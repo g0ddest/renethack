@@ -223,6 +223,19 @@ fn debug_mode_is_off_unless_the_playground_allows_it() {
 }
 
 #[test]
+fn utf8_text_survives_a_round_trip_through_the_engine() {
+    // risk R6: name the level in Cyrillic, read it back from the overview
+    let script = format!("key #\next annotate\ntext Привет, мир\nkey #\next overview\n{QUIT}");
+    let (_pg, t) = run_script(SEED, NEW_MOON, &script);
+    assert!(
+        t.lines
+            .iter()
+            .any(|l| l.contains("Level 1: \\\"Привет, мир\\\""))
+    );
+    assert!(t.lines.iter().all(|l| !l.contains('\u{fffd}')));
+}
+
+#[test]
 fn objects_on_the_map_hide_their_glyph_number() {
     let (_pg, t) = run_script(SEED, NEW_MOON, QUIT);
     let mut objects = 0;
