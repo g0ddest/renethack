@@ -131,6 +131,39 @@ fn two_items_in_a_pick_one_menu_are_rejected() {
 }
 
 #[test]
+fn objects_that_look_alike_share_a_tile() {
+    // debug mode: wish for a sack and a bag of holding; both show as "a bag"
+    let pg = tempfile::tempdir().unwrap();
+    let mut cfg = config(pg.path(), SEED, NEW_MOON);
+    std::fs::write(
+        pg.path().join("sysconf"),
+        "WIZARDS=*\nMAXPLAYERS=10\nPANICTRACE_GDB=0\nPANICTRACE_LIBC=0\n",
+    )
+    .unwrap();
+    cfg.options.push_str(",playmode:debug");
+    let script = "key 23\ntext sack\nkey 23\ntext bag of holding\nkey i\ncancel\n\
+                  key #\next quit\nyn y\nyn n\nyn q\n";
+    let mut engine = Engine::spawn(&cfg).unwrap();
+    let mut responder = ScriptResponder::new(parse_script(script).unwrap());
+    let t = run_session(&mut engine, &mut responder, &SessionLimits::default()).unwrap();
+    let bag_tiles: Vec<i32> = t
+        .lines
+        .iter()
+        .filter_map(|l| match nh_protocol::parse_line(l) {
+            Ok(EngineMsg::Win(WinCall::AddMenu(item))) if item.str.as_deref() == Some("a bag") => {
+                item.glyph.map(|g| g.tile)
+            }
+            _ => None,
+        })
+        .collect();
+    assert_eq!(bag_tiles.len(), 2, "{bag_tiles:?}");
+    assert_eq!(
+        bag_tiles[0], bag_tiles[1],
+        "a bag's tile reveals which bag it is"
+    );
+}
+
+#[test]
 fn objects_on_the_map_hide_their_glyph_number() {
     let (_pg, t) = run_script(SEED, NEW_MOON, QUIT);
     let mut objects = 0;

@@ -67,22 +67,23 @@ add_bool(cJSON *o, const char *key, int v)
 }
 
 /* What the glyph depicts.  Objects deliberately carry no glyph number: it
-   encodes the true object type, while the tile encodes the appearance. */
+   encodes the true object type.  Their tile is the appearance tile, shared
+   by every object that looks the same (rh_object_appearance_tile). */
 static cJSON *
 glyph_json(const glyph_info *ginfo)
 {
     cJSON *o;
-    int g;
+    int g, tile;
     const char *kind = "other";
 
     if (!ginfo)
         return cJSON_CreateNull();
     g = ginfo->glyph;
+    tile = ginfo->gm.tileidx;
     o = args_new();
     add_int(o, "ch", ginfo->ttychar);
     add_int(o, "color", ginfo->gm.sym.color);
     add_int(o, "flags", (long) ginfo->gm.glyphflags);
-    add_int(o, "tile", ginfo->gm.tileidx);
     if (glyph_is_unexplored(g)) {
         kind = "unexplored";
     } else if (glyph_is_nothing(g)) {
@@ -109,10 +110,12 @@ glyph_json(const glyph_info *ginfo)
         add_int(o, "mon", glyph_to_body_corpsenm(g));
     } else if (glyph_is_object(g)) {
         kind = "obj";
+        tile = rh_object_appearance_tile(tile);
     } else if (glyph_is_monster(g)) {
         kind = "mon";
         add_int(o, "mon", glyph_to_mon(g));
     }
+    add_int(o, "tile", tile);
     if (strcmp(kind, "obj") != 0)
         add_int(o, "glyph", g);
     cJSON_AddStringToObject(o, "kind", kind);

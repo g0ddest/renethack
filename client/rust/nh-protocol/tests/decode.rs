@@ -89,6 +89,23 @@ fn object_tiles_never_name_the_hidden_identity() {
 }
 
 #[test]
+fn object_tiles_list_each_appearance_once() {
+    // NetHack gives look-alike objects it never shuffles (sack / bag of
+    // holding, oil / magic lamp, the gray stones...) tiles of their own;
+    // listing those would map tiles back to object types
+    let msgs = decoded();
+    let mut seen = std::collections::HashSet::new();
+    for t in &catalog(&msgs).object_tiles {
+        assert!(
+            seen.insert((t.class.clone(), t.appearance.clone())),
+            "{} {:?} listed twice",
+            t.class,
+            t.appearance
+        );
+    }
+}
+
+#[test]
 fn object_glyphs_carry_no_glyph_number() {
     let objects: Vec<Glyph> = decoded()
         .into_iter()

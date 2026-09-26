@@ -91,25 +91,64 @@ monsters_json(void)
     return arr;
 }
 
+/* object tile -> the tile that stands for its (class, appearance).  NetHack
+   gives look-alike objects it never shuffles (sack / bag of holding, oil /
+   magic lamp, the gray stones, glass vs gems of one color) tiles of their
+   own; sending those would reveal the object type.  So every object goes out
+   with the first tile of its look-alike group, and the catalog lists each
+   appearance once.  Built with the catalog, before o_init() shuffles. */
+static int *appearance_tile;
+static int appearance_tile_len;
+
+int
+rh_object_appearance_tile(int tile)
+{
+    if (appearance_tile && tile >= 0 && tile < appearance_tile_len
+        && appearance_tile[tile] >= 0)
+        return appearance_tile[tile];
+    return tile;
+}
+
+static const char *
+object_appearance(int i)
+{
+    return obj_descr[i].oc_descr ? obj_descr[i].oc_descr
+                                 : obj_descr[i].oc_name;
+}
+
 static cJSON *
 object_tiles_json(void)
 {
     cJSON *arr = cJSON_CreateArray(), *t;
-    int i;
+    int i, j, tile;
     char sym[2];
 
+    free(appearance_tile);
+    appearance_tile_len = maxothtile + 1;
+    appearance_tile = (int *) alloc(
+        (unsigned) (appearance_tile_len * sizeof (int)));
+    for (i = 0; i < appearance_tile_len; i++)
+        appearance_tile[i] = -1;
     for (i = 0; i < NUM_OBJECTS; i++) {
         /* before o_init, object i shows its own appearance on its own tile */
-        const char *appearance = obj_descr[i].oc_descr
-                                     ? obj_descr[i].oc_descr
-                                     : obj_descr[i].oc_name;
+        const char *appearance = object_appearance(i);
         int cls = objects[i].oc_class;
 
         if (!appearance)
             continue;
+        tile = glyphmap[GLYPH_OBJ_OFF + i].tileidx;
+        for (j = 0; j < i; j++)
+            if (objects[j].oc_class == cls && object_appearance(j)
+                && !strcmp(object_appearance(j), appearance))
+                break;
+        if (j < i) {
+            appearance_tile[tile] =
+                appearance_tile[glyphmap[GLYPH_OBJ_OFF + j].tileidx];
+            continue;
+        }
+        appearance_tile[tile] = tile;
         t = cJSON_CreateObject();
-        cJSON_AddNumberToObject(t, "tile",
-                                glyphmap[GLYPH_OBJ_OFF + i].tileidx);
+        cJSON_AddNumberToObject(t, "tile", tile);
         sym[0] = def_oc_syms[cls].sym;
         sym[1] = '\0';
         cJSON_AddStringToObject(t, "class", sym);

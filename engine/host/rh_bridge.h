@@ -10,5 +10,8 @@ void rh_bridge_callback(const char *name, void *ret_ptr, const char *fmt, ...);
 void rh_bridge_atexit(void);
 /* rh_catalog.c: malloc'd catalog message line, {"t":"catalog","a":{...}} */
 char *rh_catalog_line(void);
+/* rh_catalog.c: the tile that stands for an object tile's appearance;
+   valid once rh_catalog_line() has run */
+int rh_object_appearance_tile(int tile);
 
 #endif /* RH_BRIDGE_H */
