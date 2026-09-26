@@ -169,7 +169,8 @@ impl Responder for ReplayResponder {
         let next = self.replies.pop_front();
         self.index += 1;
         match next {
-            Some(rec) if rec.func == req.name() => Ok(Some(rec.r)),
+            // a null reply is a recorded hangup: close the input again
+            Some(rec) if rec.func == req.name() => Ok((!rec.r.is_null()).then_some(rec.r)),
             Some(rec) => Err(LinkError::Divergence {
                 index: self.index,
                 expected: rec.func,

@@ -21,7 +21,7 @@ pub struct RecordingHeader {
     pub stream_hash: String,
 }
 
-/// One reply the client sent.
+/// One reply the client sent. `r` is null when the client hung up instead.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RecordedReply {
     pub id: u64,

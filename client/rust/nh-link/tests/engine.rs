@@ -216,6 +216,29 @@ fn a_recorded_session_replays_to_the_same_stream() {
 }
 
 #[test]
+fn a_session_the_client_hung_up_on_still_replays() {
+    // the usual bug report: play a little, then the client dies
+    let (_pg, t) = run_script(SEED, NEW_MOON, "key s\nkey s\nhangup\n");
+    let recording = Recording {
+        header: RecordingHeader {
+            format: RECORDING_FORMAT,
+            seed: SEED,
+            fixed_time: NEW_MOON,
+            options: String::new(),
+            engine: String::new(),
+            patchset: String::new(),
+            stream_hash: t.stream_hash(),
+        },
+        replies: t.replies.clone(),
+    };
+    let pg = tempfile::tempdir().unwrap();
+    let mut engine = Engine::spawn(&config(pg.path(), SEED, NEW_MOON)).unwrap();
+    let mut replay = ReplayResponder::new(&recording);
+    let again = run_session(&mut engine, &mut replay, &SessionLimits::default()).unwrap();
+    assert_eq!(again.stream_hash(), t.stream_hash());
+}
+
+#[test]
 fn replay_against_a_different_game_reports_divergence() {
     let (_pg, t) = run_script(SEED, NEW_MOON, QUIT);
     let recording = Recording {

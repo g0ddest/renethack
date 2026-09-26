@@ -117,7 +117,16 @@ pub fn run_session(
                             r,
                         });
                     }
-                    None => engine.close_input(),
+                    None => {
+                        // recorded too, so a session that ends in a client
+                        // hangup (the usual bug report) replays
+                        t.replies.push(RecordedReply {
+                            id,
+                            func: req.name().to_string(),
+                            r: Value::Null,
+                        });
+                        engine.close_input();
+                    }
                 }
             }
             EngineMsg::Error { msg } => t.errors.push(msg),
