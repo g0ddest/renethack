@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["nh-protocol", "nh-link"]
+members = ["nh-protocol", "nh-link", "nh-cli"]
 
 [workspace.package]
 version = "0.1.0"

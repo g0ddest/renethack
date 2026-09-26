@@ -1,0 +1,15 @@
+[package]
+name = "nh-cli"
+description = "renethack: drive nh-engine from the command line (scripts, recordings)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+nh-link = { path = "../nh-link" }
+nh-protocol = { path = "../nh-protocol" }
+clap = { version = "4", features = ["derive"] }
+tempfile = "3"
+
+[dev-dependencies]
+tempfile = "3"
