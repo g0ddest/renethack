@@ -164,6 +164,52 @@ fn objects_that_look_alike_share_a_tile() {
 }
 
 #[test]
+fn escape_at_a_yes_no_prompt_is_answered_like_the_terminal_does() {
+    // ESC at "Really quit without saving? [yn]" means "n", as in tty; the
+    // core must never receive a character that is not among the choices
+    let (pg, t) = run_script(SEED, NEW_MOON, &format!("key #\next quit\nyn ESC\n{QUIT}"));
+    let msgs = t.messages(1);
+    assert!(
+        !msgs.iter().any(|m| m.contains("Program in disorder")),
+        "{msgs:?}"
+    );
+    assert!(!pg.path().join("paniclog").exists());
+    assert!(t.said_bye && t.exit.unwrap().success());
+}
+
+#[test]
+fn a_yes_no_answer_outside_the_choices_is_a_protocol_error() {
+    let (pg, t) = run_script(SEED, NEW_MOON, "key #\next quit\nyn x\n");
+    assert_eq!(t.errors.len(), 1, "{:?}", t.errors);
+    assert!(
+        t.errors[0].contains("not one of the choices"),
+        "{:?}",
+        t.errors
+    );
+    assert!(t.exit.unwrap().success());
+    assert_saved_normally(pg.path());
+}
+
+#[test]
+fn a_message_menu_answer_is_the_letter_nothing_or_escape() {
+    // eat, ask for the list: with one food item NetHack shows it through
+    // message_menu; an unrelated key there means "no selection"
+    let (_pg, t) = run_script(
+        SEED,
+        NEW_MOON,
+        &format!("key e\nyn ?\nyn x\nyn ESC\n{QUIT}"),
+    );
+    let msgs = t.messages(1);
+    assert!(
+        !msgs
+            .iter()
+            .any(|m| m.contains("You don't have that object")),
+        "{msgs:?}"
+    );
+    assert!(msgs.iter().any(|m| m.contains("Never mind")), "{msgs:?}");
+}
+
+#[test]
 fn objects_on_the_map_hide_their_glyph_number() {
     let (_pg, t) = run_script(SEED, NEW_MOON, QUIT);
     let mut objects = 0;

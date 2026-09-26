@@ -474,17 +474,24 @@ h_select_menu(void *ret, va_list *ap)
     *(int *) ret = n;
 }
 
+/* window.txt: the answer is `let' (the item was picked), '\033' (cancel)
+   or '\0' (nothing picked); any other key means nothing picked. */
 static void
 h_message_menu(void *ret, va_list *ap)
 {
+    int let = va_arg(*ap, int);
     cJSON *a = args_new(), *r;
+    long ch;
 
-    add_int(a, "let", va_arg(*ap, int));
+    add_int(a, "let", let);
     add_int(a, "how", va_arg(*ap, int));
     add_str(a, "mesg", va_arg(*ap, const char *));
     r = rh_proto_request("message_menu", a);
-    *(char *) ret = (char) (r ? rh_reply_int(r, "ch", '\033') : '\033');
+    ch = r ? rh_reply_int(r, "ch", '\033') : '\033';
     cJSON_Delete(r);
+    if (ch != let && ch != '\033')
+        ch = '\0';
+    *(char *) ret = (char) ch;
 }
 
 static void
@@ -593,17 +600,44 @@ h_doprev_message(void *ret, va_list *ap UNUSED)
     *(int *) ret = 0;
 }
 
+/* window.txt / tty: the answer is one of `choices'; ESC means 'q' when
+   that is offered, else 'n', else the default.  With no choices any key
+   goes back as it is.  A reply outside the choices is a protocol violation
+   (the core would report "Program in disorder"). */
+static char
+yn_escape(const char *choices, char def)
+{
+    if (strchr(choices, 'q'))
+        return 'q';
+    if (strchr(choices, 'n'))
+        return 'n';
+    return def;
+}
+
 static void
 h_yn_function(void *ret, va_list *ap)
 {
+    const char *query = va_arg(*ap, const char *);
+    const char *choices = va_arg(*ap, const char *);
+    char def = (char) va_arg(*ap, int);
     cJSON *a = args_new(), *r;
+    long ch;
+    int listed = choices && *choices;
 
-    add_str(a, "query", va_arg(*ap, const char *));
-    add_str(a, "choices", va_arg(*ap, const char *));
-    add_int(a, "default", va_arg(*ap, int));
+    add_str(a, "query", query);
+    add_str(a, "choices", choices);
+    add_int(a, "default", def);
     r = rh_proto_request("yn_function", a);
-    *(char *) ret = (char) (r ? rh_reply_int(r, "ch", '\033') : '\033');
+    ch = r ? rh_reply_int(r, "ch", '\033') : '\033';
     cJSON_Delete(r);
+    if (listed && ch == '\033' && !strchr(choices, '\033')) {
+        ch = yn_escape(choices, def);
+    } else if (ch < 0 || ch > 255
+               || (listed && ch && !strchr(choices, (int) ch))) {
+        rh_proto_violation("yn_function reply is not one of the choices");
+        ch = listed ? yn_escape(choices, def) : '\033';
+    }
+    *(char *) ret = (char) ch;
 }
 
 static void
