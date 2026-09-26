@@ -1,0 +1,11 @@
+[package]
+name = "nh-protocol"
+description = "renethack engine protocol: message types and JSON Lines codec"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true

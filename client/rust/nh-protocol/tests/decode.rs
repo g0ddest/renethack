@@ -1,0 +1,227 @@
+//! Decoding real engine output. The fixture is what `engine/tests/smoke.sh`
+//! records: a new game (seed 42, 2026-01-18) whose client hangs up at the
+//! first request.
+
+use nh_protocol::*;
+
+const SESSION: &str = include_str!("data/eof-session.jsonl");
+
+fn decoded() -> Vec<EngineMsg> {
+    SESSION
+        .lines()
+        .map(|l| parse_line(l).unwrap_or_else(|e| panic!("{e}: {l}")))
+        .collect()
+}
+
+fn catalog(msgs: &[EngineMsg]) -> &Catalog {
+    match &msgs[1] {
+        EngineMsg::Catalog(c) => c,
+        other => panic!("expected catalog second, got {other:?}"),
+    }
+}
+
+#[test]
+fn every_recorded_line_decodes_to_a_known_call() {
+    for msg in decoded() {
+        if let EngineMsg::Win(WinCall::Unknown { name, .. }) = msg {
+            panic!("unmapped window call {name}");
+        }
+    }
+}
+
+#[test]
+fn session_is_hello_catalog_play_error_bye() {
+    let msgs = decoded();
+    let EngineMsg::Hello(hello) = &msgs[0] else {
+        panic!("expected hello first")
+    };
+    assert_eq!(hello.protocol, PROTOCOL_VERSION);
+    assert_eq!(hello.engine, "5.0.0");
+    let cat = catalog(&msgs);
+    assert!(cat.monsters.len() > 300);
+    assert_eq!(cat.roles.len(), 13);
+    assert_eq!(cat.races.len(), 5);
+    assert!(msgs.contains(&EngineMsg::Error {
+        msg: "client closed the connection".into()
+    }));
+    assert_eq!(msgs.last(), Some(&EngineMsg::Bye));
+}
+
+#[test]
+fn catalog_describes_monsters_by_their_visible_traits() {
+    let msgs = decoded();
+    let jackal = catalog(&msgs)
+        .monsters
+        .iter()
+        .find(|m| m.name == "jackal")
+        .unwrap();
+    assert_eq!(jackal.class, "d");
+    assert_eq!(jackal.size, "small");
+    assert!(jackal.body.contains(&"animal".to_string()));
+    // M1_NOLIMBS is a composite mask; jackals have limbs
+    assert!(!jackal.body.contains(&"nolimbs".to_string()));
+}
+
+#[test]
+fn object_tiles_never_name_the_hidden_identity() {
+    let msgs = decoded();
+    let cat = catalog(&msgs);
+    for t in &cat.object_tiles {
+        for secret in [
+            "potion of",
+            "scroll of",
+            "wand of",
+            "ring of",
+            "spellbook of",
+        ] {
+            assert!(
+                !t.appearance.contains(secret),
+                "{} leaks identity",
+                t.appearance
+            );
+        }
+    }
+    assert!(
+        cat.object_tiles
+            .iter()
+            .any(|t| t.appearance == "runed dagger")
+    );
+}
+
+#[test]
+fn object_glyphs_carry_no_glyph_number() {
+    let objects: Vec<Glyph> = decoded()
+        .into_iter()
+        .filter_map(|m| match m {
+            EngineMsg::Win(WinCall::PrintGlyph { g, .. }) if g.kind == GlyphKind::Obj => Some(g),
+            _ => None,
+        })
+        .collect();
+    assert!(!objects.is_empty(), "fixture shows no object");
+    assert!(objects.iter().all(|g| g.glyph.is_none() && g.tile > 0));
+}
+
+#[test]
+fn hero_is_a_flagged_valkyrie_glyph() {
+    let msgs = decoded();
+    let hero = msgs
+        .iter()
+        .find_map(|m| match m {
+            EngineMsg::Win(WinCall::PrintGlyph { g, .. }) if g.flags & mg::HERO != 0 => Some(g),
+            _ => None,
+        })
+        .expect("hero drawn");
+    assert_eq!(hero.kind, GlyphKind::Mon);
+    let mon = &catalog(&msgs).monsters[hero.mon.unwrap() as usize];
+    assert_eq!(mon.name, "valkyrie");
+}
+
+#[test]
+fn welcome_message_goes_to_the_message_window() {
+    let msgs = decoded();
+    let message_win = msgs
+        .iter()
+        .find_map(|m| match m {
+            EngineMsg::Win(WinCall::CreateNhwindow {
+                win,
+                kind: WindowKind::Message,
+            }) => Some(*win),
+            _ => None,
+        })
+        .unwrap();
+    assert!(msgs.iter().any(|m| matches!(m,
+        EngineMsg::Win(WinCall::Putstr { win, text, .. })
+            if *win == message_win && text.contains("welcome to NetHack"))));
+}
+
+#[test]
+fn requests_decode_with_their_arguments() {
+    let yn = r#"{"t":"req","id":3,"fn":"yn_function","a":{"query":"Really quit without saving?","choices":"yn","default":0}}"#;
+    assert_eq!(
+        parse_line(yn).unwrap(),
+        EngineMsg::Req {
+            id: 3,
+            req: Request::YnFunction {
+                query: "Really quit without saving?".into(),
+                choices: Some("yn".into()),
+                default: 0
+            }
+        }
+    );
+    let menu = r#"{"t":"req","id":4,"fn":"select_menu","a":{"win":5,"how":1}}"#;
+    assert_eq!(
+        parse_line(menu).unwrap(),
+        EngineMsg::Req {
+            id: 4,
+            req: Request::SelectMenu {
+                win: 5,
+                how: PickHow::One
+            }
+        }
+    );
+    let getlin = r#"{"t":"req","id":5,"fn":"getlin","a":{"query":"For what do you wish?"}}"#;
+    assert!(matches!(
+        parse_line(getlin).unwrap(),
+        EngineMsg::Req {
+            req: Request::Getlin { .. },
+            ..
+        }
+    ));
+    let first = decoded()
+        .into_iter()
+        .find_map(|m| match m {
+            EngineMsg::Req { req, .. } => Some(req),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(first, Request::NhPoskey);
+}
+
+#[test]
+fn replies_encode_to_the_wire_shapes() {
+    assert_eq!(
+        encode_reply(3, &Reply::Key(104).to_value()),
+        r#"{"id":3,"r":{"key":104}}"#
+    );
+    assert_eq!(
+        encode_reply(4, &Reply::Menu(vec![(2, -1)]).to_value()),
+        r#"{"id":4,"r":{"items":[[2,-1]]}}"#
+    );
+    assert_eq!(
+        encode_reply(5, &Reply::ExtCmd(None).to_value()),
+        r#"{"id":5,"r":{"cmd":null}}"#
+    );
+    assert_eq!(
+        encode_reply(6, &Reply::Ack.to_value()),
+        r#"{"id":6,"r":{}}"#
+    );
+    let click = Reply::Click {
+        x: 3,
+        y: 4,
+        modifier: 1,
+    }
+    .to_value();
+    assert_eq!(click["mod"], 1);
+}
+
+#[test]
+fn malformed_lines_are_errors() {
+    assert!(matches!(parse_line("nope"), Err(ProtocolError::Json(_))));
+    assert!(matches!(
+        parse_line(r#"{"t":"zzz","a":{}}"#),
+        Err(ProtocolError::UnknownType(_))
+    ));
+    assert!(matches!(
+        parse_line(r#"{"t":"req","fn":"nhgetch","a":{}}"#),
+        Err(ProtocolError::MissingId)
+    ));
+    assert!(matches!(
+        parse_line(r#"{"t":"req","id":1,"fn":"teleport_me","a":{}}"#),
+        Err(ProtocolError::UnknownRequest(_))
+    ));
+    // unknown notifications are tolerated, so newer engines keep working
+    assert!(matches!(
+        parse_line(r#"{"t":"win","fn":"future_call","a":{"x":1}}"#),
+        Ok(EngineMsg::Win(WinCall::Unknown { .. }))
+    ));
+}
