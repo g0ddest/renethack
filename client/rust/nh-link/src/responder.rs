@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use nh_protocol::{ESC, PickHow, Reply, Request};
 use serde_json::Value;
 
-use crate::{LinkError, Responder};
+use crate::{LinkError, Recording, Responder};
 
 /// One scripted answer.
 #[derive(Debug, Clone, PartialEq)]
@@ -145,6 +145,42 @@ impl Responder for ScriptResponder {
             }
         };
         Ok(Some(reply.to_value()))
+    }
+}
+
+/// Answers requests with the replies of a recording, in order, and fails
+/// as soon as the engine asks something the recording did not.
+pub struct ReplayResponder {
+    replies: VecDeque<crate::RecordedReply>,
+    index: usize,
+}
+
+impl ReplayResponder {
+    pub fn new(recording: &Recording) -> ReplayResponder {
+        ReplayResponder {
+            replies: recording.replies.clone().into(),
+            index: 0,
+        }
+    }
+}
+
+impl Responder for ReplayResponder {
+    fn respond(&mut self, _id: u64, req: &Request) -> Result<Option<Value>, LinkError> {
+        let next = self.replies.pop_front();
+        self.index += 1;
+        match next {
+            Some(rec) if rec.func == req.name() => Ok(Some(rec.r)),
+            Some(rec) => Err(LinkError::Divergence {
+                index: self.index,
+                expected: rec.func,
+                actual: req.name().to_string(),
+            }),
+            None => Err(LinkError::Divergence {
+                index: self.index,
+                expected: "end of recording".to_string(),
+                actual: req.name().to_string(),
+            }),
+        }
     }
 }
 

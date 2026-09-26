@@ -66,6 +66,17 @@ fn quitting_a_new_game_is_a_clean_exit() {
 }
 
 #[test]
+fn same_seed_and_clock_replay_identically() {
+    let (_a, first) = run_script(SEED, NEW_MOON, QUIT);
+    let (_b, second) = run_script(SEED, NEW_MOON, QUIT);
+    assert_eq!(first.lines, second.lines);
+    let (_c, other_seed) = run_script(SEED + 1, NEW_MOON, QUIT);
+    assert_ne!(first.stream_hash(), other_seed.stream_hash());
+    let (_d, other_time) = run_script(SEED, NEW_MOON + 14 * 86_400, QUIT);
+    assert_ne!(first.stream_hash(), other_time.stream_hash());
+}
+
+#[test]
 fn losing_the_client_saves_the_game() {
     let (pg, t) = run_script(SEED, NEW_MOON, "hangup\n");
     assert_eq!(t.errors, vec!["client closed the connection".to_string()]);
@@ -99,6 +110,67 @@ fn objects_on_the_map_hide_their_glyph_number() {
         objects > 0,
         "seed {SEED} shows no object; pick another seed"
     );
+}
+
+#[test]
+fn a_recorded_session_replays_to_the_same_stream() {
+    let (_pg, t) = run_script(SEED, NEW_MOON, QUIT);
+    let hello = t.hello.clone().unwrap();
+    let recording = Recording {
+        header: RecordingHeader {
+            format: RECORDING_FORMAT,
+            seed: SEED,
+            fixed_time: NEW_MOON,
+            options: EngineConfig::character_options(
+                "Hero", "valkyrie", "human", "female", "neutral",
+            ),
+            engine: hello.engine,
+            patchset: hello.patchset,
+            stream_hash: t.stream_hash(),
+        },
+        replies: t.replies.clone(),
+    };
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join("quit.rhrec");
+    recording.save(&file).unwrap();
+    let loaded = Recording::load(&file).unwrap();
+    assert_eq!(loaded, recording);
+
+    let pg = tempfile::tempdir().unwrap();
+    let mut cfg = config(pg.path(), loaded.header.seed, loaded.header.fixed_time);
+    cfg.options = loaded.header.options.clone();
+    let mut engine = Engine::spawn(&cfg).unwrap();
+    let mut replay = ReplayResponder::new(&loaded);
+    let again = run_session(&mut engine, &mut replay, &SessionLimits::default()).unwrap();
+    assert_eq!(again.stream_hash(), loaded.header.stream_hash);
+}
+
+#[test]
+fn replay_against_a_different_game_reports_divergence() {
+    let (_pg, t) = run_script(SEED, NEW_MOON, QUIT);
+    let recording = Recording {
+        header: RecordingHeader {
+            format: RECORDING_FORMAT,
+            seed: SEED,
+            fixed_time: NEW_MOON,
+            options: String::new(),
+            engine: String::new(),
+            patchset: String::new(),
+            stream_hash: t.stream_hash(),
+        },
+        // drop the "Really quit?" answer: the engine will ask yn, we have ext/yn mismatch
+        replies: t
+            .replies
+            .iter()
+            .filter(|r| r.func != "get_ext_cmd")
+            .cloned()
+            .collect(),
+    };
+    let pg = tempfile::tempdir().unwrap();
+    let mut engine = Engine::spawn(&config(pg.path(), SEED, NEW_MOON)).unwrap();
+    let mut replay = ReplayResponder::new(&recording);
+    let err = run_session(&mut engine, &mut replay, &SessionLimits::default()).unwrap_err();
+    assert!(matches!(err, LinkError::Divergence { .. }), "{err}");
 }
 
 #[test]
