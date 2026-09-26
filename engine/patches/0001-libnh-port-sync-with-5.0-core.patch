@@ -1,0 +1,95 @@
+--- a/sys/libnh/libnhmain.c
++++ b/sys/libnh/libnhmain.c
+@@ -35,9 +35,9 @@
+ #endif
+ extern struct passwd *getpwnam(const char *);
+ #ifdef CHDIR
+-static void chdirx(const char *, boolean);
++void chdirx(const char *, boolean);
+ #endif /* CHDIR */
+-static boolean whoami(void);
++boolean whoami(void);
+ static void process_options(int, char **);
+ 
+ #ifdef _M_UNIX
+@@ -51,7 +51,6 @@
+ 
+ static void wd_message(void);
+ static struct passwd *get_unix_pw(void);
+-ATTRNORETURN static void opt_terminate(void) NORETURN;
+ 
+ #ifdef __EMSCRIPTEN__
+ /* if WebAssembly, export this API and don't optimize it out */
+@@ -458,7 +457,7 @@
+ }
+ 
+ #ifdef CHDIR
+-static void
++void
+ chdirx(const char *dir, boolean wr)
+ {
+     if (dir /* User specified directory? */
+@@ -516,7 +515,7 @@
+ #endif /* CHDIR */
+ 
+ /* returns True iff we set plname[] to username which contains a hyphen */
+-static boolean
++boolean
+ whoami(void)
+ {
+     /*
+@@ -743,8 +742,17 @@
+     unsigned long seed = 0L;
+     unsigned long pid = (unsigned long) getpid();
+     boolean no_seed = TRUE;
++    const char *fixed_seed = getenv("RENETHACK_SEED");
+ #ifdef DEV_RANDOM
+     FILE *fptr;
++#endif
++
++    if (fixed_seed && *fixed_seed) {
++        /* deterministic run for tests/replays: never reseed */
++        has_strong_rngseed = FALSE;
++        return strtoul(fixed_seed, (char **) 0, 10);
++    }
++#ifdef DEV_RANDOM
+ 
+     fptr = fopen(DEV_RANDOM, "r");
+     if (fptr) {
+@@ -769,30 +777,16 @@
+     return seed;
+ }
+ 
+-/* for command-line options that perform some immediate action and then
+-   terminate the program without starting play, like 'nethack --version'
+-   or 'nethack -s Zelda'; do some cleanup before that termination */
+-ATTRNORETURN static void
+-opt_terminate(void)
++/* the 5.0 core calls these (allmain.c, save.c); unixmain.c provides them
++   only with NHUUID support, which this port does not use */
++void
++get_nhuuid(void)
+ {
+-    config_error_done(); /* free memory allocated by config_error_init() */
+-
+-    nh_terminate(EXIT_SUCCESS);
+-    /*NOTREACHED*/
+ }
+ 
+-/* show the sysconf file name, playground directory, run-time configuration
+-   file name, dumplog file name if applicable, and some other things */
+-ATTRNORETURN void
+-after_opt_showpaths(const char *dir)
++void
++free_nhuuid(void)
+ {
+-#ifdef CHDIR
+-    chdirx(dir, FALSE);
+-#else
+-    nhUse(dir);
+-#endif
+-    opt_terminate();
+-    /*NOTREACHED*/
+ }
+ 
+ #ifdef __EMSCRIPTEN__

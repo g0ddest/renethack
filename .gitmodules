@@ -1,0 +1,4 @@
+[submodule "engine/upstream"]
+	path = engine/upstream
+	url = https://github.com/NetHack/NetHack.git
+	shallow = true

@@ -1,0 +1,16 @@
+--- a/include/global.h
++++ b/include/global.h
+@@ -266,6 +266,13 @@
+ #endif
+ #endif
+ #endif
++/* renethack: the libnh shim client renders tiles, so it needs tileidx
++   (and per-game shuffled object appearances) in the glyph map */
++#if defined(LIBNH) && !defined(NO_TILE_C)
++#ifndef TILES_IN_GLYPHMAP
++#define TILES_IN_GLYPHMAP
++#endif
++#endif
+ #if defined(AMII_GRAPHICS) || defined(GEM_GRAPHICS)
+ #ifndef NO_TILE_C
+ #ifndef TILES_IN_GLYPHMAP
