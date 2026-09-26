@@ -47,6 +47,26 @@ fn save_files(pg: &Path) -> usize {
     std::fs::read_dir(pg.join("save")).unwrap().count()
 }
 
+/// One save file, and not NetHack's panic save (`<name>.e[.Z]`).
+fn assert_saved_normally(pg: &Path) {
+    let names: Vec<String> = std::fs::read_dir(pg.join("save"))
+        .unwrap()
+        .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+        .collect();
+    assert_eq!(names.len(), 1, "{names:?}");
+    assert!(!names[0].contains(".e"), "panic save: {names:?}");
+}
+
+/// A bad select_menu reply must end like a lost client: error, normal save, exit 0.
+fn assert_menu_reply_rejected(script: &str, why: &str) {
+    let (pg, t) = run_script(SEED, NEW_MOON, script);
+    assert_eq!(t.errors.len(), 1, "{:?}", t.errors);
+    assert!(t.errors[0].contains(why), "{:?}", t.errors);
+    assert!(t.said_bye);
+    assert!(t.exit.unwrap().success(), "{:?}", t.exit);
+    assert_saved_normally(pg.path());
+}
+
 #[test]
 fn quitting_a_new_game_is_a_clean_exit() {
     let (_pg, t) = run_script(SEED, NEW_MOON, QUIT);
@@ -91,6 +111,23 @@ fn a_nonsense_menu_reply_saves_the_game() {
     assert_eq!(t.errors.len(), 1);
     assert!(t.errors[0].contains("not selectable"), "{:?}", t.errors);
     assert_eq!(save_files(pg.path()), 1);
+}
+
+#[test]
+fn a_negative_menu_count_is_rejected_instead_of_panicking_the_core() {
+    // D, Weapons, then the spear with count -5: NetHack itself panics in splitobj()
+    assert_menu_reply_rejected("key D\nmenu 4\nmenu 1:-5\n", "count");
+}
+
+#[test]
+fn a_menu_item_named_twice_is_rejected() {
+    assert_menu_reply_rejected("key D\nmenu 4\nmenu 1 1\n", "twice");
+}
+
+#[test]
+fn two_items_in_a_pick_one_menu_are_rejected() {
+    // the inventory menu picks one item: the spear (1) and the dagger (2)
+    assert_menu_reply_rejected("key i\nmenu 1 2\n", "more than one");
 }
 
 #[test]

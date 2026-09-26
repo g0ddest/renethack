@@ -390,16 +390,22 @@ h_end_menu(void *ret UNUSED, va_list *ap)
     rh_proto_send("win", "end_menu", a);
 }
 
-/* reply: {"items":[[idx,count],...]} or {"cancel":true};
-   count -1 means "no count given" */
+/* reply: {"items":[[idx,count],...]} or {"cancel":true}.  window.txt: each
+   item at most once, count -1 ("no count given") or a count >= 1, and a
+   pick-one menu takes at most one item.  Anything else would reach the core
+   as nonsense (a negative count panics splitobj()), so it is a protocol
+   violation, handled like a lost client. */
 static void
 h_select_menu(void *ret, va_list *ap)
 {
     int w = va_arg(*ap, int), how = va_arg(*ap, int);
     menu_item **menu_list = va_arg(*ap, menu_item **);
-    cJSON *a = args_new(), *r, *items, *pair;
-    menu_item *mi;
-    int n = 0, k, idx;
+    cJSON *a = args_new(), *r, *items;
+    menu_item *mi = (menu_item *) 0;
+    int *picked = (int *) 0;
+    int n = 0, k, j, idx;
+    double count;
+    const char *why = (const char *) 0;
 
     *menu_list = (menu_item *) 0;
     add_int(a, "win", w);
@@ -414,32 +420,54 @@ h_select_menu(void *ret, va_list *ap)
     if (how != PICK_NONE && cJSON_IsArray(items))
         n = cJSON_GetArraySize(items);
     if (how == PICK_ONE && n > 1)
-        n = 1;
-    if (n > 0) {
+        why = "select_menu reply picks more than one item from a pick-one"
+              " menu";
+    if (n > 0 && !why) {
         mi = (menu_item *) alloc((unsigned) (n * sizeof (menu_item)));
-        for (k = 0; k < n; k++) {
-            pair = cJSON_GetArrayItem(items, k);
-            idx = -1;
-            if (cJSON_IsArray(pair) && cJSON_GetArraySize(pair) == 2
-                && cJSON_IsNumber(cJSON_GetArrayItem(pair, 0))
-                && cJSON_IsNumber(cJSON_GetArrayItem(pair, 1)))
-                idx = (int) cJSON_GetArrayItem(pair, 0)->valuedouble;
-            if (!valid_win(w) || idx < 0 || idx >= windows[w].nitems
-                || !windows[w].ids[idx].a_void) {
-                free(mi);
-                cJSON_Delete(r);
-                rh_proto_violation("select_menu reply names an item that is"
-                                   " not selectable");
-                *(int *) ret = -1;
-                return;
-            }
-            mi[k].item = windows[w].ids[idx];
-            mi[k].count = (long) cJSON_GetArrayItem(pair, 1)->valuedouble;
-            mi[k].itemflags = MENU_ITEMFLAGS_NONE;
-        }
-        *menu_list = mi;
+        picked = (int *) alloc((unsigned) (n * sizeof (int)));
     }
+    for (k = 0; k < n && !why; k++) {
+        const cJSON *pair = cJSON_GetArrayItem(items, k), *jidx, *jcount;
+
+        if (!cJSON_IsArray(pair) || cJSON_GetArraySize(pair) != 2
+            || !cJSON_IsNumber(jidx = cJSON_GetArrayItem(pair, 0))
+            || !cJSON_IsNumber(jcount = cJSON_GetArrayItem(pair, 1))) {
+            why = "select_menu reply item is not an [index, count] pair";
+            break;
+        }
+        /* range checks come before any cast: out-of-range casts are UB */
+        if (!valid_win(w) || !(jidx->valuedouble >= 0.0
+                               && jidx->valuedouble < windows[w].nitems)
+            || !windows[w].ids[(int) jidx->valuedouble].a_void) {
+            why = "select_menu reply names an item that is not selectable";
+            break;
+        }
+        idx = (int) jidx->valuedouble;
+        for (j = 0; j < k; j++)
+            if (picked[j] == idx)
+                why = "select_menu reply names an item twice";
+        count = jcount->valuedouble;
+        if (!why && count != -1.0
+            && !(count >= 1.0 && count <= 2147483647.0
+                 && count == (double) (long) count))
+            why = "select_menu reply has an item count that is neither -1"
+                  " nor a positive whole number";
+        if (why)
+            break;
+        picked[k] = idx;
+        mi[k].item = windows[w].ids[idx];
+        mi[k].count = (long) count;
+        mi[k].itemflags = MENU_ITEMFLAGS_NONE;
+    }
+    free(picked);
     cJSON_Delete(r);
+    if (why) {
+        free(mi);
+        rh_proto_violation(why);
+        *(int *) ret = -1;
+        return;
+    }
+    *menu_list = mi;
     *(int *) ret = n;
 }
 
