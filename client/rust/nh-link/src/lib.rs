@@ -46,4 +46,6 @@ pub enum LinkError {
     },
     #[error("recording: {0}")]
     Recording(String),
+    #[error("character: {0}")]
+    Character(String),
 }

@@ -91,6 +91,7 @@ fn playground(args: &EngineArgs) -> Result<Playground, LinkError> {
 
 fn default_options() -> String {
     EngineConfig::character_options("Hero", "valkyrie", "human", "female", "neutral")
+        .expect("the default character is valid")
 }
 
 fn run(args: RunArgs) -> Result<ExitCode, LinkError> {

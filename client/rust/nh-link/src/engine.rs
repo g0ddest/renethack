@@ -31,15 +31,53 @@ pub struct EngineConfig {
 
 impl EngineConfig {
     /// Options for a fixed character on top of `BASE_OPTIONS`.
+    ///
+    /// Everything lands in NETHACKOPTIONS as is, so whatever NetHack would
+    /// read as syntax is refused: a ',' starts another option (the name
+    /// "Hero,playmode:debug" would switch on debug mode) and a '-' makes
+    /// NetHack read the rest of a name as a role or race suffix.
     pub fn character_options(
         name: &str,
         role: &str,
         race: &str,
         gender: &str,
         align: &str,
-    ) -> String {
-        format!("{BASE_OPTIONS},name:{name},role:{role},race:{race},gender:{gender},align:{align}")
+    ) -> Result<String, LinkError> {
+        check_name(name)?;
+        for (what, word) in [
+            ("role", role),
+            ("race", race),
+            ("gender", gender),
+            ("align", align),
+        ] {
+            if word.is_empty() || !word.chars().all(|c| c.is_ascii_alphabetic()) {
+                return Err(LinkError::Character(format!(
+                    "{what} {word:?} is not a plain word"
+                )));
+            }
+        }
+        Ok(format!(
+            "{BASE_OPTIONS},name:{name},role:{role},race:{race},gender:{gender},align:{align}"
+        ))
     }
+}
+
+/// NetHack keeps a name in PL_NSIZ = 32 bytes, including the terminating NUL.
+const MAX_NAME_BYTES: usize = 31;
+
+fn check_name(name: &str) -> Result<(), LinkError> {
+    let bad = |why: &str| Err(LinkError::Character(format!("name {name:?} {why}")));
+    if name.is_empty() || name.len() > MAX_NAME_BYTES {
+        return bad("must be 1 to 31 bytes long");
+    }
+    if name.trim() != name {
+        return bad("starts or ends with a space");
+    }
+    let allowed = |c: char| c.is_alphanumeric() || matches!(c, ' ' | '\'' | '_' | '.');
+    if !name.chars().all(allowed) {
+        return bad("may only hold letters, digits, spaces and ' _ .");
+    }
+    Ok(())
 }
 
 /// One decoded line plus its exact text (hashes and replays need the text).
@@ -153,5 +191,48 @@ impl Drop for Engine {
         if let Ok(None) = self.child.try_wait() {
             self.kill();
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn options(name: &str) -> Result<String, LinkError> {
+        EngineConfig::character_options(name, "valkyrie", "human", "female", "neutral")
+    }
+
+    #[test]
+    fn a_plain_name_becomes_the_options_string() {
+        assert_eq!(
+            options("Hero").unwrap(),
+            "time,!legacy,!tutorial,!autopickup,name:Hero,role:valkyrie,race:human,gender:female,align:neutral"
+        );
+        assert!(options("Сигурд").is_ok());
+        assert!(options("Olaf the Bold").is_ok());
+    }
+
+    #[test]
+    fn names_cannot_smuggle_options_or_suffixes() {
+        assert!(options("Hero,playmode:debug").is_err()); // another option
+        assert!(options("Conan, the Barbarian").is_err()); // same, by accident
+        assert!(options("Jean-Luc").is_err()); // NetHack reads "-Luc" as a role
+        assert!(options("name:x").is_err());
+        assert!(options("").is_err());
+        assert!(options(" Hero").is_err());
+        assert!(options(&"x".repeat(32)).is_err()); // PL_NSIZ is 32 with the NUL
+        assert!(options("Hero\n").is_err());
+    }
+
+    #[test]
+    fn role_and_friends_are_plain_words() {
+        let bad = EngineConfig::character_options(
+            "Hero",
+            "valkyrie,playmode:debug",
+            "human",
+            "female",
+            "neutral",
+        );
+        assert!(bad.is_err());
     }
 }

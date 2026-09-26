@@ -1,6 +1,6 @@
 # renethack engine sysconf: minimal and relocatable (read as ./sysconf from
 # the playground).  No PANICTRACE: the engine must never launch a debugger.
-WIZARDS=*
+# No WIZARDS line: debug mode is off; tests that need it write their own.
 EXPLORERS=*
 MAXPLAYERS=10
 PANICTRACE_GDB=0

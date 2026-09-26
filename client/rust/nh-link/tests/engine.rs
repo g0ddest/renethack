@@ -29,7 +29,8 @@ fn config(playground: &Path, seed: u64, fixed_time: i64) -> EngineConfig {
     EngineConfig {
         engine,
         playground: playground.to_path_buf(),
-        options: EngineConfig::character_options("Hero", "valkyrie", "human", "female", "neutral"),
+        options: EngineConfig::character_options("Hero", "valkyrie", "human", "female", "neutral")
+            .unwrap(),
         seed: Some(seed),
         fixed_time: Some(fixed_time),
     }
@@ -210,6 +211,18 @@ fn a_message_menu_answer_is_the_letter_nothing_or_escape() {
 }
 
 #[test]
+fn debug_mode_is_off_unless_the_playground_allows_it() {
+    // playmode:debug with the shipped sysconf: ^W is not a wish prompt
+    let pg = tempfile::tempdir().unwrap();
+    let mut cfg = config(pg.path(), SEED, NEW_MOON);
+    cfg.options.push_str(",playmode:debug");
+    let mut engine = Engine::spawn(&cfg).unwrap();
+    let mut responder = ScriptResponder::new(parse_script(&format!("key 23\n{QUIT}")).unwrap());
+    let t = run_session(&mut engine, &mut responder, &SessionLimits::default()).unwrap();
+    assert!(t.exit.unwrap().success());
+}
+
+#[test]
 fn objects_on_the_map_hide_their_glyph_number() {
     let (_pg, t) = run_script(SEED, NEW_MOON, QUIT);
     let mut objects = 0;
@@ -239,7 +252,8 @@ fn a_recorded_session_replays_to_the_same_stream() {
             fixed_time: NEW_MOON,
             options: EngineConfig::character_options(
                 "Hero", "valkyrie", "human", "female", "neutral",
-            ),
+            )
+            .unwrap(),
             engine: hello.engine,
             patchset: hello.patchset,
             stream_hash: t.stream_hash(),
