@@ -387,9 +387,78 @@ fn keys() -> Vec<Step> {
     steps
 }
 
+fn camera_settled(g: &RenethackGame) -> Result<bool, String> {
+    fail_on_error_screen(g)?;
+    Ok(g.ui.as_ref().is_some_and(|ui| ui.map.is_settled()))
+}
+
+/// A walk through the first rooms of seed 42 for map screenshots: the start
+/// room, the up stairs, a doorway, the corridor, the room with the down
+/// stairs. Not part of `make test-client`.
+fn tour() -> Vec<Step> {
+    let mut steps = start();
+    steps.extend([
+        Step::Wait("the hero on the map", |g| Ok(g.world.map.hero().is_some())),
+        Step::Wait("the camera on the hero", camera_settled),
+        Step::Shot("map-start"),
+        // the travel command's getpos cursor a cell east, the mouse
+        // hovering south-west of the hero
+        key('_'),
+        // the first getpos shows a tip window
+        Step::Request("the getpos tip", |p| matches!(p, Prompt::Show { .. })),
+        Step::Dialog(DialogEvent::Close),
+        Step::Request("where to travel", command),
+        key('l'),
+        Step::Request("the cursor moved", command),
+        Step::Call("hover south-west of the hero", |g| {
+            let (x, y) = g.world.map.hero().ok_or("no hero")?;
+            if let Some(ui) = g.ui.as_mut() {
+                ui.map.set_hover(Some((x - 1, y + 1)));
+            }
+            Ok(())
+        }),
+        Step::Shot("map-getpos"),
+        Step::Call("hover nothing", |g| {
+            if let Some(ui) = g.ui.as_mut() {
+                ui.map.set_hover(None);
+            }
+            Ok(())
+        }),
+        Step::Key(KeyInput::plain(Key::Escape)),
+        Step::Request("a command after the travel is cancelled", command),
+    ]);
+    let walk = [
+        ('h', None),
+        ('h', Some("map-stairs")),
+        ('y', None),
+        ('y', None),
+        ('h', Some("map-doorway")),
+        ('h', None),
+        ('j', None),
+        ('j', None),
+        ('j', None),
+        ('j', Some("map-corridor")),
+        ('J', None),
+        ('H', None),
+        ('l', None),
+        ('l', Some("map-downstairs")),
+    ];
+    for (c, shot) in walk {
+        steps.push(key(c));
+        steps.push(Step::Request("a command after a move", command));
+        if let Some(name) = shot {
+            steps.push(Step::Wait("the camera on the hero", camera_settled));
+            steps.push(Step::Shot(name));
+        }
+    }
+    steps.extend(quit());
+    steps
+}
+
 impl SelfTest {
     pub fn new(name: &str, shots: Option<PathBuf>) -> SelfTest {
         let steps = match name {
+            "tour" => tour(),
             "smoke" => smoke(),
             "keys" => keys(),
             "save" => save(),
