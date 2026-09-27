@@ -629,13 +629,15 @@ impl Dialogs {
                 c if allowed.contains(&c) => Some(Reply::Char(c as i32)),
                 _ => None,
             },
-            Kind::Text { .. } => (input.key == Key::Escape).then_some(escape),
+            // a held key never answers: Esc cancels only when pressed
+            Kind::Text { .. } => (input.key == Key::Escape && !input.echo).then_some(escape),
             Kind::ExtCmd {
                 edit,
                 list,
                 palette,
             } => {
                 let step = match input.key {
+                    Key::Escape | Key::Tab if input.echo => return None,
                     Key::Escape => return Some(escape),
                     Key::Up => -1,
                     Key::Down => 1,

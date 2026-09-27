@@ -219,9 +219,13 @@ impl INode for RenethackGame {
         if self.ui.is_none() || self.quitting {
             return;
         }
+        // input first: Godot delivered this frame's keys before process(), so
+        // they belong to the prompt the player saw, or to the typeahead while
+        // the engine works; a request read afterwards never gets them (the
+        // typeahead policy drops them when it opens a modal question)
+        self.drain_ui();
         self.pump();
         self.sync_views(delta);
-        self.drain_ui();
         self.watch_engine();
         if !self.quitting
             && let Some(mut test) = self.selftest.take()

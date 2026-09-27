@@ -145,6 +145,29 @@ fn smoke() -> Vec<Step> {
         key('l'),
         Step::Request("a command after two steps", command),
         Step::Shot("game"),
+        // typeahead: a key queued before a question exists never answers it
+        Step::Call("'S' and 'y' typed in one frame", |g| {
+            for c in ['S', 'y'] {
+                g.push_ui(UiEvent::Key(KeyInput::plain(Key::Char(c))));
+            }
+            Ok(())
+        }),
+        Step::Request(
+            "\"Really save?\" left open by the 'y' typed ahead",
+            |p| matches!(p, Prompt::Choice { query, .. } if query.contains("save")),
+        ),
+        key('n'),
+        Step::Request("a command after not saving", command),
+        // a text window the engine does not block on is still shown
+        key('#'),
+        Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
+        Step::Dialog(DialogEvent::TextSubmitted("version".into())),
+        Step::Request("the #version text", |p| {
+            matches!(p, Prompt::Show { lines, .. }
+                if lines.iter().any(|l| l.text.contains("NetHack Version")))
+        }),
+        Step::Dialog(DialogEvent::Close),
+        Step::Request("a command after #version", command),
         key('#'),
         Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
         Step::Wait("the palette with the keyboard", |g| {
@@ -323,6 +346,18 @@ fn keys() -> Vec<Step> {
     steps.push(Step::Wait("Tab completes \"quiver\"", |g| {
         let text = g.ui.as_ref().and_then(|ui| ui.dialogs.text());
         Ok(text.as_deref() == Some("quiver"))
+    }));
+    // a held Esc never cancels a text field
+    steps.push(Step::Key(KeyInput {
+        echo: true,
+        ..KeyInput::plain(Key::Escape)
+    }));
+    steps.push(Step::Wait("the palette still open after a held Esc", |g| {
+        let ui = g.ui.as_ref().ok_or("no UI")?;
+        Ok(g.pending
+            .as_ref()
+            .is_some_and(|(_, p)| *p == Prompt::ExtCmd)
+            && ui.dialogs.kind_name() == Some("extcmd"))
     }));
     steps.push(Step::Press(GKey::ESCAPE, '\0', false));
     steps.push(Step::Request("a command after Esc in the palette", command));

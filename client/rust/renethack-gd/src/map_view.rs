@@ -22,6 +22,11 @@ const DISTANCE: f32 = 14.0;
 const MIN_DISTANCE: f32 = 6.0;
 const MAX_DISTANCE: f32 = 30.0;
 const FOLLOW_RATE: f32 = 8.0;
+/// A glyph label's centre and top above its tile.
+const GLYPH_LIFT: f32 = 0.45;
+const GLYPH_TOP: f32 = 0.8;
+/// Descent per step when a pointer ray is walked through the raised geometry.
+const PICK_STEP: f32 = 0.05;
 
 /// How a cell looks; nodes are touched only when it changes.
 #[derive(Debug, Clone, PartialEq)]
@@ -206,23 +211,19 @@ impl MapView {
         self.place_camera();
     }
 
-    /// The map cell under a screen position: the camera ray meets y = 0.
+    /// The map cell under a screen position: the first wall, door or glyph
+    /// the camera ray passes through, else where it meets the ground.
     pub fn cell_at(&self, screen_pos: Vector2) -> Option<(i32, i32)> {
         if !self.camera.is_inside_tree() {
             return None;
         }
         let origin = self.camera.project_ray_origin(screen_pos);
         let dir = self.camera.project_ray_normal(screen_pos);
-        if dir.y.abs() < 1e-4 {
-            return None;
-        }
-        let t = -origin.y / dir.y;
-        if t <= 0.0 {
-            return None;
-        }
-        let p = origin + dir * t;
-        let (x, y) = (p.x.round() as i32, p.z.round() as i32);
-        in_field(x, y).then_some((x, y))
+        pick_cell(origin, dir, |x, y| {
+            self.cells
+                .get(&(x, y))
+                .map_or(0.0, |n| pick_height(&n.look))
+        })
     }
 
     pub fn set_hover(&mut self, cell: Option<(i32, i32)>) {
@@ -352,7 +353,7 @@ impl MapView {
                 } else {
                     nh_color(color)
                 });
-                label.set_position(Vector3::new(x as f32, lift + 0.45, y as f32));
+                label.set_position(Vector3::new(x as f32, lift + GLYPH_LIFT, y as f32));
                 label.set_visible(true);
             }
             None => {
@@ -364,6 +365,49 @@ impl MapView {
         nodes.look = look;
         self.cells.insert((x, y), nodes);
     }
+}
+
+/// How high a cell's drawn geometry reaches: its tile, and its glyph on top.
+fn pick_height(look: &Look) -> f32 {
+    let tile = look.tile.map_or(0.0, |(s, _)| shape_height(s));
+    if look.glyph.is_some() {
+        tile + GLYPH_TOP
+    } else {
+        tile
+    }
+}
+
+/// Walk a ray down from the tallest geometry (a glyph on a wall) in small
+/// steps; the first cell whose column (0..height) holds the point is hit.
+/// A ray that hits nothing raised picks the cell where it meets y = 0.
+fn pick_cell(
+    origin: Vector3,
+    dir: Vector3,
+    height: impl Fn(i32, i32) -> f32,
+) -> Option<(i32, i32)> {
+    if dir.y > -1e-4 {
+        return None;
+    }
+    let ground = -origin.y / dir.y;
+    if ground <= 0.0 {
+        return None;
+    }
+    let cell = |t: f32| {
+        let p = origin + dir * t;
+        (p.x.round() as i32, p.z.round() as i32, p.y)
+    };
+    let top = shape_height(Shape::Block) + GLYPH_TOP;
+    let step = PICK_STEP / -dir.y;
+    let mut t = ((top - origin.y) / dir.y).max(0.0);
+    while t < ground {
+        let (x, y, h) = cell(t);
+        if in_field(x, y) && height(x, y) >= h {
+            return Some((x, y));
+        }
+        t += step;
+    }
+    let (x, y, _) = cell(ground);
+    in_field(x, y).then_some((x, y))
 }
 
 fn glyph_char(g: &Glyph) -> Option<char> {
@@ -438,5 +482,47 @@ fn look_of(cell: &Cell, catalog: &Catalog) -> Look {
         tile,
         glyph,
         hero: top.is_some_and(|g| g.flags & mg::HERO != 0),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The camera's ray, 55 degrees down and looking north, meeting the
+    /// ground at the centre of cell (10, 9).
+    fn ray() -> (Vector3, Vector3) {
+        let pitch = PITCH_DEG.to_radians();
+        let back = Vector3::new(0.0, pitch.sin(), pitch.cos());
+        (Vector3::new(10.0, 0.0, 9.0) + back * DISTANCE, -back)
+    }
+
+    #[test]
+    fn a_ray_over_flat_ground_picks_where_it_lands() {
+        let (origin, dir) = ray();
+        assert_eq!(pick_cell(origin, dir, |_, _| 0.0), Some((10, 9)));
+    }
+
+    #[test]
+    fn a_wall_in_front_takes_the_ray() {
+        let (origin, dir) = ray();
+        let wall = shape_height(Shape::Block);
+        // the south wall of the room hides the floor cell north of it
+        let h = |x, y| if (x, y) == (10, 10) { wall } else { 0.0 };
+        assert_eq!(pick_cell(origin, dir, h), Some((10, 10)));
+        // a glyph standing south of the floor cell covers it too
+        let h = |x, y| if (x, y) == (10, 10) { GLYPH_TOP } else { 0.0 };
+        assert_eq!(pick_cell(origin, dir, h), Some((10, 10)));
+        // a raised cell behind the landing point is never reached
+        let h = |x, y| if (x, y) == (10, 8) { wall } else { 0.0 };
+        assert_eq!(pick_cell(origin, dir, h), Some((10, 9)));
+    }
+
+    #[test]
+    fn a_ray_away_from_the_ground_picks_nothing() {
+        let (origin, dir) = ray();
+        assert_eq!(pick_cell(origin, -dir, |_, _| 0.0), None);
+        let off_map = Vector3::new(-50.0, 0.0, 9.0) + (origin - Vector3::new(10.0, 0.0, 9.0));
+        assert_eq!(pick_cell(off_map, dir, |_, _| 0.0), None);
     }
 }
