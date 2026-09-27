@@ -3,6 +3,7 @@ name = "renethack-gd"
 description = "renethack: the Godot client (GDExtension)"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 
 [lib]

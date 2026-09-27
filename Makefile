@@ -8,6 +8,8 @@
 #   make lint         rustfmt and clippy, warnings are errors
 
 GODOT ?= godot
+# GNU coreutils' timeout; Homebrew's coreutils names it gtimeout on macOS
+TIMEOUT ?= $(shell command -v timeout || command -v gtimeout)
 GODOT_PROJECT := client/godot
 SELFTESTS := smoke keys save close crash menus text dialogs soak
 # answered requests of the soak in test-client (about 35 s; from 1000 on the
@@ -15,7 +17,7 @@ SELFTESTS := smoke keys save close crash menus text dialogs soak
 SOAK_CI := 2000
 SOAK_SEEDS := 1 2 3 4 5 6 7 8
 
-.PHONY: all engine client run test test-client soak lint
+.PHONY: all engine client run test test-client soak lint need-timeout
 all: engine
 
 engine:
@@ -47,7 +49,7 @@ test: engine
 define run_selftest
 pg=$$(mktemp -d); log=$$pg/selftest.log; \
 echo "selftest $(4)"; \
-status=0; timeout $(3) $(GODOT) --headless --path $(GODOT_PROJECT) \
+status=0; $(TIMEOUT) $(3) $(GODOT) --headless --path $(GODOT_PROJECT) \
 	-- --selftest=$(1) $(2) --playground=$$pg/playground > $$log 2>&1 || status=$$?; \
 if [ $$status -ne 0 ] || ! grep -q 'Initialize godot-rust' $$log \
 	|| ! grep -q "SELFTEST PASS $(1)" $$log; then \
@@ -57,15 +59,23 @@ grep '^selftest: soak: [0-9]* requests' $$log || true; \
 rm -rf $$pg
 endef
 
-# every scenario; the soak with seed 42 and $(SOAK_CI) requests
-test-client: all client
+need-timeout:
+	@if [ -z "$(TIMEOUT)" ]; then \
+		echo "the self-tests need GNU timeout: install coreutils" \
+			"(macOS: brew install coreutils), or pass TIMEOUT=..." >&2; \
+		exit 1; \
+	fi
+
+# every scenario but tour (map screenshots); the soak with seed 42 and
+# $(SOAK_CI) requests
+test-client: need-timeout all client
 	@set -e; for s in $(SELFTESTS); do \
 		args=""; if [ $$s = soak ]; then args="--soak=$(SOAK_CI)"; fi; \
 		$(call run_selftest,$$s,$$args,180,$$s $$args); \
 	done; echo "selftests passed: $(SELFTESTS)"
 
 # random play through the UI with each of $(SOAK_SEEDS) and the default budget
-soak: all client
+soak: need-timeout all client
 	@set -e; for seed in $(SOAK_SEEDS); do \
 		$(call run_selftest,soak,--seed=$$seed,900,soak seed $$seed); \
 	done; echo "soak passed with seeds $(SOAK_SEEDS)"

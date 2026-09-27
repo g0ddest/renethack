@@ -10,7 +10,10 @@ as a dialog. The game can be played from character creation to the end.
 
 ## Requirements (macOS, Linux)
 
-- a C compiler, GNU make, git, curl, Rust (stable);
+- a C compiler, GNU make, git, curl, `patch`, `shasum` (perl) or `sha256sum`;
+- Rust 1.94 or newer (stable; gdext 0.5.5 needs it);
+- for `make test-client` and `make soak`: GNU `timeout` (coreutils; on macOS
+  `brew install coreutils` provides it as `gtimeout`, which is found too);
 - [Godot](https://godotengine.org/download) 4.5 or newer (tested with 4.7.1),
   the standard build (not .NET). If `godot` is not on your `PATH`, pass it:
   `make run GODOT=/path/to/godot`.
@@ -23,13 +26,15 @@ as a dialog. The game can be played from character creation to the end.
 `make run` builds the engine (`engine/build`), the client extension
 (`client/rust/target/debug/librenethack_gd.*`), imports the Godot project once
 and starts the game. The first engine build downloads Lua 5.4.8 (NetHack's
-Makefile checks its sha256).
+Makefile checks its sha256). NetHack's Makefiles print a few harmless lines
+such as `nroff: not found` and `expr: syntax error`.
 
 Saved games live in Godot's user data directory, in `playground/`:
 `~/.local/share/godot/app_userdata/renethack/playground` on Linux,
 `~/Library/Application Support/Godot/app_userdata/renethack/playground` on
 macOS. Closing the window saves the game in progress; the title screen offers
-to continue it. If the engine crashes, the client rebuilds the game with
+to continue it. One window at a time uses a playground: a second one says so
+and starts nothing. If the engine crashes, the client rebuilds the game with
 NetHack's `recover` (progress since the last level change is lost).
 
 ## Controls
@@ -61,9 +66,11 @@ Commands work in any keyboard layout (letters are taken by key position).
     make test         # C unit tests, engine smoke test, Rust tests
     make lint
     make test-client  # headless self-tests of the Godot client (needs Godot)
+    make soak         # random play through the client, seeds 1..8 (long)
 
 `make test-client` runs each scenario of `client/rust/renethack-gd/src/selftest.rs`
-in its own headless Godot process with a fixed seed. The same scenarios take
+in its own headless Godot process with a fixed seed: every scenario except
+`tour`, a walk through the first rooms for map screenshots. The scenarios take
 screenshots under a display:
 
     cd client/godot

@@ -3,6 +3,7 @@ name = "nh-link"
 description = "renethack: run nh-engine as a child process and drive a session"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 
 [dependencies]

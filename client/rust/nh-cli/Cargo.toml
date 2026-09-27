@@ -3,6 +3,7 @@ name = "nh-cli"
 description = "renethack: drive nh-engine from the command line (scripts, recordings)"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 
 [dependencies]

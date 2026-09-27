@@ -25,13 +25,33 @@ endif
 # NO_NHUUID:  no crash-report UUID support (its code lives in unixmain.o)
 NHVARS := WANT_LIBNH=1 HACKDIR=. NO_NHUUID=1
 PATCHES := $(shell cat patches/series)
-PATCHSET := $(shell cat $(addprefix patches/,$(PATCHES)) | shasum -a 256 | cut -c1-16)
+PATCHSET := $(shell cat $(addprefix patches/,$(PATCHES)) \
+	| (shasum -a 256 2>/dev/null || sha256sum) | cut -c1-16)
+ifeq ($(PATCHSET),)
+$(error cannot hash the patches: install shasum (perl) or sha256sum)
+endif
+# The exported tree follows the submodule's commit: the stamp is rewritten
+# (and the tree re-exported) when it changes. A tree exported before the
+# stamp existed is taken as current. Empty while the submodule is not
+# checked out.
+UPSTREAM_REV := $(if $(wildcard $(UPSTREAM)/include/hack.h),$(shell git -C $(UPSTREAM) rev-parse HEAD))
+UPSTREAM_STAMP := $(BUILD)/upstream.rev
+$(shell mkdir -p $(BUILD); \
+	if [ ! -f $(UPSTREAM_STAMP) ] && [ -f $(TREE)/.patched ]; then \
+		echo "$(UPSTREAM_REV)" > $(UPSTREAM_STAMP); touch -r $(TREE)/.patched $(UPSTREAM_STAMP); \
+	elif [ ! -f $(UPSTREAM_STAMP) ] \
+		|| [ "$$(cat $(UPSTREAM_STAMP))" != "$(UPSTREAM_REV)" ]; then \
+		echo "$(UPSTREAM_REV)" > $(UPSTREAM_STAMP); \
+	fi)
 HOST_SRC := $(wildcard $(HOST)/*.c $(HOST)/*.h $(HOST)/rh.mk)
 
 .PHONY: all test clean
 all: $(BUILD)/nh-engine $(BUILD)/recover $(BUILD)/data/.stamp
 
-$(TREE)/.patched: patches/series $(addprefix patches/,$(PATCHES))
+$(TREE)/.patched: patches/series $(addprefix patches/,$(PATCHES)) $(UPSTREAM_STAMP)
+	@test -f $(UPSTREAM)/include/hack.h || { \
+		echo "engine/upstream is empty: run git submodule update --init" >&2; \
+		exit 1; }
 	rm -rf $(TREE)
 	mkdir -p $(TREE)
 	git -C $(UPSTREAM) archive --format=tar HEAD | tar -x -C $(TREE)

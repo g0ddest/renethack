@@ -9,5 +9,7 @@ reloadable = false
 
 linux.debug.x86_64 = "res://../rust/target/debug/librenethack_gd.so"
 linux.release.x86_64 = "res://../rust/target/release/librenethack_gd.so"
+linux.debug.arm64 = "res://../rust/target/debug/librenethack_gd.so"
+linux.release.arm64 = "res://../rust/target/release/librenethack_gd.so"
 macos.debug = "res://../rust/target/debug/librenethack_gd.dylib"
 macos.release = "res://../rust/target/release/librenethack_gd.dylib"
