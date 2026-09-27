@@ -1,16 +1,23 @@
 //! Modal dialogs for menus, questions, text input, the extended-command
 //! palette and text windows. At most one is open, for one request; every
 //! event it queues carries that request's id.
+//!
+//! Lists (menus, the palette) are rows of a fixed height in a scroll
+//! container, so a dialog knows where each row is and pages and reveals rows
+//! itself. No dialog grows past the window: long content scrolls.
 
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use godot::classes::control::{FocusMode, GrowDirection, MouseFilter};
-use godot::classes::item_list::SelectMode;
+use godot::classes::box_container::AlignmentMode;
+use godot::classes::control::{FocusMode, GrowDirection, MouseFilter, SizeFlags};
+use godot::classes::scroll_container::ScrollMode;
+use godot::classes::text_server::{AutowrapMode, OverrunBehavior};
 use godot::classes::{
-    CanvasLayer, ColorRect, Control, HBoxContainer, ItemList, Label, LineEdit, PanelContainer,
-    RichTextLabel, VBoxContainer,
+    Button, CanvasLayer, ColorRect, Control, DisplayServer, Font, HBoxContainer, Label, LineEdit,
+    PanelContainer, RichTextLabel, ScrollContainer, StyleBoxEmpty, StyleBoxFlat, VBoxContainer,
 };
+use godot::global::{HorizontalAlignment, VerticalAlignment};
 use godot::prelude::*;
 use nh_protocol::{Catalog, ESC, PickHow, Reply};
 use nh_world::{Key, KeyInput, MenuEntry, MenuOutcome, MenuState, Prompt, TextLine};
@@ -21,6 +28,25 @@ use crate::ui_events::{DialogEvent, UiEvent, UiQueue, push};
 /// NetHack's BUFSZ less the NUL.
 const MAX_TEXT_BYTES: usize = 255;
 const ESC_CHAR: char = '\u{1b}';
+/// A menu item without a colour of its own (CLR_* NO_COLOR).
+const NO_COLOR: i32 = 8;
+/// One list row, and a blank separator row, in pixels.
+pub(crate) const ROW_H: f32 = 26.0;
+const SPACER_H: f32 = 10.0;
+/// Height a list dialog keeps for everything but the list: the title, the
+/// footer, the buttons, the panel's margins and the screen's.
+const LIST_CHROME: f32 = 320.0;
+/// The same for a text window (no footer).
+const TEXT_CHROME: f32 = 220.0;
+/// The window the project opens, in pixels (project.godot).
+const REFERENCE_SCREEN: Vector2 = Vector2::new(1600.0, 900.0);
+/// Space kept free left and right of a dialog.
+const SIDE_MARGIN: f32 = 80.0;
+/// Rows the palette shows at once.
+const PALETTE_ROWS: f32 = 16.0;
+/// Unselectable menu lines: grey, still easy to read.
+const INFO_TEXT: Color = Color::from_rgb(0.66, 0.67, 0.69);
+const DIALOG_BG: Color = Color::from_rgba(0.07, 0.08, 0.1, 0.97);
 
 /// One extended command as the palette lists it.
 #[derive(Debug, Clone, PartialEq)]
@@ -30,31 +56,59 @@ pub struct PaletteCmd {
     pub key: i32,
 }
 
-/// Commands matching `text`: prefix matches first, then other substring
-/// matches, each shortest first (then by name).
+/// Does the palette list this command? Not "#" itself: choosing it would
+/// only ask for an extended command again.
+fn palette_lists(name: &str) -> bool {
+    !name.is_empty() && name != "#"
+}
+
+/// The catalog's extended commands the palette offers.
+pub fn palette_cmds(catalog: Option<&Catalog>) -> Vec<PaletteCmd> {
+    let Some(catalog) = catalog else {
+        return Vec::new();
+    };
+    catalog
+        .extcmds
+        .iter()
+        .filter(|e| palette_lists(&e.name))
+        .map(|e| PaletteCmd {
+            name: e.name.clone(),
+            desc: e.desc.clone(),
+            key: e.key,
+        })
+        .collect()
+}
+
+/// Commands matching `text`: the exact name first, then prefix matches,
+/// then other substring matches, each shortest first (then by name). An
+/// empty `text` lists everything in catalog order.
 pub fn palette_filter(cmds: &[PaletteCmd], text: &str) -> Vec<usize> {
     let text = text.trim().to_lowercase();
-    let mut prefix: Vec<usize> = Vec::new();
-    let mut inner: Vec<usize> = Vec::new();
-    for (i, c) in cmds.iter().enumerate() {
-        if c.name.starts_with(&text) {
-            prefix.push(i);
-        } else if c.name.contains(&text) {
-            inner.push(i);
-        }
+    if text.is_empty() {
+        return (0..cmds.len()).collect();
     }
-    let by_len = |v: &mut Vec<usize>| {
-        v.sort_by(|&a, &b| {
-            let (a, b) = (&cmds[a].name, &cmds[b].name);
-            a.len().cmp(&b.len()).then(a.cmp(b))
+    let mut hits: Vec<(u8, usize)> = cmds
+        .iter()
+        .enumerate()
+        .filter_map(|(i, c)| {
+            let name = c.name.to_lowercase();
+            let tier = if name == text {
+                0
+            } else if name.starts_with(&text) {
+                1
+            } else if name.contains(&text) {
+                2
+            } else {
+                return None;
+            };
+            Some((tier, i))
         })
-    };
-    if !text.is_empty() {
-        by_len(&mut prefix);
-        by_len(&mut inner);
-    }
-    prefix.extend(inner);
-    prefix
+        .collect();
+    hits.sort_by(|&(ta, a), &(tb, b)| {
+        let (a, b) = (&cmds[a].name, &cmds[b].name);
+        ta.cmp(&tb).then(a.len().cmp(&b.len())).then(a.cmp(b))
+    });
+    hits.into_iter().map(|(_, i)| i).collect()
 }
 
 /// The longest common prefix of the names that start with `text`; `text`
@@ -89,47 +143,6 @@ fn truncate_bytes(s: &str, max: usize) -> String {
     s[..end].to_string()
 }
 
-struct Palette {
-    cmds: Vec<PaletteCmd>,
-    shown: Vec<usize>,
-    selected: Option<usize>,
-}
-
-impl Palette {
-    fn refilter(&mut self, text: &str) {
-        self.shown = palette_filter(&self.cmds, text);
-        self.selected = (!text.trim().is_empty() && !self.shown.is_empty()).then_some(0);
-    }
-}
-
-/// Show the palette's rows (no borrow is held while Godot is called).
-fn fill_palette(palette: &Rc<RefCell<Palette>>, list: &mut Gd<ItemList>) {
-    let (rows, selected) = {
-        let p = palette.borrow();
-        let rows: Vec<String> = p
-            .shown
-            .iter()
-            .map(|&i| {
-                let c = &p.cmds[i];
-                let key = key_name(c.key);
-                format!("{:<16} {:<5} {}", c.name, key, c.desc)
-            })
-            .collect();
-        (rows, p.selected)
-    };
-    list.clear();
-    for r in &rows {
-        list.add_item(r);
-    }
-    match selected {
-        Some(i) => {
-            list.select(i as i32);
-            list.ensure_current_is_visible();
-        }
-        None => list.deselect_all(),
-    }
-}
-
 /// How a key code reads: "^X", "M-x", "x".
 fn key_name(key: i32) -> String {
     match key {
@@ -140,126 +153,7 @@ fn key_name(key: i32) -> String {
     }
 }
 
-enum Kind {
-    Menu {
-        state: MenuState,
-        list: Gd<ItemList>,
-        count: Gd<Label>,
-    },
-    Choice {
-        allowed: Vec<char>,
-        default: Option<char>,
-    },
-    Text {
-        edit: Gd<LineEdit>,
-    },
-    ExtCmd {
-        edit: Gd<LineEdit>,
-        list: Gd<ItemList>,
-        palette: Rc<RefCell<Palette>>,
-    },
-    Show {
-        text: Gd<RichTextLabel>,
-    },
-    MessageMenu {
-        letter: char,
-        pick: bool,
-    },
-}
-
-struct Open {
-    req: u64,
-    prompt: Prompt,
-    kind: Kind,
-    shade: Gd<ColorRect>,
-    panel: Gd<PanelContainer>,
-}
-
-pub struct Dialogs {
-    root: Gd<Control>,
-    queue: UiQueue,
-    open: Option<Open>,
-}
-
-fn menu_row(e: &MenuEntry, how: PickHow) -> String {
-    let mut s = String::new();
-    if e.selectable {
-        let mark = match (e.selected, e.count) {
-            (true, Some(n)) => format!("[{n}]"),
-            (true, None) => "[+]".to_string(),
-            (false, _) => "[ ]".to_string(),
-        };
-        if how == PickHow::Any {
-            s.push_str(&mark);
-            s.push(' ');
-        }
-        match e.letter {
-            Some(l) => s.push_str(&format!("{l} - ")),
-            None => s.push_str("    "),
-        }
-    }
-    if let Some(ch) = e
-        .glyph
-        .as_ref()
-        .and_then(|g| u32::try_from(g.ch).ok())
-        .and_then(char::from_u32)
-        .filter(|c| !c.is_control())
-    {
-        s.push(ch);
-        s.push(' ');
-    }
-    s.push_str(&e.text);
-    s
-}
-
-fn fill_menu(state: &MenuState, list: &mut Gd<ItemList>, count: &mut Gd<Label>) {
-    let scroll = list.get_v_scroll_bar().map(|b| b.get_value());
-    list.clear();
-    for (i, e) in state.entries.iter().enumerate() {
-        list.add_item(&menu_row(e, state.how));
-        let i = i as i32;
-        if !e.selectable {
-            list.set_item_selectable(i, false);
-            let color = if e.text.is_empty() {
-                theme::TEXT_DIM
-            } else {
-                theme::ACCENT
-            };
-            list.set_item_custom_fg_color(i, color);
-        } else if e.selected {
-            list.set_item_custom_fg_color(i, Color::from_rgb(1.0, 1.0, 1.0));
-            list.set_item_custom_bg_color(i, Color::from_rgba(0.95, 0.78, 0.35, 0.18));
-        } else if e.skipinvert {
-            list.set_item_custom_fg_color(i, Color::from_rgb(0.7, 0.75, 0.9));
-        } else if let Some(g) = &e.glyph {
-            list.set_item_custom_fg_color(i, nh_color(g.color).lerp(theme::TEXT, 0.5));
-        }
-    }
-    if let (Some(v), Some(mut bar)) = (scroll, list.get_v_scroll_bar()) {
-        bar.set_value(v);
-    }
-    count.set_text(&match state.typed_count() {
-        Some(n) => format!("Count: {n}"),
-        None => String::new(),
-    });
-}
-
-fn scroll_by(list: &mut Gd<ItemList>, pages: f64) {
-    if let Some(mut bar) = list.get_v_scroll_bar() {
-        let page = list.get_size().y as f64 * 0.9;
-        let v = bar.get_value() + pages * page;
-        bar.set_value(v);
-    }
-}
-
-fn scroll_text(text: &mut Gd<RichTextLabel>, pages: f64) {
-    if let Some(mut bar) = text.get_v_scroll_bar() {
-        let page = text.get_size().y as f64 * 0.9;
-        let v = bar.get_value() + pages * page;
-        bar.set_value(v);
-    }
-}
-
+/// A Choice button's label: the usual answers spelled out, others as typed.
 fn choice_label(c: char) -> String {
     match c {
         'y' => "Yes (y)".to_string(),
@@ -267,6 +161,48 @@ fn choice_label(c: char) -> String {
         'q' => "Cancel (q)".to_string(),
         'a' => "All (a)".to_string(),
         c => c.to_string(),
+    }
+}
+
+/// The mark column of a pick-any row: "[ ]", "[x]", or the count.
+fn mark_text(e: &MenuEntry) -> String {
+    match (e.selected, e.count) {
+        (true, Some(n)) => format!("[{n}]"),
+        (true, None) => "[x]".to_string(),
+        (false, _) => "[ ]".to_string(),
+    }
+}
+
+/// The item's map symbol, when it has a printable one.
+fn glyph_char(e: &MenuEntry) -> Option<char> {
+    e.glyph
+        .as_ref()
+        .and_then(|g| u32::try_from(g.ch).ok())
+        .and_then(char::from_u32)
+        .filter(|c| !c.is_control() && *c != ' ')
+}
+
+/// How a menu row looks.
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum RowKind {
+    /// Blank: a gap between groups.
+    Spacer,
+    /// Unselectable with an attribute: a group header.
+    Header,
+    /// Unselectable plain text.
+    Info,
+    Item,
+}
+
+fn row_kind(e: &MenuEntry) -> RowKind {
+    if e.selectable {
+        RowKind::Item
+    } else if e.text.trim().is_empty() {
+        RowKind::Spacer
+    } else if e.attr & 0x0f != 0 {
+        RowKind::Header
+    } else {
+        RowKind::Info
     }
 }
 
@@ -285,6 +221,555 @@ fn typed(input: &KeyInput) -> Option<char> {
     }
 }
 
+/// Keys that move around a list or a text: arrows and paging, held or not,
+/// without Ctrl/Alt.
+fn nav(input: &KeyInput) -> Option<Key> {
+    if input.mods.ctrl || input.mods.alt {
+        return None;
+    }
+    match input.key {
+        k @ (Key::Up
+        | Key::Down
+        | Key::Left
+        | Key::Right
+        | Key::PageUp
+        | Key::PageDown
+        | Key::Home
+        | Key::End) => Some(k),
+        _ => None,
+    }
+}
+
+/// Fonts and row looks, made once.
+#[derive(Clone)]
+struct Look {
+    bold: Gd<Font>,
+    italic: Gd<Font>,
+    /// Monospace advance and line height.
+    char_w: f32,
+    line_h: f32,
+    /// (normal, hover) for: plain, selected, current, current and selected.
+    rows: [(Gd<StyleBoxFlat>, Gd<StyleBoxFlat>); 4],
+    no_focus: Gd<StyleBoxEmpty>,
+    default_button: Gd<StyleBoxFlat>,
+    panel: Gd<StyleBoxFlat>,
+}
+
+impl Look {
+    fn new() -> Look {
+        let flat = |bg: Color, border: Option<Color>| {
+            let mut sb = StyleBoxFlat::new_gd();
+            sb.set_bg_color(bg);
+            sb.set_corner_radius_all(3);
+            sb.set_content_margin_all(0.0);
+            if let Some(b) = border {
+                sb.set_border_width_all(1);
+                sb.set_border_color(b);
+            }
+            sb
+        };
+        let accent = |a: f32| Color { a, ..theme::ACCENT };
+        let white = |a: f32| Color::from_rgba(1.0, 1.0, 1.0, a);
+        let rows = [
+            (flat(white(0.0), None), flat(white(0.07), None)),
+            (flat(accent(0.16), None), flat(accent(0.24), None)),
+            (
+                flat(white(0.08), Some(accent(0.9))),
+                flat(white(0.12), Some(accent(0.9))),
+            ),
+            (
+                flat(accent(0.2), Some(theme::ACCENT)),
+                flat(accent(0.28), Some(theme::ACCENT)),
+            ),
+        ];
+        let mut panel = theme::panel_style(DIALOG_BG);
+        panel.set_content_margin_all(16.0);
+        panel.set_border_color(Color::from_rgb(0.38, 0.4, 0.5));
+        let (char_w, line_h) = theme::mono_metrics();
+        Look {
+            bold: theme::mono_bold().upcast(),
+            italic: theme::mono_italic().upcast(),
+            char_w,
+            line_h,
+            rows,
+            no_focus: StyleBoxEmpty::new_gd(),
+            default_button: theme::default_button_style(),
+            panel,
+        }
+    }
+
+    /// Style a list row for its state.
+    fn style_row(&self, button: &mut Gd<Button>, selected: bool, current: bool) {
+        let (normal, hover) = &self.rows[usize::from(selected) + 2 * usize::from(current)];
+        for (name, sb) in [
+            ("normal", normal),
+            ("hover", hover),
+            ("pressed", hover),
+            ("hover_pressed", hover),
+            ("disabled", normal),
+        ] {
+            button.add_theme_stylebox_override(name, sb);
+        }
+    }
+
+    /// Pixels for `n` characters of the monospace font.
+    fn chars(&self, n: usize) -> f32 {
+        n as f32 * self.char_w
+    }
+}
+
+/// One column of a list row: a label in `color`; `width` in pixels, or None
+/// to take the rest of the row (cut with an ellipsis).
+fn cell(text: &str, color: Color, font: Option<&Gd<Font>>, width: Option<f32>) -> Gd<Label> {
+    let mut l = theme::label(text);
+    l.add_theme_color_override("font_color", color);
+    if let Some(f) = font {
+        l.add_theme_font_override("font", f);
+    }
+    l.set_vertical_alignment(VerticalAlignment::CENTER);
+    match width {
+        Some(w) => l.set_custom_minimum_size(Vector2::new(w, 0.0)),
+        None => {
+            l.set_h_size_flags(SizeFlags::EXPAND_FILL);
+            l.set_clip_text(true);
+            l.set_text_overrun_behavior(OverrunBehavior::TRIM_ELLIPSIS);
+        }
+    }
+    l
+}
+
+/// A scroll container the dialog pages and scrolls itself.
+struct Scroller {
+    scroll: Gd<ScrollContainer>,
+    /// Visible height.
+    view_h: f32,
+}
+
+impl Scroller {
+    fn new(width: f32, view_h: f32, sideways: bool) -> Scroller {
+        let mut scroll = ScrollContainer::new_alloc();
+        scroll.set_focus_mode(FocusMode::NONE);
+        scroll.set_horizontal_scroll_mode(if sideways {
+            ScrollMode::AUTO
+        } else {
+            ScrollMode::DISABLED
+        });
+        scroll.set_custom_minimum_size(Vector2::new(width, view_h));
+        Scroller { scroll, view_h }
+    }
+
+    fn top(&self) -> f32 {
+        self.scroll.get_v_scroll() as f32
+    }
+
+    /// Scroll so `v` is at the top. Also once more at the end of the frame:
+    /// right after rows change the container has not measured them yet and
+    /// would clamp `v` to the old height.
+    fn scroll_to(&mut self, v: f32) {
+        let v = v.max(0.0).round() as i32;
+        self.scroll.set_v_scroll(v);
+        self.scroll.call_deferred("set_v_scroll", &[v.to_variant()]);
+    }
+
+    fn scroll_by(&mut self, dy: f32) {
+        let v = self.top() + dy;
+        self.scroll_to(v);
+    }
+
+    fn page(&mut self, pages: f32) {
+        let page = (self.view_h - ROW_H).max(ROW_H);
+        self.scroll_by(pages * page);
+    }
+
+    fn sideways(&mut self, dx: f32) {
+        let h = (self.scroll.get_h_scroll() as f32 + dx).max(0.0).round() as i32;
+        self.scroll.set_h_scroll(h);
+    }
+
+    /// Bring the band `top..top + h` into view.
+    fn reveal(&mut self, top: f32, h: f32) {
+        let v = self.top();
+        if top < v {
+            self.scroll_to(top);
+        } else if top + h > v + self.view_h {
+            self.scroll_to(top + h - self.view_h);
+        }
+    }
+
+    /// Arrows, paging, Home/End; `line` is one arrow step. False: not a
+    /// scrolling key.
+    fn key(&mut self, key: Key, line: f32) -> bool {
+        match key {
+            Key::Up => self.scroll_by(-line),
+            Key::Down => self.scroll_by(line),
+            Key::Left => self.sideways(-4.0 * line),
+            Key::Right => self.sideways(4.0 * line),
+            Key::PageUp => self.page(-1.0),
+            Key::PageDown => self.page(1.0),
+            Key::Home => self.scroll_to(0.0),
+            Key::End => self.scroll_to(1.0e9),
+            _ => return false,
+        }
+        true
+    }
+}
+
+enum MenuRow {
+    Item {
+        button: Gd<Button>,
+        mark: Option<Gd<Label>>,
+        text: Gd<Label>,
+    },
+    Fixed,
+}
+
+/// An open menu: NetHack's rules live in `MenuState`; this adds the rows,
+/// the keyboard cursor and scrolling.
+struct MenuView {
+    state: MenuState,
+    rows: Vec<MenuRow>,
+    /// Top of each row in the list.
+    tops: Vec<f32>,
+    /// The furthest the list scrolls: a row top, thanks to a filler below
+    /// the last row, so every page shows whole rows.
+    max_top: f32,
+    /// Each item's own colour (menucolors), CLR_*.
+    colors: Vec<i32>,
+    list: Scroller,
+    /// The row the keyboard is on: moved by the arrows, and set to the row
+    /// a letter or a click toggled last.
+    cursor: Option<usize>,
+    /// The arrows moved the cursor: Space toggles it (and Enter picks it
+    /// in pick-one) instead of confirming the menu.
+    armed: bool,
+    status: Gd<Label>,
+    hint: Gd<Label>,
+}
+
+impl MenuView {
+    fn refresh(&mut self, look: &Look) {
+        let any = self.state.how == PickHow::Any;
+        for (i, row) in self.rows.iter_mut().enumerate() {
+            let MenuRow::Item { button, mark, text } = row else {
+                continue;
+            };
+            let e = &self.state.entries[i];
+            look.style_row(button, e.selected, self.cursor == Some(i));
+            if let Some(m) = mark {
+                m.set_text(&mark_text(e));
+                let c = if e.selected {
+                    theme::ACCENT
+                } else {
+                    theme::TEXT_DIM
+                };
+                m.add_theme_color_override("font_color", c);
+            }
+            let color = match self.colors.get(i).copied() {
+                _ if e.selected => Color::from_rgb(1.0, 1.0, 1.0),
+                Some(c) if (0..16).contains(&c) && c != NO_COLOR => nh_color(c),
+                _ => theme::TEXT,
+            };
+            text.add_theme_color_override("font_color", color);
+        }
+        let mut status = Vec::new();
+        if let Some(n) = self.state.typed_count() {
+            status.push(format!("Count: {n} — pick an item to take that many"));
+        }
+        if any {
+            let n = self.state.entries.iter().filter(|e| e.selected).count();
+            status.push(format!("{n} selected"));
+        }
+        self.status.set_text(&status.join("   ·   "));
+        self.status.set_visible(!status.is_empty());
+        let pickable = self.state.entries.iter().any(|e| e.selectable);
+        let hint = if !pickable {
+            "↑↓ PgUp PgDn < >: scroll · Enter or Esc: close".to_string()
+        } else if any {
+            // Space confirms, as in NetHack, until the arrows mark a row
+            let space = if self.armed {
+                "Space: toggle it"
+            } else {
+                "then Space toggles it"
+            };
+            format!(
+                "letter: toggle · ↑↓ mark a row, {space} · '.' all · '-' none · '@' invert · \
+                 digits: count · PgUp PgDn < >: scroll · Enter: OK · Esc: cancel"
+            )
+        } else {
+            "letter or click: pick · ↑↓ mark a row, Enter picks it · \
+             PgUp PgDn < >: scroll · Esc: cancel"
+                .to_string()
+        };
+        self.hint.set_text(&hint);
+    }
+
+    /// Scroll by pages, to the top of a row so none is cut at the top.
+    fn page(&mut self, pages: f32) {
+        let page = (self.list.view_h - ROW_H).max(ROW_H);
+        let target = (self.list.top() + pages * page).clamp(0.0, self.max_top);
+        let snapped = self
+            .tops
+            .iter()
+            .copied()
+            .rfind(|&t| t <= target + 0.5)
+            .unwrap_or(0.0);
+        self.list.scroll_to(snapped);
+    }
+
+    /// Is row `i` wholly in view?
+    fn in_view(&self, i: usize) -> bool {
+        let (v, h) = (self.list.top(), self.list.view_h);
+        self.tops
+            .get(i)
+            .is_some_and(|&t| t >= v - 0.5 && t + ROW_H <= v + h + 0.5)
+    }
+
+    /// Scrolling away from the keyboard row lets it go: the next arrow
+    /// starts from the rows in view, and Space does not toggle a row the
+    /// player cannot see.
+    fn drop_hidden_cursor(&mut self) {
+        if self.cursor.is_some_and(|c| !self.in_view(c)) {
+            self.cursor = None;
+            self.armed = false;
+        }
+    }
+
+    /// Scroll the least that shows row `i` whole, to a row top.
+    fn reveal(&mut self, i: usize) {
+        let Some(&top) = self.tops.get(i) else {
+            return;
+        };
+        let (v, h) = (self.list.top(), self.list.view_h);
+        if top < v {
+            self.list.scroll_to(top);
+        } else if top + ROW_H > v + h {
+            let least = top + ROW_H - h;
+            let t = self.tops.iter().copied().find(|&t| t >= least - 0.5);
+            self.list.scroll_to(t.unwrap_or(top).min(self.max_top));
+        }
+    }
+
+    /// Move the cursor to the next selectable row up (`-1`) or down (`1`);
+    /// from nothing (or from a row scrolled out of view), start at the
+    /// first row in view.
+    fn step_cursor(&mut self, dir: i32) {
+        let items: Vec<usize> = (0..self.state.entries.len())
+            .filter(|&i| self.state.entries[i].selectable)
+            .collect();
+        let (Some(&first), Some(&last)) = (items.first(), items.last()) else {
+            return;
+        };
+        let cursor = self.cursor.filter(|&c| self.in_view(c));
+        let next = match cursor {
+            Some(c) if dir > 0 => items.iter().copied().find(|&i| i > c).unwrap_or(last),
+            Some(c) => items
+                .iter()
+                .rev()
+                .copied()
+                .find(|&i| i < c)
+                .unwrap_or(first),
+            None => {
+                let in_view = |&i: &usize| self.in_view(i);
+                if dir > 0 {
+                    items.iter().copied().find(in_view).unwrap_or(first)
+                } else {
+                    items.iter().rev().copied().find(in_view).unwrap_or(last)
+                }
+            }
+        };
+        self.cursor = Some(next);
+        self.armed = true;
+        self.reveal(next);
+    }
+
+    /// Toggle (pick-any) or pick (pick-one) row `i`, as a click does.
+    fn click(&mut self, i: usize, look: &Look) -> Option<Reply> {
+        match self.state.click(i) {
+            MenuOutcome::Done(reply) => Some(reply),
+            _ => {
+                if self.state.entries.get(i).is_some_and(|e| e.selectable) {
+                    self.cursor = Some(i);
+                }
+                self.refresh(look);
+                None
+            }
+        }
+    }
+
+    fn key(&mut self, input: &KeyInput, look: &Look) -> Option<Reply> {
+        match nav(input) {
+            Some(k @ (Key::Up | Key::Down)) => {
+                self.step_cursor(if k == Key::Up { -1 } else { 1 });
+                self.refresh(look);
+                return None;
+            }
+            Some(k @ (Key::PageUp | Key::PageDown)) => {
+                self.page(if k == Key::PageUp { -1.0 } else { 1.0 });
+                self.drop_hidden_cursor();
+                self.refresh(look);
+                return None;
+            }
+            Some(k) => {
+                self.list.key(k, ROW_H);
+                self.drop_hidden_cursor();
+                self.refresh(look);
+                return None;
+            }
+            None => {}
+        }
+        let c = typed(input)?;
+        if self.armed
+            && let Some(i) = self.cursor
+            && (c == ' ' || (c == '\n' && self.state.how == PickHow::One))
+        {
+            // the wheel may have scrolled it away: show what was toggled
+            self.reveal(i);
+            return self.click(i, look);
+        }
+        let before: Vec<(bool, Option<i64>)> = self
+            .state
+            .entries
+            .iter()
+            .map(|e| (e.selected, e.count))
+            .collect();
+        match self.state.key(c) {
+            MenuOutcome::Done(reply) => return Some(reply),
+            MenuOutcome::PageUp => {
+                self.page(-1.0);
+                self.drop_hidden_cursor();
+            }
+            MenuOutcome::PageDown => {
+                self.page(1.0);
+                self.drop_hidden_cursor();
+            }
+            MenuOutcome::Pending => {
+                let changed: Vec<usize> = self
+                    .state
+                    .entries
+                    .iter()
+                    .zip(&before)
+                    .enumerate()
+                    .filter(|(_, (e, b))| (e.selected, e.count) != **b)
+                    .map(|(i, _)| i)
+                    .collect();
+                // one row toggled by its letter: the cursor follows it
+                // (bulk commands leave the view alone)
+                if let [i] = changed[..] {
+                    self.cursor = Some(i);
+                    self.armed = false;
+                    self.reveal(i);
+                }
+            }
+        }
+        self.refresh(look);
+        None
+    }
+}
+
+/// One palette row; rows are slots showing the filtered commands in order.
+#[derive(Clone)]
+struct PaletteSlot {
+    button: Gd<Button>,
+    name: Gd<Label>,
+    key: Gd<Label>,
+    desc: Gd<Label>,
+}
+
+struct Palette {
+    cmds: Vec<PaletteCmd>,
+    /// Indexes into `cmds`, in the order shown.
+    shown: Vec<usize>,
+    /// Position in `shown` that Enter runs.
+    selected: Option<usize>,
+    slots: Vec<PaletteSlot>,
+    list: Scroller,
+    none: Gd<Label>,
+    look: Look,
+}
+
+impl Palette {
+    fn refilter(&mut self, text: &str) {
+        self.shown = palette_filter(&self.cmds, text);
+        self.selected = (!text.trim().is_empty() && !self.shown.is_empty()).then_some(0);
+    }
+}
+
+/// Show the palette's rows. The borrow is released before Godot is called.
+fn fill_palette(palette: &Rc<RefCell<Palette>>) {
+    let (rows, selected, slots, look, mut none) = {
+        let p = palette.borrow();
+        let rows: Vec<(String, String, String)> = p
+            .shown
+            .iter()
+            .map(|&i| {
+                let c = &p.cmds[i];
+                (c.name.clone(), key_name(c.key), c.desc.clone())
+            })
+            .collect();
+        (
+            rows,
+            p.selected,
+            p.slots.clone(),
+            p.look.clone(),
+            p.none.clone(),
+        )
+    };
+    for (i, mut slot) in slots.into_iter().enumerate() {
+        let Some((name, key, desc)) = rows.get(i) else {
+            slot.button.set_visible(false);
+            continue;
+        };
+        slot.name.set_text(name);
+        slot.key.set_text(key);
+        slot.desc.set_text(desc);
+        look.style_row(&mut slot.button, false, selected == Some(i));
+        slot.button.set_visible(true);
+    }
+    none.set_visible(rows.is_empty());
+    let mut p = palette.borrow_mut();
+    match selected {
+        Some(i) => p.list.reveal(i as f32 * ROW_H, ROW_H),
+        None => p.list.scroll_to(0.0),
+    }
+}
+
+enum Kind {
+    Menu(Box<MenuView>),
+    Choice {
+        allowed: Vec<char>,
+        default: Option<char>,
+    },
+    Text {
+        edit: Gd<LineEdit>,
+    },
+    ExtCmd {
+        edit: Gd<LineEdit>,
+        palette: Rc<RefCell<Palette>>,
+    },
+    Show {
+        text: Scroller,
+    },
+    MessageMenu {
+        letter: char,
+        pick: bool,
+    },
+}
+
+struct Open {
+    req: u64,
+    prompt: Prompt,
+    kind: Kind,
+    shade: Gd<ColorRect>,
+    panel: Gd<PanelContainer>,
+}
+
+pub struct Dialogs {
+    root: Gd<Control>,
+    queue: UiQueue,
+    look: Look,
+    open: Option<Open>,
+}
+
 impl Dialogs {
     pub fn new(mut layer: Gd<CanvasLayer>, queue: UiQueue) -> Dialogs {
         let mut root = Control::new_alloc();
@@ -294,22 +779,44 @@ impl Dialogs {
         Dialogs {
             root,
             queue,
+            look: Look::new(),
             open: None,
         }
     }
 
-    /// A centred panel with a column; `width` in pixels.
+    /// The visible area in pixels. Headless Godot reports a square viewport
+    /// as tall as it is wide; dialogs there are laid out for the window the
+    /// project opens, so self-tests see the same scrolling as a player.
+    fn screen(&self) -> Vector2 {
+        let s = self.root.get_viewport_rect().size;
+        let headless = DisplayServer::singleton().get_name() == "headless";
+        if headless || s.x < 320.0 || s.y < 240.0 {
+            REFERENCE_SCREEN
+        } else {
+            s
+        }
+    }
+
+    /// A width for `chars` characters of content plus `extra` pixels, kept
+    /// between `min` and the screen less its margins.
+    fn fit_width(&self, chars: usize, extra: f32, min: f32) -> f32 {
+        let max = (self.screen().x - 2.0 * SIDE_MARGIN).max(min);
+        (self.look.chars(chars) + extra).clamp(min, max)
+    }
+
+    /// A centred panel with a column; `width` is the content's width.
     fn frame(
         &mut self,
         width: f32,
         title: Option<&str>,
     ) -> (Gd<ColorRect>, Gd<PanelContainer>, Gd<VBoxContainer>) {
         let mut shade = ColorRect::new_alloc();
-        shade.set_color(Color::from_rgba(0.0, 0.0, 0.0, 0.35));
+        shade.set_color(Color::from_rgba(0.0, 0.0, 0.0, 0.45));
         theme::full_rect_ignore(&shade);
         self.root.add_child(&shade);
         let mut panel = PanelContainer::new_alloc();
         panel.set_mouse_filter(MouseFilter::STOP);
+        panel.add_theme_stylebox_override("panel", &self.look.panel);
         place(
             &panel,
             [0.5, 0.5, 0.5, 0.5],
@@ -319,11 +826,12 @@ impl Dialogs {
         panel.set_v_grow_direction(GrowDirection::BOTH);
         let mut col = VBoxContainer::new_alloc();
         col.add_theme_constant_override("separation", 10);
-        if let Some(t) = title.filter(|t| !t.is_empty()) {
+        if let Some(t) = title.filter(|t| !t.trim().is_empty()) {
             let mut l = theme::label(t);
             l.add_theme_color_override("font_color", theme::ACCENT);
-            l.set_autowrap_mode(godot::classes::text_server::AutowrapMode::WORD_SMART);
-            l.set_custom_minimum_size(Vector2::new(width - 40.0, 0.0));
+            l.add_theme_font_override("font", &self.look.bold);
+            l.set_autowrap_mode(AutowrapMode::WORD_SMART);
+            l.set_custom_minimum_size(Vector2::new(width, 0.0));
             col.add_child(&l);
         }
         panel.add_child(&col);
@@ -331,33 +839,50 @@ impl Dialogs {
         (shade, panel, col)
     }
 
-    fn buttons(&self, col: &mut Gd<VBoxContainer>, items: &[(String, UiEvent)]) {
+    fn buttons(&self, col: &mut Gd<VBoxContainer>, items: &[(String, UiEvent)]) -> Vec<Gd<Button>> {
         let mut row = HBoxContainer::new_alloc();
-        row.set_alignment(godot::classes::box_container::AlignmentMode::CENTER);
+        row.set_alignment(AlignmentMode::CENTER);
         row.add_theme_constant_override("separation", 12);
+        let mut out = Vec::new();
         for (text, ev) in items {
-            row.add_child(&theme::button(text, &self.queue, ev.clone()));
+            let b = theme::button(text, &self.queue, ev.clone());
+            row.add_child(&b);
+            out.push(b);
         }
         col.add_child(&row);
+        out
     }
 
-    fn item_list(&self, req: u64, rows: usize, width: f32) -> Gd<ItemList> {
-        let mut list = ItemList::new_alloc();
-        list.set_focus_mode(FocusMode::NONE);
-        list.set_select_mode(SelectMode::SINGLE);
-        list.set_allow_search(false);
-        let height = (rows.max(3) as f32 * 24.0 + 16.0).min(560.0);
-        list.set_custom_minimum_size(Vector2::new(width - 40.0, height));
+    fn hint(&self, col: &mut Gd<VBoxContainer>, text: &str, width: f32) -> Gd<Label> {
+        let mut hint = theme::label(text);
+        hint.add_theme_color_override("font_color", theme::TEXT_DIM);
+        hint.set_autowrap_mode(AutowrapMode::WORD_SMART);
+        hint.set_custom_minimum_size(Vector2::new(width, 0.0));
+        col.add_child(&hint);
+        hint
+    }
+
+    /// A list row: a flat button over `cells` that queues `MenuClick(index)`.
+    fn row_button(&self, req: u64, index: usize, cells: &[Gd<Label>]) -> Gd<Button> {
+        let mut b = Button::new_alloc();
+        b.set_focus_mode(FocusMode::NONE);
+        b.set_custom_minimum_size(Vector2::new(0.0, ROW_H));
+        b.add_theme_stylebox_override("focus", &self.look.no_focus);
+        self.look.style_row(&mut b, false, false);
+        let mut hbox = HBoxContainer::new_alloc();
+        hbox.set_mouse_filter(MouseFilter::IGNORE);
+        hbox.add_theme_constant_override("separation", 8);
+        for c in cells {
+            hbox.add_child(c);
+        }
+        place(&hbox, [0.0, 0.0, 1.0, 1.0], [8.0, 0.0, -8.0, 0.0]);
+        b.add_child(&hbox);
         let q = self.queue.clone();
-        list.signals()
-            .item_clicked()
-            .connect(move |i: i64, _pos: Vector2, button: i64| {
-                if button == 1 {
-                    let ev = DialogEvent::MenuClick(i as usize);
-                    push(&q, UiEvent::Dialog { req, ev });
-                }
-            });
-        list
+        b.signals().pressed().connect(move || {
+            let ev = DialogEvent::MenuClick(index);
+            push(&q, UiEvent::Dialog { req, ev });
+        });
+        b
     }
 
     fn line_edit(&self, req: u64) -> Gd<LineEdit> {
@@ -374,6 +899,334 @@ impl Dialogs {
         edit
     }
 
+    fn open_menu(
+        &mut self,
+        req: u64,
+        how: PickHow,
+        title: Option<&str>,
+        items: &[nh_protocol::MenuItem],
+    ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        let state = MenuState::new(how, title.map(str::to_string), items);
+        let any = how == PickHow::Any;
+        let has_glyphs = state.entries.iter().any(|e| glyph_char(e).is_some());
+        let look = self.look.clone();
+        let (mark_w, letter_w, glyph_w) = (
+            if any { look.chars(5) } else { 0.0 },
+            look.chars(3),
+            if has_glyphs { look.chars(2) } else { 0.0 },
+        );
+        let longest = state
+            .entries
+            .iter()
+            .map(|e| e.text.chars().count())
+            .max()
+            .unwrap_or(0);
+        // row padding, column gaps, the scroll bar
+        let width = self.fit_width(
+            longest,
+            mark_w + letter_w + glyph_w + 16.0 + 24.0 + 20.0,
+            560.0,
+        );
+        let mut tops = Vec::with_capacity(state.entries.len());
+        let mut y = 0.0;
+        for e in &state.entries {
+            tops.push(y);
+            y += if row_kind(e) == RowKind::Spacer {
+                SPACER_H
+            } else {
+                ROW_H
+            };
+        }
+        let max_h = (self.screen().y - LIST_CHROME).max(ROW_H * 4.0);
+        let view_h = y.min(max_h).max(ROW_H);
+        let list = Scroller::new(width, view_h, false);
+        // Scrolled to the end, the first row in view is whole: the list
+        // ends in a filler so the furthest scroll is a row top.
+        let max_top = if y > view_h {
+            tops.iter()
+                .copied()
+                .find(|&t| t >= y - view_h)
+                .unwrap_or(y - view_h)
+        } else {
+            0.0
+        };
+        let filler_h = (max_top + view_h - y).max(0.0);
+
+        let (shade, panel, mut col) = self.frame(width, title);
+        let mut rows_box = VBoxContainer::new_alloc();
+        rows_box.add_theme_constant_override("separation", 0);
+        rows_box.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        let mut rows = Vec::with_capacity(state.entries.len());
+        for (i, e) in state.entries.iter().enumerate() {
+            let kind = row_kind(e);
+            if kind != RowKind::Item {
+                let mut row: Gd<Control> = match kind {
+                    RowKind::Spacer => Control::new_alloc(),
+                    RowKind::Header => {
+                        let color = match items.get(i).map(|it| it.clr) {
+                            Some(c) if (0..16).contains(&c) && c != NO_COLOR => nh_color(c),
+                            _ => theme::ACCENT,
+                        };
+                        cell(&e.text, color, Some(&look.bold), None).upcast()
+                    }
+                    _ => cell(&e.text, INFO_TEXT, None, None).upcast(),
+                };
+                let h = if kind == RowKind::Spacer {
+                    SPACER_H
+                } else {
+                    ROW_H
+                };
+                row.set_custom_minimum_size(Vector2::new(0.0, h));
+                row.set_mouse_filter(MouseFilter::IGNORE);
+                rows_box.add_child(&row);
+                rows.push(MenuRow::Fixed);
+                continue;
+            }
+            let mut cells = Vec::new();
+            let mark = any.then(|| cell("", theme::TEXT_DIM, None, Some(mark_w)));
+            cells.extend(mark.clone());
+            let letter = e.letter.map_or(String::new(), |l| format!("{l} -"));
+            cells.push(cell(&letter, theme::ACCENT, None, Some(letter_w)));
+            if has_glyphs {
+                let (sym, color) = match (glyph_char(e), &e.glyph) {
+                    (Some(c), Some(g)) => (c.to_string(), nh_color(g.color)),
+                    _ => (String::new(), theme::TEXT),
+                };
+                cells.push(cell(&sym, color, Some(&look.bold), Some(glyph_w)));
+            }
+            let font = if e.skipinvert {
+                Some(&look.italic)
+            } else if e.attr & 0x0f == 1 {
+                Some(&look.bold)
+            } else {
+                None
+            };
+            let text = cell(&e.text, theme::TEXT, font, None);
+            cells.push(text.clone());
+            let button = self.row_button(req, i, &cells);
+            rows_box.add_child(&button);
+            rows.push(MenuRow::Item { button, mark, text });
+        }
+        if filler_h > 0.0 {
+            let mut filler = Control::new_alloc();
+            filler.set_custom_minimum_size(Vector2::new(0.0, filler_h));
+            filler.set_mouse_filter(MouseFilter::IGNORE);
+            rows_box.add_child(&filler);
+        }
+        let mut scroll = list.scroll.clone();
+        scroll.add_child(&rows_box);
+        col.add_child(&scroll);
+
+        let mut status = theme::label("");
+        status.add_theme_color_override("font_color", theme::ACCENT);
+        status.add_theme_font_override("font", &look.bold);
+        col.add_child(&status);
+        let hint = self.hint(&mut col, "", width);
+        self.buttons(
+            &mut col,
+            &[
+                ("OK".into(), dialog_ui(req, DialogEvent::MenuConfirm)),
+                ("Cancel".into(), dialog_ui(req, DialogEvent::MenuCancel)),
+            ],
+        );
+        let colors = items.iter().map(|i| i.clr).collect();
+        let mut view = MenuView {
+            state,
+            rows,
+            tops,
+            max_top,
+            colors,
+            list,
+            cursor: None,
+            armed: false,
+            status,
+            hint,
+        };
+        // a preselected item: show it
+        if let Some(i) = view.state.entries.iter().position(|e| e.selected) {
+            view.cursor = Some(i);
+            view.reveal(i);
+        }
+        view.refresh(&look);
+        (Kind::Menu(Box::new(view)), shade, panel)
+    }
+
+    fn open_palette(
+        &mut self,
+        req: u64,
+        catalog: Option<&Catalog>,
+    ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        let cmds = palette_cmds(catalog);
+        let look = self.look.clone();
+        let (name_w, key_w) = (look.chars(16), look.chars(4));
+        let longest = cmds
+            .iter()
+            .map(|c| c.desc.chars().count())
+            .max()
+            .unwrap_or(0);
+        let width = self.fit_width(longest, name_w + key_w + 16.0 + 16.0 + 20.0, 640.0);
+        let max_h = (self.screen().y - LIST_CHROME).max(ROW_H * 4.0);
+        // a fixed height, so the dialog does not jump while filtering
+        let view_h = (cmds.len() as f32 * ROW_H).clamp(ROW_H, max_h.min(PALETTE_ROWS * ROW_H));
+        let list = Scroller::new(width, view_h, false);
+
+        let (shade, panel, mut col) = self.frame(width, Some("Extended command"));
+        let mut edit = self.line_edit(req);
+        edit.set_placeholder("type a command");
+        col.add_child(&edit);
+        let mut rows_box = VBoxContainer::new_alloc();
+        rows_box.add_theme_constant_override("separation", 0);
+        rows_box.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        let mut slots = Vec::with_capacity(cmds.len());
+        for i in 0..cmds.len() {
+            let name = cell("", theme::TEXT, Some(&look.bold), Some(name_w));
+            let key = cell("", theme::ACCENT, None, Some(key_w));
+            let desc = cell("", theme::TEXT_DIM, None, None);
+            let button = self.row_button(req, i, &[name.clone(), key.clone(), desc.clone()]);
+            rows_box.add_child(&button);
+            slots.push(PaletteSlot {
+                button,
+                name,
+                key,
+                desc,
+            });
+        }
+        let mut scroll = list.scroll.clone();
+        scroll.add_child(&rows_box);
+        col.add_child(&scroll);
+        let mut none = theme::label("no command matches");
+        none.add_theme_color_override("font_color", theme::WARN);
+        none.set_visible(false);
+        col.add_child(&none);
+        self.hint(
+            &mut col,
+            "Enter: run the highlighted command · Tab: complete · ↑↓ PgUp PgDn: choose · \
+             Esc: cancel",
+            width,
+        );
+        self.buttons(
+            &mut col,
+            &[("Cancel".into(), dialog_ui(req, DialogEvent::ExtCmd(None)))],
+        );
+        let palette = Rc::new(RefCell::new(Palette {
+            shown: palette_filter(&cmds, ""),
+            cmds,
+            selected: None,
+            slots,
+            list,
+            none,
+            look,
+        }));
+        fill_palette(&palette);
+        // refiltering is local to the palette: it never touches the game
+        let p = palette.clone();
+        edit.signals().text_changed().connect(move |text: GString| {
+            p.borrow_mut().refilter(&text.to_string());
+            fill_palette(&p);
+        });
+        edit.call_deferred("grab_focus", &[]);
+        (Kind::ExtCmd { edit, palette }, shade, panel)
+    }
+
+    fn open_text(
+        &mut self,
+        req: u64,
+        query: &str,
+        name: bool,
+    ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        let width = self.fit_width(query.chars().count().min(70), 0.0, 560.0);
+        let (shade, panel, mut col) = self.frame(width, Some(query));
+        let mut edit = self.line_edit(req);
+        if name {
+            edit.set_placeholder("a name");
+        }
+        col.add_child(&edit);
+        let mut bytes = theme::label(&format!("0 / {MAX_TEXT_BYTES} bytes"));
+        bytes.add_theme_color_override("font_color", theme::TEXT_DIM);
+        bytes.set_horizontal_alignment(HorizontalAlignment::RIGHT);
+        col.add_child(&bytes);
+        // NetHack takes 255 bytes of UTF-8; LineEdit counts characters
+        let (mut e, mut b) = (edit.clone(), bytes.clone());
+        edit.signals().text_changed().connect(move |text: GString| {
+            let text = text.to_string();
+            let mut len = text.len();
+            if len > MAX_TEXT_BYTES {
+                let cut = truncate_bytes(&text, MAX_TEXT_BYTES);
+                let caret = e.get_caret_column().min(cut.chars().count() as i32);
+                len = cut.len();
+                e.set_text(&cut);
+                e.set_caret_column(caret);
+            }
+            b.set_text(&format!("{len} / {MAX_TEXT_BYTES} bytes"));
+        });
+        self.hint(&mut col, "Enter: OK · Esc: cancel", width);
+        let mut row = HBoxContainer::new_alloc();
+        row.set_alignment(AlignmentMode::CENTER);
+        row.add_theme_constant_override("separation", 12);
+        // OK submits what the field holds, as Enter does
+        let mut ok = Button::new_alloc();
+        ok.set_text("OK");
+        ok.set_focus_mode(FocusMode::NONE);
+        let (q, e) = (self.queue.clone(), edit.clone());
+        ok.signals().pressed().connect(move || {
+            let ev = DialogEvent::TextSubmitted(e.get_text().to_string());
+            push(&q, UiEvent::Dialog { req, ev });
+        });
+        row.add_child(&ok);
+        let cancel = dialog_ui(req, DialogEvent::TextCancelled);
+        row.add_child(&theme::button("Cancel", &self.queue, cancel));
+        col.add_child(&row);
+        edit.call_deferred("grab_focus", &[]);
+        (Kind::Text { edit }, shade, panel)
+    }
+
+    fn open_show(
+        &mut self,
+        title: Option<&str>,
+        lines: &[TextLine],
+        req: u64,
+    ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        let longest = lines
+            .iter()
+            .map(|l| l.text.chars().count())
+            .max()
+            .unwrap_or(0)
+            .max(title.map_or(0, |t| t.chars().count().min(60)));
+        // the scroll bar and a little air
+        let width = self.fit_width(longest, 30.0, 420.0);
+        let content_h = lines.len().max(1) as f32 * self.look.line_h + 8.0;
+        let max_h = (self.screen().y - TEXT_CHROME).max(ROW_H * 4.0);
+        let text = Scroller::new(width, content_h.min(max_h), true);
+        let (shade, panel, mut col) = self.frame(width, title);
+        let mut label = RichTextLabel::new_alloc();
+        label.set_use_bbcode(true);
+        label.set_focus_mode(FocusMode::NONE);
+        label.set_mouse_filter(MouseFilter::PASS);
+        label.set_selection_enabled(false);
+        // tables and ASCII art keep their columns: no wrapping, the label
+        // as wide and tall as its text, the container scrolls
+        label.set_autowrap_mode(AutowrapMode::OFF);
+        label.set_scroll_active(false);
+        label.set_fit_content(true);
+        label.add_theme_font_override("italics_font", &self.look.italic);
+        label.set_text(&show_text(lines));
+        let mut scroll = text.scroll.clone();
+        scroll.add_child(&label);
+        col.add_child(&scroll);
+        if content_h > max_h {
+            self.hint(
+                &mut col,
+                "↑↓ PgUp PgDn < >: scroll · Enter, Space or Esc: close",
+                width,
+            );
+        }
+        self.buttons(
+            &mut col,
+            &[("OK".into(), dialog_ui(req, DialogEvent::Close))],
+        );
+        (Kind::Show { text }, shade, panel)
+    }
+
     /// Open the UI for Menu, Choice, Text, ExtCmd, Show, MessageMenu (other
     /// prompts: no-op).
     pub fn open(&mut self, req: u64, prompt: &Prompt, catalog: Option<&Catalog>) {
@@ -381,141 +1234,63 @@ impl Dialogs {
         let (kind, shade, panel) = match prompt {
             Prompt::Menu {
                 how, title, items, ..
-            } => {
-                let state = MenuState::new(*how, title.clone(), items);
-                let width = 760.0;
-                let (shade, panel, mut col) = self.frame(width, title.as_deref());
-                let mut list = self.item_list(req, state.entries.len(), width);
-                let mut count = theme::label("");
-                count.add_theme_color_override("font_color", theme::ACCENT);
-                fill_menu(&state, &mut list, &mut count);
-                col.add_child(&list);
-                col.add_child(&count);
-                let hint = match how {
-                    PickHow::Any => "letters pick · . all · - none · Enter OK · Esc cancel",
-                    _ => "a letter or a click picks · Esc cancels",
-                };
-                let mut hint = theme::label(hint);
-                hint.add_theme_color_override("font_color", theme::TEXT_DIM);
-                col.add_child(&hint);
-                self.buttons(
-                    &mut col,
-                    &[
-                        ("OK".into(), dialog_ui(req, DialogEvent::MenuConfirm)),
-                        ("Cancel".into(), dialog_ui(req, DialogEvent::MenuCancel)),
-                    ],
-                );
-                (Kind::Menu { state, list, count }, shade, panel)
-            }
+            } => self.open_menu(req, *how, title.as_deref(), items),
             Prompt::Choice {
                 query,
                 visible,
                 allowed,
                 default,
             } => {
-                let (shade, panel, mut col) = self.frame(600.0, Some(query));
-                let buttons: Vec<(String, UiEvent)> = visible
+                let width = self.fit_width(query.chars().count().min(80), 0.0, 420.0);
+                let (shade, panel, mut col) = self.frame(width, Some(query));
+                let items: Vec<(String, UiEvent)> = visible
                     .iter()
                     .map(|&c| (choice_label(c), dialog_ui(req, DialogEvent::Choice(c))))
                     .collect();
-                self.buttons(&mut col, &buttons);
+                let buttons = self.buttons(&mut col, &items);
+                let mut hint = String::from("Esc: cancel");
+                if let Some(d) = *default {
+                    hint.push_str(&format!(" · Enter: {}", choice_label(d)));
+                    if let Some(i) = visible.iter().position(|&c| c == d) {
+                        let mut b = buttons[i].clone();
+                        b.add_theme_stylebox_override("normal", &self.look.default_button);
+                    }
+                }
+                self.hint(&mut col, &hint, width);
                 let kind = Kind::Choice {
                     allowed: allowed.clone(),
                     default: *default,
                 };
                 (kind, shade, panel)
             }
-            Prompt::Text { query, .. } => {
-                let (shade, panel, mut col) = self.frame(600.0, Some(query));
-                let mut edit = self.line_edit(req);
-                col.add_child(&edit);
-                self.buttons(
-                    &mut col,
-                    &[("Cancel".into(), dialog_ui(req, DialogEvent::TextCancelled))],
-                );
-                edit.call_deferred("grab_focus", &[]);
-                (Kind::Text { edit }, shade, panel)
-            }
-            Prompt::ExtCmd => {
-                let cmds: Vec<PaletteCmd> = catalog
-                    .map(|c| {
-                        c.extcmds
-                            .iter()
-                            .map(|e| PaletteCmd {
-                                name: e.name.clone(),
-                                desc: e.desc.clone(),
-                                key: e.key,
-                            })
-                            .collect()
-                    })
-                    .unwrap_or_default();
-                let width = 760.0;
-                let (shade, panel, mut col) = self.frame(width, Some("Extended command"));
-                let mut edit = self.line_edit(req);
-                edit.set_placeholder("type a command; Tab completes, Up/Down choose");
-                col.add_child(&edit);
-                let mut list = self.item_list(req, 16, width);
-                col.add_child(&list);
-                self.buttons(
-                    &mut col,
-                    &[("Cancel".into(), dialog_ui(req, DialogEvent::ExtCmd(None)))],
-                );
-                let palette = Rc::new(RefCell::new(Palette {
-                    shown: palette_filter(&cmds, ""),
-                    cmds,
-                    selected: None,
-                }));
-                fill_palette(&palette, &mut list);
-                // refiltering is local to the palette: it never touches the game
-                let (p, mut l) = (palette.clone(), list.clone());
-                edit.signals().text_changed().connect(move |text: GString| {
-                    p.borrow_mut().refilter(&text.to_string());
-                    fill_palette(&p, &mut l);
-                });
-                edit.call_deferred("grab_focus", &[]);
-                (
-                    Kind::ExtCmd {
-                        edit,
-                        list,
-                        palette,
-                    },
-                    shade,
-                    panel,
-                )
-            }
-            Prompt::Show { title, lines } => {
-                let width = 820.0;
-                let (shade, panel, mut col) = self.frame(width, title.as_deref());
-                let mut text = RichTextLabel::new_alloc();
-                text.set_use_bbcode(true);
-                text.set_focus_mode(FocusMode::NONE);
-                text.set_text(&show_text(lines));
-                let height = (lines.len().max(2) as f32 * 21.0 + 12.0).min(620.0);
-                text.set_custom_minimum_size(Vector2::new(width - 40.0, height));
-                col.add_child(&text);
-                self.buttons(
-                    &mut col,
-                    &[("OK".into(), dialog_ui(req, DialogEvent::Close))],
-                );
-                (Kind::Show { text }, shade, panel)
-            }
+            Prompt::Text { query, name } => self.open_text(req, query, *name),
+            Prompt::ExtCmd => self.open_palette(req, catalog),
+            Prompt::Show { title, lines } => self.open_show(title.as_deref(), lines, req),
             Prompt::MessageMenu { letter, mesg, pick } => {
-                let (shade, panel, mut col) = self.frame(600.0, Some(mesg));
-                let buttons = if *pick {
-                    vec![
-                        (
-                            format!("{letter}"),
-                            dialog_ui(req, DialogEvent::Choice(*letter)),
-                        ),
-                        (
-                            "Cancel".to_string(),
-                            dialog_ui(req, DialogEvent::Choice(ESC_CHAR)),
-                        ),
-                    ]
+                let width = self.fit_width(mesg.chars().count().min(80), 0.0, 420.0);
+                let (shade, panel, mut col) = self.frame(width, Some(mesg));
+                let (buttons, hint) = if *pick {
+                    (
+                        vec![
+                            (
+                                format!("{letter}"),
+                                dialog_ui(req, DialogEvent::Choice(*letter)),
+                            ),
+                            (
+                                "Cancel".to_string(),
+                                dialog_ui(req, DialogEvent::Choice(ESC_CHAR)),
+                            ),
+                        ],
+                        format!("{letter}: choose · Esc: cancel"),
+                    )
                 } else {
-                    vec![("OK".to_string(), dialog_ui(req, DialogEvent::Close))]
+                    (
+                        vec![("OK".to_string(), dialog_ui(req, DialogEvent::Close))],
+                        "Enter, Space or Esc: close".to_string(),
+                    )
                 };
                 self.buttons(&mut col, &buttons);
+                self.hint(&mut col, &hint, width);
                 let kind = Kind::MessageMenu {
                     letter: *letter,
                     pick: *pick,
@@ -559,7 +1334,7 @@ impl Dialogs {
     /// "menu", "choice", "text", "extcmd", "show", "message".
     pub fn kind_name(&self) -> Option<&'static str> {
         self.open.as_ref().map(|o| match o.kind {
-            Kind::Menu { .. } => "menu",
+            Kind::Menu(_) => "menu",
             Kind::Choice { .. } => "choice",
             Kind::Text { .. } => "text",
             Kind::ExtCmd { .. } => "extcmd",
@@ -570,7 +1345,52 @@ impl Dialogs {
 
     pub fn menu_entries(&self) -> Option<&[MenuEntry]> {
         match self.open.as_ref().map(|o| &o.kind) {
-            Some(Kind::Menu { state, .. }) => Some(&state.entries),
+            Some(Kind::Menu(view)) => Some(&view.state.entries),
+            _ => None,
+        }
+    }
+
+    /// The open menu's keyboard row (an index into `menu_entries`).
+    pub fn menu_cursor(&self) -> Option<usize> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::Menu(view)) => view.cursor,
+            _ => None,
+        }
+    }
+
+    /// The open menu's list: how far it is scrolled and how tall its view
+    /// is, in pixels.
+    pub fn menu_scroll(&self) -> Option<(f32, f32)> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::Menu(view)) => Some((view.list.top(), view.list.view_h)),
+            _ => None,
+        }
+    }
+
+    /// How far the open menu or text window is scrolled, in pixels.
+    pub fn list_top(&self) -> Option<f32> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::Menu(view)) => Some(view.list.top()),
+            Some(Kind::Show { text }) => Some(text.top()),
+            _ => None,
+        }
+    }
+
+    /// The top of each of the open menu's rows (one per `menu_entries`).
+    pub fn menu_row_tops(&self) -> Option<&[f32]> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::Menu(view)) => Some(&view.tops),
+            _ => None,
+        }
+    }
+
+    /// The commands the palette lists now, in order.
+    pub fn palette_names(&self) -> Option<Vec<String>> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::ExtCmd { palette, .. }) => {
+                let p = palette.borrow();
+                Some(p.shown.iter().map(|&i| p.cmds[i].name.clone()).collect())
+            }
             _ => None,
         }
     }
@@ -597,32 +1417,7 @@ impl Dialogs {
         let open = self.open.as_mut()?;
         let escape = open.prompt.escape_reply();
         match &mut open.kind {
-            Kind::Menu { state, list, count } => {
-                let c = match input.key {
-                    Key::PageUp => '<',
-                    Key::PageDown => '>',
-                    Key::Up | Key::Down if !input.mods.ctrl && !input.mods.alt => {
-                        scroll_by(list, if input.key == Key::Up { -0.1 } else { 0.1 });
-                        return None;
-                    }
-                    _ => typed(input)?,
-                };
-                match state.key(c) {
-                    MenuOutcome::Done(reply) => Some(reply),
-                    MenuOutcome::PageUp => {
-                        scroll_by(list, -1.0);
-                        None
-                    }
-                    MenuOutcome::PageDown => {
-                        scroll_by(list, 1.0);
-                        None
-                    }
-                    MenuOutcome::Pending => {
-                        fill_menu(state, list, count);
-                        None
-                    }
-                }
-            }
+            Kind::Menu(view) => view.key(input, &self.look),
             Kind::Choice { allowed, default } => match typed(input)? {
                 ESC_CHAR => Some(escape),
                 '\n' | ' ' => default.map(|d| Reply::Char(d as i32)),
@@ -631,11 +1426,7 @@ impl Dialogs {
             },
             // a held key never answers: Esc cancels only when pressed
             Kind::Text { .. } => (input.key == Key::Escape && !input.echo).then_some(escape),
-            Kind::ExtCmd {
-                edit,
-                list,
-                palette,
-            } => {
+            Kind::ExtCmd { edit, palette } => {
                 let step = match input.key {
                     Key::Escape | Key::Tab if input.echo => return None,
                     Key::Escape => return Some(escape),
@@ -649,7 +1440,7 @@ impl Dialogs {
                         edit.set_text(&done);
                         edit.set_caret_column(done.chars().count() as i32);
                         palette.borrow_mut().refilter(&done);
-                        fill_palette(palette, list);
+                        fill_palette(palette);
                         return None;
                     }
                     _ => return None,
@@ -667,27 +1458,24 @@ impl Dialogs {
                         p.selected = Some(next as usize);
                     }
                 }
-                fill_palette(palette, list);
+                fill_palette(palette);
                 None
             }
-            Kind::Show { text } => match input.key {
-                Key::PageUp | Key::Char('<') => {
-                    scroll_text(text, -1.0);
-                    None
+            Kind::Show { text } => {
+                if let Some(k) = nav(input) {
+                    text.key(k, self.look.line_h);
+                    return None;
                 }
-                Key::PageDown | Key::Char('>') => {
-                    scroll_text(text, 1.0);
-                    None
+                match typed(input)? {
+                    '<' => text.page(-1.0),
+                    '>' => text.page(1.0),
+                    '\n' | ' ' | ESC_CHAR => return Some(Reply::Ack),
+                    _ => {}
                 }
-                Key::Up | Key::Down => {
-                    scroll_text(text, if input.key == Key::Up { -0.1 } else { 0.1 });
-                    None
-                }
-                _ => match typed(input)? {
-                    '\n' | ' ' | ESC_CHAR => Some(Reply::Ack),
-                    _ => None,
-                },
-            },
+                None
+            }
+            // With `pick`, only the letter or Esc answers: Enter and Space
+            // do nothing, so a stray Enter neither picks nor cancels.
             Kind::MessageMenu { letter, pick } => match typed(input)? {
                 ESC_CHAR => Some(escape),
                 c if *pick && c == *letter => Some(Reply::Char(c as i32)),
@@ -701,16 +1489,12 @@ impl Dialogs {
         let open = self.open.as_mut().filter(|o| o.req == req)?;
         let escape = open.prompt.escape_reply();
         match (&mut open.kind, ev) {
-            (Kind::Menu { state, list, count }, DialogEvent::MenuClick(i)) => match state.click(*i)
-            {
-                MenuOutcome::Done(reply) => Some(reply),
-                _ => {
-                    fill_menu(state, list, count);
-                    None
-                }
-            },
-            (Kind::Menu { state, .. }, DialogEvent::MenuConfirm) => Some(state.confirm()),
-            (Kind::Menu { .. }, DialogEvent::MenuCancel) => Some(Reply::Cancel),
+            (Kind::Menu(view), DialogEvent::MenuClick(i)) => {
+                view.armed = false;
+                view.click(*i, &self.look)
+            }
+            (Kind::Menu(view), DialogEvent::MenuConfirm) => Some(view.state.confirm()),
+            (Kind::Menu(_), DialogEvent::MenuCancel) => Some(Reply::Cancel),
             (Kind::Choice { allowed, .. }, DialogEvent::Choice(c)) => {
                 allowed.contains(c).then_some(Reply::Char(*c as i32))
             }
@@ -718,7 +1502,7 @@ impl Dialogs {
                 Some(Reply::Text(truncate_bytes(s, MAX_TEXT_BYTES)))
             }
             (Kind::Text { .. }, DialogEvent::TextCancelled) => Some(escape),
-            (Kind::ExtCmd { palette, edit, .. }, DialogEvent::TextSubmitted(text)) => {
+            (Kind::ExtCmd { palette, edit }, DialogEvent::TextSubmitted(text)) => {
                 let p = palette.borrow();
                 let chosen = p
                     .selected
@@ -767,16 +1551,21 @@ impl Dialogs {
     }
 }
 
+/// A text window as BBCode, one line per line. NetHack's attributes:
+/// 1 bold, 2 dim, 3 italic, 4 underline, 5 blink, 7 inverse.
 fn show_text(lines: &[TextLine]) -> String {
     lines
         .iter()
         .map(|l| {
             let t = bbcode_escape(&l.text);
-            match l.attr {
-                1 => format!("[b]{t}[/b]"),
+            match l.attr & 0x0f {
                 0 => t,
-                // dim, underline, blink, inverse: an accent is enough here
-                _ => format!("[color={}]{t}[/color]", hex(theme::ACCENT)),
+                1 => format!("[b]{t}[/b]"),
+                2 => format!("[color={}]{t}[/color]", hex(theme::TEXT_DIM)),
+                3 => format!("[i]{t}[/i]"),
+                4 => format!("[u]{t}[/u]"),
+                // blink, inverse (headings): bold in the accent colour
+                _ => format!("[b][color={}]{t}[/color][/b]", hex(theme::ACCENT)),
             }
         })
         .collect::<Vec<_>>()
@@ -822,6 +1611,31 @@ mod tests {
     }
 
     #[test]
+    fn palette_filter_puts_the_exact_name_first() {
+        // "sit" is exact; "situation" is a longer prefix match; "exsit" an
+        // inner match
+        let c = cmds(&["exsit", "situation", "sit"]);
+        assert_eq!(
+            names(&c, &palette_filter(&c, "sit")),
+            ["sit", "situation", "exsit"]
+        );
+        // an exact name beats a shorter inner match
+        let c = cmds(&["ab", "xabx", "abc"]);
+        assert_eq!(names(&c, &palette_filter(&c, "abc")), ["abc"]);
+        let c = cmds(&["lo", "look", "loot"]);
+        assert_eq!(names(&c, &palette_filter(&c, "look")), ["look"]);
+    }
+
+    #[test]
+    fn palette_leaves_out_the_hash_command() {
+        assert!(!palette_lists("#"));
+        assert!(!palette_lists(""));
+        assert!(palette_lists("?"));
+        assert!(palette_lists("pray"));
+        assert!(palette_cmds(None).is_empty());
+    }
+
+    #[test]
     fn palette_tab_completes_the_common_prefix() {
         let c = cmds(&["quit", "quiver", "pray", "prevmsg"]);
         assert_eq!(palette_complete(&c, "q"), "qui");
@@ -836,6 +1650,9 @@ mod tests {
         // 'ж' is two bytes
         assert_eq!(truncate_bytes("жж", 3), "ж");
         assert_eq!(truncate_bytes("жж", 4), "жж");
+        // 200 two-byte letters: 127 of them fit in 255 bytes
+        let long = "ж".repeat(200);
+        assert_eq!(truncate_bytes(&long, MAX_TEXT_BYTES).chars().count(), 127);
     }
 
     #[test]
@@ -844,5 +1661,61 @@ mod tests {
         assert_eq!(key_name(4), "^D");
         assert_eq!(key_name(0x80 | 'p' as i32), "M-p");
         assert_eq!(key_name('#' as i32), "#");
+    }
+
+    #[test]
+    fn choice_labels_spell_out_the_usual_answers() {
+        assert_eq!(choice_label('y'), "Yes (y)");
+        assert_eq!(choice_label('n'), "No (n)");
+        assert_eq!(choice_label('q'), "Cancel (q)");
+        assert_eq!(choice_label('a'), "All (a)");
+        assert_eq!(choice_label('m'), "m");
+        assert_eq!(choice_label('?'), "?");
+    }
+
+    fn entry(selectable: bool, text: &str, attr: i32) -> MenuEntry {
+        MenuEntry {
+            idx: 0,
+            text: text.to_string(),
+            attr,
+            selectable,
+            letter: selectable.then_some('a'),
+            group: None,
+            glyph: None,
+            skipinvert: false,
+            selected: false,
+            count: None,
+        }
+    }
+
+    #[test]
+    fn menu_rows_are_headers_info_spacers_or_items() {
+        assert_eq!(row_kind(&entry(true, "a dagger", 0)), RowKind::Item);
+        assert_eq!(row_kind(&entry(false, "Weapons", 7)), RowKind::Header);
+        assert_eq!(row_kind(&entry(false, "Weapons", 1)), RowKind::Header);
+        assert_eq!(row_kind(&entry(false, "(not carried)", 0)), RowKind::Info);
+        assert_eq!(row_kind(&entry(false, "  ", 7)), RowKind::Spacer);
+        // ATR_NOHISTORY and ATR_URGENT are no display attributes
+        assert_eq!(row_kind(&entry(false, "note", 32)), RowKind::Info);
+    }
+
+    #[test]
+    fn menu_marks_show_selection_and_counts() {
+        let mut e = entry(true, "arrows", 0);
+        assert_eq!(mark_text(&e), "[ ]");
+        e.selected = true;
+        assert_eq!(mark_text(&e), "[x]");
+        e.count = Some(12);
+        assert_eq!(mark_text(&e), "[12]");
+    }
+
+    #[test]
+    fn show_text_escapes_and_styles_lines() {
+        let line = |attr, text: &str| TextLine {
+            attr,
+            text: text.to_string(),
+        };
+        let s = show_text(&[line(0, " [a] |  x"), line(1, "Bold"), line(3, "it")]);
+        assert_eq!(s, " [lb]a] |  x\n[b]Bold[/b]\n[i]it[/i]");
     }
 }

@@ -22,6 +22,7 @@ use nh_world::{Key, KeyInput, MenuEntry, MenuState, Mods, Prompt, Terrain, cell_
 
 use nh_link::save_exists;
 
+use crate::dialogs::ROW_H;
 use crate::game::{Args, GameState, RenethackGame, SELFTEST_SEED, env_number};
 use crate::screens::EndSummary;
 use crate::ui_events::{CharacterChoice, DialogEvent, UiEvent};
@@ -456,6 +457,342 @@ fn keys() -> Vec<Step> {
         press('y'),
         Step::AnswerUntil('n', "the end screen", |g| Ok(screen(g) == Some("end"))),
     ]);
+    steps
+}
+
+fn is_menu(p: &Prompt) -> bool {
+    matches!(p, Prompt::Menu { .. })
+}
+
+/// The open menu's list as the dialog lays it out.
+struct MenuList<'a> {
+    entries: &'a [MenuEntry],
+    tops: &'a [f32],
+    /// How far the list is scrolled, and the height of its view.
+    top: f32,
+    view_h: f32,
+    cursor: Option<usize>,
+}
+
+impl MenuList<'_> {
+    fn is_row_top(&self, v: f32) -> bool {
+        self.tops.iter().any(|&t| (t - v).abs() < 0.5)
+    }
+
+    /// Is row `i` wholly in view?
+    fn whole(&self, i: usize) -> bool {
+        let t = self.tops[i];
+        t >= self.top - 0.5 && t + ROW_H <= self.top + self.view_h + 0.5
+    }
+}
+
+/// The menu open for the pending request, once the dialog shows it.
+fn menu_list(g: &RenethackGame) -> Option<MenuList<'_>> {
+    let ui = g.ui.as_ref()?;
+    if ui.dialogs.open_req() != g.pending.as_ref().map(|(id, _)| *id) {
+        return None;
+    }
+    let (top, view_h) = ui.dialogs.menu_scroll()?;
+    Some(MenuList {
+        entries: ui.dialogs.menu_entries()?,
+        tops: ui.dialogs.menu_row_tops()?,
+        top,
+        view_h,
+        cursor: ui.dialogs.menu_cursor(),
+    })
+}
+
+/// Every kind of dialog once, for screenshots, with checks on what the
+/// dialogs add to NetHack's rules: the keyboard row follows a toggled item
+/// and the arrows, the palette never lists "#" and ranks prefix matches.
+fn dialogs() -> Vec<Step> {
+    let mut steps = start();
+    steps.extend([
+        key('i'),
+        Step::Request("the inventory", is_menu),
+        Step::Shot("dialog-inventory"),
+        Step::Key(KeyInput::plain(Key::Escape)),
+        Step::Request("a command after the inventory", command),
+        // 'D': the item types, then all items with two marked and a count typed
+        key('D'),
+        Step::Request("the item types to drop", is_menu),
+        Step::Shot("dialog-drop-types"),
+        key('a'),
+        Step::Key(KeyInput::plain(Key::Enter)),
+        Step::Request("the items to drop", is_menu),
+        key('a'),
+        key('c'),
+        key('5'),
+        Step::Wait("the keyboard row on the item toggled last", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let Some(entries) = ui.dialogs.menu_entries() else {
+                return Ok(false);
+            };
+            let c = entries.iter().position(|e| e.letter == Some('c'));
+            Ok(c.is_some() && ui.dialogs.menu_cursor() == c && entries[c.unwrap_or(0)].selected)
+        }),
+        Step::Shot("dialog-drop-items"),
+        // the arrows move the keyboard row, Space toggles it (with the count)
+        Step::Key(KeyInput::plain(Key::Down)),
+        key(' '),
+        Step::Wait("Down and Space pick the next item with the count", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let Some(entries) = ui.dialogs.menu_entries() else {
+                return Ok(false);
+            };
+            let d = entries.iter().find(|e| e.letter == Some('d'));
+            Ok(d.is_some_and(|e| e.selected && e.count == Some(5)))
+        }),
+        Step::Dialog(DialogEvent::MenuCancel),
+        Step::Request("a command after not dropping", command),
+        // a long menu: the options, paged away from the keyboard row
+        key('O'),
+        Step::Request("the options menu", is_menu),
+        Step::Wait("the options menu longer than its view", |g| {
+            let Some(m) = menu_list(g) else {
+                return Ok(false);
+            };
+            let end = m.tops.last().map_or(0.0, |t| t + ROW_H);
+            if end <= m.view_h {
+                return Err(format!("{end} px of options fit in {} px", m.view_h));
+            }
+            Ok(m.top == 0.0)
+        }),
+        // the arrows put the keyboard row on the first item
+        Step::Key(KeyInput::plain(Key::Down)),
+        Step::Wait("the keyboard row on the first item", |g| {
+            let Some(m) = menu_list(g) else {
+                return Ok(false);
+            };
+            let first = m.entries.iter().position(|e| e.selectable);
+            Ok(m.cursor.is_some() && m.cursor == first)
+        }),
+        Step::Key(KeyInput::plain(Key::PageDown)),
+        Step::Wait(
+            "PgDn: a page to a row top, letting the hidden row go",
+            |g| {
+                let Some(m) = menu_list(g) else {
+                    return Ok(false);
+                };
+                if m.top <= 0.0 {
+                    return Ok(false);
+                }
+                if !m.is_row_top(m.top) {
+                    return Err(format!("the list stopped at {}, not at a row top", m.top));
+                }
+                match m.cursor {
+                    Some(c) if !m.whole(c) => Err(format!("the keyboard row {c} is out of view")),
+                    _ => Ok(true),
+                }
+            },
+        ),
+        Step::Key(KeyInput::plain(Key::Down)),
+        Step::Wait("Down: the first whole item in view", |g| {
+            let Some(m) = menu_list(g) else {
+                return Ok(false);
+            };
+            let Some(c) = m.cursor else {
+                return Ok(false);
+            };
+            let first = (0..m.entries.len()).find(|&i| m.entries[i].selectable && m.whole(i));
+            let top_item = m.entries.iter().position(|e| e.selectable);
+            if Some(c) == first && Some(c) != top_item {
+                Ok(true)
+            } else {
+                Err(format!(
+                    "Down went to row {c}, not {first:?} (top {})",
+                    m.top
+                ))
+            }
+        }),
+        Step::Shot("dialog-options"),
+        Step::Key(KeyInput::plain(Key::End)),
+        Step::Wait("End: the last row whole and a row top at the top", |g| {
+            let Some(m) = menu_list(g) else {
+                return Ok(false);
+            };
+            if !m.whole(m.tops.len() - 1) {
+                return Ok(false);
+            }
+            if m.is_row_top(m.top) {
+                Ok(true)
+            } else {
+                Err(format!("the list ends at {}, not at a row top", m.top))
+            }
+        }),
+        Step::Dialog(DialogEvent::MenuCancel),
+        Step::AnswerUntil('n', "a command after the options", |g| {
+            fail_on_error_screen(g)?;
+            Ok(matches!(g.pending, Some((_, Prompt::Command))))
+        }),
+        // ^X: a text window with a table
+        Step::Key(KeyInput {
+            mods: nh_world::Mods {
+                ctrl: true,
+                ..Default::default()
+            },
+            ..KeyInput::plain(Key::Char('x'))
+        }),
+        Step::Request("the attributes", |p| {
+            matches!(p, Prompt::Show { .. } | Prompt::Menu { .. })
+        }),
+        Step::Shot("dialog-attributes"),
+        Step::AnswerUntil('n', "a command after the attributes", |g| {
+            fail_on_error_screen(g)?;
+            Ok(matches!(g.pending, Some((_, Prompt::Command))))
+        }),
+        key('S'),
+        Step::Request(
+            "Really save?",
+            |p| matches!(p, Prompt::Choice { query, .. } if query.contains("save")),
+        ),
+        Step::Shot("dialog-question"),
+        key('n'),
+        Step::Request("a command after not saving", command),
+        // the palette: typed "lo", real keys into the focused field
+        key('#'),
+        Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
+        Step::Wait("the palette with the keyboard and without \"#\"", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let names = ui.dialogs.palette_names().unwrap_or_default();
+            if names.iter().any(|n| n == "#") {
+                return Err("the palette lists \"#\"".into());
+            }
+            Ok(!names.is_empty() && ui.dialogs.text_has_focus())
+        }),
+        press('l'),
+        press('o'),
+        Step::Wait("\"look\" and \"loot\" first for \"lo\"", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let names = ui.dialogs.palette_names().unwrap_or_default();
+            if ui.dialogs.text().as_deref() != Some("lo") {
+                return Ok(false);
+            }
+            match names.get(..2) {
+                Some([a, b]) if a == "look" && b == "loot" => Ok(true),
+                _ => Err(format!("the palette shows {names:?}")),
+            }
+        }),
+        Step::Shot("dialog-palette"),
+        Step::Press(GKey::ESCAPE, '\0', false),
+        Step::Request("a command after the palette", command),
+        // a long text window: every extended command
+        key('#'),
+        Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
+        Step::Dialog(DialogEvent::TextSubmitted("?".into())),
+        Step::Request("the list of extended commands", |p| {
+            matches!(p, Prompt::Show { .. } | Prompt::Menu { .. })
+        }),
+        Step::Key(KeyInput::plain(Key::PageDown)),
+        Step::Wait("PgDn scrolls the list", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(ui.dialogs.list_top().is_some_and(|v| v > 0.0))
+        }),
+        Step::Shot("dialog-extcmd-list"),
+        Step::Dialog(DialogEvent::Close),
+        // "#?" asks for a command again after the list
+        Step::Request("the palette after the list", |p| *p == Prompt::ExtCmd),
+        Step::Dialog(DialogEvent::ExtCmd(None)),
+        Step::Request("a command after the list", command),
+        // getlin: engrave with a finger
+        key('E'),
+        Step::Request("what to write with", |p| {
+            matches!(p, Prompt::FreeKey { .. })
+        }),
+        key('-'),
+        Step::AnswerUntil('n', "the text to engrave", |g| {
+            fail_on_error_screen(g)?;
+            Ok(matches!(g.pending, Some((_, Prompt::Text { .. }))))
+        }),
+        Step::Wait("the text field with the keyboard", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(ui.dialogs.kind_name() == Some("text") && ui.dialogs.text_has_focus())
+        }),
+    ]);
+    steps.extend("Elbereth".chars().map(press));
+    steps.extend([
+        Step::Wait("\"Elbereth\" typed", |g| {
+            let text = g.ui.as_ref().and_then(|ui| ui.dialogs.text());
+            Ok(text.as_deref() == Some("Elbereth"))
+        }),
+        Step::Shot("dialog-getlin"),
+        Step::Press(GKey::ENTER, '\0', false),
+        Step::AnswerUntil('n', "a command after engraving", |g| {
+            fail_on_error_screen(g)?;
+            Ok(matches!(g.pending, Some((_, Prompt::Command))))
+        }),
+        // the engine got the text: ':' reads it back
+        key(':'),
+        Step::AnswerUntil('n', "a command after looking here", |g| {
+            fail_on_error_screen(g)?;
+            Ok(matches!(g.pending, Some((_, Prompt::Command))))
+        }),
+        Step::Wait("\"Elbereth\" read back from the floor", |g| {
+            let read = g.world.log.iter().rev().find_map(|m| {
+                let rest = m.text.split_once("You read: \"")?.1;
+                Some(rest.split_once('"')?.0.to_string())
+            });
+            match read {
+                Some(text) if smudged("Elbereth", &text) => Ok(true),
+                other => Err(format!("the floor reads {other:?}")),
+            }
+        }),
+        // one piece of armor worn: a message instead of a menu
+        key('['),
+        Step::Request("the one worn armor as a message", |p| {
+            matches!(p, Prompt::MessageMenu { pick: false, .. })
+        }),
+        Step::Wait("the message dialog", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(ui.dialogs.kind_name() == Some("message"))
+        }),
+        Step::Shot("dialog-message"),
+        Step::Key(KeyInput::plain(Key::Enter)),
+        Step::Request("a command after the message", command),
+        // a message that picks: Enter does nothing, the letter answers
+        key('e'),
+        Step::Request("what to eat", |p| matches!(p, Prompt::FreeKey { .. })),
+        key('?'),
+        Step::Request("the one thing to eat as a message", |p| {
+            matches!(
+                p,
+                Prompt::MessageMenu {
+                    pick: true,
+                    letter: 'd',
+                    ..
+                }
+            )
+        }),
+        Step::Shot("dialog-message-pick"),
+        Step::Key(KeyInput::plain(Key::Enter)),
+        Step::Key(KeyInput::plain(Key::Char(' '))),
+        Step::Wait("the message still open after Enter and Space", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let open = matches!(g.pending, Some((_, Prompt::MessageMenu { .. })));
+            if open && ui.dialogs.kind_name() == Some("message") {
+                Ok(true)
+            } else {
+                Err(format!("the message was answered: {:?}", g.pending))
+            }
+        }),
+        key('d'),
+        Step::AnswerUntil('n', "a command after eating", |g| {
+            fail_on_error_screen(g)?;
+            Ok(matches!(g.pending, Some((_, Prompt::Command))))
+        }),
+        // 'd' reached the engine: getobj ate the ration, no "Never mind."
+        Step::Wait("the food ration eaten", |g| {
+            let log: Vec<&str> = g.world.log.iter().map(|m| m.text.as_str()).collect();
+            let shown = log.iter().rposition(|t| t.starts_with("d - "));
+            let after = shown.map_or(&[][..], |i| &log[i + 1..]);
+            if !after.is_empty() && !after.iter().any(|t| t.contains("Never mind")) {
+                Ok(true)
+            } else {
+                Err(format!("the log after the message: {after:?}"))
+            }
+        }),
+    ]);
+    steps.extend(quit());
     steps
 }
 
@@ -1750,6 +2087,7 @@ impl SelfTest {
             "save" => save(),
             "close" => close(),
             "crash" => crash(),
+            "dialogs" => dialogs(),
             "menus" => menus(),
             "text" => text(),
             "soak" => soak(args),

@@ -70,6 +70,29 @@ pub fn mono_bold() -> Gd<SystemFont> {
     font
 }
 
+/// The same font in italics.
+pub fn mono_italic() -> Gd<SystemFont> {
+    let mut font = mono_font();
+    font.set_font_italic(true);
+    font
+}
+
+/// The advance of one character of the monospace font at `FONT_SIZE`, and
+/// its line height, in pixels (typical values when the font cannot tell).
+pub fn mono_metrics() -> (f32, f32) {
+    let font = mono_font();
+    let w = font.get_char_size('M' as u32, FONT_SIZE).x;
+    let h = font.get_height_ex().font_size(FONT_SIZE).done();
+    let w = if w > 1.0 { w } else { FONT_SIZE as f32 * 0.6 };
+    let h = if h > 1.0 { h } else { FONT_SIZE as f32 * 1.2 };
+    (w, h)
+}
+
+/// A button that stands out: the answer Enter gives.
+pub fn default_button_style() -> Gd<StyleBoxFlat> {
+    button_style(Color::from_rgb(0.22, 0.19, 0.1), ACCENT)
+}
+
 /// A panel background: dark, with a thin border.
 pub fn panel_style(bg: Color) -> Gd<StyleBoxFlat> {
     let mut sb = StyleBoxFlat::new_gd();
