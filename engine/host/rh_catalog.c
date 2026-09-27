@@ -3,6 +3,7 @@
  * yet shuffled object appearances.  Object tiles are described by
  * appearance only -- the true object type never leaves the engine. */
 #include "hack.h"
+#include "func_tab.h"
 #include "rh_proto.h"
 #include "rh_bridge.h"
 
@@ -160,6 +161,29 @@ object_tiles_json(void)
     return arr;
 }
 
+/* symbolic names of the map symbols ("S_vwall"): the explanations in
+   defsyms[] are not unique ("wall" for every wall), so clients classify map
+   features by these */
+static const struct {
+    int idx;
+    const char *sym;
+} cmap_syms[] = {
+#define DUMP_ENUMS_PCHAR
+#include "defsym.h"
+#undef DUMP_ENUMS_PCHAR
+};
+
+static const char *
+cmap_sym(int i)
+{
+    size_t k;
+
+    for (k = 0; k < SIZE(cmap_syms); k++)
+        if (cmap_syms[k].idx == i)
+            return cmap_syms[k].sym;
+    return "";
+}
+
 static cJSON *
 cmap_json(void)
 {
@@ -170,6 +194,7 @@ cmap_json(void)
         c = cJSON_CreateObject();
         cJSON_AddNumberToObject(c, "idx", i);
         cJSON_AddItemToObject(c, "name", rh_json_string(defsyms[i].explanation));
+        cJSON_AddStringToObject(c, "sym", cmap_sym(i));
         cJSON_AddNumberToObject(c, "ch", defsyms[i].sym);
         cJSON_AddNumberToObject(c, "color", defsyms[i].color);
         cJSON_AddItemToArray(arr, c);
@@ -284,6 +309,63 @@ glyph_offsets_json(void)
     return o;
 }
 
+/* extended commands a player can type: no internal, wizard-mode or
+   unavailable ones */
+static cJSON *
+extcmds_json(void)
+{
+    static const struct {
+        unsigned bit;
+        const char *name;
+    } flag_names[] = {
+        { AUTOCOMPLETE, "autocomplete" }, { GENERALCMD, "general" },
+        { PREFIXCMD, "prefix" },          { MOVEMENTCMD, "movement" },
+    };
+    cJSON *arr = cJSON_CreateArray(), *e, *fl;
+    const struct ext_func_tab *ef;
+    size_t k;
+    int i;
+
+    for (i = 0; (ef = extcmds_getentry(i)) != 0 && ef->ef_txt; i++) {
+        if (ef->flags & (INTERNALCMD | WIZMODECMD | CMD_NOT_AVAILABLE))
+            continue;
+        e = cJSON_CreateObject();
+        cJSON_AddItemToObject(e, "name", rh_json_string(ef->ef_txt));
+        cJSON_AddItemToObject(e, "desc", rh_json_string(ef->ef_desc));
+        cJSON_AddNumberToObject(e, "key", ef->key);
+        fl = cJSON_AddArrayToObject(e, "flags");
+        for (k = 0; k < SIZE(flag_names); k++)
+            if (ef->flags & flag_names[k].bit)
+                cJSON_AddItemToArray(fl,
+                                     cJSON_CreateString(flag_names[k].name));
+        cJSON_AddItemToArray(arr, e);
+    }
+    return arr;
+}
+
+/* status conditions: the bits of status_update's "conds" and their names */
+static cJSON *
+conditions_json(void)
+{
+    cJSON *arr = cJSON_CreateArray(), *c;
+    const char *shortest;
+    int i, t;
+
+    for (i = 0; i < CONDITION_COUNT; i++) {
+        c = cJSON_CreateObject();
+        cJSON_AddNumberToObject(c, "mask", (double) conditions[i].mask);
+        cJSON_AddItemToObject(c, "name", rh_json_string(conditions[i].text[0]));
+        shortest = conditions[i].text[0];
+        for (t = 1; t < 3; t++)
+            if (conditions[i].text[t]
+                && strlen(conditions[i].text[t]) < strlen(shortest))
+                shortest = conditions[i].text[t];
+        cJSON_AddItemToObject(c, "short", rh_json_string(shortest));
+        cJSON_AddItemToArray(arr, c);
+    }
+    return arr;
+}
+
 char *
 rh_catalog_line(void)
 {
@@ -304,6 +386,8 @@ rh_catalog_line(void)
     cJSON_AddItemToObject(a, "races", races_json());
     cJSON_AddItemToObject(a, "genders", genders_json());
     cJSON_AddItemToObject(a, "aligns", aligns_json());
+    cJSON_AddItemToObject(a, "extcmds", extcmds_json());
+    cJSON_AddItemToObject(a, "conditions", conditions_json());
     line = cJSON_PrintUnformatted(msg);
     cJSON_Delete(msg);
     if (!line)

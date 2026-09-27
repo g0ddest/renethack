@@ -13,6 +13,12 @@ pub struct Catalog {
     pub races: Vec<RaceInfo>,
     pub genders: Vec<NamedCode>,
     pub aligns: Vec<NamedCode>,
+    /// Extended commands a player may type (`#pray`, ...), in NetHack's order.
+    #[serde(default)]
+    pub extcmds: Vec<ExtCmdInfo>,
+    /// Status conditions: the bits of `status_update` field "condition".
+    #[serde(default)]
+    pub conditions: Vec<ConditionInfo>,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -69,7 +75,11 @@ pub struct ObjectTile {
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct CmapInfo {
     pub idx: i32,
+    /// NetHack's explanation ("wall"); not unique.
     pub name: String,
+    /// Symbolic name from defsym.h ("S_vwall"); unique, use it to classify.
+    #[serde(default)]
+    pub sym: String,
     pub ch: i32,
     pub color: i32,
 }
@@ -103,4 +113,22 @@ pub struct NamedCode {
     pub idx: i32,
     pub adj: String,
     pub code: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct ExtCmdInfo {
+    pub name: String,
+    pub desc: String,
+    /// Default key binding (0 = none).
+    pub key: i32,
+    /// Subset of "autocomplete", "general" (takes no time), "prefix", "movement".
+    pub flags: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct ConditionInfo {
+    /// BL_MASK_* bit.
+    pub mask: u64,
+    pub name: String,
+    pub short: String,
 }

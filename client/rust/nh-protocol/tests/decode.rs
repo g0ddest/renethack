@@ -63,6 +63,25 @@ fn catalog_describes_monsters_by_their_visible_traits() {
 }
 
 #[test]
+fn catalog_names_map_symbols_commands_and_conditions() {
+    let msgs = decoded();
+    let cat = catalog(&msgs);
+    // every map symbol has its unique defsym.h name, in index order
+    assert!(cat.cmap.iter().all(|c| c.sym.starts_with("S_")));
+    assert_eq!(cat.cmap[1].sym, "S_vwall");
+    let syms: std::collections::HashSet<_> = cat.cmap.iter().map(|c| &c.sym).collect();
+    assert_eq!(syms.len(), cat.cmap.len());
+    // extended commands a player may type, wizard-mode ones left out
+    let pray = cat.extcmds.iter().find(|e| e.name == "pray").unwrap();
+    assert!(pray.flags.contains(&"autocomplete".to_string()));
+    assert!(cat.extcmds.iter().all(|e| !e.name.starts_with("wiz")));
+    // conditions: one bit each
+    let stone = cat.conditions.iter().find(|c| c.name == "Stone").unwrap();
+    assert_eq!(stone.mask, 0x0010_0000);
+    assert!(cat.conditions.iter().all(|c| c.mask.count_ones() == 1));
+}
+
+#[test]
 fn object_tiles_never_name_the_hidden_identity() {
     let msgs = decoded();
     let cat = catalog(&msgs);

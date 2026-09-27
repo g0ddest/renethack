@@ -34,6 +34,14 @@ sed -n 2p "$out" | grep -q '^{"t":"catalog",' || fail "no catalog second"
 if grep -q 'Unknown option' "$out"; then fail "engine rejected an option"; fi
 grep -q '"msg":"client closed the connection"' "$out" || fail "no error on EOF"
 tail -1 "$out" | grep -q '^{"t":"bye"' || fail "no bye last"
+# what the client needs from the catalog: map symbol names, the extended
+# commands a player may type (no wizard-mode ones), status condition names
+sed -n 2p "$out" | grep -q '"sym":"S_vwall"' || fail "catalog: no map symbol names"
+sed -n 2p "$out" | grep -q '"extcmds":\[{' || fail "catalog: no extended commands"
+sed -n 2p "$out" | grep -q '"name":"pray"' || fail "catalog: #pray missing"
+if sed -n 2p "$out" | grep -q '"name":"wizwish"'; then fail "catalog: wizard-mode command listed"; fi
+sed -n 2p "$out" | grep -q '"conditions":\[{"mask":' || fail "catalog: no conditions"
+[ -x "$build/recover" ] || fail "recover is not built"
 ls "$tmp/base/save" | grep -q . || fail "game not saved on EOF"
 
 # whatever the game prints by itself (terminal NetHack writes --version to

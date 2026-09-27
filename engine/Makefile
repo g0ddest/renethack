@@ -1,7 +1,7 @@
 # renethack engine: pristine NetHack (upstream submodule) + patches + libnh
 # + our host  ->  build/nh-engine and build/data/.
 #
-#   make            build everything
+#   make            build everything (nh-engine, recover, data/)
 #   make test       host unit tests + engine smoke test
 #   make clean      remove build/
 #
@@ -29,7 +29,7 @@ PATCHSET := $(shell cat $(addprefix patches/,$(PATCHES)) | shasum -a 256 | cut -
 HOST_SRC := $(wildcard $(HOST)/*.c $(HOST)/*.h $(HOST)/rh.mk)
 
 .PHONY: all test clean
-all: $(BUILD)/nh-engine $(BUILD)/data/.stamp
+all: $(BUILD)/nh-engine $(BUILD)/recover $(BUILD)/data/.stamp
 
 $(TREE)/.patched: patches/series $(addprefix patches/,$(PATCHES))
 	rm -rf $(TREE)
@@ -51,6 +51,11 @@ $(BUILD)/nh-engine: $(TREE)/.built $(HOST_SRC)
 	$(MAKE) -C $(TREE)/src -f $(HOST)/rh.mk $(NHVARS) \
 		RH_HOST=$(HOST) RH_PATCHSET=$(PATCHSET) nh-engine
 	cp $(TREE)/src/nh-engine $@
+
+# NetHack's own recover utility: rebuilds a save from the level files a
+# crashed or killed game left in the playground
+$(BUILD)/recover: $(TREE)/.built
+	cp $(TREE)/util/recover $@
 
 $(BUILD)/data/.stamp: $(TREE)/.built runtime/sysconf
 	rm -rf $(BUILD)/data
