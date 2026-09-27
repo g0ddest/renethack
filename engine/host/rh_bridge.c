@@ -273,7 +273,11 @@ h_display_nhwindow(void *ret UNUSED, va_list *ap)
     cJSON *a = args_new();
 
     add_int(a, "win", w);
-    if (blocking) {
+    /* tty waits on text and menu windows whatever the flag, and the core
+       relies on it (#version, the key list, shop bills): so does the client */
+    if (blocking
+        || (valid_win(w)
+            && (windows[w].type == NHW_TEXT || windows[w].type == NHW_MENU))) {
         /* "--More--" style pause: the client acknowledges */
         cJSON_Delete(rh_proto_request("display_nhwindow", a));
     } else {

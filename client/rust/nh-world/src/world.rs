@@ -68,7 +68,8 @@ pub struct World {
     pub raw_lines: Vec<String>,
     /// exit_nhwindows text ("Be seeing you...").
     pub exit_text: Option<String>,
-    /// Last text window shown (summary, tombstone).
+    /// Last text window shown. Cleared when the message window goes (the
+    /// end of the game), so from then on only the summary or tombstone.
     pub last_text: Vec<TextLine>,
     pub windows_exited: bool,
     input_seq: u64,
@@ -141,7 +142,10 @@ impl World {
                     self.last_text = w.lines;
                 }
                 if self.message_win == Some(*win) {
+                    // the game is over: a text window seen during play is
+                    // not its summary (answering q skips the summary)
                     self.message_win = None;
+                    self.last_text.clear();
                 }
                 if self.map_win == Some(*win) {
                     self.map_win = None;
@@ -275,6 +279,14 @@ impl World {
             },
             Request::GetExtCmd => Prompt::ExtCmd,
             Request::DisplayNhwindow { win } => match self.windows.get(win) {
+                // an empty text or menu window has nothing to show
+                Some(w)
+                    if matches!(w.kind, WindowKind::Text | WindowKind::Menu)
+                        && w.lines.is_empty()
+                        && w.menu.is_empty() =>
+                {
+                    Prompt::AutoAck
+                }
                 Some(w) if w.kind == WindowKind::Text => {
                     if !w.lines.is_empty() {
                         self.last_text = w.lines.clone();
@@ -434,6 +446,53 @@ mod tests {
         );
         // an empty window (ESC at the first disclosure question) changes nothing
         assert_eq!(texts(&w.last_text), vec!["Goodbye"]);
+    }
+
+    #[test]
+    fn text_seen_during_play_is_not_the_summary() {
+        let mut w = World::new();
+        feed(&mut w, START);
+        let p = feed(
+            &mut w,
+            r#"
+            {"t":"win","fn":"create_nhwindow","a":{"win":4,"type":"text"}}
+            {"t":"win","fn":"putstr","a":{"win":4,"attr":0,"str":"Unix NetHack Version 5.0.0"}}
+            {"t":"req","id":5,"fn":"display_nhwindow","a":{"win":4}}
+            "#,
+        );
+        assert!(matches!(p, Some(Prompt::Show { .. })), "{p:?}");
+        // #quit, then q to the first disclosure question: the summary
+        // window is created and destroyed empty
+        feed(
+            &mut w,
+            r#"
+            {"t":"win","fn":"destroy_nhwindow","a":{"win":4}}
+            {"t":"win","fn":"destroy_nhwindow","a":{"win":2}}
+            {"t":"win","fn":"destroy_nhwindow","a":{"win":1}}
+            {"t":"win","fn":"create_nhwindow","a":{"win":1,"type":"text"}}
+            {"t":"win","fn":"destroy_nhwindow","a":{"win":1}}
+            "#,
+        );
+        assert!(w.last_text.is_empty(), "{:?}", w.last_text);
+    }
+
+    #[test]
+    fn an_empty_text_window_is_not_shown() {
+        let mut w = World::new();
+        feed(&mut w, START);
+        let p = feed(
+            &mut w,
+            r#"
+            {"t":"win","fn":"create_nhwindow","a":{"win":4,"type":"text"}}
+            {"t":"req","id":5,"fn":"display_nhwindow","a":{"win":4}}
+            "#,
+        );
+        assert_eq!(p, Some(Prompt::AutoAck));
+        let p = feed(
+            &mut w,
+            r#"{"t":"req","id":6,"fn":"display_nhwindow","a":{"win":3}}"#,
+        );
+        assert_eq!(p, Some(Prompt::AutoAck));
     }
 
     #[test]
