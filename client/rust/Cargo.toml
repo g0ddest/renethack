@@ -11,3 +11,11 @@ license = "NGPL"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
+
+# A level change sends ~1700 print_glyph lines: keep the decoder fast in
+# debug builds too (2000 lines take 56 ms unoptimized, 6 ms optimized).
+[profile.dev.package."*"]
+opt-level = 2
+
+[profile.dev.package.nh-protocol]
+opt-level = 2

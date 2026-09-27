@@ -1,7 +1,7 @@
-use std::io::{BufRead, BufReader, Write};
-use std::path::PathBuf;
+use std::io::{BufRead, BufReader, Read, Seek, SeekFrom, Write};
+use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, Command, ExitStatus, Stdio};
-use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
+use std::sync::mpsc::{self, Receiver, RecvTimeoutError, TryRecvError};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -13,6 +13,10 @@ use crate::LinkError;
 /// Options every session needs: turn counter for the timeline, no intro
 /// text, no tutorial prompt, no autopickup surprises.
 pub const BASE_OPTIONS: &str = "time,!legacy,!tutorial,!autopickup";
+
+/// Options the interactive client adds to character/restore options
+/// (the status line carries experience points only with "showexp").
+pub const CLIENT_EXTRA_OPTIONS: &str = "showexp";
 
 /// How to start one engine process.
 #[derive(Debug, Clone)]
@@ -60,6 +64,13 @@ impl EngineConfig {
             "{BASE_OPTIONS},name:{name},role:{role},race:{race},gender:{gender},align:{align}"
         ))
     }
+
+    /// `BASE_OPTIONS` plus the name only: NetHack restores the save for this
+    /// name (the regularized form, "Olaf_the_Bold", finds it too).
+    pub fn restore_options(name: &str) -> Result<String, LinkError> {
+        check_name(name)?;
+        Ok(format!("{BASE_OPTIONS},name:{name}"))
+    }
 }
 
 /// NetHack keeps a name in PL_NSIZ = 32 bytes, including the terminating NUL.
@@ -87,15 +98,27 @@ pub struct Incoming {
     pub msg: EngineMsg,
 }
 
+/// Result of a non-blocking read.
+#[derive(Debug)]
+pub enum Polled {
+    Line(Incoming),
+    /// Nothing ready yet.
+    Empty,
+    /// The engine closed its output and every line has been taken.
+    Closed,
+}
+
 /// A running engine process.
 pub struct Engine {
     child: Child,
     stdin: Option<ChildStdin>,
-    lines: Receiver<std::io::Result<String>>,
+    lines: Receiver<Result<Incoming, LinkError>>,
+    stderr: PathBuf,
 }
 
 impl Engine {
     pub fn spawn(cfg: &EngineConfig) -> Result<Engine, LinkError> {
+        let stderr = cfg.playground.join("engine.stderr");
         let mut cmd = Command::new(&cfg.engine);
         cmd.current_dir(&cfg.playground)
             .env("NETHACKOPTIONS", &cfg.options)
@@ -103,9 +126,7 @@ impl Engine {
             .env_remove("RENETHACK_FIXED_TIME")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .stderr(Stdio::from(std::fs::File::create(
-                cfg.playground.join("engine.stderr"),
-            )?));
+            .stderr(Stdio::from(std::fs::File::create(&stderr)?));
         if let Some(seed) = cfg.seed {
             cmd.env("RENETHACK_SEED", seed.to_string());
         }
@@ -119,9 +140,17 @@ impl Engine {
         let stdin = child.stdin.take();
         let stdout = child.stdout.take().expect("stdout is piped");
         let (tx, rx) = mpsc::channel();
+        // parse off the caller's thread: a level change is ~1700 lines
         thread::spawn(move || {
             for line in BufReader::new(stdout).lines() {
-                if tx.send(line).is_err() {
+                let item = match line {
+                    Ok(raw) => match parse_line(&raw) {
+                        Ok(msg) => Ok(Incoming { raw, msg }),
+                        Err(source) => Err(LinkError::Protocol { line: raw, source }),
+                    },
+                    Err(e) => Err(LinkError::Io(e)),
+                };
+                if tx.send(item).is_err() {
                     break;
                 }
             }
@@ -130,23 +159,37 @@ impl Engine {
             child,
             stdin,
             lines: rx,
+            stderr,
         })
     }
 
     /// Next message, or `None` once the engine closed its output.
     pub fn recv(&mut self, timeout: Duration) -> Result<Option<Incoming>, LinkError> {
         match self.lines.recv_timeout(timeout) {
-            Ok(Ok(raw)) => {
-                let msg = parse_line(&raw).map_err(|source| LinkError::Protocol {
-                    line: raw.clone(),
-                    source,
-                })?;
-                Ok(Some(Incoming { raw, msg }))
-            }
-            Ok(Err(e)) => Err(LinkError::Io(e)),
+            Ok(item) => item.map(Some),
             Err(RecvTimeoutError::Disconnected) => Ok(None),
             Err(RecvTimeoutError::Timeout) => Err(LinkError::Timeout(timeout)),
         }
+    }
+
+    /// Lines are parsed in the reader thread; this only moves a ready value.
+    /// Never blocks. A bad line comes back as `Err(LinkError::Protocol)` in
+    /// its turn, after the lines before it.
+    pub fn try_recv(&mut self) -> Result<Polled, LinkError> {
+        match self.lines.try_recv() {
+            Ok(item) => item.map(Polled::Line),
+            Err(TryRecvError::Empty) => Ok(Polled::Empty),
+            Err(TryRecvError::Disconnected) => Ok(Polled::Closed),
+        }
+    }
+
+    pub fn try_wait(&mut self) -> Result<Option<ExitStatus>, LinkError> {
+        Ok(self.child.try_wait()?)
+    }
+
+    /// Last lines of `<playground>/engine.stderr` (for error screens).
+    pub fn stderr_tail(&self, max_lines: usize) -> String {
+        read_tail(&self.stderr, max_lines).unwrap_or_default()
     }
 
     /// Answer request `id` with the `"r"` object.
@@ -194,6 +237,20 @@ impl Drop for Engine {
     }
 }
 
+/// How much of a log file is read for its tail.
+const TAIL_BYTES: u64 = 64 * 1024;
+
+fn read_tail(path: &Path, max_lines: usize) -> std::io::Result<String> {
+    let mut file = std::fs::File::open(path)?;
+    let len = file.metadata()?.len();
+    file.seek(SeekFrom::Start(len.saturating_sub(TAIL_BYTES)))?;
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes)?;
+    let text = String::from_utf8_lossy(&bytes);
+    let lines: Vec<&str> = text.lines().collect();
+    Ok(lines[lines.len().saturating_sub(max_lines)..].join("\n"))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -234,5 +291,24 @@ mod tests {
             "neutral",
         );
         assert!(bad.is_err());
+    }
+
+    #[test]
+    fn restoring_names_only_the_hero() {
+        assert_eq!(
+            EngineConfig::restore_options("Olaf_the_Bold").unwrap(),
+            "time,!legacy,!tutorial,!autopickup,name:Olaf_the_Bold"
+        );
+        assert!(EngineConfig::restore_options("Hero,playmode:debug").is_err());
+    }
+
+    #[test]
+    fn the_stderr_tail_is_the_last_lines() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("engine.stderr");
+        std::fs::write(&path, "one\ntwo\nthree\n").unwrap();
+        assert_eq!(read_tail(&path, 2).unwrap(), "two\nthree");
+        assert_eq!(read_tail(&path, 10).unwrap(), "one\ntwo\nthree");
+        assert!(read_tail(&dir.path().join("missing"), 2).is_err());
     }
 }
