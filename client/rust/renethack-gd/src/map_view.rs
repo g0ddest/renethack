@@ -69,6 +69,8 @@ const WOOD: Color = Color::from_rgb(0.42, 0.26, 0.11);
 const EARTH: Color = Color::from_rgb(0.17, 0.14, 0.10);
 const DEEP: Color = Color::from_rgb(0.03, 0.03, 0.05);
 const STATUE: Color = Color::from_rgb(0.58, 0.58, 0.60);
+/// Scratches of an engraving on the floor.
+const ENGRAVING: Color = Color::from_rgb(0.74, 0.71, 0.62);
 const HERO_RING: Color = Color::from_rgba(1.0, 0.82, 0.30, 0.9);
 const PET_RING: Color = Color::from_rgba(1.0, 0.45, 0.75, 0.9);
 const HERO_LIGHT: Color = Color::from_rgb(1.0, 0.86, 0.66);
@@ -373,6 +375,27 @@ fn is_boulder(g: &Glyph, catalog: &Catalog) -> bool {
 /// wall), so a wall or door here would hide it from the camera and is
 /// drawn low.
 fn terrain_look(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool) {
+    terrain_base(look, t, sym, g, cut);
+    if engraved(sym) {
+        for (x, z, yaw) in [(-0.06, -0.12, 18.0), (0.04, 0.02, -24.0), (0.0, 0.16, 8.0)] {
+            let mesh = cuboid(0.46, 0.012, 0.035);
+            look.turned(
+                mesh,
+                ENGRAVING,
+                Finish::Matte,
+                at(x, 0.006, z),
+                at(0.0, yaw, 0.0),
+            );
+        }
+    }
+}
+
+/// Something is engraved here (in a room or a corridor).
+fn engraved(sym: &str) -> bool {
+    matches!(sym, "S_engroom" | "S_engrcorr")
+}
+
+fn terrain_base(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool) {
     let c = g.color;
     // "S_v..." features sit in a vertical wall: the passage runs along x
     let vertical = sym.starts_with("S_v");
@@ -399,6 +422,9 @@ fn terrain_look(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool) {
             );
             look.ground = wall_h;
         }
+        // an engraving's colour (bright blue) would make it a pool: the
+        // floor keeps its own colour and gets scratches (below)
+        Terrain::Floor if engraved(sym) => look.solid(tile, FLOOR, Finish::Matte, Vector3::ZERO),
         Terrain::Floor => look.solid(tile, tinted(FLOOR, c), Finish::Matte, Vector3::ZERO),
         Terrain::DarkFloor => look.solid(tile, FLOOR_DARK, Finish::Matte, Vector3::ZERO),
         Terrain::Corridor => {
@@ -928,7 +954,12 @@ fn look_of(cell: &Cell, near: Near, catalog: &Catalog) -> Look {
         // like the floor around it, when that is known
         None if cell.entity().is_some() => match near.floor(catalog) {
             Some(g) => {
-                let sym = cmap_sym(g, catalog).unwrap_or("");
+                // the floor, not a neighbour's engraving
+                let sym = match cmap_sym(g, catalog).unwrap_or("") {
+                    "S_engroom" => "S_room",
+                    "S_engrcorr" => "S_corr",
+                    sym => sym,
+                };
                 terrain_look(&mut look, terrain_of(sym), sym, g, false);
             }
             None => {
@@ -1646,6 +1677,22 @@ mod tests {
         assert_eq!(letters("S_dnladder"), ">");
         assert_eq!(letters("S_bear_trap"), "^");
         assert_eq!(letters("S_room"), "");
+        // engravings: the plain floor or corridor with scratches, never
+        // tinted their bright blue (a pool's colour)
+        let look = |sym: &str| {
+            let g = cmap(&cat, sym);
+            let cell = Cell {
+                glyph: Some(g.clone()),
+                bk: None,
+                terrain: Some(g),
+            };
+            look_of(&cell, Near::default(), &cat)
+        };
+        for (engr, plain) in [("S_engroom", "S_room"), ("S_engrcorr", "S_corr")] {
+            let (e, p) = (look(engr), look(plain));
+            assert_eq!(e.solids[0].color, p.solids[0].color, "{engr}");
+            assert_eq!(e.solids.len(), p.solids.len() + 3, "{engr}");
+        }
     }
 
     #[test]
