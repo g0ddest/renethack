@@ -1,0 +1,18 @@
+[package]
+name = "renethack-gd"
+description = "renethack: the Godot client (GDExtension)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+godot.workspace = true
+nh-protocol = { path = "../nh-protocol" }
+nh-link = { path = "../nh-link" }
+nh-world = { path = "../nh-world" }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"

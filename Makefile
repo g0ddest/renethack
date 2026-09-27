@@ -8,7 +8,7 @@
 
 GODOT ?= godot
 GODOT_PROJECT := client/godot
-SELFTESTS := smoke save close crash menus text
+SELFTESTS := smoke keys save close crash menus text
 
 .PHONY: all engine client run test test-client lint
 all: engine
