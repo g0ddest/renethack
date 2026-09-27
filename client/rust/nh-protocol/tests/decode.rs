@@ -171,6 +171,30 @@ fn welcome_message_goes_to_the_message_window() {
 }
 
 #[test]
+fn menu_items_and_number_pad_carry_their_additions() {
+    // what the D menu sends for "Auto-select every relevant item"
+    let item = r#"{"t":"win","fn":"add_menu","a":{"win":4,"idx":0,"glyph":null,"selectable":true,"ch":65,"gch":0,"attr":0,"clr":8,"str":"Auto-select every relevant item","preselected":false,"skipinvert":true}}"#;
+    let EngineMsg::Win(WinCall::AddMenu(m)) = parse_line(item).unwrap() else {
+        panic!("expected add_menu")
+    };
+    assert!(m.skipinvert);
+    // older engines send neither field
+    let old = item.replace(r#","skipinvert":true"#, "");
+    let EngineMsg::Win(WinCall::AddMenu(m)) = parse_line(&old).unwrap() else {
+        panic!("expected add_menu")
+    };
+    assert!(!m.skipinvert);
+    let pad = r#"{"t":"win","fn":"number_pad","a":{"state":1,"dirchars":"47896321><"}}"#;
+    assert_eq!(
+        parse_line(pad).unwrap(),
+        EngineMsg::Win(WinCall::NumberPad {
+            state: 1,
+            dirchars: Some("47896321><".into())
+        })
+    );
+}
+
+#[test]
 fn requests_decode_with_their_arguments() {
     let yn = r#"{"t":"req","id":3,"fn":"yn_function","a":{"query":"Really quit without saving?","choices":"yn","default":0}}"#;
     assert_eq!(

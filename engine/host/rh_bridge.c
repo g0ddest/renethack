@@ -379,6 +379,9 @@ h_add_menu(void *ret UNUSED, va_list *ap)
     add_int(a, "clr", clr);
     add_str(a, "str", str);
     add_bool(a, "preselected", (itemflags & MENU_ITEMFLAGS_SELECTED) != 0);
+    /* bulk select/invert ('.', ',', '@') must not turn such items on
+       ("Auto-select every relevant item", "All types") */
+    add_bool(a, "skipinvert", (itemflags & MENU_ITEMFLAGS_SKIPINVERT) != 0);
     menu_add(w, id);
     rh_proto_send("win", "add_menu", a);
 }
@@ -673,12 +676,15 @@ h_get_ext_cmd(void *ret, va_list *ap UNUSED)
     cJSON_Delete(r);
 }
 
+/* after the number_pad option changes; reset_commands() has run, so the
+   current direction keys (swap_yz, phone layout...) go along */
 static void
 h_number_pad(void *ret UNUSED, va_list *ap)
 {
     cJSON *a = args_new();
 
     add_int(a, "state", va_arg(*ap, int));
+    add_str(a, "dirchars", gc.Cmd.dirchars);
     rh_proto_send("win", "number_pad", a);
 }
 
