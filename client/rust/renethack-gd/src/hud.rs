@@ -28,8 +28,8 @@ const LOG_LINES: usize = 60;
 const LOG_VISIBLE: f32 = 8.0;
 /// Height of one line of the monospace font at `theme::FONT_SIZE`.
 const LINE_HEIGHT: f32 = 19.0;
-const MARGIN: f32 = 12.0;
-const STATUS_WIDTH: f32 = 430.0;
+pub(crate) const MARGIN: f32 = 12.0;
+pub(crate) const STATUS_WIDTH: f32 = 430.0;
 const LOG_WIDTH: f32 = 780.0;
 /// Header row, the panel's content margins and the box separation.
 const LOG_CHROME: f32 = 26.0 + 20.0 + 4.0;

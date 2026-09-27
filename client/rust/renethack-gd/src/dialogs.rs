@@ -22,10 +22,23 @@ use godot::prelude::*;
 use nh_protocol::{Catalog, ESC, PickHow, Reply};
 use nh_world::{Key, KeyInput, MenuEntry, MenuOutcome, MenuState, Prompt, TextLine, choice_answer};
 
+use crate::hud::{MARGIN, STATUS_WIDTH};
 use crate::theme::{self, bbcode_escape, hex, nh_color, place};
 use crate::ui_events::{DialogEvent, UiEvent, UiQueue, push};
 
 /// NetHack's BUFSZ less the NUL.
+/// Where a dialog's panel sits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Place {
+    /// Menus, text windows, the palette: centred over a dimmed map.
+    Centre,
+    /// Questions: top centre, the map left as it is.
+    Top,
+}
+
+/// The top of a question's panel: under the prompt line.
+const TOP_Y: f32 = 56.0;
+
 const MAX_TEXT_BYTES: usize = 255;
 const ESC_CHAR: char = '\u{1b}';
 /// A menu item without a colour of its own (CLR_* NO_COLOR).
@@ -810,20 +823,50 @@ impl Dialogs {
         width: f32,
         title: Option<&str>,
     ) -> (Gd<ColorRect>, Gd<PanelContainer>, Gd<VBoxContainer>) {
+        self.frame_at(width, title, Place::Centre)
+    }
+
+    /// A panel with a column where `place` says; a short question sits at
+    /// the top, under the prompt line, and leaves the map around the hero
+    /// (the monster it is about) in sight and undimmed.
+    fn frame_at(
+        &mut self,
+        width: f32,
+        title: Option<&str>,
+        place_at: Place,
+    ) -> (Gd<ColorRect>, Gd<PanelContainer>, Gd<VBoxContainer>) {
         let mut shade = ColorRect::new_alloc();
-        shade.set_color(Color::from_rgba(0.0, 0.0, 0.0, 0.45));
+        let dim = match place_at {
+            Place::Centre => 0.45,
+            Place::Top => 0.0,
+        };
+        shade.set_color(Color::from_rgba(0.0, 0.0, 0.0, dim));
         theme::full_rect_ignore(&shade);
         self.root.add_child(&shade);
         let mut panel = PanelContainer::new_alloc();
         panel.set_mouse_filter(MouseFilter::STOP);
         panel.add_theme_stylebox_override("panel", &self.look.panel);
-        place(
-            &panel,
-            [0.5, 0.5, 0.5, 0.5],
-            [-width / 2.0, -40.0, width / 2.0, 40.0],
-        );
+        match place_at {
+            Place::Centre => {
+                place(
+                    &panel,
+                    [0.5, 0.5, 0.5, 0.5],
+                    [-width / 2.0, -40.0, width / 2.0, 40.0],
+                );
+                panel.set_v_grow_direction(GrowDirection::BOTH);
+            }
+            Place::Top => {
+                // centred right of the status panel, like the prompt line
+                let x = (STATUS_WIDTH + 2.0 * MARGIN) / 2.0;
+                place(
+                    &panel,
+                    [0.5, 0.0, 0.5, 0.0],
+                    [x - width / 2.0, TOP_Y, x + width / 2.0, TOP_Y],
+                );
+                panel.set_v_grow_direction(GrowDirection::END);
+            }
+        }
         panel.set_h_grow_direction(GrowDirection::BOTH);
-        panel.set_v_grow_direction(GrowDirection::BOTH);
         let mut col = VBoxContainer::new_alloc();
         col.add_theme_constant_override("separation", 10);
         if let Some(t) = title.filter(|t| !t.trim().is_empty()) {
@@ -1135,7 +1178,7 @@ impl Dialogs {
         name: bool,
     ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
         let width = self.fit_width(query.chars().count().min(70), 0.0, 560.0);
-        let (shade, panel, mut col) = self.frame(width, Some(query));
+        let (shade, panel, mut col) = self.frame_at(width, Some(query), Place::Top);
         let mut edit = self.line_edit(req);
         if name {
             edit.set_placeholder("a name");
@@ -1242,7 +1285,7 @@ impl Dialogs {
                 default,
             } => {
                 let width = self.fit_width(query.chars().count().min(80), 0.0, 420.0);
-                let (shade, panel, mut col) = self.frame(width, Some(query));
+                let (shade, panel, mut col) = self.frame_at(width, Some(query), Place::Top);
                 let items: Vec<(String, UiEvent)> = visible
                     .iter()
                     .map(|&c| (choice_label(c), dialog_ui(req, DialogEvent::Choice(c))))
@@ -1268,7 +1311,7 @@ impl Dialogs {
             Prompt::Show { title, lines } => self.open_show(title.as_deref(), lines, req),
             Prompt::MessageMenu { letter, mesg, pick } => {
                 let width = self.fit_width(mesg.chars().count().min(80), 0.0, 420.0);
-                let (shade, panel, mut col) = self.frame(width, Some(mesg));
+                let (shade, panel, mut col) = self.frame_at(width, Some(mesg), Place::Top);
                 let (buttons, hint) = if *pick {
                     (
                         vec![
