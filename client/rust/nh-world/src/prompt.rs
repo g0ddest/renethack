@@ -74,13 +74,17 @@ impl Prompt {
     }
 }
 
-/// yn_function with a choices string. Allowed: every character but space and
-/// ESC. Visible: the part before ESC (the rest is hidden but valid), without
-/// spaces, the word " or " and '#' (a count, which a reply cannot carry).
+/// yn_function with a choices string. Allowed: every character but space,
+/// ESC and '#'. '#' asks tty to read a count (yn_number); the host never
+/// reads one, so the core would take '#' as 'n'. Visible: the part before
+/// ESC (the rest is hidden but valid), without spaces and the word " or ".
 pub(crate) fn choice(query: &str, choices: &str, default: i32) -> Prompt {
     let esc = char::from(ESC as u8);
     let mut allowed = Vec::new();
-    for c in choices.chars().filter(|&c| c != ' ' && c != esc) {
+    for c in choices
+        .chars()
+        .filter(|&c| c != ' ' && c != esc && c != '#')
+    {
         if !allowed.contains(&c) {
             allowed.push(c);
         }
@@ -140,9 +144,9 @@ mod tests {
         // after ESC: valid but not shown
         let p = choice("Do you want to see your conduct?", "ynq\x1ba", 'n' as i32);
         assert_eq!(parts(&p), ("ynq".into(), "ynqa".into(), Some('n')));
-        // '#' lets tty type a count; it is not a button
+        // '#' lets tty type a count, which no reply can carry: not an answer
         let p = choice("Pick up a dagger?", "yn#aq", 'y' as i32);
-        assert_eq!(parts(&p), ("ynaq".into(), "yn#aq".into(), Some('y')));
+        assert_eq!(parts(&p), ("ynaq".into(), "ynaq".into(), Some('y')));
         // a default that is not a choice is no default
         let p = choice("Really attack?", "yn", 0);
         assert_eq!(parts(&p), ("yn".into(), "yn".into(), None));
