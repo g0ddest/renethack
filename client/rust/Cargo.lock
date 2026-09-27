@@ -288,6 +288,7 @@ dependencies = [
 name = "nh-link"
 version = "0.1.0"
 dependencies = [
+ "libc",
  "nh-protocol",
  "serde",
  "serde_json",

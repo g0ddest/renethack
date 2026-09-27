@@ -361,6 +361,9 @@ fn recover_rebuilds_a_killed_game() {
         let (id, _) = next_decision(&mut s, &mut seen).unwrap();
         s.answer(id, &Reply::Key('s' as i32)).unwrap();
     }
+    // a running game is not interrupted: recovering it would take its
+    // level files away
+    assert!(interrupted_games(pg.path()).unwrap().is_empty());
     // killed while busy: a request it may have sent already is not handed out
     s.kill();
     assert!(s.pending().is_none());

@@ -24,8 +24,9 @@ pub struct SavedGame {
 }
 
 /// Newest first. Strips .gz/.Z/.bz2/.xz, skips panic saves (.e before or
-/// after the suffix); the uid prefix is the file owner's uid, and "0Hero"
-/// and "0Hero.gz" are one game.
+/// after the suffix); the uid prefix is this process's uid (the engine is
+/// its child and NetHack names saves by getuid(), whoever owns the file),
+/// and "0Hero" and "0Hero.gz" are one game.
 pub fn list_saves(playground: &Path) -> io::Result<Vec<SavedGame>> {
     let entries = match fs::read_dir(playground.join("save")) {
         Ok(entries) => entries,
@@ -33,6 +34,7 @@ pub fn list_saves(playground: &Path) -> io::Result<Vec<SavedGame>> {
         Err(e) => return Err(e),
     };
     let names = load_names(playground);
+    let uid = current_uid();
     let mut games: Vec<SavedGame> = Vec::new();
     for entry in entries {
         let entry = entry?;
@@ -41,7 +43,7 @@ pub fn list_saves(playground: &Path) -> io::Result<Vec<SavedGame>> {
         let Some(name) = file_name
             .to_str()
             .filter(|_| meta.is_file())
-            .and_then(|f| save_name(f, owner_uid(&meta)))
+            .and_then(|f| save_name(f, uid))
         else {
             continue;
         };
@@ -84,13 +86,17 @@ pub fn save_exists(playground: &Path, name: &str) -> bool {
 
 /// Lock slots of interrupted games: bases like "alock" (files `<base>.0`),
 /// plus any "<uid><name>.0" in case MAXPLAYERS is ever dropped. None if
-/// the playground does not exist yet.
+/// the playground does not exist yet. A slot whose game still runs (the
+/// pid NetHack wrote first into level 0 is alive) is not interrupted:
+/// `recover` would take its level files away from it. NetHack's own
+/// recover never looks at that pid.
 pub fn interrupted_games(playground: &Path) -> io::Result<Vec<String>> {
     let entries = match fs::read_dir(playground) {
         Ok(entries) => entries,
         Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(Vec::new()),
         Err(e) => return Err(e),
     };
+    let uid = current_uid();
     let mut bases = Vec::new();
     for entry in entries {
         let entry = entry?;
@@ -103,7 +109,8 @@ pub fn interrupted_games(playground: &Path) -> io::Result<Vec<String>> {
         else {
             continue;
         };
-        if is_lock_slot(base) || save_name(base, owner_uid(&meta)).is_some() {
+        let slot = is_lock_slot(base) || save_name(base, uid).is_some();
+        if slot && !runs(&entry.path()) {
             bases.push(base.to_string());
         }
     }
@@ -149,10 +156,9 @@ pub fn recover_game(recover: &Path, playground: &Path, base: &str) -> Result<Rec
         }
         None => None,
     };
-    let name = file.and_then(|f| {
-        let meta = fs::metadata(&f).ok()?;
-        save_name(f.file_name()?.to_str()?, owner_uid(&meta))
-    });
+    let name = file
+        .filter(|f| f.is_file())
+        .and_then(|f| save_name(f.file_name()?.to_str()?, current_uid()));
     match name {
         Some(name) if out.status.success() => Ok(Recovered::Saved(name)),
         _ => {
@@ -173,7 +179,7 @@ fn regularize(name: &str) -> String {
 }
 
 /// The game name in a save file name ("0Hero.gz" -> "Hero"), or `None` for
-/// panic saves and other files. `uid` is the file owner's.
+/// panic saves and other files. `uid` is the engine's (`current_uid`).
 fn save_name(file_name: &str, uid: Option<u32>) -> Option<String> {
     let base = COMPRESSED
         .iter()
@@ -228,15 +234,44 @@ fn load_names(playground: &Path) -> BTreeMap<String, String> {
         .unwrap_or_default()
 }
 
+/// The uid NetHack puts in save and lock names: the engine is a child of
+/// this process and runs with its uid.
 #[cfg(unix)]
-fn owner_uid(meta: &fs::Metadata) -> Option<u32> {
-    use std::os::unix::fs::MetadataExt;
-    Some(meta.uid())
+fn current_uid() -> Option<u32> {
+    // SAFETY: getuid has no preconditions and cannot fail
+    Some(unsafe { libc::getuid() })
 }
 
 #[cfg(not(unix))]
-fn owner_uid(_meta: &fs::Metadata) -> Option<u32> {
+fn current_uid() -> Option<u32> {
     None
+}
+
+/// Does the game whose level 0 is `level0` still run? NetHack writes its
+/// pid (an int, native byte order) first (getlock() in unixunix.c).
+fn runs(level0: &Path) -> bool {
+    use std::io::Read;
+    let mut pid = [0u8; 4];
+    let read = fs::File::open(level0).and_then(|mut f| f.read_exact(&mut pid));
+    read.is_ok() && process_alive(i32::from_ne_bytes(pid))
+}
+
+#[cfg(unix)]
+fn process_alive(pid: i32) -> bool {
+    if pid <= 0 {
+        return false;
+    }
+    // SAFETY: signal 0 sends nothing; it only checks that the pid exists
+    if unsafe { libc::kill(pid, 0) } == 0 {
+        return true;
+    }
+    // EPERM: it exists, under another user
+    io::Error::last_os_error().raw_os_error() == Some(libc::EPERM)
+}
+
+#[cfg(not(unix))]
+fn process_alive(_pid: i32) -> bool {
+    false
 }
 
 #[cfg(test)]
@@ -253,7 +288,7 @@ mod tests {
         assert_eq!(name("0Hero.e.gz"), None);
         assert_eq!(name("0Olaf_the_Bold.gz").as_deref(), Some("Olaf_the_Bold"));
         assert_eq!(name("0Сигурд.gz").as_deref(), Some("Сигурд"));
-        // the uid is the owner's, so a name may start with digits
+        // the uid is known, so a name may start with digits
         assert_eq!(save_name("1000007.bz2", Some(1000)).as_deref(), Some("007"));
         assert_eq!(save_name("0Hero", Some(1000)), None);
         assert_eq!(name("0"), None);
@@ -276,9 +311,63 @@ mod tests {
     }
 
     #[cfg(unix)]
-    fn my_uid(dir: &Path) -> u32 {
-        use std::os::unix::fs::MetadataExt;
-        fs::metadata(dir).unwrap().uid()
+    fn my_uid(_dir: &Path) -> u32 {
+        current_uid().unwrap()
+    }
+
+    /// A level 0 as NetHack starts it: the pid, then more.
+    fn level0(pid: i32) -> Vec<u8> {
+        let mut bytes = pid.to_ne_bytes().to_vec();
+        bytes.extend_from_slice(b"rest of the level");
+        bytes
+    }
+
+    /// A pid that ran and is gone (reaped).
+    #[cfg(unix)]
+    fn dead_pid() -> i32 {
+        let mut child = std::process::Command::new("true").spawn().unwrap();
+        let pid = child.id() as i32;
+        child.wait().unwrap();
+        pid
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn saves_are_named_by_the_engines_uid_not_the_owner() {
+        let pg = tempfile::tempdir().unwrap();
+        let save = pg.path().join("save");
+        fs::create_dir(&save).unwrap();
+        let uid = my_uid(pg.path());
+        // copied from another account: the engine looks for its own uid
+        let other = uid + 1;
+        fs::write(save.join(format!("{other}Hero.gz")), "x").unwrap();
+        fs::write(save.join(format!("{uid}Olaf.gz")), "x").unwrap();
+        let names: Vec<String> = list_saves(pg.path())
+            .unwrap()
+            .into_iter()
+            .map(|g| g.name)
+            .collect();
+        assert_eq!(names, ["Olaf"]);
+        assert!(!save_exists(pg.path(), "Hero"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_running_games_slot_is_not_interrupted() {
+        let pg = tempfile::tempdir().unwrap();
+        let me = std::process::id() as i32;
+        fs::write(pg.path().join("alock.0"), level0(me)).unwrap();
+        fs::write(pg.path().join("alock.1"), "x").unwrap();
+        fs::write(pg.path().join("block.0"), level0(dead_pid())).unwrap();
+        fs::write(pg.path().join("clock.0"), level0(0)).unwrap();
+        // too short to hold a pid: recover will say what is wrong
+        fs::write(pg.path().join("dlock.0"), "x").unwrap();
+        assert_eq!(
+            interrupted_games(pg.path()).unwrap(),
+            ["block", "clock", "dlock"]
+        );
+        assert!(runs(&pg.path().join("alock.0")));
+        assert!(!runs(&pg.path().join("nowhere.0")));
     }
 
     #[cfg(unix)]

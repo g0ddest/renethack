@@ -14,9 +14,9 @@ use godot::classes::{
 use godot::global::MouseButton;
 use godot::prelude::*;
 use nh_link::{
-    AnswerError, CLIENT_EXTRA_OPTIONS, Ending, EngineConfig, LiveSession, Recovered, SessionEvent,
-    create_playground, fetch_catalog, interrupted_games, list_saves, recover_game, remember_name,
-    save_exists,
+    AnswerError, CLIENT_EXTRA_OPTIONS, Ending, EngineConfig, LiveSession, PlaygroundLock,
+    Recovered, SessionEvent, create_playground, fetch_catalog, interrupted_games, list_saves,
+    lock_playground, recover_game, remember_name, save_exists,
 };
 use nh_protocol::{Catalog, Reply, WinCall};
 use nh_world::{
@@ -148,6 +148,9 @@ pub struct RenethackGame {
     /// first moves there and after it leaves.
     mouse_pos: Option<Vector2>,
     hover: Hover,
+    /// This client's hold on the playground; `None` while another client
+    /// uses it (then nothing here recovers, lists or starts games).
+    playground_lock: Option<PlaygroundLock>,
 }
 
 /// What the hover marker and the tooltip show now: a still mouse over an
@@ -186,6 +189,7 @@ impl INode for RenethackGame {
             seed: None,
             faults: Vec::new(),
             failure: None,
+            playground_lock: None,
         }
     }
 
@@ -244,15 +248,7 @@ impl INode for RenethackGame {
             );
             return;
         }
-        let notice = self.recover_interrupted();
-        match fetch_catalog(&paths.engine(), &paths.data()) {
-            Ok((_, catalog)) => self.catalog = Some(Rc::new(catalog)),
-            Err(e) => {
-                self.show_failure("The game engine does not start.", &e.to_string(), None);
-                return;
-            }
-        }
-        self.show_title(notice);
+        self.start_up();
     }
 
     fn process(&mut self, delta: f64) {
@@ -606,8 +602,52 @@ impl RenethackGame {
         }
     }
 
+    /// Take the playground, recover interrupted games, read the catalog and
+    /// show the title. Again from the error screen's "Title" when another
+    /// client held the playground.
+    fn start_up(&mut self) {
+        let Some(paths) = self.paths.clone() else {
+            return;
+        };
+        match lock_playground(&paths.playground) {
+            Ok(Some(lock)) => self.playground_lock = Some(lock),
+            Ok(None) => {
+                self.show_failure(
+                    "renethack is already running with this game directory.",
+                    &format!(
+                        "{}\nClose the other window first, then press Title.",
+                        paths.playground.display()
+                    ),
+                    None,
+                );
+                return;
+            }
+            Err(e) => {
+                self.show_failure(
+                    "Cannot prepare the game directory.",
+                    &format!("{}: {e}", paths.playground.display()),
+                    None,
+                );
+                return;
+            }
+        }
+        let notice = self.recover_interrupted();
+        if self.catalog.is_none() {
+            match fetch_catalog(&paths.engine(), &paths.data()) {
+                Ok((_, catalog)) => self.catalog = Some(Rc::new(catalog)),
+                Err(e) => {
+                    self.show_failure("The game engine does not start.", &e.to_string(), None);
+                    return;
+                }
+            }
+        }
+        self.show_title(notice);
+    }
+
     /// Run `recover` on every interrupted game; what happened, if anything.
     fn recover_interrupted(&mut self) -> Option<String> {
+        // another client's playground is not ours to repair
+        self.playground_lock.as_ref()?;
         let paths = self.paths.clone()?;
         let bases = match interrupted_games(&paths.playground) {
             Ok(b) => b,
@@ -712,6 +752,7 @@ impl RenethackGame {
             UiEvent::ContinueGame(name) if idle => self.continue_game(&name),
             UiEvent::StartCharacter(choice) if idle => self.start_new(&choice),
             UiEvent::NameEdited(name) if idle => self.check_name(&name),
+            UiEvent::BackToTitle if idle && self.playground_lock.is_none() => self.start_up(),
             UiEvent::BackToTitle if idle => self.show_title(None),
             UiEvent::QuitApp if idle => self.finish_close(),
             UiEvent::CloseRequested => self.on_close_requested(),
