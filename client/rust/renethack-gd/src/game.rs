@@ -41,7 +41,7 @@ const CLOSE_TIMEOUT: Duration = Duration::from_secs(10);
 /// Messages the end screen repeats.
 const END_MESSAGES: usize = 12;
 /// Self-tests are reproducible: this seed and clock unless the environment says otherwise.
-const SELFTEST_SEED: u64 = 42;
+pub(crate) const SELFTEST_SEED: u64 = 42;
 const SELFTEST_TIME: i64 = 1_768_694_400;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -61,6 +61,10 @@ pub struct Args {
     pub selftest: Option<String>,
     pub screenshots: Option<PathBuf>,
     pub playground: Option<String>,
+    /// The engine's seed (overrides RENETHACK_SEED).
+    pub seed: Option<u64>,
+    /// The soak self-test's budget of answered requests.
+    pub soak: Option<u32>,
 }
 
 pub fn parse_args<S: AsRef<str>>(args: &[S]) -> Args {
@@ -73,6 +77,14 @@ pub fn parse_args<S: AsRef<str>>(args: &[S]) -> Args {
             out.screenshots = Some(PathBuf::from(v));
         } else if let Some(v) = a.strip_prefix("--playground=") {
             out.playground = Some(v.to_string());
+        } else if let Some(v) = a.strip_prefix("--seed=")
+            && let Ok(n) = v.trim().parse()
+        {
+            out.seed = Some(n);
+        } else if let Some(v) = a.strip_prefix("--soak=")
+            && let Ok(n) = v.trim().parse()
+        {
+            out.soak = Some(n);
         } else {
             godot_warn!("unknown argument {a:?}");
         }
@@ -98,7 +110,7 @@ fn prompt_line(prompt: &Prompt) -> Option<String> {
     }
 }
 
-fn env_number<T: std::str::FromStr>(name: &str) -> Option<T> {
+pub(crate) fn env_number<T: std::str::FromStr>(name: &str) -> Option<T> {
     std::env::var(name).ok().and_then(|v| v.trim().parse().ok())
 }
 
@@ -125,6 +137,13 @@ pub struct RenethackGame {
     close_deadline: Option<Instant>,
     quitting: bool,
     selftest: Option<SelfTest>,
+    /// The next engine's seed; else RENETHACK_SEED (else the self-test's).
+    pub(crate) seed: Option<u64>,
+    /// Things that went wrong without stopping the client (engine errors,
+    /// protocol failures, dead links, double answers): self-tests fail on them.
+    pub(crate) faults: Vec<String>,
+    /// What the error screen says.
+    pub(crate) failure: Option<String>,
     /// Where the mouse last moved inside the window; `None` before it
     /// first moves there and after it leaves.
     mouse_pos: Option<Vector2>,
@@ -164,6 +183,9 @@ impl INode for RenethackGame {
             selftest: None,
             mouse_pos: None,
             hover: Hover::default(),
+            seed: None,
+            faults: Vec::new(),
+            failure: None,
         }
     }
 
@@ -210,8 +232,9 @@ impl INode for RenethackGame {
             paths.playground.display()
         );
         self.paths = Some(paths.clone());
-        if let Some(name) = &args.selftest {
-            self.selftest = Some(SelfTest::new(name, args.screenshots.clone()));
+        self.seed = args.seed;
+        if args.selftest.is_some() {
+            self.selftest = SelfTest::new(&args);
         }
         if let Err(e) = paths.check() {
             self.show_failure(
@@ -247,7 +270,12 @@ impl INode for RenethackGame {
         if !self.quitting
             && let Some(mut test) = self.selftest.take()
         {
-            test.tick(self);
+            // a panic in the scenario is caught here so the test survives to
+            // report it (its panic hook recorded it) instead of hanging
+            let ticked = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| test.tick(self)));
+            if ticked.is_err() {
+                godot_error!("renethack: the self-test panicked");
+            }
             self.selftest = Some(test);
         }
     }
@@ -346,6 +374,14 @@ impl RenethackGame {
         self.mouse_pos = inside.then_some(pos);
     }
 
+    /// Keep the first few faults for a self-test to fail on.
+    fn fault(&mut self, what: String) {
+        const KEEP: usize = 16;
+        if self.faults.len() < KEEP {
+            self.faults.push(what);
+        }
+    }
+
     fn handled(&mut self) {
         if let Some(mut vp) = self.base().get_viewport() {
             vp.set_input_as_handled();
@@ -416,9 +452,15 @@ impl RenethackGame {
                     self.open_prompt(id, prompt);
                 }
             }
-            SessionEvent::EngineError(e) => godot_warn!("renethack: engine error: {e}"),
+            SessionEvent::EngineError(e) => {
+                godot_warn!("renethack: engine error: {e}");
+                self.fault(format!("engine error: {e}"));
+            }
             SessionEvent::Bye => {}
-            SessionEvent::Failed(e) => godot_error!("renethack: session failed: {e}"),
+            SessionEvent::Failed(e) => {
+                godot_error!("renethack: session failed: {e}");
+                self.fault(format!("session failed: {e}"));
+            }
             SessionEvent::Exited(ending) => self.on_exit(ending),
         }
     }
@@ -474,12 +516,14 @@ impl RenethackGame {
             }
             // a stale event or a double click: harmless
             Err(AnswerError::NotPending(id)) => {
-                godot_warn!("renethack: request {id} no longer waits; {reply:?} dropped")
+                godot_warn!("renethack: request {id} no longer waits; {reply:?} dropped");
+                self.fault(format!("request {id} answered twice: {reply:?}"));
             }
             Err(AnswerError::Link(e)) => {
                 godot_error!("renethack: cannot answer the engine: {e}");
                 self.link_error = Some(e.to_string());
                 session.kill();
+                self.fault(format!("link error: {e}"));
             }
         }
     }
@@ -742,6 +786,7 @@ impl RenethackGame {
 
     fn show_failure(&mut self, what: &str, details: &str, can_continue: Option<&str>) {
         godot_error!("renethack: {what}");
+        self.failure = Some(format!("{what}\n{details}").trim().to_string());
         self.state = GameState::Failed;
         self.show_game(false);
         self.ui_mut()
@@ -814,7 +859,10 @@ impl RenethackGame {
             engine: paths.engine(),
             playground: paths.playground.clone(),
             options: format!("{options},{CLIENT_EXTRA_OPTIONS}"),
-            seed: env_number("RENETHACK_SEED").or(test.then_some(SELFTEST_SEED)),
+            seed: self
+                .seed
+                .or_else(|| env_number("RENETHACK_SEED"))
+                .or(test.then_some(SELFTEST_SEED)),
             fixed_time: env_number("RENETHACK_FIXED_TIME").or(test.then_some(SELFTEST_TIME)),
         };
         match LiveSession::start(&cfg) {
@@ -960,6 +1008,8 @@ mod tests {
         assert_eq!(a.playground.as_deref(), Some("/tmp/pg"));
         assert_eq!(a.screenshots, Some(PathBuf::from("/tmp/shots")));
         assert_eq!(parse_args::<&str>(&[]), Args::default());
+        let a = parse_args(&["--selftest=soak", "--soak=300", "--seed=7"]);
+        assert_eq!((a.soak, a.seed), (Some(300), Some(7)));
     }
 
     #[test]
