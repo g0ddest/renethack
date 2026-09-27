@@ -24,7 +24,10 @@ use nh_world::{COLNO, Cell, MapState, ROWNO, Terrain, World, cell_terrain, in_fi
 
 use crate::theme::{self, nh_color};
 
-const PITCH_DEG: f32 = 55.0;
+/// Steep enough that a row of depth takes more screen height than a
+/// monster and its letter: a neighbour north or south of the hero stays in
+/// its own row (see `monster_letters_keep_to_their_rows`).
+const PITCH_DEG: f32 = 64.0;
 const DISTANCE: f32 = 12.0;
 const MIN_DISTANCE: f32 = 6.0;
 const MAX_DISTANCE: f32 = 30.0;
@@ -44,6 +47,11 @@ const PX_MONSTER: f32 = 0.0068;
 const PX_OBJECT: f32 = 0.0048;
 const PX_FEATURE: f32 = 0.0062;
 const PX_TRAP: f32 = 0.0052;
+/// A monster's letter floats this far over the top of its body.
+const MONSTER_LABEL_LIFT: f32 = 0.16;
+/// Where the camera aims, south of the hero at the default distance (the
+/// log covers the bottom of the screen); it shrinks as the camera closes in.
+const AIM_SOUTH: f32 = 1.5;
 
 const FLOOR: Color = Color::from_rgb(0.30, 0.29, 0.27);
 const FLOOR_DARK: Color = Color::from_rgb(0.12, 0.12, 0.14);
@@ -741,7 +749,7 @@ fn entity_look(look: &mut Look, g: &Glyph, catalog: &Catalog) {
                 } else {
                     lighter(color, 0.15)
                 };
-                look.letter(ch, color, ground + h + 0.33, PX_MONSTER, true);
+                look.letter(ch, color, ground + h + MONSTER_LABEL_LIFT, PX_MONSTER, true);
             }
         }
         GlyphKind::Invisible => {
@@ -753,7 +761,13 @@ fn entity_look(look: &mut Look, g: &Glyph, catalog: &Catalog) {
                 at(0.0, ground + 0.35, 0.0),
             );
             if let Some(ch) = ch {
-                look.letter(ch, gray, ground + 0.95, PX_MONSTER, true);
+                look.letter(
+                    ch,
+                    gray,
+                    ground + 0.65 + MONSTER_LABEL_LIFT,
+                    PX_MONSTER,
+                    true,
+                );
             }
         }
         GlyphKind::Warning => {
@@ -1218,8 +1232,10 @@ impl MapView {
     fn place_camera(&mut self) {
         let pitch = PITCH_DEG.to_radians();
         let offset = Vector3::new(0.0, pitch.sin(), pitch.cos()) * self.distance;
-        // aim a little north of the hero: the log covers the bottom of the screen
-        let aim = self.focus + Vector3::new(0.0, 0.0, 1.5);
+        // aim a little south of the hero, so the hero stands above the
+        // log; close in, the same offset would push the hero off the top
+        let south = AIM_SOUTH * self.distance / DISTANCE;
+        let aim = self.focus + Vector3::new(0.0, 0.0, south);
         self.camera.look_at_from_position(aim + offset, aim);
     }
 
@@ -1437,12 +1453,45 @@ mod tests {
         }
     }
 
-    /// The camera's ray, 55 degrees down and looking north, meeting the
+    /// The camera's ray, PITCH_DEG down and looking north, meeting the
     /// ground at the centre of cell (10, 9).
     fn ray() -> (Vector3, Vector3) {
         let pitch = PITCH_DEG.to_radians();
         let back = Vector3::new(0.0, pitch.sin(), pitch.cos());
         (Vector3::new(10.0, 0.0, 9.0) + back * DISTANCE, -back)
+    }
+
+    /// Screen rows a monster's letter covers, in rows of depth from its
+    /// cell's centre (the camera looks north, PITCH_DEG down; parallel
+    /// projection): a height h rises h * cot(pitch) rows, a billboard of
+    /// height s spans s / sin(pitch) rows. A letter ('@', capitals) fills
+    /// about three quarters of the font's line.
+    fn letter_rows(h: f32) -> (f32, f32) {
+        let pitch = PITCH_DEG.to_radians();
+        let centre = (h + MONSTER_LABEL_LIFT) / pitch.tan();
+        let half = 0.75 * FONT_PX as f32 * PX_MONSTER / 2.0 / pitch.sin();
+        (centre - half, centre + half)
+    }
+
+    #[test]
+    fn monster_letters_keep_to_their_rows() {
+        let cat = catalog();
+        let height = |name: &str| monster_height(&cat, monster(&cat, name, 0).mon);
+        // tiny to large, the hero among them: the letter of the monster a
+        // row north starts above the top of this one's
+        for south in ["newt", "kitten", "human", "jackal", "tiger"] {
+            for north in ["newt", "kitten", "human", "jackal"] {
+                let (_, top) = letter_rows(height(south));
+                let (bottom, _) = letter_rows(height(north));
+                assert!(
+                    top < 1.0 + bottom,
+                    "{north}'s letter a row north of {south}'s overlaps it"
+                );
+            }
+        }
+        // and a medium monster's letter stays off the next row's centre
+        let (_, top) = letter_rows(height("human"));
+        assert!(top < 1.0, "{top}");
     }
 
     #[test]
@@ -1458,7 +1507,7 @@ mod tests {
         let h = |x, y| if (x, y) == (10, 10) { WALL_HEIGHT } else { 0.0 };
         assert_eq!(pick_cell(origin, dir, h), Some((10, 10)));
         // a letter standing south of the floor cell covers it too
-        let h = |x, y| if (x, y) == (10, 10) { 0.8 } else { 0.0 };
+        let h = |x, y| if (x, y) == (10, 10) { 1.2 } else { 0.0 };
         assert_eq!(pick_cell(origin, dir, h), Some((10, 10)));
         // a raised cell behind the landing point is never reached
         let h = |x, y| if (x, y) == (10, 8) { WALL_HEIGHT } else { 0.0 };
