@@ -91,9 +91,11 @@ pub fn condition_tone(name: &str) -> Tone {
     }
 }
 
+/// Fainting leads straight to starving: as deadly as stoning.
 fn hunger_tone(hunger: &str) -> Tone {
     match hunger {
         "Satiated" | "Hungry" => Tone::Warn,
+        "Fainting" | "Fainted" | "Starved" => Tone::Deadly,
         _ => Tone::Bad,
     }
 }
@@ -1001,6 +1003,14 @@ mod tests {
             ]
         );
         assert_eq!(v.lines().last().unwrap(), "Weak Burdened Blind Stone Fly");
+    }
+
+    #[test]
+    fn fainting_is_deadly_weak_is_bad() {
+        assert_eq!(hunger_tone("Hungry"), Tone::Warn);
+        assert_eq!(hunger_tone("Weak"), Tone::Bad);
+        assert_eq!(hunger_tone("Fainting"), Tone::Deadly);
+        assert_eq!(hunger_tone("Fainted"), Tone::Deadly);
     }
 
     #[test]

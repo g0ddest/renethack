@@ -116,6 +116,18 @@ pub(crate) fn free_key(query: &str) -> Prompt {
     }
 }
 
+/// The answer a typed character gives to a Choice with these `allowed`
+/// characters: itself, or, as tty lowercases the key unless an answer is a
+/// capital, its lower case ('Y' with Caps Lock answers [yn]).
+pub fn choice_answer(allowed: &[char], c: char) -> Option<char> {
+    if allowed.contains(&c) {
+        return Some(c);
+    }
+    let preserve_case = allowed.iter().any(|a| a.is_ascii_uppercase());
+    let lower = c.to_ascii_lowercase();
+    (!preserve_case && allowed.contains(&lower)).then_some(lower)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -131,6 +143,20 @@ mod tests {
             panic!("not a choice: {p:?}");
         };
         (visible.iter().collect(), allowed.iter().collect(), *default)
+    }
+
+    #[test]
+    fn capitals_answer_lower_case_questions_like_tty() {
+        let yn: Vec<char> = "ynq".chars().collect();
+        assert_eq!(choice_answer(&yn, 'y'), Some('y'));
+        assert_eq!(choice_answer(&yn, 'Y'), Some('y'));
+        assert_eq!(choice_answer(&yn, 'x'), None);
+        // a capital among the answers: case matters
+        let cased: Vec<char> = "yYnN".chars().collect();
+        assert_eq!(choice_answer(&cased, 'Y'), Some('Y'));
+        let mixed: Vec<char> = "abC".chars().collect();
+        assert_eq!(choice_answer(&mixed, 'A'), None);
+        assert_eq!(choice_answer(&mixed, 'C'), Some('C'));
     }
 
     #[test]

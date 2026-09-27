@@ -20,7 +20,7 @@ use godot::classes::{
 use godot::global::{HorizontalAlignment, VerticalAlignment};
 use godot::prelude::*;
 use nh_protocol::{Catalog, ESC, PickHow, Reply};
-use nh_world::{Key, KeyInput, MenuEntry, MenuOutcome, MenuState, Prompt, TextLine};
+use nh_world::{Key, KeyInput, MenuEntry, MenuOutcome, MenuState, Prompt, TextLine, choice_answer};
 
 use crate::theme::{self, bbcode_escape, hex, nh_color, place};
 use crate::ui_events::{DialogEvent, UiEvent, UiQueue, push};
@@ -1421,8 +1421,7 @@ impl Dialogs {
             Kind::Choice { allowed, default } => match typed(input)? {
                 ESC_CHAR => Some(escape),
                 '\n' | ' ' => default.map(|d| Reply::Char(d as i32)),
-                c if allowed.contains(&c) => Some(Reply::Char(c as i32)),
-                _ => None,
+                c => choice_answer(allowed, c).map(|c| Reply::Char(c as i32)),
             },
             // a held key never answers: Esc cancels only when pressed
             Kind::Text { .. } => (input.key == Key::Escape && !input.echo).then_some(escape),
