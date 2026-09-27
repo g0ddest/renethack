@@ -1,21 +1,74 @@
 # renethack
 
 NetHack 5.0 with a modern RPG presentation. The game rules are NetHack's own,
-unchanged; this repository adds a protocol host around the engine and, later,
-a Godot client. Design: `docs/superpowers/specs/2026-09-26-renethack-design.md`.
+unchanged; this repository adds a protocol host around the engine and a Godot
+client written in Rust. Design: `docs/superpowers/specs/2026-09-26-renethack-design.md`.
 
-## Build and test (macOS, Linux)
+The client is the minimal one of subproject 2: a 3D map built from simple
+geometry, the status HUD, the message log and every NetHack menu and question
+as a dialog. The game can be played from character creation to the end.
 
-Requirements: a C compiler, GNU make, git, curl, Rust (stable).
+## Requirements (macOS, Linux)
+
+- a C compiler, GNU make, git, curl, Rust (stable);
+- [Godot](https://godotengine.org/download) 4.5 or newer (tested with 4.7.1),
+  the standard build (not .NET). If `godot` is not on your `PATH`, pass it:
+  `make run GODOT=/path/to/godot`.
+
+## Play
 
     git submodule update --init
-    make          # engine/build/nh-engine and engine/build/data
-    make test     # C unit tests, engine smoke test, Rust tests
+    make run
+
+`make run` builds the engine (`engine/build`), the client extension
+(`client/rust/target/debug/librenethack_gd.*`), imports the Godot project once
+and starts the game. The first engine build downloads Lua 5.4.8 (NetHack's
+Makefile checks its sha256).
+
+Saved games live in Godot's user data directory, in `playground/`:
+`~/.local/share/godot/app_userdata/renethack/playground` on Linux,
+`~/Library/Application Support/Godot/app_userdata/renethack/playground` on
+macOS. Closing the window saves the game in progress; the title screen offers
+to continue it. If the engine crashes, the client rebuilds the game with
+NetHack's `recover` (progress since the last level change is lost).
+
+## Controls
+
+Every NetHack command works with its usual key (`number_pad` off: `hjklyubn`
+move, `<`/`>` stairs, `i` inventory, `#` extended commands...). The client adds:
+
+| Input | Action |
+|---|---|
+| arrows, `Home` `PgUp` `End` `PgDn`, keypad | move (diagonals on the four keys and the keypad); with `Shift` — run |
+| left click on the map | travel there (adjacent: move or attack; on yourself: action menu) |
+| right click on the map | look at the cell |
+| mouse over the map | what is there (by appearance only) |
+| mouse wheel | zoom |
+| `#` | command palette: type to filter, `Tab` completes, `Up`/`Down` choose |
+| `Alt`+letter | meta commands (`M-p` pray, `M-e` enhance, ...) |
+| `Ctrl`+letter | `^X` attributes, `^T` teleport, `^P` previous message... |
+| `F9` | full message log |
+| in menus | the item's letter picks or toggles; digits type a count; `.` all, `-` none, `@` invert; `Enter` confirms; `Esc` cancels |
+| in questions | the answer's letter; `Enter`/`Space` — the default; `Esc` — cancel |
+
+Commands work in any keyboard layout (letters are taken by key position).
+
+## Build and test
+
+    git submodule update --init
+    make              # engine/build/nh-engine, recover and data
+    make test         # C unit tests, engine smoke test, Rust tests
     make lint
+    make test-client  # headless self-tests of the Godot client (needs Godot)
 
-The first build downloads Lua 5.4.8 (NetHack's Makefile checks its sha256).
+`make test-client` runs each scenario of `client/rust/renethack-gd/src/selftest.rs`
+in its own headless Godot process with a fixed seed. The same scenarios take
+screenshots under a display:
 
-## Playing a script
+    cd client/godot
+    godot --path . -- --selftest=smoke --screenshots=/tmp/shots --playground=/tmp/pg
+
+## Playing a script without the client
 
     cd client/rust
     printf 'key #\next quit\nyn y\nyn q\n' > /tmp/quit.script
@@ -30,7 +83,10 @@ Script steps are documented on `nh_link::parse_script`.
 - `engine/upstream` — NetHack at tag `NetHack-5.0.0_Released` (never edited)
 - `engine/patches` — the only changes to NetHack, applied at build time
 - `engine/host` — the protocol host (`nh-engine`)
-- `client/rust` — `nh-protocol`, `nh-link`, `nh-cli`
+- `client/rust` — `nh-protocol`, `nh-link` (engine process, live sessions,
+  saves), `nh-world` (world model, prompts, menus, key map), `nh-cli`,
+  `renethack-gd` (the Godot extension)
+- `client/godot` — the Godot project (a single scene; all logic is in Rust)
 
 ## License
 
