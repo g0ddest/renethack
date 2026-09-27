@@ -155,7 +155,7 @@ fn restored_messages(playground: &Path, name: &str) -> Vec<String> {
     let mut s = LiveSession::start(&cfg).unwrap();
     let mut seen = Vec::new();
     let (_, req) = next_decision(&mut s, &mut seen).expect("a command prompt");
-    assert_eq!(req, Request::NhPoskey);
+    assert_eq!(req, Request::NhPoskey { getpos: false });
     messages(&seen)
 }
 
@@ -225,7 +225,7 @@ fn answer_twice_is_refused_and_the_game_goes_on() {
     let mut s = LiveSession::start(&config(pg.path())).unwrap();
     let mut seen = Vec::new();
     let (id, req) = next_decision(&mut s, &mut seen).unwrap();
-    assert_eq!(req, Request::NhPoskey);
+    assert_eq!(req, Request::NhPoskey { getpos: false });
     s.answer(id, &Reply::Key('s' as i32)).unwrap();
     let err = s.answer(id, &Reply::Key('s' as i32)).unwrap_err();
     assert!(

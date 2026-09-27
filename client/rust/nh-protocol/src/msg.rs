@@ -197,7 +197,11 @@ pub enum Request {
         mesg: Option<String>,
     },
     Nhgetch,
-    NhPoskey,
+    /// A command key or a map click; `getpos`: inside getpos(), where the
+    /// keys move a cursor to pick a spot (absent on the wire otherwise).
+    NhPoskey {
+        getpos: bool,
+    },
     YnFunction {
         query: String,
         choices: Option<String>,
@@ -219,7 +223,7 @@ impl Request {
             Request::SelectMenu { .. } => "select_menu",
             Request::MessageMenu { .. } => "message_menu",
             Request::Nhgetch => "nhgetch",
-            Request::NhPoskey => "nh_poskey",
+            Request::NhPoskey { .. } => "nh_poskey",
             Request::YnFunction { .. } => "yn_function",
             Request::Getlin { .. } => "getlin",
             Request::GetExtCmd => "get_ext_cmd",
@@ -355,6 +359,11 @@ struct MessageMenu {
     letter: i32,
     how: i32,
     mesg: Option<String>,
+}
+#[derive(Deserialize)]
+struct Poskey {
+    #[serde(default)]
+    getpos: bool,
 }
 #[derive(Deserialize)]
 struct Yn {
@@ -515,7 +524,10 @@ fn request(name: &str, a: Value) -> Result<Request, ProtocolError> {
             }
         }
         "nhgetch" => Request::Nhgetch,
-        "nh_poskey" => Request::NhPoskey,
+        "nh_poskey" => {
+            let p: Poskey = args(name, a)?;
+            Request::NhPoskey { getpos: p.getpos }
+        }
         "yn_function" => {
             let y: Yn = args(name, a)?;
             Request::YnFunction {

@@ -234,7 +234,7 @@ fn requests_decode_with_their_arguments() {
             _ => None,
         })
         .unwrap();
-    assert_eq!(first, Request::NhPoskey);
+    assert_eq!(first, Request::NhPoskey { getpos: false });
 }
 
 #[test]

@@ -5,6 +5,12 @@ use nh_protocol::{Catalog, MenuItem, PickHow, Request, WinCall, WindowKind};
 use crate::prompt::{choice, free_key};
 use crate::{ATR_NOHISTORY, MapState, MessageLog, Prompt, Status, effect_cmaps};
 
+/// getpos() says this (with `flags.verbose`) right after its goal ("Where
+/// do you want to travel to?"): neither belongs in the history.
+const GETPOS_TIP: &str = "(For instructions type a ";
+/// getpos() repeats its goal so after its first-time tip window.
+const GETPOS_GOAL_AGAIN: &str = "Move cursor to ";
+
 /// Direction keys while the engine has not said otherwise (number_pad off).
 pub const DEFAULT_DIRCHARS: &str = "hykulnjb><";
 
@@ -72,6 +78,15 @@ pub struct World {
     /// end of the game), so from then on only the summary or tombstone.
     pub last_text: Vec<TextLine>,
     pub windows_exited: bool,
+    /// The pending nh_poskey moves getpos()'s cursor (farlook, travel...).
+    pub getpos: bool,
+    /// What that getpos is for ("Where do you want to travel to?").
+    pub getpos_goal: Option<String>,
+    /// doprev_message (^P) asked for the message history; the game takes it.
+    pub wants_history: bool,
+    /// Where the cursor was at the last command prompt: the core puts it on
+    /// the hero (flush_screen(1)), who may not be drawn (invisible, hiding).
+    hero_at_command: Option<(i32, i32)>,
     input_seq: u64,
 }
 
@@ -99,6 +114,10 @@ impl World {
             exit_text: None,
             last_text: Vec::new(),
             windows_exited: false,
+            getpos: false,
+            getpos_goal: None,
+            wants_history: false,
+            hero_at_command: None,
             input_seq: 0,
         }
     }
@@ -152,7 +171,10 @@ impl World {
                 }
             }
             WinCall::ClearNhwindow { win } => match self.kind(*win) {
-                Some(WindowKind::Map) => self.map.clear(),
+                Some(WindowKind::Map) => {
+                    self.map.clear();
+                    self.hero_at_command = None;
+                }
                 // tty erases the top line: the log stays, a transient goes
                 Some(WindowKind::Message) => self.transient = None,
                 Some(_) => {
@@ -166,7 +188,23 @@ impl World {
                 Some(WindowKind::Message) => {
                     if attr & ATR_NOHISTORY != 0 {
                         self.transient = Some(text.clone());
+                    } else if self.getpos_goal.is_some() && text.starts_with(GETPOS_GOAL_AGAIN) {
+                        // the prompt line says it already
+                    } else if text.starts_with(GETPOS_TIP) {
+                        // the goal said just before: the prompt line shows it
+                        let seq = self.log.last_seq();
+                        let goal =
+                            self.log.iter().next_back().filter(|m| {
+                                m.seq == seq && m.seq > self.input_seq && !m.from_history
+                            });
+                        self.getpos_goal = goal.map(|m| m.text.clone());
+                        if self.getpos_goal.is_some() {
+                            self.log.retract_newest();
+                        }
+                        self.transient = None;
                     } else {
+                        // a new message takes tty's top line
+                        self.transient = None;
                         let turn = self.turn();
                         self.log.push(text.clone(), *attr, turn, false);
                     }
@@ -235,6 +273,7 @@ impl World {
                 self.windows_exited = true;
                 self.exit_text = text.clone();
             }
+            WinCall::DoprevMessage => self.wants_history = true,
             WinCall::StatusInit => self.status = Status::new(),
             WinCall::StatusUpdate(u) => self.status.apply(u),
             _ => {}
@@ -245,7 +284,14 @@ impl World {
     /// message_menu text into the log).
     pub fn on_request(&mut self, req: &Request) -> Prompt {
         match req {
-            Request::NhPoskey => Prompt::Command,
+            Request::NhPoskey { getpos } => {
+                self.getpos = *getpos;
+                if !getpos {
+                    self.getpos_goal = None;
+                    self.hero_at_command = self.cursor;
+                }
+                Prompt::Command
+            }
             Request::Nhgetch => Prompt::Key,
             Request::YnFunction {
                 query,
@@ -332,8 +378,26 @@ impl World {
     }
 
     /// Called by the game whenever the player answers Command/Key/FreeKey/Choice.
+    /// A transient message described the moment before the key: it goes
+    /// (getpos describes the new cursor spot again).
     pub fn note_player_input(&mut self) {
         self.input_seq = self.log.last_seq();
+        self.transient = None;
+    }
+
+    /// Where the hero is: the cell drawn with MG_HERO, else (an invisible
+    /// or hiding hero is not drawn) where the core put the cursor for the
+    /// last command.
+    pub fn hero(&self) -> Option<(i32, i32)> {
+        self.map.hero().or(self.hero_at_command)
+    }
+
+    /// What the prompt line says while getpos waits.
+    pub fn getpos_line(&self) -> Option<String> {
+        self.getpos.then(|| {
+            let goal = self.getpos_goal.as_deref().unwrap_or("Pick a spot.");
+            format!("{goal}  (. , ; : pick, ? help, Esc cancel)")
+        })
     }
 
     /// Log seq at the last player input: newer messages are "new".
@@ -522,8 +586,21 @@ mod tests {
                 ("You hear the shopkeeper.", 1, true, Some(7)),
             ]
         );
-        assert_eq!(w.transient.as_deref(), Some("wall"));
+        // the shopkeeper's message took the top line from "wall"
+        assert_eq!(w.transient, None);
+        feed(
+            &mut w,
+            r#"{"t":"win","fn":"putstr","a":{"win":1,"attr":32,"str":"doorway"}}"#,
+        );
+        assert_eq!(w.transient.as_deref(), Some("doorway"));
         feed(&mut w, r#"{"t":"win","fn":"clear_nhwindow","a":{"win":1}}"#);
+        assert_eq!(w.transient, None);
+        // and a key the player pressed takes it too
+        feed(
+            &mut w,
+            r#"{"t":"win","fn":"putstr","a":{"win":1,"attr":32,"str":"corridor"}}"#,
+        );
+        w.note_player_input();
         assert_eq!(w.transient, None);
         assert_eq!(w.log.len(), 2);
         // restored history is marked
@@ -549,6 +626,89 @@ mod tests {
             r#"{"t":"win","fn":"putmsghistory","a":{"msg":null,"restoring":true}}"#,
         );
         assert_eq!(w.log.len(), 4);
+    }
+
+    #[test]
+    fn getpos_prompts_stay_out_of_the_log() {
+        let mut w = World::new();
+        feed(&mut w, START);
+        w.note_player_input();
+        let p = feed(
+            &mut w,
+            r#"
+            {"t":"win","fn":"putstr","a":{"win":1,"attr":0,"str":"You see here a dagger."}}
+            {"t":"win","fn":"putstr","a":{"win":1,"attr":0,"str":"Where do you want to travel to?"}}
+            {"t":"win","fn":"putstr","a":{"win":1,"attr":0,"str":"(For instructions type a '?')"}}
+            {"t":"win","fn":"putstr","a":{"win":1,"attr":0,"str":"Move cursor to the desired destination:"}}
+            {"t":"win","fn":"putstr","a":{"win":1,"attr":32,"str":"doorway"}}
+            {"t":"req","id":1,"fn":"nh_poskey","a":{"getpos":true}}
+            "#,
+        );
+        assert_eq!(p, Some(Prompt::Command));
+        let logged: Vec<&str> = w.log.iter().map(|m| m.text.as_str()).collect();
+        assert_eq!(logged, ["You see here a dagger."]);
+        let line = w.getpos_line().unwrap();
+        assert!(
+            line.starts_with("Where do you want to travel to?"),
+            "{line}"
+        );
+        assert_eq!(w.transient.as_deref(), Some("doorway"));
+        // the command after getpos: no prompt line
+        feed(&mut w, r#"{"t":"req","id":2,"fn":"nh_poskey","a":{}}"#);
+        assert_eq!(w.getpos_line(), None);
+        // without a goal said since the last key, the tip goes and the log stays
+        w.note_player_input();
+        feed(
+            &mut w,
+            r#"
+            {"t":"win","fn":"putstr","a":{"win":1,"attr":0,"str":"(For instructions type a '?')"}}
+            {"t":"req","id":3,"fn":"nh_poskey","a":{"getpos":true}}
+            "#,
+        );
+        let logged: Vec<&str> = w.log.iter().map(|m| m.text.as_str()).collect();
+        assert_eq!(logged, ["You see here a dagger."]);
+        assert!(w.getpos_line().unwrap().starts_with("Pick a spot."));
+    }
+
+    #[test]
+    fn an_undrawn_hero_is_where_the_command_cursor_was() {
+        let mut w = World::new();
+        feed(&mut w, START);
+        let hero = r#"{"t":"win","fn":"print_glyph","a":{"win":2,"x":5,"y":4,"g":{"glyph":341,"ch":64,"color":15,"flags":1,"tile":0,"kind":"mon","mon":341}}}"#;
+        feed(&mut w, hero);
+        assert_eq!(w.hero(), Some((5, 4)));
+        // invisible: the cell shows the floor, the core's cursor the hero
+        feed(
+            &mut w,
+            r#"
+            {"t":"win","fn":"print_glyph","a":{"win":2,"x":5,"y":4,"g":{"glyph":2400,"ch":46,"color":7,"flags":0,"tile":0,"kind":"cmap","cmap":19}}}
+            {"t":"win","fn":"curs","a":{"win":2,"x":5,"y":4}}
+            {"t":"req","id":1,"fn":"nh_poskey","a":{}}
+            "#,
+        );
+        assert_eq!(w.map.hero(), None);
+        assert_eq!(w.hero(), Some((5, 4)));
+        // a getpos cursor is not the hero
+        feed(
+            &mut w,
+            r#"
+            {"t":"win","fn":"curs","a":{"win":2,"x":9,"y":4}}
+            {"t":"req","id":2,"fn":"nh_poskey","a":{"getpos":true}}
+            "#,
+        );
+        assert_eq!(w.hero(), Some((5, 4)));
+        // a new level forgets it
+        feed(&mut w, r#"{"t":"win","fn":"clear_nhwindow","a":{"win":2}}"#);
+        assert_eq!(w.hero(), None);
+    }
+
+    #[test]
+    fn doprev_message_asks_for_the_history() {
+        let mut w = World::new();
+        feed(&mut w, START);
+        assert!(!w.wants_history);
+        feed(&mut w, r#"{"t":"win","fn":"doprev_message","a":{}}"#);
+        assert!(std::mem::take(&mut w.wants_history));
     }
 
     #[test]

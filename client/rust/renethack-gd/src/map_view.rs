@@ -31,6 +31,10 @@ const PITCH_DEG: f32 = 64.0;
 const DISTANCE: f32 = 12.0;
 const MIN_DISTANCE: f32 = 6.0;
 const MAX_DISTANCE: f32 = 30.0;
+/// The camera's vertical field of view, degrees.
+const FOV_DEG: f32 = 50.0;
+/// The overview never goes further (a whole 80x21 level fits well within).
+const MAX_OVERVIEW_DISTANCE: f32 = 70.0;
 const FOLLOW_RATE: f32 = 8.0;
 /// Descent per step when a pointer ray is walked through the raised geometry.
 const PICK_STEP: f32 = 0.05;
@@ -982,6 +986,8 @@ pub struct MapView {
     target: Vector3,
     focus: Vector3,
     distance: f32,
+    /// The whole-level view is on: its distance, refitted as cells appear.
+    overview: Option<f32>,
     snap: bool,
 }
 
@@ -1027,7 +1033,7 @@ impl MapView {
         root.add_child(&sun);
 
         let mut camera = Camera3D::new_alloc();
-        camera.set_fov(50.0);
+        camera.set_fov(FOV_DEG);
         camera.set_current(true);
         root.add_child(&camera);
 
@@ -1082,6 +1088,7 @@ impl MapView {
             target: center,
             focus: center,
             distance: DISTANCE,
+            overview: None,
             snap: true,
         };
         view.place_camera();
@@ -1090,7 +1097,8 @@ impl MapView {
 
     /// Rebuild on a new generation, else apply dirty cells; camera target =
     /// view_center, else hero; cursor marker when World.cursor differs from
-    /// the hero.
+    /// the hero, or getpos moves it. The hero ring marks `World::hero`,
+    /// also when the hero is not drawn (invisible).
     pub fn sync(&mut self, world: &mut World, catalog: &Catalog, delta: f64) {
         let generation = world.map.generation();
         if self.generation != Some(generation) {
@@ -1118,8 +1126,14 @@ impl MapView {
                 self.update_cell(x, y, world, catalog);
             }
         }
-        let hero = world.map.hero();
-        if let Some((x, y)) = world.view_center.or(hero).or(world.cursor) {
+        let hero = world.hero();
+        let bounds = self.overview.and(self.known_bounds());
+        if let Some(b) = bounds {
+            // never closer than the player's own view
+            let (centre, distance) = overview_frame(b, self.aspect());
+            self.target = centre;
+            self.overview = Some(distance.max(self.distance));
+        } else if let Some((x, y)) = world.view_center.or(hero).or(world.cursor) {
             self.target = Vector3::new(x as f32, 0.0, y as f32);
         }
         match hero {
@@ -1146,7 +1160,10 @@ impl MapView {
             }
             None => self.engulf.set_visible(false),
         }
-        match world.cursor.filter(|c| hero.is_some() && Some(*c) != hero) {
+        // the core's cursor is on the hero at every command: shown only
+        // when elsewhere, or while getpos moves it
+        let shown = |c: &(i32, i32)| world.getpos || (hero.is_some() && Some(*c) != hero);
+        match world.cursor.filter(shown) {
             Some((x, y)) => {
                 let ground = self.ground(x, y);
                 self.cursor
@@ -1190,10 +1207,47 @@ impl MapView {
         }
     }
 
-    /// Wheel steps: positive moves the camera away.
+    /// Wheel steps: positive moves the camera away. Ends the overview.
     pub fn zoom(&mut self, steps: f32) {
+        self.overview = None;
         self.distance = (self.distance + steps * 1.5).clamp(MIN_DISTANCE, MAX_DISTANCE);
         self.place_camera();
+    }
+
+    /// Frame everything known of the level, or go back to following the hero.
+    pub fn toggle_overview(&mut self) {
+        self.overview = match self.overview {
+            Some(_) => None,
+            None => Some(self.distance),
+        };
+    }
+
+    /// The whole-level view is on (self-tests).
+    pub fn in_overview(&self) -> bool {
+        self.overview.is_some()
+    }
+
+    /// The camera's distance now (self-tests).
+    pub fn camera_distance(&self) -> f32 {
+        self.overview.unwrap_or(self.distance)
+    }
+
+    /// The smallest box of cells with anything drawn: (x0, y0, x1, y1).
+    fn known_bounds(&self) -> Option<(i32, i32, i32, i32)> {
+        self.cells
+            .iter()
+            .filter(|(_, n)| !n.look.is_empty())
+            .map(|(&(x, y), _)| (x, y, x, y))
+            .reduce(|a, b| (a.0.min(b.0), a.1.min(b.1), a.2.max(b.2), a.3.max(b.3)))
+    }
+
+    /// Width over height of the window.
+    fn aspect(&self) -> f32 {
+        self.camera
+            .get_viewport()
+            .map(|vp| vp.get_visible_rect().size)
+            .filter(|s| s.y > 0.0)
+            .map_or(16.0 / 9.0, |s| s.x / s.y)
     }
 
     /// Forget every cell (a new game).
@@ -1231,10 +1285,11 @@ impl MapView {
 
     fn place_camera(&mut self) {
         let pitch = PITCH_DEG.to_radians();
-        let offset = Vector3::new(0.0, pitch.sin(), pitch.cos()) * self.distance;
+        let distance = self.camera_distance();
+        let offset = Vector3::new(0.0, pitch.sin(), pitch.cos()) * distance;
         // aim a little south of the hero, so the hero stands above the
         // log; close in, the same offset would push the hero off the top
-        let south = AIM_SOUTH * self.distance / DISTANCE;
+        let south = AIM_SOUTH * distance / DISTANCE;
         let aim = self.focus + Vector3::new(0.0, 0.0, south);
         self.camera.look_at_from_position(aim + offset, aim);
     }
@@ -1344,6 +1399,21 @@ impl MapView {
         l.set_outline_modulate(Color::from_rgba(0.0, 0.0, 0.0, 0.85));
         l
     }
+}
+
+/// The overview's aim and camera distance for the cells `(x0, y0, x1, y1)`
+/// in a window of this aspect: the box with a cell of margin fits the
+/// width, and the height above the message log (the bottom quarter).
+fn overview_frame((x0, y0, x1, y1): (i32, i32, i32, i32), aspect: f32) -> (Vector3, f32) {
+    let centre = Vector3::new((x0 + x1) as f32 / 2.0, 0.0, (y0 + y1) as f32 / 2.0);
+    let (w, h) = ((x1 - x0 + 3) as f32, (y1 - y0 + 3) as f32);
+    let tan = (FOV_DEG.to_radians() / 2.0).tan();
+    let pitch = PITCH_DEG.to_radians();
+    let across = w / (2.0 * tan * aspect);
+    // a row of depth looks sin(pitch) tall; three quarters of the screen
+    let down = h * pitch.sin() / (2.0 * tan * 0.75);
+    let distance = across.max(down).clamp(MIN_DISTANCE, MAX_OVERVIEW_DISTANCE);
+    (centre, distance)
 }
 
 /// Where a solid sits: the cell origin plus its offset, turned by its
@@ -1492,6 +1562,25 @@ mod tests {
         // and a medium monster's letter stays off the next row's centre
         let (_, top) = letter_rows(height("human"));
         assert!(top < 1.0, "{top}");
+    }
+
+    #[test]
+    fn the_overview_fits_the_level_and_centres_it() {
+        let wide = 16.0 / 9.0;
+        // a whole level: 79 columns decide
+        let (centre, full) = overview_frame((1, 0, 79, 20), wide);
+        assert_eq!((centre.x, centre.z), (40.0, 10.0));
+        let tan = (FOV_DEG.to_radians() / 2.0).tan();
+        assert!(2.0 * full * tan * wide >= 81.0, "{full}");
+        assert!(full <= MAX_OVERVIEW_DISTANCE);
+        // a single room is closer, but never closer than the nearest zoom
+        let (_, room) = overview_frame((30, 5, 40, 10), wide);
+        assert!(room < full && room >= MIN_DISTANCE, "{room}");
+        let (_, cell) = overview_frame((30, 5, 30, 5), wide);
+        assert_eq!(cell, MIN_DISTANCE);
+        // a tall narrow window: the width still fits
+        let (_, narrow) = overview_frame((1, 0, 79, 20), 1.0);
+        assert!(narrow > full);
     }
 
     #[test]

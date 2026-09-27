@@ -25,7 +25,7 @@ use nh_world::{
 
 use crate::dialogs::Dialogs;
 use crate::hud::Hud;
-use crate::input::key_input;
+use crate::input::{client_key, key_input};
 use crate::map_view::MapView;
 use crate::paths::Paths;
 use crate::screens::{DEFAULT_NAME, EndSummary, Screens};
@@ -306,12 +306,7 @@ impl INode for RenethackGame {
         if text && !owned {
             return;
         }
-        let ev = if k.key == Key::F(9) {
-            UiEvent::ToggleFullLog
-        } else {
-            UiEvent::Key(k)
-        };
-        push(&self.queue, ev);
+        push(&self.queue, client_key(&k).unwrap_or(UiEvent::Key(k)));
         self.handled();
     }
 
@@ -467,10 +462,14 @@ impl RenethackGame {
             self.typeahead.clear();
         }
         let catalog = self.catalog.clone();
+        let line = match prompt {
+            Prompt::Command => self.world.getpos_line(),
+            _ => prompt_line(&prompt),
+        };
         let ui = self.ui_mut();
         ui.dialogs.open(id, &prompt, catalog.as_deref());
         let dialog = ui.dialogs.is_open();
-        ui.hud.set_prompt_line(prompt_line(&prompt).as_deref());
+        ui.hud.set_prompt_line(line.as_deref());
         if dialog {
             // the mouse belongs to the dialog now
             self.clear_hover();
@@ -677,8 +676,9 @@ impl RenethackGame {
         if self.state != GameState::Playing {
             return;
         }
-        if k.key == Key::F(9) {
-            self.ui_mut().hud.toggle_full_log();
+        // typed ahead or pushed by a self-test as a plain key
+        if let Some(ev) = client_key(&k) {
+            self.on_ui_event(ev);
             return;
         }
         let Some((_, prompt)) = &self.pending else {
@@ -758,6 +758,7 @@ impl RenethackGame {
             UiEvent::CloseRequested => self.on_close_requested(),
             UiEvent::ToggleFullLog => self.ui_mut().hud.toggle_full_log(),
             UiEvent::Zoom(steps) => self.ui_mut().map.zoom(steps),
+            UiEvent::ToggleOverview => self.ui_mut().map.toggle_overview(),
             other => godot_warn!("renethack: {other:?} ignored while a game runs"),
         }
     }
@@ -987,6 +988,10 @@ impl RenethackGame {
         };
         if let Some(cat) = catalog.as_deref() {
             ui.map.sync(&mut self.world, cat, delta);
+        }
+        // ^P: tty shows the previous messages; here the whole log
+        if std::mem::take(&mut self.world.wants_history) {
+            ui.hud.open_full_log();
         }
         ui.hud.sync(&mut self.world, catalog.as_deref());
         self.update_hover();

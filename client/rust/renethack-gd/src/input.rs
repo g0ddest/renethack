@@ -8,6 +8,8 @@ use godot::obj::EngineEnum;
 use godot::prelude::*;
 use nh_world::{Key, KeyInput, Mods};
 
+use crate::ui_events::UiEvent;
+
 /// The parts of an InputEventKey the translation looks at.
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub struct RawKey {
@@ -171,6 +173,22 @@ pub fn translate(raw: &RawKey, text_ok: bool, mac: bool) -> Option<KeyInput> {
     // US character at the key's position ("Shift+3" is '#', not '№')
     let c = letter(raw.keycode, raw.shift).or_else(|| us_char(raw.physical, raw.shift))?;
     make(Key::Char(c), mods)
+}
+
+/// Keys the client keeps for itself (never sent to the engine): F9 the
+/// message log, Ctrl+`-` / Ctrl+`=` (`+`) zoom, F8 or Ctrl+`0` the whole
+/// level. NetHack binds none of them.
+pub fn client_key(k: &KeyInput) -> Option<UiEvent> {
+    if k.mods.alt {
+        return None;
+    }
+    match (k.key, k.mods.ctrl) {
+        (Key::F(9), _) => Some(UiEvent::ToggleFullLog),
+        (Key::F(8), _) | (Key::Char('0'), true) => Some(UiEvent::ToggleOverview),
+        (Key::Char('-' | '_'), true) => Some(UiEvent::Zoom(1.0)),
+        (Key::Char('=' | '+'), true) => Some(UiEvent::Zoom(-1.0)),
+        _ => None,
+    }
 }
 
 /// `translate` for a Godot event.
@@ -345,6 +363,30 @@ mod tests {
             ..press('Q' as i32, 'q')
         };
         assert_eq!(key(cmd), None);
+    }
+
+    #[test]
+    fn client_keys_are_the_log_zoom_and_overview() {
+        let ctrl = |c| KeyInput {
+            mods: Mods {
+                ctrl: true,
+                ..Mods::default()
+            },
+            ..KeyInput::plain(Key::Char(c))
+        };
+        let plain = |k| client_key(&KeyInput::plain(k));
+        assert_eq!(plain(Key::F(9)), Some(UiEvent::ToggleFullLog));
+        assert_eq!(plain(Key::F(8)), Some(UiEvent::ToggleOverview));
+        assert_eq!(client_key(&ctrl('0')), Some(UiEvent::ToggleOverview));
+        assert_eq!(client_key(&ctrl('-')), Some(UiEvent::Zoom(1.0)));
+        assert_eq!(client_key(&ctrl('=')), Some(UiEvent::Zoom(-1.0)));
+        assert_eq!(client_key(&ctrl('+')), Some(UiEvent::Zoom(-1.0)));
+        // NetHack's own keys stay NetHack's
+        assert_eq!(plain(Key::Char('-')), None);
+        assert_eq!(plain(Key::Char('+')), None);
+        assert_eq!(plain(Key::Char('0')), None);
+        assert_eq!(client_key(&ctrl('p')), None);
+        assert_eq!(plain(Key::PageUp), None);
     }
 
     #[test]

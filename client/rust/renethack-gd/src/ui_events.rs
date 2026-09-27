@@ -34,6 +34,8 @@ pub enum UiEvent {
     ToggleFullLog,
     /// Wheel steps: negative zooms in.
     Zoom(f32),
+    /// Frame everything known of the level, or go back to the hero.
+    ToggleOverview,
 }
 
 #[derive(Debug, Clone, PartialEq)]

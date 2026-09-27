@@ -53,9 +53,19 @@ impl MessageLog {
         self.messages.iter()
     }
 
-    /// Seq of the newest message; 0 while the log is empty.
+    /// The last seq handed out: the newest message's, unless it was
+    /// retracted; 0 while nothing was ever logged. It changes with every
+    /// push and retraction.
     pub fn last_seq(&self) -> u64 {
         self.last_seq
+    }
+
+    /// Take the newest message back (it turned out to be a prompt). Its seq
+    /// is not reused: `last_seq` moves on, so views notice the change.
+    pub fn retract_newest(&mut self) -> Option<Message> {
+        let m = self.messages.pop_back()?;
+        self.last_seq += 1;
+        Some(m)
     }
 
     /// Messages newer than `seq`.
@@ -91,5 +101,10 @@ mod tests {
         assert_eq!(log.iter().next_back().unwrap().seq, 1005);
         let recent: Vec<_> = log.since(1003).map(|m| m.text.as_str()).collect();
         assert_eq!(recent, vec!["m1003", "m1004"]);
+        let taken = log.retract_newest().unwrap();
+        assert_eq!(taken.text, "m1004");
+        assert_eq!(log.last_seq(), 1006);
+        log.push("next".into(), 0, None, false);
+        assert_eq!(log.iter().next_back().unwrap().seq, 1007);
     }
 }

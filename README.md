@@ -43,10 +43,11 @@ move, `<`/`>` stairs, `i` inventory, `#` extended commands...). The client adds:
 | left click on the map | travel there (adjacent: move or attack; on yourself: action menu) |
 | right click on the map | look at the cell |
 | mouse over the map | what is there (by appearance only) |
-| mouse wheel | zoom |
+| mouse wheel, `Ctrl`+`-` / `Ctrl`+`=` | zoom out / in |
+| `F8` or `Ctrl`+`0` | the whole known level; again (or a zoom) — back to the hero |
 | `#` | command palette: type to filter, `Tab` completes, `Up`/`Down` choose |
 | `Alt`+letter | meta commands (`M-p` pray, `M-e` enhance, ...) |
-| `Ctrl`+letter | `^X` attributes, `^T` teleport, `^P` previous message... |
+| `Ctrl`+letter | `^X` attributes, `^T` teleport, `^P` previous messages (opens the full log)... |
 | `F9` | full message log |
 | in menus | the item's letter picks or toggles; digits type a count; `.` all, `-` none, `@` invert; `Enter` confirms; `Esc` cancels |
 | in questions | the answer's letter; `Enter`/`Space` — the default; `Esc` — cancel |

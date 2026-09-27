@@ -585,13 +585,13 @@ impl Hud {
         transient_panel.set_visible(false);
         root.add_child(&transient_panel);
 
-        // prompt line, top centre: a full-width row keeps it centred
+        // prompt line, top: centred in a row right of the status panel
         let mut prompt_row = hbox();
         prompt_row.set_alignment(AlignmentMode::CENTER);
         place(
             &prompt_row,
             [0.0, 0.0, 1.0, 0.0],
-            [0.0, MARGIN, 0.0, MARGIN],
+            [STATUS_WIDTH + 2.0 * MARGIN, MARGIN, -MARGIN, MARGIN],
         );
         let mut prompt_panel = overlay(Color::from_rgba(0.08, 0.07, 0.04, 0.94), theme::ACCENT);
         let mut prompt = theme::label("");
@@ -793,6 +793,18 @@ impl Hud {
                 .any(|p| p.is_visible() && p.get_global_rect().contains_point(pos))
     }
 
+    /// What the prompt line shows, if it is up (self-tests).
+    pub fn prompt_line(&self) -> Option<String> {
+        self.prompt_panel
+            .is_visible()
+            .then(|| self.prompt.get_text().to_string())
+    }
+
+    /// The full message log is open (self-tests).
+    pub fn full_log_open(&self) -> bool {
+        self.full_log_panel.is_visible()
+    }
+
     pub fn set_prompt_line(&mut self, text: Option<&str>) {
         match text.filter(|t| !t.is_empty()) {
             Some(t) => {
@@ -843,6 +855,15 @@ impl Hud {
 
     pub fn toggle_full_log(&mut self) {
         let on = !self.full_log_panel.is_visible();
+        self.set_full_log(on);
+    }
+
+    /// Open the full log (^P), scrolled to the newest message.
+    pub fn open_full_log(&mut self) {
+        self.set_full_log(true);
+    }
+
+    fn set_full_log(&mut self, on: bool) {
         self.full_log_panel.set_visible(on);
         self.full_log_dirty = true;
         self.full_log_follow = true;

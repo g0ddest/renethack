@@ -117,7 +117,7 @@ impl MapState {
     }
 
     /// The last cell drawn with MG_HERO; None once that cell is redrawn without it
-    /// (invisible or hiding hero). The game falls back to curs() at a Command prompt.
+    /// (invisible or hiding hero). `World::hero` falls back to curs() at a command.
     pub fn hero(&self) -> Option<(i32, i32)> {
         self.hero
     }

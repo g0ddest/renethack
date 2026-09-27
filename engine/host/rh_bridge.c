@@ -577,7 +577,15 @@ h_nh_poskey(void *ret, va_list *ap)
 {
     coordxy *x = va_arg(*ap, coordxy *), *y = va_arg(*ap, coordxy *);
     int *mod = va_arg(*ap, int *);
-    cJSON *r = rh_proto_request("nh_poskey", (cJSON *) 0);
+    cJSON *a = (cJSON *) 0, *r;
+
+    /* getpos() moves a cursor over the map with these keys: the client
+       says so (the cursor is not the hero, the prompt is "pick a spot") */
+    if (gg.getposx) {
+        a = args_new();
+        add_bool(a, "getpos", 1);
+    }
+    r = rh_proto_request("nh_poskey", a);
 
     if (!r) {
         *(int *) ret = EOF;

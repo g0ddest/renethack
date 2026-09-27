@@ -388,6 +388,16 @@ fn real_key_for(ev: &UiEvent) -> Option<(GKey, char, bool)> {
     }
 }
 
+fn ctrl_key(c: char) -> KeyInput {
+    KeyInput {
+        mods: Mods {
+            ctrl: true,
+            ..Mods::default()
+        },
+        ..KeyInput::plain(Key::Char(c))
+    }
+}
+
 fn press(c: char) -> Step {
     let upper = c.to_ascii_uppercase();
     Step::Press(GKey::from_ord(upper as i32), c, c.is_ascii_uppercase())
@@ -406,6 +416,66 @@ fn keys() -> Vec<Step> {
         Step::Request("a command after Esc", command),
         press('l'),
         Step::Request("a command after a step", command),
+        // ^P goes to the engine, which asks for the message history
+        Step::Key(ctrl_key('p')),
+        Step::Request("a command after ^P", command),
+        Step::Wait("^P opened the full log", |g| {
+            Ok(g.ui.as_ref().is_some_and(|ui| ui.hud.full_log_open()))
+        }),
+        Step::Call("F9 closes it", |g| {
+            g.push_ui(UiEvent::Key(KeyInput::plain(Key::F(9))));
+            Ok(())
+        }),
+        Step::Wait("the full log closed", |g| {
+            Ok(g.ui.as_ref().is_some_and(|ui| !ui.hud.full_log_open()))
+        }),
+        // the client's own keys: zoom and the whole level
+        Step::Call("Ctrl+- zooms out", |g| {
+            g.push_ui(UiEvent::Key(ctrl_key('-')));
+            Ok(())
+        }),
+        Step::Wait("the camera a step further out", |g| {
+            let d = g.ui.as_ref().ok_or("no UI")?.map.camera_distance();
+            Ok(d > 13.0)
+        }),
+        Step::Call("F8 frames the level", |g| {
+            g.push_ui(UiEvent::Key(KeyInput::plain(Key::F(8))));
+            Ok(())
+        }),
+        Step::Wait("the overview, no closer than the hero's view", |g| {
+            let map = &g.ui.as_ref().ok_or("no UI")?.map;
+            Ok(map.in_overview() && map.camera_distance() > 13.0)
+        }),
+        Step::Wait("the camera on the level", camera_settled),
+        Step::Shot("overview"),
+        Step::Call("Ctrl+= goes back to the hero", |g| {
+            g.push_ui(UiEvent::Key(ctrl_key('=')));
+            Ok(())
+        }),
+        Step::Wait("the hero's view, a step closer", |g| {
+            let map = &g.ui.as_ref().ok_or("no UI")?.map;
+            Ok(!map.in_overview() && map.camera_distance() < 13.0)
+        }),
+        // travel's getpos: its goal on the prompt line, not in the log
+        press('_'),
+        Step::Request("the getpos tip", |p| matches!(p, Prompt::Show { .. })),
+        Step::Dialog(DialogEvent::Close),
+        Step::Request("where to travel", command),
+        Step::Wait("the travel question on the prompt line", |g| {
+            let line = g.ui.as_ref().and_then(|ui| ui.hud.prompt_line());
+            let logged = g.world.log.iter().any(|m| m.text.contains("travel to"));
+            match line {
+                Some(l) if g.world.getpos && l.contains("travel to") && !logged => Ok(true),
+                other => Err(format!("prompt line {other:?}, in the log: {logged}")),
+            }
+        }),
+        Step::Shot("getpos"),
+        Step::Press(GKey::ESCAPE, '\0', false),
+        Step::Request("a command after leaving getpos", command),
+        Step::Wait("no prompt line after getpos", |g| {
+            let line = g.ui.as_ref().and_then(|ui| ui.hud.prompt_line());
+            Ok(!g.world.getpos && line.is_none())
+        }),
         // Shift+3 types '#'
         Step::Press(GKey::KEY_3, '#', true),
         Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
