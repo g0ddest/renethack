@@ -20,7 +20,7 @@ use nh_link::{
 };
 use nh_protocol::{Catalog, Reply, WinCall};
 use nh_world::{
-    Key, KeyContext, KeyInput, Prompt, Typeahead, World, describe_cell, in_field, nethack_key,
+    Cell, Key, KeyContext, KeyInput, Prompt, Typeahead, World, describe_cell, in_field, nethack_key,
 };
 
 use crate::dialogs::Dialogs;
@@ -125,6 +125,21 @@ pub struct RenethackGame {
     close_deadline: Option<Instant>,
     quitting: bool,
     selftest: Option<SelfTest>,
+    /// Where the mouse last moved inside the window; `None` before it
+    /// first moves there and after it leaves.
+    mouse_pos: Option<Vector2>,
+    hover: Hover,
+}
+
+/// What the hover marker and the tooltip show now: a still mouse over an
+/// unchanged cell costs no Godot call and no new text.
+#[derive(Default)]
+struct Hover {
+    cell: Option<(i32, i32)>,
+    /// The cell as the tooltip describes it; a new look redoes the text.
+    look: Option<Cell>,
+    text: Option<String>,
+    pos: Vector2,
 }
 
 #[godot_api]
@@ -147,6 +162,8 @@ impl INode for RenethackGame {
             close_deadline: None,
             quitting: false,
             selftest: None,
+            mouse_pos: None,
+            hover: Hover::default(),
         }
     }
 
@@ -237,7 +254,17 @@ impl INode for RenethackGame {
 
     /// Keys the open dialog or the map own; a text field gets everything
     /// else (only its `text_submitted` answers).
+    /// Mouse motion is only recorded here, never handled: the hover needs
+    /// the position over the HUD panels too, which `unhandled_input` never
+    /// sees.
     fn input(&mut self, event: Gd<InputEvent>) {
+        let event = match event.try_cast::<InputEventMouseMotion>() {
+            Ok(motion) => {
+                self.record_mouse(motion.get_position());
+                return;
+            }
+            Err(event) => event,
+        };
         if self.state != GameState::Playing {
             return;
         }
@@ -275,21 +302,7 @@ impl INode for RenethackGame {
         if ui.dialogs.is_open() {
             return;
         }
-        if let Ok(m) = event.clone().try_cast::<InputEventMouseMotion>() {
-            let pos = m.get_position();
-            let cell = ui.map.cell_at(pos);
-            ui.map.set_hover(cell);
-            let text = match (cell, self.catalog.as_deref()) {
-                (Some((x, y)), Some(cat)) => self
-                    .world
-                    .map
-                    .cell(x, y)
-                    .and_then(|c| describe_cell(c, cat)),
-                _ => None,
-            };
-            ui.hud.set_tooltip(text.as_deref(), pos);
-            return;
-        }
+        // hovering follows the recorded mouse position (update_hover)
         let Ok(b) = event.try_cast::<InputEventMouseButton>() else {
             return;
         };
@@ -314,13 +327,25 @@ impl INode for RenethackGame {
 
     /// Only records: `process()` acts on it.
     fn on_notification(&mut self, what: NodeNotification) {
-        if what == NodeNotification::WM_CLOSE_REQUEST {
-            push(&self.queue, UiEvent::CloseRequested);
+        match what {
+            NodeNotification::WM_CLOSE_REQUEST => push(&self.queue, UiEvent::CloseRequested),
+            // entering is followed by motion, which gives the position
+            NodeNotification::WM_MOUSE_EXIT => self.mouse_pos = None,
+            _ => {}
         }
     }
 }
 
 impl RenethackGame {
+    /// A motion outside the window (a drag holds the pointer) hovers nothing.
+    fn record_mouse(&mut self, pos: Vector2) {
+        let inside = self
+            .base()
+            .get_viewport()
+            .is_some_and(|vp| vp.get_visible_rect().contains_point(pos));
+        self.mouse_pos = inside.then_some(pos);
+    }
+
     fn handled(&mut self) {
         if let Some(mut vp) = self.base().get_viewport() {
             vp.set_input_as_handled();
@@ -346,6 +371,7 @@ impl RenethackGame {
         if !on {
             ui.dialogs.close();
         }
+        self.clear_hover();
     }
 
     // ---- engine session ----
@@ -405,12 +431,12 @@ impl RenethackGame {
         let catalog = self.catalog.clone();
         let ui = self.ui_mut();
         ui.dialogs.open(id, &prompt, catalog.as_deref());
-        if ui.dialogs.is_open() {
-            // the mouse belongs to the dialog now
-            ui.hud.set_tooltip(None, Vector2::ZERO);
-            ui.map.set_hover(None);
-        }
+        let dialog = ui.dialogs.is_open();
         ui.hud.set_prompt_line(prompt_line(&prompt).as_deref());
+        if dialog {
+            // the mouse belongs to the dialog now
+            self.clear_hover();
+        }
         self.pending = Some((id, prompt));
         // keys typed while the engine was busy: the first one that answers
         while keeps && self.pending.is_some() {
@@ -874,6 +900,48 @@ impl RenethackGame {
             ui.map.sync(&mut self.world, cat, delta);
         }
         ui.hud.sync(&mut self.world, catalog.as_deref());
+        self.update_hover();
+    }
+
+    /// Hover marker and tooltip for the cell under the mouse, checked every
+    /// frame: they follow the camera and a cell that changes under a still
+    /// mouse, and go away when the mouse leaves the map or the window, or is
+    /// over a HUD panel or a dialog. Godot is told only about changes.
+    fn update_hover(&mut self) {
+        let playing = self.state == GameState::Playing;
+        let catalog = self.catalog.clone();
+        let Some(ui) = self.ui.as_mut() else {
+            return;
+        };
+        let pos = self
+            .mouse_pos
+            .filter(|&p| playing && !ui.dialogs.is_open() && !ui.hud.covers(p));
+        let cell = pos.and_then(|p| ui.map.cell_at(p));
+        if cell != self.hover.cell {
+            self.hover.cell = cell;
+            ui.map.set_hover(cell);
+        }
+        let look = cell.and_then(|(x, y)| self.world.map.cell(x, y));
+        let pos = pos.unwrap_or(Vector2::ZERO);
+        if look != self.hover.look.as_ref() {
+            self.hover.look = look.cloned();
+            self.hover.text = look
+                .zip(catalog.as_deref())
+                .and_then(|(c, cat)| describe_cell(c, cat));
+        } else if self.hover.text.is_none() || pos == self.hover.pos {
+            return;
+        }
+        self.hover.pos = pos;
+        ui.hud.set_tooltip(self.hover.text.as_deref(), pos);
+    }
+
+    /// No hover marker and no tooltip, and nothing remembered about them.
+    fn clear_hover(&mut self) {
+        self.hover = Hover::default();
+        if let Some(ui) = self.ui.as_mut() {
+            ui.hud.set_tooltip(None, Vector2::ZERO);
+            ui.map.set_hover(None);
+        }
     }
 }
 
