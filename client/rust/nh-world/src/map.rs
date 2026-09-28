@@ -1,5 +1,7 @@
 use nh_protocol::{Glyph, GlyphKind, mg};
 
+use crate::motion::{Change, Ident, Move, detect_moves};
+
 /// Map width in NetHack; column 0 is never used.
 pub const COLNO: i32 = 80;
 pub const ROWNO: i32 = 21;
@@ -46,6 +48,8 @@ impl Cell {
 pub struct MapState {
     cells: Vec<Cell>,
     dirty: Vec<(i32, i32)>,
+    /// What each dirty cell showed before it was first drawn in this batch.
+    before: Vec<Option<Glyph>>,
     is_dirty: Vec<bool>,
     generation: u64,
     hero: Option<(i32, i32)>,
@@ -69,6 +73,7 @@ impl MapState {
         MapState {
             cells: vec![Cell::default(); n],
             dirty: Vec::new(),
+            before: Vec::new(),
             is_dirty: vec![false; n],
             generation: 0,
             hero: None,
@@ -108,12 +113,31 @@ impl MapState {
 
     /// Cells drawn since the last call, each once, in drawing order.
     pub fn take_dirty(&mut self) -> Vec<(i32, i32)> {
-        for &(x, y) in &self.dirty {
-            if let Some(i) = index(x, y) {
-                self.is_dirty[i] = false;
+        self.take_dirty_moves().0
+    }
+
+    /// Cells drawn since the last call (as `take_dirty`), and the entities
+    /// that stepped to a neighbouring cell among them (see `detect_moves`).
+    pub fn take_dirty_moves(&mut self) -> (Vec<(i32, i32)>, Vec<Move>) {
+        let before = std::mem::take(&mut self.before);
+        let dirty = std::mem::take(&mut self.dirty);
+        let mut changes = Vec::new();
+        for (&(x, y), was) in dirty.iter().zip(&before) {
+            let Some(i) = index(x, y) else {
+                continue;
+            };
+            self.is_dirty[i] = false;
+            let before = was.as_ref().and_then(Ident::of);
+            let after = self.cells[i].glyph.as_ref().and_then(Ident::of);
+            if before.is_some() || after.is_some() {
+                changes.push(Change {
+                    at: (x, y),
+                    before,
+                    after,
+                });
             }
         }
-        std::mem::take(&mut self.dirty)
+        (dirty, detect_moves(&changes))
     }
 
     /// The last cell drawn with MG_HERO; None once that cell is redrawn without it
@@ -147,6 +171,11 @@ impl MapState {
         } else {
             bk.filter(|b| self.is_terrain(b))
         };
+        if !self.is_dirty[i] {
+            self.is_dirty[i] = true;
+            self.dirty.push((x, y));
+            self.before.push(self.cells[i].glyph.clone());
+        }
         let cell = &mut self.cells[i];
         if let Some(t) = terrain {
             cell.terrain = Some(t.clone());
@@ -158,10 +187,6 @@ impl MapState {
         } else if self.hero == Some((x, y)) {
             self.hero = None;
         }
-        if !self.is_dirty[i] {
-            self.is_dirty[i] = true;
-            self.dirty.push((x, y));
-        }
     }
 
     /// clear_nhwindow on the map window: nothing is known any more.
@@ -169,6 +194,7 @@ impl MapState {
         self.cells.fill(Cell::default());
         self.is_dirty.fill(false);
         self.dirty.clear();
+        self.before.clear();
         self.hero = None;
         self.generation += 1;
     }
@@ -283,6 +309,33 @@ pub(crate) mod tests {
         map.print(5, ROWNO, &floor(), None);
         assert!(map.take_dirty().is_empty());
         assert_eq!(map.cell(0, 5), None);
+    }
+
+    #[test]
+    fn a_batch_of_drawing_tells_who_stepped_where() {
+        let mut map = MapState::new();
+        for x in 8..14 {
+            map.print(x, 5, &floor(), None);
+        }
+        map.print(10, 5, &monster(0, mg::HERO), None);
+        map.print(11, 5, &monster(16, mg::PET), None);
+        map.take_dirty();
+        // the hero steps east and swaps places with the pet (the hero's old
+        // cell drawn twice in the batch: the first "before" counts)
+        map.print(11, 5, &monster(0, mg::HERO), None);
+        map.print(10, 5, &floor(), None);
+        map.print(10, 5, &monster(16, mg::PET), None);
+        let (dirty, moves) = map.take_dirty_moves();
+        assert_eq!(dirty, vec![(11, 5), (10, 5)]);
+        let pairs: Vec<_> = moves.iter().map(|m| (m.from, m.to)).collect();
+        assert_eq!(pairs, vec![((11, 5), (10, 5)), ((10, 5), (11, 5))]);
+        // nothing new: no moves
+        assert_eq!(map.take_dirty_moves(), (vec![], vec![]));
+        // a clear forgets the batch: a new level never animates
+        map.print(11, 5, &floor(), None);
+        map.clear();
+        map.print(12, 5, &monster(0, mg::HERO), None);
+        assert!(map.take_dirty_moves().1.is_empty());
     }
 
     #[test]
