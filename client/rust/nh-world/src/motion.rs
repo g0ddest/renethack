@@ -53,7 +53,8 @@ pub struct Change {
     pub after: Option<Ident>,
 }
 
-/// An entity that left `from` and now stands on the adjacent `to`.
+/// An entity that left `from` and now stands on `to`, one or two cells
+/// away (a fast monster may take two steps in one turn).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Move {
     pub from: (i32, i32),
@@ -61,16 +62,24 @@ pub struct Move {
     pub ident: Ident,
 }
 
+impl Move {
+    /// Steps taken: 1 or 2.
+    pub fn steps(&self) -> i32 {
+        chebyshev(self.from, self.to)
+    }
+}
+
 fn chebyshev(a: (i32, i32), b: (i32, i32)) -> i32 {
     (a.0 - b.0).abs().max((a.1 - b.1).abs())
 }
 
 /// Pair each entity that vanished from a cell with one of the same identity
-/// that appeared on a neighbouring cell (8 directions). Among several
-/// candidates the orthogonal step wins over the diagonal one, then the
+/// that appeared on a neighbouring cell (8 directions), or failing that two
+/// cells away (two steps in one turn). Among several candidates the nearer
+/// wins (a single step before two, orthogonal before diagonal), then the
 /// order of the cells (deterministic); each entity moves at most once.
-/// Unpaired ones simply appear and disappear; a jump of more than one cell
-/// (several steps in one batch, a teleport) is never a move.
+/// Unpaired ones simply appear and disappear; a jump of more than two cells
+/// (running, a teleport) is never a move.
 pub fn detect_moves(changes: &[Change]) -> Vec<Move> {
     let vanished: Vec<((i32, i32), Ident)> = changes
         .iter()
@@ -85,7 +94,7 @@ pub fn detect_moves(changes: &[Change]) -> Vec<Move> {
     let mut candidates: Vec<(i32, Move)> = Vec::new();
     for &(from, ident) in &vanished {
         for &(to, other) in &appeared {
-            if other == ident && chebyshev(from, to) == 1 {
+            if other == ident && (1..=2).contains(&chebyshev(from, to)) {
                 let d2 = (from.0 - to.0).pow(2) + (from.1 - to.1).pow(2);
                 candidates.push((d2, Move { from, to, ident }));
             }
@@ -306,12 +315,40 @@ mod tests {
     }
 
     #[test]
+    fn two_steps_in_a_turn_are_one_quicker_move() {
+        // a kitten (speed 18) moves twice: a knight's jump on the map
+        let kitten = |at, before, after| change(at, before, after);
+        let moves = detect_moves(&[
+            kitten((15, 5), Some(DOG), None),
+            kitten((14, 3), None, Some(DOG)),
+        ]);
+        assert_eq!(moves.len(), 1);
+        assert_eq!(moves[0].steps(), 2);
+        // a single step is preferred: the nearer pet takes the near cell
+        let moves = detect_moves(&[
+            change((10, 5), Some(JACKAL), None),
+            change((12, 5), Some(JACKAL), None),
+            change((13, 5), None, Some(JACKAL)),
+            change((11, 5), None, Some(JACKAL)),
+        ]);
+        let pairs: Vec<_> = moves.iter().map(|m| (m.from, m.to, m.steps())).collect();
+        assert_eq!(pairs, vec![((10, 5), (11, 5), 1), ((12, 5), (13, 5), 1)]);
+    }
+
+    #[test]
     fn far_jumps_other_kinds_and_standing_still_are_not_moves() {
-        // two cells in one batch (running), a teleport
+        // three cells in one batch (running), a teleport
         assert!(
             detect_moves(&[
                 change((10, 5), Some(HERO), None),
-                change((12, 5), None, Some(HERO)),
+                change((13, 5), None, Some(HERO)),
+            ])
+            .is_empty()
+        );
+        assert!(
+            detect_moves(&[
+                change((10, 5), Some(HERO), None),
+                change((30, 15), None, Some(HERO)),
             ])
             .is_empty()
         );
@@ -373,6 +410,7 @@ mod tests {
             change((10, 5), Some(JACKAL), None),
             change((12, 5), Some(JACKAL), None),
             change((11, 4), None, Some(JACKAL)),
+            change((20, 5), None, Some(JACKAL)),
         ];
         let a = detect_moves(&changes);
         let mut reversed = changes;
