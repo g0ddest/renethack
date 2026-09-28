@@ -176,19 +176,39 @@ pub fn translate(raw: &RawKey, text_ok: bool, mac: bool) -> Option<KeyInput> {
 }
 
 /// Keys the client keeps for itself (never sent to the engine): F9 the
-/// message log, Ctrl+`-` / Ctrl+`=` (`+`) zoom, F8 or Ctrl+`0` the whole
-/// level. NetHack binds none of them.
+/// message log, F5 rest until HP and Pw are full, Ctrl+`-` / Ctrl+`=`
+/// (`+`) zoom, F8 or Ctrl+`0` the whole level. NetHack binds none of them.
 pub fn client_key(k: &KeyInput) -> Option<UiEvent> {
     if k.mods.alt {
         return None;
     }
     match (k.key, k.mods.ctrl) {
         (Key::F(9), _) => Some(UiEvent::ToggleFullLog),
+        (Key::F(5), _) => Some(UiEvent::Rest),
         (Key::F(8), _) | (Key::Char('0'), true) => Some(UiEvent::ToggleOverview),
         (Key::Char('-' | '_'), true) => Some(UiEvent::Zoom(1.0)),
         (Key::Char('=' | '+'), true) => Some(UiEvent::Zoom(-1.0)),
         _ => None,
     }
+}
+
+/// The key a release event lets go of (the same translation as its press).
+pub fn key_release(ev: &Gd<InputEventKey>) -> Option<KeyInput> {
+    if ev.is_pressed() {
+        return None;
+    }
+    let raw = RawKey {
+        keycode: ev.get_keycode().ord(),
+        physical: ev.get_physical_keycode().ord(),
+        unicode: ev.get_unicode(),
+        shift: ev.is_shift_pressed(),
+        ctrl: ev.is_ctrl_pressed(),
+        alt: ev.is_alt_pressed(),
+        meta: ev.is_meta_pressed(),
+        echo: false,
+        pressed: true,
+    };
+    translate(&raw, false, cfg!(target_os = "macos"))
 }
 
 /// `translate` for a Godot event.
@@ -377,6 +397,7 @@ mod tests {
         let plain = |k| client_key(&KeyInput::plain(k));
         assert_eq!(plain(Key::F(9)), Some(UiEvent::ToggleFullLog));
         assert_eq!(plain(Key::F(8)), Some(UiEvent::ToggleOverview));
+        assert_eq!(plain(Key::F(5)), Some(UiEvent::Rest));
         assert_eq!(client_key(&ctrl('0')), Some(UiEvent::ToggleOverview));
         assert_eq!(client_key(&ctrl('-')), Some(UiEvent::Zoom(1.0)));
         assert_eq!(client_key(&ctrl('=')), Some(UiEvent::Zoom(-1.0)));

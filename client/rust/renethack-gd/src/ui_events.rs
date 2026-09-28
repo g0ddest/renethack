@@ -11,6 +11,12 @@ use nh_world::KeyInput;
 pub enum UiEvent {
     /// Translated keyboard (non-text contexts).
     Key(KeyInput),
+    /// A key let go (ends holding it down).
+    KeyUp(KeyInput),
+    /// The window lost the keyboard: held keys are let go.
+    FocusLost,
+    /// Rest until HP and Pw are full (F5).
+    Rest,
     /// A click on map cell (x, y); `button` 1 = left, 2 = right.
     MapClick {
         x: i32,

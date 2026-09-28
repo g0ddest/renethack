@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 use godot::classes::notify::NodeNotification;
 use godot::classes::{
     CanvasLayer, INode, InputEvent, InputEventKey, InputEventMouseButton, InputEventMouseMotion,
-    Node3D, Os,
+    Node3D, Os, ProjectSettings,
 };
 use godot::global::MouseButton;
 use godot::prelude::*;
@@ -20,12 +20,14 @@ use nh_link::{
 };
 use nh_protocol::{Catalog, Reply, WinCall};
 use nh_world::{
-    Cell, Key, KeyContext, KeyInput, Prompt, Typeahead, World, describe_cell, in_field, nethack_key,
+    Action, Cell, ClickPlan, CountEntry, Counted, Key, KeyContext, KeyInput, Mode, Order, Prompt,
+    Stop, TickDriver, Typeahead, World, click_order, describe_cell, find_path, in_field,
+    nethack_key, repeatable, stairs_order,
 };
 
 use crate::dialogs::Dialogs;
 use crate::hud::Hud;
-use crate::input::{client_key, key_input};
+use crate::input::{client_key, key_input, key_release};
 use crate::map_view::MapView;
 use crate::paths::Paths;
 use crate::screens::{DEFAULT_NAME, EndSummary, Screens};
@@ -40,6 +42,12 @@ const HANG_TIMEOUT: Duration = Duration::from_secs(20);
 const CLOSE_TIMEOUT: Duration = Duration::from_secs(10);
 /// Messages the end screen repeats.
 const END_MESSAGES: usize = 12;
+/// Project setting with the order tick in milliseconds (150–500).
+const TICK_SETTING: &str = "renethack/tick_ms";
+/// The soak self-test's tick, unless it is given one.
+const SOAK_TICK_MS: u64 = 20;
+/// How long the HUD tells why an order stopped.
+const STOP_NOTE: Duration = Duration::from_millis(2500);
 /// Self-tests are reproducible: this seed and clock unless the environment says otherwise.
 pub(crate) const SELFTEST_SEED: u64 = 42;
 const SELFTEST_TIME: i64 = 1_768_694_400;
@@ -65,6 +73,8 @@ pub struct Args {
     pub seed: Option<u64>,
     /// The soak self-test's budget of answered requests.
     pub soak: Option<u32>,
+    /// The order tick in milliseconds, any value (self-tests).
+    pub tick: Option<u64>,
 }
 
 pub fn parse_args<S: AsRef<str>>(args: &[S]) -> Args {
@@ -85,6 +95,10 @@ pub fn parse_args<S: AsRef<str>>(args: &[S]) -> Args {
             && let Ok(n) = v.trim().parse()
         {
             out.soak = Some(n);
+        } else if let Some(v) = a.strip_prefix("--tick=")
+            && let Ok(n) = v.trim().parse()
+        {
+            out.tick = Some(n);
         } else {
             godot_warn!("unknown argument {a:?}");
         }
@@ -108,6 +122,35 @@ fn prompt_line(prompt: &Prompt) -> Option<String> {
         Prompt::MapPause => Some("--More--  (any key)".to_string()),
         _ => None,
     }
+}
+
+/// A held key as its release names it (a letter's case may differ).
+fn held_key(k: Key) -> Key {
+    match k {
+        Key::Char(c) => Key::Char(c.to_ascii_lowercase()),
+        other => other,
+    }
+}
+
+/// What the HUD says an order does.
+fn order_text(order: &Order) -> String {
+    use nh_world::Arrival;
+    let what = match order {
+        Order::Walk { arrival, .. } => match arrival {
+            Arrival::None => "Walking".to_string(),
+            Arrival::PickUp => "Walking to pick up".to_string(),
+            Arrival::Stairs('<') => "Going to the stairs up".to_string(),
+            Arrival::Stairs(_) => "Going to the stairs down".to_string(),
+            Arrival::Open => "Going to open the door".to_string(),
+            Arrival::Attack => "Going to attack".to_string(),
+        },
+        Order::Repeat { key: 's', left } => format!("Searching, {left} more"),
+        Order::Repeat { key: '.', left } => format!("Waiting, {left} more"),
+        Order::Repeat { left, .. } => format!("Walking, {left} more steps"),
+        Order::Hold { .. } => "Holding the key".to_string(),
+        Order::Rest => "Resting until HP and Pw are full".to_string(),
+    };
+    format!("{what}  -  any key stops")
 }
 
 pub(crate) fn env_number<T: std::str::FromStr>(name: &str) -> Option<T> {
@@ -151,6 +194,37 @@ pub struct RenethackGame {
     /// This client's hold on the playground; `None` while another client
     /// uses it (then nothing here recovers, lists or starts games).
     playground_lock: Option<PlaygroundLock>,
+    /// Orders, the tick and the mode (exploring or fighting).
+    pub(crate) driver: TickDriver,
+    /// When the last action of an order went out.
+    last_action: Option<Instant>,
+    /// A count typed before a command.
+    count: CountEntry,
+    /// The key held down for a `Hold` order.
+    held: Option<Key>,
+    /// Why the last order stopped, shown until then.
+    stop_note: Option<(String, Instant)>,
+    /// What the way preview was drawn for.
+    preview_key: Option<PreviewKey>,
+    /// The last actions orders sent (self-tests: when and what), and how
+    /// many were sent in all.
+    pub(crate) order_log: std::collections::VecDeque<(Instant, char)>,
+    pub(crate) order_actions: u64,
+    /// Why the last order ended (self-tests).
+    pub(crate) last_stop: Option<Stop>,
+    /// A cell the self-test hovers instead of the mouse.
+    pub(crate) test_hover: Option<(i32, i32)>,
+}
+
+/// The way preview is drawn again only when one of these changes.
+#[derive(Debug, Clone, PartialEq)]
+struct PreviewKey {
+    hover: Option<(i32, i32)>,
+    request: Option<u64>,
+    order: Option<Order>,
+    hero: Option<(i32, i32)>,
+    generation: u64,
+    mode: Mode,
 }
 
 /// What the hover marker and the tooltip show now: a still mouse over an
@@ -190,6 +264,16 @@ impl INode for RenethackGame {
             faults: Vec::new(),
             failure: None,
             playground_lock: None,
+            driver: TickDriver::new(),
+            last_action: None,
+            count: CountEntry::default(),
+            held: None,
+            stop_note: None,
+            preview_key: None,
+            order_log: std::collections::VecDeque::new(),
+            order_actions: 0,
+            last_stop: None,
+            test_hover: None,
         }
     }
 
@@ -237,6 +321,9 @@ impl INode for RenethackGame {
         );
         self.paths = Some(paths.clone());
         self.seed = args.seed;
+        // the soak plays many orders: quickly
+        let soak = args.selftest.as_deref() == Some("soak");
+        self.set_tick(args.tick.or(soak.then_some(SOAK_TICK_MS)));
         if args.selftest.is_some() {
             self.selftest = SelfTest::new(&args);
         }
@@ -261,6 +348,7 @@ impl INode for RenethackGame {
         // typeahead policy drops them when it opens a modal question)
         self.drain_ui();
         self.pump();
+        self.drive();
         self.sync_views(delta);
         if let Some(ui) = self.ui.as_mut() {
             ui.map.preload_step();
@@ -299,6 +387,13 @@ impl INode for RenethackGame {
             return;
         };
         let text = self.ui.as_ref().is_some_and(|ui| ui.dialogs.wants_text());
+        if !key.is_pressed() {
+            // letting go ends holding it down (text fields keep theirs)
+            if !text && let Some(k) = key_release(&key) {
+                push(&self.queue, UiEvent::KeyUp(k));
+            }
+            return;
+        }
         let Some(k) = key_input(&key, text) else {
             return;
         };
@@ -351,6 +446,10 @@ impl INode for RenethackGame {
     fn on_notification(&mut self, what: NodeNotification) {
         match what {
             NodeNotification::WM_CLOSE_REQUEST => push(&self.queue, UiEvent::CloseRequested),
+            // held keys are let go without a release event
+            NodeNotification::WM_WINDOW_FOCUS_OUT | NodeNotification::APPLICATION_FOCUS_OUT => {
+                push(&self.queue, UiEvent::FocusLost)
+            }
             // entering is followed by motion, which gives the position
             NodeNotification::WM_MOUSE_EXIT => self.mouse_pos = None,
             _ => {}
@@ -460,6 +559,39 @@ impl RenethackGame {
     }
 
     fn open_prompt(&mut self, id: u64, prompt: Prompt) {
+        // the next key of an order's action (the direction after F or o):
+        // part of the decision already made, answered at once
+        if self.driver.expects_follow_up()
+            && let Some(c) = self.driver.follow_up(&prompt)
+        {
+            let reply = match prompt {
+                Prompt::Command => Reply::Key(c as i32),
+                _ => Reply::Char(c as i32),
+            };
+            self.pending = Some((id, prompt));
+            self.log_action(c);
+            self.reply(reply);
+            return;
+        }
+        if let Some(cat) = self.catalog.clone() {
+            let query = match &prompt {
+                Prompt::Choice { query, .. } | Prompt::FreeKey { query, .. } => {
+                    Some(query.as_str())
+                }
+                _ => None,
+            };
+            if prompt == Prompt::Command && !self.world.getpos {
+                // the tick's moment: the mode, and whether the order goes on
+                if let Some(mode) = self.driver.observe(&self.world, &cat) {
+                    self.ui_mut().hud.set_mode(mode == Mode::Combat, true);
+                }
+            } else if self.driver.is_active() {
+                // a question the order did not expect: the player answers
+                self.driver.on_question(query, &cat);
+            } else if let Some(q) = query {
+                self.driver.note_query(q, &cat);
+            }
+        }
         let keeps = prompt.keeps_typeahead();
         if !keeps {
             self.typeahead.clear();
@@ -559,6 +691,7 @@ impl RenethackGame {
         self.session = None;
         self.pending = None;
         self.typeahead.clear();
+        self.reset_orders();
         let ui = self.ui_mut();
         ui.dialogs.close();
         ui.hud.set_prompt_line(None);
@@ -684,10 +817,29 @@ impl RenethackGame {
             self.on_ui_event(ev);
             return;
         }
+        if !k.echo && self.held == Some(held_key(k.key)) {
+            // pressed anew: it was let go (its release went unseen)
+            self.held = None;
+        }
+        if self.driver.is_active() {
+            // any key stops an order before its next step; a key's repeat
+            // neither stops one nor steps (a held key's order does)
+            if k.echo {
+                return;
+            }
+            self.driver.interrupt(Stop::Key);
+            if k.key == Key::Escape {
+                return;
+            }
+        }
         let Some((_, prompt)) = &self.pending else {
             self.typeahead.push(k);
             return;
         };
+        if *prompt == Prompt::Command && !self.world.getpos {
+            self.command_key(k);
+            return;
+        }
         let (np, dirs) = (self.world.number_pad, self.world.dirchars.clone());
         let code = |ctx| nethack_key(&k, ctx, np, &dirs);
         let reply = match prompt {
@@ -710,15 +862,283 @@ impl RenethackGame {
         }
     }
 
+    /// A key at a command prompt (not getpos): a count, an order, or the
+    /// engine's command.
+    fn command_key(&mut self, k: KeyInput) {
+        let (np, dirs) = (self.world.number_pad, self.world.dirchars.clone());
+        let Some(code) = nethack_key(&k, KeyContext::Command, np, &dirs) else {
+            return;
+        };
+        let c = u32::try_from(code).ok().and_then(char::from_u32);
+        if k.echo {
+            // held down: a Hold order repeats it on the tick, the key's own
+            // repeat never steps; once stopped it waits for a new press
+            if self.held.is_none()
+                && self.count.shown().is_none()
+                && let Some(c) = c.filter(|c| repeatable(*c, &dirs))
+            {
+                self.held = Some(held_key(k.key));
+                self.start_order(Order::Hold { key: c });
+            }
+            return;
+        }
+        match self.count.feed(code, np) {
+            Counted::Typing => {
+                let line = self.count.shown();
+                self.ui_mut().hud.set_prompt_line(line.as_deref());
+            }
+            Counted::Command(n) => {
+                if n.is_some() {
+                    self.ui_mut().hud.set_prompt_line(None);
+                }
+                if let (Some(n), Some(c)) = (n, c)
+                    && repeatable(c, &dirs)
+                {
+                    self.start_order(Order::Repeat { key: c, left: n });
+                    return;
+                }
+                // '<' or '>' away from the stairs: walk there and use them
+                if let Some(c @ ('<' | '>')) = c
+                    && let Some(cat) = self.catalog.clone()
+                    && let Some(order) = stairs_order(&self.world, &cat, c)
+                    && self.start_order(order)
+                {
+                    return;
+                }
+                self.reply(Reply::Key(code));
+            }
+        }
+    }
+
+    /// A left click walks (and acts at the end of the way); a right click
+    /// asks the engine for the cell's actions (#therecmdmenu). In getpos a
+    /// click picks the cell.
     fn on_click(&mut self, x: i32, y: i32, button: i32) {
+        // a click stops the order; a left click gives the next one
+        self.driver.interrupt(Stop::Click);
         match self.pending.as_ref().map(|(_, p)| p) {
-            Some(Prompt::Command) => self.reply(Reply::Click {
+            Some(Prompt::Command) if self.world.getpos => self.reply(Reply::Click {
                 x,
                 y,
                 modifier: button,
             }),
+            Some(Prompt::Command) => {
+                if self.count.shown().is_some() {
+                    self.count.clear();
+                    self.ui_mut().hud.set_prompt_line(None);
+                }
+                let plan = match (button, self.catalog.clone()) {
+                    (1, Some(cat)) => click_order(&self.world, &cat, (x, y)),
+                    _ => ClickPlan::Engine,
+                };
+                match plan {
+                    ClickPlan::Order(order) => {
+                        self.start_order(order);
+                    }
+                    // CLICK_1 is the engine's #therecmdmenu
+                    ClickPlan::Engine => self.reply(Reply::Click { x, y, modifier: 1 }),
+                    ClickPlan::Nothing(why) => {
+                        self.stop_note =
+                            Some((format!("Nothing to do there ({why})"), Instant::now()));
+                    }
+                }
+            }
             Some(Prompt::MapPause) => self.reply(Reply::Ack),
             _ => {}
+        }
+    }
+
+    /// Start an order at the command prompt: its first action goes now.
+    fn start_order(&mut self, order: Order) -> bool {
+        let Some(cat) = self.catalog.clone() else {
+            return false;
+        };
+        match self.driver.start(order, &self.world, &cat) {
+            Ok(action) => {
+                self.send_action(action);
+                true
+            }
+            Err(stop) => {
+                self.note_stop(&stop);
+                self.last_stop = Some(stop);
+                false
+            }
+        }
+    }
+
+    /// Answer the command prompt with an order's action.
+    fn send_action(&mut self, action: Action) {
+        let Some(&c) = action.keys.first() else {
+            return;
+        };
+        self.last_action = Some(Instant::now());
+        self.log_action(c);
+        // the step this action brings lasts the tick, the first one too
+        let tick = self.driver.tick().as_secs_f32();
+        self.ui_mut().map.set_order_pace(Some(tick));
+        self.reply(Reply::Key(c as i32));
+    }
+
+    /// Keep the last actions for self-tests.
+    fn log_action(&mut self, c: char) {
+        const KEEP: usize = 256;
+        if self.order_log.len() == KEEP {
+            self.order_log.pop_front();
+        }
+        self.order_log.push_back((Instant::now(), c));
+        self.order_actions += 1;
+    }
+
+    /// Why an order ended, for the HUD (not when it simply finished).
+    fn note_stop(&mut self, stop: &Stop) {
+        if !stop.is_completion() {
+            self.stop_note = Some((stop.says(), Instant::now()));
+        }
+    }
+
+    /// The order's next action, when a command prompt waits, the tick has
+    /// passed and the hero's last step has been played.
+    fn drive(&mut self) {
+        if !self.driver.is_active() || self.state != GameState::Playing {
+            return;
+        }
+        if !matches!(self.pending, Some((_, Prompt::Command))) || self.world.getpos {
+            return;
+        }
+        let since = self.last_action.map_or(Duration::MAX, |t| t.elapsed());
+        let walking = self.ui.as_ref().is_some_and(|ui| ui.map.hero_walking());
+        if !self.driver.ready(since, walking) {
+            return;
+        }
+        let Some(cat) = self.catalog.clone() else {
+            return;
+        };
+        if let Some(action) = self.driver.next(&self.world, &cat) {
+            self.send_action(action);
+        }
+    }
+
+    /// A key let go: the order holding it ends.
+    fn on_key_up(&mut self, k: KeyInput) {
+        if self.held == Some(held_key(k.key)) {
+            self.held = None;
+            if matches!(self.driver.order(), Some(Order::Hold { .. })) {
+                self.driver.interrupt(Stop::Released);
+            }
+        }
+    }
+
+    /// Rest until HP and Pw are full (F5), at a command prompt.
+    fn rest(&mut self) {
+        self.driver.interrupt(Stop::Key);
+        if matches!(self.pending, Some((_, Prompt::Command))) && !self.world.getpos {
+            self.start_order(Order::Rest);
+        }
+    }
+
+    /// The tick: the project setting (150–500 ms), RENETHACK_TICK_MS, or a
+    /// self-test's `--tick=` (any value).
+    fn set_tick(&mut self, test: Option<u64>) {
+        if let Some(ms) = test {
+            self.driver.set_test_tick(Duration::from_millis(ms));
+            return;
+        }
+        let settings = ProjectSettings::singleton();
+        let setting = settings
+            .has_setting(TICK_SETTING)
+            .then(|| settings.get_setting(TICK_SETTING).try_to::<i64>().ok())
+            .flatten()
+            .and_then(|v| u64::try_from(v).ok());
+        let ms = env_number::<u64>("RENETHACK_TICK_MS")
+            .or(setting)
+            .unwrap_or(nh_world::DEFAULT_TICK_MS);
+        self.driver.set_tick_ms(ms);
+    }
+
+    /// Forget orders, counts and notes (a new game, the end of one).
+    fn reset_orders(&mut self) {
+        self.driver.reset();
+        self.held = None;
+        self.count.clear();
+        self.stop_note = None;
+        self.preview_key = None;
+        self.last_action = None;
+    }
+
+    /// The HUD's mode badge and order line, the hero's pace.
+    fn sync_orders(&mut self) {
+        if let Some(stop) = self.driver.take_stop() {
+            self.note_stop(&stop);
+            self.last_stop = Some(stop);
+        }
+        if self.driver.is_active() {
+            self.stop_note = None;
+        }
+        let note = self
+            .stop_note
+            .as_ref()
+            .filter(|(_, at)| at.elapsed() < STOP_NOTE)
+            .map(|(t, _)| t.clone());
+        let line = match self.driver.order() {
+            Some(o) => Some(order_text(o)),
+            None => note,
+        };
+        let combat = self.driver.mode() == Mode::Combat;
+        let pace = self
+            .driver
+            .is_active()
+            .then(|| self.driver.tick().as_secs_f32());
+        let Some(ui) = self.ui.as_mut() else {
+            return;
+        };
+        ui.hud.set_mode(combat, false);
+        ui.hud.set_order_line(line.as_deref());
+        ui.map.set_order_pace(pace);
+    }
+
+    /// The way a click would walk (under the mouse), or the way the order
+    /// walks; drawn again only when something it depends on changed.
+    fn update_preview(&mut self) {
+        let Some(cat) = self.catalog.clone() else {
+            return;
+        };
+        let command = matches!(self.pending, Some((_, Prompt::Command))) && !self.world.getpos;
+        let dialog = self.ui.as_ref().is_some_and(|ui| ui.dialogs.is_open());
+        let key = PreviewKey {
+            hover: self.hover.cell.filter(|_| command && !dialog),
+            request: self.pending.as_ref().map(|(id, _)| *id),
+            order: self.driver.order().cloned(),
+            hero: self.world.hero(),
+            generation: self.world.map.generation(),
+            mode: self.driver.mode(),
+        };
+        if self.preview_key.as_ref() == Some(&key) {
+            return;
+        }
+        let walk = match (&key.order, key.hover) {
+            (Some(Order::Walk { goal, arrival }), _) => Some((*goal, *arrival)),
+            (Some(_), _) => None,
+            (None, Some(at)) => match click_order(&self.world, &cat, at) {
+                ClickPlan::Order(Order::Walk { goal, arrival }) => Some((goal, arrival)),
+                _ => None,
+            },
+            (None, None) => None,
+        };
+        let path = walk
+            .zip(key.hero)
+            .and_then(|((goal, arrival), hero)| {
+                let mut way = find_path(&self.world.map, &cat, hero, goal, arrival.reach())?;
+                // the ring on what the walk is for: the door, the monster
+                if arrival.reach() != nh_world::Reach::Onto {
+                    way.push(goal);
+                }
+                Some(way)
+            })
+            .unwrap_or_default();
+        let combat = key.mode == Mode::Combat;
+        self.preview_key = Some(key);
+        if let Some(ui) = self.ui.as_mut() {
+            ui.map.set_path(&path, combat);
         }
     }
 
@@ -759,7 +1179,16 @@ impl RenethackGame {
             UiEvent::BackToTitle if idle => self.show_title(None),
             UiEvent::QuitApp if idle => self.finish_close(),
             UiEvent::CloseRequested => self.on_close_requested(),
-            UiEvent::ToggleFullLog => self.ui_mut().hud.toggle_full_log(),
+            UiEvent::ToggleFullLog => {
+                self.driver.interrupt(Stop::Panel);
+                self.ui_mut().hud.toggle_full_log();
+            }
+            UiEvent::KeyUp(k) => self.on_key_up(k),
+            UiEvent::FocusLost => {
+                self.held = None;
+                self.driver.interrupt(Stop::Focus);
+            }
+            UiEvent::Rest => self.rest(),
             UiEvent::Zoom(steps) => self.ui_mut().map.zoom(steps),
             UiEvent::ToggleOverview => self.ui_mut().map.toggle_overview(),
             other => godot_warn!("renethack: {other:?} ignored while a game runs"),
@@ -920,6 +1349,7 @@ impl RenethackGame {
                 }
                 self.pending = None;
                 self.typeahead.clear();
+                self.reset_orders();
                 self.link_error = None;
                 self.name = Some(name.to_string());
                 self.state = GameState::Playing;
@@ -938,6 +1368,7 @@ impl RenethackGame {
             (GameState::Playing, Some(session)) => {
                 // the engine saves when its input closes
                 session.hang_up();
+                self.driver.interrupt(Stop::Reset);
                 self.pending = None;
                 self.typeahead.clear();
                 self.state = GameState::Closing;
@@ -998,6 +1429,8 @@ impl RenethackGame {
         }
         ui.hud.sync(&mut self.world, catalog.as_deref());
         self.update_hover();
+        self.sync_orders();
+        self.update_preview();
     }
 
     /// Hover marker and tooltip for the cell under the mouse, checked every
@@ -1013,12 +1446,18 @@ impl RenethackGame {
         let pos = self
             .mouse_pos
             .filter(|&p| playing && !ui.dialogs.is_open() && !ui.hud.covers(p));
-        let cell = pos.and_then(|p| ui.map.cell_at(p));
+        let cell = match self.test_hover {
+            Some(c) if playing && !ui.dialogs.is_open() => Some(c),
+            _ => pos.and_then(|p| ui.map.cell_at(p)),
+        };
         if cell != self.hover.cell {
             self.hover.cell = cell;
             ui.map.set_hover(cell);
         }
-        let look = cell.and_then(|(x, y)| self.world.map.cell(x, y));
+        // a self-test's hovered cell has no mouse to put a tooltip at
+        let look = cell
+            .filter(|_| self.test_hover.is_none())
+            .and_then(|(x, y)| self.world.map.cell(x, y));
         let pos = pos.unwrap_or(Vector2::ZERO);
         if look != self.hover.look.as_ref() {
             self.hover.look = look.cloned();
@@ -1059,6 +1498,22 @@ mod tests {
         assert_eq!(parse_args::<&str>(&[]), Args::default());
         let a = parse_args(&["--selftest=soak", "--soak=300", "--seed=7"]);
         assert_eq!((a.soak, a.seed), (Some(300), Some(7)));
+    }
+
+    #[test]
+    fn orders_say_what_they_do() {
+        let walk = Order::Walk {
+            goal: (5, 5),
+            arrival: nh_world::Arrival::Stairs('>'),
+        };
+        assert!(order_text(&walk).starts_with("Going to the stairs down"));
+        let search = Order::Repeat { key: 's', left: 4 };
+        assert!(order_text(&search).starts_with("Searching, 4 more"));
+        assert!(order_text(&Order::Rest).contains("any key stops"));
+        assert_eq!(held_key(Key::Char('L')), Key::Char('l'));
+        assert_eq!(held_key(Key::Left), Key::Left);
+        let a = parse_args(&["--tick=20"]);
+        assert_eq!(a.tick, Some(20));
     }
 
     #[test]

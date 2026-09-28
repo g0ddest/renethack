@@ -38,6 +38,17 @@ const LOG_HEIGHT: f32 = LOG_VISIBLE * LINE_HEIGHT + LOG_CHROME;
 const TOOLTIP_GAP: f32 = 18.0;
 /// Deadly chips pulse this many times a second.
 const PULSE_HZ: f64 = 1.25;
+/// The mode badge, top right.
+const MODE_WIDTH: f32 = 300.0;
+/// Seconds the banner of a new mode stays, fading out in the last third.
+const FLASH_SECS: f64 = 1.6;
+
+const COMBAT_BG: Color = Color::from_rgba(0.32, 0.05, 0.04, 0.94);
+const COMBAT_EDGE: Color = Color::from_rgb(0.9, 0.25, 0.18);
+const COMBAT_TEXT: Color = Color::from_rgb(1.0, 0.5, 0.4);
+const EXPLORE_BG: Color = Color::from_rgba(0.06, 0.08, 0.07, 0.86);
+const EXPLORE_EDGE: Color = Color::from_rgb(0.3, 0.42, 0.34);
+const EXPLORE_TEXT: Color = Color::from_rgb(0.62, 0.8, 0.66);
 
 const HP_GREEN: Color = Color::from_rgb(0.25, 0.75, 0.3);
 const HP_YELLOW: Color = Color::from_rgb(0.9, 0.8, 0.2);
@@ -427,6 +438,32 @@ pub struct Hud {
     full_log_dirty: bool,
     /// The full log jumps to the newest message on its next rebuild.
     full_log_follow: bool,
+    mode_panel: Gd<PanelContainer>,
+    mode_style: Gd<StyleBoxFlat>,
+    mode_label: Gd<Label>,
+    /// What the order does, or why it stopped.
+    order_label: Gd<Label>,
+    /// The big word when the mode changes, and when it came (seconds).
+    flash: Gd<Label>,
+    flash_since: Option<f64>,
+    combat: Option<bool>,
+}
+
+/// Seconds since the engine started (for fades).
+fn now_secs() -> f64 {
+    Time::singleton().get_ticks_msec() as f64 / 1000.0
+}
+
+/// The banner's opacity `t` seconds after the mode changed.
+pub fn flash_alpha(t: f64) -> f32 {
+    let fade = FLASH_SECS / 3.0;
+    if !(0.0..FLASH_SECS).contains(&t) {
+        0.0
+    } else if t < FLASH_SECS - fade {
+        1.0
+    } else {
+        ((FLASH_SECS - t) / fade) as f32
+    }
 }
 
 /// Replace a scrolling label's text; show the end (`follow`) or stay where
@@ -636,6 +673,53 @@ impl Hud {
         full_log_panel.set_visible(false);
         root.add_child(&full_log_panel);
 
+        // the mode, top right: exploring or fighting; the order under it
+        let mut mode_col = vbox(4);
+        place(
+            &mode_col,
+            [1.0, 0.0, 1.0, 0.0],
+            [-MARGIN - MODE_WIDTH, MARGIN, -MARGIN, MARGIN],
+        );
+        mode_col.set_mouse_filter(MouseFilter::IGNORE);
+        mode_col.set_h_grow_direction(GrowDirection::BEGIN);
+        let mut mode_panel = PanelContainer::new_alloc();
+        mode_panel.set_mouse_filter(MouseFilter::IGNORE);
+        let mut mode_style = theme::panel_style(EXPLORE_BG);
+        mode_style.set_border_color(EXPLORE_EDGE);
+        mode_style.set_content_margin(Side::TOP, 4.0);
+        mode_style.set_content_margin(Side::BOTTOM, 4.0);
+        mode_panel.add_theme_stylebox_override("panel", &mode_style);
+        let mut mode_label = theme::label("");
+        mode_label.set_horizontal_alignment(HorizontalAlignment::CENTER);
+        mode_label.add_theme_font_override("font", &theme::mono_bold());
+        mode_label.add_theme_font_size_override("font_size", 16);
+        mode_panel.add_child(&mode_label);
+        mode_panel.set_visible(false);
+        mode_col.add_child(&mode_panel);
+        let mut order_label = theme::label("");
+        order_label.set_horizontal_alignment(HorizontalAlignment::RIGHT);
+        order_label.add_theme_font_size_override("font_size", 14);
+        order_label.add_theme_color_override("font_color", theme::ACCENT);
+        order_label
+            .add_theme_color_override("font_outline_color", Color::from_rgba(0.0, 0.0, 0.0, 0.9));
+        order_label.add_theme_constant_override("outline_size", 4);
+        order_label.set_autowrap_mode(AutowrapMode::WORD_SMART);
+        order_label.set_visible(false);
+        mode_col.add_child(&order_label);
+        root.add_child(&mode_col);
+
+        // the banner of a new mode, big, under the prompt line
+        let mut flash = theme::label("");
+        place(&flash, [0.0, 0.0, 1.0, 0.0], [0.0, 120.0, 0.0, 190.0]);
+        flash.set_horizontal_alignment(HorizontalAlignment::CENTER);
+        flash.add_theme_font_override("font", &theme::mono_bold());
+        flash.add_theme_font_size_override("font_size", 46);
+        flash.add_theme_color_override("font_outline_color", Color::from_rgba(0.0, 0.0, 0.0, 0.95));
+        flash.add_theme_constant_override("outline_size", 10);
+        flash.set_mouse_filter(MouseFilter::IGNORE);
+        flash.set_visible(false);
+        root.add_child(&flash);
+
         // tooltip, follows the mouse; on top of everything
         let mut tooltip_panel = overlay(
             Color::from_rgba(0.04, 0.045, 0.06, 0.95),
@@ -674,6 +758,80 @@ impl Hud {
             log_key: None,
             full_log_dirty: true,
             full_log_follow: true,
+            mode_panel,
+            mode_style,
+            mode_label,
+            order_label,
+            flash,
+            flash_since: None,
+            combat: None,
+        }
+    }
+
+    /// Exploring or fighting; `announce` shows the big banner too.
+    pub fn set_mode(&mut self, combat: bool, announce: bool) {
+        if self.combat == Some(combat) && !announce {
+            return;
+        }
+        self.combat = Some(combat);
+        let (bg, edge, text, word) = if combat {
+            (COMBAT_BG, COMBAT_EDGE, COMBAT_TEXT, "COMBAT")
+        } else {
+            (EXPLORE_BG, EXPLORE_EDGE, EXPLORE_TEXT, "EXPLORING")
+        };
+        self.mode_style.set_bg_color(bg);
+        self.mode_style.set_border_color(edge);
+        let badge = if combat {
+            "COMBAT - TURN BY TURN"
+        } else {
+            "EXPLORING"
+        };
+        self.mode_label.set_text(badge);
+        self.mode_label.add_theme_color_override("font_color", text);
+        self.mode_panel.set_visible(true);
+        if announce {
+            self.flash
+                .set_text(if combat { word } else { "EXPLORATION" });
+            self.flash.add_theme_color_override("font_color", text);
+            self.flash_since = Some(now_secs());
+            self.flash.set_modulate(Color::WHITE);
+            self.flash.set_visible(true);
+        }
+    }
+
+    /// What the order does or why it ended; None hides the line.
+    pub fn set_order_line(&mut self, text: Option<&str>) {
+        let text = text.unwrap_or("");
+        if self.order_label.get_text() != text {
+            self.order_label.set_text(text);
+            self.order_label.set_visible(!text.is_empty());
+        }
+    }
+
+    /// (the mode badge, the order line, the banner on screen) (self-tests).
+    pub fn mode_view(&self) -> (Option<String>, Option<String>, bool) {
+        let badge = self
+            .mode_panel
+            .is_visible()
+            .then(|| self.mode_label.get_text().to_string());
+        let order = self
+            .order_label
+            .is_visible()
+            .then(|| self.order_label.get_text().to_string());
+        (badge, order, self.flash.is_visible())
+    }
+
+    /// The banner fades out.
+    fn fade_flash(&mut self) {
+        let Some(since) = self.flash_since else {
+            return;
+        };
+        let a = flash_alpha(now_secs() - since);
+        if a <= 0.0 {
+            self.flash_since = None;
+            self.flash.set_visible(false);
+        } else {
+            self.flash.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, a));
         }
     }
 
@@ -683,6 +841,7 @@ impl Hud {
             self.show_status(&world.status, catalog);
         }
         self.pulse();
+        self.fade_flash();
         let full_open = self.full_log_panel.is_visible();
         let last_seq = world.log.last_seq();
         let key = (last_seq, world.input_seq(), full_open);
@@ -892,6 +1051,11 @@ impl Hud {
         self.set_prompt_line(None);
         self.set_tooltip(None, Vector2::ZERO);
         self.full_log_panel.set_visible(false);
+        self.combat = None;
+        self.mode_panel.set_visible(false);
+        self.set_order_line(None);
+        self.flash_since = None;
+        self.flash.set_visible(false);
     }
 }
 
@@ -1039,6 +1203,16 @@ mod tests {
         assert_eq!(hp_color(Some((4, 16))), HP_RED);
         assert_eq!(hp_color(Some((0, 0))), HP_RED);
         assert_eq!(hp_color(None), HP_RED);
+    }
+
+    #[test]
+    fn the_mode_banner_holds_then_fades() {
+        assert_eq!(flash_alpha(-0.1), 0.0);
+        assert_eq!(flash_alpha(0.0), 1.0);
+        assert_eq!(flash_alpha(FLASH_SECS * 0.5), 1.0);
+        let late = flash_alpha(FLASH_SECS * 0.9);
+        assert!(late > 0.0 && late < 1.0, "{late}");
+        assert_eq!(flash_alpha(FLASH_SECS), 0.0);
     }
 
     #[test]

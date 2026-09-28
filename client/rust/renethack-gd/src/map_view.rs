@@ -78,6 +78,11 @@ const DEEP: Color = Color::from_rgb(0.02, 0.02, 0.03);
 /// Scratches of an engraving on the floor.
 const ENGRAVING: Color = Color::from_rgb(0.74, 0.71, 0.62);
 const HERO_RING: Color = Color::from_rgba(1.0, 0.82, 0.30, 0.55);
+/// The way an order would walk: pale gold dots exploring, red in a fight.
+const PATH_EXPLORE: Color = Color::from_rgb(0.85, 0.72, 0.38);
+const PATH_EXPLORE_GOAL: Color = Color::from_rgb(1.0, 0.86, 0.45);
+const PATH_COMBAT: Color = Color::from_rgb(0.85, 0.28, 0.2);
+const PATH_COMBAT_GOAL: Color = Color::from_rgb(1.0, 0.36, 0.25);
 const PET_RING: Color = Color::from_rgba(1.0, 0.45, 0.75, 0.6);
 const TORCH: Color = Color::from_rgb(1.0, 0.78, 0.55);
 const TORCH_ENERGY: f32 = 2.2;
@@ -1007,6 +1012,11 @@ pub struct MapView {
     /// Self-tests stop motions at this share to take a picture.
     hold: Option<f32>,
     stats: MotionStats,
+    /// An order walks the hero: the length of its steps.
+    order_pace: Option<f32>,
+    /// The marks of the way shown, and whether it is a fight's.
+    path_marks: Vec<Gd<MeshInstance3D>>,
+    path_shown: (Vec<(i32, i32)>, bool),
 }
 
 /// A square outline over a cell: four thin bars.
@@ -1148,6 +1158,9 @@ impl MapView {
             log_seq: None,
             hold: None,
             stats: MotionStats::default(),
+            order_pace: None,
+            path_marks: Vec::new(),
+            path_shown: (Vec::new(), false),
         };
         view.place_camera();
         view
@@ -1407,6 +1420,7 @@ impl MapView {
         self.engulf.set_visible(false);
         self.snap = true;
         self.hero_at = None;
+        self.set_path(&[], false);
     }
 
     pub fn set_visible(&mut self, on: bool) {
@@ -1560,7 +1574,11 @@ impl MapView {
                     .cell(x, y)
                     .and_then(|c| c.glyph.as_ref())
                     .is_some_and(|g| g.flags & mg::HERO != 0);
-                let (secs, run) = pace(c.cells, c.hurry);
+                let (secs, run) = match self.order_pace {
+                    // an order's step lasts its tick, never a hurried run
+                    Some(p) if hero && c.cells == 1 => (p, false),
+                    _ => pace(c.cells, c.hurry),
+                };
                 let clips = self.art.clips(&c.model, run);
                 self.motions.push(Motion::step(
                     c.model.node.clone(),
@@ -1761,7 +1779,7 @@ impl MapView {
         }
         // a blow after a blow: the first one ends
         if let Some(i) = self.motions.iter().position(|m| m.cell == from) {
-            self.motions.swap_remove(i).finish();
+            self.motions.swap_remove(i).finish(false);
         }
         let Some(nodes) = self.cells.get_mut(&from) else {
             return;
@@ -1791,10 +1809,13 @@ impl MapView {
 
     fn advance_motions(&mut self, delta: f32) {
         let hold = self.hold;
+        let walking = self.order_pace.is_some();
         let mut i = 0;
         while i < self.motions.len() {
             if self.motions[i].advance(delta, hold) {
-                self.motions.swap_remove(i).finish();
+                let m = self.motions.swap_remove(i);
+                let keep = walking && m.hero && m.is_step();
+                m.finish(keep);
             } else {
                 i += 1;
             }
@@ -1805,12 +1826,119 @@ impl MapView {
     /// steps cut short (the next step there hurries).
     fn finish_motions(&mut self) {
         self.interrupted.clear();
+        let walking = self.order_pace.is_some();
         for m in self.motions.drain(..) {
             let (cell, step) = (m.cell, m.is_step());
-            if !m.finish() && step {
+            let keep = walking && m.hero && step;
+            if !m.finish(keep) && step {
                 self.interrupted.insert(cell);
             }
         }
+    }
+
+    /// An order walks the hero: each step lasts `secs` (the tick) and the
+    /// stride goes on from step to step. None: the order is over, the hero
+    /// stands idle again once the last step is played.
+    pub fn set_order_pace(&mut self, secs: Option<f32>) {
+        if self.order_pace == secs {
+            return;
+        }
+        self.order_pace = secs;
+        if secs.is_none() && !self.steps_under_way().0 {
+            self.settle_hero();
+        }
+    }
+
+    /// The hero's model plays its idle clip (after an order's last step).
+    fn settle_hero(&mut self) {
+        let Some(at) = self.hero_at else {
+            return;
+        };
+        let Some(nodes) = self.cells.get(&at) else {
+            return;
+        };
+        let Some(model) = nodes.look.entity.and_then(|i| nodes.models.get(i)) else {
+            return;
+        };
+        let mut clips = self.art.clips(model, false);
+        if let (Some(p), Some(idle)) = (clips.player.as_mut(), clips.idle.as_ref())
+            && p.is_instance_valid()
+            && p.get_current_animation().to_string() != *idle
+        {
+            p.play_ex().name(idle.as_str()).custom_blend(0.2).done();
+        }
+    }
+
+    /// The clip the hero's model plays now, and its idle clip (self-tests).
+    pub fn hero_animation(&mut self) -> (Option<String>, Option<String>) {
+        let Some(nodes) = self.hero_at.and_then(|at| self.cells.get(&at)) else {
+            return (None, None);
+        };
+        let Some(model) = nodes.look.entity.and_then(|i| nodes.models.get(i)) else {
+            return (None, None);
+        };
+        let clips = self.art.clips(model, false);
+        let now = clips
+            .player
+            .as_ref()
+            .filter(|p| p.is_instance_valid() && p.is_playing())
+            .map(|p| p.get_current_animation().to_string());
+        (now, clips.idle)
+    }
+
+    /// The hero's step is being played.
+    pub fn hero_walking(&self) -> bool {
+        self.steps_under_way().0
+    }
+
+    /// Marks on the cells of a way (the goal larger); red in a fight.
+    /// Godot hears only of changes.
+    pub fn set_path(&mut self, cells: &[(i32, i32)], combat: bool) {
+        if self.path_shown.0 == cells && self.path_shown.1 == combat {
+            return;
+        }
+        self.path_shown = (cells.to_vec(), combat);
+        let (dot, goal) = if combat {
+            (PATH_COMBAT, PATH_COMBAT_GOAL)
+        } else {
+            (PATH_EXPLORE, PATH_EXPLORE_GOAL)
+        };
+        let dot_mat = self.art.flat(dot, Finish::Glow);
+        let goal_mat = self.art.flat(goal, Finish::Glow);
+        let dot_mesh = self.art.mesh(cylinder(0.09, 0.09, 0.015));
+        let goal_mesh = self.art.mesh(torus(0.2, 0.3));
+        let step_mesh = self.art.mesh(cylinder(0.17, 0.17, 0.015));
+        for (i, &(x, y)) in cells.iter().enumerate() {
+            if i == self.path_marks.len() {
+                let mut mi = MeshInstance3D::new_alloc();
+                no_shadow(&mut mi);
+                self.root.add_child(&mi);
+                self.path_marks.push(mi);
+            }
+            let last = i + 1 == cells.len();
+            let ground = self.ground(x, y);
+            let mi = &mut self.path_marks[i];
+            // in a fight a click takes the first step only: it stands out
+            let (mesh, mat) = if last {
+                (&goal_mesh, &goal_mat)
+            } else if combat && i == 0 {
+                (&step_mesh, &goal_mat)
+            } else {
+                (&dot_mesh, &dot_mat)
+            };
+            mi.set_mesh(mesh);
+            mi.set_material_override(mat);
+            mi.set_position(Vector3::new(x as f32, ground + 0.03, y as f32));
+            mi.set_visible(true);
+        }
+        for mi in self.path_marks.iter_mut().skip(cells.len()) {
+            mi.set_visible(false);
+        }
+    }
+
+    /// The way shown now (self-tests).
+    pub fn path_shown(&self) -> &[(i32, i32)] {
+        &self.path_shown.0
     }
 
     /// Where the hero's model is while it walks (None: on its cell).

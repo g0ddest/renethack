@@ -26,6 +26,9 @@ renderer/rendering_method.mobile="gl_compatibility"
 
 ; nh-engine, recover and data/ (RENETHACK_ENGINE_DIR overrides it)
 engine_dir="res://../../engine/build"
+; the order tick in milliseconds, 150-500: one engine action per tick
+; while an order runs (RENETHACK_TICK_MS overrides it)
+tick_ms=300
 
 [importer_defaults]
 

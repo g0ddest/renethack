@@ -36,6 +36,12 @@ const NUDGE: f32 = 0.08;
 /// Roll of a swaying body (degrees).
 const SWAY_ROLL: f32 = 6.0;
 
+/// The walk clip's speed for a step of `secs`: the stride keeps up with
+/// a slower or quicker step (an order's step lasts its tick).
+pub fn walk_speed(secs: f32) -> f32 {
+    WALK_SPEED * (STEP_SECS / secs.max(0.01)).clamp(0.5, 2.0)
+}
+
 /// Smooth in and out, 0..1.
 pub fn ease(t: f32) -> f32 {
     let t = t.clamp(0.0, 1.0);
@@ -126,7 +132,11 @@ impl Motion {
     ) -> Motion {
         let hop = match (&mut clips.player, &clips.gait) {
             (Some(p), Some(gait)) => {
-                let speed = if hurry { RUN_SPEED } else { WALK_SPEED };
+                let speed = if hurry {
+                    RUN_SPEED
+                } else {
+                    walk_speed(duration)
+                };
                 p.play_ex()
                     .name(gait.as_str())
                     .custom_blend(0.1)
@@ -239,11 +249,16 @@ impl Motion {
     }
 
     /// Put the node where the world model has it, facing its way, idle
-    /// again after a step; true when it had arrived by itself.
-    pub fn finish(mut self) -> bool {
+    /// again after a step (unless `keep_gait`: an order walks on, the
+    /// stride goes on into the next step); true when it had arrived by
+    /// itself.
+    pub fn finish(mut self, keep_gait: bool) -> bool {
         let arrived = self.elapsed >= self.duration;
         place(&mut self.node, self.to, self.yaw_to, 0.0);
         self.base = self.to;
+        if keep_gait {
+            return arrived;
+        }
         if let (Kind::Step { .. }, Some(p), Some(_), Some(idle)) = (
             &self.kind,
             self.clips.player.as_mut(),
@@ -314,6 +329,15 @@ mod tests {
         assert_eq!(pace(1, true), (HURRY_SECS, true));
         let (two, run) = pace(2, false);
         assert!(run && two > STEP_SECS && two / 2.0 < HURRY_SECS);
+    }
+
+    #[test]
+    fn the_stride_follows_the_length_of_a_step() {
+        assert_eq!(walk_speed(STEP_SECS), WALK_SPEED);
+        assert!(walk_speed(0.3) < WALK_SPEED);
+        assert!(walk_speed(0.15) > WALK_SPEED);
+        assert_eq!(walk_speed(10.0), WALK_SPEED * 0.5);
+        assert_eq!(walk_speed(0.0), WALK_SPEED * 2.0);
     }
 
     #[test]
