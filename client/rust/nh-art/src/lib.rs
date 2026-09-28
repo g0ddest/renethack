@@ -89,12 +89,43 @@ pub struct Anims {
     pub idle: Option<String>,
     #[serde(default)]
     pub walk: Option<String>,
+    /// A faster gait (running, hurrying on); `walk` when there is none.
+    #[serde(default)]
+    pub run: Option<String>,
     #[serde(default)]
     pub attack: Option<String>,
     #[serde(default)]
     pub hit: Option<String>,
     #[serde(default)]
     pub death: Option<String>,
+}
+
+impl Anims {
+    /// The loop to play while moving from cell to cell: `run` when in a
+    /// hurry and the model has one, else `walk`; None when the model has
+    /// no gait (the map sways it instead).
+    pub fn gait(&self, hurry: bool) -> Option<&str> {
+        let walk = self.walk.as_deref();
+        if hurry {
+            self.run.as_deref().or(walk)
+        } else {
+            walk
+        }
+    }
+
+    /// Every clip named, for checks.
+    pub fn names(&self) -> impl Iterator<Item = &str> {
+        [
+            &self.idle,
+            &self.walk,
+            &self.run,
+            &self.attack,
+            &self.hit,
+            &self.death,
+        ]
+        .into_iter()
+        .filter_map(|n| n.as_deref())
+    }
 }
 
 fn one() -> f32 {
@@ -965,6 +996,82 @@ mod tests {
 
     /// How many monsters and object tiles resolve at each level of the
     /// fallback chain (printed; run with --nocapture).
+    /// The animation names a scene file holds, as Godot names them: glTF
+    /// clips lose a `_Loop` suffix on import; FBX clips are searched for as
+    /// they are (None: the file is not glTF, only a byte search is possible).
+    fn clips_in(path: &std::path::Path) -> Option<Vec<String>> {
+        let bytes = std::fs::read(path).unwrap();
+        let json: serde_json::Value = match path.extension()?.to_str()? {
+            "glb" => {
+                let len = u32::from_le_bytes(bytes[12..16].try_into().unwrap()) as usize;
+                serde_json::from_slice(&bytes[20..20 + len]).unwrap()
+            }
+            "gltf" => serde_json::from_slice(&bytes).unwrap(),
+            _ => return None,
+        };
+        let names = json["animations"].as_array().cloned().unwrap_or_default();
+        Some(
+            names
+                .iter()
+                .filter_map(|a| a["name"].as_str())
+                .map(|n| n.strip_suffix("_Loop").unwrap_or(n).to_string())
+                .collect(),
+        )
+    }
+
+    #[test]
+    fn every_clip_the_manifest_names_is_in_its_file() {
+        let art = manifest();
+        for (_, name, spec) in art.models() {
+            let file = match (&spec.rig, &spec.scene) {
+                (Some(rig), _) => art.library(rig).unwrap().to_string(),
+                (None, Some(scene)) => scene.clone(),
+                (None, None) => continue,
+            };
+            let path = art_dir().join(&file);
+            let clips = clips_in(&path);
+            let bytes = std::fs::read(&path).unwrap();
+            for clip in spec.anims.names() {
+                let found = match &clips {
+                    Some(c) => c.iter().any(|c| c == clip),
+                    None => bytes.windows(clip.len()).any(|w| w == clip.as_bytes()),
+                };
+                assert!(found, "model {name}: no clip {clip} in {file}");
+            }
+        }
+    }
+
+    #[test]
+    fn walkers_walk_and_some_run() {
+        let art = manifest();
+        let anims = |n: &str| {
+            let (_, _, spec) = art.models().find(|(_, name, _)| *name == n).unwrap();
+            spec.anims.clone()
+        };
+        let human = anims("human_male");
+        assert_eq!(human.gait(false), Some("Walk"));
+        assert_eq!(human.gait(true), Some("Jog_Fwd"));
+        assert_eq!(anims("imp").gait(true), Some("Jog_Fwd"));
+        assert_eq!(anims("horse").gait(true), Some("Armature|Run"));
+        assert_eq!(anims("horse").gait(false), Some("Armature|Walk"));
+        // no gait: swayed by the map
+        assert_eq!(anims("dog").gait(true), None);
+        assert_eq!(anims("rat").gait(false), None);
+        assert_eq!(anims("serpent").gait(false), None);
+        // a walk without a run walks in a hurry too
+        let only_walk = Anims {
+            walk: Some("Walk".into()),
+            ..Anims::default()
+        };
+        assert_eq!(only_walk.gait(true), Some("Walk"));
+        // every rigged character (people, imps, puglins) has a walk
+        for (_, name, spec) in art.models() {
+            if spec.rig.is_some() {
+                assert!(spec.anims.walk.is_some(), "{name}");
+            }
+        }
+    }
+
     #[test]
     fn coverage_report() {
         let (art, cat) = (manifest(), catalog());
