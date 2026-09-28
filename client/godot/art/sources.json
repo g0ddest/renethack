@@ -116,12 +116,22 @@
   {
    "page": "https://sigilsvault.itch.io/modular-dungeon-kit-v10",
    "upload": "modular dungeon kit v1.0.zip",
-   "root": "modular dungeon kit/",
-   "files": ["Modular Dungeon Pieces/GLB format/*.glb", "Props/GLB format/*.glb"],
-   "dest": "sigilsvault/dungeon",
+   "root": "modular dungeon kit/Modular Dungeon Pieces/GLB format/",
+   "files": ["*.glb"],
+   "dest": "sigilsvault/dungeon/pieces",
    "texture_max": 512,
    "license_files": ["modular dungeon kit/LICENSE.txt"],
-   "use": "architecture: walls, floors, ceilings, doors, pillars, stairs, props (to be re-textured; the embedded trim sheet is scaled to 512)"
+   "use": "architecture: walls, floors, ceilings, doors, pillars, stairs (to be re-textured; the embedded trim sheet is scaled to 512)"
+  },
+  {
+   "page": "https://sigilsvault.itch.io/modular-dungeon-kit-v10",
+   "upload": "modular dungeon kit v1.0.zip",
+   "root": "modular dungeon kit/Props/GLB format/",
+   "files": ["*.glb"],
+   "dest": "sigilsvault/dungeon/props",
+   "texture_max": 512,
+   "license_files": ["modular dungeon kit/LICENSE.txt"],
+   "use": "brazier, coffin, crate, door, pot"
   }
  ],
  "direct_comment": "Files and zips at fixed URLs. A zip is unpacked like an itch.io pack (root, files, dest; .tga becomes a lossless .png at full size); anything else is stored under dest by its own name.",
@@ -144,7 +154,7 @@
   {"url": "https://unity3d.com/files/labs/downloads/vfx/assets01/Explosion02HD/Explosion02HD-flipbooks.zip",
    "files": ["Explosion02HD_5x5.tga"], "dest": "unity-labs/flipbooks", "use": "explosions (5x5 frames)"},
   {"url": "https://kenney.nl/media/pages/assets/particle-pack/f8fe0f8cb8-1677578741/kenney_particle-pack.zip",
-   "root": "", "files": ["PNG (Transparent)/*.png", "License.txt"], "dest": "kenney/particles",
+   "root": "PNG (Transparent)/", "files": ["*.png"], "license_files": ["License.txt"], "dest": "kenney/particles",
    "use": "sparks, flares, magic circles, slashes, scorch marks, smoke puffs (grayscale, tinted in the shader)"},
   {"url": "https://opengameart.org/sites/default/files/armor.png", "dest": "icons/flare",
    "use": "armour by slot: 5 slots x 5 kinds, 64 px cells on a 320 px sheet with alpha (Clint Bellanger, Blarumyrran, crowline, Justin Nichol)"},

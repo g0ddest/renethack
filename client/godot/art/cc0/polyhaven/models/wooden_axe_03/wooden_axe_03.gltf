@@ -1,0 +1,156 @@
+{
+ "asset": {
+  "generator": "Khronos glTF Blender I/O v4.2.60",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "wooden_axe_03"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "axe_03",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Plane.015",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  }
+ ],
+ "images": [
+  {
+   "name": "wooden_axe_03_nor_gl",
+   "uri": "textures/wooden_axe_03_nor_gl_1k.jpg"
+  },
+  {
+   "name": "wooden_axe_03_diff",
+   "uri": "textures/wooden_axe_03_diff_1k.jpg"
+  },
+  {
+   "name": "wooden_axe_03_metal-wooden_axe_03_rough",
+   "uri": "textures/wooden_axe_03_arm_1k.jpg"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 2612,
+   "max": [
+    0.02482471615076065,
+    0.4080427587032318,
+    0.12262896448373795
+   ],
+   "min": [
+    -0.02564445324242115,
+    -0.22375720739364624,
+    -0.03571564704179764
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 2612,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 2612,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 11658,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 31344,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 31344,
+   "byteOffset": 31344,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 20896,
+   "byteOffset": 62688,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 23316,
+   "byteOffset": 83584,
+   "target": 34963
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 106900,
+   "uri": "wooden_axe_03.bin"
+  }
+ ]
+}
