@@ -84,6 +84,36 @@ pub fn save_exists(playground: &Path, name: &str) -> bool {
     list_saves(playground).is_ok_and(|games| games.iter().any(|g| g.name == name))
 }
 
+/// The client's own state for a character (key profile, action bar:
+/// nh-world's `UiState`), next to the saves: `<playground>/<name>.rhui.json`
+/// by the regularized name, so a restore under either form finds it.
+pub fn ui_state_path(playground: &Path, name: &str) -> PathBuf {
+    playground.join(format!("{}{UI_STATE_SUFFIX}", regularize(name)))
+}
+
+const UI_STATE_SUFFIX: &str = ".rhui.json";
+
+/// Write it whole or not at all (a crash leaves the old file).
+pub fn write_ui_state(playground: &Path, name: &str, json: &str) -> io::Result<()> {
+    let path = ui_state_path(playground, name);
+    let tmp = path.with_extension("json.tmp");
+    fs::write(&tmp, json)?;
+    fs::rename(tmp, path)
+}
+
+/// None when there is none (a game from before the file, or a new one).
+pub fn read_ui_state(playground: &Path, name: &str) -> Option<String> {
+    fs::read_to_string(ui_state_path(playground, name)).ok()
+}
+
+/// With the save, when the character dies; no file is no error.
+pub fn remove_ui_state(playground: &Path, name: &str) -> io::Result<()> {
+    match fs::remove_file(ui_state_path(playground, name)) {
+        Err(e) if e.kind() != io::ErrorKind::NotFound => Err(e),
+        _ => Ok(()),
+    }
+}
+
 /// Lock slots of interrupted games: bases like "alock" (files `<base>.0`),
 /// plus any "<uid><name>.0" in case MAXPLAYERS is ever dropped. None if
 /// the playground does not exist yet. A slot whose game still runs (the
@@ -293,6 +323,34 @@ mod tests {
         assert_eq!(save_name("0Hero", Some(1000)), None);
         assert_eq!(name("0"), None);
         assert_eq!(save_name("1000Hero.xz", None).as_deref(), Some("Hero"));
+    }
+
+    #[test]
+    fn ui_state_lives_by_the_regularized_name() {
+        let pg = tempfile::tempdir().unwrap();
+        assert_eq!(read_ui_state(pg.path(), "Olaf the Bold"), None);
+        remove_ui_state(pg.path(), "Olaf the Bold").unwrap();
+        write_ui_state(pg.path(), "Olaf the Bold", "{\"version\":1}").unwrap();
+        assert!(pg.path().join("Olaf_the_Bold.rhui.json").is_file());
+        assert_eq!(
+            read_ui_state(pg.path(), "Olaf_the_Bold").as_deref(),
+            Some("{\"version\":1}")
+        );
+        write_ui_state(pg.path(), "Olaf the Bold", "{}").unwrap();
+        assert_eq!(
+            read_ui_state(pg.path(), "Olaf the Bold").as_deref(),
+            Some("{}")
+        );
+        // not a save, not an interrupted game
+        assert!(list_saves(pg.path()).unwrap().is_empty());
+        assert!(interrupted_games(pg.path()).unwrap().is_empty());
+        remove_ui_state(pg.path(), "Olaf the Bold").unwrap();
+        assert_eq!(read_ui_state(pg.path(), "Olaf the Bold"), None);
+        assert_eq!(
+            fs::read_dir(pg.path()).unwrap().count(),
+            0,
+            "no temporary left"
+        );
     }
 
     #[test]
