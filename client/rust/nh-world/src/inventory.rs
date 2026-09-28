@@ -3,6 +3,7 @@
 //! knows more than the character: what the text says is all there is.
 
 use nh_protocol::{InvItem, Inventory, Slot};
+use serde::{Deserialize, Serialize};
 
 /// The current inventory, replaced wholesale by each notice.
 #[derive(Debug, Clone, Default, PartialEq)]
@@ -87,7 +88,7 @@ impl Pack {
 /// learning its curse status or enchantment; it changes when the item gets
 /// a new name (identified, called, named), as the item then reads as
 /// another one to the player too.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct ItemKey {
     pub tile: i32,
     pub stem: String,

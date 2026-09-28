@@ -2,6 +2,7 @@
 //! message log, windows, and the UI's view of each request. No UI code here:
 //! everything is plain data so it can be tested without Godot.
 
+mod actionbar;
 mod actions;
 mod getobj;
 mod grid;
@@ -19,6 +20,7 @@ mod status;
 mod terrain;
 mod world;
 
+pub use actionbar::*;
 pub use actions::*;
 pub use getobj::*;
 pub use grid::*;
