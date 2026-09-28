@@ -4,7 +4,7 @@
 //! synchronously. The verdict is one "SELFTEST PASS <name>" or
 //! "SELFTEST FAIL <name>: <reason>" line and the exit code.
 //!
-//! Scenarios: smoke, keys, save, close, crash, menus, text, and soak
+//! Scenarios: smoke, keys, save, close, crash, menus, text, moves, and soak
 //! (random play: `--soak=N` answered requests, `--seed=S` or
 //! RENETHACK_SEED; RENETHACK_SOAK_TRACE=1 prints every decision).
 
@@ -930,6 +930,115 @@ fn tour() -> Vec<Step> {
             steps.push(Step::Shot(name));
         }
     }
+    steps.extend(quit());
+    steps
+}
+
+fn map_view(g: &RenethackGame) -> Result<&crate::map_view::MapView, String> {
+    fail_on_error_screen(g)?;
+    Ok(&g.ui.as_ref().ok_or("no UI")?.map)
+}
+
+fn hold_at(g: &mut RenethackGame, at: Option<f32>) -> Result<(), String> {
+    g.ui.as_mut().ok_or("no UI")?.map.hold_motions(at);
+    Ok(())
+}
+
+/// Where motions stop for a picture: a little before halfway.
+const MIDWAY: f32 = 0.45;
+
+/// A step stopped midway: the hero's model between the two cells, turned
+/// the way it goes.
+fn check_midstep(g: &mut RenethackGame) -> Result<(), String> {
+    let map = map_view(g)?;
+    let Some((from, to, yaw, now)) = map.hero_step() else {
+        // the hero did not move (a wall, a fight): nothing to check
+        return Ok(());
+    };
+    let (a, b) = (now.distance_to(from), now.distance_to(to));
+    if a < 0.2 || b < 0.2 {
+        return Err(format!(
+            "the hero at {now:?}, not between {from:?} and {to:?}"
+        ));
+    }
+    let way = (to.x - from.x).atan2(to.z - from.z).to_degrees();
+    if (yaw - way).abs() > 0.5 {
+        return Err(format!("the hero turns to {yaw} walking along {way}"));
+    }
+    // a character walks (its gait clip plays), the others hop
+    let (gait, now) = map.hero_clips();
+    godot_print!("selftest: moves: the hero walks with {gait:?}, playing {now:?}");
+    if gait.is_none() || gait != now {
+        return Err(format!("the hero steps with gait {gait:?} playing {now:?}"));
+    }
+    Ok(())
+}
+
+/// Seed 42's first steps (as in `tour`), each stopped midway: the hero and
+/// the kitten between two cells, walking and facing the way they go; with
+/// `--screenshots`, a picture of each. The scene must catch up with every
+/// step, and the hero and the pet must have walked.
+fn moves() -> Vec<Step> {
+    const SHOTS: [(&str, &str); 8] = [
+        ("move-1", "move-1-close"),
+        ("move-2", "move-2-close"),
+        ("move-3", "move-3-close"),
+        ("move-4", "move-4-close"),
+        ("move-5", "move-5-close"),
+        ("move-6", "move-6-close"),
+        ("move-7", "move-7-close"),
+        ("move-8", "move-8-close"),
+    ];
+    let mut steps = start();
+    steps.extend([
+        Step::Wait("the hero on the map", |g| Ok(g.world.map.hero().is_some())),
+        Step::Call("closer", |g| zoom_by(g, -3.0)),
+        Step::Wait("the camera on the hero", camera_settled),
+        Step::Call("stop motions midway", |g| hold_at(g, Some(MIDWAY))),
+    ]);
+    for (c, shot) in ['h', 'h', 'y', 'y', 'h', 'h', 'j', 'j']
+        .into_iter()
+        .zip(SHOTS)
+    {
+        steps.extend([
+            key(c),
+            Step::Request("a command after a move", command),
+            Step::Wait("the motions midway", |g| Ok(map_view(g)?.motions_held())),
+            Step::Call("the hero between cells, facing the way", check_midstep),
+            Step::Wait("the camera on the walking hero", camera_settled),
+            Step::Call("frame the hero's cell", |g| {
+                let (hero, others) = map_view(g)?.steps_under_way();
+                godot_print!("selftest: moves: hero stepping {hero}, {others} others stepping");
+                let cell = g.world.map.hero();
+                g.ui.as_mut().ok_or("no UI")?.map.set_hover(cell);
+                Ok(())
+            }),
+            Step::Shot(shot.0),
+            Step::Call("close up", |g| zoom_by(g, -2.0)),
+            Step::Shot(shot.1),
+            Step::Call("back", |g| zoom_by(g, 2.0)),
+            Step::Call("let them arrive", |g| {
+                g.ui.as_mut().ok_or("no UI")?.map.set_hover(None);
+                hold_at(g, None)
+            }),
+            Step::Wait("everyone arrived", |g| {
+                Ok(map_view(g)?.steps_under_way() == (false, 0))
+            }),
+            Step::Call("stop motions midway", |g| hold_at(g, Some(MIDWAY))),
+        ]);
+    }
+    steps.extend([
+        Step::Call("let motions go", |g| hold_at(g, None)),
+        Step::Wait("the hero and the pet walked", |g| {
+            let s = map_view(g)?.motion_stats();
+            godot_print!("selftest: moves: {s:?}");
+            if s.hero_steps >= 6 && s.other_steps >= 1 {
+                Ok(true)
+            } else {
+                Err(format!("too few steps animated: {s:?}"))
+            }
+        }),
+    ]);
     steps.extend(quit());
     steps
 }
@@ -2271,6 +2380,7 @@ impl SelfTest {
         watch_panics();
         let steps = match name {
             "tour" => tour(),
+            "moves" => moves(),
             "gallery" => gallery(),
             "smoke" => smoke(),
             "keys" => keys(),
@@ -2369,6 +2479,10 @@ impl SelfTest {
                     Ok(false) => self.steps.push_front(Step::Soak(soak)),
                     Ok(true) => {
                         godot_print!("selftest: soak: {}", soak.summary());
+                        if let Some(ui) = game.ui.as_ref() {
+                            let m = ui.map.motion_stats();
+                            godot_print!("selftest: soak: animated {m:?}");
+                        }
                         self.step_started = Instant::now();
                         self.frames = 0;
                         continue;

@@ -73,7 +73,9 @@ Commands work in any keyboard layout (letters are taken by key position).
 `make test-client` runs each scenario of `client/rust/renethack-gd/src/selftest.rs`
 in its own headless Godot process with a fixed seed: every scenario except
 `tour`, a walk through the first rooms for map screenshots, and `gallery`,
-the art laid out page by page. With `--screenshots` the soak saves the screen
+the art laid out page by page. The `moves` scenario stops each of the first
+steps midway (with `--screenshots`, a picture of the hero and the pet
+between cells). With `--screenshots` the soak saves the screen
 every 60 answers. The scenarios take
 screenshots under a display:
 
