@@ -6,7 +6,9 @@
 
 The recipe is client/godot/art/sources.json: Poly Haven textures and models
 (through their public API) and the free files of itch.io packs (the site's own
-"no thanks, just take me to the downloads" flow). Textures larger than
+"no thanks, just take me to the downloads" flow), files and zips at fixed
+URLs (VFX flipbooks, particles, icons), and the OFL fonts of the UI
+(the google/fonts repository at a fixed commit, into client/godot/fonts). Textures larger than
 `texture_max` are scaled down and stored as JPEG; glTF files are rewritten to
 point at the converted images. client/godot/art/art.lock.json records the
 sha256 of every downloaded source, so a later run proves it started from the
@@ -32,6 +34,7 @@ import zipfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ART = os.path.join(ROOT, "client", "godot", "art")
+FONTS = os.path.join(ROOT, "client", "godot", "fonts")
 RECIPE = os.path.join(ART, "sources.json")
 LOCK = os.path.join(ART, "art.lock.json")
 UA = "renethack-fetch-art/1.0 (+https://github.com/g0ddest/renethack)"
@@ -218,6 +221,22 @@ def do_polyhaven_model(op, w, item, max_size):
 
 def do_itch(op, w, item, max_size):
     blob = cached(item["upload"], lambda: itch_upload(op, item["page"], item["upload"]))
+    unpack(w, blob, item["upload"], item, max_size)
+
+
+def do_direct(op, w, item, max_size):
+    """A file at a fixed URL: a zip unpacked like an itch.io pack, or a
+    single file stored under `dest` by its own name."""
+    blob = cached(item["url"], lambda: fetch(op, item["url"]))
+    if "files" in item:
+        unpack(w, blob, item["url"], item, max_size)
+    else:
+        name = os.path.basename(urllib.parse.urlparse(item["url"]).path)
+        w.put(f"{item['dest']}/{name}", blob)
+
+
+def unpack(w, blob, what, item, max_size):
+    max_size = item.get("texture_max", max_size)
     z = zipfile.ZipFile(io.BytesIO(blob))
     names = z.namelist()
     root = item.get("root", "")
@@ -225,7 +244,7 @@ def do_itch(op, w, item, max_size):
     picked = [n for n in names if n.startswith(root)
               and any(fnmatch.fnmatch(n[len(root):], pat) for pat in item["files"])]
     if not picked:
-        raise SystemExit(f"{item['upload']}: nothing matches {item['files']}")
+        raise SystemExit(f"{what}: nothing matches {item['files']}")
     for n in picked:
         rel = n[len(root):]
         if n.endswith(".gltf"):
@@ -244,10 +263,27 @@ def do_itch(op, w, item, max_size):
                      os.path.basename(rel), z.read(n), read_rel, max_size)
         elif n.endswith(".glb"):
             w.put(f"{dest}/{rel}", shrink_glb(z.read(n), max_size))
+        elif n.endswith(".tga"):
+            # flipbooks: kept at full size (the frames are small already), lossless
+            from PIL import Image
+            out = io.BytesIO()
+            Image.open(io.BytesIO(z.read(n))).save(out, "PNG", optimize=True)
+            w.put(f"{dest}/{rel[:-4]}.png", out.getvalue())
         else:
             w.put(f"{dest}/{rel}", z.read(n))
     for lic in item.get("license_files", []):
         w.put(f"{dest}/{os.path.basename(lic)}", z.read(lic))
+
+
+def do_fonts(op, item):
+    """OFL fonts go to client/godot/fonts/<dest>/, outside the CC0 tree."""
+    for name in item["files"]:
+        url = item["base"] + name
+        data = cached(url, lambda url=url: fetch(op, url))
+        path = os.path.join(FONTS, item["dest"], name)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "wb") as f:
+            f.write(data)
 
 
 def main():
@@ -274,6 +310,12 @@ def main():
     for item in recipe["itch"]:
         print("pack", item["upload"], flush=True)
         do_itch(op, w, item, max_size)
+    for item in recipe.get("direct", []):
+        print("file", item["url"], flush=True)
+        do_direct(op, w, item, max_size)
+    for item in recipe.get("fonts", []):
+        print("fonts", item["dest"], flush=True)
+        do_fonts(op, item)
     total = sum(os.path.getsize(os.path.join(ART, p)) for p in w.files)
     print(f"{len(w.files)} files, {total / 1e6:.1f} MB under {out_root}")
     # dynamic itch.io links change per download: key them by the upload name

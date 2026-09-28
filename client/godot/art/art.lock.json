@@ -46,6 +46,17 @@
   "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rusty_metal_02/rusty_metal_02_nor_gl_1k.jpg": "995197a62cac6fbb000e6e6591a3330a3b77ef069c4ac58f505b586b9bdbd97b",
   "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/stone_tiles_02/stone_tiles_02_arm_1k.jpg": "5f19b8f986ec3fcabf29b125e225140066beb8f3bc687d62364968ac540514a9",
   "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/stone_tiles_02/stone_tiles_02_diff_1k.jpg": "687ef4a6cc07fb680352cf26b0a2a6256d4c18d8084dcd59ac739bc509296e18",
-  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/stone_tiles_02/stone_tiles_02_nor_gl_1k.jpg": "ab19cc9baacb0bc30a219f841254beb6837412ddad9bfc9c052b5aa805d1c3f0"
+  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/stone_tiles_02/stone_tiles_02_nor_gl_1k.jpg": "ab19cc9baacb0bc30a219f841254beb6837412ddad9bfc9c052b5aa805d1c3f0",
+  "https://raw.githubusercontent.com/google/fonts/23e54b51ddffbc7713c583748e3bd86f62b1fa4a/ofl/alegreyasans/AlegreyaSans-Black.ttf": "95f06dd3f6e4529f176b371e89be1d5894c3ed0606c31b1d76b092a1308c1fc0",
+  "https://raw.githubusercontent.com/google/fonts/23e54b51ddffbc7713c583748e3bd86f62b1fa4a/ofl/alegreyasans/AlegreyaSans-Bold.ttf": "a3055a1893759bdbd7504bb22abc583769e7974c49353176eac0b03792c9fb8e",
+  "https://raw.githubusercontent.com/google/fonts/23e54b51ddffbc7713c583748e3bd86f62b1fa4a/ofl/alegreyasans/AlegreyaSans-Medium.ttf": "4b89fe7804fd1485ec2757795a53ffdb66e1206dd56f844c2d72b3c944815b43",
+  "https://raw.githubusercontent.com/google/fonts/23e54b51ddffbc7713c583748e3bd86f62b1fa4a/ofl/alegreyasans/OFL.txt": "0677891e6a143f297350d260ad766ad33bfc18ed5fa4f213acf648d6b597ec1a",
+  "https://raw.githubusercontent.com/google/fonts/23e54b51ddffbc7713c583748e3bd86f62b1fa4a/ofl/alegreyasanssc/AlegreyaSansSC-Bold.ttf": "1f7f1ca33c4ae013a94d374106fd4044820b3d915e7f7a22182ddaf49b9c7912",
+  "https://raw.githubusercontent.com/google/fonts/23e54b51ddffbc7713c583748e3bd86f62b1fa4a/ofl/alegreyasanssc/OFL.txt": "0677891e6a143f297350d260ad766ad33bfc18ed5fa4f213acf648d6b597ec1a",
+  "https://raw.githubusercontent.com/google/fonts/23e54b51ddffbc7713c583748e3bd86f62b1fa4a/ofl/cormorantsc/CormorantSC-Bold.ttf": "78f70c79b5c0a1e66641d4b4a2e2ed32e1a45774b3de94e56f8de68510219177",
+  "https://raw.githubusercontent.com/google/fonts/23e54b51ddffbc7713c583748e3bd86f62b1fa4a/ofl/cormorantsc/CormorantSC-SemiBold.ttf": "648cd1c932871e4e8e1d147b593315409e8ea82282f88e9397e2cceae83d065b",
+  "https://raw.githubusercontent.com/google/fonts/23e54b51ddffbc7713c583748e3bd86f62b1fa4a/ofl/cormorantsc/OFL.txt": "60700d351cac4650c51f3f9db318d2a420f8b45052dba2715eb5fec41f0f6956",
+  "https://raw.githubusercontent.com/google/fonts/23e54b51ddffbc7713c583748e3bd86f62b1fa4a/ofl/ptmono/OFL.txt": "511125dc85198375795fdbc109d088654d3b7f9dbd3ccb7bf93d844aef0b153c",
+  "https://raw.githubusercontent.com/google/fonts/23e54b51ddffbc7713c583748e3bd86f62b1fa4a/ofl/ptmono/PTM55FT.ttf": "cbe732b3b8fd211fd986ebdfc9b870ddeca4faab0bb5425fc509b37f9b4ac804"
  }
 }

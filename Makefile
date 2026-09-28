@@ -36,7 +36,7 @@ engine:
 # writing extension_list.cfg, so its status is ignored and the file is
 # checked instead.
 IMPORT_STAMP := $(GODOT_PROJECT)/.godot/renethack-import.stamp
-IMPORT_INPUTS := $(shell find $(GODOT_PROJECT)/art -type f 2>/dev/null) \
+IMPORT_INPUTS := $(shell find $(GODOT_PROJECT)/art $(GODOT_PROJECT)/fonts $(GODOT_PROJECT)/ui -type f 2>/dev/null) \
 	$(GODOT_PROJECT)/project.godot $(GODOT_PROJECT)/renethack.gdextension \
 	$(GODOT_PROJECT)/main.tscn
 
