@@ -10,6 +10,8 @@
 #   make lint         rustfmt and clippy, warnings are errors
 
 GODOT ?= godot
+# a macOS app bundle names a directory; the binary is inside it
+override GODOT := $(if $(filter %.app %.app/,$(GODOT)),$(patsubst %/,%,$(GODOT))/Contents/MacOS/Godot,$(GODOT))
 # GNU coreutils' timeout; Homebrew's coreutils names it gtimeout on macOS
 TIMEOUT ?= $(shell command -v timeout || command -v gtimeout)
 GODOT_PROJECT := client/godot
@@ -45,10 +47,14 @@ client:
 import: $(IMPORT_STAMP)
 
 $(IMPORT_STAMP): $(IMPORT_INPUTS)
+	@command -v "$(GODOT)" > /dev/null || [ -x "$(GODOT)" ] || { echo "Godot not found: GODOT=$(GODOT)" \
+		"(pass the executable, e.g. GODOT=/Applications/Godot.app)" >&2; exit 1; }
 	@echo "importing the Godot project (art, extension)"
-	@$(GODOT) --headless --path $(GODOT_PROJECT) --import > /dev/null 2>&1 || true
+	@mkdir -p $(GODOT_PROJECT)/.godot
+	@$(GODOT) --headless --path $(GODOT_PROJECT) --import > $(GODOT_PROJECT)/.godot/import.log 2>&1 || true
 	@test -f $(GODOT_PROJECT)/.godot/extension_list.cfg \
-		|| { echo "Godot import of $(GODOT_PROJECT) failed" >&2; exit 1; }
+		|| { tail -30 $(GODOT_PROJECT)/.godot/import.log >&2; \
+		     echo "Godot import of $(GODOT_PROJECT) failed (log: $(GODOT_PROJECT)/.godot/import.log)" >&2; exit 1; }
 	@touch $@
 
 run: all client

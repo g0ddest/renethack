@@ -17,7 +17,8 @@ The game can be played from character creation to the end.
   `brew install coreutils` provides it as `gtimeout`, which is found too);
 - [Godot](https://godotengine.org/download) 4.5 or newer (tested with 4.7.1),
   the standard build (not .NET). If `godot` is not on your `PATH`, pass it:
-  `make run GODOT=/path/to/godot`.
+  `make run GODOT=/path/to/godot` (on macOS the app bundle works too:
+  `make run GODOT=/Applications/Godot.app`).
 
 ## Play
 
