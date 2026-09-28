@@ -8,8 +8,9 @@ license.workspace = true
 
 [dependencies]
 nh-protocol = { path = "../nh-protocol" }
+serde.workspace = true
+serde_json.workspace = true
 
 [dev-dependencies]
 nh-link = { path = "../nh-link" }
-serde_json.workspace = true
 tempfile = "3"

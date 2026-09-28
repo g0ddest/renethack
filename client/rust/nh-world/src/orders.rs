@@ -16,7 +16,10 @@ use std::time::Duration;
 use nh_protocol::{Catalog, Glyph, GlyphKind, mg};
 
 use crate::path::{Passage, Reach, chebyshev, dir_key, find_path, key_dir, passage};
-use crate::{Prompt, Terrain, Who, World, cell_terrain, in_field, parse_attack};
+use crate::{
+    Key, KeyContext, KeyInput, KeyProfile, Prompt, Terrain, Who, World, bar_slot, cell_terrain,
+    in_field, nethack_key, parse_attack,
+};
 
 /// The tick: one engine action per tick while an order runs.
 pub const DEFAULT_TICK_MS: u64 = 300;
@@ -427,25 +430,31 @@ pub enum Counted {
     Command(Option<u32>),
 }
 
+/// What a key pressed at the command prompt does under a key profile.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CommandInput {
+    /// It went into the count (or cleared it: Esc).
+    Typing,
+    /// It means nothing here.
+    Ignored,
+    /// A NetHack command key, with the count typed before it.
+    Command { key: i32, count: Option<u32> },
+    /// A top-row digit: action bar slot 0–9, with the count before it.
+    Bar { slot: usize, count: Option<u32> },
+}
+
 impl CountEntry {
     /// A command key (NetHack's code) at a command prompt.
     pub fn feed(&mut self, key: i32, number_pad: bool) -> Counted {
         let c = u32::try_from(key).ok().and_then(char::from_u32);
-        let typing = self.n.is_some() || self.prefix;
+        let typing = self.typing();
         match c {
             Some('n') if number_pad && !typing => {
                 self.prefix = true;
                 Counted::Typing
             }
             Some(d @ '0'..='9') if (!number_pad || self.prefix) && (typing || d != '0') => {
-                let d = d.to_digit(10).unwrap_or(0);
-                self.n = Some(
-                    self.n
-                        .unwrap_or(0)
-                        .saturating_mul(10)
-                        .saturating_add(d)
-                        .min(MAX_COUNT),
-                );
+                self.digit(d);
                 Counted::Typing
             }
             // Esc forgets the count
@@ -453,12 +462,72 @@ impl CountEntry {
                 self.clear();
                 Counted::Typing
             }
-            _ => {
-                let n = self.n.take();
-                self.prefix = false;
-                Counted::Command(n)
-            }
+            _ => Counted::Command(self.take()),
         }
+    }
+
+    /// A key at a command prompt under `profile`. The top-row digits are
+    /// the action bar, except after Modern's `n`, where they are the
+    /// count (a slot then takes the count by a click, see [`take`]).
+    /// Classic's count is Alt and the top-row digits. The keypad moves in
+    /// both (after `n` its digits are the count, as in tty).
+    ///
+    /// [`take`]: CountEntry::take
+    pub fn feed_key(
+        &mut self,
+        input: &KeyInput,
+        profile: KeyProfile,
+        dirchars: &str,
+    ) -> CommandInput {
+        if let Key::Char(d @ '0'..='9') = input.key
+            && !input.mods.ctrl
+        {
+            let counting = match profile {
+                KeyProfile::Modern if input.mods.alt => return CommandInput::Ignored,
+                KeyProfile::Modern => self.prefix,
+                KeyProfile::Classic => input.mods.alt,
+            };
+            if !counting {
+                return CommandInput::Bar {
+                    slot: bar_slot(d).unwrap_or(0),
+                    count: self.take(),
+                };
+            }
+            if !self.typing() && d == '0' {
+                return CommandInput::Ignored;
+            }
+            self.digit(d);
+            return CommandInput::Typing;
+        }
+        let number_pad = profile.number_pad();
+        let Some(key) = nethack_key(input, KeyContext::Command, number_pad, dirchars) else {
+            return CommandInput::Ignored;
+        };
+        match self.feed(key, number_pad) {
+            Counted::Typing => CommandInput::Typing,
+            Counted::Command(count) => CommandInput::Command { key, count },
+        }
+    }
+
+    /// The count typed so far, and a fresh start (a click on a bar slot).
+    pub fn take(&mut self) -> Option<u32> {
+        self.prefix = false;
+        self.n.take()
+    }
+
+    fn typing(&self) -> bool {
+        self.n.is_some() || self.prefix
+    }
+
+    fn digit(&mut self, d: char) {
+        let d = d.to_digit(10).unwrap_or(0);
+        self.n = Some(
+            self.n
+                .unwrap_or(0)
+                .saturating_mul(10)
+                .saturating_add(d)
+                .min(MAX_COUNT),
+        );
     }
 
     /// "Count: 20" while one is typed.
@@ -989,6 +1058,7 @@ mod tests {
     use nh_protocol::StatusUpdate;
 
     use super::*;
+    use crate::Mods;
     use crate::path::tests::{FOE_MON, HERO_MON, catalog, draw, mon};
 
     fn stat(world: &mut World, field: &str, value: &str) {
@@ -1753,6 +1823,124 @@ mod tests {
             c.feed('9' as i32, false);
         }
         assert_eq!(c.feed('s' as i32, false), Counted::Command(Some(MAX_COUNT)));
+    }
+
+    #[test]
+    fn profiles_split_digits_between_count_and_bar() {
+        let plain = |c| KeyInput::plain(Key::Char(c));
+        let alt = |c| KeyInput {
+            mods: Mods {
+                alt: true,
+                ..Mods::default()
+            },
+            ..plain(c)
+        };
+        let pad = "47896321><";
+        let vi = "hykulnjb><";
+        let mut c = CountEntry::default();
+        let m = KeyProfile::Modern;
+        // Modern: digits are the bar, n20 then s is a count of 20
+        assert_eq!(
+            c.feed_key(&plain('3'), m, pad),
+            CommandInput::Bar {
+                slot: 2,
+                count: None
+            }
+        );
+        assert_eq!(
+            c.feed_key(&plain('0'), m, pad),
+            CommandInput::Bar {
+                slot: 9,
+                count: None
+            }
+        );
+        assert_eq!(c.feed_key(&plain('n'), m, pad), CommandInput::Typing);
+        assert_eq!(c.feed_key(&plain('2'), m, pad), CommandInput::Typing);
+        assert_eq!(c.feed_key(&plain('0'), m, pad), CommandInput::Typing);
+        assert_eq!(c.shown().as_deref(), Some("Count: 20"));
+        assert_eq!(
+            c.feed_key(&plain('s'), m, pad),
+            CommandInput::Command {
+                key: 's' as i32,
+                count: Some(20)
+            }
+        );
+        // the keypad moves, after n it counts
+        assert_eq!(
+            c.feed_key(&KeyInput::plain(Key::Keypad(2)), m, pad),
+            CommandInput::Command {
+                key: '2' as i32,
+                count: None
+            }
+        );
+        c.feed_key(&plain('n'), m, pad);
+        c.feed_key(&KeyInput::plain(Key::Keypad(5)), m, pad);
+        assert_eq!(c.take(), None, "keypad 5 is '.', a rest");
+        c.feed_key(&plain('n'), m, pad);
+        c.feed_key(&KeyInput::plain(Key::Keypad(3)), m, pad);
+        assert_eq!(c.take(), Some(3));
+        // Alt+digit is nothing in Modern (a second bar row later)
+        assert_eq!(c.feed_key(&alt('2'), m, pad), CommandInput::Ignored);
+        // a count, then a click on a slot
+        c.feed_key(&plain('n'), m, pad);
+        c.feed_key(&plain('7'), m, pad);
+        assert_eq!(c.take(), Some(7));
+        assert_eq!(c.shown(), None);
+
+        // Classic: n steps, Alt+digits count, digits are the bar
+        let k = KeyProfile::Classic;
+        assert_eq!(
+            c.feed_key(&plain('n'), k, vi),
+            CommandInput::Command {
+                key: 'n' as i32,
+                count: None
+            }
+        );
+        assert_eq!(c.feed_key(&alt('0'), k, vi), CommandInput::Ignored);
+        assert_eq!(c.feed_key(&alt('2'), k, vi), CommandInput::Typing);
+        assert_eq!(c.feed_key(&alt('0'), k, vi), CommandInput::Typing);
+        assert_eq!(
+            c.feed_key(&plain('s'), k, vi),
+            CommandInput::Command {
+                key: 's' as i32,
+                count: Some(20)
+            }
+        );
+        c.feed_key(&alt('4'), k, vi);
+        assert_eq!(
+            c.feed_key(&plain('2'), k, vi),
+            CommandInput::Bar {
+                slot: 1,
+                count: Some(4)
+            }
+        );
+        // the keypad moves by vi-keys
+        assert_eq!(
+            c.feed_key(&KeyInput::plain(Key::Keypad(6)), k, vi),
+            CommandInput::Command {
+                key: 'l' as i32,
+                count: None
+            }
+        );
+        // Esc forgets a count; Ctrl+digit is nothing
+        c.feed_key(&alt('9'), k, vi);
+        assert_eq!(
+            c.feed_key(&KeyInput::plain(Key::Escape), k, vi),
+            CommandInput::Typing
+        );
+        assert_eq!(c.shown(), None);
+        let ctrl = KeyInput {
+            mods: Mods {
+                ctrl: true,
+                ..Mods::default()
+            },
+            ..plain('1')
+        };
+        assert_eq!(c.feed_key(&ctrl, k, vi), CommandInput::Ignored);
+        assert_eq!(
+            c.feed_key(&KeyInput::plain(Key::F(5)), k, vi),
+            CommandInput::Ignored
+        );
     }
 
     #[test]

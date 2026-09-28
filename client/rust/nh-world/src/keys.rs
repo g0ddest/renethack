@@ -1,6 +1,57 @@
 use std::collections::VecDeque;
 
+use serde::{Deserialize, Serialize};
+
 use crate::DEFAULT_DIRCHARS;
+
+/// How keys work at the command prompt, chosen at character creation and
+/// kept with the character (NetHack does not save number_pad). Both keep
+/// the top-row digits for the action bar.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum KeyProfile {
+    /// number_pad on: arrows, Home/PgUp/End/PgDn and the keypad move, `n`
+    /// starts a count (`n20s`); number_pad's letters (`k` kick, `j` jump,
+    /// `l` loot, `u` untrap).
+    #[default]
+    Modern,
+    /// number_pad off: vi-keys `hjklyubn` move (so `n` is a step), and a
+    /// count is typed with Alt and the top-row digits (`Alt+2 Alt+0 s`).
+    Classic,
+}
+
+impl KeyProfile {
+    pub fn number_pad(self) -> bool {
+        self == KeyProfile::Modern
+    }
+
+    /// The option to add to NETHACKOPTIONS, for a new game and a restore.
+    pub fn engine_option(self) -> &'static str {
+        match self {
+            KeyProfile::Modern => "number_pad:1",
+            KeyProfile::Classic => "number_pad:0",
+        }
+    }
+}
+
+/// The action bar slot of a top-row digit: '1' is slot 0, '0' slot 9.
+pub fn bar_slot(c: char) -> Option<usize> {
+    match c {
+        '1'..='9' => Some(c as usize - '1' as usize),
+        '0' => Some(9),
+        _ => None,
+    }
+}
+
+/// The keys that give the engine a count before a command, as tty reads
+/// it: `n` and the digits with number_pad, the digits alone without.
+pub fn count_keys(count: u32, number_pad: bool) -> Vec<i32> {
+    let prefix = number_pad.then_some('n' as i32);
+    prefix
+        .into_iter()
+        .chain(count.to_string().bytes().map(i32::from))
+        .collect()
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Key {
@@ -386,6 +437,31 @@ mod tests {
         assert_eq!(
             nethack_key(&y, KeyContext::Letters, false, DEFAULT_DIRCHARS),
             None
+        );
+    }
+
+    #[test]
+    fn profiles_set_number_pad_and_count_keys() {
+        assert_eq!(KeyProfile::default(), KeyProfile::Modern);
+        assert!(KeyProfile::Modern.number_pad());
+        assert!(!KeyProfile::Classic.number_pad());
+        assert_eq!(KeyProfile::Modern.engine_option(), "number_pad:1");
+        assert_eq!(KeyProfile::Classic.engine_option(), "number_pad:0");
+        let text = |k: &[i32]| k.iter().map(|&c| c as u8 as char).collect::<String>();
+        assert_eq!(text(&count_keys(20, true)), "n20");
+        assert_eq!(text(&count_keys(5, false)), "5");
+        assert_eq!(
+            serde_json::to_string(&KeyProfile::Classic).unwrap(),
+            "\"classic\""
+        );
+        let slots: Vec<_> = "1234567890x".chars().map(bar_slot).collect();
+        assert_eq!(
+            slots,
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+                .map(Some)
+                .into_iter()
+                .chain([None])
+                .collect::<Vec<_>>()
         );
     }
 
