@@ -473,7 +473,7 @@ fn fetch_catalog_ignores_the_login_name() {
 fn exit_before_hello_is_reported() {
     let pg = tempfile::tempdir().unwrap();
     let mut cfg = config(pg.path());
-    cfg.engine = PathBuf::from("/bin/false");
+    cfg.engine = PathBuf::from("/usr/bin/false");
     let mut s = LiveSession::start(&cfg).unwrap();
     let (events, ending) = until_exit(&mut s);
     assert!(
