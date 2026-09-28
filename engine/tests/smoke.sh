@@ -41,6 +41,21 @@ sed -n 2p "$out" | grep -q '"extcmds":\[{' || fail "catalog: no extended command
 sed -n 2p "$out" | grep -q '"name":"pray"' || fail "catalog: #pray missing"
 if sed -n 2p "$out" | grep -q '"name":"wizwish"'; then fail "catalog: wizard-mode command listed"; fi
 sed -n 2p "$out" | grep -q '"conditions":\[{"mask":' || fail "catalog: no conditions"
+# the starting inventory arrives before the first command wait: letters,
+# appearance tiles, worn slots and doname() text, nothing identifying
+inv=$(grep '^{"t":"win","fn":"inventory",' "$out" | head -1)
+[ -n "$inv" ] || fail "no inventory notice"
+first_req=$(grep -n '"t":"req"' "$out" | head -1 | cut -d: -f1)
+inv_line=$(grep -n '^{"t":"win","fn":"inventory",' "$out" | head -1 | cut -d: -f1)
+[ "$inv_line" -lt "$first_req" ] || fail "inventory comes after the first request"
+echo "$inv" | grep -q '"letter":"a","class":")","tile":[0-9]*,"quan":1,"slots":\["weapon"\],"lit":false,"text":"a +1 spear (weapon in right hand)"' \
+    || fail "inventory: no wielded spear"
+echo "$inv" | grep -q '"slots":\["shield"\],"lit":false,"text":"a [a-z ]*+3 small shield (being worn)"' \
+    || fail "inventory: no worn shield"
+echo "$inv" | grep -q '"twoweap":false' || fail "inventory: no twoweap"
+if echo "$inv" | grep -q '"otyp"\|"glyph"\|"weight"\|"owt"'; then
+    fail "inventory: identifying keys"
+fi
 [ -x "$build/recover" ] || fail "recover is not built"
 ls "$tmp/base/save" | grep -q . || fail "game not saved on EOF"
 

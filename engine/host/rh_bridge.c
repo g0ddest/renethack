@@ -18,6 +18,14 @@ struct rh_window {
 
 static struct rh_window windows[RH_MAX_WINDOWS];
 
+extern glyph_map glyphmap[MAX_GLYPH];
+
+/* the inventory changed since the last snapshot the client got */
+static boolean inventory_dirty;
+/* program_state.in_moveloop as of the last request: a rise means a new or
+   restored game, whose inventory the client has not seen */
+static boolean seen_moveloop;
+
 static const char *const status_names[MAXBLSTATS] = {
     "title", "str", "dex", "con", "int", "wis", "cha",
     "align", "score", "cap", "gold",
@@ -128,6 +136,104 @@ valid_win(int w)
     return w > 0 && w < RH_MAX_WINDOWS && windows[w].type != 0;
 }
 
+/* The inventory snapshot (P6 of the spec), done here instead of in an
+   engine patch.  It is what the perm_invent option makes every windowport
+   do: doname() on the whole inventory at each update, which may set
+   dknown exactly as displaying the inventory does.  Nothing identifying is
+   sent: the tile is the appearance tile (as glyph_json() does for objects),
+   the class is apparent from the appearance, the text is what the
+   character sees; no glyph number, object type or weight. */
+static const struct {
+    long mask;
+    const char *name;
+} worn_slots[] = {
+    { W_WEP, "weapon" },      { W_SWAPWEP, "alternate" },
+    { W_QUIVER, "quiver" },   { W_ARM, "body" },
+    { W_ARMC, "cloak" },      { W_ARMH, "helmet" },
+    { W_ARMS, "shield" },     { W_ARMG, "gloves" },
+    { W_ARMF, "boots" },      { W_ARMU, "shirt" },
+    { W_AMUL, "amulet" },     { W_RINGL, "left_ring" },
+    { W_RINGR, "right_ring" }, { W_TOOL, "eyes" },
+    { W_BALL, "ball" },       { W_CHAIN, "chain" },
+};
+
+static cJSON *
+inventory_json(void)
+{
+    cJSON *a = args_new(), *items = cJSON_AddArrayToObject(a, "items");
+    cJSON *o, *slots;
+    struct obj *otmp;
+    char letter[2], cls[2], *name;
+    int glyph, tile, save_suppress_price = iflags.suppress_price;
+    size_t i;
+
+    /* as update_inventory() does: prices in full whatever the caller was
+       formatting */
+    iflags.suppress_price = 0;
+    for (otmp = gi.invent; otmp; otmp = otmp->nobj) {
+        o = args_new();
+        letter[0] = otmp->invlet;
+        letter[1] = '\0';
+        cJSON_AddStringToObject(o, "letter", letter);
+        cls[0] = def_oc_syms[(int) otmp->oclass].sym;
+        cls[1] = '\0';
+        cJSON_AddStringToObject(o, "class", cls);
+        glyph = obj_to_glyph(otmp, rn2_on_display_rng);
+        tile = glyphmap[glyph].tileidx;
+        if (glyph_is_object(glyph))
+            tile = rh_object_appearance_tile(tile);
+        add_int(o, "tile", tile);
+        add_int(o, "quan", otmp->quan);
+        slots = cJSON_AddArrayToObject(o, "slots");
+        for (i = 0; i < SIZE(worn_slots); i++)
+            if (otmp->owornmask & worn_slots[i].mask)
+                cJSON_AddItemToArray(slots,
+                                     cJSON_CreateString(worn_slots[i].name));
+        add_bool(o, "lit", otmp->lamplit);
+        name = doname(otmp);
+        add_str(o, "text", name);
+        /* give the obuf back, as display_pickinv() does: a snapshot must
+           not clobber names the core is still holding */
+        maybereleaseobuf(name);
+        cJSON_AddItemToArray(items, o);
+    }
+    iflags.suppress_price = save_suppress_price;
+    /* the alternate weapon is then wielded in the off hand */
+    add_bool(a, "twoweap", u.twoweap);
+    return a;
+}
+
+/* Before the engine waits for input.  Callers build their own arguments
+   first: strings they were given may live in objnam.c's obufs, which the
+   snapshot's doname() calls reuse.  Never from update_inventory itself,
+   which the core calls in the middle of changing things. */
+static void
+inventory_flush(void)
+{
+    if (!program_state.in_moveloop) {
+        seen_moveloop = FALSE;
+        return;
+    }
+    if (!seen_moveloop) {
+        seen_moveloop = TRUE;
+        inventory_dirty = TRUE;
+    }
+    /* saving or restoring: update_inventory() is off, and the chain may
+       be half freed */
+    if (!inventory_dirty || rh_proto_is_lost() || suppress_map_output())
+        return;
+    inventory_dirty = FALSE;
+    rh_proto_send("win", "inventory", inventory_json());
+}
+
+/* every request of this file goes through here */
+static cJSON *
+request(const char *fn, cJSON *args)
+{
+    inventory_flush();
+    return rh_proto_request(fn, args);
+}
+
 static void
 menu_reset(int w)
 {
@@ -198,7 +304,7 @@ h_player_selection(void *ret UNUSED, va_list *ap UNUSED)
 static void
 h_askname(void *ret UNUSED, va_list *ap UNUSED)
 {
-    cJSON *r = rh_proto_request("askname", (cJSON *) 0);
+    cJSON *r = request("askname", (cJSON *) 0);
     const char *name = r ? rh_reply_str(r, "text") : (const char *) 0;
 
     if (name && *name == '\033') {
@@ -279,7 +385,7 @@ h_display_nhwindow(void *ret UNUSED, va_list *ap)
         || (valid_win(w)
             && (windows[w].type == NHW_TEXT || windows[w].type == NHW_MENU))) {
         /* "--More--" style pause: the client acknowledges */
-        cJSON_Delete(rh_proto_request("display_nhwindow", a));
+        cJSON_Delete(request("display_nhwindow", a));
     } else {
         rh_proto_send("win", "display_nhwindow", a);
     }
@@ -343,7 +449,7 @@ h_display_file(void *ret UNUSED, va_list *ap)
         cJSON_AddItemToArray(lines, rh_json_string(buf));
     }
     (void) dlb_fclose(f);
-    cJSON_Delete(rh_proto_request("display_file", a));
+    cJSON_Delete(request("display_file", a));
 }
 
 static void
@@ -420,7 +526,7 @@ h_select_menu(void *ret, va_list *ap)
     *menu_list = (menu_item *) 0;
     add_int(a, "win", w);
     add_int(a, "how", how);
-    r = rh_proto_request("select_menu", a);
+    r = request("select_menu", a);
     if (!r || rh_reply_has(r, "cancel")) {
         cJSON_Delete(r);
         *(int *) ret = -1;
@@ -493,7 +599,7 @@ h_message_menu(void *ret, va_list *ap)
     add_int(a, "let", let);
     add_int(a, "how", va_arg(*ap, int));
     add_str(a, "mesg", va_arg(*ap, const char *));
-    r = rh_proto_request("message_menu", a);
+    r = request("message_menu", a);
     ch = r ? rh_reply_int(r, "ch", '\033') : '\033';
     cJSON_Delete(r);
     if (ch != let && ch != '\033')
@@ -565,7 +671,7 @@ h_raw_print_bold(void *ret UNUSED, va_list *ap)
 static void
 h_nhgetch(void *ret, va_list *ap UNUSED)
 {
-    cJSON *r = rh_proto_request("nhgetch", (cJSON *) 0);
+    cJSON *r = request("nhgetch", (cJSON *) 0);
 
     *(int *) ret = r ? (int) rh_reply_int(r, "key", '\033') : EOF;
     cJSON_Delete(r);
@@ -585,7 +691,7 @@ h_nh_poskey(void *ret, va_list *ap)
         a = args_new();
         add_bool(a, "getpos", 1);
     }
-    r = rh_proto_request("nh_poskey", a);
+    r = request("nh_poskey", a);
 
     if (!r) {
         *(int *) ret = EOF;
@@ -642,7 +748,7 @@ h_yn_function(void *ret, va_list *ap)
     add_str(a, "query", query);
     add_str(a, "choices", choices);
     add_int(a, "default", def);
-    r = rh_proto_request("yn_function", a);
+    r = request("yn_function", a);
     ch = r ? rh_reply_int(r, "ch", '\033') : '\033';
     cJSON_Delete(r);
     if (listed && ch == '\033' && !strchr(choices, '\033')) {
@@ -664,7 +770,7 @@ h_getlin(void *ret UNUSED, va_list *ap)
     const char *text;
 
     add_str(a, "query", query);
-    r = rh_proto_request("getlin", a);
+    r = request("getlin", a);
     text = r ? rh_reply_str(r, "text") : (const char *) 0;
     (void) strncpy(bufp, text ? text : "\033", BUFSZ - 1);
     bufp[BUFSZ - 1] = '\0';
@@ -674,7 +780,7 @@ h_getlin(void *ret UNUSED, va_list *ap)
 static void
 h_get_ext_cmd(void *ret, va_list *ap UNUSED)
 {
-    cJSON *r = rh_proto_request("get_ext_cmd", (cJSON *) 0);
+    cJSON *r = request("get_ext_cmd", (cJSON *) 0);
     const char *cmd = r ? rh_reply_str(r, "cmd") : (const char *) 0;
     struct ext_func_tab *e;
     int i, found = -1;
@@ -775,6 +881,7 @@ h_update_inventory(void *ret UNUSED, va_list *ap)
 
     add_int(a, "arg", va_arg(*ap, int));
     rh_proto_send("win", "update_inventory", a);
+    inventory_dirty = TRUE;
 }
 
 static void
