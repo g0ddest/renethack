@@ -41,8 +41,14 @@ const PEACEFUL_BY_DEFAULT: [&str; 8] = [
     "prisoner",
 ];
 
-/// Messages that never stop an order: a pet swapped, sounds from afar.
-const HARMLESS: [&str; 3] = ["You swap places with", "You displace", "You hear"];
+/// Messages that never stop an order: a pet swapped, sounds from afar, a
+/// door the walk opened.
+const HARMLESS: [&str; 4] = [
+    "You swap places with",
+    "You displace",
+    "You hear",
+    "The door opens.",
+];
 
 /// "Something lies here" when the hero steps onto objects.
 const ITEMS_HERE: [&str; 4] = [
@@ -791,19 +797,29 @@ impl TickDriver {
         let turn = world.status.number("time").unwrap_or(self.observed);
         let mut fought = false;
         let mut news = Vec::new();
+        let pets = pet_names(world, catalog);
         for m in world.log.since(self.seen_seq).filter(|m| !m.from_history) {
             self.peaceful.learn(&m.text, catalog);
+            let mut hero_fights = false;
             if let Some(a) = parse_attack(&m.text) {
                 match (&a.attacker, &a.target) {
                     (Who::Named(n), Who::Hero) => {
                         self.peaceful.forget(n);
-                        fought = true;
+                        hero_fights = true;
                     }
-                    (Who::Hero, _) => fought = true,
+                    (Who::Hero, _) => hero_fights = true,
                     _ => {}
                 }
             }
-            news.push((m.seq, m.text.clone(), m.urgent));
+            fought |= hero_fights;
+            let harmless = HARMLESS.iter().any(|h| m.text.starts_with(h))
+                || (!hero_fights && about_a_pet(&m.text, &pets));
+            news.push(News {
+                seq: m.seq,
+                text: m.text.clone(),
+                urgent: m.urgent,
+                harmless,
+            });
         }
         self.seen_seq = world.log.last_seq();
         let hp = world.status.number("hp");
@@ -822,7 +838,10 @@ impl TickDriver {
             self.mode = Mode::Exploration;
         }
         let entered_combat = was == Mode::Exploration && self.mode == Mode::Combat;
-        if let Some(why) = self.check(world, entered_combat, hurt, &news) {
+        if self.active.as_ref().is_some_and(|a| a.finishing) {
+            // the arrival's own action was the last
+            self.interrupt(Stop::Arrived);
+        } else if let Some(why) = self.check(world, entered_combat, hurt, &news) {
             self.interrupt(why);
         }
         (self.mode != was).then_some(self.mode)
@@ -834,14 +853,10 @@ impl TickDriver {
         world: &World,
         entered_combat: bool,
         hurt: bool,
-        news: &[(u64, String, bool)],
+        news: &[News],
     ) -> Option<Stop> {
         let active = self.active.as_ref()?;
         let before = active.before.as_ref()?;
-        if active.finishing {
-            // the arrival's own action: the order ends with it anyway
-            return None;
-        }
         if entered_combat {
             return Some(if hurt { Stop::HpLost } else { Stop::Hostile });
         }
@@ -867,14 +882,10 @@ impl TickDriver {
             }
             _ => false,
         };
-        for (seq, text, urgent) in news {
-            if *seq <= before.seq {
-                continue;
-            }
-            let harmless = HARMLESS.iter().any(|h| text.starts_with(h));
-            let items = ITEMS_HERE.iter().any(|h| text.starts_with(h));
-            if *urgent || !(harmless || (items && at_goal)) {
-                return Some(Stop::Message(text.clone()));
+        for n in news.iter().filter(|n| n.seq > before.seq) {
+            let items = ITEMS_HERE.iter().any(|h| n.text.starts_with(h));
+            if n.urgent || !(n.harmless || (items && at_goal)) {
+                return Some(Stop::Message(n.text.clone()));
             }
         }
         if let Some((cell, look)) = &before.target
@@ -903,6 +914,45 @@ impl TickDriver {
         };
         find_path(&world.map, catalog, world.hero()?, *goal, arrival.reach())
     }
+}
+
+/// A message the last command brought.
+#[derive(Debug, Clone)]
+struct News {
+    seq: u64,
+    text: String,
+    urgent: bool,
+    /// Never worth stopping for (unless urgent).
+    harmless: bool,
+}
+
+/// The names of the pets in view.
+fn pet_names<'a>(world: &World, catalog: &'a Catalog) -> Vec<&'a str> {
+    let mut names = Vec::new();
+    for y in 0..crate::ROWNO {
+        for x in 1..crate::COLNO {
+            if let Some(g) = world.map.cell(x, y).and_then(|c| c.entity())
+                && g.kind == GlyphKind::Mon
+                && g.flags & mg::PET != 0
+                && let Some(m) = g.mon
+            {
+                names.extend(names_of(catalog, m));
+            }
+        }
+    }
+    names
+}
+
+/// "The little dog picks up a bag.", "Your kitten eats a newt corpse.":
+/// what a pet in view does.
+fn about_a_pet(text: &str, pets: &[&str]) -> bool {
+    pets.iter().any(|n| {
+        ["The ", "Your "].iter().any(|p| {
+            text.strip_prefix(p)
+                .and_then(|r| r.strip_prefix(n))
+                .is_some_and(|r| r.starts_with(' '))
+        })
+    })
 }
 
 /// Where a step key takes the hero, if it is a step.
@@ -1542,6 +1592,28 @@ mod tests {
             .push("You hear the shopkeeper.".into(), 16, None, false);
         d.observe(&w, &cat);
         assert!(matches!(d.take_stop(), Some(Stop::Message(_))));
+    }
+
+    #[test]
+    fn what_a_pet_does_never_stops_an_order() {
+        let (mut w, cat) = world_of(&["|@.f....|"]);
+        let mut d = TickDriver::new();
+        d.observe(&w, &cat);
+        d.start(Order::Repeat { key: 's', left: 9 }, &w, &cat)
+            .unwrap();
+        say(&mut w, "The kitten picks up a bag.");
+        say(&mut w, "Your kitten eats a newt corpse.");
+        say(&mut w, "The door opens.");
+        d.observe(&w, &cat);
+        assert!(d.is_active());
+        d.next(&w, &cat).unwrap();
+        // a kitten that is not in view, or one that bites the hero
+        say(&mut w, "The kittenish thing waves.");
+        d.observe(&w, &cat);
+        assert!(!d.is_active());
+        assert!(about_a_pet("The kitten bites the newt.", &["kitten"]));
+        assert!(!about_a_pet("The kitten bites the newt.", &["little dog"]));
+        assert!(!about_a_pet("The kittens are here.", &["kitten"]));
     }
 
     #[test]

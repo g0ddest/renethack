@@ -271,3 +271,145 @@ fn keys_and_menus_answer_the_engine() {
     assert!(log.iter().any(|m| m.contains("bare handed")), "{log:?}");
     assert!(world.last_text.iter().any(|l| l.text.contains("You quit")));
 }
+
+/// Orders on a real game (seed 42), as the client runs them: a click walks
+/// to the far corner of the start room one step per command request, a
+/// click on the west doorway walks there, `20j` walks down the corridor
+/// until it ends, and `>` walks to the stairs it found and goes down.
+#[test]
+fn orders_walk_the_real_map_and_take_the_stairs() {
+    use std::collections::VecDeque;
+
+    let pg = tempfile::tempdir().unwrap();
+    let mut engine = Engine::spawn(&config(pg.path())).unwrap();
+    let mut world = World::new();
+    let mut catalog: Option<Catalog> = None;
+    let mut driver = TickDriver::new();
+    let mut plan: VecDeque<&str> = [
+        "click 14 7",
+        "click 13 3",
+        "key h",
+        "count 20 j",
+        "key >",
+        "quit",
+    ]
+    .into();
+    // what the plan said, actions sent, how the order ended, the hero then
+    type Done<'a> = (&'a str, u32, Option<Stop>, Option<(i32, i32)>);
+    let mut done: Vec<Done> = Vec::new();
+    let mut current: Option<(&str, u32)> = None;
+    let mut quitting = false;
+    while let Some(inc) = engine.recv(Duration::from_secs(10)).unwrap() {
+        let (id, req) = match inc.msg {
+            EngineMsg::Catalog(c) => {
+                world.set_catalog(&c);
+                catalog = Some(*c);
+                continue;
+            }
+            EngineMsg::Win(call) => {
+                world.apply(&call);
+                continue;
+            }
+            EngineMsg::Req { id, req } => (id, req),
+            _ => continue,
+        };
+        let cat = catalog.as_ref().expect("the catalog comes first");
+        let prompt = world.on_request(&req);
+        let reply = |r: Reply| r.to_value();
+        if let Some(c) = driver.follow_up(&prompt) {
+            let r = match prompt {
+                Prompt::Command => Reply::Key(c as i32),
+                _ => Reply::Char(c as i32),
+            };
+            engine.reply(id, &reply(r)).unwrap();
+            continue;
+        }
+        let answer = match &prompt {
+            Prompt::AutoAck | Prompt::Show { .. } | Prompt::MapPause => Reply::Ack,
+            Prompt::ExtCmd => Reply::ExtCmd(Some("quit".into())),
+            Prompt::Choice { query, .. } if quitting => {
+                Reply::Char(if query.contains("quit") { 'y' } else { 'n' } as i32)
+            }
+            Prompt::Command if !world.getpos => {
+                driver.observe(&world, cat);
+                if driver.is_active()
+                    && let Some(a) = driver.next(&world, cat)
+                {
+                    if let Some((_, n)) = current.as_mut() {
+                        *n += 1;
+                    }
+                    engine
+                        .reply(id, &reply(Reply::Key(a.keys[0] as i32)))
+                        .unwrap();
+                    continue;
+                }
+                if let Some((what, n)) = current.take() {
+                    done.push((what, n, driver.take_stop(), world.hero()));
+                }
+                let step = plan.pop_front().expect("the plan ends with quit");
+                let words: Vec<&str> = step.split(' ').collect();
+                let order = match words[..] {
+                    ["click", x, y] => {
+                        let at = (x.parse().unwrap(), y.parse().unwrap());
+                        match click_order(&world, cat, at) {
+                            ClickPlan::Order(o) => Some(o),
+                            other => panic!("{step}: {other:?}"),
+                        }
+                    }
+                    ["count", n, k] => Some(Order::Repeat {
+                        key: k.chars().next().unwrap(),
+                        left: n.parse().unwrap(),
+                    }),
+                    ["key", ">"] => {
+                        Some(stairs_order(&world, cat, '>').expect("the stairs are known"))
+                    }
+                    _ => None,
+                };
+                match (order, &words[..]) {
+                    (Some(o), _) => {
+                        let a = driver
+                            .start(o, &world, cat)
+                            .unwrap_or_else(|e| panic!("{step}: {e:?}"));
+                        current = Some((step, 1));
+                        Reply::Key(a.keys[0] as i32)
+                    }
+                    (None, &["key", k]) => Reply::Key(k.chars().next().unwrap() as i32),
+                    (None, &["quit"]) => {
+                        quitting = true;
+                        Reply::Key('#' as i32)
+                    }
+                    _ => panic!("{step}"),
+                }
+            }
+            other => {
+                driver.on_question(None, cat);
+                other.escape_reply()
+            }
+        };
+        engine.reply(id, &reply(answer)).unwrap();
+    }
+    engine.wait(Duration::from_secs(10)).unwrap();
+    let find = |what: &str| {
+        done.iter()
+            .find(|d| d.0 == what)
+            .unwrap_or_else(|| panic!("{what}: {done:?}"))
+    };
+    // four steps across the room, one action each
+    let walk = find("click 14 7");
+    assert_eq!(
+        (walk.2.clone(), walk.3),
+        (Some(Stop::Arrived), Some((14, 7))),
+        "{done:?}"
+    );
+    assert!(walk.1 <= 5, "{done:?}");
+    assert_eq!(find("click 13 3").3, Some((13, 3)), "{done:?}");
+    // the corridor ends where it turns: the step goes nowhere
+    let corridor = find("count 20 j");
+    assert!(
+        corridor.1 >= 10 && corridor.3.is_some_and(|h| h.1 >= 15),
+        "{done:?}"
+    );
+    let stairs = find("key >");
+    assert_eq!(stairs.2, Some(Stop::Arrived), "{done:?}");
+    assert!(stairs.1 >= 2, "walked, then '>': {done:?}");
+}
