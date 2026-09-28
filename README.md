@@ -4,9 +4,10 @@ NetHack 5.0 with a modern RPG presentation. The game rules are NetHack's own,
 unchanged; this repository adds a protocol host around the engine and a Godot
 client written in Rust. Design: `docs/superpowers/specs/2026-09-26-renethack-design.md`.
 
-The client is the minimal one of subproject 2: a 3D map built from simple
-geometry, the status HUD, the message log and every NetHack menu and question
-as a dialog. The game can be played from character creation to the end.
+The client draws a torchlit 3D dungeon ("dark realism": CC0 photo textures,
+animated models, procedural bodies for everything without a model), with the
+status HUD, the message log and every NetHack menu and question as a dialog.
+The game can be played from character creation to the end.
 
 ## Requirements (macOS, Linux)
 
@@ -24,8 +25,8 @@ as a dialog. The game can be played from character creation to the end.
     make run
 
 `make run` builds the engine (`engine/build`), the client extension
-(`client/rust/target/debug/librenethack_gd.*`), imports the Godot project once
-and starts the game. The first engine build downloads Lua 5.4.8 (NetHack's
+(`client/rust/target/debug/librenethack_gd.*`), imports the Godot project and
+any new or changed art, and starts the game. The first engine build downloads Lua 5.4.8 (NetHack's
 Makefile checks its sha256). NetHack's Makefiles print a few harmless lines
 such as `nroff: not found` and `expr: syntax error`.
 
@@ -70,11 +71,39 @@ Commands work in any keyboard layout (letters are taken by key position).
 
 `make test-client` runs each scenario of `client/rust/renethack-gd/src/selftest.rs`
 in its own headless Godot process with a fixed seed: every scenario except
-`tour`, a walk through the first rooms for map screenshots. The scenarios take
+`tour`, a walk through the first rooms for map screenshots, and `gallery`,
+the art laid out page by page. With `--screenshots` the soak saves the screen
+every 60 answers. The scenarios take
 screenshots under a display:
 
     cd client/godot
     godot --path . -- --selftest=smoke --screenshots=/tmp/shots --playground=/tmp/pg
+
+## Art
+
+The art is CC0 and committed under `client/godot/art/cc0` (Poly Haven
+textures and models, Quaternius characters, animations, monsters, animals
+and props; authors in `client/godot/art/CREDITS.md`). `make art` fetches it
+again (`tools/fetch_art.py`, needs Python 3 with Pillow) and checks every
+download against `client/godot/art/art.lock.json`; `make client` then
+imports what changed (Godot's headless import, incremental).
+
+`client/godot/art/manifest.json` says what draws each thing, from the most
+specific rule to the most general (crate `nh-art`):
+
+- a monster: its name, else its class letter, else its body (serpent, flyer,
+  blob, ghost, humanoid...), else a generic beast; the height follows the
+  catalog size, a tint tells species of one model apart;
+- an object: its appearance, else its class symbol, else a generic pouch;
+  only the appearance tile is ever used, so a look never tells more than the
+  appearance does;
+- a map feature: its terrain (materials for floors, walls, doors...).
+
+`cargo test -p nh-art -- --nocapture coverage_report` prints how many
+monsters and object tiles resolve at each level. The `gallery` self-test lays
+the art out for screenshots:
+
+    godot --path client/godot -- --selftest=gallery --screenshots=/tmp/shots
 
 ## Playing a script without the client
 
@@ -92,11 +121,14 @@ Script steps are documented on `nh_link::parse_script`.
 - `engine/patches` — the only changes to NetHack, applied at build time
 - `engine/host` — the protocol host (`nh-engine`)
 - `client/rust` — `nh-protocol`, `nh-link` (engine process, live sessions,
-  saves), `nh-world` (world model, prompts, menus, key map), `nh-cli`,
-  `renethack-gd` (the Godot extension)
+  saves), `nh-world` (world model, prompts, menus, key map), `nh-art` (the
+  art manifest and its fallback chain), `nh-cli`, `renethack-gd` (the Godot
+  extension)
 - `client/godot` — the Godot project (a single scene; all logic is in Rust)
+  and its art (`client/godot/art`)
 
 ## License
 
 NetHack General Public License (see `engine/upstream/dat/license`).
 cJSON: MIT (`engine/host/third_party/cjson/LICENSE`).
+Art: CC0 (`client/godot/art/CREDITS.md`).
