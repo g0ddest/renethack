@@ -1,6 +1,7 @@
 # renethack: top-level entry points
 #   make              build the engine (engine/build/nh-engine, recover, data)
-#   make client       build the Godot extension and import the Godot project
+#   make client       build the Godot extension; import the Godot project and
+#                     any new or changed art
 #   make run          play: engine + client, then start Godot ($(GODOT))
 #   make test         engine tests, then every Rust test against the fresh engine
 #   make test-client  headless self-tests of the Godot client, one process each
@@ -18,24 +19,37 @@ SELFTESTS := smoke keys save close crash menus text dialogs soak
 SOAK_CI := 2000
 SOAK_SEEDS := 1 2 3 4 5 6 7 8
 
-.PHONY: all engine client run test test-client soak lint need-timeout art
+.PHONY: all engine client import run test test-client soak lint need-timeout art
 all: engine
 
 engine:
 	$(MAKE) -C engine
 
-# A fresh checkout has no client/godot/.godot: until the project is imported
-# Godot does not load the extension and the main scene stays an empty
-# placeholder.  The first import of a project with a GDExtension may crash on
-# exit after writing extension_list.cfg, so its status is ignored and the
-# file is checked instead.
+# Godot must import the art (and, on a fresh checkout, the extension) before
+# a run outside the editor can load it: without client/godot/.godot the main
+# scene stays an empty placeholder, and art added or changed since the last
+# import does not load.  The import is incremental and runs whenever a file
+# under client/godot/art or the project's own files is newer than its stamp.
+# The first import of a project with a GDExtension may crash on exit after
+# writing extension_list.cfg, so its status is ignored and the file is
+# checked instead.
+IMPORT_STAMP := $(GODOT_PROJECT)/.godot/renethack-import.stamp
+IMPORT_INPUTS := $(shell find $(GODOT_PROJECT)/art -type f 2>/dev/null) \
+	$(GODOT_PROJECT)/project.godot $(GODOT_PROJECT)/renethack.gdextension \
+	$(GODOT_PROJECT)/main.tscn
+
 client:
 	cd client/rust && cargo build -p renethack-gd
-	@if [ ! -f $(GODOT_PROJECT)/.godot/extension_list.cfg ]; then \
-		$(GODOT) --headless --path $(GODOT_PROJECT) --import > /dev/null 2>&1; \
-		test -f $(GODOT_PROJECT)/.godot/extension_list.cfg \
-			|| { echo "Godot import of $(GODOT_PROJECT) failed" >&2; exit 1; }; \
-	fi
+	@$(MAKE) --no-print-directory import
+
+import: $(IMPORT_STAMP)
+
+$(IMPORT_STAMP): $(IMPORT_INPUTS)
+	@echo "importing the Godot project (art, extension)"
+	@$(GODOT) --headless --path $(GODOT_PROJECT) --import > /dev/null 2>&1 || true
+	@test -f $(GODOT_PROJECT)/.godot/extension_list.cfg \
+		|| { echo "Godot import of $(GODOT_PROJECT) failed" >&2; exit 1; }
+	@touch $@
 
 run: all client
 	$(GODOT) --path $(GODOT_PROJECT)
@@ -82,7 +96,8 @@ soak: need-timeout all client
 	done; echo "soak passed with seeds $(SOAK_SEEDS)"
 
 # The art is committed; this re-fetches it from Poly Haven and itch.io and
-# checks the downloads against client/godot/art/art.lock.json
+# checks the downloads against client/godot/art/art.lock.json; `make client`
+# then imports what changed
 art:
 	python3 tools/fetch_art.py
 

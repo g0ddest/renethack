@@ -26,3 +26,12 @@ renderer/rendering_method.mobile="gl_compatibility"
 
 ; nh-engine, recover and data/ (RENETHACK_ENGINE_DIR overrides it)
 engine_dir="res://../../engine/build"
+
+[importer_defaults]
+
+; the art is 1K photo textures seen from afar: mipmaps, and compressed on
+; the GPU (S3TC/BPTC on desktop)
+texture={
+"compress/mode": 2,
+"mipmaps/generate": true
+}

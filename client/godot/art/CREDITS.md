@@ -17,3 +17,10 @@ the recipe in `sources.json` and checks the downloads against `art.lock.json`.
 
 Textures larger than 1024 px were scaled down and re-encoded; nothing else
 was changed.
+
+Godot writes an `.import` file next to every asset when it imports the
+project (committed, as usual for Godot projects: they hold the import
+settings, e.g. mipmaps and GPU compression for the textures) and extracts
+the textures embedded in `bestiary/*.glb` next to them
+(`Imp_T_Imp_*.jpg`, `Puglin_T_Puglin_*.jpg`). `manifest.json` says which
+model, material and animation draws each monster, object and map feature.
