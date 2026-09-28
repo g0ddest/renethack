@@ -1,0 +1,75 @@
+{
+ "comment": "CC0 art of the client. tools/fetch_art.py reads this recipe, writes client/godot/art/cc0 and records the source hashes in art.lock.json.",
+ "out": "cc0",
+ "texture_max": 1024,
+ "polyhaven_textures": [
+  {"id": "stone_tiles_02", "use": "room floor"},
+  {"id": "castle_brick_07", "use": "dungeon walls"},
+  {"id": "dirt_floor", "use": "corridors"},
+  {"id": "rock_wall_08", "use": "rock, mines walls, boulders' ground"},
+  {"id": "old_planks_02", "use": "doors, drawbridges"},
+  {"id": "rusty_metal_02", "use": "iron bars, door fittings"},
+  {"id": "marble_01", "use": "altars, thrones, fountains, sinks, graves, stairs"}
+ ],
+ "polyhaven_models": [
+  {"id": "street_rat", "use": "rats"},
+  {"id": "boulder_01", "use": "boulders"},
+  {"id": "dead_tree_trunk_02", "use": "trees"},
+  {"id": "gothic_statue", "use": "statues without a monster model"}
+ ],
+ "itch": [
+  {
+   "page": "https://quaternius.itch.io/modular-character-outfits-fantasy",
+   "upload": "Modular Character Outfits - Fantasy[Standard].zip",
+   "root": "Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/",
+   "files": ["Outfits/*.gltf"],
+   "dest": "quaternius/outfits",
+   "license_files": ["Modular Character Outfits - Fantasy[Standard]/License_Standard.txt"],
+   "use": "the hero and human-like monsters (peasant, ranger; male and female)"
+  },
+  {
+   "page": "https://quaternius.itch.io/universal-animation-library",
+   "upload": "Universal Animation Library[Standard].zip",
+   "root": "Universal Animation Library[Standard]/Unreal-Godot/",
+   "files": ["UAL1_Standard.glb"],
+   "dest": "quaternius/animations",
+   "license_files": ["Universal Animation Library[Standard]/License.txt"],
+   "use": "idle, walk, attack, hit and death for the outfit characters (same skeleton)"
+  },
+  {
+   "page": "https://quaternius.itch.io/bestiary-dungeon-monsters-kit",
+   "upload": "Bestiary - Dungeon Monsters Kit[Standard].zip",
+   "root": "Bestiary - Dungeon Monsters Kit[Standard]/Exports/GLB (Godot-Unreal)/",
+   "files": ["Imp.glb", "Puglin.glb"],
+   "dest": "quaternius/bestiary",
+   "license_files": ["Bestiary - Dungeon Monsters Kit[Standard]/License_Standard.txt"],
+   "use": "imps, minor demons, goblinoids, kobolds"
+  },
+  {
+   "page": "https://quaternius.itch.io/fantasy-props-megakit",
+   "upload": "Fantasy Props MegaKit[Standard].zip",
+   "root": "Exports/glTF/",
+   "files": ["Sword_Bronze.gltf", "Axe_Bronze.gltf", "Shield_Wooden.gltf", "Pickaxe_Bronze.gltf",
+             "Potion_1.gltf", "Potion_2.gltf", "Potion_4.gltf", "SmallBottle.gltf",
+             "Scroll_1.gltf", "Scroll_2.gltf", "Book_5.gltf", "Book_7.gltf",
+             "Coin.gltf", "Coin_Pile.gltf", "Coin_Pile_2.gltf", "Key_Metal.gltf", "Key_Gold.gltf",
+             "Chest_Wood.gltf", "Bag.gltf", "Pouch_Large.gltf", "Chalice.gltf", "Mug.gltf",
+             "Candle_1.gltf", "CandleStick.gltf", "CandleStick_Triple.gltf", "Torch_Metal.gltf",
+             "Lantern_Wall.gltf", "Chain_Coil.gltf", "Carrot.gltf", "Cauldron.gltf", "Anvil.gltf",
+             "Vase_2.gltf", "Vase_Rubble_Medium.gltf", "Whetstone.gltf", "Rope_1.gltf",
+             "Cage_Small.gltf", "Barrel.gltf", "Crate_Wooden.gltf", "Table_Plate.gltf"],
+   "dest": "quaternius/props",
+   "license_files": ["License_Standard.txt"],
+   "use": "objects on the floor, altar candles, torches"
+  },
+  {
+   "page": "https://quaternius.itch.io/lowpoly-animated-animals",
+   "upload": "Farm Animals Animated  by Quaternius.zip",
+   "root": "FBX/",
+   "files": ["Pug.fbx", "Horse.fbx", "Cow.fbx", "Pig.fbx", "Sheep.fbx"],
+   "dest": "quaternius/animals",
+   "license_files": [],
+   "use": "dogs, horses, quadrupeds (CC0 per the itch.io page; the zip has no license file)"
+  }
+ ]
+}

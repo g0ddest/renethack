@@ -5,6 +5,7 @@
 #   make test         engine tests, then every Rust test against the fresh engine
 #   make test-client  headless self-tests of the Godot client, one process each
 #   make soak         random play through the client UI, seeds 1..8
+#   make art          fetch the CC0 art again (tools/fetch_art.py; needs Pillow)
 #   make lint         rustfmt and clippy, warnings are errors
 
 GODOT ?= godot
@@ -17,7 +18,7 @@ SELFTESTS := smoke keys save close crash menus text dialogs soak
 SOAK_CI := 2000
 SOAK_SEEDS := 1 2 3 4 5 6 7 8
 
-.PHONY: all engine client run test test-client soak lint need-timeout
+.PHONY: all engine client run test test-client soak lint need-timeout art
 all: engine
 
 engine:
@@ -79,6 +80,11 @@ soak: need-timeout all client
 	@set -e; for seed in $(SOAK_SEEDS); do \
 		$(call run_selftest,soak,--seed=$$seed,900,soak seed $$seed); \
 	done; echo "soak passed with seeds $(SOAK_SEEDS)"
+
+# The art is committed; this re-fetches it from Poly Haven and itch.io and
+# checks the downloads against client/godot/art/art.lock.json
+art:
+	python3 tools/fetch_art.py
 
 lint:
 	cd client/rust && cargo fmt --all -- --check
