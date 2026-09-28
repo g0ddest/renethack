@@ -17,13 +17,19 @@
 
 use std::collections::{HashMap, HashSet};
 
-use godot::classes::base_material_3d::BillboardMode;
-use godot::classes::environment::{AmbientSource, BgMode, FogMode, ToneMapper};
+use godot::classes::base_material_3d::{BillboardMode, Feature, ShadingMode, TextureParam};
+use godot::classes::control::{LayoutPreset, MouseFilter};
+use godot::classes::environment::{
+    AmbientSource, BgMode, FogMode, GlowBlendMode, ReflectionSource, ToneMapper,
+};
+use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::label_3d::DrawFlags;
 use godot::classes::light_3d::Param;
+use godot::classes::mesh::PrimitiveType;
 use godot::classes::{
-    Camera3D, DirectionalLight3D, Environment, Label3D, MeshInstance3D, Node3D, OmniLight3D,
-    SystemFont, WorldEnvironment,
+    BaseMaterial3D, Camera3D, CanvasLayer, ColorRect, DirectionalLight3D, Environment, Label3D,
+    Material, MeshInstance3D, Node3D, OmniLight3D, PackedScene, Shader, ShaderMaterial,
+    StandardMaterial3D, SurfaceTool, SystemFont, VisualInstance3D, WorldEnvironment,
 };
 use godot::prelude::*;
 use nh_art::{ArtManifest, Tint};
@@ -35,29 +41,36 @@ use nh_world::{
 
 use crate::animator::{Motion, pace, yaw_toward};
 use crate::art::{Art, Finish, Model, ModelLook, Pose, build_flat, no_shadow};
-use crate::meshes::{MeshKey, cuboid, cylinder, plane, sphere, torus};
+use crate::meshes::{MeshKey, capsule, cuboid, cylinder, plane, sphere, torus};
 use crate::theme::{self, nh_color};
 
 /// Low enough to see creatures from the side, high enough to see the floor
-/// between walls.
-const PITCH_DEG: f32 = 52.0;
+/// between walls: the pitch at the default distance; closer in the camera
+/// looks more from the side, further out more from above.
+const PITCH_DEG: f32 = 55.0;
+const PITCH_NEAR_DEG: f32 = 47.0;
+const PITCH_FAR_DEG: f32 = 60.0;
 const DISTANCE: f32 = 11.0;
-const MIN_DISTANCE: f32 = 6.0;
-const MAX_DISTANCE: f32 = 30.0;
+const MIN_DISTANCE: f32 = 7.0;
+const MAX_DISTANCE: f32 = 22.0;
 /// The camera's vertical field of view, degrees.
-const FOV_DEG: f32 = 50.0;
+const FOV_DEG: f32 = 40.0;
 /// The overview never goes further (a whole 80x21 level fits well within).
-const MAX_OVERVIEW_DISTANCE: f32 = 70.0;
-const FOLLOW_RATE: f32 = 8.0;
+const MAX_OVERVIEW_DISTANCE: f32 = 80.0;
+const FOLLOW_RATE: f32 = 6.0;
 /// Descent per step when a pointer ray is walked through the raised geometry.
 const PICK_STEP: f32 = 0.05;
 /// Nothing drawn reaches higher (a giant on an altar).
 const MAX_TOP: f32 = 2.8;
 
-const WALL_HEIGHT: f32 = 1.35;
-const DOOR_HEIGHT: f32 = 1.15;
+/// Walls stand taller than the hero; the ones in front of open ground are
+/// cut down (`CUT_HEIGHT`), so the hero is never behind one.
+const WALL_HEIGHT: f32 = 2.1;
+const DOOR_HEIGHT: f32 = 1.9;
 /// Walls and doors in front of open ground, seen from the camera's side.
 const CUT_HEIGHT: f32 = 0.3;
+/// The dark rock slab on top of a wall.
+const CAP_HEIGHT: f32 = 0.08;
 /// Label3D font size; a letter's height is about `FONT_PX * pixel size`.
 const FONT_PX: i32 = 96;
 const PX_MONSTER: f32 = 0.0068;
@@ -65,11 +78,15 @@ const PX_FEATURE: f32 = 0.0062;
 const PX_TRAP: f32 = 0.0052;
 /// Where the camera aims, south of the hero at the default distance (the
 /// log covers the bottom of the screen); it shrinks as the camera closes in.
-const AIM_SOUTH: f32 = 1.5;
+const AIM_SOUTH: f32 = 1.2;
 
 /// Brightness (%) of floors in view, and of the part of a room remembered.
-const SHADE_LIT: u8 = 100;
-const SHADE_DARK: u8 = 58;
+const SHADE_LIT: u8 = 92;
+const SHADE_DARK: u8 = 50;
+/// Stairs are of the floor's stone, a little darker than the floor.
+const SHADE_STAIRS: u8 = 75;
+/// The bedrock under and around the level.
+const SHADE_BEDROCK: u8 = 100;
 /// A lying corpse is this much darker than the living monster.
 const CORPSE_DARKEN: f32 = 0.45;
 
@@ -77,16 +94,45 @@ const FLOOR_UNSEEN: Color = Color::from_rgb(0.19, 0.19, 0.21);
 const DEEP: Color = Color::from_rgb(0.02, 0.02, 0.03);
 /// Scratches of an engraving on the floor.
 const ENGRAVING: Color = Color::from_rgb(0.74, 0.71, 0.62);
-const HERO_RING: Color = Color::from_rgba(1.0, 0.82, 0.30, 0.55);
+const HERO_RING: Color = Color::from_rgba(1.0, 0.83, 0.54, 0.3);
 /// The way an order would walk: pale gold dots exploring, red in a fight.
 const PATH_EXPLORE: Color = Color::from_rgb(0.85, 0.72, 0.38);
 const PATH_EXPLORE_GOAL: Color = Color::from_rgb(1.0, 0.86, 0.45);
 const PATH_COMBAT: Color = Color::from_rgb(0.85, 0.28, 0.2);
 const PATH_COMBAT_GOAL: Color = Color::from_rgb(1.0, 0.36, 0.25);
-const PET_RING: Color = Color::from_rgba(1.0, 0.45, 0.75, 0.6);
-const TORCH: Color = Color::from_rgb(1.0, 0.78, 0.55);
-const TORCH_ENERGY: f32 = 2.2;
-const ROOM_LIGHT: Color = Color::from_rgb(1.0, 0.86, 0.68);
+const PET_RING: Color = Color::from_rgba(0.37, 0.84, 0.75, 0.4);
+/// Under a monster the pointer is on (not the hero's or a pet).
+const HOSTILE_RING: Color = Color::from_rgba(0.88, 0.29, 0.23, 0.45);
+/// The hero's own dim pool of light, over their head (no lamp: the client
+/// does not know of one yet), and a cold rim light from behind that only
+/// the hero's model takes (`RIM_LAYER`).
+const HERO_LIGHT: Color = Color::from_rgb(0.9, 0.84, 0.76);
+const HERO_LIGHT_ENERGY: f32 = 2.4;
+const HERO_LIGHT_RANGE: f32 = 5.5;
+const RIM_LIGHT: Color = Color::from_rgb(0.62, 0.70, 1.0);
+const RIM_LAYER: u32 = 1 << 1;
+/// Torch sconces: lit by everything but their own flames (which would
+/// blow them out, a hand away).
+const SCONCE_LAYER: u32 = 1 << 2;
+const ROOM_LIGHT: Color = Color::from_rgb(0.86, 0.80, 0.72);
+const ROOM_LIGHT_ENERGY: f32 = 0.3;
+/// Torches on the walls of a lit room: one every few cells of its north,
+/// east and west walls; the ones nearest the hero cast shadows.
+const TORCH: Color = Color::from_rgb(1.0, 0.66, 0.38);
+const TORCH_ENERGY: f32 = 2.4;
+const TORCH_RANGE: f32 = 5.5;
+const TORCH_SHADOWS: usize = 3;
+/// The flame of a torch, bright enough to glow.
+const FLAME: Color = Color::from_rgb(1.0, 0.45, 0.12);
+/// Multiplies what is remembered, out of sight.
+const MEMORY: Color = Color::from_rgb(0.74, 0.80, 0.98);
+/// How much a remembered surface glows (it has no light of its own), and
+/// the bedrock (barely: a texture in the dark, not a void).
+const MEMORY_GLOW: f32 = 0.07;
+const BEDROCK_GLOW: f32 = 0.12;
+const WALL_GLOW: f32 = 0.05;
+/// Depth fog and the background: never pure black.
+const DARKNESS: Color = Color::from_rgb(0.008, 0.009, 0.013);
 
 /// What covers a solid: a manifest material (index, brightness %) or a
 /// plain colour.
@@ -117,6 +163,9 @@ struct Letter {
     pixel_size: f32,
     /// Drawn over walls and everything else.
     on_top: bool,
+    /// Shown only under the pointer and in the overview (the letters of
+    /// stairs: the model says what it is, the letter only names it).
+    hint: bool,
 }
 
 /// A model on a cell: what (the art library's look), where, which way.
@@ -143,6 +192,13 @@ struct Look {
     /// Which of `models` is the monster or object on the cell (it is
     /// carried along when it steps to another cell).
     entity: Option<usize>,
+    /// A wall at full height (a torch can hang on it).
+    wall: bool,
+    /// Something here lies below the ground (the bedrock under the level
+    /// leaves it a hole).
+    sunk: bool,
+    /// A monster that is not the hero's nor a pet (red ring under the pointer).
+    hostile: bool,
 }
 
 impl Look {
@@ -193,6 +249,7 @@ impl Look {
             pos: Vector3::new(0.0, y, 0.0),
             pixel_size,
             on_top,
+            hint: false,
         });
     }
 
@@ -340,9 +397,9 @@ fn terrain_base(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool, ct
     } else {
         (WALL_HEIGHT, DOOR_HEIGHT)
     };
-    // in view: the floor's full brightness with a little variation per
-    // cell; remembered, dark
-    let lit_shade = SHADE_LIT - (ctx.noise(1) * 10.0) as u8;
+    // in view: the floor's full brightness (the texture varies it; a
+    // brightness per cell would show the grid); remembered, dark
+    let lit_shade = SHADE_LIT;
     let floor_mat = ctx.mat("floor");
     let pbr = |m: Option<usize>, shade: u8, fallback: Color| match m {
         Some(m) => Paint::Pbr(m, shade),
@@ -357,17 +414,28 @@ fn terrain_base(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool, ct
     let label = |look: &mut Look, y: f32| {
         if let Some(ch) = glyph_char(g) {
             look.letter(ch, lighter(nh_color(c), 0.25), y, PX_FEATURE, false);
+            if let Some(l) = look.letters.last_mut() {
+                l.hint = true;
+            }
         }
     };
     match t {
         Terrain::Stone | Terrain::Effect | Terrain::Unknown => {}
         Terrain::Wall => {
+            // masonry under a slab of dark rock a little wider than it
+            let body = wall_h - CAP_HEIGHT / 2.0;
             look.solid(
-                cuboid(1.0, wall_h, 1.0),
-                main(SHADE_LIT - (ctx.noise(2) * 8.0) as u8),
-                at(0.0, wall_h / 2.0, 0.0),
+                cuboid(1.0, body, 1.0),
+                main(SHADE_LIT),
+                at(0.0, body / 2.0, 0.0),
+            );
+            look.solid(
+                cuboid(1.04, CAP_HEIGHT, 1.04),
+                trim(SHADE_LIT),
+                at(0.0, wall_h - CAP_HEIGHT / 2.0, 0.0),
             );
             look.ground = wall_h;
+            look.wall = !cut;
         }
         Terrain::Floor => {
             look.ground_tile(tile, main(lit_shade), Vector3::ZERO);
@@ -469,7 +537,7 @@ fn terrain_base(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool, ct
         }
         Terrain::StairsUp => {
             floor(look);
-            let stone = main(SHADE_LIT);
+            let stone = main(SHADE_STAIRS);
             // five steps rising to the north, between two side walls
             for i in 0..5 {
                 let h = 0.09 * (i + 1) as f32;
@@ -477,7 +545,7 @@ fn terrain_base(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool, ct
                 look.solid(cuboid(0.78, h, 0.18), stone, at(0.0, h / 2.0, z));
             }
             for x in [-0.44f32, 0.44] {
-                look.solid(cuboid(0.1, 0.5, 0.92), main(80), at(x, 0.25, 0.0));
+                look.solid(cuboid(0.1, 0.5, 0.92), main(60), at(x, 0.25, 0.0));
             }
             // whoever stands here stands on the middle step
             look.ground = 0.27;
@@ -485,8 +553,8 @@ fn terrain_base(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool, ct
         }
         Terrain::StairsDown => {
             // a pit with steps going down, away from the camera, in a rim
-            let stone = main(SHADE_LIT);
-            let rim = main(80);
+            let stone = main(SHADE_STAIRS);
+            let rim = trim(SHADE_LIT);
             for (mesh, x, z) in [
                 (cuboid(1.0, 0.06, 0.1), 0.0, -0.45),
                 (cuboid(1.0, 0.06, 0.1), 0.0, 0.45),
@@ -506,6 +574,7 @@ fn terrain_base(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool, ct
                 let pos = at(0.0, top - h / 2.0, z);
                 look.solid(cuboid(0.8, h, 0.23), stone, pos);
             }
+            look.sunk = true;
             label(look, 0.7);
         }
         Terrain::LadderUp | Terrain::LadderDown => {
@@ -602,11 +671,13 @@ fn terrain_base(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool, ct
             let deep = if t == Terrain::Water { 0.1 } else { 0.06 };
             look.ground_tile(plane(1.0, 1.0), main(SHADE_LIT), at(0.0, -deep, 0.0));
             look.ground = -deep;
+            look.sunk = true;
         }
         Terrain::Ice => look.ground_tile(tile, main(SHADE_LIT), Vector3::ZERO),
         Terrain::Lava => {
             look.ground_tile(plane(1.0, 1.0), main(SHADE_LIT), at(0.0, -0.04, 0.0));
             look.ground = -0.04;
+            look.sunk = true;
         }
         Terrain::LavaWall => {
             let mesh = cuboid(1.0, wall_h, 1.0);
@@ -633,6 +704,7 @@ fn terrain_base(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool, ct
         }
         Terrain::DrawbridgeUp => {
             look.ground_tile(plane(1.0, 1.0), trim(SHADE_LIT), at(0.0, -0.06, 0.0));
+            look.sunk = true;
             let mesh = if vertical {
                 cuboid(0.2, 1.1, 0.96)
             } else {
@@ -698,8 +770,9 @@ fn entity_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
                 look.model(ModelLook { art: r, tint, pose }, here, yaw);
                 look.entity = Some(look.models.len() - 1);
             }
+            look.hostile = !hero && g.flags & mg::PET == 0;
             if g.flags & mg::PET != 0 {
-                let ring = torus(0.36, 0.42);
+                let ring = torus(0.38, 0.41);
                 let paint = Paint::Flat(PET_RING, Finish::Flat);
                 look.ground_tile(ring, paint, at(0.0, ground + 0.02, 0.0));
             }
@@ -970,22 +1043,56 @@ pub struct MotionStats {
     pub strikes: u32,
 }
 
+/// A torch on a wall: the sconce, its flame and its light.
+struct Torch {
+    node: Gd<Node3D>,
+    light: Gd<OmniLight3D>,
+    /// Where the light burns when it does not flicker.
+    at: Vector3,
+    /// Its own flicker (seconds ahead of the clock).
+    phase: f64,
+    shadow: bool,
+}
+
 pub struct MapView {
     root: Gd<Node3D>,
     cells_root: Gd<Node3D>,
     camera: Gd<Camera3D>,
+    env: Gd<Environment>,
     cells: HashMap<(i32, i32), CellNodes>,
     generation: Option<u64>,
     art: Art,
     font: Gd<SystemFont>,
     hover: Gd<Node3D>,
+    /// The cell under the pointer.
+    hover_cell: Option<(i32, i32)>,
+    hostile_ring: Gd<MeshInstance3D>,
+    /// Cells with letters shown only under the pointer or in the overview.
+    hint_cells: HashSet<(i32, i32)>,
+    hints_dirty: bool,
     cursor: Gd<Node3D>,
     hero_ring: Gd<MeshInstance3D>,
-    torch: Gd<OmniLight3D>,
+    hero_light: Gd<OmniLight3D>,
+    rim: Gd<OmniLight3D>,
+    /// The hero's model, on the rim light's layer too.
+    rim_model: Option<Gd<Node3D>>,
     /// Fill lights over the parts of the level in view.
     room_lights: Vec<Gd<OmniLight3D>>,
+    torches: Vec<Torch>,
+    /// Surfaces that glow a little: (manifest material, brightness, tint,
+    /// glow).
+    memory: HashMap<(usize, u8, u32, u32), Gd<Material>>,
+    torch_scene: Option<Gd<PackedScene>>,
+    flame_mat: Gd<Material>,
     /// The lit areas changed: place the fill lights again.
     lights_dirty: bool,
+    /// Dark rock under the whole level, with a hole where something lies
+    /// below the ground.
+    bedrock: Gd<MeshInstance3D>,
+    holes: HashSet<(i32, i32)>,
+    bedrock_dirty: bool,
+    /// The vignette and grain over the map, under the HUD.
+    post: Gd<CanvasLayer>,
     engulf: Gd<MeshInstance3D>,
     engulf_mat: Gd<godot::classes::StandardMaterial3D>,
     target: Vector3,
@@ -1044,43 +1151,133 @@ fn frame(root: &mut Gd<Node3D>, color: Color, width: f32, height: f32) -> Gd<Nod
     node
 }
 
-/// The torch's brightness at time `t`: a few slow waves and a quick one.
+/// A torch's brightness at time `t`: a few slow waves and a quick one.
 fn flicker(t: f64) -> f32 {
     let t = t as f32;
     1.0 + 0.07 * (t * 7.3).sin() + 0.05 * (t * 13.7 + 1.3).sin() + 0.03 * (t * 29.1 + 0.4).sin()
 }
 
+/// How far a flame's light sways at time `t`: a few centimetres, so the
+/// shadows it casts move.
+fn sway(t: f64) -> Vector3 {
+    let t = t as f32;
+    let tau = std::f32::consts::TAU;
+    Vector3::new(
+        0.02 * (t * 5.1 * tau).sin() + 0.01 * (t * 8.7 * tau + 0.7).sin(),
+        0.0,
+        0.02 * (t * 8.7 * tau).sin() + 0.01 * (t * 5.1 * tau + 2.1).sin(),
+    )
+}
+
+/// The camera's pitch at a distance: from the side close in, from above
+/// far out.
+fn pitch_at(distance: f32) -> f32 {
+    let deg = if distance <= DISTANCE {
+        let t = ((distance - MIN_DISTANCE) / (DISTANCE - MIN_DISTANCE)).clamp(0.0, 1.0);
+        PITCH_NEAR_DEG + (PITCH_DEG - PITCH_NEAR_DEG) * t
+    } else {
+        let t = ((distance - DISTANCE) / (MAX_DISTANCE - DISTANCE)).clamp(0.0, 1.0);
+        PITCH_DEG + (PITCH_FAR_DEG - PITCH_DEG) * t
+    };
+    deg.to_radians()
+}
+
+/// Every mesh under `node` on these render layers.
+fn set_layers(node: &Gd<Node3D>, mask: u32) {
+    for n in node
+        .find_children_ex("*")
+        .type_("VisualInstance3D")
+        .owned(false)
+        .done()
+        .iter_shared()
+    {
+        if let Ok(mut vi) = n.try_cast::<VisualInstance3D>() {
+            vi.set_layer_mask(mask);
+        }
+    }
+}
+
 impl MapView {
     pub fn new(mut root: Gd<Node3D>) -> MapView {
+        // darkness is the default: the level shows where light falls on it
         let mut env = Environment::new_gd();
         env.set_background(BgMode::COLOR);
-        env.set_bg_color(Color::from_rgb(0.012, 0.012, 0.018));
+        env.set_bg_color(DARKNESS);
         env.set_ambient_source(AmbientSource::COLOR);
-        env.set_ambient_light_color(Color::from_rgb(0.5, 0.53, 0.68));
-        env.set_ambient_light_energy(0.55);
-        env.set_tonemapper(ToneMapper::ACES);
-        env.set_tonemap_exposure(1.1);
+        env.set_ambient_light_color(Color::from_rgb(0.28, 0.32, 0.46));
+        env.set_ambient_light_energy(0.22);
+        env.set_reflection_source(ReflectionSource::DISABLED);
+        // AgX keeps the hue of fire and rolls the highlights off gently
+        env.set_tonemapper(ToneMapper::AGX);
+        env.set_tonemap_exposure(1.0);
+        env.set_adjustment_enabled(true);
+        env.set_adjustment_contrast(1.12);
+        env.set_adjustment_saturation(0.92);
         env.set_fog_enabled(true);
         env.set_fog_mode(FogMode::DEPTH);
-        env.set_fog_light_color(Color::from_rgb(0.012, 0.012, 0.02));
+        env.set_fog_light_color(DARKNESS);
         env.set_fog_density(1.0);
-        env.set_fog_depth_begin(16.0);
-        env.set_fog_depth_end(46.0);
+        env.set_fog_depth_curve(1.6);
+        // only flames and glowing things bloom
         env.set_glow_enabled(true);
-        env.set_glow_intensity(0.7);
-        env.set_glow_bloom(0.02);
-        env.set_glow_hdr_bleed_threshold(1.2);
+        env.set_glow_normalized(false);
+        for (level, intensity) in [0.0, 0.0, 0.6, 1.0, 0.8, 0.3, 0.0].into_iter().enumerate() {
+            env.set_glow_level(level as i32, intensity);
+        }
+        env.set_glow_intensity(0.9);
+        env.set_glow_strength(1.0);
+        env.set_glow_bloom(0.0);
+        env.set_glow_blend_mode(GlowBlendMode::SOFTLIGHT);
+        env.set_glow_hdr_bleed_threshold(1.1);
+        env.set_glow_hdr_bleed_scale(2.0);
+        env.set_glow_hdr_luminance_cap(12.0);
+        // contact shadows in corners and at the foot of walls
+        env.set_ssao_enabled(true);
+        env.set_ssao_radius(1.1);
+        env.set_ssao_intensity(2.4);
+        env.set_ssao_power(1.6);
+        env.set_ssao_detail(0.6);
+        env.set_ssao_horizon(0.06);
+        env.set_ssao_sharpness(0.98);
+        env.set_ssao_direct_light_affect(0.25);
+        env.set_ssao_ao_channel_affect(0.6);
+        // torchlight thrown back from the walls onto the floor
+        env.set_ssil_enabled(true);
+        env.set_ssil_radius(3.5);
+        env.set_ssil_intensity(1.3);
+        env.set_ssil_sharpness(0.98);
+        env.set_ssil_normal_rejection(1.0);
+        // a thin haze that lights up around the flames
+        env.set_volumetric_fog_enabled(true);
+        env.set_volumetric_fog_density(0.01);
+        env.set_volumetric_fog_albedo(Color::from_rgb(0.60, 0.60, 0.66));
+        env.set_volumetric_fog_emission(Color::from_rgb(0.0, 0.0, 0.0));
+        env.set_volumetric_fog_anisotropy(0.35);
+        env.set_volumetric_fog_length(28.0);
+        env.set_volumetric_fog_detail_spread(2.0);
+        env.set_volumetric_fog_gi_inject(0.0);
+        env.set_volumetric_fog_ambient_inject(0.0);
+        env.set_volumetric_fog_temporal_reprojection_enabled(true);
+        env.set_volumetric_fog_temporal_reprojection_amount(0.9);
         let mut world_env = WorldEnvironment::new_alloc();
         world_env.set_environment(&env);
         root.add_child(&world_env);
 
-        // a faint cold light from above: walls and shapes stay readable
-        // outside the torch's reach
+        // a faint cold light from above: the shapes of remembered walls
+        // stay barely readable outside any light
         let mut moon = DirectionalLight3D::new_alloc();
         moon.set_rotation_degrees(Vector3::new(-62.0, 25.0, 0.0));
-        moon.set_color(Color::from_rgb(0.62, 0.68, 0.9));
-        moon.set_param(Param::ENERGY, 0.4);
+        moon.set_color(Color::from_rgb(0.55, 0.62, 0.9));
+        moon.set_param(Param::ENERGY, 0.22);
+        moon.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
         root.add_child(&moon);
+        // and fainter still from the other side: no wall face is flat black
+        let mut back = DirectionalLight3D::new_alloc();
+        back.set_rotation_degrees(Vector3::new(-40.0, 205.0, 0.0));
+        back.set_color(Color::from_rgb(0.5, 0.56, 0.8));
+        back.set_param(Param::ENERGY, 0.12);
+        back.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
+        root.add_child(&back);
 
         let mut camera = Camera3D::new_alloc();
         camera.set_fov(FOV_DEG);
@@ -1091,7 +1288,7 @@ impl MapView {
         root.add_child(&cells_root);
         cells_root.set_name("Cells");
 
-        let hover = frame(&mut root, Color::from_rgba(1.0, 1.0, 1.0, 0.5), 0.04, 0.02);
+        let hover = frame(&mut root, Color::from_rgba(1.0, 1.0, 1.0, 0.3), 0.03, 0.02);
         let cursor = frame(
             &mut root,
             Color::from_rgba(0.35, 0.95, 1.0, 0.95),
@@ -1099,21 +1296,70 @@ impl MapView {
             0.08,
         );
 
-        let mut hero_ring = MeshInstance3D::new_alloc();
-        hero_ring.set_mesh(&torus(0.38, 0.44).build());
-        hero_ring.set_material_override(&build_flat(HERO_RING, Finish::Flat));
-        hero_ring.set_visible(false);
-        no_shadow(&mut hero_ring);
-        root.add_child(&hero_ring);
+        let ring = |root: &mut Gd<Node3D>, mesh: MeshKey, color: Color| {
+            let mut ring = MeshInstance3D::new_alloc();
+            ring.set_mesh(&mesh.build());
+            ring.set_material_override(&build_flat(color, Finish::Flat));
+            ring.set_visible(false);
+            no_shadow(&mut ring);
+            root.add_child(&ring);
+            ring
+        };
+        let hero_ring = ring(&mut root, torus(0.40, 0.44), HERO_RING);
+        let hostile_ring = ring(&mut root, torus(0.38, 0.42), HOSTILE_RING);
 
-        let mut torch = OmniLight3D::new_alloc();
-        torch.set_color(TORCH);
-        torch.set_param(Param::ENERGY, TORCH_ENERGY);
-        torch.set_param(Param::RANGE, 7.5);
-        torch.set_param(Param::ATTENUATION, 1.1);
-        torch.set_shadow(true);
-        torch.set_visible(false);
-        root.add_child(&torch);
+        // over the hero's head: short shadows at their feet, not long ones
+        // across the floor
+        let mut hero_light = OmniLight3D::new_alloc();
+        hero_light.set_color(HERO_LIGHT);
+        hero_light.set_param(Param::ENERGY, HERO_LIGHT_ENERGY);
+        hero_light.set_param(Param::RANGE, HERO_LIGHT_RANGE);
+        hero_light.set_param(Param::ATTENUATION, 1.0);
+        hero_light.set_param(Param::SHADOW_BIAS, 0.03);
+        hero_light.set_param(Param::SHADOW_NORMAL_BIAS, 1.2);
+        hero_light.set_param(Param::SHADOW_BLUR, 2.0);
+        hero_light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
+        hero_light.set_shadow(true);
+        hero_light.set_visible(false);
+        root.add_child(&hero_light);
+
+        let mut rim = OmniLight3D::new_alloc();
+        rim.set_color(RIM_LIGHT);
+        rim.set_param(Param::ENERGY, 3.0);
+        rim.set_param(Param::RANGE, 3.0);
+        rim.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
+        rim.set_shadow(false);
+        rim.set_cull_mask(RIM_LAYER);
+        rim.set_visible(false);
+        root.add_child(&rim);
+
+        let mut bedrock = MeshInstance3D::new_alloc();
+        bedrock.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+        root.add_child(&bedrock);
+
+        let mut post = CanvasLayer::new_alloc();
+        post.set_layer(-1);
+        if let Ok(shader) = godot::tools::try_load::<Shader>("res://shaders/vignette.gdshader") {
+            let mut mat = ShaderMaterial::new_gd();
+            mat.set_shader(&shader);
+            let mut rect = ColorRect::new_alloc();
+            rect.set_anchors_preset(LayoutPreset::FULL_RECT);
+            rect.set_mouse_filter(MouseFilter::IGNORE);
+            rect.set_material(&mat);
+            post.add_child(&rect);
+        }
+        root.add_child(&post);
+
+        let mut flame = StandardMaterial3D::new_gd();
+        flame.set_shading_mode(ShadingMode::UNSHADED);
+        flame.set_albedo(FLAME);
+        flame.set_feature(Feature::EMISSION, true);
+        flame.set_emission(FLAME);
+        flame.set_emission_energy_multiplier(3.0);
+        let torch_scene = godot::tools::try_load::<PackedScene>(
+            "res://art/cc0/quaternius/props/Torch_Metal.gltf",
+        )
+        .ok();
 
         let engulf_mat = godot::classes::StandardMaterial3D::new_gd();
         let mut engulf = MeshInstance3D::new_alloc();
@@ -1131,16 +1377,31 @@ impl MapView {
             root,
             cells_root,
             camera,
+            env,
             cells: HashMap::new(),
             generation: None,
             art,
             font: theme::mono_bold(),
             hover,
+            hover_cell: None,
+            hostile_ring,
+            hint_cells: HashSet::new(),
+            hints_dirty: false,
             cursor,
             hero_ring,
-            torch,
+            hero_light,
+            rim,
+            rim_model: None,
             room_lights: Vec::new(),
+            torches: Vec::new(),
+            memory: HashMap::new(),
+            torch_scene,
+            flame_mat: flame.upcast(),
             lights_dirty: false,
+            bedrock,
+            holes: HashSet::new(),
+            bedrock_dirty: true,
+            post,
             engulf,
             engulf_mat,
             target: center,
@@ -1249,16 +1510,26 @@ impl MapView {
                 };
                 self.hero_ring.set_position(p + at(0.0, 0.02, 0.0));
                 self.hero_ring.set_visible(true);
-                // held up and a little in front, towards the camera
-                self.torch.set_position(p + at(0.25, 1.55, 0.35));
-                self.torch
-                    .set_param(Param::ENERGY, TORCH_ENERGY * flicker(self.clock));
-                self.torch.set_visible(true);
+                self.hero_light.set_position(p + at(0.0, 2.4, 0.6));
+                self.hero_light.set_visible(true);
+                // behind the hero, on the far side from the camera
+                self.rim.set_position(p + at(0.0, 2.0, -0.9));
+                self.rim.set_visible(true);
+                self.rim_hero((x, y));
+                self.light_torches(p);
             }
             None => {
                 self.hero_ring.set_visible(false);
-                self.torch.set_visible(false);
+                self.hero_light.set_visible(false);
+                self.rim.set_visible(false);
             }
+        }
+        self.show_hover();
+        if std::mem::take(&mut self.hints_dirty) {
+            self.show_hints();
+        }
+        if std::mem::take(&mut self.bedrock_dirty) {
+            self.lay_bedrock();
         }
         match hero.and_then(|h| engulfer_color(world, h)) {
             Some(color) => {
@@ -1292,7 +1563,8 @@ impl MapView {
         self.place_camera();
     }
 
-    /// One soft light over each connected area of floor in view.
+    /// One faint fill light over each connected area of floor in view (a
+    /// big room's middle stays readable), and torches on its walls.
     fn place_room_lights(&mut self) {
         let lit: std::collections::HashSet<(i32, i32)> = self
             .cells
@@ -1302,6 +1574,7 @@ impl MapView {
             .collect();
         let areas = lit_areas(&lit);
         let mut used = 0;
+        let mut sconces = Vec::new();
         for area in areas.iter().filter(|a| a.len() >= 4) {
             let n = area.len() as f32;
             let cx = area.iter().map(|c| c.0 as f32).sum::<f32>() / n;
@@ -1314,20 +1587,263 @@ impl MapView {
                 let mut l = OmniLight3D::new_alloc();
                 l.set_color(ROOM_LIGHT);
                 l.set_shadow(false);
-                l.set_param(Param::ATTENUATION, 0.5);
+                l.set_param(Param::ATTENUATION, 1.0);
+                l.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.3);
                 self.root.add_child(&l);
                 self.room_lights.push(l);
             }
             let l = &mut self.room_lights[used];
             used += 1;
-            let height = (2.2 + reach * 0.25).min(4.5);
-            l.set_position(Vector3::new(cx, height, cy));
+            l.set_position(Vector3::new(cx, 2.6, cy));
             l.set_param(Param::RANGE, (reach * 1.35 + 2.5).clamp(3.5, 16.0));
-            l.set_param(Param::ENERGY, 0.75);
+            l.set_param(Param::ENERGY, ROOM_LIGHT_ENERGY);
             l.set_visible(true);
+            sconces.extend(torch_walls(area, |x, y| {
+                self.cells.get(&(x, y)).is_some_and(|n| n.look.wall)
+            }));
         }
         for l in self.room_lights.iter_mut().skip(used) {
             l.set_visible(false);
+        }
+        self.place_torches(&sconces);
+    }
+
+    /// Torches on these walls, each facing into its room: (wall cell,
+    /// direction into the room).
+    fn place_torches(&mut self, walls: &[TorchWall]) {
+        for (i, &((x, y), (dx, dz))) in walls.iter().enumerate() {
+            if i == self.torches.len() {
+                let torch = self.new_torch();
+                self.torches.push(torch);
+            }
+            let (fx, fz) = (dx as f32, dz as f32);
+            // on the wall's face towards the room
+            let face = Vector3::new(x as f32 + fx * 0.5, 0.0, y as f32 + fz * 0.5);
+            let t = &mut self.torches[i];
+            let yaw = fx.atan2(fz);
+            let basis = Basis::from_euler(EulerOrder::YXZ, Vector3::new(0.0, yaw, 0.0));
+            t.node
+                .set_transform(Transform3D::new(basis, face + at(0.0, 1.45, 0.0)));
+            t.node.set_visible(true);
+            // at the flame, a little out from it
+            t.at = face + Vector3::new(fx * 0.45, 2.0, fz * 0.45);
+            t.phase = f64::from(cell_noise(x, y, 13)) * 10.0;
+            t.light.set_position(t.at);
+            t.light.set_visible(true);
+        }
+        for t in self.torches.iter_mut().skip(walls.len()) {
+            t.node.set_visible(false);
+            t.light.set_visible(false);
+        }
+    }
+
+    fn new_torch(&mut self) -> Torch {
+        let mut node = Node3D::new_alloc();
+        if let Some(mut sconce) = self
+            .torch_scene
+            .as_ref()
+            .and_then(|s| s.instantiate())
+            .and_then(|n| n.try_cast::<Node3D>().ok())
+        {
+            sconce.set_scale(Vector3::new(1.2, 1.2, 1.2));
+            for n in sconce
+                .find_children_ex("*")
+                .type_("GeometryInstance3D")
+                .owned(false)
+                .done()
+                .iter_shared()
+            {
+                if let Ok(mut g) = n.try_cast::<godot::classes::GeometryInstance3D>() {
+                    g.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+                    g.set_layer_mask(SCONCE_LAYER);
+                }
+            }
+            node.add_child(&sconce);
+        }
+        let mut flame = MeshInstance3D::new_alloc();
+        flame.set_mesh(&self.art.mesh(capsule(0.045, 0.16)));
+        flame.set_material_override(&self.flame_mat);
+        flame.set_position(at(0.0, 0.5, 0.3));
+        no_shadow(&mut flame);
+        node.add_child(&flame);
+        self.root.add_child(&node);
+        let mut light = OmniLight3D::new_alloc();
+        light.set_color(TORCH);
+        light.set_cull_mask(!SCONCE_LAYER);
+        light.set_param(Param::RANGE, TORCH_RANGE);
+        light.set_param(Param::ATTENUATION, 1.2);
+        light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 1.5);
+        light.set_param(Param::SHADOW_BIAS, 0.03);
+        light.set_param(Param::SHADOW_NORMAL_BIAS, 1.2);
+        light.set_param(Param::SHADOW_BLUR, 1.5);
+        light.set_enable_distance_fade(true);
+        light.set_distance_fade_begin(18.0);
+        light.set_distance_fade_shadow(10.0);
+        light.set_distance_fade_length(4.0);
+        light.set_shadow(false);
+        self.root.add_child(&light);
+        Torch {
+            node,
+            light,
+            at: Vector3::ZERO,
+            phase: 0.0,
+            shadow: false,
+        }
+    }
+
+    /// The torches flicker; the few nearest the hero cast shadows.
+    fn light_torches(&mut self, hero: Vector3) {
+        let mut near: Vec<(f32, usize)> = self
+            .torches
+            .iter()
+            .enumerate()
+            .filter(|(_, t)| t.light.is_visible())
+            .map(|(i, t)| (t.at.distance_squared_to(hero), i))
+            .collect();
+        near.sort_by(|a, b| a.0.total_cmp(&b.0));
+        let shadowed: HashSet<usize> = near.iter().take(TORCH_SHADOWS).map(|&(_, i)| i).collect();
+        let clock = self.clock;
+        for (i, t) in self.torches.iter_mut().enumerate() {
+            if !t.light.is_visible() {
+                continue;
+            }
+            let time = clock + t.phase;
+            t.light
+                .set_param(Param::ENERGY, TORCH_ENERGY * flicker(time));
+            t.light.set_position(t.at + sway(time));
+            let shadow = shadowed.contains(&i);
+            if shadow != t.shadow {
+                t.shadow = shadow;
+                t.light.set_shadow(shadow);
+            }
+        }
+    }
+
+    /// The hero's model (and only it) takes the rim light.
+    fn rim_hero(&mut self, hero: (i32, i32)) {
+        let node = self
+            .cells
+            .get(&hero)
+            .and_then(|n| n.look.entity.and_then(|i| n.models.get(i)))
+            .map(|m| m.node.clone());
+        if node.as_ref().map(|n| n.instance_id())
+            == self.rim_model.as_ref().map(|n| n.instance_id())
+        {
+            return;
+        }
+        if let Some(old) = self.rim_model.take().filter(|n| n.is_instance_valid()) {
+            set_layers(&old, 1);
+        }
+        if let Some(n) = &node {
+            set_layers(n, 1 | RIM_LAYER);
+        }
+        self.rim_model = node;
+    }
+
+    /// The hover frame, and a red ring under a hostile monster there.
+    fn show_hover(&mut self) {
+        let Some((x, y)) = self.hover_cell else {
+            self.hover.set_visible(false);
+            self.hostile_ring.set_visible(false);
+            return;
+        };
+        let ground = self.ground(x, y);
+        let p = Vector3::new(x as f32, ground, y as f32);
+        self.hover.set_position(p + at(0.0, 0.03, 0.0));
+        self.hover.set_visible(true);
+        let hostile = self.cells.get(&(x, y)).is_some_and(|n| n.look.hostile);
+        self.hostile_ring.set_position(p + at(0.0, 0.02, 0.0));
+        self.hostile_ring.set_visible(hostile);
+    }
+
+    /// Letters of stairs and ladders: under the pointer or in the overview.
+    fn show_hints(&mut self) {
+        let all = self.overview.is_some();
+        for c in &self.hint_cells {
+            let Some(nodes) = self.cells.get_mut(c) else {
+                continue;
+            };
+            let on = all || self.hover_cell == Some(*c);
+            for (l, label) in nodes.look.letters.iter().zip(nodes.letters.iter_mut()) {
+                if l.hint {
+                    label.set_visible(on);
+                }
+            }
+        }
+    }
+
+    /// A remembered surface: the same stone, cold, and faintly readable
+    /// with no light on it (it glows a little with its own texture).
+    fn remembered(&mut self, m: usize, shade: u8) -> Gd<Material> {
+        self.glowing(m, shade, MEMORY, MEMORY_GLOW)
+    }
+
+    /// A surface lit a little from inside by its own albedo texture.
+    fn glowing(&mut self, m: usize, shade: u8, tint: Color, glow: f32) -> Gd<Material> {
+        let key = (m, shade, crate::art::color_key(tint), glow.to_bits());
+        if let Some(mat) = self.memory.get(&key) {
+            return mat.clone();
+        }
+        let src = self.art.surface(m, shade, true, tint);
+        let mat = match src.duplicate_resource().try_cast::<BaseMaterial3D>() {
+            Ok(mut b) => {
+                b.set_feature(Feature::EMISSION, true);
+                let albedo = b.get_albedo();
+                b.set_emission(albedo);
+                b.set_emission_energy_multiplier(glow);
+                if let Some(t) = b.get_texture(TextureParam::ALBEDO) {
+                    b.set_texture(TextureParam::EMISSION, &t);
+                }
+                b.upcast::<Material>()
+            }
+            Err(src) => src,
+        };
+        self.memory.insert(key, mat.clone());
+        mat
+    }
+
+    /// The dark rock under the level, with holes for what lies below the
+    /// ground (stairs down, water, lava).
+    fn lay_bedrock(&mut self) {
+        let mut st = SurfaceTool::new_gd();
+        st.begin(PrimitiveType::TRIANGLES);
+        st.set_normal(Vector3::UP);
+        let y = -0.02;
+        let mut quad = |x0: f32, z0: f32, x1: f32, z1: f32| {
+            for (x, z) in [(x0, z0), (x1, z0), (x1, z1), (x0, z0), (x1, z1), (x0, z1)] {
+                st.add_vertex(Vector3::new(x, y, z));
+            }
+        };
+        // the level's field cell by cell (runs of cells along each row),
+        // and a wide margin around it
+        let (left, right) = (0.5, COLNO as f32 - 0.5);
+        let (top, bottom) = (-0.5, ROWNO as f32 - 0.5);
+        let m = 60.0;
+        quad(left - m, top - m, right + m, top);
+        quad(left - m, bottom, right + m, bottom + m);
+        quad(left - m, top, left, bottom);
+        quad(right, top, right + m, bottom);
+        for row in 0..ROWNO {
+            let mut run: Option<i32> = None;
+            for x in 1..=COLNO {
+                let solid = x < COLNO && !self.holes.contains(&(x, row));
+                match (solid, run) {
+                    (true, None) => run = Some(x),
+                    (false, Some(x0)) => {
+                        let z = row as f32;
+                        quad(x0 as f32 - 0.5, z - 0.5, x as f32 - 0.5, z + 0.5);
+                        run = None;
+                    }
+                    _ => {}
+                }
+            }
+        }
+        if let Some(mesh) = st.commit() {
+            self.bedrock.set_mesh(&mesh);
+        }
+        if let Some(m) = self.art.manifest().material("bedrock") {
+            let mat = self.glowing(m, SHADE_BEDROCK, MEMORY, BEDROCK_GLOW);
+            self.bedrock.set_material_override(&mat);
         }
     }
 
@@ -1345,19 +1861,16 @@ impl MapView {
     }
 
     pub fn set_hover(&mut self, cell: Option<(i32, i32)>) {
-        match cell {
-            Some((x, y)) => {
-                let ground = self.ground(x, y);
-                self.hover
-                    .set_position(Vector3::new(x as f32, ground + 0.03, y as f32));
-                self.hover.set_visible(true);
-            }
-            None => self.hover.set_visible(false),
+        if self.hover_cell != cell {
+            self.hover_cell = cell;
+            self.hints_dirty = true;
         }
+        self.show_hover();
     }
 
     /// Wheel steps: positive moves the camera away. Ends the overview.
     pub fn zoom(&mut self, steps: f32) {
+        self.hints_dirty |= self.overview.is_some();
         self.overview = None;
         self.distance = (self.distance + steps * 1.5).clamp(MIN_DISTANCE, MAX_DISTANCE);
         self.place_camera();
@@ -1369,6 +1882,7 @@ impl MapView {
             Some(_) => None,
             None => Some(self.distance),
         };
+        self.hints_dirty = true;
     }
 
     /// The whole-level view is on (self-tests).
@@ -1411,12 +1925,22 @@ impl MapView {
         }
         self.generation = None;
         self.hover.set_visible(false);
+        self.hover_cell = None;
+        self.hostile_ring.set_visible(false);
+        self.hint_cells.clear();
         self.cursor.set_visible(false);
         self.hero_ring.set_visible(false);
-        self.torch.set_visible(false);
+        self.hero_light.set_visible(false);
+        self.rim.set_visible(false);
+        if let Some(old) = self.rim_model.take().filter(|n| n.is_instance_valid()) {
+            set_layers(&old, 1);
+        }
         for l in &mut self.room_lights {
             l.set_visible(false);
         }
+        self.place_torches(&[]);
+        self.holes.clear();
+        self.bedrock_dirty = true;
         self.engulf.set_visible(false);
         self.snap = true;
         self.hero_at = None;
@@ -1425,6 +1949,7 @@ impl MapView {
 
     pub fn set_visible(&mut self, on: bool) {
         self.root.set_visible(on);
+        self.post.set_visible(on);
     }
 
     /// The camera has caught up with its target (self-test screenshots).
@@ -1460,8 +1985,12 @@ impl MapView {
     }
 
     fn place_camera(&mut self) {
-        let pitch = PITCH_DEG.to_radians();
         let distance = self.camera_distance();
+        let pitch = pitch_at(distance);
+        // the darkness closes in at the same depth behind what is framed,
+        // however far the camera is
+        self.env.set_fog_depth_begin(distance + 3.0);
+        self.env.set_fog_depth_end(distance + 16.0);
         let offset = Vector3::new(0.0, pitch.sin(), pitch.cos()) * distance;
         // aim a little south of the hero, so the hero stands above the
         // log; close in, the same offset would push the hero off the top
@@ -1526,6 +2055,16 @@ impl MapView {
             }
             if before.map(|b| b.paint) != Some(s.paint) {
                 let mat = match s.paint {
+                    Paint::Pbr(m, shade) if shade <= SHADE_DARK => self.remembered(m, shade),
+                    // the walls' stone shows a little outside any light
+                    Paint::Pbr(m, shade)
+                        if matches!(
+                            self.art.manifest().material_at(m).0,
+                            "masonry" | "bedrock"
+                        ) =>
+                    {
+                        self.glowing(m, shade, Color::WHITE, WALL_GLOW)
+                    }
                     Paint::Pbr(m, shade) => self.art.surface(m, shade, true, Color::WHITE),
                     Paint::Flat(c, f) => self.art.flat(c, f),
                 };
@@ -1661,6 +2200,20 @@ impl MapView {
             .take(old.letters.len().saturating_sub(look.letters.len()))
         {
             label.set_visible(false);
+        }
+        if look.letters.iter().any(|l| l.hint) {
+            self.hint_cells.insert((x, y));
+            self.hints_dirty = true;
+        } else {
+            self.hint_cells.remove(&(x, y));
+        }
+        if look.sunk != self.holes.contains(&(x, y)) {
+            if look.sunk {
+                self.holes.insert((x, y));
+            } else {
+                self.holes.remove(&(x, y));
+            }
+            self.bedrock_dirty = true;
         }
         nodes.look = look;
         self.cells.insert((x, y), nodes);
@@ -2001,6 +2554,50 @@ impl MapView {
     }
 }
 
+/// A wall cell a torch hangs on, and the way it faces into its room.
+type TorchWall = ((i32, i32), (i32, i32));
+
+/// The walls of a lit area a torch hangs on, and the way each faces into
+/// the area: every fifth cell of the north walls and every fourth of the
+/// east and west ones (the camera does not see the south wall's face), at
+/// least one per area.
+fn torch_walls(area: &[(i32, i32)], is_wall: impl Fn(i32, i32) -> bool) -> Vec<TorchWall> {
+    let mut walls: Vec<TorchWall> = area
+        .iter()
+        .flat_map(|&(x, y)| {
+            [
+                ((x, y - 1), (0, 1)),
+                ((x + 1, y), (-1, 0)),
+                ((x - 1, y), (1, 0)),
+            ]
+        })
+        .filter(|&((x, y), _)| is_wall(x, y))
+        .collect();
+    walls.sort_unstable();
+    walls.dedup();
+    let chosen: Vec<_> = walls
+        .iter()
+        .copied()
+        .filter(|&((x, y), (dx, _))| {
+            if dx == 0 {
+                (x + 2 * y).rem_euclid(5) == 0
+            } else {
+                (y + 2 * x).rem_euclid(4) == 0
+            }
+        })
+        .collect();
+    if !chosen.is_empty() {
+        return chosen;
+    }
+    // none fell on the pattern: the north wall's middle
+    let north: Vec<_> = walls.iter().filter(|(_, (dx, _))| *dx == 0).collect();
+    north
+        .get(north.len() / 2)
+        .or(walls.first().as_ref())
+        .map(|&&w| vec![w])
+        .unwrap_or_default()
+}
+
 /// Connected (4-neighbour) areas of lit cells.
 fn lit_areas(lit: &std::collections::HashSet<(i32, i32)>) -> Vec<Vec<(i32, i32)>> {
     let mut seen = std::collections::HashSet::new();
@@ -2034,7 +2631,7 @@ fn overview_frame((x0, y0, x1, y1): (i32, i32, i32, i32), aspect: f32) -> (Vecto
     let centre = Vector3::new((x0 + x1) as f32 / 2.0, 0.0, (y0 + y1) as f32 / 2.0);
     let (w, h) = ((x1 - x0 + 3) as f32, (y1 - y0 + 3) as f32);
     let tan = (FOV_DEG.to_radians() / 2.0).tan();
-    let pitch = PITCH_DEG.to_radians();
+    let pitch = PITCH_FAR_DEG.to_radians();
     let across = w / (2.0 * tan * aspect);
     // a row of depth looks sin(pitch) tall; three quarters of the screen
     let down = h * pitch.sin() / (2.0 * tan * 0.75);
@@ -2222,7 +2819,7 @@ mod tests {
         let (centre, full) = overview_frame((1, 0, 79, 20), wide);
         assert_eq!((centre.x, centre.z), (40.0, 10.0));
         let tan = (FOV_DEG.to_radians() / 2.0).tan();
-        assert!(2.0 * full * tan * wide >= 81.0, "{full}");
+        assert!(2.0 * full * tan * wide >= 81.0 - 1e-3, "{full}");
         assert!(full <= MAX_OVERVIEW_DISTANCE);
         // a single room is closer, but never closer than the nearest zoom
         let (_, room) = overview_frame((30, 5, 40, 10), wide);
@@ -2303,7 +2900,7 @@ mod tests {
     }
 
     #[test]
-    fn floors_walls_and_corridors_are_textured_stone_brick_and_dirt() {
+    fn floors_walls_and_corridors_are_textured_stone_masonry_and_dirt() {
         let f = Fixture::new();
         let cat = &f.cat;
         let pbr = |sym: &str| match f.look(&feature(cat, sym)).solids[0].paint {
@@ -2312,7 +2909,7 @@ mod tests {
         };
         assert_eq!(pbr("S_room").0, "floor");
         assert_eq!(pbr("S_corr").0, "dirt");
-        assert_eq!(pbr("S_vwall").0, "brick");
+        assert_eq!(pbr("S_vwall").0, "masonry");
         let has = |sym: &str, name: &str| {
             f.look(&feature(cat, sym))
                 .solids
@@ -2321,12 +2918,15 @@ mod tests {
         };
         assert!(has("S_hcdoor", "wood") && has("S_hcdoor", "iron"));
         assert!(has("S_altar", "marble") && has("S_fountain", "water"));
-        assert!(has("S_upstair", "marble") && has("S_bars", "iron"));
+        assert!(has("S_upstair", "floor") && has("S_bars", "iron"));
+        // walls under a cap of dark rock
+        assert!(has("S_vwall", "bedrock"));
         // the part of a room out of view is darker than the part in view
         assert!(pbr("S_darkroom").1 < pbr("S_room").1);
         assert!(f.look(&feature(cat, "S_room")).lit);
         assert!(!f.look(&feature(cat, "S_darkroom")).lit);
-        // floors vary a little from cell to cell, deterministically
+        // one brightness for every floor cell in view: the texture varies
+        // it (a brightness per cell would show the grid)
         let shade_at = |x, y| match look_of(
             &feature(cat, "S_room"),
             Near::default(),
@@ -2339,8 +2939,7 @@ mod tests {
             _ => 0,
         };
         let shades: std::collections::HashSet<u8> = (0..20).map(|x| shade_at(x, 3)).collect();
-        assert!(shades.len() > 1);
-        assert_eq!(shade_at(4, 4), shade_at(4, 4));
+        assert_eq!(shades.len(), 1);
         // floors cast no shadows, walls do
         assert!(!f.look(&feature(cat, "S_room")).solids[0].shadow);
         assert!(f.look(&feature(cat, "S_vwall")).solids[0].shadow);
@@ -2368,6 +2967,9 @@ mod tests {
         );
         let seen = look(monster(cat, "little dog", mg::DETECT));
         assert_eq!(seen.models[0].look.pose, Pose::Ghost);
+        // a red ring under the pointer for all but the hero and pets
+        assert!(newt.hostile && !pet.hostile);
+        assert!(!look(monster(cat, "human", mg::HERO)).hostile);
         // a monster on an altar stands on it
         let mut on_altar = on_floor(cat, monster(cat, "newt", 0));
         on_altar.terrain = Some(cmap(cat, "S_altar"));
@@ -2591,5 +3193,61 @@ mod tests {
             .iter()
             .fold((f32::MAX, f32::MIN), |(a, b), v| (a.min(*v), b.max(*v)));
         assert!(lo > 0.8 && hi < 1.2 && hi - lo > 0.1, "{lo}..{hi}");
+        // and its light sways a few centimetres, never up or down
+        let sways: Vec<Vector3> = (0..200).map(|i| sway(f64::from(i) * 0.013)).collect();
+        assert!(sways.iter().all(|v| v.y == 0.0 && v.length() < 0.05));
+        assert!(sways.iter().any(|v| v.length() > 0.015));
+    }
+
+    #[test]
+    fn the_camera_looks_more_from_above_further_out() {
+        assert!((pitch_at(DISTANCE) - PITCH_DEG.to_radians()).abs() < 1e-6);
+        assert!((pitch_at(MIN_DISTANCE) - PITCH_NEAR_DEG.to_radians()).abs() < 1e-6);
+        assert!((pitch_at(MAX_OVERVIEW_DISTANCE) - PITCH_FAR_DEG.to_radians()).abs() < 1e-6);
+        let steps: Vec<f32> = (0..30).map(|i| pitch_at(6.0 + i as f32)).collect();
+        assert!(steps.windows(2).all(|w| w[0] <= w[1]));
+    }
+
+    #[test]
+    fn torches_hang_on_the_walls_the_camera_sees_facing_in() {
+        // a room of 10 x 3 floor cells, walls all round
+        let area: Vec<(i32, i32)> = (5..15).flat_map(|x| (4..7).map(move |y| (x, y))).collect();
+        let wall = |x: i32, y: i32| {
+            (4..=15).contains(&x) && (3..=7).contains(&y) && !area.contains(&(x, y))
+        };
+        let torches = torch_walls(&area, wall);
+        assert!(!torches.is_empty());
+        for &((x, y), (dx, dz)) in &torches {
+            assert!(wall(x, y));
+            // the cell it faces is the room's; never the south wall
+            assert!(area.contains(&(x + dx, y + dz)), "{x},{y}");
+            assert!(y != 7);
+        }
+        // spaced out: no two side by side on one wall
+        for a in &torches {
+            for b in &torches {
+                let d = (a.0.0 - b.0.0).abs() + (a.0.1 - b.0.1).abs();
+                assert!(a == b || a.1 != b.1 || d > 1, "{a:?} {b:?}");
+            }
+        }
+        // a closet with no wall on the pattern still gets one
+        let closet = [(6, 5)];
+        let one = torch_walls(&closet, |x, y| (x, y) != (6, 5) && (5..=7).contains(&x));
+        assert_eq!(one.len(), 1);
+    }
+
+    #[test]
+    fn what_lies_below_the_ground_leaves_a_hole_in_the_bedrock() {
+        let f = Fixture::new();
+        let cat = &f.cat;
+        assert!(f.look(&feature(cat, "S_dnstair")).sunk);
+        assert!(f.look(&feature(cat, "S_pool")).sunk);
+        assert!(!f.look(&feature(cat, "S_room")).sunk);
+        assert!(!f.look(&feature(cat, "S_upstair")).sunk);
+        // the stairs' letters only name them under the pointer
+        let up = f.look(&feature(cat, "S_upstair"));
+        assert!(!up.letters.is_empty() && up.letters.iter().all(|l| l.hint));
+        // a full wall carries a torch, a wall cut down does not
+        assert!(f.look(&feature(cat, "S_hwall")).wall);
     }
 }
