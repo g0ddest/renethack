@@ -47,8 +47,13 @@ move, `<`/`>` stairs, `i` inventory, `#` extended commands...). The client adds:
 | Input | Action |
 |---|---|
 | arrows, `Home` `PgUp` `End` `PgDn`, keypad | move (diagonals on the four keys and the keypad); with `Shift` — run |
-| left click on the map | travel there (adjacent: move or attack; on yourself: action menu) |
-| right click on the map | look at the cell |
+| holding a direction key (or `s`, `.`) | step (search, wait) again every tick until the key is let go |
+| a count, then a direction, `s` or `.` (`20s`; with `number_pad`: `n20s`) | that many steps, searches or waits, one per tick |
+| left click on the map | walk there by the known map, one step per tick; on an object — pick it up, on stairs — take them, on a closed door — open it, on a monster — attack it; on yourself — the engine's menu of actions here |
+| right click on the map | the engine's menu of actions for that cell (open, kick, talk, look at...) |
+| `<` / `>` away from the stairs | walk to the known stairs and take them |
+| `F5` | rest (search) until HP and Pw are full |
+| any key, a click, `Esc` | stop the order before its next step |
 | mouse over the map | what is there (by appearance only) |
 | mouse wheel, `Ctrl`+`-` / `Ctrl`+`=` | zoom out / in |
 | `F8` or `Ctrl`+`0` | the whole known level; again (or a zoom) — back to the hero |
@@ -60,6 +65,22 @@ move, `<`/`>` stairs, `i` inventory, `#` extended commands...). The client adds:
 | in questions | the answer's letter; `Enter`/`Space` — the default; `Esc` — cancel |
 
 Commands work in any keyboard layout (letters are taken by key position).
+
+Time runs like in BG3. While no hostile is in view (**exploring**, the
+badge top right), an order — a click, a held key, a count, `F5`, `<`/`>` —
+is carried out one engine action per tick (300 ms; `tick_ms` in the
+`[renethack]` section of `client/godot/project.godot`, 150–500, or
+`RENETHACK_TICK_MS`). The hover shows the way a click would take. An order
+stops before its next step on anything worth a look: a hostile in view,
+lost HP, hunger, a new condition, a message (not what a pet does), a trap,
+another level, a step that went nowhere, a question from the game, or any
+key, click or panel. With a hostile in view (**combat**, a banner when it
+starts), every action waits for you: a click takes one step (the first
+mark of the way is larger), a held key still repeats. The fight ends after
+three turns without a hostile in view. Without the engine patch that marks
+peaceful monsters, every monster but a pet counts as hostile until the
+game calls it peaceful (`;` on it says so) — shopkeepers, watchmen and
+priests excepted.
 
 ## Build and test
 
@@ -75,7 +96,9 @@ in its own headless Godot process with a fixed seed: every scenario except
 `tour`, a walk through the first rooms for map screenshots, and `gallery`,
 the art laid out page by page. The `moves` scenario stops each of the first
 steps midway (with `--screenshots`, a picture of the hero and the pet
-between cells). With `--screenshots` the soak saves the screen
+between cells). The `orders` scenario walks, holds, counts, stops a walk
+with a key, takes the stairs, and meets a hostile that stops a walk (with
+`--screenshots`, the way previewed and the combat banner). With `--screenshots` the soak saves the screen
 every 60 answers. The scenarios take
 screenshots under a display:
 
