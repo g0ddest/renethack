@@ -108,6 +108,8 @@ pub enum WinCall {
     UpdateInventory {
         arg: i32,
     },
+    /// The whole inventory, sent before an input wait when it changed.
+    Inventory(Inventory),
     ExitNhwindows {
         text: Option<String>,
     },
@@ -167,6 +169,85 @@ pub struct StatusUpdate {
     pub percent: i32,
     #[serde(default)]
     pub color: i32,
+}
+
+/// The inventory as the character sees it: no true types, no weights.
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+pub struct Inventory {
+    /// In inventory order.
+    pub items: Vec<InvItem>,
+    /// Two-weapon combat: the alternate weapon is wielded in the off hand.
+    #[serde(default)]
+    pub twoweap: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct InvItem {
+    pub letter: char,
+    /// Object class symbol (`)`, `[`, `%`...).
+    pub class: char,
+    /// The appearance tile, shared by everything that looks the same.
+    pub tile: i32,
+    pub quan: i64,
+    /// What it is worn or wielded as; empty when merely carried.
+    #[serde(default)]
+    pub slots: Vec<Slot>,
+    /// A lit light source.
+    #[serde(default)]
+    pub lit: bool,
+    /// doname(): "a +1 spear (weapon in right hand)".
+    #[serde(default)]
+    pub text: String,
+}
+
+/// Where an item is worn or wielded (NetHack's W_* masks).
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
+#[serde(from = "String")]
+pub enum Slot {
+    Weapon,
+    /// The swap weapon; wielded in the off hand under two-weapon combat.
+    Alternate,
+    Quiver,
+    Body,
+    Cloak,
+    Helmet,
+    Shield,
+    Gloves,
+    Boots,
+    Shirt,
+    Amulet,
+    LeftRing,
+    RightRing,
+    /// Blindfold, towel or lenses.
+    Eyes,
+    Ball,
+    Chain,
+    /// A slot this crate does not know yet; kept so newer engines still work.
+    Other(String),
+}
+
+impl From<String> for Slot {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "weapon" => Slot::Weapon,
+            "alternate" => Slot::Alternate,
+            "quiver" => Slot::Quiver,
+            "body" => Slot::Body,
+            "cloak" => Slot::Cloak,
+            "helmet" => Slot::Helmet,
+            "shield" => Slot::Shield,
+            "gloves" => Slot::Gloves,
+            "boots" => Slot::Boots,
+            "shirt" => Slot::Shirt,
+            "amulet" => Slot::Amulet,
+            "left_ring" => Slot::LeftRing,
+            "right_ring" => Slot::RightRing,
+            "eyes" => Slot::Eyes,
+            "ball" => Slot::Ball,
+            "chain" => Slot::Chain,
+            _ => Slot::Other(s),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -482,6 +563,7 @@ fn win_call(name: String, a: Value) -> Result<WinCall, ProtocolError> {
         "update_inventory" => WinCall::UpdateInventory {
             arg: args::<Arg>(n, a)?.arg,
         },
+        "inventory" => WinCall::Inventory(args(n, a)?),
         "exit_nhwindows" => WinCall::ExitNhwindows {
             text: args::<Text>(n, a)?.str,
         },

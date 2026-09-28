@@ -285,3 +285,53 @@ fn malformed_lines_are_errors() {
         Ok(EngineMsg::Win(WinCall::Unknown { .. }))
     ));
 }
+
+#[test]
+fn inventory_decodes_items_slots_and_twoweap() {
+    let line = r#"{"t":"win","fn":"inventory","a":{"items":[{"letter":"a","class":")","tile":816,"quan":1,"slots":["weapon"],"lit":false,"text":"a +1 spear (weapon in right hand)"},{"letter":"b","class":")","tile":823,"quan":1,"slots":["alternate"],"lit":false,"text":"a +0 dagger (wielded in left hand)"},{"letter":"e","class":"(","tile":1018,"quan":1,"slots":[],"lit":true,"text":"an oil lamp (lit)"},{"letter":"f","class":"=","tile":1100,"quan":1,"slots":["left_ring","tail_ring"],"lit":false,"text":"a jade ring (on left hand)"}],"twoweap":true}}"#;
+    let EngineMsg::Win(WinCall::Inventory(inv)) = parse_line(line).unwrap() else {
+        panic!("expected inventory")
+    };
+    assert!(inv.twoweap);
+    assert_eq!(inv.items.len(), 4);
+    let spear = &inv.items[0];
+    assert_eq!(spear.letter, 'a');
+    assert_eq!(spear.class, ')');
+    assert_eq!(spear.tile, 816);
+    assert_eq!(spear.quan, 1);
+    assert_eq!(spear.slots, vec![Slot::Weapon]);
+    assert_eq!(spear.text, "a +1 spear (weapon in right hand)");
+    assert_eq!(inv.items[1].slots, vec![Slot::Alternate]);
+    assert!(inv.items[2].lit);
+    // a slot a newer engine adds is kept, not an error
+    assert_eq!(
+        inv.items[3].slots,
+        vec![Slot::LeftRing, Slot::Other("tail_ring".into())]
+    );
+}
+
+#[test]
+fn recorded_session_carries_the_starting_inventory() {
+    let inv = decoded()
+        .into_iter()
+        .find_map(|m| match m {
+            EngineMsg::Win(WinCall::Inventory(inv)) => Some(inv),
+            _ => None,
+        })
+        .expect("an inventory notice");
+    assert!(!inv.twoweap);
+    let letters: String = inv.items.iter().map(|i| i.letter).collect();
+    assert_eq!(letters, "abcde");
+    assert_eq!(inv.items[0].slots, vec![Slot::Weapon]);
+    assert!(inv.items[0].text.contains("spear"));
+    assert_eq!(inv.items[2].slots, vec![Slot::Shield]);
+    assert!(inv.items[3].slots.is_empty());
+    // nothing identifying is on the wire
+    let raw = SESSION
+        .lines()
+        .find(|l| l.starts_with(r#"{"t":"win","fn":"inventory""#))
+        .unwrap();
+    for key in ["\"glyph\"", "\"otyp\"", "\"weight\""] {
+        assert!(!raw.contains(key), "{key} in {raw}");
+    }
+}
