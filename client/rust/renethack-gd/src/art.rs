@@ -83,6 +83,17 @@ pub struct Model {
     player: Option<Gd<AnimationPlayer>>,
 }
 
+/// A model's animation player and the clips it has that the map plays
+/// (each one checked to be in the player).
+#[derive(Clone, Default)]
+pub struct Clips {
+    pub player: Option<Gd<AnimationPlayer>>,
+    pub idle: Option<String>,
+    /// The walk, or the run in a hurry (None: the map sways the model).
+    pub gait: Option<String>,
+    pub attack: Option<String>,
+}
+
 pub fn color_key(c: Color) -> u32 {
     c.to_u32(godot::builtin::ColorChannelOrder::RGBA)
 }
@@ -385,6 +396,29 @@ impl Art {
         }
     }
 
+    /// The clips the map plays on a model as it moves and fights; a
+    /// procedural body only idles.
+    pub fn clips(&self, m: &Model, hurry: bool) -> Clips {
+        let Some(player) = m.player.clone() else {
+            return Clips::default();
+        };
+        let spec = self.manifest.model_at(m.key.model).1;
+        let has = |n: Option<&str>| n.filter(|n| player.has_animation(*n)).map(str::to_string);
+        if spec.proc.is_some() {
+            return Clips {
+                idle: has(Some("idle")),
+                player: Some(player),
+                ..Clips::default()
+            };
+        }
+        Clips {
+            idle: has(spec.anims.idle.as_deref()),
+            gait: has(spec.anims.gait(hurry)),
+            attack: has(spec.anims.attack.as_deref()),
+            player: Some(player),
+        }
+    }
+
     /// Start the look's animation: idle with a random phase; a corpse lies
     /// at the end of its death; a statue stands still.
     fn start(&mut self, m: &mut Model, look: &ModelLook) {
@@ -503,7 +537,7 @@ impl Art {
 
     /// The scene's own AnimationPlayer, or a new one with the rig's
     /// library (the tracks name `Armature/Skeleton3D:<bone>` from the
-    /// scene root). Idle and walk loop.
+    /// scene root). Idle, walk and run loop.
     fn animate_scene(
         &mut self,
         inner: &Gd<Node3D>,
@@ -522,7 +556,8 @@ impl Art {
                 p
             }
         };
-        for name in [&spec.anims.idle, &spec.anims.walk].into_iter().flatten() {
+        let loops = [&spec.anims.idle, &spec.anims.walk, &spec.anims.run];
+        for name in loops.into_iter().flatten() {
             if let Some(mut a) = player.get_animation(name.as_str()) {
                 a.set_loop_mode(LoopMode::LINEAR);
             } else {

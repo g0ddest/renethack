@@ -8,8 +8,14 @@
 //! Each cell's look is computed as plain data (`Look`) and its nodes are
 //! touched only when the look changes. Meshes, materials and model instances
 //! are shared or pooled by the art library.
+//!
+//! An entity that steps to a neighbouring cell (`MapState::take_dirty_moves`)
+//! keeps its model node: the node is carried to the new cell and walks
+//! there (`animator`); a fight the messages tell of turns the attacker to
+//! its target. Every cell's look, picking and hovering stay on the world
+//! model's cells; only the nodes are between them for a moment.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use godot::classes::base_material_3d::BillboardMode;
 use godot::classes::environment::{AmbientSource, BgMode, FogMode, ToneMapper};
@@ -22,8 +28,12 @@ use godot::classes::{
 use godot::prelude::*;
 use nh_art::{ArtManifest, Tint};
 use nh_protocol::{Catalog, Glyph, GlyphKind, MonsterInfo, ObjectTile, mg};
-use nh_world::{COLNO, Cell, MapState, ROWNO, Terrain, World, cell_terrain, in_field, terrain_of};
+use nh_world::{
+    COLNO, Cell, Ident, MapState, Move, ROWNO, Terrain, World, cell_terrain, in_field,
+    locate_attack, parse_attack, terrain_of,
+};
 
+use crate::animator::{Motion, pace, yaw_toward};
 use crate::art::{Art, Finish, Model, ModelLook, Pose, build_flat, no_shadow};
 use crate::meshes::{MeshKey, cuboid, cylinder, plane, sphere, torus};
 use crate::theme::{self, nh_color};
@@ -125,6 +135,9 @@ struct Look {
     top: f32,
     /// A floor in view: part of a lit area.
     lit: bool,
+    /// Which of `models` is the monster or object on the cell (it is
+    /// carried along when it steps to another cell).
+    entity: Option<usize>,
 }
 
 impl Look {
@@ -261,6 +274,8 @@ struct Ctx<'a> {
     hero: Option<(i32, i32)>,
     /// Which way the hero faces (degrees about y).
     hero_yaw: f32,
+    /// Which way the monster here faces since it last stepped or fought.
+    facing: Option<f32>,
 }
 
 impl Ctx<'_> {
@@ -670,8 +685,13 @@ fn entity_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
                     Pose::Alive
                 };
                 let tint = tint_color(r.tint, g.color);
-                let yaw = if hero { ctx.hero_yaw } else { ctx.face_hero() };
+                let yaw = match (hero, ctx.facing) {
+                    (true, _) => ctx.hero_yaw,
+                    (false, Some(yaw)) => yaw,
+                    (false, None) => ctx.face_hero(),
+                };
                 look.model(ModelLook { art: r, tint, pose }, here, yaw);
+                look.entity = Some(look.models.len() - 1);
             }
             if g.flags & mg::PET != 0 {
                 let ring = torus(0.36, 0.42);
@@ -735,6 +755,9 @@ fn entity_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
                 pos,
                 yaw,
             );
+            if g.flags & mg::OBJPILE == 0 {
+                look.entity = Some(look.models.len() - 1);
+            }
         }
         GlyphKind::Body => {
             if let Some(info) = monster_info(ctx.catalog, g.mon) {
@@ -922,6 +945,26 @@ impl CellNodes {
     }
 }
 
+/// A model taken off the cell an entity left, for the cell it stepped to.
+struct Carried {
+    model: Model,
+    placed: Placed,
+    /// The world position it was at.
+    from: Vector3,
+    /// Its previous step had not ended when this one came: it runs.
+    hurry: bool,
+    /// Cells crossed: 1, or 2 for a fast monster's two steps in a turn.
+    cells: i32,
+}
+
+/// What the animator did (self-tests).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct MotionStats {
+    pub hero_steps: u32,
+    pub other_steps: u32,
+    pub strikes: u32,
+}
+
 pub struct MapView {
     root: Gd<Node3D>,
     cells_root: Gd<Node3D>,
@@ -951,6 +994,19 @@ pub struct MapView {
     /// Where the hero was and which way they face.
     hero_at: Option<(i32, i32)>,
     hero_yaw: f32,
+    /// Which way a monster faces since it stepped or fought, while the
+    /// same one stands on the cell.
+    facing: HashMap<(i32, i32), (Ident, f32)>,
+    /// Models on their way to the cell an entity stepped to (this batch).
+    incoming: HashMap<(i32, i32), Carried>,
+    motions: Vec<Motion>,
+    /// Cells whose step was cut short by the next batch.
+    interrupted: HashSet<(i32, i32)>,
+    /// The newest message already looked at for fights.
+    log_seq: Option<u64>,
+    /// Self-tests stop motions at this share to take a picture.
+    hold: Option<f32>,
+    stats: MotionStats,
 }
 
 /// A square outline over a cell: four thin bars.
@@ -1085,6 +1141,13 @@ impl MapView {
             clock: 0.0,
             hero_at: None,
             hero_yaw: 0.0,
+            facing: HashMap::new(),
+            incoming: HashMap::new(),
+            motions: Vec::new(),
+            interrupted: HashSet::new(),
+            log_seq: None,
+            hold: None,
+            stats: MotionStats::default(),
         };
         view.place_camera();
         view
@@ -1108,6 +1171,9 @@ impl MapView {
         self.hero_at = hero;
         let generation = world.map.generation();
         if self.generation != Some(generation) {
+            // a new level (or a redraw from scratch) never animates
+            self.finish_motions();
+            self.facing.clear();
             self.generation = Some(generation);
             world.map.take_dirty();
             for y in 0..ROWNO {
@@ -1120,7 +1186,12 @@ impl MapView {
         } else {
             // a cell's look depends on its neighbours: a wall on the cell
             // north of it, unseen ground under something on all four
-            let mut dirty = world.map.take_dirty();
+            let (mut dirty, moves) = world.map.take_dirty_moves();
+            if !dirty.is_empty() {
+                // the engine went on: the scene catches up at once
+                self.finish_motions();
+            }
+            self.carry(&moves, world);
             let near: Vec<_> = dirty
                 .iter()
                 .flat_map(|&(x, y)| [(x, y + 1), (x, y - 1), (x + 1, y), (x - 1, y)])
@@ -1132,7 +1203,13 @@ impl MapView {
             for (x, y) in dirty {
                 self.update_cell(x, y, world, catalog, hero);
             }
+            // a carried model whose new cell did not take it
+            for (_, c) in std::mem::take(&mut self.incoming) {
+                self.art.give(c.model);
+            }
         }
+        self.watch_fights(world, catalog);
+        self.advance_motions(delta as f32);
         if std::mem::take(&mut self.lights_dirty) {
             self.place_room_lights();
         }
@@ -1143,12 +1220,20 @@ impl MapView {
             self.target = centre;
             self.overview = Some(distance.max(self.distance));
         } else if let Some((x, y)) = world.view_center.or(hero).or(world.cursor) {
-            self.target = Vector3::new(x as f32, 0.0, y as f32);
+            // following the hero as they walk, not the cell they are bound for
+            let walking = self.hero_shown_at().filter(|_| Some((x, y)) == hero);
+            self.target = match walking {
+                Some(p) => Vector3::new(p.x, 0.0, p.z),
+                None => Vector3::new(x as f32, 0.0, y as f32),
+            };
         }
         match hero {
             Some((x, y)) => {
                 let ground = self.ground(x, y);
-                let p = Vector3::new(x as f32, ground, y as f32);
+                let p = match self.hero_shown_at() {
+                    Some(p) => Vector3::new(p.x, ground, p.z),
+                    None => Vector3::new(x as f32, ground, y as f32),
+                };
                 self.hero_ring.set_position(p + at(0.0, 0.02, 0.0));
                 self.hero_ring.set_visible(true);
                 // held up and a little in front, towards the camera
@@ -1303,6 +1388,11 @@ impl MapView {
 
     /// Forget every cell (a new game).
     pub fn clear(&mut self) {
+        self.finish_motions();
+        self.facing.clear();
+        for (_, c) in std::mem::take(&mut self.incoming) {
+            self.art.give(c.model);
+        }
         for (_, nodes) in self.cells.drain() {
             nodes.free(&mut self.art);
         }
@@ -1374,6 +1464,16 @@ impl MapView {
         catalog: &Catalog,
         hero: Option<(i32, i32)>,
     ) {
+        let here = world
+            .map
+            .cell(x, y)
+            .and_then(|c| c.glyph.as_ref())
+            .and_then(Ident::of);
+        let facing = self
+            .facing
+            .get(&(x, y))
+            .filter(|(id, _)| Some(*id) == here)
+            .map(|&(_, yaw)| yaw);
         let ctx = Ctx {
             catalog,
             art: self.art.manifest(),
@@ -1381,6 +1481,7 @@ impl MapView {
             y,
             hero,
             hero_yaw: self.hero_yaw,
+            facing,
         };
         let look = world
             .map
@@ -1443,9 +1544,42 @@ impl MapView {
         // back to the pool and taken anew
         let mut kept: Vec<Model> = Vec::with_capacity(look.models.len());
         let mut old_models = std::mem::take(&mut nodes.models).into_iter();
+        let mut carried = self.incoming.remove(&(x, y));
         for (i, p) in look.models.iter().enumerate() {
             let before = old.models.get(i);
             let reuse = old_models.next();
+            // the entity that stepped here: its own node walks in
+            if look.entity == Some(i)
+                && let Some(c) = carried.take_if(|c| c.placed.look == p.look)
+            {
+                if let Some(m) = reuse {
+                    self.art.give(m);
+                }
+                let hero = world
+                    .map
+                    .cell(x, y)
+                    .and_then(|c| c.glyph.as_ref())
+                    .is_some_and(|g| g.flags & mg::HERO != 0);
+                let (secs, run) = pace(c.cells, c.hurry);
+                let clips = self.art.clips(&c.model, run);
+                self.motions.push(Motion::step(
+                    c.model.node.clone(),
+                    (x, y),
+                    hero,
+                    (c.from, c.placed.yaw),
+                    (origin + p.pos, p.yaw),
+                    clips,
+                    p.look.art.height,
+                    (secs, run),
+                ));
+                if hero {
+                    self.stats.hero_steps += 1;
+                } else {
+                    self.stats.other_steps += 1;
+                }
+                kept.push(c.model);
+                continue;
+            }
             let mut m = match (before, reuse) {
                 (Some(b), Some(m)) if b.look == p.look => m,
                 (_, other) => {
@@ -1465,6 +1599,9 @@ impl MapView {
         }
         for m in old_models {
             self.art.give(m);
+        }
+        if let Some(c) = carried {
+            self.art.give(c.model);
         }
         nodes.models = kept;
         for (i, l) in look.letters.iter().enumerate() {
@@ -1509,6 +1646,219 @@ impl MapView {
         }
         nodes.look = look;
         self.cells.insert((x, y), nodes);
+    }
+
+    /// Take the models of the entities that stepped off their cells, for
+    /// the cells they stepped to; they face the way they went.
+    fn carry(&mut self, moves: &[Move], world: &World) {
+        for mv in moves {
+            let yaw = yaw_toward(mv.from, mv.to);
+            if !mv.ident.is_hero() {
+                self.facing.insert(mv.to, (mv.ident, yaw));
+            }
+            let Some(nodes) = self.cells.get_mut(&mv.from) else {
+                continue;
+            };
+            let Some(i) = nodes.look.entity.filter(|&i| i < nodes.models.len()) else {
+                continue;
+            };
+            let model = nodes.models.remove(i);
+            let placed = nodes.look.models.remove(i);
+            nodes.look.entity = None;
+            let origin = Vector3::new(mv.from.0 as f32, 0.0, mv.from.1 as f32);
+            let from = origin + placed.pos;
+            let hurry = self.interrupted.contains(&mv.from);
+            if let Some(old) = self.incoming.insert(
+                mv.to,
+                Carried {
+                    model,
+                    placed,
+                    from,
+                    hurry,
+                    cells: mv.steps(),
+                },
+            ) {
+                self.art.give(old.model);
+            }
+        }
+        // a cell whose entity changed forgets which way the old one faced
+        self.facing.retain(|&(x, y), (id, _)| {
+            world
+                .map
+                .cell(x, y)
+                .and_then(|c| c.glyph.as_ref())
+                .and_then(Ident::of)
+                == Some(*id)
+        });
+    }
+
+    /// Fights the new messages tell of: the attacker turns to its target
+    /// and strikes.
+    fn watch_fights(&mut self, world: &World, catalog: &Catalog) {
+        let last = world.log.last_seq();
+        let seen = match self.log_seq {
+            // the log of a game just started or restored is not news
+            Some(seen) if seen <= last => seen,
+            _ => {
+                self.log_seq = Some(last);
+                return;
+            }
+        };
+        self.log_seq = Some(last);
+        let names = |m: i32| {
+            usize::try_from(m)
+                .ok()
+                .and_then(|i| catalog.monsters.get(i))
+                .map(|info| {
+                    let mut n = vec![info.name.as_str()];
+                    n.extend(info.male.as_deref());
+                    n.extend(info.female.as_deref());
+                    n
+                })
+                .unwrap_or_default()
+        };
+        let fights: Vec<_> = world
+            .log
+            .since(seen)
+            .filter(|m| !m.from_history)
+            .filter_map(|m| parse_attack(&m.text))
+            .filter_map(|a| locate_attack(&a, &world.map, names))
+            .collect();
+        for (from, to) in fights {
+            self.strike(from, to, world);
+        }
+    }
+
+    /// The entity at `from` turns to `to` and attacks.
+    fn strike(&mut self, from: (i32, i32), to: (i32, i32), world: &World) {
+        let yaw = yaw_toward(from, to);
+        let ident = world
+            .map
+            .cell(from.0, from.1)
+            .and_then(|c| c.glyph.as_ref())
+            .and_then(Ident::of);
+        let hero = ident.is_some_and(|i| i.is_hero());
+        if hero {
+            self.hero_yaw = yaw;
+        } else if let Some(id) = ident {
+            self.facing.insert(from, (id, yaw));
+        }
+        // still walking in: it arrives facing its target
+        if let Some(m) = self
+            .motions
+            .iter_mut()
+            .find(|m| m.cell == from && m.is_step())
+        {
+            m.yaw_to = yaw;
+            if let Some(p) = self
+                .cells
+                .get_mut(&from)
+                .and_then(|n| n.look.entity.and_then(|i| n.look.models.get_mut(i)))
+            {
+                p.yaw = yaw;
+            }
+            return;
+        }
+        // a blow after a blow: the first one ends
+        if let Some(i) = self.motions.iter().position(|m| m.cell == from) {
+            self.motions.swap_remove(i).finish();
+        }
+        let Some(nodes) = self.cells.get_mut(&from) else {
+            return;
+        };
+        let Some(i) = nodes.look.entity.filter(|&i| i < nodes.models.len()) else {
+            return;
+        };
+        let placed = &mut nodes.look.models[i];
+        let yaw_from = placed.yaw;
+        placed.yaw = yaw;
+        let at = Vector3::new(from.0 as f32, 0.0, from.1 as f32) + placed.pos;
+        let toward = Vector3::new((to.0 - from.0) as f32, 0.0, (to.1 - from.1) as f32).normalized();
+        let model = &nodes.models[i];
+        let node = model.node.clone();
+        let clips = self.art.clips(model, false);
+        self.motions.push(Motion::strike(
+            node,
+            from,
+            hero,
+            at,
+            (yaw_from, yaw),
+            toward,
+            clips,
+        ));
+        self.stats.strikes += 1;
+    }
+
+    fn advance_motions(&mut self, delta: f32) {
+        let hold = self.hold;
+        let mut i = 0;
+        while i < self.motions.len() {
+            if self.motions[i].advance(delta, hold) {
+                self.motions.swap_remove(i).finish();
+            } else {
+                i += 1;
+            }
+        }
+    }
+
+    /// End every motion where the world model has its entity; remember the
+    /// steps cut short (the next step there hurries).
+    fn finish_motions(&mut self) {
+        self.interrupted.clear();
+        for m in self.motions.drain(..) {
+            let (cell, step) = (m.cell, m.is_step());
+            if !m.finish() && step {
+                self.interrupted.insert(cell);
+            }
+        }
+    }
+
+    /// Where the hero's model is while it walks (None: on its cell).
+    fn hero_shown_at(&self) -> Option<Vector3> {
+        self.motions
+            .iter()
+            .find(|m| m.hero && m.is_step())
+            .map(|m| m.base)
+    }
+
+    /// Stop motions at this share of their way (self-test pictures); None
+    /// lets them go on.
+    pub fn hold_motions(&mut self, at: Option<f32>) {
+        self.hold = at;
+    }
+
+    /// Every motion has reached the hold point (or there are none).
+    pub fn motions_held(&self) -> bool {
+        self.motions.iter().all(|m| m.is_held(self.hold))
+    }
+
+    /// Steps now under way: (the hero's, others').
+    pub fn steps_under_way(&self) -> (bool, usize) {
+        let steps = self.motions.iter().filter(|m| m.is_step());
+        let hero = steps.clone().any(|m| m.hero);
+        (hero, steps.filter(|m| !m.hero).count())
+    }
+
+    /// The hero's step's gait clip and the clip playing now (self-tests).
+    pub fn hero_clips(&self) -> (Option<String>, Option<String>) {
+        self.motions
+            .iter()
+            .find(|m| m.hero && m.is_step())
+            .map(|m| m.clips_now())
+            .unwrap_or_default()
+    }
+
+    /// The hero's step under way: (from, to, the yaw it ends with, where
+    /// the model is now) (self-tests).
+    pub fn hero_step(&self) -> Option<(Vector3, Vector3, f32, Vector3)> {
+        self.motions
+            .iter()
+            .find(|m| m.hero && m.is_step())
+            .map(|m| (m.from, m.to, m.yaw_to, m.base))
+    }
+
+    pub fn motion_stats(&self) -> MotionStats {
+        self.stats
     }
 
     fn new_label(&mut self) -> Gd<Label3D> {
@@ -1659,6 +2009,7 @@ mod tests {
                 y,
                 hero,
                 hero_yaw: 0.0,
+                facing: None,
             }
         }
 
