@@ -4,7 +4,8 @@ use crate::LinkError;
 
 /// Ordering rules for the start of a session: hello first (in our protocol
 /// version), then the catalog before any window call or request. Only
-/// `raw_print` may come early (the engine's own fatal messages).
+/// `raw_print` (the engine's own fatal messages) and `number_pad` (sent
+/// while NETHACKOPTIONS is read, when it sets number_pad) may come early.
 #[derive(Debug, Default)]
 pub(crate) struct Handshake {
     hello: bool,
@@ -39,7 +40,7 @@ impl Handshake {
                 return Err(LinkError::Handshake("first message is not hello".into()));
             }
             EngineMsg::Catalog(_) => self.catalog = true,
-            EngineMsg::Win(WinCall::RawPrint { .. }) => {}
+            EngineMsg::Win(WinCall::RawPrint { .. } | WinCall::NumberPad { .. }) => {}
             EngineMsg::Win(_) | EngineMsg::Req { .. } if !self.catalog => {
                 return Err(LinkError::Handshake(
                     "window call before the catalog".into(),
@@ -86,6 +87,11 @@ mod tests {
             bold: false,
         });
         hs.check(&raw).unwrap();
+        let pad = EngineMsg::Win(WinCall::NumberPad {
+            state: 1,
+            dirchars: Some("47896321><".into()),
+        });
+        hs.check(&pad).unwrap();
         hs.check(&EngineMsg::Error { msg: "x".into() }).unwrap();
         let req = EngineMsg::Req {
             id: 1,
