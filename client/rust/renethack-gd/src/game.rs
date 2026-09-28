@@ -286,6 +286,9 @@ impl INode for RenethackGame {
             .collect();
         let args = parse_args(&raw);
         self.base().get_tree().set_auto_accept_quit(false);
+        if let Some(window) = self.base().get_tree().get_root() {
+            crate::theme::apply_scaling(window);
+        }
 
         // layers are the game's own children, added through base_mut():
         // widgets get them and never the game node itself
@@ -1191,6 +1194,8 @@ impl RenethackGame {
             UiEvent::Rest => self.rest(),
             UiEvent::Zoom(steps) => self.ui_mut().map.zoom(steps),
             UiEvent::ToggleOverview => self.ui_mut().map.toggle_overview(),
+            // the slots have no bindings yet (the action bar's logic, phase H)
+            UiEvent::ActionSlot { .. } => {}
             other => godot_warn!("renethack: {other:?} ignored while a game runs"),
         }
     }

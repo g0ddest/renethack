@@ -15,15 +15,15 @@ use godot::classes::scroll_container::ScrollMode;
 use godot::classes::text_server::{AutowrapMode, OverrunBehavior};
 use godot::classes::{
     Button, CanvasLayer, ColorRect, Control, DisplayServer, Font, HBoxContainer, Label, LineEdit,
-    PanelContainer, RichTextLabel, ScrollContainer, StyleBoxEmpty, StyleBoxFlat, VBoxContainer,
+    PanelContainer, RichTextLabel, ScrollContainer, StyleBox, StyleBoxEmpty, StyleBoxFlat,
+    VBoxContainer,
 };
 use godot::global::{HorizontalAlignment, VerticalAlignment};
 use godot::prelude::*;
 use nh_protocol::{Catalog, ESC, PickHow, Reply};
 use nh_world::{Key, KeyInput, MenuEntry, MenuOutcome, MenuState, Prompt, TextLine, choice_answer};
 
-use crate::hud::{MARGIN, STATUS_WIDTH};
-use crate::theme::{self, bbcode_escape, hex, nh_color, place};
+use crate::theme::{self, Face, Frame, bbcode_escape, hex, nh_color, place};
 use crate::ui_events::{DialogEvent, UiEvent, UiQueue, push};
 
 /// NetHack's BUFSZ less the NUL.
@@ -36,8 +36,8 @@ enum Place {
     Top,
 }
 
-/// The top of a question's panel: under the prompt line.
-const TOP_Y: f32 = 56.0;
+/// The top of a question's panel: under the prompt banner.
+const TOP_Y: f32 = 84.0;
 
 const MAX_TEXT_BYTES: usize = 255;
 const ESC_CHAR: char = '\u{1b}';
@@ -51,15 +51,14 @@ const SPACER_H: f32 = 10.0;
 const LIST_CHROME: f32 = 320.0;
 /// The same for a text window (no footer).
 const TEXT_CHROME: f32 = 220.0;
-/// The window the project opens, in pixels (project.godot).
-const REFERENCE_SCREEN: Vector2 = Vector2::new(1600.0, 900.0);
+/// The canvas the HUD is designed for (theme::apply_scaling).
+const REFERENCE_SCREEN: Vector2 = theme::DESIGN;
 /// Space kept free left and right of a dialog.
 const SIDE_MARGIN: f32 = 80.0;
 /// Rows the palette shows at once.
 const PALETTE_ROWS: f32 = 16.0;
 /// Unselectable menu lines: grey, still easy to read.
-const INFO_TEXT: Color = Color::from_rgb(0.66, 0.67, 0.69);
-const DIALOG_BG: Color = Color::from_rgba(0.07, 0.08, 0.1, 0.97);
+const INFO_TEXT: Color = Color::from_rgb(0.74, 0.69, 0.61);
 
 /// One extended command as the palette lists it.
 #[derive(Debug, Clone, PartialEq)]
@@ -264,8 +263,7 @@ struct Look {
     /// (normal, hover) for: plain, selected, current, current and selected.
     rows: [(Gd<StyleBoxFlat>, Gd<StyleBoxFlat>); 4],
     no_focus: Gd<StyleBoxEmpty>,
-    default_button: Gd<StyleBoxFlat>,
-    panel: Gd<StyleBoxFlat>,
+    default_button: Gd<StyleBox>,
 }
 
 impl Look {
@@ -295,19 +293,15 @@ impl Look {
                 flat(accent(0.28), Some(theme::ACCENT)),
             ),
         ];
-        let mut panel = theme::panel_style(DIALOG_BG);
-        panel.set_content_margin_all(16.0);
-        panel.set_border_color(Color::from_rgb(0.38, 0.4, 0.5));
         let (char_w, line_h) = theme::mono_metrics();
         Look {
-            bold: theme::mono_bold().upcast(),
-            italic: theme::mono_italic().upcast(),
+            bold: theme::font(Face::MonoBold),
+            italic: theme::font(Face::MonoItalic),
             char_w,
             line_h,
             rows,
             no_focus: StyleBoxEmpty::new_gd(),
             default_button: theme::default_button_style(),
-            panel,
         }
     }
 
@@ -787,7 +781,7 @@ impl Dialogs {
     pub fn new(mut layer: Gd<CanvasLayer>, queue: UiQueue) -> Dialogs {
         let mut root = Control::new_alloc();
         theme::full_rect_ignore(&root);
-        root.set_theme(&theme::dark_theme());
+        root.set_theme(&theme::dialog_theme());
         layer.add_child(&root);
         Dialogs {
             root,
@@ -845,7 +839,7 @@ impl Dialogs {
         self.root.add_child(&shade);
         let mut panel = PanelContainer::new_alloc();
         panel.set_mouse_filter(MouseFilter::STOP);
-        panel.add_theme_stylebox_override("panel", &self.look.panel);
+        theme::apply_frame(&panel, Frame::Panel);
         match place_at {
             Place::Centre => {
                 place(
@@ -856,8 +850,8 @@ impl Dialogs {
                 panel.set_v_grow_direction(GrowDirection::BOTH);
             }
             Place::Top => {
-                // centred right of the status panel, like the prompt line
-                let x = (STATUS_WIDTH + 2.0 * MARGIN) / 2.0;
+                // centred under the prompt banner
+                let x = 0.0;
                 place(
                     &panel,
                     [0.5, 0.0, 0.5, 0.0],
@@ -870,9 +864,8 @@ impl Dialogs {
         let mut col = VBoxContainer::new_alloc();
         col.add_theme_constant_override("separation", 10);
         if let Some(t) = title.filter(|t| !t.trim().is_empty()) {
-            let mut l = theme::label(t);
-            l.add_theme_color_override("font_color", theme::ACCENT);
-            l.add_theme_font_override("font", &self.look.bold);
+            // the engine's own words: its prompts and menu titles
+            let mut l = theme::styled_label(t, Face::BodyBold, 20, theme::GOLD_BRIGHT);
             l.set_autowrap_mode(AutowrapMode::WORD_SMART);
             l.set_custom_minimum_size(Vector2::new(width, 0.0));
             col.add_child(&l);
@@ -897,8 +890,7 @@ impl Dialogs {
     }
 
     fn hint(&self, col: &mut Gd<VBoxContainer>, text: &str, width: f32) -> Gd<Label> {
-        let mut hint = theme::label(text);
-        hint.add_theme_color_override("font_color", theme::TEXT_DIM);
+        let mut hint = theme::styled_label(text, Face::Body, 15, theme::TEXT_DIM);
         hint.set_autowrap_mode(AutowrapMode::WORD_SMART);
         hint.set_custom_minimum_size(Vector2::new(width, 0.0));
         col.add_child(&hint);

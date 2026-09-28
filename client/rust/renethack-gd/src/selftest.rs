@@ -155,6 +155,14 @@ fn smoke() -> Vec<Step> {
             let text = g.ui.as_ref().map_or("", |ui| ui.hud.status_text());
             Ok(text.contains("HP:16(16)") && text.contains("Dlvl:1"))
         }),
+        Step::Wait("the HP and Pw orbs full, ten empty slots", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let (hp, pw, slots) = ui.hud.cluster_view();
+            if slots.len() != 10 || slots.iter().any(|&(filled, _)| filled) {
+                return Err(format!("action bar slots {slots:?}"));
+            }
+            Ok(hp == Some((16, 16)) && pw.is_some_and(|(v, m)| v == m && m > 0))
+        }),
         key('i'),
         Step::Request("the inventory menu", |p| matches!(p, Prompt::Menu { .. })),
         Step::Wait("five items in the menu", |g| {
@@ -869,6 +877,71 @@ fn dialogs() -> Vec<Step> {
 fn camera_settled(g: &RenethackGame) -> Result<bool, String> {
     fail_on_error_screen(g)?;
     Ok(g.ui.as_ref().is_some_and(|ui| ui.map.is_settled()))
+}
+
+/// The client's copy of a status field changed here (the engine is not asked).
+fn set_status(g: &mut RenethackGame, field: &str, value: &str, conds: Option<u64>) {
+    g.world.status.apply(&nh_protocol::StatusUpdate {
+        field: field.into(),
+        value: Some(value.into()),
+        conds,
+        chg: 0,
+        percent: 0,
+        color: nh_world::NO_COLOR,
+    });
+}
+
+/// The HUD's states for screenshots: hunger and burden chips, conditions
+/// (a deadly one pulsing, with its banner), a hit that leaves the HP orb
+/// low and throbbing, the message history. The status and the log are the
+/// client's copies, changed here. Not part of `make test-client`.
+fn hud() -> Vec<Step> {
+    let mut steps = start();
+    steps.extend([
+        Step::Wait("the hero on the map", |g| Ok(g.world.map.hero().is_some())),
+        Step::Wait("the camera on the hero", camera_settled),
+        Step::Shot("hud-start"),
+        Step::Call("a hungry, burdened, blind, levitating, stoning hero", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            let mask = |name: &str| {
+                cat.conditions
+                    .iter()
+                    .find(|c| c.name == name)
+                    .map(|c| c.mask)
+                    .ok_or(format!("no condition {name}"))
+            };
+            let conds = mask("Blind")? | mask("Stone")? | mask("Lev")?;
+            set_status(g, "hunger", "Hungry", None);
+            set_status(g, "cap", "Burdened", None);
+            set_status(g, "condition", "", Some(conds));
+            set_status(g, "hp", "3", None);
+            set_status(g, "str", "17", None);
+            let turn = Some(2);
+            g.world
+                .log
+                .push("You are slowing down.".into(), 0, turn, false);
+            g.world.log.push(
+                "Your limbs are stiffening.".into(),
+                nh_world::ATR_URGENT,
+                turn,
+                false,
+            );
+            Ok(())
+        }),
+        Step::Wait("the chips, the deadly banner and a low HP orb", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let text = ui.hud.status_text();
+            let (hp, ..) = ui.hud.cluster_view();
+            Ok(text.contains("Hungry Burdened") && text.contains("Stone") && hp == Some((3, 16)))
+        }),
+        Step::Shot("hud-conditions"),
+        Step::Push(UiEvent::ToggleFullLog),
+        Step::Wait("the message history", |g| {
+            Ok(g.ui.as_ref().is_some_and(|ui| ui.hud.full_log_open()))
+        }),
+        Step::Shot("hud-history"),
+    ]);
+    steps
 }
 
 /// A walk through the first rooms of seed 42 for map screenshots: the start
@@ -2842,6 +2915,7 @@ impl SelfTest {
         watch_panics();
         let steps = match name {
             "tour" => tour(),
+            "hud" => hud(),
             "moves" => moves(),
             "gallery" => gallery(),
             "smoke" => smoke(),

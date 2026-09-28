@@ -42,6 +42,12 @@ pub enum UiEvent {
     Zoom(f32),
     /// Frame everything known of the level, or go back to the hero.
     ToggleOverview,
+    /// A click on action bar slot `slot` (0-based, key 1..0); `button`
+    /// 1 = left, 2 = right.
+    ActionSlot {
+        slot: usize,
+        button: i32,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]

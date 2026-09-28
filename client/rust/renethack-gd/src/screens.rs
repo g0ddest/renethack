@@ -188,9 +188,7 @@ pub struct Screens {
 }
 
 fn title_label(text: &str, size: i32) -> Gd<Label> {
-    let mut l = theme::label(text);
-    l.add_theme_font_size_override("font_size", size);
-    l.add_theme_color_override("font_color", theme::ACCENT);
+    let mut l = theme::styled_label(text, theme::Face::Title, size, theme::ACCENT);
     l.set_horizontal_alignment(HorizontalAlignment::CENTER);
     l
 }
