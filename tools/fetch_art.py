@@ -182,6 +182,9 @@ def shrink_glb(data, max_size):
         if i in image_views:
             chunk, ext = convert_image(chunk, max_size, keep_alpha=True)
             image_views[i]["mimeType"] = "image/png" if ext == ".png" else "image/jpeg"
+            # Godot extracts the image under this name; make needs paths without spaces
+            if "name" in image_views[i]:
+                image_views[i]["name"] = image_views[i]["name"].replace(" ", "_")
         while len(out) % 4:
             out.append(0)
         v["byteOffset"] = len(out)
