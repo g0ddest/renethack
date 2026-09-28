@@ -4,7 +4,7 @@
 //! synchronously. The verdict is one "SELFTEST PASS <name>" or
 //! "SELFTEST FAIL <name>: <reason>" line and the exit code.
 //!
-//! Scenarios: smoke, keys, save, close, crash, menus, text, moves, and soak
+//! Scenarios: smoke, keys, save, close, crash, menus, text, moves, orders, and soak
 //! (random play: `--soak=N` answered requests, `--seed=S` or
 //! RENETHACK_SEED; RENETHACK_SOAK_TRACE=1 prints every decision).
 
@@ -18,7 +18,7 @@ use godot::classes::{DisplayServer, Input, InputEventKey};
 use godot::global::{Error, Key as GKey};
 use godot::prelude::*;
 use nh_protocol::PickHow;
-use nh_world::{Key, KeyInput, MenuEntry, MenuState, Mods, Prompt, Terrain, cell_terrain};
+use nh_world::{Key, KeyInput, MenuEntry, MenuState, Mods, Prompt, Stop, Terrain, cell_terrain};
 
 use nh_link::save_exists;
 
@@ -1043,6 +1043,435 @@ fn moves() -> Vec<Step> {
     steps
 }
 
+/// What a step of the `orders` scenario remembers for a later one.
+#[derive(Debug, Clone, Copy, Default)]
+struct Mark {
+    actions: u64,
+    turn: i64,
+    hero: Option<(i32, i32)>,
+    at: Option<Instant>,
+    hero_steps: u32,
+    /// The request the descent answered last.
+    pushed: Option<(u64, u64)>,
+    pushes: u32,
+}
+
+static MARK: Mutex<Mark> = Mutex::new(Mark {
+    actions: 0,
+    turn: 0,
+    hero: None,
+    at: None,
+    hero_steps: 0,
+    pushed: None,
+    pushes: 0,
+});
+
+fn marked() -> Mark {
+    MARK.lock().map(|m| *m).unwrap_or_default()
+}
+
+/// Remember the order actions, the turn, the hero and the time now.
+fn mark(g: &mut RenethackGame) -> Result<(), String> {
+    let hero_steps =
+        g.ui.as_ref()
+            .map_or(0, |ui| ui.map.motion_stats().hero_steps);
+    let mut m = MARK.lock().map_err(|e| e.to_string())?;
+    m.actions = g.order_actions;
+    m.turn = g.world.status.number("time").unwrap_or(0);
+    m.hero = g.world.hero();
+    m.at = Some(Instant::now());
+    m.hero_steps = hero_steps;
+    g.last_stop = None;
+    Ok(())
+}
+
+/// Order actions sent since the mark.
+fn actions_since(g: &RenethackGame) -> u64 {
+    g.order_actions - marked().actions
+}
+
+/// A command waits and no order runs: the player's turn.
+fn idle_command(g: &RenethackGame) -> Result<bool, String> {
+    fail_on_error_screen(g)?;
+    Ok(!g.driver.is_active() && !g.world.getpos && matches!(g.pending, Some((_, Prompt::Command))))
+}
+
+/// The seed-42 start room's south-west corner, four steps from the start.
+const FAR_FLOOR: (i32, i32) = (14, 7);
+/// Its south-east corner.
+const CORNER: (i32, i32) = (19, 7);
+/// Its west doorway, to the corridor down to the stairs.
+const WEST_DOORWAY: (i32, i32) = (13, 3);
+/// Seed 11: the start room's east door (closed) and top doorway.
+const EAST_DOOR: (i32, i32) = (28, 15);
+const TOP_DOORWAY: (i32, i32) = (22, 12);
+const SOUTH_EAST: (i32, i32) = (27, 17);
+
+fn left_click((x, y): (i32, i32)) -> Step {
+    Step::Push(UiEvent::MapClick { x, y, button: 1 })
+}
+
+fn hover(g: &mut RenethackGame, cell: Option<(i32, i32)>) -> Result<(), String> {
+    g.test_hover = cell;
+    Ok(())
+}
+
+/// The way shown ends at `goal`, of at least `n` cells.
+fn preview_to(g: &RenethackGame, goal: (i32, i32), n: usize) -> Result<bool, String> {
+    let way = map_view(g)?.path_shown();
+    Ok(way.last() == Some(&goal) && way.len() >= n)
+}
+
+fn badge(g: &RenethackGame) -> Option<String> {
+    g.ui.as_ref().and_then(|ui| ui.hud.mode_view().0)
+}
+
+/// The walk since the mark: each action a tick apart at least, each step
+/// of the hero animated, arrived.
+fn check_walk(g: &mut RenethackGame) -> Result<(), String> {
+    let m = marked();
+    let n = actions_since(g);
+    if n < 3 {
+        return Err(format!("only {n} actions"));
+    }
+    let tick = g.driver.tick();
+    let times: Vec<Instant> = g
+        .order_log
+        .iter()
+        .rev()
+        .take(n as usize)
+        .map(|(t, _)| *t)
+        .collect();
+    for w in times.windows(2) {
+        let gap = w[0].duration_since(w[1]);
+        // a frame's lateness either way
+        if gap + Duration::from_millis(20) < tick {
+            return Err(format!("two steps {gap:?} apart, the tick is {tick:?}"));
+        }
+    }
+    let steps = map_view(g)?.motion_stats().hero_steps - m.hero_steps;
+    godot_print!("selftest: orders: walked {n} actions, {steps} animated steps");
+    if u64::from(steps) < n {
+        return Err(format!("{n} steps, {steps} animated"));
+    }
+    if g.last_stop != Some(Stop::Arrived) {
+        return Err(format!("the walk ended with {:?}", g.last_stop));
+    }
+    Ok(())
+}
+
+/// Seed 42: down the corridor with counts, then `>` walks to the stairs
+/// and goes down. Each command is answered once; another question is
+/// cancelled.
+fn descend(g: &RenethackGame) -> Result<bool, String> {
+    fail_on_error_screen(g)?;
+    if g.world.status.number("leveldesc").is_some_and(|d| d >= 2) {
+        return Ok(true);
+    }
+    if g.driver.is_active() {
+        return Ok(false);
+    }
+    let Some((id, prompt)) = g.pending.clone() else {
+        return Ok(false);
+    };
+    let req = (g.session_serial, id);
+    let mut m = MARK.lock().map_err(|e| e.to_string())?;
+    if m.pushed == Some(req) {
+        return Ok(false);
+    }
+    m.pushed = Some(req);
+    m.pushes += 1;
+    if m.pushes > 40 {
+        return Err("no way down in 40 commands".into());
+    }
+    let key = |c| UiEvent::Key(KeyInput::plain(Key::Char(c)));
+    if prompt != Prompt::Command {
+        g.push_ui(UiEvent::Key(KeyInput::plain(Key::Escape)));
+        return Ok(false);
+    }
+    let cat = g.catalog.as_deref().ok_or("no catalog")?;
+    let hero = g.world.hero().ok_or("no hero")?;
+    if nh_world::stairs_order(&g.world, cat, '>').is_some() {
+        godot_print!("selftest: orders: the stairs down are known, '>' from {hero:?}");
+        g.push_ui(key('>'));
+    } else if hero == WEST_DOORWAY {
+        g.push_ui(key('h'));
+    } else if hero.0 == WEST_DOORWAY.0 - 1 {
+        for c in ['2', '0', 'j'] {
+            g.push_ui(key(c));
+        }
+    } else {
+        let (x, y) = WEST_DOORWAY;
+        g.push_ui(UiEvent::MapClick { x, y, button: 1 });
+    }
+    Ok(false)
+}
+
+/// Orders (spec 4): a click walks one step per tick and arrives, a held
+/// key steps until let go, `5s` searches five turns, Esc stops a walk
+/// before its next step, `>` walks to the stairs and goes down; in a
+/// second game (seed 11) a click on a closed door walks up and opens it,
+/// a hostile coming into view stops a walk and starts a fight, and in the
+/// fight a click takes one step. With `--screenshots`: the way previewed
+/// while exploring and in the fight, and the combat banner.
+fn orders() -> Vec<Step> {
+    let plain_key = |c| KeyInput::plain(Key::Char(c));
+    let mut steps = start();
+    steps.extend([
+        Step::Wait("the hero on the map", |g| Ok(g.world.map.hero().is_some())),
+        Step::Wait("the camera on the hero", camera_settled),
+        Step::Wait("exploring", |g| {
+            Ok(badge(g).is_some_and(|b| b.starts_with("EXPLORING")))
+        }),
+        // the way a click would walk, under the mouse
+        Step::Call("hover a far floor cell", |g| hover(g, Some(FAR_FLOOR))),
+        Step::Wait("the way to it previewed", |g| preview_to(g, FAR_FLOOR, 3)),
+        Step::Shot("orders-preview"),
+        Step::Call("the mouse away", |g| hover(g, None)),
+        Step::Wait("the preview gone", |g| {
+            Ok(map_view(g)?.path_shown().is_empty())
+        }),
+        // a click: one step per tick, each animated, and there
+        Step::Wait("the player's turn", idle_command),
+        Step::Call("mark", mark),
+        left_click(FAR_FLOOR),
+        Step::Wait("walking", |g| Ok(g.driver.is_active())),
+        Step::Wait("the order line says so", |g| {
+            let line = g.ui.as_ref().and_then(|ui| ui.hud.mode_view().1);
+            Ok(line.is_some_and(|l| l.starts_with("Walking")))
+        }),
+        Step::Call("the stride goes on between steps", |g| {
+            // between two steps of the walk (the second has not gone out):
+            // the hero is still in the walk clip, not back to idle
+            if actions_since(g) >= 2 || !g.driver.is_active() {
+                return Err("the walk went on too fast to look".into());
+            }
+            Ok(())
+        }),
+        Step::Wait("the first step played", |g| {
+            let walking = map_view(g)?.hero_walking();
+            let moved = g.world.hero() != marked().hero;
+            Ok(actions_since(g) == 1 && moved && !walking && g.driver.is_active())
+        }),
+        Step::Call("still striding", |g| {
+            let ui = g.ui.as_mut().ok_or("no UI")?;
+            let (now, idle) = ui.map.hero_animation();
+            godot_print!("selftest: orders: between steps the hero plays {now:?} (idle {idle:?})");
+            if now.is_some() && now == idle {
+                return Err(format!("the hero stands idle between steps: {now:?}"));
+            }
+            Ok(())
+        }),
+        Step::Wait("arrived", |g| {
+            Ok(idle_command(g)? && g.world.hero() == Some(FAR_FLOOR))
+        }),
+        Step::Call("one step a tick, each animated", check_walk),
+        // a held key: the press steps, the key's repeat starts the order,
+        // letting go ends it
+        Step::Call("mark", mark),
+        Step::Key(plain_key('k')),
+        Step::Request("a command after the press", command),
+        Step::Push(UiEvent::Key(KeyInput {
+            echo: true,
+            ..plain_key('k')
+        })),
+        Step::Wait("two held steps", |g| Ok(actions_since(g) >= 2)),
+        Step::Push(UiEvent::KeyUp(plain_key('k'))),
+        Step::Wait("let go", |g| Ok(!g.driver.is_active())),
+        Step::Call("mark", mark),
+        Step::Wait("no step after letting go", |g| {
+            let m = marked();
+            if m.at.is_some_and(|t| t.elapsed() < g.driver.tick() * 3) {
+                return Ok(false);
+            }
+            match actions_since(g) {
+                0 => Ok(true),
+                n => Err(format!("{n} steps after the key was let go")),
+            }
+        }),
+        Step::Wait("north of where it started", |g| {
+            let hero = g.world.hero().ok_or("no hero")?;
+            if hero.1 <= FAR_FLOOR.1 - 3 {
+                Ok(true)
+            } else {
+                Err(format!("the hero at {hero:?} after holding north"))
+            }
+        }),
+        // a count: 5s searches five turns, one action a tick
+        Step::Wait("the player's turn", idle_command),
+        Step::Call("mark", mark),
+        Step::Key(plain_key('5')),
+        Step::Wait("the count on the prompt line", |g| {
+            let line = g.ui.as_ref().and_then(|ui| ui.hud.prompt_line());
+            Ok(line.as_deref() == Some("Count: 5"))
+        }),
+        Step::Key(plain_key('s')),
+        Step::Wait("five searches", |g| {
+            Ok(idle_command(g)? && actions_since(g) >= 5)
+        }),
+        Step::Call("five turns", |g| {
+            let turns = g.world.status.number("time").unwrap_or(0) - marked().turn;
+            let n = actions_since(g);
+            let searched = g.order_log.iter().rev().take(5).all(|(_, c)| *c == 's');
+            if n == 5 && turns == 5 && searched && g.last_stop == Some(Stop::Done) {
+                Ok(())
+            } else {
+                Err(format!("{n} actions, {turns} turns, {:?}", g.last_stop))
+            }
+        }),
+        // a key stops a walk before its next step
+        Step::Wait("the player's turn", idle_command),
+        Step::Call("mark", mark),
+        left_click(CORNER),
+        Step::Wait("the first step", |g| {
+            Ok(actions_since(g) >= 1 && g.driver.is_active())
+        }),
+        Step::Key(KeyInput::plain(Key::Escape)),
+        Step::Wait("stopped by the key", |g| {
+            Ok(!g.driver.is_active() && g.last_stop == Some(Stop::Key))
+        }),
+        Step::Call("mark", mark),
+        Step::Wait("no step after the key, the corner not reached", |g| {
+            let m = marked();
+            if m.at.is_some_and(|t| t.elapsed() < g.driver.tick() * 3) {
+                return Ok(false);
+            }
+            if actions_since(g) != 0 || g.world.hero() == Some(CORNER) {
+                return Err(format!(
+                    "{} steps after Esc, the hero at {:?}",
+                    actions_since(g),
+                    g.world.hero()
+                ));
+            }
+            Ok(true)
+        }),
+        // the corridor by counts, then '>' walks to the stairs, goes down
+        Step::Call("start counting", |g| {
+            mark(g)?;
+            let mut m = MARK.lock().map_err(|e| e.to_string())?;
+            m.pushed = None;
+            m.pushes = 0;
+            Ok(())
+        }),
+        Step::Wait("down the corridor and the stairs to Dlvl 2", descend),
+        Step::Wait("the walk to the stairs went down them", |g| {
+            if g.driver.is_active() {
+                return Ok(false);
+            }
+            let last = g.order_log.back().map(|(_, c)| *c);
+            if last == Some('>') && g.last_stop == Some(Stop::Arrived) {
+                Ok(true)
+            } else {
+                Err(format!(
+                    "the last action {last:?}, ended with {:?}",
+                    g.last_stop
+                ))
+            }
+        }),
+    ]);
+    steps.extend(quit());
+    // the second game: seed 11
+    steps.extend([
+        Step::Call("seed 11", |g| {
+            g.seed = Some(11);
+            Ok(())
+        }),
+        Step::Push(UiEvent::BackToTitle),
+    ]);
+    steps.extend(start());
+    steps.extend([
+        Step::Wait("the hero on the map", |g| Ok(g.world.map.hero().is_some())),
+        Step::Wait("the player's turn", idle_command),
+        Step::Call("mark", mark),
+        left_click(EAST_DOOR),
+        Step::Wait("the door opened", |g| {
+            let cat = g.catalog.as_deref().ok_or("no catalog")?;
+            let (x, y) = EAST_DOOR;
+            let door = g.world.map.cell(x, y).and_then(|c| cell_terrain(c, cat));
+            Ok(idle_command(g)? && door == Some(Terrain::OpenDoor))
+        }),
+        Step::Call("walked up and opened it", |g| {
+            let keys: String = g.order_log.iter().rev().take(2).map(|(_, c)| *c).collect();
+            if keys == "lo" && g.last_stop == Some(Stop::Arrived) {
+                Ok(())
+            } else {
+                Err(format!("the last keys {keys:?}, {:?}", g.last_stop))
+            }
+        }),
+        Step::Call("hover the top doorway", |g| hover(g, Some(TOP_DOORWAY))),
+        Step::Wait("the way to it previewed", |g| preview_to(g, TOP_DOORWAY, 4)),
+        Step::Shot("orders-preview-door"),
+        Step::Call("the mouse away", |g| hover(g, None)),
+        Step::Call("mark", mark),
+        left_click(TOP_DOORWAY),
+        Step::Wait("walking", |g| {
+            Ok(g.driver.is_active() || g.last_stop.is_some())
+        }),
+        Step::Wait("a hostile stops the walk", |g| {
+            fail_on_error_screen(g)?;
+            if g.driver.is_active() {
+                return Ok(false);
+            }
+            match &g.last_stop {
+                Some(Stop::Hostile) => Ok(true),
+                Some(Stop::Arrived) => Err("the walk arrived: no hostile came".into()),
+                _ => Ok(false),
+            }
+        }),
+        Step::Call("in a fight, short of the doorway", |g| {
+            let (b, _, flash) =
+                g.ui.as_ref()
+                    .map(|ui| ui.hud.mode_view())
+                    .unwrap_or_default();
+            godot_print!(
+                "selftest: orders: a hostile at {:?}, the hero at {:?}",
+                nh_world::threats(
+                    &g.world,
+                    g.catalog.as_deref().ok_or("no catalog")?,
+                    g.driver.peaceful()
+                ),
+                g.world.hero()
+            );
+            if g.driver.mode() != nh_world::Mode::Combat || g.world.hero() == Some(TOP_DOORWAY) {
+                return Err(format!(
+                    "mode {:?}, hero {:?}",
+                    g.driver.mode(),
+                    g.world.hero()
+                ));
+            }
+            if !b.is_some_and(|b| b.starts_with("COMBAT")) || !flash {
+                return Err("no combat badge and banner".into());
+            }
+            Ok(())
+        }),
+        Step::Shot("orders-combat"),
+        Step::Call("hover a far cell", |g| hover(g, Some(SOUTH_EAST))),
+        Step::Wait("the way previewed in the fight", |g| {
+            preview_to(g, SOUTH_EAST, 2)
+        }),
+        Step::Shot("orders-combat-preview"),
+        Step::Call("the mouse away", |g| hover(g, None)),
+        // in a fight a click takes one step
+        Step::Wait("the player's turn", idle_command),
+        Step::Call("mark", mark),
+        left_click(SOUTH_EAST),
+        Step::Wait("the order given", |g| {
+            Ok(g.driver.is_active() || g.last_stop.is_some())
+        }),
+        Step::Wait("one action", |g| {
+            if !idle_command(g)? {
+                return Ok(false);
+            }
+            match (actions_since(g), &g.last_stop) {
+                (1, Some(Stop::OneAction)) => Ok(true),
+                (n, why) => Err(format!("{n} actions, ended with {why:?}")),
+            }
+        }),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
 fn show_page(g: &mut RenethackGame, page: usize) -> Result<(), String> {
     let cat = g.catalog.clone().ok_or("no catalog")?;
     crate::gallery::lay_out(&mut g.world, &cat, page)?;
@@ -1705,6 +2134,9 @@ pub struct Soak {
     /// Nodes in the scene tree at the first level change, and the most
     /// seen at any later one (model instances are pooled, cells reused).
     nodes: Option<(f64, f64)>,
+    /// The request a click or F5 went to: when it started no order, the
+    /// request is still open and is decided again.
+    maybe_refused: Option<(u64, u64)>,
 }
 
 impl Soak {
@@ -1738,6 +2170,7 @@ impl Soak {
             seen: 0,
             shots: None,
             nodes: None,
+            maybe_refused: None,
         }
     }
 
@@ -1940,12 +2373,21 @@ impl Soak {
         if self.answered >= self.budget {
             return Ok(true);
         }
+        // an order answers on its own until it ends
+        if g.driver.is_active() {
+            self.progress = Instant::now();
+            return Ok(false);
+        }
         let Some((id, prompt)) = g.pending.clone() else {
             return Ok(false);
         };
         let req = (g.session_serial, id);
         if req <= self.last_req {
-            return Ok(false);
+            // a click or F5 that started no order leaves the request open
+            if self.maybe_refused != Some(req) {
+                return Ok(false);
+            }
+            self.maybe_refused = None;
         }
         if self.verbose {
             for m in g.world.log.since(self.seen) {
@@ -1963,6 +2405,15 @@ impl Soak {
         self.seen = g.world.log.last_seq();
         check_dialog(g, id, &prompt)?;
         let events = self.decide(g, id, &prompt)?;
+        let may_start_nothing = events.iter().any(|e| {
+            matches!(
+                e,
+                UiEvent::MapClick { button: 1, .. } | UiEvent::Key(KeyInput { key: Key::F(5), .. })
+            )
+        });
+        if may_start_nothing {
+            self.maybe_refused = Some(req);
+        }
         self.note(format!(
             "#{} {} -> {events:?}",
             self.answered,
@@ -2031,9 +2482,10 @@ impl Soak {
                 self.dir_answer = None;
                 self.digging = false;
                 self.inventory = false;
-                // now and then a click on a known cell: travel, a step, the
-                // "here" menu (left) or a look (right)
-                if self.plan.is_empty() && self.rng.chance(3) {
+                // now and then a click on a known cell: an order to walk
+                // there and act (left), the engine's menu of actions there
+                // (right)
+                if self.plan.is_empty() && self.rng.chance(8) {
                     let cells = known_cells(g);
                     if !cells.is_empty() {
                         let (x, y) = self.rng.pick(&cells);
@@ -2045,7 +2497,15 @@ impl Soak {
                 let door = closed_door_next_to_hero(g, &dirs);
                 let k = self.command_key(&dirs, stairs_down_known(g), door, turn);
                 self.inventory = k == plain('i');
-                vec![key(k)]
+                match k.key {
+                    // a count and its command in one answer: the client
+                    // keeps the count and repeats the command as an order
+                    Key::Char(c) if c.is_ascii_digit() && !g.world.number_pad => {
+                        let then = self.plan.pop_front().unwrap_or(plain('s'));
+                        vec![key(k), key(then)]
+                    }
+                    _ => vec![key(k)],
+                }
             }
             Prompt::Key => {
                 if self.rng.chance(20) {
@@ -2275,6 +2735,8 @@ impl Soak {
                 self.pray = true;
                 plain('#')
             }
+            // rest until HP and Pw are full (nothing when they are)
+            195 => KeyInput::plain(Key::F(5)),
             _ => {
                 if self.rng.chance(50) {
                     self.dir_answer = Some(dir);
@@ -2391,6 +2853,7 @@ impl SelfTest {
             "menus" => menus(),
             "text" => text(),
             "soak" => soak(args),
+            "orders" => orders(),
             _ => Vec::new(),
         };
         Some(SelfTest {
@@ -2479,6 +2942,7 @@ impl SelfTest {
                     Ok(false) => self.steps.push_front(Step::Soak(soak)),
                     Ok(true) => {
                         godot_print!("selftest: soak: {}", soak.summary());
+                        godot_print!("selftest: soak: {} actions of orders", game.order_actions);
                         if let Some(ui) = game.ui.as_ref() {
                             let m = ui.map.motion_stats();
                             godot_print!("selftest: soak: animated {m:?}");

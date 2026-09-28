@@ -15,7 +15,7 @@ override GODOT := $(if $(filter %.app %.app/,$(GODOT)),$(patsubst %/,%,$(GODOT))
 # GNU coreutils' timeout; Homebrew's coreutils names it gtimeout on macOS
 TIMEOUT ?= $(shell command -v timeout || command -v gtimeout)
 GODOT_PROJECT := client/godot
-SELFTESTS := smoke keys save close crash menus text dialogs moves soak
+SELFTESTS := smoke keys save close crash menus text dialogs moves orders soak
 # answered requests of the soak in test-client (about 35 s; from 1000 on the
 # soak fails unless the level changes); `make soak` runs the default, 2000
 SOAK_CI := 2000
