@@ -129,8 +129,8 @@ impl Responder for ScriptResponder {
             .ok_or_else(|| LinkError::Script(format!("script exhausted; engine asks {req:?}")))?;
         let reply = match (req, step) {
             (_, Step::Hangup) => return Ok(None),
-            (Request::Nhgetch | Request::NhPoskey, Step::Key(k)) => Reply::Key(k),
-            (Request::NhPoskey, Step::Click(x, y)) => Reply::Click { x, y, modifier: 1 },
+            (Request::Nhgetch | Request::NhPoskey { .. }, Step::Key(k)) => Reply::Key(k),
+            (Request::NhPoskey { .. }, Step::Click(x, y)) => Reply::Click { x, y, modifier: 1 },
             (Request::GetExtCmd, Step::Ext(c)) => Reply::ExtCmd(c),
             (Request::YnFunction { .. } | Request::MessageMenu { .. }, Step::Yn(c)) => {
                 Reply::Char(c)

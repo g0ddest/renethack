@@ -91,6 +91,9 @@ pub enum WinCall {
     DoprevMessage,
     NumberPad {
         state: i32,
+        /// Direction keys now in effect, NetHack's order "hykulnjb><"
+        /// (digits with number_pad on; swap_yz and phone layouts included).
+        dirchars: Option<String>,
     },
     DelayOutput,
     PreferenceUpdate {
@@ -144,6 +147,9 @@ pub struct MenuItem {
     pub clr: i32,
     pub str: Option<String>,
     pub preselected: bool,
+    /// MENU_ITEMFLAGS_SKIPINVERT: bulk select and invert never turn it on.
+    #[serde(default)]
+    pub skipinvert: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -191,7 +197,11 @@ pub enum Request {
         mesg: Option<String>,
     },
     Nhgetch,
-    NhPoskey,
+    /// A command key or a map click; `getpos`: inside getpos(), where the
+    /// keys move a cursor to pick a spot (absent on the wire otherwise).
+    NhPoskey {
+        getpos: bool,
+    },
     YnFunction {
         query: String,
         choices: Option<String>,
@@ -213,7 +223,7 @@ impl Request {
             Request::SelectMenu { .. } => "select_menu",
             Request::MessageMenu { .. } => "message_menu",
             Request::Nhgetch => "nhgetch",
-            Request::NhPoskey => "nh_poskey",
+            Request::NhPoskey { .. } => "nh_poskey",
             Request::YnFunction { .. } => "yn_function",
             Request::Getlin { .. } => "getlin",
             Request::GetExtCmd => "get_ext_cmd",
@@ -318,6 +328,8 @@ struct RawPrint {
 #[derive(Deserialize)]
 struct State {
     state: i32,
+    #[serde(default)]
+    dirchars: Option<String>,
 }
 #[derive(Deserialize)]
 struct Pref {
@@ -347,6 +359,11 @@ struct MessageMenu {
     letter: i32,
     how: i32,
     mesg: Option<String>,
+}
+#[derive(Deserialize)]
+struct Poskey {
+    #[serde(default)]
+    getpos: bool,
 }
 #[derive(Deserialize)]
 struct Yn {
@@ -442,9 +459,13 @@ fn win_call(name: String, a: Value) -> Result<WinCall, ProtocolError> {
         }
         "nhbell" => WinCall::Nhbell,
         "doprev_message" => WinCall::DoprevMessage,
-        "number_pad" => WinCall::NumberPad {
-            state: args::<State>(n, a)?.state,
-        },
+        "number_pad" => {
+            let st: State = args(n, a)?;
+            WinCall::NumberPad {
+                state: st.state,
+                dirchars: st.dirchars,
+            }
+        }
         "delay_output" => WinCall::DelayOutput,
         "preference_update" => WinCall::PreferenceUpdate {
             pref: args::<Pref>(n, a)?.pref.unwrap_or_default(),
@@ -503,7 +524,10 @@ fn request(name: &str, a: Value) -> Result<Request, ProtocolError> {
             }
         }
         "nhgetch" => Request::Nhgetch,
-        "nh_poskey" => Request::NhPoskey,
+        "nh_poskey" => {
+            let p: Poskey = args(name, a)?;
+            Request::NhPoskey { getpos: p.getpos }
+        }
         "yn_function" => {
             let y: Yn = args(name, a)?;
             Request::YnFunction {

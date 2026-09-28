@@ -1,15 +1,22 @@
 //! Run `nh-engine` as a child process and drive a protocol session.
 
+mod catalog_probe;
 mod engine;
+mod handshake;
+mod live;
 mod playground;
 mod recording;
 mod responder;
+mod saves;
 mod session;
 
+pub use catalog_probe::*;
 pub use engine::*;
+pub use live::*;
 pub use playground::*;
 pub use recording::*;
 pub use responder::*;
+pub use saves::*;
 pub use session::*;
 
 use std::time::Duration;

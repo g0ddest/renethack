@@ -1,0 +1,15 @@
+[package]
+name = "nh-world"
+description = "renethack: the client's world model (map, status, log, prompts, menus, keys), no UI"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+nh-protocol = { path = "../nh-protocol" }
+
+[dev-dependencies]
+nh-link = { path = "../nh-link" }
+serde_json.workspace = true
+tempfile = "3"

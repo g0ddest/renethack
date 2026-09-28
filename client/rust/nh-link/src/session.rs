@@ -1,9 +1,10 @@
 use std::process::ExitStatus;
 use std::time::Duration;
 
-use nh_protocol::{Catalog, EngineMsg, Hello, PROTOCOL_VERSION, Request, WinCall, fnv1a64};
+use nh_protocol::{Catalog, EngineMsg, Hello, Request, WinCall, fnv1a64};
 use serde_json::Value;
 
+use crate::handshake::Handshake;
 use crate::{Engine, LinkError, RecordedReply};
 
 /// Decides how to answer each engine request.
@@ -73,34 +74,14 @@ pub fn run_session(
     limits: &SessionLimits,
 ) -> Result<Transcript, LinkError> {
     let mut t = Transcript::default();
+    let mut handshake = Handshake::new();
     let mut requests = 0usize;
     while let Some(inc) = engine.recv(limits.step_timeout)? {
         t.lines.push(inc.raw);
+        handshake.check(&inc.msg)?;
         match inc.msg {
-            EngineMsg::Hello(h) => {
-                if t.lines.len() != 1 || t.hello.is_some() {
-                    return Err(LinkError::Handshake(
-                        "hello is not the first message".into(),
-                    ));
-                }
-                if h.protocol != PROTOCOL_VERSION {
-                    return Err(LinkError::Handshake(format!(
-                        "engine speaks protocol {}, client {}",
-                        h.protocol, PROTOCOL_VERSION
-                    )));
-                }
-                t.hello = Some(h);
-            }
-            _ if t.hello.is_none() => {
-                return Err(LinkError::Handshake("first message is not hello".into()));
-            }
+            EngineMsg::Hello(h) => t.hello = Some(h),
             EngineMsg::Catalog(c) => t.catalog = Some(c),
-            EngineMsg::Win(WinCall::RawPrint { .. }) => {}
-            EngineMsg::Win(_) | EngineMsg::Req { .. } if t.catalog.is_none() => {
-                return Err(LinkError::Handshake(
-                    "window call before the catalog".into(),
-                ));
-            }
             EngineMsg::Win(_) => {}
             EngineMsg::Req { id, req } => {
                 requests += 1;

@@ -1,13 +1,25 @@
 [workspace]
 resolver = "2"
-members = ["nh-protocol", "nh-link", "nh-cli"]
+members = ["nh-protocol", "nh-link", "nh-cli", "nh-world", "nh-art", "renethack-gd"]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
+# gdext 0.5.5 needs 1.94
+rust-version = "1.94"
 license = "NGPL"
 
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
+# gdext is pinned: its API changes between minor versions
+godot = { version = "=0.5.5", features = ["api-4-5"] }
+
+# A level change sends ~1700 print_glyph lines: keep the decoder fast in
+# debug builds too (2000 lines take 56 ms unoptimized, 6 ms optimized).
+[profile.dev.package."*"]
+opt-level = 2
+
+[profile.dev.package.nh-protocol]
+opt-level = 2

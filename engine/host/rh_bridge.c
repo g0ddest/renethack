@@ -273,7 +273,11 @@ h_display_nhwindow(void *ret UNUSED, va_list *ap)
     cJSON *a = args_new();
 
     add_int(a, "win", w);
-    if (blocking) {
+    /* tty waits on text and menu windows whatever the flag, and the core
+       relies on it (#version, the key list, shop bills): so does the client */
+    if (blocking
+        || (valid_win(w)
+            && (windows[w].type == NHW_TEXT || windows[w].type == NHW_MENU))) {
         /* "--More--" style pause: the client acknowledges */
         cJSON_Delete(rh_proto_request("display_nhwindow", a));
     } else {
@@ -379,6 +383,9 @@ h_add_menu(void *ret UNUSED, va_list *ap)
     add_int(a, "clr", clr);
     add_str(a, "str", str);
     add_bool(a, "preselected", (itemflags & MENU_ITEMFLAGS_SELECTED) != 0);
+    /* bulk select/invert ('.', ',', '@') must not turn such items on
+       ("Auto-select every relevant item", "All types") */
+    add_bool(a, "skipinvert", (itemflags & MENU_ITEMFLAGS_SKIPINVERT) != 0);
     menu_add(w, id);
     rh_proto_send("win", "add_menu", a);
 }
@@ -570,7 +577,15 @@ h_nh_poskey(void *ret, va_list *ap)
 {
     coordxy *x = va_arg(*ap, coordxy *), *y = va_arg(*ap, coordxy *);
     int *mod = va_arg(*ap, int *);
-    cJSON *r = rh_proto_request("nh_poskey", (cJSON *) 0);
+    cJSON *a = (cJSON *) 0, *r;
+
+    /* getpos() moves a cursor over the map with these keys: the client
+       says so (the cursor is not the hero, the prompt is "pick a spot") */
+    if (gg.getposx) {
+        a = args_new();
+        add_bool(a, "getpos", 1);
+    }
+    r = rh_proto_request("nh_poskey", a);
 
     if (!r) {
         *(int *) ret = EOF;
@@ -673,12 +688,15 @@ h_get_ext_cmd(void *ret, va_list *ap UNUSED)
     cJSON_Delete(r);
 }
 
+/* after the number_pad option changes; reset_commands() has run, so the
+   current direction keys (swap_yz, phone layout...) go along */
 static void
 h_number_pad(void *ret UNUSED, va_list *ap)
 {
     cJSON *a = args_new();
 
     add_int(a, "state", va_arg(*ap, int));
+    add_str(a, "dirchars", gc.Cmd.dirchars);
     rh_proto_send("win", "number_pad", a);
 }
 

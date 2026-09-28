@@ -2,7 +2,7 @@
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use clap::{Args, Parser, Subcommand};
 use nh_link::*;
@@ -160,39 +160,27 @@ fn replay(engine_args: EngineArgs, path: &Path) -> Result<ExitCode, LinkError> {
 }
 
 fn catalog(engine_args: EngineArgs) -> Result<ExitCode, LinkError> {
-    let pg = playground(&engine_args)?;
-    let cfg = EngineConfig {
-        engine: engine_dir(&engine_args).join("nh-engine"),
-        playground: pg.path.clone(),
-        options: default_options(),
-        seed: None,
-        fixed_time: None,
+    let dir = engine_dir(&engine_args);
+    let engine = dir.join("nh-engine");
+    let (h, c) = match &engine_args.playground {
+        // the probe reads the playground's data files and leaves its games alone
+        Some(_) => fetch_catalog(&engine, &playground(&engine_args)?.path)?,
+        None => fetch_catalog(&engine, &dir.join("data"))?,
     };
-    let mut engine = Engine::spawn(&cfg)?;
-    while let Some(inc) = engine.recv(Duration::from_secs(10))? {
-        match inc.msg {
-            EngineMsg::Hello(h) => println!(
-                "engine {} (protocol {}, patchset {})",
-                h.engine, h.protocol, h.patchset
-            ),
-            EngineMsg::Catalog(c) => {
-                println!(
-                    "monsters {}, object tiles {}, map symbols {}, roles {}, races {}",
-                    c.monsters.len(),
-                    c.object_tiles.len(),
-                    c.cmap.len(),
-                    c.roles.len(),
-                    c.races.len()
-                );
-                engine.kill();
-                return Ok(ExitCode::SUCCESS);
-            }
-            _ => {}
-        }
-    }
-    Err(LinkError::Handshake(
-        "engine exited before sending the catalog".into(),
-    ))
+    println!(
+        "engine {} (protocol {}, patchset {})",
+        h.engine, h.protocol, h.patchset
+    );
+    println!(
+        "monsters {}, object tiles {}, map symbols {}, roles {}, races {}, extended commands {}",
+        c.monsters.len(),
+        c.object_tiles.len(),
+        c.cmap.len(),
+        c.roles.len(),
+        c.races.len(),
+        c.extcmds.len()
+    );
+    Ok(ExitCode::SUCCESS)
 }
 
 fn print_transcript(t: &Transcript) {

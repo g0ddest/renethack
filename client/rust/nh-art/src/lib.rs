@@ -1,0 +1,1024 @@
+//! The art manifest (`client/godot/art/manifest.json`) and the fallback
+//! chain of the spec (section 6.2) that picks what to draw:
+//!
+//! - a monster: its name, else its class letter, else its body (the
+//!   catalog's flags: serpent, flyer, blob, ghost, humanoid...), else a
+//!   generic creature; the height follows the catalog size;
+//! - an object: its appearance, else its class symbol, else a generic
+//!   object. Only `ObjectTile` data (tile, class, appearance) goes in: the
+//!   client never knows an object's glyph, and its look never tells more
+//!   than its appearance;
+//! - a map feature: its `Terrain`, else the generic entry.
+//!
+//! Every answer is plain data: a model (a scene file or a procedural body),
+//! its scale and lift, a tint, a skin and the fallback level used (for the
+//! coverage report and a developer's hover). No Godot here.
+
+use std::collections::BTreeMap;
+use std::path::Path;
+
+use nh_protocol::{MonsterInfo, ObjectTile, mg};
+use nh_world::Terrain;
+use serde::Deserialize;
+
+/// Where the manifest lives, relative to the Godot project.
+pub const MANIFEST_PATH: &str = "art/manifest.json";
+
+#[derive(Debug, thiserror::Error)]
+pub enum ArtError {
+    #[error("cannot read the art manifest: {0}")]
+    Io(#[from] std::io::Error),
+    #[error("the art manifest is not valid JSON for its schema: {0}")]
+    Json(#[from] serde_json::Error),
+    #[error("the art manifest is inconsistent: {0}")]
+    Invalid(String),
+}
+
+/// A body built in code from primitives with the project's materials.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Proc {
+    // creatures
+    Serpent,
+    Worm,
+    Bug,
+    Spider,
+    Bat,
+    Bird,
+    Blob,
+    Eye,
+    Light,
+    Vortex,
+    Fungus,
+    Lizard,
+    Dragon,
+    Fish,
+    Piercer,
+    Beast,
+    // objects
+    Ring,
+    Amulet,
+    Wand,
+    Gem,
+    Rock,
+    Ball,
+    Helm,
+    Boots,
+    Gloves,
+    Garment,
+    Cuirass,
+    Pole,
+    Bow,
+    Arrows,
+    Fruit,
+    Egg,
+    Tin,
+    Lump,
+    Splash,
+    Horn,
+    Orb,
+    Mirror,
+    Heap,
+}
+
+/// Animation names of a model (in its own scene or in its rig's library).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Anims {
+    #[serde(default)]
+    pub idle: Option<String>,
+    #[serde(default)]
+    pub walk: Option<String>,
+    #[serde(default)]
+    pub attack: Option<String>,
+    #[serde(default)]
+    pub hit: Option<String>,
+    #[serde(default)]
+    pub death: Option<String>,
+}
+
+fn one() -> f32 {
+    1.0
+}
+
+/// A model: a scene under `client/godot/art` or a procedural body.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ModelSpec {
+    /// Scene file relative to `client/godot/art` (glTF, GLB, FBX).
+    #[serde(default)]
+    pub scene: Option<String>,
+    #[serde(default)]
+    pub proc: Option<Proc>,
+    /// The model's own reference size (height of a creature standing,
+    /// length of a thing lying) in its units: scale = target / size.
+    pub size: f32,
+    /// Raise the model by this much of its own units so it rests on the
+    /// ground (feet at 0).
+    #[serde(default)]
+    pub lift: f32,
+    /// Euler angles in degrees applied to the model before the cell's own
+    /// turn (a sword lies down, a fallen trunk stands up).
+    #[serde(default)]
+    pub rot: [f32; 3],
+    /// The animation library (see `libraries`) that drives this rig.
+    #[serde(default)]
+    pub rig: Option<String>,
+    /// Drop the library's position tracks (a shorter rig keeps its height).
+    #[serde(default)]
+    pub strip_root: bool,
+    #[serde(default)]
+    pub anims: Anims,
+    /// Monsters: the catalog size's height times this.
+    #[serde(default = "one")]
+    pub size_factor: f32,
+    /// Objects and features: the size in metres when no rule gives one.
+    #[serde(default)]
+    pub target: Option<f32>,
+    /// How much the glyph colour tints it when no rule says (0 = never).
+    #[serde(default)]
+    pub tint_strength: f32,
+    /// The material of a procedural body's skin.
+    #[serde(default)]
+    pub material: Option<String>,
+    /// A head built in code on the rig's `Head` bone, for bodies that come
+    /// without one: "male", "female", "bearded" or "hood" (a face in a hood).
+    #[serde(default)]
+    pub head: Option<String>,
+    /// Multiplies the model's own colours ("#rrggbb"): mutes a pack's
+    /// bright palette to the project's dark one.
+    #[serde(default)]
+    pub shade: Option<String>,
+}
+
+impl ModelSpec {
+    pub fn shade_rgb(&self) -> [f32; 3] {
+        self.shade
+            .as_deref()
+            .and_then(hex)
+            .unwrap_or([1.0, 1.0, 1.0])
+    }
+}
+
+/// A PBR material: `<textures>_albedo.jpg`, `_normal.jpg` and `_arm.jpg`
+/// (ambient occlusion, roughness, metallic in R, G, B), or a plain colour.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MaterialSpec {
+    #[serde(default)]
+    pub textures: Option<String>,
+    /// Albedo colour ("#rrggbb"), multiplied with the texture.
+    #[serde(default)]
+    pub color: Option<String>,
+    /// World-space texture repeats per metre (triplanar).
+    #[serde(default = "one")]
+    pub uv_scale: f32,
+    #[serde(default)]
+    pub roughness: Option<f32>,
+    #[serde(default)]
+    pub metallic: Option<f32>,
+    #[serde(default = "one")]
+    pub normal_scale: f32,
+    #[serde(default)]
+    pub emission: Option<String>,
+    #[serde(default)]
+    pub emission_energy: f32,
+    /// Below 1: see-through.
+    #[serde(default)]
+    pub alpha: Option<f32>,
+}
+
+impl MaterialSpec {
+    pub fn albedo_path(&self) -> Option<String> {
+        self.textures.as_ref().map(|t| format!("{t}_albedo.jpg"))
+    }
+
+    pub fn normal_path(&self) -> Option<String> {
+        self.textures.as_ref().map(|t| format!("{t}_normal.jpg"))
+    }
+
+    pub fn arm_path(&self) -> Option<String> {
+        self.textures.as_ref().map(|t| format!("{t}_arm.jpg"))
+    }
+
+    pub fn albedo(&self) -> [f32; 3] {
+        self.color
+            .as_deref()
+            .and_then(hex)
+            .unwrap_or([1.0, 1.0, 1.0])
+    }
+
+    pub fn emission_color(&self) -> Option<[f32; 3]> {
+        self.emission.as_deref().and_then(hex)
+    }
+}
+
+/// How a monster or object rule looks; missing fields come from the next,
+/// more general rule of the chain.
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ArtRule {
+    #[serde(default)]
+    pub model: Option<String>,
+    /// Monsters: the model for a female (MG_FEMALE).
+    #[serde(default)]
+    pub female: Option<String>,
+    /// Objects: alternatives picked by the appearance (stable).
+    #[serde(default)]
+    pub variants: Vec<String>,
+    /// Target size in metres (monsters: overrides the catalog size).
+    #[serde(default)]
+    pub size: Option<f32>,
+    /// Multiplies the target size.
+    #[serde(default)]
+    pub scale: Option<f32>,
+    /// A fixed tint ("#rrggbb"); without it the glyph colour tints.
+    #[serde(default)]
+    pub tint: Option<String>,
+    #[serde(default)]
+    pub tint_strength: Option<f32>,
+    /// "translucent", or a material name that replaces the model's own.
+    #[serde(default)]
+    pub skin: Option<String>,
+}
+
+/// A monster rule by body flags: every flag of `all`, none of `none`, and
+/// a size among `sizes` (any when empty).
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BodyRule {
+    #[serde(default)]
+    pub all: Vec<String>,
+    #[serde(default)]
+    pub none: Vec<String>,
+    #[serde(default)]
+    pub sizes: Vec<String>,
+    pub art: ArtRule,
+}
+
+impl BodyRule {
+    fn matches(&self, m: &MonsterInfo) -> bool {
+        let has = |f: &String| m.body.iter().any(|b| b == f);
+        self.all.iter().all(has)
+            && !self.none.iter().any(has)
+            && (self.sizes.is_empty() || self.sizes.contains(&m.size))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MonsterRules {
+    /// Height in metres of a creature of each catalog size.
+    pub sizes: BTreeMap<String, f32>,
+    #[serde(default)]
+    pub names: BTreeMap<String, ArtRule>,
+    #[serde(default)]
+    pub classes: BTreeMap<String, ArtRule>,
+    #[serde(default)]
+    pub bodies: Vec<BodyRule>,
+    pub generic: ArtRule,
+}
+
+/// An object rule by appearance: the class (any when absent) and either an
+/// exact appearance or whole words in it.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AppearanceRule {
+    #[serde(default)]
+    pub class: Option<String>,
+    #[serde(default)]
+    pub exact: Vec<String>,
+    #[serde(default)]
+    pub words: Vec<String>,
+    pub art: ArtRule,
+}
+
+impl AppearanceRule {
+    fn matches(&self, t: &ObjectTile) -> bool {
+        if self.class.as_ref().is_some_and(|c| *c != t.class) {
+            return false;
+        }
+        let a = t.appearance.to_lowercase();
+        self.exact.iter().any(|e| a == e.to_lowercase())
+            || self.words.iter().any(|w| has_words(&a, &w.to_lowercase()))
+    }
+}
+
+/// `phrase` (one or more words) occurs in `text` on word boundaries.
+fn has_words<'a>(text: &'a str, phrase: &'a str) -> bool {
+    let split = |s: &'a str| -> Vec<&'a str> {
+        s.split(|c: char| !c.is_alphanumeric())
+            .filter(|w| !w.is_empty())
+            .collect()
+    };
+    let (words, want) = (split(text), split(phrase));
+    !want.is_empty() && words.windows(want.len()).any(|w| w == want.as_slice())
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ObjectRules {
+    #[serde(default)]
+    pub appearances: Vec<AppearanceRule>,
+    #[serde(default)]
+    pub classes: BTreeMap<String, ArtRule>,
+    pub generic: ArtRule,
+}
+
+/// A map feature: its surface material, a second one for trim (door
+/// bands), and a model standing on it.
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TerrainSpec {
+    #[serde(default)]
+    pub material: Option<String>,
+    #[serde(default)]
+    pub trim: Option<String>,
+    #[serde(default)]
+    pub model: Option<String>,
+    #[serde(default)]
+    pub size: Option<f32>,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct StatueSpec {
+    /// The stone of a statue made from a monster's model.
+    pub material: String,
+    /// A statue of nothing known.
+    pub model: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawManifest {
+    version: u32,
+    #[serde(default)]
+    libraries: BTreeMap<String, String>,
+    materials: BTreeMap<String, MaterialSpec>,
+    models: BTreeMap<String, ModelSpec>,
+    monsters: MonsterRules,
+    objects: ObjectRules,
+    terrain: BTreeMap<String, TerrainSpec>,
+    statue: StatueSpec,
+}
+
+/// How specific the art found is (most specific first).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Level {
+    /// A monster's own name.
+    Name,
+    /// An object's appearance.
+    Appearance,
+    /// A feature's own terrain.
+    Terrain,
+    /// The class letter or symbol.
+    Class,
+    /// The monster's body flags.
+    Body,
+    Generic,
+}
+
+/// How the model is coloured.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Tint {
+    None,
+    /// By the glyph's colour, this strongly (0..1).
+    Glyph(f32),
+    /// By a fixed colour.
+    Rgb([f32; 3], f32),
+}
+
+/// What covers the model.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Skin {
+    /// Its own materials (tinted).
+    Own,
+    /// See-through (ghosts, wraiths).
+    Translucent,
+    /// This material everywhere (statues, golems).
+    Material(usize),
+}
+
+/// The art chosen for one thing.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Resolved {
+    /// Index into `ArtManifest::model_at`.
+    pub model: usize,
+    /// Uniform scale of the model.
+    pub scale: f32,
+    /// Metres to raise it so it rests on the ground.
+    pub lift: f32,
+    /// The model's own turn (degrees).
+    pub rot: [f32; 3],
+    /// Its size in metres once scaled (height of a creature).
+    pub height: f32,
+    pub tint: Tint,
+    pub skin: Skin,
+    pub level: Level,
+}
+
+/// A map feature's art.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TerrainArt {
+    pub material: Option<usize>,
+    pub trim: Option<usize>,
+    pub model: Option<Resolved>,
+    pub level: Level,
+}
+
+/// The parsed, checked manifest.
+#[derive(Debug, Clone)]
+pub struct ArtManifest {
+    libraries: BTreeMap<String, String>,
+    materials: Vec<(String, MaterialSpec)>,
+    models: Vec<(String, ModelSpec)>,
+    monsters: MonsterRules,
+    objects: ObjectRules,
+    terrain: BTreeMap<String, TerrainSpec>,
+    statue_material: usize,
+    statue_model: usize,
+}
+
+/// "#rrggbb" as linear-ish 0..1 components (the client treats them as sRGB).
+pub fn hex(s: &str) -> Option<[f32; 3]> {
+    let s = s.strip_prefix('#')?;
+    if s.len() != 6 {
+        return None;
+    }
+    let c = |i: usize| {
+        u8::from_str_radix(s.get(i..i + 2)?, 16)
+            .ok()
+            .map(|v| f32::from(v) / 255.0)
+    };
+    Some([c(0)?, c(2)?, c(4)?])
+}
+
+/// FNV-1a: a stable pick among variants.
+fn stable_hash(s: &str) -> u64 {
+    s.bytes().fold(0xcbf2_9ce4_8422_2325, |h, b| {
+        (h ^ u64::from(b)).wrapping_mul(0x0100_0000_01b3)
+    })
+}
+
+impl ArtManifest {
+    pub fn parse(json: &str) -> Result<ArtManifest, ArtError> {
+        let raw: RawManifest = serde_json::from_str(json)?;
+        if raw.version != 1 {
+            return Err(ArtError::Invalid(format!("version {}", raw.version)));
+        }
+        let materials: Vec<_> = raw.materials.into_iter().collect();
+        let models: Vec<_> = raw.models.into_iter().collect();
+        let mat = |name: &str| materials.iter().position(|(n, _)| n == name);
+        let model = |name: &str| models.iter().position(|(n, _)| n == name);
+        let mut errors = Vec::new();
+        for (name, m) in &models {
+            if m.scene.is_some() == m.proc.is_some() {
+                errors.push(format!("model {name}: exactly one of scene and proc"));
+            }
+            if m.size <= 0.0 {
+                errors.push(format!("model {name}: size {}", m.size));
+            }
+            if let Some(rig) = &m.rig
+                && !raw.libraries.contains_key(rig)
+            {
+                errors.push(format!("model {name}: no library {rig}"));
+            }
+            if let Some(mm) = &m.material
+                && mat(mm).is_none()
+            {
+                errors.push(format!("model {name}: no material {mm}"));
+            }
+            if let Some(h) = &m.head
+                && !matches!(h.as_str(), "male" | "female" | "bearded" | "hood")
+            {
+                errors.push(format!("model {name}: head {h}"));
+            }
+            if let Some(sh) = &m.shade
+                && hex(sh).is_none()
+            {
+                errors.push(format!("model {name}: shade {sh}"));
+            }
+        }
+        let rule_errors = |what: &str, r: &ArtRule| {
+            let mut errors = Vec::new();
+            for m in r.model.iter().chain(&r.female).chain(&r.variants) {
+                if model(m).is_none() {
+                    errors.push(format!("{what}: no model {m}"));
+                }
+            }
+            if let Some(s) = &r.skin
+                && s != "translucent"
+                && mat(s).is_none()
+            {
+                errors.push(format!("{what}: no skin material {s}"));
+            }
+            if let Some(t) = &r.tint
+                && hex(t).is_none()
+            {
+                errors.push(format!("{what}: tint {t}"));
+            }
+            errors
+        };
+        let mut check_rule = |what: &str, r: &ArtRule| errors.extend(rule_errors(what, r));
+        for (n, r) in &raw.monsters.names {
+            check_rule(&format!("monster {n}"), r);
+        }
+        for (n, r) in &raw.monsters.classes {
+            check_rule(&format!("class {n}"), r);
+        }
+        for (i, b) in raw.monsters.bodies.iter().enumerate() {
+            check_rule(&format!("body rule {i}"), &b.art);
+        }
+        check_rule("generic monster", &raw.monsters.generic);
+        for (i, a) in raw.objects.appearances.iter().enumerate() {
+            check_rule(&format!("appearance rule {i}"), &a.art);
+        }
+        for (n, r) in &raw.objects.classes {
+            check_rule(&format!("object class {n}"), r);
+        }
+        check_rule("generic object", &raw.objects.generic);
+        if raw.monsters.generic.model.is_none() {
+            errors.push("the generic monster has no model".into());
+        }
+        if raw.objects.generic.model.is_none() && raw.objects.generic.variants.is_empty() {
+            errors.push("the generic object has no model".into());
+        }
+        for size in ["tiny", "small", "medium", "large", "huge", "gigantic"] {
+            if !raw.monsters.sizes.contains_key(size) {
+                errors.push(format!("no height for size {size}"));
+            }
+        }
+        for (n, t) in &raw.terrain {
+            let known = n == "generic" || Terrain::ALL.iter().any(|t| format!("{t:?}") == *n);
+            if !known {
+                errors.push(format!("terrain {n}: no such terrain"));
+            }
+            for m in t.material.iter().chain(&t.trim) {
+                if mat(m).is_none() {
+                    errors.push(format!("terrain {n}: no material {m}"));
+                }
+            }
+            if let Some(m) = &t.model
+                && model(m).is_none()
+            {
+                errors.push(format!("terrain {n}: no model {m}"));
+            }
+        }
+        if !raw.terrain.contains_key("generic") {
+            errors.push("no generic terrain".into());
+        }
+        let statue_material = mat(&raw.statue.material);
+        let statue_model = model(&raw.statue.model);
+        if statue_material.is_none() || statue_model.is_none() {
+            errors.push("the statue's material or model is missing".into());
+        }
+        if !errors.is_empty() {
+            return Err(ArtError::Invalid(errors.join("; ")));
+        }
+        Ok(ArtManifest {
+            libraries: raw.libraries,
+            materials,
+            models,
+            monsters: raw.monsters,
+            objects: raw.objects,
+            terrain: raw.terrain,
+            statue_material: statue_material.unwrap_or_default(),
+            statue_model: statue_model.unwrap_or_default(),
+        })
+    }
+
+    pub fn load(path: &Path) -> Result<ArtManifest, ArtError> {
+        ArtManifest::parse(&std::fs::read_to_string(path)?)
+    }
+
+    pub fn model_at(&self, i: usize) -> (&str, &ModelSpec) {
+        let (n, m) = &self.models[i];
+        (n, m)
+    }
+
+    pub fn models(&self) -> impl Iterator<Item = (usize, &str, &ModelSpec)> {
+        self.models
+            .iter()
+            .enumerate()
+            .map(|(i, (n, m))| (i, n.as_str(), m))
+    }
+
+    pub fn model_index(&self, name: &str) -> Option<usize> {
+        self.models.iter().position(|(n, _)| n == name)
+    }
+
+    pub fn material_at(&self, i: usize) -> (&str, &MaterialSpec) {
+        let (n, m) = &self.materials[i];
+        (n, m)
+    }
+
+    pub fn material_index(&self, name: &str) -> Option<usize> {
+        self.materials.iter().position(|(n, _)| n == name)
+    }
+
+    pub fn materials(&self) -> impl Iterator<Item = (usize, &str, &MaterialSpec)> {
+        self.materials
+            .iter()
+            .enumerate()
+            .map(|(i, (n, m))| (i, n.as_str(), m))
+    }
+
+    /// The scene file of an animation library.
+    pub fn library(&self, name: &str) -> Option<&str> {
+        self.libraries.get(name).map(String::as_str)
+    }
+
+    /// Every file the manifest names, relative to `client/godot/art`.
+    pub fn files(&self) -> Vec<String> {
+        let mut out: Vec<String> = self.libraries.values().cloned().collect();
+        out.extend(self.models.iter().filter_map(|(_, m)| m.scene.clone()));
+        for (_, m) in &self.materials {
+            out.extend(m.albedo_path());
+            out.extend(m.normal_path());
+            out.extend(m.arm_path());
+        }
+        out.sort();
+        out.dedup();
+        out
+    }
+
+    fn placed(&self, model: usize, target: f32, level: Level) -> Resolved {
+        let spec = &self.models[model].1;
+        let scale = target / spec.size;
+        Resolved {
+            model,
+            scale,
+            lift: spec.lift * scale,
+            rot: spec.rot,
+            height: target,
+            tint: if spec.tint_strength > 0.0 {
+                Tint::Glyph(spec.tint_strength)
+            } else {
+                Tint::None
+            },
+            skin: Skin::Own,
+            level,
+        }
+    }
+
+    /// Tint and skin from the most specific rules that set them.
+    fn apply(&self, chain: &[&ArtRule], mut r: Resolved) -> Resolved {
+        let first = |f: &dyn Fn(&ArtRule) -> Option<f32>| chain.iter().find_map(|r| f(r));
+        if let Some(t) = chain.iter().find_map(|r| r.tint.as_deref()).and_then(hex) {
+            let strength = first(&|r| r.tint_strength).unwrap_or(0.5);
+            r.tint = Tint::Rgb(t, strength);
+        } else if let Some(s) = first(&|r| r.tint_strength) {
+            r.tint = if s > 0.0 { Tint::Glyph(s) } else { Tint::None };
+        }
+        if let Some(skin) = chain.iter().find_map(|r| r.skin.as_deref()) {
+            r.skin = match self.material_index(skin) {
+                Some(i) => Skin::Material(i),
+                None => Skin::Translucent,
+            };
+        }
+        r
+    }
+
+    /// The rules of a monster from the most specific, with their levels.
+    fn monster_chain<'a>(&'a self, m: &MonsterInfo) -> Vec<(&'a ArtRule, Level)> {
+        let rules = &self.monsters;
+        let mut chain = Vec::new();
+        if let Some(r) = rules.names.get(&m.name) {
+            chain.push((r, Level::Name));
+        }
+        if let Some(r) = rules.classes.get(&m.class) {
+            chain.push((r, Level::Class));
+        }
+        if let Some(b) = rules.bodies.iter().find(|b| b.matches(m)) {
+            chain.push((&b.art, Level::Body));
+        }
+        chain.push((&rules.generic, Level::Generic));
+        chain
+    }
+
+    /// A monster's art; `flags` are the glyph's (MG_FEMALE picks a
+    /// female model where a rule has one).
+    pub fn monster(&self, m: &MonsterInfo, flags: u32) -> Resolved {
+        let chain = self.monster_chain(m);
+        let level = chain[0].1;
+        let rules: Vec<&ArtRule> = chain.iter().map(|(r, _)| *r).collect();
+        let female = flags & mg::FEMALE != 0;
+        // the model of the most specific rule with one (its female
+        // variant for a female); every other field from the most specific
+        // rule of the whole chain that sets it
+        let name = rules.iter().find_map(|r| {
+            r.model.as_ref()?;
+            if female { r.female.as_ref() } else { None }.or(r.model.as_ref())
+        });
+        let model = name.and_then(|n| self.model_index(n)).unwrap_or_default();
+        let spec = &self.models[model].1;
+        let height = match rules.iter().find_map(|r| r.size) {
+            Some(h) => h,
+            None => {
+                let base = self.monsters.sizes.get(&m.size).copied().unwrap_or(1.0);
+                base * spec.size_factor
+            }
+        };
+        let height = height * rules.iter().find_map(|r| r.scale).unwrap_or(1.0);
+        let placed = self.placed(model, height, level);
+        self.apply(&rules, placed)
+    }
+
+    /// A statue: the monster's model in stone, or the statue model for a
+    /// monster not known.
+    pub fn statue(&self, m: Option<&MonsterInfo>, flags: u32) -> Resolved {
+        match m {
+            Some(m) => Resolved {
+                skin: Skin::Material(self.statue_material),
+                tint: Tint::None,
+                ..self.monster(m, flags)
+            },
+            None => {
+                let spec = &self.models[self.statue_model].1;
+                self.placed(
+                    self.statue_model,
+                    spec.target.unwrap_or(1.0),
+                    Level::Generic,
+                )
+            }
+        }
+    }
+
+    /// An object's art from its appearance tile. It takes no glyph on
+    /// purpose: the look never reveals more than the appearance.
+    pub fn object(&self, tile: &ObjectTile) -> Resolved {
+        let rules = &self.objects;
+        let mut chain: Vec<(&ArtRule, Level)> = Vec::new();
+        if let Some(a) = rules.appearances.iter().find(|a| a.matches(tile)) {
+            chain.push((&a.art, Level::Appearance));
+        }
+        if let Some(r) = rules.classes.get(&tile.class) {
+            chain.push((r, Level::Class));
+        }
+        chain.push((&rules.generic, Level::Generic));
+        let level = chain[0].1;
+        let has_model = |r: &ArtRule| r.model.is_some() || !r.variants.is_empty();
+        let rules: Vec<&ArtRule> = chain.iter().map(|(r, _)| *r).collect();
+        let pick = rules.iter().find(|r| has_model(r)).map(|r| {
+            if r.variants.is_empty() {
+                r.model.clone().unwrap_or_default()
+            } else {
+                let i = stable_hash(&tile.appearance) as usize % r.variants.len();
+                r.variants[i].clone()
+            }
+        });
+        let model = pick.and_then(|n| self.model_index(&n)).unwrap_or_default();
+        let spec = &self.models[model].1;
+        let size = rules
+            .iter()
+            .find_map(|r| r.size)
+            .or(spec.target)
+            .unwrap_or(0.3);
+        let size = size * rules.iter().find_map(|r| r.scale).unwrap_or(1.0);
+        let placed = self.placed(model, size, level);
+        self.apply(&rules, placed)
+    }
+
+    /// A map feature's art: its own entry, else the generic one.
+    pub fn terrain(&self, t: Terrain) -> TerrainArt {
+        let (spec, level) = match self.terrain.get(&format!("{t:?}")) {
+            Some(s) => (s, Level::Terrain),
+            None => (&self.terrain["generic"], Level::Generic),
+        };
+        let model = spec.model.as_deref().and_then(|n| self.model_index(n));
+        TerrainArt {
+            material: spec
+                .material
+                .as_deref()
+                .and_then(|m| self.material_index(m)),
+            trim: spec.trim.as_deref().and_then(|m| self.material_index(m)),
+            model: model.map(|i| {
+                let size = spec.size.or(self.models[i].1.target).unwrap_or(1.0);
+                self.placed(i, size, level)
+            }),
+            level,
+        }
+    }
+
+    /// Draw a model as a procedural body from now on (its scene file is
+    /// missing or does not load); its size in the world stays the same.
+    pub fn replace_with_proc(&mut self, model: usize, proc: Proc) {
+        let skin = self.material_index("skin").map(|_| "skin".to_string());
+        let spec = &mut self.models[model].1;
+        *spec = ModelSpec {
+            scene: None,
+            proc: Some(proc),
+            size: 1.0,
+            lift: 0.0,
+            rot: [0.0; 3],
+            rig: None,
+            strip_root: false,
+            anims: Anims::default(),
+            size_factor: spec.size_factor,
+            target: spec.target,
+            tint_strength: spec.tint_strength.max(0.5),
+            material: skin,
+            head: None,
+            shade: None,
+        };
+    }
+
+    /// A material by name (the renderer's own surfaces: water, lava...).
+    pub fn material(&self, name: &str) -> Option<usize> {
+        self.material_index(name)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeMap;
+    use std::path::PathBuf;
+
+    use nh_protocol::{Catalog, EngineMsg, parse_line};
+
+    use super::*;
+
+    fn art_dir() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../godot/art")
+    }
+
+    fn manifest() -> ArtManifest {
+        ArtManifest::load(&art_dir().join("manifest.json")).unwrap()
+    }
+
+    fn catalog() -> Catalog {
+        let line = include_str!("../../nh-world/tests/data/catalog.jsonl");
+        match parse_line(line).unwrap() {
+            EngineMsg::Catalog(c) => *c,
+            other => panic!("{other:?}"),
+        }
+    }
+
+    fn exists(art: &ArtManifest, r: &Resolved) -> bool {
+        let (_, spec) = art.model_at(r.model);
+        match &spec.scene {
+            Some(s) => art_dir().join(s).is_file(),
+            None => spec.proc.is_some(),
+        }
+    }
+
+    #[test]
+    fn every_file_the_manifest_names_exists() {
+        let art = manifest();
+        let missing: Vec<String> = art
+            .files()
+            .into_iter()
+            .filter(|f| !art_dir().join(f).is_file())
+            .collect();
+        assert!(missing.is_empty(), "missing: {missing:?}");
+    }
+
+    #[test]
+    fn every_monster_resolves_to_a_model() {
+        let (art, cat) = (manifest(), catalog());
+        for m in &cat.monsters {
+            for flags in [0, mg::MALE, mg::FEMALE] {
+                let r = art.monster(m, flags);
+                assert!(exists(&art, &r), "{}", m.name);
+                assert!(r.scale > 0.0 && r.scale.is_finite(), "{}", m.name);
+                assert!(
+                    (0.08..=3.0).contains(&r.height),
+                    "{} is {} m tall",
+                    m.name,
+                    r.height
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn every_object_tile_resolves_to_a_model() {
+        let (art, cat) = (manifest(), catalog());
+        for t in &cat.object_tiles {
+            let r = art.object(t);
+            assert!(exists(&art, &r), "{t:?}");
+            assert!((0.02..=2.0).contains(&r.height), "{t:?}: {}", r.height);
+        }
+    }
+
+    #[test]
+    fn every_terrain_has_art() {
+        let art = manifest();
+        for t in Terrain::ALL {
+            let a = art.terrain(t);
+            if let Some(m) = a.model {
+                assert!(exists(&art, &m), "{t:?}");
+            }
+            if !matches!(t, Terrain::Stone | Terrain::Effect | Terrain::Unknown) {
+                assert_eq!(a.level, Level::Terrain, "{t:?} has its own entry");
+            }
+        }
+    }
+
+    /// The object function sees only the appearance tile: its signature
+    /// takes no glyph (a glyph number would reveal the true type).
+    #[test]
+    fn the_object_function_takes_no_glyph() {
+        let f: fn(&ArtManifest, &ObjectTile) -> Resolved = ArtManifest::object;
+        let (art, cat) = (manifest(), catalog());
+        let t = &cat.object_tiles[0];
+        assert_eq!(f(&art, t), art.object(t));
+        // the same appearance in the same class looks the same
+        let twin = ObjectTile {
+            tile: t.tile + 1000,
+            ..t.clone()
+        };
+        assert_eq!(art.object(&twin), art.object(t));
+    }
+
+    #[test]
+    fn statues_are_stone_and_corpses_keep_the_monster() {
+        let (art, cat) = (manifest(), catalog());
+        let dog = cat.monsters.iter().find(|m| m.name == "dog").unwrap();
+        let s = art.statue(Some(dog), 0);
+        assert!(matches!(s.skin, Skin::Material(_)));
+        assert_eq!(s.model, art.monster(dog, 0).model);
+        let unknown = art.statue(None, 0);
+        assert!(exists(&art, &unknown));
+    }
+
+    #[test]
+    fn species_of_a_class_are_told_apart() {
+        let (art, cat) = (manifest(), catalog());
+        let m = |n: &str| art.monster(cat.monsters.iter().find(|m| m.name == n).unwrap(), 0);
+        // the same model, but bigger and coloured differently
+        let (jackal, wolf) = (m("jackal"), m("wolf"));
+        assert_eq!(jackal.model, wolf.model);
+        assert!(wolf.height > jackal.height);
+        assert_ne!(jackal.tint, wolf.tint);
+        // a female of a class with women gets a woman's model
+        let human = cat.monsters.iter().find(|m| m.name == "human").unwrap();
+        assert_ne!(
+            art.monster(human, mg::FEMALE).model,
+            art.monster(human, 0).model
+        );
+        // words match whole: a monkey is not a key
+        assert!(has_words("skeleton key", "key") && !has_words("monkey", "key"));
+        assert!(has_words("large box", "large box") && !has_words("box", "large box"));
+    }
+
+    /// How many monsters and object tiles resolve at each level of the
+    /// fallback chain (printed; run with --nocapture).
+    #[test]
+    fn coverage_report() {
+        let (art, cat) = (manifest(), catalog());
+        let mut monsters: BTreeMap<Level, Vec<&str>> = BTreeMap::new();
+        for m in &cat.monsters {
+            monsters
+                .entry(art.monster(m, 0).level)
+                .or_default()
+                .push(&m.name);
+        }
+        let mut objects: BTreeMap<Level, usize> = BTreeMap::new();
+        for t in &cat.object_tiles {
+            *objects.entry(art.object(t).level).or_default() += 1;
+        }
+        let mut models: BTreeMap<&str, usize> = BTreeMap::new();
+        for m in &cat.monsters {
+            *models
+                .entry(art.model_at(art.monster(m, 0).model).0)
+                .or_default() += 1;
+        }
+        println!("art coverage: {} monsters", cat.monsters.len());
+        for (level, names) in &monsters {
+            println!("  {level:?}: {}", names.len());
+            if *level >= Level::Body {
+                println!("    {}", names.join(", "));
+            }
+        }
+        println!("  by model: {models:?}");
+        println!("art coverage: {} object tiles", cat.object_tiles.len());
+        for (level, n) in &objects {
+            println!("  {level:?}: {n}");
+        }
+        assert!(!monsters.contains_key(&Level::Generic), "{monsters:?}");
+    }
+
+    #[test]
+    fn a_missing_scene_becomes_a_procedural_body_of_the_same_size() {
+        let (mut art, cat) = (manifest(), catalog());
+        let dog = cat.monsters.iter().find(|m| m.name == "jackal").unwrap();
+        let before = art.monster(dog, 0);
+        art.replace_with_proc(before.model, Proc::Blob);
+        let after = art.monster(dog, 0);
+        assert_eq!(after.height, before.height);
+        assert_eq!(art.model_at(after.model).1.proc, Some(Proc::Blob));
+    }
+
+    #[test]
+    fn a_bad_manifest_is_refused() {
+        let json = std::fs::read_to_string(art_dir().join("manifest.json")).unwrap();
+        let broken = json.replacen("\"model\": \"human_male\"", "\"model\": \"nobody\"", 1);
+        assert_ne!(broken, json, "the test edits a real rule");
+        assert!(matches!(
+            ArtManifest::parse(&broken),
+            Err(ArtError::Invalid(_))
+        ));
+    }
+}
