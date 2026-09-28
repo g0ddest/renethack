@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use nh_protocol::{Catalog, MenuItem, PickHow, Request, WinCall, WindowKind};
 
 use crate::prompt::{choice, free_key};
-use crate::{ATR_NOHISTORY, MapState, MessageLog, Prompt, Status, effect_cmaps};
+use crate::{ATR_NOHISTORY, MapState, MessageLog, Pack, Prompt, Status, effect_cmaps};
 
 /// getpos() says this (with `flags.verbose`) right after its goal ("Where
 /// do you want to travel to?"): neither belongs in the history.
@@ -57,6 +57,8 @@ pub struct TextLine {
 pub struct World {
     pub map: MapState,
     pub status: Status,
+    /// The last inventory notice.
+    pub inventory: Pack,
     pub log: MessageLog,
     pub windows: BTreeMap<i32, Window>,
     pub message_win: Option<i32>,
@@ -101,6 +103,7 @@ impl World {
         World {
             map: MapState::new(),
             status: Status::new(),
+            inventory: Pack::new(),
             log: MessageLog::new(),
             windows: BTreeMap::new(),
             message_win: None,
@@ -276,6 +279,7 @@ impl World {
             WinCall::DoprevMessage => self.wants_history = true,
             WinCall::StatusInit => self.status = Status::new(),
             WinCall::StatusUpdate(u) => self.status.apply(u),
+            WinCall::Inventory(inv) => self.inventory.replace(inv),
             _ => {}
         }
     }

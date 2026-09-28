@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use nh_link::*;
-use nh_protocol::{Catalog, EngineMsg, PickHow, Reply, parse_line};
+use nh_protocol::{Catalog, EngineMsg, PickHow, Reply, Slot, parse_line};
 use nh_world::*;
 
 const SEED: u64 = 42;
@@ -158,6 +158,32 @@ fn a_scripted_game_builds_the_world() {
         end.raw_lines
     );
     assert!(end.windows.is_empty());
+}
+
+#[test]
+fn a_new_game_has_its_inventory_at_the_first_command() {
+    let pg = tempfile::tempdir().unwrap();
+    let mut engine = Engine::spawn(&config(pg.path())).unwrap();
+    let script = "key #\next quit\nyn y\nyn n\nyn n\nyn n\nyn n\n";
+    let mut responder = ScriptResponder::new(parse_script(script).unwrap());
+    let t = run_session(&mut engine, &mut responder, &SessionLimits::default()).unwrap();
+    assert!(t.said_bye && t.exit.unwrap().success(), "{:?}", t.errors);
+    let (_, seen, _) = replay(&t.lines);
+
+    let start = &seen[0];
+    assert_eq!(start.prompt, Prompt::Command);
+    let pack = &start.world.inventory;
+    assert!(pack.received());
+    let letters: String = pack.items().iter().map(|i| i.letter).collect();
+    assert_eq!(letters, "abcde");
+    let weapon = pack.wielded().expect("a wielded weapon");
+    assert_eq!(weapon.class, ')');
+    assert_eq!(ItemKey::of(weapon).stem, "spear");
+    let name = parse_item_name(&weapon.text);
+    assert_eq!(name.enchantment, Some(1));
+    assert_eq!(pack.offhand().expect("a shield").letter, 'c');
+    assert_eq!(pack.in_slot(&Slot::Alternate).unwrap().letter, 'b');
+    assert!(!pack.twoweap());
 }
 
 /// Play by reading engine lines one at a time, answering each prompt with

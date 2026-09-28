@@ -2,6 +2,7 @@
 //! message log, windows, and the UI's view of each request. No UI code here:
 //! everything is plain data so it can be tested without Godot.
 
+mod inventory;
 mod keys;
 mod log;
 mod map;
@@ -14,6 +15,7 @@ mod status;
 mod terrain;
 mod world;
 
+pub use inventory::*;
 pub use keys::*;
 pub use log::*;
 pub use map::*;
