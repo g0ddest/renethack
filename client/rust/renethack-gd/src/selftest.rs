@@ -3135,6 +3135,11 @@ fn describe(step: &Step) -> String {
 }
 
 fn save_shot(game: &RenethackGame, path: &std::path::Path) -> Result<(), String> {
+    // Forward+ may skip drawing a window it thinks nobody sees (macOS):
+    // draw the state now, a few times for the temporal effects
+    for _ in 0..8 {
+        godot::classes::RenderingServer::singleton().force_draw();
+    }
     let image = game
         .viewport_image()
         .ok_or("no viewport image (is there a renderer?)")?;
