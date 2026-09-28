@@ -1,0 +1,14 @@
+[package]
+name = "nh-art"
+description = "renethack: the art manifest and the fallback chain that picks a model for every monster, object and map feature, no UI"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+nh-protocol = { path = "../nh-protocol" }
+nh-world = { path = "../nh-world" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true

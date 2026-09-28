@@ -41,6 +41,47 @@ pub enum Terrain {
     Unknown,
 }
 
+impl Terrain {
+    /// Every terrain, in declaration order (art manifests cover them all).
+    pub const ALL: [Terrain; 32] = {
+        use Terrain::*;
+        [
+            Stone,
+            Wall,
+            Floor,
+            DarkFloor,
+            Corridor,
+            Doorway,
+            OpenDoor,
+            ClosedDoor,
+            BrokenDoor,
+            Tree,
+            IronBars,
+            StairsUp,
+            StairsDown,
+            LadderUp,
+            LadderDown,
+            Altar,
+            Grave,
+            Throne,
+            Sink,
+            Fountain,
+            Pool,
+            Water,
+            Ice,
+            Lava,
+            LavaWall,
+            DrawbridgeDown,
+            DrawbridgeUp,
+            Air,
+            Cloud,
+            Trap,
+            Effect,
+            Unknown,
+        ]
+    };
+}
+
 /// Classify a map symbol by its defsym.h name (`CmapInfo::sym`).
 pub fn terrain_of(sym: &str) -> Terrain {
     use Terrain::*;

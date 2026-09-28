@@ -275,6 +275,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a846cbc04412cf509efcd8f3694b114fc700a035fb5a37f21517f9fb019f1ebc"
 
 [[package]]
+name = "nh-art"
+version = "0.1.0"
+dependencies = [
+ "nh-protocol",
+ "nh-world",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "nh-cli"
 version = "0.1.0"
 dependencies = [
@@ -357,6 +368,7 @@ version = "0.1.0"
 dependencies = [
  "godot",
  "libc",
+ "nh-art",
  "nh-link",
  "nh-protocol",
  "nh-world",
