@@ -262,6 +262,9 @@ impl INode for RenethackGame {
         self.drain_ui();
         self.pump();
         self.sync_views(delta);
+        if let Some(ui) = self.ui.as_mut() {
+            ui.map.preload_step();
+        }
         self.watch_engine();
         if !self.quitting
             && let Some(mut test) = self.selftest.take()

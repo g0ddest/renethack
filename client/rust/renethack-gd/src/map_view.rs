@@ -1,34 +1,37 @@
-//! The 3D map from simple geometry: floor tiles, wall blocks and a primitive
-//! for every dungeon feature; capsules for monsters with their letter above,
-//! small cubes for objects; a perspective camera following the hero. Cell
+//! The 3D map: floors, walls and features built per cell with the art
+//! manifest's PBR materials (triplanar in world space, so the stone runs on
+//! across cells); models for monsters, the hero, objects and trees from the
+//! art library; a perspective camera following the hero, a flickering torch
+//! on the hero and a fill light over each part of the level in view. Cell
 //! (x, y) is the point (x, 0, y); one cell is one metre.
 //!
 //! Each cell's look is computed as plain data (`Look`) and its nodes are
-//! touched only when the look changes. Meshes and materials are shared
-//! through caches keyed by shape and colour.
+//! touched only when the look changes. Meshes, materials and model instances
+//! are shared or pooled by the art library.
 
 use std::collections::HashMap;
 
-use godot::classes::base_material_3d::{BillboardMode, Feature, ShadingMode, Transparency};
-use godot::classes::environment::{AmbientSource, BgMode};
+use godot::classes::base_material_3d::BillboardMode;
+use godot::classes::environment::{AmbientSource, BgMode, FogMode, ToneMapper};
 use godot::classes::label_3d::DrawFlags;
 use godot::classes::light_3d::Param;
 use godot::classes::{
-    BoxMesh, Camera3D, CapsuleMesh, CylinderMesh, DirectionalLight3D, Environment, Label3D, Mesh,
-    MeshInstance3D, Node3D, OmniLight3D, PlaneMesh, SphereMesh, StandardMaterial3D, SystemFont,
-    TorusMesh, WorldEnvironment,
+    Camera3D, DirectionalLight3D, Environment, Label3D, MeshInstance3D, Node3D, OmniLight3D,
+    SystemFont, WorldEnvironment,
 };
 use godot::prelude::*;
-use nh_protocol::{Catalog, Glyph, GlyphKind, mg};
+use nh_art::{ArtManifest, Tint};
+use nh_protocol::{Catalog, Glyph, GlyphKind, MonsterInfo, ObjectTile, mg};
 use nh_world::{COLNO, Cell, MapState, ROWNO, Terrain, World, cell_terrain, in_field, terrain_of};
 
+use crate::art::{Art, Finish, Model, ModelLook, Pose, build_flat, no_shadow};
+use crate::meshes::{MeshKey, cuboid, cylinder, plane, sphere, torus};
 use crate::theme::{self, nh_color};
 
-/// Steep enough that a row of depth takes more screen height than a
-/// monster and its letter: a neighbour north or south of the hero stays in
-/// its own row (see `monster_letters_keep_to_their_rows`).
-const PITCH_DEG: f32 = 64.0;
-const DISTANCE: f32 = 12.0;
+/// Low enough to see creatures from the side, high enough to see the floor
+/// between walls.
+const PITCH_DEG: f32 = 52.0;
+const DISTANCE: f32 = 11.0;
 const MIN_DISTANCE: f32 = 6.0;
 const MAX_DISTANCE: f32 = 30.0;
 /// The camera's vertical field of view, degrees.
@@ -38,206 +41,56 @@ const MAX_OVERVIEW_DISTANCE: f32 = 70.0;
 const FOLLOW_RATE: f32 = 8.0;
 /// Descent per step when a pointer ray is walked through the raised geometry.
 const PICK_STEP: f32 = 0.05;
-/// Nothing drawn reaches higher (a letter over a tall monster on an altar).
+/// Nothing drawn reaches higher (a giant on an altar).
 const MAX_TOP: f32 = 2.8;
 
-const WALL_HEIGHT: f32 = 1.2;
-const DOOR_HEIGHT: f32 = 1.05;
+const WALL_HEIGHT: f32 = 1.35;
+const DOOR_HEIGHT: f32 = 1.15;
 /// Walls and doors in front of open ground, seen from the camera's side.
 const CUT_HEIGHT: f32 = 0.3;
 /// Label3D font size; a letter's height is about `FONT_PX * pixel size`.
 const FONT_PX: i32 = 96;
 const PX_MONSTER: f32 = 0.0068;
-const PX_OBJECT: f32 = 0.0048;
 const PX_FEATURE: f32 = 0.0062;
 const PX_TRAP: f32 = 0.0052;
-/// A monster's letter floats this far over the top of its body.
-const MONSTER_LABEL_LIFT: f32 = 0.16;
 /// Where the camera aims, south of the hero at the default distance (the
 /// log covers the bottom of the screen); it shrinks as the camera closes in.
 const AIM_SOUTH: f32 = 1.5;
 
-const FLOOR: Color = Color::from_rgb(0.30, 0.29, 0.27);
-const FLOOR_DARK: Color = Color::from_rgb(0.12, 0.12, 0.14);
+/// Brightness (%) of floors in view, and of the part of a room remembered.
+const SHADE_LIT: u8 = 100;
+const SHADE_DARK: u8 = 58;
+/// A lying corpse is this much darker than the living monster.
+const CORPSE_DARKEN: f32 = 0.45;
+
 const FLOOR_UNSEEN: Color = Color::from_rgb(0.19, 0.19, 0.21);
-const CORRIDOR: Color = Color::from_rgb(0.19, 0.17, 0.15);
-const CORRIDOR_LIT: Color = Color::from_rgb(0.27, 0.24, 0.20);
-const DOORWAY: Color = Color::from_rgb(0.29, 0.22, 0.15);
-const WALL: Color = Color::from_rgb(0.40, 0.40, 0.44);
-const STONE: Color = Color::from_rgb(0.52, 0.52, 0.55);
-const WOOD: Color = Color::from_rgb(0.42, 0.26, 0.11);
-const EARTH: Color = Color::from_rgb(0.17, 0.14, 0.10);
-const DEEP: Color = Color::from_rgb(0.03, 0.03, 0.05);
-const STATUE: Color = Color::from_rgb(0.58, 0.58, 0.60);
+const DEEP: Color = Color::from_rgb(0.02, 0.02, 0.03);
 /// Scratches of an engraving on the floor.
 const ENGRAVING: Color = Color::from_rgb(0.74, 0.71, 0.62);
-const HERO_RING: Color = Color::from_rgba(1.0, 0.82, 0.30, 0.9);
-const PET_RING: Color = Color::from_rgba(1.0, 0.45, 0.75, 0.9);
-const HERO_LIGHT: Color = Color::from_rgb(1.0, 0.86, 0.66);
+const HERO_RING: Color = Color::from_rgba(1.0, 0.82, 0.30, 0.55);
+const PET_RING: Color = Color::from_rgba(1.0, 0.45, 0.75, 0.6);
+const TORCH: Color = Color::from_rgb(1.0, 0.78, 0.55);
+const TORCH_ENERGY: f32 = 2.2;
+const ROOM_LIGHT: Color = Color::from_rgb(1.0, 0.86, 0.68);
 
-/// Mesh sizes in centimetres, so meshes can be cached by shape.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum MeshKey {
-    /// Width (x), height (y), depth (z).
-    Box(u16, u16, u16),
-    /// Width (x), depth (z); faces up.
-    Plane(u16, u16),
-    /// Radius, total height.
-    Capsule(u16, u16),
-    /// Top radius, bottom radius, height.
-    Cylinder(u16, u16, u16),
-    Sphere(u16),
-    /// Inner and outer radius; lies flat.
-    Torus(u16, u16),
-}
-
-fn cm(metres: f32) -> u16 {
-    (metres * 100.0).round().clamp(0.0, f32::from(u16::MAX)) as u16
-}
-
-fn metres(cm: u16) -> f32 {
-    f32::from(cm) / 100.0
-}
-
-fn cuboid(x: f32, y: f32, z: f32) -> MeshKey {
-    MeshKey::Box(cm(x), cm(y), cm(z))
-}
-
-fn plane(x: f32, z: f32) -> MeshKey {
-    MeshKey::Plane(cm(x), cm(z))
-}
-
-fn capsule(radius: f32, height: f32) -> MeshKey {
-    MeshKey::Capsule(cm(radius), cm(height.max(2.0 * radius)))
-}
-
-fn cylinder(top: f32, bottom: f32, height: f32) -> MeshKey {
-    MeshKey::Cylinder(cm(top), cm(bottom), cm(height))
-}
-
-fn sphere(radius: f32) -> MeshKey {
-    MeshKey::Sphere(cm(radius))
-}
-
-fn torus(inner: f32, outer: f32) -> MeshKey {
-    MeshKey::Torus(cm(inner), cm(outer))
-}
-
-impl MeshKey {
-    /// Half the height of the upright mesh.
-    fn half_height(self) -> f32 {
-        match self {
-            MeshKey::Box(_, y, _) => metres(y) / 2.0,
-            MeshKey::Plane(..) => 0.0,
-            MeshKey::Capsule(_, h) | MeshKey::Cylinder(_, _, h) => metres(h) / 2.0,
-            MeshKey::Sphere(r) => metres(r),
-            MeshKey::Torus(i, o) => metres(o.saturating_sub(i)) / 2.0,
-        }
-    }
-
-    fn build(self) -> Gd<Mesh> {
-        match self {
-            MeshKey::Box(x, y, z) => {
-                let mut m = BoxMesh::new_gd();
-                m.set_size(Vector3::new(metres(x), metres(y), metres(z)));
-                m.upcast()
-            }
-            MeshKey::Plane(x, z) => {
-                let mut m = PlaneMesh::new_gd();
-                m.set_size(Vector2::new(metres(x), metres(z)));
-                m.upcast()
-            }
-            MeshKey::Capsule(r, h) => {
-                let mut m = CapsuleMesh::new_gd();
-                m.set_radius(metres(r));
-                m.set_height(metres(h));
-                m.set_radial_segments(16);
-                m.set_rings(4);
-                m.upcast()
-            }
-            MeshKey::Cylinder(t, b, h) => {
-                let mut m = CylinderMesh::new_gd();
-                m.set_top_radius(metres(t));
-                m.set_bottom_radius(metres(b));
-                m.set_height(metres(h));
-                m.set_radial_segments(16);
-                m.set_rings(1);
-                m.upcast()
-            }
-            MeshKey::Sphere(r) => {
-                let mut m = SphereMesh::new_gd();
-                m.set_radius(metres(r));
-                m.set_height(2.0 * metres(r));
-                m.set_radial_segments(16);
-                m.set_rings(8);
-                m.upcast()
-            }
-            MeshKey::Torus(i, o) => {
-                let mut m = TorusMesh::new_gd();
-                m.set_inner_radius(metres(i));
-                m.set_outer_radius(metres(o));
-                m.set_rings(24);
-                m.set_ring_segments(6);
-                m.upcast()
-            }
-        }
-    }
-}
-
-/// How a surface is lit.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum Finish {
-    Matte,
-    /// Water, ice, metal.
-    Glossy,
-    /// Lava: lit from inside.
-    Ember,
-    /// Beams and explosions: full colour, no shading.
-    Glow,
-    /// Detected and invisible monsters, clouds, air.
-    Ghost,
-    /// Rings and markers: unshaded, alpha from the colour.
-    Flat,
-}
-
-fn build_material(color: Color, finish: Finish) -> Gd<StandardMaterial3D> {
-    let mut m = StandardMaterial3D::new_gd();
-    m.set_albedo(color);
-    m.set_roughness(0.9);
-    match finish {
-        Finish::Matte => {}
-        Finish::Glossy => {
-            m.set_roughness(0.25);
-            m.set_specular(0.8);
-        }
-        Finish::Ember => {
-            m.set_feature(Feature::EMISSION, true);
-            m.set_emission(color);
-            m.set_emission_energy_multiplier(1.3);
-        }
-        Finish::Glow => m.set_shading_mode(ShadingMode::UNSHADED),
-        Finish::Ghost => {
-            m.set_transparency(Transparency::ALPHA);
-            m.set_albedo(color.with_alpha(0.4));
-            m.set_roughness(0.5);
-        }
-        Finish::Flat => {
-            m.set_shading_mode(ShadingMode::UNSHADED);
-            m.set_transparency(Transparency::ALPHA);
-        }
-    }
-    m
+/// What covers a solid: a manifest material (index, brightness %) or a
+/// plain colour.
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum Paint {
+    Pbr(usize, u8),
+    Flat(Color, Finish),
 }
 
 /// One mesh of a cell, relative to the cell's centre on the ground.
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct Solid {
     mesh: MeshKey,
-    color: Color,
-    finish: Finish,
+    paint: Paint,
     pos: Vector3,
     /// Euler angles in degrees.
     rot: Vector3,
+    /// Casts a shadow (not the floor).
+    shadow: bool,
 }
 
 /// A billboard character over a cell.
@@ -247,8 +100,17 @@ struct Letter {
     color: Color,
     pos: Vector3,
     pixel_size: f32,
-    /// Drawn over walls and everything else (monster letters stay readable).
+    /// Drawn over walls and everything else.
     on_top: bool,
+}
+
+/// A model on a cell: what (the art library's look), where, which way.
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct Placed {
+    look: ModelLook,
+    pos: Vector3,
+    /// Degrees about y; 0 faces the camera (south).
+    yaw: f32,
 }
 
 /// How a cell looks; its nodes are touched only when this changes.
@@ -256,40 +118,57 @@ struct Letter {
 struct Look {
     solids: Vec<Solid>,
     letters: Vec<Letter>,
+    models: Vec<Placed>,
     /// Where things stand on this cell and where markers lie.
     ground: f32,
     /// The top of everything drawn (pointer picking).
     top: f32,
+    /// A floor in view: part of a lit area.
+    lit: bool,
 }
 
 impl Look {
     fn is_empty(&self) -> bool {
-        self.solids.is_empty() && self.letters.is_empty()
+        self.solids.is_empty() && self.letters.is_empty() && self.models.is_empty()
     }
 
-    fn solid(&mut self, mesh: MeshKey, color: Color, finish: Finish, pos: Vector3) {
-        self.turned(mesh, color, finish, pos, Vector3::ZERO);
+    fn reach(&mut self, top: f32) {
+        self.top = self.top.max(top).min(MAX_TOP);
     }
 
-    fn turned(&mut self, mesh: MeshKey, color: Color, finish: Finish, pos: Vector3, rot: Vector3) {
-        // only capsules are ever laid down (corpses); boxes only turn about y
+    fn add(&mut self, mesh: MeshKey, paint: Paint, pos: Vector3, rot: Vector3) {
         let reach = match mesh {
-            MeshKey::Capsule(r, _) if rot.x != 0.0 || rot.z != 0.0 => metres(r),
+            MeshKey::Capsule(r, _) if rot.x != 0.0 || rot.z != 0.0 => crate::meshes::metres(r),
             _ => mesh.half_height(),
         };
-        self.top = self.top.max(pos.y + reach).min(MAX_TOP);
+        self.reach(pos.y + reach);
         self.solids.push(Solid {
             mesh,
-            color,
-            finish,
+            paint,
             pos,
             rot,
+            shadow: true,
         });
     }
 
+    fn solid(&mut self, mesh: MeshKey, paint: Paint, pos: Vector3) {
+        self.add(mesh, paint, pos, Vector3::ZERO);
+    }
+
+    fn turned(&mut self, mesh: MeshKey, paint: Paint, pos: Vector3, rot: Vector3) {
+        self.add(mesh, paint, pos, rot);
+    }
+
+    /// Flat ground: no shadow of its own.
+    fn ground_tile(&mut self, mesh: MeshKey, paint: Paint, pos: Vector3) {
+        self.add(mesh, paint, pos, Vector3::ZERO);
+        if let Some(s) = self.solids.last_mut() {
+            s.shadow = false;
+        }
+    }
+
     fn letter(&mut self, ch: char, color: Color, y: f32, pixel_size: f32, on_top: bool) {
-        let reach = FONT_PX as f32 * pixel_size / 2.0;
-        self.top = self.top.max(y + reach).min(MAX_TOP);
+        self.reach(y + FONT_PX as f32 * pixel_size / 2.0);
         self.letters.push(Letter {
             ch,
             color,
@@ -297,6 +176,17 @@ impl Look {
             pixel_size,
             on_top,
         });
+    }
+
+    fn model(&mut self, look: ModelLook, pos: Vector3, yaw: f32) {
+        let r = look.art;
+        let top = if look.pose == Pose::Corpse {
+            pos.y + (r.height * 0.4).min(0.5)
+        } else {
+            pos.y + r.lift + r.height
+        };
+        self.reach(top);
+        self.models.push(Placed { look, pos, yaw });
     }
 }
 
@@ -322,19 +212,6 @@ fn lighter(c: Color, t: f32) -> Color {
     mix(c, Color::from_rgba(1.0, 1.0, 1.0, c.a), t)
 }
 
-/// A base material colour nudged towards a NetHack colour; gray leaves it.
-fn tinted(base: Color, nh: i32) -> Color {
-    if matches!(nh & 0xff, 7 | 8) {
-        base
-    } else {
-        mix(base, nh_color(nh), 0.35)
-    }
-}
-
-fn color_key(c: Color) -> u32 {
-    c.to_u32(godot::builtin::ColorChannelOrder::RGBA)
-}
-
 fn glyph_char(g: &Glyph) -> Option<char> {
     u32::try_from(g.ch)
         .ok()
@@ -347,45 +224,83 @@ fn cmap_sym<'a>(g: &Glyph, catalog: &'a Catalog) -> Option<&'a str> {
     catalog.cmap.get(i).map(|c| c.sym.as_str())
 }
 
-/// Monster height by catalog size.
-fn monster_height(catalog: &Catalog, mon: Option<i32>) -> f32 {
-    let size = mon
-        .and_then(|m| usize::try_from(m).ok())
-        .and_then(|m| catalog.monsters.get(m))
-        .map_or("medium", |m| m.size.as_str());
-    match size {
-        "tiny" => 0.35,
-        "small" => 0.55,
-        "large" => 1.05,
-        "huge" => 1.3,
-        "gigantic" => 1.6,
-        _ => 0.8,
+fn monster_info(catalog: &Catalog, mon: Option<i32>) -> Option<&MonsterInfo> {
+    catalog.monsters.get(usize::try_from(mon?).ok()?)
+}
+
+/// An object's appearance tile: all the client knows of an object.
+fn object_tile(catalog: &Catalog, tile: i32) -> Option<&ObjectTile> {
+    catalog.object_tiles.iter().find(|t| t.tile == tile)
+}
+
+/// A stable pseudo-random number in 0..1 for a cell (and a salt).
+fn cell_noise(x: i32, y: i32, salt: u32) -> f32 {
+    let mut h = (x as u32).wrapping_mul(0x9e37_79b1) ^ (y as u32).wrapping_mul(0x85eb_ca77) ^ salt;
+    h ^= h >> 15;
+    h = h.wrapping_mul(0x2c1b_3c6d);
+    h ^= h >> 12;
+    (h & 0xffff) as f32 / 65535.0
+}
+
+/// The colour a look multiplies its model by.
+fn tint_color(tint: Tint, glyph_color: i32) -> Color {
+    match tint {
+        Tint::None => Color::WHITE,
+        Tint::Glyph(s) => mix(Color::WHITE, nh_color(glyph_color), s),
+        Tint::Rgb(c, s) => mix(Color::WHITE, Color::from_rgb(c[0], c[1], c[2]), s),
     }
 }
 
-fn is_boulder(g: &Glyph, catalog: &Catalog) -> bool {
-    catalog
-        .object_tiles
-        .iter()
-        .any(|t| t.tile == g.tile && t.appearance == "boulder")
+/// What a cell's look depends on besides the cell and its neighbours.
+struct Ctx<'a> {
+    catalog: &'a Catalog,
+    art: &'a ArtManifest,
+    x: i32,
+    y: i32,
+    /// Where the hero is (monsters face them).
+    hero: Option<(i32, i32)>,
+    /// Which way the hero faces (degrees about y).
+    hero_yaw: f32,
+}
+
+impl Ctx<'_> {
+    fn noise(&self, salt: u32) -> f32 {
+        cell_noise(self.x, self.y, salt)
+    }
+
+    /// Degrees about y that turn a model at this cell towards the hero; a
+    /// little turned towards the camera when the hero is far or unknown.
+    fn face_hero(&self) -> f32 {
+        let jitter = (self.noise(7) - 0.5) * 50.0;
+        match self.hero {
+            Some((hx, hy)) if (hx, hy) != (self.x, self.y) => {
+                let (dx, dz) = ((hx - self.x) as f32, (hy - self.y) as f32);
+                if dx.abs() + dz.abs() > 12.0 {
+                    jitter
+                } else {
+                    dx.atan2(dz).to_degrees()
+                }
+            }
+            _ => jitter,
+        }
+    }
+
+    fn mat(&self, name: &str) -> Option<usize> {
+        self.art.material(name)
+    }
 }
 
 /// Floor, walls and features. Sets `ground`. `cut`: open ground lies north
 /// of the cell (the row behind a room's south wall, a doorway above a side
 /// wall), so a wall or door here would hide it from the camera and is
 /// drawn low.
-fn terrain_look(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool) {
-    terrain_base(look, t, sym, g, cut);
+fn terrain_look(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool, ctx: &Ctx) {
+    terrain_base(look, t, sym, g, cut, ctx);
     if engraved(sym) {
         for (x, z, yaw) in [(-0.06, -0.12, 18.0), (0.04, 0.02, -24.0), (0.0, 0.16, 8.0)] {
             let mesh = cuboid(0.46, 0.012, 0.035);
-            look.turned(
-                mesh,
-                ENGRAVING,
-                Finish::Matte,
-                at(x, 0.006, z),
-                at(0.0, yaw, 0.0),
-            );
+            let paint = Paint::Flat(ENGRAVING, Finish::Matte);
+            look.turned(mesh, paint, at(x, 0.006, z), at(0.0, yaw, 0.0));
         }
     }
 }
@@ -395,8 +310,9 @@ fn engraved(sym: &str) -> bool {
     matches!(sym, "S_engroom" | "S_engrcorr")
 }
 
-fn terrain_base(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool) {
+fn terrain_base(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool, ctx: &Ctx) {
     let c = g.color;
+    let art = ctx.art.terrain(t);
     // "S_v..." features sit in a vertical wall: the passage runs along x
     let vertical = sym.starts_with("S_v");
     let (wall_h, door_h) = if cut {
@@ -404,8 +320,20 @@ fn terrain_base(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool) {
     } else {
         (WALL_HEIGHT, DOOR_HEIGHT)
     };
-    let tile = plane(0.96, 0.96);
-    let floor = |look: &mut Look| look.solid(tile, FLOOR, Finish::Matte, Vector3::ZERO);
+    // in view: the floor's full brightness with a little variation per
+    // cell; remembered, dark
+    let lit_shade = SHADE_LIT - (ctx.noise(1) * 10.0) as u8;
+    let floor_mat = ctx.mat("floor");
+    let pbr = |m: Option<usize>, shade: u8, fallback: Color| match m {
+        Some(m) => Paint::Pbr(m, shade),
+        None => Paint::Flat(fallback, Finish::Matte),
+    };
+    let main = |shade: u8| pbr(art.material, shade, FLOOR_UNSEEN);
+    let trim = |shade: u8| pbr(art.trim, shade, DEEP);
+    let tile = plane(1.0, 1.0);
+    let floor = |look: &mut Look| {
+        look.ground_tile(tile, pbr(floor_mat, lit_shade, FLOOR_UNSEEN), Vector3::ZERO);
+    };
     let label = |look: &mut Look, y: f32| {
         if let Some(ch) = glyph_char(g) {
             look.letter(ch, lighter(nh_color(c), 0.25), y, PX_FEATURE, false);
@@ -416,144 +344,147 @@ fn terrain_base(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool) {
         Terrain::Wall => {
             look.solid(
                 cuboid(1.0, wall_h, 1.0),
-                tinted(WALL, c),
-                Finish::Matte,
+                main(SHADE_LIT - (ctx.noise(2) * 8.0) as u8),
                 at(0.0, wall_h / 2.0, 0.0),
             );
             look.ground = wall_h;
         }
-        // an engraving's colour (bright blue) would make it a pool: the
-        // floor keeps its own colour and gets scratches (below)
-        Terrain::Floor if engraved(sym) => look.solid(tile, FLOOR, Finish::Matte, Vector3::ZERO),
-        Terrain::Floor => look.solid(tile, tinted(FLOOR, c), Finish::Matte, Vector3::ZERO),
-        Terrain::DarkFloor => look.solid(tile, FLOOR_DARK, Finish::Matte, Vector3::ZERO),
-        Terrain::Corridor => {
-            let color = if sym == "S_litcorr" {
-                CORRIDOR_LIT
-            } else {
-                CORRIDOR
-            };
-            look.solid(plane(0.8, 0.8), color, Finish::Matte, Vector3::ZERO);
+        Terrain::Floor => {
+            look.ground_tile(tile, main(lit_shade), Vector3::ZERO);
+            look.lit = true;
         }
-        Terrain::Doorway => look.solid(tile, DOORWAY, Finish::Matte, Vector3::ZERO),
+        Terrain::DarkFloor => look.ground_tile(tile, main(SHADE_DARK), Vector3::ZERO),
+        Terrain::Corridor => {
+            let lit = sym == "S_litcorr";
+            let shade = if lit { lit_shade } else { 85 };
+            look.ground_tile(tile, main(shade), Vector3::ZERO);
+            look.lit = lit;
+        }
+        Terrain::Doorway => {
+            floor(look);
+            // a worn wooden threshold across the passage
+            let sill = if vertical {
+                cuboid(0.16, 0.03, 0.9)
+            } else {
+                cuboid(0.9, 0.03, 0.16)
+            };
+            look.ground_tile(sill, trim(80), at(0.0, 0.015, 0.0));
+        }
         Terrain::BrokenDoor => {
-            look.solid(tile, DOORWAY, Finish::Matte, Vector3::ZERO);
-            let wood = tinted(WOOD, c);
-            let y = at(0.0, 30.0, 0.0);
+            floor(look);
+            let wood = main(85);
             look.turned(
                 cuboid(0.34, 0.05, 0.08),
                 wood,
-                Finish::Matte,
                 at(0.2, 0.025, 0.24),
-                y,
+                at(0.0, 30.0, 0.0),
             );
-            let y = at(0.0, -50.0, 0.0);
             look.turned(
                 cuboid(0.26, 0.05, 0.07),
                 wood,
-                Finish::Matte,
                 at(-0.2, 0.025, -0.2),
-                y,
+                at(0.0, -50.0, 0.0),
             );
         }
         Terrain::OpenDoor => {
-            look.solid(tile, DOORWAY, Finish::Matte, Vector3::ZERO);
+            floor(look);
             // the leaf stands open against the side of the passage
-            let (mesh, pos) = if vertical {
-                (cuboid(0.8, door_h, 0.08), at(0.0, door_h / 2.0, -0.44))
+            let (mesh, pos, band) = if vertical {
+                (
+                    cuboid(0.8, door_h, 0.08),
+                    at(0.0, door_h / 2.0, -0.44),
+                    cuboid(0.82, 0.06, 0.1),
+                )
             } else {
-                (cuboid(0.08, door_h, 0.8), at(-0.44, door_h / 2.0, 0.0))
+                (
+                    cuboid(0.08, door_h, 0.8),
+                    at(-0.44, door_h / 2.0, 0.0),
+                    cuboid(0.1, 0.06, 0.82),
+                )
             };
-            look.solid(mesh, tinted(WOOD, c), Finish::Matte, pos);
+            look.solid(mesh, main(SHADE_LIT), pos);
+            for h in [0.25, 0.75] {
+                look.solid(band, trim(SHADE_LIT), at(pos.x, door_h * h, pos.z));
+            }
         }
         Terrain::ClosedDoor => {
-            look.solid(tile, DOORWAY, Finish::Matte, Vector3::ZERO);
-            let mesh = if vertical {
-                cuboid(0.18, door_h, 0.96)
+            floor(look);
+            let (mesh, band) = if vertical {
+                (cuboid(0.18, door_h, 0.96), cuboid(0.2, 0.07, 0.98))
             } else {
-                cuboid(0.96, door_h, 0.18)
+                (cuboid(0.96, door_h, 0.18), cuboid(0.98, 0.07, 0.2))
             };
-            let pos = at(0.0, door_h / 2.0, 0.0);
-            look.solid(mesh, tinted(WOOD, c), Finish::Matte, pos);
+            look.solid(mesh, main(SHADE_LIT), at(0.0, door_h / 2.0, 0.0));
+            for h in [0.22, 0.78] {
+                look.solid(band, trim(SHADE_LIT), at(0.0, door_h * h, 0.0));
+            }
             look.ground = door_h;
         }
         Terrain::IronBars => {
-            look.solid(tile, FLOOR_DARK, Finish::Matte, Vector3::ZERO);
-            let iron = darker(nh_color(c), 0.3);
-            let bar = cylinder(0.035, 0.035, WALL_HEIGHT);
+            look.ground_tile(
+                tile,
+                pbr(floor_mat, SHADE_DARK, FLOOR_UNSEEN),
+                Vector3::ZERO,
+            );
+            let iron = main(SHADE_LIT);
+            let bar = cylinder(0.03, 0.03, WALL_HEIGHT);
             let y = WALL_HEIGHT / 2.0;
             for (x, z) in [(-0.3, 0.0), (0.0, 0.0), (0.3, 0.0), (0.0, -0.3), (0.0, 0.3)] {
-                look.solid(bar, iron, Finish::Glossy, at(x, y, z));
+                look.solid(bar, iron, at(x, y, z));
             }
             let top = WALL_HEIGHT - 0.05;
-            look.solid(
-                cuboid(0.9, 0.05, 0.05),
-                iron,
-                Finish::Glossy,
-                at(0.0, top, 0.0),
-            );
-            look.solid(
-                cuboid(0.05, 0.05, 0.9),
-                iron,
-                Finish::Glossy,
-                at(0.0, top, 0.0),
-            );
+            look.solid(cuboid(0.9, 0.06, 0.06), iron, at(0.0, top, 0.0));
+            look.solid(cuboid(0.06, 0.06, 0.9), iron, at(0.0, top, 0.0));
         }
         Terrain::Tree => {
-            look.solid(tile, EARTH, Finish::Matte, Vector3::ZERO);
-            look.solid(
-                cylinder(0.07, 0.1, 0.5),
-                WOOD,
-                Finish::Matte,
-                at(0.0, 0.25, 0.0),
-            );
-            let leaves = darker(nh_color(c), 0.35);
-            look.solid(
-                cylinder(0.0, 0.42, 1.0),
-                leaves,
-                Finish::Matte,
-                at(0.0, 1.0, 0.0),
-            );
+            look.ground_tile(tile, main(80), Vector3::ZERO);
+            if let Some(tree) = art.model {
+                let look_ = ModelLook {
+                    art: tree,
+                    tint: Color::WHITE,
+                    pose: Pose::Alive,
+                };
+                look.model(look_, Vector3::ZERO, ctx.noise(3) * 360.0);
+            }
         }
         Terrain::StairsUp => {
             floor(look);
-            let stone = tinted(STONE, c);
-            for (i, z) in [0.27f32, 0.0, -0.27].into_iter().enumerate() {
-                let h = 0.12 * (i + 1) as f32;
-                look.solid(
-                    cuboid(0.8, h, 0.27),
-                    stone,
-                    Finish::Matte,
-                    at(0.0, h / 2.0, z),
-                );
+            let stone = main(SHADE_LIT);
+            // five steps rising to the north, between two side walls
+            for i in 0..5 {
+                let h = 0.09 * (i + 1) as f32;
+                let z = 0.36 - 0.18 * i as f32;
+                look.solid(cuboid(0.78, h, 0.18), stone, at(0.0, h / 2.0, z));
+            }
+            for x in [-0.44f32, 0.44] {
+                look.solid(cuboid(0.1, 0.5, 0.92), main(80), at(x, 0.25, 0.0));
             }
             // whoever stands here stands on the middle step
-            look.ground = 0.24;
+            look.ground = 0.27;
             label(look, 0.95);
         }
         Terrain::StairsDown => {
             // a pit with steps going down, away from the camera, in a rim
-            let stone = tinted(STONE, c);
-            let rim = darker(stone, 0.2);
+            let stone = main(SHADE_LIT);
+            let rim = main(80);
             for (mesh, x, z) in [
-                (cuboid(0.96, 0.05, 0.08), 0.0, -0.44),
-                (cuboid(0.96, 0.05, 0.08), 0.0, 0.44),
-                (cuboid(0.08, 0.05, 0.8), -0.44, 0.0),
-                (cuboid(0.08, 0.05, 0.8), 0.44, 0.0),
+                (cuboid(1.0, 0.06, 0.1), 0.0, -0.45),
+                (cuboid(1.0, 0.06, 0.1), 0.0, 0.45),
+                (cuboid(0.1, 0.06, 0.8), -0.45, 0.0),
+                (cuboid(0.1, 0.06, 0.8), 0.45, 0.0),
             ] {
-                look.solid(mesh, rim, Finish::Matte, at(x, 0.025, z));
+                look.solid(mesh, rim, at(x, 0.03, z));
             }
             look.solid(
                 cuboid(0.8, 0.6, 0.04),
-                DEEP,
-                Finish::Matte,
+                Paint::Flat(DEEP, Finish::Matte),
                 at(0.0, -0.3, -0.38),
             );
             for (i, z) in [0.23f32, 0.0, -0.23].into_iter().enumerate() {
                 let top = -0.12 * (i + 1) as f32;
                 let h = top + 0.6;
                 let pos = at(0.0, top - h / 2.0, z);
-                look.solid(cuboid(0.8, h, 0.23), stone, Finish::Matte, pos);
+                look.solid(cuboid(0.8, h, 0.23), stone, pos);
             }
             label(look, 0.7);
         }
@@ -561,147 +492,110 @@ fn terrain_base(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool) {
             let up = t == Terrain::LadderUp;
             floor(look);
             if !up {
-                look.solid(plane(0.6, 0.6), DEEP, Finish::Matte, at(0.0, 0.005, 0.0));
+                look.ground_tile(
+                    plane(0.6, 0.6),
+                    Paint::Flat(DEEP, Finish::Matte),
+                    at(0.0, 0.005, 0.0),
+                );
             }
-            let wood = tinted(WOOD, c);
+            let wood = main(SHADE_LIT);
             let h = if up { 1.3 } else { 0.5 };
             let rail = cylinder(0.03, 0.03, h);
             for x in [-0.2, 0.2] {
-                look.solid(rail, wood, Finish::Matte, at(x, h / 2.0, -0.2));
+                look.solid(rail, wood, at(x, h / 2.0, -0.2));
             }
             let mut y = 0.2;
             while y < h {
-                look.solid(
-                    cuboid(0.4, 0.03, 0.03),
-                    wood,
-                    Finish::Matte,
-                    at(0.0, y, -0.2),
-                );
+                look.solid(cuboid(0.4, 0.03, 0.03), wood, at(0.0, y, -0.2));
                 y += 0.3;
             }
             label(look, if up { 1.6 } else { 0.8 });
         }
         Terrain::Altar => {
             floor(look);
-            let stone = tinted(STONE, c);
-            look.solid(
-                cuboid(0.76, 0.45, 0.56),
-                stone,
-                Finish::Matte,
-                at(0.0, 0.225, 0.0),
-            );
-            let slab = lighter(stone, 0.15);
-            look.solid(
-                cuboid(0.9, 0.06, 0.7),
-                slab,
-                Finish::Matte,
-                at(0.0, 0.48, 0.0),
-            );
+            let stone = main(90);
+            look.solid(cuboid(0.76, 0.45, 0.56), stone, at(0.0, 0.225, 0.0));
+            look.solid(cuboid(0.9, 0.06, 0.7), main(SHADE_LIT), at(0.0, 0.48, 0.0));
+            // the altar's alignment colour as a runner cloth
+            let cloth = Paint::Flat(darker(nh_color(c), 0.35), Finish::Matte);
+            look.solid(cuboid(0.3, 0.012, 0.72), cloth, at(0.0, 0.516, 0.0));
             look.ground = 0.51;
         }
         Terrain::Throne => {
             floor(look);
-            let gold = darker(nh_color(c), 0.15);
-            look.solid(
-                cuboid(0.6, 0.35, 0.55),
-                gold,
-                Finish::Glossy,
-                at(0.0, 0.175, 0.02),
-            );
-            look.solid(
-                cuboid(0.6, 0.75, 0.12),
-                gold,
-                Finish::Glossy,
-                at(0.0, 0.725, -0.24),
-            );
-            look.ground = 0.35;
+            let gold = main(SHADE_LIT);
+            look.solid(cuboid(0.62, 0.2, 0.6), trim(SHADE_LIT), at(0.0, 0.1, 0.0));
+            look.solid(cuboid(0.6, 0.18, 0.55), gold, at(0.0, 0.29, 0.02));
+            look.solid(cuboid(0.6, 0.8, 0.12), gold, at(0.0, 0.78, -0.24));
+            for x in [-0.28, 0.28] {
+                look.solid(cuboid(0.07, 0.22, 0.5), gold, at(x, 0.49, 0.0));
+            }
+            let velvet = Paint::Flat(Color::from_rgb(0.35, 0.04, 0.06), Finish::Matte);
+            look.solid(cuboid(0.48, 0.03, 0.45), velvet, at(0.0, 0.395, 0.04));
+            look.ground = 0.38;
         }
         Terrain::Fountain => {
             floor(look);
+            let stone = main(SHADE_LIT);
+            look.solid(cylinder(0.44, 0.47, 0.28), stone, at(0.0, 0.14, 0.0));
             look.solid(
-                cylinder(0.42, 0.45, 0.25),
-                STONE,
-                Finish::Matte,
-                at(0.0, 0.125, 0.0),
+                cylinder(0.38, 0.38, 0.02),
+                trim(SHADE_LIT),
+                at(0.0, 0.27, 0.0),
             );
-            let water = nh_color(c);
-            look.solid(
-                cylinder(0.36, 0.36, 0.02),
-                water,
-                Finish::Glossy,
-                at(0.0, 0.25, 0.0),
-            );
-            look.solid(
-                cylinder(0.05, 0.07, 0.5),
-                STONE,
-                Finish::Matte,
-                at(0.0, 0.4, 0.0),
-            );
-            look.ground = 0.25;
+            look.solid(cylinder(0.05, 0.08, 0.45), stone, at(0.0, 0.5, 0.0));
+            look.solid(cylinder(0.14, 0.06, 0.08), stone, at(0.0, 0.74, 0.0));
+            look.ground = 0.28;
         }
         Terrain::Sink => {
             floor(look);
-            let stone = tinted(STONE, c);
+            let stone = main(SHADE_LIT);
+            look.solid(cuboid(0.6, 0.4, 0.5), stone, at(0.0, 0.2, 0.0));
             look.solid(
-                cuboid(0.6, 0.4, 0.5),
-                stone,
-                Finish::Glossy,
-                at(0.0, 0.2, 0.0),
+                plane(0.44, 0.34),
+                Paint::Flat(DEEP, Finish::Glossy),
+                at(0.0, 0.405, 0.0),
             );
-            look.solid(plane(0.44, 0.34), DEEP, Finish::Matte, at(0.0, 0.405, 0.0));
+            let metal = pbr(ctx.mat("metal"), SHADE_LIT, DEEP);
+            look.solid(cylinder(0.02, 0.02, 0.2), metal, at(0.0, 0.5, -0.2));
             look.ground = 0.4;
         }
         Terrain::Grave => {
-            look.solid(tile, EARTH, Finish::Matte, Vector3::ZERO);
-            let mound = lighter(EARTH, 0.1);
-            look.solid(
-                cuboid(0.5, 0.1, 0.6),
-                mound,
-                Finish::Matte,
-                at(0.0, 0.05, 0.12),
-            );
-            let stone = tinted(STONE, c);
-            look.solid(
-                cuboid(0.5, 0.6, 0.1),
+            look.ground_tile(tile, main(75), Vector3::ZERO);
+            look.solid(cuboid(0.5, 0.12, 0.62), main(60), at(0.0, 0.06, 0.12));
+            let stone = trim(80);
+            look.turned(
+                cuboid(0.48, 0.6, 0.1),
                 stone,
-                Finish::Matte,
                 at(0.0, 0.3, -0.32),
+                at(-6.0, 0.0, 3.0),
             );
-            look.ground = 0.1;
+            look.turned(
+                cylinder(0.24, 0.24, 0.1),
+                stone,
+                at(0.0, 0.6, -0.33),
+                at(84.0, 0.0, 3.0),
+            );
+            look.ground = 0.12;
         }
         Terrain::Pool | Terrain::Water => {
-            let deep = if t == Terrain::Water { 0.55 } else { 0.35 };
-            let water = darker(nh_color(c), deep);
-            look.solid(plane(1.0, 1.0), water, Finish::Glossy, at(0.0, -0.04, 0.0));
-            look.ground = -0.04;
+            let deep = if t == Terrain::Water { 0.1 } else { 0.06 };
+            look.ground_tile(plane(1.0, 1.0), main(SHADE_LIT), at(0.0, -deep, 0.0));
+            look.ground = -deep;
         }
-        Terrain::Ice => {
-            let ice = lighter(nh_color(c), 0.3);
-            look.solid(plane(1.0, 1.0), ice, Finish::Glossy, Vector3::ZERO);
-        }
+        Terrain::Ice => look.ground_tile(tile, main(SHADE_LIT), Vector3::ZERO),
         Terrain::Lava => {
-            look.solid(
-                plane(1.0, 1.0),
-                nh_color(c),
-                Finish::Ember,
-                at(0.0, -0.04, 0.0),
-            );
+            look.ground_tile(plane(1.0, 1.0), main(SHADE_LIT), at(0.0, -0.04, 0.0));
             look.ground = -0.04;
         }
         Terrain::LavaWall => {
             let mesh = cuboid(1.0, wall_h, 1.0);
-            look.solid(mesh, nh_color(c), Finish::Ember, at(0.0, wall_h / 2.0, 0.0));
+            look.solid(mesh, main(SHADE_LIT), at(0.0, wall_h / 2.0, 0.0));
             look.ground = wall_h;
         }
         Terrain::DrawbridgeDown => {
-            let wood = tinted(WOOD, c);
-            look.solid(
-                cuboid(1.0, 0.08, 1.0),
-                wood,
-                Finish::Matte,
-                at(0.0, 0.04, 0.0),
-            );
-            // two beams along the span
+            look.solid(cuboid(1.0, 0.08, 1.0), main(SHADE_LIT), at(0.0, 0.04, 0.0));
+            // two iron beams along the span
             let mesh = if vertical {
                 cuboid(1.0, 0.1, 0.06)
             } else {
@@ -713,41 +607,42 @@ fn terrain_base(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool) {
                 } else {
                     at(d, 0.09, 0.0)
                 };
-                look.solid(mesh, darker(wood, 0.2), Finish::Matte, pos);
+                look.solid(mesh, trim(SHADE_LIT), pos);
             }
             look.ground = 0.08;
         }
         Terrain::DrawbridgeUp => {
-            let water = Color::from_rgb(0.05, 0.1, 0.3);
-            look.solid(plane(1.0, 1.0), water, Finish::Glossy, at(0.0, -0.04, 0.0));
+            look.ground_tile(plane(1.0, 1.0), trim(SHADE_LIT), at(0.0, -0.06, 0.0));
             let mesh = if vertical {
                 cuboid(0.2, 1.1, 0.96)
             } else {
                 cuboid(0.96, 1.1, 0.2)
             };
-            look.solid(mesh, tinted(WOOD, c), Finish::Matte, at(0.0, 0.55, 0.0));
+            look.solid(mesh, main(SHADE_LIT), at(0.0, 0.55, 0.0));
             look.ground = 1.1;
         }
         Terrain::Air => {
             let air = lighter(nh_color(c), 0.4);
-            look.solid(plane(1.0, 1.0), air, Finish::Ghost, Vector3::ZERO);
+            look.ground_tile(
+                plane(1.0, 1.0),
+                Paint::Flat(air, Finish::Ghost),
+                Vector3::ZERO,
+            );
         }
         Terrain::Cloud => {
             let cloud = lighter(nh_color(c), 0.2);
             look.solid(
                 cuboid(0.96, 0.6, 0.96),
-                cloud,
-                Finish::Ghost,
+                Paint::Flat(cloud, Finish::Ghost),
                 at(0.0, 0.3, 0.0),
             );
         }
         Terrain::Trap => {
             floor(look);
             let mark = darker(nh_color(c), 0.45);
-            look.solid(
+            look.ground_tile(
                 cylinder(0.34, 0.34, 0.02),
-                mark,
-                Finish::Matte,
+                Paint::Flat(mark, Finish::Matte),
                 at(0.0, 0.01, 0.0),
             );
             if let Some(ch) = glyph_char(g) {
@@ -758,46 +653,41 @@ fn terrain_base(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, cut: bool) {
 }
 
 /// Monsters, objects and the like on top of the terrain.
-fn entity_look(look: &mut Look, g: &Glyph, catalog: &Catalog) {
+fn entity_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
     let ground = look.ground;
     let color = nh_color(g.color);
     let ch = glyph_char(g);
+    let art = ctx.art;
+    let here = at(0.0, ground, 0.0);
     match g.kind {
         GlyphKind::Mon => {
-            let h = monster_height(catalog, g.mon);
-            let r = (h * 0.3).clamp(0.12, 0.38);
-            let ghost = g.flags & (mg::DETECT | mg::INVIS) != 0;
-            let finish = if ghost { Finish::Ghost } else { Finish::Matte };
-            look.solid(capsule(r, h), color, finish, at(0.0, ground + h / 2.0, 0.0));
-            if g.flags & mg::PET != 0 {
-                let ring = torus(0.34, 0.42);
-                look.solid(ring, PET_RING, Finish::Flat, at(0.0, ground + 0.03, 0.0));
-            }
-            if let Some(ch) = ch {
-                let color = if g.flags & mg::HERO != 0 {
-                    Color::WHITE
+            let hero = g.flags & mg::HERO != 0;
+            if let Some(info) = monster_info(ctx.catalog, g.mon) {
+                let r = art.monster(info, g.flags);
+                let pose = if g.flags & (mg::DETECT | mg::INVIS) != 0 {
+                    Pose::Ghost
                 } else {
-                    lighter(color, 0.15)
+                    Pose::Alive
                 };
-                look.letter(ch, color, ground + h + MONSTER_LABEL_LIFT, PX_MONSTER, true);
+                let tint = tint_color(r.tint, g.color);
+                let yaw = if hero { ctx.hero_yaw } else { ctx.face_hero() };
+                look.model(ModelLook { art: r, tint, pose }, here, yaw);
+            }
+            if g.flags & mg::PET != 0 {
+                let ring = torus(0.36, 0.42);
+                let paint = Paint::Flat(PET_RING, Finish::Flat);
+                look.ground_tile(ring, paint, at(0.0, ground + 0.02, 0.0));
             }
         }
         GlyphKind::Invisible => {
             let gray = Color::from_rgb(0.7, 0.72, 0.8);
             look.solid(
                 sphere(0.3),
-                gray,
-                Finish::Ghost,
+                Paint::Flat(gray, Finish::Ghost),
                 at(0.0, ground + 0.35, 0.0),
             );
             if let Some(ch) = ch {
-                look.letter(
-                    ch,
-                    gray,
-                    ground + 0.65 + MONSTER_LABEL_LIFT,
-                    PX_MONSTER,
-                    true,
-                );
+                look.letter(ch, gray, ground + 0.8, PX_MONSTER, true);
             }
         }
         GlyphKind::Warning => {
@@ -806,75 +696,101 @@ fn entity_look(look: &mut Look, g: &Glyph, catalog: &Catalog) {
             }
         }
         GlyphKind::Obj => {
-            let mut top = ground;
-            if is_boulder(g, catalog) {
-                look.solid(
-                    sphere(0.42),
-                    color,
-                    Finish::Matte,
-                    at(0.0, ground + 0.42, 0.0),
-                );
-                top += 0.84;
-            } else if g.flags & mg::OBJPILE != 0 {
-                for (s, yaw) in [(0.28f32, 10.0f32), (0.23, 38.0), (0.18, 64.0)] {
-                    let pos = at(0.0, top + s / 2.0, 0.0);
-                    let rot = at(0.0, yaw, 0.0);
-                    look.turned(cuboid(s, s, s), color, Finish::Matte, pos, rot);
-                    top += s;
-                }
-            } else {
-                let s = 0.24;
-                let pos = at(0.0, top + s / 2.0, 0.0);
-                look.turned(
-                    cuboid(s, s, s),
-                    color,
-                    Finish::Matte,
-                    pos,
-                    at(0.0, 20.0, 0.0),
-                );
-                top += s;
+            let Some(tile) = object_tile(ctx.catalog, g.tile) else {
+                return;
+            };
+            let r = art.object(tile);
+            let yaw = ctx.noise(5) * 360.0;
+            let mut pos = here;
+            if g.flags & mg::OBJPILE != 0
+                && let Some(heap) = art.model_index("heap")
+            {
+                let spec = art.model_at(heap).1;
+                let target = spec.target.unwrap_or(0.5);
+                let heap_art = nh_art::Resolved {
+                    model: heap,
+                    scale: target / spec.size,
+                    lift: 0.0,
+                    rot: [0.0; 3],
+                    height: 0.12,
+                    tint: Tint::None,
+                    skin: nh_art::Skin::Own,
+                    level: nh_art::Level::Generic,
+                };
+                let heap_look = ModelLook {
+                    art: heap_art,
+                    tint: Color::WHITE,
+                    pose: Pose::Alive,
+                };
+                look.model(heap_look, here, yaw + 40.0);
+                pos.y += 0.1;
             }
-            if let Some(ch) = ch {
-                look.letter(ch, lighter(color, 0.1), top + 0.26, PX_OBJECT, false);
-            }
+            let tint = tint_color(r.tint, g.color);
+            look.model(
+                ModelLook {
+                    art: r,
+                    tint,
+                    pose: Pose::Alive,
+                },
+                pos,
+                yaw,
+            );
         }
         GlyphKind::Body => {
-            let h = monster_height(catalog, g.mon) * 0.8;
-            let r = (h * 0.22).clamp(0.08, 0.3);
-            let pos = at(0.0, ground + r, 0.0);
-            let lying = at(0.0, 25.0, 90.0);
-            look.turned(capsule(r, h), darker(color, 0.2), Finish::Matte, pos, lying);
-            if let Some(ch) = ch {
-                look.letter(ch, color, ground + 2.0 * r + 0.25, PX_OBJECT, false);
+            if let Some(info) = monster_info(ctx.catalog, g.mon) {
+                let r = art.monster(info, g.flags);
+                let tint = darker(tint_color(r.tint, g.color), CORPSE_DARKEN);
+                let yaw = ctx.noise(6) * 360.0;
+                look.model(
+                    ModelLook {
+                        art: r,
+                        tint,
+                        pose: Pose::Corpse,
+                    },
+                    here,
+                    yaw,
+                );
             }
         }
         GlyphKind::Statue => {
-            let h = monster_height(catalog, g.mon);
-            let r = (h * 0.3).clamp(0.12, 0.38);
             let plinth = 0.1;
+            let stone = match art.material("marble") {
+                Some(m) => Paint::Pbr(m, 70),
+                None => Paint::Flat(Color::from_rgb(0.5, 0.5, 0.52), Finish::Matte),
+            };
             look.solid(
-                cuboid(0.56, plinth, 0.56),
-                STONE,
-                Finish::Matte,
-                at(0.0, ground + 0.05, 0.0),
+                cuboid(0.6, plinth, 0.6),
+                stone,
+                at(0.0, ground + plinth / 2.0, 0.0),
             );
-            let pos = at(0.0, ground + plinth + h / 2.0, 0.0);
-            look.solid(capsule(r, h), STATUE, Finish::Matte, pos);
-            if let Some(ch) = ch {
-                look.letter(ch, color, ground + plinth + h + 0.3, PX_OBJECT, false);
-            }
+            let r = art.statue(monster_info(ctx.catalog, g.mon), g.flags);
+            let yaw = ctx.face_hero();
+            let pos = at(0.0, ground + plinth, 0.0);
+            look.model(
+                ModelLook {
+                    art: r,
+                    tint: Color::WHITE,
+                    pose: Pose::Statue,
+                },
+                pos,
+                yaw,
+            );
         }
-        GlyphKind::Zap | GlyphKind::Explosion => bright_cube(look, g),
+        GlyphKind::Zap | GlyphKind::Explosion => bright_flash(look, g),
         // the engulfer is drawn once, around the hero
         _ => {}
     }
 }
 
-/// A beam, explosion or sparkle: a bright cube for the moment it shows.
-fn bright_cube(look: &mut Look, g: &Glyph) {
+/// A beam, explosion or sparkle: a glowing ball for the moment it shows.
+fn bright_flash(look: &mut Look, g: &Glyph) {
     let color = lighter(nh_color(g.color), 0.3);
     let y = look.ground.max(0.0) + 0.5;
-    look.solid(cuboid(0.5, 0.5, 0.5), color, Finish::Glow, at(0.0, y, 0.0));
+    look.solid(
+        sphere(0.28),
+        Paint::Flat(color, Finish::Glow),
+        at(0.0, y, 0.0),
+    );
 }
 
 /// Can something north of a wall be seen or stood on (so the wall would
@@ -888,10 +804,12 @@ fn is_open(cell: Option<&Cell>, catalog: &Catalog) -> bool {
             t,
             Terrain::Stone | Terrain::Wall | Terrain::LavaWall | Terrain::Effect | Terrain::Unknown
         ),
-        // only what stays put: the hero, or a remembered object; a sensed
-        // monster or a warning passing through rock would make walls flicker
+        // only what stands on open ground: the hero, a monster in sight, a
+        // remembered object; a sensed monster or a warning passing through
+        // rock would make walls flicker
         None => cell.entity().is_some_and(|g| {
             g.flags & mg::HERO != 0
+                || (g.kind == GlyphKind::Mon && g.flags & mg::DETECT == 0)
                 || matches!(g.kind, GlyphKind::Obj | GlyphKind::Body | GlyphKind::Statue)
         }),
     }
@@ -941,13 +859,14 @@ impl<'a> Near<'a> {
 
 /// A cell's look; `near` are its neighbours (walls in front of open ground
 /// are cut down, unseen ground takes the floor around it).
-fn look_of(cell: &Cell, near: Near, catalog: &Catalog) -> Look {
+fn look_of(cell: &Cell, near: Near, ctx: &Ctx) -> Look {
+    let catalog = ctx.catalog;
     let mut look = Look::default();
     match &cell.terrain {
         Some(t) => {
             let sym = cmap_sym(t, catalog).unwrap_or("");
             let cut = is_open(near.north(), catalog);
-            terrain_look(&mut look, terrain_of(sym), sym, t, cut);
+            terrain_look(&mut look, terrain_of(sym), sym, t, cut, ctx);
         }
         // print_glyph sends an unexplored background under monsters and
         // objects: something stands there, so it is walkable; it looks
@@ -960,11 +879,11 @@ fn look_of(cell: &Cell, near: Near, catalog: &Catalog) -> Look {
                     "S_engrcorr" => "S_corr",
                     sym => sym,
                 };
-                terrain_look(&mut look, terrain_of(sym), sym, g, false);
+                terrain_look(&mut look, terrain_of(sym), sym, g, false, ctx);
             }
             None => {
-                let tile = plane(0.96, 0.96);
-                look.solid(tile, FLOOR_UNSEEN, Finish::Matte, Vector3::ZERO);
+                let paint = Paint::Flat(FLOOR_UNSEEN, Finish::Matte);
+                look.ground_tile(plane(1.0, 1.0), paint, Vector3::ZERO);
             }
         },
         None => {}
@@ -972,10 +891,10 @@ fn look_of(cell: &Cell, near: Near, catalog: &Catalog) -> Look {
     match &cell.glyph {
         Some(g) if g.kind == GlyphKind::Cmap => {
             if cmap_sym(g, catalog).is_some_and(|s| terrain_of(s) == Terrain::Effect) {
-                bright_cube(&mut look, g);
+                bright_flash(&mut look, g);
             }
         }
-        Some(g) => entity_look(&mut look, g, catalog),
+        Some(g) => entity_look(&mut look, g, ctx),
         None => {}
     }
     look
@@ -986,15 +905,19 @@ struct CellNodes {
     look: Look,
     solids: Vec<Gd<MeshInstance3D>>,
     letters: Vec<Gd<Label3D>>,
+    models: Vec<Model>,
 }
 
 impl CellNodes {
-    fn free(self) {
+    fn free(self, art: &mut Art) {
         for mut n in self.solids {
             n.queue_free();
         }
         for mut n in self.letters {
             n.queue_free();
+        }
+        for m in self.models {
+            art.give(m);
         }
     }
 }
@@ -1005,27 +928,35 @@ pub struct MapView {
     camera: Gd<Camera3D>,
     cells: HashMap<(i32, i32), CellNodes>,
     generation: Option<u64>,
-    meshes: HashMap<MeshKey, Gd<Mesh>>,
-    materials: HashMap<(u32, Finish), Gd<StandardMaterial3D>>,
+    art: Art,
     font: Gd<SystemFont>,
     hover: Gd<Node3D>,
     cursor: Gd<Node3D>,
     hero_ring: Gd<MeshInstance3D>,
-    hero_light: Gd<OmniLight3D>,
+    torch: Gd<OmniLight3D>,
+    /// Fill lights over the parts of the level in view.
+    room_lights: Vec<Gd<OmniLight3D>>,
+    /// The lit areas changed: place the fill lights again.
+    lights_dirty: bool,
     engulf: Gd<MeshInstance3D>,
-    engulf_mat: Gd<StandardMaterial3D>,
+    engulf_mat: Gd<godot::classes::StandardMaterial3D>,
     target: Vector3,
     focus: Vector3,
     distance: f32,
     /// The whole-level view is on: its distance, refitted as cells appear.
     overview: Option<f32>,
     snap: bool,
+    /// Seconds since the start (the torch's flicker).
+    clock: f64,
+    /// Where the hero was and which way they face.
+    hero_at: Option<(i32, i32)>,
+    hero_yaw: f32,
 }
 
 /// A square outline over a cell: four thin bars.
 fn frame(root: &mut Gd<Node3D>, color: Color, width: f32, height: f32) -> Gd<Node3D> {
     let mut node = Node3D::new_alloc();
-    let mat = build_material(color, Finish::Flat);
+    let mat = build_flat(color, Finish::Flat);
     let along_x = cuboid(1.0, height, width).build();
     let along_z = cuboid(width, height, 1.0).build();
     let e = 0.5 - width / 2.0;
@@ -1039,6 +970,7 @@ fn frame(root: &mut Gd<Node3D>, color: Color, width: f32, height: f32) -> Gd<Nod
         mi.set_mesh(mesh);
         mi.set_material_override(&mat);
         mi.set_position(pos);
+        no_shadow(&mut mi);
         node.add_child(&mi);
     }
     node.set_visible(false);
@@ -1046,22 +978,43 @@ fn frame(root: &mut Gd<Node3D>, color: Color, width: f32, height: f32) -> Gd<Nod
     node
 }
 
+/// The torch's brightness at time `t`: a few slow waves and a quick one.
+fn flicker(t: f64) -> f32 {
+    let t = t as f32;
+    1.0 + 0.07 * (t * 7.3).sin() + 0.05 * (t * 13.7 + 1.3).sin() + 0.03 * (t * 29.1 + 0.4).sin()
+}
+
 impl MapView {
     pub fn new(mut root: Gd<Node3D>) -> MapView {
         let mut env = Environment::new_gd();
         env.set_background(BgMode::COLOR);
-        env.set_bg_color(theme::BG);
+        env.set_bg_color(Color::from_rgb(0.012, 0.012, 0.018));
         env.set_ambient_source(AmbientSource::COLOR);
-        env.set_ambient_light_color(Color::from_rgb(0.7, 0.72, 0.85));
-        env.set_ambient_light_energy(0.65);
+        env.set_ambient_light_color(Color::from_rgb(0.5, 0.53, 0.68));
+        env.set_ambient_light_energy(0.55);
+        env.set_tonemapper(ToneMapper::ACES);
+        env.set_tonemap_exposure(1.1);
+        env.set_fog_enabled(true);
+        env.set_fog_mode(FogMode::DEPTH);
+        env.set_fog_light_color(Color::from_rgb(0.012, 0.012, 0.02));
+        env.set_fog_density(1.0);
+        env.set_fog_depth_begin(16.0);
+        env.set_fog_depth_end(46.0);
+        env.set_glow_enabled(true);
+        env.set_glow_intensity(0.7);
+        env.set_glow_bloom(0.02);
+        env.set_glow_hdr_bleed_threshold(1.2);
         let mut world_env = WorldEnvironment::new_alloc();
         world_env.set_environment(&env);
         root.add_child(&world_env);
 
-        let mut sun = DirectionalLight3D::new_alloc();
-        sun.set_rotation_degrees(Vector3::new(-60.0, 30.0, 0.0));
-        sun.set_param(Param::ENERGY, 0.75);
-        root.add_child(&sun);
+        // a faint cold light from above: walls and shapes stay readable
+        // outside the torch's reach
+        let mut moon = DirectionalLight3D::new_alloc();
+        moon.set_rotation_degrees(Vector3::new(-62.0, 25.0, 0.0));
+        moon.set_color(Color::from_rgb(0.62, 0.68, 0.9));
+        moon.set_param(Param::ENERGY, 0.4);
+        root.add_child(&moon);
 
         let mut camera = Camera3D::new_alloc();
         camera.set_fov(FOV_DEG);
@@ -1081,25 +1034,32 @@ impl MapView {
         );
 
         let mut hero_ring = MeshInstance3D::new_alloc();
-        hero_ring.set_mesh(&torus(0.36, 0.46).build());
-        hero_ring.set_material_override(&build_material(HERO_RING, Finish::Flat));
+        hero_ring.set_mesh(&torus(0.38, 0.44).build());
+        hero_ring.set_material_override(&build_flat(HERO_RING, Finish::Flat));
         hero_ring.set_visible(false);
+        no_shadow(&mut hero_ring);
         root.add_child(&hero_ring);
 
-        let mut hero_light = OmniLight3D::new_alloc();
-        hero_light.set_color(HERO_LIGHT);
-        hero_light.set_param(Param::ENERGY, 1.4);
-        hero_light.set_param(Param::RANGE, 6.5);
-        hero_light.set_visible(false);
-        root.add_child(&hero_light);
+        let mut torch = OmniLight3D::new_alloc();
+        torch.set_color(TORCH);
+        torch.set_param(Param::ENERGY, TORCH_ENERGY);
+        torch.set_param(Param::RANGE, 7.5);
+        torch.set_param(Param::ATTENUATION, 1.1);
+        torch.set_shadow(true);
+        torch.set_visible(false);
+        root.add_child(&torch);
 
-        let engulf_mat = build_material(Color::WHITE, Finish::Ghost);
+        let engulf_mat = godot::classes::StandardMaterial3D::new_gd();
         let mut engulf = MeshInstance3D::new_alloc();
         engulf.set_mesh(&sphere(1.3).build());
-        engulf.set_material_override(&engulf_mat);
         engulf.set_visible(false);
         root.add_child(&engulf);
+        let mut engulf_mat = engulf_mat;
+        engulf_mat.set_transparency(godot::classes::base_material_3d::Transparency::ALPHA);
+        engulf_mat.set_roughness(0.4);
+        engulf.set_material_override(&engulf_mat);
 
+        let art = Art::new(cells_root.clone());
         let center = Vector3::new(COLNO as f32 / 2.0, 0.0, ROWNO as f32 / 2.0);
         let mut view = MapView {
             root,
@@ -1107,13 +1067,14 @@ impl MapView {
             camera,
             cells: HashMap::new(),
             generation: None,
-            meshes: HashMap::new(),
-            materials: HashMap::new(),
+            art,
             font: theme::mono_bold(),
             hover,
             cursor,
             hero_ring,
-            hero_light,
+            torch,
+            room_lights: Vec::new(),
+            lights_dirty: false,
             engulf,
             engulf_mat,
             target: center,
@@ -1121,6 +1082,9 @@ impl MapView {
             distance: DISTANCE,
             overview: None,
             snap: true,
+            clock: 0.0,
+            hero_at: None,
+            hero_yaw: 0.0,
         };
         view.place_camera();
         view
@@ -1131,16 +1095,28 @@ impl MapView {
     /// the hero, or getpos moves it. The hero ring marks `World::hero`,
     /// also when the hero is not drawn (invisible).
     pub fn sync(&mut self, world: &mut World, catalog: &Catalog, delta: f64) {
+        self.clock += delta;
+        let hero = world.hero();
+        // the hero faces the way they last stepped
+        if let (Some((x, y)), Some((px, py))) = (hero, self.hero_at)
+            && (x, y) != (px, py)
+            && (x - px).abs() <= 1
+            && (y - py).abs() <= 1
+        {
+            self.hero_yaw = ((x - px) as f32).atan2((y - py) as f32).to_degrees();
+        }
+        self.hero_at = hero;
         let generation = world.map.generation();
         if self.generation != Some(generation) {
             self.generation = Some(generation);
             world.map.take_dirty();
             for y in 0..ROWNO {
                 for x in 1..COLNO {
-                    self.update_cell(x, y, world, catalog);
+                    self.update_cell(x, y, world, catalog, hero);
                 }
             }
             self.snap = true;
+            self.lights_dirty = true;
         } else {
             // a cell's look depends on its neighbours: a wall on the cell
             // north of it, unseen ground under something on all four
@@ -1154,10 +1130,12 @@ impl MapView {
             dirty.sort_unstable();
             dirty.dedup();
             for (x, y) in dirty {
-                self.update_cell(x, y, world, catalog);
+                self.update_cell(x, y, world, catalog, hero);
             }
         }
-        let hero = world.hero();
+        if std::mem::take(&mut self.lights_dirty) {
+            self.place_room_lights();
+        }
         let bounds = self.overview.and(self.known_bounds());
         if let Some(b) = bounds {
             // never closer than the player's own view
@@ -1171,14 +1149,17 @@ impl MapView {
             Some((x, y)) => {
                 let ground = self.ground(x, y);
                 let p = Vector3::new(x as f32, ground, y as f32);
-                self.hero_ring.set_position(p + at(0.0, 0.03, 0.0));
+                self.hero_ring.set_position(p + at(0.0, 0.02, 0.0));
                 self.hero_ring.set_visible(true);
-                self.hero_light.set_position(p + at(0.0, 1.8, 0.3));
-                self.hero_light.set_visible(true);
+                // held up and a little in front, towards the camera
+                self.torch.set_position(p + at(0.25, 1.55, 0.35));
+                self.torch
+                    .set_param(Param::ENERGY, TORCH_ENERGY * flicker(self.clock));
+                self.torch.set_visible(true);
             }
             None => {
                 self.hero_ring.set_visible(false);
-                self.hero_light.set_visible(false);
+                self.torch.set_visible(false);
             }
         }
         match hero.and_then(|h| engulfer_color(world, h)) {
@@ -1211,6 +1192,45 @@ impl MapView {
             self.focus = self.focus.lerp(self.target, t);
         }
         self.place_camera();
+    }
+
+    /// One soft light over each connected area of floor in view.
+    fn place_room_lights(&mut self) {
+        let lit: std::collections::HashSet<(i32, i32)> = self
+            .cells
+            .iter()
+            .filter(|(_, n)| n.look.lit)
+            .map(|(&k, _)| k)
+            .collect();
+        let areas = lit_areas(&lit);
+        let mut used = 0;
+        for area in areas.iter().filter(|a| a.len() >= 4) {
+            let n = area.len() as f32;
+            let cx = area.iter().map(|c| c.0 as f32).sum::<f32>() / n;
+            let cy = area.iter().map(|c| c.1 as f32).sum::<f32>() / n;
+            let reach = area
+                .iter()
+                .map(|c| ((c.0 as f32 - cx).powi(2) + (c.1 as f32 - cy).powi(2)).sqrt())
+                .fold(0.0f32, f32::max);
+            if used == self.room_lights.len() {
+                let mut l = OmniLight3D::new_alloc();
+                l.set_color(ROOM_LIGHT);
+                l.set_shadow(false);
+                l.set_param(Param::ATTENUATION, 0.5);
+                self.root.add_child(&l);
+                self.room_lights.push(l);
+            }
+            let l = &mut self.room_lights[used];
+            used += 1;
+            let height = (2.2 + reach * 0.25).min(4.5);
+            l.set_position(Vector3::new(cx, height, cy));
+            l.set_param(Param::RANGE, (reach * 1.35 + 2.5).clamp(3.5, 16.0));
+            l.set_param(Param::ENERGY, 0.75);
+            l.set_visible(true);
+        }
+        for l in self.room_lights.iter_mut().skip(used) {
+            l.set_visible(false);
+        }
     }
 
     /// The map cell under a screen position: the first wall, door, creature
@@ -1284,15 +1304,19 @@ impl MapView {
     /// Forget every cell (a new game).
     pub fn clear(&mut self) {
         for (_, nodes) in self.cells.drain() {
-            nodes.free();
+            nodes.free(&mut self.art);
         }
         self.generation = None;
         self.hover.set_visible(false);
         self.cursor.set_visible(false);
         self.hero_ring.set_visible(false);
-        self.hero_light.set_visible(false);
+        self.torch.set_visible(false);
+        for l in &mut self.room_lights {
+            l.set_visible(false);
+        }
         self.engulf.set_visible(false);
         self.snap = true;
+        self.hero_at = None;
     }
 
     pub fn set_visible(&mut self, on: bool) {
@@ -1304,9 +1328,26 @@ impl MapView {
         self.focus.distance_to(self.target) < 0.05
     }
 
+    /// Load art ahead of need for a few milliseconds (every frame, also
+    /// before a game starts); false when everything is loaded.
+    pub fn preload_step(&mut self) -> bool {
+        self.art.preload_step()
+    }
+
+    /// The map generation last drawn (self-tests wait for a redraw).
+    pub fn drawn_generation(&self) -> Option<u64> {
+        self.generation
+    }
+
     /// Cells with anything drawn (self-tests check the map is drawn).
     pub fn drawn_cells(&self) -> usize {
         self.cells.values().filter(|c| !c.look.is_empty()).count()
+    }
+
+    /// Models on the map now, and model instances ever built (self-tests
+    /// check the pool reuses them).
+    pub fn model_counts(&self) -> (usize, usize) {
+        self.art.counts()
     }
 
     /// The height things stand at on a cell (0 when nothing is known).
@@ -1325,11 +1366,26 @@ impl MapView {
         self.camera.look_at_from_position(aim + offset, aim);
     }
 
-    fn update_cell(&mut self, x: i32, y: i32, world: &World, catalog: &Catalog) {
+    fn update_cell(
+        &mut self,
+        x: i32,
+        y: i32,
+        world: &World,
+        catalog: &Catalog,
+        hero: Option<(i32, i32)>,
+    ) {
+        let ctx = Ctx {
+            catalog,
+            art: self.art.manifest(),
+            x,
+            y,
+            hero,
+            hero_yaw: self.hero_yaw,
+        };
         let look = world
             .map
             .cell(x, y)
-            .map(|c| look_of(c, Near::of(&world.map, x, y), catalog))
+            .map(|c| look_of(c, Near::of(&world.map, x, y), &ctx))
             .unwrap_or_default();
         match self.cells.get(&(x, y)) {
             Some(n) if n.look == look => return,
@@ -1338,6 +1394,9 @@ impl MapView {
         }
         let mut nodes = self.cells.remove(&(x, y)).unwrap_or_default();
         let old = std::mem::take(&mut nodes.look);
+        if old.lit != look.lit {
+            self.lights_dirty = true;
+        }
         let origin = Vector3::new(x as f32, 0.0, y as f32);
         // only what changed crosses into the engine: a step redraws two
         // cells, a level arrives as a thousand of them
@@ -1348,15 +1407,18 @@ impl MapView {
             }
             let mi = &mut nodes.solids[i];
             if before.map(|b| b.mesh) != Some(s.mesh) {
-                let mesh = self.meshes.entry(s.mesh).or_insert_with(|| s.mesh.build());
-                mi.set_mesh(&*mesh);
+                mi.set_mesh(&self.art.mesh(s.mesh));
             }
-            if before.map(|b| (b.color, b.finish)) != Some((s.color, s.finish)) {
-                let mat = self
-                    .materials
-                    .entry((color_key(s.color), s.finish))
-                    .or_insert_with(|| build_material(s.color, s.finish));
-                mi.set_material_override(&*mat);
+            if before.map(|b| b.paint) != Some(s.paint) {
+                let mat = match s.paint {
+                    Paint::Pbr(m, shade) => self.art.surface(m, shade, true, Color::WHITE),
+                    Paint::Flat(c, f) => self.art.flat(c, f),
+                };
+                mi.set_material_override(&mat);
+            }
+            if before.map(|b| b.shadow) != Some(s.shadow) {
+                use godot::classes::geometry_instance_3d::ShadowCastingSetting as S;
+                mi.set_cast_shadows_setting(if s.shadow { S::ON } else { S::OFF });
             }
             if before.map(|b| (b.pos, b.rot)) != Some((s.pos, s.rot)) {
                 mi.set_transform(solid_transform(origin, s));
@@ -1377,6 +1439,34 @@ impl MapView {
         {
             mi.set_visible(false);
         }
+        // models: kept when the look is the same (only moved), else given
+        // back to the pool and taken anew
+        let mut kept: Vec<Model> = Vec::with_capacity(look.models.len());
+        let mut old_models = std::mem::take(&mut nodes.models).into_iter();
+        for (i, p) in look.models.iter().enumerate() {
+            let before = old.models.get(i);
+            let reuse = old_models.next();
+            let mut m = match (before, reuse) {
+                (Some(b), Some(m)) if b.look == p.look => m,
+                (_, other) => {
+                    if let Some(m) = other {
+                        self.art.give(m);
+                    }
+                    self.art.take(&p.look)
+                }
+            };
+            if before.map(|b| (b.pos, b.yaw, b.look)) != Some((p.pos, p.yaw, p.look)) {
+                let basis =
+                    Basis::from_euler(EulerOrder::YXZ, Vector3::new(0.0, p.yaw.to_radians(), 0.0));
+                m.node
+                    .set_transform(Transform3D::new(basis, origin + p.pos));
+            }
+            kept.push(m);
+        }
+        for m in old_models {
+            self.art.give(m);
+        }
+        nodes.models = kept;
         for (i, l) in look.letters.iter().enumerate() {
             let before = old.letters.get(i);
             if i == nodes.letters.len() {
@@ -1428,8 +1518,35 @@ impl MapView {
         l.set_font_size(FONT_PX);
         l.set_outline_size(18);
         l.set_outline_modulate(Color::from_rgba(0.0, 0.0, 0.0, 0.85));
+        l.set_cast_shadows_setting(godot::classes::geometry_instance_3d::ShadowCastingSetting::OFF);
         l
     }
+}
+
+/// Connected (4-neighbour) areas of lit cells.
+fn lit_areas(lit: &std::collections::HashSet<(i32, i32)>) -> Vec<Vec<(i32, i32)>> {
+    let mut seen = std::collections::HashSet::new();
+    let mut areas = Vec::new();
+    let mut cells: Vec<_> = lit.iter().copied().collect();
+    cells.sort_unstable();
+    for start in cells {
+        if !seen.insert(start) {
+            continue;
+        }
+        let mut area = vec![start];
+        let mut i = 0;
+        while i < area.len() {
+            let (x, y) = area[i];
+            for n in [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)] {
+                if lit.contains(&n) && seen.insert(n) {
+                    area.push(n);
+                }
+            }
+            i += 1;
+        }
+        areas.push(area);
+    }
+    areas
 }
 
 /// The overview's aim and camera distance for the cells `(x0, y0, x1, y1)`
@@ -1513,6 +1630,43 @@ mod tests {
         }
     }
 
+    fn manifest() -> ArtManifest {
+        ArtManifest::parse(include_str!("../../../godot/art/manifest.json")).unwrap()
+    }
+
+    struct Fixture {
+        cat: Catalog,
+        art: ArtManifest,
+    }
+
+    impl Fixture {
+        fn new() -> Fixture {
+            Fixture {
+                cat: catalog(),
+                art: manifest(),
+            }
+        }
+
+        fn ctx(&self) -> Ctx<'_> {
+            self.ctx_at(10, 10, None)
+        }
+
+        fn ctx_at(&self, x: i32, y: i32, hero: Option<(i32, i32)>) -> Ctx<'_> {
+            Ctx {
+                catalog: &self.cat,
+                art: &self.art,
+                x,
+                y,
+                hero,
+                hero_yaw: 0.0,
+            }
+        }
+
+        fn look(&self, cell: &Cell) -> Look {
+            look_of(cell, Near::default(), &self.ctx())
+        }
+    }
+
     fn glyph(kind: GlyphKind, ch: char) -> Glyph {
         Glyph {
             glyph: None,
@@ -1554,45 +1708,32 @@ mod tests {
         }
     }
 
+    fn object(cat: &Catalog, class: &str, appearance: &str) -> Glyph {
+        let t = cat
+            .object_tiles
+            .iter()
+            .find(|t| t.class == class && t.appearance == appearance)
+            .unwrap();
+        Glyph {
+            tile: t.tile,
+            ..glyph(GlyphKind::Obj, class.chars().next().unwrap())
+        }
+    }
+
+    fn feature(cat: &Catalog, sym: &str) -> Cell {
+        Cell {
+            glyph: Some(cmap(cat, sym)),
+            bk: None,
+            terrain: Some(cmap(cat, sym)),
+        }
+    }
+
     /// The camera's ray, PITCH_DEG down and looking north, meeting the
     /// ground at the centre of cell (10, 9).
     fn ray() -> (Vector3, Vector3) {
         let pitch = PITCH_DEG.to_radians();
         let back = Vector3::new(0.0, pitch.sin(), pitch.cos());
         (Vector3::new(10.0, 0.0, 9.0) + back * DISTANCE, -back)
-    }
-
-    /// Screen rows a monster's letter covers, in rows of depth from its
-    /// cell's centre (the camera looks north, PITCH_DEG down; parallel
-    /// projection): a height h rises h * cot(pitch) rows, a billboard of
-    /// height s spans s / sin(pitch) rows. A letter ('@', capitals) fills
-    /// about three quarters of the font's line.
-    fn letter_rows(h: f32) -> (f32, f32) {
-        let pitch = PITCH_DEG.to_radians();
-        let centre = (h + MONSTER_LABEL_LIFT) / pitch.tan();
-        let half = 0.75 * FONT_PX as f32 * PX_MONSTER / 2.0 / pitch.sin();
-        (centre - half, centre + half)
-    }
-
-    #[test]
-    fn monster_letters_keep_to_their_rows() {
-        let cat = catalog();
-        let height = |name: &str| monster_height(&cat, monster(&cat, name, 0).mon);
-        // tiny to large, the hero among them: the letter of the monster a
-        // row north starts above the top of this one's
-        for south in ["newt", "kitten", "human", "jackal", "tiger"] {
-            for north in ["newt", "kitten", "human", "jackal"] {
-                let (_, top) = letter_rows(height(south));
-                let (bottom, _) = letter_rows(height(north));
-                assert!(
-                    top < 1.0 + bottom,
-                    "{north}'s letter a row north of {south}'s overlaps it"
-                );
-            }
-        }
-        // and a medium monster's letter stays off the next row's centre
-        let (_, top) = letter_rows(height("human"));
-        assert!(top < 1.0, "{top}");
     }
 
     #[test]
@@ -1626,7 +1767,7 @@ mod tests {
         // the south wall of the room hides the floor cell north of it
         let h = |x, y| if (x, y) == (10, 10) { WALL_HEIGHT } else { 0.0 };
         assert_eq!(pick_cell(origin, dir, h), Some((10, 10)));
-        // a letter standing south of the floor cell covers it too
+        // a creature standing south of the floor cell covers it too
         let h = |x, y| if (x, y) == (10, 10) { 1.2 } else { 0.0 };
         assert_eq!(pick_cell(origin, dir, h), Some((10, 10)));
         // a raised cell behind the landing point is never reached
@@ -1644,15 +1785,16 @@ mod tests {
 
     #[test]
     fn every_map_feature_is_drawn_within_reach() {
-        let cat = catalog();
+        let f = Fixture::new();
+        let cat = &f.cat;
         for info in &cat.cmap {
             let t = terrain_of(&info.sym);
             let cell = Cell {
-                glyph: Some(cmap(&cat, &info.sym)),
+                glyph: Some(cmap(cat, &info.sym)),
                 bk: None,
-                terrain: (t != Terrain::Effect).then(|| cmap(&cat, &info.sym)),
+                terrain: (t != Terrain::Effect).then(|| cmap(cat, &info.sym)),
             };
-            let look = look_of(&cell, Near::default(), &cat);
+            let look = f.look(&cell);
             let drawn = !matches!(t, Terrain::Stone);
             assert_eq!(!look.is_empty(), drawn, "{}", info.sym);
             assert!(look.top <= MAX_TOP, "{}", info.sym);
@@ -1662,12 +1804,7 @@ mod tests {
         }
         // stairs and traps say what they are
         let letters = |sym: &str| {
-            let cell = on_floor(&cat, cmap(&cat, sym));
-            let cell = Cell {
-                terrain: cell.glyph.clone(),
-                ..cell
-            };
-            look_of(&cell, Near::default(), &cat)
+            f.look(&feature(cat, sym))
                 .letters
                 .iter()
                 .map(|l| l.ch)
@@ -1679,94 +1816,172 @@ mod tests {
         assert_eq!(letters("S_room"), "");
         // engravings: the plain floor or corridor with scratches, never
         // tinted their bright blue (a pool's colour)
-        let look = |sym: &str| {
-            let g = cmap(&cat, sym);
-            let cell = Cell {
-                glyph: Some(g.clone()),
-                bk: None,
-                terrain: Some(g),
-            };
-            look_of(&cell, Near::default(), &cat)
-        };
         for (engr, plain) in [("S_engroom", "S_room"), ("S_engrcorr", "S_corr")] {
-            let (e, p) = (look(engr), look(plain));
-            assert_eq!(e.solids[0].color, p.solids[0].color, "{engr}");
+            let (e, p) = (f.look(&feature(cat, engr)), f.look(&feature(cat, plain)));
+            assert_eq!(e.solids[0].paint, p.solids[0].paint, "{engr}");
             assert_eq!(e.solids.len(), p.solids.len() + 3, "{engr}");
         }
     }
 
     #[test]
-    fn monsters_stand_by_size_with_their_letter_above() {
-        let cat = catalog();
-        let look = |g: Glyph| look_of(&on_floor(&cat, g), Near::default(), &cat);
-        let newt = look(monster(&cat, "newt", 0));
-        let giant = look(monster(&cat, "hill giant", 0));
-        assert!(newt.top < giant.top);
-        for l in [&newt, &giant] {
-            let body = l
+    fn floors_walls_and_corridors_are_textured_stone_brick_and_dirt() {
+        let f = Fixture::new();
+        let cat = &f.cat;
+        let pbr = |sym: &str| match f.look(&feature(cat, sym)).solids[0].paint {
+            Paint::Pbr(m, shade) => (f.art.material_at(m).0.to_string(), shade),
+            other => panic!("{sym}: {other:?}"),
+        };
+        assert_eq!(pbr("S_room").0, "floor");
+        assert_eq!(pbr("S_corr").0, "dirt");
+        assert_eq!(pbr("S_vwall").0, "brick");
+        let has = |sym: &str, name: &str| {
+            f.look(&feature(cat, sym))
                 .solids
                 .iter()
-                .find(|s| matches!(s.mesh, MeshKey::Capsule(..)));
-            let body = body.unwrap();
-            assert!(l.letters[0].pos.y > body.pos.y + body.mesh.half_height());
-            assert!(l.letters[0].on_top, "monster letters stay readable");
-        }
-        let pet = look(monster(&cat, "little dog", mg::PET));
-        assert!(pet.solids.iter().any(|s| s.color == PET_RING));
-        let seen = look(monster(&cat, "little dog", mg::DETECT));
-        assert!(seen.solids.iter().any(|s| s.finish == Finish::Ghost));
+                .any(|s| matches!(s.paint, Paint::Pbr(m, _) if f.art.material_at(m).0 == name))
+        };
+        assert!(has("S_hcdoor", "wood") && has("S_hcdoor", "iron"));
+        assert!(has("S_altar", "marble") && has("S_fountain", "water"));
+        assert!(has("S_upstair", "marble") && has("S_bars", "iron"));
+        // the part of a room out of view is darker than the part in view
+        assert!(pbr("S_darkroom").1 < pbr("S_room").1);
+        assert!(f.look(&feature(cat, "S_room")).lit);
+        assert!(!f.look(&feature(cat, "S_darkroom")).lit);
+        // floors vary a little from cell to cell, deterministically
+        let shade_at = |x, y| match look_of(
+            &feature(cat, "S_room"),
+            Near::default(),
+            &f.ctx_at(x, y, None),
+        )
+        .solids[0]
+            .paint
+        {
+            Paint::Pbr(_, s) => s,
+            _ => 0,
+        };
+        let shades: std::collections::HashSet<u8> = (0..20).map(|x| shade_at(x, 3)).collect();
+        assert!(shades.len() > 1);
+        assert_eq!(shade_at(4, 4), shade_at(4, 4));
+        // floors cast no shadows, walls do
+        assert!(!f.look(&feature(cat, "S_room")).solids[0].shadow);
+        assert!(f.look(&feature(cat, "S_vwall")).solids[0].shadow);
+        // a tree is a model on earth
+        assert_eq!(f.look(&feature(cat, "S_tree")).models.len(), 1);
+    }
+
+    #[test]
+    fn monsters_are_models_standing_by_size() {
+        let f = Fixture::new();
+        let cat = &f.cat;
+        let look = |g: Glyph| f.look(&on_floor(cat, g));
+        let newt = look(monster(cat, "newt", 0));
+        let giant = look(monster(cat, "hill giant", 0));
+        assert!(newt.top < giant.top);
+        assert_eq!(newt.models.len(), 1);
+        assert!(newt.letters.is_empty(), "models, not letters");
+        let human = |flags| look(monster(cat, "human", flags)).models[0].look.art.model;
+        assert_ne!(human(mg::FEMALE), human(0), "a woman has her own model");
+        let pet = look(monster(cat, "little dog", mg::PET));
+        assert!(
+            pet.solids
+                .iter()
+                .any(|s| s.paint == Paint::Flat(PET_RING, Finish::Flat))
+        );
+        let seen = look(monster(cat, "little dog", mg::DETECT));
+        assert_eq!(seen.models[0].look.pose, Pose::Ghost);
         // a monster on an altar stands on it
-        let mut on_altar = on_floor(&cat, monster(&cat, "newt", 0));
-        on_altar.terrain = Some(cmap(&cat, "S_altar"));
-        let alt = look_of(&on_altar, Near::default(), &cat);
-        assert!(alt.top > newt.top + 0.4);
+        let mut on_altar = on_floor(cat, monster(cat, "newt", 0));
+        on_altar.terrain = Some(cmap(cat, "S_altar"));
+        let alt = f.look(&on_altar);
+        assert!(alt.models[0].pos.y > 0.5 && alt.top > newt.top + 0.4);
         // and on up stairs, on the step under the cell's centre
         let mut on_stairs = on_altar;
-        on_stairs.terrain = Some(cmap(&cat, "S_upstair"));
-        let stairs = look_of(&on_stairs, Near::default(), &cat);
+        on_stairs.terrain = Some(cmap(cat, "S_upstair"));
+        let stairs = f.look(&on_stairs);
         let step = stairs
             .solids
             .iter()
-            .filter(|s| matches!(s.mesh, MeshKey::Box(..)) && s.pos.z.abs() < 0.1)
+            .filter(|s| {
+                matches!(s.mesh, MeshKey::Box(..)) && s.pos.z.abs() < 0.1 && s.pos.x.abs() < 0.1
+            })
             .map(|s| s.pos.y + s.mesh.half_height())
             .fold(0.0f32, f32::max);
         assert!(step > 0.2, "a step under the centre");
-        assert!(stairs.ground >= step - 0.001);
-        let body = stairs
-            .solids
-            .iter()
-            .find(|s| matches!(s.mesh, MeshKey::Capsule(..)))
-            .unwrap();
-        assert!(body.pos.y - body.mesh.half_height() >= step - 0.001);
+        assert!((stairs.models[0].pos.y - step).abs() < 0.01);
+    }
+
+    #[test]
+    fn monsters_face_the_hero_and_the_hero_faces_their_way() {
+        let f = Fixture::new();
+        let cat = &f.cat;
+        let cell = on_floor(cat, monster(cat, "jackal", 0));
+        // the hero east of the monster: it turns +90 degrees (towards +x)
+        let east = look_of(&cell, Near::default(), &f.ctx_at(10, 10, Some((13, 10))));
+        assert!((east.models[0].yaw - 90.0).abs() < 0.1);
+        let north = look_of(&cell, Near::default(), &f.ctx_at(10, 10, Some((10, 7))));
+        assert!((north.models[0].yaw.abs() - 180.0).abs() < 0.1);
+        let hero = on_floor(cat, monster(cat, "valkyrie", mg::HERO | mg::FEMALE));
+        let ctx = Ctx {
+            hero_yaw: -90.0,
+            ..f.ctx_at(10, 10, Some((10, 10)))
+        };
+        assert_eq!(look_of(&hero, Near::default(), &ctx).models[0].yaw, -90.0);
+    }
+
+    #[test]
+    fn corpses_lie_darker_and_statues_stand_in_stone_on_a_plinth() {
+        let f = Fixture::new();
+        let cat = &f.cat;
+        let alive = f.look(&on_floor(cat, monster(cat, "jackal", 0)));
+        let body = Glyph {
+            kind: GlyphKind::Body,
+            ..monster(cat, "jackal", 0)
+        };
+        let corpse = f.look(&on_floor(cat, body));
+        let (a, c) = (alive.models[0].look, corpse.models[0].look);
+        assert_eq!(c.pose, Pose::Corpse);
+        assert_eq!(c.art.model, a.art.model);
+        assert!(c.tint.r < a.tint.r && c.tint.g < a.tint.g);
+        assert!(corpse.top < alive.top);
+        let statue = Glyph {
+            kind: GlyphKind::Statue,
+            ..monster(cat, "jackal", 0)
+        };
+        let s = f.look(&on_floor(cat, statue));
+        assert_eq!(s.models[0].look.pose, Pose::Statue);
+        assert!(matches!(
+            s.models[0].look.art.skin,
+            nh_art::Skin::Material(_)
+        ));
+        assert!(s.models[0].pos.y >= 0.1, "on its plinth");
+        assert!(s.solids.len() >= 2, "floor and plinth");
     }
 
     #[test]
     fn walls_in_front_of_open_ground_are_cut_down() {
-        let cat = catalog();
-        let feature = |sym: &str| Cell {
-            glyph: Some(cmap(&cat, sym)),
-            bk: None,
-            terrain: Some(cmap(&cat, sym)),
-        };
-        let floor = feature("S_room");
-        let stone = feature("S_stone");
+        let f = Fixture::new();
+        let cat = &f.cat;
+        let floor = feature(cat, "S_room");
+        let stone = feature(cat, "S_stone");
         let top = |sym: &str, north: &Cell| {
-            look_of(&feature(sym), Near([Some(north), None, None, None]), &cat).top
+            look_of(
+                &feature(cat, sym),
+                Near([Some(north), None, None, None]),
+                &f.ctx(),
+            )
+            .top
         };
         // the south wall of a room would hide the row behind it
         assert_eq!(top("S_hwall", &floor), CUT_HEIGHT);
-        assert_eq!(top("S_hcdoor", &floor), CUT_HEIGHT);
+        assert!((top("S_hcdoor", &floor) - CUT_HEIGHT).abs() < 0.01);
         // a side wall below a doorway would hide whoever stands in it
-        assert_eq!(top("S_vwall", &feature("S_ndoor")), CUT_HEIGHT);
+        assert_eq!(top("S_vwall", &feature(cat, "S_ndoor")), CUT_HEIGHT);
         // walls with rock or wall behind stand
-        assert_eq!(top("S_vwall", &feature("S_vwall")), WALL_HEIGHT);
-        assert_eq!(top("S_vcdoor", &feature("S_vwall")), DOOR_HEIGHT);
+        assert_eq!(top("S_vwall", &feature(cat, "S_vwall")), WALL_HEIGHT);
+        assert!((top("S_vcdoor", &feature(cat, "S_vwall")) - DOOR_HEIGHT).abs() < 0.05);
         assert_eq!(top("S_hwall", &stone), WALL_HEIGHT);
-        assert_eq!(top("S_hwall", &feature("S_hwall")), WALL_HEIGHT);
-        assert_eq!(
-            look_of(&feature("S_hwall"), Near::default(), &cat).top,
-            WALL_HEIGHT
-        );
+        assert_eq!(top("S_hwall", &feature(cat, "S_hwall")), WALL_HEIGHT);
+        assert_eq!(f.look(&feature(cat, "S_hwall")).top, WALL_HEIGHT);
         // on ground never shown, only what stays put cuts a wall: the hero
         // or an object, not a warning or a sensed monster passing by
         let unseen = |g: Glyph| Cell {
@@ -1774,100 +1989,128 @@ mod tests {
             bk: None,
             terrain: None,
         };
-        let hero = monster(&cat, "newt", mg::HERO);
+        let hero = monster(cat, "newt", mg::HERO);
         assert_eq!(top("S_hwall", &unseen(hero)), CUT_HEIGHT);
         let obj = glyph(GlyphKind::Obj, '(');
         assert_eq!(top("S_hwall", &unseen(obj)), CUT_HEIGHT);
         let warning = glyph(GlyphKind::Warning, '3');
         assert_eq!(top("S_hwall", &unseen(warning)), WALL_HEIGHT);
-        let sensed = monster(&cat, "newt", mg::DETECT);
+        let sensed = monster(cat, "newt", mg::DETECT);
         assert_eq!(top("S_hwall", &unseen(sensed)), WALL_HEIGHT);
+        let seen = monster(cat, "little dog", mg::PET);
+        assert_eq!(top("S_hwall", &unseen(seen)), CUT_HEIGHT);
     }
 
     #[test]
-    fn objects_are_small_cubes_and_piles_stack() {
-        let cat = catalog();
-        let one = look_of(
-            &on_floor(&cat, glyph(GlyphKind::Obj, ')')),
-            Near::default(),
-            &cat,
-        );
+    fn objects_are_models_by_appearance_and_piles_lie_on_a_heap() {
+        let f = Fixture::new();
+        let cat = &f.cat;
+        let name = |l: &Look, i: usize| f.art.model_at(l.models[i].look.art.model).0.to_string();
+        let chest = f.look(&on_floor(cat, object(cat, "(", "chest")));
+        assert_eq!(name(&chest, 0), "chest");
+        assert!(chest.letters.is_empty());
+        let boulder = f.look(&on_floor(cat, object(cat, "`", "boulder")));
+        assert_eq!(name(&boulder, 0), "boulder");
+        assert!(boulder.top > 0.7);
         let pile = Glyph {
             flags: mg::OBJPILE,
-            ..glyph(GlyphKind::Obj, ')')
+            ..object(cat, "(", "chest")
         };
-        let pile = look_of(&on_floor(&cat, pile), Near::default(), &cat);
-        let cubes = |l: &Look| {
-            l.solids
-                .iter()
-                .filter(|s| matches!(s.mesh, MeshKey::Box(..)))
-                .count()
-        };
-        assert_eq!(cubes(&one), 1);
-        assert_eq!(cubes(&pile), 3);
-        assert!(pile.top > one.top);
-        assert_eq!(one.letters[0].ch, ')');
-        assert!(!one.letters[0].on_top);
+        let pile = f.look(&on_floor(cat, pile));
+        assert_eq!(name(&pile, 0), "heap");
+        assert!(pile.models[1].pos.y > chest.models[0].pos.y);
+        // two potions of different appearances may differ; the same
+        // appearance always looks the same
+        let ruby = f.look(&on_floor(cat, object(cat, "!", "ruby")));
+        assert_eq!(ruby, f.look(&on_floor(cat, object(cat, "!", "ruby"))));
     }
 
     #[test]
     fn effects_flash_over_what_is_there() {
-        let cat = catalog();
-        let mut cell = on_floor(&cat, cmap(&cat, "S_vbeam"));
-        let beam = look_of(&cell, Near::default(), &cat);
-        assert!(beam.solids.iter().any(|s| s.finish == Finish::Glow));
+        let f = Fixture::new();
+        let cat = &f.cat;
+        let mut cell = on_floor(cat, cmap(cat, "S_vbeam"));
+        let beam = f.look(&cell);
+        assert!(
+            beam.solids
+                .iter()
+                .any(|s| matches!(s.paint, Paint::Flat(_, Finish::Glow)))
+        );
         // the engulfer is drawn around the hero, not per cell
         cell.glyph = Some(glyph(GlyphKind::Swallow, '/'));
-        assert_eq!(
-            look_of(&cell, Near::default(), &cat).solids.len(),
-            1,
-            "only the floor"
-        );
+        assert_eq!(f.look(&cell).solids.len(), 1, "only the floor");
         // unexplored cells draw nothing; an unseen floor under a monster does
-        assert!(look_of(&Cell::default(), Near::default(), &cat).is_empty());
+        assert!(f.look(&Cell::default()).is_empty());
         let under = Cell {
-            glyph: Some(monster(&cat, "newt", 0)),
+            glyph: Some(monster(cat, "newt", 0)),
             bk: None,
             terrain: None,
         };
         assert_eq!(
-            look_of(&under, Near::default(), &cat).solids[0].color,
-            FLOOR_UNSEEN
+            f.look(&under).solids[0].paint,
+            Paint::Flat(FLOOR_UNSEEN, Finish::Matte)
         );
     }
 
     #[test]
     fn unseen_ground_under_something_takes_the_floor_around_it() {
-        let cat = catalog();
-        let ground = |sym: &str| Cell {
-            glyph: Some(cmap(&cat, sym)),
-            bk: None,
-            terrain: Some(cmap(&cat, sym)),
-        };
+        let f = Fixture::new();
+        let cat = &f.cat;
         let under = Cell {
             glyph: Some(glyph(GlyphKind::Obj, '(')),
             bk: None,
             terrain: None,
         };
-        let tile = |near: [Option<&Cell>; 4]| look_of(&under, Near(near), &cat).solids[0];
-        let (lit, dark, corr) = (ground("S_room"), ground("S_darkroom"), ground("S_corr"));
-        let wall = ground("S_hwall");
-        let alone = look_of(&ground("S_room"), Near::default(), &cat).solids[0];
+        let tile = |near: [Option<&Cell>; 4]| look_of(&under, Near(near), &f.ctx()).solids[0];
+        let (lit, dark, corr) = (
+            feature(cat, "S_room"),
+            feature(cat, "S_darkroom"),
+            feature(cat, "S_corr"),
+        );
+        let wall = feature(cat, "S_hwall");
+        let alone = f.look(&lit).solids[0];
+        let dark_alone = f.look(&dark).solids[0];
+        let corr_alone = f.look(&corr).solids[0];
         // an object in a lit room lies on the same floor as its neighbours
         let t = tile([Some(&wall), Some(&lit), Some(&lit), None]);
-        assert_eq!((t.mesh, t.color), (alone.mesh, alone.color));
+        assert_eq!((t.mesh, t.paint), (alone.mesh, alone.paint));
         // most neighbours decide; ties go to the lit floor
         assert_eq!(
-            tile([Some(&dark), Some(&dark), Some(&lit), None]).color,
-            FLOOR_DARK
+            tile([Some(&dark), Some(&dark), Some(&lit), None]).paint,
+            dark_alone.paint
         );
         assert_eq!(
-            tile([Some(&dark), Some(&lit), None, None]).color,
-            alone.color
+            tile([Some(&dark), Some(&lit), None, None]).paint,
+            alone.paint
         );
-        let t = tile([None, None, Some(&corr), Some(&corr)]);
-        assert_eq!(t.mesh, plane(0.8, 0.8));
+        assert_eq!(
+            tile([None, None, Some(&corr), Some(&corr)]).paint,
+            corr_alone.paint
+        );
         // walls alone say nothing about the floor
-        assert_eq!(tile([Some(&wall), None, None, None]).color, FLOOR_UNSEEN);
+        assert_eq!(
+            tile([Some(&wall), None, None, None]).paint,
+            Paint::Flat(FLOOR_UNSEEN, Finish::Matte)
+        );
+    }
+
+    #[test]
+    fn lit_cells_group_into_areas() {
+        let lit: std::collections::HashSet<(i32, i32)> =
+            [(1, 1), (2, 1), (2, 2), (10, 10), (11, 10)]
+                .into_iter()
+                .collect();
+        let mut sizes: Vec<usize> = lit_areas(&lit).iter().map(Vec::len).collect();
+        sizes.sort_unstable();
+        assert_eq!(sizes, vec![2, 3]);
+    }
+
+    #[test]
+    fn the_torch_flickers_gently() {
+        let values: Vec<f32> = (0..200).map(|i| flicker(f64::from(i) * 0.05)).collect();
+        let (lo, hi) = values
+            .iter()
+            .fold((f32::MAX, f32::MIN), |(a, b), v| (a.min(*v), b.max(*v)));
+        assert!(lo > 0.8 && hi < 1.2 && hi - lo > 0.1, "{lo}..{hi}");
     }
 }

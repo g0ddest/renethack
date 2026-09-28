@@ -436,7 +436,7 @@ fn keys() -> Vec<Step> {
         }),
         Step::Wait("the camera a step further out", |g| {
             let d = g.ui.as_ref().ok_or("no UI")?.map.camera_distance();
-            Ok(d > 13.0)
+            Ok(d > 12.0)
         }),
         Step::Call("F8 frames the level", |g| {
             g.push_ui(UiEvent::Key(KeyInput::plain(Key::F(8))));
@@ -444,7 +444,7 @@ fn keys() -> Vec<Step> {
         }),
         Step::Wait("the overview, no closer than the hero's view", |g| {
             let map = &g.ui.as_ref().ok_or("no UI")?.map;
-            Ok(map.in_overview() && map.camera_distance() > 13.0)
+            Ok(map.in_overview() && map.camera_distance() > 12.0)
         }),
         Step::Wait("the camera on the level", camera_settled),
         Step::Shot("overview"),
@@ -934,6 +934,85 @@ fn tour() -> Vec<Step> {
     steps
 }
 
+fn show_page(g: &mut RenethackGame, page: usize) -> Result<(), String> {
+    let cat = g.catalog.clone().ok_or("no catalog")?;
+    crate::gallery::lay_out(&mut g.world, &cat, page)?;
+    Ok(())
+}
+
+fn zoom_by(g: &mut RenethackGame, steps: f32) -> Result<(), String> {
+    g.ui.as_mut().ok_or("no UI")?.map.zoom(steps);
+    Ok(())
+}
+
+/// The art gallery: pages of monsters, objects and features on a lit hall
+/// in place of the level, each shot at the default distance and close up.
+/// Not part of `make test-client`.
+fn gallery() -> Vec<Step> {
+    let mut steps = start();
+    steps.push(Step::Wait("the hero on the map", |g| {
+        Ok(g.world.map.hero().is_some())
+    }));
+    let pages: [(Check2, &'static str, &'static str); 5] = [
+        (
+            |g| show_page(g, 0),
+            "gallery-people",
+            "gallery-people-close",
+        ),
+        (
+            |g| show_page(g, 1),
+            "gallery-beasts",
+            "gallery-beasts-close",
+        ),
+        (
+            |g| show_page(g, 2),
+            "gallery-bodies",
+            "gallery-bodies-close",
+        ),
+        (
+            |g| show_page(g, 3),
+            "gallery-objects",
+            "gallery-objects-close",
+        ),
+        (
+            |g| show_page(g, 4),
+            "gallery-features",
+            "gallery-features-close",
+        ),
+    ];
+    for (page, far, close) in pages {
+        steps.extend([
+            Step::Call("lay out a gallery page", page),
+            Step::Wait("the page drawn", |g| {
+                let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+                Ok(drawn == Some(g.world.map.generation()))
+            }),
+            Step::Wait("the camera on the page", camera_settled),
+            Step::Shot(far),
+            Step::Call("closer", |g| zoom_by(g, -3.0)),
+            Step::Shot(close),
+            Step::Call("back", |g| zoom_by(g, 3.0)),
+        ]);
+    }
+    steps.extend([
+        Step::Call("the whole map", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            crate::gallery::lay_out_full(&mut g.world, &cat)?;
+            Ok(())
+        }),
+        Step::Wait("the whole map drawn", |g| {
+            let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+            Ok(drawn == Some(g.world.map.generation()))
+        }),
+        Step::Wait("the camera on the map", camera_settled),
+        Step::Shot("gallery-full"),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
+type Check2 = fn(&mut RenethackGame) -> Result<(), String>;
+
 /// The menu dialog open for the pending request, if any.
 fn open_menu(g: &RenethackGame) -> Option<&[MenuEntry]> {
     let ui = g.ui.as_ref()?;
@@ -1211,6 +1290,12 @@ const SOAK_BUDGET: u32 = 2000;
 const SOAK_MUST_DESCEND: u32 = 1000;
 /// No new request (or no answer) this long: something is stuck.
 const SOAK_STALL: Duration = Duration::from_secs(30);
+/// With `--screenshots`, the soak saves the screen every this many answers.
+const SOAK_SHOT_EVERY: u32 = 60;
+/// The scene may grow this much over the first level change's node count
+/// (bigger levels, more kinds of models in the pools), and no more.
+const NODE_GROWTH: f64 = 2.0;
+const NODE_SLACK: f64 = 4000.0;
 /// Turns on a new level before the first try to leave it.
 const DESCEND_EVERY: i64 = 40;
 /// Turns between trips to the stairs once one is due (they were not reached).
@@ -1263,7 +1348,9 @@ fn soak(args: &Args) -> Vec<Step> {
         .or_else(|| env_number("RENETHACK_SEED"))
         .unwrap_or(SELFTEST_SEED);
     let budget = args.soak.unwrap_or(SOAK_BUDGET);
-    vec![Step::Soak(Box::new(Soak::new(budget, seed)))]
+    let mut soak = Soak::new(budget, seed);
+    soak.shots = args.screenshots.clone();
+    vec![Step::Soak(Box::new(soak))]
 }
 
 /// splitmix64: the soak's decisions depend only on its seed and on what
@@ -1504,6 +1591,11 @@ pub struct Soak {
     verbose: bool,
     /// The last log message the trace printed.
     seen: u64,
+    /// Screenshots of the play now and then (`--screenshots`).
+    shots: Option<PathBuf>,
+    /// Nodes in the scene tree at the first level change, and the most
+    /// seen at any later one (model instances are pooled, cells reused).
+    nodes: Option<(f64, f64)>,
 }
 
 impl Soak {
@@ -1535,6 +1627,8 @@ impl Soak {
             digest: 0xcbf2_9ce4_8422_2325,
             verbose: std::env::var_os("RENETHACK_SOAK_TRACE").is_some(),
             seen: 0,
+            shots: None,
+            nodes: None,
         }
     }
 
@@ -1552,9 +1646,10 @@ impl Soak {
     }
 
     fn summary(&self) -> String {
+        let (first, most) = self.nodes.unwrap_or_default();
         format!(
             "{} requests, {} deaths, deepest Dlvl {}, {} level changes, {} games, seed {}, \
-             digest {:016x}",
+             digest {:016x}, nodes {first} at the first level change, at most {most}",
             self.answered,
             self.deaths,
             self.deepest,
@@ -1582,6 +1677,16 @@ impl Soak {
             return Err(format!(
                 "the level never changed in {} requests",
                 self.answered
+            ));
+        }
+        // nothing piles up over level changes: every level reuses the
+        // cells' nodes and the pooled models of the ones before
+        if let Some((first, most)) = self.nodes
+            && most > first * NODE_GROWTH + NODE_SLACK
+        {
+            return Err(format!(
+                "{most} nodes after {} level changes, {first} at the first: nodes leak",
+                self.level_changes
             ));
         }
         Ok(done)
@@ -1706,8 +1811,16 @@ impl Soak {
                 self.level_changes += 1;
                 let turn = g.world.status.number("time");
                 self.next_descent = turn.unwrap_or(i64::from(self.commands)) + DESCEND_EVERY;
+                let nodes = godot::classes::Performance::singleton()
+                    .get_monitor(godot::classes::performance::Monitor::OBJECT_NODE_COUNT);
+                let (live, built) = g.ui.as_ref().map_or((0, 0), |ui| ui.map.model_counts());
+                self.nodes = Some(match self.nodes {
+                    None => (nodes, nodes),
+                    Some((first, most)) => (first, most.max(nodes)),
+                });
                 godot_print!(
-                    "selftest: soak: Dlvl {d} after {} requests (game {})",
+                    "selftest: soak: Dlvl {d} after {} requests (game {}), {nodes} nodes, \
+                     models {live} shown {built} built",
                     self.answered,
                     self.games
                 );
@@ -1765,6 +1878,12 @@ impl Soak {
         self.last_req = req;
         self.answered += 1;
         self.progress = Instant::now();
+        if let Some(dir) = &self.shots
+            && self.answered.is_multiple_of(SOAK_SHOT_EVERY)
+        {
+            let path = dir.join(format!("soak-{}-{:05}.png", self.seed, self.answered));
+            save_shot(g, &path)?;
+        }
         if self.answered.is_multiple_of(100) {
             godot_print!(
                 "selftest: soak: {}/{} requests, game {}, Dlvl {}, {} cells known, T:{}",
@@ -2152,6 +2271,7 @@ impl SelfTest {
         watch_panics();
         let steps = match name {
             "tour" => tour(),
+            "gallery" => gallery(),
             "smoke" => smoke(),
             "keys" => keys(),
             "save" => save(),

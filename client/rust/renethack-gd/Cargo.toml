@@ -14,6 +14,7 @@ godot.workspace = true
 nh-protocol = { path = "../nh-protocol" }
 nh-link = { path = "../nh-link" }
 nh-world = { path = "../nh-world" }
+nh-art = { path = "../nh-art" }
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"

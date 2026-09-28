@@ -1,11 +1,14 @@
 //! renethack's Godot client: a GDExtension whose root node,
 //! `RenethackGame`, runs nh-engine and draws the game.
 
+mod art;
 mod dialogs;
+mod gallery;
 mod game;
 mod hud;
 mod input;
 mod map_view;
+mod meshes;
 mod paths;
 mod screens;
 mod selftest;
