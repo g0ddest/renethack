@@ -219,6 +219,8 @@ pub struct RenethackGame {
     pub(crate) last_stop: Option<Stop>,
     /// A cell the self-test hovers instead of the mouse.
     pub(crate) test_hover: Option<(i32, i32)>,
+    /// What the hero uses, from the keys and letters sent (decision 8).
+    uses: nh_world::UseTracker,
     /// This character's key profile and action bar (`<save>.rhui.json`).
     pub(crate) ui_state: UiState,
     /// A new character's role (or "random": the one the map shows): its
@@ -296,6 +298,7 @@ impl INode for RenethackGame {
             order_actions: 0,
             last_stop: None,
             test_hover: None,
+            uses: nh_world::UseTracker::new(),
             ui_state: UiState::new(KeyProfile::Modern),
             loadout_for: None,
             macros: MacroRunner::new(),
@@ -582,6 +585,12 @@ impl RenethackGame {
             SessionEvent::Win(w) => self.world.apply(&w),
             SessionEvent::Request { id, req } => {
                 let prompt = self.world.on_request(&req);
+                // the turn resolved: the hero's use is shown
+                if let Some(u) = self.uses.on_prompt(&prompt, &self.world)
+                    && let (Some(ui), Some(cat)) = (self.ui.as_mut(), self.catalog.as_deref())
+                {
+                    ui.map.show_use(&u, cat, &self.world);
+                }
                 if prompt == Prompt::AutoAck {
                     self.send(id, &prompt, Reply::Ack);
                 } else {
@@ -751,6 +760,7 @@ impl RenethackGame {
         };
         match session.answer(id, &reply) {
             Ok(()) => {
+                self.uses.on_reply(prompt, &reply, &self.world);
                 if matches!(
                     prompt,
                     Prompt::Command | Prompt::Key | Prompt::FreeKey { .. } | Prompt::Choice { .. }

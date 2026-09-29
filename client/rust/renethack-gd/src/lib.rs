@@ -6,6 +6,7 @@ mod animator;
 mod art;
 mod dialogs;
 mod gallery;
+mod hero;
 mod game;
 mod hud;
 mod icons;

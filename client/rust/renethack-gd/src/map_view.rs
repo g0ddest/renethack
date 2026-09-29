@@ -35,8 +35,8 @@ use godot::prelude::*;
 use nh_art::{ArtManifest, Tint};
 use nh_protocol::{Catalog, Glyph, GlyphKind, MonsterInfo, ObjectTile, mg};
 use nh_world::{
-    COLNO, Cell, Ident, MapState, Move, ROWNO, Terrain, World, cell_terrain, in_field,
-    locate_attack, parse_attack, terrain_of,
+    COLNO, Cell, Ident, ItemUse, MapState, Move, ROWNO, Terrain, UseKind, World, cell_terrain,
+    in_field, locate_attack, parse_attack, terrain_of,
 };
 
 use crate::animator::{Motion, pace, yaw_toward};
@@ -109,6 +109,11 @@ const HOSTILE_RING: Color = Color::from_rgba(0.88, 0.29, 0.23, 0.45);
 const HERO_LIGHT: Color = Color::from_rgb(0.9, 0.84, 0.76);
 const HERO_LIGHT_ENERGY: f32 = 2.4;
 const HERO_LIGHT_RANGE: f32 = 5.5;
+/// A lamp in hand lights the scene; the light over the hero only fills
+/// the shadow the body throws.
+const LAMP_POOL: Color = Color::from_rgb(1.0, 0.72, 0.46);
+const LAMP_POOL_ENERGY: f32 = 0.8;
+const LAMP_POOL_RANGE: f32 = 4.5;
 const RIM_LIGHT: Color = Color::from_rgb(0.62, 0.70, 1.0);
 const RIM_LAYER: u32 = 1 << 1;
 /// Torch sconces: lit by everything but their own flames (which would
@@ -1124,6 +1129,12 @@ pub struct MapView {
     /// The marks of the way shown, and whether it is a fight's.
     path_marks: Vec<Gd<MeshInstance3D>>,
     path_shown: (Vec<(i32, i32)>, bool),
+    /// What the hero carries, drawn on their model.
+    hero_gear: crate::hero::HeroGear,
+    /// How far above the ground the camera aims (self-test close-ups).
+    aim_lift: f32,
+    /// The effects of the items the hero uses.
+    hero_fx: crate::hero::HeroFx,
 }
 
 /// A square outline over a cell: four thin bars.
@@ -1373,6 +1384,7 @@ impl MapView {
 
         let art = Art::new(cells_root.clone());
         let center = Vector3::new(COLNO as f32 / 2.0, 0.0, ROWNO as f32 / 2.0);
+        let hero_fx = crate::hero::HeroFx::new(root.clone());
         let mut view = MapView {
             root,
             cells_root,
@@ -1422,6 +1434,9 @@ impl MapView {
             order_pace: None,
             path_marks: Vec::new(),
             path_shown: (Vec::new(), false),
+            hero_gear: crate::hero::HeroGear::default(),
+            aim_lift: 0.0,
+            hero_fx,
         };
         view.place_camera();
         view
@@ -1484,6 +1499,7 @@ impl MapView {
         }
         self.watch_fights(world, catalog);
         self.advance_motions(delta as f32);
+        self.hero_fx.advance(delta as f32);
         if std::mem::take(&mut self.lights_dirty) {
             self.place_room_lights();
         }
@@ -1516,6 +1532,7 @@ impl MapView {
                 self.rim.set_position(p + at(0.0, 2.0, -0.9));
                 self.rim.set_visible(true);
                 self.rim_hero((x, y));
+                self.equip_hero((x, y), world, catalog, delta as f32);
                 self.light_torches(p);
             }
             None => {
@@ -1873,6 +1890,16 @@ impl MapView {
         self.hints_dirty |= self.overview.is_some();
         self.overview = None;
         self.distance = (self.distance + steps * 1.5).clamp(MIN_DISTANCE, MAX_DISTANCE);
+        self.aim_lift = 0.0;
+        self.place_camera();
+    }
+
+    /// Self-tests: the camera this far away, nearer than a player may zoom
+    /// (close-ups of what the hero holds); the next zoom clamps it again.
+    pub fn set_distance(&mut self, distance: f32, lift: f32) {
+        self.overview = None;
+        self.distance = distance;
+        self.aim_lift = lift;
         self.place_camera();
     }
 
@@ -1945,6 +1972,137 @@ impl MapView {
         self.snap = true;
         self.hero_at = None;
         self.set_path(&[], false);
+        self.hero_gear.reset();
+        self.hero_fx.clear();
+    }
+
+    /// The hero uses an item (spec decision 8): they turn the way it goes
+    /// and play the use's clip with the item in hand; its effects follow.
+    pub fn show_use(&mut self, u: &ItemUse, catalog: &Catalog, world: &World) {
+        use crate::hero::{Fx, THROW_AT, in_hand, use_color, use_effects, use_name};
+        let Some(at) = self.hero_at else {
+            return;
+        };
+        let tile = u.tile.and_then(|t| object_tile(catalog, t));
+        let held = tile.and_then(|t| self.art.manifest().held(t));
+        let color = use_color(u, tile, self.art.manifest());
+        let dir = u.dir.filter(|&d| d != (0, 0));
+        // where it goes: on until something solid, a few cells at most
+        let reach = dir.map(|(dx, dy)| {
+            let mut c = at;
+            for _ in 0..7 {
+                let next = (c.0 + dx, c.1 + dy);
+                if !is_open(world.map.cell(next.0, next.1), catalog) {
+                    break;
+                }
+                c = next;
+            }
+            (c, (dx, dy))
+        });
+        let Some(nodes) = self.cells.get_mut(&at) else {
+            return;
+        };
+        let Some(i) = nodes.look.entity.filter(|&i| i < nodes.models.len()) else {
+            return;
+        };
+        let placed = &mut nodes.look.models[i];
+        let yaw_from = placed.yaw;
+        let yaw_to = dir.map_or(yaw_from, |d| yaw_toward((0, 0), d));
+        placed.yaw = yaw_to;
+        let height = placed.look.art.height;
+        let pos = Vector3::new(at.0 as f32, 0.0, at.1 as f32) + placed.pos;
+        let m = &mut nodes.models[i];
+        let mut clips = self.art.clips(m, false);
+        clips.attack = self.art.use_clip(m, use_name(u.kind));
+        if let (Some(h), Some(secs)) = (held, in_hand(u.kind)) {
+            self.art.hold_for(m, h, secs);
+        }
+        let node = m.node.clone();
+        self.hero_yaw = yaw_to;
+        if let Some(i) = self.motions.iter().position(|m| m.cell == at) {
+            self.motions.swap_remove(i).finish(false);
+        }
+        self.motions.push(Motion::strike(
+            node,
+            at,
+            true,
+            pos,
+            (yaw_from, yaw_to),
+            Vector3::ZERO,
+            clips,
+        ));
+        let facing = Vector3::new(yaw_to.to_radians().sin(), 0.0, yaw_to.to_radians().cos());
+        let hand = pos + Vector3::new(0.0, height * 0.62, 0.0) + facing * 0.25;
+        let ahead = reach.map(|((x, y), (dx, dy))| {
+            let end = Vector3::new(
+                x as f32 + dx as f32 * 0.45,
+                0.0,
+                y as f32 + dy as f32 * 0.45,
+            );
+            match u.kind {
+                UseKind::Kick => pos + facing * 0.7 + Vector3::new(0.0, 0.15, 0.0),
+                _ => end + Vector3::new(0.0, hand.y, 0.0),
+            }
+        });
+        for (delay, fx) in use_effects(u, color, hand, ahead) {
+            self.hero_fx.after(delay, fx);
+        }
+        if matches!(u.kind, UseKind::Throw | UseKind::Fire) {
+            let model = held.and_then(|h| self.art.held_prop(h, 0.7));
+            let to = ahead.unwrap_or(hand + facing * 3.0);
+            self.hero_fx.after(
+                THROW_AT,
+                Fx::Throw {
+                    model,
+                    from: hand,
+                    to,
+                },
+            );
+        }
+    }
+
+    /// The effects of the hero's uses (self-tests).
+    pub fn hero_fx(&self) -> &crate::hero::HeroFx {
+        &self.hero_fx
+    }
+
+    /// The hero's model shows their gear; with a lamp lit in hand, the
+    /// light over them is only the lamp's warm helper (no shadow of its own).
+    fn equip_hero(&mut self, at: (i32, i32), world: &World, catalog: &Catalog, delta: f32) {
+        self.hero_gear
+            .update(&world.inventory, catalog, self.art.manifest());
+        let Some(m) = self
+            .cells
+            .get_mut(&at)
+            .and_then(|n| n.look.entity.and_then(|i| n.models.get_mut(i)))
+        else {
+            return;
+        };
+        let lamp = self.art.equip(m, self.hero_gear.gear(), delta);
+        if self.hero_gear.set_lamp(lamp) {
+            let (color, energy, range) = if lamp {
+                (LAMP_POOL, LAMP_POOL_ENERGY, LAMP_POOL_RANGE)
+            } else {
+                (HERO_LIGHT, HERO_LIGHT_ENERGY, HERO_LIGHT_RANGE)
+            };
+            self.hero_light.set_color(color);
+            self.hero_light.set_param(Param::ENERGY, energy);
+            self.hero_light.set_param(Param::RANGE, range);
+            self.hero_light.set_shadow(!lamp);
+        }
+    }
+
+    /// The clip the hero's model plays now (self-tests).
+    pub fn hero_clip(&self) -> Option<String> {
+        let p = self.hero_model()?.player()?;
+        p.is_playing()
+            .then(|| p.get_current_animation().to_string())
+    }
+
+    /// The hero's model (self-tests look at its gear).
+    pub fn hero_model(&self) -> Option<&Model> {
+        let nodes = self.cells.get(&self.hero_at?)?;
+        nodes.look.entity.and_then(|i| nodes.models.get(i))
     }
 
     pub fn set_visible(&mut self, on: bool) {
@@ -1995,7 +2153,7 @@ impl MapView {
         // aim a little south of the hero, so the hero stands above the
         // log; close in, the same offset would push the hero off the top
         let south = AIM_SOUTH * distance / DISTANCE;
-        let aim = self.focus + Vector3::new(0.0, 0.0, south);
+        let aim = self.focus + Vector3::new(0.0, self.aim_lift, south);
         self.camera.look_at_from_position(aim + offset, aim);
     }
 
