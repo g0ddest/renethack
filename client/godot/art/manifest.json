@@ -1,7 +1,8 @@
 {
  "version": 1,
  "libraries": {
-  "ual": "cc0/quaternius/animations/UAL1_Standard.glb"
+  "ual": "cc0/quaternius/animations/UAL1_Standard.glb",
+  "ual2": "cc0/quaternius/animations/UAL2_Standard.glb"
  },
  "materials": {
   "floor": {"textures": "cc0/polyhaven/textures/stone_tiles_02/stone_tiles_02", "uv_scale": 0.5, "color": "#9a9288"},
@@ -33,15 +34,15 @@
   "straw": {"textures": "cc0/polyhaven/textures/old_planks_02/old_planks_02", "uv_scale": 3.0, "color": "#d8b060"}
  },
  "models": {
-  "human_male": {"scene": "cc0/quaternius/outfits/Outfits/Male_Peasant.gltf", "size": 1.6, "rig": "ual", "head": "male", "shade": "#a0968c",
+  "human_male": {"extra_rigs": ["ual2"], "scene": "cc0/quaternius/outfits/Outfits/Male_Peasant.gltf", "size": 1.6, "rig": "ual", "head": "male", "shade": "#a0968c",
    "anims": {"idle": "Idle", "walk": "Walk", "run": "Jog_Fwd", "attack": "Sword_Attack", "hit": "Hit_Chest", "death": "Death01"}},
-  "human_female": {"scene": "cc0/quaternius/outfits/Outfits/Female_Peasant.gltf", "size": 1.6, "rig": "ual", "head": "female", "shade": "#a0968c",
+  "human_female": {"extra_rigs": ["ual2"], "scene": "cc0/quaternius/outfits/Outfits/Female_Peasant.gltf", "size": 1.6, "rig": "ual", "head": "female", "shade": "#a0968c",
    "anims": {"idle": "Idle", "walk": "Walk", "run": "Jog_Fwd", "attack": "Sword_Attack", "hit": "Hit_Chest", "death": "Death01"}},
-  "man_bearded": {"scene": "cc0/quaternius/outfits/Outfits/Male_Peasant.gltf", "size": 1.6, "rig": "ual", "head": "bearded", "shade": "#98907e",
+  "man_bearded": {"extra_rigs": ["ual2"], "scene": "cc0/quaternius/outfits/Outfits/Male_Peasant.gltf", "size": 1.6, "rig": "ual", "head": "bearded", "shade": "#98907e",
    "anims": {"idle": "Idle", "walk": "Walk", "run": "Jog_Fwd", "attack": "Sword_Attack", "hit": "Hit_Chest", "death": "Death01"}},
-  "ranger_male": {"scene": "cc0/quaternius/outfits/Outfits/Male_Ranger.gltf", "size": 1.6, "rig": "ual", "head": "hood", "shade": "#8c8a7c",
+  "ranger_male": {"extra_rigs": ["ual2"], "scene": "cc0/quaternius/outfits/Outfits/Male_Ranger.gltf", "size": 1.6, "rig": "ual", "head": "hood", "shade": "#8c8a7c",
    "anims": {"idle": "Sword_Idle", "walk": "Walk", "run": "Jog_Fwd", "attack": "Sword_Attack", "hit": "Hit_Chest", "death": "Death01"}},
-  "ranger_female": {"scene": "cc0/quaternius/outfits/Outfits/Female_Ranger.gltf", "size": 1.6, "rig": "ual", "head": "hood", "shade": "#8c8a7c",
+  "ranger_female": {"extra_rigs": ["ual2"], "scene": "cc0/quaternius/outfits/Outfits/Female_Ranger.gltf", "size": 1.6, "rig": "ual", "head": "hood", "shade": "#8c8a7c",
    "anims": {"idle": "Sword_Idle", "walk": "Walk", "run": "Jog_Fwd", "attack": "Sword_Attack", "hit": "Hit_Chest", "death": "Death01"}},
   "imp": {"scene": "cc0/quaternius/bestiary/Imp.glb", "size": 1.6, "rig": "ual", "strip_root": true, "shade": "#a08a84",
    "anims": {"idle": "Idle", "walk": "Walk", "run": "Jog_Fwd", "attack": "Punch_Cross", "hit": "Hit_Chest", "death": "Death01"}},
@@ -133,7 +134,19 @@
   "horn": {"proc": "horn", "size": 1.0, "target": 0.45, "material": "paper"},
   "orb": {"proc": "orb", "size": 1.0, "target": 0.3, "tint_strength": 0.3, "material": "glass"},
   "mirror": {"proc": "mirror", "size": 1.0, "target": 0.36, "material": "metal"},
-  "heap": {"proc": "heap", "size": 1.0, "target": 0.5, "material": "cloth"}
+  "heap": {"proc": "heap", "size": 1.0, "target": 0.5, "material": "cloth"},
+  "estoc": {"scene": "cc0/polyhaven/models/antique_estoc/antique_estoc.gltf", "size": 1.49, "rot": [90, 0, 0], "target": 0.9},
+  "dagger_ornate": {"scene": "cc0/polyhaven/models/ornate_medieval_dagger/ornate_medieval_dagger.gltf", "size": 0.35, "rot": [90, 0, 0], "target": 0.35},
+  "mace_ornate": {"scene": "cc0/polyhaven/models/ornate_medieval_mace/ornate_medieval_mace.gltf", "size": 0.63, "rot": [90, 0, 0], "target": 0.6},
+  "war_hammer": {"scene": "cc0/polyhaven/models/ornate_war_hammer/ornate_war_hammer.gltf", "size": 0.71, "rot": [90, 0, 0], "target": 0.65},
+  "hand_axe": {"scene": "cc0/polyhaven/models/wooden_axe/wooden_axe.gltf", "size": 0.63, "rot": [90, 0, 0], "target": 0.6},
+  "battle_axe": {"scene": "cc0/polyhaven/models/wooden_axe_02/wooden_axe_02.gltf", "size": 0.7, "rot": [90, 0, 0], "target": 0.8},
+  "pick_dirty": {"scene": "cc0/polyhaven/models/picke_dirty_01/picke_dirty_01.gltf", "size": 1.12, "rot": [90, 0, 0], "target": 0.8},
+  "kite_shield": {"scene": "cc0/polyhaven/models/kite_shield/kite_shield.gltf", "size": 1.37, "rot": [-90, 0, 0], "target": 0.8},
+  "oil_lamp": {"scene": "cc0/polyhaven/models/vintage_oil_lamp/vintage_oil_lamp.gltf", "size": 0.8, "target": 0.4},
+  "lantern": {"scene": "cc0/polyhaven/models/wooden_lantern_01/wooden_lantern_01.gltf", "size": 0.53, "target": 0.4},
+  "spear": {"scene": "cc0/quaternius/weapons/Spear.fbx", "size": 9.72, "rot": [90, 0, 0], "target": 1.2},
+  "longbow": {"scene": "cc0/quaternius/weapons/Bow_Wooden.fbx", "size": 5.4, "rot": [90, 0, 0], "target": 1.0}
  },
  "monsters": {
   "sizes": {"tiny": 0.45, "small": 0.7, "medium": 1.1, "large": 1.45, "huge": 1.8, "gigantic": 2.2},
@@ -452,5 +465,102 @@
   "Cloud": {},
   "Trap": {"material": "floor", "trim": "iron"}
  },
- "statue": {"material": "statue", "model": "statue"}
+ "statue": {"material": "statue", "model": "statue"},
+ "held": {
+  "slots": {
+   "hand_r": {"bone": "hand_r", "pos": [-0.03, 0.075, 0.0], "rot": [-180, -90, -90]},
+   "hand_l": {"bone": "hand_l", "pos": [0.03, 0.075, 0.0], "rot": [-180, -90, -90]},
+   "arm_l": {"bone": "lowerarm_l", "pos": [-0.07, 0.13, 0.0], "rot": [-180, 90, 90]},
+   "back": {"bone": "spine_03", "pos": [0.14, 0.3, -0.17], "rot": [0, 0, 145]},
+   "quiver": {"bone": "spine_03", "pos": [-0.12, 0.02, -0.16], "rot": [0, 0, -20]},
+   "head": {"bone": "Head", "pos": [0.0, 0.06, 0.0], "rot": [0, 0, 0]}
+  },
+  "models": {
+   "long_blade": {"model": "estoc", "size": 1.0, "idle": "Sword_Idle", "attack": "Sword_Attack"},
+   "short_blade": {"model": "estoc", "size": 0.72, "idle": "Sword_Idle", "attack": "Sword_Attack"},
+   "great_blade": {"model": "estoc", "size": 1.3, "idle": "Sword_Idle", "attack": "Sword_Attack"},
+   "curved_blade": {"model": "estoc", "size": 0.92, "idle": "Sword_Idle", "attack": "Sword_Attack"},
+   "dagger": {"model": "dagger_ornate", "size": 0.34, "hide": ["ornate_medieval_dagger_scabbard"], "idle": "Sword_Idle", "attack": "Sword_Attack"},
+   "mace": {"model": "mace_ornate", "size": 0.62, "idle": "Sword_Idle", "attack": "Sword_Attack"},
+   "hammer": {"model": "war_hammer", "size": 0.68, "idle": "Sword_Idle", "attack": "Sword_Attack"},
+   "axe": {"model": "hand_axe", "size": 0.62, "idle": "Sword_Idle", "attack": "Sword_Attack"},
+   "great_axe": {"model": "battle_axe", "size": 0.95, "idle": "Sword_Idle", "attack": "Sword_Attack"},
+   "pick": {"model": "pick_dirty", "size": 0.8, "idle": "Sword_Idle", "attack": "Sword_Attack"},
+   "spear": {"model": "spear", "size": 1.6, "grip": {"pos": [0.0, -0.45, 0.0]}, "idle": "Sword_Idle", "attack": "Sword_Attack"},
+   "polearm": {"model": "spear", "size": 2.0, "grip": {"pos": [0.0, -0.6, 0.0]}, "idle": "Sword_Idle", "attack": "Sword_Attack"},
+   "staff": {"model": "pole", "size": 1.5, "grip": {"pos": [0.0, -0.5, 0.0], "rot": [-90, 0, 0]}, "idle": "Sword_Idle", "attack": "Sword_Attack"},
+   "bow": {"model": "longbow", "size": 1.1, "idle": "Sword_Idle", "attack": "Punch_Cross"},
+   "missile": {"size": 0.35, "grip": {"rot": [-90, 0, 0]}, "attack": "Punch_Jab"},
+   "round_shield": {"model": "shield", "size": 0.6, "grip": {"rot": [90, 0, 0]}},
+   "kite_shield": {"model": "kite_shield", "size": 0.85},
+   "helm": {"model": "helm", "size": 0.27},
+   "oil_lamp": {"model": "oil_lamp", "size": 0.3, "light": {"color": "#ffb36b", "range": 6.5, "energy": 1.8, "at": [0.0, 0.52, 0.0], "flicker": 0.12}},
+   "lantern": {"model": "lantern", "size": 0.34, "grip": {"pos": [0.0, -0.3, 0.0]}, "light": {"color": "#ffb36b", "range": 6.5, "energy": 1.8, "at": [0.0, 0.2, 0.0], "flicker": 0.08}},
+   "candle": {"size": 0.14, "light": {"color": "#ffa85c", "range": 3.8, "energy": 1.2, "at": [0.0, 0.14, 0.0], "flicker": 0.2}},
+   "candelabrum": {"size": 0.34, "light": {"color": "#ffa85c", "range": 5.0, "energy": 1.4, "at": [0.0, 0.47, 0.0], "flicker": 0.18}},
+   "quiver": {"model": "arrows", "size": 0.62, "grip": {"rot": [-90, 0, 0]}},
+   "potion": {"size": 0.16},
+   "scroll": {"size": 0.24, "grip": {"rot": [0, 0, 90]}},
+   "book": {"size": 0.24},
+   "wand": {"size": 0.32, "grip": {"pos": [0.0, -0.08, 0.0], "rot": [-90, 0, 0]}},
+   "food": {"size": 0.13},
+   "tool": {"size": 0.24},
+   "small": {"size": 0.06}
+  },
+  "appearances": [
+   {"class": ")", "words": ["dagger", "athame", "scalpel", "knife", "stiletto", "tooth", "crysknife"], "held": "dagger"},
+   {"class": ")", "words": ["two-handed sword", "long samurai sword"], "held": "great_blade"},
+   {"class": ")", "words": ["short sword"], "held": "short_blade"},
+   {"class": ")", "words": ["curved sword", "saber", "samurai sword"], "held": "curved_blade"},
+   {"class": ")", "words": ["sword", "broadsword"], "held": "long_blade"},
+   {"class": ")", "words": ["double-headed axe"], "held": "great_axe"},
+   {"class": ")", "words": ["axe"], "held": "axe"},
+   {"class": ")", "words": ["pick"], "held": "pick"},
+   {"class": ")", "words": ["war hammer"], "held": "hammer"},
+   {"class": ")", "words": ["mace", "morning star", "flail", "club"], "held": "mace"},
+   {"class": ")", "words": ["polearm", "poleaxe", "pole cleaver", "pole sickle", "pruning hook", "lance"], "held": "polearm"},
+   {"class": ")", "words": ["spear", "trident"], "held": "spear"},
+   {"class": ")", "words": ["staff"], "held": "staff"},
+   {"class": ")", "words": ["bow", "crossbow"], "held": "bow"},
+   {"class": ")", "words": ["arrow", "crossbow bolt", "dart", "throwing star", "boomerang", "sling", "bullwhip", "hose"], "held": "missile"},
+   {"class": "[", "exact": ["large shield", "polished silver shield", "white-handed shield", "blue and green shield"], "held": "kite_shield"},
+   {"class": "[", "words": ["shield"], "held": "round_shield"},
+   {"class": "[", "words": ["hat", "cap", "helmet", "pot", "fedora"], "held": "helm"},
+   {"class": "(", "words": ["lamp"], "held": "oil_lamp"},
+   {"class": "(", "words": ["lantern"], "held": "lantern"},
+   {"class": "(", "words": ["candle"], "held": "candle"},
+   {"class": "(", "words": ["candelabrum"], "held": "candelabrum"},
+   {"class": "(", "words": ["pick-axe"], "held": "pick"},
+   {"class": "(", "words": ["key", "lock pick", "credit card", "lenses", "whistle"], "held": "small"},
+   {"class": "%", "words": ["ration", "k-ration", "c-ration", "cram ration", "lembas wafer", "tin", "egg", "apple", "orange", "pear", "melon", "banana", "carrot", "corpse", "meatball", "meat stick"], "held": "food"}
+  ],
+  "classes": {")": "long_blade", "(": "tool", "!": "potion", "?": "scroll", "+": "book", "/": "wand", "%": "food", "*": "small", "=": "small", "\"": "small", "$": "small"},
+  "quiver": "quiver",
+  "colors": {
+   "ruby": "#b01830", "pink": "#e890b8", "orange": "#ec7a20", "yellow": "#e8c830", "emerald": "#20b060",
+   "dark green": "#2a6a30", "cyan": "#30d0d0", "sky blue": "#80c8f8", "brilliant blue": "#3060f0",
+   "magenta": "#d030c0", "purple-red": "#b02858", "puce": "#8a4050", "milky": "#ece8dc", "swirly": "#b090ff",
+   "bubbly": "#a8e8ff", "smoky": "#9a9aa0", "cloudy": "#c8ccd0", "effervescent": "#d8f4a0", "black": "#302838",
+   "golden": "#f0c040", "brown": "#8a5a2a", "fizzy": "#d8ecff", "dark": "#40405a", "white": "#f4f4f4",
+   "murky": "#6a6a48", "clear": "#d8ecff",
+   "glass": "#c8e8ff", "crystal": "#d8f0ff", "balsa": "#d8c49a", "maple": "#c89858", "pine": "#d0a868",
+   "redwood": "#a04a30", "oak": "#9a7040", "ebony": "#403040", "marble": "#e0dcd4", "tin": "#b8bcc0",
+   "brass": "#d8b048", "copper": "#d07840", "silver": "#dce0e8", "platinum": "#e8ecf0", "iridium": "#b8c8d8",
+   "zinc": "#a8b0b8", "aluminum": "#c8ccd0", "uranium": "#a0e060", "iron": "#909498", "steel": "#a8b0bc"
+  },
+  "parts": [
+   {"suffix": "_Acc_Pauldron", "worn": "body"},
+   {"suffix": "_Acc_Pauldrons", "worn": "body"},
+   {"suffix": "_Arms_Bracer", "worn": "gloves"},
+   {"suffix": "_Head_Hood", "hidden_by": "helmet"}
+  ],
+  "idle": {"light": "Idle_Torch", "shield": "ual2/Idle_Shield", "bare": "Idle"},
+  "attack": {"bare": "Punch_Jab"},
+  "uses": {
+   "quaff": "ual2/Consume", "eat": "ual2/Consume", "read": "proc/read", "zap": "Pistol_Shoot",
+   "cast": "Spell_Simple_Shoot", "throw": "ual2/OverhandThrow", "fire": "ual2/OverhandThrow",
+   "apply": "Interact", "wear": "Interact", "put_on": "Interact", "take_off": "Interact",
+   "remove": "Interact", "wield": "Interact", "pick_up": "PickUp_Table", "kick": "ual2/Melee_Hook"
+  }
+ }
 }

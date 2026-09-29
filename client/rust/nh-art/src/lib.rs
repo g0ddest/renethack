@@ -21,6 +21,10 @@ use nh_protocol::{MonsterInfo, ObjectTile, mg};
 use nh_world::Terrain;
 use serde::Deserialize;
 
+mod held;
+
+pub use held::*;
+
 /// Where the manifest lives, relative to the Godot project.
 pub const MANIFEST_PATH: &str = "art/manifest.json";
 
@@ -155,6 +159,10 @@ pub struct ModelSpec {
     /// The animation library (see `libraries`) that drives this rig.
     #[serde(default)]
     pub rig: Option<String>,
+    /// More libraries on the same skeleton, their clips named
+    /// `<library>/<clip>` (the hero's use and gear clips).
+    #[serde(default)]
+    pub extra_rigs: Vec<String>,
     /// Drop the library's position tracks (a shorter rig keeps its height).
     #[serde(default)]
     pub strip_root: bool,
@@ -326,13 +334,23 @@ pub struct AppearanceRule {
 
 impl AppearanceRule {
     fn matches(&self, t: &ObjectTile) -> bool {
-        if self.class.as_ref().is_some_and(|c| *c != t.class) {
-            return false;
-        }
-        let a = t.appearance.to_lowercase();
-        self.exact.iter().any(|e| a == e.to_lowercase())
-            || self.words.iter().any(|w| has_words(&a, &w.to_lowercase()))
+        appearance_matches(self.class.as_deref(), &self.exact, &self.words, t)
     }
+}
+
+/// The class (any when None) and an exact appearance or whole words in it.
+fn appearance_matches(
+    class: Option<&str>,
+    exact: &[String],
+    words: &[String],
+    t: &ObjectTile,
+) -> bool {
+    if class.is_some_and(|c| c != t.class) {
+        return false;
+    }
+    let a = t.appearance.to_lowercase();
+    exact.iter().any(|e| a == e.to_lowercase())
+        || words.iter().any(|w| has_words(&a, &w.to_lowercase()))
 }
 
 /// `phrase` (one or more words) occurs in `text` on word boundaries.
@@ -392,6 +410,8 @@ struct RawManifest {
     objects: ObjectRules,
     terrain: BTreeMap<String, TerrainSpec>,
     statue: StatueSpec,
+    #[serde(default)]
+    held: HeldRules,
 }
 
 /// How specific the art found is (most specific first).
@@ -469,6 +489,8 @@ pub struct ArtManifest {
     terrain: BTreeMap<String, TerrainSpec>,
     statue_material: usize,
     statue_model: usize,
+    held: HeldRules,
+    held_models: Vec<(String, HeldSpec)>,
 }
 
 /// "#rrggbb" as linear-ish 0..1 components (the client treats them as sRGB).
@@ -604,6 +626,17 @@ impl ArtManifest {
         if statue_material.is_none() || statue_model.is_none() {
             errors.push("the statue's material or model is missing".into());
         }
+        errors.extend(
+            raw.held
+                .check(|m| model(m).is_some(), |l| raw.libraries.contains_key(l)),
+        );
+        for (name, m) in &models {
+            for rig in &m.extra_rigs {
+                if !raw.libraries.contains_key(rig) {
+                    errors.push(format!("model {name}: no library {rig}"));
+                }
+            }
+        }
         if !errors.is_empty() {
             return Err(ArtError::Invalid(errors.join("; ")));
         }
@@ -616,6 +649,8 @@ impl ArtManifest {
             terrain: raw.terrain,
             statue_material: statue_material.unwrap_or_default(),
             statue_model: statue_model.unwrap_or_default(),
+            held_models: raw.held.models.clone().into_iter().collect(),
+            held: raw.held,
         })
     }
 
@@ -844,6 +879,7 @@ impl ArtManifest {
             lift: 0.0,
             rot: [0.0; 3],
             rig: None,
+            extra_rigs: Vec::new(),
             strip_root: false,
             anims: Anims::default(),
             size_factor: spec.size_factor,
@@ -1116,6 +1152,197 @@ mod tests {
         let after = art.monster(dog, 0);
         assert_eq!(after.height, before.height);
         assert_eq!(art.model_at(after.model).1.proc, Some(Proc::Blob));
+    }
+
+    fn tile<'a>(cat: &'a Catalog, class: &str, appearance: &str) -> &'a ObjectTile {
+        cat.object_tiles
+            .iter()
+            .find(|t| t.class == class && t.appearance == appearance)
+            .unwrap_or_else(|| panic!("no {class} {appearance}"))
+    }
+
+    fn held_name(art: &ArtManifest, h: Option<HeldArt>) -> Option<&str> {
+        h.map(|h| art.held_at(h.held).0)
+    }
+
+    /// Every weapon, every shield and every light source of the catalog
+    /// is held as something, by its appearance: and each resolves to a
+    /// model that exists.
+    #[test]
+    fn every_weapon_shield_and_light_is_held_as_something() {
+        let (art, cat) = (manifest(), catalog());
+        let mut generic = Vec::new();
+        for t in &cat.object_tiles {
+            let wanted = match t.class.as_str() {
+                ")" => true,
+                "[" => has_words(&t.appearance, "shield"),
+                "(" => ["lamp", "lantern", "candle", "candelabrum"]
+                    .iter()
+                    .any(|w| has_words(&t.appearance, w)),
+                _ => false,
+            };
+            if !wanted {
+                continue;
+            }
+            let h = art
+                .held(t)
+                .unwrap_or_else(|| panic!("{t:?} is not held as anything"));
+            let r = Resolved {
+                model: h.model,
+                ..art.object(t)
+            };
+            assert!(exists(&art, &r), "{t:?}");
+            assert!(h.scale > 0.0 && h.scale.is_finite(), "{t:?}");
+            if h.level == Level::Class {
+                generic.push(t.appearance.as_str());
+            }
+        }
+        // only the unnamed class glyph falls back to the class's model
+        assert_eq!(generic, ["weapon"], "held by class only");
+        let lamp = art.held(tile(&cat, "(", "lamp")).unwrap();
+        assert!(art.held_at(lamp.held).1.light.is_some());
+        // body armour is worn, not held
+        assert_eq!(art.held(tile(&cat, "[", "plate mail")), None);
+    }
+
+    #[test]
+    fn a_held_model_follows_the_head_noun_of_the_appearance() {
+        let (art, cat) = (manifest(), catalog());
+        let h = |class: &str, a: &str| held_name(&art, art.held(tile(&cat, class, a)));
+        assert_eq!(h(")", "runed dagger"), Some("dagger"));
+        assert_eq!(h(")", "crude dagger"), Some("dagger"));
+        assert_eq!(h(")", "long sword"), Some("long_blade"));
+        assert_eq!(h(")", "runed broadsword"), Some("long_blade"));
+        assert_eq!(h(")", "two-handed sword"), Some("great_blade"));
+        assert_eq!(h(")", "crude short sword"), Some("short_blade"));
+        assert_eq!(h(")", "spear"), Some("spear"));
+        assert_eq!(h(")", "hilted polearm"), Some("polearm"));
+        assert_eq!(h(")", "double-headed axe"), Some("great_axe"));
+        assert_eq!(h(")", "axe"), Some("axe"));
+        assert_eq!(h(")", "crossbow"), Some("bow"));
+        assert_eq!(h("[", "large round shield"), Some("round_shield"));
+        assert_eq!(h("[", "polished silver shield"), Some("kite_shield"));
+        assert_eq!(h("(", "brass lantern"), Some("lantern"));
+        assert_eq!(h("(", "candle"), Some("candle"));
+        // a potion in hand is its own model on the floor, tinted the same
+        let p = tile(&cat, "!", "ruby");
+        let held = art.held(p).unwrap();
+        assert_eq!(held.model, art.object(p).model);
+        assert_eq!(held.tint, art.object(p).tint);
+        // its colour is the appearance's, never the potion's identity
+        assert!(art.appearance_color(p).is_some_and(|c| c[0] > c[1]));
+        assert!(
+            art.appearance_color(tile(&cat, "!", "dark green"))
+                .is_some_and(|c| c[1] > c[0])
+        );
+        assert_eq!(art.appearance_color(tile(&cat, "?", "ZELGO MER")), None);
+    }
+
+    /// Like `ArtManifest::object`, `held` sees only the appearance tile.
+    #[test]
+    fn the_held_function_takes_no_glyph() {
+        let f: fn(&ArtManifest, &ObjectTile) -> Option<HeldArt> = ArtManifest::held;
+        let (art, cat) = (manifest(), catalog());
+        let t = tile(&cat, ")", "runed dagger");
+        let twin = ObjectTile {
+            tile: t.tile + 1000,
+            ..t.clone()
+        };
+        assert_eq!(f(&art, &twin), art.held(t));
+    }
+
+    fn pack(items: Vec<nh_protocol::InvItem>, twoweap: bool) -> nh_world::Pack {
+        let mut p = nh_world::Pack::new();
+        p.replace(&nh_protocol::Inventory { items, twoweap });
+        p
+    }
+
+    fn inv(
+        cat: &Catalog,
+        letter: char,
+        class: &str,
+        a: &str,
+        slots: Vec<nh_protocol::Slot>,
+        lit: bool,
+    ) -> nh_protocol::InvItem {
+        nh_protocol::InvItem {
+            letter,
+            class: class.chars().next().unwrap(),
+            tile: tile(cat, class, a).tile,
+            quan: 1,
+            slots,
+            lit,
+            text: String::new(),
+        }
+    }
+
+    #[test]
+    fn a_valkyrie_shows_her_spear_and_shield() {
+        use nh_protocol::Slot;
+        let (art, cat) = (manifest(), catalog());
+        let items = vec![
+            inv(&cat, 'a', ")", "spear", vec![Slot::Weapon], false),
+            inv(&cat, 'b', ")", "dagger", vec![Slot::Alternate], false),
+            inv(&cat, 'c', "[", "wooden shield", vec![Slot::Shield], false),
+            inv(&cat, 'd', "(", "lamp", vec![], false),
+        ];
+        let g = art.gear(&pack(items.clone(), false), &cat);
+        assert_eq!(held_name(&art, g.hand_r), Some("spear"));
+        assert_eq!(held_name(&art, g.arm_l), Some("round_shield"));
+        assert_eq!(held_name(&art, g.back), Some("dagger"));
+        assert_eq!(g.hand_l, None, "an unlit lamp stays in the pack");
+        assert_eq!(g.idle.as_deref(), Some("ual2/Idle_Shield"));
+        assert_eq!(g.attack.as_deref(), Some("Sword_Attack"));
+        assert!(!g.lit());
+        // the lamp lit: in the left hand, and the idle holds it up
+        let mut lit = items.clone();
+        lit[3].lit = true;
+        let g = art.gear(&pack(lit, false), &cat);
+        assert_eq!(held_name(&art, g.hand_l), Some("oil_lamp"));
+        assert!(g.lit());
+        assert_eq!(g.idle.as_deref(), Some("Idle_Torch"));
+        // two weapons: the dagger in the left hand, nothing on the back
+        let mut two = items.clone();
+        two.remove(2);
+        let g = art.gear(&pack(two, true), &cat);
+        assert_eq!(held_name(&art, g.hand_l), Some("dagger"));
+        assert_eq!(g.back, None);
+        // bare hands punch
+        let g = art.gear(&pack(vec![items[3].clone()], false), &cat);
+        assert_eq!((g.hand_r, g.attack.as_deref()), (None, Some("Punch_Jab")));
+        assert_eq!(g.idle.as_deref(), Some("Idle"));
+    }
+
+    #[test]
+    fn worn_armour_shows_on_the_outfit_parts() {
+        use nh_protocol::Slot;
+        let (art, cat) = (manifest(), catalog());
+        let items = vec![
+            inv(&cat, 'a', "[", "leather armor", vec![Slot::Body], false),
+            inv(&cat, 'b', "[", "visored helmet", vec![Slot::Helmet], false),
+        ];
+        let g = art.gear(&pack(items, false), &cat);
+        assert_eq!(g.worn, ["body", "helmet"]);
+        assert_eq!(held_name(&art, g.head), Some("helm"));
+        let parts = &art.held_rules().parts;
+        let rule = |suffix: &str| parts.iter().find(|p| p.suffix == suffix).unwrap();
+        assert!(rule("_Acc_Pauldron").shown(&g.worn));
+        assert!(!rule("_Arms_Bracer").shown(&g.worn));
+        assert!(!rule("_Head_Hood").shown(&g.worn));
+        assert!(rule("_Head_Hood").shown(&[]));
+    }
+
+    #[test]
+    fn every_held_clip_is_in_its_library() {
+        let art = manifest();
+        for (lib, clip) in art.held_rules().clips() {
+            if lib == Some(PROC_CLIPS) {
+                continue;
+            }
+            let file = art.library(lib.unwrap_or("ual")).unwrap();
+            let clips = clips_in(&art_dir().join(file)).unwrap();
+            assert!(clips.iter().any(|c| c == clip), "no clip {clip} in {file}");
+        }
     }
 
     #[test]
