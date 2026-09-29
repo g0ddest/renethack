@@ -470,10 +470,10 @@
   "slots": {
    "hand_r": {"bone": "hand_r", "pos": [-0.03, 0.075, 0.0], "rot": [-180, -90, -90]},
    "hand_l": {"bone": "hand_l", "pos": [0.03, 0.075, 0.0], "rot": [-180, -90, -90]},
-   "arm_l": {"bone": "lowerarm_l", "pos": [-0.07, 0.13, 0.0], "rot": [-180, 90, 90]},
+   "arm_l": {"bone": "lowerarm_l", "pos": [-0.04, 0.17, 0.03], "rot": [-50.5, -56.6, 177.3]},
    "back": {"bone": "spine_03", "pos": [0.14, 0.3, -0.17], "rot": [0, 0, 145]},
    "quiver": {"bone": "spine_03", "pos": [-0.12, 0.02, -0.16], "rot": [0, 0, -20]},
-   "head": {"bone": "Head", "pos": [0.0, 0.06, 0.0], "rot": [0, 0, 0]}
+   "head": {"bone": "Head", "pos": [0.0, 0.1, 0.0], "rot": [0, 0, 0]}
   },
   "models": {
    "long_blade": {"model": "estoc", "size": 1.0, "idle": "Sword_Idle", "attack": "Sword_Attack"},
@@ -486,14 +486,14 @@
    "axe": {"model": "hand_axe", "size": 0.62, "idle": "Sword_Idle", "attack": "Sword_Attack"},
    "great_axe": {"model": "battle_axe", "size": 0.95, "idle": "Sword_Idle", "attack": "Sword_Attack"},
    "pick": {"model": "pick_dirty", "size": 0.8, "idle": "Sword_Idle", "attack": "Sword_Attack"},
-   "spear": {"model": "spear", "size": 1.6, "grip": {"pos": [0.0, -0.45, 0.0]}, "idle": "Sword_Idle", "attack": "Sword_Attack"},
-   "polearm": {"model": "spear", "size": 2.0, "grip": {"pos": [0.0, -0.6, 0.0]}, "idle": "Sword_Idle", "attack": "Sword_Attack"},
+   "spear": {"model": "spear", "size": 2.0, "grip": {"pos": [0.0, -0.6, 0.0]}, "idle": "Sword_Idle", "attack": "Sword_Attack"},
+   "polearm": {"model": "spear", "size": 2.4, "grip": {"pos": [0.0, -0.8, 0.0]}, "idle": "Sword_Idle", "attack": "Sword_Attack"},
    "staff": {"model": "pole", "size": 1.5, "grip": {"pos": [0.0, -0.5, 0.0], "rot": [-90, 0, 0]}, "idle": "Sword_Idle", "attack": "Sword_Attack"},
    "bow": {"model": "longbow", "size": 1.1, "idle": "Sword_Idle", "attack": "Punch_Cross"},
    "missile": {"size": 0.35, "grip": {"rot": [-90, 0, 0]}, "attack": "Punch_Jab"},
-   "round_shield": {"model": "shield", "size": 0.6, "grip": {"rot": [90, 0, 0]}},
+   "round_shield": {"model": "shield", "size": 0.6},
    "kite_shield": {"model": "kite_shield", "size": 0.85},
-   "helm": {"model": "helm", "size": 0.27},
+   "helm": {"model": "helm", "size": 0.2},
    "oil_lamp": {"model": "oil_lamp", "size": 0.3, "light": {"color": "#ffb36b", "range": 6.5, "energy": 1.8, "at": [0.0, 0.52, 0.0], "flicker": 0.12}},
    "lantern": {"model": "lantern", "size": 0.34, "grip": {"pos": [0.0, -0.3, 0.0]}, "light": {"color": "#ffb36b", "range": 6.5, "energy": 1.8, "at": [0.0, 0.2, 0.0], "flicker": 0.08}},
    "candle": {"size": 0.14, "light": {"color": "#ffa85c", "range": 3.8, "energy": 1.2, "at": [0.0, 0.14, 0.0], "flicker": 0.2}},

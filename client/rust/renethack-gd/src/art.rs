@@ -24,6 +24,11 @@ use godot::classes::{
 use godot::prelude::*;
 use nh_art::{ArtManifest, MaterialSpec, Proc, Resolved, Skin};
 
+#[path = "equip.rs"]
+mod equip;
+
+pub use equip::{HELD_NODE, LAMP_LIGHT, USE_NODE, Worn};
+
 use crate::meshes::{MeshKey, capsule, cuboid, cylinder, dome, facets, prism, sphere, torus};
 
 /// The manifest built into the client, used when the project's copy cannot
@@ -81,6 +86,14 @@ pub struct Model {
     pub node: Gd<Node3D>,
     key: PoolKey,
     player: Option<Gd<AnimationPlayer>>,
+    /// What it carries (the hero only).
+    worn: Option<Box<Worn>>,
+}
+
+impl Model {
+    pub fn player(&self) -> Option<&Gd<AnimationPlayer>> {
+        self.player.as_ref().filter(|p| p.is_instance_valid())
+    }
 }
 
 /// A model's animation player and the clips it has that the map plays
@@ -140,6 +153,8 @@ pub struct Art {
     libraries: HashMap<(String, bool), Option<Gd<AnimationLibrary>>>,
     derived: HashMap<(i64, u32, bool), Gd<Material>>,
     proc_anims: HashMap<Proc, Gd<AnimationLibrary>>,
+    /// The clips built in code on the characters' skeleton (`proc/read`).
+    proc_clips: Option<Gd<AnimationLibrary>>,
     pool: HashMap<PoolKey, Vec<Model>>,
     warned: HashSet<String>,
     /// Instances handed out and not given back.
@@ -184,6 +199,7 @@ impl Art {
             libraries: HashMap::new(),
             derived: HashMap::new(),
             proc_anims: HashMap::new(),
+            proc_clips: None,
             pool: HashMap::new(),
             warned: HashSet::new(),
             live: 0,
@@ -207,7 +223,10 @@ impl Art {
         let mut rigs: Vec<(String, bool)> = self
             .manifest
             .models()
-            .filter_map(|(_, _, m)| Some((m.rig.clone()?, m.strip_root)))
+            .flat_map(|(_, _, m)| {
+                let rigs = m.rig.iter().chain(&m.extra_rigs);
+                rigs.map(|r| (r.clone(), m.strip_root)).collect::<Vec<_>>()
+            })
             .collect();
         rigs.sort();
         rigs.dedup();
@@ -384,6 +403,7 @@ impl Art {
     /// Hide an instance and keep it for the next look like it.
     pub fn give(&mut self, mut m: Model) {
         self.live = self.live.saturating_sub(1);
+        self.unequip(&mut m);
         m.node.set_visible(false);
         if let Some(p) = m.player.as_mut() {
             p.pause();
@@ -411,10 +431,14 @@ impl Art {
                 ..Clips::default()
             };
         }
+        // the gear's idle and attack (a sword, a shield, a lamp, fists)
+        let gear = m.worn.as_ref().map(|w| w.gear());
+        let idle = gear.and_then(|g| has(g.idle.as_deref()));
+        let attack = gear.and_then(|g| has(g.attack.as_deref()));
         Clips {
-            idle: has(spec.anims.idle.as_deref()),
+            idle: idle.or_else(|| has(spec.anims.idle.as_deref())),
             gait: has(spec.anims.gait(hurry)),
-            attack: has(spec.anims.attack.as_deref()),
+            attack: attack.or_else(|| has(spec.anims.attack.as_deref())),
             player: Some(player),
         }
     }
@@ -532,6 +556,7 @@ impl Art {
             node: holder,
             key,
             player,
+            worn: None,
         }
     }
 
@@ -551,6 +576,11 @@ impl Art {
                 let mut p = AnimationPlayer::new_alloc();
                 p.set_name("AnimationPlayer");
                 let _ = p.add_animation_library("", &lib);
+                for extra in &spec.extra_rigs {
+                    if let Some(lib) = self.library(extra, spec.strip_root) {
+                        let _ = p.add_animation_library(extra.as_str(), &lib);
+                    }
+                }
                 let mut inner = inner.clone();
                 inner.add_child(&p);
                 p
