@@ -172,12 +172,16 @@ impl Art {
             && old_idle.as_deref() != Some(idle.as_str())
             && p.has_animation(idle.as_str())
         {
+            if let Some(mut a) = p.get_animation(idle.as_str()) {
+                a.set_loop_mode(LoopMode::LINEAR);
+            }
             let now = p.get_current_animation().to_string();
             if !p.is_playing() || Some(now.as_str()) == old_idle.as_deref() {
-                if let Some(mut a) = p.get_animation(idle.as_str()) {
-                    a.set_loop_mode(LoopMode::LINEAR);
-                }
                 p.play_ex().name(idle.as_str()).custom_blend(0.25).done();
+            } else {
+                // busy (applying the lamp just lit): the new idle follows
+                p.clear_queue();
+                p.queue(idle.as_str());
             }
         }
         gear.lit()

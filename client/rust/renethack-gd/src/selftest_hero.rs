@@ -148,10 +148,8 @@ pub(super) fn equipment() -> Vec<Step> {
         |g| {
             let (names, lit) = held_on(g, "hand_l")?;
             let clip = g.ui.as_ref().and_then(|ui| ui.map.hero_clip());
-            if names == ["oil_lamp"] && lit && clip.as_deref() != Some("Idle_Torch") {
-                return Err(format!("the lamp is held playing {clip:?}"));
-            }
-            Ok(names == ["oil_lamp"] && lit)
+            // the apply clip first, then the lamp held up
+            Ok(names == ["oil_lamp"] && lit && clip.as_deref() == Some("Idle_Torch"))
         },
         "equip-lamp-lit",
     ));
