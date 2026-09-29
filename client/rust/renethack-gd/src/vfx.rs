@@ -95,10 +95,10 @@ impl Recipe {
             spread: 25.0,
             dir: Vector3::UP,
             gravity: Vector3::ZERO,
-            size: (0.04, 0.08),
+            size: (0.03, 0.06),
             radius: 0.3,
             damping: 0.5,
-            hdr: 3.0,
+            hdr: 1.8,
             additive: true,
         };
         match self {
@@ -116,8 +116,8 @@ impl Recipe {
                 speed: (1.0, 2.2),
                 spread: 180.0,
                 radius: 0.05,
-                size: (0.04, 0.07),
-                hdr: 5.0,
+                size: (0.03, 0.06),
+                hdr: 2.2,
                 ..base
             },
             Recipe::Swirl => Params {
@@ -136,7 +136,7 @@ impl Recipe {
                 gravity: Vector3::new(0.0, 1.5, 0.0),
                 size: (0.08, 0.16),
                 radius: 0.25,
-                hdr: 4.0,
+                hdr: 2.5,
                 ..base
             },
             Recipe::Shards => Params {
@@ -157,7 +157,7 @@ impl Recipe {
                 spread: 180.0,
                 size: (0.02, 0.05),
                 radius: 0.1,
-                hdr: 6.0,
+                hdr: 3.0,
                 ..base
             },
             Recipe::Cloud => Params {
@@ -182,7 +182,7 @@ impl Recipe {
                 size: (0.1, 0.22),
                 radius: 0.3,
                 damping: 3.0,
-                hdr: 5.0,
+                hdr: 2.8,
                 ..base
             },
             Recipe::Glints => Params {
@@ -192,7 +192,7 @@ impl Recipe {
                 spread: 180.0,
                 size: (0.03, 0.06),
                 radius: 0.3,
-                hdr: 4.0,
+                hdr: 2.5,
                 ..base
             },
             Recipe::Sparks => Params {
@@ -228,13 +228,13 @@ impl Recipe {
 fn look_of(kind: VfxKind) -> (Recipe, Color, Option<(Color, f32, f32)>) {
     let rgb = Color::from_rgb;
     match kind {
-        VfxKind::Quaff(c) => (Recipe::Motes, c, Some((c, 0.8, 0.5))),
+        VfxKind::Quaff(c) => (Recipe::Motes, c, Some((c, 0.5, 0.5))),
         VfxKind::Read => {
             let gold = rgb(1.0, 0.8, 0.4);
-            (Recipe::Runes, gold, Some((gold, 1.5, 0.5)))
+            (Recipe::Runes, gold, Some((gold, 0.8, 0.5)))
         }
-        VfxKind::Zap(c) => (Recipe::Flare, c, Some((c, 2.0, 0.15))),
-        VfxKind::Cast(c) => (Recipe::Swirl, c, Some((c, 1.6, 0.4))),
+        VfxKind::Zap(c) => (Recipe::Flare, c, Some((c, 1.2, 0.15))),
+        VfxKind::Cast(c) => (Recipe::Swirl, c, Some((c, 0.9, 0.4))),
         VfxKind::Fire => {
             let c = rgb(1.0, 0.48, 0.13);
             (Recipe::Flames, c, Some((c, 2.5, 0.4)))
@@ -434,13 +434,14 @@ fn particle_material(tex: &Gd<Texture2D>, additive: bool, shaded: bool) -> Gd<Ma
 fn ramp(color: Color, hdr: f32) -> Gd<GradientTexture1D> {
     let mut g = Gradient::new_gd();
     let hot = Color::from_rgba(color.r * hdr, color.g * hdr, color.b * hdr, 1.0);
+    // it cools in its own colour, never whiter or redder
     let mid = Color::from_rgba(
-        color.r * hdr * 0.6,
-        color.g * hdr * 0.5,
-        color.b * hdr * 0.4,
-        0.8,
+        color.r * hdr * 0.55,
+        color.g * hdr * 0.55,
+        color.b * hdr * 0.55,
+        0.75,
     );
-    let end = Color::from_rgba(color.r * 0.3, color.g * 0.2, color.b * 0.15, 0.0);
+    let end = Color::from_rgba(color.r * 0.3, color.g * 0.3, color.b * 0.3, 0.0);
     g.set_offsets(&PackedFloat32Array::from(&[0.0, 0.45, 1.0][..]));
     g.set_colors(&PackedColorArray::from(&[hot, mid, end][..]));
     let mut t = GradientTexture1D::new_gd();
@@ -783,8 +784,8 @@ impl Vfx {
         m.set_param_min(Parameter::INITIAL_LINEAR_VELOCITY, 0.3);
         m.set_param_max(Parameter::INITIAL_LINEAR_VELOCITY, 0.7);
         m.set_gravity(Vector3::new(0.0, 0.15, 0.0));
-        m.set_param_min(Parameter::SCALE, 0.012);
-        m.set_param_max(Parameter::SCALE, 0.025);
+        m.set_param_min(Parameter::SCALE, 0.65);
+        m.set_param_max(Parameter::SCALE, 1.35);
         m.set_turbulence_enabled(true);
         m.set_turbulence_noise_strength(0.4);
         m.set_turbulence_noise_scale(1.5);
@@ -793,7 +794,7 @@ impl Vfx {
         p.set_amount(10);
         p.set_lifetime(1.4);
         p.set_randomness_ratio(0.5);
-        p.set_draw_pass_mesh(0, &quad(1.0));
+        p.set_draw_pass_mesh(0, &quad(0.02));
         p.set_material_override(&particle_material(&self.soft, true, false));
         p.set_cast_shadows_setting(ShadowCastingSetting::OFF);
         p.set_visibility_aabb(Aabb::new(
@@ -822,8 +823,11 @@ fn new_emitter(root: &mut Gd<Node3D>, recipe: Recipe, soft: &Gd<Texture2D>) -> E
     m.set_gravity(p.gravity);
     m.set_param_min(Parameter::DAMPING, p.damping);
     m.set_param_max(Parameter::DAMPING, p.damping);
-    m.set_param_min(Parameter::SCALE, p.size.0);
-    m.set_param_max(Parameter::SCALE, p.size.1);
+    // the quad is the particle's mean size and the scale varies it (a
+    // scale of centimetres on a metre quad is not what Godot draws)
+    let mean = (p.size.0 + p.size.1) / 2.0;
+    m.set_param_min(Parameter::SCALE, p.size.0 / mean);
+    m.set_param_max(Parameter::SCALE, p.size.1 / mean);
     if recipe == Recipe::Swirl {
         m.set_param_min(Parameter::ORBIT_VELOCITY, 0.4);
         m.set_param_max(Parameter::ORBIT_VELOCITY, 0.8);
@@ -841,7 +845,7 @@ fn new_emitter(root: &mut Gd<Node3D>, recipe: Recipe, soft: &Gd<Texture2D>) -> E
         },
     );
     node.set_emitting(false);
-    node.set_draw_pass_mesh(0, &quad(1.0));
+    node.set_draw_pass_mesh(0, &quad(mean));
     node.set_material_override(&particle_material(soft, p.additive, !p.additive));
     node.set_cast_shadows_setting(ShadowCastingSetting::OFF);
     node.set_visibility_aabb(Aabb::new(
