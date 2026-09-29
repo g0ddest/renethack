@@ -5,11 +5,11 @@
   "ual2": "cc0/quaternius/animations/UAL2_Standard.glb"
  },
  "materials": {
-  "floor": {"textures": "cc0/polyhaven/textures/stone_tiles_02/stone_tiles_02", "uv_scale": 0.5, "color": "#9a9288"},
+  "floor": {"textures": "cc0/polyhaven/textures/monastery_stone_floor/monastery_stone_floor", "uv_scale": 0.4, "color": "#a0988c"},
   "brick": {"textures": "cc0/polyhaven/textures/castle_brick_07/castle_brick_07", "uv_scale": 0.5, "color": "#8c8480"},
   "dirt": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 0.5, "color": "#7a6a5a"},
-  "masonry": {"textures": "cc0/polyhaven/textures/rock_wall_08/rock_wall_08", "uv_scale": 0.35, "color": "#8a8580"},
-  "bedrock": {"textures": "cc0/polyhaven/textures/rock_wall_08/rock_wall_08", "uv_scale": 0.5, "color": "#3a3836"},
+  "masonry": {"textures": "cc0/polyhaven/textures/stone_wall_04/stone_wall_04", "uv_scale": 0.4, "color": "#8a8580"},
+  "bedrock": {"textures": "cc0/polyhaven/textures/rock_wall_13/rock_wall_13", "uv_scale": 0.45, "color": "#34312f"},
   "rock": {"textures": "cc0/polyhaven/textures/rock_wall_08/rock_wall_08", "uv_scale": 0.5},
   "wood": {"textures": "cc0/polyhaven/textures/old_planks_02/old_planks_02", "uv_scale": 1.0},
   "iron": {"textures": "cc0/polyhaven/textures/rusty_metal_02/rusty_metal_02", "uv_scale": 2.0, "color": "#6c6660"},

@@ -4,6 +4,7 @@
 mod action_bar;
 mod animator;
 mod art;
+mod batch;
 mod dialogs;
 mod gallery;
 mod game;
@@ -19,6 +20,7 @@ mod orb;
 mod paths;
 mod screens;
 mod selftest;
+mod surface;
 mod theme;
 mod ui_events;
 mod vfx;

@@ -36,6 +36,19 @@ environment/volumetric_fog/volume_depth=64
 lights_and_shadows/positional_shadow/atlas_size=4096
 lights_and_shadows/positional_shadow/soft_shadow_filter_quality=3
 
+[shader_globals]
+
+; the map's surface shader (map_surface.gdshader): walls and rock between
+; the eye and the hero dither away
+hero_pos={
+"type": "vec3",
+"value": Vector3(0, -100, 0)
+}
+eye_pos={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
+
 [renethack]
 
 ; nh-engine, recover and data/ (RENETHACK_ENGINE_DIR overrides it)
