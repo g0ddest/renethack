@@ -18,6 +18,7 @@ mod path;
 mod prompt;
 mod status;
 mod terrain;
+mod uses;
 mod world;
 
 pub use actionbar::*;
@@ -36,4 +37,5 @@ pub use path::*;
 pub use prompt::*;
 pub use status::*;
 pub use terrain::*;
+pub use uses::*;
 pub use world::*;
