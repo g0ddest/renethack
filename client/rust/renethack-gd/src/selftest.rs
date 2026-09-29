@@ -1994,6 +1994,67 @@ fn bar() -> Vec<Step> {
     steps
 }
 
+/// The icon bake: every object appearance tile's icon, drawn by its map
+/// art, into `art/icons/items/`. Writes files: not part of `make
+/// test-client`; `make icons` runs it.
+fn icons() -> Vec<Step> {
+    let mut steps = start();
+    steps.extend([
+        Step::Wait("the hero on the map", |g| Ok(g.world.map.hero().is_some())),
+        Step::Wait("the icon stage", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            // under the window: a child of the game would notify the game,
+            // which is bound here
+            let mut root = g.base().get_tree().get_root().ok_or("no root")?.upcast();
+            let bake = crate::icon_bake::Bake::new(&mut root, cat)?;
+            BAKE.with(|b| *b.borrow_mut() = Some(bake));
+            Ok(true)
+        }),
+    ]);
+    // one step per icon, each within the step timeout
+    for _ in 0..ICONS_MAX {
+        steps.push(Step::Wait("the next icon", |_| {
+            BAKE.with(|b| match b.borrow_mut().as_mut() {
+                Some(bake) if bake.left() > 0 => bake.tick(),
+                _ => Ok(true),
+            })
+        }));
+    }
+    steps.push(Step::Wait("every icon baked", |g| {
+        let n = g.catalog.as_ref().map_or(0, |c| c.object_tiles.len());
+        let bake = BAKE.with(|b| b.borrow_mut().take()).ok_or("no bake")?;
+        if bake.left() > 0 {
+            return Err(format!("{} icons left", bake.left()));
+        }
+        let r = &bake.report;
+        let specific = r.specific();
+        godot_print!(
+            "selftest: icons: {} of {n} tiles, {specific} not generic ({:.1} %), {} KiB, by level {:?}",
+            r.written,
+            100.0 * specific as f64 / n.max(1) as f64,
+            r.bytes / 1024,
+            r.levels
+        );
+        if !bake.failures().is_empty() {
+            return Err(format!("no icon for {}", bake.failures().join("; ")));
+        }
+        if specific * 10 < r.written * 9 {
+            return Err(format!("only {specific} of {} icons are not generic", r.written));
+        }
+        Ok(true)
+    }));
+    steps.extend(quit());
+    steps
+}
+
+/// More than the catalog's object tiles (437 in NetHack 5.0).
+const ICONS_MAX: usize = 600;
+
+thread_local! {
+    static BAKE: std::cell::RefCell<Option<crate::icon_bake::Bake>> =
+        const { std::cell::RefCell::new(None) };
+}
+
 /// The menu dialog open for the pending request, if any.
 fn open_menu(g: &RenethackGame) -> Option<&[MenuEntry]> {
     let ui = g.ui.as_ref()?;
@@ -3332,6 +3393,7 @@ impl SelfTest {
             "hud" => hud(),
             "moves" => moves(),
             "gallery" => gallery(),
+            "icons" => icons(),
             "smoke" => smoke(),
             "keys" => keys(),
             "save" => save(),

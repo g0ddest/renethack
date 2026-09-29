@@ -10,6 +10,7 @@ mod gallery;
 mod game;
 mod hero;
 mod hud;
+mod icon_bake;
 mod icons;
 mod input;
 mod inventory_panel;

@@ -21,7 +21,7 @@ SELFTESTS := smoke keys save close crash menus text dialogs moves orders invento
 SOAK_CI := 2000
 SOAK_SEEDS := 1 2 3 4 5 6 7 8
 
-.PHONY: all engine client import run test test-client soak lint need-timeout art
+.PHONY: all engine client import run test test-client soak lint need-timeout art icons
 all: engine
 
 engine:
@@ -100,6 +100,15 @@ soak: need-timeout all client
 	@set -e; for seed in $(SOAK_SEEDS); do \
 		$(call run_selftest,soak,--seed=$$seed,900,soak seed $$seed); \
 	done; echo "soak passed with seeds $(SOAK_SEEDS)"
+
+# Bake the item icons (client/godot/art/icons/items/<tile>.png) from the
+# object art; needs a display, so not headless
+icons: all client
+	@pg=$$(mktemp -d); $(if $(TIMEOUT),$(TIMEOUT) 600) $(GODOT) --path $(GODOT_PROJECT) \
+		-- --selftest=icons --playground=$$pg/playground > $$pg/icons.log 2>&1; \
+	grep '^selftest: icons' $$pg/icons.log; \
+	grep -q 'SELFTEST PASS icons' $$pg/icons.log || { tail -40 $$pg/icons.log; exit 1; }; \
+	rm -rf $$pg
 
 # The art is committed; this re-fetches it from Poly Haven and itch.io and
 # checks the downloads against client/godot/art/art.lock.json; `make client`
