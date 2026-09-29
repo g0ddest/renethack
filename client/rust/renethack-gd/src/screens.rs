@@ -13,6 +13,7 @@ use godot::global::HorizontalAlignment;
 use godot::prelude::*;
 use nh_link::SavedGame;
 use nh_protocol::Catalog;
+use nh_world::KeyProfile;
 
 use crate::theme::{self, bbcode_escape, hex};
 use crate::ui_events::{CharacterChoice, UiEvent, UiQueue, push};
@@ -109,6 +110,8 @@ struct Form {
     race: Gd<OptionButton>,
     gender: Gd<OptionButton>,
     align: Gd<OptionButton>,
+    /// Modern (item 0) or Classic keys.
+    keys: Gd<OptionButton>,
     start: Gd<Button>,
     continue_instead: Gd<Button>,
     notice: Gd<Label>,
@@ -164,6 +167,11 @@ impl Form {
                 cat.genders.get(i).map(|g| g.code.clone())
             }),
             align: code(&self.align, &|i| cat.aligns.get(i).map(|a| a.code.clone())),
+            profile: if self.keys.get_selected() == 1 {
+                KeyProfile::Classic
+            } else {
+                KeyProfile::Modern
+            },
         }
     }
 
@@ -326,6 +334,14 @@ impl Screens {
         let race = option("Race", &mut grid);
         let gender = option("Gender", &mut grid);
         let align = option("Alignment", &mut grid);
+        let mut keys = option("Keys", &mut grid);
+        keys.add_item("Modern: arrows and keypad move, n counts");
+        keys.add_item("Classic: hjklyubn move, Alt+digits count");
+        keys.select(0);
+        keys.set_tooltip_text(
+            "Both keep the action bar on 1-0. Modern plays with number_pad \
+             (k kicks, j jumps, l loots); Classic with NetHack's vi-keys.",
+        );
         col.add_child(&grid);
         let roles: Vec<(i32, String)> = catalog
             .roles
@@ -358,6 +374,7 @@ impl Screens {
             race,
             gender,
             align,
+            keys,
             start,
             continue_instead,
             notice,
@@ -437,6 +454,8 @@ impl Screens {
             .map(|a| (a.idx, a.code.clone(), a.adj.clone()))
             .collect();
         Form::preset(&mut form.align, &choice.align, &aligns);
+        form.keys
+            .select(i32::from(choice.profile == KeyProfile::Classic));
     }
 
     /// The name would restore a saved game: offer to continue it instead.

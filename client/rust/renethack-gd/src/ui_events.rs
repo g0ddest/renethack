@@ -5,7 +5,9 @@ use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::rc::Rc;
 
-use nh_world::KeyInput;
+use nh_world::{KeyInput, KeyProfile};
+
+use crate::inventory_panel::InvInput;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum UiEvent {
@@ -48,6 +50,10 @@ pub enum UiEvent {
         slot: usize,
         button: i32,
     },
+    /// Put back the slot the last right click cleared.
+    SlotUndo,
+    /// From the inventory panel.
+    Inventory(InvInput),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -70,6 +76,8 @@ pub struct CharacterChoice {
     pub race: String,
     pub gender: String,
     pub align: String,
+    /// How keys work for this character (kept with it).
+    pub profile: KeyProfile,
 }
 
 pub type UiQueue = Rc<RefCell<VecDeque<UiEvent>>>;

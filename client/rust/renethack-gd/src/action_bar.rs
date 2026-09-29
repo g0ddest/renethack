@@ -1,14 +1,14 @@
 //! The action bar's ten slots on `1`–`0` (ui-design §4.2): the look only.
-//! What a slot is bound to, and what pressing it sends, belongs to the
-//! bar's logic (phase H), which drives this view through `ActionBar`'s
-//! setters and hears clicks as `UiEvent::ActionSlot`.
+//! What a slot is bound to, and what pressing it sends, is nh-world's
+//! `ActionBar`; the game drives this view through the setters and hears
+//! clicks as `UiEvent::ActionSlot`.
 
 use godot::builtin::Side;
 use godot::classes::control::{FocusMode, MouseFilter};
 use godot::classes::texture_rect::{ExpandMode, StretchMode};
 use godot::classes::{
-    Button, Control, HBoxContainer, InputEvent, InputEventMouseButton, Label, StyleBoxFlat,
-    Texture2D, TextureRect,
+    Button, ColorRect, Control, HBoxContainer, InputEvent, InputEventMouseButton, Label,
+    StyleBoxFlat, Texture2D, TextureRect,
 };
 use godot::global::{HorizontalAlignment, MouseButton, VerticalAlignment};
 use godot::prelude::*;
@@ -39,6 +39,8 @@ struct Slot {
     key: Gd<Label>,
     /// "+" shown over an empty slot under the mouse.
     ghost: Gd<Label>,
+    /// The thin diagonal slash of an item that is gone.
+    slash: Gd<ColorRect>,
     filled: bool,
     enabled: bool,
 }
@@ -151,6 +153,16 @@ impl ActionBar {
             ghost.set_visible(false);
             button.add_child(&ghost);
 
+            let mut slash = ColorRect::new_alloc();
+            slash.set_mouse_filter(MouseFilter::IGNORE);
+            slash.set_color(Color::from_rgba(0.75, 0.22, 0.17, 0.85));
+            slash.set_size(Vector2::new(SLOT * 1.2, 2.0));
+            slash.set_position(Vector2::new(SLOT * 0.5 - SLOT * 0.6, SLOT * 0.5 - 1.0));
+            slash.set_pivot_offset(Vector2::new(SLOT * 0.6, 1.0));
+            slash.set_rotation(-std::f32::consts::FRAC_PI_4);
+            slash.set_visible(false);
+            button.add_child(&slash);
+
             let key = corner_label(key_label(i), Face::Caps, 15, theme::TEXT_DIM);
             place(&key, [0.0, 0.0, 0.0, 0.0], [7.0, 3.0, 27.0, 23.0]);
             button.add_child(&key);
@@ -198,6 +210,7 @@ impl ActionBar {
                 count,
                 key,
                 ghost,
+                slash,
                 filled: false,
                 enabled: true,
             });
@@ -215,7 +228,6 @@ impl ActionBar {
     }
 
     /// Slot `slot`'s icon; None empties it.
-    #[allow(dead_code)] // the bar's logic (phase H) binds the slots
     pub fn set_icon(&mut self, slot: usize, icon: Option<&Gd<Texture2D>>) {
         let Some(s) = self.slots.get_mut(slot) else {
             return;
@@ -236,7 +248,6 @@ impl ActionBar {
 
     /// The number at the bottom right (a stack's count, charges, a spell's
     /// cost); None hides it.
-    #[allow(dead_code)] // the bar's logic (phase H)
     pub fn set_count(&mut self, slot: usize, count: Option<&str>) {
         if let Some(s) = self.slots.get_mut(slot) {
             s.count.set_text(count.unwrap_or(""));
@@ -245,7 +256,6 @@ impl ActionBar {
 
     /// A slot whose item is gone or whose spell is unaffordable: greyed,
     /// still clickable (the logic decides what a click does).
-    #[allow(dead_code)] // the bar's logic (phase H)
     pub fn set_enabled(&mut self, slot: usize, on: bool) {
         if let Some(s) = self.slots.get_mut(slot) {
             s.enabled = on;
@@ -256,11 +266,11 @@ impl ActionBar {
             };
             s.icon.set_modulate(m);
             s.count.set_visible(on);
+            s.slash.set_visible(!on && s.filled);
         }
     }
 
     /// What hovering slot `slot` tells.
-    #[allow(dead_code)] // the bar's logic (phase H)
     pub fn set_tooltip(&mut self, slot: usize, text: &str) {
         if let Some(s) = self.slots.get_mut(slot) {
             s.button.set_tooltip_text(text);
@@ -268,13 +278,20 @@ impl ActionBar {
     }
 
     /// The whole bar at 60 % while the engine is not at a command prompt.
-    #[allow(dead_code)] // the bar's logic (phase H)
     pub fn set_active(&mut self, on: bool) {
         if self.active != on {
             self.active = on;
             let a = if on { 1.0 } else { 0.6 };
             self.root.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, a));
         }
+    }
+
+    /// Where the slots are on the canvas (drop targets of the inventory).
+    pub fn slot_rects(&self) -> Vec<Rect2> {
+        self.slots
+            .iter()
+            .map(|s| s.button.get_global_rect())
+            .collect()
     }
 
     /// (filled, enabled) of every slot (self-tests).

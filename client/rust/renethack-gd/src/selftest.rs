@@ -18,7 +18,9 @@ use godot::classes::{DisplayServer, Input, InputEventKey};
 use godot::global::{Error, Key as GKey};
 use godot::prelude::*;
 use nh_protocol::PickHow;
-use nh_world::{Key, KeyInput, MenuEntry, MenuState, Mods, Prompt, Stop, Terrain, cell_terrain};
+use nh_world::{
+    Key, KeyInput, KeyProfile, MenuEntry, MenuState, Mods, Prompt, Stop, Terrain, cell_terrain,
+};
 
 use nh_link::save_exists;
 
@@ -71,6 +73,11 @@ enum Step {
     /// A dialog event for the request now pending.
     Dialog(DialogEvent),
     Call(&'static str, fn(&mut RenethackGame) -> Result<(), String>),
+    /// An inventory panel input made from what the game shows (letters).
+    Inv(
+        &'static str,
+        fn(&RenethackGame) -> Option<crate::inventory_panel::InvInput>,
+    ),
     /// A real key event (keycode, character typed, Shift) through Godot's
     /// input buffer: delivered next frame to `input()` and the focused
     /// text field, never from inside the game's own call.
@@ -109,6 +116,8 @@ fn smoke_choice() -> CharacterChoice {
         race: "human".into(),
         gender: "female".into(),
         align: "neutral".into(),
+        // the scenarios were written for NetHack's vi-keys
+        profile: KeyProfile::Classic,
     }
 }
 
@@ -155,35 +164,33 @@ fn smoke() -> Vec<Step> {
             let text = g.ui.as_ref().map_or("", |ui| ui.hud.status_text());
             Ok(text.contains("HP:16(16)") && text.contains("Dlvl:1"))
         }),
-        Step::Wait("the HP and Pw orbs full, ten empty slots", |g| {
-            let ui = g.ui.as_ref().ok_or("no UI")?;
-            let (hp, pw, slots) = ui.hud.cluster_view();
-            if slots.len() != 10 || slots.iter().any(|&(filled, _)| filled) {
-                return Err(format!("action bar slots {slots:?}"));
-            }
-            Ok(hp == Some((16, 16)) && pw.is_some_and(|(v, m)| v == m && m > 0))
-        }),
+        Step::Wait(
+            "the HP and Pw orbs full, the default loadout on the bar",
+            |g| {
+                let ui = g.ui.as_ref().ok_or("no UI")?;
+                let (hp, pw, slots) = ui.hud.cluster_view();
+                let filled = slots.iter().filter(|&&(filled, _)| filled).count();
+                Ok(slots.len() == 10
+                    && filled >= 9
+                    && hp == Some((16, 16))
+                    && pw.is_some_and(|(v, m)| v == m && m > 0))
+            },
+        ),
         key('i'),
-        Step::Request("the inventory menu", |p| matches!(p, Prompt::Menu { .. })),
-        Step::Wait("five items in the menu", |g| {
+        Step::Wait("five items in the inventory panel", |g| {
             let ui = g.ui.as_ref().ok_or("no UI")?;
-            if ui.dialogs.open_req() != g.pending.as_ref().map(|(id, _)| *id) {
+            if ui.inventory.mode_name() != Some("browse") {
                 return Ok(false);
             }
-            let entries = ui.dialogs.menu_entries();
-            let Some(entries) = entries else {
-                return Ok(false);
-            };
-            let n = entries.iter().filter(|e| e.selectable).count();
-            if n == 5 {
-                Ok(true)
-            } else {
-                Err(format!("the inventory has {n} items, not 5"))
+            match ui.inventory.shown().len() {
+                5 => Ok(true),
+                0 => Ok(false),
+                n => Err(format!("the inventory has {n} items, not 5")),
             }
         }),
         Step::Shot("inventory"),
         Step::Key(KeyInput::plain(Key::Escape)),
-        Step::Request("a command after the menu", command),
+        Step::Wait("the panel closed", panel_closed),
         key('l'),
         Step::Request("a command after a step", command),
         key('l'),
@@ -419,9 +426,11 @@ fn keys() -> Vec<Step> {
         Step::Push(UiEvent::StartCharacter(smoke_choice())),
         Step::Request("the first command", command),
         press('i'),
-        Step::Request("the inventory menu", |p| matches!(p, Prompt::Menu { .. })),
+        Step::Wait("the inventory panel", |g| {
+            Ok(g.ui.as_ref().is_some_and(|ui| ui.inventory.is_open()))
+        }),
         Step::Press(GKey::ESCAPE, '\0', false),
-        Step::Request("a command after Esc", command),
+        Step::Wait("Esc closed it", panel_closed),
         press('l'),
         Step::Request("a command after a step", command),
         // ^P goes to the engine, which asks for the message history
@@ -587,10 +596,12 @@ fn dialogs() -> Vec<Step> {
     let mut steps = start();
     steps.extend([
         key('i'),
-        Step::Request("the inventory", is_menu),
+        Step::Wait("the inventory panel", |g| {
+            Ok(g.ui.as_ref().is_some_and(|ui| ui.inventory.is_open()))
+        }),
         Step::Shot("dialog-inventory"),
         Step::Key(KeyInput::plain(Key::Escape)),
-        Step::Request("a command after the inventory", command),
+        Step::Wait("the panel closed", panel_closed),
         // 'D': the item types, then all items with two marked and a count typed
         key('D'),
         Step::Request("the item types to drop", is_menu),
@@ -601,21 +612,20 @@ fn dialogs() -> Vec<Step> {
         key('a'),
         key('c'),
         key('5'),
-        Step::Wait("the keyboard row on the item toggled last", |g| {
+        Step::Wait("the items to drop in the panel, c selected", |g| {
             let ui = g.ui.as_ref().ok_or("no UI")?;
-            let Some(entries) = ui.dialogs.menu_entries() else {
+            let Some(entries) = ui.inventory.menu_entries() else {
                 return Ok(false);
             };
-            let c = entries.iter().position(|e| e.letter == Some('c'));
-            Ok(c.is_some() && ui.dialogs.menu_cursor() == c && entries[c.unwrap_or(0)].selected)
+            Ok(entries.iter().any(|e| e.letter == Some('c') && e.selected))
         }),
         Step::Shot("dialog-drop-items"),
-        // the arrows move the keyboard row, Space toggles it (with the count)
-        Step::Key(KeyInput::plain(Key::Down)),
+        // the arrows move the keyboard cell, Space toggles it (with the count)
+        Step::Key(KeyInput::plain(Key::Right)),
         key(' '),
-        Step::Wait("Down and Space pick the next item with the count", |g| {
+        Step::Wait("Right and Space pick the next item with the count", |g| {
             let ui = g.ui.as_ref().ok_or("no UI")?;
-            let Some(entries) = ui.dialogs.menu_entries() else {
+            let Some(entries) = ui.inventory.menu_entries() else {
                 return Ok(false);
             };
             let d = entries.iter().find(|e| e.letter == Some('d'));
@@ -830,7 +840,11 @@ fn dialogs() -> Vec<Step> {
         // a message that picks: Enter does nothing, the letter answers
         key('e'),
         Step::Request("what to eat", |p| matches!(p, Prompt::FreeKey { .. })),
-        key('?'),
+        // '?' typed is the panel's filter: the engine's own list by hand
+        Step::Call("the engine's '?'", |g| {
+            g.answer(nh_protocol::Reply::Char('?' as i32));
+            Ok(())
+        }),
         Step::Request("the one thing to eat as a message", |p| {
             matches!(
                 p,
@@ -1270,9 +1284,9 @@ fn descend(g: &RenethackGame) -> Result<bool, String> {
     } else if hero == WEST_DOORWAY {
         g.push_ui(key('h'));
     } else if hero.0 == WEST_DOORWAY.0 - 1 {
-        for c in ['2', '0', 'j'] {
-            g.push_ui(key(c));
-        }
+        g.push_ui(UiEvent::Key(alt('2')));
+        g.push_ui(UiEvent::Key(alt('0')));
+        g.push_ui(key('j'));
     } else {
         let (x, y) = WEST_DOORWAY;
         g.push_ui(UiEvent::MapClick { x, y, button: 1 });
@@ -1373,7 +1387,7 @@ fn orders() -> Vec<Step> {
         // a count: 5s searches five turns, one action a tick
         Step::Wait("the player's turn", idle_command),
         Step::Call("mark", mark),
-        Step::Key(plain_key('5')),
+        Step::Key(alt('5')),
         Step::Wait("the count on the prompt line", |g| {
             let line = g.ui.as_ref().and_then(|ui| ui.hud.prompt_line());
             Ok(line.as_deref() == Some("Count: 5"))
@@ -1624,14 +1638,387 @@ fn gallery() -> Vec<Step> {
 
 type Check2 = fn(&mut RenethackGame) -> Result<(), String>;
 
+/// A Valkyrie with the default (Modern) keys.
+fn modern_choice() -> CharacterChoice {
+    CharacterChoice {
+        profile: KeyProfile::Modern,
+        ..smoke_choice()
+    }
+}
+
+fn panel(g: &RenethackGame) -> Result<&crate::inventory_panel::InventoryPanel, String> {
+    Ok(&g.ui.as_ref().ok_or("no UI")?.inventory)
+}
+
+/// The letter of the first item whose name has `what`.
+fn letter_of(g: &RenethackGame, what: &str) -> Option<char> {
+    g.world
+        .inventory
+        .items()
+        .iter()
+        .find(|i| i.text.contains(what))
+        .map(|i| i.letter)
+}
+
+fn wielding(g: &RenethackGame, what: &str) -> bool {
+    g.world
+        .inventory
+        .wielded()
+        .is_some_and(|i| i.text.contains(what))
+}
+
+fn inv(ev: crate::inventory_panel::InvInput) -> Step {
+    Step::Push(UiEvent::Inventory(ev))
+}
+
+/// Push an inventory input built from the game's state (letters).
+fn inv_from(
+    what: &'static str,
+    f: fn(&RenethackGame) -> Option<crate::inventory_panel::InvInput>,
+) -> Step {
+    Step::Inv(what, f)
+}
+
+/// The inventory panel (ui-design §2, §3): `i` opens it on every item,
+/// a filter shows only weapons, the dagger is wielded by a drag to the
+/// main hand and the long sword again by its context menu (the
+/// inventory notice confirms both), `w` opens selection mode with the
+/// weapons pulsing and the bare hands offered, Esc cancels it, `w` and a
+/// letter still wield as in tty, and `D` drops the food ration through
+/// the panel's multi-select mode. Screenshots of each state.
+fn inventory() -> Vec<Step> {
+    use crate::inventory_panel::{DollSlot, InvInput, InvTarget};
+    use nh_world::{InvFilter, ItemActionKind};
+    let mut steps = start_as(modern_choice());
+    steps.extend([
+        Step::Wait("the first inventory", |g| Ok(g.world.inventory.received())),
+        Step::Wait("the camera on the hero", camera_settled),
+        key('i'),
+        Step::Wait("the panel in browse mode with every item", |g| {
+            let p = panel(g)?;
+            Ok(p.mode_name() == Some("browse")
+                && p.shown().len() == g.world.inventory.items().len())
+        }),
+        Step::Call("no engine inventory menu", |g| match &g.pending {
+            Some((_, Prompt::Command)) => Ok(()),
+            other => Err(format!("the engine got `i`: {other:?}")),
+        }),
+        inv_from("select the spear", |g| {
+            Some(InvInput::Click {
+                target: InvTarget::Cell(letter_of(g, "spear")?),
+                button: 1,
+                shift: false,
+                double: false,
+            })
+        }),
+        Step::Wait("its detail", |g| {
+            Ok(panel(g)?.selected() == letter_of(g, "spear"))
+        }),
+        Step::Shot("inventory-browse"),
+        inv(InvInput::Filter(InvFilter::Weapons)),
+        Step::Wait("only the weapons", |g| {
+            let shown = panel(g)?.shown();
+            let weapons = g
+                .world
+                .inventory
+                .items()
+                .iter()
+                .filter(|i| i.class == ')')
+                .count();
+            Ok(shown.len() == weapons
+                && shown.iter().all(|(c, _)| {
+                    g.world
+                        .inventory
+                        .by_letter(*c)
+                        .is_some_and(|i| i.class == ')')
+                }))
+        }),
+        Step::Shot("inventory-weapons"),
+        inv(InvInput::Filter(InvFilter::All)),
+        // a drag from the grid to the main hand wields
+        inv_from("drag the dagger to the main hand", |g| {
+            Some(InvInput::Drop {
+                from: InvTarget::Cell(letter_of(g, "dagger")?),
+                to: InvTarget::Doll(DollSlot::Main),
+                shift: false,
+            })
+        }),
+        Step::Wait("the dagger wielded", |g| {
+            Ok(wielding(g, "dagger") && idle_command(g)?)
+        }),
+        Step::Wait("the doll shows it", |g| {
+            let d = letter_of(g, "dagger");
+            Ok(panel(g)?
+                .doll_letters()
+                .iter()
+                .any(|(s, l)| *s == DollSlot::Main && l.first().copied() == d))
+        }),
+        // the context menu wields the spear again
+        inv_from("right-click the spear", |g| {
+            Some(InvInput::Click {
+                target: InvTarget::Cell(letter_of(g, "spear")?),
+                button: 2,
+                shift: false,
+                double: false,
+            })
+        }),
+        Step::Wait("its context menu offers Wield", |g| {
+            Ok(panel(g)?
+                .context_rows()
+                .is_some_and(|r| r.first() == Some(&ItemActionKind::Wield)))
+        }),
+        Step::Shot("inventory-context"),
+        inv_from("Wield", |g| {
+            Some(InvInput::Action {
+                letter: letter_of(g, "spear")?,
+                kind: ItemActionKind::Wield,
+            })
+        }),
+        Step::Wait("the spear wielded", |g| {
+            Ok(wielding(g, "spear") && idle_command(g)?)
+        }),
+        // a getobj question: selection mode
+        key('w'),
+        Step::Request(
+            "What do you want to wield?",
+            |p| matches!(p, Prompt::FreeKey { query, .. } if query.contains("wield")),
+        ),
+        Step::Wait(
+            "selection mode: the weapons suggested, the hands offered",
+            |g| {
+                let p = panel(g)?;
+                if p.mode_name() != Some("select") {
+                    return Ok(false);
+                }
+                let shown = p.shown();
+                let on = |c: Option<char>| shown.iter().any(|&(l, s)| Some(l) == c && s);
+                let off = |c: Option<char>| shown.iter().any(|&(l, s)| Some(l) == c && !s);
+                Ok(p.filter() == InvFilter::Suggested
+                    && on(Some('-'))
+                    && on(letter_of(g, "dagger")))
+                .map(|ok| ok && !off(letter_of(g, "dagger")))
+            },
+        ),
+        Step::Shot("inventory-getobj"),
+        key('*'),
+        Step::Wait("'*' shows everything, not suggested dimmed", |g| {
+            let p = panel(g)?;
+            Ok(p.filter() == InvFilter::All && p.shown().iter().any(|&(_, on)| !on))
+        }),
+        Step::Shot("inventory-getobj-all"),
+        Step::Key(KeyInput::plain(Key::Escape)),
+        Step::Request("a command after Esc", command),
+        Step::Wait("back in browse mode", |g| {
+            Ok(panel(g)?.mode_name() == Some("browse"))
+        }),
+        // typing the letter still answers
+        key('w'),
+        Step::Request("wield what, again", |p| matches!(p, Prompt::FreeKey { .. })),
+        Step::KeyFrom("the dagger's letter", |g| {
+            let c = letter_of(g, "dagger").ok_or("no dagger")?;
+            Ok(KeyInput::plain(Key::Char(c)))
+        }),
+        Step::Wait("the dagger wielded by its letter", |g| {
+            Ok(wielding(g, "dagger") && idle_command(g)?)
+        }),
+        // D: the second menu is the panel's multi-select mode
+        key('D'),
+        Step::Request("the item types to drop", is_menu),
+        Step::KeyFrom("\"All types\"", |g| entry_key(g, "All types")),
+        Step::Key(KeyInput::plain(Key::Enter)),
+        Step::Request("the items to drop", is_menu),
+        Step::Wait("multi-select mode", |g| {
+            Ok(panel(g)?.mode_name() == Some("menu"))
+        }),
+        inv_from("click the food ration", |g| {
+            Some(InvInput::Click {
+                target: InvTarget::Cell(letter_of(g, "food ration")?),
+                button: 1,
+                shift: false,
+                double: false,
+            })
+        }),
+        Step::Wait("the food ration checked", |g| {
+            let f = letter_of(g, "food ration");
+            Ok(panel(g)?
+                .menu_entries()
+                .is_some_and(|e| e.iter().any(|e| e.letter == f && e.selected)))
+        }),
+        Step::Shot("inventory-multidrop"),
+        inv(InvInput::Confirm),
+        Step::Wait("the food ration dropped", |g| {
+            Ok(idle_command(g)? && letter_of(g, "food ration").is_none())
+        }),
+        Step::Wait("browse mode again", |g| {
+            Ok(panel(g)?.mode_name() == Some("browse"))
+        }),
+        Step::Key(KeyInput::plain(Key::Escape)),
+        Step::Wait("the panel closed", panel_closed),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
+/// How many actions the bar test's searches start from.
+static SEARCH_FROM: AtomicU32 = AtomicU32::new(0);
+
+fn mark_searches(g: &mut RenethackGame) -> Result<(), String> {
+    SEARCH_FROM.store(g.order_actions as u32, Ordering::Relaxed);
+    Ok(())
+}
+
+/// Twenty searches as one order since the mark.
+fn searched_twenty(g: &RenethackGame) -> Result<bool, String> {
+    let n = g.order_actions - u64::from(SEARCH_FROM.load(Ordering::Relaxed));
+    if !idle_command(g)? || n < 20 {
+        return Ok(false);
+    }
+    let all_s = g.order_log.iter().rev().take(20).all(|(_, c)| *c == 's');
+    if n == 20 && all_s {
+        Ok(true)
+    } else {
+        Err(format!(
+            "{n} actions, the last ones {:?}",
+            g.order_log.iter().rev().take(3).collect::<Vec<_>>()
+        ))
+    }
+}
+
+/// The action bar (ui-design §4): a new Valkyrie's default loadout, the
+/// food ration bound to slot 2 by a drag from the panel, `#adjust` gives
+/// it another letter and the slot follows it, `2` eats it (then the slot
+/// shows it gone), `n20s` searches 20 turns (Modern); a Classic
+/// character's `Alt+2 Alt+0 s` does too.
+fn bar() -> Vec<Step> {
+    use crate::inventory_panel::{InvInput, InvTarget};
+    use nh_world::{BarCommand, ItemActionKind, SlotBinding};
+    let mut steps = start_as(modern_choice());
+    steps.extend([
+        Step::Wait("the default loadout", |g| {
+            let bar = &g.ui_state.bar;
+            Ok(matches!(bar.get(2), Some(SlotBinding::Command { cmd: BarCommand::Search }))
+                && matches!(bar.get(0), Some(SlotBinding::Command { cmd: BarCommand::Swap })))
+        }),
+        Step::Wait("the camera on the hero", camera_settled),
+        Step::Shot("bar-loadout"),
+        key('i'),
+        Step::Wait("the panel", |g| Ok(panel(g)?.is_open())),
+        inv_from("drag the food ration to slot 2", |g| {
+            Some(InvInput::Drop {
+                from: InvTarget::Cell(letter_of(g, "food ration")?),
+                to: InvTarget::Bar(1),
+                shift: false,
+            })
+        }),
+        Step::Wait("slot 2 eats the food ration", |g| {
+            Ok(matches!(
+                g.ui_state.bar.get(1),
+                Some(SlotBinding::Item { action: ItemActionKind::Eat, text, .. }) if text.contains("food ration")
+            ))
+        }),
+        Step::Shot("bar-bound"),
+        // #adjust: the food goes to letter z, the slot follows
+        inv_from("adjust the food ration", |g| {
+            Some(InvInput::Action {
+                letter: letter_of(g, "food ration")?,
+                kind: ItemActionKind::Adjust,
+            })
+        }),
+        key('z'),
+        Step::Wait("the food ration at z, and slot 2 with it", |g| {
+            let at_z = letter_of(g, "food ration") == Some('z');
+            let bound = matches!(g.ui_state.bar.get(1), Some(SlotBinding::Item { letter: 'z', .. }));
+            Ok(idle_command(g)? && at_z && bound)
+        }),
+        Step::Call("the binding survives in the state file", |g| {
+            let pg = g.paths.as_ref().ok_or("no paths")?.playground.clone();
+            let text = nh_link::read_ui_state(&pg, "Hero").ok_or("no state file")?;
+            let st = nh_world::UiState::from_json(&text).map_err(|e| e.to_string())?;
+            match st.bar.get(1) {
+                Some(SlotBinding::Item { letter: 'z', .. }) => Ok(()),
+                other => Err(format!("slot 2 in the file: {other:?}")),
+            }
+        }),
+        Step::Key(KeyInput::plain(Key::Escape)),
+        Step::Wait("the panel closed", panel_closed),
+        // `2` uses slot 2
+        key('2'),
+        Step::AnswerUntil('n', "the food ration eaten, slot 2 greyed", |g| {
+            let gone = g.ui_state.bar.view(1, &g.world.inventory).state == nh_world::SlotState::Gone;
+            Ok(gone && idle_command(g)?)
+        }),
+        Step::Wait("the bar shows it gone", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let (.., slots) = ui.hud.cluster_view();
+            Ok(slots.get(1) == Some(&(true, false)))
+        }),
+        Step::Shot("bar-gone"),
+        // n20s: twenty searches (Modern)
+        Step::Call("mark", mark_searches),
+        key('n'),
+        key('2'),
+        key('0'),
+        Step::Wait("the count on the prompt line", |g| {
+            let line = g.ui.as_ref().and_then(|ui| ui.hud.prompt_line());
+            Ok(line.as_deref() == Some("Count: 20"))
+        }),
+        key('s'),
+        Step::Wait("twenty searches", searched_twenty),
+    ]);
+    steps.extend(quit());
+    steps.extend([
+        Step::Push(UiEvent::BackToTitle),
+        Step::Wait("the title screen", |g| Ok(screen(g) == Some("title"))),
+        Step::Push(UiEvent::StartCharacter(CharacterChoice {
+            name: "Classic".into(),
+            ..smoke_choice()
+        })),
+        Step::Request("the first command (Classic)", command),
+        Step::Wait("vi-keys: number_pad off", |g| {
+            Ok(!g.world.number_pad && g.ui_state.profile == KeyProfile::Classic)
+        }),
+        Step::Call("mark", mark_searches),
+        Step::Key(alt('2')),
+        Step::Key(alt('0')),
+        Step::Wait("the count on the prompt line", |g| {
+            let line = g.ui.as_ref().and_then(|ui| ui.hud.prompt_line());
+            Ok(line.as_deref() == Some("Count: 20"))
+        }),
+        key('s'),
+        Step::Wait("twenty searches", searched_twenty),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
 /// The menu dialog open for the pending request, if any.
 fn open_menu(g: &RenethackGame) -> Option<&[MenuEntry]> {
     let ui = g.ui.as_ref()?;
-    let pending = g.pending.as_ref().map(|(id, _)| *id);
-    if pending.is_none() || ui.dialogs.open_req() != pending {
+    let pending = Some(g.pending.as_ref()?.0);
+    if ui.inventory.request() == pending {
+        return ui.inventory.menu_entries();
+    }
+    if ui.dialogs.open_req() != pending {
         return None;
     }
     ui.dialogs.menu_entries()
+}
+
+/// The inventory panel is closed.
+fn panel_closed(g: &RenethackGame) -> Result<bool, String> {
+    Ok(g.ui.as_ref().is_some_and(|ui| !ui.inventory.is_open()))
+}
+
+/// A top-row digit with Alt: Classic's count.
+fn alt(c: char) -> KeyInput {
+    KeyInput {
+        key: Key::Char(c),
+        mods: Mods {
+            alt: true,
+            ..Mods::default()
+        },
+        echo: false,
+    }
 }
 
 /// The key of the selectable entry whose text contains `what`.
@@ -1692,8 +2079,8 @@ fn ya_in_menu(g: &RenethackGame) -> Result<Option<u32>, String> {
 /// `D`: in the pick-any menu of item types '.' selects every type but
 /// no skipinvert entry, a letter selects; the next menu takes a typed
 /// count: a samurai drops 2 of the ya, and the turn passes and 2 fewer are
-/// in the inventory. Then `w` `?` and '-' in the pick-one menu picks the
-/// bare hands (an entry's letter beats "select none").
+/// in the inventory. Then `w`: the panel in selection mode, where `?`
+/// only changes its filter, offers the bare hands, and `-` picks them.
 fn menus() -> Vec<Step> {
     let mut steps = start_as(CharacterChoice {
         role: "samurai".into(),
@@ -1790,39 +2177,30 @@ fn menus() -> Vec<Step> {
         Step::Wait("the turn passes (T:2)", |g| {
             Ok(g.world.status.number("time").is_some_and(|t| t >= 2))
         }),
-        key('i'),
-        Step::Request("the inventory menu", |p| menu_with(p, PickHow::One, " ya")),
         Step::Wait("2 ya fewer in the inventory", |g| {
-            let Some(n) = ya_in_menu(g)? else {
-                return Ok(false);
+            let ya = g
+                .world
+                .inventory
+                .items()
+                .iter()
+                .find(|i| i.text.contains(" ya"));
+            let Some(ya) = ya else {
+                return Err("no ya in the pack".into());
             };
-            let before = YA_BEFORE.load(Ordering::Relaxed);
-            if n + 2 == before {
-                Ok(true)
-            } else {
-                Err(format!("{n} ya left of {before}"))
-            }
+            let before = i64::from(YA_BEFORE.load(Ordering::Relaxed));
+            Ok(ya.quan + 2 == before)
         }),
-        Step::Key(KeyInput::plain(Key::Escape)),
-        Step::Request("a command after the inventory", command),
         key('w'),
         Step::Request(
             "What do you want to wield?",
             |p| matches!(p, Prompt::FreeKey { query, .. } if query.contains("wield")),
         ),
+        // '?' is the panel's filter, never the engine's
         key('?'),
-        Step::Request("the pick-one menu of things to wield", |p| {
-            matches!(
-                p,
-                Prompt::Menu {
-                    how: PickHow::One,
-                    ..
-                }
-            )
-        }),
-        Step::Wait("the bare hands as '-' in the menu", |g| {
-            Ok(open_menu(g)
-                .is_some_and(|e| e.iter().any(|e| e.selectable && e.letter == Some('-'))))
+        Step::Wait("the panel in selection mode, the bare hands offered", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(ui.inventory.mode_name() == Some("select")
+                && ui.inventory.shown().iter().any(|&(c, on)| c == '-' && on))
         }),
         key('-'),
         Step::Request("a command after wielding nothing", command),
@@ -2120,7 +2498,10 @@ fn check_dialog(g: &RenethackGame, id: u64, prompt: &Prompt) -> Result<(), Strin
         Prompt::Command | Prompt::Key | Prompt::FreeKey { .. } | Prompt::MapPause => None,
         Prompt::AutoAck => return Err("an AutoAck request waits for the player".into()),
     };
-    let open = (ui.dialogs.kind_name(), ui.dialogs.open_req());
+    let open = match ui.inventory.request() {
+        Some(r) if ui.inventory.mode_name() == Some("menu") => (Some("menu"), Some(r)),
+        _ => (ui.dialogs.kind_name(), ui.dialogs.open_req()),
+    };
     let ok = match want {
         Some(kind) => open == (Some(kind), Some(id)),
         None => open == (None, None),
@@ -2395,9 +2776,6 @@ impl Soak {
         // the stairs are hidden; the first command's inventory shows its letter
         let digger = self.games % 2 == 1;
         self.can_dig = digger;
-        if digger {
-            self.plan.push_back(plain('i'));
-        }
         let role = if digger { "archeologist" } else { "random" };
         self.seen = 0;
         godot_print!(
@@ -2412,6 +2790,7 @@ impl Soak {
             race: "random".into(),
             gender: "random".into(),
             align: "random".into(),
+            profile: KeyProfile::Classic,
         }));
     }
 
@@ -2478,11 +2857,26 @@ impl Soak {
         self.seen = g.world.log.last_seq();
         check_dialog(g, id, &prompt)?;
         let events = self.decide(g, id, &prompt)?;
+        // `i` opens the panel, `?` and `*` change its filter: no answer
+        let panel_key = |e: &UiEvent| match (e, &prompt) {
+            (UiEvent::Key(k), Prompt::Command) => k.key == Key::Char('i'),
+            (
+                UiEvent::Key(k),
+                Prompt::FreeKey {
+                    directions: false, ..
+                },
+            ) => {
+                matches!(k.key, Key::Char('?' | '*'))
+            }
+            _ => false,
+        };
         let may_start_nothing = events.iter().any(|e| {
-            matches!(
-                e,
-                UiEvent::MapClick { button: 1, .. } | UiEvent::Key(KeyInput { key: Key::F(5), .. })
-            )
+            panel_key(e)
+                || matches!(
+                    e,
+                    UiEvent::MapClick { button: 1, .. }
+                        | UiEvent::Key(KeyInput { key: Key::F(5), .. })
+                )
         });
         if may_start_nothing {
             self.maybe_refused = Some(req);
@@ -2573,7 +2967,7 @@ impl Soak {
                 match k.key {
                     // a count and its command in one answer: the client
                     // keeps the count and repeats the command as an order
-                    Key::Char(c) if c.is_ascii_digit() && !g.world.number_pad => {
+                    Key::Char(c) if c.is_ascii_digit() && k.mods.alt => {
                         let then = self.plan.pop_front().unwrap_or(plain('s'));
                         vec![key(k), key(then)]
                     }
@@ -2604,6 +2998,16 @@ impl Soak {
                 // the digging tool by its letter, else the menu of the
                 // things to apply ('?') shows it
                 let listed = listed_letters(query);
+                if self.dig_letter.is_none() {
+                    // the pack says where the tool is (`i` is the panel's)
+                    self.dig_letter = g
+                        .world
+                        .inventory
+                        .items()
+                        .iter()
+                        .find(|i| DIG_TOOLS.iter().any(|t| i.text.contains(t)))
+                        .map(|i| i.letter);
+                }
                 match self.dig_letter {
                     Some(c) if listed.contains(&c) => vec![key(plain(c))],
                     Some(_) => {
@@ -2792,7 +3196,14 @@ impl Soak {
                 if self.rng.chance(40) {
                     // a count: "7s"
                     self.plan.push_back(plain('s'));
-                    plain(self.rng.pick(&['3', '5', '7', '9']))
+                    let d = self.rng.pick(&['3', '5', '7', '9']);
+                    KeyInput {
+                        mods: Mods {
+                            alt: true,
+                            ..Mods::default()
+                        },
+                        ..plain(d)
+                    }
                 } else {
                     plain('s')
                 }
@@ -2928,6 +3339,8 @@ impl SelfTest {
             "text" => text(),
             "soak" => soak(args),
             "orders" => orders(),
+            "inventory" => inventory(),
+            "bar" => bar(),
             _ => Vec::new(),
         };
         Some(SelfTest {
@@ -2963,6 +3376,9 @@ impl SelfTest {
         }
         if let Some((id, p)) = &game.pending {
             godot_print!("selftest: pending request {id}: {}", brief(p));
+        }
+        for i in game.world.inventory.items() {
+            godot_print!("selftest: pack: {} {} {}", i.letter, i.class, i.text);
         }
         godot_print!("SELFTEST FAIL {}: {why}", self.name);
         game.quit(1);
@@ -3101,6 +3517,15 @@ impl SelfTest {
                     }
                     self.next();
                 }
+                Step::Inv(what, f) => {
+                    let Some(ev) = f(game) else {
+                        let why = format!("{what}: the item is not in the pack");
+                        return self.fail(game, &why);
+                    };
+                    game.push_ui(UiEvent::Inventory(ev));
+                    self.next();
+                    return;
+                }
                 Step::Press(keycode, typed, shift) => {
                     let Some((id, _)) = pending else {
                         return;
@@ -3202,7 +3627,7 @@ fn describe(step: &Step) -> String {
         Step::KeyFrom(what, _) => format!("a request for {what}"),
         Step::Soak(_) => "the soak".to_string(),
         Step::Dialog(ev) => format!("a request for {ev:?}"),
-        Step::Call(what, _) => what.to_string(),
+        Step::Call(what, _) | Step::Inv(what, _) => what.to_string(),
         Step::Press(k, c, _) => format!("a request for key {k:?} {c:?}"),
         Step::Shot(name) => format!("screenshot {name}"),
     }

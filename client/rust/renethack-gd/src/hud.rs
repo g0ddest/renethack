@@ -36,12 +36,14 @@ const LOG_LINES: usize = 200;
 const EDGE: f32 = 24.0;
 const PORTRAIT_W: f32 = 520.0;
 const PORTRAIT_H: f32 = 176.0;
-const LOG_W: f32 = 424.0;
+const LOG_W: f32 = 404.0;
 const LOG_H: f32 = 260.0;
 /// The docked log of the compact layout, above the cluster's left half.
 const LOG_COMPACT_W: f32 = 480.0;
 const LOG_COMPACT_H: f32 = 132.0;
-const CLUSTER_W: f32 = 992.0;
+/// The orbs beside the bar's frame, never over its slots: 148 + 4 + 736
+/// + 4 + 148.
+const CLUSTER_W: f32 = 1040.0;
 const CLUSTER_H: f32 = 176.0;
 const CLUSTER_BOTTOM: f32 = 12.0;
 /// The action bar's frame: the slots plus 12 of padding each side.
@@ -56,6 +58,8 @@ const LOG_FADE_COMPACT_SECS: f64 = 6.0;
 const LOG_FADED: f32 = 0.45;
 /// Tooltip offset from the mouse.
 const TOOLTIP_GAP: f32 = 18.0;
+/// How long a toast stays (ui-design §4.2: "Slot 4 cleared · Undo").
+const TOAST_SECS: f64 = 4.0;
 /// Deadly chips pulse this many times a second (a 1.2 s cycle).
 const PULSE_HZ: f64 = 1.0 / 1.2;
 /// Seconds the banner of a new mode stays, fading out in the last third.
@@ -745,6 +749,10 @@ pub struct Hud {
     tooltip_panel: Gd<PanelContainer>,
     tooltip: Gd<Label>,
     tooltip_text: Option<String>,
+    toast_panel: Gd<PanelContainer>,
+    toast: Gd<Label>,
+    toast_undo: Gd<Button>,
+    toast_until: f64,
     full_log_shade: Gd<ColorRect>,
     full_log_panel: Gd<PanelContainer>,
     full_log: Gd<RichTextLabel>,
@@ -1159,6 +1167,24 @@ impl Hud {
         root.add_child(&full_log_panel);
         solid.push(full_log_panel.clone().upcast());
 
+        // ---- the toast lane, top centre under the prompt banner ----
+        let mut toast_row = hbox(0);
+        toast_row.set_alignment(AlignmentMode::CENTER);
+        place(&toast_row, [0.0, 0.0, 1.0, 0.0], [0.0, 80.0, 0.0, 80.0]);
+        let mut toast_panel = theme::framed(Frame::Banner);
+        toast_panel.set_mouse_filter(MouseFilter::STOP);
+        let mut toast_box = hbox(14);
+        let mut toast = theme::styled_label("", Face::BodyBold, 17, theme::TEXT);
+        toast.set_vertical_alignment(VerticalAlignment::CENTER);
+        toast_box.add_child(&toast);
+        let toast_undo = theme::button("Undo", &queue, UiEvent::SlotUndo);
+        toast_box.add_child(&toast_undo);
+        toast_panel.add_child(&toast_box);
+        toast_panel.set_visible(false);
+        toast_row.add_child(&toast_panel);
+        root.add_child(&toast_row);
+        solid.push(toast_panel.clone().upcast());
+
         // ---- tooltip, follows the mouse; on top of everything ----
         let mut tooltip_panel = theme::framed(Frame::Tooltip);
         tooltip_panel.set_mouse_filter(MouseFilter::IGNORE);
@@ -1213,6 +1239,10 @@ impl Hud {
             tooltip_panel,
             tooltip,
             tooltip_text: None,
+            toast_panel,
+            toast,
+            toast_undo,
+            toast_until: 0.0,
             full_log_shade,
             full_log_panel,
             full_log,
@@ -1227,8 +1257,22 @@ impl Hud {
         hud
     }
 
+    /// A short notice at the top centre for a few seconds; `undo` offers
+    /// the Undo button.
+    pub fn toast(&mut self, text: &str, undo: bool) {
+        self.toast.set_text(text);
+        self.toast_undo.set_visible(undo);
+        self.toast_panel.reset_size();
+        self.toast_panel.set_visible(true);
+        self.toast_until = now_secs() + TOAST_SECS;
+    }
+
+    /// The hero's role (or form) as the map shows it: "Valkyrie".
+    pub fn role(&self) -> Option<&str> {
+        self.role.as_deref()
+    }
+
     /// The action bar's slots (their bindings drive it).
-    #[allow(dead_code)] // the bar's logic (phase H)
     pub fn action_bar(&mut self) -> &mut ActionBar {
         &mut self.bar
     }
@@ -1314,6 +1358,9 @@ impl Hud {
         self.pulse(now);
         self.fade_attrs(now);
         self.fade_flash(now);
+        if self.toast_panel.is_visible() && now > self.toast_until {
+            self.toast_panel.set_visible(false);
+        }
         self.hover_log();
         if let Some(cat) = catalog {
             self.minimap.sync(&world.map, cat, now);
@@ -1858,6 +1905,7 @@ impl Hud {
         self.set_order_line(None);
         self.flash_since = None;
         self.flash.set_visible(false);
+        self.toast_panel.set_visible(false);
     }
 }
 

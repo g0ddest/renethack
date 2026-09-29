@@ -16,18 +16,22 @@ use godot::prelude::*;
 use nh_link::{
     AnswerError, CLIENT_EXTRA_OPTIONS, Ending, EngineConfig, LiveSession, PlaygroundLock,
     Recovered, SessionEvent, create_playground, fetch_catalog, interrupted_games, list_saves,
-    lock_playground, recover_game, remember_name, save_exists,
+    lock_playground, read_ui_state, recover_game, remember_name, remove_ui_state, save_exists,
+    write_ui_state,
 };
-use nh_protocol::{Catalog, Reply, WinCall};
+use nh_protocol::{Catalog, PickHow, Reply, WinCall};
 use nh_world::{
-    Action, Cell, ClickPlan, CountEntry, Counted, Key, KeyContext, KeyInput, Mode, Order, Prompt,
-    Stop, TickDriver, Typeahead, World, click_order, describe_cell, find_path, in_field,
-    nethack_key, repeatable, stairs_order,
+    Action, ActionBar, BAR_SLOTS, Cell, ClickPlan, CommandInput, CountEntry, Key, KeyContext,
+    KeyInput, KeyProfile, MacroRunner, MacroStep, MenuKind, Mode, Order, Prompt, SlotBinding,
+    SlotState, SlotUse, Stop, TickDriver, Typeahead, UiState, World, click_order, describe_cell,
+    find_path, in_field, item_question, menu_kind, nethack_key, repeatable, stairs_order,
 };
 
 use crate::dialogs::Dialogs;
 use crate::hud::Hud;
+use crate::icons;
 use crate::input::{client_key, key_input, key_release};
+use crate::inventory_panel::{self, Intent, InvInput, InventoryPanel, KeyUse};
 use crate::map_view::MapView;
 use crate::paths::Paths;
 use crate::screens::{DEFAULT_NAME, EndSummary, Screens};
@@ -110,6 +114,7 @@ pub fn parse_args<S: AsRef<str>>(args: &[S]) -> Args {
 pub struct Ui {
     pub map: MapView,
     pub hud: Hud,
+    pub inventory: InventoryPanel,
     pub dialogs: Dialogs,
     pub screens: Screens,
 }
@@ -214,6 +219,23 @@ pub struct RenethackGame {
     pub(crate) last_stop: Option<Stop>,
     /// A cell the self-test hovers instead of the mouse.
     pub(crate) test_hover: Option<(i32, i32)>,
+    /// This character's key profile and action bar (`<save>.rhui.json`).
+    pub(crate) ui_state: UiState,
+    /// A new character's role (or "random": the one the map shows): its
+    /// default loadout goes on the bar once the first inventory comes.
+    loadout_for: Option<String>,
+    /// The item actions behind clicks, drags and bar slots.
+    pub(crate) macros: MacroRunner,
+    /// Keys the engine reads after a getobj answer (get_count: the rest
+    /// of a count, then the letter), one per command prompt.
+    typing: std::collections::VecDeque<i32>,
+    /// A slot or panel action waiting for the command prompt (the engine
+    /// was busy with an order's step).
+    deferred: Option<SlotUse>,
+    /// The slot a right click cleared last, for Undo.
+    cleared: Option<(usize, SlotBinding)>,
+    /// The bar is drawn again when this changes.
+    bar_key: Option<Vec<nh_world::SlotView>>,
 }
 
 /// The way preview is drawn again only when one of these changes.
@@ -274,6 +296,13 @@ impl INode for RenethackGame {
             order_actions: 0,
             last_stop: None,
             test_hover: None,
+            ui_state: UiState::new(KeyProfile::Modern),
+            loadout_for: None,
+            macros: MacroRunner::new(),
+            typing: std::collections::VecDeque::new(),
+            deferred: None,
+            cleared: None,
+            bar_key: None,
         }
     }
 
@@ -295,7 +324,12 @@ impl INode for RenethackGame {
         let mut map_root = Node3D::new_alloc();
         map_root.set_name("MapRoot");
         let mut layers = Vec::new();
-        for (name, z) in [("HudLayer", 1), ("DialogLayer", 2), ("ScreenLayer", 3)] {
+        for (name, z) in [
+            ("HudLayer", 1),
+            ("PanelLayer", 2),
+            ("DialogLayer", 3),
+            ("ScreenLayer", 4),
+        ] {
             let mut layer = CanvasLayer::new_alloc();
             layer.set_name(name);
             layer.set_layer(z);
@@ -307,10 +341,11 @@ impl INode for RenethackGame {
         }
         let queue = self.queue.clone();
         let mut layers = layers.into_iter();
-        let mut next = || layers.next().expect("three layers");
+        let mut next = || layers.next().expect("four layers");
         self.ui = Some(Ui {
             map: MapView::new(map_root),
             hud: Hud::new(next(), queue.clone()),
+            inventory: InventoryPanel::new(next(), queue.clone()),
             dialogs: Dialogs::new(next(), queue.clone()),
             screens: Screens::new(next(), queue),
         });
@@ -389,7 +424,10 @@ impl INode for RenethackGame {
         let Ok(key) = event.try_cast::<InputEventKey>() else {
             return;
         };
-        let text = self.ui.as_ref().is_some_and(|ui| ui.dialogs.wants_text());
+        let text = self
+            .ui
+            .as_ref()
+            .is_some_and(|ui| ui.dialogs.wants_text() || ui.inventory.wants_text());
         if !key.is_pressed() {
             // letting go ends holding it down (text fields keep theirs)
             if !text && let Some(k) = key_release(&key) {
@@ -502,6 +540,7 @@ impl RenethackGame {
         ui.hud.set_visible(on);
         if !on {
             ui.dialogs.close();
+            ui.inventory.reset();
         }
         self.clear_hover();
     }
@@ -537,6 +576,7 @@ impl RenethackGame {
             }
             SessionEvent::Catalog(c) => {
                 self.world.set_catalog(&c);
+                icons::set_catalog(&c);
                 self.catalog = Some(Rc::new(*c));
             }
             SessionEvent::Win(w) => self.world.apply(&w),
@@ -576,6 +616,26 @@ impl RenethackGame {
             self.reply(reply);
             return;
         }
+        // the rest of a count and the letter, read by get_count
+        if !self.typing.is_empty() {
+            if matches!(prompt, Prompt::Command | Prompt::Key)
+                && let Some(k) = self.typing.pop_front()
+            {
+                self.pending = Some((id, prompt));
+                self.reply(Reply::Key(k));
+                return;
+            }
+            self.typing.clear();
+        }
+        // a macro answers the prompts it expects; the first one it does
+        // not goes to the player as usual
+        if self.macros.is_active()
+            && let MacroStep::Reply(r) = self.macros.on_prompt(&prompt, &self.world)
+        {
+            self.pending = Some((id, prompt));
+            self.reply(r);
+            return;
+        }
         if let Some(cat) = self.catalog.clone() {
             let query = match &prompt {
                 Prompt::Choice { query, .. } | Prompt::FreeKey { query, .. } => {
@@ -604,8 +664,44 @@ impl RenethackGame {
             Prompt::Command => self.world.getpos_line(),
             _ => prompt_line(&prompt),
         };
+        let inventory_menu = match &prompt {
+            Prompt::Menu { how, items, .. } => {
+                *how != PickHow::None
+                    && menu_kind(items, &self.world.inventory) == MenuKind::Inventory
+            }
+            _ => false,
+        };
+        let question = item_question(&prompt);
         let ui = self.ui_mut();
-        ui.dialogs.open(id, &prompt, catalog.as_deref());
+        match (&prompt, question) {
+            // getobj: the panel in selection mode
+            (Prompt::FreeKey { query, .. }, Some(q)) => {
+                ui.dialogs.close();
+                ui.inventory.open_select(id, q, query);
+            }
+            (
+                Prompt::Menu {
+                    how, title, items, ..
+                },
+                _,
+            ) if inventory_menu => {
+                ui.dialogs.close();
+                ui.inventory.open_menu(id, *how, title.as_deref(), items);
+            }
+            _ => {
+                // a direction or a place follows: the panel makes way
+                if matches!(
+                    prompt,
+                    Prompt::FreeKey {
+                        directions: true,
+                        ..
+                    }
+                ) {
+                    ui.inventory.close();
+                }
+                ui.dialogs.open(id, &prompt, catalog.as_deref());
+            }
+        }
         let dialog = ui.dialogs.is_open();
         ui.hud.set_prompt_line(line.as_deref());
         if dialog {
@@ -620,6 +716,18 @@ impl RenethackGame {
             };
             self.on_key(k);
         }
+        // a slot pressed while an order's step was out
+        if self.at_command()
+            && !self.driver.is_active()
+            && let Some(u) = self.deferred.take()
+        {
+            self.use_slot(u);
+        }
+    }
+
+    /// The engine waits at its command prompt (not getpos).
+    fn at_command(&self) -> bool {
+        matches!(self.pending, Some((_, Prompt::Command))) && !self.world.getpos
     }
 
     /// Answer the pending request.
@@ -630,6 +738,9 @@ impl RenethackGame {
         };
         let ui = self.ui_mut();
         ui.dialogs.close();
+        if ui.inventory.request() == Some(id) {
+            ui.inventory.end_request();
+        }
         ui.hud.set_prompt_line(None);
         self.send(id, &prompt, reply);
     }
@@ -724,6 +835,12 @@ impl RenethackGame {
         } else if let Some(n) = saved(&name) {
             self.show_title(Some(format!("Game saved: {n}.")));
         } else if ending.said_bye && ending.code == Some(0) {
+            // the character is gone with its save: its bar too
+            if let Some(n) = &name
+                && let Err(e) = remove_ui_state(&pg, n)
+            {
+                godot_warn!("renethack: cannot remove the UI state: {e}");
+            }
             self.show_end();
         } else {
             let notes = self.recover_interrupted();
@@ -772,7 +889,10 @@ impl RenethackGame {
         let notice = self.recover_interrupted();
         if self.catalog.is_none() {
             match fetch_catalog(&paths.engine(), &paths.data()) {
-                Ok((_, catalog)) => self.catalog = Some(Rc::new(catalog)),
+                Ok((_, catalog)) => {
+                    icons::set_catalog(&catalog);
+                    self.catalog = Some(Rc::new(catalog));
+                }
                 Err(e) => {
                     self.show_failure("The game engine does not start.", &e.to_string(), None);
                     return;
@@ -824,6 +944,10 @@ impl RenethackGame {
             // pressed anew: it was let go (its release went unseen)
             self.held = None;
         }
+        // a key of the player's own ends a macro that waits for the engine
+        if !k.echo && self.macros.is_active() {
+            self.macros.cancel();
+        }
         if self.driver.is_active() {
             // any key stops an order before its next step; a key's repeat
             // neither stops one nor steps (a held key's order does)
@@ -839,7 +963,25 @@ impl RenethackGame {
             self.typeahead.push(k);
             return;
         };
-        if *prompt == Prompt::Command && !self.world.getpos {
+        let command = *prompt == Prompt::Command && !self.world.getpos;
+        // the open panel first (not under a dialog of its own); a count
+        // being typed keeps its Esc
+        let typing_count = command && self.count.shown().is_some();
+        let dialog = self.ui.as_ref().is_some_and(|ui| ui.dialogs.is_open());
+        if !dialog && !(typing_count && k.key == Key::Escape) {
+            match self.ui_mut().inventory.key(&k, command) {
+                KeyUse::Used => return,
+                KeyUse::Then(intent) => {
+                    self.inventory_intent(intent);
+                    return;
+                }
+                KeyUse::Pass => {}
+            }
+        }
+        let Some((_, prompt)) = &self.pending else {
+            return;
+        };
+        if command {
             self.command_key(k);
             return;
         }
@@ -869,10 +1011,16 @@ impl RenethackGame {
     /// engine's command.
     fn command_key(&mut self, k: KeyInput) {
         let (np, dirs) = (self.world.number_pad, self.world.dirchars.clone());
+        let profile = self.ui_state.profile;
+        // the top-row digits are the bar's (Alt+digits Classic's count)
+        let digit = matches!(k.key, Key::Char('0'..='9')) && !k.mods.ctrl;
         let Some(code) = nethack_key(&k, KeyContext::Command, np, &dirs) else {
             return;
         };
         let c = u32::try_from(code).ok().and_then(char::from_u32);
+        if k.echo && digit {
+            return;
+        }
         if k.echo {
             // held down: a Hold order repeats it on the tick, the key's own
             // repeat never steps; once stopped it waits for a new press
@@ -885,14 +1033,32 @@ impl RenethackGame {
             }
             return;
         }
-        match self.count.feed(code, np) {
-            Counted::Typing => {
+        match self.count.feed_key(&k, profile, &dirs) {
+            CommandInput::Typing => {
                 let line = self.count.shown();
                 self.ui_mut().hud.set_prompt_line(line.as_deref());
             }
-            Counted::Command(n) => {
+            CommandInput::Ignored => {}
+            CommandInput::Bar { slot, count } => {
+                if count.is_some() {
+                    self.ui_mut().hud.set_prompt_line(None);
+                }
+                self.activate_slot(slot, count);
+            }
+            CommandInput::Command {
+                key: code,
+                count: n,
+            } => {
+                let c = u32::try_from(code).ok().and_then(char::from_u32);
                 if n.is_some() {
                     self.ui_mut().hud.set_prompt_line(None);
+                }
+                // `i`: the client's inventory panel; the engine's `i` is
+                // never sent (the host pushes the inventory)
+                if c == Some('i') {
+                    self.driver.interrupt(Stop::Panel);
+                    self.on_inventory(InvInput::Toggle);
+                    return;
                 }
                 if let (Some(n), Some(c)) = (n, c)
                     && repeatable(c, &dirs)
@@ -913,12 +1079,250 @@ impl RenethackGame {
         }
     }
 
+    /// Slot `slot` of the bar, with the count typed before it.
+    fn activate_slot(&mut self, slot: usize, count: Option<u32>) {
+        let u =
+            self.ui_state
+                .bar
+                .activate(slot, &self.world.inventory, count, self.ui_state.profile);
+        self.use_slot(u);
+    }
+
+    /// Run a macro or start an order, at the command prompt (after
+    /// stopping any order); while the engine plays an order's step, at the
+    /// next command prompt; never as the answer to another question.
+    fn use_slot(&mut self, u: SlotUse) {
+        if matches!(u, SlotUse::Nothing) {
+            return;
+        }
+        self.driver.interrupt(Stop::Key);
+        if !self.at_command() {
+            if self.pending.is_none() {
+                self.deferred = Some(u);
+            }
+            return;
+        }
+        if self.count.shown().is_some() {
+            self.count.clear();
+            self.ui_mut().hud.set_prompt_line(None);
+        }
+        match u {
+            SlotUse::Macro(m) => {
+                if let Some(r) = self.macros.start(m) {
+                    self.reply(r);
+                }
+            }
+            SlotUse::Order(o) => {
+                self.start_order(o);
+            }
+            SlotUse::Nothing => {}
+        }
+    }
+
+    /// Something the panel's widgets did.
+    fn on_inventory(&mut self, ev: InvInput) {
+        if ev == InvInput::Toggle {
+            self.driver.interrupt(Stop::Panel);
+        }
+        if let Some(i) = self.ui_mut().inventory.input(ev) {
+            self.inventory_intent(i);
+        }
+    }
+
+    /// What the panel asks for.
+    fn inventory_intent(&mut self, i: Intent) {
+        let panel_req = self.ui.as_ref().and_then(|ui| ui.inventory.request());
+        let pending = self.pending.as_ref().map(|(id, _)| *id);
+        match i {
+            Intent::Macro(m) => self.use_slot(SlotUse::Macro(m)),
+            Intent::Reply(r) => {
+                if panel_req.is_some() && panel_req == pending {
+                    self.reply(r);
+                }
+            }
+            Intent::Pick { letter, count } => {
+                if panel_req.is_none() || panel_req != pending {
+                    return;
+                }
+                match count {
+                    // getobj takes the first digit, get_count the rest
+                    Some(n) => {
+                        let mut keys: std::collections::VecDeque<i32> =
+                            n.to_string().bytes().map(i32::from).collect();
+                        let first = keys.pop_front().unwrap_or('1' as i32);
+                        keys.push_back(letter as i32);
+                        self.reply(Reply::Char(first));
+                        self.typing = keys;
+                    }
+                    None => self.reply(Reply::Char(letter as i32)),
+                }
+            }
+            Intent::Bind { slot, binding } => {
+                self.ui_state.bar.set(slot, Some(binding));
+                self.save_ui_state();
+                let key = crate::action_bar::key_label(slot);
+                self.ui_mut()
+                    .hud
+                    .toast(&format!("Bound to slot {key}"), false);
+            }
+        }
+    }
+
+    /// Right click on a slot: it is cleared, with an Undo.
+    fn clear_slot(&mut self, slot: usize) {
+        let Some(b) = self.ui_state.bar.get(slot).cloned() else {
+            return;
+        };
+        self.ui_state.bar.set(slot, None);
+        self.cleared = Some((slot, b));
+        self.save_ui_state();
+        let key = crate::action_bar::key_label(slot);
+        self.ui_mut()
+            .hud
+            .toast(&format!("Slot {key} cleared"), true);
+    }
+
+    fn undo_clear(&mut self) {
+        if let Some((slot, b)) = self.cleared.take() {
+            self.ui_state.bar.set(slot, Some(b));
+            self.save_ui_state();
+            let key = crate::action_bar::key_label(slot);
+            self.ui_mut()
+                .hud
+                .toast(&format!("Slot {key} restored"), false);
+        }
+    }
+
+    /// Write `<save>.rhui.json` (atomically).
+    fn save_ui_state(&mut self) {
+        self.bar_key = None;
+        let Some(name) = self.name.clone() else {
+            return;
+        };
+        if let Err(e) = write_ui_state(&self.playground(), &name, &self.ui_state.to_json()) {
+            godot_warn!("renethack: cannot write the UI state: {e}");
+        }
+    }
+
+    /// The pack for the panel and the bar: the bar follows its items, a
+    /// new character gets its loadout, the slots are drawn again.
+    fn sync_inventory(&mut self) {
+        if self.world.inventory.take_changed() {
+            let pack = self.world.inventory.clone();
+            self.ui_mut().inventory.set_pack(&pack);
+            if self.ui_state.bar.rebind(&pack) {
+                self.save_ui_state();
+            }
+            self.bar_key = None;
+        }
+        if let Some(role) = self.loadout_for.clone()
+            && self.world.inventory.received()
+        {
+            let role = match role.as_str() {
+                "random" => self
+                    .ui
+                    .as_ref()
+                    .and_then(|ui| ui.hud.role().map(str::to_string)),
+                _ => Some(role),
+            };
+            if let Some(role) = role {
+                self.loadout_for = None;
+                self.ui_state.bar = ActionBar::default_for(&role, &self.world.inventory);
+                self.save_ui_state();
+            }
+        }
+        let status = &self.world.status;
+        let get = |f: &str| {
+            status
+                .get(f)
+                .map(|v| v.trim().to_string())
+                .filter(|v| !v.is_empty())
+        };
+        // gold comes as "$:12" (the glyph and the amount)
+        let gold = get("gold").map(|g| g.rsplit(':').next().unwrap_or(&g).to_string());
+        let (ac, cap) = (get("ac"), get("cap"));
+        let active = self.at_command();
+        let views: Vec<nh_world::SlotView> = (0..BAR_SLOTS)
+            .map(|i| self.ui_state.bar.view(i, &self.world.inventory))
+            .collect();
+        let redraw = self.bar_key.as_ref() != Some(&views);
+        let Some(ui) = self.ui.as_mut() else {
+            return;
+        };
+        ui.inventory.set_status(ac, gold, cap);
+        let rects = ui.hud.action_bar().slot_rects();
+        ui.inventory.set_bar_rects(rects);
+        ui.inventory.sync();
+        let bar = ui.hud.action_bar();
+        bar.set_active(active);
+        if !redraw {
+            return;
+        }
+        for (i, v) in views.iter().enumerate() {
+            let binding = self.ui_state.bar.get(i);
+            let icon = match binding {
+                None => None,
+                Some(SlotBinding::Item { key, .. }) => {
+                    let class = self
+                        .world
+                        .inventory
+                        .items()
+                        .iter()
+                        .find(|it| it.tile == key.tile)
+                        .map_or_else(|| icons::tile_class(key.tile), |it| it.class);
+                    Some(icons::item_icon(key.tile, class))
+                }
+                Some(SlotBinding::Spell { .. }) => Some(icons::emblem(icons::Glyph::Book)),
+                Some(SlotBinding::Command { cmd }) => {
+                    Some(icons::emblem(icons::command_glyph(*cmd)))
+                }
+            };
+            bar.set_icon(i, icon.as_ref());
+            let count = v
+                .charges
+                .map(|c| c.to_string())
+                .or_else(|| v.count.map(|c| c.to_string()));
+            bar.set_count(i, count.as_deref());
+            bar.set_enabled(i, v.state != SlotState::Gone);
+            let key = crate::action_bar::key_label(i);
+            let what = v
+                .label_key
+                .as_deref()
+                .map(inventory_panel::label)
+                .unwrap_or_default();
+            let tip = match (v.state, &v.text) {
+                (SlotState::Empty, _) => {
+                    format!("Slot {key} (empty): drag an item here from the inventory")
+                }
+                (SlotState::Gone, Some(t)) => format!("{what}: {t} (not in your pack)"),
+                (_, Some(t)) => format!("{what}: {t}"),
+                (_, None) => what,
+            };
+            let hint = v.hint.as_deref().unwrap_or("");
+            bar.set_tooltip(
+                i,
+                &format!("{tip}\nKey {key} · NetHack: {hint} · right-click: clear"),
+            );
+        }
+        self.bar_key = Some(views);
+    }
+
     /// A left click walks (and acts at the end of the way); a right click
     /// asks the engine for the cell's actions (#therecmdmenu). In getpos a
     /// click picks the cell.
     fn on_click(&mut self, x: i32, y: i32, button: i32) {
         // a click stops the order; a left click gives the next one
         self.driver.interrupt(Stop::Click);
+        // a click on the world beside the open panel closes it (and does
+        // what it does); while the panel asks, the question waits
+        if let Some(ui) = self.ui.as_mut()
+            && ui.inventory.is_open()
+        {
+            if ui.inventory.request().is_some() {
+                return;
+            }
+            ui.inventory.close();
+        }
         match self.pending.as_ref().map(|(_, p)| p) {
             Some(Prompt::Command) if self.world.getpos => self.reply(Reply::Click {
                 x,
@@ -1061,6 +1465,9 @@ impl RenethackGame {
     /// Forget orders, counts and notes (a new game, the end of one).
     fn reset_orders(&mut self) {
         self.driver.reset();
+        self.macros.cancel();
+        self.typing.clear();
+        self.deferred = None;
         self.held = None;
         self.count.clear();
         self.stop_note = None;
@@ -1170,7 +1577,14 @@ impl RenethackGame {
                     godot_warn!("renethack: dialog event for request {req} dropped: {ev:?}");
                     return;
                 }
-                if let Some(r) = self.ui_mut().dialogs.dialog_event(req, &ev) {
+                // an inventory menu is the panel's
+                let ui = self.ui_mut();
+                let r = if ui.inventory.request() == Some(req) {
+                    ui.inventory.dialog_event(req, &ev)
+                } else {
+                    ui.dialogs.dialog_event(req, &ev)
+                };
+                if let Some(r) = r {
                     self.reply(r);
                 }
             }
@@ -1194,8 +1608,17 @@ impl RenethackGame {
             UiEvent::Rest => self.rest(),
             UiEvent::Zoom(steps) => self.ui_mut().map.zoom(steps),
             UiEvent::ToggleOverview => self.ui_mut().map.toggle_overview(),
-            // the slots have no bindings yet (the action bar's logic, phase H)
-            UiEvent::ActionSlot { .. } => {}
+            UiEvent::ActionSlot { slot, button: 1 } if self.state == GameState::Playing => {
+                // a count typed before (`n20`, then a click)
+                let count = self.count.take();
+                if count.is_some() {
+                    self.ui_mut().hud.set_prompt_line(None);
+                }
+                self.activate_slot(slot, count);
+            }
+            UiEvent::ActionSlot { slot, .. } => self.clear_slot(slot),
+            UiEvent::SlotUndo => self.undo_clear(),
+            UiEvent::Inventory(ev) if self.state == GameState::Playing => self.on_inventory(ev),
             other => godot_warn!("renethack: {other:?} ignored while a game runs"),
         }
     }
@@ -1298,14 +1721,28 @@ impl RenethackGame {
         if let Err(e) = remember_name(&pg, &choice.name) {
             godot_warn!("renethack: cannot remember the name: {e}");
         }
-        self.start_session(options, &choice.name);
+        // a new character: its profile, and the default loadout once the
+        // first inventory (and the role, if random) is known
+        let state = UiState::new(choice.profile);
+        if self.start_session(options, &choice.name, state) {
+            self.loadout_for = Some(choice.role.clone());
+            self.save_ui_state();
+        }
     }
 
     fn continue_game(&mut self, name: &str) {
         match EngineConfig::restore_options(name) {
             Ok(options) => {
                 if self.prepare_playground() {
-                    self.start_session(options, name);
+                    // the profile and the bar kept with the save; none (a
+                    // game from before them): Modern and the default loadout
+                    let kept = read_ui_state(&self.playground(), name)
+                        .and_then(|t| UiState::from_json(&t).ok());
+                    let fresh = kept.is_none();
+                    let state = kept.unwrap_or_else(|| UiState::new(KeyProfile::Modern));
+                    if self.start_session(options, name, state) && fresh {
+                        self.loadout_for = Some("random".into());
+                    }
                 }
             }
             Err(e) => self.show_failure("This save cannot be restored.", &e.to_string(), None),
@@ -1329,15 +1766,21 @@ impl RenethackGame {
         }
     }
 
-    fn start_session(&mut self, options: String, name: &str) {
+    /// Start the engine for `name` with this UI state; false when it
+    /// cannot start.
+    fn start_session(&mut self, options: String, name: &str, state: UiState) -> bool {
         let Some(paths) = self.paths.clone() else {
-            return;
+            return false;
         };
         let test = self.selftest.is_some();
         let cfg = EngineConfig {
             engine: paths.engine(),
             playground: paths.playground.clone(),
-            options: format!("{options},{CLIENT_EXTRA_OPTIONS}"),
+            // NetHack does not save number_pad: every start passes it
+            options: format!(
+                "{options},{CLIENT_EXTRA_OPTIONS},{}",
+                state.profile.engine_option()
+            ),
             seed: self
                 .seed
                 .or_else(|| env_number("RENETHACK_SEED"))
@@ -1363,8 +1806,16 @@ impl RenethackGame {
                 ui.map.clear();
                 ui.hud.reset();
                 self.show_game(true);
+                self.ui_state = state;
+                self.loadout_for = None;
+                self.cleared = None;
+                self.bar_key = None;
+                true
             }
-            Err(e) => self.show_failure("Cannot start the game engine.", &e.to_string(), None),
+            Err(e) => {
+                self.show_failure("Cannot start the game engine.", &e.to_string(), None);
+                false
+            }
         }
     }
 
@@ -1404,6 +1855,12 @@ impl RenethackGame {
         self.base().get_tree().quit_ex().exit_code(code).done();
     }
 
+    /// Answer the pending request with a reply no key gives (self-tests:
+    /// the engine's own `?` at getobj, which the panel keeps).
+    pub(crate) fn answer(&mut self, r: Reply) {
+        self.reply(r);
+    }
+
     pub(crate) fn push_ui(&self, ev: UiEvent) {
         push(&self.queue, ev);
     }
@@ -1433,6 +1890,7 @@ impl RenethackGame {
             ui.hud.open_full_log();
         }
         ui.hud.sync(&mut self.world, catalog.as_deref());
+        self.sync_inventory();
         self.update_hover();
         self.sync_orders();
         self.update_preview();
@@ -1448,9 +1906,9 @@ impl RenethackGame {
         let Some(ui) = self.ui.as_mut() else {
             return;
         };
-        let pos = self
-            .mouse_pos
-            .filter(|&p| playing && !ui.dialogs.is_open() && !ui.hud.covers(p));
+        let pos = self.mouse_pos.filter(|&p| {
+            playing && !ui.dialogs.is_open() && !ui.hud.covers(p) && !ui.inventory.covers(p)
+        });
         let cell = match self.test_hover {
             Some(c) if playing && !ui.dialogs.is_open() => Some(c),
             _ => pos.and_then(|p| ui.map.cell_at(p)),
