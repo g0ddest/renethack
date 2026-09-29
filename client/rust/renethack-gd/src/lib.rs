@@ -21,6 +21,7 @@ mod screens;
 mod selftest;
 mod theme;
 mod ui_events;
+mod vfx;
 
 use godot::init::InitStage;
 use godot::prelude::*;
