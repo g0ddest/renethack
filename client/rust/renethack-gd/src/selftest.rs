@@ -24,6 +24,9 @@ use nh_world::{
 
 use nh_link::save_exists;
 
+#[path = "selftest_hero.rs"]
+mod hero;
+
 use crate::dialogs::ROW_H;
 use crate::game::{Args, GameState, RenethackGame, SELFTEST_SEED, env_number};
 use crate::screens::EndSummary;
@@ -3339,6 +3342,8 @@ impl SelfTest {
             "text" => text(),
             "soak" => soak(args),
             "orders" => orders(),
+            "equipment" => hero::equipment(),
+            "item-use" => hero::item_use(),
             "inventory" => inventory(),
             "bar" => bar(),
             _ => Vec::new(),
