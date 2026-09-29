@@ -156,6 +156,8 @@ object_tiles_json(void)
         cJSON_AddItemToObject(t, "class_name",
                               rh_json_string(def_oc_syms[cls].name));
         cJSON_AddItemToObject(t, "appearance", rh_json_string(appearance));
+        /* the colour goes with the appearance: o_init shuffles them together */
+        cJSON_AddNumberToObject(t, "color", objects[i].oc_color);
         cJSON_AddItemToArray(arr, t);
     }
     return arr;

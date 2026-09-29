@@ -70,6 +70,10 @@ pub struct ObjectTile {
     pub class: String,
     pub class_name: String,
     pub appearance: String,
+    /// The colour the map shows it in (NetHack's 16; it goes with the
+    /// appearance, never with the true object).
+    #[serde(default)]
+    pub color: Option<i32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
