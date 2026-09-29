@@ -41,14 +41,27 @@ NetHack's `recover` (progress since the last level change is lost).
 
 ## Controls
 
-Every NetHack command works with its usual key (`number_pad` off: `hjklyubn`
-move, `<`/`>` stairs, `i` inventory, `#` extended commands...). The client adds:
+Every NetHack command works with its usual key. The key profile is chosen
+when the character is created and kept with it:
+
+| | **Modern** (default) | **Classic** |
+|---|---|---|
+| NetHack's `number_pad` | on | off |
+| move | arrows, `Home` `PgUp` `End` `PgDn`, keypad; `Shift` — run | `hjklyubn` (and the arrows, keypad); `Shift` — run |
+| a count (`20` searches) | `n20s` | `Alt`+`2` `Alt`+`0` `s` |
+| `k` `j` `l` `u` | kick, jump, loot, untrap (number_pad letters) | moves |
+| top-row `1`–`0` | the action bar | the action bar |
+
+The client adds:
 
 | Input | Action |
 |---|---|
-| arrows, `Home` `PgUp` `End` `PgDn`, keypad | move (diagonals on the four keys and the keypad); with `Shift` — run |
+| `i` | the inventory panel (the engine's `i` is never needed): a grid in pack order, the paper doll, filters, the detail of an item. Double-click — its first action, right-click — all of them; drag to the doll — wear, wield, put on; off the doll — take off, remove, unwield; onto another item — `#adjust`; out of the panel — drop; onto the bar — bind. Command keys still work while it is open (`w`, then a letter). `Tab` filters, arrows move, `Enter` acts, `Space` the actions, `Esc` closes |
+| a question about an item ("What do you want to wield?") | the panel in selection mode: the suggested items pulse, the others are dimmed but can be chosen; a click or the letter answers, `-` the hands, digits or `Shift`+click a count, `?`/`*` the Suggested/All filter, `Esc` cancels |
+| a menu of your own items (`D`, `A`, identify...) | the panel with check marks: the letter or a click toggles, digits a count, `Enter` confirms |
+| `1`–`9`, `0` | action bar slots: an item with its action, a spell or a command; a new character gets its role's loadout. After a count (`n20`, `Alt`+digits) a slot takes it by a click. Right-click clears a slot (Undo in the notice); an item's slot follows it through new letters and names, and shows it greyed while it is not in the pack. The bar is kept with the character (`<name>.rhui.json` in the game directory) |
 | holding a direction key (or `s`, `.`) | step (search, wait) again every tick until the key is let go |
-| a count, then a direction, `s` or `.` (`20s`; with `number_pad`: `n20s`) | that many steps, searches or waits, one per tick |
+| a count, then a direction, `s` or `.` | that many steps, searches or waits, one per tick |
 | left click on the map | walk there by the known map, one step per tick; on an object — pick it up, on stairs — take them, on a closed door — open it, on a monster — attack it; on yourself — the engine's menu of actions here |
 | right click on the map | the engine's menu of actions for that cell (open, kick, talk, look at...) |
 | `<` / `>` away from the stairs | walk to the known stairs and take them |
@@ -98,7 +111,12 @@ the art laid out page by page. The `moves` scenario stops each of the first
 steps midway (with `--screenshots`, a picture of the hero and the pet
 between cells). The `orders` scenario walks, holds, counts, stops a walk
 with a key, takes the stairs, and meets a hostile that stops a walk (with
-`--screenshots`, the way previewed and the combat banner). With `--screenshots` the soak saves the screen
+`--screenshots`, the way previewed and the combat banner). The `inventory`
+scenario opens the panel, filters it, wields by a drag and by the context
+menu, answers a getobj question in selection mode and drops through the
+panel's `D` menu; `bar` binds the food ration to a slot, follows it through
+`#adjust`, eats it with `2`, and counts 20 searches with `n20s` (Modern) and
+`Alt`+`2` `Alt`+`0` `s` (Classic). With `--screenshots` the soak saves the screen
 every 60 answers. The scenarios take
 screenshots under a display:
 
