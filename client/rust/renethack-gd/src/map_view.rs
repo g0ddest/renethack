@@ -2072,7 +2072,7 @@ impl MapView {
         }
         self.watch_fights(world, catalog);
         self.advance_motions(delta as f32);
-        self.hero_fx.advance(delta as f32);
+        self.hero_fx.advance(delta as f32, &mut self.vfx);
         if std::mem::take(&mut self.fow_dirty) {
             self.see(hero, new_level);
         }
