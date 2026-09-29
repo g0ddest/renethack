@@ -169,11 +169,23 @@ impl UseTracker {
 
     /// The client answered `prompt` with `reply`.
     pub fn on_reply(&mut self, prompt: &Prompt, reply: &Reply, world: &World) {
-        if matches!(reply, Reply::Cancel)
-            || matches!(reply, Reply::Key(ESC) | Reply::Char(ESC))
-            || matches!(reply, Reply::ExtCmd(None))
-        {
-            self.armed = None;
+        let esc = matches!(reply, Reply::Cancel | Reply::Key(ESC) | Reply::Char(ESC))
+            || matches!(reply, Reply::ExtCmd(None));
+        if esc {
+            // only the use's own questions call it off: the item before
+            // one is chosen, or the direction; a later question (what to
+            // identify after a scroll is read) does not
+            let own = match &self.armed {
+                Some(a) => {
+                    matches!(prompt, Prompt::FreeKey { directions: true, .. })
+                        || a.u.letter.is_none()
+                        || *prompt == Prompt::Command
+                }
+                None => true,
+            };
+            if own {
+                self.armed = None;
+            }
             return;
         }
         match (prompt, reply) {
@@ -480,6 +492,27 @@ mod tests {
         assert_eq!(run(&w, &[(Prompt::Command, key('q'))]), None);
         // another command: nothing
         assert_eq!(run(&w, &[(Prompt::Command, key('s'))]), None);
+    }
+
+    #[test]
+    fn an_escape_after_the_item_is_chosen_keeps_the_use() {
+        let w = world();
+        let menu = Prompt::Menu {
+            win: 5,
+            how: nh_protocol::PickHow::Any,
+            title: Some("What would you like to identify first?".into()),
+            items: Vec::new(),
+        };
+        let u = run(
+            &w,
+            &[
+                (Prompt::Command, key('r')),
+                (getobj("read"), ch('g')),
+                (menu, Reply::Cancel),
+            ],
+        )
+        .unwrap();
+        assert_eq!(u.kind, UseKind::Read);
     }
 
     #[test]
