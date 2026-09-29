@@ -1862,6 +1862,7 @@ impl RenethackGame {
 
     pub(crate) fn quit(&mut self, code: i32) {
         self.quitting = true;
+        crate::icons::clear();
         self.base().get_tree().quit_ex().exit_code(code).done();
     }
 

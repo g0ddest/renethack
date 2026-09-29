@@ -6,8 +6,8 @@ mod animator;
 mod art;
 mod dialogs;
 mod gallery;
-mod hero;
 mod game;
+mod hero;
 mod hud;
 mod icons;
 mod input;
@@ -32,6 +32,12 @@ unsafe impl ExtensionLibrary for RenethackExtension {
     fn on_stage_init(stage: InitStage) {
         if stage == InitStage::Scene {
             ignore_sigpipe();
+        }
+    }
+
+    fn on_stage_deinit(stage: InitStage) {
+        if stage == InitStage::Scene {
+            icons::clear();
         }
     }
 }

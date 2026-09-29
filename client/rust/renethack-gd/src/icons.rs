@@ -32,6 +32,13 @@ thread_local! {
     static LOOKS: RefCell<HashMap<i32, (String, char)>> = RefCell::new(HashMap::new());
 }
 
+/// Let the cached textures go while Godot still runs: a Gd dropped with
+/// the thread's locals after the engine shut down aborts the process.
+pub fn clear() {
+    ITEMS.with(|i| i.borrow_mut().clear());
+    GLYPHS.with(|g| g.borrow_mut().clear());
+}
+
 /// The catalog's appearance names (a potion's colour word); call when it
 /// arrives.
 pub fn set_catalog(catalog: &Catalog) {
