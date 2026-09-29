@@ -59,7 +59,13 @@ pub fn item_icon(tile: i32, class: char) -> Gd<Texture2D> {
         return t;
     }
     let look = LOOKS.with(|l| l.borrow().get(&tile).map(|(a, _)| a.clone()));
-    let tex = load_png(&format!("{BAKED}/{tile}.png"))
+    // a statue has a tile per monster, none of them an appearance of the
+    // catalog: they all show the statue's icon
+    let baked = match look {
+        None if class == '`' => statue_tile().unwrap_or(tile),
+        _ => tile,
+    };
+    let tex = load_png(&format!("{BAKED}/{baked}.png"))
         .or_else(|| {
             let look = look.as_deref()?;
             match flare_file(class, look) {
@@ -75,6 +81,16 @@ pub fn item_icon(tile: i32, class: char) -> Gd<Texture2D> {
         });
     ITEMS.with(|i| i.borrow_mut().insert((tile, class), tex.clone()));
     tex
+}
+
+/// The catalog's tile of the appearance "statue".
+fn statue_tile() -> Option<i32> {
+    LOOKS.with(|l| {
+        l.borrow()
+            .iter()
+            .find(|(_, (look, class))| *class == '`' && look == "statue")
+            .map(|(t, _)| *t)
+    })
 }
 
 /// The class of an appearance tile, as the catalog has it ('?' unknown).
