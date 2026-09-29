@@ -266,10 +266,26 @@ pub const THROW_AT: f32 = 0.45;
 
 /// The effects of a use, after their delays: `hand` is where the item
 /// is, `ahead` the far end of its way (a beam's, a flight's).
-pub fn use_effects(u: &ItemUse, color: Color, hand: Vector3, ahead: Option<Vector3>) -> Vec<(f32, Fx)> {
+pub fn use_effects(
+    u: &ItemUse,
+    color: Color,
+    hand: Vector3,
+    ahead: Option<Vector3>,
+) -> Vec<(f32, Fx)> {
     let burst = |name, kind, at| Fx::Burst { name, kind, at };
     let up = Vector3::new(0.0, 0.35, 0.0);
-    let beam = |kind| ahead.map(|to| (0.4, Fx::Beam { kind, from: hand, to }));
+    let beam = |kind| {
+        ahead.map(|to| {
+            (
+                0.4,
+                Fx::Beam {
+                    kind,
+                    from: hand,
+                    to,
+                },
+            )
+        })
+    };
     match u.kind {
         UseKind::Quaff => vec![(0.8, burst("quaff", VfxKind::Quaff(color), hand + up))],
         UseKind::Eat => vec![(0.6, burst("eat", VfxKind::Quaff(color), hand))],

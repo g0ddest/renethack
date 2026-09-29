@@ -177,8 +177,13 @@ impl UseTracker {
             // identify after a scroll is read) does not
             let own = match &self.armed {
                 Some(a) => {
-                    matches!(prompt, Prompt::FreeKey { directions: true, .. })
-                        || a.u.letter.is_none()
+                    matches!(
+                        prompt,
+                        Prompt::FreeKey {
+                            directions: true,
+                            ..
+                        }
+                    ) || a.u.letter.is_none()
                         || *prompt == Prompt::Command
                 }
                 None => true,
