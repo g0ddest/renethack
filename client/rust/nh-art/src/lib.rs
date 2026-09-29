@@ -83,6 +83,7 @@ pub enum Proc {
     Orb,
     Mirror,
     Heap,
+    Potion,
 }
 
 /// Animation names of a model (in its own scene or in its rig's library).
@@ -188,6 +189,10 @@ pub struct ModelSpec {
     /// bright palette to the project's dark one.
     #[serde(default)]
     pub shade: Option<String>,
+    /// A procedural body's variant, by the appearance the rule matched: a
+    /// potion's bottle, an amulet's shape, a ring's setting...
+    #[serde(default)]
+    pub shape: Option<String>,
 }
 
 impl ModelSpec {
@@ -888,6 +893,7 @@ impl ArtManifest {
             material: skin,
             head: None,
             shade: None,
+            shape: None,
         };
     }
 
@@ -997,6 +1003,23 @@ mod tests {
             ..t.clone()
         };
         assert_eq!(art.object(&twin), art.object(t));
+    }
+
+    /// The catalog gives each appearance the colour the map shows it in
+    /// (the icon bake tints by it).
+    #[test]
+    fn every_object_tile_has_its_colour() {
+        let cat = catalog();
+        let ruby = |class: &str, a: &str| {
+            let t = cat
+                .object_tiles
+                .iter()
+                .find(|t| t.class == class && t.appearance == a);
+            t.and_then(|t| t.color)
+        };
+        assert!(cat.object_tiles.iter().all(|t| t.color.is_some()));
+        assert_eq!(ruby("!", "ruby"), Some(1));
+        assert_eq!(ruby("*", "blue"), Some(4));
     }
 
     #[test]

@@ -650,6 +650,7 @@ impl Art {
             art: self,
             skin,
             tint: Color::WHITE,
+            shape: None,
         };
         kit.head(kind, &mut head);
     }
@@ -721,6 +722,7 @@ impl Art {
             art: self,
             skin,
             tint,
+            shape: spec.shape.clone(),
         };
         let mut root = Node3D::new_alloc();
         kit.body(kind, &mut root);
@@ -778,6 +780,10 @@ pub enum Finish {
     Ghost,
     /// Markers: unshaded, alpha from the colour.
     Flat,
+    /// Clear glass: polished, alpha from the colour, both faces drawn.
+    Glass,
+    /// A cut stone or a potion's liquid: polished, lit a little from inside.
+    Gem,
 }
 
 pub fn build_flat(color: Color, finish: Finish) -> Gd<Material> {
@@ -805,6 +811,26 @@ pub fn build_flat(color: Color, finish: Finish) -> Gd<Material> {
             m.set_shading_mode(ShadingMode::UNSHADED);
             m.set_transparency(Transparency::ALPHA);
             m.set_cull_mode(CullMode::DISABLED);
+        }
+        Finish::Glass => {
+            m.set_transparency(Transparency::ALPHA);
+            m.set_cull_mode(CullMode::DISABLED);
+            m.set_roughness(0.04);
+            m.set_specular(1.0);
+            m.set_feature(Feature::RIM, true);
+            m.set_rim(0.6);
+            m.set_rim_tint(0.2);
+        }
+        Finish::Gem => {
+            m.set_roughness(0.06);
+            m.set_specular(1.0);
+            m.set_metallic(0.15);
+            m.set_feature(Feature::EMISSION, true);
+            m.set_emission(color);
+            m.set_emission_energy_multiplier(0.35);
+            m.set_feature(Feature::RIM, true);
+            m.set_rim(0.5);
+            m.set_rim_tint(0.8);
         }
     }
     m.upcast()
@@ -920,6 +946,8 @@ struct Kit<'a> {
     art: &'a mut Art,
     skin: Gd<Material>,
     tint: Color,
+    /// The model's variant (`ModelSpec::shape`).
+    shape: Option<String>,
 }
 
 impl Kit<'_> {
@@ -1870,394 +1898,10 @@ impl Kit<'_> {
             );
         }
     }
-
-    /// Objects: each one unit across (its length or height), resting on y = 0.
-    fn object(&mut self, kind: Proc, root: &mut Gd<Node3D>) {
-        let one = [1.0f32; 3];
-        let flat = [0.0f32; 3];
-        match kind {
-            Proc::Ring => {
-                self.skin(
-                    root,
-                    torus(0.34, 0.5),
-                    [0.0, 0.08, 0.0],
-                    flat,
-                    [1.0, 1.4, 1.0],
-                );
-                let gem = self
-                    .art
-                    .flat(Color::from_rgb(0.7, 0.1, 0.12), Finish::Glossy);
-                self.part(root, facets(0.12, 6), &gem, [0.0, 0.12, 0.46], flat, one);
-            }
-            Proc::Amulet => {
-                self.skin(root, cylinder(0.3, 0.3, 0.08), [0.0, 0.04, 0.1], flat, one);
-                let gem = self
-                    .art
-                    .flat(Color::from_rgb(0.1, 0.35, 0.7), Finish::Glossy);
-                self.part(
-                    root,
-                    facets(0.12, 6),
-                    &gem,
-                    [0.0, 0.1, 0.1],
-                    flat,
-                    [1.0, 0.5, 1.0],
-                );
-                self.skin(root, torus(0.4, 0.44), [0.0, 0.02, -0.3], flat, one);
-            }
-            Proc::Wand => {
-                self.skin(
-                    root,
-                    cylinder(0.025, 0.035, 1.0),
-                    [0.0, 0.035, 0.0],
-                    [90.0, 0.0, 0.0],
-                    one,
-                );
-                let tip = self.glint();
-                self.part(root, facets(0.05, 4), &tip, [0.0, 0.04, 0.52], flat, one);
-                let dark = self.dark();
-                self.part(
-                    root,
-                    cylinder(0.04, 0.04, 0.15),
-                    &dark,
-                    [0.0, 0.04, -0.38],
-                    [90.0, 0.0, 0.0],
-                    one,
-                );
-            }
-            Proc::Gem => {
-                self.skin(
-                    root,
-                    facets(0.5, 6),
-                    [0.0, 0.4, 0.0],
-                    [0.0, 15.0, 0.0],
-                    [1.0, 0.8, 1.0],
-                );
-            }
-            Proc::Rock => {
-                self.skin(
-                    root,
-                    facets(0.5, 7),
-                    [0.0, 0.35, 0.0],
-                    [10.0, 30.0, 0.0],
-                    [1.1, 0.7, 0.9],
-                );
-            }
-            Proc::Ball => {
-                self.skin(root, sphere(0.45), [0.0, 0.45, 0.0], flat, one);
-                self.skin(
-                    root,
-                    torus(0.08, 0.14),
-                    [0.4, 0.06, 0.35],
-                    [0.0, 30.0, 0.0],
-                    one,
-                );
-                self.skin(
-                    root,
-                    torus(0.08, 0.14),
-                    [0.58, 0.06, 0.52],
-                    [90.0, 30.0, 0.0],
-                    one,
-                );
-            }
-            Proc::Helm => {
-                self.skin(root, dome(0.45), [0.0, 0.08, 0.0], flat, [1.0, 1.3, 1.1]);
-                self.skin(
-                    root,
-                    torus(0.4, 0.5),
-                    [0.0, 0.08, 0.0],
-                    flat,
-                    [1.0, 1.0, 1.1],
-                );
-                let dark = self.dark();
-                self.part(
-                    root,
-                    cuboid(0.5, 0.06, 0.05),
-                    &dark,
-                    [0.0, 0.3, 0.45],
-                    flat,
-                    one,
-                );
-            }
-            Proc::Boots => {
-                for s in [-1.0f32, 1.0] {
-                    self.skin(
-                        root,
-                        cuboid(0.26, 0.55, 0.28),
-                        [s * 0.2, 0.28, -0.1],
-                        [0.0, s * 8.0, 0.0],
-                        one,
-                    );
-                    self.skin(
-                        root,
-                        cuboid(0.26, 0.2, 0.55),
-                        [s * 0.2, 0.1, 0.1],
-                        [0.0, s * 8.0, 0.0],
-                        one,
-                    );
-                }
-            }
-            Proc::Gloves => {
-                for s in [-1.0f32, 1.0] {
-                    self.skin(
-                        root,
-                        sphere(0.25),
-                        [s * 0.25, 0.08, 0.0],
-                        [0.0, s * 20.0, 0.0],
-                        [0.9, 0.3, 1.4],
-                    );
-                    for f in 0..4 {
-                        let x = s * 0.25 + (f as f32 - 1.5) * 0.08;
-                        self.skin(
-                            root,
-                            capsule(0.035, 0.2),
-                            [x, 0.06, 0.38],
-                            [90.0, 0.0, 0.0],
-                            one,
-                        );
-                    }
-                }
-            }
-            Proc::Garment => {
-                self.skin(
-                    root,
-                    cuboid(1.0, 0.08, 0.7),
-                    [0.0, 0.04, 0.0],
-                    [0.0, 5.0, 0.0],
-                    one,
-                );
-                self.skin(
-                    root,
-                    cuboid(0.8, 0.07, 0.5),
-                    [0.05, 0.11, 0.05],
-                    [0.0, -10.0, 0.0],
-                    one,
-                );
-                self.skin(
-                    root,
-                    capsule(0.08, 0.7),
-                    [0.0, 0.16, 0.25],
-                    [0.0, 0.0, 90.0],
-                    one,
-                );
-            }
-            Proc::Cuirass => {
-                self.skin(
-                    root,
-                    cylinder(0.42, 0.38, 0.8),
-                    [0.0, 0.2, 0.0],
-                    [90.0, 0.0, 0.0],
-                    [1.0, 1.0, 0.45],
-                );
-                let dark = self.dark();
-                for z in [-0.2f32, 0.1] {
-                    self.part(
-                        root,
-                        cuboid(0.86, 0.05, 0.06),
-                        &dark,
-                        [0.0, 0.39, z],
-                        flat,
-                        one,
-                    );
-                }
-                self.skin(root, sphere(0.2), [-0.42, 0.25, 0.3], flat, [1.0, 0.6, 1.0]);
-                self.skin(root, sphere(0.2), [0.42, 0.25, 0.3], flat, [1.0, 0.6, 1.0]);
-            }
-            Proc::Pole => {
-                self.skin(
-                    root,
-                    cylinder(0.018, 0.022, 0.85),
-                    [0.0, 0.03, -0.07],
-                    [90.0, 0.0, 0.0],
-                    one,
-                );
-                let metal = self.named("metal", Color::from_rgb(0.6, 0.6, 0.62));
-                self.part(
-                    root,
-                    cylinder(0.0, 0.04, 0.16),
-                    &metal,
-                    [0.0, 0.03, 0.43],
-                    [90.0, 0.0, 0.0],
-                    one,
-                );
-                self.part(
-                    root,
-                    cuboid(0.1, 0.02, 0.05),
-                    &metal,
-                    [0.0, 0.03, 0.34],
-                    flat,
-                    one,
-                );
-            }
-            Proc::Bow => {
-                for (z, a) in [(-0.3f32, 20.0f32), (0.0, 0.0), (0.3, -20.0)] {
-                    self.skin(
-                        root,
-                        cylinder(0.02, 0.02, 0.36),
-                        [-0.1 + (z.abs() * 0.3), 0.02, z],
-                        [90.0, a, 0.0],
-                        one,
-                    );
-                }
-                let string = self.bone();
-                self.part(
-                    root,
-                    cylinder(0.004, 0.004, 0.95),
-                    &string,
-                    [0.08, 0.02, 0.0],
-                    [90.0, 0.0, 0.0],
-                    one,
-                );
-            }
-            Proc::Arrows => {
-                let metal = self.named("metal", Color::from_rgb(0.6, 0.6, 0.62));
-                let feather = self.bone();
-                for (x, a) in [(-0.06f32, -6.0f32), (0.0, 2.0), (0.06, 8.0)] {
-                    self.skin(
-                        root,
-                        cylinder(0.008, 0.008, 0.9),
-                        [x, 0.02, 0.0],
-                        [90.0, a, 0.0],
-                        one,
-                    );
-                    self.part(
-                        root,
-                        cylinder(0.0, 0.02, 0.08),
-                        &metal,
-                        [x + a * 0.004, 0.02, 0.48],
-                        [90.0, a, 0.0],
-                        one,
-                    );
-                    self.part(
-                        root,
-                        prism(0.04, 0.12, 0.01),
-                        &feather,
-                        [x - a * 0.004, 0.03, -0.42],
-                        [90.0, a, 0.0],
-                        one,
-                    );
-                }
-            }
-            Proc::Fruit => {
-                self.skin(root, sphere(0.45), [0.0, 0.42, 0.0], flat, [1.0, 0.92, 1.0]);
-                let stem = self
-                    .art
-                    .flat(Color::from_rgb(0.25, 0.18, 0.08), Finish::Matte);
-                self.part(
-                    root,
-                    cylinder(0.02, 0.03, 0.2),
-                    &stem,
-                    [0.0, 0.9, 0.0],
-                    [0.0, 0.0, 12.0],
-                    one,
-                );
-            }
-            Proc::Egg => {
-                self.skin(root, sphere(0.36), [0.0, 0.48, 0.0], flat, [1.0, 1.35, 1.0]);
-            }
-            Proc::Tin => {
-                self.skin(root, cylinder(0.4, 0.4, 0.55), [0.0, 0.28, 0.0], flat, one);
-                let label = self
-                    .art
-                    .flat(Color::from_rgb(0.55, 0.12, 0.08), Finish::Matte);
-                self.part(
-                    root,
-                    cylinder(0.41, 0.41, 0.3),
-                    &label,
-                    [0.0, 0.28, 0.0],
-                    flat,
-                    one,
-                );
-            }
-            Proc::Lump => {
-                self.skin(root, sphere(0.4), [0.0, 0.3, 0.0], flat, [1.2, 0.7, 1.0]);
-                self.skin(root, sphere(0.25), [0.25, 0.22, 0.2], flat, [1.0, 0.8, 1.0]);
-            }
-            Proc::Splash => {
-                self.skin(
-                    root,
-                    cylinder(0.5, 0.5, 0.02),
-                    [0.0, 0.01, 0.0],
-                    flat,
-                    [1.0, 1.0, 0.8],
-                );
-                self.skin(root, sphere(0.12), [0.3, 0.03, 0.25], flat, [1.0, 0.3, 1.0]);
-            }
-            Proc::Horn => {
-                self.skin(
-                    root,
-                    cylinder(0.0, 0.1, 1.0),
-                    [0.0, 0.08, 0.0],
-                    [90.0, 0.0, 0.0],
-                    one,
-                );
-                let dark = self.dark();
-                for z in [-0.3f32, -0.1, 0.1] {
-                    self.part(
-                        root,
-                        torus(0.08 - z * 0.1, 0.1 - z * 0.1),
-                        &dark,
-                        [0.0, 0.08, z],
-                        [90.0, 0.0, 0.0],
-                        one,
-                    );
-                }
-            }
-            Proc::Orb => {
-                self.skin(root, sphere(0.4), [0.0, 0.5, 0.0], flat, one);
-                let stand = self.named("gilded", Color::from_rgb(0.7, 0.55, 0.2));
-                self.part(
-                    root,
-                    cylinder(0.2, 0.3, 0.15),
-                    &stand,
-                    [0.0, 0.075, 0.0],
-                    flat,
-                    one,
-                );
-            }
-            Proc::Mirror => {
-                self.skin(root, cylinder(0.3, 0.3, 0.04), [0.0, 0.03, 0.15], flat, one);
-                let glass = self
-                    .art
-                    .flat(Color::from_rgb(0.75, 0.82, 0.88), Finish::Glossy);
-                self.part(
-                    root,
-                    cylinder(0.26, 0.26, 0.045),
-                    &glass,
-                    [0.0, 0.035, 0.15],
-                    flat,
-                    one,
-                );
-                self.skin(
-                    root,
-                    cylinder(0.04, 0.04, 0.4),
-                    [0.0, 0.03, -0.32],
-                    [90.0, 0.0, 0.0],
-                    one,
-                );
-            }
-            // a pile of things too many to tell apart
-            _ => {
-                let wood = self.named("wood", Color::from_rgb(0.4, 0.28, 0.16));
-                self.skin(
-                    root,
-                    cuboid(0.8, 0.12, 0.6),
-                    [0.0, 0.06, 0.0],
-                    [0.0, 10.0, 0.0],
-                    one,
-                );
-                self.part(
-                    root,
-                    cuboid(0.5, 0.1, 0.4),
-                    &wood,
-                    [0.1, 0.17, -0.05],
-                    [0.0, -25.0, 0.0],
-                    one,
-                );
-                self.skin(root, sphere(0.2), [-0.2, 0.2, 0.15], flat, [1.0, 0.6, 1.0]);
-            }
-        }
-    }
 }
+
+#[path = "object_kit.rs"]
+mod object_kit;
 
 /// Cast shadows off for flat ground geometry (map_view).
 pub fn no_shadow(mi: &mut Gd<MeshInstance3D>) {
