@@ -300,8 +300,10 @@ pub enum Glyph {
     Check,
     /// "Suggested": a star.
     Star,
-    /// Search, look, farlook.
+    /// Look here, farlook, terrain.
     Eye,
+    /// Search: a magnifying glass.
+    Lens,
     /// Rest, wait.
     Moon,
     /// Pray, offer, turn undead.
@@ -338,7 +340,8 @@ pub fn class_glyph(class: char) -> Glyph {
 pub fn command_glyph(cmd: nh_world::BarCommand) -> Glyph {
     use nh_world::BarCommand::*;
     match cmd {
-        Search | LookHere | Farlook | Terrain => Glyph::Eye,
+        Search => Glyph::Lens,
+        LookHere | Farlook | Terrain => Glyph::Eye,
         Rest | Wait | Sit => Glyph::Moon,
         Kick | Jump => Glyph::Boots,
         PickUp | Chat | Untrap => Glyph::Hand,
@@ -823,15 +826,53 @@ fn layers(g: Glyph, main: Mat) -> Vec<Layer> {
             },
             LEATHER,
         )],
-        Glyph::Boots => vec![layer(
-            |p| {
-                union(
-                    rect(p, (-0.12, -0.1), (0.24, 0.52), 0.06),
-                    rect(p, (0.14, 0.46), (0.5, 0.16), 0.12),
-                )
-            },
-            LEATHER,
-        )],
+        Glyph::Boots => vec![
+            // the shaft, the instep and the toe as one leather shape
+            layer(
+                |p| {
+                    let shaft = poly(
+                        p,
+                        &[
+                            (-0.4, -0.66),
+                            (0.12, -0.66),
+                            (0.1, 0.12),
+                            (0.34, 0.24),
+                            (0.66, 0.34),
+                            (0.7, 0.52),
+                            (-0.44, 0.52),
+                        ],
+                    );
+                    smooth(shaft, circle(p, (0.5, 0.42), 0.14), 0.06)
+                },
+                LEATHER,
+            ),
+            // the cuff, the sole and the heel
+            layer(
+                |p| rect(p, (-0.14, -0.6), (0.3, 0.08), 0.03),
+                mat(0x6a3e22, 0x2e180a),
+            ),
+            layer(
+                |p| {
+                    union(
+                        rect(p, (0.12, 0.6), (0.62, 0.07), 0.04),
+                        rect(p, (-0.3, 0.6), (0.16, 0.1), 0.02),
+                    )
+                },
+                mat(0x3a2a20, 0x120c08),
+            ),
+        ],
+        Glyph::Lens => vec![
+            layer(|p| capsule(p, (0.2, 0.2), (0.62, 0.62), 0.09), WOOD),
+            layer(|p| ring_sd(p, (-0.16, -0.16), 0.4, 0.07), BRONZE),
+            layer(
+                |p| circle(p, (-0.16, -0.16), 0.33),
+                Mat {
+                    top: [0.8, 0.9, 1.0],
+                    bottom: [0.3, 0.4, 0.5],
+                    glass: true,
+                },
+            ),
+        ],
         Glyph::Lamp => vec![
             layer(|p| ring_sd(p, (0.0, -0.46), 0.16, 0.04), IRON),
             layer(|p| rect(p, (0.0, 0.1), (0.36, 0.44), 0.08), BRONZE),
@@ -841,8 +882,21 @@ fn layers(g: Glyph, main: Mat) -> Vec<Layer> {
             ),
         ],
         Glyph::Leash => vec![
-            layer(|p| ring_sd(p, (-0.1, -0.2), 0.4, 0.06), LEATHER),
-            layer(|p| capsule(p, (0.2, 0.06), (0.6, 0.6), 0.06), LEATHER),
+            // a collar and the rope from it, in three lazy bends
+            layer(|p| ring_sd(p, (-0.34, 0.34), 0.26, 0.07), LEATHER),
+            layer(
+                |p| {
+                    union(
+                        capsule(p, (-0.14, 0.14), (0.1, -0.2), 0.05),
+                        union(
+                            capsule(p, (0.1, -0.2), (0.4, -0.18), 0.05),
+                            capsule(p, (0.4, -0.18), (0.6, -0.6), 0.05),
+                        ),
+                    )
+                },
+                mat(0xc8a878, 0x6a5030),
+            ),
+            layer(|p| rect(p, (0.6, -0.64), (0.1, 0.06), 0.03), BRONZE),
         ],
         Glyph::Shield => vec![
             layer(
@@ -1229,6 +1283,20 @@ mod tests {
         assert_ne!(ruby, clear);
         assert_eq!(colour_word("sky blue"), Some(0x70b8f0));
         assert_eq!(colour_word("bubbly"), None);
+    }
+
+    #[test]
+    fn the_default_loadouts_commands_look_different() {
+        use nh_world::BarCommand::*;
+        let glyphs: Vec<Glyph> = [
+            Search, Rest, Kick, PickUp, LookHere, Pray, Enhance, Swap, Fire,
+        ]
+        .into_iter()
+        .map(command_glyph)
+        .collect();
+        for (i, g) in glyphs.iter().enumerate() {
+            assert!(!glyphs[i + 1..].contains(g), "{g:?} twice");
+        }
     }
 
     #[test]

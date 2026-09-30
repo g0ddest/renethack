@@ -1260,6 +1260,10 @@ impl RenethackGame {
             return;
         };
         ui.inventory.set_status(ac, gold, cap);
+        let open = ui.inventory.is_open();
+        ui.hud.set_panel_open(open);
+        let hero = ui.map.hero_model().map(|m| m.node.clone());
+        ui.inventory.set_hero(hero);
         let rects = ui.hud.action_bar().slot_rects();
         ui.inventory.set_bar_rects(rects);
         ui.inventory.sync();

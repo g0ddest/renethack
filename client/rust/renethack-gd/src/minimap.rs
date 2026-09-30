@@ -1,12 +1,13 @@
 //! The minimap (ui-design §1.5): the known level, 5 px a cell, drawn from
-//! the map window's cells only (what the hero saw or remembers). A click
-//! walks there like a click on the map.
+//! the map window's cells only (what the hero saw or remembers), shown
+//! cropped to what is known with a margin, so a first room is not a speck.
+//! A click walks there like a click on the map.
 
 use godot::classes::control::MouseFilter;
 use godot::classes::image::Format;
 use godot::classes::texture_rect::{ExpandMode, StretchMode};
 use godot::classes::{
-    CanvasItem, Image, ImageTexture, InputEvent, InputEventMouseButton, TextureRect,
+    AtlasTexture, CanvasItem, Image, ImageTexture, InputEvent, InputEventMouseButton, TextureRect,
 };
 use godot::global::MouseButton;
 use godot::prelude::*;
@@ -74,6 +75,52 @@ fn mark_bits(m: Mark) -> [u8; 5] {
         Mark::Up => [0b00100, 0b01110, 0b11011, 0b10001, 0b00000],
         Mark::Down => [0b00000, 0b10001, 0b11011, 0b01110, 0b00100],
     }
+}
+
+/// The fewest cells across the view shows (at most about 4.5× zoom).
+const MIN_VIEW_W: i32 = 18;
+/// Cells of margin around what is known, across and down.
+const MARGIN: i32 = 3;
+const MARGIN_Y: i32 = 2;
+
+/// The known cells' bounds (x0, y0, x1, y1), inclusive.
+pub fn known_bounds(map: &MapState, catalog: &Catalog) -> Option<(i32, i32, i32, i32)> {
+    let mut b: Option<(i32, i32, i32, i32)> = None;
+    for y in 0..ROWNO {
+        for x in 1..COLNO {
+            let known = map
+                .cell(x, y)
+                .and_then(|c| cell_terrain(c, catalog))
+                .and_then(terrain_color)
+                .is_some();
+            if known || map.hero() == Some((x, y)) {
+                b = Some(match b {
+                    None => (x, y, x, y),
+                    Some((x0, y0, x1, y1)) => (x0.min(x), y0.min(y), x1.max(x), y1.max(y)),
+                });
+            }
+        }
+    }
+    b
+}
+
+/// The cells the minimap shows (x, y, w, h): the known bounds and a
+/// margin, in the whole map's proportions, inside the map.
+pub fn view(bounds: Option<(i32, i32, i32, i32)>) -> (i32, i32, i32, i32) {
+    let Some((x0, y0, x1, y1)) = bounds else {
+        return (0, 0, COLNO, ROWNO);
+    };
+    let (bw, bh) = (x1 - x0 + 1 + 2 * MARGIN, y1 - y0 + 1 + 2 * MARGIN_Y);
+    // the widest of: the bounds, their height in proportion, the minimum
+    let w = bw
+        .max((bh * COLNO + ROWNO - 1) / ROWNO)
+        .clamp(MIN_VIEW_W, COLNO);
+    let h = ((w * ROWNO + COLNO - 1) / COLNO).min(ROWNO);
+    let cx = (x0 + x1 + 1) / 2;
+    let cy = (y0 + y1 + 1) / 2;
+    let x = (cx - w / 2).clamp(0, COLNO - w);
+    let y = (cy - h / 2).clamp(0, ROWNO - h);
+    (x, y, w, h)
 }
 
 /// The minimap's pixels, RGBA, WIDTH×HEIGHT.
@@ -163,6 +210,10 @@ fn stamp(put: &mut impl FnMut(i32, i32, Rgba), ox: i32, oy: i32, m: Mark) {
 pub struct Minimap {
     rect: Gd<TextureRect>,
     texture: Option<Gd<ImageTexture>>,
+    /// The part of the picture shown.
+    atlas: Gd<AtlasTexture>,
+    /// The cells shown (x, y, w, h), shared with the click handler.
+    shown: std::rc::Rc<std::cell::Cell<(i32, i32, i32, i32)>>,
     /// (map generation, hero, frame count) of the last picture.
     last: Option<(u64, Option<(i32, i32)>)>,
     /// Seconds of the last rebuild.
@@ -184,6 +235,8 @@ impl Minimap {
         rect.set_tooltip_text("The level as far as you know it. Click: walk there.");
         let q = queue.clone();
         let r = rect.clone();
+        let shown = std::rc::Rc::new(std::cell::Cell::new((0, 0, COLNO, ROWNO)));
+        let sh = shown.clone();
         rect.signals()
             .gui_input()
             .connect(move |ev: Gd<InputEvent>| {
@@ -198,13 +251,16 @@ impl Minimap {
                     return;
                 }
                 let p = b.get_position();
-                let x = (p.x / size.x * COLNO as f32).floor() as i32;
-                let y = (p.y / size.y * ROWNO as f32).floor() as i32;
+                let (vx, vy, vw, vh) = sh.get();
+                let x = vx + (p.x / size.x * vw as f32).floor() as i32;
+                let y = vy + (p.y / size.y * vh as f32).floor() as i32;
                 push(&q, UiEvent::MapClick { x, y, button: 1 });
             });
         Minimap {
             rect,
             texture: None,
+            atlas: AtlasTexture::new_gd(),
+            shown,
             last: None,
             built_at: f64::NEG_INFINITY,
         }
@@ -232,9 +288,19 @@ impl Minimap {
             None => {
                 self.texture = ImageTexture::create_from_image(&image);
                 if let Some(t) = &self.texture {
-                    self.rect.set_texture(t);
+                    self.atlas.set_atlas(t);
+                    self.rect.set_texture(&self.atlas);
                 }
             }
+        }
+        let v = view(known_bounds(map, catalog));
+        if self.shown.get() != v {
+            self.shown.set(v);
+            let (x, y, w, h) = v;
+            self.atlas.set_region(Rect2::new(
+                Vector2::new((x * CELL) as f32, (y * CELL) as f32),
+                Vector2::new((w * CELL) as f32, (h * CELL) as f32),
+            ));
         }
     }
 
@@ -243,6 +309,8 @@ impl Minimap {
         self.last = None;
         self.built_at = f64::NEG_INFINITY;
         self.texture = None;
+        self.shown.set((0, 0, COLNO, ROWNO));
+        self.atlas = AtlasTexture::new_gd();
         self.rect
             .set_texture(Option::<&Gd<godot::classes::Texture2D>>::None);
         self.rect.clone().upcast::<CanvasItem>().queue_redraw();
@@ -263,6 +331,22 @@ mod tests {
         let wall = terrain_color(Terrain::Wall).unwrap();
         let sum = |c: Rgba| c[0] as u32 + c[1] as u32 + c[2] as u32;
         assert!(sum(wall) > sum(floor), "walls lighter than floors");
+    }
+
+    #[test]
+    fn the_view_is_what_is_known_with_a_margin_in_proportion() {
+        assert_eq!(view(None), (0, 0, COLNO, ROWNO));
+        // a first room: at least the minimum width, the map's proportions
+        let (x, y, w, h) = view(Some((30, 8, 38, 12)));
+        assert!((MIN_VIEW_W..COLNO / 2).contains(&w), "{w} cells across");
+        assert!((w * ROWNO / COLNO - h).abs() <= 1, "{w}×{h} in proportion");
+        assert!(x <= 30 - MARGIN && x + w > 38 + MARGIN);
+        assert!(y <= 8 - MARGIN_Y && y + h > 12 + MARGIN_Y);
+        // near an edge it stays inside the map
+        let (x, y, w, h) = view(Some((1, 0, 5, 3)));
+        assert!(x == 0 && y == 0 && w <= COLNO && h <= ROWNO);
+        // everything known: the whole map
+        assert_eq!(view(Some((1, 0, 79, 20))), (0, 0, COLNO, ROWNO));
     }
 
     #[test]

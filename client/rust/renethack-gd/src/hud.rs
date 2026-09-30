@@ -60,6 +60,8 @@ const LOG_FADED: f32 = 0.45;
 const TOOLTIP_GAP: f32 = 18.0;
 /// How long a toast stays (ui-design §4.2: "Slot 4 cleared · Undo").
 const TOAST_SECS: f64 = 4.0;
+/// The mode ribbon, from the top.
+const FLASH_Y: f32 = 76.0;
 /// Deadly chips pulse this many times a second (a 1.2 s cycle).
 const PULSE_HZ: f64 = 1.0 / 1.2;
 /// Seconds the banner of a new mode stays, fading out in the last third.
@@ -731,6 +733,10 @@ pub struct Hud {
     transient: Gd<Label>,
 
     // minimap, mode badge and order line, top right
+    minimap_panel: Gd<PanelContainer>,
+    /// A modal panel (the inventory) is open: the corners and the log
+    /// step back instead of peeking out clipped around it.
+    panel_open: bool,
     minimap: Minimap,
     minimap_caption: Gd<Label>,
     mode_panel: Gd<PanelContainer>,
@@ -742,6 +748,8 @@ pub struct Hud {
     prompt_panel: Gd<PanelContainer>,
     prompt: Gd<Label>,
     flash: Gd<Label>,
+    /// The ribbon the mode word sits in.
+    flash_ribbon: Gd<HBoxContainer>,
     flash_since: Option<f64>,
     deadly: Gd<Label>,
     combat: Option<bool>,
@@ -1044,6 +1052,7 @@ impl Hud {
         minimap_panel.add_child(&mm_col);
         root.add_child(&minimap_panel);
         solid.push(minimap_panel.clone().upcast());
+        let minimap_frame = minimap_panel.clone();
 
         let mut mode_panel = theme::framed(Frame::Banner);
         mode_panel.set_mouse_filter(MouseFilter::IGNORE);
@@ -1104,12 +1113,26 @@ impl Hud {
         root.add_child(&prompt_row);
 
         // ---- the banner of a new mode, big, under the prompt banner ----
-        let mut flash = theme::styled_label("", Face::TitleBold, 60, EXPLORE_TEXT);
-        place(&flash, [0.0, 0.0, 1.0, 0.0], [0.0, 110.0, 0.0, 190.0]);
+        // a ribbon under the prompt banner, off the hero (who is in the
+        // middle of the screen at every zoom)
+        let mut flash_row = hbox(0);
+        flash_row.set_alignment(AlignmentMode::CENTER);
+        place(
+            &flash_row,
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, FLASH_Y, 0.0, FLASH_Y],
+        );
+        let mut flash_panel = theme::framed(Frame::Banner);
+        flash_panel.set_mouse_filter(MouseFilter::IGNORE);
+        let mut flash = theme::styled_label("", Face::TitleBold, 34, EXPLORE_TEXT);
         flash.set_horizontal_alignment(HorizontalAlignment::CENTER);
-        theme::outline(&flash, 12);
-        flash.set_visible(false);
-        root.add_child(&flash);
+        flash.set_custom_minimum_size(Vector2::new(300.0, 0.0));
+        theme::outline(&flash, 6);
+        flash_panel.add_child(&flash);
+        flash_row.add_child(&flash_panel);
+        flash_row.set_visible(false);
+        root.add_child(&flash_row);
+        let flash_ribbon = flash_row.clone();
 
         // ---- the deadly banner, centre ----
         let mut deadly = theme::styled_label("", Face::TitleBold, 42, theme::DANGER);
@@ -1167,14 +1190,19 @@ impl Hud {
         root.add_child(&full_log_panel);
         solid.push(full_log_panel.clone().upcast());
 
-        // ---- the toast lane, top centre under the prompt banner ----
+        // ---- the toast lane: over the bar it is about, under any panel ----
         let mut toast_row = hbox(0);
         toast_row.set_alignment(AlignmentMode::CENTER);
-        place(&toast_row, [0.0, 0.0, 1.0, 0.0], [0.0, 80.0, 0.0, 80.0]);
+        let toast_y = -CLUSTER_BOTTOM - CLUSTER_H + 2.0;
+        place(
+            &toast_row,
+            [0.0, 1.0, 1.0, 1.0],
+            [0.0, toast_y, 0.0, toast_y],
+        );
         let mut toast_panel = theme::framed(Frame::Banner);
         toast_panel.set_mouse_filter(MouseFilter::STOP);
         let mut toast_box = hbox(14);
-        let mut toast = theme::styled_label("", Face::BodyBold, 17, theme::TEXT);
+        let mut toast = theme::styled_label("", Face::BodyBold, 16, theme::GOLD_BRIGHT);
         toast.set_vertical_alignment(VerticalAlignment::CENTER);
         toast_box.add_child(&toast);
         let toast_undo = theme::button("Undo", &queue, UiEvent::SlotUndo);
@@ -1224,6 +1252,8 @@ impl Hud {
             arrivals: VecDeque::new(),
             transient_panel,
             transient,
+            minimap_panel: minimap_frame,
+            panel_open: false,
             minimap,
             minimap_caption,
             mode_panel,
@@ -1233,6 +1263,7 @@ impl Hud {
             prompt_panel,
             prompt,
             flash,
+            flash_ribbon,
             flash_since: None,
             deadly,
             combat: None,
@@ -1297,8 +1328,8 @@ impl Hud {
             self.flash.set_text(word);
             self.flash.add_theme_color_override("font_color", text);
             self.flash_since = Some(now_secs());
-            self.flash.set_modulate(Color::WHITE);
-            self.flash.set_visible(true);
+            self.flash_ribbon.set_modulate(Color::WHITE);
+            self.flash_ribbon.set_visible(true);
         }
     }
 
@@ -1321,7 +1352,7 @@ impl Hud {
             .order_label
             .is_visible()
             .then(|| self.order_label.get_text().to_string());
-        (badge, order, self.flash.is_visible())
+        (badge, order, self.flash_ribbon.is_visible())
     }
 
     /// (HP, Pw) the orbs show, and the ten slots' (filled, enabled) (self-tests).
@@ -1337,9 +1368,10 @@ impl Hud {
         let a = flash_alpha(now - since);
         if a <= 0.0 {
             self.flash_since = None;
-            self.flash.set_visible(false);
+            self.flash_ribbon.set_visible(false);
         } else {
-            self.flash.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, a));
+            self.flash_ribbon
+                .set_modulate(Color::from_rgba(1.0, 1.0, 1.0, a));
         }
     }
 
@@ -1358,8 +1390,16 @@ impl Hud {
         self.pulse(now);
         self.fade_attrs(now);
         self.fade_flash(now);
-        if self.toast_panel.is_visible() && now > self.toast_until {
-            self.toast_panel.set_visible(false);
+        if self.toast_panel.is_visible() {
+            // the last second fades out
+            let left = self.toast_until - now;
+            if left <= 0.0 {
+                self.toast_panel.set_visible(false);
+            } else {
+                let a = left.min(1.0) as f32;
+                self.toast_panel
+                    .set_modulate(Color::from_rgba(1.0, 1.0, 1.0, a));
+            }
         }
         self.hover_log();
         if let Some(cat) = catalog {
@@ -1778,10 +1818,11 @@ impl Hud {
     /// Is a block that takes the mouse under `pos` (then the map is not hovered)?
     pub fn covers(&self, pos: Vector2) -> bool {
         self.root.is_visible()
-            && self
-                .solid
-                .iter()
-                .any(|p| p.is_visible_in_tree() && p.get_global_rect().contains_point(pos))
+            && self.solid.iter().any(|p| {
+                p.is_visible_in_tree()
+                    && p.get_mouse_filter() != MouseFilter::IGNORE
+                    && p.get_global_rect().contains_point(pos)
+            })
     }
 
     /// What the prompt line shows, if it is up (self-tests).
@@ -1862,6 +1903,42 @@ impl Hud {
         self.full_log_shade.set_visible(on);
         self.full_log_dirty = true;
         self.full_log_follow = true;
+        self.step_back();
+    }
+
+    /// A modal panel of the game's (the inventory) opens or closes.
+    pub fn set_panel_open(&mut self, on: bool) {
+        if self.panel_open != on {
+            self.panel_open = on;
+            self.step_back();
+        }
+    }
+
+    /// Under a modal panel the portrait, the minimap, the mode badge, the
+    /// order line and the log fade out (the orbs and the bar stay).
+    fn step_back(&mut self) {
+        let away = self.panel_open || self.full_log_panel.is_visible();
+        let m = Color::from_rgba(1.0, 1.0, 1.0, if away { 0.0 } else { 1.0 });
+        let filter = if away {
+            MouseFilter::IGNORE
+        } else {
+            MouseFilter::STOP
+        };
+        for mut c in [
+            self.portrait_panel.clone().upcast::<Control>(),
+            self.minimap_panel.clone().upcast(),
+            self.log_panel.clone().upcast(),
+        ] {
+            c.set_modulate(m);
+            c.set_mouse_filter(filter);
+        }
+        for mut c in [
+            self.mode_panel.clone().upcast::<Control>(),
+            self.order_label.clone().upcast(),
+            self.transient_panel.clone().upcast(),
+        ] {
+            c.set_modulate(m);
+        }
     }
 
     /// Forget what was shown (a new game).
@@ -1904,7 +1981,7 @@ impl Hud {
         self.mode_panel.set_visible(false);
         self.set_order_line(None);
         self.flash_since = None;
-        self.flash.set_visible(false);
+        self.flash_ribbon.set_visible(false);
         self.toast_panel.set_visible(false);
     }
 }

@@ -18,12 +18,14 @@ use std::rc::Rc;
 
 use godot::builtin::Side;
 use godot::classes::control::{FocusMode, MouseFilter, SizeFlags};
+use godot::classes::sub_viewport::UpdateMode;
 use godot::classes::text_server::AutowrapMode;
 use godot::classes::texture_rect::{ExpandMode, StretchMode};
 use godot::classes::{
-    Button, CanvasLayer, ColorRect, Control, GridContainer, HBoxContainer, InputEvent,
-    InputEventMouseButton, InputEventMouseMotion, Label, LineEdit, PanelContainer, StyleBoxFlat,
-    Texture2D, TextureRect, Time, VBoxContainer,
+    Button, Camera3D, CanvasLayer, ColorRect, Control, DirectionalLight3D, Environment,
+    GridContainer, HBoxContainer, InputEvent, InputEventMouseButton, InputEventMouseMotion, Label,
+    LineEdit, Node3D, PanelContainer, StyleBoxFlat, SubViewport, Texture2D, TextureRect, Time,
+    VBoxContainer,
 };
 use godot::global::{HorizontalAlignment, MouseButton, VerticalAlignment};
 use godot::prelude::*;
@@ -1057,6 +1059,120 @@ impl Socket {
     }
 }
 
+/// The render layer only the hero's model and what it holds are on (the
+/// map's rim light layer): the doll's camera sees nothing else.
+const HERO_LAYER: u32 = 1 << 1;
+/// The doll's render, twice the area it is shown in for sharpness.
+const DOLL_PX: Vector2i = Vector2i::new(480, 880);
+
+/// A camera in the map's own world that sees only the hero, lit by a key
+/// and a fill that light only the hero, on a clear background: the doll
+/// shows the hero in their gear as the map does.
+struct DollView {
+    viewport: Gd<SubViewport>,
+    camera: Gd<Camera3D>,
+    hero: Option<Gd<Node3D>>,
+    on: bool,
+}
+
+impl DollView {
+    fn new(parent: &mut Gd<Control>) -> DollView {
+        let mut viewport = SubViewport::new_alloc();
+        viewport.set_size(DOLL_PX);
+        viewport.set_transparent_background(true);
+        viewport.set_msaa_3d(godot::classes::viewport::Msaa::MSAA_4X);
+        viewport.set_update_mode(UpdateMode::DISABLED);
+        let mut camera = Camera3D::new_alloc();
+        camera.set_cull_mask(HERO_LAYER);
+        camera.set_fov(24.0);
+        let mut env = Environment::new_gd();
+        env.set_background(godot::classes::environment::BgMode::CLEAR_COLOR);
+        env.set_ambient_source(godot::classes::environment::AmbientSource::COLOR);
+        env.set_ambient_light_color(Color::from_rgb(0.55, 0.5, 0.46));
+        env.set_ambient_light_energy(1.6);
+        env.set_tonemapper(godot::classes::environment::ToneMapper::AGX);
+        camera.set_environment(&env);
+        // a warm key from the upper left, a cold rim from behind
+        for (rot, color, energy) in [
+            (
+                Vector3::new(-0.5, -0.6, 0.0),
+                Color::from_rgb(1.0, 0.9, 0.78),
+                3.4,
+            ),
+            (
+                Vector3::new(-0.2, 0.7, 0.0),
+                Color::from_rgb(0.9, 0.8, 0.7),
+                0.9,
+            ),
+            (
+                Vector3::new(-0.3, 2.6, 0.0),
+                Color::from_rgb(0.62, 0.7, 1.0),
+                1.6,
+            ),
+        ] {
+            let mut light = DirectionalLight3D::new_alloc();
+            light.set_rotation(rot);
+            light.set_color(color);
+            light.set_param(godot::classes::light_3d::Param::ENERGY, energy);
+            light.set_cull_mask(HERO_LAYER);
+            light.set_shadow(false);
+            camera.add_child(&light);
+        }
+        viewport.add_child(&camera);
+        parent.add_child(&viewport);
+        DollView {
+            viewport,
+            camera,
+            hero: None,
+            on: false,
+        }
+    }
+
+    fn texture(&self) -> Gd<Texture2D> {
+        self.viewport
+            .get_texture()
+            .expect("a viewport has a texture")
+            .upcast()
+    }
+
+    /// Aim at the hero (slowly circling them); false when there is none.
+    fn frame(&mut self, now: f64) -> bool {
+        let at = self
+            .hero
+            .as_ref()
+            .filter(|h| h.is_instance_valid() && h.is_inside_tree())
+            .map(|h| {
+                // the model's own transform (its yaw) is on its child
+                let facing = h
+                    .get_child(0)
+                    .and_then(|c| c.try_cast::<Node3D>().ok())
+                    .map_or(h.get_global_transform(), |c| c.get_global_transform());
+                Transform3D::new(facing.basis, h.get_global_position())
+            });
+        let on = at.is_some();
+        if on != self.on {
+            self.on = on;
+            self.viewport.set_update_mode(if on {
+                UpdateMode::ALWAYS
+            } else {
+                UpdateMode::DISABLED
+            });
+        }
+        let Some(t) = at else {
+            return false;
+        };
+        // in front of the model, a little above, turning slowly
+        let face = t.basis.col_c().normalized();
+        let yaw = (now * 0.25).sin() as f32 * 0.6;
+        let dir = Basis::from_axis_angle(Vector3::UP, yaw) * face;
+        let target = t.origin + Vector3::new(0.0, 0.82, 0.0);
+        let eye = target + dir * 4.1 + Vector3::new(0.0, 0.4, 0.0);
+        self.camera
+            .set_global_transform(Transform3D::new(Basis::IDENTITY, eye).looking_at(target));
+        true
+    }
+}
+
 /// The inventory panel.
 pub struct InventoryPanel {
     queue: UiQueue,
@@ -1105,12 +1221,16 @@ pub struct InventoryPanel {
     count_label: Gd<Label>,
     /// AC, gold and burden, from the HUD's status.
     status: (Option<String>, Option<String>, Option<String>),
+    /// The hero's render on the doll, and the silhouette it replaces.
+    doll_view: DollView,
+    hero_rect: Gd<TextureRect>,
+    figure: Gd<TextureRect>,
 }
 
 fn tab_button(glyph: Glyph, tip: &str, looks: &Looks) -> Gd<Button> {
     let mut b = Button::new_alloc();
     b.set_focus_mode(FocusMode::NONE);
-    b.set_custom_minimum_size(Vector2::new(40.0, 32.0));
+    b.set_custom_minimum_size(Vector2::new(42.0, 36.0));
     b.set_tooltip_text(tip);
     for s in [
         "normal",
@@ -1125,9 +1245,9 @@ fn tab_button(glyph: Glyph, tip: &str, looks: &Looks) -> Gd<Button> {
     let mut hover = looks.tab.duplicate_resource();
     hover.set_border_color(theme::GOLD);
     b.add_theme_stylebox_override("hover", &hover);
-    let mut t = fill_icon(5.0);
+    let mut t = fill_icon(3.0);
     t.set_texture(&icons::glyph_icon(glyph));
-    t.set_modulate(theme::GOLD);
+    t.set_modulate(theme::GOLD_BRIGHT);
     b.add_child(&t);
     b
 }
@@ -1413,6 +1533,20 @@ impl InventoryPanel {
             [76.0, -4.0, inner_w - 76.0, 448.0],
         );
         doll_area.add_child(&figure);
+        // the hero, rendered in their gear, over the engraved figure
+        let doll_view = DollView::new(&mut root);
+        let mut hero_rect = TextureRect::new_alloc();
+        hero_rect.set_mouse_filter(MouseFilter::IGNORE);
+        hero_rect.set_expand_mode(ExpandMode::IGNORE_SIZE);
+        hero_rect.set_stretch_mode(StretchMode::KEEP_ASPECT_CENTERED);
+        hero_rect.set_texture(&doll_view.texture());
+        place(
+            &hero_rect,
+            [0.0, 0.0, 0.0, 0.0],
+            [72.0, -8.0, inner_w - 72.0, 452.0],
+        );
+        hero_rect.set_visible(false);
+        doll_area.add_child(&hero_rect);
         let mut doll = Vec::new();
         let ghost_color = Color::from_rgba(0.72, 0.54, 0.23, 0.28);
         let mut slot_area = doll_area.clone();
@@ -1729,6 +1863,9 @@ impl InventoryPanel {
             count_box,
             count_label,
             status: (None, None, None),
+            doll_view,
+            hero_rect,
+            figure,
         }
     }
 
@@ -2608,6 +2745,21 @@ impl InventoryPanel {
             self.redraw();
         }
         self.pulse();
+        let shown = self.doll_view.frame(now_secs());
+        if self.hero_rect.is_visible() != shown {
+            self.hero_rect.set_visible(shown);
+            self.figure.set_visible(!shown);
+        }
+    }
+
+    /// The hero's model on the map (None: none yet), for the doll.
+    pub fn set_hero(&mut self, node: Option<Gd<Node3D>>) {
+        self.doll_view.hero = node.filter(|n| n.is_instance_valid());
+    }
+
+    /// Whether the doll shows the hero's render (self-tests).
+    pub fn doll_rendered(&self) -> bool {
+        self.hero_rect.is_visible()
     }
 
     /// Place and scale the panel above the HUD's bottom cluster.
@@ -2976,9 +3128,16 @@ impl InventoryPanel {
         }
         let item = match &self.mode {
             Mode::Browse => self.selected.and_then(|l| self.pack.by_letter(l)).cloned(),
+            // the item under the keyboard, else the first one suggested
             _ => match self.focused() {
                 Some(InvTarget::Cell(l)) => self.pack.by_letter(l).cloned(),
-                _ => None,
+                _ => self.cells_shown.iter().find_map(|t| match t {
+                    InvTarget::Cell(l) => {
+                        let on = self.question().is_none_or(|q| q.all || q.suggests(*l));
+                        on.then(|| self.pack.by_letter(*l).cloned()).flatten()
+                    }
+                    _ => None,
+                }),
             },
         };
         self.detail_empty.set_visible(item.is_none());
