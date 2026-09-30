@@ -13,10 +13,11 @@ use godot::classes::box_container::AlignmentMode;
 use godot::classes::control::{FocusMode, GrowDirection, MouseFilter, SizeFlags};
 use godot::classes::scroll_container::ScrollMode;
 use godot::classes::text_server::{AutowrapMode, OverrunBehavior};
+use godot::classes::texture_rect::{ExpandMode, StretchMode};
 use godot::classes::{
     Button, CanvasLayer, ColorRect, Control, DisplayServer, Font, HBoxContainer, Label, LineEdit,
     PanelContainer, RichTextLabel, ScrollContainer, StyleBox, StyleBoxEmpty, StyleBoxFlat,
-    VBoxContainer,
+    TextureRect, VBoxContainer,
 };
 use godot::global::{HorizontalAlignment, VerticalAlignment};
 use godot::prelude::*;
@@ -44,7 +45,7 @@ const ESC_CHAR: char = '\u{1b}';
 /// A menu item without a colour of its own (CLR_* NO_COLOR).
 const NO_COLOR: i32 = 8;
 /// One list row, and a blank separator row, in pixels.
-pub(crate) const ROW_H: f32 = 26.0;
+pub(crate) const ROW_H: f32 = 30.0;
 const SPACER_H: f32 = 10.0;
 /// Height a list dialog keeps for everything but the list: the title, the
 /// footer, the buttons, the panel's margins and the screen's.
@@ -56,7 +57,7 @@ const REFERENCE_SCREEN: Vector2 = theme::DESIGN;
 /// Space kept free left and right of a dialog.
 const SIDE_MARGIN: f32 = 80.0;
 /// Rows the palette shows at once.
-const PALETTE_ROWS: f32 = 16.0;
+const PALETTE_ROWS: f32 = 12.0;
 /// Unselectable menu lines: grey, still easy to read.
 const INFO_TEXT: Color = Color::from_rgb(0.74, 0.69, 0.61);
 
@@ -176,13 +177,64 @@ fn choice_label(c: char) -> String {
     }
 }
 
-/// The mark column of a pick-any row: "[ ]", "[x]", or the count.
+/// What the check medallion of a pick-any row shows: nothing, a check,
+/// or the count.
 fn mark_text(e: &MenuEntry) -> String {
     match (e.selected, e.count) {
-        (true, Some(n)) => format!("[{n}]"),
-        (true, None) => "[x]".to_string(),
-        (false, _) => "[ ]".to_string(),
+        (true, Some(n)) => n.to_string(),
+        (true, None) => "✔".to_string(),
+        (false, _) => String::new(),
     }
+}
+
+/// An option's value in the options menu: "[X]", "[ ]", "[default]".
+#[derive(Debug, Clone, PartialEq)]
+enum OptionValue {
+    On,
+    Off,
+    Set(String),
+}
+
+fn option_value(field: &str) -> Option<OptionValue> {
+    let inner = field.strip_prefix('[')?.strip_suffix(']')?;
+    if inner.contains('[') || inner.contains(']') {
+        return None;
+    }
+    Some(match inner.trim() {
+        "X" | "x" => OptionValue::On,
+        "" => OptionValue::Off,
+        v => OptionValue::Set(v.to_string()),
+    })
+}
+
+/// The columns the engine laid a row out in with runs of spaces or tabs
+/// (the options, the skills, the spells, `#?`): each is drawn in its own
+/// cell, so the body face keeps them aligned.
+fn fields(text: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut cur = String::new();
+    let mut spaces = 0;
+    for c in text.trim().chars() {
+        if c == ' ' {
+            spaces += 1;
+            continue;
+        }
+        if c == '\t' {
+            spaces = 2;
+            continue;
+        }
+        if spaces >= 2 && !cur.is_empty() {
+            out.push(std::mem::take(&mut cur));
+        } else if spaces == 1 {
+            cur.push(' ');
+        }
+        spaces = 0;
+        cur.push(c);
+    }
+    if !cur.is_empty() {
+        out.push(cur);
+    }
+    out
 }
 
 /// The item's map symbol, when it has a printable one.
@@ -264,7 +316,18 @@ struct Look {
     rows: [(Gd<StyleBoxFlat>, Gd<StyleBoxFlat>); 4],
     no_focus: Gd<StyleBoxEmpty>,
     default_button: Gd<StyleBox>,
+    /// The proportional faces of rows that are not engine columns.
+    body: Gd<Font>,
+    body_bold: Gd<Font>,
+    title: Gd<Font>,
+    /// The check medallion, off and on; the letter badge.
+    mark_off: Gd<StyleBoxFlat>,
+    mark_on: Gd<StyleBoxFlat>,
+    badge: Gd<StyleBoxFlat>,
 }
+
+/// Row text in the body face.
+const BODY_SIZE: i32 = 17;
 
 impl Look {
     fn new() -> Look {
@@ -280,19 +343,39 @@ impl Look {
             sb
         };
         let accent = |a: f32| Color { a, ..theme::ACCENT };
-        let white = |a: f32| Color::from_rgba(1.0, 1.0, 1.0, a);
+        let gold = |a: f32| Color { a, ..theme::GOLD };
+        // a selected row: a gold bar on its left edge
+        let picked = |bg: Color, border: Option<Color>| {
+            let mut sb = flat(bg, border);
+            sb.set_border_width(godot::builtin::Side::LEFT, 3);
+            if border.is_none() {
+                sb.set_border_color(theme::GOLD_BRIGHT);
+            }
+            sb
+        };
         let rows = [
-            (flat(white(0.0), None), flat(white(0.07), None)),
-            (flat(accent(0.16), None), flat(accent(0.24), None)),
+            (flat(gold(0.0), None), flat(gold(0.12), None)),
+            (picked(accent(0.13), None), picked(accent(0.2), None)),
             (
-                flat(white(0.08), Some(accent(0.9))),
-                flat(white(0.12), Some(accent(0.9))),
+                flat(gold(0.1), Some(accent(0.9))),
+                flat(gold(0.16), Some(accent(0.9))),
             ),
             (
-                flat(accent(0.2), Some(theme::ACCENT)),
-                flat(accent(0.28), Some(theme::ACCENT)),
+                picked(accent(0.18), Some(theme::ACCENT)),
+                picked(accent(0.26), Some(theme::ACCENT)),
             ),
         ];
+        let medallion = |bg: Color, border: Color| {
+            let mut sb = StyleBoxFlat::new_gd();
+            sb.set_bg_color(bg);
+            sb.set_border_width_all(1);
+            sb.set_border_color(border);
+            sb.set_corner_radius_all(4);
+            sb.set_content_margin_all(0.0);
+            sb
+        };
+        let mut badge = medallion(Color::from_rgba(0.043, 0.035, 0.031, 0.9), theme::GOLD_DIM);
+        badge.set_corner_radius_all(3);
         let (char_w, line_h) = theme::mono_metrics();
         Look {
             bold: theme::font(Face::MonoBold),
@@ -302,7 +385,18 @@ impl Look {
             rows,
             no_focus: StyleBoxEmpty::new_gd(),
             default_button: theme::default_button_style(),
+            body: theme::font(Face::Body),
+            body_bold: theme::font(Face::BodyBold),
+            title: theme::font(Face::Title),
+            mark_off: medallion(theme::SOCKET, theme::GOLD_DIM),
+            mark_on: medallion(Color::from_rgba(0.3, 0.22, 0.09, 1.0), theme::GOLD_BRIGHT),
+            badge,
         }
+    }
+
+    /// Pixels `text` takes in `font` at `size`.
+    fn text_w(&self, text: &str, font: &Gd<Font>, size: i32) -> f32 {
+        font.get_string_size_ex(text).font_size(size).done().x
     }
 
     /// Style a list row for its state.
@@ -464,12 +558,12 @@ impl MenuView {
             look.style_row(button, e.selected, self.cursor == Some(i));
             if let Some(m) = mark {
                 m.set_text(&mark_text(e));
-                let c = if e.selected {
-                    theme::ACCENT
+                let sb = if e.selected {
+                    &look.mark_on
                 } else {
-                    theme::TEXT_DIM
+                    &look.mark_off
                 };
-                m.add_theme_color_override("font_color", c);
+                m.add_theme_stylebox_override("normal", sb);
             }
             let color = match self.colors.get(i).copied() {
                 _ if e.selected => Color::from_rgb(1.0, 1.0, 1.0),
@@ -881,7 +975,8 @@ impl Dialogs {
         row.add_theme_constant_override("separation", 12);
         let mut out = Vec::new();
         for (text, ev) in items {
-            let b = theme::button(text, &self.queue, ev.clone());
+            let mut b = theme::button(text, &self.queue, ev.clone());
+            b.set_custom_minimum_size(Vector2::new(112.0, 36.0));
             row.add_child(&b);
             out.push(b);
         }
@@ -898,7 +993,12 @@ impl Dialogs {
     }
 
     /// A list row: a flat button over `cells` that queues `MenuClick(index)`.
-    fn row_button(&self, req: u64, index: usize, cells: &[Gd<Label>]) -> Gd<Button> {
+    fn row_button<T: Inherits<Control>>(
+        &self,
+        req: u64,
+        index: usize,
+        cells: &[Gd<T>],
+    ) -> Gd<Button> {
         let mut b = Button::new_alloc();
         b.set_focus_mode(FocusMode::NONE);
         b.set_custom_minimum_size(Vector2::new(0.0, ROW_H));
@@ -906,9 +1006,9 @@ impl Dialogs {
         self.look.style_row(&mut b, false, false);
         let mut hbox = HBoxContainer::new_alloc();
         hbox.set_mouse_filter(MouseFilter::IGNORE);
-        hbox.add_theme_constant_override("separation", 8);
+        hbox.add_theme_constant_override("separation", 10);
         for c in cells {
-            hbox.add_child(c);
+            hbox.add_child(&c.clone().upcast::<Control>());
         }
         place(&hbox, [0.0, 0.0, 1.0, 1.0], [8.0, 0.0, -8.0, 0.0]);
         b.add_child(&hbox);
@@ -945,23 +1045,74 @@ impl Dialogs {
         let any = how == PickHow::Any;
         let has_glyphs = state.entries.iter().any(|e| glyph_char(e).is_some());
         let look = self.look.clone();
+        // the engine's columns: the widest of each, over every row with more
+        // than one
+        let split: Vec<Vec<String>> = state.entries.iter().map(|e| fields(&e.text)).collect();
+        let mut col_w: Vec<f32> = Vec::new();
+        for (e, f) in state.entries.iter().zip(&split) {
+            if f.len() < 2 || row_kind(e) == RowKind::Spacer {
+                continue;
+            }
+            for (j, t) in f.iter().enumerate() {
+                let w = look.text_w(t, &look.body, BODY_SIZE) + 18.0;
+                if col_w.len() <= j {
+                    col_w.push(w);
+                } else {
+                    col_w[j] = col_w[j].max(w);
+                }
+            }
+        }
         let (mark_w, letter_w, glyph_w) = (
-            if any { look.chars(5) } else { 0.0 },
-            look.chars(3),
-            if has_glyphs { look.chars(2) } else { 0.0 },
+            if any { 22.0 } else { 0.0 },
+            24.0,
+            if has_glyphs { 24.0 } else { 0.0 },
         );
-        let longest = state
+        let text_w = state
             .entries
             .iter()
-            .map(|e| e.text.chars().count())
-            .max()
-            .unwrap_or(0);
+            .zip(&split)
+            .map(|(e, f)| {
+                if f.len() >= 2 {
+                    return col_w.iter().take(f.len()).sum::<f32>();
+                }
+                let font = if row_kind(e) == RowKind::Header {
+                    &look.title
+                } else {
+                    &look.body
+                };
+                look.text_w(&e.text, font, BODY_SIZE + 2)
+            })
+            .fold(0.0f32, f32::max);
+        // the cells of a row laid out in columns, else one cell
+        let columns = |f: &[String], color: Color, font: &Gd<Font>, size: i32| -> Vec<Gd<Label>> {
+            f.iter()
+                .enumerate()
+                .map(|(j, t)| {
+                    let last = j + 1 == f.len();
+                    let w = (!last).then(|| col_w.get(j).copied().unwrap_or(0.0));
+                    // an option's value: on, off, or what it is set to
+                    let (t, color) = match option_value(t) {
+                        Some(OptionValue::On) => ("✔".to_string(), theme::GOOD),
+                        Some(OptionValue::Off) => ("·".to_string(), theme::TEXT_OFF),
+                        Some(OptionValue::Set(v)) => (v, theme::GOLD_BRIGHT),
+                        None => (t.clone(), color),
+                    };
+                    let mut l = cell(&t, color, Some(font), w);
+                    l.add_theme_font_size_override("font_size", size);
+                    l
+                })
+                .collect()
+        };
+        // non-item rows start where the items' text does
+        let lead = mark_w
+            + letter_w
+            + glyph_w
+            + 10.0 * (1.0 + f32::from(u8::from(any)) + f32::from(u8::from(has_glyphs)));
+        let title_w = title.map_or(0.0, |t| look.text_w(t, &look.body_bold, 20).min(760.0));
         // row padding, column gaps, the scroll bar
-        let width = self.fit_width(
-            longest,
-            mark_w + letter_w + glyph_w + 16.0 + 24.0 + 20.0,
-            560.0,
-        );
+        let chrome = mark_w + letter_w + glyph_w + 16.0 + 32.0 + 20.0;
+        let max_w = (self.screen().x - 2.0 * SIDE_MARGIN).max(420.0);
+        let width = (text_w + chrome).max(title_w).clamp(420.0, max_w);
         let mut tops = Vec::with_capacity(state.entries.len());
         let mut y = 0.0;
         for e in &state.entries {
@@ -1002,9 +1153,27 @@ impl Dialogs {
                             Some(c) if (0..16).contains(&c) && c != NO_COLOR => nh_color(c),
                             _ => theme::ACCENT,
                         };
-                        cell(&e.text, color, Some(&look.bold), None).upcast()
+                        let mut l = cell(e.text.trim(), color, Some(&look.title), None);
+                        l.add_theme_font_size_override("font_size", BODY_SIZE + 3);
+                        l.upcast()
                     }
-                    _ => cell(&e.text, INFO_TEXT, None, None).upcast(),
+                    // column headings line up with the columns below
+                    _ if split[i].len() >= 2 => {
+                        let mut hbox = HBoxContainer::new_alloc();
+                        hbox.add_theme_constant_override("separation", 0);
+                        let mut pad = Control::new_alloc();
+                        pad.set_custom_minimum_size(Vector2::new(lead + 8.0, 0.0));
+                        hbox.add_child(&pad);
+                        for l in columns(&split[i], INFO_TEXT, &look.body_bold, BODY_SIZE - 1) {
+                            hbox.add_child(&l);
+                        }
+                        hbox.upcast()
+                    }
+                    _ => {
+                        let mut l = cell(&e.text, INFO_TEXT, Some(&look.body), None);
+                        l.add_theme_font_size_override("font_size", BODY_SIZE - 1);
+                        l.upcast()
+                    }
                 };
                 let h = if kind == RowKind::Spacer {
                     SPACER_H
@@ -1017,27 +1186,78 @@ impl Dialogs {
                 rows.push(MenuRow::Fixed);
                 continue;
             }
-            let mut cells = Vec::new();
-            let mark = any.then(|| cell("", theme::TEXT_DIM, None, Some(mark_w)));
-            cells.extend(mark.clone());
-            let letter = e.letter.map_or(String::new(), |l| format!("{l} -"));
-            cells.push(cell(&letter, theme::ACCENT, None, Some(letter_w)));
-            if has_glyphs {
-                let (sym, color) = match (glyph_char(e), &e.glyph) {
-                    (Some(c), Some(g)) => (c.to_string(), nh_color(g.color)),
-                    _ => (String::new(), theme::TEXT),
-                };
-                cells.push(cell(&sym, color, Some(&look.bold), Some(glyph_w)));
+            let mut cells: Vec<Gd<Control>> = Vec::new();
+            // a check medallion, the letter on a badge, the item's icon
+            let mark = any.then(|| {
+                let mut m = cell("", theme::GOLD_BRIGHT, Some(&look.body_bold), Some(mark_w));
+                m.add_theme_font_size_override("font_size", 13);
+                m.set_horizontal_alignment(HorizontalAlignment::CENTER);
+                m.set_v_size_flags(SizeFlags::SHRINK_CENTER);
+                m.set_custom_minimum_size(Vector2::new(mark_w, mark_w));
+                m.add_theme_stylebox_override("normal", &look.mark_off);
+                m
+            });
+            if let Some(m) = &mark {
+                cells.push(m.clone().upcast());
             }
-            let font = if e.skipinvert {
-                Some(&look.italic)
-            } else if e.attr & 0x0f == 1 {
-                Some(&look.bold)
+            let mut letter = cell(
+                &e.letter.map_or(String::new(), |l| l.to_string()),
+                theme::GOLD_BRIGHT,
+                Some(&look.body_bold),
+                Some(letter_w),
+            );
+            letter.add_theme_font_size_override("font_size", 15);
+            letter.set_horizontal_alignment(HorizontalAlignment::CENTER);
+            letter.set_v_size_flags(SizeFlags::SHRINK_CENTER);
+            letter.set_custom_minimum_size(Vector2::new(letter_w, 22.0));
+            if e.letter.is_some() {
+                letter.add_theme_stylebox_override("normal", &look.badge);
+            }
+            cells.push(letter.upcast());
+            if has_glyphs {
+                match &e.glyph {
+                    // an object: its appearance's icon
+                    Some(g) if g.kind == nh_protocol::GlyphKind::Obj => {
+                        let class = glyph_char(e).unwrap_or('?');
+                        let mut t = TextureRect::new_alloc();
+                        t.set_mouse_filter(MouseFilter::IGNORE);
+                        t.set_expand_mode(ExpandMode::IGNORE_SIZE);
+                        t.set_stretch_mode(StretchMode::KEEP_ASPECT_CENTERED);
+                        t.set_custom_minimum_size(Vector2::new(glyph_w, glyph_w));
+                        t.set_v_size_flags(SizeFlags::SHRINK_CENTER);
+                        t.set_texture(&crate::icons::item_icon(g.tile, class));
+                        cells.push(t.upcast());
+                    }
+                    g => {
+                        let (sym, color) = match (glyph_char(e), g) {
+                            (Some(c), Some(g)) => (c.to_string(), nh_color(g.color)),
+                            _ => (String::new(), theme::TEXT),
+                        };
+                        let mut l = cell(&sym, color, Some(&look.bold), Some(glyph_w));
+                        l.set_horizontal_alignment(HorizontalAlignment::CENTER);
+                        cells.push(l.upcast());
+                    }
+                }
+            }
+            let font = if e.attr & 0x0f == 1 {
+                &look.body_bold
             } else {
-                None
+                &look.body
             };
-            let text = cell(&e.text, theme::TEXT, font, None);
-            cells.push(text.clone());
+            let mut texts = if split[i].len() >= 2 {
+                columns(&split[i], theme::TEXT, font, BODY_SIZE)
+            } else {
+                let mut l = cell(&e.text, theme::TEXT, Some(font), None);
+                l.add_theme_font_size_override("font_size", BODY_SIZE);
+                vec![l]
+            };
+            if e.skipinvert {
+                for t in texts.iter_mut() {
+                    t.add_theme_color_override("font_color", INFO_TEXT);
+                }
+            }
+            let text = texts[0].clone();
+            cells.extend(texts.into_iter().map(|t| t.upcast::<Control>()));
             let button = self.row_button(req, i, &cells);
             rows_box.add_child(&button);
             rows.push(MenuRow::Item { button, mark, text });
@@ -1054,7 +1274,7 @@ impl Dialogs {
 
         let mut status = theme::label("");
         status.add_theme_color_override("font_color", theme::ACCENT);
-        status.add_theme_font_override("font", &look.bold);
+        status.add_theme_font_override("font", &look.body_bold);
         col.add_child(&status);
         let hint = self.hint(&mut col, "", width);
         self.buttons(
@@ -1093,13 +1313,21 @@ impl Dialogs {
     ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
         let cmds = palette_cmds(catalog);
         let look = self.look.clone();
-        let (name_w, key_w) = (look.chars(16), look.chars(4));
+        let name_w = cmds
+            .iter()
+            .map(|c| look.text_w(&c.name, &look.body_bold, BODY_SIZE))
+            .fold(120.0f32, f32::max)
+            + 8.0;
+        let key_w = look.chars(4);
         let longest = cmds
             .iter()
             .map(|c| c.desc.chars().count())
             .max()
             .unwrap_or(0);
-        let width = self.fit_width(longest, name_w + key_w + 16.0 + 16.0 + 20.0, 640.0);
+        // the descriptions in the body face, about 0.52 em a character
+        let desc_w = longest as f32 * BODY_SIZE as f32 * 0.52;
+        let max_w = (self.screen().x - 2.0 * SIDE_MARGIN).max(480.0);
+        let width = (desc_w + name_w + key_w + 16.0 + 30.0 + 20.0).clamp(480.0, max_w.min(820.0));
         let max_h = (self.screen().y - LIST_CHROME).max(ROW_H * 4.0);
         // a fixed height, so the dialog does not jump while filtering
         let view_h = (cmds.len() as f32 * ROW_H).clamp(ROW_H, max_h.min(PALETTE_ROWS * ROW_H));
@@ -1114,9 +1342,12 @@ impl Dialogs {
         rows_box.set_h_size_flags(SizeFlags::EXPAND_FILL);
         let mut slots = Vec::with_capacity(cmds.len());
         for i in 0..cmds.len() {
-            let name = cell("", theme::TEXT, Some(&look.bold), Some(name_w));
-            let key = cell("", theme::ACCENT, None, Some(key_w));
-            let desc = cell("", theme::TEXT_DIM, None, None);
+            let mut name = cell("", theme::TEXT, Some(&look.body_bold), Some(name_w));
+            name.add_theme_font_size_override("font_size", BODY_SIZE);
+            let mut key = cell("", theme::ACCENT, None, Some(key_w));
+            key.add_theme_font_size_override("font_size", 14);
+            let mut desc = cell("", theme::TEXT_DIM, Some(&look.body), None);
+            desc.add_theme_font_size_override("font_size", BODY_SIZE - 1);
             let button = self.row_button(req, i, &[name.clone(), key.clone(), desc.clone()]);
             rows_box.add_child(&button);
             slots.push(PaletteSlot {
@@ -1221,15 +1452,33 @@ impl Dialogs {
         lines: &[TextLine],
         req: u64,
     ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
-        let longest = lines
+        // prose (`^X`, the intro, messages) reads in the body face; tables
+        // and pictures keep the monospace columns
+        let prose = !lines.iter().any(|l| {
+            let t = l.text.trim();
+            t.contains("  ") || t.contains('|') || t.contains("--") || t.contains('\t')
+        });
+        let look = self.look.clone();
+        let longest_w = lines
             .iter()
-            .map(|l| l.text.chars().count())
-            .max()
-            .unwrap_or(0)
-            .max(title.map_or(0, |t| t.chars().count().min(60)));
+            .map(|l| {
+                if prose {
+                    look.text_w(&l.text, &look.body_bold, BODY_SIZE)
+                } else {
+                    look.chars(l.text.chars().count())
+                }
+            })
+            .fold(0.0f32, f32::max)
+            .max(title.map_or(0.0, |t| look.text_w(t, &look.body_bold, 20).min(760.0)));
         // the scroll bar and a little air
-        let width = self.fit_width(longest, 30.0, 420.0);
-        let content_h = lines.len().max(1) as f32 * self.look.line_h + 8.0;
+        let max_w = (self.screen().x - 2.0 * SIDE_MARGIN).max(420.0);
+        let width = (longest_w + 30.0).clamp(420.0, max_w);
+        let line_h = if prose {
+            look.body.get_height_ex().font_size(BODY_SIZE).done()
+        } else {
+            self.look.line_h
+        };
+        let content_h = lines.len().max(1) as f32 * line_h + 8.0;
         let max_h = (self.screen().y - TEXT_CHROME).max(ROW_H * 4.0);
         let text = Scroller::new(width, content_h.min(max_h), true);
         let (shade, panel, mut col) = self.frame(width, title);
@@ -1243,8 +1492,16 @@ impl Dialogs {
         label.set_autowrap_mode(AutowrapMode::OFF);
         label.set_scroll_active(false);
         label.set_fit_content(true);
-        label.add_theme_font_override("italics_font", &self.look.italic);
-        label.set_text(&show_text(lines));
+        if prose {
+            label.add_theme_font_override("normal_font", &look.body);
+            label.add_theme_font_override("bold_font", &look.body_bold);
+            label.add_theme_font_size_override("normal_font_size", BODY_SIZE);
+            label.add_theme_font_size_override("bold_font_size", BODY_SIZE);
+            label.set_text(&prose_text(lines));
+        } else {
+            label.add_theme_font_override("italics_font", &self.look.italic);
+            label.set_text(&show_text(lines));
+        }
         let mut scroll = text.scroll.clone();
         scroll.add_child(&label);
         col.add_child(&scroll);
@@ -1606,6 +1863,27 @@ fn show_text(lines: &[TextLine]) -> String {
         .join("\n")
 }
 
+/// A text window of prose: as `show_text`, and the lines that head a
+/// section ("Background:") in gold.
+fn prose_text(lines: &[TextLine]) -> String {
+    lines
+        .iter()
+        .map(|l| {
+            let heading = l.attr & 0x0f == 0
+                && l.text.ends_with(':')
+                && !l.text.starts_with(' ')
+                && l.text.len() < 60;
+            if heading {
+                let t = bbcode_escape(&l.text);
+                format!("[b][color={}]{t}[/color][/b]", hex(theme::GOLD_BRIGHT))
+            } else {
+                show_text(std::slice::from_ref(l))
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 fn dialog_ui(req: u64, ev: DialogEvent) -> UiEvent {
     UiEvent::Dialog { req, ev }
 }
@@ -1736,11 +2014,26 @@ mod tests {
     #[test]
     fn menu_marks_show_selection_and_counts() {
         let mut e = entry(true, "arrows", 0);
-        assert_eq!(mark_text(&e), "[ ]");
+        assert_eq!(mark_text(&e), "");
         e.selected = true;
-        assert_eq!(mark_text(&e), "[x]");
+        assert_eq!(mark_text(&e), "✔");
         e.count = Some(12);
-        assert_eq!(mark_text(&e), "[12]");
+        assert_eq!(mark_text(&e), "12");
+    }
+
+    #[test]
+    fn engine_columns_split_on_runs_of_spaces() {
+        assert_eq!(
+            fields("pickup_stolen      [X]  (for autopickup)"),
+            ["pickup_stolen", "[X]", "(for autopickup)"]
+        );
+        assert_eq!(fields("autoquiver   [ ]"), ["autoquiver", "[ ]"]);
+        assert_eq!(fields("All types"), ["All types"]);
+        assert_eq!(fields("enhance\t[A] advance"), ["enhance", "[A] advance"]);
+        assert_eq!(option_value("[X]"), Some(OptionValue::On));
+        assert_eq!(option_value("[ ]"), Some(OptionValue::Off));
+        assert_eq!(option_value("[all]"), Some(OptionValue::Set("all".into())));
+        assert_eq!(option_value("[A] advance"), None);
     }
 
     #[test]
