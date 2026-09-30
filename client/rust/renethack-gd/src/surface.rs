@@ -35,8 +35,10 @@ pub enum Role {
     Wall,
     /// Door leaves and frames: they dither too.
     Door,
-    /// Caps and plinths: they stay.
+    /// Caps and plinths.
     Trim,
+    /// A wall cut down in front of open ground: masonry with a broken top.
+    Ruin,
     /// The rock the level is cut into: broken up, cut in facets, dithers.
     Rock,
     /// The ground under the level: rock fading into darkness.
@@ -156,8 +158,25 @@ impl Surfaces {
         if Some(m) == self.top {
             set(&mut mat, "natural", 1.0);
         }
+        // whatever stands between the eye and the hero thins out around
+        // them; floors and the ground below never do
+        if !matches!(role, Role::Floor | Role::Void) {
+            set(&mut mat, "occlude", 1.0);
+            set(&mut mat, "solid_top", 10.0);
+        }
+        // nothing on the level is pure black: a faint cold light of its own
+        let lift = match role {
+            Role::Void => Color::from_rgb(0.0, 0.0, 0.0),
+            Role::Rock => Color::from_rgb(0.003, 0.0034, 0.0045),
+            _ => Color::from_rgb(0.0014, 0.0015, 0.002),
+        };
+        mat.set_shader_parameter("lift", &lift.to_variant());
         match role {
             Role::Prop | Role::Trim => set(&mut mat, "glow", 0.02),
+            Role::Ruin => {
+                set(&mut mat, "glow", 0.02);
+                set(&mut mat, "displace", 0.03);
+            }
             Role::Floor => {
                 set(&mut mat, "grime", 1.0);
                 set(&mut mat, "wet", 0.8);
@@ -168,23 +187,19 @@ impl Surfaces {
                     "natural_top",
                     if role == Role::Wall { 1.0 } else { 0.0 },
                 );
-                set(&mut mat, "occlude", 1.0);
                 set(&mut mat, "glow", 0.03);
-                set(&mut mat, "solid_top", 1.98);
             }
             Role::Rock => {
-                set(&mut mat, "occlude", 1.0);
-                set(&mut mat, "solid_top", 1.9);
                 set(&mut mat, "displace", 0.06);
                 set(&mut mat, "natural", 1.0);
                 set(&mut mat, "detail_strength", 0.5);
-                set(&mut mat, "glow", 0.1);
-                set(&mut mat, "memory_glow", 0.08);
+                set(&mut mat, "glow", 0.05);
+                set(&mut mat, "memory_glow", 0.04);
             }
             Role::Void => {
                 set(&mut mat, "void_fade", 1.0);
                 set(&mut mat, "memory", 0.0);
-                set(&mut mat, "glow", 0.05);
+                set(&mut mat, "glow", 0.02);
                 set(&mut mat, "macro", 1.4);
             }
         }

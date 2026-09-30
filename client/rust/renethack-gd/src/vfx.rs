@@ -791,10 +791,10 @@ impl Vfx {
         m.set_turbulence_noise_scale(1.5);
         m.set_color_ramp(&ramp(Color::from_rgb(1.0, 0.62, 0.25), 4.0));
         p.set_process_material(&m);
-        p.set_amount(10);
+        p.set_amount(14);
         p.set_lifetime(1.4);
         p.set_randomness_ratio(0.5);
-        p.set_draw_pass_mesh(0, &quad(0.02));
+        p.set_draw_pass_mesh(0, &quad(0.035));
         p.set_material_override(&particle_material(&self.soft, true, false));
         p.set_cast_shadows_setting(ShadowCastingSetting::OFF);
         p.set_visibility_aabb(Aabb::new(

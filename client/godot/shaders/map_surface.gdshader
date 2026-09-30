@@ -56,6 +56,8 @@ uniform float memory_glow = 0.06;
 uniform float void_fade = 0.0;
 // what the fog of war takes from what is remembered (0: nothing)
 uniform float memory = 1.0;
+// the least light a surface gives out (linear): never pure black
+uniform vec3 lift : source_color = vec3(0.0);
 
 global uniform vec3 hero_pos;
 global uniform vec3 eye_pos;
@@ -108,7 +110,7 @@ void vertex() {
 		// move together, no cracks
 		// lumps a metre or so across: finer, the grid would show as cobbles
 		vec3 d = vec3(noise3(w * 1.1), noise3(w * 1.1 + 17.3), noise3(w * 1.1 + 31.1)) - 0.5;
-		vec3 dw = d * displace * 2.0;
+		vec3 dw = d * displace * 3.5;
 		// the tops are uneven on a larger scale too
 		dw.y += (fbm2(w.xz * 0.8) - 0.5) * displace * 7.0 * smoothstep(0.2, 0.45, w.y);
 		w += dw;
@@ -145,7 +147,9 @@ void fragment() {
 		float before = 1.0 - 0.6 / sqrt(len2);
 		if (t > 0.0 && t < before) {
 			float d = length(wpos - (eye_pos + ch * t));
-			float cover = mix(0.22, 1.0, smoothstep(0.7, 1.35, d));
+			// a cone from the eye widening to the hero's own size at the hero
+			float r = 0.25 + 0.5 * t;
+			float cover = mix(0.2, 1.0, smoothstep(r * 0.7, r * 1.3, d));
 			if (bayer4(FRAGCOORD.xy) >= cover) {
 				discard;
 			}
@@ -191,7 +195,11 @@ void fragment() {
 		// mottled at two scales, never a pattern that could be paving
 		float grain = fbm3(wpos * 1.1) * 0.6 + fbm3(wpos * 4.7) * 0.4;
 		vec3 base = mix(side_color.rgb, top_color.rgb, bw.y);
-		vec3 rock = base * mix(0.6, 1.3, grain);
+		// strata across the faces, pits and cracks in them
+		float strata = 0.5 + 0.5 * sin(wpos.y * 11.0 + fbm3(wpos * 0.9) * 7.0);
+		float crack = smoothstep(0.46, 0.5, fbm3(wpos * 2.2 + 3.1)) - smoothstep(0.5, 0.54, fbm3(wpos * 2.2 + 3.1));
+		vec3 rock = base * mix(0.55, 1.35, grain) * mix(1.0, mix(0.8, 1.1, strata), 1.0 - bw.y);
+		rock *= 1.0 - 0.45 * crack;
 		albedo = mix(albedo, rock, nat);
 		// its relief from the noise's slope, not from the mesh's grid
 		const float STEP = 0.04;
@@ -199,7 +207,7 @@ void fragment() {
 		float h0 = fbm3(q);
 		vec3 grad = vec3(fbm3(q + vec3(STEP, 0, 0)), fbm3(q + vec3(0, STEP, 0)), fbm3(q + vec3(0, 0, STEP))) - h0;
 		grad /= STEP;
-		vec3 bump = normalize(n - (grad - dot(grad, n) * n) * 0.09);
+		vec3 bump = normalize(n - (grad - dot(grad, n) * n) * 0.22);
 		wn = normalize(mix(wn, bump, nat));
 		// nor the texture's cavities and gloss: the noise's own
 		orm = mix(orm, vec3(mix(0.55, 1.0, smoothstep(0.25, 0.6, h0)), mix(0.55, 0.9, grain), 0.0), nat);
@@ -230,7 +238,7 @@ void fragment() {
 	float luma = dot(albedo, vec3(0.299, 0.587, 0.114));
 	vec3 remembered = mix(albedo, luma * MEMORY_TINT, 0.8) * 0.4;
 	vec3 color = mix(remembered, albedo, seen);
-	vec3 emission = color * mix(memory_glow, glow, seen);
+	vec3 emission = color * mix(memory_glow, glow, seen) + lift;
 	if (void_fade > 0.0) {
 		float near = mix(1.0, fow.a, void_fade);
 		color *= near;

@@ -1,9 +1,14 @@
 // A torch's flame (map_view.rs): a billboard turning about y to face the
-// camera, shaped and licked by scrolling noise, white-hot at its root.
+// camera, playing a flipbook of a real flame (Unity Labs, CC0), or shaped
+// and licked by scrolling noise without one.
 shader_type spatial;
 render_mode unshaded, blend_add, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled;
 
 uniform float energy = 1.3;
+uniform sampler2D flipbook : source_color, filter_linear_mipmap, repeat_disable;
+uniform bool has_flipbook = false;
+uniform vec2 frames = vec2(16.0, 4.0);
+uniform float fps = 24.0;
 // each flame its own
 instance uniform float phase = 0.0;
 
@@ -33,17 +38,32 @@ void vertex() {
 		vec4(front * s, 0.0), MODEL_MATRIX[3]);
 }
 
+vec3 page(float f, vec2 uv) {
+	float n = frames.x * frames.y;
+	f = mod(f, n);
+	vec2 cell = vec2(mod(f, frames.x), floor(f / frames.x));
+	return texture(flipbook, (cell + clamp(uv, 0.002, 0.998)) / frames).rgb;
+}
+
 void fragment() {
-	float y = 1.0 - UV.y;
-	float t = TIME + phase;
-	float n = fbm(vec2(UV.x * 3.0, y * 2.4 - t * 2.3));
-	float x = (UV.x - 0.5) * 2.0 + (n - 0.5) * 0.7 * y;
-	float width = mix(0.75, 0.04, pow(y, 0.75));
-	float shape = 1.0 - smoothstep(width * 0.45, width, abs(x));
-	shape *= smoothstep(0.0, 0.1, y) * (1.0 - smoothstep(0.45 + n * 0.45, 1.0, y));
-	float heat = shape * (1.25 - y);
-	vec3 col = mix(vec3(1.0, 0.22, 0.03), vec3(1.0, 0.68, 0.3), smoothstep(0.25, 0.8, heat));
-	col = mix(col, vec3(1.0, 0.93, 0.75), smoothstep(0.8, 1.1, heat));
-	ALBEDO = col * energy;
-	ALPHA = clamp(shape * 1.2, 0.0, 1.0);
+	if (has_flipbook) {
+		float t = (TIME + phase) * fps;
+		float f = floor(t);
+		vec3 c = mix(page(f, UV), page(f + 1.0, UV), fract(t));
+		ALBEDO = c * energy * 1.6;
+		ALPHA = clamp(max(c.r, max(c.g, c.b)) * 1.5, 0.0, 1.0);
+	} else {
+		float y = 1.0 - UV.y;
+		float t = TIME + phase;
+		float n = fbm(vec2(UV.x * 3.0, y * 2.4 - t * 2.3));
+		float x = (UV.x - 0.5) * 2.0 + (n - 0.5) * 0.7 * y;
+		float width = mix(0.75, 0.04, pow(y, 0.75));
+		float shape = 1.0 - smoothstep(width * 0.45, width, abs(x));
+		shape *= smoothstep(0.0, 0.1, y) * (1.0 - smoothstep(0.45 + n * 0.45, 1.0, y));
+		float heat = shape * (1.25 - y);
+		vec3 col = mix(vec3(1.0, 0.22, 0.03), vec3(1.0, 0.68, 0.3), smoothstep(0.25, 0.8, heat));
+		col = mix(col, vec3(1.0, 0.93, 0.75), smoothstep(0.8, 1.1, heat));
+		ALBEDO = col * energy;
+		ALPHA = clamp(shape * 1.2, 0.0, 1.0);
+	}
 }
