@@ -1717,6 +1717,9 @@ fn inventory() -> Vec<Step> {
         Step::Wait("its detail", |g| {
             Ok(panel(g)?.selected() == letter_of(g, "spear"))
         }),
+        Step::Wait("the doll renders the hero", |g| {
+            Ok(panel(g)?.doll_rendered())
+        }),
         Step::Shot("inventory-browse"),
         inv(InvInput::Filter(InvFilter::Weapons)),
         Step::Wait("only the weapons", |g| {
@@ -1867,21 +1870,41 @@ static SEARCH_FROM: AtomicU32 = AtomicU32::new(0);
 
 fn mark_searches(g: &mut RenethackGame) -> Result<(), String> {
     SEARCH_FROM.store(g.order_actions as u32, Ordering::Relaxed);
+    g.last_stop = None;
     Ok(())
 }
 
-/// Twenty searches as one order since the mark.
+/// The count went to a search order of twenty.
+fn searching_twenty(g: &RenethackGame) -> Result<bool, String> {
+    match g.driver.order() {
+        Some(nh_world::Order::Repeat { key: 's', left }) if *left >= 18 => Ok(true),
+        Some(other) => Err(format!("the order is {other:?}")),
+        None => Ok(false),
+    }
+}
+
+/// The search order ran to its end as searches: twenty, unless something
+/// worth a look stopped it (the pet picking something up), as orders do.
 fn searched_twenty(g: &RenethackGame) -> Result<bool, String> {
     let n = g.order_actions - u64::from(SEARCH_FROM.load(Ordering::Relaxed));
-    if !idle_command(g)? || n < 20 {
+    if !idle_command(g)? || n == 0 {
         return Ok(false);
     }
-    let all_s = g.order_log.iter().rev().take(20).all(|(_, c)| *c == 's');
-    if n == 20 && all_s {
+    let all_s = g
+        .order_log
+        .iter()
+        .rev()
+        .take(n as usize)
+        .all(|(_, c)| *c == 's');
+    let done = n == 20 && g.last_stop == Some(Stop::Done);
+    let stopped = n < 20 && g.last_stop.as_ref().is_some_and(|s| !s.is_completion());
+    if all_s && (done || stopped) {
+        godot_print!("selftest: bar: {n} searches, {:?}", g.last_stop);
         Ok(true)
     } else {
         Err(format!(
-            "{n} actions, the last ones {:?}",
+            "{n} actions ({:?}), the last ones {:?}",
+            g.last_stop,
             g.order_log.iter().rev().take(3).collect::<Vec<_>>()
         ))
     }
@@ -1966,6 +1989,7 @@ fn bar() -> Vec<Step> {
             Ok(line.as_deref() == Some("Count: 20"))
         }),
         key('s'),
+        Step::Wait("a search order of twenty", searching_twenty),
         Step::Wait("twenty searches", searched_twenty),
     ]);
     steps.extend(quit());
@@ -1988,6 +2012,7 @@ fn bar() -> Vec<Step> {
             Ok(line.as_deref() == Some("Count: 20"))
         }),
         key('s'),
+        Step::Wait("a search order of twenty", searching_twenty),
         Step::Wait("twenty searches", searched_twenty),
     ]);
     steps.extend(quit());
@@ -3475,6 +3500,17 @@ impl SelfTest {
                     game,
                     "--screenshots needs a display: run without --headless (e.g. under xvfb-run)",
                 );
+            }
+            // the review set is 1920×1080 (success criterion 1) unless
+            // Godot's --resolution says otherwise
+            let asked = godot::classes::Os::singleton()
+                .get_cmdline_args()
+                .as_slice()
+                .iter()
+                .any(|a| a.to_string().starts_with("--resolution"));
+            if self.shots.is_some() && !asked {
+                let mut ds = DisplayServer::singleton();
+                ds.window_set_size(Vector2i::new(1920, 1080));
             }
             if let Some(dir) = &self.shots
                 && let Err(e) = std::fs::create_dir_all(dir)
