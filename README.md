@@ -143,6 +143,25 @@ specific rule to the most general (crate `nh-art`):
   appearance does;
 - a map feature: its terrain (materials for floors, walls, doors...).
 
+- an object in the hero's hands or on their body: the `held` section, again
+  by appearance only (the head noun of the appearance, else the class); it
+  says the model, its grip on the bone, the sub-meshes to hide and the metal.
+
+The hero shows their gear from the inventory the host sends before each
+input wait: the weapon in the right hand, the shield on the left forearm, a
+lit lamp in the left hand (with its own light), the alternate weapon and
+the quiver on the back, armour pieces on the outfit. Using an item (quaff,
+read, zap, cast, eat, apply, throw, fire, wear, pick up, kick) plays a clip
+with the item in hand and an effect.
+
+The inventory icons are baked from the same art: `make icons` (needs a
+display, about a minute) renders every object appearance tile into
+`client/godot/art/icons/items/<tile>.png`; they are committed.
+
+The renderer is Forward+ (Vulkan, Metal or D3D12). `RENETHACK_FRAME_STATS=1`
+logs frame times every two seconds; `RENETHACK_UI_SCALE` (percent, 80–140)
+scales the interface (120 % by default on a 1280×800 screen).
+
 `cargo test -p nh-art -- --nocapture coverage_report` prints how many
 monsters and object tiles resolve at each level. The `gallery` self-test lays
 the art out for screenshots:
@@ -175,4 +194,4 @@ Script steps are documented on `nh_link::parse_script`.
 
 NetHack General Public License (see `engine/upstream/dat/license`).
 cJSON: MIT (`engine/host/third_party/cjson/LICENSE`).
-Art: CC0 (`client/godot/art/CREDITS.md`).
+Art: CC0; fonts: SIL OFL 1.1 (`client/godot/art/CREDITS.md`).
