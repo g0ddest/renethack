@@ -276,6 +276,20 @@ impl Art {
         holder.set_transform(grip);
         holder.add_child(&model);
         root.add_child(&holder);
+        if h.lit {
+            // an unlit lamp's flame is hidden on its model: here it burns
+            let hidden = self.manifest.model_at(h.model).1.hide.clone();
+            for name in hidden.iter().filter(|n| n.contains("flame")) {
+                if let Some(mut n) = model
+                    .find_child_ex(name)
+                    .owned(false)
+                    .done()
+                    .and_then(|n| n.try_cast::<Node3D>().ok())
+                {
+                    n.set_visible(true);
+                }
+            }
+        }
         if h.lit
             && let Some(light) = &spec.light
         {

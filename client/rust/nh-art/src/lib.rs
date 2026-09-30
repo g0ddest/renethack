@@ -83,6 +83,8 @@ pub enum Proc {
     Orb,
     Mirror,
     Heap,
+    /// A mace, morning star, flail or club (by its shape).
+    Mace,
     Potion,
 }
 
@@ -193,9 +195,33 @@ pub struct ModelSpec {
     /// potion's bottle, an amulet's shape, a ring's setting...
     #[serde(default)]
     pub shape: Option<String>,
+    /// Meshes of the scene not shown (a dagger's scabbard, an unlit
+    /// lamp's flame), on the floor, in the hand and in icons.
+    #[serde(default)]
+    pub hide: Vec<String>,
+    /// The scene's own metal, and how rough it is (they multiply its
+    /// textures: a blade reads as steel, its leather grip stays leather).
+    #[serde(default)]
+    pub metallic: Option<f32>,
+    #[serde(default)]
+    pub roughness: Option<f32>,
+    /// A faint glow ("#rrggbb") over the scene's own colours (runes).
+    #[serde(default)]
+    pub glow: Option<String>,
+    #[serde(default)]
+    pub glow_energy: f32,
 }
 
 impl ModelSpec {
+    /// Whether the scene's own materials are changed beyond a tint.
+    pub fn refinishes(&self) -> bool {
+        self.metallic.is_some() || self.roughness.is_some() || self.glow.is_some()
+    }
+
+    pub fn glow_rgb(&self) -> Option<[f32; 3]> {
+        self.glow.as_deref().and_then(hex)
+    }
+
     pub fn shade_rgb(&self) -> [f32; 3] {
         self.shade
             .as_deref()
@@ -557,6 +583,11 @@ impl ArtManifest {
             {
                 errors.push(format!("model {name}: shade {sh}"));
             }
+            if let Some(g) = &m.glow
+                && hex(g).is_none()
+            {
+                errors.push(format!("model {name}: glow {g}"));
+            }
         }
         let rule_errors = |what: &str, r: &ArtRule| {
             let mut errors = Vec::new();
@@ -894,6 +925,11 @@ impl ArtManifest {
             head: None,
             shade: None,
             shape: None,
+            hide: Vec::new(),
+            metallic: None,
+            roughness: None,
+            glow: None,
+            glow_energy: 0.0,
         };
     }
 

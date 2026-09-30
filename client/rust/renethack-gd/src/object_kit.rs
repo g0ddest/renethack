@@ -76,6 +76,8 @@ impl Kit<'_> {
             Proc::Cuirass => self.cuirass(root),
             Proc::Bow => self.bow(root),
             Proc::Horn => self.horn(root),
+            Proc::Pole => self.pole(root),
+            Proc::Mace => self.mace(root),
             _ => self.simple(kind, root),
         }
     }
@@ -1550,32 +1552,6 @@ impl Kit<'_> {
                     one,
                 );
             }
-            Proc::Pole => {
-                self.skin(
-                    root,
-                    cylinder(0.018, 0.022, 0.85),
-                    [0.0, 0.03, -0.07],
-                    [90.0, 0.0, 0.0],
-                    one,
-                );
-                let metal = self.named("metal", Color::from_rgb(0.6, 0.6, 0.62));
-                self.part(
-                    root,
-                    cylinder(0.0, 0.04, 0.16),
-                    &metal,
-                    [0.0, 0.03, 0.43],
-                    [90.0, 0.0, 0.0],
-                    one,
-                );
-                self.part(
-                    root,
-                    cuboid(0.1, 0.02, 0.05),
-                    &metal,
-                    [0.0, 0.03, 0.34],
-                    flat,
-                    one,
-                );
-            }
             Proc::Arrows => {
                 let metal = self.named("metal", Color::from_rgb(0.6, 0.6, 0.62));
                 let feather = self.bone();
@@ -1724,6 +1700,364 @@ impl Kit<'_> {
                     one,
                 );
                 self.skin(root, sphere(0.2), [-0.2, 0.2, 0.15], flat, [1.0, 0.6, 1.0]);
+            }
+        }
+    }
+}
+
+/// The head and the metal of a weapon's shape: "spear", "spear:silver".
+fn shape_parts(shape: Option<&str>, default: &str) -> (String, String) {
+    let s = shape.unwrap_or(default);
+    match s.split_once(':') {
+        Some((form, metal)) => (form.to_string(), metal.to_string()),
+        None => (s.to_string(), "steel".to_string()),
+    }
+}
+
+impl Kit<'_> {
+    /// A weapon's metal: steel, silver, crude dark iron, or runed steel
+    /// with a faint glow.
+    fn weapon_metal(&mut self, metal: &str) -> Gd<Material> {
+        let (name, fallback) = match metal {
+            "silver" => ("silver", Color::from_rgb(0.86, 0.88, 0.92)),
+            "crude" => ("dark_iron", Color::from_rgb(0.3, 0.28, 0.26)),
+            "runed" => ("runed_steel", Color::from_rgb(0.7, 0.76, 0.84)),
+            _ => ("steel", Color::from_rgb(0.72, 0.75, 0.8)),
+        };
+        self.plain(name, fallback)
+    }
+
+    /// A flat plate lying in the object's plane: centre (x, z), width and
+    /// length, turned `yaw` degrees about y (0: along z).
+    fn plate(
+        &mut self,
+        root: &mut Gd<Node3D>,
+        mat: &Gd<Material>,
+        at: [f32; 2],
+        size: [f32; 2],
+        yaw: f32,
+    ) {
+        self.part(
+            root,
+            cuboid(size[0], 0.012, size[1]),
+            mat,
+            [at[0], 0.03, at[1]],
+            [0.0, yaw, 0.0],
+            ONE,
+        );
+    }
+
+    /// A flat point: its base centred at (x, z), `len` long towards `yaw`
+    /// (0: +z, 90: +x).
+    fn point(
+        &mut self,
+        root: &mut Gd<Node3D>,
+        mat: &Gd<Material>,
+        at: [f32; 2],
+        width: f32,
+        len: f32,
+        yaw: f32,
+    ) {
+        let (s, c) = yaw.to_radians().sin_cos();
+        let mid = [at[0] + s * len / 2.0, at[1] + c * len / 2.0];
+        self.part(
+            root,
+            prism(width, len, 0.012),
+            mat,
+            [mid[0], 0.03, mid[1]],
+            [90.0, yaw, 0.0],
+            ONE,
+        );
+    }
+
+    /// A round rod lying along z from `z0` to `z1` (at x).
+    fn rod(
+        &mut self,
+        root: &mut Gd<Node3D>,
+        mat: &Gd<Material>,
+        x: f32,
+        z: (f32, f32),
+        r: (f32, f32),
+    ) {
+        self.part(
+            root,
+            cylinder(r.1, r.0, (z.1 - z.0).abs()),
+            mat,
+            [x, 0.03, (z.0 + z.1) / 2.0],
+            [90.0, 0.0, 0.0],
+            ONE,
+        );
+    }
+
+    /// A curved blade: short plates along an arc of radius `r` about
+    /// (x, z), from angle `a0` to `a1` (degrees; 0 is +z, 90 is +x).
+    #[allow(clippy::too_many_arguments)]
+    fn arc(
+        &mut self,
+        root: &mut Gd<Node3D>,
+        mat: &Gd<Material>,
+        centre: [f32; 2],
+        r: f32,
+        a0: f32,
+        a1: f32,
+        width: f32,
+    ) {
+        let n = 6;
+        let seg = r * (a1 - a0).abs().to_radians() / n as f32 + 0.01;
+        for i in 0..n {
+            let a = a0 + (a1 - a0) * (i as f32 + 0.5) / n as f32;
+            let (s, c) = a.to_radians().sin_cos();
+            let w = width * (1.0 - 0.5 * i as f32 / n as f32);
+            self.plate(
+                root,
+                mat,
+                [centre[0] + s * r, centre[1] + c * r],
+                [w, seg],
+                a + 90.0,
+            );
+        }
+    }
+
+    /// A shafted weapon lying along z, its head at +z: spears, a trident, a
+    /// lance, the polearms by the appearance's head, a staff bound in iron.
+    fn pole(&mut self, root: &mut Gd<Node3D>) {
+        let (form, metal) = shape_parts(self.shape.as_deref(), "spear");
+        let wood = self.skin.clone();
+        let steel = self.weapon_metal(&metal);
+        let iron = self.plain("iron", Color::from_rgb(0.35, 0.33, 0.3));
+        // a shaft about 3 cm across at the length it is drawn
+        let thick = match form.as_str() {
+            "staff" => 0.014,
+            "stout" => 0.012,
+            "javelin" => 0.008,
+            _ => 0.01,
+        };
+        let top = match form.as_str() {
+            "staff" => 0.5,
+            "lance" => 0.05,
+            _ => 0.34,
+        };
+        self.rod(root, &wood, 0.0, (-0.5, top), (thick, thick * 0.9));
+        if form != "staff" && form != "lance" {
+            self.rod(
+                root,
+                &iron,
+                0.0,
+                (top - 0.05, top + 0.01),
+                (thick * 1.25, thick * 1.1),
+            );
+        }
+        let t = top;
+        match form.as_str() {
+            "staff" => {
+                for z in [-0.5f32, -0.38, 0.38] {
+                    self.rod(root, &iron, 0.0, (z, z + 0.05), (0.017, 0.017));
+                }
+                self.part(root, sphere(0.018), &iron, [0.0, 0.03, 0.5], FLAT, ONE);
+            }
+            "lance" => {
+                self.rod(root, &steel, 0.0, (t, 0.5), (0.055, 0.004));
+                self.part(
+                    root,
+                    cylinder(0.09, 0.07, 0.03),
+                    &steel,
+                    [0.0, 0.03, t],
+                    [90.0, 0.0, 0.0],
+                    ONE,
+                );
+                self.rod(root, &iron, 0.0, (-0.5, -0.44), (0.016, 0.016));
+            }
+            "trident" => {
+                self.plate(root, &steel, [0.0, t + 0.02], [0.16, 0.025], 0.0);
+                for x in [-0.07f32, 0.0, 0.07] {
+                    let len = if x == 0.0 { 0.15 } else { 0.12 };
+                    self.plate(root, &steel, [x, t + 0.02 + len / 2.0], [0.014, len], 0.0);
+                    self.point(root, &steel, [x, t + 0.02 + len], 0.03, 0.04, 0.0);
+                }
+            }
+            "fork" => {
+                for x in [-0.035f32, 0.035] {
+                    self.plate(root, &steel, [x, t + 0.08], [0.016, 0.16], 0.0);
+                    self.point(root, &steel, [x, t + 0.16], 0.03, 0.05, 0.0);
+                }
+                self.plate(root, &steel, [0.0, t + 0.01], [0.1, 0.02], 0.0);
+            }
+            "broad" => {
+                // a broad leaf with lugs at its base (vulgar polearm)
+                self.point(root, &steel, [0.0, t + 0.02], 0.12, 0.2, 0.0);
+                self.point(root, &steel, [0.0, t + 0.03], 0.12, 0.03, 180.0);
+                for s in [-1.0f32, 1.0] {
+                    self.point(root, &steel, [s * 0.05, t + 0.02], 0.03, 0.05, s * 50.0);
+                }
+            }
+            "hilted" => {
+                // a spike with a crossguard of two side prongs
+                self.plate(root, &steel, [0.0, t + 0.015], [0.14, 0.022], 0.0);
+                self.point(root, &steel, [0.0, t + 0.02], 0.04, 0.18, 0.0);
+                for s in [-1.0f32, 1.0] {
+                    self.point(root, &steel, [s * 0.06, t + 0.015], 0.025, 0.07, s * 35.0);
+                }
+            }
+            "glaive" => {
+                // one long edge, the back straight
+                self.plate(root, &steel, [0.018, t + 0.09], [0.05, 0.18], 0.0);
+                self.point(root, &steel, [0.018, t + 0.18], 0.05, 0.06, -12.0);
+            }
+            "halberd" => {
+                self.plate(root, &steel, [0.075, t + 0.02], [0.11, 0.1], 0.0);
+                self.plate(root, &steel, [0.13, t + 0.02], [0.03, 0.15], 0.0);
+                self.point(root, &steel, [-0.01, t + 0.02], 0.035, 0.08, -90.0);
+                self.point(root, &steel, [0.0, t + 0.06], 0.035, 0.14, 0.0);
+            }
+            "bardiche" => {
+                self.plate(root, &steel, [0.055, t - 0.02], [0.07, 0.26], 0.0);
+                self.arc(root, &steel, [0.0, t - 0.02], 0.09, 20.0, 160.0, 0.03);
+                self.point(root, &steel, [0.055, t + 0.11], 0.07, 0.05, -20.0);
+            }
+            "cleaver" => {
+                self.plate(root, &steel, [0.05, t + 0.07], [0.1, 0.16], 0.0);
+                self.point(root, &steel, [0.05, t + 0.15], 0.1, 0.04, 0.0);
+            }
+            "sickle" => {
+                self.plate(root, &steel, [0.0, t + 0.04], [0.02, 0.08], 0.0);
+                self.arc(root, &steel, [0.08, t + 0.08], 0.08, -80.0, 80.0, 0.035);
+            }
+            "hook" => {
+                self.plate(root, &steel, [0.015, t + 0.08], [0.035, 0.16], 0.0);
+                self.arc(root, &steel, [-0.03, t + 0.17], 0.045, 90.0, 250.0, 0.025);
+            }
+            "billhook" => {
+                self.point(root, &steel, [0.0, t + 0.02], 0.04, 0.18, 0.0);
+                self.arc(root, &steel, [0.055, t + 0.05], 0.045, -60.0, 120.0, 0.025);
+                self.point(root, &steel, [-0.015, t + 0.06], 0.03, 0.06, -90.0);
+            }
+            "pronged" => {
+                // a hammer of prongs and a spike (lucern hammer)
+                self.plate(root, &steel, [0.0, t + 0.03], [0.16, 0.04], 0.0);
+                for x in [0.05f32, 0.08] {
+                    self.point(root, &steel, [x, t + 0.05], 0.02, 0.04, 0.0);
+                }
+                self.point(root, &steel, [-0.08, t + 0.03], 0.035, 0.06, -90.0);
+                self.point(root, &steel, [0.0, t + 0.05], 0.03, 0.12, 0.0);
+            }
+            "beaked" => {
+                self.plate(root, &steel, [0.03, t + 0.03], [0.06, 0.05], 0.0);
+                self.arc(root, &steel, [-0.04, t - 0.02], 0.07, 0.0, -80.0, 0.03);
+                self.point(root, &steel, [0.0, t + 0.05], 0.03, 0.12, 0.0);
+            }
+            form => {
+                // spears: a leaf point (a stout one broader, a javelin slim)
+                let (w, len) = match form {
+                    "stout" => (0.07, 0.15),
+                    "javelin" => (0.036, 0.12),
+                    _ => (0.05, 0.14),
+                };
+                self.point(root, &steel, [0.0, t + 0.035], w, len, 0.0);
+                self.point(root, &steel, [0.0, t + 0.04], w, 0.035, 180.0);
+            }
+        }
+    }
+
+    /// A mace lying along z, its head at +z: a flanged mace, a spiked
+    /// morning star, a flail's ball on a chain, a club of wood, a thonged
+    /// club.
+    fn mace(&mut self, root: &mut Gd<Node3D>) {
+        let (form, metal) = shape_parts(self.shape.as_deref(), "mace");
+        let wood = self.skin.clone();
+        let steel = self.weapon_metal(&metal);
+        let grip = self.leather();
+        let y = 0.03;
+        match form.as_str() {
+            "club" | "aklys" => {
+                self.rod(root, &wood, 0.0, (-0.5, 0.45), (0.035, 0.075));
+                self.part(
+                    root,
+                    sphere(0.075),
+                    &wood,
+                    [0.0, y, 0.45],
+                    FLAT,
+                    [1.0, 1.0, 0.7],
+                );
+                for (x, z) in [(0.05f32, 0.2f32), (-0.055, 0.32), (0.04, 0.05)] {
+                    self.part(root, sphere(0.022), &wood, [x, y + 0.01, z], FLAT, ONE);
+                }
+                self.rod(root, &grip, 0.0, (-0.5, -0.32), (0.04, 0.04));
+                if form == "aklys" {
+                    self.part(root, torus(0.06, 0.075), &grip, [0.0, y, -0.55], FLAT, ONE);
+                }
+            }
+            "flail" => {
+                self.rod(root, &wood, 0.0, (-0.5, 0.0), (0.028, 0.03));
+                self.rod(root, &grip, 0.0, (-0.5, -0.3), (0.034, 0.034));
+                self.part(root, sphere(0.036), &steel, [0.0, y, 0.01], FLAT, ONE);
+                for i in 0..4 {
+                    let z = 0.07 + i as f32 * 0.06;
+                    let roll = if i % 2 == 0 { 0.0 } else { 90.0 };
+                    self.part(
+                        root,
+                        torus(0.016, 0.026),
+                        &steel,
+                        [0.0, y, z],
+                        [90.0, 0.0, roll],
+                        [1.0, 1.0, 1.6],
+                    );
+                }
+                self.spiked_ball(root, &steel, 0.38, 0.085);
+            }
+            "star" => {
+                self.rod(root, &wood, 0.0, (-0.5, 0.3), (0.03, 0.034));
+                self.rod(root, &grip, 0.0, (-0.5, -0.3), (0.036, 0.036));
+                self.spiked_ball(root, &steel, 0.38, 0.095);
+            }
+            _ => {
+                // a flanged head, heavy, on an iron haft
+                self.rod(root, &steel, 0.0, (-0.5, 0.26), (0.024, 0.026));
+                self.rod(root, &grip, 0.0, (-0.5, -0.28), (0.032, 0.032));
+                self.rod(root, &steel, 0.0, (0.26, 0.46), (0.042, 0.036));
+                for i in 0..6 {
+                    let a = i as f32 * 60.0;
+                    let (s, c) = a.to_radians().sin_cos();
+                    self.part(
+                        root,
+                        prism(0.075, 0.16, 0.014),
+                        &steel,
+                        [s * 0.05, y + c * 0.05, 0.37],
+                        [90.0, 0.0, -a],
+                        [1.0, 1.0, 1.0],
+                    );
+                }
+                self.part(root, sphere(0.026), &steel, [0.0, y, 0.47], FLAT, ONE);
+            }
+        }
+    }
+
+    /// A ball with spikes all round it, centred at z.
+    fn spiked_ball(&mut self, root: &mut Gd<Node3D>, mat: &Gd<Material>, z: f32, r: f32) {
+        let y = 0.03;
+        self.part(root, sphere(r), mat, [0.0, y, z], FLAT, ONE);
+        for (pitch, n) in [(-50.0f32, 5), (0.0, 7), (50.0, 5)] {
+            for i in 0..n {
+                let yaw = i as f32 * 360.0 / n as f32 + pitch;
+                let (sp, cp) = pitch.to_radians().sin_cos();
+                let (sy, cy) = yaw.to_radians().sin_cos();
+                let dir = Vector3::new(cp * sy, sp, cp * cy);
+                let at = Vector3::new(0.0, y, z) + dir * (r + 0.02);
+                // a cone standing along `dir`
+                let rot =
+                    Basis::from_euler(EulerOrder::YXZ, Vector3::new(0.0, yaw.to_radians(), 0.0))
+                        * Basis::from_euler(
+                            EulerOrder::YXZ,
+                            Vector3::new((90.0 - pitch).to_radians(), 0.0, 0.0),
+                        );
+                let e = rot.get_euler_with(EulerOrder::YXZ);
+                self.part(
+                    root,
+                    cylinder(0.0, 0.016, 0.05),
+                    mat,
+                    [at.x, at.y, at.z],
+                    [e.x.to_degrees(), e.y.to_degrees(), e.z.to_degrees()],
+                    ONE,
+                );
             }
         }
     }

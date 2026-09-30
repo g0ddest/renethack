@@ -151,7 +151,7 @@ pub struct Art {
     flat: HashMap<(u32, u8), Gd<Material>>,
     scenes: HashMap<usize, Option<Gd<PackedScene>>>,
     libraries: HashMap<(String, bool), Option<Gd<AnimationLibrary>>>,
-    derived: HashMap<(i64, u32, bool), Gd<Material>>,
+    derived: HashMap<(i64, u32, bool, Option<usize>), Gd<Material>>,
     proc_anims: HashMap<Proc, Gd<AnimationLibrary>>,
     /// The clips built in code on the characters' skeleton (`proc/read`).
     proc_clips: Option<Gd<AnimationLibrary>>,
@@ -604,7 +604,20 @@ impl Art {
         let r = look.art;
         let ghost = look.pose == Pose::Ghost || r.skin == Skin::Translucent;
         let tint = mul(look.tint, shade);
-        let plain = tint == Color::WHITE && !ghost && r.skin == Skin::Own;
+        let spec = self.manifest.model_at(r.model).1;
+        for name in spec.hide.clone() {
+            if let Some(mut n) = inner
+                .find_child_ex(&name)
+                .owned(false)
+                .done()
+                .and_then(|n| n.try_cast::<Node3D>().ok())
+            {
+                n.set_visible(false);
+            }
+        }
+        // the scene's own metal and glow (a steel blade, a runed one)
+        let finish = spec.refinishes().then_some(r.model);
+        let plain = tint == Color::WHITE && !ghost && r.skin == Skin::Own && finish.is_none();
         for node in inner
             .find_children_ex("*")
             .type_("MeshInstance3D")
@@ -624,7 +637,7 @@ impl Art {
                     Skin::Material(m) => Some(self.surface(m, 100, false, look.tint)),
                     _ => mi
                         .get_active_material(i)
-                        .map(|src| self.derive(&src, tint, ghost)),
+                        .map(|src| self.derive(&src, tint, ghost, finish)),
                 };
                 if let Some(mat) = mat {
                     mi.set_surface_override_material(i, &mat);
@@ -655,8 +668,16 @@ impl Art {
         kit.head(kind, &mut head);
     }
 
-    fn derive(&mut self, src: &Gd<Material>, tint: Color, ghost: bool) -> Gd<Material> {
-        let key = (src.instance_id().to_i64(), color_key(tint), ghost);
+    /// `finish`: the model whose metal, roughness and glow replace the
+    /// source's own.
+    fn derive(
+        &mut self,
+        src: &Gd<Material>,
+        tint: Color,
+        ghost: bool,
+        finish: Option<usize>,
+    ) -> Gd<Material> {
+        let key = (src.instance_id().to_i64(), color_key(tint), ghost, finish);
         if let Some(m) = self.derived.get(&key) {
             return m.clone();
         }
@@ -668,6 +689,24 @@ impl Art {
                     m.set_metallic(MAX_METALLIC);
                     let rough = m.get_roughness().max(0.35);
                     m.set_roughness(rough);
+                }
+                if let Some(model) = finish {
+                    let spec = self.manifest.model_at(model).1;
+                    if let Some(v) = spec.metallic {
+                        m.set_metallic(v);
+                    }
+                    if let Some(v) = spec.roughness {
+                        m.set_roughness(v);
+                    }
+                    if let Some(g) = spec.glow_rgb() {
+                        // brightest where the albedo is: the blade, not the grip
+                        m.set_feature(Feature::EMISSION, true);
+                        m.set_emission(rgb(g));
+                        m.set_emission_energy_multiplier(spec.glow_energy);
+                        if let Some(t) = m.get_texture(TextureParam::ALBEDO) {
+                            m.set_texture(TextureParam::EMISSION, &t);
+                        }
+                    }
                 }
                 if ghost {
                     albedo.a = 0.4;
