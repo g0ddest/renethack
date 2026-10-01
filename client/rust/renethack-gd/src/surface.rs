@@ -51,6 +51,7 @@ type Key = (usize, u8, Role);
 pub struct Surfaces {
     shader: Option<Gd<Shader>>,
     fow: Gd<ImageTexture>,
+    noise: Gd<Texture2D>,
     detail: Option<Gd<Texture2D>>,
     textures: HashMap<String, Option<Gd<Texture2D>>>,
     materials: HashMap<Key, Gd<Material>>,
@@ -67,6 +68,7 @@ impl Surfaces {
         let mut s = Surfaces {
             shader,
             fow,
+            noise: noise_texture(),
             detail: None,
             textures: HashMap::new(),
             materials: HashMap::new(),
@@ -154,6 +156,7 @@ impl Surfaces {
             mat.set_shader_parameter("detail_normal", &d.to_variant());
         }
         mat.set_shader_parameter("fow_tex", &self.fow.to_variant());
+        mat.set_shader_parameter("noise_tex", &self.noise.to_variant());
         // the rock the level is cut from is rock, never blocks
         if Some(m) == self.top {
             set(&mut mat, "natural", 1.0);
@@ -208,6 +211,26 @@ impl Surfaces {
         self.materials.insert(key, mat.clone());
         Some(mat)
     }
+}
+
+/// A tiling fractal noise, 256 px, about eight features across: the
+/// surface shader's noise in its fragments.
+fn noise_texture() -> Gd<Texture2D> {
+    use godot::classes::fast_noise_lite::{FractalType, NoiseType};
+    use godot::classes::{FastNoiseLite, NoiseTexture2D};
+    let mut noise = FastNoiseLite::new_gd();
+    noise.set_noise_type(NoiseType::PERLIN);
+    noise.set_frequency(1.0 / 32.0);
+    noise.set_fractal_type(FractalType::FBM);
+    noise.set_fractal_octaves(5);
+    let mut tex = NoiseTexture2D::new_gd();
+    tex.set_width(256);
+    tex.set_height(256);
+    tex.set_seamless(true);
+    tex.set_generate_mipmaps(true);
+    tex.set_normalize(true);
+    tex.set_noise(&noise);
+    tex.upcast()
 }
 
 /// What the hero knows of a cell.

@@ -2257,6 +2257,7 @@ impl MapView {
         self.hero_at = hero;
         let generation = world.map.generation();
         let new_level = self.generation != Some(generation);
+        let started = std::time::Instant::now();
         if new_level {
             // a new level (or a redraw from scratch) never animates
             self.finish_motions();
@@ -2300,6 +2301,12 @@ impl MapView {
             for (_, c) in std::mem::take(&mut self.incoming) {
                 self.art.give(c.model);
             }
+        }
+        if new_level && self.stats_window.is_some() {
+            godot_print!(
+                "map: level drawn in {:.1} ms",
+                started.elapsed().as_secs_f64() * 1000.0
+            );
         }
         self.watch_fights(world, catalog);
         self.advance_motions(delta as f32);
@@ -3911,7 +3918,7 @@ fn fill_lights(area: &[(i32, i32)]) -> Vec<(f32, f32, f32, f32)> {
                     x as f32,
                     y as f32,
                     FILL_STEP as f32 + 1.5,
-                    ROOM_LIGHT_ENERGY * 3.0,
+                    ROOM_LIGHT_ENERGY * 4.5,
                 ));
             }
             x += FILL_STEP;

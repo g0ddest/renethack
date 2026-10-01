@@ -18,6 +18,9 @@ uniform sampler2D detail_normal : hint_normal, filter_linear_mipmap, repeat_enab
 // per cell of the level (80 x 21): R seen now, G known, B wall, A near
 // something known (the darkness beyond fades by it)
 uniform sampler2D fow_tex : filter_linear, repeat_disable;
+// a tiling fractal noise (surface.rs): the fragments read noise from it
+// rather than work it out (a fragment of rock would hash hundreds of times)
+uniform sampler2D noise_tex : filter_linear_mipmap, repeat_enable;
 
 uniform vec4 side_color : source_color = vec4(1.0);
 uniform vec4 top_color : source_color = vec4(1.0);
@@ -101,6 +104,16 @@ float fbm3(vec3 p) {
 
 float fbm2(vec2 p) {
 	return fbm3(vec3(p, 0.37));
+}
+
+// the noise texture's tile is 8 units of the noise above
+float tn2(vec2 p) {
+	return texture(noise_tex, p * 0.125).r;
+}
+
+// a slanted slice of the 2D noise: it varies on walls as on floors
+float tn3(vec3 p) {
+	return tn2(p.xz + p.y * vec2(0.37, 0.71));
 }
 
 void vertex() {
@@ -192,30 +205,31 @@ void fragment() {
 	float nat = max(natural, natural_top * smoothstep(0.5, 0.9, bw.y));
 	if (nat > 0.0) {
 		// mottled at two scales, never a pattern that could be paving
-		float grain = fbm3(wpos * 1.1) * 0.6 + fbm3(wpos * 4.7) * 0.4;
+		float grain = tn3(wpos * 1.1) * 0.6 + tn3(wpos * 4.7) * 0.4;
 		vec3 base = mix(side_color.rgb, top_color.rgb, bw.y);
 		// strata across the faces, pits and cracks in them
-		float strata = 0.5 + 0.5 * sin(wpos.y * 11.0 + fbm3(wpos * 0.9) * 7.0);
-		float crack = smoothstep(0.46, 0.5, fbm3(wpos * 2.2 + 3.1)) - smoothstep(0.5, 0.54, fbm3(wpos * 2.2 + 3.1));
-		vec3 rock = base * mix(0.55, 1.35, grain) * mix(1.0, mix(0.8, 1.1, strata), 1.0 - bw.y);
+		float strata = 0.5 + 0.5 * sin(wpos.y * 11.0 + tn3(wpos * 0.9) * 7.0);
+		float cn = tn3(wpos * 2.2 + 3.1);
+		float crack = smoothstep(0.46, 0.5, cn) - smoothstep(0.5, 0.54, cn);
+		vec3 rock = base * mix(0.6, 1.3, grain) * mix(1.0, mix(0.9, 1.05, strata), 1.0 - bw.y);
 		rock *= 1.0 - 0.45 * crack;
 		albedo = mix(albedo, rock, nat);
 		// its relief from the noise's slope, not from the mesh's grid
 		const float STEP = 0.04;
 		vec3 q = wpos * 3.3;
-		float h0 = fbm3(q);
-		vec3 grad = vec3(fbm3(q + vec3(STEP, 0, 0)), fbm3(q + vec3(0, STEP, 0)), fbm3(q + vec3(0, 0, STEP))) - h0;
+		float h0 = tn3(q);
+		vec3 grad = vec3(tn3(q + vec3(STEP, 0, 0)), tn3(q + vec3(0, STEP, 0)), tn3(q + vec3(0, 0, STEP))) - h0;
 		grad /= STEP;
-		vec3 bump = normalize(n - (grad - dot(grad, n) * n) * 0.22);
+		vec3 bump = normalize(n - (grad - dot(grad, n) * n) * 0.1);
 		wn = normalize(mix(wn, bump, nat));
 		// nor the texture's cavities and gloss: the noise's own
 		orm = mix(orm, vec3(mix(0.55, 1.0, smoothstep(0.25, 0.6, h0)), mix(0.55, 0.9, grain), 0.0), nat);
 	}
 
 	// slow variation over the level, a little warmer or cooler by place
-	float m = fbm2(wpos.xz * 0.12 + wpos.y * 0.05);
+	float m = tn2(wpos.xz * 0.12 + wpos.y * 0.05);
 	albedo *= mix(1.0, mix(0.82, 1.06, m), macro);
-	float hue = fbm2(wpos.xz * 0.07 + 5.3) - 0.5;
+	float hue = tn2(wpos.xz * 0.07 + 5.3) - 0.5;
 	albedo *= 1.0 + hue * macro * vec3(0.07, 0.0, -0.07);
 	float rough = clamp(orm.g + roughness_bias, 0.0, 1.0) * roughness;
 
@@ -227,7 +241,7 @@ void fragment() {
 		rough = min(rough + 0.1 * g, 1.0);
 	}
 	if (wet > 0.0) {
-		float w = smoothstep(0.66, 0.74, fbm2(wpos.xz * 0.3 + 11.0)) * wet * bw.y;
+		float w = smoothstep(0.66, 0.74, tn2(wpos.xz * 0.3 + 11.0)) * wet * bw.y;
 		albedo *= mix(1.0, 0.75, w);
 		rough = mix(rough, 0.35, w);
 	}
