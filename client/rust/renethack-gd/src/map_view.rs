@@ -1656,6 +1656,8 @@ pub struct MotionStats {
     pub hero_steps: u32,
     pub other_steps: u32,
     pub strikes: u32,
+    /// Blows that made their target reel.
+    pub flinches: u32,
 }
 
 /// Frame times summed for `MapView::frame_stats`.
@@ -3482,6 +3484,15 @@ impl MapView {
             self.strike(from, to, world);
             if hit {
                 self.impact(from, to, world, catalog);
+                // the one struck reels (its hit clip)
+                if let Some(m) = self
+                    .cells
+                    .get(&to)
+                    .and_then(|n| n.look.entity.and_then(|i| n.models.get(i)))
+                    && self.art.flinch(m)
+                {
+                    self.stats.flinches += 1;
+                }
             }
         }
     }

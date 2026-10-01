@@ -3431,6 +3431,7 @@ impl SelfTest {
             "orders" => orders(),
             "equipment" => hero::equipment(),
             "item-use" => hero::item_use(),
+            "combat" => hero::combat(),
             "inventory" => inventory(),
             "bar" => bar(),
             _ => Vec::new(),

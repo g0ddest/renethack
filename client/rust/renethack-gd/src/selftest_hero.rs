@@ -127,7 +127,7 @@ pub(super) fn equipment() -> Vec<Step> {
         }),
         Step::Push(UiEvent::BackToTitle),
     ]);
-    steps.extend(start_as(choice("archeologist", "female")));
+    steps.extend(start_as(choice("tourist", "female")));
     steps.extend([Step::Wait("the hero on the map", |g| {
         Ok(g.world.map.hero().is_some())
     })]);
@@ -310,7 +310,7 @@ pub(super) fn item_use() -> Vec<Step> {
         }),
         Step::Push(UiEvent::BackToTitle),
     ]);
-    steps.extend(start_as(choice("archeologist", "female")));
+    steps.extend(start_as(choice("tourist", "female")));
     steps.push(Step::Wait("the hero on the map", |g| {
         Ok(g.world.map.hero().is_some())
     }));
@@ -362,6 +362,99 @@ pub(super) fn item_use() -> Vec<Step> {
             using(g, "ual2/Consume", "eat", Some("food"))
         }),
         Step::Shot("use-eat"),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
+/// A hostile next to the hero: (where it is, the vi-key towards it).
+fn hostile_near(g: &RenethackGame) -> Option<((i32, i32), char)> {
+    use nh_protocol::{GlyphKind, mg};
+    let (hx, hy) = g.world.map.hero()?;
+    let keys = [
+        ((-1, 0), 'h'),
+        ((1, 0), 'l'),
+        ((0, -1), 'k'),
+        ((0, 1), 'j'),
+        ((-1, -1), 'y'),
+        ((1, -1), 'u'),
+        ((-1, 1), 'b'),
+        ((1, 1), 'n'),
+    ];
+    keys.into_iter().find_map(|((dx, dy), k)| {
+        let g = g.world.map.cell(hx + dx, hy + dy)?.glyph.as_ref()?;
+        (g.kind == GlyphKind::Mon && g.flags & (mg::PET | mg::HERO) == 0)
+            .then_some(((hx + dx, hy + dy), k))
+    })
+}
+
+/// The hero is mid-blow: the attack clip a little way in.
+fn mid_blow(g: &RenethackGame) -> Result<bool, String> {
+    let map = map_view(g)?;
+    let Some(p) = map.hero_model().and_then(|m| m.player()) else {
+        return Ok(false);
+    };
+    let clip = p.get_current_animation().to_string();
+    Ok(p.is_playing()
+        && (clip == "Sword_Attack" || clip == "Punch_Jab")
+        && p.get_current_animation_position() > 0.28)
+}
+
+/// Seed 173's Tourist fights the kobold zombie south of her at the start
+/// with her fists (a sturdy foe: a Valkyrie's spear or a whip kills a
+/// kobold or a goblin at the first blow, and a killed foe has no model
+/// left to reel): each blow turns her to it with her attack clip, a hit
+/// throws sparks and makes the zombie reel. A picture mid-blow, at the
+/// medium distance that shows both, and one after the fight.
+pub(super) fn combat() -> Vec<Step> {
+    let mut steps = vec![Step::Call("seed 173", |g| {
+        g.seed = Some(173);
+        Ok(())
+    })];
+    steps.extend(start_as(choice("tourist", "female")));
+    steps.extend([
+        Step::Wait("the hero on the map", |g| Ok(g.world.map.hero().is_some())),
+        Step::Wait("a hostile next to the hero", |g| {
+            fail_on_error_screen(g)?;
+            Ok(hostile_near(g).is_some())
+        }),
+        Step::Call("the fight framed", |g| {
+            g.ui.as_mut().ok_or("no UI")?.map.set_distance(4.2, 0.4);
+            Ok(())
+        }),
+        Step::Wait("the camera on the hero", camera_settled),
+    ]);
+    // the first blow, caught mid-swing for the picture
+    steps.extend([
+        Step::KeyFrom("a blow at the hostile", |g| {
+            let k = hostile_near(g).map_or('s', |(_, k)| k);
+            Ok(nh_world::KeyInput::plain(nh_world::Key::Char(k)))
+        }),
+        Step::Request("a command after the blow", command),
+        Step::Wait("the hero mid-blow", mid_blow),
+        Step::Shot("combat-blow"),
+    ]);
+    // blow after blow until the fight is over
+    for _ in 0..8 {
+        steps.extend([
+            Step::KeyFrom("a blow at the hostile", |g| {
+                let k = hostile_near(g).map_or('s', |(_, k)| k);
+                Ok(nh_world::KeyInput::plain(nh_world::Key::Char(k)))
+            }),
+            Step::Request("a command after the blow", command),
+        ]);
+    }
+    steps.extend([
+        Step::Wait("the hero settled", |g| Ok(!mid_blow(g)?)),
+        Step::Shot("combat-after"),
+        Step::Call("blows struck, a target reeled", |g| {
+            let s = map_view(g)?.motion_stats();
+            godot_print!("selftest: combat: {s:?}");
+            if s.strikes == 0 || s.flinches == 0 {
+                return Err(format!("no blow landed on a target that reels: {s:?}"));
+            }
+            Ok(())
+        }),
     ]);
     steps.extend(quit());
     steps

@@ -443,6 +443,24 @@ impl Art {
         }
     }
 
+    /// A model struck reels: its hit clip, then back to its idle (the
+    /// gear's for the hero). False when it has no hit clip.
+    pub fn flinch(&self, m: &Model) -> bool {
+        let Some(mut p) = m.player.clone().filter(|p| p.is_instance_valid()) else {
+            return false;
+        };
+        let spec = self.manifest.model_at(m.key.model).1;
+        let Some(hit) = spec.anims.hit.as_deref().filter(|h| p.has_animation(*h)) else {
+            return false;
+        };
+        let idle = self.clips(m, false).idle;
+        p.play_ex().name(hit).custom_blend(0.06).done();
+        if let Some(idle) = idle {
+            p.queue(idle.as_str());
+        }
+        true
+    }
+
     /// Start the look's animation: idle with a random phase; a corpse lies
     /// at the end of its death; a statue stands still.
     fn start(&mut self, m: &mut Model, look: &ModelLook) {
