@@ -1163,12 +1163,27 @@ impl Kit<'_> {
         );
         self.part(
             head,
-            sphere(0.018),
+            sphere(0.02),
             &face,
-            [0.0, 0.085, 0.118],
+            [0.0, 0.083, 0.118],
             flat,
-            [0.8, 1.0, 1.3],
+            [0.85, 1.05, 1.35],
         );
+        // cheeks with a little colour, so the face has a shape and is not
+        // a mask
+        let cheek = self
+            .art
+            .flat(Color::from_rgb(0.6, 0.36, 0.3), Finish::Matte);
+        for s in [-1.0f32, 1.0] {
+            self.part(
+                head,
+                sphere(0.02),
+                &cheek,
+                [s * 0.05, 0.075, 0.095],
+                flat,
+                [1.0, 0.7, 0.45],
+            );
+        }
         // eyes (whites, iris, pupil), brows and a mouth: a face, not a
         // mannequin's blank
         let white = self

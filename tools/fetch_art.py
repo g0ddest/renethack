@@ -229,12 +229,12 @@ def do_itch(op, w, item, max_size):
 
 def do_direct(op, w, item, max_size):
     """A file at a fixed URL: a zip unpacked like an itch.io pack, or a
-    single file stored under `dest` by its own name."""
+    single file stored under `dest` by its own name (or `name`)."""
     blob = cached(item["url"], lambda: fetch(op, item["url"]))
     if "files" in item:
         unpack(w, blob, item["url"], item, max_size)
     else:
-        name = os.path.basename(urllib.parse.urlparse(item["url"]).path)
+        name = item.get("name") or os.path.basename(urllib.parse.urlparse(item["url"]).path)
         w.put(f"{item['dest']}/{name}", blob)
 
 

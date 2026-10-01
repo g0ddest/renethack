@@ -3010,8 +3010,19 @@ impl MapView {
             self.hero_fx.after(delay, fx);
         }
         if matches!(u.kind, UseKind::Throw | UseKind::Fire) {
-            let model = held.and_then(|h| self.art.held_prop(h, 0.7));
+            // never smaller than a hand's breadth in flight: a stone of
+            // 6 cm would vanish at the camera's distance
+            let model = held.and_then(|h| self.art.held_prop(h, (0.16 / h.scale).max(0.7)));
             let to = ahead.unwrap_or(hand + facing * 3.0);
+            self.hero_fx.after(
+                THROW_AT + 0.25,
+                Fx::Burst {
+                    name: "landing",
+                    kind: VfxKind::Sparks,
+                    at: to,
+                    anchor: None,
+                },
+            );
             self.hero_fx.after(
                 THROW_AT,
                 Fx::Throw {

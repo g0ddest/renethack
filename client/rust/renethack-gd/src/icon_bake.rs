@@ -205,11 +205,20 @@ fn local_box(holder: &Gd<Node3D>, points: &[Vector3]) -> Option<Aabb> {
 /// Turn a long thing (a sword, a wand, a polearm) to lie across the icon
 /// from the bottom left to the top right, its flat side to the viewer;
 /// anything else is seen from the front at three quarters.
-fn present(holder: &mut Gd<Node3D>) {
+fn present(holder: &mut Gd<Node3D>, upright: bool) {
     let Some(b) = local_box(holder, &corners(holder)) else {
         return;
     };
     let s = b.size;
+    if upright {
+        // a shield lying face up: stood on its point, its face to the
+        // viewer, turned a little (three quarters)
+        let local = Basis::from_cols(Vector3::LEFT, Vector3::BACK, Vector3::UP);
+        let turn = Basis::from_axis_angle(Vector3::UP, (-14f32).to_radians());
+        let basis = view_basis() * turn * local;
+        holder.set_transform(Transform3D::new(basis, -(basis * b.center())));
+        return;
+    }
     let (long, short) = if s.x >= s.z { (s.x, s.z) } else { (s.z, s.x) };
     if long < 1.8 * short.max(s.y) {
         return;
@@ -428,7 +437,8 @@ impl Bake {
                 let (look, _) = object_look(&self.stage.art, &self.catalog, &tile);
                 let mut model = self.stage.art.take(&look);
                 model.node.set_transform(Transform3D::IDENTITY);
-                present(&mut model.node);
+                let shield = tile.class == "[" && tile.appearance.contains("shield");
+                present(&mut model.node, shield);
                 let pts = corners(&model.node);
                 if pts.is_empty() {
                     self.stage.art.give(model);

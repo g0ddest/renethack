@@ -153,6 +153,8 @@
    "files": ["CandleSmoke01_20x4.tga"], "dest": "unity-labs/flipbooks", "use": "thin smoke of candles and lamps (20x4 frames)"},
   {"url": "https://unity3d.com/files/labs/downloads/vfx/assets01/Explosion02HD/Explosion02HD-flipbooks.zip",
    "files": ["Explosion02HD_5x5.tga"], "dest": "unity-labs/flipbooks", "use": "explosions (5x5 frames)"},
+  {"url": "https://static.poly.pizza/f1d12388-e39b-4157-b32a-646a1d089fc4.glb", "name": "Wolf.glb", "dest": "quaternius/animals", "use": "wolves, jackals, coyotes, foxes, wargs (Ultimate Animated Animal Pack by Quaternius, CC0, mirrored on Poly Pizza: https://poly.pizza/m/P1gU3Qkr9r; the pack's own Google Drive is over its quota)"},
+  {"url": "https://static.poly.pizza/611d25c7-430f-4bb5-ab2c-d8f5f3cb9712.glb", "name": "Husky.glb", "dest": "quaternius/animals", "use": "dogs (Ultimate Animated Animal Pack by Quaternius, CC0, mirrored on Poly Pizza: https://poly.pizza/m/wcWiuEqwzq)"},
   {"url": "https://kenney.nl/media/pages/assets/particle-pack/f8fe0f8cb8-1677578741/kenney_particle-pack.zip",
    "root": "PNG (Transparent)/", "files": ["*.png"], "license_files": ["License.txt"], "dest": "kenney/particles",
    "use": "sparks, flares, magic circles, slashes, scorch marks, smoke puffs (grayscale, tinted in the shader)"},

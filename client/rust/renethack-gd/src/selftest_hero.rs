@@ -127,7 +127,7 @@ pub(super) fn equipment() -> Vec<Step> {
         }),
         Step::Push(UiEvent::BackToTitle),
     ]);
-    steps.extend(start_as(choice("tourist", "female")));
+    steps.extend(start_as(choice("archeologist", "female")));
     steps.extend([Step::Wait("the hero on the map", |g| {
         Ok(g.world.map.hero().is_some())
     })]);
@@ -310,7 +310,7 @@ pub(super) fn item_use() -> Vec<Step> {
         }),
         Step::Push(UiEvent::BackToTitle),
     ]);
-    steps.extend(start_as(choice("tourist", "female")));
+    steps.extend(start_as(choice("archeologist", "female")));
     steps.push(Step::Wait("the hero on the map", |g| {
         Ok(g.world.map.hero().is_some())
     }));
