@@ -85,6 +85,10 @@ pub enum Proc {
     Heap,
     /// A mace, morning star, flail or club (by its shape).
     Mace,
+    /// A sword by its shape: long, broad, great, short, curved, katana.
+    Sword,
+    /// A wrapped, tied ration.
+    Ration,
     Potion,
 }
 

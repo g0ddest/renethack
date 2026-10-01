@@ -179,18 +179,18 @@ fn in_use(g: &RenethackGame) -> Result<Option<String>, String> {
         return Ok(None);
     };
     let node: Gd<Node> = m.node.clone().upcast();
-    let Some(att) = node.find_child_ex("Gear_hand_r").owned(false).done() else {
-        return Ok(None);
-    };
-    Ok(att
-        .get_children()
-        .iter_shared()
-        .filter(|c| !c.is_queued_for_deletion())
-        .find_map(|c| {
-            let name = c.get_name().to_string();
-            name.strip_prefix(&format!("{USE_NODE}_"))
-                .map(str::to_string)
-        }))
+    let held = ["Gear_hand_r", "Gear_hand_l"].into_iter().find_map(|bone| {
+        let att = node.find_child_ex(bone).owned(false).done()?;
+        att.get_children()
+            .iter_shared()
+            .filter(|c| !c.is_queued_for_deletion())
+            .find_map(|c| {
+                let name = c.get_name().to_string();
+                name.strip_prefix(&format!("{USE_NODE}_"))
+                    .map(str::to_string)
+            })
+    });
+    Ok(held)
 }
 
 /// The hero plays `clip` and the effect `fx` has started (with the item
@@ -211,13 +211,14 @@ fn using(g: &RenethackGame, clip: &str, fx: &str, held: Option<&str>) -> Result<
     Ok(started)
 }
 
-/// Seed 1's Wizard drinks a potion, reads a scroll, zaps a wand and casts
+/// Seed 5's Wizard drinks a potion, reads a scroll, zaps a wand (a beam
+/// to the wall) and casts
 /// force bolt; seed 2's Archeologist eats, applies the lamp and throws a
 /// stone. Each use starts its clip and its effect (a picture of each,
 /// mid-motion).
 pub(super) fn item_use() -> Vec<Step> {
-    let mut steps = vec![Step::Call("seed 1", |g| {
-        g.seed = Some(1);
+    let mut steps = vec![Step::Call("seed 5", |g| {
+        g.seed = Some(5);
         Ok(())
     })];
     steps.extend(start_as(choice("wizard", "male")));
@@ -237,7 +238,8 @@ pub(super) fn item_use() -> Vec<Step> {
     steps.extend([
         key('q'),
         Step::Request("what to drink", getobj),
-        key('f'),
+        // not f: object detection asks where to look
+        key('h'),
         Step::Request("a command after drinking", command),
         Step::Wait("drinking, the potion in hand, a sparkle", |g| {
             using(g, "ual2/Consume", "quaff", Some("potion"))
@@ -260,9 +262,20 @@ pub(super) fn item_use() -> Vec<Step> {
         key('z'),
         Step::Request("what to zap", getobj),
         key('c'),
+        Step::Request("the zap's direction", |p| {
+            matches!(
+                p,
+                Prompt::FreeKey {
+                    directions: true,
+                    ..
+                }
+            )
+        }),
+        key('l'),
         Step::AnswerUntil('n', "a command after zapping", idle_command),
-        Step::Wait("zapping, the wand in hand, a flare", |g| {
-            using(g, "Pistol_Shoot", "zap", Some("wand"))
+        Step::Wait("zapping, the wand in hand, a beam", |g| {
+            Ok(using(g, "Pistol_Shoot", "zap", Some("wand"))?
+                && map_view(g)?.hero_fx().started().contains(&"beam"))
         }),
         Step::Shot("use-zap"),
         Step::Wait("the hero idle again", |g| {
@@ -332,7 +345,7 @@ pub(super) fn item_use() -> Vec<Step> {
             let map = map_view(g)?;
             let clip = map.hero_clip();
             let flying = map.hero_fx().started().contains(&"throw");
-            if flying && clip.as_deref() != Some("ual2/OverhandThrow") {
+            if flying && clip.as_deref() != Some("proc/throw") {
                 return Err(format!("the throw plays {clip:?}"));
             }
             Ok(flying)

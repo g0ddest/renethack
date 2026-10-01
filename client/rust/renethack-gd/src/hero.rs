@@ -66,15 +66,18 @@ pub struct HeroFx {
 /// An effect, as plain data.
 #[derive(Debug, Clone)]
 pub enum Fx {
+    /// `at`, or where `anchor` is when it starts (a hand, as it moves).
     Burst {
         name: &'static str,
         kind: VfxKind,
         at: Vector3,
+        anchor: Option<Gd<Node3D>>,
     },
     Beam {
         kind: VfxKind,
         from: Vector3,
         to: Vector3,
+        anchor: Option<Gd<Node3D>>,
     },
     /// A thrown thing's model flying from one point to another.
     Throw {
@@ -174,13 +177,23 @@ impl HeroFx {
 
     fn spawn(&mut self, fx: Fx, vfx: &mut Vfx) {
         match fx {
-            Fx::Burst { name, kind, at } => {
+            Fx::Burst {
+                name,
+                kind,
+                at,
+                anchor,
+            } => {
                 self.started.push(name);
-                vfx.burst(kind, at);
+                vfx.burst(kind, where_now(anchor.as_ref(), at));
             }
-            Fx::Beam { kind, from, to } => {
+            Fx::Beam {
+                kind,
+                from,
+                to,
+                anchor,
+            } => {
                 self.started.push("beam");
-                vfx.beam(kind, from, to);
+                vfx.beam(kind, where_now(anchor.as_ref(), from), to);
             }
             Fx::Throw { model, from, to } => {
                 self.started.push("throw");
@@ -208,6 +221,23 @@ impl HeroFx {
                 });
             }
         }
+    }
+}
+
+/// Where an anchor is now, else `at`.
+fn where_now(anchor: Option<&Gd<Node3D>>, at: Vector3) -> Vector3 {
+    anchor
+        .filter(|a| a.is_instance_valid() && a.is_inside_tree())
+        .map_or(at, |a| a.get_global_position())
+}
+
+/// The hand a use's clip moves: drinking, eating and applying bring the
+/// left hand up (Consume, Interact), a spell leaves the left hand; a wand,
+/// a page and a throw are in the right.
+pub fn use_hand(kind: UseKind) -> &'static str {
+    match kind {
+        UseKind::Quaff | UseKind::Eat | UseKind::Apply | UseKind::Cast => "hand_l",
+        _ => "hand_r",
     }
 }
 
@@ -262,46 +292,74 @@ pub fn in_hand(kind: UseKind) -> Option<f32> {
 }
 
 /// When a throw lets go (seconds into the clip).
-pub const THROW_AT: f32 = 0.45;
+pub const THROW_AT: f32 = crate::art::THROW_LETS_GO;
 
 /// The effects of a use, after their delays: `hand` is where the item
-/// is, `ahead` the far end of its way (a beam's, a flight's).
+/// is (`anchor` its bone, followed as it moves), `ahead` the far end of
+/// its way (a beam's, a flight's), where a beam ends in a flash.
 pub fn use_effects(
     u: &ItemUse,
     color: Color,
     hand: Vector3,
+    anchor: Option<Gd<Node3D>>,
     ahead: Option<Vector3>,
 ) -> Vec<(f32, Fx)> {
-    let burst = |name, kind, at| Fx::Burst { name, kind, at };
-    let up = Vector3::new(0.0, 0.35, 0.0);
-    let beam = |kind| {
-        ahead.map(|to| {
-            (
-                0.4,
-                Fx::Beam {
-                    kind,
-                    from: hand,
-                    to,
-                },
-            )
-        })
+    let burst = |name, kind, at: Vector3| Fx::Burst {
+        name,
+        kind,
+        at,
+        anchor: anchor.clone(),
+    };
+    let beam = |kind, impact| {
+        ahead
+            .map(|to| {
+                vec![
+                    (
+                        0.4,
+                        Fx::Beam {
+                            kind,
+                            from: hand,
+                            to,
+                            anchor: anchor.clone(),
+                        },
+                    ),
+                    (
+                        0.55,
+                        Fx::Burst {
+                            name: "impact",
+                            kind: impact,
+                            at: to,
+                            anchor: None,
+                        },
+                    ),
+                ]
+            })
+            .unwrap_or_default()
     };
     match u.kind {
-        UseKind::Quaff => vec![(0.8, burst("quaff", VfxKind::Quaff(color), hand + up))],
+        UseKind::Quaff => vec![(0.8, burst("quaff", VfxKind::Quaff(color), hand))],
         UseKind::Eat => vec![(0.6, burst("eat", VfxKind::Quaff(color), hand))],
         UseKind::Read => vec![(0.5, burst("read", VfxKind::Read, hand))],
         UseKind::Zap => {
             let mut v = vec![(0.35, burst("zap", VfxKind::Zap(color), hand))];
-            v.extend(beam(VfxKind::Zap(color)));
+            v.extend(beam(VfxKind::Zap(color), VfxKind::Explosion(color)));
             v
         }
         UseKind::Cast => {
             let mut v = vec![(0.3, burst("cast", VfxKind::Cast(color), hand))];
-            v.extend(beam(VfxKind::Cast(color)));
+            v.extend(beam(VfxKind::Cast(color), VfxKind::Explosion(color)));
             v
         }
         UseKind::Apply => vec![(0.4, burst("apply", VfxKind::Sparkle, hand))],
-        UseKind::Kick => vec![(0.3, burst("kick", VfxKind::Sparks, ahead.unwrap_or(hand)))],
+        UseKind::Kick => vec![(
+            0.3,
+            Fx::Burst {
+                name: "kick",
+                kind: VfxKind::Sparks,
+                at: ahead.unwrap_or(hand),
+                anchor: None,
+            },
+        )],
         _ => Vec::new(),
     }
 }

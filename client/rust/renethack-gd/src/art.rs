@@ -27,7 +27,7 @@ use nh_art::{ArtManifest, MaterialSpec, Proc, Resolved, Skin};
 #[path = "equip.rs"]
 mod equip;
 
-pub use equip::{HELD_NODE, LAMP_LIGHT, USE_NODE, Worn};
+pub use equip::{HELD_NODE, LAMP_LIGHT, THROW_LETS_GO, USE_NODE, Worn};
 
 use crate::meshes::{MeshKey, capsule, cuboid, cylinder, dome, facets, prism, sphere, torus};
 
@@ -658,7 +658,7 @@ impl Art {
         head.set_name("ProcHead");
         head.set_scale(Vector3::new(0.88, 0.88, 0.88));
         bone.add_child(&head);
-        let skin = self.flat(Color::from_rgb(0.62, 0.45, 0.35), Finish::Matte);
+        let skin = self.flat(Color::from_rgb(0.56, 0.4, 0.31), Finish::Matte);
         let mut kit = Kit {
             art: self,
             skin,
@@ -1120,9 +1120,10 @@ impl Kit<'_> {
             .art
             .flat(Color::from_rgb(0.1, 0.07, 0.05), Finish::Matte);
         let hood = kind == "hood";
+        // in a hood's shadow the face keeps a little light of its own, so
+        // it reads as a face and not as a hole
         let face = if hood {
-            self.art
-                .flat(Color::from_rgb(0.3, 0.22, 0.17), Finish::Matte)
+            lit_skin(Color::from_rgb(0.46, 0.33, 0.26), 0.45)
         } else {
             self.skin.clone()
         };
@@ -1150,14 +1151,58 @@ impl Kit<'_> {
             flat,
             [0.8, 1.0, 1.3],
         );
+        // eyes (whites, iris, pupil), brows and a mouth: a face, not a
+        // mannequin's blank
+        let white = self
+            .art
+            .flat(Color::from_rgb(0.86, 0.84, 0.8), Finish::Glossy);
+        let iris = self
+            .art
+            .flat(Color::from_rgb(0.24, 0.16, 0.1), Finish::Glossy);
         let eye = self.eye();
+        let lips = self
+            .art
+            .flat(Color::from_rgb(0.42, 0.2, 0.17), Finish::Matte);
+        self.part(
+            head,
+            cuboid(0.034, 0.007, 0.01),
+            &lips,
+            [0.0, 0.052, 0.108],
+            flat,
+            one,
+        );
         for s in [-1.0f32, 1.0] {
             self.part(
                 head,
-                sphere(0.013),
-                &eye,
-                [s * 0.034, 0.112, 0.097],
+                sphere(0.02),
+                &white,
+                [s * 0.034, 0.112, 0.1],
                 flat,
+                [0.85, 0.6, 0.5],
+            );
+            self.part(
+                head,
+                sphere(0.01),
+                &iris,
+                [s * 0.034, 0.112, 0.108],
+                flat,
+                [0.9, 0.9, 0.45],
+            );
+            self.part(
+                head,
+                // meshes come in whole centimetres: a smaller one is scaled
+                sphere(0.01),
+                &eye,
+                [s * 0.034, 0.112, 0.113],
+                flat,
+                [0.45, 0.45, 0.3],
+            );
+            self.part(
+                head,
+                cuboid(0.03, 0.006, 0.012),
+                &hair,
+                [s * 0.036, 0.132, 0.106],
+                [0.0, 0.0, s * -10.0],
                 one,
             );
             if !hood {
@@ -1887,6 +1932,10 @@ impl Kit<'_> {
     }
 
     fn beast(&mut self, root: &mut Gd<Node3D>) {
+        if self.shape.as_deref() == Some("cat") {
+            self.cat(root);
+            return;
+        }
         self.skin(
             root,
             sphere(0.34),
@@ -1939,8 +1988,108 @@ impl Kit<'_> {
     }
 }
 
+impl Kit<'_> {
+    /// A cat: a long slender body, a round head with pointed ears and eyes
+    /// that catch the light, thin legs and a long tail carried high.
+    fn cat(&mut self, root: &mut Gd<Node3D>) {
+        let one = [1.0f32; 3];
+        self.skin(
+            root,
+            sphere(0.26),
+            [0.0, 0.5, -0.02],
+            [0.0; 3],
+            [0.72, 0.68, 1.55],
+        );
+        self.skin(
+            root,
+            sphere(0.2),
+            [0.0, 0.56, 0.24],
+            [0.0; 3],
+            [0.85, 0.85, 1.0],
+        );
+        let mut head = self.pivot(root, "Head", [0.0, 0.74, 0.42]);
+        self.skin(
+            &mut head,
+            sphere(0.15),
+            [0.0, 0.0, 0.04],
+            [0.0; 3],
+            [1.0, 0.88, 0.92],
+        );
+        self.skin(
+            &mut head,
+            sphere(0.065),
+            [0.0, -0.05, 0.16],
+            [0.0; 3],
+            [1.1, 0.8, 0.9],
+        );
+        let nose = self
+            .art
+            .flat(Color::from_rgb(0.55, 0.3, 0.3), Finish::Matte);
+        self.part(
+            &mut head,
+            sphere(0.018),
+            &nose,
+            [0.0, -0.025, 0.215],
+            [0.0; 3],
+            one,
+        );
+        self.eyes(&mut head, [0.0, 0.03, 0.155], 0.058, 0.024, true);
+        for s in [-1.0f32, 1.0] {
+            self.skin(
+                &mut head,
+                cylinder(0.0, 0.055, 0.12),
+                [s * 0.085, 0.15, 0.0],
+                [-10.0, 0.0, s * -18.0],
+                one,
+            );
+        }
+        let mut tail = self.pivot(root, "Tail", [0.0, 0.58, -0.42]);
+        self.skin(
+            &mut tail,
+            cylinder(0.022, 0.034, 0.34),
+            [0.0, 0.08, -0.14],
+            [-35.0, 0.0, 0.0],
+            one,
+        );
+        self.skin(
+            &mut tail,
+            cylinder(0.014, 0.022, 0.28),
+            [0.0, 0.33, -0.25],
+            [-8.0, 0.0, 0.0],
+            one,
+        );
+        for (x, z) in [(-1.0f32, 0.3f32), (1.0, 0.3), (-1.0, -0.3), (1.0, -0.3)] {
+            self.skin(
+                root,
+                capsule(0.045, 0.52),
+                [x * 0.11, 0.25, z],
+                [0.0; 3],
+                one,
+            );
+            self.skin(
+                root,
+                sphere(0.05),
+                [x * 0.11, 0.03, z + 0.03],
+                [0.0; 3],
+                [1.0, 0.6, 1.3],
+            );
+        }
+    }
+}
+
 #[path = "object_kit.rs"]
 mod object_kit;
+
+/// Skin that glows a little from inside (a face in a hood's shadow).
+fn lit_skin(color: Color, glow: f32) -> Gd<Material> {
+    let mut m = StandardMaterial3D::new_gd();
+    m.set_albedo(color);
+    m.set_roughness(0.8);
+    m.set_feature(Feature::EMISSION, true);
+    m.set_emission(color);
+    m.set_emission_energy_multiplier(glow);
+    m.upcast()
+}
 
 /// Cast shadows off for flat ground geometry (map_view).
 pub fn no_shadow(mi: &mut Gd<MeshInstance3D>) {

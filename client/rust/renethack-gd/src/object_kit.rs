@@ -78,6 +78,8 @@ impl Kit<'_> {
             Proc::Horn => self.horn(root),
             Proc::Pole => self.pole(root),
             Proc::Mace => self.mace(root),
+            Proc::Sword => self.sword(root),
+            Proc::Ration => self.ration(root),
             _ => self.simple(kind, root),
         }
     }
@@ -511,7 +513,8 @@ impl Kit<'_> {
         let glass = self.mat(Color::from_rgba(0.82, 0.9, 0.95, 0.28), Finish::Glass);
         let liquid = self.gem_mat();
         let cork = self.plain("wood", Color::from_rgb(0.45, 0.3, 0.16));
-        let wax = self.mat(Color::from_rgb(0.5, 0.08, 0.06), Finish::Glossy);
+        // a dark seal over the cork: a red one read as an eye on a pale flask
+        let wax = self.mat(Color::from_rgb(0.26, 0.15, 0.09), Finish::Glossy);
         let shape = self.shape.clone().unwrap_or_default();
         let (neck_y, neck_r) = match shape.as_str() {
             "bottle" => {
@@ -1369,6 +1372,14 @@ impl Kit<'_> {
     /// A bow lying flat: a curved stave, a wrapped grip, the string.
     fn bow(&mut self, root: &mut Gd<Node3D>) {
         let skin = self.skin.clone();
+        if self.shape_is("sling") {
+            self.sling(root);
+            return;
+        }
+        if self.shape_is("crossbow") {
+            self.crossbow(root);
+            return;
+        }
         if self.shape_is("boomerang") {
             for s in [-1.0f32, 1.0] {
                 self.part(
@@ -1847,6 +1858,18 @@ impl Kit<'_> {
                 (thick * 1.25, thick * 1.1),
             );
         }
+        // a polearm's head, a little larger than life, so it reads at a
+        // glance (and in an icon, where the whole shaft must fit)
+        let big = !matches!(
+            form.as_str(),
+            "staff" | "lance" | "spear" | "stout" | "javelin" | "trident"
+        );
+        let k = if big { 1.45 } else { 1.0 };
+        let mut head = Node3D::new_alloc();
+        head.set_position(Vector3::new(0.0, 0.03 * (1.0 - k), top * (1.0 - k)));
+        head.set_scale(Vector3::new(k, k, k));
+        root.add_child(&head);
+        let root = &mut head;
         let t = top;
         match form.as_str() {
             "staff" => {
@@ -2060,5 +2083,213 @@ impl Kit<'_> {
                 );
             }
         }
+    }
+}
+
+impl Kit<'_> {
+    /// A sword lying along z, its point at +z: a long, broad, great or
+    /// short straight blade with a fuller, or a curved sabre or katana.
+    fn sword(&mut self, root: &mut Gd<Node3D>) {
+        let (form, metal) = shape_parts(self.shape.as_deref(), "long");
+        let steel = self.weapon_metal(&metal);
+        let dark = self.plain("dark_iron", Color::from_rgb(0.3, 0.28, 0.26));
+        let grip = self.leather();
+        let (w, grip_len) = match form.as_str() {
+            "broad" => (0.11, 0.17),
+            "great" => (0.085, 0.26),
+            "short" => (0.085, 0.16),
+            "katana" => (0.06, 0.24),
+            "curved" => (0.07, 0.17),
+            _ => (0.08, 0.18),
+        };
+        let z0 = -0.5 + grip_len + 0.05;
+        let tip = 0.12;
+        let len = 0.5 - tip - z0;
+        self.rod(root, &grip, 0.0, (-0.49, z0 - 0.02), (0.02, 0.022));
+        self.part(
+            root,
+            sphere(0.03),
+            &steel,
+            [0.0, 0.03, -0.49],
+            FLAT,
+            [1.0, 0.8, 1.0],
+        );
+        if form == "katana" {
+            self.part(
+                root,
+                cylinder(0.06, 0.06, 0.02),
+                &dark,
+                [0.0, 0.03, z0 - 0.01],
+                [90.0, 0.0, 0.0],
+                ONE,
+            );
+        } else {
+            let guard = if form == "broad" { 0.3 } else { 0.24 };
+            self.plate(root, &steel, [0.0, z0 - 0.015], [guard, 0.03], 0.0);
+        }
+        match form.as_str() {
+            "curved" | "katana" => {
+                // a gentle curve: the edge sweeps back towards -x
+                let r = 1.3f32;
+                let sweep = (len / r).to_degrees();
+                self.arc(root, &steel, [-r, z0], r, 90.0, 90.0 - sweep, w);
+                let a = (90.0 - sweep).to_radians();
+                let end = [-r + r * a.sin(), z0 + r * a.cos()];
+                self.point(root, &steel, end, w * 0.55, tip, -sweep);
+            }
+            _ => {
+                self.plate(root, &steel, [0.0, z0 + len / 2.0], [w, len], 0.0);
+                self.point(root, &steel, [0.0, z0 + len], w, tip, 0.0);
+                // the fuller: a dark groove down the middle
+                self.part(
+                    root,
+                    cuboid(w * 0.22, 0.004, len * 0.8),
+                    &dark,
+                    [0.0, 0.037, z0 + len * 0.45],
+                    FLAT,
+                    ONE,
+                );
+            }
+        }
+    }
+
+    /// A ration: a block wrapped in waxed paper and tied with twine.
+    fn ration(&mut self, root: &mut Gd<Node3D>) {
+        let wrap = self.skin.clone();
+        let twine = self.plain("cloth", Color::from_rgb(0.4, 0.3, 0.2));
+        self.part(
+            root,
+            cuboid(0.9, 0.3, 0.6),
+            &wrap,
+            [0.0, 0.15, 0.0],
+            FLAT,
+            ONE,
+        );
+        self.part(
+            root,
+            cuboid(0.92, 0.02, 0.05),
+            &twine,
+            [0.0, 0.305, 0.0],
+            FLAT,
+            ONE,
+        );
+        self.part(
+            root,
+            cuboid(0.05, 0.02, 0.62),
+            &twine,
+            [0.0, 0.305, 0.0],
+            FLAT,
+            ONE,
+        );
+        self.part(
+            root,
+            cuboid(0.93, 0.31, 0.05),
+            &twine,
+            [0.0, 0.15, 0.0],
+            FLAT,
+            ONE,
+        );
+        self.part(
+            root,
+            cuboid(0.05, 0.31, 0.63),
+            &twine,
+            [0.0, 0.15, 0.0],
+            FLAT,
+            ONE,
+        );
+        self.part(
+            root,
+            torus(0.03, 0.06),
+            &twine,
+            [0.0, 0.32, 0.0],
+            FLAT,
+            [1.4, 1.0, 1.0],
+        );
+    }
+
+    /// A sling: two cords from a leather pouch, a loop at one end.
+    fn sling(&mut self, root: &mut Gd<Node3D>) {
+        let cord = self.plain("cloth", Color::from_rgb(0.45, 0.35, 0.22));
+        let pouch = self.leather();
+        self.part(
+            root,
+            sphere(0.12),
+            &pouch,
+            [0.0, 0.04, 0.0],
+            FLAT,
+            [1.0, 0.35, 1.4],
+        );
+        for (x0, z0, x1, z1) in [
+            (-0.06f32, -0.14f32, -0.02f32, -0.5f32),
+            (0.06, -0.14, 0.02, -0.5),
+            (-0.06, 0.14, -0.1, 0.48),
+            (0.06, 0.14, -0.06, 0.48),
+        ] {
+            let len = ((x1 - x0).powi(2) + (z1 - z0).powi(2)).sqrt();
+            let yaw = (x1 - x0).atan2(z1 - z0).to_degrees();
+            self.part(
+                root,
+                cylinder(0.008, 0.008, len),
+                &cord,
+                [(x0 + x1) / 2.0, 0.03, (z0 + z1) / 2.0],
+                [90.0, yaw, 0.0],
+                ONE,
+            );
+        }
+        self.part(
+            root,
+            torus(0.03, 0.045),
+            &cord,
+            [0.0, 0.03, -0.52],
+            FLAT,
+            ONE,
+        );
+    }
+
+    /// A crossbow: a wooden stock along z, the bow across it at the front,
+    /// its string drawn back to the nut.
+    fn crossbow(&mut self, root: &mut Gd<Node3D>) {
+        let wood = self.skin.clone();
+        let steel = self.weapon_metal("steel");
+        let string = self.bone();
+        self.plate(root, &wood, [0.0, -0.05], [0.08, 0.9], 0.0);
+        self.part(
+            root,
+            cuboid(0.1, 0.06, 0.26),
+            &wood,
+            [0.0, 0.03, -0.38],
+            FLAT,
+            ONE,
+        );
+        for s in [-1.0f32, 1.0] {
+            self.part(
+                root,
+                cylinder(0.014, 0.022, 0.4),
+                &steel,
+                [s * 0.19, 0.04, 0.34],
+                [90.0, s * 72.0, 0.0],
+                ONE,
+            );
+            // the string from the bow's tip back to the nut
+            let (x0, z0, x1, z1) = (s * 0.37, 0.28f32, s * 0.03, 0.05f32);
+            let len = ((x1 - x0).powi(2) + (z1 - z0).powi(2)).sqrt();
+            let yaw = (x1 - x0).atan2(z1 - z0).to_degrees();
+            self.part(
+                root,
+                cylinder(0.005, 0.005, len),
+                &string,
+                [(x0 + x1) / 2.0, 0.045, (z0 + z1) / 2.0],
+                [90.0, yaw, 0.0],
+                ONE,
+            );
+        }
+        self.part(
+            root,
+            cuboid(0.03, 0.08, 0.04),
+            &steel,
+            [0.0, -0.01, -0.12],
+            FLAT,
+            ONE,
+        );
     }
 }

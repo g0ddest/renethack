@@ -9,10 +9,13 @@
 use std::collections::HashMap;
 
 use godot::classes::animation::{LoopMode, TrackType};
+use godot::classes::base_material_3d::{
+    BillboardMode, BlendMode, ShadingMode, TextureParam, Transparency,
+};
 use godot::classes::light_3d::Param;
 use godot::classes::{
     Animation, AnimationLibrary, AnimationPlayer, BoneAttachment3D, MeshInstance3D, Node, Node3D,
-    OmniLight3D, Skeleton3D,
+    OmniLight3D, QuadMesh, Skeleton3D, StandardMaterial3D,
 };
 use godot::prelude::*;
 use nh_art::{Gear, HeldArt, LightSpec, PROC_CLIPS, Resolved, Tint};
@@ -40,8 +43,8 @@ pub struct Worn {
     held: Vec<(&'static str, Gd<Node3D>)>,
     /// The outfit's meshes some part rule governs, and the rule.
     parts: Option<Vec<(Gd<MeshInstance3D>, usize)>>,
-    /// An item used, in the right hand for a few seconds more.
-    in_use: Option<(Gd<Node3D>, f32)>,
+    /// An item used, in a hand for a few seconds more.
+    in_use: Option<(Gd<Node3D>, f32, &'static str)>,
 }
 
 impl Worn {
@@ -121,15 +124,15 @@ impl Art {
         if worn.skeleton.is_none() {
             return false;
         }
-        if let Some((node, left)) = worn.in_use.as_mut() {
+        if let Some((node, left, hand)) = worn.in_use.as_mut() {
             *left -= delta;
             if *left <= 0.0 {
-                let mut node = node.clone();
+                let (mut node, hand) = (node.clone(), *hand);
                 if node.is_instance_valid() {
                     node.queue_free();
                 }
                 worn.in_use = None;
-                show_slot(worn, "hand_r", true);
+                show_slot(worn, hand, true);
             }
         }
         if worn.gear == *gear {
@@ -158,8 +161,8 @@ impl Art {
                 worn.held.push((slot, node));
             }
         }
-        if worn.in_use.is_some() {
-            show_slot(&mut worn, "hand_r", false);
+        if let Some((_, _, hand)) = worn.in_use {
+            show_slot(&mut worn, hand, false);
         }
         self.show_parts(&mut worn, &gear.worn);
         worn.gear = gear.clone();
@@ -197,7 +200,7 @@ impl Art {
                 node.queue_free();
             }
         }
-        if let Some((mut node, _)) = worn.in_use.take()
+        if let Some((mut node, _, _)) = worn.in_use.take()
             && node.is_instance_valid()
         {
             node.queue_free();
@@ -213,23 +216,33 @@ impl Art {
 
     /// Show an item in the right hand for `secs` (a potion drunk, a wand
     /// zapped); the weapon there steps aside meanwhile.
-    pub fn hold_for(&mut self, m: &mut Model, h: HeldArt, secs: f32) -> bool {
+    pub fn hold_for(&mut self, m: &mut Model, h: HeldArt, secs: f32, hand: &'static str) -> bool {
         let Some(mut worn) = m.worn.take() else {
             return false;
         };
-        if let Some((mut old, _)) = worn.in_use.take()
-            && old.is_instance_valid()
-        {
-            old.queue_free();
+        if let Some((mut old, _, hand)) = worn.in_use.take() {
+            if old.is_instance_valid() {
+                old.queue_free();
+            }
+            show_slot(&mut worn, hand, true);
         }
-        let node = self.hold(&mut worn, "hand_r", h, USE_NODE);
+        let node = self.hold(&mut worn, hand, h, USE_NODE);
         let shown = node.is_some();
         if let Some(node) = node {
-            worn.in_use = Some((node, secs));
-            show_slot(&mut worn, "hand_r", false);
+            worn.in_use = Some((node, secs, hand));
+            show_slot(&mut worn, hand, false);
         }
         m.worn = Some(worn);
         shown
+    }
+
+    /// The node that follows a slot's bone (where a spell leaves the hand).
+    pub fn slot_anchor(&mut self, m: &mut Model, slot: &str) -> Option<Gd<Node3D>> {
+        let bone = self.manifest.held_slot(slot)?.bone.clone();
+        let mut worn = m.worn.take()?;
+        let b = self.bone(&mut worn, &bone);
+        m.worn = Some(worn);
+        b.map(|b| b.upcast())
     }
 
     /// A held thing on its own (a thrown one in flight), `scale` times
@@ -362,13 +375,34 @@ impl Art {
         light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 1.0);
         light.set_shadow(true);
         light.set_position(at);
-        // the flame itself glows (the light never lights its own inside)
+        // the flame itself glows (the light never lights its own inside),
+        // in a soft halo that reads at any distance
         let flame = self.flat(Color::from_rgb(1.0, 0.62, 0.28), Finish::Ember);
         let mut core = MeshInstance3D::new_alloc();
-        core.set_mesh(&self.mesh(sphere(0.018)));
+        core.set_mesh(&self.mesh(sphere(0.022)));
         core.set_material_override(&flame);
         crate::art::no_shadow(&mut core);
         light.add_child(&core);
+        let mut halo_mat = StandardMaterial3D::new_gd();
+        halo_mat.set_shading_mode(ShadingMode::UNSHADED);
+        halo_mat.set_transparency(Transparency::ALPHA);
+        halo_mat.set_blend_mode(BlendMode::ADD);
+        halo_mat.set_billboard_mode(BillboardMode::ENABLED);
+        halo_mat.set_albedo(Color::from_rgba(
+            color.r,
+            color.g * 0.85,
+            color.b * 0.6,
+            0.55,
+        ));
+        halo_mat.set_texture(TextureParam::ALBEDO, &crate::vfx::soft_texture());
+        let mut quad = QuadMesh::new_gd();
+        quad.set_size(Vector2::new(0.32, 0.32));
+        let mut halo = MeshInstance3D::new_alloc();
+        halo.set_name("LampHalo");
+        halo.set_mesh(&quad);
+        halo.set_material_override(&halo_mat);
+        crate::art::no_shadow(&mut halo);
+        light.add_child(&halo);
         if spec.flicker > 0.0 {
             let mut lib = AnimationLibrary::new_gd();
             let _ = lib.add_animation("flicker", &flicker_animation(spec.energy, spec.flicker, at));
@@ -423,8 +457,9 @@ impl Art {
         player.has_animation(name.as_str()).then_some(name)
     }
 
-    /// The clips built in code on the shared skeleton: `read` is the idle
-    /// with both forearms raised to hold a page and the head bowed to it.
+    /// The clips built in code on the shared skeleton: `read` (a page held
+    /// up, the head bowed to it) and `throw` (an upright overhand throw),
+    /// both the idle with a few bones turned.
     fn add_proc_clips(&mut self, player: &mut Gd<AnimationPlayer>) {
         if player.has_animation_library(PROC_CLIPS) {
             return;
@@ -436,7 +471,8 @@ impl Art {
                     return;
                 };
                 let mut lib = AnimationLibrary::new_gd();
-                let _ = lib.add_animation("read", &read_animation(&idle));
+                let _ = lib.add_animation("read", &pose_clip(&idle, READ_SECS, READ_POSE));
+                let _ = lib.add_animation("throw", &pose_clip(&idle, THROW_SECS, THROW_POSE));
                 self.proc_clips = Some(lib.clone());
                 lib
             }
@@ -445,41 +481,144 @@ impl Art {
     }
 }
 
-/// Bone turns (bone, local axis, degrees) of the read pose: in the idle
-/// both arms hang with their x to the hero's right, so a turn about x
-/// swings them forward; the head bows about its own x.
-const READ_POSE: [(&str, Vector3, f32); 6] = [
-    ("upperarm_l", Vector3::new(1.0, 0.0, 0.0), 28.0),
-    ("upperarm_r", Vector3::new(1.0, 0.0, 0.0), 28.0),
-    ("lowerarm_l", Vector3::new(1.0, 0.0, 0.0), 70.0),
-    ("lowerarm_r", Vector3::new(1.0, 0.0, 0.0), 70.0),
-    ("neck_01", Vector3::new(1.0, 0.0, 0.0), 10.0),
-    ("Head", Vector3::new(1.0, 0.0, 0.0), 18.0),
-];
+/// A bone's turn over a clip: (bone, local axis, (share of the clip,
+/// degrees) keys in between which the turn is linear).
+type PoseTrack = (&'static str, Vector3, &'static [(f32, f32)]);
 
-fn read_animation(idle: &Gd<Animation>) -> Gd<Animation> {
+const X: Vector3 = Vector3::new(1.0, 0.0, 0.0);
+const Y: Vector3 = Vector3::new(0.0, 1.0, 0.0);
+
+/// Reading: in the idle both arms hang with their x to the hero's right,
+/// so a turn about x swings them forward (the page held up); the head
+/// bows about its own x.
+const READ_POSE: &[PoseTrack] = &[
+    (
+        "upperarm_l",
+        X,
+        &[(0.0, 0.0), (0.2, 28.0), (0.8, 28.0), (1.0, 0.0)],
+    ),
+    (
+        "upperarm_r",
+        X,
+        &[(0.0, 0.0), (0.2, 28.0), (0.8, 28.0), (1.0, 0.0)],
+    ),
+    (
+        "lowerarm_l",
+        X,
+        &[(0.0, 0.0), (0.2, 70.0), (0.8, 70.0), (1.0, 0.0)],
+    ),
+    (
+        "lowerarm_r",
+        X,
+        &[(0.0, 0.0), (0.2, 70.0), (0.8, 70.0), (1.0, 0.0)],
+    ),
+    (
+        "neck_01",
+        X,
+        &[(0.0, 0.0), (0.2, 10.0), (0.8, 10.0), (1.0, 0.0)],
+    ),
+    (
+        "Head",
+        X,
+        &[(0.0, 0.0), (0.2, 18.0), (0.8, 18.0), (1.0, 0.0)],
+    ),
+];
+const READ_SECS: f32 = 1.6;
+
+/// An overhand throw, upright: the right arm swings back and up (the
+/// elbow bent, the chest turned away), then over and forward to let go
+/// at `THROW_RELEASE` of the clip, and back to rest.
+const THROW_POSE: &[PoseTrack] = &[
+    (
+        "upperarm_r",
+        X,
+        &[
+            (0.0, 0.0),
+            (0.35, -150.0),
+            (0.55, 45.0),
+            (0.75, 25.0),
+            (1.0, 0.0),
+        ],
+    ),
+    (
+        "lowerarm_r",
+        X,
+        &[(0.0, 0.0), (0.35, 95.0), (0.55, 10.0), (1.0, 0.0)],
+    ),
+    (
+        "spine_02",
+        Y,
+        &[(0.0, 0.0), (0.35, 22.0), (0.55, -18.0), (1.0, 0.0)],
+    ),
+    (
+        "spine_02",
+        X,
+        &[(0.0, 0.0), (0.35, -6.0), (0.55, 12.0), (1.0, 0.0)],
+    ),
+    (
+        "upperarm_l",
+        X,
+        &[(0.0, 0.0), (0.35, 40.0), (0.55, 10.0), (1.0, 0.0)],
+    ),
+];
+const THROW_SECS: f32 = 0.9;
+/// When the throw lets go, as a share of the clip, and in seconds.
+const THROW_RELEASE: f32 = 0.55;
+pub const THROW_LETS_GO: f32 = THROW_SECS * THROW_RELEASE;
+
+/// A pose's turn at share `f` of the clip.
+fn turn_at(keys: &[(f32, f32)], f: f32) -> f32 {
+    for w in keys.windows(2) {
+        let ((f0, d0), (f1, d1)) = (w[0], w[1]);
+        if f <= f1 {
+            let t = if f1 > f0 {
+                ((f - f0) / (f1 - f0)).clamp(0.0, 1.0)
+            } else {
+                1.0
+            };
+            // smooth in and out of each key
+            let t = t * t * (3.0 - 2.0 * t);
+            return d0 + (d1 - d0) * t;
+        }
+    }
+    keys.last().map_or(0.0, |k| k.1)
+}
+
+/// A clip `secs` long: the idle with the pose's bones turned, keyed at 30
+/// frames a second (the idle's own keys are too few to carry a motion).
+fn pose_clip(idle: &Gd<Animation>, secs: f32, pose: &[PoseTrack]) -> Gd<Animation> {
+    const FPS: f32 = 30.0;
     let mut a = idle.duplicate_resource();
     a.set_loop_mode(LoopMode::NONE);
-    let len = f64::from(a.get_length());
+    a.set_length(secs);
     for t in 0..a.get_track_count() {
         if a.track_get_type(t) != TrackType::ROTATION_3D {
             continue;
         }
         let path = a.track_get_path(t).to_string();
-        let Some((_, axis, deg)) = READ_POSE
+        let turns: Vec<&PoseTrack> = pose
             .iter()
-            .find(|(b, _, _)| path.ends_with(&format!(":{b}")))
-        else {
+            .filter(|(b, _, _)| path.ends_with(&format!(":{b}")))
+            .collect();
+        if turns.is_empty() {
             continue;
-        };
-        let turn = Quaternion::from_axis_angle(*axis, deg.to_radians());
-        for k in 0..a.track_get_key_count(t) {
-            let time = a.track_get_key_time(t, k);
-            // in and out of the pose over the first and last fifth
-            let w = ((time / len).min(1.0 - time / len) * 5.0).clamp(0.0, 1.0) as f32;
-            let q: Quaternion = a.track_get_key_value(t, k).to();
-            let q = q * Quaternion::IDENTITY.slerp(turn, w);
-            a.track_set_key_value(t, k, &q.to_variant());
+        }
+        let frames = (secs * FPS).ceil() as i32;
+        let samples: Vec<(f64, Quaternion)> = (0..=frames)
+            .map(|k| {
+                let time = f64::from((k as f32 / FPS).min(secs));
+                (time, idle.rotation_track_interpolate(t, time))
+            })
+            .collect();
+        for k in (0..a.track_get_key_count(t)).rev() {
+            a.track_remove_key(t, k);
+        }
+        for (time, q) in samples {
+            let f = time as f32 / secs;
+            let q = turns.iter().fold(q, |q, (_, axis, keys)| {
+                q * Quaternion::from_axis_angle(*axis, turn_at(keys, f).to_radians())
+            });
+            a.rotation_track_insert_key(t, time, q);
         }
     }
     a
