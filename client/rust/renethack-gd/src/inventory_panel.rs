@@ -51,6 +51,8 @@ const DETAIL_W: f32 = 356.0;
 /// Cells: 8 × 7 of 64, gap 4.
 const COLS: usize = 8;
 const ROWS: usize = 7;
+/// The fewest rows the grid shows.
+const MIN_ROWS: usize = 3;
 const CELL: f32 = 64.0;
 const CELL_GAP: f32 = 4.0;
 const GRID_W: f32 = COLS as f32 * CELL + (COLS - 1) as f32 * CELL_GAP;
@@ -1089,20 +1091,34 @@ impl DollView {
         env.set_background(godot::classes::environment::BgMode::CLEAR_COLOR);
         env.set_ambient_source(godot::classes::environment::AmbientSource::COLOR);
         env.set_ambient_light_color(Color::from_rgb(0.55, 0.5, 0.46));
-        env.set_ambient_light_energy(1.6);
+        env.set_ambient_light_energy(1.9);
         env.set_tonemapper(godot::classes::environment::ToneMapper::AGX);
+        env.set_tonemap_exposure(1.25);
         camera.set_environment(&env);
         // a warm key from the upper left, a cold rim from behind
         for (rot, color, energy) in [
+            // the key, not too steep: the legs get it too
             (
-                Vector3::new(-0.5, -0.6, 0.0),
+                Vector3::new(-0.3, -0.55, 0.0),
                 Color::from_rgb(1.0, 0.9, 0.78),
                 3.4,
             ),
             (
                 Vector3::new(-0.2, 0.7, 0.0),
                 Color::from_rgb(0.9, 0.8, 0.7),
-                0.9,
+                1.1,
+            ),
+            // a warm bounce from below, as off a lit floor
+            (
+                Vector3::new(0.45, 0.3, 0.0),
+                Color::from_rgb(1.0, 0.82, 0.62),
+                2.6,
+            ),
+            // and a level fill for the legs and the boots
+            (
+                Vector3::new(0.05, -0.35, 0.0),
+                Color::from_rgb(0.95, 0.88, 0.8),
+                1.2,
             ),
             (
                 Vector3::new(-0.3, 2.6, 0.0),
@@ -1221,6 +1237,11 @@ pub struct InventoryPanel {
     count_label: Gd<Label>,
     /// AC, gold and burden, from the HUD's status.
     status: (Option<String>, Option<String>, Option<String>),
+    /// Grid rows shown: the pack's and an empty one, at least 3; chosen
+    /// when the panel opens and only growing while it is open, so cells
+    /// never move under the pointer (0: closed).
+    rows: usize,
+    grid_top: f32,
     /// The hero's render on the doll, and the silhouette it replaces.
     doll_view: DollView,
     hero_rect: Gd<TextureRect>,
@@ -1863,6 +1884,8 @@ impl InventoryPanel {
             count_box,
             count_label,
             status: (None, None, None),
+            rows: 0,
+            grid_top: grid_y,
             doll_view,
             hero_rect,
             figure,
@@ -1997,6 +2020,7 @@ impl InventoryPanel {
 
     pub fn close(&mut self) {
         self.mode = Mode::Closed;
+        self.rows = 0;
         self.choose = None;
         self.counting = None;
         self.drag_from = None;
@@ -2799,7 +2823,20 @@ impl InventoryPanel {
         }
     }
 
+    /// The rows the pack needs: its items (and the hands) and one empty
+    /// row to drop on, at least `MIN_ROWS`.
+    fn wanted_rows(&self) -> usize {
+        let n = self.pack.items().len() + 1;
+        (n.div_ceil(COLS) + 1).clamp(MIN_ROWS, ROWS)
+    }
+
     fn redraw(&mut self) {
+        let rows = self.wanted_rows().max(self.rows);
+        if rows != self.rows {
+            self.rows = rows;
+            let bottom = self.grid_top + rows as f32 * (CELL + CELL_GAP) - CELL_GAP;
+            self.hint.set_offset(Side::TOP, bottom + 14.0);
+        }
         let question = self.question().cloned();
         let menu_letters: Option<Vec<(char, bool, Option<i64>)>> = match &self.mode {
             Mode::Menu { state, .. } => Some(
@@ -2858,6 +2895,10 @@ impl InventoryPanel {
             sock.rim.set_visible(false);
             sock.check.set_visible(false);
             sock.root.set_modulate(Color::WHITE);
+            let in_grid = i < rows * COLS;
+            if sock.root.is_visible() != in_grid {
+                sock.root.set_visible(in_grid);
+            }
             match target {
                 Some(InvTarget::Hands) => {
                     sock.show(None);
