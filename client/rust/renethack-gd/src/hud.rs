@@ -60,6 +60,9 @@ const LOG_FADED: f32 = 0.45;
 const TOOLTIP_GAP: f32 = 18.0;
 /// How long a toast stays (ui-design §4.2: "Slot 4 cleared · Undo").
 const TOAST_SECS: f64 = 4.0;
+/// A line of the full log, and its title, rule and padding.
+const FULL_LOG_LINE: f32 = 24.0;
+const FULL_LOG_CHROME: f32 = 120.0;
 /// The mode ribbon, from the top.
 const FLASH_Y: f32 = 76.0;
 /// Deadly chips pulse this many times a second (a 1.2 s cycle).
@@ -734,6 +737,8 @@ pub struct Hud {
 
     // minimap, mode badge and order line, top right
     minimap_panel: Gd<PanelContainer>,
+    /// The map's well: as wide as the part of the level shown needs.
+    minimap_well: Gd<ColorRect>,
     /// A modal panel (the inventory) is open: the corners and the log
     /// step back instead of peeking out clipped around it.
     panel_open: bool,
@@ -1038,6 +1043,7 @@ impl Hud {
         let mut mm_col = vbox(4);
         let minimap = Minimap::new(&queue);
         let mut well = ColorRect::new_alloc();
+        let minimap_well = well.clone();
         well.set_mouse_filter(MouseFilter::IGNORE);
         well.set_color(Color::from_rgba(0.07, 0.055, 0.04, 0.85));
         well.set_custom_minimum_size(Vector2::new(minimap::WIDTH as f32, minimap::HEIGHT as f32));
@@ -1155,7 +1161,7 @@ impl Hud {
         place(
             &full_log_panel,
             [0.5, 0.5, 0.5, 0.5],
-            [-708.0, -380.0, 708.0, 380.0],
+            [-600.0, -380.0, 600.0, 380.0],
         );
         let mut full_col = vbox(8);
         let mut full_head = hbox(12);
@@ -1253,6 +1259,7 @@ impl Hud {
             transient_panel,
             transient,
             minimap_panel: minimap_frame,
+            minimap_well,
             panel_open: false,
             minimap,
             minimap_caption,
@@ -1333,6 +1340,22 @@ impl Hud {
         }
     }
 
+    /// The minimap's frame takes the shape of what it shows (right
+    /// aligned under the corner, as tall as ever).
+    fn fit_minimap(&mut self) {
+        let h = minimap::HEIGHT as f32;
+        let w = (h * self.minimap.aspect())
+            .clamp(h, minimap::WIDTH as f32)
+            .round();
+        if self.minimap_well.get_custom_minimum_size().x == w {
+            return;
+        }
+        self.minimap_well
+            .set_custom_minimum_size(Vector2::new(w, h));
+        let frame_w = w + (MINIMAP_W - minimap::WIDTH as f32);
+        self.minimap_panel.set_offset(Side::LEFT, -EDGE - frame_w);
+    }
+
     /// What the order does or why it ended; None hides the line.
     pub fn set_order_line(&mut self, text: Option<&str>) {
         let text = text.unwrap_or("");
@@ -1404,6 +1427,7 @@ impl Hud {
         self.hover_log();
         if let Some(cat) = catalog {
             self.minimap.sync(&world.map, cat, now);
+            self.fit_minimap();
         }
         let full_open = self.full_log_panel.is_visible();
         let last_seq = world.log.last_seq();
@@ -1719,7 +1743,14 @@ impl Hud {
         let mouse = self.root.get_global_mouse_position();
         let over = self.log_panel.is_visible_in_tree()
             && self.log_panel.get_global_rect().contains_point(mouse);
-        let target = if over { 1.0 } else { 0.0 };
+        // docked over the world (the compact layout) it keeps a soft
+        // backing, or its lines would float over the scene
+        let rest = if self.log_compact == Some(true) {
+            0.6
+        } else {
+            0.0
+        };
+        let target = if over { 1.0 } else { rest };
         let mut m = self.log_panel.get_self_modulate();
         if (m.a - target).abs() > 0.01 {
             m.a += (target - m.a) * 0.25;
@@ -1808,6 +1839,17 @@ impl Hud {
         self.full_log_count
             .set_text(&format!("{} messages", world.log.len()));
         set_scrolled_text(&mut self.full_log, &lines.join("\n"), follow);
+        // as tall as its lines (a long line wraps: count it twice), up to
+        // the inventory panel's size
+        let rows: usize = world
+            .log
+            .iter()
+            .map(|m| 1 + usize::from(m.text.chars().count() > 110))
+            .sum();
+        let h = (rows as f32 * FULL_LOG_LINE + FULL_LOG_CHROME).clamp(260.0, 760.0);
+        let half = (h / 2.0).round();
+        self.full_log_panel.set_offset(Side::TOP, -half);
+        self.full_log_panel.set_offset(Side::BOTTOM, half);
     }
 
     /// The status as plain text.

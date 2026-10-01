@@ -77,8 +77,11 @@ fn mark_bits(m: Mark) -> [u8; 5] {
     }
 }
 
-/// The fewest cells across the view shows (at most about 4.5× zoom).
-const MIN_VIEW_W: i32 = 18;
+/// The fewest rows the view shows (at most 3× zoom in the frame's
+/// height), and its width per row: from a near square to the whole map.
+const MIN_VIEW_H: i32 = 7;
+const MIN_ASPECT: f32 = 1.4;
+const MAX_ASPECT: f32 = COLNO as f32 / ROWNO as f32;
 /// Cells of margin around what is known, across and down.
 const MARGIN: i32 = 3;
 const MARGIN_Y: i32 = 2;
@@ -105,17 +108,17 @@ pub fn known_bounds(map: &MapState, catalog: &Catalog) -> Option<(i32, i32, i32,
 }
 
 /// The cells the minimap shows (x, y, w, h): the known bounds and a
-/// margin, in the whole map's proportions, inside the map.
+/// margin, at most about 3× zoom, no squarer than `MIN_ASPECT` and no
+/// wider than the whole map; the frame takes the view's shape.
 pub fn view(bounds: Option<(i32, i32, i32, i32)>) -> (i32, i32, i32, i32) {
     let Some((x0, y0, x1, y1)) = bounds else {
         return (0, 0, COLNO, ROWNO);
     };
-    let (bw, bh) = (x1 - x0 + 1 + 2 * MARGIN, y1 - y0 + 1 + 2 * MARGIN_Y);
-    // the widest of: the bounds, their height in proportion, the minimum
-    let w = bw
-        .max((bh * COLNO + ROWNO - 1) / ROWNO)
-        .clamp(MIN_VIEW_W, COLNO);
-    let h = ((w * ROWNO + COLNO - 1) / COLNO).min(ROWNO);
+    let mut w = x1 - x0 + 1 + 2 * MARGIN;
+    let mut h = (y1 - y0 + 1 + 2 * MARGIN_Y).max(MIN_VIEW_H);
+    w = w.max((h as f32 * MIN_ASPECT).ceil() as i32);
+    h = h.max((w as f32 / MAX_ASPECT).ceil() as i32);
+    let (w, h) = (w.min(COLNO), h.min(ROWNO));
     let cx = (x0 + x1 + 1) / 2;
     let cy = (y0 + y1 + 1) / 2;
     let x = (cx - w / 2).clamp(0, COLNO - w);
@@ -304,6 +307,12 @@ impl Minimap {
         }
     }
 
+    /// The shown part's width per height (the frame follows it).
+    pub fn aspect(&self) -> f32 {
+        let (_, _, w, h) = self.shown.get();
+        w as f32 / h.max(1) as f32
+    }
+
     /// Forget the picture (a new game).
     pub fn reset(&mut self) {
         self.last = None;
@@ -336,12 +345,15 @@ mod tests {
     #[test]
     fn the_view_is_what_is_known_with_a_margin_in_proportion() {
         assert_eq!(view(None), (0, 0, COLNO, ROWNO));
-        // a first room: at least the minimum width, the map's proportions
+        // a first room: zoomed, no squarer than the minimum
         let (x, y, w, h) = view(Some((30, 8, 38, 12)));
-        assert!((MIN_VIEW_W..COLNO / 2).contains(&w), "{w} cells across");
-        assert!((w * ROWNO / COLNO - h).abs() <= 1, "{w}×{h} in proportion");
+        assert!(h >= MIN_VIEW_H && w as f32 / h as f32 >= MIN_ASPECT - 0.01);
+        assert!(w < COLNO / 2, "{w} cells across");
         assert!(x <= 30 - MARGIN && x + w > 38 + MARGIN);
         assert!(y <= 8 - MARGIN_Y && y + h > 12 + MARGIN_Y);
+        // a long corridor: no wider than the map's shape
+        let (_, _, w, h) = view(Some((5, 10, 70, 10)));
+        assert!(w as f32 / h as f32 <= MAX_ASPECT + 0.01);
         // near an edge it stays inside the map
         let (x, y, w, h) = view(Some((1, 0, 5, 3)));
         assert!(x == 0 && y == 0 && w <= COLNO && h <= ROWNO);

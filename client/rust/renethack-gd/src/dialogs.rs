@@ -58,6 +58,8 @@ const REFERENCE_SCREEN: Vector2 = theme::DESIGN;
 const SIDE_MARGIN: f32 = 80.0;
 /// Rows the palette shows at once.
 const PALETTE_ROWS: f32 = 12.0;
+/// The most rows an engine menu shows at once.
+const MENU_ROWS: f32 = 18.0;
 /// Unselectable menu lines: grey, still easy to read.
 const INFO_TEXT: Color = Color::from_rgb(0.74, 0.69, 0.61);
 
@@ -1123,7 +1125,8 @@ impl Dialogs {
                 ROW_H
             };
         }
-        let max_h = (self.screen().y - LIST_CHROME).max(ROW_H * 4.0);
+        // a long list scrolls in a panel of 18 rows rather than filling the screen
+        let max_h = (self.screen().y - LIST_CHROME).clamp(ROW_H * 4.0, MENU_ROWS * ROW_H);
         let view_h = y.min(max_h).max(ROW_H);
         let list = Scroller::new(width, view_h, false);
         // Scrolled to the end, the first row in view is whole: the list
