@@ -104,7 +104,7 @@ const SHADE_LIT: u8 = 92;
 const SHADE_STAIRS: u8 = 75;
 /// The bedrock under and around the level, and the rock mass.
 const SHADE_BEDROCK: u8 = 100;
-const SHADE_ROCK: u8 = 100;
+const SHADE_ROCK: u8 = 70;
 /// Stones at the foot of a wall: of the rock, darker still.
 const SHADE_RUBBLE: u8 = 55;
 /// A wall cut down in front of open ground.
@@ -115,8 +115,8 @@ const CORPSE_DARKEN: f32 = 0.45;
 const FLOOR_UNSEEN: Color = Color::from_rgb(0.19, 0.19, 0.21);
 const DEEP: Color = Color::from_rgb(0.02, 0.02, 0.03);
 /// Scratches of an engraving on the floor.
-const ENGRAVING: Color = Color::from_rgb(0.74, 0.71, 0.62);
-const HERO_RING: Color = Color::from_rgba(1.0, 0.83, 0.54, 0.3);
+const ENGRAVING: Color = Color::from_rgb(0.05, 0.04, 0.035);
+const HERO_RING: Color = Color::from_rgba(1.0, 0.83, 0.54, 0.2);
 /// The core's cursor (getpos, travel): the theme's gold.
 const CURSOR: Color = Color::from_rgba(1.0, 0.82, 0.42, 0.85);
 /// The way an order would walk: pale gold dots exploring, red in a fight.
@@ -254,13 +254,20 @@ struct Look {
     blast: Option<Color>,
     /// A ray crosses here: (colour, yaw, height).
     ray: Option<(Color, f32, f32)>,
+    /// Something glints here for a moment: (colour, height).
+    glint: Option<(Color, f32)>,
     /// Masonry of a wall (grime gathers at its foot).
     masonry: bool,
 }
 
 impl Look {
     fn is_empty(&self) -> bool {
-        self.solids.is_empty() && self.letters.is_empty() && self.models.is_empty()
+        self.solids.is_empty()
+            && self.letters.is_empty()
+            && self.models.is_empty()
+            && self.ray.is_none()
+            && self.glint.is_none()
+            && self.blast.is_none()
     }
 
     fn reach(&mut self, top: f32) {
@@ -483,10 +490,34 @@ fn terrain_look(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, near: &Near, 
     let cut = is_open(near.cells[0], ctx.catalog);
     terrain_base(look, t, sym, g, cut, &around, ctx);
     if engraved(sym) {
-        for (x, z, yaw) in [(-0.06, -0.12, 18.0), (0.04, 0.02, -24.0), (0.0, 0.16, 8.0)] {
-            let mesh = cuboid(0.46, 0.012, 0.035);
-            let paint = Paint::Flat(ENGRAVING, Finish::Matte);
-            look.turned(mesh, paint, at(x, 0.006, z), at(0.0, yaw, 0.0));
+        // a few lines of runes cut into the floor, dark in their grooves
+        let paint = Paint::Flat(ENGRAVING, Finish::Matte);
+        for row in 0..3 {
+            let z = -0.16 + 0.16 * row as f32;
+            for k in 0..4 {
+                let salt = 60 + (row * 4 + k) as u32 * 2;
+                if ctx.noise(salt) < 0.15 {
+                    continue;
+                }
+                let x = -0.24 + 0.16 * k as f32 + (ctx.noise(salt + 1) - 0.5) * 0.04;
+                let yaw = (ctx.noise(salt + 2) - 0.5) * 120.0;
+                let len = 0.06 + ctx.noise(salt + 3) * 0.05;
+                look.turned(
+                    cuboid(len, 0.004, 0.012),
+                    paint,
+                    at(x, 0.002, z),
+                    at(0.0, yaw, 0.0),
+                );
+                look.turned(
+                    cuboid(0.012, 0.004, len * 0.8),
+                    paint,
+                    at(x + 0.02, 0.002, z),
+                    at(0.0, yaw * 0.5, 0.0),
+                );
+            }
+        }
+        for s in look.solids.iter_mut().filter(|s| s.paint == paint) {
+            s.shadow = false;
         }
     }
     look.seen = match t {
@@ -533,7 +564,8 @@ fn rubble(look: &mut Look, around: &Around, rock: Option<usize>, ctx: &Ctx) {
         let n = 1 + (ctx.noise(31 + i as u32) * 2.99) as usize;
         for k in 0..n {
             let salt = 41 + (i * 4 + k) as u32 * 3;
-            let r = 0.035 + ctx.noise(salt) * 0.055;
+            // three sizes of stone: one batch each across the level
+            let r = [0.04, 0.065, 0.09][(ctx.noise(salt) * 2.99) as usize];
             let along = (ctx.noise(salt + 1) - 0.5) * 0.8;
             let from_wall = 0.42 - r - ctx.noise(salt + 2) * 0.08;
             let (x, z) = if *dx == 0.0 {
@@ -934,14 +966,23 @@ fn terrain_base(
         Terrain::Fountain => {
             floor(look);
             let stone = main(SHADE_LIT);
-            look.solid(cylinder(0.44, 0.47, 0.28), stone, at(0.0, 0.14, 0.0));
-            // the water stands just above the basin's rim stone, never in
-            // the same plane (they would fight)
-            let water = Paint::Flat(Color::from_rgb(0.05, 0.1, 0.13), Finish::Glossy);
-            look.solid(cylinder(0.38, 0.38, 0.02), water, at(0.0, 0.285, 0.0));
-            look.solid(cylinder(0.05, 0.08, 0.45), stone, at(0.0, 0.5, 0.0));
-            look.solid(cylinder(0.14, 0.06, 0.08), stone, at(0.0, 0.74, 0.0));
-            look.ground = 0.28;
+            // a low basin of stone blocks round still water, a small
+            // spout in its middle
+            for i in 0..8 {
+                let a = (i as f32 * 45.0).to_radians();
+                let p = at(0.4 * a.sin(), 0.13, 0.4 * a.cos());
+                look.turned(
+                    bevel(0.33, 0.26, 0.12),
+                    stone,
+                    p,
+                    at(0.0, i as f32 * 45.0, 0.0),
+                );
+            }
+            let water = Paint::Flat(Color::from_rgb(0.04, 0.09, 0.12), Finish::Glossy);
+            look.solid(cylinder(0.4, 0.4, 0.02), water, at(0.0, 0.2, 0.0));
+            look.solid(bevel(0.16, 0.36, 0.16), stone, at(0.0, 0.2, 0.0));
+            look.solid(cylinder(0.12, 0.05, 0.06), stone, at(0.0, 0.41, 0.0));
+            look.ground = 0.26;
         }
         Terrain::Sink => {
             floor(look);
@@ -1424,29 +1465,12 @@ fn entity_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
 }
 
 /// A beam, explosion or sparkle for the moment it shows: a ray is a
-/// glowing rod along its direction (the glyph's symbol says which), the
-/// rest a glowing ball.
+/// piece of a glowing ray along its direction (the glyph says which), the
+/// rest a burst of glints; the effects draw them (`Vfx`), no solid stands
+/// in the cell.
 fn bright_flash(look: &mut Look, g: &Glyph, ctx: &Ctx) {
     let color = lighter(nh_color(g.color), 0.3);
     let y = look.ground.max(0.0) + 0.6;
-    let paint = Paint::Flat(color, Finish::Glow);
-    let rod = |look: &mut Look, yaw: f32| {
-        look.ray = Some((color, yaw, y));
-        // a core and a fainter sheath
-        look.turned(
-            cylinder(0.05, 0.05, 1.05),
-            paint,
-            at(0.0, y, 0.0),
-            at(90.0, yaw, 0.0),
-        );
-        let sheath = Paint::Flat(color.with_alpha(0.35), Finish::Ghost);
-        look.turned(
-            cylinder(0.12, 0.12, 1.0),
-            sheath,
-            at(0.0, y, 0.0),
-            at(90.0, yaw, 0.0),
-        );
-    };
     let sym = if g.kind == GlyphKind::Zap {
         // a zap's direction is in its character
         match glyph_char(g) {
@@ -1459,13 +1483,18 @@ fn bright_flash(look: &mut Look, g: &Glyph, ctx: &Ctx) {
     } else {
         cmap_sym(g, ctx.catalog).unwrap_or("")
     };
-    match sym {
-        "S_vbeam" => rod(look, 0.0),
-        "S_hbeam" => rod(look, 90.0),
-        "S_lslant" => rod(look, 45.0),
-        "S_rslant" => rod(look, -45.0),
-        _ => look.solid(sphere(0.28), paint, at(0.0, y, 0.0)),
+    let yaw = match sym {
+        "S_vbeam" => Some(0.0),
+        "S_hbeam" => Some(90.0),
+        "S_lslant" => Some(45.0),
+        "S_rslant" => Some(-45.0),
+        _ => None,
+    };
+    match yaw {
+        Some(yaw) => look.ray = Some((color, yaw, y)),
+        None => look.glint = Some((color, y)),
     }
+    look.reach(y + 0.3);
 }
 
 /// Can something north of a wall be seen or stood on (so the wall would
@@ -1788,7 +1817,7 @@ pub struct MapView {
 fn marker(root: &mut Gd<Node3D>, texture: &Gd<godot::classes::Texture2D>, size: f32) -> Gd<Decal> {
     use godot::classes::decal::DecalTexture;
     let mut d = Decal::new_alloc();
-    d.set_size(Vector3::new(size, 0.5, size));
+    d.set_size(Vector3::new(size, 0.24, size));
     d.set_texture(DecalTexture::ALBEDO, texture);
     d.set_texture(DecalTexture::EMISSION, texture);
     d.set_albedo_mix(0.25);
@@ -1815,7 +1844,7 @@ fn ground_mist(root: &mut Gd<Node3D>) -> Gd<FogVolume> {
     tex.set_seamless(true);
     tex.set_noise(&noise);
     let mut mat = FogMaterial::new_gd();
-    mat.set_density(0.01);
+    mat.set_density(0.005);
     mat.set_albedo(Color::from_rgb(0.62, 0.64, 0.7));
     mat.set_height_falloff(2.0);
     mat.set_edge_fade(0.3);
@@ -1914,7 +1943,7 @@ impl MapView {
         env.set_bg_color(DARKNESS);
         env.set_ambient_source(AmbientSource::COLOR);
         env.set_ambient_light_color(Color::from_rgb(0.28, 0.32, 0.46));
-        env.set_ambient_light_energy(0.22);
+        env.set_ambient_light_energy(0.12);
         env.set_reflection_source(ReflectionSource::DISABLED);
         // AgX keeps the hue of fire and rolls the highlights off gently
         env.set_tonemapper(ToneMapper::AGX);
@@ -1960,7 +1989,7 @@ impl MapView {
         env.set_ssil_normal_rejection(1.0);
         // a thin haze that lights up around the flames
         env.set_volumetric_fog_enabled(true);
-        env.set_volumetric_fog_density(0.01);
+        env.set_volumetric_fog_density(0.003);
         env.set_volumetric_fog_albedo(Color::from_rgb(0.60, 0.60, 0.66));
         env.set_volumetric_fog_emission(Color::from_rgb(0.0, 0.0, 0.0));
         env.set_volumetric_fog_anisotropy(0.35);
@@ -1979,14 +2008,14 @@ impl MapView {
         let mut moon = DirectionalLight3D::new_alloc();
         moon.set_rotation_degrees(Vector3::new(-62.0, 25.0, 0.0));
         moon.set_color(Color::from_rgb(0.55, 0.62, 0.9));
-        moon.set_param(Param::ENERGY, 0.22);
+        moon.set_param(Param::ENERGY, 0.14);
         moon.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
         root.add_child(&moon);
         // and fainter still from the other side: no wall face is flat black
         let mut back = DirectionalLight3D::new_alloc();
         back.set_rotation_degrees(Vector3::new(-40.0, 205.0, 0.0));
         back.set_color(Color::from_rgb(0.5, 0.56, 0.8));
-        back.set_param(Param::ENERGY, 0.12);
+        back.set_param(Param::ENERGY, 0.07);
         back.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
         root.add_child(&back);
 
@@ -2005,7 +2034,7 @@ impl MapView {
         let mut cursor = marker(&mut root, &crate::vfx::frame_texture(), 1.05);
         cursor.set_modulate(CURSOR);
 
-        let mut hero_ring = marker(&mut root, &ring_tex, 1.1);
+        let mut hero_ring = marker(&mut root, &ring_tex, 0.95);
         hero_ring.set_modulate(HERO_RING);
         let mut hostile_ring = marker(&mut root, &ring_tex, 1.05);
         hostile_ring.set_modulate(HOSTILE_RING);
@@ -3168,11 +3197,12 @@ impl MapView {
             }
             Lamp::Down => {
                 light.set_color(STAIR_DOWN_LIGHT);
-                light.set_param(Param::ENERGY, 0.9);
-                light.set_param(Param::RANGE, 2.2);
-                light.set_position(origin + at(0.0, -0.8, 0.0));
+                // above the far steps, so their treads catch it
+                light.set_param(Param::ENERGY, 1.4);
+                light.set_param(Param::RANGE, 1.8);
+                light.set_position(origin + at(0.0, -0.1, -0.2));
                 let mut mat = FogMaterial::new_gd();
-                mat.set_density(0.14);
+                mat.set_density(0.05);
                 mat.set_albedo(Color::from_rgb(0.6, 0.66, 0.8));
                 mat.set_edge_fade(0.5);
                 let mut fog = FogVolume::new_alloc();
@@ -3266,6 +3296,17 @@ impl MapView {
                 VfxKind::Explosion(c),
                 origin + at(0.0, look.ground.max(0.0) + 0.6, 0.0),
             );
+        }
+        if let Some((c, y)) = look.glint
+            && old.glint != look.glint
+        {
+            self.vfx
+                .burst_tinted(VfxKind::Sparkle, origin + at(0.0, y, 0.0), c);
+        }
+        // the effects' rays stop at what stands here
+        let solid = (look.ground >= 0.3).then_some(look.top.max(look.ground));
+        if (old.ground >= 0.3).then_some(old.top.max(old.ground)) != solid {
+            self.vfx.set_solid((x, y), solid);
         }
         // a ray lights up as it crosses the cell
         if let Some((c, yaw, y)) = look.ray
@@ -3689,17 +3730,19 @@ impl MapView {
             let last = i + 1 == cells.len();
             let ground = self.ground(x, y);
             // in a fight a click takes the first step only: it stands out
+            // the goal is where the order walks to (a soft disc, never a
+            // ring a creature could be taken to stand in)
             let (tex, size, color) = if last {
-                (&self.ring_tex, 0.8, goal)
+                (&self.soft_tex, 0.5, goal)
             } else if combat && i == 0 {
-                (&self.ring_tex, 0.55, goal)
+                (&self.soft_tex, 0.4, goal)
             } else {
                 (&self.soft_tex, 0.26, dot)
             };
             let d = &mut self.path_marks[i];
             d.set_texture(godot::classes::decal::DecalTexture::ALBEDO, tex);
             d.set_texture(godot::classes::decal::DecalTexture::EMISSION, tex);
-            d.set_size(Vector3::new(size, 0.5, size));
+            d.set_size(Vector3::new(size, 0.24, size));
             d.set_modulate(color.with_alpha(0.75));
             d.set_position(Vector3::new(x as f32, ground, y as f32));
             d.set_visible(true);
@@ -4295,7 +4338,14 @@ mod tests {
         for (engr, plain) in [("S_engroom", "S_room"), ("S_engrcorr", "S_corr")] {
             let (e, p) = (f.look(&feature(cat, engr)), f.look(&feature(cat, plain)));
             assert_eq!(e.solids[0].paint, p.solids[0].paint, "{engr}");
-            assert_eq!(e.solids.len(), p.solids.len() + 3, "{engr}");
+            // runes cut in it, dark in their grooves
+            let runes: Vec<_> = e.solids.iter().skip(p.solids.len()).collect();
+            assert!(runes.len() >= 6, "{engr}");
+            assert!(
+                runes
+                    .iter()
+                    .all(|s| s.paint == Paint::Flat(ENGRAVING, Finish::Matte))
+            );
         }
     }
 
@@ -4512,11 +4562,13 @@ mod tests {
         let cat = &f.cat;
         let mut cell = on_floor(cat, cmap(cat, "S_vbeam"));
         let beam = f.look(&cell);
-        assert!(
-            beam.solids
-                .iter()
-                .any(|s| matches!(s.paint, Paint::Flat(_, Finish::Glow)))
-        );
+        // a piece of a ray along the cell (the effects draw it), no solid
+        let (_, yaw, y) = beam.ray.expect("a ray");
+        assert_eq!(yaw, 0.0);
+        assert!(y > 0.3);
+        assert_eq!(beam.solids.len(), 1, "only the floor");
+        let spark = f.look(&on_floor(cat, cmap(cat, "S_ss1")));
+        assert!(spark.glint.is_some() && spark.ray.is_none());
         // the engulfer is drawn around the hero, not per cell
         cell.glyph = Some(glyph(GlyphKind::Swallow, '/'));
         assert_eq!(f.look(&cell).solids.len(), 1, "only the floor");

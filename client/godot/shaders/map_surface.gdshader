@@ -125,12 +125,11 @@ vec3 bent(vec3 tn, vec2 base, float z) {
 	return vec3(tn.xy * normal_strength + base, abs(tn.z) * z);
 }
 
-const float BAYER[16] = { 0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0,
-	3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0 };
-
-float bayer4(vec2 p) {
-	ivec2 q = ivec2(mod(p, 4.0));
-	return (BAYER[q.x + q.y * 4] + 0.5) / 16.0;
+// interleaved gradient noise: a fine dither with no visible grid, moved
+// a little each frame so it never settles into a pattern
+float dither(vec2 p, float t) {
+	p += vec2(5.588238, 5.588238) * mod(t * 60.0, 64.0);
+	return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715))));
 }
 
 void fragment() {
@@ -150,7 +149,7 @@ void fragment() {
 			// a cone from the eye widening to the hero's own size at the hero
 			float r = 0.25 + 0.5 * t;
 			float cover = mix(0.2, 1.0, smoothstep(r * 0.7, r * 1.3, d));
-			if (bayer4(FRAGCOORD.xy) >= cover) {
+			if (dither(FRAGCOORD.xy, TIME) >= cover) {
 				discard;
 			}
 		}

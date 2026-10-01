@@ -26,8 +26,6 @@ use godot::classes::{
 };
 use godot::prelude::*;
 
-use crate::meshes::cylinder;
-
 /// What an effect shows.
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[allow(dead_code)] // most are for the hero's item use (Phase E)
@@ -297,6 +295,8 @@ struct Beam {
     to: Vector3,
     age: f32,
     flicker: bool,
+    /// A whole ray (the hero's), not a cell's piece of one.
+    whole: bool,
 }
 
 struct Splat {
@@ -334,6 +334,8 @@ pub struct Vfx {
     /// Decals land on these render layers only (the level, not models).
     decal_mask: u32,
     clock: f32,
+    /// Cells a ray stops at, and how high their solid stands.
+    solids: HashMap<(i32, i32), f32>,
 }
 
 /// A white disc fading out from the middle.
@@ -473,6 +475,7 @@ impl Vfx {
             dust,
             decal_mask,
             clock: 0.0,
+            solids: HashMap::new(),
         }
     }
 
@@ -533,7 +536,9 @@ impl Vfx {
     }
 
     fn beam_as(&mut self, kind: VfxKind, from: Vector3, to: Vector3, tint: Option<Color>) {
-        self.ray(tint.unwrap_or_else(|| beam_color(kind)), from, to);
+        // a ray stops at the first wall, door or rock in its way
+        let to = self.clip(from, to);
+        self.place_ray(tint.unwrap_or_else(|| beam_color(kind)), from, to, true);
         self.pending.push(Pending {
             kind,
             at: to,
@@ -543,8 +548,51 @@ impl Vfx {
     }
 
     /// A ray of this colour from one point to another, a light travelling
-    /// along it, with no burst (the map's zaps, cell by cell).
+    /// along it, with no burst (the map's zaps, cell by cell). A piece of
+    /// a ray already drawn whole (the hero's own zap) is not drawn again.
     pub fn ray(&mut self, color: Color, from: Vector3, to: Vector3) {
+        let mid = (from + to) / 2.0;
+        let covered = self
+            .beams
+            .iter()
+            .any(|b| b.whole && b.age < BEAM_SECS && distance_to_segment(mid, b.from, b.to) < 0.6);
+        if !covered {
+            self.place_ray(color, from, to, false);
+        }
+    }
+
+    /// The solid cells a ray stops at: (cell, how high the solid stands).
+    pub fn set_solid(&mut self, cell: (i32, i32), top: Option<f32>) {
+        match top {
+            Some(t) => {
+                self.solids.insert(cell, t);
+            }
+            None => {
+                self.solids.remove(&cell);
+            }
+        }
+    }
+
+    /// Where a ray from `from` towards `to` first meets a solid cell (not
+    /// the one it starts in), or `to` (where its impact belongs).
+    pub fn clip(&self, from: Vector3, to: Vector3) -> Vector3 {
+        let cell = |p: Vector3| (p.x.round() as i32, p.z.round() as i32);
+        let start = cell(from);
+        let len = from.distance_to(to);
+        let steps = (len / 0.05).ceil().max(1.0) as i32;
+        let mut last = from;
+        for i in 1..=steps {
+            let p = from.lerp(to, i as f32 / steps as f32);
+            let c = cell(p);
+            if c != start && self.solids.get(&c).is_some_and(|&top| p.y < top) {
+                return last;
+            }
+            last = p;
+        }
+        to
+    }
+
+    fn place_ray(&mut self, color: Color, from: Vector3, to: Vector3, whole: bool) {
         let i = match self.beams.iter().position(|b| b.age >= BEAM_SECS) {
             Some(i) => i,
             None => {
@@ -557,12 +605,14 @@ impl Vfx {
         b.from = from;
         b.to = to;
         b.age = 0.0;
+        b.whole = whole;
         // lightning's light is white-blue and jitters
         b.flicker = color.b > 0.95 && color.r > 0.85 && color.g > 0.9;
         let len = from.distance_to(to).max(0.05);
         let mid = (from + to) / 2.0;
         let dir = (to - from) / len;
-        // the cylinder's axis is y: turn it onto the ray and stretch it
+        // the ribbon's y is the ray, stretched; the shader turns it to
+        // the camera
         let up = if dir.y.abs() > 0.99 {
             Vector3::RIGHT
         } else {
@@ -571,6 +621,7 @@ impl Vfx {
         let x = up.cross(dir).normalized();
         let z = x.cross(dir);
         let basis = Basis::from_cols(x, dir * len, z);
+        b.mat.set_shader_parameter("head", &0.0f32.to_variant());
         b.node.set_transform(Transform3D::new(basis, mid));
         b.node.set_visible(true);
         b.mat.set_shader_parameter("color", &color.to_variant());
@@ -581,7 +632,14 @@ impl Vfx {
 
     fn new_beam(&mut self) -> Beam {
         let mut node = MeshInstance3D::new_alloc();
-        node.set_mesh(&cylinder(0.06, 0.06, 1.0).build());
+        let mut ribbon = QuadMesh::new_gd();
+        ribbon.set_size(Vector2::new(1.0, 1.0));
+        node.set_mesh(&ribbon);
+        // the ribbon is placed in the shader: never culled by its quad
+        node.set_custom_aabb(Aabb::new(
+            Vector3::new(-2.0, -2.0, -2.0),
+            Vector3::new(4.0, 4.0, 4.0),
+        ));
         node.set_cast_shadows_setting(ShadowCastingSetting::OFF);
         let mut mat = ShaderMaterial::new_gd();
         if let Some(s) = &self.beam_shader {
@@ -603,6 +661,7 @@ impl Vfx {
             to: Vector3::ZERO,
             age: BEAM_SECS,
             flicker: false,
+            whole: false,
         }
     }
 
@@ -713,6 +772,7 @@ impl Vfx {
             // the head of the ray runs ahead, then the ray fades
             let head = (t / 0.4).min(1.0);
             b.light.set_position(b.from.lerp(b.to, head));
+            b.mat.set_shader_parameter("head", &head.to_variant());
             let mut fade = 1.0 - ((t - 0.4) / 0.6).clamp(0.0, 1.0);
             if b.flicker {
                 fade *= 0.55 + 0.45 * (clock * 20.0 * std::f32::consts::TAU).sin().abs();
@@ -803,6 +863,12 @@ impl Vfx {
         ));
         p
     }
+}
+
+fn distance_to_segment(p: Vector3, a: Vector3, b: Vector3) -> f32 {
+    let ab = b - a;
+    let t = ((p - a).dot(ab) / ab.length_squared().max(1e-6)).clamp(0.0, 1.0);
+    p.distance_to(a + ab * t)
 }
 
 fn quad(size: f32) -> Gd<QuadMesh> {

@@ -16,7 +16,7 @@ use godot::prelude::*;
 use crate::meshes::MeshKey;
 
 /// Cells per chunk across and down.
-const CHUNK: (i32, i32) = (10, 7);
+const CHUNK: (i32, i32) = (20, 11);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BatchKey {

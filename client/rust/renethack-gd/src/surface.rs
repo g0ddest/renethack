@@ -167,8 +167,8 @@ impl Surfaces {
         // nothing on the level is pure black: a faint cold light of its own
         let lift = match role {
             Role::Void => Color::from_rgb(0.0, 0.0, 0.0),
-            Role::Rock => Color::from_rgb(0.003, 0.0034, 0.0045),
-            _ => Color::from_rgb(0.0014, 0.0015, 0.002),
+            Role::Rock => Color::from_rgb(0.007, 0.007, 0.0085),
+            _ => Color::from_rgb(0.004, 0.004, 0.005),
         };
         mat.set_shader_parameter("lift", &lift.to_variant());
         match role {
@@ -191,7 +191,8 @@ impl Surfaces {
             }
             Role::Rock => {
                 set(&mut mat, "displace", 0.06);
-                set(&mut mat, "natural", 1.0);
+                // the texture's own relief shows through the mottling
+                set(&mut mat, "natural", 0.7);
                 set(&mut mat, "detail_strength", 0.5);
                 set(&mut mat, "glow", 0.05);
                 set(&mut mat, "memory_glow", 0.04);
