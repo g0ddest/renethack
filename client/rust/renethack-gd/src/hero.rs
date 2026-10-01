@@ -73,11 +73,13 @@ pub enum Fx {
         at: Vector3,
         anchor: Option<Gd<Node3D>>,
     },
+    /// A ray, and the flash where it stops (at the first wall on its way).
     Beam {
         kind: VfxKind,
         from: Vector3,
         to: Vector3,
         anchor: Option<Gd<Node3D>>,
+        impact: Option<VfxKind>,
     },
     /// A thrown thing's model flying from one point to another.
     Throw {
@@ -191,9 +193,23 @@ impl HeroFx {
                 from,
                 to,
                 anchor,
+                impact,
             } => {
                 self.started.push("beam");
-                vfx.beam(kind, where_now(anchor.as_ref(), from), to);
+                let from = where_now(anchor.as_ref(), from);
+                vfx.beam(kind, from, to);
+                if let Some(kind) = impact {
+                    let at = vfx.clip(from, to);
+                    self.after(
+                        0.15,
+                        Fx::Burst {
+                            name: "impact",
+                            kind,
+                            at,
+                            anchor: None,
+                        },
+                    );
+                }
             }
             Fx::Throw { model, from, to } => {
                 self.started.push("throw");
@@ -311,30 +327,18 @@ pub fn use_effects(
         anchor: anchor.clone(),
     };
     let beam = |kind, impact| {
-        ahead
-            .map(|to| {
-                vec![
-                    (
-                        0.4,
-                        Fx::Beam {
-                            kind,
-                            from: hand,
-                            to,
-                            anchor: anchor.clone(),
-                        },
-                    ),
-                    (
-                        0.55,
-                        Fx::Burst {
-                            name: "impact",
-                            kind: impact,
-                            at: to,
-                            anchor: None,
-                        },
-                    ),
-                ]
-            })
-            .unwrap_or_default()
+        ahead.map(|to| {
+            (
+                0.4,
+                Fx::Beam {
+                    kind,
+                    from: hand,
+                    to,
+                    anchor: anchor.clone(),
+                    impact: Some(impact),
+                },
+            )
+        })
     };
     match u.kind {
         UseKind::Quaff => vec![(0.8, burst("quaff", VfxKind::Quaff(color), hand))],

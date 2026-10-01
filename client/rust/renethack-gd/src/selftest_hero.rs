@@ -271,7 +271,8 @@ pub(super) fn item_use() -> Vec<Step> {
                 }
             )
         }),
-        key('l'),
+        // west: across the room (east is a door at arm's length)
+        key('h'),
         Step::AnswerUntil('n', "a command after zapping", idle_command),
         Step::Wait("zapping, the wand in hand, a beam", |g| {
             Ok(using(g, "Pistol_Shoot", "zap", Some("wand"))?
