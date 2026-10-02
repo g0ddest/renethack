@@ -66,6 +66,8 @@ pub enum DialogEvent {
     TextCancelled,
     ExtCmd(Option<String>),
     Close,
+    /// A key of the on-screen keyboard (row, column) clicked.
+    OskKey(usize, usize),
 }
 
 /// Role, race, gender and alignment codes ("random" allowed).

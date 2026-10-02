@@ -318,6 +318,8 @@ struct Look {
     rows: [(Gd<StyleBoxFlat>, Gd<StyleBoxFlat>); 4],
     no_focus: Gd<StyleBoxEmpty>,
     default_button: Gd<StyleBox>,
+    /// The button a gamepad is on.
+    focus_button: Gd<StyleBoxFlat>,
     /// The proportional faces of rows that are not engine columns.
     body: Gd<Font>,
     body_bold: Gd<Font>,
@@ -387,6 +389,17 @@ impl Look {
             rows,
             no_focus: StyleBoxEmpty::new_gd(),
             default_button: theme::default_button_style(),
+            focus_button: {
+                let mut sb = StyleBoxFlat::new_gd();
+                sb.set_bg_color(Color::from_rgba(0.3, 0.22, 0.09, 1.0));
+                sb.set_border_width_all(2);
+                sb.set_border_color(theme::GOLD_BRIGHT);
+                sb.set_corner_radius_all(3);
+                sb.set_shadow_size(6);
+                sb.set_shadow_color(Color::from_rgba(0.906, 0.761, 0.478, 0.35));
+                sb.set_content_margin_all(6.0);
+                sb
+            },
             body: theme::font(Face::Body),
             body_bold: theme::font(Face::BodyBold),
             title: theme::font(Face::Title),
@@ -841,9 +854,14 @@ enum Kind {
     Choice {
         allowed: Vec<char>,
         default: Option<char>,
+        /// The answers' buttons, and the one the d-pad is on.
+        buttons: Vec<(char, Gd<Button>)>,
+        focus: Option<usize>,
     },
     Text {
         edit: Gd<LineEdit>,
+        /// The on-screen keyboard (a gamepad).
+        osk: Option<Osk>,
     },
     ExtCmd {
         edit: Gd<LineEdit>,
@@ -871,6 +889,9 @@ pub struct Dialogs {
     queue: UiQueue,
     look: Look,
     open: Option<Open>,
+    /// A gamepad gave the last input: dialogs open with a focus, a text
+    /// field with the on-screen keyboard.
+    pad: bool,
 }
 
 impl Dialogs {
@@ -884,6 +905,7 @@ impl Dialogs {
             queue,
             look: Look::new(),
             open: None,
+            pad: false,
         }
     }
 
@@ -1305,6 +1327,15 @@ impl Dialogs {
             view.cursor = Some(i);
             view.reveal(i);
         }
+        // a gamepad starts on the first entry, ready for A
+        if self.pad
+            && view.cursor.is_none()
+            && let Some(i) = view.state.entries.iter().position(|e| e.selectable)
+        {
+            view.cursor = Some(i);
+            view.armed = true;
+            view.reveal(i);
+        }
         view.refresh(&look);
         (Kind::Menu(Box::new(view)), shade, panel)
     }
@@ -1445,8 +1476,22 @@ impl Dialogs {
         let cancel = dialog_ui(req, DialogEvent::TextCancelled);
         row.add_child(&theme::button("Cancel", &self.queue, cancel));
         col.add_child(&row);
-        edit.call_deferred("grab_focus", &[]);
-        (Kind::Text { edit }, shade, panel)
+        // a gamepad types on a keyboard of ours (and asks Steam for its
+        // own, which types into the field, where there is one)
+        let osk = self.pad.then(|| {
+            let mut osk = Osk::new(&mut col, req, &self.queue);
+            osk.show(&self.look);
+            let steam = std::env::var("SteamDeck").is_ok_and(|v| v == "1")
+                || std::env::var("SteamTenfoot").is_ok();
+            if steam {
+                godot::classes::Os::singleton().shell_open("steam://open/keyboard");
+            }
+            osk
+        });
+        if osk.is_none() {
+            edit.call_deferred("grab_focus", &[]);
+        }
+        (Kind::Text { edit, osk }, shade, panel)
     }
 
     fn open_show(
@@ -1574,10 +1619,26 @@ impl Dialogs {
                     }
                 }
                 self.hint(&mut col, &hint, width);
-                let kind = Kind::Choice {
+                let buttons: Vec<(char, Gd<Button>)> =
+                    visible.iter().copied().zip(buttons).collect();
+                // a gamepad starts on the default answer
+                let focus = self
+                    .pad
+                    .then(|| {
+                        default
+                            .and_then(|d| buttons.iter().position(|(c, _)| *c == d))
+                            .unwrap_or(0)
+                    })
+                    .filter(|_| !buttons.is_empty());
+                let mut kind = Kind::Choice {
                     allowed: allowed.clone(),
                     default: *default,
+                    buttons,
+                    focus,
                 };
+                if let Kind::Choice { buttons, focus, .. } = &mut kind {
+                    show_focus(buttons, *focus, &self.look);
+                }
                 (kind, shade, panel)
             }
             Prompt::Text { query, name } => self.open_text(req, query, *name),
@@ -1660,6 +1721,76 @@ impl Dialogs {
         })
     }
 
+    /// Whether a gamepad gives the input now.
+    pub fn set_pad(&mut self, on: bool) {
+        self.pad = on;
+    }
+
+    /// The open menu picks several entries.
+    pub fn menu_any(&self) -> bool {
+        matches!(self.open.as_ref().map(|o| &o.kind), Some(Kind::Menu(v)) if v.state.how == PickHow::Any)
+    }
+
+    /// The letter a message to pick takes.
+    pub fn message_letter(&self) -> Option<char> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::MessageMenu { letter, pick: true }) => Some(*letter),
+            _ => None,
+        }
+    }
+
+    /// The on-screen keyboard: a gamepad's move, key, backspace, layout or
+    /// OK; the reply when it answers.
+    pub fn osk(&mut self, op: crate::gamepad::OskOp) -> Option<Reply> {
+        use crate::gamepad::OskOp;
+        let open = self.open.as_mut()?;
+        let Kind::Text {
+            edit,
+            osk: Some(osk),
+        } = &mut open.kind
+        else {
+            return None;
+        };
+        let text = edit.get_text().to_string();
+        match op {
+            OskOp::Move(dx, dy) => osk.step(dx, dy, &self.look),
+            OskOp::Layout => osk.switch(),
+            OskOp::Submit => return Some(Reply::Text(truncate_bytes(&text, MAX_TEXT_BYTES))),
+            OskOp::Back if text.is_empty() => return Some(open.prompt.escape_reply()),
+            OskOp::Back => {
+                let mut t = text;
+                t.pop();
+                edit.set_text(&t);
+            }
+            OskOp::Press => match osk.current() {
+                OskKey::Char(c) => {
+                    let t = format!("{text}{c}");
+                    if t.len() <= MAX_TEXT_BYTES {
+                        edit.set_text(&t);
+                    }
+                }
+                OskKey::Space => edit.set_text(&format!("{text} ")),
+                OskKey::Back => {
+                    let mut t = text;
+                    t.pop();
+                    edit.set_text(&t);
+                }
+                OskKey::Shift => osk.shift(),
+                OskKey::Layout => osk.switch(),
+                OskKey::Ok => return Some(Reply::Text(truncate_bytes(&text, MAX_TEXT_BYTES))),
+            },
+        }
+        None
+    }
+
+    /// The on-screen keyboard is up (self-tests).
+    pub fn osk_open(&self) -> bool {
+        matches!(
+            self.open.as_ref().map(|o| &o.kind),
+            Some(Kind::Text { osk: Some(_), .. })
+        )
+    }
+
     pub fn menu_entries(&self) -> Option<&[MenuEntry]> {
         match self.open.as_ref().map(|o| &o.kind) {
             Some(Kind::Menu(view)) => Some(&view.state.entries),
@@ -1715,7 +1846,7 @@ impl Dialogs {
     /// The text field's contents.
     pub fn text(&self) -> Option<String> {
         match self.open.as_ref().map(|o| &o.kind) {
-            Some(Kind::Text { edit } | Kind::ExtCmd { edit, .. }) => {
+            Some(Kind::Text { edit, .. } | Kind::ExtCmd { edit, .. }) => {
                 Some(edit.get_text().to_string())
             }
             _ => None,
@@ -1725,7 +1856,7 @@ impl Dialogs {
     /// Does the text field have the keyboard?
     pub fn text_has_focus(&self) -> bool {
         match self.open.as_ref().map(|o| &o.kind) {
-            Some(Kind::Text { edit } | Kind::ExtCmd { edit, .. }) => edit.has_focus(),
+            Some(Kind::Text { edit, .. } | Kind::ExtCmd { edit, .. }) => edit.has_focus(),
             _ => false,
         }
     }
@@ -1735,17 +1866,48 @@ impl Dialogs {
         let escape = open.prompt.escape_reply();
         match &mut open.kind {
             Kind::Menu(view) => view.key(input, &self.look),
-            Kind::Choice { allowed, default } => match typed(input)? {
-                ESC_CHAR => Some(escape),
-                '\n' | ' ' => default.map(|d| Reply::Char(d as i32)),
-                c => choice_answer(allowed, c).map(|c| Reply::Char(c as i32)),
-            },
+            Kind::Choice {
+                allowed,
+                default,
+                buttons,
+                focus,
+            } => {
+                // the arrows (a gamepad) move between the answers
+                let step = match nav(input) {
+                    Some(Key::Left | Key::Up) => -1,
+                    Some(Key::Right | Key::Down) => 1,
+                    _ => 0,
+                };
+                if step != 0 && !buttons.is_empty() {
+                    let n = buttons.len() as i32;
+                    let f = focus.map_or(if step > 0 { -1 } else { 0 }, |f| f as i32);
+                    *focus = Some(((f + step).rem_euclid(n)) as usize);
+                    show_focus(buttons, *focus, &self.look);
+                    return None;
+                }
+                match typed(input)? {
+                    ESC_CHAR => Some(escape),
+                    '\n' | ' ' => match focus.and_then(|f| buttons.get(f)) {
+                        Some((c, _)) => Some(Reply::Char(*c as i32)),
+                        None => default.map(|d| Reply::Char(d as i32)),
+                    },
+                    c => choice_answer(allowed, c).map(|c| Reply::Char(c as i32)),
+                }
+            }
             // a held key never answers: Esc cancels only when pressed
             Kind::Text { .. } => (input.key == Key::Escape && !input.echo).then_some(escape),
             Kind::ExtCmd { edit, palette } => {
                 let step = match input.key {
                     Key::Escape | Key::Tab if input.echo => return None,
                     Key::Escape => return Some(escape),
+                    // a gamepad's A: the highlighted command
+                    Key::Enter | Key::KeypadEnter if !input.echo => {
+                        let p = palette.borrow();
+                        return p
+                            .selected
+                            .and_then(|s| p.shown.get(s))
+                            .map(|&i| Reply::ExtCmd(Some(p.cmds[i].name.clone())));
+                    }
                     Key::Up => -1,
                     Key::Down => 1,
                     Key::PageUp => -10,
@@ -1802,6 +1964,21 @@ impl Dialogs {
     }
 
     pub fn dialog_event(&mut self, req: u64, ev: &DialogEvent) -> Option<Reply> {
+        // a key of the on-screen keyboard clicked: as if A typed it
+        if let DialogEvent::OskKey(r, c) = ev {
+            if let Some(Open {
+                req: open_req,
+                kind: Kind::Text { osk: Some(o), .. },
+                ..
+            }) = self.open.as_mut()
+                && *open_req == req
+            {
+                o.at(*r, *c);
+            } else {
+                return None;
+            }
+            return self.osk(crate::gamepad::OskOp::Press);
+        }
         let open = self.open.as_mut().filter(|o| o.req == req)?;
         let escape = open.prompt.escape_reply();
         match (&mut open.kind, ev) {
@@ -1907,6 +2084,180 @@ fn prose_text(lines: &[TextLine]) -> String {
         })
         .collect::<Vec<_>>()
         .join("\n")
+}
+
+/// Mark the answer the d-pad is on.
+fn show_focus(buttons: &mut [(char, Gd<Button>)], focus: Option<usize>, look: &Look) {
+    for (i, (_, b)) in buttons.iter_mut().enumerate() {
+        if Some(i) == focus {
+            b.add_theme_stylebox_override("normal", &look.focus_button);
+            b.add_theme_color_override("font_color", theme::GOLD_BRIGHT);
+        } else {
+            b.remove_theme_color_override("font_color");
+        }
+    }
+}
+
+/// A key of the on-screen keyboard.
+#[derive(Debug, Clone, PartialEq)]
+enum OskKey {
+    Char(String),
+    Space,
+    Back,
+    Shift,
+    Layout,
+    Ok,
+}
+
+/// The keyboard's rows: digits and letters by layout, then the controls.
+const OSK_LATIN: [&str; 4] = ["1234567890", "qwertyuiop", "asdfghjkl'", "zxcvbnm,.-"];
+const OSK_CYRILLIC: [&str; 4] = ["1234567890", "йцукенгшщзх", "фывапролджэ", "ячсмитьбю.ё"];
+
+/// The on-screen keyboard of a text question, driven by a gamepad (or the
+/// mouse): the d-pad moves, A types, Y switches Latin and Cyrillic.
+struct Osk {
+    rows: Vec<Vec<(OskKey, Gd<Button>)>>,
+    row: usize,
+    col: usize,
+    cyrillic: bool,
+    upper: bool,
+}
+
+impl Osk {
+    fn new(col: &mut Gd<VBoxContainer>, req: u64, queue: &UiQueue) -> Osk {
+        let mut grid = VBoxContainer::new_alloc();
+        grid.add_theme_constant_override("separation", 4);
+        let mut rows = Vec::new();
+        let specials = [
+            (OskKey::Shift, "⇧ Shift"),
+            (OskKey::Layout, "АБВ / ABC"),
+            (OskKey::Space, "Space"),
+            (OskKey::Back, "⌫"),
+            (OskKey::Ok, "OK"),
+        ];
+        for r in 0..5 {
+            let mut line = HBoxContainer::new_alloc();
+            line.set_alignment(AlignmentMode::CENTER);
+            line.add_theme_constant_override("separation", 4);
+            let mut keys = Vec::new();
+            let row: Vec<(OskKey, &str)> = if r < 4 {
+                (0..11).map(|_| (OskKey::Char(String::new()), "")).collect()
+            } else {
+                specials.to_vec()
+            };
+            for (c, (k, text)) in row.into_iter().enumerate() {
+                let mut b = Button::new_alloc();
+                b.set_focus_mode(FocusMode::NONE);
+                b.set_custom_minimum_size(Vector2::new(if r < 4 { 40.0 } else { 104.0 }, 36.0));
+                if r == 4 {
+                    b.set_text(text);
+                }
+                // a click types the key as A does (the dialog knows which)
+                let q = queue.clone();
+                let (rr, cc) = (r, c);
+                b.signals().pressed().connect(move || {
+                    let ev = DialogEvent::OskKey(rr, cc);
+                    push(&q, UiEvent::Dialog { req, ev });
+                });
+                line.add_child(&b);
+                keys.push((k, b));
+            }
+            grid.add_child(&line);
+            rows.push(keys);
+        }
+        col.add_child(&grid);
+        let mut hint = theme::styled_label(
+            "D-pad: a key · A: type · B: erase · Y: АБВ/ABC · Start: OK",
+            Face::Body,
+            14,
+            theme::TEXT_DIM,
+        );
+        hint.set_horizontal_alignment(HorizontalAlignment::CENTER);
+        col.add_child(&hint);
+        let mut osk = Osk {
+            rows,
+            row: 1,
+            col: 0,
+            cyrillic: false,
+            upper: false,
+        };
+        osk.relabel();
+        osk
+    }
+
+    /// The letters of the layout and case on the keys.
+    fn relabel(&mut self) {
+        let layout = if self.cyrillic {
+            &OSK_CYRILLIC
+        } else {
+            &OSK_LATIN
+        };
+        for (r, line) in layout.iter().enumerate() {
+            let chars: Vec<char> = line.chars().collect();
+            for (c, (k, b)) in self.rows[r].iter_mut().enumerate() {
+                let ch = chars.get(c).map(|ch| {
+                    if self.upper {
+                        ch.to_uppercase().collect::<String>()
+                    } else {
+                        ch.to_string()
+                    }
+                });
+                *k = OskKey::Char(ch.clone().unwrap_or_default());
+                b.set_text(ch.as_deref().unwrap_or(""));
+                b.set_visible(ch.is_some());
+            }
+        }
+    }
+
+    fn width(&self, row: usize) -> usize {
+        self.rows[row]
+            .iter()
+            .filter(|(k, _)| !matches!(k, OskKey::Char(c) if c.is_empty()))
+            .count()
+            .max(1)
+    }
+
+    fn step(&mut self, dx: i32, dy: i32, look: &Look) {
+        let rows = self.rows.len() as i32;
+        self.row = (self.row as i32 + dy).rem_euclid(rows) as usize;
+        let w = self.width(self.row) as i32;
+        self.col = (self.col as i32 + dx).clamp(0, w - 1) as usize;
+        self.show(look);
+    }
+
+    fn show(&mut self, look: &Look) {
+        for (r, line) in self.rows.iter_mut().enumerate() {
+            for (c, (_, b)) in line.iter_mut().enumerate() {
+                if (r, c) == (self.row, self.col) {
+                    b.add_theme_stylebox_override("normal", &look.focus_button);
+                } else {
+                    b.remove_theme_stylebox_override("normal");
+                }
+            }
+        }
+    }
+
+    fn current(&self) -> OskKey {
+        self.rows[self.row][self.col].0.clone()
+    }
+
+    fn at(&mut self, row: usize, col: usize) {
+        if row < self.rows.len() && col < self.width(row) {
+            self.row = row;
+            self.col = col;
+        }
+    }
+
+    fn switch(&mut self) {
+        self.cyrillic = !self.cyrillic;
+        self.relabel();
+        self.col = self.col.min(self.width(self.row) - 1);
+    }
+
+    fn shift(&mut self) {
+        self.upper = !self.upper;
+        self.relabel();
+    }
 }
 
 fn dialog_ui(req: u64, ev: DialogEvent) -> UiEvent {

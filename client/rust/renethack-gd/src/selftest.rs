@@ -83,6 +83,10 @@ enum Step {
         &'static str,
         fn(&RenethackGame) -> Option<crate::inventory_panel::InvInput>,
     ),
+    /// Joypad events through Godot's input, as a controller sends them.
+    Pad(Vec<PadEv>),
+    /// Joypad events chosen by what the game shows (where the pet is).
+    PadFrom(&'static str, fn(&RenethackGame) -> Vec<PadEv>),
     /// A real key event (keycode, character typed, Shift) through Godot's
     /// input buffer: delivered next frame to `input()` and the focused
     /// text field, never from inside the game's own call.
@@ -1647,6 +1651,320 @@ fn gallery() -> Vec<Step> {
 }
 
 type Check2 = fn(&mut RenethackGame) -> Result<(), String>;
+
+/// A joypad event of the gamepad self-test.
+#[derive(Debug, Clone, Copy)]
+enum PadEv {
+    Button(crate::gamepad::PadButton, bool),
+    Axis(godot::global::JoyAxis, f32),
+}
+
+/// Give Godot a joypad event: delivered to `input()` next frame.
+fn pad_event(ev: PadEv) {
+    let mut input = Input::singleton();
+    match ev {
+        PadEv::Button(b, pressed) => {
+            let mut e = godot::classes::InputEventJoypadButton::new_gd();
+            e.set_device(0);
+            e.set_button_index(b.joy());
+            e.set_pressed(pressed);
+            input.parse_input_event(&e);
+        }
+        PadEv::Axis(a, v) => {
+            let mut e = godot::classes::InputEventJoypadMotion::new_gd();
+            e.set_device(0);
+            e.set_axis(a);
+            e.set_axis_value(v);
+            input.parse_input_event(&e);
+        }
+    }
+}
+
+/// A button pressed and let go.
+fn tap(b: crate::gamepad::PadButton) -> Step {
+    Step::Pad(vec![PadEv::Button(b, true), PadEv::Button(b, false)])
+}
+
+/// A bumper held, a face button tapped, the bumper let go.
+fn chord(bumper: crate::gamepad::PadButton, face: crate::gamepad::PadButton) -> Step {
+    Step::Pad(vec![
+        PadEv::Button(bumper, true),
+        PadEv::Button(face, true),
+        PadEv::Button(face, false),
+        PadEv::Button(bumper, false),
+    ])
+}
+
+/// The radial menu: hold LT, push the left stick to entry `i` (clockwise
+/// from the top), let go of LT, centre the stick.
+fn radial(i: usize) -> Vec<Step> {
+    use godot::global::JoyAxis;
+    let a = i as f32 * std::f32::consts::TAU / 8.0;
+    vec![
+        Step::Pad(vec![PadEv::Axis(JoyAxis::TRIGGER_LEFT, 1.0)]),
+        Step::Wait("the radial menu", |g| {
+            Ok(g.ui.as_ref().is_some_and(|ui| ui.pad.radial_shown()))
+        }),
+        Step::Pad(vec![
+            PadEv::Axis(JoyAxis::LEFT_X, a.sin()),
+            PadEv::Axis(JoyAxis::LEFT_Y, -a.cos()),
+        ]),
+        Step::Shot("pad-radial"),
+        Step::Pad(vec![PadEv::Axis(JoyAxis::TRIGGER_LEFT, 0.0)]),
+        Step::Pad(vec![
+            PadEv::Axis(JoyAxis::LEFT_X, 0.0),
+            PadEv::Axis(JoyAxis::LEFT_Y, 0.0),
+        ]),
+    ]
+}
+
+/// The left stick pushed toward the pet (if it is next to the hero, else
+/// east) and let go: a direction.
+fn stick_to_pet(g: &RenethackGame) -> Vec<PadEv> {
+    use godot::global::JoyAxis;
+    let (dx, dy) = pet_dir(g).unwrap_or((1, 0));
+    vec![
+        PadEv::Axis(JoyAxis::LEFT_X, dx as f32),
+        PadEv::Axis(JoyAxis::LEFT_Y, dy as f32),
+        PadEv::Axis(JoyAxis::LEFT_X, 0.0),
+        PadEv::Axis(JoyAxis::LEFT_Y, 0.0),
+    ]
+}
+
+fn pet_dir(g: &RenethackGame) -> Option<(i32, i32)> {
+    let (hx, hy) = g.world.hero()?;
+    for dy in -1..=1 {
+        for dx in -1..=1 {
+            let pet = g
+                .world
+                .map
+                .cell(hx + dx, hy + dy)
+                .and_then(|c| c.entity())
+                .is_some_and(|e| e.flags & nh_protocol::mg::PET != 0);
+            if (dx, dy) != (0, 0) && pet {
+                return Some((dx, dy));
+            }
+        }
+    }
+    None
+}
+
+/// Yes to the question waiting: the d-pad from the focused (default)
+/// answer to 'y', then A.
+fn pad_yes(g: &mut RenethackGame) -> Result<(), String> {
+    use crate::gamepad::PadButton as B;
+    let Some((
+        _,
+        Prompt::Choice {
+            visible, default, ..
+        },
+    )) = &g.pending
+    else {
+        return Err("no question".into());
+    };
+    let from = default
+        .and_then(|d| visible.iter().position(|c| *c == d))
+        .unwrap_or(0);
+    let to = visible.iter().position(|c| *c == 'y').ok_or("no yes")?;
+    let (b, n) = if to >= from {
+        (B::Right, to - from)
+    } else {
+        (B::Left, from - to)
+    };
+    for _ in 0..n {
+        pad_event(PadEv::Button(b, true));
+        pad_event(PadEv::Button(b, false));
+    }
+    pad_event(PadEv::Button(B::A, true));
+    pad_event(PadEv::Button(B::A, false));
+    Ok(())
+}
+
+static PAD_HERO: Mutex<Option<(i32, i32)>> = Mutex::new(None);
+
+/// The whole game with a controller (spec part 2, criterion 5): walk,
+/// open the inventory, wield the dagger and drop the food by the panel,
+/// pick it up and open a cell's menu by the radial, throw by a bar slot
+/// (a getobj answered in the panel, then a direction), fight toward the
+/// pet, and save (a yes/no). Joypad events only.
+fn gamepad() -> Vec<Step> {
+    use crate::gamepad::PadButton as B;
+    use crate::inventory_panel::DollSlot;
+    use godot::global::JoyAxis;
+    let mut steps = start_as(modern_choice());
+    steps.extend([
+        Step::Wait("the first inventory", |g| Ok(g.world.inventory.received())),
+        Step::Wait("the camera on the hero", camera_settled),
+        // walk: the stick east, a step, let go
+        Step::Call("where the hero stands", |g| {
+            *PAD_HERO.lock().map_err(|e| e.to_string())? = g.world.hero();
+            Ok(())
+        }),
+        Step::Pad(vec![PadEv::Axis(JoyAxis::LEFT_X, 1.0)]),
+        Step::Pad(vec![PadEv::Axis(JoyAxis::LEFT_X, 0.0)]),
+        Step::Wait("a step east", |g| {
+            let was = PAD_HERO
+                .lock()
+                .map_err(|e| e.to_string())?
+                .ok_or("no hero")?;
+            Ok(idle_command(g)? && g.world.hero().is_some_and(|h| h.0 > was.0))
+        }),
+        Step::Shot("pad-world"),
+        // the inventory: Y; the dagger is the second cell; A wields it
+        tap(B::Y),
+        Step::Wait("the panel", |g| Ok(panel(g)?.mode_name() == Some("browse"))),
+        tap(B::Right),
+        tap(B::A),
+        Step::Wait("the dagger wielded by the panel", |g| {
+            Ok(wielding(g, "dagger") && idle_command(g)?)
+        }),
+        Step::Wait("the doll shows it", |g| {
+            let d = letter_of(g, "dagger");
+            Ok(panel(g)?
+                .doll_letters()
+                .iter()
+                .any(|(s, l)| *s == DollSlot::Main && l.first().copied() == d))
+        }),
+        // name it: its actions (X), down to "Name this item", A; the
+        // keyboard on screen types (A) and Start confirms
+        tap(B::X),
+        Step::Wait("the dagger's actions", |g| {
+            Ok(panel(g)?.context_rows().is_some())
+        }),
+        Step::PadFrom("down to Name", |g| {
+            let rows =
+                g.ui.as_ref()
+                    .and_then(|ui| ui.inventory.context_rows())
+                    .unwrap_or_default();
+            let n = rows
+                .iter()
+                .position(|k| *k == nh_world::ItemActionKind::Name)
+                .unwrap_or(0);
+            (0..n)
+                .flat_map(|_| [PadEv::Button(B::Down, true), PadEv::Button(B::Down, false)])
+                .chain([PadEv::Button(B::A, true), PadEv::Button(B::A, false)])
+                .collect()
+        }),
+        Step::Request("what to call it", |p| matches!(p, Prompt::Text { .. })),
+        Step::Wait("the keyboard on screen", |g| {
+            Ok(g.ui.as_ref().is_some_and(|ui| ui.dialogs.osk_open()))
+        }),
+        Step::Shot("pad-keyboard"),
+        tap(B::A),
+        tap(B::Start),
+        Step::Wait("the dagger named by the keyboard", |g| {
+            Ok(idle_command(g)?
+                && g.world
+                    .inventory
+                    .items()
+                    .iter()
+                    .any(|i| i.text.contains("dagger named q")))
+        }),
+        // the food (two cells on): X for its actions, Drop is the second
+        tap(B::Right),
+        tap(B::Right),
+        tap(B::X),
+        Step::Wait("the food's actions", |g| {
+            Ok(panel(g)?.context_rows().is_some())
+        }),
+        Step::Shot("pad-inventory"),
+        tap(B::Down),
+        tap(B::A),
+        Step::Wait("the food dropped", |g| {
+            Ok(idle_command(g)? && letter_of(g, "food ration").is_none())
+        }),
+        tap(B::B),
+        Step::Wait("the panel closed", panel_closed),
+    ]);
+    // pick it up again by the radial
+    steps.extend(radial(1));
+    steps.extend([Step::Wait("the food picked up", |g| {
+        Ok(idle_command(g)? && letter_of(g, "food ration").is_some())
+    })]);
+    // the cell's actions (the engine's menu) by the radial; B answers it
+    steps.extend(radial(0));
+    steps.extend([
+        Step::Request("the menu of actions here", is_menu),
+        Step::Shot("pad-menu"),
+        tap(B::B),
+        Step::Request("a command after the menu", command),
+        // a bar slot (bound to Throw), its getobj in the panel, a direction
+        Step::Call("Throw on slot 4", |g| {
+            g.ui_state.bar.set(
+                3,
+                Some(nh_world::SlotBinding::Command {
+                    cmd: nh_world::BarCommand::Throw,
+                }),
+            );
+            g.pad_cursor = None;
+            Ok(())
+        }),
+        chord(B::Lb, B::Y),
+        Step::Request(
+            "What do you want to throw?",
+            |p| matches!(p, Prompt::FreeKey { query, .. } if query.contains("throw")),
+        ),
+        Step::Wait("the panel asks", |g| {
+            Ok(panel(g)?.mode_name() == Some("select"))
+        }),
+        Step::Shot("pad-getobj"),
+        tap(B::A),
+        Step::Request("in what direction", |p| {
+            matches!(
+                p,
+                Prompt::FreeKey {
+                    directions: true,
+                    ..
+                }
+            )
+        }),
+        Step::Pad(vec![
+            PadEv::Axis(JoyAxis::LEFT_X, 1.0),
+            PadEv::Axis(JoyAxis::LEFT_X, 0.0),
+        ]),
+        Step::AnswerUntil('y', "a command after the throw", idle_command),
+    ]);
+    // fight: F toward the pet (the engine reads the direction as a key:
+    // the stick gives it; attacking a pet asks first: yes)
+    steps.extend(radial(2));
+    steps.extend([
+        Step::Wait("F answered", idle_command),
+        Step::PadFrom("the stick toward the pet", stick_to_pet),
+        Step::Request("the fight or its question", |p| {
+            matches!(p, Prompt::Choice { .. } | Prompt::Command)
+        }),
+        Step::Call("yes to its question, if one came", |g| {
+            if matches!(g.pending, Some((_, Prompt::Choice { .. }))) {
+                pad_yes(g)?;
+            }
+            Ok(())
+        }),
+        Step::Wait("a command after the fight", idle_command),
+    ]);
+    // save: a yes/no, Yes by the d-pad and A
+    steps.extend(radial(7));
+    steps.extend([
+        Step::Request(
+            "Really save?",
+            |p| matches!(p, Prompt::Choice { query, .. } if query.contains("save")),
+        ),
+        Step::Shot("pad-yn"),
+        Step::Call("Yes, by the d-pad and A", pad_yes),
+        Step::Wait("the title screen after the save", |g| {
+            fail_on_error_screen(g)?;
+            Ok(screen(g) == Some("title"))
+        }),
+        Step::Call("the save exists", |g| {
+            let pg = g.paths.as_ref().ok_or("no paths")?.playground.clone();
+            if save_exists(&pg, "Hero") {
+                Ok(())
+            } else {
+                Err("no save".into())
+            }
+        }),
+    ]);
+    steps
+}
 
 /// A Valkyrie with the default (Modern) keys.
 fn modern_choice() -> CharacterChoice {
@@ -3439,8 +3757,10 @@ impl SelfTest {
             "equipment" => hero::equipment(),
             "item-use" => hero::item_use(),
             "combat" => hero::combat(),
+            "roles" => hero::roles(),
             "branches" => world_looks::branches(),
             "inventory" => inventory(),
+            "gamepad" => gamepad(),
             "bar" => bar(),
             _ => Vec::new(),
         };
@@ -3638,6 +3958,26 @@ impl SelfTest {
                     self.next();
                     return;
                 }
+                Step::Pad(evs) => {
+                    for ev in evs {
+                        pad_event(*ev);
+                    }
+                    if let Some((id, _)) = pending {
+                        self.last_req = (serial, id);
+                    }
+                    self.next();
+                    return;
+                }
+                Step::PadFrom(_, f) => {
+                    for ev in f(game) {
+                        pad_event(ev);
+                    }
+                    if let Some((id, _)) = pending {
+                        self.last_req = (serial, id);
+                    }
+                    self.next();
+                    return;
+                }
                 Step::Press(keycode, typed, shift) => {
                     let Some((id, _)) = pending else {
                         return;
@@ -3759,7 +4099,8 @@ fn describe(step: &Step) -> String {
         Step::KeyFrom(what, _) => format!("a request for {what}"),
         Step::Soak(_) => "the soak".to_string(),
         Step::Dialog(ev) => format!("a request for {ev:?}"),
-        Step::Call(what, _) | Step::Inv(what, _) => what.to_string(),
+        Step::Call(what, _) | Step::Inv(what, _) | Step::PadFrom(what, _) => what.to_string(),
+        Step::Pad(evs) => format!("joypad {evs:?}"),
         Step::Press(k, c, _) => format!("a request for key {k:?} {c:?}"),
         Step::Shot(name) | Step::ShotIf(name, _) => format!("screenshot {name}"),
     }

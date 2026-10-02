@@ -675,6 +675,9 @@ pub enum InvInput {
     /// Multi-select mode: the header's Confirm and Cancel.
     Confirm,
     Cancel,
+    /// A gamepad picks up the focused item, or puts the one it holds down
+    /// where the focus is (a drag and drop).
+    Carry,
 }
 
 /// What the game does for the panel.
@@ -1240,6 +1243,15 @@ pub struct InventoryPanel {
     count_label: Gd<Label>,
     /// AC, gold and burden, from the HUD's status.
     status: (Option<String>, Option<String>, Option<String>),
+    /// A gamepad plays: the focus is always somewhere.
+    pad: bool,
+    /// The keyboard (a gamepad) is on a doll socket: its index in `doll`.
+    doll_focus: Option<usize>,
+    /// A gamepad's "drag": the item picked up, put down with Y again.
+    carrying: Option<InvTarget>,
+    /// The context menu's rows and the one the d-pad is on.
+    ctx_buttons: Vec<(ItemActionKind, Gd<Button>)>,
+    ctx_focus: usize,
     /// Grid rows shown: the pack's and an empty one, at least 3; chosen
     /// when the panel opens and only growing while it is open, so cells
     /// never move under the pointer (0: closed).
@@ -1904,6 +1916,11 @@ impl InventoryPanel {
             count_box,
             count_label,
             status: (None, None, None),
+            pad: false,
+            doll_focus: None,
+            carrying: None,
+            ctx_buttons: Vec::new(),
+            ctx_focus: 0,
             rows: 0,
             grid_top: grid_y,
             doll_view,
@@ -2041,6 +2058,8 @@ impl InventoryPanel {
     pub fn close(&mut self) {
         self.mode = Mode::Closed;
         self.rows = 0;
+        self.carrying = None;
+        self.doll_focus = None;
         self.choose = None;
         self.counting = None;
         self.drag_from = None;
@@ -2186,6 +2205,7 @@ impl InventoryPanel {
                 Mode::Menu { state, .. } => Some(Intent::Reply(state.confirm())),
                 _ => None,
             },
+            InvInput::Carry => self.carry(),
             InvInput::Cancel => match &self.mode {
                 Mode::Menu { .. } => Some(Intent::Reply(Reply::Cancel)),
                 Mode::Select { .. } => Some(Intent::Reply(Reply::Char(27))),
@@ -2421,7 +2441,9 @@ impl InventoryPanel {
             return;
         };
         let actions = actions_for(&item, &self.pack);
+        // out of the box at once, so it sizes to the new rows only
         for mut c in self.ctx_rows.get_children().iter_shared() {
+            self.ctx_rows.remove_child(&c);
             c.queue_free();
         }
         let mut head = theme::styled_label(&title_of(&item), Face::Title, 18, theme::GOLD_BRIGHT);
@@ -2429,10 +2451,14 @@ impl InventoryPanel {
         head.set_custom_minimum_size(Vector2::new(284.0, 0.0));
         self.ctx_rows.add_child(&head);
         self.ctx_rows.add_child(&separator());
+        self.ctx_buttons.clear();
         for a in &actions {
             let row = self.action_row(letter, a, 300.0, 32.0, false);
             self.ctx_rows.add_child(&row);
+            self.ctx_buttons.push((a.kind, row));
         }
+        self.ctx_focus = 0;
+        self.show_ctx_focus();
         self.menu_for = Some(letter);
         self.ctx_menu.reset_size();
         // next to the cell, inside the window
@@ -2585,11 +2611,29 @@ impl InventoryPanel {
             }
             return KeyUse::Used;
         }
-        // the context menu: Esc closes it, a row's key runs it
+        // the context menu: Esc closes it, a row's key runs it, the arrows
+        // and Enter (a gamepad) pick a row
         if let Some(l) = self.menu_for {
             if k.key == Key::Escape {
                 self.close_menu();
                 return KeyUse::Used;
+            }
+            let n = self.ctx_buttons.len();
+            if n > 0 {
+                match k.key {
+                    Key::Up | Key::Down => {
+                        let step = if k.key == Key::Up { n - 1 } else { 1 };
+                        self.ctx_focus = (self.ctx_focus + step) % n;
+                        self.show_ctx_focus();
+                        return KeyUse::Used;
+                    }
+                    Key::Enter | Key::KeypadEnter => {
+                        let kind = self.ctx_buttons[self.ctx_focus.min(n - 1)].0;
+                        self.close_menu();
+                        return self.action(l, kind).map_or(KeyUse::Used, KeyUse::Then);
+                    }
+                    _ => {}
+                }
             }
             if let (Some(c), Some(item)) = (ch, self.pack.by_letter(l)) {
                 let hit = actions_for(item, &self.pack)
@@ -2601,9 +2645,41 @@ impl InventoryPanel {
                 }
             }
         }
+        if k.key == Key::Escape && self.carrying.take().is_some() {
+            self.drag_from = None;
+            return KeyUse::Used;
+        }
         if k.key == Key::Tab {
             self.cycle_filter(if k.mods.shift { -1 } else { 1 });
             return KeyUse::Used;
+        }
+        // the doll's sockets (the keyboard or a gamepad): its columns, the
+        // weapons row, and back to the grid on the right
+        if self.mode == Mode::Browse
+            && matches!(k.key, Key::Left | Key::Right | Key::Up | Key::Down)
+        {
+            if let Some(d) = self.doll_focus {
+                let next = doll_step(d, k.key);
+                match next {
+                    DollStep::To(i) => self.doll_focus = Some(i),
+                    DollStep::Grid(row) => {
+                        self.doll_focus = None;
+                        let n = self.cells_shown.len();
+                        self.focus = (n > 0).then(|| (row * COLS).min(n - 1));
+                    }
+                    DollStep::Stay => {}
+                }
+                self.select_focus();
+                return KeyUse::Used;
+            }
+            let at_left_edge = self.focus.is_none_or(|f| f % COLS == 0);
+            if k.key == Key::Left && at_left_edge {
+                let row = self.focus.map_or(0, |f| f / COLS).min(5);
+                self.focus = None;
+                self.doll_focus = Some(6 + row);
+                self.select_focus();
+                return KeyUse::Used;
+            }
         }
         let step = match k.key {
             Key::Left => Some(-1),
@@ -2628,6 +2704,7 @@ impl InventoryPanel {
             return KeyUse::Used;
         }
         let focused = self.focused();
+        let target = self.focus_target();
         match &mut self.mode {
             Mode::Closed => KeyUse::Pass,
             Mode::Browse => match k.key {
@@ -2635,19 +2712,22 @@ impl InventoryPanel {
                     self.close();
                     KeyUse::Used
                 }
+                // the focused item's first action (on the doll: off it)
                 Key::Enter | Key::KeypadEnter => {
-                    let Some(InvTarget::Cell(l)) = focused else {
+                    let Some(item) = target.and_then(|t| self.item_at(t)).cloned() else {
                         return KeyUse::Used;
                     };
-                    let kind = self
-                        .pack
-                        .by_letter(l)
-                        .and_then(|i| default_action(i, &self.pack));
-                    kind.and_then(|kind| self.action(l, kind))
+                    let kind = match target {
+                        Some(InvTarget::Doll(slot)) => slot.unequip(&item),
+                        _ => default_action(&item, &self.pack),
+                    };
+                    kind.and_then(|kind| self.action(item.letter, kind))
                         .map_or(KeyUse::Used, KeyUse::Then)
                 }
                 Key::Char(' ') => {
-                    if let Some(t @ InvTarget::Cell(l)) = focused {
+                    if let Some(t) = target
+                        && let Some(l) = self.item_at(t).map(|i| i.letter)
+                    {
                         self.open_context(l, t);
                     }
                     KeyUse::Used
@@ -2732,6 +2812,78 @@ impl InventoryPanel {
                     MenuOutcome::Done(r) => KeyUse::Then(Intent::Reply(r)),
                     _ => KeyUse::Used,
                 }
+            }
+        }
+    }
+
+    /// What the keyboard is on: a doll socket or a cell.
+    fn focus_target(&self) -> Option<InvTarget> {
+        match self.doll_focus {
+            Some(d) => self.doll.get(d).map(|(s, _)| InvTarget::Doll(*s)),
+            None => self.focused(),
+        }
+    }
+
+    /// The detail follows the focus (browse mode).
+    fn select_focus(&mut self) {
+        if self.mode == Mode::Browse
+            && let Some(l) = self
+                .focus_target()
+                .and_then(|t| self.item_at(t))
+                .map(|i| i.letter)
+        {
+            self.selected = Some(l);
+        }
+    }
+
+    /// Y: pick the focused item up, or put the one held down at the focus
+    /// (what a drag does).
+    fn carry(&mut self) -> Option<Intent> {
+        if self.mode != Mode::Browse {
+            return None;
+        }
+        let at = self.focus_target();
+        match self.carrying.take() {
+            None => {
+                let t = at.filter(|t| self.item_at(*t).is_some())?;
+                self.carrying = Some(t);
+                self.drag_from = Some(t);
+                None
+            }
+            Some(from) => {
+                self.drag_from = None;
+                self.dropped(from, at.unwrap_or(InvTarget::Nothing), false)
+            }
+        }
+    }
+
+    /// A gamepad gives the input (the focus shows at once).
+    pub fn set_pad(&mut self, on: bool) {
+        if self.pad != on {
+            self.pad = on;
+            self.dirty = true;
+        }
+    }
+
+    /// The context menu's row the d-pad is on.
+    fn show_ctx_focus(&mut self) {
+        let focus = self.ctx_focus;
+        let mut on = self.looks.selected.duplicate_resource();
+        on.set_content_margin(Side::LEFT, 10.0);
+        on.set_shadow_size(0);
+        for (i, (_, b)) in self.ctx_buttons.iter_mut().enumerate() {
+            if i == focus {
+                b.add_theme_stylebox_override("normal", &on);
+            } else {
+                b.remove_theme_stylebox_override("normal");
+                let mut sb = flat(
+                    Color::from_rgba(0.0, 0.0, 0.0, 0.0),
+                    Color::from_rgba(0.0, 0.0, 0.0, 0.0),
+                    0,
+                    2,
+                );
+                sb.set_content_margin(Side::LEFT, 10.0);
+                b.add_theme_stylebox_override("normal", &sb);
             }
         }
     }
@@ -2905,6 +3057,24 @@ impl InventoryPanel {
         if self.focus.is_some_and(|f| f >= shown.len()) {
             self.focus = None;
         }
+        // a gamepad's focus starts on the first suggested item
+        if self.pad && self.focus.is_none() && self.doll_focus.is_none() && !shown.is_empty() {
+            let q = question.as_ref();
+            self.focus = Some(
+                shown
+                    .iter()
+                    .position(|t| match t {
+                        InvTarget::Cell(l) => q.is_none_or(|q| q.all || q.suggests(*l)),
+                        _ => false,
+                    })
+                    .unwrap_or(0),
+            );
+            if let Some(InvTarget::Cell(l)) = self.focus.and_then(|f| shown.get(f))
+                && self.mode == Mode::Browse
+            {
+                self.selected = Some(*l);
+            }
+        }
         let drag_item = self.drag_from.and_then(|t| self.item_at(t)).cloned();
         let preview = self
             .selected
@@ -3004,7 +3174,8 @@ impl InventoryPanel {
             }
         }
         // the doll
-        for (slot, sock) in self.doll.iter_mut() {
+        let doll_focus = self.doll_focus;
+        for (di, (slot, sock)) in self.doll.iter_mut().enumerate() {
             let items = slot.items(&self.pack);
             let first = items.first().copied();
             sock.show(first);
@@ -3017,7 +3188,11 @@ impl InventoryPanel {
             } else {
                 &self.looks.empty
             };
-            if first.is_some_and(|i| self.selected == Some(i.letter)) && self.mode == Mode::Browse {
+            let focused = doll_focus == Some(di);
+            if focused
+                || first.is_some_and(|i| self.selected == Some(i.letter))
+                    && self.mode == Mode::Browse
+            {
                 style = &self.looks.selected;
             }
             sock.rim.set_visible(false);
@@ -3177,6 +3352,12 @@ impl InventoryPanel {
                 };
                 ("Choose".into(), sub, hint.to_string())
             }
+            _ if self.carrying.is_some() => (
+                "Inventory".into(),
+                "Carrying an item".into(),
+                "Move to where it goes (a doll socket, another item) and press Y again · B: put it back"
+                    .into(),
+            ),
             _ => (
                 "Inventory".into(),
                 String::new(),
@@ -3367,6 +3548,36 @@ impl InventoryPanel {
     }
 }
 
+/// Where an arrow goes from a doll socket.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum DollStep {
+    To(usize),
+    /// Back to the grid, at this row.
+    Grid(usize),
+    Stay,
+}
+
+/// The doll's sockets as the keyboard walks them: the left column (0–5),
+/// the right column (6–11), the weapons row (12–15) under both.
+fn doll_step(i: usize, k: Key) -> DollStep {
+    match (i, k) {
+        (0..=5, Key::Up) => DollStep::To(i.saturating_sub(1)),
+        (0..=4, Key::Down) | (6..=10, Key::Down) => DollStep::To(i + 1),
+        (5, Key::Down) => DollStep::To(12),
+        (11, Key::Down) => DollStep::To(15),
+        (0..=5, Key::Right) => DollStep::To(i + 6),
+        (6..=11, Key::Left) => DollStep::To(i - 6),
+        (6..=11, Key::Up) => DollStep::To(if i == 6 { 6 } else { i - 1 }),
+        (6..=11, Key::Right) => DollStep::Grid(i - 6),
+        (12..=15, Key::Left) => DollStep::To(if i == 12 { 12 } else { i - 1 }),
+        (12..=14, Key::Right) => DollStep::To(i + 1),
+        (15, Key::Right) => DollStep::Grid(0),
+        (12 | 13, Key::Up) => DollStep::To(5),
+        (14 | 15, Key::Up) => DollStep::To(11),
+        _ => DollStep::Stay,
+    }
+}
+
 /// The '-' cell's label by the question's verb (ui-design §3).
 pub fn hands_label(verb: &str) -> &'static str {
     match verb {
@@ -3448,6 +3659,17 @@ mod tests {
                     .all(|f| !f.text.to_lowercase().contains("weight"))
             );
         }
+    }
+
+    #[test]
+    fn the_keyboard_walks_the_doll() {
+        assert_eq!(doll_step(0, Key::Up), DollStep::To(0));
+        assert_eq!(doll_step(5, Key::Down), DollStep::To(12));
+        assert_eq!(doll_step(2, Key::Right), DollStep::To(8));
+        assert_eq!(doll_step(8, Key::Right), DollStep::Grid(2));
+        assert_eq!(doll_step(15, Key::Up), DollStep::To(11));
+        assert_eq!(doll_step(12, Key::Left), DollStep::To(12));
+        assert_eq!(doll_step(0, Key::Left), DollStep::Stay);
     }
 
     #[test]

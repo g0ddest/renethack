@@ -79,6 +79,34 @@ The client adds:
 
 Commands work in any keyboard layout (letters are taken by key position).
 
+### Gamepad and Steam Deck
+
+The whole game plays with a controller (Xbox, PlayStation or the Steam
+Deck; the buttons on screen are drawn with that controller's letters or
+shapes). A strip over the action bar says what the buttons do on the
+screen at hand.
+
+| Input | In the world | In menus, questions and the inventory |
+|---|---|---|
+| left stick, d-pad | walk in 8 directions; held — walk on, as a held key | move the focus (the menu row, the item, the doll's socket, the answer) |
+| right stick | the cursor over the map (what is there; getpos moves the engine's cursor) | move the focus |
+| A | the cursor cell's action, as a left click (walk, pick up, open, attack) | choose; toggle in a menu of several |
+| B | Esc | back, cancel |
+| X | search | the item's actions (inventory) |
+| Y | inventory | pick the item up, then put it down where the focus is (a drag: to the doll, onto another item) |
+| LB + A B X Y | action bar slots 1–4 | the previous filter or page |
+| RB + A B X Y | action bar slots 5–8 | the next filter or page |
+| LB or RB + d-pad ← → | the bar's second page: LB + A, B are slots 9 and 0 | |
+| LT (hold) | the radial menu: the cursor cell's actions (the engine's menu of what can be done there), pick up, fight, kick, rest, pray, travel, save; a stick picks, letting go of LT runs it | |
+| RT | fire | |
+| Start | the command palette | confirm (a menu of several, the keyboard) |
+| Back / View | the message history | |
+| L3, R3 | the whole level; the cursor back on the hero | |
+
+A direction question takes the stick; a text question opens a keyboard on
+screen (Latin and Cyrillic, Y switches; on a Steam Deck the client also
+asks Steam for its own keyboard).
+
 Time runs like in BG3. While no hostile is in view (**exploring**, the
 badge top right), an order — a click, a held key, a count, `F5`, `<`/`>` —
 is carried out one engine action per tick (300 ms; `tick_ms` in the

@@ -8,8 +8,8 @@ use std::time::{Duration, Instant};
 
 use godot::classes::notify::NodeNotification;
 use godot::classes::{
-    CanvasLayer, INode, InputEvent, InputEventKey, InputEventMouseButton, InputEventMouseMotion,
-    Node3D, Os, ProjectSettings, Time,
+    CanvasLayer, INode, Input, InputEvent, InputEventJoypadButton, InputEventJoypadMotion,
+    InputEventKey, InputEventMouseButton, InputEventMouseMotion, Node3D, Os, ProjectSettings, Time,
 };
 use godot::global::MouseButton;
 use godot::prelude::*;
@@ -28,6 +28,7 @@ use nh_world::{
 };
 
 use crate::dialogs::Dialogs;
+use crate::gamepad::{OskOp, Pad, PadButton, PadCtx, PadKind, PadOut, RADIAL, RadialEntry};
 use crate::hud::Hud;
 use crate::icons;
 use crate::input::{client_key, key_input, key_release};
@@ -116,6 +117,7 @@ pub struct Ui {
     pub hud: Hud,
     pub inventory: InventoryPanel,
     pub dialogs: Dialogs,
+    pub pad: crate::pad_view::PadView,
     pub screens: Screens,
 }
 
@@ -156,6 +158,11 @@ fn order_text(order: &Order) -> String {
         Order::Rest => "Resting until HP and Pw are full".to_string(),
     };
     format!("{what}  -  any key stops")
+}
+
+/// Seconds since the engine started (the pad's clock).
+fn now_secs() -> f64 {
+    godot::classes::Time::singleton().get_ticks_msec() as f64 / 1000.0
 }
 
 pub(crate) fn env_number<T: std::str::FromStr>(name: &str) -> Option<T> {
@@ -241,6 +248,11 @@ pub struct RenethackGame {
     cleared: Option<(usize, SlotBinding)>,
     /// The bar is drawn again when this changes.
     bar_key: Option<Vec<nh_world::SlotView>>,
+    /// A gamepad's state, and its world cursor (None: on the hero).
+    pub(crate) pad: Pad,
+    pub(crate) pad_cursor: Option<(i32, i32)>,
+    /// The bar's labels were drawn for this (pad kind and page, if a pad).
+    pad_labels: Option<Option<(PadKind, usize)>>,
 }
 
 /// The way preview is drawn again only when one of these changes.
@@ -310,6 +322,9 @@ impl INode for RenethackGame {
             deferred: None,
             cleared: None,
             bar_key: None,
+            pad: Pad::new(),
+            pad_cursor: None,
+            pad_labels: None,
         }
     }
 
@@ -335,7 +350,8 @@ impl INode for RenethackGame {
             ("HudLayer", 1),
             ("PanelLayer", 2),
             ("DialogLayer", 3),
-            ("ScreenLayer", 4),
+            ("PadLayer", 4),
+            ("ScreenLayer", 5),
         ] {
             let mut layer = CanvasLayer::new_alloc();
             layer.set_name(name);
@@ -348,12 +364,13 @@ impl INode for RenethackGame {
         }
         let queue = self.queue.clone();
         let mut layers = layers.into_iter();
-        let mut next = || layers.next().expect("four layers");
+        let mut next = || layers.next().expect("five layers");
         self.ui = Some(Ui {
             map: MapView::new(map_root),
             hud: Hud::new(next(), queue.clone()),
             inventory: InventoryPanel::new(next(), queue.clone()),
             dialogs: Dialogs::new(next(), queue.clone()),
+            pad: crate::pad_view::PadView::new(next()),
             screens: Screens::new(next(), queue),
         });
         self.show_game(false);
@@ -391,6 +408,7 @@ impl INode for RenethackGame {
         // they belong to the prompt the player saw, or to the typeahead while
         // the engine works; a request read afterwards never gets them (the
         // typeahead policy drops them when it opens a modal question)
+        self.pad_tick();
         self.drain_ui();
         self.pump();
         self.drive();
@@ -428,9 +446,41 @@ impl INode for RenethackGame {
         if self.state != GameState::Playing {
             return;
         }
+        // a gamepad: what its buttons and sticks mean on this screen
+        let event = match event.try_cast::<InputEventJoypadButton>() {
+            Ok(b) => {
+                self.pad.kind = PadKind::from_name(
+                    &Input::singleton().get_joy_name(b.get_device()).to_string(),
+                );
+                if let Some(pb) = PadButton::from_joy(b.get_button_index()) {
+                    let ctx = self.pad_ctx();
+                    let outs = self.pad.button(pb, b.is_pressed(), ctx, now_secs());
+                    self.pad_out(outs);
+                }
+                self.handled();
+                return;
+            }
+            Err(event) => event,
+        };
+        let event = match event.try_cast::<InputEventJoypadMotion>() {
+            Ok(m) => {
+                let ctx = self.pad_ctx();
+                let outs = self
+                    .pad
+                    .axis(m.get_axis(), m.get_axis_value(), ctx, now_secs());
+                self.pad_out(outs);
+                self.handled();
+                return;
+            }
+            Err(event) => event,
+        };
+        if event.clone().try_cast::<InputEventMouseButton>().is_ok() {
+            self.pad.active = false;
+        }
         let Ok(key) = event.try_cast::<InputEventKey>() else {
             return;
         };
+        self.pad.active = false;
         let text = self
             .ui
             .as_ref()
@@ -545,9 +595,11 @@ impl RenethackGame {
         let ui = self.ui_mut();
         ui.map.set_visible(on);
         ui.hud.set_visible(on);
+        ui.pad.set_visible(on);
         if !on {
             ui.dialogs.close();
             ui.inventory.reset();
+            ui.pad.radial_open(false);
         }
         self.clear_hover();
     }
@@ -1093,6 +1145,133 @@ impl RenethackGame {
         }
     }
 
+    /// What a gamepad's buttons mean now (the topmost thing on screen).
+    pub(crate) fn pad_ctx(&self) -> PadCtx {
+        let Some(ui) = self.ui.as_ref() else {
+            return PadCtx::Other;
+        };
+        if ui.dialogs.is_open() {
+            return match ui.dialogs.kind_name() {
+                Some("menu") => PadCtx::Menu {
+                    any: ui.dialogs.menu_any(),
+                },
+                Some("choice") => PadCtx::Choice,
+                Some("text") => PadCtx::Text,
+                Some("message") => match ui.dialogs.message_letter() {
+                    Some(letter) => PadCtx::Message { letter },
+                    None => PadCtx::Other,
+                },
+                _ => PadCtx::Other,
+            };
+        }
+        if ui.inventory.is_open() {
+            return match ui.inventory.mode_name() {
+                Some("select") => PadCtx::PanelSelect,
+                Some("menu") => PadCtx::PanelMenu,
+                _ => PadCtx::PanelBrowse,
+            };
+        }
+        match self.pending.as_ref().map(|(_, p)| p) {
+            Some(Prompt::Command) if self.world.getpos => PadCtx::Getpos,
+            Some(Prompt::Command) | None => PadCtx::World,
+            Some(Prompt::FreeKey {
+                directions: true, ..
+            }) => PadCtx::Direction,
+            _ => PadCtx::Other,
+        }
+    }
+
+    /// Held sticks repeat.
+    fn pad_tick(&mut self) {
+        if self.state != GameState::Playing {
+            return;
+        }
+        let ctx = self.pad_ctx();
+        let outs = self.pad.tick(ctx, now_secs());
+        self.pad_out(outs);
+    }
+
+    /// The world cursor's cell: where it was moved, else the hero.
+    fn pad_cell(&self) -> Option<(i32, i32)> {
+        self.pad_cursor.or_else(|| self.world.hero())
+    }
+
+    /// Do what the pad asks.
+    fn pad_out(&mut self, outs: Vec<PadOut>) {
+        for o in outs {
+            match o {
+                PadOut::Key(k) => self.push_ui(UiEvent::Key(k)),
+                PadOut::KeyUp(k) => self.push_ui(UiEvent::KeyUp(k)),
+                PadOut::Activate => {
+                    if let Some((x, y)) = self.pad_cell() {
+                        self.push_ui(UiEvent::MapClick { x, y, button: 1 });
+                    }
+                    self.pad_cursor = None;
+                }
+                PadOut::Cursor(dx, dy) => {
+                    if let Some((x, y)) = self.pad_cell() {
+                        let (nx, ny) = (x + dx, y + dy);
+                        if in_field(nx, ny) {
+                            self.pad_cursor = Some((nx, ny));
+                        }
+                    }
+                }
+                PadOut::CursorHome => self.pad_cursor = None,
+                PadOut::Slot(slot) => self.push_ui(UiEvent::ActionSlot { slot, button: 1 }),
+                PadOut::Page(_) => {}
+                PadOut::Carry => self.push_ui(UiEvent::Inventory(InvInput::Carry)),
+                PadOut::History => self.push_ui(UiEvent::ToggleFullLog),
+                PadOut::RadialOpen => self.ui_mut().pad.radial_open(true),
+                PadOut::RadialHover(sel) => self.ui_mut().pad.select(sel),
+                PadOut::RadialClose(sel) => {
+                    self.ui_mut().pad.radial_open(false);
+                    if let Some(e) = sel.and_then(|i| RADIAL.get(i)) {
+                        self.radial_run(*e);
+                    }
+                }
+                PadOut::Osk(op) => self.osk(op),
+            }
+        }
+    }
+
+    /// The on-screen keyboard's key; its answer, if any.
+    fn osk(&mut self, op: OskOp) {
+        let pending = self.pending.as_ref().map(|(id, _)| *id);
+        let ui = self.ui_mut();
+        if ui.dialogs.open_req() != pending {
+            return;
+        }
+        if let Some(r) = ui.dialogs.osk(op) {
+            self.reply(r);
+        }
+    }
+
+    /// A radial menu entry.
+    fn radial_run(&mut self, e: RadialEntry) {
+        let key = |c: char| UiEvent::Key(KeyInput::plain(Key::Char(c)));
+        match e {
+            RadialEntry::Here => {
+                if let Some((x, y)) = self.pad_cell() {
+                    self.push_ui(UiEvent::MapClick { x, y, button: 2 });
+                }
+            }
+            RadialEntry::PickUp => self.push_ui(key(',')),
+            RadialEntry::Fight => self.push_ui(key('F')),
+            RadialEntry::Kick => self.push_ui(UiEvent::Key(KeyInput {
+                key: Key::Char('d'),
+                mods: nh_world::Mods {
+                    ctrl: true,
+                    ..Default::default()
+                },
+                echo: false,
+            })),
+            RadialEntry::Rest => self.push_ui(UiEvent::Rest),
+            RadialEntry::Pray => self.use_slot(SlotUse::Macro(nh_world::Macro::ext("pray"))),
+            RadialEntry::Travel => self.push_ui(key('_')),
+            RadialEntry::Save => self.push_ui(key('S')),
+        }
+    }
+
     /// Slot `slot` of the bar, with the count typed before it.
     fn activate_slot(&mut self, slot: usize, count: Option<u32>) {
         let u =
@@ -1260,12 +1439,35 @@ impl RenethackGame {
             .map(|i| self.ui_state.bar.view(i, &self.world.inventory))
             .collect();
         let redraw = self.bar_key.as_ref() != Some(&views);
+        let ctx = self.pad_ctx();
         let Some(ui) = self.ui.as_mut() else {
             return;
         };
         ui.inventory.set_status(ac, gold, cap);
         let open = ui.inventory.is_open();
         ui.hud.set_panel_open(open);
+        // a gamepad: its hints, the bar's chords, dialogs with a focus
+        let pad = self.pad.active.then_some(self.pad.kind);
+        ui.dialogs.set_pad(pad.is_some());
+        ui.inventory.set_pad(pad.is_some());
+        ui.pad.show_hints(pad.map(|k| (k, ctx)));
+        let labels = pad.map(|k| (k, self.pad.page()));
+        if self.pad_labels != Some(labels) {
+            self.pad_labels = Some(labels);
+            let texts: Option<Vec<String>> = labels.map(|(kind, page)| {
+                (0..BAR_SLOTS)
+                    .map(|i| {
+                        let (p, rb, face) = Pad::chord_of(i);
+                        if p != page {
+                            return String::new();
+                        }
+                        let bumper = if rb { PadButton::Rb } else { PadButton::Lb };
+                        format!("{} {}", kind.label(bumper), kind.label(face))
+                    })
+                    .collect()
+            });
+            ui.hud.action_bar().set_key_labels(texts.as_deref());
+        }
         let hero = ui.map.hero_model().map(|m| m.node.clone());
         ui.inventory.set_hero(hero);
         let rects = ui.hud.action_bar().slot_rects();
@@ -1620,6 +1822,7 @@ impl RenethackGame {
             }
             UiEvent::KeyUp(k) => self.on_key_up(k),
             UiEvent::FocusLost => {
+                self.pad.release_all();
                 self.held = None;
                 self.driver.interrupt(Stop::Focus);
             }
@@ -1968,8 +2171,22 @@ impl RenethackGame {
         let pos = self.mouse_pos.filter(|&p| {
             playing && !ui.dialogs.is_open() && !ui.hud.covers(p) && !ui.inventory.covers(p)
         });
-        let cell = match self.test_hover {
-            Some(c) if playing && !ui.dialogs.is_open() => Some(c),
+        // a gamepad's cursor is the pointer while it plays
+        let pad = self.pad_cursor.filter(|_| {
+            self.pad.active && playing && !ui.dialogs.is_open() && !ui.inventory.is_open()
+        });
+        let pad_pos = pad.and_then(|(x, y)| {
+            let cam = self.base().get_viewport()?.get_camera_3d()?;
+            let p = Vector3::new(x as f32, 0.3, y as f32);
+            (!cam.is_position_behind(p)).then(|| cam.unproject_position(p))
+        });
+        let Some(ui) = self.ui.as_mut() else {
+            return;
+        };
+        let pos = pad_pos.or(pos);
+        let cell = match (self.test_hover, pad) {
+            (Some(c), _) if playing && !ui.dialogs.is_open() => Some(c),
+            (_, Some(c)) => Some(c),
             _ => pos.and_then(|p| ui.map.cell_at(p)),
         };
         if cell != self.hover.cell {

@@ -286,6 +286,22 @@ impl ActionBar {
         }
     }
 
+    /// The slots' key labels: a gamepad's chords ("LB A"), or None for the
+    /// keys 1–0.
+    pub fn set_key_labels(&mut self, labels: Option<&[String]>) {
+        for (i, s) in self.slots.iter_mut().enumerate() {
+            let text = labels
+                .and_then(|l| l.get(i).cloned())
+                .unwrap_or_else(|| key_label(i).to_string());
+            s.key.set_text(&text);
+            // a chord is wider than a digit
+            let w = if labels.is_some() { 56.0 } else { 20.0 };
+            s.key.set_offset(godot::builtin::Side::RIGHT, 7.0 + w);
+            s.key
+                .add_theme_font_size_override("font_size", if labels.is_some() { 12 } else { 15 });
+        }
+    }
+
     /// Where the slots are on the canvas (drop targets of the inventory).
     pub fn slot_rects(&self) -> Vec<Rect2> {
         self.slots
