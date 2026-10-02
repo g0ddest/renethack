@@ -1229,6 +1229,9 @@ pub struct InventoryPanel {
     doll: Vec<(DollSlot, Socket)>,
     doll_summary: Gd<Label>,
     hint: Gd<Label>,
+    /// "Your pack": the classes carried and how many, under the grid.
+    pack_box: Gd<VBoxContainer>,
+    pack_key: Vec<(InvFilter, usize)>,
     detail: Gd<VBoxContainer>,
     detail_empty: Gd<Label>,
     ctx_menu: Gd<PanelContainer>,
@@ -1742,6 +1745,21 @@ impl InventoryPanel {
             [gx, grid_y + GRID_H + 14.0, gx + GRID_COL_W, top + body_h],
         );
         body.add_child(&hint);
+        // under a small grid: what the pack holds by class, each a filter
+        let mut pack_box = VBoxContainer::new_alloc();
+        pack_box.set_mouse_filter(MouseFilter::IGNORE);
+        pack_box.add_theme_constant_override("separation", 10);
+        place(
+            &pack_box,
+            [0.0, 0.0, 0.0, 0.0],
+            [
+                gx + 20.0,
+                top + body_h,
+                gx + GRID_COL_W - 20.0,
+                top + body_h,
+            ],
+        );
+        body.add_child(&pack_box);
 
         // ---- the detail, right ----
         let dx = gx + GRID_COL_W + PAD;
@@ -1877,6 +1895,8 @@ impl InventoryPanel {
             doll,
             doll_summary,
             hint,
+            pack_box,
+            pack_key: Vec::new(),
             detail,
             detail_empty,
             ctx_menu,
@@ -2836,6 +2856,10 @@ impl InventoryPanel {
             self.rows = rows;
             let bottom = self.grid_top + rows as f32 * (CELL + CELL_GAP) - CELL_GAP;
             self.hint.set_offset(Side::TOP, bottom + 14.0);
+            // the hint takes two lines; the pack's summary goes under it
+            let free = self.hint.get_offset(Side::BOTTOM) - (bottom + 80.0);
+            self.pack_box.set_offset(Side::TOP, bottom + 80.0);
+            self.pack_box.set_visible(free > 120.0);
         }
         let question = self.question().cloned();
         let menu_letters: Option<Vec<(char, bool, Option<i64>)>> = match &self.mode {
@@ -3080,6 +3104,7 @@ impl InventoryPanel {
             on(b, *f == filter, &self.looks);
         }
         self.draw_detail();
+        self.draw_pack();
         // the count picker
         match self.counting {
             Some((what, v, max)) => {
@@ -3160,6 +3185,86 @@ impl InventoryPanel {
                     .into(),
             ),
         }
+    }
+
+    /// "Your pack": a button per class carried (its count), which filters
+    /// the grid to it; drawn again only when the counts change.
+    fn draw_pack(&mut self) {
+        let counts: Vec<(InvFilter, usize)> = InvFilter::TABS
+            .iter()
+            .skip(1)
+            .map(|&f| {
+                (
+                    f,
+                    self.pack
+                        .items()
+                        .iter()
+                        .filter(|i| f.shows(i, None))
+                        .count(),
+                )
+            })
+            .filter(|&(_, n)| n > 0)
+            .collect();
+        if counts == self.pack_key {
+            return;
+        }
+        self.pack_key = counts.clone();
+        for mut c in self.pack_box.get_children().iter_shared() {
+            c.queue_free();
+        }
+        let mut head = theme::styled_label("Your pack", Face::Title, 21, theme::GOLD_BRIGHT);
+        head.set_horizontal_alignment(HorizontalAlignment::CENTER);
+        self.pack_box.add_child(&head);
+        self.pack_box.add_child(&separator());
+        let mut grid_box = GridContainer::new_alloc();
+        grid_box.set_columns(2);
+        grid_box.add_theme_constant_override("h_separation", 10);
+        grid_box.add_theme_constant_override("v_separation", 6);
+        for (f, n) in counts {
+            let mut b = Button::new_alloc();
+            b.set_focus_mode(FocusMode::NONE);
+            b.set_custom_minimum_size(Vector2::new(260.0, 38.0));
+            b.set_h_size_flags(SizeFlags::EXPAND_FILL);
+            for st in ["normal", "disabled"] {
+                b.add_theme_stylebox_override(st, &self.looks.tab);
+            }
+            let mut hover = self.looks.tab.duplicate_resource();
+            hover.set_border_color(theme::GOLD);
+            b.add_theme_stylebox_override("hover", &hover);
+            b.add_theme_stylebox_override("pressed", &self.looks.tab_on);
+            b.set_tooltip_text(&format!(
+                "Show only {}",
+                label(f.label_key()).to_lowercase()
+            ));
+            let mut row = HBoxContainer::new_alloc();
+            row.set_mouse_filter(MouseFilter::IGNORE);
+            row.add_theme_constant_override("separation", 8);
+            place(&row, [0.0, 0.0, 1.0, 1.0], [8.0, 0.0, -10.0, 0.0]);
+            let mut glyph = TextureRect::new_alloc();
+            glyph.set_mouse_filter(MouseFilter::IGNORE);
+            glyph.set_expand_mode(ExpandMode::IGNORE_SIZE);
+            glyph.set_stretch_mode(StretchMode::KEEP_ASPECT_CENTERED);
+            glyph.set_custom_minimum_size(Vector2::new(26.0, 26.0));
+            glyph.set_v_size_flags(SizeFlags::SHRINK_CENTER);
+            glyph.set_texture(&icons::glyph_icon(filter_glyph(f)));
+            glyph.set_modulate(theme::GOLD);
+            row.add_child(&glyph);
+            let mut name = theme::styled_label(&label(f.label_key()), Face::Body, 16, theme::TEXT);
+            name.set_h_size_flags(SizeFlags::EXPAND_FILL);
+            name.set_vertical_alignment(VerticalAlignment::CENTER);
+            row.add_child(&name);
+            let mut count =
+                theme::styled_label(&n.to_string(), Face::BodyBold, 16, theme::GOLD_BRIGHT);
+            count.set_vertical_alignment(VerticalAlignment::CENTER);
+            row.add_child(&count);
+            b.add_child(&row);
+            let q = self.queue.clone();
+            b.signals()
+                .pressed()
+                .connect(move || push(&q, UiEvent::Inventory(InvInput::Filter(f))));
+            grid_box.add_child(&b);
+        }
+        self.pack_box.add_child(&grid_box);
     }
 
     /// The detail column: the selected item's icon, name, facts, actions.

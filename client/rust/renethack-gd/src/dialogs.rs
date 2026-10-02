@@ -1455,6 +1455,13 @@ impl Dialogs {
         lines: &[TextLine],
         req: u64,
     ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        // the engine pads a window with blank lines: no empty band under
+        // the text
+        let end = lines
+            .iter()
+            .rposition(|l| !l.text.trim().is_empty())
+            .map_or(0, |i| i + 1);
+        let lines = &lines[..end];
         // prose (`^X`, the intro, messages) reads in the body face; tables
         // and pictures keep the monospace columns
         let prose = !lines.iter().any(|l| {
@@ -1508,6 +1515,21 @@ impl Dialogs {
         let mut scroll = text.scroll.clone();
         scroll.add_child(&label);
         col.add_child(&scroll);
+        // the estimate above errs tall: once the text is laid out (its
+        // first draw), the scroller and the panel shrink to it
+        if content_h < max_h {
+            let (mut sc, l, mut p) = (scroll.clone(), label.clone(), panel.clone());
+            label.signals().draw().connect(move || {
+                let content = l.get_content_height() as f32 + 8.0;
+                let now = sc.get_custom_minimum_size();
+                if content > 8.0 && content + 1.0 < now.y {
+                    sc.set_custom_minimum_size(Vector2::new(now.x, content.max(ROW_H)));
+                    // the centred panel shrinks and grows back both ways
+                    p.set_offset(godot::builtin::Side::TOP, -40.0);
+                    p.set_offset(godot::builtin::Side::BOTTOM, 40.0);
+                }
+            });
+        }
         if content_h > max_h {
             self.hint(
                 &mut col,
