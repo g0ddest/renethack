@@ -165,6 +165,16 @@ impl Art {
             show_slot(&mut worn, hand, false);
         }
         self.show_parts(&mut worn, &gear.worn);
+        // a role's hat, cape or shield steps aside for what is worn there
+        for (slot, node) in &m.extras {
+            let Some(slot) = slot else { continue };
+            let covered =
+                gear.worn.contains(&slot.as_str()) || (slot == "shield" && gear.arm_l.is_some());
+            let mut node = node.clone();
+            if node.is_instance_valid() {
+                node.set_visible(!covered);
+            }
+        }
         worn.gear = gear.clone();
         m.worn = Some(worn);
         // the idle the gear calls for, unless the model is busy
@@ -212,6 +222,12 @@ impl Art {
             }
         }
         worn.gear = Gear::default();
+        for (_, node) in &m.extras {
+            let mut node = node.clone();
+            if node.is_instance_valid() {
+                node.set_visible(true);
+            }
+        }
     }
 
     /// Show an item in the right hand for `secs` (a potion drunk, a wand
@@ -429,8 +445,10 @@ impl Art {
                     .iter_shared()
                 {
                     let name = n.get_name().to_string();
+                    // a part the look itself leaves off (a role's) stays off
                     if let Some(i) = rules.iter().position(|r| name.ends_with(&r.suffix))
                         && let Ok(mi) = n.try_cast::<MeshInstance3D>()
+                        && mi.is_visible()
                     {
                         parts.push((mi, i));
                     }

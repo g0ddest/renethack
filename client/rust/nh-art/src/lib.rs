@@ -217,6 +217,39 @@ pub struct ModelSpec {
     /// Shade the scene's meshes smooth (a low-poly pack's flat facets).
     #[serde(default)]
     pub smooth: bool,
+    /// Multiplies the meshes whose names end so ("_Arms": "#c89070"):
+    /// sleeves the colour of bare skin; "=#rrggbb" dyes them that colour
+    /// outright (a white robe: a product only darkens).
+    #[serde(default)]
+    pub recolor: BTreeMap<String, String>,
+    /// Things worn on the rig's bones: a hat, a winged helm, a cape.
+    #[serde(default)]
+    pub extras: Vec<Extra>,
+}
+
+/// A model worn on a bone of a character (a role's hat or cape), hidden
+/// while something is worn in its `slot` ("helmet", "cloak", "shield").
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Extra {
+    pub model: String,
+    pub bone: String,
+    /// Metres and degrees in the bone's space, and the model's size.
+    #[serde(default)]
+    pub pos: [f32; 3],
+    #[serde(default)]
+    pub rot: [f32; 3],
+    pub size: f32,
+    #[serde(default)]
+    pub tint: Option<String>,
+    #[serde(default)]
+    pub slot: Option<String>,
+}
+
+impl Extra {
+    pub fn tint_rgb(&self) -> Option<[f32; 3]> {
+        self.tint.as_deref().and_then(hex)
+    }
 }
 
 impl ModelSpec {
@@ -235,6 +268,30 @@ impl ModelSpec {
             .and_then(hex)
             .unwrap_or([1.0, 1.0, 1.0])
     }
+}
+
+/// A head cut from a base character at the neck and worn on a rig's
+/// skeleton: its face (texture, normal and roughness maps), eyes and
+/// eyebrows, hair and beard on the Head bone.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct HeadSpec {
+    /// The base character's scene (relative to `client/godot/art`).
+    pub base: String,
+    /// Keep what lies above this height of the base's own rest pose.
+    pub cut: f32,
+    /// Another albedo texture for the skin (a lighter or darker one).
+    #[serde(default)]
+    pub skin: Option<String>,
+    /// Multiplies the skin ("#rrggbb"): an elf's pallor, an orc's green.
+    #[serde(default)]
+    pub tint: Option<String>,
+    /// Hair, beard and eyebrows: scenes skinned to the Head bone.
+    #[serde(default)]
+    pub hair: Vec<String>,
+    /// Multiplies the hair ("#rrggbb").
+    #[serde(default)]
+    pub hair_color: Option<String>,
 }
 
 /// A PBR material: `<textures>_albedo.jpg`, `_normal.jpg` and `_arm.jpg`
@@ -450,6 +507,8 @@ struct RawManifest {
     statue: StatueSpec,
     #[serde(default)]
     held: HeldRules,
+    #[serde(default)]
+    heads: BTreeMap<String, HeadSpec>,
 }
 
 /// How specific the art found is (most specific first).
@@ -529,6 +588,7 @@ pub struct ArtManifest {
     statue_model: usize,
     held: HeldRules,
     held_models: Vec<(String, HeldSpec)>,
+    heads: BTreeMap<String, HeadSpec>,
 }
 
 /// "#rrggbb" as linear-ish 0..1 components (the client treats them as sRGB).
@@ -582,6 +642,7 @@ impl ArtManifest {
             }
             if let Some(h) = &m.head
                 && !matches!(h.as_str(), "male" | "female" | "bearded" | "hood")
+                && !raw.heads.contains_key(h)
             {
                 errors.push(format!("model {name}: head {h}"));
             }
@@ -594,6 +655,21 @@ impl ArtManifest {
                 && hex(g).is_none()
             {
                 errors.push(format!("model {name}: glow {g}"));
+            }
+            for c in m.recolor.values() {
+                if hex(c.trim_start_matches('=')).is_none() {
+                    errors.push(format!("model {name}: recolour {c}"));
+                }
+            }
+            for e in &m.extras {
+                if model(&e.model).is_none() {
+                    errors.push(format!("model {name}: no extra model {}", e.model));
+                }
+                if let Some(t) = &e.tint
+                    && hex(t).is_none()
+                {
+                    errors.push(format!("model {name}: extra tint {t}"));
+                }
             }
         }
         let rule_errors = |what: &str, r: &ArtRule| {
@@ -669,6 +745,13 @@ impl ArtManifest {
         if statue_material.is_none() || statue_model.is_none() {
             errors.push("the statue's material or model is missing".into());
         }
+        for (name, h) in &raw.heads {
+            for c in h.tint.iter().chain(&h.hair_color) {
+                if hex(c).is_none() {
+                    errors.push(format!("head {name}: colour {c}"));
+                }
+            }
+        }
         errors.extend(
             raw.held
                 .check(|m| model(m).is_some(), |l| raw.libraries.contains_key(l)),
@@ -693,6 +776,7 @@ impl ArtManifest {
             statue_material: statue_material.unwrap_or_default(),
             statue_model: statue_model.unwrap_or_default(),
             held_models: raw.held.models.clone().into_iter().collect(),
+            heads: raw.heads,
             held: raw.held,
         })
     }
@@ -742,6 +826,11 @@ impl ArtManifest {
     pub fn files(&self) -> Vec<String> {
         let mut out: Vec<String> = self.libraries.values().cloned().collect();
         out.extend(self.models.iter().filter_map(|(_, m)| m.scene.clone()));
+        for h in self.heads.values() {
+            out.push(h.base.clone());
+            out.extend(h.skin.clone());
+            out.extend(h.hair.iter().cloned());
+        }
         for (_, m) in &self.materials {
             out.extend(m.albedo_path());
             out.extend(m.normal_path());
@@ -938,7 +1027,14 @@ impl ArtManifest {
             glow: None,
             glow_energy: 0.0,
             smooth: false,
+            recolor: BTreeMap::new(),
+            extras: Vec::new(),
         };
+    }
+
+    /// A head built from a base character's (see `HeadSpec`), by name.
+    pub fn head(&self, name: &str) -> Option<&HeadSpec> {
+        self.heads.get(name)
     }
 
     /// A material by name (the renderer's own surfaces: water, lava...).

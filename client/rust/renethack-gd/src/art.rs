@@ -19,7 +19,7 @@ use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::{
     Animation, AnimationLibrary, AnimationPlayer, ArrayMesh, BaseMaterial3D, BoneAttachment3D,
     FileAccess, Material, Mesh, MeshInstance3D, Node, Node3D, OrmMaterial3D, PackedScene,
-    ResourceLoader, Skeleton3D, StandardMaterial3D, SurfaceTool, Texture2D,
+    ResourceLoader, Skeleton3D, Skin as GdSkin, StandardMaterial3D, SurfaceTool, Texture2D,
 };
 use godot::prelude::*;
 use nh_art::{ArtManifest, MaterialSpec, Proc, Resolved, Skin};
@@ -88,9 +88,17 @@ pub struct Model {
     player: Option<Gd<AnimationPlayer>>,
     /// What it carries (the hero only).
     worn: Option<Box<Worn>>,
+    /// What its look wears on its bones (a role's hat), by the slot that
+    /// hides it while something is worn there.
+    extras: Vec<(Option<String>, Gd<Node3D>)>,
 }
 
 impl Model {
+    /// The manifest model it is an instance of (self-tests).
+    pub fn model_index(&self) -> usize {
+        self.key.model
+    }
+
     pub fn player(&self) -> Option<&Gd<AnimationPlayer>> {
         self.player.as_ref().filter(|p| p.is_instance_valid())
     }
@@ -157,6 +165,8 @@ pub struct Art {
     proc_clips: Option<Gd<AnimationLibrary>>,
     /// Meshes shaded smooth, by the source mesh's id.
     smoothed: HashMap<i64, Gd<Mesh>>,
+    /// The meshes (and their skins) of each base head, built once.
+    heads: HashMap<String, Option<HeadParts>>,
     pool: HashMap<PoolKey, Vec<Model>>,
     warned: HashSet<String>,
     /// Instances handed out and not given back.
@@ -203,6 +213,7 @@ impl Art {
             proc_anims: HashMap::new(),
             proc_clips: None,
             smoothed: HashMap::new(),
+            heads: HashMap::new(),
             pool: HashMap::new(),
             warned: HashSet::new(),
             live: 0,
@@ -556,7 +567,10 @@ impl Art {
                 }
                 let player = self.animate_scene(&inner, &spec);
                 if let Some(kind) = spec.head.as_deref() {
-                    self.attach_head(&inner, kind);
+                    // a base character's head, else the procedural one
+                    if !self.attach_base_head(&inner, kind) {
+                        self.attach_head(&inner, kind);
+                    }
                 }
                 let shade = rgb(spec.shade_rgb());
                 self.dress(&inner, look, shade);
@@ -576,11 +590,17 @@ impl Art {
         inner.set_transform(transform([0.0, lift, 0.0], rot, [s, s, s]));
         holder.add_child(&inner);
         self.root.add_child(&holder);
+        let extras = if spec.proc.is_none() {
+            self.attach_extras(&inner, &spec, look)
+        } else {
+            Vec::new()
+        };
         Model {
             node: holder,
             key,
             player,
             worn: None,
+            extras,
         }
     }
 
@@ -641,7 +661,24 @@ impl Art {
         }
         // the scene's own metal and glow (a steel blade, a runed one)
         let finish = spec.refinishes().then_some(r.model);
-        let plain = tint == Color::WHITE && !ghost && r.skin == Skin::Own && finish.is_none();
+        // (mesh name suffix, colour, dyed outright)
+        let recolor: Vec<(String, Color, bool)> = spec
+            .recolor
+            .iter()
+            .filter_map(|(k, v)| {
+                let flat = v.starts_with('=');
+                Some((
+                    k.clone(),
+                    rgb(nh_art::hex(v.trim_start_matches('='))?),
+                    flat,
+                ))
+            })
+            .collect();
+        let plain = tint == Color::WHITE
+            && !ghost
+            && r.skin == Skin::Own
+            && finish.is_none()
+            && recolor.is_empty();
         for node in inner
             .find_children_ex("*")
             .type_("MeshInstance3D")
@@ -655,13 +692,30 @@ impl Art {
             if plain {
                 continue;
             }
+            let name = mi.get_name().to_string();
+            // a base head keeps its own skin and hair (only a ghost's fades)
+            let head = name.starts_with("BaseHead");
+            if head && !ghost {
+                continue;
+            }
+            let dye = recolor
+                .iter()
+                .find(|(k, _, _)| !head && name.ends_with(k.as_str()));
+            let tint = match dye {
+                Some((_, c, false)) => mul(tint, *c),
+                Some((_, c, true)) => mul(look.tint, *c),
+                None if head => Color::WHITE,
+                None => tint,
+            };
+            let flat = dye.is_some_and(|d| d.2);
             let n = mi.get_mesh().map_or(0, |m| m.get_surface_count());
             for i in 0..n {
                 let mat = match r.skin {
-                    Skin::Material(m) => Some(self.surface(m, 100, false, look.tint)),
-                    _ => mi
-                        .get_active_material(i)
-                        .map(|src| self.derive(&src, tint, ghost, finish)),
+                    Skin::Material(m) if !head => Some(self.surface(m, 100, false, look.tint)),
+                    _ => mi.get_active_material(i).map(|src| {
+                        let src = if flat { self.undyed(&src) } else { src };
+                        self.derive(&src, tint, ghost, finish)
+                    }),
                 };
                 if let Some(mat) = mat {
                     mi.set_surface_override_material(i, &mat);
@@ -710,6 +764,168 @@ impl Art {
         }
     }
 
+    /// A base character's head (see `nh_art::HeadSpec`) worn on the
+    /// rig's skeleton: each of its meshes skinned to the rig's bones (the
+    /// names are the same: one skeleton). False when there is no such head
+    /// (the procedural one is drawn instead).
+    fn attach_base_head(&mut self, inner: &Gd<Node3D>, kind: &str) -> bool {
+        if self.manifest.head(kind).is_none() {
+            return false;
+        }
+        let Some(mut skeleton) = find::<Skeleton3D>(&inner.clone().upcast()) else {
+            return false;
+        };
+        let parts = match self.heads.get(kind) {
+            Some(p) => p.clone(),
+            None => {
+                let p = self.build_head(kind);
+                if p.is_none() {
+                    self.warn_once(format!("head {kind} does not load"));
+                }
+                self.heads.insert(kind.to_string(), p.clone());
+                p
+            }
+        };
+        let Some(parts) = parts else {
+            return false;
+        };
+        for (i, (mesh, skin)) in parts.iter().enumerate() {
+            let mut mi = MeshInstance3D::new_alloc();
+            mi.set_name(&format!("BaseHead{i}"));
+            mi.set_mesh(mesh);
+            if let Some(skin) = skin {
+                mi.set_skin(skin);
+            }
+            skeleton.add_child(&mi);
+            mi.set_skeleton_path(&NodePath::from(".."));
+        }
+        true
+    }
+
+    /// The meshes of a base head: the face cut from the base character at
+    /// the neck (whole triangles above the cut; the skin weights stay), its
+    /// eyes and eyebrows, and the hair; skin and hair re-coloured.
+    fn build_head(&mut self, kind: &str) -> Option<HeadParts> {
+        let spec = self.manifest.head(kind)?.clone();
+        let tint = spec.tint.as_deref().and_then(nh_art::hex).map(rgb);
+        let hair_tint = spec.hair_color.as_deref().and_then(nh_art::hex).map(rgb);
+        let skin_tex = spec.skin.as_deref().and_then(|t| self.texture(t));
+        let mut out = Vec::new();
+        let scenes = std::iter::once((spec.base.clone(), true))
+            .chain(spec.hair.iter().map(|h| (h.clone(), false)));
+        for (path, base) in scenes {
+            let scene = godot::tools::try_load::<PackedScene>(&format!("{ART_ROOT}{path}")).ok()?;
+            let mut inst = scene.instantiate()?;
+            for node in inst
+                .find_children_ex("*")
+                .type_("MeshInstance3D")
+                .owned(false)
+                .done()
+                .iter_shared()
+            {
+                let Ok(mi) = node.try_cast::<MeshInstance3D>() else {
+                    continue;
+                };
+                let Some(mesh) = mi.get_mesh().and_then(|m| m.try_cast::<ArrayMesh>().ok()) else {
+                    continue;
+                };
+                // the body's own mesh is the tall one; the eyes and the
+                // eyebrows come whole
+                let body = base && mesh.get_aabb().size.y > 0.5;
+                let mesh = if body {
+                    cut_above(&mesh, spec.cut)
+                } else {
+                    mesh
+                };
+                // the base's own eyebrows take the hair's colour; its eyes
+                // keep theirs
+                let brows = mi.get_name().to_string().contains("Eyebrow");
+                let colour = match (body, base) {
+                    (true, _) => tint,
+                    (false, true) if brows => hair_tint,
+                    (false, true) => None,
+                    (false, false) => hair_tint,
+                };
+                let texture = if body { skin_tex.clone() } else { None };
+                let mesh = recolour(&mesh, colour, texture);
+                out.push((mesh.upcast::<Mesh>(), mi.get_skin()));
+            }
+            inst.queue_free();
+        }
+        (!out.is_empty()).then_some(out)
+    }
+
+    /// The things the model's spec wears on its bones (`extras`).
+    fn attach_extras(
+        &mut self,
+        inner: &Gd<Node3D>,
+        spec: &nh_art::ModelSpec,
+        look: &ModelLook,
+    ) -> Vec<(Option<String>, Gd<Node3D>)> {
+        let mut out = Vec::new();
+        if spec.extras.is_empty() {
+            return out;
+        }
+        let Some(mut skeleton) = find::<Skeleton3D>(&inner.clone().upcast()) else {
+            return out;
+        };
+        for e in &spec.extras {
+            let Some(model) = self.manifest.model_index(&e.model) else {
+                continue;
+            };
+            let tint = e.tint_rgb().map_or(Color::WHITE, rgb);
+            let Some(node) = self.prop(model, tint, look.pose == Pose::Ghost) else {
+                continue;
+            };
+            let mut bone = BoneAttachment3D::new_alloc();
+            bone.set_bone_name(&e.bone);
+            skeleton.add_child(&bone);
+            let k = e.size / self.manifest.model_at(model).1.size;
+            let mut holder = Node3D::new_alloc();
+            holder.set_name(&format!("Extra_{}", e.model));
+            holder.set_transform(transform(e.pos, e.rot, [k, k, k]));
+            holder.add_child(&node);
+            bone.add_child(&holder);
+            out.push((e.slot.clone(), holder));
+        }
+        out
+    }
+
+    /// A model on its own, dressed in `tint` (a prop worn or carried).
+    fn prop(&mut self, model: usize, tint: Color, ghost: bool) -> Option<Gd<Node3D>> {
+        let spec = self.manifest.model_at(model).1.clone();
+        let look = ModelLook {
+            art: Resolved {
+                model,
+                scale: 1.0,
+                lift: 0.0,
+                rot: [0.0; 3],
+                height: 1.0,
+                tint: nh_art::Tint::None,
+                skin: Skin::Own,
+                level: nh_art::Level::Generic,
+            },
+            tint,
+            pose: if ghost { Pose::Ghost } else { Pose::Alive },
+        };
+        match (spec.proc, self.scene(model)) {
+            (Some(kind), _) => {
+                let (root, player) = self.build_proc(kind, &spec, &look);
+                if let Some(mut p) = player {
+                    p.queue_free();
+                }
+                Some(root)
+            }
+            (None, Some(scene)) => {
+                let inner = scene.instantiate_as::<Node3D>();
+                let shade = rgb(spec.shade_rgb());
+                self.dress(&inner, &look, shade);
+                Some(inner)
+            }
+            (None, None) => None,
+        }
+    }
+
     /// A head on the rig's `Head` bone (the outfits come without one).
     fn attach_head(&mut self, inner: &Gd<Node3D>, kind: &str) {
         let Some(mut skeleton) = find::<Skeleton3D>(&inner.clone().upcast()) else {
@@ -730,6 +946,25 @@ impl Art {
             shape: None,
         };
         kit.head(kind, &mut head);
+    }
+
+    /// A material without its albedo texture (to be dyed a flat colour);
+    /// one per source material.
+    fn undyed(&mut self, src: &Gd<Material>) -> Gd<Material> {
+        let key = (src.instance_id().to_i64(), 0, true, Some(usize::MAX));
+        if let Some(m) = self.derived.get(&key) {
+            return m.clone();
+        }
+        let out = match src.duplicate_resource().try_cast::<BaseMaterial3D>() {
+            Ok(mut m) => {
+                m.set_texture(TextureParam::ALBEDO, Gd::null_arg());
+                m.set_albedo(Color::WHITE);
+                m.upcast::<Material>()
+            }
+            Err(m) => m,
+        };
+        self.derived.insert(key, out.clone());
+        out
     }
 
     /// `finish`: the model whose metal, roughness and glow replace the
@@ -2158,6 +2393,75 @@ impl Kit<'_> {
 
 #[path = "object_kit.rs"]
 mod object_kit;
+
+/// A base head's meshes and their skins.
+type HeadParts = Vec<(Gd<Mesh>, Option<Gd<GdSkin>>)>;
+
+/// The triangles of `mesh` whose corners all lie above `cut` (y, in the
+/// mesh's own rest pose), every vertex array kept as it is.
+fn cut_above(mesh: &Gd<ArrayMesh>, cut: f32) -> Gd<ArrayMesh> {
+    use godot::classes::mesh::{ArrayFormat, ArrayType, PrimitiveType};
+    let mut out = ArrayMesh::new_gd();
+    for i in 0..mesh.get_surface_count() {
+        let mut arrays = mesh.surface_get_arrays(i);
+        let verts: PackedVector3Array = arrays.at(ArrayType::VERTEX.ord() as usize).to();
+        let index: PackedInt32Array = arrays.at(ArrayType::INDEX.ord() as usize).to();
+        let above = |k: i32| verts.get(k as usize).is_some_and(|v| v.y >= cut);
+        let kept: Vec<i32> = index
+            .as_slice()
+            .chunks(3)
+            .filter(|t| t.len() == 3 && t.iter().all(|&k| above(k)))
+            .flatten()
+            .copied()
+            .collect();
+        if kept.is_empty() {
+            continue;
+        }
+        arrays.set(
+            ArrayType::INDEX.ord() as usize,
+            &PackedInt32Array::from(kept.as_slice()).to_variant(),
+        );
+        let eight = mesh.surface_get_format(i).ord() & ArrayFormat::FLAG_USE_8_BONE_WEIGHTS.ord();
+        out.add_surface_from_arrays_ex(PrimitiveType::TRIANGLES, &arrays)
+            .flags(ArrayFormat::from_ord(eight))
+            .done();
+        if let Some(m) = mesh.surface_get_material(i) {
+            let n = out.get_surface_count() - 1;
+            out.surface_set_material(n, &m);
+        }
+    }
+    out
+}
+
+/// A copy of `mesh` whose materials are multiplied by `colour` and take
+/// `texture` as their albedo (a skin tone, a hair colour).
+fn recolour(
+    mesh: &Gd<ArrayMesh>,
+    colour: Option<Color>,
+    texture: Option<Gd<Texture2D>>,
+) -> Gd<ArrayMesh> {
+    if colour.is_none() && texture.is_none() {
+        return mesh.clone();
+    }
+    let mut out = mesh.duplicate_resource();
+    for i in 0..out.get_surface_count() {
+        let Some(mut m) = out
+            .surface_get_material(i)
+            .and_then(|m| m.duplicate_resource().try_cast::<BaseMaterial3D>().ok())
+        else {
+            continue;
+        };
+        if let Some(c) = colour {
+            let albedo = mul(m.get_albedo(), c);
+            m.set_albedo(albedo);
+        }
+        if let Some(t) = &texture {
+            m.set_texture(TextureParam::ALBEDO, t);
+        }
+        out.surface_set_material(i, &m);
+    }
+    out
+}
 
 /// Skin: light scattered under it softens the shading (a face, not a
 /// painted mask), a faint rim holds its outline, and `glow` lifts it a

@@ -506,3 +506,85 @@ pub(super) fn combat() -> Vec<Step> {
     steps.extend(quit());
     steps
 }
+
+/// The hero models the `roles` test saw, in order.
+static ROLE_MODELS: std::sync::Mutex<Vec<usize>> = std::sync::Mutex::new(Vec::new());
+
+/// The 13 roles: role, gender, alignment, picture.
+const ROLES: [(&str, &str, &str, &str); 13] = [
+    ("archeologist", "male", "neutral", "role-archeologist"),
+    ("barbarian", "male", "neutral", "role-barbarian"),
+    ("caveman", "female", "neutral", "role-caveman"),
+    ("healer", "female", "neutral", "role-healer"),
+    ("knight", "male", "lawful", "role-knight"),
+    ("monk", "male", "neutral", "role-monk"),
+    ("priest", "female", "neutral", "role-priest"),
+    ("rogue", "male", "chaotic", "role-rogue"),
+    ("ranger", "female", "neutral", "role-ranger"),
+    ("samurai", "male", "lawful", "role-samurai"),
+    ("tourist", "female", "neutral", "role-tourist"),
+    ("valkyrie", "female", "neutral", "role-valkyrie"),
+    ("wizard", "male", "neutral", "role-wizard"),
+];
+
+/// Each of the 13 roles, created and seen close up: every role's hero is
+/// its own model, and none is part 1's generic outfit.
+pub(super) fn roles() -> Vec<Step> {
+    let mut steps = vec![Step::Call("seed 1, nothing seen yet", |g| {
+        g.seed = Some(1);
+        ROLE_MODELS.lock().map_err(|e| e.to_string())?.clear();
+        Ok(())
+    })];
+    for (i, (role, gender, align, shot)) in ROLES.into_iter().enumerate() {
+        if i > 0 {
+            steps.push(Step::Push(UiEvent::BackToTitle));
+        }
+        steps.extend(start_as(CharacterChoice {
+            align: align.into(),
+            ..choice(role, gender)
+        }));
+        steps.extend([
+            Step::Wait("the hero on the map", |g| {
+                Ok(map_view(g)?.hero_model().is_some())
+            }),
+            Step::Call("close to the face", |g| {
+                g.ui.as_mut().ok_or("no UI")?.map.set_distance(2.3, 0.7);
+                Ok(())
+            }),
+            Step::Wait("the hero's pose", pose_settled),
+            Step::Wait("the camera on the hero", camera_settled),
+            Step::Shot(shot),
+            Step::Call("the hero's model", |g| {
+                let m = map_view(g)?
+                    .hero_model()
+                    .ok_or("no hero model")?
+                    .model_index();
+                ROLE_MODELS.lock().map_err(|e| e.to_string())?.push(m);
+                Ok(())
+            }),
+        ]);
+        steps.extend(quit());
+    }
+    steps.push(Step::Call("every role its own model", |_| {
+        let seen = ROLE_MODELS.lock().map_err(|e| e.to_string())?.clone();
+        let text = godot::classes::FileAccess::get_file_as_string("res://art/manifest.json");
+        let art = nh_art::ArtManifest::parse(&text.to_string()).map_err(|e| e.to_string())?;
+        let generic: Vec<usize> = ["human_male", "human_female", "ranger_male", "ranger_female"]
+            .iter()
+            .filter_map(|n| art.model_index(n))
+            .collect();
+        let names: Vec<&str> = seen.iter().map(|&m| art.model_at(m).0).collect();
+        godot_print!("selftest: roles: {names:?}");
+        let mut unique = seen.clone();
+        unique.sort_unstable();
+        unique.dedup();
+        if seen.len() != ROLES.len() || unique.len() != seen.len() {
+            return Err(format!("the roles share models: {names:?}"));
+        }
+        if seen.iter().any(|m| generic.contains(m)) {
+            return Err(format!("a role wears the generic outfit: {names:?}"));
+        }
+        Ok(())
+    }));
+    steps
+}

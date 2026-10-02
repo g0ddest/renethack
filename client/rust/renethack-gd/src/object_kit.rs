@@ -799,6 +799,23 @@ impl Kit<'_> {
                     ONE,
                 );
                 match shape.as_str() {
+                    "winged" => {
+                        // a Valkyrie's: white wings of three feathers on
+                        // each side, fanned back
+                        let wing = self.mat(Color::from_rgb(0.9, 0.88, 0.82), Finish::Matte);
+                        for side in [-1.0f32, 1.0] {
+                            for (i, a) in [(0.0f32, 12.0f32), (1.0, 38.0), (2.0, 62.0)] {
+                                self.part(
+                                    root,
+                                    prism(0.13, 0.46 - i * 0.07, 0.02),
+                                    &wing,
+                                    [side * 0.44, 0.42 + i * 0.02, -0.04 - i * 0.07],
+                                    [0.0, 90.0, -a],
+                                    ONE,
+                                );
+                            }
+                        }
+                    }
                     "plumed" => {
                         let plume = self.mat(Color::from_rgb(0.62, 0.08, 0.06), Finish::Matte);
                         for (i, a) in [(0, -30.0f32), (1, -55.0), (2, -80.0)] {
