@@ -4,6 +4,7 @@
 
 mod actionbar;
 mod actions;
+mod branch;
 mod getobj;
 mod grid;
 mod inventory;
@@ -23,6 +24,7 @@ mod world;
 
 pub use actionbar::*;
 pub use actions::*;
+pub use branch::*;
 pub use getobj::*;
 pub use grid::*;
 pub use inventory::*;

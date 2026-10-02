@@ -311,6 +311,22 @@ fn inventory_decodes_items_slots_and_twoweap() {
 }
 
 #[test]
+fn level_decodes_the_branch_the_depth_and_a_plane() {
+    let line = r#"{"t":"win","fn":"level","a":{"dungeon":"The Gnomish Mines","depth":3}}"#;
+    let EngineMsg::Win(WinCall::Level(l)) = parse_line(line).unwrap() else {
+        panic!("expected level")
+    };
+    assert_eq!(l.dungeon, "The Gnomish Mines");
+    assert_eq!(l.depth, 3);
+    assert_eq!(l.plane, None);
+    let line = r#"{"t":"win","fn":"level","a":{"dungeon":"The Elemental Planes","depth":-2,"plane":"air"}}"#;
+    let EngineMsg::Win(WinCall::Level(l)) = parse_line(line).unwrap() else {
+        panic!("expected level")
+    };
+    assert_eq!(l.plane.as_deref(), Some("air"));
+}
+
+#[test]
 fn recorded_session_carries_the_starting_inventory() {
     let inv = decoded()
         .into_iter()

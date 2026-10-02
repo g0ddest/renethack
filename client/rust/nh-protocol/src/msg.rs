@@ -110,6 +110,9 @@ pub enum WinCall {
     },
     /// The whole inventory, sent before an input wait when it changed.
     Inventory(Inventory),
+    /// The hero is on another level (or a game began): the branch and the
+    /// depth only, never a special level's name.
+    Level(LevelNotice),
     ExitNhwindows {
         text: Option<String>,
     },
@@ -169,6 +172,17 @@ pub struct StatusUpdate {
     pub percent: i32,
     #[serde(default)]
     pub color: i32,
+}
+
+/// Where the hero is: what the status line and the overview say.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+pub struct LevelNotice {
+    /// The dungeon's name ("The Dungeons of Doom", "The Gnomish Mines"...).
+    pub dungeon: String,
+    pub depth: i32,
+    /// In the endgame: "earth", "air", "fire", "water" or "astral".
+    #[serde(default)]
+    pub plane: Option<String>,
 }
 
 /// The inventory as the character sees it: no true types, no weights.
@@ -564,6 +578,7 @@ fn win_call(name: String, a: Value) -> Result<WinCall, ProtocolError> {
             arg: args::<Arg>(n, a)?.arg,
         },
         "inventory" => WinCall::Inventory(args(n, a)?),
+        "level" => WinCall::Level(args(n, a)?),
         "exit_nhwindows" => WinCall::ExitNhwindows {
             text: args::<Text>(n, a)?.str,
         },

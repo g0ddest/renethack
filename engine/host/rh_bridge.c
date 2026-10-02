@@ -25,6 +25,8 @@ static boolean inventory_dirty;
 /* program_state.in_moveloop as of the last request: a rise means a new or
    restored game, whose inventory the client has not seen */
 static boolean seen_moveloop;
+/* the level the client was last told the hero is on (dnum < 0: none) */
+static d_level told_level = { -1, -1 };
 
 static const char *const status_names[MAXBLSTATS] = {
     "title", "str", "dex", "con", "int", "wis", "cha",
@@ -226,10 +228,41 @@ inventory_flush(void)
     rh_proto_send("win", "inventory", inventory_json());
 }
 
+/* Before the engine waits for input: the hero arrived on another level
+   (or a game began or was restored).  Only the branch and the depth, which
+   the hero always knows (the overview names the branch on arrival); never
+   a special level's name, which would tell more than the map shows. */
+static void
+level_flush(void)
+{
+    cJSON *a;
+
+    if (!program_state.in_moveloop) {
+        told_level.dnum = -1;
+        return;
+    }
+    if (rh_proto_is_lost() || suppress_map_output()
+        || (told_level.dnum == u.uz.dnum && told_level.dlevel == u.uz.dlevel))
+        return;
+    told_level = u.uz;
+    a = args_new();
+    add_str(a, "dungeon", svd.dungeons[u.uz.dnum].dname);
+    add_int(a, "depth", depth(&u.uz));
+    /* the status line names the plane the hero is on, so may we */
+    if (In_endgame(&u.uz))
+        add_str(a, "plane", Is_earthlevel(&u.uz) ? "earth"
+                            : Is_airlevel(&u.uz) ? "air"
+                            : Is_firelevel(&u.uz) ? "fire"
+                            : Is_waterlevel(&u.uz) ? "water"
+                            : "astral");
+    rh_proto_send("win", "level", a);
+}
+
 /* every request of this file goes through here */
 static cJSON *
 request(const char *fn, cJSON *args)
 {
+    level_flush();
     inventory_flush();
     return rh_proto_request(fn, args);
 }

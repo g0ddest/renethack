@@ -112,6 +112,12 @@ fn a_scripted_game_builds_the_world() {
     assert_eq!(w.status.number("hp"), Some(16));
     assert_eq!(w.status.number("hpmax"), Some(16));
     assert_eq!(w.status.get("leveldesc"), Some("Dlvl:1"));
+    // the level notice: the main dungeon, depth 1, no plane
+    assert_eq!(w.branch(), Branch::Main);
+    assert_eq!(w.depth(), Some(1));
+    let notice = w.level.as_ref().expect("a level notice");
+    assert_eq!(notice.dungeon, "The Dungeons of Doom");
+    assert_eq!(notice.plane, None);
     assert_eq!(w.status.get("title"), Some("Hero the Stripling"));
     assert_eq!(w.status.get("exp"), Some("0"));
     assert_eq!(w.status.number("gold"), Some(0));

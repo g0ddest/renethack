@@ -165,6 +165,9 @@ fn smoke() -> Vec<Step> {
             let drawn = g.ui.as_ref().map_or(0, |ui| ui.map.drawn_cells());
             Ok(g.world.map.hero().is_some() && known >= 20 && drawn >= 20)
         }),
+        Step::Wait("the level notice: the main dungeon, depth 1", |g| {
+            Ok(g.world.branch() == nh_world::Branch::Main && g.world.depth() == Some(1))
+        }),
         Step::Wait("HP:16(16) and Dlvl:1 on the HUD", |g| {
             let text = g.ui.as_ref().map_or("", |ui| ui.hud.status_text());
             Ok(text.contains("HP:16(16)") && text.contains("Dlvl:1"))

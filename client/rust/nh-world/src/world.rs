@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use nh_protocol::{Catalog, MenuItem, PickHow, Request, WinCall, WindowKind};
+use nh_protocol::{Catalog, LevelNotice, MenuItem, PickHow, Request, WinCall, WindowKind};
 
 use crate::prompt::{choice, free_key};
 use crate::{ATR_NOHISTORY, MapState, MessageLog, Pack, Prompt, Status, effect_cmaps};
@@ -59,6 +59,8 @@ pub struct World {
     pub status: Status,
     /// The last inventory notice.
     pub inventory: Pack,
+    /// The last level notice: where the hero is.
+    pub level: Option<LevelNotice>,
     pub log: MessageLog,
     pub windows: BTreeMap<i32, Window>,
     pub message_win: Option<i32>,
@@ -104,6 +106,7 @@ impl World {
             map: MapState::new(),
             status: Status::new(),
             inventory: Pack::new(),
+            level: None,
             log: MessageLog::new(),
             windows: BTreeMap::new(),
             message_win: None,
@@ -280,6 +283,7 @@ impl World {
             WinCall::StatusInit => self.status = Status::new(),
             WinCall::StatusUpdate(u) => self.status.apply(u),
             WinCall::Inventory(inv) => self.inventory.replace(inv),
+            WinCall::Level(l) => self.level = Some(l.clone()),
             _ => {}
         }
     }
