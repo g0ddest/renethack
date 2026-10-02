@@ -535,7 +535,15 @@ pub(super) fn roles() -> Vec<Step> {
         ROLE_MODELS.lock().map_err(|e| e.to_string())?.clear();
         Ok(())
     })];
-    for (i, (role, gender, align, shot)) in ROLES.into_iter().enumerate() {
+    // RENETHACK_ROLES=healer,wizard: only those (to look at a few)
+    let only: Option<Vec<String>> = std::env::var("RENETHACK_ROLES")
+        .ok()
+        .map(|v| v.split(',').map(str::to_string).collect());
+    let picked: Vec<_> = ROLES
+        .into_iter()
+        .filter(|(r, ..)| only.as_ref().is_none_or(|o| o.iter().any(|x| x == r)))
+        .collect();
+    for (i, (role, gender, align, shot)) in picked.into_iter().enumerate() {
         if i > 0 {
             steps.push(Step::Push(UiEvent::BackToTitle));
         }
@@ -578,7 +586,8 @@ pub(super) fn roles() -> Vec<Step> {
         let mut unique = seen.clone();
         unique.sort_unstable();
         unique.dedup();
-        if seen.len() != ROLES.len() || unique.len() != seen.len() {
+        let wanted = std::env::var("RENETHACK_ROLES").map_or(ROLES.len(), |v| v.split(',').count());
+        if seen.len() != wanted || unique.len() != seen.len() {
             return Err(format!("the roles share models: {names:?}"));
         }
         if seen.iter().any(|m| generic.contains(m)) {

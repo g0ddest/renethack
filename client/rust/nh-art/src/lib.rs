@@ -225,6 +225,10 @@ pub struct ModelSpec {
     /// Things worn on the rig's bones: a hat, a winged helm, a cape.
     #[serde(default)]
     pub extras: Vec<Extra>,
+    /// Bare arms: those of this head's base character (its skin), worn
+    /// instead of the outfit's sleeves (hide those).
+    #[serde(default)]
+    pub bare_arms: Option<String>,
 }
 
 /// A model worn on a bone of a character (a role's hat or cape), hidden
@@ -661,6 +665,11 @@ impl ArtManifest {
                     errors.push(format!("model {name}: recolour {c}"));
                 }
             }
+            if let Some(h) = &m.bare_arms
+                && !raw.heads.contains_key(h)
+            {
+                errors.push(format!("model {name}: bare arms of no head {h}"));
+            }
             for e in &m.extras {
                 if model(&e.model).is_none() {
                     errors.push(format!("model {name}: no extra model {}", e.model));
@@ -1029,6 +1038,7 @@ impl ArtManifest {
             smooth: false,
             recolor: BTreeMap::new(),
             extras: Vec::new(),
+            bare_arms: None,
         };
     }
 

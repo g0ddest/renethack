@@ -683,6 +683,64 @@ impl Kit<'_> {
                     [1.0, 1.0, 1.1],
                 );
             }
+            "pointed" => {
+                // a wizard's: tall, its tip bent back a little, a wide brim
+                self.part(
+                    root,
+                    cylinder(0.12, 0.32, 0.8),
+                    &skin,
+                    [0.0, 0.42, 0.0],
+                    FLAT,
+                    ONE,
+                );
+                self.part(
+                    root,
+                    cylinder(0.0, 0.12, 0.45),
+                    &skin,
+                    [0.0, 0.98, -0.06],
+                    [-18.0, 0.0, 0.0],
+                    ONE,
+                );
+                self.part(
+                    root,
+                    cylinder(0.58, 0.58, 0.03),
+                    &skin,
+                    [0.0, 0.03, 0.0],
+                    FLAT,
+                    ONE,
+                );
+                self.part(
+                    root,
+                    cylinder(0.33, 0.33, 0.08),
+                    &dark,
+                    [0.0, 0.09, 0.0],
+                    FLAT,
+                    ONE,
+                );
+                let star = self.glint();
+                self.part(root, facets(0.06, 4), &star, [0.0, 0.42, 0.24], FLAT, ONE);
+            }
+            "mask" => {
+                // a band of black cloth across the eyes, knotted behind
+                self.part(
+                    root,
+                    torus(0.4, 0.47),
+                    &dark,
+                    [0.0, 0.25, 0.02],
+                    FLAT,
+                    [1.0, 0.25, 1.1],
+                );
+                for s in [-1.0f32, 1.0] {
+                    self.part(
+                        root,
+                        cuboid(0.05, 0.2, 0.02),
+                        &dark,
+                        [s * 0.05, 0.14, -0.5],
+                        [0.0, 0.0, s * 20.0],
+                        ONE,
+                    );
+                }
+            }
             "cone" => {
                 self.part(
                     root,
@@ -800,17 +858,18 @@ impl Kit<'_> {
                 );
                 match shape.as_str() {
                     "winged" => {
-                        // a Valkyrie's: white wings of three feathers on
-                        // each side, fanned back
-                        let wing = self.mat(Color::from_rgb(0.9, 0.88, 0.82), Finish::Matte);
+                        // a Valkyrie's: a fan of white feathers splayed out
+                        // on each side, facing forward (they read as wings
+                        // from the camera)
+                        let wing = self.mat(Color::from_rgb(0.86, 0.84, 0.78), Finish::Matte);
                         for side in [-1.0f32, 1.0] {
-                            for (i, a) in [(0.0f32, 12.0f32), (1.0, 38.0), (2.0, 62.0)] {
+                            for (i, a) in [(0.0f32, 18.0f32), (1.0, 40.0), (2.0, 62.0)] {
                                 self.part(
                                     root,
-                                    prism(0.13, 0.46 - i * 0.07, 0.02),
+                                    prism(0.16, 0.55 - i * 0.08, 0.025),
                                     &wing,
-                                    [side * 0.44, 0.42 + i * 0.02, -0.04 - i * 0.07],
-                                    [0.0, 90.0, -a],
+                                    [side * (0.5 + i * 0.05), 0.42 - i * 0.06, -0.02 - i * 0.03],
+                                    [0.0, 0.0, -side * a],
                                     ONE,
                                 );
                             }
@@ -979,6 +1038,30 @@ impl Kit<'_> {
         let dark = self.dark();
         let shape = self.shape.clone().unwrap_or_default();
         match shape.as_str() {
+            "mantle" => {
+                // a short fur mantle on the shoulders: a thick ring of fur
+                // and tufts
+                self.part(
+                    root,
+                    torus(0.2, 0.5),
+                    &skin,
+                    [0.0, 0.1, 0.0],
+                    FLAT,
+                    [1.0, 0.6, 0.8],
+                );
+                for i in 0..10 {
+                    let a = i as f32 * 36.0f32;
+                    let (sn, cs) = a.to_radians().sin_cos();
+                    self.part(
+                        root,
+                        sphere(0.12),
+                        &skin,
+                        [sn * 0.38, 0.14, cs * 0.3],
+                        FLAT,
+                        [1.0, 0.8, 1.0],
+                    );
+                }
+            }
             "cloak" | "cape" | "robe" => {
                 let hood = shape == "cloak";
                 let len = if shape == "cape" { 0.7 } else { 0.95 };

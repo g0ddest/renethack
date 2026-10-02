@@ -568,9 +568,12 @@ impl Art {
                 let player = self.animate_scene(&inner, &spec);
                 if let Some(kind) = spec.head.as_deref() {
                     // a base character's head, else the procedural one
-                    if !self.attach_base_head(&inner, kind) {
+                    if !self.attach_base_head(&inner, kind, Region::Head) {
                         self.attach_head(&inner, kind);
                     }
+                }
+                if let Some(kind) = spec.bare_arms.as_deref() {
+                    self.attach_base_head(&inner, kind, Region::Arms);
                 }
                 let shade = rgb(spec.shade_rgb());
                 self.dress(&inner, look, shade);
@@ -768,21 +771,22 @@ impl Art {
     /// rig's skeleton: each of its meshes skinned to the rig's bones (the
     /// names are the same: one skeleton). False when there is no such head
     /// (the procedural one is drawn instead).
-    fn attach_base_head(&mut self, inner: &Gd<Node3D>, kind: &str) -> bool {
+    fn attach_base_head(&mut self, inner: &Gd<Node3D>, kind: &str, region: Region) -> bool {
         if self.manifest.head(kind).is_none() {
             return false;
         }
         let Some(mut skeleton) = find::<Skeleton3D>(&inner.clone().upcast()) else {
             return false;
         };
-        let parts = match self.heads.get(kind) {
+        let key = format!("{kind}{region:?}");
+        let parts = match self.heads.get(&key) {
             Some(p) => p.clone(),
             None => {
-                let p = self.build_head(kind);
+                let p = self.build_head(kind, region);
                 if p.is_none() {
                     self.warn_once(format!("head {kind} does not load"));
                 }
-                self.heads.insert(kind.to_string(), p.clone());
+                self.heads.insert(key, p.clone());
                 p
             }
         };
@@ -805,14 +809,20 @@ impl Art {
     /// The meshes of a base head: the face cut from the base character at
     /// the neck (whole triangles above the cut; the skin weights stay), its
     /// eyes and eyebrows, and the hair; skin and hair re-coloured.
-    fn build_head(&mut self, kind: &str) -> Option<HeadParts> {
+    fn build_head(&mut self, kind: &str, region: Region) -> Option<HeadParts> {
         let spec = self.manifest.head(kind)?.clone();
         let tint = spec.tint.as_deref().and_then(nh_art::hex).map(rgb);
         let hair_tint = spec.hair_color.as_deref().and_then(nh_art::hex).map(rgb);
         let skin_tex = spec.skin.as_deref().and_then(|t| self.texture(t));
         let mut out = Vec::new();
-        let scenes = std::iter::once((spec.base.clone(), true))
-            .chain(spec.hair.iter().map(|h| (h.clone(), false)));
+        // arms come from the base alone, without its eyes or hair
+        let hair = if region == Region::Head {
+            spec.hair.clone()
+        } else {
+            Vec::new()
+        };
+        let scenes =
+            std::iter::once((spec.base.clone(), true)).chain(hair.into_iter().map(|h| (h, false)));
         for (path, base) in scenes {
             let scene = godot::tools::try_load::<PackedScene>(&format!("{ART_ROOT}{path}")).ok()?;
             let mut inst = scene.instantiate()?;
@@ -829,13 +839,21 @@ impl Art {
                 let Some(mesh) = mi.get_mesh().and_then(|m| m.try_cast::<ArrayMesh>().ok()) else {
                     continue;
                 };
+                // a material set on the instance (not the mesh) goes with
+                // the mesh, or the copy would wear the default one
+                let mesh = with_active_materials(&mi, mesh);
                 // the body's own mesh is the tall one; the eyes and the
                 // eyebrows come whole
                 let body = base && mesh.get_aabb().size.y > 0.5;
-                let mesh = if body {
-                    cut_above(&mesh, spec.cut)
-                } else {
-                    mesh
+                if region == Region::Arms && !body {
+                    continue;
+                }
+                let mesh = match (body, region) {
+                    (true, Region::Head) => cut(&mesh, |v| v.y >= spec.cut),
+                    // in the rest pose the arms reach out sideways from
+                    // the shoulders
+                    (true, Region::Arms) => cut(&mesh, |v| v.x.abs() > 0.2 && v.y > 1.2),
+                    _ => mesh,
                 };
                 // the base's own eyebrows take the hair's colour; its eyes
                 // keep theirs
@@ -2397,16 +2415,42 @@ mod object_kit;
 /// A base head's meshes and their skins.
 type HeadParts = Vec<(Gd<Mesh>, Option<Gd<GdSkin>>)>;
 
-/// The triangles of `mesh` whose corners all lie above `cut` (y, in the
-/// mesh's own rest pose), every vertex array kept as it is.
-fn cut_above(mesh: &Gd<ArrayMesh>, cut: f32) -> Gd<ArrayMesh> {
+/// `mesh` with each surface's material as `mi` shows it (an override on
+/// the instance included).
+fn with_active_materials(mi: &Gd<MeshInstance3D>, mesh: Gd<ArrayMesh>) -> Gd<ArrayMesh> {
+    let n = mesh.get_surface_count();
+    let missing = (0..n).any(|i| {
+        mesh.surface_get_material(i).is_none() || mi.get_surface_override_material(i).is_some()
+    });
+    if !missing {
+        return mesh;
+    }
+    let mut out = mesh.duplicate_resource();
+    for i in 0..n {
+        if let Some(m) = mi.get_active_material(i) {
+            out.surface_set_material(i, &m);
+        }
+    }
+    out
+}
+
+/// Which part of a base character is worn.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Region {
+    Head,
+    Arms,
+}
+
+/// The triangles of `mesh` whose corners all `keep` (in the mesh's own
+/// rest pose), every vertex array kept as it is.
+fn cut(mesh: &Gd<ArrayMesh>, keep: impl Fn(Vector3) -> bool) -> Gd<ArrayMesh> {
     use godot::classes::mesh::{ArrayFormat, ArrayType, PrimitiveType};
     let mut out = ArrayMesh::new_gd();
     for i in 0..mesh.get_surface_count() {
         let mut arrays = mesh.surface_get_arrays(i);
         let verts: PackedVector3Array = arrays.at(ArrayType::VERTEX.ord() as usize).to();
         let index: PackedInt32Array = arrays.at(ArrayType::INDEX.ord() as usize).to();
-        let above = |k: i32| verts.get(k as usize).is_some_and(|v| v.y >= cut);
+        let above = |k: i32| verts.get(k as usize).is_some_and(&keep);
         let kept: Vec<i32> = index
             .as_slice()
             .chunks(3)
@@ -2421,6 +2465,16 @@ fn cut_above(mesh: &Gd<ArrayMesh>, cut: f32) -> Gd<ArrayMesh> {
             ArrayType::INDEX.ord() as usize,
             &PackedInt32Array::from(kept.as_slice()).to_variant(),
         );
+        // extra UV and colour sets come as custom channels whose formats
+        // would have to be passed too; nothing here uses them
+        for custom in [
+            ArrayType::CUSTOM0,
+            ArrayType::CUSTOM1,
+            ArrayType::CUSTOM2,
+            ArrayType::CUSTOM3,
+        ] {
+            arrays.set(custom.ord() as usize, &Variant::nil());
+        }
         let eight = mesh.surface_get_format(i).ord() & ArrayFormat::FLAG_USE_8_BONE_WEIGHTS.ord();
         out.add_surface_from_arrays_ex(PrimitiveType::TRIANGLES, &arrays)
             .flags(ArrayFormat::from_ord(eight))
