@@ -87,6 +87,25 @@ fn grade_curve(shadows: Color, highlights: Color) -> Gd<godot::classes::Gradient
     t
 }
 
+/// More cells changed at once than this: those near the hero (within
+/// `NEAR_CELLS`) are drawn now, the rest over the next frames.
+const MANY_CELLS: usize = 150;
+const NEAR_CELLS: i32 = 8;
+/// Time per frame spent drawing a new level's cells (the rest wait for
+/// the next frames).
+const BUILD_BUDGET: std::time::Duration = std::time::Duration::from_millis(4);
+
+/// Every cell of the level, the farthest from `hero` first (they are taken
+/// from the end).
+fn build_order(hero: Option<(i32, i32)>) -> Vec<(i32, i32)> {
+    let (hx, hy) = hero.unwrap_or((COLNO / 2, ROWNO / 2));
+    let mut cells: Vec<(i32, i32)> = (0..ROWNO)
+        .flat_map(|y| (1..COLNO).map(move |x| (x, y)))
+        .collect();
+    cells.sort_by_key(|&(x, y)| std::cmp::Reverse((x - hx).pow(2) + (y - hy).pow(2)));
+    cells
+}
+
 /// Seconds a new level takes to come up out of black.
 const LEVEL_FADE_SECS: f32 = 0.25;
 /// Seconds from the start of a strike to the blow landing.
@@ -179,6 +198,8 @@ const ROOM_LIGHT_ENERGY: f32 = 0.3;
 const TORCH: Color = Color::from_rgb(1.0, 0.66, 0.38);
 const TORCH_RANGE: f32 = 5.5;
 const TORCH_SHADOWS: usize = 3;
+/// Torches made before any level is shown.
+const TORCHES_AHEAD: usize = 12;
 /// A flame's flipbook: 16 x 4 frames of a real flame (Unity Labs, CC0).
 const FLAME_BOOK: &str = "res://art/cc0/unity-labs/flipbooks/Flame02_16x4.png";
 /// The flame of a torch, bright enough to glow.
@@ -196,6 +217,15 @@ const DARKNESS: Color = Color::from_rgb(0.008, 0.009, 0.013);
 enum Paint {
     Pbr(usize, u8, Role),
     Flat(Color, Finish),
+    /// A shader of the map's own: water, lava, the air over lava.
+    Liquid(Liquid),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum Liquid {
+    Water,
+    Lava,
+    Haze,
 }
 
 /// A light of a feature on its cell.
@@ -205,6 +235,8 @@ enum Lamp {
     Up,
     /// Cold, from deep down, with a little mist.
     Down,
+    /// The red glow of lava.
+    Lava,
 }
 
 /// One mesh of a cell, relative to the cell's centre on the ground.
@@ -476,21 +508,26 @@ enum Side {
 struct Around {
     /// North, south, west, east.
     sides: [Side; 4],
+    /// Which of them are water or lava.
+    liquid: [bool; 4],
 }
 
 impl Around {
     fn of(near: &Near, catalog: &Catalog) -> Around {
         let mut sides = [Side::Solid; 4];
+        let mut liquid = [false; 4];
         for (i, side) in sides.iter_mut().enumerate() {
             let cell = near.cells[i];
-            *side = match cell.and_then(|c| cell_terrain(c, catalog)) {
+            let t = cell.and_then(|c| cell_terrain(c, catalog));
+            liquid[i] = matches!(t, Some(Terrain::Pool | Terrain::Water | Terrain::Lava));
+            *side = match t {
                 Some(Terrain::Wall | Terrain::LavaWall) => Side::Wall,
                 Some(Terrain::ClosedDoor | Terrain::OpenDoor | Terrain::Doorway) => Side::Wall,
                 _ if is_open(cell, catalog) => Side::Open,
                 _ => Side::Solid,
             };
         }
-        Around { sides }
+        Around { sides, liquid }
     }
 
     /// A door's wall runs along x (its passage along z): walls or doors
@@ -654,6 +691,30 @@ fn mine_support(look: &mut Look, around: &Around, ctx: &Ctx) {
             at(dx * out, 1.9, 0.0)
         };
         look.solid(beam, wood, pos);
+    }
+}
+
+/// What holds water or lava: a bed of stone `depth` down, and a bank of
+/// stone on each side where the ground is not liquid too.
+fn liquid_bed(look: &mut Look, around: &Around, ctx: &Ctx, depth: f32) {
+    let Some(m) = ctx.mat("bedrock") else {
+        return;
+    };
+    let stone = Paint::Pbr(m, 70, Role::Prop);
+    look.ground_tile(plane(1.0, 1.0), stone, at(0.0, -depth, 0.0));
+    for (i, (dx, dz)) in SIDES.iter().enumerate() {
+        if around.liquid[i] {
+            continue;
+        }
+        let (mesh, pos) = if *dx == 0.0 {
+            (bevel(1.0, depth, 0.06), at(0.0, -depth / 2.0, dz * 0.47))
+        } else {
+            (bevel(0.06, depth, 1.0), at(dx * 0.47, -depth / 2.0, 0.0))
+        };
+        look.solid(mesh, stone, pos);
+        if let Some(s) = look.solids.last_mut() {
+            s.shadow = false;
+        }
     }
 }
 
@@ -1111,14 +1172,42 @@ fn terrain_base(
         }
         Terrain::Pool | Terrain::Water => {
             let deep = if t == Terrain::Water { 0.1 } else { 0.06 };
-            look.ground_tile(plane(1.0, 1.0), main(SHADE_LIT), at(0.0, -deep, 0.0));
+            look.ground_tile(
+                plane(1.0, 1.0),
+                Paint::Liquid(Liquid::Water),
+                at(0.0, -deep, 0.0),
+            );
+            if let Some(s) = look.solids.last_mut() {
+                s.shadow = false;
+            }
+            liquid_bed(
+                look,
+                around,
+                ctx,
+                if t == Terrain::Water { 0.9 } else { 0.5 },
+            );
             look.ground = -deep;
             look.sunk = true;
         }
         Terrain::Ice => look.ground_tile(tile, main(SHADE_LIT), Vector3::ZERO),
         Terrain::Lava => {
-            look.ground_tile(plane(1.0, 1.0), main(SHADE_LIT), at(0.0, -0.04, 0.0));
-            look.ground = -0.04;
+            look.ground_tile(
+                plane(1.0, 1.0),
+                Paint::Liquid(Liquid::Lava),
+                at(0.0, -0.06, 0.0),
+            );
+            liquid_bed(look, around, ctx, 0.12);
+            // the air shimmers over it, and it lights its banks
+            if (ctx.x + 2 * ctx.y).rem_euclid(3) == 0 {
+                look.ground_tile(
+                    plane(1.0, 1.2),
+                    Paint::Liquid(Liquid::Haze),
+                    at(0.0, -0.06, 0.0),
+                );
+                look.lamp = Some(Lamp::Lava);
+            }
+            look.top = look.top.min(0.1);
+            look.ground = -0.06;
             look.sunk = true;
         }
         Terrain::LavaWall => {
@@ -1791,6 +1880,13 @@ struct FrameStats {
     gpu: f64,
     cpu: f64,
     draws: f64,
+    /// The longest frame.
+    worst: f64,
+    /// The last sync's time (ms) and models it built.
+    last_sync: f64,
+    last_built: usize,
+    /// Seconds since the last level change.
+    since_level: f64,
 }
 
 /// A torch on a wall: the sconce, its flame and its light.
@@ -1853,6 +1949,12 @@ pub struct MapView {
     vfx: Vfx,
     /// Low mist over the level.
     mist: Gd<FogVolume>,
+    /// Profiling: time of the parts of the last sync (ms).
+    prof: Vec<(&'static str, f64)>,
+    /// Water, lava and the air over lava: their materials.
+    liquids: HashMap<Liquid, Gd<Material>>,
+    /// The cells of a new level still to draw, the nearest the hero last.
+    building: Vec<(i32, i32)>,
     /// The branch the level drawn is in, and how it looks.
     branch: Branch,
     branch_look: BranchLook,
@@ -2305,6 +2407,9 @@ impl MapView {
             mist,
             post_mat,
             fade: 0.0,
+            building: Vec::new(),
+            liquids: HashMap::new(),
+            prof: Vec::new(),
             branch: Branch::Main,
             branch_look: crate::branch_look::look_of(Branch::Main),
             stats_window: std::env::var_os("RENETHACK_FRAME_STATS").map(|_| FrameStats::default()),
@@ -2340,6 +2445,14 @@ impl MapView {
             hero_fx,
         };
         view.set_branch(Branch::Main);
+        // torches are made ahead (a sconce's scene and embers cost a long
+        // frame when a lit room first shows)
+        for _ in 0..TORCHES_AHEAD {
+            let mut t = view.new_torch();
+            t.node.set_visible(false);
+            t.light.set_visible(false);
+            view.torches.push(t);
+        }
         view.place_camera();
         view
     }
@@ -2349,7 +2462,10 @@ impl MapView {
     /// the hero, or getpos moves it. The hero ring marks `World::hero`,
     /// also when the hero is not drawn (invisible).
     pub fn sync(&mut self, world: &mut World, catalog: &Catalog, delta: f64) {
+        let sync_start = std::time::Instant::now();
+        let built_before = self.art.counts().1;
         self.clock += delta;
+        self.prof.clear();
         let hero = world.hero();
         // the hero faces the way they last stepped
         if let (Some((x, y)), Some((px, py))) = (hero, self.hero_at)
@@ -2379,11 +2495,8 @@ impl MapView {
             self.facing.clear();
             self.generation = Some(generation);
             world.map.take_dirty();
-            for y in 0..ROWNO {
-                for x in 1..COLNO {
-                    self.update_cell(x, y, world, catalog, hero);
-                }
-            }
+            // built over the next frames, nearest the hero first
+            self.building = build_order(hero);
             self.snap = true;
             self.lights_dirty = true;
         } else {
@@ -2408,13 +2521,31 @@ impl MapView {
             dirty.extend(near);
             dirty.sort_unstable();
             dirty.dedup();
-            for (x, y) in dirty {
+            // much changed at once (a map revealed, a redraw): what is
+            // near the hero or moved now, the rest over the next frames
+            let now = |&(x, y): &(i32, i32)| {
+                dirty.len() <= MANY_CELLS
+                    || moves.iter().any(|m| m.to == (x, y) || m.from == (x, y))
+                    || hero.is_none_or(|(hx, hy)| (hx - x).abs().max((hy - y).abs()) <= NEAR_CELLS)
+            };
+            let (urgent, later): (Vec<_>, Vec<_>) = dirty.iter().copied().partition(now);
+            for (x, y) in urgent {
                 self.update_cell(x, y, world, catalog, hero);
+            }
+            if !later.is_empty() {
+                self.building.extend(later);
+                let (hx, hy) = hero.unwrap_or((COLNO / 2, ROWNO / 2));
+                self.building
+                    .sort_by_key(|&(x, y)| std::cmp::Reverse((x - hx).pow(2) + (y - hy).pow(2)));
+                self.building.dedup();
             }
             // a carried model whose new cell did not take it
             for (_, c) in std::mem::take(&mut self.incoming) {
                 self.art.give(c.model);
             }
+        }
+        if let Some(st) = self.stats_window.as_mut().filter(|_| new_level) {
+            st.since_level = 0.0;
         }
         if new_level && self.stats_window.is_some() {
             godot_print!(
@@ -2422,17 +2553,27 @@ impl MapView {
                 started.elapsed().as_secs_f64() * 1000.0
             );
         }
+        let __t = std::time::Instant::now();
+        self.build_some(world, catalog, hero);
+        self.prof
+            .push(("build", __t.elapsed().as_secs_f64() * 1000.0));
         self.watch_fights(world, catalog);
         self.advance_motions(delta as f32);
         self.hero_fx.advance(delta as f32, &mut self.vfx);
         if std::mem::take(&mut self.fow_dirty) {
+            let __t = std::time::Instant::now();
             self.see(hero, new_level);
+            self.prof
+                .push(("see", __t.elapsed().as_secs_f64() * 1000.0));
         }
         if self.fow.advance(delta as f32) {
             self.surfaces.show_fow(&self.fow);
         }
         if std::mem::take(&mut self.lights_dirty) {
+            let __t = std::time::Instant::now();
             self.place_room_lights();
+            self.prof
+                .push(("lights", __t.elapsed().as_secs_f64() * 1000.0));
         }
         let bounds = self.overview.and(self.known_bounds());
         if let Some(b) = bounds {
@@ -2466,7 +2607,10 @@ impl MapView {
                 self.rim.set_position(p + at(0.0, 2.0, -0.9));
                 self.rim.set_visible(true);
                 self.rim_hero((x, y));
+                let __t = std::time::Instant::now();
                 self.equip_hero((x, y), world, catalog, delta as f32);
+                self.prof
+                    .push(("equip", __t.elapsed().as_secs_f64() * 1000.0));
                 self.show_through((x, y), p);
                 self.light_torches(p);
             }
@@ -2483,7 +2627,10 @@ impl MapView {
             self.show_hints();
         }
         if std::mem::take(&mut self.bedrock_dirty) {
+            let __t = std::time::Instant::now();
             self.lay_bedrock();
+            self.prof
+                .push(("bedrock", __t.elapsed().as_secs_f64() * 1000.0));
         }
         match hero.and_then(|h| engulfer_color(world, h)) {
             Some(color) => {
@@ -2518,8 +2665,21 @@ impl MapView {
         self.follow_rings();
         self.fade_in(new_level, delta as f32);
         self.vfx.process(delta as f32, self.focus);
+        let __t = std::time::Instant::now();
         self.batches.flush();
+        self.prof
+            .push(("flush", __t.elapsed().as_secs_f64() * 1000.0));
+        // a long frame is told of with the sync before it (this one's
+        // numbers are for the next)
         self.frame_stats(delta);
+        if let Some(stats) = self.stats_window.as_mut() {
+            let ms = sync_start.elapsed().as_secs_f64() * 1000.0;
+            if ms > 10.0 {
+                godot_print!("map: a sync of {ms:.1} ms: {:?}", self.prof);
+            }
+            stats.last_sync = sync_start.elapsed().as_secs_f64() * 1000.0;
+            stats.last_built = self.art.counts().1 - built_before;
+        }
     }
 
     /// With RENETHACK_FRAME_STATS set, the frame and GPU times every two
@@ -2538,6 +2698,17 @@ impl MapView {
         }
         stats.frames += 1;
         stats.secs += delta;
+        stats.worst = stats.worst.max(delta);
+        stats.since_level += delta;
+        if delta > 0.033 {
+            godot_print!(
+                "map: a frame of {:.1} ms, {:.2} s after a level change; the map's last sync took {:.1} ms and built {} models",
+                delta * 1000.0,
+                stats.since_level,
+                stats.last_sync,
+                stats.last_built
+            );
+        }
         stats.gpu += rs.viewport_get_measured_render_time_gpu(rid);
         stats.cpu += rs.get_frame_setup_time_cpu();
         stats.draws += rs.get_rendering_info(
@@ -2554,15 +2725,36 @@ impl MapView {
                 "n/a".to_string()
             };
             godot_print!(
-                "map: frame {:.2} ms, gpu {gpu}, render setup {:.2} ms, {:.0} draw calls; {b} batches, {solids} solids",
+                "map: frame {:.2} ms (worst {:.1} ms), gpu {gpu}, render setup {:.2} ms, {:.0} draw calls; {b} batches, {solids} solids",
                 stats.secs * 1000.0 / n,
+                stats.worst * 1000.0,
                 stats.cpu / n,
                 stats.draws / n
             );
             *stats = FrameStats {
                 frames: 1,
+                since_level: stats.since_level,
                 ..FrameStats::default()
             };
+        }
+    }
+
+    /// Draw the cells of a new level still to draw for at most
+    /// `BUILD_BUDGET`; the lights and the fog of war again once all are.
+    fn build_some(&mut self, world: &World, catalog: &Catalog, hero: Option<(i32, i32)>) {
+        if self.building.is_empty() {
+            return;
+        }
+        let start = std::time::Instant::now();
+        while let Some((x, y)) = self.building.pop() {
+            self.update_cell(x, y, world, catalog, hero);
+            if start.elapsed() >= BUILD_BUDGET {
+                break;
+            }
+        }
+        if self.building.is_empty() {
+            self.lights_dirty = true;
+            self.fow_dirty = true;
         }
     }
 
@@ -2948,7 +3140,46 @@ impl MapView {
                 }
             }
             Paint::Flat(c, f) => self.art.flat(c, f),
+            Paint::Liquid(l) => self.liquid(l),
         }
+    }
+
+    /// The material of water, lava or the air over lava (made once).
+    fn liquid(&mut self, l: Liquid) -> Gd<Material> {
+        if let Some(m) = self.liquids.get(&l) {
+            return m.clone();
+        }
+        let path = match l {
+            Liquid::Water => "res://shaders/water.gdshader",
+            Liquid::Lava => "res://shaders/lava.gdshader",
+            Liquid::Haze => "res://shaders/heat_haze.gdshader",
+        };
+        let mat: Gd<Material> = match godot::tools::try_load::<Shader>(path) {
+            Ok(shader) => {
+                let mut m = ShaderMaterial::new_gd();
+                m.set_shader(&shader);
+                m.set_shader_parameter("noise_tex", &self.surfaces.noise().to_variant());
+                m.set_shader_parameter("fow_tex", &self.surfaces.fow_texture().to_variant());
+                m.upcast()
+            }
+            Err(_) => {
+                let c = match l {
+                    Liquid::Water => Color::from_rgba(0.05, 0.12, 0.15, 0.85),
+                    Liquid::Lava => Color::from_rgb(1.0, 0.35, 0.05),
+                    Liquid::Haze => Color::from_rgba(1.0, 1.0, 1.0, 0.0),
+                };
+                self.art.flat(
+                    c,
+                    if l == Liquid::Lava {
+                        Finish::Glow
+                    } else {
+                        Finish::Ghost
+                    },
+                )
+            }
+        };
+        self.liquids.insert(l, mat.clone());
+        mat
     }
 
     /// The dark rock under the level, with holes for what lies below the
@@ -3074,6 +3305,7 @@ impl MapView {
 
     /// Forget every cell (a new game).
     pub fn clear(&mut self) {
+        self.building.clear();
         self.finish_motions();
         self.facing.clear();
         for (_, c) in std::mem::take(&mut self.incoming) {
@@ -3267,7 +3499,7 @@ impl MapView {
     /// The camera has caught up with its target and a new level has come
     /// up out of black (self-test screenshots).
     pub fn is_settled(&self) -> bool {
-        self.focus.distance_to(self.target) < 0.05 && self.fade <= 0.0
+        self.focus.distance_to(self.target) < 0.05 && self.fade <= 0.0 && self.building.is_empty()
     }
 
     /// Load art ahead of need for a few milliseconds (every frame, also
@@ -3386,6 +3618,13 @@ impl MapView {
                 light.set_param(Param::ENERGY, 0.6);
                 light.set_param(Param::RANGE, 2.5);
                 light.set_position(origin + at(0.0, 1.5, -0.3));
+            }
+            Lamp::Lava => {
+                light.set_color(Color::from_rgb(1.0, 0.4, 0.12));
+                light.set_param(Param::ENERGY, 1.6);
+                light.set_param(Param::RANGE, 3.2);
+                light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 2.0);
+                light.set_position(origin + at(0.0, 0.4, 0.0));
             }
             Lamp::Down => {
                 light.set_color(STAIR_DOWN_LIGHT);
@@ -4066,7 +4305,7 @@ fn torch_walls(area: &[(i32, i32)], is_wall: impl Fn(i32, i32) -> bool) -> Vec<T
 }
 
 /// Cells between the fill lights of a big lit area.
-const FILL_STEP: i32 = 6;
+const FILL_STEP: i32 = 10;
 
 /// The fill lights of a lit area: (x, z, range, energy). A room is lit
 /// faintly from its middle; a hall wider than a light reaches gets one
@@ -4103,7 +4342,7 @@ fn fill_lights(area: &[(i32, i32)]) -> Vec<(f32, f32, f32, f32)> {
                 lights.push((
                     x as f32,
                     y as f32,
-                    FILL_STEP as f32 + 1.5,
+                    FILL_STEP as f32 * 1.3,
                     ROOM_LIGHT_ENERGY * 8.0,
                 ));
             }
@@ -4507,6 +4746,16 @@ mod tests {
         // walls beside the hero (a doorway, a corridor) do not
         let sides = |x: i32, y| (x != 10 && y == 5).then_some(WALL_HEIGHT);
         assert!(!hides(chest, eye, (10, 5), sides));
+    }
+
+    #[test]
+    fn a_level_is_built_from_the_hero_outwards() {
+        let order = build_order(Some((10, 5)));
+        assert_eq!(order.len(), ((COLNO - 1) * ROWNO) as usize);
+        // taken from the end: the hero's cell first, then its neighbours
+        assert_eq!(order.last(), Some(&(10, 5)));
+        let d = |&(x, y): &(i32, i32)| (x - 10).pow(2) + (y - 5).pow(2);
+        assert!(order.windows(2).all(|w| d(&w[0]) >= d(&w[1])));
     }
 
     #[test]

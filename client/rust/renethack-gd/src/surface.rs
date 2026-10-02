@@ -90,6 +90,16 @@ impl Surfaces {
         t
     }
 
+    /// The tiling noise the map's shaders read.
+    pub fn noise(&self) -> Gd<Texture2D> {
+        self.noise.clone()
+    }
+
+    /// The fog of war's texture, for shaders of the map's own.
+    pub fn fow_texture(&self) -> Gd<ImageTexture> {
+        self.fow.clone()
+    }
+
     /// The fog of war changed: the shader sees the new texture.
     pub fn show_fow(&mut self, fow: &Fow) {
         self.fow.update(&fow.image);
