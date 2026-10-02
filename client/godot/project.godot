@@ -48,6 +48,11 @@ eye_pos={
 "type": "vec3",
 "value": Vector3(0, 0, 0)
 }
+; how much the floors of the branch crack and glow from below (Gehennom)
+branch_cracks={
+"type": "float",
+"value": 0.0
+}
 
 [renethack]
 

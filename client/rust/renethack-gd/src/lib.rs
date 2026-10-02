@@ -5,6 +5,7 @@ mod action_bar;
 mod animator;
 mod art;
 mod batch;
+mod branch_look;
 mod dialogs;
 mod gallery;
 mod game;

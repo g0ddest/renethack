@@ -39,13 +39,14 @@ use godot::prelude::*;
 use nh_art::{ArtManifest, Tint};
 use nh_protocol::{Catalog, Glyph, GlyphKind, MonsterInfo, ObjectTile, mg};
 use nh_world::{
-    COLNO, Cell, Ident, ItemUse, MapState, Move, ROWNO, Terrain, UseKind, World, cell_terrain,
-    in_field, locate_attack, parse_attack, terrain_of,
+    Branch, COLNO, Cell, Ident, ItemUse, MapState, Move, ROWNO, Terrain, UseKind, World,
+    cell_terrain, in_field, locate_attack, parse_attack, terrain_of,
 };
 
 use crate::animator::{Motion, pace, yaw_toward};
 use crate::art::{Art, Finish, Model, ModelLook, Pose, build_flat, no_shadow};
 use crate::batch::{Batches, Slot};
+use crate::branch_look::BranchLook;
 use crate::meshes::{
     MeshKey, bevel, cuboid, cylinder, dome, facets, plane, prism, rock, sphere, torus,
 };
@@ -67,6 +68,25 @@ const FOV_DEG: f32 = 40.0;
 /// The overview never goes further (a whole 80x21 level fits well within).
 const MAX_OVERVIEW_DISTANCE: f32 = 80.0;
 const FOLLOW_RATE: f32 = 6.0;
+/// A per-channel curve through (1/4, shadows/4) and (3/4, highlights*3/4).
+fn grade_curve(shadows: Color, highlights: Color) -> Gd<godot::classes::GradientTexture1D> {
+    let mut g = godot::classes::Gradient::new_gd();
+    let at = |c: Color, k: f32| Color::from_rgb(c.r * k, c.g * k, c.b * k);
+    g.set_offsets(&PackedFloat32Array::from(&[0.0, 0.25, 0.75, 1.0][..]));
+    g.set_colors(&PackedColorArray::from(
+        &[
+            Color::from_rgb(0.0, 0.0, 0.0),
+            at(shadows, 0.25),
+            at(highlights, 0.75),
+            Color::from_rgb(1.0, 1.0, 1.0),
+        ][..],
+    ));
+    let mut t = godot::classes::GradientTexture1D::new_gd();
+    t.set_gradient(&g);
+    t.set_width(256);
+    t
+}
+
 /// Seconds a new level takes to come up out of black.
 const LEVEL_FADE_SECS: f32 = 0.25;
 /// Seconds from the start of a strike to the blow landing.
@@ -157,7 +177,6 @@ const ROOM_LIGHT_ENERGY: f32 = 0.3;
 /// Torches on the walls of a lit room: one every few cells of its north,
 /// east and west walls; the ones nearest the hero cast shadows.
 const TORCH: Color = Color::from_rgb(1.0, 0.66, 0.38);
-const TORCH_ENERGY: f32 = 2.4;
 const TORCH_RANGE: f32 = 5.5;
 const TORCH_SHADOWS: usize = 3;
 /// A flame's flipbook: 16 x 4 frames of a real flame (Unity Labs, CC0).
@@ -404,6 +423,8 @@ struct Ctx<'a> {
     hero_yaw: f32,
     /// Which way the monster here faces since it last stepped or fought.
     facing: Option<f32>,
+    /// How the branch the level is in looks.
+    branch: &'a BranchLook,
 }
 
 impl Ctx<'_> {
@@ -428,8 +449,15 @@ impl Ctx<'_> {
         }
     }
 
+    /// A manifest material by name, as this branch has it.
     fn mat(&self, name: &str) -> Option<usize> {
-        self.art.material(name)
+        self.art.material(self.branch.material(name))
+    }
+
+    /// A manifest material as this branch has it.
+    fn remap(&self, m: Option<usize>) -> Option<usize> {
+        let name = self.art.material_at(m?).0;
+        self.art.material(self.branch.material(name)).or(m)
     }
 }
 
@@ -594,16 +622,55 @@ fn rubble(
     look.top = look.top.min(0.2);
 }
 
+/// Timber holding up a mine's rock: on some walls beside open ground, two
+/// posts against the face and a beam across, placed by the cell.
+fn mine_support(look: &mut Look, around: &Around, ctx: &Ctx) {
+    let Some(wood) = ctx.mat("wood") else {
+        return;
+    };
+    let wood = Paint::Pbr(wood, 75, Role::Prop);
+    for (i, (dx, dz)) in SIDES.iter().enumerate() {
+        // the camera does not see a south wall's face (its north side)
+        if around.sides[i] != Side::Open || i == 0 || ctx.noise(71 + i as u32) > 0.28 {
+            continue;
+        }
+        let out = 0.56;
+        for s in [-0.38f32, 0.38] {
+            let (mesh, pos) = if *dx == 0.0 {
+                (bevel(0.14, 1.9, 0.14), at(s, 0.95, dz * out))
+            } else {
+                (bevel(0.14, 1.9, 0.14), at(dx * out, 0.95, s))
+            };
+            look.solid(mesh, wood, pos);
+        }
+        let beam = if *dx == 0.0 {
+            bevel(1.0, 0.16, 0.16)
+        } else {
+            bevel(0.16, 0.16, 1.0)
+        };
+        let pos = if *dx == 0.0 {
+            at(0.0, 1.9, dz * out)
+        } else {
+            at(dx * out, 1.9, 0.0)
+        };
+        look.solid(beam, wood, pos);
+    }
+}
+
 /// A doorway's frame: two posts and a lintel, the wall closed above it by
 /// a stretch of masonry under the cap. Cut down, only the posts' feet.
 fn door_frame(look: &mut Look, along_x: bool, cut: bool, ctx: &Ctx, wood: Paint) {
+    let role = if ctx.branch.cave {
+        Role::Rock
+    } else {
+        Role::Wall
+    };
     let masonry = ctx
-        .art
-        .terrain(Terrain::Wall)
-        .material
-        .map(|m| Paint::Pbr(m, SHADE_LIT, Role::Wall));
+        .remap(ctx.art.terrain(Terrain::Wall).material)
+        .map(|m| Paint::Pbr(m, SHADE_LIT, role));
     let cap = ctx
-        .mat("bedrock")
+        .mat(ctx.branch.cap)
+        .filter(|_| !ctx.branch.cave)
         .map(|m| Paint::Pbr(m, SHADE_LIT, Role::Trim));
     let h = if cut { CUT_HEIGHT } else { DOOR_HEIGHT };
     // the posts stand on the wall's line, either side of the passage; in
@@ -699,7 +766,9 @@ fn terrain_base(
     ctx: &Ctx,
 ) {
     let c = g.color;
-    let art = ctx.art.terrain(t);
+    let mut art = ctx.art.terrain(t);
+    art.material = ctx.remap(art.material);
+    art.trim = ctx.remap(art.trim);
     // "S_v..." features sit in a vertical wall: the passage runs along x
     let vertical = sym.starts_with("S_v");
     let (wall_h, door_h) = if cut {
@@ -744,7 +813,18 @@ fn terrain_base(
             } else {
                 (1.0, wall_h)
             };
-            if cut {
+            if ctx.branch.cave {
+                // a cave's wall is the rock itself, broken and uneven
+                let rock_paint = pbr(art.material, SHADE_LIT, Role::Rock, FLOOR_UNSEEN);
+                let h = if cut { ROCK_CUT } else { wall_h };
+                look.solid(rock(1.0, h, 1.0), rock_paint, Vector3::ZERO);
+                if let Some(s) = look.solids.last_mut() {
+                    s.shadow = !cut;
+                }
+                if ctx.branch.supports && !cut {
+                    mine_support(look, around, ctx);
+                }
+            } else if cut {
                 // cut down, it is the stump of a wall: courses of masonry
                 // broken off unevenly, darker than the wall that stands
                 let ruin = pbr(art.material, SHADE_RUIN, Role::Ruin, FLOOR_UNSEEN);
@@ -753,7 +833,7 @@ fn terrain_base(
                 let body = top - CAP_HEIGHT;
                 let masonry = pbr(art.material, SHADE_LIT, Role::Wall, FLOOR_UNSEEN);
                 look.solid(bevel(w, body, w), masonry, at(0.0, body / 2.0, 0.0));
-                let cap = pbr(art.trim, SHADE_LIT, Role::Trim, DEEP);
+                let cap = pbr(ctx.mat(ctx.branch.cap), SHADE_LIT, Role::Trim, DEEP);
                 look.solid(
                     bevel(w + 0.04, CAP_HEIGHT, w + 0.04),
                     cap,
@@ -763,7 +843,7 @@ fn terrain_base(
             // a plinth of darker stone where there is ground to stand on
             let plinth = pbr(art.material, 62, Role::Trim, DEEP);
             for (i, (dx, dz)) in SIDES.iter().enumerate() {
-                if around.sides[i] != Side::Open {
+                if around.sides[i] != Side::Open || ctx.branch.cave {
                     continue;
                 }
                 let h = PLINTH_HEIGHT.min(wall_h - 0.02);
@@ -1773,6 +1853,9 @@ pub struct MapView {
     vfx: Vfx,
     /// Low mist over the level.
     mist: Gd<FogVolume>,
+    /// The branch the level drawn is in, and how it looks.
+    branch: Branch,
+    branch_look: BranchLook,
     /// The post layer's material, and how far a new level is still
     /// hidden in black (1 when it is drawn, 0 when it shows).
     post_mat: Option<Gd<ShaderMaterial>>,
@@ -2222,6 +2305,8 @@ impl MapView {
             mist,
             post_mat,
             fade: 0.0,
+            branch: Branch::Main,
+            branch_look: crate::branch_look::look_of(Branch::Main),
             stats_window: std::env::var_os("RENETHACK_FRAME_STATS").map(|_| FrameStats::default()),
             lights_dirty: false,
             bedrock,
@@ -2254,6 +2339,7 @@ impl MapView {
             aim_lift: 0.0,
             hero_fx,
         };
+        view.set_branch(Branch::Main);
         view.place_camera();
         view
     }
@@ -2277,6 +2363,12 @@ impl MapView {
             self.fow_dirty = true;
         }
         self.hero_at = hero;
+        // another branch: its own look, and every cell drawn again in it
+        let branch = world.branch();
+        if branch != self.branch {
+            self.set_branch(branch);
+            self.generation = None;
+        }
         let generation = world.map.generation();
         let new_level = self.generation != Some(generation);
         let started = std::time::Instant::now();
@@ -2474,6 +2566,44 @@ impl MapView {
         }
     }
 
+    /// Light, haze and grade the branch's way (the level's cells are drawn
+    /// again by the caller).
+    fn set_branch(&mut self, branch: Branch) {
+        self.branch = branch;
+        let l = crate::branch_look::look_of(branch);
+        self.branch_look = l;
+        let env = &mut self.env;
+        env.set_bg_color(l.darkness);
+        env.set_fog_light_color(l.darkness);
+        env.set_ambient_light_color(l.ambient);
+        env.set_ambient_light_energy(l.ambient_energy);
+        env.set_volumetric_fog_albedo(l.fog);
+        env.set_volumetric_fog_density(l.fog_density);
+        let g = l.grade;
+        env.set_adjustment_saturation(g.saturation);
+        env.set_adjustment_contrast(g.contrast);
+        env.set_adjustment_brightness(g.brightness);
+        env.set_adjustment_color_correction(&grade_curve(g.shadows, g.highlights));
+        RenderingServer::singleton()
+            .global_shader_parameter_set("branch_cracks", &l.cracks.to_variant());
+        self.vfx.set_dust(l.dust);
+        self.lights_dirty = true;
+    }
+
+    /// The branch the level drawn is in (self-tests).
+    pub fn branch(&self) -> Branch {
+        self.branch
+    }
+
+    /// The manifest material of the walls drawn now (self-tests check each
+    /// branch has its own).
+    pub fn wall_material(&self) -> String {
+        let art = self.art.manifest();
+        let wall = art.terrain(Terrain::Wall).material;
+        wall.map(|m| self.branch_look.material(art.material_at(m).0).to_string())
+            .unwrap_or_default()
+    }
+
     /// A new level is built in one long frame: it comes up out of black
     /// over a quarter of a second after, instead of with a jolt.
     fn fade_in(&mut self, new_level: bool, delta: f32) {
@@ -2568,7 +2698,8 @@ impl MapView {
             used += 1;
             l.set_position(Vector3::new(cx, 2.6, cy));
             l.set_param(Param::RANGE, reach);
-            l.set_param(Param::ENERGY, energy);
+            l.set_param(Param::ENERGY, energy * self.branch_look.fill_scale);
+            l.set_color(self.branch_look.fill);
             l.set_visible(true);
         }
         for l in self.room_lights.iter_mut().skip(used) {
@@ -2691,13 +2822,14 @@ impl MapView {
         near.sort_by(|a, b| a.0.total_cmp(&b.0));
         let shadowed: HashSet<usize> = near.iter().take(TORCH_SHADOWS).map(|&(_, i)| i).collect();
         let clock = self.clock;
+        let (color, energy) = (self.branch_look.torch, self.branch_look.torch_energy);
         for (i, t) in self.torches.iter_mut().enumerate() {
             if !t.light.is_visible() {
                 continue;
             }
             let time = clock + t.phase;
-            t.light
-                .set_param(Param::ENERGY, TORCH_ENERGY * flicker(time));
+            t.light.set_color(color);
+            t.light.set_param(Param::ENERGY, energy * flicker(time));
             t.light.set_position(t.at + sway(time));
             let shadow = shadowed.contains(&i);
             if shadow != t.shadow {
@@ -3303,6 +3435,7 @@ impl MapView {
             hero,
             hero_yaw: self.hero_yaw,
             facing,
+            branch: &self.branch_look,
         };
         let look = world
             .map
@@ -4116,6 +4249,7 @@ mod tests {
     struct Fixture {
         cat: Catalog,
         art: ArtManifest,
+        branch: BranchLook,
     }
 
     impl Fixture {
@@ -4123,6 +4257,7 @@ mod tests {
             Fixture {
                 cat: catalog(),
                 art: manifest(),
+                branch: crate::branch_look::look_of(Branch::Main),
             }
         }
 
@@ -4139,6 +4274,7 @@ mod tests {
                 hero,
                 hero_yaw: 0.0,
                 facing: None,
+                branch: &self.branch,
             }
         }
 
@@ -4214,6 +4350,53 @@ mod tests {
         let pitch = PITCH_DEG.to_radians();
         let back = Vector3::new(0.0, pitch.sin(), pitch.cos());
         (Vector3::new(10.0, 0.0, 9.0) + back * DISTANCE, -back)
+    }
+
+    #[test]
+    fn every_branch_draws_in_materials_the_manifest_has() {
+        let f = Fixture::new();
+        let cat = &f.cat;
+        let branches = [
+            Branch::Mines,
+            Branch::Sokoban,
+            Branch::Gehennom,
+            Branch::Quest,
+            Branch::Ludios,
+            Branch::Vlad,
+            Branch::Planes(nh_world::Plane::Earth),
+            Branch::Planes(nh_world::Plane::Fire),
+            Branch::Planes(nh_world::Plane::Astral),
+        ];
+        let floor = feature(cat, "S_room");
+        for b in branches {
+            let look = crate::branch_look::look_of(b);
+            for (_, to) in look.remap {
+                assert!(f.art.material(to).is_some(), "{b:?}: no material {to}");
+            }
+            assert!(
+                f.art.material(look.cap).is_some(),
+                "{b:?}: no cap {}",
+                look.cap
+            );
+            let ctx = Ctx {
+                branch: &look,
+                ..f.ctx()
+            };
+            let wall = look_of(
+                &feature(cat, "S_hwall"),
+                Near::orth([None, Some(&floor), None, None]),
+                &ctx,
+            );
+            let name = |l: &Look| match l.solids[0].paint {
+                Paint::Pbr(m, _, _) => f.art.material_at(m).0.to_string(),
+                other => panic!("{other:?}"),
+            };
+            assert_eq!(name(&wall), look.material("masonry"), "{b:?}");
+            // a cave's walls are its rock, not masonry under a cap
+            if look.cave {
+                assert!(matches!(wall.solids[0].mesh, MeshKey::Rock(..)), "{b:?}");
+            }
+        }
     }
 
     #[test]

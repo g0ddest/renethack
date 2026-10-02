@@ -336,6 +336,8 @@ const POOL: usize = 6;
 const SPLATS: usize = 24;
 const SPLAT_SECS: f32 = 14.0;
 const BEAM_SECS: f32 = 0.45;
+/// Motes of dust around the camera's focus in the main dungeon.
+const DUST: i32 = 220;
 
 pub struct Vfx {
     root: Gd<Node3D>,
@@ -873,6 +875,14 @@ impl Vfx {
         }
     }
 
+    /// How thick the dust in the air is (1: the main dungeon's).
+    pub fn set_dust(&mut self, thickness: f32) {
+        let amount = (DUST as f32 * thickness).round().max(1.0) as i32;
+        if self.dust.get_amount() != amount {
+            self.dust.set_amount(amount);
+        }
+    }
+
     /// Embers rising from a flame: a small emitter to put under a torch.
     pub fn embers(&self) -> Gd<GpuParticles3D> {
         let mut p = GpuParticles3D::new_alloc();
@@ -1008,7 +1018,7 @@ fn dust(root: &mut Gd<Node3D>, soft: &Gd<Texture2D>) -> Gd<GpuParticles3D> {
     let mut p = GpuParticles3D::new_alloc();
     p.set_name("Dust");
     p.set_process_material(&m);
-    p.set_amount(220);
+    p.set_amount(DUST);
     p.set_lifetime(8.0);
     p.set_pre_process_time(8.0);
     p.set_use_local_coordinates(false);

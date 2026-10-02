@@ -187,6 +187,9 @@ pub struct RenethackGame {
     selftest: Option<SelfTest>,
     /// The next engine's seed; else RENETHACK_SEED (else the self-test's).
     pub(crate) seed: Option<u64>,
+    /// Self-tests only: the next game in debug (wizard) mode, its
+    /// playground allowing it (level teleport to a branch).
+    pub(crate) debug_mode: bool,
     /// Things that went wrong without stopping the client (engine errors,
     /// protocol failures, dead links, double answers): self-tests fail on them.
     pub(crate) faults: Vec<String>,
@@ -285,6 +288,7 @@ impl INode for RenethackGame {
             mouse_pos: None,
             hover: Hover::default(),
             seed: None,
+            debug_mode: false,
             faults: Vec::new(),
             failure: None,
             playground_lock: None,
@@ -1732,6 +1736,17 @@ impl RenethackGame {
         if !self.prepare_playground() {
             return;
         }
+        let options = if self.debug_mode && self.selftest.is_some() {
+            if let Err(e) = std::fs::write(
+                pg.join("sysconf"),
+                "WIZARDS=*\nMAXPLAYERS=10\nPANICTRACE_GDB=0\nPANICTRACE_LIBC=0\n",
+            ) {
+                godot_warn!("renethack: cannot allow debug mode: {e}");
+            }
+            format!("{options},playmode:debug")
+        } else {
+            options
+        };
         if let Err(e) = remember_name(&pg, &choice.name) {
             godot_warn!("renethack: cannot remember the name: {e}");
         }

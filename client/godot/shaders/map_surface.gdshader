@@ -66,6 +66,7 @@ uniform vec3 lift : source_color = vec3(0.0);
 
 global uniform vec3 hero_pos;
 global uniform vec3 eye_pos;
+global uniform float branch_cracks;
 
 const vec2 FIELD = vec2(80.0, 21.0);
 const vec3 MEMORY_TINT = vec3(0.54, 0.59, 0.72);
@@ -263,6 +264,15 @@ void fragment() {
 		albedo *= 1.0 - 0.32 * g;
 		rough = min(rough + 0.1 * g, 1.0);
 	}
+	vec3 lava = vec3(0.0);
+	if (grime > 0.0 && branch_cracks > 0.0) {
+		// fire under the floor shows through its cracks
+		float c = tn2(wpos.xz * 0.6 + 3.7);
+		float crack = smoothstep(0.487, 0.5, c) - smoothstep(0.5, 0.513, c);
+		float pulse = 0.75 + 0.25 * sin(TIME * 1.3 + tn2(wpos.xz * 0.2) * 9.0);
+		lava = vec3(1.0, 0.28, 0.05) * crack * pulse * branch_cracks * 1.2;
+		albedo *= 1.0 - crack * 0.8;
+	}
 	if (wet > 0.0) {
 		float w = smoothstep(0.66, 0.74, tn2(wpos.xz * 0.3 + 11.0)) * wet * bw.y;
 		albedo *= mix(1.0, 0.75, w);
@@ -290,6 +300,6 @@ void fragment() {
 		float graze = 1.0 - clamp(dot(normalize(wn), normalize(CAMERA_POSITION_WORLD - wpos)), 0.0, 1.0);
 		emission += vec3(0.35, 0.42, 0.6) * pow(graze, 3.0) * rim;
 	}
-	EMISSION = emission;
+	EMISSION = emission + lava;
 	NORMAL = normalize((VIEW_MATRIX * vec4(wn, 0.0)).xyz);
 }
