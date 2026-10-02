@@ -39,7 +39,12 @@
   {"id": "wooden_crate_01", "use": "room dressing, boxes"},
   {"id": "old_military_crate", "use": "room dressing, boxes"},
   {"id": "treasure_chest", "use": "chests, vaults"},
-  {"id": "stone_fire_pit", "use": "braziers, fire pits"}
+  {"id": "stone_fire_pit", "use": "braziers, fire pits"},
+  {"id": "large_castle_door", "use": "branch props (doors, gates, light)"},
+  {"id": "large_iron_gate", "use": "branch props (doors, gates, light)"},
+  {"id": "lantern_chandelier_01", "use": "branch props (doors, gates, light)"},
+  {"id": "wooden_candlestick", "use": "branch props (doors, gates, light)"},
+  {"id": "brass_candleholders", "use": "branch props (doors, gates, light)"}
  ],
  "itch": [
   {
@@ -157,7 +162,10 @@
    "texture_max": 512,
    "license_files": ["modular dungeon kit/LICENSE.txt"],
    "use": "brazier, coffin, crate, door, pot"
-  }
+  },
+  {"page": "https://binbun3d.itch.io/hit-fx", "upload": "Hit FX Free", "root": "HitFXFree/assets/BinbunVFX_Vol2/", "files": ["StylizedHitFX/shader/*", "StylizedHitFX/script/*", "StylizedHitFX/effects/*", "StylizedHitFX/effects/*/*", "shared/script/*"], "dest": "binbun/BinbunVFX_Vol2", "rewrite": {"res://assets/BinbunVFX_Vol2/": "res://art/cc0/binbun/BinbunVFX_Vol2/"}, "license_keep_path": true, "license_files": ["HitFXFree/assets/BinbunVFX_Vol2/StylizedHitFX/license.txt"], "use": "blows that land hard"},
+  {"page": "https://binbun3d.itch.io/explosion-fx", "upload": "Free", "root": "ExplosionFXFree/assets/BinbunVFX_Vol2/", "files": ["ExplosionFX/shader/*", "ExplosionFX/script/*", "ExplosionFX/effects/*", "ExplosionFX/effects/*/*", "shared/script/*"], "dest": "binbun/BinbunVFX_Vol2", "rewrite": {"res://assets/BinbunVFX_Vol2/": "res://art/cc0/binbun/BinbunVFX_Vol2/"}, "license_keep_path": true, "license_files": ["ExplosionFXFree/assets/BinbunVFX_Vol2/ExplosionFX/license.txt"], "use": "explosions"},
+  {"page": "https://binbun3d.itch.io/flame-fx", "upload": "Flame FX Free", "root": "FlameFXFree/assets/BinbunVFX_Vol2/", "files": ["FlameFX/shader/*", "FlameFX/script/*", "FlameFX/effects/*", "FlameFX/effects/*/*", "shared/script/*"], "dest": "binbun/BinbunVFX_Vol2", "rewrite": {"res://assets/BinbunVFX_Vol2/": "res://art/cc0/binbun/BinbunVFX_Vol2/"}, "license_keep_path": true, "license_files": ["FlameFXFree/assets/BinbunVFX_Vol2/FlameFX/license.txt"], "use": "fire bursts"}
  ],
  "direct_comment": "Files and zips at fixed URLs. A zip is unpacked like an itch.io pack (root, files, dest; .tga becomes a lossless .png at full size); anything else is stored under dest by its own name.",
  "direct": [  {"url": "https://unity3d.com/files/labs/downloads/vfx/assets01/Flame02/Flame02-flipbooks.zip",
@@ -190,7 +198,16 @@
    "use": "blunt weapons and axes, 256 px (Clint Bellanger)"},
   {"url": "https://opengameart.org/sites/default/files/valmis.zip",
    "root": "Valmis/", "files": ["*.png"], "dest": "icons/flare/osare",
-   "use": "OSARE weapons and armour, 64 px (Blarumyrran)"}
+   "use": "OSARE weapons and armour, 64 px (Blarumyrran)"},
+  {"url": "https://github.com/RPicster/Godot-particle-and-vfx-textures/archive/refs/heads/main.zip", "root": "Godot-particle-and-vfx-textures-main/textures/256/alpha/", "files": ["*.png"], "dest": "rpicster/256", "license_files": ["Godot-particle-and-vfx-textures-main/LICENSE"], "use": "flares, glows and starbursts for particles (Raffaele Picca)"}
+ ],
+ "pbr_zips_comment": "Zips of PBR maps at fixed URLs (ambientCG, TextureCan): written as <dest>/<id>/<id>_albedo/normal/arm(/emission).jpg; `browser` fetches with a browser's User-Agent.",
+ "pbr_zips": [
+  {"id": "lava_flow", "url": "https://www.texturecan.com/downloads/ground_0027/ground_0027_1k_kRh2Tv.zip", "browser": true, "maps": {"albedo": "*_color_1k.jpg", "normal": "*_normal_opengl_1k.png", "ao": "*_ao_1k.jpg", "roughness": "*_roughness_1k.jpg", "emission": "*_emissive_1k.jpg"}, "dest": "texturecan", "use": "lava: crust and molten channels (TextureCan ground_0027)"},
+  {"id": "icy_rock", "url": "https://www.texturecan.com/downloads/ground_0031/ground_0031_1k_s6SWdZ.zip", "browser": true, "maps": {"albedo": "*_color_1k.jpg", "normal": "*_normal_opengl_1k.png", "ao": "*_ao_1k.jpg", "roughness": "*_roughness_1k.jpg"}, "dest": "texturecan", "use": "ice floors (TextureCan ground_0031)"},
+  {"id": "Lava003", "url": "https://ambientcg.com/get?file=Lava003_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "roughness": "*_Roughness.jpg", "emission": "*_Emission.jpg"}, "dest": "ambientcg", "use": "Gehennom floors: crust with glowing veins"},
+  {"id": "Rock035", "url": "https://ambientcg.com/get?file=Rock035_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "ao": "*_AmbientOcclusion.jpg", "roughness": "*_Roughness.jpg"}, "dest": "ambientcg", "use": "dark cave walls (Mines, Earth)"},
+  {"id": "Rock058", "url": "https://ambientcg.com/get?file=Rock058_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "ao": "*_AmbientOcclusion.jpg", "roughness": "*_Roughness.jpg"}, "dest": "ambientcg", "use": "obsidian walls (Gehennom, Vlad's Tower)"}
  ],
  "fonts_comment": "SIL OFL 1.1 fonts of the UI (not CC0): fetched from the google/fonts repository at a fixed commit into client/godot/fonts/<dest>/ with their OFL.txt.",
  "fonts": [

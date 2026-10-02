@@ -8,7 +8,7 @@ the recipe in `sources.json` and checks the downloads against `art.lock.json`.
 | Where | What | Author | Source |
 |---|---|---|---|
 | `cc0/polyhaven/textures/` | stone tiles, castle brick, dirt floor, rock walls, old planks, rusty metal, marble, stone walls, castle wall, monastery and rock-tile floors, volcanic rock tiles (1K) | Poly Haven artists | https://polyhaven.com/textures |
-| `cc0/polyhaven/models/` | street rat, boulder, dead tree trunk, gothic statue; estoc, dagger, mace, war hammer, kite shield, three axes, oil lamp, lantern, pick; barrels, crates, treasure chest, stone fire pit (1K textures) | Poly Haven artists | https://polyhaven.com/models |
+| `cc0/polyhaven/models/` | street rat, boulder, dead tree trunk, gothic statue; estoc, dagger, mace, war hammer, kite shield, three axes, oil lamp, lantern, pick; barrels, crates, treasure chest, stone fire pit; large castle door, large iron gate, lantern chandelier, wooden candlestick, brass candleholders (1K textures) | Poly Haven artists | https://polyhaven.com/models |
 | `cc0/quaternius/outfits/` | Modular Character Outfits – Fantasy (Standard): peasant, ranger | Quaternius | https://quaternius.itch.io/modular-character-outfits-fantasy |
 | `cc0/quaternius/animations/` | Universal Animation Library (Standard) | Quaternius | https://quaternius.itch.io/universal-animation-library |
 | `cc0/quaternius/animations/UAL2_Standard.glb` | Universal Animation Library 2 (Standard) | Quaternius | https://quaternius.itch.io/universal-animation-library-2 |
@@ -20,6 +20,10 @@ the recipe in `sources.json` and checks the downloads against `art.lock.json`.
 | `cc0/quaternius/animals/` | Farm Animals Animated: pug, horse, cow, pig, sheep | Quaternius | https://quaternius.itch.io/lowpoly-animated-animals |
 | `cc0/sigilsvault/dungeon/` | Modular Dungeon Kit v1.0: pieces and props (GLB) | Kevin Barany (SigilsVault) | https://sigilsvault.itch.io/modular-dungeon-kit-v10 |
 | `cc0/unity-labs/flipbooks/` | VFX flipbooks: Flame02, Flame03, FireBall01–04, WispySmoke01, CandleSmoke01, Explosion02HD | Unity Technologies (Unity Labs Paris) | https://unity.com/blog/engine-platform/free-vfx-image-sequences-flipbooks |
+| `cc0/ambientcg/` | Lava003, Rock035, Rock058 (1K, maps repacked) | ambientCG (Lennart Demes) | https://ambientcg.com |
+| `cc0/texturecan/` | Volcanic Lava Flow (ground_0027), Icy Rock (ground_0031) (1K, maps repacked) | TextureCan | https://www.texturecan.com (CC0: https://www.texturecan.com/terms/) |
+| `cc0/binbun/` | Hit FX, Explosion FX and Flame FX, the free versions (Godot 4 shaders, scripts and effect scenes; their `res://` paths rewritten to this folder) | Binbun3D | https://binbun3d.itch.io |
+| `cc0/rpicster/` | Godot particle and VFX textures (256 px, alpha) | Raffaele Picca | https://github.com/RPicster/Godot-particle-and-vfx-textures |
 | `cc0/kenney/particles/` | Particle Pack (transparent PNGs) | Kenney | https://kenney.nl/assets/particle-pack |
 | `cc0/icons/flare/armor.png` | Armor Icons by Equipment Slot | Clint Bellanger, Blarumyrran, crowline, Justin Nichol | https://opengameart.org/content/armor-icons-by-equipment-slot |
 | `cc0/icons/flare/weapons-2/` | Flare weapon icons 2 | Clint Bellanger | https://opengameart.org/content/flare-weapon-icons-2 |
@@ -27,7 +31,8 @@ the recipe in `sources.json` and checks the downloads against `art.lock.json`.
 
 Textures larger than 1024 px (512 px for the SigilsVault kit) were scaled
 down and re-encoded, and the flipbooks were converted from TGA to PNG at full
-size; nothing else was changed.
+size; ambientCG and TextureCan maps were repacked as albedo, OpenGL normal,
+AO/roughness/metal and emission; nothing else was changed.
 
 Godot writes an `.import` file next to every asset when it imports the
 project (committed, as usual for Godot projects: they hold the import

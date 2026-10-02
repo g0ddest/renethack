@@ -38,6 +38,9 @@ FONTS = os.path.join(ROOT, "client", "godot", "fonts")
 RECIPE = os.path.join(ART, "sources.json")
 LOCK = os.path.join(ART, "art.lock.json")
 UA = "renethack-fetch-art/1.0 (+https://github.com/g0ddest/renethack)"
+# some hosts (TextureCan) refuse anything that does not look like a browser
+BROWSER_UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 "
+              "(KHTML, like Gecko) Chrome/120.0 Safari/537.36")
 CACHE = os.environ.get("RENETHACK_ART_CACHE",
                        os.path.join(tempfile.gettempdir(), "renethack-art-cache"))
 
@@ -49,9 +52,12 @@ def opener():
     return op
 
 
-def fetch(op, url, data=None, timeout=600):
+def fetch(op, url, data=None, timeout=600, ua=None):
     body = urllib.parse.urlencode(data).encode() if data is not None else None
-    with op.open(url, body, timeout=timeout) as r:
+    req = urllib.request.Request(url, body)
+    if ua:
+        req.add_header("User-Agent", ua)
+    with op.open(req, timeout=timeout) as r:
         return r.read()
 
 
@@ -238,13 +244,58 @@ def do_direct(op, w, item, max_size):
         w.put(f"{item['dest']}/{name}", blob)
 
 
+def do_pbr_zip(op, w, item, max_size):
+    """A zip of PBR maps (ambientCG, TextureCan): written as the manifest
+    names a texture set, <dest>/<id>/<id>_albedo.jpg, _normal.jpg, _arm.jpg
+    (ambient occlusion, roughness, metalness in R, G, B; a map the zip lacks
+    is white AO, mid roughness, no metal) and _emission.jpg when there is
+    one."""
+    from PIL import Image
+    ua = BROWSER_UA if item.get("browser") else None
+    blob = cached(item["url"], lambda: fetch(op, item["url"], ua=ua))
+    z = zipfile.ZipFile(io.BytesIO(blob))
+    names = [n for n in z.namelist() if not n.startswith("__MACOSX")]
+
+    def find(key):
+        pat = item["maps"].get(key)
+        hits = [n for n in names if pat and fnmatch.fnmatch(os.path.basename(n), pat)]
+        return Image.open(io.BytesIO(z.read(hits[0]))) if hits else None
+
+    base = f"{item['dest']}/{item['id']}/{item['id']}"
+
+    def put(img, suffix):
+        out = io.BytesIO()
+        img.convert("RGB").save(out, "PNG")
+        data, ext = convert_image(out.getvalue(), max_size, keep_alpha=False)
+        w.put(f"{base}_{suffix}{ext}", data)
+
+    albedo = find("albedo")
+    if albedo is None:
+        raise SystemExit(f"{item['url']}: no albedo map")
+    put(albedo, "albedo")
+    normal = find("normal")
+    if normal is not None:
+        put(normal, "normal")
+    size = albedo.size
+    chan = lambda img, v: (img.convert("L").resize(size) if img is not None
+                           else Image.new("L", size, v))
+    arm = Image.merge("RGB", (chan(find("ao"), 255), chan(find("roughness"), 200),
+                              chan(find("metal"), 0)))
+    put(arm, "arm")
+    emission = find("emission")
+    if emission is not None:
+        put(emission, "emission")
+    for lic in item.get("license_files", []):
+        w.put(f"{item['dest']}/{item['id']}/{os.path.basename(lic)}", z.read(lic))
+
+
 def unpack(w, blob, what, item, max_size):
     max_size = item.get("texture_max", max_size)
     z = zipfile.ZipFile(io.BytesIO(blob))
     names = z.namelist()
     root = item.get("root", "")
     dest = item["dest"]
-    picked = [n for n in names if n.startswith(root)
+    picked = [n for n in names if n.startswith(root) and not n.endswith("/")
               and any(fnmatch.fnmatch(n[len(root):], pat) for pat in item["files"])]
     if not picked:
         raise SystemExit(f"{what}: nothing matches {item['files']}")
@@ -276,9 +327,18 @@ def unpack(w, blob, what, item, max_size):
             Image.open(io.BytesIO(z.read(n))).save(out, "PNG", optimize=True)
             w.put(f"{dest}/{rel[:-4]}.png", out.getvalue())
         else:
-            w.put(f"{dest}/{rel}", z.read(n))
+            data = z.read(n)
+            # a Godot pack's own res:// paths, to where it lands here
+            for old, new in item.get("rewrite", {}).items():
+                if os.path.splitext(n)[1] in (".tscn", ".tres", ".gd", ".gdshader",
+                                              ".gdshaderinc"):
+                    data = data.replace(old.encode(), new.encode())
+            w.put(f"{dest}/{rel}", data)
     for lic in item.get("license_files", []):
-        w.put(f"{dest}/{os.path.basename(lic)}", z.read(lic))
+        # packs sharing a dest keep theirs where they lie under the root
+        keep = item.get("license_keep_path") and lic.startswith(root)
+        rel = lic[len(root):] if keep else os.path.basename(lic)
+        w.put(f"{dest}/{rel}", z.read(lic))
 
 
 def do_fonts(op, item):
@@ -319,6 +379,9 @@ def main():
     for item in recipe.get("direct", []):
         print("file", item["url"], flush=True)
         do_direct(op, w, item, max_size)
+    for item in recipe.get("pbr_zips", []):
+        print("textures", item["id"], flush=True)
+        do_pbr_zip(op, w, item, max_size)
     for item in recipe.get("fonts", []):
         print("fonts", item["dest"], flush=True)
         do_fonts(op, item)
