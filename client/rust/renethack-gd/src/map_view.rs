@@ -3624,7 +3624,8 @@ impl MapView {
             ground + (height * 0.6).clamp(0.2, 1.2),
             to.1 as f32,
         ) + toward * 0.25;
-        self.vfx.burst_after(VfxKind::Sparks, at, CONTACT_SECS);
+        // sparks thrown back towards the striker
+        self.vfx.hit(at, toward, CONTACT_SECS);
         let blood = target
             .filter(|g| g.kind == GlyphKind::Mon)
             .and_then(|g| monster_info(catalog, g.mon))

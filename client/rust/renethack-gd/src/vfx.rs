@@ -16,6 +16,7 @@ use godot::classes::base_material_3d::{
     BillboardMode, BlendMode, Flags, ShadingMode, Transparency,
 };
 use godot::classes::geometry_instance_3d::ShadowCastingSetting;
+use godot::classes::gpu_particles_3d::TransformAlign;
 use godot::classes::image::Format;
 use godot::classes::light_3d::Param;
 use godot::classes::particle_process_material::{EmissionShape, Parameter};
@@ -66,6 +67,8 @@ enum Recipe {
     Blast,
     Glints,
     Sparks,
+    /// A flare at the point of contact.
+    Flash,
     Droplets,
 }
 
@@ -193,16 +196,29 @@ impl Recipe {
                 hdr: 2.5,
                 ..base
             },
+            // streaks thrown out from the point of contact (each drawn
+            // along its own way), round a short flare
             Recipe::Sparks => Params {
-                amount: 18,
-                life: 0.22,
-                speed: (3.0, 5.0),
-                spread: 75.0,
-                gravity: Vector3::new(0.0, -9.0, 0.0),
-                size: (0.015, 0.035),
-                radius: 0.05,
-                damping: 1.0,
-                hdr: 6.0,
+                amount: 44,
+                life: 0.34,
+                speed: (2.5, 6.5),
+                spread: 55.0,
+                gravity: Vector3::new(0.0, -7.0, 0.0),
+                size: (0.025, 0.05),
+                radius: 0.06,
+                damping: 2.5,
+                hdr: 1.7,
+                ..base
+            },
+            Recipe::Flash => Params {
+                amount: 2,
+                life: 0.14,
+                speed: (0.0, 0.05),
+                spread: 180.0,
+                size: (0.45, 0.6),
+                radius: 0.0,
+                damping: 0.0,
+                hdr: 3.5,
                 ..base
             },
             Recipe::Droplets => Params {
@@ -253,8 +269,8 @@ fn look_of(kind: VfxKind) -> (Recipe, Color, Option<(Color, f32, f32)>) {
         }
         VfxKind::Sparkle => (Recipe::Glints, rgb(1.0, 0.95, 0.8), None),
         VfxKind::Sparks => {
-            let c = rgb(1.0, 0.72, 0.38);
-            (Recipe::Sparks, c, Some((c, 3.0, 0.07)))
+            let c = rgb(1.0, 0.6, 0.22);
+            (Recipe::Sparks, c, Some((c, 5.0, 0.1)))
         }
         VfxKind::Blood(c) => (Recipe::Droplets, c, None),
     }
@@ -310,6 +326,8 @@ struct Pending {
     at: Vector3,
     left: f32,
     tint: Option<Color>,
+    /// Which way the particles go (None: the recipe's).
+    dir: Option<Vector3>,
 }
 
 /// Emitters kept per recipe.
@@ -492,10 +510,29 @@ impl Vfx {
     }
 
     fn burst_as(&mut self, kind: VfxKind, at: Vector3, tint: Option<Color>) {
+        self.burst_dir(kind, at, tint, None);
+    }
+
+    /// A blow landing at `at`, its sparks thrown out towards `toward` (the
+    /// striker's side) after `secs`.
+    pub fn hit(&mut self, at: Vector3, toward: Vector3, secs: f32) {
+        self.pending.push(Pending {
+            kind: VfxKind::Sparks,
+            at,
+            left: secs,
+            tint: None,
+            dir: Some((toward.normalized() + Vector3::UP * 0.6).normalized()),
+        });
+    }
+
+    fn burst_dir(&mut self, kind: VfxKind, at: Vector3, tint: Option<Color>, dir: Option<Vector3>) {
         let (recipe, color, light) = look_of(kind);
         let color = tint.unwrap_or(color);
         let light = light.map(|(c, e, s)| (tint.unwrap_or(c), e, s));
-        self.emit(recipe, color, at);
+        self.emit(recipe, color, at, dir);
+        if recipe == Recipe::Sparks {
+            self.emit(Recipe::Flash, color, at, None);
+        }
         if let Some((c, energy, secs)) = light {
             self.flash(at + Vector3::new(0.0, 0.3, 0.0), c, energy, secs);
         }
@@ -519,6 +556,7 @@ impl Vfx {
             at,
             left: secs,
             tint: None,
+            dir: None,
         });
     }
 
@@ -544,6 +582,7 @@ impl Vfx {
             at: to,
             left: BEAM_SECS * 0.4,
             tint,
+            dir: None,
         });
     }
 
@@ -665,7 +704,7 @@ impl Vfx {
         }
     }
 
-    fn emit(&mut self, recipe: Recipe, color: Color, at: Vector3) {
+    fn emit(&mut self, recipe: Recipe, color: Color, at: Vector3, dir: Option<Vector3>) {
         let pool = self.emitters.entry(recipe).or_default();
         let i = match pool.iter().position(|e| e.busy <= 0.0) {
             Some(i) => i,
@@ -684,6 +723,7 @@ impl Vfx {
         let p = recipe.params();
         let e = &mut pool[i];
         e.process.set_color_ramp(&ramp(color, p.hdr));
+        e.process.set_direction(dir.unwrap_or(p.dir));
         e.node.set_position(at);
         e.node.restart();
         e.node.set_emitting(true);
@@ -800,14 +840,14 @@ impl Vfx {
         self.pending.retain_mut(|p| {
             p.left -= delta;
             if p.left <= 0.0 {
-                due.push((p.kind, p.at, p.tint));
+                due.push((p.kind, p.at, p.tint, p.dir));
                 false
             } else {
                 true
             }
         });
-        for (kind, at, tint) in due {
-            self.burst_as(kind, at, tint);
+        for (kind, at, tint, dir) in due {
+            self.burst_dir(kind, at, tint, dir);
         }
     }
 
@@ -911,8 +951,22 @@ fn new_emitter(root: &mut Gd<Node3D>, recipe: Recipe, soft: &Gd<Texture2D>) -> E
         },
     );
     node.set_emitting(false);
-    node.set_draw_pass_mesh(0, &quad(mean));
-    node.set_material_override(&particle_material(soft, p.additive, !p.additive));
+    if recipe == Recipe::Sparks {
+        // a streak along its velocity, facing the camera round it
+        let mut streak = QuadMesh::new_gd();
+        streak.set_size(Vector2::new(mean * 0.9, mean * 4.0));
+        node.set_draw_pass_mesh(0, &streak);
+        node.set_transform_align(TransformAlign::Z_BILLBOARD_Y_TO_VELOCITY);
+        let mut m = particle_material(soft, true, false);
+        if let Ok(mut b) = m.clone().try_cast::<StandardMaterial3D>() {
+            b.set_billboard_mode(BillboardMode::DISABLED);
+            m = b.upcast();
+        }
+        node.set_material_override(&m);
+    } else {
+        node.set_draw_pass_mesh(0, &quad(mean));
+        node.set_material_override(&particle_material(soft, p.additive, !p.additive));
+    }
     node.set_cast_shadows_setting(ShadowCastingSetting::OFF);
     node.set_visibility_aabb(Aabb::new(
         Vector3::new(-3.0, -2.0, -3.0),
