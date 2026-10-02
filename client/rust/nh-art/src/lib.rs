@@ -214,6 +214,9 @@ pub struct ModelSpec {
     pub glow: Option<String>,
     #[serde(default)]
     pub glow_energy: f32,
+    /// Shade the scene's meshes smooth (a low-poly pack's flat facets).
+    #[serde(default)]
+    pub smooth: bool,
 }
 
 impl ModelSpec {
@@ -934,6 +937,7 @@ impl ArtManifest {
             roughness: None,
             glow: None,
             glow_energy: 0.0,
+            smooth: false,
         };
     }
 

@@ -3,6 +3,8 @@
 //! a lamp lit and snuffed) and `item-use` (quaff, read, zap, cast, eat,
 //! apply, throw each start their clip and effect).
 
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+
 use godot::classes::{Node, Node3D};
 use godot::prelude::*;
 use nh_world::Prompt;
@@ -389,6 +391,29 @@ fn hostile_near(g: &RenethackGame) -> Option<((i32, i32), char)> {
     })
 }
 
+static BLOW_MARK: AtomicU64 = AtomicU64::new(0);
+static SHOT_TAKEN: AtomicBool = AtomicBool::new(false);
+
+/// The hero's last blow landed (the log says so since it was struck).
+fn blow_landed(g: &RenethackGame) -> bool {
+    let mark = BLOW_MARK.load(Ordering::Relaxed);
+    g.world
+        .log
+        .since(mark)
+        .any(|m| m.text.starts_with("You hit") || m.text.starts_with("You kill"))
+}
+
+/// The blow meets its target: the attack clip just past contact, while
+/// its sparks fly (they start at 0.16 s and last 0.22 s).
+fn contact(g: &RenethackGame) -> Result<bool, String> {
+    let map = map_view(g)?;
+    let Some(p) = map.hero_model().and_then(|m| m.player()) else {
+        return Ok(false);
+    };
+    let t = p.get_current_animation_position();
+    Ok(p.is_playing() && (0.17..0.32).contains(&t))
+}
+
 /// The hero is mid-blow: the attack clip a little way in.
 fn mid_blow(g: &RenethackGame) -> Result<bool, String> {
     let map = map_view(g)?;
@@ -425,28 +450,49 @@ pub(super) fn combat() -> Vec<Step> {
         }),
         Step::Wait("the camera on the hero", camera_settled),
     ]);
-    // the first blow, caught mid-swing for the picture
-    steps.extend([
-        Step::KeyFrom("a blow at the hostile", |g| {
-            let k = hostile_near(g).map_or('s', |(_, k)| k);
-            Ok(nh_world::KeyInput::plain(nh_world::Key::Char(k)))
-        }),
-        Step::Request("a command after the blow", command),
-        Step::Wait("the hero mid-blow", mid_blow),
-        Step::Shot("combat-blow"),
-    ]);
-    // blow after blow until the fight is over
-    for _ in 0..8 {
+    // blow after blow; the first that lands is caught as its sparks fly
+    steps.push(Step::Call("no picture yet", |_| {
+        SHOT_TAKEN.store(false, Ordering::Relaxed);
+        Ok(())
+    }));
+    for _ in 0..10 {
         steps.extend([
+            Step::Call("mark the log", |g| {
+                BLOW_MARK.store(g.world.log.last_seq(), Ordering::Relaxed);
+                Ok(())
+            }),
             Step::KeyFrom("a blow at the hostile", |g| {
                 let k = hostile_near(g).map_or('s', |(_, k)| k);
                 Ok(nh_world::KeyInput::plain(nh_world::Key::Char(k)))
             }),
             Step::Request("a command after the blow", command),
+            Step::Wait("the blow's contact (or a miss)", |g| {
+                if !blow_landed(g) || SHOT_TAKEN.load(Ordering::Relaxed) {
+                    return Ok(true);
+                }
+                // at contact, or past it (the next hit gets the picture)
+                let map = map_view(g)?;
+                let p = map.hero_model().and_then(|m| m.player());
+                Ok(p.is_none_or(|p| !p.is_playing() || p.get_current_animation_position() >= 0.17))
+            }),
+            Step::ShotIf("combat-blow", |g| {
+                let now = blow_landed(g) && !SHOT_TAKEN.load(Ordering::Relaxed) && contact(g)?;
+                if now {
+                    SHOT_TAKEN.store(true, Ordering::Relaxed);
+                }
+                Ok(now)
+            }),
         ]);
     }
     steps.extend([
         Step::Wait("the hero settled", |g| Ok(!mid_blow(g)?)),
+        Step::Call("a landed blow was pictured", |_| {
+            if SHOT_TAKEN.load(Ordering::Relaxed) {
+                Ok(())
+            } else {
+                Err("no blow landed at a moment for the picture".into())
+            }
+        }),
         Step::Shot("combat-after"),
         Step::Call("blows struck, a target reeled", |g| {
             let s = map_view(g)?.motion_stats();

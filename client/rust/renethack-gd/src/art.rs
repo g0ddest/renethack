@@ -17,9 +17,9 @@ use godot::classes::base_material_3d::{
 };
 use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::{
-    Animation, AnimationLibrary, AnimationPlayer, BaseMaterial3D, BoneAttachment3D, FileAccess,
-    Material, Mesh, MeshInstance3D, Node, Node3D, OrmMaterial3D, PackedScene, ResourceLoader,
-    Skeleton3D, StandardMaterial3D, Texture2D,
+    Animation, AnimationLibrary, AnimationPlayer, ArrayMesh, BaseMaterial3D, BoneAttachment3D,
+    FileAccess, Material, Mesh, MeshInstance3D, Node, Node3D, OrmMaterial3D, PackedScene,
+    ResourceLoader, Skeleton3D, StandardMaterial3D, SurfaceTool, Texture2D,
 };
 use godot::prelude::*;
 use nh_art::{ArtManifest, MaterialSpec, Proc, Resolved, Skin};
@@ -155,6 +155,8 @@ pub struct Art {
     proc_anims: HashMap<Proc, Gd<AnimationLibrary>>,
     /// The clips built in code on the characters' skeleton (`proc/read`).
     proc_clips: Option<Gd<AnimationLibrary>>,
+    /// Meshes shaded smooth, by the source mesh's id.
+    smoothed: HashMap<i64, Gd<Mesh>>,
     pool: HashMap<PoolKey, Vec<Model>>,
     warned: HashSet<String>,
     /// Instances handed out and not given back.
@@ -200,6 +202,7 @@ impl Art {
             derived: HashMap::new(),
             proc_anims: HashMap::new(),
             proc_clips: None,
+            smoothed: HashMap::new(),
             pool: HashMap::new(),
             warned: HashSet::new(),
             live: 0,
@@ -548,6 +551,9 @@ impl Art {
             (Some(kind), _) => self.build_proc(kind, &spec, look),
             (None, Some(scene)) => {
                 let inner = scene.instantiate_as::<Node3D>();
+                if spec.smooth {
+                    self.smooth(&inner);
+                }
                 let player = self.animate_scene(&inner, &spec);
                 if let Some(kind) = spec.head.as_deref() {
                     self.attach_head(&inner, kind);
@@ -664,6 +670,46 @@ impl Art {
         }
     }
 
+    /// Shade a scene's meshes smooth: each surface's normals are made
+    /// again across its shared corners (the skin weights stay); once per
+    /// mesh, shared by every instance.
+    fn smooth(&mut self, inner: &Gd<Node3D>) {
+        for node in inner
+            .find_children_ex("*")
+            .type_("MeshInstance3D")
+            .owned(false)
+            .done()
+            .iter_shared()
+        {
+            let Ok(mut mi) = node.try_cast::<MeshInstance3D>() else {
+                continue;
+            };
+            let Some(src) = mi.get_mesh() else {
+                continue;
+            };
+            let key = src.instance_id().to_i64();
+            let mesh = match self.smoothed.get(&key) {
+                Some(m) => m.clone(),
+                None => {
+                    let out = ArrayMesh::new_gd();
+                    for i in 0..src.get_surface_count() {
+                        let mut st = SurfaceTool::new_gd();
+                        st.create_from(&src, i);
+                        st.generate_normals();
+                        if let Some(mat) = src.surface_get_material(i) {
+                            st.set_material(&mat);
+                        }
+                        st.commit_ex().existing(&out).done();
+                    }
+                    let out: Gd<Mesh> = out.upcast();
+                    self.smoothed.insert(key, out.clone());
+                    out
+                }
+            };
+            mi.set_mesh(&mesh);
+        }
+    }
+
     /// A head on the rig's `Head` bone (the outfits come without one).
     fn attach_head(&mut self, inner: &Gd<Node3D>, kind: &str) {
         let Some(mut skeleton) = find::<Skeleton3D>(&inner.clone().upcast()) else {
@@ -676,7 +722,7 @@ impl Art {
         head.set_name("ProcHead");
         head.set_scale(Vector3::new(0.88, 0.88, 0.88));
         bone.add_child(&head);
-        let skin = self.flat(Color::from_rgb(0.56, 0.4, 0.31), Finish::Matte);
+        let skin = lit_skin(Color::from_rgb(0.56, 0.4, 0.31), 0.0);
         let mut kit = Kit {
             art: self,
             skin,
@@ -2113,14 +2159,23 @@ impl Kit<'_> {
 #[path = "object_kit.rs"]
 mod object_kit;
 
-/// Skin that glows a little from inside (a face in a hood's shadow).
+/// Skin: light scattered under it softens the shading (a face, not a
+/// painted mask), a faint rim holds its outline, and `glow` lifts it a
+/// little from inside (a face in a hood's shadow).
 fn lit_skin(color: Color, glow: f32) -> Gd<Material> {
     let mut m = StandardMaterial3D::new_gd();
     m.set_albedo(color);
-    m.set_roughness(0.8);
-    m.set_feature(Feature::EMISSION, true);
-    m.set_emission(color);
-    m.set_emission_energy_multiplier(glow);
+    m.set_roughness(0.55);
+    m.set_feature(Feature::SUBSURFACE_SCATTERING, true);
+    m.set_subsurface_scattering_strength(0.45);
+    m.set_feature(Feature::RIM, true);
+    m.set_rim(0.25);
+    m.set_rim_tint(0.6);
+    if glow > 0.0 {
+        m.set_feature(Feature::EMISSION, true);
+        m.set_emission(color);
+        m.set_emission_energy_multiplier(glow);
+    }
     m.upcast()
 }
 

@@ -3543,14 +3543,24 @@ impl MapView {
             self.strike(from, to, world);
             if hit {
                 self.impact(from, to, world, catalog);
-                // the one struck reels (its hit clip)
-                if let Some(m) = self
-                    .cells
-                    .get(&to)
-                    .and_then(|n| n.look.entity.and_then(|i| n.models.get(i)))
-                    && self.art.flinch(m)
-                {
-                    self.stats.flinches += 1;
+                // the one struck reels (its hit clip), and the blow
+                // flashes on its chest as it lands
+                let struck = self.cells.get(&to).and_then(|n| {
+                    n.look
+                        .entity
+                        .and_then(|i| n.models.get(i).zip(n.look.models.get(i)))
+                });
+                if let Some((m, placed)) = struck {
+                    let height = placed.look.art.height;
+                    if self.art.flinch(m) {
+                        self.stats.flinches += 1;
+                    }
+                    let toward = Vector3::new((from.0 - to.0) as f32, 0.0, (from.1 - to.1) as f32)
+                        .normalized();
+                    let chest = Vector3::new(to.0 as f32, self.ground(to.0, to.1), to.1 as f32)
+                        + Vector3::new(0.0, height * 0.6, 0.0)
+                        + toward * 0.25;
+                    self.vfx.burst_after(VfxKind::Sparkle, chest, CONTACT_SECS);
                 }
             }
         }

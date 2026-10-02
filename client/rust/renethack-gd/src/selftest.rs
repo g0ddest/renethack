@@ -86,6 +86,8 @@ enum Step {
     /// text field, never from inside the game's own call.
     Press(GKey, char, bool),
     Shot(&'static str),
+    /// A screenshot, taken only when the check holds now (else skipped).
+    ShotIf(&'static str, Check),
     /// Answer each question with this key (text windows with OK) until the check holds.
     AnswerUntil(char, &'static str, Check),
     /// Random play until the budget is spent; its own watchdog, no step timeout.
@@ -3655,6 +3657,26 @@ impl SelfTest {
                     godot_print!("selftest: screenshot {}", path.display());
                     self.next();
                 }
+                Step::ShotIf(name, check) => {
+                    if self.frames == 0 && !check(game).unwrap_or(false) {
+                        self.next();
+                        continue;
+                    }
+                    let Some(dir) = self.shots.clone() else {
+                        self.next();
+                        continue;
+                    };
+                    if self.frames < SHOT_FRAMES {
+                        self.frames += 1;
+                        return;
+                    }
+                    let path = dir.join(format!("{name}.png"));
+                    if let Err(why) = save_shot(game, &path) {
+                        return self.fail(game, &why);
+                    }
+                    godot_print!("selftest: screenshot {}", path.display());
+                    self.next();
+                }
                 Step::AnswerUntil(c, _, check) => {
                     match check(game) {
                         Ok(true) => {
@@ -3733,7 +3755,7 @@ fn describe(step: &Step) -> String {
         Step::Dialog(ev) => format!("a request for {ev:?}"),
         Step::Call(what, _) | Step::Inv(what, _) => what.to_string(),
         Step::Press(k, c, _) => format!("a request for key {k:?} {c:?}"),
-        Step::Shot(name) => format!("screenshot {name}"),
+        Step::Shot(name) | Step::ShotIf(name, _) => format!("screenshot {name}"),
     }
 }
 
