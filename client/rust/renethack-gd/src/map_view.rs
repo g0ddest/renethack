@@ -67,6 +67,8 @@ const FOV_DEG: f32 = 40.0;
 /// The overview never goes further (a whole 80x21 level fits well within).
 const MAX_OVERVIEW_DISTANCE: f32 = 80.0;
 const FOLLOW_RATE: f32 = 6.0;
+/// Seconds a new level takes to come up out of black.
+const LEVEL_FADE_SECS: f32 = 0.25;
 /// Seconds from the start of a strike to the blow landing.
 const CONTACT_SECS: f32 = 0.16;
 /// Descent per step when a pointer ray is walked through the raised geometry.
@@ -553,12 +555,19 @@ fn is_pier(sym: &str) -> bool {
 /// A few stones at the foot of the walls beside a floor cell, placed by the
 /// cell (the same every time): small, half sunk and of the rock, never
 /// like something lying there to pick up.
-fn rubble(look: &mut Look, around: &Around, rock: Option<usize>, ctx: &Ctx) {
+fn rubble(
+    look: &mut Look,
+    around: &Around,
+    rock: Option<usize>,
+    ctx: &Ctx,
+    edge: Side,
+    chance: f32,
+) {
     let Some(m) = rock else {
         return;
     };
     for (i, (dx, dz)) in SIDES.iter().enumerate() {
-        if around.sides[i] != Side::Wall || ctx.noise(21 + i as u32) > 0.3 {
+        if around.sides[i] != edge || ctx.noise(21 + i as u32) > chance {
             continue;
         }
         let n = 1 + (ctx.noise(31 + i as u32) * 2.99) as usize;
@@ -773,7 +782,7 @@ fn terrain_base(
         Terrain::Floor | Terrain::DarkFloor => {
             look.ground_tile(tile, ground(lit_shade), Vector3::ZERO);
             look.lit = t == Terrain::Floor;
-            rubble(look, around, bedrock, ctx);
+            rubble(look, around, bedrock, ctx, Side::Wall, 0.3);
         }
         Terrain::Corridor => {
             let lit = sym == "S_litcorr";
@@ -783,6 +792,8 @@ fn terrain_base(
                 Vector3::ZERO,
             );
             look.lit = lit;
+            // stones fallen from the rock along the trench's sides
+            rubble(look, around, bedrock, ctx, Side::Solid, 0.55);
         }
         Terrain::Doorway | Terrain::BrokenDoor => {
             floor(look);
@@ -885,7 +896,6 @@ fn terrain_base(
         Terrain::StairsDown => {
             // a shaft with steps going down, away from the camera, in a
             // rim of stone blocks
-            let stone = main(SHADE_STAIRS);
             let rim = trim(SHADE_LIT);
             for (mesh, x, z) in [
                 (bevel(1.0, 0.1, 0.12), 0.0, -0.44),
@@ -901,17 +911,21 @@ fn terrain_base(
             for x in [-0.36f32, 0.36] {
                 look.solid(bevel(0.08, 1.0, 0.72), wall, at(x, -0.5, 0.0));
             }
-            // an arch over the far end: the way goes down under it
-            let arch = trim(SHADE_LIT);
-            for x in [-0.42f32, 0.42] {
-                look.solid(bevel(0.14, 1.1, 0.24), arch, at(x, 0.55, -0.4));
-            }
-            look.solid(bevel(1.0, 0.22, 0.28), arch, at(0.0, 1.2, -0.4));
+            // worn treads going down, each with a pale worn nosing that
+            // catches the cold light from below (nothing stands over the
+            // shaft to hide them from the camera)
+            let tread = main(SHADE_LIT);
+            let nosing = pbr(floor_mat, 100, Role::Prop, FLOOR_UNSEEN);
             for (i, z) in [0.26f32, 0.08, -0.1, -0.28].into_iter().enumerate() {
                 let top = -0.14 * (i + 1) as f32;
                 let h = top + 0.9;
                 let pos = at(0.0, top - h / 2.0, z);
-                look.solid(bevel(0.76, h, 0.18), stone, pos);
+                look.solid(bevel(0.72, h, 0.18), tread, pos);
+                look.solid(
+                    bevel(0.72, 0.03, 0.04),
+                    nosing,
+                    at(0.0, top - 0.005, z + 0.08),
+                );
             }
             look.sunk = true;
             look.lamp = Some(Lamp::Down);
@@ -1759,6 +1773,10 @@ pub struct MapView {
     vfx: Vfx,
     /// Low mist over the level.
     mist: Gd<FogVolume>,
+    /// The post layer's material, and how far a new level is still
+    /// hidden in black (1 when it is drawn, 0 when it shows).
+    post_mat: Option<Gd<ShaderMaterial>>,
+    fade: f32,
     /// Frame times being summed (RENETHACK_FRAME_STATS).
     stats_window: Option<FrameStats>,
     /// The lit areas changed: place the fill lights again.
@@ -2095,9 +2113,11 @@ impl MapView {
 
         let mut post = CanvasLayer::new_alloc();
         post.set_layer(-1);
+        let mut post_mat = None;
         if let Ok(shader) = godot::tools::try_load::<Shader>("res://shaders/vignette.gdshader") {
             let mut mat = ShaderMaterial::new_gd();
             mat.set_shader(&shader);
+            post_mat = Some(mat.clone());
             let mut rect = ColorRect::new_alloc();
             rect.set_anchors_preset(LayoutPreset::FULL_RECT);
             rect.set_mouse_filter(MouseFilter::IGNORE);
@@ -2200,6 +2220,8 @@ impl MapView {
             fow_dirty: true,
             vfx,
             mist,
+            post_mat,
+            fade: 0.0,
             stats_window: std::env::var_os("RENETHACK_FRAME_STATS").map(|_| FrameStats::default()),
             lights_dirty: false,
             bedrock,
@@ -2402,6 +2424,7 @@ impl MapView {
         }
         self.place_camera();
         self.follow_rings();
+        self.fade_in(new_level, delta as f32);
         self.vfx.process(delta as f32, self.focus);
         self.batches.flush();
         self.frame_stats(delta);
@@ -2448,6 +2471,24 @@ impl MapView {
                 frames: 1,
                 ..FrameStats::default()
             };
+        }
+    }
+
+    /// A new level is built in one long frame: it comes up out of black
+    /// over a quarter of a second after, instead of with a jolt.
+    fn fade_in(&mut self, new_level: bool, delta: f32) {
+        if new_level {
+            self.fade = 1.0;
+        } else if self.fade > 0.0 {
+            // the long frame itself does not count
+            self.fade = (self.fade - delta.min(1.0 / 30.0) / LEVEL_FADE_SECS).max(0.0);
+        } else {
+            return;
+        }
+        if let Some(m) = self.post_mat.as_mut() {
+            let shown = 1.0 - self.fade;
+            let f = 1.0 - shown * shown * (3.0 - 2.0 * shown);
+            m.set_shader_parameter("fade", &f.to_variant());
         }
     }
 
@@ -3091,9 +3132,10 @@ impl MapView {
         self.mist.set_visible(on);
     }
 
-    /// The camera has caught up with its target (self-test screenshots).
+    /// The camera has caught up with its target and a new level has come
+    /// up out of black (self-test screenshots).
     pub fn is_settled(&self) -> bool {
-        self.focus.distance_to(self.target) < 0.05
+        self.focus.distance_to(self.target) < 0.05 && self.fade <= 0.0
     }
 
     /// Load art ahead of need for a few milliseconds (every frame, also
@@ -3216,8 +3258,8 @@ impl MapView {
             Lamp::Down => {
                 light.set_color(STAIR_DOWN_LIGHT);
                 // above the far steps, so their treads catch it
-                light.set_param(Param::ENERGY, 1.4);
-                light.set_param(Param::RANGE, 1.8);
+                light.set_param(Param::ENERGY, 2.2);
+                light.set_param(Param::RANGE, 2.0);
                 light.set_position(origin + at(0.0, -0.1, -0.2));
                 let mut mat = FogMaterial::new_gd();
                 mat.set_density(0.05);
@@ -3928,7 +3970,7 @@ fn fill_lights(area: &[(i32, i32)]) -> Vec<(f32, f32, f32, f32)> {
                     x as f32,
                     y as f32,
                     FILL_STEP as f32 + 1.5,
-                    ROOM_LIGHT_ENERGY * 4.5,
+                    ROOM_LIGHT_ENERGY * 8.0,
                 ));
             }
             x += FILL_STEP;

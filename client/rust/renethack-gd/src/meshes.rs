@@ -216,6 +216,8 @@ impl Tris {
     }
 
     fn done(mut self) -> Gd<Mesh> {
+        // corners shared by triangles of one face are one vertex
+        self.st.index();
         self.st.generate_tangents();
         match self.st.commit() {
             Some(m) => m.upcast(),

@@ -49,6 +49,8 @@ uniform float facets = 0.0;
 // natural rock: the texture's blocks give way to a noise of the place,
 // its relief to the facets
 uniform float natural = 0.0;
+// a faint cold light along the edges the camera sees grazing (rock)
+uniform float rim = 0.0;
 // the same on the tops only (a wall's rock top)
 uniform float natural_top = 0.0;
 // how much a surface glows with its own colour: in view, and remembered
@@ -116,21 +118,42 @@ float tn3(vec3 p) {
 	return tn2(p.xz + p.y * vec2(0.37, 0.71));
 }
 
+// how far the rock at a world point is pushed: a function of the point
+// only, so the corners blocks share move together and leave no cracks;
+// lumps a metre or so across (finer, the grid would show as cobbles), and
+// the tops broken on a larger scale still
+float tl2(vec2 p) {
+	return textureLod(noise_tex, p * 0.125, 0.0).r;
+}
+
+vec3 displacement(vec3 w) {
+	vec2 q = w.xz * 1.1 + w.y * vec2(0.37, 0.71);
+	vec3 d = vec3(tl2(q), tl2(q + 17.3), tl2(q.yx + 31.1)) - 0.5;
+	vec3 dw = d * displace * 3.5;
+	float ridge = 1.0 - abs(tl2(w.xz * 0.8) * 2.0 - 1.0);
+	dw.y += (ridge - 0.55) * displace * 9.0 * smoothstep(0.2, 0.45, w.y);
+	return dw;
+}
+
 void vertex() {
 	vec3 w = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	vec3 n = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
 	if (displace > 0.0) {
-		// a function of where the point is only: the corners blocks share
-		// move together, no cracks
-		// lumps a metre or so across: finer, the grid would show as cobbles
-		vec3 d = vec3(noise3(w * 1.1), noise3(w * 1.1 + 17.3), noise3(w * 1.1 + 31.1)) - 0.5;
-		vec3 dw = d * displace * 3.5;
-		// the tops are uneven on a larger scale too
-		dw.y += (fbm2(w.xz * 0.8) - 0.5) * displace * 7.0 * smoothstep(0.2, 0.45, w.y);
-		w += dw;
+		vec3 dw = displacement(w);
+		// the normal of the pushed surface, from two neighbours pushed too
+		vec3 t = normalize(abs(n.y) > 0.9 ? cross(n, vec3(1.0, 0.0, 0.0)) : cross(n, vec3(0.0, 1.0, 0.0)));
+		vec3 b = cross(n, t);
+		const float DS = 0.05;
+		vec3 p0 = w + dw;
+		vec3 p1 = w + t * DS + displacement(w + t * DS);
+		vec3 p2 = w + b * DS + displacement(w + b * DS);
+		vec3 pn = normalize(cross(p1 - p0, p2 - p0));
+		n = dot(pn, n) < 0.0 ? -pn : pn;
+		w = p0;
 		VERTEX += transpose(mat3(MODEL_MATRIX)) * dw;
 	}
 	wpos = w;
-	wnrm = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
+	wnrm = n;
 }
 
 // a tangent-space normal onto a projection (whiteout blend)
@@ -220,7 +243,7 @@ void fragment() {
 		float h0 = tn3(q);
 		vec3 grad = vec3(tn3(q + vec3(STEP, 0, 0)), tn3(q + vec3(0, STEP, 0)), tn3(q + vec3(0, 0, STEP))) - h0;
 		grad /= STEP;
-		vec3 bump = normalize(n - (grad - dot(grad, n) * n) * 0.1);
+		vec3 bump = normalize(n - (grad - dot(grad, n) * n) * 0.16);
 		wn = normalize(mix(wn, bump, nat));
 		// nor the texture's cavities and gloss: the noise's own
 		orm = mix(orm, vec3(mix(0.55, 1.0, smoothstep(0.25, 0.6, h0)), mix(0.55, 0.9, grain), 0.0), nat);
@@ -263,6 +286,10 @@ void fragment() {
 	METALLIC = metallic * orm.b;
 	AO = orm.r;
 	AO_LIGHT_AFFECT = 0.3;
+	if (rim > 0.0) {
+		float graze = 1.0 - clamp(dot(normalize(wn), normalize(CAMERA_POSITION_WORLD - wpos)), 0.0, 1.0);
+		emission += vec3(0.35, 0.42, 0.6) * pow(graze, 3.0) * rim;
+	}
 	EMISSION = emission;
 	NORMAL = normalize((VIEW_MATRIX * vec4(wn, 0.0)).xyz);
 }

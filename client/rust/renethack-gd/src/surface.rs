@@ -196,7 +196,9 @@ impl Surfaces {
                 set(&mut mat, "displace", 0.06);
                 // the texture's own relief shows through the mottling
                 set(&mut mat, "natural", 0.7);
-                set(&mut mat, "detail_strength", 0.5);
+                set(&mut mat, "detail_strength", 1.1);
+                set(&mut mat, "detail_scale", 3.0);
+                set(&mut mat, "rim", 0.02);
                 set(&mut mat, "glow", 0.05);
                 set(&mut mat, "memory_glow", 0.04);
             }

@@ -9,6 +9,8 @@ uniform float radius = 0.78;
 uniform float softness = 0.45;
 uniform float strength = 0.40;
 uniform float grain = 0.025;
+// a new level comes up out of black (map_view.rs)
+uniform float fade = 0.0;
 
 float hash(vec2 p) {
 	vec3 q = fract(vec3(p.xyx) * 0.1031);
@@ -25,5 +27,6 @@ void fragment() {
 	float luma = dot(col, vec3(0.2126, 0.7152, 0.0722));
 	float n = hash(floor(FRAGCOORD.xy) + fract(TIME * 7.3) * 517.0) - 0.5;
 	col += n * grain * (1.0 - smoothstep(0.0, 0.6, luma) * 0.7);
+	col = mix(col, edge_color * 0.3, fade);
 	COLOR = vec4(col, 1.0);
 }
