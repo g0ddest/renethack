@@ -62,6 +62,10 @@ pub(super) fn branches() -> Vec<Step> {
         },
     )];
     steps.extend(start());
+    // the first level drawn and come up out of black
+    steps.push(Step::Wait("the first level drawn", |g| {
+        drawn_in(g, Branch::Main)
+    }));
     steps.push(Step::Call("the main dungeon's walls", |g| {
         let wall = map_view(g)?.wall_material();
         if wall != "masonry" {
