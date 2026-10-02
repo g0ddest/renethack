@@ -15,8 +15,8 @@ use godot::classes::control::{FocusMode, GrowDirection, MouseFilter, SizeFlags};
 use godot::classes::text_server::{AutowrapMode, OverrunBehavior};
 use godot::classes::{
     Button, CanvasLayer, ColorRect, Control, HBoxContainer, HFlowContainer, InputEvent,
-    InputEventMouseButton, Label, PanelContainer, RichTextLabel, ShaderMaterial, StyleBoxFlat,
-    Time, VBoxContainer,
+    InputEventMouseButton, Label, PanelContainer, Polygon2D, RichTextLabel, ShaderMaterial,
+    StyleBoxFlat, Time, VBoxContainer,
 };
 use godot::global::{HorizontalAlignment, MouseButton, VerticalAlignment};
 use godot::prelude::*;
@@ -367,6 +367,44 @@ pub fn attr_rank(v: &str) -> Option<f32> {
         None => v.trim().parse().ok(),
     }
 }
+
+/// Where the threat arrow goes for a hostile at screen point `at` in a
+/// view of `view`: None while it is in the frame (away from the HUD's
+/// bottom cluster), else a point on the inner edge toward it and the
+/// angle it points at.
+pub fn edge_arrow(at: Option<Vector2>, view: Vector2) -> Option<(Vector2, f32)> {
+    let at = at?;
+    // the frame the player watches: the edges less a margin, above the bar
+    let (left, top) = (ARROW_MARGIN, ARROW_MARGIN);
+    let (right, bottom) = (
+        view.x - ARROW_MARGIN,
+        view.y - CLUSTER_BOTTOM - CLUSTER_H - ARROW_MARGIN,
+    );
+    if (left..=right).contains(&at.x) && (top..=bottom).contains(&at.y) {
+        return None;
+    }
+    let c = Vector2::new(view.x * 0.5, (top + bottom) * 0.5);
+    let d = at - c;
+    if d.length() < 1.0 {
+        return None;
+    }
+    // scale the way from the centre so it meets the inner rectangle
+    let tx = if d.x.abs() > 1e-3 {
+        (if d.x > 0.0 { right - c.x } else { left - c.x }) / d.x
+    } else {
+        f32::MAX
+    };
+    let ty = if d.y.abs() > 1e-3 {
+        (if d.y > 0.0 { bottom - c.y } else { top - c.y }) / d.y
+    } else {
+        f32::MAX
+    };
+    let t = tx.min(ty);
+    Some((c + d * t, d.y.atan2(d.x)))
+}
+
+/// The arrow keeps this far from the screen's edges.
+const ARROW_MARGIN: f32 = 48.0;
 
 /// The compact layout (ui-design §1.6): the log docks over the cluster
 /// when there is no room for it beside the cluster.
@@ -734,6 +772,13 @@ pub struct Hud {
     arrivals: VecDeque<(u64, f64)>,
     transient_panel: Gd<PanelContainer>,
     transient: Gd<Label>,
+    /// getpos's description of the cursor's cell, next to that cell.
+    cursor_note_panel: Gd<PanelContainer>,
+    cursor_note: Gd<Label>,
+    /// Where on screen the getpos cursor is (None: not in getpos).
+    cursor_at: Option<Vector2>,
+    /// The arrow at the screen's edge toward a hostile out of the frame.
+    threat: Gd<Control>,
 
     // minimap, mode badge and order line, top right
     minimap_panel: Gd<PanelContainer>,
@@ -1031,6 +1076,34 @@ impl Hud {
         transient_panel.add_child(&transient);
         transient_panel.set_visible(false);
         root.add_child(&transient_panel);
+        let mut cursor_note_panel = theme::framed(Frame::Tooltip);
+        cursor_note_panel.set_mouse_filter(MouseFilter::IGNORE);
+        let cursor_note = theme::styled_label("", Face::Body, 16, theme::GOLD_BRIGHT);
+        cursor_note_panel.add_child(&cursor_note);
+        cursor_note_panel.set_visible(false);
+        root.add_child(&cursor_note_panel);
+
+        // an arrow (pointing right before it is turned) with a dark rim
+        let mut threat = Control::new_alloc();
+        threat.set_mouse_filter(MouseFilter::IGNORE);
+        let tip = PackedVector2Array::from(&[
+            Vector2::new(22.0, 0.0),
+            Vector2::new(-14.0, -16.0),
+            Vector2::new(-6.0, 0.0),
+            Vector2::new(-14.0, 16.0),
+        ]);
+        let mut rim = Polygon2D::new_alloc();
+        rim.set_polygon(&tip);
+        rim.set_color(Color::from_rgba(0.02, 0.01, 0.01, 0.85));
+        rim.set_scale(Vector2::new(1.25, 1.25));
+        threat.add_child(&rim);
+        let mut arrow = Polygon2D::new_alloc();
+        arrow.set_polygon(&tip);
+        arrow.set_color(theme::DANGER);
+        threat.add_child(&arrow);
+        threat.set_visible(false);
+        threat.set_tooltip_text("A hostile in view, out of the frame");
+        root.add_child(&threat);
 
         // ---- minimap, top right; the mode and the order under it ----
         let mut minimap_panel = theme::framed(Frame::Hud);
@@ -1258,6 +1331,10 @@ impl Hud {
             arrivals: VecDeque::new(),
             transient_panel,
             transient,
+            cursor_note_panel,
+            cursor_note,
+            cursor_at: None,
+            threat,
             minimap_panel: minimap_frame,
             minimap_well,
             panel_open: false,
@@ -1337,6 +1414,35 @@ impl Hud {
             self.flash_since = Some(now_secs());
             self.flash_ribbon.set_modulate(Color::WHITE);
             self.flash_ribbon.set_visible(true);
+        }
+    }
+
+    /// Where on screen getpos's cursor is, while it is up.
+    pub fn set_cursor_at(&mut self, at: Option<Vector2>) {
+        self.cursor_at = at;
+    }
+
+    /// A hostile the hero sees at `at` on screen: when it is out of the
+    /// frame, an arrow at the edge points to it.
+    pub fn set_threat(&mut self, at: Option<Vector2>, now: f64) {
+        let view = self.root.get_viewport_rect().size;
+        // in a fight a hostile in the frame gets the arrow over its head
+        // (a doorway's wall may hide it), pointing down and bobbing
+        let over = at.filter(|_| self.combat == Some(true)).map(|p| {
+            let bob = 6.0 * (now * TAU * 1.2).sin() as f32;
+            let y = (p.y - 70.0 - bob).max(ARROW_MARGIN);
+            (Vector2::new(p.x, y), std::f32::consts::FRAC_PI_2)
+        });
+        let edge = edge_arrow(at, view).or(over);
+        match edge {
+            Some((p, angle)) => {
+                self.threat.set_position(p);
+                self.threat.set_rotation(angle);
+                let a = 0.65 + 0.35 * pulse_now(now);
+                self.threat.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, a));
+                self.threat.set_visible(true);
+            }
+            None => self.threat.set_visible(false),
         }
     }
 
@@ -1446,9 +1552,31 @@ impl Hud {
             self.show_full_log(world, follow);
         }
         let transient = world.transient.as_deref().unwrap_or("").trim();
-        if self.transient.get_text() != transient {
-            self.transient.set_text(transient);
-            self.transient_panel.set_visible(!transient.is_empty());
+        // getpos describes the cursor's cell: next to that cell
+        let (docked, note) = match self.cursor_at {
+            Some(_) => ("", transient),
+            None => (transient, ""),
+        };
+        if self.transient.get_text() != docked {
+            self.transient.set_text(docked);
+            self.transient_panel.set_visible(!docked.is_empty());
+        }
+        if self.cursor_note.get_text() != note {
+            self.cursor_note.set_text(note);
+            self.cursor_note_panel.reset_size();
+            self.cursor_note_panel.set_visible(!note.is_empty());
+        }
+        if let Some(at) = self.cursor_at.filter(|_| !note.is_empty()) {
+            let view = self.root.get_viewport_rect().size;
+            let size = self.cursor_note_panel.get_size();
+            let mut p = at + Vector2::new(36.0, -size.y * 0.5);
+            if p.x + size.x > view.x - 8.0 {
+                p.x = at.x - 36.0 - size.x;
+            }
+            p.y = p.y.clamp(8.0, view.y - size.y - 8.0);
+            if self.cursor_note_panel.get_position() != p {
+                self.cursor_note_panel.set_position(p);
+            }
         }
     }
 
@@ -1978,6 +2106,7 @@ impl Hud {
             self.mode_panel.clone().upcast::<Control>(),
             self.order_label.clone().upcast(),
             self.transient_panel.clone().upcast(),
+            self.threat.clone().upcast(),
         ] {
             c.set_modulate(m);
         }
@@ -2016,6 +2145,10 @@ impl Hud {
         self.full_log.set_text("");
         self.transient.set_text("");
         self.transient_panel.set_visible(false);
+        self.cursor_note.set_text("");
+        self.cursor_note_panel.set_visible(false);
+        self.cursor_at = None;
+        self.threat.set_visible(false);
         self.set_prompt_line(None);
         self.set_tooltip(None, Vector2::ZERO);
         self.set_full_log(false);
@@ -2209,6 +2342,22 @@ mod tests {
         assert!(attr_rank("18/**") > attr_rank("18/99"));
         assert!(attr_rank("19") > attr_rank("18/**").map(|v| v - 0.5));
         assert_eq!(attr_rank("x"), None);
+    }
+
+    #[test]
+    fn the_threat_arrow_points_from_the_edge() {
+        let view = Vector2::new(1920.0, 1080.0);
+        // on screen: no arrow
+        assert_eq!(edge_arrow(Some(Vector2::new(900.0, 500.0)), view), None);
+        assert_eq!(edge_arrow(None, view), None);
+        // far to the right: on the right edge, pointing right
+        let (p, a) = edge_arrow(Some(Vector2::new(4000.0, 380.0)), view).unwrap();
+        assert!((p.x - (1920.0 - ARROW_MARGIN)).abs() < 0.5);
+        assert!(a.abs() < 0.1);
+        // above: on the top edge, pointing up
+        let (p, a) = edge_arrow(Some(Vector2::new(960.0, -900.0)), view).unwrap();
+        assert!((p.y - ARROW_MARGIN).abs() < 0.5);
+        assert!((a + std::f32::consts::FRAC_PI_2).abs() < 0.1);
     }
 
     #[test]

@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 use godot::classes::notify::NodeNotification;
 use godot::classes::{
     CanvasLayer, INode, InputEvent, InputEventKey, InputEventMouseButton, InputEventMouseMotion,
-    Node3D, Os, ProjectSettings,
+    Node3D, Os, ProjectSettings, Time,
 };
 use godot::global::MouseButton;
 use godot::prelude::*;
@@ -1904,6 +1904,35 @@ impl RenethackGame {
         if std::mem::take(&mut self.world.wants_history) {
             ui.hud.open_full_log();
         }
+        // getpos's cursor on screen, and the nearest hostile in view
+        let camera = self.base().get_viewport().and_then(|v| v.get_camera_3d());
+        let on_screen = |(x, y): (i32, i32), lift: f32| {
+            let cam = camera.as_ref()?;
+            let p = Vector3::new(x as f32, lift, y as f32);
+            if cam.is_position_behind(p) {
+                return None;
+            }
+            Some(cam.unproject_position(p))
+        };
+        let cursor = self
+            .world
+            .cursor
+            .filter(|_| self.world.getpos)
+            .and_then(|c| on_screen(c, 0.3));
+        let hero = self.world.hero();
+        let threat = match (catalog.as_deref(), hero) {
+            (Some(cat), Some(h)) => nh_world::threats(&self.world, cat, self.driver.peaceful())
+                .into_iter()
+                .min_by_key(|&(x, y)| (x - h.0).abs().max((y - h.1).abs())),
+            _ => None,
+        };
+        let threat = threat.and_then(|t| on_screen(t, 0.8));
+        let Some(ui) = self.ui.as_mut() else {
+            return;
+        };
+        ui.hud.set_cursor_at(cursor);
+        ui.hud
+            .set_threat(threat, Time::singleton().get_ticks_msec() as f64 / 1000.0);
         ui.hud.sync(&mut self.world, catalog.as_deref());
         self.sync_inventory();
         self.update_hover();
