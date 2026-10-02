@@ -22,8 +22,8 @@ use godot::classes::light_3d::Param;
 use godot::classes::particle_process_material::{EmissionShape, Parameter};
 use godot::classes::{
     Decal, GpuParticles3D, Gradient, GradientTexture1D, Image, ImageTexture, Material,
-    MeshInstance3D, Node3D, OmniLight3D, ParticleProcessMaterial, QuadMesh, Shader, ShaderMaterial,
-    StandardMaterial3D, Texture2D,
+    MeshInstance3D, Node3D, OmniLight3D, PackedScene, ParticleProcessMaterial, QuadMesh, Shader,
+    ShaderMaterial, StandardMaterial3D, Texture2D,
 };
 use godot::prelude::*;
 
@@ -336,12 +336,41 @@ const POOL: usize = 6;
 const SPLATS: usize = 24;
 const SPLAT_SECS: f32 = 14.0;
 const BEAM_SECS: f32 = 0.45;
+/// Binbun's ground explosion (CC0), and how many may burn at once.
+const BLAST_SCENE: &str =
+    "res://art/cc0/binbun/BinbunVFX_Vol2/ExplosionFX/effects/ground/vfx_ground_explosion_01.tscn";
+const BLASTS: usize = 3;
+
+/// RPicster's particle textures (CC0) by recipe: a starburst for a blow's
+/// flare and a cast's swirl, a star for glints and flares.
+fn particle_textures() -> HashMap<Recipe, Gd<Texture2D>> {
+    let dir = "res://art/cc0/rpicster/256/";
+    [
+        (Recipe::Flash, "effect_3"),
+        (Recipe::Glints, "spotlight_5"),
+        (Recipe::Flare, "spotlight_5"),
+        (Recipe::Runes, "spotlight_8"),
+    ]
+    .into_iter()
+    .filter_map(|(r, name)| {
+        godot::tools::try_load::<Texture2D>(&format!("{dir}{name}.png"))
+            .ok()
+            .map(|t| (r, t))
+    })
+    .collect()
+}
 /// Motes of dust around the camera's focus in the main dungeon.
 const DUST: i32 = 220;
 
 pub struct Vfx {
     root: Gd<Node3D>,
     soft: Gd<Texture2D>,
+    /// The particle textures of recipes that have their own (RPicster's
+    /// starbursts and flares), else the soft disc.
+    textures: HashMap<Recipe, Gd<Texture2D>>,
+    /// Binbun's explosion (CC0): pooled instances and how long each is busy.
+    blast_scene: Option<Gd<PackedScene>>,
+    blasts: Vec<(Gd<Node3D>, f32)>,
     splat: Gd<Texture2D>,
     emitters: HashMap<Recipe, Vec<Emitter>>,
     flashes: Vec<Flash>,
@@ -485,6 +514,9 @@ impl Vfx {
             root: node,
             splat: splat_texture(),
             soft,
+            textures: particle_textures(),
+            blast_scene: godot::tools::try_load::<PackedScene>(BLAST_SCENE).ok(),
+            blasts: Vec::new(),
             emitters: HashMap::new(),
             flashes: Vec::new(),
             beams: Vec::new(),
@@ -547,8 +579,41 @@ impl Vfx {
                 Vector3::new(at.x, 0.0, at.z),
                 Color::from_rgb(0.05, 0.04, 0.035),
             );
-            let _ = c;
+            self.blast(c, at);
         }
+    }
+
+    /// The explosion scene (when there is one) at `at`, in the blast's
+    /// colour.
+    fn blast(&mut self, color: Color, at: Vector3) {
+        let Some(scene) = self.blast_scene.clone() else {
+            return;
+        };
+        let i = match self.blasts.iter().position(|(_, busy)| *busy <= 0.0) {
+            Some(i) => i,
+            None if self.blasts.len() < BLASTS => {
+                let Some(node) = scene
+                    .instantiate()
+                    .and_then(|n| n.try_cast::<Node3D>().ok())
+                else {
+                    return;
+                };
+                self.root.add_child(&node);
+                self.blasts.push((node, 0.0));
+                self.blasts.len() - 1
+            }
+            None => return,
+        };
+        let (node, busy) = &mut self.blasts[i];
+        node.set_global_position(at - Vector3::new(0.0, 0.5, 0.0));
+        node.set_scale(Vector3::new(0.6, 0.6, 0.6));
+        node.set("one_shot", &true.to_variant());
+        node.set("primary_color", &color.to_variant());
+        node.set_visible(true);
+        if node.has_method("play") {
+            node.call("play", &[]);
+        }
+        *busy = 2.5;
     }
 
     /// An effect a little later (seconds).
@@ -711,7 +776,8 @@ impl Vfx {
         let i = match pool.iter().position(|e| e.busy <= 0.0) {
             Some(i) => i,
             None if pool.len() < POOL => {
-                let e = new_emitter(&mut self.root, recipe, &self.soft);
+                let tex = self.textures.get(&recipe).unwrap_or(&self.soft);
+                let e = new_emitter(&mut self.root, recipe, tex);
                 pool.push(e);
                 pool.len() - 1
             }
@@ -793,6 +859,14 @@ impl Vfx {
         self.dust.set_position(focus + Vector3::new(0.0, 1.2, 0.0));
         for e in self.emitters.values_mut().flatten() {
             e.busy -= delta;
+        }
+        for (node, busy) in &mut self.blasts {
+            if *busy > 0.0 {
+                *busy -= delta;
+                if *busy <= 0.0 {
+                    node.set_visible(false);
+                }
+            }
         }
         for f in &mut self.flashes {
             if f.left > 0.0 {

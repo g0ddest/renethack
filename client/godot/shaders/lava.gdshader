@@ -9,6 +9,12 @@ uniform vec4 crust : source_color = vec4(0.07, 0.05, 0.045, 1.0);
 uniform float energy = 3.5;
 uniform sampler2D noise_tex : filter_linear_mipmap, repeat_enable;
 uniform sampler2D fow_tex : filter_linear, repeat_disable;
+// a photographed flow (TextureCan's Volcanic Lava Flow): its crust and
+// its molten channels; without it the crust is all noise
+uniform sampler2D flow_albedo : source_color, filter_linear_mipmap, repeat_enable;
+uniform sampler2D flow_glow : source_color, filter_linear_mipmap, repeat_enable;
+uniform bool has_flow = false;
+uniform float flow_scale = 0.45;
 
 const vec2 FIELD = vec2(80.0, 21.0);
 
@@ -33,6 +39,15 @@ void fragment() {
 	float seethe = 0.8 + 0.2 * sin(t * 2.1 + plates * 13.0);
 	vec3 glow = molten.rgb * crack * seethe;
 	vec3 rock = crust.rgb * mix(0.7, 1.3, fine);
+	if (has_flow) {
+		// the flow creeps; the noise's cracks open on its channels
+		vec2 uv = wpos.xz * flow_scale + flow * 0.6;
+		vec3 g = texture(flow_glow, uv).rgb;
+		float channel = dot(g, vec3(0.5, 0.4, 0.1));
+		crack = max(channel * 1.2, crack * 0.35);
+		glow = molten.rgb * crack * seethe;
+		rock = texture(flow_albedo, uv).rgb * 0.6;
+	}
 
 	float seen = texture(fow_tex, (wpos.xz + 0.5) / FIELD).r;
 	ALBEDO = mix(rock, molten.rgb * 0.3, crack);

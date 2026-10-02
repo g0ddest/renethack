@@ -33,7 +33,7 @@ use godot::classes::{
     Camera3D, CanvasLayer, ColorRect, Decal, DirectionalLight3D, Environment, FogMaterial,
     FogVolume, GeometryInstance3D, Label3D, Material, MeshInstance3D, Node3D, OmniLight3D,
     PackedScene, RenderingServer, Shader, ShaderMaterial, StandardMaterial3D, SurfaceTool,
-    SystemFont, VisualInstance3D, WorldEnvironment,
+    SystemFont, WorldEnvironment,
 };
 use godot::prelude::*;
 use nh_art::{ArtManifest, Tint};
@@ -91,6 +91,15 @@ fn grade_curve(shadows: Color, highlights: Color) -> Gd<godot::classes::Gradient
 /// `NEAR_CELLS`) are drawn now, the rest over the next frames.
 const MANY_CELLS: usize = 150;
 const NEAR_CELLS: i32 = 8;
+/// Where a feature's lamp burns on its cell.
+fn lamp_offset(kind: Lamp) -> Vector3 {
+    match kind {
+        Lamp::Up => at(0.0, 1.5, -0.3),
+        Lamp::Lava => at(0.0, 0.4, 0.0),
+        Lamp::Down => at(0.0, -0.1, -0.2),
+    }
+}
+
 /// Time per frame spent drawing a new level's cells (the rest wait for
 /// the next frames).
 const BUILD_BUDGET: std::time::Duration = std::time::Duration::from_millis(4);
@@ -1828,7 +1837,7 @@ struct CellNodes {
 }
 
 impl CellNodes {
-    fn free(self, art: &mut Art, batches: &mut Batches) {
+    fn free(self, art: &mut Art, batches: &mut Batches, lamps: &mut Vec<CellLamp>) {
         for slot in self.solids {
             batches.remove(slot);
         }
@@ -1841,12 +1850,21 @@ impl CellNodes {
         if let Some(mut d) = self.ring {
             d.queue_free();
         }
-        if let Some(mut l) = self.lamp {
-            l.light.queue_free();
-            if let Some(mut m) = l.mist {
-                m.queue_free();
-            }
+        if let Some(l) = self.lamp {
+            lamps.push(l.hidden());
         }
+    }
+}
+
+impl CellLamp {
+    /// Put out, to be lit again elsewhere: a light freed while the
+    /// renderer pairs it with geometry upsets Godot (a crash at exit).
+    fn hidden(mut self) -> CellLamp {
+        self.light.set_visible(false);
+        if let Some(m) = self.mist.as_mut() {
+            m.set_visible(false);
+        }
+        self
     }
 }
 
@@ -1951,6 +1969,8 @@ pub struct MapView {
     mist: Gd<FogVolume>,
     /// Profiling: time of the parts of the last sync (ms).
     prof: Vec<(&'static str, f64)>,
+    /// Lamps of features put out, to be lit again elsewhere.
+    spare_lamps: Vec<CellLamp>,
     /// Water, lava and the air over lava: their materials.
     liquids: HashMap<Liquid, Gd<Material>>,
     /// The cells of a new level still to draw, the nearest the hero last.
@@ -2125,15 +2145,20 @@ fn pitch_at(distance: f32) -> f32 {
 
 /// Every mesh under `node` on these render layers.
 fn set_layers(node: &Gd<Node3D>, mask: u32) {
+    // geometry only: the lights the hero carries (a lamp) keep their own
+    // layers, and a light's layers changed while the renderer pairs it
+    // with geometry crashes Godot at exit
     for n in node
         .find_children_ex("*")
-        .type_("VisualInstance3D")
+        .type_("GeometryInstance3D")
         .owned(false)
         .done()
         .iter_shared()
     {
-        if let Ok(mut vi) = n.try_cast::<VisualInstance3D>() {
-            vi.set_layer_mask(mask);
+        if let Ok(mut g) = n.try_cast::<GeometryInstance3D>()
+            && g.get_layer_mask() != mask
+        {
+            g.set_layer_mask(mask);
         }
     }
 }
@@ -2409,6 +2434,7 @@ impl MapView {
             fade: 0.0,
             building: Vec::new(),
             liquids: HashMap::new(),
+            spare_lamps: Vec::new(),
             prof: Vec::new(),
             branch: Branch::Main,
             branch_look: crate::branch_look::look_of(Branch::Main),
@@ -2495,7 +2521,8 @@ impl MapView {
             self.facing.clear();
             self.generation = Some(generation);
             world.map.take_dirty();
-            // built over the next frames, nearest the hero first
+            // built over the next frames, nearest the hero first (the
+            // lights are placed once it is all drawn)
             self.building = build_order(hero);
             self.snap = true;
             self.lights_dirty = true;
@@ -2569,7 +2596,8 @@ impl MapView {
         if self.fow.advance(delta as f32) {
             self.surfaces.show_fow(&self.fow);
         }
-        if std::mem::take(&mut self.lights_dirty) {
+        // the lights of a level still being drawn wait for all of it
+        if self.building.is_empty() && std::mem::take(&mut self.lights_dirty) {
             let __t = std::time::Instant::now();
             self.place_room_lights();
             self.prof
@@ -2606,7 +2634,11 @@ impl MapView {
                 // behind the hero, on the far side from the camera
                 self.rim.set_position(p + at(0.0, 2.0, -0.9));
                 self.rim.set_visible(true);
-                self.rim_hero((x, y));
+                // while a level is drawn the hero's cell may still hold the
+                // last level's model
+                if self.building.is_empty() {
+                    self.rim_hero((x, y));
+                }
                 let __t = std::time::Instant::now();
                 self.equip_hero((x, y), world, catalog, delta as f32);
                 self.prof
@@ -2626,7 +2658,10 @@ impl MapView {
         if std::mem::take(&mut self.hints_dirty) {
             self.show_hints();
         }
-        if std::mem::take(&mut self.bedrock_dirty) {
+        // its mesh is laid once a level is all drawn (a mesh swapped
+        // under an instance the lights pair with, frame after frame,
+        // crashes Godot at exit)
+        if self.building.is_empty() && std::mem::take(&mut self.bedrock_dirty) {
             let __t = std::time::Instant::now();
             self.lay_bedrock();
             self.prof
@@ -2746,9 +2781,12 @@ impl MapView {
             return;
         }
         let start = std::time::Instant::now();
+        // no hero (the game ended, a map cleared): nothing to cover with
+        // a fade, and nothing to start from; at once
+        let all = hero.is_none() || !self.root.is_visible();
         while let Some((x, y)) = self.building.pop() {
             self.update_cell(x, y, world, catalog, hero);
-            if start.elapsed() >= BUILD_BUDGET {
+            if !all && start.elapsed() >= BUILD_BUDGET {
                 break;
             }
         }
@@ -3043,11 +3081,14 @@ impl MapView {
         {
             return;
         }
-        if let Some(old) = self.rim_model.take().filter(|n| n.is_instance_valid()) {
+        // a model given back to the pool may be on its way out: never
+        // touch one being freed (Godot crashes at exit)
+        let alive = |n: &Gd<Node3D>| n.is_instance_valid() && !n.is_queued_for_deletion();
+        if let Some(old) = self.rim_model.take().filter(alive) {
             set_layers(&old, 1);
             set_overlay(&old, None);
         }
-        if let Some(n) = &node {
+        if let Some(n) = node.as_ref().filter(|n| alive(n)) {
             set_layers(n, 1 | RIM_LAYER);
         }
         self.rim_model = node;
@@ -3086,7 +3127,11 @@ impl MapView {
             a.map(|n| n.instance_id()) == b.map(|n| n.instance_id())
         };
         if !same(self.outlined.as_ref(), target.as_ref().map(|t| &t.0)) {
-            if let Some(old) = self.outlined.take().filter(|n| n.is_instance_valid()) {
+            if let Some(old) = self
+                .outlined
+                .take()
+                .filter(|n| n.is_instance_valid() && !n.is_queued_for_deletion())
+            {
                 set_overlay(&old, None);
             }
             if let Some((node, hostile)) = &target {
@@ -3160,6 +3205,19 @@ impl MapView {
                 m.set_shader(&shader);
                 m.set_shader_parameter("noise_tex", &self.surfaces.noise().to_variant());
                 m.set_shader_parameter("fow_tex", &self.surfaces.fow_texture().to_variant());
+                if l == Liquid::Lava {
+                    let flow = |map: &str| {
+                        godot::tools::try_load::<godot::classes::Texture2D>(&format!(
+                            "res://art/cc0/texturecan/lava_flow/lava_flow_{map}.jpg"
+                        ))
+                        .ok()
+                    };
+                    if let (Some(a), Some(e)) = (flow("albedo"), flow("emission")) {
+                        m.set_shader_parameter("flow_albedo", &a.to_variant());
+                        m.set_shader_parameter("flow_glow", &e.to_variant());
+                        m.set_shader_parameter("has_flow", &true.to_variant());
+                    }
+                }
                 m.upcast()
             }
             Err(_) => {
@@ -3312,12 +3370,16 @@ impl MapView {
             self.art.give(c.model);
         }
         for (_, nodes) in self.cells.drain() {
-            nodes.free(&mut self.art, &mut self.batches);
+            nodes.free(&mut self.art, &mut self.batches, &mut self.spare_lamps);
         }
         self.batches.flush();
         self.vfx.clear();
         self.fow_dirty = true;
-        if let Some(old) = self.outlined.take().filter(|n| n.is_instance_valid()) {
+        if let Some(old) = self
+            .outlined
+            .take()
+            .filter(|n| n.is_instance_valid() && !n.is_queued_for_deletion())
+        {
             set_overlay(&old, None);
         }
         self.generation = None;
@@ -3599,39 +3661,47 @@ impl MapView {
         if nodes.lamp.as_ref().map(|l| l.kind) == look.lamp {
             return;
         }
-        if let Some(mut l) = nodes.lamp.take() {
-            l.light.queue_free();
-            if let Some(mut m) = l.mist {
-                m.queue_free();
-            }
+        if let Some(l) = nodes.lamp.take() {
+            self.spare_lamps.push(l.hidden());
         }
         let Some(kind) = look.lamp else {
             return;
         };
+        // a lamp put out before, of the same kind, else a new one
+        if let Some(i) = self.spare_lamps.iter().position(|l| l.kind == kind) {
+            let mut l = self.spare_lamps.swap_remove(i);
+            let pos = origin + lamp_offset(kind);
+            l.light.set_position(pos);
+            l.light.set_visible(true);
+            if let Some(m) = l.mist.as_mut() {
+                m.set_position(origin + at(0.0, -0.3, 0.0));
+                m.set_visible(true);
+            }
+            nodes.lamp = Some(l);
+            return;
+        }
         let mut light = OmniLight3D::new_alloc();
         light.set_shadow(false);
         light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 1.0);
+        light.set_position(origin + lamp_offset(kind));
         let mut mist = None;
         match kind {
             Lamp::Up => {
                 light.set_color(STAIR_UP_LIGHT);
                 light.set_param(Param::ENERGY, 0.6);
                 light.set_param(Param::RANGE, 2.5);
-                light.set_position(origin + at(0.0, 1.5, -0.3));
             }
             Lamp::Lava => {
                 light.set_color(Color::from_rgb(1.0, 0.4, 0.12));
                 light.set_param(Param::ENERGY, 1.6);
                 light.set_param(Param::RANGE, 3.2);
                 light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 2.0);
-                light.set_position(origin + at(0.0, 0.4, 0.0));
             }
             Lamp::Down => {
                 light.set_color(STAIR_DOWN_LIGHT);
                 // above the far steps, so their treads catch it
                 light.set_param(Param::ENERGY, 2.2);
                 light.set_param(Param::RANGE, 2.0);
-                light.set_position(origin + at(0.0, -0.1, -0.2));
                 let mut mat = FogMaterial::new_gd();
                 mat.set_density(0.05);
                 mat.set_albedo(Color::from_rgb(0.6, 0.66, 0.8));
