@@ -257,8 +257,11 @@ def unpack(w, blob, what, item, max_size):
                 for cand in (f"{folder}/{r}", f"{folder}/{os.path.basename(r)}"):
                     if cand in names:
                         return z.read(cand)
-                # packs keep one texture folder next to the exports
-                hits = [x for x in names if x.endswith("/" + os.path.basename(r))]
+                # packs keep one texture folder next to the exports, and
+                # an exporter may name "X.png" as "X_png.png"
+                base = os.path.basename(r)
+                wanted = {base, base.replace("_png.png", ".png")}
+                hits = [x for x in names if os.path.basename(x) in wanted]
                 if not hits:
                     raise SystemExit(f"{n}: missing {r}")
                 return z.read(hits[0])

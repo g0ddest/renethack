@@ -96,6 +96,31 @@
    "use": "dogs, horses, quadrupeds (CC0 per the itch.io page; the zip has no license file)"
   },
   {
+   "page": "https://quaternius.itch.io/universal-base-characters",
+   "upload": "Universal Base Characters[Standard].zip",
+   "root": "Universal Base Characters[Standard]/Base Characters/Godot - UE/",
+   "files": ["*.gltf"],
+   "dest": "quaternius/base",
+   "license_files": ["Universal Base Characters[Standard]/License_Standard.txt"],
+   "use": "heads: the base bodies' textured heads (face, eyes, normal and roughness maps), cut at the neck and worn on the outfits' skeleton"
+  },
+  {
+   "page": "https://quaternius.itch.io/universal-base-characters",
+   "upload": "Universal Base Characters[Standard].zip",
+   "root": "Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/",
+   "files": ["*.gltf"],
+   "dest": "quaternius/base/hair",
+   "use": "hair, beards and eyebrows on the Head bone"
+  },
+  {
+   "page": "https://quaternius.itch.io/universal-base-characters",
+   "upload": "Universal Base Characters[Standard].zip",
+   "root": "Universal Base Characters[Standard]/Base Characters/Textures/",
+   "files": ["T_Superhero_Female_Light_BaseColor.png", "T_Superhero_Male_Ligh.png"],
+   "dest": "quaternius/base",
+   "use": "the light skin of the base heads"
+  },
+  {
    "page": "https://quaternius.itch.io/universal-animation-library-2",
    "upload": "Universal Animation Library 2[Standard].zip",
    "root": "Universal Animation Library 2[Standard]/Unreal-Godot/",
