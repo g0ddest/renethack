@@ -46,7 +46,7 @@ use nh_world::{
 use crate::animator::{Motion, pace, yaw_toward};
 use crate::art::{Art, Finish, Model, ModelLook, Pose, build_flat, no_shadow};
 use crate::batch::{Batches, Slot};
-use crate::branch_look::BranchLook;
+use crate::branch_look::{BranchLook, Prop};
 use crate::meshes::{
     MeshKey, bevel, cuboid, cylinder, dome, facets, plane, prism, rock, sphere, torus,
 };
@@ -320,6 +320,18 @@ struct Look {
     glint: Option<(Color, f32)>,
     /// Masonry of a wall (grime gathers at its foot).
     masonry: bool,
+    /// Models of the branch's own on the cell (doors, candles).
+    props: Vec<PlacedProp>,
+}
+
+/// A branch's model on a cell: where, which way, how stretched.
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct PlacedProp {
+    prop: Prop,
+    pos: Vector3,
+    /// Degrees about y.
+    yaw: f32,
+    scale: Vector3,
 }
 
 impl Look {
@@ -729,7 +741,7 @@ fn liquid_bed(look: &mut Look, around: &Around, ctx: &Ctx, depth: f32) {
 
 /// A doorway's frame: two posts and a lintel, the wall closed above it by
 /// a stretch of masonry under the cap. Cut down, only the posts' feet.
-fn door_frame(look: &mut Look, along_x: bool, cut: bool, ctx: &Ctx, wood: Paint) {
+fn door_frame(look: &mut Look, along_x: bool, cut: bool, ctx: &Ctx, wood: Paint, posts: bool) {
     let role = if ctx.branch.cave {
         Role::Rock
     } else {
@@ -746,7 +758,7 @@ fn door_frame(look: &mut Look, along_x: bool, cut: bool, ctx: &Ctx, wood: Paint)
     // the posts stand on the wall's line, either side of the passage; in
     // a side wall the south one would stand between the camera and
     // whoever is in the doorway: only its foot is left
-    for s in [-1.0f32, 1.0] {
+    for s in [-1.0f32, 1.0].into_iter().filter(|_| posts) {
         let h = if !along_x && s > 0.0 {
             h.min(CUT_HEIGHT)
         } else {
@@ -767,7 +779,9 @@ fn door_frame(look: &mut Look, along_x: bool, cut: bool, ctx: &Ctx, wood: Paint)
     } else {
         bevel(0.36, LINTEL, 1.0)
     };
-    look.solid(lintel, wood, at(0.0, DOOR_HEIGHT + LINTEL / 2.0, 0.0));
+    if posts {
+        look.solid(lintel, wood, at(0.0, DOOR_HEIGHT + LINTEL / 2.0, 0.0));
+    }
     let above = WALL_HEIGHT - CAP_HEIGHT - DOOR_HEIGHT - LINTEL;
     if let Some(masonry) = masonry
         && above > 0.01
@@ -928,6 +942,31 @@ fn terrain_base(
             look.ground = top;
             look.wall = !cut;
             look.masonry = true;
+            // candles on some walls' tops beside a room (no object ever
+            // lies there)
+            let beside_room = around.sides.contains(&Side::Open);
+            if ctx.branch.candles && !cut && !ctx.branch.cave && beside_room && ctx.noise(91) < 0.18
+            {
+                for (i, dx) in [-0.18f32, 0.16].into_iter().enumerate() {
+                    let h = 1.2 + 0.4 * ctx.noise(92 + i as u32);
+                    look.props.push(PlacedProp {
+                        prop: Prop::Candle,
+                        pos: at(dx, top, 0.04 * i as f32),
+                        yaw: ctx.noise(94 + i as u32) * 360.0,
+                        scale: Vector3::new(1.2, h, 1.2),
+                    });
+                    // its flame
+                    let flame = Paint::Flat(Color::from_rgb(1.0, 0.7, 0.35), Finish::Glow);
+                    look.solid(
+                        sphere(0.012),
+                        flame,
+                        at(dx, top + 0.22 * h + 0.015, 0.04 * i as f32),
+                    );
+                    if let Some(s) = look.solids.last_mut() {
+                        s.shadow = false;
+                    }
+                }
+            }
         }
         Terrain::Floor | Terrain::DarkFloor => {
             look.ground_tile(tile, ground(lit_shade), Vector3::ZERO);
@@ -949,7 +988,7 @@ fn terrain_base(
             floor(look);
             let along_x = around.wall_along_x();
             let wood = pbr(ctx.mat("wood"), 70, Role::Door, DEEP);
-            door_frame(look, along_x, cut, ctx, wood);
+            door_frame(look, along_x, cut, ctx, wood, true);
             // a worn wooden threshold across the passage
             let sill = if along_x {
                 cuboid(0.9, 0.03, 0.2)
@@ -980,8 +1019,28 @@ fn terrain_base(
             let along_x = !vertical;
             let wood = pbr(art.material, SHADE_LIT, Role::Door, FLOOR_UNSEEN);
             let frame = pbr(art.material, 62, Role::Door, FLOOR_UNSEEN);
-            door_frame(look, along_x, cut, ctx, frame);
-            door_leaf(look, along_x, open, door_h, wood, trim(SHADE_LIT));
+            match ctx.branch.door.filter(|_| !open && !cut) {
+                Some(prop) => {
+                    // the branch's own door fills the opening, frame and all;
+                    // the masonry above it closes the wall
+                    door_frame(look, along_x, cut, ctx, frame, false);
+                    let (sx, sy) = match prop {
+                        Prop::CastleDoor => (0.96 / 2.01, (DOOR_HEIGHT + LINTEL) / 2.94),
+                        _ => (0.96 / 2.96, (DOOR_HEIGHT + LINTEL) / 2.92),
+                    };
+                    look.props.push(PlacedProp {
+                        prop,
+                        pos: Vector3::ZERO,
+                        yaw: if along_x { 0.0 } else { 90.0 },
+                        scale: Vector3::new(sx, sy, 2.0),
+                    });
+                    look.reach(DOOR_HEIGHT + LINTEL);
+                }
+                None => {
+                    door_frame(look, along_x, cut, ctx, frame, true);
+                    door_leaf(look, along_x, open, door_h, wood, trim(SHADE_LIT));
+                }
+            }
             if !open {
                 look.ground = door_h;
             }
@@ -1834,10 +1893,21 @@ struct CellNodes {
     models: Vec<Model>,
     ring: Option<Gd<Decal>>,
     lamp: Option<CellLamp>,
+    props: Vec<(Prop, Gd<Node3D>)>,
 }
 
 impl CellNodes {
-    fn free(self, art: &mut Art, batches: &mut Batches, lamps: &mut Vec<CellLamp>) {
+    fn free(
+        self,
+        art: &mut Art,
+        batches: &mut Batches,
+        lamps: &mut Vec<CellLamp>,
+        props: &mut HashMap<Prop, Vec<Gd<Node3D>>>,
+    ) {
+        for (prop, mut node) in self.props {
+            node.set_visible(false);
+            props.entry(prop).or_default().push(node);
+        }
         for slot in self.solids {
             batches.remove(slot);
         }
@@ -1910,6 +1980,10 @@ struct FrameStats {
 /// A torch on a wall: the sconce, its flame and its light.
 struct Torch {
     node: Gd<Node3D>,
+    /// The torch in its sconce, and a lantern hung there instead in the
+    /// branches that have them (made when first needed).
+    fire: Gd<Node3D>,
+    lantern: Option<Gd<Node3D>>,
     flame: Gd<MeshInstance3D>,
     light: Gd<OmniLight3D>,
     /// Where the light burns when it does not flicker.
@@ -1971,6 +2045,9 @@ pub struct MapView {
     prof: Vec<(&'static str, f64)>,
     /// Lamps of features put out, to be lit again elsewhere.
     spare_lamps: Vec<CellLamp>,
+    /// The branches' models: their scenes, and those taken off cells.
+    prop_scenes: HashMap<Prop, Option<Gd<PackedScene>>>,
+    spare_props: HashMap<Prop, Vec<Gd<Node3D>>>,
     /// Water, lava and the air over lava: their materials.
     liquids: HashMap<Liquid, Gd<Material>>,
     /// The cells of a new level still to draw, the nearest the hero last.
@@ -2435,6 +2512,8 @@ impl MapView {
             building: Vec::new(),
             liquids: HashMap::new(),
             spare_lamps: Vec::new(),
+            prop_scenes: HashMap::new(),
+            spare_props: HashMap::new(),
             prof: Vec::new(),
             branch: Branch::Main,
             branch_look: crate::branch_look::look_of(Branch::Main),
@@ -2962,6 +3041,52 @@ impl MapView {
                 .set_instance_shader_parameter("phase", &(t.phase as f32).to_variant());
             t.light.set_position(t.at);
             t.light.set_visible(true);
+            let lanterns = self.branch_look.lanterns;
+            t.fire.set_visible(!lanterns);
+            if lanterns && t.lantern.is_none() {
+                let scene = self
+                    .prop_scenes
+                    .entry(Prop::Lantern)
+                    .or_insert_with(|| {
+                        godot::tools::try_load::<PackedScene>(Prop::Lantern.scene()).ok()
+                    })
+                    .clone();
+                if let Some(mut l) = scene
+                    .and_then(|s| s.instantiate())
+                    .and_then(|n| n.try_cast::<Node3D>().ok())
+                {
+                    // hung from a bracket over the room, out of its own light
+                    let mut lamp = Node3D::new_alloc();
+                    l.set_position(at(0.0, 0.8, 0.32));
+                    l.set_scale(Vector3::new(0.5, 0.5, 0.5));
+                    set_layers(&l, SCONCE_LAYER);
+                    lamp.add_child(&l);
+                    // its flames, glowing through the glass, and their halo
+                    let warm = self.art.flat(Color::from_rgb(1.0, 0.72, 0.4), Finish::Glow);
+                    let flame_mesh = self.art.mesh(sphere(0.025));
+                    for (x, z) in [(-0.06f32, 0.0f32), (0.06, 0.0), (0.0, 0.06)] {
+                        let mut core = MeshInstance3D::new_alloc();
+                        core.set_mesh(&flame_mesh);
+                        core.set_material_override(&warm);
+                        core.set_position(at(x, 0.55, 0.32 + z));
+                        no_shadow(&mut core);
+                        lamp.add_child(&core);
+                    }
+                    let mut halo = MeshInstance3D::new_alloc();
+                    let mut disc = godot::classes::QuadMesh::new_gd();
+                    disc.set_size(Vector2::new(0.8, 0.8));
+                    halo.set_mesh(&disc);
+                    halo.set_material_override(&self.halo_mat);
+                    halo.set_position(at(0.0, 0.57, 0.36));
+                    no_shadow(&mut halo);
+                    lamp.add_child(&halo);
+                    t.node.add_child(&lamp);
+                    t.lantern = Some(lamp);
+                }
+            }
+            if let Some(l) = t.lantern.as_mut() {
+                l.set_visible(lanterns);
+            }
         }
         for t in self.torches.iter_mut().skip(walls.len()) {
             t.node.set_visible(false);
@@ -2971,6 +3096,8 @@ impl MapView {
 
     fn new_torch(&mut self) -> Torch {
         let mut node = Node3D::new_alloc();
+        // the torch itself (a lantern may hang there instead)
+        let mut fire = Node3D::new_alloc();
         if let Some(mut sconce) = self
             .torch_scene
             .as_ref()
@@ -2990,7 +3117,7 @@ impl MapView {
                     g.set_layer_mask(SCONCE_LAYER);
                 }
             }
-            node.add_child(&sconce);
+            fire.add_child(&sconce);
         }
         // the flame licks up from the torch's head, embers rise from it
         let mut flame = MeshInstance3D::new_alloc();
@@ -3001,7 +3128,7 @@ impl MapView {
         flame.set_material_override(&self.flame_mat);
         flame.set_position(at(0.0, 0.46, 0.3));
         no_shadow(&mut flame);
-        node.add_child(&flame);
+        fire.add_child(&flame);
         // and a warm halo in the air around it
         let mut halo = MeshInstance3D::new_alloc();
         let mut disc = godot::classes::QuadMesh::new_gd();
@@ -3010,10 +3137,11 @@ impl MapView {
         halo.set_material_override(&self.halo_mat);
         halo.set_position(at(0.0, 0.62, 0.32));
         no_shadow(&mut halo);
-        node.add_child(&halo);
+        fire.add_child(&halo);
         let mut embers = self.vfx.embers();
         embers.set_position(at(0.0, 0.58, 0.3));
-        node.add_child(&embers);
+        fire.add_child(&embers);
+        node.add_child(&fire);
         self.root.add_child(&node);
         let mut light = OmniLight3D::new_alloc();
         light.set_color(TORCH);
@@ -3032,6 +3160,8 @@ impl MapView {
         self.root.add_child(&light);
         Torch {
             node,
+            fire,
+            lantern: None,
             flame,
             light,
             at: Vector3::ZERO,
@@ -3370,7 +3500,12 @@ impl MapView {
             self.art.give(c.model);
         }
         for (_, nodes) in self.cells.drain() {
-            nodes.free(&mut self.art, &mut self.batches, &mut self.spare_lamps);
+            nodes.free(
+                &mut self.art,
+                &mut self.batches,
+                &mut self.spare_lamps,
+                &mut self.spare_props,
+            );
         }
         self.batches.flush();
         self.vfx.clear();
@@ -3655,6 +3790,41 @@ impl MapView {
         }
     }
 
+    /// A branch's models on a cell: those of the old look go back to the
+    /// pool, the new ones are taken from it (or made).
+    fn place_props(&mut self, nodes: &mut CellNodes, look: &Look, origin: Vector3) {
+        for (prop, mut node) in std::mem::take(&mut nodes.props) {
+            node.set_visible(false);
+            self.spare_props.entry(prop).or_default().push(node);
+        }
+        for p in &look.props {
+            let node = match self.spare_props.get_mut(&p.prop).and_then(Vec::pop) {
+                Some(n) => Some(n),
+                None => {
+                    let scene = self
+                        .prop_scenes
+                        .entry(p.prop)
+                        .or_insert_with(|| {
+                            godot::tools::try_load::<PackedScene>(p.prop.scene()).ok()
+                        })
+                        .clone();
+                    scene
+                        .and_then(|s| s.instantiate())
+                        .and_then(|n| n.try_cast::<Node3D>().ok())
+                        .inspect(|n| self.cells_root.add_child(n))
+                }
+            };
+            let Some(mut node) = node else {
+                continue;
+            };
+            let basis = Basis::from_euler(EulerOrder::YXZ, at(0.0, p.yaw.to_radians(), 0.0))
+                * Basis::from_scale(p.scale);
+            node.set_transform(Transform3D::new(basis, origin + p.pos));
+            node.set_visible(true);
+            nodes.props.push((p.prop, node));
+        }
+    }
+
     /// The light of stairs on their cell: warm from above up the stairs,
     /// cold from below down them, with a little mist in the shaft.
     fn place_lamp(&mut self, nodes: &mut CellNodes, look: &Look, origin: Vector3) {
@@ -3791,6 +3961,9 @@ impl MapView {
         nodes.solids = kept_slots;
         self.place_ring(&mut nodes, &look, origin);
         self.place_lamp(&mut nodes, &look, origin);
+        if old.props != look.props {
+            self.place_props(&mut nodes, &look, origin);
+        }
         if let Some(c) = look.blast
             && old.blast != look.blast
         {
@@ -4659,6 +4832,50 @@ mod tests {
         let pitch = PITCH_DEG.to_radians();
         let back = Vector3::new(0.0, pitch.sin(), pitch.cos());
         (Vector3::new(10.0, 0.0, 9.0) + back * DISTANCE, -back)
+    }
+
+    #[test]
+    fn closed_doors_and_wall_tops_take_the_branch_s_props() {
+        let f = Fixture::new();
+        let cat = &f.cat;
+        let wall = feature(cat, "S_hwall");
+        let floor = feature(cat, "S_room");
+        for (b, door) in [
+            (Branch::Vlad, Prop::IronGate),
+            (Branch::Ludios, Prop::CastleDoor),
+        ] {
+            let look = crate::branch_look::look_of(b);
+            let ctx = Ctx {
+                branch: &look,
+                ..f.ctx()
+            };
+            // a door in a horizontal wall, rock north of it
+            let near = Near::orth([None, Some(&floor), Some(&wall), Some(&wall)]);
+            let d = look_of(&feature(cat, "S_hcdoor"), near, &ctx);
+            assert_eq!(d.props.len(), 1, "{b:?}");
+            assert_eq!(d.props[0].prop, door);
+            assert!(d.top >= DOOR_HEIGHT, "{b:?}: it stands");
+            // the main dungeon keeps its planks
+            let main = look_of(&feature(cat, "S_hcdoor"), near, &f.ctx());
+            assert!(main.props.is_empty());
+        }
+        // Vlad's walls beside a room carry candles here and there, the
+        // same ones every time, never on a wall cut down
+        let look = crate::branch_look::look_of(Branch::Vlad);
+        let candles = (0..60)
+            .filter(|&x| {
+                let ctx = Ctx {
+                    branch: &look,
+                    ..f.ctx_at(x, 3, None)
+                };
+                let near = Near::orth([None, Some(&floor), None, None]);
+                look_of(&wall, near, &ctx)
+                    .props
+                    .iter()
+                    .any(|p| p.prop == Prop::Candle)
+            })
+            .count();
+        assert!(candles > 2 && candles < 30, "{candles}");
     }
 
     #[test]

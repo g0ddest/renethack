@@ -20,8 +20,45 @@ pub struct Grade {
     pub highlights: Color,
 }
 
+/// A model of a branch's own, placed by the map (never an object's look:
+/// doors, gates, lamps on walls, candles on wall tops).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Prop {
+    /// A great double door of planks and iron (Poly Haven, CC0).
+    CastleDoor,
+    /// A gate of iron bars (Poly Haven, CC0).
+    IronGate,
+    /// A lantern hung on a wall instead of a torch (Poly Haven, CC0).
+    Lantern,
+    /// A candlestick standing on a wall's top (Poly Haven, CC0).
+    Candle,
+}
+
+impl Prop {
+    pub fn scene(self) -> &'static str {
+        match self {
+            Prop::CastleDoor => {
+                "res://art/cc0/polyhaven/models/large_castle_door/large_castle_door.gltf"
+            }
+            Prop::IronGate => "res://art/cc0/polyhaven/models/large_iron_gate/large_iron_gate.gltf",
+            Prop::Lantern => {
+                "res://art/cc0/polyhaven/models/lantern_chandelier_01/lantern_chandelier_01.gltf"
+            }
+            Prop::Candle => {
+                "res://art/cc0/polyhaven/models/wooden_candlestick/wooden_candlestick.gltf"
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct BranchLook {
+    /// What stands in a closed door's frame instead of planks.
+    pub door: Option<Prop>,
+    /// Lanterns instead of torches on the walls.
+    pub lanterns: bool,
+    /// Candles stand on some walls' tops.
+    pub candles: bool,
     /// Manifest materials and what they become in this branch.
     pub remap: &'static [(&'static str, &'static str)],
     /// The walls are the rock itself, broken and irregular (caves).
@@ -59,6 +96,9 @@ const NEUTRAL: Grade = Grade {
 };
 
 const MAIN: BranchLook = BranchLook {
+    door: None,
+    lanterns: false,
+    candles: false,
     remap: &[],
     cave: false,
     supports: false,
@@ -143,6 +183,7 @@ pub fn look_of(branch: Branch) -> BranchLook {
             fill_scale: 1.5,
             ambient: rgb(0.5, 0.18, 0.12),
             ambient_energy: 0.16,
+            door: Some(Prop::IronGate),
             fog: rgb(0.7, 0.35, 0.25),
             fog_density: 0.005,
             darkness: rgb(0.02, 0.006, 0.004),
@@ -175,6 +216,8 @@ pub fn look_of(branch: Branch) -> BranchLook {
         Branch::Ludios => BranchLook {
             remap: &[("masonry", "ludios_wall"), ("floor", "marble_floor")],
             cap: "gilded",
+            door: Some(Prop::CastleDoor),
+            lanterns: true,
             torch: rgb(1.0, 0.78, 0.5),
             fill_scale: 2.0,
             grade: Grade {
@@ -187,6 +230,9 @@ pub fn look_of(branch: Branch) -> BranchLook {
         // a gothic tower: dark stone, cold violet light
         Branch::Vlad => BranchLook {
             remap: &[("masonry", "gothic"), ("floor", "gothic_floor")],
+            door: Some(Prop::IronGate),
+            lanterns: true,
+            candles: true,
             torch: rgb(0.9, 0.6, 0.5),
             torch_energy: 2.0,
             ambient: rgb(0.3, 0.26, 0.46),

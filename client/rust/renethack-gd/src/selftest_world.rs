@@ -1,7 +1,8 @@
 //! The world's looks by branch (spec part 2, phase K): `branches` starts a
 //! game in debug mode (its playground allows it), teleports the hero to a
-//! level of the Gnomish Mines, of Sokoban and of Gehennom by the debug
-//! level teleport's menu, and checks that each is drawn in its own
+//! level of the Gnomish Mines, of Sokoban, of Gehennom and of Vlad's Tower
+//! by the debug level teleport's menu (Fort Ludios is out of its reach
+//! until its portal is made), and checks that each is drawn in its own
 //! materials, with a picture of each.
 
 use nh_world::{Branch, KeyInput, Prompt};
@@ -91,6 +92,12 @@ pub(super) fn branches() -> Vec<Step> {
         |g| drawn_in(g, Branch::Gehennom),
         |g| own_walls(g, Branch::Gehennom),
         "branch-gehennom",
+    ));
+    steps.extend(teleport(
+        |g| entry_key(g, "tower1"),
+        |g| drawn_in(g, Branch::Vlad),
+        |g| own_walls(g, Branch::Vlad),
+        "branch-vlad",
     ));
     steps.extend(quit());
     steps
