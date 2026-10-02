@@ -1441,8 +1441,12 @@ impl Dialogs {
             edit.set_placeholder("a name");
         }
         col.add_child(&edit);
-        let mut bytes = theme::label(&format!("0 / {MAX_TEXT_BYTES} bytes"));
-        bytes.add_theme_color_override("font_color", theme::TEXT_DIM);
+        let mut bytes = theme::styled_label(
+            &format!("0 / {MAX_TEXT_BYTES} bytes"),
+            Face::Body,
+            14,
+            theme::TEXT_DIM,
+        );
         bytes.set_horizontal_alignment(HorizontalAlignment::RIGHT);
         col.add_child(&bytes);
         // NetHack takes 255 bytes of UTF-8; LineEdit counts characters
@@ -1459,23 +1463,26 @@ impl Dialogs {
             }
             b.set_text(&format!("{len} / {MAX_TEXT_BYTES} bytes"));
         });
-        self.hint(&mut col, "Enter: OK · Esc: cancel", width);
-        let mut row = HBoxContainer::new_alloc();
-        row.set_alignment(AlignmentMode::CENTER);
-        row.add_theme_constant_override("separation", 12);
-        // OK submits what the field holds, as Enter does
-        let mut ok = Button::new_alloc();
-        ok.set_text("OK");
-        ok.set_focus_mode(FocusMode::NONE);
-        let (q, e) = (self.queue.clone(), edit.clone());
-        ok.signals().pressed().connect(move || {
-            let ev = DialogEvent::TextSubmitted(e.get_text().to_string());
-            push(&q, UiEvent::Dialog { req, ev });
-        });
-        row.add_child(&ok);
-        let cancel = dialog_ui(req, DialogEvent::TextCancelled);
-        row.add_child(&theme::button("Cancel", &self.queue, cancel));
-        col.add_child(&row);
+        // with a gamepad the keyboard below has its own OK (and B cancels)
+        if !self.pad {
+            self.hint(&mut col, "Enter: OK · Esc: cancel", width);
+            let mut row = HBoxContainer::new_alloc();
+            row.set_alignment(AlignmentMode::CENTER);
+            row.add_theme_constant_override("separation", 12);
+            // OK submits what the field holds, as Enter does
+            let mut ok = Button::new_alloc();
+            ok.set_text("OK");
+            ok.set_focus_mode(FocusMode::NONE);
+            let (q, e) = (self.queue.clone(), edit.clone());
+            ok.signals().pressed().connect(move || {
+                let ev = DialogEvent::TextSubmitted(e.get_text().to_string());
+                push(&q, UiEvent::Dialog { req, ev });
+            });
+            row.add_child(&ok);
+            let cancel = dialog_ui(req, DialogEvent::TextCancelled);
+            row.add_child(&theme::button("Cancel", &self.queue, cancel));
+            col.add_child(&row);
+        }
         // a gamepad types on a keyboard of ours (and asks Steam for its
         // own, which types into the field, where there is one)
         let osk = self.pad.then(|| {

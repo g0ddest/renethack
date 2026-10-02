@@ -289,16 +289,44 @@ impl ActionBar {
     /// The slots' key labels: a gamepad's chords ("LB A"), or None for the
     /// keys 1–0.
     pub fn set_key_labels(&mut self, labels: Option<&[String]>) {
+        use godot::builtin::Side;
+        // a chord: a small dark pill in the corner, over the icon, as on
+        // consoles; a digit: as before
+        let mut pill = StyleBoxFlat::new_gd();
+        pill.set_bg_color(Color::from_rgba(0.035, 0.027, 0.02, 0.88));
+        pill.set_border_width_all(1);
+        pill.set_border_color(theme::GOLD_DIM);
+        pill.set_corner_radius_all(3);
+        pill.set_content_margin(Side::LEFT, 3.0);
+        pill.set_content_margin(Side::RIGHT, 3.0);
         for (i, s) in self.slots.iter_mut().enumerate() {
-            let text = labels
-                .and_then(|l| l.get(i).cloned())
-                .unwrap_or_else(|| key_label(i).to_string());
-            s.key.set_text(&text);
-            // a chord is wider than a digit
-            let w = if labels.is_some() { 56.0 } else { 20.0 };
-            s.key.set_offset(godot::builtin::Side::RIGHT, 7.0 + w);
-            s.key
-                .add_theme_font_size_override("font_size", if labels.is_some() { 12 } else { 15 });
+            let chord = labels.and_then(|l| l.get(i)).filter(|t| !t.is_empty());
+            match chord {
+                Some(text) => {
+                    s.key.set_text(text);
+                    s.key.add_theme_font_size_override("font_size", 10);
+                    s.key.add_theme_stylebox_override("normal", &pill);
+                    s.key.add_theme_constant_override("outline_size", 0);
+                    let w = 8.0 + 6.0 * text.chars().count() as f32;
+                    s.key.set_offset(Side::LEFT, 2.0);
+                    s.key.set_offset(Side::TOP, 2.0);
+                    s.key.set_offset(Side::RIGHT, 2.0 + w);
+                    s.key.set_offset(Side::BOTTOM, 15.0);
+                    s.key.set_visible(true);
+                }
+                None => {
+                    s.key.set_text(key_label(i));
+                    s.key.add_theme_font_size_override("font_size", 15);
+                    s.key.remove_theme_stylebox_override("normal");
+                    s.key.add_theme_constant_override("outline_size", 4);
+                    s.key.set_offset(Side::LEFT, 7.0);
+                    s.key.set_offset(Side::TOP, 3.0);
+                    s.key.set_offset(Side::RIGHT, 27.0);
+                    s.key.set_offset(Side::BOTTOM, 23.0);
+                    // a slot off the pad's page shows no chord
+                    s.key.set_visible(labels.is_none());
+                }
+            }
         }
     }
 

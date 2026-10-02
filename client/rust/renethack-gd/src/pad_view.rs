@@ -4,16 +4,39 @@
 
 use godot::builtin::Side;
 use godot::classes::control::MouseFilter;
-use godot::classes::{CanvasLayer, Control, HBoxContainer, Label, PanelContainer, StyleBoxFlat};
+use godot::classes::control::SizeFlags;
+use godot::classes::texture_rect::{ExpandMode, StretchMode};
+use godot::classes::{
+    CanvasLayer, ColorRect, Control, HBoxContainer, Label, PanelContainer, ShaderMaterial,
+    StyleBoxFlat, TextureRect, VBoxContainer,
+};
 use godot::global::{HorizontalAlignment, VerticalAlignment};
 use godot::prelude::*;
 
-use crate::gamepad::{PadButton, PadCtx, PadKind, RADIAL};
-use crate::theme::{self, Face, Frame, place};
+use crate::gamepad::{PadButton, PadCtx, PadKind, RADIAL, RadialEntry};
+use crate::icons::{self, Glyph};
+use crate::theme::{self, Face, place};
 
-/// The radial's radius and an entry's size, in design pixels.
-const RADIUS: f32 = 170.0;
-const ENTRY: Vector2 = Vector2::new(150.0, 44.0);
+/// The radial ring's size, its radii (share of the half size, as the
+/// shader has them) and a sector's icon and caption box, in design pixels.
+const RING: f32 = 460.0;
+const INNER: f32 = 0.44;
+const OUTER: f32 = 0.97;
+const CELL: Vector2 = Vector2::new(110.0, 70.0);
+
+/// The icon of a radial entry.
+fn entry_glyph(e: RadialEntry) -> Glyph {
+    match e {
+        RadialEntry::Here => Glyph::Hand,
+        RadialEntry::PickUp => Glyph::Sack,
+        RadialEntry::Fight => Glyph::Sword,
+        RadialEntry::Kick => Glyph::Boots,
+        RadialEntry::Rest => Glyph::Moon,
+        RadialEntry::Pray => Glyph::Ankh,
+        RadialEntry::Travel => Glyph::Stairs,
+        RadialEntry::Save => Glyph::Scroll,
+    }
+}
 
 /// A button as a medallion: a round plate with its letter or shape.
 pub fn medallion(kind: PadKind, b: PadButton) -> Gd<PanelContainer> {
@@ -92,7 +115,10 @@ pub fn hints(ctx: PadCtx) -> Vec<(Vec<PadButton>, &'static str)> {
 pub struct PadView {
     root: Gd<Control>,
     radial: Gd<Control>,
-    entries: Vec<Gd<PanelContainer>>,
+    entries: Vec<Gd<VBoxContainer>>,
+    material: Option<Gd<ShaderMaterial>>,
+    title: Gd<Label>,
+    hint: Gd<Label>,
     strip: Gd<HBoxContainer>,
     shown: Option<(PadKind, PadCtx)>,
     selected: Option<usize>,
@@ -105,33 +131,62 @@ impl PadView {
         root.set_theme(&theme::dark_theme());
         layer.add_child(&root);
 
-        // the radial: entries on a circle around the screen's centre
+        // the radial: a ring of 8 sectors centred on the screen (above the
+        // bottom cluster at every size), an icon and a caption in each, the
+        // chosen action's name in the middle
         let mut radial = Control::new_alloc();
         radial.set_mouse_filter(MouseFilter::IGNORE);
-        place(&radial, [0.5, 0.5, 0.5, 0.5], [0.0, -40.0, 0.0, -40.0]);
-        let mut hub = theme::framed(Frame::Banner);
-        hub.set_mouse_filter(MouseFilter::IGNORE);
-        let mut hub_label = theme::styled_label("Actions", Face::Title, 20, theme::GOLD_BRIGHT);
-        hub_label.set_horizontal_alignment(HorizontalAlignment::CENTER);
-        hub.add_child(&hub_label);
-        hub.set_position(Vector2::new(-60.0, -20.0));
-        hub.set_custom_minimum_size(Vector2::new(120.0, 40.0));
-        radial.add_child(&hub);
+        place(&radial, [0.5, 0.5, 0.5, 0.5], [0.0, -60.0, 0.0, -60.0]);
+        let mut ring = ColorRect::new_alloc();
+        ring.set_mouse_filter(MouseFilter::IGNORE);
+        ring.set_size(Vector2::new(RING, RING));
+        ring.set_position(Vector2::new(-RING / 2.0, -RING / 2.0));
+        let material = theme::ui_material("ui_radial");
+        match &material {
+            Some(m) => ring.set_material(m),
+            None => ring.set_color(Color::from_rgba(0.07, 0.055, 0.04, 0.8)),
+        }
+        radial.add_child(&ring);
         let mut entries = Vec::new();
+        let mid = RING / 2.0 * (INNER + OUTER) / 2.0;
         for (i, e) in RADIAL.iter().enumerate() {
             let a = (i as f32) * std::f32::consts::TAU / RADIAL.len() as f32;
-            let c = Vector2::new(a.sin(), -a.cos()) * RADIUS;
-            let mut p = theme::framed(Frame::Tooltip);
-            p.set_mouse_filter(MouseFilter::IGNORE);
-            p.set_custom_minimum_size(ENTRY);
-            p.set_position(c - ENTRY * 0.5);
-            let mut l = theme::styled_label(e.label(), Face::BodyBold, 17, theme::TEXT);
+            let c = Vector2::new(a.sin(), -a.cos()) * mid;
+            let mut col = VBoxContainer::new_alloc();
+            col.set_mouse_filter(MouseFilter::IGNORE);
+            col.add_theme_constant_override("separation", 2);
+            col.set_size(CELL);
+            col.set_position(c - CELL * 0.5);
+            let mut icon = TextureRect::new_alloc();
+            icon.set_mouse_filter(MouseFilter::IGNORE);
+            icon.set_expand_mode(ExpandMode::IGNORE_SIZE);
+            icon.set_stretch_mode(StretchMode::KEEP_ASPECT_CENTERED);
+            icon.set_custom_minimum_size(Vector2::new(44.0, 44.0));
+            icon.set_h_size_flags(SizeFlags::SHRINK_CENTER);
+            icon.set_texture(&icons::emblem(entry_glyph(*e)));
+            col.add_child(&icon);
+            let mut l = theme::styled_label(e.label(), Face::BodyBold, 14, theme::TEXT);
+            theme::outline(&l, 4);
             l.set_horizontal_alignment(HorizontalAlignment::CENTER);
-            l.set_vertical_alignment(VerticalAlignment::CENTER);
-            p.add_child(&l);
-            radial.add_child(&p);
-            entries.push(p);
+            col.add_child(&l);
+            radial.add_child(&col);
+            entries.push(col);
         }
+        let mut centre = VBoxContainer::new_alloc();
+        centre.set_mouse_filter(MouseFilter::IGNORE);
+        centre.set_alignment(godot::classes::box_container::AlignmentMode::CENTER);
+        let inner_w = RING * INNER * 0.85;
+        centre.set_size(Vector2::new(inner_w, inner_w));
+        centre.set_position(Vector2::new(-inner_w / 2.0, -inner_w / 2.0));
+        let mut title = theme::styled_label("", Face::Title, 22, theme::GOLD_BRIGHT);
+        title.set_horizontal_alignment(HorizontalAlignment::CENTER);
+        title.set_autowrap_mode(godot::classes::text_server::AutowrapMode::WORD_SMART);
+        centre.add_child(&title);
+        let mut hint = theme::styled_label("", Face::Body, 13, theme::TEXT_DIM);
+        hint.set_horizontal_alignment(HorizontalAlignment::CENTER);
+        hint.set_autowrap_mode(godot::classes::text_server::AutowrapMode::WORD_SMART);
+        centre.add_child(&hint);
+        radial.add_child(&centre);
         radial.set_visible(false);
         root.add_child(&radial);
 
@@ -147,6 +202,9 @@ impl PadView {
             root,
             radial,
             entries,
+            material,
+            title,
+            hint,
             strip,
             shown: None,
             selected: None,
@@ -163,19 +221,34 @@ impl PadView {
     /// The highlighted entry.
     pub fn select(&mut self, sel: Option<usize>) {
         self.selected = sel;
+        if let Some(m) = self.material.as_mut() {
+            let i = sel.map_or(-1, |i| i as i32);
+            m.set_shader_parameter("selected", &i.to_variant());
+        }
         for (i, e) in self.entries.iter_mut().enumerate() {
             let on = Some(i) == sel;
             e.set_modulate(if on {
-                Color::from_rgb(1.0, 0.92, 0.7)
+                Color::from_rgb(1.0, 0.95, 0.8)
             } else {
-                Color::from_rgba(1.0, 1.0, 1.0, 0.85)
+                Color::from_rgba(1.0, 1.0, 1.0, 0.72)
             });
             e.set_scale(if on {
-                Vector2::new(1.12, 1.12)
+                Vector2::new(1.1, 1.1)
             } else {
                 Vector2::ONE
             });
-            e.set_pivot_offset(ENTRY * 0.5);
+            e.set_pivot_offset(CELL * 0.5);
+        }
+        match sel.and_then(|i| RADIAL.get(i)) {
+            Some(e) => {
+                self.title.set_text(e.label());
+                self.hint.set_text("Let go of LT to do it");
+            }
+            None => {
+                self.title.set_text("Actions");
+                self.hint
+                    .set_text("Point a stick at one · let go in the middle: nothing");
+            }
         }
     }
 
