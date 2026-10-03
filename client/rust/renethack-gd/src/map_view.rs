@@ -2320,6 +2320,9 @@ pub struct MapView {
     rehearsed: bool,
     /// The shadow atlas has been made (the rehearsal casts a shadow).
     shadow_made: bool,
+    /// A frame's time for drawing a new level's cells (`BUILD_BUDGET`, or
+    /// less where the rehearsal draws a level's first frames).
+    build_budget: std::time::Duration,
     /// How many of the map's parts draw behind the title (see
     /// `show_parts`).
     showing: u8,
@@ -2817,6 +2820,7 @@ impl MapView {
             rehearsal: None,
             rehearsed: false,
             shadow_made: false,
+            build_budget: BUILD_BUDGET,
             showing: 0,
             shadow_block: None,
             shadow_frames: 0,
@@ -3204,8 +3208,8 @@ impl MapView {
         }
     }
 
-    /// Draw the cells of a new level still to draw for at most
-    /// `BUILD_BUDGET`; the lights and the fog of war again once all are.
+    /// Draw the cells of a new level still to draw for at most the
+    /// frame's budget; the lights and the fog of war again once all are.
     fn build_some(&mut self, world: &World, catalog: &Catalog, hero: Option<(i32, i32)>) {
         if self.building.is_empty() {
             return;
@@ -3216,7 +3220,7 @@ impl MapView {
         let all = hero.is_none() || !self.root.is_visible();
         while let Some((x, y)) = self.building.pop() {
             self.update_cell(x, y, world, catalog, hero);
-            if !all && start.elapsed() >= BUILD_BUDGET {
+            if !all && start.elapsed() >= self.build_budget {
                 break;
             }
         }
@@ -3879,6 +3883,7 @@ impl MapView {
     pub fn clear(&mut self) {
         // a game starts: the rehearsal is over, the gallery's light off
         self.rehearsal = None;
+        self.build_budget = BUILD_BUDGET;
         self.set_showcase(false);
         self.building.clear();
         self.finish_motions();
@@ -4165,10 +4170,12 @@ impl MapView {
         }
         let rehearsal = now.elapsed() - art;
         let showing = self.showing;
-        let doing = self
-            .rehearsal
-            .as_ref()
-            .map(|r| format!("{}, {showing} of the map's {SHOW_ALL} parts shown", r.doing()));
+        let doing = self.rehearsal.as_ref().map(|r| {
+            format!(
+                "{}, {showing} of the map's {SHOW_ALL} parts shown",
+                r.doing()
+            )
+        });
         self.title_frame(now, art, rehearsal, doing);
         if !more && self.stats_window.is_some() && !std::mem::replace(&mut self.preload_told, true)
         {
@@ -4179,6 +4186,11 @@ impl MapView {
             );
         }
         more
+    }
+
+    /// A frame's time for drawing a new level's cells (None: the game's).
+    pub(crate) fn set_build_budget(&mut self, budget: Option<std::time::Duration>) {
+        self.build_budget = budget.unwrap_or(BUILD_BUDGET);
     }
 
     /// A title frame left to other work (the dialogs' warm-up), instead of

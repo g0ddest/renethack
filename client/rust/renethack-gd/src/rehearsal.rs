@@ -31,6 +31,9 @@ const STAGES: &[(&str, Branch)] = &[
 /// Frames a stage is held once it is drawn: an effect a frame, then the
 /// pipelines compiled in the background.
 const HOLD: u32 = 30;
+/// A frame's time for drawing the first stage's cells (the game's is
+/// 4 ms: the first level drawn compiles and allocates as it goes).
+const FIRST_BUDGET: std::time::Duration = std::time::Duration::from_micros(1500);
 /// A stage that never settles moves on after this many frames.
 const MOST: u32 = 300;
 
@@ -40,6 +43,24 @@ const X1: i32 = 50;
 const Y0: i32 = 3;
 const Y1: i32 = 15;
 const HERO: (i32, i32) = (40, 14);
+
+/// A scene (its meshes come with it), not a texture.
+fn is_scene(path: &str) -> bool {
+    [".gltf", ".glb", ".tscn", ".scn"]
+        .iter()
+        .any(|e| path.ends_with(e))
+}
+
+/// Ask for `path` to load in the background (gdext leaves the threaded
+/// loads out without its threads feature: they are called by name).
+fn request(path: &str) -> bool {
+    let mut loader = ResourceLoader::singleton();
+    loader.exists(path)
+        && loader
+            .call("load_threaded_request", &[path.to_variant()])
+            .try_to::<i64>()
+            .is_ok_and(|e| e == 0)
+}
 
 /// ResourceLoader.ThreadLoadStatus: still loading, and loaded.
 const LOADING: i64 = 1;
@@ -68,8 +89,10 @@ pub struct Rehearsal {
     phase: Phase,
     stage: usize,
     frame: u32,
-    /// Loads still running, and what they gave (kept until it is over).
+    /// Loads still running, scenes waiting their turn, and what they
+    /// gave (kept until it is over).
     fetching: Vec<String>,
+    queued: Vec<String>,
     fetched: Vec<Gd<Resource>>,
 }
 
@@ -79,23 +102,12 @@ impl Rehearsal {
     pub fn new(catalog: &Catalog, fetch: Vec<String>) -> Rehearsal {
         let mut world = World::new();
         world.set_catalog(catalog);
-        // (gdext leaves the threaded loads out without its threads
-        // feature: they are called by name)
-        let fetching = if fetch.is_empty() {
-            Vec::new()
-        } else {
-            let mut loader = ResourceLoader::singleton();
-            fetch
-                .into_iter()
-                .filter(|p| {
-                    loader.exists(p.as_str())
-                        && loader
-                            .call("load_threaded_request", &[p.to_variant()])
-                            .try_to::<i64>()
-                            .is_ok_and(|e| e == 0)
-                })
-                .collect()
-        };
+        // the textures all at once; the scenes one after another (a
+        // scene's meshes compile their pipelines on the frame it arrives)
+        let (mut scenes, textures): (Vec<String>, Vec<String>) =
+            fetch.into_iter().partition(|p| is_scene(p));
+        scenes.reverse();
+        let fetching = textures.into_iter().filter(|p| request(p)).collect();
         let mut r = Rehearsal {
             world,
             catalog: catalog.clone(),
@@ -103,15 +115,25 @@ impl Rehearsal {
             stage: 0,
             frame: 0,
             fetching,
+            queued: scenes,
             fetched: Vec::new(),
         };
         r.lay_level();
         r
     }
 
-    /// Take what has loaded; true when nothing is loading any more (every
-    /// frame, also while the art loads ahead).
+    /// Take what has loaded, and send for the next scene; true when
+    /// nothing is loading any more (every frame, also while the art
+    /// loads ahead).
     pub fn fetch(&mut self) -> bool {
+        if !self.fetching.iter().any(|p| is_scene(p)) {
+            while let Some(p) = self.queued.pop() {
+                if request(&p) {
+                    self.fetching.push(p);
+                    break;
+                }
+            }
+        }
         if self.fetching.is_empty() {
             return true;
         }
@@ -135,7 +157,7 @@ impl Rehearsal {
                 self.fetched.push(r);
             }
         }
-        self.fetching.is_empty()
+        self.fetching.is_empty() && self.queued.is_empty()
     }
 
     /// The map it plays (its monsters and objects are built ahead).
@@ -179,6 +201,9 @@ impl Rehearsal {
                 }
             }
             Phase::Build => {
+                // the first level drawn draws everything for the first
+                // time: a few of its cells a frame
+                map.set_build_budget((self.stage == 0).then_some(FIRST_BUDGET));
                 map.sync(&mut self.world, &self.catalog, delta);
                 self.frame += 1;
                 if map.is_settled() || self.frame >= MOST {
