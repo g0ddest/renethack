@@ -206,6 +206,41 @@ the art out for screenshots:
 
     godot --path client/godot -- --selftest=gallery --screenshots=/tmp/shots
 
+## Translation
+
+The engine stays English; the client translates what it shows. The pieces
+(Russian in progress):
+
+- `client/i18n/catalog.en.json` — every text the engine can show, as its
+  printf format with the call sites and what each placeholder names
+  (monster, object, word, number...): the pline family with the prefix
+  vpline sees ("You hit %s."), Sprintf pieces, menus, questions, text
+  windows and the texts of `dat/` (rumours, oracles, epitaphs, engravings,
+  quest texts). `make i18n-catalog` extracts it again with
+  `tools/i18n/extract.py` (Python 3, no dependencies); `make i18n-check`
+  runs the extractor's tests and fails when the committed catalog is out
+  of date.
+- `client/i18n/ru/*.toml` — the Russian templates, keyed by the catalog's
+  ids: `"Вы бьёте {1:acc}."`, `"{1} {1:gender|убит|убита|убито|убиты}!"`,
+  `"{1} {1:plural|монета|монеты|монет}"` (the syntax is in
+  `client/rust/nh-i18n/src/template.rs`).
+- `nh-i18n` — the translator: a message with its format takes its template,
+  any other text is matched against the whole catalog; the names in it are
+  declined by the lexicon. Its tests lint every translation and keep
+  `tests/snapshots/grammar.txt`, each template rendered with words of every
+  gender and number (`UPDATE_SNAPSHOTS=1 cargo test -p nh-i18n --test
+  snapshots` writes it again).
+
+The coverage on the soak: `RENETHACK_DUMP_MESSAGES=<file>` makes the
+`soak` self-test append every shown text to a file as JSON lines;
+
+    cd client/rust
+    cargo run --release -p nh-i18n --bin i18n-coverage -- <file> [--todo todo.toml 100]
+
+reports the share of texts a template matches and the share translated,
+the texts no template matches and the untranslated templates by how often
+they were shown (`--todo` writes the most shown as stubs to translate).
+
 ## Playing a script without the client
 
     cd client/rust
@@ -223,8 +258,10 @@ Script steps are documented on `nh_link::parse_script`.
 - `engine/host` — the protocol host (`nh-engine`)
 - `client/rust` — `nh-protocol`, `nh-link` (engine process, live sessions,
   saves), `nh-world` (world model, prompts, menus, key map), `nh-art` (the
-  art manifest and its fallback chain), `nh-cli`, `renethack-gd` (the Godot
-  extension)
+  art manifest and its fallback chain), `nh-i18n` (the translation of the
+  engine's texts), `nh-cli`, `renethack-gd` (the Godot extension)
+- `client/i18n` — the catalog of the engine's texts and their translations
+- `tools` — the art fetcher and the i18n extractor
 - `client/godot` — the Godot project (a single scene; all logic is in Rust)
   and its art (`client/godot/art`)
 

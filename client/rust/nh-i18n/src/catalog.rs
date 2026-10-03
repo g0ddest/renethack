@@ -38,9 +38,9 @@ pub enum Use {
     Menu,
     /// A question (yn_function, getlin...).
     Query,
-    /// The verb of "What do you want to <verb>?".
+    /// The verb of "What do you want to eat?".
     Getobj,
-    /// What the hero is busy doing ("You stop <digging>.").
+    /// What the hero is busy doing ("You stop digging.").
     Occupation,
     /// A cause of death.
     Death,

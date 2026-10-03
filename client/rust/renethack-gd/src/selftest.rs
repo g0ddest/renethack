@@ -6,7 +6,9 @@
 //!
 //! Scenarios: smoke, keys, save, close, crash, menus, text, moves, orders, and soak
 //! (random play: `--soak=N` answered requests, `--seed=S` or
-//! RENETHACK_SEED; RENETHACK_SOAK_TRACE=1 prints every decision).
+//! RENETHACK_SEED; RENETHACK_SOAK_TRACE=1 prints every decision;
+//! RENETHACK_DUMP_MESSAGES=<file> appends every shown text to the file, for
+//! nh-i18n's i18n-coverage).
 
 use std::collections::VecDeque;
 use std::path::PathBuf;
@@ -2810,6 +2812,22 @@ fn soak(args: &Args) -> Vec<Step> {
     vec![Step::Soak(Box::new(soak))]
 }
 
+/// A JSON string literal.
+fn json_string(s: &str) -> String {
+    let mut out = String::from("\"");
+    for c in s.chars() {
+        match c {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            '\n' => out.push_str("\\n"),
+            c if u32::from(c) < 0x20 => out.push_str(&format!("\\u{:04x}", u32::from(c))),
+            c => out.push(c),
+        }
+    }
+    out.push('"');
+    out
+}
+
 /// splitmix64: the soak's decisions depend only on its seed and on what
 /// the engine asks.
 struct Rng(u64);
@@ -3059,6 +3077,10 @@ pub struct Soak {
     /// The request a click or F5 went to: when it started no order, the
     /// request is still open and is decided again.
     maybe_refused: Option<(u64, u64)>,
+    /// RENETHACK_DUMP_MESSAGES=<file>: every text shown (messages,
+    /// questions, menus, text windows) appended as JSON lines, the corpus
+    /// of the translation's coverage report.
+    dump: Option<std::fs::File>,
 }
 
 impl Soak {
@@ -3093,6 +3115,63 @@ impl Soak {
             shots: None,
             nodes: None,
             maybe_refused: None,
+            dump: std::env::var_os("RENETHACK_DUMP_MESSAGES").and_then(|p| {
+                std::fs::File::options()
+                    .create(true)
+                    .append(true)
+                    .open(p)
+                    .ok()
+            }),
+        }
+    }
+
+    /// The texts shown since the last request, and the request's own:
+    /// one JSON line each, `{"seed", "kind", "text"}`; a text window is
+    /// one text, its lines joined by newlines.
+    fn dump_shown(&mut self, g: &RenethackGame, prompt: &Prompt) {
+        use std::io::Write as _;
+        let Some(out) = self.dump.as_mut() else {
+            return;
+        };
+        let window: String;
+        let mut shown: Vec<(&str, &str)> = g
+            .world
+            .log
+            .since(self.seen)
+            .map(|m| ("message", m.text.as_str()))
+            .collect();
+        match prompt {
+            Prompt::Choice { query, .. }
+            | Prompt::FreeKey { query, .. }
+            | Prompt::Text { query, .. } => shown.push(("query", query)),
+            Prompt::Menu { title, items, .. } => {
+                shown.extend(title.as_deref().map(|t| ("menu-title", t)));
+                shown.extend(
+                    items
+                        .iter()
+                        .filter_map(|i| i.str.as_deref())
+                        .map(|t| ("menu", t)),
+                );
+            }
+            Prompt::Show { title, lines } => {
+                shown.extend(title.as_deref().map(|t| ("window-title", t)));
+                let texts: Vec<&str> = lines.iter().map(|l| l.text.as_str()).collect();
+                window = texts.join("\n").trim_matches('\n').to_string();
+                shown.push(("window", &window));
+            }
+            Prompt::MessageMenu { mesg, .. } => shown.push(("message-menu", mesg)),
+            _ => {}
+        }
+        for (kind, text) in shown {
+            if text.trim().is_empty() {
+                continue;
+            }
+            let _ = writeln!(
+                out,
+                "{{\"seed\": {}, \"kind\": \"{kind}\", \"text\": {}}}",
+                self.seed,
+                json_string(text)
+            );
         }
     }
 
@@ -3322,6 +3401,7 @@ impl Soak {
                 g.world.status.number("leveldesc")
             );
         }
+        self.dump_shown(g, &prompt);
         self.seen = g.world.log.last_seq();
         check_dialog(g, id, &prompt)?;
         let events = self.decide(g, id, &prompt)?;

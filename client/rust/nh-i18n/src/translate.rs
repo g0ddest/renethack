@@ -152,6 +152,8 @@ impl Translator {
     /// The lines of a text window, joined by newlines: a text of the
     /// catalog as a whole (a quest message, an oracle), else line by line.
     pub fn window(&self, text: &str) -> Output {
+        // the blank lines around a text are not part of it
+        let text = text.trim_matches(|c: char| c == '\n' || c == '\r');
         let whole = self.by_text(text, Channel::Window);
         if whole.status != Status::Unknown || !text.contains('\n') {
             return whole;
