@@ -165,6 +165,13 @@ impl Rehearsal {
         &self.world.map
     }
 
+    /// Everything a game draws for the first time has been drawn: the
+    /// first stage built, its effects gone off (its pipelines compiled,
+    /// its buffers made).
+    pub fn first_draws_done(&self) -> bool {
+        self.stage > 0
+    }
+
     /// What it is doing (RENETHACK_FRAME_STATS).
     pub fn doing(&self) -> String {
         format!(

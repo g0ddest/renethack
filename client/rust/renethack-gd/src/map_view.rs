@@ -2314,6 +2314,8 @@ pub struct MapView {
     stats_window: Option<FrameStats>,
     /// The art loaded ahead has been told of (RENETHACK_FRAME_STATS).
     preload_told: bool,
+    /// The rehearsal's first draws done has been told of (stats).
+    first_draws_told: bool,
     /// The level played behind the title screen (render pipelines
     /// compiled ahead), until it is over; and whether the map is shown.
     rehearsal: Option<crate::rehearsal::Rehearsal>,
@@ -2817,6 +2819,7 @@ impl MapView {
             branch_look: crate::branch_look::look_of(Branch::Main),
             stats_window: std::env::var_os("RENETHACK_FRAME_STATS").map(|_| FrameStats::default()),
             preload_told: false,
+            first_draws_told: false,
             rehearsal: None,
             rehearsed: false,
             shadow_made: false,
@@ -4168,6 +4171,15 @@ impl MapView {
                 }
             }
         }
+        if self.stats_window.is_some()
+            && self.rehearsal_first_draws_done()
+            && !std::mem::replace(&mut self.first_draws_told, true)
+        {
+            godot_print!(
+                "map: the rehearsal's first draws done {:.1} s after start",
+                godot::classes::Time::singleton().get_ticks_msec() as f64 / 1000.0
+            );
+        }
         let rehearsal = now.elapsed() - art;
         let showing = self.showing;
         let doing = self.rehearsal.as_ref().map(|r| {
@@ -4230,6 +4242,14 @@ impl MapView {
         self.title_work = (art, rehearsal, doing);
     }
 
+    /// The rehearsal has drawn everything a game draws for the first time
+    /// (its first stage built, its effects gone off): the long frames of
+    /// first draws are behind (the start-up veil waits for this). False
+    /// until `warm_up` has started it; true once it is over.
+    pub fn rehearsal_first_draws_done(&self) -> bool {
+        self.rehearsed && self.rehearsal.as_ref().is_none_or(|r| r.first_draws_done())
+    }
+
     /// Nothing is left to load ahead (self-tests start a game then).
     pub fn preloaded(&self) -> bool {
         self.rehearsed && self.art.preloaded() && self.rehearsal.is_none()
@@ -4240,6 +4260,12 @@ impl MapView {
     /// monsters of the first levels.
     pub fn warm_up(&mut self, catalog: &Catalog, role: Option<&str>) {
         if !std::mem::replace(&mut self.rehearsed, true) {
+            if self.stats_window.is_some() {
+                godot_print!(
+                    "map: the rehearsal starts {:.1} s after start",
+                    godot::classes::Time::singleton().get_ticks_msec() as f64 / 1000.0
+                );
+            }
             let fetch = self.prefetch_paths();
             self.rehearsal = Some(crate::rehearsal::Rehearsal::new(catalog, fetch));
             self.set_visible(self.shown);
