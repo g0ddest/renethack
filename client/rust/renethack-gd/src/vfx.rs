@@ -929,6 +929,13 @@ impl Vfx {
     }
 
     /// How thick the dust in the air is (1: the main dungeon's).
+    /// Whether the dust draws (its first frame runs its pre-process).
+    pub fn set_dust_shown(&mut self, on: bool) {
+        if self.dust.is_visible() != on {
+            self.dust.set_visible(on);
+        }
+    }
+
     /// `embers`: glowing embers rising slowly instead (the fire below).
     pub fn set_dust(&mut self, thickness: f32, embers: bool) {
         // a new amount restarts the emitter, and its 8 s of pre-process

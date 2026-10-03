@@ -158,6 +158,8 @@ const SHADE_STAIRS: u8 = 75;
 const SHADE_BEDROCK: u8 = 100;
 /// The art gallery's ambient light, and how much its fills are raised.
 const GALLERY_AMBIENT: f32 = 0.4;
+/// The map's parts, shown one a frame behind the title (`show_parts`).
+const SHOW_ALL: u8 = 4;
 /// The glow from below round the hero where the floors burn: how far it
 /// reaches and how bright.
 const UNDERGLOW_RANGE: f32 = 4.5;
@@ -2318,6 +2320,9 @@ pub struct MapView {
     rehearsed: bool,
     /// The shadow atlas has been made (the rehearsal casts a shadow).
     shadow_made: bool,
+    /// How many of the map's parts draw behind the title (see
+    /// `show_parts`).
+    showing: u8,
     shadow_block: Option<Gd<MeshInstance3D>>,
     shadow_frames: u32,
     /// A card the rehearsal shows textures on (see `show_texture`).
@@ -2812,6 +2817,7 @@ impl MapView {
             rehearsal: None,
             rehearsed: false,
             shadow_made: false,
+            showing: 0,
             shadow_block: None,
             shadow_frames: 0,
             card: None,
@@ -4099,11 +4105,25 @@ impl MapView {
 
     pub fn set_visible(&mut self, on: bool) {
         self.shown = on;
-        // drawn behind the title while the rehearsal plays
-        let on = on || self.rehearsal.is_some();
-        self.root.set_visible(on);
-        self.post.set_visible(on);
-        self.mist.set_visible(on);
+        self.show_parts();
+    }
+
+    /// What of the map draws: all of it in a game; behind the title while
+    /// the rehearsal plays, a part more each frame (`showing`), so that no
+    /// one frame draws it all for the first time: the world, then the
+    /// vignette, the mist, the dust.
+    fn show_parts(&mut self) {
+        let parts = if self.shown {
+            SHOW_ALL
+        } else if self.rehearsal.is_some() {
+            self.showing
+        } else {
+            0
+        };
+        self.root.set_visible(parts >= 1);
+        self.post.set_visible(parts >= 2);
+        self.mist.set_visible(parts >= 3);
+        self.vfx.set_dust_shown(parts >= 4);
     }
 
     /// The camera has caught up with its target and a new level has come
@@ -4116,7 +4136,11 @@ impl MapView {
     /// before a game starts); false when everything is loaded.
     pub fn preload_step(&mut self) -> bool {
         let now = std::time::Instant::now();
-        let frame = self.title_clock.replace(now).map(|t| now.duration_since(t));
+        // behind the title, a part more of the map drawn each frame
+        if self.rehearsal.is_some() && !self.shown && self.showing < SHOW_ALL {
+            self.showing += 1;
+            self.show_parts();
+        }
         let mut more = self.art.preload_step();
         let art = now.elapsed();
         if let Some(mut r) = self.rehearsal.take() {
@@ -4139,9 +4163,45 @@ impl MapView {
                 }
             }
         }
-        // the title's long frames, with the work done in the one before
         let rehearsal = now.elapsed() - art;
-        let doing = self.rehearsal.as_ref().map(|r| r.doing());
+        let showing = self.showing;
+        let doing = self
+            .rehearsal
+            .as_ref()
+            .map(|r| format!("{}, {showing} of the map's {SHOW_ALL} parts shown", r.doing()));
+        self.title_frame(now, art, rehearsal, doing);
+        if !more && self.stats_window.is_some() && !std::mem::replace(&mut self.preload_told, true)
+        {
+            godot_print!(
+                "map: art loaded ahead {:.1} s after start, {} models built",
+                godot::classes::Time::singleton().get_ticks_msec() as f64 / 1000.0,
+                self.art.counts().1
+            );
+        }
+        more
+    }
+
+    /// A title frame left to other work (the dialogs' warm-up), instead of
+    /// `preload_step`: nothing is loaded ahead in it, and the title's
+    /// frame times stay a frame each.
+    #[allow(dead_code)] // until the dialogs' warm-up keeps frames of its own
+    pub fn title_tick(&mut self) {
+        let none = std::time::Duration::ZERO;
+        let doing = Some("a frame left to other work".to_string());
+        self.title_frame(std::time::Instant::now(), none, none, doing);
+    }
+
+    /// With RENETHACK_FRAME_STATS, the title's frames over 33 ms, with the
+    /// work done in the one before (`now`: this frame's turn, then its
+    /// own work).
+    fn title_frame(
+        &mut self,
+        now: std::time::Instant,
+        art: std::time::Duration,
+        rehearsal: std::time::Duration,
+        doing: Option<String>,
+    ) {
+        let frame = self.title_clock.replace(now).map(|t| now.duration_since(t));
         if self.stats_window.is_some() && !self.shown {
             let ms = |d: std::time::Duration| d.as_secs_f64() * 1000.0;
             if let Some(f) = frame.filter(|f| ms(*f) > 33.0) {
@@ -4156,20 +4216,11 @@ impl MapView {
             }
         }
         self.title_work = (art, rehearsal, doing);
-        if !more && self.stats_window.is_some() && !std::mem::replace(&mut self.preload_told, true)
-        {
-            godot_print!(
-                "map: art loaded ahead {:.1} s after start, {} models built",
-                godot::classes::Time::singleton().get_ticks_msec() as f64 / 1000.0,
-                self.art.counts().1
-            );
-        }
-        more
     }
 
     /// Nothing is left to load ahead (self-tests start a game then).
     pub fn preloaded(&self) -> bool {
-        self.art.preloaded() && self.rehearsal.is_none()
+        self.rehearsed && self.art.preloaded() && self.rehearsal.is_none()
     }
 
     /// Build ahead the models a game shows first: the role's hero (first
