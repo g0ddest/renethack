@@ -54,7 +54,7 @@ CATALOG_FORMAT = 1
 ENGINE = "NetHack-5.0.0_Released"
 # a call with more combinations of literal arguments keeps placeholders
 # for its most varied arguments
-MAX_DERIVED = 64
+MAX_DERIVED = 96
 # how deep buffers built from buffers are followed
 MAX_DEPTH = 3
 # a text with more Strcats after its Sprintf is a list: only its pieces
@@ -532,7 +532,8 @@ class Context:
                     continue
                 j = expression_end(toks, i + 1, end)
                 self.assigns.setdefault(name, []).append(toks[i + 1:j])
-                i = j
+                # the calls in the value are scanned too
+                i += 1
                 continue
             if t.text == "=" and toks[i - 1].text == "]" and toks[i + 1].text == "{":
                 # name[...] = {...}: a local table
@@ -586,6 +587,11 @@ class Context:
             open_i -= 1
         params = []
         for arg in split_args(toks, open_i, k):
+            # int (*name)(OBJ_P): the name is in the first parentheses
+            fn = [j for j in range(len(arg) - 2) if arg[j].text == "(" and arg[j + 1].text == "*"]
+            if fn and arg[fn[0] + 2].kind == "ident":
+                params.append(arg[fn[0] + 2].text)
+                continue
             names = [t.text for t in arg if t.kind == "ident"]
             params.append(names[-1] if names else "")
         return params
