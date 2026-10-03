@@ -1,3 +1,4 @@
 /engine/build/
 /client/rust/target/
 /client/godot/.godot/
+__pycache__/
