@@ -28,7 +28,7 @@ DECK_DIR ?= $(GODOT_PROJECT)/.godot/shots/deck
 SOAK_CI := 2000
 SOAK_SEEDS := 1 2 3 4 5 6 7 8
 
-.PHONY: all engine client import run test test-client soak lint need-timeout art icons deck
+.PHONY: all engine client import run test test-client soak lint need-timeout art icons achievement-icons deck
 all: engine
 
 engine:
@@ -129,6 +129,17 @@ icons: all client
 		-- --selftest=icons --playground=$$pg/playground > $$pg/icons.log 2>&1; \
 	grep '^selftest: icons' $$pg/icons.log; \
 	grep -q 'SELFTEST PASS icons' $$pg/icons.log || { tail -40 $$pg/icons.log; exit 1; }; \
+	rm -rf $$pg
+
+# Bake the achievements' medallions (client/godot/art/icons/achievements/,
+# steam/achievements/ and steam/achievements.vdf) from
+# client/achievements/achievements.toml; needs a display, so not headless
+achievement-icons: all client
+	@pg=$$(mktemp -d); $(if $(TIMEOUT),$(TIMEOUT) 900) $(GODOT) --path $(GODOT_PROJECT) \
+		-- --selftest=achievement-icons --playground=$$pg/playground > $$pg/achievement-icons.log 2>&1; \
+	grep '^selftest: achievement-icons' $$pg/achievement-icons.log; \
+	grep -q 'SELFTEST PASS achievement-icons' $$pg/achievement-icons.log \
+		|| { tail -40 $$pg/achievement-icons.log; exit 1; }; \
 	rm -rf $$pg
 
 # The art is committed; this re-fetches it from Poly Haven and itch.io and

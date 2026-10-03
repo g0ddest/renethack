@@ -26,10 +26,10 @@ use crate::theme::nh_color;
 
 /// Where the icons go, and the side of the render and of the icon.
 pub const OUT_DIR: &str = "res://art/icons/items";
-const RENDER: i32 = 256;
+pub(crate) const RENDER: i32 = 256;
 const ICON: i32 = 128;
 /// The part of the icon the object fills.
-const FILL: f32 = 0.8;
+pub(crate) const FILL: f32 = 0.8;
 /// Corpses on the map are darkened this much (map_view's CORPSE_DARKEN).
 const CORPSE_DARKEN: f32 = 0.35;
 
@@ -50,10 +50,10 @@ impl Report {
 
 /// The stage: a transparent SubViewport with its own world, lights and an
 /// orthographic camera, and an art library whose models live in it.
-struct Stage {
-    viewport: Gd<SubViewport>,
+pub(crate) struct Stage {
+    pub(crate) viewport: Gd<SubViewport>,
     camera: Gd<Camera3D>,
-    art: Art,
+    pub(crate) art: Art,
 }
 
 fn mix(a: Color, b: Color, t: f32) -> Color {
@@ -67,7 +67,7 @@ fn mix(a: Color, b: Color, t: f32) -> Color {
 
 /// The colour a look multiplies its model by (map_view's `tint_color`),
 /// from the colour the catalog gives the appearance.
-fn tint_color(tint: Tint, color: i32) -> Color {
+pub(crate) fn tint_color(tint: Tint, color: i32) -> Color {
     match tint {
         Tint::None => Color::WHITE,
         Tint::Glyph(s) => mix(Color::WHITE, nh_color(color), s),
@@ -79,7 +79,7 @@ fn tint_color(tint: Tint, color: i32) -> Color {
 const YAW: f32 = 28.0;
 const PITCH: f32 = -32.0;
 
-fn view_basis() -> Basis {
+pub(crate) fn view_basis() -> Basis {
     Basis::from_euler(
         EulerOrder::YXZ,
         Vector3::new(PITCH.to_radians(), YAW.to_radians(), 0.0),
@@ -87,7 +87,7 @@ fn view_basis() -> Basis {
 }
 
 impl Stage {
-    fn new(parent: &mut Gd<Node>) -> Stage {
+    pub(crate) fn new(parent: &mut Gd<Node>) -> Stage {
         let mut viewport = SubViewport::new_alloc();
         viewport.set_name("IconBake");
         viewport.set_size(Vector2i::new(RENDER, RENDER));
@@ -158,14 +158,14 @@ impl Stage {
 
     /// The camera framing `aabb` (in world space) to fill FILL of the
     /// frame, looking along the view.
-    fn frame(&mut self, center: Vector3, extent: f32) {
+    pub(crate) fn frame(&mut self, center: Vector3, extent: f32) {
         let view = view_basis();
         let pos = center + view * Vector3::new(0.0, 0.0, 20.0);
         self.camera.set_transform(Transform3D::new(view, pos));
         self.camera.set_size(extent.max(0.01) / FILL);
     }
 
-    fn grab(&self) -> Option<Gd<Image>> {
+    pub(crate) fn grab(&self) -> Option<Gd<Image>> {
         let mut image = self.viewport.get_texture()?.get_image()?;
         image.convert(Format::RGBA8);
         Some(image)
@@ -173,7 +173,7 @@ impl Stage {
 }
 
 /// Every mesh of a model, in world space: the corners of their boxes.
-fn corners(node: &Gd<Node3D>) -> Vec<Vector3> {
+pub(crate) fn corners(node: &Gd<Node3D>) -> Vec<Vector3> {
     let mut out = Vec::new();
     for n in node
         .find_children_ex("*")
@@ -205,7 +205,7 @@ fn local_box(holder: &Gd<Node3D>, points: &[Vector3]) -> Option<Aabb> {
 /// Turn a long thing (a sword, a wand, a polearm) to lie across the icon
 /// from the bottom left to the top right, its flat side to the viewer;
 /// anything else is seen from the front at three quarters.
-fn present(holder: &mut Gd<Node3D>, upright: bool) {
+pub(crate) fn present(holder: &mut Gd<Node3D>, upright: bool) {
     let Some(b) = local_box(holder, &corners(holder)) else {
         return;
     };
@@ -238,7 +238,7 @@ fn present(holder: &mut Gd<Node3D>, upright: bool) {
 
 /// The outline and the drop shadow that keep an icon readable on a dark
 /// slot, under the rendered object (RGBA8, straight alpha).
-fn finish(image: &Gd<Image>) -> Option<Gd<Image>> {
+pub(crate) fn finish(image: &Gd<Image>) -> Option<Gd<Image>> {
     let (w, h) = (image.get_width() as usize, image.get_height() as usize);
     let src = image.get_data().to_vec();
     let alpha: Vec<f32> = src.chunks(4).map(|p| f32::from(p[3]) / 255.0).collect();
@@ -322,7 +322,7 @@ fn finish(image: &Gd<Image>) -> Option<Gd<Image>> {
 }
 
 /// The used part of an image's alpha: (min x, min y, max x, max y).
-fn used(image: &Gd<Image>) -> Option<(f32, f32, f32, f32)> {
+pub(crate) fn used(image: &Gd<Image>) -> Option<(f32, f32, f32, f32)> {
     let r = image.get_used_rect();
     (r.size.x > 0 && r.size.y > 0).then(|| {
         (
@@ -347,7 +347,7 @@ fn corpse_look(art: &Art, cat: &Catalog) -> Option<ModelLook> {
 }
 
 /// The look of an object tile, as the map draws the object.
-fn object_look(art: &Art, cat: &Catalog, tile: &ObjectTile) -> (ModelLook, Level) {
+pub(crate) fn object_look(art: &Art, cat: &Catalog, tile: &ObjectTile) -> (ModelLook, Level) {
     if tile.class == "%"
         && tile.appearance == "corpse"
         && let Some(look) = corpse_look(art, cat)
@@ -387,7 +387,7 @@ pub struct Bake {
 
 /// Frames a picture may take to hold still (a new material's pipeline
 /// compiles in the background, and meanwhile draws nothing).
-const STILL_FRAMES: u32 = 240;
+pub(crate) const STILL_FRAMES: u32 = 240;
 
 impl Bake {
     pub fn new(parent: &mut Gd<Node>, catalog: std::rc::Rc<Catalog>) -> Result<Bake, String> {
@@ -537,7 +537,7 @@ impl Drop for Bake {
 
 /// The picture, once something is drawn and it is the same as the frame
 /// before (after a few frames for the view to reach the renderer).
-fn still(
+pub(crate) fn still(
     image: Gd<Image>,
     last: Option<&PackedByteArray>,
     n: u32,
@@ -551,7 +551,7 @@ fn still(
     }
 }
 
-fn save(image: &Gd<Image>, path: &Path) -> Result<(), String> {
+pub(crate) fn save(image: &Gd<Image>, path: &Path) -> Result<(), String> {
     let err = image.save_png(&path.to_string_lossy().to_string());
     if err == godot::global::Error::OK {
         Ok(())
@@ -561,7 +561,7 @@ fn save(image: &Gd<Image>, path: &Path) -> Result<(), String> {
 }
 
 /// RENETHACK_ICONS_DEBUG=dir: keep the raw renders there.
-fn debug_save(image: &Gd<Image>, what: &str) {
+pub(crate) fn debug_save(image: &Gd<Image>, what: &str) {
     use std::sync::atomic::{AtomicU32, Ordering};
     static N: AtomicU32 = AtomicU32::new(0);
     if let Ok(dir) = std::env::var("RENETHACK_ICONS_DEBUG") {

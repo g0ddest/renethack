@@ -2408,8 +2408,54 @@ fn icons() -> Vec<Step> {
 /// More than the catalog's object tiles (437 in NetHack 5.0).
 const ICONS_MAX: usize = 600;
 
+/// The achievement icons (`achievement_bake`): every achievement's
+/// medallion in both states, for the game and for Steam, and Steam's
+/// `achievements.vdf`. Writes files: `make achievement-icons` runs it.
+fn achievement_icons() -> Vec<Step> {
+    let mut steps = start();
+    steps.extend([
+        Step::Wait("the hero on the map", |g| Ok(g.world.map.hero().is_some())),
+        Step::Wait("the medallions' stage", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            let mut root = g.base().get_tree().get_root().ok_or("no root")?.upcast();
+            let bake = crate::achievement_bake::Bake::new(&mut root, cat)?;
+            ACHIEVEMENT_BAKE.with(|b| *b.borrow_mut() = Some(bake));
+            Ok(true)
+        }),
+    ]);
+    for _ in 0..ACHIEVEMENT_ICONS_MAX {
+        steps.push(Step::Wait("the next medallion", |_| {
+            ACHIEVEMENT_BAKE.with(|b| match b.borrow_mut().as_mut() {
+                Some(bake) if bake.left() > 0 || !bake.idle() => bake.tick(),
+                _ => Ok(true),
+            })
+        }));
+    }
+    steps.push(Step::Wait("every medallion baked", |_| {
+        let bake = ACHIEVEMENT_BAKE
+            .with(|b| b.borrow_mut().take())
+            .ok_or("no bake")?;
+        if bake.left() > 0 {
+            return Err(format!("{} medallions left", bake.left()));
+        }
+        bake.write_vdf()?;
+        godot_print!("selftest: achievement-icons: {} medallions", bake.written);
+        if !bake.failures().is_empty() {
+            return Err(format!("no medallion for {}", bake.failures().join("; ")));
+        }
+        Ok(true)
+    }));
+    steps.extend(quit());
+    steps
+}
+
+/// More than the achievements (69).
+const ACHIEVEMENT_ICONS_MAX: usize = 120;
+
 thread_local! {
     static BAKE: std::cell::RefCell<Option<crate::icon_bake::Bake>> =
+        const { std::cell::RefCell::new(None) };
+    static ACHIEVEMENT_BAKE: std::cell::RefCell<Option<crate::achievement_bake::Bake>> =
         const { std::cell::RefCell::new(None) };
 }
 
@@ -3752,6 +3798,7 @@ impl SelfTest {
             "moves" => moves(),
             "gallery" => gallery(),
             "icons" => icons(),
+            "achievement-icons" => achievement_icons(),
             "smoke" => smoke(),
             "keys" => keys(),
             "save" => save(),

@@ -147,7 +147,7 @@ desc_en = "Kill Medusa."
 id = "blind"
 steam = "ACH_BLIND"
 when = { achieved = 13 }
-icon = { glyph = "Blindfold" }
+icon = { glyph = "Eye", crossed = true }
 name = "achievement-blind-name"
 desc = "achievement-blind-desc"
 name_en = "In the Dark"
@@ -327,7 +327,7 @@ desc_en = "Reach experience level 30 and your role's next title."
 id = "tune"
 steam = "ACH_TUNE"
 when = { achieved = 31 }
-icon = { object = "flute" }
+icon = { emblem = "tune" }
 name = "achievement-tune-name"
 desc = "achievement-tune-desc"
 name_en = "Five Notes"

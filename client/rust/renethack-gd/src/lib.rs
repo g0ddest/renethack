@@ -1,6 +1,7 @@
 //! renethack's Godot client: a GDExtension whose root node,
 //! `RenethackGame`, runs nh-engine and draws the game.
 
+mod achievement_bake;
 mod action_bar;
 mod animator;
 mod art;

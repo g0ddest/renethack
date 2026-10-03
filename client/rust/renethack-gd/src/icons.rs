@@ -312,7 +312,41 @@ pub enum Glyph {
     Ankh,
     /// Up, down, travel.
     Stairs,
+    // the achievements' emblems (`achievement_bake`)
+    /// Gehennom: three tongues of fire.
+    Flames,
+    /// The invocation: a star in a circle.
+    Pentagram,
+    /// The Elemental Planes: the four elements' triangles.
+    Elements,
+    /// The Astral Plane: an eight-pointed star.
+    Sunburst,
+    /// The ascension: an ankh in a ring of rays.
+    Ascension,
+    /// The Big Room: a great hall and its crowd.
+    Hall,
+    Crown,
+    /// The vibrating square: a square and its ripples.
+    Ripples,
+    /// The castle's drawbridge, lowered.
+    Drawbridge,
+    /// The passtune: two notes beamed together.
+    Notes,
     Unknown,
+}
+
+impl Glyph {
+    /// The glyph of this name ("Sword", "Ankh"...).
+    pub fn named(name: &str) -> Option<Glyph> {
+        use Glyph::*;
+        let all = [
+            Sword, Cuirass, Ring, Amulet, Sack, Drumstick, Flask, Scroll, Book, Wand, Gem, Boulder,
+            Ball, Chain, Drop, Coins, Helmet, Blindfold, Cloak, Shirt, Gloves, Boots, Lamp, Leash,
+            Shield, Swap, Quiver, Hand, Grid, Check, Star, Eye, Lens, Moon, Ankh, Stairs, Flames,
+            Pentagram, Elements, Sunburst, Ascension, Hall, Crown, Ripples, Drawbridge, Notes,
+        ];
+        all.into_iter().find(|g| format!("{g:?}") == name)
+    }
 }
 
 /// Every glyph (the warm-up paints them all).
@@ -462,6 +496,12 @@ const CRIMSON: Mat = mat(0xb03a2e, 0x4a1010);
 const MEAT: Mat = mat(0xd07a4a, 0x7a2e18);
 const BONE: Mat = mat(0xf2ead6, 0xa89a7a);
 const STONE: Mat = mat(0xa09a90, 0x4a4640);
+const FIRE: Mat = mat(0xffa83a, 0xa81e10);
+const FLAME_CORE: Mat = mat(0xfff4b8, 0xffa830);
+const WATER: Mat = mat(0x6ab0f4, 0x1a4890);
+const AIR: Mat = mat(0xeef4fa, 0x8898aa);
+const EARTH: Mat = mat(0xa8844e, 0x4a3018);
+const PEARL: Mat = mat(0xffffff, 0xb0c0dc);
 const CORK: Mat = mat(0xc89a60, 0x6a4a28);
 
 /// The colour words of appearances ("ruby potion", "blue gem").
@@ -1107,6 +1147,247 @@ fn layers(g: Glyph, main: Mat) -> Vec<Layer> {
             },
             STONE,
         )],
+        Glyph::Flames => {
+            // a flame: a drop whose tip rises to a point
+            let tongue = |cx: f32, h: f32, w: f32| {
+                move |p: V| {
+                    let base = circle(p, (cx, 0.62 - w), w);
+                    let tip = poly(
+                        p,
+                        &[
+                            (cx - w * 0.97, 0.62 - w),
+                            (cx + w * 0.25, 0.62 - w - h),
+                            (cx + w * 0.97, 0.62 - w),
+                        ],
+                    );
+                    smooth(base, tip, 0.06)
+                }
+            };
+            vec![
+                layer(tongue(-0.44, 0.62, 0.22), FIRE),
+                layer(tongue(0.44, 0.58, 0.22), FIRE),
+                layer(tongue(0.0, 1.0, 0.32), FIRE),
+                layer(tongue(0.0, 0.52, 0.17), FLAME_CORE),
+            ]
+        }
+        Glyph::Pentagram => {
+            let pts: Vec<V> = (0..5)
+                .map(|k| {
+                    let a = (-90.0 + k as f32 * 72.0f32).to_radians();
+                    (0.66 * a.cos(), 0.66 * a.sin())
+                })
+                .collect();
+            vec![
+                layer(|p| ring_sd(p, (0.0, 0.0), 0.78, 0.06), GOLD),
+                layer(
+                    move |p| {
+                        (0..5)
+                            .map(|k| capsule(p, pts[k], pts[(k + 2) % 5], 0.045))
+                            .fold(f32::MAX, f32::min)
+                    },
+                    GOLD,
+                ),
+            ]
+        }
+        Glyph::Elements => {
+            // the alchemists' triangles: fire and air point up, water and
+            // earth down; air and earth are barred
+            let tri = |c: V, up: bool, bar: bool| {
+                move |p: V| {
+                    let (s, (x, y)) = (0.34, c);
+                    let k = if up { 1.0 } else { -1.0 };
+                    let pts = [
+                        (x, y - s * k),
+                        (x + s * 0.95, y + s * 0.62 * k),
+                        (x - s * 0.95, y + s * 0.62 * k),
+                    ];
+                    let d = poly(p, &pts).abs() - 0.055;
+                    if bar {
+                        d.min(capsule(p, (x - s * 0.66, y), (x + s * 0.66, y), 0.05))
+                    } else {
+                        d
+                    }
+                }
+            };
+            vec![
+                layer(tri((-0.44, -0.4), true, false), FIRE),
+                layer(tri((0.44, -0.4), false, false), WATER),
+                layer(tri((-0.44, 0.46), true, true), AIR),
+                layer(tri((0.44, 0.46), false, true), EARTH),
+            ]
+        }
+        Glyph::Sunburst => {
+            let star: Vec<V> = (0..16)
+                .map(|k| {
+                    let a = (k as f32 * 22.5 - 90.0f32).to_radians();
+                    let r = if k % 2 == 0 { 0.95 } else { 0.34 };
+                    (r * a.cos(), r * a.sin())
+                })
+                .collect();
+            vec![
+                layer(move |p| poly(p, &star), GOLD),
+                layer(|p| circle(p, (0.0, 0.0), 0.2), PEARL),
+            ]
+        }
+        Glyph::Ascension => {
+            let mut v = vec![layer(
+                |p| {
+                    (0..16)
+                        .map(|k| {
+                            let a = (k as f32 * 22.5f32).to_radians();
+                            let (c, s) = (a.cos(), a.sin());
+                            capsule(p, (0.66 * c, 0.66 * s), (0.94 * c, 0.94 * s), 0.035)
+                        })
+                        .fold(f32::MAX, f32::min)
+                },
+                GOLD,
+            )];
+            v.extend(layers(Glyph::Ankh, main));
+            v
+        }
+        Glyph::Hall => vec![
+            // its walls, a door below
+            layer(
+                |p| {
+                    let walls = rect(p, (0.0, 0.0), (0.86, 0.62), 0.04).abs() - 0.07;
+                    cut(walls, rect(p, (0.0, 0.62), (0.16, 0.12), 0.0))
+                },
+                STONE,
+            ),
+            layer(
+                |p| {
+                    [(-0.5, -0.26), (0.5, -0.26), (-0.5, 0.26), (0.5, 0.26)]
+                        .into_iter()
+                        .map(|c| rect(p, c, (0.08, 0.08), 0.01))
+                        .fold(f32::MAX, f32::min)
+                },
+                STONE,
+            ),
+            // the crowd
+            layer(
+                |p| {
+                    [
+                        (-0.16, -0.12),
+                        (0.2, 0.04),
+                        (0.02, 0.3),
+                        (-0.28, 0.16),
+                        (0.12, -0.3),
+                    ]
+                    .into_iter()
+                    .map(|c| circle(p, c, 0.065))
+                    .fold(f32::MAX, f32::min)
+                },
+                CRIMSON,
+            ),
+        ],
+        Glyph::Crown => vec![
+            layer(
+                |p| {
+                    poly(
+                        p,
+                        &[
+                            (-0.72, 0.42),
+                            (-0.72, -0.3),
+                            (-0.38, 0.06),
+                            (0.0, -0.52),
+                            (0.38, 0.06),
+                            (0.72, -0.3),
+                            (0.72, 0.42),
+                        ],
+                    )
+                },
+                GOLD,
+            ),
+            layer(|p| rect(p, (0.0, 0.46), (0.76, 0.13), 0.05), GOLD),
+            layer(
+                |p| {
+                    circle(p, (0.0, -0.6), 0.09)
+                        .min(circle(p, (-0.72, -0.38), 0.08))
+                        .min(circle(p, (0.72, -0.38), 0.08))
+                },
+                GOLD,
+            ),
+            layer(
+                |p| {
+                    circle(p, (0.0, 0.46), 0.075)
+                        .min(circle(p, (-0.42, 0.46), 0.06))
+                        .min(circle(p, (0.42, 0.46), 0.06))
+                },
+                CRIMSON,
+            ),
+        ],
+        Glyph::Ripples => vec![
+            layer(
+                |p| rect(p, (0.0, 0.0), (0.84, 0.84), 0.12).abs() - 0.03,
+                STEEL,
+            ),
+            layer(
+                |p| rect(p, (0.0, 0.0), (0.6, 0.6), 0.09).abs() - 0.035,
+                STEEL,
+            ),
+            layer(
+                |p| rect(p, (0.0, 0.0), (0.36, 0.36), 0.06).abs() - 0.04,
+                GOLD,
+            ),
+            layer(|p| rect(p, (0.0, 0.0), (0.14, 0.14), 0.03), GOLD),
+        ],
+        Glyph::Drawbridge => vec![
+            // the gatehouse: two towers with merlons, the arch cut out
+            layer(
+                |p| {
+                    let mut d = rect(p, (-0.56, -0.12), (0.24, 0.62), 0.02)
+                        .min(rect(p, (0.56, -0.12), (0.24, 0.62), 0.02))
+                        .min(rect(p, (0.0, -0.22), (0.42, 0.42), 0.02));
+                    for x in [-0.72, -0.4, 0.4, 0.72] {
+                        d = cut(d, rect(p, (x, -0.74), (0.06, 0.08), 0.0));
+                    }
+                    let arch =
+                        rect(p, (0.0, 0.04), (0.22, 0.24), 0.0).min(circle(p, (0.0, -0.2), 0.22));
+                    cut(d, arch)
+                },
+                STONE,
+            ),
+            // the bridge, let down toward the viewer
+            layer(
+                |p| poly(p, &[(-0.24, 0.28), (0.24, 0.28), (0.36, 0.9), (-0.36, 0.9)]),
+                WOOD,
+            ),
+            layer(
+                |p| {
+                    capsule(p, (-0.3, -0.36), (-0.34, 0.66), 0.028).min(capsule(
+                        p,
+                        (0.3, -0.36),
+                        (0.34, 0.66),
+                        0.028,
+                    ))
+                },
+                IRON,
+            ),
+        ],
+        Glyph::Notes => vec![
+            // two heads, their stems and the beam joining them
+            layer(
+                |p| {
+                    let heads = ellipse(p, (-0.42, 0.52), (0.24, 0.17)).min(ellipse(
+                        p,
+                        (0.4, 0.36),
+                        (0.24, 0.17),
+                    ));
+                    let stems = rect(p, (-0.21, -0.06), (0.05, 0.56), 0.0).min(rect(
+                        p,
+                        (0.61, -0.22),
+                        (0.05, 0.56),
+                        0.0,
+                    ));
+                    let beam = poly(
+                        p,
+                        &[(-0.26, -0.58), (0.66, -0.78), (0.66, -0.56), (-0.26, -0.36)],
+                    );
+                    heads.min(stems).min(beam)
+                },
+                GOLD,
+            ),
+        ],
         Glyph::Unknown => vec![layer(|p| circle(p, (0.0, 0.0), 0.5), STONE)],
     }
 }
@@ -1291,6 +1572,19 @@ pub fn figure() -> Gd<Texture2D> {
         .upcast()
 }
 
+/// A glyph embossed at `side` pixels, its main surface gold or steel (an
+/// achievement's medallion).
+pub fn glyph_image(glyph: Glyph, side: usize, gold: bool) -> Option<Gd<Image>> {
+    let style = Style::Filled(if gold { GOLD } else { STEEL });
+    Image::create_from_data(
+        side as i32,
+        side as i32,
+        false,
+        Format::RGBA8,
+        &PackedByteArray::from(paint(glyph, style, side)),
+    )
+}
+
 fn painted(g: Glyph, style: Style) -> Gd<Texture2D> {
     let data = paint(g, style, SIDE);
     let image = Image::create_from_data(
@@ -1386,6 +1680,30 @@ mod tests {
         assert_eq!(flare_cell(')', "jackboots"), None);
         assert_eq!(flare_file('/', "oak wand"), Some("osare/wand.png"));
         assert_eq!(flare_file('!', "ruby potion"), None);
+    }
+
+    #[test]
+    fn the_achievement_emblems_cover_their_middle() {
+        use Glyph::*;
+        for g in [
+            Flames, Pentagram, Elements, Sunburst, Ascension, Hall, Crown, Ripples, Drawbridge,
+            Notes,
+        ] {
+            let n = 48;
+            let px = paint(g, Style::Filled(GOLD), n);
+            let alpha = |x: usize, y: usize| px[(y * n + x) * 4 + 3];
+            assert_eq!(alpha(0, 0), 0, "{g:?}");
+            let covered = (0..n * n).filter(|i| px[i * 4 + 3] > 128).count();
+            assert!(covered > n * n / 8, "{g:?}: {covered} pixels");
+        }
+    }
+
+    #[test]
+    fn glyphs_go_by_their_names() {
+        assert_eq!(Glyph::named("Ankh"), Some(Glyph::Ankh));
+        assert_eq!(Glyph::named("Drawbridge"), Some(Glyph::Drawbridge));
+        assert_eq!(Glyph::named("ankh"), None);
+        assert_eq!(Glyph::named("Unknown"), None);
     }
 
     #[test]
