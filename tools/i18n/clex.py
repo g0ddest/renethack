@@ -248,6 +248,11 @@ class Unit:
     arrays: dict = field(default_factory=dict)
     # name -> value: `#define NAME "literal"` and `static const char x[] = "..."`
     strings: dict = field(default_factory=dict)
+    # struct tag -> its members' names, in order
+    structs: dict = field(default_factory=dict)
+    # name -> (struct tag, rows): `struct tag name[] = { {...}, {...} }`,
+    # each row its initializer's elements as token lists
+    tables: dict = field(default_factory=dict)
 
 
 ATTRIBUTE_WORDS = {"NORETURN", "UNUSED", "NONNULL", "NONNULLARG1", "NONNULLARG2",
@@ -286,12 +291,18 @@ def scan_unit(path, src):
             i = close + 1
             continue
         if t.text == "=" and i + 1 < n and toks[i + 1].text == "{":
-            # a top-level initializer: an array of strings is a table
+            # a top-level initializer: an array of strings is a table, an
+            # array of structs a table of rows
             end = match_close(toks, i + 1)
             name = declared_name(toks, i)
             values = string_array(toks[i + 2 : end])
             if name and values is not None:
                 unit.arrays[name] = values
+            elif name:
+                rows = struct_rows(toks, i + 1, end)
+                tag = declared_struct(toks, i)
+                if rows and tag:
+                    unit.tables[name] = (tag, rows)
             i = end + 1
             continue
         if t.text == "=" and i + 1 < n and toks[i + 1].kind == "string":
@@ -307,10 +318,86 @@ def scan_unit(path, src):
             continue
         if t.text == "{":
             # struct, union or enum bodies at the top level
-            i = match_close(toks, i) + 1
+            close = match_close(toks, i)
+            if i >= 2 and toks[i - 2].text == "struct" and toks[i - 1].kind == "ident":
+                unit.structs[toks[i - 1].text] = struct_members(toks[i + 1 : close])
+            i = close + 1
             continue
         i += 1
     return unit
+
+
+def struct_members(toks):
+    """The names of a struct body's members, in order."""
+    names = []
+    decl = []
+    depth = 0
+    for t in toks:
+        if t.text in "([{":
+            depth += 1
+        elif t.text in ")]}":
+            depth -= 1
+        if depth == 0 and t.text in (";", ","):
+            name = declarator_name(decl)
+            if name:
+                names.append(name)
+            # `const char *a, *b;`: the type stays for the next one
+            decl = [] if t.text == ";" else [x for x in decl if x.kind == "ident"][:1]
+            continue
+        decl.append(t)
+    return names
+
+
+def declarator_name(decl):
+    """`const char *name`, `char name[N]`, `int (*fn)(void)`, `unsigned x:1`."""
+    for j in range(len(decl) - 2):
+        if decl[j].text == "(" and decl[j + 1].text == "*" and decl[j + 2].kind == "ident":
+            return decl[j + 2].text
+    depth = 0
+    name = None
+    for t in decl:
+        if t.text in "([":
+            depth += 1
+        elif t.text in ")]":
+            depth -= 1
+        elif t.text == ":" and depth == 0:
+            break
+        elif t.kind == "ident" and depth == 0:
+            name = t.text
+    return name
+
+
+def struct_rows(toks, open_i, close_i):
+    """The rows of `{ {a, b}, {c, d} }`: each a list of element token lists;
+    None when the initializer is not made of braced rows."""
+    rows = []
+    for elem in split_args(toks, open_i, close_i):
+        if not elem:
+            continue
+        if elem[0].text != "{" or match_close(elem, 0) != len(elem) - 1:
+            return None
+        rows.append(split_args(elem, 0, len(elem) - 1))
+    return rows or None
+
+
+def declared_struct(toks, eq):
+    """The struct tag of the declaration whose `=` is at toks[eq]."""
+    j = eq - 1
+    depth = 0
+    while j >= 0:
+        t = toks[j]
+        if t.text in (")", "]", "}"):
+            depth += 1
+        elif t.text in ("(", "[", "{"):
+            depth -= 1
+        elif depth == 0 and t.text == ";":
+            break
+        if depth == 0 and t.text == "struct" and j + 1 < eq and toks[j + 1].kind == "ident":
+            return toks[j + 1].text
+        if depth < 0:
+            break
+        j -= 1
+    return None
 
 
 def declared_name(toks, eq):

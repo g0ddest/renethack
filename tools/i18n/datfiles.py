@@ -1,6 +1,7 @@
 """The texts of engine/upstream/dat for the catalog: rumours, oracles,
-epitaphs, engravings, hallucinatory monster names, the quest texts of
-quest.lua and the messages and engravings of the level files.
+epitaphs, engravings, hallucinatory monster names, the dungeons' names,
+the quest texts of quest.lua and the messages and engravings of the level
+files.
 
 Not dat/tribute nor dat/data.base (third-party copyright).
 
@@ -73,6 +74,7 @@ def extract(upstream):
             line = line[1:]
         yield escape(line), "bogusmon", f"dat/bogusmon.txt:{n}", []
     yield from oracles(os.path.join(dat, "oracles.txt"))
+    yield from dungeon_names(os.path.join(dat, "dungeon.lua"))
     yield from quest_texts(os.path.join(dat, "quest.lua"))
     for name in sorted(os.listdir(dat)):
         if name.endswith(".lua") and name != "quest.lua":
@@ -219,6 +221,21 @@ def lua_value(toks, i):
         return "".join(p.value for p in parts if p.kind == "string"), i
     del start
     return None, i
+
+
+def dungeon_names(path):
+    """The names of the dungeons (#overview, the end of the game): "The
+    Gnomish Mines". Their levels' names are internal."""
+    with open(path, encoding="latin-1") as f:
+        toks = lua_lex(f.read())
+    i = next(k for k, t in enumerate(toks) if t.text == "dungeon")
+    while toks[i].text != "{":
+        i += 1
+    dungeons, _ = lua_table(toks, i)
+    line_of = {t.value: t.line for t in toks if t.kind == "string"}
+    for d in dungeons.values():
+        if isinstance(d, dict) and isinstance(d.get("name"), str):
+            yield escape(d["name"]), "dungeon", f"dat/dungeon.lua:{line_of.get(d['name'], 0)}", []
 
 
 def quest_texts(path):

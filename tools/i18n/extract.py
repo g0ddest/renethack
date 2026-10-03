@@ -380,6 +380,8 @@ class Globals:
     def __init__(self):
         self.strings = {}
         self.arrays = {}
+        self.structs = {}
+        self.tables = {}
         self.defs = {}  # function name -> [Context]
         self.callers = {}  # function name -> [(Context, args)]
         self.memo = {}
@@ -502,8 +504,9 @@ class Context:
         self.returns = []
         self.calls = []
         # where each variable is a whole argument of a call: a buffer is
-        # shown (or handed on) there
+        # shown (or handed on) there; a call that may write it clobbers it
         self.uses = {}
+        self.clobbers = {}
         start, end = func.body
         i = start + 1
         while i < end:
@@ -517,10 +520,15 @@ class Context:
                 args = split_args(toks, i + 1, close)
                 self.calls.append((t.text, args))
                 if t.text not in BUFFER_QUERIES:
+                    # a call that shows the buffer reads it; any other may
+                    # write it (fmt_elapsed_time(buf, final))
+                    reads = t.text in PLINE or t.text in PLINE1 or t.text in SINKS or t.text in ENL
                     for a in args:
                         a = strip_expr(a)
                         if len(a) == 1 and a[0].kind == "ident":
                             self.uses.setdefault(a[0].text, []).append(i)
+                            if not reads:
+                                self.clobbers.setdefault(a[0].text, set()).add(i)
             if t.text == "=" and toks[i - 1].kind == "ident" and toks[i - 2].text not in (".", "->"):
                 name = toks[i - 1].text
                 if toks[i + 1].text == "{":
@@ -535,6 +543,14 @@ class Context:
                 # the calls in the value are scanned too
                 i += 1
                 continue
+            if t.text == "=" and toks[i - 1].text == "]" and toks[i + 1].kind == "string":
+                # static const char name[] = "...": a local string
+                k = i - 1
+                while k > start and toks[k].text != "[":
+                    k -= 1
+                if toks[k - 1].kind == "ident":
+                    j = expression_end(toks, i + 1, end)
+                    self.assigns.setdefault(toks[k - 1].text, []).append(toks[i + 1:j])
             if t.text == "=" and toks[i - 1].text == "]" and toks[i + 1].text == "{":
                 # name[...] = {...}: a local table
                 k = i - 1
@@ -674,7 +690,37 @@ class Context:
             table = self.array(toks[0].text)
             if table:
                 return dedupe(table)
+        # rows[i].member: the member of every row of a struct table
+        if (toks[0].kind == "ident" and len(toks) >= 6 and toks[1].text == "["
+                and match_close(toks, 1) == len(toks) - 3 and toks[-2].text == "."
+                and toks[-1].kind == "ident"):
+            column = self.column(toks[0].text, toks[-1].text)
+            if column:
+                return column
         return None
+
+    def column(self, table, member):
+        """The literals of `member` in every row of struct table `table`;
+        None when a row holds something else."""
+        found = self.unit.tables.get(table) or self.glob.tables.get(table)
+        if not found:
+            return None
+        tag, rows = found
+        members = self.unit.structs.get(tag) or self.glob.structs.get(tag)
+        if not members or member not in members:
+            return None
+        k = members.index(member)
+        out = []
+        for row in rows:
+            if k >= len(row):
+                continue
+            if source_text(strip_expr(row[k])) in NULL_POINTERS:
+                continue
+            v = self.values(row[k])
+            if v is None:
+                return None
+            out += v
+        return dedupe(out) or None
 
     def kind(self, toks, depth=0, seen=()):
         """What a %s argument names, when it is not a literal."""
@@ -834,6 +880,9 @@ class Context:
         uses = [u for u in self.uses.get(name, []) if u < pos]
         since = max(uses) if uses else -1
         ops = [op for op in self.ops.get(name, []) if since < op.index < pos]
+        if since in self.clobbers.get(name, ()) and not any(not op.append for op in ops):
+            # written by a call: what it holds is not known
+            return []
         if not any(not op.append for op in ops) and since >= 0:
             # appended (or not) to what it held at its last use
             before = self.compositions(name, since, depth)
@@ -1041,17 +1090,11 @@ def add_printf(cat, ctx, use, fmt_toks, args, pos, site, prefixes, name):
 
 
 def add_text(cat, ctx, use, arg, pos, site):
-    """Text that is not a format: each literal it can be, or what the
-    buffer it names holds."""
-    v = ctx.values(arg)
-    if v is not None:
-        for x in v:
-            cat.add(escape(x), use, site, [])
-        return
-    toks = strip_expr(arg)
-    if len(toks) == 1 and toks[0].kind == "ident" and toks[0].text in ctx.ops:
-        for fmt, kinds in ctx.compositions(toks[0].text, pos, 1):
-            cat.add(fmt, use, site, kinds)
+    """Text that is not a format: each literal it can be (a ternary's
+    literal side, what callers pass for a parameter), or what the buffer it
+    names holds."""
+    for fmt, kinds in ctx.pieces(arg, pos, 0):
+        cat.add(fmt, use, site, kinds)
 
 
 def add_enlightenment(cat, ctx, name, args, pos, site):
@@ -1112,6 +1155,7 @@ def load_globals(units):
             u = clex.scan_unit(name, f.read())
         glob.strings.update(u.strings)
         glob.arrays.update(u.arrays)
+        glob.structs.update(u.structs)
     # the common strings: #define nothing_happens c_common_strings.c_nothing_happens
     decl = next(u for u in units if u.path == "decl.c")
     with open(os.path.join(inc, "decl.h"), encoding="latin-1") as f:
@@ -1126,6 +1170,10 @@ def load_globals(units):
     for u in units:
         for k, v in u.arrays.items():
             glob.arrays.setdefault(k, v)
+        for k, v in u.structs.items():
+            glob.structs.setdefault(k, v)
+        for k, v in u.tables.items():
+            glob.tables.setdefault(k, v)
     return glob
 
 
