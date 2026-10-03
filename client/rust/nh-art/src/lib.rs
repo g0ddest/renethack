@@ -1268,8 +1268,8 @@ mod tests {
         assert_eq!(human.gait(false), Some("Walk"));
         assert_eq!(human.gait(true), Some("Jog_Fwd"));
         assert_eq!(anims("imp").gait(true), Some("Jog_Fwd"));
-        assert_eq!(anims("horse").gait(true), Some("Armature|Run"));
-        assert_eq!(anims("horse").gait(false), Some("Armature|Walk"));
+        assert_eq!(anims("horse").gait(true), Some("Gallop"));
+        assert_eq!(anims("horse").gait(false), Some("Walk"));
         // no gait: swayed by the map
         assert_eq!(anims("dog").gait(true), None);
         assert_eq!(anims("rat").gait(false), None);

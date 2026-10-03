@@ -95,10 +95,10 @@
    "page": "https://quaternius.itch.io/lowpoly-animated-animals",
    "upload": "Farm Animals Animated  by Quaternius.zip",
    "root": "FBX/",
-   "files": ["Pug.fbx", "Horse.fbx", "Cow.fbx", "Pig.fbx", "Sheep.fbx"],
+   "files": ["Pug.fbx", "Pig.fbx", "Sheep.fbx"],
    "dest": "quaternius/animals",
    "license_files": [],
-   "use": "dogs, horses, quadrupeds (CC0 per the itch.io page; the zip has no license file)"
+   "use": "the pig (rust monsters, wumpuses), the sheep and the pug (CC0 per the itch.io page; the zip has no license file)"
   },
   {
    "page": "https://quaternius.itch.io/universal-base-characters",
@@ -188,6 +188,9 @@
    "files": ["Explosion02HD_5x5.tga"], "dest": "unity-labs/flipbooks", "use": "explosions (5x5 frames)"},
   {"url": "https://static.poly.pizza/f1d12388-e39b-4157-b32a-646a1d089fc4.glb", "name": "Wolf.glb", "dest": "quaternius/animals", "use": "wolves, jackals, coyotes, foxes, wargs (Ultimate Animated Animal Pack by Quaternius, CC0, mirrored on Poly Pizza: https://poly.pizza/m/P1gU3Qkr9r; the pack's own Google Drive is over its quota)"},
   {"url": "https://static.poly.pizza/611d25c7-430f-4bb5-ab2c-d8f5f3cb9712.glb", "name": "Husky.glb", "dest": "quaternius/animals", "use": "dogs (Ultimate Animated Animal Pack by Quaternius, CC0, mirrored on Poly Pizza: https://poly.pizza/m/wcWiuEqwzq)"},
+  {"url": "https://static.poly.pizza/d37dbc87-ca61-4b2c-a2da-d2f0c4240bef.glb", "name": "Horse.glb", "dest": "quaternius/animals", "use": "ponies, horses, warhorses, centaurs (Ultimate Animated Animal Pack by Quaternius, CC0, mirrored on Poly Pizza: https://poly.pizza/m/qvTrSG9pZF)"},
+  {"url": "https://static.poly.pizza/3edc2bd9-3378-4b43-a50d-d5e1f858562b.glb", "name": "WhiteHorse.glb", "dest": "quaternius/animals", "use": "unicorns and the ki-rin (Ultimate Animated Animal Pack by Quaternius, CC0, mirrored on Poly Pizza: https://poly.pizza/m/bEdE4rmZy9)"},
+  {"url": "https://static.poly.pizza/382b3d4a-a7c9-4c03-9858-3df630d90047.glb", "name": "Cow.glb", "dest": "quaternius/animals", "use": "rothes, mumakil and the other quadrupeds (Ultimate Animated Animal Pack by Quaternius, CC0, mirrored on Poly Pizza: https://poly.pizza/m/26zM1outCr)"},
   {"url": "https://kenney.nl/media/pages/assets/particle-pack/f8fe0f8cb8-1677578741/kenney_particle-pack.zip",
    "root": "PNG (Transparent)/", "files": ["*.png"], "license_files": ["License.txt"], "dest": "kenney/particles",
    "use": "sparks, flares, magic circles, slashes, scorch marks, smoke puffs (grayscale, tinted in the shader)"},

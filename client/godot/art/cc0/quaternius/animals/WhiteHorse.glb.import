@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://1ry1rm4hfyda"
-path="res://.godot/imported/Horse.fbx-40b1f4fae875a2d6c99384dfa1eed03d.scn"
+uid="uid://bggyq4kar18hv"
+path="res://.godot/imported/WhiteHorse.glb-ae9e256091f2b65743d6377a0a0b94c3.scn"
 
 [deps]
 
-source_file="res://art/cc0/quaternius/animals/Horse.fbx"
-dest_files=["res://.godot/imported/Horse.fbx-40b1f4fae875a2d6c99384dfa1eed03d.scn"]
+source_file="res://art/cc0/quaternius/animals/WhiteHorse.glb"
+dest_files=["res://.godot/imported/WhiteHorse.glb-ae9e256091f2b65743d6377a0a0b94c3.scn"]
 
 [params]
 
@@ -32,7 +32,7 @@ meshes/force_disable_compression=false
 skins/use_named_skins=true
 animation/import=true
 animation/fps=30
-animation/trimming=true
+animation/trimming=false
 animation/remove_immutable_tracks=true
 animation/import_rest_as_RESET=false
 import_script/path=""
@@ -40,7 +40,6 @@ materials/extract=0
 materials/extract_format=0
 materials/extract_path=""
 _subresources={}
-fbx/importer=0
-fbx/allow_geometry_helper_nodes=false
-fbx/embedded_image_handling=1
-fbx/naming_version=2
+gltf/naming_version=2
+gltf/embedded_image_handling=1
+gltf/texture_map_mode=1

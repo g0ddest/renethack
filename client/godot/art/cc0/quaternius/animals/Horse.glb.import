@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://hk6w3vhmq8c0"
-path="res://.godot/imported/Cow.fbx-52bc2be546cf51727cd6fe88f5ca55d4.scn"
+uid="uid://b2mr7i5mh10wf"
+path="res://.godot/imported/Horse.glb-31482850b45b391a0140a0fa6e8d2b44.scn"
 
 [deps]
 
-source_file="res://art/cc0/quaternius/animals/Cow.fbx"
-dest_files=["res://.godot/imported/Cow.fbx-52bc2be546cf51727cd6fe88f5ca55d4.scn"]
+source_file="res://art/cc0/quaternius/animals/Horse.glb"
+dest_files=["res://.godot/imported/Horse.glb-31482850b45b391a0140a0fa6e8d2b44.scn"]
 
 [params]
 
@@ -32,7 +32,7 @@ meshes/force_disable_compression=false
 skins/use_named_skins=true
 animation/import=true
 animation/fps=30
-animation/trimming=true
+animation/trimming=false
 animation/remove_immutable_tracks=true
 animation/import_rest_as_RESET=false
 import_script/path=""
@@ -40,7 +40,6 @@ materials/extract=0
 materials/extract_format=0
 materials/extract_path=""
 _subresources={}
-fbx/importer=0
-fbx/allow_geometry_helper_nodes=false
-fbx/embedded_image_handling=1
-fbx/naming_version=2
+gltf/naming_version=2
+gltf/embedded_image_handling=1
+gltf/texture_map_mode=1

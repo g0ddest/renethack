@@ -13,11 +13,11 @@ the recipe in `sources.json` and checks the downloads against `art.lock.json`.
 | `cc0/quaternius/animations/` | Universal Animation Library (Standard) | Quaternius | https://quaternius.itch.io/universal-animation-library |
 | `cc0/quaternius/animations/UAL2_Standard.glb` | Universal Animation Library 2 (Standard) | Quaternius | https://quaternius.itch.io/universal-animation-library-2 |
 | `cc0/quaternius/weapons/` | Medieval Weapons Pack: bows, arrow, spear | Quaternius | https://quaternius.itch.io/lowpoly-medieval-weapons |
-| `cc0/quaternius/animals/Wolf.glb`, `Husky.glb` | Ultimate Animated Animal Pack: wolf, husky | Quaternius | https://quaternius.com/packs/ultimateanimatedanimals.html (fetched from the Poly Pizza mirror: https://poly.pizza/m/P1gU3Qkr9r, https://poly.pizza/m/wcWiuEqwzq) |
+| `cc0/quaternius/animals/Wolf.glb`, `Husky.glb`, `Horse.glb`, `WhiteHorse.glb`, `Cow.glb` | Ultimate Animated Animal Pack: wolf, husky, horse, white horse, cow | Quaternius | https://quaternius.com/packs/ultimateanimatedanimals.html (fetched from the Poly Pizza mirror: https://poly.pizza/m/P1gU3Qkr9r, https://poly.pizza/m/wcWiuEqwzq, https://poly.pizza/m/qvTrSG9pZF, https://poly.pizza/m/bEdE4rmZy9, https://poly.pizza/m/26zM1outCr) |
 | `cc0/quaternius/base/` | Universal Base Characters (Standard): the base heads (face, eyes, eyebrows), hairstyles and beards | Quaternius | https://quaternius.itch.io/universal-base-characters |
 | `cc0/quaternius/bestiary/` | Bestiary – Dungeon Monsters Kit (Standard): imp, puglin | Quaternius | https://quaternius.itch.io/bestiary-dungeon-monsters-kit |
 | `cc0/quaternius/props/` | Fantasy Props MegaKit (Standard), a selection | Quaternius | https://quaternius.itch.io/fantasy-props-megakit |
-| `cc0/quaternius/animals/` | Farm Animals Animated: pug, horse, cow, pig, sheep | Quaternius | https://quaternius.itch.io/lowpoly-animated-animals |
+| `cc0/quaternius/animals/Pug.fbx`, `Pig.fbx`, `Sheep.fbx` | Farm Animals Animated: pug, pig, sheep | Quaternius | https://quaternius.itch.io/lowpoly-animated-animals |
 | `cc0/sigilsvault/dungeon/` | Modular Dungeon Kit v1.0: pieces and props (GLB) | Kevin Barany (SigilsVault) | https://sigilsvault.itch.io/modular-dungeon-kit-v10 |
 | `cc0/unity-labs/flipbooks/` | VFX flipbooks: Flame02, Flame03, FireBall01–04, WispySmoke01, CandleSmoke01, Explosion02HD | Unity Technologies (Unity Labs Paris) | https://unity.com/blog/engine-platform/free-vfx-image-sequences-flipbooks |
 | `cc0/ambientcg/` | Lava003, Rock035, Rock058 (1K, maps repacked) | ambientCG (Lennart Demes) | https://ambientcg.com |

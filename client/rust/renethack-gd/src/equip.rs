@@ -46,6 +46,9 @@ pub struct Worn {
     parts: Option<Vec<(Gd<MeshInstance3D>, usize)>>,
     /// An item used, in a hand for a few seconds more.
     in_use: Option<(Gd<Node3D>, f32, &'static str)>,
+    /// Seconds more the weapon in the right hand stands upright (the other
+    /// hand casts).
+    upright: f32,
 }
 
 impl Worn {
@@ -141,6 +144,19 @@ impl Art {
                 show_slot(worn, hand, true);
             }
         }
+        if worn.upright > 0.0 {
+            worn.upright -= delta;
+            let slot = self.manifest.held_slot("hand_r");
+            let held = worn.held.iter_mut().find(|(s, _)| *s == "hand_r");
+            if let (Some(slot), Some((_, node))) = (slot, held)
+                && node.is_instance_valid()
+            {
+                node.set_transform(transform(slot.pos, slot.rot, [1.0; 3]));
+                if worn.upright > 0.0 {
+                    stand_up(node);
+                }
+            }
+        }
         if worn.gear == *gear {
             return gear.lit();
         }
@@ -204,6 +220,15 @@ impl Art {
             }
         }
         gear.lit()
+    }
+
+    /// While the left hand casts, the weapon in the right stands upright
+    /// in it for `secs` (a staff planted at the side, not across the hips
+    /// of a hand that opens).
+    pub fn steady(&mut self, m: &mut Model, secs: f32) {
+        if let Some(worn) = m.worn.as_mut() {
+            worn.upright = secs;
+        }
     }
 
     /// The item in use leaves the hand at once (the model is put away
@@ -660,6 +685,21 @@ fn pose_clip(idle: &Gd<Animation>, secs: f32, pose: &[PoseTrack]) -> Gd<Animatio
         }
     }
     a
+}
+
+/// Turn a held thing about its grip (the root's origin, in the hand) so
+/// that it points straight up: a held thing lies along its root's +Y,
+/// tip first.
+fn stand_up(root: &mut Gd<Node3D>) {
+    let g = root.get_global_transform();
+    let along = (g.basis * Vector3::UP).normalized();
+    let axis = along.cross(Vector3::UP);
+    let sin = axis.length();
+    if sin < 1e-4 {
+        return;
+    }
+    let turn = Basis::from_axis_angle(axis / sin, sin.atan2(along.dot(Vector3::UP)));
+    root.set_global_transform(Transform3D::new(turn * g.basis, g.origin));
 }
 
 fn show_slot(worn: &mut Worn, slot: &str, on: bool) {

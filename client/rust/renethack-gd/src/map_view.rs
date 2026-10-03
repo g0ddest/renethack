@@ -3803,6 +3803,14 @@ impl MapView {
             // put away, not left in a hand that opens
             self.art.put_down(m);
         }
+        if u.kind == UseKind::Cast {
+            let secs = clips
+                .attack
+                .as_deref()
+                .and_then(|a| clips.player.as_ref()?.get_animation(a))
+                .map_or(1.6, |a| a.get_length());
+            self.art.steady(m, secs);
+        }
         let anchor = self.art.slot_anchor(m, hand_slot);
         let node = m.node.clone();
         self.hero_yaw = yaw_to;

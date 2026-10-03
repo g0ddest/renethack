@@ -433,7 +433,19 @@ impl Art {
         world: bool,
         tint: Color,
     ) -> Gd<Material> {
-        let mut m = OrmMaterial3D::new_gd();
+        let maps = match (spec.albedo_path(), spec.normal_path(), spec.arm_path()) {
+            (Some(a), Some(n), Some(orm)) => Some((a, n, orm)),
+            _ => None,
+        };
+        // an ORM material takes its roughness and metal from the ORM map
+        // alone: without one it would be all metal, black where nothing
+        // is there to reflect (the paper doll); a plain one keeps the
+        // spec's own
+        let mut m: Gd<BaseMaterial3D> = if maps.is_some() {
+            OrmMaterial3D::new_gd().upcast()
+        } else {
+            StandardMaterial3D::new_gd().upcast()
+        };
         let base = mul(rgb(spec.albedo()), tint);
         let k = f32::from(shade) / 100.0;
         let mut albedo = Color::from_rgba(base.r * k, base.g * k, base.b * k, tint.a);
@@ -444,28 +456,25 @@ impl Art {
             m.set_transparency(Transparency::ALPHA);
         }
         m.set_albedo(albedo);
-        let textured = match (spec.albedo_path(), spec.normal_path(), spec.arm_path()) {
-            (Some(a), Some(n), Some(orm)) => {
-                let (a, n, orm) = (self.texture(&a), self.texture(&n), self.texture(&orm));
-                if let Some(a) = a {
-                    m.set_texture(TextureParam::ALBEDO, &a);
-                }
-                if let Some(n) = n {
-                    m.set_feature(Feature::NORMAL_MAPPING, true);
-                    m.set_texture(TextureParam::NORMAL, &n);
-                    m.set_normal_scale(spec.normal_scale);
-                }
-                if let Some(orm) = orm {
-                    m.set_texture(TextureParam::ORM, &orm);
-                }
-                m.set_flag(Flags::UV1_USE_TRIPLANAR, true);
-                m.set_flag(Flags::UV1_USE_WORLD_TRIPLANAR, world);
-                let s = spec.uv_scale;
-                m.set_uv1_scale(Vector3::new(s, s, s));
-                true
+        let textured = maps.is_some();
+        if let Some((a, n, orm)) = maps {
+            let (a, n, orm) = (self.texture(&a), self.texture(&n), self.texture(&orm));
+            if let Some(a) = a {
+                m.set_texture(TextureParam::ALBEDO, &a);
             }
-            _ => false,
-        };
+            if let Some(n) = n {
+                m.set_feature(Feature::NORMAL_MAPPING, true);
+                m.set_texture(TextureParam::NORMAL, &n);
+                m.set_normal_scale(spec.normal_scale);
+            }
+            if let Some(orm) = orm {
+                m.set_texture(TextureParam::ORM, &orm);
+            }
+            m.set_flag(Flags::UV1_USE_TRIPLANAR, true);
+            m.set_flag(Flags::UV1_USE_WORLD_TRIPLANAR, world);
+            let s = spec.uv_scale;
+            m.set_uv1_scale(Vector3::new(s, s, s));
+        }
         m.set_roughness(spec.roughness.unwrap_or(if textured { 1.0 } else { 0.8 }));
         m.set_metallic(spec.metallic.unwrap_or(0.0));
         if !textured {
@@ -980,11 +989,25 @@ impl Art {
             let Some(src) = mi.get_mesh().and_then(|m| m.try_cast::<ArrayMesh>().ok()) else {
                 continue;
             };
+            // the model's up in the mesh's own space
+            let mut to_model = Transform3D::IDENTITY;
+            let mut at: Gd<Node> = mi.clone().upcast();
+            while at != inner.clone().upcast::<Node>() {
+                let Ok(n) = at.clone().try_cast::<Node3D>() else {
+                    break;
+                };
+                to_model = n.get_transform() * to_model;
+                let Some(parent) = at.get_parent() else {
+                    break;
+                };
+                at = parent;
+            }
+            let up = (to_model.basis.inverse() * Vector3::UP).normalized();
             let key = src.instance_id().to_i64();
             let mesh = self
                 .smoothed
                 .entry(key)
-                .or_insert_with(|| welded(&src).upcast())
+                .or_insert_with(|| welded(&src, up).upcast())
                 .clone();
             mi.set_mesh(&mesh);
         }
@@ -1236,6 +1259,10 @@ impl Art {
                 }
                 if let Some(model) = finish {
                     let spec = self.manifest.model_at(model).1;
+                    // the shade baked into a smoothed mesh's corners
+                    if spec.smooth {
+                        m.set_flag(Flags::ALBEDO_FROM_VERTEX_COLOR, true);
+                    }
                     if let Some(v) = spec.metallic {
                         m.set_metallic(v);
                     }
@@ -2687,13 +2714,27 @@ fn is_skin(m: &Gd<Material>) -> bool {
 }
 
 /// `mesh` with each corner's normal averaged over every face that meets at
-/// its position (corners split by seams included).
-fn welded(mesh: &Gd<ArrayMesh>) -> Gd<ArrayMesh> {
+/// its position (corners split by seams included), and a shade baked into
+/// its corners (`up` is the model's up in the mesh's space): undersides
+/// and low parts (legs, hooves) in their own shadow, and patches across
+/// the coat, so a flat-coloured low-poly animal is not plastic. The shade
+/// moves with the skin; the materials multiply it in.
+fn welded(mesh: &Gd<ArrayMesh>, up: Vector3) -> Gd<ArrayMesh> {
     use godot::classes::mesh::{ArrayFormat, ArrayType, PrimitiveType};
     let place = |v: Vector3| {
         let q = |f: f32| (f * 10_000.0).round() as i64;
         (q(v.x), q(v.y), q(v.z))
     };
+    let bounds = mesh.get_aabb();
+    let heights: Vec<f32> = (0..8)
+        .map(|i| {
+            let pick = |bit: i32, lo: f32, size: f32| if i & bit != 0 { lo + size } else { lo };
+            let (p, s) = (bounds.position, bounds.size);
+            Vector3::new(pick(1, p.x, s.x), pick(2, p.y, s.y), pick(4, p.z, s.z)).dot(up)
+        })
+        .collect();
+    let low = heights.iter().copied().fold(f32::INFINITY, f32::min);
+    let tall = (heights.iter().copied().fold(f32::NEG_INFINITY, f32::max) - low).max(1e-6);
     let mut out = ArrayMesh::new_gd();
     for i in 0..mesh.get_surface_count() {
         let mut arrays = mesh.surface_get_arrays(i);
@@ -2732,6 +2773,25 @@ fn welded(mesh: &Gd<ArrayMesh>) -> Gd<ArrayMesh> {
                 if n.dot(mine) < 0.0 { -n } else { n }
             })
             .collect();
+        let own: PackedColorArray = arrays.at(ArrayType::COLOR.ord() as usize).to();
+        let colours: Vec<Color> = verts
+            .iter()
+            .zip(&normals)
+            .enumerate()
+            .map(|(k, (v, n))| {
+                let h = (v.dot(up) - low) / tall;
+                let under = smoothstep(-0.7, 0.4, n.dot(up));
+                let ground = smoothstep(0.0, 0.5, h);
+                let coat = value_noise(*v * (4.0 / tall));
+                let shade = (0.75 + 0.25 * under) * (0.85 + 0.15 * ground) * (0.9 + 0.1 * coat);
+                let c = own.get(k).unwrap_or(Color::WHITE);
+                Color::from_rgba(c.r * shade, c.g * shade, c.b * shade, c.a)
+            })
+            .collect();
+        arrays.set(
+            ArrayType::COLOR.ord() as usize,
+            &PackedColorArray::from(colours.as_slice()).to_variant(),
+        );
         arrays.set(
             ArrayType::NORMAL.ord() as usize,
             &PackedVector3Array::from(normals.as_slice()).to_variant(),
@@ -2756,6 +2816,36 @@ fn welded(mesh: &Gd<ArrayMesh>) -> Gd<ArrayMesh> {
         }
     }
     out
+}
+
+fn smoothstep(edge0: f32, edge1: f32, x: f32) -> f32 {
+    let t = ((x - edge0) / (edge1 - edge0)).clamp(0.0, 1.0);
+    t * t * (3.0 - 2.0 * t)
+}
+
+/// Smooth noise in 0..1 with a period of about one unit.
+fn value_noise(p: Vector3) -> f32 {
+    let hash = |x: i32, y: i32, z: i32| {
+        let mut h = (x as u32)
+            .wrapping_mul(0x8da6_b343)
+            .wrapping_add((y as u32).wrapping_mul(0xd816_3841))
+            .wrapping_add((z as u32).wrapping_mul(0xcb1a_b31f));
+        h ^= h >> 13;
+        h = h.wrapping_mul(0x5bd1_e995);
+        h ^= h >> 15;
+        (h & 0xffff) as f32 / 65535.0
+    };
+    let (fx, fy, fz) = (p.x.floor(), p.y.floor(), p.z.floor());
+    let (ix, iy, iz) = (fx as i32, fy as i32, fz as i32);
+    let ease = |t: f32| t * t * (3.0 - 2.0 * t);
+    let (tx, ty, tz) = (ease(p.x - fx), ease(p.y - fy), ease(p.z - fz));
+    let lerp = |a: f32, b: f32, t: f32| a + (b - a) * t;
+    let plane = |z: i32| {
+        let a = lerp(hash(ix, iy, z), hash(ix + 1, iy, z), tx);
+        let b = lerp(hash(ix, iy + 1, z), hash(ix + 1, iy + 1, z), tx);
+        lerp(a, b, ty)
+    };
+    lerp(plane(iz), plane(iz + 1), tz)
 }
 
 /// The triangles of `mesh` whose corners all `keep` (in the mesh's own
