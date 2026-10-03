@@ -253,6 +253,9 @@ def quest_texts(path):
         if section == "msg_fallbacks":
             continue
         for msgid, msg in questtext[section].items():
+            if msgid == "TEST_PATTERN":
+                # the list of the codes, for testing; never shown
+                continue
             if isinstance(msg, str):
                 texts = [(msg, None)]
                 output = None
