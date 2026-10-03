@@ -15,7 +15,8 @@
   "cave_rock": {"textures": "cc0/ambientcg/Rock035/Rock035", "uv_scale": 0.4, "color": "#4a3e34"},
   "earth": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 0.45, "color": "#7a6450"},
   "dressed": {"textures": "cc0/polyhaven/textures/castle_wall_varriation/castle_wall_varriation", "uv_scale": 0.45, "color": "#9a9a9e"},
-  "planks": {"textures": "cc0/polyhaven/textures/old_planks_02/old_planks_02", "uv_scale": 0.6, "color": "#86705a"},
+  "planks": {"textures": "cc0/polyhaven/textures/old_planks_02/old_planks_02", "uv_scale": 0.6, "color": "#9a7c5c"},
+  "soko_wall": {"textures": "cc0/polyhaven/textures/castle_brick_07/castle_brick_07", "uv_scale": 0.5, "color": "#b07a62"},
   "basalt": {"textures": "cc0/polyhaven/textures/volcanic_rock_tiles/volcanic_rock_tiles", "uv_scale": 0.4, "color": "#4a3a36"},
   "basalt_floor": {"textures": "cc0/polyhaven/textures/volcanic_rock_tiles/volcanic_rock_tiles", "uv_scale": 0.5, "color": "#5a4440"},
   "ash": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 0.5, "color": "#3e3532"},
@@ -128,7 +129,7 @@
   "beast": {"proc": "beast", "size": 1.0, "size_factor": 0.7, "tint_strength": 0.6, "material": "skin"},
   "cat": {"proc": "beast", "shape": "cat", "size": 1.0, "size_factor": 0.55, "tint_strength": 0.6, "material": "fur"},
 
-  "boulder": {"scene": "cc0/polyhaven/models/boulder_01/boulder_01.gltf", "size": 1.0, "lift": 0.074, "target": 0.9},
+  "boulder": {"scene": "cc0/polyhaven/models/boulder_01/boulder_01.gltf", "size": 1.9, "lift": 0.074, "target": 0.9},
   "tree": {"scene": "cc0/polyhaven/models/dead_tree_trunk_02/dead_tree_trunk_02.gltf", "size": 4.05, "rot": [0, 0, 90], "lift": 1.92, "target": 2.0},
   "statue": {"scene": "cc0/polyhaven/models/gothic_statue/gothic_statue.gltf", "size": 1.74, "lift": 0.016, "target": 1.2},
 
@@ -430,7 +431,7 @@
    "jellyfish": {"model": "blob", "skin": "translucent"},
    "kraken": {"model": "serpent", "scale": 1.3},
    "stalker": {"model": "human_male", "skin": "translucent", "tint": "#e0e0f0", "tint_strength": 0.6},
-   "earth elemental": {"model": "boulder", "tint": "#6a5a48", "tint_strength": 0.3, "scale": 0.8},
+   "earth elemental": {"model": "boulder", "tint": "#6a5a48", "tint_strength": 0.3, "scale": 1.5},
    "water elemental": {"model": "blob", "skin": "translucent", "scale": 1.2},
    "xorn": {"model": "blob", "skin": "rock", "scale": 1.4},
    "umber hulk": {"model": "imp", "tint": "#3a2a18", "tint_strength": 0.7},

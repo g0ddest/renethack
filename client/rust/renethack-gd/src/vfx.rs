@@ -340,6 +340,8 @@ const BEAM_SECS: f32 = 0.45;
 const BLAST_SCENE: &str =
     "res://art/cc0/binbun/BinbunVFX_Vol2/ExplosionFX/effects/ground/vfx_ground_explosion_01.tscn";
 const BLASTS: usize = 3;
+/// Its size: made metres wide, it should cover a cell or two.
+const BLAST_SCALE: f32 = 0.25;
 
 /// RPicster's particle textures (CC0) by recipe: a starburst for a blow's
 /// flare and a cast's swirl, a star for glints and flares.
@@ -370,7 +372,8 @@ pub struct Vfx {
     /// The particle textures of recipes that have their own (RPicster's
     /// starbursts and flares), else the soft disc.
     textures: HashMap<Recipe, Gd<Texture2D>>,
-    /// Binbun's explosion (CC0): pooled instances and how long each is busy.
+    /// Binbun's explosion (CC0): the instances playing, and how long each
+    /// is still busy (freed then).
     blast_scene: Option<Gd<PackedScene>>,
     blasts: Vec<(Gd<Node3D>, f32)>,
     splat: Gd<Texture2D>,
@@ -591,31 +594,57 @@ impl Vfx {
         let Some(scene) = self.blast_scene.clone() else {
             return;
         };
-        let i = match self.blasts.iter().position(|(_, busy)| *busy <= 0.0) {
-            Some(i) => i,
-            None if self.blasts.len() < BLASTS => {
-                let Some(node) = scene
-                    .instantiate()
-                    .and_then(|n| n.try_cast::<Node3D>().ok())
-                else {
-                    return;
-                };
-                self.root.add_child(&node);
-                self.blasts.push((node, 0.0));
-                self.blasts.len() - 1
-            }
-            None => return,
+        if self.blasts.len() >= BLASTS {
+            return;
+        }
+        let Some(mut node) = scene
+            .instantiate()
+            .and_then(|n| n.try_cast::<Node3D>().ok())
+        else {
+            return;
         };
-        let (node, busy) = &mut self.blasts[i];
-        node.set_global_position(at - Vector3::new(0.0, 0.5, 0.0));
-        node.set_scale(Vector3::new(0.6, 0.6, 0.6));
+        // its shrapnel and flying bits are made for a blast metres wide:
+        // their speed and trails ignore the scale, and at a cell's size
+        // they sweep white ribbons across the whole screen
+        // (hidden, not removed: its animation drives them)
+        for name in ["Shrapnel", "Bits", "BitsTrail"] {
+            if let Some(mut part) = node
+                .get_node_or_null(name)
+                .and_then(|n| n.try_cast::<Node3D>().ok())
+            {
+                part.set_visible(false);
+            }
+        }
+        // the rest is scaled down to a cell or two: its particles kept in
+        // the node's space take its scale, speed and all; its light too
+        for n in node
+            .find_children_ex("*")
+            .type_("GPUParticles3D")
+            .owned(false)
+            .done()
+            .iter_shared()
+        {
+            if let Ok(mut p) = n.try_cast::<GpuParticles3D>() {
+                p.set_use_local_coordinates(true);
+            }
+        }
+        if let Some(mut light) = node
+            .get_node_or_null("VFXOmniLightBB")
+            .and_then(|n| n.try_cast::<OmniLight3D>().ok())
+        {
+            light.set_param(Param::RANGE, 10.0 * BLAST_SCALE);
+        }
+        node.set_transform(Transform3D::new(
+            Basis::from_scale(Vector3::new(BLAST_SCALE, BLAST_SCALE, BLAST_SCALE)),
+            at - Vector3::new(0.0, 0.3, 0.0),
+        ));
         node.set("one_shot", &true.to_variant());
         node.set("primary_color", &color.to_variant());
-        node.set_visible(true);
+        self.root.add_child(&node);
         if node.has_method("play") {
             node.call("play", &[]);
         }
-        *busy = 2.5;
+        self.blasts.push((node, 2.5));
     }
 
     /// An effect a little later (seconds).
@@ -862,14 +891,14 @@ impl Vfx {
         for e in self.emitters.values_mut().flatten() {
             e.busy -= delta;
         }
-        for (node, busy) in &mut self.blasts {
+        self.blasts.retain_mut(|(node, busy)| {
+            *busy -= delta;
             if *busy > 0.0 {
-                *busy -= delta;
-                if *busy <= 0.0 {
-                    node.set_visible(false);
-                }
+                return true;
             }
-        }
+            node.queue_free();
+            false
+        });
         for f in &mut self.flashes {
             if f.left > 0.0 {
                 f.left -= delta;
@@ -932,6 +961,9 @@ impl Vfx {
     /// Forget every effect under way (a new level, a new game).
     pub fn clear(&mut self) {
         self.pending.clear();
+        for (mut node, _) in self.blasts.drain(..) {
+            node.queue_free();
+        }
         for e in self.emitters.values_mut().flatten() {
             e.node.set_emitting(false);
             e.busy = 0.0;

@@ -96,7 +96,7 @@ fn lamp_offset(kind: Lamp) -> Vector3 {
     match kind {
         Lamp::Up => at(0.0, 1.5, -0.3),
         Lamp::Lava => at(0.0, 0.4, 0.0),
-        Lamp::Down => at(0.0, -0.1, -0.2),
+        Lamp::Down => at(0.0, -0.05, 0.3),
     }
 }
 
@@ -233,6 +233,8 @@ enum Paint {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Liquid {
     Water,
+    /// Foam along water's bank.
+    Foam,
     Lava,
     Haze,
 }
@@ -793,7 +795,8 @@ fn liquid_bed(look: &mut Look, around: &Around, ctx: &Ctx, depth: f32) {
     let Some(m) = ctx.mat("bedrock") else {
         return;
     };
-    let stone = Paint::Pbr(m, 70, Role::Prop);
+    // dark and wet under the water: a bed, not a pale tank
+    let stone = Paint::Pbr(m, 45, Role::Prop);
     look.ground_tile(plane(1.0, 1.0), stone, at(0.0, -depth, 0.0));
     for (i, (dx, dz)) in SIDES.iter().enumerate() {
         if around.liquid[i] {
@@ -1039,6 +1042,36 @@ fn terrain_base(
                     }
                 }
             }
+            // a tower's narrow pointed windows, the night showing cold
+            // through them, in the wall faces the camera sees
+            if ctx.branch.windows
+                && !cut
+                && !pier
+                && !ctx.branch.cave
+                && around.sides[1] == Side::Open
+                && ctx.noise(97) < 0.5
+            {
+                let face = w / 2.0 + 0.01;
+                let night = Paint::Flat(Color::from_rgb(0.2, 0.26, 0.48), Finish::Glow);
+                look.solid(cuboid(0.18, 0.8, 0.02), night, at(0.0, 1.32, face));
+                let stone = pbr(ctx.mat(ctx.branch.cap), SHADE_LIT, Role::Trim, DEEP);
+                look.solid(bevel(0.34, 0.06, 0.08), stone, at(0.0, 0.9, face + 0.02));
+                for x in [-0.12f32, 0.12] {
+                    look.solid(bevel(0.06, 0.84, 0.06), stone, at(x, 1.32, face + 0.02));
+                }
+                // the pointed arch over it
+                for (x, z) in [(-0.06f32, -38.0f32), (0.06, 38.0)] {
+                    look.turned(
+                        bevel(0.17, 0.05, 0.06),
+                        stone,
+                        at(x, 1.79, face + 0.02),
+                        at(0.0, 0.0, z),
+                    );
+                }
+                for s in look.solids.iter_mut().rev().take(6) {
+                    s.shadow = false;
+                }
+            }
         }
         Terrain::Floor | Terrain::DarkFloor => {
             look.ground_tile(tile, ground(lit_shade), Vector3::ZERO);
@@ -1192,16 +1225,17 @@ fn terrain_base(
             for x in [-0.36f32, 0.36] {
                 look.solid(bevel(0.08, 1.0, 0.72), wall, at(x, -0.5, 0.0));
             }
-            // worn treads going down, each with a pale worn nosing that
-            // catches the cold light from below (nothing stands over the
-            // shaft to hide them from the camera)
+            // worn treads going down from the far side towards the camera,
+            // their risers and pale worn nosings facing it and catching
+            // the cold light from below; the lowest go under the near rim
             let tread = main(SHADE_LIT);
+            let riser = main(50);
             let nosing = pbr(floor_mat, 100, Role::Prop, FLOOR_UNSEEN);
-            for (i, z) in [0.26f32, 0.08, -0.1, -0.28].into_iter().enumerate() {
-                let top = -0.14 * (i + 1) as f32;
+            for (i, z) in [-0.28f32, -0.1, 0.08, 0.26].into_iter().enumerate() {
+                let top = -0.08 - 0.14 * i as f32;
                 let h = top + 0.9;
-                let pos = at(0.0, top - h / 2.0, z);
-                look.solid(bevel(0.72, h, 0.18), tread, pos);
+                look.solid(bevel(0.72, h, 0.18), tread, at(0.0, top - h / 2.0, z));
+                look.solid(bevel(0.72, 0.1, 0.02), riser, at(0.0, top - 0.06, z + 0.09));
                 look.solid(
                     bevel(0.72, 0.03, 0.04),
                     nosing,
@@ -1311,7 +1345,7 @@ fn terrain_base(
             look.ground = 0.12;
         }
         Terrain::Pool | Terrain::Water => {
-            let deep = if t == Terrain::Water { 0.1 } else { 0.06 };
+            let deep = if t == Terrain::Water { 0.1 } else { 0.05 };
             look.ground_tile(
                 plane(1.0, 1.0),
                 Paint::Liquid(Liquid::Water),
@@ -1319,6 +1353,27 @@ fn terrain_base(
             );
             if let Some(s) = look.solids.last_mut() {
                 s.shadow = false;
+            }
+            // foam lapping at every bank, its stone side out
+            for (i, (dx, dz)) in SIDES.iter().enumerate() {
+                if around.liquid[i] {
+                    continue;
+                }
+                let yaw = match (*dx as i32, *dz as i32) {
+                    (0, -1) => 0.0,
+                    (0, _) => 180.0,
+                    (-1, _) => 90.0,
+                    _ => -90.0,
+                };
+                look.turned(
+                    plane(1.0, 0.24),
+                    Paint::Liquid(Liquid::Foam),
+                    at(dx * 0.38, -deep + 0.004, dz * 0.38),
+                    at(0.0, yaw, 0.0),
+                );
+                if let Some(s) = look.solids.last_mut() {
+                    s.shadow = false;
+                }
             }
             liquid_bed(
                 look,
@@ -1337,10 +1392,12 @@ fn terrain_base(
                 at(0.0, -0.06, 0.0),
             );
             liquid_bed(look, around, ctx, 0.12);
-            // the air shimmers over it, and it lights its banks
-            if (ctx.x + 2 * ctx.y).rem_euclid(3) == 0 {
+            // the air shimmers over it, and it lights its banks: every
+            // third cell of a lake, every cell of a narrow flow
+            let banks = around.liquid.iter().filter(|l| !**l).count();
+            if (ctx.x + 2 * ctx.y).rem_euclid(3) == 0 || banks >= 2 {
                 look.ground_tile(
-                    plane(1.0, 1.2),
+                    plane(1.0, 1.6),
                     Paint::Liquid(Liquid::Haze),
                     at(0.0, -0.06, 0.0),
                 );
@@ -1927,8 +1984,13 @@ fn look_of(cell: &Cell, near: Near, ctx: &Ctx) -> Look {
                 let open = Near::default();
                 terrain_look(&mut look, terrain_of(sym), sym, g, &open, ctx);
             }
+            // none known: the branch's floor (a flat grey tile reads as
+            // a highlight under whoever stands there)
             None => {
-                let paint = Paint::Flat(FLOOR_UNSEEN, Finish::Matte);
+                let paint = match ctx.mat("floor") {
+                    Some(m) => Paint::Pbr(m, SHADE_LIT, Role::Floor),
+                    None => Paint::Flat(FLOOR_UNSEEN, Finish::Matte),
+                };
                 look.ground_tile(plane(1.0, 1.0), paint, Vector3::ZERO);
             }
         },
@@ -3008,6 +3070,7 @@ impl MapView {
             .global_shader_parameter_set("branch_cracks", &l.cracks.to_variant());
         self.vfx.set_dust(l.dust);
         self.lights_dirty = true;
+        self.bedrock_dirty = true;
     }
 
     /// The branch the level drawn is in (self-tests).
@@ -3385,7 +3448,8 @@ impl MapView {
                 self.outlined = Some(node.clone());
             }
         }
-        let Some((x, y)) = self.hover_cell else {
+        // the hero's own cell has the hero's ring: no frame over it
+        let Some((x, y)) = self.hover_cell.filter(|&c| Some(c) != self.hero_at) else {
             self.hover.set_visible(false);
             self.hostile_ring.set_visible(false);
             return;
@@ -3436,7 +3500,7 @@ impl MapView {
             return m.clone();
         }
         let path = match l {
-            Liquid::Water => "res://shaders/water.gdshader",
+            Liquid::Water | Liquid::Foam => "res://shaders/water.gdshader",
             Liquid::Lava => "res://shaders/lava.gdshader",
             Liquid::Haze => "res://shaders/heat_haze.gdshader",
         };
@@ -3446,6 +3510,11 @@ impl MapView {
                 m.set_shader(&shader);
                 m.set_shader_parameter("noise_tex", &self.surfaces.noise().to_variant());
                 m.set_shader_parameter("fow_tex", &self.surfaces.fow_texture().to_variant());
+                if l == Liquid::Foam {
+                    m.set_shader_parameter("bank", &true.to_variant());
+                    // over the water it laps on
+                    m.set_render_priority(1);
+                }
                 if l == Liquid::Lava {
                     let flow = |map: &str| {
                         godot::tools::try_load::<godot::classes::Texture2D>(&format!(
@@ -3464,6 +3533,7 @@ impl MapView {
             Err(_) => {
                 let c = match l {
                     Liquid::Water => Color::from_rgba(0.05, 0.12, 0.15, 0.85),
+                    Liquid::Foam => Color::from_rgba(0.7, 0.75, 0.75, 0.0),
                     Liquid::Lava => Color::from_rgb(1.0, 0.35, 0.05),
                     Liquid::Haze => Color::from_rgba(1.0, 1.0, 1.0, 0.0),
                 };
@@ -3520,7 +3590,9 @@ impl MapView {
         if let Some(mesh) = st.commit() {
             self.bedrock.set_mesh(&mesh);
         }
-        if let Some(m) = self.art.manifest().material("bedrock") {
+        // the branch's own rock (Gehennom's dark basalt)
+        let name = self.branch_look.material("bedrock");
+        if let Some(m) = self.art.manifest().material(name) {
             let mat = self.material(Paint::Pbr(m, SHADE_BEDROCK, Role::Void));
             self.bedrock.set_material_override(&mat);
         }
@@ -4070,8 +4142,8 @@ impl MapView {
             }
             Lamp::Lava => {
                 light.set_color(Color::from_rgb(1.0, 0.4, 0.12));
-                light.set_param(Param::ENERGY, 1.6);
-                light.set_param(Param::RANGE, 3.2);
+                light.set_param(Param::ENERGY, 2.6);
+                light.set_param(Param::RANGE, 3.6);
                 light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 2.0);
             }
             Lamp::Down => {
@@ -4079,8 +4151,9 @@ impl MapView {
                 // above the far steps, so their treads catch it
                 light.set_param(Param::ENERGY, 2.2);
                 light.set_param(Param::RANGE, 2.0);
+                // a thin mist: the treads show through it
                 let mut mat = FogMaterial::new_gd();
-                mat.set_density(0.05);
+                mat.set_density(0.012);
                 mat.set_albedo(Color::from_rgb(0.6, 0.66, 0.8));
                 mat.set_edge_fade(0.5);
                 let mut fog = FogVolume::new_alloc();
@@ -5587,7 +5660,7 @@ mod tests {
         };
         assert_eq!(
             f.look(&under).solids[0].paint,
-            Paint::Flat(FLOOR_UNSEEN, Finish::Matte)
+            f.look(&feature(cat, "S_room")).solids[0].paint
         );
     }
 
@@ -5626,11 +5699,8 @@ mod tests {
             tile([None, None, Some(&corr), Some(&corr)]).paint,
             corr_alone.paint
         );
-        // walls alone say nothing about the floor
-        assert_eq!(
-            tile([Some(&wall), None, None, None]).paint,
-            Paint::Flat(FLOOR_UNSEEN, Finish::Matte)
-        );
+        // walls alone say nothing about the floor: the branch's floor
+        assert_eq!(tile([Some(&wall), None, None, None]).paint, alone.paint);
     }
 
     #[test]

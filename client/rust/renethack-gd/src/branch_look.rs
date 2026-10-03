@@ -59,6 +59,8 @@ pub struct BranchLook {
     pub lanterns: bool,
     /// Candles stand on some walls' tops.
     pub candles: bool,
+    /// Narrow pointed windows in some walls (a tower).
+    pub windows: bool,
     /// Manifest materials and what they become in this branch.
     pub remap: &'static [(&'static str, &'static str)],
     /// The walls are the rock itself, broken and irregular (caves).
@@ -99,6 +101,7 @@ const MAIN: BranchLook = BranchLook {
     door: None,
     lanterns: false,
     candles: false,
+    windows: false,
     remap: &[],
     cave: false,
     supports: false,
@@ -149,9 +152,9 @@ pub fn look_of(branch: Branch) -> BranchLook {
             },
             ..MAIN
         },
-        // built: dressed stone, wood and iron, an even cold light
+        // built: brick, planks and iron, an even cold light
         Branch::Sokoban => BranchLook {
-            remap: &[("masonry", "dressed"), ("floor", "planks")],
+            remap: &[("masonry", "soko_wall"), ("floor", "planks")],
             cap: "iron",
             torch: rgb(0.86, 0.9, 1.0),
             torch_energy: 1.8,
@@ -181,12 +184,14 @@ pub fn look_of(branch: Branch) -> BranchLook {
             torch_energy: 2.8,
             fill: rgb(1.0, 0.45, 0.25),
             fill_scale: 1.5,
-            ambient: rgb(0.5, 0.18, 0.12),
-            ambient_energy: 0.16,
+            // the dark is dark: red in the haze over the fire, not a red
+            // light over everything
+            ambient: rgb(0.4, 0.26, 0.22),
+            ambient_energy: 0.12,
             door: Some(Prop::IronGate),
-            fog: rgb(0.7, 0.35, 0.25),
-            fog_density: 0.005,
-            darkness: rgb(0.02, 0.006, 0.004),
+            fog: rgb(0.62, 0.4, 0.32),
+            fog_density: 0.004,
+            darkness: rgb(0.011, 0.007, 0.006),
             cracks: 1.0,
             dust: 1.5,
             grade: Grade {
@@ -233,6 +238,7 @@ pub fn look_of(branch: Branch) -> BranchLook {
             door: Some(Prop::IronGate),
             lanterns: true,
             candles: true,
+            windows: true,
             torch: rgb(0.9, 0.6, 0.5),
             torch_energy: 2.0,
             ambient: rgb(0.3, 0.26, 0.46),
