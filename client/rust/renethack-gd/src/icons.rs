@@ -37,6 +37,7 @@ thread_local! {
 pub fn clear() {
     ITEMS.with(|i| i.borrow_mut().clear());
     GLYPHS.with(|g| g.borrow_mut().clear());
+    crate::theme::clear_fonts();
 }
 
 /// The catalog's appearance names (a potion's colour word); call when it

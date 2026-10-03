@@ -36,6 +36,7 @@ use nh_world::{
     parse_item_name, worn_accessory, worn_armor,
 };
 
+use crate::gamepad::{PadButton, PadKind};
 use crate::icons::{self, Glyph};
 use crate::theme::{self, Face, Frame, place};
 use crate::ui_events::{UiEvent, UiQueue, push};
@@ -814,6 +815,19 @@ fn now_secs() -> f64 {
     Time::singleton().get_ticks_msec() as f64 / 1000.0
 }
 
+/// Override a stylebox unless it is the one there already: an override is
+/// a theme change, the node and its children work out their looks again.
+fn set_style<T: Inherits<Control>>(node: &mut Gd<T>, name: &str, sb: &Gd<StyleBoxFlat>) {
+    let mut c = node.clone().upcast::<Control>();
+    if c.has_theme_stylebox_override(name)
+        && c.get_theme_stylebox(name)
+            .is_some_and(|s| s.instance_id() == sb.instance_id())
+    {
+        return;
+    }
+    c.add_theme_stylebox_override(name, sb);
+}
+
 fn flat(bg: Color, border: Color, width: i32, radius: i32) -> Gd<StyleBoxFlat> {
     let mut sb = StyleBoxFlat::new_gd();
     sb.set_bg_color(bg);
@@ -1077,8 +1091,13 @@ struct DollView {
     viewport: Gd<SubViewport>,
     camera: Gd<Camera3D>,
     hero: Option<Gd<Node3D>>,
-    on: bool,
+    /// When it last rendered: it renders at `DOLL_FPS`, the game's frames
+    /// in between have one 3D view fewer to draw.
+    last: f64,
 }
+
+/// The doll turns slowly and breathes: 30 renders a second are plenty.
+const DOLL_FPS: f64 = 30.0;
 
 impl DollView {
     fn new(parent: &mut Gd<Control>) -> DollView {
@@ -1143,7 +1162,7 @@ impl DollView {
             viewport,
             camera,
             hero: None,
-            on: false,
+            last: f64::NEG_INFINITY,
         }
     }
 
@@ -1168,18 +1187,16 @@ impl DollView {
                     .map_or(h.get_global_transform(), |c| c.get_global_transform());
                 Transform3D::new(facing.basis, h.get_global_position())
             });
-        let on = at.is_some();
-        if on != self.on {
-            self.on = on;
-            self.viewport.set_update_mode(if on {
-                UpdateMode::ALWAYS
-            } else {
-                UpdateMode::DISABLED
-            });
-        }
         let Some(t) = at else {
             return false;
         };
+        // the last render stays shown; a new one once in a while (once
+        // rendered, the viewport goes back to DISABLED on its own)
+        if now - self.last < 1.0 / DOLL_FPS {
+            return true;
+        }
+        self.last = now;
+        self.viewport.set_update_mode(UpdateMode::ONCE);
         // in front of the model, a little above, turning slowly
         let face = t.basis.col_c().normalized();
         let yaw = (now * 0.25).sin() as f32 * 0.6;
@@ -1236,6 +1253,9 @@ pub struct InventoryPanel {
     pack_box: Gd<VBoxContainer>,
     pack_key: Vec<(InvFilter, usize)>,
     detail: Gd<VBoxContainer>,
+    /// What the detail column shows (the item, and its actions or not):
+    /// it is rebuilt only when that changes.
+    detail_key: Option<(Option<InvItem>, bool)>,
     detail_empty: Gd<Label>,
     ctx_menu: Gd<PanelContainer>,
     ctx_rows: Gd<VBoxContainer>,
@@ -1245,6 +1265,7 @@ pub struct InventoryPanel {
     status: (Option<String>, Option<String>, Option<String>),
     /// A gamepad plays: the focus is always somewhere.
     pad: bool,
+    pad_kind: Option<PadKind>,
     /// The keyboard (a gamepad) is on a doll socket: its index in `doll`.
     doll_focus: Option<usize>,
     /// A gamepad's "drag": the item picked up, put down with Y again.
@@ -1261,6 +1282,16 @@ pub struct InventoryPanel {
     doll_view: DollView,
     hero_rect: Gd<TextureRect>,
     figure: Gd<TextureRect>,
+    /// The warm-up behind the title: frames it has been open (and the
+    /// doll shown), or done.
+    warm: Warm,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum Warm {
+    Not,
+    Open { frames: u32, doll: u32 },
+    Done,
 }
 
 fn tab_button(glyph: Glyph, tip: &str, looks: &Looks) -> Gd<Button> {
@@ -1910,6 +1941,7 @@ impl InventoryPanel {
             pack_box,
             pack_key: Vec::new(),
             detail,
+            detail_key: None,
             detail_empty,
             ctx_menu,
             ctx_rows,
@@ -1917,6 +1949,7 @@ impl InventoryPanel {
             count_label,
             status: (None, None, None),
             pad: false,
+            pad_kind: None,
             doll_focus: None,
             carrying: None,
             ctx_buttons: Vec::new(),
@@ -1926,7 +1959,70 @@ impl InventoryPanel {
             doll_view,
             hero_rect,
             figure,
+            warm: Warm::Not,
         }
+    }
+
+    /// One frame of the warm-up behind the title screen: the panel open on
+    /// a sample pack with the doll rendering `hero`, so the first real
+    /// opening finds its pipelines compiled, its buffers allocated and its
+    /// textures loaded. True once done.
+    pub fn warm_step(&mut self, hero: Option<Gd<Node3D>>) -> bool {
+        let (frames, doll) = match self.warm {
+            Warm::Done => return true,
+            Warm::Not => {
+                let item = |letter, class, text: &str, slots| InvItem {
+                    letter,
+                    class,
+                    tile: -1,
+                    quan: 1,
+                    slots,
+                    lit: false,
+                    text: text.to_string(),
+                };
+                let mut pack = Pack::new();
+                pack.replace(&nh_protocol::Inventory {
+                    items: vec![
+                        item(
+                            'a',
+                            ')',
+                            "a long sword (weapon in hand)",
+                            vec![Slot::Weapon],
+                        ),
+                        item('b', '[', "a leather armor (being worn)", vec![Slot::Body]),
+                        item('c', '!', "a bubbly potion", vec![]),
+                    ],
+                    twoweap: false,
+                });
+                self.set_pack(&pack);
+                self.open();
+                self.selected = Some('a');
+                (0, 0)
+            }
+            Warm::Open { frames, doll } => (frames, doll),
+        };
+        self.set_hero(hero);
+        self.sync();
+        let doll = doll + u32::from(self.doll_rendered());
+        // a few frames with the doll rendered; without a hero, a few anyway
+        if doll >= 3 || frames >= 60 {
+            self.warm_end();
+            return true;
+        }
+        self.warm = Warm::Open {
+            frames: frames + 1,
+            doll,
+        };
+        false
+    }
+
+    /// The warm-up is over (done, or a game starts): nothing of it stays.
+    pub fn warm_end(&mut self) {
+        if matches!(self.warm, Warm::Open { .. }) {
+            self.set_hero(None);
+            self.reset();
+        }
+        self.warm = Warm::Done;
     }
 
     // ---- state ----
@@ -2035,6 +2131,8 @@ impl InventoryPanel {
     /// A new inventory.
     pub fn set_pack(&mut self, pack: &Pack) {
         self.pack = pack.clone();
+        // its actions depend on the rest of the pack
+        self.detail_key = None;
         if self.selected.is_some_and(|l| pack.by_letter(l).is_none()) {
             self.selected = None;
         }
@@ -2857,10 +2955,12 @@ impl InventoryPanel {
         }
     }
 
-    /// A gamepad gives the input (the focus shows at once).
-    pub fn set_pad(&mut self, on: bool) {
-        if self.pad != on {
-            self.pad = on;
+    /// A gamepad gives the input (the focus shows at once, the help names
+    /// its buttons).
+    pub fn set_pad(&mut self, kind: Option<PadKind>) {
+        if self.pad_kind != kind {
+            self.pad_kind = kind;
+            self.pad = kind.is_some();
             self.dirty = true;
         }
     }
@@ -3103,8 +3203,7 @@ impl InventoryPanel {
                     let verb = question.as_ref().map_or("", |q| q.verb.as_str());
                     sock.root
                         .set_tooltip_text(&format!("{}  (-)", hands_label(verb)));
-                    sock.root
-                        .add_theme_stylebox_override("panel", &self.looks.normal);
+                    set_style(&mut sock.root, "panel", &self.looks.normal);
                     if question.as_ref().is_some_and(|q| q.hands) {
                         sock.rim.set_visible(true);
                     }
@@ -3161,14 +3260,13 @@ impl InventoryPanel {
                     {
                         sock.root.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, 0.4));
                     }
-                    sock.root.add_theme_stylebox_override("panel", style);
+                    set_style(&mut sock.root, "panel", style);
                     sock.root.set_tooltip_text(&tip);
                 }
                 _ => {
                     sock.icon.set_modulate(Color::WHITE);
                     sock.show(None);
-                    sock.root
-                        .add_theme_stylebox_override("panel", &self.looks.empty);
+                    set_style(&mut sock.root, "panel", &self.looks.empty);
                     sock.root.set_tooltip_text("");
                 }
             }
@@ -3205,7 +3303,7 @@ impl InventoryPanel {
                     sock.root.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, 0.4));
                 }
             }
-            sock.root.add_theme_stylebox_override("panel", style);
+            set_style(&mut sock.root, "panel", style);
             let tip = match first {
                 Some(i) => {
                     let out = slot.unequip(i).map_or(String::new(), |k| {
@@ -3267,8 +3365,8 @@ impl InventoryPanel {
         self.suggested_tab.set_visible(question.is_some());
         let on = |b: &mut Gd<Button>, active: bool, looks: &Looks| {
             let sb = if active { &looks.tab_on } else { &looks.tab };
-            b.add_theme_stylebox_override("normal", sb);
-            b.add_theme_stylebox_override("pressed", sb);
+            set_style(b, "normal", sb);
+            set_style(b, "pressed", sb);
         };
         on(
             &mut self.suggested_tab,
@@ -3302,6 +3400,58 @@ impl InventoryPanel {
 
     /// The header's title and subtitle, the hint under the grid.
     fn texts(&self, question: Option<&ItemQuestion>) -> (String, String, String) {
+        let (title, sub, hint) = self.mouse_texts(question);
+        match self.pad_kind {
+            Some(kind) => (title, sub, self.pad_hint(kind, question)),
+            None => (title, sub, hint),
+        }
+    }
+
+    /// The help line for a gamepad: its buttons, no mouse.
+    fn pad_hint(&self, kind: PadKind, question: Option<&ItemQuestion>) -> String {
+        use PadButton::*;
+        let b = |b| kind.label(b);
+        let filter = format!("{} {}: filter", b(Lb), b(Rb));
+        if self.choose.is_some() {
+            return format!("D-pad: the item · {}: this one · {}: cancel", b(A), b(B));
+        }
+        match &self.mode {
+            Mode::Select { .. } => {
+                let mut hint = format!(
+                    "D-pad: the item · {}: choose · {filter} · {}: cancel",
+                    b(A),
+                    b(B)
+                );
+                if question.is_some_and(|q| q.all) {
+                    hint = format!("Nothing suggested — any item may be chosen. {hint}");
+                }
+                hint
+            }
+            Mode::Menu { .. } => format!(
+                "D-pad: the item · {}: select · {}: confirm · {filter} · {}: cancel",
+                b(A),
+                b(Start),
+                b(B)
+            ),
+            _ if self.carrying.is_some() => format!(
+                "D-pad: where it goes (a doll socket, another item) · {}: put it down · {}: put \
+                 it back",
+                b(Y),
+                b(B)
+            ),
+            _ => format!(
+                "D-pad: the items and the doll · {}: the first action · {}: every action\n\
+                 {}: pick up, then {} again where it goes (the doll: equip) · {filter} · {}: close",
+                b(A),
+                b(X),
+                b(Y),
+                b(Y),
+                b(B)
+            ),
+        }
+    }
+
+    fn mouse_texts(&self, question: Option<&ItemQuestion>) -> (String, String, String) {
         if let Some(choose) = self.choose {
             let (sub, hint) = match choose {
                 Choose::Adjust { from, count } => (
@@ -3450,9 +3600,6 @@ impl InventoryPanel {
 
     /// The detail column: the selected item's icon, name, facts, actions.
     fn draw_detail(&mut self) {
-        for mut c in self.detail.get_children().iter_shared() {
-            c.queue_free();
-        }
         let item = match &self.mode {
             Mode::Browse => self.selected.and_then(|l| self.pack.by_letter(l)).cloned(),
             // the item under the keyboard, else the first one suggested
@@ -3467,6 +3614,14 @@ impl InventoryPanel {
                 }),
             },
         };
+        let key = (item.clone(), self.mode == Mode::Browse);
+        if self.detail_key.as_ref() == Some(&key) {
+            return;
+        }
+        self.detail_key = Some(key);
+        for mut c in self.detail.get_children().iter_shared() {
+            c.queue_free();
+        }
         self.detail_empty.set_visible(item.is_none());
         let Some(item) = item else {
             return;

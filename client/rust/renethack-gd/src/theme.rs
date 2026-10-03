@@ -109,7 +109,7 @@ pub const MONO_SIZE: i32 = 16;
 // ---- fonts (ui-design §6.3) ----
 
 /// The UI's typefaces.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Face {
     /// Cormorant SC SemiBold: titles, panel headers.
     Title,
@@ -158,9 +158,31 @@ fn system_font(names: &[&str]) -> Gd<SystemFont> {
     font
 }
 
+thread_local! {
+    /// The faces made so far: each new font has its own glyph cache, so a
+    /// label given a fresh one shapes and rasterises its text from scratch
+    /// (milliseconds a label).
+    static FONTS: std::cell::RefCell<std::collections::HashMap<Face, Gd<Font>>> =
+        std::cell::RefCell::new(std::collections::HashMap::new());
+}
+
+/// Let the fonts go while Godot still runs (as `icons::clear`).
+pub fn clear_fonts() {
+    FONTS.with(|f| f.borrow_mut().clear());
+}
+
 /// A face of the UI; a system font when the file cannot be loaded, and
-/// system fonts behind it for characters it lacks.
+/// system fonts behind it for characters it lacks. Made once a face.
 pub fn font(face: Face) -> Gd<Font> {
+    if let Some(f) = FONTS.with(|f| f.borrow().get(&face).cloned()) {
+        return f;
+    }
+    let f = make_font(face);
+    FONTS.with(|fs| fs.borrow_mut().insert(face, f.clone()));
+    f
+}
+
+fn make_font(face: Face) -> Gd<Font> {
     let path = format!("res://fonts/{}", face.file());
     let base: Option<Gd<Font>> = godot::tools::try_load::<FontFile>(&path)
         .ok()

@@ -257,6 +257,10 @@ pub struct RenethackGame {
     /// The dialogs' warm-up has been built; every glyph is painted.
     warmed: bool,
     glyphs_warm: bool,
+    /// The inventory panel has been open behind the title; frames waited
+    /// for the rehearsal's hero to show on its doll.
+    panel_warm: bool,
+    title_frames: u32,
     /// The bar's labels were drawn for this (pad kind and page, if a pad).
     pad_labels: Option<Option<(PadKind, usize)>>,
 }
@@ -334,6 +338,8 @@ impl INode for RenethackGame {
             prof: None,
             warmed: false,
             glyphs_warm: false,
+            panel_warm: false,
+            title_frames: 0,
         }
     }
 
@@ -609,6 +615,8 @@ impl RenethackGame {
         // its dialogs go after a few frames, whatever comes next
         ui.dialogs.warm_tick();
         if !title {
+            // a game started before the panel's warm-up was over
+            ui.inventory.warm_end();
             return;
         }
         if !self.warmed {
@@ -616,12 +624,21 @@ impl RenethackGame {
             ui.dialogs.warm_up(catalog.as_deref());
         }
         self.glyphs_warm = !icons::warm_step();
+        // the doll renders the hero of the map's rehearsal (if there is
+        // none for long, the panel warms without it)
+        self.title_frames += 1;
+        let hero = ui.map.hero_model().map(|m| m.node.clone());
+        if self.glyphs_warm && (hero.is_some() || self.title_frames > 900) {
+            self.panel_warm = ui.inventory.warm_step(hero);
+        }
     }
 
     /// The warm-up behind the title screen is done (self-tests start a
     /// game after it, as a player would).
     pub(crate) fn warmed_up(&self) -> bool {
-        self.glyphs_warm && self.ui.as_ref().is_some_and(|ui| ui.dialogs.warm_done())
+        self.glyphs_warm
+            && self.panel_warm
+            && self.ui.as_ref().is_some_and(|ui| ui.dialogs.warm_done())
     }
 
     /// Time since `t` under `what` (RENETHACK_FRAME_STATS).
@@ -1531,7 +1548,7 @@ impl RenethackGame {
         // a gamepad: its hints, the bar's chords, dialogs with a focus
         let pad = self.pad.active.then_some(self.pad.kind);
         ui.dialogs.set_pad(pad.is_some());
-        ui.inventory.set_pad(pad.is_some());
+        ui.inventory.set_pad(pad);
         ui.pad.show_hints(pad.map(|k| (k, ctx)));
         let labels = pad.map(|k| (k, self.pad.page()));
         if self.pad_labels != Some(labels) {

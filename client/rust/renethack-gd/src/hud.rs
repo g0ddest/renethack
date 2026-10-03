@@ -67,8 +67,10 @@ const FULL_LOG_CHROME: f32 = 120.0;
 const FLASH_Y: f32 = 76.0;
 /// Deadly chips pulse this many times a second (a 1.2 s cycle).
 const PULSE_HZ: f64 = 1.0 / 1.2;
-/// Seconds the banner of a new mode stays, fading out in the last third.
+/// Seconds the banner of a new mode stays, fading out at the end.
 const FLASH_SECS: f64 = 1.6;
+/// The fade: short, a half-faded plaque over a lit wall reads as a smudge.
+const FLASH_FADE: f64 = 0.25;
 /// Seconds a changed attribute stays green or red.
 const ATTR_FLASH_SECS: f64 = 1.5;
 
@@ -644,7 +646,7 @@ fn now_secs() -> f64 {
 
 /// The banner's opacity `t` seconds after the mode changed.
 pub fn flash_alpha(t: f64) -> f32 {
-    let fade = FLASH_SECS / 3.0;
+    let fade = FLASH_FADE;
     if !(0.0..FLASH_SECS).contains(&t) {
         0.0
     } else if t < FLASH_SECS - fade {
@@ -2378,7 +2380,7 @@ mod tests {
         assert_eq!(flash_alpha(-0.1), 0.0);
         assert_eq!(flash_alpha(0.0), 1.0);
         assert_eq!(flash_alpha(FLASH_SECS * 0.5), 1.0);
-        let late = flash_alpha(FLASH_SECS * 0.9);
+        let late = flash_alpha(FLASH_SECS - FLASH_FADE * 0.5);
         assert!(late > 0.0 && late < 1.0, "{late}");
         assert_eq!(flash_alpha(FLASH_SECS), 0.0);
     }

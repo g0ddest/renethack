@@ -304,14 +304,14 @@ impl ActionBar {
             match chord {
                 Some(text) => {
                     s.key.set_text(text);
-                    s.key.add_theme_font_size_override("font_size", 10);
+                    s.key.add_theme_font_size_override("font_size", 14);
                     s.key.add_theme_stylebox_override("normal", &pill);
                     s.key.add_theme_constant_override("outline_size", 0);
-                    let w = 8.0 + 6.0 * text.chars().count() as f32;
+                    let w = 10.0 + 8.0 * text.chars().count() as f32;
                     s.key.set_offset(Side::LEFT, 2.0);
                     s.key.set_offset(Side::TOP, 2.0);
                     s.key.set_offset(Side::RIGHT, 2.0 + w);
-                    s.key.set_offset(Side::BOTTOM, 15.0);
+                    s.key.set_offset(Side::BOTTOM, 21.0);
                     s.key.set_visible(true);
                 }
                 None => {
