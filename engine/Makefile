@@ -91,8 +91,15 @@ $(BUILD)/test_proto: $(HOST)/tests/test_proto.c $(HOST)/rh_proto.c \
 		-o $@ $(HOST)/tests/test_proto.c $(HOST)/rh_proto.c \
 		$(HOST)/third_party/cjson/cJSON.c
 
-test: $(BUILD)/test_proto all
+$(BUILD)/test_progress: $(HOST)/tests/test_progress.c $(HOST)/rh_progress.c \
+		$(HOST)/rh_progress.h
+	mkdir -p $(BUILD)
+	cc -std=c99 -Wall -Wextra -I$(HOST) \
+		-o $@ $(HOST)/tests/test_progress.c $(HOST)/rh_progress.c
+
+test: $(BUILD)/test_proto $(BUILD)/test_progress all
 	$(BUILD)/test_proto
+	$(BUILD)/test_progress
 	sh tests/smoke.sh $(BUILD)
 
 clean:

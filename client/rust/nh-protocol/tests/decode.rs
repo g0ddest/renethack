@@ -327,6 +327,46 @@ fn level_decodes_the_branch_the_depth_and_a_plane() {
 }
 
 #[test]
+fn progress_decodes_achievements_events_conducts_and_the_end() {
+    let line = r#"{"t":"win","fn":"progress","a":{"mode":"normal","achieved":[15,23,21],"events":{"qcalled":true,"uheard_tune":2,"udemigod":false},"deepest":7,"conduct":{"unvegan":0,"wishes":2},"roleplay":{"blind":false,"nudist":true},"gameover":true,"how":"ascended"}}"#;
+    let EngineMsg::Win(WinCall::Progress(p)) = parse_line(line).unwrap() else {
+        panic!("expected progress")
+    };
+    assert_eq!(p.mode, "normal");
+    assert_eq!(p.achieved, vec![15, 23, 21]);
+    assert!(p.achieved(21) && !p.achieved(10));
+    // a flag and a stage both read as numbers
+    assert_eq!(p.events["qcalled"], 1);
+    assert_eq!(p.events["uheard_tune"], 2);
+    assert!(p.event("qcalled") && p.event("uheard_tune") && !p.event("udemigod"));
+    assert_eq!(p.deepest, 7);
+    assert_eq!(p.conduct["wishes"], 2);
+    assert!(p.roleplay["nudist"]);
+    assert!(p.gameover);
+    assert_eq!(p.how.as_deref(), Some("ascended"));
+}
+
+#[test]
+fn recorded_session_tells_a_fresh_game_has_earned_nothing() {
+    let p = decoded()
+        .into_iter()
+        .find_map(|m| match m {
+            EngineMsg::Win(WinCall::Progress(p)) => Some(p),
+            _ => None,
+        })
+        .expect("a progress notice");
+    assert_eq!(p.mode, "normal");
+    assert!(p.achieved.is_empty());
+    assert!(p.events.values().all(|&n| n == 0), "{:?}", p.events);
+    assert_eq!(p.deepest, 1);
+    assert!(!p.gameover);
+    assert_eq!(p.how, None);
+    // the valkyrie's kitten: a pet, no other conduct broken
+    assert_eq!(p.conduct["pets"], 1);
+    assert_eq!(p.conduct["unvegan"], 0);
+}
+
+#[test]
 fn recorded_session_carries_the_starting_inventory() {
     let inv = decoded()
         .into_iter()

@@ -222,6 +222,49 @@ fn debug_mode_is_off_unless_the_playground_allows_it() {
     assert!(t.exit.unwrap().success());
 }
 
+/// The progress notices of a session, in order.
+fn progress(t: &Transcript) -> Vec<nh_protocol::ProgressNotice> {
+    t.lines
+        .iter()
+        .filter_map(|l| match nh_protocol::parse_line(l) {
+            Ok(EngineMsg::Win(WinCall::Progress(p))) => Some(p),
+            _ => None,
+        })
+        .collect()
+}
+
+#[test]
+fn a_fresh_game_has_earned_nothing_and_quitting_ends_it() {
+    let (_pg, t) = run_script(SEED, NEW_MOON, QUIT);
+    let p = progress(&t);
+    let first = p.first().expect("a progress notice");
+    assert_eq!(first.mode, "normal");
+    assert!(first.achieved.is_empty(), "{:?}", first.achieved);
+    assert!(!first.gameover);
+    // after "Really quit?": the game is over, and told how
+    let last = p.last().unwrap();
+    assert!(last.gameover);
+    assert_eq!(last.how.as_deref(), Some("quit"));
+    assert!(last.achieved.is_empty(), "{:?}", last.achieved);
+}
+
+#[test]
+fn a_debug_game_reports_its_mode() {
+    let pg = tempfile::tempdir().unwrap();
+    let mut cfg = config(pg.path(), SEED, NEW_MOON);
+    std::fs::write(
+        pg.path().join("sysconf"),
+        "WIZARDS=*\nMAXPLAYERS=10\nPANICTRACE_GDB=0\nPANICTRACE_LIBC=0\n",
+    )
+    .unwrap();
+    cfg.options.push_str(",playmode:debug");
+    let mut engine = Engine::spawn(&cfg).unwrap();
+    let mut responder = ScriptResponder::new(parse_script(QUIT).unwrap());
+    let t = run_session(&mut engine, &mut responder, &SessionLimits::default()).unwrap();
+    let p = progress(&t);
+    assert_eq!(p.first().expect("a progress notice").mode, "debug");
+}
+
 #[test]
 fn utf8_text_survives_a_round_trip_through_the_engine() {
     // risk R6: name the level in Cyrillic, read it back from the overview

@@ -1,6 +1,8 @@
 use std::collections::BTreeMap;
 
-use nh_protocol::{Catalog, LevelNotice, MenuItem, PickHow, Request, WinCall, WindowKind};
+use nh_protocol::{
+    Catalog, LevelNotice, MenuItem, PickHow, ProgressNotice, Request, WinCall, WindowKind,
+};
 
 use crate::prompt::{choice, free_key};
 use crate::{ATR_NOHISTORY, MapState, MessageLog, Pack, Prompt, Status, effect_cmaps};
@@ -61,6 +63,8 @@ pub struct World {
     pub inventory: Pack,
     /// The last level notice: where the hero is.
     pub level: Option<LevelNotice>,
+    /// The last progress notice (see `progress`).
+    progress: Option<ProgressNotice>,
     pub log: MessageLog,
     pub windows: BTreeMap<i32, Window>,
     pub message_win: Option<i32>,
@@ -107,6 +111,7 @@ impl World {
             status: Status::new(),
             inventory: Pack::new(),
             level: None,
+            progress: None,
             log: MessageLog::new(),
             windows: BTreeMap::new(),
             message_win: None,
@@ -284,6 +289,7 @@ impl World {
             WinCall::StatusUpdate(u) => self.status.apply(u),
             WinCall::Inventory(inv) => self.inventory.replace(inv),
             WinCall::Level(l) => self.level = Some(l.clone()),
+            WinCall::Progress(p) => self.progress = Some(p.clone()),
             _ => {}
         }
     }
@@ -409,6 +415,12 @@ impl World {
     }
 
     /// Log seq at the last player input: newer messages are "new".
+    /// The hero's progress as last told (achievements are made of it):
+    /// None before the game's first input wait.
+    pub fn progress(&self) -> Option<&ProgressNotice> {
+        self.progress.as_ref()
+    }
+
     pub fn input_seq(&self) -> u64 {
         self.input_seq
     }
@@ -443,6 +455,24 @@ mod tests {
 
     fn texts(lines: &[TextLine]) -> Vec<&str> {
         lines.iter().map(|l| l.text.as_str()).collect()
+    }
+
+    #[test]
+    fn the_last_progress_notice_is_the_hero_s_progress() {
+        let mut w = World::new();
+        assert!(w.progress().is_none());
+        feed(
+            &mut w,
+            r#"
+            {"t":"win","fn":"progress","a":{"mode":"debug","achieved":[],"events":{},"deepest":1,"conduct":{},"roleplay":{},"gameover":false,"how":null}}
+            {"t":"win","fn":"progress","a":{"mode":"debug","achieved":[15],"events":{"qcalled":true},"deepest":3,"conduct":{"pets":1},"roleplay":{},"gameover":false,"how":null}}
+            "#,
+        );
+        let p = w.progress().expect("progress");
+        assert_eq!(p.mode, "debug");
+        assert!(p.achieved(15));
+        assert!(p.event("qcalled"));
+        assert_eq!(p.deepest, 3);
     }
 
     #[test]

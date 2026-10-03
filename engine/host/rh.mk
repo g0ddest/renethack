@@ -10,11 +10,13 @@ RH_PATCHSET ?= unknown
 RH_EXCLUDE = unixmain.o getline.o termcap.o topl.o wintty.o
 RH_CORE_OBJS = $(sort $(filter-out $(RH_EXCLUDE),$(HOBJ)) \
 		$(LIBNHSYSOBJ) date.o tile.o)
-RH_OBJS = rh_main.o rh_bridge.o rh_catalog.o rh_proto.o rh_time.o rh_cjson.o
+RH_OBJS = rh_main.o rh_bridge.o rh_catalog.o rh_proto.o rh_progress.o \
+		rh_time.o rh_cjson.o
 RH_CFLAGS = $(TARGET_CFLAGS) -I$(RH_HOST) -I$(RH_HOST)/third_party/cjson \
 		-DRH_PATCHSET=\"$(RH_PATCHSET)\"
 
-rh_%.o: $(RH_HOST)/rh_%.c $(RH_HOST)/rh_proto.h $(RH_HOST)/rh_bridge.h $(HACK_H)
+rh_%.o: $(RH_HOST)/rh_%.c $(RH_HOST)/rh_proto.h $(RH_HOST)/rh_bridge.h \
+		$(RH_HOST)/rh_progress.h $(HACK_H)
 	$(TARGET_CC) $(RH_CFLAGS) -c -o $@ $<
 
 rh_cjson.o: $(RH_HOST)/third_party/cjson/cJSON.c

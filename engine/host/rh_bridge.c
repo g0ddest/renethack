@@ -7,6 +7,12 @@
 #include <stdarg.h>
 #include "rh_proto.h"
 #include "rh_bridge.h"
+#include "rh_progress.h"
+
+/* rh_progress.h names NetHack's two spoiler achievements by number */
+typedef char rh_spoiler_ids_match[(ACH_MINE_PRIZE == RH_ACH_MINE_PRIZE
+                                   && ACH_SOKO_PRIZE == RH_ACH_SOKO_PRIZE)
+                                      ? 1 : -1];
 
 #define RH_MAX_WINDOWS 64
 
@@ -27,6 +33,8 @@ static boolean inventory_dirty;
 static boolean seen_moveloop;
 /* the level the client was last told the hero is on (dnum < 0: none) */
 static d_level told_level = { -1, -1 };
+/* the hash of the progress notice the client last got (0: none) */
+static unsigned long long told_progress;
 
 static const char *const status_names[MAXBLSTATS] = {
     "title", "str", "dex", "con", "int", "wis", "cha",
@@ -258,12 +266,104 @@ level_flush(void)
     rh_proto_send("win", "level", a);
 }
 
+/* The hero's progress, for achievements: the play mode, NetHack's own
+   achievements in the order attained, the u.uevent milestones, the
+   deepest level reached, the conducts, the role-play options and how the
+   game ended.  Only what the game tells the player: #chronicle lists the
+   achievements (but for the two spoilers, held back until the game is
+   over: rh_progress.h), #overview and #conduct the rest.  Observation
+   only: no RNG, no state change, no formatting buffers. */
+static cJSON *
+progress_json(void)
+{
+    cJSON *a = args_new(), *o;
+    int i, ach;
+
+    add_str(a, "mode", wizard ? "debug" : discover ? "explore" : "normal");
+    o = cJSON_AddArrayToObject(a, "achieved");
+    for (i = 0; i < N_ACH && u.uachieved[i]; i++) {
+        /* the ranks are negated when the hero was female */
+        ach = abs(u.uachieved[i]);
+        if (rh_achievement_shown(ach, program_state.gameover))
+            cJSON_AddItemToArray(o, cJSON_CreateNumber(ach));
+    }
+    o = cJSON_AddObjectToObject(a, "events");
+    add_bool(o, "minor_oracle", u.uevent.minor_oracle);
+    add_bool(o, "major_oracle", u.uevent.major_oracle);
+    add_bool(o, "read_tribute", u.uevent.read_tribute);
+    add_bool(o, "qcalled", u.uevent.qcalled);
+    add_bool(o, "qexpelled", u.uevent.qexpelled);
+    add_bool(o, "qcompleted", u.uevent.qcompleted);
+    add_int(o, "uheard_tune", u.uevent.uheard_tune);
+    add_bool(o, "uopened_dbridge", u.uevent.uopened_dbridge);
+    add_bool(o, "invoked", u.uevent.invoked);
+    add_bool(o, "gehennom_entered", u.uevent.gehennom_entered);
+    add_int(o, "uhand_of_elbereth", u.uevent.uhand_of_elbereth);
+    add_bool(o, "udemigod", u.uevent.udemigod);
+    add_bool(o, "uvibrated", u.uevent.uvibrated);
+    add_bool(o, "ascended", u.uevent.ascended);
+    add_bool(o, "amulet_wish", u.uevent.amulet_wish);
+    add_int(a, "deepest", deepest_lev_reached(FALSE));
+    o = cJSON_AddObjectToObject(a, "conduct");
+    add_int(o, "unvegetarian", u.uconduct.unvegetarian);
+    add_int(o, "unvegan", u.uconduct.unvegan);
+    add_int(o, "food", u.uconduct.food);
+    add_int(o, "gnostic", u.uconduct.gnostic);
+    add_int(o, "weaphit", u.uconduct.weaphit);
+    add_int(o, "killer", u.uconduct.killer);
+    add_int(o, "literate", u.uconduct.literate);
+    add_int(o, "polypiles", u.uconduct.polypiles);
+    add_int(o, "polyselfs", u.uconduct.polyselfs);
+    add_int(o, "wishes", u.uconduct.wishes);
+    add_int(o, "wisharti", u.uconduct.wisharti);
+    add_int(o, "sokocheat", u.uconduct.sokocheat);
+    add_int(o, "pets", u.uconduct.pets);
+    o = cJSON_AddObjectToObject(a, "roleplay");
+    add_bool(o, "blind", u.uroleplay.blind);
+    add_bool(o, "nudist", u.uroleplay.nudist);
+    add_bool(o, "deaf", u.uroleplay.deaf);
+    add_bool(o, "pauper", u.uroleplay.pauper);
+    add_bool(a, "gameover", program_state.gameover);
+    add_str(a, "how",
+            rh_end_how(program_state.gameover, svk.killer.name,
+                       u.uevent.ascended, u.uhp > 0 || (Upolyd && u.mh > 0)));
+    return a;
+}
+
+/* Before the engine waits for input: the progress notice, when it
+   changed since the last one the client got. */
+static void
+progress_flush(void)
+{
+    cJSON *a;
+    char *line;
+    unsigned long long h;
+
+    if (!program_state.in_moveloop && !program_state.gameover) {
+        told_progress = 0;
+        return;
+    }
+    if (rh_proto_is_lost() || suppress_map_output())
+        return;
+    a = progress_json();
+    line = cJSON_PrintUnformatted(a);
+    h = line ? rh_fnv1a64(line, strlen(line)) : 1;
+    cJSON_free(line);
+    if (h == told_progress) {
+        cJSON_Delete(a);
+        return;
+    }
+    told_progress = h;
+    rh_proto_send("win", "progress", a);
+}
+
 /* every request of this file goes through here */
 static cJSON *
 request(const char *fn, cJSON *args)
 {
     level_flush();
     inventory_flush();
+    progress_flush();
     return rh_proto_request(fn, args);
 }
 

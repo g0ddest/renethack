@@ -56,6 +56,16 @@ echo "$inv" | grep -q '"twoweap":false' || fail "inventory: no twoweap"
 if echo "$inv" | grep -q '"otyp"\|"glyph"\|"weight"\|"owt"'; then
     fail "inventory: identifying keys"
 fi
+# the hero's progress arrives before the first command wait: a fresh game
+# in normal mode, nothing achieved, on level 1, not over
+prog=$(grep '^{"t":"win","fn":"progress",' "$out" | head -1)
+[ -n "$prog" ] || fail "no progress notice"
+prog_line=$(grep -n '^{"t":"win","fn":"progress",' "$out" | head -1 | cut -d: -f1)
+[ "$prog_line" -lt "$first_req" ] || fail "progress comes after the first request"
+echo "$prog" | grep -q '"mode":"normal","achieved":\[\],' || fail "progress: not a fresh normal game"
+echo "$prog" | grep -q '"deepest":1,' || fail "progress: deepest level"
+echo "$prog" | grep -q '"gameover":false,"how":null' || fail "progress: game over"
+echo "$prog" | grep -q '"conduct":{"unvegetarian":0,' || fail "progress: no conducts"
 [ -x "$build/recover" ] || fail "recover is not built"
 ls "$tmp/base/save" | grep -q . || fail "game not saved on EOF"
 

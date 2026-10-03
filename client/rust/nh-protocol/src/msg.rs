@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
 use serde_json::Value;
@@ -113,6 +115,9 @@ pub enum WinCall {
     /// The hero is on another level (or a game began): the branch and the
     /// depth only, never a special level's name.
     Level(LevelNotice),
+    /// The hero's progress, for achievements: sent before an input wait
+    /// when it changed.
+    Progress(ProgressNotice),
     ExitNhwindows {
         text: Option<String>,
     },
@@ -183,6 +188,67 @@ pub struct LevelNotice {
     /// In the endgame: "earth", "air", "fire", "water" or "astral".
     #[serde(default)]
     pub plane: Option<String>,
+}
+
+/// The hero's progress as the game tells it to the player (#chronicle,
+/// #overview, #conduct): what achievements are made of.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+pub struct ProgressNotice {
+    /// "normal", "explore" or "debug": only a normal game earns anything.
+    pub mode: String,
+    /// NetHack's achievements (`enum achivements`, 1..31) in the order
+    /// attained. The Mines' End luckstone (10) and the Sokoban prize (11)
+    /// come only once the game is over: they would spoil it.
+    pub achieved: Vec<i32>,
+    /// The `u.uevent` milestones by NetHack's names ("qcalled",
+    /// "udemigod"...); the two that count stages are numbers
+    /// ("uheard_tune" 0-3, "uhand_of_elbereth" 0-2), the rest 0 or 1.
+    #[serde(deserialize_with = "counts")]
+    pub events: BTreeMap<String, i64>,
+    /// The deepest level reached (the Quest's levels included).
+    pub deepest: i32,
+    /// How often each conduct was broken, by NetHack's names ("unvegan",
+    /// "wishes", "sokocheat"...).
+    pub conduct: BTreeMap<String, i64>,
+    /// The role-play options of the game ("blind", "nudist"...).
+    pub roleplay: BTreeMap<String, bool>,
+    pub gameover: bool,
+    /// Once over: "died", "quit", "escaped", "ascended", "panicked" or
+    /// "tricked".
+    pub how: Option<String>,
+}
+
+impl ProgressNotice {
+    /// The achievement `ach` has been attained.
+    pub fn achieved(&self, ach: i32) -> bool {
+        self.achieved.contains(&ach)
+    }
+
+    /// The milestone `name` has happened (a staged one: at least once).
+    pub fn event(&self, name: &str) -> bool {
+        self.events.get(name).is_some_and(|&n| n > 0)
+    }
+}
+
+/// A map of numbers where the engine sends booleans for some (as 0 or 1).
+fn counts<'de, D: serde::Deserializer<'de>>(d: D) -> Result<BTreeMap<String, i64>, D::Error> {
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Count {
+        Flag(bool),
+        Number(i64),
+    }
+    let raw = BTreeMap::<String, Count>::deserialize(d)?;
+    Ok(raw
+        .into_iter()
+        .map(|(k, v)| {
+            let n = match v {
+                Count::Flag(b) => i64::from(b),
+                Count::Number(n) => n,
+            };
+            (k, n)
+        })
+        .collect())
 }
 
 /// The inventory as the character sees it: no true types, no weights.
@@ -579,6 +645,7 @@ fn win_call(name: String, a: Value) -> Result<WinCall, ProtocolError> {
         },
         "inventory" => WinCall::Inventory(args(n, a)?),
         "level" => WinCall::Level(args(n, a)?),
+        "progress" => WinCall::Progress(args(n, a)?),
         "exit_nhwindows" => WinCall::ExitNhwindows {
             text: args::<Text>(n, a)?.str,
         },
