@@ -26,7 +26,9 @@
 mod catalog;
 mod format;
 mod grammar;
+pub mod lexicon;
 mod lint;
+pub mod names;
 mod phrase;
 mod russian;
 mod template;
