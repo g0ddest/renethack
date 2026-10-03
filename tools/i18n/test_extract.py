@@ -78,6 +78,18 @@ class Formats(unittest.TestCase):
         self.assertNotIn("Other text %s.", e)
         self.assertNotIn("%s bites!", e)
 
+    def test_a_call_may_write_a_buffer(self):
+        src = ('static void fill(char *out) { out[0] = 0; }\n'
+               'static void show(const char *s) { (void) s; }\n'
+               'void f(void) {\n'
+               '    char buf[BUFSZ];\n'
+               '    Strcpy(buf, "First text");\n'
+               '    CALL(buf);\n'
+               '    Strcat(buf, " more");\n'
+               '    pline("%s!", buf);\n}\n')
+        self.assertIn("First text more!", catalog_of(src.replace("CALL", "show")))
+        self.assertNotIn("First text more!", catalog_of(src.replace("CALL", "fill")))
+
     def test_helpers_returns_and_parameters(self):
         e = catalog_of('static const char *exclam(int d) { return d > 4 ? "!" : "."; }\n'
                        'static void hit(const char *what, int d) { You("hit %s%s", what, exclam(d)); }\n'

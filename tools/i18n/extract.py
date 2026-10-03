@@ -382,6 +382,8 @@ class Globals:
         self.arrays = {}
         self.structs = {}
         self.tables = {}
+        # function name -> for each parameter: may it write it (char *)?
+        self.prototypes = {}
         self.defs = {}  # function name -> [Context]
         self.callers = {}  # function name -> [(Context, args)]
         self.memo = {}
@@ -430,6 +432,15 @@ class Globals:
                 out += v
             return dedupe(out) if out else None
         return self._memo(("pv", ctx.unit.path, ctx.func.name, name), compute)
+
+    def writes(self, fname, k):
+        """May function `fname` write its argument k (a `char *`
+        parameter, by its definition or extern.h)?"""
+        for d in self.defs.get(fname, []):
+            if k < len(d.param_writable):
+                return d.param_writable[k]
+        proto = self.prototypes.get(fname)
+        return bool(proto and k < len(proto) and proto[k])
 
     def param_values_partial(self, ctx, name):
         """The literals the callers that pass literals give a parameter."""
@@ -506,7 +517,7 @@ class Context:
         # where each variable is a whole argument of a call: a buffer is
         # shown (or handed on) there; a call that may write it clobbers it
         self.uses = {}
-        self.clobbers = {}
+        self.passes = {}
         start, end = func.body
         i = start + 1
         while i < end:
@@ -520,15 +531,14 @@ class Context:
                 args = split_args(toks, i + 1, close)
                 self.calls.append((t.text, args))
                 if t.text not in BUFFER_QUERIES:
-                    # a call that shows the buffer reads it; any other may
-                    # write it (fmt_elapsed_time(buf, final))
-                    reads = t.text in PLINE or t.text in PLINE1 or t.text in SINKS or t.text in ENL
-                    for a in args:
+                    # a call that shows the buffer reads it; a function whose
+                    # parameter is a `char *` may write it
+                    # (fmt_elapsed_time(buf, final)): resolved later
+                    for k, a in enumerate(args):
                         a = strip_expr(a)
                         if len(a) == 1 and a[0].kind == "ident":
                             self.uses.setdefault(a[0].text, []).append(i)
-                            if not reads:
-                                self.clobbers.setdefault(a[0].text, set()).add(i)
+                            self.passes.setdefault(a[0].text, {})[i] = (t.text, k)
             if t.text == "=" and toks[i - 1].kind == "ident" and toks[i - 2].text not in (".", "->"):
                 name = toks[i - 1].text
                 if toks[i + 1].text == "{":
@@ -602,7 +612,9 @@ class Context:
                     break
             open_i -= 1
         params = []
+        self.param_writable = []
         for arg in split_args(toks, open_i, k):
+            self.param_writable.append(writable(arg))
             # int (*name)(OBJ_P): the name is in the first parentheses
             fn = [j for j in range(len(arg) - 2) if arg[j].text == "(" and arg[j + 1].text == "*"]
             if fn and arg[fn[0] + 2].kind == "ident":
@@ -880,7 +892,8 @@ class Context:
         uses = [u for u in self.uses.get(name, []) if u < pos]
         since = max(uses) if uses else -1
         ops = [op for op in self.ops.get(name, []) if since < op.index < pos]
-        if since in self.clobbers.get(name, ()) and not any(not op.append for op in ops):
+        passed = self.passes.get(name, {}).get(since)
+        if passed and self.glob.writes(*passed) and not any(not op.append for op in ops):
             # written by a call: what it holds is not known
             return []
         if not any(not op.append for op in ops) and since >= 0:
@@ -921,6 +934,12 @@ def with_tails(heads, tails):
                 for combo in itertools.product(heads, *chosen):
                     out.append(("".join(p for p, _ in combo), [x for _, ks in combo for x in ks]))
     return dedupe(out)[:MAX_DERIVED]
+
+
+def writable(param):
+    """Is a parameter declaration a `char *` the function may write?"""
+    words = [t.text for t in param]
+    return "char" in words and "*" in words and "const" not in words
 
 
 def product_size(choices):
@@ -1156,6 +1175,15 @@ def load_globals(units):
         glob.strings.update(u.strings)
         glob.arrays.update(u.arrays)
         glob.structs.update(u.structs)
+    with open(os.path.join(inc, "extern.h"), encoding="latin-1") as f:
+        toks = clex.lex(f.read())
+    for i, t in enumerate(toks):
+        if t.kind == "ident" and i + 1 < len(toks) and toks[i + 1].text == "(" and toks[i - 1].text != "(":
+            close = match_close(toks, i + 1)
+            if close + 1 < len(toks) and toks[close + 1].text in (";", "NONNULL", "NONNULLARG1", "NO_NNARGS",
+                                                                   "NONNULLARG12", "NONNULLARG2", "NORETURN",
+                                                                   "PRINTF_F", "NONNULLARG123", "NONNULLPTRS"):
+                glob.prototypes.setdefault(t.text, [writable(a) for a in split_args(toks, i + 1, close)])
     # the common strings: #define nothing_happens c_common_strings.c_nothing_happens
     decl = next(u for u in units if u.path == "decl.c")
     with open(os.path.join(inc, "decl.h"), encoding="latin-1") as f:
