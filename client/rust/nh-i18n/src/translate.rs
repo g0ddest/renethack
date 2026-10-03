@@ -21,6 +21,9 @@ use crate::template::{Part, Placeholder, RuTemplate, Target, Value, capitalize};
 
 /// How deep a text made of texts is followed.
 const MAX_NESTING: usize = 3;
+/// A template with fewer letters of its own than this says almost nothing
+/// ("%s of %s", "%s (%s)"): a name the lexicon reads goes first.
+const STRONG_LETTERS: usize = 3;
 
 /// An argument of a message as P7 sends it.
 #[derive(Debug, Clone, PartialEq)]
@@ -141,18 +144,96 @@ impl Translator {
         self.by_text(text, Channel::Message)
     }
 
-    /// A line of a text window or a menu, a question.
+    /// A line of a menu, a question, a heading.
     pub fn text(&self, text: &str) -> Output {
         self.by_text(text, Channel::Window)
     }
 
+    /// The lines of a text window, joined by newlines: a text of the
+    /// catalog as a whole (a quest message, an oracle), else line by line.
+    pub fn window(&self, text: &str) -> Output {
+        let whole = self.by_text(text, Channel::Window);
+        if whole.status != Status::Unknown || !text.contains('\n') {
+            return whole;
+        }
+        let lines: Vec<Output> = text.split('\n').map(|l| self.line(l)).collect();
+        let worst = lines
+            .iter()
+            .map(|o| o.status)
+            .max_by_key(|s| match s {
+                Status::Translated => 0,
+                Status::Partial => 1,
+                Status::Untranslated => 2,
+                Status::Unknown => 3,
+            })
+            .unwrap_or(Status::Translated);
+        Output {
+            text: lines
+                .iter()
+                .map(|o| o.text.as_str())
+                .collect::<Vec<_>>()
+                .join("\n"),
+            status: worst,
+            template: None,
+        }
+    }
+
+    /// One line of a window: an empty or blank line is translated as it is.
+    fn line(&self, line: &str) -> Output {
+        if line.trim().is_empty() {
+            return Output::english(line, Status::Translated, None);
+        }
+        self.by_text(line, Channel::Window)
+    }
+
     fn by_text(&self, text: &str, channel: Channel) -> Output {
-        match self.catalog.find(text, channel) {
+        let found = self.catalog.find(text, channel);
+        if found
+            .as_ref()
+            .is_none_or(|m| m.template.letters() < STRONG_LETTERS)
+        {
+            // a template that says almost nothing ("%s of %s") loses to a
+            // name the lexicon reads whole ("a scroll of identify"), and to
+            // a text the catalog knows without its last mark ("The Gnomish
+            // Mines:")
+            if let Some(p) = self.names.parse(NameKind::Any, text) {
+                return Output {
+                    text: p.form(crate::grammar::Case::Nom),
+                    status: Status::Translated,
+                    template: None,
+                };
+            }
+            if let Some(out) = self.without_mark(text, channel) {
+                return out;
+            }
+        }
+        match found {
             Some(m) => self
                 .render_or_base(&m, text, 0)
                 .unwrap_or_else(|| Output::english(text, Status::Untranslated, Some(m.template))),
             None => Output::english(text, Status::Unknown, None),
         }
+    }
+
+    /// `text` but its last ':', '.', '!' or '?', translated by a template
+    /// with words of its own, the mark put back.
+    fn without_mark(&self, text: &str, channel: Channel) -> Option<Output> {
+        let trimmed = text.trim_end();
+        let mark = trimmed.chars().last().filter(|c| ":.!?".contains(*c))?;
+        let inner = &trimmed[..trimmed.len() - mark.len_utf8()];
+        if inner.is_empty() || inner.ends_with(mark) {
+            return None;
+        }
+        let out = self.by_text(inner, channel);
+        let strong = out
+            .template
+            .as_deref()
+            .and_then(|id| self.catalog.by_id(id))
+            .is_some_and(|t| t.letters() >= STRONG_LETTERS);
+        (strong || out.status == Status::Translated).then(|| Output {
+            text: format!("{}{mark}", out.text),
+            ..out
+        })
     }
 
     /// A derived template without a translation falls back to the

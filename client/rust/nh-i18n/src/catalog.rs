@@ -63,7 +63,7 @@ impl Use {
             "occupation" => Use::Occupation,
             "death" => Use::Death,
             "rumor" | "oracle" | "epitaph" | "engraving" | "bogusmon" | "quest" | "level"
-            | "tutorial" => Use::Data,
+            | "tutorial" | "dungeon" => Use::Data,
             _ => Use::Other,
         }
     }
@@ -137,6 +137,17 @@ impl Template {
 
     pub fn literal_len(&self) -> usize {
         self.literal_len
+    }
+
+    /// The letters of its literal text.
+    pub fn letters(&self) -> usize {
+        self.segments
+            .iter()
+            .map(|s| match s {
+                Segment::Lit(l) => l.chars().filter(|c| c.is_alphabetic()).count(),
+                Segment::Conv(_) => 0,
+            })
+            .sum()
     }
 
     pub fn has_use(&self, u: Use) -> bool {
@@ -408,8 +419,8 @@ fn anchor(segments: &[Segment]) -> Option<&str> {
 
 /// Match a whole text against a template: the text of each conversion, or
 /// None. Conversions take the shortest text that lets the rest match;
-/// a name's text is never empty nor "You", and no capture leaves a
-/// bracket or a quote open.
+/// a name's text is never empty nor "You", no capture leaves a bracket or
+/// a quote open nor spans lines.
 pub fn match_template(t: &Template, text: &str) -> Option<Vec<String>> {
     let mut caps = Vec::new();
     if match_from(t, 0, text, &mut caps, 0) {
@@ -502,6 +513,10 @@ const NOT_NAMES: [&str; 4] = ["You", "you", "Your", "your"];
 fn plausible(t: &Template, conv: usize, kind: ConvKind, piece: &str) -> bool {
     if kind != ConvKind::Str {
         return true;
+    }
+    // an argument is never lines of a window
+    if piece.contains('\n') {
+        return false;
     }
     if t.is_name(conv) {
         let p = piece.trim();

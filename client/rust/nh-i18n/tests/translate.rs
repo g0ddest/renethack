@@ -144,3 +144,39 @@ fn the_hero_gender_is_the_translators() {
     let out = t.text("You are already here.");
     assert_eq!(out.status, Status::Untranslated);
 }
+
+#[test]
+fn windows_headings_and_names() {
+    let russian = Russian::parse(&[(
+        "t.toml".into(),
+        r#"
+[54d1bffd3629]
+en = "The Gnomish Mines"
+ru = "Гномьи копи"
+"#
+        .into(),
+    )])
+    .unwrap();
+    let t = Translator::new(catalog(), russian, Box::new(TestNames));
+    // a heading the catalog knows without its colon
+    let out = t.text("The Gnomish Mines:");
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        ("Гномьи копи:", Status::Translated)
+    );
+    // a name, not "%s of %s"
+    let out = t.text("a dart");
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        ("дротик", Status::Translated)
+    );
+    // a window of lines the catalog knows one by one
+    let out = translator().window("You are already here.\n\nNever mind.");
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        ("Вы уже здесь.\n\nНеважно.", Status::Translated)
+    );
+    let out = translator().window("You are already here.\nXyzzy plugh");
+    assert_eq!(out.status, Status::Unknown);
+    assert_eq!(out.text, "Вы уже здесь.\nXyzzy plugh");
+}
