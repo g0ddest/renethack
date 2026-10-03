@@ -363,16 +363,26 @@ impl Translator {
         {
             return (Value::Phrase(p), true);
         }
-        if depth < MAX_NESTING
-            && let Some(m) = self.catalog.find(shown, Channel::Any)
-            && m.template.arity() > 0
+        let found = if depth < MAX_NESTING {
+            self.catalog
+                .find(shown, Channel::Any)
+                .filter(|m| m.template.arity() > 0)
+        } else {
+            None
+        };
+        // a text another template makes, unless that template says almost
+        // nothing and the lexicon reads the text as a name
+        let strong = found
+            .as_ref()
+            .is_some_and(|m| m.template.letters() >= STRONG_LETTERS);
+        if !strong && let Some(p) = self.names.parse(NameKind::Any, shown) {
+            return (Value::Phrase(p), true);
+        }
+        if let Some(m) = found
             && let Some(out) = self.render_or_base(&m, shown, depth + 1)
         {
             let ok = out.status == Status::Translated;
             return (Value::Text(out.text), ok);
-        }
-        if let Some(p) = self.names.parse(NameKind::Any, shown) {
-            return (Value::Phrase(p), true);
         }
         (Value::Text(shown.to_string()), false)
     }
