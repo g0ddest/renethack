@@ -14,7 +14,8 @@ pub trait Phrase {
     /// `Plur` when the count is over one or the noun has no singular.
     fn number(&self) -> Number;
     /// The phrase as counted by `n` (written before it), in `case`:
-    /// 1 стрелу, 2 стрелы, 5 стрел; in the genitive 2 стрел. By default
+    /// 1 стрелу, 2 стрелы, 5 стрел; in the genitive 2 стрел
+    /// ([`counted_form`](crate::counted_form) says which form). By default
     /// its form in that case.
     fn counted(&self, n: u64, case: Case) -> String {
         let _ = n;

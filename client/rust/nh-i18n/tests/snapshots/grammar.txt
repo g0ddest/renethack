@@ -159,7 +159,7 @@ You hear some noises.  [3048c9596d67]
 You hear someone counting gold coins.  [fe613c47e230]
   =   Вы слышите, как кто-то пересчитывает золотые монеты.
 You hear the footsteps of a guard on patrol.  [76b13de14bce]
-  =   Вы слышите шаги стражника, совершающего обход.
+  =   Вы слышите шаги стража, совершающего обход.
 You hit %s.  [741e0f949397]
   m   Вы бьёте тритона.
   f   Вы бьёте крысу.

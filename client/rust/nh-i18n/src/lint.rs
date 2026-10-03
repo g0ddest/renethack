@@ -18,6 +18,14 @@ pub struct Term {
     pub ru: Vec<String>,
 }
 
+/// The sections of the glossary whose names a translation must keep.
+pub const ENFORCED: [&str; 8] = [
+    "monster", "object", "artifact", "role", "rank", "god", "place", "term",
+];
+
+/// Names of the glossary that are everyday words in a sentence.
+const NOT_TERMS: [&str; 4] = ["you", "it", "someone", "something"];
+
 /// The canonical names the translations must use.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Glossary {
@@ -27,6 +35,54 @@ pub struct Glossary {
 impl Glossary {
     pub fn new(terms: Vec<Term>) -> Glossary {
         Glossary { terms }
+    }
+
+    /// The glossary of `client/i18n/glossary.ru.toml` (sections of
+    /// `"English" = { ru = "..." }`), every term with all the forms
+    /// `client/i18n/lexicon.ru.toml` gives it (`sg`, `pl`, `few`, an
+    /// adjective's `m`, `f`, `n`). Only the sections of things with a name
+    /// of their own bind a message's words ([`ENFORCED`]): "empty" or
+    /// "food" in a sentence are words, not the glossary's terms.
+    pub fn from_toml(glossary: &str, lexicon: &str) -> Result<Glossary, String> {
+        let glossary: toml::Table =
+            toml::from_str(glossary).map_err(|e| format!("glossary: {e}"))?;
+        let lexicon: toml::Table = toml::from_str(lexicon).map_err(|e| format!("lexicon: {e}"))?;
+        let mut terms = Vec::new();
+        for (section, entries) in &glossary {
+            let Some(entries) = entries.as_table() else {
+                continue;
+            };
+            if !ENFORCED.contains(&section.as_str()) {
+                continue;
+            }
+            for (en, entry) in entries {
+                if NOT_TERMS.contains(&en.as_str()) {
+                    continue;
+                }
+                let mut ru: Vec<String> = Vec::new();
+                if let Some(lemma) = entry.get("ru").and_then(toml::Value::as_str) {
+                    ru.push(lemma.to_string());
+                }
+                let forms = lexicon
+                    .get(section)
+                    .and_then(|s| s.get(en))
+                    .and_then(toml::Value::as_table);
+                for key in ["sg", "pl", "few", "m", "f", "n", "fixed"] {
+                    match forms.and_then(|f| f.get(key)) {
+                        Some(toml::Value::String(form)) => ru.push(form.clone()),
+                        Some(toml::Value::Array(row)) => {
+                            ru.extend(row.iter().filter_map(|v| v.as_str().map(str::to_string)))
+                        }
+                        _ => {}
+                    }
+                }
+                ru.dedup();
+                if !ru.is_empty() {
+                    terms.push(Term { en: en.clone(), ru });
+                }
+            }
+        }
+        Ok(Glossary { terms })
     }
 }
 

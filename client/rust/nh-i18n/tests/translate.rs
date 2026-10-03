@@ -5,7 +5,7 @@ mod support;
 
 use std::sync::OnceLock;
 
-use nh_i18n::{Arg, Catalog, Gender, Glossary, Russian, Status, Term, Translator, lint};
+use nh_i18n::{Arg, Catalog, Gender, Glossary, Russian, Status, Translator, lint};
 
 use support::{TestNames, i18n_dir};
 
@@ -34,10 +34,16 @@ fn the_catalog_and_the_translations_agree() {
     assert!(catalog.len() > 20_000, "{} templates", catalog.len());
     let russian = russian();
     assert!(russian.len() >= 50, "{} translations", russian.len());
-    let glossary = Glossary::new(vec![Term {
-        en: "Elbereth".into(),
-        ru: vec!["Elbereth".into()],
-    }]);
+    let read = |name: &str| std::fs::read_to_string(i18n_dir().join(name)).expect(name);
+    let glossary = Glossary::from_toml(&read("glossary.ru.toml"), &read("lexicon.ru.toml"))
+        .expect("the glossary and the lexicon");
+    assert!(
+        glossary.terms.len() > 1000,
+        "{} terms",
+        glossary.terms.len()
+    );
+    let elbereth = glossary.terms.iter().find(|t| t.en == "Elbereth");
+    assert_eq!(elbereth.map(|t| t.ru[0].as_str()), Some("Elbereth"));
     let problems = lint(&catalog, &russian, &glossary);
     assert!(
         problems.is_empty(),

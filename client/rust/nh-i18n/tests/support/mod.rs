@@ -17,6 +17,8 @@ pub struct Noun {
     pub en: &'static str,
     pub sg: [&'static str; 6],
     pub pl: [&'static str; 6],
+    /// after 2, 3, 4 in the nominative
+    pub few: &'static str,
     pub gender: Gender,
     pub animate: bool,
 }
@@ -40,6 +42,7 @@ pub const NOUNS: &[Noun] = &[
             "тритонами",
             "тритонах",
         ],
+        few: "тритона",
         gender: Gender::Masc,
         animate: true,
     },
@@ -47,6 +50,7 @@ pub const NOUNS: &[Noun] = &[
         en: "sewer rat",
         sg: ["крыса", "крысы", "крысе", "крысу", "крысой", "крысе"],
         pl: ["крысы", "крыс", "крысам", "крыс", "крысами", "крысах"],
+        few: "крысы",
         gender: Gender::Fem,
         animate: true,
     },
@@ -54,6 +58,7 @@ pub const NOUNS: &[Noun] = &[
         en: "spear",
         sg: ["копьё", "копья", "копью", "копьё", "копьём", "копье"],
         pl: ["копья", "копий", "копьям", "копья", "копьями", "копьях"],
+        few: "копья",
         gender: Gender::Neut,
         animate: false,
     },
@@ -68,6 +73,7 @@ pub const NOUNS: &[Noun] = &[
             "стрелами",
             "стрелах",
         ],
+        few: "стрелы",
         gender: Gender::Fem,
         animate: false,
     },
@@ -82,6 +88,7 @@ pub const NOUNS: &[Noun] = &[
             "котёнке",
         ],
         pl: ["котята", "котят", "котятам", "котят", "котятами", "котятах"],
+        few: "котёнка",
         gender: Gender::Masc,
         animate: true,
     },
@@ -103,6 +110,7 @@ pub const NOUNS: &[Noun] = &[
             "золотыми монетами",
             "золотых монетах",
         ],
+        few: "золотые монеты",
         gender: Gender::Fem,
         animate: false,
     },
@@ -124,6 +132,7 @@ pub const NOUNS: &[Noun] = &[
             "дротиками",
             "дротиках",
         ],
+        few: "дротика",
         gender: Gender::Masc,
         animate: false,
     },
@@ -131,6 +140,7 @@ pub const NOUNS: &[Noun] = &[
         en: "pick-axe",
         sg: ["кирка", "кирки", "кирке", "кирку", "киркой", "кирке"],
         pl: ["кирки", "кирок", "киркам", "кирки", "кирками", "кирках"],
+        few: "кирки",
         gender: Gender::Fem,
         animate: false,
     },
@@ -221,13 +231,12 @@ impl Phrase for Name {
     }
 
     fn counted(&self, n: u64, case: Case) -> String {
-        let (number, case) = counted_form(n, case, self.noun.animate);
-        let row = if number == Number::Sing {
-            &self.noun.sg
-        } else {
-            &self.noun.pl
-        };
-        row[case.index()].to_string()
+        match counted_form(n, case, self.noun.animate) {
+            // 2 золотые монеты: the phrase's own form after 2, 3, 4
+            (Number::Sing, Case::Gen) if case != Case::Gen => self.noun.few.to_string(),
+            (Number::Sing, c) => self.noun.sg[c.index()].to_string(),
+            (Number::Plur, c) => self.noun.pl[c.index()].to_string(),
+        }
     }
 }
 
