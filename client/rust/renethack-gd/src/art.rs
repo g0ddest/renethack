@@ -22,7 +22,7 @@ use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::{
     Animation, AnimationLibrary, AnimationPlayer, ArrayMesh, BaseMaterial3D, BoneAttachment3D,
     FileAccess, Material, Mesh, MeshInstance3D, Node, Node3D, OrmMaterial3D, PackedScene,
-    ResourceLoader, Skeleton3D, Skin as GdSkin, StandardMaterial3D, SurfaceTool, Texture2D,
+    ResourceLoader, Skeleton3D, Skin as GdSkin, StandardMaterial3D, Texture2D,
 };
 use godot::prelude::*;
 use nh_art::{ArtManifest, MaterialSpec, Proc, Resolved, Skin};
@@ -295,11 +295,11 @@ impl Art {
             .flat_map(|(_, _, m)| {
                 let head = m.head.clone().map(|h| (h, Region::Head));
                 head.into_iter()
-                    .chain(m.bare_arms.clone().map(|a| (a, Region::Arms)))
+                    .chain(m.bare_arms.clone().map(|a| (a, Region::bare(m))))
             })
             .filter(|(h, _)| self.manifest.head(h).is_some())
             .collect();
-        heads.sort_by_key(|(h, r)| (h.clone(), *r == Region::Arms));
+        heads.sort_by_key(|(h, r)| (h.clone(), *r as u8));
         heads.dedup();
         q.extend(heads.into_iter().map(|(h, r)| Preload::Head(h, r)));
         q.extend(
@@ -330,7 +330,7 @@ impl Art {
                 q.extend(
                     spec.bare_arms
                         .clone()
-                        .map(|a| Preload::Head(a, Region::Arms)),
+                        .map(|a| Preload::Head(a, Region::bare(spec))),
                 );
             }
             q.push(Preload::Warm(*look));
@@ -801,7 +801,7 @@ impl Art {
                     }
                 }
                 if let Some(kind) = spec.bare_arms.as_deref() {
-                    self.attach_base_head(&inner, kind, Region::Arms);
+                    self.attach_base_head(&inner, kind, Region::bare(&spec));
                 }
                 let shade = rgb(spec.shade_rgb());
                 self.dress(&inner, look, shade);
@@ -898,6 +898,14 @@ impl Art {
                 ))
             })
             .collect();
+        // the head's skin tone, for the bare hands of an outfit
+        let skin_tone = spec
+            .head
+            .as_deref()
+            .and_then(|h| self.manifest.head(h))
+            .and_then(|h| h.tint.as_deref())
+            .and_then(nh_art::hex)
+            .map_or(Color::WHITE, rgb);
         let plain = tint == Color::WHITE
             && !ghost
             && r.skin == Skin::Own
@@ -937,6 +945,12 @@ impl Art {
                 let mat = match r.skin {
                     Skin::Material(m) if !head => Some(self.surface(m, 100, false, look.tint)),
                     _ => mi.get_active_material(i).map(|src| {
+                        // an outfit's bare hands are skin: the head's tone,
+                        // never the cloth's dye
+                        if is_skin(&src) {
+                            let tone = mul(look.tint, skin_tone);
+                            return self.derive(&src, tone, ghost, None);
+                        }
                         let src = if flat { self.undyed(&src) } else { src };
                         self.derive(&src, tint, ghost, finish)
                     }),
@@ -948,9 +962,10 @@ impl Art {
         }
     }
 
-    /// Shade a scene's meshes smooth: each surface's normals are made
-    /// again across its shared corners (the skin weights stay); once per
-    /// mesh, shared by every instance.
+    /// Shade a scene's meshes smooth: each corner's normal is the mean of
+    /// the faces around its place, across the seams that split a low-poly
+    /// model's corners (the skin weights stay); once per mesh, shared by
+    /// every instance.
     fn smooth(&mut self, inner: &Gd<Node3D>) {
         for node in inner
             .find_children_ex("*")
@@ -962,28 +977,15 @@ impl Art {
             let Ok(mut mi) = node.try_cast::<MeshInstance3D>() else {
                 continue;
             };
-            let Some(src) = mi.get_mesh() else {
+            let Some(src) = mi.get_mesh().and_then(|m| m.try_cast::<ArrayMesh>().ok()) else {
                 continue;
             };
             let key = src.instance_id().to_i64();
-            let mesh = match self.smoothed.get(&key) {
-                Some(m) => m.clone(),
-                None => {
-                    let out = ArrayMesh::new_gd();
-                    for i in 0..src.get_surface_count() {
-                        let mut st = SurfaceTool::new_gd();
-                        st.create_from(&src, i);
-                        st.generate_normals();
-                        if let Some(mat) = src.surface_get_material(i) {
-                            st.set_material(&mat);
-                        }
-                        st.commit_ex().existing(&out).done();
-                    }
-                    let out: Gd<Mesh> = out.upcast();
-                    self.smoothed.insert(key, out.clone());
-                    out
-                }
-            };
+            let mesh = self
+                .smoothed
+                .entry(key)
+                .or_insert_with(|| welded(&src).upcast())
+                .clone();
             mi.set_mesh(&mesh);
         }
     }
@@ -1068,7 +1070,7 @@ impl Art {
                 // the body's own mesh is the tall one; the eyes and the
                 // eyebrows come whole
                 let body = base && mesh.get_aabb().size.y > 0.5;
-                if region == Region::Arms && !body {
+                if region != Region::Head && !body {
                     continue;
                 }
                 let mesh = match (body, region) {
@@ -1076,6 +1078,8 @@ impl Art {
                     // in the rest pose the arms reach out sideways from
                     // the shoulders
                     (true, Region::Arms) => cut(&mesh, |v| v.x.abs() > 0.2 && v.y > 1.2),
+                    // from the waist (under the trousers' top) to the neck
+                    (true, Region::Torso) => cut(&mesh, |v| v.y > 1.06 && v.y < spec.cut + 0.03),
                     _ => mesh,
                 };
                 // the base's own eyebrows take the hair's colour; its eyes
@@ -2662,6 +2666,96 @@ fn with_active_materials(mi: &Gd<MeshInstance3D>, mesh: Gd<ArrayMesh>) -> Gd<Arr
 enum Region {
     Head,
     Arms,
+    /// The arms and the chest.
+    Torso,
+}
+
+impl Region {
+    /// What a model shows of its base character's body.
+    fn bare(spec: &nh_art::ModelSpec) -> Region {
+        if spec.bare_chest {
+            Region::Torso
+        } else {
+            Region::Arms
+        }
+    }
+}
+
+/// A mesh's material that is skin (the outfits' bare hands).
+fn is_skin(m: &Gd<Material>) -> bool {
+    m.get_name().to_string().starts_with("MI_Regular")
+}
+
+/// `mesh` with each corner's normal averaged over every face that meets at
+/// its position (corners split by seams included).
+fn welded(mesh: &Gd<ArrayMesh>) -> Gd<ArrayMesh> {
+    use godot::classes::mesh::{ArrayFormat, ArrayType, PrimitiveType};
+    let place = |v: Vector3| {
+        let q = |f: f32| (f * 10_000.0).round() as i64;
+        (q(v.x), q(v.y), q(v.z))
+    };
+    let mut out = ArrayMesh::new_gd();
+    for i in 0..mesh.get_surface_count() {
+        let mut arrays = mesh.surface_get_arrays(i);
+        let verts: PackedVector3Array = arrays.at(ArrayType::VERTEX.ord() as usize).to();
+        let verts = verts.as_slice();
+        let index: PackedInt32Array = arrays.at(ArrayType::INDEX.ord() as usize).to();
+        let index: Vec<usize> = if index.is_empty() {
+            (0..verts.len()).collect()
+        } else {
+            index.as_slice().iter().map(|&k| k as usize).collect()
+        };
+        let mut sums: HashMap<(i64, i64, i64), Vector3> = HashMap::new();
+        for t in index.chunks(3).filter(|t| t.len() == 3) {
+            let (Some(a), Some(b), Some(c)) = (verts.get(t[0]), verts.get(t[1]), verts.get(t[2]))
+            else {
+                continue;
+            };
+            // its length is the face's area (twice): big faces weigh more
+            let n = (*b - *a).cross(*c - *a);
+            for v in [a, b, c] {
+                *sums.entry(place(*v)).or_insert(Vector3::ZERO) += n;
+            }
+        }
+        let own: PackedVector3Array = arrays.at(ArrayType::NORMAL.ord() as usize).to();
+        let normals: Vec<Vector3> = verts
+            .iter()
+            .enumerate()
+            .map(|(k, v)| {
+                let mine = own.get(k).unwrap_or(Vector3::UP);
+                let n = sums.get(&place(*v)).copied().unwrap_or(mine);
+                if n.length_squared() == 0.0 {
+                    return mine;
+                }
+                // the side the model's own normal faces (whatever the winding)
+                let n = n.normalized();
+                if n.dot(mine) < 0.0 { -n } else { n }
+            })
+            .collect();
+        arrays.set(
+            ArrayType::NORMAL.ord() as usize,
+            &PackedVector3Array::from(normals.as_slice()).to_variant(),
+        );
+        // tangents follow the normals; nothing smoothed is normal-mapped
+        arrays.set(ArrayType::TANGENT.ord() as usize, &Variant::nil());
+        for custom in [
+            ArrayType::CUSTOM0,
+            ArrayType::CUSTOM1,
+            ArrayType::CUSTOM2,
+            ArrayType::CUSTOM3,
+        ] {
+            arrays.set(custom.ord() as usize, &Variant::nil());
+        }
+        let eight = mesh.surface_get_format(i).ord() & ArrayFormat::FLAG_USE_8_BONE_WEIGHTS.ord();
+        out.add_surface_from_arrays_ex(PrimitiveType::TRIANGLES, &arrays)
+            .flags(ArrayFormat::from_ord(eight))
+            .done();
+        if let Some(m) = mesh.surface_get_material(i) {
+            let n = out.get_surface_count() - 1;
+            out.surface_set_material(n, &m);
+        }
+    }
+    out
 }
 
 /// The triangles of `mesh` whose corners all `keep` (in the mesh's own

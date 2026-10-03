@@ -684,7 +684,8 @@ impl Kit<'_> {
                 );
             }
             "pointed" => {
-                // a wizard's: tall, its tip bent back a little, a wide brim
+                // a wizard's: tall, its tip bent back a little, a brim
+                // narrow enough to leave the face to the camera above
                 self.part(
                     root,
                     cylinder(0.12, 0.32, 0.8),
@@ -703,7 +704,7 @@ impl Kit<'_> {
                 );
                 self.part(
                     root,
-                    cylinder(0.58, 0.58, 0.03),
+                    cylinder(0.43, 0.43, 0.03),
                     &skin,
                     [0.0, 0.03, 0.0],
                     FLAT,
@@ -717,11 +718,79 @@ impl Kit<'_> {
                     FLAT,
                     ONE,
                 );
-                let star = self.glint();
-                self.part(root, facets(0.06, 4), &star, [0.0, 0.42, 0.24], FLAT, ONE);
+            }
+            "kabuto" => {
+                // a samurai's: a lacquered bowl, the neck guard flaring out
+                // in plates behind and at the sides, turned-back flaps at
+                // the front and a gilded crest of two horns
+                let gold = self.plain("gilded", Color::from_rgb(0.75, 0.58, 0.2));
+                self.part(
+                    root,
+                    dome(0.4),
+                    &skin,
+                    [0.0, 0.1, 0.0],
+                    FLAT,
+                    [1.0, 1.2, 1.1],
+                );
+                self.part(
+                    root,
+                    torus(0.38, 0.45),
+                    &gold,
+                    [0.0, 0.1, 0.0],
+                    FLAT,
+                    [1.0, 1.0, 1.1],
+                );
+                for (y, k) in [(0.02f32, 1.0f32), (-0.1, 1.12), (-0.22, 1.24)] {
+                    // back
+                    self.part(
+                        root,
+                        cuboid(0.8 * k, 0.13, 0.04),
+                        &skin,
+                        [0.0, y, -0.44 * k],
+                        [-28.0, 0.0, 0.0],
+                        ONE,
+                    );
+                    for side in [-1.0f32, 1.0] {
+                        self.part(
+                            root,
+                            cuboid(0.04, 0.13, 0.42 * k),
+                            &skin,
+                            [side * 0.44 * k, y, -0.14],
+                            [0.0, 0.0, side * 28.0],
+                            ONE,
+                        );
+                    }
+                }
+                for side in [-1.0f32, 1.0] {
+                    self.part(
+                        root,
+                        cuboid(0.2, 0.16, 0.03),
+                        &skin,
+                        [side * 0.42, 0.14, 0.24],
+                        [0.0, side * 55.0, 0.0],
+                        ONE,
+                    );
+                    self.part(
+                        root,
+                        cuboid(0.05, 0.5, 0.02),
+                        &gold,
+                        [side * 0.14, 0.52, 0.42],
+                        [-10.0, 0.0, -side * 24.0],
+                        ONE,
+                    );
+                }
+                self.part(
+                    root,
+                    cylinder(0.07, 0.07, 0.03),
+                    &gold,
+                    [0.0, 0.3, 0.44],
+                    [90.0, 0.0, 0.0],
+                    ONE,
+                );
             }
             "mask" => {
                 // a band of black cloth across the eyes, knotted behind
+                let dark = self.mat(Color::from_rgb(0.03, 0.03, 0.035), Finish::Matte);
                 self.part(
                     root,
                     torus(0.4, 0.47),
@@ -788,10 +857,11 @@ impl Kit<'_> {
                 );
                 self.part(
                     root,
-                    cylinder(0.52, 0.52, 0.03),
+                    cylinder(0.44, 0.44, 0.03),
                     &skin,
                     [0.0, 0.03, 0.0],
-                    [4.0, 0.0, 0.0],
+                    // its front snapped up: the face shows from above
+                    [-8.0, 0.0, 0.0],
                     [1.0, 1.0, 1.1],
                 );
             }
@@ -1059,6 +1129,122 @@ impl Kit<'_> {
                         [sn * 0.38, 0.14, cs * 0.3],
                         FLAT,
                         [1.0, 0.8, 1.0],
+                    );
+                }
+            }
+            "sash" => {
+                // a band from one shoulder across the chest to the other hip
+                self.part(
+                    root,
+                    torus(0.36, 0.52),
+                    &skin,
+                    [0.0, 0.0, 0.0],
+                    [0.0, 0.0, 38.0],
+                    [1.0, 1.0, 0.72],
+                );
+            }
+            "sode" => {
+                // a samurai's shoulder guards: lacquered plates laced in
+                // rows, hanging out over each upper arm
+                for side in [-1.0f32, 1.0] {
+                    for (i, k) in [(0.0f32, 1.0f32), (1.0, 1.08), (2.0, 1.16)] {
+                        self.part(
+                            root,
+                            cuboid(0.3 * k, 0.13, 0.42 * k),
+                            &skin,
+                            [side * (0.5 + i * 0.07), 0.38 - i * 0.12, 0.0],
+                            [0.0, 0.0, side * -32.0],
+                            ONE,
+                        );
+                        self.part(
+                            root,
+                            cuboid(0.31 * k, 0.02, 0.43 * k),
+                            &dark,
+                            [side * (0.5 + i * 0.07), 0.32 - i * 0.12, 0.0],
+                            [0.0, 0.0, side * -32.0],
+                            ONE,
+                        );
+                    }
+                }
+            }
+            "obi" => {
+                // a broad sash round the waist, its ends hanging in front
+                self.part(
+                    root,
+                    torus(0.43, 0.5),
+                    &skin,
+                    [0.0, 0.0, 0.0],
+                    FLAT,
+                    [1.0, 3.2, 0.78],
+                );
+                for (x, a) in [(0.1f32, 8.0f32), (0.2, 16.0)] {
+                    self.part(
+                        root,
+                        cuboid(0.09, 0.42, 0.02),
+                        &skin,
+                        [x, -0.2, 0.4],
+                        [0.0, 0.0, a],
+                        ONE,
+                    );
+                }
+            }
+            "hakama" | "loincloth" => {
+                // wide trousers like a pleated skirt to the ankles, or a
+                // short ragged pelt round the hips
+                let long = shape == "hakama";
+                let (top, len, hem) = if long {
+                    (0.36, 1.6, 0.66)
+                } else {
+                    (0.42, 0.7, 0.6)
+                };
+                self.part(
+                    root,
+                    cylinder(top, hem, len),
+                    &skin,
+                    [0.0, 0.08 - len * 0.5, 0.0],
+                    FLAT,
+                    [1.0, 1.0, 0.8],
+                );
+                if long {
+                    // its pleats
+                    for i in 0..8 {
+                        let a = i as f32 * 45.0 + 22.5;
+                        let (sn, cs) = a.to_radians().sin_cos();
+                        self.part(
+                            root,
+                            cuboid(0.02, len * 0.9, 0.04),
+                            &dark,
+                            [sn * 0.5, 0.08 - len * 0.52, cs * 0.4],
+                            [0.0, a, sn * 7.0],
+                            ONE,
+                        );
+                    }
+                } else {
+                    // the pelt's ragged hem
+                    for i in 0..9 {
+                        let a = i as f32 * 40.0;
+                        let (sn, cs) = a.to_radians().sin_cos();
+                        self.part(
+                            root,
+                            cylinder(0.0, 0.1, 0.2),
+                            &skin,
+                            [sn * 0.55, 0.08 - len - 0.04, cs * 0.44],
+                            [180.0, 0.0, 0.0],
+                            ONE,
+                        );
+                    }
+                }
+            }
+            "wrap" => {
+                // cloth wound round a forearm
+                for i in 0..3 {
+                    self.part(
+                        root,
+                        torus(0.42, 0.56),
+                        &skin,
+                        [0.0, i as f32 * 0.32 - 0.32, 0.0],
+                        [0.0, 0.0, if i % 2 == 0 { 8.0 } else { -8.0 }],
+                        [1.0, 2.2, 1.0],
                     );
                 }
             }

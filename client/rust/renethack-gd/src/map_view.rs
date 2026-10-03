@@ -514,6 +514,20 @@ pub(crate) fn role_monster(role: &str) -> &str {
     }
 }
 
+/// The darkest a creature's tint goes (its brightest channel): a black
+/// one is dark fur under the light, not a silhouette.
+const MIN_TINT: f32 = 0.55;
+
+/// `c` brightened to `MIN_TINT`, its hue kept.
+fn lifted(c: Color) -> Color {
+    let v = c.r.max(c.g).max(c.b);
+    if v >= MIN_TINT || v <= 0.0 {
+        return c;
+    }
+    let k = MIN_TINT / v;
+    Color::from_rgba(c.r * k, c.g * k, c.b * k, c.a)
+}
+
 fn tint_color(tint: Tint, glyph_color: i32) -> Color {
     match tint {
         Tint::None => Color::WHITE,
@@ -1646,7 +1660,7 @@ fn entity_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
                 } else {
                     Pose::Alive
                 };
-                let tint = tint_color(r.tint, g.color);
+                let tint = lifted(tint_color(r.tint, g.color));
                 let yaw = match (hero, ctx.facing) {
                     (true, _) => ctx.hero_yaw,
                     (false, Some(yaw)) => yaw,
@@ -3685,6 +3699,10 @@ impl MapView {
         let hand_slot = use_hand(u.kind);
         if let (Some(h), Some(secs)) = (held, in_hand(u.kind)) {
             self.art.hold_for(m, h, secs, hand_slot);
+        } else {
+            // a use with nothing in hand (a spell): the last item used is
+            // put away, not left in a hand that opens
+            self.art.put_down(m);
         }
         let anchor = self.art.slot_anchor(m, hand_slot);
         let node = m.node.clone();
@@ -3863,7 +3881,7 @@ impl MapView {
                 let r = self.art.manifest().monster(info, flags);
                 let look = ModelLook {
                     art: r,
-                    tint: tint_color(r.tint, info.color),
+                    tint: lifted(tint_color(r.tint, info.color)),
                     pose: Pose::Alive,
                 };
                 if !looks.contains(&look) {

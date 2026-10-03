@@ -208,7 +208,7 @@ impl Art {
 
     /// The item in use leaves the hand at once (the model is put away
     /// with its gear on).
-    pub(super) fn put_down(&mut self, m: &mut Model) {
+    pub fn put_down(&mut self, m: &mut Model) {
         let Some(worn) = m.worn.as_mut() else {
             return;
         };

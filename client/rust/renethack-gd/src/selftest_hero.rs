@@ -301,7 +301,8 @@ pub(super) fn item_use() -> Vec<Step> {
         Step::Wait("casting, a glow and a bolt", |g| {
             let map = map_view(g)?;
             Ok(using(g, "Spell_Simple_Shoot", "cast", None)?
-                && map.hero_fx().started().contains(&"beam"))
+                && map.hero_fx().started().contains(&"beam")
+                && in_use(g)?.is_none())
         }),
         Step::Shot("use-cast"),
     ]);
@@ -543,7 +544,14 @@ pub(super) fn roles() -> Vec<Step> {
         .into_iter()
         .filter(|(r, ..)| only.as_ref().is_none_or(|o| o.iter().any(|x| x == r)))
         .collect();
+    // RENETHACK_ROLES_OTHER=1: each of the other gender
+    let other = std::env::var_os("RENETHACK_ROLES_OTHER").is_some();
     for (i, (role, gender, align, shot)) in picked.into_iter().enumerate() {
+        let gender = match (other, gender) {
+            (false, g) => g,
+            (true, "male") => "female",
+            (true, _) => "male",
+        };
         if i > 0 {
             steps.push(Step::Push(UiEvent::BackToTitle));
         }

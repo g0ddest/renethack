@@ -229,6 +229,9 @@ pub struct ModelSpec {
     /// instead of the outfit's sleeves (hide those).
     #[serde(default)]
     pub bare_arms: Option<String>,
+    /// With `bare_arms`, the chest bare too (hide the outfit's body).
+    #[serde(default)]
+    pub bare_chest: bool,
 }
 
 /// A model worn on a bone of a character (a role's hat or cape), hidden
@@ -670,6 +673,9 @@ impl ArtManifest {
             {
                 errors.push(format!("model {name}: bare arms of no head {h}"));
             }
+            if m.bare_chest && m.bare_arms.is_none() {
+                errors.push(format!("model {name}: a bare chest without bare arms"));
+            }
             for e in &m.extras {
                 if model(&e.model).is_none() {
                     errors.push(format!("model {name}: no extra model {}", e.model));
@@ -1039,6 +1045,7 @@ impl ArtManifest {
             recolor: BTreeMap::new(),
             extras: Vec::new(),
             bare_arms: None,
+            bare_chest: false,
         };
     }
 
