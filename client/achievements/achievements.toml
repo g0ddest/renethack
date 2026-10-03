@@ -1,0 +1,716 @@
+# The achievements (spec 2026-10-03-steam-achievements-design.md), read by
+# nh-world::achievements. Each one:
+#   id      what the game and the local store call it
+#   steam   its API name on Steam (unique, ACH_...)
+#   when    the condition over the host's `progress` notice; every field
+#           given must hold:
+#             achieved = N        NetHack's achievement N (ACH_* in you.h)
+#             event = "name"      that u.uevent field is set
+#             deepest = N         the deepest level reached is N or deeper
+#             gameover = true     the game is over
+#             ascended = true     the game ended in an ascension
+#             role = "Val"        the hero's role (its file code)
+#             never = "name"      that u.uconduct counter is still 0
+#   icon    the medallion's subject (the achievement-icons bake): one of
+#           object (an appearance), creature (a monster), role (a role's
+#           hero), numeral, glyph (a pictogram of the client's icon set)
+#           or emblem (one drawn for the medallions); crossed = true
+#           strikes it through ("never did...")
+#   hidden  Steam hides it until it is earned
+#   name, desc   Fluent keys; name_en and desc_en hold the English until
+#           the catalogs come
+
+
+[[achievement]]
+id = "bell"
+steam = "ACH_BELL"
+when = { achieved = 1 }
+icon = { object = "silver bell" }
+name = "achievement-bell-name"
+desc = "achievement-bell-desc"
+name_en = "Ring My Bell"
+desc_en = "Take the Bell of Opening from your quest nemesis."
+
+[[achievement]]
+id = "gehennom"
+steam = "ACH_GEHENNOM"
+when = { achieved = 2 }
+icon = { emblem = "gehennom" }
+name = "achievement-gehennom-name"
+desc = "achievement-gehennom-desc"
+name_en = "Abandon All Hope"
+desc_en = "Enter Gehennom through the Valley of the Dead."
+
+[[achievement]]
+id = "candelabrum"
+steam = "ACH_CANDELABRUM"
+when = { achieved = 3 }
+icon = { object = "candelabrum" }
+name = "achievement-candelabrum-name"
+desc = "achievement-candelabrum-desc"
+name_en = "Seven Candles"
+desc_en = "Take the Candelabrum of Invocation from Vlad's Tower."
+
+[[achievement]]
+id = "book_of_the_dead"
+steam = "ACH_BOOK_OF_THE_DEAD"
+when = { achieved = 4 }
+icon = { object = "papyrus" }
+name = "achievement-book-of-the-dead-name"
+desc = "achievement-book-of-the-dead-desc"
+name_en = "Required Reading"
+desc_en = "Take the Book of the Dead from the Wizard of Yendor."
+
+[[achievement]]
+id = "invocation"
+steam = "ACH_INVOCATION"
+when = { achieved = 5 }
+icon = { emblem = "invocation" }
+name = "achievement-invocation-name"
+desc = "achievement-invocation-desc"
+name_en = "The Gate Opens"
+desc_en = "Perform the invocation at the vibrating square."
+
+[[achievement]]
+id = "amulet"
+steam = "ACH_AMULET"
+when = { achieved = 6 }
+icon = { object = "Amulet of Yendor" }
+name = "achievement-amulet-name"
+desc = "achievement-amulet-desc"
+name_en = "The Prize"
+desc_en = "Take the Amulet of Yendor from the high priest of Moloch."
+
+[[achievement]]
+id = "planes"
+steam = "ACH_PLANES"
+when = { achieved = 7 }
+icon = { emblem = "planes" }
+name = "achievement-planes-name"
+desc = "achievement-planes-desc"
+name_en = "Beyond the Dungeon"
+desc_en = "Carry the Amulet up into the Elemental Planes."
+
+[[achievement]]
+id = "astral"
+steam = "ACH_ASTRAL"
+when = { achieved = 8 }
+icon = { emblem = "astral" }
+name = "achievement-astral-name"
+desc = "achievement-astral-desc"
+name_en = "Among the Stars"
+desc_en = "Reach the Astral Plane."
+
+[[achievement]]
+id = "ascension"
+steam = "ACH_ASCENSION"
+when = { achieved = 9 }
+icon = { emblem = "ascension" }
+name = "achievement-ascension-name"
+desc = "achievement-ascension-desc"
+name_en = "Demigod"
+desc_en = "Offer the Amulet of Yendor to your god and ascend."
+
+[[achievement]]
+id = "mines_prize"
+steam = "ACH_MINES_PRIZE"
+when = { achieved = 10 }
+icon = { object = "gray" }
+hidden = true
+name = "achievement-mines-prize-name"
+desc = "achievement-mines-prize-desc"
+name_en = "Feeling Lucky"
+desc_en = "Find the luckstone hidden at Mines' End."
+
+[[achievement]]
+id = "sokoban_prize"
+steam = "ACH_SOKOBAN_PRIZE"
+when = { achieved = 11 }
+icon = { object = "bag" }
+hidden = true
+name = "achievement-sokoban-prize-name"
+desc = "achievement-sokoban-prize-desc"
+name_en = "Puzzle Solved"
+desc_en = "Claim the prize at the top of Sokoban."
+
+[[achievement]]
+id = "medusa"
+steam = "ACH_MEDUSA"
+when = { achieved = 12 }
+icon = { creature = "Medusa" }
+name = "achievement-medusa-name"
+desc = "achievement-medusa-desc"
+name_en = "Stone Cold"
+desc_en = "Kill Medusa."
+
+[[achievement]]
+id = "blind"
+steam = "ACH_BLIND"
+when = { achieved = 13 }
+icon = { glyph = "Blindfold" }
+name = "achievement-blind-name"
+desc = "achievement-blind-desc"
+name_en = "In the Dark"
+desc_en = "Finish a game blind from the first turn to the last."
+
+[[achievement]]
+id = "nudist"
+steam = "ACH_NUDIST"
+when = { achieved = 14 }
+icon = { glyph = "Cuirass", crossed = true }
+name = "achievement-nudist-name"
+desc = "achievement-nudist-desc"
+name_en = "Nothing to Wear"
+desc_en = "Finish a game without ever wearing armour."
+
+[[achievement]]
+id = "mines"
+steam = "ACH_MINES"
+when = { achieved = 15 }
+icon = { object = "pick-axe" }
+name = "achievement-mines-name"
+desc = "achievement-mines-desc"
+name_en = "Gnomish Mines"
+desc_en = "Enter the Gnomish Mines."
+
+[[achievement]]
+id = "minetown"
+steam = "ACH_MINETOWN"
+when = { achieved = 16 }
+icon = { creature = "watchman" }
+name = "achievement-minetown-name"
+desc = "achievement-minetown-desc"
+name_en = "Minetown"
+desc_en = "Reach Minetown."
+
+[[achievement]]
+id = "shop"
+steam = "ACH_SHOP"
+when = { achieved = 17 }
+icon = { object = "gold piece" }
+name = "achievement-shop-name"
+desc = "achievement-shop-desc"
+name_en = "Customer"
+desc_en = "Enter a shop."
+
+[[achievement]]
+id = "temple"
+steam = "ACH_TEMPLE"
+when = { achieved = 18 }
+icon = { glyph = "Ankh" }
+name = "achievement-temple-name"
+desc = "achievement-temple-desc"
+name_en = "Sanctuary"
+desc_en = "Enter a temple."
+
+[[achievement]]
+id = "oracle"
+steam = "ACH_ORACLE"
+when = { achieved = 19 }
+icon = { creature = "Oracle" }
+name = "achievement-oracle-name"
+desc = "achievement-oracle-desc"
+name_en = "Words of Wisdom"
+desc_en = "Consult the Oracle."
+
+[[achievement]]
+id = "novel"
+steam = "ACH_NOVEL"
+when = { achieved = 20 }
+icon = { object = "paperback" }
+name = "achievement-novel-name"
+desc = "achievement-novel-desc"
+name_en = "A Good Read"
+desc_en = "Read a passage from a Discworld novel."
+
+[[achievement]]
+id = "sokoban"
+steam = "ACH_SOKOBAN"
+when = { achieved = 21 }
+icon = { object = "boulder" }
+name = "achievement-sokoban-name"
+desc = "achievement-sokoban-desc"
+name_en = "Sokoban"
+desc_en = "Enter Sokoban."
+
+[[achievement]]
+id = "big_room"
+steam = "ACH_BIG_ROOM"
+when = { achieved = 22 }
+icon = { emblem = "big room" }
+name = "achievement-big-room-name"
+desc = "achievement-big-room-desc"
+name_en = "The Big Room"
+desc_en = "Enter the Big Room."
+
+[[achievement]]
+id = "rank_1"
+steam = "ACH_RANK_1"
+when = { achieved = 23 }
+icon = { numeral = 3 }
+name = "achievement-rank-1-name"
+desc = "achievement-rank-1-desc"
+name_en = "Rising"
+desc_en = "Reach experience level 3 and your role's next title."
+
+[[achievement]]
+id = "rank_2"
+steam = "ACH_RANK_2"
+when = { achieved = 24 }
+icon = { numeral = 6 }
+name = "achievement-rank-2-name"
+desc = "achievement-rank-2-desc"
+name_en = "Seasoned"
+desc_en = "Reach experience level 6 and your role's next title."
+
+[[achievement]]
+id = "rank_3"
+steam = "ACH_RANK_3"
+when = { achieved = 25 }
+icon = { numeral = 10 }
+name = "achievement-rank-3-name"
+desc = "achievement-rank-3-desc"
+name_en = "Veteran"
+desc_en = "Reach experience level 10 and your role's next title."
+
+[[achievement]]
+id = "rank_4"
+steam = "ACH_RANK_4"
+when = { achieved = 26 }
+icon = { numeral = 14 }
+name = "achievement-rank-4-name"
+desc = "achievement-rank-4-desc"
+name_en = "Hardened"
+desc_en = "Reach experience level 14 and your role's next title."
+
+[[achievement]]
+id = "rank_5"
+steam = "ACH_RANK_5"
+when = { achieved = 27 }
+icon = { numeral = 18 }
+name = "achievement-rank-5-name"
+desc = "achievement-rank-5-desc"
+name_en = "Renowned"
+desc_en = "Reach experience level 18 and your role's next title."
+
+[[achievement]]
+id = "rank_6"
+steam = "ACH_RANK_6"
+when = { achieved = 28 }
+icon = { numeral = 22 }
+name = "achievement-rank-6-name"
+desc = "achievement-rank-6-desc"
+name_en = "Famed"
+desc_en = "Reach experience level 22 and your role's next title."
+
+[[achievement]]
+id = "rank_7"
+steam = "ACH_RANK_7"
+when = { achieved = 29 }
+icon = { numeral = 26 }
+name = "achievement-rank-7-name"
+desc = "achievement-rank-7-desc"
+name_en = "Legendary"
+desc_en = "Reach experience level 26 and your role's next title."
+
+[[achievement]]
+id = "rank_8"
+steam = "ACH_RANK_8"
+when = { achieved = 30 }
+icon = { numeral = 30 }
+name = "achievement-rank-8-name"
+desc = "achievement-rank-8-desc"
+name_en = "Peerless"
+desc_en = "Reach experience level 30 and your role's next title."
+
+[[achievement]]
+id = "tune"
+steam = "ACH_TUNE"
+when = { achieved = 31 }
+icon = { object = "flute" }
+name = "achievement-tune-name"
+desc = "achievement-tune-desc"
+name_en = "Five Notes"
+desc_en = "Learn the tune that opens the castle's drawbridge."
+
+[[achievement]]
+id = "quest_called"
+steam = "ACH_QUEST_CALLED"
+when = { event = "qcalled" }
+icon = { glyph = "Scroll" }
+name = "achievement-quest-called-name"
+desc = "achievement-quest-called-desc"
+name_en = "The Call"
+desc_en = "Be called to your Quest by your leader."
+
+[[achievement]]
+id = "quest_done"
+steam = "ACH_QUEST_DONE"
+when = { event = "qcompleted" }
+icon = { glyph = "Check" }
+name = "achievement-quest-done-name"
+desc = "achievement-quest-done-desc"
+name_en = "Quest Fulfilled"
+desc_en = "Bring your quest artifact back to your leader."
+
+[[achievement]]
+id = "crowned"
+steam = "ACH_CROWNED"
+when = { event = "uhand_of_elbereth" }
+icon = { emblem = "crown" }
+name = "achievement-crowned-name"
+desc = "achievement-crowned-desc"
+name_en = "Crowned"
+desc_en = "Be crowned by your god."
+
+[[achievement]]
+id = "wizard"
+steam = "ACH_WIZARD"
+when = { event = "udemigod" }
+icon = { creature = "Wizard of Yendor" }
+name = "achievement-wizard-name"
+desc = "achievement-wizard-desc"
+name_en = "Wizard Slayer"
+desc_en = "Kill the Wizard of Yendor."
+
+[[achievement]]
+id = "drawbridge"
+steam = "ACH_DRAWBRIDGE"
+when = { event = "uopened_dbridge" }
+icon = { emblem = "drawbridge" }
+name = "achievement-drawbridge-name"
+desc = "achievement-drawbridge-desc"
+name_en = "Open Sesame"
+desc_en = "Open the castle's drawbridge."
+
+[[achievement]]
+id = "vibrating_square"
+steam = "ACH_VIBRATING_SQUARE"
+when = { event = "uvibrated" }
+icon = { emblem = "vibrating square" }
+name = "achievement-vibrating-square-name"
+desc = "achievement-vibrating-square-desc"
+name_en = "Good Vibrations"
+desc_en = "Find the vibrating square."
+
+[[achievement]]
+id = "major_oracle"
+steam = "ACH_MAJOR_ORACLE"
+when = { event = "major_oracle" }
+icon = { creature = "Oracle" }
+name = "achievement-major-oracle-name"
+desc = "achievement-major-oracle-desc"
+name_en = "A Major Consultation"
+desc_en = "Pay the Oracle for a major consultation."
+
+[[achievement]]
+id = "amulet_wish"
+steam = "ACH_AMULET_WISH"
+when = { event = "amulet_wish" }
+icon = { glyph = "Star" }
+hidden = true
+name = "achievement-amulet-wish-name"
+desc = "achievement-amulet-wish-desc"
+name_en = "Wish Upon the Amulet"
+desc_en = "Gain a wish from the Amulet of Yendor."
+
+[[achievement]]
+id = "depth_10"
+steam = "ACH_DEPTH_10"
+when = { deepest = 10 }
+icon = { numeral = 10 }
+name = "achievement-depth-10-name"
+desc = "achievement-depth-10-desc"
+name_en = "Down Below"
+desc_en = "Reach dungeon level 10."
+
+[[achievement]]
+id = "depth_20"
+steam = "ACH_DEPTH_20"
+when = { deepest = 20 }
+icon = { numeral = 20 }
+name = "achievement-depth-20-name"
+desc = "achievement-depth-20-desc"
+name_en = "Deep Delver"
+desc_en = "Reach dungeon level 20."
+
+[[achievement]]
+id = "depth_30"
+steam = "ACH_DEPTH_30"
+when = { deepest = 30 }
+icon = { numeral = 30 }
+name = "achievement-depth-30-name"
+desc = "achievement-depth-30-desc"
+name_en = "Underworld"
+desc_en = "Reach dungeon level 30."
+
+[[achievement]]
+id = "depth_40"
+steam = "ACH_DEPTH_40"
+when = { deepest = 40 }
+icon = { numeral = 40 }
+name = "achievement-depth-40-name"
+desc = "achievement-depth-40-desc"
+name_en = "Depths of Despair"
+desc_en = "Reach dungeon level 40."
+
+[[achievement]]
+id = "ascend_arc"
+steam = "ACH_ASCEND_ARC"
+when = { ascended = true, role = "Arc" }
+icon = { role = "Arc" }
+name = "achievement-ascend-arc-name"
+desc = "achievement-ascend-arc-desc"
+name_en = "Ascended Archeologist"
+desc_en = "Ascend as an archeologist."
+
+[[achievement]]
+id = "ascend_bar"
+steam = "ACH_ASCEND_BAR"
+when = { ascended = true, role = "Bar" }
+icon = { role = "Bar" }
+name = "achievement-ascend-bar-name"
+desc = "achievement-ascend-bar-desc"
+name_en = "Ascended Barbarian"
+desc_en = "Ascend as a barbarian."
+
+[[achievement]]
+id = "ascend_cav"
+steam = "ACH_ASCEND_CAV"
+when = { ascended = true, role = "Cav" }
+icon = { role = "Cav" }
+name = "achievement-ascend-cav-name"
+desc = "achievement-ascend-cav-desc"
+name_en = "Ascended Cave Dweller"
+desc_en = "Ascend as a cave dweller."
+
+[[achievement]]
+id = "ascend_hea"
+steam = "ACH_ASCEND_HEA"
+when = { ascended = true, role = "Hea" }
+icon = { role = "Hea" }
+name = "achievement-ascend-hea-name"
+desc = "achievement-ascend-hea-desc"
+name_en = "Ascended Healer"
+desc_en = "Ascend as a healer."
+
+[[achievement]]
+id = "ascend_kni"
+steam = "ACH_ASCEND_KNI"
+when = { ascended = true, role = "Kni" }
+icon = { role = "Kni" }
+name = "achievement-ascend-kni-name"
+desc = "achievement-ascend-kni-desc"
+name_en = "Ascended Knight"
+desc_en = "Ascend as a knight."
+
+[[achievement]]
+id = "ascend_mon"
+steam = "ACH_ASCEND_MON"
+when = { ascended = true, role = "Mon" }
+icon = { role = "Mon" }
+name = "achievement-ascend-mon-name"
+desc = "achievement-ascend-mon-desc"
+name_en = "Ascended Monk"
+desc_en = "Ascend as a monk."
+
+[[achievement]]
+id = "ascend_pri"
+steam = "ACH_ASCEND_PRI"
+when = { ascended = true, role = "Pri" }
+icon = { role = "Pri" }
+name = "achievement-ascend-pri-name"
+desc = "achievement-ascend-pri-desc"
+name_en = "Ascended Cleric"
+desc_en = "Ascend as a priest or priestess."
+
+[[achievement]]
+id = "ascend_rog"
+steam = "ACH_ASCEND_ROG"
+when = { ascended = true, role = "Rog" }
+icon = { role = "Rog" }
+name = "achievement-ascend-rog-name"
+desc = "achievement-ascend-rog-desc"
+name_en = "Ascended Rogue"
+desc_en = "Ascend as a rogue."
+
+[[achievement]]
+id = "ascend_ran"
+steam = "ACH_ASCEND_RAN"
+when = { ascended = true, role = "Ran" }
+icon = { role = "Ran" }
+name = "achievement-ascend-ran-name"
+desc = "achievement-ascend-ran-desc"
+name_en = "Ascended Ranger"
+desc_en = "Ascend as a ranger."
+
+[[achievement]]
+id = "ascend_sam"
+steam = "ACH_ASCEND_SAM"
+when = { ascended = true, role = "Sam" }
+icon = { role = "Sam" }
+name = "achievement-ascend-sam-name"
+desc = "achievement-ascend-sam-desc"
+name_en = "Ascended Samurai"
+desc_en = "Ascend as a samurai."
+
+[[achievement]]
+id = "ascend_tou"
+steam = "ACH_ASCEND_TOU"
+when = { ascended = true, role = "Tou" }
+icon = { role = "Tou" }
+name = "achievement-ascend-tou-name"
+desc = "achievement-ascend-tou-desc"
+name_en = "Ascended Tourist"
+desc_en = "Ascend as a tourist."
+
+[[achievement]]
+id = "ascend_val"
+steam = "ACH_ASCEND_VAL"
+when = { ascended = true, role = "Val" }
+icon = { role = "Val" }
+name = "achievement-ascend-val-name"
+desc = "achievement-ascend-val-desc"
+name_en = "Ascended Valkyrie"
+desc_en = "Ascend as a valkyrie."
+
+[[achievement]]
+id = "ascend_wiz"
+steam = "ACH_ASCEND_WIZ"
+when = { ascended = true, role = "Wiz" }
+icon = { role = "Wiz" }
+name = "achievement-ascend-wiz-name"
+desc = "achievement-ascend-wiz-desc"
+name_en = "Ascended Wizard"
+desc_en = "Ascend as a wizard."
+
+[[achievement]]
+id = "ascend_vegan"
+steam = "ACH_ASCEND_VEGAN"
+when = { ascended = true, never = "unvegan" }
+icon = { object = "carrot" }
+name = "achievement-ascend-vegan-name"
+desc = "achievement-ascend-vegan-desc"
+name_en = "Vegan Ascension"
+desc_en = "Ascend without eating any animal or animal product."
+
+[[achievement]]
+id = "ascend_vegetarian"
+steam = "ACH_ASCEND_VEGETARIAN"
+when = { ascended = true, never = "unvegetarian" }
+icon = { glyph = "Drumstick", crossed = true }
+name = "achievement-ascend-vegetarian-name"
+desc = "achievement-ascend-vegetarian-desc"
+name_en = "Vegetarian Ascension"
+desc_en = "Ascend without eating any animal."
+
+[[achievement]]
+id = "ascend_foodless"
+steam = "ACH_ASCEND_FOODLESS"
+when = { ascended = true, never = "food" }
+icon = { object = "food ration", crossed = true }
+name = "achievement-ascend-foodless-name"
+desc = "achievement-ascend-foodless-desc"
+name_en = "Foodless Ascension"
+desc_en = "Ascend without eating anything at all."
+
+[[achievement]]
+id = "ascend_atheist"
+steam = "ACH_ASCEND_ATHEIST"
+when = { ascended = true, never = "gnostic" }
+icon = { glyph = "Ankh", crossed = true }
+name = "achievement-ascend-atheist-name"
+desc = "achievement-ascend-atheist-desc"
+name_en = "Atheist Ascension"
+desc_en = "Ascend without praying, using an altar or asking a priest."
+
+[[achievement]]
+id = "ascend_weaponless"
+steam = "ACH_ASCEND_WEAPONLESS"
+when = { ascended = true, never = "weaphit" }
+icon = { glyph = "Hand" }
+name = "achievement-ascend-weaponless-name"
+desc = "achievement-ascend-weaponless-desc"
+name_en = "Weaponless Ascension"
+desc_en = "Ascend without hitting anything with a wielded weapon."
+
+[[achievement]]
+id = "ascend_pacifist"
+steam = "ACH_ASCEND_PACIFIST"
+when = { ascended = true, never = "killer" }
+icon = { glyph = "Sword", crossed = true }
+name = "achievement-ascend-pacifist-name"
+desc = "achievement-ascend-pacifist-desc"
+name_en = "Pacifist Ascension"
+desc_en = "Ascend without killing a single monster yourself."
+
+[[achievement]]
+id = "ascend_illiterate"
+steam = "ACH_ASCEND_ILLITERATE"
+when = { ascended = true, never = "literate" }
+icon = { glyph = "Scroll", crossed = true }
+name = "achievement-ascend-illiterate-name"
+desc = "achievement-ascend-illiterate-desc"
+name_en = "Illiterate Ascension"
+desc_en = "Ascend without reading anything."
+
+[[achievement]]
+id = "ascend_polypileless"
+steam = "ACH_ASCEND_POLYPILELESS"
+when = { ascended = true, never = "polypiles" }
+icon = { glyph = "Wand", crossed = true }
+name = "achievement-ascend-polypileless-name"
+desc = "achievement-ascend-polypileless-desc"
+name_en = "Polypileless Ascension"
+desc_en = "Ascend without polymorphing an object."
+
+[[achievement]]
+id = "ascend_polyselfless"
+steam = "ACH_ASCEND_POLYSELFLESS"
+when = { ascended = true, never = "polyselfs" }
+icon = { glyph = "Ring", crossed = true }
+name = "achievement-ascend-polyselfless-name"
+desc = "achievement-ascend-polyselfless-desc"
+name_en = "Polyselfless Ascension"
+desc_en = "Ascend without changing your form."
+
+[[achievement]]
+id = "ascend_wishless"
+steam = "ACH_ASCEND_WISHLESS"
+when = { ascended = true, never = "wishes" }
+icon = { glyph = "Star", crossed = true }
+name = "achievement-ascend-wishless-name"
+desc = "achievement-ascend-wishless-desc"
+name_en = "Wishless Ascension"
+desc_en = "Ascend without wishing for anything."
+
+[[achievement]]
+id = "ascend_artiwishless"
+steam = "ACH_ASCEND_ARTIWISHLESS"
+when = { ascended = true, never = "wisharti" }
+icon = { object = "long sword", crossed = true }
+name = "achievement-ascend-artiwishless-name"
+desc = "achievement-ascend-artiwishless-desc"
+name_en = "Artifact Wishless Ascension"
+desc_en = "Ascend without wishing for an artifact."
+
+[[achievement]]
+id = "ascend_petless"
+steam = "ACH_ASCEND_PETLESS"
+when = { ascended = true, never = "pets" }
+icon = { creature = "little dog", crossed = true }
+name = "achievement-ascend-petless-name"
+desc = "achievement-ascend-petless-desc"
+name_en = "Petless Ascension"
+desc_en = "Ascend without ever having a pet."
+
+[[achievement]]
+id = "sokoban_purist"
+steam = "ACH_SOKOBAN_PURIST"
+when = { gameover = true, achieved = 11, never = "sokocheat" }
+icon = { glyph = "Boulder" }
+hidden = true
+name = "achievement-sokoban-purist-name"
+desc = "achievement-sokoban-purist-desc"
+name_en = "Sokoban Purist"
+desc_en = "Claim the Sokoban prize without breaking Sokoban's rules."

@@ -2,6 +2,7 @@
 //! message log, windows, and the UI's view of each request. No UI code here:
 //! everything is plain data so it can be tested without Godot.
 
+pub mod achievements;
 mod actionbar;
 mod actions;
 mod branch;

@@ -10,6 +10,7 @@ license.workspace = true
 nh-protocol = { path = "../nh-protocol" }
 serde.workspace = true
 serde_json.workspace = true
+toml = "1.1.6"
 
 [dev-dependencies]
 nh-link = { path = "../nh-link" }
