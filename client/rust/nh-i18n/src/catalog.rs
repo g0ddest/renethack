@@ -92,7 +92,8 @@ pub struct Template {
     /// text, quest:p...); several joined by '|'.
     pub kinds: Vec<String>,
     pub uses: Vec<Use>,
-    /// The generic template this one was derived from, by its index.
+    /// The (first) generic template this one was derived from, by its
+    /// index; `Catalog::derived` knows every one.
     pub from: Option<usize>,
     /// Derived templates exist: translate those instead.
     pub expanded: bool,
@@ -170,7 +171,7 @@ struct RawEntry {
     #[serde(default)]
     args: Vec<String>,
     #[serde(default)]
-    from: Option<String>,
+    from: Vec<String>,
     #[serde(default)]
     expanded: bool,
     #[serde(default)]
@@ -255,11 +256,11 @@ impl Catalog {
         }
         let mut derived: HashMap<usize, Vec<usize>> = HashMap::new();
         for (i, e) in raw.entries.iter().enumerate() {
-            if let Some(base) = &e.from {
+            for base in &e.from {
                 let b = *by_id.get(base).ok_or_else(|| {
                     CatalogError::Invalid(format!("{} derives from unknown {base}", e.id))
                 })?;
-                templates[i].from = Some(b);
+                templates[i].from.get_or_insert(b);
                 derived.entry(b).or_default().push(i);
             }
         }
@@ -552,7 +553,7 @@ mod tests {
     pub(crate) const SAMPLE: &str = r#"{"format": 1, "engine": "test", "count": 9, "entries": [
 {"id": "a1", "fmt": "You hit %s.", "uses": ["pline"], "args": ["monster"], "sites": ["src/uhitm.c:1 f You(mon_nam(mon))"]},
 {"id": "a2", "fmt": "%s %s%s%s", "uses": ["pline"], "args": ["monster", "text", "text", "text"], "expanded": true, "sites": []},
-{"id": "a3", "fmt": "%s bites!", "uses": ["pline"], "args": ["monster"], "from": "a2", "sites": []},
+{"id": "a3", "fmt": "%s bites!", "uses": ["pline"], "args": ["monster"], "from": ["a2"], "sites": []},
 {"id": "a4", "fmt": "%s hit the %s.", "uses": ["pline"], "args": ["object", "word"], "sites": []},
 {"id": "a5", "fmt": "%c - %.*s.", "uses": ["sprintf"], "args": ["char", "object"], "sites": []},
 {"id": "a6", "fmt": "%s in %s", "uses": ["sprintf"], "args": ["text", "text"], "sites": []},
@@ -623,7 +624,7 @@ mod tests {
     fn a_bad_catalog_is_refused() {
         let bad = SAMPLE.replace("\"format\": 1", "\"format\": 9");
         assert!(matches!(Catalog::parse(&bad), Err(CatalogError::Format(9))));
-        let bad = SAMPLE.replace("\"from\": \"a2\"", "\"from\": \"zz\"");
+        let bad = SAMPLE.replace("\"from\": [\"a2\"]", "\"from\": [\"zz\"]");
         assert!(matches!(
             Catalog::parse(&bad),
             Err(CatalogError::Invalid(_))

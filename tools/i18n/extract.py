@@ -28,9 +28,9 @@ the generic entry then says `"expanded": true`.
 Each entry: a stable id (a hash of the format), the format (printf style:
 %s, %d, %c, %ld...; a literal % is %%), what shows it (`uses`), what each
 conversion is (`args`: monster, species, object, word, number, char,
-text, quest:<code>...), the entry it derives from (`from`) and the call
-sites (file:line function call(arguments)). Entries are sorted by their
-first site, one per line.
+text, quest:<code>...), the entries it derives from (`from`, their ids)
+and the call sites (file:line function call(arguments)). Entries are
+sorted by their first site, one per line.
 """
 
 import argparse
@@ -1056,7 +1056,7 @@ class Entry:
         self.uses = set()
         self.args = None  # per conversion: set of kinds
         self.sites = []
-        self.base = None
+        self.bases = []
         self.expanded = False
 
 
@@ -1097,8 +1097,8 @@ class Catalog:
             s.update(k.split("|"))
         if site not in e.sites:
             e.sites.append(site)
-        if base and base != fmt and e.base is None and base in self.entries:
-            e.base = base
+        if base and base != fmt and base in self.entries and base not in e.bases:
+            e.bases.append(base)
         return e
 
     def add_all(self, use, site, generic, variants, prefixes=("",), suffix=""):
@@ -1378,8 +1378,9 @@ def render(cat):
         obj = {"id": entry_id(e.fmt), "fmt": e.fmt, "uses": sorted(e.uses)}
         if e.args:
             obj["args"] = ["|".join(sorted(a)) for a in e.args]
-        if e.base:
-            obj["from"] = entry_id(e.base)
+        if e.bases:
+            # every generic format it derives from (P7 sends any of them)
+            obj["from"] = [entry_id(b) for b in e.bases]
         if e.expanded:
             obj["expanded"] = True
         obj["sites"] = e.sites

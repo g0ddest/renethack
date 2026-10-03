@@ -49,7 +49,7 @@ class Formats(unittest.TestCase):
                        '    You("%s %s.", p ? "swap places with" : "frighten", mon_nam(m));\n}\n')
         self.assertIn("You swap places with %s.", e)
         self.assertIn("You frighten %s.", e)
-        self.assertEqual(e["You frighten %s."].base, "You %s %s.")
+        self.assertEqual(e["You frighten %s."].bases, ["You %s %s."])
         self.assertTrue(e["You %s %s."].expanded)
 
     def test_variables_switches_and_verbs(self):
