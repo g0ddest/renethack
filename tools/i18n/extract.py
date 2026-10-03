@@ -58,7 +58,7 @@ MAX_DERIVED = 96
 # how deep buffers built from buffers are followed
 MAX_DEPTH = 3
 # a text with more Strcats after its Sprintf is a list: only its pieces
-MAX_APPENDS = 2
+MAX_APPENDS = 3
 
 # ---------------------------------------------------------------- calls
 
@@ -827,33 +827,25 @@ class Context:
     def compositions(self, name, pos, depth):
         """What buffer `name` can hold at token `pos`: what the operations
         since its last use before `pos` wrote (a buffer is reused for one
-        text after another): each Sprintf/Strcpy alone, and followed by
-        the Strcats after it when there are few (more are a list, not a
-        sentence). Branches are not followed: an over-approximation."""
+        text after another): each Sprintf/Strcpy alone and followed by
+        any of the Strcats after it, when there are few (more are a list,
+        not a sentence). Branches are not followed: an
+        over-approximation."""
         uses = [u for u in self.uses.get(name, []) if u < pos]
         since = max(uses) if uses else -1
         ops = [op for op in self.ops.get(name, []) if since < op.index < pos]
-        if ops and all(op.append for op in ops) and since >= 0:
-            # appended to what it held at its last use
+        if not any(not op.append for op in ops) and since >= 0:
+            # appended (or not) to what it held at its last use
             before = self.compositions(name, since, depth)
-            tails = [self.op_pieces(a, depth) for a in ops]
-            if not before or product_size([before] + tails) > MAX_DERIVED:
-                return []
-            return dedupe([("".join(p for p, _ in combo), [x for _, ks in combo for x in ks])
-                           for combo in itertools.product(before, *tails)])[:MAX_DERIVED]
-        if not ops and since >= 0:
-            return self.compositions(name, since, depth)
+            tails = [t for t in (self.op_pieces(a, depth) for a in ops) if t]
+            return with_tails(before, tails)
         out = []
         for k, op in enumerate(ops):
             if op.append:
                 continue
             heads = self.op_pieces(op, depth)
-            out += heads
-            tails = [self.op_pieces(a, depth) for a in ops[k + 1:] if a.append]
-            tails = [t for t in tails if t]
-            if tails and len(tails) <= MAX_APPENDS and product_size([heads] + tails) <= MAX_DERIVED:
-                for combo in itertools.product(heads, *tails):
-                    out.append(("".join(p for p, _ in combo), [x for _, ks in combo for x in ks]))
+            tails = [t for t in (self.op_pieces(a, depth) for a in ops[k + 1:] if a.append) if t]
+            out += with_tails(heads, tails)
         return dedupe(out)[:MAX_DERIVED]
 
     def formats(self, toks, pos):
@@ -866,6 +858,20 @@ class Context:
         if len(toks) == 1 and toks[0].kind == "ident" and toks[0].text in self.ops:
             return [(f, kinds) for f, kinds in self.compositions(toks[0].text, pos, 1)]
         return []
+
+
+def with_tails(heads, tails):
+    """Each head alone and followed by any ordered subset of the tails (an
+    append may be in a branch); only the heads when the tails are many."""
+    out = list(heads)
+    if heads and 0 < len(tails) <= MAX_APPENDS:
+        for r in range(1, len(tails) + 1):
+            for chosen in itertools.combinations(tails, r):
+                if product_size([heads, *chosen]) > MAX_DERIVED:
+                    continue
+                for combo in itertools.product(heads, *chosen):
+                    out.append(("".join(p for p, _ in combo), [x for _, ks in combo for x in ks]))
+    return dedupe(out)[:MAX_DERIVED]
 
 
 def product_size(choices):
