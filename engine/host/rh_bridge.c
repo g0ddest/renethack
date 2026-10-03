@@ -343,7 +343,9 @@ progress_json(void)
 }
 
 /* Before the engine waits for input: the progress notice, when it
-   changed since the last one the client got. */
+   changed since the last one the client got.  It also tells the turn,
+   which is not a change: the turn the progress last changed, when
+   whatever it brings was earned. */
 static void
 progress_flush(void)
 {
@@ -366,6 +368,7 @@ progress_flush(void)
         return;
     }
     told_progress = h;
+    add_int(a, "turn", svm.moves);
     rh_proto_send("win", "progress", a);
 }
 

@@ -240,6 +240,7 @@ fn a_fresh_game_has_earned_nothing_and_quitting_ends_it() {
     let first = p.first().expect("a progress notice");
     assert_eq!(first.mode, "normal");
     assert_eq!(first.role, "Val");
+    assert_eq!(first.turn, 1);
     assert!(first.achieved.is_empty(), "{:?}", first.achieved);
     assert!(!first.gameover);
     // after "Really quit?": the game is over, and told how
@@ -247,6 +248,20 @@ fn a_fresh_game_has_earned_nothing_and_quitting_ends_it() {
     assert!(last.gameover);
     assert_eq!(last.how.as_deref(), Some("quit"));
     assert!(last.achieved.is_empty(), "{:?}", last.achieved);
+}
+
+#[test]
+fn progress_is_told_when_it_changes_with_the_turn_of_the_change() {
+    // five searches change nothing; praying breaks the atheist conduct
+    let script = format!("key s\nkey s\nkey s\nkey s\nkey s\nkey #\next pray\nyn y\n{QUIT}");
+    let (_pg, t) = run_script(SEED, NEW_MOON, &script);
+    let p = progress(&t);
+    // the start, the prayer, the end: the turns between send nothing
+    assert_eq!(p.len(), 3, "{p:?}");
+    assert_eq!((p[0].turn, p[0].conduct["gnostic"]), (1, 0));
+    assert_eq!(p[1].conduct["gnostic"], 1);
+    assert!(p[1].turn > 5, "prayed on turn {}", p[1].turn);
+    assert!(p[2].gameover && p[2].turn >= p[1].turn);
 }
 
 #[test]

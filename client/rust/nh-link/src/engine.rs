@@ -105,7 +105,8 @@ pub struct Incoming {
 /// Result of a non-blocking read.
 #[derive(Debug)]
 pub enum Polled {
-    Line(Incoming),
+    /// Boxed: a decoded line is far bigger than the other variants.
+    Line(Box<Incoming>),
     /// Nothing ready yet.
     Empty,
     /// The engine closed its output and every line has been taken.
@@ -181,7 +182,7 @@ impl Engine {
     /// its turn, after the lines before it.
     pub fn try_recv(&mut self) -> Result<Polled, LinkError> {
         match self.lines.try_recv() {
-            Ok(item) => item.map(Polled::Line),
+            Ok(item) => item.map(|inc| Polled::Line(Box::new(inc))),
             Err(TryRecvError::Empty) => Ok(Polled::Empty),
             Err(TryRecvError::Disconnected) => Ok(Polled::Closed),
         }

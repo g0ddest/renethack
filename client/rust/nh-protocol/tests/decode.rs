@@ -374,7 +374,7 @@ fn level_decodes_the_branch_the_depth_and_a_plane() {
 
 #[test]
 fn progress_decodes_achievements_events_conducts_and_the_end() {
-    let line = r#"{"t":"win","fn":"progress","a":{"mode":"normal","role":"Wiz","achieved":[15,23,21],"events":{"qcalled":true,"uheard_tune":2,"udemigod":false},"deepest":7,"conduct":{"unvegan":0,"wishes":2},"roleplay":{"blind":false,"nudist":true},"gameover":true,"how":"ascended"}}"#;
+    let line = r#"{"t":"win","fn":"progress","a":{"mode":"normal","role":"Wiz","achieved":[15,23,21],"events":{"qcalled":true,"uheard_tune":2,"udemigod":false},"deepest":7,"conduct":{"unvegan":0,"wishes":2},"roleplay":{"blind":false,"nudist":true},"gameover":true,"how":"ascended","turn":41250}}"#;
     let EngineMsg::Win(WinCall::Progress(p)) = parse_line(line).unwrap() else {
         panic!("expected progress")
     };
@@ -391,6 +391,7 @@ fn progress_decodes_achievements_events_conducts_and_the_end() {
     assert!(p.roleplay["nudist"]);
     assert!(p.gameover);
     assert_eq!(p.how.as_deref(), Some("ascended"));
+    assert_eq!(p.turn, 41250);
 }
 
 #[test]
@@ -409,6 +410,7 @@ fn recorded_session_tells_a_fresh_game_has_earned_nothing() {
     assert_eq!(p.deepest, 1);
     assert!(!p.gameover);
     assert_eq!(p.how, None);
+    assert_eq!(p.turn, 1);
     // the valkyrie's kitten: a pet, no other conduct broken
     assert_eq!(p.conduct["pets"], 1);
     assert_eq!(p.conduct["unvegan"], 0);

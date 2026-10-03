@@ -242,6 +242,11 @@ pub struct ProgressNotice {
     /// Once over: "died", "quit", "escaped", "ascended", "panicked" or
     /// "tricked".
     pub how: Option<String>,
+    /// The turn (moves) the notice was sent on. A notice comes only when
+    /// the progress changed, so this is when whatever it brings was
+    /// earned (0 in recordings made before the notice carried it).
+    #[serde(default)]
+    pub turn: i64,
 }
 
 impl ProgressNotice {

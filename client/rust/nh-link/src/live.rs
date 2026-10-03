@@ -122,7 +122,7 @@ impl LiveSession {
                 break;
             }
             let stop = match self.engine.try_recv() {
-                Ok(Polled::Line(inc)) => self.take(inc, &mut events),
+                Ok(Polled::Line(inc)) => self.take(*inc, &mut events),
                 Ok(Polled::Empty) => break,
                 Ok(Polled::Closed) => {
                     self.output_closed = true;
