@@ -279,8 +279,9 @@ fn start_as(choice: CharacterChoice) -> Vec<Step> {
         Step::Wait("the title screen, the art loaded ahead", |g| {
             fail_on_error_screen(g)?;
             // a player reads the title longer than the art takes to load
+            // and the dialogs and glyphs to warm up
             let loaded = g.ui.as_ref().is_some_and(|ui| ui.map.preloaded());
-            Ok(screen(g) == Some("title") && loaded)
+            Ok(screen(g) == Some("title") && loaded && g.warmed_up())
         }),
         Step::Push(UiEvent::StartCharacter(choice)),
         Step::Request("the first command", command),

@@ -50,7 +50,8 @@ pub fn set_catalog(catalog: &Catalog) {
             l.insert(t.tile, (t.appearance.clone(), class));
         }
     });
-    ITEMS.with(|i| i.borrow_mut().clear());
+    // the items' icons may change with the catalog; the emblems do not
+    ITEMS.with(|i| i.borrow_mut().retain(|(_, c), _| *c == 'E'));
 }
 
 /// The icon of an item with appearance `tile` and class symbol `class`.
@@ -311,6 +312,67 @@ pub enum Glyph {
     /// Up, down, travel.
     Stairs,
     Unknown,
+}
+
+/// Every glyph (the warm-up paints them all).
+pub const ALL_GLYPHS: [Glyph; 37] = [
+    Glyph::Sword,
+    Glyph::Cuirass,
+    Glyph::Ring,
+    Glyph::Amulet,
+    Glyph::Sack,
+    Glyph::Drumstick,
+    Glyph::Flask,
+    Glyph::Scroll,
+    Glyph::Book,
+    Glyph::Wand,
+    Glyph::Gem,
+    Glyph::Boulder,
+    Glyph::Ball,
+    Glyph::Chain,
+    Glyph::Drop,
+    Glyph::Coins,
+    Glyph::Helmet,
+    Glyph::Blindfold,
+    Glyph::Cloak,
+    Glyph::Shirt,
+    Glyph::Gloves,
+    Glyph::Boots,
+    Glyph::Lamp,
+    Glyph::Leash,
+    Glyph::Shield,
+    Glyph::Swap,
+    Glyph::Quiver,
+    Glyph::Hand,
+    Glyph::Grid,
+    Glyph::Check,
+    Glyph::Star,
+    Glyph::Eye,
+    Glyph::Lens,
+    Glyph::Moon,
+    Glyph::Ankh,
+    Glyph::Stairs,
+    Glyph::Unknown,
+];
+
+thread_local! {
+    /// How far the warm-up has got through `ALL_GLYPHS` (both styles).
+    static WARMED: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
+
+/// Paint the next glyph's textures, outline and emblem, ahead of their
+/// first use (each is a few milliseconds of CPU: one a frame behind the
+/// title screen instead of a dozen in the first frame of a game); false
+/// once all are painted.
+pub fn warm_step() -> bool {
+    let i = WARMED.with(|w| w.get());
+    let Some(&g) = ALL_GLYPHS.get(i) else {
+        return false;
+    };
+    glyph_icon(g);
+    emblem(g);
+    WARMED.with(|w| w.set(i + 1));
+    true
 }
 
 /// The pictogram of an object class.

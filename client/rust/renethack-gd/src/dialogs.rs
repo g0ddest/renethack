@@ -798,6 +798,9 @@ struct Palette {
     /// Position in `shown` that Enter runs.
     selected: Option<usize>,
     slots: Vec<PaletteSlot>,
+    /// The slot styled as the highlighted one: restyling every row is a
+    /// theme change each, too slow to do on every keystroke.
+    styled: Option<usize>,
     list: Scroller,
     none: Gd<Label>,
     look: Look,
@@ -812,7 +815,7 @@ impl Palette {
 
 /// Show the palette's rows. The borrow is released before Godot is called.
 fn fill_palette(palette: &Rc<RefCell<Palette>>) {
-    let (rows, selected, slots, look, mut none) = {
+    let (rows, selected, styled, slots, look, mut none) = {
         let p = palette.borrow();
         let rows: Vec<(String, String, String)> = p
             .shown
@@ -825,6 +828,7 @@ fn fill_palette(palette: &Rc<RefCell<Palette>>) {
         (
             rows,
             p.selected,
+            p.styled,
             p.slots.clone(),
             p.look.clone(),
             p.none.clone(),
@@ -838,11 +842,14 @@ fn fill_palette(palette: &Rc<RefCell<Palette>>) {
         slot.name.set_text(name);
         slot.key.set_text(key);
         slot.desc.set_text(desc);
-        look.style_row(&mut slot.button, false, selected == Some(i));
+        if (selected == Some(i)) != (styled == Some(i)) {
+            look.style_row(&mut slot.button, false, selected == Some(i));
+        }
         slot.button.set_visible(true);
     }
     none.set_visible(rows.is_empty());
     let mut p = palette.borrow_mut();
+    p.styled = selected;
     match selected {
         Some(i) => p.list.reveal(i as f32 * ROW_H, ROW_H),
         None => p.list.scroll_to(0.0),
@@ -866,6 +873,8 @@ enum Kind {
     ExtCmd {
         edit: Gd<LineEdit>,
         palette: Rc<RefCell<Palette>>,
+        /// The request its rows and buttons answer (the palette is reused).
+        req: Rc<std::cell::Cell<u64>>,
     },
     Show {
         text: Scroller,
@@ -892,6 +901,21 @@ pub struct Dialogs {
     /// A gamepad gave the last input: dialogs open with a focus, a text
     /// field with the on-screen keyboard.
     pad: bool,
+    /// Dialogs of every kind built behind the title screen, and the frames
+    /// they have been drawn (the warm-up).
+    warm: Vec<(Gd<ColorRect>, Gd<PanelContainer>)>,
+    warm_frames: u32,
+    /// The command palette, built once (about a hundred rows: tens of
+    /// milliseconds) and hidden between uses.
+    palette_pool: Option<PalettePool>,
+}
+
+struct PalettePool {
+    shade: Gd<ColorRect>,
+    panel: Gd<PanelContainer>,
+    edit: Gd<LineEdit>,
+    palette: Rc<RefCell<Palette>>,
+    req: Rc<std::cell::Cell<u64>>,
 }
 
 impl Dialogs {
@@ -906,6 +930,9 @@ impl Dialogs {
             look: Look::new(),
             open: None,
             pad: false,
+            warm: Vec::new(),
+            warm_frames: 0,
+            palette_pool: None,
         }
     }
 
@@ -1023,6 +1050,17 @@ impl Dialogs {
         index: usize,
         cells: &[Gd<T>],
     ) -> Gd<Button> {
+        self.row_button_at(Rc::new(std::cell::Cell::new(req)), index, cells)
+    }
+
+    /// A list row whose request is read when it is pressed (the palette,
+    /// reused across requests).
+    fn row_button_at<T: Inherits<Control>>(
+        &self,
+        req: Rc<std::cell::Cell<u64>>,
+        index: usize,
+        cells: &[Gd<T>],
+    ) -> Gd<Button> {
         let mut b = Button::new_alloc();
         b.set_focus_mode(FocusMode::NONE);
         b.set_custom_minimum_size(Vector2::new(0.0, ROW_H));
@@ -1039,7 +1077,7 @@ impl Dialogs {
         let q = self.queue.clone();
         b.signals().pressed().connect(move || {
             let ev = DialogEvent::MenuClick(index);
-            push(&q, UiEvent::Dialog { req, ev });
+            push(&q, UiEvent::Dialog { req: req.get(), ev });
         });
         b
     }
@@ -1346,6 +1384,36 @@ impl Dialogs {
         catalog: Option<&Catalog>,
     ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
         let cmds = palette_cmds(catalog);
+        if let Some(pool) = self
+            .palette_pool
+            .take()
+            .filter(|p| p.palette.borrow().cmds.len() == cmds.len())
+        {
+            let PalettePool {
+                mut shade,
+                mut panel,
+                mut edit,
+                palette,
+                req: pooled,
+            } = pool;
+            pooled.set(req);
+            edit.set_text("");
+            palette.borrow_mut().refilter("");
+            fill_palette(&palette);
+            shade.set_visible(true);
+            panel.set_visible(true);
+            edit.call_deferred("grab_focus", &[]);
+            return (
+                Kind::ExtCmd {
+                    edit,
+                    palette,
+                    req: pooled,
+                },
+                shade,
+                panel,
+            );
+        }
+        let req_cell = Rc::new(std::cell::Cell::new(req));
         let look = self.look.clone();
         let name_w = cmds
             .iter()
@@ -1368,7 +1436,16 @@ impl Dialogs {
         let list = Scroller::new(width, view_h, false);
 
         let (shade, panel, mut col) = self.frame(width, Some("Extended command"));
-        let mut edit = self.line_edit(req);
+        let mut edit = LineEdit::new_alloc();
+        edit.set_max_length(MAX_TEXT_BYTES as i32);
+        edit.set_keep_editing_on_text_submit(true);
+        let (q, c) = (self.queue.clone(), req_cell.clone());
+        edit.signals()
+            .text_submitted()
+            .connect(move |text: GString| {
+                let ev = DialogEvent::TextSubmitted(text.to_string());
+                push(&q, UiEvent::Dialog { req: c.get(), ev });
+            });
         edit.set_placeholder("type a command");
         col.add_child(&edit);
         let mut rows_box = VBoxContainer::new_alloc();
@@ -1382,7 +1459,13 @@ impl Dialogs {
             key.add_theme_font_size_override("font_size", 14);
             let mut desc = cell("", theme::TEXT_DIM, Some(&look.body), None);
             desc.add_theme_font_size_override("font_size", BODY_SIZE - 1);
-            let button = self.row_button(req, i, &[name.clone(), key.clone(), desc.clone()]);
+            // the palette is reused: its rows answer the request it is open
+            // for now
+            let button = self.row_button_at(
+                req_cell.clone(),
+                i,
+                &[name.clone(), key.clone(), desc.clone()],
+            );
             rows_box.add_child(&button);
             slots.push(PaletteSlot {
                 button,
@@ -1404,15 +1487,25 @@ impl Dialogs {
              Esc: cancel",
             width,
         );
-        self.buttons(
-            &mut col,
-            &[("Cancel".into(), dialog_ui(req, DialogEvent::ExtCmd(None)))],
-        );
+        let mut row = HBoxContainer::new_alloc();
+        row.set_alignment(AlignmentMode::CENTER);
+        let mut cancel = Button::new_alloc();
+        cancel.set_text("Cancel");
+        cancel.set_focus_mode(FocusMode::NONE);
+        cancel.set_custom_minimum_size(Vector2::new(112.0, 36.0));
+        let (q, c) = (self.queue.clone(), req_cell.clone());
+        cancel.signals().pressed().connect(move || {
+            let ev = DialogEvent::ExtCmd(None);
+            push(&q, UiEvent::Dialog { req: c.get(), ev });
+        });
+        row.add_child(&cancel);
+        col.add_child(&row);
         let palette = Rc::new(RefCell::new(Palette {
             shown: palette_filter(&cmds, ""),
             cmds,
             selected: None,
             slots,
+            styled: None,
             list,
             none,
             look,
@@ -1425,7 +1518,15 @@ impl Dialogs {
             fill_palette(&p);
         });
         edit.call_deferred("grab_focus", &[]);
-        (Kind::ExtCmd { edit, palette }, shade, panel)
+        (
+            Kind::ExtCmd {
+                edit,
+                palette,
+                req: req_cell,
+            },
+            shade,
+            panel,
+        )
     }
 
     fn open_text(
@@ -1728,6 +1829,96 @@ impl Dialogs {
         })
     }
 
+    /// Build one dialog of each kind, to be drawn for a few frames under
+    /// the title screen: the first real one then costs no font loading,
+    /// text shaping, frame shader or style set-up (tens of milliseconds
+    /// in the frame the getpos tip opened).
+    pub fn warm_up(&mut self, catalog: Option<&Catalog>) {
+        let item =
+            |idx: i32, ch: char, text: &str, attr: i32, selectable: bool| nh_protocol::MenuItem {
+                win: 0,
+                idx,
+                glyph: None,
+                selectable,
+                ch: if selectable { ch as i32 } else { 0 },
+                gch: 0,
+                attr,
+                clr: 8,
+                str: Some(text.to_string()),
+                preselected: false,
+                skipinvert: false,
+            };
+        let line = |attr: i32, text: &str| TextLine {
+            attr,
+            text: text.to_string(),
+        };
+        let samples = [
+            Prompt::Show {
+                title: Some("Tip".into()),
+                lines: vec![
+                    line(0, "Use '@' to move the cursor on yourself."),
+                    line(1, "Background:"),
+                    line(0, " a | b  table  1234567890"),
+                ],
+            },
+            Prompt::Menu {
+                win: 0,
+                how: PickHow::Any,
+                title: Some("Pick up what?".into()),
+                items: vec![
+                    item(0, ' ', "Weapons", 1, false),
+                    item(1, 'a', "a long sword", 0, true),
+                    item(2, 'b', "option   [X]  (for autopickup)", 0, true),
+                ],
+            },
+            Prompt::Choice {
+                query: "Really attack?".into(),
+                visible: vec!['y', 'n'],
+                allowed: vec!['y', 'n'],
+                default: Some('n'),
+            },
+            Prompt::Text {
+                query: "What do you want to name it?".into(),
+                name: false,
+            },
+            Prompt::ExtCmd,
+            Prompt::MessageMenu {
+                letter: 'a',
+                mesg: "a - a long sword.".into(),
+                pick: true,
+            },
+        ];
+        for p in &samples {
+            self.open(0, p, catalog);
+            // the palette goes to its pool for the first `#`
+            if *p == Prompt::ExtCmd {
+                self.close();
+            } else if let Some(o) = self.open.take() {
+                self.warm.push((o.shade, o.panel));
+            }
+        }
+        self.warm_frames = 0;
+    }
+
+    /// A frame passed; the warm-up's dialogs go after a few.
+    pub fn warm_tick(&mut self) {
+        if self.warm.is_empty() {
+            return;
+        }
+        self.warm_frames += 1;
+        if self.warm_frames >= 3 {
+            for (mut shade, mut panel) in self.warm.drain(..) {
+                panel.queue_free();
+                shade.queue_free();
+            }
+        }
+    }
+
+    /// The warm-up's dialogs have been drawn and freed.
+    pub fn warm_done(&self) -> bool {
+        self.warm.is_empty() && self.warm_frames >= 3
+    }
+
     /// Whether a gamepad gives the input now.
     pub fn set_pad(&mut self, on: bool) {
         self.pad = on;
@@ -1903,7 +2094,7 @@ impl Dialogs {
             }
             // a held key never answers: Esc cancels only when pressed
             Kind::Text { .. } => (input.key == Key::Escape && !input.echo).then_some(escape),
-            Kind::ExtCmd { edit, palette } => {
+            Kind::ExtCmd { edit, palette, .. } => {
                 let step = match input.key {
                     Key::Escape | Key::Tab if input.echo => return None,
                     Key::Escape => return Some(escape),
@@ -2002,7 +2193,7 @@ impl Dialogs {
                 Some(Reply::Text(truncate_bytes(s, MAX_TEXT_BYTES)))
             }
             (Kind::Text { .. }, DialogEvent::TextCancelled) => Some(escape),
-            (Kind::ExtCmd { palette, edit }, DialogEvent::TextSubmitted(text)) => {
+            (Kind::ExtCmd { palette, edit, .. }, DialogEvent::TextSubmitted(text)) => {
                 let p = palette.borrow();
                 let chosen = p
                     .selected
@@ -2044,10 +2235,26 @@ impl Dialogs {
     }
 
     pub fn close(&mut self) {
-        if let Some(mut open) = self.open.take() {
-            open.panel.queue_free();
-            open.shade.queue_free();
+        let Some(mut open) = self.open.take() else {
+            return;
+        };
+        // the palette is hidden for the next time
+        if let Kind::ExtCmd { edit, palette, req } = open.kind {
+            open.panel.set_visible(false);
+            open.shade.set_visible(false);
+            let mut e = edit.clone();
+            e.release_focus();
+            self.palette_pool = Some(PalettePool {
+                shade: open.shade,
+                panel: open.panel,
+                edit,
+                palette,
+                req,
+            });
+            return;
         }
+        open.panel.queue_free();
+        open.shade.queue_free();
     }
 }
 

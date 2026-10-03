@@ -251,6 +251,12 @@ pub struct RenethackGame {
     /// A gamepad's state, and its world cursor (None: on the hero).
     pub(crate) pad: Pad,
     pub(crate) pad_cursor: Option<(i32, i32)>,
+    /// With RENETHACK_FRAME_STATS: what this frame's work spent, by part
+    /// (printed when it is long).
+    prof: Option<Vec<(&'static str, f64)>>,
+    /// The dialogs' warm-up has been built; every glyph is painted.
+    warmed: bool,
+    glyphs_warm: bool,
     /// The bar's labels were drawn for this (pad kind and page, if a pad).
     pad_labels: Option<Option<(PadKind, usize)>>,
 }
@@ -325,6 +331,9 @@ impl INode for RenethackGame {
             pad: Pad::new(),
             pad_cursor: None,
             pad_labels: None,
+            prof: None,
+            warmed: false,
+            glyphs_warm: false,
         }
     }
 
@@ -408,11 +417,34 @@ impl INode for RenethackGame {
         // they belong to the prompt the player saw, or to the typeahead while
         // the engine works; a request read afterwards never gets them (the
         // typeahead policy drops them when it opens a modal question)
+        self.warm_up();
+        let stats = std::env::var_os("RENETHACK_FRAME_STATS").is_some();
+        self.prof = stats.then(Vec::new);
+        let t = Instant::now();
         self.pad_tick();
         self.drain_ui();
+        self.lap("input", t);
+        let t = Instant::now();
         self.pump();
+        self.lap("pump", t);
         self.drive();
+        let t = Instant::now();
         self.sync_views(delta);
+        self.lap("views", t);
+        if let Some(p) = self.prof.take() {
+            let total: f64 = p
+                .iter()
+                .filter(|(k, _)| matches!(*k, "input" | "pump" | "views"))
+                .map(|(_, v)| v)
+                .sum();
+            if total > 12.0 {
+                let parts: Vec<String> = p.iter().map(|(k, v)| format!("{k} {v:.1}")).collect();
+                godot_print!(
+                    "game: a frame's work of {total:.1} ms: {}",
+                    parts.join(", ")
+                );
+            }
+        }
         if let Some(ui) = self.ui.as_mut() {
             ui.map.preload_step();
         }
@@ -563,6 +595,40 @@ impl RenethackGame {
             .get_viewport()
             .is_some_and(|vp| vp.get_visible_rect().contains_point(pos));
         self.mouse_pos = inside.then_some(pos);
+    }
+
+    /// Behind the title screen, what the first frames of a game would
+    /// otherwise pay for: one dialog of each kind drawn for a few frames,
+    /// and a glyph texture painted a frame.
+    fn warm_up(&mut self) {
+        let catalog = self.catalog.clone();
+        let title = self.state == GameState::Title;
+        let Some(ui) = self.ui.as_mut() else {
+            return;
+        };
+        // its dialogs go after a few frames, whatever comes next
+        ui.dialogs.warm_tick();
+        if !title {
+            return;
+        }
+        if !self.warmed {
+            self.warmed = true;
+            ui.dialogs.warm_up(catalog.as_deref());
+        }
+        self.glyphs_warm = !icons::warm_step();
+    }
+
+    /// The warm-up behind the title screen is done (self-tests start a
+    /// game after it, as a player would).
+    pub(crate) fn warmed_up(&self) -> bool {
+        self.glyphs_warm && self.ui.as_ref().is_some_and(|ui| ui.dialogs.warm_done())
+    }
+
+    /// Time since `t` under `what` (RENETHACK_FRAME_STATS).
+    fn lap(&mut self, what: &'static str, t: Instant) {
+        if let Some(p) = self.prof.as_mut() {
+            p.push((what, t.elapsed().as_secs_f64() * 1000.0));
+        }
     }
 
     /// Keep the first few faults for a self-test to fail on.
@@ -737,6 +803,7 @@ impl RenethackGame {
             _ => false,
         };
         let question = item_question(&prompt);
+        let t = Instant::now();
         let ui = self.ui_mut();
         match (&prompt, question) {
             // getobj: the panel in selection mode
@@ -768,6 +835,17 @@ impl RenethackGame {
             }
         }
         let dialog = ui.dialogs.is_open();
+        let kind = match &prompt {
+            Prompt::Menu { .. } => "dialog menu",
+            Prompt::Show { .. } => "dialog text",
+            Prompt::ExtCmd => "dialog palette",
+            Prompt::Choice { .. } => "dialog choice",
+            Prompt::Text { .. } => "dialog getlin",
+            Prompt::FreeKey { .. } => "dialog getobj",
+            _ => "dialog",
+        };
+        self.lap(kind, t);
+        let ui = self.ui_mut();
         ui.hud.set_prompt_line(line.as_deref());
         if dialog {
             // the mouse belongs to the dialog now
@@ -2158,8 +2236,12 @@ impl RenethackGame {
         ui.hud.set_cursor_at(cursor);
         ui.hud
             .set_threat(threat, Time::singleton().get_ticks_msec() as f64 / 1000.0);
+        let t = Instant::now();
         ui.hud.sync(&mut self.world, catalog.as_deref());
+        self.lap("hud", t);
+        let t = Instant::now();
         self.sync_inventory();
+        self.lap("inventory", t);
         self.update_hover();
         self.sync_orders();
         self.update_preview();
