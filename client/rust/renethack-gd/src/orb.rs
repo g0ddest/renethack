@@ -52,7 +52,7 @@ pub struct Orb {
 }
 
 impl Orb {
-    /// `name` for the tooltip ("Hit points"); the liquid from `deep` at
+    /// `name`: the key of the tooltip ("orb-hp"); the liquid from `deep` at
     /// the bottom to `bright` at the surface.
     pub fn new(name: &'static str, deep: Color, bright: Color) -> Orb {
         let mut root = Control::new_alloc();
@@ -120,7 +120,14 @@ impl Orb {
         self.target = target;
         let text = value.map_or(String::new(), |(v, m)| format!("{v} / {m}"));
         self.text.set_text(&text);
-        let tip = value.map_or(String::new(), |(v, m)| format!("{} {v} of {m}", self.name));
+        self.relang();
+    }
+
+    /// The tooltip in the language now.
+    pub fn relang(&mut self) {
+        let tip = self.value.map_or(String::new(), |(v, m)| {
+            crate::i18n::tr_with(self.name, Some(&orb_args(v, m)))
+        });
         self.root.set_tooltip_text(&tip);
     }
 
@@ -167,6 +174,14 @@ impl Orb {
         self.low = false;
         self.text.set_text("");
     }
+}
+
+/// The tooltip's arguments: the value and the most.
+fn orb_args(value: i64, most: i64) -> crate::i18n::FluentArgs<'static> {
+    let mut args = crate::i18n::FluentArgs::new();
+    args.set("value", crate::i18n::Arg::fluent(value));
+    args.set("most", crate::i18n::Arg::fluent(most));
+    args
 }
 
 #[cfg(test)]

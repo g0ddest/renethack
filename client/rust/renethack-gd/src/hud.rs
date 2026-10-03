@@ -24,9 +24,11 @@ use nh_protocol::{Catalog, GlyphKind, mg};
 use nh_world::{Key, KeyInput, Message, Mods, Status, World};
 
 use crate::action_bar::{self, ActionBar};
+use crate::i18n::{self, EngineKind};
 use crate::minimap::{self, Minimap};
 use crate::orb::{self, Orb};
 use crate::theme::{self, Face, Frame, bbcode_escape, hex, hex_alpha, place};
+use crate::tr;
 use crate::ui_events::{UiEvent, UiQueue, push};
 
 /// Messages kept in the log panel; the wheel scrolls through them (the
@@ -127,15 +129,28 @@ pub fn condition_tone(name: &str) -> Tone {
 }
 
 /// The words of the deadly banner for a deadly condition.
-pub fn deadly_words(name: &str) -> Option<&'static str> {
+pub fn deadly_words(name: &str) -> Option<String> {
     Some(match name {
-        "Stone" => "Turning to stone!",
-        "Slime" => "Turning into slime!",
-        "Strngl" | "Strangled" => "Strangled!",
-        "FoodPois" => "Food poisoning!",
-        "TermIll" => "Terminally ill!",
+        "Stone" => tr!("deadly-stone"),
+        "Slime" => tr!("deadly-slime"),
+        "Strngl" | "Strangled" => tr!("deadly-strangled"),
+        "FoodPois" => tr!("deadly-food-poisoning"),
+        "TermIll" => tr!("deadly-terminally-ill"),
         _ => return None,
     })
+}
+
+/// An attribute's tag on the portrait (St, Dx...).
+fn attr_tag(tag: &str) -> String {
+    match tag {
+        "St" => tr!("attr-st"),
+        "Dx" => tr!("attr-dx"),
+        "Co" => tr!("attr-co"),
+        "In" => tr!("attr-in"),
+        "Wi" => tr!("attr-wi"),
+        "Ch" => tr!("attr-ch"),
+        other => other.to_string(),
+    }
 }
 
 /// Fainting leads straight to starving: as deadly as stoning.
@@ -460,7 +475,8 @@ pub fn message_look(m: &Message, input_seq: u64) -> Look {
 /// the warning colour (and bold while new); `faded` ones at 45 %.
 fn message_bbcode(m: &Message, input_seq: u64, faded: bool) -> String {
     let look = message_look(m, input_seq);
-    let text = bbcode_escape(&m.text);
+    // the engine's English is kept; the log draws it in the language now
+    let text = bbcode_escape(&i18n::engine_message(m));
     let color = match (look.urgent, look.new) {
         (true, true) => theme::DANGER,
         (true, false) => theme::DANGER.lerp(theme::TEXT_DIM, 0.45),
@@ -612,7 +628,8 @@ fn need_chip(c: &Chip) -> ShownChip {
     p.set_mouse_filter(MouseFilter::IGNORE);
     p.add_theme_stylebox_override("panel", &style);
     p.set_custom_minimum_size(Vector2::new(0.0, 26.0));
-    p.add_child(&theme::styled_label(&c.text, Face::BodyBold, 16, fg));
+    let word = i18n::engine(EngineKind::Status, &c.text);
+    p.add_child(&theme::styled_label(&word, Face::BodyBold, 16, fg));
     ShownChip {
         chip: c.clone(),
         node: p,
@@ -635,7 +652,8 @@ fn condition_chip(c: &Chip) -> ShownChip {
     p.set_mouse_filter(MouseFilter::PASS);
     p.add_theme_stylebox_override("panel", &style);
     p.set_custom_minimum_size(Vector2::new(0.0, 26.0));
-    p.set_tooltip_text(&c.text);
+    let word = i18n::engine(EngineKind::Status, &c.text);
+    p.set_tooltip_text(&*word);
     let mut row = hbox(5);
     let (gem, material) = ring(20.0, 0.62, rim);
     if let Some(m) = &material {
@@ -644,7 +662,7 @@ fn condition_chip(c: &Chip) -> ShownChip {
         m.set_shader_parameter("face_edge", &rim.darkened(0.7).to_variant());
     }
     row.add_child(&gem);
-    row.add_child(&theme::styled_label(&c.text, Face::BodyBold, 15, fg));
+    row.add_child(&theme::styled_label(&word, Face::BodyBold, 15, fg));
     p.add_child(&row);
     ShownChip {
         chip: c.clone(),
@@ -720,10 +738,10 @@ fn ctrl(c: char) -> KeyInput {
 }
 
 /// An icon-only button (36×28) with a tooltip naming it and its key.
-fn micro_button(glyph: i32, tip: &str, queue: &UiQueue, ev: UiEvent) -> Gd<Button> {
+fn micro_button(glyph: i32, tip: &'static str, queue: &UiQueue, ev: UiEvent) -> Gd<Button> {
     let mut b = theme::button("", queue, ev);
     b.set_custom_minimum_size(Vector2::new(36.0, 28.0));
-    b.set_tooltip_text(tip);
+    i18n::tip(&b, tip);
     b.set_mouse_filter(MouseFilter::STOP);
     for state in ["normal", "hover", "pressed", "hover_pressed", "disabled"] {
         if let Some(mut sb) = b.get_theme_stylebox(state) {
@@ -800,6 +818,9 @@ pub struct Hud {
     cursor_note: Gd<Label>,
     /// Where on screen the getpos cursor is (None: not in getpos).
     cursor_at: Option<Vector2>,
+    /// The transient line shown (the engine's words) and whether next to
+    /// the cursor (None: to show again).
+    transient_shown: Option<(String, bool)>,
     /// The arrow at the screen's edge toward a hostile out of the frame.
     threat: Gd<Control>,
 
@@ -935,7 +956,7 @@ impl Hud {
         attrs.set_autowrap_mode(AutowrapMode::OFF);
         attrs.add_theme_font_override("normal_font", &theme::font(Face::Body));
         attrs.add_theme_font_size_override("normal_font_size", 16);
-        attrs.set_tooltip_text("Attributes. Click: your character (^X).");
+        i18n::tip(&attrs, "hud-attrs-tip");
         place(&attrs, [0.0, 1.0, 1.0, 1.0], [140.0, -24.0, 0.0, 0.0]);
         let q = queue.clone();
         attrs
@@ -1023,7 +1044,7 @@ impl Hud {
         {
             sb.set_content_margin_all(0.0);
         }
-        xp_frame.set_tooltip_text("Experience");
+        i18n::tip(&xp_frame, "hud-xp-tip");
         cluster.add_child(&xp_frame);
         cluster_parts.push(("XP bar", xp_frame.clone().upcast()));
         solid.push(xp_frame.clone().upcast());
@@ -1038,11 +1059,12 @@ impl Hud {
         );
         let plain = |c| key_event(KeyInput::plain(Key::Char(c)));
         for (glyph, tip, ev) in [
-            (0, "Inventory (i)", plain('i')),
-            (1, "Spells (+)", plain('+')),
-            (2, "Character (^X)", key_event(ctrl('x'))),
-            (3, "Dungeon overview (^O)", key_event(ctrl('o'))),
-            (4, "Message history (F9)", UiEvent::ToggleFullLog),
+            (0, "hud-inventory-tip", plain('i')),
+            (1, "hud-spells-tip", plain('+')),
+            (2, "hud-character-tip", key_event(ctrl('x'))),
+            (3, "hud-overview-tip", key_event(ctrl('o'))),
+            (4, "hud-history-tip", UiEvent::ToggleFullLog),
+            (7, "hud-settings-tip", UiEvent::OpenSettings),
         ] {
             let b = micro_button(glyph, tip, &queue, ev);
             micro.add_child(&b);
@@ -1051,8 +1073,8 @@ impl Hud {
         cluster.add_child(&micro);
         cluster_parts.push(("micro-buttons", micro.clone().upcast()));
 
-        let mut hp = Orb::new("Hit points", theme::HP_DEEP, theme::HP);
-        let mut pw = Orb::new("Power", theme::PW_DEEP, theme::PW);
+        let mut hp = Orb::new("orb-hp", theme::HP_DEEP, theme::HP);
+        let mut pw = Orb::new("orb-pw", theme::PW_DEEP, theme::PW);
         let orb_y = CLUSTER_H - orb::SIZE;
         hp.node().set_position(Vector2::new(0.0, orb_y));
         pw.node()
@@ -1074,12 +1096,13 @@ impl Hud {
         let mut log_col = vbox(2);
         let mut log_head = hbox(4);
         log_head.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, 0.0));
-        let mut log_title = theme::styled_label("Messages", Face::Caps, 14, theme::TEXT_DIM);
+        let mut log_title = theme::styled_label("", Face::Caps, 14, theme::TEXT_DIM);
+        i18n::text(&log_title, "log-title");
         theme::outline(&log_title, 4);
         log_title.set_h_size_flags(SizeFlags::EXPAND_FILL);
         log_title.set_vertical_alignment(VerticalAlignment::CENTER);
         log_head.add_child(&log_title);
-        let history = micro_button(4, "Message history (F9)", &queue, UiEvent::ToggleFullLog);
+        let history = micro_button(4, "hud-history-tip", &queue, UiEvent::ToggleFullLog);
         log_head.add_child(&history);
         log_col.add_child(&log_head.clone());
         let mut log_area = vbox(0);
@@ -1136,7 +1159,7 @@ impl Hud {
         arrow.set_color(theme::DANGER);
         threat.add_child(&arrow);
         threat.set_visible(false);
-        threat.set_tooltip_text("A hostile in view, out of the frame");
+        i18n::tip(&threat, "hud-threat-tip");
         root.add_child(&threat);
 
         // ---- minimap, top right; the mode and the order under it ----
@@ -1272,14 +1295,16 @@ impl Hud {
         );
         let mut full_col = vbox(8);
         let mut full_head = hbox(12);
-        let full_title =
-            theme::styled_label("Message history", Face::Title, 28, theme::GOLD_BRIGHT);
+        let full_title = theme::styled_label("", Face::Title, 28, theme::GOLD_BRIGHT);
+        i18n::text(&full_title, "log-history-title");
         full_head.add_child(&full_title);
         let mut full_log_count = theme::styled_label("", Face::Body, 16, theme::TEXT_DIM);
         full_log_count.set_h_size_flags(SizeFlags::EXPAND_FILL);
         full_log_count.set_vertical_alignment(VerticalAlignment::CENTER);
         full_head.add_child(&full_log_count);
-        full_head.add_child(&theme::button("Close  F9", &queue, UiEvent::ToggleFullLog));
+        let close = theme::button("", &queue, UiEvent::ToggleFullLog);
+        i18n::text(&close, "log-history-close");
+        full_head.add_child(&close);
         full_col.add_child(&full_head);
         let mut rule = ColorRect::new_alloc();
         rule.set_color(Color {
@@ -1318,7 +1343,8 @@ impl Hud {
         let mut toast = theme::styled_label("", Face::BodyBold, 16, theme::GOLD_BRIGHT);
         toast.set_vertical_alignment(VerticalAlignment::CENTER);
         toast_box.add_child(&toast);
-        let toast_undo = theme::button("Undo", &queue, UiEvent::SlotUndo);
+        let toast_undo = theme::button("", &queue, UiEvent::SlotUndo);
+        i18n::text(&toast_undo, "bar-undo");
         toast_box.add_child(&toast_undo);
         toast_panel.add_child(&toast_box);
         toast_panel.set_visible(false);
@@ -1371,6 +1397,7 @@ impl Hud {
             cursor_note_panel,
             cursor_note,
             cursor_at: None,
+            transient_shown: None,
             threat,
             minimap_panel: minimap_frame,
             minimap_well,
@@ -1438,17 +1465,17 @@ impl Hud {
         }
         self.combat = Some(combat);
         let (text, badge, word) = if combat {
-            (COMBAT_TEXT, "COMBAT - TURN BY TURN", "COMBAT")
+            (COMBAT_TEXT, tr!("mode-combat-badge"), tr!("mode-combat"))
         } else {
-            (EXPLORE_TEXT, "EXPLORING", "EXPLORATION")
+            (EXPLORE_TEXT, tr!("mode-explore-badge"), tr!("mode-explore"))
         };
-        self.mode_label.set_text(badge);
+        self.mode_label.set_text(&badge);
         self.mode_label.add_theme_color_override("font_color", text);
         self.mode_panel
             .set_self_modulate(if combat { COMBAT_TINT } else { Color::WHITE });
         self.mode_panel.set_visible(true);
         if announce {
-            self.flash.set_text(word);
+            self.flash.set_text(&word);
             self.flash.add_theme_color_override("font_color", text);
             self.flash_since = Some(now_secs());
             self.flash_ribbon.set_modulate(Color::WHITE);
@@ -1543,6 +1570,26 @@ impl Hud {
         }
     }
 
+    /// What the HUD draws itself, again in the language now (bound labels
+    /// change by themselves): the status, its chips, the log from the
+    /// engine's English, the mode, the orbs' tooltips.
+    pub fn relang(&mut self) {
+        self.status_text.clear();
+        for mut c in self.needs.drain(..).chain(self.conditions.drain(..)) {
+            c.node.queue_free();
+        }
+        self.log_key = None;
+        self.full_log_dirty = true;
+        self.show_subtitle();
+        if let Some(combat) = self.combat.take() {
+            self.set_mode(combat, false);
+        }
+        self.hp.relang();
+        self.pw.relang();
+        self.tooltip_text = None;
+        self.transient_shown = None;
+    }
+
     /// Called every frame while a game is on screen.
     pub fn sync(&mut self, world: &mut World, catalog: Option<&Catalog>) {
         let now = now_secs();
@@ -1594,21 +1641,32 @@ impl Hud {
             self.show_full_log(world, follow);
         }
         let transient = world.transient.as_deref().unwrap_or("").trim();
-        // getpos describes the cursor's cell: next to that cell
-        let (docked, note) = match self.cursor_at {
-            Some(_) => ("", transient),
-            None => (transient, ""),
-        };
-        if self.transient.get_text() != docked {
+        let at_cursor = self.cursor_at.is_some();
+        let shown = self
+            .transient_shown
+            .as_ref()
+            .is_some_and(|(t, c)| t == transient && *c == at_cursor);
+        if !shown {
+            self.transient_shown = Some((transient.to_string(), at_cursor));
+            let words = if transient.is_empty() {
+                String::new()
+            } else {
+                i18n::engine(EngineKind::Message, transient).into_owned()
+            };
+            // getpos describes the cursor's cell: next to that cell
+            let (docked, note) = if at_cursor {
+                ("", words.as_str())
+            } else {
+                (words.as_str(), "")
+            };
             self.transient.set_text(docked);
             self.transient_panel.set_visible(!docked.is_empty());
-        }
-        if self.cursor_note.get_text() != note {
             self.cursor_note.set_text(note);
             self.cursor_note_panel.reset_size();
             self.cursor_note_panel.set_visible(!note.is_empty());
         }
-        if let Some(at) = self.cursor_at.filter(|_| !note.is_empty()) {
+        let note = at_cursor && !transient.is_empty();
+        if let Some(at) = self.cursor_at.filter(|_| note) {
             let view = self.root.get_viewport_rect().size;
             let size = self.cursor_note_panel.get_size();
             let mut p = at + Vector2::new(36.0, -size.y * 0.5);
@@ -1741,10 +1799,15 @@ impl Hud {
     }
 
     fn show_subtitle(&mut self) {
-        let parts: Vec<&str> = [self.role.as_deref(), self.align_text.as_deref()]
-            .into_iter()
-            .flatten()
-            .collect();
+        let role = self
+            .role
+            .as_deref()
+            .map(|r| i18n::engine(EngineKind::Name, r).into_owned());
+        let align = self
+            .align_text
+            .as_deref()
+            .map(|a| i18n::engine(EngineKind::Status, a).into_owned());
+        let parts: Vec<String> = [role, align].into_iter().flatten().collect();
         self.subtitle.set_text(&parts.join("  ·  "));
         let initial = self
             .role
@@ -1758,24 +1821,31 @@ impl Hud {
         let conditions = catalog.map_or_else(Vec::new, |c| status.condition_names(c));
         let view = StatusView::new(status, &conditions);
         self.status_text = view.lines().join("\n");
-        self.portrait_panel.set_tooltip_text(&self.status_text);
-        self.title.set_text(&view.title);
+        // the classic status lines: the engine's words
+        let tip: Vec<String> = view
+            .lines()
+            .iter()
+            .map(|l| i18n::engine(EngineKind::Status, l).into_owned())
+            .collect();
+        self.portrait_panel.set_tooltip_text(&tip.join("\n"));
+        self.title
+            .set_text(&*i18n::engine(EngineKind::Status, &view.title));
         if self.align_text != view.align {
             self.align_text = view.align.clone();
             self.show_subtitle();
         }
         self.ac.set(
             view.field("AC"),
-            &format!("Armour class {}", view.field("AC").unwrap_or("")),
+            &tr!("hud-ac-tip", ac = view.field("AC").unwrap_or("")),
         );
         self.gold.set(
             view.field("$"),
-            &format!("Gold {}", view.field("$").unwrap_or("")),
+            &tr!("hud-gold-tip", gold = view.field("$").unwrap_or("")),
         );
         let level = view.field("XL").and_then(|v| v.parse::<i64>().ok());
         let plaque = match (level, view.field("HD")) {
-            (Some(l), _) => format!("Lv {l}"),
-            (None, Some(hd)) => format!("HD {hd}"),
+            (Some(l), _) => tr!("hud-level", level = l),
+            (None, Some(hd)) => tr!("hud-hit-dice", hd = hd),
             (None, None) => String::new(),
         };
         self.plaque.set_text(&plaque);
@@ -1793,13 +1863,13 @@ impl Hud {
         let (share, label) = match (level, exp) {
             (Some(l), Some(e)) => {
                 let (share, next) = xp_progress(l, e);
-                (share, format!("Lv {l}  ·  {e} / {next}"))
+                (share, tr!("hud-xp", level = l, exp = e, next = next))
             }
-            (Some(l), None) => (0.0, format!("Lv {l}")),
+            (Some(l), None) => (0.0, tr!("hud-level", level = l)),
             (None, _) => (
                 0.0,
                 view.field("HD")
-                    .map_or(String::new(), |hd| format!("HD {hd}")),
+                    .map_or(String::new(), |hd| tr!("hud-hit-dice", hd = hd)),
             ),
         };
         let w = (BAR_W - 16.0) * share;
@@ -1808,10 +1878,11 @@ impl Hud {
         self.xp_label.set_text(&label);
 
         // the minimap's caption: where and when
-        let caption: Vec<String> = [view.place(), view.field("T").map(|t| format!("T {t}"))]
-            .into_iter()
-            .flatten()
-            .collect();
+        let place = view
+            .place()
+            .map(|p| i18n::engine(EngineKind::Status, &p).into_owned());
+        let turn = view.field("T").map(|t| tr!("hud-turn", turn = t));
+        let caption: Vec<String> = [place, turn].into_iter().flatten().collect();
         self.minimap_caption.set_text(&caption.join("  ·  "));
 
         self.show_attrs(&view.attrs, now);
@@ -1847,7 +1918,8 @@ impl Hud {
                     None => theme::TEXT,
                 };
                 format!(
-                    "[color={dim}]{tag}[/color] [color={}]{}[/color]",
+                    "[color={dim}]{}[/color] [color={}]{}[/color]",
+                    bbcode_escape(&attr_tag(tag)),
                     hex(color),
                     bbcode_escape(v)
                 )
@@ -1890,7 +1962,7 @@ impl Hud {
                 self.conditions.push(shown);
             }
             self.cond_box.set_visible(!self.conditions.is_empty());
-            let words: Vec<&str> = view
+            let words: Vec<String> = view
                 .conditions
                 .iter()
                 .filter_map(|c| deadly_words(&c.text))
@@ -2025,7 +2097,7 @@ impl Hud {
             .log
             .iter()
             .map(|m| {
-                let turn = m.turn.map_or(String::new(), |t| format!("T {t}"));
+                let turn = m.turn.map_or(String::new(), |t| tr!("hud-turn", turn = t));
                 format!(
                     "[color={dim}]{turn:<8}[/color]  {}",
                     message_bbcode(m, input_seq, false)
@@ -2033,7 +2105,7 @@ impl Hud {
             })
             .collect();
         self.full_log_count
-            .set_text(&format!("{} messages", world.log.len()));
+            .set_text(&tr!("log-count", n = world.log.len()));
         set_scrolled_text(&mut self.full_log, &lines.join("\n"), follow);
         // as tall as its lines (a long line wraps: count it twice), up to
         // the inventory panel's size
@@ -2179,6 +2251,11 @@ impl Hud {
         })
         .map(|(name, c)| (name, rect(&c)))
         .collect()
+    }
+
+    /// Where the log is (the gamepad's hints keep right of it).
+    pub fn log_rect(&self) -> Rect2 {
+        self.log_panel.get_global_rect()
     }
 
     /// The log shows whole lines: its view is as high as its last lines

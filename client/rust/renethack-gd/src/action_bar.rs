@@ -98,7 +98,7 @@ impl ActionBar {
             ] {
                 button.add_theme_stylebox_override(name, sb);
             }
-            button.set_tooltip_text(&format!("Slot {} (empty)", key_label(i)));
+            button.set_tooltip_text(&crate::tr!("bar-slot-empty", key = key_label(i)));
 
             // the inner shadow of the socket
             let mut well = godot::classes::ColorRect::new_alloc();

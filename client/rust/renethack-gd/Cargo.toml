@@ -20,6 +20,13 @@ nh-link = { path = "../nh-link" }
 nh-world = { path = "../nh-world" }
 nh-art = { path = "../nh-art" }
 steamworks = { version = "0.13", optional = true }
+# the client's own words in the player's language (Project Fluent)
+fluent-bundle = "0.16"
+unic-langid = "0.9"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
+
+[dev-dependencies]
+# the catalogs' keys and arguments, read in the tests
+fluent-syntax = "0.12"

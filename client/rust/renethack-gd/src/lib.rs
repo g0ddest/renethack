@@ -13,6 +13,7 @@ mod game;
 mod gamepad;
 mod hero;
 mod hud;
+mod i18n;
 mod icon_bake;
 mod icons;
 mod input;
@@ -48,6 +49,7 @@ unsafe impl ExtensionLibrary for RenethackExtension {
     fn on_stage_deinit(stage: InitStage) {
         if stage == InitStage::Scene {
             icons::clear();
+            i18n::clear();
         }
     }
 }

@@ -1,5 +1,5 @@
-//! Full-screen pages outside a game: title, character creation, the end of
-//! a game and errors.
+//! Full-screen pages outside a game: title, settings, character creation,
+//! the end of a game and errors.
 
 use std::rc::Rc;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -15,7 +15,9 @@ use nh_link::SavedGame;
 use nh_protocol::Catalog;
 use nh_world::KeyProfile;
 
+use crate::i18n::{self, EngineKind, Lang};
 use crate::theme::{self, bbcode_escape, hex};
+use crate::tr;
 use crate::ui_events::{CharacterChoice, UiEvent, UiQueue, push};
 
 /// What the end screen shows.
@@ -28,7 +30,8 @@ pub struct EndSummary {
     pub scores: Vec<String>,
 }
 
-/// Name used when the field is left empty.
+/// Name used when the field is left empty (a name the engine keeps: not
+/// translated).
 pub const DEFAULT_NAME: &str = "Adventurer";
 const RANDOM: &str = "random";
 
@@ -87,11 +90,17 @@ fn select_index(ob: &mut Gd<OptionButton>, idx: Option<i32>) {
 fn fill_options(ob: &mut Gd<OptionButton>, items: &[(i32, String)]) {
     let keep = selected(ob);
     ob.clear();
-    ob.add_item_ex("Random").id(RANDOM_ID).done();
+    ob.add_item_ex(&tr!("creation-random")).id(RANDOM_ID).done();
     for (idx, text) in items {
         ob.add_item_ex(text).id(idx + 1).done();
     }
     select_index(ob, keep);
+}
+
+/// A role's, race's, gender's or alignment's name from the catalog, as the
+/// player reads it.
+fn engine_name(english: &str) -> String {
+    capitalize(&i18n::engine(EngineKind::Name, english))
 }
 
 fn capitalize(s: &str) -> String {
@@ -125,19 +134,23 @@ impl Form {
         if from_role {
             let races: Vec<(i32, String)> = races_for(&cat, role)
                 .into_iter()
-                .filter_map(|i| cat.races.get(i as usize).map(|r| (i, capitalize(&r.noun))))
+                .filter_map(|i| cat.races.get(i as usize).map(|r| (i, engine_name(&r.noun))))
                 .collect();
             fill_options(&mut self.race, &races);
         }
         let race = selected(&self.race);
         let genders: Vec<(i32, String)> = options_for(&cat, role, race, false)
             .into_iter()
-            .filter_map(|i| cat.genders.get(i as usize).map(|g| (i, capitalize(&g.adj))))
+            .filter_map(|i| {
+                cat.genders
+                    .get(i as usize)
+                    .map(|g| (i, engine_name(&g.adj)))
+            })
             .collect();
         fill_options(&mut self.gender, &genders);
         let aligns: Vec<(i32, String)> = options_for(&cat, role, race, true)
             .into_iter()
-            .filter_map(|i| cat.aligns.get(i as usize).map(|a| (i, capitalize(&a.adj))))
+            .filter_map(|i| cat.aligns.get(i as usize).map(|a| (i, engine_name(&a.adj))))
             .collect();
         fill_options(&mut self.align, &aligns);
     }
@@ -193,6 +206,37 @@ pub struct Screens {
     current: Option<&'static str>,
     form: Option<Form>,
     end: Option<EndSummary>,
+    /// What the title shows (the saves, a notice), for drawing it again.
+    title: (Vec<SavedGame>, Option<String>),
+    /// The settings page was opened from a game (Back returns to it).
+    settings_in_game: bool,
+}
+
+/// The game's name on the title: a name, the same in every language.
+const GAME_NAME: &str = "renethack";
+
+/// A picker of the interface's language, each in its own name; a choice
+/// switches at once.
+fn language_option(queue: &UiQueue) -> Gd<OptionButton> {
+    let mut ob = OptionButton::new_alloc();
+    ob.set_focus_mode(FocusMode::NONE);
+    // each language in its own name, whatever the language now
+    i18n::verbatim(&ob);
+    for lang in Lang::ALL {
+        ob.add_item(lang.name());
+    }
+    let now = Lang::ALL
+        .iter()
+        .position(|&l| l == i18n::lang())
+        .unwrap_or(0);
+    ob.select(now as i32);
+    let q = queue.clone();
+    ob.signals().item_selected().connect(move |i: i64| {
+        if let Some(&lang) = Lang::ALL.get(i as usize) {
+            push(&q, UiEvent::SetLanguage(lang));
+        }
+    });
+    ob
 }
 
 fn title_label(text: &str, size: i32) -> Gd<Label> {
@@ -260,6 +304,8 @@ impl Screens {
             current: None,
             form: None,
             end: None,
+            title: (Vec::new(), None),
+            settings_in_game: false,
         }
     }
 
@@ -276,9 +322,13 @@ impl Screens {
     }
 
     pub fn show_title(&mut self, saves: &[SavedGame], notice: Option<&str>) {
+        self.title = (saves.to_vec(), notice.map(str::to_string));
         let mut col = column();
-        col.add_child(&title_label("renethack", 72));
-        let mut sub = theme::label("NetHack 5.0");
+        // the game's name: not translated
+        let name = title_label(GAME_NAME, 72);
+        i18n::verbatim(&name);
+        col.add_child(&name);
+        let mut sub = theme::label(&tr!("title-subtitle"));
         sub.set_horizontal_alignment(HorizontalAlignment::CENTER);
         sub.add_theme_color_override("font_color", theme::TEXT_DIM);
         col.add_child(&sub);
@@ -286,16 +336,29 @@ impl Screens {
         gap.set_custom_minimum_size(Vector2::new(0.0, 24.0));
         col.add_child(&gap);
         col.add_child(&wide(theme::button(
-            "New game",
+            &tr!("title-new-game"),
             &self.queue,
             UiEvent::NewGame,
         )));
         for s in saves {
-            let text = format!("Continue: {} ({})", s.display_name, format_time(s.modified));
+            let text = tr!(
+                "title-continue",
+                name = &s.display_name,
+                time = format_time(s.modified)
+            );
             let ev = UiEvent::ContinueGame(s.name.clone());
             col.add_child(&wide(theme::button(&text, &self.queue, ev)));
         }
-        col.add_child(&wide(theme::button("Quit", &self.queue, UiEvent::QuitApp)));
+        col.add_child(&wide(theme::button(
+            &tr!("title-settings"),
+            &self.queue,
+            UiEvent::OpenSettings,
+        )));
+        col.add_child(&wide(theme::button(
+            &tr!("title-quit"),
+            &self.queue,
+            UiEvent::QuitApp,
+        )));
         if let Some(n) = notice {
             let mut l = theme::label(n);
             l.set_horizontal_alignment(HorizontalAlignment::CENTER);
@@ -308,10 +371,75 @@ impl Screens {
         self.page("title", &col.upcast());
     }
 
+    /// The client's own settings: the language. `in_game`: opened from a
+    /// game, Back returns to it.
+    pub fn show_settings(&mut self, in_game: bool) {
+        let mut panel = PanelContainer::new_alloc();
+        let mut col = column();
+        col.add_child(&title_label(&tr!("settings-title"), 32));
+        let mut grid = GridContainer::new_alloc();
+        grid.set_columns(2);
+        grid.add_theme_constant_override("h_separation", 16);
+        grid.add_theme_constant_override("v_separation", 10);
+        grid.add_child(&theme::label(&tr!("settings-language")));
+        let mut lang = language_option(&self.queue);
+        lang.set_custom_minimum_size(Vector2::new(320.0, 0.0));
+        grid.add_child(&lang);
+        col.add_child(&grid);
+        let mut buttons = row();
+        buttons.add_child(&theme::button(
+            &tr!("settings-back"),
+            &self.queue,
+            UiEvent::CloseSettings,
+        ));
+        col.add_child(&buttons);
+        panel.add_child(&col);
+        self.form = None;
+        self.settings_in_game = in_game;
+        self.page("settings", &panel.upcast());
+    }
+
+    /// The settings page was opened from a game.
+    pub fn settings_in_game(&self) -> bool {
+        self.settings_in_game
+    }
+
+    /// The page again in the language now (the creation form keeps what
+    /// was chosen and typed).
+    pub fn relang(&mut self) {
+        match self.current {
+            Some("title") => {
+                let (saves, notice) = self.title.clone();
+                self.show_title(&saves, notice.as_deref());
+            }
+            Some("settings") => self.show_settings(self.settings_in_game),
+            Some("creation") => {
+                let Some(form) = self.form.clone() else {
+                    return;
+                };
+                let choice = form.choice();
+                let typed = form.name.get_text().to_string();
+                self.show_creation(form.catalog.clone());
+                self.preset_creation(&choice);
+                if let Some(f) = self.form.as_mut() {
+                    f.name.set_text(&typed);
+                }
+                // the name's check again (a saved game of that name)
+                push(&self.queue, UiEvent::NameEdited(typed));
+            }
+            Some("end") => {
+                if let Some(summary) = self.end.clone() {
+                    self.show_end(&summary);
+                }
+            }
+            _ => {}
+        }
+    }
+
     pub fn show_creation(&mut self, catalog: Rc<Catalog>) {
         let mut panel = PanelContainer::new_alloc();
         let mut col = column();
-        col.add_child(&title_label("New character", 32));
+        col.add_child(&title_label(&tr!("creation-title"), 32));
         let mut grid = GridContainer::new_alloc();
         grid.set_columns(2);
         grid.add_theme_constant_override("h_separation", 16);
@@ -328,25 +456,26 @@ impl Screens {
             grid.add_child(&ob);
             ob
         };
-        grid.add_child(&theme::label("Name"));
+        grid.add_child(&theme::label(&tr!("creation-name")));
         grid.add_child(&name);
-        let mut role = option("Role", &mut grid);
-        let race = option("Race", &mut grid);
-        let gender = option("Gender", &mut grid);
-        let align = option("Alignment", &mut grid);
-        let mut keys = option("Keys", &mut grid);
-        keys.add_item("Modern: arrows and keypad move, n counts");
-        keys.add_item("Classic: hjklyubn move, Alt+digits count");
+        let mut role = option(&tr!("creation-role"), &mut grid);
+        let race = option(&tr!("creation-race"), &mut grid);
+        let gender = option(&tr!("creation-gender"), &mut grid);
+        let align = option(&tr!("creation-alignment"), &mut grid);
+        let mut keys = option(&tr!("creation-keys"), &mut grid);
+        keys.add_item(&tr!("creation-keys-modern"));
+        keys.add_item(&tr!("creation-keys-classic"));
         keys.select(0);
-        keys.set_tooltip_text(
-            "Both keep the action bar on 1-0. Modern plays with number_pad \
-             (k kicks, j jumps, l loots); Classic with NetHack's vi-keys.",
-        );
+        keys.set_tooltip_text(&tr!("creation-keys-tip"));
+        grid.add_child(&theme::label(&tr!("creation-language")));
+        let mut lang = language_option(&self.queue);
+        lang.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        grid.add_child(&lang);
         col.add_child(&grid);
         let roles: Vec<(i32, String)> = catalog
             .roles
             .iter()
-            .map(|r| (r.idx, r.name.clone()))
+            .map(|r| (r.idx, i18n::engine(EngineKind::Name, &r.name).into_owned()))
             .collect();
         fill_options(&mut role, &roles);
         let mut notice = theme::label("");
@@ -356,14 +485,18 @@ impl Screens {
         col.add_child(&notice);
         let mut buttons = row();
         let mut start = Button::new_alloc();
-        start.set_text("Start");
+        start.set_text(&tr!("creation-start"));
         start.set_focus_mode(FocusMode::NONE);
         let mut continue_instead = Button::new_alloc();
         continue_instead.set_focus_mode(FocusMode::NONE);
         continue_instead.set_visible(false);
         buttons.add_child(&start);
         buttons.add_child(&continue_instead);
-        buttons.add_child(&theme::button("Back", &self.queue, UiEvent::BackToTitle));
+        buttons.add_child(&theme::button(
+            &tr!("creation-back"),
+            &self.queue,
+            UiEvent::BackToTitle,
+        ));
         col.add_child(&buttons);
         panel.add_child(&col);
 
@@ -467,11 +600,11 @@ impl Screens {
         form.start.set_disabled(taken);
         form.continue_instead.set_visible(taken);
         form.continue_instead
-            .set_text(&format!("Continue {name} instead"));
-        form.notice.set_text(if taken {
-            "A saved game has this name: starting would continue it."
+            .set_text(&tr!("creation-continue-instead", name = name));
+        form.notice.set_text(&if taken {
+            tr!("creation-name-taken")
         } else {
-            ""
+            String::new()
         });
     }
 
@@ -489,7 +622,7 @@ impl Screens {
     pub fn show_end(&mut self, summary: &EndSummary) {
         let mut panel = PanelContainer::new_alloc();
         let mut col = column();
-        col.add_child(&title_label("The game is over", 32));
+        col.add_child(&title_label(&tr!("end-title"), 32));
         let mut text = RichTextLabel::new_alloc();
         text.set_use_bbcode(true);
         text.set_focus_mode(FocusMode::NONE);
@@ -499,7 +632,7 @@ impl Screens {
             let msgs: Vec<String> = summary
                 .last_messages
                 .iter()
-                .map(|m| bbcode_escape(m))
+                .map(|m| bbcode_escape(&i18n::engine(EngineKind::Message, m)))
                 .collect();
             parts.push(format!(
                 "[color={}]{}[/color]",
@@ -508,11 +641,19 @@ impl Screens {
             ));
         }
         if !summary.text.is_empty() {
-            let lines: Vec<String> = summary.text.iter().map(|l| bbcode_escape(l)).collect();
+            let lines: Vec<String> = summary
+                .text
+                .iter()
+                .map(|l| bbcode_escape(&i18n::engine(EngineKind::Window, l)))
+                .collect();
             parts.push(lines.join("\n"));
         }
         if !summary.scores.is_empty() {
-            let lines: Vec<String> = summary.scores.iter().map(|l| bbcode_escape(l)).collect();
+            let lines: Vec<String> = summary
+                .scores
+                .iter()
+                .map(|l| bbcode_escape(&i18n::engine(EngineKind::Window, l)))
+                .collect();
             parts.push(format!(
                 "[color={}]{}[/color]",
                 hex(theme::ACCENT),
@@ -522,8 +663,16 @@ impl Screens {
         text.set_text(&parts.join("\n\n"));
         col.add_child(&text);
         let mut buttons = row();
-        buttons.add_child(&theme::button("New game", &self.queue, UiEvent::NewGame));
-        buttons.add_child(&theme::button("Title", &self.queue, UiEvent::BackToTitle));
+        buttons.add_child(&theme::button(
+            &tr!("end-new-game"),
+            &self.queue,
+            UiEvent::NewGame,
+        ));
+        buttons.add_child(&theme::button(
+            &tr!("end-to-title"),
+            &self.queue,
+            UiEvent::BackToTitle,
+        ));
         col.add_child(&buttons);
         panel.add_child(&col);
         self.end = Some(summary.clone());
@@ -535,7 +684,7 @@ impl Screens {
     pub fn show_error(&mut self, what: &str, details: &str, can_continue: Option<&str>) {
         let mut panel = PanelContainer::new_alloc();
         let mut col = column();
-        col.add_child(&title_label("Something went wrong", 32));
+        col.add_child(&title_label(&tr!("error-title"), 32));
         let mut l = theme::label(what);
         l.set_autowrap_mode(godot::classes::text_server::AutowrapMode::WORD_SMART);
         l.set_custom_minimum_size(Vector2::new(900.0, 0.0));
@@ -551,10 +700,19 @@ impl Screens {
         let mut buttons = row();
         if let Some(name) = can_continue {
             let ev = UiEvent::ContinueGame(name.to_string());
-            buttons.add_child(&theme::button(&format!("Continue {name}"), &self.queue, ev));
+            let text = tr!("error-continue", name = name);
+            buttons.add_child(&theme::button(&text, &self.queue, ev));
         }
-        buttons.add_child(&theme::button("Title", &self.queue, UiEvent::BackToTitle));
-        buttons.add_child(&theme::button("Quit", &self.queue, UiEvent::QuitApp));
+        buttons.add_child(&theme::button(
+            &tr!("error-to-title"),
+            &self.queue,
+            UiEvent::BackToTitle,
+        ));
+        buttons.add_child(&theme::button(
+            &tr!("error-quit"),
+            &self.queue,
+            UiEvent::QuitApp,
+        ));
         col.add_child(&buttons);
         panel.add_child(&col);
         self.form = None;
@@ -570,7 +728,7 @@ impl Screens {
         self.root.set_visible(false);
     }
 
-    /// "title", "creation", "end", "error" or None.
+    /// "title", "settings", "creation", "end", "error" or None.
     pub fn current(&self) -> Option<&'static str> {
         self.current
     }

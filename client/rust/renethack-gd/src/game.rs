@@ -16,21 +16,23 @@ use godot::prelude::*;
 use nh_link::{
     AnswerError, CLIENT_EXTRA_OPTIONS, Ending, EngineConfig, LiveSession, PlaygroundLock,
     Recovered, SessionEvent, create_playground, fetch_catalog, interrupted_games, list_saves,
-    lock_playground, read_ui_state, recover_game, remember_name, remove_ui_state, save_exists,
-    write_ui_state,
+    lock_playground, read_profile, read_ui_state, recover_game, remember_name, remove_ui_state,
+    save_exists, write_profile, write_ui_state,
 };
 use nh_protocol::{Catalog, PickHow, Reply, WinCall};
 use nh_world::achievements::{Achievements, Tracker};
 use nh_world::{
     Action, ActionBar, BAR_SLOTS, Cell, ClickPlan, CommandInput, CountEntry, Key, KeyContext,
-    KeyInput, KeyProfile, MacroRunner, MacroStep, MenuKind, Mode, Order, Prompt, SlotBinding,
-    SlotState, SlotUse, Stop, TickDriver, Typeahead, UiState, World, click_order, describe_cell,
-    find_path, in_field, item_question, menu_kind, nethack_key, repeatable, stairs_order,
+    KeyInput, KeyProfile, MacroRunner, MacroStep, MenuKind, Mode, Order, Profile, Prompt,
+    SlotBinding, SlotState, SlotUse, Stop, TickDriver, Typeahead, UiState, World, click_order,
+    describe_cell, find_path, in_field, item_question, menu_kind, nethack_key, repeatable,
+    stairs_order,
 };
 
 use crate::dialogs::Dialogs;
 use crate::gamepad::{OskOp, Pad, PadButton, PadCtx, PadKind, PadOut, RADIAL, RadialEntry};
 use crate::hud::Hud;
+use crate::i18n::{self, EngineKind, Lang};
 use crate::icons;
 use crate::input::{client_key, key_input, key_release};
 use crate::inventory_panel::{self, Intent, InvInput, InventoryPanel, KeyUse, WarmStep};
@@ -38,6 +40,7 @@ use crate::map_view::MapView;
 use crate::paths::Paths;
 use crate::screens::{DEFAULT_NAME, EndSummary, Screens};
 use crate::selftest::SelfTest;
+use crate::tr;
 use crate::ui_events::{CharacterChoice, UiEvent, UiQueue, new_queue, push};
 
 /// Time per frame spent reading the engine.
@@ -85,6 +88,9 @@ pub struct Args {
     /// Steam Deck's screen). Godot's own `--resolution` never reaches the
     /// game: Godot takes it out of the arguments.
     pub size: Option<(i32, i32)>,
+    /// The interface's language, `--lang=ru` (self-tests; else the
+    /// profile's, the system's or English).
+    pub lang: Option<Lang>,
 }
 
 /// The window's size the project opens with (its override, else its
@@ -125,6 +131,10 @@ pub fn parse_args<S: AsRef<str>>(args: &[S]) -> Args {
             && let Ok(n) = v.trim().parse()
         {
             out.tick = Some(n);
+        } else if let Some(v) = a.strip_prefix("--lang=")
+            && let Some(lang) = Lang::from_code(v)
+        {
+            out.lang = Some(lang);
         } else if let Some(v) = a.strip_prefix("--size=")
             && let Some((w, h)) = v.split_once('x')
             && let (Ok(w), Ok(h)) = (w.trim().parse(), h.trim().parse())
@@ -152,11 +162,23 @@ pub struct Ui {
 /// What the prompt line says while `prompt` waits.
 fn prompt_line(prompt: &Prompt) -> Option<String> {
     match prompt {
-        Prompt::Key => Some("Press a key".to_string()),
-        Prompt::FreeKey { query, .. } => Some(query.clone()),
-        Prompt::MapPause => Some("--More--  (any key)".to_string()),
+        Prompt::Key => Some(tr!("prompt-press-key")),
+        Prompt::FreeKey { query, .. } => Some(i18n::engine(EngineKind::Prompt, query).into_owned()),
+        Prompt::MapPause => Some(tr!("prompt-more")),
         _ => None,
     }
+}
+
+/// What the prompt line says while getpos waits: what for (the engine's
+/// words), and the keys.
+fn getpos_line(world: &World) -> Option<String> {
+    world.getpos.then(|| {
+        let goal = match world.getpos_goal.as_deref() {
+            Some(g) => i18n::engine(EngineKind::Prompt, g).into_owned(),
+            None => tr!("prompt-pick-spot"),
+        };
+        tr!("prompt-getpos", goal = goal)
+    })
 }
 
 /// A held key as its release names it (a letter's case may differ).
@@ -172,20 +194,70 @@ fn order_text(order: &Order) -> String {
     use nh_world::Arrival;
     let what = match order {
         Order::Walk { arrival, .. } => match arrival {
-            Arrival::None => "Walking".to_string(),
-            Arrival::PickUp => "Walking to pick up".to_string(),
-            Arrival::Stairs('<') => "Going to the stairs up".to_string(),
-            Arrival::Stairs(_) => "Going to the stairs down".to_string(),
-            Arrival::Open => "Going to open the door".to_string(),
-            Arrival::Attack => "Going to attack".to_string(),
+            Arrival::None => tr!("order-walk"),
+            Arrival::PickUp => tr!("order-walk-pick-up"),
+            Arrival::Stairs('<') => tr!("order-stairs-up"),
+            Arrival::Stairs(_) => tr!("order-stairs-down"),
+            Arrival::Open => tr!("order-open-door"),
+            Arrival::Attack => tr!("order-attack"),
         },
-        Order::Repeat { key: 's', left } => format!("Searching, {left} more"),
-        Order::Repeat { key: '.', left } => format!("Waiting, {left} more"),
-        Order::Repeat { left, .. } => format!("Walking, {left} more steps"),
-        Order::Hold { .. } => "Holding the key".to_string(),
-        Order::Rest => "Resting until HP and Pw are full".to_string(),
+        Order::Repeat { key: 's', left } => tr!("order-search", left = *left),
+        Order::Repeat { key: '.', left } => tr!("order-wait", left = *left),
+        Order::Repeat { left, .. } => tr!("order-walk-steps", left = *left),
+        Order::Hold { .. } => tr!("order-hold"),
+        Order::Rest => tr!("order-rest"),
     };
-    format!("{what}  -  any key stops")
+    tr!("order-line", what = what)
+}
+
+/// What the HUD says about why an order ended.
+fn stop_text(stop: &Stop) -> String {
+    match stop {
+        Stop::Arrived => tr!("stop-arrived"),
+        Stop::Done => tr!("stop-done"),
+        Stop::Healed => tr!("stop-healed"),
+        Stop::OneAction => tr!("stop-one-action"),
+        Stop::Released => tr!("stop-released"),
+        Stop::Key | Stop::Click | Stop::Reset => tr!("stop-stopped"),
+        Stop::Panel => tr!("stop-panel"),
+        Stop::Focus => tr!("stop-focus"),
+        Stop::Question => tr!("stop-question"),
+        Stop::Hostile => tr!("stop-hostile"),
+        Stop::HpLost => tr!("stop-hurt"),
+        Stop::Hunger => tr!("stop-hunger"),
+        Stop::Condition => tr!("stop-condition"),
+        Stop::Message(m) => tr!(
+            "stop-message",
+            message = i18n::engine(EngineKind::Message, m).into_owned()
+        ),
+        Stop::Level => tr!("stop-level"),
+        Stop::Blocked => tr!("stop-blocked"),
+        Stop::NoPath => tr!("stop-no-path"),
+    }
+}
+
+/// The interface's language at start: `--lang`, `RENETHACK_LANG`, else
+/// (no self-test: those play in English unless asked) the profile's, else
+/// the system's, else English.
+fn startup_lang(args: &Args) -> Lang {
+    if let Some(lang) = args.lang {
+        return lang;
+    }
+    if let Some(lang) = std::env::var("RENETHACK_LANG")
+        .ok()
+        .and_then(|v| Lang::from_code(&v))
+    {
+        return lang;
+    }
+    if args.selftest.is_some() {
+        return Lang::En;
+    }
+    let paths = Paths::resolve(args.playground.as_deref());
+    read_profile(&paths.playground)
+        .map(|t| Profile::from_json(&t))
+        .and_then(|p| p.lang.as_deref().and_then(Lang::from_code))
+        .or_else(|| Lang::from_code(&Os::singleton().get_locale_language().to_string()))
+        .unwrap_or_default()
 }
 
 /// Seconds since the engine started (the pad's clock).
@@ -443,6 +515,8 @@ impl INode for RenethackGame {
             .collect();
         let args = parse_args(&raw);
         self.base().get_tree().set_auto_accept_quit(false);
+        // the interface's language before anything shows words
+        i18n::set_lang(startup_lang(&args));
         if let Some(mut window) = self.base().get_tree().get_root() {
             // the window the self-tests asked for; screenshots are
             // 1920×1080 (the review set, success criterion 1) unless a size
@@ -538,8 +612,8 @@ impl INode for RenethackGame {
         }
         if let Err(e) = paths.check() {
             self.show_failure(
-                "The game engine is not built.",
-                &format!("{e}\nRun `make` in the repository, or set RENETHACK_ENGINE_DIR."),
+                &tr!("err-engine-not-built"),
+                &tr!("err-engine-not-built-details", error = e.to_string()),
                 None,
             );
             return;
@@ -986,7 +1060,7 @@ impl RenethackGame {
         }
     }
 
-    fn playground(&self) -> PathBuf {
+    pub(crate) fn playground(&self) -> PathBuf {
         self.paths
             .as_ref()
             .map(|p| p.playground.clone())
@@ -1133,7 +1207,7 @@ impl RenethackGame {
         }
         let catalog = self.catalog.clone();
         let line = match prompt {
-            Prompt::Command => self.world.getpos_line(),
+            Prompt::Command => getpos_line(&self.world),
             _ => prompt_line(&prompt),
         };
         let inventory_menu = match &prompt {
@@ -1277,10 +1351,7 @@ impl RenethackGame {
                 "renethack: the engine hangs ({} s silent)",
                 silent.as_secs()
             );
-            self.link_error = Some(format!(
-                "The engine stopped responding ({} s without output).",
-                silent.as_secs()
-            ));
+            self.link_error = Some(tr!("err-engine-hangs", secs = silent.as_secs()));
             session.kill();
         }
     }
@@ -1312,13 +1383,14 @@ impl RenethackGame {
                 None => (self.recover_interrupted(), saved(&name)),
             };
             let details = [notes.unwrap_or_default(), ending.stderr_tail.clone()].join("\n\n");
-            let mut text = format!("The game engine failed: {what}");
+            let mut text = tr!("err-engine-failed", what = what.clone());
             if let Some(n) = &save {
-                text.push_str(&format!("\nThe game is saved; you can continue it as {n}."));
+                text.push('\n');
+                text.push_str(&tr!("err-game-saved-as", name = n));
             }
             self.show_failure(&text, details.trim(), save.as_deref());
         } else if let Some(n) = saved(&name) {
-            self.show_title(Some(format!("Game saved: {n}.")));
+            self.show_title(Some(tr!("title-game-saved", name = n)));
         } else if ending.said_bye && ending.code == Some(0) {
             // the character is gone with its save: its bar too
             if let Some(n) = &name
@@ -1330,12 +1402,12 @@ impl RenethackGame {
         } else {
             let notes = self.recover_interrupted();
             let save = saved(&name);
-            let code = ending.code.map_or("killed by a signal".to_string(), |c| {
-                format!("exit code {c}")
+            let code = ending.code.map_or(tr!("err-killed-by-signal"), |c| {
+                tr!("err-exit-code", code = c)
             });
             let details = [notes.unwrap_or_default(), ending.stderr_tail.clone()].join("\n\n");
             self.show_failure(
-                &format!("The game engine stopped unexpectedly ({code})."),
+                &tr!("err-engine-stopped", code = code),
                 details.trim(),
                 save.as_deref(),
             );
@@ -1353,10 +1425,10 @@ impl RenethackGame {
             Ok(Some(lock)) => self.playground_lock = Some(lock),
             Ok(None) => {
                 self.show_failure(
-                    "renethack is already running with this game directory.",
-                    &format!(
-                        "{}\nClose the other window first, then press Title.",
-                        paths.playground.display()
+                    &tr!("err-already-running"),
+                    &tr!(
+                        "err-already-running-details",
+                        dir = paths.playground.display().to_string()
                     ),
                     None,
                 );
@@ -1364,7 +1436,7 @@ impl RenethackGame {
             }
             Err(e) => {
                 self.show_failure(
-                    "Cannot prepare the game directory.",
+                    &tr!("err-playground"),
                     &format!("{}: {e}", paths.playground.display()),
                     None,
                 );
@@ -1396,7 +1468,7 @@ impl RenethackGame {
                     self.catalog = Some(Rc::new(catalog));
                 }
                 Err(e) => {
-                    self.show_failure("The game engine does not start.", &e.to_string(), None);
+                    self.show_failure(&tr!("err-engine-does-not-start"), &e.to_string(), None);
                     return;
                 }
             }
@@ -1430,17 +1502,15 @@ impl RenethackGame {
         let paths = self.paths.clone()?;
         let bases = match interrupted_games(&paths.playground) {
             Ok(b) => b,
-            Err(e) => return Some(format!("Cannot look for interrupted games: {e}")),
+            Err(e) => return Some(tr!("recover-cannot-look", error = e.to_string())),
         };
         let notes: Vec<String> = bases
             .iter()
             .map(
                 |base| match recover_game(&paths.recover(), &paths.playground, base) {
-                    Ok(Recovered::Saved(n)) => format!("Recovered an interrupted game: {n}."),
-                    Ok(Recovered::Lost) => {
-                        format!("An interrupted game ({base}) could not be recovered.")
-                    }
-                    Err(e) => format!("Recovering {base} failed: {e}"),
+                    Ok(Recovered::Saved(n)) => tr!("recover-saved", name = n),
+                    Ok(Recovered::Lost) => tr!("recover-lost", base = base),
+                    Err(e) => tr!("recover-failed", base = base, error = e.to_string()),
                 },
             )
             .collect();
@@ -1454,6 +1524,13 @@ impl RenethackGame {
 
     fn on_key(&mut self, k: KeyInput) {
         if self.state != GameState::Playing {
+            return;
+        }
+        // over the game, the settings page has the keys: Esc closes it
+        if self.settings_open() {
+            if k.key == Key::Escape && !k.echo {
+                self.close_settings();
+            }
             return;
         }
         // typed ahead or pushed by a self-test as a plain key
@@ -1809,9 +1886,7 @@ impl RenethackGame {
                 self.ui_state.bar.set(slot, Some(binding));
                 self.save_ui_state();
                 let key = crate::action_bar::key_label(slot);
-                self.ui_mut()
-                    .hud
-                    .toast(&format!("Bound to slot {key}"), false);
+                self.ui_mut().hud.toast(&tr!("bar-bound", key = key), false);
             }
         }
     }
@@ -1827,7 +1902,7 @@ impl RenethackGame {
         let key = crate::action_bar::key_label(slot);
         self.ui_mut()
             .hud
-            .toast(&format!("Slot {key} cleared"), true);
+            .toast(&tr!("bar-cleared", key = key), true);
     }
 
     fn undo_clear(&mut self) {
@@ -1837,7 +1912,7 @@ impl RenethackGame {
             let key = crate::action_bar::key_label(slot);
             self.ui_mut()
                 .hud
-                .toast(&format!("Slot {key} restored"), false);
+                .toast(&tr!("bar-restored", key = key), false);
         }
     }
 
@@ -1907,7 +1982,8 @@ impl RenethackGame {
         ui.dialogs.set_pad(pad.is_some());
         ui.inventory.set_pad(pad);
         ui.pad.show_hints(pad.map(|k| (k, ctx)));
-        ui.pad.dock_hints(ui.inventory.frame_rect());
+        ui.pad
+            .dock_hints(ui.inventory.frame_rect(), ui.hud.log_rect());
         let labels = pad.map(|k| (k, self.pad.page()));
         if self.pad_labels != Some(labels) {
             self.pad_labels = Some(labels);
@@ -1967,18 +2043,20 @@ impl RenethackGame {
                 .as_deref()
                 .map(inventory_panel::label)
                 .unwrap_or_default();
-            let tip = match (v.state, &v.text) {
-                (SlotState::Empty, _) => {
-                    format!("Slot {key} (empty): drag an item here from the inventory")
-                }
-                (SlotState::Gone, Some(t)) => format!("{what}: {t} (not in your pack)"),
-                (_, Some(t)) => format!("{what}: {t}"),
+            let text = v
+                .text
+                .as_deref()
+                .map(|t| i18n::engine(EngineKind::Name, t).into_owned());
+            let tip = match (v.state, text) {
+                (SlotState::Empty, _) => tr!("bar-slot-empty-tip", key = key),
+                (SlotState::Gone, Some(t)) => tr!("bar-slot-gone-tip", what = what, item = t),
+                (_, Some(t)) => tr!("bar-slot-tip", what = what, item = t),
                 (_, None) => what,
             };
             let hint = v.hint.as_deref().unwrap_or("");
             bar.set_tooltip(
                 i,
-                &format!("{tip}\nKey {key} · NetHack: {hint} · right-click: clear"),
+                &tr!("bar-slot-keys-tip", tip = tip, key = key, hint = hint),
             );
         }
         self.bar_key = Some(views);
@@ -2022,8 +2100,11 @@ impl RenethackGame {
                     // CLICK_1 is the engine's #therecmdmenu
                     ClickPlan::Engine => self.reply(Reply::Click { x, y, modifier: 1 }),
                     ClickPlan::Nothing(why) => {
-                        self.stop_note =
-                            Some((format!("Nothing to do there ({why})"), Instant::now()));
+                        let why = match why {
+                            "unexplored" => tr!("click-unexplored"),
+                            _ => tr!("click-off-map"),
+                        };
+                        self.stop_note = Some((tr!("click-nothing", why = why), Instant::now()));
                     }
                 }
             }
@@ -2076,7 +2157,7 @@ impl RenethackGame {
     /// Why an order ended, for the HUD (not when it simply finished).
     fn note_stop(&mut self, stop: &Stop) {
         if !stop.is_completion() {
-            self.stop_note = Some((stop.says(), Instant::now()));
+            self.stop_note = Some((stop_text(stop), Instant::now()));
         }
     }
 
@@ -2297,11 +2378,92 @@ impl RenethackGame {
             UiEvent::ActionSlot { slot, .. } => self.clear_slot(slot),
             UiEvent::SlotUndo => self.undo_clear(),
             UiEvent::Inventory(ev) if self.state == GameState::Playing => self.on_inventory(ev),
+            UiEvent::OpenSettings => self.open_settings(),
+            UiEvent::CloseSettings => self.close_settings(),
+            UiEvent::SetLanguage(lang) => self.set_language(lang),
             other => godot_warn!("renethack: {other:?} ignored while a game runs"),
         }
     }
 
     // ---- screens and lifecycle ----
+
+    /// The settings page, over the title or the game (its orders stop).
+    fn open_settings(&mut self) {
+        match self.state {
+            GameState::Title => self.ui_mut().screens.show_settings(false),
+            GameState::Playing => {
+                self.driver.interrupt(Stop::Panel);
+                self.ui_mut().screens.show_settings(true);
+            }
+            _ => {}
+        }
+    }
+
+    fn close_settings(&mut self) {
+        let Some(ui) = self.ui.as_mut() else {
+            return;
+        };
+        if ui.screens.current() != Some("settings") {
+            return;
+        }
+        if ui.screens.settings_in_game() && self.state == GameState::Playing {
+            ui.screens.hide();
+        } else {
+            self.show_title(None);
+        }
+    }
+
+    /// The settings page is up (keys are its own).
+    fn settings_open(&self) -> bool {
+        self.ui
+            .as_ref()
+            .is_some_and(|ui| ui.screens.current() == Some("settings"))
+    }
+
+    /// Switch the interface's language: kept in the profile and with the
+    /// character playing; what is on screen is drawn again in it (the log
+    /// from the engine's own English).
+    fn set_language(&mut self, lang: Lang) {
+        if i18n::lang() == lang {
+            return;
+        }
+        i18n::set_lang(lang);
+        let playground = self.playground();
+        let mut profile = read_profile(&playground)
+            .map(|t| Profile::from_json(&t))
+            .unwrap_or_default();
+        profile.lang = Some(lang.code().to_string());
+        if let Err(e) = write_profile(&playground, &profile.to_json()) {
+            godot_warn!("renethack: cannot keep the profile: {e}");
+        }
+        if self.session.is_some() {
+            self.ui_state.lang = Some(lang.code().to_string());
+            self.save_ui_state();
+        }
+        self.relang();
+    }
+
+    /// Everything on screen in the language now.
+    fn relang(&mut self) {
+        self.bar_key = None;
+        self.pad_labels = None;
+        let line = self.pending.as_ref().and_then(|(_, p)| match p {
+            Prompt::Command => getpos_line(&self.world),
+            p => prompt_line(p),
+        });
+        let catalog = self.catalog.clone();
+        let Some(ui) = self.ui.as_mut() else {
+            return;
+        };
+        ui.hud.relang();
+        ui.inventory.relang();
+        ui.dialogs.relang(catalog.as_deref());
+        ui.pad.relang();
+        ui.screens.relang();
+        if line.is_some() {
+            ui.hud.set_prompt_line(line.as_deref());
+        }
+    }
 
     fn show_title(&mut self, notice: Option<String>) {
         self.state = GameState::Title;
@@ -2315,7 +2477,7 @@ impl RenethackGame {
 
     fn show_creation(&mut self) {
         let Some(catalog) = self.catalog.clone() else {
-            self.show_failure("The game catalog is not available.", "", None);
+            self.show_failure(&tr!("err-no-catalog"), "", None);
             return;
         };
         self.state = GameState::Creating;
@@ -2415,7 +2577,8 @@ impl RenethackGame {
         }
         // a new character: its profile, and the default loadout once the
         // first inventory (and the role, if random) is known
-        let state = UiState::new(choice.profile);
+        let mut state = UiState::new(choice.profile);
+        state.lang = Some(i18n::lang().code().to_string());
         if self.start_session(options, &choice.name, state) {
             self.loadout_for = Some(choice.role.clone());
             self.save_ui_state();
@@ -2432,12 +2595,16 @@ impl RenethackGame {
                         .and_then(|t| UiState::from_json(&t).ok());
                     let fresh = kept.is_none();
                     let state = kept.unwrap_or_else(|| UiState::new(KeyProfile::Modern));
+                    // the character plays in its own language
+                    if let Some(lang) = state.lang.as_deref().and_then(Lang::from_code) {
+                        self.set_language(lang);
+                    }
                     if self.start_session(options, name, state) && fresh {
                         self.loadout_for = Some("random".into());
                     }
                 }
             }
-            Err(e) => self.show_failure("This save cannot be restored.", &e.to_string(), None),
+            Err(e) => self.show_failure(&tr!("err-cannot-restore"), &e.to_string(), None),
         }
     }
 
@@ -2449,7 +2616,7 @@ impl RenethackGame {
             Ok(()) => true,
             Err(e) => {
                 self.show_failure(
-                    "Cannot prepare the game directory.",
+                    &tr!("err-playground"),
                     &format!("{}: {e}", paths.playground.display()),
                     None,
                 );
@@ -2505,7 +2672,7 @@ impl RenethackGame {
                 true
             }
             Err(e) => {
-                self.show_failure("Cannot start the game engine.", &e.to_string(), None);
+                self.show_failure(&tr!("err-cannot-start"), &e.to_string(), None);
                 false
             }
         }
@@ -2523,7 +2690,7 @@ impl RenethackGame {
                 self.close_deadline = Some(Instant::now() + CLOSE_TIMEOUT);
                 let ui = self.ui_mut();
                 ui.dialogs.close();
-                ui.hud.set_prompt_line(Some("Saving the game..."));
+                ui.hud.set_prompt_line(Some(&tr!("prompt-saving")));
             }
             (GameState::Closing, _) => {}
             _ => self.finish_close(),
@@ -2671,9 +2838,16 @@ impl RenethackGame {
         let pos = pos.unwrap_or(Vector2::ZERO);
         if look != self.hover.look.as_ref() {
             self.hover.look = look.cloned();
+            // the catalog's names, a line each, as the player reads them
             self.hover.text = look
                 .zip(catalog.as_deref())
-                .and_then(|(c, cat)| describe_cell(c, cat));
+                .and_then(|(c, cat)| describe_cell(c, cat))
+                .map(|d| {
+                    d.lines()
+                        .map(|l| i18n::engine(EngineKind::Name, l).into_owned())
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                });
         } else if self.hover.text.is_none() || pos == self.hover.pos {
             return;
         }

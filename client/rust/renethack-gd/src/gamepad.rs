@@ -367,16 +367,17 @@ pub enum RadialEntry {
 }
 
 impl RadialEntry {
-    pub fn label(self) -> &'static str {
+    /// The key of its caption.
+    pub fn label_key(self) -> &'static str {
         match self {
-            RadialEntry::Here => "Actions here",
-            RadialEntry::PickUp => "Pick up",
-            RadialEntry::Fight => "Fight",
-            RadialEntry::Kick => "Kick",
-            RadialEntry::Rest => "Rest",
-            RadialEntry::Pray => "Pray",
-            RadialEntry::Travel => "Travel",
-            RadialEntry::Save => "Save",
+            RadialEntry::Here => "radial-here",
+            RadialEntry::PickUp => "radial-pick-up",
+            RadialEntry::Fight => "radial-fight",
+            RadialEntry::Kick => "radial-kick",
+            RadialEntry::Rest => "radial-rest",
+            RadialEntry::Pray => "radial-pray",
+            RadialEntry::Travel => "radial-travel",
+            RadialEntry::Save => "radial-save",
         }
     }
 }

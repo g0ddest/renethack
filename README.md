@@ -161,6 +161,32 @@ the log in whole lines). `make test-client` also runs `smoke`, `inventory`,
 120 % UI scale; `make deck` shoots `smoke`, `tour`, `inventory`, `bar`,
 `hud`, `dialogs` and `gamepad` at a real 1280×800.
 
+## Languages
+
+The client's own words (buttons, hints, panels, tooltips) are Project
+Fluent catalogs built into the extension: `client/i18n/en.ftl`, the
+source, and `client/i18n/ru.ftl`. Code takes a string with
+`tr!("hud-gold", gold = 12)`; a static label bound with `i18n::text` or
+`i18n::tip` follows a switch of the language by itself. A new key goes into
+both files: the tests check that both have the same keys with the same
+arguments, that every key the code names is there and that none is left
+unused. What the engine says (messages, names, menus, text windows) stays
+English in the engine and in the client's state, and reaches the screen
+through `i18n::engine`, where the engine's translator (`nh-i18n`) plugs in.
+
+The language is picked in the settings (the gear among the HUD's buttons,
+Settings on the title screen) and when a character is made; it switches at
+once and is kept in the profile (`profile.json` in the playground) and in
+the character's UI state. At start: `--lang=ru`, else `RENETHACK_LANG`,
+else the profile, else the system's language. The `language` scenario
+switches in the settings and back, the log keeping the engine's English.
+`--lang=qps` is a pseudo-language for the self-tests: words through the
+catalogs show ⟦so⟧ and the engine's ⟪so⟫, and a screen a scenario shoots
+fails on any word outside the marks. `make test-client` also runs
+scenarios in Russian at 1280×800 and 1920×1080 (the layout must fit) and in
+the pseudo-language; `make deck DECK_ARGS=--lang=ru` shoots the Deck's
+screens in Russian.
+
 ## Art
 
 The art is CC0 and committed under `client/godot/art/cc0` (Poly Haven

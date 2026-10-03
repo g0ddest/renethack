@@ -54,6 +54,11 @@ pub enum UiEvent {
     SlotUndo,
     /// From the inventory panel.
     Inventory(InvInput),
+    /// The client's settings page (the title's button, the HUD's gear).
+    OpenSettings,
+    CloseSettings,
+    /// The interface's language chosen (settings, character creation).
+    SetLanguage(crate::i18n::Lang),
 }
 
 #[derive(Debug, Clone, PartialEq)]

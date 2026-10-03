@@ -1,7 +1,8 @@
 // Engraved glyphs drawn from distance fields until the icon set (phase I)
 // exists: one stroke weight, gold on transparent. `icon` picks the glyph:
 // 0 bag (inventory), 1 book (spells), 2 bust (character), 3 map
-// (overview), 4 scroll (message history), 5 shield (AC), 6 coin (gold).
+// (overview), 4 scroll (message history), 5 shield (AC), 6 coin (gold),
+// 7 gear (settings).
 shader_type canvas_item;
 render_mode unshaded;
 
@@ -89,6 +90,12 @@ float glyph(vec2 p) {
 		float shield = max(max(top, side), max(tip, q.y - 0.75));
 		d = ring(shield);
 		d = min(d, abs(sd_segment(p, vec2(0.0, -0.45), vec2(0.0, 0.55))) - stroke * 0.3);
+	} else if (icon == 7) {
+		// a gear: a toothed rim around a hub
+		float a = atan(p.y, p.x);
+		float teeth = 0.44 + 0.12 * smoothstep(-0.25, 0.25, cos(a * 8.0));
+		d = ring(length(p) - teeth);
+		d = min(d, ring(sd_circle(p, 0.17)));
 	} else {
 		// a coin with a milled edge
 		d = ring(sd_circle(p, 0.56));

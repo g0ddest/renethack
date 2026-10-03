@@ -556,6 +556,10 @@ pub struct UiState {
     pub profile: KeyProfile,
     #[serde(default)]
     pub bar: ActionBar,
+    /// The interface's language this character plays in ("en", "ru");
+    /// None: the client's own choice.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lang: Option<String>,
 }
 
 impl UiState {
@@ -566,6 +570,7 @@ impl UiState {
             version: UiState::VERSION,
             profile,
             bar: ActionBar::new(),
+            lang: None,
         }
     }
 
@@ -577,6 +582,25 @@ impl UiState {
         let mut s: UiState = serde_json::from_str(text)?;
         s.bar.normalize();
         Ok(s)
+    }
+}
+
+/// The client's own settings, the same for every character
+/// (`<playground>/profile.json`): the last language chosen.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Profile {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lang: Option<String>,
+}
+
+impl Profile {
+    pub fn to_json(&self) -> String {
+        serde_json::to_string_pretty(self).unwrap_or_default()
+    }
+
+    /// A broken or missing file is an empty profile.
+    pub fn from_json(text: &str) -> Profile {
+        serde_json::from_str(text).unwrap_or_default()
     }
 }
 
@@ -976,6 +1000,23 @@ mod tests {
         );
         assert_eq!(old.bar.view(9, &pack).state, SlotState::Empty);
         assert!(UiState::from_json("not json").is_err());
+    }
+
+    #[test]
+    fn the_language_is_kept_with_the_character_and_in_the_profile() {
+        let mut state = UiState::new(KeyProfile::Modern);
+        assert!(
+            !state.to_json().contains("lang"),
+            "no language: none written"
+        );
+        state.lang = Some("ru".into());
+        let back = UiState::from_json(&state.to_json()).unwrap();
+        assert_eq!(back.lang.as_deref(), Some("ru"));
+        let profile = Profile {
+            lang: Some("ru".into()),
+        };
+        assert_eq!(Profile::from_json(&profile.to_json()), profile);
+        assert_eq!(Profile::from_json("broken"), Profile::default());
     }
 
     #[test]

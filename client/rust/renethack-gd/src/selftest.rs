@@ -33,7 +33,9 @@ mod world_looks;
 
 use crate::dialogs::ROW_H;
 use crate::game::{Args, GameState, RenethackGame, SELFTEST_SEED, env_number};
+use crate::i18n::{self, Lang};
 use crate::screens::EndSummary;
+use crate::tr;
 use crate::ui_events::{CharacterChoice, DialogEvent, UiEvent};
 
 const STEP_TIMEOUT: Duration = Duration::from_secs(30);
@@ -134,6 +136,13 @@ fn smoke_choice() -> CharacterChoice {
     }
 }
 
+/// The title's button for a saved game, up to its date ("Continue: Hero (").
+fn continue_label(name: &str) -> String {
+    let full = tr!("title-continue", name = name, time = "");
+    // the pseudo-language's closing mark, then the date's parenthesis
+    full.trim_end_matches('⟧').trim_end_matches(')').to_string()
+}
+
 fn screen(game: &RenethackGame) -> Option<&'static str> {
     // a screen still under the start-up veil is not up yet
     if game.veiled() {
@@ -154,7 +163,7 @@ fn smoke() -> Vec<Step> {
         Step::Wait("the title screen", |g| {
             fail_on_error_screen(g)?;
             let ui = g.ui.as_ref().ok_or("no UI")?;
-            Ok(screen(g) == Some("title") && ui.screens.has_button("New game"))
+            Ok(screen(g) == Some("title") && ui.screens.has_button(&tr!("title-new-game")))
         }),
         Step::Shot("title"),
         Step::Push(UiEvent::NewGame),
@@ -312,6 +321,76 @@ fn quit() -> Vec<Step> {
     ]
 }
 
+/// The interface switches its language on the fly: the settings page from
+/// the HUD's gear, Russian picked; the HUD, the inventory panel and the log
+/// drawn again (the log from the engine's English, which is kept); the
+/// choice kept with the character and in the profile; English again.
+fn language() -> Vec<Step> {
+    let mut steps = start();
+    steps.extend([
+        Step::Wait("the hero on the map", |g| Ok(g.world.map.hero().is_some())),
+        // from English, whatever `--lang` started in
+        Step::Push(UiEvent::SetLanguage(Lang::En)),
+        Step::Wait("exploring", |g| {
+            Ok(badge(g).is_some_and(|b| b.starts_with("EXPLORING")))
+        }),
+        Step::Push(UiEvent::OpenSettings),
+        Step::Wait("the settings page over the game", |g| {
+            Ok(screen(g) == Some("settings"))
+        }),
+        Step::Shot("language-settings"),
+        Step::Push(UiEvent::SetLanguage(Lang::Ru)),
+        Step::Wait("the page in Russian", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(i18n::lang() == Lang::Ru
+                && screen(g) == Some("settings")
+                && ui.screens.has_button("Назад"))
+        }),
+        Step::Shot("language-settings-ru"),
+        Step::Push(UiEvent::CloseSettings),
+        Step::Wait("back in the game", |g| Ok(screen(g).is_none())),
+        Step::Wait("the HUD in Russian", |g| {
+            Ok(badge(g).is_some_and(|b| b.starts_with("ИССЛЕДОВАНИЕ")))
+        }),
+        Step::Call("the log keeps the engine's English", |g| {
+            if !g
+                .world
+                .log
+                .iter()
+                .any(|m| m.text.contains("welcome to NetHack"))
+            {
+                return Err("the welcome message is gone from the log".into());
+            }
+            Ok(())
+        }),
+        Step::Call(
+            "the choice kept with the character and in the profile",
+            |g| {
+                let pg = g.playground();
+                let state = nh_link::read_ui_state(&pg, "Hero").unwrap_or_default();
+                let profile = nh_link::read_profile(&pg).unwrap_or_default();
+                if !state.contains("\"lang\": \"ru\"") || !profile.contains("\"lang\": \"ru\"") {
+                    return Err(format!("not kept: state {state:?}, profile {profile:?}"));
+                }
+                Ok(())
+            },
+        ),
+        key('i'),
+        Step::Wait("the panel in Russian", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(ui.inventory.is_open() && ui.inventory.title_text() == "Инвентарь")
+        }),
+        Step::Shot("language-inventory-ru"),
+        inv(crate::inventory_panel::InvInput::Close),
+        Step::Push(UiEvent::SetLanguage(Lang::En)),
+        Step::Wait("English again", |g| {
+            Ok(badge(g).is_some_and(|b| b.starts_with("EXPLORING")))
+        }),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
 fn welcome_back(g: &RenethackGame) -> Result<bool, String> {
     fail_on_error_screen(g)?;
     Ok(g.world.log.iter().any(|m| m.text.contains("welcome back")))
@@ -332,7 +411,7 @@ fn save() -> Vec<Step> {
         Step::Wait("\"Continue: Hero\" on the title screen", |g| {
             fail_on_error_screen(g)?;
             let ui = g.ui.as_ref().ok_or("no UI")?;
-            Ok(screen(g) == Some("title") && ui.screens.has_button("Continue: Hero"))
+            Ok(screen(g) == Some("title") && ui.screens.has_button(&continue_label("Hero")))
         }),
         Step::Shot("saved"),
         Step::Push(UiEvent::ContinueGame("Hero".into())),
@@ -368,7 +447,8 @@ fn crash() -> Vec<Step> {
         key('l'),
         Step::Wait("the error screen with \"Continue Hero\"", |g| {
             let ui = g.ui.as_ref().ok_or("no UI")?;
-            Ok(screen(g) == Some("error") && ui.screens.has_button("Continue Hero"))
+            Ok(screen(g) == Some("error")
+                && ui.screens.has_button(&tr!("error-continue", name = "Hero")))
         }),
         Step::Shot("error"),
         Step::Push(UiEvent::ContinueGame("Hero".into())),
@@ -1331,7 +1411,8 @@ fn orders() -> Vec<Step> {
         Step::Wait("the hero on the map", |g| Ok(g.world.map.hero().is_some())),
         Step::Wait("the camera on the hero", camera_settled),
         Step::Wait("exploring", |g| {
-            Ok(badge(g).is_some_and(|b| b.starts_with("EXPLORING")))
+            let explore = unmarked(&tr!("mode-explore-badge"));
+            Ok(badge(g).is_some_and(|b| unmarked(&b).starts_with(&explore)))
         }),
         // the way a click would walk, under the mouse
         Step::Call("hover a far floor cell", |g| hover(g, Some(FAR_FLOOR))),
@@ -1348,7 +1429,7 @@ fn orders() -> Vec<Step> {
         Step::Wait("walking", |g| Ok(g.driver.is_active())),
         Step::Wait("the order line says so", |g| {
             let line = g.ui.as_ref().and_then(|ui| ui.hud.mode_view().1);
-            Ok(line.is_some_and(|l| l.starts_with("Walking")))
+            Ok(line.is_some_and(|l| unmarked(&l).starts_with(&unmarked(&tr!("order-walk")))))
         }),
         Step::Call("the stride goes on between steps", |g| {
             // between two steps of the walk (the second has not gone out):
@@ -1549,7 +1630,8 @@ fn orders() -> Vec<Step> {
                     g.world.hero()
                 ));
             }
-            if !b.is_some_and(|b| b.starts_with("COMBAT")) || !flash {
+            let combat = unmarked(&tr!("mode-combat"));
+            if !b.is_some_and(|b| unmarked(&b).starts_with(&combat)) || !flash {
                 return Err("no combat badge and banner".into());
             }
             Ok(())
@@ -2507,11 +2589,18 @@ fn entry_key(g: &RenethackGame, what: &str) -> Result<KeyInput, String> {
     Ok(KeyInput::plain(Key::Char(c)))
 }
 
-fn selected(entries: &[MenuEntry]) -> Vec<&str> {
+fn selected(entries: &[MenuEntry]) -> Vec<String> {
     entries
         .iter()
         .filter(|e| e.selected)
-        .map(|e| e.text.as_str())
+        .map(|e| unmarked(&e.text))
+        .collect()
+}
+
+/// A text as the engine wrote it: without the pseudo-language's marks.
+fn unmarked(text: &str) -> String {
+    text.chars()
+        .filter(|c| !matches!(c, '⟦' | '⟧' | '⟪' | '⟫'))
         .collect()
 }
 
@@ -2537,8 +2626,7 @@ fn ya_in_menu(g: &RenethackGame) -> Result<Option<u32>, String> {
         .iter()
         .find(|e| e.selectable && e.text.contains(" ya"))
         .ok_or("no ya in the menu")?;
-    let n = ya
-        .text
+    let n = unmarked(&ya.text)
         .split_whitespace()
         .next()
         .and_then(|n| n.parse().ok());
@@ -2603,7 +2691,7 @@ fn menus() -> Vec<Step> {
             };
             match selected(entries).as_slice() {
                 [] => Ok(false),
-                ["Weapons"] => Ok(true),
+                [w] if w == "Weapons" => Ok(true),
                 other => Err(format!("selected {other:?}")),
             }
         }),
@@ -3903,6 +3991,7 @@ impl SelfTest {
         let steps = match name {
             "tour" => tour(),
             "hud" => hud(),
+            "language" => language(),
             "moves" => moves(),
             "gallery" => gallery(),
             "icons" => icons(),
@@ -4173,8 +4262,11 @@ impl SelfTest {
                         continue;
                     }
                     // a run at a set size checks that what the screen
-                    // shows fits it, with or without screenshots
-                    if self.shots.is_none() && game.window_size.is_none() {
+                    // shows fits it, with or without screenshots; one in
+                    // the pseudo-language, that its words are marked
+                    let sized = self.shots.is_some() || game.window_size.is_some();
+                    let pseudo = i18n::lang() == Lang::Pseudo;
+                    if !sized && !pseudo {
                         self.next();
                         continue;
                     }
@@ -4183,7 +4275,11 @@ impl SelfTest {
                         return;
                     }
                     let name = *name;
-                    if let Err(why) = layout_fits(game) {
+                    if sized && let Err(why) = layout_fits(game) {
+                        let why = format!("screen {name}: {why}");
+                        return self.fail(game, &why);
+                    }
+                    if pseudo && let Err(why) = words_marked(game) {
                         let why = format!("screen {name}: {why}");
                         return self.fail(game, &why);
                     }
@@ -4281,7 +4377,8 @@ fn describe(step: &Step) -> String {
 
 /// What the screen shows fits it: the HUD's blocks, an open panel and an
 /// open dialog are inside the canvas; the HUD's blocks do not overlap one
-/// another nor the panel; the log shows whole lines.
+/// another nor the panel; the gamepad's hints are inside their panel, or
+/// clear of the HUD's blocks; the log shows whole lines.
 fn layout_fits(game: &RenethackGame) -> Result<(), String> {
     let Some(ui) = game.ui.as_ref() else {
         return Ok(());
@@ -4316,10 +4413,130 @@ fn layout_fits(game: &RenethackGame) -> Result<(), String> {
             return Err(format!("the inventory panel covers the {a}"));
         }
     }
+    match ui.pad.strip_rect() {
+        Some((r, Some(p))) if !p.grow(1.0).encloses(r) => {
+            return Err("the gamepad's hints are not inside their panel".to_string());
+        }
+        Some((r, None)) => {
+            if !canvas.encloses(r) {
+                return Err("the gamepad's hints are not inside the canvas".to_string());
+            }
+            if let Some((name, _)) = blocks.iter().find(|(_, b)| b.intersects_exclude_borders(r)) {
+                return Err(format!("the gamepad's hints and the {name} overlap"));
+            }
+        }
+        _ => {}
+    }
     if !ui.hud.log_lines_whole() {
         return Err("the log's top line is cut".to_string());
     }
     Ok(())
+}
+
+/// Every word on screen came through the strings of the client (Fluent)
+/// or the engine's translator: in the pseudo-language both mark theirs,
+/// so a word outside the marks is shown as the code wrote it. Widgets
+/// marked verbatim (a language's own name, a controller's button) and
+/// words of one or two letters (an item's letter, "LB") pass.
+fn words_marked(game: &RenethackGame) -> Result<(), String> {
+    let mut found: Vec<String> = Vec::new();
+    let mut stack: Vec<Gd<Node>> = vec![game.to_gd().upcast()];
+    while let Some(node) = stack.pop() {
+        if node.has_meta(i18n::VERBATIM) {
+            continue;
+        }
+        let shown = match node.clone().try_cast::<godot::classes::CanvasItem>() {
+            Ok(item) => item.is_visible_in_tree(),
+            // the 3D world draws no words; layers and plain nodes hold
+            // the interface
+            Err(n) => !n.is_class("Node3D"),
+        };
+        if !shown {
+            continue;
+        }
+        for text in node_texts(&node) {
+            if let Some(word) = unmarked_word(&text) {
+                found.push(format!("\"{word}\" in {} \"{text}\"", node.get_path()));
+            }
+        }
+        stack.extend(node.get_children().iter_shared());
+    }
+    if found.is_empty() {
+        return Ok(());
+    }
+    let more = found.len().saturating_sub(6);
+    found.truncate(6);
+    Err(format!(
+        "words not through Fluent nor the engine's translator: {}{}",
+        found.join("; "),
+        if more > 0 {
+            format!(" (and {more} more)")
+        } else {
+            String::new()
+        }
+    ))
+}
+
+/// The words a widget shows: its text, its placeholder while empty (what
+/// the player types is theirs), its items, its tooltip.
+fn node_texts(node: &Gd<Node>) -> Vec<String> {
+    use godot::classes::{Button, Control, ItemList, Label, LineEdit, RichTextLabel};
+    let mut out = Vec::new();
+    if let Ok(l) = node.clone().try_cast::<Label>() {
+        out.push(l.get_text().to_string());
+    } else if let Ok(r) = node.clone().try_cast::<RichTextLabel>() {
+        out.push(r.get_parsed_text().to_string());
+    } else if let Ok(b) = node.clone().try_cast::<Button>() {
+        out.push(b.get_text().to_string());
+    } else if let Ok(e) = node.clone().try_cast::<LineEdit>() {
+        if e.get_text().is_empty() {
+            out.push(e.get_placeholder().to_string());
+        }
+    } else if let Ok(list) = node.clone().try_cast::<ItemList>() {
+        for i in 0..list.get_item_count() {
+            out.push(list.get_item_text(i).to_string());
+        }
+    }
+    if let Ok(c) = node.clone().try_cast::<Control>() {
+        out.push(c.get_tooltip_text().to_string());
+    }
+    out
+}
+
+/// The first word of three letters or more outside the marks. A text cut
+/// out of a marked one (a menu's column) may close a mark it does not
+/// open: it starts inside. "#adjust" is a command as typed.
+fn unmarked_word(text: &str) -> Option<String> {
+    let mut depth = 0i32;
+    let mut lowest = 0i32;
+    for c in text.chars() {
+        match c {
+            '⟦' | '⟪' => depth += 1,
+            '⟧' | '⟫' => depth -= 1,
+            _ => {}
+        }
+        lowest = lowest.min(depth);
+    }
+    let mut depth = -lowest;
+    let mut outside = String::new();
+    for c in text.chars() {
+        match c {
+            '⟦' | '⟪' => depth += 1,
+            '⟧' | '⟫' => {
+                depth -= 1;
+                outside.push(' ');
+            }
+            _ if depth == 0 => outside.push(c),
+            _ => {}
+        }
+    }
+    outside
+        .split_whitespace()
+        .map(|t| t.trim_matches(|c: char| !c.is_alphanumeric() && c != '#'))
+        .filter(|t| !t.starts_with('#'))
+        .flat_map(|t| t.split(|c: char| !c.is_alphabetic()))
+        .find(|w| w.chars().count() > 2)
+        .map(str::to_string)
 }
 
 fn save_shot(game: &RenethackGame, path: &std::path::Path) -> Result<(), String> {
@@ -4353,6 +4570,18 @@ fn save_shot(game: &RenethackGame, path: &std::path::Path) -> Result<(), String>
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn words_outside_the_marks_are_found() {
+        assert_eq!(unmarked_word("⟦Inventory⟧"), None);
+        assert_eq!(unmarked_word("⟦Wielding: ⟪a +1 spear⟫⟧  12/20"), None);
+        assert_eq!(unmarked_word("LB A · x"), None);
+        assert_eq!(unmarked_word("⟦Close⟧ Esc"), Some("Esc".to_string()));
+        assert_eq!(unmarked_word("⟦Adjust letter…⟧  (#adjust)"), None);
+        assert_eq!(unmarked_word("(weapon in hand)⟫"), None);
+        assert_eq!(unmarked_word("⟪a - a long sword"), None);
+        assert_eq!(unmarked_word("Inventory"), Some("Inventory".to_string()));
+    }
 
     #[test]
     fn soak_reads_the_letters_a_getobj_question_lists() {

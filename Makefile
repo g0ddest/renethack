@@ -19,13 +19,22 @@ override GODOT := $(if $(filter %.app %.app/,$(GODOT)),$(patsubst %/,%,$(GODOT))
 # GNU coreutils' timeout; Homebrew's coreutils names it gtimeout on macOS
 TIMEOUT ?= $(shell command -v timeout || command -v gtimeout)
 GODOT_PROJECT := client/godot
-SELFTESTS := smoke keys save close crash menus text dialogs moves orders inventory bar gamepad equipment item-use combat roles branches soak
+SELFTESTS := smoke keys save close crash menus text dialogs moves orders inventory bar gamepad equipment item-use combat roles branches soak language
 # again at the Steam Deck's 1280×800 (its 120 % UI scale, the compact
 # layout): every screen a scenario would shoot must fit the canvas
 DECK_SELFTESTS := smoke inventory hud gamepad
+# the same in Russian (a third longer than English), at the Deck's size and
+# at 1920×1080
+RU_DECK_SELFTESTS := smoke inventory hud dialogs gamepad
+RU_SELFTESTS := smoke inventory dialogs
+# in the pseudo-language (--lang=qps): every word on the screens a scenario
+# would shoot came through the client's catalogs or the engine's translator
+PSEUDO_SELFTESTS := smoke keys dialogs orders inventory gamepad hud
 # `make deck`: the same screens shot at a real 1280×800, into DECK_DIR
+# (`make deck DECK_ARGS=--lang=ru`: in Russian)
 DECK_SHOTS := smoke tour inventory bar hud dialogs gamepad
 DECK_DIR ?= $(GODOT_PROJECT)/.godot/shots/deck
+DECK_ARGS ?=
 # answered requests of the soak in test-client (about 35 s; from 1000 on the
 # soak fails unless the level changes); `make soak` runs the default, 2000
 SOAK_CI := 2000
@@ -112,7 +121,8 @@ need-timeout:
 	fi
 
 # every scenario but tour (map screenshots); the soak with seed 42 and
-# $(SOAK_CI) requests; then $(DECK_SELFTESTS) at the Deck's size
+# $(SOAK_CI) requests; then $(DECK_SELFTESTS) at the Deck's size, the
+# Russian runs and the pseudo-language's
 test-client: need-timeout all client
 	@set -e; for s in $(SELFTESTS); do \
 		args=""; if [ $$s = soak ]; then args="--soak=$(SOAK_CI)"; fi; \
@@ -120,7 +130,18 @@ test-client: need-timeout all client
 	done; \
 	for s in $(DECK_SELFTESTS); do \
 		$(call run_selftest,$$s,--size=1280x800,180,$$s at 1280x800); \
-	done; echo "selftests passed: $(SELFTESTS); at 1280x800: $(DECK_SELFTESTS)"
+	done; \
+	for s in $(RU_DECK_SELFTESTS); do \
+		$(call run_selftest,$$s,--size=1280x800 --lang=ru,180,$$s in Russian at 1280x800); \
+	done; \
+	for s in $(RU_SELFTESTS); do \
+		$(call run_selftest,$$s,--size=1920x1080 --lang=ru,180,$$s in Russian at 1920x1080); \
+	done; \
+	for s in $(PSEUDO_SELFTESTS); do \
+		$(call run_selftest,$$s,--lang=qps,180,$$s in the pseudo-language); \
+	done; echo "selftests passed: $(SELFTESTS); at 1280x800: $(DECK_SELFTESTS);" \
+		"in Russian: $(RU_DECK_SELFTESTS) at 1280x800, $(RU_SELFTESTS) at 1920x1080;" \
+		"in the pseudo-language: $(PSEUDO_SELFTESTS)"
 
 # The Steam Deck's screen for review: $(DECK_SHOTS) shot at a real
 # 1280×800 into $(DECK_DIR)/<scenario>. A run fails when the window is not
@@ -129,7 +150,7 @@ test-client: need-timeout all client
 deck: need-timeout all client
 	@set -e; for s in $(DECK_SHOTS); do \
 		dir=$(abspath $(DECK_DIR))/$$s; rm -rf $$dir; mkdir -p $$dir; \
-		$(call run_selftest,$$s,--size=1280x800 --screenshots=$$dir,300,$$s at 1280x800,window); \
+		$(call run_selftest,$$s,--size=1280x800 $(DECK_ARGS) --screenshots=$$dir,300,$$s at 1280x800,window); \
 	done; echo "Deck screenshots in $(abspath $(DECK_DIR)): $(DECK_SHOTS)"
 
 # random play through the UI with each of $(SOAK_SEEDS) and the default budget

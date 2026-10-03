@@ -235,7 +235,7 @@ impl Minimap {
         rect.set_custom_minimum_size(Vector2::new(WIDTH as f32, HEIGHT as f32));
         rect.set_mouse_filter(MouseFilter::STOP);
         rect.set_texture_filter(godot::classes::canvas_item::TextureFilter::NEAREST);
-        rect.set_tooltip_text("The level as far as you know it. Click: walk there.");
+        crate::i18n::tip(&rect, "minimap-tip");
         let q = queue.clone();
         let r = rect.clone();
         let shown = std::rc::Rc::new(std::cell::Cell::new((0, 0, COLNO, ROWNO)));

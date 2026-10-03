@@ -3,19 +3,22 @@
 //! medallions with the controller's letters or shapes (no logos).
 
 use godot::builtin::Side;
+use godot::classes::control::GrowDirection;
 use godot::classes::control::MouseFilter;
 use godot::classes::control::SizeFlags;
 use godot::classes::texture_rect::{ExpandMode, StretchMode};
 use godot::classes::{
-    CanvasLayer, ColorRect, Control, HBoxContainer, Label, PanelContainer, ShaderMaterial,
-    StyleBoxFlat, TextureRect, VBoxContainer,
+    CanvasLayer, ColorRect, Control, HBoxContainer, HFlowContainer, Label, PanelContainer,
+    ShaderMaterial, StyleBoxFlat, TextureRect, VBoxContainer,
 };
 use godot::global::{HorizontalAlignment, VerticalAlignment};
 use godot::prelude::*;
 
 use crate::gamepad::{PadButton, PadCtx, PadKind, RADIAL, RadialEntry};
+use crate::i18n;
 use crate::icons::{self, Glyph};
 use crate::theme::{self, Face, place};
+use crate::tr;
 
 /// The radial ring's size, its radii (share of the half size, as the
 /// shader has them) and a sector's icon and caption box, in design pixels.
@@ -59,6 +62,8 @@ pub fn medallion(kind: PadKind, b: PadButton) -> Gd<PanelContainer> {
     let mut l = theme::styled_label(kind.label(b), Face::BodyBold, 15, tint);
     l.set_horizontal_alignment(HorizontalAlignment::CENTER);
     l.set_vertical_alignment(VerticalAlignment::CENTER);
+    // the name printed on the controller
+    i18n::verbatim(&l);
     p.add_child(&l);
     p
 }
@@ -68,47 +73,47 @@ pub fn hints(ctx: PadCtx) -> Vec<(Vec<PadButton>, &'static str)> {
     use PadButton::*;
     match ctx {
         PadCtx::World => vec![
-            (vec![A], "Act"),
-            (vec![X], "Search"),
-            (vec![Y], "Inventory"),
-            (vec![Lt], "Actions"),
-            (vec![Rt], "Fire"),
-            (vec![Lb, Rb], "Bar"),
-            (vec![Start], "Commands"),
+            (vec![A], "hint-act"),
+            (vec![X], "hint-search"),
+            (vec![Y], "hint-inventory"),
+            (vec![Lt], "hint-actions"),
+            (vec![Rt], "hint-fire"),
+            (vec![Lb, Rb], "hint-bar"),
+            (vec![Start], "hint-commands"),
         ],
-        PadCtx::Getpos => vec![(vec![A], "Pick"), (vec![B], "Cancel")],
-        PadCtx::Direction => vec![(vec![A], "Here"), (vec![B], "Cancel")],
+        PadCtx::Getpos => vec![(vec![A], "hint-pick"), (vec![B], "hint-cancel")],
+        PadCtx::Direction => vec![(vec![A], "hint-here"), (vec![B], "hint-cancel")],
         PadCtx::Menu { any: true } => vec![
-            (vec![A], "Toggle"),
-            (vec![Start], "Confirm"),
-            (vec![B], "Cancel"),
-            (vec![Lb, Rb], "Page"),
+            (vec![A], "hint-toggle"),
+            (vec![Start], "hint-confirm"),
+            (vec![B], "hint-cancel"),
+            (vec![Lb, Rb], "hint-page"),
         ],
         PadCtx::PanelBrowse => vec![
-            (vec![A], "Use"),
-            (vec![X], "Actions"),
-            (vec![Y], "Pick up / put down"),
-            (vec![Lb, Rb], "Filter"),
-            (vec![B], "Close"),
+            (vec![A], "hint-use"),
+            (vec![X], "hint-actions"),
+            (vec![Y], "hint-carry"),
+            (vec![Lb, Rb], "hint-filter"),
+            (vec![B], "hint-close"),
         ],
         PadCtx::PanelSelect => vec![
-            (vec![A], "Choose"),
-            (vec![Lb, Rb], "Filter"),
-            (vec![B], "Cancel"),
+            (vec![A], "hint-choose"),
+            (vec![Lb, Rb], "hint-filter"),
+            (vec![B], "hint-cancel"),
         ],
         PadCtx::PanelMenu => vec![
-            (vec![A], "Toggle"),
-            (vec![Start], "Confirm"),
-            (vec![Lb, Rb], "Filter"),
-            (vec![B], "Cancel"),
+            (vec![A], "hint-toggle"),
+            (vec![Start], "hint-confirm"),
+            (vec![Lb, Rb], "hint-filter"),
+            (vec![B], "hint-cancel"),
         ],
         PadCtx::Text => vec![
-            (vec![A], "Type"),
-            (vec![B], "Erase"),
-            (vec![Y], "АБВ / ABC"),
-            (vec![Start], "OK"),
+            (vec![A], "hint-type"),
+            (vec![B], "hint-erase"),
+            (vec![Y], "hint-layout"),
+            (vec![Start], "hint-ok"),
         ],
-        _ => vec![(vec![A], "OK"), (vec![B], "Back")],
+        _ => vec![(vec![A], "hint-ok"), (vec![B], "hint-back")],
     }
 }
 
@@ -119,9 +124,10 @@ pub struct PadView {
     material: Option<Gd<ShaderMaterial>>,
     title: Gd<Label>,
     hint: Gd<Label>,
-    strip: Gd<HBoxContainer>,
-    /// The panel the strip sits in the bottom of (None: over the world).
-    strip_in: Option<Rect2>,
+    strip: Gd<HFlowContainer>,
+    /// Where the strip is docked: the panel it sits in the bottom of, or
+    /// over the world right of the log (its rect).
+    strip_in: Option<(Option<Rect2>, Rect2)>,
     shown: Option<(PadKind, PadCtx)>,
     selected: Option<usize>,
 }
@@ -167,7 +173,8 @@ impl PadView {
             icon.set_h_size_flags(SizeFlags::SHRINK_CENTER);
             icon.set_texture(&icons::emblem(entry_glyph(*e)));
             col.add_child(&icon);
-            let mut l = theme::styled_label(e.label(), Face::BodyBold, 14, theme::TEXT);
+            let mut l = theme::styled_label("", Face::BodyBold, 14, theme::TEXT);
+            i18n::text(&l, e.label_key());
             theme::outline(&l, 4);
             l.set_horizontal_alignment(HorizontalAlignment::CENTER);
             col.add_child(&l);
@@ -192,11 +199,14 @@ impl PadView {
         radial.set_visible(false);
         root.add_child(&radial);
 
-        // the strip of hints, bottom right above the Pw orb's corner
-        let mut strip = HBoxContainer::new_alloc();
+        // the strip of hints, bottom right above the Pw orb's corner; a
+        // second row above when the words are too long for one
+        let mut strip = HFlowContainer::new_alloc();
         strip.set_mouse_filter(MouseFilter::IGNORE);
-        strip.add_theme_constant_override("separation", 14);
-        strip.set_alignment(godot::classes::box_container::AlignmentMode::END);
+        strip.add_theme_constant_override("h_separation", 14);
+        strip.add_theme_constant_override("v_separation", 6);
+        strip.set_alignment(godot::classes::flow_container::AlignmentMode::END);
+        strip.set_v_grow_direction(GrowDirection::BEGIN);
         place(&strip, [0.0, 1.0, 1.0, 1.0], [24.0, -232.0, -24.0, -200.0]);
         strip.set_visible(false);
         root.add_child(&strip);
@@ -244,13 +254,12 @@ impl PadView {
         }
         match sel.and_then(|i| RADIAL.get(i)) {
             Some(e) => {
-                self.title.set_text(e.label());
-                self.hint.set_text("Let go of LT to do it");
+                self.title.set_text(&i18n::tr(e.label_key()));
+                self.hint.set_text(&tr!("radial-let-go"));
             }
             None => {
-                self.title.set_text("Actions");
-                self.hint
-                    .set_text("Point a stick at one · let go in the middle: nothing");
+                self.title.set_text(&tr!("radial-title"));
+                self.hint.set_text(&tr!("radial-hint"));
             }
         }
     }
@@ -281,7 +290,8 @@ impl PadView {
             for b in buttons {
                 item.add_child(&medallion(kind, b));
             }
-            let mut l: Gd<Label> = theme::styled_label(what, Face::Body, 16, theme::TEXT);
+            let mut l: Gd<Label> =
+                theme::styled_label(&i18n::tr(what), Face::Body, 16, theme::TEXT);
             theme::outline(&l, 5);
             l.set_vertical_alignment(VerticalAlignment::CENTER);
             item.add_child(&l);
@@ -294,14 +304,21 @@ impl PadView {
         self.root.set_visible(on);
     }
 
+    /// The hints again in the language now (the radial's captions are
+    /// bound).
+    pub fn relang(&mut self) {
+        let shown = self.shown.take();
+        self.show_hints(shown);
+    }
+
     /// The strip goes in the bottom right of a panel open on screen (the
     /// inventory), inside its frame, rather than across its edge; None:
-    /// back over the world, above the Pw orb.
-    pub fn dock_hints(&mut self, panel: Option<Rect2>) {
-        if self.strip_in == panel {
+    /// back over the world, above the Pw orb, right of the log (`log`).
+    pub fn dock_hints(&mut self, panel: Option<Rect2>, log: Rect2) {
+        if self.strip_in == Some((panel, log)) {
             return;
         }
-        self.strip_in = panel;
+        self.strip_in = Some((panel, log));
         match panel {
             Some(r) => {
                 let (end, bottom) = (r.end().x - 28.0, r.end().y - 18.0);
@@ -314,9 +331,27 @@ impl PadView {
             None => place(
                 &self.strip,
                 [0.0, 1.0, 1.0, 1.0],
-                [24.0, -232.0, -24.0, -200.0],
+                [log.end().x.max(0.0) + 24.0, -232.0, -24.0, -200.0],
             ),
         }
+    }
+
+    /// Where the strip's hints are on screen (None: no strip), and the
+    /// panel it is docked in (self-tests: it fits the panel, or the
+    /// screen beside the HUD's blocks).
+    pub fn strip_rect(&self) -> Option<(Rect2, Option<Rect2>)> {
+        if !self.strip.is_visible_in_tree() {
+            return None;
+        }
+        let rect = self
+            .strip
+            .get_children()
+            .iter_shared()
+            .filter_map(|k| k.try_cast::<Control>().ok())
+            .filter(|k| k.is_visible())
+            .map(|k| k.get_global_rect())
+            .reduce(|a, b| a.merge(b))?;
+        Some((rect, self.strip_in.and_then(|(panel, _)| panel)))
     }
 }
 
@@ -339,6 +374,10 @@ mod tests {
                 "{ctx:?}"
             );
         }
-        assert!(hints(PadCtx::World).iter().any(|(_, w)| *w == "Inventory"));
+        assert!(
+            hints(PadCtx::World)
+                .iter()
+                .any(|(_, w)| *w == "hint-inventory")
+        );
     }
 }

@@ -37,8 +37,10 @@ use nh_world::{
 };
 
 use crate::gamepad::{PadButton, PadKind};
+use crate::i18n::{self, EngineKind};
 use crate::icons::{self, Glyph};
 use crate::theme::{self, Face, Frame, place};
+use crate::tr;
 use crate::ui_events::{UiEvent, UiQueue, push};
 
 /// The panel's design size (ui-design §2.2).
@@ -75,68 +77,13 @@ const PULSE_HIGH: Color = Color::from_rgb(0.941, 0.753, 0.376);
 
 // ---- texts ----
 
-/// The English text of a label key ("item.wield", "cmd.pick_up",
-/// "inv.weapons"); an unknown key reads as its humanized name.
+/// The text of a label key ("item.wield", "cmd.pick_up", "inv.weapons")
+/// in the language now; a key the catalogs lack reads as its humanized
+/// name.
 pub fn label(key: &str) -> String {
-    let known = match key {
-        "item.wield" => "Wield",
-        "item.unwield" => "Unwield",
-        "item.set_alternate" => "Set as alternate",
-        "item.swap_weapons" => "Swap weapons",
-        "item.quiver" => "Ready in quiver",
-        "item.empty_quiver" => "Empty the quiver",
-        "item.fire" => "Fire",
-        "item.throw" => "Throw",
-        "item.apply" => "Apply",
-        "item.wear" => "Wear",
-        "item.take_off" => "Take off",
-        "item.put_on" => "Put on",
-        "item.put_on_left" => "Put on left hand",
-        "item.put_on_right" => "Put on right hand",
-        "item.remove" => "Remove",
-        "item.eat" => "Eat",
-        "item.quaff" => "Quaff",
-        "item.read" => "Read",
-        "item.zap" => "Zap",
-        "item.engrave" => "Engrave with",
-        "item.break" => "Break",
-        "item.drop" => "Drop",
-        "item.drop_some" => "Drop some…",
-        "item.adjust" => "Adjust letter…",
-        "item.split" => "Split stack…",
-        "item.name" => "Name this item…",
-        "item.call" => "Call this type…",
-        "item.dip" => "Dip into…",
-        "item.two_weapon" => "Two-weapon",
-        "item.force" => "Force a lock",
-        "item.rub" => "Rub on…",
-        "item.tip" => "Tip out",
-        "inv.all" => "All",
-        "inv.suggested" => "Suggested",
-        "inv.weapons" => "Weapons",
-        "inv.armor" => "Armor",
-        "inv.accessories" => "Rings and amulets",
-        "inv.tools" => "Tools",
-        "inv.food" => "Food",
-        "inv.potions" => "Potions",
-        "inv.scrolls_and_books" => "Scrolls and books",
-        "inv.wands" => "Wands",
-        "inv.gems_and_other" => "Gems and other",
-        "inv.equipped" => "Equipped",
-        "cmd.look_here" => "Look here",
-        "cmd.pick_up" => "Pick up",
-        "cmd.two_weapon" => "Two-weapon",
-        "cmd.turn_undead" => "Turn undead",
-        "cmd.cast" => "Cast a spell",
-        "cmd.swap" => "Swap weapons",
-        "cmd.rest" => "Rest until healed",
-        "cmd.enhance" => "Enhance skills",
-        "cmd.up" => "Go up",
-        "cmd.down" => "Go down",
-        _ => "",
-    };
-    if !known.is_empty() {
-        return known.to_string();
+    let id = i18n::fluent_id(key);
+    if i18n::has(&id) {
+        return i18n::tr(&id);
     }
     let name = key.rsplit('.').next().unwrap_or(key).replace('_', " ");
     let mut c = name.chars();
@@ -147,25 +94,25 @@ pub fn label(key: &str) -> String {
 }
 
 /// What a class is called in the detail panel.
-pub fn class_name(class: char) -> &'static str {
+pub fn class_name(class: char) -> String {
     match class {
-        ')' => "Weapon",
-        '[' => "Armor",
-        '=' => "Ring",
-        '"' => "Amulet",
-        '(' => "Tool",
-        '%' => "Comestible",
-        '!' => "Potion",
-        '?' => "Scroll",
-        '+' => "Spellbook",
-        '/' => "Wand",
-        '*' => "Gem or rock",
-        '`' => "Boulder or statue",
-        '0' => "Iron ball",
-        '_' => "Iron chain",
-        '.' => "Venom",
-        '$' => "Coins",
-        _ => "Item",
+        ')' => tr!("class-weapon"),
+        '[' => tr!("class-armor"),
+        '=' => tr!("class-ring"),
+        '"' => tr!("class-amulet"),
+        '(' => tr!("class-tool"),
+        '%' => tr!("class-comestible"),
+        '!' => tr!("class-potion"),
+        '?' => tr!("class-scroll"),
+        '+' => tr!("class-spellbook"),
+        '/' => tr!("class-wand"),
+        '*' => tr!("class-gem"),
+        '`' => tr!("class-boulder"),
+        '0' => tr!("class-iron-ball"),
+        '_' => tr!("class-iron-chain"),
+        '.' => tr!("class-venom"),
+        '$' => tr!("class-coins"),
+        _ => tr!("class-item"),
     }
 }
 
@@ -262,44 +209,38 @@ pub fn facts(item: &InvItem) -> Vec<Fact> {
         if let Some((a, b)) = g.split_once(':')
             && let (Ok(r), Ok(n)) = (a.parse::<i32>(), b.parse::<i32>())
         {
-            let times = if r == 1 { "once" } else { "times" };
-            let rec = if r == 1 {
-                "Recharged once".to_string()
-            } else {
-                format!("Recharged {r} {times}")
-            };
-            out.push(fact(format!("{rec} · {n} charges left")));
+            out.push(fact(tr!("fact-recharged", times = r, charges = n)));
         } else if let Ok(n) = g.parse::<i32>() {
-            out.push(fact(format!("{n} charges")));
+            out.push(fact(tr!("fact-charges", n = n)));
         } else if g.starts_with("unpaid") || g.starts_with("for sale") || g == "no charge" {
             out.push(Fact {
-                text: capitalized(&g),
+                text: capitalized(&i18n::engine(EngineKind::Name, &g)),
                 color: Some(theme::WARN),
             });
         } else {
             out.push(Fact {
-                text: capitalized(&g),
+                text: capitalized(&i18n::engine(EngineKind::Name, &g)),
                 color: Some(theme::GOLD_BRIGHT),
             });
         }
     }
     match name.buc {
         Some(Buc::Blessed) => out.push(Fact {
-            text: "Blessed".into(),
+            text: tr!("fact-blessed"),
             color: Some(BLESSED),
         }),
         Some(Buc::Uncursed) => out.push(Fact {
-            text: "Uncursed".into(),
+            text: tr!("fact-uncursed"),
             color: Some(UNCURSED),
         }),
         Some(Buc::Cursed) => out.push(Fact {
-            text: "Cursed".into(),
+            text: tr!("fact-cursed"),
             color: Some(CURSED),
         }),
         None => {}
     }
     if let Some(e) = name.enchantment {
-        out.push(fact(format!("Enchantment {e:+}")));
+        out.push(fact(tr!("fact-enchantment", value = format!("{e:+}"))));
     }
     // the state words, with their "very", "thoroughly", "partly"
     let words: Vec<&str> = bare(&item.text).split(' ').collect();
@@ -311,7 +252,8 @@ pub fn facts(item: &InvItem) -> Vec<Fact> {
             while start > 0 && matches!(words[start - 1], "very" | "thoroughly" | "partly") {
                 start -= 1;
             }
-            out.push(fact(capitalized(&words[start..=i].join(" "))));
+            let state = words[start..=i].join(" ");
+            out.push(fact(capitalized(&i18n::engine(EngineKind::Name, &state))));
         }
         if w == "named" || w == "called" || w == "containing" {
             break;
@@ -321,21 +263,19 @@ pub fn facts(item: &InvItem) -> Vec<Fact> {
     let text = bare(&item.text);
     if let Some(at) = text.find(" containing ") {
         let what = &text[at + 12..];
-        out.push(fact(format!("Containing {what}")));
+        let what = i18n::engine(EngineKind::Name, what).into_owned();
+        out.push(fact(tr!("fact-containing", what = what)));
     }
     let stem = &name.stem;
     if let Some(at) = stem.find(" named ") {
-        out.push(fact(format!("Name: {}", &stem[at + 7..])));
+        out.push(fact(tr!("fact-name", name = &stem[at + 7..])));
     }
     if let Some(at) = stem.find(" called ") {
         let end = stem
             .find(" named ")
             .filter(|&e| e > at)
             .unwrap_or(stem.len());
-        out.push(fact(format!(
-            "You called this type: {}",
-            &stem[at + 8..end]
-        )));
+        out.push(fact(tr!("fact-called", name = &stem[at + 8..end])));
     }
     out
 }
@@ -406,34 +346,34 @@ impl DollSlot {
         DollSlot::Quiver,
     ];
 
-    pub fn name(self) -> &'static str {
+    pub fn name(self) -> String {
         match self {
-            DollSlot::Helmet => "Helmet",
-            DollSlot::Cloak => "Cloak",
-            DollSlot::Body => "Body armor",
-            DollSlot::Shirt => "Shirt",
-            DollSlot::Gloves => "Gloves",
-            DollSlot::Boots => "Boots",
-            DollSlot::Eyes => "Eyewear",
-            DollSlot::Amulet => "Amulet",
-            DollSlot::LeftRing => "Left ring",
-            DollSlot::RightRing => "Right ring",
-            DollSlot::Light => "Light",
-            DollSlot::Leash => "Leash",
-            DollSlot::Main => "Main hand",
-            DollSlot::Off => "Off hand / shield",
-            DollSlot::Alternate => "Alternate weapon",
-            DollSlot::Quiver => "Quiver",
+            DollSlot::Helmet => tr!("doll-helmet"),
+            DollSlot::Cloak => tr!("doll-cloak"),
+            DollSlot::Body => tr!("doll-body"),
+            DollSlot::Shirt => tr!("doll-shirt"),
+            DollSlot::Gloves => tr!("doll-gloves"),
+            DollSlot::Boots => tr!("doll-boots"),
+            DollSlot::Eyes => tr!("doll-eyes"),
+            DollSlot::Amulet => tr!("doll-amulet"),
+            DollSlot::LeftRing => tr!("doll-left-ring"),
+            DollSlot::RightRing => tr!("doll-right-ring"),
+            DollSlot::Light => tr!("doll-light"),
+            DollSlot::Leash => tr!("doll-leash"),
+            DollSlot::Main => tr!("doll-main"),
+            DollSlot::Off => tr!("doll-off"),
+            DollSlot::Alternate => tr!("doll-alternate"),
+            DollSlot::Quiver => tr!("doll-quiver"),
         }
     }
 
-    /// The short caption under a weapons-row socket.
+    /// The key of the short caption under a weapons-row socket.
     fn caption(self) -> &'static str {
         match self {
-            DollSlot::Main => "Main",
-            DollSlot::Off => "Off hand",
-            DollSlot::Alternate => "Alternate",
-            DollSlot::Quiver => "Quiver",
+            DollSlot::Main => "doll-main-short",
+            DollSlot::Off => "doll-off-short",
+            DollSlot::Alternate => "doll-alternate-short",
+            DollSlot::Quiver => "doll-quiver-short",
             _ => "",
         }
     }
@@ -1516,7 +1456,7 @@ impl InventoryPanel {
         let frame: Gd<Control> = frame.upcast();
 
         // ---- header ----
-        let mut title = theme::styled_label("Inventory", Face::Title, 30, theme::GOLD_BRIGHT);
+        let mut title = theme::styled_label(&tr!("inv-title"), Face::Title, 30, theme::GOLD_BRIGHT);
         place(
             &title,
             [0.0, 0.0, 0.0, 0.0],
@@ -1544,26 +1484,24 @@ impl InventoryPanel {
         );
         let mut letters = theme::styled_label("", Face::Body, 16, theme::TEXT_DIM);
         letters.set_vertical_alignment(VerticalAlignment::CENTER);
-        letters.set_tooltip_text("Inventory letters in use (NetHack keeps 52)");
+        i18n::tip(&letters, "inv-letters-tip");
         letters.set_mouse_filter(MouseFilter::PASS);
         head_right.add_child(&letters);
         let ac_chip = chip("");
         head_right.add_child(&ac_chip);
         let gold_chip = chip("");
         head_right.add_child(&gold_chip);
-        let mut confirm = theme::button(
-            "Confirm  Enter",
-            &queue,
-            UiEvent::Inventory(InvInput::Confirm),
-        );
+        let mut confirm = theme::button("", &queue, UiEvent::Inventory(InvInput::Confirm));
+        i18n::text(&confirm, "inv-confirm");
         confirm.add_theme_stylebox_override("normal", &theme::default_button_style());
         confirm.set_visible(false);
         head_right.add_child(&confirm);
-        let mut cancel = theme::button("Cancel  Esc", &queue, UiEvent::Inventory(InvInput::Cancel));
+        let mut cancel = theme::button("", &queue, UiEvent::Inventory(InvInput::Cancel));
+        i18n::text(&cancel, "inv-cancel");
         cancel.set_visible(false);
         head_right.add_child(&cancel);
         let mut close = theme::button("✕", &queue, UiEvent::Inventory(InvInput::Close));
-        close.set_tooltip_text("Close (Esc or i)");
+        i18n::tip(&close, "inv-close-tip");
         close.set_custom_minimum_size(Vector2::new(36.0, 32.0));
         head_right.add_child(&close);
         body.add_child(&head_right);
@@ -1647,7 +1585,7 @@ impl InventoryPanel {
                 inner.move_child(&g, 1);
             }
             s.ghost = Some(g);
-            s.root.set_tooltip_text(slot.name());
+            s.root.set_tooltip_text(&slot.name());
             slot_area.add_child(&s.root);
             let t = slot;
             wire_socket(&s.root, Rc::new(move || InvTarget::Doll(t)), &queue, &mouse);
@@ -1669,7 +1607,8 @@ impl InventoryPanel {
         for (i, slot) in DollSlot::HANDS.iter().enumerate() {
             let x = row_x + i as f32 * (CELL + 24.0);
             add_slot(*slot, x, row_y, &mut doll);
-            let mut cap = theme::styled_label(slot.caption(), Face::Caps, 13, theme::TEXT_DIM);
+            let mut cap = theme::styled_label("", Face::Caps, 13, theme::TEXT_DIM);
+            i18n::text(&cap, slot.caption());
             cap.set_horizontal_alignment(HorizontalAlignment::CENTER);
             place(
                 &cap,
@@ -1703,7 +1642,8 @@ impl InventoryPanel {
             [0.0, 0.0, 0.0, 0.0],
             [gx, top, gx + GRID_COL_W, top + 32.0],
         );
-        let mut suggested_tab = tab_button(Glyph::Star, "Suggested (?)", &looks);
+        let mut suggested_tab = tab_button(Glyph::Star, "", &looks);
+        i18n::tip(&suggested_tab, "inv-suggested-tip");
         let q = queue.clone();
         suggested_tab.signals().pressed().connect(move || {
             push(
@@ -1715,13 +1655,7 @@ impl InventoryPanel {
         tab_row.add_child(&suggested_tab);
         let mut tabs = Vec::new();
         for f in InvFilter::TABS {
-            let classes = f.classes();
-            let tip = if classes.is_empty() {
-                label(f.label_key())
-            } else {
-                format!("{}  {}", label(f.label_key()), classes)
-            };
-            let b = tab_button(filter_glyph(f), &tip, &looks);
+            let b = tab_button(filter_glyph(f), &filter_tip(f), &looks);
             let q = queue.clone();
             b.signals()
                 .pressed()
@@ -1731,7 +1665,7 @@ impl InventoryPanel {
         }
         body.add_child(&tab_row);
         let mut search_edit = LineEdit::new_alloc();
-        search_edit.set_placeholder("Search");
+        i18n::bind(&search_edit, "placeholder_text", "inv-search");
         search_edit.set_clear_button_enabled(true);
         place(
             &search_edit,
@@ -1751,8 +1685,8 @@ impl InventoryPanel {
             .text_submitted()
             .connect(move |_t: GString| se.release_focus());
         body.add_child(&search_edit);
-        let mut order =
-            theme::styled_label("NetHack's pack order", Face::Body, 14, theme::TEXT_OFF);
+        let mut order = theme::styled_label("", Face::Body, 14, theme::TEXT_OFF);
+        i18n::text(&order, "inv-pack-order");
         order.set_horizontal_alignment(HorizontalAlignment::RIGHT);
         order.set_vertical_alignment(VerticalAlignment::CENTER);
         place(
@@ -1843,12 +1777,8 @@ impl InventoryPanel {
             ],
         );
         body.add_child(&detail);
-        let mut detail_empty = theme::styled_label(
-            "Select an item to see what you know of it.",
-            Face::Body,
-            16,
-            theme::TEXT_OFF,
-        );
+        let mut detail_empty = theme::styled_label("", Face::Body, 16, theme::TEXT_OFF);
+        i18n::text(&detail_empty, "inv-detail-empty");
         detail_empty.set_autowrap_mode(AutowrapMode::WORD_SMART);
         detail_empty.set_horizontal_alignment(HorizontalAlignment::CENTER);
         detail_empty.set_vertical_alignment(VerticalAlignment::CENTER);
@@ -1888,28 +1818,20 @@ impl InventoryPanel {
         count_label.set_horizontal_alignment(HorizontalAlignment::CENTER);
         count_label.set_custom_minimum_size(Vector2::new(300.0, 0.0));
         count_col.add_child(&count_label);
-        let mut count_hint = theme::styled_label(
-            "Type the number or use ← →.  Enter: OK · Esc: cancel",
-            Face::Body,
-            14,
-            theme::TEXT_DIM,
-        );
+        let mut count_hint = theme::styled_label("", Face::Body, 14, theme::TEXT_DIM);
+        i18n::text(&count_hint, "inv-count-hint");
         count_hint.set_horizontal_alignment(HorizontalAlignment::CENTER);
         count_hint.set_autowrap_mode(AutowrapMode::WORD_SMART);
         count_col.add_child(&count_hint);
         let mut count_buttons = HBoxContainer::new_alloc();
         count_buttons.set_alignment(godot::classes::box_container::AlignmentMode::CENTER);
         count_buttons.add_theme_constant_override("separation", 12);
-        count_buttons.add_child(&theme::button(
-            "OK",
-            &queue,
-            UiEvent::Inventory(InvInput::Count(0)),
-        ));
-        count_buttons.add_child(&theme::button(
-            "Cancel",
-            &queue,
-            UiEvent::Inventory(InvInput::CancelCount),
-        ));
+        let ok = theme::button("", &queue, UiEvent::Inventory(InvInput::Count(0)));
+        i18n::text(&ok, "dlg-ok");
+        count_buttons.add_child(&ok);
+        let cancel_count = theme::button("", &queue, UiEvent::Inventory(InvInput::CancelCount));
+        i18n::text(&cancel_count, "dlg-cancel");
+        count_buttons.add_child(&cancel_count);
         count_col.add_child(&count_buttons);
         count_box.add_child(&count_col);
         root.add_child(&count_box);
@@ -2042,6 +1964,18 @@ impl InventoryPanel {
         }
     }
 
+    /// The panel in the language now: its tabs' tooltips, and everything
+    /// it draws again (bound labels change by themselves).
+    pub fn relang(&mut self) {
+        for (f, b) in self.tabs.iter_mut() {
+            b.set_tooltip_text(&filter_tip(*f));
+        }
+        self.pack_key.clear();
+        self.detail_key = None;
+        self.close_menu();
+        self.dirty = true;
+    }
+
     /// The warm-up is over (done, or a game starts): nothing of it stays.
     pub fn warm_end(&mut self) {
         if matches!(self.warm, Warm::Open { .. }) {
@@ -2052,6 +1986,11 @@ impl InventoryPanel {
     }
 
     // ---- state ----
+
+    /// The header's title as shown (self-tests).
+    pub fn title_text(&self) -> String {
+        self.title.get_text().to_string()
+    }
 
     pub fn is_open(&self) -> bool {
         self.mode != Mode::Closed
@@ -2570,7 +2509,8 @@ impl InventoryPanel {
             self.ctx_rows.remove_child(&c);
             c.queue_free();
         }
-        let mut head = theme::styled_label(&title_of(&item), Face::Title, 18, theme::GOLD_BRIGHT);
+        let title = i18n::engine(EngineKind::Name, &title_of(&item)).into_owned();
+        let mut head = theme::styled_label(&title, Face::Title, 18, theme::GOLD_BRIGHT);
         head.set_autowrap_mode(AutowrapMode::WORD_SMART);
         head.set_custom_minimum_size(Vector2::new(284.0, 0.0));
         self.ctx_rows.add_child(&head);
@@ -2634,7 +2574,7 @@ impl InventoryPanel {
         b.set_text_alignment(HorizontalAlignment::LEFT);
         let mut text = label(a.label_key);
         if a.two_actions {
-            text.push_str("  (2 actions)");
+            text = tr!("inv-two-actions", action = text);
         }
         b.set_text(&text);
         if !primary {
@@ -3258,7 +3198,7 @@ impl InventoryPanel {
                     if self.selected == Some(item.letter) && self.mode == Mode::Browse || focus {
                         style = &self.looks.selected;
                     }
-                    let mut tip = item.text.clone();
+                    let mut tip = i18n::engine(EngineKind::Name, &item.text).into_owned();
                     if let Some(q) = &question {
                         let on = q.all || q.suggests(item.letter);
                         sock.rim.set_visible(on && !q.all);
@@ -3266,7 +3206,13 @@ impl InventoryPanel {
                             sock.root
                                 .set_modulate(Color::from_rgba(0.55, 0.52, 0.5, 0.4));
                         }
-                        tip.push_str(&format!("\nClick or press {}: {}", item.letter, q.verb));
+                        let verb = i18n::engine(EngineKind::Prompt, &q.verb).into_owned();
+                        tip.push('\n');
+                        tip.push_str(&tr!(
+                            "inv-cell-select-tip",
+                            letter = item.letter,
+                            verb = verb
+                        ));
                     } else if let Some(m) = &menu_letters {
                         if let Some((_, true, count)) = m.iter().find(|(l, ..)| *l == item.letter) {
                             {
@@ -3278,12 +3224,14 @@ impl InventoryPanel {
                                 sock.check.set_visible(true);
                             }
                         }
-                        tip.push_str("\nClick or press its letter: select · Shift+click: a count");
+                        tip.push('\n');
+                        tip.push_str(&tr!("inv-cell-menu-tip"));
                     } else if let Some(a) = default_action(item, &self.pack) {
-                        tip.push_str(&format!(
-                            "\nDouble-click: {} ({}) · Right-click: actions",
-                            label(a.label_key()),
-                            a.keys()
+                        tip.push('\n');
+                        tip.push_str(&tr!(
+                            "inv-cell-tip",
+                            action = label(a.label_key()),
+                            keys = a.keys()
                         ));
                     }
                     if let Some(d) = &drag_item
@@ -3337,30 +3285,37 @@ impl InventoryPanel {
             set_style(&mut sock.root, "panel", style);
             let tip = match first {
                 Some(i) => {
-                    let out = slot.unequip(i).map_or(String::new(), |k| {
-                        format!(
-                            "\nDrag out or double-click: {} ({})",
-                            label(k.label_key()),
-                            k.keys()
-                        )
-                    });
-                    format!("{}: {}{out}", slot.name(), i.text)
+                    let name = i18n::engine(EngineKind::Name, &i.text).into_owned();
+                    let mut tip = tr!("inv-doll-tip", slot = slot.name(), item = name);
+                    if let Some(k) = slot.unequip(i) {
+                        tip.push('\n');
+                        tip.push_str(&tr!(
+                            "inv-doll-out-tip",
+                            action = label(k.label_key()),
+                            keys = k.keys()
+                        ));
+                    }
+                    tip
                 }
-                None => format!("{} (empty) · drag an item here", slot.name()),
+                None => tr!("inv-doll-empty-tip", slot = slot.name()),
             };
             sock.root.set_tooltip_text(&tip);
         }
         let mut summary = Vec::new();
         if let Some(ac) = &self.status.0 {
-            summary.push(format!("AC {ac}"));
+            summary.push(tr!("inv-ac", ac = ac));
         }
         if let Some(b) = self.status.2.as_ref().filter(|b| !b.is_empty()) {
-            summary.push(b.clone());
+            summary.push(i18n::engine(EngineKind::Status, b).into_owned());
         }
         let mut text = summary.join("  ·  ");
+        text.push('\n');
         match self.pack.wielded() {
-            Some(w) => text.push_str(&format!("\nWielding {}", title_of(w))),
-            None => text.push_str("\nEmpty handed"),
+            Some(w) => {
+                let name = i18n::engine(EngineKind::Name, &title_of(w)).into_owned();
+                text.push_str(&tr!("inv-wielding", item = name));
+            }
+            None => text.push_str(&tr!("inv-empty-handed")),
         }
         self.doll_summary.set_text(&text);
         self.mouse.borrow_mut().preview_tex = preview;
@@ -3371,11 +3326,13 @@ impl InventoryPanel {
             .iter()
             .filter(|i| i.letter.is_ascii_alphabetic())
             .count();
-        self.letters.set_text(&format!("Letters {used}/52"));
+        self.letters.set_text(&tr!("inv-letters", used = used));
         self.ac_chip
-            .set_text(&format!("AC {}", self.status.0.as_deref().unwrap_or("?")));
-        self.gold_chip
-            .set_text(&format!("Gold {}", self.status.1.as_deref().unwrap_or("0")));
+            .set_text(&tr!("inv-ac", ac = self.status.0.as_deref().unwrap_or("?")));
+        self.gold_chip.set_text(&tr!(
+            "inv-gold",
+            gold = self.status.1.as_deref().unwrap_or("0")
+        ));
         let (title, sub, hint) = self.texts(question.as_ref());
         self.title.set_text(&title);
         self.subtitle.set_text(&sub);
@@ -3385,7 +3342,7 @@ impl InventoryPanel {
             .done()
             .x;
         self.subtitle.set_offset(Side::LEFT, PAD + 4.0 + tw + 24.0);
-        self.hint.set_text(&hint);
+        self.hint.set_text(&i18n::whole_parts(&hint));
         let menu = matches!(self.mode, Mode::Menu { .. });
         self.confirm.set_visible(
             menu && matches!(&self.mode, Mode::Menu { state, .. } if state.how == PickHow::Any),
@@ -3412,13 +3369,14 @@ impl InventoryPanel {
         // the count picker
         match self.counting {
             Some((what, v, max)) => {
-                let verb = match what {
-                    CountFor::Pick(_) => "How many",
-                    CountFor::Drop(_) => "Drop how many",
-                    CountFor::Split(_) => "Split off how many",
-                    CountFor::Entry(_) => "How many",
+                let key = match what {
+                    CountFor::Pick(_) | CountFor::Entry(_) => "inv-count-how-many",
+                    CountFor::Drop(_) => "inv-count-drop",
+                    CountFor::Split(_) => "inv-count-split",
                 };
-                self.count_label.set_text(&format!("{verb}?  {v} / {max}"));
+                let verb = i18n::tr(key);
+                self.count_label
+                    .set_text(&tr!("inv-count", verb = verb, value = v, most = max));
                 self.count_box.reset_size();
                 let view = self.root.get_viewport_rect().size;
                 let size = self.count_box.get_combined_minimum_size();
@@ -3442,42 +3400,34 @@ impl InventoryPanel {
     fn pad_hint(&self, kind: PadKind, question: Option<&ItemQuestion>) -> String {
         use PadButton::*;
         let b = |b| kind.label(b);
-        let filter = format!("{} {}: filter", b(Lb), b(Rb));
+        let filter = tr!("inv-pad-filter", lb = b(Lb), rb = b(Rb));
         if self.choose.is_some() {
-            return format!("D-pad: the item · {}: this one · {}: cancel", b(A), b(B));
+            return tr!("inv-pad-choose", a = b(A), b = b(B));
         }
         match &self.mode {
             Mode::Select { .. } => {
-                let mut hint = format!(
-                    "D-pad: the item · {}: choose · {filter} · {}: cancel",
-                    b(A),
-                    b(B)
-                );
+                let hint = tr!("inv-pad-select", a = b(A), b = b(B), filter = filter);
                 if question.is_some_and(|q| q.all) {
-                    hint = format!("Nothing suggested — any item may be chosen. {hint}");
+                    tr!("inv-nothing-suggested", hint = hint)
+                } else {
+                    hint
                 }
-                hint
             }
-            Mode::Menu { .. } => format!(
-                "D-pad: the item · {}: select · {}: confirm · {filter} · {}: cancel",
-                b(A),
-                b(Start),
-                b(B)
+            Mode::Menu { .. } => tr!(
+                "inv-pad-menu",
+                a = b(A),
+                start = b(Start),
+                b = b(B),
+                filter = filter
             ),
-            _ if self.carrying.is_some() => format!(
-                "D-pad: where it goes (a doll socket, another item) · {}: put it down · {}: put \
-                 it back",
-                b(Y),
-                b(B)
-            ),
-            _ => format!(
-                "D-pad: the items and the doll · {}: the first action · {}: every action\n\
-                 {}: pick up, then {} again where it goes (the doll: equip) · {filter} · {}: close",
-                b(A),
-                b(X),
-                b(Y),
-                b(Y),
-                b(B)
+            _ if self.carrying.is_some() => tr!("inv-pad-carrying", y = b(Y), b = b(B)),
+            _ => tr!(
+                "inv-pad-browse",
+                a = b(A),
+                x = b(X),
+                y = b(Y),
+                b = b(B),
+                filter = filter
             ),
         }
     }
@@ -3487,65 +3437,56 @@ impl InventoryPanel {
             let (sub, hint) = match choose {
                 Choose::Adjust { from, count } => (
                     match count {
-                        Some(n) => format!("Split {n} off {from} to which letter?"),
-                        None => format!("Adjust {from} to which letter?"),
+                        Some(n) => tr!("inv-split-to", n = n, from = from),
+                        None => tr!("inv-adjust-to", from = from),
                     },
-                    "Type the new letter, or click the item to swap with. Esc: cancel".to_string(),
+                    tr!("inv-adjust-hint"),
                 ),
-                Choose::Dip { from } => (
-                    format!("Dip {from} into what?"),
-                    "Click the item to dip into, or type its letter. Esc: cancel".to_string(),
-                ),
+                Choose::Dip { from } => (tr!("inv-dip-into", from = from), tr!("inv-dip-hint")),
             };
-            return ("Inventory".into(), sub, hint);
+            return (tr!("inv-title"), sub, hint);
         }
         match &self.mode {
             Mode::Select { query, count, .. } => {
                 let q = question.expect("selection mode has its question");
-                let mut sub = query.split(" [").next().unwrap_or(query).to_string();
+                let question = query.split(" [").next().unwrap_or(query);
+                let mut sub = i18n::engine(EngineKind::Prompt, question).into_owned();
                 if let Some(n) = count {
-                    sub.push_str(&format!("   Count {n}"));
+                    sub.push_str("   ");
+                    sub.push_str(&tr!("inv-count-typed", n = *n));
                 }
-                let mut hint = String::from(
-                    "Click an item or press its letter · ? suggested · * all · Esc: cancel",
-                );
+                let mut hint = tr!("inv-select-hint");
                 if q.takes_count() {
-                    hint.push_str(" · digits or Shift+click: a count");
+                    hint = tr!("inv-select-hint-count", hint = hint);
                 }
                 if q.all {
-                    hint = format!("Nothing suggested — any item may be chosen. {hint}");
+                    hint = tr!("inv-nothing-suggested", hint = hint);
                 }
-                ("Choose".into(), sub, hint)
+                (tr!("inv-choose"), sub, hint)
             }
             Mode::Menu { state, .. } => {
-                let title = state.title.clone().unwrap_or_default();
+                let title = state.title.as_deref().map_or(String::new(), |t| {
+                    i18n::engine(EngineKind::Menu, t).into_owned()
+                });
                 let hint = if state.how == PickHow::Any {
-                    "Click or letter: select · Shift+click or digits: a count\n\
-                     '.' all · '-' none · '@' invert · Enter: confirm · Esc: cancel"
+                    tr!("inv-menu-any-hint")
                 } else {
-                    "Click or press a letter to choose · Esc: cancel"
+                    tr!("inv-menu-one-hint")
                 };
                 let n = state.entries.iter().filter(|e| e.selected).count();
                 let sub = if state.how == PickHow::Any {
-                    format!("{title}   {n} selected")
+                    format!("{title}   {}", tr!("dlg-selected", n = n))
                 } else {
                     title
                 };
-                ("Choose".into(), sub, hint.to_string())
+                (tr!("inv-choose"), sub, hint)
             }
             _ if self.carrying.is_some() => (
-                "Inventory".into(),
-                "Carrying an item".into(),
-                "Move to where it goes (a doll socket, another item) and press Y again · B: put it back"
-                    .into(),
+                tr!("inv-title"),
+                tr!("inv-carrying"),
+                tr!("inv-carrying-hint"),
             ),
-            _ => (
-                "Inventory".into(),
-                String::new(),
-                "Drag to the doll: equip · to the action bar: bind · out of the panel: drop\n\
-                 Double-click: the first action · Right-click: every action"
-                    .into(),
-            ),
+            _ => (tr!("inv-title"), String::new(), tr!("inv-browse-hint")),
         }
     }
 
@@ -3574,7 +3515,8 @@ impl InventoryPanel {
         for mut c in self.pack_box.get_children().iter_shared() {
             c.queue_free();
         }
-        let mut head = theme::styled_label("Your pack", Face::Title, 21, theme::GOLD_BRIGHT);
+        let mut head =
+            theme::styled_label(&tr!("inv-your-pack"), Face::Title, 21, theme::GOLD_BRIGHT);
         head.set_horizontal_alignment(HorizontalAlignment::CENTER);
         self.pack_box.add_child(&head);
         self.pack_box.add_child(&separator());
@@ -3594,9 +3536,9 @@ impl InventoryPanel {
             hover.set_border_color(theme::GOLD);
             b.add_theme_stylebox_override("hover", &hover);
             b.add_theme_stylebox_override("pressed", &self.looks.tab_on);
-            b.set_tooltip_text(&format!(
-                "Show only {}",
-                label(f.label_key()).to_lowercase()
+            b.set_tooltip_text(&tr!(
+                "inv-show-only",
+                what = label(f.label_key()).to_lowercase()
             ));
             let mut row = HBoxContainer::new_alloc();
             row.set_mouse_filter(MouseFilter::IGNORE);
@@ -3669,11 +3611,16 @@ impl InventoryPanel {
         icon.set_custom_minimum_size(Vector2::new(128.0, 128.0));
         icon_box.add_child(&icon);
         self.detail.add_child(&icon_box);
-        let mut name = theme::styled_label(&title_of(&item), Face::Title, 23, theme::GOLD_BRIGHT);
+        let title = i18n::engine(EngineKind::Name, &title_of(&item)).into_owned();
+        let mut name = theme::styled_label(&title, Face::Title, 23, theme::GOLD_BRIGHT);
         name.set_autowrap_mode(AutowrapMode::WORD_SMART);
         name.set_horizontal_alignment(HorizontalAlignment::CENTER);
         self.detail.add_child(&name);
-        let mut class_line = format!("{} · letter {}", class_name(item.class), item.letter);
+        let mut class_line = tr!(
+            "inv-class-line",
+            class = class_name(item.class),
+            letter = item.letter
+        );
         if item.quan > 1 {
             class_line.push_str(&format!(" · ×{}", item.quan));
         }
@@ -3715,8 +3662,15 @@ impl InventoryPanel {
             self.detail.add_child(&grid_box);
             self.detail.add_child(&separator());
         }
-        let mut raw =
-            theme::styled_label(&format!("“{}”", item.text), Face::Body, 14, theme::TEXT_OFF);
+        let mut raw = theme::styled_label(
+            &tr!(
+                "inv-raw",
+                text = i18n::engine(EngineKind::Name, &item.text).into_owned()
+            ),
+            Face::Body,
+            14,
+            theme::TEXT_OFF,
+        );
         raw.set_autowrap_mode(AutowrapMode::WORD_SMART);
         self.detail.add_child(&raw);
     }
@@ -3765,12 +3719,22 @@ fn doll_step(i: usize, k: Key) -> DollStep {
 }
 
 /// The '-' cell's label by the question's verb (ui-design §3).
-pub fn hands_label(verb: &str) -> &'static str {
+pub fn hands_label(verb: &str) -> String {
     match verb {
-        "wield" => "Bare hands",
-        v if v.starts_with("write") || v.starts_with("engrave") => "Fingers",
-        v if v.starts_with("ready") => "Nothing (empty the quiver)",
-        _ => "Nothing",
+        "wield" => tr!("hands-bare"),
+        v if v.starts_with("write") || v.starts_with("engrave") => tr!("hands-fingers"),
+        v if v.starts_with("ready") => tr!("hands-empty-quiver"),
+        _ => tr!("hands-nothing"),
+    }
+}
+
+/// A filter tab's tooltip: its name and its classes' symbols.
+fn filter_tip(f: InvFilter) -> String {
+    let classes = f.classes();
+    if classes.is_empty() {
+        label(f.label_key())
+    } else {
+        format!("{}  {}", label(f.label_key()), classes)
     }
 }
 

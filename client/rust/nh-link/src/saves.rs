@@ -106,6 +106,23 @@ pub fn read_ui_state(playground: &Path, name: &str) -> Option<String> {
     fs::read_to_string(ui_state_path(playground, name)).ok()
 }
 
+/// The client's own settings, the same for every character (nh-world's
+/// `Profile`): `<playground>/profile.json`.
+const PROFILE_FILE: &str = "profile.json";
+
+/// None when there is none yet.
+pub fn read_profile(playground: &Path) -> Option<String> {
+    fs::read_to_string(playground.join(PROFILE_FILE)).ok()
+}
+
+/// Write it whole or not at all.
+pub fn write_profile(playground: &Path, json: &str) -> io::Result<()> {
+    let path = playground.join(PROFILE_FILE);
+    let tmp = path.with_extension("json.tmp");
+    fs::write(&tmp, json)?;
+    fs::rename(tmp, path)
+}
+
 /// With the save, when the character dies; no file is no error.
 pub fn remove_ui_state(playground: &Path, name: &str) -> io::Result<()> {
     match fs::remove_file(ui_state_path(playground, name)) {
@@ -349,6 +366,24 @@ mod tests {
         assert_eq!(
             fs::read_dir(pg.path()).unwrap().count(),
             0,
+            "no temporary left"
+        );
+    }
+
+    #[test]
+    fn the_profile_is_one_file_beside_the_saves() {
+        let pg = tempfile::tempdir().unwrap();
+        assert_eq!(read_profile(pg.path()), None);
+        write_profile(pg.path(), "{\"lang\":\"ru\"}").unwrap();
+        assert_eq!(
+            read_profile(pg.path()).as_deref(),
+            Some("{\"lang\":\"ru\"}")
+        );
+        // not a save
+        assert!(list_saves(pg.path()).unwrap().is_empty());
+        assert_eq!(
+            fs::read_dir(pg.path()).unwrap().count(),
+            1,
             "no temporary left"
         );
     }

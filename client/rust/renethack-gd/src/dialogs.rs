@@ -24,7 +24,9 @@ use godot::prelude::*;
 use nh_protocol::{Catalog, ESC, PickHow, Reply};
 use nh_world::{Key, KeyInput, MenuEntry, MenuOutcome, MenuState, Prompt, TextLine, choice_answer};
 
+use crate::i18n::{self, EngineKind, Lang};
 use crate::theme::{self, Face, Frame, bbcode_escape, hex, nh_color, place};
+use crate::tr;
 use crate::ui_events::{DialogEvent, UiEvent, UiQueue, push};
 
 /// NetHack's BUFSZ less the NUL.
@@ -88,7 +90,8 @@ pub fn palette_cmds(catalog: Option<&Catalog>) -> Vec<PaletteCmd> {
         .filter(|e| palette_lists(&e.name))
         .map(|e| PaletteCmd {
             name: e.name.clone(),
-            desc: e.desc.clone(),
+            // the engine's words: its translator gives them
+            desc: i18n::engine(EngineKind::Menu, &e.desc).into_owned(),
             key: e.key,
         })
         .collect()
@@ -171,10 +174,10 @@ fn key_name(key: i32) -> String {
 /// A Choice button's label: the usual answers spelled out, others as typed.
 fn choice_label(c: char) -> String {
     match c {
-        'y' => "Yes (y)".to_string(),
-        'n' => "No (n)".to_string(),
-        'q' => "Cancel (q)".to_string(),
-        'a' => "All (a)".to_string(),
+        'y' => tr!("dlg-yes"),
+        'n' => tr!("dlg-no"),
+        'q' => tr!("dlg-cancel-q"),
+        'a' => tr!("dlg-all-a"),
         c => c.to_string(),
     }
 }
@@ -589,34 +592,29 @@ impl MenuView {
         }
         let mut status = Vec::new();
         if let Some(n) = self.state.typed_count() {
-            status.push(format!("Count: {n} — pick an item to take that many"));
+            status.push(tr!("dlg-count", n = n));
         }
         if any {
             let n = self.state.entries.iter().filter(|e| e.selected).count();
-            status.push(format!("{n} selected"));
+            status.push(tr!("dlg-selected", n = n));
         }
         self.status.set_text(&status.join("   ·   "));
         self.status.set_visible(!status.is_empty());
         let pickable = self.state.entries.iter().any(|e| e.selectable);
         let hint = if !pickable {
-            "↑↓ PgUp PgDn < >: scroll · Enter or Esc: close".to_string()
+            tr!("dlg-hint-read")
         } else if any {
             // Space confirms, as in NetHack, until the arrows mark a row
             let space = if self.armed {
-                "Space: toggle it"
+                tr!("dlg-space-toggle")
             } else {
-                "then Space toggles it"
+                tr!("dlg-space-then")
             };
-            format!(
-                "letter: toggle · ↑↓ mark a row, {space} · '.' all · '-' none · '@' invert · \
-                 digits: count · PgUp PgDn < >: scroll · Enter: OK · Esc: cancel"
-            )
+            tr!("dlg-hint-any", space = space)
         } else {
-            "letter or click: pick · ↑↓ mark a row, Enter picks it · \
-             PgUp PgDn < >: scroll · Esc: cancel"
-                .to_string()
+            tr!("dlg-hint-one")
         };
-        self.hint.set_text(&hint);
+        self.hint.set_text(&i18n::whole_parts(&hint));
     }
 
     /// Scroll by pages, to the top of a row so none is cut at the top.
@@ -1045,7 +1043,8 @@ impl Dialogs {
     }
 
     fn hint(&self, col: &mut Gd<VBoxContainer>, text: &str, width: f32) -> Gd<Label> {
-        let mut hint = theme::styled_label(text, Face::Body, 15, theme::TEXT_DIM);
+        let text = i18n::whole_parts(text);
+        let mut hint = theme::styled_label(&text, Face::Body, 15, theme::TEXT_DIM);
         hint.set_autowrap_mode(AutowrapMode::WORD_SMART);
         hint.set_custom_minimum_size(Vector2::new(width, 0.0));
         col.add_child(&hint);
@@ -1352,8 +1351,8 @@ impl Dialogs {
         self.buttons(
             &mut col,
             &[
-                ("OK".into(), dialog_ui(req, DialogEvent::MenuConfirm)),
-                ("Cancel".into(), dialog_ui(req, DialogEvent::MenuCancel)),
+                (tr!("dlg-ok"), dialog_ui(req, DialogEvent::MenuConfirm)),
+                (tr!("dlg-cancel"), dialog_ui(req, DialogEvent::MenuCancel)),
             ],
         );
         let colors = items.iter().map(|i| i.clr).collect();
@@ -1446,7 +1445,7 @@ impl Dialogs {
         let view_h = (cmds.len() as f32 * ROW_H).clamp(ROW_H, max_h.min(PALETTE_ROWS * ROW_H));
         let list = Scroller::new(width, view_h, false);
 
-        let (shade, panel, mut col) = self.frame(width, Some("Extended command"));
+        let (shade, panel, mut col) = self.frame(width, Some(&tr!("palette-title")));
         let mut edit = LineEdit::new_alloc();
         edit.set_max_length(MAX_TEXT_BYTES as i32);
         edit.set_keep_editing_on_text_submit(true);
@@ -1457,7 +1456,7 @@ impl Dialogs {
                 let ev = DialogEvent::TextSubmitted(text.to_string());
                 push(&q, UiEvent::Dialog { req: c.get(), ev });
             });
-        edit.set_placeholder("type a command");
+        edit.set_placeholder(&tr!("palette-placeholder"));
         col.add_child(&edit);
         let mut rows_box = VBoxContainer::new_alloc();
         rows_box.add_theme_constant_override("separation", 0);
@@ -1468,6 +1467,9 @@ impl Dialogs {
             name.add_theme_font_size_override("font_size", BODY_SIZE);
             let mut key = cell("", theme::ACCENT, None, Some(key_w));
             key.add_theme_font_size_override("font_size", 14);
+            // the command and its key as the player types them
+            i18n::verbatim(&name);
+            i18n::verbatim(&key);
             let mut desc = cell("", theme::TEXT_DIM, Some(&look.body), None);
             desc.add_theme_font_size_override("font_size", BODY_SIZE - 1);
             // the palette is reused: its rows answer the request it is open
@@ -1488,20 +1490,15 @@ impl Dialogs {
         let mut scroll = list.scroll.clone();
         scroll.add_child(&rows_box);
         col.add_child(&scroll);
-        let mut none = theme::label("no command matches");
+        let mut none = theme::label(&tr!("palette-none"));
         none.add_theme_color_override("font_color", theme::WARN);
         none.set_visible(false);
         col.add_child(&none);
-        self.hint(
-            &mut col,
-            "Enter: run the highlighted command · Tab: complete · ↑↓ PgUp PgDn: choose · \
-             Esc: cancel",
-            width,
-        );
+        self.hint(&mut col, &tr!("palette-hint"), width);
         let mut row = HBoxContainer::new_alloc();
         row.set_alignment(AlignmentMode::CENTER);
         let mut cancel = Button::new_alloc();
-        cancel.set_text("Cancel");
+        cancel.set_text(&tr!("dlg-cancel"));
         cancel.set_focus_mode(FocusMode::NONE);
         cancel.set_custom_minimum_size(Vector2::new(112.0, 36.0));
         let (q, c) = (self.queue.clone(), req_cell.clone());
@@ -1552,11 +1549,11 @@ impl Dialogs {
         let (shade, panel, mut col) = self.frame_at(width, Some(query), Place::Top);
         let mut edit = self.line_edit(req);
         if name {
-            edit.set_placeholder("a name");
+            edit.set_placeholder(&tr!("text-name-placeholder"));
         }
         col.add_child(&edit);
         let mut bytes = theme::styled_label(
-            &format!("0 / {MAX_TEXT_BYTES} bytes"),
+            &tr!("text-bytes", len = 0, max = MAX_TEXT_BYTES),
             Face::Body,
             14,
             theme::TEXT_DIM,
@@ -1575,17 +1572,17 @@ impl Dialogs {
                 e.set_text(&cut);
                 e.set_caret_column(caret);
             }
-            b.set_text(&format!("{len} / {MAX_TEXT_BYTES} bytes"));
+            b.set_text(&tr!("text-bytes", len = len, max = MAX_TEXT_BYTES));
         });
         // with a gamepad the keyboard below has its own OK (and B cancels)
         if !self.pad {
-            self.hint(&mut col, "Enter: OK · Esc: cancel", width);
+            self.hint(&mut col, &tr!("text-hint"), width);
             let mut row = HBoxContainer::new_alloc();
             row.set_alignment(AlignmentMode::CENTER);
             row.add_theme_constant_override("separation", 12);
             // OK submits what the field holds, as Enter does
             let mut ok = Button::new_alloc();
-            ok.set_text("OK");
+            ok.set_text(&tr!("dlg-ok"));
             ok.set_focus_mode(FocusMode::NONE);
             let (q, e) = (self.queue.clone(), edit.clone());
             ok.signals().pressed().connect(move || {
@@ -1594,7 +1591,7 @@ impl Dialogs {
             });
             row.add_child(&ok);
             let cancel = dialog_ui(req, DialogEvent::TextCancelled);
-            row.add_child(&theme::button("Cancel", &self.queue, cancel));
+            row.add_child(&theme::button(&tr!("dlg-cancel"), &self.queue, cancel));
             col.add_child(&row);
         }
         // a gamepad types on a keyboard of ours (and asks Steam for its
@@ -1697,23 +1694,23 @@ impl Dialogs {
             });
         }
         if content_h > max_h {
-            self.hint(
-                &mut col,
-                "↑↓ PgUp PgDn < >: scroll · Enter, Space or Esc: close",
-                width,
-            );
+            self.hint(&mut col, &tr!("show-hint"), width);
         }
         self.buttons(
             &mut col,
-            &[("OK".into(), dialog_ui(req, DialogEvent::Close))],
+            &[(tr!("dlg-ok"), dialog_ui(req, DialogEvent::Close))],
         );
         (Kind::Show { text }, shade, panel)
     }
 
     /// Open the UI for Menu, Choice, Text, ExtCmd, Show, MessageMenu (other
     /// prompts: no-op).
-    pub fn open(&mut self, req: u64, prompt: &Prompt, catalog: Option<&Catalog>) {
+    pub fn open(&mut self, req: u64, original: &Prompt, catalog: Option<&Catalog>) {
         self.close();
+        // the engine's words as the player reads them; the original is kept
+        // (a switch of the language opens it again)
+        let shown = shown_prompt(original);
+        let prompt = &shown;
         let (kind, shade, panel) = match prompt {
             Prompt::Menu {
                 how, title, items, ..
@@ -1731,9 +1728,9 @@ impl Dialogs {
                     .map(|&c| (choice_label(c), dialog_ui(req, DialogEvent::Choice(c))))
                     .collect();
                 let buttons = self.buttons(&mut col, &items);
-                let mut hint = String::from("Esc: cancel");
+                let mut hint = tr!("choice-hint");
                 if let Some(d) = *default {
-                    hint.push_str(&format!(" · Enter: {}", choice_label(d)));
+                    hint = tr!("choice-hint-default", hint = hint, answer = choice_label(d));
                     if let Some(i) = visible.iter().position(|&c| c == d) {
                         let mut b = buttons[i].clone();
                         b.add_theme_stylebox_override("normal", &self.look.default_button);
@@ -1776,16 +1773,16 @@ impl Dialogs {
                                 dialog_ui(req, DialogEvent::Choice(*letter)),
                             ),
                             (
-                                "Cancel".to_string(),
+                                tr!("dlg-cancel"),
                                 dialog_ui(req, DialogEvent::Choice(ESC_CHAR)),
                             ),
                         ],
-                        format!("{letter}: choose · Esc: cancel"),
+                        tr!("msgmenu-hint-pick", letter = *letter),
                     )
                 } else {
                     (
-                        vec![("OK".to_string(), dialog_ui(req, DialogEvent::Close))],
-                        "Enter, Space or Esc: close".to_string(),
+                        vec![(tr!("dlg-ok"), dialog_ui(req, DialogEvent::Close))],
+                        tr!("msgmenu-hint-close"),
                     )
                 };
                 self.buttons(&mut col, &buttons);
@@ -1806,7 +1803,7 @@ impl Dialogs {
         };
         self.open = Some(Open {
             req,
-            prompt: prompt.clone(),
+            prompt: original.clone(),
             kind,
             shade,
             panel,
@@ -1891,6 +1888,19 @@ impl Dialogs {
             self.retire(open);
         }
         shown
+    }
+
+    /// The open dialog again in the language now (its state starts over:
+    /// a switch happens between questions, from the settings); the
+    /// palette is made again on its next use.
+    pub fn relang(&mut self, catalog: Option<&Catalog>) {
+        if let Some(mut pool) = self.palette_pool.take() {
+            pool.panel.queue_free();
+            pool.shade.queue_free();
+        }
+        if let Some((req, prompt)) = self.open.as_ref().map(|o| (o.req, o.prompt.clone())) {
+            self.open(req, &prompt, catalog);
+        }
     }
 
     /// The command palette made ahead, hidden, with its rows' text shaped
@@ -2342,6 +2352,65 @@ fn prompt_kind(p: &Prompt) -> &'static str {
     }
 }
 
+/// A prompt with the engine's words in it (the question, a menu's title and
+/// entries, a text window's lines, a message) as the player reads them.
+fn shown_prompt(p: &Prompt) -> Prompt {
+    if i18n::lang() == Lang::En {
+        return p.clone();
+    }
+    let e = |kind: EngineKind, t: &str| i18n::engine(kind, t).into_owned();
+    match p {
+        Prompt::Menu {
+            win,
+            how,
+            title,
+            items,
+        } => Prompt::Menu {
+            win: *win,
+            how: *how,
+            title: title.as_deref().map(|t| e(EngineKind::Menu, t)),
+            items: items
+                .iter()
+                .map(|i| nh_protocol::MenuItem {
+                    str: i.str.as_deref().map(|t| e(EngineKind::Menu, t)),
+                    ..i.clone()
+                })
+                .collect(),
+        },
+        Prompt::Choice {
+            query,
+            visible,
+            allowed,
+            default,
+        } => Prompt::Choice {
+            query: e(EngineKind::Prompt, query),
+            visible: visible.clone(),
+            allowed: allowed.clone(),
+            default: *default,
+        },
+        Prompt::Text { query, name } => Prompt::Text {
+            query: e(EngineKind::Prompt, query),
+            name: *name,
+        },
+        Prompt::Show { title, lines } => Prompt::Show {
+            title: title.as_deref().map(|t| e(EngineKind::Window, t)),
+            lines: lines
+                .iter()
+                .map(|l| TextLine {
+                    attr: l.attr,
+                    text: e(EngineKind::Window, &l.text),
+                })
+                .collect(),
+        },
+        Prompt::MessageMenu { letter, mesg, pick } => Prompt::MessageMenu {
+            letter: *letter,
+            mesg: e(EngineKind::Message, mesg),
+            pick: *pick,
+        },
+        other => other.clone(),
+    }
+}
+
 /// A text window as BBCode, one line per line. NetHack's attributes:
 /// 1 bold, 2 dim, 3 italic, 4 underline, 5 blink, 7 inverse.
 fn show_text(lines: &[TextLine]) -> String {
@@ -2427,19 +2496,21 @@ impl Osk {
         grid.add_theme_constant_override("separation", 4);
         let mut rows = Vec::new();
         let specials = [
-            (OskKey::Shift, "⇧ Shift"),
-            (OskKey::Layout, "АБВ / ABC"),
-            (OskKey::Space, "Space"),
-            (OskKey::Back, "⌫"),
-            (OskKey::Ok, "OK"),
+            (OskKey::Shift, tr!("osk-shift")),
+            (OskKey::Layout, tr!("osk-layout")),
+            (OskKey::Space, tr!("osk-space")),
+            (OskKey::Back, "⌫".to_string()),
+            (OskKey::Ok, tr!("dlg-ok")),
         ];
         for r in 0..5 {
             let mut line = HBoxContainer::new_alloc();
             line.set_alignment(AlignmentMode::CENTER);
             line.add_theme_constant_override("separation", 4);
             let mut keys = Vec::new();
-            let row: Vec<(OskKey, &str)> = if r < 4 {
-                (0..11).map(|_| (OskKey::Char(String::new()), "")).collect()
+            let row: Vec<(OskKey, String)> = if r < 4 {
+                (0..11)
+                    .map(|_| (OskKey::Char(String::new()), String::new()))
+                    .collect()
             } else {
                 specials.to_vec()
             };
@@ -2448,7 +2519,7 @@ impl Osk {
                 b.set_focus_mode(FocusMode::NONE);
                 b.set_custom_minimum_size(Vector2::new(if r < 4 { 40.0 } else { 104.0 }, 36.0));
                 if r == 4 {
-                    b.set_text(text);
+                    b.set_text(&text);
                 }
                 // a click types the key as A does (the dialog knows which)
                 let q = queue.clone();
@@ -2465,7 +2536,7 @@ impl Osk {
         }
         col.add_child(&grid);
         let mut hint = theme::styled_label(
-            "D-pad: a key · A: type · B: erase · Y: АБВ/ABC · Start: OK",
+            &i18n::whole_parts(&tr!("osk-hint")),
             Face::Body,
             14,
             theme::TEXT_DIM,
