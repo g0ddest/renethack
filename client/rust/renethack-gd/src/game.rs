@@ -32,7 +32,7 @@ use crate::gamepad::{OskOp, Pad, PadButton, PadCtx, PadKind, PadOut, RADIAL, Rad
 use crate::hud::Hud;
 use crate::icons;
 use crate::input::{client_key, key_input, key_release};
-use crate::inventory_panel::{self, Intent, InvInput, InventoryPanel, KeyUse};
+use crate::inventory_panel::{self, Intent, InvInput, InventoryPanel, KeyUse, WarmStep};
 use crate::map_view::MapView;
 use crate::paths::Paths;
 use crate::screens::{DEFAULT_NAME, EndSummary, Screens};
@@ -281,19 +281,60 @@ pub struct RenethackGame {
     /// With RENETHACK_FRAME_STATS: what this frame's work spent, by part
     /// (printed when it is long).
     prof: Option<Vec<(&'static str, f64)>>,
-    /// The dialogs' warm-up has been built; every glyph is painted.
-    warmed: bool,
-    glyphs_warm: bool,
-    /// The inventory panel has been open behind the title; frames waited
-    /// for the rehearsal's hero to show on its doll.
-    panel_warm: bool,
+    /// Where the warm-up behind the title is, what it did this frame
+    /// (RENETHACK_FRAME_STATS), and whether that was a first draw (the
+    /// map's loading waits a frame then: no two first draws share one).
+    title_warm: TitleWarm,
+    warm_did: &'static str,
+    warm_heavy: bool,
+    /// Frames waited for the rehearsal's hero to show on the doll.
     title_frames: u32,
+    /// Frames processed, and whether none is drawn (headless): frames are
+    /// counted by those processed then.
+    frames: u64,
+    headless: bool,
+    /// The start-up veil (the boot splash's colour) and when it began to
+    /// lift (None: still down).
+    veil: Option<Gd<godot::classes::ColorRect>>,
+    veil_lift: Option<Instant>,
+    /// When the last title frame began, and the pipelines compiled and
+    /// video memory used then (RENETHACK_FRAME_STATS).
+    title_clock: Option<Instant>,
+    title_render: ([i64; 5], f64),
     /// The bar's labels were drawn for this (pad kind and page, if a pad).
     pad_labels: Option<Option<(PadKind, usize)>>,
     /// The window's size the self-test asked for (its screenshots must be
     /// that size).
     pub(crate) window_size: Option<Vector2i>,
 }
+
+/// The warm-up behind the title screen, in order: nothing drawn for the
+/// first time shares a frame with another first draw (each is tens of
+/// milliseconds of pipelines and buffers), and none falls on the frames
+/// that present the title.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum TitleWarm {
+    /// The title presented for a few frames first, once the start-up veil
+    /// is up (the frames shown when it began).
+    Settle(Option<u64>),
+    /// A kind of dialog built a frame.
+    Dialogs,
+    /// A glyph's textures painted a frame.
+    Glyphs,
+    /// The map's warm-up (the rehearsal behind the title, the first
+    /// levels' art), then the inventory panel on the rehearsal's hero.
+    Map,
+    Panel,
+    Done,
+}
+
+/// Frames the title is drawn before the warm-up begins.
+const TITLE_SETTLE: u64 = 4;
+/// Frames drawn under the start-up veil: the first ones set up the 3D
+/// view's buffers and passes (a frame or two of 50-220 ms); then seconds
+/// the veil takes to fade.
+const VEIL_FRAMES: u64 = 8;
+const VEIL_FADE: f32 = 0.25;
 
 /// The way preview is drawn again only when one of these changes.
 #[derive(Debug, Clone, PartialEq)]
@@ -366,10 +407,16 @@ impl INode for RenethackGame {
             pad_cursor: None,
             pad_labels: None,
             prof: None,
-            warmed: false,
-            glyphs_warm: false,
-            panel_warm: false,
+            title_warm: TitleWarm::Settle(None),
+            warm_did: "-",
+            warm_heavy: false,
             title_frames: 0,
+            frames: 0,
+            headless: false,
+            veil: None,
+            veil_lift: None,
+            title_clock: None,
+            title_render: ([0; 5], 0.0),
             window_size: None,
         }
     }
@@ -426,6 +473,18 @@ impl INode for RenethackGame {
         for layer in &layers {
             self.base_mut().add_child(layer);
         }
+        // the boot splash's colour over everything for the first frames:
+        // the first 3D frame's buffers and passes are made behind it
+        let mut veil_layer = CanvasLayer::new_alloc();
+        veil_layer.set_name("VeilLayer");
+        veil_layer.set_layer(100);
+        let mut veil = godot::classes::ColorRect::new_alloc();
+        veil.set_color(crate::theme::BG);
+        crate::theme::place(&veil, [0.0, 0.0, 1.0, 1.0], [0.0; 4]);
+        veil_layer.add_child(&veil);
+        self.base_mut().add_child(&veil_layer);
+        self.veil = Some(veil);
+        self.headless = godot::classes::DisplayServer::singleton().get_name() == "headless";
         let queue = self.queue.clone();
         let mut layers = layers.into_iter();
         let mut next = || layers.next().expect("five layers");
@@ -472,8 +531,11 @@ impl INode for RenethackGame {
         // they belong to the prompt the player saw, or to the typeahead while
         // the engine works; a request read afterwards never gets them (the
         // typeahead policy drops them when it opens a modal question)
-        self.warm_up();
+        self.frames += 1;
         let stats = std::env::var_os("RENETHACK_FRAME_STATS").is_some();
+        self.time_title_frame(stats);
+        self.lift_veil();
+        self.warm_up();
         self.prof = stats.then(Vec::new);
         let t = Instant::now();
         self.pad_tick();
@@ -500,7 +562,16 @@ impl INode for RenethackGame {
                 );
             }
         }
-        if let Some(ui) = self.ui.as_mut() {
+        // the map's loading begins after the title's own warm-up and waits
+        // out a frame of a first draw of it
+        let map_turn = !matches!(
+            self.title_warm,
+            TitleWarm::Settle(_) | TitleWarm::Dialogs | TitleWarm::Glyphs
+        ) || self.state != GameState::Title;
+        if let Some(ui) = self.ui.as_mut()
+            && map_turn
+            && !self.warm_heavy
+        {
             ui.map.preload_step();
         }
         self.watch_engine();
@@ -653,41 +724,177 @@ impl RenethackGame {
     }
 
     /// Behind the title screen, what the first frames of a game would
-    /// otherwise pay for: one dialog of each kind drawn for a few frames,
-    /// and a glyph texture painted a frame.
+    /// otherwise pay for, a step a frame (see `TitleWarm`): one dialog of
+    /// each kind drawn for a few frames, a glyph's textures painted, the
+    /// map's rehearsal and art, the inventory panel and its doll.
     fn warm_up(&mut self) {
+        self.warm_did = "-";
+        self.warm_heavy = false;
+        let shown = self.frames_shown();
         let catalog = self.catalog.clone();
         let title = self.state == GameState::Title;
         let Some(ui) = self.ui.as_mut() else {
             return;
         };
-        // its dialogs go after a few frames, whatever comes next
-        ui.dialogs.warm_tick();
         if !title {
-            // a game started before the panel's warm-up was over
+            // a game started before the warm-up was over: nothing of it
+            // stays on screen
+            ui.dialogs.warm_tick();
             ui.inventory.warm_end();
             return;
         }
-        if !self.warmed {
-            self.warmed = true;
-            ui.dialogs.warm_up(catalog.as_deref());
+        match self.title_warm {
+            TitleWarm::Settle(_) if self.veil.is_some() => {}
+            TitleWarm::Settle(start) => {
+                ui.dialogs.warm_tick();
+                let start = start.unwrap_or(shown);
+                self.title_warm = if shown >= start + TITLE_SETTLE {
+                    TitleWarm::Dialogs
+                } else {
+                    TitleWarm::Settle(Some(start))
+                };
+            }
+            TitleWarm::Dialogs => match ui.dialogs.warm_step(catalog.as_deref()) {
+                Some(kind) => {
+                    self.warm_did = kind;
+                    self.warm_heavy = true;
+                }
+                None if ui.dialogs.warm_done() => self.title_warm = TitleWarm::Glyphs,
+                None => {}
+            },
+            TitleWarm::Glyphs => {
+                ui.dialogs.warm_tick();
+                self.warm_did = "glyph";
+                if !icons::warm_step() {
+                    self.title_warm = TitleWarm::Map;
+                }
+            }
+            TitleWarm::Map => {
+                ui.dialogs.warm_tick();
+                // the rehearsal begins and the map is drawn behind the
+                // title: its loading waits a frame
+                if let Some(cat) = catalog.as_deref() {
+                    ui.map.warm_up(cat, None);
+                }
+                self.warm_did = "map warm-up";
+                self.warm_heavy = true;
+                self.title_warm = TitleWarm::Panel;
+            }
+            TitleWarm::Panel => {
+                ui.dialogs.warm_tick();
+                // the doll renders the rehearsal's hero (if none comes for
+                // long, the panel warms without it)
+                self.title_frames += 1;
+                let hero = ui.map.hero_model().map(|m| m.node.clone());
+                if hero.is_none() && self.title_frames <= 900 {
+                    return;
+                }
+                let step = ui.inventory.warm_step(hero);
+                (self.warm_did, self.warm_heavy) = match step {
+                    WarmStep::Panel => ("panel made", true),
+                    WarmStep::Drawn => ("panel drawn", true),
+                    WarmStep::Doll => ("doll", true),
+                    WarmStep::Shown => ("panel shown", false),
+                    WarmStep::Done => ("panel done", false),
+                };
+                if step == WarmStep::Done {
+                    self.title_warm = TitleWarm::Done;
+                }
+            }
+            TitleWarm::Done => {
+                ui.dialogs.warm_tick();
+            }
         }
-        self.glyphs_warm = !icons::warm_step();
-        // the doll renders the hero of the map's rehearsal (if there is
-        // none for long, the panel warms without it)
-        self.title_frames += 1;
-        let hero = ui.map.hero_model().map(|m| m.node.clone());
-        if self.glyphs_warm && (hero.is_some() || self.title_frames > 900) {
-            self.panel_warm = ui.inventory.warm_step(hero);
+    }
+
+    /// The start-up veil lifts after its frames, whatever the first screen
+    /// is (the title, or an error).
+    fn lift_veil(&mut self) {
+        let Some(mut veil) = self.veil.clone() else {
+            return;
+        };
+        match self.veil_lift {
+            None => {
+                if self.frames_shown() >= VEIL_FRAMES {
+                    self.veil_lift = Some(Instant::now());
+                }
+            }
+            Some(t) => {
+                let a = 1.0 - t.elapsed().as_secs_f32() / VEIL_FADE;
+                if a <= 0.0 {
+                    if let Some(mut layer) = veil.get_parent() {
+                        layer.queue_free();
+                    }
+                    self.veil = None;
+                } else {
+                    veil.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, a));
+                }
+            }
         }
+    }
+
+    /// Frames shown so far: those drawn, or (headless, where none is)
+    /// those processed.
+    fn frames_shown(&self) -> u64 {
+        if self.headless {
+            self.frames
+        } else {
+            godot::classes::Engine::singleton().get_frames_drawn() as u64
+        }
+    }
+
+    /// The first screen is still under the start-up veil (self-tests: not
+    /// up yet).
+    pub(crate) fn veiled(&self) -> bool {
+        self.veil.is_some()
     }
 
     /// The warm-up behind the title screen is done (self-tests start a
     /// game after it, as a player would).
     pub(crate) fn warmed_up(&self) -> bool {
-        self.glyphs_warm
-            && self.panel_warm
-            && self.ui.as_ref().is_some_and(|ui| ui.dialogs.warm_done())
+        self.title_warm == TitleWarm::Done
+    }
+
+    /// A title frame over 33 ms, with what the warm-up did in the one
+    /// before (RENETHACK_FRAME_STATS; the map logs its own part).
+    fn time_title_frame(&mut self, stats: bool) {
+        let now = Instant::now();
+        let last = self.title_clock.replace(now);
+        if !stats || self.state != GameState::Title {
+            return;
+        }
+        use godot::classes::performance::Monitor as M;
+        let perf = godot::classes::Performance::singleton();
+        let pipelines = [
+            M::PIPELINE_COMPILATIONS_CANVAS,
+            M::PIPELINE_COMPILATIONS_MESH,
+            M::PIPELINE_COMPILATIONS_SURFACE,
+            M::PIPELINE_COMPILATIONS_DRAW,
+            M::PIPELINE_COMPILATIONS_SPECIALIZATION,
+        ]
+        .map(|m| perf.get_monitor(m) as i64);
+        let vmem = perf.get_monitor(M::RENDER_VIDEO_MEM_USED) / 1e6;
+        let (before, vmem_before) = std::mem::replace(&mut self.title_render, (pipelines, vmem));
+        if let Some(t) = last {
+            let ms = now.duration_since(t).as_secs_f64() * 1000.0;
+            if ms > 33.0 {
+                let new: Vec<i64> = pipelines.iter().zip(before).map(|(a, b)| a - b).collect();
+                // a frame drawn under the start-up veil (fully down) is not
+                // seen: the boot splash goes on
+                let seen = if self.veil.is_some() && self.veil_lift.is_none() {
+                    ", under the start-up veil"
+                } else {
+                    ""
+                };
+                godot_print!(
+                    "game: a title frame of {ms:.1} ms (frame {}{seen}); the warm-up before it: {} ({:?}); pipelines compiled (canvas, mesh, surface, draw, specialization) {new:?}, video memory {:+.1} MB",
+                    godot::classes::Engine::singleton().get_frames_drawn(),
+                    self.warm_did,
+                    self.title_warm,
+                    vmem - vmem_before
+                );
+            }
+        }
     }
 
     /// Time since `t` under `what` (RENETHACK_FRAME_STATS).
@@ -1100,10 +1307,12 @@ impl RenethackGame {
         if self.catalog.is_none() {
             match fetch_catalog(&paths.engine(), &paths.data()) {
                 Ok((_, catalog)) => {
+                    // the first level's models are built behind the title,
+                    // once it is up (warm_up); the palette now, under the
+                    // boot splash
                     icons::set_catalog(&catalog);
-                    // the first level's models are built behind the title
                     if let Some(ui) = self.ui.as_mut() {
-                        ui.map.warm_up(&catalog, None);
+                        ui.dialogs.prebuild_palette(Some(&catalog));
                     }
                     self.catalog = Some(Rc::new(catalog));
                 }

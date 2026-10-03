@@ -1294,6 +1294,21 @@ enum Warm {
     Done,
 }
 
+/// What a frame of the panel's warm-up did: made the panel (hidden), drew
+/// it for the first time, rendered the doll for the first time, showed
+/// them again, or finished.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WarmStep {
+    Panel,
+    Drawn,
+    Doll,
+    Shown,
+    Done,
+}
+
+/// The warm-up's frame the doll's render begins on.
+const DOLL_AFTER: u32 = 3;
+
 fn tab_button(glyph: Glyph, tip: &str, looks: &Looks) -> Gd<Button> {
     let mut b = Button::new_alloc();
     b.set_focus_mode(FocusMode::NONE);
@@ -1966,10 +1981,10 @@ impl InventoryPanel {
     /// One frame of the warm-up behind the title screen: the panel open on
     /// a sample pack with the doll rendering `hero`, so the first real
     /// opening finds its pipelines compiled, its buffers allocated and its
-    /// textures loaded. True once done.
-    pub fn warm_step(&mut self, hero: Option<Gd<Node3D>>) -> bool {
+    /// textures loaded.
+    pub fn warm_step(&mut self, hero: Option<Gd<Node3D>>) -> WarmStep {
         let (frames, doll) = match self.warm {
-            Warm::Done => return true,
+            Warm::Done => return WarmStep::Done,
             Warm::Not => {
                 let item = |letter, class, text: &str, slots| InvItem {
                     letter,
@@ -1997,23 +2012,34 @@ impl InventoryPanel {
                 self.set_pack(&pack);
                 self.open();
                 self.selected = Some('a');
-                (0, 0)
+                // made in this frame, hidden; drawn from the next
+                self.layout();
+                self.redraw();
+                self.dirty = false;
+                self.warm = Warm::Open { frames: 1, doll: 0 };
+                return WarmStep::Panel;
             }
             Warm::Open { frames, doll } => (frames, doll),
         };
-        self.set_hero(hero);
+        // the panel is made, then drawn, then the doll renders, each in a
+        // frame of its own: each costs a frame's work the first time
+        self.set_hero(hero.filter(|_| frames >= DOLL_AFTER));
         self.sync();
         let doll = doll + u32::from(self.doll_rendered());
         // a few frames with the doll rendered; without a hero, a few anyway
         if doll >= 3 || frames >= 60 {
             self.warm_end();
-            return true;
+            return WarmStep::Done;
         }
         self.warm = Warm::Open {
             frames: frames + 1,
             doll,
         };
-        false
+        match (frames, doll) {
+            (1, _) => WarmStep::Drawn,
+            (_, 1) if self.doll_rendered() => WarmStep::Doll,
+            _ => WarmStep::Shown,
+        }
     }
 
     /// The warm-up is over (done, or a game starts): nothing of it stays.

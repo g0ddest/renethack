@@ -133,6 +133,10 @@ fn smoke_choice() -> CharacterChoice {
 }
 
 fn screen(game: &RenethackGame) -> Option<&'static str> {
+    // a screen still under the start-up veil is not up yet
+    if game.veiled() {
+        return None;
+    }
     game.ui.as_ref().and_then(|ui| ui.screens.current())
 }
 

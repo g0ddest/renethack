@@ -901,10 +901,13 @@ pub struct Dialogs {
     /// A gamepad gave the last input: dialogs open with a focus, a text
     /// field with the on-screen keyboard.
     pad: bool,
-    /// Dialogs of every kind built behind the title screen, and the frames
-    /// they have been drawn (the warm-up).
-    warm: Vec<(Gd<ColorRect>, Gd<PanelContainer>)>,
-    warm_frames: u32,
+    /// Dialogs of every kind built behind the title screen one a frame,
+    /// and the frames each has been drawn (the warm-up); the next to build.
+    warm: Vec<(Open, u32)>,
+    warm_next: usize,
+    /// A dialog of the warm-up is being built: its text field takes no
+    /// keyboard focus (the system's text input would start up for it).
+    warming: bool,
     /// The command palette, built once (about a hundred rows: tens of
     /// milliseconds) and hidden between uses.
     palette_pool: Option<PalettePool>,
@@ -936,7 +939,8 @@ impl Dialogs {
             open: None,
             pad: false,
             warm: Vec::new(),
-            warm_frames: 0,
+            warm_next: 0,
+            warming: false,
             palette_pool: None,
         }
     }
@@ -1407,7 +1411,9 @@ impl Dialogs {
             fill_palette(&palette);
             shade.set_visible(true);
             panel.set_visible(true);
-            edit.call_deferred("grab_focus", &[]);
+            if !self.warming {
+                edit.call_deferred("grab_focus", &[]);
+            }
             return (
                 Kind::ExtCmd {
                     edit,
@@ -1522,7 +1528,9 @@ impl Dialogs {
             p.borrow_mut().refilter(&text.to_string());
             fill_palette(&p);
         });
-        edit.call_deferred("grab_focus", &[]);
+        if !self.warming {
+            edit.call_deferred("grab_focus", &[]);
+        }
         (
             Kind::ExtCmd {
                 edit,
@@ -1601,7 +1609,7 @@ impl Dialogs {
             }
             osk
         });
-        if osk.is_none() {
+        if osk.is_none() && !self.warming {
             edit.call_deferred("grab_focus", &[]);
         }
         (Kind::Text { edit, osk }, shade, panel)
@@ -1834,94 +1842,84 @@ impl Dialogs {
         })
     }
 
-    /// Build one dialog of each kind, to be drawn for a few frames under
-    /// the title screen: the first real one then costs no font loading,
-    /// text shaping, frame shader or style set-up (tens of milliseconds
-    /// in the frame the getpos tip opened).
-    pub fn warm_up(&mut self, catalog: Option<&Catalog>) {
-        let item =
-            |idx: i32, ch: char, text: &str, attr: i32, selectable: bool| nh_protocol::MenuItem {
-                win: 0,
-                idx,
-                glyph: None,
-                selectable,
-                ch: if selectable { ch as i32 } else { 0 },
-                gch: 0,
-                attr,
-                clr: 8,
-                str: Some(text.to_string()),
-                preselected: false,
-                skipinvert: false,
-            };
-        let line = |attr: i32, text: &str| TextLine {
-            attr,
-            text: text.to_string(),
-        };
-        let samples = [
-            Prompt::Show {
-                title: Some("Tip".into()),
-                lines: vec![
-                    line(0, "Use '@' to move the cursor on yourself."),
-                    line(1, "Background:"),
-                    line(0, " a | b  table  1234567890"),
-                ],
-            },
-            Prompt::Menu {
-                win: 0,
-                how: PickHow::Any,
-                title: Some("Pick up what?".into()),
-                items: vec![
-                    item(0, ' ', "Weapons", 1, false),
-                    item(1, 'a', "a long sword", 0, true),
-                    item(2, 'b', "option   [X]  (for autopickup)", 0, true),
-                ],
-            },
-            Prompt::Choice {
-                query: "Really attack?".into(),
-                visible: vec!['y', 'n'],
-                allowed: vec!['y', 'n'],
-                default: Some('n'),
-            },
-            Prompt::Text {
-                query: "What do you want to name it?".into(),
-                name: false,
-            },
-            Prompt::ExtCmd,
-            Prompt::MessageMenu {
-                letter: 'a',
-                mesg: "a - a long sword.".into(),
-                pick: true,
-            },
-        ];
-        for p in &samples {
-            self.open(0, p, catalog);
-            // the palette goes to its pool for the first `#`
-            if *p == Prompt::ExtCmd {
-                self.close();
-            } else if let Some(o) = self.open.take() {
-                self.warm.push((o.shade, o.panel));
-            }
+    /// One frame of the warm-up behind the title screen: the dialogs drawn
+    /// long enough go, and either the last one built is drawn for the
+    /// first time or the next kind is built, hidden (what was done: this
+    /// frame's work; a making and a first draw never share a frame).
+    pub fn warm_step(&mut self, catalog: Option<&Catalog>) -> Option<&'static str> {
+        if self.warm_tick() {
+            return Some("dialog drawn");
         }
-        self.warm_frames = 0;
+        let samples = warm_samples();
+        let sample = samples.get(self.warm_next)?;
+        // a dialog of the game's own stays
+        if self.open.is_some() {
+            return None;
+        }
+        self.warm_next += 1;
+        self.warming = true;
+        self.open(0, sample, catalog);
+        self.warming = false;
+        let mut open = self.open.take()?;
+        // built hidden, drawn from the next frame: its making and its
+        // first draw (layout, text, pipelines) fall on two frames
+        open.panel.set_visible(false);
+        open.shade.set_visible(false);
+        self.warm.push((open, 0));
+        Some(prompt_kind(sample))
     }
 
-    /// A frame passed; the warm-up's dialogs go after a few.
-    pub fn warm_tick(&mut self) {
-        if self.warm.is_empty() {
+    /// A frame passed: the warm-up's dialog built last frame is drawn, the
+    /// ones drawn for a few frames go (the palette to its pool, for the
+    /// first `#`). True when one is drawn for the first time.
+    pub fn warm_tick(&mut self) -> bool {
+        let mut shown = false;
+        for (open, frames) in self.warm.iter_mut() {
+            *frames += 1;
+            if *frames == 1 {
+                open.panel.set_visible(true);
+                open.shade.set_visible(true);
+                shown = true;
+            }
+        }
+        let (old, keep): (Vec<_>, Vec<_>) = self
+            .warm
+            .drain(..)
+            .partition(|(_, frames)| *frames >= WARM_FRAMES);
+        self.warm = keep;
+        for (open, _) in old {
+            self.retire(open);
+        }
+        shown
+    }
+
+    /// The command palette made ahead, hidden, with its rows' text shaped
+    /// (at start-up, under the boot splash: about a hundred rows are tens
+    /// of milliseconds); its first draw, in the warm-up, has only drawing
+    /// left.
+    pub fn prebuild_palette(&mut self, catalog: Option<&Catalog>) {
+        if self.palette_pool.is_some() || self.open.is_some() {
             return;
         }
-        self.warm_frames += 1;
-        if self.warm_frames >= 3 {
-            for (mut shade, mut panel) in self.warm.drain(..) {
-                panel.queue_free();
-                shade.queue_free();
+        self.warming = true;
+        self.open(0, &Prompt::ExtCmd, catalog);
+        self.warming = false;
+        let Some(open) = self.open.take() else {
+            return;
+        };
+        if let Kind::ExtCmd { palette, .. } = &open.kind {
+            for slot in &palette.borrow().slots {
+                for label in [&slot.name, &slot.key, &slot.desc] {
+                    label.get_minimum_size();
+                }
             }
         }
+        self.retire(open);
     }
 
-    /// The warm-up's dialogs have been drawn and freed.
+    /// Every kind of dialog has been built, drawn and put away.
     pub fn warm_done(&self) -> bool {
-        self.warm.is_empty() && self.warm_frames >= 3
+        self.warm.is_empty() && self.warm_next >= warm_samples().len()
     }
 
     /// Whether a gamepad gives the input now.
@@ -2240,9 +2238,13 @@ impl Dialogs {
     }
 
     pub fn close(&mut self) {
-        let Some(mut open) = self.open.take() else {
-            return;
-        };
+        if let Some(open) = self.open.take() {
+            self.retire(open);
+        }
+    }
+
+    /// A dialog closed: freed, the palette hidden for the next time.
+    fn retire(&mut self, mut open: Open) {
         // the palette is hidden for the next time
         if let Kind::ExtCmd { edit, palette, req } = open.kind {
             open.panel.set_visible(false);
@@ -2260,6 +2262,83 @@ impl Dialogs {
         }
         open.panel.queue_free();
         open.shade.queue_free();
+    }
+}
+
+/// Frames a dialog of the warm-up is kept (built hidden, then drawn).
+const WARM_FRAMES: u32 = 4;
+
+/// One dialog of each kind, built behind the title screen, a kind a frame,
+/// and drawn for a few frames: the first real one then costs no font
+/// loading, text shaping, frame shader or style set-up (tens of
+/// milliseconds in the frame the getpos tip opened).
+fn warm_samples() -> Vec<Prompt> {
+    let item =
+        |idx: i32, ch: char, text: &str, attr: i32, selectable: bool| nh_protocol::MenuItem {
+            win: 0,
+            idx,
+            glyph: None,
+            selectable,
+            ch: if selectable { ch as i32 } else { 0 },
+            gch: 0,
+            attr,
+            clr: 8,
+            str: Some(text.to_string()),
+            preselected: false,
+            skipinvert: false,
+        };
+    let line = |attr: i32, text: &str| TextLine {
+        attr,
+        text: text.to_string(),
+    };
+    vec![
+        Prompt::Show {
+            title: Some("Tip".into()),
+            lines: vec![
+                line(0, "Use '@' to move the cursor on yourself."),
+                line(1, "Background:"),
+                line(0, " a | b  table  1234567890"),
+            ],
+        },
+        Prompt::Menu {
+            win: 0,
+            how: PickHow::Any,
+            title: Some("Pick up what?".into()),
+            items: vec![
+                item(0, ' ', "Weapons", 1, false),
+                item(1, 'a', "a long sword", 0, true),
+                item(2, 'b', "option   [X]  (for autopickup)", 0, true),
+            ],
+        },
+        Prompt::Choice {
+            query: "Really attack?".into(),
+            visible: vec!['y', 'n'],
+            allowed: vec!['y', 'n'],
+            default: Some('n'),
+        },
+        Prompt::Text {
+            query: "What do you want to name it?".into(),
+            name: false,
+        },
+        Prompt::ExtCmd,
+        Prompt::MessageMenu {
+            letter: 'a',
+            mesg: "a - a long sword.".into(),
+            pick: true,
+        },
+    ]
+}
+
+/// A prompt's kind, by name (RENETHACK_FRAME_STATS).
+fn prompt_kind(p: &Prompt) -> &'static str {
+    match p {
+        Prompt::Show { .. } => "text",
+        Prompt::Menu { .. } => "menu",
+        Prompt::Choice { .. } => "choice",
+        Prompt::Text { .. } => "getlin",
+        Prompt::ExtCmd => "palette",
+        Prompt::MessageMenu { .. } => "message menu",
+        _ => "dialog",
     }
 }
 

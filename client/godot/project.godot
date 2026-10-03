@@ -9,6 +9,10 @@ config/name="renethack"
 config/description="NetHack 5.0 with a modern presentation"
 run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.5")
+; the boot splash is the title's own colour, without the engine's logo:
+; the game keeps it up for its first frames (game.rs, the start-up veil)
+boot_splash/bg_color=Color(0.043137256, 0.03529412, 0.03137255, 1)
+boot_splash/show_image=false
 
 [display]
 
