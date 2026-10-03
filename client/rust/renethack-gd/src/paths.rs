@@ -54,6 +54,16 @@ impl Paths {
         self.engine_dir.join("recover")
     }
 
+    /// The local achievements store, beside the playground: in the user
+    /// data directory for a player, in a self-test's own directory for a
+    /// test.
+    pub fn achievements(&self) -> PathBuf {
+        match self.playground.parent() {
+            Some(dir) => dir.join("achievements.json"),
+            None => self.playground.join("achievements.json"),
+        }
+    }
+
     /// Why the engine cannot run, if it cannot.
     pub fn check(&self) -> Result<(), String> {
         let missing = |p: &Path| format!("{} is missing", p.display());

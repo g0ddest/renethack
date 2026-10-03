@@ -383,6 +383,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
 
 [[package]]
+name = "paste"
+version = "1.0.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -416,6 +422,7 @@ dependencies = [
  "nh-link",
  "nh-protocol",
  "nh-world",
+ "steamworks",
 ]
 
 [[package]]
@@ -482,6 +489,24 @@ checksum = "6662b5879511e06e8999a8a235d848113e942c9124f211511b16466ee2995f26"
 dependencies = [
  "serde_core",
 ]
+
+[[package]]
+name = "steamworks"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5ff29921f6a7e8c85b0c971ec3c42002b9f535e3b8f4358cb22911d43709739a"
+dependencies = [
+ "bitflags",
+ "paste",
+ "steamworks-sys",
+ "thiserror",
+]
+
+[[package]]
+name = "steamworks-sys"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae139f051204a4af015d4f0ed3a1f7a51020d03a44c7cf249168c543d88131e9"
 
 [[package]]
 name = "strsim"

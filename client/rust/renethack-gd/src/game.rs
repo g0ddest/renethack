@@ -20,6 +20,7 @@ use nh_link::{
     write_ui_state,
 };
 use nh_protocol::{Catalog, PickHow, Reply, WinCall};
+use nh_world::achievements::{Achievements, Tracker};
 use nh_world::{
     Action, ActionBar, BAR_SLOTS, Cell, ClickPlan, CommandInput, CountEntry, Key, KeyContext,
     KeyInput, KeyProfile, MacroRunner, MacroStep, MenuKind, Mode, Order, Prompt, SlotBinding,
@@ -214,6 +215,9 @@ pub struct RenethackGame {
     pub(crate) session_serial: u64,
     /// The hero's name, as typed or as saved.
     pub(crate) name: Option<String>,
+    /// The achievements: earned as the progress notices tell, kept in the
+    /// local store, sent to Steam when it runs.
+    pub(crate) achievements: Option<Tracker>,
     /// A reply could not be written: the engine is gone.
     link_error: Option<String>,
     close_deadline: Option<Instant>,
@@ -379,6 +383,7 @@ impl INode for RenethackGame {
             paths: None,
             session_serial: 0,
             name: None,
+            achievements: None,
             link_error: None,
             close_deadline: None,
             quitting: false,
@@ -597,6 +602,7 @@ impl INode for RenethackGame {
             }
         }
         self.watch_engine();
+        self.achieve();
         if !self.quitting
             && let Some(mut test) = self.selftest.take()
         {
@@ -1366,6 +1372,17 @@ impl RenethackGame {
             }
         }
         let notice = self.recover_interrupted();
+        if self.achievements.is_none() {
+            let (backend, why) = crate::steam::backend();
+            if let Some(why) = why {
+                godot_print!("renethack: achievements without {why}");
+            }
+            self.achievements = Some(Tracker::start(
+                Achievements::built_in(),
+                Some(paths.achievements()),
+                backend,
+            ));
+        }
         if self.catalog.is_none() {
             match fetch_catalog(&paths.engine(), &paths.data()) {
                 Ok((_, catalog)) => {
@@ -1385,6 +1402,25 @@ impl RenethackGame {
             }
         }
         self.show_title(notice);
+    }
+
+    /// What the last progress notice newly earns, kept and sent on (the
+    /// toast comes with the achievements panel); the backend's work.
+    fn achieve(&mut self) {
+        let Some(t) = self.achievements.as_mut() else {
+            return;
+        };
+        let character = self.name.as_deref().unwrap_or_default();
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |d| d.as_secs() as i64);
+        for a in t.update(&self.world, self.session_serial, character, now) {
+            godot_print!("renethack: achievement {} ({})", a.name_en, a.steam);
+        }
+        if let Some(e) = t.take_trouble() {
+            godot_warn!("renethack: achievements: {e}");
+        }
+        t.tick();
     }
 
     /// Run `recover` on every interrupted game; what happened, if anything.

@@ -2,6 +2,7 @@
 #   make              build the engine (engine/build/nh-engine, recover, data)
 #   make client       build the Godot extension; import the Godot project and
 #                     any new or changed art
+#   make steam        the same with Steam's achievements (Steam must be running)
 #   make run          play: engine + client, then start Godot ($(GODOT))
 #   make test         engine tests, then every Rust test against the fresh engine
 #   make test-client  headless self-tests of the Godot client, one process each
@@ -30,7 +31,7 @@ DECK_DIR ?= $(GODOT_PROJECT)/.godot/shots/deck
 SOAK_CI := 2000
 SOAK_SEEDS := 1 2 3 4 5 6 7 8
 
-.PHONY: all engine client import run test test-client soak lint need-timeout art icons achievement-icons deck \
+.PHONY: all engine client steam import run test test-client soak lint need-timeout art icons achievement-icons deck \
 	i18n-catalog i18n-check
 all: engine
 
@@ -52,6 +53,18 @@ IMPORT_INPUTS := $(shell find $(GODOT_PROJECT)/art $(GODOT_PROJECT)/fonts $(GODO
 
 client:
 	cd client/rust && cargo build -p renethack-gd
+	@$(MAKE) --no-print-directory import
+
+# The extension with the `steam` feature: unlocks go to Steam as well.
+# Valve's steam_api library comes with the steamworks crate and is copied
+# beside the extension, into target/ (never committed). The App ID is
+# RENETHACK_STEAM_APPID, else steam_appid.txt in the working directory,
+# else the game Steam launched; `make client` builds without Steam again.
+steam:
+	cd client/rust && cargo build -p renethack-gd --features steam
+	@lib=$$(ls -t client/rust/target/debug/build/steamworks-sys-*/out/libsteam_api.* 2>/dev/null | head -1); \
+	test -n "$$lib" || { echo "the steamworks-sys build left no steam_api library" >&2; exit 1; }; \
+	cp "$$lib" client/rust/target/debug/
 	@$(MAKE) --no-print-directory import
 
 import: $(IMPORT_STAMP)
@@ -165,3 +178,4 @@ i18n-check:
 lint:
 	cd client/rust && cargo fmt --all -- --check
 	cd client/rust && cargo clippy --all-targets -- -D warnings
+	cd client/rust && cargo clippy -p renethack-gd --all-targets --features steam -- -D warnings

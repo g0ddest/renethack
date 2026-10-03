@@ -1,15 +1,20 @@
 //! Achievements (spec 2026-10-03-steam-achievements-design.md): the
 //! definitions of `client/achievements/achievements.toml`, their conditions
 //! over the host's `progress` notice, the unlock policy (a normal game
-//! only, each achievement once per player profile) and the local store,
-//! `achievements.json` in the user data directory.
+//! only, each achievement once per player profile), the local store,
+//! `achievements.json` in the user data directory, and the backends the
+//! unlocks also go to (Steam, when the client runs under it).
 
+use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
 use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::rc::Rc;
 
 use nh_protocol::ProgressNotice;
 use serde::{Deserialize, Serialize};
+
+use crate::World;
 
 /// The definitions built into the client.
 pub const BUILT_IN: &str = include_str!("../../../achievements/achievements.toml");
@@ -409,6 +414,176 @@ impl Store {
     }
 }
 
+/// Where unlocks go besides the local store: Steam, when the client runs
+/// under it.
+pub trait Backend {
+    /// Its name, for the log.
+    fn name(&self) -> &'static str;
+    /// The achievement of this Steam API name is earned.
+    fn unlock(&mut self, steam: &str);
+    /// Once a frame (Steam's callbacks).
+    fn tick(&mut self) {}
+}
+
+/// Without Steam: the local store is all there is.
+#[derive(Debug, Default)]
+pub struct Local;
+
+impl Backend for Local {
+    fn name(&self) -> &'static str {
+        "local"
+    }
+
+    fn unlock(&mut self, _steam: &str) {}
+}
+
+/// What it was told, in order (tests and the achievements self-test);
+/// clones share the list.
+#[derive(Debug, Default, Clone)]
+pub struct Mock {
+    pub unlocked: Rc<RefCell<Vec<String>>>,
+}
+
+impl Backend for Mock {
+    fn name(&self) -> &'static str {
+        "mock"
+    }
+
+    fn unlock(&mut self, steam: &str) {
+        self.unlocked.borrow_mut().push(steam.to_string());
+    }
+}
+
+/// The achievements of a running client: the definitions, the store and
+/// a backend, fed the world's progress notices.
+pub struct Tracker {
+    all: Achievements,
+    store: Store,
+    /// Where the store is kept (None: kept in memory only).
+    path: Option<PathBuf>,
+    backend: Box<dyn Backend>,
+    /// The game and its progress notice last looked at
+    /// (`World::progress_seq`).
+    seen: (u64, u64),
+    /// Unlocked and not yet shown (the toast takes them).
+    fresh: Vec<String>,
+    /// What went wrong with the store, for the log.
+    trouble: Option<String>,
+}
+
+impl Tracker {
+    /// The store at `path` (a damaged one is set aside as `.bad` and a new
+    /// one begun), and every unlock it holds sent to `backend`: what was
+    /// earned while it was away (Steam, offline) reaches it now.
+    pub fn start(
+        all: Achievements,
+        path: Option<PathBuf>,
+        mut backend: Box<dyn Backend>,
+    ) -> Tracker {
+        let mut trouble = None;
+        let store = match path.as_deref().map(Store::load) {
+            None => Store::default(),
+            Some(Ok(store)) => store,
+            Some(Err(e)) => {
+                let path = path.as_deref().expect("a path");
+                let bad = path.with_extension("json.bad");
+                trouble = Some(match std::fs::rename(path, &bad) {
+                    Ok(()) => format!("{}: {e}; set aside as {}", path.display(), bad.display()),
+                    Err(r) => format!("{}: {e}; and it cannot be set aside: {r}", path.display()),
+                });
+                Store::default()
+            }
+        };
+        for a in all.all() {
+            if store.has(&a.id) {
+                backend.unlock(&a.steam);
+            }
+        }
+        Tracker {
+            all,
+            store,
+            path,
+            backend,
+            seen: (0, 0),
+            fresh: Vec::new(),
+            trouble,
+        }
+    }
+
+    /// Look at the world's last progress notice if it is new: what it
+    /// newly earns `character` (Unix time `now`) is recorded, saved, sent
+    /// to the backend and returned. `game` tells one game's world from the
+    /// next: each counts its notices from 1.
+    pub fn update(
+        &mut self,
+        world: &World,
+        game: u64,
+        character: &str,
+        now: i64,
+    ) -> Vec<Achievement> {
+        let seen = (game, world.progress_seq());
+        if seen == self.seen {
+            return Vec::new();
+        }
+        self.seen = seen;
+        let Some(p) = world.progress() else {
+            return Vec::new();
+        };
+        let hero = Hero {
+            role: Some(p.role.clone()).filter(|r| !r.is_empty()),
+            character: character.to_string(),
+            turn: world.turn().unwrap_or(0),
+            time: now,
+        };
+        let earned: Vec<Achievement> = self
+            .all
+            .unlock(p, &hero, &mut self.store)
+            .into_iter()
+            .cloned()
+            .collect();
+        if earned.is_empty() {
+            return earned;
+        }
+        if let Some(path) = &self.path
+            && let Err(e) = self.store.save(path)
+        {
+            self.trouble = Some(format!("{}: {e}", path.display()));
+        }
+        for a in &earned {
+            self.backend.unlock(&a.steam);
+            self.fresh.push(a.id.clone());
+        }
+        earned
+    }
+
+    /// Once a frame: the backend's work.
+    pub fn tick(&mut self) {
+        self.backend.tick();
+    }
+
+    /// The unlocks not yet shown, oldest first.
+    pub fn take_fresh(&mut self) -> Vec<String> {
+        std::mem::take(&mut self.fresh)
+    }
+
+    pub fn store(&self) -> &Store {
+        &self.store
+    }
+
+    pub fn achievements(&self) -> &Achievements {
+        &self.all
+    }
+
+    pub fn backend_name(&self) -> &'static str {
+        self.backend.name()
+    }
+
+    /// What went wrong with the store since it was last asked.
+    pub fn take_trouble(&mut self) -> Option<String> {
+        self.trouble.take()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -718,6 +893,127 @@ mod tests {
         let got = earned(&all, &p, "Tou");
         assert!(got.contains(&"ascend_tou".into()) && got.contains(&"depth_40".into()));
         assert!(!got.iter().any(|a| a == "ascend_vegan"), "{got:?}");
+    }
+
+    /// A world fed the progress notices `args`, one after another.
+    fn world_after(args: &[&str]) -> World {
+        let mut w = World::new();
+        for a in args {
+            let line = format!(r#"{{"t":"win","fn":"progress","a":{a}}}"#);
+            let Ok(EngineMsg::Win(call)) = parse_line(&line) else {
+                panic!("{line}")
+            };
+            w.apply(&call);
+        }
+        w
+    }
+
+    const MINES: &str = r#"{"mode":"normal","role":"Arc","achieved":[15],"events":{},
+        "deepest":3,"conduct":{"pets":1},"roleplay":{},"gameover":false,"how":null}"#;
+    const MINETOWN: &str = r#"{"mode":"normal","role":"Arc","achieved":[15,16],"events":{},
+        "deepest":5,"conduct":{"pets":1},"roleplay":{},"gameover":false,"how":null}"#;
+
+    #[test]
+    fn a_tracker_unlocks_each_notice_once_and_tells_the_backend() {
+        let mock = Mock::default();
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("achievements.json");
+        let mut t = Tracker::start(
+            Achievements::built_in(),
+            Some(path.clone()),
+            Box::new(mock.clone()),
+        );
+        let w = world_after(&[MINES]);
+        let got: Vec<String> = t
+            .update(&w, 1, "Indy", 100)
+            .into_iter()
+            .map(|a| a.id)
+            .collect();
+        assert_eq!(got, ["mines"]);
+        // the same notice again: nothing
+        assert!(t.update(&w, 1, "Indy", 101).is_empty());
+        let w = world_after(&[MINES, MINETOWN]);
+        let got: Vec<String> = t
+            .update(&w, 1, "Indy", 102)
+            .into_iter()
+            .map(|a| a.id)
+            .collect();
+        assert_eq!(got, ["minetown"]);
+        assert_eq!(*mock.unlocked.borrow(), ["ACH_MINES", "ACH_MINETOWN"]);
+        assert_eq!(t.take_fresh(), ["mines", "minetown"]);
+        assert!(t.take_fresh().is_empty());
+        // kept on disk, with the role from the notice
+        let saved = Store::load(&path).unwrap();
+        assert_eq!(saved.unlocked["mines"].role, "Arc");
+        assert_eq!(saved.unlocked["minetown"].character, "Indy");
+    }
+
+    #[test]
+    fn unlocks_earned_offline_reach_the_backend_at_start() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("achievements.json");
+        let mut store = Store::default();
+        for id in ["medusa", "sokoban"] {
+            store.unlocked.insert(
+                id.into(),
+                Unlock {
+                    turn: 1,
+                    role: "Val".into(),
+                    character: "Brunhilde".into(),
+                    time: 1,
+                },
+            );
+        }
+        store.save(&path).unwrap();
+        let steam = Mock::default();
+        let t = Tracker::start(
+            Achievements::built_in(),
+            Some(path),
+            Box::new(steam.clone()),
+        );
+        assert_eq!(t.backend_name(), "mock");
+        // in the definitions' order
+        assert_eq!(*steam.unlocked.borrow(), ["ACH_MEDUSA", "ACH_SOKOBAN"]);
+    }
+
+    #[test]
+    fn a_damaged_store_is_set_aside_and_a_new_one_begun() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("achievements.json");
+        std::fs::write(&path, "{not json").unwrap();
+        let mut t = Tracker::start(
+            Achievements::built_in(),
+            Some(path.clone()),
+            Box::new(Local),
+        );
+        assert!(t.take_trouble().is_some_and(|e| e.contains("set aside")));
+        assert!(path.with_extension("json.bad").exists());
+        let w = world_after(&[MINES]);
+        assert_eq!(t.update(&w, 1, "Indy", 5).len(), 1);
+        assert!(Store::load(&path).unwrap().has("mines"));
+    }
+
+    #[test]
+    fn a_debug_game_unlocks_nothing_through_the_tracker() {
+        let mock = Mock::default();
+        let mut t = Tracker::start(Achievements::built_in(), None, Box::new(mock.clone()));
+        let w = world_after(&[&MINES.replace("\"normal\"", "\"debug\"")]);
+        assert!(t.update(&w, 1, "Wizard", 1).is_empty());
+        assert!(mock.unlocked.borrow().is_empty());
+    }
+
+    #[test]
+    fn the_next_game_is_looked_at_from_its_first_notice() {
+        let mut t = Tracker::start(Achievements::built_in(), None, Box::new(Local));
+        assert_eq!(t.update(&world_after(&[MINES]), 1, "Indy", 1).len(), 1);
+        // a new world counts its notices from 1 again
+        let next = world_after(&[MINETOWN]);
+        let got: Vec<String> = t
+            .update(&next, 2, "Marion", 2)
+            .into_iter()
+            .map(|a| a.id)
+            .collect();
+        assert_eq!(got, ["minetown"]);
     }
 
     #[test]

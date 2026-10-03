@@ -9,12 +9,17 @@ license.workspace = true
 [lib]
 crate-type = ["cdylib"]
 
+[features]
+# Steam's achievements (`make steam`): links Valve's steam_api library
+steam = ["dep:steamworks"]
+
 [dependencies]
 godot.workspace = true
 nh-protocol = { path = "../nh-protocol" }
 nh-link = { path = "../nh-link" }
 nh-world = { path = "../nh-world" }
 nh-art = { path = "../nh-art" }
+steamworks = { version = "0.13", optional = true }
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"

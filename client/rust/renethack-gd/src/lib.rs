@@ -26,6 +26,7 @@ mod paths;
 mod rehearsal;
 mod screens;
 mod selftest;
+mod steam;
 mod surface;
 mod theme;
 mod ui_events;
