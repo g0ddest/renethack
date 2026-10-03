@@ -4216,7 +4216,6 @@ impl MapView {
     /// A title frame left to other work (the dialogs' warm-up), instead of
     /// `preload_step`: nothing is loaded ahead in it, and the title's
     /// frame times stay a frame each.
-    #[allow(dead_code)] // until the dialogs' warm-up keeps frames of its own
     pub fn title_tick(&mut self) {
         let none = std::time::Duration::ZERO;
         let doing = Some("a frame left to other work".to_string());

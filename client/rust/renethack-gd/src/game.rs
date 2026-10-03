@@ -293,10 +293,13 @@ pub struct RenethackGame {
     /// counted by those processed then.
     frames: u64,
     headless: bool,
-    /// The start-up veil (the boot splash's colour) and when it began to
-    /// lift (None: still down).
+    /// The start-up veil (the boot splash's colour), the cue pulsing on
+    /// it, and when it began to lift (None: still down).
     veil: Option<Gd<godot::classes::ColorRect>>,
+    veil_cue: Option<Gd<godot::classes::TextureRect>>,
     veil_lift: Option<Instant>,
+    /// The map's warm-up (its rehearsal, under the veil) has begun.
+    map_warm: bool,
     /// When the last title frame began, and the pipelines compiled and
     /// video memory used then (RENETHACK_FRAME_STATS).
     title_clock: Option<Instant>,
@@ -308,33 +311,30 @@ pub struct RenethackGame {
     pub(crate) window_size: Option<Vector2i>,
 }
 
-/// The warm-up behind the title screen, in order: nothing drawn for the
-/// first time shares a frame with another first draw (each is tens of
-/// milliseconds of pipelines and buffers), and none falls on the frames
-/// that present the title.
+/// The warm-up behind the start-up veil, a step a frame, beside the map's
+/// rehearsal: what a game draws for the first time is drawn there, unseen.
+/// A step left when the veil has lifted shares no frame with the map's
+/// loading if it draws something for the first time.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum TitleWarm {
-    /// The title presented for a few frames first, once the start-up veil
-    /// is up (the frames shown when it began).
-    Settle(Option<u64>),
     /// A kind of dialog built a frame.
     Dialogs,
     /// A glyph's textures painted a frame.
     Glyphs,
-    /// The map's warm-up (the rehearsal behind the title, the first
-    /// levels' art), then the inventory panel on the rehearsal's hero.
-    Map,
+    /// The inventory panel, its doll on the rehearsal's hero.
     Panel,
     Done,
 }
 
-/// Frames the title is drawn before the warm-up begins.
-const TITLE_SETTLE: u64 = 4;
-/// Frames drawn under the start-up veil: the first ones set up the 3D
-/// view's buffers and passes (a frame or two of 50-220 ms); then seconds
-/// the veil takes to fade.
+/// The start-up veil: down for at least these frames (the first set up
+/// the 3D view's buffers and passes) and until the map's rehearsal has
+/// drawn everything for the first time and the dialogs and glyphs are
+/// warm, at most these seconds after start; then it fades. A cue pulses
+/// on it after a second.
 const VEIL_FRAMES: u64 = 8;
+const VEIL_CAP_SECS: f64 = 6.0;
 const VEIL_FADE: f32 = 0.25;
+const VEIL_CUE_SECS: f64 = 1.0;
 
 /// The way preview is drawn again only when one of these changes.
 #[derive(Debug, Clone, PartialEq)]
@@ -407,14 +407,16 @@ impl INode for RenethackGame {
             pad_cursor: None,
             pad_labels: None,
             prof: None,
-            title_warm: TitleWarm::Settle(None),
+            title_warm: TitleWarm::Dialogs,
             warm_did: "-",
             warm_heavy: false,
             title_frames: 0,
             frames: 0,
             headless: false,
             veil: None,
+            veil_cue: None,
             veil_lift: None,
+            map_warm: false,
             title_clock: None,
             title_render: ([0; 5], 0.0),
             window_size: None,
@@ -481,9 +483,20 @@ impl INode for RenethackGame {
         let mut veil = godot::classes::ColorRect::new_alloc();
         veil.set_color(crate::theme::BG);
         crate::theme::place(&veil, [0.0, 0.0, 1.0, 1.0], [0.0; 4]);
+        // while the map's rehearsal draws behind it: an ankh pulses
+        let mut cue = godot::classes::TextureRect::new_alloc();
+        cue.set_texture(&icons::glyph_icon(icons::Glyph::Ankh));
+        cue.set_expand_mode(godot::classes::texture_rect::ExpandMode::IGNORE_SIZE);
+        cue.set_stretch_mode(godot::classes::texture_rect::StretchMode::KEEP_ASPECT_CENTERED);
+        cue.set_mouse_filter(godot::classes::control::MouseFilter::IGNORE);
+        crate::theme::place(&cue, [0.5, 0.5, 0.5, 0.5], [-36.0, -36.0, 36.0, 36.0]);
+        cue.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, 0.0));
+        cue.set_self_modulate(crate::theme::GOLD);
+        veil.add_child(&cue);
         veil_layer.add_child(&veil);
         self.base_mut().add_child(&veil_layer);
         self.veil = Some(veil);
+        self.veil_cue = Some(cue);
         self.headless = godot::classes::DisplayServer::singleton().get_name() == "headless";
         let queue = self.queue.clone();
         let mut layers = layers.into_iter();
@@ -534,7 +547,7 @@ impl INode for RenethackGame {
         self.frames += 1;
         let stats = std::env::var_os("RENETHACK_FRAME_STATS").is_some();
         self.time_title_frame(stats);
-        self.lift_veil();
+        self.lift_veil(stats);
         self.warm_up();
         self.prof = stats.then(Vec::new);
         let t = Instant::now();
@@ -562,15 +575,16 @@ impl INode for RenethackGame {
                 );
             }
         }
-        // the map's loading begins after the title's own warm-up and waits
-        // out a frame of a first draw of it (such frames only keep its
+        // under the veil the map loads every frame beside the warm-up;
+        // after it, dialogs and glyphs still to warm go first and a frame of
+        // a first draw is theirs alone (such frames only keep the map's
         // title log a frame each)
-        let map_turn = !matches!(
-            self.title_warm,
-            TitleWarm::Settle(_) | TitleWarm::Dialogs | TitleWarm::Glyphs
-        ) || self.state != GameState::Title;
+        let veiled = self.veil.is_some();
+        let map_turn = veiled
+            || !matches!(self.title_warm, TitleWarm::Dialogs | TitleWarm::Glyphs)
+            || self.state != GameState::Title;
         if let Some(ui) = self.ui.as_mut() {
-            if map_turn && !self.warm_heavy {
+            if map_turn && (veiled || !self.warm_heavy) {
                 ui.map.preload_step();
             } else {
                 ui.map.title_tick();
@@ -725,10 +739,11 @@ impl RenethackGame {
         self.mouse_pos = inside.then_some(pos);
     }
 
-    /// Behind the title screen, what the first frames of a game would
-    /// otherwise pay for, a step a frame (see `TitleWarm`): one dialog of
-    /// each kind drawn for a few frames, a glyph's textures painted, the
-    /// map's rehearsal and art, the inventory panel and its doll.
+    /// Behind the start-up veil, beside the map's rehearsal (started on the
+    /// first frames), what the first frames of a game would otherwise pay
+    /// for, a step a frame (see `TitleWarm`): one dialog of each kind drawn
+    /// for a few frames, a glyph's textures painted, the inventory panel
+    /// and its doll on the rehearsal's hero.
     fn warm_up(&mut self) {
         self.warm_did = "-";
         self.warm_heavy = false;
@@ -745,17 +760,17 @@ impl RenethackGame {
             ui.inventory.warm_end();
             return;
         }
+        // the map's rehearsal from the first frames on, under the veil:
+        // its first draws are made there, unseen
+        if !self.map_warm
+            && shown >= 1
+            && let Some(cat) = catalog.as_deref()
+        {
+            self.map_warm = true;
+            ui.map.warm_up(cat, None);
+            self.warm_did = "map warm-up";
+        }
         match self.title_warm {
-            TitleWarm::Settle(_) if self.veil.is_some() => {}
-            TitleWarm::Settle(start) => {
-                ui.dialogs.warm_tick();
-                let start = start.unwrap_or(shown);
-                self.title_warm = if shown >= start + TITLE_SETTLE {
-                    TitleWarm::Dialogs
-                } else {
-                    TitleWarm::Settle(Some(start))
-                };
-            }
             TitleWarm::Dialogs => match ui.dialogs.warm_step(catalog.as_deref()) {
                 Some(kind) => {
                     self.warm_did = kind;
@@ -768,28 +783,16 @@ impl RenethackGame {
                 ui.dialogs.warm_tick();
                 self.warm_did = "glyph";
                 if !icons::warm_step() {
-                    self.title_warm = TitleWarm::Map;
+                    self.title_warm = TitleWarm::Panel;
                 }
-            }
-            TitleWarm::Map => {
-                ui.dialogs.warm_tick();
-                // the rehearsal begins and the map is drawn behind the
-                // title (once there is a catalog): its loading waits a frame
-                let Some(cat) = catalog.as_deref() else {
-                    return;
-                };
-                ui.map.warm_up(cat, None);
-                self.warm_did = "map warm-up";
-                self.warm_heavy = true;
-                self.title_warm = TitleWarm::Panel;
             }
             TitleWarm::Panel => {
                 ui.dialogs.warm_tick();
-                // the doll renders the rehearsal's hero (if none comes for
-                // long, the panel warms without it)
+                // the doll renders the rehearsal's hero (without one once
+                // the rehearsal is over, or none came for long)
                 self.title_frames += 1;
                 let hero = ui.map.hero_model().map(|m| m.node.clone());
-                if hero.is_none() && self.title_frames <= 900 {
+                if hero.is_none() && !ui.map.preloaded() && self.title_frames <= 900 {
                     return;
                 }
                 let step = ui.inventory.warm_step(hero);
@@ -810,17 +813,44 @@ impl RenethackGame {
         }
     }
 
-    /// The start-up veil lifts after its frames, whatever the first screen
-    /// is (the title, or an error).
-    fn lift_veil(&mut self) {
+    /// The start-up veil lifts once the map's rehearsal has drawn
+    /// everything for the first time behind it and the dialogs and glyphs
+    /// are warm, after its first frames and at the latest at its cap; at
+    /// once on another first screen than the title (an error). Its cue
+    /// pulses after a second.
+    fn lift_veil(&mut self, stats: bool) {
         let Some(mut veil) = self.veil.clone() else {
             return;
         };
+        let secs = Time::singleton().get_ticks_msec() as f64 / 1000.0;
         match self.veil_lift {
             None => {
-                if self.frames_shown() >= VEIL_FRAMES {
-                    self.veil_lift = Some(Instant::now());
+                if let Some(cue) = self.veil_cue.as_mut() {
+                    let t = secs - VEIL_CUE_SECS;
+                    let fade_in = (t / 0.6).clamp(0.0, 1.0);
+                    let pulse = 0.45 + 0.25 * (t * std::f64::consts::TAU / 2.4).sin();
+                    cue.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, (fade_in * pulse) as f32));
                 }
+                let title = self.state == GameState::Title;
+                let drawn = self
+                    .ui
+                    .as_ref()
+                    .is_some_and(|ui| ui.map.rehearsal_first_draws_done())
+                    && matches!(self.title_warm, TitleWarm::Panel | TitleWarm::Done);
+                let capped = secs >= VEIL_CAP_SECS;
+                if self.frames_shown() < VEIL_FRAMES || (title && !drawn && !capped) {
+                    return;
+                }
+                if title && !drawn {
+                    godot_warn!(
+                        "renethack: the start-up veil lifts at {secs:.1} s, before the warm-up behind it was done ({:?})",
+                        self.title_warm
+                    );
+                }
+                if stats {
+                    godot_print!("game: the start-up veil lifts {secs:.1} s after start");
+                }
+                self.veil_lift = Some(Instant::now());
             }
             Some(t) => {
                 let a = 1.0 - t.elapsed().as_secs_f32() / VEIL_FADE;
@@ -829,6 +859,7 @@ impl RenethackGame {
                         layer.queue_free();
                     }
                     self.veil = None;
+                    self.veil_cue = None;
                 } else {
                     veil.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, a));
                 }
