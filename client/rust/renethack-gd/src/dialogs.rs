@@ -919,6 +919,11 @@ struct PalettePool {
 }
 
 impl Dialogs {
+    /// The open dialog's panel on screen (self-tests).
+    pub fn panel_rect(&self) -> Option<Rect2> {
+        self.open.as_ref().map(|o| o.panel.get_global_rect())
+    }
+
     pub fn new(mut layer: Gd<CanvasLayer>, queue: UiQueue) -> Dialogs {
         let mut root = Control::new_alloc();
         theme::full_rect_ignore(&root);

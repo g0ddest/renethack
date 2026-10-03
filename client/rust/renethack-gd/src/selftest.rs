@@ -3834,22 +3834,36 @@ impl SelfTest {
                     "--screenshots needs a display: run without --headless (e.g. under xvfb-run)",
                 );
             }
-            // the review set is 1920×1080 (success criterion 1) unless
-            // Godot's --resolution says otherwise
-            let asked = godot::classes::Os::singleton()
-                .get_cmdline_args()
-                .as_slice()
-                .iter()
-                .any(|a| a.to_string().starts_with("--resolution"));
-            if self.shots.is_some() && !asked {
-                let mut ds = DisplayServer::singleton();
-                ds.window_set_size(Vector2i::new(1920, 1080));
-            }
             if let Some(dir) = &self.shots
                 && let Err(e) = std::fs::create_dir_all(dir)
             {
                 let why = format!("cannot create {}: {e}", dir.display());
                 return self.fail(game, &why);
+            }
+            // the window the scenario asked for (`--size`, or 1920×1080 for
+            // screenshots): the system may refuse a window larger than
+            // its screen, and the run would then show another layout
+            if let Some(want) = game.window_size {
+                let real = if headless {
+                    want
+                } else {
+                    DisplayServer::singleton().window_get_size()
+                };
+                let canvas = game.canvas_size();
+                godot_print!(
+                    "selftest: window {}×{}, canvas {:.0}×{:.0}",
+                    real.x,
+                    real.y,
+                    canvas.x,
+                    canvas.y
+                );
+                if real != want {
+                    let why = format!(
+                        "the window is {}×{}, not the {}×{} asked for",
+                        real.x, real.y, want.x, want.y
+                    );
+                    return self.fail(game, &why);
+                }
             }
         }
         if let Some(p) = first_panic() {
@@ -3991,40 +4005,36 @@ impl SelfTest {
                     self.next();
                     return;
                 }
-                Step::Shot(name) => {
-                    let Some(dir) = self.shots.clone() else {
+                Step::Shot(name) | Step::ShotIf(name, _) => {
+                    if let Step::ShotIf(_, check) = step
+                        && self.frames == 0
+                        && !check(game).unwrap_or(false)
+                    {
                         self.next();
                         continue;
-                    };
+                    }
+                    // a run at a set size checks that what the screen
+                    // shows fits it, with or without screenshots
+                    if self.shots.is_none() && game.window_size.is_none() {
+                        self.next();
+                        continue;
+                    }
                     if self.frames < SHOT_FRAMES {
                         self.frames += 1;
                         return;
                     }
-                    let path = dir.join(format!("{name}.png"));
-                    if let Err(why) = save_shot(game, &path) {
+                    let name = *name;
+                    if let Err(why) = layout_fits(game) {
+                        let why = format!("screen {name}: {why}");
                         return self.fail(game, &why);
                     }
-                    godot_print!("selftest: screenshot {}", path.display());
-                    self.next();
-                }
-                Step::ShotIf(name, check) => {
-                    if self.frames == 0 && !check(game).unwrap_or(false) {
-                        self.next();
-                        continue;
+                    if let Some(dir) = self.shots.clone() {
+                        let path = dir.join(format!("{name}.png"));
+                        if let Err(why) = save_shot(game, &path) {
+                            return self.fail(game, &why);
+                        }
+                        godot_print!("selftest: screenshot {}", path.display());
                     }
-                    let Some(dir) = self.shots.clone() else {
-                        self.next();
-                        continue;
-                    };
-                    if self.frames < SHOT_FRAMES {
-                        self.frames += 1;
-                        return;
-                    }
-                    let path = dir.join(format!("{name}.png"));
-                    if let Err(why) = save_shot(game, &path) {
-                        return self.fail(game, &why);
-                    }
-                    godot_print!("selftest: screenshot {}", path.display());
                     self.next();
                 }
                 Step::AnswerUntil(c, _, check) => {
@@ -4110,6 +4120,49 @@ fn describe(step: &Step) -> String {
     }
 }
 
+/// What the screen shows fits it: the HUD's blocks, an open panel and an
+/// open dialog are inside the canvas; the HUD's blocks do not overlap one
+/// another nor the panel; the log shows whole lines.
+fn layout_fits(game: &RenethackGame) -> Result<(), String> {
+    let Some(ui) = game.ui.as_ref() else {
+        return Ok(());
+    };
+    if !matches!(game.state, GameState::Playing) {
+        return Ok(());
+    }
+    let size = game.canvas_size();
+    let canvas = Rect2::new(Vector2::ZERO, size).grow(1.0);
+    let blocks = ui.hud.blocks();
+    let mut all = blocks.clone();
+    let panel = ui.inventory.frame_rect();
+    all.extend(panel.map(|r| ("inventory panel", r)));
+    all.extend(ui.dialogs.panel_rect().map(|r| ("dialog", r)));
+    for (name, r) in &all {
+        if !canvas.encloses(*r) {
+            return Err(format!(
+                "the {name} at {:.0},{:.0} {:.0}×{:.0} is not inside the {:.0}×{:.0} canvas",
+                r.position.x, r.position.y, r.size.x, r.size.y, size.x, size.y
+            ));
+        }
+    }
+    for (i, (a, ra)) in blocks.iter().enumerate() {
+        for (b, rb) in blocks.iter().skip(i + 1) {
+            if ra.intersects_exclude_borders(*rb) {
+                return Err(format!("the {a} and the {b} overlap"));
+            }
+        }
+        if let Some(p) = panel
+            && p.intersects_exclude_borders(*ra)
+        {
+            return Err(format!("the inventory panel covers the {a}"));
+        }
+    }
+    if !ui.hud.log_lines_whole() {
+        return Err("the log's top line is cut".to_string());
+    }
+    Ok(())
+}
+
 fn save_shot(game: &RenethackGame, path: &std::path::Path) -> Result<(), String> {
     // Forward+ may skip drawing a window it thinks nobody sees (macOS):
     // draw the state now, a few times for the temporal effects
@@ -4119,6 +4172,17 @@ fn save_shot(game: &RenethackGame, path: &std::path::Path) -> Result<(), String>
     let image = game
         .viewport_image()
         .ok_or("no viewport image (is there a renderer?)")?;
+    // a window the system did not give the size asked for would review
+    // another screen than the one named
+    if let Some(want) = game.window_size
+        && image.get_size() != want
+    {
+        let got = image.get_size();
+        return Err(format!(
+            "the screenshot is {}×{}, not the {}×{} asked for",
+            got.x, got.y, want.x, want.y
+        ));
+    }
     let err = image.save_png(&path.to_string_lossy().to_string());
     if err == Error::OK {
         Ok(())

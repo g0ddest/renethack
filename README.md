@@ -131,6 +131,7 @@ priests excepted.
     make lint
     make test-client  # headless self-tests of the Godot client (needs Godot)
     make soak         # random play through the client, seeds 1..8 (long)
+    make deck         # screenshots at the Steam Deck's 1280×800 (needs a display)
 
 `make test-client` runs each scenario of `client/rust/renethack-gd/src/selftest.rs`
 in its own headless Godot process with a fixed seed: every scenario except
@@ -150,6 +151,15 @@ screenshots under a display:
 
     cd client/godot
     godot --path . -- --selftest=smoke --screenshots=/tmp/shots --playground=/tmp/pg
+
+Screenshots are 1920×1080 unless `--size=1280x800` (or Godot's own
+`--resolution`) asks for another window; a run fails when the window or a
+screenshot is not the size asked for, and at a set size every screen a
+scenario shoots must fit the canvas (the HUD's blocks inside it and apart,
+the log in whole lines). `make test-client` also runs `smoke`, `inventory`,
+`hud` and `gamepad` headless at 1280×800, the Steam Deck's screen with its
+120 % UI scale; `make deck` shoots `smoke`, `tour`, `inventory`, `bar`,
+`hud`, `dialogs` and `gamepad` at a real 1280×800.
 
 ## Art
 

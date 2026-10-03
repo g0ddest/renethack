@@ -80,6 +80,26 @@ pub struct Args {
     pub soak: Option<u32>,
     /// The order tick in milliseconds, any value (self-tests).
     pub tick: Option<u64>,
+    /// The window's size in pixels, `--size=1280x800` (self-tests: the
+    /// Steam Deck's screen). Godot's own `--resolution` never reaches the
+    /// game: Godot takes it out of the arguments.
+    pub size: Option<(i32, i32)>,
+}
+
+/// The window's size the project opens with (its override, else its
+/// viewport's).
+fn project_window_size() -> Vector2i {
+    let ps = ProjectSettings::singleton();
+    let get = |key: &str| {
+        ps.get_setting(&format!("display/window/size/{key}"))
+            .try_to::<i32>()
+            .unwrap_or(0)
+    };
+    let pick = |over: i32, base: i32| if over > 0 { over } else { base };
+    Vector2i::new(
+        pick(get("window_width_override"), get("viewport_width")),
+        pick(get("window_height_override"), get("viewport_height")),
+    )
 }
 
 pub fn parse_args<S: AsRef<str>>(args: &[S]) -> Args {
@@ -104,6 +124,13 @@ pub fn parse_args<S: AsRef<str>>(args: &[S]) -> Args {
             && let Ok(n) = v.trim().parse()
         {
             out.tick = Some(n);
+        } else if let Some(v) = a.strip_prefix("--size=")
+            && let Some((w, h)) = v.split_once('x')
+            && let (Ok(w), Ok(h)) = (w.trim().parse(), h.trim().parse())
+            && w > 0
+            && h > 0
+        {
+            out.size = Some((w, h));
         } else {
             godot_warn!("unknown argument {a:?}");
         }
@@ -263,6 +290,9 @@ pub struct RenethackGame {
     title_frames: u32,
     /// The bar's labels were drawn for this (pad kind and page, if a pad).
     pad_labels: Option<Option<(PadKind, usize)>>,
+    /// The window's size the self-test asked for (its screenshots must be
+    /// that size).
+    pub(crate) window_size: Option<Vector2i>,
 }
 
 /// The way preview is drawn again only when one of these changes.
@@ -340,6 +370,7 @@ impl INode for RenethackGame {
             glyphs_warm: false,
             panel_warm: false,
             title_frames: 0,
+            window_size: None,
         }
     }
 
@@ -352,7 +383,25 @@ impl INode for RenethackGame {
             .collect();
         let args = parse_args(&raw);
         self.base().get_tree().set_auto_accept_quit(false);
-        if let Some(window) = self.base().get_tree().get_root() {
+        if let Some(mut window) = self.base().get_tree().get_root() {
+            // the window the self-tests asked for; screenshots are
+            // 1920×1080 (the review set, success criterion 1) unless a size
+            // is given, or Godot's --resolution made the window another
+            // size than the project's. Set before the UI scale is chosen:
+            // 1280×800 is a Steam Deck's.
+            let size = args.size.map(|(w, h)| Vector2i::new(w, h)).or_else(|| {
+                let start = window.get_size();
+                let asked = start != project_window_size();
+                args.screenshots.is_some().then_some(if asked {
+                    start
+                } else {
+                    Vector2i::new(1920, 1080)
+                })
+            });
+            if let Some(size) = size {
+                window.set_size(size);
+                self.window_size = Some(size);
+            }
             crate::theme::apply_scaling(window);
         }
 
@@ -1544,12 +1593,14 @@ impl RenethackGame {
         };
         ui.inventory.set_status(ac, gold, cap);
         let open = ui.inventory.is_open();
-        ui.hud.set_panel_open(open);
+        let asks = ui.inventory.request().is_some();
+        ui.hud.set_panel_open(open, asks);
         // a gamepad: its hints, the bar's chords, dialogs with a focus
         let pad = self.pad.active.then_some(self.pad.kind);
         ui.dialogs.set_pad(pad.is_some());
         ui.inventory.set_pad(pad);
         ui.pad.show_hints(pad.map(|k| (k, ctx)));
+        ui.pad.dock_hints(ui.inventory.frame_rect());
         let labels = pad.map(|k| (k, self.pad.page()));
         if self.pad_labels != Some(labels) {
             self.pad_labels = Some(labels);
@@ -2200,6 +2251,13 @@ impl RenethackGame {
         push(&self.queue, ev);
     }
 
+    /// The canvas the UI is laid out on, in design pixels (self-tests).
+    pub(crate) fn canvas_size(&self) -> Vector2 {
+        self.base()
+            .get_viewport()
+            .map_or(Vector2::ZERO, |v| v.get_visible_rect().size)
+    }
+
     pub(crate) fn viewport_image(&self) -> Option<Gd<godot::classes::Image>> {
         self.base().get_viewport()?.get_texture()?.get_image()
     }
@@ -2359,6 +2417,9 @@ mod tests {
         assert_eq!(held_key(Key::Left), Key::Left);
         let a = parse_args(&["--tick=20"]);
         assert_eq!(a.tick, Some(20));
+        assert_eq!(parse_args(&["--size=1280x800"]).size, Some((1280, 800)));
+        assert_eq!(parse_args(&["--size=1280"]).size, None);
+        assert_eq!(parse_args(&["--size=0x800"]).size, None);
     }
 
     #[test]

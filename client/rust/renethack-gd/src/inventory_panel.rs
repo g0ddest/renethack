@@ -3053,6 +3053,11 @@ impl InventoryPanel {
         self.doll_view.hero = node.filter(|n| n.is_instance_valid());
     }
 
+    /// The panel's frame on screen while it is open (self-tests).
+    pub fn frame_rect(&self) -> Option<Rect2> {
+        self.is_open().then(|| self.frame.get_global_rect())
+    }
+
     /// Whether the doll shows the hero's render (self-tests).
     pub fn doll_rendered(&self) -> bool {
         self.hero_rect.is_visible()
@@ -3489,8 +3494,8 @@ impl InventoryPanel {
             Mode::Menu { state, .. } => {
                 let title = state.title.clone().unwrap_or_default();
                 let hint = if state.how == PickHow::Any {
-                    "Click or letter: select · Shift+click or digits: a count · '.' all · '-' none · \
-                     '@' invert · Enter: confirm · Esc: cancel"
+                    "Click or letter: select · Shift+click or digits: a count\n\
+                     '.' all · '-' none · '@' invert · Enter: confirm · Esc: cancel"
                 } else {
                     "Click or press a letter to choose · Esc: cancel"
                 };

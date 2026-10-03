@@ -38,9 +38,13 @@ const PORTRAIT_W: f32 = 520.0;
 const PORTRAIT_H: f32 = 176.0;
 const LOG_W: f32 = 404.0;
 const LOG_H: f32 = 260.0;
-/// The docked log of the compact layout, above the cluster's left half.
-const LOG_COMPACT_W: f32 = 480.0;
-const LOG_COMPACT_H: f32 = 132.0;
+/// The docked log of the compact layout: on the XP bar, from the bar's
+/// left end, clear of the gamepad's hints on the right; this many lines.
+const LOG_COMPACT_W: f32 = 460.0;
+const LOG_COMPACT_LINES: f32 = 4.0;
+/// The log's text: Alegreya Sans 16 and 2 px between lines.
+const LOG_FONT: i32 = 16;
+const LOG_LINE_GAP: i32 = 2;
 /// The orbs beside the bar's frame, never over its slots: 148 + 4 + 736
 /// + 4 + 148.
 const CLUSTER_W: f32 = 1040.0;
@@ -408,6 +412,17 @@ pub fn edge_arrow(at: Option<Vector2>, view: Vector2) -> Option<(Vector2, f32)> 
 /// The arrow keeps this far from the screen's edges.
 const ARROW_MARGIN: f32 = 48.0;
 
+/// The docked log's bottom-left corner (from the bottom centre): the action
+/// bar's left end, on the XP bar like the micro-buttons.
+fn compact_log_corner() -> (f32, f32) {
+    let bar_left = -CLUSTER_W / 2.0 + (CLUSTER_W - BAR_W) / 2.0;
+    let xp_top = -CLUSTER_BOTTOM - BAR_H - 6.0 - 22.0;
+    (bar_left, xp_top - 6.0)
+}
+
+/// The log frame's margin (Frame::Hud).
+const LOG_MARGIN: f32 = 12.0;
+
 /// The compact layout (ui-design §1.6): the log docks over the cluster
 /// when there is no room for it beside the cluster.
 pub fn compact(virtual_width: f32) -> bool {
@@ -763,6 +778,9 @@ pub struct Hud {
     xp_fill: Gd<ColorRect>,
     xp_label: Gd<Label>,
     bar: ActionBar,
+    /// The orbs, the XP bar, the micro-buttons and the bar, by name
+    /// (self-tests: what must fit).
+    cluster_parts: Vec<(&'static str, Gd<Control>)>,
 
     // the log, bottom left (docked over the cluster when compact)
     log_panel: Gd<PanelContainer>,
@@ -770,6 +788,9 @@ pub struct Hud {
     /// The log's title and history button (not in the compact layout).
     log_head: Gd<HBoxContainer>,
     log_compact: Option<bool>,
+    /// The width the log's lines were wrapped at (another width: shown
+    /// again, its whole lines are others).
+    log_width: f32,
     /// When each message was first shown (seq, seconds).
     arrivals: VecDeque<(u64, f64)>,
     transient_panel: Gd<PanelContainer>,
@@ -789,6 +810,8 @@ pub struct Hud {
     /// A modal panel (the inventory) is open: the corners and the log
     /// step back instead of peeking out clipped around it.
     panel_open: bool,
+    /// And it asks the engine's question itself (the banner steps back).
+    panel_asks: bool,
     minimap: Minimap,
     minimap_caption: Gd<Label>,
     mode_panel: Gd<PanelContainer>,
@@ -810,6 +833,9 @@ pub struct Hud {
     tooltip: Gd<Label>,
     tooltip_text: Option<String>,
     toast_panel: Gd<PanelContainer>,
+    /// The row the toast is centred in: over the cluster, or over the
+    /// docked log.
+    toast_lane: Gd<HBoxContainer>,
     toast: Gd<Label>,
     toast_undo: Gd<Button>,
     toast_until: f64,
@@ -955,6 +981,8 @@ impl Hud {
         bar_node.set_v_size_flags(SizeFlags::SHRINK_CENTER);
         bar_frame.add_child(&bar_node);
         cluster.add_child(&bar_frame);
+        let mut cluster_parts: Vec<(&'static str, Gd<Control>)> =
+            vec![("action bar", bar_frame.clone().upcast())];
         solid.push(bar_frame.upcast());
 
         let xp_y = CLUSTER_H - BAR_H - 6.0 - 22.0;
@@ -997,6 +1025,7 @@ impl Hud {
         }
         xp_frame.set_tooltip_text("Experience");
         cluster.add_child(&xp_frame);
+        cluster_parts.push(("XP bar", xp_frame.clone().upcast()));
         solid.push(xp_frame.clone().upcast());
 
         let mut micro = hbox(4);
@@ -1020,6 +1049,7 @@ impl Hud {
             solid.push(b.upcast());
         }
         cluster.add_child(&micro);
+        cluster_parts.push(("micro-buttons", micro.clone().upcast()));
 
         let mut hp = Orb::new("Hit points", theme::HP_DEEP, theme::HP);
         let mut pw = Orb::new("Power", theme::PW_DEEP, theme::PW);
@@ -1034,6 +1064,8 @@ impl Hud {
         hp.reset();
         pw.reset();
         root.add_child(&cluster);
+        cluster_parts.push(("HP orb", hp.node()));
+        cluster_parts.push(("Pw orb", pw.node()));
 
         // ---- the log, bottom left; the wheel scrolls it ----
         let mut log_panel = theme::framed(Frame::Hud);
@@ -1057,9 +1089,9 @@ impl Hud {
         log.set_scroll_follow(true);
         log.add_theme_font_override("normal_font", &theme::font(Face::Body));
         log.add_theme_font_override("bold_font", &theme::font(Face::BodyBold));
-        log.add_theme_font_size_override("normal_font_size", 16);
-        log.add_theme_font_size_override("bold_font_size", 16);
-        log.add_theme_constant_override("line_separation", 2);
+        log.add_theme_font_size_override("normal_font_size", LOG_FONT);
+        log.add_theme_font_size_override("bold_font_size", LOG_FONT);
+        log.add_theme_constant_override("line_separation", LOG_LINE_GAP);
         theme::outline(&log, 5);
         log.add_theme_constant_override("outline_size", 5);
         log.set_v_size_flags(SizeFlags::SHRINK_END);
@@ -1292,6 +1324,7 @@ impl Hud {
         toast_panel.set_visible(false);
         toast_row.add_child(&toast_panel);
         root.add_child(&toast_row);
+        let toast_lane = toast_row.clone();
         solid.push(toast_panel.clone().upcast());
 
         // ---- tooltip, follows the mouse; on top of everything ----
@@ -1329,7 +1362,9 @@ impl Hud {
             log_panel,
             log,
             log_head,
+            cluster_parts,
             log_compact: None,
+            log_width: 0.0,
             arrivals: VecDeque::new(),
             transient_panel,
             transient,
@@ -1340,6 +1375,7 @@ impl Hud {
             minimap_panel: minimap_frame,
             minimap_well,
             panel_open: false,
+            panel_asks: false,
             minimap,
             minimap_caption,
             mode_panel,
@@ -1357,6 +1393,7 @@ impl Hud {
             tooltip,
             tooltip_text: None,
             toast_panel,
+            toast_lane,
             toast,
             toast_undo,
             toast_until: 0.0,
@@ -1541,6 +1578,9 @@ impl Hud {
         let last_seq = world.log.last_seq();
         let faded = self.note_arrivals(world, now);
         let key = (last_seq, world.input_seq(), full_open, faded);
+        if self.log.get_size().x != self.log_width {
+            self.log_key = None;
+        }
         if self.log_key != Some(key) {
             let news = self.log_key.is_none_or(|(seen, ..)| seen != last_seq);
             self.log_key = Some(key);
@@ -1594,17 +1634,19 @@ impl Hud {
         if self.log_compact != Some(compact) {
             self.log_compact = Some(compact);
             if compact {
-                // docked above the cluster's left half
-                let top = -CLUSTER_BOTTOM - CLUSTER_H - 8.0 - LOG_COMPACT_H;
+                // docked on the XP bar, from the bar's left end, as high
+                // as its lines and the frame
+                let (left, bottom) = compact_log_corner();
+                let line = theme::font(Face::Body)
+                    .get_height_ex()
+                    .font_size(LOG_FONT)
+                    .done()
+                    + LOG_LINE_GAP as f32;
+                let h = 2.0 * LOG_MARGIN + LOG_COMPACT_LINES * line.ceil() + 2.0;
                 place(
                     &self.log_panel,
                     [0.5, 1.0, 0.5, 1.0],
-                    [
-                        -CLUSTER_W / 2.0 + orb::SIZE - 20.0,
-                        top,
-                        -CLUSTER_W / 2.0 + orb::SIZE - 20.0 + LOG_COMPACT_W,
-                        top + LOG_COMPACT_H,
-                    ],
+                    [left, bottom - h, left + LOG_COMPACT_W, bottom],
                 );
             } else {
                 place(
@@ -1633,6 +1675,19 @@ impl Hud {
                 [anchor, 1.0, anchor, 1.0],
                 [l, log_top - 6.0, r, log_top - 6.0],
             );
+            // the toast is over the cluster, or over the log docked there
+            let toast_y = if compact {
+                log_top - 6.0
+            } else {
+                -CLUSTER_BOTTOM - CLUSTER_H + 2.0
+            };
+            self.toast_lane.set_offset(Side::TOP, toast_y);
+            self.toast_lane.set_offset(Side::BOTTOM, toast_y);
+            self.toast_lane.set_v_grow_direction(if compact {
+                GrowDirection::BEGIN
+            } else {
+                GrowDirection::END
+            });
             self.log_key = None;
         }
         // the banner fits between the portrait block and the minimap
@@ -1873,10 +1928,10 @@ impl Hud {
         let mouse = self.root.get_global_mouse_position();
         let over = self.log_panel.is_visible_in_tree()
             && self.log_panel.get_global_rect().contains_point(mouse);
-        // docked over the world (the compact layout) it keeps a soft
-        // backing, or its lines would float over the scene
+        // docked on the cluster (the compact layout) it keeps its
+        // backing, as the bar does, or its lines would float over the scene
         let rest = if self.log_compact == Some(true) {
-            0.6
+            1.0
         } else {
             0.0
         };
@@ -1945,11 +2000,22 @@ impl Hud {
             })
             .collect();
         set_scrolled_text(&mut self.log, &lines.join("\n"), follow);
-        // the log sits on the panel's bottom edge and grows up to fill it
+        // the log sits on the panel's bottom edge and grows up to fill it,
+        // in whole lines: the top one is never cut in half
         let h = self.log.get_content_height() as f32;
         let room = self.log.get_parent_control().map_or(h, |p| p.get_size().y);
+        let shown = if h <= room {
+            h
+        } else {
+            let n = self.log.get_line_count();
+            (0..n)
+                .map(|i| h - self.log.get_line_offset(i))
+                .find(|&rest| rest <= room)
+                .unwrap_or(room)
+        };
         self.log
-            .set_custom_minimum_size(Vector2::new(0.0, h.min(room.max(1.0))));
+            .set_custom_minimum_size(Vector2::new(0.0, shown.max(1.0)));
+        self.log_width = self.log.get_size().x;
     }
 
     fn show_full_log(&mut self, world: &World, follow: bool) {
@@ -2078,10 +2144,59 @@ impl Hud {
         self.step_back();
     }
 
-    /// A modal panel of the game's (the inventory) opens or closes.
-    pub fn set_panel_open(&mut self, on: bool) {
-        if self.panel_open != on {
+    /// The HUD's blocks on screen, by name, where they are (self-tests:
+    /// they must fit the canvas and not overlap). Blocks stepped back
+    /// under a panel are not on screen.
+    pub fn blocks(&self) -> Vec<(&'static str, Rect2)> {
+        let shown = |c: &Gd<Control>| c.is_visible_in_tree() && c.get_modulate().a > 0.0;
+        // a row's rect is as wide as the row: its children's are what shows
+        let rect = |c: &Gd<Control>| {
+            let kids: Vec<Rect2> = c
+                .get_children()
+                .iter_shared()
+                .filter_map(|k| k.try_cast::<Control>().ok())
+                .filter(|k| k.is_visible())
+                .map(|k| k.get_global_rect())
+                .collect();
+            match (c.is_class("HBoxContainer"), kids.split_first()) {
+                (true, Some((first, rest))) => rest.iter().fold(*first, |a, b| a.merge(*b)),
+                _ => c.get_global_rect(),
+            }
+        };
+        [
+            ("portrait", self.portrait_panel.clone().upcast::<Control>()),
+            ("minimap", self.minimap_panel.clone().upcast()),
+            ("mode badge", self.mode_panel.clone().upcast()),
+            ("log", self.log_panel.clone().upcast()),
+            ("prompt", self.prompt_panel.clone().upcast()),
+        ]
+        .into_iter()
+        .chain(self.cluster_parts.iter().cloned())
+        .filter(|(name, c)| {
+            // the banner steps back through its row
+            let row = *name != "prompt" || self.prompt_row.get_modulate().a > 0.0;
+            shown(c) && row
+        })
+        .map(|(name, c)| (name, rect(&c)))
+        .collect()
+    }
+
+    /// The log shows whole lines: its view is as high as its last lines
+    /// (none cut at the top).
+    pub fn log_lines_whole(&self) -> bool {
+        let h = self.log.get_content_height() as f32;
+        let view = self.log.get_size().y;
+        view >= h - 0.5
+            || (0..self.log.get_line_count())
+                .any(|i| (h - self.log.get_line_offset(i) - view).abs() < 0.5)
+    }
+
+    /// A modal panel of the game's (the inventory) opens or closes;
+    /// `asks`: it shows the engine's question in its own header.
+    pub fn set_panel_open(&mut self, on: bool, asks: bool) {
+        if (self.panel_open, self.panel_asks) != (on, asks) {
             self.panel_open = on;
+            self.panel_asks = asks;
             self.step_back();
         }
     }
@@ -2104,6 +2219,15 @@ impl Hud {
             c.set_modulate(m);
             c.set_mouse_filter(filter);
         }
+        // the question is in the panel's header: the banner would only
+        // peek out behind its top edge on a short screen
+        let asked = self.panel_open && self.panel_asks;
+        self.prompt_row.set_modulate(Color::from_rgba(
+            1.0,
+            1.0,
+            1.0,
+            if asked { 0.0 } else { 1.0 },
+        ));
         for mut c in [
             self.mode_panel.clone().upcast::<Control>(),
             self.order_label.clone().upcast(),
@@ -2367,6 +2491,19 @@ mod tests {
         assert!(!compact(1920.0));
         assert!(compact(1600.0));
         assert!(!compact(2560.0));
+    }
+
+    #[test]
+    fn the_docked_log_sits_on_the_xp_bar_beside_the_hp_orb() {
+        let (left, bottom) = compact_log_corner();
+        // the bar's left end, past the HP orb and its gap
+        assert_eq!(left, -CLUSTER_W / 2.0 + orb::SIZE + 4.0);
+        // the micro-buttons' bottom, 6 above the XP bar
+        assert_eq!(bottom, -CLUSTER_BOTTOM - BAR_H - 6.0 - 22.0 - 6.0);
+        // clear of the micro-buttons at the bar's right end (5 of 28 and
+        // 4 between)
+        let micro_left = left + BAR_W - (5.0 * 28.0 + 4.0 * 4.0);
+        assert!(left + LOG_COMPACT_W + 12.0 <= micro_left);
     }
 
     #[test]

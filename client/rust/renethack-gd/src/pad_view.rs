@@ -120,6 +120,8 @@ pub struct PadView {
     title: Gd<Label>,
     hint: Gd<Label>,
     strip: Gd<HBoxContainer>,
+    /// The panel the strip sits in the bottom of (None: over the world).
+    strip_in: Option<Rect2>,
     shown: Option<(PadKind, PadCtx)>,
     selected: Option<usize>,
 }
@@ -206,6 +208,7 @@ impl PadView {
             title,
             hint,
             strip,
+            strip_in: None,
             shown: None,
             selected: None,
         }
@@ -289,6 +292,31 @@ impl PadView {
 
     pub fn set_visible(&mut self, on: bool) {
         self.root.set_visible(on);
+    }
+
+    /// The strip goes in the bottom right of a panel open on screen (the
+    /// inventory), inside its frame, rather than across its edge; None:
+    /// back over the world, above the Pw orb.
+    pub fn dock_hints(&mut self, panel: Option<Rect2>) {
+        if self.strip_in == panel {
+            return;
+        }
+        self.strip_in = panel;
+        match panel {
+            Some(r) => {
+                let (end, bottom) = (r.end().x - 28.0, r.end().y - 18.0);
+                place(
+                    &self.strip,
+                    [0.0, 0.0, 0.0, 0.0],
+                    [r.position.x + 28.0, bottom - 32.0, end, bottom],
+                );
+            }
+            None => place(
+                &self.strip,
+                [0.0, 1.0, 1.0, 1.0],
+                [24.0, -232.0, -24.0, -200.0],
+            ),
+        }
     }
 }
 

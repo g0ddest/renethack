@@ -5,6 +5,7 @@
 #   make run          play: engine + client, then start Godot ($(GODOT))
 #   make test         engine tests, then every Rust test against the fresh engine
 #   make test-client  headless self-tests of the Godot client, one process each
+#   make deck         screenshots at the Steam Deck's 1280×800 (needs a display)
 #   make soak         random play through the client UI, seeds 1..8
 #   make art          fetch the CC0 art again (tools/fetch_art.py; needs Pillow)
 #   make lint         rustfmt and clippy, warnings are errors
@@ -16,12 +17,18 @@ override GODOT := $(if $(filter %.app %.app/,$(GODOT)),$(patsubst %/,%,$(GODOT))
 TIMEOUT ?= $(shell command -v timeout || command -v gtimeout)
 GODOT_PROJECT := client/godot
 SELFTESTS := smoke keys save close crash menus text dialogs moves orders inventory bar gamepad equipment item-use combat roles branches soak
+# again at the Steam Deck's 1280×800 (its 120 % UI scale, the compact
+# layout): every screen a scenario would shoot must fit the canvas
+DECK_SELFTESTS := smoke inventory hud gamepad
+# `make deck`: the same screens shot at a real 1280×800, into DECK_DIR
+DECK_SHOTS := smoke tour inventory bar hud dialogs gamepad
+DECK_DIR ?= $(GODOT_PROJECT)/.godot/shots/deck
 # answered requests of the soak in test-client (about 35 s; from 1000 on the
 # soak fails unless the level changes); `make soak` runs the default, 2000
 SOAK_CI := 2000
 SOAK_SEEDS := 1 2 3 4 5 6 7 8
 
-.PHONY: all engine client import run test test-client soak lint need-timeout art icons
+.PHONY: all engine client import run test test-client soak lint need-timeout art icons deck
 all: engine
 
 engine:
@@ -65,12 +72,13 @@ test: engine
 	cd client/rust && cargo test
 
 # One self-test in its own Godot process and playground: $(1) scenario,
-# $(2) more arguments, $(3) timeout in seconds, $(4) its name in messages.
+# $(2) more arguments, $(3) timeout in seconds, $(4) its name in messages,
+# $(5) empty for a headless run, else it gets a window (screenshots).
 # It passes only with exit status 0 and its "SELFTEST PASS" line.
 define run_selftest
 pg=$$(mktemp -d); log=$$pg/selftest.log; \
 echo "selftest $(4)"; \
-status=0; $(TIMEOUT) $(3) $(GODOT) --headless --path $(GODOT_PROJECT) \
+status=0; $(TIMEOUT) $(3) $(GODOT) $(if $(5),,--headless) --path $(GODOT_PROJECT) \
 	-- --selftest=$(1) $(2) --playground=$$pg/playground > $$log 2>&1 || status=$$?; \
 if [ $$status -ne 0 ] || ! grep -q 'Initialize godot-rust' $$log \
 	|| ! grep -q "SELFTEST PASS $(1)" $$log; then \
@@ -88,12 +96,25 @@ need-timeout:
 	fi
 
 # every scenario but tour (map screenshots); the soak with seed 42 and
-# $(SOAK_CI) requests
+# $(SOAK_CI) requests; then $(DECK_SELFTESTS) at the Deck's size
 test-client: need-timeout all client
 	@set -e; for s in $(SELFTESTS); do \
 		args=""; if [ $$s = soak ]; then args="--soak=$(SOAK_CI)"; fi; \
 		$(call run_selftest,$$s,$$args,180,$$s $$args); \
-	done; echo "selftests passed: $(SELFTESTS)"
+	done; \
+	for s in $(DECK_SELFTESTS); do \
+		$(call run_selftest,$$s,--size=1280x800,180,$$s at 1280x800); \
+	done; echo "selftests passed: $(SELFTESTS); at 1280x800: $(DECK_SELFTESTS)"
+
+# The Steam Deck's screen for review: $(DECK_SHOTS) shot at a real
+# 1280×800 into $(DECK_DIR)/<scenario>. A run fails when the window is not
+# that size or a screen does not fit it. Needs a display (without one:
+# xvfb-run make deck).
+deck: need-timeout all client
+	@set -e; for s in $(DECK_SHOTS); do \
+		dir=$(abspath $(DECK_DIR))/$$s; rm -rf $$dir; mkdir -p $$dir; \
+		$(call run_selftest,$$s,--size=1280x800 --screenshots=$$dir,300,$$s at 1280x800,window); \
+	done; echo "Deck screenshots in $(abspath $(DECK_DIR)): $(DECK_SHOTS)"
 
 # random play through the UI with each of $(SOAK_SEEDS) and the default budget
 soak: need-timeout all client
