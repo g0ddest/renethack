@@ -1,0 +1,2214 @@
+# The canonical Russian names (spec 2026-10-03-russian-localization,
+# decision 4): every name the engine prints, as it prints it, and its
+# Russian in the nominative singular (plural for things that come in
+# pairs). Translations of messages use these and nothing else.
+#
+#   "English" = { ru = "русский", src = "...", note = "..." }
+#
+# src: "nethack-ru" — from Skadga/nethack-ru (NGPL, see client/i18n/CREDITS.md);
+#      "chosen" — chosen here, the note says why when the source said
+#      otherwise; "todo" — not translated yet.
+# The forms of every name are in client/i18n/lexicon.ru.toml, made by
+# tools/i18n/lexicon_build.py; a few entries carry keys that steer it
+# (g, head, like, indecl, plural, proper, adjnoun, hyphen, lemma: see there).
+
+[monster]
+# monsters by class; a gendered name is its own entry
+# ant or other insect
+"giant ant" = { ru = "гигантский муравей", src = "nethack-ru" }
+"killer bee" = { ru = "пчела-убийца", src = "nethack-ru" }
+"soldier ant" = { ru = "муравей-солдат", src = "nethack-ru" }
+"fire ant" = { ru = "огненный муравей", src = "nethack-ru" }
+"giant beetle" = { ru = "гигантский жук", src = "nethack-ru" }
+"queen bee" = { ru = "пчелиная матка", src = "chosen", note = "was пчеломатка; clearer than пчеломатка" }
+# blob
+"acid blob" = { ru = "кислотный сгусток", src = "chosen", note = "was кислотная слизь; blob = сгусток, so слизь stays for oozes and slimes" }
+"quivering blob" = { ru = "дрожащий сгусток", src = "chosen", note = "was дрожащая слизь; blob = сгусток" }
+"gelatinous cube" = { ru = "студенистый куб", src = "nethack-ru" }
+# cockatrice
+"chickatrice" = { ru = "птенец кокатрикса", src = "chosen", note = "was цыплёнок-василиск; the family is кокатрикс, as in D&D in Russian" }
+"cockatrice" = { ru = "кокатрикс", src = "chosen", note = "was василиск; василиск is another creature; кокатрикс is the D&D word" }
+"pyrolisk" = { ru = "пиролиск", src = "nethack-ru" }
+# dog or other canine
+"jackal" = { ru = "шакал", src = "nethack-ru" }
+"fox" = { ru = "лиса", src = "nethack-ru" }
+"coyote" = { ru = "койот", src = "nethack-ru" }
+"werejackal" = { ru = "шакал-оборотень", src = "chosen", note = "was оборотень-шакал; like крыса-оборотень" }
+"little dog" = { ru = "собачка", src = "chosen", note = "was маленькая собака; the starting pet; natural and short: собачка, собака, большая собака" }
+"dingo" = { ru = "динго", src = "nethack-ru" }
+"dog" = { ru = "собака", src = "nethack-ru" }
+"large dog" = { ru = "большая собака", src = "nethack-ru" }
+"wolf" = { ru = "волк", src = "nethack-ru" }
+"werewolf" = { ru = "волк-оборотень", src = "chosen", note = "was оборотень; plain оборотень is the whole kind" }
+"winter wolf cub" = { ru = "детёныш зимнего волка", src = "nethack-ru" }
+"warg" = { ru = "варг", src = "nethack-ru" }
+"winter wolf" = { ru = "зимний волк", src = "nethack-ru" }
+"hell hound pup" = { ru = "щенок адской гончей", src = "nethack-ru" }
+"hell hound" = { ru = "адская гончая", src = "nethack-ru" }
+# eye or sphere
+"gas spore" = { ru = "газовая спора", src = "chosen", note = "was газовая пора; пора is a pore" }
+"floating eye" = { ru = "парящий глаз", src = "chosen", note = "was парящее око; око is poetic; глаз reads at once" }
+"freezing sphere" = { ru = "замораживающая сфера", src = "nethack-ru" }
+"flaming sphere" = { ru = "пылающая сфера", src = "chosen", note = "was пламенеющая сфера" }
+"shocking sphere" = { ru = "электрическая сфера", src = "chosen", note = "was шоковая сфера; шоковая is slang" }
+# cat or other feline
+"kitten" = { ru = "котёнок", src = "nethack-ru" }
+"housecat" = { ru = "домашняя кошка", src = "chosen", note = "was домашний кот; kitten, housecat, large cat: котёнок, домашняя кошка, большая кошка" }
+"jaguar" = { ru = "ягуар", src = "nethack-ru" }
+"lynx" = { ru = "рысь", src = "nethack-ru" }
+"panther" = { ru = "пантера", src = "nethack-ru" }
+"large cat" = { ru = "большая кошка", src = "nethack-ru" }
+"tiger" = { ru = "тигр", src = "nethack-ru" }
+"displacer beast" = { ru = "ускользающий зверь", src = "chosen", note = "was смещающийся зверь; the D&D name in Russian" }
+# gremlin
+"gremlin" = { ru = "гремлин", src = "nethack-ru" }
+"gargoyle" = { ru = "горгулья", src = "nethack-ru" }
+"winged gargoyle" = { ru = "крылатая горгулья", src = "nethack-ru" }
+# humanoid
+"hobbit" = { ru = "хоббит", src = "nethack-ru" }
+"dwarf" = { ru = "дварф", src = "nethack-ru" }
+"bugbear" = { ru = "багбир", src = "chosen", note = "was бугбер; the D&D name in Russian" }
+"dwarf leader" = { ru = "вождь дварфов", src = "chosen", note = "was дварф-вождь; the X lord/lady/leader/king/queen/ruler family: <title> <race gen. pl.>" }
+"dwarf lord" = { ru = "лорд дварфов", src = "chosen", note = "was дварф-лорд; family: <title> <race gen. pl.>" }
+"dwarf lady" = { ru = "леди дварфов", src = "chosen", note = "was дварф-леди; family: <title> <race gen. pl.>" }
+"dwarf ruler" = { ru = "правитель дварфов", src = "chosen", note = "was дварф-правитель; family: <title> <race gen. pl.>" }
+"dwarf king" = { ru = "король дварфов", src = "chosen", note = "was дварф-король; family: <title> <race gen. pl.>" }
+"dwarf queen" = { ru = "королева дварфов", src = "chosen", note = "was дварф-королева; family: <title> <race gen. pl.>" }
+"mind flayer" = { ru = "свежеватель разума", src = "chosen", note = "was пожиратель разума; the D&D name in Russian" }
+"master mind flayer" = { ru = "высший свежеватель разума", src = "chosen", note = "was мастер-пожиратель разума; master X = высший X (also master lich)" }
+# imp or minor demon
+"manes" = { ru = "манес", src = "chosen", note = "was мана; мана is magic energy; манес after the Latin manes", like = "слон", g = "m" }
+"homunculus" = { ru = "гомункул", src = "nethack-ru" }
+"imp" = { ru = "бесёнок", src = "nethack-ru" }
+"lemure" = { ru = "лемур", src = "nethack-ru" }
+"quasit" = { ru = "квазит", src = "nethack-ru" }
+"tengu" = { ru = "тэнгу", src = "nethack-ru" }
+# jelly
+"blue jelly" = { ru = "синий студень", src = "chosen", note = "was голубой студень; blue = синий (голубой is light blue)" }
+"spotted jelly" = { ru = "пятнистый студень", src = "nethack-ru" }
+"ochre jelly" = { ru = "охряной студень", src = "chosen", note = "was охристый студень; the D&D name" }
+# kobold
+"kobold" = { ru = "кобольд", src = "nethack-ru" }
+"large kobold" = { ru = "большой кобольд", src = "nethack-ru" }
+"kobold leader" = { ru = "вождь кобольдов", src = "chosen", note = "was кобольд-вождь; family: <title> <race gen. pl.>" }
+"kobold lord" = { ru = "лорд кобольдов", src = "chosen", note = "was кобольд-лорд; family: <title> <race gen. pl.>" }
+"kobold lady" = { ru = "леди кобольдов", src = "chosen", note = "was кобольд-леди; family: <title> <race gen. pl.>" }
+"kobold shaman" = { ru = "кобольд-шаман", src = "nethack-ru" }
+# leprechaun
+"leprechaun" = { ru = "лепрекон", src = "nethack-ru" }
+# mimic
+"small mimic" = { ru = "малый мимик", src = "chosen", note = "was маленькая мимикрия; мимикрия is the phenomenon; мимик is the creature" }
+"large mimic" = { ru = "большой мимик", src = "chosen", note = "was большая мимикрия; мимик" }
+"giant mimic" = { ru = "гигантский мимик", src = "chosen", note = "was гигантская мимикрия; мимик" }
+# nymph
+"wood nymph" = { ru = "лесная нимфа", src = "nethack-ru" }
+"water nymph" = { ru = "водяная нимфа", src = "nethack-ru" }
+"mountain nymph" = { ru = "горная нимфа", src = "nethack-ru" }
+# orc
+"goblin" = { ru = "гоблин", src = "nethack-ru" }
+"hobgoblin" = { ru = "хобгоблин", src = "nethack-ru" }
+"orc" = { ru = "орк", src = "nethack-ru" }
+"hill orc" = { ru = "холмовой орк", src = "chosen", note = "was горный орк; hill = холмовой, as in холмовой великан; горный is mountain" }
+"Mordor orc" = { ru = "мордорский орк", src = "chosen", note = "was орк Мордора" }
+"Uruk-hai" = { ru = "урук-хай", src = "chosen", note = "was урок-хай; the Russian Tolkien spelling" }
+"orc shaman" = { ru = "орк-шаман", src = "nethack-ru" }
+"orc-captain" = { ru = "орк-капитан", src = "nethack-ru" }
+# piercer
+"rock piercer" = { ru = "каменный пронзатель", src = "chosen", note = "was скальный прокальщик; piercer = пронзатель (D&D)" }
+"iron piercer" = { ru = "железный пронзатель", src = "chosen", note = "was железный прокальщик; piercer = пронзатель" }
+"glass piercer" = { ru = "стеклянный пронзатель", src = "chosen", note = "was стеклянный прокальщик; piercer = пронзатель" }
+# quadruped
+"rothe" = { ru = "роте", src = "nethack-ru" }
+"mumak" = { ru = "мумак", src = "nethack-ru" }
+"leocrotta" = { ru = "левкрота", src = "chosen", note = "was леокрот; the Russian bestiary name" }
+"wumpus" = { ru = "вампус", src = "nethack-ru" }
+"titanothere" = { ru = "титанотерий", src = "nethack-ru" }
+"baluchitherium" = { ru = "белуджитерий", src = "chosen", note = "was балухитерий; the Russian paleontological name" }
+"mastodon" = { ru = "мастодонт", src = "nethack-ru" }
+# rodent
+"sewer rat" = { ru = "канализационная крыса", src = "nethack-ru" }
+"giant rat" = { ru = "гигантская крыса", src = "nethack-ru" }
+"rabid rat" = { ru = "бешеная крыса", src = "nethack-ru" }
+"wererat" = { ru = "крыса-оборотень", src = "nethack-ru" }
+"rock mole" = { ru = "каменный крот", src = "nethack-ru" }
+"woodchuck" = { ru = "лесной сурок", src = "nethack-ru" }
+# arachnid or centipede
+"cave spider" = { ru = "пещерный паук", src = "nethack-ru" }
+"centipede" = { ru = "сороконожка", src = "nethack-ru" }
+"giant spider" = { ru = "гигантский паук", src = "nethack-ru" }
+"scorpion" = { ru = "скорпион", src = "nethack-ru" }
+# trapper or lurker above
+"lurker above" = { ru = "затаившийся сверху", src = "nethack-ru" }
+"trapper" = { ru = "ловец", src = "chosen", note = "was ловчий; ловчий is a huntsman" }
+# unicorn or horse
+"pony" = { ru = "пони", src = "nethack-ru" }
+"white unicorn" = { ru = "белый единорог", src = "nethack-ru" }
+"gray unicorn" = { ru = "серый единорог", src = "nethack-ru" }
+"black unicorn" = { ru = "чёрный единорог", src = "nethack-ru" }
+"horse" = { ru = "лошадь", src = "nethack-ru" }
+"warhorse" = { ru = "боевой конь", src = "nethack-ru" }
+# vortex
+"fog cloud" = { ru = "туманное облако", src = "chosen", note = "was облако тумана" }
+"dust vortex" = { ru = "пылевой вихрь", src = "nethack-ru" }
+"ice vortex" = { ru = "ледяной вихрь", src = "nethack-ru" }
+"energy vortex" = { ru = "энергетический вихрь", src = "nethack-ru" }
+"steam vortex" = { ru = "паровой вихрь", src = "nethack-ru" }
+"fire vortex" = { ru = "огненный вихрь", src = "nethack-ru" }
+# worm
+"baby long worm" = { ru = "детёныш длинного червя", src = "nethack-ru" }
+"baby purple worm" = { ru = "детёныш пурпурного червя", src = "nethack-ru" }
+"long worm" = { ru = "длинный червь", src = "nethack-ru" }
+"purple worm" = { ru = "пурпурный червь", src = "nethack-ru" }
+# xan or other mythical/fantastic insect
+"grid bug" = { ru = "сеточный жук", src = "chosen", note = "was ситовый жучок; it moves along a grid" }
+"xan" = { ru = "ксан", src = "nethack-ru" }
+# light
+"yellow light" = { ru = "жёлтый огонёк", src = "chosen", note = "was жёлтый свет; a light that moves and explodes: огонёк" }
+"black light" = { ru = "чёрный огонёк", src = "chosen", note = "was чёрный свет; огонёк" }
+# zruty
+"zruty" = { ru = "зрути", src = "nethack-ru" }
+# angelic being
+"couatl" = { ru = "коатль", src = "nethack-ru" }
+"Aleax" = { ru = "алеакс", src = "nethack-ru" }
+"Angel" = { ru = "ангел", src = "nethack-ru" }
+"ki-rin" = { ru = "ки-рин", src = "nethack-ru" }
+"Archon" = { ru = "архонт", src = "chosen", note = "was архон; the Russian word" }
+# bat or bird
+"bat" = { ru = "летучая мышь", src = "nethack-ru" }
+"giant bat" = { ru = "гигантская летучая мышь", src = "nethack-ru" }
+"raven" = { ru = "ворон", src = "nethack-ru" }
+"vampire bat" = { ru = "летучая мышь-вампир", src = "chosen", note = "was вампирская летучая мышь; the zoological name" }
+# centaur
+"plains centaur" = { ru = "степной кентавр", src = "chosen", note = "was равнинный кентавр; plains = степь" }
+"forest centaur" = { ru = "лесной кентавр", src = "nethack-ru" }
+"mountain centaur" = { ru = "горный кентавр", src = "nethack-ru" }
+# dragon
+"baby gray dragon" = { ru = "детёныш серого дракона", src = "nethack-ru" }
+"baby gold dragon" = { ru = "детёныш золотого дракона", src = "nethack-ru" }
+"baby silver dragon" = { ru = "детёныш серебряного дракона", src = "nethack-ru" }
+"baby red dragon" = { ru = "детёныш красного дракона", src = "nethack-ru" }
+"baby white dragon" = { ru = "детёныш белого дракона", src = "nethack-ru" }
+"baby orange dragon" = { ru = "детёныш оранжевого дракона", src = "nethack-ru" }
+"baby black dragon" = { ru = "детёныш чёрного дракона", src = "nethack-ru" }
+"baby blue dragon" = { ru = "детёныш синего дракона", src = "nethack-ru" }
+"baby green dragon" = { ru = "детёныш зелёного дракона", src = "nethack-ru" }
+"baby yellow dragon" = { ru = "детёныш жёлтого дракона", src = "nethack-ru" }
+"gray dragon" = { ru = "серый дракон", src = "nethack-ru" }
+"gold dragon" = { ru = "золотой дракон", src = "nethack-ru" }
+"silver dragon" = { ru = "серебряный дракон", src = "nethack-ru" }
+"red dragon" = { ru = "красный дракон", src = "nethack-ru" }
+"white dragon" = { ru = "белый дракон", src = "nethack-ru" }
+"orange dragon" = { ru = "оранжевый дракон", src = "nethack-ru" }
+"black dragon" = { ru = "чёрный дракон", src = "nethack-ru" }
+"blue dragon" = { ru = "синий дракон", src = "nethack-ru" }
+"green dragon" = { ru = "зелёный дракон", src = "nethack-ru" }
+"yellow dragon" = { ru = "жёлтый дракон", src = "nethack-ru" }
+# elemental
+"stalker" = { ru = "преследователь", src = "nethack-ru" }
+"air elemental" = { ru = "воздушный элементаль", src = "nethack-ru", like = "зверь", g = "m" }
+"fire elemental" = { ru = "огненный элементаль", src = "nethack-ru", like = "зверь", g = "m" }
+"earth elemental" = { ru = "земляной элементаль", src = "nethack-ru", like = "зверь", g = "m" }
+"water elemental" = { ru = "водяной элементаль", src = "nethack-ru", like = "зверь", g = "m" }
+# fungus or mold
+"lichen" = { ru = "лишайник", src = "nethack-ru" }
+"brown mold" = { ru = "бурая плесень", src = "nethack-ru" }
+"yellow mold" = { ru = "жёлтая плесень", src = "nethack-ru" }
+"green mold" = { ru = "зелёная плесень", src = "nethack-ru" }
+"red mold" = { ru = "красная плесень", src = "nethack-ru" }
+"shrieker" = { ru = "крикун", src = "nethack-ru" }
+"violet fungus" = { ru = "фиолетовый гриб", src = "nethack-ru" }
+# gnome
+"gnome" = { ru = "гном", src = "nethack-ru" }
+"gnome leader" = { ru = "вождь гномов", src = "chosen", note = "was гном-вождь; family: <title> <race gen. pl.>" }
+"gnome lord" = { ru = "лорд гномов", src = "chosen", note = "was гном-лорд; family: <title> <race gen. pl.>" }
+"gnome lady" = { ru = "леди гномов", src = "chosen", note = "was гном-леди; family: <title> <race gen. pl.>" }
+"gnomish wizard" = { ru = "гном-волшебник", src = "nethack-ru" }
+"gnome ruler" = { ru = "правитель гномов", src = "chosen", note = "was гном-правитель; family: <title> <race gen. pl.>" }
+"gnome king" = { ru = "король гномов", src = "chosen", note = "was гном-король; family: <title> <race gen. pl.>" }
+"gnome queen" = { ru = "королева гномов", src = "chosen", note = "was гном-королева; family: <title> <race gen. pl.>" }
+# giant humanoid
+"giant" = { ru = "великан", src = "nethack-ru" }
+"stone giant" = { ru = "каменный великан", src = "nethack-ru" }
+"hill giant" = { ru = "холмовой великан", src = "nethack-ru" }
+"fire giant" = { ru = "огненный великан", src = "nethack-ru" }
+"frost giant" = { ru = "ледяной великан", src = "chosen", note = "was морозный великан; the D&D name" }
+"ettin" = { ru = "эттин", src = "nethack-ru" }
+"storm giant" = { ru = "штормовой великан", src = "nethack-ru" }
+"titan" = { ru = "титан", src = "nethack-ru" }
+"minotaur" = { ru = "минотавр", src = "nethack-ru" }
+# jabberwock
+"jabberwock" = { ru = "бармаглот", src = "chosen", note = "was джаббервок; Carroll's Jabberwock in Russian (Орловская)" }
+# Keystone Kop
+"Keystone Kop" = { ru = "кистоунский коп", src = "chosen", note = "was полицейский Кистоун; Keystone is the film studio" }
+"Kop Sergeant" = { ru = "коп-сержант", src = "nethack-ru" }
+"Kop Lieutenant" = { ru = "коп-лейтенант", src = "nethack-ru" }
+"Kop Kaptain" = { ru = "коп-капитан", src = "nethack-ru" }
+# lich
+"lich" = { ru = "лич", src = "nethack-ru" }
+"demilich" = { ru = "демилич", src = "nethack-ru" }
+"master lich" = { ru = "высший лич", src = "chosen", note = "was мастер-лич; master X = высший X" }
+"arch-lich" = { ru = "архилич", src = "nethack-ru" }
+# mummy
+"kobold mummy" = { ru = "мумия кобольда", src = "nethack-ru" }
+"gnome mummy" = { ru = "мумия гнома", src = "nethack-ru" }
+"orc mummy" = { ru = "мумия орка", src = "nethack-ru" }
+"dwarf mummy" = { ru = "мумия дварфа", src = "nethack-ru" }
+"elf mummy" = { ru = "мумия эльфа", src = "nethack-ru" }
+"human mummy" = { ru = "мумия человека", src = "nethack-ru" }
+"ettin mummy" = { ru = "мумия эттина", src = "nethack-ru" }
+"giant mummy" = { ru = "мумия великана", src = "nethack-ru" }
+# naga
+"red naga hatchling" = { ru = "детёныш красной наги", src = "nethack-ru" }
+"black naga hatchling" = { ru = "детёныш чёрной наги", src = "nethack-ru" }
+"golden naga hatchling" = { ru = "детёныш золотой наги", src = "nethack-ru" }
+"guardian naga hatchling" = { ru = "детёныш наги-хранительницы", src = "chosen", note = "was детёныш наги-хранителя; agrees with нага-хранительница" }
+"red naga" = { ru = "красная нага", src = "nethack-ru" }
+"black naga" = { ru = "чёрная нага", src = "nethack-ru" }
+"golden naga" = { ru = "золотая нага", src = "nethack-ru" }
+"guardian naga" = { ru = "нага-хранительница", src = "nethack-ru" }
+# ogre
+"ogre" = { ru = "огр", src = "nethack-ru" }
+"ogre leader" = { ru = "вождь огров", src = "chosen", note = "was огр-вождь; family: <title> <race gen. pl.>" }
+"ogre lord" = { ru = "лорд огров", src = "chosen", note = "was огр-лорд; family: <title> <race gen. pl.>" }
+"ogre lady" = { ru = "леди огров", src = "chosen", note = "was огр-леди; family: <title> <race gen. pl.>" }
+"ogre tyrant" = { ru = "тиран огров", src = "chosen", note = "was огр-тиран; family: <title> <race gen. pl.>" }
+"ogre king" = { ru = "король огров", src = "chosen", note = "was огр-король; family: <title> <race gen. pl.>" }
+"ogre queen" = { ru = "королева огров", src = "chosen", note = "was огр-королева; family: <title> <race gen. pl.>" }
+# pudding or ooze
+"gray ooze" = { ru = "серая слизь", src = "nethack-ru" }
+"brown pudding" = { ru = "бурый пудинг", src = "nethack-ru" }
+"green slime" = { ru = "зелёная слизь", src = "nethack-ru" }
+"black pudding" = { ru = "чёрный пудинг", src = "nethack-ru" }
+# quantum mechanic
+"quantum mechanic" = { ru = "квантовый механик", src = "nethack-ru" }
+"genetic engineer" = { ru = "генный инженер", src = "chosen", note = "was генетик-инженер; the Russian term" }
+# rust monster or disenchanter
+"rust monster" = { ru = "ржавник", src = "chosen", note = "was ржавое чудовище; the D&D name in Russian" }
+"disenchanter" = { ru = "поглотитель чар", src = "chosen", note = "was разочарователь; разочарователь means one who disappoints" }
+# snake
+"garter snake" = { ru = "подвязочная змея", src = "nethack-ru" }
+"snake" = { ru = "змея", src = "nethack-ru" }
+"water moccasin" = { ru = "водяной щитомордник", src = "nethack-ru" }
+"python" = { ru = "питон", src = "nethack-ru" }
+"pit viper" = { ru = "ямкоголовая гадюка", src = "nethack-ru" }
+"cobra" = { ru = "кобра", src = "nethack-ru" }
+# troll
+"troll" = { ru = "тролль", src = "nethack-ru" }
+"ice troll" = { ru = "ледяной тролль", src = "nethack-ru" }
+"rock troll" = { ru = "каменный тролль", src = "chosen", note = "was скальный тролль" }
+"water troll" = { ru = "водяной тролль", src = "nethack-ru" }
+"Olog-hai" = { ru = "олог-хай", src = "nethack-ru" }
+# umber hulk
+"umber hulk" = { ru = "бурый увалень", src = "chosen", note = "was умбер-хальк; the D&D name in Russian" }
+# vampire
+"vampire" = { ru = "вампир", src = "nethack-ru" }
+"vampire leader" = { ru = "вождь вампиров", src = "chosen", note = "was вампир-вождь; family: <title> <race gen. pl.>" }
+"vampire lord" = { ru = "лорд вампиров", src = "chosen", note = "was вампир-лорд; family: <title> <race gen. pl.>" }
+"vampire lady" = { ru = "леди вампиров", src = "chosen", note = "was вампир-леди; family: <title> <race gen. pl.>" }
+"Vlad the Impaler" = { ru = "Влад Цепеш", src = "nethack-ru", head = "Влад Цепеш", like = "врач" }
+# wraith
+"barrow wight" = { ru = "курганное умертвие", src = "chosen", note = "was курганный вит; Tolkien's barrow-wights are умертвия" }
+"wraith" = { ru = "призрак", src = "nethack-ru" }
+"Nazgul" = { ru = "назгул", src = "nethack-ru" }
+# xorn
+"xorn" = { ru = "ксорн", src = "nethack-ru" }
+# apelike creature
+"monkey" = { ru = "мартышка", src = "chosen", note = "was обезьяна; a small thief; обезьяна is the ape" }
+"ape" = { ru = "обезьяна", src = "chosen", note = "was человекообразная обезьяна; человекообразная обезьяна is too long for messages" }
+"owlbear" = { ru = "совомедведь", src = "nethack-ru" }
+"yeti" = { ru = "йети", src = "nethack-ru" }
+"carnivorous ape" = { ru = "плотоядная обезьяна", src = "nethack-ru" }
+"sasquatch" = { ru = "сасквач", src = "chosen", note = "was сасквоч" }
+# zombie
+"kobold zombie" = { ru = "зомби кобольда", src = "nethack-ru" }
+"gnome zombie" = { ru = "зомби гнома", src = "nethack-ru" }
+"orc zombie" = { ru = "зомби орка", src = "nethack-ru" }
+"dwarf zombie" = { ru = "зомби дварфа", src = "nethack-ru" }
+"elf zombie" = { ru = "зомби эльфа", src = "nethack-ru" }
+"human zombie" = { ru = "зомби человека", src = "nethack-ru" }
+"ettin zombie" = { ru = "зомби эттина", src = "nethack-ru" }
+"ghoul" = { ru = "гуль", src = "nethack-ru" }
+"giant zombie" = { ru = "зомби великана", src = "nethack-ru" }
+"skeleton" = { ru = "скелет", src = "nethack-ru" }
+# golem
+"straw golem" = { ru = "соломенный голем", src = "nethack-ru" }
+"paper golem" = { ru = "бумажный голем", src = "nethack-ru" }
+"rope golem" = { ru = "верёвочный голем", src = "nethack-ru" }
+"gold golem" = { ru = "золотой голем", src = "nethack-ru" }
+"leather golem" = { ru = "кожаный голем", src = "nethack-ru" }
+"wood golem" = { ru = "деревянный голем", src = "nethack-ru" }
+"flesh golem" = { ru = "голем из плоти", src = "chosen", note = "was плотяной голем; the D&D name" }
+"clay golem" = { ru = "глиняный голем", src = "nethack-ru" }
+"stone golem" = { ru = "каменный голем", src = "nethack-ru" }
+"glass golem" = { ru = "стеклянный голем", src = "nethack-ru" }
+"iron golem" = { ru = "железный голем", src = "nethack-ru" }
+# human or elf
+"human" = { ru = "человек", src = "nethack-ru" }
+"elf" = { ru = "эльф", src = "nethack-ru" }
+"Woodland-elf" = { ru = "лесной эльф", src = "nethack-ru" }
+"Green-elf" = { ru = "зелёный эльф", src = "nethack-ru" }
+"Grey-elf" = { ru = "серый эльф", src = "nethack-ru" }
+"elf-noble" = { ru = "знатный эльф", src = "chosen", note = "was эльф-знатный" }
+"elf-lord" = { ru = "лорд эльфов", src = "chosen", note = "was эльф-лорд; family: <title> <race gen. pl.>" }
+"elf-lady" = { ru = "леди эльфов", src = "chosen", note = "was эльф-леди; family: <title> <race gen. pl.>" }
+"elven monarch" = { ru = "монарх эльфов", src = "chosen", note = "was эльфийский монарх; family: <title> <race gen. pl.>" }
+"Elvenking" = { ru = "король эльфов", src = "chosen", note = "was эльфийский король; family: <title> <race gen. pl.>" }
+"Elvenqueen" = { ru = "королева эльфов", src = "chosen", note = "was эльфийская королева; family: <title> <race gen. pl.>" }
+"doppelganger" = { ru = "доппельгангер", src = "nethack-ru" }
+"shopkeeper" = { ru = "лавочник", src = "nethack-ru" }
+"guard" = { ru = "страж", src = "nethack-ru" }
+"prisoner" = { ru = "узник", src = "nethack-ru" }
+"Oracle" = { ru = "Оракул", src = "chosen", note = "was оракул; unique: capitalised like Медуза" }
+"aligned cleric" = { ru = "храмовый служитель", src = "chosen", note = "was выровненный клирик; the neutral name of a temple priest" }
+"priest" = { ru = "жрец", src = "nethack-ru" }
+"priestess" = { ru = "жрица", src = "nethack-ru" }
+"high cleric" = { ru = "верховный служитель", src = "chosen", note = "was верховный клирик; neutral of high priest(ess)" }
+"high priest" = { ru = "верховный жрец", src = "nethack-ru" }
+"high priestess" = { ru = "верховная жрица", src = "nethack-ru" }
+"soldier" = { ru = "солдат", src = "nethack-ru" }
+"sergeant" = { ru = "сержант", src = "nethack-ru" }
+"nurse" = { ru = "медсестра", src = "nethack-ru" }
+"lieutenant" = { ru = "лейтенант", src = "nethack-ru" }
+"captain" = { ru = "капитан", src = "nethack-ru" }
+"watchman" = { ru = "стражник", src = "nethack-ru" }
+"watch captain" = { ru = "капитан стражи", src = "nethack-ru" }
+"Medusa" = { ru = "Медуза", src = "nethack-ru" }
+"Wizard of Yendor" = { ru = "Волшебник Йендора", src = "nethack-ru" }
+"Croesus" = { ru = "Крёз", src = "nethack-ru" }
+# ghost
+"ghost" = { ru = "привидение", src = "chosen", note = "was призрак; призрак is the wraith" }
+"shade" = { ru = "тень", src = "nethack-ru" }
+# major demon
+"water demon" = { ru = "водяной демон", src = "nethack-ru" }
+"amorous demon" = { ru = "любвеобильный демон", src = "nethack-ru" }
+"incubus" = { ru = "инкуб", src = "nethack-ru" }
+"succubus" = { ru = "суккуб", src = "nethack-ru" }
+"horned devil" = { ru = "рогатый дьявол", src = "nethack-ru" }
+"erinys" = { ru = "эриния", src = "nethack-ru" }
+"barbed devil" = { ru = "шипастый дьявол", src = "chosen", note = "was колючий дьявол; the D&D name" }
+"marilith" = { ru = "марилит", src = "nethack-ru" }
+"vrock" = { ru = "врок", src = "nethack-ru" }
+"hezrou" = { ru = "хезроу", src = "chosen", note = "was гезру; the D&D name" }
+"bone devil" = { ru = "костяной дьявол", src = "nethack-ru" }
+"ice devil" = { ru = "ледяной дьявол", src = "nethack-ru" }
+"nalfeshnee" = { ru = "нальфешни", src = "chosen", note = "was налфешни; the D&D name", indecl = true }
+"pit fiend" = { ru = "исчадие преисподней", src = "chosen", note = "was адский гад; the D&D name; адский гад was a joke" }
+"sandestin" = { ru = "сандестин", src = "nethack-ru" }
+"balrog" = { ru = "балрог", src = "nethack-ru", like = "враг" }
+"Juiblex" = { ru = "Джубилекс", src = "chosen", note = "was Жуиблекс; the D&D name" }
+"Yeenoghu" = { ru = "Йеногу", src = "chosen", note = "was Ииноху; the D&D name" }
+"Orcus" = { ru = "Оркус", src = "nethack-ru" }
+"Geryon" = { ru = "Герион", src = "nethack-ru" }
+"Dispater" = { ru = "Диспатер", src = "nethack-ru" }
+"Baalzebub" = { ru = "Баалзебул", src = "chosen", note = "was Баалзебуб; the D&D name" }
+"Asmodeus" = { ru = "Асмодей", src = "nethack-ru" }
+"Demogorgon" = { ru = "Демогоргон", src = "nethack-ru" }
+"Death" = { ru = "Смерть", src = "nethack-ru" }
+"Pestilence" = { ru = "Мор", src = "nethack-ru" }
+"Famine" = { ru = "Голод", src = "nethack-ru" }
+"djinni" = { ru = "джинн", src = "nethack-ru" }
+# sea monster
+"jellyfish" = { ru = "морская медуза", src = "chosen", note = "was медуза; plain медуза would read as Medusa at the start of a sentence" }
+"piranha" = { ru = "пиранья", src = "nethack-ru" }
+"shark" = { ru = "акула", src = "nethack-ru" }
+"giant eel" = { ru = "гигантский угорь", src = "nethack-ru" }
+"electric eel" = { ru = "электрический угорь", src = "nethack-ru" }
+"kraken" = { ru = "кракен", src = "nethack-ru" }
+# lizard
+"newt" = { ru = "тритон", src = "nethack-ru" }
+"gecko" = { ru = "геккон", src = "nethack-ru" }
+"iguana" = { ru = "игуана", src = "nethack-ru" }
+"baby crocodile" = { ru = "детёныш крокодила", src = "nethack-ru" }
+"lizard" = { ru = "ящерица", src = "nethack-ru" }
+"chameleon" = { ru = "хамелеон", src = "nethack-ru" }
+"crocodile" = { ru = "крокодил", src = "nethack-ru" }
+"salamander" = { ru = "саламандра", src = "nethack-ru" }
+# long worm tail
+"long worm tail" = { ru = "хвост длинного червя", src = "nethack-ru" }
+# human or elf
+"archeologist" = { ru = "археолог", src = "nethack-ru" }
+"barbarian" = { ru = "варвар", src = "nethack-ru" }
+"cave dweller" = { ru = "обитатель пещер", src = "nethack-ru" }
+"caveman" = { ru = "пещерный человек", src = "nethack-ru" }
+"cavewoman" = { ru = "пещерная женщина", src = "nethack-ru" }
+"healer" = { ru = "целитель", src = "nethack-ru" }
+"knight" = { ru = "рыцарь", src = "nethack-ru" }
+"monk" = { ru = "монах", src = "nethack-ru" }
+"cleric" = { ru = "священнослужитель", src = "chosen", note = "was клирик; neutral of priest(ess) for the player monster" }
+"ranger" = { ru = "следопыт", src = "nethack-ru" }
+"rogue" = { ru = "плут", src = "nethack-ru" }
+"samurai" = { ru = "самурай", src = "nethack-ru" }
+"tourist" = { ru = "турист", src = "nethack-ru" }
+"valkyrie" = { ru = "валькирия", src = "nethack-ru" }
+"wizard" = { ru = "волшебник", src = "nethack-ru" }
+"Lord Carnarvon" = { ru = "лорд Карнарвон", src = "nethack-ru", head = "лорд Карнарвон", proper = true }
+"Pelias" = { ru = "Пелий", src = "nethack-ru" }
+"Shaman Karnov" = { ru = "шаман Карнов", src = "nethack-ru", head = "шаман Карнов", proper = true }
+"Hippocrates" = { ru = "Гиппократ", src = "nethack-ru" }
+"King Arthur" = { ru = "король Артур", src = "nethack-ru", head = "король Артур", proper = true }
+"Grand Master" = { ru = "Великий Мастер", src = "nethack-ru" }
+"Arch Priest" = { ru = "Первосвященник", src = "chosen", note = "was Верховный жрец; верховный жрец is the high priest" }
+"Orion" = { ru = "Орион", src = "nethack-ru" }
+"Master of Thieves" = { ru = "Мастер воров", src = "chosen", note = "was Мастер Воров" }
+"Lord Sato" = { ru = "лорд Сато", src = "nethack-ru", head = "лорд Сато", proper = true }
+"Twoflower" = { ru = "Двацветок", src = "nethack-ru" }
+"Norn" = { ru = "Норна", src = "chosen", note = "was норна; unique: capitalised" }
+"Neferet the Green" = { ru = "Неферет Зелёная", src = "nethack-ru" }
+# major demon
+"Minion of Huhetotl" = { ru = "Прислужник Уэуэтеотля", src = "chosen", note = "was прислужник Хухетотла; the god is Уэуэтеотль" }
+# human or elf
+"Thoth Amon" = { ru = "Тот-Амон", src = "chosen", note = "was Тот Амон; the Russian Conan spelling", hyphen = "last" }
+# dragon
+"Chromatic Dragon" = { ru = "Хроматический дракон", src = "nethack-ru" }
+# giant humanoid
+"Cyclops" = { ru = "Циклоп", src = "chosen", note = "was циклоп; unique: capitalised" }
+# dragon
+"Ixoth" = { ru = "Иксот", src = "nethack-ru" }
+# human or elf
+"Master Kaen" = { ru = "мастер Каэн", src = "nethack-ru", head = "мастер Каэн", proper = true }
+# major demon
+"Nalzok" = { ru = "Налзок", src = "nethack-ru", like = "слон" }
+# arachnid or centipede
+"Scorpius" = { ru = "Скорпиус", src = "nethack-ru" }
+# human or elf
+"Master Assassin" = { ru = "Мастер-ассасин", src = "chosen", note = "was Мастер Ассасин" }
+"Ashikaga Takauji" = { ru = "Асикага Такаудзи", src = "nethack-ru", head = "Асикага Такаудзи" }
+# giant humanoid
+"Lord Surtur" = { ru = "лорд Сурт", src = "chosen", note = "was лорд Суртур; Surtr is Сурт in Russian", head = "лорд Сурт", proper = true }
+# human or elf
+"Dark One" = { ru = "Тёмный", src = "nethack-ru", adjnoun = true }
+"student" = { ru = "ученик", src = "nethack-ru" }
+"chieftain" = { ru = "вождь", src = "nethack-ru" }
+"neanderthal" = { ru = "неандерталец", src = "nethack-ru" }
+"attendant" = { ru = "санитар", src = "chosen", note = "was служитель; the Healer's quest guardians; служитель is the temple priest" }
+"page" = { ru = "паж", src = "nethack-ru" }
+"abbot" = { ru = "аббат", src = "nethack-ru" }
+"acolyte" = { ru = "послушник", src = "nethack-ru" }
+"hunter" = { ru = "охотник", src = "nethack-ru" }
+"thug" = { ru = "головорез", src = "nethack-ru" }
+"ninja" = { ru = "ниндзя", src = "nethack-ru" }
+"roshi" = { ru = "роси", src = "nethack-ru" }
+"guide" = { ru = "проводник", src = "nethack-ru" }
+"warrior" = { ru = "воин", src = "nethack-ru" }
+"apprentice" = { ru = "подмастерье", src = "nethack-ru" }
+"poohbah" = { ru = "шишка", src = "chosen", note = "hallucination: the grand poohbah of a god is the big шишка" }
+"guardian Angel" = { ru = "ангел-хранитель", src = "chosen", note = "a tame Angel" }
+"it" = { ru = "кто-то", src = "chosen", note = "an unseen monster" }
+"someone" = { ru = "кто-то", src = "chosen" }
+"something" = { ru = "что-то", src = "chosen" }
+"you" = { ru = "вы", src = "chosen", note = "the hero" }
+"himself" = { ru = "себя", src = "chosen" }
+"herself" = { ru = "себя", src = "chosen" }
+"itself" = { ru = "себя", src = "chosen" }
+"themselves" = { ru = "себя", src = "chosen" }
+
+[object]
+# identified objects, as xname() names one
+# illobj
+"strange object" = { ru = "странный предмет", src = "nethack-ru" }
+# weapon
+"arrow" = { ru = "стрела", src = "nethack-ru" }
+"elven arrow" = { ru = "эльфийская стрела", src = "nethack-ru" }
+"orcish arrow" = { ru = "орочья стрела", src = "chosen", note = "was оркская стрела; orcish = орочий throughout" }
+"silver arrow" = { ru = "серебряная стрела", src = "nethack-ru" }
+"ya" = { ru = "японская стрела", src = "chosen", note = "was я; я reads as the pronoun" }
+"crossbow bolt" = { ru = "арбалетный болт", src = "nethack-ru" }
+"dart" = { ru = "дротик", src = "nethack-ru" }
+"shuriken" = { ru = "сюрикен", src = "nethack-ru" }
+"boomerang" = { ru = "бумеранг", src = "nethack-ru" }
+"spear" = { ru = "копьё", src = "nethack-ru" }
+"elven spear" = { ru = "эльфийское копьё", src = "nethack-ru" }
+"orcish spear" = { ru = "орочье копьё", src = "chosen", note = "was оркское копьё; orcish = орочий" }
+"dwarvish spear" = { ru = "дварфийское копьё", src = "nethack-ru" }
+"silver spear" = { ru = "серебряное копьё", src = "nethack-ru" }
+"javelin" = { ru = "сулица", src = "chosen", note = "was метательное копьё; the source gave its look's name, метательное копьё, to the javelin too" }
+"trident" = { ru = "трезубец", src = "nethack-ru" }
+"dagger" = { ru = "кинжал", src = "nethack-ru" }
+"elven dagger" = { ru = "эльфийский кинжал", src = "nethack-ru" }
+"orcish dagger" = { ru = "орочий кинжал", src = "chosen", note = "was оркский кинжал; orcish = орочий" }
+"silver dagger" = { ru = "серебряный кинжал", src = "nethack-ru" }
+"athame" = { ru = "атам", src = "chosen", note = "was кержамес; the ritual knife" }
+"scalpel" = { ru = "скальпель", src = "nethack-ru" }
+"knife" = { ru = "нож", src = "nethack-ru" }
+"stiletto" = { ru = "стилет", src = "nethack-ru" }
+"worm tooth" = { ru = "зуб червя", src = "nethack-ru" }
+"crysknife" = { ru = "криснож", src = "nethack-ru" }
+"axe" = { ru = "топор", src = "nethack-ru" }
+"battle-axe" = { ru = "боевой топор", src = "nethack-ru" }
+"short sword" = { ru = "короткий меч", src = "nethack-ru" }
+"elven short sword" = { ru = "эльфийский короткий меч", src = "nethack-ru" }
+"orcish short sword" = { ru = "орочий короткий меч", src = "chosen", note = "was оркский короткий меч; orcish = орочий" }
+"dwarvish short sword" = { ru = "дварфийский короткий меч", src = "nethack-ru" }
+"scimitar" = { ru = "скимитар", src = "chosen", note = "was ятаган; the D&D name; ятаган is another sword" }
+"silver saber" = { ru = "серебряная сабля", src = "nethack-ru" }
+"broadsword" = { ru = "палаш", src = "nethack-ru" }
+"elven broadsword" = { ru = "эльфийский палаш", src = "nethack-ru" }
+"long sword" = { ru = "длинный меч", src = "nethack-ru" }
+"two-handed sword" = { ru = "двуручный меч", src = "nethack-ru" }
+"katana" = { ru = "катана", src = "nethack-ru" }
+"tsurugi" = { ru = "цуруги", src = "nethack-ru", indecl = true, g = "m" }
+"runesword" = { ru = "рунный меч", src = "chosen", note = "was рунический меч; runed = рунный throughout" }
+"partisan" = { ru = "протазан", src = "nethack-ru" }
+"ranseur" = { ru = "рансёр", src = "chosen", note = "was ронсар" }
+"spetum" = { ru = "спетум", src = "nethack-ru" }
+"glaive" = { ru = "глефа", src = "nethack-ru" }
+"halberd" = { ru = "алебарда", src = "nethack-ru" }
+"bardiche" = { ru = "бердыш", src = "chosen", note = "was бардиш; the Russian word" }
+"voulge" = { ru = "вульж", src = "chosen", note = "was вуж; вуж reads as уж" }
+"fauchard" = { ru = "фошар", src = "nethack-ru" }
+"guisarme" = { ru = "гизарма", src = "nethack-ru" }
+"bill-guisarme" = { ru = "биль-гизарма", src = "nethack-ru", hyphen = "last", g = "f" }
+"lucern hammer" = { ru = "люцернский молот", src = "nethack-ru" }
+"bec de corbin" = { ru = "бек-де-корбен", src = "chosen", note = "was бек де корбен" }
+"dwarvish mattock" = { ru = "дварфийская мотыга", src = "chosen", note = "was дварфийская кирка; кирка is the pick-axe" }
+"lance" = { ru = "рыцарское копьё", src = "chosen", note = "was пика; a jousting lance; пика is a pike" }
+"mace" = { ru = "булава", src = "nethack-ru" }
+"silver mace" = { ru = "серебряная булава", src = "nethack-ru" }
+"morning star" = { ru = "моргенштерн", src = "nethack-ru" }
+"war hammer" = { ru = "боевой молот", src = "nethack-ru" }
+"club" = { ru = "дубина", src = "nethack-ru" }
+"rubber hose" = { ru = "резиновый шланг", src = "nethack-ru" }
+"quarterstaff" = { ru = "боевой посох", src = "chosen", note = "was посох; посох is its look, staff" }
+"aklys" = { ru = "аклис", src = "nethack-ru" }
+"flail" = { ru = "цеп", src = "nethack-ru" }
+"bullwhip" = { ru = "кнут", src = "chosen", note = "was бычий бич; the Russian word" }
+"bow" = { ru = "лук", src = "nethack-ru" }
+"elven bow" = { ru = "эльфийский лук", src = "nethack-ru" }
+"orcish bow" = { ru = "орочий лук", src = "chosen", note = "was оркский лук; orcish = орочий" }
+"yumi" = { ru = "юми", src = "nethack-ru" }
+"sling" = { ru = "праща", src = "nethack-ru" }
+"crossbow" = { ru = "арбалет", src = "nethack-ru" }
+# armor
+"elven leather helm" = { ru = "эльфийский кожаный шлем", src = "nethack-ru" }
+"orcish helm" = { ru = "орочий шлем", src = "chosen", note = "was оркский шлем; orcish = орочий" }
+"dwarvish iron helm" = { ru = "дварфийский железный шлем", src = "nethack-ru" }
+"fedora" = { ru = "федора", src = "nethack-ru" }
+"cornuthaum" = { ru = "корнутаум", src = "chosen", note = "was корнуфаум", like = "слон" }
+"dunce cap" = { ru = "дурацкий колпак", src = "chosen", note = "was колпак дурака; the Russian idiom" }
+"dented pot" = { ru = "помятый горшок", src = "nethack-ru" }
+"helm of brilliance" = { ru = "шлем озарения", src = "chosen", note = "was шлем блеска; brilliance of mind: it raises Int and Wis" }
+"helmet" = { ru = "шлем", src = "nethack-ru" }
+"helm of caution" = { ru = "шлем бдительности", src = "chosen", note = "was шлем осторожности; it warns" }
+"helm of opposite alignment" = { ru = "шлем противоположного мировоззрения", src = "chosen", note = "was шлем противоположной ориентации; alignment = мировоззрение (D&D)" }
+"helm of telepathy" = { ru = "шлем телепатии", src = "nethack-ru" }
+"gray dragon scale mail" = { ru = "доспех из чешуи серого дракона", src = "chosen", note = "was серая кольчуга из чешуи дракона; scale mail is not chain mail" }
+"gold dragon scale mail" = { ru = "доспех из чешуи золотого дракона", src = "chosen", note = "was золотая кольчуга из чешуи дракона; the dragon family" }
+"silver dragon scale mail" = { ru = "доспех из чешуи серебряного дракона", src = "chosen", note = "was серебряная кольчуга из чешуи дракона; the dragon family" }
+"red dragon scale mail" = { ru = "доспех из чешуи красного дракона", src = "chosen", note = "was красная кольчуга из чешуи дракона; the dragon family" }
+"white dragon scale mail" = { ru = "доспех из чешуи белого дракона", src = "chosen", note = "was белая кольчуга из чешуи дракона; the dragon family" }
+"orange dragon scale mail" = { ru = "доспех из чешуи оранжевого дракона", src = "chosen", note = "was оранжевая кольчуга из чешуи дракона; the dragon family" }
+"black dragon scale mail" = { ru = "доспех из чешуи чёрного дракона", src = "chosen", note = "was чёрная кольчуга из чешуи дракона; the dragon family" }
+"blue dragon scale mail" = { ru = "доспех из чешуи синего дракона", src = "chosen", note = "was синяя кольчуга из чешуи дракона; the dragon family" }
+"green dragon scale mail" = { ru = "доспех из чешуи зелёного дракона", src = "chosen", note = "was зелёная кольчуга из чешуи дракона; the dragon family" }
+"yellow dragon scale mail" = { ru = "доспех из чешуи жёлтого дракона", src = "chosen", note = "was жёлтая кольчуга из чешуи дракона; the dragon family" }
+"set of gray dragon scales" = { ru = "чешуя серого дракона", src = "chosen", note = "was серая чешуя дракона; the dragon family" }
+"set of gold dragon scales" = { ru = "чешуя золотого дракона", src = "chosen", note = "was золотая чешуя дракона; the dragon family" }
+"set of silver dragon scales" = { ru = "чешуя серебряного дракона", src = "chosen", note = "was серебряная чешуя дракона; the dragon family" }
+"set of red dragon scales" = { ru = "чешуя красного дракона", src = "chosen", note = "was красная чешуя дракона; the dragon family" }
+"set of white dragon scales" = { ru = "чешуя белого дракона", src = "chosen", note = "was белая чешуя дракона; the dragon family" }
+"set of orange dragon scales" = { ru = "чешуя оранжевого дракона", src = "chosen", note = "was оранжевая чешуя дракона; the dragon family" }
+"set of black dragon scales" = { ru = "чешуя чёрного дракона", src = "chosen", note = "was чёрная чешуя дракона; the dragon family" }
+"set of blue dragon scales" = { ru = "чешуя синего дракона", src = "chosen", note = "was синяя чешуя дракона; the dragon family" }
+"set of green dragon scales" = { ru = "чешуя зелёного дракона", src = "chosen", note = "was зелёная чешуя дракона; the dragon family" }
+"set of yellow dragon scales" = { ru = "чешуя жёлтого дракона", src = "chosen", note = "was жёлтая чешуя дракона; the dragon family" }
+"plate mail" = { ru = "латный доспех", src = "nethack-ru" }
+"crystal plate mail" = { ru = "хрустальный латный доспех", src = "nethack-ru" }
+"bronze plate mail" = { ru = "бронзовый латный доспех", src = "nethack-ru" }
+"splint mail" = { ru = "наборный доспех", src = "chosen", note = "was доспех из пластин; the D&D name" }
+"banded mail" = { ru = "пластинчатый доспех", src = "chosen", note = "was полосатый доспех; полосатый means striped" }
+"dwarvish mithril-coat" = { ru = "дварфийская мифриловая кольчуга", src = "chosen", note = "was дварфийский мифриловый доспех; a mail shirt, as in Tolkien" }
+"elven mithril-coat" = { ru = "эльфийская мифриловая кольчуга", src = "chosen", note = "was эльфийский мифриловый доспех; a mail shirt" }
+"chain mail" = { ru = "кольчуга", src = "nethack-ru" }
+"orcish chain mail" = { ru = "орочья кольчуга", src = "chosen", note = "was оркская кольчуга; orcish = орочий" }
+"scale mail" = { ru = "чешуйчатый доспех", src = "nethack-ru" }
+"studded leather armor" = { ru = "проклёпанный кожаный доспех", src = "chosen", note = "was кожаный доспех с шипами; the D&D name" }
+"ring mail" = { ru = "колечный доспех", src = "chosen", note = "was кольчатый доспех; the D&D name" }
+"orcish ring mail" = { ru = "орочий колечный доспех", src = "chosen", note = "was оркский кольчатый доспех; orcish = орочий" }
+"leather armor" = { ru = "кожаный доспех", src = "nethack-ru" }
+"leather jacket" = { ru = "кожаная куртка", src = "nethack-ru" }
+"Hawaiian shirt" = { ru = "гавайская рубашка", src = "nethack-ru" }
+"T-shirt" = { ru = "футболка", src = "nethack-ru" }
+"mummy wrapping" = { ru = "обмотка мумии", src = "nethack-ru" }
+"elven cloak" = { ru = "эльфийский плащ", src = "nethack-ru" }
+"orcish cloak" = { ru = "орочий плащ", src = "chosen", note = "was оркский плащ; orcish = орочий" }
+"dwarvish cloak" = { ru = "дварфийский плащ", src = "nethack-ru" }
+"oilskin cloak" = { ru = "непромокаемый плащ", src = "chosen", note = "was прорезиненный плащ" }
+"robe" = { ru = "мантия", src = "nethack-ru" }
+"alchemy smock" = { ru = "алхимический фартук", src = "chosen", note = "was алхимический халат; its look is a фартук" }
+"leather cloak" = { ru = "кожаный плащ", src = "nethack-ru" }
+"cloak of protection" = { ru = "плащ защиты", src = "nethack-ru" }
+"cloak of invisibility" = { ru = "плащ невидимости", src = "nethack-ru" }
+"cloak of magic resistance" = { ru = "плащ сопротивления магии", src = "chosen", note = "was плащ магической защиты; the сопротивление family" }
+"cloak of displacement" = { ru = "плащ смещения", src = "nethack-ru" }
+"small shield" = { ru = "малый щит", src = "nethack-ru" }
+"shield of drain resistance" = { ru = "щит сопротивления истощению", src = "nethack-ru" }
+"shield of shock resistance" = { ru = "щит сопротивления электричеству", src = "nethack-ru" }
+"elven shield" = { ru = "эльфийский щит", src = "nethack-ru" }
+"Uruk-hai shield" = { ru = "щит урук-хаев", src = "chosen", note = "was щит урук-хай" }
+"orcish shield" = { ru = "орочий щит", src = "chosen", note = "was оркский щит; orcish = орочий" }
+"large shield" = { ru = "большой щит", src = "nethack-ru" }
+"dwarvish roundshield" = { ru = "дварфийский круглый щит", src = "nethack-ru" }
+"shield of reflection" = { ru = "щит отражения", src = "nethack-ru" }
+"pair of leather gloves" = { ru = "кожаные перчатки", src = "nethack-ru" }
+"pair of gauntlets of fumbling" = { ru = "рукавицы неуклюжести", src = "nethack-ru" }
+"pair of gauntlets of power" = { ru = "рукавицы силы", src = "nethack-ru" }
+"pair of gauntlets of dexterity" = { ru = "рукавицы ловкости", src = "nethack-ru" }
+"pair of low boots" = { ru = "ботинки", src = "chosen", note = "was низкие ботинки; boots: ботинки (low), башмаки (iron shoes), сапоги (high)" }
+"pair of iron shoes" = { ru = "железные башмаки", src = "chosen", note = "was железные ботинки" }
+"pair of high boots" = { ru = "высокие сапоги", src = "chosen", note = "was высокие ботинки" }
+"pair of speed boots" = { ru = "сапоги-скороходы", src = "chosen", note = "was ботинки скорости; the fairy-tale name" }
+"pair of water walking boots" = { ru = "сапоги водохождения", src = "chosen", note = "was ботинки хождения по воде" }
+"pair of jumping boots" = { ru = "сапоги прыгучести", src = "chosen", note = "was прыгательные ботинки" }
+"pair of elven boots" = { ru = "эльфийские сапоги", src = "chosen", note = "was эльфийские ботинки" }
+"pair of kicking boots" = { ru = "сапоги для пинков", src = "chosen", note = "was ботинки для пинков" }
+"pair of fumble boots" = { ru = "сапоги неуклюжести", src = "chosen", note = "was неуклюжие ботинки" }
+"pair of levitation boots" = { ru = "сапоги левитации", src = "chosen", note = "was ботинки левитации" }
+# ring
+"ring of adornment" = { ru = "кольцо обаяния", src = "chosen", note = "was кольцо украшения; it raises Charisma" }
+"ring of gain strength" = { ru = "кольцо увеличения силы", src = "nethack-ru" }
+"ring of gain constitution" = { ru = "кольцо увеличения телосложения", src = "chosen", note = "was кольцо увеличения конституции; Constitution = телосложение (D&D)" }
+"ring of increase accuracy" = { ru = "кольцо повышения точности", src = "nethack-ru" }
+"ring of increase damage" = { ru = "кольцо повышения урона", src = "nethack-ru" }
+"ring of protection" = { ru = "кольцо защиты", src = "nethack-ru" }
+"ring of regeneration" = { ru = "кольцо регенерации", src = "nethack-ru" }
+"ring of searching" = { ru = "кольцо поиска", src = "nethack-ru" }
+"ring of stealth" = { ru = "кольцо скрытности", src = "nethack-ru" }
+"ring of sustain ability" = { ru = "кольцо сохранения характеристик", src = "chosen", note = "was кольцо поддержания способности; ability = характеристики" }
+"ring of levitation" = { ru = "кольцо левитации", src = "nethack-ru" }
+"ring of hunger" = { ru = "кольцо голода", src = "nethack-ru" }
+"ring of aggravate monster" = { ru = "кольцо раздражения монстров", src = "nethack-ru" }
+"ring of conflict" = { ru = "кольцо конфликта", src = "nethack-ru" }
+"ring of warning" = { ru = "кольцо предупреждения", src = "nethack-ru" }
+"ring of poison resistance" = { ru = "кольцо сопротивления яду", src = "nethack-ru" }
+"ring of fire resistance" = { ru = "кольцо сопротивления огню", src = "nethack-ru" }
+"ring of cold resistance" = { ru = "кольцо сопротивления холоду", src = "nethack-ru" }
+"ring of shock resistance" = { ru = "кольцо сопротивления электричеству", src = "nethack-ru" }
+"ring of free action" = { ru = "кольцо свободы действий", src = "nethack-ru" }
+"ring of slow digestion" = { ru = "кольцо замедленного пищеварения", src = "nethack-ru" }
+"ring of teleportation" = { ru = "кольцо телепортации", src = "nethack-ru" }
+"ring of teleport control" = { ru = "кольцо контроля телепортации", src = "nethack-ru" }
+"ring of polymorph" = { ru = "кольцо превращения", src = "nethack-ru" }
+"ring of polymorph control" = { ru = "кольцо контроля превращения", src = "nethack-ru" }
+"ring of invisibility" = { ru = "кольцо невидимости", src = "nethack-ru" }
+"ring of see invisible" = { ru = "кольцо видения невидимого", src = "nethack-ru" }
+"ring of protection from shape changers" = { ru = "кольцо защиты от оборотней", src = "chosen", note = "was кольцо защиты от принимающих облик; shape changers = оборотни" }
+# amulet
+"amulet of ESP" = { ru = "амулет телепатии", src = "chosen", note = "was амулет экстрасенсорного восприятия; as the helm of telepathy: same power" }
+"amulet of life saving" = { ru = "амулет спасения жизни", src = "chosen", note = "was амулет спасения" }
+"amulet of strangulation" = { ru = "амулет удушения", src = "nethack-ru" }
+"amulet of restful sleep" = { ru = "амулет спокойного сна", src = "nethack-ru" }
+"amulet versus poison" = { ru = "амулет против яда", src = "nethack-ru" }
+"amulet of change" = { ru = "амулет перемены", src = "chosen", note = "was амулет изменения" }
+"amulet of unchanging" = { ru = "амулет неизменности", src = "nethack-ru" }
+"amulet of reflection" = { ru = "амулет отражения", src = "nethack-ru" }
+"amulet of magical breathing" = { ru = "амулет магического дыхания", src = "nethack-ru" }
+"amulet of guarding" = { ru = "амулет охраны", src = "chosen", note = "was амулет защиты; защита is protection" }
+"amulet of flying" = { ru = "амулет полёта", src = "nethack-ru" }
+"cheap plastic imitation of the Amulet of Yendor" = { ru = "дешёвая пластиковая имитация Амулета Йендора", src = "nethack-ru" }
+"Amulet of Yendor" = { ru = "Амулет Йендора", src = "nethack-ru" }
+# tool
+"large box" = { ru = "большой ящик", src = "nethack-ru" }
+"chest" = { ru = "сундук", src = "nethack-ru" }
+"ice box" = { ru = "ледник", src = "nethack-ru" }
+"sack" = { ru = "мешок", src = "nethack-ru" }
+"oilskin sack" = { ru = "непромокаемый мешок", src = "chosen", note = "was прорезиненный мешок" }
+"bag of holding" = { ru = "сумка хранения", src = "chosen", note = "was мешок вместительности; the D&D name; its look is a сумка" }
+"bag of tricks" = { ru = "сумка фокусов", src = "chosen", note = "was мешок трюков; its look is a сумка" }
+"skeleton key" = { ru = "универсальный ключ", src = "chosen", note = "was отмычка; отмычка is the lock pick" }
+"lock pick" = { ru = "отмычка", src = "nethack-ru" }
+"credit card" = { ru = "кредитная карта", src = "chosen", note = "was кредитная карточка" }
+"tallow candle" = { ru = "сальная свеча", src = "nethack-ru" }
+"wax candle" = { ru = "восковая свеча", src = "nethack-ru" }
+"brass lantern" = { ru = "латунный фонарь", src = "nethack-ru" }
+"oil lamp" = { ru = "масляная лампа", src = "nethack-ru" }
+"magic lamp" = { ru = "волшебная лампа", src = "nethack-ru" }
+"expensive camera" = { ru = "дорогой фотоаппарат", src = "chosen", note = "was дорогая камера" }
+"mirror" = { ru = "зеркало", src = "nethack-ru" }
+"crystal ball" = { ru = "хрустальный шар", src = "nethack-ru" }
+"pair of lenses" = { ru = "очки", src = "chosen", note = "was линзы; eyewear" }
+"blindfold" = { ru = "повязка на глаза", src = "nethack-ru" }
+"towel" = { ru = "полотенце", src = "nethack-ru" }
+"saddle" = { ru = "седло", src = "nethack-ru" }
+"leash" = { ru = "поводок", src = "nethack-ru" }
+"stethoscope" = { ru = "стетоскоп", src = "nethack-ru" }
+"tinning kit" = { ru = "набор для консервирования", src = "nethack-ru" }
+"tin opener" = { ru = "консервный нож", src = "chosen", note = "was открывалка для банок; the Russian word" }
+"can of grease" = { ru = "банка смазки", src = "nethack-ru" }
+"figurine" = { ru = "статуэтка", src = "nethack-ru" }
+"magic marker" = { ru = "волшебный маркер", src = "nethack-ru" }
+"land mine" = { ru = "мина", src = "nethack-ru" }
+"beartrap" = { ru = "капкан", src = "nethack-ru" }
+"tin whistle" = { ru = "оловянный свисток", src = "nethack-ru" }
+"magic whistle" = { ru = "волшебный свисток", src = "nethack-ru" }
+"wooden flute" = { ru = "деревянная флейта", src = "nethack-ru" }
+"magic flute" = { ru = "волшебная флейта", src = "nethack-ru" }
+"tooled horn" = { ru = "резной рог", src = "nethack-ru" }
+"frost horn" = { ru = "морозный рог", src = "nethack-ru" }
+"fire horn" = { ru = "огненный рог", src = "nethack-ru" }
+"horn of plenty" = { ru = "рог изобилия", src = "nethack-ru" }
+"wooden harp" = { ru = "деревянная арфа", src = "nethack-ru" }
+"magic harp" = { ru = "волшебная арфа", src = "nethack-ru" }
+"bell" = { ru = "колокольчик", src = "nethack-ru" }
+"bugle" = { ru = "горн", src = "nethack-ru" }
+"leather drum" = { ru = "кожаный барабан", src = "nethack-ru" }
+"drum of earthquake" = { ru = "барабан землетрясения", src = "nethack-ru" }
+"pick-axe" = { ru = "кирка", src = "nethack-ru" }
+"grappling hook" = { ru = "абордажный крюк", src = "nethack-ru" }
+"unicorn horn" = { ru = "рог единорога", src = "nethack-ru" }
+"Candelabrum of Invocation" = { ru = "Канделябр Призыва", src = "nethack-ru" }
+"Bell of Opening" = { ru = "Колокол Открытия", src = "nethack-ru" }
+# food
+"tripe ration" = { ru = "рубец", src = "nethack-ru" }
+"corpse" = { ru = "труп", src = "nethack-ru" }
+"egg" = { ru = "яйцо", src = "nethack-ru" }
+"meatball" = { ru = "фрикаделька", src = "nethack-ru" }
+"meat stick" = { ru = "мясная палочка", src = "nethack-ru" }
+"enormous meatball" = { ru = "огромная фрикаделька", src = "nethack-ru" }
+"meat ring" = { ru = "мясное кольцо", src = "nethack-ru" }
+"glob of gray ooze" = { ru = "комок серой слизи", src = "nethack-ru" }
+"glob of brown pudding" = { ru = "комок коричневого пудинга", src = "nethack-ru" }
+"glob of green slime" = { ru = "комок зелёной слизи", src = "nethack-ru" }
+"glob of black pudding" = { ru = "комок чёрного пудинга", src = "nethack-ru" }
+"kelp frond" = { ru = "лопасть ламинарии", src = "nethack-ru" }
+"eucalyptus leaf" = { ru = "лист эвкалипта", src = "nethack-ru" }
+"apple" = { ru = "яблоко", src = "nethack-ru" }
+"orange" = { ru = "апельсин", src = "nethack-ru" }
+"pear" = { ru = "груша", src = "nethack-ru" }
+"melon" = { ru = "дыня", src = "nethack-ru" }
+"banana" = { ru = "банан", src = "nethack-ru" }
+"carrot" = { ru = "морковь", src = "nethack-ru" }
+"sprig of wolfsbane" = { ru = "веточка аконита", src = "nethack-ru" }
+"clove of garlic" = { ru = "зубчик чеснока", src = "nethack-ru" }
+"slime mold" = { ru = "слизевик", src = "chosen", note = "was слизевой гриб; the Russian biological name; the default fruit" }
+"lump of royal jelly" = { ru = "комок маточного молочка", src = "nethack-ru" }
+"cream pie" = { ru = "кремовый пирог", src = "nethack-ru" }
+"candy bar" = { ru = "шоколадный батончик", src = "nethack-ru" }
+"fortune cookie" = { ru = "печенье с предсказанием", src = "nethack-ru" }
+"pancake" = { ru = "блин", src = "nethack-ru" }
+"lembas wafer" = { ru = "лембас", src = "nethack-ru" }
+"cram ration" = { ru = "концентрированный паёк", src = "nethack-ru" }
+"food ration" = { ru = "паёк", src = "nethack-ru" }
+"K-ration" = { ru = "паёк К", src = "nethack-ru" }
+"C-ration" = { ru = "паёк С", src = "nethack-ru" }
+"tin" = { ru = "банка", src = "nethack-ru" }
+# potion
+"potion of gain ability" = { ru = "зелье улучшения характеристик", src = "chosen", note = "was зелье повышения способности; ability = характеристики" }
+"potion of restore ability" = { ru = "зелье восстановления характеристик", src = "chosen", note = "was зелье восстановления способности; ability = характеристики" }
+"potion of confusion" = { ru = "зелье замешательства", src = "nethack-ru" }
+"potion of blindness" = { ru = "зелье слепоты", src = "nethack-ru" }
+"potion of paralysis" = { ru = "зелье паралича", src = "nethack-ru" }
+"potion of speed" = { ru = "зелье скорости", src = "nethack-ru" }
+"potion of levitation" = { ru = "зелье левитации", src = "nethack-ru" }
+"potion of hallucination" = { ru = "зелье галлюцинаций", src = "chosen", note = "was зелье галлюцинации" }
+"potion of invisibility" = { ru = "зелье невидимости", src = "nethack-ru" }
+"potion of see invisible" = { ru = "зелье видения невидимого", src = "nethack-ru" }
+"potion of healing" = { ru = "зелье лечения", src = "nethack-ru" }
+"potion of extra healing" = { ru = "зелье усиленного лечения", src = "nethack-ru" }
+"potion of gain level" = { ru = "зелье повышения уровня", src = "chosen", note = "was зелье получения уровня" }
+"potion of enlightenment" = { ru = "зелье просветления", src = "nethack-ru" }
+"potion of monster detection" = { ru = "зелье обнаружения монстров", src = "nethack-ru" }
+"potion of object detection" = { ru = "зелье обнаружения предметов", src = "nethack-ru" }
+"potion of gain energy" = { ru = "зелье прилива энергии", src = "chosen", note = "was зелье получения энергии" }
+"potion of sleeping" = { ru = "зелье сна", src = "nethack-ru" }
+"potion of full healing" = { ru = "зелье полного лечения", src = "nethack-ru" }
+"potion of polymorph" = { ru = "зелье превращения", src = "nethack-ru" }
+"potion of booze" = { ru = "флакон выпивки", src = "chosen", note = "was зелье алкоголя; a drink, not a magic potion: флакон" }
+"potion of sickness" = { ru = "зелье болезни", src = "nethack-ru" }
+"potion of fruit juice" = { ru = "флакон фруктового сока", src = "chosen", note = "was зелье фруктового сока; a drink: флакон" }
+"potion of acid" = { ru = "флакон кислоты", src = "chosen", note = "was зелье кислоты; a liquid: флакон" }
+"potion of oil" = { ru = "флакон масла", src = "chosen", note = "was зелье масла; a liquid: флакон" }
+"potion of water" = { ru = "флакон воды", src = "chosen", note = "was зелье воды; a liquid: флакон" }
+"potion of holy water" = { ru = "флакон святой воды", src = "chosen", note = "was зелье воды; a liquid: флакон" }
+"potion of unholy water" = { ru = "флакон нечестивой воды", src = "chosen", note = "was зелье воды; проклятый is the curse status" }
+# scroll
+"scroll of enchant armor" = { ru = "свиток зачарования брони", src = "chosen", note = "was свиток зачароватя броню" }
+"scroll of destroy armor" = { ru = "свиток уничтожения брони", src = "chosen", note = "was свиток уничтожитя броню" }
+"scroll of confuse monster" = { ru = "свиток замешательства", src = "chosen", note = "was свиток замешательства монстра" }
+"scroll of scare monster" = { ru = "свиток отпугивания монстров", src = "chosen", note = "was свиток отпугивания монстра" }
+"scroll of remove curse" = { ru = "свиток снятия проклятия", src = "nethack-ru" }
+"scroll of enchant weapon" = { ru = "свиток зачарования оружия", src = "chosen", note = "was свиток зачароватя оружие" }
+"scroll of create monster" = { ru = "свиток создания монстра", src = "nethack-ru" }
+"scroll of taming" = { ru = "свиток приручения", src = "nethack-ru" }
+"scroll of genocide" = { ru = "свиток геноцида", src = "nethack-ru" }
+"scroll of light" = { ru = "свиток света", src = "nethack-ru" }
+"scroll of teleportation" = { ru = "свиток телепортации", src = "nethack-ru" }
+"scroll of gold detection" = { ru = "свиток обнаружения золота", src = "nethack-ru" }
+"scroll of food detection" = { ru = "свиток обнаружения еды", src = "nethack-ru" }
+"scroll of identify" = { ru = "свиток опознания", src = "nethack-ru" }
+"scroll of magic mapping" = { ru = "свиток магического картирования", src = "nethack-ru" }
+"scroll of amnesia" = { ru = "свиток амнезии", src = "nethack-ru" }
+"scroll of fire" = { ru = "свиток огня", src = "nethack-ru" }
+"scroll of earth" = { ru = "свиток земли", src = "nethack-ru" }
+"scroll of punishment" = { ru = "свиток наказания", src = "nethack-ru" }
+"scroll of charging" = { ru = "свиток подзарядки", src = "chosen", note = "was свиток зарядки" }
+"scroll of stinking cloud" = { ru = "свиток зловонного облака", src = "nethack-ru" }
+"scroll of blank paper" = { ru = "чистый свиток", src = "chosen", note = "was свиток чистого листа" }
+# spellbook
+"spellbook of dig" = { ru = "книга копания", src = "nethack-ru" }
+"spellbook of magic missile" = { ru = "книга волшебной стрелы", src = "chosen", note = "was книга магической стрелы; the spell is волшебная стрела (D&D)" }
+"spellbook of fireball" = { ru = "книга огненного шара", src = "nethack-ru" }
+"spellbook of cone of cold" = { ru = "книга конуса холода", src = "nethack-ru" }
+"spellbook of sleep" = { ru = "книга сна", src = "nethack-ru" }
+"spellbook of finger of death" = { ru = "книга перста смерти", src = "chosen", note = "was книга пальца смерти; the spell is перст смерти (D&D)" }
+"spellbook of light" = { ru = "книга света", src = "nethack-ru" }
+"spellbook of detect monsters" = { ru = "книга обнаружения монстров", src = "nethack-ru" }
+"spellbook of healing" = { ru = "книга лечения", src = "nethack-ru" }
+"spellbook of knock" = { ru = "книга открывания", src = "nethack-ru" }
+"spellbook of force bolt" = { ru = "книга силового удара", src = "chosen", note = "was книга силового снаряда; the spell is силовой удар" }
+"spellbook of confuse monster" = { ru = "книга замешательства", src = "chosen", note = "was книга замешательства монстра" }
+"spellbook of cure blindness" = { ru = "книга лечения слепоты", src = "nethack-ru" }
+"spellbook of drain life" = { ru = "книга истощения жизни", src = "nethack-ru" }
+"spellbook of slow monster" = { ru = "книга замедления монстра", src = "nethack-ru" }
+"spellbook of wizard lock" = { ru = "книга волшебного замка", src = "nethack-ru" }
+"spellbook of create monster" = { ru = "книга создания монстра", src = "nethack-ru" }
+"spellbook of detect food" = { ru = "книга обнаружения еды", src = "nethack-ru" }
+"spellbook of cause fear" = { ru = "книга наведения страха", src = "chosen", note = "was книга вызова страха" }
+"spellbook of clairvoyance" = { ru = "книга ясновидения", src = "nethack-ru" }
+"spellbook of cure sickness" = { ru = "книга лечения болезни", src = "nethack-ru" }
+"spellbook of charm monster" = { ru = "книга очарования монстра", src = "nethack-ru" }
+"spellbook of haste self" = { ru = "книга ускорения", src = "chosen", note = "was книга ускорения себя" }
+"spellbook of detect unseen" = { ru = "книга обнаружения невидимого", src = "nethack-ru" }
+"spellbook of levitation" = { ru = "книга левитации", src = "nethack-ru" }
+"spellbook of extra healing" = { ru = "книга усиленного лечения", src = "nethack-ru" }
+"spellbook of restore ability" = { ru = "книга восстановления характеристик", src = "chosen", note = "was книга восстановления способности" }
+"spellbook of invisibility" = { ru = "книга невидимости", src = "nethack-ru" }
+"spellbook of detect treasure" = { ru = "книга обнаружения сокровищ", src = "nethack-ru" }
+"spellbook of remove curse" = { ru = "книга снятия проклятия", src = "nethack-ru" }
+"spellbook of magic mapping" = { ru = "книга магического картирования", src = "nethack-ru" }
+"spellbook of identify" = { ru = "книга опознания", src = "nethack-ru" }
+"spellbook of turn undead" = { ru = "книга изгнания нежити", src = "nethack-ru" }
+"spellbook of polymorph" = { ru = "книга превращения", src = "nethack-ru" }
+"spellbook of teleport away" = { ru = "книга телепортации прочь", src = "nethack-ru" }
+"spellbook of create familiar" = { ru = "книга призыва фамильяра", src = "chosen", note = "was книга создания фамильяра" }
+"spellbook of cancellation" = { ru = "книга отмены", src = "nethack-ru" }
+"spellbook of protection" = { ru = "книга защиты", src = "nethack-ru" }
+"spellbook of jumping" = { ru = "книга прыжков", src = "chosen", note = "was книга прыжка" }
+"spellbook of stone to flesh" = { ru = "книга обращения камня в плоть", src = "chosen", note = "was книга камня в плоть" }
+"spellbook of chain lightning" = { ru = "книга цепной молнии", src = "nethack-ru" }
+"spellbook of blank paper" = { ru = "чистая книга", src = "chosen", note = "was книга чистого листа" }
+"novel" = { ru = "роман", src = "nethack-ru" }
+"Book of the Dead" = { ru = "Книга Мёртвых", src = "nethack-ru" }
+# wand
+"wand of light" = { ru = "палочка света", src = "nethack-ru" }
+"wand of secret door detection" = { ru = "палочка обнаружения потайных дверей", src = "nethack-ru" }
+"wand of enlightenment" = { ru = "палочка просветления", src = "nethack-ru" }
+"wand of create monster" = { ru = "палочка создания монстров", src = "chosen", note = "was палочка создания монстра" }
+"wand of wishing" = { ru = "палочка желаний", src = "chosen", note = "was палочка желания; the established Russian name" }
+"wand of stasis" = { ru = "палочка стазиса", src = "nethack-ru" }
+"wand of nothing" = { ru = "палочка-пустышка", src = "chosen", note = "was палочка ничего" }
+"wand of striking" = { ru = "палочка удара", src = "nethack-ru" }
+"wand of make invisible" = { ru = "палочка невидимости", src = "chosen", note = "was палочка сделатя невидимым" }
+"wand of slow monster" = { ru = "палочка замедления", src = "chosen", note = "was палочка замедления монстра" }
+"wand of speed monster" = { ru = "палочка ускорения", src = "chosen", note = "was палочка ускорения монстра" }
+"wand of undead turning" = { ru = "палочка изгнания нежити", src = "chosen", note = "was палочка обращения нежити; as the spell turn undead" }
+"wand of polymorph" = { ru = "палочка превращения", src = "nethack-ru" }
+"wand of cancellation" = { ru = "палочка отмены", src = "nethack-ru" }
+"wand of teleportation" = { ru = "палочка телепортации", src = "nethack-ru" }
+"wand of opening" = { ru = "палочка открывания", src = "nethack-ru" }
+"wand of locking" = { ru = "палочка запирания", src = "nethack-ru" }
+"wand of probing" = { ru = "палочка зондирования", src = "chosen", note = "was палочка разведки" }
+"wand of digging" = { ru = "палочка копания", src = "nethack-ru" }
+"wand of magic missile" = { ru = "палочка волшебной стрелы", src = "chosen", note = "was палочка магической стрелы; as the spell" }
+"wand of fire" = { ru = "палочка огня", src = "nethack-ru" }
+"wand of cold" = { ru = "палочка холода", src = "nethack-ru" }
+"wand of sleep" = { ru = "палочка сна", src = "nethack-ru" }
+"wand of death" = { ru = "палочка смерти", src = "nethack-ru" }
+"wand of lightning" = { ru = "палочка молнии", src = "nethack-ru" }
+# coin
+"gold piece" = { ru = "золотая монета", src = "nethack-ru" }
+# gem
+"dilithium crystal" = { ru = "кристалл дилития", src = "nethack-ru" }
+"diamond" = { ru = "алмаз", src = "nethack-ru" }
+"ruby" = { ru = "рубин", src = "nethack-ru" }
+"jacinth stone" = { ru = "гиацинт", src = "nethack-ru" }
+"sapphire" = { ru = "сапфир", src = "nethack-ru" }
+"black opal" = { ru = "чёрный опал", src = "nethack-ru" }
+"emerald" = { ru = "изумруд", src = "nethack-ru" }
+"turquoise stone" = { ru = "бирюза", src = "nethack-ru", like = "рыба" }
+"citrine stone" = { ru = "цитрин", src = "nethack-ru" }
+"aquamarine stone" = { ru = "аквамарин", src = "nethack-ru" }
+"amber stone" = { ru = "янтарь", src = "nethack-ru" }
+"topaz stone" = { ru = "топаз", src = "nethack-ru" }
+"jet stone" = { ru = "гагат", src = "nethack-ru" }
+"opal" = { ru = "опал", src = "nethack-ru" }
+"chrysoberyl stone" = { ru = "хризоберилл", src = "nethack-ru" }
+"garnet stone" = { ru = "гранат", src = "nethack-ru" }
+"amethyst stone" = { ru = "аметист", src = "nethack-ru" }
+"jasper stone" = { ru = "яшма", src = "nethack-ru" }
+"fluorite stone" = { ru = "флюорит", src = "nethack-ru" }
+"obsidian stone" = { ru = "обсидиан", src = "nethack-ru" }
+"agate stone" = { ru = "агат", src = "nethack-ru" }
+"jade stone" = { ru = "нефрит", src = "nethack-ru" }
+"worthless piece of white glass" = { ru = "бесполезный кусок белого стекла", src = "nethack-ru" }
+"worthless piece of blue glass" = { ru = "бесполезный кусок синего стекла", src = "nethack-ru" }
+"worthless piece of red glass" = { ru = "бесполезный кусок красного стекла", src = "nethack-ru" }
+"worthless piece of yellowish brown glass" = { ru = "бесполезный кусок желтовато-коричневого стекла", src = "nethack-ru" }
+"worthless piece of orange glass" = { ru = "бесполезный кусок оранжевого стекла", src = "nethack-ru" }
+"worthless piece of yellow glass" = { ru = "бесполезный кусок жёлтого стекла", src = "nethack-ru" }
+"worthless piece of black glass" = { ru = "бесполезный кусок чёрного стекла", src = "nethack-ru" }
+"worthless piece of green glass" = { ru = "бесполезный кусок зелёного стекла", src = "nethack-ru" }
+"worthless piece of violet glass" = { ru = "бесполезный кусок фиолетового стекла", src = "nethack-ru" }
+"luckstone" = { ru = "камень удачи", src = "nethack-ru" }
+"loadstone" = { ru = "магнитный камень", src = "nethack-ru" }
+"touchstone" = { ru = "пробный камень", src = "nethack-ru" }
+"flint stone" = { ru = "кремень", src = "nethack-ru" }
+"rock" = { ru = "булыжник", src = "chosen", note = "was камень; камень is the gray stone's class word: the two must differ" }
+# rock
+"boulder" = { ru = "валун", src = "nethack-ru" }
+"statue" = { ru = "статуя", src = "nethack-ru" }
+# ball
+"heavy iron ball" = { ru = "тяжёлое железное ядро", src = "chosen", note = "was тяжёлый железный шар; ball and chain: ядро" }
+# chain
+"iron chain" = { ru = "железная цепь", src = "nethack-ru" }
+# venom
+"splash of blinding venom" = { ru = "брызги ослепляющего яда", src = "nethack-ru" }
+"splash of acid venom" = { ru = "брызги кислотного яда", src = "nethack-ru" }
+# Samurai names (objnam.c Japanese_items)
+"shito" = { ru = "сито", src = "chosen", note = "Samurai: knife (Polivanov)", indecl = true, g = "m" }
+"wakizashi" = { ru = "вакидзаси", src = "chosen", note = "Samurai: short sword", indecl = true, g = "m" }
+"ninja-to" = { ru = "ниндзято", src = "chosen", note = "Samurai: broadsword" }
+"naginata" = { ru = "нагината", src = "chosen", note = "Samurai: glaive", g = "f" }
+"nunchaku" = { ru = "нунчаку", src = "chosen", note = "Samurai: flail", g = "n" }
+"kabuto" = { ru = "кабуто", src = "chosen", note = "Samurai: helmet" }
+"tanko" = { ru = "танко", src = "chosen", note = "Samurai: plate mail" }
+"pair of yugake" = { ru = "югакэ", src = "chosen", note = "Samurai: leather gloves", indecl = true }
+"osaku" = { ru = "осаку", src = "chosen", note = "Samurai: lock pick" }
+"koto" = { ru = "кото", src = "chosen", note = "Samurai: wooden harp", g = "n" }
+"magic koto" = { ru = "волшебное кото", src = "chosen", note = "Samurai: magic harp", g = "n" }
+"gunyoki" = { ru = "гуньёки", src = "chosen", note = "Samurai: food ration", indecl = true, g = "m" }
+"potion of sake" = { ru = "флакон саке", src = "chosen", note = "Samurai: booze" }
+
+[appearance]
+# unidentified objects: their look, as xname() names it
+# illobj
+# weapon
+"runed arrow" = { ru = "рунная стрела", src = "chosen", note = "was руническая стрела; runed = рунный throughout" }
+"crude arrow" = { ru = "грубая стрела", src = "nethack-ru" }
+"bamboo arrow" = { ru = "бамбуковая стрела", src = "nethack-ru" }
+"throwing star" = { ru = "метательная звезда", src = "nethack-ru" }
+"runed spear" = { ru = "рунное копьё", src = "chosen", note = "was руническое копьё; runed = рунный" }
+"crude spear" = { ru = "грубое копьё", src = "nethack-ru" }
+"stout spear" = { ru = "крепкое копьё", src = "nethack-ru" }
+"throwing spear" = { ru = "метательное копьё", src = "nethack-ru" }
+"runed dagger" = { ru = "рунный кинжал", src = "chosen", note = "was рунический кинжал; runed = рунный" }
+"crude dagger" = { ru = "грубый кинжал", src = "nethack-ru" }
+"double-headed axe" = { ru = "двулезвийный топор", src = "chosen", note = "was двухлезвийный топор" }
+"runed short sword" = { ru = "рунный короткий меч", src = "chosen", note = "was рунический короткий меч; runed = рунный" }
+"crude short sword" = { ru = "грубый короткий меч", src = "nethack-ru" }
+"broad short sword" = { ru = "широкий короткий меч", src = "nethack-ru" }
+"curved sword" = { ru = "изогнутый меч", src = "nethack-ru" }
+"runed broadsword" = { ru = "рунный палаш", src = "chosen", note = "was рунический палаш; runed = рунный" }
+"samurai sword" = { ru = "самурайский меч", src = "chosen", note = "was меч самурая" }
+"long samurai sword" = { ru = "длинный самурайский меч", src = "chosen", note = "was длинный меч самурая" }
+"vulgar polearm" = { ru = "простое древковое оружие", src = "nethack-ru" }
+"hilted polearm" = { ru = "древковое оружие с гардой", src = "chosen", note = "was древковое оружие с рукоятью" }
+"forked polearm" = { ru = "раздвоенное древковое оружие", src = "chosen", note = "was развильчатое древковое оружие" }
+"single-edged polearm" = { ru = "однолезвийное древковое оружие", src = "chosen", note = "was древковое оружие с односторонним лезвием" }
+"angled poleaxe" = { ru = "изогнутая секира", src = "nethack-ru" }
+"long poleaxe" = { ru = "длинная секира", src = "nethack-ru" }
+"pole cleaver" = { ru = "тесак на древке", src = "chosen", note = "was древковый тесак" }
+"pole sickle" = { ru = "серп на древке", src = "chosen", note = "was древковый серп" }
+"pruning hook" = { ru = "садовый крюк", src = "chosen", note = "was садовая коса; садовая коса is a scythe" }
+"hooked polearm" = { ru = "крючковое древковое оружие", src = "chosen", note = "was крюкообразное древковое оружие" }
+"pronged polearm" = { ru = "зубчатое древковое оружие", src = "nethack-ru" }
+"beaked polearm" = { ru = "клювовидное древковое оружие", src = "chosen", note = "was древковое оружие с клювом" }
+"broad pick" = { ru = "широкое кайло", src = "nethack-ru" }
+"staff" = { ru = "посох", src = "nethack-ru" }
+"thonged club" = { ru = "дубинка на ремне", src = "chosen", note = "was дубина на ремне" }
+"runed bow" = { ru = "рунный лук", src = "chosen", note = "was рунический лук; runed = рунный" }
+"crude bow" = { ru = "грубый лук", src = "nethack-ru" }
+"long bow" = { ru = "длинный лук", src = "nethack-ru" }
+# armor
+"leather hat" = { ru = "кожаная шляпа", src = "nethack-ru" }
+"iron skull cap" = { ru = "железная шапочка", src = "chosen", note = "was железная шапочка-череп" }
+"hard hat" = { ru = "каска", src = "nethack-ru" }
+"conical hat" = { ru = "остроконечная шляпа", src = "chosen", note = "was коническая шляпа" }
+"crystal helmet" = { ru = "хрустальный шлем", src = "nethack-ru" }
+"plumed helmet" = { ru = "шлем с плюмажем", src = "nethack-ru" }
+"etched helmet" = { ru = "чеканный шлем", src = "chosen", note = "was гравированный шлем" }
+"crested helmet" = { ru = "шлем с гребнем", src = "nethack-ru" }
+"visored helmet" = { ru = "шлем с забралом", src = "nethack-ru" }
+"crude chain mail" = { ru = "грубая кольчуга", src = "nethack-ru" }
+"crude ring mail" = { ru = "грубый колечный доспех", src = "chosen", note = "was грубый кольчатый доспех; as ring mail" }
+"faded pall" = { ru = "выцветший покров", src = "chosen", note = "was выцветшая мантия" }
+"coarse mantelet" = { ru = "грубая пелерина", src = "chosen", note = "was грубая мантилья" }
+"hooded cloak" = { ru = "плащ с капюшоном", src = "nethack-ru" }
+"slippery cloak" = { ru = "скользкий плащ", src = "nethack-ru" }
+"apron" = { ru = "фартук", src = "nethack-ru" }
+"tattered cape" = { ru = "рваный плащ", src = "nethack-ru" }
+"opera cloak" = { ru = "оперный плащ", src = "nethack-ru" }
+"ornamental cope" = { ru = "узорчатая накидка", src = "nethack-ru" }
+"piece of cloth" = { ru = "кусок ткани", src = "nethack-ru" }
+"wooden shield" = { ru = "деревянный щит", src = "nethack-ru" }
+"blue and green shield" = { ru = "сине-зелёный щит", src = "nethack-ru" }
+"white-handed shield" = { ru = "щит с белой рукой", src = "nethack-ru" }
+"red-eyed shield" = { ru = "щит с красным глазом", src = "nethack-ru" }
+"large round shield" = { ru = "большой круглый щит", src = "nethack-ru" }
+"polished silver shield" = { ru = "полированный серебряный щит", src = "nethack-ru" }
+"pair of old gloves" = { ru = "старые перчатки", src = "nethack-ru" }
+"pair of padded gloves" = { ru = "стёганые перчатки", src = "chosen", note = "was стеганые перчатки" }
+"pair of riding gloves" = { ru = "перчатки для верховой езды", src = "nethack-ru" }
+"pair of fencing gloves" = { ru = "фехтовальные перчатки", src = "nethack-ru" }
+"pair of walking shoes" = { ru = "прогулочные ботинки", src = "chosen", note = "was ботинки для ходьбы" }
+"pair of hard shoes" = { ru = "крепкие башмаки", src = "chosen", note = "was твёрдые ботинки" }
+"pair of jackboots" = { ru = "ботфорты", src = "chosen", note = "was ботинки-бутсы" }
+"pair of combat boots" = { ru = "армейские ботинки", src = "chosen", note = "was боевые ботинки" }
+"pair of jungle boots" = { ru = "ботинки для джунглей", src = "chosen", note = "was тропические ботинки" }
+"pair of hiking boots" = { ru = "походные ботинки", src = "nethack-ru" }
+"pair of mud boots" = { ru = "болотные сапоги", src = "chosen", note = "was ботинки для грязи" }
+"pair of buckled boots" = { ru = "сапоги с пряжками", src = "chosen", note = "was ботинки с пряжками" }
+"pair of riding boots" = { ru = "сапоги для верховой езды", src = "chosen", note = "was ботинки для верховой езды" }
+"pair of snow boots" = { ru = "зимние сапоги", src = "chosen", note = "was снежные ботинки" }
+# ring
+"wooden ring" = { ru = "деревянное кольцо", src = "nethack-ru" }
+"granite ring" = { ru = "гранитное кольцо", src = "nethack-ru" }
+"opal ring" = { ru = "опаловое кольцо", src = "nethack-ru" }
+"clay ring" = { ru = "глиняное кольцо", src = "nethack-ru" }
+"coral ring" = { ru = "коралловое кольцо", src = "nethack-ru" }
+"black onyx ring" = { ru = "кольцо из чёрного оникса", src = "chosen", note = "was чёрный оникс кольцо" }
+"moonstone ring" = { ru = "кольцо из лунного камня", src = "chosen", note = "was лунный камень кольцо" }
+"tiger eye ring" = { ru = "кольцо из тигрового глаза", src = "chosen", note = "was тигровый глаз кольцо" }
+"jade ring" = { ru = "нефритовое кольцо", src = "nethack-ru" }
+"bronze ring" = { ru = "бронзовое кольцо", src = "nethack-ru" }
+"agate ring" = { ru = "агатовое кольцо", src = "nethack-ru" }
+"topaz ring" = { ru = "топазовое кольцо", src = "nethack-ru" }
+"sapphire ring" = { ru = "сапфировое кольцо", src = "nethack-ru" }
+"ruby ring" = { ru = "рубиновое кольцо", src = "nethack-ru" }
+"diamond ring" = { ru = "алмазное кольцо", src = "nethack-ru" }
+"pearl ring" = { ru = "жемчужное кольцо", src = "nethack-ru" }
+"iron ring" = { ru = "железное кольцо", src = "nethack-ru" }
+"brass ring" = { ru = "латунное кольцо", src = "nethack-ru" }
+"copper ring" = { ru = "медное кольцо", src = "nethack-ru" }
+"twisted ring" = { ru = "витое кольцо", src = "nethack-ru" }
+"steel ring" = { ru = "стальное кольцо", src = "nethack-ru" }
+"silver ring" = { ru = "серебряное кольцо", src = "nethack-ru" }
+"gold ring" = { ru = "золотое кольцо", src = "nethack-ru" }
+"ivory ring" = { ru = "кольцо из слоновой кости", src = "chosen", note = "was слоновая кость кольцо" }
+"emerald ring" = { ru = "изумрудное кольцо", src = "nethack-ru" }
+"wire ring" = { ru = "проволочное кольцо", src = "nethack-ru" }
+"engagement ring" = { ru = "обручальное кольцо", src = "nethack-ru" }
+"shiny ring" = { ru = "блестящее кольцо", src = "nethack-ru" }
+# amulet
+"circular amulet" = { ru = "круглый амулет", src = "nethack-ru" }
+"spherical amulet" = { ru = "сферический амулет", src = "nethack-ru" }
+"oval amulet" = { ru = "овальный амулет", src = "nethack-ru" }
+"triangular amulet" = { ru = "треугольный амулет", src = "nethack-ru" }
+"pyramidal amulet" = { ru = "пирамидальный амулет", src = "nethack-ru" }
+"square amulet" = { ru = "квадратный амулет", src = "nethack-ru" }
+"concave amulet" = { ru = "вогнутый амулет", src = "nethack-ru" }
+"hexagonal amulet" = { ru = "шестиугольный амулет", src = "nethack-ru" }
+"octagonal amulet" = { ru = "восьмиугольный амулет", src = "nethack-ru" }
+"perforated amulet" = { ru = "перфорированный амулет", src = "nethack-ru" }
+"cubical amulet" = { ru = "кубический амулет", src = "nethack-ru" }
+"Amulet of Yendor" = { ru = "Амулет Йендора", src = "nethack-ru" }
+# tool
+"bag" = { ru = "сумка", src = "nethack-ru" }
+"key" = { ru = "ключ", src = "nethack-ru" }
+"candle" = { ru = "свеча", src = "nethack-ru" }
+"lamp" = { ru = "лампа", src = "nethack-ru" }
+"looking glass" = { ru = "зеркальце", src = "nethack-ru" }
+"glass orb" = { ru = "стеклянный шар", src = "nethack-ru" }
+"whistle" = { ru = "свисток", src = "nethack-ru" }
+"flute" = { ru = "флейта", src = "nethack-ru" }
+"horn" = { ru = "рог", src = "nethack-ru" }
+"harp" = { ru = "арфа", src = "nethack-ru" }
+"drum" = { ru = "барабан", src = "nethack-ru" }
+"candelabrum" = { ru = "канделябр", src = "nethack-ru" }
+"silver bell" = { ru = "серебряный колокол", src = "nethack-ru" }
+# food
+# potion
+"ruby potion" = { ru = "рубиновое зелье", src = "nethack-ru" }
+"pink potion" = { ru = "розовое зелье", src = "nethack-ru" }
+"orange potion" = { ru = "оранжевое зелье", src = "nethack-ru" }
+"yellow potion" = { ru = "жёлтое зелье", src = "nethack-ru" }
+"emerald potion" = { ru = "изумрудное зелье", src = "nethack-ru" }
+"dark green potion" = { ru = "тёмно-зелёное зелье", src = "nethack-ru" }
+"cyan potion" = { ru = "голубое зелье", src = "nethack-ru" }
+"sky blue potion" = { ru = "небесно-голубое зелье", src = "nethack-ru" }
+"brilliant blue potion" = { ru = "ярко-синее зелье", src = "nethack-ru" }
+"magenta potion" = { ru = "пурпурное зелье", src = "nethack-ru" }
+"purple-red potion" = { ru = "пурпурно-красное зелье", src = "nethack-ru" }
+"puce potion" = { ru = "красновато-бурое зелье", src = "chosen", note = "was бледно-коричневое зелье" }
+"milky potion" = { ru = "молочное зелье", src = "nethack-ru" }
+"swirly potion" = { ru = "клубящееся зелье", src = "chosen", note = "was завихряющееся зелье" }
+"bubbly potion" = { ru = "пузырящееся зелье", src = "nethack-ru" }
+"smoky potion" = { ru = "дымчатое зелье", src = "nethack-ru" }
+"cloudy potion" = { ru = "мутное зелье", src = "nethack-ru" }
+"effervescent potion" = { ru = "шипучее зелье", src = "nethack-ru" }
+"black potion" = { ru = "чёрное зелье", src = "nethack-ru" }
+"golden potion" = { ru = "золотистое зелье", src = "chosen", note = "was золотое зелье" }
+"brown potion" = { ru = "коричневое зелье", src = "nethack-ru" }
+"fizzy potion" = { ru = "газированное зелье", src = "nethack-ru" }
+"dark potion" = { ru = "тёмное зелье", src = "nethack-ru" }
+"white potion" = { ru = "белое зелье", src = "nethack-ru" }
+"murky potion" = { ru = "илистое зелье", src = "chosen", note = "was мутное зелье; cloudy is мутное" }
+"clear potion" = { ru = "прозрачное зелье", src = "nethack-ru" }
+# scroll
+"unlabeled scroll" = { ru = "свиток без надписи", src = "chosen", note = "was без надписи" }
+# spellbook
+"parchment spellbook" = { ru = "пергаментная книга заклинаний", src = "nethack-ru" }
+"vellum spellbook" = { ru = "веленевая книга заклинаний", src = "nethack-ru" }
+"ragged spellbook" = { ru = "рваная книга заклинаний", src = "nethack-ru" }
+"dog eared spellbook" = { ru = "книга заклинаний с загнутыми уголками", src = "chosen", note = "was с загнутыми уголками книга заклинаний" }
+"mottled spellbook" = { ru = "пёстрая книга заклинаний", src = "nethack-ru" }
+"stained spellbook" = { ru = "запятнанная книга заклинаний", src = "chosen", note = "was в пятнах книга заклинаний" }
+"cloth spellbook" = { ru = "тканевая книга заклинаний", src = "nethack-ru" }
+"leathery spellbook" = { ru = "кожаная книга заклинаний", src = "nethack-ru" }
+"white spellbook" = { ru = "белая книга заклинаний", src = "nethack-ru" }
+"pink spellbook" = { ru = "розовая книга заклинаний", src = "nethack-ru" }
+"red spellbook" = { ru = "красная книга заклинаний", src = "nethack-ru" }
+"orange spellbook" = { ru = "оранжевая книга заклинаний", src = "nethack-ru" }
+"yellow spellbook" = { ru = "жёлтая книга заклинаний", src = "nethack-ru" }
+"velvet spellbook" = { ru = "бархатная книга заклинаний", src = "nethack-ru" }
+"light green spellbook" = { ru = "светло-зелёная книга заклинаний", src = "nethack-ru" }
+"dark green spellbook" = { ru = "тёмно-зелёная книга заклинаний", src = "nethack-ru" }
+"turquoise spellbook" = { ru = "бирюзовая книга заклинаний", src = "nethack-ru" }
+"cyan spellbook" = { ru = "голубая книга заклинаний", src = "nethack-ru" }
+"light blue spellbook" = { ru = "светло-синяя книга заклинаний", src = "nethack-ru" }
+"dark blue spellbook" = { ru = "тёмно-синяя книга заклинаний", src = "nethack-ru" }
+"indigo spellbook" = { ru = "книга заклинаний цвета индиго", src = "chosen", note = "was индиго книга заклинаний" }
+"magenta spellbook" = { ru = "пурпурная книга заклинаний", src = "nethack-ru" }
+"purple spellbook" = { ru = "лиловая книга заклинаний", src = "chosen", note = "was фиолетовая книга заклинаний; violet is фиолетовая" }
+"violet spellbook" = { ru = "фиолетовая книга заклинаний", src = "nethack-ru" }
+"tan spellbook" = { ru = "песочная книга заклинаний", src = "chosen", note = "was светло-коричневая книга заклинаний; light brown is светло-коричневая" }
+"plaid spellbook" = { ru = "клетчатая книга заклинаний", src = "nethack-ru" }
+"light brown spellbook" = { ru = "светло-коричневая книга заклинаний", src = "nethack-ru" }
+"dark brown spellbook" = { ru = "тёмно-коричневая книга заклинаний", src = "nethack-ru" }
+"gray spellbook" = { ru = "серая книга заклинаний", src = "nethack-ru" }
+"wrinkled spellbook" = { ru = "мятая книга заклинаний", src = "chosen", note = "was морщинистая книга заклинаний" }
+"dusty spellbook" = { ru = "пыльная книга заклинаний", src = "nethack-ru" }
+"bronze spellbook" = { ru = "бронзовая книга заклинаний", src = "nethack-ru" }
+"copper spellbook" = { ru = "медная книга заклинаний", src = "nethack-ru" }
+"silver spellbook" = { ru = "серебряная книга заклинаний", src = "nethack-ru" }
+"gold spellbook" = { ru = "золотая книга заклинаний", src = "nethack-ru" }
+"glittering spellbook" = { ru = "сверкающая книга заклинаний", src = "nethack-ru" }
+"shining spellbook" = { ru = "блестящая книга заклинаний", src = "nethack-ru" }
+"dull spellbook" = { ru = "тусклая книга заклинаний", src = "nethack-ru" }
+"thin spellbook" = { ru = "тонкая книга заклинаний", src = "nethack-ru" }
+"thick spellbook" = { ru = "толстая книга заклинаний", src = "nethack-ru" }
+"checkered spellbook" = { ru = "книга заклинаний в шашечку", src = "chosen", note = "was в клетку книга заклинаний; plaid is клетчатая" }
+"plain spellbook" = { ru = "простая книга заклинаний", src = "chosen", note = "was обычная книга заклинаний" }
+"paperback book" = { ru = "книга в мягкой обложке", src = "chosen", note = "was в мягкой обложке" }
+"papyrus spellbook" = { ru = "папирусная книга заклинаний", src = "nethack-ru" }
+# wand
+"glass wand" = { ru = "стеклянная палочка", src = "nethack-ru" }
+"balsa wand" = { ru = "бальсовая палочка", src = "nethack-ru" }
+"crystal wand" = { ru = "хрустальная палочка", src = "nethack-ru" }
+"maple wand" = { ru = "кленовая палочка", src = "nethack-ru" }
+"pine wand" = { ru = "сосновая палочка", src = "nethack-ru" }
+"redwood wand" = { ru = "палочка из красного дерева", src = "chosen", note = "was из красного дерева палочка" }
+"oak wand" = { ru = "дубовая палочка", src = "nethack-ru" }
+"ebony wand" = { ru = "эбеновая палочка", src = "chosen", note = "was из чёрного дерева палочка" }
+"marble wand" = { ru = "мраморная палочка", src = "nethack-ru" }
+"tin wand" = { ru = "оловянная палочка", src = "nethack-ru" }
+"brass wand" = { ru = "латунная палочка", src = "nethack-ru" }
+"copper wand" = { ru = "медная палочка", src = "nethack-ru" }
+"silver wand" = { ru = "серебряная палочка", src = "nethack-ru" }
+"platinum wand" = { ru = "платиновая палочка", src = "nethack-ru" }
+"iridium wand" = { ru = "иридиевая палочка", src = "nethack-ru" }
+"zinc wand" = { ru = "цинковая палочка", src = "nethack-ru" }
+"aluminum wand" = { ru = "алюминиевая палочка", src = "nethack-ru" }
+"uranium wand" = { ru = "урановая палочка", src = "nethack-ru" }
+"iron wand" = { ru = "железная палочка", src = "nethack-ru" }
+"steel wand" = { ru = "стальная палочка", src = "nethack-ru" }
+"hexagonal wand" = { ru = "шестиугольная палочка", src = "nethack-ru" }
+"short wand" = { ru = "короткая палочка", src = "nethack-ru" }
+"runed wand" = { ru = "рунная палочка", src = "chosen", note = "was руническая палочка; runed = рунный" }
+"long wand" = { ru = "длинная палочка", src = "nethack-ru" }
+"curved wand" = { ru = "изогнутая палочка", src = "nethack-ru" }
+"forked wand" = { ru = "раздвоенная палочка", src = "chosen", note = "was развильчатая палочка" }
+"spiked wand" = { ru = "шипастая палочка", src = "chosen", note = "was с шипами палочка" }
+"jeweled wand" = { ru = "палочка с самоцветами", src = "chosen", note = "was украшенный самоцветами палочка" }
+# coin
+# gem
+"white gem" = { ru = "белый самоцвет", src = "nethack-ru" }
+"red gem" = { ru = "красный самоцвет", src = "nethack-ru" }
+"orange gem" = { ru = "оранжевый самоцвет", src = "nethack-ru" }
+"blue gem" = { ru = "синий самоцвет", src = "nethack-ru" }
+"black gem" = { ru = "чёрный самоцвет", src = "nethack-ru" }
+"green gem" = { ru = "зелёный самоцвет", src = "nethack-ru" }
+"yellow gem" = { ru = "жёлтый самоцвет", src = "nethack-ru" }
+"yellowish brown gem" = { ru = "желтовато-коричневый самоцвет", src = "nethack-ru" }
+"violet gem" = { ru = "фиолетовый самоцвет", src = "nethack-ru" }
+"gray stone" = { ru = "серый камень", src = "nethack-ru" }
+# rock
+# ball
+# chain
+# venom
+"splash of venom" = { ru = "брызги яда", src = "nethack-ru" }
+
+[label]
+# scroll labels (scroll labeled X)
+"ZELGO MER" = { ru = "ZELGO MER", src = "chosen", note = "kept in Latin: magic words" }
+"JUYED AWK YACC" = { ru = "JUYED AWK YACC", src = "chosen", note = "kept in Latin: magic words" }
+"NR 9" = { ru = "NR 9", src = "chosen", note = "kept in Latin: magic words" }
+"XIXAXA XOXAXA XUXAXA" = { ru = "XIXAXA XOXAXA XUXAXA", src = "chosen", note = "kept in Latin: magic words" }
+"PRATYAVAYAH" = { ru = "PRATYAVAYAH", src = "chosen", note = "kept in Latin: magic words" }
+"DAIYEN FOOELS" = { ru = "DAIYEN FOOELS", src = "chosen", note = "kept in Latin: magic words" }
+"LEP GEX VEN ZEA" = { ru = "LEP GEX VEN ZEA", src = "chosen", note = "kept in Latin: magic words" }
+"PRIRUTSENIE" = { ru = "PRIRUTSENIE", src = "chosen", note = "kept in Latin: magic words" }
+"ELBIB YLOH" = { ru = "ELBIB YLOH", src = "chosen", note = "kept in Latin: magic words" }
+"VERR YED HORRE" = { ru = "VERR YED HORRE", src = "chosen", note = "kept in Latin: magic words" }
+"VENZAR BORGAVVE" = { ru = "VENZAR BORGAVVE", src = "chosen", note = "kept in Latin: magic words" }
+"THARR" = { ru = "THARR", src = "chosen", note = "kept in Latin: magic words" }
+"YUM YUM" = { ru = "YUM YUM", src = "chosen", note = "kept in Latin: magic words" }
+"KERNOD WEL" = { ru = "KERNOD WEL", src = "chosen", note = "kept in Latin: magic words" }
+"ELAM EBOW" = { ru = "ELAM EBOW", src = "chosen", note = "kept in Latin: magic words" }
+"DUAM XNAHT" = { ru = "DUAM XNAHT", src = "chosen", note = "kept in Latin: magic words" }
+"ANDOVA BEGARIN" = { ru = "ANDOVA BEGARIN", src = "chosen", note = "kept in Latin: magic words" }
+"KIRJE" = { ru = "KIRJE", src = "chosen", note = "kept in Latin: magic words" }
+"VE FORBRYDERNE" = { ru = "VE FORBRYDERNE", src = "chosen", note = "kept in Latin: magic words" }
+"HACKEM MUCHE" = { ru = "HACKEM MUCHE", src = "chosen", note = "kept in Latin: magic words" }
+"VELOX NEB" = { ru = "VELOX NEB", src = "chosen", note = "kept in Latin: magic words" }
+"FOOBIE BLETCH" = { ru = "FOOBIE BLETCH", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ФУБИ БЛЕТЧ)" }
+"TEMOV" = { ru = "TEMOV", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ТЕМОВ)" }
+"GARVEN DEH" = { ru = "GARVEN DEH", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ГАРВЕН ДЕХ)" }
+"READ ME" = { ru = "READ ME", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ПРОЧТИ МЕНЯ)" }
+"ETAOIN SHRDLU" = { ru = "ETAOIN SHRDLU", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ЭТАОИН ШРДЛУ)" }
+"LOREM IPSUM" = { ru = "LOREM IPSUM", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ЛОРЕМ ИПСУМ)" }
+"FNORD" = { ru = "FNORD", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ФНОРД)" }
+"KO BATE" = { ru = "KO BATE", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote КО БАТЕ)" }
+"ABRA KA DABRA" = { ru = "ABRA KA DABRA", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote АБРА КА ДАБРА)" }
+"ASHPD SODALG" = { ru = "ASHPD SODALG", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote АШПД СОДАЛГ)" }
+"ZLORFIK" = { ru = "ZLORFIK", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ЗЛОРФИК)" }
+"GNIK SISI VLE" = { ru = "GNIK SISI VLE", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ГНИК СИСИ ВЛЕ)" }
+"HAPAX LEGOMENON" = { ru = "HAPAX LEGOMENON", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ГАПАКС ЛЕГОМЕНОН)" }
+"EIRIS SAZUN IDISI" = { ru = "EIRIS SAZUN IDISI", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ЭЙРИС САЗУН ИДИСИ)" }
+"PHOL ENDE WODAN" = { ru = "PHOL ENDE WODAN", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ФОЛ ЭНДЕ ВОДАН)" }
+"GHOTI" = { ru = "GHOTI", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ГХОТИ)" }
+"MAPIRO MAHAMA DIROMAT" = { ru = "MAPIRO MAHAMA DIROMAT", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote МАПИРО МАХАМА ДИРОМАТ)" }
+"VAS CORP BET MANI" = { ru = "VAS CORP BET MANI", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ВАС КОРП БЕТ МАНИ)" }
+"XOR OTA" = { ru = "XOR OTA", src = "chosen", note = "kept in Latin: magic words" }
+"STRC PRST SKRZ KRK" = { ru = "STRC PRST SKRZ KRK", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote СТРЦ ПРСТ СКРЖ КРК)" }
+
+[class]
+# what an object is called before it is seen up close, and the word a "called" name hangs on
+"potion" = { ru = "зелье", src = "chosen" }
+"scroll" = { ru = "свиток", src = "chosen" }
+"wand" = { ru = "палочка", src = "chosen" }
+"ring" = { ru = "кольцо", src = "chosen" }
+"amulet" = { ru = "амулет", src = "chosen" }
+"spellbook" = { ru = "книга заклинаний", src = "chosen" }
+"book" = { ru = "книга", src = "chosen" }
+"novel" = { ru = "роман", src = "chosen" }
+"gem" = { ru = "самоцвет", src = "chosen" }
+"stone" = { ru = "камень", src = "chosen" }
+"hat" = { ru = "шляпа", src = "chosen" }
+"helm" = { ru = "шлем", src = "chosen" }
+"dragon mail" = { ru = "драконий доспех", src = "chosen" }
+"mail" = { ru = "доспех", src = "chosen" }
+"suit" = { ru = "доспех", src = "chosen" }
+"jacket" = { ru = "куртка", src = "chosen" }
+"shirt" = { ru = "рубашка", src = "chosen" }
+"wrapping" = { ru = "обмотка", src = "chosen" }
+"cloak" = { ru = "плащ", src = "chosen" }
+"robe" = { ru = "мантия", src = "chosen" }
+"apron" = { ru = "фартук", src = "chosen" }
+"smock" = { ru = "фартук", src = "chosen" }
+"shield" = { ru = "щит", src = "chosen" }
+"silver shield" = { ru = "серебряный щит", src = "chosen" }
+"smooth shield" = { ru = "гладкий щит", src = "chosen" }
+"pair of gloves" = { ru = "перчатки", src = "chosen" }
+"pair of gauntlets" = { ru = "рукавицы", src = "chosen" }
+"pair of shoes" = { ru = "башмаки", src = "chosen" }
+"pair of boots" = { ru = "сапоги", src = "chosen" }
+"bag" = { ru = "сумка", src = "chosen" }
+
+[artifact]
+"Excalibur" = { ru = "Экскалибур", src = "nethack-ru" }
+"Stormbringer" = { ru = "Буревестник", src = "chosen", note = "was Буреглас; the name in the Russian Elric books" }
+"Mjollnir" = { ru = "Мьёльнир", src = "chosen", note = "was Мьёлльнир; the usual Russian spelling" }
+"Cleaver" = { ru = "Секач", src = "chosen", note = "was секaч" }
+"Grimtooth" = { ru = "Мрачный Клык", src = "nethack-ru" }
+"Orcrist" = { ru = "Оркрист", src = "nethack-ru" }
+"Sting" = { ru = "Жало", src = "nethack-ru" }
+"Magicbane" = { ru = "Чарокруш", src = "nethack-ru" }
+"Frost Brand" = { ru = "Морозный Клинок", src = "nethack-ru" }
+"Fire Brand" = { ru = "Огненный Клинок", src = "nethack-ru" }
+"Dragonbane" = { ru = "Драконоборец", src = "nethack-ru", like = "иностранец" }
+"Demonbane" = { ru = "Демоноборец", src = "nethack-ru", like = "иностранец" }
+"Werebane" = { ru = "Оборотнеборец", src = "nethack-ru", like = "иностранец" }
+"Grayswandir" = { ru = "Грейсвандир", src = "nethack-ru" }
+"Giantslayer" = { ru = "Великаноборец", src = "chosen", note = "was Гигантобоец; giant = великан; the -борец family", like = "иностранец" }
+"Ogresmasher" = { ru = "Крушитель Огров", src = "chosen", note = "was Убийца Огров" }
+"Trollsbane" = { ru = "Троллеборец", src = "chosen", note = "was Троллегуб; the -борец family", like = "иностранец" }
+"Vorpal Blade" = { ru = "Ворпальный Клинок", src = "nethack-ru" }
+"Snickersnee" = { ru = "Сникерсни", src = "nethack-ru" }
+"Sunsword" = { ru = "Солнечный Меч", src = "nethack-ru" }
+"Orb of Detection" = { ru = "Сфера Обнаружения", src = "nethack-ru" }
+"Heart of Ahriman" = { ru = "Сердце Ахримана", src = "nethack-ru" }
+"Sceptre of Might" = { ru = "Скипетр Могущества", src = "chosen", note = "was Скипетр Мощи" }
+"Palantir of Westernesse" = { ru = "Палантир Нуменора", src = "chosen", note = "Westernesse is Númenor" }
+"Staff of Aesculapius" = { ru = "Посох Эскулапа", src = "nethack-ru" }
+"Magic Mirror of Merlin" = { ru = "Волшебное Зеркало Мерлина", src = "nethack-ru" }
+"Eyes of the Overworld" = { ru = "Очи Надмирья", src = "chosen", note = "was Очи Мира Иного" }
+"Mitre of Holiness" = { ru = "Митра Святости", src = "nethack-ru" }
+"Longbow of Diana" = { ru = "Длинный Лук Дианы", src = "nethack-ru" }
+"Master Key of Thievery" = { ru = "Мастер-ключ Воровства", src = "chosen", note = "was Главный Ключ Воровства", hyphen = "last" }
+"Tsurugi of Muramasa" = { ru = "Цуруги Мурамасы", src = "nethack-ru", indecl = true, g = "m" }
+"Platinum Yendorian Express Card" = { ru = "Платиновая Йендорская Экспресс-Карта", src = "chosen", note = "was Платиновая Йендорианская Кредитка", hyphen = "last", g = "f" }
+"Orb of Fate" = { ru = "Сфера Судьбы", src = "nethack-ru" }
+"Eye of the Aethiopica" = { ru = "Око Эфиопики", src = "nethack-ru" }
+
+[role]
+# role names; a gendered one is its own entry
+"Archeologist" = { ru = "Археолог", src = "nethack-ru" }
+"Barbarian" = { ru = "Варвар", src = "nethack-ru" }
+"Caveman" = { ru = "Пещерный человек", src = "chosen", note = "was Пещерник; as the monster caveman" }
+"Cavewoman" = { ru = "Пещерная женщина", src = "chosen", note = "was Пещерница; as the monster" }
+"Healer" = { ru = "Целитель", src = "nethack-ru" }
+"Knight" = { ru = "Рыцарь", src = "nethack-ru" }
+"Monk" = { ru = "Монах", src = "nethack-ru" }
+"Priest" = { ru = "Жрец", src = "nethack-ru" }
+"Priestess" = { ru = "Жрица", src = "nethack-ru" }
+"Rogue" = { ru = "Плут", src = "nethack-ru" }
+"Ranger" = { ru = "Следопыт", src = "nethack-ru" }
+"Samurai" = { ru = "Самурай", src = "nethack-ru" }
+"Tourist" = { ru = "Турист", src = "nethack-ru" }
+"Valkyrie" = { ru = "Валькирия", src = "nethack-ru" }
+"Wizard" = { ru = "Волшебник", src = "nethack-ru" }
+
+[rank]
+# rank titles by role
+# Archeologist
+"Digger" = { ru = "Землекоп", src = "nethack-ru" }
+"Field Worker" = { ru = "Полевой работник", src = "chosen", note = "was Полевой рабочий" }
+"Investigator" = { ru = "Изыскатель", src = "chosen", note = "was Следователь; Исследователь is the Tourist's Explorer" }
+"Exhumer" = { ru = "Эксгуматор", src = "nethack-ru" }
+"Excavator" = { ru = "Раскопщик", src = "chosen", note = "was Землерой" }
+"Spelunker" = { ru = "Спелеолог-любитель", src = "nethack-ru" }
+"Speleologist" = { ru = "Спелеолог", src = "nethack-ru" }
+"Collector" = { ru = "Коллекционер", src = "nethack-ru" }
+"Curator" = { ru = "Куратор", src = "chosen", note = "was Хранитель" }
+# Barbarian
+"Plunderer" = { ru = "Мародёр", src = "chosen", note = "was Грабитель" }
+"Plunderess" = { ru = "Мародёрка", src = "chosen" }
+"Pillager" = { ru = "Разоритель", src = "nethack-ru" }
+"Bandit" = { ru = "Бандит", src = "nethack-ru" }
+"Brigand" = { ru = "Разбойник", src = "nethack-ru" }
+"Raider" = { ru = "Налётчик", src = "nethack-ru" }
+"Reaver" = { ru = "Опустошитель", src = "nethack-ru" }
+"Slayer" = { ru = "Истребитель", src = "chosen", note = "was Убийца" }
+"Chieftain" = { ru = "Вождь", src = "nethack-ru" }
+"Chieftainess" = { ru = "Предводительница", src = "nethack-ru" }
+"Conqueror" = { ru = "Завоеватель", src = "nethack-ru" }
+"Conqueress" = { ru = "Завоевательница", src = "nethack-ru" }
+# Caveman
+"Troglodyte" = { ru = "Троглодит", src = "nethack-ru" }
+"Aborigine" = { ru = "Абориген", src = "nethack-ru" }
+"Wanderer" = { ru = "Странник", src = "nethack-ru" }
+"Vagrant" = { ru = "Бродяга", src = "nethack-ru" }
+"Wayfarer" = { ru = "Путник", src = "nethack-ru" }
+"Roamer" = { ru = "Скиталец", src = "chosen", note = "was Кочевник" }
+"Nomad" = { ru = "Кочевник", src = "chosen", note = "was Номад" }
+"Rover" = { ru = "Перекати-поле", src = "chosen", note = "was Скиталец" }
+"Pioneer" = { ru = "Первооткрыватель", src = "chosen", note = "was Пионер" }
+# Healer
+"Rhizotomist" = { ru = "Корневед", src = "nethack-ru" }
+"Empiric" = { ru = "Эмпирик", src = "nethack-ru" }
+"Embalmer" = { ru = "Бальзамировщик", src = "nethack-ru" }
+"Dresser" = { ru = "Перевязчик", src = "chosen", note = "was Санитар; санитар is the Healer's attendant" }
+"Medicus ossium" = { ru = "Костоправ", src = "nethack-ru" }
+"Medica ossium" = { ru = "Костоправка", src = "nethack-ru" }
+"Herbalist" = { ru = "Травник", src = "nethack-ru" }
+"Magister" = { ru = "Магистр", src = "nethack-ru" }
+"Magistra" = { ru = "Магистр", src = "chosen", note = "was Магистра" }
+"Physician" = { ru = "Лекарь", src = "nethack-ru" }
+"Chirurgeon" = { ru = "Хирург", src = "nethack-ru" }
+# Knight
+"Gallant" = { ru = "Удалец", src = "chosen", note = "was Галант" }
+"Esquire" = { ru = "Оруженосец", src = "nethack-ru" }
+"Bachelor" = { ru = "Бакалавр", src = "nethack-ru" }
+"Sergeant" = { ru = "Сержант", src = "nethack-ru" }
+"Knight" = { ru = "Рыцарь", src = "nethack-ru" }
+"Banneret" = { ru = "Баннерет", src = "nethack-ru" }
+"Chevalier" = { ru = "Шевалье", src = "nethack-ru" }
+"Chevaliere" = { ru = "Шевалье", src = "chosen", note = "was Шевалье-ж; the same word for a woman" }
+"Seignieur" = { ru = "Сеньор", src = "nethack-ru" }
+"Dame" = { ru = "Дама", src = "nethack-ru" }
+"Paladin" = { ru = "Паладин", src = "nethack-ru" }
+# Monk
+"Candidate" = { ru = "Кандидат", src = "nethack-ru" }
+"Novice" = { ru = "Послушник", src = "nethack-ru" }
+"Initiate" = { ru = "Посвящённый", src = "nethack-ru", adjnoun = true }
+"Student of Stones" = { ru = "Ученик Камня", src = "chosen", note = "was Ученик камня" }
+"Student of Waters" = { ru = "Ученик Воды", src = "chosen", note = "was Ученик воды" }
+"Student of Metals" = { ru = "Ученик Металла", src = "chosen", note = "was Ученик металла" }
+"Student of Winds" = { ru = "Ученик Ветра", src = "chosen", note = "was Ученик ветра" }
+"Student of Fire" = { ru = "Ученик Огня", src = "chosen", note = "was Ученик огня" }
+"Master" = { ru = "Мастер", src = "nethack-ru" }
+# Priest
+"Aspirant" = { ru = "Соискатель", src = "chosen", note = "was Искатель" }
+"Acolyte" = { ru = "Аколит", src = "nethack-ru" }
+"Adept" = { ru = "Адепт", src = "nethack-ru" }
+"Priest" = { ru = "Жрец", src = "nethack-ru" }
+"Priestess" = { ru = "Жрица", src = "nethack-ru" }
+"Curate" = { ru = "Викарий", src = "chosen", note = "was Курат" }
+"Canon" = { ru = "Каноник", src = "chosen", note = "was Канон" }
+"Canoness" = { ru = "Канонисса", src = "chosen", note = "was Канонесса" }
+"Lama" = { ru = "Лама", src = "nethack-ru" }
+"Patriarch" = { ru = "Патриарх", src = "nethack-ru" }
+"Matriarch" = { ru = "Матриарх", src = "nethack-ru" }
+"High Priest" = { ru = "Верховный жрец", src = "nethack-ru" }
+"High Priestess" = { ru = "Верховная жрица", src = "nethack-ru" }
+# Rogue
+"Footpad" = { ru = "Уличный вор", src = "chosen", note = "was Карманник" }
+"Cutpurse" = { ru = "Карманник", src = "chosen", note = "was Резальщик кошельков" }
+"Rogue" = { ru = "Плут", src = "nethack-ru" }
+"Pilferer" = { ru = "Мелкий вор", src = "nethack-ru" }
+"Robber" = { ru = "Грабитель", src = "nethack-ru" }
+"Burglar" = { ru = "Взломщик", src = "nethack-ru" }
+"Filcher" = { ru = "Воришка", src = "nethack-ru" }
+"Magsman" = { ru = "Мошенник", src = "chosen", note = "was Фокусник; a magsman is a swindler" }
+"Magswoman" = { ru = "Мошенница", src = "chosen", note = "was Фокусница" }
+"Thief" = { ru = "Вор", src = "nethack-ru" }
+# Ranger
+"Tenderfoot" = { ru = "Новичок", src = "nethack-ru" }
+"Lookout" = { ru = "Дозорный", src = "nethack-ru" }
+"Trailblazer" = { ru = "Первопроходец", src = "chosen", note = "was Пролагатель троп" }
+"Reconnoiterer" = { ru = "Разведчик", src = "nethack-ru" }
+"Reconnoiteress" = { ru = "Разведчица", src = "nethack-ru" }
+"Scout" = { ru = "Скаут", src = "nethack-ru" }
+"Arbalester" = { ru = "Арбалетчик", src = "nethack-ru" }
+"Archer" = { ru = "Лучник", src = "nethack-ru" }
+"Sharpshooter" = { ru = "Снайпер", src = "nethack-ru" }
+"Marksman" = { ru = "Мастер-стрелок", src = "chosen", note = "was Стрелок" }
+"Markswoman" = { ru = "Мастер-стрелок", src = "chosen", note = "was Стрелок-ж" }
+# Samurai
+"Hatamoto" = { ru = "Хатамото", src = "nethack-ru" }
+"Ronin" = { ru = "Ронин", src = "nethack-ru", like = "слон" }
+"Ninja" = { ru = "Ниндзя", src = "nethack-ru" }
+"Kunoichi" = { ru = "Куноити", src = "nethack-ru", indecl = true, g = "f" }
+"Joshu" = { ru = "Дзёсю", src = "nethack-ru" }
+"Ryoshu" = { ru = "Рёсю", src = "chosen", note = "was исю" }
+"Kokushu" = { ru = "Кокусю", src = "nethack-ru" }
+"Daimyo" = { ru = "Даймё", src = "nethack-ru" }
+"Kuge" = { ru = "Кугэ", src = "nethack-ru" }
+"Shogun" = { ru = "Сёгун", src = "chosen", note = "was игун" }
+# Tourist
+"Rambler" = { ru = "Гуляка", src = "chosen", note = "was Бродяга" }
+"Sightseer" = { ru = "Зевака", src = "chosen", note = "was Турист; Турист is the role" }
+"Excursionist" = { ru = "Экскурсант", src = "nethack-ru" }
+"Peregrinator" = { ru = "Пилигрим", src = "chosen", note = "was Странник" }
+"Peregrinatrix" = { ru = "Пилигримка", src = "chosen", note = "was Странница" }
+"Traveler" = { ru = "Путешественник", src = "nethack-ru" }
+"Journeyer" = { ru = "Странствователь", src = "nethack-ru" }
+"Voyager" = { ru = "Вояжёр", src = "chosen", note = "was Мореплаватель" }
+"Explorer" = { ru = "Исследователь", src = "nethack-ru" }
+"Adventurer" = { ru = "Искатель приключений", src = "nethack-ru" }
+# Valkyrie
+"Stripling" = { ru = "Новобранец", src = "chosen", note = "was Юнец; Valkyries are women: no Юнец" }
+"Skirmisher" = { ru = "Застрельщик", src = "chosen", note = "was Засадник" }
+"Fighter" = { ru = "Боец", src = "nethack-ru" }
+"Man-at-arms" = { ru = "Латник", src = "chosen", note = "was Оруженосец" }
+"Woman-at-arms" = { ru = "Латница", src = "chosen", note = "was Женщина-воин" }
+"Warrior" = { ru = "Воин", src = "nethack-ru" }
+"Swashbuckler" = { ru = "Рубака", src = "chosen", note = "was Забияка" }
+"Hero" = { ru = "Герой", src = "nethack-ru" }
+"Heroine" = { ru = "Героиня", src = "nethack-ru" }
+"Champion" = { ru = "Чемпион", src = "nethack-ru" }
+"Lord" = { ru = "Лорд", src = "nethack-ru" }
+"Lady" = { ru = "Леди", src = "nethack-ru" }
+# Wizard
+"Evoker" = { ru = "Призыватель", src = "nethack-ru" }
+"Conjurer" = { ru = "Кудесник", src = "chosen", note = "was Чародей" }
+"Thaumaturge" = { ru = "Чудотворец", src = "nethack-ru" }
+"Magician" = { ru = "Маг", src = "nethack-ru" }
+"Enchanter" = { ru = "Чародей", src = "chosen", note = "was Заклинатель" }
+"Enchantress" = { ru = "Чародейка", src = "chosen", note = "was Заклинательница" }
+"Sorcerer" = { ru = "Колдун", src = "chosen", note = "was Чародей" }
+"Sorceress" = { ru = "Колдунья", src = "nethack-ru" }
+"Necromancer" = { ru = "Некромант", src = "nethack-ru" }
+"Wizard" = { ru = "Волшебник", src = "nethack-ru" }
+"Mage" = { ru = "Архимаг", src = "chosen", note = "was Маг; the top rank; Маг is the Magician" }
+
+[god]
+# a leading _ in role.c marks a goddess
+"Quetzalcoatl" = { ru = "Кецалькоатль", src = "nethack-ru", note = "Archeologist" }
+"Camaxtli" = { ru = "Камаштли", src = "nethack-ru", note = "Archeologist", indecl = true, g = "m" }
+"Huhetotl" = { ru = "Уэуэтеотль", src = "nethack-ru", note = "Archeologist" }
+"Mitra" = { ru = "Митра", src = "nethack-ru", note = "Barbarian", g = "m" }
+"Crom" = { ru = "Кром", src = "nethack-ru", note = "Barbarian" }
+"Set" = { ru = "Сет", src = "nethack-ru", note = "Barbarian" }
+"Anu" = { ru = "Ану", src = "nethack-ru", note = "Caveman" }
+"Ishtar" = { ru = "Иштар", src = "nethack-ru", note = "Caveman, goddess", indecl = true, g = "f" }
+"Anshar" = { ru = "Аншар", src = "nethack-ru", note = "Caveman" }
+"Athena" = { ru = "Афина", src = "nethack-ru", note = "Healer, goddess" }
+"Hermes" = { ru = "Гермес", src = "nethack-ru", note = "Healer" }
+"Poseidon" = { ru = "Посейдон", src = "nethack-ru", note = "Healer" }
+"Lugh" = { ru = "Луг", src = "nethack-ru", note = "Knight" }
+"Brigit" = { ru = "Бригита", src = "chosen", note = "was Бригитта" }
+"Manannan Mac Lir" = { ru = "Мананнан мак Лир", src = "chosen", note = "was Мананнан-Мак-Лир" }
+"Shan Lai Ching" = { ru = "Шань Лай Цин", src = "chosen", note = "Palladius", indecl = true, g = "m" }
+"Chih Sung-tzu" = { ru = "Чи Сун-цзы", src = "chosen", note = "Palladius" }
+"Huan Ti" = { ru = "Хуан-ди", src = "chosen", note = "the Yellow Emperor", indecl = true, g = "m" }
+"Issek" = { ru = "Иссек", src = "chosen", note = "Leiber's Lankhmar in Russian" }
+"Mog" = { ru = "Мог", src = "chosen" }
+"Kos" = { ru = "Кос", src = "chosen" }
+"Mercury" = { ru = "Меркурий", src = "nethack-ru", note = "Ranger" }
+"Venus" = { ru = "Венера", src = "nethack-ru", note = "Ranger, goddess" }
+"Mars" = { ru = "Марс", src = "nethack-ru", note = "Ranger" }
+"Amaterasu Omikami" = { ru = "Аматэрасу Омиками", src = "nethack-ru", note = "Samurai, goddess", indecl = true, g = "f" }
+"Raijin" = { ru = "Райдзин", src = "nethack-ru", note = "Samurai", like = "слон" }
+"Susanowo" = { ru = "Сусаноо", src = "nethack-ru", note = "Samurai" }
+"Blind Io" = { ru = "Слепой Ио", src = "chosen", note = "the Russian Pratchett name" }
+"The Lady" = { ru = "Госпожа", src = "chosen", note = "the Russian Pratchett name" }
+"Offler" = { ru = "Оффлер", src = "chosen", note = "the Russian Pratchett name" }
+"Tyr" = { ru = "Тюр", src = "nethack-ru", note = "Valkyrie" }
+"Odin" = { ru = "Один", src = "nethack-ru", note = "Valkyrie" }
+"Loki" = { ru = "Локи", src = "nethack-ru", note = "Valkyrie", indecl = true, g = "m" }
+"Ptah" = { ru = "Птах", src = "nethack-ru", note = "Wizard" }
+"Thoth" = { ru = "Тот", src = "nethack-ru", note = "Wizard" }
+"Anhur" = { ru = "Анхур", src = "nethack-ru", note = "Wizard" }
+"Moloch" = { ru = "Молох", src = "chosen", note = "the unaligned god" }
+"the Flying Spaghetti Monster" = { ru = "Летающий Макаронный Монстр", src = "chosen", note = "hallucination" }
+"Eris" = { ru = "Эрида", src = "chosen", note = "hallucination", g = "f" }
+"the Martians" = { ru = "марсиане", src = "chosen", note = "hallucination" }
+"Xom" = { ru = "Ксом", src = "chosen", note = "hallucination" }
+"AnDoR dRaKoN" = { ru = "АнДоР дРаКоН", src = "chosen", note = "hallucination", indecl = true, g = "m" }
+"the Central Bank of Yendor" = { ru = "Центральный банк Йендора", src = "chosen", note = "hallucination" }
+"Tooth Fairy" = { ru = "Зубная фея", src = "chosen", note = "hallucination" }
+"Om" = { ru = "Ом", src = "chosen", note = "hallucination; Pratchett" }
+"Yawgmoth" = { ru = "Явгмот", src = "chosen", note = "hallucination" }
+"Morgoth" = { ru = "Моргот", src = "chosen", note = "hallucination" }
+"Cthulhu" = { ru = "Ктулху", src = "chosen", note = "hallucination" }
+"the Ori" = { ru = "Орай", src = "chosen", note = "hallucination", indecl = true, g = "m" }
+"destiny" = { ru = "судьба", src = "chosen", note = "hallucination" }
+"your Friend the Computer" = { ru = "ваш Друг Компьютер", src = "chosen", note = "hallucination", head = "Друг Компьютер" }
+
+[race]
+"human" = { ru = "человек", src = "nethack-ru" }
+"humanity" = { ru = "человечество", src = "nethack-ru", note = "collective" }
+"man" = { ru = "мужчина", src = "nethack-ru" }
+"woman" = { ru = "женщина", src = "nethack-ru" }
+"elf" = { ru = "эльф", src = "nethack-ru" }
+"elven" = { ru = "эльфийский", src = "nethack-ru", note = "adjective" }
+"elvenkind" = { ru = "эльфийский народ", src = "nethack-ru", note = "collective" }
+"dwarf" = { ru = "дварф", src = "nethack-ru" }
+"dwarven" = { ru = "дварфийский", src = "nethack-ru", note = "adjective" }
+"dwarvenkind" = { ru = "дварфийский народ", src = "nethack-ru", note = "collective" }
+"gnome" = { ru = "гном", src = "nethack-ru" }
+"gnomish" = { ru = "гномий", src = "nethack-ru", note = "adjective", like = "волчий" }
+"gnomehood" = { ru = "гномий народ", src = "nethack-ru", note = "collective" }
+"orc" = { ru = "орк", src = "nethack-ru" }
+"orcish" = { ru = "орочий", src = "chosen", note = "was оркский; orcish = орочий throughout" }
+"orcdom" = { ru = "орочье племя", src = "nethack-ru", note = "collective" }
+
+[alignment]
+"lawful" = { ru = "законопослушный", src = "nethack-ru" }
+"law" = { ru = "закон", src = "nethack-ru", note = "noun" }
+"neutral" = { ru = "нейтральный", src = "nethack-ru" }
+"balance" = { ru = "равновесие", src = "nethack-ru", note = "noun" }
+"chaotic" = { ru = "хаотичный", src = "nethack-ru" }
+"chaos" = { ru = "хаос", src = "nethack-ru", note = "noun" }
+"unaligned" = { ru = "безверный", src = "nethack-ru" }
+"evil" = { ru = "зло", src = "nethack-ru", note = "noun" }
+
+[place]
+"The Dungeons of Doom" = { ru = "Подземелья Рока", src = "chosen", note = "was Подземелья Судьбы" }
+"The Gnomish Mines" = { ru = "Гномьи копи", src = "chosen", note = "was Гномьи шахты; копи as in Tolkien" }
+"Sokoban" = { ru = "Сокобан", src = "nethack-ru" }
+"The Quest" = { ru = "Квест", src = "nethack-ru" }
+"Fort Ludios" = { ru = "Форт Лудиос", src = "nethack-ru" }
+"Gehennom" = { ru = "Геенна", src = "nethack-ru" }
+"The Elemental Planes" = { ru = "Стихийные планы", src = "nethack-ru" }
+"Vlad's Tower" = { ru = "Башня Влада", src = "nethack-ru" }
+"The Tutorial" = { ru = "Обучение", src = "nethack-ru" }
+"the College of Archeology" = { ru = "Колледж археологии", src = "chosen" }
+"the Tomb of the Toltec Kings" = { ru = "Гробница тольтекских царей", src = "chosen" }
+"the Camp of the Duali Tribe" = { ru = "Лагерь племени дуали", src = "chosen" }
+"the Duali Oasis" = { ru = "Оазис дуали", src = "chosen" }
+"the Caves of the Ancestors" = { ru = "Пещеры предков", src = "chosen" }
+"the Dragon's Lair" = { ru = "Логово дракона", src = "chosen" }
+"the Temple of Epidaurus" = { ru = "Храм Эпидавра", src = "chosen" }
+"the Temple of Coeus" = { ru = "Храм Кея", src = "chosen" }
+"Camelot Castle" = { ru = "Замок Камелот", src = "chosen" }
+"the Isle of Glass" = { ru = "Стеклянный остров", src = "chosen" }
+"the Monastery of Chan-Sune" = { ru = "Монастырь Чань-Сунь", src = "chosen" }
+"the Monastery of the Earth-Lord" = { ru = "Монастырь Владыки Земли", src = "chosen" }
+"the Great Temple" = { ru = "Великий храм", src = "chosen" }
+"the Temple of Nalzok" = { ru = "Храм Налзока", src = "chosen" }
+"the Thieves' Guild Hall" = { ru = "Зал гильдии воров", src = "chosen" }
+"the Assassins' Guild Hall" = { ru = "Зал гильдии убийц", src = "chosen" }
+"Orion's camp" = { ru = "Лагерь Ориона", src = "chosen" }
+"the cave of the wumpus" = { ru = "Пещера вампуса", src = "chosen" }
+"the Castle of the Taro Clan" = { ru = "Замок клана Таро", src = "chosen" }
+"the Shogun's Castle" = { ru = "Замок сёгуна", src = "chosen" }
+"Ankh-Morpork" = { ru = "Анк-Морпорк", src = "chosen", note = "the Russian Pratchett name", hyphen = "last" }
+"the Shrine of Destiny" = { ru = "Святилище Судьбы", src = "chosen" }
+"the cave of Surtur" = { ru = "Пещера Сурта", src = "chosen" }
+"the Lonely Tower" = { ru = "Одинокая башня", src = "chosen" }
+"the Tower of Darkness" = { ru = "Башня Тьмы", src = "chosen" }
+"the Astral Plane" = { ru = "Астральный план", src = "chosen" }
+"the Plane of Earth" = { ru = "План Земли", src = "chosen" }
+"the Plane of Air" = { ru = "План Воздуха", src = "chosen" }
+"the Plane of Fire" = { ru = "План Огня", src = "chosen" }
+"the Plane of Water" = { ru = "План Воды", src = "chosen" }
+"Delphi" = { ru = "Дельфы", src = "chosen" }
+"Minetown" = { ru = "Шахтёрский городок", src = "chosen" }
+"Orcish Town" = { ru = "Орочий городок", src = "chosen" }
+"Mines' End" = { ru = "Дно копей", src = "chosen" }
+"Medusa's Island" = { ru = "Остров Медузы", src = "chosen" }
+"the Castle" = { ru = "Замок", src = "chosen" }
+"the Valley of the Dead" = { ru = "Долина Мёртвых", src = "chosen" }
+"Moloch's Sanctum" = { ru = "Святилище Молоха", src = "chosen" }
+"the Wizard's Tower" = { ru = "Башня Волшебника", src = "chosen" }
+"the Big Room" = { ru = "Большой зал", src = "chosen" }
+"Juiblex's Swamp" = { ru = "Болото Джубилекса", src = "chosen" }
+"Orcus Town" = { ru = "Город Оркуса", src = "chosen" }
+
+[terrain]
+# map features as farlook names them (defsym.h)
+"stone" = { ru = "камень", src = "nethack-ru" }
+"wall" = { ru = "стена", src = "nethack-ru" }
+"doorway" = { ru = "дверной проём", src = "nethack-ru" }
+"open door" = { ru = "открытая дверь", src = "nethack-ru" }
+"closed door" = { ru = "закрытая дверь", src = "nethack-ru" }
+"iron bars" = { ru = "железная решётка", src = "chosen", note = "was железные прутья" }
+"tree" = { ru = "дерево", src = "nethack-ru" }
+"floor of a room" = { ru = "пол комнаты", src = "chosen", note = "was пол в комнате" }
+"dark part of a room" = { ru = "тёмная часть комнаты", src = "nethack-ru" }
+"engraving" = { ru = "надпись", src = "nethack-ru" }
+"corridor" = { ru = "коридор", src = "nethack-ru" }
+"lit corridor" = { ru = "освещённый коридор", src = "nethack-ru" }
+"staircase up" = { ru = "лестница вверх", src = "nethack-ru" }
+"staircase down" = { ru = "лестница вниз", src = "nethack-ru" }
+"ladder up" = { ru = "приставная лестница вверх", src = "chosen", note = "was верёвочная лестница вверх" }
+"ladder down" = { ru = "приставная лестница вниз", src = "chosen", note = "was верёвочная лестница вниз" }
+"branch staircase up" = { ru = "боковая лестница вверх", src = "chosen" }
+"branch staircase down" = { ru = "боковая лестница вниз", src = "chosen" }
+"branch ladder up" = { ru = "боковая приставная лестница вверх", src = "chosen" }
+"branch ladder down" = { ru = "боковая приставная лестница вниз", src = "chosen" }
+"altar" = { ru = "алтарь", src = "nethack-ru" }
+"grave" = { ru = "могила", src = "nethack-ru" }
+"opulent throne" = { ru = "роскошный трон", src = "chosen", note = "was величественный трон" }
+"sink" = { ru = "раковина", src = "nethack-ru" }
+"fountain" = { ru = "фонтан", src = "nethack-ru" }
+"water" = { ru = "вода", src = "nethack-ru" }
+"ice" = { ru = "лёд", src = "nethack-ru" }
+"molten lava" = { ru = "расплавленная лава", src = "chosen", note = "was раскалённая лава" }
+"wall of lava" = { ru = "стена лавы", src = "nethack-ru" }
+"lowered drawbridge" = { ru = "опущенный подъёмный мост", src = "nethack-ru" }
+"raised drawbridge" = { ru = "поднятый подъёмный мост", src = "nethack-ru" }
+"air" = { ru = "воздух", src = "nethack-ru" }
+"cloud" = { ru = "облако", src = "nethack-ru" }
+"poison cloud" = { ru = "ядовитое облако", src = "nethack-ru" }
+"valid position" = { ru = "допустимая позиция", src = "chosen", note = "was подходящая позиция" }
+"broken door" = { ru = "сломанная дверь", src = "chosen" }
+"doorless doorway" = { ru = "пустой проём", src = "chosen" }
+
+[trap]
+"arrow trap" = { ru = "ловушка со стрелами", src = "nethack-ru" }
+"dart trap" = { ru = "ловушка с дротиками", src = "nethack-ru" }
+"falling rock trap" = { ru = "ловушка с камнепадом", src = "chosen", note = "was ловушка с падающим камнем" }
+"squeaky board" = { ru = "скрипучая половица", src = "nethack-ru" }
+"bear trap" = { ru = "медвежий капкан", src = "nethack-ru" }
+"land mine" = { ru = "мина", src = "nethack-ru" }
+"rolling boulder trap" = { ru = "ловушка с катящимся валуном", src = "nethack-ru" }
+"sleeping gas trap" = { ru = "ловушка с усыпляющим газом", src = "nethack-ru" }
+"rust trap" = { ru = "ловушка ржавчины", src = "nethack-ru" }
+"fire trap" = { ru = "огненная ловушка", src = "nethack-ru" }
+"pit" = { ru = "яма", src = "nethack-ru" }
+"spiked pit" = { ru = "яма с кольями", src = "nethack-ru" }
+"hole" = { ru = "дыра", src = "nethack-ru" }
+"trap door" = { ru = "люк", src = "nethack-ru" }
+"teleportation trap" = { ru = "телепортационная ловушка", src = "chosen", note = "was ловушка телепортации" }
+"level teleporter" = { ru = "телепорт между уровнями", src = "chosen", note = "was ловушка телепортации уровня" }
+"magic portal" = { ru = "магический портал", src = "nethack-ru" }
+"web" = { ru = "паутина", src = "nethack-ru" }
+"statue trap" = { ru = "ловушка-статуя", src = "nethack-ru" }
+"magic trap" = { ru = "магическая ловушка", src = "nethack-ru" }
+"anti-magic field" = { ru = "антимагическое поле", src = "chosen", note = "was поле антимагии" }
+"polymorph trap" = { ru = "ловушка превращения", src = "chosen", note = "was ловушка полиморфии; polymorph = превращение" }
+"vibrating square" = { ru = "вибрирующий квадрат", src = "nethack-ru" }
+"trapped door" = { ru = "дверь-ловушка", src = "nethack-ru" }
+"trapped chest" = { ru = "сундук-ловушка", src = "nethack-ru" }
+
+[monclass]
+# monster classes (farlook, the / command)
+"ant or other insect" = { ru = "муравей или другое насекомое", src = "chosen" }
+"blob" = { ru = "сгусток", src = "chosen" }
+"cockatrice" = { ru = "кокатрикс", src = "chosen" }
+"dog or other canine" = { ru = "собака или другое псовое", src = "chosen" }
+"eye or sphere" = { ru = "глаз или сфера", src = "chosen" }
+"cat or other feline" = { ru = "кошка или другое кошачье", src = "chosen" }
+"gremlin" = { ru = "гремлин", src = "chosen" }
+"humanoid" = { ru = "гуманоид", src = "chosen" }
+"imp or minor demon" = { ru = "бес или младший демон", src = "chosen" }
+"jelly" = { ru = "студень", src = "chosen" }
+"kobold" = { ru = "кобольд", src = "chosen" }
+"leprechaun" = { ru = "лепрекон", src = "chosen" }
+"mimic" = { ru = "мимик", src = "chosen" }
+"nymph" = { ru = "нимфа", src = "chosen" }
+"orc" = { ru = "орк", src = "chosen" }
+"piercer" = { ru = "пронзатель", src = "chosen" }
+"quadruped" = { ru = "четвероногое", src = "chosen" }
+"rodent" = { ru = "грызун", src = "chosen" }
+"arachnid or centipede" = { ru = "паукообразное или многоножка", src = "chosen" }
+"trapper or lurker above" = { ru = "ловец или затаившийся сверху", src = "chosen" }
+"unicorn or horse" = { ru = "единорог или лошадь", src = "chosen" }
+"vortex" = { ru = "вихрь", src = "chosen" }
+"worm" = { ru = "червь", src = "chosen" }
+"xan or other mythical/fantastic insect" = { ru = "ксан или другое сказочное насекомое", src = "chosen" }
+"light" = { ru = "огонёк", src = "chosen" }
+"zruty" = { ru = "зрути", src = "chosen" }
+"angelic being" = { ru = "ангельское существо", src = "chosen" }
+"bat or bird" = { ru = "летучая мышь или птица", src = "chosen" }
+"centaur" = { ru = "кентавр", src = "chosen" }
+"dragon" = { ru = "дракон", src = "chosen" }
+"elemental" = { ru = "элементаль", src = "chosen" }
+"fungus or mold" = { ru = "гриб или плесень", src = "chosen" }
+"gnome" = { ru = "гном", src = "chosen" }
+"giant humanoid" = { ru = "великан", src = "chosen" }
+"invisible monster" = { ru = "невидимый монстр", src = "chosen" }
+"jabberwock" = { ru = "бармаглот", src = "chosen" }
+"Keystone Kop" = { ru = "кистоунский коп", src = "chosen" }
+"lich" = { ru = "лич", src = "chosen" }
+"mummy" = { ru = "мумия", src = "chosen" }
+"naga" = { ru = "нага", src = "chosen" }
+"ogre" = { ru = "огр", src = "chosen" }
+"pudding or ooze" = { ru = "пудинг или слизь", src = "chosen" }
+"quantum mechanic" = { ru = "квантовый механик", src = "chosen" }
+"rust monster or disenchanter" = { ru = "ржавник или поглотитель чар", src = "chosen" }
+"snake" = { ru = "змея", src = "chosen" }
+"troll" = { ru = "тролль", src = "chosen" }
+"umber hulk" = { ru = "бурый увалень", src = "chosen" }
+"vampire" = { ru = "вампир", src = "chosen" }
+"wraith" = { ru = "призрак", src = "chosen" }
+"xorn" = { ru = "ксорн", src = "chosen" }
+"apelike creature" = { ru = "обезьяноподобное существо", src = "chosen" }
+"zombie" = { ru = "зомби", src = "chosen" }
+"human or elf" = { ru = "человек или эльф", src = "chosen" }
+"ghost" = { ru = "привидение", src = "chosen" }
+"golem" = { ru = "голем", src = "chosen" }
+"major demon" = { ru = "старший демон", src = "chosen" }
+"sea monster" = { ru = "морское чудовище", src = "chosen" }
+"lizard" = { ru = "ящерица", src = "chosen" }
+"long worm tail" = { ru = "хвост длинного червя", src = "chosen" }
+
+[objclass]
+# object classes: the plural is a menu heading
+"illegal objects" = { ru = "странные предметы", src = "chosen" }
+"strange object" = { ru = "странный предмет", src = "nethack-ru" }
+"weapons" = { ru = "оружие", src = "chosen" }
+"weapon" = { ru = "оружие", src = "nethack-ru" }
+"armor" = { ru = "доспехи", src = "chosen" }
+"suit or piece of armor" = { ru = "доспех или его часть", src = "chosen", note = "was часть доспехов" }
+"rings" = { ru = "кольца", src = "chosen" }
+"ring" = { ru = "кольцо", src = "nethack-ru" }
+"amulets" = { ru = "амулеты", src = "chosen" }
+"amulet" = { ru = "амулет", src = "nethack-ru" }
+"tools" = { ru = "инструменты", src = "chosen" }
+"useful item (pick-axe, key, lamp...)" = { ru = "полезный предмет (кирка, ключ, лампа...)", src = "nethack-ru" }
+"food" = { ru = "еда", src = "chosen" }
+"piece of food" = { ru = "еда", src = "chosen", note = "was кусок еды" }
+"potions" = { ru = "зелья", src = "chosen" }
+"potion" = { ru = "зелье", src = "nethack-ru" }
+"scrolls" = { ru = "свитки", src = "chosen", lemma = "свиток" }
+"scroll" = { ru = "свиток", src = "nethack-ru" }
+"spellbooks" = { ru = "книги заклинаний", src = "chosen" }
+"spellbook" = { ru = "книга заклинаний", src = "nethack-ru" }
+"wands" = { ru = "палочки", src = "chosen" }
+"wand" = { ru = "волшебная палочка", src = "nethack-ru" }
+"coins" = { ru = "монеты", src = "chosen" }
+"pile of coins" = { ru = "груда монет", src = "nethack-ru" }
+"rocks" = { ru = "камни", src = "chosen" }
+"gem or rock" = { ru = "самоцвет или камень", src = "nethack-ru" }
+"large stones" = { ru = "крупные камни", src = "chosen" }
+"boulder or statue" = { ru = "валун или статуя", src = "nethack-ru" }
+"iron balls" = { ru = "железные ядра", src = "chosen" }
+"iron ball" = { ru = "железное ядро", src = "chosen", note = "was железный шар" }
+"chains" = { ru = "цепи", src = "chosen" }
+"iron chain" = { ru = "железная цепь", src = "nethack-ru" }
+"venoms" = { ru = "яды", src = "chosen" }
+"splash of venom" = { ru = "брызги яда", src = "nethack-ru" }
+
+[condition]
+# status line: conditions, hunger, encumbrance
+"Bare" = { ru = "Без оружия", src = "chosen" }
+"Blind" = { ru = "Слепота", src = "chosen" }
+"Busy" = { ru = "Занят", src = "chosen" }
+"Conf" = { ru = "Замешательство", src = "chosen" }
+"Deaf" = { ru = "Глухота", src = "chosen" }
+"Iron" = { ru = "Железо", src = "chosen" }
+"Fly" = { ru = "Полёт", src = "chosen" }
+"FoodPois" = { ru = "Отравление", src = "chosen" }
+"Glow" = { ru = "Сияние", src = "chosen" }
+"Grab" = { ru = "Схвачен", src = "chosen" }
+"Hallu" = { ru = "Галлюцинации", src = "chosen" }
+"Held" = { ru = "Удержан", src = "chosen" }
+"Icy" = { ru = "Лёд", src = "chosen" }
+"InLava" = { ru = "В лаве", src = "chosen" }
+"Lev" = { ru = "Левитация", src = "chosen" }
+"Parlyz" = { ru = "Паралич", src = "chosen" }
+"Ride" = { ru = "Верхом", src = "chosen" }
+"Zzz" = { ru = "Сон", src = "chosen" }
+"Slime" = { ru = "Ослизнение", src = "chosen" }
+"Slip" = { ru = "Скольжение", src = "chosen" }
+"Stone" = { ru = "Окаменение", src = "chosen" }
+"Strngl" = { ru = "Удушье", src = "chosen" }
+"Stun" = { ru = "Оглушение", src = "chosen" }
+"Submrg" = { ru = "Под водой", src = "chosen" }
+"TermIll" = { ru = "Смертельная болезнь", src = "chosen" }
+"Teth" = { ru = "На привязи", src = "chosen" }
+"Trap" = { ru = "В ловушке", src = "chosen" }
+"Out" = { ru = "Без сознания", src = "chosen" }
+"WLegs" = { ru = "Ранены ноги", src = "chosen" }
+"UHold" = { ru = "Удерживает", src = "chosen" }
+"Satiated" = { ru = "Сытость", src = "chosen", note = "was Сыт; a noun: the hero's gender does not matter" }
+"Hungry" = { ru = "Голод", src = "chosen", note = "was Голоден; a noun" }
+"Weak" = { ru = "Слабость", src = "chosen", note = "was Слаб; a noun" }
+"Fainting" = { ru = "Обморок", src = "chosen", note = "was Падает; a noun" }
+"Fainted" = { ru = "Без чувств", src = "chosen", note = "was Лежит" }
+"Starved" = { ru = "Смерть от голода", src = "chosen", note = "was Умер" }
+"Burdened" = { ru = "Нагрузка", src = "chosen" }
+"Stressed" = { ru = "Перегрузка", src = "chosen" }
+"Strained" = { ru = "Сильная перегрузка", src = "chosen" }
+"Overtaxed" = { ru = "Тяжкая перегрузка", src = "chosen" }
+"Overloaded" = { ru = "Неподъёмный груз", src = "chosen" }
+
+[skill]
+"bare hands" = { ru = "голые руки", src = "nethack-ru" }
+"two weapon combat" = { ru = "бой с двух рук", src = "chosen", note = "was бой двумя оружиями" }
+"riding" = { ru = "верховая езда", src = "chosen", note = "was езда верхом" }
+"polearms" = { ru = "древковое оружие", src = "nethack-ru" }
+"saber" = { ru = "сабля", src = "nethack-ru" }
+"hammer" = { ru = "молот", src = "nethack-ru" }
+"whip" = { ru = "кнут", src = "nethack-ru" }
+"attack spells" = { ru = "боевые заклинания", src = "chosen", note = "was атакующие заклинания" }
+"healing spells" = { ru = "лечебные заклинания", src = "chosen", note = "was целебные заклинания" }
+"divination spells" = { ru = "заклинания прорицания", src = "nethack-ru" }
+"enchantment spells" = { ru = "заклинания очарования", src = "chosen", note = "was чары" }
+"clerical spells" = { ru = "жреческие заклинания", src = "chosen", note = "was священные заклинания" }
+"escape spells" = { ru = "заклинания бегства", src = "chosen", note = "was заклинания спасения" }
+"matter spells" = { ru = "заклинания материи", src = "nethack-ru" }
+"bare handed combat" = { ru = "рукопашный бой", src = "chosen", note = "was бой голыми руками" }
+"martial arts" = { ru = "боевые искусства", src = "nethack-ru" }
+"Restricted" = { ru = "Недоступно", src = "chosen" }
+"Unskilled" = { ru = "Новичок", src = "chosen" }
+"Basic" = { ru = "Основы", src = "chosen" }
+"Skilled" = { ru = "Умелец", src = "chosen" }
+"Expert" = { ru = "Эксперт", src = "chosen" }
+"Master" = { ru = "Мастер", src = "chosen" }
+"Grand Master" = { ru = "Великий мастер", src = "chosen" }
+
+[spell]
+# spells by their spellbook's name
+"dig" = { ru = "копание", src = "nethack-ru" }
+"magic missile" = { ru = "волшебная стрела", src = "chosen", note = "was магическая стрела; the D&D name" }
+"fireball" = { ru = "огненный шар", src = "nethack-ru" }
+"cone of cold" = { ru = "конус холода", src = "nethack-ru" }
+"sleep" = { ru = "сон", src = "nethack-ru" }
+"finger of death" = { ru = "перст смерти", src = "chosen", note = "was палец смерти; the D&D name" }
+"light" = { ru = "свет", src = "nethack-ru" }
+"detect monsters" = { ru = "обнаружение монстров", src = "nethack-ru" }
+"healing" = { ru = "лечение", src = "nethack-ru" }
+"knock" = { ru = "открывание", src = "nethack-ru" }
+"force bolt" = { ru = "силовой удар", src = "chosen", note = "was силовой снаряд" }
+"confuse monster" = { ru = "замешательство", src = "chosen", note = "was замешательство монстра" }
+"cure blindness" = { ru = "лечение слепоты", src = "nethack-ru" }
+"drain life" = { ru = "истощение жизни", src = "nethack-ru" }
+"slow monster" = { ru = "замедление монстра", src = "nethack-ru" }
+"wizard lock" = { ru = "волшебный замок", src = "nethack-ru" }
+"create monster" = { ru = "создание монстра", src = "nethack-ru" }
+"detect food" = { ru = "обнаружение еды", src = "nethack-ru" }
+"cause fear" = { ru = "наведение страха", src = "chosen", note = "was вызов страха" }
+"clairvoyance" = { ru = "ясновидение", src = "nethack-ru" }
+"cure sickness" = { ru = "лечение болезни", src = "nethack-ru" }
+"charm monster" = { ru = "очарование монстра", src = "nethack-ru" }
+"haste self" = { ru = "ускорение", src = "chosen", note = "was ускорение себя" }
+"detect unseen" = { ru = "обнаружение невидимого", src = "nethack-ru" }
+"levitation" = { ru = "левитация", src = "nethack-ru" }
+"extra healing" = { ru = "усиленное лечение", src = "nethack-ru" }
+"restore ability" = { ru = "восстановление характеристик", src = "chosen", note = "was восстановление способности" }
+"invisibility" = { ru = "невидимость", src = "nethack-ru" }
+"detect treasure" = { ru = "обнаружение сокровищ", src = "nethack-ru" }
+"remove curse" = { ru = "снятие проклятия", src = "nethack-ru" }
+"magic mapping" = { ru = "магическое картирование", src = "nethack-ru" }
+"identify" = { ru = "опознание", src = "nethack-ru" }
+"turn undead" = { ru = "изгнание нежити", src = "nethack-ru" }
+"polymorph" = { ru = "превращение", src = "nethack-ru" }
+"teleport away" = { ru = "телепортация прочь", src = "nethack-ru" }
+"create familiar" = { ru = "призыв фамильяра", src = "chosen", note = "was создание фамильяра" }
+"cancellation" = { ru = "отмена", src = "nethack-ru" }
+"protection" = { ru = "защита", src = "nethack-ru" }
+"jumping" = { ru = "прыжки", src = "chosen", note = "was прыжок" }
+"stone to flesh" = { ru = "обращение камня в плоть", src = "chosen", note = "was камень в плоть" }
+"chain lightning" = { ru = "цепная молния", src = "nethack-ru" }
+"attack" = { ru = "атака", src = "chosen", note = "school; healing is the spell's word too" }
+"divination" = { ru = "прорицание", src = "chosen", note = "school" }
+"enchantment" = { ru = "очарование", src = "chosen", note = "school" }
+"clerical" = { ru = "жреческие", src = "chosen", note = "school" }
+"escape" = { ru = "бегство", src = "chosen", note = "school" }
+"matter" = { ru = "материя", src = "chosen", note = "school" }
+
+[shop]
+"general store" = { ru = "универсальный магазин", src = "nethack-ru" }
+"used armor dealership" = { ru = "магазин подержанных доспехов", src = "chosen", note = "was торговля подержанной бронёй" }
+"armor shop" = { ru = "лавка доспехов", src = "chosen", note = "was лавка брони" }
+"second-hand bookstore" = { ru = "букинистическая лавка", src = "chosen", note = "was букинистический магазин" }
+"scroll shop" = { ru = "лавка свитков", src = "nethack-ru" }
+"liquor emporium" = { ru = "винная лавка", src = "nethack-ru" }
+"potion shop" = { ru = "лавка зелий", src = "nethack-ru" }
+"antique weapons outlet" = { ru = "антикварная оружейная лавка", src = "chosen", note = "was антикварная оружейная" }
+"weapon shop" = { ru = "оружейная лавка", src = "chosen", note = "was лавка оружия" }
+"delicatessen" = { ru = "гастроном", src = "chosen", note = "was деликатесы" }
+"food shop" = { ru = "продуктовая лавка", src = "chosen", note = "was лавка еды" }
+"jewelers" = { ru = "ювелирная лавка", src = "nethack-ru" }
+"ring shop" = { ru = "лавка колец", src = "nethack-ru" }
+"quality apparel and accessories" = { ru = "салон одежды и аксессуаров", src = "chosen", note = "was качественная одежда и аксессуары; a shop that sells wands: the joke stays" }
+"wand shop" = { ru = "лавка волшебных палочек", src = "chosen", note = "was лавка жезлов" }
+"hardware store" = { ru = "скобяная лавка", src = "chosen", note = "was скобяной магазин" }
+"tool shop" = { ru = "лавка инструментов", src = "nethack-ru" }
+"rare books" = { ru = "лавка редких книг", src = "chosen", note = "was редкие книги" }
+"bookstore" = { ru = "книжная лавка", src = "chosen", note = "was книжный магазин" }
+"health food store" = { ru = "магазин здорового питания", src = "chosen", note = "was магазин здоровой пищи" }
+"vegetarian food shop" = { ru = "вегетарианская лавка", src = "nethack-ru" }
+"lighting store" = { ru = "магазин светильников", src = "chosen", note = "was магазин освещения" }
+"lighting shop" = { ru = "лавка светильников", src = "nethack-ru" }
+
+
+[part]
+"meat" = { ru = "мясо", src = "chosen", note = "tin of <monster> meat: банка мяса <monster>" }
+"spinach" = { ru = "шпинат", src = "chosen" }
+"soup made from" = { ru = "суп из", src = "chosen", note = "tin of soup made from <monster> meat" }
+"pair" = { ru = "пара", src = "chosen", note = "the unit of boots, gloves, lenses: 2 пары сапог" }
+"set" = { ru = "набор", src = "chosen", note = "the unit of dragon scales" }
+"item" = { ru = "предмет", src = "chosen", note = "containing N items: с N предметами" }
+"candle" = { ru = "свеча", src = "chosen", note = "N of 7 candles" }
+"called" = { ru = "под названием", src = "chosen", note = "potion called X: зелье под названием «X»" }
+"named" = { ru = "по имени", src = "chosen", note = "long sword named X: длинный меч по имени X" }
+"labeled" = { ru = "с надписью", src = "chosen", note = "scroll labeled X: свиток с надписью X" }
+"ghost" = { ru = "привидение", src = "chosen", note = "<Name>'s ghost: привидение <Name>" }
+
+[status]
+"being worn" = { ru = "{надет|надета|надето|надеты}", src = "chosen", note = "{m|f|n|pl}: agrees with the item" }
+"being worn; slippery" = { ru = "{надет|надета|надето|надеты}; скользкие", src = "chosen" }
+"embedded in your skin" = { ru = "{врос|вросла|вросло|вросли} в вашу кожу", src = "chosen" }
+"being doffed" = { ru = "{снимается|снимается|снимается|снимаются}", src = "chosen" }
+"being donned" = { ru = "{надевается|надевается|надевается|надеваются}", src = "chosen" }
+"weapon in {hand}" = { ru = "оружие в {hand:prep}", src = "chosen", note = "hand is the hero's body part (a claw, a tentacle...)" }
+"weapon in {hands}" = { ru = "оружие в {hands:prep}", src = "chosen" }
+"weapon in right {hand}" = { ru = "оружие в {правой:hand} {hand:prep}", src = "chosen", note = "right agrees with the body part" }
+"weapon in left {hand}" = { ru = "оружие в {левой:hand} {hand:prep}", src = "chosen" }
+"wielded in right {hand}" = { ru = "в {правой:hand} {hand:prep}", src = "chosen" }
+"wielded in left {hand}" = { ru = "в {левой:hand} {hand:prep}", src = "chosen" }
+"tethered to {hand}" = { ru = "{привязан|привязана|привязано|привязаны} к {hand:dat}", src = "chosen" }
+"tethered to right {hand}" = { ru = "{привязан|привязана|привязано|привязаны} к {правой:hand} {hand:dat}", src = "chosen" }
+"tethered to left {hand}" = { ru = "{привязан|привязана|привязано|привязаны} к {левой:hand} {hand:dat}", src = "chosen" }
+"tethered to {hands}" = { ru = "{привязан|привязана|привязано|привязаны} к {hands:dat}", src = "chosen" }
+"wielded" = { ru = "в руке", src = "chosen", note = "a wielded non-weapon or a stack of missiles" }
+"alternate weapon; not wielded" = { ru = "запасное оружие; не в руках", src = "chosen" }
+"alternate weapons; not wielded" = { ru = "запасное оружие; не в руках", src = "chosen" }
+"in quiver" = { ru = "в колчане", src = "chosen" }
+"in quiver pouch" = { ru = "в подсумке", src = "chosen" }
+"at the ready" = { ru = "наготове", src = "chosen" }
+"lit" = { ru = "{горит|горит|горит|горят}", src = "chosen" }
+"on right {hand}" = { ru = "на {правой:hand} {hand:prep}", src = "chosen" }
+"on left {hand}" = { ru = "на {левой:hand} {hand:prep}", src = "chosen" }
+"laid by you" = { ru = "снесено вами", src = "chosen", note = "an egg" }
+"chained to you" = { ru = "{прикован|прикована|приковано|прикованы} к вам", src = "chosen" }
+"attached to you" = { ru = "{прикован|прикована|приковано|прикованы} к вам", src = "chosen" }
+"attached to {monster}" = { ru = "{привязан|привязана|привязано|привязаны} к {monster:dat}", src = "chosen", note = "a leash" }
+"{n} of 7 candles attached" = { ru = "свечей: {n} из 7", src = "chosen", note = "the Candelabrum" }
+"{n} of 7 candles, lit" = { ru = "свечей: {n} из 7, горят", src = "chosen" }
+"unpaid, {price}" = { ru = "не оплачено, {price}", src = "chosen" }
+"contents, {price}" = { ru = "содержимое, {price}", src = "chosen" }
+"for sale, {price}" = { ru = "на продажу, {price}", src = "chosen" }
+"no charge" = { ru = "бесплатно", src = "chosen" }
+"male" = { ru = "самец", src = "chosen", note = "wizard mode" }
+"female" = { ru = "самка", src = "chosen", note = "wizard mode" }
+"unspecified gender" = { ru = "пол не указан", src = "chosen", note = "wizard mode" }
+"{n} aum" = { ru = "{n} аум", src = "chosen", note = "wizard mode weight" }
+"radiantly lit" = { ru = "сияет", src = "chosen" }
+"brilliantly lit" = { ru = "ярко светится", src = "chosen" }
+"brightly lit" = { ru = "светится", src = "chosen" }
+"dimly lit" = { ru = "тускло светится", src = "chosen" }
+"strangely lit" = { ru = "странно светится", src = "chosen" }
+"quivering {color}" = { ru = "дрожит {color:ins}", src = "chosen", note = "Sting's warning: дрожит голубым" }
+"flickering {color}" = { ru = "мерцает {color:ins}", src = "chosen" }
+"glimmering {color}" = { ru = "поблёскивает {color:ins}", src = "chosen" }
+"gleaming {color}" = { ru = "сверкает {color:ins}", src = "chosen" }
+"buy" = { ru = "покупка", src = "chosen", note = "price quotes: {buy 10-20 sell 5}" }
+"sell" = { ru = "продажа", src = "chosen" }
+
+[heading]
+"Illegal objects" = { ru = "Странные предметы", src = "chosen" }
+"Weapons" = { ru = "Оружие", src = "chosen" }
+"Armor" = { ru = "Доспехи", src = "chosen" }
+"Rings" = { ru = "Кольца", src = "chosen" }
+"Amulets" = { ru = "Амулеты", src = "chosen" }
+"Tools" = { ru = "Инструменты", src = "chosen" }
+"Comestibles" = { ru = "Еда", src = "chosen" }
+"Potions" = { ru = "Зелья", src = "chosen" }
+"Scrolls" = { ru = "Свитки", src = "chosen" }
+"Spellbooks" = { ru = "Книги заклинаний", src = "chosen" }
+"Wands" = { ru = "Палочки", src = "chosen" }
+"Coins" = { ru = "Монеты", src = "chosen" }
+"Gems/Stones" = { ru = "Самоцветы и камни", src = "chosen" }
+"Boulders/Statues" = { ru = "Валуны и статуи", src = "chosen" }
+"Iron balls" = { ru = "Железные ядра", src = "chosen" }
+"Chains" = { ru = "Цепи", src = "chosen" }
+"Venoms" = { ru = "Яды", src = "chosen" }
+"Bagged/Boxed items" = { ru = "В сумках и ящиках", src = "chosen" }
+
+[gender]
+"male" = { ru = "мужской", src = "chosen" }
+"female" = { ru = "женский", src = "chosen" }
+"neuter" = { ru = "средний", src = "chosen" }
+
+[term]
+"Elbereth" = { ru = "Elbereth", src = "chosen", note = "engraved: stays in Latin, it is game mechanics" }
+"Luck" = { ru = "Удача", src = "chosen", note = "the hidden attribute" }
+"luck" = { ru = "удача", src = "chosen" }
+"zorkmid" = { ru = "зоркмид", src = "chosen", note = "the currency" }
+"Yendor" = { ru = "Йендор", src = "chosen" }
+"Invocation" = { ru = "Призыв", src = "chosen", note = "the ritual" }
+"Riders" = { ru = "Всадники", src = "chosen", note = "Death, Famine, Pestilence" }
+"nemesis" = { ru = "заклятый враг", src = "chosen", note = "the quest nemesis" }
+"artifact" = { ru = "артефакт", src = "chosen" }
+"Excalibur" = { ru = "Экскалибур", src = "chosen", note = "also an artifact" }
+
+[currency]
+"zorkmid" = { ru = "зоркмид", src = "chosen" }
+"Altarian Dollar" = { ru = "альтаирский доллар", src = "chosen", note = "hallucination: The Hitchhiker's Guide" }
+"Ankh-Morpork Dollar" = { ru = "анк-морпоркский доллар", src = "chosen", note = "hallucination: Discworld" }
+"auric" = { ru = "аурик", src = "chosen", note = "hallucination" }
+"buckazoid" = { ru = "баказоид", src = "chosen", note = "hallucination: Space Quest" }
+"cirbozoid" = { ru = "цирбозоид", src = "chosen", note = "hallucination" }
+"credit chit" = { ru = "кредитный чип", src = "chosen", note = "hallucination" }
+"cubit" = { ru = "кубит", src = "chosen", note = "hallucination" }
+"Flanian Pobble Bead" = { ru = "фланианская бусина", src = "chosen", note = "hallucination" }
+"fretzer" = { ru = "фретцер", src = "chosen", note = "hallucination" }
+"imperial credit" = { ru = "имперский кредит", src = "chosen", note = "hallucination" }
+"Hong Kong Luna Dollar" = { ru = "гонконгский лунный доллар", src = "chosen", note = "hallucination" }
+"kongbuck" = { ru = "конгбакс", src = "chosen", note = "hallucination" }
+"nanite" = { ru = "нанит", src = "chosen", note = "hallucination" }
+"quatloo" = { ru = "кватлу", src = "chosen", note = "hallucination" }
+"simoleon" = { ru = "симолеон", src = "chosen", note = "hallucination" }
+"solari" = { ru = "солари", src = "chosen", note = "hallucination", indecl = true, g = "m" }
+"spacebuck" = { ru = "космобакс", src = "chosen", note = "hallucination" }
+"sporebuck" = { ru = "споробакс", src = "chosen", note = "hallucination" }
+"Triganic Pu" = { ru = "триганский пу", src = "chosen", note = "hallucination" }
+"woolong" = { ru = "вулонг", src = "chosen", note = "hallucination" }
+
+[color]
+"black" = { ru = "чёрный", src = "chosen" }
+"red" = { ru = "красный", src = "chosen" }
+"green" = { ru = "зелёный", src = "chosen" }
+"brown" = { ru = "коричневый", src = "chosen" }
+"blue" = { ru = "синий", src = "chosen" }
+"magenta" = { ru = "пурпурный", src = "chosen" }
+"cyan" = { ru = "голубой", src = "chosen" }
+"gray" = { ru = "серый", src = "chosen" }
+"grey" = { ru = "серый", src = "chosen" }
+"transparent" = { ru = "прозрачный", src = "chosen" }
+"orange" = { ru = "оранжевый", src = "chosen" }
+"bright green" = { ru = "ярко-зелёный", src = "chosen" }
+"yellow" = { ru = "жёлтый", src = "chosen" }
+"bright blue" = { ru = "ярко-синий", src = "chosen" }
+"bright magenta" = { ru = "ярко-пурпурный", src = "chosen" }
+"bright cyan" = { ru = "ярко-голубой", src = "chosen" }
+"white" = { ru = "белый", src = "chosen" }
+"light green" = { ru = "светло-зелёный", src = "chosen" }
+"light blue" = { ru = "светло-синий", src = "chosen" }
+"light magenta" = { ru = "светло-пурпурный", src = "chosen" }
+"light cyan" = { ru = "светло-голубой", src = "chosen" }
+"no color" = { ru = "бесцветный", src = "chosen" }
+"purple" = { ru = "лиловый", src = "chosen" }
+"light purple" = { ru = "светло-лиловый", src = "chosen" }
+"bright purple" = { ru = "ярко-лиловый", src = "chosen" }
+"bright red" = { ru = "ярко-красный", src = "chosen" }
+
+[bodypart]
+"hand" = { ru = "рука", src = "chosen" }
+"grasp" = { ru = "ложноножка", src = "chosen", note = "a jelly's hand" }
+"foreclaw" = { ru = "передняя лапа", src = "chosen" }
+"wing" = { ru = "крыло", src = "chosen" }
+"forehoof" = { ru = "переднее копыто", src = "chosen" }
+"tentacle" = { ru = "щупальце", src = "chosen" }
+"strand" = { ru = "нить", src = "chosen", note = "a fungus" }
+"swirl" = { ru = "завихрение", src = "chosen", note = "a vortex" }
+"scale gap" = { ru = "щель в чешуе", src = "chosen", note = "a snake" }
+"segment" = { ru = "сегмент", src = "chosen", note = "a worm" }
+"pedipalp" = { ru = "педипальпа", src = "chosen" }
+"pectoral fin" = { ru = "грудной плавник", src = "chosen" }
+
+[adjective]
+"blessed" = { ru = "благословенный", src = "chosen" }
+"uncursed" = { ru = "непроклятый", src = "chosen" }
+"cursed" = { ru = "проклятый", src = "chosen" }
+"empty" = { ru = "пустой", src = "chosen" }
+"trapped" = { ru = "заминированный", src = "chosen", note = "a box with a trap" }
+"broken" = { ru = "взломанный", src = "chosen", note = "a box whose lock is broken" }
+"locked" = { ru = "запертый", src = "chosen" }
+"unlocked" = { ru = "незапертый", src = "chosen" }
+"greased" = { ru = "смазанный", src = "chosen" }
+"poisoned" = { ru = "отравленный", src = "chosen" }
+"rusty" = { ru = "ржавый", src = "chosen" }
+"very rusty" = { ru = "очень ржавый", src = "chosen" }
+"thoroughly rusty" = { ru = "насквозь ржавый", src = "chosen" }
+"burnt" = { ru = "обгоревший", src = "chosen" }
+"very burnt" = { ru = "сильно обгоревший", src = "chosen" }
+"thoroughly burnt" = { ru = "полностью обгоревший", src = "chosen" }
+"cracked" = { ru = "треснувший", src = "chosen" }
+"very cracked" = { ru = "сильно треснувший", src = "chosen" }
+"thoroughly cracked" = { ru = "совсем растрескавшийся", src = "chosen" }
+"corroded" = { ru = "разъеденный", src = "chosen" }
+"very corroded" = { ru = "сильно разъеденный", src = "chosen" }
+"thoroughly corroded" = { ru = "насквозь разъеденный", src = "chosen" }
+"rotted" = { ru = "подгнивший", src = "chosen" }
+"very rotted" = { ru = "сильно подгнивший", src = "chosen" }
+"thoroughly rotted" = { ru = "насквозь прогнивший", src = "chosen" }
+"fixed" = { ru = "стабилизированный", src = "chosen", note = "a crysknife that will not revert" }
+"rustproof" = { ru = "нержавеющий", src = "chosen" }
+"corrodeproof" = { ru = "антикоррозийный", src = "chosen" }
+"fireproof" = { ru = "огнеупорный", src = "chosen" }
+"tempered" = { ru = "закалённый", src = "chosen" }
+"rotproof" = { ru = "негниющий", src = "chosen" }
+"partly used" = { ru = "оплывший", src = "chosen", note = "only candles are partly used" }
+"partly eaten" = { ru = "надкусанный", src = "chosen" }
+"diluted" = { ru = "разбавленный", src = "chosen" }
+"moist" = { ru = "влажный", src = "chosen" }
+"wet" = { ru = "мокрый", src = "chosen" }
+"historic" = { ru = "исторический", src = "chosen" }
+"next" = { ru = "следующий", src = "chosen", note = "the next boulder" }
+"small" = { ru = "маленький", src = "chosen" }
+"medium" = { ru = "средний", src = "chosen" }
+"large" = { ru = "большой", src = "chosen" }
+"very large" = { ru = "очень большой", src = "chosen" }
+"rotten" = { ru = "тухлый", src = "chosen", note = "tin" }
+"homemade" = { ru = "домашний", src = "chosen", note = "tin" }
+"french fried" = { ru = "жаренный по-французски", src = "chosen", note = "tin" }
+"pickled" = { ru = "маринованный", src = "chosen", note = "tin" }
+"boiled" = { ru = "варёный", src = "chosen", note = "tin" }
+"smoked" = { ru = "копчёный", src = "chosen", note = "tin" }
+"dried" = { ru = "сушёный", src = "chosen", note = "tin" }
+"deep fried" = { ru = "жаренный во фритюре", src = "chosen", note = "tin" }
+"szechuan" = { ru = "сычуаньский", src = "chosen", note = "tin" }
+"broiled" = { ru = "печёный", src = "chosen", note = "tin" }
+"stir fried" = { ru = "жаренный в воке", src = "chosen", note = "tin" }
+"sauteed" = { ru = "тушёный", src = "chosen", note = "tin" }
+"candied" = { ru = "засахаренный", src = "chosen", note = "tin" }
+"pureed" = { ru = "протёртый", src = "chosen", note = "tin" }
+"invisible" = { ru = "невидимый", src = "chosen" }
+"saddled" = { ru = "осёдланный", src = "chosen" }
+"tame" = { ru = "ручной", src = "chosen" }
+"peaceful" = { ru = "мирный", src = "chosen" }
+"poor" = { ru = "бедный", src = "chosen" }
+"angry" = { ru = "разгневанный", src = "chosen" }
+"falling" = { ru = "падающий", src = "chosen" }
+"sleeping" = { ru = "спящий", src = "chosen" }
+"bite-covered" = { ru = "искусанный", src = "chosen" }
+"plain" = { ru = "обычный", src = "chosen" }
+"immobile" = { ru = "неподвижный", src = "chosen" }
+"blinded" = { ru = "ослеплённый", src = "chosen" }
+"blind" = { ru = "слепой", src = "chosen" }
+"beautiful" = { ru = "прекрасный", src = "chosen" }
+"renegade" = { ru = "мятежный", src = "chosen", note = "a renegade priest or Angel" }
+"high" = { ru = "верховный", src = "chosen", note = "high priest" }
+"grand" = { ru = "большой", src = "chosen", note = "the grand poohbah: большая шишка" }
+"your" = { ru = "ваш", src = "chosen", note = "possessive; agrees with the name" }
+"human" = { ru = "человеческий", src = "chosen", note = "the race adjective (role.c races[].adj)" }
+"right" = { ru = "правый", src = "chosen" }
+"left" = { ru = "левый", src = "chosen" }

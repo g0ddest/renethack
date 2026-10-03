@@ -233,3 +233,4 @@ Script steps are documented on `nh_link::parse_script`.
 NetHack General Public License (see `engine/upstream/dat/license`).
 cJSON: MIT (`engine/host/third_party/cjson/LICENSE`).
 Art: CC0; fonts: SIL OFL 1.1 (`client/godot/art/CREDITS.md`).
+The Russian names: sources and credits in `client/i18n/CREDITS.md`.
