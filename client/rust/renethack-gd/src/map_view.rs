@@ -154,6 +154,9 @@ const SHADE_LIT: u8 = 92;
 const SHADE_STAIRS: u8 = 75;
 /// The bedrock under and around the level, and the rock mass.
 const SHADE_BEDROCK: u8 = 100;
+/// The art gallery's ambient light, and how much its fills are raised.
+const GALLERY_AMBIENT: f32 = 0.4;
+const GALLERY_FILL: f32 = 2.5;
 const SHADE_ROCK: u8 = 70;
 /// Stones at the foot of a wall: of the rock, darker still.
 const SHADE_RUBBLE: u8 = 55;
@@ -1596,12 +1599,14 @@ fn trap_look(look: &mut Look, sym: &str, color: Color, ctx: &Ctx) {
                 let x = -0.15 + 0.1 * i as f32;
                 flat(look, cuboid(0.04, 0.012, 0.4), hole, at(x, 0.031, 0.0), 0.0);
             }
+            // a centimetre thick: a mesh of whole centimetres rounds a
+            // thinner one to nothing, and Godot cannot light that
             let stain = Paint::Flat(darker(color, 0.6).with_alpha(0.5), Finish::Ghost);
             flat(
                 look,
-                cylinder(0.4, 0.4, 0.004),
+                cylinder(0.4, 0.4, 0.01),
                 stain,
-                at(0.0, 0.003, 0.0),
+                at(0.0, 0.005, 0.0),
                 0.0,
             );
         }
@@ -2205,6 +2210,9 @@ pub struct MapView {
     /// compiled ahead), until it is over; and whether the map is shown.
     rehearsal: Option<crate::rehearsal::Rehearsal>,
     rehearsed: bool,
+    /// The art gallery's light, and whether it is on.
+    studio: Gd<DirectionalLight3D>,
+    showcase: bool,
     shown: bool,
     /// The lit areas changed: place the fill lights again.
     lights_dirty: bool,
@@ -2468,6 +2476,14 @@ impl MapView {
         back.set_param(Param::ENERGY, 0.07);
         back.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
         root.add_child(&back);
+        // the art gallery's own light (for review, never in a game)
+        let mut studio = DirectionalLight3D::new_alloc();
+        studio.set_rotation_degrees(Vector3::new(-50.0, -30.0, 0.0));
+        studio.set_color(Color::from_rgb(1.0, 0.95, 0.88));
+        studio.set_param(Param::ENERGY, 0.9);
+        studio.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
+        studio.set_visible(false);
+        root.add_child(&studio);
 
         let mut camera = Camera3D::new_alloc();
         camera.set_fov(FOV_DEG);
@@ -2666,6 +2682,8 @@ impl MapView {
             preload_told: false,
             rehearsal: None,
             rehearsed: false,
+            studio,
+            showcase: false,
             shown: false,
             lights_dirty: false,
             bedrock,
@@ -3058,7 +3076,11 @@ impl MapView {
         env.set_bg_color(l.darkness);
         env.set_fog_light_color(l.darkness);
         env.set_ambient_light_color(l.ambient);
-        env.set_ambient_light_energy(l.ambient_energy);
+        env.set_ambient_light_energy(if self.showcase {
+            GALLERY_AMBIENT
+        } else {
+            l.ambient_energy
+        });
         env.set_volumetric_fog_albedo(l.fog);
         env.set_volumetric_fog_density(l.fog_density);
         let g = l.grade;
@@ -3181,7 +3203,11 @@ impl MapView {
             used += 1;
             l.set_position(Vector3::new(cx, 2.6, cy));
             l.set_param(Param::RANGE, reach);
-            l.set_param(Param::ENERGY, energy * self.branch_look.fill_scale);
+            let showcase = if self.showcase { GALLERY_FILL } else { 1.0 };
+            l.set_param(
+                Param::ENERGY,
+                energy * self.branch_look.fill_scale * showcase,
+            );
             l.set_color(self.branch_look.fill);
             l.set_visible(true);
         }
@@ -3676,8 +3702,9 @@ impl MapView {
 
     /// Forget every cell (a new game).
     pub fn clear(&mut self) {
-        // a game starts: the rehearsal is over
+        // a game starts: the rehearsal is over, the gallery's light off
         self.rehearsal = None;
+        self.set_showcase(false);
         self.building.clear();
         self.finish_motions();
         self.facing.clear();
@@ -3874,6 +3901,22 @@ impl MapView {
     pub fn hero_model(&self) -> Option<&Model> {
         let nodes = self.cells.get(&self.hero_at?)?;
         nodes.look.entity.and_then(|i| nodes.models.get(i))
+    }
+
+    /// The art gallery's lighting (for review): a key light over the
+    /// hall, the fills and the ambient raised. A new game ends it.
+    pub fn set_showcase(&mut self, on: bool) {
+        if self.showcase == on {
+            return;
+        }
+        self.showcase = on;
+        self.studio.set_visible(on);
+        self.env.set_ambient_light_energy(if on {
+            GALLERY_AMBIENT
+        } else {
+            self.branch_look.ambient_energy
+        });
+        self.lights_dirty = true;
     }
 
     pub fn set_visible(&mut self, on: bool) {

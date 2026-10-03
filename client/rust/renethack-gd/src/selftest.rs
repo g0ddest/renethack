@@ -1579,6 +1579,7 @@ fn orders() -> Vec<Step> {
 fn show_page(g: &mut RenethackGame, page: usize) -> Result<(), String> {
     let cat = g.catalog.clone().ok_or("no catalog")?;
     crate::gallery::lay_out(&mut g.world, &cat, page)?;
+    g.ui.as_mut().ok_or("no UI")?.map.set_showcase(true);
     Ok(())
 }
 
