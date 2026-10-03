@@ -320,7 +320,8 @@ def level_texts(path):
                     kinds += k
                 else:
                     fmt.append(escape(lit))
-            yield "".join(fmt), use, f"dat/{name}:{t.line} {call}", kinds
+            # a window's text: the blank lines around it are not shown
+            yield "".join(fmt).strip("\n"), use, f"dat/{name}:{t.line} {call}", kinds
 
 
 def lua_args(toks, open_i):

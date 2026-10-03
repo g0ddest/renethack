@@ -359,9 +359,10 @@ def destination(toks):
 
 
 class Op:
-    """A write to a local buffer."""
+    """A write to a local buffer; `transform` is a change in place
+    (mungspaces, the first letter's case) instead of a text written."""
 
-    def __init__(self, index, append, text, args, printf, line, call):
+    def __init__(self, index, append, text, args, printf, line, call, transform=None):
         self.index = index
         self.append = append
         self.text = text
@@ -369,6 +370,23 @@ class Op:
         self.printf = printf
         self.line = line
         self.call = call
+        self.transform = transform
+
+
+def squeeze(fmt):
+    return re.sub(r" {2,}", " ", fmt).strip(" ")
+
+
+def lower_first(fmt):
+    return fmt[:1].lower() + fmt[1:] if fmt[:1].isalpha() else fmt
+
+
+def upper_first(fmt):
+    return fmt[:1].upper() + fmt[1:] if fmt[:1].isalpha() else fmt
+
+
+# in-place changes of a buffer: name(buf); as a statement
+TRANSFORMS = {"mungspaces": squeeze, "trimspaces": squeeze, "upstart": upper_first}
 
 
 class Globals:
@@ -573,6 +591,19 @@ class Context:
                         self.arrays[toks[k - 1].text] = values
                 i = close + 1
                 continue
+            if (t.kind == "ident" and t.text in TRANSFORMS and toks[i + 1].text == "("
+                    and toks[i + 2].kind == "ident" and toks[i + 3].text == ")"
+                    and toks[i - 1].text in (";", "{", "}", ")") and toks[i + 4].text == ";"):
+                # mungspaces(buf); (or after a (void) cast)
+                self.ops.setdefault(toks[i + 2].text, []).append(
+                    Op(i, True, [], [], False, t.line, t.text, TRANSFORMS[t.text]))
+            if (t.text == "*" and toks[i + 1].kind == "ident" and toks[i + 2].text == "="
+                    and toks[i + 3].text in ("lowc", "highc") and toks[i + 4].text == "("
+                    and toks[i + 5].text == "*" and toks[i + 6].text == toks[i + 1].text):
+                # *buf = lowc(*buf): the first letter's case
+                fn = lower_first if toks[i + 3].text == "lowc" else upper_first
+                self.ops.setdefault(toks[i + 1].text, []).append(
+                    Op(i, True, [], [], False, t.line, toks[i + 3].text, fn))
             if (t.kind == "ident" and toks[i + 1].text == "[" and toks[i + 2].text == "0"
                     and toks[i + 3].text == "]" and toks[i + 4].text == "="
                     and toks[i + 5].text in ("'\\0'", "0") and toks[i - 1].text not in (".", "->")):
@@ -875,6 +906,8 @@ class Context:
 
     def op_pieces(self, op, depth):
         """What one buffer operation writes."""
+        if op.transform:
+            return []
         if op.printf:
             fmts = self.values(op.text)
             if fmts is None:
@@ -899,15 +932,24 @@ class Context:
         if not any(not op.append for op in ops) and since >= 0:
             # appended (or not) to what it held at its last use
             before = self.compositions(name, since, depth)
-            tails = [t for t in (self.op_pieces(a, depth) for a in ops) if t]
-            return with_tails(before, tails)
+            tails = [t for t in (self.op_pieces(a, depth) for a in ops if not a.transform) if t]
+            built = with_tails(before, tails)
+            for a in ops:
+                if a.transform:
+                    built = [(a.transform(f), kinds) for f, kinds in built]
+            return built
         out = []
         for k, op in enumerate(ops):
             if op.append:
                 continue
             heads = self.op_pieces(op, depth)
-            tails = [t for t in (self.op_pieces(a, depth) for a in ops[k + 1:] if a.append) if t]
-            out += with_tails(heads, tails)
+            later = [a for a in ops[k + 1:] if a.append]
+            tails = [t for t in (self.op_pieces(a, depth) for a in later if not a.transform) if t]
+            built = with_tails(heads, tails)
+            for a in later:
+                if a.transform:
+                    built = [(a.transform(f), kinds) for f, kinds in built]
+            out += built
         return dedupe(out)[:MAX_DERIVED]
 
     def formats(self, toks, pos):
@@ -1118,16 +1160,15 @@ def add_text(cat, ctx, use, arg, pos, site):
 
 def add_enlightenment(cat, ctx, name, args, pos, site):
     """you_are(attr, ps) and its kin: " You are <attr><ps>." while the game
-    goes on, " You were <attr><ps>." at its end."""
+    goes on, " You were <attr><ps>." at its end; enl_msg(prefix, present,
+    past, suffix, ps) the same with its own words."""
+    lit = lambda text: [(escape(text), [])]  # noqa: E731
     if name == "enl_msg":
         if len(args) != 5:
             return
-        prefix = ctx.values(args[0])
-        verbs = [ctx.values(args[1]), ctx.values(args[2])]
+        prefixes = ctx.pieces(args[0], pos, 0)
+        verbs = ctx.pieces(args[1], pos, 0) + ctx.pieces(args[2], pos, 0)
         attr, ps = args[3], args[4]
-        if prefix is None or None in verbs:
-            return
-        forms = [(p, v) for p in prefix for vs in verbs for v in vs]
     else:
         spec = ENL[name]
         if name in ("you_have_been", "you_have_never", "you_have_X"):
@@ -1138,28 +1179,19 @@ def add_enlightenment(cat, ctx, name, args, pos, site):
             if len(args) != 2:
                 return
             attr, ps = args
-        forms = [(spec[0], spec[1]), (spec[0], spec[2])]
-    attrs = enl_pieces(ctx, attr, pos)
-    pss = enl_pieces(ctx, ps, pos) if ps is not None else [("", [])]
-    for p, v in forms:
-        for a, akinds in attrs:
-            for s, skinds in pss:
-                fmt = " " + escape(p) + escape(v) + a + s + "."
-                for twowords, short in ENL_CONTRACTIONS:
-                    fmt = fmt.replace(twowords, short)
-                cat.add(fmt, "window", site, akinds + skinds)
-
-
-def enl_pieces(ctx, toks, pos):
-    v = ctx.values(toks)
-    if v is not None:
-        return [(escape(x), []) for x in v]
-    t = strip_expr(toks)
-    if len(t) == 1 and t[0].kind == "ident" and t[0].text in ctx.ops:
-        built = ctx.compositions(t[0].text, pos, 1)
-        if built:
-            return built
-    return [("%s", [ctx.kind(toks)])]
+        prefixes = lit(spec[0])
+        verbs = lit(spec[1]) + lit(spec[2])
+    parts = [prefixes, dedupe(verbs), ctx.pieces(attr, pos, 0),
+             ctx.pieces(ps, pos, 0) if ps is not None else lit("")]
+    # (the present and the past double every line)
+    while product_size(parts) > 2 * MAX_DERIVED:
+        k = max(range(len(parts)), key=lambda i: len(parts[i]))
+        parts[k] = [("%s", ["text"])]
+    for combo in itertools.product(*parts):
+        fmt = " " + "".join(p for p, _ in combo) + "."
+        for twowords, short in ENL_CONTRACTIONS:
+            fmt = fmt.replace(twowords, short)
+        cat.add(fmt, "window", site, [k for _, ks in combo for k in ks])
 
 
 # ------------------------------------------------------------ the run
