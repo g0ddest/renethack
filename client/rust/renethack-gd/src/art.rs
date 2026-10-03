@@ -155,6 +155,7 @@ fn transform(pos: [f32; 3], rot: [f32; 3], scale: [f32; 3]) -> Transform3D {
 }
 
 /// Something to load before it is first needed.
+#[derive(Clone)]
 enum Preload {
     Texture(String),
     Library(String, bool),
@@ -163,6 +164,8 @@ enum Preload {
     Head(String, Region),
     /// A scene's meshes shaded smooth.
     Smooth(usize),
+    /// A model worn on another's bones, built once (its meshes are made).
+    Prop(usize),
     /// An instance built once and pooled: its meshes, materials and
     /// shaders are ready before the look is first seen.
     Warm(ModelLook),
@@ -170,6 +173,8 @@ enum Preload {
 
 /// Time per frame the preloading may take.
 const PRELOAD_BUDGET: std::time::Duration = std::time::Duration::from_millis(6);
+/// Animations stripped of their root motion in one step.
+const STRIP_STEP: usize = 4;
 
 /// A material key: (manifest material, brightness %, world UVs, tint).
 type SurfaceKey = (usize, u8, bool, u32);
@@ -191,6 +196,9 @@ pub struct Art {
     smoothed: HashMap<i64, Gd<Mesh>>,
     /// The meshes (and their skins) of each base head, built once.
     heads: HashMap<String, Option<HeadParts>>,
+    /// The base characters' bodies cut to a region, by (base, region, cut
+    /// in mm).
+    bodies: HashMap<(String, u8, i32), CutBody>,
     pool: HashMap<PoolKey, Vec<Model>>,
     warned: HashSet<String>,
     /// Instances handed out and not given back.
@@ -200,6 +208,15 @@ pub struct Art {
     phase: u32,
     /// What is still to load ahead of need, last first.
     preload: Vec<Preload>,
+    /// The files the preloading needs were asked of the loader's threads.
+    requested: bool,
+    /// Files being read on worker threads (`res://` paths), and the ones
+    /// read, held so that a load of them is the cached resource.
+    loading: Vec<String>,
+    loaded: HashMap<String, Gd<godot::classes::Resource>>,
+    /// A library being stripped of its root motion over several steps:
+    /// its name, the source, what is stripped so far, the next animation.
+    stripping: Option<(String, Gd<AnimationLibrary>, Gd<AnimationLibrary>, usize)>,
     /// Looks built at least once (later instances are cheap).
     warmed: HashSet<PoolKey>,
     /// The hero's model given back with their gear on (a level change):
@@ -248,12 +265,17 @@ impl Art {
             proc_clips: None,
             smoothed: HashMap::new(),
             heads: HashMap::new(),
+            bodies: HashMap::new(),
             pool: HashMap::new(),
             warned: HashSet::new(),
             live: 0,
             built: 0,
             phase: 0,
             preload: Vec::new(),
+            requested: false,
+            loading: Vec::new(),
+            loaded: HashMap::new(),
+            stripping: None,
             warmed: HashSet::new(),
             kept: None,
             spent: None,
@@ -332,6 +354,12 @@ impl Art {
                         .clone()
                         .map(|a| Preload::Head(a, Region::bare(spec))),
                 );
+                q.extend(
+                    spec.extras
+                        .iter()
+                        .filter_map(|e| self.manifest.model_index(&e.model))
+                        .map(Preload::Prop),
+                );
             }
             q.push(Preload::Warm(*look));
         }
@@ -348,43 +376,224 @@ impl Art {
         self.preload.is_empty()
     }
 
-    /// Load ahead for a few milliseconds; false when all is loaded.
+    /// Load ahead for a few milliseconds; false when all is loaded. The
+    /// files are read on the loader's threads (an item waits for its
+    /// own); what is left for the main thread comes in steps of a few
+    /// milliseconds.
     pub fn preload_step(&mut self) -> bool {
         let start = std::time::Instant::now();
-        while start.elapsed() < PRELOAD_BUDGET {
-            match self.preload.pop() {
-                Some(Preload::Texture(t)) => {
-                    self.texture(&t);
-                }
-                Some(Preload::Library(name, strip)) => {
-                    self.library(&name, strip);
-                }
-                Some(Preload::Scene(i)) => {
-                    self.scene(i);
-                }
-                Some(Preload::Head(kind, region)) => {
-                    self.head_parts(&kind, region);
-                }
-                Some(Preload::Smooth(i)) => {
-                    if let Some(scene) = self.scene(i) {
-                        let mut inner = scene.instantiate_as::<Node3D>();
-                        self.smooth(&inner);
-                        inner.queue_free();
-                    }
-                }
-                Some(Preload::Warm(look)) => {
-                    if !self.warmed.contains(&PoolKey::of(&look)) {
-                        // never a stand-in
-                        let spent = self.spent.take();
-                        let m = self.take(&look);
-                        self.give(m);
-                        self.spent = spent;
-                    }
-                }
-                None => return false,
+        if !self.requested {
+            self.requested = true;
+            let files: Vec<String> = self
+                .preload
+                .iter()
+                .rev()
+                .flat_map(|p| self.files_of(p))
+                .collect();
+            for f in files {
+                self.request(f);
             }
         }
+        self.collect_loads();
+        // a step is not begun that would end past the budget at the pace
+        // of the last one
+        let mut last = std::time::Duration::ZERO;
+        while start.elapsed() + last < PRELOAD_BUDGET {
+            let Some(next) = self.preload.last().cloned() else {
+                self.loaded.clear();
+                return false;
+            };
+            let mut waiting = false;
+            for f in self.files_of(&next) {
+                waiting |= self.request(f);
+            }
+            if waiting {
+                return true;
+            }
+            let began = std::time::Instant::now();
+            self.preload_item(next);
+            last = began.elapsed();
+        }
         true
+    }
+
+    /// Do (a step of) the next item; it leaves the queue once done.
+    fn preload_item(&mut self, item: Preload) {
+        match item {
+            Preload::Texture(t) => {
+                self.texture(&t);
+            }
+            Preload::Library(name, true) if !self.libraries.contains_key(&(name.clone(), true)) => {
+                if !self.strip_step(&name) {
+                    return;
+                }
+            }
+            Preload::Library(name, strip) => {
+                self.library(&name, strip);
+            }
+            Preload::Scene(i) => {
+                self.scene(i);
+            }
+            Preload::Head(kind, region) => {
+                self.head_parts(&kind, region);
+            }
+            Preload::Smooth(i) => {
+                if let Some(scene) = self.scene(i) {
+                    let mut inner = scene.instantiate_as::<Node3D>();
+                    self.smooth(&inner);
+                    inner.queue_free();
+                }
+            }
+            Preload::Prop(i) => {
+                if let Some(mut prop) = self.prop(i, Color::WHITE, false) {
+                    prop.queue_free();
+                }
+            }
+            Preload::Warm(look) => {
+                if !self.warmed.contains(&PoolKey::of(&look)) {
+                    // never a stand-in
+                    let spent = self.spent.take();
+                    let m = self.take(&look);
+                    self.give(m);
+                    self.spent = spent;
+                }
+            }
+        }
+        self.preload.pop();
+    }
+
+    /// The files an item reads (`res://` paths).
+    fn files_of(&self, item: &Preload) -> Vec<String> {
+        let full = |p: &str| format!("{ART_ROOT}{p}");
+        let scene = |i: usize| self.manifest.model_at(i).1.scene.as_deref().map(full);
+        let library = |n: &str| self.manifest.library(n).map(&full);
+        let head = |kind: &str, region: Region| -> Vec<String> {
+            let Some(h) = self.manifest.head(kind) else {
+                return Vec::new();
+            };
+            let hair = h.hair.iter().filter(|_| region == Region::Head);
+            std::iter::once(&h.base)
+                .chain(hair)
+                .chain(&h.skin)
+                .map(|p| full(p))
+                .collect()
+        };
+        match item {
+            Preload::Texture(t) => vec![full(t)],
+            Preload::Library(n, _) => library(n).into_iter().collect(),
+            Preload::Scene(i) | Preload::Smooth(i) | Preload::Prop(i) => {
+                scene(*i).into_iter().collect()
+            }
+            Preload::Head(kind, region) => head(kind, *region),
+            Preload::Warm(look) => {
+                let spec = self.manifest.model_at(look.art.model).1;
+                let mut out: Vec<String> = scene(look.art.model).into_iter().collect();
+                out.extend(
+                    spec.rig
+                        .iter()
+                        .chain(&spec.extra_rigs)
+                        .filter_map(|r| library(r)),
+                );
+                out.extend(spec.head.iter().flat_map(|h| head(h, Region::Head)));
+                out.extend(
+                    spec.bare_arms
+                        .iter()
+                        .flat_map(|h| head(h, Region::bare(spec))),
+                );
+                out.extend(
+                    spec.extras
+                        .iter()
+                        .filter_map(|e| self.manifest.model_index(&e.model))
+                        .filter_map(scene),
+                );
+                out
+            }
+        }
+    }
+
+    /// Ask the loader's threads for a file not read yet; true while it is
+    /// being read.
+    fn request(&mut self, path: String) -> bool {
+        if self.loaded.contains_key(&path) {
+            return false;
+        }
+        if self.loading.contains(&path) {
+            return true;
+        }
+        let mut loader = ResourceLoader::singleton();
+        // a missing file is reported where it is used (the threaded calls
+        // are not in the bindings: called by name)
+        if !loader.exists(&path)
+            || loader
+                .call("load_threaded_request", &[path.to_variant()])
+                .try_to::<i64>()
+                .ok()
+                != Some(0)
+        {
+            return false;
+        }
+        self.loading.push(path);
+        true
+    }
+
+    /// Take the files the loader's threads have read.
+    fn collect_loads(&mut self) {
+        // ResourceLoader.ThreadLoadStatus
+        const IN_PROGRESS: i64 = 1;
+        const LOADED: i64 = 3;
+        let mut loader = ResourceLoader::singleton();
+        for path in std::mem::take(&mut self.loading) {
+            let arg = [path.to_variant()];
+            match loader
+                .call("load_threaded_get_status", &arg)
+                .try_to::<i64>()
+            {
+                Ok(IN_PROGRESS) => self.loading.push(path),
+                Ok(LOADED) => {
+                    let r = loader.call("load_threaded_get", &arg);
+                    if let Ok(r) = r.try_to::<Gd<godot::classes::Resource>>() {
+                        self.loaded.insert(path, r);
+                    }
+                }
+                // a failed one is reported where it is used
+                _ => {}
+            }
+        }
+    }
+
+    /// Strip a few more of a library's animations of their root motion;
+    /// true once the library is done.
+    fn strip_step(&mut self, name: &str) -> bool {
+        let (src, out, next) = match self.stripping.take() {
+            Some((n, src, out, next)) if n == name => (src, out, next),
+            // the source first, its animations in the steps after
+            _ => match self.library(name, false) {
+                Some(src) => {
+                    let out = AnimationLibrary::new_gd();
+                    self.stripping = Some((name.to_string(), src, out, 0));
+                    return false;
+                }
+                None => {
+                    self.libraries.insert((name.to_string(), true), None);
+                    return true;
+                }
+            },
+        };
+        let mut out = out;
+        let names = src.get_animation_list();
+        let end = (next + STRIP_STEP).min(names.len());
+        for i in next..end {
+            if let Some(a) = names.get(i) {
+                strip_into(&mut out, &src, &a);
+            }
+        }
+        if end >= names.len() {
+            self.libraries.insert((name.to_string(), true), Some(out));
+            true
+        } else {
+            self.stripping = Some((name.to_string(), src, out, end));
+            false
+        }
     }
 
     pub fn manifest(&self) -> &ArtManifest {
@@ -759,10 +968,13 @@ impl Art {
             self.manifest.library(name).and_then(|path| {
                 let scene =
                     godot::tools::try_load::<PackedScene>(&format!("{ART_ROOT}{path}")).ok()?;
-                let mut inst = scene.instantiate()?;
-                let lib = find::<AnimationPlayer>(&inst).and_then(|p| p.get_animation_library(""));
-                inst.queue_free();
-                lib
+                library_in(&scene).or_else(|| {
+                    let mut inst = scene.instantiate()?;
+                    let lib =
+                        find::<AnimationPlayer>(&inst).and_then(|p| p.get_animation_library(""));
+                    inst.queue_free();
+                    lib
+                })
             })
         };
         if lib.is_none() {
@@ -1027,10 +1239,15 @@ impl Art {
         let Some(parts) = self.head_parts(kind, region) else {
             return false;
         };
-        for (i, (mesh, skin)) in parts.iter().enumerate() {
+        for (i, (mesh, skin, materials)) in parts.iter().enumerate() {
             let mut mi = MeshInstance3D::new_alloc();
             mi.set_name(&format!("BaseHead{i}"));
             mi.set_mesh(mesh);
+            for (s, m) in materials.iter().enumerate() {
+                if let Some(m) = m {
+                    mi.set_surface_override_material(s as i32, m);
+                }
+            }
             if let Some(skin) = skin {
                 mi.set_skin(skin);
             }
@@ -1087,23 +1304,25 @@ impl Art {
                 let Some(mesh) = mi.get_mesh().and_then(|m| m.try_cast::<ArrayMesh>().ok()) else {
                     continue;
                 };
-                // a material set on the instance (not the mesh) goes with
-                // the mesh, or the copy would wear the default one
-                let mesh = with_active_materials(&mi, mesh);
+                // a material set on the instance (not the mesh) is worn too
+                let worn: Vec<Option<Gd<Material>>> = (0..mesh.get_surface_count())
+                    .map(|i| mi.get_active_material(i))
+                    .collect();
                 // the body's own mesh is the tall one; the eyes and the
                 // eyebrows come whole
                 let body = base && mesh.get_aabb().size.y > 0.5;
                 if region != Region::Head && !body {
                     continue;
                 }
-                let mesh = match (body, region) {
-                    (true, Region::Head) => cut(&mesh, |v| v.y >= spec.cut),
-                    // in the rest pose the arms reach out sideways from
-                    // the shoulders
-                    (true, Region::Arms) => cut(&mesh, |v| v.x.abs() > 0.2 && v.y > 1.2),
-                    // from the waist (under the trousers' top) to the neck
-                    (true, Region::Torso) => cut(&mesh, |v| v.y > 1.06 && v.y < spec.cut + 0.03),
-                    _ => mesh,
+                let (mesh, worn) = if body {
+                    let (cut, kept) = self.body_cut(&path, region, spec.cut, &mesh);
+                    let worn = kept
+                        .iter()
+                        .map(|&i| worn.get(i).cloned().flatten())
+                        .collect();
+                    (cut, worn)
+                } else {
+                    (mesh, worn)
                 };
                 // the base's own eyebrows take the hair's colour; its eyes
                 // keep theirs
@@ -1115,12 +1334,32 @@ impl Art {
                     (false, false) => hair_tint,
                 };
                 let texture = if body { skin_tex.clone() } else { None };
-                let mesh = recolour(&mesh, colour, texture);
-                out.push((mesh.upcast::<Mesh>(), mi.get_skin()));
+                let materials = recoloured(&worn, colour, texture);
+                out.push((mesh.upcast::<Mesh>(), mi.get_skin(), materials));
             }
             inst.queue_free();
         }
         (!out.is_empty()).then_some(out)
+    }
+
+    /// A base character's body cut to `region` (whole triangles; the skin
+    /// weights stay), once per base and region: the mesh, and the source
+    /// surfaces it keeps.
+    fn body_cut(&mut self, base: &str, region: Region, at: f32, mesh: &Gd<ArrayMesh>) -> CutBody {
+        let key = (base.to_string(), region as u8, (at * 1000.0).round() as i32);
+        if let Some(c) = self.bodies.get(&key) {
+            return c.clone();
+        }
+        let c = match region {
+            Region::Head => cut(mesh, |v| v.y >= at),
+            // in the rest pose the arms reach out sideways from the
+            // shoulders
+            Region::Arms => cut(mesh, |v| v.x.abs() > 0.2 && v.y > 1.2),
+            // from the waist (under the trousers' top) to the neck
+            Region::Torso => cut(mesh, |v| v.y > 1.06 && v.y < at + 0.03),
+        };
+        self.bodies.insert(key, c.clone());
+        c
     }
 
     /// The things the model's spec wears on its bones (`extras`).
@@ -1362,18 +1601,37 @@ fn find<T: GodotClass + Inherits<Node>>(root: &Gd<Node>) -> Option<Gd<T>> {
 fn stripped(lib: &Gd<AnimationLibrary>) -> Gd<AnimationLibrary> {
     let mut out = AnimationLibrary::new_gd();
     for name in lib.get_animation_list().iter_shared() {
-        let Some(anim) = lib.get_animation(&name) else {
-            continue;
-        };
-        let mut copy = anim.duplicate_resource();
-        for t in (0..copy.get_track_count()).rev() {
-            if copy.track_get_type(t) == TrackType::POSITION_3D {
-                copy.remove_track(t);
-            }
-        }
-        let _ = out.add_animation(&name, &copy);
+        strip_into(&mut out, lib, &name);
     }
     out
+}
+
+/// A copy of `lib`'s animation `name` without its position tracks, into
+/// `out`.
+fn strip_into(out: &mut Gd<AnimationLibrary>, lib: &Gd<AnimationLibrary>, name: &StringName) {
+    let Some(anim) = lib.get_animation(name) else {
+        return;
+    };
+    let mut copy = anim.duplicate_resource();
+    for t in (0..copy.get_track_count()).rev() {
+        if copy.track_get_type(t) == TrackType::POSITION_3D {
+            copy.remove_track(t);
+        }
+    }
+    let _ = out.add_animation(name, &copy);
+}
+
+/// The animation library of a scene's AnimationPlayer, read from the
+/// packed scene without making its nodes.
+fn library_in(scene: &Gd<PackedScene>) -> Option<Gd<AnimationLibrary>> {
+    let state = scene.get_state()?;
+    (0..state.get_node_count())
+        .filter(|&n| state.get_node_type(n) == "AnimationPlayer")
+        .find_map(|n| {
+            (0..state.get_node_property_count(n))
+                .find(|&p| state.get_node_property_name(n, p) == "libraries/")
+                .and_then(|p| state.get_node_property_value(n, p).try_to().ok())
+        })
 }
 
 /// How a plain surface is lit.
@@ -2667,26 +2925,12 @@ impl Kit<'_> {
 mod object_kit;
 
 /// A base head's meshes and their skins.
-type HeadParts = Vec<(Gd<Mesh>, Option<Gd<GdSkin>>)>;
+/// A mesh cut from another, and the source surfaces it keeps.
+type CutBody = (Gd<ArrayMesh>, Vec<usize>);
 
-/// `mesh` with each surface's material as `mi` shows it (an override on
-/// the instance included).
-fn with_active_materials(mi: &Gd<MeshInstance3D>, mesh: Gd<ArrayMesh>) -> Gd<ArrayMesh> {
-    let n = mesh.get_surface_count();
-    let missing = (0..n).any(|i| {
-        mesh.surface_get_material(i).is_none() || mi.get_surface_override_material(i).is_some()
-    });
-    if !missing {
-        return mesh;
-    }
-    let mut out = mesh.duplicate_resource();
-    for i in 0..n {
-        if let Some(m) = mi.get_active_material(i) {
-            out.surface_set_material(i, &m);
-        }
-    }
-    out
-}
+/// A base head's meshes, each with its skin and the materials worn on its
+/// surfaces.
+type HeadParts = Vec<(Gd<Mesh>, Option<Gd<GdSkin>>, Vec<Option<Gd<Material>>>)>;
 
 /// Which part of a base character is worn.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -2850,9 +3094,10 @@ fn value_noise(p: Vector3) -> f32 {
 
 /// The triangles of `mesh` whose corners all `keep` (in the mesh's own
 /// rest pose), every vertex array kept as it is.
-fn cut(mesh: &Gd<ArrayMesh>, keep: impl Fn(Vector3) -> bool) -> Gd<ArrayMesh> {
+fn cut(mesh: &Gd<ArrayMesh>, keep: impl Fn(Vector3) -> bool) -> CutBody {
     use godot::classes::mesh::{ArrayFormat, ArrayType, PrimitiveType};
     let mut out = ArrayMesh::new_gd();
+    let mut kept_surfaces = Vec::new();
     for i in 0..mesh.get_surface_count() {
         let mut arrays = mesh.surface_get_arrays(i);
         let verts: PackedVector3Array = arrays.at(ArrayType::VERTEX.ord() as usize).to();
@@ -2890,38 +3135,38 @@ fn cut(mesh: &Gd<ArrayMesh>, keep: impl Fn(Vector3) -> bool) -> Gd<ArrayMesh> {
             let n = out.get_surface_count() - 1;
             out.surface_set_material(n, &m);
         }
+        kept_surfaces.push(i as usize);
     }
-    out
+    (out, kept_surfaces)
 }
 
-/// A copy of `mesh` whose materials are multiplied by `colour` and take
-/// `texture` as their albedo (a skin tone, a hair colour).
-fn recolour(
-    mesh: &Gd<ArrayMesh>,
+/// `materials` multiplied by `colour` and taking `texture` as their albedo
+/// (a skin tone, a hair colour): copies, the mesh shared.
+fn recoloured(
+    materials: &[Option<Gd<Material>>],
     colour: Option<Color>,
     texture: Option<Gd<Texture2D>>,
-) -> Gd<ArrayMesh> {
-    if colour.is_none() && texture.is_none() {
-        return mesh.clone();
-    }
-    let mut out = mesh.duplicate_resource();
-    for i in 0..out.get_surface_count() {
-        let Some(mut m) = out
-            .surface_get_material(i)
-            .and_then(|m| m.duplicate_resource().try_cast::<BaseMaterial3D>().ok())
-        else {
-            continue;
-        };
-        if let Some(c) = colour {
-            let albedo = mul(m.get_albedo(), c);
-            m.set_albedo(albedo);
-        }
-        if let Some(t) = &texture {
-            m.set_texture(TextureParam::ALBEDO, t);
-        }
-        out.surface_set_material(i, &m);
-    }
-    out
+) -> Vec<Option<Gd<Material>>> {
+    materials
+        .iter()
+        .map(|m| {
+            let m = m.as_ref()?;
+            if colour.is_none() && texture.is_none() {
+                return Some(m.clone());
+            }
+            let Ok(mut out) = m.duplicate_resource().try_cast::<BaseMaterial3D>() else {
+                return Some(m.clone());
+            };
+            if let Some(c) = colour {
+                let albedo = mul(out.get_albedo(), c);
+                out.set_albedo(albedo);
+            }
+            if let Some(t) = &texture {
+                out.set_texture(TextureParam::ALBEDO, t);
+            }
+            Some(out.upcast())
+        })
+        .collect()
 }
 
 /// Skin: light scattered under it softens the shading (a face, not a
