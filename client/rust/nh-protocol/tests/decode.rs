@@ -328,11 +328,12 @@ fn level_decodes_the_branch_the_depth_and_a_plane() {
 
 #[test]
 fn progress_decodes_achievements_events_conducts_and_the_end() {
-    let line = r#"{"t":"win","fn":"progress","a":{"mode":"normal","achieved":[15,23,21],"events":{"qcalled":true,"uheard_tune":2,"udemigod":false},"deepest":7,"conduct":{"unvegan":0,"wishes":2},"roleplay":{"blind":false,"nudist":true},"gameover":true,"how":"ascended"}}"#;
+    let line = r#"{"t":"win","fn":"progress","a":{"mode":"normal","role":"Wiz","achieved":[15,23,21],"events":{"qcalled":true,"uheard_tune":2,"udemigod":false},"deepest":7,"conduct":{"unvegan":0,"wishes":2},"roleplay":{"blind":false,"nudist":true},"gameover":true,"how":"ascended"}}"#;
     let EngineMsg::Win(WinCall::Progress(p)) = parse_line(line).unwrap() else {
         panic!("expected progress")
     };
-    assert_eq!(p.mode, "normal");
+    assert!(p.earns());
+    assert_eq!(p.role, "Wiz");
     assert_eq!(p.achieved, vec![15, 23, 21]);
     assert!(p.achieved(21) && !p.achieved(10));
     // a flag and a stage both read as numbers
@@ -356,6 +357,7 @@ fn recorded_session_tells_a_fresh_game_has_earned_nothing() {
         })
         .expect("a progress notice");
     assert_eq!(p.mode, "normal");
+    assert_eq!(p.role, "Val");
     assert!(p.achieved.is_empty());
     assert!(p.events.values().all(|&n| n == 0), "{:?}", p.events);
     assert_eq!(p.deepest, 1);

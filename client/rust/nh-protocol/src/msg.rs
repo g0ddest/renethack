@@ -196,6 +196,10 @@ pub struct LevelNotice {
 pub struct ProgressNotice {
     /// "normal", "explore" or "debug": only a normal game earns anything.
     pub mode: String,
+    /// The role's file code, "Arc" .. "Wiz" (empty in recordings made
+    /// before the notice carried it).
+    #[serde(default)]
+    pub role: String,
     /// NetHack's achievements (`enum achivements`, 1..31) in the order
     /// attained. The Mines' End luckstone (10) and the Sokoban prize (11)
     /// come only once the game is over: they would spoil it.
@@ -219,6 +223,11 @@ pub struct ProgressNotice {
 }
 
 impl ProgressNotice {
+    /// A game in normal mode: the only one that earns achievements.
+    pub fn earns(&self) -> bool {
+        self.mode == "normal"
+    }
+
     /// The achievement `ach` has been attained.
     pub fn achieved(&self, ach: i32) -> bool {
         self.achieved.contains(&ach)

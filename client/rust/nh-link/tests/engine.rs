@@ -239,6 +239,7 @@ fn a_fresh_game_has_earned_nothing_and_quitting_ends_it() {
     let p = progress(&t);
     let first = p.first().expect("a progress notice");
     assert_eq!(first.mode, "normal");
+    assert_eq!(first.role, "Val");
     assert!(first.achieved.is_empty(), "{:?}", first.achieved);
     assert!(!first.gameover);
     // after "Really quit?": the game is over, and told how

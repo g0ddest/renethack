@@ -63,8 +63,9 @@ pub struct World {
     pub inventory: Pack,
     /// The last level notice: where the hero is.
     pub level: Option<LevelNotice>,
-    /// The last progress notice (see `progress`).
+    /// The last progress notice (see `progress`), and how many came.
     progress: Option<ProgressNotice>,
+    progress_seq: u64,
     pub log: MessageLog,
     pub windows: BTreeMap<i32, Window>,
     pub message_win: Option<i32>,
@@ -112,6 +113,7 @@ impl World {
             inventory: Pack::new(),
             level: None,
             progress: None,
+            progress_seq: 0,
             log: MessageLog::new(),
             windows: BTreeMap::new(),
             message_win: None,
@@ -143,7 +145,9 @@ impl World {
         self.windows.get(&win).map(|w| w.kind)
     }
 
-    fn turn(&self) -> Option<i64> {
+    /// The game turn, as the status line shows it (the `time` option is
+    /// always on).
+    pub fn turn(&self) -> Option<i64> {
         self.status.number("time")
     }
 
@@ -289,7 +293,10 @@ impl World {
             WinCall::StatusUpdate(u) => self.status.apply(u),
             WinCall::Inventory(inv) => self.inventory.replace(inv),
             WinCall::Level(l) => self.level = Some(l.clone()),
-            WinCall::Progress(p) => self.progress = Some(p.clone()),
+            WinCall::Progress(p) => {
+                self.progress = Some(p.clone());
+                self.progress_seq += 1;
+            }
             _ => {}
         }
     }
@@ -421,6 +428,12 @@ impl World {
         self.progress.as_ref()
     }
 
+    /// How many progress notices came: a new one moves it on (what is
+    /// worked out from the progress, once per notice).
+    pub fn progress_seq(&self) -> u64 {
+        self.progress_seq
+    }
+
     pub fn input_seq(&self) -> u64 {
         self.input_seq
     }
@@ -464,12 +477,14 @@ mod tests {
         feed(
             &mut w,
             r#"
-            {"t":"win","fn":"progress","a":{"mode":"debug","achieved":[],"events":{},"deepest":1,"conduct":{},"roleplay":{},"gameover":false,"how":null}}
-            {"t":"win","fn":"progress","a":{"mode":"debug","achieved":[15],"events":{"qcalled":true},"deepest":3,"conduct":{"pets":1},"roleplay":{},"gameover":false,"how":null}}
+            {"t":"win","fn":"progress","a":{"mode":"debug","role":"Wiz","achieved":[],"events":{},"deepest":1,"conduct":{},"roleplay":{},"gameover":false,"how":null}}
+            {"t":"win","fn":"progress","a":{"mode":"debug","role":"Wiz","achieved":[15],"events":{"qcalled":true},"deepest":3,"conduct":{"pets":1},"roleplay":{},"gameover":false,"how":null}}
             "#,
         );
         let p = w.progress().expect("progress");
+        assert_eq!(w.progress_seq(), 2);
         assert_eq!(p.mode, "debug");
+        assert!(!p.earns());
         assert!(p.achieved(15));
         assert!(p.event("qcalled"));
         assert_eq!(p.deepest, 3);

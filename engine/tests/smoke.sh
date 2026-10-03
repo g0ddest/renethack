@@ -62,7 +62,7 @@ prog=$(grep '^{"t":"win","fn":"progress",' "$out" | head -1)
 [ -n "$prog" ] || fail "no progress notice"
 prog_line=$(grep -n '^{"t":"win","fn":"progress",' "$out" | head -1 | cut -d: -f1)
 [ "$prog_line" -lt "$first_req" ] || fail "progress comes after the first request"
-echo "$prog" | grep -q '"mode":"normal","achieved":\[\],' || fail "progress: not a fresh normal game"
+echo "$prog" | grep -q '"mode":"normal","role":"Val","achieved":\[\],' || fail "progress: not a fresh normal game"
 echo "$prog" | grep -q '"deepest":1,' || fail "progress: deepest level"
 echo "$prog" | grep -q '"gameover":false,"how":null' || fail "progress: game over"
 echo "$prog" | grep -q '"conduct":{"unvegetarian":0,' || fail "progress: no conducts"

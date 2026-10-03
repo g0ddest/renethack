@@ -280,6 +280,8 @@ progress_json(void)
     int i, ach;
 
     add_str(a, "mode", wizard ? "debug" : discover ? "explore" : "normal");
+    /* the role's file code ("Arc".."Wiz"), for the ascensions by role */
+    add_str(a, "role", gu.urole.filecode);
     o = cJSON_AddArrayToObject(a, "achieved");
     for (i = 0; i < N_ACH && u.uachieved[i]; i++) {
         /* the ranks are negated when the hero was female */
