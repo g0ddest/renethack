@@ -183,7 +183,7 @@ struct RawEntry {
 pub struct Match<'c> {
     pub template: &'c Template,
     pub index: usize,
-    /// One per conversion, trimmed of the padding a width adds.
+    /// One per conversion, as printed (with the padding of a width).
     pub captures: Vec<String>,
 }
 
@@ -449,7 +449,7 @@ fn match_from(t: &Template, seg: usize, text: &str, caps: &mut Vec<String>, conv
                 if !plausible(t, conv, c.kind, piece) {
                     continue;
                 }
-                caps.push(piece.trim().to_string());
+                caps.push(piece.to_string());
                 if match_from(t, seg + 1, &text[end..], caps, conv + 1) {
                     return true;
                 }

@@ -127,9 +127,7 @@ fn run(
     };
     let translator = Translator::new(catalog, russian, names);
 
-    let mut tallies: HashMap<String, Tally> = HashMap::new();
-    let mut unknown: HashMap<String, usize> = HashMap::new();
-    let mut untranslated: HashMap<String, usize> = HashMap::new();
+    let mut report = Report::default();
     let mut with_fmt = 0;
     for path in corpora {
         let text = std::fs::read_to_string(path).map_err(|e| format!("{}: {e}", path.display()))?;
@@ -171,20 +169,18 @@ fn run(
                 }
             }
             for (kind, text, out) in items {
-                tally(
-                    &translator,
-                    &mut tallies,
-                    &mut unknown,
-                    &mut untranslated,
-                    &kind,
-                    &text,
-                    out,
-                );
+                report.tally(&translator, &kind, &text, out);
             }
         }
     }
 
     let mut out = String::new();
+    let Report {
+        tallies,
+        unknown,
+        untranslated,
+        partial,
+    } = report;
     let mut kinds: Vec<_> = tallies.iter().collect();
     kinds.sort_by_key(|(k, t)| (std::cmp::Reverse(t.shown), (*k).clone()));
     let total = kinds.iter().fold(Tally::default(), |mut a, (_, t)| {
@@ -235,6 +231,16 @@ fn run(
     for (text, n) in misses.iter().take(60) {
         let _ = writeln!(out, "{n:>6} {text}");
     }
+    let mut halves: Vec<_> = partial.into_iter().collect();
+    halves.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+    let _ = writeln!(
+        out,
+        "\ntranslated but for a name the lexicon does not read ({} distinct):",
+        halves.len()
+    );
+    for (text, n) in halves.iter().take(30) {
+        let _ = writeln!(out, "{n:>6} {text}");
+    }
     let mut todo_list: Vec<_> = untranslated.into_iter().collect();
     todo_list.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
     let _ = writeln!(
@@ -272,44 +278,55 @@ fn run(
     Ok(out)
 }
 
-fn tally(
-    translator: &Translator,
-    tallies: &mut HashMap<String, Tally>,
-    unknown: &mut HashMap<String, usize>,
-    untranslated: &mut HashMap<String, usize>,
-    kind: &str,
-    text: &str,
-    out: Output,
-) {
-    let t = tallies.entry(kind.to_string()).or_default();
-    t.shown += 1;
-    let weak = out
-        .template
-        .as_deref()
-        .and_then(|id| translator.catalog().by_id(id))
-        .is_some_and(|tpl| tpl.letters() < 3 && out.status == Status::Untranslated);
-    if weak {
-        t.weak += 1;
-        *unknown
-            .entry(format!("[{kind}] (weak) {text}"))
-            .or_default() += 1;
-        return;
-    }
-    match out.status {
-        Status::Unknown => *unknown.entry(format!("[{kind}] {text}")).or_default() += 1,
-        Status::Untranslated => {
-            t.matched += 1;
-            if let Some(id) = out.template {
-                *untranslated.entry(id).or_default() += 1;
+/// What the texts of a corpus came to.
+#[derive(Default)]
+struct Report {
+    tallies: HashMap<String, Tally>,
+    /// "[kind] text" no template matched
+    unknown: HashMap<String, usize>,
+    /// template id -> times shown without a translation
+    untranslated: HashMap<String, usize>,
+    /// "[kind] text" translated but for a name
+    partial: HashMap<String, usize>,
+}
+
+impl Report {
+    fn tally(&mut self, translator: &Translator, kind: &str, text: &str, out: Output) {
+        let t = self.tallies.entry(kind.to_string()).or_default();
+        t.shown += 1;
+        let weak = out
+            .template
+            .as_deref()
+            .and_then(|id| translator.catalog().by_id(id))
+            .is_some_and(|tpl| tpl.letters() < 3 && out.status == Status::Untranslated);
+        if weak {
+            t.weak += 1;
+            *self
+                .unknown
+                .entry(format!("[{kind}] (weak) {text}"))
+                .or_default() += 1;
+            return;
+        }
+        match out.status {
+            Status::Unknown => *self.unknown.entry(format!("[{kind}] {text}")).or_default() += 1,
+            Status::Untranslated => {
+                t.matched += 1;
+                if let Some(id) = out.template {
+                    *self.untranslated.entry(id).or_default() += 1;
+                }
             }
-        }
-        Status::Partial => {
-            t.matched += 1;
-            t.partial += 1;
-        }
-        Status::Translated => {
-            t.matched += 1;
-            t.translated += 1;
+            Status::Partial => {
+                t.matched += 1;
+                t.partial += 1;
+                *self
+                    .partial
+                    .entry(format!("[{kind}] {text} -> {}", out.text))
+                    .or_default() += 1;
+            }
+            Status::Translated => {
+                t.matched += 1;
+                t.translated += 1;
+            }
         }
     }
 }

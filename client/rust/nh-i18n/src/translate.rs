@@ -15,7 +15,7 @@
 use crate::catalog::{Catalog, Channel, Match, Template};
 use crate::format::{ConvKind, Segment, convs};
 use crate::grammar::Gender;
-use crate::phrase::{NameKind, Names};
+use crate::phrase::{NameKind, Names, Phrase};
 use crate::russian::Russian;
 use crate::template::{Part, Placeholder, RuTemplate, Target, Value, capitalize};
 
@@ -248,7 +248,10 @@ impl Translator {
     fn render_or_base(&self, m: &Match, text: &str, depth: usize) -> Option<Output> {
         self.render_match(m, depth).or_else(|| {
             let base = self.catalog.match_index(m.template.from?, text)?;
-            self.render_match(&base, depth)
+            // a base of conversions alone would say the English again
+            (base.template.letters() > 0)
+                .then(|| self.render_match(&base, depth))
+                .flatten()
         })
     }
 
@@ -350,7 +353,30 @@ impl Translator {
         }
     }
 
+    /// An argument printed with `%s`: the padding of a width (or the
+    /// spaces the format put inside it) stays around what it becomes.
     fn text_value(&self, shown: &str, name: NameKind, depth: usize) -> (Value, bool) {
+        let trimmed = shown.trim();
+        if trimmed.len() == shown.len() {
+            return self.bare_text_value(shown, name, depth);
+        }
+        let start = shown.len() - shown.trim_start().len();
+        let (before, after) = (&shown[..start], &shown[start + trimmed.len()..]);
+        match self.bare_text_value(trimmed, name, depth) {
+            (Value::Phrase(p), ok) => (
+                Value::Phrase(Box::new(Padded {
+                    inner: p,
+                    before: before.to_string(),
+                    after: after.to_string(),
+                })),
+                ok,
+            ),
+            (Value::Text(t), ok) => (Value::Text(format!("{before}{t}{after}")), ok),
+            (v, ok) => (v, ok),
+        }
+    }
+
+    fn bare_text_value(&self, shown: &str, name: NameKind, depth: usize) -> (Value, bool) {
         if shown.is_empty() {
             return (Value::Text(String::new()), true);
         }
@@ -390,6 +416,36 @@ impl Translator {
             return (Value::Text(out.text), ok);
         }
         (Value::Text(shown.to_string()), false)
+    }
+}
+
+/// A phrase with the spaces that stood around its English.
+struct Padded {
+    inner: Box<dyn Phrase>,
+    before: String,
+    after: String,
+}
+
+impl Phrase for Padded {
+    fn form(&self, case: crate::grammar::Case) -> String {
+        format!("{}{}{}", self.before, self.inner.form(case), self.after)
+    }
+
+    fn gender(&self) -> Gender {
+        self.inner.gender()
+    }
+
+    fn number(&self) -> crate::grammar::Number {
+        self.inner.number()
+    }
+
+    fn counted(&self, n: u64, case: crate::grammar::Case) -> String {
+        format!(
+            "{}{}{}",
+            self.before,
+            self.inner.counted(n, case),
+            self.after
+        )
     }
 }
 

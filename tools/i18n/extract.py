@@ -55,6 +55,8 @@ ENGINE = "NetHack-5.0.0_Released"
 # a call with more combinations of literal arguments keeps placeholders
 # for its most varied arguments
 MAX_DERIVED = 96
+# what a buffer can hold: its writes with the appends after them
+MAX_HELD = 4 * MAX_DERIVED
 # how deep buffers built from buffers are followed
 MAX_DEPTH = 3
 # a text with more Strcats after its Sprintf is a list: only its pieces
@@ -950,7 +952,7 @@ class Context:
                 if a.transform:
                     built = [(a.transform(f), kinds) for f, kinds in built]
             out += built
-        return dedupe(out)[:MAX_DERIVED]
+        return dedupe(out)[:MAX_HELD]
 
     def formats(self, toks, pos):
         """The formats a format argument can be: its literals, or what the
@@ -1012,7 +1014,7 @@ def with_tails(heads, tails):
                     continue
                 for combo in itertools.product(heads, *chosen):
                     out.append(("".join(p for p, _ in combo), [x for _, ks in combo for x in ks]))
-    return dedupe(out)[:MAX_DERIVED]
+    return dedupe(out)[:MAX_HELD]
 
 
 def writable(param):
