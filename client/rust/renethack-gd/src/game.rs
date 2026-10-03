@@ -957,6 +957,10 @@ impl RenethackGame {
             match fetch_catalog(&paths.engine(), &paths.data()) {
                 Ok((_, catalog)) => {
                     icons::set_catalog(&catalog);
+                    // the first level's models are built behind the title
+                    if let Some(ui) = self.ui.as_mut() {
+                        ui.map.warm_up(&catalog, None);
+                    }
                     self.catalog = Some(Rc::new(catalog));
                 }
                 Err(e) => {
@@ -1918,6 +1922,9 @@ impl RenethackGame {
     }
 
     fn start_new(&mut self, choice: &CharacterChoice) {
+        if let (Some(ui), Some(cat)) = (self.ui.as_mut(), self.catalog.as_deref()) {
+            ui.map.warm_up(cat, Some(&choice.role));
+        }
         let pg = self.playground();
         if save_exists(&pg, &choice.name) {
             self.ui_mut().screens.set_name_taken(true);

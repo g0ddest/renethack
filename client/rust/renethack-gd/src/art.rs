@@ -3,7 +3,10 @@
 //! model instances. A model instance is taken for a `ModelLook` and given
 //! back when its cell no longer shows it; instances of the same look are
 //! reused (a level change reuses the previous level's models), so nodes
-//! never pile up.
+//! never pile up. Behind the title the looks a game shows first are built
+//! once ahead (`warm`); on the map, a look never built before that is
+//! wanted past the frame's budget gets an empty stand-in, built in a later
+//! frame (`complete`).
 //!
 //! A scene file that is missing is reported once and drawn as a procedural
 //! blob instead. Procedural bodies (serpents, bugs, bats, rings, wands...)
@@ -39,6 +42,10 @@ const ART_ROOT: &str = "res://art/";
 const MAX_METALLIC: f32 = 0.45;
 /// Pooled instances kept per look; more are freed.
 const POOL_MAX: usize = 24;
+/// Time per frame the map's new instances may take; a look never seen
+/// before that is wanted beyond it is built in a later frame (an empty
+/// node stands in meanwhile).
+const BUILD_BUDGET: std::time::Duration = std::time::Duration::from_millis(8);
 
 /// How a thing is shown.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -80,6 +87,9 @@ impl PoolKey {
     }
 }
 
+/// What a look wears on its bones, by the slot that hides it.
+type Extras = Vec<(Option<String>, Gd<Node3D>)>;
+
 /// A model instance on the map.
 pub struct Model {
     /// Placed by the map; its child holds the model's own transform.
@@ -90,7 +100,9 @@ pub struct Model {
     worn: Option<Box<Worn>>,
     /// What its look wears on its bones (a role's hat), by the slot that
     /// hides it while something is worn there.
-    extras: Vec<(Option<String>, Gd<Node3D>)>,
+    extras: Extras,
+    /// The look still to build into `node` (see `Art::complete`).
+    pending: Option<ModelLook>,
 }
 
 impl Model {
@@ -101,6 +113,11 @@ impl Model {
 
     pub fn player(&self) -> Option<&Gd<AnimationPlayer>> {
         self.player.as_ref().filter(|p| p.is_instance_valid())
+    }
+
+    /// Still an empty stand-in for its look.
+    pub fn is_pending(&self) -> bool {
+        self.pending.is_some()
     }
 }
 
@@ -142,6 +159,13 @@ enum Preload {
     Texture(String),
     Library(String, bool),
     Scene(usize),
+    /// A base head's meshes (or its arms).
+    Head(String, Region),
+    /// A scene's meshes shaded smooth.
+    Smooth(usize),
+    /// An instance built once and pooled: its meshes, materials and
+    /// shaders are ready before the look is first seen.
+    Warm(ModelLook),
 }
 
 /// Time per frame the preloading may take.
@@ -176,6 +200,16 @@ pub struct Art {
     phase: u32,
     /// What is still to load ahead of need, last first.
     preload: Vec<Preload>,
+    /// Looks built at least once (later instances are cheap).
+    warmed: HashSet<PoolKey>,
+    /// The hero's model given back with their gear on (a level change):
+    /// taken again as it is.
+    kept: Option<Model>,
+    /// Time the map's new instances took this frame (None: no budget,
+    /// everything is built at once).
+    spent: Option<std::time::Duration>,
+    /// Stand-ins handed out and not yet built.
+    pending: usize,
 }
 
 impl Art {
@@ -220,6 +254,10 @@ impl Art {
             built: 0,
             phase: 0,
             preload: Vec::new(),
+            warmed: HashSet::new(),
+            kept: None,
+            spent: None,
+            pending: 0,
         }
         .with_preload()
     }
@@ -251,9 +289,63 @@ impl Art {
                 .filter(|(_, _, m)| m.scene.is_some())
                 .map(|(i, _, _)| Preload::Scene(i)),
         );
+        let mut heads: Vec<(String, Region)> = self
+            .manifest
+            .models()
+            .flat_map(|(_, _, m)| {
+                let head = m.head.clone().map(|h| (h, Region::Head));
+                head.into_iter()
+                    .chain(m.bare_arms.clone().map(|a| (a, Region::Arms)))
+            })
+            .filter(|(h, _)| self.manifest.head(h).is_some())
+            .collect();
+        heads.sort_by_key(|(h, r)| (h.clone(), *r == Region::Arms));
+        heads.dedup();
+        q.extend(heads.into_iter().map(|(h, r)| Preload::Head(h, r)));
+        q.extend(
+            self.manifest
+                .models()
+                .filter(|(_, _, m)| m.smooth && m.scene.is_some())
+                .map(|(i, _, _)| Preload::Smooth(i)),
+        );
         q.reverse();
         self.preload = q;
         self
+    }
+
+    /// Build each look once ahead of need (and what it needs first), after
+    /// what is queued already, or before it with `first`.
+    pub fn warm(&mut self, looks: &[ModelLook], first: bool) {
+        let mut q = Vec::new();
+        for look in looks {
+            let spec = self.manifest.model_at(look.art.model).1;
+            if spec.proc.is_none() && spec.scene.is_some() {
+                let rigs = spec.rig.iter().chain(&spec.extra_rigs);
+                q.extend(rigs.map(|r| Preload::Library(r.clone(), spec.strip_root)));
+                q.push(Preload::Scene(look.art.model));
+                if spec.smooth {
+                    q.push(Preload::Smooth(look.art.model));
+                }
+                q.extend(spec.head.clone().map(|h| Preload::Head(h, Region::Head)));
+                q.extend(
+                    spec.bare_arms
+                        .clone()
+                        .map(|a| Preload::Head(a, Region::Arms)),
+                );
+            }
+            q.push(Preload::Warm(*look));
+        }
+        if first {
+            self.preload.extend(q.into_iter().rev());
+        } else {
+            let rest = std::mem::take(&mut self.preload);
+            self.preload = q.into_iter().rev().chain(rest).collect();
+        }
+    }
+
+    /// Nothing is left to load ahead.
+    pub fn preloaded(&self) -> bool {
+        self.preload.is_empty()
     }
 
     /// Load ahead for a few milliseconds; false when all is loaded.
@@ -269,6 +361,25 @@ impl Art {
                 }
                 Some(Preload::Scene(i)) => {
                     self.scene(i);
+                }
+                Some(Preload::Head(kind, region)) => {
+                    self.head_parts(&kind, region);
+                }
+                Some(Preload::Smooth(i)) => {
+                    if let Some(scene) = self.scene(i) {
+                        let mut inner = scene.instantiate_as::<Node3D>();
+                        self.smooth(&inner);
+                        inner.queue_free();
+                    }
+                }
+                Some(Preload::Warm(look)) => {
+                    if !self.warmed.contains(&PoolKey::of(&look)) {
+                        // never a stand-in
+                        let spent = self.spent.take();
+                        let m = self.take(&look);
+                        self.give(m);
+                        self.spent = spent;
+                    }
                 }
                 None => return false,
             }
@@ -399,7 +510,9 @@ impl Art {
         m
     }
 
-    /// A model instance for this look: one given back before, or a new one.
+    /// A model instance for this look: one given back before, or a new one
+    /// (on the map, past this frame's budget, a stand-in for a look never
+    /// built before: see `complete`).
     pub fn take(&mut self, look: &ModelLook) -> Model {
         let key = PoolKey::of(look);
         self.live += 1;
@@ -408,15 +521,111 @@ impl Art {
             self.start(&mut m, look);
             return m;
         }
+        let over = self.spent.is_some_and(|t| t >= BUILD_BUDGET);
+        if over && !self.warmed.contains(&key) {
+            let mut node = Node3D::new_alloc();
+            self.root.add_child(&node);
+            node.set_visible(true);
+            self.pending += 1;
+            return Model {
+                node,
+                key,
+                player: None,
+                worn: None,
+                extras: Vec::new(),
+                pending: Some(*look),
+            };
+        }
+        let start = std::time::Instant::now();
         self.built += 1;
         let mut m = self.build(look, key);
         self.start(&mut m, look);
+        self.warmed.insert(key);
+        if let Some(t) = self.spent.as_mut() {
+            *t += start.elapsed();
+        }
         m
     }
 
-    /// Hide an instance and keep it for the next look like it.
+    /// The hero's model: the one given back with their gear on, if it is
+    /// of this look, else as `take`.
+    pub fn take_hero(&mut self, look: &ModelLook) -> Model {
+        match self.kept.take() {
+            Some(mut m) if m.key == PoolKey::of(look) => {
+                self.live += 1;
+                m.node.set_visible(true);
+                self.start(&mut m, look);
+                m
+            }
+            other => {
+                if let Some(m) = other {
+                    self.give_plain(m);
+                }
+                self.take(look)
+            }
+        }
+    }
+
+    /// Build a stand-in's look into it if this frame's budget allows;
+    /// true when it was built.
+    pub fn complete(&mut self, m: &mut Model) -> bool {
+        let Some(look) = m.pending else {
+            return true;
+        };
+        if self.spent.is_some_and(|t| t >= BUILD_BUDGET) {
+            return false;
+        }
+        let start = std::time::Instant::now();
+        self.built += 1;
+        let (player, extras) = self.build_into(&m.node, &look);
+        m.player = player;
+        m.extras = extras;
+        m.worn = None;
+        m.pending = None;
+        self.pending = self.pending.saturating_sub(1);
+        self.start(m, &look);
+        self.warmed.insert(m.key);
+        if let Some(t) = self.spent.as_mut() {
+            *t += start.elapsed();
+        }
+        true
+    }
+
+    /// A new frame of the map: the budget for new instances starts again.
+    pub fn begin_frame(&mut self) {
+        self.spent = Some(std::time::Duration::ZERO);
+    }
+
+    /// Stand-ins not yet built.
+    pub fn pending(&self) -> usize {
+        self.pending
+    }
+
+    /// Hide an instance and keep it for the next look like it; the hero's
+    /// keeps their gear on (the next level shows them as they were).
     pub fn give(&mut self, mut m: Model) {
         self.live = self.live.saturating_sub(1);
+        if m.pending.is_some() {
+            self.pending = self.pending.saturating_sub(1);
+            m.node.queue_free();
+            return;
+        }
+        m.node.set_visible(false);
+        if let Some(p) = m.player.as_mut() {
+            p.pause();
+        }
+        if m.worn.as_ref().is_some_and(|w| w.has_gear()) {
+            self.put_down(&mut m);
+            if let Some(old) = self.kept.replace(m) {
+                self.give_plain(old);
+            }
+            return;
+        }
+        self.give_plain(m);
+    }
+
+    /// Into the pool, the gear taken off.
+    fn give_plain(&mut self, mut m: Model) {
         self.unequip(&mut m);
         m.node.set_visible(false);
         if let Some(p) = m.player.as_mut() {
@@ -555,9 +764,28 @@ impl Art {
     }
 
     fn build(&mut self, look: &ModelLook, key: PoolKey) -> Model {
+        let holder = Node3D::new_alloc();
+        let (player, extras) = self.build_into(&holder, look);
+        self.root.add_child(&holder);
+        Model {
+            node: holder,
+            key,
+            player,
+            worn: None,
+            extras,
+            pending: None,
+        }
+    }
+
+    /// The look's model under `holder`: its animation player and extras.
+    fn build_into(
+        &mut self,
+        holder: &Gd<Node3D>,
+        look: &ModelLook,
+    ) -> (Option<Gd<AnimationPlayer>>, Extras) {
         let r = look.art;
         let spec = self.manifest.model_at(r.model).1.clone();
-        let mut holder = Node3D::new_alloc();
+        let mut holder = holder.clone();
         let (mut inner, player) = match (spec.proc, self.scene(r.model)) {
             (Some(kind), _) => self.build_proc(kind, &spec, look),
             (None, Some(scene)) => {
@@ -591,20 +819,13 @@ impl Art {
         }
         let s = r.scale;
         inner.set_transform(transform([0.0, lift, 0.0], rot, [s, s, s]));
-        holder.add_child(&inner);
-        self.root.add_child(&holder);
         let extras = if spec.proc.is_none() {
             self.attach_extras(&inner, &spec, look)
         } else {
             Vec::new()
         };
-        Model {
-            node: holder,
-            key,
-            player,
-            worn: None,
-            extras,
-        }
+        holder.add_child(&inner);
+        (player, extras)
     }
 
     /// The scene's own AnimationPlayer, or a new one with the rig's
@@ -778,19 +999,7 @@ impl Art {
         let Some(mut skeleton) = find::<Skeleton3D>(&inner.clone().upcast()) else {
             return false;
         };
-        let key = format!("{kind}{region:?}");
-        let parts = match self.heads.get(&key) {
-            Some(p) => p.clone(),
-            None => {
-                let p = self.build_head(kind, region);
-                if p.is_none() {
-                    self.warn_once(format!("head {kind} does not load"));
-                }
-                self.heads.insert(key, p.clone());
-                p
-            }
-        };
-        let Some(parts) = parts else {
+        let Some(parts) = self.head_parts(kind, region) else {
             return false;
         };
         for (i, (mesh, skin)) in parts.iter().enumerate() {
@@ -804,6 +1013,20 @@ impl Art {
             mi.set_skeleton_path(&NodePath::from(".."));
         }
         true
+    }
+
+    /// A base head's meshes, built once.
+    fn head_parts(&mut self, kind: &str, region: Region) -> Option<HeadParts> {
+        let key = format!("{kind}{region:?}");
+        if let Some(p) = self.heads.get(&key) {
+            return p.clone();
+        }
+        let p = self.build_head(kind, region);
+        if p.is_none() {
+            self.warn_once(format!("head {kind} does not load"));
+        }
+        self.heads.insert(key, p.clone());
+        p
     }
 
     /// The meshes of a base head: the face cut from the base character at
@@ -879,7 +1102,7 @@ impl Art {
         inner: &Gd<Node3D>,
         spec: &nh_art::ModelSpec,
         look: &ModelLook,
-    ) -> Vec<(Option<String>, Gd<Node3D>)> {
+    ) -> Extras {
         let mut out = Vec::new();
         if spec.extras.is_empty() {
             return out;

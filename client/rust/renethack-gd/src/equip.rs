@@ -3,8 +3,9 @@
 //! it sits in the hand; a lit lamp brings its flickering light; armour
 //! toggles the outfit's parts; the idle and attack clips follow the gear. An
 //! item used is shown in the hand for a moment. Held models are built when
-//! the gear changes and freed when it changes again (or the model goes back
-//! to the pool), so nothing piles up.
+//! the gear changes and freed when it changes again (or the model goes into
+//! the pool), so nothing piles up; the hero's model put away on a level
+//! change keeps its gear for the next level.
 
 use std::collections::HashMap;
 
@@ -50,6 +51,11 @@ pub struct Worn {
 impl Worn {
     pub fn gear(&self) -> &Gear {
         &self.gear
+    }
+
+    /// Anything shown on the model.
+    pub(super) fn has_gear(&self) -> bool {
+        !self.held.is_empty() || self.gear != Gear::default()
     }
 }
 
@@ -198,6 +204,20 @@ impl Art {
             }
         }
         gear.lit()
+    }
+
+    /// The item in use leaves the hand at once (the model is put away
+    /// with its gear on).
+    pub(super) fn put_down(&mut self, m: &mut Model) {
+        let Some(worn) = m.worn.as_mut() else {
+            return;
+        };
+        if let Some((mut node, _, hand)) = worn.in_use.take() {
+            if node.is_instance_valid() {
+                node.queue_free();
+            }
+            show_slot(worn, hand, true);
+        }
     }
 
     /// Take the gear off (the model goes back to the pool).

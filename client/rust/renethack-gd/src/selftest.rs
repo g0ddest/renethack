@@ -276,9 +276,11 @@ fn start() -> Vec<Step> {
 /// A new game of this character, up to the first command.
 fn start_as(choice: CharacterChoice) -> Vec<Step> {
     vec![
-        Step::Wait("the title screen", |g| {
+        Step::Wait("the title screen, the art loaded ahead", |g| {
             fail_on_error_screen(g)?;
-            Ok(screen(g) == Some("title"))
+            // a player reads the title longer than the art takes to load
+            let loaded = g.ui.as_ref().is_some_and(|ui| ui.map.preloaded());
+            Ok(screen(g) == Some("title") && loaded)
         }),
         Step::Push(UiEvent::StartCharacter(choice)),
         Step::Request("the first command", command),

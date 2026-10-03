@@ -456,6 +456,64 @@ fn cell_noise(x: i32, y: i32, salt: u32) -> f32 {
 }
 
 /// The colour a look multiplies its model by.
+/// The roles (as a new character names them).
+const ROLES: [&str; 13] = [
+    "archeologist",
+    "barbarian",
+    "caveman",
+    "healer",
+    "knight",
+    "monk",
+    "priest",
+    "rogue",
+    "ranger",
+    "samurai",
+    "tourist",
+    "valkyrie",
+    "wizard",
+];
+
+/// The monsters met most on the first levels, and the pets.
+const WARM_MONSTERS: &[&str] = &[
+    "kitten",
+    "little dog",
+    "pony",
+    "newt",
+    "jackal",
+    "sewer rat",
+    "grid bug",
+    "fox",
+    "coyote",
+    "kobold",
+    "large kobold",
+    "goblin",
+    "lichen",
+    "gecko",
+    "giant rat",
+    "yellow mold",
+    "acid blob",
+    "floating eye",
+    "gnome",
+    "gnome lord",
+    "hobbit",
+    "kobold zombie",
+    "gnome zombie",
+    "homunculus",
+    "giant bat",
+    "hill orc",
+    "dwarf",
+    "shopkeeper",
+];
+
+/// The monster a role's hero is drawn as.
+fn role_monster(role: &str) -> &str {
+    match role {
+        "caveman" | "cavewoman" => "cave dweller",
+        "priest" | "priestess" => "cleric",
+        r => r,
+    }
+}
+
 fn tint_color(tint: Tint, glyph_color: i32) -> Color {
     match tint {
         Tint::None => Color::WHITE,
@@ -2061,6 +2119,8 @@ pub struct MapView {
     fade: f32,
     /// Frame times being summed (RENETHACK_FRAME_STATS).
     stats_window: Option<FrameStats>,
+    /// The art loaded ahead has been told of (RENETHACK_FRAME_STATS).
+    preload_told: bool,
     /// The lit areas changed: place the fill lights again.
     lights_dirty: bool,
     /// Dark rock under the whole level, with a hole where something lies
@@ -2518,6 +2578,7 @@ impl MapView {
             branch: Branch::Main,
             branch_look: crate::branch_look::look_of(Branch::Main),
             stats_window: std::env::var_os("RENETHACK_FRAME_STATS").map(|_| FrameStats::default()),
+            preload_told: false,
             lights_dirty: false,
             bedrock,
             holes: HashSet::new(),
@@ -2569,6 +2630,7 @@ impl MapView {
     pub fn sync(&mut self, world: &mut World, catalog: &Catalog, delta: f64) {
         let sync_start = std::time::Instant::now();
         let built_before = self.art.counts().1;
+        self.art.begin_frame();
         self.clock += delta;
         self.prof.clear();
         let hero = world.hero();
@@ -2661,6 +2723,7 @@ impl MapView {
         }
         let __t = std::time::Instant::now();
         self.build_some(world, catalog, hero);
+        self.complete_models();
         self.prof
             .push(("build", __t.elapsed().as_secs_f64() * 1000.0));
         self.watch_fights(world, catalog);
@@ -3702,7 +3765,73 @@ impl MapView {
     /// Load art ahead of need for a few milliseconds (every frame, also
     /// before a game starts); false when everything is loaded.
     pub fn preload_step(&mut self) -> bool {
-        self.art.preload_step()
+        let more = self.art.preload_step();
+        if !more && self.stats_window.is_some() && !std::mem::replace(&mut self.preload_told, true)
+        {
+            godot_print!(
+                "map: art loaded ahead {:.1} s after start, {} models built",
+                godot::classes::Time::singleton().get_ticks_msec() as f64 / 1000.0,
+                self.art.counts().1
+            );
+        }
+        more
+    }
+
+    /// Nothing is left to load ahead (self-tests start a game then).
+    pub fn preloaded(&self) -> bool {
+        self.art.preloaded()
+    }
+
+    /// Build ahead the models a game shows first: the role's hero (first
+    /// of all) when one is chosen, else every role's, the pets and the
+    /// monsters of the first levels.
+    pub fn warm_up(&mut self, catalog: &Catalog, role: Option<&str>) {
+        let names: Vec<&str> = match role {
+            Some(role) => vec![role_monster(role)],
+            None => ROLES
+                .iter()
+                .map(|r| role_monster(r))
+                .chain(WARM_MONSTERS.iter().copied())
+                .collect(),
+        };
+        let mut looks = Vec::new();
+        for name in names {
+            let Some(info) = catalog.monsters.iter().find(|m| m.name == name) else {
+                continue;
+            };
+            for flags in [0, mg::FEMALE] {
+                let r = self.art.manifest().monster(info, flags);
+                let look = ModelLook {
+                    art: r,
+                    tint: tint_color(r.tint, info.color),
+                    pose: Pose::Alive,
+                };
+                if !looks.contains(&look) {
+                    looks.push(look);
+                }
+            }
+        }
+        self.art.warm(&looks, role.is_some());
+    }
+
+    /// Build the stand-ins of looks first seen in a busy frame, as far as
+    /// the frame's budget goes.
+    fn complete_models(&mut self) {
+        if self.art.pending() == 0 {
+            return;
+        }
+        let rim = self.rim_model.as_ref().map(|n| n.instance_id());
+        for nodes in self.cells.values_mut() {
+            for m in nodes.models.iter_mut().filter(|m| m.is_pending()) {
+                if !self.art.complete(m) {
+                    return;
+                }
+                // the hero's rim light takes the meshes now there
+                if Some(m.node.instance_id()) == rim {
+                    self.rim_model = None;
+                }
+            }
+        }
     }
 
     /// The map generation last drawn (self-tests wait for a redraw).
@@ -3999,6 +4128,11 @@ impl MapView {
         let mut kept: Vec<Model> = Vec::with_capacity(look.models.len());
         let mut old_models = std::mem::take(&mut nodes.models).into_iter();
         let mut carried = self.incoming.remove(&(x, y));
+        let hero_here = world
+            .map
+            .cell(x, y)
+            .and_then(|c| c.glyph.as_ref())
+            .is_some_and(|g| g.flags & mg::HERO != 0);
         for (i, p) in look.models.iter().enumerate() {
             let before = old.models.get(i);
             let reuse = old_models.next();
@@ -4044,7 +4178,11 @@ impl MapView {
                     if let Some(m) = other {
                         self.art.give(m);
                     }
-                    self.art.take(&p.look)
+                    if hero_here && look.entity == Some(i) {
+                        self.art.take_hero(&p.look)
+                    } else {
+                        self.art.take(&p.look)
+                    }
                 }
             };
             if before.map(|b| (b.pos, b.yaw, b.look)) != Some((p.pos, p.yaw, p.look)) {
