@@ -1,0 +1,1212 @@
+#!/usr/bin/env python3
+"""Extract every English text the engine can show into the catalog the
+client translates by: client/i18n/catalog.en.json.
+
+    python3 tools/i18n/extract.py            # write the catalog
+    python3 tools/i18n/extract.py --check    # fail if it is out of date
+
+Sources (engine/upstream, read only):
+
+- src/*.c: every pline-family call (pline, You, Your, You_feel, You_hear,
+  You_see, You_cant, pline_The, There, Norep, verbalize, custompline,
+  urgent_pline, pline_mon...), with the prefix the call adds ("You ",
+  "The "...) folded into the format, as vpline sees it; the Sprintf /
+  Snprintf / Strcpy / Strcat calls that build text; menu items, text
+  window lines, questions (yn_function, getlin...), getobj verbs,
+  occupations, enlightenment lines, death reasons;
+- dat/: rumors, oracles, epitaphs, engravings, hallucinatory monster
+  names, the quest texts of quest.lua (their %p, %r... codes become %s
+  placeholders), the level messages and engravings of the other .lua
+  files (the tutorial among them). Not dat/tribute or dat/data.base.
+
+An argument that can only be one of a few literals ("swap places with" or
+"frighten"), a verb conjugated for its subject (vtense, Tobjnam...) or a
+local buffer filled by Sprintf/Strcpy/Strcat before the call gives the
+format a derived entry per value, so whole sentences can be translated;
+the generic entry then says `"expanded": true`.
+
+Each entry: a stable id (a hash of the format), the format (printf style:
+%s, %d, %c, %ld...; a literal % is %%), what shows it (`uses`), what each
+conversion is (`args`: monster, species, object, word, number, char,
+text, quest:<code>...), the entry it derives from (`from`) and the call
+sites (file:line function call(arguments)). Entries are sorted by their
+first site, one per line.
+"""
+
+import argparse
+import hashlib
+import itertools
+import json
+import os
+import re
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import clex  # noqa: E402
+import datfiles  # noqa: E402
+from clex import match_close, source_text, split_args  # noqa: E402
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+UPSTREAM = os.path.join(ROOT, "engine", "upstream")
+OUT = os.path.join(ROOT, "client", "i18n", "catalog.en.json")
+CATALOG_FORMAT = 1
+ENGINE = "NetHack-5.0.0_Released"
+# a call with more combinations of literal arguments keeps placeholders
+# for its most varied arguments
+MAX_DERIVED = 64
+# how deep buffers built from buffers are followed
+MAX_DEPTH = 3
+# a text with more Strcats after its Sprintf is a list: only its pieces
+MAX_APPENDS = 2
+
+# ---------------------------------------------------------------- calls
+
+# The pline family: name -> (index of the format, prefixes vpline sees).
+# Several prefixes give an entry each (You_feel says "You dream that you
+# feel " while the hero is unconscious).
+PLINE = {
+    "pline": (0, [""]),
+    "pline_dir": (1, [""]),
+    "pline_xy": (2, [""]),
+    "pline_mon": (1, [""]),
+    "custompline": (1, [""]),
+    "urgent_pline": (0, [""]),
+    "Norep": (0, [""]),
+    "You": (0, ["You "]),
+    "Your": (0, ["Your "]),
+    "You_cant": (0, ["You can't "]),
+    "pline_The": (0, ["The "]),
+    "There": (0, ["There "]),
+    "You_feel": (0, ["You feel ", "You dream that you feel "]),
+    "You_hear": (0, ["You hear ", "You barely hear ", "You dream that you hear "]),
+    "You_see": (0, ["You see ", "You sense ", "You dream that you see "]),
+    "verbalize": (0, ['"']),
+    "raw_printf": (0, [""]),
+    "livelog_printf": (1, [""]),
+}
+PLINE_USE = {"raw_printf": "raw", "livelog_printf": "livelog"}
+# one-argument shorthands: X1(cstr) is X("%s", cstr)
+PLINE1 = {"pline1": "pline", "You1": "You", "Your1": "Your",
+          "verbalize1": "verbalize", "You_hear1": "You_hear"}
+# Calls whose arguments are shown text that is not a format:
+# name -> [(use, index)]
+SINKS = {
+    "putstr": [("window", 2)],
+    "add_menu": [("menu", 7)],
+    "add_menu_str": [("menu", 1)],
+    "end_menu": [("menu", 1)],
+    "yn_function": [("query", 0)],
+    "y_n": [("query", 0)],
+    "ynq": [("query", 0)],
+    "ynaq": [("query", 0)],
+    "nyaq": [("query", 0)],
+    "nyNaq": [("query", 0)],
+    "getlin": [("query", 0)],
+    "paranoid_query": [("query", 1)],
+    "paranoid_ynq": [("query", 1)],
+    "getdir": [("query", 0)],
+    "query_objlist": [("menu", 0)],
+    "query_category": [("menu", 0)],
+    "getobj": [("getobj", 0)],
+    "ggetobj": [("getobj", 0)],
+    "set_occupation": [("occupation", 1)],
+    "unmul": [("pline", 0)],
+    "enlght_out": [("window", 0)],
+    "losehp": [("death", 1)],
+    "losexp": [("death", 0)],
+    "instapetrify": [("death", 0)],
+    "poisoned": [("pline", 0), ("death", 2)],
+    "make_sick": [("death", 1)],
+    "make_slimed": [("pline", 1)],
+    "make_stoned": [("pline", 1), ("death", 3)],
+}
+# Assignments shown later: gn.nomovemsg when the hero can move again,
+# gm.multi_reason in the cause of death ("while frozen by a potion")
+ASSIGN_SINKS = {"nomovemsg": "pline", "multi_reason": "death"}
+# Buffers: name -> (index of the destination, index of the text, printf?)
+BUFFER_OPS = {
+    "Sprintf": (0, 1, True),
+    "sprintf": (0, 1, True),
+    "Snprintf": (0, 2, True),
+    "snprintf": (0, 2, True),
+    "Sprintf1": (0, 1, False),
+    "Strcpy": (0, 1, False),
+    "strcpy": (0, 1, False),
+    "copynchars": (0, 1, False),
+    "Strcat": (0, 1, False),
+    "strcat": (0, 1, False),
+}
+APPENDS = {"Strcat", "strcat"}
+# calls that read a buffer without showing it
+BUFFER_QUERIES = {"strlen", "strcmp", "strncmp", "strcmpi", "strncmpi", "strstri",
+                  "strstr", "strchr", "strrchr", "index", "rindex", "eos", "c_eos",
+                  "sizeof", "lowc", "highc", "digit", "letter", "isspace", "strsubst",
+                  "strNsubst", "mungspaces", "trimspaces", "upstart", "lcase", "ucase",
+                  "strip_newline", "Strlen", "BSTRNCMPI", "BSTRCMPI", "fuzzymatch"}
+# Not shown to a player in a normal game: never in the catalog.
+NOT_SHOWN = {"impossible", "panic", "debugpline0", "debugpline1", "debugpline2",
+             "debugpline3", "debugpline4", "config_error_add", "paniclog",
+             "nhassert_failed", "ifdebugresist", "warning", "error", "printf",
+             "fprintf", "nh_terminate", "raw_print", "Fprintf", "dlb_fopen",
+             "fopen", "nhl_error", "luaL_error", "strcmp", "strcmpi", "strncmpi",
+             "strncmp", "strstri", "strstr", "strchr", "strrchr", "sscanf",
+             "index", "rindex", "fuzzymatch", "match_optname", "getenv",
+             "sanitize_name", "lua_getfield", "lua_setfield", "lua_pushstring",
+             "nhl_add_table_entry_str", "nhl_add_table_entry_int",
+             "nhl_add_table_entry_bool", "nhl_add_table_entry_char",
+             "dump_plines", "putmsghistory"}
+# The enlightenment lines of ^X: enl_msg(prefix, present, past, suffix, ps)
+# shows " <prefix><present or past><suffix><ps>."
+ENL = {
+    "enl_msg": None,
+    "you_are": ("You ", "are ", "were "),
+    "you_have": ("You ", "have ", "had "),
+    "you_can": ("You ", "can ", "could "),
+    "you_have_been": ("You ", "have been ", "were "),
+    "you_have_never": ("You ", "have never ", "never "),
+    "you_have_X": ("You ", "have ", ""),
+}
+ENL_CONTRACTIONS = ((" are not ", " aren't "), (" were not ", " weren't "),
+                    (" have not ", " haven't "), (" had not ", " hadn't "),
+                    (" can not ", " can't "), (" could not ", " couldn't "))
+
+# ------------------------------------------------- argument kinds
+
+KIND_FUNCS = {}
+for _k, _names in {
+    "monster": """x_monnam l_monnam mon_nam noit_mon_nam some_mon_nam Monnam
+        noit_Monnam Some_Monnam noname_monnam m_monnam y_monnam YMonnam
+        Adjmonnam a_monnam Amonnam distant_monnam mon_nam_too minimal_monnam
+        priestname shkname Shknam ghostname""",
+    "species": """pmname mon_pmname obj_pmname rndmonnam bogusmon monexplain
+        rndghostname roguename coyotename rndorcname""",
+    "object": """xname xname_flags minimal_xname mshot_xname doname doname_base
+        doname_with_price doname_vague_quan corpse_xname cxname
+        cxname_singular killer_xname short_oname singular Doname2 paydoname
+        yname Yname2 ysimple_name Ysimple_name2 simpleonames ansimpleoname
+        thesimpleoname bare_artifactname distant_name artiname artifact_name
+        simple_typename obj_typename OBJ_NAME OBJ_DESCR tin_details
+        safe_typename dump_typename bottlename""",
+    "word": """body_part mbodypart hcolor rndcolor hliquid surface ceiling
+        locomotion stagger on_fire msummon_environ u_locomotion mswings_verb
+        mpoisons_subj trapname a_gname a_gname_at u_gname align_gname
+        halu_gname align_gtitle align_str rank_of rank fingers_or_gloves
+        Hello Goodbye dfeature_at role_gender_name explain_terrain""",
+    "number": "sitoa itoa",
+}.items():
+    for _n in _names.split():
+        KIND_FUNCS[_n] = _k
+# x(name) keeps name's kind: an(xname(obj)) is an object
+WRAPPERS = set("""an An the The upstart upwords lcase ucase s_suffix makeplural
+    makesingular ing_suffix strip_the_prefix just_an capitalize highc
+    trimspaces mungspaces""".split())
+# x(obj, "verb") is "<the object's name> verb[s]"
+OBJVERB = {"aobjnam", "yobjnam", "Yobjnam2", "Tobjnam"}
+# calls and names whose value is one of a few literals
+LITERAL_CALLS = {
+    "uhe": ["he", "she"], "uhim": ["him", "her"], "uhis": ["his", "her"],
+    "mhe": ["he", "she", "it", "they"], "mhim": ["him", "her", "it", "them"],
+    "mhis": ["his", "her", "its", "their"],
+    "noit_mhe": ["he", "she", "it", "they"], "noit_mhim": ["him", "her", "it", "them"],
+    "noit_mhis": ["his", "her", "its", "their"],
+    "plur": ["", "s"], "currency": ["zorkmid", "zorkmids"],
+    "ordin": ["st", "nd", "rd", "th"],
+}
+NULL_POINTERS = {"0", "NULL", "(char *) 0", "(const char *) 0", "(char*) 0",
+                 "(const char*) 0", "(genericptr_t) 0", "nul", "emptystr"}
+CONV_RE = re.compile(
+    r"%(?P<flags>[-+ #0]*)(?P<width>\*|\d+)?(?:\.(?P<prec>\*|\d*))?"
+    r"(?P<len>hh|h|ll|l|L|z|j|t|I64)?(?P<conv>[diouxXeEfgGcspn%])"
+)
+
+
+def conversions(fmt):
+    """The conversions of a printf format (not %%)."""
+    return [m for m in CONV_RE.finditer(fmt) if m.group("conv") != "%"]
+
+
+def conv_kind(m):
+    c = m.group("conv")
+    if c in "diouxXeEfgG":
+        return "number"
+    if c == "c":
+        return "char"
+    if c == "p":
+        return "pointer"
+    return "text"
+
+
+def escape(s):
+    return s.replace("%", "%%")
+
+
+def verb_s(verb):
+    """vtense(singular subject, verb): the third person singular."""
+    low = verb.lower()
+    if low == "are":
+        return verb[:-3] + "is"
+    if low == "have":
+        return verb[:-2] + "s"
+    if (low[-1:] in ("z", "x", "s") or (len(low) >= 2 and low[-1] == "h" and low[-2] in "cs")
+            or (len(low) == 2 and low[-1] == "o")):
+        return verb + "es"
+    if low[-1:] == "y" and len(low) >= 2 and low[-2] not in "aeiou":
+        return verb[:-1] + "ies"
+    return verb + "s"
+
+
+def strip_expr(toks):
+    """Drop enclosing parentheses and leading casts."""
+    while toks:
+        if toks[0].text == "(" and match_close(toks, 0) == len(toks) - 1:
+            toks = toks[1:-1]
+            continue
+        if toks[0].text == "(":
+            close = match_close(toks, 0)
+            inner = toks[1:close]
+            if (close < len(toks) - 1 and inner
+                    and all(t.kind == "ident" or t.text == "*" for t in inner)
+                    and (inner[-1].text == "*" or inner[0].text in ("const", "char", "int", "long",
+                                                                    "unsigned", "void", "boolean"))):
+                toks = toks[close + 1:]
+                continue
+        break
+    return toks
+
+
+def find_top(toks, text):
+    depth = 0
+    for i, t in enumerate(toks):
+        if t.kind == "punct":
+            if t.text in "([{":
+                depth += 1
+            elif t.text in ")]}":
+                depth -= 1
+            elif t.text == text and depth == 0:
+                return i
+    return None
+
+
+def ternary(toks):
+    """(cond, a, b) of `cond ? a : b`, else None."""
+    q = find_top(toks, "?")
+    if q is None:
+        return None
+    depth = 0
+    nest = 0
+    for i in range(q + 1, len(toks)):
+        t = toks[i]
+        if t.kind != "punct":
+            continue
+        if t.text in "([{":
+            depth += 1
+        elif t.text in ")]}":
+            depth -= 1
+        elif depth == 0 and t.text == "?":
+            nest += 1
+        elif depth == 0 and t.text == ":":
+            if nest == 0:
+                return toks[:q], toks[q + 1:i], toks[i + 1:]
+            nest -= 1
+    return None
+
+
+def call_parts(toks):
+    """(name, args) when the expression is one call `name(args)`."""
+    if (len(toks) >= 3 and toks[0].kind == "ident" and toks[1].text == "("
+            and match_close(toks, 1) == len(toks) - 1):
+        return toks[0].text, split_args(toks, 1, len(toks) - 1)
+    return None
+
+
+def dedupe(xs):
+    seen = set()
+    out = []
+    for x in xs:
+        key = x if isinstance(x, str) else (x[0], tuple(x[1]))
+        if key not in seen:
+            seen.add(key)
+            out.append(x)
+    return out
+
+
+def destination(toks):
+    """(buffer name, append?) of a buffer operation's destination: buf,
+    eos(buf), buf + n, &buf[n]."""
+    toks = strip_expr(toks)
+    call = call_parts(toks)
+    if call and call[0] in ("eos", "c_eos") and call[1]:
+        name, _ = destination(call[1][0])
+        return name, True
+    append = False
+    if toks and toks[0].text == "&":
+        toks = toks[1:]
+        append = True
+    if find_top(toks, "+") is not None:
+        append = True
+        toks = toks[:find_top(toks, "+")]
+    # the whole lvalue: buf, svk.killer.name, mtmp->mgivenname
+    if toks and toks[0].kind == "ident":
+        name = []
+        for t in toks:
+            if t.kind == "ident" or t.text in (".", "->"):
+                name.append(t.text)
+            else:
+                break
+        return "".join(name), append
+    return None, False
+
+
+class Op:
+    """A write to a local buffer."""
+
+    def __init__(self, index, append, text, args, printf, line, call):
+        self.index = index
+        self.append = append
+        self.text = text
+        self.args = args
+        self.printf = printf
+        self.line = line
+        self.call = call
+
+
+class Globals:
+    """What every file sees: string macros of the headers, the common
+    strings (nothing_happens...), the tables of words; every function's
+    context and call sites, for what a parameter or a return value can
+    be."""
+
+    def __init__(self):
+        self.strings = {}
+        self.arrays = {}
+        self.defs = {}  # function name -> [Context]
+        self.callers = {}  # function name -> [(Context, args)]
+        self.memo = {}
+
+    def index(self, ctx):
+        self.defs.setdefault(ctx.func.name, []).append(ctx)
+        for name, args in ctx.calls:
+            self.callers.setdefault(name, []).append((ctx, args))
+
+    def _memo(self, key, compute, unknown=None):
+        if key in self.memo:
+            return self.memo[key]
+        self.memo[key] = unknown  # what a cycle answers
+        value = compute()
+        self.memo[key] = value
+        return value
+
+    def definitions(self, name, unit):
+        defs = self.defs.get(name, [])
+        if len(defs) > 1:
+            defs = [d for d in defs if d.unit is unit] or defs[:1]
+        return defs
+
+    def call_sites(self, ctx):
+        sites = self.callers.get(ctx.func.name, [])
+        if len(self.defs.get(ctx.func.name, [])) > 1:
+            sites = [s for s in sites if s[0].unit is ctx.unit]
+        return sites
+
+    def param_values(self, ctx, name):
+        """The literals every caller passes for a parameter, or None."""
+        def compute():
+            k = ctx.param_list.index(name)
+            sites = self.call_sites(ctx)
+            if not sites:
+                return None
+            out = []
+            for caller, args in sites:
+                if k >= len(args):
+                    return None
+                if source_text(strip_expr(args[k])) in NULL_POINTERS or source_text(args[k]) in NULL_POINTERS:
+                    continue
+                v = caller.values(args[k])
+                if v is None:
+                    return None
+                out += v
+            return dedupe(out) if out else None
+        return self._memo(("pv", ctx.unit.path, ctx.func.name, name), compute)
+
+    def param_values_partial(self, ctx, name):
+        """The literals the callers that pass literals give a parameter."""
+        def compute():
+            k = ctx.param_list.index(name)
+            out = []
+            for caller, args in self.call_sites(ctx):
+                if k < len(args):
+                    v = caller.values(args[k])
+                    if v is not None:
+                        out += v
+            return dedupe(out)
+        return self._memo(("pp", ctx.unit.path, ctx.func.name, name), compute, [])
+
+    def param_kind(self, ctx, name):
+        def compute():
+            k = ctx.param_list.index(name)
+            kinds = set()
+            for caller, args in self.call_sites(ctx):
+                if k < len(args) and caller.values(args[k]) is None:
+                    kinds.add(caller.kind(args[k]))
+            kinds.discard("text")
+            return kinds.pop() if len(kinds) == 1 else "text"
+        return self._memo(("pk", ctx.unit.path, ctx.func.name, name), compute, "text")
+
+    def return_values(self, name, unit):
+        """The literals a function returns, or None."""
+        def compute():
+            defs = self.definitions(name, unit)
+            if not defs:
+                return None
+            out = []
+            for d in defs:
+                if not d.returns:
+                    return None
+                for expr in d.returns:
+                    if source_text(strip_expr(expr)) in NULL_POINTERS:
+                        continue
+                    v = d.values(expr)
+                    if v is None:
+                        return None
+                    out += v
+            return dedupe(out) if out else None
+        return self._memo(("rv", unit.path, name), compute)
+
+    def return_kind(self, name, unit):
+        def compute():
+            kinds = set()
+            for d in self.definitions(name, unit):
+                for expr in d.returns:
+                    if source_text(strip_expr(expr)) not in NULL_POINTERS:
+                        kinds.add(d.kind(expr))
+            kinds.discard("text")
+            return kinds.pop() if len(kinds) == 1 else "text"
+        return self._memo(("rk", unit.path, name), compute, "text")
+
+
+class Context:
+    """One function: its parameters, the literal assignments of its
+    variables, the buffers it writes."""
+
+    def __init__(self, glob, unit, func):
+        self.glob = glob
+        self.unit = unit
+        self.func = func
+        toks = unit.toks
+        self.param_list = self._params()
+        self.params = set(self.param_list)
+        self.assigns = {}
+        self.arrays = {}
+        self.ops = {}
+        self.returns = []
+        self.calls = []
+        # where each variable is a whole argument of a call: a buffer is
+        # shown (or handed on) there
+        self.uses = {}
+        start, end = func.body
+        i = start + 1
+        while i < end:
+            t = toks[i]
+            if t.text == "return" and toks[i + 1].text != ";":
+                j = expression_end(toks, i + 1, end)
+                self.returns.append(toks[i + 1:j])
+            if (t.kind == "ident" and toks[i + 1].text == "(" and toks[i - 1].text not in (".", "->")
+                    and t.text not in BUFFER_OPS):
+                close = match_close(toks, i + 1)
+                args = split_args(toks, i + 1, close)
+                self.calls.append((t.text, args))
+                if t.text not in BUFFER_QUERIES:
+                    for a in args:
+                        a = strip_expr(a)
+                        if len(a) == 1 and a[0].kind == "ident":
+                            self.uses.setdefault(a[0].text, []).append(i)
+            if t.text == "=" and toks[i - 1].kind == "ident" and toks[i - 2].text not in (".", "->"):
+                name = toks[i - 1].text
+                if toks[i + 1].text == "{":
+                    close = match_close(toks, i + 1)
+                    values = clex.string_array(toks[i + 2:close])
+                    if values is not None:
+                        self.arrays[name] = values
+                    i = close + 1
+                    continue
+                j = expression_end(toks, i + 1, end)
+                self.assigns.setdefault(name, []).append(toks[i + 1:j])
+                i = j
+                continue
+            if t.text == "=" and toks[i - 1].text == "]" and toks[i + 1].text == "{":
+                # name[...] = {...}: a local table
+                k = i - 1
+                while k > start and toks[k].text != "[":
+                    k -= 1
+                close = match_close(toks, i + 1)
+                if toks[k - 1].kind == "ident":
+                    values = clex.string_array(toks[i + 2:close])
+                    if values is not None:
+                        self.arrays[toks[k - 1].text] = values
+                i = close + 1
+                continue
+            if (t.kind == "ident" and toks[i + 1].text == "[" and toks[i + 2].text == "0"
+                    and toks[i + 3].text == "]" and toks[i + 4].text == "="
+                    and toks[i + 5].text in ("'\\0'", "0") and toks[i - 1].text not in (".", "->")):
+                # buf[0] = '\0': the buffer is emptied
+                self.ops.setdefault(t.text, []).append(
+                    Op(i, False, [clex.Tok("string", '""', t.line, "")], [], False, t.line, "="))
+            if (t.text == "*" and toks[i + 1].kind == "ident" and toks[i + 2].text == "="
+                    and toks[i + 3].text in ("'\\0'", "0") and toks[i - 1].text in (";", "{", "}", ")")):
+                self.ops.setdefault(toks[i + 1].text, []).append(
+                    Op(i, False, [clex.Tok("string", '""', t.line, "")], [], False, t.line, "="))
+            if (t.kind == "ident" and t.text in BUFFER_OPS and toks[i + 1].text == "("
+                    and toks[i - 1].text not in (".", "->")):
+                close = match_close(toks, i + 1)
+                args = split_args(toks, i + 1, close)
+                didx, tidx, printf = BUFFER_OPS[t.text]
+                if len(args) > tidx:
+                    dest, append = destination(args[didx])
+                    if dest:
+                        op = Op(i, append or t.text in APPENDS, args[tidx], args[tidx + 1:],
+                                printf, t.line, t.text)
+                        self.ops.setdefault(dest, []).append(op)
+            i += 1
+
+    def _params(self):
+        toks = self.unit.toks
+        k = self.func.body[0] - 1
+        while k > 0 and toks[k].text != ")":
+            k -= 1
+        open_i = k
+        depth = 0
+        while open_i > 0:
+            if toks[open_i].text == ")":
+                depth += 1
+            elif toks[open_i].text == "(":
+                depth -= 1
+                if depth == 0:
+                    break
+            open_i -= 1
+        params = []
+        for arg in split_args(toks, open_i, k):
+            names = [t.text for t in arg if t.kind == "ident"]
+            params.append(names[-1] if names else "")
+        return params
+
+    def string_const(self, name):
+        if name in self.unit.strings:
+            return self.unit.strings[name]
+        return self.glob.strings.get(name)
+
+    def array(self, name):
+        for table in (self.arrays, self.unit.arrays, self.glob.arrays):
+            if name in table:
+                return table[name]
+        return None
+
+    def values(self, toks, depth=0, seen=()):
+        """The literals an expression can be, or None when it can be
+        something else."""
+        if depth > 8:
+            return None
+        toks = strip_expr(toks)
+        if not toks:
+            return None
+        tern = ternary(toks)
+        if tern:
+            a = self.values(tern[1], depth + 1, seen)
+            b = self.values(tern[2], depth + 1, seen)
+            if a is not None and b is not None:
+                return dedupe(a + b)
+            return None
+        if all(t.kind == "string" or (t.kind == "ident" and self.string_const(t.text) is not None)
+               for t in toks):
+            return ["".join(t.value if t.kind == "string" else self.string_const(t.text) for t in toks)]
+        call = call_parts(toks)
+        if call:
+            name, args = call
+            if name in LITERAL_CALLS:
+                return LITERAL_CALLS[name]
+            if name in ("vtense", "otense") and len(args) == 2:
+                verbs = self.values(args[1], depth + 1, seen)
+                if verbs is not None:
+                    return dedupe([f for v in verbs for f in (v, verb_s(v))])
+            if name in ("upstart", "capitalize", "highc") and len(args) == 1:
+                inner = self.values(args[0], depth + 1, seen)
+                if inner is not None:
+                    return [v[:1].upper() + v[1:] for v in inner]
+            if name in WRAPPERS or name in OBJVERB:
+                return None
+            returned = self.glob.return_values(name, self.unit)
+            if name in KIND_FUNCS and returned is not None and len(returned) > 4:
+                # a word of a large set (a body part, a colour): the
+                # lexicon's, not one entry per word
+                return None
+            return returned
+        if len(toks) == 1 and toks[0].kind == "ident":
+            name = toks[0].text
+            if name in LITERAL_CALLS:
+                return LITERAL_CALLS[name]
+            if name in self.ops or name in seen:
+                return None
+            out = []
+            if name in self.params:
+                v = self.glob.param_values(self, name)
+                if v is None:
+                    return None
+                out += v
+            elif name not in self.assigns:
+                return None
+            for rhs in self.assigns.get(name, []):
+                if source_text(rhs) in NULL_POINTERS:
+                    continue
+                v = self.values(rhs, depth + 1, seen + (name,))
+                if v is None:
+                    return None
+                out += v
+            return dedupe(out) if out else None
+        # table[i]
+        if (toks[0].kind == "ident" and len(toks) >= 4 and toks[1].text == "["
+                and match_close(toks, 1) == len(toks) - 1):
+            table = self.array(toks[0].text)
+            if table:
+                return dedupe(table)
+        return None
+
+    def kind(self, toks, depth=0, seen=()):
+        """What a %s argument names, when it is not a literal."""
+        if depth > 8:
+            return "text"
+        toks = strip_expr(toks)
+        if not toks:
+            return "text"
+        tern = ternary(toks)
+        if tern:
+            kinds = set()
+            for side in tern[1:]:
+                if self.values(side) is None:
+                    kinds.add(self.kind(side, depth + 1, seen))
+            return "|".join(sorted(kinds)) if kinds else "text"
+        call = call_parts(toks)
+        if call:
+            name, args = call
+            if name in KIND_FUNCS:
+                return KIND_FUNCS[name]
+            if name in OBJVERB:
+                return "object"
+            if name in WRAPPERS and args:
+                return self.kind(args[0], depth + 1, seen)
+            if re.search(r"mon_?nam$|Monnam$", name):
+                return "monster"
+            return self.glob.return_kind(name, self.unit)
+        if len(toks) == 1 and toks[0].kind == "ident":
+            name = toks[0].text
+            if name in seen:
+                return "text"
+            kinds = set()
+            if name in self.params:
+                kinds.add(self.glob.param_kind(self, name))
+            for rhs in self.assigns.get(name, []):
+                if source_text(rhs) not in NULL_POINTERS:
+                    kinds.add(self.kind(rhs, depth + 1, seen + (name,)))
+            kinds.discard("text")
+            if len(kinds) == 1:
+                return kinds.pop()
+            return "text"
+        text = source_text(toks)
+        if re.search(r"pmnames\s*\[|^mons\[", text):
+            return "species"
+        if re.search(r"oc_name|oc_descr|OBJ_NAME|OBJ_DESCR", text):
+            return "object"
+        if re.search(r"\.explanation|defsyms", text):
+            return "word"
+        return "text"
+
+    # ---- the formats a call can show
+
+    def alternatives(self, m, arg, pos, depth):
+        """What conversion m with argument tokens `arg` can show: pieces
+        (format text, kinds of its conversions)."""
+        plain = m.group("conv") == "s" and m.group("width") is None and m.group("prec") is None
+        if not plain:
+            return [(m.group(0), [conv_kind(m)])]
+        return self.pieces(arg, pos, depth)
+
+    def pieces(self, toks, pos, depth, seen=()):
+        """What an expression shown as text can be: its literals, the verb
+        forms of Tobjnam(obj, "verb"), what a local buffer holds, the
+        values of a variable's assignments; a placeholder for the rest."""
+        v = self.values(toks)
+        if v is not None:
+            return [(escape(x), []) for x in v]
+        placeholder = [("%s", [self.kind(toks)])]
+        if depth >= MAX_DEPTH:
+            return placeholder
+        t = strip_expr(toks)
+        tern = ternary(t)
+        if tern:
+            return dedupe(self.pieces(tern[1], pos, depth + 1, seen)
+                          + self.pieces(tern[2], pos, depth + 1, seen))[:MAX_DERIVED]
+        call = call_parts(t)
+        if call and call[0] in OBJVERB and len(call[1]) == 2:
+            verbs = self.values(call[1][1])
+            if verbs is not None:
+                forms = dedupe([f for x in verbs for f in (x, verb_s(x))])
+                return [("%s " + escape(f), ["object"]) for f in forms]
+        if len(t) != 1 or t[0].kind != "ident" or t[0].text in seen:
+            return placeholder
+        name = t[0].text
+        if name in self.ops:
+            return self.compositions(name, pos, depth + 1) or placeholder
+        out = []
+        if name in self.params:
+            # the literals some callers pass, and the placeholder for the
+            # others
+            known = self.glob.param_values_partial(self, name)
+            out += [(escape(x), []) for x in known] + placeholder
+        if name in self.assigns:
+            for rhs in self.assigns[name]:
+                if source_text(rhs) in NULL_POINTERS:
+                    continue
+                out += self.pieces(rhs, pos, depth + 1, seen + (name,))
+        out = dedupe(out)
+        return out[:MAX_DERIVED] if out else placeholder
+
+    def variants(self, fmt, args, pos, depth=0):
+        """Every text of format `fmt` with its arguments: literal arguments
+        put in, buffers inlined. Pieces (format, kinds)."""
+        convs = conversions(fmt)
+        choices = []
+        ai = 0
+        for m in convs:
+            ai += (m.group("width") == "*") + (m.group("prec") == "*")
+            arg = args[ai] if ai < len(args) else []
+            ai += 1
+            choices.append(self.alternatives(m, arg, pos, depth))
+        # too many combinations: the most varied arguments stay placeholders
+        while product_size(choices) > MAX_DERIVED:
+            k = max(range(len(choices)), key=lambda c: len(choices[c]))
+            choices[k] = [(convs[k].group(0), [conv_kind(convs[k])])]
+        out = []
+        for combo in itertools.product(*choices):
+            text = []
+            kinds = []
+            p = 0
+            for m, (piece, piece_kinds) in zip(convs, combo):
+                text.append(fmt[p:m.start()])
+                text.append(piece)
+                kinds += piece_kinds
+                p = m.end()
+            text.append(fmt[p:])
+            out.append(("".join(text), kinds))
+        return out
+
+    def generic(self, fmt, args):
+        """The format as it is, with the kinds of its conversions."""
+        kinds = []
+        ai = 0
+        for m in conversions(fmt):
+            ai += (m.group("width") == "*") + (m.group("prec") == "*")
+            arg = args[ai] if ai < len(args) else []
+            ai += 1
+            kinds.append(self.kind(arg) if conv_kind(m) == "text" else conv_kind(m))
+        return fmt, kinds
+
+    def op_pieces(self, op, depth):
+        """What one buffer operation writes."""
+        if op.printf:
+            fmts = self.values(op.text)
+            if fmts is None:
+                return []
+            return [p for f in fmts for p in self.variants(f, op.args, op.index, depth)]
+        return self.pieces(op.text, op.index, depth)
+
+    def compositions(self, name, pos, depth):
+        """What buffer `name` can hold at token `pos`: what the operations
+        since its last use before `pos` wrote (a buffer is reused for one
+        text after another): each Sprintf/Strcpy alone, and followed by
+        the Strcats after it when there are few (more are a list, not a
+        sentence). Branches are not followed: an over-approximation."""
+        uses = [u for u in self.uses.get(name, []) if u < pos]
+        since = max(uses) if uses else -1
+        ops = [op for op in self.ops.get(name, []) if since < op.index < pos]
+        if ops and all(op.append for op in ops) and since >= 0:
+            # appended to what it held at its last use
+            before = self.compositions(name, since, depth)
+            tails = [self.op_pieces(a, depth) for a in ops]
+            if not before or product_size([before] + tails) > MAX_DERIVED:
+                return []
+            return dedupe([("".join(p for p, _ in combo), [x for _, ks in combo for x in ks])
+                           for combo in itertools.product(before, *tails)])[:MAX_DERIVED]
+        if not ops and since >= 0:
+            return self.compositions(name, since, depth)
+        out = []
+        for k, op in enumerate(ops):
+            if op.append:
+                continue
+            heads = self.op_pieces(op, depth)
+            out += heads
+            tails = [self.op_pieces(a, depth) for a in ops[k + 1:] if a.append]
+            tails = [t for t in tails if t]
+            if tails and len(tails) <= MAX_APPENDS and product_size([heads] + tails) <= MAX_DERIVED:
+                for combo in itertools.product(heads, *tails):
+                    out.append(("".join(p for p, _ in combo), [x for _, ks in combo for x in ks]))
+        return dedupe(out)[:MAX_DERIVED]
+
+    def formats(self, toks, pos):
+        """The formats a format argument can be: its literals, or what the
+        buffer it names holds."""
+        v = self.values(toks)
+        if v is not None:
+            return [(f, None) for f in v]
+        toks = strip_expr(toks)
+        if len(toks) == 1 and toks[0].kind == "ident" and toks[0].text in self.ops:
+            return [(f, kinds) for f, kinds in self.compositions(toks[0].text, pos, 1)]
+        return []
+
+
+def product_size(choices):
+    n = 1
+    for c in choices:
+        n *= max(1, len(c))
+    return n
+
+
+def expression_end(toks, i, end):
+    """The index of the `;` or top-level `,` ending the expression at i."""
+    depth = 0
+    while i < end:
+        x = toks[i]
+        if x.kind == "punct":
+            if x.text in "([{":
+                depth += 1
+            elif x.text in ")]}":
+                if depth == 0:
+                    break
+                depth -= 1
+            elif x.text in (";", ",") and depth == 0:
+                break
+        i += 1
+    return i
+
+
+# --------------------------------------------------------- the catalog
+
+class Entry:
+    def __init__(self, fmt):
+        self.fmt = fmt
+        self.uses = set()
+        self.args = None  # per conversion: set of kinds
+        self.sites = []
+        self.base = None
+        self.expanded = False
+
+
+def entry_id(fmt):
+    return hashlib.sha1(fmt.encode("utf-8")).hexdigest()[:12]
+
+
+def worth_keeping(fmt):
+    """A format with words, or with conversions between punctuation that
+    tells its parts apart ("%c - %s.", "%s (%d)"); not one of conversions
+    and sentence punctuation only ("%s.", "%s, %s"), which matches
+    anything."""
+    literal = CONV_RE.sub("", fmt)
+    if re.search(r"[A-Za-z]", literal):
+        return True
+    return bool(conversions(fmt)) and re.sub(r"[\s.,!?;:'\"]", "", literal) != ""
+
+
+class Catalog:
+    def __init__(self):
+        self.entries = {}
+
+    def add(self, fmt, use, site, kinds, base=None):
+        """kinds: one kind per conversion of fmt."""
+        if not fmt or not worth_keeping(fmt):
+            return None
+        n = len(conversions(fmt))
+        assert len(kinds) == n, (fmt, kinds, site)
+        e = self.entries.get(fmt)
+        if e is None:
+            e = self.entries[fmt] = Entry(fmt)
+        e.uses.add(use)
+        if e.args is None:
+            e.args = [set() for _ in kinds]
+        for s, k in zip(e.args, kinds):
+            s.update(k.split("|"))
+        if site not in e.sites:
+            e.sites.append(site)
+        if base and base != fmt and e.base is None and base in self.entries:
+            e.base = base
+        return e
+
+    def add_all(self, use, site, generic, variants, prefixes=("",), suffix=""):
+        """A call's generic format and the texts it derives, with each
+        prefix vpline puts before them."""
+        for prefix in prefixes:
+            g = prefix + generic[0] + suffix
+            base = self.add(g, use, site, generic[1])
+            # a derived entry's site is short: its base shows the call
+            short = site.split("(", 1)[0].rsplit(" ", 1)[0] if base is not None else site
+            for fmt, kinds in variants:
+                full = prefix + fmt + suffix
+                if full == g:
+                    continue
+                self.add(full, use, short, kinds, base=g if base else None)
+                if base is not None:
+                    base.expanded = True
+
+
+def site_text(path, func, line, call, args):
+    shown = ", ".join(source_text(a) for a in args)
+    if len(shown) > 120:
+        shown = shown[:117] + "..."
+    return f"{path}:{line} {func} {call}({shown})"
+
+
+def scan_function(cat, ctx):
+    glob, unit, func = ctx.glob, ctx.unit, ctx.func
+    toks = unit.toks
+    start, end = func.body
+    path = "src/" + unit.path
+    i = start
+    while i < end:
+        t = toks[i]
+        if t.kind == "ident" and t.text in ASSIGN_SINKS and toks[i + 1].text == "=" and toks[i - 1].text in (".", "->"):
+            j = expression_end(toks, i + 2, end)
+            rhs = toks[i + 2:j]
+            v = ctx.values(rhs)
+            site = f"{path}:{t.line} {func.name} {t.text} = {source_text(rhs)}"
+            for x in v or []:
+                cat.add(escape(x), ASSIGN_SINKS[t.text], site, [])
+            i = j
+            continue
+        if t.kind != "ident" or toks[i + 1].text != "(" or toks[i - 1].text in (".", "->"):
+            i += 1
+            continue
+        name = t.text
+        close = match_close(toks, i + 1)
+        if name in NOT_SHOWN:
+            i = close + 1
+            continue
+        args = split_args(toks, i + 1, close)
+        site = site_text(path, func.name, t.line, name, args)
+        if name in PLINE1 and args:
+            _, prefixes = PLINE[PLINE1[name]]
+            add_printf(cat, ctx, "pline", None, args, i, site, prefixes, PLINE1[name])
+        elif name in PLINE and len(args) > PLINE[name][0]:
+            fidx, prefixes = PLINE[name]
+            add_printf(cat, ctx, PLINE_USE.get(name, "pline"), args[fidx], args[fidx + 1:], i,
+                       site, prefixes, name)
+        elif name in BUFFER_OPS and len(args) > BUFFER_OPS[name][1]:
+            didx, tidx, printf = BUFFER_OPS[name]
+            dest, _ = destination(args[didx])
+            use = "death" if dest and "killer" in dest else "sprintf"
+            if printf:
+                add_printf(cat, ctx, use, args[tidx], args[tidx + 1:], i, site, ("",), name)
+            else:
+                add_text(cat, ctx, use, args[tidx], i, site)
+        elif name in SINKS:
+            for use, tidx in SINKS[name]:
+                if len(args) > tidx:
+                    add_text(cat, ctx, use, args[tidx], i, site)
+        elif name in ENL:
+            add_enlightenment(cat, ctx, name, args, i, site)
+        i += 1
+
+
+def add_printf(cat, ctx, use, fmt_toks, args, pos, site, prefixes, name):
+    """A printf-style call. fmt_toks None: the X1(cstr) shorthands."""
+    suffix = '"' if name == "verbalize" else ""
+    if fmt_toks is None:
+        fmts = [("%s", None)]
+    else:
+        fmts = ctx.formats(fmt_toks, pos)
+    for fmt, kinds in fmts:
+        if kinds is not None:
+            # a buffer as the format: what it holds is the text
+            cat.add_all(use, site, (fmt, kinds), [], prefixes, suffix)
+            continue
+        cat.add_all(use, site, ctx.generic(fmt, args), ctx.variants(fmt, args, pos), prefixes, suffix)
+
+
+def add_text(cat, ctx, use, arg, pos, site):
+    """Text that is not a format: each literal it can be, or what the
+    buffer it names holds."""
+    v = ctx.values(arg)
+    if v is not None:
+        for x in v:
+            cat.add(escape(x), use, site, [])
+        return
+    toks = strip_expr(arg)
+    if len(toks) == 1 and toks[0].kind == "ident" and toks[0].text in ctx.ops:
+        for fmt, kinds in ctx.compositions(toks[0].text, pos, 1):
+            cat.add(fmt, use, site, kinds)
+
+
+def add_enlightenment(cat, ctx, name, args, pos, site):
+    """you_are(attr, ps) and its kin: " You are <attr><ps>." while the game
+    goes on, " You were <attr><ps>." at its end."""
+    if name == "enl_msg":
+        if len(args) != 5:
+            return
+        prefix = ctx.values(args[0])
+        verbs = [ctx.values(args[1]), ctx.values(args[2])]
+        attr, ps = args[3], args[4]
+        if prefix is None or None in verbs:
+            return
+        forms = [(p, v) for p in prefix for vs in verbs for v in vs]
+    else:
+        spec = ENL[name]
+        if name in ("you_have_been", "you_have_never", "you_have_X"):
+            if len(args) != 1:
+                return
+            attr, ps = args[0], None
+        else:
+            if len(args) != 2:
+                return
+            attr, ps = args
+        forms = [(spec[0], spec[1]), (spec[0], spec[2])]
+    attrs = enl_pieces(ctx, attr, pos)
+    pss = enl_pieces(ctx, ps, pos) if ps is not None else [("", [])]
+    for p, v in forms:
+        for a, akinds in attrs:
+            for s, skinds in pss:
+                fmt = " " + escape(p) + escape(v) + a + s + "."
+                for twowords, short in ENL_CONTRACTIONS:
+                    fmt = fmt.replace(twowords, short)
+                cat.add(fmt, "window", site, akinds + skinds)
+
+
+def enl_pieces(ctx, toks, pos):
+    v = ctx.values(toks)
+    if v is not None:
+        return [(escape(x), []) for x in v]
+    t = strip_expr(toks)
+    if len(t) == 1 and t[0].kind == "ident" and t[0].text in ctx.ops:
+        built = ctx.compositions(t[0].text, pos, 1)
+        if built:
+            return built
+    return [("%s", [ctx.kind(toks)])]
+
+
+# ------------------------------------------------------------ the run
+
+def load_globals(units):
+    glob = Globals()
+    inc = os.path.join(UPSTREAM, "include")
+    for name in sorted(os.listdir(inc)):
+        if not name.endswith(".h"):
+            continue
+        with open(os.path.join(inc, name), encoding="latin-1") as f:
+            u = clex.scan_unit(name, f.read())
+        glob.strings.update(u.strings)
+        glob.arrays.update(u.arrays)
+    # the common strings: #define nothing_happens c_common_strings.c_nothing_happens
+    decl = next(u for u in units if u.path == "decl.c")
+    with open(os.path.join(inc, "decl.h"), encoding="latin-1") as f:
+        decl_h = f.read()
+    for struct in ("c_common_strings",):
+        fields = struct_fields(os.path.join(inc, "hack.h"), struct)
+        table = dict(zip(fields, struct_initializer(decl, struct)))
+        for m in re.finditer(rf"#define\s+(\w+)\s+{struct}\.(\w+)\s*$", decl_h, re.M):
+            v = table.get(m.group(2))
+            if isinstance(v, str):
+                glob.strings[m.group(1)] = v
+    for u in units:
+        for k, v in u.arrays.items():
+            glob.arrays.setdefault(k, v)
+    return glob
+
+
+def struct_fields(header, struct):
+    with open(header, encoding="latin-1") as f:
+        src = f.read()
+    m = re.search(rf"struct {struct} {{(.*?)}};", src, re.S)
+    return [n for n, _ in re.findall(r"\*const\s+(\w+)(\[\d+\])?", m.group(1))]
+
+
+def struct_initializer(unit, struct):
+    toks = unit.toks
+    for i, t in enumerate(toks):
+        if t.text == struct and toks[i + 1].text == "=" and toks[i + 2].text == "{":
+            close = match_close(toks, i + 2)
+            out = []
+            for arg in split_args(toks, i + 2, close):
+                if arg and all(x.kind == "string" for x in arg):
+                    out.append("".join(x.value for x in arg))
+                else:
+                    out.append(None)
+            return out
+    return []
+
+
+def extract():
+    src_dir = os.path.join(UPSTREAM, "src")
+    units = []
+    for name in sorted(os.listdir(src_dir)):
+        if name.endswith(".c"):
+            with open(os.path.join(src_dir, name), encoding="latin-1") as f:
+                units.append(clex.scan_unit(name, f.read()))
+    glob = load_globals(units)
+    contexts = [Context(glob, unit, func) for unit in units for func in unit.functions]
+    for ctx in contexts:
+        glob.index(ctx)
+    cat = Catalog()
+    for ctx in contexts:
+        scan_function(cat, ctx)
+    for fmt, use, site, kinds in datfiles.extract(UPSTREAM):
+        cat.add(fmt, use, site, kinds)
+    return cat
+
+
+def site_key(site):
+    m = re.match(r"(\S+?):(\d+)", site)
+    return (m.group(1), int(m.group(2))) if m else (site, 0)
+
+
+def render(cat):
+    entries = sorted(cat.entries.values(), key=lambda e: (site_key(e.sites[0]), e.fmt))
+    ids = {}
+    for e in entries:
+        i = entry_id(e.fmt)
+        if i in ids:
+            raise SystemExit(f"id collision: {ids[i]!r} and {e.fmt!r}")
+        ids[i] = e.fmt
+    lines = []
+    for e in entries:
+        obj = {"id": entry_id(e.fmt), "fmt": e.fmt, "uses": sorted(e.uses)}
+        if e.args:
+            obj["args"] = ["|".join(sorted(a)) for a in e.args]
+        if e.base:
+            obj["from"] = entry_id(e.base)
+        if e.expanded:
+            obj["expanded"] = True
+        obj["sites"] = e.sites
+        lines.append(json.dumps(obj, ensure_ascii=False))
+    head = {"format": CATALOG_FORMAT, "engine": ENGINE, "count": len(lines)}
+    return json.dumps(head)[:-1] + ', "entries": [\n' + ",\n".join(lines) + "\n]}\n"
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    ap.add_argument("--check", action="store_true", help="fail if the catalog is out of date")
+    ap.add_argument("--out", default=OUT)
+    opts = ap.parse_args()
+    text = render(extract())
+    if opts.check:
+        with open(opts.out, encoding="utf-8") as f:
+            if f.read() != text:
+                raise SystemExit(f"{opts.out} is out of date: run tools/i18n/extract.py")
+        print(f"{opts.out} is up to date")
+        return
+    os.makedirs(os.path.dirname(opts.out), exist_ok=True)
+    with open(opts.out, "w", encoding="utf-8") as f:
+        f.write(text)
+    print(f"{opts.out}: {len(cat_lines(text))} entries")
+
+
+def cat_lines(text):
+    return [line for line in text.split("\n")[1:] if line.startswith("{")]
+
+
+if __name__ == "__main__":
+    main()

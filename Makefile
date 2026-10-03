@@ -8,6 +8,8 @@
 #   make deck         screenshots at the Steam Deck's 1280×800 (needs a display)
 #   make soak         random play through the client UI, seeds 1..8
 #   make art          fetch the CC0 art again (tools/fetch_art.py; needs Pillow)
+#   make i18n-catalog extract the English catalog of every text the engine shows
+#   make i18n-check   the extractor's tests; fail if the catalog is out of date
 #   make lint         rustfmt and clippy, warnings are errors
 
 GODOT ?= godot
@@ -28,7 +30,8 @@ DECK_DIR ?= $(GODOT_PROJECT)/.godot/shots/deck
 SOAK_CI := 2000
 SOAK_SEEDS := 1 2 3 4 5 6 7 8
 
-.PHONY: all engine client import run test test-client soak lint need-timeout art icons achievement-icons deck
+.PHONY: all engine client import run test test-client soak lint need-timeout art icons achievement-icons deck \
+	i18n-catalog i18n-check
 all: engine
 
 engine:
@@ -147,6 +150,17 @@ achievement-icons: all client
 # then imports what changed
 art:
 	python3 tools/fetch_art.py
+
+# The English catalog the translation keys on (committed): every pline,
+# Sprintf, menu, question and dat/ text of engine/upstream, with its call
+# sites and what its placeholders are (tools/i18n/extract.py, Python 3, no
+# dependencies)
+i18n-catalog:
+	python3 tools/i18n/extract.py
+
+i18n-check:
+	python3 -m unittest discover -s tools/i18n
+	python3 tools/i18n/extract.py --check
 
 lint:
 	cd client/rust && cargo fmt --all -- --check
