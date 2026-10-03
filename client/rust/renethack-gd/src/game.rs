@@ -298,6 +298,9 @@ pub struct RenethackGame {
     veil: Option<Gd<godot::classes::ColorRect>>,
     veil_cue: Option<Gd<godot::classes::TextureRect>>,
     veil_lift: Option<Instant>,
+    /// The cue fading out before the veil lifts: since when, from what
+    /// strength.
+    cue_out: Option<(Instant, f32)>,
     /// The map's warm-up (its rehearsal, under the veil) has begun.
     map_warm: bool,
     /// When the last title frame began, and the pipelines compiled and
@@ -335,6 +338,8 @@ const VEIL_FRAMES: u64 = 8;
 const VEIL_CAP_SECS: f64 = 6.0;
 const VEIL_FADE: f32 = 0.25;
 const VEIL_CUE_SECS: f64 = 1.0;
+/// Seconds the cue takes to fade out, before the veil lifts.
+const CUE_OUT: f32 = 0.2;
 
 /// The way preview is drawn again only when one of these changes.
 #[derive(Debug, Clone, PartialEq)]
@@ -416,6 +421,7 @@ impl INode for RenethackGame {
             veil: None,
             veil_cue: None,
             veil_lift: None,
+            cue_out: None,
             map_warm: false,
             title_clock: None,
             title_render: ([0; 5], 0.0),
@@ -823,13 +829,15 @@ impl RenethackGame {
             return;
         };
         let secs = Time::singleton().get_ticks_msec() as f64 / 1000.0;
-        match self.veil_lift {
-            None => {
+        match (self.veil_lift, self.cue_out) {
+            (None, None) => {
+                let mut shown = 0.0;
                 if let Some(cue) = self.veil_cue.as_mut() {
                     let t = secs - VEIL_CUE_SECS;
                     let fade_in = (t / 0.6).clamp(0.0, 1.0);
                     let pulse = 0.45 + 0.25 * (t * std::f64::consts::TAU / 2.4).sin();
-                    cue.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, (fade_in * pulse) as f32));
+                    shown = (fade_in * pulse) as f32;
+                    cue.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, shown));
                 }
                 let title = self.state == GameState::Title;
                 let drawn = self
@@ -847,12 +855,24 @@ impl RenethackGame {
                         self.title_warm
                     );
                 }
-                if stats {
-                    godot_print!("game: the start-up veil lifts {secs:.1} s after start");
+                // the cue goes first: half faded over the title it would
+                // read as part of it
+                if shown > 0.01 {
+                    self.cue_out = Some((Instant::now(), shown));
+                } else {
+                    self.start_lift(stats, secs);
                 }
-                self.veil_lift = Some(Instant::now());
             }
-            Some(t) => {
+            (None, Some((t, from))) => {
+                let a = from * (1.0 - t.elapsed().as_secs_f32() / CUE_OUT);
+                if let Some(cue) = self.veil_cue.as_mut() {
+                    cue.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, a.max(0.0)));
+                }
+                if a <= 0.0 {
+                    self.start_lift(stats, secs);
+                }
+            }
+            (Some(t), _) => {
                 let a = 1.0 - t.elapsed().as_secs_f32() / VEIL_FADE;
                 if a <= 0.0 {
                     if let Some(mut layer) = veil.get_parent() {
@@ -865,6 +885,14 @@ impl RenethackGame {
                 }
             }
         }
+    }
+
+    /// The start-up veil begins to fade.
+    fn start_lift(&mut self, stats: bool, secs: f64) {
+        if stats {
+            godot_print!("game: the start-up veil lifts {secs:.1} s after start");
+        }
+        self.veil_lift = Some(Instant::now());
     }
 
     /// Frames shown so far: those drawn, or (headless, where none is)
