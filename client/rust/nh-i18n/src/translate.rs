@@ -131,6 +131,11 @@ impl Translator {
             {
                 return out;
             }
+            // a format of conversions alone ("%s %s%s%s") says nothing its
+            // derived templates did not: the text decides
+            if self.catalog.templates()[i].letters() == 0 {
+                return self.by_text(text, Channel::Message);
+            }
             // the generic template with P7's arguments: a literal argument
             // is a piece, translated on its own
             if let Some(out) = self.render_args(i, args) {

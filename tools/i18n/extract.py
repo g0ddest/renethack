@@ -1040,9 +1040,11 @@ class Catalog:
     def __init__(self):
         self.entries = {}
 
-    def add(self, fmt, use, site, kinds, base=None):
-        """kinds: one kind per conversion of fmt."""
-        if not fmt or not worth_keeping(fmt):
+    def add(self, fmt, use, site, kinds, base=None, force=False):
+        """kinds: one kind per conversion of fmt. `force` keeps a format
+        that is not worth keeping on its own: the generic format of
+        derived entries, which P7 sends ("%s %s%s%s")."""
+        if not fmt or not (worth_keeping(fmt) or force):
             return None
         n = len(conversions(fmt))
         assert len(kinds) == n, (fmt, kinds, site)
@@ -1065,7 +1067,11 @@ class Catalog:
         prefix vpline puts before them."""
         for prefix in prefixes:
             g = prefix + generic[0] + suffix
-            base = self.add(g, use, site, generic[1])
+            derives = any(prefix + f + suffix != g and worth_keeping(prefix + f + suffix)
+                          for f, _ in variants)
+            # a format of conversions alone stays as the key P7 sends, when
+            # it has entries derived from it
+            base = self.add(g, use, site, generic[1], force=derives and bool(conversions(g)))
             # a derived entry's site is short: its base shows the call
             short = site.split("(", 1)[0].rsplit(" ", 1)[0] if base is not None else site
             for fmt, kinds in variants:
