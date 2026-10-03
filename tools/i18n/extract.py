@@ -961,7 +961,44 @@ class Context:
         toks = strip_expr(toks)
         if len(toks) == 1 and toks[0].kind == "ident" and toks[0].text in self.ops:
             return [(f, kinds) for f, kinds in self.compositions(toks[0].text, pos, 1)]
+        # &buf[i], buf + i: what it holds from offset i ("Wait!  " left out)
+        name, offsets = None, None
+        if (len(toks) >= 5 and toks[0].text == "&" and toks[1].kind == "ident"
+                and toks[2].text == "[" and match_close(toks, 2) == len(toks) - 1):
+            name, offsets = toks[1].text, self.int_values(toks[3:-1])
+        elif len(toks) >= 3 and toks[0].kind == "ident" and toks[1].text == "+":
+            name, offsets = toks[0].text, self.int_values(toks[2:])
+        if name in self.ops and offsets:
+            out = []
+            for f, kinds in self.compositions(name, pos, 1):
+                for k in offsets:
+                    if "%" not in f[:k]:
+                        out.append((f[k:], kinds))
+            return dedupe(out)
         return []
+
+    def int_values(self, toks, depth=0):
+        """The integer literals an expression can be (a ternary of them, a
+        variable assigned them), or None."""
+        toks = strip_expr(toks)
+        if depth > 4 or not toks:
+            return None
+        if len(toks) == 1 and toks[0].kind == "number" and toks[0].text.isdigit():
+            return [int(toks[0].text)]
+        tern = ternary(toks)
+        if tern:
+            a = self.int_values(tern[1], depth + 1)
+            b = self.int_values(tern[2], depth + 1)
+            return a + b if a is not None and b is not None else None
+        if len(toks) == 1 and toks[0].kind == "ident" and toks[0].text in self.assigns:
+            out = []
+            for rhs in self.assigns[toks[0].text]:
+                v = self.int_values(rhs, depth + 1)
+                if v is None:
+                    return None
+                out += v
+            return sorted(set(out))
+        return None
 
 
 def with_tails(heads, tails):
@@ -1150,10 +1187,47 @@ def add_printf(cat, ctx, use, fmt_toks, args, pos, site, prefixes, name):
         fmts = ctx.formats(fmt_toks, pos)
     for fmt, kinds in fmts:
         if kinds is not None:
-            # a buffer as the format: what it holds is the text
-            cat.add_all(use, site, (fmt, kinds), [], prefixes, suffix)
+            # a buffer as the format: what it holds is the text, its %%s
+            # the conversions the call's arguments fill
+            cat.add_all(use, site, as_format(ctx, fmt, kinds, args), [], prefixes, suffix)
             continue
         cat.add_all(use, site, ctx.generic(fmt, args), ctx.variants(fmt, args, pos), prefixes, suffix)
+
+
+def as_format(ctx, held, kinds, args):
+    """The format a buffer holds: `held` is its text as a format (its %
+    escaped as %%, its unknown parts %s with `kinds`); used as a format,
+    each %% before a conversion ("That %s is %%s!") becomes a conversion
+    the call's arguments fill."""
+    out = []
+    out_kinds = []
+    k = 0
+    ai = 0
+    i = 0
+    while i < len(held):
+        if held.startswith("%%", i):
+            m = CONV_RE.match(held, i + 1)
+            if m and m.group("conv") != "%":
+                ai += (m.group("width") == "*") + (m.group("prec") == "*")
+                arg = args[ai] if ai < len(args) else []
+                ai += 1
+                out.append(m.group(0))
+                out_kinds.append(ctx.kind(arg) if conv_kind(m) == "text" else conv_kind(m))
+                i = m.end()
+                continue
+            out.append("%%")
+            i += 2
+            continue
+        m = CONV_RE.match(held, i) if held[i] == "%" else None
+        if m:
+            out.append(m.group(0))
+            out_kinds.append(kinds[k] if k < len(kinds) else "text")
+            k += 1
+            i = m.end()
+            continue
+        out.append(held[i])
+        i += 1
+    return "".join(out), out_kinds
 
 
 def add_text(cat, ctx, use, arg, pos, site):

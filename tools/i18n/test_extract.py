@@ -90,6 +90,14 @@ class Formats(unittest.TestCase):
         self.assertIn("First text more!", catalog_of(src.replace("CALL", "show")))
         self.assertNotIn("First text more!", catalog_of(src.replace("CALL", "fill")))
 
+    def test_a_format_built_in_a_buffer(self):
+        e = catalog_of('void f(struct monst *m, int p) {\n'
+                       '    char fmtbuf[BUFSZ];\n'
+                       '    Snprintf(fmtbuf, sizeof fmtbuf, "%s %s is %%s!", p ? "That" : "This", "thing");\n'
+                       '    pline(fmtbuf, a_monnam(m));\n}\n')
+        self.assertIn("That thing is %s!", e)
+        self.assertEqual(e["That thing is %s!"].args, [{"monster"}])
+
     def test_helpers_returns_and_parameters(self):
         e = catalog_of('static const char *exclam(int d) { return d > 4 ? "!" : "."; }\n'
                        'static void hit(const char *what, int d) { You("hit %s%s", what, exclam(d)); }\n'
