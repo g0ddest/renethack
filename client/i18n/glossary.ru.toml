@@ -977,6 +977,7 @@
 "magic koto" = { ru = "волшебное кото", src = "chosen", note = "Samurai: magic harp", g = "n" }
 "gunyoki" = { ru = "гуньёки", src = "chosen", note = "Samurai: food ration", indecl = true, g = "m" }
 "potion of sake" = { ru = "флакон саке", src = "chosen", note = "Samurai: booze" }
+"very heavy iron ball" = { ru = "очень тяжёлое железное ядро", src = "chosen", note = "xname() of a heavier ball" }
 
 [appearance]
 # unidentified objects: their look, as xname() names it
@@ -1971,7 +1972,6 @@
 [part]
 "meat" = { ru = "мясо", src = "chosen", note = "tin of <monster> meat: банка мяса <monster>" }
 "spinach" = { ru = "шпинат", src = "chosen" }
-"soup made from" = { ru = "суп из", src = "chosen", note = "tin of soup made from <monster> meat" }
 "pair" = { ru = "пара", src = "chosen", note = "the unit of boots, gloves, lenses: 2 пары сапог" }
 "set" = { ru = "набор", src = "chosen", note = "the unit of dragon scales" }
 "item" = { ru = "предмет", src = "chosen", note = "containing N items: с N предметами" }
@@ -1980,6 +1980,8 @@
 "named" = { ru = "по имени", src = "chosen", note = "long sword named X: длинный меч по имени X" }
 "labeled" = { ru = "с надписью", src = "chosen", note = "scroll labeled X: свиток с надписью X" }
 "ghost" = { ru = "привидение", src = "chosen", note = "<Name>'s ghost: привидение <Name>" }
+"soup" = { ru = "суп", src = "chosen", note = "tin of soup made from <monster> meat: банка супа из мяса <monster>" }
+"contents" = { ru = "содержимое", src = "chosen", note = "the contents of X: содержимое X" }
 
 [status]
 "being worn" = { ru = "{надет|надета|надето|надеты}", src = "chosen", note = "{m|f|n|pl}: agrees with the item" }
@@ -1987,16 +1989,10 @@
 "embedded in your skin" = { ru = "{врос|вросла|вросло|вросли} в вашу кожу", src = "chosen" }
 "being doffed" = { ru = "{снимается|снимается|снимается|снимаются}", src = "chosen" }
 "being donned" = { ru = "{надевается|надевается|надевается|надеваются}", src = "chosen" }
-"weapon in {hand}" = { ru = "оружие в {hand:prep}", src = "chosen", note = "hand is the hero's body part (a claw, a tentacle...)" }
-"weapon in {hands}" = { ru = "оружие в {hands:prep}", src = "chosen" }
-"weapon in right {hand}" = { ru = "оружие в {правой:hand} {hand:prep}", src = "chosen", note = "right agrees with the body part" }
-"weapon in left {hand}" = { ru = "оружие в {левой:hand} {hand:prep}", src = "chosen" }
-"wielded in right {hand}" = { ru = "в {правой:hand} {hand:prep}", src = "chosen" }
-"wielded in left {hand}" = { ru = "в {левой:hand} {hand:prep}", src = "chosen" }
-"tethered to {hand}" = { ru = "{привязан|привязана|привязано|привязаны} к {hand:dat}", src = "chosen" }
-"tethered to right {hand}" = { ru = "{привязан|привязана|привязано|привязаны} к {правой:hand} {hand:dat}", src = "chosen" }
-"tethered to left {hand}" = { ru = "{привязан|привязана|привязано|привязаны} к {левой:hand} {hand:dat}", src = "chosen" }
-"tethered to {hands}" = { ru = "{привязан|привязана|привязано|привязаны} к {hands:dat}", src = "chosen" }
+"weapon in {hand}" = { ru = "оружие в {hand:prep}", src = "chosen", note = "hand: the hero's hand, claw, tentacle..., with right or left when the engine says so" }
+"wielded in {hand}" = { ru = "в {hand:prep}", src = "chosen", note = "the off-hand weapon in two-weapon combat" }
+"tethered to {hand}" = { ru = "{привязан|привязана|привязано|привязаны} к {hand:dat}", src = "chosen", note = "an aklys" }
+"on {hand}" = { ru = "на {hand:prep}", src = "chosen", note = "a ring" }
 "wielded" = { ru = "в руке", src = "chosen", note = "a wielded non-weapon or a stack of missiles" }
 "alternate weapon; not wielded" = { ru = "запасное оружие; не в руках", src = "chosen" }
 "alternate weapons; not wielded" = { ru = "запасное оружие; не в руках", src = "chosen" }
@@ -2004,8 +2000,6 @@
 "in quiver pouch" = { ru = "в подсумке", src = "chosen" }
 "at the ready" = { ru = "наготове", src = "chosen" }
 "lit" = { ru = "{горит|горит|горит|горят}", src = "chosen" }
-"on right {hand}" = { ru = "на {правой:hand} {hand:prep}", src = "chosen" }
-"on left {hand}" = { ru = "на {левой:hand} {hand:prep}", src = "chosen" }
 "laid by you" = { ru = "снесено вами", src = "chosen", note = "an egg" }
 "chained to you" = { ru = "{прикован|прикована|приковано|прикованы} к вам", src = "chosen" }
 "attached to you" = { ru = "{прикован|прикована|приковано|прикованы} к вам", src = "chosen" }
@@ -2020,15 +2014,15 @@
 "female" = { ru = "самка", src = "chosen", note = "wizard mode" }
 "unspecified gender" = { ru = "пол не указан", src = "chosen", note = "wizard mode" }
 "{n} aum" = { ru = "{n} аум", src = "chosen", note = "wizard mode weight" }
-"radiantly lit" = { ru = "сияет", src = "chosen" }
-"brilliantly lit" = { ru = "ярко светится", src = "chosen" }
-"brightly lit" = { ru = "светится", src = "chosen" }
-"dimly lit" = { ru = "тускло светится", src = "chosen" }
-"strangely lit" = { ru = "странно светится", src = "chosen" }
-"quivering {color}" = { ru = "дрожит {color:ins}", src = "chosen", note = "Sting's warning: дрожит голубым" }
-"flickering {color}" = { ru = "мерцает {color:ins}", src = "chosen" }
-"glimmering {color}" = { ru = "поблёскивает {color:ins}", src = "chosen" }
-"gleaming {color}" = { ru = "сверкает {color:ins}", src = "chosen" }
+"radiantly lit" = { ru = "{сияет|сияет|сияет|сияют}", src = "chosen" }
+"brilliantly lit" = { ru = "ярко {светится|светится|светится|светятся}", src = "chosen" }
+"brightly lit" = { ru = "{светится|светится|светится|светятся}", src = "chosen" }
+"dimly lit" = { ru = "тускло {светится|светится|светится|светятся}", src = "chosen" }
+"strangely lit" = { ru = "странно {светится|светится|светится|светятся}", src = "chosen" }
+"quivering {color}" = { ru = "{дрожит|дрожит|дрожит|дрожат} {color:ins}", src = "chosen", note = "Sting's warning: дрожит голубым" }
+"flickering {color}" = { ru = "{мерцает|мерцает|мерцает|мерцают} {color:ins}", src = "chosen" }
+"glimmering {color}" = { ru = "{поблёскивает|поблёскивает|поблёскивает|поблёскивают} {color:ins}", src = "chosen" }
+"gleaming {color}" = { ru = "{сверкает|сверкает|сверкает|сверкают} {color:ins}", src = "chosen" }
 "buy" = { ru = "покупка", src = "chosen", note = "price quotes: {buy 10-20 sell 5}" }
 "sell" = { ru = "продажа", src = "chosen" }
 
@@ -2133,6 +2127,9 @@
 "segment" = { ru = "сегмент", src = "chosen", note = "a worm" }
 "pedipalp" = { ru = "педипальпа", src = "chosen" }
 "pectoral fin" = { ru = "грудной плавник", src = "chosen" }
+"paw" = { ru = "лапа", src = "chosen", note = "dogs, cats, rodents, the owlbear" }
+"claw" = { ru = "коготь", src = "chosen", note = "humanoids with claws" }
+"ray" = { ru = "луч", src = "chosen", note = "a light" }
 
 [adjective]
 "blessed" = { ru = "благословенный", src = "chosen" }
@@ -2210,5 +2207,6 @@
 "grand" = { ru = "большой", src = "chosen", note = "the grand poohbah: большая шишка" }
 "your" = { ru = "ваш", src = "chosen", note = "possessive; agrees with the name" }
 "human" = { ru = "человеческий", src = "chosen", note = "the race adjective (role.c races[].adj)" }
+"unpaid" = { ru = "неоплаченный", src = "chosen", note = "paydoname(): an unpaid bag" }
 "right" = { ru = "правый", src = "chosen" }
 "left" = { ru = "левый", src = "chosen" }

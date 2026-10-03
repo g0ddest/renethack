@@ -49,7 +49,7 @@ ANIMATE = {"monster", "role", "rank", "god"}
 PROPER = {"artifact", "god", "place"}
 ADJECTIVES = {"adjective", "color", "gender"}
 FIXED = {"label", "status", "heading", "condition", "monclass"}
-LINKS = {"called", "named", "labeled", "soup made from"}
+LINKS = {"called", "named", "labeled"}
 # a few words in other sections are adjectives
 ADJECTIVE_KEYS = {
     ("race", "elven"), ("race", "dwarven"), ("race", "gnomish"), ("race", "orcish"),

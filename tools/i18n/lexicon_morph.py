@@ -268,7 +268,10 @@ def adj_forms(word, gender, number="sing"):
     """The six case forms of an adjective agreeing with a noun of that
     gender (masc/femn/neut) or plural; the accusative is the inanimate one.
     An adjective pymorphy3 does not know, or one it reads as a form of
-    another word (высший as высокий), declines like a model."""
+    another word (высший as высокий), declines like a model. An adverb
+    (очень) stays."""
+    if _is_adverb(word) and not _is_agreeing(word):
+        return [word] * 6
     try:
         p = adj_parse(word)
     except Unknown:
@@ -349,10 +352,16 @@ def split_phrase(text, head=None):
                 return words[:i], head, words[i + len(hw):]
         raise Unknown("head %r not in %r" % (head, text))
     for i, w in enumerate(words):
-        if i + 1 < len(words) and (_is_agreeing(w) or _unknown_adjective(w)):
+        if i + 1 < len(words) and (_is_agreeing(w) or _unknown_adjective(w) or _is_adverb(w)):
             continue
         return words[:i], w, words[i + 1 :]
     raise Unknown(text)
+
+
+def _is_adverb(word):
+    """An adverb before an adjective (очень тяжёлое): it stays as it is."""
+    ps = morph().parse(word)
+    return bool(ps) and ps[0].tag.POS == "ADVB"
 
 
 def phrase(text, anim, g=None, head=None, plural_only=False, like=None, indeclinable=False, proper=False,
