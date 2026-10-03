@@ -296,6 +296,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "nh-i18n"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "nh-link"
 version = "0.1.0"
 dependencies = [

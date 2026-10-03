@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["nh-protocol", "nh-link", "nh-cli", "nh-world", "nh-art", "renethack-gd"]
+members = ["nh-protocol", "nh-link", "nh-cli", "nh-world", "nh-art", "nh-i18n", "renethack-gd"]
 
 [workspace.package]
 version = "0.1.0"

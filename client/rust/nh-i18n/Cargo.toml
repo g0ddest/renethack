@@ -1,0 +1,12 @@
+[package]
+name = "nh-i18n"
+description = "renethack: the Russian translation of the engine's messages (catalog, matching, declension, rendering), no UI"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
