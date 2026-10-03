@@ -59,6 +59,9 @@ uniform float memory_glow = 0.06;
 // the ground under the level: rock that fades into darkness away from
 // what is known
 uniform float void_fade = 0.0;
+// it glows through its cracks too where the branch's floors do (the fire
+// under Gehennom), this much of theirs
+uniform float fissures = 0.0;
 // what the fog of war takes from what is remembered (0: nothing)
 uniform float memory = 1.0;
 // the least light a surface gives out (linear): never pure black
@@ -265,7 +268,7 @@ void fragment() {
 		rough = min(rough + 0.1 * g, 1.0);
 	}
 	vec3 lava = vec3(0.0);
-	if (grime > 0.0 && branch_cracks > 0.0) {
+	if ((grime > 0.0 || fissures > 0.0) && branch_cracks > 0.0) {
 		// fire under the floor shows through its cracks
 		float c = tn2(wpos.xz * 0.6 + 3.7);
 		float crack = smoothstep(0.487, 0.5, c) - smoothstep(0.5, 0.513, c);
@@ -284,9 +287,15 @@ void fragment() {
 	float luma = dot(albedo, vec3(0.299, 0.587, 0.114));
 	vec3 remembered = mix(albedo, luma * MEMORY_TINT, 0.8) * 0.4;
 	vec3 color = mix(remembered, albedo, seen);
-	vec3 emission = color * mix(memory_glow, glow, seen) + lift;
+	// what is remembered shows by its own faint light: shaded by its
+	// relief, as if from above and to one side, so a remembered wall is
+	// the same stone, not a flat box
+	float relief = 0.45 + 0.8 * clamp(dot(wn, normalize(vec3(-0.35, 0.75, 0.55))), 0.0, 1.0);
+	relief *= mix(1.0, orm.r, 0.7);
+	vec3 emission = color * mix(memory_glow * relief, glow, seen) + lift;
+	float near = 1.0;
 	if (void_fade > 0.0) {
-		float near = mix(1.0, fow.a, void_fade);
+		near = mix(1.0, fow.a, void_fade);
 		color *= near;
 		emission *= near * near;
 	}
@@ -300,6 +309,8 @@ void fragment() {
 		float graze = 1.0 - clamp(dot(normalize(wn), normalize(CAMERA_POSITION_WORLD - wpos)), 0.0, 1.0);
 		emission += vec3(0.35, 0.42, 0.6) * pow(graze, 3.0) * rim;
 	}
-	EMISSION = emission + lava;
+	// the ground's fissures fainter than a floor's cracks, and fading
+	// away from what is known
+	EMISSION = emission + lava * (fissures > 0.0 ? fissures * near * near : 1.0);
 	NORMAL = normalize((VIEW_MATRIX * vec4(wn, 0.0)).xyz);
 }

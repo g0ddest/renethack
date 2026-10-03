@@ -32,6 +32,9 @@ pub enum Prop {
     Lantern,
     /// A candlestick standing on a wall's top (Poly Haven, CC0).
     Candle,
+    /// A brass candelabra of three on a wall's top (Poly Haven, CC0: one
+    /// of the set's three holders).
+    Candelabra,
 }
 
 impl Prop {
@@ -47,6 +50,17 @@ impl Prop {
             Prop::Candle => {
                 "res://art/cc0/polyhaven/models/wooden_candlestick/wooden_candlestick.gltf"
             }
+            Prop::Candelabra => {
+                "res://art/cc0/polyhaven/models/brass_candleholders/brass_candleholders.gltf"
+            }
+        }
+    }
+
+    /// The one node of the scene that is the prop (the rest is freed).
+    pub fn part(self) -> Option<&'static str> {
+        match self {
+            Prop::Candelabra => Some("brass_candleholder_02"),
+            _ => None,
         }
     }
 }
@@ -59,8 +73,16 @@ pub struct BranchLook {
     pub lanterns: bool,
     /// Candles stand on some walls' tops.
     pub candles: bool,
-    /// Narrow pointed windows in some walls (a tower).
+    /// Narrow pointed windows in some walls (a tower), and banners.
     pub windows: bool,
+    pub banners: bool,
+    /// An iron band round the walls beside a room (built places), by
+    /// manifest name.
+    pub bands: Option<&'static str>,
+    /// Embers rising in the air instead of dust, and a glow from below
+    /// round the hero (the fire under Gehennom's floors).
+    pub embers: bool,
+    pub underglow: Option<Color>,
     /// Manifest materials and what they become in this branch.
     pub remap: &'static [(&'static str, &'static str)],
     /// The walls are the rock itself, broken and irregular (caves).
@@ -102,6 +124,10 @@ const MAIN: BranchLook = BranchLook {
     lanterns: false,
     candles: false,
     windows: false,
+    banners: false,
+    bands: None,
+    embers: false,
+    underglow: None,
     remap: &[],
     cave: false,
     supports: false,
@@ -156,6 +182,7 @@ pub fn look_of(branch: Branch) -> BranchLook {
         Branch::Sokoban => BranchLook {
             remap: &[("masonry", "soko_wall"), ("floor", "planks")],
             cap: "iron",
+            bands: Some("iron"),
             torch: rgb(0.86, 0.9, 1.0),
             torch_energy: 1.8,
             fill: rgb(0.8, 0.86, 0.96),
@@ -193,6 +220,8 @@ pub fn look_of(branch: Branch) -> BranchLook {
             fog_density: 0.004,
             darkness: rgb(0.011, 0.007, 0.006),
             cracks: 1.0,
+            embers: true,
+            underglow: Some(rgb(1.0, 0.36, 0.12)),
             dust: 1.5,
             grade: Grade {
                 saturation: 1.0,
@@ -239,16 +268,20 @@ pub fn look_of(branch: Branch) -> BranchLook {
             lanterns: true,
             candles: true,
             windows: true,
+            banners: true,
+            bands: Some("dark_iron"),
             torch: rgb(0.9, 0.6, 0.5),
             torch_energy: 2.0,
-            ambient: rgb(0.3, 0.26, 0.46),
-            fog: rgb(0.5, 0.48, 0.62),
+            // a cold night in the tower: blue in the shadows and the haze
+            ambient: rgb(0.24, 0.27, 0.5),
+            fog: rgb(0.42, 0.46, 0.64),
             fog_density: 0.005,
+            darkness: rgb(0.006, 0.007, 0.015),
             grade: Grade {
                 saturation: 0.75,
                 contrast: 1.12,
-                shadows: rgb(0.98, 0.96, 1.08),
-                highlights: rgb(0.98, 0.96, 1.02),
+                shadows: rgb(0.9, 0.95, 1.14),
+                highlights: rgb(0.95, 0.97, 1.08),
                 ..NEUTRAL
             },
             ..MAIN
@@ -306,6 +339,7 @@ fn plane_look(plane: Plane) -> BranchLook {
             fog_density: 0.012,
             darkness: rgb(0.08, 0.015, 0.005),
             cracks: 1.4,
+            embers: true,
             grade: Grade {
                 contrast: 1.12,
                 shadows: rgb(1.1, 0.92, 0.86),

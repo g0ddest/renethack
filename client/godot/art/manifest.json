@@ -16,7 +16,7 @@
   "earth": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 0.45, "color": "#7a6450"},
   "dressed": {"textures": "cc0/polyhaven/textures/castle_wall_varriation/castle_wall_varriation", "uv_scale": 0.45, "color": "#9a9a9e"},
   "planks": {"textures": "cc0/polyhaven/textures/old_planks_02/old_planks_02", "uv_scale": 0.6, "color": "#9a7c5c"},
-  "soko_wall": {"textures": "cc0/polyhaven/textures/castle_brick_07/castle_brick_07", "uv_scale": 0.5, "color": "#b07a62"},
+  "soko_wall": {"textures": "cc0/polyhaven/textures/castle_wall_varriation/castle_wall_varriation", "uv_scale": 0.32, "color": "#8c939c"},
   "basalt": {"textures": "cc0/polyhaven/textures/volcanic_rock_tiles/volcanic_rock_tiles", "uv_scale": 0.4, "color": "#4a3a36"},
   "basalt_floor": {"textures": "cc0/polyhaven/textures/volcanic_rock_tiles/volcanic_rock_tiles", "uv_scale": 0.5, "color": "#5a4440"},
   "ash": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 0.5, "color": "#3e3532"},

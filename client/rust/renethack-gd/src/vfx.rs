@@ -22,8 +22,8 @@ use godot::classes::light_3d::Param;
 use godot::classes::particle_process_material::{EmissionShape, Parameter};
 use godot::classes::{
     Decal, GpuParticles3D, Gradient, GradientTexture1D, Image, ImageTexture, Material,
-    MeshInstance3D, Node3D, OmniLight3D, PackedScene, ParticleProcessMaterial, QuadMesh, Shader,
-    ShaderMaterial, StandardMaterial3D, Texture2D,
+    MeshInstance3D, Node3D, OmniLight3D, ParticleProcessMaterial, QuadMesh, Shader, ShaderMaterial,
+    StandardMaterial3D, Texture2D,
 };
 use godot::prelude::*;
 
@@ -336,12 +336,6 @@ const POOL: usize = 6;
 const SPLATS: usize = 24;
 const SPLAT_SECS: f32 = 14.0;
 const BEAM_SECS: f32 = 0.45;
-/// Binbun's ground explosion (CC0), and how many may burn at once.
-const BLAST_SCENE: &str =
-    "res://art/cc0/binbun/BinbunVFX_Vol2/ExplosionFX/effects/ground/vfx_ground_explosion_01.tscn";
-const BLASTS: usize = 3;
-/// Its size: made metres wide, it should cover a cell or two.
-const BLAST_SCALE: f32 = 0.25;
 
 /// RPicster's particle textures (CC0) by recipe: a starburst for a blow's
 /// flare and a cast's swirl, a star for glints and flares.
@@ -372,10 +366,6 @@ pub struct Vfx {
     /// The particle textures of recipes that have their own (RPicster's
     /// starbursts and flares), else the soft disc.
     textures: HashMap<Recipe, Gd<Texture2D>>,
-    /// Binbun's explosion (CC0): the instances playing, and how long each
-    /// is still busy (freed then).
-    blast_scene: Option<Gd<PackedScene>>,
-    blasts: Vec<(Gd<Node3D>, f32)>,
     splat: Gd<Texture2D>,
     emitters: HashMap<Recipe, Vec<Emitter>>,
     flashes: Vec<Flash>,
@@ -385,6 +375,12 @@ pub struct Vfx {
     pending: Vec<Pending>,
     beam_shader: Option<Gd<Shader>>,
     dust: Gd<GpuParticles3D>,
+    /// The dust's looks: motes, or embers rising (and which it is).
+    mote_ramp: Gd<Texture2D>,
+    mote_mat: Gd<Material>,
+    ember_ramp: Gd<Texture2D>,
+    ember_mat: Gd<Material>,
+    embers_in_air: bool,
     /// Decals land on these render layers only (the level, not models).
     decal_mask: u32,
     clock: f32,
@@ -514,14 +510,23 @@ impl Vfx {
         node.set_name("Vfx");
         root.add_child(&node);
         let dust = dust(&mut node, &soft);
+        // its looks: motes of dust, or embers
+        let mote_ramp = dust
+            .get_process_material()
+            .and_then(|m| m.try_cast::<ParticleProcessMaterial>().ok())
+            .and_then(|m| m.get_color_ramp())
+            .unwrap_or_else(|| ramp(Color::from_rgb(0.9, 0.86, 0.78), 0.35).upcast());
+        let mote_mat = dust
+            .get_material_override()
+            .unwrap_or_else(|| particle_material(&soft, false, true));
+        let ember_ramp = ramp(Color::from_rgb(1.0, 0.42, 0.12), 2.5).upcast();
+        let ember_mat = particle_material(&soft, true, false);
         let beam_shader = godot::tools::try_load::<Shader>("res://shaders/beam.gdshader").ok();
         Vfx {
             root: node,
             splat: splat_texture(),
             soft,
             textures: particle_textures(),
-            blast_scene: godot::tools::try_load::<PackedScene>(BLAST_SCENE).ok(),
-            blasts: Vec::new(),
             emitters: HashMap::new(),
             flashes: Vec::new(),
             beams: Vec::new(),
@@ -530,6 +535,11 @@ impl Vfx {
             pending: Vec::new(),
             beam_shader,
             dust,
+            mote_ramp,
+            mote_mat,
+            ember_ramp,
+            ember_mat,
+            embers_in_air: false,
             decal_mask,
             clock: 0.0,
             solids: HashMap::new(),
@@ -578,73 +588,13 @@ impl Vfx {
         if let VfxKind::Blood(c) = kind {
             self.splat(Vector3::new(at.x, 0.0, at.z), c);
         }
-        if let VfxKind::Explosion(c) = kind {
+        if let VfxKind::Explosion(_) = kind {
             // the scorch of the blast, fading like blood
             self.splat(
                 Vector3::new(at.x, 0.0, at.z),
                 Color::from_rgb(0.05, 0.04, 0.035),
             );
-            self.blast(c, at);
         }
-    }
-
-    /// The explosion scene (when there is one) at `at`, in the blast's
-    /// colour.
-    fn blast(&mut self, color: Color, at: Vector3) {
-        let Some(scene) = self.blast_scene.clone() else {
-            return;
-        };
-        if self.blasts.len() >= BLASTS {
-            return;
-        }
-        let Some(mut node) = scene
-            .instantiate()
-            .and_then(|n| n.try_cast::<Node3D>().ok())
-        else {
-            return;
-        };
-        // its shrapnel and flying bits are made for a blast metres wide:
-        // their speed and trails ignore the scale, and at a cell's size
-        // they sweep white ribbons across the whole screen
-        // (hidden, not removed: its animation drives them)
-        for name in ["Shrapnel", "Bits", "BitsTrail"] {
-            if let Some(mut part) = node
-                .get_node_or_null(name)
-                .and_then(|n| n.try_cast::<Node3D>().ok())
-            {
-                part.set_visible(false);
-            }
-        }
-        // the rest is scaled down to a cell or two: its particles kept in
-        // the node's space take its scale, speed and all; its light too
-        for n in node
-            .find_children_ex("*")
-            .type_("GPUParticles3D")
-            .owned(false)
-            .done()
-            .iter_shared()
-        {
-            if let Ok(mut p) = n.try_cast::<GpuParticles3D>() {
-                p.set_use_local_coordinates(true);
-            }
-        }
-        if let Some(mut light) = node
-            .get_node_or_null("VFXOmniLightBB")
-            .and_then(|n| n.try_cast::<OmniLight3D>().ok())
-        {
-            light.set_param(Param::RANGE, 10.0 * BLAST_SCALE);
-        }
-        node.set_transform(Transform3D::new(
-            Basis::from_scale(Vector3::new(BLAST_SCALE, BLAST_SCALE, BLAST_SCALE)),
-            at - Vector3::new(0.0, 0.3, 0.0),
-        ));
-        node.set("one_shot", &true.to_variant());
-        node.set("primary_color", &color.to_variant());
-        self.root.add_child(&node);
-        if node.has_method("play") {
-            node.call("play", &[]);
-        }
-        self.blasts.push((node, 2.5));
     }
 
     /// An effect a little later (seconds).
@@ -824,6 +774,7 @@ impl Vfx {
         e.process.set_color_ramp(&ramp(color, p.hdr));
         e.process.set_direction(dir.unwrap_or(p.dir));
         e.node.set_position(at);
+        e.node.set_visible(true);
         e.node.restart();
         e.node.set_emitting(true);
         e.busy = p.life as f32 + 0.1;
@@ -891,14 +842,6 @@ impl Vfx {
         for e in self.emitters.values_mut().flatten() {
             e.busy -= delta;
         }
-        self.blasts.retain_mut(|(node, busy)| {
-            *busy -= delta;
-            if *busy > 0.0 {
-                return true;
-            }
-            node.queue_free();
-            false
-        });
         for f in &mut self.flashes {
             if f.left > 0.0 {
                 f.left -= delta;
@@ -961,11 +904,13 @@ impl Vfx {
     /// Forget every effect under way (a new level, a new game).
     pub fn clear(&mut self) {
         self.pending.clear();
-        for (mut node, _) in self.blasts.drain(..) {
-            node.queue_free();
-        }
+        // what they emitted goes too (a restart clears it, and hidden
+        // they show nothing that lingers): kept, not freed, their shaders
+        // stay compiled
         for e in self.emitters.values_mut().flatten() {
+            e.node.restart();
             e.node.set_emitting(false);
+            e.node.set_visible(false);
             e.busy = 0.0;
         }
         for f in &mut self.flashes {
@@ -984,11 +929,32 @@ impl Vfx {
     }
 
     /// How thick the dust in the air is (1: the main dungeon's).
-    pub fn set_dust(&mut self, thickness: f32) {
+    /// `embers`: glowing embers rising slowly instead (the fire below).
+    pub fn set_dust(&mut self, thickness: f32, embers: bool) {
         // a new amount restarts the emitter, and its 8 s of pre-process
         // run on the GPU in one frame: the ratio of a fixed amount does not
         self.dust
             .set_amount_ratio((thickness / DUST_MOST).clamp(0.0, 1.0));
+        if embers == self.embers_in_air {
+            return;
+        }
+        self.embers_in_air = embers;
+        let Some(mut process) = self
+            .dust
+            .get_process_material()
+            .and_then(|m| m.try_cast::<ParticleProcessMaterial>().ok())
+        else {
+            return;
+        };
+        // (its looks changed, not its particles: nothing restarts)
+        let (ramp, mat, rise) = if embers {
+            (&self.ember_ramp, &self.ember_mat, 0.03)
+        } else {
+            (&self.mote_ramp, &self.mote_mat, -0.005)
+        };
+        process.set_color_ramp(ramp);
+        process.set_gravity(Vector3::new(0.0, rise, 0.0));
+        self.dust.set_material_override(mat);
     }
 
     /// Embers rising from a flame: a small emitter to put under a torch.

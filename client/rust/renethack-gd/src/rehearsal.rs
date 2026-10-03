@@ -4,7 +4,13 @@
 //! over it. Godot compiles the render pipelines (and allocates the shadow
 //! atlas and the buffers) of what it draws for the first time: done here,
 //! no frame of the first levels waits for it.
+//!
+//! It holds the game's own frame budget: what it draws is loaded first in
+//! the background, what the map keeps in its pools (torches, lanterns,
+//! the branches' props) is made ahead one piece a frame, each level is
+//! drawn over frames as in the game, and its effects go off one a frame.
 
+use godot::classes::{ResourceLoader, Texture2D};
 use godot::prelude::*;
 use nh_protocol::{Catalog, Glyph, GlyphKind, LevelNotice, mg};
 use nh_world::{Branch, World};
@@ -22,9 +28,9 @@ const STAGES: &[(&str, Branch)] = &[
     ("Vlad's Tower", Branch::Vlad),
 ];
 
-/// Frames a stage is held once it is drawn: effects fired, pipelines
-/// compiled in the background.
-const HOLD: u32 = 24;
+/// Frames a stage is held once it is drawn: an effect a frame, then the
+/// pipelines compiled in the background.
+const HOLD: u32 = 30;
 /// A stage that never settles moves on after this many frames.
 const MOST: u32 = 300;
 
@@ -35,60 +41,171 @@ const Y0: i32 = 3;
 const Y1: i32 = 15;
 const HERO: (i32, i32) = (40, 14);
 
+/// ResourceLoader.ThreadLoadStatus: still loading, and loaded.
+const LOADING: i64 = 1;
+const LOADED: i64 = 3;
+
+/// Where a rehearsal is.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Phase {
+    /// What the stages draw being loaded in the background.
+    Fetch,
+    /// What was loaded drawn once, a texture a frame: a texture loaded in
+    /// the background reaches the graphics card when first drawn, and a
+    /// level drawing them all at once waits for all of them.
+    Upload,
+    /// What the stage's level takes from the map's pools, made ahead.
+    Pools,
+    /// The stage's level drawn over frames.
+    Build,
+    /// Effects going off over it.
+    Hold,
+}
+
 pub struct Rehearsal {
     world: World,
     catalog: Catalog,
+    phase: Phase,
     stage: usize,
     frame: u32,
-    held: u32,
+    /// Loads still running, and what they gave (kept until it is over).
+    fetching: Vec<String>,
+    fetched: Vec<Gd<Resource>>,
 }
 
 impl Rehearsal {
-    pub fn new(catalog: &Catalog) -> Rehearsal {
+    /// A rehearsal of this game's catalog; `fetch` is what its stages
+    /// draw, loaded now in the background.
+    pub fn new(catalog: &Catalog, fetch: Vec<String>) -> Rehearsal {
         let mut world = World::new();
         world.set_catalog(catalog);
+        // (gdext leaves the threaded loads out without its threads
+        // feature: they are called by name)
+        let fetching = if fetch.is_empty() {
+            Vec::new()
+        } else {
+            let mut loader = ResourceLoader::singleton();
+            fetch
+                .into_iter()
+                .filter(|p| {
+                    loader.exists(p.as_str())
+                        && loader
+                            .call("load_threaded_request", &[p.to_variant()])
+                            .try_to::<i64>()
+                            .is_ok_and(|e| e == 0)
+                })
+                .collect()
+        };
         let mut r = Rehearsal {
             world,
             catalog: catalog.clone(),
+            phase: Phase::Fetch,
             stage: 0,
             frame: 0,
-            held: 0,
+            fetching,
+            fetched: Vec::new(),
         };
         r.lay_level();
-        r.enter(0);
         r
+    }
+
+    /// Take what has loaded; true when nothing is loading any more (every
+    /// frame, also while the art loads ahead).
+    pub fn fetch(&mut self) -> bool {
+        if self.fetching.is_empty() {
+            return true;
+        }
+        let mut loader = ResourceLoader::singleton();
+        let mut done = Vec::new();
+        self.fetching.retain(|p| {
+            let status = loader.call("load_threaded_get_status", &[p.to_variant()]);
+            match status.try_to::<i64>() {
+                Ok(LOADING) => true,
+                Ok(LOADED) => {
+                    done.push(p.clone());
+                    false
+                }
+                // failed: drawn without it, loaded when it is needed
+                _ => false,
+            }
+        });
+        for p in done {
+            let r = loader.call("load_threaded_get", &[p.to_variant()]);
+            if let Ok(r) = r.try_to::<Gd<Resource>>() {
+                self.fetched.push(r);
+            }
+        }
+        self.fetching.is_empty()
+    }
+
+    /// The map it plays (its monsters and objects are built ahead).
+    pub fn map(&self) -> &nh_world::MapState {
+        &self.world.map
+    }
+
+    /// What it is doing (RENETHACK_FRAME_STATS).
+    pub fn doing(&self) -> String {
+        format!(
+            "{:?} of stage {} frame {}",
+            self.phase, self.stage, self.frame
+        )
     }
 
     /// One frame of it; false when it is over.
     pub fn step(&mut self, map: &mut MapView, delta: f64) -> bool {
-        map.sync(&mut self.world, &self.catalog, delta);
-        self.frame += 1;
-        if !map.is_settled() && self.frame < MOST {
-            return true;
+        match self.phase {
+            Phase::Fetch => {
+                if self.fetch() {
+                    self.phase = Phase::Upload;
+                }
+            }
+            Phase::Upload => {
+                let next = self.fetched.get(self.frame as usize).cloned();
+                let texture = next
+                    .as_ref()
+                    .and_then(|r| r.clone().try_cast::<Texture2D>().ok());
+                map.show_texture(texture.as_ref());
+                self.frame += 1;
+                if next.is_none() {
+                    self.frame = 0;
+                    self.phase = Phase::Pools;
+                }
+            }
+            Phase::Pools => {
+                // one piece a frame; the stage once there is all it takes
+                if !map.warm_pools(STAGES[self.stage].1) {
+                    self.enter(self.stage);
+                    self.phase = Phase::Build;
+                }
+            }
+            Phase::Build => {
+                map.sync(&mut self.world, &self.catalog, delta);
+                self.frame += 1;
+                if map.is_settled() || self.frame >= MOST {
+                    self.phase = Phase::Hold;
+                    self.frame = 0;
+                }
+            }
+            Phase::Hold => {
+                self.act(map, self.frame);
+                map.sync(&mut self.world, &self.catalog, delta);
+                self.frame += 1;
+                if self.frame >= HOLD {
+                    map.set_hover(None);
+                    map.set_path(&[], false);
+                    self.stage += 1;
+                    if self.stage == STAGES.len() {
+                        return false;
+                    }
+                    self.phase = Phase::Pools;
+                }
+            }
         }
-        match self.held {
-            0 => self.fire(map, 0),
-            8 => self.fire(map, 1),
-            16 => self.fire(map, 2),
-            _ => {}
-        }
-        self.held += 1;
-        if self.held < HOLD {
-            return true;
-        }
-        map.set_hover(None);
-        map.set_path(&[], false);
-        self.stage += 1;
-        if self.stage == STAGES.len() {
-            return false;
-        }
-        self.enter(self.stage);
         true
     }
 
     fn enter(&mut self, stage: usize) {
         self.frame = 0;
-        self.held = 0;
         self.world.level = Some(LevelNotice {
             dungeon: STAGES[stage].0.to_string(),
             depth: 1,
@@ -97,8 +214,9 @@ impl Rehearsal {
         debug_assert_eq!(self.world.branch(), STAGES[stage].1);
     }
 
-    /// Effects of every kind over the room, hover outlines, a path.
-    fn fire(&self, map: &mut MapView, round: u32) {
+    /// The `n`th effect of a stage: a burst of every kind, beams, a ray,
+    /// a blow, outlines (a hostile, a pet, an empty cell) and a path.
+    fn act(&self, map: &mut MapView, n: u32) {
         let red = Color::from_rgb(1.0, 0.3, 0.2);
         let kinds = [
             VfxKind::Quaff(Color::from_rgb(0.4, 0.6, 1.0)),
@@ -115,23 +233,26 @@ impl Rehearsal {
             VfxKind::Sparks,
             VfxKind::Blood(red),
         ];
-        for (i, kind) in kinds.into_iter().enumerate() {
-            map.burst_at(kind, (X0 + 2 + i as i32, 9));
-        }
-        map.beam_between(VfxKind::Lightning, (X0 + 2, 12), (X1 - 2, 12));
-        map.beam_between(VfxKind::Fire, HERO, (HERO.0, Y0 + 2));
         let at = |(x, y): (i32, i32)| Vector3::new(x as f32, 0.6, y as f32);
-        map.vfx().ray(red, at(HERO), at((X1 - 3, 6)));
-        map.vfx().hit(at((HERO.0 + 1, HERO.1)), at(HERO), 0.3);
-        // a monster outlined (hostile, then a pet), then an empty cell
-        let hover = match round {
-            0 => (X0 + 9, Y0 + 2),
-            1 => (X0 + 1, Y0 + 1),
-            _ => (X0 + 4, Y0 + 6),
-        };
-        map.set_hover(Some(hover));
         let path: Vec<_> = (0..5).map(|i| (HERO.0 - i, HERO.1 - 1)).collect();
-        map.set_path(&path, round == 1);
+        let n = n as usize;
+        match n.checked_sub(kinds.len()) {
+            None => map.burst_at(kinds[n], (X0 + 2 + n as i32, 9)),
+            Some(0) => map.beam_between(VfxKind::Lightning, (X0 + 2, 12), (X1 - 2, 12)),
+            Some(1) => map.beam_between(VfxKind::Fire, HERO, (HERO.0, Y0 + 2)),
+            Some(2) => map.vfx().ray(red, at(HERO), at((X1 - 3, 6))),
+            Some(3) => map.vfx().hit(at((HERO.0 + 1, HERO.1)), at(HERO), 0.3),
+            Some(4) => map.set_hover(Some((X0 + 9, Y0 + 2))),
+            Some(5) => {
+                map.set_hover(Some((X0 + 1, Y0 + 1)));
+                map.set_path(&path, true);
+            }
+            Some(6) => {
+                map.set_hover(Some((X0 + 4, Y0 + 6)));
+                map.set_path(&path, false);
+            }
+            _ => {}
+        }
     }
 
     fn lay_level(&mut self) {
@@ -343,7 +464,7 @@ mod tests {
     #[test]
     fn the_rehearsal_has_the_hero_every_liquid_and_monsters_and_objects() {
         let cat = catalog();
-        let r = Rehearsal::new(&cat);
+        let r = Rehearsal::new(&cat, Vec::new());
         assert_eq!(r.world.hero(), Some(HERO));
         assert_eq!(r.world.branch(), Branch::Main);
         let sym = |x, y| {

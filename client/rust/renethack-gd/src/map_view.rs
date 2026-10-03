@@ -134,6 +134,8 @@ const LINTEL: f32 = 0.2;
 const CUT_HEIGHT: f32 = 0.35;
 /// The dark rock slab on top of a wall.
 const CAP_HEIGHT: f32 = 0.1;
+/// How high a built place's iron band runs round its walls.
+const BAND_Y: f32 = 1.2;
 /// A plinth along a wall's foot where open ground is next to it.
 const PLINTH_HEIGHT: f32 = 0.22;
 /// The rock around the level: its top, and cut down in front of open
@@ -156,6 +158,10 @@ const SHADE_STAIRS: u8 = 75;
 const SHADE_BEDROCK: u8 = 100;
 /// The art gallery's ambient light, and how much its fills are raised.
 const GALLERY_AMBIENT: f32 = 0.4;
+/// The glow from below round the hero where the floors burn: how far it
+/// reaches and how bright.
+const UNDERGLOW_RANGE: f32 = 4.5;
+const UNDERGLOW_ENERGY: f32 = 0.9;
 const GALLERY_FILL: f32 = 2.5;
 const SHADE_ROCK: u8 = 70;
 /// Stones at the foot of a wall: of the rock, darker still.
@@ -211,7 +217,11 @@ const TORCH: Color = Color::from_rgb(1.0, 0.66, 0.38);
 const TORCH_RANGE: f32 = 5.5;
 const TORCH_SHADOWS: usize = 3;
 /// Torches made before any level is shown.
-const TORCHES_AHEAD: usize = 12;
+const TORCHES_AHEAD: usize = 16;
+/// The branches' doors and candles made ahead.
+const DOORS_AHEAD: usize = 2;
+const CANDLES_AHEAD: usize = 32;
+const CANDELABRAS_AHEAD: usize = 8;
 /// A flame's flipbook: 16 x 4 frames of a real flame (Unity Labs, CC0).
 const FLAME_BOOK: &str = "res://art/cc0/unity-labs/flipbooks/Flame02_16x4.png";
 /// The flame of a torch, bright enough to glow.
@@ -603,21 +613,25 @@ enum Side {
 }
 
 /// The neighbours of a cell, by which a cell looks the way it does.
+#[derive(Clone, Copy)]
 struct Around {
     /// North, south, west, east.
     sides: [Side; 4],
-    /// Which of them are water or lava.
+    /// Which of them are water or lava, and which a room's floor.
     liquid: [bool; 4],
+    floor: [bool; 4],
 }
 
 impl Around {
     fn of(near: &Near, catalog: &Catalog) -> Around {
         let mut sides = [Side::Solid; 4];
         let mut liquid = [false; 4];
+        let mut floor = [false; 4];
         for (i, side) in sides.iter_mut().enumerate() {
             let cell = near.cells[i];
             let t = cell.and_then(|c| cell_terrain(c, catalog));
             liquid[i] = matches!(t, Some(Terrain::Pool | Terrain::Water | Terrain::Lava));
+            floor[i] = matches!(t, Some(Terrain::Floor | Terrain::DarkFloor));
             *side = match t {
                 Some(Terrain::Wall | Terrain::LavaWall) => Side::Wall,
                 Some(Terrain::ClosedDoor | Terrain::OpenDoor | Terrain::Doorway) => Side::Wall,
@@ -625,7 +639,11 @@ impl Around {
                 _ => Side::Solid,
             };
         }
-        Around { sides, liquid }
+        Around {
+            sides,
+            liquid,
+            floor,
+        }
     }
 
     /// A door's wall runs along x (its passage along z): walls or doors
@@ -1023,7 +1041,23 @@ fn terrain_base(
             // candles on some walls' tops beside a room (no object ever
             // lies there)
             let beside_room = around.sides.contains(&Side::Open);
-            if ctx.branch.candles && !cut && !ctx.branch.cave && beside_room && ctx.noise(91) < 0.18
+            let lights = ctx.noise(91);
+            if ctx.branch.candles && !cut && !ctx.branch.cave && beside_room && lights < 0.14 {
+                // a brass candelabra of three, its flames
+                look.props.push(PlacedProp {
+                    prop: Prop::Candelabra,
+                    pos: at(0.0, top, 0.0),
+                    yaw: 0.0,
+                    scale: Vector3::new(1.3, 1.3, 1.3),
+                });
+                let flame = Paint::Flat(Color::from_rgb(1.0, 0.7, 0.35), Finish::Glow);
+                for x in [-0.145f32, 0.0, 0.145] {
+                    look.solid(sphere(0.014), flame, at(x, top + 0.535, 0.0));
+                    if let Some(s) = look.solids.last_mut() {
+                        s.shadow = false;
+                    }
+                }
+            } else if ctx.branch.candles && !cut && !ctx.branch.cave && beside_room && lights < 0.3
             {
                 for (i, dx) in [-0.18f32, 0.16].into_iter().enumerate() {
                     let h = 1.2 + 0.4 * ctx.noise(92 + i as u32);
@@ -1045,16 +1079,15 @@ fn terrain_base(
                     }
                 }
             }
-            // a tower's narrow pointed windows, the night showing cold
-            // through them, in the wall faces the camera sees
-            if ctx.branch.windows
-                && !cut
-                && !pier
-                && !ctx.branch.cave
-                && around.sides[1] == Side::Open
-                && ctx.noise(97) < 0.5
-            {
-                let face = w / 2.0 + 0.01;
+            // the face the camera sees: a tower's narrow pointed windows
+            // (the night cold through them) and its banners
+            let facing = !cut && !pier && !ctx.branch.cave && around.sides[1] == Side::Open;
+            let decor = ctx.noise(97);
+            let window = facing && ctx.branch.windows && decor < 0.25;
+            let banner = facing && ctx.branch.banners && (0.25..0.6).contains(&decor);
+            let face = w / 2.0 + 0.01;
+            let decor_from = look.solids.len();
+            if window {
                 let night = Paint::Flat(Color::from_rgb(0.2, 0.26, 0.48), Finish::Glow);
                 look.solid(cuboid(0.18, 0.8, 0.02), night, at(0.0, 1.32, face));
                 let stone = pbr(ctx.mat(ctx.branch.cap), SHADE_LIT, Role::Trim, DEEP);
@@ -1071,9 +1104,40 @@ fn terrain_base(
                         at(0.0, 0.0, z),
                     );
                 }
-                for s in look.solids.iter_mut().rev().take(6) {
-                    s.shadow = false;
+            }
+            if banner {
+                // a long cloth hung from an iron rod, a gold hem
+                let rod = pbr(ctx.mat("dark_iron"), SHADE_LIT, Role::Trim, DEEP);
+                look.turned(
+                    cylinder(0.015, 0.015, 0.62),
+                    rod,
+                    at(0.0, 1.98, face + 0.05),
+                    at(0.0, 0.0, 90.0),
+                );
+                let cloth = Paint::Flat(Color::from_rgb(0.3, 0.05, 0.08), Finish::Matte);
+                look.solid(cuboid(0.5, 0.92, 0.012), cloth, at(0.0, 1.5, face + 0.04));
+                let gold = pbr(ctx.mat("gold"), SHADE_LIT, Role::Trim, DEEP);
+                look.solid(cuboid(0.5, 0.05, 0.016), gold, at(0.0, 1.06, face + 0.045));
+                look.solid(cuboid(0.04, 0.88, 0.016), gold, at(0.0, 1.5, face + 0.045));
+            }
+            // a built place's iron bands round the faces beside a room
+            if let (Some(band), false, false) = (ctx.branch.bands, cut, ctx.branch.cave) {
+                let iron = pbr(ctx.mat(band), SHADE_LIT, Role::Trim, DEEP);
+                let out = w / 2.0 + 0.02;
+                for (i, (dx, dz)) in SIDES.iter().enumerate() {
+                    if around.sides[i] != Side::Open || (i == 1 && (window || banner)) {
+                        continue;
+                    }
+                    let (mesh, pos) = if *dx == 0.0 {
+                        (bevel(w + 0.02, 0.07, 0.05), at(0.0, BAND_Y, dz * out))
+                    } else {
+                        (bevel(0.05, 0.07, w + 0.02), at(dx * out, BAND_Y, 0.0))
+                    };
+                    look.solid(mesh, iron, pos);
                 }
+            }
+            for s in &mut look.solids[decor_from..] {
+                s.shadow = false;
             }
         }
         Terrain::Floor | Terrain::DarkFloor => {
@@ -1089,8 +1153,29 @@ fn terrain_base(
                 Vector3::ZERO,
             );
             look.lit = lit;
-            // stones fallen from the rock along the trench's sides
+            // stones fallen from the rock along the trench's sides, and
+            // kicked to its edges where it opens on a room's floor
             rubble(look, around, bedrock, ctx, Side::Solid, 0.55);
+            let rooms = Around {
+                sides: around
+                    .floor
+                    .map(|f| if f { Side::Open } else { Side::Solid }),
+                ..*around
+            };
+            rubble(look, &rooms, bedrock, ctx, Side::Open, 0.7);
+            // gravel trodden into the earth: a path, not a tile of colour
+            if let Some(m) = bedrock {
+                for k in 0..5u32 {
+                    let r = 0.025 + 0.02 * ctx.noise(70 + k);
+                    let (x, z) = (ctx.noise(75 + k) - 0.5, ctx.noise(80 + k) - 0.5);
+                    let rot = at(ctx.noise(85 + k) * 90.0, ctx.noise(90 + k) * 360.0, 0.0);
+                    let paint = Paint::Pbr(m, SHADE_RUBBLE, Role::Trim);
+                    look.turned(facets(r, 5), paint, at(x * 0.8, r * 0.15, z * 0.8), rot);
+                    if let Some(s) = look.solids.last_mut() {
+                        s.shadow = false;
+                    }
+                }
+            }
         }
         Terrain::Doorway | Terrain::BrokenDoor => {
             floor(look);
@@ -1170,7 +1255,23 @@ fn terrain_base(
             look.solid(cuboid(0.06, 0.06, 0.9), iron, at(0.0, top, 0.0));
         }
         Terrain::Tree => {
-            look.ground_tile(tile, ground(80), Vector3::ZERO);
+            // the floor, and a round of earth where the roots go down (a
+            // square of earth reads as a tile out of place)
+            floor(look);
+            look.ground_tile(cylinder(0.44, 0.44, 0.01), ground(80), at(0.0, 0.005, 0.0));
+            for i in 0..5 {
+                let yaw = i as f32 * 72.0 + ctx.noise(60 + i) * 40.0;
+                let (sin, cos) = yaw.to_radians().sin_cos();
+                look.turned(
+                    bevel(0.07, 0.05, 0.26),
+                    ground(60),
+                    at(sin * 0.2, 0.02, cos * 0.2),
+                    at(-8.0, yaw, 0.0),
+                );
+                if let Some(s) = look.solids.last_mut() {
+                    s.shadow = false;
+                }
+            }
             if let Some(tree) = art.model {
                 let look_ = ModelLook {
                     art: tree,
@@ -2118,6 +2219,8 @@ struct FrameStats {
     /// the frame before.
     pipelines: [i64; 5],
     vmem: f64,
+    /// The process frame and the time of the last sync.
+    clock: Option<(u64, std::time::Instant)>,
 }
 
 /// A torch on a wall: the sconce, its flame and its light.
@@ -2128,6 +2231,7 @@ struct Torch {
     fire: Gd<Node3D>,
     lantern: Option<Gd<Node3D>>,
     flame: Gd<MeshInstance3D>,
+    embers: Gd<godot::classes::GpuParticles3D>,
     light: Gd<OmniLight3D>,
     /// Where the light burns when it does not flicker.
     at: Vector3,
@@ -2165,6 +2269,8 @@ pub struct MapView {
     hero_ring: Gd<Decal>,
     ring_tex: Gd<godot::classes::Texture2D>,
     hero_light: Gd<OmniLight3D>,
+    /// The glow from below round the hero where the floors burn.
+    underglow: Gd<OmniLight3D>,
     rim: Gd<OmniLight3D>,
     /// The hero's model, on the rim light's layer too.
     rim_model: Option<Gd<Node3D>>,
@@ -2210,6 +2316,18 @@ pub struct MapView {
     /// compiled ahead), until it is over; and whether the map is shown.
     rehearsal: Option<crate::rehearsal::Rehearsal>,
     rehearsed: bool,
+    /// The shadow atlas has been made (the rehearsal casts a shadow).
+    shadow_made: bool,
+    shadow_block: Option<Gd<MeshInstance3D>>,
+    shadow_frames: u32,
+    /// A card the rehearsal shows textures on (see `show_texture`).
+    card: Option<Gd<MeshInstance3D>>,
+    /// Embers made ahead for the first torch.
+    spare_embers: Option<Gd<godot::classes::GpuParticles3D>>,
+    /// When the last title frame began, and the art's and the
+    /// rehearsal's work in it (RENETHACK_FRAME_STATS).
+    title_clock: Option<std::time::Instant>,
+    title_work: (std::time::Duration, std::time::Duration, Option<String>),
     /// The art gallery's light, and whether it is on.
     studio: Gd<DirectionalLight3D>,
     showcase: bool,
@@ -2543,6 +2661,16 @@ impl MapView {
         hero_light.set_visible(false);
         root.add_child(&hero_light);
 
+        // the glow of the fire under a branch's floors, low round the hero
+        let mut underglow = OmniLight3D::new_alloc();
+        underglow.set_param(Param::RANGE, UNDERGLOW_RANGE);
+        underglow.set_param(Param::ENERGY, UNDERGLOW_ENERGY);
+        underglow.set_param(Param::ATTENUATION, 1.4);
+        underglow.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.6);
+        underglow.set_shadow(false);
+        underglow.set_visible(false);
+        root.add_child(&underglow);
+
         let mut rim = OmniLight3D::new_alloc();
         rim.set_color(RIM_LIGHT);
         rim.set_param(Param::ENERGY, 3.0);
@@ -2642,6 +2770,7 @@ impl MapView {
             hero_ring,
             ring_tex,
             hero_light,
+            underglow,
             rim,
             rim_model: None,
             room_lights: Vec::new(),
@@ -2682,6 +2811,13 @@ impl MapView {
             preload_told: false,
             rehearsal: None,
             rehearsed: false,
+            shadow_made: false,
+            shadow_block: None,
+            shadow_frames: 0,
+            card: None,
+            spare_embers: None,
+            title_clock: None,
+            title_work: Default::default(),
             studio,
             showcase: false,
             shown: false,
@@ -2717,14 +2853,9 @@ impl MapView {
             hero_fx,
         };
         view.set_branch(Branch::Main);
-        // torches are made ahead (a sconce's scene and embers cost a long
-        // frame when a lit room first shows)
-        for _ in 0..TORCHES_AHEAD {
-            let mut t = view.new_torch();
-            t.node.set_visible(false);
-            t.light.set_visible(false);
-            view.torches.push(t);
-        }
+        // torches are made ahead by the rehearsal, a frame each (a
+        // sconce's scene and embers cost a long frame when a lit room
+        // first shows)
         view.place_camera();
         view
     }
@@ -2879,6 +3010,14 @@ impl MapView {
                     .global_shader_parameter_set("hero_pos", &(p + at(0.0, 0.9, 0.0)).to_variant());
                 self.hero_light.set_position(p + at(0.0, 2.4, 0.6));
                 self.hero_light.set_visible(true);
+                match self.branch_look.underglow {
+                    Some(c) => {
+                        self.underglow.set_color(c);
+                        self.underglow.set_position(p + at(0.0, 0.2, 0.0));
+                        self.underglow.set_visible(true);
+                    }
+                    None => self.underglow.set_visible(false),
+                }
                 // behind the hero, on the far side from the camera
                 self.rim.set_position(p + at(0.0, 2.0, -0.9));
                 self.rim.set_visible(true);
@@ -2897,6 +3036,7 @@ impl MapView {
             None => {
                 self.hero_ring.set_visible(false);
                 self.hero_light.set_visible(false);
+                self.underglow.set_visible(false);
                 self.rim.set_visible(false);
                 RenderingServer::singleton()
                     .global_shader_parameter_set("hero_pos", &at(0.0, -100.0, 0.0).to_variant());
@@ -2979,9 +3119,21 @@ impl MapView {
         if stats.frames == 0 {
             rs.viewport_set_measure_render_time(rid, true);
         }
+        // the frame by the clock on the wall (from the last frame's sync to
+        // this one's): Godot's process step is evened out against its
+        // physics ticks, and a long frame can show there as a short one
+        // and a longer one
+        let now = std::time::Instant::now();
+        let frame = godot::classes::Engine::singleton().get_process_frames();
+        let wall = stats
+            .clock
+            .filter(|(n, _)| frame == n + 1)
+            .map(|(_, t)| now.duration_since(t).as_secs_f64());
+        stats.clock = Some((frame, now));
+        let long = wall.unwrap_or(delta);
         stats.frames += 1;
         stats.secs += delta;
-        stats.worst = stats.worst.max(delta);
+        stats.worst = stats.worst.max(long);
         stats.since_level += delta;
         // pipelines compiled, and video memory, since the frame before
         let perf = godot::classes::Performance::singleton();
@@ -2995,14 +3147,15 @@ impl MapView {
         ]
         .map(|m| perf.get_monitor(m) as i64);
         let vmem = perf.get_monitor(M::RENDER_VIDEO_MEM_USED) / 1e6;
-        if delta > 0.033 {
+        if long > 0.033 {
             let new: Vec<i64> = pipelines
                 .iter()
                 .zip(stats.pipelines)
                 .map(|(a, b)| a - b)
                 .collect();
             godot_print!(
-                "map: a frame of {:.1} ms, {:.2} s after a level change; the map's last sync took {:.1} ms and built {} models; pipelines compiled (canvas, mesh, surface, draw, specialization) {new:?}, video memory {:+.1} MB",
+                "map: a frame of {:.1} ms (Godot's step {:.1} ms), {:.2} s after a level change; the map's last sync took {:.1} ms and built {} models; pipelines compiled (canvas, mesh, surface, draw, specialization) {new:?}, video memory {:+.1} MB",
+                long * 1000.0,
                 delta * 1000.0,
                 stats.since_level,
                 stats.last_sync,
@@ -3039,6 +3192,7 @@ impl MapView {
                 since_level: stats.since_level,
                 pipelines: stats.pipelines,
                 vmem: stats.vmem,
+                clock: stats.clock,
                 ..FrameStats::default()
             };
         }
@@ -3090,7 +3244,7 @@ impl MapView {
         env.set_adjustment_color_correction(&grade_curve(g.shadows, g.highlights));
         RenderingServer::singleton()
             .global_shader_parameter_set("branch_cracks", &l.cracks.to_variant());
-        self.vfx.set_dust(l.dust);
+        self.vfx.set_dust(l.dust, l.embers);
         self.lights_dirty = true;
         self.bedrock_dirty = true;
     }
@@ -3229,6 +3383,11 @@ impl MapView {
             // on the wall's face towards the room
             let face = Vector3::new(x as f32 + fx * 0.5, 0.0, y as f32 + fz * 0.5);
             let t = &mut self.torches[i];
+            // a torch lit again elsewhere: the embers it left behind go
+            // (they rise in the world, not on the torch)
+            if !t.node.is_visible() {
+                t.embers.restart();
+            }
             let yaw = fx.atan2(fz);
             let basis = Basis::from_euler(EulerOrder::YXZ, Vector3::new(0.0, yaw, 0.0));
             t.node
@@ -3244,46 +3403,9 @@ impl MapView {
             let lanterns = self.branch_look.lanterns;
             t.fire.set_visible(!lanterns);
             if lanterns && t.lantern.is_none() {
-                let scene = self
-                    .prop_scenes
-                    .entry(Prop::Lantern)
-                    .or_insert_with(|| {
-                        godot::tools::try_load::<PackedScene>(Prop::Lantern.scene()).ok()
-                    })
-                    .clone();
-                if let Some(mut l) = scene
-                    .and_then(|s| s.instantiate())
-                    .and_then(|n| n.try_cast::<Node3D>().ok())
-                {
-                    // hung from a bracket over the room, out of its own light
-                    let mut lamp = Node3D::new_alloc();
-                    l.set_position(at(0.0, 0.8, 0.32));
-                    l.set_scale(Vector3::new(0.5, 0.5, 0.5));
-                    set_layers(&l, SCONCE_LAYER);
-                    lamp.add_child(&l);
-                    // its flames, glowing through the glass, and their halo
-                    let warm = self.art.flat(Color::from_rgb(1.0, 0.72, 0.4), Finish::Glow);
-                    let flame_mesh = self.art.mesh(sphere(0.025));
-                    for (x, z) in [(-0.06f32, 0.0f32), (0.06, 0.0), (0.0, 0.06)] {
-                        let mut core = MeshInstance3D::new_alloc();
-                        core.set_mesh(&flame_mesh);
-                        core.set_material_override(&warm);
-                        core.set_position(at(x, 0.55, 0.32 + z));
-                        no_shadow(&mut core);
-                        lamp.add_child(&core);
-                    }
-                    let mut halo = MeshInstance3D::new_alloc();
-                    let mut disc = godot::classes::QuadMesh::new_gd();
-                    disc.set_size(Vector2::new(0.8, 0.8));
-                    halo.set_mesh(&disc);
-                    halo.set_material_override(&self.halo_mat);
-                    halo.set_position(at(0.0, 0.57, 0.36));
-                    no_shadow(&mut halo);
-                    lamp.add_child(&halo);
-                    t.node.add_child(&lamp);
-                    t.lantern = Some(lamp);
-                }
+                self.hang_lantern(i);
             }
+            let t = &mut self.torches[i];
             if let Some(l) = t.lantern.as_mut() {
                 l.set_visible(lanterns);
             }
@@ -3291,6 +3413,49 @@ impl MapView {
         for t in self.torches.iter_mut().skip(walls.len()) {
             t.node.set_visible(false);
             t.light.set_visible(false);
+        }
+    }
+
+    /// A lantern hung on torch `i`'s bracket (the branches of lanterns
+    /// show it instead of the torch).
+    fn hang_lantern(&mut self, i: usize) {
+        let scene = self
+            .prop_scenes
+            .entry(Prop::Lantern)
+            .or_insert_with(|| godot::tools::try_load::<PackedScene>(Prop::Lantern.scene()).ok())
+            .clone();
+        if let Some(mut l) = scene
+            .and_then(|s| s.instantiate())
+            .and_then(|n| n.try_cast::<Node3D>().ok())
+        {
+            // hung from a bracket over the room, out of its own light
+            let mut lamp = Node3D::new_alloc();
+            l.set_position(at(0.0, 0.8, 0.32));
+            l.set_scale(Vector3::new(0.5, 0.5, 0.5));
+            set_layers(&l, SCONCE_LAYER);
+            lamp.add_child(&l);
+            // its flames, glowing through the glass, and their halo
+            let warm = self.art.flat(Color::from_rgb(1.0, 0.72, 0.4), Finish::Glow);
+            let flame_mesh = self.art.mesh(sphere(0.025));
+            for (x, z) in [(-0.06f32, 0.0f32), (0.06, 0.0), (0.0, 0.06)] {
+                let mut core = MeshInstance3D::new_alloc();
+                core.set_mesh(&flame_mesh);
+                core.set_material_override(&warm);
+                core.set_position(at(x, 0.55, 0.32 + z));
+                no_shadow(&mut core);
+                lamp.add_child(&core);
+            }
+            let mut halo = MeshInstance3D::new_alloc();
+            let mut disc = godot::classes::QuadMesh::new_gd();
+            disc.set_size(Vector2::new(0.8, 0.8));
+            halo.set_mesh(&disc);
+            halo.set_material_override(&self.halo_mat);
+            halo.set_position(at(0.0, 0.57, 0.36));
+            no_shadow(&mut halo);
+            lamp.add_child(&halo);
+            let t = &mut self.torches[i];
+            t.node.add_child(&lamp);
+            t.lantern = Some(lamp);
         }
     }
 
@@ -3338,7 +3503,10 @@ impl MapView {
         halo.set_position(at(0.0, 0.62, 0.32));
         no_shadow(&mut halo);
         fire.add_child(&halo);
-        let mut embers = self.vfx.embers();
+        let mut embers = self
+            .spare_embers
+            .take()
+            .unwrap_or_else(|| self.vfx.embers());
         embers.set_position(at(0.0, 0.58, 0.3));
         fire.add_child(&embers);
         node.add_child(&fire);
@@ -3363,6 +3531,7 @@ impl MapView {
             fire,
             lantern: None,
             flame,
+            embers,
             light,
             at: Vector3::ZERO,
             phase: 0.0,
@@ -3738,6 +3907,7 @@ impl MapView {
         self.cursor.set_visible(false);
         self.hero_ring.set_visible(false);
         self.hero_light.set_visible(false);
+        self.underglow.set_visible(false);
         self.rim.set_visible(false);
         if let Some(old) = self.rim_model.take().filter(|n| n.is_instance_valid()) {
             set_layers(&old, 1);
@@ -3945,11 +4115,17 @@ impl MapView {
     /// Load art ahead of need for a few milliseconds (every frame, also
     /// before a game starts); false when everything is loaded.
     pub fn preload_step(&mut self) -> bool {
+        let now = std::time::Instant::now();
+        let frame = self.title_clock.replace(now).map(|t| now.duration_since(t));
         let mut more = self.art.preload_step();
-        // the rehearsal once the art is loaded (a game started ends it)
-        if !more && let Some(mut r) = self.rehearsal.take() {
-            let delta = self.root.get_process_delta_time();
-            if r.step(self, delta) {
+        let art = now.elapsed();
+        if let Some(mut r) = self.rehearsal.take() {
+            // what it draws loads in the background meanwhile; it plays
+            // once the art is loaded (a game started ends it)
+            if more {
+                r.fetch();
+                self.rehearsal = Some(r);
+            } else if r.step(self, self.root.get_process_delta_time()) {
                 self.rehearsal = Some(r);
                 more = true;
             } else {
@@ -3963,6 +4139,23 @@ impl MapView {
                 }
             }
         }
+        // the title's long frames, with the work done in the one before
+        let rehearsal = now.elapsed() - art;
+        let doing = self.rehearsal.as_ref().map(|r| r.doing());
+        if self.stats_window.is_some() && !self.shown {
+            let ms = |d: std::time::Duration| d.as_secs_f64() * 1000.0;
+            if let Some(f) = frame.filter(|f| ms(*f) > 33.0) {
+                let (art, rehearsal, doing) = &self.title_work;
+                godot_print!(
+                    "map: a title frame of {:.1} ms; the work before it: art {:.1} ms, rehearsal {:.1} ms ({})",
+                    ms(f),
+                    ms(*art),
+                    ms(*rehearsal),
+                    doing.as_deref().unwrap_or("-")
+                );
+            }
+        }
+        self.title_work = (art, rehearsal, doing);
         if !more && self.stats_window.is_some() && !std::mem::replace(&mut self.preload_told, true)
         {
             godot_print!(
@@ -3984,7 +4177,8 @@ impl MapView {
     /// monsters of the first levels.
     pub fn warm_up(&mut self, catalog: &Catalog, role: Option<&str>) {
         if !std::mem::replace(&mut self.rehearsed, true) {
-            self.rehearsal = Some(crate::rehearsal::Rehearsal::new(catalog));
+            let fetch = self.prefetch_paths();
+            self.rehearsal = Some(crate::rehearsal::Rehearsal::new(catalog, fetch));
             self.set_visible(self.shown);
         }
         let names: Vec<&str> = match role {
@@ -3995,7 +4189,12 @@ impl MapView {
                 .chain(WARM_MONSTERS.iter().copied())
                 .collect(),
         };
-        let mut looks = Vec::new();
+        // the rehearsal's monsters and objects are built ahead with the
+        // art (a model built as a level is drawn costs a long frame)
+        let mut looks = match &self.rehearsal {
+            Some(r) => self.models_of(r.map(), catalog),
+            None => Vec::new(),
+        };
         for name in names {
             let Some(info) = catalog.monsters.iter().find(|m| m.name == name) else {
                 continue;
@@ -4013,6 +4212,34 @@ impl MapView {
             }
         }
         self.art.warm(&looks, role.is_some());
+    }
+
+    /// The models of the monsters and objects on `map`.
+    fn models_of(&self, map: &MapState, catalog: &Catalog) -> Vec<ModelLook> {
+        let mut looks = Vec::new();
+        for y in 0..ROWNO {
+            for x in 0..COLNO {
+                let Some(cell) = map.cell(x, y).filter(|c| c.entity().is_some()) else {
+                    continue;
+                };
+                let ctx = Ctx {
+                    catalog,
+                    art: self.art.manifest(),
+                    x,
+                    y,
+                    hero: None,
+                    hero_yaw: 0.0,
+                    facing: None,
+                    branch: &self.branch_look,
+                };
+                for p in look_of(cell, Near::of(map, x, y), &ctx).models {
+                    if !looks.contains(&p.look) {
+                        looks.push(p.look);
+                    }
+                }
+            }
+        }
+        looks
     }
 
     /// Build the stand-ins of looks first seen in a busy frame, as far as
@@ -4130,19 +4357,7 @@ impl MapView {
         for p in &look.props {
             let node = match self.spare_props.get_mut(&p.prop).and_then(Vec::pop) {
                 Some(n) => Some(n),
-                None => {
-                    let scene = self
-                        .prop_scenes
-                        .entry(p.prop)
-                        .or_insert_with(|| {
-                            godot::tools::try_load::<PackedScene>(p.prop.scene()).ok()
-                        })
-                        .clone();
-                    scene
-                        .and_then(|s| s.instantiate())
-                        .and_then(|n| n.try_cast::<Node3D>().ok())
-                        .inspect(|n| self.cells_root.add_child(n))
-                }
+                None => self.new_prop(p.prop),
             };
             let Some(mut node) = node else {
                 continue;
@@ -4153,6 +4368,186 @@ impl MapView {
             node.set_visible(true);
             nodes.props.push((p.prop, node));
         }
+    }
+
+    /// A branch's model, made (on the level, not yet placed).
+    fn new_prop(&mut self, prop: Prop) -> Option<Gd<Node3D>> {
+        let scene = self
+            .prop_scenes
+            .entry(prop)
+            .or_insert_with(|| godot::tools::try_load::<PackedScene>(prop.scene()).ok())
+            .clone();
+        let node = scene
+            .and_then(|s| s.instantiate())
+            .and_then(|n| n.try_cast::<Node3D>().ok())?;
+        // a set of several: the one this prop is, alone and centred
+        if let Some(part) = prop.part() {
+            for child in node.get_children().iter_shared() {
+                if child.get_name() != part {
+                    child.free();
+                } else if let Ok(mut c) = child.try_cast::<Node3D>() {
+                    c.set_position(Vector3::ZERO);
+                }
+            }
+        }
+        self.cells_root.add_child(&node);
+        Some(node)
+    }
+
+    /// Make ahead one more of what a level of `branch` takes from the
+    /// pools (torches, their lanterns, the branch's doors and candles):
+    /// a level that first shows many of them costs a long frame. False
+    /// when there are enough.
+    pub(crate) fn warm_pools(&mut self, branch: Branch) -> bool {
+        let look = crate::branch_look::look_of(branch);
+        // a shadow cast once, alone (a block under the hero's light): the
+        // shadow atlas is made then, not with the first level
+        match self.shadow_block.take() {
+            None if !self.shadow_made => {
+                self.shadow_made = true;
+                // in the map's own stone, so the first real geometry (its
+                // buffers, its pipelines) is drawn here too
+                let mut block = MeshInstance3D::new_alloc();
+                block.set_mesh(&self.art.mesh(cuboid(0.5, 0.5, 0.5)));
+                block.set_position(self.focus + at(0.0, 0.25, 0.0));
+                if let Some(m) = self.art.manifest().material("floor") {
+                    let mat = self.material(Paint::Pbr(m, SHADE_LIT, Role::Floor));
+                    block.set_material_override(&mat);
+                }
+                self.root.add_child(&block);
+                self.hero_light.set_position(self.focus + at(0.0, 2.4, 0.6));
+                self.hero_light.set_visible(true);
+                self.shadow_block = Some(block);
+                return true;
+            }
+            Some(block) if self.shadow_frames < 3 => {
+                // drawn a few frames
+                self.shadow_frames += 1;
+                self.shadow_block = Some(block);
+                return true;
+            }
+            Some(mut block) => {
+                block.queue_free();
+                self.hero_light.set_visible(false);
+                return true;
+            }
+            None => {}
+        }
+        // the liquids' materials (their shaders and the lava's flow)
+        for l in [Liquid::Water, Liquid::Foam, Liquid::Lava, Liquid::Haze] {
+            if !self.liquids.contains_key(&l) {
+                self.liquid(l);
+                return true;
+            }
+        }
+        // the embers' particles alone first (their shader is a long
+        // compile), then the torches
+        if self.spare_embers.is_none() && self.torches.is_empty() {
+            self.spare_embers = Some(self.vfx.embers());
+            return true;
+        }
+        if self.torches.len() < TORCHES_AHEAD {
+            let mut t = self.new_torch();
+            t.node.set_visible(false);
+            t.light.set_visible(false);
+            self.torches.push(t);
+            return true;
+        }
+        if look.lanterns
+            && let Some(i) = self.torches.iter().position(|t| t.lantern.is_none())
+        {
+            // its scene loaded in one frame, hung in the next
+            if !self.load_prop(Prop::Lantern) {
+                self.hang_lantern(i);
+            }
+            return true;
+        }
+        let wanted = [
+            (look.door, DOORS_AHEAD),
+            (look.candles.then_some(Prop::Candle), CANDLES_AHEAD),
+            (look.candles.then_some(Prop::Candelabra), CANDELABRAS_AHEAD),
+        ];
+        for (prop, n) in wanted {
+            let Some(prop) = prop else {
+                continue;
+            };
+            if self.spare_props.get(&prop).map_or(0, Vec::len) >= n {
+                continue;
+            }
+            if self.load_prop(prop) {
+                return true;
+            }
+            if let Some(mut node) = self.new_prop(prop) {
+                node.set_visible(false);
+                self.spare_props.entry(prop).or_default().push(node);
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Draw `texture` on a small card before the camera (None: no card),
+    /// so it reaches the graphics card now, not with a level.
+    pub(crate) fn show_texture(&mut self, texture: Option<&Gd<godot::classes::Texture2D>>) {
+        let Some(t) = texture else {
+            if let Some(mut card) = self.card.take() {
+                card.queue_free();
+            }
+            return;
+        };
+        let card = self.card.get_or_insert_with(|| {
+            let mut card = MeshInstance3D::new_alloc();
+            let mut quad = godot::classes::QuadMesh::new_gd();
+            quad.set_size(Vector2::new(0.1, 0.1));
+            card.set_mesh(&quad);
+            let mut m = StandardMaterial3D::new_gd();
+            m.set_shading_mode(ShadingMode::UNSHADED);
+            card.set_material_override(&m);
+            no_shadow(&mut card);
+            self.root.add_child(&card);
+            card
+        });
+        let eye = self.camera.get_global_transform();
+        card.set_global_transform(eye * Transform3D::new(Basis::IDENTITY, at(0.0, 0.0, -1.0)));
+        if let Some(mut m) = card
+            .get_material_override()
+            .and_then(|m| m.try_cast::<StandardMaterial3D>().ok())
+        {
+            m.set_texture(godot::classes::base_material_3d::TextureParam::ALBEDO, t);
+        }
+    }
+
+    /// Load a prop's scene if it is not yet: true when it was (that is
+    /// the frame's work).
+    fn load_prop(&mut self, prop: Prop) -> bool {
+        if self.prop_scenes.contains_key(&prop) {
+            return false;
+        }
+        let scene = godot::tools::try_load::<PackedScene>(prop.scene()).ok();
+        self.prop_scenes.insert(prop, scene);
+        true
+    }
+
+    /// What the rehearsal's levels draw, loaded ahead in the background:
+    /// the map's textures. (A scene or a shader loaded so stalls the frame
+    /// that takes it in: the rehearsal loads those one a frame.)
+    fn prefetch_paths(&self) -> Vec<String> {
+        let mut paths = crate::surface::Surfaces::texture_paths(self.art.manifest());
+        paths.extend(
+            [
+                Prop::CastleDoor,
+                Prop::IronGate,
+                Prop::Lantern,
+                Prop::Candle,
+                Prop::Candelabra,
+            ]
+            .map(|p| p.scene().to_string()),
+        );
+        paths.extend(
+            ["albedo", "emission"]
+                .map(|m| format!("res://art/cc0/texturecan/lava_flow/lava_flow_{m}.jpg")),
+        );
+        paths
     }
 
     /// The light of stairs on their cell: warm from above up the stairs,

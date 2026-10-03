@@ -81,6 +81,20 @@ impl Surfaces {
         s
     }
 
+    /// Every texture the manifest's materials read (all the branches'),
+    /// as the map loads them.
+    pub fn texture_paths(manifest: &ArtManifest) -> Vec<String> {
+        let mut paths: Vec<String> = manifest
+            .materials()
+            .flat_map(|(_, _, spec)| [spec.albedo_path(), spec.normal_path(), spec.arm_path()])
+            .flatten()
+            .map(|p| format!("{ART_ROOT}{p}"))
+            .collect();
+        paths.sort();
+        paths.dedup();
+        paths
+    }
+
     fn texture(&mut self, path: &str) -> Option<Gd<Texture2D>> {
         if let Some(t) = self.textures.get(path) {
             return t.clone();
@@ -217,6 +231,10 @@ impl Surfaces {
                 set(&mut mat, "memory", 0.0);
                 set(&mut mat, "glow", 0.02);
                 set(&mut mat, "macro", 1.4);
+                // rock in any branch (the main dungeon's is the manifest's
+                // own bedrock), cracked where the branch's floors are
+                set(&mut mat, "natural", 1.0);
+                set(&mut mat, "fissures", 0.6);
             }
         }
         let mat = mat.upcast::<Material>();

@@ -36,7 +36,7 @@ float n2(vec2 p) {
 float waves(vec2 p, float t) {
 	return n2(p * 0.35 + vec2(t * 0.03, t * 0.02))
 		+ n2(p * 0.7 - vec2(t * 0.025, -t * 0.035)) * 0.6
-		+ n2(p * 1.9 + vec2(-t * 0.05, t * 0.04)) * 0.25;
+		+ n2(p * 1.9 + vec2(-t * 0.05, t * 0.04)) * 0.1;
 }
 
 void fragment() {
@@ -46,20 +46,20 @@ void fragment() {
 	float h = waves(wpos.xz, t);
 	float hx = waves(wpos.xz + vec2(DS, 0.0), t);
 	float hz = waves(wpos.xz + vec2(0.0, DS), t);
-	vec3 wn = normalize(vec3((h - hx) / DS * ripple * 0.18, 1.0, (h - hz) / DS * ripple * 0.18));
+	vec3 wn = normalize(vec3((h - hx) / DS * ripple * 0.12, 1.0, (h - hz) / DS * ripple * 0.12));
 	vec3 n = normalize((VIEW_MATRIX * vec4(wn, 0.0)).xyz);
 
 	if (bank) {
 		// foam lapping at the stone: thick against it, breaking up outwards
 		float lap = 0.5 + 0.5 * sin(t * 1.4 + wpos.x * 2.3 + wpos.z * 1.7);
-		float reach = mix(0.35, 0.8, lap);
+		float reach = mix(0.25, 0.6, lap);
 		float edge = 1.0 - smoothstep(reach * 0.4, reach, UV.y);
 		float breakup = smoothstep(0.3, 0.65, n2(wpos.xz * 2.4 + vec2(t * 0.06, -t * 0.04)) + 0.25 * (1.0 - UV.y));
 		float a = edge * breakup;
 		vec3 c = foam_color.rgb;
 		float luma = dot(c, vec3(0.299, 0.587, 0.114));
 		ALBEDO = mix(luma * vec3(0.54, 0.59, 0.72) * 0.4, c, seen);
-		ALPHA = clamp(a * 0.7, 0.0, 1.0);
+		ALPHA = clamp(a * 0.5, 0.0, 1.0);
 		ROUGHNESS = 0.6;
 		NORMAL = n;
 	} else {
@@ -85,9 +85,13 @@ void fragment() {
 
 		ALBEDO = col;
 		ALPHA = mix(0.8, 0.97, depth_t);
-		ROUGHNESS = 0.05;
+		// rough enough, and rougher where the ripples turn faster than
+		// a pixel: the lights glint as soft streaks along them, not as
+		// points (stars)
+		float turn = length(fwidth(wn));
+		ROUGHNESS = clamp(0.28 + turn * 6.0, 0.28, 0.85);
 		METALLIC = 0.0;
-		SPECULAR = 0.7;
+		SPECULAR = 0.45;
 		NORMAL = n;
 	}
 }
