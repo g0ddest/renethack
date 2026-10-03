@@ -2,7 +2,7 @@
 
 NetHack 5.0 with a modern RPG presentation. The game rules are NetHack's own,
 unchanged; this repository adds a protocol host around the engine and a Godot
-client written in Rust. Design: `docs/superpowers/specs/2026-09-26-renethack-design.md`.
+client written in Rust.
 
 The client draws a torchlit 3D dungeon ("dark realism": CC0 photo textures,
 animated models, procedural bodies for everything without a model), with the

@@ -2,3 +2,4 @@
 /client/rust/target/
 /client/godot/.godot/
 __pycache__/
+/docs/superpowers/
