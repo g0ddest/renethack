@@ -563,16 +563,18 @@ impl INode for RenethackGame {
             }
         }
         // the map's loading begins after the title's own warm-up and waits
-        // out a frame of a first draw of it
+        // out a frame of a first draw of it (such frames only keep its
+        // title log a frame each)
         let map_turn = !matches!(
             self.title_warm,
             TitleWarm::Settle(_) | TitleWarm::Dialogs | TitleWarm::Glyphs
         ) || self.state != GameState::Title;
-        if let Some(ui) = self.ui.as_mut()
-            && map_turn
-            && !self.warm_heavy
-        {
-            ui.map.preload_step();
+        if let Some(ui) = self.ui.as_mut() {
+            if map_turn && !self.warm_heavy {
+                ui.map.preload_step();
+            } else {
+                ui.map.title_tick();
+            }
         }
         self.watch_engine();
         if !self.quitting
@@ -772,10 +774,11 @@ impl RenethackGame {
             TitleWarm::Map => {
                 ui.dialogs.warm_tick();
                 // the rehearsal begins and the map is drawn behind the
-                // title: its loading waits a frame
-                if let Some(cat) = catalog.as_deref() {
-                    ui.map.warm_up(cat, None);
-                }
+                // title (once there is a catalog): its loading waits a frame
+                let Some(cat) = catalog.as_deref() else {
+                    return;
+                };
+                ui.map.warm_up(cat, None);
                 self.warm_did = "map warm-up";
                 self.warm_heavy = true;
                 self.title_warm = TitleWarm::Panel;
