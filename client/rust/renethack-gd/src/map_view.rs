@@ -457,7 +457,7 @@ fn cell_noise(x: i32, y: i32, salt: u32) -> f32 {
 
 /// The colour a look multiplies its model by.
 /// The roles (as a new character names them).
-const ROLES: [&str; 13] = [
+pub(crate) const ROLES: [&str; 13] = [
     "archeologist",
     "barbarian",
     "caveman",
@@ -474,7 +474,7 @@ const ROLES: [&str; 13] = [
 ];
 
 /// The monsters met most on the first levels, and the pets.
-const WARM_MONSTERS: &[&str] = &[
+pub(crate) const WARM_MONSTERS: &[&str] = &[
     "kitten",
     "little dog",
     "pony",
@@ -506,7 +506,7 @@ const WARM_MONSTERS: &[&str] = &[
 ];
 
 /// The monster a role's hero is drawn as.
-fn role_monster(role: &str) -> &str {
+pub(crate) fn role_monster(role: &str) -> &str {
     match role {
         "caveman" | "cavewoman" => "cave dweller",
         "priest" | "priestess" => "cleric",
@@ -2033,6 +2033,10 @@ struct FrameStats {
     last_built: usize,
     /// Seconds since the last level change.
     since_level: f64,
+    /// Pipelines compiled so far (by kind) and video memory (MB), as of
+    /// the frame before.
+    pipelines: [i64; 5],
+    vmem: f64,
 }
 
 /// A torch on a wall: the sconce, its flame and its light.
@@ -2121,6 +2125,11 @@ pub struct MapView {
     stats_window: Option<FrameStats>,
     /// The art loaded ahead has been told of (RENETHACK_FRAME_STATS).
     preload_told: bool,
+    /// The level played behind the title screen (render pipelines
+    /// compiled ahead), until it is over; and whether the map is shown.
+    rehearsal: Option<crate::rehearsal::Rehearsal>,
+    rehearsed: bool,
+    shown: bool,
     /// The lit areas changed: place the fill lights again.
     lights_dirty: bool,
     /// Dark rock under the whole level, with a hole where something lies
@@ -2579,6 +2588,9 @@ impl MapView {
             branch_look: crate::branch_look::look_of(Branch::Main),
             stats_window: std::env::var_os("RENETHACK_FRAME_STATS").map(|_| FrameStats::default()),
             preload_told: false,
+            rehearsal: None,
+            rehearsed: false,
+            shown: false,
             lights_dirty: false,
             bedrock,
             holes: HashSet::new(),
@@ -2877,15 +2889,35 @@ impl MapView {
         stats.secs += delta;
         stats.worst = stats.worst.max(delta);
         stats.since_level += delta;
+        // pipelines compiled, and video memory, since the frame before
+        let perf = godot::classes::Performance::singleton();
+        use godot::classes::performance::Monitor as M;
+        let pipelines = [
+            M::PIPELINE_COMPILATIONS_CANVAS,
+            M::PIPELINE_COMPILATIONS_MESH,
+            M::PIPELINE_COMPILATIONS_SURFACE,
+            M::PIPELINE_COMPILATIONS_DRAW,
+            M::PIPELINE_COMPILATIONS_SPECIALIZATION,
+        ]
+        .map(|m| perf.get_monitor(m) as i64);
+        let vmem = perf.get_monitor(M::RENDER_VIDEO_MEM_USED) / 1e6;
         if delta > 0.033 {
+            let new: Vec<i64> = pipelines
+                .iter()
+                .zip(stats.pipelines)
+                .map(|(a, b)| a - b)
+                .collect();
             godot_print!(
-                "map: a frame of {:.1} ms, {:.2} s after a level change; the map's last sync took {:.1} ms and built {} models",
+                "map: a frame of {:.1} ms, {:.2} s after a level change; the map's last sync took {:.1} ms and built {} models; pipelines compiled (canvas, mesh, surface, draw, specialization) {new:?}, video memory {:+.1} MB",
                 delta * 1000.0,
                 stats.since_level,
                 stats.last_sync,
-                stats.last_built
+                stats.last_built,
+                vmem - stats.vmem
             );
         }
+        stats.pipelines = pipelines;
+        stats.vmem = vmem;
         stats.gpu += rs.viewport_get_measured_render_time_gpu(rid);
         stats.cpu += rs.get_frame_setup_time_cpu();
         stats.draws += rs.get_rendering_info(
@@ -2911,6 +2943,8 @@ impl MapView {
             *stats = FrameStats {
                 frames: 1,
                 since_level: stats.since_level,
+                pipelines: stats.pipelines,
+                vmem: stats.vmem,
                 ..FrameStats::default()
             };
         }
@@ -3556,6 +3590,8 @@ impl MapView {
 
     /// Forget every cell (a new game).
     pub fn clear(&mut self) {
+        // a game starts: the rehearsal is over
+        self.rehearsal = None;
         self.building.clear();
         self.finish_motions();
         self.facing.clear();
@@ -3751,6 +3787,9 @@ impl MapView {
     }
 
     pub fn set_visible(&mut self, on: bool) {
+        self.shown = on;
+        // drawn behind the title while the rehearsal plays
+        let on = on || self.rehearsal.is_some();
         self.root.set_visible(on);
         self.post.set_visible(on);
         self.mist.set_visible(on);
@@ -3765,7 +3804,24 @@ impl MapView {
     /// Load art ahead of need for a few milliseconds (every frame, also
     /// before a game starts); false when everything is loaded.
     pub fn preload_step(&mut self) -> bool {
-        let more = self.art.preload_step();
+        let mut more = self.art.preload_step();
+        // the rehearsal once the art is loaded (a game started ends it)
+        if !more && let Some(mut r) = self.rehearsal.take() {
+            let delta = self.root.get_process_delta_time();
+            if r.step(self, delta) {
+                self.rehearsal = Some(r);
+                more = true;
+            } else {
+                self.clear();
+                self.set_visible(self.shown);
+                if self.stats_window.is_some() {
+                    godot_print!(
+                        "map: rehearsal over {:.1} s after start",
+                        godot::classes::Time::singleton().get_ticks_msec() as f64 / 1000.0
+                    );
+                }
+            }
+        }
         if !more && self.stats_window.is_some() && !std::mem::replace(&mut self.preload_told, true)
         {
             godot_print!(
@@ -3779,13 +3835,17 @@ impl MapView {
 
     /// Nothing is left to load ahead (self-tests start a game then).
     pub fn preloaded(&self) -> bool {
-        self.art.preloaded()
+        self.art.preloaded() && self.rehearsal.is_none()
     }
 
     /// Build ahead the models a game shows first: the role's hero (first
     /// of all) when one is chosen, else every role's, the pets and the
     /// monsters of the first levels.
     pub fn warm_up(&mut self, catalog: &Catalog, role: Option<&str>) {
+        if !std::mem::replace(&mut self.rehearsed, true) {
+            self.rehearsal = Some(crate::rehearsal::Rehearsal::new(catalog));
+            self.set_visible(self.shown);
+        }
         let names: Vec<&str> = match role {
             Some(role) => vec![role_monster(role)],
             None => ROLES

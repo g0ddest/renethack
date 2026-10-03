@@ -361,6 +361,8 @@ fn particle_textures() -> HashMap<Recipe, Gd<Texture2D>> {
 }
 /// Motes of dust around the camera's focus in the main dungeon.
 const DUST: i32 = 220;
+/// The thickest dust of any branch (the Plane of Earth's).
+const DUST_MOST: f32 = 3.0;
 
 pub struct Vfx {
     root: Gd<Node3D>,
@@ -951,10 +953,10 @@ impl Vfx {
 
     /// How thick the dust in the air is (1: the main dungeon's).
     pub fn set_dust(&mut self, thickness: f32) {
-        let amount = (DUST as f32 * thickness).round().max(1.0) as i32;
-        if self.dust.get_amount() != amount {
-            self.dust.set_amount(amount);
-        }
+        // a new amount restarts the emitter, and its 8 s of pre-process
+        // run on the GPU in one frame: the ratio of a fixed amount does not
+        self.dust
+            .set_amount_ratio((thickness / DUST_MOST).clamp(0.0, 1.0));
     }
 
     /// Embers rising from a flame: a small emitter to put under a torch.
@@ -1092,7 +1094,8 @@ fn dust(root: &mut Gd<Node3D>, soft: &Gd<Texture2D>) -> Gd<GpuParticles3D> {
     let mut p = GpuParticles3D::new_alloc();
     p.set_name("Dust");
     p.set_process_material(&m);
-    p.set_amount(DUST);
+    p.set_amount((DUST as f32 * DUST_MOST) as i32);
+    p.set_amount_ratio(1.0 / DUST_MOST);
     p.set_lifetime(8.0);
     p.set_pre_process_time(8.0);
     p.set_use_local_coordinates(false);
