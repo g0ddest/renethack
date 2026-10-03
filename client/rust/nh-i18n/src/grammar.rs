@@ -100,9 +100,45 @@ pub fn plural_category(n: u64) -> Plural {
     }
 }
 
+/// Which form of a noun follows the number `n` written in digits, in
+/// `case`: (number, case) of the paradigm's cell. In the nominative and
+/// the inanimate accusative 1 takes the singular, 2–4 the genitive
+/// singular, 5–20 the genitive plural (1 стрела, 2 стрелы, 5 стрел); an
+/// animate accusative takes the genitive plural after 2 and more (2
+/// тритонов); the other cases the plural of that case (2 стрелам).
+pub fn counted_form(n: u64, case: Case, animate: bool) -> (Number, Case) {
+    let p = plural_category(n);
+    if p == Plural::One {
+        return (Number::Sing, case);
+    }
+    match case {
+        Case::Nom => match p {
+            Plural::Few => (Number::Sing, Case::Gen),
+            _ => (Number::Plur, Case::Gen),
+        },
+        Case::Acc if animate => (Number::Plur, Case::Gen),
+        Case::Acc => match p {
+            Plural::Few => (Number::Sing, Case::Gen),
+            _ => (Number::Plur, Case::Gen),
+        },
+        other => (Number::Plur, other),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn numbers_govern_their_noun() {
+        let f = |n, c, a| counted_form(n, c, a);
+        assert_eq!(f(1, Case::Nom, false), (Number::Sing, Case::Nom));
+        assert_eq!(f(21, Case::Acc, true), (Number::Sing, Case::Acc));
+        assert_eq!(f(3, Case::Nom, false), (Number::Sing, Case::Gen));
+        assert_eq!(f(5, Case::Acc, false), (Number::Plur, Case::Gen));
+        assert_eq!(f(3, Case::Acc, true), (Number::Plur, Case::Gen));
+        assert_eq!(f(12, Case::Ins, false), (Number::Plur, Case::Ins));
+    }
 
     #[test]
     fn plural_categories_follow_the_last_two_digits() {

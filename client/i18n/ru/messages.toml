@@ -1,0 +1,272 @@
+# The Russian of the engine's most frequent texts (soak seeds 1..8):
+# the seed of the catalog's translation. Each table is a template of
+# client/i18n/catalog.en.json by its id; en repeats its format, ru is
+# the Russian template (syntax: nh-i18n's template.rs).
+
+[ab7df3759fc6]
+en = "%s bites!"
+ru = "{1} {1:num|кусает|кусают}!"
+
+[8e3761e5ea42]
+en = "You swap places with %s."
+ru = "Вы меняетесь местами с {1:ins}."
+
+[9a306b489be9]
+en = "You are already here."
+ru = "Вы уже здесь."
+
+[3b08451a6158]
+en = "There is nothing here to pick up."
+ru = "Здесь нечего подобрать."
+
+[4dab96b854b4]
+en = "You see here %s."
+ru = "Здесь {1:num|лежит|лежат} {1}."
+
+[d1844b98ec47]
+en = "%s misses %s."
+ru = "{1} {1:num|промахивается|промахиваются} по {2:dat}."
+
+[8721eb15a055]
+en = "Never mind."
+ru = "Неважно."
+
+[eb4c3e5c3e13]
+en = "You don't have that object."
+ru = "У вас нет такого предмета."
+
+[f4e5f81a184e]
+en = "%s picks up %s."
+ru = "{1} {1:num|подбирает|подбирают} {2:acc}."
+
+[8963ee4d881e]
+en = "%s bites %s."
+ru = "{1} {1:num|кусает|кусают} {2:acc}."
+
+[9119db71c2f3]
+en = "%s drops %s."
+ru = "{1} {1:num|бросает|бросают} {2:acc}."
+
+[22b8fc39f20d]
+en = "You see no door there."
+ru = "Вы не видите там двери."
+
+[f2176d6bc4e8]
+en = "You start digging downward."
+ru = "Вы начинаете копать вниз."
+
+[9e72cd8ce22e]
+en = "You see no objects here."
+ru = "Вы не видите здесь никаких предметов."
+
+[62ba78627eb0]
+en = "Ouch!  You bump into a door."
+ru = "Ой!  Вы врезаетесь в дверь."
+
+[cf60093a2441]
+en = "You get zapped!"
+ru = "Вас бьёт током!"
+
+[61edc156059a]
+en = "%s misses!"
+ru = "{1} {1:num|промахивается|промахиваются}!"
+
+[d205ce9e7545]
+en = "%s is killed!"
+ru = "{1} {1:gender|убит|убита|убито|убиты}!"
+
+[7abd00927bfe]
+en = "You stop.  %s is in the way!"
+ru = "Вы останавливаетесь.  {1:cap} {1:num|стоит|стоят} на пути!"
+
+[752eb0e1b6b6]
+en = "You cannot escape from %s!"
+ru = "Вам не вырваться от {1:gen}!"
+
+[8d7c93579184]
+en = "You faint from lack of food."
+ru = "Вы теряете сознание от голода."
+
+[d9d9ab0d18bf]
+en = "You miss %s."
+ru = "Вы промахиваетесь по {1:dat}."
+
+[14619ce84942]
+en = "You regain consciousness."
+ru = "Вы приходите в себя."
+
+[a25a6fb87c74]
+en = "You kill %s!"
+ru = "Вы убиваете {1:acc}!"
+
+[611b3e3324ee]
+en = "There is %s here."
+ru = "Здесь {1}."
+
+[c3da5e802a80]
+en = "You stop %s."
+ru = "Вы перестаёте {1}."
+
+[77a3d5a2586c]
+en = "digging"
+ru = "копать"
+
+[ce8bacaa777b]
+en = "%s hits!"
+ru = "{1} {1:num|бьёт|бьют}!"
+
+[d51260249749]
+en = "That door is closed."
+ru = "Эта дверь закрыта."
+
+[7522d78d6574]
+en = "You continue digging downward."
+ru = "Вы продолжаете копать вниз."
+
+[bf3a3235a23a]
+en = "You fall through..."
+ru = "Вы проваливаетесь..."
+
+[a3dfd51209d6]
+en = "Be careful!  New moon tonight."
+ru = "Осторожно!  Сегодня новолуние."
+
+[2bf24241726b]
+en = "Where do you want to travel to?"
+ru = "Куда вы хотите отправиться?"
+
+[8c40430b080d]
+en = "The door opens."
+ru = "Дверь открывается."
+
+[97008cab6899]
+en = "You drop %s."
+ru = "Вы бросаете {1:acc}."
+
+[741e0f949397]
+en = "You hit %s."
+ru = "Вы бьёте {1:acc}."
+
+[9979e4c12ada]
+en = "You die..."
+ru = "Вы умираете..."
+
+[74ba1a1e775e]
+en = "Whammm!!"
+ru = "Бамм!!"
+
+[a97258ae2942]
+en = "This door is locked."
+ru = "Эта дверь заперта."
+
+[cf251ff12a58]
+en = "%s eats %s."
+ru = "{1} {1:num|ест|едят} {2:acc}."
+
+[c3905ce69e13]
+en = "As you kick the door, it crashes open!"
+ru = "От вашего пинка дверь с треском распахивается!"
+
+[3048c9596d67]
+en = "You hear some noises."
+ru = "Вы слышите какой-то шум."
+
+[827b1b7208fd]
+en = "%s just misses!"
+ru = "{1} едва {1:num|промахивается|промахиваются}!"
+
+[76b13de14bce]
+en = "You hear the footsteps of a guard on patrol."
+ru = "Вы слышите шаги стражника, совершающего обход."
+
+[acf899020ced]
+en = "%s touches you!"
+ru = "{1} {1:num|касается|касаются} вас!"
+
+[fe613c47e230]
+en = "You hear someone counting gold coins."
+ru = "Вы слышите, как кто-то пересчитывает золотые монеты."
+
+[19accd0af40f]
+en = "You can hear again."
+ru = "Вы снова слышите."
+
+[b26effd89232]
+en = "Ouch!  That hurts!"
+ru = "Ой!  Больно!"
+
+[23efe4dcca92]
+en = "You are bare handed."
+ru = "Вы безоружны."
+
+[474054947c9e]
+en = "You were wearing %s."
+ru = "На вас {1:gender|был надет|была надета|было надето|были надеты} {1}."
+
+[9e4f57d300dc]
+en = "%s throws %s!"
+ru = "{1} {1:num|бросает|бросают} {2:acc}!"
+
+[5b553aaa39a8]
+en = "The door resists!"
+ru = "Дверь не поддаётся!"
+
+[0dc210bc58d9]
+en = "You are hit by %s."
+ru = "В вас {1:num|попадает|попадают} {1}."
+
+[547db6aa041f]
+en = "You find a hidden door."
+ru = "Вы находите потайную дверь."
+
+[be1046433128]
+en = "You kick at empty space."
+ru = "Вы пинаете пустоту."
+
+[d6f163b09381]
+en = "You have no ammunition readied."
+ru = "У вас нет приготовленных снарядов."
+
+[a0051d0a4f52]
+en = "You begin bashing monsters with %s."
+ru = "Вы начинаете колотить монстров {1:ins}."
+
+[c81cb6e78cef]
+en = "You don't have anything to eat."
+ru = "Вам нечего есть."
+
+[e346935ac437]
+en = "You don't have anything to drink."
+ru = "Вам нечего пить."
+
+[05ba94c010c2]
+en = "You don't have anything to zap."
+ru = "Вам нечем взмахнуть."
+
+[516aa87ede8f]
+en = "You don't have anything else to wear."
+ru = "Вам больше нечего надеть."
+
+[71508cfd503b]
+en = "You don't have anything else to put on."
+ru = "Вам больше нечего надеть."
+
+[64973080ddcd]
+en = "You shoot %d %s."
+ru = "Вы выпускаете {1} {2:by1:acc}."
+
+[eb0208287c0b]
+en = "There are %ld gold pieces here; eat them?"
+ru = "Здесь {1:plural|лежит|лежат|лежат} {1} {1:plural|золотая монета|золотые монеты|золотых монет}; съесть {1:plural|её|их|их}?"
+
+[5ec4cbbafd6f]
+en = "You give %s the %ld gold pieces he asked for."
+ru = "Вы отдаёте {1:dat} {2} {2:plural|золотую монету|золотые монеты|золотых монет}, как он и просил."
+
+[0338b67cb612]
+en = "You give %s the %ld gold pieces she asked for."
+ru = "Вы отдаёте {1:dat} {2} {2:plural|золотую монету|золотые монеты|золотых монет}, как она и просила."
+
+[d4acda9a63b9]
+en = "You read: \"%s\""
+ru = "Вы читаете: «{1}»"

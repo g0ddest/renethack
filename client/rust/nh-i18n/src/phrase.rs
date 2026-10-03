@@ -13,6 +13,13 @@ pub trait Phrase {
     fn gender(&self) -> Gender;
     /// `Plur` when the count is over one or the noun has no singular.
     fn number(&self) -> Number;
+    /// The phrase as counted by `n` (written before it), in `case`:
+    /// 1 стрелу, 2 стрелы, 5 стрел; in the genitive 2 стрел. By default
+    /// its form in that case.
+    fn counted(&self, n: u64, case: Case) -> String {
+        let _ = n;
+        self.form(case)
+    }
 }
 
 /// What an argument of a message names, as the catalog knows it from the C
@@ -68,5 +75,11 @@ impl Phrase for Fixed {
 
     fn number(&self) -> Number {
         self.number
+    }
+}
+
+impl<T: Names + ?Sized> Names for &T {
+    fn parse(&self, kind: NameKind, english: &str) -> Option<Box<dyn Phrase>> {
+        (**self).parse(kind, english)
     }
 }
