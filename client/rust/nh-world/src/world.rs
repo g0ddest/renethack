@@ -199,7 +199,13 @@ impl World {
                 }
                 None => {}
             },
-            WinCall::Putstr { win, attr, text } => match self.kind(*win) {
+            WinCall::Putstr {
+                win,
+                attr,
+                text,
+                fmt,
+                args,
+            } => match self.kind(*win) {
                 Some(WindowKind::Message) => {
                     if attr & ATR_NOHISTORY != 0 {
                         self.transient = Some(text.clone());
@@ -221,7 +227,8 @@ impl World {
                         // a new message takes tty's top line
                         self.transient = None;
                         let turn = self.turn();
-                        self.log.push(text.clone(), *attr, turn, false);
+                        self.log
+                            .push_format(text.clone(), *attr, turn, fmt.clone(), args.clone());
                     }
                 }
                 Some(WindowKind::Text | WindowKind::Menu) => {
@@ -444,7 +451,7 @@ mod tests {
     use nh_protocol::{EngineMsg, parse_line};
 
     use super::*;
-    use crate::{Terrain, cell_terrain, describe_cell};
+    use crate::{FmtArg, Terrain, cell_terrain, describe_cell};
 
     /// Apply engine lines; the prompt for the last request, if any.
     fn feed(world: &mut World, lines: &str) -> Option<Prompt> {
@@ -610,6 +617,39 @@ mod tests {
             r#"{"t":"req","id":6,"fn":"display_nhwindow","a":{"win":3}}"#,
         );
         assert_eq!(p, Some(Prompt::AutoAck));
+    }
+
+    #[test]
+    fn a_logged_message_keeps_its_format_for_the_translator() {
+        let mut w = World::new();
+        feed(
+            &mut w,
+            &format!(
+                "{START}{}",
+                r#"
+                {"t":"win","fn":"putstr","a":{"win":1,"attr":0,"str":"You hit the newt.","fmt":"You hit %s.","args":["the newt"]}}
+                {"t":"win","fn":"putstr","a":{"win":1,"attr":0,"str":"You have 2 gold pieces."}}
+                {"t":"win","fn":"putmsghistory","a":{"msg":"old news","restoring":true}}
+                "#
+            ),
+        );
+        let logged: Vec<_> = w
+            .log
+            .iter()
+            .map(|m| (m.text.as_str(), m.fmt.as_deref(), m.args.clone()))
+            .collect();
+        assert_eq!(
+            logged,
+            vec![
+                (
+                    "You hit the newt.",
+                    Some("You hit %s."),
+                    vec![FmtArg::Str("the newt".into())]
+                ),
+                ("You have 2 gold pieces.", None, vec![]),
+                ("old news", None, vec![]),
+            ]
+        );
     }
 
     #[test]

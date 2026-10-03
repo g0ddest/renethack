@@ -5,8 +5,10 @@
 #include "func_tab.h"
 #include "dlb.h"
 #include <stdarg.h>
+#include "nhevents.h"
 #include "rh_proto.h"
 #include "rh_bridge.h"
+#include "rh_fmt.h"
 #include "rh_progress.h"
 
 /* rh_progress.h names NetHack's two spoiler achievements by number */
@@ -35,6 +37,14 @@ static boolean seen_moveloop;
 static d_level told_level = { -1, -1 };
 /* the hash of the progress notice the client last got (0: none) */
 static unsigned long long told_progress;
+/* the message vpline() is about to show, as its format and arguments and
+   the text they make: the putstr that shows that text carries them to the
+   client's translator.  Any message putstr ends it, so a message that is
+   not shown (MSGTYPE=hide, Norep) lends its format to no other. */
+static struct {
+    char *fmt, *text;
+    cJSON *args;
+} pending_pline;
 
 static const char *const status_names[MAXBLSTATS] = {
     "title", "str", "dex", "con", "int", "wis", "cha",
@@ -551,13 +561,51 @@ h_curs(void *ret UNUSED, va_list *ap)
 }
 
 static void
+pending_pline_clear(void)
+{
+    free(pending_pline.fmt);
+    free(pending_pline.text);
+    cJSON_Delete(pending_pline.args);
+    pending_pline.fmt = pending_pline.text = (char *) 0;
+    pending_pline.args = (cJSON *) 0;
+}
+
+/* nhevents: vpline() was given `fmt` and `args`.  Observation only: the
+   arguments are read from a copy, nothing of the game's is touched. */
+static void
+pline_format(const char *fmt, va_list args)
+{
+    pending_pline_clear();
+    if (!(pending_pline.args = rh_fmt_args(fmt, args)))
+        return;
+    pending_pline.text = rh_fmt_text(fmt, args, BUFSZ - 1);
+    pending_pline.fmt = malloc(strlen(fmt) + 1);
+    if (!pending_pline.text || !pending_pline.fmt) {
+        pending_pline_clear();
+        return;
+    }
+    Strcpy(pending_pline.fmt, fmt);
+}
+
+static void
 h_putstr(void *ret UNUSED, va_list *ap)
 {
     cJSON *a = args_new();
+    int win = va_arg(*ap, int);
+    const char *str;
 
-    add_int(a, "win", va_arg(*ap, int));
+    add_int(a, "win", win);
     add_int(a, "attr", va_arg(*ap, int));
-    add_str(a, "str", va_arg(*ap, const char *));
+    str = va_arg(*ap, const char *);
+    add_str(a, "str", str);
+    if (win == WIN_MESSAGE) {
+        if (pending_pline.text && str && !strcmp(str, pending_pline.text)) {
+            add_str(a, "fmt", pending_pline.fmt);
+            cJSON_AddItemToObject(a, "args", pending_pline.args);
+            pending_pline.args = (cJSON *) 0;
+        }
+        pending_pline_clear();
+    }
     rh_proto_send("win", "putstr", a);
 }
 
@@ -1111,6 +1159,10 @@ rh_bridge_start(void)
     rh_proto_send("hello", (const char *) 0, a);
     rh_proto_flush();
     rh_proto_set_lost_handler(client_lost);
+    /* messages carry their formats, unless a test compares the game
+       without the hook */
+    if (!getenv("RENETHACK_NO_PLINE_HOOK"))
+        nhevents.pline_format = pline_format;
 }
 
 void

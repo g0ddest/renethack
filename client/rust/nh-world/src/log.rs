@@ -1,5 +1,7 @@
 use std::collections::VecDeque;
 
+pub use nh_protocol::FmtArg;
+
 /// ATR_URGENT: the message must not be missed.
 pub const ATR_URGENT: i32 = 16;
 /// ATR_NOHISTORY: a transient message that does not belong in the history.
@@ -20,6 +22,12 @@ pub struct Message {
     pub urgent: bool,
     /// Restored from a save (putmsghistory), not said in this session.
     pub from_history: bool,
+    /// The printf format the engine made `text` from, the key of its
+    /// translation, and its arguments: kept so the log can be shown again
+    /// in another language. None for history and for text the host could
+    /// not pair with a format.
+    pub fmt: Option<String>,
+    pub args: Vec<FmtArg>,
 }
 
 /// The message history, newest last.
@@ -35,18 +43,49 @@ impl MessageLog {
     }
 
     pub fn push(&mut self, text: String, attr: i32, turn: Option<i64>, from_history: bool) {
+        self.add(Message {
+            seq: 0,
+            text,
+            attr,
+            turn,
+            urgent: false,
+            from_history,
+            fmt: None,
+            args: Vec::new(),
+        });
+    }
+
+    /// A message said now, with the format and arguments it was made from.
+    pub fn push_format(
+        &mut self,
+        text: String,
+        attr: i32,
+        turn: Option<i64>,
+        fmt: Option<String>,
+        args: Vec<FmtArg>,
+    ) {
+        self.add(Message {
+            seq: 0,
+            text,
+            attr,
+            turn,
+            urgent: false,
+            from_history: false,
+            fmt,
+            args,
+        });
+    }
+
+    /// Number `m` and keep it; its attr still has the URGENT/NOHISTORY bits.
+    fn add(&mut self, mut m: Message) {
         self.last_seq += 1;
         if self.messages.len() == LOG_CAPACITY {
             self.messages.pop_front();
         }
-        self.messages.push_back(Message {
-            seq: self.last_seq,
-            text,
-            attr: attr & !(ATR_URGENT | ATR_NOHISTORY),
-            turn,
-            urgent: attr & ATR_URGENT != 0,
-            from_history,
-        });
+        m.seq = self.last_seq;
+        m.urgent = m.attr & ATR_URGENT != 0;
+        m.attr &= !(ATR_URGENT | ATR_NOHISTORY);
+        self.messages.push_back(m);
     }
 
     pub fn iter(&self) -> impl DoubleEndedIterator<Item = &Message> {
@@ -106,5 +145,23 @@ mod tests {
         assert_eq!(log.last_seq(), 1006);
         log.push("next".into(), 0, None, false);
         assert_eq!(log.iter().next_back().unwrap().seq, 1007);
+    }
+
+    #[test]
+    fn a_message_keeps_the_format_it_was_made_from() {
+        let mut log = MessageLog::new();
+        log.push_format(
+            "You hit the newt.".into(),
+            ATR_URGENT,
+            Some(3),
+            Some("You hit %s.".into()),
+            vec![FmtArg::Str("the newt".into())],
+        );
+        log.push("old news".into(), 0, None, true);
+        let said: Vec<_> = log.iter().collect();
+        assert_eq!(said[0].fmt.as_deref(), Some("You hit %s."));
+        assert_eq!(said[0].args, [FmtArg::Str("the newt".into())]);
+        assert!(said[0].urgent && said[0].attr == 0 && !said[0].from_history);
+        assert_eq!((said[1].fmt.as_deref(), said[1].args.len()), (None, 0));
     }
 }

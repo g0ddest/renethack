@@ -66,6 +66,17 @@ echo "$prog" | grep -q '"mode":"normal","role":"Val","achieved":\[\],' || fail "
 echo "$prog" | grep -q '"deepest":1,' || fail "progress: deepest level"
 echo "$prog" | grep -q '"gameover":false,"how":null' || fail "progress: game over"
 echo "$prog" | grep -q '"conduct":{"unvegetarian":0,' || fail "progress: no conducts"
+# messages carry the format vpline() was given and its arguments, for the
+# translator; the hook that reads them only observes: without it the game
+# is the same, line for line
+grep -q '"str":"Velkommen Hero, welcome to NetHack!  You are a neutral human Valkyrie.","fmt":"%s %s, welcome to NetHack!  You are a%s.","args":\["Velkommen","Hero"," neutral human Valkyrie"\]}}$' "$out" \
+    || fail "the welcome has no format"
+run_engine nohook RENETHACK_NO_PLINE_HOOK=1
+if grep -q '"fmt":' "$tmp/nohook/session.jsonl"; then
+    fail "formats without the hook"
+fi
+sed 's/,"fmt":.*}}$/}}/' "$out" | cmp -s - "$tmp/nohook/session.jsonl" \
+    || fail "the message hook changes the game"
 [ -x "$build/recover" ] || fail "recover is not built"
 ls "$tmp/base/save" | grep -q . || fail "game not saved on EOF"
 

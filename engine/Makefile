@@ -97,9 +97,18 @@ $(BUILD)/test_progress: $(HOST)/tests/test_progress.c $(HOST)/rh_progress.c \
 	cc -std=c99 -Wall -Wextra -I$(HOST) \
 		-o $@ $(HOST)/tests/test_progress.c $(HOST)/rh_progress.c
 
-test: $(BUILD)/test_proto $(BUILD)/test_progress all
+$(BUILD)/test_fmt: $(HOST)/tests/test_fmt.c $(HOST)/rh_fmt.c \
+		$(HOST)/rh_fmt.h $(HOST)/rh_proto.c $(HOST)/rh_proto.h \
+		$(HOST)/third_party/cjson/cJSON.c
+	mkdir -p $(BUILD)
+	cc -std=c99 -Wall -Wextra -I$(HOST) -I$(HOST)/third_party/cjson \
+		-o $@ $(HOST)/tests/test_fmt.c $(HOST)/rh_fmt.c \
+		$(HOST)/rh_proto.c $(HOST)/third_party/cjson/cJSON.c
+
+test: $(BUILD)/test_proto $(BUILD)/test_progress $(BUILD)/test_fmt all
 	$(BUILD)/test_proto
 	$(BUILD)/test_progress
+	$(BUILD)/test_fmt
 	sh tests/smoke.sh $(BUILD)
 
 clean:

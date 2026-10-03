@@ -58,6 +58,14 @@ pub enum WinCall {
         win: i32,
         attr: i32,
         text: String,
+        /// A message's printf format as the engine's vpline() was given it
+        /// ("You hit %s."), the key of its translation; only on the
+        /// message window, and only when the host could tell it made
+        /// `text`.
+        fmt: Option<String>,
+        /// The format's arguments, one per conversion (empty without
+        /// `fmt`).
+        args: Vec<FmtArg>,
     },
     /// Only sent when the file is missing; present files arrive as a request.
     DisplayFileMissing {
@@ -188,6 +196,20 @@ pub struct LevelNotice {
     /// In the endgame: "earth", "air", "fire", "water" or "astral".
     #[serde(default)]
     pub plane: Option<String>,
+}
+
+/// One argument of a message's format, as the host read it.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(untagged)]
+pub enum FmtArg {
+    /// %s (as printed, so cut to its precision), %c, %p.
+    Str(String),
+    /// The integer conversions: %d, %u, %x...
+    Int(i64),
+    /// The floating conversions (and an integer too big for `Int`).
+    Num(f64),
+    /// %s given a null pointer.
+    Null,
 }
 
 /// The hero's progress as the game tells it to the player (#chronicle,
@@ -460,6 +482,10 @@ struct Putstr {
     win: i32,
     attr: i32,
     str: Option<String>,
+    #[serde(default)]
+    fmt: Option<String>,
+    #[serde(default)]
+    args: Vec<FmtArg>,
 }
 #[derive(Deserialize)]
 struct FileArgs {
@@ -584,6 +610,8 @@ fn win_call(name: String, a: Value) -> Result<WinCall, ProtocolError> {
                 win: p.win,
                 attr: p.attr,
                 text: p.str.unwrap_or_default(),
+                fmt: p.fmt,
+                args: p.args,
             }
         }
         "display_file" => WinCall::DisplayFileMissing {

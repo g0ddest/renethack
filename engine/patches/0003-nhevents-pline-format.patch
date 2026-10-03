@@ -1,0 +1,109 @@
+--- /dev/null
++++ b/include/nhevents.h
+@@ -0,0 +1,24 @@
++/* NetHack 5.0	nhevents.h */
++/* renethack: observation hooks for a front end */
++/* NetHack may be freely redistributed.  See license for details. */
++
++#ifndef NHEVENTS_H
++#define NHEVENTS_H
++
++#include <stdarg.h>
++
++/* What the core does, for a front end that wants to know more than the
++ * window port is told.  A hook only observes: it must not change the game,
++ * draw on the RNG, or call pline() or the display.  Every hook is null
++ * unless the front end sets it, so the core alone calls none.
++ */
++struct nhevents_procs {
++    /* a message about to be formatted: vpline()'s format and arguments */
++    void (*pline_format)(const char *fmt, va_list args);
++};
++
++extern struct nhevents_procs nhevents;
++
++extern void nhevents_pline_format(const char *, va_list);
++
++#endif /* NHEVENTS_H */
+--- /dev/null
++++ b/src/nhevents.c
+@@ -0,0 +1,22 @@
++/* NetHack 5.0	nhevents.c */
++/* renethack: observation hooks for a front end (see nhevents.h) */
++/* NetHack may be freely redistributed.  See license for details. */
++
++#include "hack.h"
++#include "nhevents.h"
++
++struct nhevents_procs nhevents = { 0 };
++
++/* the hook gets a copy of the arguments: vpline() goes on to format the
++   message from them */
++void
++nhevents_pline_format(const char *fmt, va_list args)
++{
++    va_list copy;
++
++    if (!nhevents.pline_format)
++        return;
++    va_copy(copy, args);
++    (*nhevents.pline_format)(fmt, copy);
++    va_end(copy);
++}
+--- a/src/pline.c
++++ b/src/pline.c
+@@ -4,6 +4,7 @@
+ /* NetHack may be freely redistributed.  See license for details. */
+ 
+ #include "hack.h"
++#include "nhevents.h"
+ 
+ #define BIGBUFSZ (5 * BUFSZ) /* big enough to format a 4*BUFSZ string (from
+                               * config file parsing) with modest decoration;
+@@ -189,6 +190,10 @@
+         return;
+     }
+ 
++    /* renethack: the format and its arguments, for a front end that
++       translates messages; it only observes */
++    nhevents_pline_format(line, the_args);
++
+     if (!strchr(line, '%')) {
+         /* format does not specify any substitutions; use it as-is */
+         ln = (int) strlen(line);
+--- a/sys/unix/Makefile.src
++++ b/sys/unix/Makefile.src
+@@ -523,7 +523,7 @@
+ 	   lock.c mail.c makemon.c mcastu.c mdlib.c mhitm.c \
+ 	   mhitu.c minion.c mklev.c mkmap.c mkmaze.c mkobj.c mkroom.c mon.c \
+ 	   mondata.c monmove.c monst.c mplayer.c mthrowu.c muse.c music.c \
+-	   nhlua.c nhlsel.c nhlobj.c nhmd4.c o_init.c objects.c objnam.c \
++	   nhevents.c nhlua.c nhlsel.c nhlobj.c nhmd4.c o_init.c objects.c objnam.c \
+ 	   options.c pager.c pickup.c pline.c polyself.c potion.c pray.c \
+ 	   priest.c quest.c questpgr.c read.c rect.c region.c report.c restore.c \
+ 	   rip.c rnd.c role.c rumors.c save.c selvar.c sfbase.c sfstruct.c \
+@@ -611,6 +611,7 @@
+ 	$(TARGETPFX)mkroom.o $(TARGETPFX)mon.o $(TARGETPFX)mondata.o \
+ 	$(TARGETPFX)monmove.o $(TARGETPFX)monst.o $(TARGETPFX)mplayer.o \
+ 	$(TARGETPFX)mthrowu.o $(TARGETPFX)muse.o $(TARGETPFX)music.o \
++	$(TARGETPFX)nhevents.o \
+ 	$(TARGETPFX)nhlua.o $(TARGETPFX)nhlsel.o $(TARGETPFX)nhlobj.o \
+ 	$(TARGETPFX)nhmd4.o $(TARGETPFX)objects.o $(TARGETPFX)o_init.o \
+ 	$(TARGETPFX)objnam.o $(TARGETPFX)options.o $(TARGETPFX)pager.o \
+@@ -1220,6 +1221,7 @@
+ $(TARGETPFX)mthrowu.o: mthrowu.c $(HACK_H)
+ $(TARGETPFX)muse.o: muse.c $(HACK_H)
+ $(TARGETPFX)music.o: music.c $(HACK_H)
++$(TARGETPFX)nhevents.o: nhevents.c $(HACK_H) ../include/nhevents.h
+ $(TARGETPFX)nhlobj.o: nhlobj.c $(HACK_H) ../include/sp_lev.h
+ $(TARGETPFX)nhlsel.o: nhlsel.c $(HACK_H) ../include/sp_lev.h
+ $(TARGETPFX)nhlua.o: nhlua.c $(HACK_H) ../include/dlb.h
+@@ -1234,7 +1236,7 @@
+ 		../include/optlist.h ../include/tcap.h
+ $(TARGETPFX)pager.o: pager.c $(HACK_H) ../include/dlb.h
+ $(TARGETPFX)pickup.o: pickup.c $(HACK_H)
+-$(TARGETPFX)pline.o: pline.c $(HACK_H)
++$(TARGETPFX)pline.o: pline.c $(HACK_H) ../include/nhevents.h
+ $(TARGETPFX)polyself.o: polyself.c $(HACK_H)
+ $(TARGETPFX)potion.o: potion.c $(HACK_H)
+ $(TARGETPFX)pray.o: pray.c $(HACK_H)

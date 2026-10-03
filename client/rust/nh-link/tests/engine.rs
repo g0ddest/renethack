@@ -332,6 +332,70 @@ fn a_recorded_session_replays_to_the_same_stream() {
     assert_eq!(again.stream_hash(), loaded.header.stream_hash);
 }
 
+/// A little play with many messages: praying, engraving and reading it,
+/// swapping weapons, walking into the pet and the walls.
+const CHATTY: &str = "key #\next pray\nyn y\nkey E\nyn -\ntext Elbereth\nkey :\nkey x\nkey x\n\
+    key h\nkey h\nkey h\nkey h\nkey l\nkey l\nkey l\nkey l\nkey l\nkey l\n\
+    key j\nkey j\nkey j\nkey k\nkey k\nkey k\nkey k\nkey k\nkey s\nkey s\n";
+
+/// A session's lines without the message formats the host adds to putstr
+/// (always its last two arguments): what the game itself sent.
+fn without_formats(t: &Transcript) -> Vec<String> {
+    t.lines
+        .iter()
+        .map(|l| match l.find(r#","fmt":"#) {
+            // a quote inside a string is escaped: this is the key
+            Some(i) => format!("{}}}}}", &l[..i]),
+            None => l.clone(),
+        })
+        .collect()
+}
+
+#[test]
+fn the_message_hook_only_observes() {
+    // the same game with the host's pline hook and without it
+    let script = format!("{CHATTY}{QUIT}");
+    let (_pg, with) = run_script(SEED, NEW_MOON, &script);
+    let pg = tempfile::tempdir().unwrap();
+    let mut cfg = config(pg.path(), SEED, NEW_MOON);
+    let unhooked = pg.path().join("nh-engine-unhooked");
+    std::fs::write(
+        &unhooked,
+        format!(
+            "#!/bin/sh\nRENETHACK_NO_PLINE_HOOK=1 exec '{}' \"$@\"\n",
+            cfg.engine.display()
+        ),
+    )
+    .unwrap();
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&unhooked, std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    cfg.engine = unhooked;
+    let mut engine = Engine::spawn(&cfg).unwrap();
+    let mut responder = ScriptResponder::new(parse_script(&script).unwrap());
+    let without = run_session(&mut engine, &mut responder, &SessionLimits::default()).unwrap();
+
+    let formats = with
+        .lines
+        .iter()
+        .filter(|l| l.contains(r#","fmt":"#))
+        .count();
+    assert!(formats >= 20, "only {formats} messages with a format");
+    assert!(without.lines.iter().all(|l| !l.contains(r#","fmt":"#)));
+    let stripped = without_formats(&with);
+    if let Some(i) =
+        (0..stripped.len().min(without.lines.len())).find(|&i| stripped[i] != without.lines[i])
+    {
+        panic!("line {i} differs:\n{}\n{}", stripped[i], without.lines[i]);
+    }
+    let digest = format!(
+        "{:016x}",
+        nh_protocol::fnv1a64(stripped.join("\n").as_bytes())
+    );
+    assert_eq!(digest, without.stream_hash());
+}
+
 #[test]
 fn a_session_the_client_hung_up_on_still_replays() {
     // the usual bug report: play a little, then the client dies

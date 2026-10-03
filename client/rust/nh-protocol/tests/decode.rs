@@ -171,6 +171,52 @@ fn welcome_message_goes_to_the_message_window() {
 }
 
 #[test]
+fn a_message_carries_the_format_it_was_made_from() {
+    // the welcome, with vpline()'s format and its arguments
+    let welcome = decoded()
+        .into_iter()
+        .find_map(|m| match m {
+            EngineMsg::Win(WinCall::Putstr {
+                text, fmt, args, ..
+            }) if text.contains("welcome to NetHack") => Some((fmt, args)),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(
+        welcome,
+        (
+            Some("%s %s, welcome to NetHack!  You are a%s.".to_string()),
+            vec![
+                FmtArg::Str("Velkommen".into()),
+                FmtArg::Str("Hero".into()),
+                FmtArg::Str(" neutral human Valkyrie".into()),
+            ]
+        )
+    );
+    // each kind of argument; a putstr without a format has none
+    let line = r#"{"t":"win","fn":"putstr","a":{"win":1,"attr":0,"str":"x","fmt":"%s %d %c %.1f %s","args":["a",-3,"b",2.5,null]}}"#;
+    let EngineMsg::Win(WinCall::Putstr { fmt, args, .. }) = parse_line(line).unwrap() else {
+        panic!("expected putstr")
+    };
+    assert_eq!(fmt.as_deref(), Some("%s %d %c %.1f %s"));
+    assert_eq!(
+        args,
+        [
+            FmtArg::Str("a".into()),
+            FmtArg::Int(-3),
+            FmtArg::Str("b".into()),
+            FmtArg::Num(2.5),
+            FmtArg::Null
+        ]
+    );
+    let line = r#"{"t":"win","fn":"putstr","a":{"win":3,"attr":0,"str":"menu text"}}"#;
+    let EngineMsg::Win(WinCall::Putstr { fmt, args, .. }) = parse_line(line).unwrap() else {
+        panic!("expected putstr")
+    };
+    assert_eq!((fmt, args), (None, vec![]));
+}
+
+#[test]
 fn menu_items_and_number_pad_carry_their_additions() {
     // what the D menu sends for "Auto-select every relevant item"
     let item = r#"{"t":"win","fn":"add_menu","a":{"win":4,"idx":0,"glyph":null,"selectable":true,"ch":65,"gch":0,"attr":0,"clr":8,"str":"Auto-select every relevant item","preselected":false,"skipinvert":true}}"#;
