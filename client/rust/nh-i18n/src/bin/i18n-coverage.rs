@@ -1,7 +1,7 @@
 //! How much of what the game showed the catalog knows and the Russian
 //! translates.
 //!
-//!     cargo run -p nh-i18n --bin i18n-coverage -- [--todo FILE N] CORPUS...
+//!     cargo run -p nh-i18n --bin i18n-coverage -- [--todo FILE N] [--no-lexicon] CORPUS...
 //!
 //! A corpus is the soak's dump (`RENETHACK_DUMP_MESSAGES=<file>`: JSON
 //! lines `{"kind", "text"}`, with `fmt` and `args` for a message when the
@@ -10,7 +10,9 @@
 //! share a template matched and the share translated, then the texts no
 //! template matched and the templates without a translation, by how often
 //! they were shown. `--todo FILE N` writes the N most shown untranslated
-//! templates as stubs to translate.
+//! templates as stubs to translate. The names in the texts are declined by
+//! the lexicon (`client/i18n/lexicon.ru.toml`); `--no-lexicon` leaves them
+//! English, to see the templates alone.
 
 use std::collections::HashMap;
 use std::fmt::Write as _;
@@ -20,7 +22,7 @@ use std::process::ExitCode;
 use nh_i18n::{Arg, Catalog, NameKind, Names, Output, Phrase, Russian, Status, Translator};
 use serde::Deserialize;
 
-/// No lexicon yet: every name stays English.
+/// `--no-lexicon`: every name stays English.
 struct NoNames;
 
 impl Names for NoNames {
@@ -69,9 +71,12 @@ struct Tally {
 fn main() -> ExitCode {
     let mut todo: Option<(PathBuf, usize)> = None;
     let mut corpora = Vec::new();
+    let mut lexicon = true;
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
-        if a == "--todo" {
+        if a == "--no-lexicon" {
+            lexicon = false;
+        } else if a == "--todo" {
             let file = args.next().map(PathBuf::from);
             let n = args.next().and_then(|n| n.parse().ok());
             match (file, n) {
@@ -86,10 +91,10 @@ fn main() -> ExitCode {
         }
     }
     if corpora.is_empty() {
-        eprintln!("usage: i18n-coverage [--todo FILE N] CORPUS...");
+        eprintln!("usage: i18n-coverage [--todo FILE N] [--no-lexicon] CORPUS...");
         return ExitCode::FAILURE;
     }
-    match run(&corpora, todo) {
+    match run(&corpora, todo, lexicon) {
         Ok(report) => {
             print!("{report}");
             ExitCode::SUCCESS
@@ -105,13 +110,22 @@ fn i18n_dir() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../../i18n")
 }
 
-fn run(corpora: &[PathBuf], todo: Option<(PathBuf, usize)>) -> Result<String, String> {
+fn run(
+    corpora: &[PathBuf],
+    todo: Option<(PathBuf, usize)>,
+    lexicon: bool,
+) -> Result<String, String> {
     let dir = i18n_dir();
     let catalog_text =
         std::fs::read_to_string(dir.join("catalog.en.json")).map_err(|e| e.to_string())?;
     let catalog = Catalog::parse(&catalog_text).map_err(|e| e.to_string())?;
     let russian = Russian::load_dir(&dir.join("ru")).map_err(|e| e.to_string())?;
-    let translator = Translator::new(catalog, russian, Box::new(NoNames));
+    let names: Box<dyn Names + Send + Sync> = if lexicon {
+        Box::new(nh_i18n::lexicon::Lexicon::ru())
+    } else {
+        Box::new(NoNames)
+    };
+    let translator = Translator::new(catalog, russian, names);
 
     let mut tallies: HashMap<String, Tally> = HashMap::new();
     let mut unknown: HashMap<String, usize> = HashMap::new();
@@ -211,8 +225,8 @@ fn run(corpora: &[PathBuf], todo: Option<(PathBuf, usize)>) -> Result<String, St
     }
     let _ = writeln!(
         out,
-        "matched: a template with words of its own; partial: its names stay English \
-         (no lexicon); weak: only a template like \"%s of %s\" (a name to read)"
+        "matched: a template with words of its own (or a name the lexicon reads); \
+         partial: a name in it stays English; weak: only a template like \"%s of %s\""
     );
     let _ = writeln!(out, "messages with their format (P7): {with_fmt}");
     let mut misses: Vec<_> = unknown.into_iter().collect();

@@ -2812,6 +2812,16 @@ fn soak(args: &Args) -> Vec<Step> {
     vec![Step::Soak(Box::new(soak))]
 }
 
+/// A message's argument as JSON.
+fn json_arg(a: &nh_world::FmtArg) -> String {
+    match a {
+        nh_world::FmtArg::Str(s) => json_string(s),
+        nh_world::FmtArg::Int(n) => n.to_string(),
+        nh_world::FmtArg::Num(x) if x.is_finite() => x.to_string(),
+        nh_world::FmtArg::Num(_) | nh_world::FmtArg::Null => "null".to_string(),
+    }
+}
+
 /// A JSON string literal.
 fn json_string(s: &str) -> String {
     let mut out = String::from("\"");
@@ -3126,20 +3136,38 @@ impl Soak {
     }
 
     /// The texts shown since the last request, and the request's own:
-    /// one JSON line each, `{"seed", "kind", "text"}`; a text window is
-    /// one text, its lines joined by newlines.
+    /// one JSON line each, `{"seed", "kind", "text"}`, a message with the
+    /// `fmt` and `args` the engine made it from; a text window is one
+    /// text, its lines joined by newlines.
     fn dump_shown(&mut self, g: &RenethackGame, prompt: &Prompt) {
         use std::io::Write as _;
         let Some(out) = self.dump.as_mut() else {
             return;
         };
+        for m in g.world.log.since(self.seen) {
+            if m.text.trim().is_empty() {
+                continue;
+            }
+            let format = match &m.fmt {
+                Some(fmt) => {
+                    let args: Vec<String> = m.args.iter().map(json_arg).collect();
+                    format!(
+                        ", \"fmt\": {}, \"args\": [{}]",
+                        json_string(fmt),
+                        args.join(", ")
+                    )
+                }
+                None => String::new(),
+            };
+            let _ = writeln!(
+                out,
+                "{{\"seed\": {}, \"kind\": \"message\", \"text\": {}{format}}}",
+                self.seed,
+                json_string(&m.text)
+            );
+        }
         let window: String;
-        let mut shown: Vec<(&str, &str)> = g
-            .world
-            .log
-            .since(self.seen)
-            .map(|m| ("message", m.text.as_str()))
-            .collect();
+        let mut shown: Vec<(&str, &str)> = Vec::new();
         match prompt {
             Prompt::Choice { query, .. }
             | Prompt::FreeKey { query, .. }
