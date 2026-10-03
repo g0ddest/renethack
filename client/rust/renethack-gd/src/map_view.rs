@@ -2329,9 +2329,12 @@ pub struct MapView {
     /// `show_parts`).
     showing: u8,
     shadow_block: Option<Gd<MeshInstance3D>>,
-    shadow_frames: u32,
-    /// A card the rehearsal shows textures on (see `show_texture`).
-    card: Option<Gd<MeshInstance3D>>,
+    shadow_frames: u64,
+    /// Cards the rehearsal shows textures on (see `show_textures`), and
+    /// what it shows once (see `show_once`).
+    cards: Vec<Gd<MeshInstance3D>>,
+    shown_once: Vec<Gd<Node3D>>,
+    embers_shown: bool,
     /// Embers made ahead for the first torch.
     spare_embers: Option<Gd<godot::classes::GpuParticles3D>>,
     /// When the last title frame began, and the art's and the
@@ -2827,7 +2830,9 @@ impl MapView {
             showing: 0,
             shadow_block: None,
             shadow_frames: 0,
-            card: None,
+            cards: Vec::new(),
+            shown_once: Vec::new(),
+            embers_shown: false,
             spare_embers: None,
             title_clock: None,
             title_work: Default::default(),
@@ -4151,6 +4156,17 @@ impl MapView {
         }
         let mut more = self.art.preload_step();
         let art = now.elapsed();
+        if !more
+            && self.rehearsed
+            && self.stats_window.is_some()
+            && !std::mem::replace(&mut self.preload_told, true)
+        {
+            godot_print!(
+                "map: art loaded ahead {:.1} s after start, {} models built",
+                godot::classes::Time::singleton().get_ticks_msec() as f64 / 1000.0,
+                self.art.counts().1
+            );
+        }
         if let Some(mut r) = self.rehearsal.take() {
             // what it draws loads in the background meanwhile; it plays
             // once the art is loaded (a game started ends it)
@@ -4189,14 +4205,6 @@ impl MapView {
             )
         });
         self.title_frame(now, art, rehearsal, doing);
-        if !more && self.stats_window.is_some() && !std::mem::replace(&mut self.preload_told, true)
-        {
-            godot_print!(
-                "map: art loaded ahead {:.1} s after start, {} models built",
-                godot::classes::Time::singleton().get_ticks_msec() as f64 / 1000.0,
-                self.art.counts().1
-            );
-        }
         more
     }
 
@@ -4483,12 +4491,13 @@ impl MapView {
         Some(node)
     }
 
-    /// Make ahead one more of what a level of `branch` takes from the
-    /// pools (torches, their lanterns, the branch's doors and candles):
-    /// a level that first shows many of them costs a long frame. False
-    /// when there are enough.
-    pub(crate) fn warm_pools(&mut self, branch: Branch) -> bool {
-        let look = crate::branch_look::look_of(branch);
+    /// Make ahead one more of what the levels take from the pools, every
+    /// branch's (torches, their lanterns, doors, gates, candles,
+    /// candelabras), the first of each kind drawn once before the camera
+    /// (its first draw: its pipelines, its buffers), and the dust once as
+    /// embers: a level showing them later costs no long frame. False when
+    /// there is all of it.
+    pub(crate) fn warm_pools(&mut self) -> bool {
         // a shadow cast once, alone (a block under the hero's light): the
         // shadow atlas is made then, not with the first level
         match self.shadow_block.take() {
@@ -4507,11 +4516,12 @@ impl MapView {
                 self.hero_light.set_position(self.focus + at(0.0, 2.4, 0.6));
                 self.hero_light.set_visible(true);
                 self.shadow_block = Some(block);
+                self.shadow_frames = Self::frame();
                 return true;
             }
-            Some(block) if self.shadow_frames < 3 => {
-                // drawn a few frames
-                self.shadow_frames += 1;
+            Some(block) if Self::frame() < self.shadow_frames + 3 => {
+                // drawn a few frames (frames, not calls: under the veil
+                // there are several calls a frame)
                 self.shadow_block = Some(block);
                 return true;
             }
@@ -4529,6 +4539,12 @@ impl MapView {
                 return true;
             }
         }
+        // the dust once as Gehennom's embers
+        if !self.embers_shown {
+            self.embers_shown = true;
+            self.vfx.set_dust(1.0, true);
+            return true;
+        }
         // the embers' particles alone first (their shader is a long
         // compile), then the torches
         if self.spare_embers.is_none() && self.torches.is_empty() {
@@ -4537,37 +4553,49 @@ impl MapView {
         }
         if self.torches.len() < TORCHES_AHEAD {
             let mut t = self.new_torch();
-            t.node.set_visible(false);
             t.light.set_visible(false);
+            let first = self.torches.is_empty();
+            t.node.set_visible(first);
+            if first {
+                self.show_once(t.node.clone());
+            }
             self.torches.push(t);
             return true;
         }
-        if look.lanterns
-            && let Some(i) = self.torches.iter().position(|t| t.lantern.is_none())
-        {
+        if let Some(i) = self.torches.iter().position(|t| t.lantern.is_none()) {
             // its scene loaded in one frame, hung in the next
             if !self.load_prop(Prop::Lantern) {
                 self.hang_lantern(i);
+                if i == 0 {
+                    // the first drawn once, in its torch's place
+                    let t = &mut self.torches[0];
+                    t.fire.set_visible(false);
+                    t.node.set_visible(true);
+                    let node = t.node.clone();
+                    self.show_once(node);
+                }
             }
             return true;
         }
         let wanted = [
-            (look.door, DOORS_AHEAD),
-            (look.candles.then_some(Prop::Candle), CANDLES_AHEAD),
-            (look.candles.then_some(Prop::Candelabra), CANDELABRAS_AHEAD),
+            (Prop::CastleDoor, DOORS_AHEAD),
+            (Prop::IronGate, DOORS_AHEAD),
+            (Prop::Candle, CANDLES_AHEAD),
+            (Prop::Candelabra, CANDELABRAS_AHEAD),
         ];
         for (prop, n) in wanted {
-            let Some(prop) = prop else {
-                continue;
-            };
-            if self.spare_props.get(&prop).map_or(0, Vec::len) >= n {
+            let have = self.spare_props.get(&prop).map_or(0, Vec::len);
+            if have >= n {
                 continue;
             }
             if self.load_prop(prop) {
                 return true;
             }
             if let Some(mut node) = self.new_prop(prop) {
-                node.set_visible(false);
+                node.set_visible(have == 0);
+                if have == 0 {
+                    self.show_once(node.clone());
+                }
                 self.spare_props.entry(prop).or_default().push(node);
                 return true;
             }
@@ -4575,34 +4603,69 @@ impl MapView {
         false
     }
 
-    /// Draw `texture` on a small card before the camera (None: no card),
-    /// so it reaches the graphics card now, not with a level.
-    pub(crate) fn show_texture(&mut self, texture: Option<&Gd<godot::classes::Texture2D>>) {
-        let Some(t) = texture else {
-            if let Some(mut card) = self.card.take() {
+    /// The process frame (a few things wait frames, not calls).
+    fn frame() -> u64 {
+        godot::classes::Engine::singleton().get_process_frames()
+    }
+
+    /// A pooled thing drawn once before the camera, put away by
+    /// `put_away_shown` (the next frame).
+    fn show_once(&mut self, mut node: Gd<Node3D>) {
+        let k = self.shown_once.len() as f32;
+        let place = self.focus + at(-1.5 + (k % 4.0), 0.0, -1.0 + (k / 4.0).floor());
+        node.set_global_position(place);
+        self.shown_once.push(node);
+    }
+
+    /// What was drawn once put away (its torch's fire as it was), and the
+    /// dust back to the branch's.
+    pub(crate) fn put_away_shown(&mut self) {
+        for mut node in std::mem::take(&mut self.shown_once) {
+            node.set_visible(false);
+        }
+        if let Some(t) = self.torches.first_mut() {
+            t.fire.set_visible(!self.branch_look.lanterns);
+        }
+        let l = self.branch_look;
+        self.vfx.set_dust(l.dust, l.embers);
+    }
+
+    /// Models standing in for ones not built yet.
+    pub(crate) fn models_pending(&self) -> usize {
+        self.art.pending()
+    }
+
+    /// Draw `textures` on small cards before the camera (none: no cards),
+    /// so they reach the graphics card now, not with a level.
+    pub(crate) fn show_textures(&mut self, textures: &[Gd<godot::classes::Texture2D>]) {
+        while self.cards.len() > textures.len() {
+            if let Some(mut card) = self.cards.pop() {
                 card.queue_free();
             }
-            return;
-        };
-        let card = self.card.get_or_insert_with(|| {
-            let mut card = MeshInstance3D::new_alloc();
-            let mut quad = godot::classes::QuadMesh::new_gd();
-            quad.set_size(Vector2::new(0.1, 0.1));
-            card.set_mesh(&quad);
-            let mut m = StandardMaterial3D::new_gd();
-            m.set_shading_mode(ShadingMode::UNSHADED);
-            card.set_material_override(&m);
-            no_shadow(&mut card);
-            self.root.add_child(&card);
-            card
-        });
+        }
         let eye = self.camera.get_global_transform();
-        card.set_global_transform(eye * Transform3D::new(Basis::IDENTITY, at(0.0, 0.0, -1.0)));
-        if let Some(mut m) = card
-            .get_material_override()
-            .and_then(|m| m.try_cast::<StandardMaterial3D>().ok())
-        {
-            m.set_texture(godot::classes::base_material_3d::TextureParam::ALBEDO, t);
+        for (i, t) in textures.iter().enumerate() {
+            if i == self.cards.len() {
+                let mut card = MeshInstance3D::new_alloc();
+                let mut quad = godot::classes::QuadMesh::new_gd();
+                quad.set_size(Vector2::new(0.1, 0.1));
+                card.set_mesh(&quad);
+                let mut m = StandardMaterial3D::new_gd();
+                m.set_shading_mode(ShadingMode::UNSHADED);
+                card.set_material_override(&m);
+                no_shadow(&mut card);
+                self.root.add_child(&card);
+                self.cards.push(card);
+            }
+            let card = &mut self.cards[i];
+            let x = -0.4 + 0.11 * i as f32;
+            card.set_global_transform(eye * Transform3D::new(Basis::IDENTITY, at(x, 0.0, -1.0)));
+            if let Some(mut m) = card
+                .get_material_override()
+                .and_then(|m| m.try_cast::<StandardMaterial3D>().ok())
+            {
+                m.set_texture(godot::classes::base_material_3d::TextureParam::ALBEDO, t);
+            }
         }
     }
 

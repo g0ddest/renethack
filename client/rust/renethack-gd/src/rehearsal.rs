@@ -28,12 +28,18 @@ const STAGES: &[(&str, Branch)] = &[
     ("Vlad's Tower", Branch::Vlad),
 ];
 
-/// Frames a stage is held once it is drawn: an effect a frame, then the
-/// pipelines compiled in the background.
-const HOLD: u32 = 30;
-/// A frame's time for drawing the first stage's cells (the game's is
-/// 4 ms: the first level drawn compiles and allocates as it goes).
-const FIRST_BUDGET: std::time::Duration = std::time::Duration::from_micros(1500);
+/// The effects the first stage fires (`act`), how many a frame go off
+/// under the start-up veil, and the frames a stage is held after them
+/// (the effects that follow others go off then).
+const ACTS: u32 = 20;
+const VEILED_ACTS: u32 = 4;
+const HOLD_TAIL: u32 = 24;
+/// The frames a later stage is held (nothing in it is drawn for the
+/// first time).
+const LATER_HOLD: u32 = 6;
+/// Under the start-up veil: a frame's work, and the textures drawn in one.
+const VEILED_FRAME: std::time::Duration = std::time::Duration::from_millis(20);
+const VEILED_TEXTURES: usize = 8;
 /// A stage that never settles moves on after this many frames.
 const MOST: u32 = 300;
 
@@ -89,6 +95,8 @@ pub struct Rehearsal {
     phase: Phase,
     stage: usize,
     frame: u32,
+    /// The first stage's effects gone off so far.
+    acted: u32,
     /// Loads still running, scenes waiting their turn, and what they
     /// gave (kept until it is over).
     fetching: Vec<String>,
@@ -114,6 +122,7 @@ impl Rehearsal {
             phase: Phase::Fetch,
             stage: 0,
             frame: 0,
+            acted: 0,
             fetching,
             queued: scenes,
             fetched: Vec::new(),
@@ -182,6 +191,11 @@ impl Rehearsal {
 
     /// One frame of it; false when it is over.
     pub fn step(&mut self, map: &mut MapView, delta: f64) -> bool {
+        // under the start-up veil nothing shows: no frame's budget is
+        // kept, the sooner it is done the sooner the title shows
+        let veiled = !self.first_draws_done();
+        let started = std::time::Instant::now();
+        let in_time = |t: std::time::Instant| !veiled || t.elapsed() < VEILED_FRAME;
         match self.phase {
             Phase::Fetch => {
                 if self.fetch() {
@@ -189,42 +203,66 @@ impl Rehearsal {
                 }
             }
             Phase::Upload => {
-                let next = self.fetched.get(self.frame as usize).cloned();
-                let texture = next
-                    .as_ref()
-                    .and_then(|r| r.clone().try_cast::<Texture2D>().ok());
-                map.show_texture(texture.as_ref());
-                self.frame += 1;
-                if next.is_none() {
+                let n = if veiled { VEILED_TEXTURES } else { 1 };
+                let at = self.frame as usize;
+                let textures: Vec<Gd<Texture2D>> = self
+                    .fetched
+                    .iter()
+                    .skip(at)
+                    .take(n)
+                    .filter_map(|r| r.clone().try_cast::<Texture2D>().ok())
+                    .collect();
+                map.show_textures(&textures);
+                self.frame += n as u32;
+                if at >= self.fetched.len() {
                     self.frame = 0;
                     self.phase = Phase::Pools;
                 }
             }
             Phase::Pools => {
-                // one piece a frame; the stage once there is all it takes
-                if !map.warm_pools(STAGES[self.stage].1) {
+                // every branch's, each drawn once; the first stage once
+                // there is all it takes
+                map.put_away_shown();
+                let mut more = map.warm_pools();
+                while more && veiled && in_time(started) {
+                    more = map.warm_pools();
+                }
+                if !more {
                     self.enter(self.stage);
                     self.phase = Phase::Build;
                 }
             }
             Phase::Build => {
-                // the first level drawn draws everything for the first
-                // time: a few of its cells a frame
-                map.set_build_budget((self.stage == 0).then_some(FIRST_BUDGET));
+                map.set_build_budget(veiled.then_some(VEILED_FRAME));
                 map.sync(&mut self.world, &self.catalog, delta);
                 self.frame += 1;
-                if map.is_settled() || self.frame >= MOST {
+                if (map.is_settled() && map.models_pending() == 0) || self.frame >= MOST {
                     self.phase = Phase::Hold;
                     self.frame = 0;
                 }
             }
             Phase::Hold => {
-                self.act(map, self.frame);
+                // the first stage: every effect, a few a frame under the
+                // veil; the others only show their level a while
+                let (acts, hold) = if self.stage == 0 {
+                    (ACTS, ACTS.div_ceil(VEILED_ACTS) + HOLD_TAIL)
+                } else {
+                    (0, LATER_HOLD)
+                };
+                let per = if veiled { VEILED_ACTS } else { 1 };
+                for k in 0..per {
+                    let n = self.acted + k;
+                    if n < acts {
+                        self.act(map, n);
+                    }
+                }
+                self.acted += per;
                 map.sync(&mut self.world, &self.catalog, delta);
                 self.frame += 1;
-                if self.frame >= HOLD {
+                if self.frame >= hold {
                     map.set_hover(None);
                     map.set_path(&[], false);
+                    self.acted = 0;
                     self.stage += 1;
                     if self.stage == STAGES.len() {
                         return false;
