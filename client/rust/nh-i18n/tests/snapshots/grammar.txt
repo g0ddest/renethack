@@ -5808,6 +5808,8 @@ All worn and wielded types  [70cb28745864]
   =   Всё надетое и всё в руках
 All's well that ends well  [6fd91413b152]
   =   Всё хорошо, что хорошо кончается
+Almost all adventurers who come this way hope to pass the dread Medusa.  To\ndo this, the best advice is to keep thine eyes blindfolded and to cause the\ncreature to espy its own reflection in a mirror.  [bdb8bf14714f]
+  =   Почти все искатели приключений, что идут этим путём, надеются миновать\nгрозную Медузу. Лучший совет здесь — держать глаза завязанными и заставить\nчудовище узреть своё отражение в зеркале.
 Alone at last!  [ac0eec938f2c]
   =   Наконец-то одни!
 Always attack a floating eye from behind!  [b354491ec5f7]
@@ -5858,6 +5860,8 @@ And they said it couldn't be done!  [44d4100b08ad]
   =   А говорили, что это невозможно!
 And what do I look like?  The living?  [da6487071bce]
   =   А я на кого похож?  На живого?
+And where it is written "ad aerarium", diligent searching will often reveal\nthe way to a trap which sends one to the Magic Memory Vault, where the riches\nof Croesus are stored; however, escaping from the vault with its gold is much\nharder than getting in.  [b0fe962ce4ed]
+  =   А где начертано «ad aerarium», усердные поиски нередко открывают путь к\nзападне, что переносит в Волшебное хранилище памяти, где сокрыты богатства\nКрёза; однако выбраться из хранилища с его золотом куда труднее, чем туда\nпопасть.
 And yes, it was ALL his fault!  [c6fb2ed95645]
   =   И да, это ВСЁ он виноват!
 And you said it was pretty here...  [a980fe284fdc]
@@ -5923,6 +5927,8 @@ At last... a nice long sleep.  [08466e2630b8]
   =   Наконец-то... долгий сладкий сон.
 At least I'm good at something  [256f3169217d]
   =   Хоть в чём-то я хорош
+At times, the gods may favor worthy supplicants with named blades whose\npowers echo throughout legend.  Learned wayfarers can reproduce blades of\nelven lineage, hated of the orcs, without the need for such intervention.  [6b4be1c8c413]
+  =   Порой боги жалуют достойных просителей именными клинками, чья сила гремит\nв легендах. Сведущие же странники умеют воссоздавать клинки эльфийского\nрода, ненавистные оркам, и без подобного заступничества.
 At whom? (in what direction)  [39015019ee75]
   =   В кого? (в каком направлении)
 Attach these to your candelabrum, or extinguish it  [2439938989a5]
@@ -6023,6 +6029,8 @@ Beg your pardon, didn't recognize you, I've changed a lot.  [b26a3a742fad]
   =   Простите, не узнал вас, я сильно изменился.
 Behind this door is a dark corridor  [eb9e3a60b211]
   =   За этой дверью тёмный коридор
+Behold the cockatrice, whose diminutive stature belies its hidden might.  The\ncockatrice can petrify any ordinary being it contacts--save those wise\nadventurers who eat a dead lizard or blob of acid when they feel themselves\nslowly turning to stone.  [1780f93e1704]
+  =   Узри василиска, чей малый рост скрывает великую силу. Василиск обращает в\nкамень всякое обычное существо, коего коснётся, — кроме мудрых искателей\nприключений, что съедают мёртвую ящерицу или кислотный сгусток, ощутив,\nкак медленно каменеют.
 Being dead builds character  [d5380a36eb67]
   =   Смерть закаляет характер
 Beloved daughter, a treasure, buried here.  [b045a6b6e4dd]
@@ -7208,6 +7216,12 @@ If a man's deeds do not outlive him, of what value is a mark in stone?  [b0cd5a7
   =   Если дела человека не переживут его, что толку в надписи на камне?
 If there's a spot of blood on your hands, why not wash them?  [7bbc57bd711e]
   =   Если на руках пятно крови, почему бы их не вымыть?
+If thou hast had trouble with rust on thine armor or weapons, thou shouldst\nknow that thou canst prevent this by, while in a confused state, reading the\nmagical parchments which normally are used to cause their enchantment.\nUnguents of lubrication may provide similar protection, albeit of a\ntransitory nature.  [23ff1de237ae]
+  =   Коли досаждает тебе ржа на доспехах и оружии, знай: уберечь их можно,\nпрочтя в смятении ума те волшебные пергаменты, коими обыкновенно их\nзачаровывают. Смазочные снадобья дают подобную защиту, хотя и\nнедолговечную.
+If thou wouldst travel quickly between distant locations, thou must be\nable to control thy teleports, and in a confused state misread the scroll\nwhich usually teleports thyself locally.  Daring adventurers have also\nperformed the same feat sans need for scrolls or potions by stepping into\na particular ambuscade.  [35348936ce98]
+  =   Коли желаешь ты быстро перемещаться между далёкими местами, должно тебе\nвладеть своими телепортациями и в смятении ума прочесть не так свиток, что\nобыкновенно переносит тебя неподалёку. Отважные искатели приключений\nсовершали то же и без свитков и зелий, ступив в особую западню.
+If thy wand hath run out of charges, thou mayst zap it again and again; though\nnaught will happen at first, verily, thy persistence shall be rewarded, as\none last charge may yet be wrested from it!  [f24576c93c6b]
+  =   Коли иссякли заряды твоей палочки, взмахивай ею снова и снова: поначалу\nничего не случится, но воистину упорство твоё будет вознаграждено, ибо\nпоследний заряд ещё можно из неё исторгнуть!
 If you are being punished, it's done with a deadly weapon.  [a70b2199ce50]
   =   Если вас наказывают, то смертоносным оружием.
 If you are the shopkeeper, you can take things for free.  [3cd47db75545]
@@ -7259,6 +7273,8 @@ In a cloud of smoke, %s emerges!  [d4d16ccfd3fe]
   f   В облаке дыма появляется крыса!
   n   В облаке дыма появляется копьё!
   pl  В облаке дыма появляются 3 стрелы!
+In the deepest recesses of the Dungeons of Doom, guarding access to the\nnether regions, there standeth a castle, wherein lieth a wand of wishes.\nIf thou wouldst gain entry, bear with thee an instrument of music, for the\npontlevis may be charmed down with the proper melody.  What notes comprise\nit only the gods know, but a musical mastermind may yet succeed by witful\nimprovisation.  However, the less perspicacious are not without recourse,\nshould they be prepared to circumambulate the castle to the postern.  [c8dd91efac17]
+  =   В глубочайших недрах Подземелий Рока, охраняя путь в преисподнюю, стоит\nзамок, а в нём лежит палочка желаний. Коли желаешь войти, принеси с собою\nмузыкальный инструмент, ибо подъёмный мост можно опустить нужной мелодией.\nИз каких нот она сложена, ведают лишь боги, но музыкальный гений может\nпреуспеть, искусно импровизируя. Впрочем, и менее проницательные не\nостанутся без выхода, коли готовы обойти замок кругом к задним воротам.
 In use  [20716e9262a7]
   =   Используется
 In what direction do you want to chop? [%s]  [380aa11c01d7]
@@ -7303,6 +7319,8 @@ It happens sometimes.  People just explode.  [4e3ab9e41f9f]
   =   Иногда так бывает.  Люди просто взрываются.
 It is bad manners to use a wand in a shop.  [9470995665ca]
   =   Пользоваться палочкой в лавке — дурной тон.
+It is customarily known among travelers that extra-healing draughts may clear\nthy senses when thou art addled by delusory visions.  But never forget, the\nlowly potion which makes one sick may be used for the same purpose.  [d3641cc79f65]
+  =   Среди странников известно, что снадобья сильного исцеления проясняют\nразум, смущённый обманными видениями. Но не забывай: и низкое зелье, от\nкоего делается дурно, может послужить той же цели.
 It is dangerous to visit a graveyard at midnight.  [60282c983d6a]
   =   Ходить на кладбище в полночь опасно.
 It is fatal.  [2a26b025b10b]
@@ -7313,8 +7331,12 @@ It is not always a good idea to whistle for your dog.  [c91600b29dc7]
   =   Не всегда стоит подзывать собаку свистком.
 It is rumored that the Wizard has hired some help.  [dd963db26c63]
   =   Ходят слухи, что Волшебник нанял помощников.
+It is said that thou mayst gain entry to Moloch's sanctuary, if thou\ndarest, from a place where the ground vibrateth in the deepest depths of\nGehennom.  Thou needs must have the aid of three magical items.  The\npure sound of a silver bell shall announce thee.  The terrible runes,\nread from Moloch's book, shall cause the earth to tremble mightily.  The\nlight of an enchanted candelabrum shall show thee the way.  [23b0d3294b0d]
+  =   Говорят, что в святилище Молоха можно войти, коли посмеешь, из места, где\nземля дрожит в глубочайших недрах Геенны. Понадобится тебе помощь трёх\nволшебных предметов. Чистый звук серебряного колокола возвестит о тебе.\nГрозные руны, прочтённые из книги Молоха, заставят землю содрогнуться.\nСвет зачарованного канделябра укажет тебе путь.
 It is the letter 'c' and not 'e' that changes status to statue.  [3a8c98f2d821]
   =   В статую превращает буква 'c', а не 'e'.
+It is well known that wily shopkeepers raise their prices whene'er they\nespy the garish apparel of the approaching tourist or the countenance of a\ndisfavored patron.  They favor the gentle of manner and the fair of face.\nThe boor may expect unprofitable transactions.  [cd7a2c0158db]
+  =   Всем известно, что хитрые лавочники поднимают цены, завидев пёстрое платье\nприближающегося туриста или лик немилого им покупателя. Любы им кроткие\nнравом и пригожие лицом. Грубияну же не видать выгодных сделок.
 It might be a good idea to offer the unicorn a ruby.  [c84e45f8a2bb]
   =   Может, стоит предложить единорогу рубин.
 It must be Thursday.  I never could get the hang of Thursdays.  [6d03f09517d7]
@@ -8760,16 +8782,22 @@ The air crackles around %s.  [f653cffe3626]
   pl  Воздух вокруг 3 стрел потрескивает.
 The best equipment for your work is, of course, the most expensive.  [0d2fdb7c277e]
   =   Лучшее снаряжение для вашего дела — разумеется, самое дорогое.
+The cliche of the kitchen sink swallowing any unfortunate rings that contact\nits pernicious surface reflecteth greater truth than many homilies, yet\neven so, few have developed the skill to identify enchanted rings by the\ntransfigurations effected upon the voracious device's frame.  [632c382d6538]
+  =   Избитая присказка о кухонной раковине, что глотает всякое несчастное\nкольцо, коснувшееся её пагубной поверхности, правдивее многих поучений; и\nвсё же немногие овладели искусством распознавать зачарованные кольца по\nпеременам, что они творят с обликом прожорливого устройства.
 The crowd was so tough, the Stooges won't play the Dungeon anymore, nyuk nyuk.  [d91c6239b97c]
   =   Публика была такой суровой, что «Три балбеса» больше не играют в Подземелье, ньюк-ньюк.
 The dart was poisoned!  [8f78a62bd20b]
   =   Дротик был отравлен!
+The detection of blessings and curses is in the domain of the gods.  They will\nmake this information available to mortals who request it at their places of\nworship, or elsewhere for those mortals who devote themselves to the service\nof the gods.  [cdd47c994974]
+  =   Распознавать благословения и проклятия — удел богов. Они открывают это\nсмертным, что просят о том в местах поклонения, а также в иных местах —\nтем смертным, что посвятили себя служению богам.
 The door opens.  [8c40430b080d]
   =   Дверь открывается.
 The door resists!  [5b553aaa39a8]
   =   Дверь не поддаётся!
 The frog's dead.  He Kermitted suicide.  [6045d3e332f2]
   =   Лягушонок мёртв.  Самоквакийство.
+The gods are said to be pleased when offerings are given to the\npriests who attend their temples, and they may grant various favors to\nthose who do so.  But beware!  To be young and frugal is better than to\nbe old and miserly.  [a5e1c035b1de]
+  =   Говорят, боги довольны, когда подношения отдают жрецам, служащим в их\nхрамах, и даруют таким людям разные милости. Но берегись! Лучше быть\nмолодым и бережливым, чем старым и скупым.
 The gods don't appreciate pesky priesthood.  [c428a58671a0]
   =   Богам не по душе назойливые жрецы.
 The gods will get angry if you kill your dog.  [284658c9111c]
@@ -8790,6 +8818,8 @@ The magical ink in this spellbook is fresh.  [da43fd8e577b]
   =   Волшебные чернила в этой книге заклинаний ещё свежие.
 The magical ink in this spellbook is slightly faded.  [261a2ccaadde]
   =   Волшебные чернила в этой книге заклинаний слегка выцвели.
+The meat of enchanted creatures ofttimes conveyeth magical properties\nunto the consumer.  A fresh corpse of floating eye doth fetch a high\nprice among wizards for its utility in conferring Telepathy, by which\nthe sightless may locate surrounding minds.  [4bb4e2079f01]
+  =   Мясо волшебных созданий нередко передаёт едоку их магические свойства.\nСвежий труп парящего ока высоко ценится у волшебников, ибо дарует\nТелепатию, коей незрячий может находить окружающие его умы.
 The meek shall inherit your bones files.  [15f3a77ff2d9]
   =   Кроткие унаследуют ваши файлы костей.
 The message reads:  [afc260d0ae38]
@@ -8813,6 +8843,8 @@ The moon is not the only heavenly body to influence this game.  [95cf17774717]
   =   Луна — не единственное небесное тело, что влияет на эту игру.
 The more you use the E word, the better.  [ed7df3a32f11]
   =   Чем чаще вы пишете слово на букву «E», тем лучше.
+The name of Elbereth may strike fear into the hearts of thine enemies, if\nthou dost write it upon the ground at thy feet.  If thou maintainest the\nutmost calm, thy safety will be aided greatly, but beware lest thy clumsy\nfeet scuff the inscription, cancelling its potence, or thy wayward\nsword-arm break the truce.  [eda01d5f4659]
+  =   Имя Elbereth может вселить страх в сердца твоих врагов, коли начертаешь\nего на земле у себя под ногами. Коли сохранишь величайшее спокойствие, это\nвесьма поможет тебе уцелеть, но берегись, как бы неуклюжие ноги не стёрли\nнадпись, лишив её силы, или своенравная рука с мечом не нарушила\nперемирие.
 The orc swings his orcish broadsword named Elfrist at you.  You die...  [1976d47b9502]
   =   Орк замахивается на вас своим орочьим палашом по имени Эльфрист.  Вы умираете...
 The potion clears.  [af57194425f1]
@@ -8920,6 +8952,8 @@ There are iron bars here; eat them?  [30fe7f0db64b]
   =   Здесь железная решётка; съесть её?
 There are iron bars here; resume eating them?  [c012321be1a1]
   =   Здесь железная решётка; продолжить её есть?
+There are many stories of a mighty amulet, the origins of which are said\nto be ancient Yendor.  This amulet doth have awesome power, and the gods\ndesire it greatly.  Mortals mayst tap only portions of its terrible\nabilities.  The stories tell of mortals seeing what their eyes cannot\nsee and seeking places of magical transportation, while having this\namulet in their possession.  Others say a mortal must wear the amulet to\nobtain these powers.  But verily, such power comes at great cost, to\npreserve the balance.  [186b8f7db8c8]
+  =   Много сказаний ходит о могучем амулете, чьи истоки, говорят, восходят к\nдревнему Йендору. Велика мощь сего амулета, и боги страстно его жаждут.\nСмертным же доступна лишь малая доля его грозных сил. Сказания говорят,\nчто смертные, владея им, видели незримое глазу и искали места волшебного\nперемещения. Иные же молвят, что для этих сил амулет надлежит носить. Но\nвоистину, такая мощь даётся дорогой ценой, дабы сохранить равновесие.
 There are no worms in the UNIX version.  [0a0575b486c4]
   =   В версии для UNIX червей нет.
 There are several objects here.  [134ca6b9087b]
@@ -9897,6 +9931,8 @@ Those are your second weapon.  Ready them instead?  [3231d33bdd06]
   =   Это ваше второе оружие.  Положить их в колчан?
 Those who wield a cockatrice corpse have a rocky road ahead of them.  [65913db4248c]
   =   Кто держит в руках труп василиска, тому предстоит каменистый путь.
+Though the shopkeepers be wary, thieves have nevertheless stolen much by using\ntheir digging wands to hasten exits through the pavement.  [84749e351cde]
+  =   Хоть лавочники и осторожны, воры немало у них похитили, прорывая себе\nпалочками копания поспешный выход сквозь пол.
 Throne sit effect (1..13) [0=random]  [5a342da55f60]
   =   Эффект трона (1..13) [0 — случайный]
 Throw items with '%s'  [23385920128b]
@@ -10687,6 +10723,10 @@ Which ring-%s, Right or Left?  [b3f2a30b3a5d]
   pl  На какой 3 стрелы кольцо, правый или левый?
 Which way do you want to teleport?  [a09f582df694]
   =   Куда телепортироваться?
+While some wayfarers rely on scrounging finished armour in the dungeon, the\nresourceful know the mystical means by which mail may be fashioned out of\nscales from a dragon's hide.  [8ecf7cfadd32]
+  =   Иные странники надеются отыскать в подземелье готовые доспехи, но\nнаходчивым ведомо таинство, коим кольчугу можно сработать из чешуи, снятой\nсо шкуры дракона.
+While the consumption of lizard flesh or water beloved of the gods may clear\nthe muddled head, the application of the horn of a creature of utmost purity\ncan alleviate many other afflictions as well.  [4bc607e6daa3]
+  =   Мясо ящерицы или вода, любезная богам, проясняют затуманенную голову, но\nрог существа наивысшей чистоты избавляет и от многих иных напастей.
 Who needs an apron if they're made of glass?  [82c2eac4f731]
   =   Зачем фартук тому, кто сделан из стекла?
 Why do you suppose they call them MAGIC markers?  [760af3515ba8]
