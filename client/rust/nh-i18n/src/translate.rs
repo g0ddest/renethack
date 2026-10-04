@@ -22,8 +22,9 @@ use crate::template::{Part, Placeholder, RuTemplate, Target, Value, capitalize};
 /// How deep a text made of texts is followed.
 const MAX_NESTING: usize = 3;
 /// A template with fewer letters of its own than this says almost nothing
-/// ("%s of %s", "%s (%s)"): a name the lexicon reads goes first.
-const STRONG_LETTERS: usize = 3;
+/// ("%s of %s", "%s (%s)", "the %s", "%s and %s"): a name the lexicon reads
+/// goes first.
+const STRONG_LETTERS: usize = 4;
 
 /// An argument of a message as P7 sends it.
 #[derive(Debug, Clone, PartialEq)]
