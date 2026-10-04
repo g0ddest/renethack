@@ -1,0 +1,195 @@
+# R6, dat texts: the random engravings (dat/engrave.txt) and the ones the
+# levels and mklev.c engrave by name. Elbereth stays as the engine checks it;
+# the jokes and quotations get Russian ones.
+
+[a053ba02e4d4]
+en = "X marks the spot."
+ru = "Место отмечено крестиком."
+
+[a9bb2aa3d007]
+en = "Elbereth"
+ru = "Elbereth"
+
+[0c52a4a4cf3d]
+en = "Owlbreath"
+ru = "Ельберёза"
+
+[b766d103d0a9]
+en = "Galadriel"
+ru = "Галадриэль"
+
+[f7597f3eb8a9]
+en = "Kilroy was here"
+ru = "Здесь был Вася"
+
+[69736eb9d11d]
+en = "Frodo lives"
+ru = "Фродо жив"
+
+[2c5609394a8f]
+en = "A.S. ->"
+ru = "А. С. ->"
+
+[431379503366]
+en = "<- A.S."
+ru = "<- А. С."
+
+[87675925587e]
+en = "You won't get it up the steps"
+ru = "По ступенькам вам его не поднять"
+
+[f5cbdd2dda73]
+en = "Lasciate ogni speranza o voi ch'entrate."
+ru = "Оставь надежду, всяк сюда входящий."
+
+[e72a6fea1b64]
+en = "Well Come"
+ru = "Дабро пожаловать"
+
+[44331ca184cd]
+en = "We apologize for the inconvenience."
+ru = "Приносим извинения за причинённые неудобства."
+
+[352bb84b951d]
+en = "See you next Wednesday"
+ru = "Увидимся в следующую среду"
+
+[59c902b19d14]
+en = "notary sojak"
+ru = "нотари сожак"
+
+[5897207fac92]
+en = "For a good time call 8?7-5309"
+ru = "Хочешь весело провести время — звони 8?7-5309"
+
+[c33b67e79731]
+en = "Please don't feed the animals."
+ru = "Пожалуйста, не кормите животных."
+
+[a768a5cd9b7b]
+en = "Madam, in Eden, I'm Adam."
+ru = "Мадам, Адам."
+
+[21fcd12661c6]
+en = "Two thumbs up!"
+ru = "Два больших пальца вверх!"
+
+[0a0a9f2a6772]
+en = "Hello, World!"
+ru = "Привет, мир!"
+
+[0de62859d1e5]
+en = "^?MAIL"
+ru = "^?ПОЧТА"
+
+[40e18a8a0c61]
+en = "You've got mail!"
+ru = "Вам письмо!"
+
+[fefc49faf244]
+en = "As if!"
+ru = "Ага, щас!"
+
+[b26d60f4cd9e]
+en = "BAD WOLF"
+ru = "ЗЛОЙ ВОЛК"
+
+[cf254e309ace]
+en = "Arooo!  Werewolves of Yendor!"
+ru = "Аууу!  Оборотни Йендора!"
+
+[4fd0b38184c8]
+en = "Dig for Victory here"
+ru = "Копай здесь ради Победы"
+
+[d6f2b5352f4b]
+en = "Gaius Julius Primigenius was here.  Why are you late?"
+ru = "Здесь был Гай Юлий Примигений.  Где тебя носит?"
+
+[5dc6c704c5a5]
+en = "Don't go this way"
+ru = "Сюда не ходите"
+
+[96313ad11993]
+en = "Go left --->"
+ru = "Налево --->"
+
+[8fa2f0e372e7]
+en = "<--- Go right"
+ru = "<--- Направо"
+
+[3f131b327ecc]
+en = "X marks the spot"
+ru = "Место отмечено крестиком"
+
+[e584c752ec7b]
+en = "X <--- You are here."
+ru = "X <--- Вы здесь."
+
+[088d50f568d7]
+en = "Here be dragons"
+ru = "Здесь водятся драконы"
+
+[46befe9b3b29]
+en = "Save now, and do your homework!"
+ru = "Сохранитесь сейчас — и марш за уроки!"
+
+[42c99275dd21]
+en = "There was a hole here.  It's gone now."
+ru = "Здесь была дыра.  Теперь её нет."
+
+[4897138d2ce1]
+en = "The Vibrating Square"
+ru = "Вибрирующий квадрат"
+
+[f2fb84311a6f]
+en = "This is a pit!"
+ru = "Это яма!"
+
+[32f8328e8406]
+en = "This is not the dungeon you are looking for."
+ru = "Это не то подземелье, которое вы ищете."
+
+[4ac1d3c62188]
+en = "Watch out, there's a gnome with a wand of death behind that door!"
+ru = "Осторожно, за той дверью гном с палочкой смерти!"
+
+[8895d3130600]
+en = "This square deliberately left blank."
+ru = "Эта клетка намеренно оставлена пустой."
+
+[8f83dae45768]
+en = "Haermund Hardaxe carved these runes"
+ru = "Эти руны вырезал Хермунд Крепкая Секира"
+
+[530bb78e37ab]
+en = "Need a light?  Come visit the Minetown branch of Izchak's Lighting Store!"
+ru = "Нужен свет?  Заглядывайте в филиал магазина светильников Ицхака в Шахтёрском городке!"
+
+[14cef42fb55f]
+en = "Snakes on the Astral Plane - Soon in a dungeon near you"
+ru = "Змеи на Астральном плане — скоро в подземельях вашего города"
+
+[8681cf1b7e99]
+en = "You are the one millionth visitor to this place!  Please wait 200 turns for your wand of wishing."
+ru = "Вы — миллионный посетитель этого места!  Подождите 200 ходов, и вам вручат палочку желаний."
+
+[ae6c519fde20]
+en = "Warning, Exploding runes!"
+ru = "Осторожно, взрывные руны!"
+
+[c297e98d7937]
+en = "If you can read these words then you are not only a nerd but probably dead."
+ru = "Если вы можете прочесть эти слова, то вы не просто ботан, но, скорее всего, ещё и покойник."
+
+[a6e49758f934]
+en = "The cake is a lie"
+ru = "Торт — это ложь"
+
+[67fdd5db8578]
+en = "Vlad was here"
+ru = "Здесь был Влад"
+
+[04b2adcce743]
+en = "ad aerarium"
+ru = "ad aerarium"
