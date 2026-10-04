@@ -1,0 +1,3371 @@
+# R6, batch 5: ^X and the end of the game: the hero's state and
+# attributes, the conduct and achievements, the farewell and the
+# summary of the game; the soak's last questions.
+
+[810a6581c1f2]
+en = "Really %s into that %s?"
+ru = "Вы точно хотите шагнуть в {2:acc}?{1:skip}"
+
+[9ade72736690]
+en = "Really %s onto that %s?"
+ru = "Вы точно хотите наступить на {2:acc}?{1:skip}"
+
+[3b43e3f6578f]
+en = "%s %s the Demigoddess..."
+ru = "{1}, {2}, полубогиня..."
+
+[c11055179389]
+en = "%s %s the Demigod..."
+ru = "{1}, {2}, полубог..."
+
+[601662c1373a]
+en = "%s %s the %s..."
+ru = "{1}, {2}, {3:hero}..."
+
+[a19e385f0624]
+en = "went to your reward with %ld point,"
+ru = "отправились за наградой, набрав {1} {1:plural|очко|очка|очков},"
+
+[a8fb11549201]
+en = "escaped from the dungeon with %ld point,"
+ru = "сбежали из подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[ef776f988a9f]
+en = "went to your reward with %ld points,"
+ru = "отправились за наградой, набрав {1} {1:plural|очко|очка|очков},"
+
+[f86b21ba623c]
+en = "escaped from the dungeon with %ld points,"
+ru = "сбежали из подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[7c504abdd166]
+en = "%8ld %s (worth %ld zorkmids),"
+ru = "{1} {2:by1} (стоимостью {3} {3:plural|зоркмид|зоркмида|зоркмидов}),"
+
+[d02d86c912fe]
+en = "%8ld %s (worth %ld zorkmid),"
+ru = "{1} {2:by1} (стоимостью {3} {3:plural|зоркмид|зоркмида|зоркмидов}),"
+
+[309aeaf4a428]
+en = "%8ld worthless piece of colored glass,"
+ru = "{1} {1:plural|никчёмный кусок|никчёмных куска|никчёмных кусков} цветного стекла,"
+
+[6562c983fa67]
+en = "%8ld worthless pieces of colored glass,"
+ru = "{1} {1:plural|никчёмный кусок|никчёмных куска|никчёмных кусков} цветного стекла,"
+
+[120cbca851ca]
+en = "and %ld pieces of gold, after %ld move."
+ru = "и {1} {1:plural|золотую монету|золотые монеты|золотых монет} за {2} {2:plural|ход|хода|ходов}."
+
+[78e2caae88dc]
+en = "and %ld pieces of gold, after %ld moves."
+ru = "и {1} {1:plural|золотую монету|золотые монеты|золотых монет} за {2} {2:plural|ход|хода|ходов}."
+
+[87a96cf598e3]
+en = "and %ld piece of gold, after %ld move."
+ru = "и {1} {1:plural|золотую монету|золотые монеты|золотых монет} за {2} {2:plural|ход|хода|ходов}."
+
+[eff7a69629fd]
+en = "and %ld piece of gold, after %ld moves."
+ru = "и {1} {1:plural|золотую монету|золотые монеты|золотых монет} за {2} {2:plural|ход|хода|ходов}."
+
+[00964ece2849]
+en = "You were level %d with a maximum of %d hit points when you escaped."
+ru = "Когда вы сбежали, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[083a1446226e]
+en = "You were level %d with a maximum of %d hit point when you drowned."
+ru = "Когда вы утонули, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[0ef1058481c8]
+en = "You were level %d with a maximum of %d hit point when you turned to stone."
+ru = "Когда вы окаменели, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[296f8e4d9c9c]
+en = "You were level %d with a maximum of %d hit points when you turned to stone."
+ru = "Когда вы окаменели, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[37de60150829]
+en = "You were level %d with a maximum of %d hit points when you starved."
+ru = "Когда вы умерли от голода, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[4c94bc667d84]
+en = "You were level %d with a maximum of %d hit point when you turned into slime."
+ru = "Когда вы превратились в слизь, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[4db3eaf85543]
+en = "You were level %d with a maximum of %d hit point when you burned."
+ru = "Когда вы сгорели, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[5eaec1da322e]
+en = "You were level %d with a maximum of %d hit points when you died."
+ru = "Когда вы умерли, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[7191665509e2]
+en = "You were level %d with a maximum of %d hit points when you were tricked."
+ru = "Когда вы были обмануты, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[71bd680f9b45]
+en = "You were level %d with a maximum of %d hit point when you dissolved in the lava."
+ru = "Когда вы растворились в лаве, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[7801725cc780]
+en = "You were level %d with a maximum of %d hit points when you choked."
+ru = "Когда вы подавились, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[7c4aac5ed576]
+en = "You were level %d with a maximum of %d hit points when you ascended."
+ru = "Когда вы вознеслись, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[834ab7b6a4e9]
+en = "You were level %d with a maximum of %d hit point when you were poisoned."
+ru = "Когда вы отравились, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[8664dc6aa5c6]
+en = "You were level %d with a maximum of %d hit point when you were tricked."
+ru = "Когда вы были обмануты, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[91f4981825a8]
+en = "You were level %d with a maximum of %d hit points when you quit."
+ru = "Когда вы сдались, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[9d501aefbc71]
+en = "You were level %d with a maximum of %d hit points when you were poisoned."
+ru = "Когда вы отравились, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[9ea5e0636c01]
+en = "You were level %d with a maximum of %d hit point when you choked."
+ru = "Когда вы подавились, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[a07359850ba9]
+en = "You were level %d with a maximum of %d hit points when you were crushed."
+ru = "Когда вы были раздавлены, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[ada2db2e7e34]
+en = "You were level %d with a maximum of %d hit points when you turned into slime."
+ru = "Когда вы превратились в слизь, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[bbe15c08aa20]
+en = "You were level %d with a maximum of %d hit point when you panicked."
+ru = "Когда вы запаниковали, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[bdf670162936]
+en = "You were level %d with a maximum of %d hit points when you burned."
+ru = "Когда вы сгорели, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[be7d412487ca]
+en = "You were level %d with a maximum of %d hit point when you ascended."
+ru = "Когда вы вознеслись, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[c5bbd49c48d5]
+en = "You were level %d with a maximum of %d hit point when you starved."
+ru = "Когда вы умерли от голода, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[c68124bb6765]
+en = "You were level %d with a maximum of %d hit point when you quit."
+ru = "Когда вы сдались, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[cd7eb4bd5b7f]
+en = "You were level %d with a maximum of %d hit points when you panicked."
+ru = "Когда вы запаниковали, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[e3e8fb49037a]
+en = "You were level %d with a maximum of %d hit point when you were crushed."
+ru = "Когда вы были раздавлены, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[e5d35d2c6c72]
+en = "You were level %d with a maximum of %d hit point when you escaped."
+ru = "Когда вы сбежали, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[ec81fb63589f]
+en = "You were level %d with a maximum of %d hit points when you dissolved in the lava."
+ru = "Когда вы растворились в лаве, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[ecb0df2694ac]
+en = "You were level %d with a maximum of %d hit points when you drowned."
+ru = "Когда вы утонули, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[ed2911611bbe]
+en = "You were level %d with a maximum of %d hit points when you were genocided."
+ru = "Когда вы были истреблены, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[f69a37426a60]
+en = "You were level %d with a maximum of %d hit point when you were genocided."
+ru = "Когда вы были истреблены, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[ff331fa322e9]
+en = "You were level %d with a maximum of %d hit point when you died."
+ru = "Когда вы умерли, у вас был {1}-й уровень и максимум здоровья {2}."
+
+[d9e9dfa4b6da]
+en = "Contents of %s:Schroedinger's cat!"
+ru = "Содержимое {1:gen}: кот Шрёдингера!"
+
+[dc17cb386e47]
+en = "Contents of %s:%sSchroedinger's cat!"
+ru = "Содержимое {1:gen}:{2}кот Шрёдингера!"
+
+[c8e85637d89d]
+en = "Latest messages:"
+ru = "Последние сообщения:"
+
+[1b2b94c5c669]
+en = "%s, neutral female %s %s"
+ru = "{1}, нейтральная {2:f} {3:f}"
+
+[1fd3d9d919d8]
+en = "%s, lawful male %s %s"
+ru = "{1}, законопослушный {2:m} {3:m}"
+
+[1ff4600db7be]
+en = "%s, neutral male %s %s"
+ru = "{1}, нейтральный {2:m} {3:m}"
+
+[356ba5777667]
+en = "%s, chaotic male %s %s"
+ru = "{1}, хаотичный {2:m} {3:m}"
+
+[5321b0606c86]
+en = "%s, unaligned female %s %s"
+ru = "{1}, безверная {2:f} {3:f}"
+
+[68f223659188]
+en = "%s, lawful female %s %s"
+ru = "{1}, законопослушная {2:f} {3:f}"
+
+[69f325aa625b]
+en = "%s, unaligned male %s %s"
+ru = "{1}, безверный {2:m} {3:m}"
+
+[775dc2f1d201]
+en = "%s, chaotic female %s %s"
+ru = "{1}, хаотичная {2:f} {3:f}"
+
+[5f5a3fc65a12]
+en = "Inventory:"
+ru = "Инвентарь:"
+
+[0c0f0a2715af]
+en = "%s (worth %ld zorkmid and %ld points)"
+ru = "{1} (стоимостью {2} {2:plural|зоркмид|зоркмида|зоркмидов} и {3} {3:plural|очко|очка|очков})"
+
+[2e4b23d4c8c3]
+en = "The %s (worth %ld zorkmids and %ld points)"
+ru = "{1} (стоимостью {2} {2:plural|зоркмид|зоркмида|зоркмидов} и {3} {3:plural|очко|очка|очков})"
+
+[76706ea4becf]
+en = "The %s (worth %ld zorkmid and %ld points)"
+ru = "{1} (стоимостью {2} {2:plural|зоркмид|зоркмида|зоркмидов} и {3} {3:plural|очко|очка|очков})"
+
+[a7e169f1bae5]
+en = "%s (worth %ld zorkmids and %ld points)"
+ru = "{1} (стоимостью {2} {2:plural|зоркмид|зоркмида|зоркмидов} и {3} {3:plural|очко|очка|очков})"
+
+[457b3d22b263]
+en = " You were walking on %s%s."
+ru = " Вы шли по {1:dat}{2}."
+
+[47f4bd41abe9]
+en = " You were walking on lava%s."
+ru = " Вы шли по лаве{1}."
+
+[8f8d3d8f97ec]
+en = " You are walking on lava%s."
+ru = " Вы идёте по лаве{1}."
+
+[a3d82522dbbf]
+en = " You were walking on water%s."
+ru = " Вы шли по воде{1}."
+
+[d5b05d83b084]
+en = " You are walking on %s%s."
+ru = " Вы идёте по {1:dat}{2}."
+
+[ecdb96cd94e6]
+en = " You are walking on water%s."
+ru = " Вы идёте по воде{1}."
+
+[1aaaeea1df25]
+en = " You are turning to stone."
+ru = " Вы превращаетесь в камень."
+
+[3274b8394c0e]
+en = " You were turning to stone."
+ru = " Вы превращались в камень."
+
+[b56bb65c1818]
+en = " You are turning into slime."
+ru = " Вы превращаетесь в слизь."
+
+[cba5bc3111d4]
+en = " You were turning into slime."
+ru = " Вы превращались в слизь."
+
+[26b1d201e19f]
+en = " You are buried."
+ru = " Вы погребены."
+
+[d3bc23beb3f3]
+en = " You were buried."
+ru = " Вы были погребены."
+
+[4767046d18c3]
+en = " You were being strangled%s."
+ru = " Вас душили{1}."
+
+[75ecaf870195]
+en = " You are being strangled%s."
+ru = " Вас душат{1}."
+
+[c760daccf8b2]
+en = " You were being strangled (%ld)%s."
+ru = " Вас душили ({1}){2}."
+
+[d340b52a199f]
+en = " You are being strangled (%ld)%s."
+ru = " Вас душат ({1}){2}."
+
+[8e3774ff19df]
+en = " You are terminally sick from illness."
+ru = " Вы при смерти от болезни."
+
+[e23e4245b933]
+en = " You were terminally sick from illness."
+ru = " Вы были при смерти от болезни."
+
+[8f7b21a6d005]
+en = " You are terminally sick from food poisoning."
+ru = " Вы при смерти от пищевого отравления."
+
+[fa5d1158ce6a]
+en = " You were terminally sick from food poisoning."
+ru = " Вы были при смерти от пищевого отравления."
+
+[dbd6c66bf137]
+en = " You were nauseated."
+ru = " Вас тошнило."
+
+[f4b3dbd16ea0]
+en = " You are nauseated."
+ru = " Вас тошнит."
+
+[1d0ede415b6f]
+en = " You were stunned."
+ru = " Вы были оглушены."
+
+[bd26ee0c78fa]
+en = " You are stunned."
+ru = " Вы оглушены."
+
+[5082c103d7c0]
+en = " You are confused."
+ru = " Вы в замешательстве."
+
+[738be8c86a0c]
+en = " You were confused."
+ru = " Вы были в замешательстве."
+
+[1d957ec6765a]
+en = " You are hallucinating."
+ru = " У вас галлюцинации."
+
+[2e311159efc1]
+en = " You were hallucinating."
+ru = " У вас были галлюцинации."
+
+[13aabb1b2f83]
+en = " You are permanently blind (%ld)."
+ru = " Вы слепы навсегда ({1})."
+
+[15eb9009601d]
+en = " You were innately blind (%ld)%s."
+ru = " Вы были слепы от природы ({1}){2}."
+
+[31a3332fded3]
+en = " You are innately blind (%ld)."
+ru = " Вы слепы от природы ({1})."
+
+[385128247bfa]
+en = " You were temporarily blind (%ld)."
+ru = " Вы были временно слепы ({1})."
+
+[38b32a0c6da5]
+en = " You are permanently blind."
+ru = " Вы слепы навсегда."
+
+[410e5ecce8af]
+en = " You were deliberately blind."
+ru = " Вы были с завязанными глазами."
+
+[4392c8669641]
+en = " You were deliberately blind (%ld)%s."
+ru = " Вы были с завязанными глазами ({1}){2}."
+
+[491bc9617969]
+en = " You were deliberately blind (%ld)."
+ru = " Вы были с завязанными глазами ({1})."
+
+[581d9447d8c2]
+en = " You are innately blind."
+ru = " Вы слепы от природы."
+
+[6112a48358c4]
+en = " You were deliberately blind%s."
+ru = " Вы были с завязанными глазами{1}."
+
+[62ad40f785f4]
+en = " You were permanently blind (%ld)."
+ru = " Вы были слепы навсегда ({1})."
+
+[65e270b32177]
+en = " You are deliberately blind."
+ru = " Вы с завязанными глазами."
+
+[679183a4f6f8]
+en = " You are temporarily blind (%ld)%s."
+ru = " Вы временно слепы ({1}){2}."
+
+[6e5aa95d769d]
+en = " You were permanently blind."
+ru = " Вы были слепы навсегда."
+
+[7a9e48f3dec7]
+en = " You are deliberately blind (%ld)%s."
+ru = " Вы с завязанными глазами ({1}){2}."
+
+[7c39bf173824]
+en = " You are deliberately blind (%ld)."
+ru = " Вы с завязанными глазами ({1})."
+
+[7f5135517b85]
+en = " You were temporarily blind (%ld)%s."
+ru = " Вы были временно слепы ({1}){2}."
+
+[81c762602047]
+en = " You are deliberately blind%s."
+ru = " Вы с завязанными глазами{1}."
+
+[8aa9aee9c6c8]
+en = " You were innately blind."
+ru = " Вы были слепы от природы."
+
+[96439d9d5c23]
+en = " You were temporarily blind."
+ru = " Вы были временно слепы."
+
+[9b4e65a6cb08]
+en = " You are permanently blind (%ld)%s."
+ru = " Вы слепы навсегда ({1}){2}."
+
+[9f01164f9011]
+en = " You were temporarily blind%s."
+ru = " Вы были временно слепы{1}."
+
+[a525489dadc3]
+en = " You are permanently blind%s."
+ru = " Вы слепы навсегда{1}."
+
+[aa3f7e7c6eaf]
+en = " You were permanently blind%s."
+ru = " Вы были слепы навсегда{1}."
+
+[ad91fbd041f8]
+en = " You are temporarily blind."
+ru = " Вы временно слепы."
+
+[b7b2da749542]
+en = " You are innately blind%s."
+ru = " Вы слепы от природы{1}."
+
+[bbafd7a98861]
+en = " You are innately blind (%ld)%s."
+ru = " Вы слепы от природы ({1}){2}."
+
+[d95fb0496205]
+en = " You are temporarily blind (%ld)."
+ru = " Вы временно слепы ({1})."
+
+[dbbc7bfe8ea3]
+en = " You are temporarily blind%s."
+ru = " Вы временно слепы{1}."
+
+[df0abf178871]
+en = " You were permanently blind (%ld)%s."
+ru = " Вы были слепы навсегда ({1}){2}."
+
+[e8980061d17c]
+en = " You were innately blind%s."
+ru = " Вы были слепы от природы{1}."
+
+[fb590c24beca]
+en = " You were innately blind (%ld)."
+ru = " Вы были слепы от природы ({1})."
+
+[2faabe6a3ce4]
+en = " You are deaf%s."
+ru = " Вы глухи{1}."
+
+[4059653b4379]
+en = " You were deaf%s."
+ru = " Вы были глухи{1}."
+
+[114debf15956]
+en = " You were chained to %s."
+ru = " Вы были прикованы к {1:dat}."
+
+[44a0cbb138f8]
+en = " You are chained to %s."
+ru = " Вы прикованы к {1:dat}."
+
+[76f88ca2c0cc]
+en = " You are punished."
+ru = " Вы наказаны ядром на цепи."
+
+[a1545e131458]
+en = " You were punished."
+ru = " Вы были наказаны ядром на цепи."
+
+[04026d9a284e]
+en = " You were swallowed by %s and got totally digested."
+ru = " Вы были проглочены {1:ins} и полностью переварены."
+
+[06bc8a113a2e]
+en = " You are swallowed by an unseen creature and are being digested."
+ru = " Вы проглочены невидимым существом, и вас переваривают."
+
+[070b746236e1]
+en = " You were engulfed by an unseen creature and got totally digested."
+ru = " Вы были поглощены невидимым существом и полностью переварены."
+
+[08f2cc892e7b]
+en = " You were engulfed by %s and got totally digested."
+ru = " Вы были поглощены {1:ins} и полностью переварены."
+
+[0f3428516625]
+en = " You were engulfed by an unseen creature."
+ru = " Вы были поглощены невидимым существом."
+
+[0fbb9b25028e]
+en = " You are engulfed by %s."
+ru = " Вы поглощены {1:ins}."
+
+[110e0df7d530]
+en = " You were engulfed by %s."
+ru = " Вы были поглощены {1:ins}."
+
+[1a291410938c]
+en = " You were swallowed by %s and were being digested (%u)."
+ru = " Вы были проглочены {1:ins}, и вас переваривали ({2})."
+
+[1ef9f38adf33]
+en = " You were swallowed by an unseen creature and were being digested (%u)."
+ru = " Вы были проглочены невидимым существом, и вас переваривали ({1})."
+
+[1fe3a8b1a32c]
+en = " You were swallowed by an unseen creature and were being digested."
+ru = " Вы были проглочены невидимым существом, и вас переваривали."
+
+[22fc6ad4672a]
+en = " You were swallowed by an unseen creature and got totally digested."
+ru = " Вы были проглочены невидимым существом и полностью переварены."
+
+[30ff60283bb7]
+en = " You are engulfed by %s and are being digested (%u)."
+ru = " Вы поглощены {1:ins}, и вас переваривают ({2})."
+
+[31fc19c39ae2]
+en = " You were swallowed by an unseen creature."
+ru = " Вы были проглочены невидимым существом."
+
+[3b12c2af4be6]
+en = " You are engulfed by %s (%u)."
+ru = " Вы поглощены {1:ins} ({2})."
+
+[4da2995c05d4]
+en = " You were engulfed by an unseen creature (%u)."
+ru = " Вы были поглощены невидимым существом ({1})."
+
+[4e740e4234f0]
+en = " You are swallowed by %s and are being digested (%u)."
+ru = " Вы проглочены {1:ins}, и вас переваривают ({2})."
+
+[6a3bdd479ff6]
+en = " You were swallowed by an unseen creature and got totally digested (%u)."
+ru = " Вы были проглочены невидимым существом и полностью переварены ({1})."
+
+[6e93c0f18f80]
+en = " You were swallowed by %s (%u)."
+ru = " Вы были проглочены {1:ins} ({2})."
+
+[731cc8b54588]
+en = " You are swallowed by an unseen creature."
+ru = " Вы проглочены невидимым существом."
+
+[8ba980c1aa3a]
+en = " You were engulfed by an unseen creature and were being digested."
+ru = " Вы были поглощены невидимым существом, и вас переваривали."
+
+[8bca3c899e99]
+en = " You were swallowed by %s."
+ru = " Вы были проглочены {1:ins}."
+
+[8d3a9b6ba534]
+en = " You are engulfed by an unseen creature and are being digested."
+ru = " Вы поглощены невидимым существом, и вас переваривают."
+
+[a05db88ee6eb]
+en = " You are swallowed by %s."
+ru = " Вы проглочены {1:ins}."
+
+[a559d98abffb]
+en = " You were engulfed by %s and were being digested (%u)."
+ru = " Вы были поглощены {1:ins}, и вас переваривали ({2})."
+
+[a79186ee6a5b]
+en = " You are swallowed by %s (%u)."
+ru = " Вы проглочены {1:ins} ({2})."
+
+[a84e7302a0fc]
+en = " You are engulfed by an unseen creature."
+ru = " Вы поглощены невидимым существом."
+
+[a9fa47690270]
+en = " You were swallowed by %s and got totally digested (%u)."
+ru = " Вы были проглочены {1:ins} и полностью переварены ({2})."
+
+[af804015e3ce]
+en = " You were engulfed by %s and got totally digested (%u)."
+ru = " Вы были поглощены {1:ins} и полностью переварены ({2})."
+
+[c53fdce3ae0e]
+en = " You were engulfed by an unseen creature and were being digested (%u)."
+ru = " Вы были поглощены невидимым существом, и вас переваривали ({1})."
+
+[cbfcf735f571]
+en = " You are swallowed by %s and are being digested."
+ru = " Вы проглочены {1:ins}, и вас переваривают."
+
+[d1c6c7735fce]
+en = " You are swallowed by an unseen creature and are being digested (%u)."
+ru = " Вы проглочены невидимым существом, и вас переваривают ({1})."
+
+[d45b4ce778fb]
+en = " You are swallowed by an unseen creature (%u)."
+ru = " Вы проглочены невидимым существом ({1})."
+
+[d7ed9a0cda4e]
+en = " You were engulfed by %s and were being digested."
+ru = " Вы были поглощены {1:ins}, и вас переваривали."
+
+[e532b1965669]
+en = " You were swallowed by an unseen creature (%u)."
+ru = " Вы были проглочены невидимым существом ({1})."
+
+[e766f51ea13e]
+en = " You are engulfed by an unseen creature and are being digested (%u)."
+ru = " Вы поглощены невидимым существом, и вас переваривают ({1})."
+
+[e7bac0cff087]
+en = " You were engulfed by an unseen creature and got totally digested (%u)."
+ru = " Вы были поглощены невидимым существом и полностью переварены ({1})."
+
+[e9345d228713]
+en = " You are engulfed by %s and are being digested."
+ru = " Вы поглощены {1:ins}, и вас переваривают."
+
+[e94e72be64fe]
+en = " You were swallowed by %s and were being digested."
+ru = " Вы были проглочены {1:ins}, и вас переваривали."
+
+[e9a1e5f4808b]
+en = " You are engulfed by an unseen creature (%u)."
+ru = " Вы поглощены невидимым существом ({1})."
+
+[eb9be1df5ac7]
+en = " You were engulfed by %s (%u)."
+ru = " Вы были поглощены {1:ins} ({2})."
+
+[3dbabb49c1d8]
+en = " You were holding %s (%s)."
+ru = " Вы держали {1:acc} ({2})."
+
+[54748045dc94]
+en = " You were holding an unseen creature (%s)."
+ru = " Вы держали невидимое существо ({1})."
+
+[77ff34fbaa65]
+en = " You are holding %s (%s)."
+ru = " Вы держите {1:acc} ({2})."
+
+[815b2357f4e1]
+en = " You were held by %s (%s)."
+ru = " Вас {1:gender|держал|держала|держало|держали} {1} ({2})."
+
+[c2f110494dfb]
+en = " You were held by an unseen creature (%s)."
+ru = " Вас держало невидимое существо ({1})."
+
+[f177faa90d83]
+en = " You are holding an unseen creature (%s)."
+ru = " Вы держите невидимое существо ({1})."
+
+[f6eff158b1de]
+en = " You are held by an unseen creature (%s)."
+ru = " Вас держит невидимое существо ({1})."
+
+[191fb73074e7]
+en = " You had wounded %s."
+ru = " У вас {1:gender|был ранен|была ранена|было ранено|были ранены} {1}."
+
+[350944e38338]
+en = " You have a wounded right %s."
+ru = " У вас {1:gender|ранен правый|ранена правая|ранено правое|ранены правые} {1}."
+
+[3661f687119f]
+en = " You had a wounded left %s."
+ru = " У вас {1:gender|был ранен левый|была ранена левая|было ранено левое|были ранены левые} {1}."
+
+[6e742d986ab0]
+en = " You have a wounded left %s."
+ru = " У вас {1:gender|ранен левый|ранена левая|ранено левое|ранены левые} {1}."
+
+[7fbbd161f409]
+en = " You have wounded %s."
+ru = " У вас {1:gender|ранен|ранена|ранено|ранены} {1}."
+
+[eb579da64d90]
+en = " You had a wounded right %s."
+ru = " У вас {1:gender|был ранен правый|была ранена правая|было ранено правое|были ранены правые} {1}."
+
+[299fbd307547]
+en = " You have slippery %s."
+ru = " У вас скользкие {1}."
+
+[4d6a526c9cd7]
+en = " You have slippery %s (%ld)."
+ru = " У вас скользкие {1} ({2})."
+
+[c15783551991]
+en = " You had slippery %s (%ld)."
+ru = " У вас были скользкие {1} ({2})."
+
+[dc7bbb274a65]
+en = " You had slippery %s."
+ru = " У вас были скользкие {1}."
+
+[26e9f496c51b]
+en = " You fumble%s."
+ru = " Вы спотыкаетесь{1}."
+
+[ddf92fa196c2]
+en = " You fumbled%s."
+ru = " Вы спотыкались{1}."
+
+[34ee87292612]
+en = " You fell asleep uncontrollably%s."
+ru = " Вы неудержимо засыпали{1}."
+
+[496e67cba27c]
+en = " You fall asleep uncontrollably%s (%ld)."
+ru = " Вы неудержимо засыпаете{1} ({2})."
+
+[55ccc7d227c1]
+en = " You fell asleep uncontrollably%s (%ld)."
+ru = " Вы неудержимо засыпали{1} ({2})."
+
+[afaafac752f6]
+en = " You fall asleep uncontrollably%s."
+ru = " Вы неудержимо засыпаете{1}."
+
+[82ff995db0e7]
+en = " You hunger rapidly%s."
+ru = " Вы быстро голодаете{1}."
+
+[cc29410ac447]
+en = " You hungered rapidly%s."
+ru = " Вы быстро голодали{1}."
+
+[0c9df2d08545]
+en = " You are weak from severe hunger <%d>."
+ru = " Вы слабеете от сильного голода <{1}>."
+
+[127b774c902c]
+en = " You were fainting due to starvation <%d>."
+ru = " Вы теряли сознание от истощения <{1}>."
+
+[15c90dfed1f5]
+en = " You were weak from severe hunger."
+ru = " Вы слабели от сильного голода."
+
+[16d9e9de93a3]
+en = " You are satiated <%d>."
+ru = " Вы пресыщены <{1}>."
+
+[2b67ef193ad4]
+en = " You were satiated <%d>."
+ru = " Вы были пресыщены <{1}>."
+
+[2c24dbeaf7c5]
+en = " You are starved <%d>."
+ru = " Вы умираете от голода <{1}>."
+
+[3096a54d5f55]
+en = " You were starved <%d>."
+ru = " Вы умерли от голода <{1}>."
+
+[31f4a21bad03]
+en = " You are fainted due to starvation."
+ru = " Вы без сознания от истощения."
+
+[39654a8c9ffe]
+en = " You are hungry <%d>."
+ru = " Вы голодны <{1}>."
+
+[3a9525a40ea9]
+en = " You are starved."
+ru = " Вы умираете от голода."
+
+[408f48ff8048]
+en = " You were fainted due to starvation."
+ru = " Вы были без сознания от истощения."
+
+[4485e96d0f4e]
+en = " You are weak from severe hunger."
+ru = " Вы слабеете от сильного голода."
+
+[68f4e6b6026f]
+en = " You were hungry."
+ru = " Вы были голодны."
+
+[69c8925da91a]
+en = " You are fainting due to starvation <%d>."
+ru = " Вы теряете сознание от истощения <{1}>."
+
+[7066c97fbff7]
+en = " You were starved."
+ru = " Вы умерли от голода."
+
+[a23b97f6cf8e]
+en = " You were fainting due to starvation."
+ru = " Вы теряли сознание от истощения."
+
+[a82fead3dbe0]
+en = " You are fainting due to starvation."
+ru = " Вы теряете сознание от истощения."
+
+[a8305179a15c]
+en = " You were hungry <%d>."
+ru = " Вы были голодны <{1}>."
+
+[c3b41fb5402a]
+en = " You are satiated."
+ru = " Вы пресыщены."
+
+[d54074d36174]
+en = " You are fainted due to starvation <%d>."
+ru = " Вы без сознания от истощения <{1}>."
+
+[df368006e05a]
+en = " You were satiated."
+ru = " Вы были пресыщены."
+
+[df77cabc4fa8]
+en = " You weren't hungry <%d>."
+ru = " Вы не были голодны <{1}>."
+
+[e0a1dd2dcf04]
+en = " You were weak from severe hunger <%d>."
+ru = " Вы слабели от сильного голода <{1}>."
+
+[e98de67462f5]
+en = " You were fainted due to starvation <%d>."
+ru = " Вы были без сознания от истощения <{1}>."
+
+[f8fb4ab4db5e]
+en = " You aren't hungry <%d>."
+ru = " Вы не голодны <{1}>."
+
+[3ec28242a8a4]
+en = " who is opposed by %s (%s) and %s (%s)."
+ru = " чьи противники — {1} ({2:like1}) и {3} ({4:like3})."
+
+[807c9899d4c9]
+en = " who was opposed by %s (%s) and %s (%s)."
+ru = " чьими противниками были {1} ({2:like1}) и {3} ({4:like3})."
+
+[cc9eec532003]
+en = " You are unencumbered <%d>."
+ru = " Вы не обременены <{1}>."
+
+[fe43814bb4d6]
+en = " You were unencumbered <%d>."
+ru = " Вы были не обременены <{1}>."
+
+[04e851303e77]
+en = " You weren't wearing any armor."
+ru = " На вас не было доспехов."
+
+[65bbdf509b6f]
+en = " You aren't wielding anything."
+ru = " У вас ничего нет в руках."
+
+[66dbd362ead3]
+en = " You were bare handed."
+ru = " Вы были безоружны."
+
+[68886a2bf973]
+en = " You weren't wielding anything."
+ru = " У вас ничего не было в руках."
+
+[94610a9f246a]
+en = " You were empty handed."
+ru = " Вы были с пустыми руками."
+
+[da23775962c0]
+en = " You are bare handed."
+ru = " Вы безоружны."
+
+[eb757fe2ff97]
+en = " You are empty handed."
+ru = " Вы с пустыми руками."
+
+[0fa020f54595]
+en = " You were wielding two weapons at once."
+ru = " Вы сражались двумя оружиями сразу."
+
+[59acb3262a36]
+en = " You are wielding two weapons at once."
+ru = " Вы сражаетесь двумя оружиями сразу."
+
+[098ae9b5584f]
+en = " Your items are protected from cold%s."
+ru = " Ваши вещи защищены от холода{1}."
+
+[161c1b8eca83]
+en = " Your items are protected from acid%s."
+ru = " Ваши вещи защищены от кислоты{1}."
+
+[190964b035ac]
+en = " Your items are somewhat protected from disintegration%s."
+ru = " Ваши вещи частично защищены от распада{1}."
+
+[1cc1563f480a]
+en = " Your items were somewhat protected from cold%s."
+ru = " Ваши вещи были частично защищены от холода{1}."
+
+[204a378d7952]
+en = " Your items were somewhat protected from electric shocks%s."
+ru = " Ваши вещи были частично защищены от электричества{1}."
+
+[3dbec894d7c0]
+en = " Your items were protected from electric shocks%s."
+ru = " Ваши вещи были защищены от электричества{1}."
+
+[40c568b1cb91]
+en = " Your items were protected from disintegration%s."
+ru = " Ваши вещи были защищены от распада{1}."
+
+[43e675f66d65]
+en = " Your items were somewhat protected from disintegration%s."
+ru = " Ваши вещи были частично защищены от распада{1}."
+
+[589026478448]
+en = " Your items were somewhat protected from acid%s."
+ru = " Ваши вещи были частично защищены от кислоты{1}."
+
+[6b357f8e7d66]
+en = " Your items were protected from fire%s."
+ru = " Ваши вещи были защищены от огня{1}."
+
+[76e180565dc4]
+en = " Your items are somewhat protected from fire%s."
+ru = " Ваши вещи частично защищены от огня{1}."
+
+[8480682841cb]
+en = " Your items were protected from acid%s."
+ru = " Ваши вещи были защищены от кислоты{1}."
+
+[856b6f326a6b]
+en = " Your items are protected from electric shocks%s."
+ru = " Ваши вещи защищены от электричества{1}."
+
+[b8f70b442313]
+en = " Your items are protected from disintegration%s."
+ru = " Ваши вещи защищены от распада{1}."
+
+[c2a570ef9d10]
+en = " Your items were somewhat protected from fire%s."
+ru = " Ваши вещи были частично защищены от огня{1}."
+
+[c7a978108320]
+en = " Your items are somewhat protected from cold%s."
+ru = " Ваши вещи частично защищены от холода{1}."
+
+[df56a004b647]
+en = " Your items were protected from cold%s."
+ru = " Ваши вещи были защищены от холода{1}."
+
+[e27c33889d2c]
+en = " Your items are somewhat protected from electric shocks%s."
+ru = " Ваши вещи частично защищены от электричества{1}."
+
+[ead6ed07b599]
+en = " Your items are somewhat protected from acid%s."
+ru = " Ваши вещи частично защищены от кислоты{1}."
+
+[fe35a58ac42d]
+en = " Your items are protected from fire%s."
+ru = " Ваши вещи защищены от огня{1}."
+
+[d599dc5950db]
+en = " Your alignment is %d."
+ru = " Ваша преданность мировоззрению: {1}."
+
+[edba5bd26315]
+en = " Your alignment was %d."
+ru = " Ваша преданность мировоззрению была: {1}."
+
+[3f637fb9272c]
+en = " You are invulnerable%s."
+ru = " Вы неуязвимы{1}."
+
+[cb2e72289de8]
+en = " You were invulnerable%s."
+ru = " Вы были неуязвимы{1}."
+
+[90e96b1694f2]
+en = " You are magic-protected%s."
+ru = " Вы защищены от магии{1}."
+
+[d44b0940a857]
+en = " You were magic-protected%s."
+ru = " Вы были защищены от магии{1}."
+
+[60bee664b1fd]
+en = " You are fire resistant%s."
+ru = " Вы невосприимчивы к огню{1}."
+
+[9ab5b4fdafe3]
+en = " You were fire resistant%s."
+ru = " Вы были невосприимчивы к огню{1}."
+
+[680e7482e723]
+en = " You were cold resistant%s."
+ru = " Вы были невосприимчивы к холоду{1}."
+
+[c4506e442df3]
+en = " You are cold resistant%s."
+ru = " Вы невосприимчивы к холоду{1}."
+
+[d4c971357732]
+en = " You are sleep resistant%s."
+ru = " Вы невосприимчивы ко сну{1}."
+
+[ed564df6339b]
+en = " You were sleep resistant%s."
+ru = " Вы были невосприимчивы ко сну{1}."
+
+[9e2c41c50cbd]
+en = " You are disintegration resistant%s."
+ru = " Вы невосприимчивы к распаду{1}."
+
+[f9d5b3e0dd98]
+en = " You were disintegration resistant%s."
+ru = " Вы были невосприимчивы к распаду{1}."
+
+[f909e2bc27da]
+en = " You are shock resistant%s."
+ru = " Вы невосприимчивы к электричеству{1}."
+
+[ff95c1c33628]
+en = " You were shock resistant%s."
+ru = " Вы были невосприимчивы к электричеству{1}."
+
+[024f5b0a3a0e]
+en = " You were poison resistant%s."
+ru = " Вы были невосприимчивы к яду{1}."
+
+[47b77af12284]
+en = " You are poison resistant%s."
+ru = " Вы невосприимчивы к яду{1}."
+
+[df8936bc12b8]
+en = " You were level-drain resistant%s."
+ru = " Вы были невосприимчивы к потере уровней{1}."
+
+[fe70ce92e384]
+en = " You are level-drain resistant%s."
+ru = " Вы невосприимчивы к потере уровней{1}."
+
+[3b8d83f1a8f9]
+en = " You were immune to sickness%s."
+ru = " Вы были невосприимчивы к болезням{1}."
+
+[41318e6c7702]
+en = " You are immune to sickness%s."
+ru = " Вы невосприимчивы к болезням{1}."
+
+[451523a824c3]
+en = " You resist hallucinations%s."
+ru = " Вы не подвержены галлюцинациям{1}."
+
+[79fa5cc725de]
+en = " You resisted hallucinations%s."
+ru = " Вы не были подвержены галлюцинациям{1}."
+
+[94c2f62fe885]
+en = " You can recognize detrimental food."
+ru = " Вы распознаёте вредную пищу."
+
+[b5c0dce79b98]
+en = " You could recognize detrimental food."
+ru = " Вы распознавали вредную пищу."
+
+[7190300c6420]
+en = " You aren't subject to light-induced blindness%s."
+ru = " Вы не подвержены ослеплению светом{1}."
+
+[768ce324c302]
+en = " You weren't subject to light-induced blindness%s."
+ru = " Вы не были подвержены ослеплению светом{1}."
+
+[906d9dc3c055]
+en = " You saw invisible%s."
+ru = " Вы видели невидимое{1}."
+
+[dd9178d16375]
+en = " You see invisible%s."
+ru = " Вы видите невидимое{1}."
+
+[cbeb7927438f]
+en = " You were telepathic%s."
+ru = " Вы были наделены телепатией{1}."
+
+[fa8a0a4213b1]
+en = " You are telepathic%s."
+ru = " Вы наделены телепатией{1}."
+
+[29c85edb50a5]
+en = " You are warned%s."
+ru = " Вы чувствуете опасность{1}."
+
+[2b0dbc110372]
+en = " You were warned%s."
+ru = " Вы чувствовали опасность{1}."
+
+[060130155eca]
+en = " You were aware of the presence of demons%s."
+ru = " Вы чувствовали присутствие демонов{1}."
+
+[4298800d8db8]
+en = " You are aware of the presence of something%s."
+ru = " Вы чувствуете чьё-то присутствие{1}."
+
+[508245fd6101]
+en = " You are aware of the presence of orcs%s."
+ru = " Вы чувствуете присутствие орков{1}."
+
+[7a32cb97ad95]
+en = " You were aware of the presence of elves%s."
+ru = " Вы чувствовали присутствие эльфов{1}."
+
+[85b0cf2416da]
+en = " You are aware of the presence of elves%s."
+ru = " Вы чувствуете присутствие эльфов{1}."
+
+[9a06aed21f52]
+en = " You were aware of the presence of orcs%s."
+ru = " Вы чувствовали присутствие орков{1}."
+
+[cdcf8edc9f51]
+en = " You were aware of the presence of something%s."
+ru = " Вы чувствовали чьё-то присутствие{1}."
+
+[fa328be7e9a1]
+en = " You are aware of the presence of demons%s."
+ru = " Вы чувствуете присутствие демонов{1}."
+
+[30ae1d8b8942]
+en = " You are aware of the presence of orcs."
+ru = " Вы чувствуете присутствие орков."
+
+[45f8f0305500]
+en = " You are aware of the presence of certain monsters."
+ru = " Вы чувствуете присутствие некоторых монстров."
+
+[5dd3fd215bd0]
+en = " You are aware of the presence of demons."
+ru = " Вы чувствуете присутствие демонов."
+
+[62c8e52dbb16]
+en = " You were aware of the presence of humans."
+ru = " Вы чувствовали присутствие людей."
+
+[64d0404332ab]
+en = " You were aware of the presence of orcs."
+ru = " Вы чувствовали присутствие орков."
+
+[69981fc34b7b]
+en = " You are aware of the presence of humans."
+ru = " Вы чувствуете присутствие людей."
+
+[847db2889ab7]
+en = " You were aware of the presence of demons."
+ru = " Вы чувствовали присутствие демонов."
+
+[a74aec1597f2]
+en = " You were aware of the presence of certain monsters."
+ru = " Вы чувствовали присутствие некоторых монстров."
+
+[b4408ab05065]
+en = " You are aware of the presence of humans and elves."
+ru = " Вы чувствуете присутствие людей и эльфов."
+
+[b57ac8399cf9]
+en = " You were aware of the presence of humans and elves."
+ru = " Вы чувствовали присутствие людей и эльфов."
+
+[ca8c6801ed1c]
+en = " You are aware of the presence of elves."
+ru = " Вы чувствуете присутствие эльфов."
+
+[e659b86e109c]
+en = " You were aware of the presence of elves."
+ru = " Вы чувствовали присутствие эльфов."
+
+[9eb69c52b164]
+en = " You were aware of the presence of %s%s."
+ru = " Вы чувствовали присутствие {1:gen}{2}."
+
+[ad683669c12c]
+en = " You are aware of the presence of %s%s."
+ru = " Вы чувствуете присутствие {1:gen}{2}."
+
+[1603ffbd3779]
+en = " You were warned of undead%s."
+ru = " Вы чувствовали нежить{1}."
+
+[cd98e5a821c3]
+en = " You are warned of undead%s."
+ru = " Вы чувствуете нежить{1}."
+
+[5ee8b1069bc7]
+en = " You have automatic searching%s."
+ru = " Вы всё время обыскиваете окрестности{1}."
+
+[57a911dcdc29]
+en = " You were clairvoyant%s."
+ru = " Вы были наделены ясновидением{1}."
+
+[d2a3f05478bf]
+en = " You are clairvoyant%s."
+ru = " Вы наделены ясновидением{1}."
+
+[83133754d781]
+en = " You have infravision%s."
+ru = " У вас инфразрение{1}."
+
+[3af772547a6f]
+en = " You were sensing the presence of monsters."
+ru = " Вы ощущали присутствие монстров."
+
+[b860ab7d9418]
+en = " You are sensing the presence of monsters."
+ru = " Вы ощущаете присутствие монстров."
+
+[eb81fb354ad4]
+en = " You were sensing the presence of monsters (%ld)."
+ru = " Вы ощущали присутствие монстров ({1})."
+
+[fc5edcd1b606]
+en = " You are sensing the presence of monsters (%ld)."
+ru = " Вы ощущаете присутствие монстров ({1})."
+
+[0abcf3faa948]
+en = " You were charismatic%s."
+ru = " Вы были обаятельны{1}."
+
+[10cf63793fa0]
+en = " You are charismatic%s."
+ru = " Вы обаятельны{1}."
+
+[1b8e3925dc38]
+en = " You are more charismatic%s."
+ru = " Вы обаятельнее{1}."
+
+[3125808e97cd]
+en = " You were less charismatic%s."
+ru = " Вы были менее обаятельны{1}."
+
+[53c373da2b73]
+en = " You are less charismatic%s."
+ru = " Вы менее обаятельны{1}."
+
+[e3c874429a3a]
+en = " You were more charismatic%s."
+ru = " Вы были обаятельнее{1}."
+
+[666751f8c0ce]
+en = " You are invisible%s."
+ru = " Вы невидимы{1}."
+
+[7e7f9199e65b]
+en = " You were invisible%s."
+ru = " Вы были невидимы{1}."
+
+[65b97b7b31b7]
+en = " You are invisible to others%s."
+ru = " Вы невидимы для других{1}."
+
+[e70413e30902]
+en = " You were invisible to others%s."
+ru = " Вы были невидимы для других{1}."
+
+[22b12b9d16a3]
+en = " You are visible%s."
+ru = " Вы видимы{1}."
+
+[58c09066ffc8]
+en = " You were visible%s."
+ru = " Вы были видимы{1}."
+
+[52edf3a53066]
+en = " You are displaced%s."
+ru = " Ваш образ смещён{1}."
+
+[6f93125a9e55]
+en = " You were displaced%s."
+ru = " Ваш образ был смещён{1}."
+
+[965aa82eec28]
+en = " You are stealthy%s."
+ru = " Вы двигаетесь бесшумно{1}."
+
+[a4fb7796e41e]
+en = " You were stealthy%s."
+ru = " Вы двигались бесшумно{1}."
+
+[3aa72c40b6ce]
+en = " You aggravate monsters%s."
+ru = " Вы раздражаете монстров{1}."
+
+[9adefa553581]
+en = " You aggravated monsters%s."
+ru = " Вы раздражали монстров{1}."
+
+[6cf31ca1a75f]
+en = " You cause conflict%s."
+ru = " Вы сеете раздор{1}."
+
+[87d736ac9f38]
+en = " You caused conflict%s."
+ru = " Вы сеяли раздор{1}."
+
+[0996ba664e45]
+en = " You can jump%s."
+ru = " Вы умеете прыгать{1}."
+
+[9dd23e48a94b]
+en = " You could jump%s."
+ru = " Вы умели прыгать{1}."
+
+[c701ed8e4fc6]
+en = " You could teleport%s."
+ru = " Вы могли телепортироваться{1}."
+
+[ce18e88cb03a]
+en = " You can teleport%s."
+ru = " Вы можете телепортироваться{1}."
+
+[26471f74a779]
+en = " You have teleport control%s."
+ru = " Вы управляете телепортацией{1}."
+
+[ae0da0c93e28]
+en = " You had teleport control%s."
+ru = " Вы управляли телепортацией{1}."
+
+[34a03b02a4f9]
+en = " You can cling to the ceiling."
+ru = " Вы можете цепляться за потолок."
+
+[91500ad22ece]
+en = " You could cling to the ceiling."
+ru = " Вы могли цепляться за потолок."
+
+[4c7fabbc449d]
+en = " You can walk on water%s."
+ru = " Вы можете ходить по воде{1}."
+
+[d9817d2b4c21]
+en = " You could walk on water%s."
+ru = " Вы могли ходить по воде{1}."
+
+[9e2be1f3e039]
+en = " You could swim%s."
+ru = " Вы умели плавать{1}."
+
+[d1866c0f90d7]
+en = " You can swim%s."
+ru = " Вы умеете плавать{1}."
+
+[60f108bfcdbf]
+en = " You can survive without air%s."
+ru = " Вы можете обходиться без воздуха{1}."
+
+[c19192197cb7]
+en = " You could survive without air%s."
+ru = " Вы могли обходиться без воздуха{1}."
+
+[933e807cf6fa]
+en = " You could breathe water%s."
+ru = " Вы могли дышать под водой{1}."
+
+[daf95a56798c]
+en = " You can breathe water%s."
+ru = " Вы можете дышать под водой{1}."
+
+[629e1f7eda21]
+en = " You could walk through walls%s."
+ru = " Вы могли проходить сквозь стены{1}."
+
+[c996b569983a]
+en = " You can walk through walls%s."
+ru = " Вы можете проходить сквозь стены{1}."
+
+[0a777d206487]
+en = " You regenerated%s."
+ru = " Вы быстро исцелялись{1}."
+
+[f3c912712613]
+en = " You regenerate%s."
+ru = " Вы быстро исцеляетесь{1}."
+
+[185d80a1db73]
+en = " You have slower digestion%s."
+ru = " У вас замедленное пищеварение{1}."
+
+[777368de8d19]
+en = " You had slower digestion%s."
+ru = " У вас было замедленное пищеварение{1}."
+
+[00f07d493948]
+en = " You were protected."
+ru = " Вы были защищены."
+
+[6032e7c87587]
+en = " You are protected."
+ru = " Вы защищены."
+
+[300bad95c07f]
+en = " You took reduced poison gas damage."
+ru = " Вы получали меньше урона от ядовитого газа."
+
+[a953a06a007b]
+en = " You take reduced poison gas damage."
+ru = " Вы получаете меньше урона от ядовитого газа."
+
+[0588ad34372d]
+en = " Your spell casting is enhanced by wearing a robe."
+ru = " Мантия усиливает ваши заклинания."
+
+[498c6a6a0787]
+en = " Your spell casting was enhanced by wearing a robe."
+ru = " Мантия усиливала ваши заклинания."
+
+[98c3d5d49771]
+en = " Your spell casting is impaired by metallic armor."
+ru = " Металлические доспехи мешают вашим заклинаниям."
+
+[dcfac4ae2c82]
+en = " Your spell casting was impaired by metallic armor, mitigated by your robe."
+ru = " Металлические доспехи мешали вашим заклинаниям, но мантия это смягчала."
+
+[ecec48507ddd]
+en = " Your spell casting is impaired by metallic armor, mitigated by your robe."
+ru = " Металлические доспехи мешают вашим заклинаниям, но мантия это смягчает."
+
+[ff7498efebc6]
+en = " Your spell casting was impaired by metallic armor."
+ru = " Металлические доспехи мешали вашим заклинаниям."
+
+[10675866f3d5]
+en = " You are protected from shape changers%s."
+ru = " Вы защищены от оборотней{1}."
+
+[33915a3bc24e]
+en = " You were protected from shape changers%s."
+ru = " Вы были защищены от оборотней{1}."
+
+[109f5a71f335]
+en = " You are polymorphing periodically%s."
+ru = " Вы время от времени меняете облик{1}."
+
+[f0d39d63d831]
+en = " You were polymorphing periodically%s."
+ru = " Вы время от времени меняли облик{1}."
+
+[4340a042a68a]
+en = " You had polymorph control%s."
+ru = " Вы управляли превращениями{1}."
+
+[e58fadf4089e]
+en = " You have polymorph control%s."
+ru = " Вы управляете превращениями{1}."
+
+[35c68625ddb1]
+en = " You are polymorphed into %s (%d)."
+ru = " Вы превращены в {1:acc} ({2})."
+
+[73a0c3b55236]
+en = " You were polymorphed into %s (%d)."
+ru = " Вы были превращены в {1:acc} ({2})."
+
+[814e21465192]
+en = " You are polymorphed into %s."
+ru = " Вы превращены в {1:acc}."
+
+[c3b677aa8730]
+en = " You were polymorphed into %s."
+ru = " Вы были превращены в {1:acc}."
+
+[051250eb5113]
+en = " You could lay eggs."
+ru = " Вы могли откладывать яйца."
+
+[b9efa98dd5c3]
+en = " You can lay eggs."
+ru = " Вы можете откладывать яйца."
+
+[955c81188892]
+en = " You are harmed by silver."
+ru = " Вам вредит серебро."
+
+[c1b0971ea7ae]
+en = " You were harmed by silver."
+ru = " Вам вредило серебро."
+
+[202d49483138]
+en = " You are fast%s."
+ru = " Вы быстры{1}."
+
+[848a0be52b99]
+en = " You were very fast%s."
+ru = " Вы были очень быстры{1}."
+
+[b7cf6aaeef2f]
+en = " You were fast%s."
+ru = " Вы были быстры{1}."
+
+[cd3044c2d3f2]
+en = " You are very fast%s."
+ru = " Вы очень быстры{1}."
+
+[b394f67967e1]
+en = " You had reflection%s."
+ru = " У вас было отражение{1}."
+
+[d4d38f0e2f25]
+en = " You have reflection%s."
+ru = " У вас отражение{1}."
+
+[a9ee78521c28]
+en = " You had free action%s."
+ru = " У вас была свобода действий{1}."
+
+[cd2c56ca8ab4]
+en = " You have free action%s."
+ru = " У вас свобода действий{1}."
+
+[360c5b70760d]
+en = " You had fixed abilities%s."
+ru = " Ваши характеристики были неизменны{1}."
+
+[69a8978a35c2]
+en = " You have fixed abilities%s."
+ru = " Ваши характеристики неизменны{1}."
+
+[90e2f12daf8e]
+en = " Your life would have been saved."
+ru = " Ваша жизнь была бы спасена."
+
+[e58ba30bb981]
+en = " Your life will be saved."
+ru = " Ваша жизнь будет спасена."
+
+[153421446817]
+en = " You are unlucky (%d)."
+ru = " Вам не везёт ({1})."
+
+[2bc2c0c71802]
+en = " You are lucky (%d)."
+ru = " Вам везёт ({1})."
+
+[2d39994685cb]
+en = " You were unlucky."
+ru = " Вам не везло."
+
+[45c83e57969d]
+en = " You are very lucky (%d)."
+ru = " Вам очень везёт ({1})."
+
+[56c79c1fb9f6]
+en = " You are extremely unlucky."
+ru = " Вам ужасно не везёт."
+
+[83bc41ca4a8e]
+en = " You are very unlucky (%d)."
+ru = " Вам очень не везёт ({1})."
+
+[87768611b5da]
+en = " You are very lucky."
+ru = " Вам очень везёт."
+
+[88ee6733b8d9]
+en = " You are lucky."
+ru = " Вам везёт."
+
+[a2df732ef9e0]
+en = " You were very unlucky."
+ru = " Вам очень не везло."
+
+[a5cf0de03b5f]
+en = " You were lucky (%d)."
+ru = " Вам везло ({1})."
+
+[aef8d80daf1a]
+en = " You were unlucky (%d)."
+ru = " Вам не везло ({1})."
+
+[b5eb85f90be4]
+en = " You were extremely unlucky."
+ru = " Вам ужасно не везло."
+
+[bc14144c43f5]
+en = " You were very lucky (%d)."
+ru = " Вам очень везло ({1})."
+
+[c0896035704c]
+en = " You are extremely lucky (%d)."
+ru = " Вам невероятно везёт ({1})."
+
+[c79a870e4488]
+en = " You were very unlucky (%d)."
+ru = " Вам очень не везло ({1})."
+
+[ca0cb2a6d37d]
+en = " You are very unlucky."
+ru = " Вам очень не везёт."
+
+[ce6588514496]
+en = " You were very lucky."
+ru = " Вам очень везло."
+
+[da200991aa5d]
+en = " You are extremely unlucky (%d)."
+ru = " Вам ужасно не везёт ({1})."
+
+[ec04fe38e56c]
+en = " You were extremely unlucky (%d)."
+ru = " Вам ужасно не везло ({1})."
+
+[ef2047aed4a5]
+en = " You are unlucky."
+ru = " Вам не везёт."
+
+[f4198e8e88bc]
+en = " You were extremely lucky (%d)."
+ru = " Вам невероятно везло ({1})."
+
+[f8ae9bcb7af1]
+en = " You are extremely lucky."
+ru = " Вам невероятно везёт."
+
+[fdcb45ed5975]
+en = " You were extremely lucky."
+ru = " Вам невероятно везло."
+
+[07e1f82c4506]
+en = " Your luck was zero."
+ru = " Ваша удача была нулевой."
+
+[a7cdd7ee2450]
+en = " Your luck is zero."
+ru = " Ваша удача нулевая."
+
+[83ef0254b6a8]
+en = " You had extra luck."
+ru = " У вас была дополнительная удача."
+
+[a03aa5454363]
+en = " You have extra luck."
+ru = " У вас дополнительная удача."
+
+[b3cc6528c5e1]
+en = " You had reduced luck."
+ru = " У вас была пониженная удача."
+
+[dc69ddbcafe9]
+en = " You have reduced luck."
+ru = " У вас пониженная удача."
+
+[0a60499eef02]
+en = " Bad luck does not time out for you."
+ru = " Ваша неудача не проходит со временем."
+
+[e5aa309ebe50]
+en = " Bad luck did not time out for you."
+ru = " Ваша неудача не проходила со временем."
+
+[af944229c164]
+en = " Good luck did not time out for you."
+ru = " Ваша удача не проходила со временем."
+
+[f4b6619307ad]
+en = " Good luck does not time out for you."
+ru = " Ваша удача не проходит со временем."
+
+[59831da9ef38]
+en = " %s is extremely angry with you (%d)."
+ru = " {1} страшно гневается на вас ({2})."
+
+[6adb54086957]
+en = " %s was very angry with you."
+ru = " {1} сильно {1:gender|гневался|гневалась|гневалось|гневались} на вас."
+
+[75576348f3db]
+en = " %s was very angry with you (%d)."
+ru = " {1} сильно {1:gender|гневался|гневалась|гневалось|гневались} на вас ({2})."
+
+[83db413bf5a9]
+en = " %s was angry with you."
+ru = " {1} {1:gender|гневался|гневалась|гневалось|гневались} на вас."
+
+[9e0b5a6b2ae3]
+en = " %s was angry with you (%d)."
+ru = " {1} {1:gender|гневался|гневалась|гневалось|гневались} на вас ({2})."
+
+[bfad229a9f42]
+en = " %s is very angry with you (%d)."
+ru = " {1} сильно гневается на вас ({2})."
+
+[d9e0a0d8286f]
+en = " %s was extremely angry with you."
+ru = " {1} страшно {1:gender|гневался|гневалась|гневалось|гневались} на вас."
+
+[e772dc0a6baf]
+en = " %s was extremely angry with you (%d)."
+ru = " {1} страшно {1:gender|гневался|гневалась|гневалось|гневались} на вас ({2})."
+
+[e93e1cb3db19]
+en = " %s is angry with you (%d)."
+ru = " {1} гневается на вас ({2})."
+
+[ec303d03e7ae]
+en = " %s is very angry with you."
+ru = " {1} сильно гневается на вас."
+
+[f2c619ed9b89]
+en = " %s is extremely angry with you."
+ru = " {1} страшно гневается на вас."
+
+[fdea10c6b647]
+en = " %s is angry with you."
+ru = " {1} гневается на вас."
+
+[524279e65ff8]
+en = " You can safely pray."
+ru = " Вы можете безопасно молиться."
+
+[5eb568eaddc0]
+en = " You couldn't safely pray."
+ru = " Вы не могли безопасно молиться."
+
+[69dd26d271b1]
+en = " You couldn't safely pray (%d)."
+ru = " Вы не могли безопасно молиться ({1})."
+
+[94879e72fb10]
+en = " You could safely pray (%d)."
+ru = " Вы могли безопасно молиться ({1})."
+
+[a07802dc2c00]
+en = " You can safely pray (%d)."
+ru = " Вы можете безопасно молиться ({1})."
+
+[b57b488fb6eb]
+en = " You could safely pray."
+ru = " Вы могли безопасно молиться."
+
+[1a3bb9906d3d]
+en = " You survived (%dst time!)."
+ru = " Вы выжили ({1}-й раз!)."
+
+[754dd78631fd]
+en = " You are dead (%dth time!)."
+ru = " Вы мертвы ({1}-й раз!)."
+
+[7bab62c5a7cc]
+en = " You survived (%dnd time!)."
+ru = " Вы выжили ({1}-й раз!)."
+
+[97fab26899ac]
+en = " You survived (%drd time!)."
+ru = " Вы выжили ({1}-й раз!)."
+
+[adcf43c9359d]
+en = " You are dead (%dnd time!)."
+ru = " Вы мертвы ({1}-й раз!)."
+
+[c594b029f45d]
+en = " You are dead (%drd time!)."
+ru = " Вы мертвы ({1}-й раз!)."
+
+[e77020a56373]
+en = " You are dead (%dst time!)."
+ru = " Вы мертвы ({1}-й раз!)."
+
+[fefb6bb6c225]
+en = " You survived (%dth time!)."
+ru = " Вы выжили ({1}-й раз!)."
+
+[3b819d7fcec5]
+en = " You were hiding."
+ru = " Вы прятались."
+
+[4458ce61e3c8]
+en = " You are hiding."
+ru = " Вы прячетесь."
+
+[e493d7e0ae91]
+en = " You were blind from birth."
+ru = " Вы были слепы от рождения."
+
+[9ade5db9d0f9]
+en = " You were deaf from birth."
+ru = " Вы были глухи от рождения."
+
+[3565ecd58fc2]
+en = " You are without possessions."
+ru = " У вас нет имущества."
+
+[522b090cc97a]
+en = " You started without possessions."
+ru = " Вы начали игру без имущества."
+
+[f4041c87ce1a]
+en = " You started out without possessions."
+ru = " Вы начали игру без имущества."
+
+[9086d45f6cd2]
+en = " You were faithfully nudist."
+ru = " Вы {hero:gender|были убеждённым нудистом|были убеждённой нудисткой}."
+
+[2cfdf2c6d3d5]
+en = " You followed a strict vegan diet."
+ru = " Вы соблюдали строгую веганскую диету."
+
+[0f902c32ff06]
+en = " You hit with a wielded weapon %ld time."
+ru = " Вы {1} {1:plural|раз|раза|раз} ударили оружием."
+
+[90c16b8f6527]
+en = " You hit with a wielded weapon %ld times."
+ru = " Вы {1} {1:plural|раз|раза|раз} ударили оружием."
+
+[06e69e4ba60f]
+en = " You read items or engraved %ld time."
+ru = " Вы {1} {1:plural|раз|раза|раз} читали или писали."
+
+[b78d5b5a58e1]
+en = " You read items or engraved %ld times."
+ru = " Вы {1} {1:plural|раз|раза|раз} читали или писали."
+
+[267f517d2897]
+en = " You never had a pet."
+ru = " У вас никогда не было питомца."
+
+[88342aafeaa6]
+en = " You genocided %d types of monsters."
+ru = " Вы истребили {1} {1:plural|вид|вида|видов} монстров."
+
+[9a24c7d58e12]
+en = " You genocided %d type of monster."
+ru = " Вы истребили {1} {1:plural|вид|вида|видов} монстров."
+
+[022e0d816eb0]
+en = " You polymorphed %ld item."
+ru = " Вы превратили {1} {1:plural|предмет|предмета|предметов}."
+
+[dfa167ffc42f]
+en = " You polymorphed %ld items."
+ru = " Вы превратили {1} {1:plural|предмет|предмета|предметов}."
+
+[bf9daf702bc1]
+en = " You changed form %ld time."
+ru = " Вы меняли облик {1} {1:plural|раз|раза|раз}."
+
+[c2ebe524e2c5]
+en = " You changed form %ld times."
+ru = " Вы меняли облик {1} {1:plural|раз|раза|раз}."
+
+[03b1528aadef]
+en = " You took reduced spell damage%s."
+ru = " Вы получали меньше урона от заклинаний{1}."
+
+[0d5887777424]
+en = " You take half physical damage%s."
+ru = " Вы получаете вдвое меньше физического урона{1}."
+
+[31045621eb4a]
+en = " You took reduced physical damage%s."
+ru = " Вы получали меньше физического урона{1}."
+
+[6d6d61e32152]
+en = " You took half physical damage%s."
+ru = " Вы получали вдвое меньше физического урона{1}."
+
+[88506388d2c7]
+en = " You take reduced physical damage%s."
+ru = " Вы получаете меньше физического урона{1}."
+
+[e3543ba23521]
+en = " You take reduced spell damage%s."
+ru = " Вы получаете меньше урона от заклинаний{1}."
+
+[fa6c7a3ce675]
+en = " You took half spell damage%s."
+ru = " Вы получали вдвое меньше урона от заклинаний{1}."
+
+[fd9162d651f5]
+en = " You take half spell damage%s."
+ru = " Вы получаете вдвое меньше урона от заклинаний{1}."
+
+[00f0088cd2f9]
+en = " You used %ld wishes (%ld for an artifact)."
+ru = " Вы использовали {1} {1:plural|желание|желания|желаний} ({2} — на артефакт)."
+
+[1599951b7403]
+en = " You used %ld wishes (%ld for artifacts)."
+ru = " Вы использовали {1} {1:plural|желание|желания|желаний} ({2} — на артефакты)."
+
+[2d816f840260]
+en = " You used %ld wishes."
+ru = " Вы использовали {1} {1:plural|желание|желания|желаний}."
+
+[35889b30e0a8]
+en = " You used %ld wish (for an artifact)."
+ru = " Вы использовали {1} {1:plural|желание|желания|желаний} (на артефакт)."
+
+[43286d73fbc4]
+en = " You used %ld wishes (all for artifacts)."
+ru = " Вы использовали {1} {1:plural|желание|желания|желаний} (все — на артефакты)."
+
+[dd274407176f]
+en = " You used %ld wish."
+ru = " Вы использовали {1} {1:plural|желание|желания|желаний}."
+
+[ec891a9643ec]
+en = " You used %ld wishes (both for artifacts)."
+ru = " Вы использовали {1} {1:plural|желание|желания|желаний} (оба — на артефакты)."
+
+[6f1fcb999220]
+en = "Achievements:"
+ru = "Достижения:"
+
+[7ada46611510]
+en = " You explored without being able to see."
+ru = " Вы исследовали подземелье вслепую."
+
+[ebbe48c41f86]
+en = " You are exploring without being able to see."
+ru = " Вы исследуете подземелье вслепую."
+
+[7aca9fdcffbf]
+en = " You went without any armor."
+ru = " Вы обходились без доспехов."
+
+[3fc5780d6f20]
+en = " You entered Minetown."
+ru = " Вы вошли в Шахтёрский городок."
+
+[545e134c87bb]
+en = " You entered a shop."
+ru = " Вы вошли в лавку."
+
+[12bf464b11a5]
+en = " You entered a temple."
+ru = " Вы вошли в храм."
+
+[0e6dea84d59a]
+en = " You consulted the Oracle of Delphi."
+ru = " Вы советовались с Дельфийским Оракулом."
+
+[be5ac7175efb]
+en = " You read from a Discworld novel."
+ru = " Вы читали роман о Плоском мире."
+
+[81ff500fcc04]
+en = " You entered Sokoban."
+ru = " Вы вошли в Сокобан."
+
+[e0195e41836a]
+en = " You completed Sokoban."
+ru = " Вы прошли Сокобан."
+
+[4b810d8aed11]
+en = " You completed the Gnomish Mines."
+ru = " Вы прошли Гномьи копи."
+
+[6c0db1dcde77]
+en = " You entered the Big Room."
+ru = " Вы вошли в Большой зал."
+
+[336a4d3824d7]
+en = " You defeated Medusa."
+ru = " Вы победили Медузу."
+
+[b5608219bd08]
+en = " You learned the tune to open and close the Castle's drawbridge."
+ru = " Вы выучили мелодию, открывающую и закрывающую подъёмный мост Замка."
+
+[2324e70c2774]
+en = " You handled the Bell of Opening."
+ru = " Вы держали в руках Колокол Открытия."
+
+[805496808823]
+en = " You had the Bell of Opening."
+ru = " У вас был Колокол Открытия."
+
+[9a1401510610]
+en = " You have the Bell of Opening."
+ru = " У вас Колокол Открытия."
+
+[d6ae1197fa06]
+en = " You entered Gehennom."
+ru = " Вы вошли в Геенну."
+
+[954af69f05ef]
+en = " You handled the Candelabrum of Invocation."
+ru = " Вы держали в руках Канделябр Призыва."
+
+[c094c2f2dba7]
+en = " You had the Candelabrum of Invocation."
+ru = " У вас был Канделябр Призыва."
+
+[c101683ceb87]
+en = " You have the Candelabrum of Invocation."
+ru = " У вас Канделябр Призыва."
+
+[0a0a423efbb0]
+en = " You handled the Book of the Dead."
+ru = " Вы держали в руках Книгу Мёртвых."
+
+[364f30259b12]
+en = " You had the Book of the Dead."
+ru = " У вас была Книга Мёртвых."
+
+[759fdb5e9d75]
+en = " You have the Book of the Dead."
+ru = " У вас Книга Мёртвых."
+
+[84636dbcfdb8]
+en = " You gained access to Moloch's Sanctum."
+ru = " Вы проникли в Святилище Молоха."
+
+[1649ddc63433]
+en = " You have obtained the Amulet of Yendor."
+ru = " Вы добыли Амулет Йендора."
+
+[52a85fc60ad4]
+en = " You delivered the Amulet of Yendor."
+ru = " Вы доставили Амулет Йендора."
+
+[65757e57d6b5]
+en = " You have the Amulet of Yendor."
+ru = " У вас Амулет Йендора."
+
+[864444e0c17c]
+en = " You had the Amulet of Yendor."
+ru = " У вас был Амулет Йендора."
+
+[fc69777c6d40]
+en = " You had obtained the Amulet of Yendor."
+ru = " Вы добыли Амулет Йендора."
+
+[ae6c97204235]
+en = " You reached the Elemental Planes."
+ru = " Вы достигли Стихийных планов."
+
+[43e39d93b09f]
+en = " You reached the Astral Plane."
+ru = " Вы достигли Астрального плана."
+
+[d95ef90c5d12]
+en = " You attained the rank of %s."
+ru = " Вы достигли звания {1:gen}."
+
+[3a3506467816]
+en = "Logged events:"
+ru = "Записанные события:"
+
+[e143972abc38]
+en = "Major events:"
+ru = "Главные события:"
+
+[df27d9f3ff9e]
+en = " none"
+ru = " нет"
+
+[15eab7cf7dc9]
+en = " You are running in explore mode."
+ru = " Игра идёт в режиме исследования."
+
+[60ac4ff5b4f6]
+en = " You were running in debug mode."
+ru = " Игра шла в режиме отладки."
+
+[be35fd1e0748]
+en = " You were running in explore mode."
+ru = " Игра шла в режиме исследования."
+
+[f5b8ffcbda55]
+en = " You are running in debug mode."
+ru = " Игра идёт в режиме отладки."
+
+[0be807a53c93]
+en = " You disabled loading of bones levels."
+ru = " Вы отключили загрузку уровней-костей."
+
+[fc5981f6c6e8]
+en = " You disabled loading and storing of bones levels."
+ru = " Вы отключили загрузку и сохранение уровней-костей."
+
+[58eb9b46cd78]
+en = " You encountered %ld bones level."
+ru = " Вы встретили {1} {1:plural|уровень|уровня|уровней} с костями."
+
+[ad0fd07ce627]
+en = " You encountered %ld bones levels."
+ru = " Вы встретили {1} {1:plural|уровень|уровня|уровней} с костями."
+
+[064de9529c96]
+en = " You are %s, level %d female %s."
+ru = " Вы — {1:f}, {3:f} {2}-го уровня."
+
+[13154798eb70]
+en = " You were %s, level %d female %s."
+ru = " Вы были {1:f:ins}, {3:f:ins} {2}-го уровня."
+
+[24b59f512a31]
+en = " You are actually %s, a level %d %s %s."
+ru = " На самом деле вы — {1:hero}, {3:hero} {4:hero} {2}-го уровня."
+
+[27cbc1d68e4e]
+en = " You were actually %s, a level %d male %s %s."
+ru = " На самом деле вы были {1:m:ins}, {3:m:ins} {4:m:ins} {2}-го уровня."
+
+[3fbc8769cb74]
+en = " You are %s, level %d %s."
+ru = " Вы — {1:hero}, {3:hero} {2}-го уровня."
+
+[51058ad14098]
+en = " You were actually %s, a level %d %s %s."
+ru = " На самом деле вы были {1:hero:ins}, {3:hero:ins} {4:hero:ins} {2}-го уровня."
+
+[522901b29dad]
+en = " You were %s, level %d male %s."
+ru = " Вы были {1:m:ins}, {3:m:ins} {2}-го уровня."
+
+[558ffd8cf47b]
+en = " You are actually %s, level %d %s."
+ru = " На самом деле вы — {1:hero}, {3:hero} {2}-го уровня."
+
+[61d90338c67c]
+en = " You were %s, a level %d %s %s."
+ru = " Вы были {1:hero:ins}, {3:hero:ins} {4:hero:ins} {2}-го уровня."
+
+[67bb28d378d2]
+en = " You were actually %s, a level %d female %s %s."
+ru = " На самом деле вы были {1:f:ins}, {3:f:ins} {4:f:ins} {2}-го уровня."
+
+[6e60a71f3526]
+en = " You were actually %s, level %d male %s."
+ru = " На самом деле вы были {1:m:ins}, {3:m:ins} {2}-го уровня."
+
+[79e767993a4d]
+en = " You were %s, level %d %s."
+ru = " Вы были {1:hero:ins}, {3:hero:ins} {2}-го уровня."
+
+[7dd7175f7dc0]
+en = " You are actually %s, a level %d male %s %s."
+ru = " На самом деле вы — {1:m}, {3:m} {4:m} {2}-го уровня."
+
+[8e3418ee0387]
+en = " You were %s, a level %d female %s %s."
+ru = " Вы были {1:f:ins}, {3:f:ins} {4:f:ins} {2}-го уровня."
+
+[916d18a8361a]
+en = " You are %s, level %d male %s."
+ru = " Вы — {1:m}, {3:m} {2}-го уровня."
+
+[a80f0c6d98f4]
+en = " You were actually %s, level %d %s."
+ru = " На самом деле вы были {1:hero:ins}, {3:hero:ins} {2}-го уровня."
+
+[b83ca9947031]
+en = " You are actually %s, level %d female %s."
+ru = " На самом деле вы — {1:f}, {3:f} {2}-го уровня."
+
+[c07d97a35c5e]
+en = " You are actually %s, a level %d female %s %s."
+ru = " На самом деле вы — {1:f}, {3:f} {4:f} {2}-го уровня."
+
+[d5bfbe4e8200]
+en = " You are actually %s, level %d male %s."
+ru = " На самом деле вы — {1:m}, {3:m} {2}-го уровня."
+
+[edd003a48a5a]
+en = " You were actually %s, level %d female %s."
+ru = " На самом деле вы были {1:f:ins}, {3:f:ins} {2}-го уровня."
+
+[3d07751de455]
+en = " You are left-handed."
+ru = " Вы левша."
+
+[556fa88705d7]
+en = " You were normally right-handed."
+ru = " Вы обычно были правшой."
+
+[5e11c8d70fdf]
+en = " You are normally left-handed."
+ru = " Вы обычно левша."
+
+[a4289d2ef2af]
+en = " You are normally right-handed."
+ru = " Вы обычно правша."
+
+[cf1dde4f8210]
+en = " You were left-handed."
+ru = " Вы были левшой."
+
+[da5b6330f619]
+en = " You were normally left-handed."
+ru = " Вы обычно были левшой."
+
+[8f2b1779ad2b]
+en = " You had just started your adventure."
+ru = " Вы только начали своё приключение."
+
+[b19a10ead851]
+en = " You have just started your adventure."
+ru = " Вы только начали своё приключение."
+
+[87cfdb4c3b13]
+en = " It is nighttime."
+ru = " Сейчас ночь."
+
+[a19e60b03802]
+en = " It was nighttime."
+ru = " Была ночь."
+
+[03b1a7958273]
+en = " There is a full moon in effect."
+ru = " Сейчас полнолуние."
+
+[1030f453663a]
+en = " There is a first quarter moon in effect when your adventure ended."
+ru = " Когда ваше приключение закончилось, была луна в первой четверти."
+
+[1852899820b1]
+en = " There is a full moon in effect when your adventure ended."
+ru = " Когда ваше приключение закончилось, было полнолуние."
+
+[34ec6b533632]
+en = " There was a full moon in effect when your adventure ended."
+ru = " Когда ваше приключение закончилось, было полнолуние."
+
+[470c8ee2720e]
+en = " There was a new moon in effect."
+ru = " Было новолуние."
+
+[4d8547193bdc]
+en = " There was a last quarter moon in effect when your adventure ended."
+ru = " Когда ваше приключение закончилось, была луна в последней четверти."
+
+[65141e74d469]
+en = " There is a last quarter moon in effect."
+ru = " Луна в последней четверти."
+
+[796cd46aaecb]
+en = " There was a first quarter moon in effect."
+ru = " Луна была в первой четверти."
+
+[7b84a5cb7644]
+en = " There was a first quarter moon in effect when your adventure ended."
+ru = " Когда ваше приключение закончилось, была луна в первой четверти."
+
+[9de3bc447a67]
+en = " There is a first quarter moon in effect."
+ru = " Луна в первой четверти."
+
+[a388f60776f7]
+en = " There is a last quarter moon in effect when your adventure ended."
+ru = " Когда ваше приключение закончилось, была луна в последней четверти."
+
+[af61481d222c]
+en = " There was a full moon in effect."
+ru = " Было полнолуние."
+
+[c74b58f6d5f1]
+en = " There is a new moon in effect when your adventure ended."
+ru = " Когда ваше приключение закончилось, было новолуние."
+
+[df008fcc10ce]
+en = " There was a last quarter moon in effect."
+ru = " Луна была в последней четверти."
+
+[1146133a6ff5]
+en = " You have %-1ld experience points, %ld needed to attain level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно {2}."
+
+[11eba384a907]
+en = " You have %-1ld experience points, %ld needed for level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно {2}."
+
+[156f14ce2bde]
+en = " You have %-1ld experience point, %ld were needed for level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно было {2}."
+
+[1a3c0f19e13e]
+en = " You have %-1ld experience points, %ld were needed to attain level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно было {2}."
+
+[1b6f86fb48cd]
+en = " You have %-1ld experience points, %ld was needed to attain level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно было {2}."
+
+[1e26f466cf84]
+en = " You have %-1ld experience point, %ld needed for level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно {2}."
+
+[25fa9a982165]
+en = " You have %-1ld experience points, %ld more needed for level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно {2}."
+
+[280a0f5d1f20]
+en = " You have %-1ld experience points, %ld more was needed to attain level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[280a99f2f42c]
+en = " You have %-1ld experience points, %ld were needed for level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно было {2}."
+
+[280cc2403ad0]
+en = " You had %-1ld experience point, %ld was needed to attain level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно было {2}."
+
+[3b4dacd0c2c5]
+en = " You have %-1ld experience point, %ld were needed to attain level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно было {2}."
+
+[43abcfaa808b]
+en = " You had %-1ld experience point, %ld needed for level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно было {2}."
+
+[44bbabe03c83]
+en = " You have %-1ld experience points, %ld more were needed for level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[4be3fa1b89a3]
+en = " You had %-1ld experience points."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта."
+
+[4c54c5a67a6c]
+en = " You have %-1ld experience point, %ld more were needed to attain level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[5267213ca515]
+en = " You had %-1ld experience point, %ld needed to attain level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно было {2}."
+
+[53a992cee9b3]
+en = " You had %-1ld experience point, %ld were needed to attain level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно было {2}."
+
+[58d099dd896d]
+en = " You had %-1ld experience points, %ld more was needed to attain level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[5b2af9e33481]
+en = " You had %-1ld experience point, %ld more were needed to attain level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[5cedf75f2bc7]
+en = " You had %-1ld experience point, %ld more needed for level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[64a89ec98937]
+en = " You have %-1ld experience points, %ld more needed to attain level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно {2}."
+
+[66082d8bef0c]
+en = " You have %-1ld experience point, %ld more needed to attain level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно {2}."
+
+[6b107d79fd6b]
+en = " You had %-1ld experience points, %ld more needed to attain level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[74f84fbef621]
+en = " You have %-1ld experience point, %ld more was needed to attain level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[7955c99afc89]
+en = " You had %-1ld experience point, %ld more needed to attain level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[83f43a0eaaa7]
+en = " You had %-1ld experience points, %ld more were needed for level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[8a4166f58319]
+en = " You had %-1ld experience points, %ld needed for level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно было {2}."
+
+[8b5cbf3e179f]
+en = " You had %-1ld experience points, %ld were needed for level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно было {2}."
+
+[8e086d4846d6]
+en = " You had %-1ld experience point."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта."
+
+[8ec9eda0a42d]
+en = " You have %-1ld experience point, %ld was needed to attain level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно было {2}."
+
+[a047c1b39e05]
+en = " You had %-1ld experience points, %ld was needed to attain level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно было {2}."
+
+[ab8b60160f09]
+en = " You had %-1ld experience point, %ld were needed for level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно было {2}."
+
+[ad9d5903e8d5]
+en = " You have %-1ld experience point, %ld more were needed for level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[bf8a46275c87]
+en = " You had %-1ld experience points, %ld more was needed for level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[c2506d26a796]
+en = " You have %-1ld experience point, %ld more was needed for level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[c68a68230390]
+en = " You had %-1ld experience points, %ld needed to attain level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно было {2}."
+
+[cd9c40e61c80]
+en = " You have %-1ld experience points, %ld was needed for level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно было {2}."
+
+[d432a7fa537a]
+en = " You have %-1ld experience points, %ld more were needed to attain level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[d5980e8155e7]
+en = " You have %-1ld experience points, %ld more was needed for level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[d6cc6de87e4a]
+en = " You had %-1ld experience points, %ld more were needed to attain level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[d74fb2eb70a3]
+en = " You had %-1ld experience points, %ld was needed for level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно было {2}."
+
+[db6dbd0a6e51]
+en = " You had %-1ld experience point, %ld more was needed to attain level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[e44cdf3650e6]
+en = " You had %-1ld experience points, %ld more needed for level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[ed02b5422ebd]
+en = " You have %-1ld experience point, %ld was needed for level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно было {2}."
+
+[eefe7f459fab]
+en = " You had %-1ld experience point, %ld was needed for level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно было {2}."
+
+[f1a0369ed68a]
+en = " You have %-1ld experience point, %ld needed to attain level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} нужно {2}."
+
+[f24d9fd7e7af]
+en = " You had %-1ld experience point, %ld more was needed for level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[fcb21d4d2b9c]
+en = " You had %-1ld experience point, %ld more were needed for level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно было {2}."
+
+[fd5cb7b7ac6d]
+en = " You have %-1ld experience point, %ld more needed for level %d."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта, до уровня {3} ещё нужно {2}."
+
+[09e86b05a037]
+en = " Your score was %ld before end-of-game adjustments."
+ru = " Ваш счёт был {1} до итоговых поправок."
+
+[87cdb3f8213d]
+en = " Your score is %ld."
+ru = " Ваш счёт: {1}."
+
+[8ea3860b1cbe]
+en = " Your score is %ld before end-of-game adjustments."
+ru = " Ваш счёт: {1} до итоговых поправок."
+
+[e60ea1f7a4a3]
+en = " Your score was %ld."
+ru = " Ваш счёт был {1}."
+
+[3fe8b509d519]
+en = " You have %d out of %d hit point."
+ru = " Здоровье: {1} из {2}."
+
+[70f0607e5dbb]
+en = " You had all %d hit points."
+ru = " Здоровье было полным: {1}."
+
+[8b3b0f1d11a2]
+en = " You had %d out of %d hit point."
+ru = " Здоровье: {1} из {2}."
+
+[2a9b553b1127]
+en = " You had both energy points (spell power)."
+ru = " Энергия была полной: 2."
+
+[2b1d44564036]
+en = " You had no energy points (spell power)."
+ru = " У вас не было энергии."
+
+[3982b084a7bd]
+en = " You have both energy points (spell power)."
+ru = " Энергия полная: 2."
+
+[847b9886eb0c]
+en = " You had all %d energy points (spell power)."
+ru = " Энергия была полной: {1}."
+
+[f64709a3c25a]
+en = " You have no energy points (spell power)."
+ru = " У вас нет энергии."
+
+[5a6235ca80d4]
+en = " Your armor class was %d, the best possible."
+ru = " Ваш класс брони был {1}, лучший из возможных."
+
+[5b40ed5d2105]
+en = " Your armor class is %d, the worst possible."
+ru = " Ваш класс брони: {1}, худший из возможных."
+
+[b4c080649330]
+en = " Your armor class is %d, the best possible."
+ru = " Ваш класс брони: {1}, лучший из возможных."
+
+[e558e97860a2]
+en = " Your armor class was %d, the worst possible."
+ru = " Ваш класс брони был {1}, худший из возможных."
+
+[200bd7a72f82]
+en = " you had %ld zorkmid stashed away in your pack."
+ru = " у вас было {1} {1:plural|зоркмид|зоркмида|зоркмидов} спрятано в рюкзаке."
+
+[24f45eec0aba]
+en = " you have %ld zorkmids stashed away in your pack."
+ru = " у вас {1} {1:plural|зоркмид|зоркмида|зоркмидов} спрятано в рюкзаке."
+
+[b6ea8233ed30]
+en = " you have %ld zorkmid stashed away in your pack."
+ru = " у вас {1} {1:plural|зоркмид|зоркмида|зоркмидов} спрятано в рюкзаке."
+
+[c274d4e3a9b0]
+en = " you have %ld more stashed away in your pack."
+ru = " у вас ещё {1} спрятано в рюкзаке."
+
+[ed13c5e675cb]
+en = " you had %ld zorkmids stashed away in your pack."
+ru = " у вас было {1} {1:plural|зоркмид|зоркмида|зоркмидов} спрятано в рюкзаке."
+
+[f28fba700cd4]
+en = " you had %ld more stashed away in your pack."
+ru = " у вас было ещё {1} спрятано в рюкзаке."
+
+[5c66532b781f]
+en = " Autopickup was on."
+ru = " Автоподбор был включён."
+
+[e000806fcc9e]
+en = " Autopickup is on."
+ru = " Автоподбор включён."
+
+[133839e2c8a1]
+en = "%s (current; peak:%s, limit:%s)"
+ru = "{1} (текущее; наибольшее: {2}, предел: {3})"
+
+[202ef3c76280]
+en = "%s (innate limit:%s)"
+ru = "{1} (врождённый предел: {2})"
+
+[2d5d3a5c8812]
+en = "%s (current; base:%s, peak:%s, limit:%s"
+ru = "{1} (текущее; базовое: {2}, наибольшее: {3}, предел: {4}"
+
+[2f46e5da031a]
+en = "%s (current; base:%s, innate limit:%s)"
+ru = "{1} (текущее; базовое: {2}, врождённый предел: {3})"
+
+[2fe7f67b321b]
+en = "%s (current; base:%s)"
+ru = "{1} (текущее; базовое: {2})"
+
+[330bccf1067a]
+en = "%s (current; limit:%s)"
+ru = "{1} (текущее; предел: {2})"
+
+[3486fdfbefc3]
+en = "%s (peak:%s, innate limit:%s)"
+ru = "{1} (наибольшее: {2}, врождённый предел: {3})"
+
+[4a2274f573b3]
+en = "%s (current; base:%s, peak:%s, limit:%s)"
+ru = "{1} (текущее; базовое: {2}, наибольшее: {3}, предел: {4})"
+
+[4c473292c51c]
+en = "%s (current; base:%s, limit:%s)"
+ru = "{1} (текущее; базовое: {2}, предел: {3})"
+
+[54018d66056c]
+en = "%s (peak:%s)"
+ru = "{1} (наибольшее: {2})"
+
+[54993c623030]
+en = "%s (base:%s, innate limit:%s)"
+ru = "{1} (базовое: {2}, врождённый предел: {3})"
+
+[5cba5f8298a4]
+en = "%s (base:%s, peak:%s)"
+ru = "{1} (базовое: {2}, наибольшее: {3})"
+
+[69ee274e1884]
+en = "%s (base:%s, peak:%s, limit:%s"
+ru = "{1} (базовое: {2}, наибольшее: {3}, предел: {4}"
+
+[7ce3bdbee6de]
+en = "%s (base:%s, peak:%s, limit:%s)"
+ru = "{1} (базовое: {2}, наибольшее: {3}, предел: {4})"
+
+[810603e0b655]
+en = "%s (base:%s, peak:%s, innate limit:%s)"
+ru = "{1} (базовое: {2}, наибольшее: {3}, врождённый предел: {4})"
+
+[9af2ebdb11ab]
+en = "%s (current; peak:%s, innate limit:%s)"
+ru = "{1} (текущее; наибольшее: {2}, врождённый предел: {3})"
+
+[a307fc61b572]
+en = "%s (current; peak:%s)"
+ru = "{1} (текущее; наибольшее: {2})"
+
+[c18d96245349]
+en = "%s (current; innate limit:%s)"
+ru = "{1} (текущее; врождённый предел: {2})"
+
+[c52b9f9b2015]
+en = "%s (base:%s)"
+ru = "{1} (базовое: {2})"
+
+[cccf14b7c38d]
+en = "%s (base:%s, limit:%s)"
+ru = "{1} (базовое: {2}, предел: {3})"
+
+[d03da93e2d0e]
+en = "%s (limit:%s)"
+ru = "{1} (предел: {2})"
+
+[d3fa9219cd75]
+en = "%s (current; base:%s, peak:%s, innate limit:%s"
+ru = "{1} (текущее; базовое: {2}, наибольшее: {3}, врождённый предел: {4}"
+
+[d53e9b1c72dc]
+en = "%s (base:%s, peak:%s, innate limit:%s"
+ru = "{1} (базовое: {2}, наибольшее: {3}, врождённый предел: {4}"
+
+[e7cd03a6a0a2]
+en = "%s (current; base:%s, peak:%s, innate limit:%s)"
+ru = "{1} (текущее; базовое: {2}, наибольшее: {3}, врождённый предел: {4})"
+
+[e9439f9954b8]
+en = "%s (current; base:%s, peak:%s)"
+ru = "{1} (текущее; базовое: {2}, наибольшее: {3})"
+
+[fff69f78574c]
+en = "%s (peak:%s, limit:%s)"
+ru = "{1} (наибольшее: {2}, предел: {3})"
+
+[1045e1fb03d6]
+en = " You are transformed and feel empty inside."
+ru = " Вы превращены и чувствуете внутри пустоту."
+
+[a3b831e0dc7e]
+en = " You are transformed and feel dead inside."
+ru = " Вы превращены и чувствуете себя {hero:gender|мёртвым|мёртвой} внутри."
+
+[b580b472c680]
+en = " You are transformed and feel condemned inside."
+ru = " Вы превращены и чувствуете себя {hero:gender|проклятым|проклятой}."
+
+[c2f3c9510c63]
+en = " You were transformed."
+ru = " Вы были превращены."
+
+[c72d3c8f6cae]
+en = " You are transformed."
+ru = " Вы превращены."
+
+[e28af1bac2e8]
+en = " You were transformed and felt condemned inside."
+ru = " Вы были превращены и чувствовали себя {hero:gender|проклятым|проклятой}."
+
+[f708bee5a270]
+en = " You were transformed and felt dead inside."
+ru = " Вы были превращены и чувствовали себя {hero:gender|мёртвым|мёртвой} внутри."
+
+[f7307249d370]
+en = " You were transformed and felt empty inside."
+ru = " Вы были превращены и чувствовали внутри пустоту."
+
+[2bc00378d7a1]
+en = " You were riding %s."
+ru = " Вы ехали верхом на {1:prep}."
+
+[e6313a3b611e]
+en = " You are riding %s."
+ru = " Вы едете верхом на {1:prep}."
+
+[0025372d8334]
+en = " You are levitating, at will."
+ru = " Вы левитируете по желанию."
+
+[ffa8cf59f1aa]
+en = " You were levitating, at will."
+ru = " Вы левитировали по желанию."
+
+[47f3e39d00df]
+en = " You were levitating%s."
+ru = " Вы левитировали{1}."
+
+[5526e4371a6a]
+en = " You and %s are levitating%s."
+ru = " Вы и {1} левитируете{2}."
+
+[7db8a70a8cfe]
+en = " You are levitating%s."
+ru = " Вы левитируете{1}."
+
+[f310d211deed]
+en = " You and %s were levitating%s."
+ru = " Вы и {1} левитировали{2}."
+
+[16b78e0c4579]
+en = " You and %s are flying%s."
+ru = " Вы и {1} летите{2}."
+
+[7854c154d68f]
+en = " You were flying%s."
+ru = " Вы летели{1}."
+
+[d63935a1abdf]
+en = " You and %s were flying%s."
+ru = " Вы и {1} летели{2}."
+
+[f432909b868d]
+en = " You are flying%s."
+ru = " Вы летите{1}."
+
+[52919f7c2563]
+en = " You were underwater."
+ru = " Вы были под водой."
+
+[b69b1a9e1a61]
+en = " You are underwater."
+ru = " Вы под водой."
+
+[02034437784f]
+en = " You were swimming%s."
+ru = " Вы плыли{1}."
+
+[1290c14f9bf4]
+en = " You are swimming%s."
+ru = " Вы плывёте{1}."
+
+[1b46035a3ac2]
+en = " You were in water%s."
+ru = " Вы были в воде{1}."
+
+[d0b6fb1b5149]
+en = " You are in water%s."
+ru = " Вы в воде{1}."
+
+[001f0b237b15]
+en = "You were crushed in The Astral Plane with %ld point,"
+ru = "Вы были раздавлены на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[0041817db941]
+en = "You turned to stone in %s with %ld points,"
+ru = "Вы окаменели в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[012adbf4e901]
+en = "You escaped in %s with %ld point,"
+ru = "Вы сбежали в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[017cf2194c73]
+en = "You quit beyond the confines of the dungeon with %ld points,"
+ru = "Вы сдались за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[01ce8e72cd24]
+en = "You dissolved in the lava in The Astral Plane with %ld points,"
+ru = "Вы растворились в лаве на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[01f67fc18e8f]
+en = "You dissolved in the lava in %s on dungeon level %d with %ld point,"
+ru = "Вы растворились в лаве в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[06cc1ca0e8ac]
+en = "You were poisoned in %s on dungeon level %d with %ld point,"
+ru = "Вы отравились в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[07135a44a8bd]
+en = "You passed away beyond the confines of the dungeon with %ld point,"
+ru = "Вы скончались за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[075ad418f001]
+en = "You ascended in %s on dungeon level %d with %ld point,"
+ru = "Вы вознеслись в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[08a4d353f9f4]
+en = "You were genocided in The Astral Plane with %ld point,"
+ru = "Вы были истреблены на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[0c2a88dabf69]
+en = "You quit in %s on dungeon level %d with %ld points,"
+ru = "Вы сдались в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[0c9d8c2fa929]
+en = "You burned in %s with %ld points,"
+ru = "Вы сгорели в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[0def99958c6d]
+en = "You were tricked beyond the confines of the dungeon with %ld point,"
+ru = "Вы были обмануты за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[126407a97c6e]
+en = "You were genocided in %s with %ld points,"
+ru = "Вы были истреблены в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[16a291f9d333]
+en = "You turned into slime in %s with %ld points,"
+ru = "Вы превратились в слизь в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[1995e5b4af82]
+en = "You dissolved in the lava in %s on dungeon level %d with %ld points,"
+ru = "Вы растворились в лаве в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[1a05d9cf4123]
+en = "You burned beyond the confines of the dungeon with %ld points,"
+ru = "Вы сгорели за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[1a9f3463fa1a]
+en = "You choked in The Astral Plane with %ld point,"
+ru = "Вы подавились на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[218b11fcc57f]
+en = "You burned in The Astral Plane with %ld point,"
+ru = "Вы сгорели на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[22ca5df3bdc0]
+en = "You drowned in %s on dungeon level %d with %ld point,"
+ru = "Вы утонули в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[2649212f9198]
+en = "You died beyond the confines of the dungeon with %ld point,"
+ru = "Вы умерли за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[27382a5ecb48]
+en = "You dissolved in the lava beyond the confines of the dungeon with %ld points,"
+ru = "Вы растворились в лаве за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[2adf848079f6]
+en = "You choked beyond the confines of the dungeon with %ld point,"
+ru = "Вы подавились за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[2ddf264f4367]
+en = "You died in The Astral Plane with %ld point,"
+ru = "Вы умерли на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[313f3f879f6a]
+en = "You turned to stone beyond the confines of the dungeon with %ld points,"
+ru = "Вы окаменели за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[31a243e89c15]
+en = "You escaped beyond the confines of the dungeon with %ld points,"
+ru = "Вы сбежали за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[31f82e93ffd5]
+en = "You choked in %s with %ld point,"
+ru = "Вы подавились в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[3927e2bf4bac]
+en = "You ascended in %s with %ld point,"
+ru = "Вы вознеслись в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[3bd9e8c33101]
+en = "You turned to stone in %s with %ld point,"
+ru = "Вы окаменели в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[3c1ef4b1b649]
+en = "You burned in %s on dungeon level %d with %ld points,"
+ru = "Вы сгорели в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[3d8a6ae5d2af]
+en = "You starved beyond the confines of the dungeon with %ld points,"
+ru = "Вы умерли от голода за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[3e7306515634]
+en = "You starved in %s on dungeon level %d with %ld point,"
+ru = "Вы умерли от голода в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[40afa16a586c]
+en = "You burned in The Astral Plane with %ld points,"
+ru = "Вы сгорели на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[447e9b2ecb11]
+en = "You turned to stone beyond the confines of the dungeon with %ld point,"
+ru = "Вы окаменели за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[4c58620fe248]
+en = "You starved in %s with %ld points,"
+ru = "Вы умерли от голода в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[4db4a349d43a]
+en = "You were tricked in The Astral Plane with %ld point,"
+ru = "Вы были обмануты на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[4eeb6a19dd2b]
+en = "You were crushed in %s with %ld point,"
+ru = "Вы были раздавлены в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[529c816232da]
+en = "You were genocided in %s with %ld point,"
+ru = "Вы были истреблены в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[55d94a4d987a]
+en = "You died in %s with %ld points,"
+ru = "Вы умерли в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[56f0e913df4b]
+en = "You dissolved in the lava in %s with %ld points,"
+ru = "Вы растворились в лаве в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[58264cbc3235]
+en = "You were crushed in %s with %ld points,"
+ru = "Вы были раздавлены в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[59b954146cc5]
+en = "You ascended beyond the confines of the dungeon with %ld point,"
+ru = "Вы вознеслись за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[5b381bea36f4]
+en = "You escaped in %s on dungeon level %d with %ld point,"
+ru = "Вы сбежали в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[5cc7033a3de9]
+en = "You quit in %s on dungeon level %d with %ld point,"
+ru = "Вы сдались в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[5d058f6dbbbb]
+en = "You were tricked in %s with %ld point,"
+ru = "Вы были обмануты в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[62d5d726b452]
+en = "You dissolved in the lava in The Astral Plane with %ld point,"
+ru = "Вы растворились в лаве на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[650d5bd735a5]
+en = " went to your reward with %ld point,"
+ru = " отправились за наградой, набрав {1} {1:plural|очко|очка|очков},"
+
+[65ee890aa15d]
+en = "You turned into slime beyond the confines of the dungeon with %ld point,"
+ru = "Вы превратились в слизь за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[6956dc338210]
+en = "You turned into slime in %s on dungeon level %d with %ld points,"
+ru = "Вы превратились в слизь в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[6a363413c0c7]
+en = "You dissolved in the lava beyond the confines of the dungeon with %ld point,"
+ru = "Вы растворились в лаве за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[6c441beab7c7]
+en = "You burned in %s with %ld point,"
+ru = "Вы сгорели в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[6e44f2dd6e29]
+en = "You dissolved in the lava in %s with %ld point,"
+ru = "Вы растворились в лаве в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[6e695e02b960]
+en = "You starved in %s with %ld point,"
+ru = "Вы умерли от голода в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[6e7deec3fb04]
+en = "You died in %s with %ld point,"
+ru = "Вы умерли в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[70d7ec238e80]
+en = "You were genocided beyond the confines of the dungeon with %ld point,"
+ru = "Вы были истреблены за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[73a51e331e4a]
+en = "You were poisoned in The Astral Plane with %ld points,"
+ru = "Вы отравились на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[73e98045d6d1]
+en = "You starved in The Astral Plane with %ld point,"
+ru = "Вы умерли от голода на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[7972fd9bbeb5]
+en = "You turned to stone in The Astral Plane with %ld point,"
+ru = "Вы окаменели на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[79dcea7bb25b]
+en = "You were crushed in %s on dungeon level %d with %ld point,"
+ru = "Вы были раздавлены в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[7d3c03f7f497]
+en = "You were genocided in %s on dungeon level %d with %ld point,"
+ru = "Вы были истреблены в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[7d6904f08b65]
+en = "You were genocided in The Astral Plane with %ld points,"
+ru = "Вы были истреблены на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[7d9d00668b6b]
+en = "You burned in %s on dungeon level %d with %ld point,"
+ru = "Вы сгорели в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[80fddea37dff]
+en = "You passed away beyond the confines of the dungeon with %ld points,"
+ru = "Вы скончались за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[829475ffdb8d]
+en = "You were tricked in The Astral Plane with %ld points,"
+ru = "Вы были обмануты на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[837e5187ed8a]
+en = "You ascended in The Astral Plane with %ld point,"
+ru = "Вы вознеслись на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[8600504434d7]
+en = "You panicked beyond the confines of the dungeon with %ld point,"
+ru = "Вы запаниковали за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[8964383dce7f]
+en = "You drowned in %s with %ld points,"
+ru = "Вы утонули в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[89702b809bf4]
+en = "You were tricked in %s on dungeon level %d with %ld point,"
+ru = "Вы были обмануты в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[8dfc55c5cc31]
+en = "You burned beyond the confines of the dungeon with %ld point,"
+ru = "Вы сгорели за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[8eb1b55c7efe]
+en = "You ascended in The Astral Plane with %ld points,"
+ru = "Вы вознеслись на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[8ece5211dc78]
+en = "You starved beyond the confines of the dungeon with %ld point,"
+ru = "Вы умерли от голода за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[8fe6485f2a18]
+en = "You drowned in %s on dungeon level %d with %ld points,"
+ru = "Вы утонули в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[92077376aa7b]
+en = " went to your reward with %ld points,"
+ru = " отправились за наградой, набрав {1} {1:plural|очко|очка|очков},"
+
+[96e54f008b46]
+en = "You panicked in %s with %ld point,"
+ru = "Вы запаниковали в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[9cc5be9f1b27]
+en = "You panicked in The Astral Plane with %ld points,"
+ru = "Вы запаниковали на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[a8a5acb5cf0e]
+en = "You quit in %s with %ld point,"
+ru = "Вы сдались в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[a9b18f36d1db]
+en = "You drowned in The Astral Plane with %ld points,"
+ru = "Вы утонули на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[aa04c08c5aa3]
+en = "You and %s"
+ru = "Вы и {1}"
+
+[ac9710a62c6a]
+en = "You died in The Astral Plane with %ld points,"
+ru = "Вы умерли на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[b09aa56abd93]
+en = "You escaped beyond the confines of the dungeon with %ld point,"
+ru = "Вы сбежали за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[b3a30fa26e75]
+en = "You turned into slime beyond the confines of the dungeon with %ld points,"
+ru = "Вы превратились в слизь за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[b4f348ffe541]
+en = "You choked in The Astral Plane with %ld points,"
+ru = "Вы подавились на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[b52283ca278a]
+en = "You starved in The Astral Plane with %ld points,"
+ru = "Вы умерли от голода на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[b7cb19952501]
+en = "You were poisoned in The Astral Plane with %ld point,"
+ru = "Вы отравились на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[b85d8b721943]
+en = "You panicked beyond the confines of the dungeon with %ld points,"
+ru = "Вы запаниковали за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[b8608ade36ed]
+en = "You drowned beyond the confines of the dungeon with %ld point,"
+ru = "Вы утонули за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[b9748285177b]
+en = "You drowned in The Astral Plane with %ld point,"
+ru = "Вы утонули на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[b9933436abfa]
+en = "You died beyond the confines of the dungeon with %ld points,"
+ru = "Вы умерли за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[ba08972cc0f6]
+en = "You ascended in %s with %ld points,"
+ru = "Вы вознеслись в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[bbdcde226ec0]
+en = " escaped from the dungeon with %ld point,"
+ru = " сбежали из подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[bca25dfd1c66]
+en = "You died in %s on dungeon level %d with %ld points,"
+ru = "Вы умерли в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[c15cf5032c18]
+en = "You were crushed beyond the confines of the dungeon with %ld point,"
+ru = "Вы были раздавлены за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[c4350b611c10]
+en = "You quit in The Astral Plane with %ld point,"
+ru = "Вы сдались на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[c466fcf47ee5]
+en = "You escaped in The Astral Plane with %ld points,"
+ru = "Вы сбежали на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[c56430e0f525]
+en = "You starved in %s on dungeon level %d with %ld points,"
+ru = "Вы умерли от голода в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[c970b38376d7]
+en = "You turned into slime in The Astral Plane with %ld point,"
+ru = "Вы превратились в слизь на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[cace98943884]
+en = "You were poisoned beyond the confines of the dungeon with %ld point,"
+ru = "Вы отравились за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[cdfbef24a42c]
+en = "You panicked in %s on dungeon level %d with %ld points,"
+ru = "Вы запаниковали в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[d05dc4627df9]
+en = "You quit in The Astral Plane with %ld points,"
+ru = "Вы сдались на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[d0e719950841]
+en = "You choked beyond the confines of the dungeon with %ld points,"
+ru = "Вы подавились за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[d1799b8a2aeb]
+en = "You choked in %s on dungeon level %d with %ld point,"
+ru = "Вы подавились в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[d2665756e57a]
+en = "You turned into slime in %s on dungeon level %d with %ld point,"
+ru = "Вы превратились в слизь в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[d3527218399d]
+en = "You choked in %s with %ld points,"
+ru = "Вы подавились в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[d5415cd3d743]
+en = "You were genocided in %s on dungeon level %d with %ld points,"
+ru = "Вы были истреблены в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[d5bca2aa695a]
+en = "You turned to stone in %s on dungeon level %d with %ld points,"
+ru = "Вы окаменели в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[d608032d9714]
+en = "You were crushed in The Astral Plane with %ld points,"
+ru = "Вы были раздавлены на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[d624c4c08ca5]
+en = "You were poisoned in %s on dungeon level %d with %ld points,"
+ru = "Вы отравились в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[d6e36686fc9e]
+en = "You choked in %s on dungeon level %d with %ld points,"
+ru = "Вы подавились в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[d86182aea814]
+en = "You were poisoned in %s with %ld points,"
+ru = "Вы отравились в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[d94293c36934]
+en = "You were poisoned in %s with %ld point,"
+ru = "Вы отравились в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[d9e16a2936bb]
+en = "You were tricked beyond the confines of the dungeon with %ld points,"
+ru = "Вы были обмануты за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[dc5640aab7bc]
+en = "You were tricked in %s on dungeon level %d with %ld points,"
+ru = "Вы были обмануты в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[dcb5b798fc32]
+en = "You turned to stone in %s on dungeon level %d with %ld point,"
+ru = "Вы окаменели в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[dcf99e44acd0]
+en = "You turned into slime in %s with %ld point,"
+ru = "Вы превратились в слизь в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[dd3e082e38f1]
+en = "You drowned beyond the confines of the dungeon with %ld points,"
+ru = "Вы утонули за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[dda453ddaa1a]
+en = "You died in %s on dungeon level %d with %ld point,"
+ru = "Вы умерли в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[deef6d992518]
+en = "You were crushed in %s on dungeon level %d with %ld points,"
+ru = "Вы были раздавлены в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[dfb20ee8370f]
+en = "You were tricked in %s with %ld points,"
+ru = "Вы были обмануты в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[e0c5c6dc8865]
+en = "You panicked in %s on dungeon level %d with %ld point,"
+ru = "Вы запаниковали в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[e22ba6e11e7b]
+en = "You were crushed beyond the confines of the dungeon with %ld points,"
+ru = "Вы были раздавлены за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[e26eb1a40720]
+en = "You panicked in The Astral Plane with %ld point,"
+ru = "Вы запаниковали на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[e36575d990c0]
+en = "You turned into slime in The Astral Plane with %ld points,"
+ru = "Вы превратились в слизь на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[e57d49c5e54b]
+en = " escaped from the dungeon with %ld points,"
+ru = " сбежали из подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[e5a507c577cd]
+en = "You were poisoned beyond the confines of the dungeon with %ld points,"
+ru = "Вы отравились за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[e6b04b3a6482]
+en = "You escaped in %s on dungeon level %d with %ld points,"
+ru = "Вы сбежали в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[e9582535970b]
+en = "You turned to stone in The Astral Plane with %ld points,"
+ru = "Вы окаменели на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[eb20f8339c63]
+en = "You were genocided beyond the confines of the dungeon with %ld points,"
+ru = "Вы были истреблены за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[f23b599f7c63]
+en = "You and %s and Schroedinger's cat"
+ru = "Вы, {1} и кот Шрёдингера"
+
+[f4d327b29946]
+en = "You quit in %s with %ld points,"
+ru = "Вы сдались в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[f4d9b7a06db7]
+en = "You quit beyond the confines of the dungeon with %ld point,"
+ru = "Вы сдались за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[f75774581fff]
+en = "You ascended beyond the confines of the dungeon with %ld points,"
+ru = "Вы вознеслись за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[f797f12b50c2]
+en = "You panicked in %s with %ld points,"
+ru = "Вы запаниковали в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[fc01a2e928f3]
+en = "You escaped in The Astral Plane with %ld point,"
+ru = "Вы сбежали на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+
+[fc27cc6ee4dc]
+en = "You escaped in %s with %ld points,"
+ru = "Вы сбежали в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[fde9c6c8ab20]
+en = "You ascended in %s on dungeon level %d with %ld points,"
+ru = "Вы вознеслись в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+
+[ff1a455f673a]
+en = "You drowned in %s with %ld point,"
+ru = "Вы утонули в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"

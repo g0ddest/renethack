@@ -793,7 +793,7 @@ ru = " Изначально вы были мужчиной{1}."
 
 [1048ea9f1351]
 en = " You are %s, belatedly on a mission for %s"
-ru = " Вы — {1}, в итоге исполняете волю {2:gen}"
+ru = " Ваше мировоззрение — {1:n}, вы в итоге исполняете волю {2:gen}"
 
 [1be692f2ec01]
 en = " Your wallet contains %ld zorkmid, but"
@@ -805,7 +805,7 @@ ru = " В вашем кошельке было {1} {1:plural|зоркмид|зо
 
 [28e2f3c9282a]
 en = " You are %s, nominally on a mission for %s"
-ru = " Вы — {1}, номинально исполняете волю {2:gen}"
+ru = " Ваше мировоззрение — {1:n}, вы номинально исполняете волю {2:gen}"
 
 [29b8d05bc4ef]
 en = " Your wallet contained %ld zorkmid, but"
@@ -853,11 +853,11 @@ ru = " Вы вошли в подземелье {1} {1:plural|ход|хода|х�
 
 [5d7afddb0c5e]
 en = " You are %s, currently on a mission for %s"
-ru = " Вы — {1}, сейчас исполняете волю {2:gen}"
+ru = " Ваше мировоззрение — {1:n}, вы сейчас исполняете волю {2:gen}"
 
 [5d7ffb0f07ef]
 en = " You were %s, belatedly on a mission for %s"
-ru = " Вы были: {1}, в итоге исполняли волю {2:gen}"
+ru = " Ваше мировоззрение было {1:n:ins}, вы в итоге исполняли волю {2:gen}"
 
 [60ecfc69a44a]
 en = " Your wallet contained %ld zorkmid, and"
@@ -881,7 +881,7 @@ ru = " В вашем кошельке было {1} {1:plural|зоркмид|зо
 
 [76ef67ccde5e]
 en = " You were %s, now on a mission for %s"
-ru = " Вы были: {1}, в итоге исполняли волю {2:gen}"
+ru = " Ваше мировоззрение было {1:n:ins}, вы в итоге исполняли волю {2:gen}"
 
 [7a930b48674c]
 en = " Your wallet contains %ld zorkmid, and"
@@ -893,15 +893,15 @@ ru = " В пятницу 13-го может случиться что-то пл�
 
 [81ef7c281a37]
 en = " You were %s, currently on a mission for %s"
-ru = " Вы были: {1}, на тот момент исполняли волю {2:gen}"
+ru = " Ваше мировоззрение было {1:n:ins}, вы на тот момент исполняли волю {2:gen}"
 
 [82dbe8b9e46b]
 en = " You are %s, temporarily on a mission for %s"
-ru = " Вы — {1}, временно исполняете волю {2:gen}"
+ru = " Ваше мировоззрение — {1:n}, вы временно исполняете волю {2:gen}"
 
 [897f761cf3a8]
 en = " You were %s, nominally on a mission for %s"
-ru = " Вы были: {1}, номинально исполняли волю {2:gen}"
+ru = " Ваше мировоззрение было {1:n:ins}, вы номинально исполняли волю {2:gen}"
 
 [8f09ce33a4aa]
 en = " Your wallet contains %ld zorkmid"
@@ -933,7 +933,7 @@ ru = " В вашем кошельке {1} {1:plural|зоркмид|зоркми�
 
 [af2eadd1655b]
 en = " You were %s, temporarily on a mission for %s"
-ru = " Вы были: {1}, временно исполняли волю {2:gen}"
+ru = " Ваше мировоззрение было {1:n:ins}, вы временно исполняли волю {2:gen}"
 
 [b720222bcc11]
 en = " You died from strangulation."
@@ -977,7 +977,7 @@ ru = " В вашем кошельке было {1} {1:plural|зоркмид|зо
 
 [d92b142fd6f3]
 en = " You are %s, now on a mission for %s"
-ru = " Вы — {1}, теперь исполняете волю {2:gen}"
+ru = " Ваше мировоззрение — {1:n}, вы теперь исполняете волю {2:gen}"
 
 [f0475331e55e]
 en = " Your wallet contains %ld zorkmids."

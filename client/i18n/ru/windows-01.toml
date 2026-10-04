@@ -139,7 +139,7 @@ ru = " Вы {hero:gender|были пацифистом|были пацифист
 
 [c96d3b250ef1]
 en = " You are %s, a level %d male %s %s."
-ru = " Вы — {1}, {4} {2}-го уровня ({3}, мужчина)."
+ru = " Вы — {1:m}, {3:m} {4:m} {2}-го уровня."
 
 [09cd5a32761d]
 en = " You never polymorphed an object."
@@ -199,7 +199,7 @@ ru = " Ваша ловкость была: {1}."
 
 [1c396453af94]
 en = " You are %s, a level %d female %s %s."
-ru = " Вы — {1}, {4} {2}-го уровня ({3}, женщина)."
+ru = " Вы — {1:f}, {3:f} {4:f} {2}-го уровня."
 
 [1ee5b760d25f]
 en = " Your strength was %s."
@@ -227,7 +227,7 @@ ru = " Вы голодны."
 
 [504206b5f1e8]
 en = " You were %s, a level %d male %s %s."
-ru = " Вы были: {1}, {4} {2}-го уровня ({3}, мужчина)."
+ru = " Вы были {1:m:ins}, {3:m:ins} {4:m:ins} {2}-го уровня."
 
 [50dd56438a83]
 en = " You aren't wearing any armor."
@@ -291,7 +291,7 @@ ru = " Вы были правшой."
 
 [cafd0f65a72b]
 en = " You are %s, a level %d %s %s."
-ru = " Вы — {1}, {4} {2}-го уровня ({3})."
+ru = " Вы — {1:hero}, {3:hero} {4:hero} {2}-го уровня."
 
 [d28ef71ec6dc]
 en = " You had %-1ld experience points, %ld were needed to attain level %d."

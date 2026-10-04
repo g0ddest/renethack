@@ -103,7 +103,7 @@ ru = "Характеристики:"
 
 [a38ea7980d4c]
 en = " You are %s, on a mission for %s"
-ru = " Вы — {1}, исполняете волю {2:gen}"
+ru = " Ваше мировоззрение — {1:n}, вы исполняете волю {2:gen}"
 
 [a834c8892bb5]
 en = "Search for secret doors"
@@ -235,7 +235,7 @@ ru = "Итоговые характеристики:"
 
 [eab57616995b]
 en = " You were %s, on a mission for %s"
-ru = " Вы были: {1}, исполняли волю {2:gen}"
+ru = " Ваше мировоззрение было {1:n:ins}, вы исполняли волю {2:gen}"
 
 [faaae6cf861b]
 en = "traditional: by monster level, by internal monster index"
