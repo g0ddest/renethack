@@ -5864,6 +5864,8 @@ And you said it was pretty here...  [a980fe284fdc]
   =   А вы говорили, что здесь красиво...
 Another lost soul  [633c84a25445]
   =   Ещё одна заблудшая душа
+Another magic portal, a way to leave this tutorial  [225f35484a78]
+  =   Ещё один волшебный портал, чтобы покинуть обучение
 Any day above ground is a good day!  [5f7cc6386461]
   =   Любой день над землёй — хороший день!
 Any more of this and I'll die of a stroke before I'm 30.  [4691b537b72f]
@@ -5972,6 +5974,8 @@ Automatic description is off.  [5d135746c123]
   =   Автоописание выключено.
 Autopickup what?  [1d7e87b0cb3b]
   =   Что подбирать автоматически?
+Avoid being burdened, it slows you down  [3fca5de6c031]
+  =   Не перегружайтесь: груз замедляет
 BOOM!  They explode!  [cc976a1a821b]
   =   БАБАХ!  Они взрываются!
 Background:  [0ad42765ddcf]
@@ -6017,6 +6021,8 @@ Beetlejuice Beetlejuice Beetlejuice  [e1e25442ed48]
   =   Битлджус Битлджус Битлджус
 Beg your pardon, didn't recognize you, I've changed a lot.  [b26a3a742fad]
   =   Простите, не узнал вас, я сильно изменился.
+Behind this door is a dark corridor  [eb9e3a60b211]
+  =   За этой дверью тёмный коридор
 Being dead builds character  [d5380a36eb67]
   =   Смерть закаляет характер
 Beloved daughter, a treasure, buried here.  [b045a6b6e4dd]
@@ -6084,6 +6090,8 @@ Burninated  [5aad2ec2d17b]
   =   Испепелён
 But I disarmed the trap!  [b300e6615587]
   =   Но я же обезвредил ловушку!
+But now thou must face the final Test...  [e49d8ee04c21]
+  =   Но теперь тебе предстоит последнее Испытание...
 Buy this unpaid item  [38beac67c21a]
   =   Купить этот неоплаченный предмет
 Buy this unpaid stack  [15e4157ded82]
@@ -6121,6 +6129,8 @@ Can't find dungeon feature '%c'.  [1cd903743ac8]
   f   На карте нет объекта 'x'.
   n   На карте нет объекта 'x'.
   pl  На карте нет объекта 'x'.
+Can't get through?  You're carrying too much.  [454a33484916]
+  =   Не пролезть?  Вы несёте слишком много.
 Can't you hit me?!  [585a1ea954c0]
   =   Неужели вы не можете в меня попасть?!
 Cast a spell  [d625d9c42fcb]
@@ -6192,6 +6202,11 @@ Click!  You trigger a rolling boulder trap!  [1037a67d0a3c]
   =   Щёлк!  Вы приводите в действие ловушку с катящимся валуном!
 Close the door  [3c9e34fa34be]
   =   Закрыть дверь
+Close the door with '%s'  [f511e7f153b8]
+  m   Закройте дверь клавишей 'тритон'
+  f   Закройте дверь клавишей 'крыса'
+  n   Закройте дверь клавишей 'копьё'
+  pl  Закройте дверь клавишей '3 стрелы'
 Close the door!  You're letting the heat out!  [e1bc4972351c]
   =   Закройте дверь!  Тепло уходит!
 Cockatrices might turn themselves to stone faced with a mirror.  [c471671debb9]
@@ -6206,6 +6221,11 @@ Come back here!  I'll bite your bloody knees off!  [fc78384eca8b]
   =   Вернись!  Я тебе колени отгрызу!
 Comestibles  [c238700e8163]
   =   Еда
+Comestibles are eaten with '%s'  [e06b322c8a85]
+  m   Еду едят клавишей 'тритон'
+  f   Еду едят клавишей 'крыса'
+  n   Еду едят клавишей 'копьё'
+  pl  Еду едят клавишей '3 стрелы'
 Command %s requires a parameter:  [1efe3e8717df]
   m   Команде тритон нужен параметр:
   f   Команде крыса нужен параметр:
@@ -6229,6 +6249,11 @@ Conserve energy, turn off the lights.  [e3e9d5cf6a2f]
   =   Берегите энергию, гасите свет.
 Consumption of home-made food is strictly forbidden in this dungeon.  [bb5e5e3e4eb3]
   =   Употребление домашней еды в этом подземелье строго запрещено.
+Containers can also be emptied with '%s'  [70e0ddb2eab9]
+  m   Контейнеры можно и вытряхнуть клавишей 'тритон'
+  f   Контейнеры можно и вытряхнуть клавишей 'крыса'
+  n   Контейнеры можно и вытряхнуть клавишей 'копьё'
+  pl  Контейнеры можно и вытряхнуть клавишей '3 стрелы'
 Contents of %s %s  [98358c9c1c9e]
   m   Содержимое тритона тритона
   f   Содержимое крысы крысы
@@ -6542,6 +6567,11 @@ Drinking potions of booze may land you in jail if you are under 21.  [faa624a8a0
   =   Распитие флаконов выпивки до 21 года может привести вас за решётку.
 Drop items  [f98c8639a637]
   =   Положить предметы
+Drop items with '%s'  [ea3966ff49a5]
+  m   Кладите предметы на пол клавишей 'тритон'
+  f   Кладите предметы на пол клавишей 'крыса'
+  n   Кладите предметы на пол клавишей 'копьё'
+  pl  Кладите предметы на пол клавишей '3 стрелы'
 Drop the %s corpse without %s protection on?  [4eab68ee6ae2]
   m   Положить труп тритона без защиты на тритоне?
   f   Положить труп крысы без защиты на крысе?
@@ -6806,6 +6836,11 @@ Finally I am becoming stupider no more  [c8ffa90c7ef4]
   =   Наконец-то я перестал глупеть
 Fine goods for sale:  [63bd0b029bf3]
   =   Отличные товары на продажу:
+Firing launches items from your quiver; Use '%s' to put items in it  [8dbbe825f05a]
+  m   Выстрел берёт предметы из колчана; положить их туда можно клавишей 'тритон'
+  f   Выстрел берёт предметы из колчана; положить их туда можно клавишей 'крыса'
+  n   Выстрел берёт предметы из колчана; положить их туда можно клавишей 'копьё'
+  pl  Выстрел берёт предметы из колчана; положить их туда можно клавишей '3 стрелы'
 First shalt thou pull out the Holy Pin  [f92cc51da70b]
   =   Сперва изыми Святую Чеку
 Flip a coin  [b14d0cd58b85]
@@ -7009,6 +7044,11 @@ Here lies the body of Jonathan Blake.  Stepped on the gas instead of the brake. 
   =   Здесь лежит Иван Петров: жал на газ вместо тормозов.
 Here lies the left foot of Jack, killed by a land mine.  Let us know if you find any more of him  [caadca272dfa]
   =   Здесь лежит левая нога Джека, погибшего на мине.  Если найдёте от него что-нибудь ещё, сообщите нам
+Here the High Temple of %s is located.  [6184af80d855]
+  m   Здесь находится Высший храм тритона.
+  f   Здесь находится Высший храм крысы.
+  n   Здесь находится Высший храм копья.
+  pl  Здесь находится Высший храм 3 стрел.
 Here there be dragons  [30921cc4e86e]
   =   Здесь водятся драконы
 Hey, I didn't write this stuff!  [62c575eb42f5]
@@ -7017,6 +7057,8 @@ Hide  [34d8b60fe253]
   =   Спрятаться
 Hide [h] or spin a web [s]?  [a186ead714b7]
   =   Спрятаться [h] или сплести паутину [s]?
+Hit monsters by walking into them.  [3825ae4c9324]
+  =   Чтобы ударить монстра, шагните в него.
 Hit yourself with this cream pie  [d29c051a771a]
   =   Ударить себя этим кремовым пирогом
 Hodie mihi, cras tibi  [2de871c70103]
@@ -7364,6 +7406,11 @@ Killer bees keep appearing till you kill their queen.  [b20353abf8d1]
   =   Пчёлы-убийцы будут появляться, пока вы не убьёте их матку.
 Killer bunnies can be tamed with carrots only.  [54625e25c02a]
   =   Кроликов-убийц можно приручить только морковью.
+Knights can jump with '%s'  [1b6caa74f930]
+  m   Рыцари умеют прыгать: клавиша 'тритон'
+  f   Рыцари умеют прыгать: клавиша 'крыса'
+  n   Рыцари умеют прыгать: клавиша 'копьё'
+  pl  Рыцари умеют прыгать: клавиша '3 стрелы'
 Lash out with this whip  [2350a71c4be8]
   =   Хлестнуть этим кнутом
 Latest messages:  [c8e85637d89d]
@@ -7427,6 +7474,11 @@ Lock it?  [d04fdebf6a21]
   =   Запереть?
 Logged events:  [3a3506467816]
   =   Записанные события:
+Look around the map with '%s', press ESC when you're done  [9e426833477a]
+  m   Осмотрите карту клавишей 'тритон', а закончив, нажмите ESC
+  f   Осмотрите карту клавишей 'крыса', а закончив, нажмите ESC
+  n   Осмотрите карту клавишей 'копьё', а закончив, нажмите ESC
+  pl  Осмотрите карту клавишей '3 стрелы', а закончив, нажмите ESC
 Look at map symbol  [2ccf49712240]
   =   Рассмотреть символ на карте
 Look at what is here  [07b4290baea9]
@@ -7444,6 +7496,8 @@ Look up information about this  [eec57ee20d60]
   =   Узнать об этом подробнее
 Lookin' good, Medusa.  [dee305187e95]
   =   Отлично выглядишь, Медуза.
+Looks like you're getting hungry.  You'll starve to death, unless you eat something.  [9fc9e66b2103]
+  =   Похоже, вы проголодались.  Если ничего не съесть, вы умрёте от голода.
 Loot %s  [9977d99afaf2]
   m   Обыскать тритона
   f   Обыскать крысу
@@ -7459,6 +7513,11 @@ Made in Taiwan  [3486a014ad35]
   =   Сделано на Тайване
 Madge Ination -- It wasn't all in my head  [c7b515a2febe]
   =   Ира Воображалова — не всё было у меня в голове
+Magic wands are used with '%s'  [8780db7b46d3]
+  m   Волшебными палочками взмахивают клавишей 'тритон'
+  f   Волшебными палочками взмахивают клавишей 'крыса'
+  n   Волшебными палочками взмахивают клавишей 'копьё'
+  pl  Волшебными палочками взмахивают клавишей '3 стрелы'
 Magical energies course through your body.  [923e9ae0d9cc]
   =   По вашему телу струится магическая энергия.
 Major events:  [e143972abc38]
@@ -7475,6 +7534,8 @@ Miscellaneous  [5f2cbd107037]
   =   Разное
 Miscellaneous:  [69aa5db4d883]
   =   Разное:
+Missiles, such as rocks, work better when fired from appropriate launcher  [eeaaf052be93]
+  =   Снаряды вроде камней лучше пускать из подходящего метательного оружия
 Money lost, little lost; honor lost, much lost; pluck lost, all lost.  [e0185d0cb2cb]
   =   Деньги потерять — ничего не потерять; честь потерять — много потерять; мужество потерять — всё потерять.
 Money to invest?  Take it to the local branch of the Magic Memory Vault!  [0209bde3424e]
@@ -7496,8 +7557,18 @@ Most monsters prefer minced meat.  That's why they are hitting you!  [c649e5ff83
   =   Большинство монстров предпочитает фарш.  Вот почему они вас бьют!
 Most of the bugs in NetHack are on the floor.  [c60a4ca6e876]
   =   Большинство багов в NetHack ползает по полу.
+Move around with %s  [af77bc72187c]
+  m   Ходите клавишами тритон
+  f   Ходите клавишами крыса
+  n   Ходите клавишами копьё
+  pl  Ходите клавишами 3 стрелы
 Move cursor to a monster, object or location:  [b988ed6f1e02]
   =   Наведите курсор на монстра, предмет или место:
+Move diagonally with %s  [4da5398b307a]
+  m   По диагонали — клавишами тритон
+  f   По диагонали — клавишами крыса
+  n   По диагонали — клавишами копьё
+  pl  По диагонали — клавишами 3 стрелы
 Move on the trap  [f8d31c621db5]
   =   Встать на ловушку
 Move on, there's nothing to see here.  [44c0e56b037a]
@@ -7605,6 +7676,11 @@ Not yet; choose another name  [dee9aad00ac0]
   =   Пока нет, выбрать другое имя
 Note -- there are NO valuable items in this grave  [a64fe9c1f684]
   =   Примечание: в этой могиле НЕТ ценных вещей
+Note: Outside the tutorial, Ctrl-key combinations are shown prefixed with a caret, like '^%s'  [37bbc5c5ef2c]
+  m   Примечание: вне обучения сочетания с Ctrl показаны со знаком ^ впереди, например '^тритон'
+  f   Примечание: вне обучения сочетания с Ctrl показаны со знаком ^ впереди, например '^крыса'
+  n   Примечание: вне обучения сочетания с Ctrl показаны со знаком ^ впереди, например '^копьё'
+  pl  Примечание: вне обучения сочетания с Ctrl показаны со знаком ^ впереди, например '^3 стрелы'
 Note: full alphabetical and alphabetical within class  [2ccde7e6bab1]
   =   Примечание: полный алфавитный порядок и алфавитный внутри класса
 Note: when no choices are selected, "all" is implied.  [30571162ace7]
@@ -7617,6 +7693,8 @@ Now I have a life  [33b2a492db0b]
   =   Теперь у меня есть жизнь
 Now I lay thee down to sleep... wanna join me?  [ee8e73a6315a]
   =   Укладываю тебя спать... не хочешь ко мне?
+Now you know the very basics. You can leave the tutorial via the magic portal.  [ffcc8da102b4]
+  =   Теперь вы знаете самые основы. Покинуть обучение можно через волшебный портал.
 Nurses are trained to touch naked persons:  they don't harm them.  [bfd093d4c98b]
   =   Медсестёр учат прикасаться к обнажённым: вреда они не причиняют.
 Nymphs and nurses like beautiful rings.  [f93d7f03f621]
@@ -7710,6 +7788,8 @@ Open one of these tins with your tin opener and eat the contents  [b4ad193fa0f5]
   =   Открыть одну из этих банок консервным ножом и съесть содержимое
 Open the door  [366f8571aa10]
   =   Открыть дверь
+Open the door by moving into it  [e3ed22670b19]
+  =   Чтобы открыть дверь, шагните в неё
 Open this container  [d299de10b6ac]
   =   Открыть этот контейнер
 Open this tin and eat the contents  [0351bf2f280d]
@@ -7864,6 +7944,21 @@ Pick up %s?  [99d79daee369]
   pl  Подобрать 3 стрелы?
 Pick up items  [20204bbc407e]
   =   Подобрать предметы
+Pick up items with '%s'  [8749b1a811a7]
+  m   Подбирайте предметы клавишей 'тритон'
+  f   Подбирайте предметы клавишей 'крыса'
+  n   Подбирайте предметы клавишей 'копьё'
+  pl  Подбирайте предметы клавишей '3 стрелы'
+Pick up the spellbook with '%s'  [6f531b9f7716]
+  m   Подберите книгу заклинаний клавишей 'тритон'
+  f   Подберите книгу заклинаний клавишей 'крыса'
+  n   Подберите книгу заклинаний клавишей 'копьё'
+  pl  Подберите книгу заклинаний клавишей '3 стрелы'
+Pick up this scroll, read it with '%s', and try to remove the armor again  [5ccb62c9aea8]
+  m   Подберите этот свиток, прочтите его клавишей 'тритон' и снова попробуйте снять доспехи
+  f   Подберите этот свиток, прочтите его клавишей 'крыса' и снова попробуйте снять доспехи
+  n   Подберите этот свиток, прочтите его клавишей 'копьё' и снова попробуйте снять доспехи
+  pl  Подберите этот свиток, прочтите его клавишей '3 стрелы' и снова попробуйте снять доспехи
 Pick up what?  [a363203e9145]
   =   Что подобрать?
 Place this saddle on a pet  [49eec5e37d2b]
@@ -7898,8 +7993,12 @@ Praying will frighten demons.  [b7d264ebcac9]
   =   Молитва отпугивает демонов.
 Prepare to meet me in Heaven  [3a4b3af0b869]
   =   Готовьтесь к встрече со мной на небесах
+Prove thyself worthy or perish!  [63896aea153d]
+  =   Докажи, что достоин, или погибни!
 Psst!  It's done with mirrors!  [7f5472148f57]
   =   Тсс!  Весь фокус в зеркалах!
+Push boulders by moving into them  [6a071fd0fd41]
+  =   Чтобы толкнуть валун, шагните в него
 Push the boulder  [433c2dd44d43]
   =   Толкнуть валун
 Put in what type of objects?  [bf9f5fad5f1b]
@@ -7908,6 +8007,11 @@ Put in what?  [d1ca1b3ef398]
   =   Что положить внутрь?
 Put on a ring of teleportation:  it will take you away from onslaught.  [1395fd9c2674]
   =   Наденьте кольцо телепортации: оно унесёт вас от нападения.
+Put on accessories with '%s'  [265c220abb4b]
+  m   Надевайте украшения клавишей 'тритон'
+  f   Надевайте украшения клавишей 'крыса'
+  n   Надевайте украшения клавишей 'копьё'
+  pl  Надевайте украшения клавишей '3 стрелы'
 Put saddle on %s  [2cb3611bc190]
   m   Надеть седло на тритона
   f   Надеть седло на крысу
@@ -8009,6 +8113,11 @@ Reach into this bag  [a08c6c58a52c]
   =   Запустить руку в этот мешок
 Read the manual before entering the cave -- you might get killed otherwise.  [173c200c0c87]
   =   Прочтите инструкцию, прежде чем лезть в пещеру, — иначе можете погибнуть.
+Read the spellbook with '%s'  [6ba5d2c2f4f7]
+  m   Прочтите книгу заклинаний клавишей 'тритон'
+  f   Прочтите книгу заклинаний клавишей 'крыса'
+  n   Прочтите книгу заклинаний клавишей 'копьё'
+  pl  Прочтите книгу заклинаний клавишей '3 стрелы'
 Reading Herbert might be enlightening in one case.  [127f2413ecf1]
   =   Чтение Герберта кое в чём просвещает.
 Reading Tolkien might help you.  [f487709e1040]
@@ -8069,6 +8178,11 @@ Relax.  Nothing ever happens on the first level.  [988e28cf3524]
   =   Расслабьтесь.  На первом уровне никогда ничего не случается.
 Remain in beast form?  [bb923370c446]
   =   Остаться в зверином облике?
+Remove accessories with '%s'  [c6f3e7915750]
+  m   Снимайте украшения клавишей 'тритон'
+  f   Снимайте украшения клавишей 'крыса'
+  n   Снимайте украшения клавишей 'копьё'
+  pl  Снимайте украшения клавишей '3 стрелы'
 Remove saddle from %s  [3567cf50cdaf]
   m   Снять седло с тритона
   f   Снять седло с крысы
@@ -8250,6 +8364,10 @@ So let it be written, so let it be done!  [0302fbf30ca0]
   =   Да будет так записано, да будет так исполнено!
 So then I says, How do I know you're the real angel of death?  [2ecc7bcc7e0f]
   =   А я ему: откуда мне знать, что ты настоящий ангел смерти?
+Some actions may require multiple tries before succeeding  [a917dcef6689]
+  =   Некоторые действия удаются не с первой попытки
+Some items have shuffled descriptions, different each game  [910349371d43]
+  =   Описания некоторых предметов перемешаны и в каждой игре разные
 Some mazes (especially small ones) have no solutions, says man 6 maze.  [2ec4e8e428af]
   =   У некоторых лабиринтов (особенно маленьких) нет решения, — говорит man 6 maze.
 Some monsters can be tamed.  I once saw a hacker with a tame dragon!  [1b670ff0dcb8]
@@ -8264,6 +8382,11 @@ Some remain flexible, while others can't seem to change their tune.  [bcd70e3328
   =   Одни гибки, а другие никак не сменят пластинку.
 Some things are better left buried.  [1a8b8008b097]
   =   Кое-что лучше оставить погребённым.
+Some traps can be disabled with '%s'  [4fec1db160f5]
+  m   Некоторые ловушки можно обезвредить клавишей 'тритон'
+  f   Некоторые ловушки можно обезвредить клавишей 'крыса'
+  n   Некоторые ловушки можно обезвредить клавишей 'копьё'
+  pl  Некоторые ловушки можно обезвредить клавишей '3 стрелы'
 Some vapor passes harmlessly around you.  [93dd34caf15e]
   =   Пары безвредно проходят мимо вас.
 Someone once said that what goes up < might come down >.  [9214f640ba9e]
@@ -8309,6 +8432,8 @@ Special  [942078ca2d04]
   =   Особое
 Specify what? (type the word)  [a200dfd7caa0]
   =   Что именно? (введите слово)
+Spellcasting  [7a00a5ebff6a]
+  =   Заклинания
 Spellcasting Skills  [3ffd7256f68d]
   =   Навыки заклинаний
 Spin a web  [7f8f8573f85e]
@@ -8319,6 +8444,8 @@ Start a new character  [fddf85e7341e]
   =   Создать нового персонажа
 Status:  [11dc9e195292]
   =   Состояние:
+Step into this portal to leave the tutorial  [32728dfd16cf]
+  =   Шагните в этот портал, чтобы покинуть обучение
 Sticks and stones may break your bones but manes will never hurt you.  [c46c9a1ec03d]
   =   Палки и камни ломают кости, а манесы — никогда.
 Stormbringer doesn't steal souls.  People steal souls.  [d6caea1effdf]
@@ -8357,6 +8484,11 @@ Swap this with your alternate weapon  [9d2abb5c01ab]
   =   Поменять местами с запасным оружием
 Swap this with your main weapon  [442a68156245]
   =   Поменять местами с основным оружием
+Swap weapons quickly with '%s'  [13735b2a251a]
+  m   Быстро меняйте оружие клавишей 'тритон'
+  f   Быстро меняйте оружие клавишей 'крыса'
+  n   Быстро меняйте оружие клавишей 'копьё'
+  pl  Быстро меняйте оружие клавишей '3 стрелы'
 Swapping: %s  [4ee3c1e9fa6a]
   m   Обмен: тритон
   f   Обмен: крыса
@@ -8382,6 +8514,11 @@ Take a photograph  [8d841567433c]
   =   Сделать снимок
 Take my stuff, I don't need it anymore  [4cfb501b3b58]
   =   Забирайте мои вещи, мне они больше не нужны
+Take off armor with '%s'  [04de9f63f538]
+  m   Снимайте доспехи клавишей 'тритон'
+  f   Снимайте доспехи клавишей 'крыса'
+  n   Снимайте доспехи клавишей 'копьё'
+  pl  Снимайте доспехи клавишей '3 стрелы'
 Take off this armor  [9c55cd10dc1b]
   =   Снять это
 Take off your gauntlets despite carrying a dead %s?  [d364961c9f17]
@@ -8777,6 +8914,8 @@ There are containers and %s here.  Remove %s?  [59951b0ea936]
   f   Здесь контейнеры и крыса.  Убрать крысу?
   n   Здесь контейнеры и копьё.  Убрать копьё?
   pl  Здесь контейнеры и 3 стрелы.  Убрать 3 стрелы?
+There are four traps next to you! Search for them.  [2c27810d29c5]
+  =   Рядом с вами четыре ловушки! Найдите их.
 There are iron bars here; eat them?  [30fe7f0db64b]
   =   Здесь железная решётка; съесть её?
 There are iron bars here; resume eating them?  [c012321be1a1]
@@ -9682,6 +9821,11 @@ This door is broken.  [0ffa3ea2c4b2]
   =   Эта дверь сломана.
 This door is locked.  [a97258ae2942]
   =   Эта дверь заперта.
+This door is locked. Kick it with '%s'  [8b0fabfc526b]
+  m   Эта дверь заперта. Выбейте её клавишей 'тритон'
+  f   Эта дверь заперта. Выбейте её клавишей 'крыса'
+  n   Эта дверь заперта. Выбейте её клавишей 'копьё'
+  pl  Эта дверь заперта. Выбейте её клавишей '3 стрелы'
 This doorway has no door.  [74f8c9988a84]
   =   В этом проёме нет двери.
 This dungeon is a pushover  [f9eb9f259d70]
@@ -9755,6 +9899,11 @@ Those who wield a cockatrice corpse have a rocky road ahead of them.  [65913db42
   =   Кто держит в руках труп василиска, тому предстоит каменистый путь.
 Throne sit effect (1..13) [0=random]  [5a342da55f60]
   =   Эффект трона (1..13) [0 — случайный]
+Throw items with '%s'  [23385920128b]
+  m   Бросайте предметы клавишей 'тритон'
+  f   Бросайте предметы клавишей 'крыса'
+  n   Бросайте предметы клавишей 'копьё'
+  pl  Бросайте предметы клавишей '3 стрелы'
 Throw one of these  [a8747a1a5c8b]
   =   Бросить один из них
 Throw one of these (same as 'f')  [9520df9a3421]
@@ -9834,6 +9983,11 @@ Too far!  [e408642d7551]
   =   Слишком далеко!
 Tourists wear shirts loud enough to wake the dead.  [cac398eedd31]
   =   Туристы носят такие кричащие рубашки, что мёртвые просыпаются.
+Travel across the level with '%s'  [bade22a985ca]
+  m   Путешествуйте по уровню клавишей 'тритон'
+  f   Путешествуйте по уровню клавишей 'крыса'
+  n   Путешествуйте по уровню клавишей 'копьё'
+  pl  Путешествуйте по уровню клавишей '3 стрелы'
 Travel here  [088518d10e60]
   =   Идти сюда
 Trolls are described as rubbery:  they keep bouncing back.  [f1cc8542b6e6]
@@ -9854,6 +10008,8 @@ Tu quoque, Brute?  [17b926e45b1b]
   =   И ты, Брут?
 Two wrongs don't make a right, but three lefts do.  [3661abccfa3e]
   =   Два неверных поворота не дадут верного, а вот три левых дадут правый.
+UNDER CONSTRUCTION  [37ccbf8f5dd9]
+  =   ИДЁТ СТРОИТЕЛЬСТВО
 Ulch - that meat was tainted!  [57560e3af672]
   =   Тьфу, это мясо испорчено!
 Ulch!  That meat was painted!  [0235c096e70a]
@@ -9872,6 +10028,8 @@ Unacceptable races  [64676c9d62fd]
   =   Недопустимые расы
 Unacceptable roles  [4f16713d6929]
   =   Недопустимые профессии
+Unfortunately you don't have enough energy to cast spells.  [889a035f48d1]
+  =   К сожалению, вам не хватает энергии на заклинания.
 Unfortunately, this message was left intentionally blank.  [1aaadeb6bc3e]
   =   К сожалению, это сообщение намеренно оставлено пустым.
 Unicorn horns can cleanse things other than yourself.  [90f81498003f]
@@ -9907,6 +10065,41 @@ Unpaid items already used up  [f25a9200bbe2]
   =   Неоплаченные предметы, уже израсходованные
 Unpaid items:  [4dd4a12ed71d]
   =   Неоплаченные предметы:
+Use '%s' to cast a spell  [1bf58c94048e]
+  m   Клавишей 'тритон' произносите заклинание
+  f   Клавишей 'крыса' произносите заклинание
+  n   Клавишей 'копьё' произносите заклинание
+  pl  Клавишей '3 стрелы' произносите заклинание
+Use '%s' to eat edible things  [96af129f87c1]
+  m   Клавишей 'тритон' ешьте съедобное
+  f   Клавишей 'крыса' ешьте съедобное
+  n   Клавишей 'копьё' ешьте съедобное
+  pl  Клавишей '3 стрелы' ешьте съедобное
+Use '%s' to fire missiles with the wielded launcher  [d5968efed0b1]
+  m   Клавишей 'тритон' стреляйте из того, что в руках
+  f   Клавишей 'крыса' стреляйте из того, что в руках
+  n   Клавишей 'копьё' стреляйте из того, что в руках
+  pl  Клавишей '3 стрелы' стреляйте из того, что в руках
+Use '%s' to go down the stairs  [a32933f5d84b]
+  m   Клавишей 'тритон' спускайтесь по лестнице
+  f   Клавишей 'крыса' спускайтесь по лестнице
+  n   Клавишей 'копьё' спускайтесь по лестнице
+  pl  Клавишей '3 стрелы' спускайтесь по лестнице
+Use '%s' to go up the stairs  [d54917714a35]
+  m   Клавишей 'тритон' поднимайтесь по лестнице
+  f   Клавишей 'крыса' поднимайтесь по лестнице
+  n   Клавишей 'копьё' поднимайтесь по лестнице
+  pl  Клавишей '3 стрелы' поднимайтесь по лестнице
+Use '%s' to search for secret doors  [bd4ded87f353]
+  m   Клавишей 'тритон' ищите потайные двери
+  f   Клавишей 'крыса' ищите потайные двери
+  n   Клавишей 'копьё' ищите потайные двери
+  pl  Клавишей '3 стрелы' ищите потайные двери
+Use '%s' to use two weapons at once  [15fcaf6a8b25]
+  m   Клавишей 'тритон' сражайтесь двумя оружиями сразу
+  f   Клавишей 'крыса' сражайтесь двумя оружиями сразу
+  n   Клавишей 'копьё' сражайтесь двумя оружиями сразу
+  pl  Клавишей '3 стрелы' сражайтесь двумя оружиями сразу
 Use the can to grease an item  [e5cf1a81f101]
   =   Смазать предмет из этой банки
 Use this kit to tin a corpse  [8c28d4ee56e8]
@@ -9974,6 +10167,11 @@ We weren't sure who this was, but we buried him here anyway  [0bdaa12a3b0a]
   =   Мы не знали, кто это, но всё равно похоронили его здесь
 Weapon Skills  [b2925617dd26]
   =   Владение оружием
+Wear armor with '%s'  [a508865ba627]
+  m   Надевайте доспехи клавишей 'тритон'
+  f   Надевайте доспехи клавишей 'крыса'
+  n   Надевайте доспехи клавишей 'копьё'
+  pl  Надевайте доспехи клавишей '3 стрелы'
 Wear this armor  [fa9ab533c33d]
   =   Надеть эти доспехи
 Weep not, he is at rest  [8169017dce5f]
@@ -9987,6 +10185,8 @@ Welcome to experience level %d.  [f8909c52be7b]
   pl  Вы достигли 21-го уровня опыта.
 Welcome!  [e52e5e6cd50e]
   =   Добро пожаловать!
+Well done, mortal!  [a1224d8e9641]
+  =   Отлично, смертный!
 Well, at least they listened to my sermon...  [6da4315baf32]
   =   Ну, хоть мою проповедь они выслушали...
 Went to be an angel.  [ab57d5786faa]
@@ -9999,6 +10199,8 @@ What a pity--you just ruined a future piece of art!  [1fdfbe6a41ad]
   =   Какая жалость — вы только что испортили будущее произведение искусства!
 What a pity--you just ruined a future piece of fine art!  [2774aee8f2ae]
   =   Какая жалость — вы только что испортили будущий шедевр!
+What a strange feeling!  [d5335a1468c3]
+  =   Какое странное чувство!
 What a trippy feeling!  [07d9ee928bfa]
   =   Какое улётное ощущение!
 What are you doing over there?  [2a007310b854]
@@ -10555,6 +10757,8 @@ Wield '%c' to un-wield this weapon  [1e37bb084ecb]
   pl  Убрать из рук ('x')
 Wield all of them instead?  [b3175842e612]
   =   Взять в руки их все?
+Wield the sling  [1e65ba176eab]
+  =   Возьмите в руки пращу
 Wield the tin opener to easily open tins  [797da636d254]
   =   Взять в руки консервный нож, чтобы легко открывать банки
 Wield this item as your weapon  [dbd776fba7f0]
@@ -10571,6 +10775,11 @@ Wield this stack in your %s  [f54c603de2a7]
   f   Взять эту стопку в крысу
   n   Взять эту стопку в копьё
   pl  Взять эту стопку в 3 стрелы
+Wield weapons with '%s'  [14f4b28fb0a9]
+  m   Берите оружие в руки клавишей 'тритон'
+  f   Берите оружие в руки клавишей 'крыса'
+  n   Берите оружие в руки клавишей 'копьё'
+  pl  Берите оружие в руки клавишей '3 стрелы'
 Will let you know for sure in a day or two...  [d14caf6d530a]
   =   Через день-другой сообщу наверняка...
 Will you accept %ld zorkmid in credit for   [d37e471b0255]
@@ -10638,6 +10847,8 @@ Write on the %s with this item  [b09c6376a473]
   f   Написать на крысе этим предметом
   n   Написать на копье этим предметом
   pl  Написать на 3 стрелах этим предметом
+Wrong secret  [62524258627f]
+  =   Не тот секрет
 Ya really had me going baby, but now I'm gone.  [f76244a5a617]
   =   Ты меня реально завела, детка, а теперь меня нет.
 Yea, it got me too  [15f6401bef9b]
@@ -10656,6 +10867,11 @@ Yes; start game  [a03832dd3642]
   =   Да, начать игру
 Yet Another Silly Message (YASM).  [110b894bd7fd]
   =   Ещё Одно Глупое Сообщение (ЕОГС).
+You "quaff" potions with '%s'  [ec3b0298d645]
+  m   Зелья пьют клавишей 'тритон'
+  f   Зелья пьют клавишей 'крыса'
+  n   Зелья пьют клавишей 'копьё'
+  pl  Зелья пьют клавишей '3 стрелы'
 You already found a monster.  Use '%s' prefix to force another search.  [4e9a5544b54b]
   m   Вы уже нашли монстра.  Чтобы всё равно искать, используйте префикс 'тритон'.
   f   Вы уже нашли монстра.  Чтобы всё равно искать, используйте префикс 'крыса'.
@@ -10813,6 +11029,8 @@ You aren't wielding %s, so you throw your %s by %s.  [998fe240c408]
   f   Вы не держите крысу, поэтому бросаете крысу крысой.
   n   Вы не держите копьё, поэтому бросаете копьё копьём.
   pl  Вы не держите 3 стрелы, поэтому бросаете 3 стрелы 3 стрелами.
+You arrive on the Astral Plane!  [08d4a67fc3fc]
+  =   Вы прибываете на Астральный план!
 You ascended beyond the confines of the dungeon with %ld point,  [59b954146cc5]
   m   Вы вознеслись за пределами подземелья, набрав 1 очко,
   f   Вы вознеслись за пределами подземелья, набрав 3 очка,
@@ -10927,20 +11145,34 @@ You burned in The Astral Plane with %ld points,  [40afa16a586c]
   pl  Вы сгорели на Астральном плане, набрав 21 очко,
 You caitiff!  [643e3a771753]
   =   Подлец!
+You can drop partial stacks by prefixing the item slot letter with a number  [7e35e9625460]
+  =   Чтобы положить часть стопки, наберите перед буквой предмета число
 You can get a genuine Amulet of Yendor by doing the following:  --More--  [2078d6796ac7]
   =   Настоящий Амулет Йендора можно получить так:  --Дальше--
 You can hear again.  [19accd0af40f]
   =   Вы снова слышите.
+You can leave the tutorial via the magic portal.  [e9f26a0ecfeb]
+  =   Покинуть обучение можно через волшебный портал.
 You can make holy water by boiling the hell out of it.  [c47a9b91faf1]
   =   Святую воду можно получить, если выпарить из неё всю чертовщину.
 You can move again.  [614e16bd9ab7]
   =   Вы снова можете двигаться.
 You can protect yourself from black dragons by doing the following:  --More--  [8b9b958716b6]
   =   От чёрных драконов можно защититься так:  --Дальше--
+You can run by prefixing a movement key with '%s'  [3e7bf5f7681d]
+  m   Чтобы бежать, нажмите перед клавишей движения 'тритон'
+  f   Чтобы бежать, нажмите перед клавишей движения 'крыса'
+  n   Чтобы бежать, нажмите перед клавишей движения 'копьё'
+  pl  Чтобы бежать, нажмите перед клавишей движения '3 стрелы'
 You can see again.  [6ca81cc3c844]
   =   Вы снова видите.
 You can see through yourself, but you are visible!  [fa142e7e7c57]
   =   Вы видите себя насквозь, но вас всё равно видно!
+You can wait a turn with '%s'  [ec959bcc4fe8]
+  m   Пропустить ход можно клавишей 'тритон'
+  f   Пропустить ход можно клавишей 'крыса'
+  n   Пропустить ход можно клавишей 'копьё'
+  pl  Пропустить ход можно клавишей '3 стрелы'
 You can't bribe soldier ants.  [bb34df60978e]
   =   Муравьёв-солдат не подкупишь.
 You can't fit your %s into the mouth of the bottle!  [903cd6df9ab3]
@@ -11543,6 +11775,8 @@ You find a hidden door.  [547db6aa041f]
   =   Вы находите потайную дверь.
 You find a hidden passage.  [386d7f68438a]
   =   Вы находите потайной проход.
+You find yourself suspended in an air bubble surrounded by water.  [ed4e03c83e0b]
+  =   Вы оказываетесь в воздушном пузыре посреди воды.
 You finish %s.  [18c2feb65720]
   m   Вы заканчиваете тритон.
   f   Вы заканчиваете крыса.
@@ -11801,6 +12035,11 @@ You lash %s.  [486cb6019661]
   f   Вы хлещете крысу.
   n   Вы хлещете копьё.
   pl  Вы хлещете 3 стрелы.
+You loot containers with '%s'  [32122b77065e]
+  m   Обыскивайте контейнеры клавишей 'тритон'
+  f   Обыскивайте контейнеры клавишей 'крыса'
+  n   Обыскивайте контейнеры клавишей 'копьё'
+  pl  Обыскивайте контейнеры клавишей '3 стрелы'
 You made the top ten list!  [02cf73edadde]
   =   Вы попали в первую десятку!
 You make an opening in the wall.  [1f1f7402a887]
@@ -11846,6 +12085,8 @@ You no longer have ammunition readied.  [90bf72594cd7]
   =   У вас больше нет снарядов наготове.
 You no longer seem to be petrifying.  [934ddaa579b2]
   =   Похоже, вы больше не каменеете.
+You notice that there is no gravity here.  [2442f1605479]
+  =   Вы замечаете, что здесь нет силы тяжести.
 You now have no ammunition readied.  [48f01745280a]
   =   Теперь у вас нет снарядов наготове.
 You now wield %s.  [6a176b4bc6dd]
@@ -12032,6 +12273,8 @@ You see no door there.  [22b8fc39f20d]
   =   Вы не видите там двери.
 You see no objects here.  [9e72cd8ce22e]
   =   Вы не видите здесь никаких предметов.
+You sense alarm, hostility, and excitement in the air!  [12f1df209a23]
+  =   Вы чувствуете в воздухе тревогу, враждебность и возбуждение!
 You set my heart aflame.  You gave me heartburn.  [a48bded4dfbd]
   =   Ты зажгла в моём сердце огонь.  И изжогу.
 You shoot %d %s.  [64973080ddcd]

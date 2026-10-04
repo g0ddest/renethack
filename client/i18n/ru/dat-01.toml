@@ -1,0 +1,266 @@
+# R6, dat texts, part 1: the tutorial's engravings and words, the
+# levels' own messages (the Astral Plane, the Planes).
+
+[d5335a1468c3]
+en = "What a strange feeling!"
+ru = "Какое странное чувство!"
+
+[2442f1605479]
+en = "You notice that there is no gravity here."
+ru = "Вы замечаете, что здесь нет силы тяжести."
+
+[08d4a67fc3fc]
+en = "You arrive on the Astral Plane!"
+ru = "Вы прибываете на Астральный план!"
+
+[6184af80d855]
+en = "Here the High Temple of %s is located."
+ru = "Здесь находится Высший храм {1:gen}."
+
+[12f1df209a23]
+en = "You sense alarm, hostility, and excitement in the air!"
+ru = "Вы чувствуете в воздухе тревогу, враждебность и возбуждение!"
+
+[a1224d8e9641]
+en = "Well done, mortal!"
+ru = "Отлично, смертный!"
+
+[e49d8ee04c21]
+en = "But now thou must face the final Test..."
+ru = "Но теперь тебе предстоит последнее Испытание..."
+
+[63896aea153d]
+en = "Prove thyself worthy or perish!"
+ru = "Докажи, что достоин, или погибни!"
+
+[9fc9e66b2103]
+en = "Looks like you're getting hungry.  You'll starve to death, unless you eat something."
+ru = "Похоже, вы проголодались.  Если ничего не съесть, вы умрёте от голода."
+
+[e06b322c8a85]
+en = "Comestibles are eaten with '%s'"
+ru = "Еду едят клавишей '{1}'"
+
+[8b0fabfc526b]
+en = "This door is locked. Kick it with '%s'"
+ru = "Эта дверь заперта. Выбейте её клавишей '{1}'"
+
+[9e426833477a]
+en = "Look around the map with '%s', press ESC when you're done"
+ru = "Осмотрите карту клавишей '{1}', а закончив, нажмите ESC"
+
+[bd4ded87f353]
+en = "Use '%s' to search for secret doors"
+ru = "Клавишей '{1}' ищите потайные двери"
+
+[62524258627f]
+en = "Wrong secret"
+ru = "Не тот секрет"
+
+[eb9e3a60b211]
+en = "Behind this door is a dark corridor"
+ru = "За этой дверью тёмный коридор"
+
+[2c27810d29c5]
+en = "There are four traps next to you! Search for them."
+ru = "Рядом с вами четыре ловушки! Найдите их."
+
+[4fec1db160f5]
+en = "Some traps can be disabled with '%s'"
+ru = "Некоторые ловушки можно обезвредить клавишей '{1}'"
+
+[8749b1a811a7]
+en = "Pick up items with '%s'"
+ru = "Подбирайте предметы клавишей '{1}'"
+
+[a508865ba627]
+en = "Wear armor with '%s'"
+ru = "Надевайте доспехи клавишей '{1}'"
+
+[14f4b28fb0a9]
+en = "Wield weapons with '%s'"
+ru = "Берите оружие в руки клавишей '{1}'"
+
+[3825ae4c9324]
+en = "Hit monsters by walking into them."
+ru = "Чтобы ударить монстра, шагните в него."
+
+[ffcc8da102b4]
+en = "Now you know the very basics. You can leave the tutorial via the magic portal."
+ru = "Теперь вы знаете самые основы. Покинуть обучение можно через волшебный портал."
+
+[32728dfd16cf]
+en = "Step into this portal to leave the tutorial"
+ru = "Шагните в этот портал, чтобы покинуть обучение"
+
+[6a071fd0fd41]
+en = "Push boulders by moving into them"
+ru = "Чтобы толкнуть валун, шагните в него"
+
+[04de9f63f538]
+en = "Take off armor with '%s'"
+ru = "Снимайте доспехи клавишей '{1}'"
+
+[910349371d43]
+en = "Some items have shuffled descriptions, different each game"
+ru = "Описания некоторых предметов перемешаны и в каждой игре разные"
+
+[5ccb62c9aea8]
+en = "Pick up this scroll, read it with '%s', and try to remove the armor again"
+ru = "Подберите этот свиток, прочтите его клавишей '{1}' и снова попробуйте снять доспехи"
+
+[225f35484a78]
+en = "Another magic portal, a way to leave this tutorial"
+ru = "Ещё один волшебный портал, чтобы покинуть обучение"
+
+[3fca5de6c031]
+en = "Avoid being burdened, it slows you down"
+ru = "Не перегружайтесь: груз замедляет"
+
+[ea3966ff49a5]
+en = "Drop items with '%s'"
+ru = "Кладите предметы на пол клавишей '{1}'"
+
+[7e35e9625460]
+en = "You can drop partial stacks by prefixing the item slot letter with a number"
+ru = "Чтобы положить часть стопки, наберите перед буквой предмета число"
+
+[23385920128b]
+en = "Throw items with '%s'"
+ru = "Бросайте предметы клавишей '{1}'"
+
+[eeaaf052be93]
+en = "Missiles, such as rocks, work better when fired from appropriate launcher"
+ru = "Снаряды вроде камней лучше пускать из подходящего метательного оружия"
+
+[1e65ba176eab]
+en = "Wield the sling"
+ru = "Возьмите в руки пращу"
+
+[d5968efed0b1]
+en = "Use '%s' to fire missiles with the wielded launcher"
+ru = "Клавишей '{1}' стреляйте из того, что в руках"
+
+[8dbbe825f05a]
+en = "Firing launches items from your quiver; Use '%s' to put items in it"
+ru = "Выстрел берёт предметы из колчана; положить их туда можно клавишей '{1}'"
+
+[ec959bcc4fe8]
+en = "You can wait a turn with '%s'"
+ru = "Пропустить ход можно клавишей '{1}'"
+
+[32122b77065e]
+en = "You loot containers with '%s'"
+ru = "Обыскивайте контейнеры клавишей '{1}'"
+
+[70e0ddb2eab9]
+en = "Containers can also be emptied with '%s'"
+ru = "Контейнеры можно и вытряхнуть клавишей '{1}'"
+
+[8780db7b46d3]
+en = "Magic wands are used with '%s'"
+ru = "Волшебными палочками взмахивают клавишей '{1}'"
+
+[37bbc5c5ef2c]
+en = "Note: Outside the tutorial, Ctrl-key combinations are shown prefixed with a caret, like '^%s'"
+ru = "Примечание: вне обучения сочетания с Ctrl показаны со знаком ^ впереди, например '^{1}'"
+
+[3e7bf5f7681d]
+en = "You can run by prefixing a movement key with '%s'"
+ru = "Чтобы бежать, нажмите перед клавишей движения '{1}'"
+
+[bade22a985ca]
+en = "Travel across the level with '%s'"
+ru = "Путешествуйте по уровню клавишей '{1}'"
+
+[96af129f87c1]
+en = "Use '%s' to eat edible things"
+ru = "Клавишей '{1}' ешьте съедобное"
+
+[15fcaf6a8b25]
+en = "Use '%s' to use two weapons at once"
+ru = "Клавишей '{1}' сражайтесь двумя оружиями сразу"
+
+[13735b2a251a]
+en = "Swap weapons quickly with '%s'"
+ru = "Быстро меняйте оружие клавишей '{1}'"
+
+[265c220abb4b]
+en = "Put on accessories with '%s'"
+ru = "Надевайте украшения клавишей '{1}'"
+
+[c6f3e7915750]
+en = "Remove accessories with '%s'"
+ru = "Снимайте украшения клавишей '{1}'"
+
+[a32933f5d84b]
+en = "Use '%s' to go down the stairs"
+ru = "Клавишей '{1}' спускайтесь по лестнице"
+
+[37ccbf8f5dd9]
+en = "UNDER CONSTRUCTION"
+ru = "ИДЁТ СТРОИТЕЛЬСТВО"
+
+[454a33484916]
+en = "Can't get through?  You're carrying too much."
+ru = "Не пролезть?  Вы несёте слишком много."
+
+[7a00a5ebff6a]
+en = "Spellcasting"
+ru = "Заклинания"
+
+[889a035f48d1]
+en = "Unfortunately you don't have enough energy to cast spells."
+ru = "К сожалению, вам не хватает энергии на заклинания."
+
+[6f531b9f7716]
+en = "Pick up the spellbook with '%s'"
+ru = "Подберите книгу заклинаний клавишей '{1}'"
+
+[6ba5d2c2f4f7]
+en = "Read the spellbook with '%s'"
+ru = "Прочтите книгу заклинаний клавишей '{1}'"
+
+[1bf58c94048e]
+en = "Use '%s' to cast a spell"
+ru = "Клавишей '{1}' произносите заклинание"
+
+[ec3b0298d645]
+en = "You \"quaff\" potions with '%s'"
+ru = "Зелья пьют клавишей '{1}'"
+
+[af77bc72187c]
+en = "Move around with %s"
+ru = "Ходите клавишами {1}"
+
+[4da5398b307a]
+en = "Move diagonally with %s"
+ru = "По диагонали — клавишами {1}"
+
+[1b6caa74f930]
+en = "Knights can jump with '%s'"
+ru = "Рыцари умеют прыгать: клавиша '{1}'"
+
+[a917dcef6689]
+en = "Some actions may require multiple tries before succeeding"
+ru = "Некоторые действия удаются не с первой попытки"
+
+[e3ed22670b19]
+en = "Open the door by moving into it"
+ru = "Чтобы открыть дверь, шагните в неё"
+
+[f511e7f153b8]
+en = "Close the door with '%s'"
+ru = "Закройте дверь клавишей '{1}'"
+
+[e9f26a0ecfeb]
+en = "You can leave the tutorial via the magic portal."
+ru = "Покинуть обучение можно через волшебный портал."
+
+[d54917714a35]
+en = "Use '%s' to go up the stairs"
+ru = "Клавишей '{1}' поднимайтесь по лестнице"
+
+[ed4e03c83e0b]
+en = "You find yourself suspended in an air bubble surrounded by water."
+ru = "Вы оказываетесь в воздушном пузыре посреди воды."
