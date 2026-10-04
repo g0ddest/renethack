@@ -1,7 +1,7 @@
 //! How much of what the game showed the catalog knows and the Russian
 //! translates.
 //!
-//!     cargo run -p nh-i18n --bin i18n-coverage -- [--todo FILE N] [--no-lexicon] CORPUS...
+//!     cargo run -p nh-i18n --bin i18n-coverage -- [--todo FILE N [--todo-kind KINDS]] [--no-lexicon] CORPUS...
 //!
 //! A corpus is the soak's dump (`RENETHACK_DUMP_MESSAGES=<file>`: JSON
 //! lines `{"kind", "text"}`, with `fmt` and `args` for a message when the
@@ -10,11 +10,12 @@
 //! share a template matched and the share translated, then the texts no
 //! template matched and the templates without a translation, by how often
 //! they were shown. `--todo FILE N` writes the N most shown untranslated
-//! templates as stubs to translate. The names in the texts are declined by
+//! templates as stubs to translate, of the kinds given (`--todo-kind
+//! query,menu,window`; message, query, menu, window). The names in the texts are declined by
 //! the lexicon (`client/i18n/lexicon.ru.toml`); `--no-lexicon` leaves them
 //! English, to see the templates alone.
 
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -74,10 +75,18 @@ fn main() -> ExitCode {
     let mut todo: Option<(PathBuf, usize)> = None;
     let mut corpora = Vec::new();
     let mut lexicon = true;
+    let mut kinds: Vec<String> = Vec::new();
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         if a == "--no-lexicon" {
             lexicon = false;
+        } else if a == "--todo-kind" {
+            kinds.extend(
+                args.next()
+                    .unwrap_or_default()
+                    .split(',')
+                    .map(str::to_string),
+            );
         } else if a == "--todo" {
             let file = args.next().map(PathBuf::from);
             let n = args.next().and_then(|n| n.parse().ok());
@@ -96,7 +105,7 @@ fn main() -> ExitCode {
         eprintln!("usage: i18n-coverage [--todo FILE N] [--no-lexicon] CORPUS...");
         return ExitCode::FAILURE;
     }
-    match run(&corpora, todo, lexicon) {
+    match run(&corpora, todo, &kinds, lexicon) {
         Ok(report) => {
             print!("{report}");
             ExitCode::SUCCESS
@@ -115,6 +124,7 @@ fn i18n_dir() -> PathBuf {
 fn run(
     corpora: &[PathBuf],
     todo: Option<(PathBuf, usize)>,
+    todo_kinds: &[String],
     lexicon: bool,
 ) -> Result<String, String> {
     let dir = i18n_dir();
@@ -193,6 +203,7 @@ fn run(
         tallies,
         unknown,
         untranslated,
+        shown_as,
         partial,
     } = report;
     let mut kinds: Vec<_> = tallies.iter().collect();
@@ -275,7 +286,13 @@ fn run(
     if let Some((file, n)) = todo {
         let mut stubs =
             String::from("# The most shown templates without a translation (i18n-coverage).\n\n");
-        for (id, count) in todo_list.iter().take(n) {
+        let wanted = |id: &str| {
+            todo_kinds.is_empty()
+                || shown_as
+                    .get(id)
+                    .is_some_and(|ks| ks.iter().any(|k| todo_kinds.contains(k)))
+        };
+        for (id, count) in todo_list.iter().filter(|(id, _)| wanted(id)).take(n) {
             let Some(t) = catalog.by_id(id) else {
                 continue;
             };
@@ -316,6 +333,8 @@ struct Report {
     unknown: HashMap<String, usize>,
     /// template id -> times shown without a translation
     untranslated: HashMap<String, usize>,
+    /// template id -> the kinds of text it was shown as
+    shown_as: HashMap<String, BTreeSet<String>>,
     /// "[kind] text" translated but for a name
     partial: HashMap<String, usize>,
 }
@@ -342,6 +361,10 @@ impl Report {
             Status::Untranslated => {
                 t.matched += 1;
                 if let Some(id) = out.template {
+                    // "window-line" and "window-title" are windows,
+                    // "menu-title" a menu
+                    let family = kind.split('-').next().unwrap_or(kind).to_string();
+                    self.shown_as.entry(id.clone()).or_default().insert(family);
                     *self.untranslated.entry(id).or_default() += 1;
                 }
             }

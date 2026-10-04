@@ -8,12 +8,9 @@ use crate::translate::Translator;
 /// `client/i18n/catalog.en.json`.
 pub const CATALOG_JSON: &str = include_str!("../../../i18n/catalog.en.json");
 
-/// `client/i18n/ru/*.toml`, by name: a test checks that every file of the
-/// directory is here.
-pub const RU_FILES: &[(&str, &str)] = &[(
-    "messages.toml",
-    include_str!("../../../i18n/ru/messages.toml"),
-)];
+/// `client/i18n/ru/*.toml`, by name: every file of the directory (build.rs
+/// lists them).
+pub const RU_FILES: &[(&str, &str)] = include!(concat!(env!("OUT_DIR"), "/ru_files.rs"));
 
 impl Translator {
     /// The built-in catalog and translations, with the built-in lexicon.
@@ -51,7 +48,7 @@ mod tests {
         built_in.sort();
         assert_eq!(
             on_disk, built_in,
-            "list every client/i18n/ru file in RU_FILES"
+            "build.rs lists every client/i18n/ru file"
         );
         let t = Translator::built_in().unwrap();
         assert_eq!(
