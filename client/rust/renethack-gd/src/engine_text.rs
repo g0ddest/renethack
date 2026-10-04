@@ -10,7 +10,8 @@ use std::collections::HashMap;
 use std::thread::JoinHandle;
 
 use godot::prelude::*;
-use nh_i18n::{Arg, Gender, Output, Status, Translator};
+use nh_i18n::lexicon::Lexicon;
+use nh_i18n::{Arg, Case, Gender, Number, Output, Status, Translator};
 use nh_world::FmtArg;
 
 use crate::i18n::{EngineKind, EngineText, Lang};
@@ -198,6 +199,28 @@ impl EngineText for EngineTranslator {
     fn set_hero_female(&self, female: bool) {
         EngineTranslator::set_hero_female(self, female);
     }
+
+    fn hero_word(&self, lang: Lang, english: &str) -> Option<String> {
+        if lang != Lang::Ru {
+            return None;
+        }
+        // an alignment (or another adjective) in the hero's gender
+        let key = english.trim().to_lowercase();
+        let lex = Lexicon::ru();
+        let adjective = lex
+            .get("alignment", &key)
+            .and_then(|e| e.adjective())
+            .or_else(|| lex.adjective(&key));
+        match adjective {
+            Some(a) => {
+                let word = a.form(self.hero.get(), Number::Sing, true, Case::Nom);
+                let mut c = word.chars();
+                c.next()
+                    .map(|f| f.to_uppercase().chain(c).collect::<String>())
+            }
+            None => self.translate(lang, EngineKind::Status, english),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -215,6 +238,22 @@ mod tests {
             std::thread::sleep(std::time::Duration::from_millis(20));
         }
         t
+    }
+
+    #[test]
+    fn an_alignment_agrees_with_the_hero() {
+        let t = loaded();
+        t.set_hero_female(true);
+        assert_eq!(
+            t.hero_word(Lang::Ru, "Neutral").as_deref(),
+            Some("Нейтральная")
+        );
+        t.set_hero_female(false);
+        assert_eq!(
+            t.hero_word(Lang::Ru, "Lawful").as_deref(),
+            Some("Законопослушный")
+        );
+        assert_eq!(t.hero_word(Lang::En, "Chaotic"), None);
     }
 
     #[test]

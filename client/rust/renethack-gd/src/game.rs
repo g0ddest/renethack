@@ -1860,6 +1860,9 @@ impl RenethackGame {
         if female.is_some() && female != self.hero_female {
             self.hero_female = female;
             i18n::set_hero_female(female == Some(true));
+            if let Some(ui) = self.ui.as_mut() {
+                ui.hud.hero_changed();
+            }
         }
     }
 

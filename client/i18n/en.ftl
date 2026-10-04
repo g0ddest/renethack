@@ -653,3 +653,10 @@ help-nothing = Nothing found
 help-hint = ↑↓: chapter · PgUp PgDn: scroll · Esc: close
 hint-chapter = Chapter
 hint-scroll = Scroll
+
+## The status: the level, experience and score
+
+hud-dlvl = Dlvl { $level }
+hud-tutorial-level = Tutorial { $level }
+hud-exp = Exp { $exp }
+hud-score = Score { $score }

@@ -658,3 +658,10 @@ help-nothing = Ничего не найдено
 help-hint = ↑↓: глава · PgUp PgDn: прокрутка · Esc: закрыть
 hint-chapter = Глава
 hint-scroll = Прокрутка
+
+## Состояние: уровень подземелья, опыт и очки
+
+hud-dlvl = Глубина { $level }
+hud-tutorial-level = Обучение { $level }
+hud-exp = Опыт { $exp }
+hud-score = Очки { $score }

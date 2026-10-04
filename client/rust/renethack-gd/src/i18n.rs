@@ -377,6 +377,12 @@ pub trait EngineText {
     fn set_hero_female(&self, female: bool) {
         let _ = female;
     }
+
+    /// A word that describes the hero (an alignment: Нейтральная for a
+    /// heroine), agreeing with the hero; by default as a status word.
+    fn hero_word(&self, lang: Lang, english: &str) -> Option<String> {
+        self.translate(lang, EngineKind::Status, english)
+    }
 }
 
 /// Plug the engine's translator in (None: the English shows).
@@ -391,6 +397,23 @@ pub fn set_hero_female(female: bool) {
             t.set_hero_female(female);
         }
     });
+}
+
+/// A word of the engine's that describes the hero, as the player reads it
+/// (agreeing with the hero where the language wants it).
+pub fn engine_hero_word(english: &str) -> Cow<'_, str> {
+    let lang = lang();
+    match lang {
+        Lang::En => return Cow::Borrowed(english),
+        Lang::Pseudo => return Cow::Owned(mark_columns(english)),
+        Lang::Ru => {}
+    }
+    ENGINE.with(|e| {
+        e.borrow()
+            .as_ref()
+            .and_then(|t| t.hero_word(lang, english))
+            .map_or(Cow::Borrowed(english), Cow::Owned)
+    })
 }
 
 /// A text window's lines as the player reads them (None: as written; the

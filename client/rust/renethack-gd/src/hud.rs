@@ -180,6 +180,75 @@ pub struct Chip {
     pub tone: Tone,
 }
 
+/// Where the hero is, as the player reads it: "Dlvl 1" and "Tutorial 1"
+/// in the interface's words, the engine's names of other places ("Home 2",
+/// "Fort Ludios", "Astral") through its translator.
+fn place_text(view: &StatusView) -> Option<String> {
+    let (tag, v) = view.fields.first()?;
+    Some(match tag.as_str() {
+        "$" | "AC" | "XL" | "Exp" | "HD" | "T" | "S" => return None,
+        "Dlvl" => tr!("hud-dlvl", level = v.as_str()),
+        "Tutorial" => tr!("hud-tutorial-level", level = v.as_str()),
+        _ => i18n::engine(EngineKind::Status, &view.place()?).into_owned(),
+    })
+}
+
+/// The status as the portrait's tooltip says it in full: name and title,
+/// alignment; place, gold, armour, level, experience, turn, score; hit
+/// points and power; the attributes; hunger, encumbrance, conditions.
+fn status_tip(view: &StatusView) -> String {
+    let mut head = i18n::engine(EngineKind::Status, &view.title).into_owned();
+    if let Some(a) = &view.align {
+        head.push_str("  ·  ");
+        head.push_str(&i18n::engine_hero_word(a));
+    }
+    let mut facts: Vec<String> = place_text(view).into_iter().collect();
+    for (tag, v) in &view.fields {
+        let v = v.as_str();
+        facts.extend(match tag.as_str() {
+            "$" => Some(tr!("hud-gold-tip", gold = v)),
+            "AC" => Some(tr!("hud-ac-tip", ac = v)),
+            "XL" => Some(tr!("hud-level", level = v)),
+            "HD" => Some(tr!("hud-hit-dice", hd = v)),
+            "Exp" => Some(tr!("hud-exp", exp = v)),
+            "T" => Some(tr!("hud-turn", turn = v)),
+            "S" => Some(tr!("hud-score", score = v)),
+            _ => None,
+        });
+    }
+    let bars: Vec<String> = [("orb-hp", view.hp), ("orb-pw", view.pw)]
+        .into_iter()
+        .filter_map(|(key, p)| {
+            p.map(|(value, most)| {
+                let mut args = i18n::FluentArgs::new();
+                args.set("value", i18n::Arg::fluent(value));
+                args.set("most", i18n::Arg::fluent(most));
+                i18n::tr_with(key, Some(&args))
+            })
+        })
+        .collect();
+    let attrs: Vec<String> = view
+        .attrs
+        .iter()
+        .map(|(tag, v)| format!("{} {v}", attr_tag(tag)))
+        .collect();
+    let chips: Vec<String> = view
+        .chips()
+        .map(|c| i18n::engine(EngineKind::Status, &c.text).into_owned())
+        .collect();
+    [
+        head,
+        facts.join("  ·  "),
+        bars.join("  ·  "),
+        attrs.join("  "),
+        chips.join("  "),
+    ]
+    .into_iter()
+    .filter(|l| !l.trim().is_empty())
+    .collect::<Vec<_>>()
+    .join("\n")
+}
+
 /// What the status shows.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct StatusView {
@@ -1816,10 +1885,11 @@ impl Hud {
             .role
             .as_deref()
             .map(|r| i18n::engine(EngineKind::Name, r).into_owned());
+        // the alignment describes the hero: it agrees with the hero
         let align = self
             .align_text
             .as_deref()
-            .map(|a| i18n::engine(EngineKind::Status, a).into_owned());
+            .map(|a| i18n::engine_hero_word(a).into_owned());
         let parts: Vec<String> = [role, align].into_iter().flatten().collect();
         self.subtitle.set_text(&parts.join("  ·  "));
         let initial = self
@@ -1834,13 +1904,7 @@ impl Hud {
         let conditions = catalog.map_or_else(Vec::new, |c| status.condition_names(c));
         let view = StatusView::new(status, &conditions);
         self.status_text = view.lines().join("\n");
-        // the classic status lines: the engine's words
-        let tip: Vec<String> = view
-            .lines()
-            .iter()
-            .map(|l| i18n::engine(EngineKind::Status, l).into_owned())
-            .collect();
-        self.portrait_panel.set_tooltip_text(&tip.join("\n"));
+        self.portrait_panel.set_tooltip_text(&status_tip(&view));
         self.title
             .set_text(&*i18n::engine(EngineKind::Status, &view.title));
         if self.align_text != view.align {
@@ -1891,9 +1955,7 @@ impl Hud {
         self.xp_label.set_text(&label);
 
         // the minimap's caption: where and when
-        let place = view
-            .place()
-            .map(|p| i18n::engine(EngineKind::Status, &p).into_owned());
+        let place = place_text(&view);
         let turn = view.field("T").map(|t| tr!("hud-turn", turn = t));
         let caption: Vec<String> = [place, turn].into_iter().flatten().collect();
         self.minimap_caption.set_text(&caption.join("  ·  "));
@@ -2266,6 +2328,13 @@ impl Hud {
         .collect()
     }
 
+    /// The hero's gender became known or changed: the words that agree
+    /// with the hero again.
+    pub fn hero_changed(&mut self) {
+        self.show_subtitle();
+        self.status_text.clear();
+    }
+
     /// The log as it shows now (self-tests).
     pub fn log_shown(&self) -> String {
         self.log.get_parsed_text().to_string()
@@ -2423,6 +2492,43 @@ mod tests {
         ("hpmax", "16"),
         ("leveldesc", "Dlvl:1  "),
     ];
+
+    #[test]
+    fn the_place_and_the_tooltip_are_in_the_language_now() {
+        let mut s = status(&START);
+        s.apply(&StatusUpdate {
+            field: "xlevel".into(),
+            value: Some("1".into()),
+            conds: None,
+            chg: 0,
+            percent: 0,
+            color: NO_COLOR,
+        });
+        let v = StatusView::new(&s, &[]);
+        assert_eq!(place_text(&v).as_deref(), Some("Dlvl 1"));
+        let tip = status_tip(&v);
+        for words in [
+            "Hero the Stripling  ·  Neutral",
+            "Dlvl 1",
+            "Gold 0",
+            "Lv 1",
+            "T 1",
+            "St 16",
+        ] {
+            assert!(tip.contains(words), "{words:?} not in {tip:?}");
+        }
+        crate::i18n::set_lang(crate::i18n::Lang::Ru);
+        let place = place_text(&v);
+        let tip = status_tip(&v);
+        crate::i18n::set_lang(crate::i18n::Lang::En);
+        assert_eq!(place.as_deref(), Some("Глубина 1"));
+        for words in ["Глубина 1", "Золото 0", "Ур 1", "Ход 1", "Сил 16"] {
+            assert!(tip.contains(words), "{words:?} not in {tip:?}");
+        }
+        // a place with a name of its own: the engine's words
+        let home = StatusView::new(&status(&[("leveldesc", "Home 2")]), &[]);
+        assert_eq!(place_text(&home).as_deref(), Some("Home 2"));
+    }
 
     #[test]
     fn a_new_hero_reads_like_the_bottom_lines() {
