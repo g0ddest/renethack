@@ -1,0 +1,242 @@
+# R6, batch 1: the engine's menus: titles and items, the most shown
+# on soak seeds 1..8 first. Syntax: nh-i18n's template.rs.
+
+[4d1bb3191d8a]
+en = "Items known to be Uncursed"
+ru = "Предметы, известные как непроклятые"
+
+[0de4314ca54a]
+en = "    (ignored unless some other choices are also picked)"
+ru = "    (не учитывается, если не выбрано что-то ещё)"
+
+[30c8a0fc9c1a]
+en = "All types"
+ru = "Все типы"
+
+[625f1902b43e]
+en = "Auto-select every relevant item"
+ru = "Выбрать все подходящие предметы"
+
+[032edcfaa1ae]
+en = "What type of things do you want to take off?"
+ru = "Какие вещи вы хотите снять?"
+
+[70cb28745864]
+en = "All worn and wielded types"
+ru = "Всё надетое и всё в руках"
+
+[9dc8481060be]
+en = "Items known to be Blessed"
+ru = "Предметы, известные как благословенные"
+
+[a76b2f6c0522]
+en = "Drop what type of items?"
+ru = "Какие предметы положить?"
+
+[2c1c3fc710f7]
+en = "What would you like to drop?"
+ru = "Что вы хотите положить?"
+
+[8d4f6ef55f73]
+en = "What do you want to do?"
+ru = "Что вы хотите сделать?"
+
+[01588766108a]
+en = "View which?"
+ru = "Что показать?"
+
+[07fde20b433f]
+en = "known map without monsters and objects"
+ru = "известная карта без монстров и предметов"
+
+[0ad42765ddcf]
+en = "Background:"
+ru = "Происхождение:"
+
+[30e3765baaf4]
+en = " Character rerolling was not enabled."
+ru = " Повторная генерация персонажа была выключена."
+
+[401558128991]
+en = "known map without monsters"
+ru = "известная карта без монстров"
+
+[69aa5db4d883]
+en = "Miscellaneous:"
+ru = "Разное:"
+
+[7e081a2a83c3]
+en = "known map without monsters, objects, and traps"
+ru = "известная карта без монстров, предметов и ловушек"
+
+[8cf33dd0438a]
+en = " You entered the dungeon %ld turns ago."
+ru = " Вы вошли в подземелье {1} {1:plural|ход|хода|ходов} назад."
+
+[f1eb3d2fddd2]
+en = "%s the %s's attributes:"
+ru = "Свойства героя по имени {1} ({2}):"
+
+[f2a317699c1c]
+en = "Basics:"
+ru = "Основное:"
+
+[11dc9e195292]
+en = "Status:"
+ru = "Состояние:"
+
+[39f5bc89155f]
+en = "Fighting Skills"
+ru = "Боевые навыки"
+
+[3ffd7256f68d]
+en = "Spellcasting Skills"
+ru = "Навыки заклинаний"
+
+[545b9247278d]
+en = "Current skills:"
+ru = "Текущие навыки:"
+
+[69803692f054]
+en = "Characteristics:"
+ru = "Характеристики:"
+
+[a38ea7980d4c]
+en = " You are %s, on a mission for %s"
+ru = " Вы — {1}, исполняете волю {2:gen}"
+
+[a834c8892bb5]
+en = "Search for secret doors"
+ru = "Искать потайные двери"
+
+[ae9530a903bf]
+en = " Your wallet is empty."
+ru = " Ваш кошелёк пуст."
+
+[b2925617dd26]
+en = "Weapon Skills"
+ru = "Владение оружием"
+
+[193ae7129821]
+en = "a particular object in inventory"
+ru = "определённый предмет в инвентаре"
+
+[3a567dbcdf23]
+en = "record an annotation for the current level"
+ru = "сделать пометку для текущего уровня"
+
+[be8fd5977d20]
+en = "the type of an object on discoveries list"
+ru = "тип предмета из списка открытий"
+
+[c332f989e893]
+en = "a monster"
+ru = "монстра"
+
+[d5213ef88090]
+en = "the type of an object in inventory"
+ru = "тип предмета в инвентаре"
+
+[fcf3fc918a6e]
+en = "the type of an object upon the floor"
+ru = "тип предмета на полу"
+
+[1cc6e20e5e56]
+en = "put in, then take out"
+ru = "положить, затем вынуть"
+
+[7de13db595f6]
+en = "put something in"
+ru = "положить что-нибудь внутрь"
+
+[a3753fa72fb5]
+en = "stash one item into %s"
+ru = "положить один предмет в {1:acc}"
+
+[bdbd93292417]
+en = "do nothing"
+ru = "ничего не делать"
+
+[c89a4bdde11e]
+en = "Look inside %s"
+ru = "Заглянуть в {1:acc}"
+
+[07b4290baea9]
+en = "Look at what is here"
+ru = "Осмотреть, что здесь лежит"
+
+[08578042b110]
+en = "Rest one turn"
+ru = "Отдохнуть один ход"
+
+[300d29fd5f32]
+en = "Inventory"
+ru = "Инвентарь"
+
+[6541a7bf5486]
+en = "Search around you"
+ru = "Обыскать всё вокруг"
+
+[bf9f5fad5f1b]
+en = "Put in what type of objects?"
+ru = "Какие предметы положить внутрь?"
+
+[f98c8639a637]
+en = "Drop items"
+ru = "Положить предметы"
+
+[3324d8858cf9]
+en = "Sort order for vanquished monster counts (also genocided types)"
+ru = "Порядок списка побеждённых монстров (и истреблённых видов)"
+
+[36d289c2d83f]
+en = "by monster class, low to high level within class"
+ru = "по классам монстров, внутри класса — по возрастанию уровня"
+
+[53cf80a57e8d]
+en = "alphabetically, first unique monsters, then others"
+ru = "по алфавиту: сначала уникальные монстры, затем остальные"
+
+[6e2fdb20d648]
+en = "Pick an object type to name"
+ru = "Выберите тип предмета, чтобы назвать его"
+
+[82a2012dde8b]
+en = "by count, low to high, by internal index within tied count"
+ru = "по количеству, по возрастанию; при равенстве — по внутреннему номеру"
+
+[84b4c5f7d6d6]
+en = "Final Attributes:"
+ru = "Итоговые свойства:"
+
+[ae7d9031ee23]
+en = " Your wallet was empty."
+ru = " Ваш кошелёк был пуст."
+
+[bd289a020b9d]
+en = "by monster difficulty rating, by internal monster index"
+ru = "по сложности монстра, затем по внутреннему номеру"
+
+[c7ffea839993]
+en = "Final Status:"
+ru = "Итоговое состояние:"
+
+[d1ca1b3ef398]
+en = "Put in what?"
+ru = "Что положить внутрь?"
+
+[d7ba52e4791b]
+en = "by count, high to low, by internal index within tied count"
+ru = "по количеству, по убыванию; при равенстве — по внутреннему номеру"
+
+[e0ec341b4e35]
+en = "Final Characteristics:"
+ru = "Итоговые характеристики:"
+
+[eab57616995b]
+en = " You were %s, on a mission for %s"
+ru = " Вы были: {1}, исполняли волю {2:gen}"
+
+[faaae6cf861b]
+en = "traditional: by monster level, by internal monster index"
+ru = "традиционный: по уровню монстра, затем по внутреннему номеру"

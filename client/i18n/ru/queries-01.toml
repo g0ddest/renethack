@@ -1,0 +1,190 @@
+# R6, batch 1: the engine's questions (yn, getlin, getobj, getdir), the most shown
+# on soak seeds 1..8 first. Syntax: nh-i18n's template.rs.
+
+[23ff0855b202]
+en = "In what direction?"
+ru = "В каком направлении?"
+
+[d3ebd1e6eb71]
+en = "What do you want to remove? [*]"
+ru = "Что вы хотите снять? [*]"
+
+[cad9095596f1]
+en = "What do you want to read? [*]"
+ru = "Что вы хотите прочитать? [*]"
+
+[db716f189453]
+en = "What do you want to throw? [*]"
+ru = "Что вы хотите бросить? [*]"
+
+[ef7d708f8eb5]
+en = "What do you want to use or apply? [%s or ?*]"
+ru = "Что вы хотите использовать? [{1} или ?*]"
+
+[ce0fbafaee6b]
+en = "In what direction do you want to dig? [%s]"
+ru = "В каком направлении копать? [{1}]"
+
+[cb4b2089bb8b]
+en = "What do you want to put on? [*]"
+ru = "Что вы хотите надеть? [*]"
+
+[76fa2b3b5e67]
+en = "What do you want to ready? [*]"
+ru = "Что вы хотите положить в колчан? [*]"
+
+[b0cbbcd8ba37]
+en = "What do you want to invoke? [*]"
+ru = "Что вы хотите задействовать? [*]"
+
+[a184427e1325]
+en = "What do you want to drop? [%s or ?*]"
+ru = "Что вы хотите положить? [{1} или ?*]"
+
+[7c1f33077ab0]
+en = "What do you want to wield? [%s or ?*]"
+ru = "Чем вы хотите вооружиться? [{1} или ?*]"
+
+[38574df8f7ba]
+en = "What do you want to eat? [%s or ?*]"
+ru = "Что вы хотите съесть? [{1} или ?*]"
+
+[ec40037eab48]
+en = "What do you want to ready? [%s or ?*]"
+ru = "Что вы хотите положить в колчан? [{1} или ?*]"
+
+[5f87a3012c1e]
+en = "Do you want your possessions identified?"
+ru = "Опознать ваши вещи?"
+
+[ae5dc8970987]
+en = "Do you want to see your attributes?"
+ru = "Показать ваши характеристики?"
+
+[031ef3f0196b]
+en = "What do you want to fire? [*]"
+ru = "Чем вы хотите выстрелить? [*]"
+
+[fc9eebb1b18c]
+en = "What do you want to take off? [%s or ?*]"
+ru = "Что вы хотите снять? [{1} или ?*]"
+
+[e0ac8b1a1956]
+en = "That is your alternate weapon.  Ready it instead?"
+ru = "Это ваше запасное оружие.  Положить его в колчан?"
+
+[e37d6de15075]
+en = "Are you sure you want to pray?"
+ru = "Вы уверены, что хотите помолиться?"
+
+[561993d032dc]
+en = "What do you want to take off?"
+ru = "Что вы хотите снять?"
+
+[cbda2ed56d0f]
+en = "Do you want to see the dungeon overview?"
+ru = "Показать обзор подземелья?"
+
+[91aa93cb913c]
+en = "What do you want to throw? [%s or ?*]"
+ru = "Что вы хотите бросить? [{1} или ?*]"
+
+[f2c7fcf900dc]
+en = "What do you want to fire? [%s or ?*]"
+ru = "Чем вы хотите выстрелить? [{1} или ?*]"
+
+[0bf0ead6b5d7]
+en = "Loot in what direction?"
+ru = "В каком направлении обыскать?"
+
+[736b04ba76d5]
+en = "What do you want to wear? [%s or ?*]"
+ru = "Что вы хотите надеть? [{1} или ?*]"
+
+[8b3d36083e2b]
+en = "Do you want to see your conduct?"
+ru = "Показать ваши обеты?"
+
+[1884bc7750b2]
+en = "What do you want to dip? [%s or ?*]"
+ru = "Что вы хотите окунуть? [{1} или ?*]"
+
+[67d98943ae6e]
+en = "Do you want to see your conduct and achievements?"
+ru = "Показать ваши обеты и достижения?"
+
+[0d450883412d]
+en = "What do you want to rub on the stone? [*]"
+ru = "Что вы хотите потереть о камень? [*]"
+
+[345015c6d880]
+en = "Talk to whom? (in what direction)"
+ru = "С кем поговорить? (в каком направлении)"
+
+[1d1bd057a8fa]
+en = "What do you want to name?"
+ru = "Что вы хотите назвать?"
+
+[189fee78fe69]
+en = "Do you want to see what you had when you died?"
+ru = "Показать, что было при вас в момент смерти?"
+
+[55d0ed8fdbba]
+en = "What do you want to call %s?"
+ru = "Как вы хотите назвать {1:acc}?"
+
+[73be3463d620]
+en = "Continue eating?"
+ru = "Продолжить есть?"
+
+[3cc342fc0024]
+en = "Really attack %s?"
+ru = "Действительно атаковать {1:acc}?"
+
+[d096e49c99f5]
+en = "What do you want to adjust? [%s or ?*]"
+ru = "Что вы хотите переложить? [{1} или ?*]"
+
+[09498cacc1bd]
+en = "There is %s here; eat it?"
+ru = "Здесь {1:num|лежит|лежат} {1}; съесть?"
+
+[2f1bcd000f70]
+en = "What do you want to read? [%s or ?*]"
+ru = "Что вы хотите прочитать? [{1} или ?*]"
+
+[2f2d42fb3b3b]
+en = "Refresh your memory anyway?"
+ru = "Всё равно освежить память?"
+
+[3221b9a627ec]
+en = "What do you want to rub on the stones? [%s or ?*]"
+ru = "Что вы хотите потереть о камни? [{1} или ?*]"
+
+[776121bc49d1]
+en = "Call %s:"
+ru = "Назвать {1:acc}:"
+
+[92346ad5b823]
+en = "Adjust letter to what [%s] (? see used letters)?"
+ru = "Какую букву дать [{1}] (? — занятые буквы)?"
+
+[9b62d8957f78]
+en = "Replace annotation \"%.30s\" with?"
+ru = "Чем заменить пометку «{1}»?"
+
+[a7da50d9c1c1]
+en = "What do you want to name these %s?"
+ru = "Как вы хотите назвать эти {1:acc}?"
+
+[c8c6aba35b99]
+en = "What do you want to name? [%s or ?*]"
+ru = "Что вы хотите назвать? [{1} или ?*]"
+
+[e04450e9bc60]
+en = "What do you want to drink? [%s or ?*]"
+ru = "Что вы хотите выпить? [{1} или ?*]"
+
+[e38192f3d01b]
+en = "What do you want to rub? [%s or ?*]"
+ru = "Что вы хотите потереть? [{1} или ?*]"

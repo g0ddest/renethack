@@ -1,0 +1,330 @@
+# R6, batch 1: the engine's text windows (^X, discoveries, tips, the end of the game), the most shown
+# on soak seeds 1..8 first. Syntax: nh-i18n's template.rs.
+
+[e465dbb131f1]
+en = "Tip: Farlooking or selecting a map location\n\nYou are now in a \"farlook\" mode - the movement keys move the cursor,\nnot your character.  Game time does not advance.  This mode is used\nto look around the map, or to select a location on it.\n\nWhen in this mode, you can press ESC to return to normal game mode,\nand pressing ? will show the key help."
+ru = "Подсказка: осмотр или выбор места на карте\n\nВы в режиме «осмотра»: клавиши движения перемещают курсор,\nа не вашего героя.  Игровое время стоит.  В этом режиме\nможно осмотреться на карте или выбрать на ней место.\n\nВ этом режиме ESC возвращает к обычной игре,\nа ? показывает подсказку по клавишам."
+
+[8d1dab161231]
+en = "Things that are here:"
+ru = "Предметы здесь:"
+
+[f0e61367e617]
+en = "Do you want an account of creatures vanquished?"
+ru = "Показать список побеждённых существ?"
+
+[32812993da26]
+en = "Discoveries, by order of discovery within each class"
+ru = "Открытия, по порядку открытия в каждом классе"
+
+[9f3bbf1f4b54]
+en = "Voluntary challenges:"
+ru = "Добровольные испытания:"
+
+[2db361143c61]
+en = " Your wisdom is %s."
+ru = " Ваша мудрость: {1}."
+
+[694993eb27fa]
+en = " There is a new moon in effect."
+ru = " Сейчас новолуние."
+
+[7743f08984e9]
+en = " Your charisma is %s."
+ru = " Ваша харизма: {1}."
+
+[8661a9695352]
+en = " Your intelligence is %s."
+ru = " Ваш интеллект: {1}."
+
+[8bc6ab922c84]
+en = " Your dexterity is %s."
+ru = " Ваша ловкость: {1}."
+
+[8ef26e10d6c2]
+en = " It is the midnight hour."
+ru = " Сейчас полночь."
+
+[af5ecca78740]
+en = " Autopickup is off."
+ru = " Автоподбор выключен."
+
+[bdad26f53576]
+en = " Total elapsed playing time is%s."
+ru = " Общее время игры:{1}."
+
+[c7b1907066bf]
+en = " You are right-handed."
+ru = " Вы правша."
+
+[cd5cb4c3fe34]
+en = " You are unencumbered."
+ru = " Вы не обременены."
+
+[d6a793c1e2eb]
+en = " You are in %s, on level %d."
+ru = " Вы в {1:loc}, на уровне {2}."
+
+[dbd60285d202]
+en = " You are wielding %s."
+ru = " У вас в руках {1}."
+
+[e3a262cf7f69]
+en = " Your constitution is %s."
+ru = " Ваше телосложение: {1}."
+
+[ec4269256832]
+en = " Your strength is %s."
+ru = " Ваша сила: {1}."
+
+[f36f0808fa96]
+en = " Your armor class is %d."
+ru = " Ваш класс брони: {1}."
+
+[0bab27e1b114]
+en = " You aren't hungry."
+ru = " Вы не голодны."
+
+[38ba0fc988a0]
+en = " You have never genocided any monsters."
+ru = " Вы не истребили ни одного вида монстров."
+
+[502e32f723d1]
+en = " You have been illiterate."
+ru = " Вы не прочли ни строчки."
+
+[57db573a340e]
+en = " You have gone without food."
+ru = " Вы обходились без еды."
+
+[6718f51b1828]
+en = " You have been an atheist."
+ru = " Вы {hero:gender|были атеистом|были атеисткой}."
+
+[7611641a6a9f]
+en = " You have never changed form."
+ru = " Вы ни разу не меняли облик."
+
+[946db0c61905]
+en = " You have %-1ld experience points."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта."
+
+[a52a1b755406]
+en = " You have %s skill with %s."
+ru = " Ваше владение {2:ins}: {1}."
+
+[bb2b509937fb]
+en = " You have never polymorphed an object."
+ru = " Вы ни разу не превращали предметы."
+
+[d2e844bfb72b]
+en = " You have used no wishes."
+ru = " Вы не использовали ни одного желания."
+
+[3d70415e6717]
+en = " You have all %d hit points."
+ru = " Здоровье полное: {1}."
+
+[4b2386440376]
+en = " You have all %d energy points (spell power)."
+ru = " Энергия полная: {1}."
+
+[79f7ed1ef3b3]
+en = " You have never hit with a wielded weapon."
+ru = " Вы ни разу не ударили оружием."
+
+[955418682a0c]
+en = " You have been a pacifist."
+ru = " Вы {hero:gender|были пацифистом|были пацифисткой}."
+
+[c96d3b250ef1]
+en = " You are %s, a level %d male %s %s."
+ru = " Вы — {1}, {4} {2}-го уровня ({3}, мужчина)."
+
+[09cd5a32761d]
+en = " You never polymorphed an object."
+ru = " Вы ни разу не превратили предмет."
+
+[0c956d86a025]
+en = " You were an atheist."
+ru = " Вы {hero:gender|были атеистом|были атеисткой}."
+
+[25472be20d0b]
+en = " You never genocided any monsters."
+ru = " Вы не истребили ни одного вида монстров."
+
+[3c140c3b858e]
+en = " You have %d out of %d hit points."
+ru = " Здоровье: {1} из {2}."
+
+[9496095dbe8a]
+en = " You never changed form."
+ru = " Вы ни разу не сменили облик."
+
+[aadd2bb55ec3]
+en = " You used no wishes."
+ru = " Вы не использовали ни одного желания."
+
+[be960cbca27a]
+en = " You have %d out of %d energy points (spell power)."
+ru = " Энергия: {1} из {2}."
+
+[dc3dd88cb4fb]
+en = " You never hit with a wielded weapon."
+ru = " Вы ни разу не ударили оружием."
+
+[107e1e4f6775]
+en = " You didn't encounter any bones levels."
+ru = " Вы не встретили ни одного уровня с костями."
+
+[11fce7b8dfda]
+en = " You were illiterate."
+ru = " Вы не прочли ни строчки."
+
+[1367a29e7fc9]
+en = " There was a new moon in effect when your adventure ended."
+ru = " Когда ваше приключение закончилось, было новолуние."
+
+[15b3ae4e90c2]
+en = " You are held by %s (%s)."
+ru = " Вас держит {1} ({2})."
+
+[169b281370e4]
+en = " You were in %s, on level %d."
+ru = " Вы были в {1:loc}, на уровне {2}."
+
+[1889799a81cc]
+en = " Your dexterity was %s."
+ru = " Ваша ловкость была: {1}."
+
+[1c396453af94]
+en = " You are %s, a level %d female %s %s."
+ru = " Вы — {1}, {4} {2}-го уровня ({3}, женщина)."
+
+[1ee5b760d25f]
+en = " Your strength was %s."
+ru = " Ваша сила была: {1}."
+
+[2fda130fc033]
+en = " You weren't hungry."
+ru = " Вы не были голодны."
+
+[31d5a8c09500]
+en = " You were vegetarian."
+ru = " Вы {hero:gender|были вегетарианцем|были вегетарианкой}."
+
+[332d8468ce07]
+en = " You have %-1ld experience point."
+ru = " У вас {1} {1:plural|очко|очка|очков} опыта."
+
+[38c2343a19a6]
+en = " It was the midnight hour."
+ru = " Была полночь."
+
+[4b0625924d91]
+en = " You are hungry."
+ru = " Вы голодны."
+
+[504206b5f1e8]
+en = " You were %s, a level %d male %s %s."
+ru = " Вы были: {1}, {4} {2}-го уровня ({3}, мужчина)."
+
+[50dd56438a83]
+en = " You aren't wearing any armor."
+ru = " На вас нет доспехов."
+
+[5aaceccfa7f6]
+en = " Your constitution was %s."
+ru = " Ваше телосложение было: {1}."
+
+[6d35e9e1b503]
+en = " You were unencumbered."
+ru = " Вы не были обременены."
+
+[72e49f32bfa9]
+en = "Achievement:"
+ru = "Достижение:"
+
+[7b996475489e]
+en = " You had %d out of %d energy points (spell power)."
+ru = " Энергия была: {1} из {2}."
+
+[8041fe3ab596]
+en = " Your intelligence was %s."
+ru = " Ваш интеллект был: {1}."
+
+[8278a2334075]
+en = " You entered the Gnomish Mines."
+ru = " Вы вошли в Гномьи копи."
+
+[8ebd5f416bae]
+en = " Autopickup was off."
+ru = " Автоподбор был выключен."
+
+[97d7aa1db417]
+en = " You had %d out of %d hit points."
+ru = " Здоровье было: {1} из {2}."
+
+[9a8bbac17bff]
+en = " Total elapsed playing time was%s."
+ru = " Общее время игры:{1}."
+
+[9dbdd1685673]
+en = " Your charisma was %s."
+ru = " Ваша харизма была: {1}."
+
+[9f7867071025]
+en = " You had infravision%s."
+ru = " У вас было инфразрение{1}."
+
+[abd431d9fff0]
+en = " You had automatic searching%s."
+ru = " У вас был автоматический поиск{1}."
+
+[b19cdd4b1c77]
+en = " You went without food."
+ru = " Вы обходились без еды."
+
+[c70354670908]
+en = " You were right-handed."
+ru = " Вы были правшой."
+
+[cafd0f65a72b]
+en = " You are %s, a level %d %s %s."
+ru = " Вы — {1}, {4} {2}-го уровня ({3})."
+
+[d28ef71ec6dc]
+en = " You had %-1ld experience points, %ld were needed to attain level %d."
+ru = " У вас было {1} {1:plural|очко|очка|очков} опыта, а для {3}-го уровня нужно было {2}."
+
+[d979917c18d1]
+en = " You were a pacifist."
+ru = " Вы {hero:gender|были пацифистом|были пацифисткой}."
+
+[e2a904eeb921]
+en = " You had %s skill with %s."
+ru = " Ваше владение {2:ins} было: {1}."
+
+[e434c64939e1]
+en = " You were wielding %s."
+ru = " У вас в руках {1:gender|был|была|было|были} {1}."
+
+[fd44136994eb]
+en = " Your wisdom was %s."
+ru = " Ваша мудрость была: {1}."
+
+[fe36fe6d3946]
+en = " Your armor class was %d."
+ru = " Ваш класс брони был: {1}."
+
+[ffc7340378ee]
+en = " You were lucky."
+ru = " Вам везло."
+
+[73021e2b7615]
+en = "Gems/Stones"
+ru = "Самоцветы/камни"
+
+[c238700e8163]
+en = "Comestibles"
+ru = "Еда"

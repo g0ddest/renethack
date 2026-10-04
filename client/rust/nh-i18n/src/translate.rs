@@ -158,17 +158,8 @@ impl Translator {
     /// word of the status line): the lexicon reads it, in the nominative,
     /// capitalised as the English was; else it is a text.
     pub fn name(&self, english: &str) -> Output {
-        let bare = english.trim();
-        if let Some(p) = self.names.parse(NameKind::Any, bare) {
-            let ru = p.form(crate::grammar::Case::Nom);
-            let upper = bare.chars().next().is_some_and(char::is_uppercase);
-            return Output {
-                text: if upper { capitalize(&ru) } else { ru },
-                status: Status::Translated,
-                template: None,
-            };
-        }
-        self.text(english)
+        self.whole_name(english)
+            .unwrap_or_else(|| self.text(english))
     }
 
     /// The lines of a text window, joined by newlines: a text of the
@@ -220,23 +211,37 @@ impl Translator {
             // name the lexicon reads whole ("a scroll of identify"), and to
             // a text the catalog knows without its last mark ("The Gnomish
             // Mines:")
-            if let Some(p) = self.names.parse(NameKind::Any, text) {
-                return Output {
-                    text: p.form(crate::grammar::Case::Nom),
-                    status: Status::Translated,
-                    template: None,
-                };
+            if let Some(out) = self.whole_name(text) {
+                return out;
             }
             if let Some(out) = self.without_mark(text, channel) {
                 return out;
             }
         }
         match found {
-            Some(m) => self
-                .render_or_base(&m, text, 0)
-                .unwrap_or_else(|| Output::english(text, Status::Untranslated, Some(m.template))),
+            Some(m) => self.render_or_base(&m, text, 0).unwrap_or_else(|| {
+                // no Russian for the template yet: a heading the glossary
+                // names ("Armor") still reads as a name
+                match self.whole_name(text) {
+                    Some(out) => out,
+                    None => Output::english(text, Status::Untranslated, Some(m.template)),
+                }
+            }),
             None => Output::english(text, Status::Unknown, None),
         }
+    }
+
+    /// The whole text as a name the lexicon reads, capitalised as it was.
+    fn whole_name(&self, text: &str) -> Option<Output> {
+        let bare = text.trim();
+        let p = self.names.parse(NameKind::Any, bare)?;
+        let ru = p.form(crate::grammar::Case::Nom);
+        let upper = bare.chars().next().is_some_and(char::is_uppercase);
+        Some(Output {
+            text: if upper { capitalize(&ru) } else { ru },
+            status: Status::Translated,
+            template: None,
+        })
     }
 
     /// `text` but its last ':', '.', '!' or '?', translated by a template
@@ -432,8 +437,19 @@ impl Translator {
             let ok = out.status == Status::Translated;
             return (Value::Text(out.text), ok);
         }
-        (Value::Text(shown.to_string()), false)
+        // what stays English: a name or a code of one word (a pet's name,
+        // inventory letters "aefgh") is shown as it is; words are not
+        (Value::Text(shown.to_string()), verbatim(shown))
     }
+}
+
+/// Is a text fine shown as it is in a Russian sentence: one word at most
+/// (a name, letters, a number), not English words?
+fn verbatim(s: &str) -> bool {
+    s.split(|c: char| !c.is_alphabetic())
+        .filter(|w| w.chars().count() >= 2)
+        .count()
+        <= 1
 }
 
 /// Does a template say more than a name the lexicon reads in the same
