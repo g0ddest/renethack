@@ -221,10 +221,15 @@ pub(super) fn achievements() -> Vec<Step> {
         },
     ));
     steps.push(Step::Wait("depth 10 earned", |g| earned(g, "depth_10")));
-    steps.push(Step::Wait("the toast tells of depth 10", |g| {
-        let ui = g.ui.as_ref().ok_or("no ui")?;
-        Ok(ui.toast.shown() == Some("depth_10") && ui.toast.settled())
-    }));
+    // its picture: the level faded in after the teleport, the toast come
+    // in fully (both fade)
+    steps.push(Step::Wait(
+        "the toast tells of depth 10 over the level",
+        |g| {
+            let ui = g.ui.as_ref().ok_or("no ui")?;
+            Ok(ui.toast.shown() == Some("depth_10") && ui.toast.settled() && camera_settled(g)?)
+        },
+    ));
     steps.push(Step::Shot("achievement-toast"));
     steps.push(Step::Call("the toast fits under the prompt banner", |g| {
         toast_fits(g)
