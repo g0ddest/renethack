@@ -295,6 +295,9 @@ pub struct RenethackGame {
     pub(crate) achievements: Option<Tracker>,
     /// The achievements page while it is open.
     pub(crate) achievement_page: Option<crate::achievement_view::Page>,
+    /// The hero's gender as the map draws the hero, told to the engine's
+    /// translator (the words that agree with the hero).
+    hero_female: Option<bool>,
     /// A reply could not be written: the engine is gone.
     link_error: Option<String>,
     close_deadline: Option<Instant>,
@@ -461,6 +464,7 @@ impl INode for RenethackGame {
             session_serial: 0,
             name: None,
             achievements: None,
+            hero_female: None,
             achievement_page: None,
             link_error: None,
             close_deadline: None,
@@ -523,6 +527,9 @@ impl INode for RenethackGame {
         self.base().get_tree().set_auto_accept_quit(false);
         // the interface's language before anything shows words
         i18n::set_lang(startup_lang(&args));
+        // the engine's texts in the player's language: nh-i18n's translator
+        // (loaded on a thread; the English shows until it is ready)
+        i18n::set_engine_text(Some(Box::new(crate::engine_text::EngineTranslator::new())));
         if let Some(mut window) = self.base().get_tree().get_root() {
             // the window the self-tests asked for; screenshots are
             // 1920×1080 (the review set, success criterion 1) unless a size
@@ -1838,6 +1845,24 @@ impl RenethackGame {
         }
     }
 
+    /// The hero's gender from the hero's glyph (a polymorph changes it),
+    /// told to the engine's translator when it changes.
+    fn sync_hero_gender(&mut self) {
+        use nh_protocol::mg;
+        let female = self
+            .world
+            .map
+            .hero()
+            .and_then(|(x, y)| self.world.map.cell(x, y))
+            .and_then(|c| c.glyph.as_ref())
+            .filter(|g| g.flags & mg::HERO != 0)
+            .map(|g| g.flags & mg::FEMALE != 0);
+        if female.is_some() && female != self.hero_female {
+            self.hero_female = female;
+            i18n::set_hero_female(female == Some(true));
+        }
+    }
+
     /// A picker's button (a gamepad's).
     fn pick_op(&mut self, op: crate::gamepad::PickOp) {
         let pending = self.pending.as_ref().map(|(id, _)| *id);
@@ -2972,6 +2997,7 @@ impl RenethackGame {
         let t = Instant::now();
         ui.hud.sync(&mut self.world, catalog.as_deref());
         self.lap("hud", t);
+        self.sync_hero_gender();
         let t = Instant::now();
         self.sync_inventory();
         self.lap("inventory", t);

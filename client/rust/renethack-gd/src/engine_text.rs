@@ -5,9 +5,6 @@
 //! the translator does not know, or knows without a translation yet,
 //! stays English.
 
-// game.rs plugs it in with i18n::set_engine_text
-#![allow(dead_code)]
-
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::thread::JoinHandle;
@@ -174,6 +171,32 @@ impl EngineText for EngineTranslator {
             let args: Vec<Arg> = args.iter().map(arg).collect();
             t.message(fmt, &args, english)
         })
+    }
+
+    fn window(&self, lang: Lang, lines: &[&str]) -> Option<Vec<String>> {
+        let whole = lines.join("\n");
+        if lang != Lang::Ru || whole.trim().is_empty() {
+            return None;
+        }
+        // the translator leaves out the blank lines around a text: they
+        // stay, so the lines keep their places (and attributes)
+        let lead = lines.iter().take_while(|l| l.trim().is_empty()).count();
+        let trail = lines[lead..]
+            .iter()
+            .rev()
+            .take_while(|l| l.trim().is_empty())
+            .count();
+        self.cached(EngineKind::Window, &whole, None, |t| t.window(&whole))
+            .map(|text| {
+                let mut out = vec![String::new(); lead];
+                out.extend(text.split('\n').map(str::to_string));
+                out.extend(std::iter::repeat_n(String::new(), trail));
+                out
+            })
+    }
+
+    fn set_hero_female(&self, female: bool) {
+        EngineTranslator::set_hero_female(self, female);
     }
 }
 

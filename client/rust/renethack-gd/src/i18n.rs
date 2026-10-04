@@ -355,12 +355,53 @@ pub trait EngineText {
         let _ = (fmt, args);
         self.translate(lang, EngineKind::Message, english)
     }
+
+    /// A whole text window (a quest's text, an oracle, a help), which a
+    /// translation may say in another number of lines; by default line by
+    /// line.
+    fn window(&self, lang: Lang, lines: &[&str]) -> Option<Vec<String>> {
+        let shown: Vec<Option<String>> = lines
+            .iter()
+            .map(|l| self.translate(lang, EngineKind::Window, l))
+            .collect();
+        shown.iter().any(Option::is_some).then(|| {
+            shown
+                .into_iter()
+                .zip(lines)
+                .map(|(s, l)| s.unwrap_or_else(|| l.to_string()))
+                .collect()
+        })
+    }
+
+    /// The hero is female (or not): the words that agree with the hero.
+    fn set_hero_female(&self, female: bool) {
+        let _ = female;
+    }
 }
 
 /// Plug the engine's translator in (None: the English shows).
-#[allow(dead_code)] // nh-i18n plugs in here (localization phase R4)
 pub fn set_engine_text(translator: Option<Box<dyn EngineText>>) {
     ENGINE.with(|e| *e.borrow_mut() = translator);
+}
+
+/// The hero's gender, for the translator's agreement.
+pub fn set_hero_female(female: bool) {
+    ENGINE.with(|e| {
+        if let Some(t) = e.borrow().as_ref() {
+            t.set_hero_female(female);
+        }
+    });
+}
+
+/// A text window's lines as the player reads them (None: as written; the
+/// pseudo-language marks each).
+pub fn engine_window(lines: &[&str]) -> Option<Vec<String>> {
+    let lang = lang();
+    match lang {
+        Lang::En => None,
+        Lang::Pseudo => Some(lines.iter().map(|l| mark_columns(l)).collect()),
+        Lang::Ru => ENGINE.with(|e| e.borrow().as_ref().and_then(|t| t.window(lang, lines))),
+    }
 }
 
 /// A message of the log as the player reads it (see `engine`): its format
@@ -760,6 +801,20 @@ mod tests {
         assert_eq!(engine_message(&m), "You hit %s. with 1");
         assert_eq!(engine(EngineKind::Name, "newt"), "<newt>");
         assert_eq!(engine(EngineKind::Message, "Hello."), "Hello.");
+        // a window: by default line by line, the English where nothing is
+        // translated; nothing translated, as written
+        assert_eq!(engine_window(&["Hello.", "newt"]), None);
+        struct Lines;
+        impl EngineText for Lines {
+            fn translate(&self, _: Lang, kind: EngineKind, english: &str) -> Option<String> {
+                (kind == EngineKind::Window && english == "a").then(|| "А".to_string())
+            }
+        }
+        set_engine_text(Some(Box::new(Lines)));
+        assert_eq!(
+            engine_window(&["a", "b"]),
+            Some(vec!["А".to_string(), "b".to_string()])
+        );
         set_engine_text(None);
         assert_eq!(engine_message(&m), "You hit the newt.");
         LANG.with(|l| l.set(Lang::En));

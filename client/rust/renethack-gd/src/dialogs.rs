@@ -3024,6 +3024,25 @@ fn prompt_kind(p: &Prompt) -> &'static str {
     }
 }
 
+/// A text window as the player reads it: the translator has it whole (a
+/// translation may run to another number of lines: those take the first
+/// line's attribute).
+fn shown_window(lines: &[TextLine]) -> Vec<TextLine> {
+    let english: Vec<&str> = lines.iter().map(|l| l.text.as_str()).collect();
+    let Some(shown) = i18n::engine_window(&english) else {
+        return lines.to_vec();
+    };
+    let first = lines.first().map_or(0, |l| l.attr);
+    shown
+        .into_iter()
+        .enumerate()
+        .map(|(i, text)| TextLine {
+            attr: lines.get(i).map_or(first, |l| l.attr),
+            text,
+        })
+        .collect()
+}
+
 /// A prompt with the engine's words in it (the question, a menu's title and
 /// entries, a text window's lines, a message) as the player reads them.
 fn shown_prompt(p: &Prompt) -> Prompt {
@@ -3066,13 +3085,7 @@ fn shown_prompt(p: &Prompt) -> Prompt {
         },
         Prompt::Show { title, lines } => Prompt::Show {
             title: title.as_deref().map(|t| e(EngineKind::Window, t)),
-            lines: lines
-                .iter()
-                .map(|l| TextLine {
-                    attr: l.attr,
-                    text: e(EngineKind::Window, &l.text),
-                })
-                .collect(),
+            lines: shown_window(lines),
         },
         Prompt::MessageMenu { letter, mesg, pick } => Prompt::MessageMenu {
             letter: *letter,

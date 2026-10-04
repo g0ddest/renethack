@@ -329,8 +329,9 @@ fn quit() -> Vec<Step> {
 
 /// The interface switches its language on the fly: the settings page from
 /// the HUD's gear, Russian picked; the HUD, the inventory panel and the log
-/// drawn again (the log from the engine's English, which is kept); the
-/// choice kept with the character and in the profile; English again.
+/// drawn again (the log from the engine's English, which is kept, through
+/// the engine's translator); the choice kept with the character and in the
+/// profile; English again.
 fn language() -> Vec<Step> {
     let mut steps = start();
     steps.extend([
@@ -368,6 +369,11 @@ fn language() -> Vec<Step> {
                 return Err("the welcome message is gone from the log".into());
             }
             Ok(())
+        }),
+        // shown through the engine's translator (once it has loaded)
+        Step::Wait("the log shown in Russian", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(ui.hud.log_shown().contains("добро пожаловать в NetHack"))
         }),
         Step::Call(
             "the choice kept with the character and in the profile",
@@ -2550,16 +2556,31 @@ thread_local! {
 }
 
 /// The menu dialog open for the pending request, if any.
-fn open_menu(g: &RenethackGame) -> Option<&[MenuEntry]> {
+/// The open menu's entries, their marks and letters as shown, their text
+/// the engine's own English (the menu shows the player's language).
+fn open_menu(g: &RenethackGame) -> Option<Vec<MenuEntry>> {
     let ui = g.ui.as_ref()?;
-    let pending = Some(g.pending.as_ref()?.0);
-    if ui.inventory.request() == pending {
-        return ui.inventory.menu_entries();
-    }
-    if ui.dialogs.open_req() != pending {
+    let (id, prompt) = g.pending.as_ref()?;
+    let shown = if ui.inventory.request() == Some(*id) {
+        ui.inventory.menu_entries()?
+    } else if ui.dialogs.open_req() == Some(*id) {
+        ui.dialogs.menu_entries()?
+    } else {
         return None;
-    }
-    ui.dialogs.menu_entries()
+    };
+    let Prompt::Menu { items, .. } = prompt else {
+        return Some(shown.to_vec());
+    };
+    Some(
+        shown
+            .iter()
+            .zip(items)
+            .map(|(e, i)| MenuEntry {
+                text: i.str.clone().unwrap_or_default(),
+                ..e.clone()
+            })
+            .collect(),
+    )
 }
 
 /// The inventory panel is closed.
@@ -2672,7 +2693,7 @@ fn menus() -> Vec<Step> {
             let Some(entries) = open_menu(g) else {
                 return Ok(false);
             };
-            if selected(entries).is_empty() {
+            if selected(&entries).is_empty() {
                 return Ok(false);
             }
             let wrong: Vec<&str> = entries
@@ -2688,14 +2709,14 @@ fn menus() -> Vec<Step> {
         }),
         key('-'),
         Step::Wait("'-' clears the selection", |g| {
-            Ok(open_menu(g).is_some_and(|e| selected(e).is_empty()))
+            Ok(open_menu(g).is_some_and(|e| selected(&e).is_empty()))
         }),
         Step::KeyFrom("the letter of \"Weapons\"", |g| entry_key(g, "Weapons")),
         Step::Wait("only \"Weapons\" selected", |g| {
             let Some(entries) = open_menu(g) else {
                 return Ok(false);
             };
-            match selected(entries).as_slice() {
+            match selected(&entries).as_slice() {
                 [] => Ok(false),
                 [w] if w == "Weapons" => Ok(true),
                 other => Err(format!("selected {other:?}")),

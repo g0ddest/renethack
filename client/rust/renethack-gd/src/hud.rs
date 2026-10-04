@@ -2266,6 +2266,11 @@ impl Hud {
         .collect()
     }
 
+    /// The log as it shows now (self-tests).
+    pub fn log_shown(&self) -> String {
+        self.log.get_parsed_text().to_string()
+    }
+
     /// Where the log is (the gamepad's hints keep right of it).
     pub fn log_rect(&self) -> Rect2 {
         self.log_panel.get_global_rect()
