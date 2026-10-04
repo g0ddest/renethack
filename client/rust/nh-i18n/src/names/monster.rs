@@ -248,7 +248,17 @@ impl MonsterName {
                 .unwrap_or_else(|| Arc::new(Noun::fixed(key, crate::grammar::Gender::Masc)))
         };
         let mut name = match &self.kind {
-            MonsterKind::Species(k) | MonsterKind::Pronoun(k) => RuName::new(noun("monster", k)),
+            MonsterKind::Species(k) => {
+                // "human" is a race's adjective as well (человеческий), and a
+                // player monster ("wizard") a role with its feminine
+                let mut n = RuName::new(noun("monster", k));
+                n.as_adjective = lex.adjective_reading(k);
+                n.female = lex
+                    .noun("female", &super::english::capitalized(k))
+                    .map(|f| Arc::new(f.uncapitalized()));
+                n
+            }
+            MonsterKind::Pronoun(k) => RuName::new(noun("monster", k)),
             MonsterKind::Called { species, name } => {
                 let mut n = RuName::new(noun("monster", species));
                 n.tails
@@ -278,7 +288,10 @@ impl MonsterName {
                 n
             }
             MonsterKind::Rank { section, key } => {
-                RuName::new(Arc::new(noun(section, key).uncapitalized()))
+                // "Wizard" is a role and a rank: either has the role's feminine
+                let mut n = RuName::new(Arc::new(noun(section, key).uncapitalized()));
+                n.female = lex.noun("female", key).map(|f| Arc::new(f.uncapitalized()));
+                n
             }
             MonsterKind::Name(who) => match lex.noun("name", who) {
                 Some(n) => RuName::new(n.clone()),
@@ -289,6 +302,7 @@ impl MonsterName {
         name.adjectives = renamed.filter_map(|a| lex.adjective(a).cloned()).collect();
         if self.your {
             name.possessive = lex.adjective("your").cloned();
+            name.own = lex.adjective("own").cloned();
         }
         name.count = self.count;
         name
@@ -366,5 +380,16 @@ mod tests {
         assert_eq!(ru("It", Case::Dat), "кому-то");
         assert_eq!(ru("you", Case::Acc), "вас");
         assert_eq!(ru("the stripling", Case::Gen), "новобранца");
+        // the welcome's words, read as monsters: a heroine's race and role
+        let her = |w: &str| {
+            parse(w).ru(lex).agreeing(
+                crate::grammar::Gender::Fem,
+                crate::grammar::Number::Sing,
+                Case::Nom,
+            )
+        };
+        assert_eq!(her("human"), "человеческая");
+        assert_eq!(her("Wizard"), "волшебница");
+        assert_eq!(her("Archeologist"), "женщина-археолог");
     }
 }

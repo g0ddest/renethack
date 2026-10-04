@@ -548,6 +548,7 @@ impl ObjectName {
         name.ordinal = self.ordinal;
         if self.owner == Some(Owner::Your) {
             name.possessive = lex.adjective("your").cloned();
+            name.own = lex.adjective("own").cloned();
         }
         let index = lex.index();
         name.statuses = self

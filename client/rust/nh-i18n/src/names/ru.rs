@@ -37,6 +37,8 @@ pub enum Tail {
 pub struct RuName {
     /// "your": ваш, agreeing with the name.
     pub possessive: Option<Arc<Adjective>>,
+    /// The "your" of a sentence whose subject is the hero: свой.
+    pub own: Option<Arc<Adjective>>,
     /// "the 2nd arrow": 2-я стрела.
     pub ordinal: Option<u32>,
     pub count: Count,
@@ -54,12 +56,18 @@ pub struct RuName {
     pub statuses: Vec<Status>,
     /// A price quote: " {покупка 10-20}".
     pub quote: Option<String>,
+    /// The word read as an adjective, for a template that makes it agree
+    /// ("lawful": законопослушная for a heroine; "human": человеческая).
+    pub as_adjective: Option<Arc<Adjective>>,
+    /// The feminine of a role, for a heroine (Целительница).
+    pub female: Option<Arc<Noun>>,
 }
 
 impl RuName {
     pub fn new(head: Arc<Noun>) -> RuName {
         RuName {
             possessive: None,
+            own: None,
             ordinal: None,
             count: Count::One,
             count_hidden: false,
@@ -70,7 +78,28 @@ impl RuName {
             tails: Vec::new(),
             statuses: Vec::new(),
             quote: None,
+            as_adjective: None,
+            female: None,
         }
+    }
+
+    /// The name agreeing with a noun of `gender` and `number`, in `case`:
+    /// an adjective reading takes that gender (законопослушная), a role its
+    /// feminine (Целительница); any other name is its form in the case.
+    pub fn agreeing(&self, gender: Gender, number: Number, case: Case) -> String {
+        if let Some(a) = &self.as_adjective {
+            return a.form(gender, number, false, case).to_string();
+        }
+        if gender == Gender::Fem
+            && number == Number::Sing
+            && let Some(f) = &self.female
+        {
+            let mut she = self.clone();
+            she.head = f.clone();
+            she.female = None;
+            return she.form(case);
+        }
+        self.form(case)
     }
 
     /// A name that never changes: masculine singular.
@@ -296,6 +325,21 @@ impl Phrase for RuName {
         counted.count = Count::Exactly(n);
         counted.count_hidden = true;
         counted.form(case)
+    }
+
+    fn agreeing(&self, gender: Gender, number: Number, case: Case) -> String {
+        RuName::agreeing(self, gender, number, case)
+    }
+
+    fn own(&self, case: Case) -> String {
+        match (&self.possessive, &self.own) {
+            (Some(_), Some(own)) => {
+                let mut mine = self.clone();
+                mine.possessive = Some(own.clone());
+                mine.form(case)
+            }
+            _ => self.form(case),
+        }
     }
 }
 

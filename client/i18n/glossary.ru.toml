@@ -2535,6 +2535,7 @@
 "high" = { ru = "верховный", src = "chosen", note = "high priest" }
 "grand" = { ru = "большой", src = "chosen", note = "the grand poohbah: большая шишка" }
 "your" = { ru = "ваш", src = "chosen", note = "possessive; agrees with the name" }
+"own" = { ru = "свой", src = "chosen", note = "your where the hero does the thing ({1:own}): вы бьёте своим топором" }
 "human" = { ru = "человеческий", src = "chosen", note = "the race adjective (role.c races[].adj)" }
 "unpaid" = { ru = "неоплаченный", src = "chosen", note = "paydoname(): an unpaid bag" }
 "right" = { ru = "правый", src = "chosen" }
@@ -2579,6 +2580,21 @@
 "A note" = { ru = "ля", src = "chosen" }
 "B flat" = { ru = "си-бемоль", src = "chosen" }
 "B note" = { ru = "си", src = "chosen" }
+
+[female]
+# the feminine of a role, for a heroine ({N:hero} in a template): Вы —
+# целительница, женщина-археолог; a role the engine already names by
+# gender (Priestess, Cavewoman) has none
+"Archeologist" = { ru = "Женщина-археолог", src = "chosen", note = "the adjectives before it agree with a woman" }
+"Barbarian" = { ru = "Варварка", src = "chosen" }
+"Healer" = { ru = "Целительница", src = "chosen" }
+"Knight" = { ru = "Женщина-рыцарь", src = "chosen" }
+"Monk" = { ru = "Монахиня", src = "chosen" }
+"Ranger" = { ru = "Женщина-следопыт", src = "chosen" }
+"Rogue" = { ru = "Плутовка", src = "chosen" }
+"Samurai" = { ru = "Женщина-самурай", src = "chosen" }
+"Tourist" = { ru = "Туристка", src = "chosen" }
+"Wizard" = { ru = "Волшебница", src = "chosen" }
 
 [name]
 # personal names the engine gives: the default pets (dog.c) and the

@@ -21,6 +21,19 @@ pub trait Phrase {
         let _ = n;
         self.form(case)
     }
+    /// The phrase with its "your" as свой, for a sentence whose subject
+    /// is the hero ("Вы бьёте своим топором"). By default its form.
+    fn own(&self, case: Case) -> String {
+        self.form(case)
+    }
+    /// The phrase agreeing with a noun of that gender and number, in
+    /// `case`: a word that is an adjective takes that gender ("lawful":
+    /// законопослушная), a role its feminine. By default its form in that
+    /// case.
+    fn agreeing(&self, gender: Gender, number: Number, case: Case) -> String {
+        let _ = (gender, number);
+        self.form(case)
+    }
 }
 
 /// What an argument of a message names, as the catalog knows it from the C

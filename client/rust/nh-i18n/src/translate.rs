@@ -488,6 +488,24 @@ impl Phrase for Padded {
             self.after
         )
     }
+
+    fn own(&self, case: crate::grammar::Case) -> String {
+        format!("{}{}{}", self.before, self.inner.own(case), self.after)
+    }
+
+    fn agreeing(
+        &self,
+        gender: Gender,
+        number: crate::grammar::Number,
+        case: crate::grammar::Case,
+    ) -> String {
+        format!(
+            "{}{}{}",
+            self.before,
+            self.inner.agreeing(gender, number, case),
+            self.after
+        )
+    }
 }
 
 /// A Russian template that is the format itself: "%c - %s." → "{1} - {2}.".
@@ -505,6 +523,8 @@ fn identity(t: &Template) -> RuTemplate {
                     select: None,
                     count_by: None,
                     skip: false,
+                    agree: None,
+                    own: false,
                     source: (i + 1).to_string(),
                 }));
                 i += 1;

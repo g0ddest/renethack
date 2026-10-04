@@ -30,7 +30,7 @@ pub use ru::{Count, RuName, Tail};
 pub use status::{Hand, Slots, Status};
 
 use crate::grammar::Gender;
-use crate::lexicon::{Lexicon, Noun};
+use crate::lexicon::{Adjective, Lexicon, Noun};
 use crate::phrase::{NameKind, Names, Phrase};
 
 /// The sections an object's name comes from, in the order a name is looked
@@ -200,18 +200,31 @@ impl Lexicon {
                 let Some(entry) = self.get(section, t) else {
                     continue;
                 };
-                if let Some(n) = entry.noun() {
-                    return Some(RuName::new(n.clone()));
+                let mut name = if let Some(n) = entry.noun() {
+                    RuName::new(n.clone())
+                } else if let Some(a) = entry.adjective() {
+                    RuName::new(Arc::new(a.as_noun(Gender::Masc)))
+                } else if let Some(t) = entry.fixed() {
+                    RuName::new(Arc::new(Noun::fixed(t, Gender::Masc)))
+                } else {
+                    continue;
+                };
+                name.as_adjective = self.adjective_reading(t);
+                if matches!(section, "role" | "rank") {
+                    name.female = self.noun("female", t).cloned();
                 }
-                if let Some(a) = entry.adjective() {
-                    return Some(RuName::new(Arc::new(a.as_noun(Gender::Masc))));
-                }
-                if let Some(t) = entry.fixed() {
-                    return Some(RuName::new(Arc::new(Noun::fixed(t, Gender::Masc))));
-                }
+                return Some(name);
             }
         }
         None
+    }
+
+    /// The word as an adjective, in whatever section has it so: "lawful",
+    /// "elven", and "human" (a race as a noun, an adjective in races[].adj).
+    pub(super) fn adjective_reading(&self, key: &str) -> Option<Arc<Adjective>> {
+        ["adjective", "race", "alignment", "color", "gender"]
+            .iter()
+            .find_map(|s| self.get(s, key)?.adjective().cloned())
     }
 
     /// A word in the plural makeplural() gives it: "feet", "hyphae".
@@ -293,6 +306,29 @@ mod tests {
         assert_eq!(p.form(Case::Loc), "2 абордажных крюках");
         let p = parse(NameKind::Monster, "the newt");
         assert_eq!(p.form(Case::Loc), "тритоне");
+    }
+
+    #[test]
+    fn words_agree_with_a_heroine() {
+        let lex = Lexicon::ru();
+        let her = |w: &str| {
+            lex.word(w)
+                .unwrap()
+                .agreeing(Gender::Fem, Number::Sing, Case::Nom)
+        };
+        assert_eq!(her("lawful"), "законопослушная");
+        assert_eq!(her("elven"), "эльфийская");
+        assert_eq!(her("human"), "человеческая");
+        assert_eq!(her("Healer"), "Целительница");
+        assert_eq!(her("Archeologist"), "Женщина-археолог");
+        let axe = Lexicon::ru().parse(NameKind::Object, "your axe").unwrap();
+        assert_eq!(axe.own(Case::Ins), "своим топором");
+        assert_eq!(axe.form(Case::Ins), "вашим топором");
+        let him = lex.word("Healer").unwrap();
+        assert_eq!(
+            him.agreeing(Gender::Masc, Number::Sing, Case::Ins),
+            "Целителем"
+        );
     }
 
     #[test]

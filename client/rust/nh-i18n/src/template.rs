@@ -17,6 +17,8 @@
 //! | `{1:sg\|один\|одну\|одно}` | the gender of argument 1's noun even when it is plural ("взять одну" of 3 стрелы) |
 //! | `{1:plural\|монету\|монеты\|монет}` | after the number argument 1: one (1, 21), few (2–4, 22–24), many (5–20, 0) |
 //! | `{2:by1}`, `{2:by1:acc}` | argument 2 as counted by the number argument 1: "стрелу", "стрелы", "стрел" |
+//! | `{2:ins:own}` | argument 2 with its "your" as свой, where the hero does the thing: "Вы бьёте {2:ins:own}" → своим топором |
+//! | `{3:hero}`, `{3:f}`, `{3:pl:gen}` | argument 3 agreeing with the hero, or with a masculine (`m`), feminine (`f`), neuter (`n`) or plural (`pl`) noun: a word that is an adjective takes that gender ("lawful": законопослушная), a role its feminine (Целительница); any other name stays as it is |
 //! | `{hero:gender\|сам\|сама}` | as the hero's gender: masculine, feminine |
 //! | `{1:skip}` | nothing: the Russian says otherwise what argument 1 says (a heading's fixed word, the "weapons" of a menu about the item itself) |
 //!
@@ -90,8 +92,20 @@ pub struct Placeholder {
     pub count_by: Option<usize>,
     /// `{2:skip}`: the argument is not shown.
     pub skip: bool,
+    /// `{3:hero}`, `{3:f}`: agreeing with the hero or with a gender.
+    pub agree: Option<Agree>,
+    /// `{2:own}`: its "your" as свой.
+    pub own: bool,
     /// As written, without the braces.
     pub source: String,
+}
+
+/// What a placeholder's argument agrees with.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Agree {
+    /// The hero, in the singular.
+    Hero,
+    Gender(Gender, Number),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -273,8 +287,13 @@ fn render_placeholder(p: &Placeholder, args: &[Value], hero: Gender) -> String {
         Some(Select::HeroGender(_)) => String::new(),
         None => {
             let case = p.case.unwrap_or(Case::Nom);
-            let form = match (p.count_by.and_then(|j| args.get(j)), v) {
-                (Some(Value::Number(n)), Value::Phrase(ph)) => ph.counted(n.unsigned_abs(), case),
+            let form = match (p.count_by.and_then(|j| args.get(j)), v, p.agree) {
+                (Some(Value::Number(n)), Value::Phrase(ph), _) => {
+                    ph.counted(n.unsigned_abs(), case)
+                }
+                (_, Value::Phrase(ph), _) if p.own => ph.own(case),
+                (_, Value::Phrase(ph), Some(Agree::Hero)) => ph.agreeing(hero, Number::Sing, case),
+                (_, Value::Phrase(ph), Some(Agree::Gender(g, n))) => ph.agreeing(g, n, case),
                 _ => v.form(case),
             };
             if p.cap { capitalize(&form) } else { form }
@@ -307,10 +326,18 @@ fn placeholder(src: &str) -> Result<Placeholder, TemplateError> {
     let mut selector = None;
     let mut count_by = None;
     let mut skip = false;
+    let mut agree = None;
+    let mut own = false;
     for w in words {
         match w.trim() {
             "cap" => cap = true,
             "skip" => skip = true,
+            "own" => own = true,
+            "hero" => agree = Some(Agree::Hero),
+            "m" => agree = Some(Agree::Gender(Gender::Masc, Number::Sing)),
+            "f" => agree = Some(Agree::Gender(Gender::Fem, Number::Sing)),
+            "n" => agree = Some(Agree::Gender(Gender::Neut, Number::Sing)),
+            "pl" => agree = Some(Agree::Gender(Gender::Masc, Number::Plur)),
             s @ ("gender" | "sg" | "num" | "plural") => selector = Some(s),
             by if by.starts_with("by") => match by[2..].parse::<usize>() {
                 Ok(k) if k >= 1 => count_by = Some(k - 1),
@@ -371,10 +398,17 @@ fn placeholder(src: &str) -> Result<Placeholder, TemplateError> {
             ]))
         }
     };
-    if select.is_some() && (case.is_some() || cap || count_by.is_some()) {
+    if select.is_some() && (case.is_some() || cap || count_by.is_some() || agree.is_some() || own) {
         return Err(TemplateError::SelectorWithCase(src.into()));
     }
-    if skip && (select.is_some() || case.is_some() || cap || count_by.is_some()) {
+    if skip
+        && (select.is_some()
+            || case.is_some()
+            || cap
+            || count_by.is_some()
+            || agree.is_some()
+            || own)
+    {
         return Err(TemplateError::Skip(src.into()));
     }
     Ok(Placeholder {
@@ -384,6 +418,8 @@ fn placeholder(src: &str) -> Result<Placeholder, TemplateError> {
         select,
         count_by,
         skip,
+        agree,
+        own,
         source: src.into(),
     })
 }
@@ -462,6 +498,76 @@ mod tests {
             render("С {1:ins}: {{ok}}", &[arrows()]),
             "С 3 стрелами: {ok}"
         );
+    }
+
+    /// "lawful": an adjective that agrees when asked.
+    struct Lawful;
+
+    impl Phrase for Lawful {
+        fn form(&self, case: Case) -> String {
+            ["законопослушный", "законопослушного"][usize::from(case != Case::Nom)].into()
+        }
+        fn gender(&self) -> Gender {
+            Gender::Masc
+        }
+        fn number(&self) -> Number {
+            Number::Sing
+        }
+        fn agreeing(&self, gender: Gender, number: Number, case: Case) -> String {
+            match (gender, number, case) {
+                (_, Number::Plur, _) => "законопослушные".into(),
+                (Gender::Fem, _, Case::Nom) => "законопослушная".into(),
+                (Gender::Fem, _, _) => "законопослушной".into(),
+                _ => self.form(case),
+            }
+        }
+    }
+
+    /// "your axe": its "your" can be свой.
+    struct YourAxe;
+
+    impl Phrase for YourAxe {
+        fn form(&self, case: Case) -> String {
+            ["ваш топор", "вашим топором"][usize::from(case == Case::Ins)].into()
+        }
+        fn gender(&self) -> Gender {
+            Gender::Masc
+        }
+        fn number(&self) -> Number {
+            Number::Sing
+        }
+        fn own(&self, case: Case) -> String {
+            ["свой топор", "своим топором"][usize::from(case == Case::Ins)].into()
+        }
+    }
+
+    #[test]
+    fn your_is_own_where_the_hero_does_the_thing() {
+        let axe = [Value::Phrase(Box::new(YourAxe))];
+        assert_eq!(
+            render("Вы бьёте {1:ins:own}.", &axe),
+            "Вы бьёте своим топором."
+        );
+        assert_eq!(render("{1:ins} бьют вас.", &axe), "вашим топором бьют вас.");
+        assert_eq!(render("{1:own}", &[newt()]), "тритон");
+    }
+
+    #[test]
+    fn words_agree_with_the_hero_or_a_gender() {
+        let t = RuTemplate::parse("Вы — {1:hero} {2:hero}.").unwrap();
+        let args = [Value::Phrase(Box::new(Lawful)), newt()];
+        assert_eq!(t.render(&args, Gender::Fem), "Вы — законопослушная тритон.");
+        assert_eq!(
+            t.render(&args, Gender::Masc),
+            "Вы — законопослушный тритон."
+        );
+        let lawful = [Value::Phrase(Box::new(Lawful))];
+        assert_eq!(render("{1:f:gen}", &lawful), "законопослушной");
+        assert_eq!(render("{1:pl}", &lawful), "законопослушные");
+        assert!(matches!(
+            RuTemplate::parse("{1:f:gender|а|б|в|г}"),
+            Err(TemplateError::SelectorWithCase(_))
+        ));
     }
 
     #[test]
