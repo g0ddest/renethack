@@ -213,7 +213,9 @@ fn kind(
             Count::One,
         ));
     }
-    if lenient && !rest.is_empty() {
+    // a name the engine gives (a default pet, a shopkeeper), or any name
+    // where one is expected
+    if lex.noun("name", rest).is_some() || (lenient && !rest.is_empty()) {
         return Some((MonsterKind::Name(rest.to_string()), Count::One));
     }
     None
@@ -269,7 +271,10 @@ impl MonsterName {
             MonsterKind::Rank { section, key } => {
                 RuName::new(Arc::new(noun(section, key).uncapitalized()))
             }
-            MonsterKind::Name(who) => RuName::fixed(who),
+            MonsterKind::Name(who) => match lex.noun("name", who) {
+                Some(n) => RuName::new(n.clone()),
+                None => RuName::fixed(who),
+            },
         };
         let renamed = self.adjectives.iter().map(String::as_str);
         name.adjectives = renamed.filter_map(|a| lex.adjective(a).cloned()).collect();
@@ -328,6 +333,10 @@ mod tests {
             MonsterKind::Name("Fido".into())
         );
         assert!(lex.parse_monster("Fido", true).is_none());
+        let pet = lex.parse_monster("Slasher", true).unwrap();
+        assert_eq!(pet.kind, MonsterKind::Name("Slasher".into()));
+        let zlaw = lex.parse_monster("Zlaw", true).unwrap().ru(lex);
+        assert_eq!(zlaw.gender(), crate::grammar::Gender::Fem);
         assert_eq!(ru("dog called Fido", Case::Gen), "собаки по имени Fido");
         assert_eq!(
             ru("Asidonhopo the invisible shopkeeper", Case::Dat),

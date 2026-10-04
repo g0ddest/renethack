@@ -33,7 +33,9 @@ head (the words that decline, when they are not the first noun: "лорд
 plural (true: the phrase has no singular), proper (true: no plural),
 adjnoun (true: the head declines like an adjective: Тёмный), hyphen
 ("last": only the last part of a hyphenated head declines: Тот-Амон),
-lemma (the dictionary word a plural head belongs to: свитки -> свиток).
+lemma (the dictionary word a plural head belongs to: свитки -> свиток),
+ru_pl (the nominative plural, when the words after the head change too:
+палец ноги, пальцы ног).
 """
 
 import os
@@ -47,11 +49,13 @@ GLOSSARY = os.path.join(ROOT, "client", "i18n", "glossary.ru.toml")
 LEXICON = os.path.join(ROOT, "client", "i18n", "lexicon.ru.toml")
 
 # how a section's names are declined
-ANIMATE = {"monster", "role", "rank", "god"}
-PROPER = {"artifact", "god", "place"}
+ANIMATE = {"monster", "role", "rank", "god", "name"}
+PROPER = {"artifact", "god", "place", "name"}
 ADJECTIVES = {"adjective", "color", "gender"}
 FIXED = {"label", "status", "heading", "condition", "monclass"}
-LINKS = {"called", "named", "labeled"}
+# words that join a name to what follows it, fixed: "по имени", "на уровень"
+LINKS = {"called", "named", "labeled", "to level", "to", "out of the dungeon", "to the Elemental Planes",
+         "to the end game"}
 # a few words in other sections are adjectives
 ADJECTIVE_KEYS = {
     ("race", "elven"), ("race", "dwarven"), ("race", "gnomish"), ("race", "orcish"),
@@ -94,6 +98,8 @@ def build_noun(section, en, g_entry):
         like=g_entry.get("like"), indeclinable=g_entry.get("indecl", False), proper=proper,
         adjnoun=g_entry.get("adjnoun", False), hyphen=g_entry.get("hyphen", "all"), lemma=g_entry.get("lemma"),
     )
+    if g_entry.get("ru_pl"):
+        f["pl"] = lm.phrase(g_entry["ru_pl"], anim, plural_only=True)["pl"]
     out = {"g": f["g"], "anim": anim, "src": f["how"]}
     for k in ("sg", "pl", "few", "loc"):
         if k in f:

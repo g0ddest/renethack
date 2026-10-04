@@ -14,6 +14,7 @@
 //! stood in a message and gets a [`RuName`] it can put in any case.
 
 mod english;
+mod feature;
 mod monster;
 mod object;
 mod ru;
@@ -38,8 +39,10 @@ const OBJECT_SECTIONS: [&str; 4] = ["object", "appearance", "class", "artifact"]
 
 /// The sections of words: what a message names that is neither a thing
 /// nor a creature, in the order a word is looked up.
-const WORD_SECTIONS: [&str; 22] = [
+const WORD_SECTIONS: [&str; 24] = [
     "terrain",
+    "surface",
+    "liquid",
     "trap",
     "place",
     "role",
@@ -75,6 +78,8 @@ pub struct Index {
     titles: HashMap<String, (&'static str, String)>,
     bodypart_plurals: HashMap<String, String>,
     currency_plurals: HashMap<String, String>,
+    /// The plurals of the words: "feet", "hyphae" -> (section, key).
+    word_plurals: HashMap<String, (&'static str, String)>,
     /// The longest object name, in words.
     max_words: usize,
 }
@@ -123,10 +128,22 @@ impl Index {
                 }
             }
         }
+        let mut word_plurals = HashMap::new();
+        for section in WORD_SECTIONS {
+            for (key, entry) in lex.entries(section) {
+                let many = makeplural(key);
+                if entry.noun().is_some_and(|n| n.has_plural()) && many != key {
+                    word_plurals
+                        .entry(many)
+                        .or_insert((section, key.to_string()));
+                }
+            }
+        }
         Index {
             objects,
             monsters,
             titles,
+            word_plurals,
             bodypart_plurals: status::plurals(lex, "bodypart"),
             currency_plurals: status::plurals(lex, "currency"),
             max_words,
@@ -153,18 +170,32 @@ impl Lexicon {
     }
 
     /// A closed-set word ("fountain", "the Astral Plane", "Valkyrie",
-    /// "lawful") as a name.
+    /// "lawful", "feet") or a feature of the map as the engine describes
+    /// it ("a staircase up to level 3", "altar to Tyr (lawful)", "thin
+    /// ice") as a name.
     pub fn word(&self, english: &str) -> Option<RuName> {
-        let candidates = [
-            english.to_string(),
-            english::uncapitalized(english),
-            english::strip_word(english, "the")
-                .map(str::to_string)
-                .unwrap_or_default(),
+        let text = english.trim();
+        let bare = ["the", "an", "a"]
+            .iter()
+            .find_map(|a| english::strip_word(text, a))
+            .unwrap_or(text);
+        self.word_entry(text)
+            .or_else(|| self.word_entry(bare))
+            .or_else(|| self.word_plural(bare))
+            .or_else(|| feature::parse(self, bare))
+    }
+
+    /// The entry of a word section, as spelled or with its first letter
+    /// changed ("the Gnomish Mines" for "The Gnomish Mines").
+    fn word_entry(&self, text: &str) -> Option<RuName> {
+        let spellings = [
+            text.to_string(),
+            english::uncapitalized(text),
+            english::capitalized(text),
         ];
-        for text in candidates.iter().filter(|t| !t.is_empty()) {
+        for t in spellings.iter().filter(|t| !t.is_empty()) {
             for section in WORD_SECTIONS {
-                let Some(entry) = self.get(section, text) else {
+                let Some(entry) = self.get(section, t) else {
                     continue;
                 };
                 if let Some(n) = entry.noun() {
@@ -179,6 +210,14 @@ impl Lexicon {
             }
         }
         None
+    }
+
+    /// A word in the plural makeplural() gives it: "feet", "hyphae".
+    fn word_plural(&self, text: &str) -> Option<RuName> {
+        let (section, key) = self.index().word_plurals.get(text)?;
+        let mut name = RuName::new(self.noun(section, key)?.clone());
+        name.count = Count::Some;
+        Some(name)
     }
 }
 

@@ -65,6 +65,9 @@ pub enum Status {
     Charges(String),
     /// Several parts of one group: "(weapon in hand, brightly lit)".
     Joined(Vec<Status>, &'static str),
+    /// Russian that agrees with nothing: an object's look in the
+    /// discoveries ("(сине-зелёный щит)").
+    Text(String),
     /// A group no pattern knows: kept in English.
     English(String),
 }
@@ -74,8 +77,7 @@ impl Status {
     /// number.
     pub fn render(&self, g: Gender, num: Number) -> String {
         match self {
-            Status::Charges(c) => c.clone(),
-            Status::English(e) => e.clone(),
+            Status::Charges(c) | Status::Text(c) | Status::English(c) => c.clone(),
             Status::Joined(parts, sep) => parts
                 .iter()
                 .map(|p| p.render(g, num))

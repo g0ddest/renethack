@@ -553,7 +553,12 @@ impl ObjectName {
         name.statuses = self
             .statuses
             .iter()
-            .map(|g| status::parse(lex, index, g))
+            .map(|g| match status::parse(lex, index, g) {
+                Status::English(e) => {
+                    look(lex, &self.base, &e).map_or(Status::English(e), Status::Text)
+                }
+                s => s,
+            })
             .collect::<Vec<Status>>();
         name.quote = self.quote.as_ref().map(|q| quote_ru(lex, q));
         match self.contents {
@@ -578,6 +583,56 @@ impl ObjectName {
             }
         }
     }
+}
+
+/// The classes whose look obj_typename() writes without the class word:
+/// "potion of healing (bubbly)".
+const LOOK_CLASSES: [&str; 8] = [
+    "potion",
+    "scroll",
+    "wand",
+    "ring",
+    "spellbook",
+    "amulet",
+    "gem",
+    "stone",
+];
+
+/// The look obj_typename() puts in parentheses after a known name, in the
+/// nominative: "potion of healing (bubbly)" -> пузырящееся, "elven shield
+/// (blue and green shield)" -> сине-зелёный щит, "scroll of identify
+/// (KIRJE)" -> KIRJE.
+fn look(lex: &Lexicon, base: &Base, group: &str) -> Option<String> {
+    if !matches!(base, Base::Thing { .. }) {
+        return None;
+    }
+    if let Some(label) = lex.get("label", group).and_then(|e| e.fixed()) {
+        return Some(label.to_string());
+    }
+    for class in LOOK_CLASSES {
+        if let Some(n) = lex.noun("appearance", &format!("{group} {class}")) {
+            let whole = n.singular(Case::Nom);
+            let class_ru = lex
+                .noun("class", class)
+                .map_or("", |c| c.singular(Case::Nom));
+            // пузырящееся (зелье), (книга заклинаний) с загнутыми уголками
+            let bare = whole
+                .strip_suffix(class_ru)
+                .map(str::trim_end)
+                .or_else(|| whole.strip_prefix(class_ru).map(str::trim_start))
+                .filter(|b| !b.is_empty() && !class_ru.is_empty());
+            return Some(bare.unwrap_or(whole).to_string());
+        }
+    }
+    for key in [group.to_string(), format!("pair of {group}")] {
+        if let Some(n) = lex
+            .noun("appearance", &key)
+            .or_else(|| lex.noun("object", &key))
+        {
+            return Some(n.singular(Case::Nom).to_string());
+        }
+    }
+    None
 }
 
 fn with_tail(mut name: RuName, tail: Tail) -> RuName {
@@ -791,6 +846,26 @@ mod tests {
         assert_eq!(
             ru("a +0 dagger (alternate weapon; not wielded)", Case::Nom),
             "+0 кинжал (запасное оружие; не в руках)"
+        );
+    }
+
+    #[test]
+    fn looks_in_the_discoveries() {
+        assert_eq!(
+            ru("potion of healing (bubbly)", Case::Nom),
+            "зелье лечения (пузырящееся)"
+        );
+        assert_eq!(
+            ru("elven shield (blue and green shield)", Case::Nom),
+            "эльфийский щит (сине-зелёный щит)"
+        );
+        assert_eq!(
+            ru("pair of elven boots (snow boots)", Case::Nom),
+            "эльфийские сапоги (зимние сапоги)"
+        );
+        assert_eq!(
+            ru("scroll of identify (KIRJE)", Case::Nom),
+            "свиток опознания (KIRJE)"
         );
     }
 

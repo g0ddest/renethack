@@ -295,6 +295,16 @@ pub fn uncapitalized(text: &str) -> String {
     }
 }
 
+/// `text` with its first letter in upper case: "The Gnomish Mines" for
+/// the "the Gnomish Mines" stairs_description() writes.
+pub fn capitalized(text: &str) -> String {
+    let mut c = text.chars();
+    match c.next() {
+        Some(f) => f.to_uppercase().chain(c).collect(),
+        None => String::new(),
+    }
+}
+
 /// `text` without the leading article or word of `prefixes`, case
 /// insensitive in its first letter: ("the newt", "The newt") -> "newt".
 pub fn strip_word<'a>(text: &'a str, word: &str) -> Option<&'a str> {
