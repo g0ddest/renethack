@@ -5569,6 +5569,14 @@
   =   (показать подходящее)
 (none)  [3c6b183d348f]
   =   (нет)
+1st Law of Hacking:  leaving is much more difficult than entering.  [2b22b6fbebf2]
+  =   Первый закон хакинга: выйти гораздо труднее, чем войти.
+2nd Law of Hacking:  first in, first out.  [f49b5e8dd59a]
+  =   Второй закон хакинга: первым вошёл — первым вышел.
+3rd Law of Hacking:  the last blow counts most.  [7d699b2c504a]
+  =   Третий закон хакинга: важнее всего последний удар.
+4th Law of Hacking:  you will find the exit at the entrance.  [3205480d6378]
+  =   Четвёртый закон хакинга: выход вы найдёте у входа.
 <%d,%d> is not considered viable; force anyway?  [0861f4661ca2]
   m   <1,1> не годится; всё равно?
   f   <3,3> не годится; всё равно?
@@ -5593,6 +5601,8 @@ A board beneath you squeaks %s loudly.  [1f9be8d03152]
   pl  Половица под вами громко скрипит на ноте 3 стрелы.
 A candelabrum affixed with seven candles shows the way with a magical light.  [581d8d45a9b5]
   =   Канделябр с семью свечами укажет путь волшебным светом.
+A chameleon imitating a mail daemon often delivers scrolls of fire.  [205ee04aa6d8]
+  =   Хамелеон, изображающий почтового демона, часто приносит свитки огня.
 A cloud of darkness falls upon you.  [fb7a94d3963a]
   =   На вас опускается облако тьмы.
 A cloud of gas puts you to sleep!  [49731d3ed038]
@@ -5602,12 +5612,24 @@ A coating wears off %s.  [1474230ee3bc]
   f   С крысы сходит покрытие.
   n   С копья сходит покрытие.
   pl  С 3 стрел сходит покрытие.
+A cockatrice corpse is guaranteed to be untainted!  [1213474502ee]
+  =   Труп василиска гарантированно свежий!
 A cream pie has two uses: food... and entertainment.  [244d91c6df9c]
   =   У кремового пирога два применения: еда... и развлечение.
 A crystal plate mail will not rust.  [884e2c160696]
   =   Хрустальный латный доспех не ржавеет.
 A dead body may protect your live body.  But only an item can protect an item.  [9f182d6caffc]
   =   Мёртвое тело может защитить ваше живое.  Но предмет защитит только предмет.
+A dead cockatrice is just a dead lizard.  [aed83d8abdc9]
+  =   Мёртвый василиск — просто мёртвая ящерица.
+A dragon is just a snake that ate a scroll of fire.  [02d496ac00b0]
+  =   Дракон — это просто змея, которая съела свиток огня.
+A fading corridor enlightens your insight.  [ab23f8bf0e0f]
+  =   Исчезающий коридор проясняет разум.
+A glowing potion is too hot to drink.  [66cbb49b950b]
+  =   Светящееся зелье слишком горячее, чтобы его пить.
+A good amulet may protect you against guards.  [40e7ad55c1e9]
+  =   Хороший амулет защитит вас от стражей.
 A gush of water hits %s on the %s!  [32a929ca833f]
   m   Струя воды бьёт тритона по тритону!
   f   Струя воды бьёт крысу по крысе!
@@ -5643,6 +5665,10 @@ A little dart shoots out at you!  [ee39fec2c8ec]
   =   В вас вылетает маленький дротик!
 A little goes a long way.  [8f5e9c4e9579]
   =   Немного — уже достаточно.
+A lizard corpse is a good thing to turn undead.  [5227bfacaa1f]
+  =   Трупом ящерицы удобно изгонять нежить.
+A long worm can be defined recursively.  So how should you attack it?  [908f3e72d0ce]
+  =   Длинного червя можно определить рекурсивно.  Так как же его атаковать?
 A magic vomit pump could be useful for gourmands.  [41ce24978218]
   =   Волшебный рвотный насос пригодился бы гурманам.
 A map coalesces in your mind!  [4ec805b616fd]
@@ -5651,6 +5677,8 @@ A monstrous mind is a toy forever.  [d498867feae8]
   =   Чудовищный разум — игрушка навсегда.
 A nymph knows how to unlock chains.  [be28e23edb3f]
   =   Нимфа умеет отпирать цепи.
+A nymph will be very pleased if you call her by her real name:  Lorelei.  [063fe67d95ef]
+  =   Нимфа будет очень рада, если вы назовёте её настоящим именем: Лорелея.
 A potion of blindness lets you see invisible things.  [4bb1c339e89f]
   =   Зелье слепоты позволяет видеть невидимое.
 A priest can get the gods to listen easily.  [a3e40676e895]
@@ -5659,6 +5687,12 @@ A priestess and a virgin you might be, but that unicorn won't care.  [fc06a305fe
   =   Будь вы хоть жрица и девственница, единорогу до этого нет дела.
 A ring of conflict is a bad thing if there is a nurse in the room.  [9c007cf6f3a1]
   =   Кольцо конфликта — плохая затея, если в комнате медсестра.
+A ring of dungeon master control is a great find.  [f34875e826e7]
+  =   Кольцо управления мастером подземелья — отличная находка.
+A ring of extra ring finger is useless if not enchanted.  [05d2848e69d7]
+  =   Кольцо лишнего безымянного пальца бесполезно без зачарования.
+A rope may form a trail in a maze.  [19c0c7b61b24]
+  =   Верёвка поможет отметить путь в лабиринте.
 A shiver runs up and down your %s!  [10754d62b25a]
   m   По тритону у вас пробегает дрожь!
   f   По крысе у вас пробегает дрожь!
@@ -5666,6 +5700,8 @@ A shiver runs up and down your %s!  [10754d62b25a]
   pl  По 3 стрелам у вас пробегает дрожь!
 A short sword is not as good as a long sword.  [216373c4ed8e]
   =   Короткий меч хуже длинного меча.
+A staff may recharge if you drop it for awhile.  [d5642bb7debd]
+  =   Посох может перезарядиться, если его ненадолго бросить.
 A succubus will go farther than a nymph.  [c915280e16aa]
   =   Суккуб зайдёт дальше нимфы.
 A trap door in %s opens and %s falls on your %s!  [3a68ab0a3511]
@@ -5675,8 +5711,16 @@ A trap door in %s opens and %s falls on your %s!  [3a68ab0a3511]
   pl  В 3 стрелах открывается люк, и 3 стрелы падают вам на 3 стрелы!
 A trap door opens up under you!  [88af9a06ec62]
   =   Под вами открывается люк!
+A visit to the Zoo is very educational; you meet interesting animals.  [fd182dbaba40]
+  =   Поход в зверинец очень познавателен: там встречаются интересные животные.
 A wand can exorcize a past explorer's ghost.  [ff2dbd91cc2e]
   =   Палочкой можно изгнать привидение прежнего исследователя.
+A wand of deaf is a more dangerous weapon than a wand of sheep.  [01e14ec8f251]
+  =   Палочка смерди — оружие опаснее, чем палочка сена.
+A wand of vibration might bring the whole cave crashing about your ears.  [c9213c868530]
+  =   Палочка вибрации может обрушить вам на голову всю пещеру.
+A winner never quits.  A quitter never wins.  [fb49bf6b1351]
+  =   Победитель никогда не сдаётся.  Сдавшийся никогда не побеждает.
 Achievement:  [72e49f32bfa9]
   =   Достижение:
 Achievements:  [6f1fcb999220]
@@ -5696,6 +5740,8 @@ Advance skills without practice?  [12c0880fa94a]
   =   Повысить навыки без тренировки?
 Affairs with nymphs are often very expensive.  [b2972950c346]
   =   Романы с нимфами обычно обходятся очень дорого.
+Afraid of mimics?  Try to wear a ring of true seeing.  [c97f17a81e41]
+  =   Боитесь мимиков?  Попробуйте надеть кольцо истинного зрения.
 Afraid of nymphs?  Wear a ring of adornment.  [1378362d84c9]
   =   Боитесь нимф?  Наденьте кольцо обаяния.
 Afraid of your valuables being stolen?  Carry more junk!  [3741934b46c5]
@@ -5706,6 +5752,8 @@ Aim for what?  [4e90fb513fa1]
   =   Что зацепить?
 All  [6a72085653e4]
   =   Все
+All monsters are created evil, but some are more evil than others.  [97e1e9c7896c]
+  =   Все монстры созданы злыми, но некоторые злее других.
 All monsters currently shown on the map:  [97ce1d62141b]
   =   Все монстры на карте:
 All objects currently shown on the map:  [f25ae82aa4f5]
@@ -5714,6 +5762,8 @@ All types  [30c8a0fc9c1a]
   =   Все типы
 All worn and wielded types  [70cb28745864]
   =   Всё надетое и всё в руках
+Always attack a floating eye from behind!  [b354491ec5f7]
+  =   Парящее око всегда атакуйте со спины!
 Always be aware of the phase of the moon!  [ad2bc5f14895]
   =   Всегда помните о фазе луны!
 Always pickup '<'; never pickup '>'  [a586b42a2007]
@@ -5724,12 +5774,20 @@ Amulets of Yendor are hard to make.  Even for a wand of wishing.  [cd2c84eac0ce]
   =   Амулеты Йендора трудно создать.  Даже палочке желаний.
 An arrow shoots out at you!  [346c0a6645a5]
   =   В вас вылетает стрела!
+An elven cloak is always the height of fashion.  [1c92f317babe]
+  =   Эльфийский плащ всегда на пике моды.
 An elven cloak is useful against magic.  [c2e9089bb1ea]
   =   Эльфийский плащ защищает от магии.
 An umber hulk can be a confusing sight.  [949be91e1158]
   =   От вида бурого увальня можно растеряться.
 Analyze throne?  [950c6e9e51c7]
   =   Исследовать трон?
+Any small object that is accidentally dropped will hide under a larger object.  [c4ff43dd08c0]
+  =   Любой мелкий предмет, случайно оброненный, спрячется под предметом покрупнее.
+Archeologists are very squishy, often found under boulders.  [65c26701dc91]
+  =   Археологи очень мягкие, их часто находят под валунами.
+Archeologists find more bones piles.  [26c7173a1611]
+  =   Археологи находят больше куч костей.
 Are you sure you want to enter?  [de3090869465]
   =   Вы уверены, что хотите войти?
 Are you sure you want to pray?  [e37d6de15075]
@@ -5790,6 +5848,8 @@ Attempt to disarm trap  [668756245b3e]
   =   Попытаться обезвредить ловушку
 Attributes:  [b8087185e5ee]
   =   Свойства:
+Austin Powers says: My Mojo is back!  Yeah, baby!  [7ef017e97684]
+  =   Остин Пауэрс говорит: моё моджо снова со мной!  Йе, бейби!
 Auto-select every item being worn or wielded  [386aaaffbb6a]
   =   Выбрать всё надетое и всё, что в руках
 Auto-select every relevant item  [625f1902b43e]
@@ -5802,12 +5862,18 @@ BOOM!  They explode!  [cc976a1a821b]
   =   БАБАХ!  Они взрываются!
 Background:  [0ad42765ddcf]
   =   Происхождение:
+Balrogs do not appear above level 20.  [d599abbe19da]
+  =   Балроги не встречаются выше 20-го уровня.
+Banana peels work especially well against Keystone Kops.  [06dd8fe124d3]
+  =   Банановая кожура особенно хорошо действует на кистоунских копов.
 Bandaging wounds helps keep up appearances.  [21ca14bf18a6]
   =   Перевязанные раны помогают сохранить приличный вид.
 Bashing monsters with a bow is not such a good idea.  [7a4f1c0d2e7a]
   =   Колотить монстров луком — не лучшая мысль.
 Basics:  [f2a317699c1c]
   =   Основное:
+Be careful when eating bananas.  Monsters might slip on the peels.  [5017089c2847]
+  =   Осторожнее с бананами.  Монстры могут поскользнуться на кожуре.
 Be careful!  New moon tonight.  [a3dfd51209d6]
   =   Осторожно!  Сегодня новолуние.
 Be careful!  The Wizard may plan an ambush!  [65b0cd2a264e]
@@ -5821,8 +5887,16 @@ Become %s?  [9254005c98f8]
   pl  Стать 3 стрелами?
 Become what kind of monster? [type the name]  [06357e84a194]
   =   В какого монстра превратиться? [введите название]
+Better leave the dungeon; otherwise you might get hurt badly.  [67d2c4c715da]
+  =   Лучше покиньте подземелье, а то можете сильно пострадать.
+Beware of the potion of nitroglycerin -- it's not for the weak of heart.  [2a20eb1cbb85]
+  =   Берегитесь зелья нитроглицерина — оно не для слабых сердцем.
 Beware, there will be no return!  Still climb?  [b569a8915411]
   =   Берегитесь, пути назад не будет!  Всё равно подняться?
+Beware:  there's always a chance that your wand explodes as you try to zap it!  [19c2760deba2]
+  =   Осторожно: палочка всегда может взорваться, когда вы ею взмахнёте!
+Beyond the 23rd level lies a happy retirement in a room of your own.  [89f615cf87b0]
+  =   За 23-м уровнем вас ждёт счастливая пенсия в отдельной комнате.
 Bind '%s' to what command?  [8d9281045ed3]
   m   На какую команду назначить 'тритон'?
   f   На какую команду назначить 'крыса'?
@@ -5892,6 +5966,8 @@ Change %s @ %s into what?  [72a8d7b071f4]
   f   Во что превратить крысу @ крыса?
   n   Во что превратить копьё @ копьё?
   pl  Во что превратить 3 стрелы @ 3 стрелы?
+Changing your suit without dropping your sword?  You must be kidding!  [0943168bd087]
+  =   Переодеться, не выпуская меча?  Вы шутите!
 Characteristics:  [69803692f054]
   =   Характеристики:
 Check %s for a trap?  [ed3e36a52459]
@@ -5926,6 +6002,10 @@ Click!  You trigger a rolling boulder trap!  [1037a67d0a3c]
   =   Щёлк!  Вы приводите в действие ловушку с катящимся валуном!
 Close the door  [3c9e34fa34be]
   =   Закрыть дверь
+Close the door!  You're letting the heat out!  [e1bc4972351c]
+  =   Закройте дверь!  Тепло уходит!
+Cockatrices might turn themselves to stone faced with a mirror.  [c471671debb9]
+  =   Василиски могут окаменеть, увидев себя в зеркале.
 Comestibles  [c238700e8163]
   =   Еда
 Command %s requires a parameter:  [1efe3e8717df]
@@ -5941,6 +6021,8 @@ Concise conquest:  Control, confuse, conjure, condemn.  [65882aea9e66]
   =   Завоевание вкратце: подчини, помути, призови, погуби.
 Conserve energy, turn off the lights.  [e3e9d5cf6a2f]
   =   Берегите энергию, гасите свет.
+Consumption of home-made food is strictly forbidden in this dungeon.  [bb5e5e3e4eb3]
+  =   Употребление домашней еды в этом подземелье строго запрещено.
 Contents of %s %s  [98358c9c1c9e]
   m   Содержимое тритона тритона
   f   Содержимое крысы крысы
@@ -5998,6 +6080,14 @@ Current skills:  (%d slots available)  [9406bb9acff4]
   pl  Текущие навыки:  (свободных слотов: 21)
 Currently known spells  [ad7cc3284c0d]
   =   Известные заклинания
+Dark room?  Your chance to develop your photographs!  [3fe277d1b011]
+  =   Тёмная комната?  Самое время проявить фотографии!
+Dark rooms are not *completely* dark:  just wait and let your eyes adjust...  [54148a192ced]
+  =   Тёмные комнаты темны не *совсем*: подождите, пока глаза привыкнут...
+David London sez, "Hey guys, *WIELD* a lizard corpse against a cockatrice!"  [1e15fe2683a2]
+  =   Дэвид Лондон грит: "Ребята, *ВОЗЬМИТЕ В РУКИ* труп ящерицы против василиска!"
+Death is just life's way of telling you you've been fired.  [b5c9791f991f]
+  =   Смерть — это просто способ, которым жизнь сообщает, что вы уволены.
 Debug Identify  [50ba0172a20c]
   =   Отладочное опознание
 Debug Identify -- unidentified or partially identified item  [56d01726e8fe]
@@ -6008,6 +6098,14 @@ Debugging Extended Commands  [cafef674cd85]
   =   Отладочные расширенные команды
 Delicious!  Must be a Macintosh!  [978510d59d1d]
   =   Восхитительно!  Должно быть, «Макинтош»!
+Demi-gods don't need any help from the gods.  [dae749be30f3]
+  =   Полубогам помощь богов не нужна.
+Demons *HATE* Priests and Priestesses.  [5af8f27cc8fa]
+  =   Демоны *НЕНАВИДЯТ* жрецов и жриц.
+Didn't you forget to pay?  [196c5895eae1]
+  =   Вы не забыли заплатить?
+Didn't your mother tell you not to eat food off the floor?  [23103ef89b85]
+  =   Разве мама не говорила вам не есть с пола?
 Die?  [f8ad41e7fcf0]
   =   Умереть?
 Dig with this digging tool  [dae46cd84e76]
@@ -6074,6 +6172,8 @@ Dip your %s into the sink?  [77b644a9c78b]
   f   Окунуть крысу в раковину?
   n   Окунуть копьё в раковину?
   pl  Окунуть 3 стрелы в раковину?
+Direct a direct hit on your direct opponent, directing in the right direction.  [8c6b1967ca86]
+  =   Направьте прямой удар на прямого противника, направляя в правильном направлении.
 Disarm it?  [7cb3aa0366a0]
   =   Обезвредить?
 Discovered %s in 'sortloot' order  [0f1e37e3398d]
@@ -6126,6 +6226,8 @@ Do you want to change into %s?  [6491b35b0de4]
   pl  Превратиться в 3 стрелы?
 Do you want to enter explore mode?  [de6c7d592dc3]
   =   Перейти в режим исследования?
+Do you want to make more money?  Sure, we all do!  Join the Fort Ludios guard!  [55b24868eeec]
+  =   Хотите больше зарабатывать?  Конечно, все хотят!  Вступайте в стражу Форта Лудиос!
 Do you want to remove the saddle from %s?  [0350e3639da7]
   m   Снять седло с тритона?
   f   Снять седло с крысы?
@@ -6147,12 +6249,18 @@ Do you want to try to disarm it?  [45434f45fb87]
   =   Попробовать обезвредить?
 Do you want your possessions identified?  [5f87a3012c1e]
   =   Опознать ваши вещи?
+Does your boss know what you're doing right now?  [ba673eb3268c]
+  =   А ваш начальник знает, чем вы сейчас занимаетесь?
 Dogs are attracted by the smell of tripe.  [fbbdf5b20c06]
   =   Собак манит запах рубца.
 Dogs are superstitious; they never step on cursed items.  [d94b8b019e45]
   =   Собаки суеверны: на проклятые вещи они не наступают.
 Dogs of ghosts aren't angry, just hungry.  [326b7b09784d]
   =   Собаки привидений не злые, просто голодные.
+Don't bother wishing for things.  You'll probably find one on the next level.  [1d122dcb0490]
+  =   Не тратьте желания.  Скорее всего, то же самое найдётся на следующем уровне.
+Don't eat too much:  you might start hiccoughing!  [a37f29d91892]
+  =   Не объедайтесь: начнёте икать!
 Don't forget!  Large dogs are MUCH harder to kill than little dogs.  [5ffd89186d5d]
   =   Не забывайте!  Большую собаку убить НАМНОГО труднее, чем собачку.
 Don't know what to hit.  [ced2db95b788]
@@ -6161,6 +6269,10 @@ Don't lash out at people while blinded.  [f5262e79416a]
   =   Ослепнув, не кидайтесь на людей.
 Don't mess with shopkeepers, or you'll get the Guild after you.  [7ef78db003be]
   =   Не связывайтесь с лавочниками, не то за вами придёт Гильдия.
+Don't play NetHack at your work; your boss might hit you!  [507dfe4e8c3b]
+  =   Не играйте в NetHack на работе: начальник может вас ударить!
+Don't tell a soul you found a secret door, otherwise it isn't a secret anymore.  [b1786a4dfdf1]
+  =   Никому не говорите, что нашли потайную дверь, иначе она перестанет быть тайной.
 Done.  [e2bcda84facb]
   =   Готово.
 Dragons never whip their children; they wouldn't feel it!  [053b7c7915ef]
@@ -6176,6 +6288,8 @@ Drink from the sink?  [8cb11b265952]
   =   Выпить из раковины?
 Drink the water around you?  [54ca708e4183]
   =   Выпить окружающую вас воду?
+Drinking potions of booze may land you in jail if you are under 21.  [faa624a8a04a]
+  =   Распитие флаконов выпивки до 21 года может привести вас за решётку.
 Drop items  [f98c8639a637]
   =   Положить предметы
 Drop the %s corpse without %s protection on?  [4eab68ee6ae2]
@@ -6229,6 +6343,8 @@ Drop this stack  [703156c568e5]
   =   Положить эту стопку
 Drop what type of items?  [a76b2f6c0522]
   =   Какие предметы положить?
+Drop your vanity and get rid of your jewels!  Pickpockets about!  [d1cd49081a7f]
+  =   Оставьте тщеславие и избавьтесь от драгоценностей!  Кругом карманники!
 Dry up fountain?  [0f9743408b2c]
   =   Осушить фонтан?
 Dumb move!  You strain a muscle.  [57461d3230d8]
@@ -6244,6 +6360,8 @@ Eat %s  [b17dc354c3bf]
   f   Съесть крысу
   n   Съесть копьё
   pl  Съесть 3 стрелы
+Eat 10 cloves of garlic and keep all humans at a two-square distance.  [0458cbe69dce]
+  =   Съешьте 10 зубчиков чеснока, и все люди будут держаться от вас за две клетки.
 Eat it?  [f5a25a6cb6eb]
   =   Съесть?
 Eat one of these  [5fdb873075e1]
@@ -6262,10 +6380,16 @@ Eating a wraith is a rewarding experience!  [c7dba131460d]
   =   Съеденный призрак прибавит вам опыта!
 Eating unpaid leprechauns may be advantageous.  [cd2b356a863e]
   =   Съесть неоплаченного лепрекона бывает выгодно.
+Eels hide under mud.  Use a unicorn to clear the water and make them visible.  [674e3272358e]
+  =   Угри прячутся в иле.  Чтобы очистить воду и увидеть их, позовите единорога.
+Eels will help you tie your shoes.  [a98909226ea1]
+  =   Угри помогут вам завязать шнурки.
 Elbereth has quite a reputation around these parts.  [f40a1e79b70d]
   =   Слово Elbereth в здешних краях пользуется большим уважением.
 Elf corpses are incompatible with the sandman, and at times the gods as well.  [aaa21a0bd22d]
   =   Трупы эльфов не ладят с Песочным человеком, а порой и с богами.
+Elf has extra speed.  [9df65a93b09b]
+  =   У эльфа повышенная скорость.
 Elf is about to die.  [9e0d5f3f93e1]
   =   Эльф вот-вот умрёт.
 Elf needs food, badly!  [288450e016a6]
@@ -6284,6 +6408,8 @@ Engrave on the %s with this item  [444c64b7c517]
   f   Вырезать надпись на крысе этим предметом
   n   Вырезать надпись на копье этим предметом
   pl  Вырезать надпись на 3 стрелах этим предметом
+Engrave your wishes with a wand of wishing.  [e7156f05915f]
+  =   Записывайте свои желания палочкой желаний.
 Engulfed Creatures  [878617b7d0d2]
   =   Поглощённые существа
 Enter %s text value to match:  [ab6b5c6209b5]
@@ -6307,8 +6433,24 @@ Even evil players have a guardian angel.  [fb7f62ef9423]
   =   Даже у злых игроков есть ангел-хранитель.
 Even the most powerful heroes sometimes need to quaff away their injuries.  [683650c2931e]
   =   Даже могучим героям порой приходится запивать раны зельем.
+Eventually you will come to admire the swift elegance of a retreating nymph.  [17e474471a45]
+  =   Со временем вы оцените стремительное изящество убегающей нимфы.
 Ever fought with an enchanted tooth?  [32054a6e49f1]
   =   Пробовали сражаться зачарованным зубом?
+Ever heard hissing outside?  I *knew* you hadn't!  [0b6f909f4930]
+  =   Слышали когда-нибудь шипение снаружи?  Я *так* и знал, что нет!
+Ever lifted a dragon corpse?  [36e559d1953f]
+  =   Вы когда-нибудь поднимали труп дракона?
+Ever seen a leocrotta dancing the tengu?  [252e1bedea34]
+  =   Видели когда-нибудь, как левкрота пляшет тэнгу?
+Ever seen your weapon glow plaid?  [65577d1cdc05]
+  =   Видели, как ваше оружие светится в клеточку?
+Ever tamed a shopkeeper?  [1249276973d2]
+  =   Приручали когда-нибудь лавочника?
+Ever tried digging through a Vault Guard?  [ad675df522a8]
+  =   Пробовали прокопаться сквозь стража хранилища?
+Ever tried enchanting a rope?  [d7d6b7629834]
+  =   Пробовали зачаровать верёвку?
 Ever tried reading while confused?  [7937e2948089]
   =   Пробовали читать в замешательстве?
 Ever tried to lock a troll inside a large box?  [928f52704030]
@@ -6374,12 +6516,16 @@ Fine goods for sale:  [63bd0b029bf3]
   =   Отличные товары на продажу:
 Flip a coin  [b14d0cd58b85]
   =   Подбросить монетку
+Floating eyes can't stand Hawaiian shirts.  [e1cab72d7af0]
+  =   Парящие очи не выносят гавайских рубашек.
 For a good time engrave `Elbereth'.  [7b757d3c7d25]
   =   Для приятного времяпрепровождения начертите `Elbereth'.
 For an instant you could see right through yourself!  [b8fd502f7b9c]
   =   На миг вы видите себя насквозь!
 For an instant you couldn't see yourself!  [f6b84ec6e39c]
   =   На миг вы перестаёте себя видеть!
+For any remedy there is a misery.  [528df914b3fa]
+  =   На любое лекарство найдётся своя хворь.
 For some reason, you feel your presence is known.  [9f4859b2cf9d]
   =   Почему-то вы чувствуете, что о вашем присутствии знают.
 For what do you wish  [950698d53808]
@@ -6410,6 +6556,8 @@ Getting hungry?  Stop wearing rings!  [4d25d043935f]
   =   Проголодались?  Снимите кольца!
 Getting too warm?  Take off that Amulet of Yendor and stay away from the exit!  [3cb1f7862b57]
   =   Жарко стало?  Снимите-ка Амулет Йендора и держитесь подальше от выхода!
+Giant bats turn into giant vampires.  [3a6b4ead3b82]
+  =   Гигантские летучие мыши превращаются в гигантских вампиров.
 Gift an artifact?  [0af4b98306cf]
   =   Даровать артефакт?
 Go down the ladder  [9354dc250a90]
@@ -6428,6 +6576,8 @@ Gods look down their noses at demigods.  [4e2f88540201]
   =   Боги смотрят на полубогов свысока.
 Gods love cats and dogs.  [89f2cf3d8fab]
   =   Боги любят кошек и собак.
+Good day for overcoming obstacles.  Try a steeplechase.  [18917603445e]
+  =   Хороший день для преодоления препятствий.  Попробуйте стипль-чез.
 Got a question?  Try rec.games.roguelike.nethack.  [65d6d6978d35]
   =   Есть вопрос?  Загляните в rec.games.roguelike.nethack.
 Grapple something with this hook  [dd8d51491d07]
@@ -6436,6 +6586,8 @@ Grave robbers sometimes get rich.  [dff8afa918c1]
   =   Грабители могил порой богатеют.
 Guy Montag keeps his scrolls in a bag.  [ce56d6c3ef57]
   =   Гай Монтэг держит свитки в мешке.
+Half Moon tonight.  (At least it's better than no Moon at all.)  [330cb0e33c33]
+  =   Сегодня половина луны.  (Всё лучше, чем совсем без луны.)
 Handle your flasks carefully -- there might be a ghost inside!  [d552f9f17acc]
   =   Обращайтесь с флягами осторожно: внутри может сидеть привидение!
 Having fun sitting on the %s?  [5b98526d0160]
@@ -6459,6 +6611,10 @@ Holy water has many uses.  [fa56bef9aa19]
   =   У святой воды много применений.
 Horses trust their riders, even when not so deserved.  [f90fa5e0a058]
   =   Лошади доверяют своим всадникам, даже когда те этого не заслуживают.
+Housecats have nine lives, kittens only one.  [5be4aea537a7]
+  =   У домашних кошек девять жизней, а у котят — только одна.
+How long can you tread water?  [7413e83d57d5]
+  =   Долго вы продержитесь на плаву?
 How much will you offer (suggested: %ld or %ld)?  [4927766b0b39]
   m   Сколько вы предложите (советуем 1 или 1)?
   f   Сколько вы предложите (советуем 3 или 3)?
@@ -6470,8 +6626,12 @@ Huh, What?  Where am I?  [ea24f8e6e00a]
   =   А?  Что?  Где я?
 Hunger is a confusing experience for a dog!  [cf4b200290cd]
   =   Голод сбивает собаку с толку!
+Hungry?  There is an abundance of food on the next level.  [6447c2c59df8]
+  =   Проголодались?  На следующем уровне еды навалом.
 I can't see a trap there.  [76bb406a01d0]
   =   Не вижу там ловушки.
+I guess you've never hit a mail daemon with the Amulet of Yendor...  [611d6a824b55]
+  =   Наверное, вы ещё ни разу не били почтового демона Амулетом Йендора...
 I once knew a hacker who ate too fast and choked to death.  [54339a445c10]
   =   Знавал я хакера, который ел слишком быстро и подавился насмерть.
 I see no monster there.  [bcb85e274c0d]
@@ -6488,20 +6648,38 @@ I'm watching you.  -- The Wizard of Yendor  [7d23aecd657c]
   =   Я слежу за вами.  — Волшебник Йендора
 Ice boxes keep your food fresh.  [436168ba56c1]
   =   В леднике еда остаётся свежей.
+If there's a spot of blood on your hands, why not wash them?  [7bbc57bd711e]
+  =   Если на руках пятно крови, почему бы их не вымыть?
 If you are being punished, it's done with a deadly weapon.  [a70b2199ce50]
   =   Если вас наказывают, то смертоносным оружием.
+If you are the shopkeeper, you can take things for free.  [3cd47db75545]
+  =   Если вы — лавочник, можете брать вещи бесплатно.
+If you ask really nicely, the Wizard will give you the Amulet.  [fe60878e84b4]
+  =   Если очень вежливо попросить, Волшебник отдаст вам Амулет.
 If you can't breathe air, how can you drink liquid?  [b9241eaedff9]
   =   Если вы не дышите воздухом, как вы будете пить?
+If you can't learn to do it well, learn to enjoy doing it badly.  [3ed909150793]
+  =   Если не можете научиться делать это хорошо, научитесь получать удовольствие, делая это плохо.
 If you kill the Wizard, you get promoted to demi-god.  [565dcefc1ea2]
   =   Убьёте Волшебника — станете полубогом.
 If you need a wand of digging, kindly ask the minotaur.  [a975d06ba1a4]
   =   Нужна палочка копания?  Вежливо попросите у минотавра.
+If you thought the Wizard was bad, just wait till you meet the Warlord!  [3d39218d07e6]
+  =   Если вам казалось, что Волшебник плох, подождите, пока встретите Военачальника!
+If you turn blind, don't expect your dog to be turned into a seeing-eye dog.  [f34f075e6d34]
+  =   Если ослепнете, не ждите, что ваша собака станет собакой-поводырём.
+If you want to feel great, you must eat something real big.  [cdea6b8ee1e3]
+  =   Хотите почувствовать себя великим — съешьте что-нибудь по-настоящему большое.
+If you want to float, you'd better eat a floating eye.  [87304e5b30ce]
+  =   Хотите парить — съешьте парящее око.
 If you want to hit, use a dagger.  [42aaa1f50609]
   =   Хотите попасть — берите кинжал.
 If you want to rob a shop, train your dog.  [903673d34c06]
   =   Хотите ограбить лавку — дрессируйте собаку.
 If you're lost, try buying a map next time you're in a shop.  [166a7011faab]
   =   Заблудились?  В следующий раз купите в лавке карту.
+If your ghost kills a player, it increases your score.  [80f1d01b268e]
+  =   Если ваше привидение убьёт игрока, ваш счёт вырастет.
 If your hands are greasy, why not wash them?  [35c446747eaf]
   =   Если руки жирные, почему бы их не вымыть?
 If your items get destroyed, you weren't wearing the right ring.  [888dbed51b8c]
@@ -6529,6 +6707,8 @@ In what direction do you want to dig? [%s]  [ce0fbafaee6b]
   pl  В каком направлении копать? [3 стрелы]
 In what direction?  [23ff0855b202]
   =   В каком направлении?
+Increase mindpower:  Tame your own ghost!  [96376c0ccf06]
+  =   Развивайте силу разума: приручите собственное привидение!
 Inside a shop you better take a look at the price tags before buying anything.  [83664fec9fa0]
   =   В лавке лучше посмотреть на ценники, прежде чем что-то покупать.
 Interesting...  [ecd6a5986385]
@@ -6545,6 +6725,8 @@ Is this ok? [ynaq]  [281b7c52cb8f]
   =   Всё верно? [ynaq]
 Is this ok? [ynq]  [cdaa87122186]
   =   Всё верно? [ynq]
+It furthers one to see the great man.  [bad8f5aed355]
+  =   Полезно повидать великого человека.
 It is bad manners to use a wand in a shop.  [9470995665ca]
   =   Пользоваться палочкой в лавке — дурной тон.
 It is dangerous to visit a graveyard at midnight.  [60282c983d6a]
@@ -6575,6 +6757,8 @@ It would be peculiarly sad were your dog turned to stone.  [3a5edb79d615]
   =   Было бы особенно грустно, если бы ваша собака окаменела.
 It's a 'd' eats 'd' world.  [26b9cb26ee88]
   =   В этом мире 'd' ест 'd'.
+It's easy to overlook a monster in a wood.  [26d8d301870a]
+  =   Монстра в лесу легко не заметить.
 It's like talking to a wall.  [b36ee16b6d60]
   =   Всё равно что разговаривать со стеной.
 Itemized billing?  [8f4c2e7b88e6]
@@ -6593,6 +6777,8 @@ Jump in?  [3985743ecfe8]
   =   Прыгнуть внутрь?
 Just because it says READ ME doesn't mean you should.  [344f54a4bdb1]
   =   Если на свитке написано ПРОЧТИ МЕНЯ, это ещё не значит, что его надо читать.
+Just below any trap door there may be another one.  Just keep falling!  [52c970cb88af]
+  =   Прямо под любым люком может оказаться ещё один.  Падайте дальше!
 Just picked up: %s  [bf8231949896]
   m   Только что подобрано: тритон
   f   Только что подобрано: крыса
@@ -6600,6 +6786,10 @@ Just picked up: %s  [bf8231949896]
   pl  Только что подобрано: 3 стрелы
 KAABLAMM!!!  You triggered a land mine!  [80a1795b1eaa]
   =   БАБАХ!!!  Вы наступили на мину!
+Katanas are very sharp; watch you don't cut yourself.  [6a724e1f7587]
+  =   Катаны очень острые: смотрите не порежьтесь.
+Keep a clear mind:  quaff clear potions.  [6daa93007172]
+  =   Сохраняйте ясность ума: пейте прозрачные зелья.
 Keep your armors away from rust.  [73ccd6db5107]
   =   Берегите доспехи от ржавчины.
 Keep your weaponry away from acids.  [7d434bb6471f]
@@ -6620,18 +6810,36 @@ Kick the door  [054d1e91de6b]
   =   Пнуть дверь
 Kick your steed?  [42903701a821]
   =   Пнуть своего скакуна?
+Kicking the terminal doesn't hurt the monsters.  [6d1851f7844a]
+  =   Пинать терминал бесполезно: монстрам от этого не больно.
 Kill a unicorn of your color and you kill your luck.  [516422e29fce]
   =   Убьёте единорога своего цвета — убьёте свою удачу.
+Killer bees keep appearing till you kill their queen.  [b20353abf8d1]
+  =   Пчёлы-убийцы будут появляться, пока вы не убьёте их матку.
+Killer bunnies can be tamed with carrots only.  [54625e25c02a]
+  =   Кроликов-убийц можно приручить только морковью.
 Lash out with this whip  [2350a71c4be8]
   =   Хлестнуть этим кнутом
 Latest messages:  [c8e85637d89d]
   =   Последние сообщения:
+Latest news?  Put `rec.games.roguelike.nethack' in your .newsrc!  [e2fc1607e671]
+  =   Свежие новости?  Добавьте `rec.games.roguelike.nethack' в свой .newsrc!
+Learn how to spell.  Play NetHack!  [0c6551bab845]
+  =   Хотите научиться грамотно колдовать?  Играйте в NetHack!
 Leather is waterproof.  Ever see a cow with an umbrella?  [ef2bca9882c8]
   =   Кожа не промокает.  Вы когда-нибудь видели корову с зонтиком?
 Left  [8ae1c34bd37f]
   =   Левая
 Leprechauns are the most skilled cutpurses in this dungeon.  [69b5aaa19a6b]
   =   Лепреконы — самые ловкие карманники в этом подземелье.
+Leprechauns hide their gold in a secret room.  [64c2f9f65912]
+  =   Лепреконы прячут золото в тайной комнате.
+Let your fingers do the walking on the yulkjhnb keys.  [810d1ef8dec6]
+  =   Пусть ваши пальцы прогуляются по клавишам yulkjhnb.
+Let's face it:  this time you're not going to win.  [49a4f568cf41]
+  =   Посмотрим правде в глаза: на этот раз вы не победите.
+Let's have a party, drink a lot of booze.  [cd5a261712da]
+  =   Давайте устроим вечеринку и напьёмся!
 Light the candelabrum  [20ac2b0fac89]
   =   Зажечь канделябр
 Light these %s  [53279e71d664]
@@ -6648,6 +6856,8 @@ Light this light source  [861dbbd8b1bb]
   =   Зажечь этот источник света
 Light this oil  [1caa4b1bac2c]
   =   Поджечь это масло
+Liquor sellers do not drink; they hate to see you twice.  [177ab7b59172]
+  =   Торговцы выпивкой не пьют: им противно видеть вас дважды.
 Listen through the stethoscope  [b48557e46b20]
   =   Послушать стетоскопом
 Lizard corpses protect against cockatrices.  [68388994d7a8]
@@ -6683,18 +6893,28 @@ Loot in what direction?  [0bf0ead6b5d7]
   =   В каком направлении обыскать?
 Loot which containers?  [44d1dbf2e2ad]
   =   Какие контейнеры обыскать?
+Lunar eclipse tonight.  May as well quit now!  [6d8035c28092]
+  =   Сегодня лунное затмение.  Можно сразу сдаваться!
 Magical energies course through your body.  [923e9ae0d9cc]
   =   По вашему телу струится магическая энергия.
 Major events:  [e143972abc38]
   =   Главные события:
 Make this figurine transform  [3b5a90562104]
   =   Оживить эту статуэтку
+Meeting your own ghost decreases your luck considerably!  [c8bbcc651148]
+  =   Встреча с собственным привидением сильно уменьшает удачу!
 Miscellaneous  [5f2cbd107037]
   =   Разное
 Miscellaneous:  [69aa5db4d883]
   =   Разное:
 Money lost, little lost; honor lost, much lost; pluck lost, all lost.  [e0185d0cb2cb]
   =   Деньги потерять — ничего не потерять; честь потерять — много потерять; мужество потерять — всё потерять.
+Money to invest?  Take it to the local branch of the Magic Memory Vault!  [0209bde3424e]
+  =   Есть деньги для вложений?  Несите их в местное отделение «Волшебного Хранилища Памяти»!
+Monsters come from nowhere to hit you everywhere.  [41d6deeca51f]
+  =   Монстры приходят ниоткуда, чтобы бить вас повсюду.
+Monsters sleep because you are boring, not because they ever get tired.  [d3cf977d678f]
+  =   Монстры спят не от усталости, а потому что с вами скучно.
 More info about "%s"?  [587ff01306b1]
   m   Подробнее о «тритон»?
   f   Подробнее о «крыса»?
@@ -6704,6 +6924,10 @@ Moreover, you have no gold.  [df3ee140da5c]
   =   К тому же у вас нет золота.
 Most monsters can't swim.  [d78b96d4f6d8]
   =   Большинство монстров не умеет плавать.
+Most monsters prefer minced meat.  That's why they are hitting you!  [c649e5ff830e]
+  =   Большинство монстров предпочитает фарш.  Вот почему они вас бьют!
+Most of the bugs in NetHack are on the floor.  [c60a4ca6e876]
+  =   Большинство багов в NetHack ползает по полу.
 Move cursor to a monster, object or location:  [b988ed6f1e02]
   =   Наведите курсор на монстра, предмет или место:
 Move on the trap  [f8d31c621db5]
@@ -6713,6 +6937,10 @@ Moving: %s  [4fa5e62211f0]
   f   Перемещено: крыса
   n   Перемещено: копьё
   pl  Перемещено: 3 стрелы
+Much ado Nothing Happens.  [a65f559dc4b9]
+  =   Много шума из «Ничего не происходит».
+Multi-player NetHack is a myth.  [8988477b471c]
+  =   Многопользовательский NetHack — это миф.
 Music hath charms to affect the stubborn drawbridge.  [acacf0022c11]
   =   Музыка способна тронуть даже упрямый подъёмный мост.
 Music hath charms to soothe the savage beast.  [ea72718bada6]
@@ -6729,26 +6957,52 @@ Name %s  [90106354bb94]
   f   Дать имя крысе
   n   Дать имя копью
   pl  Дать имя 3 стрелам
+NetHack is addictive.  Too late, you're already hooked.  [11edddaf1ba2]
+  =   NetHack вызывает привыкание.  Поздно, вы уже на крючке.
+Never ask a shopkeeper for a price list.  [3895ff902c60]
+  =   Никогда не просите у лавочника прейскурант.
 Never attack a guard.  [233f1789e365]
   =   Никогда не нападайте на стража.
+Never burn a tree, unless you like getting whacked with a +5 shovel.  [08b58986ebeb]
+  =   Никогда не жгите деревья, если не любите получать по голове лопатой +5.
+Never eat with glowing hands!  [b408a66c9a02]
+  =   Никогда не ешьте светящимися руками!
 Never mind (quit)  [9dc20cdb8a59]
   =   Неважно (выйти)
+Never mind the monsters hitting you:  they just replace the charwomen.  [f1a4485571f6]
+  =   Не обращайте внимания на бьющих вас монстров: они просто заменяют уборщиц.
 Never mind.  [8721eb15a055]
   =   Неважно.
+Never play leapfrog with a unicorn.  [254f8fbb5911]
+  =   Никогда не играйте с единорогом в чехарду.
 Never ride a long worm.  [2cc357d0d5c5]
   =   Никогда не садитесь верхом на длинного червя.
+Never step on a cursed engraving.  [8cb620c1143b]
+  =   Никогда не наступайте на проклятую надпись.
+Never swim with a camera:  there's nothing to take pictures of.  [1bce851f5a97]
+  =   Никогда не плавайте с фотоаппаратом: снимать там нечего.
+Never teach your pet rust monster to fetch.  [d8d55ef58edb]
+  =   Никогда не учите ручного ржавника приносить палку.
+Never trust a random generator in magic fields.  [60a23a85a63f]
+  =   Никогда не доверяйте генератору случайностей в магических полях.
+Never use a wand of death.  [a89579ce55c8]
+  =   Никогда не пользуйтесь палочкой смерти.
 Never use your best weapon to engrave a curse.  [e6f20484acd9]
   =   Не пишите проклятия своим лучшим оружием.
 No  [816c52fd2bdd]
   =   Нет
 No easy fighting with a heavy load!  [53a88657cf10]
   =   С тяжёлой ношей много не навоюешь!
+No level contains two shops.  The maze is no level.  So...  [b63e40dc69c9]
+  =   Ни на одном уровне нет двух лавок.  Лабиринт — не уровень.  Значит...
 No relevant items selected.  [1c8456c38e24]
   =   Подходящие предметы не выбраны.
 No; choose role again  [795fc9dc9a01]
   =   Нет, выбрать профессию заново
 Not all boots were made for walking.  [e5ade14c687d]
   =   Не все сапоги созданы для ходьбы.
+Not all rumors are as misleading as this one.  [5f00e579a3d8]
+  =   Не все слухи так обманчивы, как этот.
 Not carrying anything  [58f098e45fbb]
   =   Вы ничего не несёте
 Not using any items  [0005dcd479e3]
@@ -6769,31 +7023,53 @@ Nothing seems to happen.  [f5f1e5f853bd]
   =   Кажется, ничего не происходит.
 Nurses are trained to touch naked persons:  they don't harm them.  [bfd093d4c98b]
   =   Медсестёр учат прикасаться к обнажённым: вреда они не причиняют.
+Nymphs and nurses like beautiful rings.  [f93d7f03f621]
+  =   Нимфы и медсёстры любят красивые кольца.
+Nymphs are blondes.  Are you a gentleman?  [f1eece94fbf7]
+  =   Нимфы — блондинки.  А вы джентльмен?
 Nymphs can unlink more than your chain mail.  [fb8adeb6307e]
   =   Нимфы могут расстегнуть не только вашу кольчугу.
 Offer this amulet as a sacrifice at this altar  [77d3f6c94e44]
   =   Принести этот амулет в жертву на этом алтаре
 Offer this corpse as a sacrifice at this altar  [973ec40fb171]
   =   Принести этот труп в жертву на этом алтаре
+Offering a unicorn a worthless piece of glass might prove to be fatal!  [85e8493307a2]
+  =   Предложить единорогу бесполезную стекляшку может оказаться роковой ошибкой!
 Oh wow!  Everything feels so cosmic!  [14204d1db20d]
   =   Ух ты!  Всё на ощупь такое космическое!
 Oh wow!  Everything looks so cosmic!  [07351bd2fa70]
   =   Ух ты!  Всё выглядит таким космическим!
 Oh, bummer!  Everything is dark!  Help!  [ab6ef56c65da]
   =   Облом!  Всё темно!  Помогите!
+Old hackers never die:  young ones do.  [60e0a8c677b6]
+  =   Старые хакеры не умирают: умирают молодые.
 Once your little dog will be a big dog, and you will be proud of it.  [47efdda4ed2b]
   =   Однажды ваша собачка станет большой собакой, и вы будете ею гордиться.
+One has to leave shops before closing time.  [5b8d88cf5f27]
+  =   Из лавки нужно уйти до закрытия.
+One homunculus a day keeps the doctor away.  [f0d724be9db6]
+  =   Съедайте по гомункулу в день — и доктор не понадобится.
+One level further down somebody is getting killed, right now.  [74e32064abcb]
+  =   Уровнем ниже прямо сейчас кого-то убивают.
 One of %s forms a coating on %s.  [a785d488f9fa]
   m   Одно из тритона покрывает тритона налётом.
   f   Одно из крысы покрывает крысу налётом.
   n   Одно из копья покрывает копьё налётом.
   pl  Одно из 3 стрел покрывает 3 стрелы налётом.
+Only a wizard can use a magic whistle.  [2876502c2f69]
+  =   Только волшебник может пользоваться волшебным свистком.
+Only adventurers of evil alignment think of killing their dog.  [8acdeef3bbd3]
+  =   Только злые искатели приключений помышляют убить свою собаку.
 Only carrying gold  [84beadb5341f]
   =   У вас только золото
+Only chaotic evils kill sleeping monsters.  [ca2ee6a921a2]
+  =   Только хаотично-злые убивают спящих монстров.
 Only female monsters can lay eggs.  [21f97a55afc9]
   =   Откладывать яйца могут только самки.
 Only real trappers escape traps.  [0df5bfad29bc]
   =   Из ловушек выбираются только настоящие ловцы.
+Only real wizards can write scrolls.  [4a4c0e1789dc]
+  =   Только настоящие волшебники умеют писать свитки.
 Only the most confused adventurers would read cursed destroy armor scrolls.  [7c7bfe0b0f28]
   =   Только искатель приключений в сильнейшем замешательстве станет читать проклятые свитки уничтожения брони.
 Ooph!  This tastes like dandelion wine!  [adb491bdfa89]
@@ -6822,6 +7098,8 @@ Open where? [.>]  [9516e9d483a7]
   =   Открыть что? [.>]
 Opening a tin is difficult, especially when you attempt it bare handed!  [5f6b43b14ebb]
   =   Открыть банку непросто, особенно голыми руками!
+Operation OVERKILL has started now.  [852e5d79e7b6]
+  =   Операция ТОТАЛЬНОЕ УНИЧТОЖЕНИЕ началась.
 Orcs and killer bees share their lifestyle.  [b83a5800e348]
   =   У орков и пчёл-убийц схожий образ жизни.
 Orcs do not procreate in dark rooms.  [f556a7ba3a56]
@@ -6836,12 +7114,16 @@ Ouch!  That hurts!  [b26effd89232]
   =   Ой!  Больно!
 Ouch!  You bump into a door.  [62ba78627eb0]
   =   Ой!  Вы врезаетесь в дверь.
+Ouch.  I hate when that happens.  [761716148f0e]
+  =   Ой.  Ненавижу, когда такое случается.
 Override glob weight limit?  [d5f445afe493]
   =   Превысить предельный вес сгустка?
 Override?  [c976a831674d]
   =   Переопределить?
 Overwrite the old file?  [3f4675b590a2]
   =   Перезаписать старый файл?
+PLEASE ignore previous rumor.  [d59a65f5e9aa]
+  =   ПОЖАЛУЙСТА, не обращайте внимания на предыдущий слух.
 Pardon me, %s.  [ed153f97e5e1]
   m   Простите, тритон.
   f   Простите, крыса.
@@ -6966,12 +7248,16 @@ Playing Gauntlet might be enlightening in some situations.  [3a2869ad0456]
   =   Игра в Gauntlet в иных случаях кое-чему учит.
 Playing billiards pays when you are in a shop.  [34b4df308257]
   =   Игра в бильярд в лавке окупается.
+Polymorph into an ettin; meet your opponents face to face to face.  [f081152b869b]
+  =   Превратитесь в эттина и встречайте противников лицом к лицу к лицу.
 Polymorphing a shopkeeper might make you safer.  [1bd184a31195]
   =   Превращённый лавочник, может быть, безопаснее для вас.
 Polymorphing your dog probably makes you safer.  [ad7e22440942]
   =   Превращённая собака, скорее всего, безопаснее для вас.
 Potions don't usually mix, but sometimes...  [a9f50b88bcbc]
   =   Зелья обычно не смешиваются, но иногда...
+Praying will frighten demons.  [b7d264ebcac9]
+  =   Молитва отпугивает демонов.
 Psst!  It's done with mirrors!  [7f5472148f57]
   =   Тсс!  Весь фокус в зеркалах!
 Push the boulder  [433c2dd44d43]
@@ -7191,6 +7477,8 @@ Right  [954daa8b0033]
   =   Правая
 Ring the bell  [6a8c13f710cc]
   =   Позвонить в колокольчик
+Row (3x) that boat gently down the stream, Charon (4x), death is but a dream.  [318a51c81c44]
+  =   Греби (3 раза) неспешно вниз по реке, Харон (4 раза), смерть — всего лишь сон.
 Rub something on this stone  [175140090ae0]
   =   Потереть что-нибудь об этот камень
 Rub this %s  [4a65d2284b52]
@@ -7198,6 +7486,8 @@ Rub this %s  [4a65d2284b52]
   f   Потереть эту крысу
   n   Потереть это копьё
   pl  Потереть эти 3 стрелы
+Running is good for your legs.  [04824917da74]
+  =   Бег полезен для ног.
 Rust monsters love water.  There are potions they hate, however.  [2752830ea386]
   =   Ржавники обожают воду.  Но есть зелья, которых они терпеть не могут.
 Sacks protect contents from temperatures up to 452 degrees fahrenheit.  [0fd690279cf8]
@@ -7208,6 +7498,8 @@ Save bones?  [f2a15270d60f]
   =   Сохранить кости?
 Saving:  [852759f4dbd2]
   =   Сохранение:
+Screw up your courage!  You've screwed up everything else.  [7e39866aa24b]
+  =   Соберитесь с духом!  Всё остальное вы уже растеряли.
 Scribble graffiti on the floor  [b8e08cf29dc6]
   =   Нарисовать граффити на полу
 Scrolls fading?  It's not the heat, it's the humidity.  [2249cae5f24a]
@@ -7220,6 +7512,10 @@ Search for secret doors  [a834c8892bb5]
   =   Искать потайные двери
 Search the door for a trap  [c4e63dc345a6]
   =   Проверить дверь на ловушки
+Seepage?  Leaky pipes?  Rising damp?  Summon the plumber!  [cd9c313bf2f2]
+  =   Протечки?  Трубы текут?  Сырость ползёт по стенам?  Вызовите сантехника!
+Segmentation fault (core dumped).  [a878c7c7d629]
+  =   Ошибка сегментирования (стек памяти сброшен на диск).
 Select one item:  [4d9d4cb415cd]
   =   Выберите пункт:
 Select one of your saved games  [bba68b2cd70a]
@@ -7262,6 +7558,8 @@ Shoot this with your wielded %s  [948efc753dba]
   pl  Выстрелить этим из 3 стрел
 Shopkeepers accept credit cards, as long as you pay cash.  [b844d62a94f2]
   =   Лавочники принимают кредитные карты — при условии, что вы платите наличными.
+Shopkeepers are insured by Croesus himself!  [0b193654d7fd]
+  =   Лавочники застрахованы у самого Крёза!
 Shopkeepers can spot a tourist a mile away with those Hawaiian shirts.  [667ea662826d]
   =   В этих гавайских рубашках лавочник узнаёт туриста за версту.
 Shopkeepers can't tell identical twins apart.  [3a7ea11d6351]
@@ -7272,6 +7570,8 @@ Shopkeepers have incredible patience.  [59622d6305b4]
   =   Терпение у лавочников невероятное.
 Shopkeepers might raise their prices for tourists.  [3f41d7f05ae4]
   =   Для туристов лавочники могут и цены поднять.
+Shopkeepers sometimes die from old age.  [1a06973bdd62]
+  =   Лавочники иногда умирают от старости.
 Shopkeepers value money more than revenge.  [bcadcd8e4e7d]
   =   Деньги лавочник ценит выше мести.
 Show something its reflection  [586e8522c7c1]
@@ -7284,8 +7584,12 @@ Sit on the throne  [a28b4e6636b7]
   =   Сесть на трон
 Snap!  [0ea9539ce8be]
   =   Щёлк!
+Some mazes (especially small ones) have no solutions, says man 6 maze.  [2ec4e8e428af]
+  =   У некоторых лабиринтов (особенно маленьких) нет решения, — говорит man 6 maze.
 Some monsters can be tamed.  I once saw a hacker with a tame dragon!  [1b670ff0dcb8]
   =   Некоторых монстров можно приручить.  Я как-то видел хакера с ручным драконом!
+Some questions the Sphynx asks just *don't* have any answers.  [caf5e469aedb]
+  =   На некоторые вопросы Сфинкса ответов *нет* вовсе.
 Some remain flexible, while others can't seem to change their tune.  [bcd70e332830]
   =   Одни гибки, а другие никак не сменят пластинку.
 Some vapor passes harmlessly around you.  [93dd34caf15e]
@@ -7309,6 +7613,8 @@ Something speaks.  [1fd48bd6c6e8]
   =   Что-то говорит.
 Something's in the way.  [4c08f14df7a3]
   =   Что-то мешает.
+Sometimes "mu" is the answer.  [7ee3018f5c5f]
+  =   Иногда ответ — "му".
 Sometimes monsters are more likely to fight each other than attack you.  [195ccffb2ccf]
   =   Иногда монстры охотнее дерутся друг с другом, чем нападают на вас.
 Sorry, I don't know how to use that.  [9e526edab5a9]
@@ -7317,6 +7623,8 @@ Sort order for genocided monster types (also vanquished counts)  [f6c074bb5511]
   =   Порядок списка истреблённых видов (и побеждённых монстров)
 Sort order for vanquished monster counts (also genocided types)  [3324d8858cf9]
   =   Порядок списка побеждённых монстров (и истреблённых видов)
+Spare your scrolls of make-edible until it's really necessary!  [f434daa22835]
+  =   Берегите свитки съедобности до крайней необходимости!
 Special  [942078ca2d04]
   =   Особое
 Specify what? (type the word)  [a200dfd7caa0]
@@ -7331,6 +7639,10 @@ Start a new character  [fddf85e7341e]
   =   Создать нового персонажа
 Status:  [11dc9e195292]
   =   Состояние:
+Sticks and stones may break your bones but manes will never hurt you.  [c46c9a1ec03d]
+  =   Палки и камни ломают кости, а манесы — никогда.
+Stormbringer doesn't steal souls.  People steal souls.  [d6caea1effdf]
+  =   Буревестник не крадёт души.  Души крадут люди.
 Suddenly one of the Vault's %s enters!  [daed7fef9855]
   m   Внезапно входит один из тритона хранилища!
   f   Внезапно входит один из крысы хранилища!
@@ -7346,6 +7658,8 @@ Suddenly, %s falls through a trap door.  [4973432c6662]
   f   Внезапно крыса проваливается в люк.
   n   Внезапно копьё проваливается в люк.
   pl  Внезапно 3 стрелы проваливаются в люк.
+Suddenly, the dungeon will collapse...  [c8df325e689e]
+  =   Внезапно подземелье обрушится...
 Surviving the full extent of the mines could mean that your luck is changing.  [951be2de5825]
   =   Если вы прошли копи до самого дна, удача, возможно, повернулась к вам лицом.
 Swallowed Creatures  [be0332c450bf]
@@ -7489,6 +7803,8 @@ Talk to whom? (in what direction)  [345015c6d880]
   =   С кем поговорить? (в каком направлении)
 Talking to yourself is a bad habit for a dungeoneer.  [d2926e9e2e18]
   =   Говорить с самим собой — дурная привычка для того, кто бродит по подземельям.
+Taming a mail daemon may cause a system security violation.  [b026b05037fd]
+  =   Приручение почтового демона может привести к нарушению безопасности системы.
 Telepathy is just a trick:  once you know how to do it, it's easy.  [529150b37030]
   =   Телепатия — просто фокус: стоит понять, как это делается, и всё легко.
 That %s is %s!  [59be6b475d52]
@@ -7611,6 +7927,8 @@ The air crackles around %s.  [f653cffe3626]
   pl  Воздух вокруг 3 стрел потрескивает.
 The best equipment for your work is, of course, the most expensive.  [0d2fdb7c277e]
   =   Лучшее снаряжение для вашего дела — разумеется, самое дорогое.
+The crowd was so tough, the Stooges won't play the Dungeon anymore, nyuk nyuk.  [d91c6239b97c]
+  =   Публика была такой суровой, что «Три балбеса» больше не играют в Подземелье, ньюк-ньюк.
 The dart was poisoned!  [8f78a62bd20b]
   =   Дротик был отравлен!
 The door opens.  [8c40430b080d]
@@ -7623,16 +7941,26 @@ The gods will get angry if you kill your dog.  [284658c9111c]
   =   Боги разгневаются, если вы убьёте свою собаку.
 The iron ball smacks into you!  [2a9529faa90c]
   =   Железное ядро врезается в вас!
+The leprechauns hide their treasure in a small hidden room.  [3d5dc52e53e6]
+  =   Лепреконы прячут сокровища в маленькой тайной комнате.
 The less magic in your armor, the more you can add.  [e44ee0192478]
   =   Чем меньше магии в доспехах, тем больше её можно добавить.
+The longer the wand the better.  [0f6e7678ff4d]
+  =   Чем длиннее палочка, тем лучше.
 The magic marker is mightier than the sword.  [42cc2860235d]
   =   Что написано волшебным маркером, того не вырубишь и мечом.
+The magic word is "XYZZY".  [bb0b36468946]
+  =   Волшебное слово — "XYZZY".
 The magical ink in this spellbook is fresh.  [da43fd8e577b]
   =   Волшебные чернила в этой книге заклинаний ещё свежие.
 The magical ink in this spellbook is slightly faded.  [261a2ccaadde]
   =   Волшебные чернила в этой книге заклинаний слегка выцвели.
+The meek shall inherit your bones files.  [15f3a77ff2d9]
+  =   Кроткие унаследуют ваши файлы костей.
 The message reads:  [afc260d0ae38]
   =   В послании сказано:
+The mines are dark and deep, and I have levels to go before I sleep.  [cf005a67624e]
+  =   Копи темны и глубоки, а мне ещё уровни пройти, прежде чем уснуть.
 The mixture bubbles, then clears.  [f624f44b8a24]
   =   Смесь пузырится, а затем светлеет.
 The mixture bubbles.  [3f35558d08ea]
@@ -7648,6 +7976,8 @@ The mixture looks %s.  [287622174be1]
   pl  Смесь выглядит 3 стрелами.
 The moon is not the only heavenly body to influence this game.  [95cf17774717]
   =   Луна — не единственное небесное тело, что влияет на эту игру.
+The more you use the E word, the better.  [ed7df3a32f11]
+  =   Чем чаще вы пишете слово на букву «E», тем лучше.
 The orc swings his orcish broadsword named Elfrist at you.  You die...  [1976d47b9502]
   =   Орк замахивается на вас своим орочьим палашом по имени Эльфрист.  Вы умираете...
 The potion clears.  [af57194425f1]
@@ -7687,6 +8017,8 @@ The stairs are too hard to dig in.  [ecf2aa0e6c48]
   =   Ступени слишком твёрдые, чтобы их копать.
 The towel soaks it up!  [100d312fe573]
   =   Полотенце впитывает это!
+The use of dynamite is dangerous.  [378daeadac2f]
+  =   Применение динамита опасно.
 The wand hits you!  [4df478984457]
   =   Палочка попадает в вас!
 The wand misses you.  [c3ad01cfbe3e]
@@ -7749,6 +8081,8 @@ There are iron bars here; eat them?  [30fe7f0db64b]
   =   Здесь железная решётка; съесть её?
 There are iron bars here; resume eating them?  [c012321be1a1]
   =   Здесь железная решётка; продолжить её есть?
+There are no worms in the UNIX version.  [0a0575b486c4]
+  =   В версии для UNIX червей нет.
 There are several objects here.  [134ca6b9087b]
   =   Здесь лежит несколько предметов.
 There doesn't seem to be any object there.  [1de9d5c9d34b]
@@ -7867,6 +8201,8 @@ There is a container and %s here.  Remove %s?  [725e5d4a9746]
   pl  Здесь контейнер и 3 стрелы.  Убрать 3 стрелы?
 There is a level teleporter here. Trigger it?  [a6c3ff77a5ce]
   =   Здесь телепорт на другой уровень. Задействовать его?
+There is a trap on this level!  [72e951f7aa64]
+  =   На этом уровне есть ловушка!
 There is a vapor cloud here.  [cda6f1d7c22f]
   =   Здесь облако пара.
 There is more magic in this cave than meets the eye.  [ddb31e99eb68]
@@ -7898,18 +8234,44 @@ They say a gelatinous cube can paralyze you...  [e446429f673b]
   =   Говорят, студенистый куб может вас парализовать...
 They say that 'Elbereth' is often written about.  [c5cc1e145203]
   =   Говорят, 'Elbereth' пишут где попало.
+They say that Demogorgon, Asmodeus, Orcus, Yeenoghu & Juiblex is no law firm.  [c34232a70779]
+  =   Говорят, «Демогоргон, Асмодей, Оркус, Йеногу и Джубилекс» — вовсе не юридическая фирма.
+They say that Geryon has an evil twin, beware!  [485f1e8b2764]
+  =   Говорят, у Гериона есть злой близнец, берегитесь!
 They say that Juiblex is somewhat afraid of a wand of digging.  [20e28cc2b651]
   =   Говорят, Джубилекс побаивается палочки копания.
 They say that Medusa would like to put you on a pedestal.  [19315a452ce6]
   =   Говорят, Медуза хотела бы возвести вас на пьедестал.
+They say that Medusa would make a terrible pet.  [aff1d666e1ff]
+  =   Говорят, из Медузы вышел бы ужасный питомец.
+They say that NetHack bugs are Seldon planned.  [63697008cba8]
+  =   Говорят, баги в NetHack — часть плана Селдона.
+They say that NetHack comes in 256 flavors.  [5df2c69c479d]
+  =   Говорят, NetHack бывает 256 вкусов.
+They say that NetHack is just a computer game.  [619f1a27dada]
+  =   Говорят, NetHack — просто компьютерная игра.
+They say that NetHack is more than just a computer game.  [80a6cce39b48]
+  =   Говорят, NetHack — больше, чем просто компьютерная игра.
+They say that NetHack is never what it used to be.  [5587d0ceaefa]
+  =   Говорят, NetHack уже не тот, что прежде.
 They say that Vlad lives!!! ... near the mazes.  [941e0038abc2]
   =   Говорят, Влад жив!!! ...где-то возле лабиринтов.
+They say that a baby dragon is too small to hurt or help you.  [bd046f863a7c]
+  =   Говорят, дракончик слишком мал, чтобы вам навредить или помочь.
 They say that a bag of holding can't hold everything.  [8b962c35a4d2]
   =   Говорят, сумка хранения не вместит всего.
+They say that a black pudding is simply a brown pudding gone bad.  [fa0d34dae9e3]
+  =   Говорят, чёрный пудинг — это просто испортившийся бурый пудинг.
+They say that a black sheep has 3 bags full of wool.  [fd65d3bae1b8]
+  =   Говорят, с паршивой овцы — целых три мешка шерсти.
+They say that a blank scroll is like a blank check.  [6a4269c7fb6e]
+  =   Говорят, чистый свиток — всё равно что чистый бланк чека.
 They say that a blessed tin of quasit meat is a quick meal.  [42df6b8c0d29]
   =   Говорят, благословенная банка мяса квазита — быстрый обед.
 They say that a cat avoids traps.  [bf20e570f93c]
   =   Говорят, кошки обходят ловушки.
+They say that a cat named Morris has nine lives.  [d1236e76ec32]
+  =   Говорят, у кота по имени Моррис девять жизней.
 They say that a cave spider will occasionally eat cave spider eggs.  [705c8c655831]
   =   Говорят, пещерный паук порой ест яйца пещерных пауков.
 They say that a clever wizard can have stats:  18/** 24 18 24 24 24.  [da9dfe897981]
@@ -7918,36 +8280,102 @@ They say that a clove of garlic makes a good talisman if handled right.  [e0a0b6
   =   Говорят, зубчик чеснока — хороший талисман, если правильно с ним обращаться.
 They say that a cursed scroll of teleportation could land you in trouble.  [a441c70777a8]
   =   Говорят, проклятый свиток телепортации может забросить вас в беду.
+They say that a desperate shopper might pay any price in a shop.  [ed28940e90dd]
+  =   Говорят, отчаявшийся покупатель заплатит в лавке любую цену.
+They say that a diamond dog is everybody's best friend.  [ee5b8d06a599]
+  =   Говорят, алмазная собака — лучший друг каждого.
 They say that a diamond is another kind of luck stone.  [424392061f7f]
   =   Говорят, алмаз — это тоже своего рода камень удачи.
 They say that a dog can be trained to fetch objects.  [d9278e84dff4]
   =   Говорят, собаку можно научить приносить вещи.
+They say that a dwarf lord can carry a pick-axe because his armor is light.  [49a36b8402c1]
+  =   Говорят, лорд дварфов может носить кирку, потому что у него лёгкая броня.
+They say that a floating eye can defeat Medusa.  [9ea32451249b]
+  =   Говорят, парящее око может одолеть Медузу.
+They say that a fountain looks nothing like a regularly erupting geyser.  [948bde9875e9]
+  =   Говорят, фонтан совсем не похож на регулярно извергающийся гейзер.
 They say that a gelatinous cube makes a healthy breakfast.  [6f382dadde98]
   =   Говорят, студенистый куб — здоровый завтрак.
 They say that a giant gets strong by eating right, try it!  [982552d8aca8]
   =   Говорят, великан становится сильным, потому что правильно питается.  Попробуйте!
+They say that a gold doubloon is worth more than its weight in gold.  [dbce3a5379f2]
+  =   Говорят, золотой дублон стоит больше, чем весит золотом.
 They say that a grid bug won't hit you when you cross it.  [29b07de603bb]
   =   Говорят, ситовый жучок вас не тронет, если зайти к нему по диагонали.
+They say that a grid bug won't pay a shopkeeper for zapping you in a shop.  [fbf95d6c43bc]
+  =   Говорят, ситовый жучок не заплатит лавочнику за то, что пальнул в вас в лавке.
+They say that a hacker named Alice once level teleported by using a mirror.  [c9cbc05a5e6b]
+  =   Говорят, хакер по имени Алиса однажды переместилась на другой уровень через зеркало.
+They say that a hacker named David once slew a giant with a sling and a rock.  [e570b755b955]
+  =   Говорят, хакер по имени Давид однажды сразил великана пращой и камнем.
+They say that a hacker named Dorothy once rode a fog cloud to Oz.  [3ba58dba86eb]
+  =   Говорят, хакер по имени Дороти однажды долетела до страны Оз на туманном облаке.
+They say that a hacker named Mary once lost a white sheep in the mazes.  [f23acab1fb15]
+  =   Говорят, хакер по имени Мэри однажды потеряла в лабиринтах белую овечку.
+They say that a helm of brilliance is not to be taken lightly.  [0197b9a16348]
+  =   Говорят, к шлему озарения нельзя относиться легкомысленно.
+They say that a hot dog and a hell hound are the same thing.  [8dbfa445f3e8]
+  =   Говорят, хот-дог и адская гончая — одно и то же.
+They say that a lamp named Aladdin's Lamp contains a djinni with 3 wishes.  [f308692f9c46]
+  =   Говорят, в лампе по имени Лампа Аладдина живёт джинн с тремя желаниями.
+They say that a large dog named Lassie will lead you to the amulet.  [e0a9400b2197]
+  =   Говорят, большая собака по имени Лесси приведёт вас к амулету.
 They say that a lembas wafer is a very light snack.  [ad45d328bea1]
   =   Говорят, лембас — очень лёгкая закуска.
 They say that a loadstone has a strange attraction and is not bad luck.  [7ae3240f7bdd]
   =   Говорят, у магнитного камня странная притягательность, а неудачи он не приносит.
 They say that a lock pick by any other name is still a lock pick.  [807caf3fd86a]
   =   Говорят, отмычка остаётся отмычкой, как её ни назови.
+They say that a long sword is not a light sword.  [de3f7ad9b76b]
+  =   Говорят, длинный меч — не световой меч.
 They say that a lucky amulet will block poisoned arrows.  [ce6945e08873]
   =   Говорят, счастливый амулет отражает отравленные стрелы.
+They say that a manes won't mince words with you.  [704666055ff5]
+  =   Говорят, манес не станет с вами церемониться.
+They say that a mind is a terrible thing to waste.  [68f93ee03dcd]
+  =   Говорят, разум жалко тратить впустую.
 They say that a mirror will freeze a floating eye but you can still see it.  [8b3ae31a4e4f]
   =   Говорят, зеркало парализует парящее око, а вы при этом останетесь зрячим.
 They say that a neutral character might get Giantslayer.  [0a903e628809]
   =   Говорят, нейтральный герой может получить Великаноборца.
+They say that a plain nymph will only wear a wire ring in one ear.  [33f246910e8d]
+  =   Говорят, обычная нимфа носит проволочное кольцо только в одном ухе.
+They say that a plumed hat could be a previously used crested helmet.  [a3bb732c82b7]
+  =   Говорят, шляпа с плюмажем может оказаться бывшим шлемом с гребнем.
 They say that a polymorph trap is magic and magic protection prevents it.  [c26df7b512d1]
   =   Говорят, ловушка превращения — это магия, и защита от магии от неё спасает.
 They say that a potion of healing can cancel a potion of sickness.  [76c9f0f3febd]
   =   Говорят, зелье лечения может нейтрализовать зелье болезни.
 They say that a potion of monster detection sometimes works both ways.  [15647de9f233]
   =   Говорят, зелье обнаружения монстров порой действует в обе стороны.
+They say that a potion of oil is difficult to grasp.  [323fedde9e90]
+  =   Говорят, флакон масла трудно удержать в руках.
+They say that a potion of yogurt is a cancelled potion of sickness.  [50875ef37aca]
+  =   Говорят, зелье йогурта — это отменённое зелье болезни.
+They say that a purple worm is not a baby purple dragon.  [0a8ee0ffccaa]
+  =   Говорят, пурпурный червь — вовсе не детёныш пурпурного дракона.
+They say that a quivering blob tastes different than a gelatinous cube.  [489a7cace909]
+  =   Говорят, дрожащий сгусток на вкус не такой, как студенистый куб.
+They say that a runed broadsword named Stormbringer attracts vortices.  [f896f12d4538]
+  =   Говорят, рунический палаш по имени Буревестник притягивает вихри.
+They say that a scroll of summoning has other names.  [897414d3126d]
+  =   Говорят, у свитка призыва есть и другие имена.
+They say that a shaman can bestow blessings but usually doesn't.  [24203731e466]
+  =   Говорят, шаман может даровать благословение, но обычно этого не делает.
+They say that a shaman will bless you for an eye of newt and wing of bat.  [a66a0582308c]
+  =   Говорят, шаман благословит вас за глаз тритона и крыло летучей мыши.
+They say that a shimmering gold shield is not a polished silver shield.  [f8ef418042d3]
+  =   Говорят, мерцающий золотой щит — не полированный серебряный щит.
 They say that a sink looks different from high above the floor.  [27897929d973]
   =   Говорят, сверху раковина выглядит иначе.
+They say that a spear will hit a neo-otyugh.  (Do YOU know what that is?)  [5b97222a54ba]
+  =   Говорят, копьё попадёт в нео-отиуха.  (А ВЫ знаете, кто это?)
+They say that a spotted dragon is the ultimate shape changer.  [d74ade8b0b40]
+  =   Говорят, пятнистый дракон — непревзойдённый оборотень.
+They say that a stethoscope is no good if you can only hear your heartbeat.  [d3ba50eca637]
+  =   Говорят, от стетоскопа мало толку, если слышно только своё сердцебиение.
+They say that a succubus named Suzy will sometimes warn you of danger.  [bb0a2eb32747]
+  =   Говорят, суккуб по имени Сюзи иногда предупреждает об опасности.
 They say that a summoned demon could improve your game.  [95c66383a796]
   =   Говорят, вызванный демон может улучшить вашу игру.
 They say that a tin of wraith meat is a rare dining experience.  [5de454171e99]
@@ -7956,6 +8384,8 @@ They say that a unicorn might bring you luck.  [ec8d07912b46]
   =   Говорят, единорог может принести вам удачу.
 They say that a wand of cancellation is like a wand of polymorph.  [f699438cea02]
   =   Говорят, палочка отмены похожа на палочку превращения.
+They say that a wand of cancellation is not like a wand of polymorph.  [d7078ba63153]
+  =   Говорят, палочка отмены совсем не похожа на палочку превращения.
 They say that a wand of locking can close more than just doors.  [bd8a386991b8]
   =   Говорят, палочка запирания закрывает не только двери.
 They say that a wand of polymorph can change your game.  [51acac2b69c8]
@@ -7964,38 +8394,80 @@ They say that a wise choice of donations lets you choose your blessings.  [c776f
   =   Говорят, мудро выбранное пожертвование позволяет выбрать и благословение.
 They say that a wizard is even more powerful the second time around.  [84004e527b30]
   =   Говорят, во второй раз волшебник ещё сильнее.
+They say that a wood golem named Pinocchio would be easy to control.  [6c60a51cdbcb]
+  =   Говорят, деревянным големом по имени Буратино было бы легко управлять.
 They say that a xorn knows of no obstacles when pursuing you.  [5006ed928213]
   =   Говорят, ксорн, преследуя вас, не знает преград.
 They say that abusing a credit card could shock you sooner or later.  [1d7dfe3671d3]
   =   Говорят, злоупотребление кредитной картой рано или поздно вас шокирует.
+They say that after killing a dragon it's time for a change of scenery.  [fccc5a9a9936]
+  =   Говорят, после убийства дракона пора сменить обстановку.
 They say that amulets, like most things, can be deadly or life saving.  [dcfdf2a08d4a]
   =   Говорят, амулеты, как и многое другое, могут и убить, и спасти жизнь.
 They say that an altar can identify blessings.  [4706bad98ef9]
   =   Говорят, алтарь распознаёт благословения.
+They say that an amulet of strangulation is worse than ring around the collar.  [ae4623536364]
+  =   Говорят, амулет удушения хуже грязного воротничка.
+They say that an attic is the best place to hide your toys.  [8b643caf03ff]
+  =   Говорят, чердак — лучшее место, чтобы спрятать игрушки.
+They say that an axe named Cleaver once belonged to a hacker named Beaver.  [5a5abcc35c3f]
+  =   Говорят, топор по имени Секач когда-то принадлежал хакеру по прозвищу Бородач.
+They say that an eye of newt and a wing of bat are double the trouble.  [3f7ae6bcf639]
+  =   Говорят, от глаза тритона и крыла летучей мыши хлопот вдвойне.
+They say that an incubus named Izzy sometimes makes women feel sensitive.  [e42ff75da6f0]
+  =   Говорят, инкуб по имени Иззи иногда пробуждает в женщинах чувствительность.
 They say that an ooze will bite your boots and a rock mole might eat them.  [16de6b136970]
   =   Говорят, слизь разъест вам сапоги, а каменный крот может их съесть.
+They say that an opulent throne room is rarely a place to wish you'd be in.  [7ae6115bc30f]
+  =   Говорят, оказаться в роскошном тронном зале желают редко.
+They say that an unlucky hacker once had a nose bleed at an altar and died.  [14d310203b11]
+  =   Говорят, один невезучий хакер как-то пустил кровь из носа у алтаря и умер.
 They say that an unlucky hacker was once killed by an exploding tin.  [8325b08e9766]
   =   Говорят, одного невезучего хакера убила взорвавшаяся банка.
+They say that and they say this but they never say never, never!  [b689c2368ee3]
+  =   Говорят то, говорят сё, но никогда не говорят «никогда», никогда!
 They say that antique dealers are always interested in precious stones.  [c80c77a6a406]
   =   Говорят, антиквары всегда интересуются драгоценными камнями.
+They say that any quantum mechanic knows that speed kills.  [673f099e8f6a]
+  =   Говорят, любой квантовый механик знает, что скорость убивает.
+They say that applying a unicorn horn means you've missed the point.  [d021f997543d]
+  =   Говорят, если вы применяете рог единорога, значит, вы не поняли, в чём тут острота.
 They say that bandaging one's wounds helps to keep up one's appearance.  [1af7c0853e50]
   =   Говорят, перевязанные раны помогают сохранять приличный вид.
+They say that blue stones are radioactive, beware.  [13f670bc66bb]
+  =   Говорят, синие камни радиоактивны, берегитесь.
 They say that booze can be diluted but not cancelled.  [e55055fba42e]
   =   Говорят, выпивку можно разбавить, но не отменить.
+They say that building a dungeon is a team effort.  [bb54eb33049c]
+  =   Говорят, строительство подземелья — командная работа.
 They say that by listening carefully, you can hear a secret door!  [e3b0d411c2dd]
   =   Говорят, если хорошенько прислушаться, можно услышать потайную дверь!
 They say that carrots and carrot juice may improve your vision.  [7cb63b203f0f]
   =   Говорят, морковь и морковный сок улучшают зрение.
 They say that cave spiders are not considered expensive health food.  [0b59de078e4f]
   =   Говорят, пещерных пауков не считают дорогой диетической едой.
+They say that chaotic characters never get a kick out of altars.  [429b87ee617d]
+  =   Говорят, хаотичным героям пинать алтари совсем не в радость.
+They say that collapsing a dungeon often creates a panic.  [bb2d368d93c5]
+  =   Говорят, обрушение подземелья часто вызывает панику.
+They say that counting your eggs before they hatch shows that you care.  [164bd7766337]
+  =   Говорят, кто считает яйца, пока они не вылупились, тот заботливый.
 They say that demigods must leave behind their prized earthly possessions.  [a304ada4b1fc]
   =   Говорят, полубогам приходится оставлять свои драгоценные земные пожитки.
+They say that dipping a bag of tricks in a fountain won't make it an icebox.  [df00c00341e4]
+  =   Говорят, если окунуть сумку фокусов в фонтан, ледника из неё не выйдет.
+They say that dipping an eel and brown mold in hot water makes bouillabaisse.  [122e9db65d6a]
+  =   Говорят, если окунуть угря и бурую плесень в горячую воду, выйдет буйабес.
 They say that disturbing a djinni can be a costly mistake.  [ed74a37c38bd]
   =   Говорят, потревожить джинна — дорогостоящая ошибка.
+They say that donating a doubloon is extremely pious charity.  [4265ed5e6203]
+  =   Говорят, пожертвовать дублон — высшая степень благочестия.
 They say that dragon scales can be quite enchanting.  [c2b4c52f04b4]
   =   Говорят, драконья чешуя бывает очаровательна, особенно если её зачаровать.
 They say that dropping coins into a fountain will not grant you a wish.  [8b87ae8ca4c6]
   =   Говорят, монетка, брошенная в фонтан, желания не исполнит.
+They say that dungeoneers prefer dark chocolate.  [11efb9d33759]
+  =   Говорят, любители подземелий предпочитают тёмный шоколад.
 They say that dwarves lawfully mind their own business.  [1c1f040c0d79]
   =   Говорят, дварфы законопослушно занимаются своими делами.
 They say that eating a bat corpse will make you batty, for a while.  [0b2a5a49bc57]
@@ -8004,14 +8476,26 @@ They say that eating a cram ration is a smart move.  [d597c407db41]
   =   Говорят, съесть концентрированный паёк — умный ход.
 They say that eating blue jelly is cool if you don't fight the feeling.  [21a11bdd33a4]
   =   Говорят, синий студень освежает, если не бороться с ощущением.
+They say that eating royal jelly attracts grizzly owlbears.  [8b4ce6af3a23]
+  =   Говорят, маточное молочко привлекает гризли-совомедведей.
+They say that eggs, pancakes and juice are just a mundane breakfast.  [450888ec5a1c]
+  =   Говорят, яйца, блины и сок — самый обычный завтрак.
 They say that elven armor can hold the most magic.  [4602f838030f]
   =   Говорят, эльфийские доспехи вмещают больше всего магии.
 They say that escaping a dungeon is only the beginning of the end.  [1355f3c159b1]
   =   Говорят, выбраться из подземелья — это только начало конца.
+They say that everyone knows why Medusa stands alone in the dark.  [4ba249ca1e44]
+  =   Говорят, все знают, почему Медуза стоит одна в темноте.
+They say that everyone wanted rec.games.hack to undergo a name change.  [fcb9f228e09a]
+  =   Говорят, все хотели, чтобы rec.games.hack сменила название.
 They say that feeling an unexpected draft of air is sort of a breakthrough.  [98a822b5e28a]
   =   Говорят, неожиданный сквозняк — своего рода прорыв.
 They say that finding a cursed gray stone is always bad luck.  [beafd8c713b5]
   =   Говорят, найти проклятый серый камень — всегда к неудаче.
+They say that finding a winning strategy is a deliberate move on your part.  [e6f1b53f953a]
+  =   Говорят, найти выигрышную стратегию — обдуманный ход с вашей стороны.
+They say that finding worthless glass is worth something.  [98c2c40c93f2]
+  =   Говорят, найти бесполезное стекло — тоже чего-то стоит.
 They say that gaining a level is an experience that can raise your sights.  [ff84757fb4e4]
   =   Говорят, новый уровень — это опыт, который расширяет горизонты.
 They say that garter snake meat may not taste good but it's still healthy.  [006baac6a891]
@@ -8020,8 +8504,12 @@ They say that gauntlets of dexterity have a hidden enchanted touch.  [5cd27e8202
   =   Говорят, у перчаток ловкости есть скрытое волшебное прикосновение.
 They say that going to heaven is just another way of escaping the dungeon.  [ec03706984b7]
   =   Говорят, попасть на небеса — всего лишь ещё один способ выбраться из подземелья.
+They say that gold is only wasted on a pet dragon.  [33102e3a5337]
+  =   Говорят, тратить золото на ручного дракона — пустое дело.
 They say that golden nagas are law-abiding denizens as long as you are too.  [82c68266c8ce]
   =   Говорят, золотые наги законопослушны — пока законопослушны вы.
+They say that good things come to those that wait.  [bfac79a371cc]
+  =   Говорят, всё приходит к тому, кто умеет ждать.
 They say that greased objects will slip out of monsters' hands.  [204c14082d06]
   =   Говорят, что смазанные предметы выскальзывают из рук монстров.
 They say that gremlins can make you feel cooler than you are now.  [5602a847d155]
@@ -8036,44 +8524,100 @@ They say that healing potions often come in pairs.  [0deef66f480a]
   =   Говорят, зелья лечения часто встречаются парами.
 They say that if it's hard getting your food down another bite could kill.  [af63eca53ba9]
   =   Говорят, если еда уже в горло не лезет, ещё один кусок может убить.
+They say that if you can't spell then you'll wish you had a spellbook.  [a5f692f042e1]
+  =   Говорят, кто не силён в заклинаниях, мечтает о книге заклинаний.
 They say that if you don't wear glasses why bother with carrots?  [71fada740c63]
   =   Говорят, если вы не носите очков, зачем вам морковь?
+They say that if you live by the sword, you'll die by the sword.  [c78ca47c6c6d]
+  =   Говорят, кто с мечом живёт, от меча и погибнет.
 They say that if you notice a loose board beneath you, don't step on it.  [8655043af27f]
   =   Говорят, если заметили под ногами шаткую доску, не наступайте на неё.
+They say that if you play like a monster you'll have a better game.  [e7f5aa212999]
+  =   Говорят, если играть как монстр, игра пойдёт лучше.
+They say that if you sleep with a demon you might awake with a headache.  [f92359280691]
+  =   Говорят, если переспать с демоном, можно проснуться с головной болью.
 They say that if you start at the bottom the only place to go is up.  [3993b6b6db1b]
   =   Говорят, если начинаешь с самого дна, дорога одна — наверх.
+They say that if you step on a crack you could break your mother's back.  [3cad1ec0d306]
+  =   Говорят, наступишь на трещину — сломаешь маме спину.
 They say that if you teleport to heaven you're presumed to be dead already.  [220921b1e752]
   =   Говорят, кто телепортировался на небеса, считается уже мёртвым.
+They say that if you're invisible you can still be heard!  [c430f8c59f0b]
+  =   Говорят, невидимку всё равно слышно!
+They say that if you're lucky you can feel the runes on a scroll.  [d352ce60f6b9]
+  =   Говорят, если повезёт, руны на свитке можно нащупать.
 They say that in a shop you can be charged for old charges.  [5068ffe8d626]
   =   Говорят, в лавке с вас могут взять плату за старые заряды.
 They say that in lighter moments you could think of ways to pass a stone.  [5d416424a22b]
   =   Говорят, в минуты лёгкости можно придумать, как избавиться от камня.
+They say that in the big picture gold is only small change.  [966804d456dd]
+  =   Говорят, в масштабах целого золото — всего лишь мелочь.
 They say that in the dungeon breaking a mirror can be seven years bad luck.  [a8e04bac0900]
   =   Говорят, разбитое в подземелье зеркало сулит семь лет неудач.
+They say that in the dungeon it's not what you know that really matters.  [07d568c02d4c]
+  =   Говорят, в подземелье важно не то, что вы знаете.
+They say that in the dungeon moon rocks are really dilithium crystals.  [155800913210]
+  =   Говорят, в подземелье лунные камни на самом деле — кристаллы дилития.
+They say that in the dungeon the boorish customer is never right.  [9fb7fed83337]
+  =   Говорят, в подземелье грубый покупатель никогда не прав.
+They say that in the dungeon you don't need a watch to tell time.  [6979dd7d7e9c]
+  =   Говорят, в подземелье часы, чтобы узнать время, не нужны.
 They say that in the dungeon you don't usually have any luck at all.  [00f828c0428a]
   =   Говорят, в подземелье удачи обычно нет вовсе.
+They say that in the dungeon you need something old, new, burrowed and blue.  [dd168476f770]
+  =   Говорят, в подземелье нужно что-то старое, что-то новое, что-то закопанное и что-то голубое.
+They say that in the dungeon you should always count your blessings.  [c9978bcb6fc8]
+  =   Говорят, в подземелье всегда стоит пересчитывать свои благословения.
 They say that in time a blessed luckstone can make your god happy.  [83b5548b7990]
   =   Говорят, со временем благословенный камень удачи может порадовать вашего бога.
+They say that iron golem plate mail isn't worth wishing for.  [18c4544605b2]
+  =   Говорят, латный доспех из железного голема не стоит желания.
 They say that it is easier to kill the Wizard than to make him stand still.  [a3fa11e7114f]
   =   Говорят, Волшебника легче убить, чем заставить стоять на месте.
 They say that it only takes 1 zorkmid to meet the Kops.  [921ed46390f8]
   =   Говорят, чтобы встретиться с кистоунскими копами, хватит и одного зоркмида.
+They say that it takes four quarterstaffs to make one staff.  [82b424bb3fbe]
+  =   Говорят, из четырёх боевых посохов, они же четвертные, выходит один целый.
 They say that it's a blast when you mix the right potions together.  [b72828dc3987]
   =   Говорят, если смешать правильные зелья, будет просто взрыв.
 They say that it's not blind luck if you catch a glimpse of Medusa.  [dab4fe87fb0f]
   =   Говорят, уцелеть при виде Медузы — это не слепая удача, а удача слепого.
+They say that it's not over till the fat ladies sing.  [ec006ac7ba25]
+  =   Говорят, всё не кончено, пока не запоют толстые дамы.
+They say that it's not over till the fat lady shouts `Off with its head'.  [4dc6601ea34e]
+  =   Говорят, всё не кончено, пока толстая дама не крикнет `Отрубить ему голову!'.
+They say that kicking a heavy statue is really a dumb move.  [4fb67f45ce7f]
+  =   Говорят, пинать тяжёлую статую — очень глупый ход.
+They say that kicking a valuable gem doesn't seem to make sense.  [7b92a9a8214c]
+  =   Говорят, пинать драгоценный камень — смысла никакого.
 They say that killing a shopkeeper brings bad luck.  [cbbc483d372e]
   =   Говорят, убийство лавочника приносит неудачу.
+They say that leprechauns know Latin and you should too.  [26caff251ed3]
+  =   Говорят, лепреконы знают латынь, и вам бы не помешало.
+They say that minotaurs get lost outside of the mazes.  [fd938ebb15e8]
+  =   Говорят, минотавры теряются вне лабиринтов.
 They say that monsters never step on a scare monster scroll.  [441a926bf7f6]
   =   Говорят, монстры никогда не наступают на свиток отпугивания монстров.
 They say that most monsters find flute recitals extremely boring.  [50a7ceda9c29]
   =   Говорят, на концертах флейты большинство монстров засыпает со скуки.
+They say that most trolls are born again.  [3cbaadcc0055]
+  =   Говорят, большинство троллей рождаются заново.
 They say that mummy corpses are not well preserved.  [06c872001cb3]
   =   Говорят, трупы мумий плохо сохраняются.
+They say that naming your cat Garfield will make you more attractive.  [e2833bd56d3f]
+  =   Говорят, если назвать кота Гарфилдом, вы станете привлекательнее.
 They say that naturally a wand of wishing would be heavily guarded.  [da45c0c0c309]
   =   Говорят, палочку желаний, разумеется, хорошо охраняют.
+They say that no one knows everything about everything in the dungeon.  [fb7458d64a3d]
+  =   Говорят, никто не знает всего обо всём в подземелье.
 They say that no one notices the junk underneath a boulder.  [d11868ae687c]
   =   Говорят, хлама под валуном никто не замечает.
+They say that no one plays NetHack just for the fun of it.  [8977327dba37]
+  =   Говорят, никто не играет в NetHack просто ради удовольствия.
+They say that no one really subscribes to rec.games.roguelike.nethack.  [e6b63af6c5af]
+  =   Говорят, на rec.games.roguelike.nethack на самом деле никто не подписан.
+They say that no one will admit to starting a rumor.  [78bcd0a2bdab]
+  =   Говорят, никто не признается, что пустил слух.
 They say that nobody expects a unicorn horn to rust.  [6d1173324a15]
   =   Говорят, никто не ожидает, что рог единорога заржавеет.
 They say that nobody knows if an explorer can live forever.  Do you?  [c206afee7a17]
@@ -8082,32 +8626,66 @@ They say that nothing can change the fact that some potions contain a djinni.  [
   =   Говорят, ничто не изменит того, что в некоторых зельях сидит джинн.
 They say that nothing can change the fact that some potions contain a ghost.  [bb96c072abfe]
   =   Говорят, ничто не изменит того, что в некоторых зельях сидит привидение.
+They say that nurses sometimes carry scalpels and never use them.  [7308531c0605]
+  =   Говорят, медсёстры иногда носят скальпели, но никогда ими не пользуются.
 They say that nymphs always fall for rock'n'roll, try it!  [7cab0f4b295f]
   =   Говорят, нимфы всегда западают на рок-н-ролл.  Попробуйте!
 They say that once an Olog-Hai is canned it never shows its face again.  [90272f048a8d]
   =   Говорят, олог-хай, попав в консервную банку, больше никогда не показывается.
 They say that once upon a time xans would never scratch your boots.  [e0d2a5b8d5a6]
   =   Говорят, когда-то ксаны никогда не царапали вам сапоги.
+They say that once you've met one wizard you've met them all.  [c71e4a6bf206]
+  =   Говорят, кто видел одного волшебника, видел их всех.
+They say that one troll is worth 10,000 newts.  [c739cab29c83]
+  =   Говорят, один тролль стоит 10 000 тритонов.
+They say that only David can find the zoo!  [2537f23b868c]
+  =   Говорят, найти зверинец может только Давид!
 They say that only an experienced wizard can do the tengu shuffle.  [0d0784253ec0]
   =   Говорят, только опытный волшебник освоит пляску тэнгу.
+They say that only angels play their harps for their pets.  [2eca88bcffa0]
+  =   Говорят, только ангелы играют своим питомцам на арфах.
+They say that only big spenders carry gold.  [a948644fb85b]
+  =   Говорят, золото носят с собой только транжиры.
 They say that only chaotics can kill shopkeepers and get away with it.  [61e4bac723dd]
   =   Говорят, только хаотичным героям сходит с рук убийство лавочников.
 They say that only female monsters can lay eggs.  [7cb8c71e2274]
   =   Говорят, откладывать яйца могут только самки монстров.
+They say that orc shamans are healthy, wealthy and wise.  [2548db6db469]
+  =   Говорят, орки-шаманы здоровы, богаты и мудры.
+They say that playing NetHack is like walking into a death trap.  [2782f3801b7f]
+  =   Говорят, играть в NetHack — всё равно что лезть в смертельную ловушку.
 They say that playing a horn really bad is really good.  [0c4364756adb]
   =   Говорят, если очень плохо играть на роге, это очень хорошо.
 They say that prayer at an altar can sometimes make the water there holy.  [26e15a0967e5]
   =   Говорят, молитва у алтаря порой делает воду на нём святой.
+They say that problem breathing is best treated by a proper diet.  [830a72415092]
+  =   Говорят, проблемы с дыханием лучше всего лечить правильной диетой.
+They say that quaffing many potions of levitation can give you a headache.  [cfadd26d8ac7]
+  =   Говорят, если выпить много зелий левитации, может разболеться голова.
+They say that queen bees get that way by eating royal jelly.  [4d17bb4e7302]
+  =   Говорят, пчелиными матками становятся, поедая маточное молочко.
+They say that reading a scare monster scroll is the same as saying Elbereth.  [657aabbef2a1]
+  =   Говорят, прочитать свиток отпугивания монстров — всё равно что сказать Elbereth.
+They say that real hackers always are controlled.  [3998d15926e7]
+  =   Говорят, настоящие хакеры всегда под контролем.
+They say that real hackers never sleep.  [eedababaf250]
+  =   Говорят, настоящие хакеры никогда не спят.
 They say that rubbing a glowing potion does not make it a magic lamp.  [0741ea7669cd]
   =   Говорят, если потереть светящееся зелье, волшебной лампой оно не станет.
 They say that scalpels become dull because they're not athames.  [3d00a2121c11]
   =   Говорят, скальпели тупятся, потому что они не атамы.
+They say that shopkeepers are insured by Croesus himself!  [2ffa555c0195]
+  =   Говорят, лавочники застрахованы у самого Крёза!
 They say that shopkeepers don't like pick-axes.  [346f4ae88939]
   =   Говорят, лавочники не любят кирки.
 They say that shopkeepers don't mind you bringing your pets in the shop.  [d6e630556f2f]
   =   Говорят, лавочники не возражают, если вы приводите в лавку питомцев.
 They say that shopkeepers don't usually mind if you sneak into a shop.  [3adf1cfac13d]
   =   Говорят, лавочники обычно не против, если вы прокрадётесь в лавку.
+They say that shopkeepers never carry more than 20 gold pieces, at night.  [e8935823b706]
+  =   Говорят, ночью лавочники носят с собой не больше 20 золотых монет.
+They say that shopkeepers never sell blessed potions of invisibility.  [cf32e8f16f83]
+  =   Говорят, лавочники никогда не продают благословенные зелья невидимости.
 They say that shopkeepers often have a large amount of money in their purses.  [dd46c869e627]
   =   Говорят, в кошельках у лавочников обычно водятся большие деньги.
 They say that shopkeepers often remember things that you might forget.  [6a220d14077f]
@@ -8122,14 +8700,22 @@ They say that snake charmers aren't charismatic, just musical.  [7067b3fa3c78]
   =   Говорят, заклинатели змей не обаятельны, а просто музыкальны.
 They say that soldiers are always prepared and usually protected.  [61fa0be76cf9]
   =   Говорят, солдаты всегда готовы и обычно хорошо защищены.
+They say that soldiers wear kid gloves and silly helmets.  [a0130d7955a2]
+  =   Говорят, солдаты носят лайковые перчатки и дурацкие шлемы.
+They say that some Kops are on the take.  [e1ff03e7b795]
+  =   Говорят, некоторые копы берут взятки.
 They say that some eggs could hatch in your pack, lucky or not.  [ee1780ee6785]
   =   Говорят, некоторые яйца могут вылупиться прямо у вас в рюкзаке, к счастью или нет.
 They say that some fire ants will make you a hot meal.  [845c928816f3]
   =   Говорят, огненные муравьи приготовят вам горячий обед.
+They say that some guards' palms can be greased.  [c0701b0a0f08]
+  =   Говорят, некоторым стражам можно смазать лапу.
 They say that some horns play hot music and others are too cool for words.  [32fa117be9e5]
   =   Говорят, одни рога играют зажигательную музыку, а другие слишком холодны для слов.
 They say that some humanoids are nonetheless quite human.  [0779348d7ef7]
   =   Говорят, некоторые гуманоиды всё-таки вполне люди.
+They say that some monsters may kiss your boots to stop your drum playing.  [91b00699363d]
+  =   Говорят, некоторые монстры готовы целовать вам сапоги, лишь бы вы перестали барабанить.
 They say that some shopkeepers consider gems to be family heirlooms.  [a99bddeba292]
   =   Говорят, некоторые лавочники считают самоцветы фамильными драгоценностями.
 They say that some shopkeepers recognize gems but they won't tell you.  [74503417597d]
@@ -8140,8 +8726,10 @@ They say that some yetis are full of hot air.  [0f705f79028e]
   =   Говорят, некоторые йети полны горячего воздуха.
 They say that something very special would be in a well-protected place.  [0dce81ce3f7a]
   =   Говорят, что-то совсем особенное должно лежать в хорошо защищённом месте.
+They say that sometimes you can be the hit of the party when playing a horn.  [1aa1643f0778]
+  =   Говорят, сыграв на роге, можно стать хитом вечеринки.
 They say that speed boots aren't fast enough to let you walk on water.  [e969defc29d5]
-  =   Говорят, сапоги скорости недостаточно быстры, чтобы бегать по воде.
+  =   Говорят, даже сапоги-скороходы недостаточно быстры, чтобы бегать по воде.
 They say that teleport traps are the devil's work.  [5e510e9242f9]
   =   Говорят, телепортационные ловушки — дело рук дьявола.
 They say that tengu don't wear rings, why should you?  [e5cce6d9fd36]
@@ -8156,12 +8744,26 @@ They say that the Hand of Elbereth can hold up your prayers.  [c9efdfe545d4]
   =   Говорят, Длань Elbereth может задержать ответ на ваши молитвы.
 They say that the Leprechaun King is rich as Croesus.  [c1ada5ed2802]
   =   Говорят, Король лепреконов богат, как Крёз.
+They say that the NetHack gods generally welcome your sacrifices.  [7bdf4a55af25]
+  =   Говорят, боги NetHack обычно рады вашим жертвам.
+They say that the Three Rings are named Vilya, Nenya and Narya.  [cab7e6ebc937]
+  =   Говорят, Три Кольца зовутся Вилья, Ненья и Нарья.
+They say that the Wizard of Yendor has a death wish.  [ea60ce8ccc2c]
+  =   Говорят, Волшебник Йендора ищет смерти.
 They say that the Wizard of Yendor is schizophrenic and suicidal.  [e3c8f0e88c65]
   =   Говорят, у Волшебника Йендора раздвоение личности и тяга к самоубийству.
+They say that the `hair of the dog' is sometimes an effective remedy.  [a3c294be9e8e]
+  =   Говорят, `клин клином' порой отличное лекарство.
+They say that the best time to save your game is now before it's too late.  [3b4f650f3c08]
+  =   Говорят, лучшее время сохранить игру — сейчас, пока не поздно.
 They say that the best way to fix your injuries is a potion.  [261c688ebd97]
   =   Говорят, лучшее средство от ран — зелье.
+They say that the biggest obstacle in NetHack is your mind.  [fb6dfddbbfc8]
+  =   Говорят, самое большое препятствие в NetHack — ваш собственный разум.
 They say that the experienced character knows how to convert an altar.  [f239a3b00b9b]
   =   Говорят, опытный герой знает, как обратить алтарь в свою веру.
+They say that the gods are angry when they hit you with objects.  [9edc47e0f2b9]
+  =   Говорят, боги злятся, когда бросают в вас предметы.
 They say that the gods are happy when they drop objects at your feet.  [18cd2eabd7e7]
   =   Говорят, боги довольны, когда роняют предметы к вашим ногам.
 They say that the idea of invisible Nazgul has a certain ring to it.  [97ecdb9ab65c]
@@ -8174,6 +8776,8 @@ They say that the only door to the vampire's tower is on its lowest level.  [272
   =   Говорят, единственная дверь в башню вампира — на её нижнем этаже.
 They say that the only good djinni is a grateful djinni.  [a128dc49d07c]
   =   Говорят, хороший джинн — только благодарный джинн.
+They say that the priesthood are specially favored by the gods.  [a27cb20bb78f]
+  =   Говорят, боги особенно благоволят жрецам.
 They say that the right wand may help you chase a nymph.  [080051e1f9f8]
   =   Говорят, подходящая палочка поможет вам догнать нимфу.
 They say that the thing about genocide is that it works both ways.  [454034502764]
@@ -8184,52 +8788,130 @@ They say that the view from a fog cloud is really very moving.  [cb6fd698f8aa]
   =   Говорят, вид изнутри туманного облака очень трогательный.
 They say that the walls in shops are made of extra hard material.  [8eef928f64ba]
   =   Говорят, стены в лавках сделаны из особо прочного материала.
+They say that the way to make a unicorn happy is to give it what it wants.  [914c0c2b8a84]
+  =   Говорят, чтобы порадовать единорога, дайте ему то, чего он хочет.
 They say that there are at least 15 ways to lose a pair of levitation boots.  [4f0d993de65f]
   =   Говорят, есть по меньшей мере 15 способов лишиться сапог левитации.
+They say that there are no black or white stones, only gray.  [58f910278e70]
+  =   Говорят, не бывает чёрных и белых камней, только серые.
+They say that there are no skeletons hence there are no skeleton keys.  [37a5565b76a2]
+  =   Говорят, скелетов не бывает, а значит, нет и универсальных ключей.
+They say that there is a clever rogue in every hacker just dying to escape.  [927a8a6b0da5]
+  =   Говорят, в каждом хакере сидит хитрый плут, который до смерти хочет вырваться на волю.
+They say that there is no such thing as free advice.  [38c185e578b2]
+  =   Говорят, бесплатных советов не бывает.
+They say that there is only one way to win at NetHack.  [0c9e02218841]
+  =   Говорят, выиграть в NetHack можно только одним способом.
+They say that there once was a fearsome chaotic samurai named Luk No.  [64987d47f538]
+  =   Говорят, жил когда-то грозный хаотичный самурай по имени Неуда Чи.
+They say that there was a time when cursed holy water wasn't water.  [f0834cba510f]
+  =   Говорят, было время, когда проклятая святая вода не была водой.
+They say that there's no point in crying over a gray ooze.  [66ad67f0a03e]
+  =   Говорят, над серой слизью слёз не льют.
 They say that there's only hope left after you've opened Pandora's box.  [338b95bf8078]
   =   Говорят, что когда откроешь ящик Пандоры, остаётся только надежда.
 They say that throwing glass gems is the same as throwing rocks.  [7d2a5fb975a9]
   =   Говорят, кидаться стекляшками — всё равно что кидаться камнями.
 They say that to block a shocking sphere, you need the right shield.  [dd35cd12a781]
   =   Говорят, чтобы защититься от электрической сферы, нужен правильный щит.
+They say that trap doors should always be marked `Caution:  Trap Door'.  [dc7f36f265fc]
+  =   Говорят, на люках всегда должна быть надпись `Осторожно: люк'.
 They say that trespassing a boulder is probably beneath you.  [d15b8cff3952]
   =   Говорят, пролезать под валуном — ниже вашего достоинства.
 They say that true power comes from within...except when it doesn't.  [9722d93e1cf7]
   =   Говорят, истинная сила идёт изнутри... кроме тех случаев, когда нет.
 They say that unicorns are fond of precious gems.  [16c065bc747a]
   =   Говорят, единороги любят драгоценные камни.
+They say that using an amulet of change isn't a difficult operation.  [80661bf7f585]
+  =   Говорят, воспользоваться амулетом перемены — несложная операция.
+They say that water walking boots are better if you are fast like Hermes.  [d9010c1081f1]
+  =   Говорят, сапоги водохождения лучше, если вы быстры, как Гермес.
 They say that what goes down the drain might come back up.  [967665004ff6]
   =   Говорят, что ушло в слив, может и вернуться.
+They say that when you wear a circular amulet you might resemble a troll.  [5d2bbf456dff]
+  =   Говорят, надев круглый амулет, можно стать похожим на тролля.
+They say that when you're hungry you can get a pizza in 30 moves or it's free.  [4ae1671bc054]
+  =   Говорят, если проголодаетесь, пиццу доставят за 30 ходов, а иначе — бесплатно.
+They say that when your god is angry you should try another one.  [83d51dbd826b]
+  =   Говорят, если ваш бог гневается, попробуйте другого.
 They say that wielded, a long sword named Fire Brand makes you feel cooler.  [3060128a8434]
   =   Говорят, длинный меч по имени Огненный Клинок в руке дарит прохладу.
 They say that wielded, a long sword named Frost Brand makes you hot stuff.  [8ee94383f342]
   =   Говорят, длинный меч по имени Морозный Клинок в руке делает вас горячей штучкой.
+They say that wielding a unicorn horn takes strength.  [0a13f78bcc84]
+  =   Говорят, чтобы орудовать рогом единорога, нужна сила.
 They say that wiping its face is impossible for a floating eye.  [70ad70a91767]
   =   Говорят, парящее око никак не может вытереть лицо.
 They say that with a floating eye you could see in the dark.  [1e5d08860113]
   =   Говорят, с парящим оком можно видеть в темноте.
+They say that with speed boots you never worry about hit and run accidents.  [ea38298cba4a]
+  =   Говорят, в сапогах-скороходах можно бить и убегать без забот.
 They say that you are lucky if you can get a unicorn to catch a ruby.  [bc3512822de6]
   =   Говорят, если единорог поймает ваш рубин, вам повезло.
 They say that you are what you eat.  [94acc2ed9ae8]
   =   Говорят, вы — то, что вы едите.
+They say that you can defeat a killer bee with a unicorn horn.  [fce55d090d07]
+  =   Говорят, пчелу-убийцу можно одолеть рогом единорога.
 They say that you can find named weapons at an altar if you're lucky.  [3327d6a5246d]
   =   Говорят, если повезёт, у алтаря можно найти именное оружие.
 They say that you can give potions of extra healing new energy.  [1a3f69536ba6]
   =   Говорят, зельям усиленного лечения можно придать новую силу.
+They say that you can only cross the River Styx in Charon's boat.  [469d17f21c2f]
+  =   Говорят, Стикс можно пересечь только в лодке Харона.
+They say that you can only kill a lich once and then you'd better be careful.  [b4bf47812920]
+  =   Говорят, лича можно убить только однажды, а потом лучше быть начеку.
+They say that you can only wish for things you've already had.  [216438cc954f]
+  =   Говорят, пожелать можно только то, что у вас уже было.
 They say that you can safely touch cockatrice eggs but why bother?  [071c14746e82]
   =   Говорят, яйца василиска можно трогать без опаски, но зачем?
+They say that you can train a cat by talking gently to it.  [f2e5fed54301]
+  =   Говорят, кошку можно приручить, ласково с ней разговаривая.
+They say that you can train a dog by talking firmly to it.  [b405c9af6c70]
+  =   Говорят, собаку можно выдрессировать, строго с ней разговаривая.
+They say that you can trust your gold with the king.  [92021ef183e3]
+  =   Говорят, своё золото можно доверить королю.
 They say that you can't break an amulet of reflection.  [7821ca6b929e]
   =   Говорят, амулет отражения не разбить.
+They say that you can't wipe your greasy bare hands on a blank scroll.  [28b62cec895a]
+  =   Говорят, жирные руки о чистый свиток не вытрешь.
+They say that you cannot trust scrolls of rumor.  [a35225ce0041]
+  =   Говорят, свиткам слухов верить нельзя.
+They say that you could fall head over heels for an energy vortex.  [9d9a9f97d88e]
+  =   Говорят, в энергетический вихрь можно влюбиться по уши.
 They say that you don't always get what you wish for.  [cf347c306f68]
   =   Говорят, желаемое сбывается не всегда.
+They say that you need a key in order to open locked doors.  [9582dc1c3db0]
+  =   Говорят, чтобы открыть запертую дверь, нужен ключ.
+They say that you need a mirror to notice a mimic in an antique shop.  [da7e29682621]
+  =   Говорят, чтобы заметить мимика в антикварной лавке, нужно зеркало.
+They say that you really can use a pick-axe unless you really can't.  [94a12b9dba22]
+  =   Говорят, кирку вы действительно можете применить, если только действительно не можете.
 They say that you should always be prepared for a final challenge.  [9b8942a893aa]
   =   Говорят, к последнему испытанию надо быть готовым всегда.
+They say that you should always store your tools in the cellar.  [9df4344d1edf]
+  =   Говорят, инструменты всегда стоит хранить в подвале.
 They say that you should ask a dwarf to let you into a locked shop.  [7c232b59b084]
   =   Говорят, чтобы попасть в запертую лавку, попросите дварфа.
+They say that you should be careful while climbing the ladder to success.  [16a14f006711]
+  =   Говорят, по лестнице успеха надо подниматься осторожно.
+They say that you should call your armor `rustproof'.  [a441576f4450]
+  =   Говорят, свои доспехи стоит назвать `нержавеющими'.
+They say that you should name your dog Spuds to have a cool pet.  [ae43b7721263]
+  =   Говорят, назовите собаку Спадс — и питомец будет что надо.
+They say that you should name your weapon after your first monster kill.  [72bd0eb110d3]
+  =   Говорят, оружие стоит назвать в честь первого убитого монстра.
+They say that you should never introduce a rope golem to a succubus.  [d100155ac4c1]
+  =   Говорят, никогда не знакомьте верёвочного голема с суккубом.
+They say that you should never sleep near invisible ring wraiths.  [7557ddc01be8]
+  =   Говорят, никогда не спите рядом с невидимыми кольценосными призраками.
+They say that you should never try to leave the dungeon with a bag of gems.  [747fb30e7cf7]
+  =   Говорят, никогда не пытайтесь покинуть подземелье с мешком самоцветов.
 They say that you should pray for divine inspiration.  [3c129633384c]
   =   Говорят, о божественном вдохновении надо молиться.
 They say that you should religiously give your gold away.  [f10104ce3ec3]
   =   Говорят, золото надо раздавать с религиозным рвением.
+They say that you should remove your armor before sitting on a throne.  [2d1f77456294]
+  =   Говорят, прежде чем сесть на трон, снимите доспехи.
 They say that you will never get healthy by eating geckos.  [34e9cdf91671]
   =   Говорят, поедая гекконов, здоровья не наберёшься.
 They say that zapping yourself with a wand of undead turning is stupid.  [131caae0b2be]
@@ -8306,6 +8988,8 @@ This food really hits the spot!  [d670ef61b5da]
   =   Эта еда пришлась как нельзя кстати!
 This is a charging scroll.  [982435da324a]
   =   Это свиток подзарядки.
+This release contains 10%% recycled material.  [8dc9109be48d]
+  =   Эта версия на 10% состоит из переработанных материалов.
 This satiates your %s!  [d931d7633b85]
   m   Это насыщает ваш тритона!
   f   Это насыщает вашу крысу!
@@ -8387,6 +9071,8 @@ Thwack!!  [06f5c5ed0c48]
   =   Бац!!
 Tie a pet to this leash  [52a5883c950b]
   =   Привязать питомца к этому поводку
+Time stands still as the succubus changes her calendar to January 1, 2000.  [594e0351e0e8]
+  =   Время замирает: суккуб переворачивает календарь на 1 января 2000 года.
 Tip %s  [2fa3a0511091]
   m   Вытряхнуть тритона
   f   Вытряхнуть крысу
@@ -8398,8 +9084,14 @@ Tip which container?  [2bc817077686]
   =   Какой контейнер вытряхнуть?
 Tip: Farlooking or selecting a map location\n\nYou are now in a "farlook" mode - the movement keys move the cursor,\nnot your character.  Game time does not advance.  This mode is used\nto look around the map, or to select a location on it.\n\nWhen in this mode, you can press ESC to return to normal game mode,\nand pressing ? will show the key help.  [e465dbb131f1]
   =   Подсказка: осмотр или выбор места на карте\n\nВы в режиме «осмотра»: клавиши движения перемещают курсор,\nа не вашего героя.  Игровое время стоит.  В этом режиме\nможно осмотреться на карте или выбрать на ней место.\n\nВ этом режиме ESC возвращает к обычной игре,\nа ? показывает подсказку по клавишам.
+Tired?  Try a scroll of charging on yourself.  [ad930240ebe7]
+  =   Устали?  Прочитайте на себя свиток подзарядки.
 To a full belly all food is bad.  [f1556e98da13]
   =   Сытому любая еда противна.
+To achieve the next higher rating, you need 3 more points.  [3dc9d0512347]
+  =   Чтобы подняться в рейтинге, вам нужно ещё 3 очка.
+To reach heaven, escape the dungeon while wearing a ring of levitation.  [7db469ed4cd9]
+  =   Чтобы попасть на небеса, покиньте подземелье в кольце левитации.
 To what level do you want to teleport?  [dd2152d81265]
   =   На какой уровень вы хотите телепортироваться?
 To what level do you want to teleport? [type a number or name]  [94c54715882f]
@@ -8418,10 +9110,14 @@ Too close!  [fd40207178de]
   =   Слишком близко!
 Too far!  [e408642d7551]
   =   Слишком далеко!
+Tourists wear shirts loud enough to wake the dead.  [cac398eedd31]
+  =   Туристы носят такие кричащие рубашки, что мёртвые просыпаются.
 Travel here  [088518d10e60]
   =   Идти сюда
 Trolls are described as rubbery:  they keep bouncing back.  [f1cc8542b6e6]
   =   Троллей называют резиновыми: они всё время возвращаются.
+Try calling your katana Moulinette.  [2530d8dd6953]
+  =   Попробуйте назвать свою катану Мулинетт.
 Try the fall-back end-run play against ghosts.  [31e9aa234a0b]
   =   Против привидений попробуйте обходной манёвр с отступлением.
 Try to invoke a unique power of this object  [c4a2c9403841]
@@ -8436,6 +9132,8 @@ Two wrongs don't make a right, but three lefts do.  [3661abccfa3e]
   =   Два неверных поворота не дадут верного, а вот три левых дадут правый.
 Ulch - that meat was tainted!  [57560e3af672]
   =   Тьфу, это мясо испорчено!
+Ulch!  That meat was painted!  [0235c096e70a]
+  =   Тьфу!  Это мясо было крашеное!
 Ulch!  That potion smells terrible!  [cf46f4288736]
   =   Тьфу!  Это зелье ужасно пахнет!
 Ulch!  That potion tasted foul!  [4ba7512cb58b]
@@ -8450,6 +9148,8 @@ Unacceptable races  [64676c9d62fd]
   =   Недопустимые расы
 Unacceptable roles  [4f16713d6929]
   =   Недопустимые профессии
+Unfortunately, this message was left intentionally blank.  [1aaadeb6bc3e]
+  =   К сожалению, это сообщение намеренно оставлено пустым.
 Unicorn horns can cleanse things other than yourself.  [90f81498003f]
   =   Рогом единорога можно очищать не только себя.
 Unique items or Relics  [60ad9e96153d]
@@ -8497,6 +9197,8 @@ Used up item:  [20f398908696]
   =   Израсходованный предмет:
 Used up items:  [eda847f6b2fa]
   =   Израсходованные предметы:
+Using a morning star in the evening has no effect.  [a73e19a38f2b]
+  =   Моргенштерн вечером не действует.
 Valkyries come from the north, and have commensurate abilities.  [c34eebe2021d]
   =   Валькирии родом с севера, и способности у них соответствующие.
 Vampires hate garlic.  [d0e89a97f9d6]
@@ -8522,12 +9224,22 @@ Wait!  There's %s hiding under %s!  [74e8d72dbd50]
   pl  Стойте!  Под 3 стрелами прячется 3 стрелы!
 Wait!  There's something there you can't see!  [73850eeb8f93]
   =   Стойте!  Там что-то, чего вы не видите!
+Waltz, dumb nymph, for quick jigs vex.  [88c022dbe34a]
+  =   Съешь же ещё этих мягких французских булок, нимфа, да выпей чаю.
+Want a hint?  Zap a wand of make invisible on your weapon!  [1ea28c4ed96c]
+  =   Хотите подсказку?  Наведите палочку невидимости на своё оружие!
+Want to ascend in a hurry?  Apply at Gizmonic Institute.  [ada06f4a0bfa]
+  =   Хотите вознестись побыстрее?  Обращайтесь в Гизмонический институт.
 Want to heal faster?  Dip your potions of healing in a potion of speed!  [642b42c04f7d]
   =   Хотите лечиться быстрее?  Окуните зелья лечения в зелье скорости!
+Wanted: shopkeepers.  Send a scroll of mail to Mage of Yendor/Level 35/Dungeon.  [15a35d2326fb]
+  =   Требуются лавочники.  Присылайте почтовый свиток по адресу: Архимаг Йендора/Уровень 35/Подземелье.
 Watch out, the Wizard might come back.  [6497d1b21753]
   =   Берегитесь: Волшебник может вернуться.
 Water traps have no effect on dragons.  [64beabacd9ef]
   =   Водяные ловушки на драконов не действуют.
+We have new ways of detecting treachery...  [05aa7b4a833f]
+  =   У нас есть новые способы распознавать предательство...
 Weapon Skills  [b2925617dd26]
   =   Владение оружием
 Wear this armor  [fa9ab533c33d]
@@ -8537,6 +9249,8 @@ Welcome to experience level %d.  [f8909c52be7b]
   f   Вы достигли 3-го уровня опыта.
   n   Вы достигли 5-го уровня опыта.
   pl  Вы достигли 21-го уровня опыта.
+Wet towels make great weapons!  [05154f30ca60]
+  =   Мокрое полотенце — отличное оружие!
 Whammm!!  [74ba1a1e775e]
   =   Бамм!!
 What a pity--you just ruined a future piece of art!  [1fdfbe6a41ad]
@@ -8980,6 +9694,14 @@ What would you like to identify first?  [921c1aa5daf3]
   =   Что вы хотите опознать первым?
 What would you like to identify next?  [23c67b25aa24]
   =   Что вы хотите опознать следующим?
+Whatever can go wrong, will go wrong.  [7b6861593015]
+  =   Если что-то может пойти не так, оно пойдёт не так.
+When a piercer drops in on you, you will be tempted to hit the ceiling!  [24e8ddfdacd8]
+  =   Когда на вас свалится пронзатель, вам захочется лезть на потолок!
+When in a maze follow the right wall and you will never get lost.  [e9f3bbb83814]
+  =   В лабиринте держитесь правой стены — и никогда не заблудитесь.
+When you have a key, you don't have to wait for the guard.  [8430e6ab1f14]
+  =   Если у вас есть ключ, стража можно не ждать.
 Where do you want to hit?  [7654d7794c5d]
   =   Куда вы хотите ударить?
 Where do you want to jump?  [b0cece9b8435]
@@ -9113,6 +9835,8 @@ Will you accept %ld zorkmids in credit for %s?  [5fb4936e549d]
   pl  Примете ли вы 21 зоркмид в кредит за 3 стрелы?
 Wipe the floor with this towel  [4d326ac95bd8]
   =   Протереть пол этим полотенцем
+Wish for a master key and open the Magic Memory Vault!  [4fc8399c3e39]
+  =   Пожелайте универсальный ключ и откройте «Волшебное Хранилище Памяти»!
 Wish what?  [0b8a7f9f4b05]
   =   Что пожелать?
 Wishing too much may bring you too little.  [d9b6ed4009bd]
@@ -9122,12 +9846,16 @@ With great effort you move %s.  [e4dc2e23967a]
   f   С огромным трудом вы сдвигаете крысу.
   n   С огромным трудом вы сдвигаете копьё.
   pl  С огромным трудом вы сдвигаете 3 стрелы.
+Wizard expects every monster to do its duty.  [c474b9c5d7d6]
+  =   Волшебник ожидает, что каждый монстр исполнит свой долг.
 Wow!  This makes you feel better!  [c53ee2ce4f58]
   =   Ух ты!  Вам становится лучше!
 Wow!  This makes you feel good!  [ccc3e2e7c24c]
   =   Ух ты!  Вам становится хорошо!
 Wow!  This makes you feel great!  [21bb0acd5817]
   =   Ух ты!  Вы чувствуете себя отлично!
+Wow!  You could've had a potion of fruit juice!  [6a95477c18a9]
+  =   Ого!  А ведь мог быть флакон фруктового сока!
 Write on something with this marker  [5605e18a0063]
   =   Написать что-нибудь этим маркером
 Write on the %s with one of these items  [7d163a970d27]
@@ -9150,6 +9878,8 @@ Yes  [5397e0583f14]
   =   Да
 Yes; start game  [a03832dd3642]
   =   Да, начать игру
+Yet Another Silly Message (YASM).  [110b894bd7fd]
+  =   Ещё Одно Глупое Сообщение (ЕОГС).
 You already found a monster.  Use '%s' prefix to force another search.  [4e9a5544b54b]
   m   Вы уже нашли монстра.  Чтобы всё равно искать, используйте префикс 'тритон'.
   f   Вы уже нашли монстра.  Чтобы всё равно искать, используйте префикс 'крыса'.
@@ -9421,10 +10151,16 @@ You burned in The Astral Plane with %ld points,  [40afa16a586c]
   pl  Вы сгорели на Астральном плане, набрав 21 очко,
 You caitiff!  [643e3a771753]
   =   Подлец!
+You can get a genuine Amulet of Yendor by doing the following:  --More--  [2078d6796ac7]
+  =   Настоящий Амулет Йендора можно получить так:  --Дальше--
 You can hear again.  [19accd0af40f]
   =   Вы снова слышите.
+You can make holy water by boiling the hell out of it.  [c47a9b91faf1]
+  =   Святую воду можно получить, если выпарить из неё всю чертовщину.
 You can move again.  [614e16bd9ab7]
   =   Вы снова можете двигаться.
+You can protect yourself from black dragons by doing the following:  --More--  [8b9b958716b6]
+  =   От чёрных драконов можно защититься так:  --Дальше--
 You can see again.  [6ca81cc3c844]
   =   Вы снова видите.
 You can see through yourself, but you are visible!  [fa142e7e7c57]
@@ -9442,6 +10178,8 @@ You can't force anything with that weapon.  [afc88279f2f9]
   =   Этим оружием ничего не взломать.
 You can't force anything with those weapons.  [de55948b6c2e]
   =   Этим оружием ничего не взломать.
+You can't get by the snake.  [a98436835287]
+  =   Мимо змеи не пройти.
 You can't go down here.  [b2336d9d07bf]
   =   Здесь нельзя спуститься.
 You can't jump very far.  [0b15146032d1]
@@ -9946,6 +10684,8 @@ You feel like a million zorkmid!  [ec36ed68fe65]
   =   Вы чувствуете себя на миллион зоркмидов!
 You feel like a million zorkmids!  [ceb3659861b1]
   =   Вы чувствуете себя на миллион зоркмидов!
+You feel like someone is pulling your leg.  [f78bdd5ffba7]
+  =   Кажется, кто-то водит вас за нос.
 You feel limber!  [340c539915a5]
   =   Вы чувствуете гибкость!
 You feel lonely.  [70cb2bf4ab97]
@@ -10149,6 +10889,8 @@ You have those readied.  Wield it instead?  [2cc96915206e]
   =   Это у вас в колчане.  Взять в руки?
 You have those readied.  Wield them instead?  [13ab2b9f31df]
   =   Это у вас в колчане.  Взять их в руки?
+You have to outwit the Sphynx or pay her.  [22f9c8c87600]
+  =   Сфинкса нужно перехитрить или заплатить ей.
 You have trouble lifting %s.  Continue?  [31e20f838c3d]
   m   Вам трудно поднять тритона.  Продолжить?
   f   Вам трудно поднять крысу.  Продолжить?
@@ -10291,6 +11033,8 @@ You materialize in a different location!  [96ce8fe89692]
   =   Вы материализуетесь в другом месте!
 You may discover a fine spirit inside a potion bottle.  [fc9064e909bd]
   =   В бутылке из-под зелья может оказаться отменный дух.
+You may get rich selling letters, but beware of being blackmailed!  [39607d49c07b]
+  =   На продаже писем можно разбогатеть, но берегитесь шантажа!
 You may want to dip into a potion of bottled blessings.  [ad80e2818800]
   =   Вам, пожалуй, стоит окунуть что-нибудь в зелье разлитых по бутылкам благословений.
 You might be able to bribe a demon lord.  [a16e86e5da6d]
@@ -10333,6 +11077,8 @@ You now wield %s.  [6a176b4bc6dd]
   f   Теперь вы держите в руках крысу.
   n   Теперь вы держите в руках копьё.
   pl  Теперь вы держите в руках 3 стрелы.
+You offend Shai-Hulud by sheathing your crysknife without having drawn blood.  [a8457d67d8a0]
+  =   Вы оскорбляете Шаи-Хулуда, вложив криснож в ножны, не пролив крови.
 You only feel hungry now.  [9e55596ef49e]
   =   Теперь вы лишь голодны.
 You panicked beyond the confines of the dungeon with %ld point,  [8600504434d7]
@@ -10702,6 +11448,8 @@ You turned to stone in The Astral Plane with %ld points,  [e9582535970b]
   pl  Вы окаменели на Астральном плане, набрав 21 очко,
 You wake up.  [e5435e98c0d4]
   =   Вы просыпаетесь.
+You want to regain strength?  Two levels ahead is a guesthouse!  [e017fb43828b]
+  =   Хотите восстановить силы?  Через два уровня будет гостиница!
 You were crushed beyond the confines of the dungeon with %ld point,  [c15cf5032c18]
   m   Вы были раздавлены за пределами подземелья, набрав 1 очко,
   f   Вы были раздавлены за пределами подземелья, набрав 3 очка,
@@ -11027,6 +11775,8 @@ You were wearing %s.  [474054947c9e]
   f   На вас была надета крыса.
   n   На вас было надето копьё.
   pl  На вас были надеты 3 стрелы.
+You will encounter a tall, dark, and gruesome creature...  [0745bad463fc]
+  =   Вы встретите высокое, тёмное и жуткое существо...
 You wobble in the saddle.  [ccaae82fc208]
   =   Вы покачиваетесь в седле.
 You won't always get a second chance, even with life saving.  [7a5b4374aeaf]
@@ -11244,6 +11994,40 @@ Zapping a wand of undead turning might bring your dog back to life.  [0ec0375106
   f   [свободных крысы для колец нет]
   n   [свободных копья для колец нет]
   pl  [свободных 3 стрел для колец нет]
+[cookie] A wish?  Okay, make me a fortune cookie!  [88dffd9dc546]
+  =   Желание?  Ладно, сделайте из меня печенье с предсказанием!
+[cookie] Help!  I'm being held prisoner in a fortune cookie factory!  [51a6616d0b56]
+  =   Помогите!  Я узник фабрики печенья с предсказанием!
+[cookie] No part of this fortune may be reproduced, stored in a retrieval system, ...  [7b6f36fac5cb]
+  =   Никакая часть этого предсказания не может быть воспроизведена, сохранена в информационной системе, ...
+[cookie] Sorry, no fortune this time.  Better luck next cookie!  [afea93f56572]
+  =   Простите, на этот раз без предсказания.  Удачи в следующем печенье!
+[cookie] They say that a fortune only has 1 line and you can't read between it.  [30042a358ff3]
+  =   Говорят, у предсказания всего одна строка, и между строк его не прочесть.
+[cookie] They say that a fortune only has 1 line, but you can read between it.  [a9fd31c017ea]
+  =   Говорят, у предсказания всего одна строка, но между строк его прочесть можно.
+[cookie] They say that a gypsy could tell your fortune for a price.  [9629c252371e]
+  =   Говорят, гадалка предскажет вам судьбу за плату.
+[cookie] They say that fortune cookies are food for thought.  [935b6196739b]
+  =   Говорят, печенье с предсказанием — пища для размышлений.
+[cookie] This fortune cookie is copy protected.  [940c88e23a9b]
+  =   Это печенье с предсказанием защищено от копирования.
+[cookie] This fortune cookie is the property of Fortune Cookies, Inc.  [b19c792f2759]
+  =   Это печенье с предсказанием — собственность ООО «Печенье с предсказаниями».
+[cookie] Warning:  fortune reading can be hazardous to your health.  [b0d914b07d32]
+  =   Минздрав предупреждает: чтение предсказаний опасно для вашего здоровья.
+[cookie] What a pity, you cannot read it!  [f739c28034e5]
+  =   Какая жалость, вы не можете это прочесть!
+[cookie] Why are you wasting time reading fortunes?  [3fdae60303ad]
+  =   Зачем вы тратите время на чтение предсказаний?
+[cookie] You are destined to be misled by a fortune.  [61fca93fe899]
+  =   Предсказанию суждено вас обмануть.
+[cookie] You choke on the fortune cookie.  --More--  [199ec69767aa]
+  =   Вы подавились печеньем с предсказанием.  --Дальше--
+[cookie] You hear the fortune cookie's hissing!  [d70c1f03d80a]
+  =   Вы слышите шипение печенья с предсказанием!
+[cookie] You swallowed the fortune!  [57a29d7f6751]
+  =   Вы проглотили предсказание!
 [m] Command accepts '%s' prefix  [50491bdaf137]
   m   [m] Команда принимает префикс 'тритон'
   f   [m] Команда принимает префикс 'крыса'

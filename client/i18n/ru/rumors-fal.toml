@@ -1,0 +1,1579 @@
+# R6, dat texts: the false rumours (dat/rumors.fal), as fortune cookies,
+# the Oracle's minor consultations and the rest tell them; "[cookie] " is
+# the engine's own marker, cut before a rumour is shown. Syntax: nh-i18n's
+# template.rs; not_terms: English words that are not the glossary's terms
+# there.
+
+[2b22b6fbebf2]
+en = "1st Law of Hacking:  leaving is much more difficult than entering."
+ru = "Первый закон хакинга: выйти гораздо труднее, чем войти."
+
+[f49b5e8dd59a]
+en = "2nd Law of Hacking:  first in, first out."
+ru = "Второй закон хакинга: первым вошёл — первым вышел."
+
+[7d699b2c504a]
+en = "3rd Law of Hacking:  the last blow counts most."
+ru = "Третий закон хакинга: важнее всего последний удар."
+
+[3205480d6378]
+en = "4th Law of Hacking:  you will find the exit at the entrance."
+ru = "Четвёртый закон хакинга: выход вы найдёте у входа."
+
+[205ee04aa6d8]
+en = "A chameleon imitating a mail daemon often delivers scrolls of fire."
+ru = "Хамелеон, изображающий почтового демона, часто приносит свитки огня."
+
+[1213474502ee]
+en = "A cockatrice corpse is guaranteed to be untainted!"
+ru = "Труп василиска гарантированно свежий!"
+
+[aed83d8abdc9]
+en = "A dead cockatrice is just a dead lizard."
+ru = "Мёртвый василиск — просто мёртвая ящерица."
+
+[02d496ac00b0]
+en = "A dragon is just a snake that ate a scroll of fire."
+ru = "Дракон — это просто змея, которая съела свиток огня."
+
+[ab23f8bf0e0f]
+en = "A fading corridor enlightens your insight."
+ru = "Исчезающий коридор проясняет разум."
+
+[66cbb49b950b]
+en = "A glowing potion is too hot to drink."
+ru = "Светящееся зелье слишком горячее, чтобы его пить."
+
+[40e7ad55c1e9]
+en = "A good amulet may protect you against guards."
+ru = "Хороший амулет защитит вас от стражей."
+
+[5227bfacaa1f]
+en = "A lizard corpse is a good thing to turn undead."
+ru = "Трупом ящерицы удобно изгонять нежить."
+
+[908f3e72d0ce]
+en = "A long worm can be defined recursively.  So how should you attack it?"
+ru = "Длинного червя можно определить рекурсивно.  Так как же его атаковать?"
+
+[063fe67d95ef]
+en = "A nymph will be very pleased if you call her by her real name:  Lorelei."
+ru = "Нимфа будет очень рада, если вы назовёте её настоящим именем: Лорелея."
+
+[f34875e826e7]
+en = "A ring of dungeon master control is a great find."
+ru = "Кольцо управления мастером подземелья — отличная находка."
+
+[05d2848e69d7]
+en = "A ring of extra ring finger is useless if not enchanted."
+ru = "Кольцо лишнего безымянного пальца бесполезно без зачарования."
+
+[19c0c7b61b24]
+en = "A rope may form a trail in a maze."
+ru = "Верёвка поможет отметить путь в лабиринте."
+
+[d5642bb7debd]
+en = "A staff may recharge if you drop it for awhile."
+ru = "Посох может перезарядиться, если его ненадолго бросить."
+
+[fd182dbaba40]
+en = "A visit to the Zoo is very educational; you meet interesting animals."
+ru = "Поход в зверинец очень познавателен: там встречаются интересные животные."
+
+[01e14ec8f251]
+en = "A wand of deaf is a more dangerous weapon than a wand of sheep."
+ru = "Палочка смерди — оружие опаснее, чем палочка сена."
+
+[c9213c868530]
+en = "A wand of vibration might bring the whole cave crashing about your ears."
+ru = "Палочка вибрации может обрушить вам на голову всю пещеру."
+
+[fb49bf6b1351]
+en = "A winner never quits.  A quitter never wins."
+ru = "Победитель никогда не сдаётся.  Сдавшийся никогда не побеждает."
+
+[88dffd9dc546]
+en = "[cookie] A wish?  Okay, make me a fortune cookie!"
+ru = "Желание?  Ладно, сделайте из меня печенье с предсказанием!"
+
+[c97f17a81e41]
+en = "Afraid of mimics?  Try to wear a ring of true seeing."
+ru = "Боитесь мимиков?  Попробуйте надеть кольцо истинного зрения."
+
+[97e1e9c7896c]
+en = "All monsters are created evil, but some are more evil than others."
+ru = "Все монстры созданы злыми, но некоторые злее других."
+
+[b354491ec5f7]
+en = "Always attack a floating eye from behind!"
+ru = "Парящее око всегда атакуйте со спины!"
+
+[1c92f317babe]
+en = "An elven cloak is always the height of fashion."
+ru = "Эльфийский плащ всегда на пике моды."
+
+[c4ff43dd08c0]
+en = "Any small object that is accidentally dropped will hide under a larger object."
+ru = "Любой мелкий предмет, случайно оброненный, спрячется под предметом покрупнее."
+
+[65c26701dc91]
+en = "Archeologists are very squishy, often found under boulders."
+ru = "Археологи очень мягкие, их часто находят под валунами."
+
+[26c7173a1611]
+en = "Archeologists find more bones piles."
+ru = "Археологи находят больше куч костей."
+
+[7ef017e97684]
+en = "Austin Powers says: My Mojo is back!  Yeah, baby!"
+ru = "Остин Пауэрс говорит: моё моджо снова со мной!  Йе, бейби!"
+
+[d599abbe19da]
+en = "Balrogs do not appear above level 20."
+ru = "Балроги не встречаются выше 20-го уровня."
+
+[06dd8fe124d3]
+en = "Banana peels work especially well against Keystone Kops."
+ru = "Банановая кожура особенно хорошо действует на кистоунских копов."
+
+[5017089c2847]
+en = "Be careful when eating bananas.  Monsters might slip on the peels."
+ru = "Осторожнее с бананами.  Монстры могут поскользнуться на кожуре."
+
+[67d2c4c715da]
+en = "Better leave the dungeon; otherwise you might get hurt badly."
+ru = "Лучше покиньте подземелье, а то можете сильно пострадать."
+
+[2a20eb1cbb85]
+en = "Beware of the potion of nitroglycerin -- it's not for the weak of heart."
+ru = "Берегитесь зелья нитроглицерина — оно не для слабых сердцем."
+
+[19c2760deba2]
+en = "Beware:  there's always a chance that your wand explodes as you try to zap it!"
+ru = "Осторожно: палочка всегда может взорваться, когда вы ею взмахнёте!"
+
+[89f615cf87b0]
+en = "Beyond the 23rd level lies a happy retirement in a room of your own."
+ru = "За 23-м уровнем вас ждёт счастливая пенсия в отдельной комнате."
+
+[0943168bd087]
+en = "Changing your suit without dropping your sword?  You must be kidding!"
+ru = "Переодеться, не выпуская меча?  Вы шутите!"
+
+[e1bc4972351c]
+en = "Close the door!  You're letting the heat out!"
+ru = "Закройте дверь!  Тепло уходит!"
+
+[c471671debb9]
+en = "Cockatrices might turn themselves to stone faced with a mirror."
+ru = "Василиски могут окаменеть, увидев себя в зеркале."
+
+[bb5e5e3e4eb3]
+en = "Consumption of home-made food is strictly forbidden in this dungeon."
+ru = "Употребление домашней еды в этом подземелье строго запрещено."
+
+[3fe277d1b011]
+en = "Dark room?  Your chance to develop your photographs!"
+ru = "Тёмная комната?  Самое время проявить фотографии!"
+
+[54148a192ced]
+en = "Dark rooms are not *completely* dark:  just wait and let your eyes adjust..."
+ru = "Тёмные комнаты темны не *совсем*: подождите, пока глаза привыкнут..."
+
+[1e15fe2683a2]
+en = "David London sez, \"Hey guys, *WIELD* a lizard corpse against a cockatrice!\""
+ru = "Дэвид Лондон грит: \"Ребята, *ВОЗЬМИТЕ В РУКИ* труп ящерицы против василиска!\""
+
+[b5c9791f991f]
+en = "Death is just life's way of telling you you've been fired."
+ru = "Смерть — это просто способ, которым жизнь сообщает, что вы уволены."
+
+[dae749be30f3]
+en = "Demi-gods don't need any help from the gods."
+ru = "Полубогам помощь богов не нужна."
+
+[5af8f27cc8fa]
+en = "Demons *HATE* Priests and Priestesses."
+ru = "Демоны *НЕНАВИДЯТ* жрецов и жриц."
+
+[196c5895eae1]
+en = "Didn't you forget to pay?"
+ru = "Вы не забыли заплатить?"
+
+[23103ef89b85]
+en = "Didn't your mother tell you not to eat food off the floor?"
+ru = "Разве мама не говорила вам не есть с пола?"
+
+[8c6b1967ca86]
+en = "Direct a direct hit on your direct opponent, directing in the right direction."
+ru = "Направьте прямой удар на прямого противника, направляя в правильном направлении."
+
+[55b24868eeec]
+en = "Do you want to make more money?  Sure, we all do!  Join the Fort Ludios guard!"
+ru = "Хотите больше зарабатывать?  Конечно, все хотят!  Вступайте в стражу Форта Лудиос!"
+
+[ba673eb3268c]
+en = "Does your boss know what you're doing right now?"
+ru = "А ваш начальник знает, чем вы сейчас занимаетесь?"
+
+[1d122dcb0490]
+en = "Don't bother wishing for things.  You'll probably find one on the next level."
+ru = "Не тратьте желания.  Скорее всего, то же самое найдётся на следующем уровне."
+
+[a37f29d91892]
+en = "Don't eat too much:  you might start hiccoughing!"
+ru = "Не объедайтесь: начнёте икать!"
+
+[507dfe4e8c3b]
+en = "Don't play NetHack at your work; your boss might hit you!"
+ru = "Не играйте в NetHack на работе: начальник может вас ударить!"
+
+[b1786a4dfdf1]
+en = "Don't tell a soul you found a secret door, otherwise it isn't a secret anymore."
+ru = "Никому не говорите, что нашли потайную дверь, иначе она перестанет быть тайной."
+
+[faa624a8a04a]
+en = "Drinking potions of booze may land you in jail if you are under 21."
+ru = "Распитие флаконов выпивки до 21 года может привести вас за решётку."
+
+[d1cd49081a7f]
+en = "Drop your vanity and get rid of your jewels!  Pickpockets about!"
+ru = "Оставьте тщеславие и избавьтесь от драгоценностей!  Кругом карманники!"
+
+[0458cbe69dce]
+en = "Eat 10 cloves of garlic and keep all humans at a two-square distance."
+ru = "Съешьте 10 зубчиков чеснока, и все люди будут держаться от вас за две клетки."
+
+[674e3272358e]
+en = "Eels hide under mud.  Use a unicorn to clear the water and make them visible."
+ru = "Угри прячутся в иле.  Чтобы очистить воду и увидеть их, позовите единорога."
+
+[a98909226ea1]
+en = "Eels will help you tie your shoes."
+ru = "Угри помогут вам завязать шнурки."
+
+[9df65a93b09b]
+en = "Elf has extra speed."
+ru = "У эльфа повышенная скорость."
+
+[e7156f05915f]
+en = "Engrave your wishes with a wand of wishing."
+ru = "Записывайте свои желания палочкой желаний."
+
+[17e474471a45]
+en = "Eventually you will come to admire the swift elegance of a retreating nymph."
+ru = "Со временем вы оцените стремительное изящество убегающей нимфы."
+
+[0b6f909f4930]
+en = "Ever heard hissing outside?  I *knew* you hadn't!"
+ru = "Слышали когда-нибудь шипение снаружи?  Я *так* и знал, что нет!"
+
+[36e559d1953f]
+en = "Ever lifted a dragon corpse?"
+ru = "Вы когда-нибудь поднимали труп дракона?"
+
+[252e1bedea34]
+en = "Ever seen a leocrotta dancing the tengu?"
+ru = "Видели когда-нибудь, как левкрота пляшет тэнгу?"
+
+[65577d1cdc05]
+en = "Ever seen your weapon glow plaid?"
+ru = "Видели, как ваше оружие светится в клеточку?"
+
+[1249276973d2]
+en = "Ever tamed a shopkeeper?"
+ru = "Приручали когда-нибудь лавочника?"
+
+[ad675df522a8]
+en = "Ever tried digging through a Vault Guard?"
+ru = "Пробовали прокопаться сквозь стража хранилища?"
+
+[d7d6b7629834]
+en = "Ever tried enchanting a rope?"
+ru = "Пробовали зачаровать верёвку?"
+
+[e1cab72d7af0]
+en = "Floating eyes can't stand Hawaiian shirts."
+ru = "Парящие очи не выносят гавайских рубашек."
+
+[528df914b3fa]
+en = "For any remedy there is a misery."
+ru = "На любое лекарство найдётся своя хворь."
+
+[3a6b4ead3b82]
+en = "Giant bats turn into giant vampires."
+ru = "Гигантские летучие мыши превращаются в гигантских вампиров."
+not_terms = ["giant"]
+
+[18917603445e]
+en = "Good day for overcoming obstacles.  Try a steeplechase."
+ru = "Хороший день для преодоления препятствий.  Попробуйте стипль-чез."
+
+[330cb0e33c33]
+en = "Half Moon tonight.  (At least it's better than no Moon at all.)"
+ru = "Сегодня половина луны.  (Всё лучше, чем совсем без луны.)"
+
+[51a6616d0b56]
+en = "[cookie] Help!  I'm being held prisoner in a fortune cookie factory!"
+ru = "Помогите!  Я узник фабрики печенья с предсказанием!"
+
+[5be4aea537a7]
+en = "Housecats have nine lives, kittens only one."
+ru = "У домашних кошек девять жизней, а у котят — только одна."
+
+[7413e83d57d5]
+en = "How long can you tread water?"
+ru = "Долго вы продержитесь на плаву?"
+
+[6447c2c59df8]
+en = "Hungry?  There is an abundance of food on the next level."
+ru = "Проголодались?  На следующем уровне еды навалом."
+
+[611d6a824b55]
+en = "I guess you've never hit a mail daemon with the Amulet of Yendor..."
+ru = "Наверное, вы ещё ни разу не били почтового демона Амулетом Йендора..."
+
+[7bbc57bd711e]
+en = "If there's a spot of blood on your hands, why not wash them?"
+ru = "Если на руках пятно крови, почему бы их не вымыть?"
+
+[3cd47db75545]
+en = "If you are the shopkeeper, you can take things for free."
+ru = "Если вы — лавочник, можете брать вещи бесплатно."
+
+[fe60878e84b4]
+en = "If you ask really nicely, the Wizard will give you the Amulet."
+ru = "Если очень вежливо попросить, Волшебник отдаст вам Амулет."
+
+[3ed909150793]
+en = "If you can't learn to do it well, learn to enjoy doing it badly."
+ru = "Если не можете научиться делать это хорошо, научитесь получать удовольствие, делая это плохо."
+
+[3d39218d07e6]
+en = "If you thought the Wizard was bad, just wait till you meet the Warlord!"
+ru = "Если вам казалось, что Волшебник плох, подождите, пока встретите Военачальника!"
+
+[f34f075e6d34]
+en = "If you turn blind, don't expect your dog to be turned into a seeing-eye dog."
+ru = "Если ослепнете, не ждите, что ваша собака станет собакой-поводырём."
+
+[cdea6b8ee1e3]
+en = "If you want to feel great, you must eat something real big."
+ru = "Хотите почувствовать себя великим — съешьте что-нибудь по-настоящему большое."
+
+[87304e5b30ce]
+en = "If you want to float, you'd better eat a floating eye."
+ru = "Хотите парить — съешьте парящее око."
+
+[80f1d01b268e]
+en = "If your ghost kills a player, it increases your score."
+ru = "Если ваше привидение убьёт игрока, ваш счёт вырастет."
+
+[96376c0ccf06]
+en = "Increase mindpower:  Tame your own ghost!"
+ru = "Развивайте силу разума: приручите собственное привидение!"
+
+[bad8f5aed355]
+en = "It furthers one to see the great man."
+ru = "Полезно повидать великого человека."
+
+[26d8d301870a]
+en = "It's easy to overlook a monster in a wood."
+ru = "Монстра в лесу легко не заметить."
+
+[52c970cb88af]
+en = "Just below any trap door there may be another one.  Just keep falling!"
+ru = "Прямо под любым люком может оказаться ещё один.  Падайте дальше!"
+
+[6a724e1f7587]
+en = "Katanas are very sharp; watch you don't cut yourself."
+ru = "Катаны очень острые: смотрите не порежьтесь."
+
+[6daa93007172]
+en = "Keep a clear mind:  quaff clear potions."
+ru = "Сохраняйте ясность ума: пейте прозрачные зелья."
+
+[6d1851f7844a]
+en = "Kicking the terminal doesn't hurt the monsters."
+ru = "Пинать терминал бесполезно: монстрам от этого не больно."
+
+[b20353abf8d1]
+en = "Killer bees keep appearing till you kill their queen."
+ru = "Пчёлы-убийцы будут появляться, пока вы не убьёте их матку."
+
+[54625e25c02a]
+en = "Killer bunnies can be tamed with carrots only."
+ru = "Кроликов-убийц можно приручить только морковью."
+
+[e2fc1607e671]
+en = "Latest news?  Put `rec.games.roguelike.nethack' in your .newsrc!"
+ru = "Свежие новости?  Добавьте `rec.games.roguelike.nethack' в свой .newsrc!"
+
+[0c6551bab845]
+en = "Learn how to spell.  Play NetHack!"
+ru = "Хотите научиться грамотно колдовать?  Играйте в NetHack!"
+
+[64c2f9f65912]
+en = "Leprechauns hide their gold in a secret room."
+ru = "Лепреконы прячут золото в тайной комнате."
+
+[810d1ef8dec6]
+en = "Let your fingers do the walking on the yulkjhnb keys."
+ru = "Пусть ваши пальцы прогуляются по клавишам yulkjhnb."
+
+[49a4f568cf41]
+en = "Let's face it:  this time you're not going to win."
+ru = "Посмотрим правде в глаза: на этот раз вы не победите."
+
+[cd5a261712da]
+en = "Let's have a party, drink a lot of booze."
+ru = "Давайте устроим вечеринку и напьёмся!"
+
+[177ab7b59172]
+en = "Liquor sellers do not drink; they hate to see you twice."
+ru = "Торговцы выпивкой не пьют: им противно видеть вас дважды."
+
+[6d8035c28092]
+en = "Lunar eclipse tonight.  May as well quit now!"
+ru = "Сегодня лунное затмение.  Можно сразу сдаваться!"
+
+[c8bbcc651148]
+en = "Meeting your own ghost decreases your luck considerably!"
+ru = "Встреча с собственным привидением сильно уменьшает удачу!"
+
+[0209bde3424e]
+en = "Money to invest?  Take it to the local branch of the Magic Memory Vault!"
+ru = "Есть деньги для вложений?  Несите их в местное отделение «Волшебного Хранилища Памяти»!"
+
+[41d6deeca51f]
+en = "Monsters come from nowhere to hit you everywhere."
+ru = "Монстры приходят ниоткуда, чтобы бить вас повсюду."
+
+[d3cf977d678f]
+en = "Monsters sleep because you are boring, not because they ever get tired."
+ru = "Монстры спят не от усталости, а потому что с вами скучно."
+
+[c649e5ff830e]
+en = "Most monsters prefer minced meat.  That's why they are hitting you!"
+ru = "Большинство монстров предпочитает фарш.  Вот почему они вас бьют!"
+
+[c60a4ca6e876]
+en = "Most of the bugs in NetHack are on the floor."
+ru = "Большинство багов в NetHack ползает по полу."
+
+[a65f559dc4b9]
+en = "Much ado Nothing Happens."
+ru = "Много шума из «Ничего не происходит»."
+
+[8988477b471c]
+en = "Multi-player NetHack is a myth."
+ru = "Многопользовательский NetHack — это миф."
+
+[11edddaf1ba2]
+en = "NetHack is addictive.  Too late, you're already hooked."
+ru = "NetHack вызывает привыкание.  Поздно, вы уже на крючке."
+
+[3895ff902c60]
+en = "Never ask a shopkeeper for a price list."
+ru = "Никогда не просите у лавочника прейскурант."
+
+[08b58986ebeb]
+en = "Never burn a tree, unless you like getting whacked with a +5 shovel."
+ru = "Никогда не жгите деревья, если не любите получать по голове лопатой +5."
+
+[b408a66c9a02]
+en = "Never eat with glowing hands!"
+ru = "Никогда не ешьте светящимися руками!"
+
+[f1a4485571f6]
+en = "Never mind the monsters hitting you:  they just replace the charwomen."
+ru = "Не обращайте внимания на бьющих вас монстров: они просто заменяют уборщиц."
+
+[254f8fbb5911]
+en = "Never play leapfrog with a unicorn."
+ru = "Никогда не играйте с единорогом в чехарду."
+
+[8cb620c1143b]
+en = "Never step on a cursed engraving."
+ru = "Никогда не наступайте на проклятую надпись."
+
+[1bce851f5a97]
+en = "Never swim with a camera:  there's nothing to take pictures of."
+ru = "Никогда не плавайте с фотоаппаратом: снимать там нечего."
+
+[d8d55ef58edb]
+en = "Never teach your pet rust monster to fetch."
+ru = "Никогда не учите ручного ржавника приносить палку."
+
+[60a23a85a63f]
+en = "Never trust a random generator in magic fields."
+ru = "Никогда не доверяйте генератору случайностей в магических полях."
+
+[a89579ce55c8]
+en = "Never use a wand of death."
+ru = "Никогда не пользуйтесь палочкой смерти."
+
+[b63e40dc69c9]
+en = "No level contains two shops.  The maze is no level.  So..."
+ru = "Ни на одном уровне нет двух лавок.  Лабиринт — не уровень.  Значит..."
+
+[7b6f36fac5cb]
+en = "[cookie] No part of this fortune may be reproduced, stored in a retrieval system, ..."
+ru = "Никакая часть этого предсказания не может быть воспроизведена, сохранена в информационной системе, ..."
+
+[5f00e579a3d8]
+en = "Not all rumors are as misleading as this one."
+ru = "Не все слухи так обманчивы, как этот."
+
+[f93d7f03f621]
+en = "Nymphs and nurses like beautiful rings."
+ru = "Нимфы и медсёстры любят красивые кольца."
+
+[f1eece94fbf7]
+en = "Nymphs are blondes.  Are you a gentleman?"
+ru = "Нимфы — блондинки.  А вы джентльмен?"
+
+[85e8493307a2]
+en = "Offering a unicorn a worthless piece of glass might prove to be fatal!"
+ru = "Предложить единорогу бесполезную стекляшку может оказаться роковой ошибкой!"
+
+[60e0a8c677b6]
+en = "Old hackers never die:  young ones do."
+ru = "Старые хакеры не умирают: умирают молодые."
+
+[5b8d88cf5f27]
+en = "One has to leave shops before closing time."
+ru = "Из лавки нужно уйти до закрытия."
+
+[f0d724be9db6]
+en = "One homunculus a day keeps the doctor away."
+ru = "Съедайте по гомункулу в день — и доктор не понадобится."
+
+[74e32064abcb]
+en = "One level further down somebody is getting killed, right now."
+ru = "Уровнем ниже прямо сейчас кого-то убивают."
+
+[2876502c2f69]
+en = "Only a wizard can use a magic whistle."
+ru = "Только волшебник может пользоваться волшебным свистком."
+
+[8acdeef3bbd3]
+en = "Only adventurers of evil alignment think of killing their dog."
+ru = "Только злые искатели приключений помышляют убить свою собаку."
+
+[ca2ee6a921a2]
+en = "Only chaotic evils kill sleeping monsters."
+ru = "Только хаотично-злые убивают спящих монстров."
+
+[4a4c0e1789dc]
+en = "Only real wizards can write scrolls."
+ru = "Только настоящие волшебники умеют писать свитки."
+
+[852e5d79e7b6]
+en = "Operation OVERKILL has started now."
+ru = "Операция ТОТАЛЬНОЕ УНИЧТОЖЕНИЕ началась."
+
+[761716148f0e]
+en = "Ouch.  I hate when that happens."
+ru = "Ой.  Ненавижу, когда такое случается."
+
+[d59a65f5e9aa]
+en = "PLEASE ignore previous rumor."
+ru = "ПОЖАЛУЙСТА, не обращайте внимания на предыдущий слух."
+
+[f081152b869b]
+en = "Polymorph into an ettin; meet your opponents face to face to face."
+ru = "Превратитесь в эттина и встречайте противников лицом к лицу к лицу."
+
+[b7d264ebcac9]
+en = "Praying will frighten demons."
+ru = "Молитва отпугивает демонов."
+
+[318a51c81c44]
+en = "Row (3x) that boat gently down the stream, Charon (4x), death is but a dream."
+ru = "Греби (3 раза) неспешно вниз по реке, Харон (4 раза), смерть — всего лишь сон."
+
+[04824917da74]
+en = "Running is good for your legs."
+ru = "Бег полезен для ног."
+
+[7e39866aa24b]
+en = "Screw up your courage!  You've screwed up everything else."
+ru = "Соберитесь с духом!  Всё остальное вы уже растеряли."
+
+[cd9c313bf2f2]
+en = "Seepage?  Leaky pipes?  Rising damp?  Summon the plumber!"
+ru = "Протечки?  Трубы текут?  Сырость ползёт по стенам?  Вызовите сантехника!"
+
+[a878c7c7d629]
+en = "Segmentation fault (core dumped)."
+ru = "Ошибка сегментирования (стек памяти сброшен на диск)."
+
+[0b193654d7fd]
+en = "Shopkeepers are insured by Croesus himself!"
+ru = "Лавочники застрахованы у самого Крёза!"
+
+[1a06973bdd62]
+en = "Shopkeepers sometimes die from old age."
+ru = "Лавочники иногда умирают от старости."
+
+[2ec4e8e428af]
+en = "Some mazes (especially small ones) have no solutions, says man 6 maze."
+ru = "У некоторых лабиринтов (особенно маленьких) нет решения, — говорит man 6 maze."
+
+[caf5e469aedb]
+en = "Some questions the Sphynx asks just *don't* have any answers."
+ru = "На некоторые вопросы Сфинкса ответов *нет* вовсе."
+
+[7ee3018f5c5f]
+en = "Sometimes \"mu\" is the answer."
+ru = "Иногда ответ — \"му\"."
+
+[afea93f56572]
+en = "[cookie] Sorry, no fortune this time.  Better luck next cookie!"
+ru = "Простите, на этот раз без предсказания.  Удачи в следующем печенье!"
+
+[f434daa22835]
+en = "Spare your scrolls of make-edible until it's really necessary!"
+ru = "Берегите свитки съедобности до крайней необходимости!"
+
+[c46c9a1ec03d]
+en = "Sticks and stones may break your bones but manes will never hurt you."
+ru = "Палки и камни ломают кости, а манесы — никогда."
+
+[d6caea1effdf]
+en = "Stormbringer doesn't steal souls.  People steal souls."
+ru = "Буревестник не крадёт души.  Души крадут люди."
+
+[c8df325e689e]
+en = "Suddenly, the dungeon will collapse..."
+ru = "Внезапно подземелье обрушится..."
+
+[b026b05037fd]
+en = "Taming a mail daemon may cause a system security violation."
+ru = "Приручение почтового демона может привести к нарушению безопасности системы."
+
+[d91c6239b97c]
+en = "The crowd was so tough, the Stooges won't play the Dungeon anymore, nyuk nyuk."
+ru = "Публика была такой суровой, что «Три балбеса» больше не играют в Подземелье, ньюк-ньюк."
+
+[3d5dc52e53e6]
+en = "The leprechauns hide their treasure in a small hidden room."
+ru = "Лепреконы прячут сокровища в маленькой тайной комнате."
+
+[0f6e7678ff4d]
+en = "The longer the wand the better."
+ru = "Чем длиннее палочка, тем лучше."
+
+[bb0b36468946]
+en = "The magic word is \"XYZZY\"."
+ru = "Волшебное слово — \"XYZZY\"."
+
+[15f3a77ff2d9]
+en = "The meek shall inherit your bones files."
+ru = "Кроткие унаследуют ваши файлы костей."
+
+[cf005a67624e]
+en = "The mines are dark and deep, and I have levels to go before I sleep."
+ru = "Копи темны и глубоки, а мне ещё уровни пройти, прежде чем уснуть."
+
+[ed7df3a32f11]
+en = "The more you use the E word, the better."
+ru = "Чем чаще вы пишете слово на букву «E», тем лучше."
+
+[378daeadac2f]
+en = "The use of dynamite is dangerous."
+ru = "Применение динамита опасно."
+
+[0a0575b486c4]
+en = "There are no worms in the UNIX version."
+ru = "В версии для UNIX червей нет."
+
+[72e951f7aa64]
+en = "There is a trap on this level!"
+ru = "На этом уровне есть ловушка!"
+
+[c34232a70779]
+en = "They say that Demogorgon, Asmodeus, Orcus, Yeenoghu & Juiblex is no law firm."
+ru = "Говорят, «Демогоргон, Асмодей, Оркус, Йеногу и Джубилекс» — вовсе не юридическая фирма."
+
+[485f1e8b2764]
+en = "They say that Geryon has an evil twin, beware!"
+ru = "Говорят, у Гериона есть злой близнец, берегитесь!"
+
+[aff1d666e1ff]
+en = "They say that Medusa would make a terrible pet."
+ru = "Говорят, из Медузы вышел бы ужасный питомец."
+
+[63697008cba8]
+en = "They say that NetHack bugs are Seldon planned."
+ru = "Говорят, баги в NetHack — часть плана Селдона."
+
+[5df2c69c479d]
+en = "They say that NetHack comes in 256 flavors."
+ru = "Говорят, NetHack бывает 256 вкусов."
+
+[619f1a27dada]
+en = "They say that NetHack is just a computer game."
+ru = "Говорят, NetHack — просто компьютерная игра."
+
+[80a6cce39b48]
+en = "They say that NetHack is more than just a computer game."
+ru = "Говорят, NetHack — больше, чем просто компьютерная игра."
+
+[5587d0ceaefa]
+en = "They say that NetHack is never what it used to be."
+ru = "Говорят, NetHack уже не тот, что прежде."
+
+[bd046f863a7c]
+en = "They say that a baby dragon is too small to hurt or help you."
+ru = "Говорят, дракончик слишком мал, чтобы вам навредить или помочь."
+
+[fa0d34dae9e3]
+en = "They say that a black pudding is simply a brown pudding gone bad."
+ru = "Говорят, чёрный пудинг — это просто испортившийся бурый пудинг."
+
+[fd65d3bae1b8]
+en = "They say that a black sheep has 3 bags full of wool."
+ru = "Говорят, с паршивой овцы — целых три мешка шерсти."
+
+[6a4269c7fb6e]
+en = "They say that a blank scroll is like a blank check."
+ru = "Говорят, чистый свиток — всё равно что чистый бланк чека."
+
+[d1236e76ec32]
+en = "They say that a cat named Morris has nine lives."
+ru = "Говорят, у кота по имени Моррис девять жизней."
+
+[ed28940e90dd]
+en = "They say that a desperate shopper might pay any price in a shop."
+ru = "Говорят, отчаявшийся покупатель заплатит в лавке любую цену."
+
+[ee5b8d06a599]
+en = "They say that a diamond dog is everybody's best friend."
+ru = "Говорят, алмазная собака — лучший друг каждого."
+
+[49a36b8402c1]
+en = "They say that a dwarf lord can carry a pick-axe because his armor is light."
+ru = "Говорят, лорд дварфов может носить кирку, потому что у него лёгкая броня."
+
+[9ea32451249b]
+en = "They say that a floating eye can defeat Medusa."
+ru = "Говорят, парящее око может одолеть Медузу."
+
+[30042a358ff3]
+en = "[cookie] They say that a fortune only has 1 line and you can't read between it."
+ru = "Говорят, у предсказания всего одна строка, и между строк его не прочесть."
+
+[a9fd31c017ea]
+en = "[cookie] They say that a fortune only has 1 line, but you can read between it."
+ru = "Говорят, у предсказания всего одна строка, но между строк его прочесть можно."
+
+[948bde9875e9]
+en = "They say that a fountain looks nothing like a regularly erupting geyser."
+ru = "Говорят, фонтан совсем не похож на регулярно извергающийся гейзер."
+
+[dbce3a5379f2]
+en = "They say that a gold doubloon is worth more than its weight in gold."
+ru = "Говорят, золотой дублон стоит больше, чем весит золотом."
+
+[fbf95d6c43bc]
+en = "They say that a grid bug won't pay a shopkeeper for zapping you in a shop."
+ru = "Говорят, ситовый жучок не заплатит лавочнику за то, что пальнул в вас в лавке."
+
+[9629c252371e]
+en = "[cookie] They say that a gypsy could tell your fortune for a price."
+ru = "Говорят, гадалка предскажет вам судьбу за плату."
+
+[c9cbc05a5e6b]
+en = "They say that a hacker named Alice once level teleported by using a mirror."
+ru = "Говорят, хакер по имени Алиса однажды переместилась на другой уровень через зеркало."
+
+[e570b755b955]
+en = "They say that a hacker named David once slew a giant with a sling and a rock."
+ru = "Говорят, хакер по имени Давид однажды сразил великана пращой и камнем."
+
+[3ba58dba86eb]
+en = "They say that a hacker named Dorothy once rode a fog cloud to Oz."
+ru = "Говорят, хакер по имени Дороти однажды долетела до страны Оз на туманном облаке."
+
+[f23acab1fb15]
+en = "They say that a hacker named Mary once lost a white sheep in the mazes."
+ru = "Говорят, хакер по имени Мэри однажды потеряла в лабиринтах белую овечку."
+
+[0197b9a16348]
+en = "They say that a helm of brilliance is not to be taken lightly."
+ru = "Говорят, к шлему озарения нельзя относиться легкомысленно."
+
+[8dbfa445f3e8]
+en = "They say that a hot dog and a hell hound are the same thing."
+ru = "Говорят, хот-дог и адская гончая — одно и то же."
+not_terms = ["dog"]
+
+[f308692f9c46]
+en = "They say that a lamp named Aladdin's Lamp contains a djinni with 3 wishes."
+ru = "Говорят, в лампе по имени Лампа Аладдина живёт джинн с тремя желаниями."
+
+[e0a9400b2197]
+en = "They say that a large dog named Lassie will lead you to the amulet."
+ru = "Говорят, большая собака по имени Лесси приведёт вас к амулету."
+
+[de3f7ad9b76b]
+en = "They say that a long sword is not a light sword."
+ru = "Говорят, длинный меч — не световой меч."
+
+[704666055ff5]
+en = "They say that a manes won't mince words with you."
+ru = "Говорят, манес не станет с вами церемониться."
+
+[68f93ee03dcd]
+en = "They say that a mind is a terrible thing to waste."
+ru = "Говорят, разум жалко тратить впустую."
+
+[33f246910e8d]
+en = "They say that a plain nymph will only wear a wire ring in one ear."
+ru = "Говорят, обычная нимфа носит проволочное кольцо только в одном ухе."
+
+[a3bb732c82b7]
+en = "They say that a plumed hat could be a previously used crested helmet."
+ru = "Говорят, шляпа с плюмажем может оказаться бывшим шлемом с гребнем."
+
+[323fedde9e90]
+en = "They say that a potion of oil is difficult to grasp."
+ru = "Говорят, флакон масла трудно удержать в руках."
+
+[50875ef37aca]
+en = "They say that a potion of yogurt is a cancelled potion of sickness."
+ru = "Говорят, зелье йогурта — это отменённое зелье болезни."
+
+[0a8ee0ffccaa]
+en = "They say that a purple worm is not a baby purple dragon."
+ru = "Говорят, пурпурный червь — вовсе не детёныш пурпурного дракона."
+
+[489a7cace909]
+en = "They say that a quivering blob tastes different than a gelatinous cube."
+ru = "Говорят, дрожащий сгусток на вкус не такой, как студенистый куб."
+
+[f896f12d4538]
+en = "They say that a runed broadsword named Stormbringer attracts vortices."
+ru = "Говорят, рунический палаш по имени Буревестник притягивает вихри."
+
+[897414d3126d]
+en = "They say that a scroll of summoning has other names."
+ru = "Говорят, у свитка призыва есть и другие имена."
+
+[24203731e466]
+en = "They say that a shaman can bestow blessings but usually doesn't."
+ru = "Говорят, шаман может даровать благословение, но обычно этого не делает."
+
+[a66a0582308c]
+en = "They say that a shaman will bless you for an eye of newt and wing of bat."
+ru = "Говорят, шаман благословит вас за глаз тритона и крыло летучей мыши."
+
+[f8ef418042d3]
+en = "They say that a shimmering gold shield is not a polished silver shield."
+ru = "Говорят, мерцающий золотой щит — не полированный серебряный щит."
+
+[5b97222a54ba]
+en = "They say that a spear will hit a neo-otyugh.  (Do YOU know what that is?)"
+ru = "Говорят, копьё попадёт в нео-отиуха.  (А ВЫ знаете, кто это?)"
+
+[d74ade8b0b40]
+en = "They say that a spotted dragon is the ultimate shape changer."
+ru = "Говорят, пятнистый дракон — непревзойдённый оборотень."
+
+[d3ba50eca637]
+en = "They say that a stethoscope is no good if you can only hear your heartbeat."
+ru = "Говорят, от стетоскопа мало толку, если слышно только своё сердцебиение."
+
+[bb0a2eb32747]
+en = "They say that a succubus named Suzy will sometimes warn you of danger."
+ru = "Говорят, суккуб по имени Сюзи иногда предупреждает об опасности."
+
+[d7078ba63153]
+en = "They say that a wand of cancellation is not like a wand of polymorph."
+ru = "Говорят, палочка отмены совсем не похожа на палочку превращения."
+
+[6c60a51cdbcb]
+en = "They say that a wood golem named Pinocchio would be easy to control."
+ru = "Говорят, деревянным големом по имени Буратино было бы легко управлять."
+
+[fccc5a9a9936]
+en = "They say that after killing a dragon it's time for a change of scenery."
+ru = "Говорят, после убийства дракона пора сменить обстановку."
+
+[ae4623536364]
+en = "They say that an amulet of strangulation is worse than ring around the collar."
+ru = "Говорят, амулет удушения хуже грязного воротничка."
+
+[8b643caf03ff]
+en = "They say that an attic is the best place to hide your toys."
+ru = "Говорят, чердак — лучшее место, чтобы спрятать игрушки."
+
+[5a5abcc35c3f]
+en = "They say that an axe named Cleaver once belonged to a hacker named Beaver."
+ru = "Говорят, топор по имени Секач когда-то принадлежал хакеру по прозвищу Бородач."
+
+[3f7ae6bcf639]
+en = "They say that an eye of newt and a wing of bat are double the trouble."
+ru = "Говорят, от глаза тритона и крыла летучей мыши хлопот вдвойне."
+
+[e42ff75da6f0]
+en = "They say that an incubus named Izzy sometimes makes women feel sensitive."
+ru = "Говорят, инкуб по имени Иззи иногда пробуждает в женщинах чувствительность."
+
+[7ae6115bc30f]
+en = "They say that an opulent throne room is rarely a place to wish you'd be in."
+ru = "Говорят, оказаться в роскошном тронном зале желают редко."
+
+[14d310203b11]
+en = "They say that an unlucky hacker once had a nose bleed at an altar and died."
+ru = "Говорят, один невезучий хакер как-то пустил кровь из носа у алтаря и умер."
+
+[b689c2368ee3]
+en = "They say that and they say this but they never say never, never!"
+ru = "Говорят то, говорят сё, но никогда не говорят «никогда», никогда!"
+
+[673f099e8f6a]
+en = "They say that any quantum mechanic knows that speed kills."
+ru = "Говорят, любой квантовый механик знает, что скорость убивает."
+
+[d021f997543d]
+en = "They say that applying a unicorn horn means you've missed the point."
+ru = "Говорят, если вы применяете рог единорога, значит, вы не поняли, в чём тут острота."
+
+[13f670bc66bb]
+en = "They say that blue stones are radioactive, beware."
+ru = "Говорят, синие камни радиоактивны, берегитесь."
+
+[bb54eb33049c]
+en = "They say that building a dungeon is a team effort."
+ru = "Говорят, строительство подземелья — командная работа."
+
+[429b87ee617d]
+en = "They say that chaotic characters never get a kick out of altars."
+ru = "Говорят, хаотичным героям пинать алтари совсем не в радость."
+
+[bb2d368d93c5]
+en = "They say that collapsing a dungeon often creates a panic."
+ru = "Говорят, обрушение подземелья часто вызывает панику."
+
+[164bd7766337]
+en = "They say that counting your eggs before they hatch shows that you care."
+ru = "Говорят, кто считает яйца, пока они не вылупились, тот заботливый."
+
+[df00c00341e4]
+en = "They say that dipping a bag of tricks in a fountain won't make it an icebox."
+ru = "Говорят, если окунуть сумку фокусов в фонтан, ледника из неё не выйдет."
+
+[122e9db65d6a]
+en = "They say that dipping an eel and brown mold in hot water makes bouillabaisse."
+ru = "Говорят, если окунуть угря и бурую плесень в горячую воду, выйдет буйабес."
+
+[4265ed5e6203]
+en = "They say that donating a doubloon is extremely pious charity."
+ru = "Говорят, пожертвовать дублон — высшая степень благочестия."
+
+[11efb9d33759]
+en = "They say that dungeoneers prefer dark chocolate."
+ru = "Говорят, любители подземелий предпочитают тёмный шоколад."
+
+[8b4ce6af3a23]
+en = "They say that eating royal jelly attracts grizzly owlbears."
+ru = "Говорят, маточное молочко привлекает гризли-совомедведей."
+
+[450888ec5a1c]
+en = "They say that eggs, pancakes and juice are just a mundane breakfast."
+ru = "Говорят, яйца, блины и сок — самый обычный завтрак."
+
+[4ba249ca1e44]
+en = "They say that everyone knows why Medusa stands alone in the dark."
+ru = "Говорят, все знают, почему Медуза стоит одна в темноте."
+
+[fcb9f228e09a]
+en = "They say that everyone wanted rec.games.hack to undergo a name change."
+ru = "Говорят, все хотели, чтобы rec.games.hack сменила название."
+
+[e6f1b53f953a]
+en = "They say that finding a winning strategy is a deliberate move on your part."
+ru = "Говорят, найти выигрышную стратегию — обдуманный ход с вашей стороны."
+
+[98c2c40c93f2]
+en = "They say that finding worthless glass is worth something."
+ru = "Говорят, найти бесполезное стекло — тоже чего-то стоит."
+
+[935b6196739b]
+en = "[cookie] They say that fortune cookies are food for thought."
+ru = "Говорят, печенье с предсказанием — пища для размышлений."
+
+[33102e3a5337]
+en = "They say that gold is only wasted on a pet dragon."
+ru = "Говорят, тратить золото на ручного дракона — пустое дело."
+
+[bfac79a371cc]
+en = "They say that good things come to those that wait."
+ru = "Говорят, всё приходит к тому, кто умеет ждать."
+
+[a5f692f042e1]
+en = "They say that if you can't spell then you'll wish you had a spellbook."
+ru = "Говорят, кто не силён в заклинаниях, мечтает о книге заклинаний."
+
+[c78ca47c6c6d]
+en = "They say that if you live by the sword, you'll die by the sword."
+ru = "Говорят, кто с мечом живёт, от меча и погибнет."
+
+[e7f5aa212999]
+en = "They say that if you play like a monster you'll have a better game."
+ru = "Говорят, если играть как монстр, игра пойдёт лучше."
+
+[f92359280691]
+en = "They say that if you sleep with a demon you might awake with a headache."
+ru = "Говорят, если переспать с демоном, можно проснуться с головной болью."
+
+[3cad1ec0d306]
+en = "They say that if you step on a crack you could break your mother's back."
+ru = "Говорят, наступишь на трещину — сломаешь маме спину."
+
+[c430f8c59f0b]
+en = "They say that if you're invisible you can still be heard!"
+ru = "Говорят, невидимку всё равно слышно!"
+
+[d352ce60f6b9]
+en = "They say that if you're lucky you can feel the runes on a scroll."
+ru = "Говорят, если повезёт, руны на свитке можно нащупать."
+
+[966804d456dd]
+en = "They say that in the big picture gold is only small change."
+ru = "Говорят, в масштабах целого золото — всего лишь мелочь."
+
+[07d568c02d4c]
+en = "They say that in the dungeon it's not what you know that really matters."
+ru = "Говорят, в подземелье важно не то, что вы знаете."
+
+[155800913210]
+en = "They say that in the dungeon moon rocks are really dilithium crystals."
+ru = "Говорят, в подземелье лунные камни на самом деле — кристаллы дилития."
+
+[9fb7fed83337]
+en = "They say that in the dungeon the boorish customer is never right."
+ru = "Говорят, в подземелье грубый покупатель никогда не прав."
+
+[6979dd7d7e9c]
+en = "They say that in the dungeon you don't need a watch to tell time."
+ru = "Говорят, в подземелье часы, чтобы узнать время, не нужны."
+
+[dd168476f770]
+en = "They say that in the dungeon you need something old, new, burrowed and blue."
+ru = "Говорят, в подземелье нужно что-то старое, что-то новое, что-то закопанное и что-то голубое."
+
+[c9978bcb6fc8]
+en = "They say that in the dungeon you should always count your blessings."
+ru = "Говорят, в подземелье всегда стоит пересчитывать свои благословения."
+
+[18c4544605b2]
+en = "They say that iron golem plate mail isn't worth wishing for."
+ru = "Говорят, латный доспех из железного голема не стоит желания."
+
+[82b424bb3fbe]
+en = "They say that it takes four quarterstaffs to make one staff."
+ru = "Говорят, из четырёх боевых посохов, они же четвертные, выходит один целый."
+
+[ec006ac7ba25]
+en = "They say that it's not over till the fat ladies sing."
+ru = "Говорят, всё не кончено, пока не запоют толстые дамы."
+
+[4dc6601ea34e]
+en = "They say that it's not over till the fat lady shouts `Off with its head'."
+ru = "Говорят, всё не кончено, пока толстая дама не крикнет `Отрубить ему голову!'."
+not_terms = ["lady"]
+
+[4fb67f45ce7f]
+en = "They say that kicking a heavy statue is really a dumb move."
+ru = "Говорят, пинать тяжёлую статую — очень глупый ход."
+
+[7b92a9a8214c]
+en = "They say that kicking a valuable gem doesn't seem to make sense."
+ru = "Говорят, пинать драгоценный камень — смысла никакого."
+
+[26caff251ed3]
+en = "They say that leprechauns know Latin and you should too."
+ru = "Говорят, лепреконы знают латынь, и вам бы не помешало."
+
+[fd938ebb15e8]
+en = "They say that minotaurs get lost outside of the mazes."
+ru = "Говорят, минотавры теряются вне лабиринтов."
+
+[3cbaadcc0055]
+en = "They say that most trolls are born again."
+ru = "Говорят, большинство троллей рождаются заново."
+
+[e2833bd56d3f]
+en = "They say that naming your cat Garfield will make you more attractive."
+ru = "Говорят, если назвать кота Гарфилдом, вы станете привлекательнее."
+
+[fb7458d64a3d]
+en = "They say that no one knows everything about everything in the dungeon."
+ru = "Говорят, никто не знает всего обо всём в подземелье."
+
+[8977327dba37]
+en = "They say that no one plays NetHack just for the fun of it."
+ru = "Говорят, никто не играет в NetHack просто ради удовольствия."
+
+[e6b63af6c5af]
+en = "They say that no one really subscribes to rec.games.roguelike.nethack."
+ru = "Говорят, на rec.games.roguelike.nethack на самом деле никто не подписан."
+
+[78bcd0a2bdab]
+en = "They say that no one will admit to starting a rumor."
+ru = "Говорят, никто не признается, что пустил слух."
+
+[7308531c0605]
+en = "They say that nurses sometimes carry scalpels and never use them."
+ru = "Говорят, медсёстры иногда носят скальпели, но никогда ими не пользуются."
+
+[c71e4a6bf206]
+en = "They say that once you've met one wizard you've met them all."
+ru = "Говорят, кто видел одного волшебника, видел их всех."
+
+[c739cab29c83]
+en = "They say that one troll is worth 10,000 newts."
+ru = "Говорят, один тролль стоит 10 000 тритонов."
+
+[2537f23b868c]
+en = "They say that only David can find the zoo!"
+ru = "Говорят, найти зверинец может только Давид!"
+
+[2eca88bcffa0]
+en = "They say that only angels play their harps for their pets."
+ru = "Говорят, только ангелы играют своим питомцам на арфах."
+
+[a948644fb85b]
+en = "They say that only big spenders carry gold."
+ru = "Говорят, золото носят с собой только транжиры."
+
+[2548db6db469]
+en = "They say that orc shamans are healthy, wealthy and wise."
+ru = "Говорят, орки-шаманы здоровы, богаты и мудры."
+
+[2782f3801b7f]
+en = "They say that playing NetHack is like walking into a death trap."
+ru = "Говорят, играть в NetHack — всё равно что лезть в смертельную ловушку."
+not_terms = ["death"]
+
+[830a72415092]
+en = "They say that problem breathing is best treated by a proper diet."
+ru = "Говорят, проблемы с дыханием лучше всего лечить правильной диетой."
+
+[cfadd26d8ac7]
+en = "They say that quaffing many potions of levitation can give you a headache."
+ru = "Говорят, если выпить много зелий левитации, может разболеться голова."
+
+[4d17bb4e7302]
+en = "They say that queen bees get that way by eating royal jelly."
+ru = "Говорят, пчелиными матками становятся, поедая маточное молочко."
+
+[657aabbef2a1]
+en = "They say that reading a scare monster scroll is the same as saying Elbereth."
+ru = "Говорят, прочитать свиток отпугивания монстров — всё равно что сказать Elbereth."
+
+[3998d15926e7]
+en = "They say that real hackers always are controlled."
+ru = "Говорят, настоящие хакеры всегда под контролем."
+
+[eedababaf250]
+en = "They say that real hackers never sleep."
+ru = "Говорят, настоящие хакеры никогда не спят."
+
+[2ffa555c0195]
+en = "They say that shopkeepers are insured by Croesus himself!"
+ru = "Говорят, лавочники застрахованы у самого Крёза!"
+
+[e8935823b706]
+en = "They say that shopkeepers never carry more than 20 gold pieces, at night."
+ru = "Говорят, ночью лавочники носят с собой не больше 20 золотых монет."
+
+[cf32e8f16f83]
+en = "They say that shopkeepers never sell blessed potions of invisibility."
+ru = "Говорят, лавочники никогда не продают благословенные зелья невидимости."
+
+[a0130d7955a2]
+en = "They say that soldiers wear kid gloves and silly helmets."
+ru = "Говорят, солдаты носят лайковые перчатки и дурацкие шлемы."
+
+[e1ff03e7b795]
+en = "They say that some Kops are on the take."
+ru = "Говорят, некоторые копы берут взятки."
+
+[c0701b0a0f08]
+en = "They say that some guards' palms can be greased."
+ru = "Говорят, некоторым стражам можно смазать лапу."
+
+[91b00699363d]
+en = "They say that some monsters may kiss your boots to stop your drum playing."
+ru = "Говорят, некоторые монстры готовы целовать вам сапоги, лишь бы вы перестали барабанить."
+
+[1aa1643f0778]
+en = "They say that sometimes you can be the hit of the party when playing a horn."
+ru = "Говорят, сыграв на роге, можно стать хитом вечеринки."
+
+[7bdf4a55af25]
+en = "They say that the NetHack gods generally welcome your sacrifices."
+ru = "Говорят, боги NetHack обычно рады вашим жертвам."
+
+[cab7e6ebc937]
+en = "They say that the Three Rings are named Vilya, Nenya and Narya."
+ru = "Говорят, Три Кольца зовутся Вилья, Ненья и Нарья."
+
+[ea60ce8ccc2c]
+en = "They say that the Wizard of Yendor has a death wish."
+ru = "Говорят, Волшебник Йендора ищет смерти."
+
+[a3c294be9e8e]
+en = "They say that the `hair of the dog' is sometimes an effective remedy."
+ru = "Говорят, `клин клином' порой отличное лекарство."
+not_terms = ["dog"]
+
+[3b4f650f3c08]
+en = "They say that the best time to save your game is now before it's too late."
+ru = "Говорят, лучшее время сохранить игру — сейчас, пока не поздно."
+
+[fb6dfddbbfc8]
+en = "They say that the biggest obstacle in NetHack is your mind."
+ru = "Говорят, самое большое препятствие в NetHack — ваш собственный разум."
+
+[9edc47e0f2b9]
+en = "They say that the gods are angry when they hit you with objects."
+ru = "Говорят, боги злятся, когда бросают в вас предметы."
+
+[a27cb20bb78f]
+en = "They say that the priesthood are specially favored by the gods."
+ru = "Говорят, боги особенно благоволят жрецам."
+
+[914c0c2b8a84]
+en = "They say that the way to make a unicorn happy is to give it what it wants."
+ru = "Говорят, чтобы порадовать единорога, дайте ему то, чего он хочет."
+
+[58f910278e70]
+en = "They say that there are no black or white stones, only gray."
+ru = "Говорят, не бывает чёрных и белых камней, только серые."
+
+[37a5565b76a2]
+en = "They say that there are no skeletons hence there are no skeleton keys."
+ru = "Говорят, скелетов не бывает, а значит, нет и универсальных ключей."
+
+[927a8a6b0da5]
+en = "They say that there is a clever rogue in every hacker just dying to escape."
+ru = "Говорят, в каждом хакере сидит хитрый плут, который до смерти хочет вырваться на волю."
+
+[38c185e578b2]
+en = "They say that there is no such thing as free advice."
+ru = "Говорят, бесплатных советов не бывает."
+
+[0c9e02218841]
+en = "They say that there is only one way to win at NetHack."
+ru = "Говорят, выиграть в NetHack можно только одним способом."
+
+[64987d47f538]
+en = "They say that there once was a fearsome chaotic samurai named Luk No."
+ru = "Говорят, жил когда-то грозный хаотичный самурай по имени Неуда Чи."
+
+[f0834cba510f]
+en = "They say that there was a time when cursed holy water wasn't water."
+ru = "Говорят, было время, когда проклятая святая вода не была водой."
+
+[66ad67f0a03e]
+en = "They say that there's no point in crying over a gray ooze."
+ru = "Говорят, над серой слизью слёз не льют."
+
+[dc7f36f265fc]
+en = "They say that trap doors should always be marked `Caution:  Trap Door'."
+ru = "Говорят, на люках всегда должна быть надпись `Осторожно: люк'."
+
+[80661bf7f585]
+en = "They say that using an amulet of change isn't a difficult operation."
+ru = "Говорят, воспользоваться амулетом перемены — несложная операция."
+
+[d9010c1081f1]
+en = "They say that water walking boots are better if you are fast like Hermes."
+ru = "Говорят, сапоги водохождения лучше, если вы быстры, как Гермес."
+
+[5d2bbf456dff]
+en = "They say that when you wear a circular amulet you might resemble a troll."
+ru = "Говорят, надев круглый амулет, можно стать похожим на тролля."
+
+[4ae1671bc054]
+en = "They say that when you're hungry you can get a pizza in 30 moves or it's free."
+ru = "Говорят, если проголодаетесь, пиццу доставят за 30 ходов, а иначе — бесплатно."
+
+[83d51dbd826b]
+en = "They say that when your god is angry you should try another one."
+ru = "Говорят, если ваш бог гневается, попробуйте другого."
+
+[0a13f78bcc84]
+en = "They say that wielding a unicorn horn takes strength."
+ru = "Говорят, чтобы орудовать рогом единорога, нужна сила."
+
+[ea38298cba4a]
+en = "They say that with speed boots you never worry about hit and run accidents."
+ru = "Говорят, в сапогах-скороходах можно бить и убегать без забот."
+
+[fce55d090d07]
+en = "They say that you can defeat a killer bee with a unicorn horn."
+ru = "Говорят, пчелу-убийцу можно одолеть рогом единорога."
+
+[469d17f21c2f]
+en = "They say that you can only cross the River Styx in Charon's boat."
+ru = "Говорят, Стикс можно пересечь только в лодке Харона."
+
+[b4bf47812920]
+en = "They say that you can only kill a lich once and then you'd better be careful."
+ru = "Говорят, лича можно убить только однажды, а потом лучше быть начеку."
+
+[216438cc954f]
+en = "They say that you can only wish for things you've already had."
+ru = "Говорят, пожелать можно только то, что у вас уже было."
+
+[f2e5fed54301]
+en = "They say that you can train a cat by talking gently to it."
+ru = "Говорят, кошку можно приручить, ласково с ней разговаривая."
+
+[b405c9af6c70]
+en = "They say that you can train a dog by talking firmly to it."
+ru = "Говорят, собаку можно выдрессировать, строго с ней разговаривая."
+
+[92021ef183e3]
+en = "They say that you can trust your gold with the king."
+ru = "Говорят, своё золото можно доверить королю."
+
+[28b62cec895a]
+en = "They say that you can't wipe your greasy bare hands on a blank scroll."
+ru = "Говорят, жирные руки о чистый свиток не вытрешь."
+
+[a35225ce0041]
+en = "They say that you cannot trust scrolls of rumor."
+ru = "Говорят, свиткам слухов верить нельзя."
+
+[9d9a9f97d88e]
+en = "They say that you could fall head over heels for an energy vortex."
+ru = "Говорят, в энергетический вихрь можно влюбиться по уши."
+
+[9582dc1c3db0]
+en = "They say that you need a key in order to open locked doors."
+ru = "Говорят, чтобы открыть запертую дверь, нужен ключ."
+
+[da7e29682621]
+en = "They say that you need a mirror to notice a mimic in an antique shop."
+ru = "Говорят, чтобы заметить мимика в антикварной лавке, нужно зеркало."
+
+[94a12b9dba22]
+en = "They say that you really can use a pick-axe unless you really can't."
+ru = "Говорят, кирку вы действительно можете применить, если только действительно не можете."
+
+[9df4344d1edf]
+en = "They say that you should always store your tools in the cellar."
+ru = "Говорят, инструменты всегда стоит хранить в подвале."
+
+[16a14f006711]
+en = "They say that you should be careful while climbing the ladder to success."
+ru = "Говорят, по лестнице успеха надо подниматься осторожно."
+
+[a441576f4450]
+en = "They say that you should call your armor `rustproof'."
+ru = "Говорят, свои доспехи стоит назвать `нержавеющими'."
+
+[ae43b7721263]
+en = "They say that you should name your dog Spuds to have a cool pet."
+ru = "Говорят, назовите собаку Спадс — и питомец будет что надо."
+
+[72bd0eb110d3]
+en = "They say that you should name your weapon after your first monster kill."
+ru = "Говорят, оружие стоит назвать в честь первого убитого монстра."
+
+[d100155ac4c1]
+en = "They say that you should never introduce a rope golem to a succubus."
+ru = "Говорят, никогда не знакомьте верёвочного голема с суккубом."
+
+[7557ddc01be8]
+en = "They say that you should never sleep near invisible ring wraiths."
+ru = "Говорят, никогда не спите рядом с невидимыми кольценосными призраками."
+
+[747fb30e7cf7]
+en = "They say that you should never try to leave the dungeon with a bag of gems."
+ru = "Говорят, никогда не пытайтесь покинуть подземелье с мешком самоцветов."
+
+[2d1f77456294]
+en = "They say that you should remove your armor before sitting on a throne."
+ru = "Говорят, прежде чем сесть на трон, снимите доспехи."
+
+[940c88e23a9b]
+en = "[cookie] This fortune cookie is copy protected."
+ru = "Это печенье с предсказанием защищено от копирования."
+
+[b19c792f2759]
+en = "[cookie] This fortune cookie is the property of Fortune Cookies, Inc."
+ru = "Это печенье с предсказанием — собственность ООО «Печенье с предсказаниями»."
+
+[8dc9109be48d]
+en = "This release contains 10%% recycled material."
+ru = "Эта версия на 10% состоит из переработанных материалов."
+
+[594e0351e0e8]
+en = "Time stands still as the succubus changes her calendar to January 1, 2000."
+ru = "Время замирает: суккуб переворачивает календарь на 1 января 2000 года."
+
+[ad930240ebe7]
+en = "Tired?  Try a scroll of charging on yourself."
+ru = "Устали?  Прочитайте на себя свиток подзарядки."
+
+[3dc9d0512347]
+en = "To achieve the next higher rating, you need 3 more points."
+ru = "Чтобы подняться в рейтинге, вам нужно ещё 3 очка."
+
+[7db469ed4cd9]
+en = "To reach heaven, escape the dungeon while wearing a ring of levitation."
+ru = "Чтобы попасть на небеса, покиньте подземелье в кольце левитации."
+
+[cac398eedd31]
+en = "Tourists wear shirts loud enough to wake the dead."
+ru = "Туристы носят такие кричащие рубашки, что мёртвые просыпаются."
+
+[2530d8dd6953]
+en = "Try calling your katana Moulinette."
+ru = "Попробуйте назвать свою катану Мулинетт."
+
+[0235c096e70a]
+en = "Ulch!  That meat was painted!"
+ru = "Тьфу!  Это мясо было крашеное!"
+
+[1aaadeb6bc3e]
+en = "Unfortunately, this message was left intentionally blank."
+ru = "К сожалению, это сообщение намеренно оставлено пустым."
+
+[a73e19a38f2b]
+en = "Using a morning star in the evening has no effect."
+ru = "Моргенштерн вечером не действует."
+
+[88c022dbe34a]
+en = "Waltz, dumb nymph, for quick jigs vex."
+ru = "Съешь же ещё этих мягких французских булок, нимфа, да выпей чаю."
+
+[1ea28c4ed96c]
+en = "Want a hint?  Zap a wand of make invisible on your weapon!"
+ru = "Хотите подсказку?  Наведите палочку невидимости на своё оружие!"
+
+[ada06f4a0bfa]
+en = "Want to ascend in a hurry?  Apply at Gizmonic Institute."
+ru = "Хотите вознестись побыстрее?  Обращайтесь в Гизмонический институт."
+
+[15a35d2326fb]
+en = "Wanted: shopkeepers.  Send a scroll of mail to Mage of Yendor/Level 35/Dungeon."
+ru = "Требуются лавочники.  Присылайте почтовый свиток по адресу: Архимаг Йендора/Уровень 35/Подземелье."
+
+[b0d914b07d32]
+en = "[cookie] Warning:  fortune reading can be hazardous to your health."
+ru = "Минздрав предупреждает: чтение предсказаний опасно для вашего здоровья."
+
+[05aa7b4a833f]
+en = "We have new ways of detecting treachery..."
+ru = "У нас есть новые способы распознавать предательство..."
+
+[05154f30ca60]
+en = "Wet towels make great weapons!"
+ru = "Мокрое полотенце — отличное оружие!"
+
+[f739c28034e5]
+en = "[cookie] What a pity, you cannot read it!"
+ru = "Какая жалость, вы не можете это прочесть!"
+
+[7b6861593015]
+en = "Whatever can go wrong, will go wrong."
+ru = "Если что-то может пойти не так, оно пойдёт не так."
+
+[24e8ddfdacd8]
+en = "When a piercer drops in on you, you will be tempted to hit the ceiling!"
+ru = "Когда на вас свалится пронзатель, вам захочется лезть на потолок!"
+
+[e9f3bbb83814]
+en = "When in a maze follow the right wall and you will never get lost."
+ru = "В лабиринте держитесь правой стены — и никогда не заблудитесь."
+
+[8430e6ab1f14]
+en = "When you have a key, you don't have to wait for the guard."
+ru = "Если у вас есть ключ, стража можно не ждать."
+
+[3fdae60303ad]
+en = "[cookie] Why are you wasting time reading fortunes?"
+ru = "Зачем вы тратите время на чтение предсказаний?"
+
+[4fc8399c3e39]
+en = "Wish for a master key and open the Magic Memory Vault!"
+ru = "Пожелайте универсальный ключ и откройте «Волшебное Хранилище Памяти»!"
+not_terms = ["master"]
+
+[c474b9c5d7d6]
+en = "Wizard expects every monster to do its duty."
+ru = "Волшебник ожидает, что каждый монстр исполнит свой долг."
+
+[6a95477c18a9]
+en = "Wow!  You could've had a potion of fruit juice!"
+ru = "Ого!  А ведь мог быть флакон фруктового сока!"
+
+[110b894bd7fd]
+en = "Yet Another Silly Message (YASM)."
+ru = "Ещё Одно Глупое Сообщение (ЕОГС)."
+
+[61fca93fe899]
+en = "[cookie] You are destined to be misled by a fortune."
+ru = "Предсказанию суждено вас обмануть."
+
+[2078d6796ac7]
+en = "You can get a genuine Amulet of Yendor by doing the following:  --More--"
+ru = "Настоящий Амулет Йендора можно получить так:  --Дальше--"
+
+[c47a9b91faf1]
+en = "You can make holy water by boiling the hell out of it."
+ru = "Святую воду можно получить, если выпарить из неё всю чертовщину."
+
+[8b9b958716b6]
+en = "You can protect yourself from black dragons by doing the following:  --More--"
+ru = "От чёрных драконов можно защититься так:  --Дальше--"
+
+[a98436835287]
+en = "You can't get by the snake."
+ru = "Мимо змеи не пройти."
+
+[199ec69767aa]
+en = "[cookie] You choke on the fortune cookie.  --More--"
+ru = "Вы подавились печеньем с предсказанием.  --Дальше--"
+
+[f78bdd5ffba7]
+en = "You feel like someone is pulling your leg."
+ru = "Кажется, кто-то водит вас за нос."
+
+[22f9c8c87600]
+en = "You have to outwit the Sphynx or pay her."
+ru = "Сфинкса нужно перехитрить или заплатить ей."
+
+[d70c1f03d80a]
+en = "[cookie] You hear the fortune cookie's hissing!"
+ru = "Вы слышите шипение печенья с предсказанием!"
+
+[39607d49c07b]
+en = "You may get rich selling letters, but beware of being blackmailed!"
+ru = "На продаже писем можно разбогатеть, но берегитесь шантажа!"
+
+[a8457d67d8a0]
+en = "You offend Shai-Hulud by sheathing your crysknife without having drawn blood."
+ru = "Вы оскорбляете Шаи-Хулуда, вложив криснож в ножны, не пролив крови."
+
+[57a29d7f6751]
+en = "[cookie] You swallowed the fortune!"
+ru = "Вы проглотили предсказание!"
+
+[e017fb43828b]
+en = "You want to regain strength?  Two levels ahead is a guesthouse!"
+ru = "Хотите восстановить силы?  Через два уровня будет гостиница!"
+
+[0745bad463fc]
+en = "You will encounter a tall, dark, and gruesome creature..."
+ru = "Вы встретите высокое, тёмное и жуткое существо..."
