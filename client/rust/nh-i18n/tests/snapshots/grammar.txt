@@ -3072,6 +3072,8 @@
   =   «Скорее всего, всё ваше золото украдено из этого хранилища.»
 "Move along!"  [e874cd6b9304]
   =   «Проходите!»
+"Oh, honey... I missed you!" she said, and fired again.  [d1ae0ca5cd9f]
+  =   "Ох, милый... я опять по тебе промазала!" — сказала она и выстрелила снова.
 "Please drop that gold and follow me."  [028ed83bebaf]
   =   «Пожалуйста, бросьте это золото и следуйте за мной.»
 "Please follow me."  [ca32dd77bc77]
@@ -5552,6 +5554,8 @@
   f   (Ещё 3 неоплаченных предмета под полом.)
   n   (Ещё 5 неоплаченных предметов под полом.)
   pl  (Ещё 21 неоплаченный предмет под полом.)
+(This space for sale)  [b03db3ab0a5a]
+  =   (Место сдаётся)
 (Tip: use '%s' prefix to step in if you really want to.)  [55f7d2a42dac]
   m   (Совет: если вы правда хотите туда шагнуть, используйте префикс 'тритон'.)
   f   (Совет: если вы правда хотите туда шагнуть, используйте префикс 'крыса'.)
@@ -5569,6 +5573,14 @@
   =   (показать подходящее)
 (none)  [3c6b183d348f]
   =   (нет)
+...and they made me engrave my own headstone too!  [0245decc5af6]
+  =   ...и надгробие мне тоже пришлось гравировать самому!
+...but the blood has stopped pumping and I am left to decay...  [333e441466ea]
+  =   ...но кровь перестала течь, и мне осталось лишь тлеть...
+...for famous men have the whole earth as their memorial  [83ab99eb0eb5]
+  =   ...ибо для славных мужей вся земля — памятник
+1994-1995. The Longest-Lived Hacker Ever  [664a46aacea0]
+  =   1994–1995. Самый долгоживущий хакер в истории
 1st Law of Hacking:  leaving is much more difficult than entering.  [2b22b6fbebf2]
   =   Первый закон хакинга: выйти гораздо труднее, чем войти.
 2nd Law of Hacking:  first in, first out.  [f49b5e8dd59a]
@@ -5582,6 +5594,8 @@
   f   <3,3> не годится; всё равно?
   n   <5,5> не годится; всё равно?
   pl  <21,21> не годится; всё равно?
+<Expletive Deleted>  [2794298fd85b]
+  =   <Нецензурное выражение удалено>
 A bear trap closes on your %s!  [5e667d21e762]
   m   Медвежий капкан смыкается на вашем тритоне!
   f   Медвежий капкан смыкается на вашей крысе!
@@ -5673,6 +5687,8 @@ A magic vomit pump could be useful for gourmands.  [41ce24978218]
   =   Волшебный рвотный насос пригодился бы гурманам.
 A map coalesces in your mind!  [4ec805b616fd]
   =   В вашем сознании складывается карта!
+A masochist is never satisfied.  [6df322ef4da8]
+  =   Мазохиста ничем не удовлетворишь.
 A monstrous mind is a toy forever.  [d498867feae8]
   =   Чудовищный разум — игрушка навсегда.
 A nymph knows how to unlock chains.  [be28e23edb3f]
@@ -5721,12 +5737,16 @@ A wand of vibration might bring the whole cave crashing about your ears.  [c9213
   =   Палочка вибрации может обрушить вам на голову всю пещеру.
 A winner never quits.  A quitter never wins.  [fb49bf6b1351]
   =   Победитель никогда не сдаётся.  Сдавшийся никогда не побеждает.
+Ach, 'twas a wee monster in the loch  [6c9459562af6]
+  =   Ох, то было махонькое чудище из озера
 Achievement:  [72e49f32bfa9]
   =   Достижение:
 Achievements:  [6f1fcb999220]
   =   Достижения:
 Acid blobs should be attacked bare-handed.  [fe64830b94e5]
   =   Кислотные сгустки лучше бить голыми руками.
+Adapt.  Enjoy.  Survive.  [b72d0a5cc062]
+  =   Приспосабливайся.  Наслаждайся.  Выживай.
 Adjust inventory by assigning new letter  [dfe372753a5f]
   =   Сменить букву предмета в инвентаре
 Adjust inventory by splitting this stack  [1f00dffe33f7]
@@ -5738,6 +5758,8 @@ Adjust letter to what [%s] (? see used letters)?  [92346ad5b823]
   pl  Какую букву дать [3 стрелы] (? — занятые буквы)?
 Advance skills without practice?  [12c0880fa94a]
   =   Повысить навыки без тренировки?
+Adventure, hah!  Excitement, hah!  [643c79f96faa]
+  =   Приключения, ха!  Острые ощущения, ха!
 Affairs with nymphs are often very expensive.  [b2972950c346]
   =   Романы с нимфами обычно обходятся очень дорого.
 Afraid of mimics?  Try to wear a ring of true seeing.  [c97f17a81e41]
@@ -5746,22 +5768,48 @@ Afraid of nymphs?  Wear a ring of adornment.  [1378362d84c9]
   =   Боитесь нимф?  Наденьте кольцо обаяния.
 Afraid of your valuables being stolen?  Carry more junk!  [3741934b46c5]
   =   Боитесь, что украдут ценности?  Носите побольше хлама!
+After all, what are friends for...  [ff4b14153362]
+  =   В конце концов, для чего же ещё нужны друзья...
+After this, nothing will shock me  [8503b76b111d]
+  =   После этого меня уже ничто не шокирует
+After three days, fish and guests stink  [1cc83cf508a9]
+  =   Через три дня и рыба, и гости начинают вонять
+Age and treachery will always overcome youth and skill  [f992bc84c71b]
+  =   Возраст и коварство всегда победят молодость и мастерство
+Ageing is not so bad.  The real killer is when you stop.  [3a1dfeda2f7d]
+  =   Стареть не так уж плохо.  Убивает, когда перестаёшь.
 Ahh, a refreshing drink.  [98c4714e7827]
   =   Ах, освежает.
 Aim for what?  [4e90fb513fa1]
   =   Что зацепить?
+Ain't I a stinker?  [2113e34a7991]
+  =   Ну не вредина ли я?
+Alas fair Death, 'twas missed in life - some peace and quiet from my wife  [e5a9dfa34787]
+  =   О Смерть, ты дала мне то, чего при жизни не дала жена: покой и тишина
+Algernon  [9b9721fb4773]
+  =   Элджернон
 All  [6a72085653e4]
   =   Все
+All else failed...  [7845f3767e2f]
+  =   Всё остальное не сработало...
+All hail RNG  [7ab6c558c2a7]
+  =   Да славится ГСЧ
 All monsters are created evil, but some are more evil than others.  [97e1e9c7896c]
   =   Все монстры созданы злыми, но некоторые злее других.
 All monsters currently shown on the map:  [97ce1d62141b]
   =   Все монстры на карте:
 All objects currently shown on the map:  [f25ae82aa4f5]
   =   Все предметы на карте:
+All right, we'll call it a draw!  [6c212036f1b7]
+  =   Ладно, назовём это ничьей!
 All types  [30c8a0fc9c1a]
   =   Все типы
 All worn and wielded types  [70cb28745864]
   =   Всё надетое и всё в руках
+All's well that ends well  [6fd91413b152]
+  =   Всё хорошо, что хорошо кончается
+Alone at last!  [ac0eec938f2c]
+  =   Наконец-то одни!
 Always attack a floating eye from behind!  [b354491ec5f7]
   =   Парящее око всегда атакуйте со спины!
 Always be aware of the phase of the moon!  [ad2bc5f14895]
@@ -5770,6 +5818,8 @@ Always pickup '<'; never pickup '>'  [a586b42a2007]
   =   Всегда подбирать '<'; никогда не подбирать '>'
 Always sweep the floor before engraving important messages.  [8da40fa2c9d1]
   =   Прежде чем писать на полу что-то важное, подметите его.
+Am I having fun yet?  [56cc401ab328]
+  =   Мне уже весело?
 Amulets of Yendor are hard to make.  Even for a wand of wishing.  [cd2c84eac0ce]
   =   Амулеты Йендора трудно создать.  Даже палочке желаний.
 An arrow shoots out at you!  [346c0a6645a5]
@@ -5782,12 +5832,64 @@ An umber hulk can be a confusing sight.  [949be91e1158]
   =   От вида бурого увальня можно растеряться.
 Analyze throne?  [950c6e9e51c7]
   =   Исследовать трон?
+And I can still crawl, I'm not dead yet!  [eaaf59e8dad5]
+  =   А я ещё ползаю, я ещё не умер!
+And all I wanted was a free lunch  [7383c86bd6d1]
+  =   А ведь я всего лишь хотел бесплатного сыра
+And all of the signs were right there on your face  [344d3de5c99b]
+  =   А ведь все знаки были прямо у вас на лице
+And don't give me that innocent look either!  [0a8349dc5566]
+  =   И не надо делать такое невинное лицо!
+And everyone died.  Boo hoo hoo.  [b31049820888]
+  =   И все умерли.  Буу-хуу-хуу.
+And here I go again...  [5bfa66c0172b]
+  =   И вот опять...
+And nobody cares until somebody famous dies...  [0b6b63e95453]
+  =   И всем всё равно, пока не умрёт кто-нибудь знаменитый...
+And so it ends?  [0ab938721d4d]
+  =   Вот так всё и кончается?
+And so... it begins.  [7a08256390bd]
+  =   И вот... всё начинается.
+And sometimes the bear eats you.  [8b8deaf5b165]
+  =   А иногда медведь съедает вас.
+And then 'e nailed me 'ead to the floor!  [d1f42c8f5724]
+  =   А потом он мне башку к полу прибил!
+And they said it couldn't be done!  [44d4100b08ad]
+  =   А говорили, что это невозможно!
+And what do I look like?  The living?  [da6487071bce]
+  =   А я на кого похож?  На живого?
+And yes, it was ALL his fault!  [c6fb2ed95645]
+  =   И да, это ВСЁ он виноват!
+And you said it was pretty here...  [a980fe284fdc]
+  =   А вы говорили, что здесь красиво...
+Another lost soul  [633c84a25445]
+  =   Ещё одна заблудшая душа
+Any day above ground is a good day!  [5f7cc6386461]
+  =   Любой день над землёй — хороший день!
+Any more of this and I'll die of a stroke before I'm 30.  [4691b537b72f]
+  =   Ещё немного — и меня хватит удар, не дожив до 30.
 Any small object that is accidentally dropped will hide under a larger object.  [c4ff43dd08c0]
   =   Любой мелкий предмет, случайно оброненный, спрячется под предметом покрупнее.
+Anybody seen my head?  [e4f52f2ecf76]
+  =   Кто-нибудь видел мою голову?
+Anyone for deathmatch?  [9f7f84f628d4]
+  =   Кто на дезматч?
+Anything for a change.  [e1b534a17ed6]
+  =   Всё что угодно, лишь бы перемены.
+Anything that kills you makes you ... well, dead  [eb337f182891]
+  =   Всё, что вас убивает, делает вас... ну, мёртвым
+Anything worth doing is worth overdoing.  [85c52c8236ed]
+  =   Что стоит делать, с тем стоит и переборщить.
+Applaud, my friends, the comedy is finished.  [953e3503b9d8]
+  =   Аплодируйте, друзья, комедия окончена.
 Archeologists are very squishy, often found under boulders.  [65c26701dc91]
   =   Археологи очень мягкие, их часто находят под валунами.
 Archeologists find more bones piles.  [26c7173a1611]
   =   Археологи находят больше куч костей.
+Are unicorns supposedly peaceful if you're a virgin?  Hah!  [c1f6b53d8427]
+  =   Говорят, единороги мирные, если вы девственны?  Ха!
+Are we all being disintegrated, or is it just me?  [6bdf2aa22e45]
+  =   Нас всех распыляет, или только меня?
 Are you sure you want to enter?  [de3090869465]
   =   Вы уверены, что хотите войти?
 Are you sure you want to pray?  [e37d6de15075]
@@ -5815,6 +5917,10 @@ As you read the scroll, it disappears.  [40113e6469d1]
   =   Пока вы читаете свиток, он исчезает.
 Asking about monsters may be very useful.  [bd1360d74c8e]
   =   Расспросы о монстрах бывают очень полезны.
+At last... a nice long sleep.  [08466e2630b8]
+  =   Наконец-то... долгий сладкий сон.
+At least I'm good at something  [256f3169217d]
+  =   Хоть в чём-то я хорош
 At whom? (in what direction)  [39015019ee75]
   =   В кого? (в каком направлении)
 Attach these to your candelabrum, or extinguish it  [2439938989a5]
@@ -5846,8 +5952,16 @@ Attacking an eel where there is none is usually a fatal mistake!  [b52db48956b2]
   =   Атаковать угря там, где его нет, — обычно роковая ошибка!
 Attempt to disarm trap  [668756245b3e]
   =   Попытаться обезвредить ловушку
+Attempted suicide  [2cbca522835d]
+  =   Попытка самоубийства
 Attributes:  [b8087185e5ee]
   =   Свойства:
+Audi Partem Alteram  [9cd48e230154]
+  =   Выслушай и другую сторону
+Auri sacra fames  [189a9514928f]
+  =   Проклятая жажда золота
+Auribus teneo lupum  [24e737a01def]
+  =   Держу волка за уши
 Austin Powers says: My Mojo is back!  Yeah, baby!  [7ef017e97684]
   =   Остин Пауэрс говорит: моё моджо снова со мной!  Йе, бейби!
 Auto-select every item being worn or wielded  [386aaaffbb6a]
@@ -5872,14 +5986,22 @@ Bashing monsters with a bow is not such a good idea.  [7a4f1c0d2e7a]
   =   Колотить монстров луком — не лучшая мысль.
 Basics:  [f2a317699c1c]
   =   Основное:
+Basil, assaulted by bears  [64befe9aba34]
+  =   Василий, задранный медведями
 Be careful when eating bananas.  Monsters might slip on the peels.  [5017089c2847]
   =   Осторожнее с бананами.  Монстры могут поскользнуться на кожуре.
 Be careful!  New moon tonight.  [a3dfd51209d6]
   =   Осторожно!  Сегодня новолуние.
 Be careful!  The Wizard may plan an ambush!  [65b0cd2a264e]
   =   Осторожно!  Волшебник может готовить засаду!
+Be careful, or this could happen to you!  [7e03d0422b6e]
+  =   Будьте осторожны, иначе с вами случится то же самое!
 Be nice to a nurse:  Put away your weapon and take off your clothes.  [72ac25df8b47]
   =   Будьте любезны с медсестрой: уберите оружие и снимите одежду.
+Be prepared  [951cbab8e20b]
+  =   Будь готов
+Beauty survives  [2f6705abdc2a]
+  =   Красота бессмертна
 Become %s?  [9254005c98f8]
   m   Стать тритоном?
   f   Стать крысой?
@@ -5887,10 +6009,34 @@ Become %s?  [9254005c98f8]
   pl  Стать 3 стрелами?
 Become what kind of monster? [type the name]  [06357e84a194]
   =   В какого монстра превратиться? [введите название]
+Been Here.  Now Gone.  Had a Good Time.  [15bd8ad38538]
+  =   Был здесь.  Теперь ушёл.  Хорошо провёл время.
+Been through Hell, eh?  What did you bring me?  [1e14013feebf]
+  =   Побывали в аду, а?  Что мне привезли?
+Beetlejuice Beetlejuice Beetlejuice  [e1e25442ed48]
+  =   Битлджус Битлджус Битлджус
+Beg your pardon, didn't recognize you, I've changed a lot.  [b26a3a742fad]
+  =   Простите, не узнал вас, я сильно изменился.
+Being dead builds character  [d5380a36eb67]
+  =   Смерть закаляет характер
+Beloved daughter, a treasure, buried here.  [b045a6b6e4dd]
+  =   Здесь погребена любимая дочь, наше сокровище.
+Best friends come and go....  Mine just die.  [b8642012075f]
+  =   Лучшие друзья приходят и уходят....  Мои просто умирают.
+Better be dead than a fat slave  [b74f06018e51]
+  =   Лучше умереть, чем быть толстым рабом
 Better leave the dungeon; otherwise you might get hurt badly.  [67d2c4c715da]
   =   Лучше покиньте подземелье, а то можете сильно пострадать.
+Better luck next time  [c2dc8a21871d]
+  =   Удачи в следующий раз
+Beware of Discordians bearing answers  [041eee8e619b]
+  =   Бойтесь дискордианцев, ответы приносящих
+Beware of Electric Third Rail  [60bab5ba376e]
+  =   Осторожно: третий рельс под напряжением
 Beware of the potion of nitroglycerin -- it's not for the weak of heart.  [2a20eb1cbb85]
   =   Берегитесь зелья нитроглицерина — оно не для слабых сердцем.
+Beware the ...  [bfd78fb7f610]
+  =   Берегитесь ...
 Beware, there will be no return!  Still climb?  [b569a8915411]
   =   Берегитесь, пути назад не будет!  Всё равно подняться?
 Beware:  there's always a chance that your wand explodes as you try to zap it!  [19c2760deba2]
@@ -5910,10 +6056,16 @@ Blecch!  Rotten food!  [51a3917713c8]
   =   Фу!  Тухлятина!
 Blind?  Catch a floating eye!  [4503891e916b]
   =   Ослепли?  Самое время бить парящее око!
+Bloody Hell...  [923c0b483e2b]
+  =   Чёрт побери...
+Bloody barbarians!  [7f72f3414ee5]
+  =   Проклятые варвары!
 Blow into the horn of plenty  [cd736d973436]
   =   Подуть в рог изобилия
 Blow this whistle  [308c50b6a2ef]
   =   Подуть в этот свисток
+Blown upward out of sight: He sought the leak by candlelight  [6c1a8a2eacca]
+  =   Он утечку газа искал со свечой — теперь он где-то над землёй
 Bones file already exists.  Replace it?  [7962ad62486d]
   =   Файл костей уже есть.  Заменить его?
 Booksellers never read scrolls; they might get carried away.  [36053022de6b]
@@ -5922,12 +6074,22 @@ Booleans (selecting will toggle value):  [6d2795daff98]
   =   Флажки (выбор переключает значение):
 Boom!  [96e930300eb5]
   =   Бабах!
+Brains... Brains... Fresh human brains...  [7fca3355a377]
+  =   Мозги... Мозги... Свежие мозги людей...
 Break this wand  [5df2aea1098f]
   =   Сломать эту палочку
+Buried the cat.  Took an hour.  Damn thing kept fighting.  [b57d56fdc759]
+  =   Похоронил кота.  Ушёл целый час.  Проклятая тварь всё сопротивлялась.
+Burninated  [5aad2ec2d17b]
+  =   Испепелён
+But I disarmed the trap!  [b300e6615587]
+  =   Но я же обезвредил ловушку!
 Buy this unpaid item  [38beac67c21a]
   =   Купить этот неоплаченный предмет
 Buy this unpaid stack  [15e4157ded82]
   =   Купить эту неоплаченную стопку
+CONNECT 1964 - NO CARRIER 1994  [a232e5f55b2d]
+  =   СОЕДИНЕНИЕ 1964 — НЕТ НЕСУЩЕЙ 1994
 Call %s:  [776121bc49d1]
   m   Назвать тритона:
   f   Назвать крысу:
@@ -5938,11 +6100,29 @@ Call a stream of %s fluid:  [b6e809ef19b4]
   f   Назвать струю жидкости (крыса):
   n   Назвать струю жидкости (копьё):
   pl  Назвать струю жидкости (3 стрелы):
+Call me if you need my phone number!  [c5797bb642eb]
+  =   Позвоните, если понадобится мой номер телефона!
+Can YOU fly?  [05c84dde306d]
+  =   А ВЫ умеете летать?
+Can you believe that thing is STILL moving?  [2f7ed7024b1a]
+  =   Представляете, эта штука ВСЁ ЕЩЁ шевелится?
+Can you come up with some better ending for this?  [e48bb8e2de25]
+  =   Не придумаете ли концовку получше?
+Can you feel anything when I do this?  [1013b68b0d3f]
+  =   Вы что-нибудь чувствуете, когда я делаю вот так?
+Can you give me mouth to mouth, you just took my breath away.  [e74a7c648559]
+  =   Сделайте мне искусственное дыхание: от вас у меня перехватило дух.
+Can't I just have a LITTLE peril?  [e96da37adbe1]
+  =   А можно мне хоть НЕМНОЖКО опасности?
+Can't eat, can't sleep, had to bury the husband here.  [da3eba8e9817]
+  =   Ни есть, ни спать не могу, пришлось похоронить здесь мужа.
 Can't find dungeon feature '%c'.  [1cd903743ac8]
   m   На карте нет объекта 'x'.
   f   На карте нет объекта 'x'.
   n   На карте нет объекта 'x'.
   pl  На карте нет объекта 'x'.
+Can't you hit me?!  [585a1ea954c0]
+  =   Неужели вы не можете в меня попасть?!
 Cast a spell  [d625d9c42fcb]
   =   Произнести заклинание
 Cast which spell?  [fea10ee28fb7]
@@ -5961,6 +6141,8 @@ Cast which spell? [a-zA-%c *?]  [92c329c869f8]
   f   Какое заклинание прочесть? [a-zA-x *?]
   n   Какое заклинание прочесть? [a-zA-x *?]
   pl  Какое заклинание прочесть? [a-zA-x *?]
+Caution! This grave contains toxic waste  [f356d93bc3b8]
+  =   Осторожно! В этой могиле токсичные отходы
 Change %s @ %s into what?  [72a8d7b071f4]
   m   Во что превратить тритона @ тритон?
   f   Во что превратить крысу @ крыса?
@@ -5968,6 +6150,8 @@ Change %s @ %s into what?  [72a8d7b071f4]
   pl  Во что превратить 3 стрелы @ 3 стрелы?
 Changing your suit without dropping your sword?  You must be kidding!  [0943168bd087]
   =   Переодеться, не выпуская меча?  Вы шутите!
+Chaos, panic and disorder.  My work here is done.  [111629683511]
+  =   Хаос, паника и беспорядок.  Моя работа здесь окончена.
 Characteristics:  [69803692f054]
   =   Характеристики:
 Check %s for a trap?  [ed3e36a52459]
@@ -5975,10 +6159,16 @@ Check %s for a trap?  [ed3e36a52459]
   f   Проверить крысу на ловушки?
   n   Проверить копьё на ловушки?
   pl  Проверить 3 стрелы на ловушки?
+Check enclosed.  [1b004d0be557]
+  =   Чек прилагается.
 Check this door for a trap?  [ce96a1bac93e]
   =   Проверить эту дверь на ловушки?
+Check this out!  It's my brain!  [7483b67d7a81]
+  =   Смотрите!  Это мой мозг!
 Chemistry 101: Never pour water into acid.  [e50b6180b3fa]
   =   Химия для начинающих: никогда не лейте воду в кислоту.
+Chivalry is only reasonably dead  [4a05827646dc]
+  =   Рыцарство умерло лишь отчасти
 Choose %s text value to match:  [451a0ce00d53]
   m   Выберите текст для тритон:
   f   Выберите текст для крыса:
@@ -6006,6 +6196,14 @@ Close the door!  You're letting the heat out!  [e1bc4972351c]
   =   Закройте дверь!  Тепло уходит!
 Cockatrices might turn themselves to stone faced with a mirror.  [c471671debb9]
   =   Василиски могут окаменеть, увидев себя в зеркале.
+Coffin for sale.  Lifetime guarantee.  [f9f6d2c6ad85]
+  =   Продаётся гроб.  Пожизненная гарантия.
+Come Monday, I'll be all right.  [71430e62092e]
+  =   В понедельник со мной всё будет в порядке.
+Come and see the violence inherent in the system  [399a80be26fa]
+  =   Подходите, посмотрите на насилие, присущее системе
+Come back here!  I'll bite your bloody knees off!  [fc78384eca8b]
+  =   Вернись!  Я тебе колени отгрызу!
 Comestibles  [c238700e8163]
   =   Еда
 Command %s requires a parameter:  [1efe3e8717df]
@@ -6015,10 +6213,18 @@ Command %s requires a parameter:  [1efe3e8717df]
   pl  Команде 3 стрелы нужен параметр:
 Commit suicide?  [382bffe25a6a]
   =   Покончить с собой?
+Commodore Business Machines, Inc.  Died for our sins.  [6ed37137a8ed]
+  =   «Коммодор Бизнес Машинс».  Умерла за наши грехи.
+Complain to one who can help you  [fa70e776d5bb]
+  =   Жалуйтесь тому, кто может помочь
 Compounds (selecting will prompt for new value):  [272e5dc25e55]
   =   Составные (выбор запросит новое значение):
 Concise conquest:  Control, confuse, conjure, condemn.  [65882aea9e66]
   =   Завоевание вкратце: подчини, помути, призови, погуби.
+Confess my sins to god?  Which one?  [c80e84a0f13c]
+  =   Исповедаться в грехах богу?  Которому?
+Confusion will be my epitaph  [92175eaf51ba]
+  =   Смятенье — вот моя эпитафия
 Conserve energy, turn off the lights.  [e3e9d5cf6a2f]
   =   Берегите энергию, гасите свет.
 Consumption of home-made food is strictly forbidden in this dungeon.  [bb5e5e3e4eb3]
@@ -6055,6 +6261,22 @@ Continue your attempt to set %s?  [6a098606bed4]
   f   Продолжить устанавливать крысу?
   n   Продолжить устанавливать копьё?
   pl  Продолжить устанавливать 3 стрелы?
+Cooties?  Ain't no cooties on me!  [166dbcd5fb2d]
+  =   Вши?  Нет на мне никаких вшей!
+Could somebody get this noose off me?  [8cab926bfa0f]
+  =   Кто-нибудь снимет с меня эту петлю?
+Could you check again?  My name MUST be there.  [9610ec26a1a8]
+  =   Можете проверить ещё раз?  Моё имя ДОЛЖНО там быть.
+Could you please take a breath mint?  [74588d5844a1]
+  =   Не могли бы вы взять мятную конфетку?
+Couldn't I be sedated for this?  [fae199345986]
+  =   А нельзя ли меня для этого усыпить?
+Courage is looking at your setbacks with serenity  [c8a7e0971c9c]
+  =   Мужество — это спокойно смотреть на свои неудачи
+Cover me, I'm going in!  [52494075cecb]
+  =   Прикройте, я захожу!
+Crash course in brain surgery  [908e9ed1a17e]
+  =   Ускоренный курс нейрохирургии
 Crash!  [a722e727991a]
   =   Дзынь!
 Create SnapShot?  [dca069048d7a]
@@ -6066,6 +6288,8 @@ Creating %s instead; force %s?  [a0331986023d]
   f   Вместо этого создаётся крыса; принудительно создать крысу?
   n   Вместо этого создаётся копьё; принудительно создать копьё?
   pl  Вместо этого создаётся 3 стрелы; принудительно создать 3 стрелы?
+Cross my fingers for me.  [69add9961a60]
+  =   Скрестите за меня пальцы.
 Current skills:  [545b9247278d]
   =   Текущие навыки:
 Current skills:  (%d slot available)  [60d366a454bc]
@@ -6080,12 +6304,24 @@ Current skills:  (%d slots available)  [9406bb9acff4]
   pl  Текущие навыки:  (свободных слотов: 21)
 Currently known spells  [ad7cc3284c0d]
   =   Известные заклинания
+Curse god and die  [612f736525c3]
+  =   Похули Бога и умри
+Cut to fit  [178366153e52]
+  =   Подрезано по размеру
 Dark room?  Your chance to develop your photographs!  [3fe277d1b011]
   =   Тёмная комната?  Самое время проявить фотографии!
 Dark rooms are not *completely* dark:  just wait and let your eyes adjust...  [54148a192ced]
   =   Тёмные комнаты темны не *совсем*: подождите, пока глаза привыкнут...
 David London sez, "Hey guys, *WIELD* a lizard corpse against a cockatrice!"  [1e15fe2683a2]
   =   Дэвид Лондон грит: "Ребята, *ВОЗЬМИТЕ В РУКИ* труп ящерицы против василиска!"
+De'Ath  [a6f8d42c22c7]
+  =   Смертин
+Dead Again?  Pardon me for not getting it right the first time!  [191f945bc818]
+  =   Снова мёртв?  Простите, что с первого раза не вышло как следует!
+Dead and loving every moment!  [cd6f087c1b64]
+  =   Мёртв и наслаждаюсь каждым мгновением!
+Dear wife of mine.  Died of a broken heart, after I took it out of her.  [228dda6da0a1]
+  =   Моя дорогая жена.  Умерла от разбитого сердца, после того как я вынул его из неё.
 Death is just life's way of telling you you've been fired.  [b5c9791f991f]
   =   Смерть — это просто способ, которым жизнь сообщает, что вы уволены.
 Debug Identify  [50ba0172a20c]
@@ -6206,6 +6442,8 @@ Dismount %s  [f46026084f4d]
   f   Слезть с крысы
   n   Слезть с копья
   pl  Слезть с 3 стрел
+Do not open until Christmas  [ee1582b8bacc]
+  =   Не открывать до Рождества
 Do what with %s?  [66751e7359e4]
   m   Что сделать с тритоном?
   f   Что сделать с крысой?
@@ -6257,26 +6495,38 @@ Dogs are superstitious; they never step on cursed items.  [d94b8b019e45]
   =   Собаки суеверны: на проклятые вещи они не наступают.
 Dogs of ghosts aren't angry, just hungry.  [326b7b09784d]
   =   Собаки привидений не злые, просто голодные.
+Don't be daft, they couldn't hit an elephant at this dist-  [e2a77300a663]
+  =   Не глупите, отсюда они и в слона не попадут с такого рассто-
 Don't bother wishing for things.  You'll probably find one on the next level.  [1d122dcb0490]
   =   Не тратьте желания.  Скорее всего, то же самое найдётся на следующем уровне.
 Don't eat too much:  you might start hiccoughing!  [a37f29d91892]
   =   Не объедайтесь: начнёте икать!
+Don't forget to stop and smell the roses  [1e924d9df0bf]
+  =   Не забывайте остановиться и понюхать розы
 Don't forget!  Large dogs are MUCH harder to kill than little dogs.  [5ffd89186d5d]
   =   Не забывайте!  Большую собаку убить НАМНОГО труднее, чем собачку.
 Don't know what to hit.  [ced2db95b788]
   =   Непонятно, что бить.
 Don't lash out at people while blinded.  [f5262e79416a]
   =   Ослепнув, не кидайтесь на людей.
+Don't let this happen to you!  [515b10a1740f]
+  =   Не допустите, чтобы с вами случилось то же самое!
 Don't mess with shopkeepers, or you'll get the Guild after you.  [7ef78db003be]
   =   Не связывайтесь с лавочниками, не то за вами придёт Гильдия.
 Don't play NetHack at your work; your boss might hit you!  [507dfe4e8c3b]
   =   Не играйте в NetHack на работе: начальник может вас ударить!
 Don't tell a soul you found a secret door, otherwise it isn't a secret anymore.  [b1786a4dfdf1]
   =   Никому не говорите, что нашли потайную дверь, иначе она перестанет быть тайной.
+Don't tread on me!  [582c0c85571d]
+  =   Не наступай на меня!
 Done.  [e2bcda84facb]
   =   Готово.
+Dragon? What dragon?  [8d74a1ae47ad]
+  =   Дракон? Какой дракон?
 Dragons never whip their children; they wouldn't feel it!  [053b7c7915ef]
   =   Драконы никогда не секут своих детей: те бы ничего не почувствовали!
+Drawn and quartered  [aea8de3d0803]
+  =   Четвертован
 Drink from the %s  [ad3a9f554977]
   m   Выпить из тритона
   f   Выпить из крысы
@@ -6347,6 +6597,8 @@ Drop your vanity and get rid of your jewels!  Pickpockets about!  [d1cd49081a7f]
   =   Оставьте тщеславие и избавьтесь от драгоценностей!  Кругом карманники!
 Dry up fountain?  [0f9743408b2c]
   =   Осушить фонтан?
+Dulce et decorum est pro patria mori  [a27485a9b333]
+  =   Сладко и почётно умереть за отечество
 Dumb move!  You strain a muscle.  [57461d3230d8]
   =   Глупая затея!  Вы растягиваете мышцу.
 Dump core?  [f8ee5656245d]
@@ -6384,6 +6636,8 @@ Eels hide under mud.  Use a unicorn to clear the water and make them visible.  [
   =   Угри прячутся в иле.  Чтобы очистить воду и увидеть их, позовите единорога.
 Eels will help you tie your shoes.  [a98909226ea1]
   =   Угри помогут вам завязать шнурки.
+Either I'm dead or my watch has stopped.  [989cd658e802]
+  =   Либо я умер, либо у меня остановились часы.
 Elbereth has quite a reputation around these parts.  [f40a1e79b70d]
   =   Слово Elbereth в здешних краях пользуется большим уважением.
 Elf corpses are incompatible with the sandman, and at times the gods as well.  [aaa21a0bd22d]
@@ -6394,10 +6648,14 @@ Elf is about to die.  [9e0d5f3f93e1]
   =   Эльф вот-вот умрёт.
 Elf needs food, badly!  [288450e016a6]
   =   Эльфу срочно нужна еда!
+Eliza -- Was I really alive, or did I just think I was?  [ae5f8ccaa901]
+  =   Элиза — я правда была жива или мне только так казалось?
 Elven cloaks cannot rust.  [55826e9385e2]
   =   Эльфийские плащи не ржавеют.
 Elves can help you feel less tired.  [167ac2f15fc4]
   =   Эльфы помогут вам не засыпать на ходу.
+Elvis  [e283641f4273]
+  =   Элвис
 Engrave on the %s with one of these items  [21f379975475]
   m   Вырезать надпись на тритоне одним из этих предметов
   f   Вырезать надпись на крысе одним из этих предметов
@@ -6419,6 +6677,8 @@ Enter %s text value to match:  [ab6b5c6209b5]
   pl  Введите текст для 3 стрелы:
 Enter debugger?  [813e2babaf67]
   =   Войти в отладчик?
+Enter not into the path of the wicked  [1a21b3a3da62]
+  =   На стезю нечестивых не вступай
 Enter percentage value for %s threshold:  [ff42bbd593e6]
   m   Введите порог для тритон в процентах:
   f   Введите порог для крыса в процентах:
@@ -6429,6 +6689,16 @@ Enter value for %s threshold:  [f4b9a4e76e90]
   f   Введите порог для крыса:
   n   Введите порог для копьё:
   pl  Введите порог для 3 стрелы:
+Eris?  I don't need Eris  [f5ab189080b2]
+  =   Эрида?  Не нужна мне Эрида
+Et in Arcadia ego  [16b7fc4f390b]
+  =   И я был в Аркадии
+Eternal Damnation, Come and stay a long while!  [4e4e7aeb7a39]
+  =   Вечное проклятие: заходите и оставайтесь надолго!
+Even The Dead pay taxes (and they aren't Grateful).  [5f5df25ea844]
+  =   Даже мёртвые платят налоги (и не очень-то благодарны).
+Even a tomb stone will say good things when you're down!  [8f69d5f1413f]
+  =   Даже надгробие скажет о вас что-то хорошее, когда вы в земле!
 Even evil players have a guardian angel.  [fb7f62ef9423]
   =   Даже у злых игроков есть ангел-хранитель.
 Even the most powerful heroes sometimes need to quaff away their injuries.  [683650c2931e]
@@ -6441,6 +6711,8 @@ Ever heard hissing outside?  I *knew* you hadn't!  [0b6f909f4930]
   =   Слышали когда-нибудь шипение снаружи?  Я *так* и знал, что нет!
 Ever lifted a dragon corpse?  [36e559d1953f]
   =   Вы когда-нибудь поднимали труп дракона?
+Ever notice that live is evil backwards?  [f592fbdd80cd]
+  =   Замечали, что «ад» задом наперёд — это «да»?
 Ever seen a leocrotta dancing the tengu?  [252e1bedea34]
   =   Видели когда-нибудь, как левкрота пляшет тэнгу?
 Ever seen your weapon glow plaid?  [65577d1cdc05]
@@ -6457,16 +6729,32 @@ Ever tried to lock a troll inside a large box?  [928f52704030]
   =   Пробовали запереть тролля в большом ящике?
 Ever wondered why one would want to dip something in a potion?  [87f3454700bb]
   =   Не задумывались, зачем окунать что-то в зелье?
+Every day is starting to look like Monday  [5bf992aa8535]
+  =   Каждый день начинает походить на понедельник
+Every day, in every way, I am getting better and better.  [8dbeaa790888]
+  =   С каждым днём мне во всех отношениях становится всё лучше и лучше.
+Every survival kit should include a sense of humor  [7a91c6726cc3]
+  =   В каждом наборе для выживания должно быть чувство юмора
 Everything feels SO boring now.  [cea861191f49]
   =   Теперь всё на ощупь ТАКОЕ скучное.
 Everything looks SO boring now.  [67979f48c72b]
   =   Теперь всё выглядит ТАКИМ скучным.
 Everything suddenly goes dark.  [8230a6dad8dd]
   =   Всё внезапно погружается во тьму.
+Evil I did dwell;  lewd did I live  [5bbba0e00e2c]
+  =   Я иду с мечем судия
+Ex post fucto  [b94dd0899bb5]
+  =   Пост-фак-тум
 Examine trap  [b40971ecea1f]
   =   Осмотреть ловушку
+Excellent day to have a rotten day.  [353299886f98]
+  =   Отличный день для паршивого дня.
+Excuse me for not standing up.  [71396a6b2324]
+  =   Простите, что не встаю.
 Expensive cameras have penetrating flash lights.  [26d2677c0758]
   =   У дорогих фотоаппаратов пронзительная вспышка.
+Experience isn't everything.  First, you've got to survive.  [a346ac337230]
+  =   Опыт — это ещё не всё.  Сначала надо выжить.
 Extended Command:   [f5de698a150d]
   =   Расширенная команда: 
 Extended Command: %s  [4eb87fb193bd]
@@ -6502,6 +6790,8 @@ Far out, man!  You can see right through yourself.  [ee7503a50d59]
   =   Улёт, чувак!  Вы видите себя насквозь.
 Far out, man!  You can't see yourself.  [b68d32304535]
   =   Улёт, чувак!  Вы себя не видите.
+Fatty and skinny went to bed.  Fatty rolled over and skinny was dead.  Skinny Smith 1983-2000.  [8b7ae627a3e9]
+  =   Толстый и тонкий легли на кровать.  Толстый подвинулся — тонкому не встать.  Тонкий Смит, 1983–2000.
 Fiery letters might deter monsters.  [d8e9973e00f6]
   =   Огненные буквы могут отпугнуть монстров.
 Fighting Skills  [39f5bc89155f]
@@ -6512,12 +6802,20 @@ Final Characteristics:  [e0ec341b4e35]
   =   Итоговые характеристики:
 Final Status:  [c7ffea839993]
   =   Итоговое состояние:
+Finally I am becoming stupider no more  [c8ffa90c7ef4]
+  =   Наконец-то я перестал глупеть
 Fine goods for sale:  [63bd0b029bf3]
   =   Отличные товары на продажу:
+First shalt thou pull out the Holy Pin  [f92cc51da70b]
+  =   Сперва изыми Святую Чеку
 Flip a coin  [b14d0cd58b85]
   =   Подбросить монетку
 Floating eyes can't stand Hawaiian shirts.  [e1cab72d7af0]
   =   Парящие очи не выносят гавайских рубашек.
+Follow me to hell  [567818922a19]
+  =   Следуй за мной в ад
+For a Breath, I Tarry...  [01cc190e789a]
+  =   Лишь вздох — и я уйду...
 For a good time engrave `Elbereth'.  [7b757d3c7d25]
   =   Для приятного времяпрепровождения начертите `Elbereth'.
 For an instant you could see right through yourself!  [b8fd502f7b9c]
@@ -6526,6 +6824,12 @@ For an instant you couldn't see yourself!  [f6b84ec6e39c]
   =   На миг вы перестаёте себя видеть!
 For any remedy there is a misery.  [528df914b3fa]
   =   На любое лекарство найдётся своя хворь.
+For recreational use only.  [4ab31247cfd9]
+  =   Только для развлекательного использования.
+For sale: One soul, slightly used.  Asking for 3 wishes.  [ef623847f0f7]
+  =   Продаётся: одна душа, слегка поношенная.  Прошу 3 желания.
+For some moments in life, there are no words.  [59879ea0b029]
+  =   В жизни бывают мгновения, когда слов нет.
 For some reason, you feel your presence is known.  [9f4859b2cf9d]
   =   Почему-то вы чувствуете, что о вашем присутствии знают.
 For what do you wish  [950698d53808]
@@ -6538,10 +6842,20 @@ Force the gods to be pleased?  [f3d81348e476]
   =   Заставить богов быть довольными?
 Force the mount to succeed?  [14d1d962a035]
   =   Заставить посадку удаться?
+Forget Disney World, I'm going to Hell!  [aa27a9a12a09]
+  =   Какой там Диснейленд, я отправляюсь в ад!
+Forget about the dog, Beware of my wife.  [c05acbc59036]
+  =   Забудьте про собаку, бойтесь моей жены.
 Fortunately, you have been immunized.  [b5bfb26e1613]
   =   К счастью, у вас иммунитет.
+Funeral - Real fun.  [511190e9e80f]
+  =   Похороны — обхохочешься.
+Game over, man.  Game over.  [e6f9d4e2dbab]
+  =   Игра окончена, чувак.  Игра окончена.
 Game over:  [253ba4d66b23]
   =   Игра окончена:
+Gawd, it's depressing in here, isn't it?  [9d5181cf48c7]
+  =   Господи, ну и тоска же здесь, а?
 Gee!  All of a sudden, you can see right through yourself.  [4cb41c9bd137]
   =   Ого!  Внезапно вы видите себя насквозь.
 Gee!  All of a sudden, you can't see yourself.  [750fa152699e]
@@ -6550,6 +6864,10 @@ Gems are too precious to be thrown away carelessly.  [5ef1196112f9]
   =   Самоцветы слишком дороги, чтобы швыряться ими почём зря.
 Gems/Stones  [73021e2b7615]
   =   Самоцветы/камни
+Genuine Exploding Gravestone.  (c)Acme Gravestones Inc.  [89a366280efe]
+  =   Подлинное взрывающееся надгробие.  (c) ООО «Акме Надгробия»
+Get back here!  I'm not finished yet...  [094fd3cc04d1]
+  =   Вернись!  Я ещё не закончил...
 Get bones?  [bb9650ffe6e3]
   =   Загрузить кости?
 Getting hungry?  Stop wearing rings!  [4d25d043935f]
@@ -6560,6 +6878,16 @@ Giant bats turn into giant vampires.  [3a6b4ead3b82]
   =   Гигантские летучие мыши превращаются в гигантских вампиров.
 Gift an artifact?  [0af4b98306cf]
   =   Даровать артефакт?
+Go Team Ant!  [f3e6bf2b8353]
+  =   Вперёд, команда муравьёв!
+Go ahead, I dare you to!  [55de22d95086]
+  =   Давай, слабо?
+Go ahead, it's either you or him.  [27ddc9dcf4e3]
+  =   Давайте, либо вы, либо он.
+Go away!  [52cb8712c65a]
+  =   Уходите!
+Go away!  I'm trying to take a nap in here!  Bloody adventurers...  [6a1f7e843488]
+  =   Уходите!  Я тут вздремнуть пытаюсь!  Чёртовы искатели приключений...
 Go down the ladder  [9354dc250a90]
   =   Спуститься по приставной лестнице
 Go down the stairs  [75b71efad8b6]
@@ -6576,39 +6904,129 @@ Gods look down their noses at demigods.  [4e2f88540201]
   =   Боги смотрят на полубогов свысока.
 Gods love cats and dogs.  [89f2cf3d8fab]
   =   Боги любят кошек и собак.
+Goldilocks -- This casket is just right  [930a17952f4e]
+  =   Златовласка — этот гроб в самый раз
+Gone But Not Forgotten  [d0450ee2ac8a]
+  =   Ушёл, но не забыт
+Gone Underground For Good  [309b40a5e44c]
+  =   Ушёл в подполье навсегда
+Gone away owin' more than he could pay.  [e41da7bdef24]
+  =   Ушёл, задолжав больше, чем мог заплатить.
+Gone fishin'  [73d6950b3017]
+  =   Ушёл на рыбалку
+Gone, but not forgiven  [9115a141b984]
+  =   Ушёл, но не прощён
 Good day for overcoming obstacles.  Try a steeplechase.  [18917603445e]
   =   Хороший день для преодоления препятствий.  Попробуйте стипль-чез.
+Good night, sweet prince: And flights of angels sing thee to thy rest!  [cb7ba3591642]
+  =   Спокойной ночи, милый принц: пусть ангелы баюкают твой сон!
+Got a life.  Didn't know what to do with it.  [3f97944684af]
+  =   Получил жизнь.  Не знал, что с ней делать.
 Got a question?  Try rec.games.roguelike.nethack.  [65d6d6978d35]
   =   Есть вопрос?  Загляните в rec.games.roguelike.nethack.
 Grapple something with this hook  [dd8d51491d07]
   =   Зацепить что-нибудь этим крюком
 Grave robbers sometimes get rich.  [dff8afa918c1]
   =   Грабители могил порой богатеют.
+Grave?  But I was cremated!  [814f46a7f3fc]
+  =   Могила?  Но меня же кремировали!
+Greetings from Hell - Wish you were here.  [b820d153b8ca]
+  =   Привет из ада.  Жаль, что вас здесь нет.
 Guy Montag keeps his scrolls in a bag.  [ce56d6c3ef57]
   =   Гай Монтэг держит свитки в мешке.
+HELP! It's dark in here....  Oh, my eyes are closed - sorry  [706d3ed9c56b]
+  =   ПОМОГИТЕ! Здесь темно....  Ой, у меня глаза закрыты, извините
+Ha! I NEVER pay income tax!  [08fa4754de01]
+  =   Ха! Я НИКОГДА не плачу подоходный налог!
 Half Moon tonight.  (At least it's better than no Moon at all.)  [330cb0e33c33]
   =   Сегодня половина луны.  (Всё лучше, чем совсем без луны.)
 Handle your flasks carefully -- there might be a ghost inside!  [d552f9f17acc]
   =   Обращайтесь с флягами осторожно: внутри может сидеть привидение!
+Have you come to raise the dead?  [2ee3a2e09eda]
+  =   Вы пришли воскрешать мёртвых?
+Having a good time can be deadly.  [d101ff3e7767]
+  =   Хорошо проводить время бывает смертельно опасно.
+Having a great time.  Where am I exactly??  [e5069ac9b2c5]
+  =   Отлично провожу время.  Где я, собственно??
 Having fun sitting on the %s?  [5b98526d0160]
   m   Весело сидеть на тритоне?
   f   Весело сидеть на крысе?
   n   Весело сидеть на копье?
   pl  Весело сидеть на 3 стрелах?
+He always lied while on the earth and now he's lying in it  [332325acfa32]
+  =   Всю жизнь он заливал, а теперь сам залёг
+He died of the flux.  [0a6c5c6fe376]
+  =   Он умер от дизентерии.
+He died today....  May we rest in peace!  [1e598a47b665]
+  =   Сегодня он умер....  Теперь-то мы отдохнём!
+He farmed his way here  [ef57996a50f8]
+  =   Он сюда дофармился
+He got the upside, I got the downside.  [0e969023cd11]
+  =   Ему досталась верхняя сторона, а мне — нижняя.
+He lost his face when he was beheaded.  [4a03112bf50b]
+  =   Он потерял лицо, когда его обезглавили.
+He missed me first.  [136662712bd5]
+  =   Он первым промахнулся.
+He waited too long  [ecb7a2fc7521]
+  =   Он слишком долго ждал
+He's not dead, he just smells that way.  [7ff713169ffc]
+  =   Он не умер, он просто так пахнет.
 Heal your leg?  [11f0b150d8d4]
   =   Вылечить ногу?
 Heal your legs?  [8ffdb5f0e0a5]
   =   Вылечить ноги?
 Heavy-duty boots can protect more than just your feet.  [bcead42e2a73]
   =   Крепкие сапоги берегут не только ноги.
+Help! I've fallen and I can't get up!  [9bb525d58691]
+  =   Помогите! Я упал и не могу встать!
+Help, I can't wake up!  [f735448cb582]
+  =   Помогите, я не могу проснуться!
+Here lies Bob - decided to try an acid blob  [39964fafaf69]
+  =   Здесь лежит Боб: кислотный сгусток в рот — и в гроб
+Here lies Dudley, killed by another %%&#@#& newt.  [d8ebed374a3c]
+  =   Здесь лежит Дадли, убитый очередным %&#@#& тритоном.
+Here lies Ezekiel, age 102.  The good die young.  [8e180426ab1e]
+  =   Здесь лежит Иезекииль, 102 года.  Хорошие умирают молодыми.
+Here lies Gregg, choked on an egg  [8fba0b317836]
+  =   Здесь лежит Матвей — подавился яйцом, ей-ей
+Here lies Johnny Yeast.  Pardon me for not rising.  [4fc861dd7a07]
+  =   Здесь лежит Джонни Дрожжин.  Простите, что не поднимаюсь.
+Here lies Lies.  It's True.  [4b3f6726a8dd]
+  =   Здесь лежит Ложь.  Это правда.
+Here lies Pinocchio  [897a475ec3d2]
+  =   Здесь лежит Буратино (и врёт)
+Here lies The Lady's maid, died of a Vorpal Blade  [714ec173c8ce]
+  =   Здесь лежит служанка Госпожи, сражённая Вострым Клинком
+Here lies a programmer.  Killed by a fatal error.  [1dda1fc96e3c]
+  =   Здесь лежит программист.  Убит фатальной ошибкой.
+Here lies an Atheist, all dressed up and no place to go  [00a08ca8c570]
+  =   Здесь лежит атеист: при полном параде, а идти некуда
+Here lies my wife: Here let her lie! Now she's at rest and so am I.  [3ac5889b265f]
+  =   Здесь лежит моя жена: пусть лежит! Теперь покой у неё — и у меня.
+Here lies the body of John Round.  Lost at sea and never found.  [efd86b5f8a14]
+  =   Здесь покоится Иван Кругов: сгинул в море — и нет следов.
+Here lies the body of Jonathan Blake.  Stepped on the gas instead of the brake.  [f9b3b2ed2b34]
+  =   Здесь лежит Иван Петров: жал на газ вместо тормозов.
+Here lies the left foot of Jack, killed by a land mine.  Let us know if you find any more of him  [caadca272dfa]
+  =   Здесь лежит левая нога Джека, погибшего на мине.  Если найдёте от него что-нибудь ещё, сообщите нам
+Here there be dragons  [30921cc4e86e]
+  =   Здесь водятся драконы
+Hey, I didn't write this stuff!  [62c575eb42f5]
+  =   Эй, это не я написал!
 Hide  [34d8b60fe253]
   =   Спрятаться
 Hide [h] or spin a web [s]?  [a186ead714b7]
   =   Спрятаться [h] или сплести паутину [s]?
 Hit yourself with this cream pie  [d29c051a771a]
   =   Ударить себя этим кремовым пирогом
+Hodie mihi, cras tibi  [2de871c70103]
+  =   Сегодня мне, завтра тебе
+Hold my calls  [e71eedaab0a7]
+  =   Меня ни с кем не соединять
 Holy water has many uses.  [fa56bef9aa19]
   =   У святой воды много применений.
+Home Sweet Hell  [3eda5b8e06c1]
+  =   Ад, милый ад
 Horses trust their riders, even when not so deserved.  [f90fa5e0a058]
   =   Лошади доверяют своим всадникам, даже когда те этого не заслуживают.
 Housecats have nine lives, kittens only one.  [5be4aea537a7]
@@ -6624,30 +7042,128 @@ How much will you offer?  [552024b571f9]
   =   Сколько вы предложите?
 Huh, What?  Where am I?  [ea24f8e6e00a]
   =   А?  Что?  Где я?
+Humpty Dumpty, a Bad Egg.  He was pushed off the wall.  [87fbab943bda]
+  =   Шалтай-Болтай, тухлое яйцо.  Его столкнули со стены.
 Hunger is a confusing experience for a dog!  [cf4b200290cd]
   =   Голод сбивает собаку с толку!
 Hungry?  There is an abundance of food on the next level.  [6447c2c59df8]
   =   Проголодались?  На следующем уровне еды навалом.
+I KNEW this would happen if I lived long enough.  [c82abe953381]
+  =   Я ЗНАЛ, что так и будет, если проживу достаточно долго.
+I TOLD you I was sick!  [3f65f8b35741]
+  =   Я же ГОВОРИЛ, что болен!
+I ain't broke but I am badly bent.  [b473e9052ce7]
+  =   Я не сломан, но сильно погнут.
+I ain't old.  I'm chronologically advantaged.  [3f2feab75836]
+  =   Я не старый.  Я хронологически одарённый.
+I am NOT a vampire.  I just like to bite..nibble, really!  [149fd906277e]
+  =   Я НЕ вампир.  Я просто люблю кусаться... то есть покусывать!
+I am here.  Wish you were fine.  [90ff7292ebb7]
+  =   Я на месте.  Жаль, что вы здоровы.
+I am not dead yet, but watch for further reports.  [f55a742ea9be]
+  =   Я ещё не умер, но следите за новостями.
+I believe them bones are me.  [4fbe1f79a02c]
+  =   Похоже, эти кости — это я.
+I broke his brain.  [c61fe5816bb1]
+  =   Я сломал ему мозг.
+I can feel it.  My mind.  It's going.  I can feel it.  [a50afcc40d8c]
+  =   Я чувствую.  Мой разум.  Он уходит.  Я это чувствую.
+I can't go to Hell.  They're afraid I'm gonna take over!  [01323d736ecb]
+  =   Мне нельзя в ад.  Там боятся, что я всё приберу к рукам!
+I can't go to hell, they don't want me.  [7ae8a48ff83d]
+  =   Мне нельзя в ад: меня там не хотят.
 I can't see a trap there.  [76bb406a01d0]
   =   Не вижу там ловушки.
+I didn't believe in reincarnation the last time, either.  [0581d24c27ff]
+  =   В прошлый раз я тоже не верил в реинкарнацию.
+I didn't mean it when I said 'Bite me'  [c67a5ee5faf4]
+  =   Я не всерьёз сказал «Укуси меня»
+I died laughing  [4247037a6541]
+  =   Я умер со смеху
+I disbelieved in reincarnation in my last life, too.  [a36e9d9c94ec]
+  =   Я и в прошлой жизни не верил в реинкарнацию.
 I guess you've never hit a mail daemon with the Amulet of Yendor...  [611d6a824b55]
   =   Наверное, вы ещё ни разу не били почтового демона Амулетом Йендора...
+I hacked myself to death  [6caf7d02fd55]
+  =   Я захакал себя до смерти
+I have all the time in the world  [302be38aad7b]
+  =   У меня в запасе всё время мира
+I have reached Mine's End  [5b7607ea9978]
+  =   Я дошёл до Дна копей
+I knew I'd find a use for this gravestone!  [f8744e2c3904]
+  =   Я знал, что найду применение этому надгробию!
+I know my mind.  And it's around here someplace.  [8e5d8c17f005]
+  =   Свой разум я знаю.  Он где-то здесь.
+I lied!  I'll never be alright!  [04f8f59d5beb]
+  =   Я соврал!  Со мной никогда не будет всё в порядке!
+I like it better in the dark.  [2b5a468f8c4d]
+  =   Мне больше нравится в темноте.
+I like to be here when I can.  [fccc607aa565]
+  =   Люблю бывать здесь, когда получается.
+I made an ash of myself  [b27ca8964d75]
+  =   Сгорел со стыда. Буквально
+I may rise but I refuse to shine.  [0da2771929d1]
+  =   Может, я и встану, но сиять отказываюсь.
+I never get any either.  [ab8b7db974bb]
+  =   Мне тоже никогда не достаётся.
 I once knew a hacker who ate too fast and choked to death.  [54339a445c10]
   =   Знавал я хакера, который ел слишком быстро и подавился насмерть.
+I said hit HIM with the fireball, not me!  [2e740a21df52]
+  =   Я сказал: огненным шаром в НЕГО, а не в меня!
 I see no monster there.  [bcb85e274c0d]
   =   Я не вижу там монстра.
 I see nobody there.  [9551ad986c69]
   =   Я никого там не вижу.
 I smell a maze of twisty little passages.  [9208a2aab5b3]
   =   Чую лабиринт извилистых коридорчиков.
+I told you I would never say goodbye.  [6320babd53c4]
+  =   Я же говорил, что никогда не попрощаюсь.
+I took both pills!  [5357d483a671]
+  =   Я принял обе таблетки!
+I used to be amusing.  Now I'm just disgusting.  [2d5f74697ae3]
+  =   Раньше я был забавным.  Теперь я просто противный.
+I used up all my sick days, so now I'm calling in dead.  [f8e1bfc94887]
+  =   Больничные кончились, так что звоню сказать, что умер.
+I was killed by <illegible scrawl>  [9c90e4832c87]
+  =   Меня убил <неразборчивые каракули>
+I was somebody.  Who, is no business of yours.  [4db8c165873a]
+  =   Я был кем-то.  Кем — не ваше дело.
+I will not go quietly.  [18a80280ab69]
+  =   Тихо я не уйду.
+I will survive!  [32abbdce6f6e]
+  =   Я выживу!
 I wish I never wished a wand of wishing.  (Wishful thinking.)  [d2dda1d591a6]
   =   Вот бы мне никогда не пожелать палочку желаний.  (Желаемое за действительное.)
 I wouldn't advise playing catch with a giant.  [5e0de7a66248]
   =   Не советую играть с великаном в мяч.
+I'd give you a piece of my mind... but I can't find it.  [1f4163803e53]
+  =   Я бы высказал вам всё, что думаю... но не могу найти, чем думать.
+I'd rather be breathing  [0c7f3c9070e0]
+  =   Лучше бы я дышал
+I'd rather be sailing  [0ff5969c6a1a]
+  =   Лучше бы я ходил под парусом
+I'll be back!  [42d22bfb4189]
+  =   Я вернусь!
+I'll be mellow when I'm dead.  For now, let's PARTY!  [21886e855c39]
+  =   Успокоюсь, когда умру.  А пока — ГУЛЯЕМ!
+I'm doing this only for tax purposes.  [5912ffe545cb]
+  =   Я делаю это исключительно ради налогов.
+I'm gonna make it!  [2f3b6d9b9d4c]
+  =   Я прорвусь!
+I'm not afraid of Death!  What's he gonna do? Kill me?  [07dcafdf89df]
+  =   Я не боюсь Смерти!  Что она мне сделает?  Убьёт?
+I'm not getting enough money, so I'm not going to engrave anything useful here.  [6f3af38dfbf3]
+  =   Мне мало платят, так что ничего полезного я тут писать не буду.
+I'm not saying anything.  [9d036056f443]
+  =   Я ничего не скажу.
 I'm watching you.  -- The Wizard of Yendor  [7d23aecd657c]
   =   Я слежу за вами.  — Волшебник Йендора
+I'm weeth stupeed --->  [0f840ba1aa6b]
+  =   Йа с тупым --->
 Ice boxes keep your food fresh.  [436168ba56c1]
   =   В леднике еда остаётся свежей.
+If a man's deeds do not outlive him, of what value is a mark in stone?  [b0cd5a7a310f]
+  =   Если дела человека не переживут его, что толку в надписи на камне?
 If there's a spot of blood on your hands, why not wash them?  [7bbc57bd711e]
   =   Если на руках пятно крови, почему бы их не вымыть?
 If you are being punished, it's done with a deadly weapon.  [a70b2199ce50]
@@ -6666,6 +7182,8 @@ If you need a wand of digging, kindly ask the minotaur.  [a975d06ba1a4]
   =   Нужна палочка копания?  Вежливо попросите у минотавра.
 If you thought the Wizard was bad, just wait till you meet the Warlord!  [3d39218d07e6]
   =   Если вам казалось, что Волшебник плох, подождите, пока встретите Военачальника!
+If you thought you had problems...  [d592dff546a4]
+  =   Если вы думали, что у вас проблемы...
 If you turn blind, don't expect your dog to be turned into a seeing-eye dog.  [f34f075e6d34]
   =   Если ослепнете, не ждите, что ваша собака станет собакой-поводырём.
 If you want to feel great, you must eat something real big.  [cdea6b8ee1e3]
@@ -6684,6 +7202,12 @@ If your hands are greasy, why not wash them?  [35c446747eaf]
   =   Если руки жирные, почему бы их не вымыть?
 If your items get destroyed, you weren't wearing the right ring.  [888dbed51b8c]
   =   Если ваши вещи гибнут, значит, вы носили не то кольцо.
+Ignorance kills daily.  [e246c83f763e]
+  =   Невежество убивает ежедневно.
+Ignore me... I'm just here for my looks!  [fb06a0ad266f]
+  =   Не обращайте внимания... я тут только для красоты!
+Ilene Toofar -- Fell off a cliff  [16a647945708]
+  =   Перегнула Палкина — упала со скалы
 Illegal move!  [1fbe810f114c]
   =   Так ходить нельзя!
 Improvise?  [8d120d7ab03c]
@@ -6721,12 +7245,20 @@ Inventory letters used:  [8e48d10561a7]
   =   Занятые буквы инвентаря:
 Inventory:  [5f5a3fc65a12]
   =   Инвентарь:
+Is that all?  [58daf246d7ba]
+  =   И это всё?
+Is there life before Death?  [4025a0f41209]
+  =   Есть ли жизнь до Смерти?
+Is this a joke, or a grave matter?  [9d5f5e94be82]
+  =   Это шутка или могильная серьёзность?
 Is this ok? [ynaq]  [281b7c52cb8f]
   =   Всё верно? [ynaq]
 Is this ok? [ynq]  [cdaa87122186]
   =   Всё верно? [ynq]
 It furthers one to see the great man.  [bad8f5aed355]
   =   Полезно повидать великого человека.
+It happens sometimes.  People just explode.  [4e3ab9e41f9f]
+  =   Иногда так бывает.  Люди просто взрываются.
 It is bad manners to use a wand in a shop.  [9470995665ca]
   =   Пользоваться палочкой в лавке — дурной тон.
 It is dangerous to visit a graveyard at midnight.  [60282c983d6a]
@@ -6743,6 +7275,8 @@ It is the letter 'c' and not 'e' that changes status to statue.  [3a8c98f2d821]
   =   В статую превращает буква 'c', а не 'e'.
 It might be a good idea to offer the unicorn a ruby.  [c84e45f8a2bb]
   =   Может, стоит предложить единорогу рубин.
+It must be Thursday.  I never could get the hang of Thursdays.  [6d03f09517d7]
+  =   Должно быть, сегодня четверг.  Никогда не понимал четвергов.
 It reads:  [d07d314c0c50]
   =   Там написано:
 It suddenly gets dark.  [204a8db4832c]
@@ -6751,10 +7285,16 @@ It tasted bad.  [dfba6d6e3631]
   =   Это было невкусно.
 It turns out to be empty.  [41399fe23a04]
   =   Она оказывается пустой.
+It wasn't a fair fight  [e77ad38b6137]
+  =   Бой был нечестный
+It wasn't so easy.  [ca9a93eeaa43]
+  =   Не так уж это было просто.
 It won't come off the hinges.  [2d2d0e0a23af]
   =   Её не снять с петель.
 It would be peculiarly sad were your dog turned to stone.  [3a5edb79d615]
   =   Было бы особенно грустно, если бы ваша собака окаменела.
+It's Loot, Pillage and THEN Burn...  [e9092c95a8a9]
+  =   Сначала грабёж, потом мародёрство, а ПОТОМ поджог...
 It's a 'd' eats 'd' world.  [26b9cb26ee88]
   =   В этом мире 'd' ест 'd'.
 It's easy to overlook a monster in a wood.  [26d8d301870a]
@@ -6779,6 +7319,8 @@ Just because it says READ ME doesn't mean you should.  [344f54a4bdb1]
   =   Если на свитке написано ПРОЧТИ МЕНЯ, это ещё не значит, что его надо читать.
 Just below any trap door there may be another one.  Just keep falling!  [52c970cb88af]
   =   Прямо под любым люком может оказаться ещё один.  Падайте дальше!
+Just doing my job here  [416b1910bc88]
+  =   Я просто делаю свою работу
 Just picked up: %s  [bf8231949896]
   m   Только что подобрано: тритон
   f   Только что подобрано: крыса
@@ -6814,6 +7356,10 @@ Kicking the terminal doesn't hurt the monsters.  [6d1851f7844a]
   =   Пинать терминал бесполезно: монстрам от этого не больно.
 Kill a unicorn of your color and you kill your luck.  [516422e29fce]
   =   Убьёте единорога своего цвета — убьёте свою удачу.
+Killed by a black dragon -- This grave is empty  [fbb1285ef4e9]
+  =   Убит чёрным драконом. Эта могила пуста
+Killed by diarrhea of mouth and constipation of brain.  [0b297bff43b1]
+  =   Убит словесным поносом и запором мозга.
 Killer bees keep appearing till you kill their queen.  [b20353abf8d1]
   =   Пчёлы-убийцы будут появляться, пока вы не убьёте их матку.
 Killer bunnies can be tamed with carrots only.  [54625e25c02a]
@@ -6834,12 +7380,22 @@ Leprechauns are the most skilled cutpurses in this dungeon.  [69b5aaa19a6b]
   =   Лепреконы — самые ловкие карманники в этом подземелье.
 Leprechauns hide their gold in a secret room.  [64c2f9f65912]
   =   Лепреконы прячут золото в тайной комнате.
+Let her RIP  [f90fc2ce8760]
+  =   Пусть отрывается с миром
+Let it be; I am dead.  [d6856df37c2c]
+  =   Оставьте; я мёртв.
+Let me out of here!  [1164d0eabcae]
+  =   Выпустите меня отсюда!
 Let your fingers do the walking on the yulkjhnb keys.  [810d1ef8dec6]
   =   Пусть ваши пальцы прогуляются по клавишам yulkjhnb.
 Let's face it:  this time you're not going to win.  [49a4f568cf41]
   =   Посмотрим правде в глаза: на этот раз вы не победите.
 Let's have a party, drink a lot of booze.  [cd5a261712da]
   =   Давайте устроим вечеринку и напьёмся!
+Let's play Hide the Corpse  [795160537eaa]
+  =   Давайте сыграем в «Спрячь труп»
+Life is NOT a dream  [7403d358f049]
+  =   Жизнь — НЕ сон
 Light the candelabrum  [20ac2b0fac89]
   =   Зажечь канделябр
 Light these %s  [53279e71d664]
@@ -6880,10 +7436,14 @@ Look inside %s  [c89a4bdde11e]
   f   Заглянуть в крысу
   n   Заглянуть в копьё
   pl  Заглянуть в 3 стрелы
+Look out below!  [f249549ebed0]
+  =   Поберегись внизу!
 Look up information about these  [16dedf3305bc]
   =   Узнать о них подробнее
 Look up information about this  [eec57ee20d60]
   =   Узнать об этом подробнее
+Lookin' good, Medusa.  [dee305187e95]
+  =   Отлично выглядишь, Медуза.
 Loot %s  [9977d99afaf2]
   m   Обыскать тритона
   f   Обыскать крысу
@@ -6895,12 +7455,20 @@ Loot which containers?  [44d1dbf2e2ad]
   =   Какие контейнеры обыскать?
 Lunar eclipse tonight.  May as well quit now!  [6d8035c28092]
   =   Сегодня лунное затмение.  Можно сразу сдаваться!
+Made in Taiwan  [3486a014ad35]
+  =   Сделано на Тайване
+Madge Ination -- It wasn't all in my head  [c7b515a2febe]
+  =   Ира Воображалова — не всё было у меня в голове
 Magical energies course through your body.  [923e9ae0d9cc]
   =   По вашему телу струится магическая энергия.
 Major events:  [e143972abc38]
   =   Главные события:
 Make this figurine transform  [3b5a90562104]
   =   Оживить эту статуэтку
+Mary had a little lamb/Its fleece was white as snow/When Mary was in trouble/The lamb was first to go  [0799e93d6a42]
+  =   У Мэри был барашек,/Он белым был, как снег;/Когда пришлось ей туго,/Он сгинул раньше всех
+Meet me in Heaven  [6bd524880f16]
+  =   Встретимся на небесах
 Meeting your own ghost decreases your luck considerably!  [c8bbcc651148]
   =   Встреча с собственным привидением сильно уменьшает удачу!
 Miscellaneous  [5f2cbd107037]
@@ -6932,11 +7500,17 @@ Move cursor to a monster, object or location:  [b988ed6f1e02]
   =   Наведите курсор на монстра, предмет или место:
 Move on the trap  [f8d31c621db5]
   =   Встать на ловушку
+Move on, there's nothing to see here.  [44c0e56b037a]
+  =   Проходите, здесь не на что смотреть.
 Moving: %s  [4fa5e62211f0]
   m   Перемещено: тритон
   f   Перемещено: крыса
   n   Перемещено: копьё
   pl  Перемещено: 3 стрелы
+Mr. Flintstone -- Yabba-dabba-done  [50cb2303bb4a]
+  =   Мистер Флинтстоун — ябба-дабба-ду... всё
+Mrs. Smith, choked on an apple.  She left behind grieving husband, daughter, and granddaughter.  [60585784fb2a]
+  =   Миссис Смит подавилась яблоком.  После неё остались скорбящие муж, дочь и внучка.
 Much ado Nothing Happens.  [a65f559dc4b9]
   =   Много шума из «Ничего не происходит».
 Multi-player NetHack is a myth.  [8988477b471c]
@@ -6945,6 +7519,8 @@ Music hath charms to affect the stubborn drawbridge.  [acacf0022c11]
   =   Музыка способна тронуть даже упрямый подъёмный мост.
 Music hath charms to soothe the savage beast.  [ea72718bada6]
   =   Музыка способна усмирить дикого зверя.
+My heart is not in this  [a468fc551efb]
+  =   Моего сердца здесь нет
 Name	Level	Category	Fail	Retention  [407c8027e581]
   =   Название	Уровень	Школа	Провал	Память
 Name	Level	Category	Fail	Retention%c%6s  [d8281bf39a1a]
@@ -6995,16 +7571,30 @@ No easy fighting with a heavy load!  [53a88657cf10]
   =   С тяжёлой ношей много не навоюешь!
 No level contains two shops.  The maze is no level.  So...  [b63e40dc69c9]
   =   Ни на одном уровне нет двух лавок.  Лабиринт — не уровень.  Значит...
+No one ever died from it  [3257ad9d638d]
+  =   От этого ещё никто не умирал
 No relevant items selected.  [1c8456c38e24]
   =   Подходящие предметы не выбраны.
+No!  I don't want to see my damn conduct!  [b9ce4de1da41]
+  =   Нет!  Не хочу я смотреть свои чёртовы испытания!
+No, you want room 12A, next door.  [e327a9ac7096]
+  =   Нет, вам в 12А, это по соседству.
 No; choose role again  [795fc9dc9a01]
   =   Нет, выбрать профессию заново
+Nobody believed her when she said her feet were killing her  [bb3934e0f685]
+  =   Никто ей не верил, когда она жаловалась, что ноги её в гроб сведут
+Nope.  No trap on that chest.  I swear.  [02dd391c95b3]
+  =   Не-а.  Никакой ловушки на этом сундуке.  Клянусь.
+Not again!  [5c9c3676fb6e]
+  =   Только не снова!
 Not all boots were made for walking.  [e5ade14c687d]
   =   Не все сапоги созданы для ходьбы.
 Not all rumors are as misleading as this one.  [5f00e579a3d8]
   =   Не все слухи так обманчивы, как этот.
 Not carrying anything  [58f098e45fbb]
   =   Вы ничего не несёте
+Not every soil can bear all things  [cc923b286a84]
+  =   Не всякая земля всё родит
 Not using any items  [0005dcd479e3]
   =   Вы не используете ни одного предмета
 Not wearing any accessories or armor.  [267801f62d89]
@@ -7013,6 +7603,8 @@ Not wearing any armor or accessories.  [d16d24493bf6]
   =   На вас нет ни доспехов, ни украшений.
 Not yet; choose another name  [dee9aad00ac0]
   =   Пока нет, выбрать другое имя
+Note -- there are NO valuable items in this grave  [a64fe9c1f684]
+  =   Примечание: в этой могиле НЕТ ценных вещей
 Note: full alphabetical and alphabetical within class  [2ccde7e6bab1]
   =   Примечание: полный алфавитный порядок и алфавитный внутри класса
 Note: when no choices are selected, "all" is implied.  [30571162ace7]
@@ -7021,6 +7613,10 @@ Nothing happens.  [8bc396c6c665]
   =   Ничего не происходит.
 Nothing seems to happen.  [f5f1e5f853bd]
   =   Кажется, ничего не происходит.
+Now I have a life  [33b2a492db0b]
+  =   Теперь у меня есть жизнь
+Now I lay thee down to sleep... wanna join me?  [ee8e73a6315a]
+  =   Укладываю тебя спать... не хочешь ко мне?
 Nurses are trained to touch naked persons:  they don't harm them.  [bfd093d4c98b]
   =   Медсестёр учат прикасаться к обнажённым: вреда они не причиняют.
 Nymphs and nurses like beautiful rings.  [f93d7f03f621]
@@ -7029,22 +7625,40 @@ Nymphs are blondes.  Are you a gentleman?  [f1eece94fbf7]
   =   Нимфы — блондинки.  А вы джентльмен?
 Nymphs can unlink more than your chain mail.  [fb8adeb6307e]
   =   Нимфы могут расстегнуть не только вашу кольчугу.
+OK, here is a question: Where ARE your tanlines?  [8558749b0396]
+  =   Ладно, вопрос: а ГДЕ у вас следы загара?
+Obesa Cantavit  [1bc9b5a3e56b]
+  =   Толстуха спела
 Offer this amulet as a sacrifice at this altar  [77d3f6c94e44]
   =   Принести этот амулет в жертву на этом алтаре
 Offer this corpse as a sacrifice at this altar  [973ec40fb171]
   =   Принести этот труп в жертву на этом алтаре
 Offering a unicorn a worthless piece of glass might prove to be fatal!  [85e8493307a2]
   =   Предложить единорогу бесполезную стекляшку может оказаться роковой ошибкой!
+Og friend. Og good dude. Og died. Og now food.  [20f48a9b48e9]
+  =   Ог друг. Ог хороший парень. Ог умер. Ог теперь еда.
 Oh wow!  Everything feels so cosmic!  [14204d1db20d]
   =   Ух ты!  Всё на ощупь такое космическое!
 Oh wow!  Everything looks so cosmic!  [07351bd2fa70]
   =   Ух ты!  Всё выглядит таким космическим!
+Oh! An untimely death.  [e4fcdd413b4c]
+  =   Ох! Безвременная смерть.
 Oh, bummer!  Everything is dark!  Help!  [ab6ef56c65da]
   =   Облом!  Всё темно!  Помогите!
+Oh, by the way, how was my funeral?  [ba26b77c9c4e]
+  =   Да, кстати, как прошли мои похороны?
+Ok, so the light does go off.  Now let me out of here.  [2887153b345c]
+  =   Ладно, свет и правда гаснет.  А теперь выпустите меня.
 Old hackers never die:  young ones do.  [60e0a8c677b6]
   =   Старые хакеры не умирают: умирают молодые.
+On the whole, I'd rather be in Minetown  [f598194fcf37]
+  =   В общем и целом я бы предпочёл быть в Шахтёрском городке
+On vacation  [0233d933cc4e]
+  =   В отпуске
 Once your little dog will be a big dog, and you will be proud of it.  [47efdda4ed2b]
   =   Однажды ваша собачка станет большой собакой, и вы будете ею гордиться.
+One corpse, sans head  [ebdc4f987a7d]
+  =   Один труп, без головы
 One has to leave shops before closing time.  [5b8d88cf5f27]
   =   Из лавки нужно уйти до закрытия.
 One homunculus a day keeps the doctor away.  [f0d724be9db6]
@@ -7056,6 +7670,8 @@ One of %s forms a coating on %s.  [a785d488f9fa]
   f   Одно из крысы покрывает крысу налётом.
   n   Одно из копья покрывает копьё налётом.
   pl  Одно из 3 стрел покрывает 3 стрелы налётом.
+One stone brain  [dc7025fc17df]
+  =   Вместо мозгов — камень
 Only a wizard can use a magic whistle.  [2876502c2f69]
   =   Только волшебник может пользоваться волшебным свистком.
 Only adventurers of evil alignment think of killing their dog.  [8acdeef3bbd3]
@@ -7072,6 +7688,8 @@ Only real wizards can write scrolls.  [4a4c0e1789dc]
   =   Только настоящие волшебники умеют писать свитки.
 Only the most confused adventurers would read cursed destroy armor scrolls.  [7c7bfe0b0f28]
   =   Только искатель приключений в сильнейшем замешательстве станет читать проклятые свитки уничтожения брони.
+Ooh! Somebody STOP me!  [778bbe2b7d1d]
+  =   Ох! Кто-нибудь, ОСТАНОВИТЕ меня!
 Ooph!  This tastes like dandelion wine!  [adb491bdfa89]
   =   Ух!  На вкус как одуванчиковое вино!
 Ooph!  This tastes like liquid fire!  [047281758c6c]
@@ -7080,6 +7698,10 @@ Ooph!  This tastes like watered down dandelion wine!  [83809a136e6c]
   =   Ух!  На вкус как разбавленное одуванчиковое вино!
 Ooph!  This tastes like watered down liquid fire!  [3b8f33ded347]
   =   Ух!  На вкус как разбавленный жидкий огонь!
+Oops!  [f6443e9cced6]
+  =   Упс!
+Oops.  [1cda6334473b]
+  =   Упс.
 Open a portal to which dungeon?  [9e21c7a5446a]
   =   В какое подземелье открыть портал?
 Open one of these tins and eat the contents  [e5432735052f]
@@ -7116,12 +7738,18 @@ Ouch!  You bump into a door.  [62ba78627eb0]
   =   Ой!  Вы врезаетесь в дверь.
 Ouch.  I hate when that happens.  [761716148f0e]
   =   Ой.  Ненавижу, когда такое случается.
+Out for the night.  Leave a message.  [66b89eb93f89]
+  =   Ушёл на всю ночь.  Оставьте сообщение.
+Out to Lunch  [2a587dfaa3eb]
+  =   Ушёл на обед
 Override glob weight limit?  [d5f445afe493]
   =   Превысить предельный вес сгустка?
 Override?  [c976a831674d]
   =   Переопределить?
 Overwrite the old file?  [3f4675b590a2]
   =   Перезаписать старый файл?
+Ow!  Do that again!  [41b2788284bd]
+  =   Ай!  А ну-ка ещё раз!
 PLEASE ignore previous rumor.  [d59a65f5e9aa]
   =   ПОЖАЛУЙСТА, не обращайте внимания на предыдущий слух.
 Pardon me, %s.  [ed153f97e5e1]
@@ -7129,6 +7757,10 @@ Pardon me, %s.  [ed153f97e5e1]
   f   Простите, крыса.
   n   Простите, копьё.
   pl  Простите, 3 стрелы.
+Pardon my dust.  [d339137c5f6b]
+  =   Простите за пыль.
+Part of me still works.  [3fd381d89d7e]
+  =   Кое-что во мне ещё работает.
 Pay for which items?  [edb57756ff8c]
   =   За какие предметы заплатить?
 Peer into this crystal ball  [ee16d5b5243b]
@@ -7248,16 +7880,24 @@ Playing Gauntlet might be enlightening in some situations.  [3a2869ad0456]
   =   Игра в Gauntlet в иных случаях кое-чему учит.
 Playing billiards pays when you are in a shop.  [34b4df308257]
   =   Игра в бильярд в лавке окупается.
+Please don't dig me up.  I'm perfectly happy down here. -- Resident  [154b5189ca21]
+  =   Пожалуйста, не выкапывайте меня.  Мне и здесь прекрасно. — Жилец
+Please, not in front of those orcs!  [f81cea67146d]
+  =   Пожалуйста, только не при этих орках!
 Polymorph into an ettin; meet your opponents face to face to face.  [f081152b869b]
   =   Превратитесь в эттина и встречайте противников лицом к лицу к лицу.
 Polymorphing a shopkeeper might make you safer.  [1bd184a31195]
   =   Превращённый лавочник, может быть, безопаснее для вас.
 Polymorphing your dog probably makes you safer.  [ad7e22440942]
   =   Превращённая собака, скорее всего, безопаснее для вас.
+Postman, please note forwarding address: Gehennom, Asmodeus's Fortress, fifth lemure on the left  [c2baaf9f418d]
+  =   Почтальон, адрес для пересылки: Геенна, Крепость Асмодея, пятый лемур слева
 Potions don't usually mix, but sometimes...  [a9f50b88bcbc]
   =   Зелья обычно не смешиваются, но иногда...
 Praying will frighten demons.  [b7d264ebcac9]
   =   Молитва отпугивает демонов.
+Prepare to meet me in Heaven  [3a4b3af0b869]
+  =   Готовьтесь к встрече со мной на небесах
 Psst!  It's done with mirrors!  [7f5472148f57]
   =   Тсс!  Весь фокус в зеркалах!
 Push the boulder  [433c2dd44d43]
@@ -7357,6 +7997,10 @@ Quiver this stack for easy shooting with 'f'ire  [b2ef1336b389]
   =   Положить стопку в колчан, чтобы стрелять клавишей 'f'
 Quiver this stack for easy throwing with 'f'ire  [21cae8c5bf01]
   =   Положить стопку в колчан, чтобы метать клавишей 'f'
+R.I.P.  [9242f4543ad2]
+  =   R.I.P.
+R2D2 -- Rest, Tin Piece  [e84ccd7006c9]
+  =   R2D2 — Покойся, жестянка
 Random  [58d888c08aa5]
   =   Случайный выбор
 Rays aren't boomerangs, of course, but still...  [ad3a3edc39be]
@@ -7421,6 +8065,8 @@ Really save?  [da94bf901d1f]
   =   Действительно сохранить?
 Refresh your memory anyway?  [2f2d42fb3b3b]
   =   Всё равно освежить память?
+Relax.  Nothing ever happens on the first level.  [988e28cf3524]
+  =   Расслабьтесь.  На первом уровне никогда ничего не случается.
 Remain in beast form?  [bb923370c446]
   =   Остаться в зверином облике?
 Remove saddle from %s  [3567cf50cdaf]
@@ -7460,10 +8106,18 @@ Report now?  [9f0a6e0cd252]
   =   Сообщить сейчас?
 Reroll this character?  [b03d18671aed]
   =   Пересоздать этого персонажа?
+Res omnia mea culpa est  [e7cf75a212cf]
+  =   Во всём виноват я сам
 Reset role/race/&c filtering  [bd11b8267ed7]
   =   Сбросить фильтр профессий, рас и прочего
+Rest In Pieces  [251ca52b1ff6]
+  =   Покойся по частям
+Rest in peace  [1159a845432b]
+  =   Покойся с миром
 Rest one turn  [08578042b110]
   =   Отдохнуть один ход
+Rest, rest, perturbed spirit.  [eb3aae2d6a99]
+  =   Мир, мир тебе, мятежный дух!
 Restoring:  [873ad926717a]
   =   Восстановление:
 Ride %s  [87ed071ab015]
@@ -7477,6 +8131,8 @@ Right  [954daa8b0033]
   =   Правая
 Ring the bell  [6a8c13f710cc]
   =   Позвонить в колокольчик
+Rip Torn  [b7b4c660f284]
+  =   Порван-Разорван
 Row (3x) that boat gently down the stream, Charon (4x), death is but a dream.  [318a51c81c44]
   =   Греби (3 раза) неспешно вниз по реке, Харон (4 раза), смерть — всего лишь сон.
 Rub something on this stone  [175140090ae0]
@@ -7490,6 +8146,8 @@ Running is good for your legs.  [04824917da74]
   =   Бег полезен для ног.
 Rust monsters love water.  There are potions they hate, however.  [2752830ea386]
   =   Ржавники обожают воду.  Но есть зелья, которых они терпеть не могут.
+SOLD  [8ae9ec763f4c]
+  =   ПРОДАНО
 Sacks protect contents from temperatures up to 452 degrees fahrenheit.  [0fd690279cf8]
   =   Мешки защищают содержимое при температуре до 452 градусов по Фаренгейту.
 Sacrifice something on the altar  [bf0ea9623779]
@@ -7527,6 +8185,10 @@ Set %s to what?  [f0e7ea8b52a2]
   pl  Какое значение дать параметру 3 стрелы?
 Set role/race/&c filtering  [ce53424ae990]
   =   Задать фильтр профессий, рас и прочего
+She always said her feet were killing her but nobody believed her.  [819fa43d31cd]
+  =   Она всегда жаловалась, что ноги её в гроб сведут, но никто ей не верил.
+She died of a chest cold.  [77ee699ea1bf]
+  =   Она простудилась насмерть, сидя на сундуке.
 She stole %s.  [46860e8172a5]
   m   Она украла тритона.
   f   Она украла крысу.
@@ -7584,18 +8246,30 @@ Sit on the throne  [a28b4e6636b7]
   =   Сесть на трон
 Snap!  [0ea9539ce8be]
   =   Щёлк!
+So let it be written, so let it be done!  [0302fbf30ca0]
+  =   Да будет так записано, да будет так исполнено!
+So then I says, How do I know you're the real angel of death?  [2ecc7bcc7e0f]
+  =   А я ему: откуда мне знать, что ты настоящий ангел смерти?
 Some mazes (especially small ones) have no solutions, says man 6 maze.  [2ec4e8e428af]
   =   У некоторых лабиринтов (особенно маленьких) нет решения, — говорит man 6 maze.
 Some monsters can be tamed.  I once saw a hacker with a tame dragon!  [1b670ff0dcb8]
   =   Некоторых монстров можно приручить.  Я как-то видел хакера с ручным драконом!
+Some patients insist on dying.  [c84358852a66]
+  =   Некоторые пациенты упорно умирают.
+Some people have it dead easy, don't they?  [646606e51713]
+  =   Некоторым всё даётся до смерти легко, правда?
 Some questions the Sphynx asks just *don't* have any answers.  [caf5e469aedb]
   =   На некоторые вопросы Сфинкса ответов *нет* вовсе.
 Some remain flexible, while others can't seem to change their tune.  [bcd70e332830]
   =   Одни гибки, а другие никак не сменят пластинку.
+Some things are better left buried.  [1a8b8008b097]
+  =   Кое-что лучше оставить погребённым.
 Some vapor passes harmlessly around you.  [93dd34caf15e]
   =   Пары безвредно проходят мимо вас.
 Someone once said that what goes up < might come down >.  [9214f640ba9e]
   =   Кто-то однажды сказал, что поднявшийся < может и спуститься >.
+Someone set us up the bomb!  [67f017a46344]
+  =   Кто-то заложил нам бомбу!
 Someone's been spiking the pits!  [357165a4005e]
   =   Кто-то натыкал кольев в ямы!
 Something happens.  [a501fa8d8cad]
@@ -7617,6 +8291,10 @@ Sometimes "mu" is the answer.  [7ee3018f5c5f]
   =   Иногда ответ — "му".
 Sometimes monsters are more likely to fight each other than attack you.  [195ccffb2ccf]
   =   Иногда монстры охотнее дерутся друг с другом, чем нападают на вас.
+Soon ripe.  Soon rotten.  Soon gone.  But not forgotten.  [79ed2defd457]
+  =   Быстро созрел.  Быстро сгнил.  Быстро ушёл.  Но не забыт.
+Soon you'll join this fellow in hell! -- the Wizard of Yendor  [8e84f4e92ca9]
+  =   Скоро вы составите компанию этому парню в аду! — Волшебник Йендора
 Sorry, I don't know how to use that.  [9e526edab5a9]
   =   Извините, я не знаю, как это использовать.
 Sort order for genocided monster types (also vanquished counts)  [f6c074bb5511]
@@ -7625,6 +8303,8 @@ Sort order for vanquished monster counts (also genocided types)  [3324d8858cf9]
   =   Порядок списка побеждённых монстров (и истреблённых видов)
 Spare your scrolls of make-edible until it's really necessary!  [f434daa22835]
   =   Берегите свитки съедобности до крайней необходимости!
+Sparky -- he was a very good dog  [214147803e26]
+  =   Спарки — он был очень хорошей собакой
 Special  [942078ca2d04]
   =   Особое
 Specify what? (type the word)  [a200dfd7caa0]
@@ -7660,6 +8340,10 @@ Suddenly, %s falls through a trap door.  [4973432c6662]
   pl  Внезапно 3 стрелы проваливаются в люк.
 Suddenly, the dungeon will collapse...  [c8df325e689e]
   =   Внезапно подземелье обрушится...
+Sum quod eris  [b2e142da49f6]
+  =   Я — то, чем будешь ты
+Sure, trust me, I'm a lawyer...  [3921dbfcf11b]
+  =   Конечно, доверьтесь мне, я юрист...
 Surviving the full extent of the mines could mean that your luck is changing.  [951be2de5825]
   =   Если вы прошли копи до самого дна, удача, возможно, повернулась к вам лицом.
 Swallowed Creatures  [be0332c450bf]
@@ -7696,6 +8380,8 @@ Tainted meat is even more sickening than poison!  [6e7b83630a86]
   =   Тухлое мясо ещё тошнотворнее яда!
 Take a photograph  [8d841567433c]
   =   Сделать снимок
+Take my stuff, I don't need it anymore  [4cfb501b3b58]
+  =   Забирайте мои вещи, мне они больше не нужны
 Take off this armor  [9c55cd10dc1b]
   =   Снять это
 Take off your gauntlets despite carrying a dead %s?  [d364961c9f17]
@@ -7794,6 +8480,8 @@ Take out what?  [e4fa7c280722]
   =   Что вынуть?
 Take your healing potions to the next level!  [3b8b2bbd9663]
   =   Поднимите свои зелья лечения на новый уровень!
+Taking a year dead for tax reasons  [cf9b437de70d]
+  =   Умер на годик по налоговым соображениям
 Talk to %s  [03401467299c]
   m   Поговорить с тритоном
   f   Поговорить с крысой
@@ -7807,6 +8495,8 @@ Taming a mail daemon may cause a system security violation.  [b026b05037fd]
   =   Приручение почтового демона может привести к нарушению безопасности системы.
 Telepathy is just a trick:  once you know how to do it, it's easy.  [529150b37030]
   =   Телепатия — просто фокус: стоит понять, как это делается, и всё легко.
+Thank God I wore my corset, because I think my sides have split.  [d3372acb7cd6]
+  =   Слава богу, на мне был корсет: кажется, я лопнул со смеху.
 That %s is %s!  [59be6b475d52]
   m   Этот тритон — тритон!
   f   Эта крыса — крыса!
@@ -7822,6 +8512,8 @@ That is a silly thing to read.  [52b99b12f003]
   =   Читать такое — глупая затея.
 That is a silly thing to wear.  [8edaf8d525bb]
   =   Надевать такое — глупая затея.
+That is all  [5f3b1f739424]
+  =   Это всё
 That is your alternate weapon.  Ready it instead?  [e0ac8b1a1956]
   =   Это ваше запасное оружие.  Положить его в колчан?
 That is your alternate weapon.  Ready them instead?  [dd6f3bc9d7e2]
@@ -7912,6 +8604,10 @@ The '%s' prefix should be followed by a movement command.  [37b621a30e7f]
   f   После префикса 'крыса' нужна команда движения.
   n   После префикса 'копьё' нужна команда движения.
   pl  После префикса '3 стрелы' нужна команда движения.
+The Gods DO have a sense of humor: I'm living proof!  [99f2d3a2e38e]
+  =   У богов ЕСТЬ чувство юмора: я — живое доказательство!
+The Grave of the Unknown Hacker  [dea64a380f4d]
+  =   Могила неизвестного хакера
 The Leprechaun Gold Tru$t is no division of the Magic Memory Vault.  [42a452a5da9d]
   =   «Золотой Тра$т Лепреконов» не имеет отношения к «Волшебному Хранилищу Памяти».
 The Oracle meditates for a moment and then intones:  [52c62898c6a3]
@@ -7935,6 +8631,8 @@ The door opens.  [8c40430b080d]
   =   Дверь открывается.
 The door resists!  [5b553aaa39a8]
   =   Дверь не поддаётся!
+The frog's dead.  He Kermitted suicide.  [6045d3e332f2]
+  =   Лягушонок мёртв.  Самоквакийство.
 The gods don't appreciate pesky priesthood.  [c428a58671a0]
   =   Богам не по душе назойливые жрецы.
 The gods will get angry if you kill your dog.  [284658c9111c]
@@ -7999,6 +8697,8 @@ The potion turns %s.  [e99fe71d1c64]
   f   Зелье становится крысой.
   n   Зелье становится копьём.
   pl  Зелье становится 3 стрелами.
+The reports of my demise are completely accurate  [7f9944f33f72]
+  =   Слухи о моей смерти совершенно точны
 The secret of wands of Nothing Happens:  try again!  [263ab21dad57]
   =   Секрет палочек «Ничего не происходит»: попробуйте ещё раз!
 The slime burns away!  [40bcdafe28a6]
@@ -8984,10 +9684,22 @@ This door is locked.  [a97258ae2942]
   =   Эта дверь заперта.
 This doorway has no door.  [74f8c9988a84]
   =   В этом проёме нет двери.
+This dungeon is a pushover  [f9eb9f259d70]
+  =   Это подземелье — проще простого
+This elevator doesn't go to Heaven  [e544e60d7d15]
+  =   Этот лифт не идёт на небеса
 This food really hits the spot!  [d670ef61b5da]
   =   Эта еда пришлась как нельзя кстати!
+This gravestone is shareware.  To register, please send me 10 zorkmids  [beb759d1784d]
+  =   Это надгробие — условно-бесплатное.  Для регистрации пришлите мне 10 зоркмидов
+This gravestone provided by The Yendorian Grave Services Inc.  [1df5caeafd1f]
+  =   Надгробие предоставлено ООО «Йендорские ритуальные услуги»
 This is a charging scroll.  [982435da324a]
   =   Это свиток подзарядки.
+This is not an important part of my life.  [d3ce0f7b6d3f]
+  =   Это не важная часть моей жизни.
+This one's on me.  [a7a76e374bb6]
+  =   Этот за мой счёт.
 This release contains 10%% recycled material.  [8dc9109be48d]
   =   Эта версия на 10% состоит из переработанных материалов.
 This satiates your %s!  [d931d7633b85]
@@ -8995,6 +9707,8 @@ This satiates your %s!  [d931d7633b85]
   f   Это насыщает вашу крысу!
   n   Это насыщает ваше копьё!
   pl  Это насыщает ваши 3 стрелы!
+This side up  [f71cf964a9f7]
+  =   Этой стороной вверх
 This spellbook is difficult to comprehend.  Continue?  [7b82c1fcf0a9]
   =   Эта книга заклинаний трудна для понимания.  Продолжить?
 This spellbook is very difficult to comprehend.  Continue?  [cef7a3d48c1f]
@@ -9025,6 +9739,10 @@ This tastes sour.  [936987857b53]
   =   На вкус кисло.
 This tastes tangy.  [a835acdbc1bf]
   =   На вкус терпко.
+This was actually just a pit, but since there was a corpse, we filled it  [2759907ca290]
+  =   Вообще-то это была просто яма, но раз уж в ней лежал труп, мы её засыпали
+This way to the crypt  [cb1d9dd73c24]
+  =   Проход в склеп
 Those are your alternate weapon.  Ready it instead?  [00b7b4a49291]
   =   Это ваше запасное оружие.  Положить его в колчан?
 Those are your alternate weapon.  Ready them instead?  [ffad1fb192ef]
@@ -9071,6 +9789,8 @@ Thwack!!  [06f5c5ed0c48]
   =   Бац!!
 Tie a pet to this leash  [52a5883c950b]
   =   Привязать питомца к этому поводку
+Tim Burr -- Smashed by a tree  [ff56958a523d]
+  =   Тим Бревнов — раздавлен деревом
 Time stands still as the succubus changes her calendar to January 1, 2000.  [594e0351e0e8]
   =   Время замирает: суккуб переворачивает календарь на 1 января 2000 года.
 Tip %s  [2fa3a0511091]
@@ -9106,6 +9826,8 @@ Toggle two-weapon combat off  [fc432f1c758a]
   =   Выключить бой с двух рук
 Toggle two-weapon combat on  [fa59135fd2b3]
   =   Включить бой с двух рук
+Tone it down a bit, I'm trying to get some rest here.  [9e73f0ad9c02]
+  =   Потише, пожалуйста, я тут пытаюсь отдохнуть.
 Too close!  [fd40207178de]
   =   Слишком близко!
 Too far!  [e408642d7551]
@@ -9128,6 +9850,8 @@ Try to squeeze through?  [317885e3bba3]
   =   Попытаться протиснуться?
 Try using your magic marker on wet scrolls.  [2e6ade308afa]
   =   Попробуйте писать волшебным маркером на размокших свитках.
+Tu quoque, Brute?  [17b926e45b1b]
+  =   И ты, Брут?
 Two wrongs don't make a right, but three lefts do.  [3661abccfa3e]
   =   Два неверных поворота не дадут верного, а вот три левых дадут правый.
 Ulch - that meat was tainted!  [57560e3af672]
@@ -9199,6 +9923,8 @@ Used up items:  [eda847f6b2fa]
   =   Израсходованные предметы:
 Using a morning star in the evening has no effect.  [a73e19a38f2b]
   =   Моргенштерн вечером не действует.
+VACANCY  [ad327cb9206b]
+  =   СВОБОДНЫЕ МЕСТА
 Valkyries come from the north, and have commensurate abilities.  [c34eebe2021d]
   =   Валькирии родом с севера, и способности у них соответствующие.
 Vampires hate garlic.  [d0e89a97f9d6]
@@ -9213,6 +9939,8 @@ View known spells list sorted  [348b69f4cf1c]
   =   Как упорядочить список известных заклинаний
 View which?  [01588766108a]
   =   Что показать?
+Virtually Alive  [d8bdfb4bd50e]
+  =   Виртуально жив
 Visitors are requested not to apply genocide to shopkeepers.  [0a2e8cec180d]
   =   Посетителей просят не применять геноцид к лавочникам.
 Voluntary challenges:  [9f3bbf1f4b54]
@@ -9238,17 +9966,31 @@ Watch out, the Wizard might come back.  [6497d1b21753]
   =   Берегитесь: Волшебник может вернуться.
 Water traps have no effect on dragons.  [64beabacd9ef]
   =   Водяные ловушки на драконов не действуют.
+We Will Meet Again.  [3096af6458f3]
+  =   Мы ещё встретимся.
 We have new ways of detecting treachery...  [05aa7b4a833f]
   =   У нас есть новые способы распознавать предательство...
+We weren't sure who this was, but we buried him here anyway  [0bdaa12a3b0a]
+  =   Мы не знали, кто это, но всё равно похоронили его здесь
 Weapon Skills  [b2925617dd26]
   =   Владение оружием
 Wear this armor  [fa9ab533c33d]
   =   Надеть эти доспехи
+Weep not, he is at rest  [8169017dce5f]
+  =   Не плачьте, он обрёл покой
+Welcome to Dante's.  What level please?  [e98220679692]
+  =   Добро пожаловать к Данте.  Какой круг, пожалуйста?
 Welcome to experience level %d.  [f8909c52be7b]
   m   Вы достигли 1-го уровня опыта.
   f   Вы достигли 3-го уровня опыта.
   n   Вы достигли 5-го уровня опыта.
   pl  Вы достигли 21-го уровня опыта.
+Welcome!  [e52e5e6cd50e]
+  =   Добро пожаловать!
+Well, at least they listened to my sermon...  [6da4315baf32]
+  =   Ну, хоть мою проповедь они выслушали...
+Went to be an angel.  [ab57d5786faa]
+  =   Ушёл в ангелы.
 Wet towels make great weapons!  [05154f30ca60]
   =   Мокрое полотенце — отличное оружие!
 Whammm!!  [74ba1a1e775e]
@@ -9259,6 +10001,12 @@ What a pity--you just ruined a future piece of fine art!  [2774aee8f2ae]
   =   Какая жалость — вы только что испортили будущий шедевр!
 What a trippy feeling!  [07d9ee928bfa]
   =   Какое улётное ощущение!
+What are you doing over there?  [2a007310b854]
+  =   Что вы там делаете?
+What are you smiling at?  [fc1e4a0e4c32]
+  =   Чему вы улыбаетесь?
+What can you say, Death's got appeal...!  [7c5a5db47ea4]
+  =   Что тут скажешь, есть в Смерти своё обаяние...!
 What class of monsters do you want to genocide?  [26ab7da3dd6e]
   =   Какой класс монстров вы хотите истребить?
 What class of monsters do you want to genocide? [enter '?' to see previous genocides]  [39dcdcc6d032]
@@ -9647,6 +10395,8 @@ What do you want to zap? [%s or ?*]  [206de1a86f64]
   pl  Чем вы хотите взмахнуть? [3 стрелы или ?*]
 What do you want to zap? [*]  [76620173e83a]
   =   Чем вы хотите взмахнуть? [*]
+What health care?  [f41bcf002284]
+  =   Какая ещё медицинская страховка?
 What is a cockatrice going to eat when it gets hungry?  [1eb22f758e1d]
   =   Что станет есть василиск, когда проголодается?
 What kinds of thing do you want to pick up? [%s]  [cd147934ea30]
@@ -9670,6 +10420,8 @@ What new menucolor pattern?  [6b121389951d]
   =   Какой шаблон цвета меню?
 What new message pattern?  [7be0f568f8a7]
   =   Какой шаблон сообщения?
+What pit?  [3b42ea7b6237]
+  =   Какая яма?
 What tune are you playing? [5 notes, A-G]  [6cb6873f5a3d]
   =   Какую мелодию вы играете? [5 нот, A-G]
 What type of book do you want to write?  [ad416dc39578]
@@ -9700,6 +10452,8 @@ When a piercer drops in on you, you will be tempted to hit the ceiling!  [24e8dd
   =   Когда на вас свалится пронзатель, вам захочется лезть на потолок!
 When in a maze follow the right wall and you will never get lost.  [e9f3bbb83814]
   =   В лабиринте держитесь правой стены — и никогда не заблудитесь.
+When the gods want to punish you, they answer your prayers.  [d50bdd30453d]
+  =   Когда боги хотят вас наказать, они исполняют ваши молитвы.
 When you have a key, you don't have to wait for the guard.  [8430e6ab1f14]
   =   Если у вас есть ключ, стража можно не ждать.
 Where do you want to hit?  [7654d7794c5d]
@@ -9708,11 +10462,15 @@ Where do you want to jump?  [b0cece9b8435]
   =   Куда вы хотите прыгнуть?
 Where do you want to travel to?  [2bf24241726b]
   =   Куда вы хотите отправиться?
+Where e'er you be let your wind go free.  Keeping it in was the death of me!  [3568dae19a6c]
+  =   Где бы ни был — газы выпускай на волю: я терпел — и сгинул смертью злою.
 Where to tip the contents of %s  [399ef6607ea9]
   m   Куда вытряхнуть содержимое тритона
   f   Куда вытряхнуть содержимое крысы
   n   Куда вытряхнуть содержимое копья
   pl  Куда вытряхнуть содержимое 3 стрел
+Where's my refund?  [d190e8e431a9]
+  =   Где мой возврат денег?
 Which %s, Right or Left?  [7efc981dc350]
   m   Которое тритон, правое или левое?
   f   Которое крыса, правое или левое?
@@ -9813,6 +10571,8 @@ Wield this stack in your %s  [f54c603de2a7]
   f   Взять эту стопку в крысу
   n   Взять эту стопку в копьё
   pl  Взять эту стопку в 3 стрелы
+Will let you know for sure in a day or two...  [d14caf6d530a]
+  =   Через день-другой сообщу наверняка...
 Will you accept %ld zorkmid in credit for   [d37e471b0255]
   m   Примете ли вы 1 зоркмид в кредит за 
   f   Примете ли вы 3 зоркмида в кредит за 
@@ -9839,6 +10599,8 @@ Wish for a master key and open the Magic Memory Vault!  [4fc8399c3e39]
   =   Пожелайте универсальный ключ и откройте «Волшебное Хранилище Памяти»!
 Wish what?  [0b8a7f9f4b05]
   =   Что пожелать?
+Wish you were here!  [bf493afd2c48]
+  =   Жаль, что вас здесь нет!
 Wishing too much may bring you too little.  [d9b6ed4009bd]
   =   Кто желает слишком многого, может получить слишком мало.
 With great effort you move %s.  [e4dc2e23967a]
@@ -9848,6 +10610,14 @@ With great effort you move %s.  [e4dc2e23967a]
   pl  С огромным трудом вы сдвигаете 3 стрелы.
 Wizard expects every monster to do its duty.  [c474b9c5d7d6]
   =   Волшебник ожидает, что каждый монстр исполнит свой долг.
+Wizards are wimps  [be35e312f553]
+  =   Волшебники — слабаки
+Worms at work, do not disturb!  [fc3bf908be0d]
+  =   Работают черви, не беспокоить!
+Would you mind moving a bit?  I'm short of breath down here.  [3952b27a793a]
+  =   Не могли бы вы немного подвинуться?  Мне тут, внизу, дышать нечем.
+Would you quit being evil over my shoulder?  [9bf668eb6eb7]
+  =   Может, хватит творить зло у меня над плечом?
 Wow!  This makes you feel better!  [c53ee2ce4f58]
   =   Ух ты!  Вам становится лучше!
 Wow!  This makes you feel good!  [ccc3e2e7c24c]
@@ -9868,6 +10638,10 @@ Write on the %s with this item  [b09c6376a473]
   f   Написать на крысе этим предметом
   n   Написать на копье этим предметом
   pl  Написать на 3 стрелах этим предметом
+Ya really had me going baby, but now I'm gone.  [f76244a5a617]
+  =   Ты меня реально завела, детка, а теперь меня нет.
+Yea, it got me too  [15f6401bef9b]
+  =   Ага, меня оно тоже достало
 Yecch!  This stuff tastes like poison.  [90919eb34435]
   =   Фу!  На вкус как яд.
 Yecch!  This tastes overripe.  [a314f25d1cd7]
@@ -9876,6 +10650,8 @@ Yecch!  This tastes rotten.  [5a8ae5798f29]
   =   Фу!  На вкус как гнилое.
 Yes  [5397e0583f14]
   =   Да
+Yes Dear, just a few more minutes...  [e2d5fb02a20f]
+  =   Да, дорогая, ещё пару минуточек...
 Yes; start game  [a03832dd3642]
   =   Да, начать игру
 Yet Another Silly Message (YASM).  [110b894bd7fd]
@@ -11236,6 +12012,8 @@ You rise up, through the %s!  [4f2267e1e33b]
   f   Вы поднимаетесь вверх сквозь крысу!
   n   Вы поднимаетесь вверх сквозь копьё!
   pl  Вы поднимаетесь вверх сквозь 3 стрелы!
+You said it wasn't poisonous!  [26288cbee97b]
+  =   Вы говорили, что оно не ядовитое!
 You see %s start to roll.  [ccb0d7ab3964]
   m   Вы видите, как тритон начинает катиться.
   f   Вы видите, как крыса начинает катиться.
@@ -11254,6 +12032,8 @@ You see no door there.  [22b8fc39f20d]
   =   Вы не видите там двери.
 You see no objects here.  [9e72cd8ce22e]
   =   Вы не видите здесь никаких предметов.
+You set my heart aflame.  You gave me heartburn.  [a48bded4dfbd]
+  =   Ты зажгла в моём сердце огонь.  И изжогу.
 You shoot %d %s.  [64973080ddcd]
   m   Вы выпускаете 1 тритона.
   f   Вы выпускаете 3 крыс.
@@ -11261,6 +12041,8 @@ You shoot %d %s.  [64973080ddcd]
   pl  Вы выпускаете 21 стрелу.
 You should certainly learn about quantum mechanics.  [736296ea74d7]
   =   Вам определённо стоит изучить квантовую механику.
+You should see the other guy  [612734424cff]
+  =   Видели бы вы того, другого!
 You smell acrid fumes.  [851aec870e19]
   =   Вы чувствуете едкий запах.
 You start digging downward.  [f2176d6bc4e8]

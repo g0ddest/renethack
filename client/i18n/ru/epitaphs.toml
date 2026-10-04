@@ -1,0 +1,1572 @@
+# R6, dat texts: the epitaphs (dat/epitaph.txt) on the headstones of the
+# dungeon's graves. Syntax: nh-i18n's template.rs; not_terms: English words
+# that are not the glossary's terms there.
+
+[1159a845432b]
+en = "Rest in peace"
+ru = "Покойся с миром"
+
+[9242f4543ad2]
+en = "R.I.P."
+ru = "R.I.P."
+
+[251ca52b1ff6]
+en = "Rest In Pieces"
+ru = "Покойся по частям"
+
+[a64fe9c1f684]
+en = "Note -- there are NO valuable items in this grave"
+ru = "Примечание: в этой могиле НЕТ ценных вещей"
+
+[664a46aacea0]
+en = "1994-1995. The Longest-Lived Hacker Ever"
+ru = "1994–1995. Самый долгоживущий хакер в истории"
+
+[dea64a380f4d]
+en = "The Grave of the Unknown Hacker"
+ru = "Могила неизвестного хакера"
+
+[0bdaa12a3b0a]
+en = "We weren't sure who this was, but we buried him here anyway"
+ru = "Мы не знали, кто это, но всё равно похоронили его здесь"
+
+[214147803e26]
+en = "Sparky -- he was a very good dog"
+ru = "Спарки — он был очень хорошей собакой"
+
+[60bab5ba376e]
+en = "Beware of Electric Third Rail"
+ru = "Осторожно: третий рельс под напряжением"
+
+[3486a014ad35]
+en = "Made in Taiwan"
+ru = "Сделано на Тайване"
+
+[20f48a9b48e9]
+en = "Og friend. Og good dude. Og died. Og now food."
+ru = "Ог друг. Ог хороший парень. Ог умер. Ог теперь еда."
+
+[e1e25442ed48]
+en = "Beetlejuice Beetlejuice Beetlejuice"
+ru = "Битлджус Битлджус Битлджус"
+
+[f249549ebed0]
+en = "Look out below!"
+ru = "Поберегись внизу!"
+
+[154b5189ca21]
+en = "Please don't dig me up.  I'm perfectly happy down here. -- Resident"
+ru = "Пожалуйста, не выкапывайте меня.  Мне и здесь прекрасно. — Жилец"
+
+[c2baaf9f418d]
+en = "Postman, please note forwarding address: Gehennom, Asmodeus's Fortress, fifth lemure on the left"
+ru = "Почтальон, адрес для пересылки: Геенна, Крепость Асмодея, пятый лемур слева"
+
+[0799e93d6a42]
+en = "Mary had a little lamb/Its fleece was white as snow/When Mary was in trouble/The lamb was first to go"
+ru = "У Мэри был барашек,/Он белым был, как снег;/Когда пришлось ей туго,/Он сгинул раньше всех"
+
+[7e03d0422b6e]
+en = "Be careful, or this could happen to you!"
+ru = "Будьте осторожны, иначе с вами случится то же самое!"
+
+[8e84f4e92ca9]
+en = "Soon you'll join this fellow in hell! -- the Wizard of Yendor"
+ru = "Скоро вы составите компанию этому парню в аду! — Волшебник Йендора"
+
+[f356d93bc3b8]
+en = "Caution! This grave contains toxic waste"
+ru = "Осторожно! В этой могиле токсичные отходы"
+
+[b2e142da49f6]
+en = "Sum quod eris"
+ru = "Я — то, чем будешь ты"
+not_terms = ["eris"]
+
+[00a08ca8c570]
+en = "Here lies an Atheist, all dressed up and no place to go"
+ru = "Здесь лежит атеист: при полном параде, а идти некуда"
+
+[8e180426ab1e]
+en = "Here lies Ezekiel, age 102.  The good die young."
+ru = "Здесь лежит Иезекииль, 102 года.  Хорошие умирают молодыми."
+
+[3ac5889b265f]
+en = "Here lies my wife: Here let her lie! Now she's at rest and so am I."
+ru = "Здесь лежит моя жена: пусть лежит! Теперь покой у неё — и у меня."
+
+[4fc861dd7a07]
+en = "Here lies Johnny Yeast.  Pardon me for not rising."
+ru = "Здесь лежит Джонни Дрожжин.  Простите, что не поднимаюсь."
+
+[332325acfa32]
+en = "He always lied while on the earth and now he's lying in it"
+ru = "Всю жизнь он заливал, а теперь сам залёг"
+
+[b27ca8964d75]
+en = "I made an ash of myself"
+ru = "Сгорел со стыда. Буквально"
+
+[79ed2defd457]
+en = "Soon ripe.  Soon rotten.  Soon gone.  But not forgotten."
+ru = "Быстро созрел.  Быстро сгнил.  Быстро ушёл.  Но не забыт."
+
+[f9b3b2ed2b34]
+en = "Here lies the body of Jonathan Blake.  Stepped on the gas instead of the brake."
+ru = "Здесь лежит Иван Петров: жал на газ вместо тормозов."
+
+[52cb8712c65a]
+en = "Go away!"
+ru = "Уходите!"
+
+[e5a9dfa34787]
+en = "Alas fair Death, 'twas missed in life - some peace and quiet from my wife"
+ru = "О Смерть, ты дала мне то, чего при жизни не дала жена: покой и тишина"
+
+[953e3503b9d8]
+en = "Applaud, my friends, the comedy is finished."
+ru = "Аплодируйте, друзья, комедия окончена."
+
+[08466e2630b8]
+en = "At last... a nice long sleep."
+ru = "Наконец-то... долгий сладкий сон."
+
+[9cd48e230154]
+en = "Audi Partem Alteram"
+ru = "Выслушай и другую сторону"
+
+[64befe9aba34]
+en = "Basil, assaulted by bears"
+ru = "Василий, задранный медведями"
+
+[5aad2ec2d17b]
+en = "Burninated"
+ru = "Испепелён"
+
+[92175eaf51ba]
+en = "Confusion will be my epitaph"
+ru = "Смятенье — вот моя эпитафия"
+
+[ee1582b8bacc]
+en = "Do not open until Christmas"
+ru = "Не открывать до Рождества"
+
+[e2a77300a663]
+en = "Don't be daft, they couldn't hit an elephant at this dist-"
+ru = "Не глупите, отсюда они и в слона не попадут с такого рассто-"
+
+[1e924d9df0bf]
+en = "Don't forget to stop and smell the roses"
+ru = "Не забывайте остановиться и понюхать розы"
+
+[515b10a1740f]
+en = "Don't let this happen to you!"
+ru = "Не допустите, чтобы с вами случилось то же самое!"
+
+[a27485a9b333]
+en = "Dulce et decorum est pro patria mori"
+ru = "Сладко и почётно умереть за отечество"
+
+[16b7fc4f390b]
+en = "Et in Arcadia ego"
+ru = "И я был в Аркадии"
+
+[8b7ae627a3e9]
+en = "Fatty and skinny went to bed.  Fatty rolled over and skinny was dead.  Skinny Smith 1983-2000."
+ru = "Толстый и тонкий легли на кровать.  Толстый подвинулся — тонкому не встать.  Тонкий Смит, 1983–2000."
+
+[c8ffa90c7ef4]
+en = "Finally I am becoming stupider no more"
+ru = "Наконец-то я перестал глупеть"
+
+[567818922a19]
+en = "Follow me to hell"
+ru = "Следуй за мной в ад"
+
+[83ab99eb0eb5]
+en = "...for famous men have the whole earth as their memorial"
+ru = "...ибо для славных мужей вся земля — памятник"
+
+[e6f9d4e2dbab]
+en = "Game over, man.  Game over."
+ru = "Игра окончена, чувак.  Игра окончена."
+
+[6a1f7e843488]
+en = "Go away!  I'm trying to take a nap in here!  Bloody adventurers..."
+ru = "Уходите!  Я тут вздремнуть пытаюсь!  Чёртовы искатели приключений..."
+
+[73d6950b3017]
+en = "Gone fishin'"
+ru = "Ушёл на рыбалку"
+
+[cb7ba3591642]
+en = "Good night, sweet prince: And flights of angels sing thee to thy rest!"
+ru = "Спокойной ночи, милый принц: пусть ангелы баюкают твой сон!"
+
+[f3e6bf2b8353]
+en = "Go Team Ant!"
+ru = "Вперёд, команда муравьёв!"
+
+[ef57996a50f8]
+en = "He farmed his way here"
+ru = "Он сюда дофармился"
+
+[1dda1fc96e3c]
+en = "Here lies a programmer.  Killed by a fatal error."
+ru = "Здесь лежит программист.  Убит фатальной ошибкой."
+
+[39964fafaf69]
+en = "Here lies Bob - decided to try an acid blob"
+ru = "Здесь лежит Боб: кислотный сгусток в рот — и в гроб"
+
+[d8ebed374a3c]
+en = "Here lies Dudley, killed by another %%&#@#& newt."
+ru = "Здесь лежит Дадли, убитый очередным %&#@#& тритоном."
+
+[8fba0b317836]
+en = "Here lies Gregg, choked on an egg"
+ru = "Здесь лежит Матвей — подавился яйцом, ей-ей"
+
+[4b3f6726a8dd]
+en = "Here lies Lies.  It's True."
+ru = "Здесь лежит Ложь.  Это правда."
+
+[714ec173c8ce]
+en = "Here lies The Lady's maid, died of a Vorpal Blade"
+ru = "Здесь лежит служанка Госпожи, сражённая Вострым Клинком"
+
+[caadca272dfa]
+en = "Here lies the left foot of Jack, killed by a land mine.  Let us know if you find any more of him"
+ru = "Здесь лежит левая нога Джека, погибшего на мине.  Если найдёте от него что-нибудь ещё, сообщите нам"
+
+[ecb7a2fc7521]
+en = "He waited too long"
+ru = "Он слишком долго ждал"
+
+[0ff5969c6a1a]
+en = "I'd rather be sailing"
+ru = "Лучше бы я ходил под парусом"
+
+[b0cd5a7a310f]
+en = "If a man's deeds do not outlive him, of what value is a mark in stone?"
+ru = "Если дела человека не переживут его, что толку в надписи на камне?"
+
+[2f3b6d9b9d4c]
+en = "I'm gonna make it!"
+ru = "Я прорвусь!"
+
+[5357d483a671]
+en = "I took both pills!"
+ru = "Я принял обе таблетки!"
+
+[32abbdce6f6e]
+en = "I will survive!"
+ru = "Я выживу!"
+
+[fbb1285ef4e9]
+en = "Killed by a black dragon -- This grave is empty"
+ru = "Убит чёрным драконом. Эта могила пуста"
+
+[1164d0eabcae]
+en = "Let me out of here!"
+ru = "Выпустите меня отсюда!"
+
+[dee305187e95]
+en = "Lookin' good, Medusa."
+ru = "Отлично выглядишь, Медуза."
+
+[60585784fb2a]
+en = "Mrs. Smith, choked on an apple.  She left behind grieving husband, daughter, and granddaughter."
+ru = "Миссис Смит подавилась яблоком.  После неё остались скорбящие муж, дочь и внучка."
+
+[bb3934e0f685]
+en = "Nobody believed her when she said her feet were killing her"
+ru = "Никто ей не верил, когда она жаловалась, что ноги её в гроб сведут"
+
+[b9ce4de1da41]
+en = "No!  I don't want to see my damn conduct!"
+ru = "Нет!  Не хочу я смотреть свои чёртовы испытания!"
+
+[ebdc4f987a7d]
+en = "One corpse, sans head"
+ru = "Один труп, без головы"
+
+[f598194fcf37]
+en = "On the whole, I'd rather be in Minetown"
+ru = "В общем и целом я бы предпочёл быть в Шахтёрском городке"
+
+[0233d933cc4e]
+en = "On vacation"
+ru = "В отпуске"
+
+[1cda6334473b]
+en = "Oops."
+ru = "Упс."
+
+[2a587dfaa3eb]
+en = "Out to Lunch"
+ru = "Ушёл на обед"
+
+[8ae9ec763f4c]
+en = "SOLD"
+ru = "ПРОДАНО"
+
+[67f017a46344]
+en = "Someone set us up the bomb!"
+ru = "Кто-то заложил нам бомбу!"
+not_terms = ["set"]
+
+[4cfb501b3b58]
+en = "Take my stuff, I don't need it anymore"
+ru = "Забирайте мои вещи, мне они больше не нужны"
+
+[cf9b437de70d]
+en = "Taking a year dead for tax reasons"
+ru = "Умер на годик по налоговым соображениям"
+
+[7f9944f33f72]
+en = "The reports of my demise are completely accurate"
+ru = "Слухи о моей смерти совершенно точны"
+
+[b03db3ab0a5a]
+en = "(This space for sale)"
+ru = "(Место сдаётся)"
+
+[2759907ca290]
+en = "This was actually just a pit, but since there was a corpse, we filled it"
+ru = "Вообще-то это была просто яма, но раз уж в ней лежал труп, мы её засыпали"
+
+[cb1d9dd73c24]
+en = "This way to the crypt"
+ru = "Проход в склеп"
+
+[17b926e45b1b]
+en = "Tu quoque, Brute?"
+ru = "И ты, Брут?"
+
+[ad327cb9206b]
+en = "VACANCY"
+ru = "СВОБОДНЫЕ МЕСТА"
+
+[e52e5e6cd50e]
+en = "Welcome!"
+ru = "Добро пожаловать!"
+
+[bf493afd2c48]
+en = "Wish you were here!"
+ru = "Жаль, что вас здесь нет!"
+
+[15f6401bef9b]
+en = "Yea, it got me too"
+ru = "Ага, меня оно тоже достало"
+
+[612734424cff]
+en = "You should see the other guy"
+ru = "Видели бы вы того, другого!"
+
+[0245decc5af6]
+en = "...and they made me engrave my own headstone too!"
+ru = "...и надгробие мне тоже пришлось гравировать самому!"
+
+[333e441466ea]
+en = "...but the blood has stopped pumping and I am left to decay..."
+ru = "...но кровь перестала течь, и мне осталось лишь тлеть..."
+
+[2794298fd85b]
+en = "<Expletive Deleted>"
+ru = "<Нецензурное выражение удалено>"
+
+[6df322ef4da8]
+en = "A masochist is never satisfied."
+ru = "Мазохиста ничем не удовлетворишь."
+
+[6c9459562af6]
+en = "Ach, 'twas a wee monster in the loch"
+ru = "Ох, то было махонькое чудище из озера"
+
+[b72d0a5cc062]
+en = "Adapt.  Enjoy.  Survive."
+ru = "Приспосабливайся.  Наслаждайся.  Выживай."
+
+[643c79f96faa]
+en = "Adventure, hah!  Excitement, hah!"
+ru = "Приключения, ха!  Острые ощущения, ха!"
+
+[ff4b14153362]
+en = "After all, what are friends for..."
+ru = "В конце концов, для чего же ещё нужны друзья..."
+
+[8503b76b111d]
+en = "After this, nothing will shock me"
+ru = "После этого меня уже ничто не шокирует"
+
+[1cc83cf508a9]
+en = "After three days, fish and guests stink"
+ru = "Через три дня и рыба, и гости начинают вонять"
+
+[f992bc84c71b]
+en = "Age and treachery will always overcome youth and skill"
+ru = "Возраст и коварство всегда победят молодость и мастерство"
+
+[3a1dfeda2f7d]
+en = "Ageing is not so bad.  The real killer is when you stop."
+ru = "Стареть не так уж плохо.  Убивает, когда перестаёшь."
+
+[2113e34a7991]
+en = "Ain't I a stinker?"
+ru = "Ну не вредина ли я?"
+
+[9b9721fb4773]
+en = "Algernon"
+ru = "Элджернон"
+
+[7845f3767e2f]
+en = "All else failed..."
+ru = "Всё остальное не сработало..."
+
+[7ab6c558c2a7]
+en = "All hail RNG"
+ru = "Да славится ГСЧ"
+
+[6c212036f1b7]
+en = "All right, we'll call it a draw!"
+ru = "Ладно, назовём это ничьей!"
+
+[6fd91413b152]
+en = "All's well that ends well"
+ru = "Всё хорошо, что хорошо кончается"
+
+[ac0eec938f2c]
+en = "Alone at last!"
+ru = "Наконец-то одни!"
+
+[56cc401ab328]
+en = "Am I having fun yet?"
+ru = "Мне уже весело?"
+
+[eaaf59e8dad5]
+en = "And I can still crawl, I'm not dead yet!"
+ru = "А я ещё ползаю, я ещё не умер!"
+
+[7383c86bd6d1]
+en = "And all I wanted was a free lunch"
+ru = "А ведь я всего лишь хотел бесплатного сыра"
+
+[344d3de5c99b]
+en = "And all of the signs were right there on your face"
+ru = "А ведь все знаки были прямо у вас на лице"
+
+[0a8349dc5566]
+en = "And don't give me that innocent look either!"
+ru = "И не надо делать такое невинное лицо!"
+
+[b31049820888]
+en = "And everyone died.  Boo hoo hoo."
+ru = "И все умерли.  Буу-хуу-хуу."
+
+[5bfa66c0172b]
+en = "And here I go again..."
+ru = "И вот опять..."
+
+[0b6b63e95453]
+en = "And nobody cares until somebody famous dies..."
+ru = "И всем всё равно, пока не умрёт кто-нибудь знаменитый..."
+
+[0ab938721d4d]
+en = "And so it ends?"
+ru = "Вот так всё и кончается?"
+
+[7a08256390bd]
+en = "And so... it begins."
+ru = "И вот... всё начинается."
+
+[8b8deaf5b165]
+en = "And sometimes the bear eats you."
+ru = "А иногда медведь съедает вас."
+
+[d1f42c8f5724]
+en = "And then 'e nailed me 'ead to the floor!"
+ru = "А потом он мне башку к полу прибил!"
+
+[44d4100b08ad]
+en = "And they said it couldn't be done!"
+ru = "А говорили, что это невозможно!"
+
+[da6487071bce]
+en = "And what do I look like?  The living?"
+ru = "А я на кого похож?  На живого?"
+
+[c6fb2ed95645]
+en = "And yes, it was ALL his fault!"
+ru = "И да, это ВСЁ он виноват!"
+
+[a980fe284fdc]
+en = "And you said it was pretty here..."
+ru = "А вы говорили, что здесь красиво..."
+
+[633c84a25445]
+en = "Another lost soul"
+ru = "Ещё одна заблудшая душа"
+
+[5f7cc6386461]
+en = "Any day above ground is a good day!"
+ru = "Любой день над землёй — хороший день!"
+
+[4691b537b72f]
+en = "Any more of this and I'll die of a stroke before I'm 30."
+ru = "Ещё немного — и меня хватит удар, не дожив до 30."
+
+[e4f52f2ecf76]
+en = "Anybody seen my head?"
+ru = "Кто-нибудь видел мою голову?"
+
+[9f7f84f628d4]
+en = "Anyone for deathmatch?"
+ru = "Кто на дезматч?"
+
+[e1b534a17ed6]
+en = "Anything for a change."
+ru = "Всё что угодно, лишь бы перемены."
+
+[eb337f182891]
+en = "Anything that kills you makes you ... well, dead"
+ru = "Всё, что вас убивает, делает вас... ну, мёртвым"
+
+[85c52c8236ed]
+en = "Anything worth doing is worth overdoing."
+ru = "Что стоит делать, с тем стоит и переборщить."
+
+[c1f6b53d8427]
+en = "Are unicorns supposedly peaceful if you're a virgin?  Hah!"
+ru = "Говорят, единороги мирные, если вы девственны?  Ха!"
+
+[6bdf2aa22e45]
+en = "Are we all being disintegrated, or is it just me?"
+ru = "Нас всех распыляет, или только меня?"
+
+[256f3169217d]
+en = "At least I'm good at something"
+ru = "Хоть в чём-то я хорош"
+
+[2cbca522835d]
+en = "Attempted suicide"
+ru = "Попытка самоубийства"
+
+[189a9514928f]
+en = "Auri sacra fames"
+ru = "Проклятая жажда золота"
+
+[24e737a01def]
+en = "Auribus teneo lupum"
+ru = "Держу волка за уши"
+
+[951cbab8e20b]
+en = "Be prepared"
+ru = "Будь готов"
+
+[2f6705abdc2a]
+en = "Beauty survives"
+ru = "Красота бессмертна"
+
+[15bd8ad38538]
+en = "Been Here.  Now Gone.  Had a Good Time."
+ru = "Был здесь.  Теперь ушёл.  Хорошо провёл время."
+
+[1e14013feebf]
+en = "Been through Hell, eh?  What did you bring me?"
+ru = "Побывали в аду, а?  Что мне привезли?"
+
+[b26a3a742fad]
+en = "Beg your pardon, didn't recognize you, I've changed a lot."
+ru = "Простите, не узнал вас, я сильно изменился."
+
+[d5380a36eb67]
+en = "Being dead builds character"
+ru = "Смерть закаляет характер"
+
+[b045a6b6e4dd]
+en = "Beloved daughter, a treasure, buried here."
+ru = "Здесь погребена любимая дочь, наше сокровище."
+
+[b8642012075f]
+en = "Best friends come and go....  Mine just die."
+ru = "Лучшие друзья приходят и уходят....  Мои просто умирают."
+
+[b74f06018e51]
+en = "Better be dead than a fat slave"
+ru = "Лучше умереть, чем быть толстым рабом"
+
+[c2dc8a21871d]
+en = "Better luck next time"
+ru = "Удачи в следующий раз"
+
+[041eee8e619b]
+en = "Beware of Discordians bearing answers"
+ru = "Бойтесь дискордианцев, ответы приносящих"
+
+[bfd78fb7f610]
+en = "Beware the ..."
+ru = "Берегитесь ..."
+
+[923c0b483e2b]
+en = "Bloody Hell..."
+ru = "Чёрт побери..."
+
+[7f72f3414ee5]
+en = "Bloody barbarians!"
+ru = "Проклятые варвары!"
+
+[6c1a8a2eacca]
+en = "Blown upward out of sight: He sought the leak by candlelight"
+ru = "Он утечку газа искал со свечой — теперь он где-то над землёй"
+
+[7fca3355a377]
+en = "Brains... Brains... Fresh human brains..."
+ru = "Мозги... Мозги... Свежие мозги людей..."
+
+[b57d56fdc759]
+en = "Buried the cat.  Took an hour.  Damn thing kept fighting."
+ru = "Похоронил кота.  Ушёл целый час.  Проклятая тварь всё сопротивлялась."
+
+[b300e6615587]
+en = "But I disarmed the trap!"
+ru = "Но я же обезвредил ловушку!"
+
+[a232e5f55b2d]
+en = "CONNECT 1964 - NO CARRIER 1994"
+ru = "СОЕДИНЕНИЕ 1964 — НЕТ НЕСУЩЕЙ 1994"
+
+[c5797bb642eb]
+en = "Call me if you need my phone number!"
+ru = "Позвоните, если понадобится мой номер телефона!"
+
+[05c84dde306d]
+en = "Can YOU fly?"
+ru = "А ВЫ умеете летать?"
+
+[2f7ed7024b1a]
+en = "Can you believe that thing is STILL moving?"
+ru = "Представляете, эта штука ВСЁ ЕЩЁ шевелится?"
+
+[e48bb8e2de25]
+en = "Can you come up with some better ending for this?"
+ru = "Не придумаете ли концовку получше?"
+
+[1013b68b0d3f]
+en = "Can you feel anything when I do this?"
+ru = "Вы что-нибудь чувствуете, когда я делаю вот так?"
+
+[e74a7c648559]
+en = "Can you give me mouth to mouth, you just took my breath away."
+ru = "Сделайте мне искусственное дыхание: от вас у меня перехватило дух."
+
+[e96da37adbe1]
+en = "Can't I just have a LITTLE peril?"
+ru = "А можно мне хоть НЕМНОЖКО опасности?"
+
+[da3eba8e9817]
+en = "Can't eat, can't sleep, had to bury the husband here."
+ru = "Ни есть, ни спать не могу, пришлось похоронить здесь мужа."
+
+[585a1ea954c0]
+en = "Can't you hit me?!"
+ru = "Неужели вы не можете в меня попасть?!"
+
+[111629683511]
+en = "Chaos, panic and disorder.  My work here is done."
+ru = "Хаос, паника и беспорядок.  Моя работа здесь окончена."
+
+[1b004d0be557]
+en = "Check enclosed."
+ru = "Чек прилагается."
+
+[7483b67d7a81]
+en = "Check this out!  It's my brain!"
+ru = "Смотрите!  Это мой мозг!"
+
+[4a05827646dc]
+en = "Chivalry is only reasonably dead"
+ru = "Рыцарство умерло лишь отчасти"
+
+[f9f6d2c6ad85]
+en = "Coffin for sale.  Lifetime guarantee."
+ru = "Продаётся гроб.  Пожизненная гарантия."
+
+[71430e62092e]
+en = "Come Monday, I'll be all right."
+ru = "В понедельник со мной всё будет в порядке."
+
+[399a80be26fa]
+en = "Come and see the violence inherent in the system"
+ru = "Подходите, посмотрите на насилие, присущее системе"
+
+[fc78384eca8b]
+en = "Come back here!  I'll bite your bloody knees off!"
+ru = "Вернись!  Я тебе колени отгрызу!"
+
+[6ed37137a8ed]
+en = "Commodore Business Machines, Inc.  Died for our sins."
+ru = "«Коммодор Бизнес Машинс».  Умерла за наши грехи."
+
+[fa70e776d5bb]
+en = "Complain to one who can help you"
+ru = "Жалуйтесь тому, кто может помочь"
+
+[c80e84a0f13c]
+en = "Confess my sins to god?  Which one?"
+ru = "Исповедаться в грехах богу?  Которому?"
+
+[166dbcd5fb2d]
+en = "Cooties?  Ain't no cooties on me!"
+ru = "Вши?  Нет на мне никаких вшей!"
+
+[8cab926bfa0f]
+en = "Could somebody get this noose off me?"
+ru = "Кто-нибудь снимет с меня эту петлю?"
+
+[9610ec26a1a8]
+en = "Could you check again?  My name MUST be there."
+ru = "Можете проверить ещё раз?  Моё имя ДОЛЖНО там быть."
+
+[74588d5844a1]
+en = "Could you please take a breath mint?"
+ru = "Не могли бы вы взять мятную конфетку?"
+
+[fae199345986]
+en = "Couldn't I be sedated for this?"
+ru = "А нельзя ли меня для этого усыпить?"
+
+[c8a7e0971c9c]
+en = "Courage is looking at your setbacks with serenity"
+ru = "Мужество — это спокойно смотреть на свои неудачи"
+
+[52494075cecb]
+en = "Cover me, I'm going in!"
+ru = "Прикройте, я захожу!"
+
+[908e9ed1a17e]
+en = "Crash course in brain surgery"
+ru = "Ускоренный курс нейрохирургии"
+
+[69add9961a60]
+en = "Cross my fingers for me."
+ru = "Скрестите за меня пальцы."
+
+[612f736525c3]
+en = "Curse god and die"
+ru = "Похули Бога и умри"
+
+[178366153e52]
+en = "Cut to fit"
+ru = "Подрезано по размеру"
+
+[a6f8d42c22c7]
+en = "De'Ath"
+ru = "Смертин"
+
+[191f945bc818]
+en = "Dead Again?  Pardon me for not getting it right the first time!"
+ru = "Снова мёртв?  Простите, что с первого раза не вышло как следует!"
+
+[cd6f087c1b64]
+en = "Dead and loving every moment!"
+ru = "Мёртв и наслаждаюсь каждым мгновением!"
+
+[228dda6da0a1]
+en = "Dear wife of mine.  Died of a broken heart, after I took it out of her."
+ru = "Моя дорогая жена.  Умерла от разбитого сердца, после того как я вынул его из неё."
+
+[582c0c85571d]
+en = "Don't tread on me!"
+ru = "Не наступай на меня!"
+
+[8d74a1ae47ad]
+en = "Dragon? What dragon?"
+ru = "Дракон? Какой дракон?"
+
+[aea8de3d0803]
+en = "Drawn and quartered"
+ru = "Четвертован"
+
+[989cd658e802]
+en = "Either I'm dead or my watch has stopped."
+ru = "Либо я умер, либо у меня остановились часы."
+
+[ae5f8ccaa901]
+en = "Eliza -- Was I really alive, or did I just think I was?"
+ru = "Элиза — я правда была жива или мне только так казалось?"
+
+[e283641f4273]
+en = "Elvis"
+ru = "Элвис"
+
+[1a21b3a3da62]
+en = "Enter not into the path of the wicked"
+ru = "На стезю нечестивых не вступай"
+
+[f5ab189080b2]
+en = "Eris?  I don't need Eris"
+ru = "Эрида?  Не нужна мне Эрида"
+
+[4e4e7aeb7a39]
+en = "Eternal Damnation, Come and stay a long while!"
+ru = "Вечное проклятие: заходите и оставайтесь надолго!"
+
+[5f5df25ea844]
+en = "Even The Dead pay taxes (and they aren't Grateful)."
+ru = "Даже мёртвые платят налоги (и не очень-то благодарны)."
+
+[8f69d5f1413f]
+en = "Even a tomb stone will say good things when you're down!"
+ru = "Даже надгробие скажет о вас что-то хорошее, когда вы в земле!"
+
+[f592fbdd80cd]
+en = "Ever notice that live is evil backwards?"
+ru = "Замечали, что «ад» задом наперёд — это «да»?"
+
+[5bf992aa8535]
+en = "Every day is starting to look like Monday"
+ru = "Каждый день начинает походить на понедельник"
+
+[8dbeaa790888]
+en = "Every day, in every way, I am getting better and better."
+ru = "С каждым днём мне во всех отношениях становится всё лучше и лучше."
+
+[7a91c6726cc3]
+en = "Every survival kit should include a sense of humor"
+ru = "В каждом наборе для выживания должно быть чувство юмора"
+
+[5bbba0e00e2c]
+en = "Evil I did dwell;  lewd did I live"
+ru = "Я иду с мечем судия"
+
+[b94dd0899bb5]
+en = "Ex post fucto"
+ru = "Пост-фак-тум"
+
+[353299886f98]
+en = "Excellent day to have a rotten day."
+ru = "Отличный день для паршивого дня."
+
+[71396a6b2324]
+en = "Excuse me for not standing up."
+ru = "Простите, что не встаю."
+
+[a346ac337230]
+en = "Experience isn't everything.  First, you've got to survive."
+ru = "Опыт — это ещё не всё.  Сначала надо выжить."
+
+[f92cc51da70b]
+en = "First shalt thou pull out the Holy Pin"
+ru = "Сперва изыми Святую Чеку"
+
+[01cc190e789a]
+en = "For a Breath, I Tarry..."
+ru = "Лишь вздох — и я уйду..."
+
+[4ab31247cfd9]
+en = "For recreational use only."
+ru = "Только для развлекательного использования."
+
+[ef623847f0f7]
+en = "For sale: One soul, slightly used.  Asking for 3 wishes."
+ru = "Продаётся: одна душа, слегка поношенная.  Прошу 3 желания."
+
+[59879ea0b029]
+en = "For some moments in life, there are no words."
+ru = "В жизни бывают мгновения, когда слов нет."
+
+[aa27a9a12a09]
+en = "Forget Disney World, I'm going to Hell!"
+ru = "Какой там Диснейленд, я отправляюсь в ад!"
+
+[c05acbc59036]
+en = "Forget about the dog, Beware of my wife."
+ru = "Забудьте про собаку, бойтесь моей жены."
+
+[511190e9e80f]
+en = "Funeral - Real fun."
+ru = "Похороны — обхохочешься."
+
+[9d5181cf48c7]
+en = "Gawd, it's depressing in here, isn't it?"
+ru = "Господи, ну и тоска же здесь, а?"
+
+[89a366280efe]
+en = "Genuine Exploding Gravestone.  (c)Acme Gravestones Inc."
+ru = "Подлинное взрывающееся надгробие.  (c) ООО «Акме Надгробия»"
+
+[094fd3cc04d1]
+en = "Get back here!  I'm not finished yet..."
+ru = "Вернись!  Я ещё не закончил..."
+
+[55de22d95086]
+en = "Go ahead, I dare you to!"
+ru = "Давай, слабо?"
+
+[27ddc9dcf4e3]
+en = "Go ahead, it's either you or him."
+ru = "Давайте, либо вы, либо он."
+
+[930a17952f4e]
+en = "Goldilocks -- This casket is just right"
+ru = "Златовласка — этот гроб в самый раз"
+
+[d0450ee2ac8a]
+en = "Gone But Not Forgotten"
+ru = "Ушёл, но не забыт"
+
+[309b40a5e44c]
+en = "Gone Underground For Good"
+ru = "Ушёл в подполье навсегда"
+
+[e41da7bdef24]
+en = "Gone away owin' more than he could pay."
+ru = "Ушёл, задолжав больше, чем мог заплатить."
+
+[9115a141b984]
+en = "Gone, but not forgiven"
+ru = "Ушёл, но не прощён"
+
+[3f97944684af]
+en = "Got a life.  Didn't know what to do with it."
+ru = "Получил жизнь.  Не знал, что с ней делать."
+
+[814f46a7f3fc]
+en = "Grave?  But I was cremated!"
+ru = "Могила?  Но меня же кремировали!"
+
+[b820d153b8ca]
+en = "Greetings from Hell - Wish you were here."
+ru = "Привет из ада.  Жаль, что вас здесь нет."
+
+[706d3ed9c56b]
+en = "HELP! It's dark in here....  Oh, my eyes are closed - sorry"
+ru = "ПОМОГИТЕ! Здесь темно....  Ой, у меня глаза закрыты, извините"
+
+[08fa4754de01]
+en = "Ha! I NEVER pay income tax!"
+ru = "Ха! Я НИКОГДА не плачу подоходный налог!"
+
+[2ee3a2e09eda]
+en = "Have you come to raise the dead?"
+ru = "Вы пришли воскрешать мёртвых?"
+
+[d101ff3e7767]
+en = "Having a good time can be deadly."
+ru = "Хорошо проводить время бывает смертельно опасно."
+
+[e5069ac9b2c5]
+en = "Having a great time.  Where am I exactly??"
+ru = "Отлично провожу время.  Где я, собственно??"
+
+[0a6c5c6fe376]
+en = "He died of the flux."
+ru = "Он умер от дизентерии."
+
+[1e598a47b665]
+en = "He died today....  May we rest in peace!"
+ru = "Сегодня он умер....  Теперь-то мы отдохнём!"
+
+[0e969023cd11]
+en = "He got the upside, I got the downside."
+ru = "Ему досталась верхняя сторона, а мне — нижняя."
+
+[4a03112bf50b]
+en = "He lost his face when he was beheaded."
+ru = "Он потерял лицо, когда его обезглавили."
+
+[136662712bd5]
+en = "He missed me first."
+ru = "Он первым промахнулся."
+
+[7ff713169ffc]
+en = "He's not dead, he just smells that way."
+ru = "Он не умер, он просто так пахнет."
+
+[9bb525d58691]
+en = "Help! I've fallen and I can't get up!"
+ru = "Помогите! Я упал и не могу встать!"
+
+[f735448cb582]
+en = "Help, I can't wake up!"
+ru = "Помогите, я не могу проснуться!"
+
+[897a475ec3d2]
+en = "Here lies Pinocchio"
+ru = "Здесь лежит Буратино (и врёт)"
+
+[efd86b5f8a14]
+en = "Here lies the body of John Round.  Lost at sea and never found."
+ru = "Здесь покоится Иван Кругов: сгинул в море — и нет следов."
+
+[30921cc4e86e]
+en = "Here there be dragons"
+ru = "Здесь водятся драконы"
+
+[62c575eb42f5]
+en = "Hey, I didn't write this stuff!"
+ru = "Эй, это не я написал!"
+
+[2de871c70103]
+en = "Hodie mihi, cras tibi"
+ru = "Сегодня мне, завтра тебе"
+
+[e71eedaab0a7]
+en = "Hold my calls"
+ru = "Меня ни с кем не соединять"
+
+[3eda5b8e06c1]
+en = "Home Sweet Hell"
+ru = "Ад, милый ад"
+
+[87fbab943bda]
+en = "Humpty Dumpty, a Bad Egg.  He was pushed off the wall."
+ru = "Шалтай-Болтай, тухлое яйцо.  Его столкнули со стены."
+
+[c82abe953381]
+en = "I KNEW this would happen if I lived long enough."
+ru = "Я ЗНАЛ, что так и будет, если проживу достаточно долго."
+
+[3f65f8b35741]
+en = "I TOLD you I was sick!"
+ru = "Я же ГОВОРИЛ, что болен!"
+
+[b473e9052ce7]
+en = "I ain't broke but I am badly bent."
+ru = "Я не сломан, но сильно погнут."
+
+[3f2feab75836]
+en = "I ain't old.  I'm chronologically advantaged."
+ru = "Я не старый.  Я хронологически одарённый."
+
+[149fd906277e]
+en = "I am NOT a vampire.  I just like to bite..nibble, really!"
+ru = "Я НЕ вампир.  Я просто люблю кусаться... то есть покусывать!"
+
+[90ff7292ebb7]
+en = "I am here.  Wish you were fine."
+ru = "Я на месте.  Жаль, что вы здоровы."
+
+[f55a742ea9be]
+en = "I am not dead yet, but watch for further reports."
+ru = "Я ещё не умер, но следите за новостями."
+
+[4fbe1f79a02c]
+en = "I believe them bones are me."
+ru = "Похоже, эти кости — это я."
+
+[c61fe5816bb1]
+en = "I broke his brain."
+ru = "Я сломал ему мозг."
+
+[a50afcc40d8c]
+en = "I can feel it.  My mind.  It's going.  I can feel it."
+ru = "Я чувствую.  Мой разум.  Он уходит.  Я это чувствую."
+
+[01323d736ecb]
+en = "I can't go to Hell.  They're afraid I'm gonna take over!"
+ru = "Мне нельзя в ад.  Там боятся, что я всё приберу к рукам!"
+
+[7ae8a48ff83d]
+en = "I can't go to hell, they don't want me."
+ru = "Мне нельзя в ад: меня там не хотят."
+
+[0581d24c27ff]
+en = "I didn't believe in reincarnation the last time, either."
+ru = "В прошлый раз я тоже не верил в реинкарнацию."
+
+[c67a5ee5faf4]
+en = "I didn't mean it when I said 'Bite me'"
+ru = "Я не всерьёз сказал «Укуси меня»"
+
+[4247037a6541]
+en = "I died laughing"
+ru = "Я умер со смеху"
+
+[a36e9d9c94ec]
+en = "I disbelieved in reincarnation in my last life, too."
+ru = "Я и в прошлой жизни не верил в реинкарнацию."
+
+[6caf7d02fd55]
+en = "I hacked myself to death"
+ru = "Я захакал себя до смерти"
+
+[302be38aad7b]
+en = "I have all the time in the world"
+ru = "У меня в запасе всё время мира"
+
+[5b7607ea9978]
+en = "I have reached Mine's End"
+ru = "Я дошёл до Дна копей"
+
+[f8744e2c3904]
+en = "I knew I'd find a use for this gravestone!"
+ru = "Я знал, что найду применение этому надгробию!"
+
+[8e5d8c17f005]
+en = "I know my mind.  And it's around here someplace."
+ru = "Свой разум я знаю.  Он где-то здесь."
+
+[04f8f59d5beb]
+en = "I lied!  I'll never be alright!"
+ru = "Я соврал!  Со мной никогда не будет всё в порядке!"
+
+[2b5a468f8c4d]
+en = "I like it better in the dark."
+ru = "Мне больше нравится в темноте."
+
+[fccc607aa565]
+en = "I like to be here when I can."
+ru = "Люблю бывать здесь, когда получается."
+
+[0da2771929d1]
+en = "I may rise but I refuse to shine."
+ru = "Может, я и встану, но сиять отказываюсь."
+
+[ab8b7db974bb]
+en = "I never get any either."
+ru = "Мне тоже никогда не достаётся."
+
+[2e740a21df52]
+en = "I said hit HIM with the fireball, not me!"
+ru = "Я сказал: огненным шаром в НЕГО, а не в меня!"
+
+[6320babd53c4]
+en = "I told you I would never say goodbye."
+ru = "Я же говорил, что никогда не попрощаюсь."
+
+[2d5f74697ae3]
+en = "I used to be amusing.  Now I'm just disgusting."
+ru = "Раньше я был забавным.  Теперь я просто противный."
+
+[f8e1bfc94887]
+en = "I used up all my sick days, so now I'm calling in dead."
+ru = "Больничные кончились, так что звоню сказать, что умер."
+
+[9c90e4832c87]
+en = "I was killed by <illegible scrawl>"
+ru = "Меня убил <неразборчивые каракули>"
+
+[4db8c165873a]
+en = "I was somebody.  Who, is no business of yours."
+ru = "Я был кем-то.  Кем — не ваше дело."
+
+[18a80280ab69]
+en = "I will not go quietly."
+ru = "Тихо я не уйду."
+
+[1f4163803e53]
+en = "I'd give you a piece of my mind... but I can't find it."
+ru = "Я бы высказал вам всё, что думаю... но не могу найти, чем думать."
+
+[0c7f3c9070e0]
+en = "I'd rather be breathing"
+ru = "Лучше бы я дышал"
+
+[42d22bfb4189]
+en = "I'll be back!"
+ru = "Я вернусь!"
+
+[21886e855c39]
+en = "I'll be mellow when I'm dead.  For now, let's PARTY!"
+ru = "Успокоюсь, когда умру.  А пока — ГУЛЯЕМ!"
+
+[5912ffe545cb]
+en = "I'm doing this only for tax purposes."
+ru = "Я делаю это исключительно ради налогов."
+
+[07dcafdf89df]
+en = "I'm not afraid of Death!  What's he gonna do? Kill me?"
+ru = "Я не боюсь Смерти!  Что она мне сделает?  Убьёт?"
+
+[6f3af38dfbf3]
+en = "I'm not getting enough money, so I'm not going to engrave anything useful here."
+ru = "Мне мало платят, так что ничего полезного я тут писать не буду."
+
+[9d036056f443]
+en = "I'm not saying anything."
+ru = "Я ничего не скажу."
+
+[0f840ba1aa6b]
+en = "I'm weeth stupeed --->"
+ru = "Йа с тупым --->"
+
+[d592dff546a4]
+en = "If you thought you had problems..."
+ru = "Если вы думали, что у вас проблемы..."
+
+[e246c83f763e]
+en = "Ignorance kills daily."
+ru = "Невежество убивает ежедневно."
+
+[fb06a0ad266f]
+en = "Ignore me... I'm just here for my looks!"
+ru = "Не обращайте внимания... я тут только для красоты!"
+
+[16a647945708]
+en = "Ilene Toofar -- Fell off a cliff"
+ru = "Перегнула Палкина — упала со скалы"
+
+[58daf246d7ba]
+en = "Is that all?"
+ru = "И это всё?"
+
+[4025a0f41209]
+en = "Is there life before Death?"
+ru = "Есть ли жизнь до Смерти?"
+
+[9d5f5e94be82]
+en = "Is this a joke, or a grave matter?"
+ru = "Это шутка или могильная серьёзность?"
+
+[4e3ab9e41f9f]
+en = "It happens sometimes.  People just explode."
+ru = "Иногда так бывает.  Люди просто взрываются."
+
+[6d03f09517d7]
+en = "It must be Thursday.  I never could get the hang of Thursdays."
+ru = "Должно быть, сегодня четверг.  Никогда не понимал четвергов."
+
+[e77ad38b6137]
+en = "It wasn't a fair fight"
+ru = "Бой был нечестный"
+
+[ca9a93eeaa43]
+en = "It wasn't so easy."
+ru = "Не так уж это было просто."
+
+[e9092c95a8a9]
+en = "It's Loot, Pillage and THEN Burn..."
+ru = "Сначала грабёж, потом мародёрство, а ПОТОМ поджог..."
+
+[416b1910bc88]
+en = "Just doing my job here"
+ru = "Я просто делаю свою работу"
+
+[0b297bff43b1]
+en = "Killed by diarrhea of mouth and constipation of brain."
+ru = "Убит словесным поносом и запором мозга."
+
+[f90fc2ce8760]
+en = "Let her RIP"
+ru = "Пусть отрывается с миром"
+
+[d6856df37c2c]
+en = "Let it be; I am dead."
+ru = "Оставьте; я мёртв."
+
+[795160537eaa]
+en = "Let's play Hide the Corpse"
+ru = "Давайте сыграем в «Спрячь труп»"
+
+[7403d358f049]
+en = "Life is NOT a dream"
+ru = "Жизнь — НЕ сон"
+
+[c7b515a2febe]
+en = "Madge Ination -- It wasn't all in my head"
+ru = "Ира Воображалова — не всё было у меня в голове"
+
+[6bd524880f16]
+en = "Meet me in Heaven"
+ru = "Встретимся на небесах"
+
+[44c0e56b037a]
+en = "Move on, there's nothing to see here."
+ru = "Проходите, здесь не на что смотреть."
+
+[50cb2303bb4a]
+en = "Mr. Flintstone -- Yabba-dabba-done"
+ru = "Мистер Флинтстоун — ябба-дабба-ду... всё"
+
+[a468fc551efb]
+en = "My heart is not in this"
+ru = "Моего сердца здесь нет"
+
+[3257ad9d638d]
+en = "No one ever died from it"
+ru = "От этого ещё никто не умирал"
+
+[e327a9ac7096]
+en = "No, you want room 12A, next door."
+ru = "Нет, вам в 12А, это по соседству."
+
+[02dd391c95b3]
+en = "Nope.  No trap on that chest.  I swear."
+ru = "Не-а.  Никакой ловушки на этом сундуке.  Клянусь."
+
+[5c9c3676fb6e]
+en = "Not again!"
+ru = "Только не снова!"
+
+[cc923b286a84]
+en = "Not every soil can bear all things"
+ru = "Не всякая земля всё родит"
+
+[33b2a492db0b]
+en = "Now I have a life"
+ru = "Теперь у меня есть жизнь"
+
+[ee8e73a6315a]
+en = "Now I lay thee down to sleep... wanna join me?"
+ru = "Укладываю тебя спать... не хочешь ко мне?"
+
+[8558749b0396]
+en = "OK, here is a question: Where ARE your tanlines?"
+ru = "Ладно, вопрос: а ГДЕ у вас следы загара?"
+
+[1bc9b5a3e56b]
+en = "Obesa Cantavit"
+ru = "Толстуха спела"
+
+[e4fcdd413b4c]
+en = "Oh! An untimely death."
+ru = "Ох! Безвременная смерть."
+
+[ba26b77c9c4e]
+en = "Oh, by the way, how was my funeral?"
+ru = "Да, кстати, как прошли мои похороны?"
+
+[d1ae0ca5cd9f]
+en = "\"Oh, honey... I missed you!\" she said, and fired again."
+ru = "\"Ох, милый... я опять по тебе промазала!\" — сказала она и выстрелила снова."
+
+[2887153b345c]
+en = "Ok, so the light does go off.  Now let me out of here."
+ru = "Ладно, свет и правда гаснет.  А теперь выпустите меня."
+
+[dc7025fc17df]
+en = "One stone brain"
+ru = "Вместо мозгов — камень"
+
+[778bbe2b7d1d]
+en = "Ooh! Somebody STOP me!"
+ru = "Ох! Кто-нибудь, ОСТАНОВИТЕ меня!"
+
+[66b89eb93f89]
+en = "Out for the night.  Leave a message."
+ru = "Ушёл на всю ночь.  Оставьте сообщение."
+
+[41b2788284bd]
+en = "Ow!  Do that again!"
+ru = "Ай!  А ну-ка ещё раз!"
+
+[d339137c5f6b]
+en = "Pardon my dust."
+ru = "Простите за пыль."
+
+[3fd381d89d7e]
+en = "Part of me still works."
+ru = "Кое-что во мне ещё работает."
+
+[f81cea67146d]
+en = "Please, not in front of those orcs!"
+ru = "Пожалуйста, только не при этих орках!"
+
+[3a4b3af0b869]
+en = "Prepare to meet me in Heaven"
+ru = "Готовьтесь к встрече со мной на небесах"
+
+[e84ccd7006c9]
+en = "R2D2 -- Rest, Tin Piece"
+ru = "R2D2 — Покойся, жестянка"
+not_terms = ["tin"]
+
+[988e28cf3524]
+en = "Relax.  Nothing ever happens on the first level."
+ru = "Расслабьтесь.  На первом уровне никогда ничего не случается."
+
+[e7cf75a212cf]
+en = "Res omnia mea culpa est"
+ru = "Во всём виноват я сам"
+
+[eb3aae2d6a99]
+en = "Rest, rest, perturbed spirit."
+ru = "Мир, мир тебе, мятежный дух!"
+
+[b7b4c660f284]
+en = "Rip Torn"
+ru = "Порван-Разорван"
+
+[819fa43d31cd]
+en = "She always said her feet were killing her but nobody believed her."
+ru = "Она всегда жаловалась, что ноги её в гроб сведут, но никто ей не верил."
+
+[77ee699ea1bf]
+en = "She died of a chest cold."
+ru = "Она простудилась насмерть, сидя на сундуке."
+
+[0302fbf30ca0]
+en = "So let it be written, so let it be done!"
+ru = "Да будет так записано, да будет так исполнено!"
+
+[2ecc7bcc7e0f]
+en = "So then I says, How do I know you're the real angel of death?"
+ru = "А я ему: откуда мне знать, что ты настоящий ангел смерти?"
+
+[c84358852a66]
+en = "Some patients insist on dying."
+ru = "Некоторые пациенты упорно умирают."
+
+[646606e51713]
+en = "Some people have it dead easy, don't they?"
+ru = "Некоторым всё даётся до смерти легко, правда?"
+
+[1a8b8008b097]
+en = "Some things are better left buried."
+ru = "Кое-что лучше оставить погребённым."
+
+[3921dbfcf11b]
+en = "Sure, trust me, I'm a lawyer..."
+ru = "Конечно, доверьтесь мне, я юрист..."
+
+[d3372acb7cd6]
+en = "Thank God I wore my corset, because I think my sides have split."
+ru = "Слава богу, на мне был корсет: кажется, я лопнул со смеху."
+
+[5f3b1f739424]
+en = "That is all"
+ru = "Это всё"
+
+[99f2d3a2e38e]
+en = "The Gods DO have a sense of humor: I'm living proof!"
+ru = "У богов ЕСТЬ чувство юмора: я — живое доказательство!"
+
+[6045d3e332f2]
+en = "The frog's dead.  He Kermitted suicide."
+ru = "Лягушонок мёртв.  Самоквакийство."
+
+[f9eb9f259d70]
+en = "This dungeon is a pushover"
+ru = "Это подземелье — проще простого"
+
+[e544e60d7d15]
+en = "This elevator doesn't go to Heaven"
+ru = "Этот лифт не идёт на небеса"
+
+[beb759d1784d]
+en = "This gravestone is shareware.  To register, please send me 10 zorkmids"
+ru = "Это надгробие — условно-бесплатное.  Для регистрации пришлите мне 10 зоркмидов"
+
+[1df5caeafd1f]
+en = "This gravestone provided by The Yendorian Grave Services Inc."
+ru = "Надгробие предоставлено ООО «Йендорские ритуальные услуги»"
+
+[d3ce0f7b6d3f]
+en = "This is not an important part of my life."
+ru = "Это не важная часть моей жизни."
+
+[a7a76e374bb6]
+en = "This one's on me."
+ru = "Этот за мой счёт."
+
+[f71cf964a9f7]
+en = "This side up"
+ru = "Этой стороной вверх"
+
+[ff56958a523d]
+en = "Tim Burr -- Smashed by a tree"
+ru = "Тим Бревнов — раздавлен деревом"
+
+[9e73f0ad9c02]
+en = "Tone it down a bit, I'm trying to get some rest here."
+ru = "Потише, пожалуйста, я тут пытаюсь отдохнуть."
+
+[d8bdfb4bd50e]
+en = "Virtually Alive"
+ru = "Виртуально жив"
+
+[3096af6458f3]
+en = "We Will Meet Again."
+ru = "Мы ещё встретимся."
+
+[8169017dce5f]
+en = "Weep not, he is at rest"
+ru = "Не плачьте, он обрёл покой"
+
+[e98220679692]
+en = "Welcome to Dante's.  What level please?"
+ru = "Добро пожаловать к Данте.  Какой круг, пожалуйста?"
+
+[6da4315baf32]
+en = "Well, at least they listened to my sermon..."
+ru = "Ну, хоть мою проповедь они выслушали..."
+
+[ab57d5786faa]
+en = "Went to be an angel."
+ru = "Ушёл в ангелы."
+
+[2a007310b854]
+en = "What are you doing over there?"
+ru = "Что вы там делаете?"
+
+[fc1e4a0e4c32]
+en = "What are you smiling at?"
+ru = "Чему вы улыбаетесь?"
+
+[7c5a5db47ea4]
+en = "What can you say, Death's got appeal...!"
+ru = "Что тут скажешь, есть в Смерти своё обаяние...!"
+
+[f41bcf002284]
+en = "What health care?"
+ru = "Какая ещё медицинская страховка?"
+
+[3b42ea7b6237]
+en = "What pit?"
+ru = "Какая яма?"
+
+[d50bdd30453d]
+en = "When the gods want to punish you, they answer your prayers."
+ru = "Когда боги хотят вас наказать, они исполняют ваши молитвы."
+
+[3568dae19a6c]
+en = "Where e'er you be let your wind go free.  Keeping it in was the death of me!"
+ru = "Где бы ни был — газы выпускай на волю: я терпел — и сгинул смертью злою."
+
+[d190e8e431a9]
+en = "Where's my refund?"
+ru = "Где мой возврат денег?"
+
+[d14caf6d530a]
+en = "Will let you know for sure in a day or two..."
+ru = "Через день-другой сообщу наверняка..."
+
+[be35e312f553]
+en = "Wizards are wimps"
+ru = "Волшебники — слабаки"
+
+[fc3bf908be0d]
+en = "Worms at work, do not disturb!"
+ru = "Работают черви, не беспокоить!"
+
+[3952b27a793a]
+en = "Would you mind moving a bit?  I'm short of breath down here."
+ru = "Не могли бы вы немного подвинуться?  Мне тут, внизу, дышать нечем."
+
+[9bf668eb6eb7]
+en = "Would you quit being evil over my shoulder?"
+ru = "Может, хватит творить зло у меня над плечом?"
+
+[f76244a5a617]
+en = "Ya really had me going baby, but now I'm gone."
+ru = "Ты меня реально завела, детка, а теперь меня нет."
+not_terms = ["ya"]
+
+[e2d5fb02a20f]
+en = "Yes Dear, just a few more minutes..."
+ru = "Да, дорогая, ещё пару минуточек..."
+
+[26288cbee97b]
+en = "You said it wasn't poisonous!"
+ru = "Вы говорили, что оно не ядовитое!"
+
+[a48bded4dfbd]
+en = "You set my heart aflame.  You gave me heartburn."
+ru = "Ты зажгла в моём сердце огонь.  И изжогу."
+not_terms = ["set"]
+
+[f6443e9cced6]
+en = "Oops!"
+ru = "Упс!"
