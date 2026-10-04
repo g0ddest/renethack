@@ -2584,8 +2584,6 @@ Flip a coin  [b14d0cd58b85]
   =   Подбросить монетку
 For what do you wish  [950698d53808]
   =   Чего вы желаете
-For what do you wish (enter 'help' for assistance)  [dafac7e9f837]
-  =   Чего вы желаете (введите «help» для подсказки)
 For what do you wish (enter 'help' for assistance)?  [1799dfeb9b00]
   =   Чего вы желаете (введите «help» для подсказки)?
 For what do you wish?  [8f429df2419a]

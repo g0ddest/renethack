@@ -67,7 +67,8 @@ class Formats(unittest.TestCase):
         e = catalog_of('void f(struct monst *m) {\n'
                        '    char buf[BUFSZ];\n'
                        '    Sprintf(buf, "%s bites", Monnam(m));\n'
-                       '    Strcat(buf, " hard");\n'
+                       '    if (m->mtame)\n'
+                       '        Strcat(buf, " hard");\n'
                        '    pline("%s %s.", buf, mon_nam(m));\n'
                        '    Strcpy(buf, "Other text");\n'
                        '    pline("%s!", buf);\n}\n')
@@ -77,6 +78,22 @@ class Formats(unittest.TestCase):
         # the second use only sees what was written after the first
         self.assertNotIn("Other text %s.", e)
         self.assertNotIn("%s bites!", e)
+
+    def test_appends_that_always_run(self):
+        e = catalog_of('void f(int a) {\n'
+                       '    char buf[BUFSZ];\n'
+                       '    Sprintf(buf, " who %s opposed by", a ? "is" : "was");\n'
+                       '    if (a != 1)\n'
+                       '        Sprintf(eos(buf), " %s (%s) and", g(1), s(1));\n'
+                       '    if (a != 2) {\n'
+                       '        Sprintf(eos(buf), " %s (%s)", g(2), s(2));\n'
+                       '    }\n'
+                       '    Strcat(buf, ".");\n'
+                       '    pline("%s", buf);\n}\n')
+        self.assertIn(" who is opposed by %s (%s) and %s (%s).", e)
+        self.assertIn(" who was opposed by %s (%s).", e)
+        # the last append always runs: no text ends before it
+        self.assertNotIn("pline", e[" who is opposed by"].uses)
 
     def test_a_call_may_write_a_buffer(self):
         src = ('static void fill(char *out) { out[0] = 0; }\n'

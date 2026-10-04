@@ -571,6 +571,7 @@ class Context:
         # shown (or handed on) there; a call that may write it clobbers it
         self.uses = {}
         self.passes = {}
+        self._depths = None
         start, end = func.body
         i = start + 1
         while i < end:
@@ -984,13 +985,75 @@ class Context:
             return [p for f in fmts for p in self.variants(f, op.args, op.index, depth)]
         return self.pieces(op.text, op.index, depth)
 
+    def op_generic(self, op):
+        """What one buffer operation writes, its arguments placeholders."""
+        if op.printf:
+            fmts = self.values(op.text)
+            return [self.generic(f, op.args) for f in fmts] if fmts is not None else []
+        return [("%s", [self.kind(op.text)])]
+
+    def tail(self, op, ref, depth):
+        """An append, as the text at token `ref` (a write or a use of the
+        buffer) is followed by it."""
+        return Tail(self.op_pieces(op, depth), self.op_generic(op), self.always_after(ref, op.index))
+
+    def always_after(self, ref, i):
+        """Does the statement at token i run whenever the code at token
+        `ref` before it ran: not in a branch or a loop `ref` is not in?"""
+        if self.guarded(i):
+            return False
+        d = self.depths()
+        return min(d[k] for k in range(ref, i + 1)) >= d[i]
+
+    def guarded(self, i):
+        """Is the statement holding token i the body of an if, else, for,
+        while, do or case without braces?"""
+        toks = self.unit.toks
+        j = i - 1
+        while j > self.func.body[0]:
+            t = toks[j].text
+            if t in (";", "{", "}"):
+                return False
+            if t in ("else", "do", ":"):
+                return True
+            if t == ")":
+                level = 0
+                while j > 0:
+                    if toks[j].text == ")":
+                        level += 1
+                    elif toks[j].text == "(":
+                        level -= 1
+                        if level == 0:
+                            break
+                    j -= 1
+                if toks[j - 1].text in ("if", "for", "while", "switch"):
+                    return True
+            # an enclosing call's "(", a cast, an operand: further back
+            j -= 1
+        return False
+
+    def depths(self):
+        """The block depth at each token of the body."""
+        if self._depths is None:
+            toks = self.unit.toks
+            start, end = self.func.body
+            d, out = 0, {}
+            for k in range(start, end + 1):
+                out[k] = d
+                if toks[k].text == "{":
+                    d += 1
+                elif toks[k].text == "}":
+                    d -= 1
+            self._depths = out
+        return self._depths
+
     def compositions(self, name, pos, depth):
         """What buffer `name` can hold at token `pos`: what the operations
         since its last use before `pos` wrote (a buffer is reused for one
-        text after another): each Sprintf/Strcpy alone and followed by
-        any of the Strcats after it, when there are few (more are a list,
-        not a sentence). Branches are not followed: an
-        over-approximation."""
+        text after another): each Sprintf/Strcpy followed by the Strcats
+        after it that always run and by any of those in a branch, when
+        these are few (more are a list, not a sentence). Which branch
+        runs is not followed: an over-approximation."""
         uses = [u for u in self.uses.get(name, []) if u < pos]
         since = max(uses) if uses else -1
         ops = [op for op in self.ops.get(name, []) if since < op.index < pos]
@@ -1001,7 +1064,7 @@ class Context:
         if not any(not op.append for op in ops) and since >= 0:
             # appended (or not) to what it held at its last use
             before = self.compositions(name, since, depth)
-            tails = [t for t in (self.op_pieces(a, depth) for a in ops if not a.transform) if t]
+            tails = [t for t in (self.tail(a, since, depth) for a in ops if not a.transform) if t.pieces]
             built = with_tails(before, tails)
             for a in ops:
                 if a.transform:
@@ -1013,7 +1076,8 @@ class Context:
                 continue
             heads = self.op_pieces(op, depth)
             later = [a for a in ops[k + 1:] if a.append]
-            tails = [t for t in (self.op_pieces(a, depth) for a in later if not a.transform) if t]
+            tails = [t for t in (self.tail(a, op.index, depth) for a in later if not a.transform)
+                     if t.pieces]
             built = with_tails(heads, tails)
             for a in later:
                 if a.transform:
@@ -1070,17 +1134,41 @@ class Context:
         return None
 
 
+class Tail:
+    """What an append can write, the same with placeholders for its
+    arguments, and whether it always runs after the text it ends."""
+
+    def __init__(self, pieces, generic, always):
+        self.pieces = pieces
+        self.generic = generic
+        self.always = always
+
+
 def with_tails(heads, tails):
-    """Each head alone and followed by any ordered subset of the tails (an
-    append may be in a branch); only the heads when the tails are many."""
-    out = list(heads)
-    if heads and 0 < len(tails) <= MAX_APPENDS:
-        for r in range(1, len(tails) + 1):
-            for chosen in itertools.combinations(tails, r):
-                if product_size([heads, *chosen]) > MAX_DERIVED:
-                    continue
-                for combo in itertools.product(heads, *chosen):
-                    out.append(("".join(p for p, _ in combo), [x for _, ks in combo for x in ks]))
+    """Each head followed by the appends that always run after it and by
+    any ordered subset of the others (they are in branches); by those that
+    always run alone when the others are many. A combination with too
+    many texts has placeholders for the arguments of its most varied
+    appends."""
+    if not heads:
+        return []
+    optional = [t for t in tails if not t.always]
+    if len(optional) > MAX_APPENDS:
+        optional = []
+    out = []
+    for r in range(len(optional) + 1):
+        for chosen in itertools.combinations(optional, r):
+            used = [t for t in tails if t.always or t in chosen]
+            parts = [heads] + [t.pieces for t in used]
+            while product_size(parts) > MAX_DERIVED:
+                k = max(range(1, len(parts)), key=lambda c: len(parts[c]), default=None)
+                if k is None or not 0 < len(used[k - 1].generic) < len(parts[k]):
+                    break
+                parts[k] = used[k - 1].generic
+            if product_size(parts) > MAX_DERIVED:
+                continue
+            for combo in itertools.product(*parts):
+                out.append(("".join(p for p, _ in combo), [x for _, ks in combo for x in ks]))
     return dedupe(out)[:MAX_HELD]
 
 
