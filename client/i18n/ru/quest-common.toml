@@ -1,0 +1,214 @@
+# R6 quest texts: common (dat/quest.lua).
+
+[d41f8e3b1fd9]
+en = "\"Repent, and thou shalt be saved!\""
+ru = "«Покайся — и спасён будешь!»"
+
+[d3cd7cebc154]
+en = "\"Thou shalt pay for thine insolence!\""
+ru = "«Ты заплатишь за свою дерзость!»"
+
+[22bba30610fe]
+en = "\"Very soon, my child, thou shalt meet thy maker.\""
+ru = "«Очень скоро, дитя моё, ты предстанешь перед своим создателем.»"
+
+[2893c44e5d94]
+en = "\"The great %s has sent me to make you pay for your sins!\""
+ru = "«Великий {1} послал меня покарать тебя за грехи!»"
+
+[4496ee598e10]
+en = "\"The wrath of %s is now upon you!\""
+ru = "«Гнев {1:gen} обрушился на тебя!»"
+
+[18250ed04c93]
+en = "\"Thy life belongs to %s now!\""
+ru = "«Отныне твоя жизнь принадлежит {1:dat}!»"
+
+[4b40bf8f33b4]
+en = "\"Dost thou wish to receive thy final blessing?\""
+ru = "«Желаешь ли получить последнее благословение?»"
+
+[da3392da55d1]
+en = "\"Thou art but a godless void.\""
+ru = "«Ты всего лишь безбожная пустота.»"
+
+[51131edb47e4]
+en = "\"Thou art not worthy to seek the Amulet.\""
+ru = "«Ты недостоин искать Амулет.»"
+
+[f50a7270c2dc]
+en = "\"No one expects the Spanish Inquisition!\""
+ru = "«Никто не ждёт испанской инквизиции!»"
+
+[06a42f2a87bd]
+en = "\"Judgment hath been passed upon thee, %s.\""
+ru = "«Над тобой свершён суд, {1}.»"
+
+[a612e67218c8]
+en = "\"Thy reckoning is at hand, %s.\""
+ru = "«Час расплаты близок, {1}.»"
+
+[c53b4c986d1c]
+en = "\"Thou shalt be brought before %s for thy crimes!\""
+ru = "«Ты предстанешь перед {1:ins} за свои преступления!»"
+
+[704572c3cae6]
+en = "\"With %s as my witness, I shall strike thee down.\""
+ru = "«{1:cap} мне свидетель — я сражу тебя.»"
+
+[a10845fbb711]
+en = "[You are banished from %s for betraying your allegiance to %s.]"
+ru = "[Вы изгнаны из {1:gen} за измену {2:dat}.]"
+
+[5b578385b9c9]
+en = "\"You have betrayed all those who hold allegiance to %s, as you once did.\nMy allegiance to %s holds fast and I cannot condone or accept what you\nhave done.\n\nLeave this place.  You shall never set foot at %s again.\nThat which you seek is now lost forever, for without the Bell of Opening,\nyou will never be able to enter the place where he who has the Amulet\nresides.\n\nGo now!  You are banished from this place."
+ru = "«Вы предали всех, кто хранит верность {1:dat}, как когда-то хранили её вы.\nМоя верность {2:dat} непоколебима, и я не могу ни простить, ни принять\nтого, что вы сделали.\n\nПокиньте это место.  Нога ваша больше никогда не ступит в {3:acc}.\nТо, что вы ищете, потеряно навеки: без Колокола Открытия\nвам никогда не войти туда, где пребывает тот, у кого Амулет.\n\nУходите!  Вы изгнаны отсюда."
+
+[c810081dbb5b]
+en = "\"I first mistook thee for a statue, when I regarded thy head of stone.\""
+ru = "«Я было принял тебя за статую — уж больно каменная у тебя голова.»"
+
+[c7ac309e7127]
+en = "\"Come here often?\""
+ru = "«Часто здесь бываешь?»"
+
+[bad2e2a25bad]
+en = "\"Doth pain excite thee?  Wouldst thou prefer the whip?\""
+ru = "«Боль тебя возбуждает?  Может, предпочтёшь кнут?»"
+
+[92dbcaf784ef]
+en = "\"Thinkest thou it shall tickle as I rip out thy lungs?\""
+ru = "«Думаешь, будет щекотно, когда я вырву тебе лёгкие?»"
+
+[f0a44baf0ded]
+en = "\"Eat slime and die!\""
+ru = "«Жри слизь и сдохни!»"
+
+[e6e27e6e9556]
+en = "\"Go ahead, fetch thy mama!  I shall wait.\""
+ru = "«Давай, сбегай за мамочкой!  Я подожду.»"
+
+[8f83ba4c8759]
+en = "\"Go play leapfrog with a herd of unicorns!\""
+ru = "«Ступай поиграй в чехарду со стадом единорогов!»"
+
+[e056ded7e6c9]
+en = "\"Hast thou been drinking, or art thou always so clumsy?\""
+ru = "«Ты пьян или всегда такой неуклюжий?»"
+
+[8b6bf356c796]
+en = "\"This time I shall let thee off with a spanking, but let it not happen again.\""
+ru = "«На сей раз отделаешься поркой, но чтоб больше такого не было.»"
+
+[8e0d05cf55bb]
+en = "\"I've met smarter (and prettier) acid blobs.\""
+ru = "«Я встречал кислотные сгустки и поумнее (и покрасивее).»"
+
+[b16d8f3d50db]
+en = "\"Look!  Thy bootlace is undone!\""
+ru = "«Гляди!  У тебя шнурок развязался!»"
+
+[d9e9450978f8]
+en = "\"Mercy!  Dost thou wish me to die of laughter?\""
+ru = "«Помилуй!  Хочешь, чтобы я помер со смеху?»"
+
+[2ee7ca3644bf]
+en = "\"Run away!  Live to flee another day!\""
+ru = "«Беги!  Доживи до следующего бегства!»"
+
+[057c29230b65]
+en = "\"Thou hadst best fight better than thou canst dress!\""
+ru = "«Дерись хоть лучше, чем одеваешься!»"
+
+[bc74cd85a025]
+en = "\"Twixt thy cousin and thee, Medusa is the prettier.\""
+ru = "«Из вас с кузиной Медуза — та, что красивее.»"
+
+[d7081fc3c2bb]
+en = "\"Methinks thou wert unnaturally stirred by yon corpse back there, eh, varlet?\""
+ru = "«Сдаётся мне, тот труп позади взволновал тебя как-то противоестественно, а, негодяй?»"
+
+[ce5bea4550e8]
+en = "\"Up thy nose with a rubber hose!\""
+ru = "«Резиновый шланг тебе в нос!»"
+
+[24400e750e41]
+en = "\"Verily, thy corpse could not smell worse!\""
+ru = "«Воистину, даже твой труп не смердел бы хуже!»"
+
+[082d00eeb376]
+en = "\"Wait!  I shall polymorph into a grid bug to give thee a fighting chance!\""
+ru = "«Постой!  Я превращусь в ситового жучка, чтобы дать тебе хоть какой-то шанс!»"
+
+[a7bf70a9c0c9]
+en = "\"Why search for the Amulet?  Thou wouldst but lose it, cretin.\""
+ru = "«Зачем тебе Амулет?  Всё равно потеряешь, болван.»"
+
+[c9e59aaa6210]
+en = "\"Thy gaze is so vacant, I thought thee a floating eye!\""
+ru = "«Взгляд у тебя такой пустой, что я принял тебя за парящее око!»"
+
+[5045c2a4978a]
+en = "\"Thy head is unfit for a mind flayer to munch upon!\""
+ru = "«Твоя голова не годится в пищу даже пожирателю разума!»"
+
+[639363a2da95]
+en = "\"Only thy reflection could love thee!\""
+ru = "«Тебя может полюбить разве что твоё отражение!»"
+
+[192077760360]
+en = "\"Hast thou considered masking thine odour?\""
+ru = "«Ты не думал как-нибудь скрыть свою вонь?»"
+
+[4de873609a03]
+en = "\"Hold! Thy face is a most exquisite torture!\""
+ru = "«Стой!  Твоё лицо — изысканнейшая пытка!»"
+
+[70dc24e85ee5]
+en = "\"I should fart in thy direction, but it might improve thy smell!\""
+ru = "«Я бы пустил ветры в твою сторону, да боюсь, твой запах от этого только улучшится!»"
+
+[af2ce8be4942]
+en = "[%s has chosen you to recover the Amulet of Yendor for %s.]"
+ru = "[{1} {1:gender|избрал|избрала|избрало|избрали} вас, чтобы вернуть {1:gender|ему|ей|ему|им} Амулет Йендора.{2:skip}]"
+
+[670f2a410935]
+en = "It is written in the Book of %s:\n\n    After the Creation, the cruel god Moloch rebelled\n    against the authority of Marduk the Creator.\n    Moloch stole from Marduk the most powerful of all\n    the artifacts of the gods, the Amulet of Yendor,\n    and he hid it in the dark cavities of Gehennom, the\n    Under World, where he now lurks, and bides his time.\n\nYour %s %s seeks to possess the Amulet, and with it\nto gain deserved ascendance over the other gods.\n\nYou, a newly trained %s, have been heralded\nfrom birth as the instrument of %s.  You are destined\nto recover the Amulet for your deity, or die in the\nattempt.  Your hour of destiny has come.  For the sake\nof us all:  Go bravely with %s!"
+ru = "Написано в Книге {1:gen}:\n\n    После Сотворения жестокий бог Молох восстал\n    против власти Мардука-Творца.\n    Молох похитил у Мардука могущественнейший\n    из артефактов богов — Амулет Йендора —\n    и спрятал его в тёмных пустотах Геенны,\n    Подземного мира, где ныне таится, выжидая своего часа.\n\n{3:gender|Ваш бог|Ваша богиня|Ваше божество|Ваши боги}{2:skip} {3} {3:gender|стремится|стремится|стремится|стремятся} завладеть Амулетом, а с ним\nобрести заслуженное превосходство над прочими богами.\n\nВы, {hero:gender|только что обученный|только что обученная} {4:hero}, с самого рождения\nбыли предназначены стать орудием {5:gen}.  Вам суждено\nвернуть Амулет своему божеству или погибнуть, пытаясь.\nПробил час вашей судьбы.  Ради всех нас: ступайте смело, и да пребудет с вами {6}!"
+
+[56a8ff47019a]
+en = "It is written in the Book of %s:\n\n    After the Creation, the cruel god Moloch rebelled\n    against the authority of Marduk the Creator.\n    Moloch stole from Marduk the most powerful of all\n    the artifacts of the gods, the Amulet of Yendor,\n    and he hid it in the dark cavities of Gehennom, the\n    Under World, where he now lurks, and bides his time.\n\nYour %s %s seeks to possess the Amulet, and with it\nto gain deserved ascendance over the other gods.\n\nYou, an untrained %s, have been unable to adequately\nprepare to be the instrument of %s.  Nevertheless, you\nare destined to recover the Amulet for your deity, or die\nin the attempt.  Your hour of destiny has come.  For the\nsake of us all:  Go bravely with %s!"
+ru = "Написано в Книге {1:gen}:\n\n    После Сотворения жестокий бог Молох восстал\n    против власти Мардука-Творца.\n    Молох похитил у Мардука могущественнейший\n    из артефактов богов — Амулет Йендора —\n    и спрятал его в тёмных пустотах Геенны,\n    Подземного мира, где ныне таится, выжидая своего часа.\n\n{3:gender|Ваш бог|Ваша богиня|Ваше божество|Ваши боги}{2:skip} {3} {3:gender|стремится|стремится|стремится|стремятся} завладеть Амулетом, а с ним\nобрести заслуженное превосходство над прочими богами.\n\nВы, {hero:gender|необученный|необученная} {4:hero}, так и не смогли как следует\nподготовиться к тому, чтобы стать орудием {5:gen}.  И всё же вам суждено\nвернуть Амулет своему божеству или погибнуть, пытаясь.\nПробил час вашей судьбы.  Ради всех нас: ступайте смело, и да пребудет с вами {6}!"
+
+[ddfce0f91a54]
+en = "\"The silver bell which was hoarded by %s will be\nessential in locating the Amulet of Yendor.\""
+ru = "«Серебряный колокол, что хранил{1:gender||а|о|и} {1}, понадобится,\nчтобы отыскать Амулет Йендора.»"
+not_terms = ["bell"]
+
+[030a8216c1d6]
+en = "Look for a ...ic transporter."
+ru = "Ищите ...ический переносчик."
+
+[5d55c11ab04c]
+en = "You couldn't quite make out that last message."
+ru = "Последнее послание вы толком не разобрали."
+
+[758e7a572f8a]
+en = "Your help is urgently needed at %s!"
+ru = "Ваша помощь срочно нужна в {1:loc}!"
+
+[949fd7401f66]
+en = "You receive a faint telepathic message from %s:\nYour help is urgently needed at %s!\nLook for a ...ic transporter.\nYou couldn't quite make out that last message."
+ru = "Вы получаете слабое телепатическое послание от {1:gen}:\nВаша помощь срочно нужна в {2:loc}!\nИщите ...ический переносчик.\nПоследнее послание вы толком не разобрали."
+
+[e005dc7323a5]
+en = "You receive a faint telepathic message from %s:"
+ru = "Вы получаете слабое телепатическое послание от {1:gen}:"
+
+[bfbad19d853d]
+en = "You again sense %s pleading for help."
+ru = "Вы снова чувствуете, как {1} молит о помощи."
+
+[2fd0251a65df]
+en = "You again sense %s demanding your attendance."
+ru = "Вы снова чувствуете, как {1} требует вашего присутствия."
