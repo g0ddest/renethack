@@ -1,0 +1,275 @@
+# R6 quest texts: Arc (dat/quest.lua).
+
+[8b291a1670dd]
+en = "[%s has stolen %s.  Locate %s, defeat %s, and return %s.]"
+ru = "[{1:cap} {1:gender|похитил|похитила|похитило|похитили} {2:acc}.  Найдите {3:acc}, победите {4:skip}его и верните {2:gender|его|её|его|их}.{5:skip}]"
+
+[b0b0bdebc19e]
+en = "\"Grave times have befallen the college, for %s has\nstolen %s.  Without it, the board of directors of\nthe university will soon have no choice but to revoke our research grants.\n\n\"You must locate the entrance to %s.  Within it,\nyou will find %s.\n\n\"You must then defeat %s and return %s\nto me.\n\n\"Only in this way will we be able to prevent the budget cuts that could\nclose this college.\n\n\"May the wisdom of %s be your guide.\""
+ru = "«Тяжёлые времена настали для колледжа, ибо {1} {1:gender|похитил|похитила|похитило|похитили}\n{2:acc}.  Без неё совет директоров университета\nвскоре будет вынужден отозвать наши исследовательские гранты.\n\nВы должны найти вход в {3:acc}.  Там\nвы найдёте {4:acc}.\n\nЗатем вы должны победить {5:acc} и вернуть мне\n{6:acc}.\n\nТолько так мы сможем предотвратить урезание бюджета, которое может\nзакрыть этот колледж.\n\nДа будет мудрость {7:gen} вашим проводником.»"
+
+[cc0a24c00e6c]
+en = "[\"%s, you have strayed from the %s path.  Purify yourself!\"]"
+ru = "[«{1}, вы сошли с {2:m:gen} пути.  Очиститесь!»]"
+
+[43ec05c5f7e0]
+en = "\"%s!  I've heard that you've been using sloppy techniques.  Your\nresults lately can hardly be called suitable for %s!\n\n\"How could you have strayed from the %s path?  Go from here, and come\nback only when you have purified yourself.\""
+ru = "«{1}!  До меня дошли слухи о ваших небрежных методах.  Ваши\nпоследние результаты едва ли достойны {2:gen}!\n\nКак вы могли сойти с {3:m:gen} пути?  Ступайте отсюда и возвращайтесь,\nлишь когда очиститесь.»"
+
+[69913bd0b3d5]
+en = "[%s, a mere %s is too inexperienced.]"
+ru = "[{1}, простой {2} — слишком неопытен.]"
+
+[1aacc53afe39]
+en = "\"%s, you are yet too inexperienced to undertake such a demanding\nquest.  A mere %s could not possibly face the rigors demanded and\nsurvive.  Go forth, and come here again when your adventures have further\ntaught you.\""
+ru = "«{1}, вы ещё слишком неопытны, чтобы взяться за столь трудное\nзадание.  Простой {2} никак не выдержит всех его тягот\nи не выживет.  Ступайте и возвращайтесь, когда приключения\nнаучат вас большему.»"
+
+[ea64dad2c83a]
+en = "\"Try your best, %s.  You cannot defeat me.\""
+ru = "«Старайся, {1}.  Тебе меня не победить.»"
+
+[7d0263059d66]
+en = "\"I shall rend the flesh from your body whilst you still breathe!\""
+ru = "«Я сдеру плоть с твоих костей, пока ты ещё дышишь!»"
+
+[0d37c0c51457]
+en = "\"First you, %s, then I shall destroy your mentor, %s.\""
+ru = "«Сначала ты, {1}, а потом я уничтожу и твоего наставника, {2:acc}.»"
+
+[4eb7113b39c1]
+en = "\"Tiring yet, %s?  I draw my power from my master and cannot falter!\""
+ru = "«Устаёшь, {1}?  Я черпаю силу у своего хозяина и не дрогну!»"
+
+[990eebafe299]
+en = "\"I shall rend thy soul from thy body and consume it!\""
+ru = "«Я вырву душу из твоего тела и пожру её!»"
+
+[660a5ad0df37]
+en = "\"You are far too %s -- it weakens you.  You shall die in this place.\""
+ru = "«Ты слишком уж {1:hero} — это тебя ослабляет.  Ты умрёшь здесь.»"
+
+[fd370c11bccd]
+en = "\"%s has forsaken you!  You are lost now!\""
+ru = "«{1:cap} {1:gender|покинул|покинула|покинуло|покинули} тебя!  Теперь ты пропал{hero:gender||а}!»"
+
+[7898d8d2d358]
+en = "\"A mere %s cannot hope to defeat me!\""
+ru = "«Простому {1:dat} меня не победить!»"
+
+[4fe7ae268cc6]
+en = "\"If you are the best %s can send, I have nothing to fear.\""
+ru = "«Если ты лучшее, что {1} {1:gender|смог|смогла|смогло|смогли} прислать, мне нечего бояться.»"
+
+[0043c7de602a]
+en = "\"Die %s!  I shall exhibit your carcass as a trophy.\""
+ru = "«Умри, {1:hero}!  Я выставлю твою тушу как трофей.»"
+
+[79cbf11c6031]
+en = "\"Beware, for %s is powerful and cunning.\""
+ru = "«Берегитесь: {1} могуч и хитёр.»"
+
+[c6d37b2c4982]
+en = "\"To locate the entrance to %s, you must pass many traps.\""
+ru = "«Чтобы найти вход в {1:acc}, придётся миновать множество ловушек.»"
+
+[f24deed2fe60]
+en = "\"A %s may be vulnerable to attacks by magical cold.\""
+ru = "«{1:cap} может быть уязвим для волшебного холода.»"
+
+[cd8334935065]
+en = "\"Call upon %s when you encounter %s.\""
+ru = "«Взывайте к {1:dat}, когда встретите {2:acc}.»"
+
+[b7c090a52cba]
+en = "\"You must destroy %s.  It will pursue you otherwise.\""
+ru = "«Вы должны уничтожить {1:acc}.  Иначе он будет вас преследовать.»"
+
+[511dbfa54ab2]
+en = "\"%s is a mighty talisman.  With it you can destroy %s.\""
+ru = "«{1:cap} — могучий талисман.  С ним вы сможете уничтожить {2:acc}.»"
+
+[d09aa8fc1bdf]
+en = "\"Go forth with the blessings of %s.\""
+ru = "«Ступайте с благословением {1:gen}.»"
+
+[734993a9e7f7]
+en = "\"I will have my %s watch for your return.\""
+ru = "«Я велю моим {1:dat} ждать вашего возвращения.»"
+
+[f498e97bdc29]
+en = "\"Remember not to stray from the true %s path.\""
+ru = "«Помните: не сходите с истинного {1:m:gen} пути.»"
+
+[1d0e62111b93]
+en = "\"You may be able to sense %s when you are near.\""
+ru = "«Возможно, вы почувствуете {1:acc}, когда окажетесь рядом.»"
+
+[3c14bc71dba9]
+en = "[You arrive at %s, but all is not well.]"
+ru = "[Вы прибываете в {1:acc}, но там неладно.]"
+
+[c8f80a51214e]
+en = "You are suddenly in familiar surroundings.  The buildings in the distance\nseem to be those of your old alma mater, but something is wrong.  It feels\nas if there has been a riot recently, or %s has\nbeen under siege.\n\nAll of the windows are boarded up, and there are objects scattered around\nthe entrance.\n\nStrange forbidding shapes seem to be moving in the distance."
+ru = "Вы внезапно оказываетесь в знакомых местах.  Здания вдали похожи\nна вашу старую альма-матер, но что-то не так.  Такое чувство,\nбудто недавно здесь был бунт или {1} {1:gender|был|была|было|были}\nв осаде.\n\nВсе окна заколочены, а у входа разбросаны\nкакие-то предметы.\n\nВдали, кажется, движутся странные грозные силуэты."
+
+[17a1f57256b2]
+en = "You have returned to %s lair."
+ru = "Вы вернулись в логово {1:gen}."
+
+[e80fdb27eb71]
+en = "[This strange feeling must be the presence of %s.]"
+ru = "[Это странное чувство — наверняка присутствие {1:gen}.]"
+
+[11231377f4f2]
+en = "A strange feeling washes over you, and you think back to things you\nlearned during the many lectures of %s.\n\nYou realize the feeling must be the presence of %s."
+ru = "Вас охватывает странное чувство, и вы вспоминаете то, что\nузнали на многочисленных лекциях {1:gen}.\n\nВы понимаете, что это чувство — присутствие {2:gen}."
+
+[0fc035fc576c]
+en = "The familiar presence of %s is in the ether."
+ru = "В эфире ощущается знакомое присутствие {1:gen}."
+
+[c7a90ed5ad13]
+en = "[The power of %s flows through your body!  You must return it to %s.]"
+ru = "[Сила {1:gen} струится по вашему телу!  Вы должны вернуть {1:gender|его|её|его|их} {2:dat}.]"
+
+[0b28d1bead28]
+en = "The power of %s flows through your body!  You feel\nas if you could now take on the Wizard of Yendor himself and win, but\nyou know you must return %s to %s."
+ru = "Сила {1:gen} струится по вашему телу!  Вам кажется,\nчто теперь вы одолели бы и самого Волшебника Йендора, но\nвы знаете, что должны вернуть {2:acc} {3:dat}."
+
+[7876dc7f21cd]
+en = "\"Did you see Lash LaRue in 'Song of Old Wyoming' the other night?\""
+ru = "«Видели на днях Лэша Ларю в „Песне старого Вайоминга“?»"
+
+[0289315a452a]
+en = "\"Hey man, got any potions of hallucination for sale?\""
+ru = "«Слышь, дружище, зелий галлюцинации на продажу не найдётся?»"
+
+[deb2945544ed]
+en = "\"I guess you are guaranteed to make full professor now.\""
+ru = "«Теперь-то вам точно дадут полного профессора.»"
+
+[eb421ed6b824]
+en = "\"So, what was worse, %s or your entrance exams?\""
+ru = "«Ну и что было хуже — {1} или вступительные экзамены?»"
+
+[f617acc3e189]
+en = "\"%s is impressive, but nothing like the bones I dug up!\""
+ru = "«{1:cap} впечатляет, но куда {1:gender|ему|ей|ему|им} до костей, что я откопал!»"
+
+[74154bba6904]
+en = "\"Did you see the artifact %s brought back from the last dig?\""
+ru = "«Видели артефакт, который {1} {1:gender|привёз|привезла|привезло|привезли} с последних раскопок?»"
+
+[63476e892c7a]
+en = "\"So what species do *you* think we evolved from?\""
+ru = "«А от какого вида, по-*вашему*, мы произошли?»"
+
+[211059dc6fed]
+en = "\"So you're %s prize pupil!  I don't know what he sees in you.\""
+ru = "«Так вы — лучший ученик {1:gen}!  Не понимаю, что он в вас нашёл.»"
+
+[425be27bcf2d]
+en = "[Take the Amulet to the Astral Plane and sacrifice it at the altar of %s.]"
+ru = "[Отнесите Амулет на Астральный план и принесите его в жертву на алтаре {1:gen}.]"
+
+[62c6af15e8b0]
+en = "\"Congratulations, %s.  I wondered if anyone could prevail against\nthe Wizard and the minions of Moloch.  Now, you must embark on one\nfinal adventure.\n\n\"Take the Amulet, and find your way onto the Astral Plane.\nThere you must find the altar of %s and sacrifice the\nAmulet on that altar to fulfill your destiny.\n\n\"Remember, your path now should always be upwards.\""
+ru = "«Поздравляю, {1}.  Я гадал, сможет ли кто-нибудь одолеть\nВолшебника и прислужников Молоха.  Теперь вам предстоит последнее\nприключение.\n\nВозьмите Амулет и найдите путь на Астральный план.\nТам вы должны отыскать алтарь {2:gen} и принести\nАмулет в жертву на этом алтаре, чтобы исполнить свою судьбу.\n\nПомните: теперь ваш путь — всегда наверх.»"
+
+[634fd4aae855]
+en = "The body of %s dissipates in a cloud of noxious fumes."
+ru = "Тело {1:gen} рассеивается облаком ядовитых испарений."
+
+[cef2259a652a]
+en = "[\"You have returned, %s, to a difficult task.\"]"
+ru = "[«Вы вернулись, {1}, к трудной задаче.»]"
+
+[5ba5a1104b77]
+en = "\"Finally you have returned, %s.  You were always\nmy most promising student.  Allow me to see if you are ready for the\nmost difficult task of your career.\""
+ru = "«Наконец-то вы вернулись, {1}.  Вы всегда были\n{hero:gender|моим самым многообещающим учеником|моей самой многообещающей ученицей}.  Позвольте мне проверить, готовы ли вы\nк самой трудной задаче в своей карьере.»"
+
+[41fde25c5ebc]
+en = "[\"%s, you have failed us.  Begone!\"]"
+ru = "[«{1}, вы нас подвели.  Прочь!»]"
+
+[70735f78f626]
+en = "\"%s, you have failed us.  All of my careful training has been in\nvain.  Begone!  Your tenure at this college has been revoked!\n\n\"You are a disgrace to the profession!\""
+ru = "«{1}, вы нас подвели.  Всё моё старательное обучение\nпошло прахом.  Прочь!  Ваша должность в этом колледже упразднена!\n\nВы позор профессии!»"
+
+[c0460c5cc62e]
+en = "\"Again, %s, you stand before me.\nLet me see if you have gained experience in the interim.\""
+ru = "«И снова, {1}, вы стоите передо мной.\nПосмотрим, набрались ли вы тем временем опыта.»"
+
+[33ca0a0602ca]
+en = "\"Once more, %s, you have returned from the field.\nAre you finally ready for the task that must be accomplished?\""
+ru = "«Вы опять вернулись с раскопок, {1}.\nГотовы ли вы наконец к заданию, которое должно быть исполнено?»"
+
+[1c151effd7cc]
+en = "[This foreboding edifice must hide the entrance to %s.]"
+ru = "[Это зловещее здание, должно быть, скрывает вход в {1:acc}.]"
+
+[98e14092fc2d]
+en = "A plain opens before you.  Beyond the plain lies a foreboding edifice.\n\nYou have the feeling that you will soon find the entrance to\n%s."
+ru = "Перед вами открывается равнина.  За ней высится зловещее здание.\n\nУ вас такое чувство, что скоро вы найдёте вход в\n{1:acc}."
+
+[ec776beb4a24]
+en = "Once again, you are near the entrance to %s."
+ru = "Вы снова у входа в {1:acc}."
+
+[d23acbc2617e]
+en = "[\"Come, %s, I shall destroy you!\"]"
+ru = "[«Подходи, {1}, я тебя уничтожу!»]"
+
+[b39cacc6b1e4]
+en = "\"So, %s, you think that you can succeed in recovering\n%s, when your teacher, %s, has already failed.\n\n\"Come, try your best!  I shall destroy you, and gnaw on your bones.\""
+ru = "«Итак, {1}, ты думаешь, что сумеешь вернуть\n{2:acc}, когда твой учитель, {3}, уже потерпел неудачу?\n\nЧто ж, попробуй!  Я уничтожу тебя и обглодаю твои кости.»"
+
+[5cf6d4bc4240]
+en = "[\"Again you try to best me, %s?  You shall never recover %s.\"]"
+ru = "[«Опять пытаешься меня одолеть, {1}?  Тебе никогда не вернуть {2:acc}.»]"
+
+[b3779227222c]
+en = "\"Again you try to best me, eh %s?  Well, you shall fail again.\n\n\"You shall never recover %s.\n\n\"I shall bear your soul to the Plane of Origins for my master's pleasure.\""
+ru = "«Опять пытаешься меня одолеть, а, {1}?  Что ж, снова проиграешь.\n\nТебе никогда не вернуть {2:acc}.\n\nЯ унесу твою душу на План Первоначал на потеху моему хозяину.»"
+
+[9254f3865e82]
+en = "\"You persist yet %s!  Good.  Now, you shall die!\""
+ru = "«Ты всё упорствуешь, {1}!  Хорошо.  Теперь ты умрёшь!»"
+
+[5ea0d69b3cf9]
+en = "\"I shall have %s from you, %s, then feast\nupon your entrails!\""
+ru = "«Я заберу у тебя {1:acc}, {2}, а потом попирую\nтвоими потрохами!»"
+
+[7311ea3c11f8]
+en = "Once again, you are back at %s."
+ru = "Вы снова в {1:loc}."
+
+[178ad5e5618f]
+en = "[%s instructs you to guard %s from now on.]"
+ru = "[{1:cap} велит вам отныне хранить {2:acc}.]"
+not_terms = ["guard"]
+
+[f2acabbe3c69]
+en = "%s touches %s briefly, gazes into it,\nthen smiles at you and says:\n\n\"Well done, %s.  You have defeated %s and\nrecovered %s.  But I fear that it shall never be safe\nhere.\n\nPlease take %s with you.  You, %s, can\nguard it now far better than I.\n\nMay the blessings of %s follow you and guard you.\""
+ru = "{1:cap} касается {2:gen}, вглядывается в {2:gender|него|неё|него|них},\nзатем улыбается вам и говорит:\n\n«Отлично, {3}.  Вы победили {4:acc} и\nвернули {5:acc}.  Но боюсь, здесь {5:gender|он|она|оно|они} никогда\nне будет в безопасности.\n\nПрошу, возьмите {6:acc} с собой.  Вы, {7}, сумеете\nхранить {6:gender|его|её|его|их} куда лучше меня.\n\nДа сопутствует вам и хранит вас благословение {8:gen}.»"
+not_terms = ["guard"]
+
+[611b368b9cc4]
+en = "[\"Resume your search for the Amulet beyond the magic portal to %s.\"]"
+ru = "[«Продолжите поиски Амулета за волшебным порталом в {1:acc}.»]"
+
+[0f113a1e02f3]
+en = "\"Careful, %s!  %s might break, and that would be\na tragic loss.  You are its keeper now, and the time has come to\nresume your search for the Amulet.  %s await your\nreturn through the magic portal that brought you here.\""
+ru = "«Осторожнее, {1}!  {2:cap} может разбиться, и это была бы\nтрагическая потеря.  Теперь вы {2:gender|его|её|его|их} хранитель, и пришло время\nпродолжить поиски Амулета.  {3:cap} {3:num|ждёт|ждут} вашего\nвозвращения через волшебный портал, что привёл вас сюда.»"
+
+[3654483e6ff1]
+en = "You are back at %s.\nYou have an odd feeling this may be the last time you ever come here."
+ru = "Вы снова в {1:loc}.\nУ вас странное чувство, что вы здесь в последний раз."
+
+[452999d0b90c]
+en = "[\"Have you progressed with your quest to regain the Amulet of Yendor for %s?\"]"
+ru = "[«Продвинулись ли вы в поисках Амулета Йендора для {1:gen}?»]"
+
+[01c3061fdcc7]
+en = "\"Welcome back, %s.  Have you progressed with your quest to\nregain the Amulet of Yendor for %s?\""
+ru = "«С возвращением, {1}.  Продвинулись ли вы в поисках\nАмулета Йендора для {2:gen}?»"
