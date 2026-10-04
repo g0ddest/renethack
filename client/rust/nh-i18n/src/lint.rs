@@ -137,7 +137,7 @@ fn check(catalog: &Catalog, tr: &Translation, glossary: &Glossary) -> Vec<String
                     p.source
                 ));
             }
-            Some(Select::Gender(_) | Select::Num(_)) if number => {
+            Some(Select::Gender(_) | Select::Sg(_) | Select::Num(_)) if number => {
                 out.push(format!(
                     "{{{}}}: argument {n} is a number: use plural",
                     p.source
@@ -172,15 +172,16 @@ fn check(catalog: &Catalog, tr: &Translation, glossary: &Glossary) -> Vec<String
         }
     }
     let ru_text = tr.template.render(&[], crate::grammar::Gender::Masc);
+    let en_lower = tr.en.to_lowercase();
     for word in latin_words(&ru_text) {
-        if !tr.en.contains(word) {
+        // the answers a question takes stay as the engine reads them
+        if !has_word(&en_lower, &word.to_lowercase()) {
             out.push(format!("English left in the translation: {word:?}"));
         }
     }
-    let en_lower = tr.en.to_lowercase();
     let ru_lower = tr.ru.to_lowercase();
     for term in &glossary.terms {
-        if has_word(&en_lower, &term.en.to_lowercase())
+        if names_term(&tr.en, &term.en)
             && !term.ru.iter().any(|f| ru_lower.contains(&f.to_lowercase()))
         {
             out.push(format!(
@@ -191,6 +192,20 @@ fn check(catalog: &Catalog, tr: &Translation, glossary: &Glossary) -> Vec<String
         }
     }
     out
+}
+
+/// Does the English name the term? A name with a capital ("Set", the god)
+/// only with its capital and not where a sentence begins ("Set %s to
+/// what?"), a word in any case.
+fn names_term(en: &str, term: &str) -> bool {
+    if !term.chars().next().is_some_and(char::is_uppercase) {
+        return has_word(&en.to_lowercase(), &term.to_lowercase());
+    }
+    en.match_indices(term).any(|(i, _)| {
+        let before = en[..i].trim_end();
+        let starts = before.is_empty() || before.ends_with(['.', '!', '?', ':', '"']);
+        has_word(&en[i.saturating_sub(1)..], term) && !starts
+    })
 }
 
 /// The words of Latin letters in a text.

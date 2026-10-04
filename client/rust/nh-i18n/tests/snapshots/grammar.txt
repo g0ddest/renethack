@@ -283,6 +283,270 @@
   f    Ваша мудрость была: крыса.
   n    Ваша мудрость была: копьё.
   pl   Ваша мудрость была: 3 стрелы.
+"Hello stranger, who are you?" -  [9cee2fa2391c]
+  =   «Привет, незнакомец, кто ты такой?» —
+"Shall I remove your apron, dear?"  [62b03dcd0962]
+  =   «Можно снять с тебя фартук, дорогой?»
+"Shall I remove your apron, lover?"  [b6be3e03fb1d]
+  =   «Можно снять с тебя фартук, милый?»
+"Shall I remove your apron, sweetheart?"  [104b1eba31f3]
+  =   «Можно снять с тебя фартук, сладкий?»
+"Shall I remove your boots, dear?"  [4a0abce77424]
+  =   «Можно снять с тебя сапоги, дорогой?»
+"Shall I remove your boots, lover?"  [daf0660ae296]
+  =   «Можно снять с тебя сапоги, милый?»
+"Shall I remove your boots, sweetheart?"  [3785e83fc378]
+  =   «Можно снять с тебя сапоги, сладкий?»
+"Shall I remove your cloak, dear?"  [0673388cd82e]
+  =   «Можно снять с тебя плащ, дорогой?»
+"Shall I remove your cloak, lover?"  [6b6c91d440b4]
+  =   «Можно снять с тебя плащ, милый?»
+"Shall I remove your cloak, sweetheart?"  [7f2c3a63b636]
+  =   «Можно снять с тебя плащ, сладкий?»
+"Shall I remove your dragon mail, dear?"  [b1035917517d]
+  =   «Можно снять с тебя драконью броню, дорогой?»
+"Shall I remove your dragon mail, lover?"  [94ee01e6eb0f]
+  =   «Можно снять с тебя драконью броню, милый?»
+"Shall I remove your dragon mail, sweetheart?"  [53e57cb8415d]
+  =   «Можно снять с тебя драконью броню, сладкий?»
+"Shall I remove your dragon scales, dear?"  [595ee13a75a6]
+  =   «Можно снять с тебя драконью чешую, дорогой?»
+"Shall I remove your dragon scales, lover?"  [ba6698ed8314]
+  =   «Можно снять с тебя драконью чешую, милый?»
+"Shall I remove your dragon scales, sweetheart?"  [057359f6af0f]
+  =   «Можно снять с тебя драконью чешую, сладкий?»
+"Shall I remove your gloves, dear?"  [60bc23df62e8]
+  =   «Можно снять с тебя перчатки, дорогой?»
+"Shall I remove your gloves, lover?"  [084beaf9ddfd]
+  =   «Можно снять с тебя перчатки, милый?»
+"Shall I remove your gloves, sweetheart?"  [c9091a7c3c66]
+  =   «Можно снять с тебя перчатки, сладкий?»
+"Shall I remove your hat, dear?"  [d2249b253e6e]
+  =   «Можно снять с тебя шляпу, дорогой?»
+"Shall I remove your hat, lover?"  [bc5e1ff7dd04]
+  =   «Можно снять с тебя шляпу, милый?»
+"Shall I remove your hat, sweetheart?"  [dcc196237a9e]
+  =   «Можно снять с тебя шляпу, сладкий?»
+"Shall I remove your helm, dear?"  [ce93489a73ee]
+  =   «Можно снять с тебя шлем, дорогой?»
+"Shall I remove your helm, lover?"  [73c045c2a684]
+  =   «Можно снять с тебя шлем, милый?»
+"Shall I remove your helm, sweetheart?"  [50acc3ac06e2]
+  =   «Можно снять с тебя шлем, сладкий?»
+"Shall I remove your jacket, dear?"  [ca3cdec1a385]
+  =   «Можно снять с тебя куртку, дорогой?»
+"Shall I remove your jacket, lover?"  [7ee4d32d4c96]
+  =   «Можно снять с тебя куртку, милый?»
+"Shall I remove your jacket, sweetheart?"  [ddb5da7a4c75]
+  =   «Можно снять с тебя куртку, сладкий?»
+"Shall I remove your mail, dear?"  [203a8be63a66]
+  =   «Можно снять с тебя кольчугу, дорогой?»
+"Shall I remove your mail, lover?"  [b0d9ed8a90d4]
+  =   «Можно снять с тебя кольчугу, милый?»
+"Shall I remove your mail, sweetheart?"  [507c8b4a139f]
+  =   «Можно снять с тебя кольчугу, сладкий?»
+"Shall I remove your robe, dear?"  [93200ed1243a]
+  =   «Можно снять с тебя мантию, дорогой?»
+"Shall I remove your robe, lover?"  [4b23e9476e94]
+  =   «Можно снять с тебя мантию, милый?»
+"Shall I remove your robe, sweetheart?"  [4550db5c7c7a]
+  =   «Можно снять с тебя мантию, сладкий?»
+"Shall I remove your shield, dear?"  [5d9fefb06937]
+  =   «Можно снять с тебя щит, дорогой?»
+"Shall I remove your shield, lover?"  [8294eb7e3a83]
+  =   «Можно снять с тебя щит, милый?»
+"Shall I remove your shield, sweetheart?"  [11340f77d026]
+  =   «Можно снять с тебя щит, сладкий?»
+"Shall I remove your shirt, dear?"  [6ad8cd316dc2]
+  =   «Можно снять с тебя рубашку, дорогой?»
+"Shall I remove your shirt, lover?"  [826430260f99]
+  =   «Можно снять с тебя рубашку, милый?»
+"Shall I remove your shirt, sweetheart?"  [d48978d8911c]
+  =   «Можно снять с тебя рубашку, сладкий?»
+"Shall I remove your smock, dear?"  [2d3a18ff85e4]
+  =   «Можно снять с тебя халат, дорогой?»
+"Shall I remove your smock, lover?"  [097786ed0226]
+  =   «Можно снять с тебя халат, милый?»
+"Shall I remove your smock, sweetheart?"  [0d403a31de97]
+  =   «Можно снять с тебя халат, сладкий?»
+"Shall I remove your suit, dear?"  [2a8b743d457a]
+  =   «Можно снять с тебя костюм, дорогой?»
+"Shall I remove your suit, lover?"  [589a9a1d1f28]
+  =   «Можно снять с тебя костюм, милый?»
+"Shall I remove your suit, sweetheart?"  [1e94fc258801]
+  =   «Можно снять с тебя костюм, сладкий?»
+"Shall I remove your wrapping, dear?"  [6c0b766f5f7c]
+  =   «Можно снять с тебя обмотки, дорогой?»
+"Shall I remove your wrapping, lover?"  [279146ab2a8c]
+  =   «Можно снять с тебя обмотки, милый?»
+"Shall I remove your wrapping, sweetheart?"  [869d0494a223]
+  =   «Можно снять с тебя обмотки, сладкий?»
+"That %s looks pretty.  May I have it?"  [f277c917d8e3]
+  m   «Какой красивый тритон.  Можно мне его взять?»
+  f   «Какая красивая крыса.  Можно мне её взять?»
+  n   «Какое красивое копьё.  Можно мне его взять?»
+  pl  «Какие красивые 3 стрелы.  Можно мне их взять?»
+"That %s looks pretty.  Would you wear it for me?"  [8e26c6da2d23]
+  m   «Какой красивый тритон.  Наденешь его для меня?»
+  f   «Какая красивая крыса.  Наденешь её для меня?»
+  n   «Какое красивое копьё.  Наденешь его для меня?»
+  pl  «Какие красивые 3 стрелы.  Наденешь их для меня?»
+"Then dost thou desire a major one?" (%d zorkmid)  [233e89d9f629]
+  m   «Тогда желаешь ли ты великого?» (1 зоркмид)
+  f   «Тогда желаешь ли ты великого?» (3 зоркмида)
+  n   «Тогда желаешь ли ты великого?» (5 зоркмидов)
+  pl  «Тогда желаешь ли ты великого?» (21 зоркмид)
+"Then dost thou desire a major one?" (%d zorkmids)  [d9efeeffc281]
+  m   «Тогда желаешь ли ты великого?» (1 зоркмид)
+  f   «Тогда желаешь ли ты великого?» (3 зоркмида)
+  n   «Тогда желаешь ли ты великого?» (5 зоркмидов)
+  pl  «Тогда желаешь ли ты великого?» (21 зоркмид)
+"Wilt thou settle for a minor consultation?" (%d zorkmid)  [fed5f0d5e0bd]
+  m   «Согласен ли ты на малое прорицание?» (1 зоркмид)
+  f   «Согласен ли ты на малое прорицание?» (3 зоркмида)
+  n   «Согласен ли ты на малое прорицание?» (5 зоркмидов)
+  pl  «Согласен ли ты на малое прорицание?» (21 зоркмид)
+"Wilt thou settle for a minor consultation?" (%d zorkmids)  [ad21f92aece3]
+  m   «Согласен ли ты на малое прорицание?» (1 зоркмид)
+  f   «Согласен ли ты на малое прорицание?» (3 зоркмида)
+  n   «Согласен ли ты на малое прорицание?» (5 зоркмидов)
+  pl  «Согласен ли ты на малое прорицание?» (21 зоркмид)
+"Yes" or "No": Drop the %s corpse without %s protection on? [yes|n] (n)  [32ffa4590cf1]
+  m   Ответьте yes или no: Положить труп тритона без защиты на тритоне? [yes|n] (n)
+  f   Ответьте yes или no: Положить труп крысы без защиты на крысе? [yes|n] (n)
+  n   Ответьте yes или no: Положить труп копья без защиты на копье? [yes|n] (n)
+  pl  Ответьте yes или no: Положить труп 3 стрел без защиты на 3 стрелах? [yes|n] (n)
+"Yes" or "No": Drop the %s corpse without %s protection on? [yes|no]  [447e1f62f2f9]
+  m   Ответьте yes или no: Положить труп тритона без защиты на тритоне? [yes|no]
+  f   Ответьте yes или no: Положить труп крысы без защиты на крысе? [yes|no]
+  n   Ответьте yes или no: Положить труп копья без защиты на копье? [yes|no]
+  pl  Ответьте yes или no: Положить труп 3 стрел без защиты на 3 стрелах? [yes|no]
+"Yes" or "No": Drop the %s corpse without %s protection on? [yes|no|quit]  [26d8b20e21bc]
+  m   Ответьте yes или no: Положить труп тритона без защиты на тритоне? [yes|no|quit]
+  f   Ответьте yes или no: Положить труп крысы без защиты на крысе? [yes|no|quit]
+  n   Ответьте yes или no: Положить труп копья без защиты на копье? [yes|no|quit]
+  pl  Ответьте yes или no: Положить труп 3 стрел без защиты на 3 стрелах? [yes|no|quit]
+"Yes" or "No": Drop the %s corpse without %s protection on? [yes|n|q] (n)  [c1d95c4b55d3]
+  m   Ответьте yes или no: Положить труп тритона без защиты на тритоне? [yes|n|q] (n)
+  f   Ответьте yes или no: Положить труп крысы без защиты на крысе? [yes|n|q] (n)
+  n   Ответьте yes или no: Положить труп копья без защиты на копье? [yes|n|q] (n)
+  pl  Ответьте yes или no: Положить труп 3 стрел без защиты на 3 стрелах? [yes|n|q] (n)
+"Yes" or "No": Drop the %s corpse without %s protection on?...? [yes|n] (n)  [55241ba61259]
+  m   Ответьте yes или no: Положить труп тритона без защиты на тритоне...? [yes|n] (n)
+  f   Ответьте yes или no: Положить труп крысы без защиты на крысе...? [yes|n] (n)
+  n   Ответьте yes или no: Положить труп копья без защиты на копье...? [yes|n] (n)
+  pl  Ответьте yes или no: Положить труп 3 стрел без защиты на 3 стрелах...? [yes|n] (n)
+"Yes" or "No": Drop the %s corpse without %s protection on?...? [yes|no]  [54e203a81f25]
+  m   Ответьте yes или no: Положить труп тритона без защиты на тритоне...? [yes|no]
+  f   Ответьте yes или no: Положить труп крысы без защиты на крысе...? [yes|no]
+  n   Ответьте yes или no: Положить труп копья без защиты на копье...? [yes|no]
+  pl  Ответьте yes или no: Положить труп 3 стрел без защиты на 3 стрелах...? [yes|no]
+"Yes" or "No": Drop the %s corpse without %s protection on?...? [yes|no|quit]  [521882213d16]
+  m   Ответьте yes или no: Положить труп тритона без защиты на тритоне...? [yes|no|quit]
+  f   Ответьте yes или no: Положить труп крысы без защиты на крысе...? [yes|no|quit]
+  n   Ответьте yes или no: Положить труп копья без защиты на копье...? [yes|no|quit]
+  pl  Ответьте yes или no: Положить труп 3 стрел без защиты на 3 стрелах...? [yes|no|quit]
+"Yes" or "No": Drop the %s corpse without %s protection on?...? [yes|n|q] (n)  [3faaf8d86b13]
+  m   Ответьте yes или no: Положить труп тритона без защиты на тритоне...? [yes|n|q] (n)
+  f   Ответьте yes или no: Положить труп крысы без защиты на крысе...? [yes|n|q] (n)
+  n   Ответьте yes или no: Положить труп копья без защиты на копье...? [yes|n|q] (n)
+  pl  Ответьте yes или no: Положить труп 3 стрел без защиты на 3 стрелах...? [yes|n|q] (n)
+"Yes" or "No": Really autoselect All? [yes|n] (n)  [27756d04234a]
+  =   Ответьте yes или no: Действительно выбрать всё? [yes|n] (n)
+"Yes" or "No": Really autoselect All? [yes|no]  [3739068984dd]
+  =   Ответьте yes или no: Действительно выбрать всё? [yes|no]
+"Yes" or "No": Really autoselect All? [yes|no|quit]  [0d65d2dab8ab]
+  =   Ответьте yes или no: Действительно выбрать всё? [yes|no|quit]
+"Yes" or "No": Really autoselect All? [yes|n|q] (n)  [28598ce4d73b]
+  =   Ответьте yes или no: Действительно выбрать всё? [yes|n|q] (n)
+"Yes" or "No": Really autoselect All?...? [yes|n] (n)  [130408b83366]
+  =   Ответьте yes или no: Действительно выбрать всё...? [yes|n] (n)
+"Yes" or "No": Really autoselect All?...? [yes|no]  [fd8159973162]
+  =   Ответьте yes или no: Действительно выбрать всё...? [yes|no]
+"Yes" or "No": Really autoselect All?...? [yes|no|quit]  [ed50586b9f71]
+  =   Ответьте yes или no: Действительно выбрать всё...? [yes|no|quit]
+"Yes" or "No": Really autoselect All?...? [yes|n|q] (n)  [025fdb947bcf]
+  =   Ответьте yes или no: Действительно выбрать всё...? [yes|n|q] (n)
+"Yes" or "No": Take off your gauntlets despite carrying a dead %s? [yes|n] (n)  [bfc764d7f941]
+  m   Ответьте yes или no: Снять рукавицы, держа мёртвого тритона? [yes|n] (n)
+  f   Ответьте yes или no: Снять рукавицы, держа мёртвую крысу? [yes|n] (n)
+  n   Ответьте yes или no: Снять рукавицы, держа мёртвое копьё? [yes|n] (n)
+  pl  Ответьте yes или no: Снять рукавицы, держа мёртвых 3 стрелы? [yes|n] (n)
+"Yes" or "No": Take off your gauntlets despite carrying a dead %s? [yes|no]  [d250ea22333c]
+  m   Ответьте yes или no: Снять рукавицы, держа мёртвого тритона? [yes|no]
+  f   Ответьте yes или no: Снять рукавицы, держа мёртвую крысу? [yes|no]
+  n   Ответьте yes или no: Снять рукавицы, держа мёртвое копьё? [yes|no]
+  pl  Ответьте yes или no: Снять рукавицы, держа мёртвых 3 стрелы? [yes|no]
+"Yes" or "No": Take off your gauntlets despite carrying a dead %s? [yes|no|quit]  [c613b48058b9]
+  m   Ответьте yes или no: Снять рукавицы, держа мёртвого тритона? [yes|no|quit]
+  f   Ответьте yes или no: Снять рукавицы, держа мёртвую крысу? [yes|no|quit]
+  n   Ответьте yes или no: Снять рукавицы, держа мёртвое копьё? [yes|no|quit]
+  pl  Ответьте yes или no: Снять рукавицы, держа мёртвых 3 стрелы? [yes|no|quit]
+"Yes" or "No": Take off your gauntlets despite carrying a dead %s? [yes|n|q] (n)  [7e460582328f]
+  m   Ответьте yes или no: Снять рукавицы, держа мёртвого тритона? [yes|n|q] (n)
+  f   Ответьте yes или no: Снять рукавицы, держа мёртвую крысу? [yes|n|q] (n)
+  n   Ответьте yes или no: Снять рукавицы, держа мёртвое копьё? [yes|n|q] (n)
+  pl  Ответьте yes или no: Снять рукавицы, держа мёртвых 3 стрелы? [yes|n|q] (n)
+"Yes" or "No": Take off your gauntlets despite carrying a dead %s?...? [yes|n] (n)  [dc2c86f17995]
+  m   Ответьте yes или no: Снять рукавицы, держа мёртвого тритона...? [yes|n] (n)
+  f   Ответьте yes или no: Снять рукавицы, держа мёртвую крысу...? [yes|n] (n)
+  n   Ответьте yes или no: Снять рукавицы, держа мёртвое копьё...? [yes|n] (n)
+  pl  Ответьте yes или no: Снять рукавицы, держа мёртвых 3 стрелы...? [yes|n] (n)
+"Yes" or "No": Take off your gauntlets despite carrying a dead %s?...? [yes|no]  [058dd0ee0688]
+  m   Ответьте yes или no: Снять рукавицы, держа мёртвого тритона...? [yes|no]
+  f   Ответьте yes или no: Снять рукавицы, держа мёртвую крысу...? [yes|no]
+  n   Ответьте yes или no: Снять рукавицы, держа мёртвое копьё...? [yes|no]
+  pl  Ответьте yes или no: Снять рукавицы, держа мёртвых 3 стрелы...? [yes|no]
+"Yes" or "No": Take off your gauntlets despite carrying a dead %s?...? [yes|no|quit]  [fb4d944afadf]
+  m   Ответьте yes или no: Снять рукавицы, держа мёртвого тритона...? [yes|no|quit]
+  f   Ответьте yes или no: Снять рукавицы, держа мёртвую крысу...? [yes|no|quit]
+  n   Ответьте yes или no: Снять рукавицы, держа мёртвое копьё...? [yes|no|quit]
+  pl  Ответьте yes или no: Снять рукавицы, держа мёртвых 3 стрелы...? [yes|no|quit]
+"Yes" or "No": Take off your gauntlets despite carrying a dead %s?...? [yes|n|q] (n)  [a3743d9a8ea9]
+  m   Ответьте yes или no: Снять рукавицы, держа мёртвого тритона...? [yes|n|q] (n)
+  f   Ответьте yes или no: Снять рукавицы, держа мёртвую крысу...? [yes|n|q] (n)
+  n   Ответьте yes или no: Снять рукавицы, держа мёртвое копьё...? [yes|n|q] (n)
+  pl  Ответьте yes или no: Снять рукавицы, держа мёртвых 3 стрелы...? [yes|n|q] (n)
+"Yes" or "No": Take off your gloves despite carrying a dead %s? [yes|n] (n)  [11464c515dba]
+  m   Ответьте yes или no: Снять перчатки, держа мёртвого тритона? [yes|n] (n)
+  f   Ответьте yes или no: Снять перчатки, держа мёртвую крысу? [yes|n] (n)
+  n   Ответьте yes или no: Снять перчатки, держа мёртвое копьё? [yes|n] (n)
+  pl  Ответьте yes или no: Снять перчатки, держа мёртвых 3 стрелы? [yes|n] (n)
+"Yes" or "No": Take off your gloves despite carrying a dead %s? [yes|no]  [bfbff40a8cd7]
+  m   Ответьте yes или no: Снять перчатки, держа мёртвого тритона? [yes|no]
+  f   Ответьте yes или no: Снять перчатки, держа мёртвую крысу? [yes|no]
+  n   Ответьте yes или no: Снять перчатки, держа мёртвое копьё? [yes|no]
+  pl  Ответьте yes или no: Снять перчатки, держа мёртвых 3 стрелы? [yes|no]
+"Yes" or "No": Take off your gloves despite carrying a dead %s? [yes|no|quit]  [eb92bc517a0e]
+  m   Ответьте yes или no: Снять перчатки, держа мёртвого тритона? [yes|no|quit]
+  f   Ответьте yes или no: Снять перчатки, держа мёртвую крысу? [yes|no|quit]
+  n   Ответьте yes или no: Снять перчатки, держа мёртвое копьё? [yes|no|quit]
+  pl  Ответьте yes или no: Снять перчатки, держа мёртвых 3 стрелы? [yes|no|quit]
+"Yes" or "No": Take off your gloves despite carrying a dead %s? [yes|n|q] (n)  [c77a26e9594d]
+  m   Ответьте yes или no: Снять перчатки, держа мёртвого тритона? [yes|n|q] (n)
+  f   Ответьте yes или no: Снять перчатки, держа мёртвую крысу? [yes|n|q] (n)
+  n   Ответьте yes или no: Снять перчатки, держа мёртвое копьё? [yes|n|q] (n)
+  pl  Ответьте yes или no: Снять перчатки, держа мёртвых 3 стрелы? [yes|n|q] (n)
+"Yes" or "No": Take off your gloves despite carrying a dead %s?...? [yes|n] (n)  [eb8931e77e2c]
+  m   Ответьте yes или no: Снять перчатки, держа мёртвого тритона...? [yes|n] (n)
+  f   Ответьте yes или no: Снять перчатки, держа мёртвую крысу...? [yes|n] (n)
+  n   Ответьте yes или no: Снять перчатки, держа мёртвое копьё...? [yes|n] (n)
+  pl  Ответьте yes или no: Снять перчатки, держа мёртвых 3 стрелы...? [yes|n] (n)
+"Yes" or "No": Take off your gloves despite carrying a dead %s?...? [yes|no]  [d7653971d3ab]
+  m   Ответьте yes или no: Снять перчатки, держа мёртвого тритона...? [yes|no]
+  f   Ответьте yes или no: Снять перчатки, держа мёртвую крысу...? [yes|no]
+  n   Ответьте yes или no: Снять перчатки, держа мёртвое копьё...? [yes|no]
+  pl  Ответьте yes или no: Снять перчатки, держа мёртвых 3 стрелы...? [yes|no]
+"Yes" or "No": Take off your gloves despite carrying a dead %s?...? [yes|no|quit]  [1013e7a6bcf9]
+  m   Ответьте yes или no: Снять перчатки, держа мёртвого тритона...? [yes|no|quit]
+  f   Ответьте yes или no: Снять перчатки, держа мёртвую крысу...? [yes|no|quit]
+  n   Ответьте yes или no: Снять перчатки, держа мёртвое копьё...? [yes|no|quit]
+  pl  Ответьте yes или no: Снять перчатки, держа мёртвых 3 стрелы...? [yes|no|quit]
+"Yes" or "No": Take off your gloves despite carrying a dead %s?...? [yes|n|q] (n)  [42c42dfbac15]
+  m   Ответьте yes или no: Снять перчатки, держа мёртвого тритона...? [yes|n|q] (n)
+  f   Ответьте yes или no: Снять перчатки, держа мёртвую крысу...? [yes|n|q] (n)
+  n   Ответьте yes или no: Снять перчатки, держа мёртвое копьё...? [yes|n|q] (n)
+  pl  Ответьте yes или no: Снять перчатки, держа мёртвых 3 стрелы...? [yes|n|q] (n)
 %s bites %s.  [8963ee4d881e]
   m   Тритон кусает тритона.
   f   Крыса кусает крысу.
@@ -355,14 +619,20 @@ Adjust letter to what [%s] (? see used letters)?  [92346ad5b823]
   f   Какую букву дать [крыса] (? — занятые буквы)?
   n   Какую букву дать [копьё] (? — занятые буквы)?
   pl  Какую букву дать [3 стрелы] (? — занятые буквы)?
+Advance skills without practice?  [12c0880fa94a]
+  =   Повысить навыки без тренировки?
 All types  [30c8a0fc9c1a]
   =   Все типы
 All worn and wielded types  [70cb28745864]
   =   Всё надетое и всё в руках
+Are you sure you want to enter?  [de3090869465]
+  =   Вы уверены, что хотите войти?
 Are you sure you want to pray?  [e37d6de15075]
   =   Вы уверены, что хотите помолиться?
 As you kick the door, it crashes open!  [c3905ce69e13]
   =   От вашего пинка дверь с треском распахивается!
+At whom? (in what direction)  [39015019ee75]
+  =   В кого? (в каком направлении)
 Auto-select every relevant item  [625f1902b43e]
   =   Выбрать все подходящие предметы
 Background:  [0ad42765ddcf]
@@ -371,39 +641,218 @@ Basics:  [f2a317699c1c]
   =   Основное:
 Be careful!  New moon tonight.  [a3dfd51209d6]
   =   Осторожно!  Сегодня новолуние.
+Become %s?  [9254005c98f8]
+  m   Стать тритоном?
+  f   Стать крысой?
+  n   Стать копьём?
+  pl  Стать 3 стрелами?
+Become what kind of monster? [type the name]  [06357e84a194]
+  =   В какого монстра превратиться? [введите название]
+Beware, there will be no return!  Still climb?  [b569a8915411]
+  =   Берегитесь, пути назад не будет!  Всё равно подняться?
+Bones file already exists.  Replace it?  [7962ad62486d]
+  =   Файл костей уже есть.  Заменить его?
 Call %s:  [776121bc49d1]
   m   Назвать тритона:
   f   Назвать крысу:
   n   Назвать копьё:
   pl  Назвать 3 стрелы:
+Call a stream of %s fluid:  [b6e809ef19b4]
+  m   Назвать струю жидкости (тритон):
+  f   Назвать струю жидкости (крыса):
+  n   Назвать струю жидкости (копьё):
+  pl  Назвать струю жидкости (3 стрелы):
+Cast which spell? [a *?]  [f79b918e950e]
+  =   Какое заклинание прочесть? [a *?]
+Cast which spell? [a-%c *?]  [6ea0ab685f4d]
+  m   Какое заклинание прочесть? [a-x *?]
+  f   Какое заклинание прочесть? [a-x *?]
+  n   Какое заклинание прочесть? [a-x *?]
+  pl  Какое заклинание прочесть? [a-x *?]
+Cast which spell? [a-zA *?]  [f893bd60f8e4]
+  =   Какое заклинание прочесть? [a-zA *?]
+Cast which spell? [a-zA-%c *?]  [92c329c869f8]
+  m   Какое заклинание прочесть? [a-zA-x *?]
+  f   Какое заклинание прочесть? [a-zA-x *?]
+  n   Какое заклинание прочесть? [a-zA-x *?]
+  pl  Какое заклинание прочесть? [a-zA-x *?]
 Characteristics:  [69803692f054]
   =   Характеристики:
+Check %s for a trap?  [ed3e36a52459]
+  m   Проверить тритона на ловушки?
+  f   Проверить крысу на ловушки?
+  n   Проверить копьё на ловушки?
+  pl  Проверить 3 стрелы на ловушки?
+Check this door for a trap?  [ce96a1bac93e]
+  =   Проверить эту дверь на ловушки?
 Comestibles  [c238700e8163]
   =   Еда
+Command %s requires a parameter:  [1efe3e8717df]
+  m   Команде тритон нужен параметр:
+  f   Команде крыса нужен параметр:
+  n   Команде копьё нужен параметр:
+  pl  Команде 3 стрелы нужен параметр:
+Commit suicide?  [382bffe25a6a]
+  =   Покончить с собой?
 Continue eating?  [73be3463d620]
   =   Продолжить есть?
+Continue your attempt to set %s?  [6a098606bed4]
+  m   Продолжить устанавливать тритона?
+  f   Продолжить устанавливать крысу?
+  n   Продолжить устанавливать копьё?
+  pl  Продолжить устанавливать 3 стрелы?
+Create what kind of monster?  [f8d51c365377]
+  =   Какого монстра создать?
 Current skills:  [545b9247278d]
   =   Текущие навыки:
+Die?  [f8ad41e7fcf0]
+  =   Умереть?
+Dip %s into the %s?  [08abe5ee52b3]
+  m   Окунуть тритона в тритона?
+  f   Окунуть крысу в крысу?
+  n   Окунуть копьё в копьё?
+  pl  Окунуть 3 стрелы в 3 стрелы?
+Dip %s into the fountain?  [4af2a408b764]
+  m   Окунуть тритона в фонтан?
+  f   Окунуть крысу в фонтан?
+  n   Окунуть копьё в фонтан?
+  pl  Окунуть 3 стрелы в фонтан?
+Dip %s into the sink?  [2fcfe9255781]
+  m   Окунуть тритона в раковину?
+  f   Окунуть крысу в раковину?
+  n   Окунуть копьё в раковину?
+  pl  Окунуть 3 стрелы в раковину?
+Dip it into the %s?  [6d3eb51c7033]
+  m   Окунуть это в тритона?
+  f   Окунуть это в крысу?
+  n   Окунуть это в копьё?
+  pl  Окунуть это в 3 стрелы?
+Dip it into the fountain?  [4baf67c4a787]
+  =   Окунуть это в фонтан?
+Dip it into the sink?  [2b5f03f40a33]
+  =   Окунуть это в раковину?
+Dip them into the %s?  [e0c62737f3db]
+  m   Окунуть их в тритона?
+  f   Окунуть их в крысу?
+  n   Окунуть их в копьё?
+  pl  Окунуть их в 3 стрелы?
+Dip them into the fountain?  [558bb9807438]
+  =   Окунуть их в фонтан?
+Dip them into the sink?  [67caa1e6c69c]
+  =   Окунуть их в раковину?
+Dip your %s into the %s?  [3dd51d2fbe06]
+  m   Окунуть тритона в тритона?
+  f   Окунуть крысу в крысу?
+  n   Окунуть копьё в копьё?
+  pl  Окунуть 3 стрелы в 3 стрелы?
+Dip your %s into the fountain?  [4d87456043e6]
+  m   Окунуть тритона в фонтан?
+  f   Окунуть крысу в фонтан?
+  n   Окунуть копьё в фонтан?
+  pl  Окунуть 3 стрелы в фонтан?
+Dip your %s into the sink?  [77b644a9c78b]
+  m   Окунуть тритона в раковину?
+  f   Окунуть крысу в раковину?
+  n   Окунуть копьё в раковину?
+  pl  Окунуть 3 стрелы в раковину?
+Disarm it?  [7cb3aa0366a0]
+  =   Обезвредить?
 Discoveries, by order of discovery within each class  [32812993da26]
   =   Открытия, по порядку открытия в каждом классе
+Do what with %s?  [66751e7359e4]
+  m   Что сделать с тритоном?
+  f   Что сделать с крысой?
+  n   Что сделать с копьём?
+  pl  Что сделать с 3 стрелами?
 Do you want an account of creatures vanquished?  [f0e61367e617]
   =   Показать список побеждённых существ?
+Do you want to add to the current engraving?  [9508ca2c2893]
+  =   Дописать к уже начертанной надписи?
+Do you want to change into %s?  [6491b35b0de4]
+  m   Превратиться в тритона?
+  f   Превратиться в крысу?
+  n   Превратиться в копьё?
+  pl  Превратиться в 3 стрелы?
+Do you want to enter explore mode?  [de6c7d592dc3]
+  =   Перейти в режим исследования?
+Do you want to remove the saddle from %s?  [0350e3639da7]
+  m   Снять седло с тритона?
+  f   Снять седло с крысы?
+  n   Снять седло с копья?
+  pl  Снять седло с 3 стрел?
 Do you want to see the dungeon overview?  [cbda2ed56d0f]
   =   Показать обзор подземелья?
 Do you want to see what you had when you died?  [189fee78fe69]
   =   Показать, что было при вас в момент смерти?
+Do you want to see what you had when you quit?  [c213ad63fb60]
+  =   Показать, что было при вас, когда вы вышли?
 Do you want to see your attributes?  [ae5dc8970987]
   =   Показать ваши характеристики?
 Do you want to see your conduct and achievements?  [67d98943ae6e]
   =   Показать ваши обеты и достижения?
 Do you want to see your conduct?  [8b3d36083e2b]
   =   Показать ваши обеты?
+Do you want to try to disarm it?  [45434f45fb87]
+  =   Попробовать обезвредить?
 Do you want your possessions identified?  [5f87a3012c1e]
   =   Опознать ваши вещи?
+Drink from the fountain?  [8c4ff3ade0c2]
+  =   Выпить из фонтана?
+Drink from the sink?  [8cb11b265952]
+  =   Выпить из раковины?
+Drink the water around you?  [54ca708e4183]
+  =   Выпить окружающую вас воду?
 Drop items  [f98c8639a637]
   =   Положить предметы
+Drop the %s corpse without %s protection on?  [4eab68ee6ae2]
+  m   Положить труп тритона без защиты на тритоне?
+  f   Положить труп крысы без защиты на крысе?
+  n   Положить труп копья без защиты на копье?
+  pl  Положить труп 3 стрел без защиты на 3 стрелах?
+Drop the %s corpse without %s protection on? [yes|n] (n)  [6763d3d9a8b5]
+  m   Положить труп тритона без защиты на тритоне? [yes|n] (n)
+  f   Положить труп крысы без защиты на крысе? [yes|n] (n)
+  n   Положить труп копья без защиты на копье? [yes|n] (n)
+  pl  Положить труп 3 стрел без защиты на 3 стрелах? [yes|n] (n)
+Drop the %s corpse without %s protection on? [yes|no]  [6e38301bb847]
+  m   Положить труп тритона без защиты на тритоне? [yes|no]
+  f   Положить труп крысы без защиты на крысе? [yes|no]
+  n   Положить труп копья без защиты на копье? [yes|no]
+  pl  Положить труп 3 стрел без защиты на 3 стрелах? [yes|no]
+Drop the %s corpse without %s protection on? [yes|no|quit]  [c2833ff7b557]
+  m   Положить труп тритона без защиты на тритоне? [yes|no|quit]
+  f   Положить труп крысы без защиты на крысе? [yes|no|quit]
+  n   Положить труп копья без защиты на копье? [yes|no|quit]
+  pl  Положить труп 3 стрел без защиты на 3 стрелах? [yes|no|quit]
+Drop the %s corpse without %s protection on? [yes|n|q] (n)  [a9be618317b5]
+  m   Положить труп тритона без защиты на тритоне? [yes|n|q] (n)
+  f   Положить труп крысы без защиты на крысе? [yes|n|q] (n)
+  n   Положить труп копья без защиты на копье? [yes|n|q] (n)
+  pl  Положить труп 3 стрел без защиты на 3 стрелах? [yes|n|q] (n)
+Drop the %s corpse without %s protection on?...? [yes|n] (n)  [4493f61998bf]
+  m   Положить труп тритона без защиты на тритоне...? [yes|n] (n)
+  f   Положить труп крысы без защиты на крысе...? [yes|n] (n)
+  n   Положить труп копья без защиты на копье...? [yes|n] (n)
+  pl  Положить труп 3 стрел без защиты на 3 стрелах...? [yes|n] (n)
+Drop the %s corpse without %s protection on?...? [yes|no]  [ddd7cf2ff181]
+  m   Положить труп тритона без защиты на тритоне...? [yes|no]
+  f   Положить труп крысы без защиты на крысе...? [yes|no]
+  n   Положить труп копья без защиты на копье...? [yes|no]
+  pl  Положить труп 3 стрел без защиты на 3 стрелах...? [yes|no]
+Drop the %s corpse without %s protection on?...? [yes|no|quit]  [77dd661c42d5]
+  m   Положить труп тритона без защиты на тритоне...? [yes|no|quit]
+  f   Положить труп крысы без защиты на крысе...? [yes|no|quit]
+  n   Положить труп копья без защиты на копье...? [yes|no|quit]
+  pl  Положить труп 3 стрел без защиты на 3 стрелах...? [yes|no|quit]
+Drop the %s corpse without %s protection on?...? [yes|n|q] (n)  [aa76adc2700c]
+  m   Положить труп тритона без защиты на тритоне...? [yes|n|q] (n)
+  f   Положить труп крысы без защиты на крысе...? [yes|n|q] (n)
+  n   Положить труп копья без защиты на копье...? [yes|n|q] (n)
+  pl  Положить труп 3 стрел без защиты на 3 стрелах...? [yes|n|q] (n)
 Drop what type of items?  [a76b2f6c0522]
   =   Какие предметы положить?
+Dry up fountain?  [0f9743408b2c]
+  =   Осушить фонтан?
 Fighting Skills  [39f5bc89155f]
   =   Боевые навыки
 Final Attributes:  [84b4c5f7d6d6]
@@ -412,8 +861,42 @@ Final Characteristics:  [e0ec341b4e35]
   =   Итоговые характеристики:
 Final Status:  [c7ffea839993]
   =   Итоговое состояние:
+For what do you wish  [950698d53808]
+  =   Чего вы желаете
+For what do you wish (enter 'help' for assistance)  [dafac7e9f837]
+  =   Чего вы желаете (введите «help» для подсказки)
+For what do you wish (enter 'help' for assistance)?  [1799dfeb9b00]
+  =   Чего вы желаете (введите «help» для подсказки)?
+For what do you wish?  [8f429df2419a]
+  =   Чего вы желаете?
+Force the gods to be pleased?  [f3d81348e476]
+  =   Заставить богов быть довольными?
 Gems/Stones  [73021e2b7615]
   =   Самоцветы/камни
+Gift an artifact?  [0af4b98306cf]
+  =   Даровать артефакт?
+Go to Nowhere.  Are you sure?  [146c0d7a7e64]
+  =   Отправиться в Никуда.  Вы уверены?
+Heal your leg?  [11f0b150d8d4]
+  =   Вылечить ногу?
+Heal your legs?  [8ffdb5f0e0a5]
+  =   Вылечить ноги?
+Hide [h] or spin a web [s]?  [a186ead714b7]
+  =   Спрятаться [h] или сплести паутину [s]?
+How much will you offer (suggested: %ld or %ld)?  [4927766b0b39]
+  m   Сколько вы предложите (советуем 1 или 1)?
+  f   Сколько вы предложите (советуем 3 или 3)?
+  n   Сколько вы предложите (советуем 5 или 5)?
+  pl  Сколько вы предложите (советуем 21 или 21)?
+How much will you offer?  [552024b571f9]
+  =   Сколько вы предложите?
+Improvise?  [8d120d7ab03c]
+  =   Импровизировать?
+In what direction do you want to chop? [%s]  [380aa11c01d7]
+  m   В каком направлении рубить? [тритон]
+  f   В каком направлении рубить? [крыса]
+  n   В каком направлении рубить? [копьё]
+  pl  В каком направлении рубить? [3 стрелы]
 In what direction do you want to dig? [%s]  [ce0fbafaee6b]
   m   В каком направлении копать? [тритон]
   f   В каком направлении копать? [крыса]
@@ -423,10 +906,25 @@ In what direction?  [23ff0855b202]
   =   В каком направлении?
 Inventory  [300d29fd5f32]
   =   Инвентарь
+Itemized billing?  [8f4c2e7b88e6]
+  =   Показать счёт по предметам?
 Items known to be Blessed  [9dc8481060be]
   =   Предметы, известные как благословенные
 Items known to be Uncursed  [4d1bb3191d8a]
   =   Предметы, известные как непроклятые
+Jump in?  [3985743ecfe8]
+  =   Прыгнуть внутрь?
+Kick it?  [745d6498a4b5]
+  =   Пнуть?
+Kick your steed?  [42903701a821]
+  =   Пнуть своего скакуна?
+Lock it with %s?  [c550ab284650]
+  m   Запереть тритоном?
+  f   Запереть крысой?
+  n   Запереть копьём?
+  pl  Запереть 3 стрелами?
+Lock it?  [d04fdebf6a21]
+  =   Запереть?
 Look at what is here  [07b4290baea9]
   =   Осмотреть, что здесь лежит
 Look inside %s  [c89a4bdde11e]
@@ -438,48 +936,211 @@ Loot in what direction?  [0bf0ead6b5d7]
   =   В каком направлении обыскать?
 Miscellaneous:  [69aa5db4d883]
   =   Разное:
+More info about "%s"?  [587ff01306b1]
+  m   Подробнее о «тритон»?
+  f   Подробнее о «крыса»?
+  n   Подробнее о «копьё»?
+  pl  Подробнее о «3 стрелы»?
 Never mind.  [8721eb15a055]
   =   Неважно.
+Open where? [.>]  [9516e9d483a7]
+  =   Открыть что? [.>]
 Ouch!  That hurts!  [b26effd89232]
   =   Ой!  Больно!
 Ouch!  You bump into a door.  [62ba78627eb0]
   =   Ой!  Вы врезаетесь в дверь.
+Overwrite the old file?  [3f4675b590a2]
+  =   Перезаписать старый файл?
+Perform seppuku?  [cf07b98f3c97]
+  =   Совершить сэппуку?
 Pick an object type to name  [6e2fdb20d648]
   =   Выберите тип предмета, чтобы назвать его
+Pick up %s?  [99d79daee369]
+  m   Подобрать тритона?
+  f   Подобрать крысу?
+  n   Подобрать копьё?
+  pl  Подобрать 3 стрелы?
+Play the passtune?  [0e817d424dae]
+  =   Сыграть пароль?
 Put in what type of objects?  [bf9f5fad5f1b]
   =   Какие предметы положить внутрь?
 Put in what?  [d1ca1b3ef398]
   =   Что положить внутрь?
+Reading mail will violate "illiterate" conduct.  Read anyway?  [00510025ac94]
+  =   Прочитав письмо, вы нарушите обет «неграмотности».  Всё равно прочитать?
+Ready all of them instead?  [47f7537fca35]
+  =   Положить в колчан их все?
 Really attack %s?  [3cc342fc0024]
   m   Действительно атаковать тритона?
   f   Действительно атаковать крысу?
   n   Действительно атаковать копьё?
   pl  Действительно атаковать 3 стрелы?
+Really autoselect All?  [380e1ad2d15a]
+  =   Действительно выбрать всё?
+Really autoselect All? [yes|n] (n)  [3e9de0ec90cd]
+  =   Действительно выбрать всё? [yes|n] (n)
+Really autoselect All? [yes|no]  [614c885c0772]
+  =   Действительно выбрать всё? [yes|no]
+Really autoselect All? [yes|no|quit]  [fd96dd42409c]
+  =   Действительно выбрать всё? [yes|no|quit]
+Really autoselect All? [yes|n|q] (n)  [d622af3bc07a]
+  =   Действительно выбрать всё? [yes|n|q] (n)
+Really autoselect All?...? [yes|n] (n)  [0b3b8fad7a6f]
+  =   Действительно выбрать всё...? [yes|n] (n)
+Really autoselect All?...? [yes|no]  [36a0dd795449]
+  =   Действительно выбрать всё...? [yes|no]
+Really autoselect All?...? [yes|no|quit]  [b1acafe566ce]
+  =   Действительно выбрать всё...? [yes|no|quit]
+Really autoselect All?...? [yes|n|q] (n)  [63f102640658]
+  =   Действительно выбрать всё...? [yes|n|q] (n)
+Really confuse %s?  [8000018d0ac9]
+  m   Действительно сбить с толку тритона?
+  f   Действительно сбить с толку крысу?
+  n   Действительно сбить с толку копьё?
+  pl  Действительно сбить с толку 3 стрелы?
+Really quit without saving?  [96395bd5ec91]
+  =   Действительно выйти без сохранения?
+Really save?  [da94bf901d1f]
+  =   Действительно сохранить?
 Refresh your memory anyway?  [2f2d42fb3b3b]
   =   Всё равно освежить память?
+Remain in beast form?  [bb923370c446]
+  =   Остаться в зверином облике?
 Replace annotation "%.30s" with?  [9b62d8957f78]
   m   Чем заменить пометку «тритон»?
   f   Чем заменить пометку «крыса»?
   n   Чем заменить пометку «копьё»?
   pl  Чем заменить пометку «3 стрелы»?
+Replace annotation "%.30s..." with?  [6de42971e269]
+  m   Чем заменить пометку «тритон…»?
+  f   Чем заменить пометку «крыса…»?
+  n   Чем заменить пометку «копьё…»?
+  pl  Чем заменить пометку «3 стрелы…»?
 Rest one turn  [08578042b110]
   =   Отдохнуть один ход
+Save bones?  [f2a15270d60f]
+  =   Сохранить кости?
 Search around you  [6541a7bf5486]
   =   Обыскать всё вокруг
 Search for secret doors  [a834c8892bb5]
   =   Искать потайные двери
+Set %s to what?  [f0e7ea8b52a2]
+  m   Какое значение дать параметру тритон?
+  f   Какое значение дать параметру крыса?
+  n   Какое значение дать параметру копьё?
+  pl  Какое значение дать параметру 3 стрелы?
 Sort order for vanquished monster counts (also genocided types)  [3324d8858cf9]
   =   Порядок списка побеждённых монстров (и истреблённых видов)
+Specify what? (type the word)  [a200dfd7caa0]
+  =   Что именно? (введите слово)
 Spellcasting Skills  [3ffd7256f68d]
   =   Навыки заклинаний
 Status:  [11dc9e195292]
   =   Состояние:
+Switch from the tutorial back to regular play?  [a48fcf5db627]
+  =   Выйти из обучения в обычную игру?
+Take off your gauntlets despite carrying a dead %s?  [d364961c9f17]
+  m   Снять рукавицы, держа мёртвого тритона?
+  f   Снять рукавицы, держа мёртвую крысу?
+  n   Снять рукавицы, держа мёртвое копьё?
+  pl  Снять рукавицы, держа мёртвых 3 стрелы?
+Take off your gauntlets despite carrying a dead %s? [yes|n] (n)  [664ff7de2194]
+  m   Снять рукавицы, держа мёртвого тритона? [yes|n] (n)
+  f   Снять рукавицы, держа мёртвую крысу? [yes|n] (n)
+  n   Снять рукавицы, держа мёртвое копьё? [yes|n] (n)
+  pl  Снять рукавицы, держа мёртвых 3 стрелы? [yes|n] (n)
+Take off your gauntlets despite carrying a dead %s? [yes|no]  [6b9e30860f5e]
+  m   Снять рукавицы, держа мёртвого тритона? [yes|no]
+  f   Снять рукавицы, держа мёртвую крысу? [yes|no]
+  n   Снять рукавицы, держа мёртвое копьё? [yes|no]
+  pl  Снять рукавицы, держа мёртвых 3 стрелы? [yes|no]
+Take off your gauntlets despite carrying a dead %s? [yes|no|quit]  [1b3ed22b48f7]
+  m   Снять рукавицы, держа мёртвого тритона? [yes|no|quit]
+  f   Снять рукавицы, держа мёртвую крысу? [yes|no|quit]
+  n   Снять рукавицы, держа мёртвое копьё? [yes|no|quit]
+  pl  Снять рукавицы, держа мёртвых 3 стрелы? [yes|no|quit]
+Take off your gauntlets despite carrying a dead %s? [yes|n|q] (n)  [9cc2dd90d26e]
+  m   Снять рукавицы, держа мёртвого тритона? [yes|n|q] (n)
+  f   Снять рукавицы, держа мёртвую крысу? [yes|n|q] (n)
+  n   Снять рукавицы, держа мёртвое копьё? [yes|n|q] (n)
+  pl  Снять рукавицы, держа мёртвых 3 стрелы? [yes|n|q] (n)
+Take off your gauntlets despite carrying a dead %s?...? [yes|n] (n)  [505b1db4d8a3]
+  m   Снять рукавицы, держа мёртвого тритона...? [yes|n] (n)
+  f   Снять рукавицы, держа мёртвую крысу...? [yes|n] (n)
+  n   Снять рукавицы, держа мёртвое копьё...? [yes|n] (n)
+  pl  Снять рукавицы, держа мёртвых 3 стрелы...? [yes|n] (n)
+Take off your gauntlets despite carrying a dead %s?...? [yes|no]  [b6da26c91966]
+  m   Снять рукавицы, держа мёртвого тритона...? [yes|no]
+  f   Снять рукавицы, держа мёртвую крысу...? [yes|no]
+  n   Снять рукавицы, держа мёртвое копьё...? [yes|no]
+  pl  Снять рукавицы, держа мёртвых 3 стрелы...? [yes|no]
+Take off your gauntlets despite carrying a dead %s?...? [yes|no|quit]  [7226650eca1d]
+  m   Снять рукавицы, держа мёртвого тритона...? [yes|no|quit]
+  f   Снять рукавицы, держа мёртвую крысу...? [yes|no|quit]
+  n   Снять рукавицы, держа мёртвое копьё...? [yes|no|quit]
+  pl  Снять рукавицы, держа мёртвых 3 стрелы...? [yes|no|quit]
+Take off your gauntlets despite carrying a dead %s?...? [yes|n|q] (n)  [bdb65c7e737d]
+  m   Снять рукавицы, держа мёртвого тритона...? [yes|n|q] (n)
+  f   Снять рукавицы, держа мёртвую крысу...? [yes|n|q] (n)
+  n   Снять рукавицы, держа мёртвое копьё...? [yes|n|q] (n)
+  pl  Снять рукавицы, держа мёртвых 3 стрелы...? [yes|n|q] (n)
+Take off your gloves despite carrying a dead %s?  [fc9691140f7f]
+  m   Снять перчатки, держа мёртвого тритона?
+  f   Снять перчатки, держа мёртвую крысу?
+  n   Снять перчатки, держа мёртвое копьё?
+  pl  Снять перчатки, держа мёртвых 3 стрелы?
+Take off your gloves despite carrying a dead %s? [yes|n] (n)  [49b779f31c29]
+  m   Снять перчатки, держа мёртвого тритона? [yes|n] (n)
+  f   Снять перчатки, держа мёртвую крысу? [yes|n] (n)
+  n   Снять перчатки, держа мёртвое копьё? [yes|n] (n)
+  pl  Снять перчатки, держа мёртвых 3 стрелы? [yes|n] (n)
+Take off your gloves despite carrying a dead %s? [yes|no]  [2b3ac3dc20a1]
+  m   Снять перчатки, держа мёртвого тритона? [yes|no]
+  f   Снять перчатки, держа мёртвую крысу? [yes|no]
+  n   Снять перчатки, держа мёртвое копьё? [yes|no]
+  pl  Снять перчатки, держа мёртвых 3 стрелы? [yes|no]
+Take off your gloves despite carrying a dead %s? [yes|no|quit]  [651b5a5bcee3]
+  m   Снять перчатки, держа мёртвого тритона? [yes|no|quit]
+  f   Снять перчатки, держа мёртвую крысу? [yes|no|quit]
+  n   Снять перчатки, держа мёртвое копьё? [yes|no|quit]
+  pl  Снять перчатки, держа мёртвых 3 стрелы? [yes|no|quit]
+Take off your gloves despite carrying a dead %s? [yes|n|q] (n)  [7e1ca1b8c4fb]
+  m   Снять перчатки, держа мёртвого тритона? [yes|n|q] (n)
+  f   Снять перчатки, держа мёртвую крысу? [yes|n|q] (n)
+  n   Снять перчатки, держа мёртвое копьё? [yes|n|q] (n)
+  pl  Снять перчатки, держа мёртвых 3 стрелы? [yes|n|q] (n)
+Take off your gloves despite carrying a dead %s?...? [yes|n] (n)  [66492e439c47]
+  m   Снять перчатки, держа мёртвого тритона...? [yes|n] (n)
+  f   Снять перчатки, держа мёртвую крысу...? [yes|n] (n)
+  n   Снять перчатки, держа мёртвое копьё...? [yes|n] (n)
+  pl  Снять перчатки, держа мёртвых 3 стрелы...? [yes|n] (n)
+Take off your gloves despite carrying a dead %s?...? [yes|no]  [f7a1d23b4f6d]
+  m   Снять перчатки, держа мёртвого тритона...? [yes|no]
+  f   Снять перчатки, держа мёртвую крысу...? [yes|no]
+  n   Снять перчатки, держа мёртвое копьё...? [yes|no]
+  pl  Снять перчатки, держа мёртвых 3 стрелы...? [yes|no]
+Take off your gloves despite carrying a dead %s?...? [yes|no|quit]  [96f513a0bcc7]
+  m   Снять перчатки, держа мёртвого тритона...? [yes|no|quit]
+  f   Снять перчатки, держа мёртвую крысу...? [yes|no|quit]
+  n   Снять перчатки, держа мёртвое копьё...? [yes|no|quit]
+  pl  Снять перчатки, держа мёртвых 3 стрелы...? [yes|no|quit]
+Take off your gloves despite carrying a dead %s?...? [yes|n|q] (n)  [5014cffeb592]
+  m   Снять перчатки, держа мёртвого тритона...? [yes|n|q] (n)
+  f   Снять перчатки, держа мёртвую крысу...? [yes|n|q] (n)
+  n   Снять перчатки, держа мёртвое копьё...? [yes|n|q] (n)
+  pl  Снять перчатки, держа мёртвых 3 стрелы...? [yes|n|q] (n)
 Talk to whom? (in what direction)  [345015c6d880]
   =   С кем поговорить? (в каком направлении)
 That door is closed.  [d51260249749]
   =   Эта дверь закрыта.
 That is your alternate weapon.  Ready it instead?  [e0ac8b1a1956]
   =   Это ваше запасное оружие.  Положить его в колчан?
+That is your alternate weapon.  Ready them instead?  [dd6f3bc9d7e2]
+  =   Это ваше запасное оружие.  Положить их в колчан?
+That is your second weapon.  Ready it instead?  [96b4dd01309c]
+  =   Это ваше второе оружие.  Положить его в колчан?
+That is your second weapon.  Ready them instead?  [d6f2ffe85b59]
+  =   Это ваше второе оружие.  Положить их в колчан?
 The door opens.  [8c40430b080d]
   =   Дверь открывается.
 The door resists!  [5b553aaa39a8]
@@ -489,24 +1150,162 @@ There are %ld gold pieces here; eat them?  [eb0208287c0b]
   f   Здесь лежат 3 золотые монеты; съесть их?
   n   Здесь лежат 5 золотых монет; съесть их?
   pl  Здесь лежит 21 золотая монета; съесть её?
+There are %s here; eat it?  [6e0675f544e3]
+  m   Здесь лежит тритон; съесть?
+  f   Здесь лежит крыса; съесть?
+  n   Здесь лежит копьё; съесть?
+  pl  Здесь лежат 3 стрелы; съесть?
+There are %s here; eat one?  [8b00950381d4]
+  m   Здесь лежит тритон; съесть?
+  f   Здесь лежит крыса; съесть?
+  n   Здесь лежит копьё; съесть?
+  pl  Здесь лежат 3 стрелы; съесть?
+There are %s here; sacrifice it?  [ba1b77a5b4fe]
+  m   Здесь лежит тритон; принести в жертву?
+  f   Здесь лежит крыса; принести в жертву?
+  n   Здесь лежит копьё; принести в жертву?
+  pl  Здесь лежат 3 стрелы; принести в жертву?
+There are %s here; sacrifice one?  [13a2804a94ae]
+  m   Здесь лежит тритон; принести в жертву?
+  f   Здесь лежит крыса; принести в жертву?
+  n   Здесь лежит копьё; принести в жертву?
+  pl  Здесь лежат 3 стрелы; принести в жертву?
+There are %s here; tin it?  [59010bb91be6]
+  m   Здесь лежит тритон; закатать в банку?
+  f   Здесь лежит крыса; закатать в банку?
+  n   Здесь лежит копьё; закатать в банку?
+  pl  Здесь лежат 3 стрелы; закатать в банку?
+There are %s here; tin one?  [2352f82f24c9]
+  m   Здесь лежит тритон; закатать в банку?
+  f   Здесь лежит крыса; закатать в банку?
+  n   Здесь лежит копьё; закатать в банку?
+  pl  Здесь лежат 3 стрелы; закатать в банку?
 There is %s here.  [611b3e3324ee]
   m   Здесь тритон.
   f   Здесь крыса.
   n   Здесь копьё.
   pl  Здесь 3 стрелы.
+There is %s here.  Check it for traps?  [1e136e2398ee]
+  m   Здесь лежит тритон.  Проверить на ловушки?
+  f   Здесь лежит крыса.  Проверить на ловушки?
+  n   Здесь лежит копьё.  Проверить на ловушки?
+  pl  Здесь лежат 3 стрелы.  Проверить на ловушки?
 There is %s here; eat it?  [09498cacc1bd]
   m   Здесь лежит тритон; съесть?
   f   Здесь лежит крыса; съесть?
   n   Здесь лежит копьё; съесть?
   pl  Здесь лежат 3 стрелы; съесть?
+There is %s here; eat one?  [26ce2a858fc6]
+  m   Здесь лежит тритон; съесть?
+  f   Здесь лежит крыса; съесть?
+  n   Здесь лежит копьё; съесть?
+  pl  Здесь лежат 3 стрелы; съесть?
+There is %s here; fix it?  [19dbffa1e853]
+  m   Здесь лежит тритон; починить?
+  f   Здесь лежит крыса; починить?
+  n   Здесь лежит копьё; починить?
+  pl  Здесь лежат 3 стрелы; починить?
+There is %s here; fix its lock?  [291a8ba93f7c]
+  m   Здесь лежит тритон; починить замок?
+  f   Здесь лежит крыса; починить замок?
+  n   Здесь лежит копьё; починить замок?
+  pl  Здесь лежат 3 стрелы; починить замок?
+There is %s here; force its lock?  [70c538042717]
+  m   Здесь лежит тритон; взломать замок?
+  f   Здесь лежит крыса; взломать замок?
+  n   Здесь лежит копьё; взломать замок?
+  pl  Здесь лежат 3 стрелы; взломать замок?
+There is %s here; lock it?  [d00361a76157]
+  m   Здесь лежит тритон; запереть?
+  f   Здесь лежит крыса; запереть?
+  n   Здесь лежит копьё; запереть?
+  pl  Здесь лежат 3 стрелы; запереть?
+There is %s here; lock its lock?  [f1452fd62fc5]
+  m   Здесь лежит тритон; запереть замок?
+  f   Здесь лежит крыса; запереть замок?
+  n   Здесь лежит копьё; запереть замок?
+  pl  Здесь лежат 3 стрелы; запереть замок?
+There is %s here; pick it?  [dc93f15ea9d2]
+  m   Здесь лежит тритон; вскрыть?
+  f   Здесь лежит крыса; вскрыть?
+  n   Здесь лежит копьё; вскрыть?
+  pl  Здесь лежат 3 стрелы; вскрыть?
+There is %s here; pick its lock?  [acb481049184]
+  m   Здесь лежит тритон; вскрыть замок?
+  f   Здесь лежит крыса; вскрыть замок?
+  n   Здесь лежит копьё; вскрыть замок?
+  pl  Здесь лежат 3 стрелы; вскрыть замок?
+There is %s here; sacrifice it?  [5e6c3d961bcb]
+  m   Здесь лежит тритон; принести в жертву?
+  f   Здесь лежит крыса; принести в жертву?
+  n   Здесь лежит копьё; принести в жертву?
+  pl  Здесь лежат 3 стрелы; принести в жертву?
+There is %s here; sacrifice one?  [75444742c2fd]
+  m   Здесь лежит тритон; принести в жертву?
+  f   Здесь лежит крыса; принести в жертву?
+  n   Здесь лежит копьё; принести в жертву?
+  pl  Здесь лежат 3 стрелы; принести в жертву?
+There is %s here; tin it?  [3ad334dae193]
+  m   Здесь лежит тритон; закатать в банку?
+  f   Здесь лежит крыса; закатать в банку?
+  n   Здесь лежит копьё; закатать в банку?
+  pl  Здесь лежат 3 стрелы; закатать в банку?
+There is %s here; tin one?  [74cfaba3ddbf]
+  m   Здесь лежит тритон; закатать в банку?
+  f   Здесь лежит крыса; закатать в банку?
+  n   Здесь лежит копьё; закатать в банку?
+  pl  Здесь лежат 3 стрелы; закатать в банку?
+There is %s here; unlock it?  [e19e593427b4]
+  m   Здесь лежит тритон; отпереть?
+  f   Здесь лежит крыса; отпереть?
+  n   Здесь лежит копьё; отпереть?
+  pl  Здесь лежат 3 стрелы; отпереть?
+There is %s here; unlock its lock?  [2cbcdb36426e]
+  m   Здесь лежит тритон; отпереть замок?
+  f   Здесь лежит крыса; отпереть замок?
+  n   Здесь лежит копьё; отпереть замок?
+  pl  Здесь лежат 3 стрелы; отпереть замок?
+There is a level teleporter here. Trigger it?  [a6c3ff77a5ce]
+  =   Здесь телепорт на другой уровень. Задействовать его?
 There is nothing here to pick up.  [3b08451a6158]
   =   Здесь нечего подобрать.
 Things that are here:  [8d1dab161231]
   =   Предметы здесь:
 This door is locked.  [a97258ae2942]
   =   Эта дверь заперта.
+This spellbook is difficult to comprehend.  Continue?  [7b82c1fcf0a9]
+  =   Эта книга заклинаний трудна для понимания.  Продолжить?
+This spellbook is very difficult to comprehend.  Continue?  [cef7a3d48c1f]
+  =   Эта книга заклинаний очень трудна для понимания.  Продолжить?
+Those are your alternate weapon.  Ready it instead?  [00b7b4a49291]
+  =   Это ваше запасное оружие.  Положить его в колчан?
+Those are your alternate weapon.  Ready them instead?  [ffad1fb192ef]
+  =   Это ваше запасное оружие.  Положить их в колчан?
+Those are your second weapon.  Ready it instead?  [4bc135cff4c6]
+  =   Это ваше второе оружие.  Положить его в колчан?
+Those are your second weapon.  Ready them instead?  [3231d33bdd06]
+  =   Это ваше второе оружие.  Положить их в колчан?
 Tip: Farlooking or selecting a map location\n\nYou are now in a "farlook" mode - the movement keys move the cursor,\nnot your character.  Game time does not advance.  This mode is used\nto look around the map, or to select a location on it.\n\nWhen in this mode, you can press ESC to return to normal game mode,\nand pressing ? will show the key help.  [e465dbb131f1]
   =   Подсказка: осмотр или выбор места на карте\n\nВы в режиме «осмотра»: клавиши движения перемещают курсор,\nа не вашего героя.  Игровое время стоит.  В этом режиме\nможно осмотреться на карте или выбрать на ней место.\n\nВ этом режиме ESC возвращает к обычной игре,\nа ? показывает подсказку по клавишам.
+To what level do you want to teleport?  [dd2152d81265]
+  =   На какой уровень вы хотите телепортироваться?
+To what level do you want to teleport? [type a number or name]  [94c54715882f]
+  =   На какой уровень вы хотите телепортироваться? [введите номер или название]
+To what level do you want to teleport? [type a number, name, or ? for a menu]  [a0fa19ae9467]
+  =   На какой уровень вы хотите телепортироваться? [введите номер, название или ? для меню]
+Try to squeeze down?  [f2955bbed671]
+  =   Попытаться протиснуться вниз?
+Try to squeeze through?  [317885e3bba3]
+  =   Попытаться протиснуться?
+Unlock it with %s?  [5add5bb25d65]
+  m   Отпереть тритоном?
+  f   Отпереть крысой?
+  n   Отпереть копьём?
+  pl  Отпереть 3 стрелами?
+Unlock it?  [23c0b47a506c]
+  =   Отпереть?
+View discoveries for which sort of objects?  [73de65daebe1]
+  =   Открытия какого рода предметов показать?
 View which?  [01588766108a]
   =   Что показать?
 Voluntary challenges:  [9f3bbf1f4b54]
@@ -515,38 +1314,97 @@ Weapon Skills  [b2925617dd26]
   =   Владение оружием
 Whammm!!  [74ba1a1e775e]
   =   Бамм!!
+What class of monsters do you want to genocide?  [26ab7da3dd6e]
+  =   Какой класс монстров вы хотите истребить?
+What class of monsters do you want to genocide? [enter '?' to see previous genocides]  [39dcdcc6d032]
+  =   Какой класс монстров вы хотите истребить? [введите «?», чтобы увидеть прежние истребления]
+What class of monsters do you want to genocide? [enter the symbol or name representing a class, or '?']  [11265e09c40d]
+  =   Какой класс монстров вы хотите истребить? [введите символ или название класса, или «?»]
+What command?  [5c1ff51290c1]
+  =   Какая команда?
+What do you look for?  [d76c7b6c5dbf]
+  =   Что вы ищете?
+What do you want to adjust?  [a27cbf7a89a0]
+  =   Что вы хотите переложить?
 What do you want to adjust? [%s or ?*]  [d096e49c99f5]
   m   Что вы хотите переложить? [тритон или ?*]
   f   Что вы хотите переложить? [крыса или ?*]
   n   Что вы хотите переложить? [копьё или ?*]
   pl  Что вы хотите переложить? [3 стрелы или ?*]
+What do you want to adjust? [*]  [88fd6def2828]
+  =   Что вы хотите переложить? [*]
 What do you want to call %s?  [55d0ed8fdbba]
   m   Как вы хотите назвать тритона?
   f   Как вы хотите назвать крысу?
   n   Как вы хотите назвать копьё?
   pl  Как вы хотите назвать 3 стрелы?
+What do you want to call?  [b6cc458810c0]
+  =   Какой тип предметов вы хотите назвать?
+What do you want to call? [%s or ?*]  [14cf2beee381]
+  m   Какой тип предметов вы хотите назвать? [тритон или ?*]
+  f   Какой тип предметов вы хотите назвать? [крыса или ?*]
+  n   Какой тип предметов вы хотите назвать? [копьё или ?*]
+  pl  Какой тип предметов вы хотите назвать? [3 стрелы или ?*]
+What do you want to call? [*]  [44c66cada92b]
+  =   Какой тип предметов вы хотите назвать? [*]
+What do you want to charge?  [f3167b492ffc]
+  =   Что вы хотите зарядить?
+What do you want to charge? [%s or ?*]  [5a1400935dfd]
+  m   Что вы хотите зарядить? [тритон или ?*]
+  f   Что вы хотите зарядить? [крыса или ?*]
+  n   Что вы хотите зарядить? [копьё или ?*]
+  pl  Что вы хотите зарядить? [3 стрелы или ?*]
+What do you want to charge? [*]  [039a26f4058a]
+  =   Что вы хотите зарядить? [*]
+What do you want to destroy?  [ec2fc81a09e8]
+  =   Что вы хотите уничтожить?
+What do you want to destroy? [%s or ?*]  [bd81ae73c3ad]
+  m   Что вы хотите уничтожить? [тритон или ?*]
+  f   Что вы хотите уничтожить? [крыса или ?*]
+  n   Что вы хотите уничтожить? [копьё или ?*]
+  pl  Что вы хотите уничтожить? [3 стрелы или ?*]
+What do you want to destroy? [*]  [e2ebf865d37b]
+  =   Что вы хотите уничтожить? [*]
+What do you want to dip?  [9fd0b16722c9]
+  =   Что вы хотите окунуть?
 What do you want to dip? [%s or ?*]  [1884bc7750b2]
   m   Что вы хотите окунуть? [тритон или ?*]
   f   Что вы хотите окунуть? [крыса или ?*]
   n   Что вы хотите окунуть? [копьё или ?*]
   pl  Что вы хотите окунуть? [3 стрелы или ?*]
+What do you want to dip? [*]  [e3bac3ca0ddf]
+  =   Что вы хотите окунуть? [*]
 What do you want to do?  [8d4f6ef55f73]
   =   Что вы хотите сделать?
+What do you want to drink?  [da580f33e6b4]
+  =   Что вы хотите выпить?
 What do you want to drink? [%s or ?*]  [e04450e9bc60]
   m   Что вы хотите выпить? [тритон или ?*]
   f   Что вы хотите выпить? [крыса или ?*]
   n   Что вы хотите выпить? [копьё или ?*]
   pl  Что вы хотите выпить? [3 стрелы или ?*]
+What do you want to drink? [*]  [118b3d4cdd7d]
+  =   Что вы хотите выпить? [*]
+What do you want to drop?  [7f23d8ecd0d1]
+  =   Что вы хотите положить?
 What do you want to drop? [%s or ?*]  [a184427e1325]
   m   Что вы хотите положить? [тритон или ?*]
   f   Что вы хотите положить? [крыса или ?*]
   n   Что вы хотите положить? [копьё или ?*]
   pl  Что вы хотите положить? [3 стрелы или ?*]
+What do you want to drop? [*]  [4b3e6962a167]
+  =   Что вы хотите положить? [*]
+What do you want to eat?  [29d01261b07b]
+  =   Что вы хотите съесть?
 What do you want to eat? [%s or ?*]  [38574df8f7ba]
   m   Что вы хотите съесть? [тритон или ?*]
   f   Что вы хотите съесть? [крыса или ?*]
   n   Что вы хотите съесть? [копьё или ?*]
   pl  Что вы хотите съесть? [3 стрелы или ?*]
+What do you want to eat? [*]  [c45261e5794a]
+  =   Что вы хотите съесть? [*]
+What do you want to fire?  [8df1b124f809]
+  =   Чем вы хотите выстрелить?
 What do you want to fire? [%s or ?*]  [f2c7fcf900dc]
   m   Чем вы хотите выстрелить? [тритон или ?*]
   f   Чем вы хотите выстрелить? [крыса или ?*]
@@ -554,6 +1412,22 @@ What do you want to fire? [%s or ?*]  [f2c7fcf900dc]
   pl  Чем вы хотите выстрелить? [3 стрелы или ?*]
 What do you want to fire? [*]  [031ef3f0196b]
   =   Чем вы хотите выстрелить? [*]
+What do you want to grease?  [a095170ce523]
+  =   Что вы хотите смазать?
+What do you want to grease? [%s or ?*]  [5517850eded3]
+  m   Что вы хотите смазать? [тритон или ?*]
+  f   Что вы хотите смазать? [крыса или ?*]
+  n   Что вы хотите смазать? [копьё или ?*]
+  pl  Что вы хотите смазать? [3 стрелы или ?*]
+What do you want to grease? [*]  [e6b20a5fa652]
+  =   Что вы хотите смазать? [*]
+What do you want to invoke?  [45fa4ea117e6]
+  =   Что вы хотите задействовать?
+What do you want to invoke? [%s or ?*]  [7c57d05f52e9]
+  m   Что вы хотите задействовать? [тритон или ?*]
+  f   Что вы хотите задействовать? [крыса или ?*]
+  n   Что вы хотите задействовать? [копьё или ?*]
+  pl  Что вы хотите задействовать? [3 стрелы или ?*]
 What do you want to invoke? [*]  [b0cbbcd8ba37]
   =   Что вы хотите задействовать? [*]
 What do you want to name these %s?  [a7da50d9c1c1]
@@ -561,6 +1435,11 @@ What do you want to name these %s?  [a7da50d9c1c1]
   f   Как вы хотите назвать эти крысу?
   n   Как вы хотите назвать эти копьё?
   pl  Как вы хотите назвать эти 3 стрелы?
+What do you want to name this %s?  [12d737be80ba]
+  m   Как вы хотите назвать тритона?
+  f   Как вы хотите назвать крысу?
+  n   Как вы хотите назвать копьё?
+  pl  Как вы хотите назвать 3 стрелы?
 What do you want to name?  [1d1bd057a8fa]
   =   Что вы хотите назвать?
 What do you want to name? [%s or ?*]  [c8c6aba35b99]
@@ -568,8 +1447,28 @@ What do you want to name? [%s or ?*]  [c8c6aba35b99]
   f   Что вы хотите назвать? [крыса или ?*]
   n   Что вы хотите назвать? [копьё или ?*]
   pl  Что вы хотите назвать? [3 стрелы или ?*]
+What do you want to name? [*]  [2822cd76dc70]
+  =   Что вы хотите назвать? [*]
+What do you want to open?  [2ee6d999aeca]
+  =   Что вы хотите открыть?
+What do you want to open? [%s or ?*]  [115a041e503a]
+  m   Что вы хотите открыть? [тритон или ?*]
+  f   Что вы хотите открыть? [крыса или ?*]
+  n   Что вы хотите открыть? [копьё или ?*]
+  pl  Что вы хотите открыть? [3 стрелы или ?*]
+What do you want to open? [*]  [6eb50e7e0870]
+  =   Что вы хотите открыть? [*]
+What do you want to put on?  [218851265c72]
+  =   Что вы хотите надеть?
+What do you want to put on? [%s or ?*]  [8079498a66f8]
+  m   Что вы хотите надеть? [тритон или ?*]
+  f   Что вы хотите надеть? [крыса или ?*]
+  n   Что вы хотите надеть? [копьё или ?*]
+  pl  Что вы хотите надеть? [3 стрелы или ?*]
 What do you want to put on? [*]  [cb4b2089bb8b]
   =   Что вы хотите надеть? [*]
+What do you want to read?  [5aa47c026e4e]
+  =   Что вы хотите прочитать?
 What do you want to read? [%s or ?*]  [2f1bcd000f70]
   m   Что вы хотите прочитать? [тритон или ?*]
   f   Что вы хотите прочитать? [крыса или ?*]
@@ -577,6 +1476,8 @@ What do you want to read? [%s or ?*]  [2f1bcd000f70]
   pl  Что вы хотите прочитать? [3 стрелы или ?*]
 What do you want to read? [*]  [cad9095596f1]
   =   Что вы хотите прочитать? [*]
+What do you want to ready?  [571d48e4676a]
+  =   Что вы хотите положить в колчан?
 What do you want to ready? [%s or ?*]  [ec40037eab48]
   m   Что вы хотите положить в колчан? [тритон или ?*]
   f   Что вы хотите положить в колчан? [крыса или ?*]
@@ -584,20 +1485,78 @@ What do you want to ready? [%s or ?*]  [ec40037eab48]
   pl  Что вы хотите положить в колчан? [3 стрелы или ?*]
 What do you want to ready? [*]  [76fa2b3b5e67]
   =   Что вы хотите положить в колчан? [*]
+What do you want to remove?  [c50017f1d33f]
+  =   Что вы хотите снять?
+What do you want to remove? [%s or ?*]  [80bf804105a6]
+  m   Что вы хотите снять? [тритон или ?*]
+  f   Что вы хотите снять? [крыса или ?*]
+  n   Что вы хотите снять? [копьё или ?*]
+  pl  Что вы хотите снять? [3 стрелы или ?*]
 What do you want to remove? [*]  [d3ebd1e6eb71]
   =   Что вы хотите снять? [*]
+What do you want to rub on the stone?  [50c3d1bf4f60]
+  =   Что вы хотите потереть о камень?
+What do you want to rub on the stone? [%s or ?*]  [9c53386a59b0]
+  m   Что вы хотите потереть о камень? [тритон или ?*]
+  f   Что вы хотите потереть о камень? [крыса или ?*]
+  n   Что вы хотите потереть о камень? [копьё или ?*]
+  pl  Что вы хотите потереть о камень? [3 стрелы или ?*]
 What do you want to rub on the stone? [*]  [0d450883412d]
   =   Что вы хотите потереть о камень? [*]
+What do you want to rub on the stones?  [c6112151a735]
+  =   Что вы хотите потереть о камни?
 What do you want to rub on the stones? [%s or ?*]  [3221b9a627ec]
   m   Что вы хотите потереть о камни? [тритон или ?*]
   f   Что вы хотите потереть о камни? [крыса или ?*]
   n   Что вы хотите потереть о камни? [копьё или ?*]
   pl  Что вы хотите потереть о камни? [3 стрелы или ?*]
+What do you want to rub on the stones? [*]  [06d1a40001d2]
+  =   Что вы хотите потереть о камни? [*]
+What do you want to rub the royal jelly on?  [47233bcbde37]
+  =   На что вы хотите намазать маточное молочко?
+What do you want to rub the royal jelly on? [%s or ?*]  [78d6a22e19af]
+  m   На что вы хотите намазать маточное молочко? [тритон или ?*]
+  f   На что вы хотите намазать маточное молочко? [крыса или ?*]
+  n   На что вы хотите намазать маточное молочко? [копьё или ?*]
+  pl  На что вы хотите намазать маточное молочко? [3 стрелы или ?*]
+What do you want to rub the royal jelly on? [*]  [acdf8572242a]
+  =   На что вы хотите намазать маточное молочко? [*]
+What do you want to rub?  [f8013603a4fb]
+  =   Что вы хотите потереть?
 What do you want to rub? [%s or ?*]  [e38192f3d01b]
   m   Что вы хотите потереть? [тритон или ?*]
   f   Что вы хотите потереть? [крыса или ?*]
   n   Что вы хотите потереть? [копьё или ?*]
   pl  Что вы хотите потереть? [3 стрелы или ?*]
+What do you want to rub? [*]  [6caadcb4a661]
+  =   Что вы хотите потереть? [*]
+What do you want to sacrifice?  [b55210066ba7]
+  =   Что вы хотите принести в жертву?
+What do you want to sacrifice? [%s or ?*]  [a2b355015b76]
+  m   Что вы хотите принести в жертву? [тритон или ?*]
+  f   Что вы хотите принести в жертву? [крыса или ?*]
+  n   Что вы хотите принести в жертву? [копьё или ?*]
+  pl  Что вы хотите принести в жертву? [3 стрелы или ?*]
+What do you want to sacrifice? [*]  [46f66584b09d]
+  =   Что вы хотите принести в жертву? [*]
+What do you want to split?  [796b346be309]
+  =   Что вы хотите разделить?
+What do you want to split? [%s or ?*]  [6b4d5ba0a884]
+  m   Что вы хотите разделить? [тритон или ?*]
+  f   Что вы хотите разделить? [крыса или ?*]
+  n   Что вы хотите разделить? [копьё или ?*]
+  pl  Что вы хотите разделить? [3 стрелы или ?*]
+What do you want to split? [*]  [106221ca1974]
+  =   Что вы хотите разделить? [*]
+What do you want to stash?  [8016dda0b8b0]
+  =   Что вы хотите спрятать?
+What do you want to stash? [%s or ?*]  [952f84c29e21]
+  m   Что вы хотите спрятать? [тритон или ?*]
+  f   Что вы хотите спрятать? [крыса или ?*]
+  n   Что вы хотите спрятать? [копьё или ?*]
+  pl  Что вы хотите спрятать? [3 стрелы или ?*]
+What do you want to stash? [*]  [e6301dd2f3b0]
+  =   Что вы хотите спрятать? [*]
 What do you want to take off?  [561993d032dc]
   =   Что вы хотите снять?
 What do you want to take off? [%s or ?*]  [fc9eebb1b18c]
@@ -605,6 +1564,10 @@ What do you want to take off? [%s or ?*]  [fc9eebb1b18c]
   f   Что вы хотите снять? [крыса или ?*]
   n   Что вы хотите снять? [копьё или ?*]
   pl  Что вы хотите снять? [3 стрелы или ?*]
+What do you want to take off? [*]  [a5592064933b]
+  =   Что вы хотите снять? [*]
+What do you want to throw?  [3e39659b7d34]
+  =   Что вы хотите бросить?
 What do you want to throw? [%s or ?*]  [91aa93cb913c]
   m   Что вы хотите бросить? [тритон или ?*]
   f   Что вы хотите бросить? [крыса или ?*]
@@ -612,36 +1575,179 @@ What do you want to throw? [%s or ?*]  [91aa93cb913c]
   pl  Что вы хотите бросить? [3 стрелы или ?*]
 What do you want to throw? [*]  [db716f189453]
   =   Что вы хотите бросить? [*]
+What do you want to tin?  [51d26a41595f]
+  =   Что вы хотите закатать в банку?
+What do you want to tin? [%s or ?*]  [9d9e30105994]
+  m   Что вы хотите закатать в банку? [тритон или ?*]
+  f   Что вы хотите закатать в банку? [крыса или ?*]
+  n   Что вы хотите закатать в банку? [копьё или ?*]
+  pl  Что вы хотите закатать в банку? [3 стрелы или ?*]
+What do you want to tin? [*]  [2e374bc25ae3]
+  =   Что вы хотите закатать в банку? [*]
+What do you want to tip?  [22fc4c65f75c]
+  =   Что вы хотите опорожнить?
+What do you want to tip? [%s or ?*]  [51852100ebb5]
+  m   Что вы хотите опорожнить? [тритон или ?*]
+  f   Что вы хотите опорожнить? [крыса или ?*]
+  n   Что вы хотите опорожнить? [копьё или ?*]
+  pl  Что вы хотите опорожнить? [3 стрелы или ?*]
+What do you want to tip? [*]  [e35e26173b6e]
+  =   Что вы хотите опорожнить? [*]
+What do you want to untrap with?  [8c27ad96c526]
+  =   Чем вы хотите обезвредить ловушку?
+What do you want to untrap with? [%s or ?*]  [8b4d8a8135a3]
+  m   Чем вы хотите обезвредить ловушку? [тритон или ?*]
+  f   Чем вы хотите обезвредить ловушку? [крыса или ?*]
+  n   Чем вы хотите обезвредить ловушку? [копьё или ?*]
+  pl  Чем вы хотите обезвредить ловушку? [3 стрелы или ?*]
+What do you want to untrap with? [*]  [b640238d87ea]
+  =   Чем вы хотите обезвредить ловушку? [*]
+What do you want to use or apply?  [adee18f21084]
+  =   Что вы хотите использовать?
 What do you want to use or apply? [%s or ?*]  [ef7d708f8eb5]
   m   Что вы хотите использовать? [тритон или ?*]
   f   Что вы хотите использовать? [крыса или ?*]
   n   Что вы хотите использовать? [копьё или ?*]
   pl  Что вы хотите использовать? [3 стрелы или ?*]
+What do you want to use or apply? [*]  [fd5cdf5fce5b]
+  =   Что вы хотите использовать? [*]
+What do you want to wear?  [befbfdb3eb96]
+  =   Что вы хотите надеть?
 What do you want to wear? [%s or ?*]  [736b04ba76d5]
   m   Что вы хотите надеть? [тритон или ?*]
   f   Что вы хотите надеть? [крыса или ?*]
   n   Что вы хотите надеть? [копьё или ?*]
   pl  Что вы хотите надеть? [3 стрелы или ?*]
+What do you want to wear? [*]  [440f945e0861]
+  =   Что вы хотите надеть? [*]
+What do you want to wield?  [8fd9fbcdd9fd]
+  =   Чем вы хотите вооружиться?
 What do you want to wield? [%s or ?*]  [7c1f33077ab0]
   m   Чем вы хотите вооружиться? [тритон или ?*]
   f   Чем вы хотите вооружиться? [крыса или ?*]
   n   Чем вы хотите вооружиться? [копьё или ?*]
   pl  Чем вы хотите вооружиться? [3 стрелы или ?*]
+What do you want to wield? [*]  [6eb55461d3aa]
+  =   Чем вы хотите вооружиться? [*]
+What do you want to write on?  [da2264ba4cde]
+  =   На чём вы хотите писать?
+What do you want to write on? [%s or ?*]  [63682aae2b9a]
+  m   На чём вы хотите писать? [тритон или ?*]
+  f   На чём вы хотите писать? [крыса или ?*]
+  n   На чём вы хотите писать? [копьё или ?*]
+  pl  На чём вы хотите писать? [3 стрелы или ?*]
+What do you want to write on? [*]  [6a0c8eb471c9]
+  =   На чём вы хотите писать? [*]
+What do you want to write with?  [e3eb16e6e641]
+  =   Чем вы хотите писать?
+What do you want to write with? [%s or ?*]  [fa94e2cd1cdd]
+  m   Чем вы хотите писать? [тритон или ?*]
+  f   Чем вы хотите писать? [крыса или ?*]
+  n   Чем вы хотите писать? [копьё или ?*]
+  pl  Чем вы хотите писать? [3 стрелы или ?*]
+What do you want to write with? [*]  [be88a5846357]
+  =   Чем вы хотите писать? [*]
+What do you want to zap?  [abce9db7e513]
+  =   Чем вы хотите взмахнуть?
+What do you want to zap? [%s or ?*]  [206de1a86f64]
+  m   Чем вы хотите взмахнуть? [тритон или ?*]
+  f   Чем вы хотите взмахнуть? [крыса или ?*]
+  n   Чем вы хотите взмахнуть? [копьё или ?*]
+  pl  Чем вы хотите взмахнуть? [3 стрелы или ?*]
+What do you want to zap? [*]  [76620173e83a]
+  =   Чем вы хотите взмахнуть? [*]
+What kinds of thing do you want to pick up? [%s]  [cd147934ea30]
+  m   Какие вещи вы хотите подобрать? [тритон]
+  f   Какие вещи вы хотите подобрать? [крыса]
+  n   Какие вещи вы хотите подобрать? [копьё]
+  pl  Какие вещи вы хотите подобрать? [3 стрелы]
+What kinds of thing do you want to put in? [%s]  [2c81971328bf]
+  m   Какие вещи вы хотите положить внутрь? [тритон]
+  f   Какие вещи вы хотите положить внутрь? [крыса]
+  n   Какие вещи вы хотите положить внутрь? [копьё]
+  pl  Какие вещи вы хотите положить внутрь? [3 стрелы]
+What kinds of thing do you want to take out? [%s]  [8f2a25964151]
+  m   Какие вещи вы хотите вынуть? [тритон]
+  f   Какие вещи вы хотите вынуть? [крыса]
+  n   Какие вещи вы хотите вынуть? [копьё]
+  pl  Какие вещи вы хотите вынуть? [3 стрелы]
+What new autopickup exception pattern?  [2fe5ecbc8e5c]
+  =   Какой шаблон исключения для автоподбора?
+What new menucolor pattern?  [6b121389951d]
+  =   Какой шаблон цвета меню?
+What new message pattern?  [7be0f568f8a7]
+  =   Какой шаблон сообщения?
+What tune are you playing? [5 notes, A-G]  [6cb6873f5a3d]
+  =   Какую мелодию вы играете? [5 нот, A-G]
+What type of book do you want to write?  [ad416dc39578]
+  =   Какую книгу вы хотите написать?
+What type of monster do you want to genocide?  [91775c5ba49e]
+  =   Какой вид монстров вы хотите истребить?
+What type of monster do you want to genocide? [enter '?' to see previous genocides]  [494512bbfbe6]
+  =   Какой вид монстров вы хотите истребить? [введите «?», чтобы увидеть прежние истребления]
+What type of monster do you want to genocide? [enter the name of a type of monster, or '?']  [8094bc02005e]
+  =   Какой вид монстров вы хотите истребить? [введите название вида или «?»]
+What type of scroll do you want to write?  [50e84be44a54]
+  =   Какой свиток вы хотите написать?
+What type of spellbook do you want to write?  [b7fc65419eac]
+  =   Какую книгу заклинаний вы хотите написать?
 What type of things do you want to take off?  [032edcfaa1ae]
   =   Какие вещи вы хотите снять?
 What would you like to drop?  [2c1c3fc710f7]
   =   Что вы хотите положить?
 Where do you want to travel to?  [2bf24241726b]
   =   Куда вы хотите отправиться?
+Which %s, Right or Left?  [7efc981dc350]
+  m   Которое тритон, правое или левое?
+  f   Которое крыса, правое или левое?
+  n   Которое копьё, правое или левое?
+  pl  Которое 3 стрелы, правое или левое?
+Which ring-%s, Right or Left?  [b3f2a30b3a5d]
+  m   На какой тритон кольцо, правый или левый?
+  f   На какой крыса кольцо, правый или левый?
+  n   На какой копьё кольцо, правый или левый?
+  pl  На какой 3 стрелы кольцо, правый или левый?
+Wield all of them instead?  [b3175842e612]
+  =   Взять в руки их все?
+Will you accept %ld zorkmid in credit for %s?  [108dfd549623]
+  m   Примете ли вы 1 зоркмид в кредит за тритона?
+  f   Примете ли вы 3 зоркмида в кредит за крысу?
+  n   Примете ли вы 5 зоркмидов в кредит за копьё?
+  pl  Примете ли вы 21 зоркмид в кредит за 3 стрелы?
+Will you accept %ld zorkmids in credit for %s?  [5fb4936e549d]
+  m   Примете ли вы 1 зоркмид в кредит за тритона?
+  f   Примете ли вы 3 зоркмида в кредит за крысу?
+  n   Примете ли вы 5 зоркмидов в кредит за копьё?
+  pl  Примете ли вы 21 зоркмид в кредит за 3 стрелы?
 You are already here.  [9a306b489be9]
   =   Вы уже здесь.
 You are bare handed.  [23efe4dcca92]
   =   Вы безоружны.
+You are dual wielding %ld %s.  Ready %ld of them?  [2911c3ca7758]
+  m   У вас в обеих руках 1 тритон.  Положить 1 в колчан?
+  f   У вас в обеих руках 3 крысы.  Положить 3 в колчан?
+  n   У вас в обеих руках 5 копий.  Положить 5 в колчан?
+  pl  У вас в обеих руках 21 стрела.  Положить 21 в колчан?
 You are hit by %s.  [0dc210bc58d9]
   m   В вас попадает тритон.
   f   В вас попадает крыса.
   n   В вас попадает копьё.
   pl  В вас попадают 3 стрелы.
+You are required to supply your name. -  [66427e852d3c]
+  =   Вы должны назвать своё имя. —
+You are wielding %ld %s.  Ready %ld of them?  [bdaa0e3bc86d]
+  m   У вас в руках 1 тритон.  Положить 1 в колчан?
+  f   У вас в руках 3 крысы.  Положить 3 в колчан?
+  n   У вас в руках 5 копий.  Положить 5 в колчан?
+  pl  У вас в руках 21 стрела.  Положить 21 в колчан?
+You are wielding that.  Ready it instead?  [d0baa58e6095]
+  =   Это у вас в руках.  Положить в колчан?
+You are wielding that.  Ready them instead?  [609c2ad5e000]
+  =   Это у вас в руках.  Положить их в колчан?
+You are wielding those.  Ready it instead?  [fa947a780651]
+  =   Это у вас в руках.  Положить в колчан?
+You are wielding those.  Ready them instead?  [207bcff6d0db]
+  =   Это у вас в руках.  Положить их в колчан?
 You begin bashing monsters with %s.  [a0051d0a4f52]
   m   Вы начинаете колотить монстров тритоном.
   f   Вы начинаете колотить монстров крысой.
@@ -656,6 +1762,16 @@ You cannot escape from %s!  [752eb0e1b6b6]
   pl  Вам не вырваться от 3 стрел!
 You continue digging downward.  [7522d78d6574]
   =   Вы продолжаете копать вниз.
+You did %ld zorkmid worth of damage!  Pay?  [bd427937268c]
+  m   Вы нанесли ущерба на 1 зоркмид!  Заплатить?
+  f   Вы нанесли ущерба на 3 зоркмида!  Заплатить?
+  n   Вы нанесли ущерба на 5 зоркмидов!  Заплатить?
+  pl  Вы нанесли ущерба на 21 зоркмид!  Заплатить?
+You did %ld zorkmids worth of damage!  Pay?  [e1c44a3aac0f]
+  m   Вы нанесли ущерба на 1 зоркмид!  Заплатить?
+  f   Вы нанесли ущерба на 3 зоркмида!  Заплатить?
+  n   Вы нанесли ущерба на 5 зоркмидов!  Заплатить?
+  pl  Вы нанесли ущерба на 21 зоркмид!  Заплатить?
 You die...  [9979e4c12ada]
   =   Вы умираете...
 You don't have anything else to put on.  [71508cfd503b]
@@ -693,8 +1809,61 @@ You give %s the %ld gold pieces she asked for.  [0338b67cb612]
   f   Вы отдаёте крысе 3 золотые монеты, как она и просила.
   n   Вы отдаёте копью 5 золотых монет, как она и просила.
   pl  Вы отдаёте 3 стрелам 21 золотую монету, как она и просила.
+You have %ld %s readied.  Wield one?  [7298751873e7]
+  m   У вас в колчане 1 тритон.  Взять один в руки?
+  f   У вас в колчане 3 крысы.  Взять одну в руки?
+  n   У вас в колчане 5 копий.  Взять одно в руки?
+  pl  У вас в колчане 21 стрела.  Взять одну в руки?
+You have a little trouble lifting %s.  Continue?  [6a7f96dd7c6e]
+  m   Вам немного трудно поднять тритона.  Продолжить?
+  f   Вам немного трудно поднять крысу.  Продолжить?
+  n   Вам немного трудно поднять копьё.  Продолжить?
+  pl  Вам немного трудно поднять 3 стрелы.  Продолжить?
+You have a little trouble removing %s.  Continue?  [3c76f028f2fb]
+  m   Вам немного трудно вынуть тритона.  Продолжить?
+  f   Вам немного трудно вынуть крысу.  Продолжить?
+  n   Вам немного трудно вынуть копьё.  Продолжить?
+  pl  Вам немного трудно вынуть 3 стрелы.  Продолжить?
+You have extreme difficulty lifting %s.  Continue?  [6b660a05a41f]
+  m   Вам крайне трудно поднять тритона.  Продолжить?
+  f   Вам крайне трудно поднять крысу.  Продолжить?
+  n   Вам крайне трудно поднять копьё.  Продолжить?
+  pl  Вам крайне трудно поднять 3 стрелы.  Продолжить?
+You have extreme difficulty removing %s.  Continue?  [d99bb020c6fd]
+  m   Вам крайне трудно вынуть тритона.  Продолжить?
+  f   Вам крайне трудно вынуть крысу.  Продолжить?
+  n   Вам крайне трудно вынуть копьё.  Продолжить?
+  pl  Вам крайне трудно вынуть 3 стрелы.  Продолжить?
+You have much trouble lifting %s.  Continue?  [a51469ed9c37]
+  m   Вам очень трудно поднять тритона.  Продолжить?
+  f   Вам очень трудно поднять крысу.  Продолжить?
+  n   Вам очень трудно поднять копьё.  Продолжить?
+  pl  Вам очень трудно поднять 3 стрелы.  Продолжить?
+You have much trouble removing %s.  Continue?  [fb6e11b8cc5a]
+  m   Вам очень трудно вынуть тритона.  Продолжить?
+  f   Вам очень трудно вынуть крысу.  Продолжить?
+  n   Вам очень трудно вынуть копьё.  Продолжить?
+  pl  Вам очень трудно вынуть 3 стрелы.  Продолжить?
 You have no ammunition readied.  [d6f163b09381]
   =   У вас нет приготовленных снарядов.
+You have that readied.  Wield it instead?  [3b3f39a317cd]
+  =   Это у вас в колчане.  Взять в руки?
+You have that readied.  Wield them instead?  [757b58383cd8]
+  =   Это у вас в колчане.  Взять их в руки?
+You have those readied.  Wield it instead?  [2cc96915206e]
+  =   Это у вас в колчане.  Взять в руки?
+You have those readied.  Wield them instead?  [13ab2b9f31df]
+  =   Это у вас в колчане.  Взять их в руки?
+You have trouble lifting %s.  Continue?  [31e20f838c3d]
+  m   Вам трудно поднять тритона.  Продолжить?
+  f   Вам трудно поднять крысу.  Продолжить?
+  n   Вам трудно поднять копьё.  Продолжить?
+  pl  Вам трудно поднять 3 стрелы.  Продолжить?
+You have trouble removing %s.  Continue?  [4df416ffc953]
+  m   Вам трудно вынуть тритона.  Продолжить?
+  f   Вам трудно вынуть крысу.  Продолжить?
+  n   Вам трудно вынуть копьё.  Продолжить?
+  pl  Вам трудно вынуть 3 стрелы.  Продолжить?
 You hear some noises.  [3048c9596d67]
   =   Вы слышите какой-то шум.
 You hear someone counting gold coins.  [fe613c47e230]
@@ -761,6 +1930,11 @@ You were wearing %s.  [474054947c9e]
   f   На вас была надета крыса.
   n   На вас было надето копьё.
   pl  На вас были надеты 3 стрелы.
+Your alternate weapon is %ld %s.  Ready %ld of them?  [ac1a8bfb42f6]
+  m   Ваше запасное оружие — 1 тритон.  Положить 1 в колчан?
+  f   Ваше запасное оружие — 3 крысы.  Положить 3 в колчан?
+  n   Ваше запасное оружие — 5 копий.  Положить 5 в колчан?
+  pl  Ваше запасное оружие — 21 стрела.  Положить 21 в колчан?
 a monster  [c332f989e893]
   =   Монстра
 a particular object in inventory  [193ae7129821]
@@ -804,3 +1978,5 @@ the type of an object upon the floor  [fcf3fc918a6e]
   =   Тип предмета на полу
 traditional: by monster level, by internal monster index  [faaae6cf861b]
   =   Традиционный: по уровню монстра, затем по внутреннему номеру
+which direction?  [65f7c4b89317]
+  =   В каком направлении?

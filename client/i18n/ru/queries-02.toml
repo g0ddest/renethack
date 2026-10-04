@@ -1,0 +1,1480 @@
+# R6, batch 2: the engine's questions beyond the soak: getobj for every
+# verb, floorfood, the paranoid confirmations, locks, fountains, wield
+# and ready, genocide, wishes, the end of the game. Syntax: nh-i18n's
+# template.rs.
+
+[6a098606bed4]
+en = "Continue your attempt to set %s?"
+ru = "Продолжить устанавливать {1:acc}?"
+
+[7962ad62486d]
+en = "Bones file already exists.  Replace it?"
+ru = "Файл костей уже есть.  Заменить его?"
+
+[1efe3e8717df]
+en = "Command %s requires a parameter:"
+ru = "Команде {1} нужен параметр:"
+
+[9516e9d483a7]
+en = "Open where? [.>]"
+ru = "Открыть что? [.>]"
+
+[380aa11c01d7]
+en = "In what direction do you want to chop? [%s]"
+ru = "В каком направлении рубить? [{1}]"
+
+[39015019ee75]
+en = "At whom? (in what direction)"
+ru = "В кого? (в каком направлении)"
+
+[65f7c4b89317]
+en = "which direction?"
+ru = "в каком направлении?"
+
+[380e1ad2d15a]
+en = "Really autoselect All?"
+ru = "Действительно выбрать всё?"
+
+[4eab68ee6ae2]
+en = "Drop the %s corpse without %s protection on?"
+ru = "Положить труп {1:gen} без защиты на {2:prep}?"
+
+[d364961c9f17]
+en = "Take off your gauntlets despite carrying a dead %s?"
+ru = "Снять рукавицы, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}?"
+
+[fc9691140f7f]
+en = "Take off your gloves despite carrying a dead %s?"
+ru = "Снять перчатки, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}?"
+
+[025fdb947bcf]
+en = "\"Yes\" or \"No\": Really autoselect All?...? [yes|n|q] (n)"
+ru = "Ответьте yes или no: Действительно выбрать всё...? [yes|n|q] (n)"
+
+[058dd0ee0688]
+en = "\"Yes\" or \"No\": Take off your gauntlets despite carrying a dead %s?...? [yes|no]"
+ru = "Ответьте yes или no: Снять рукавицы, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}...? [yes|no]"
+
+[0b3b8fad7a6f]
+en = "Really autoselect All?...? [yes|n] (n)"
+ru = "Действительно выбрать всё...? [yes|n] (n)"
+
+[0d65d2dab8ab]
+en = "\"Yes\" or \"No\": Really autoselect All? [yes|no|quit]"
+ru = "Ответьте yes или no: Действительно выбрать всё? [yes|no|quit]"
+
+[1013e7a6bcf9]
+en = "\"Yes\" or \"No\": Take off your gloves despite carrying a dead %s?...? [yes|no|quit]"
+ru = "Ответьте yes или no: Снять перчатки, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}...? [yes|no|quit]"
+
+[11464c515dba]
+en = "\"Yes\" or \"No\": Take off your gloves despite carrying a dead %s? [yes|n] (n)"
+ru = "Ответьте yes или no: Снять перчатки, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}? [yes|n] (n)"
+
+[130408b83366]
+en = "\"Yes\" or \"No\": Really autoselect All?...? [yes|n] (n)"
+ru = "Ответьте yes или no: Действительно выбрать всё...? [yes|n] (n)"
+
+[1b3ed22b48f7]
+en = "Take off your gauntlets despite carrying a dead %s? [yes|no|quit]"
+ru = "Снять рукавицы, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}? [yes|no|quit]"
+
+[26d8b20e21bc]
+en = "\"Yes\" or \"No\": Drop the %s corpse without %s protection on? [yes|no|quit]"
+ru = "Ответьте yes или no: Положить труп {1:gen} без защиты на {2:prep}? [yes|no|quit]"
+
+[27756d04234a]
+en = "\"Yes\" or \"No\": Really autoselect All? [yes|n] (n)"
+ru = "Ответьте yes или no: Действительно выбрать всё? [yes|n] (n)"
+
+[28598ce4d73b]
+en = "\"Yes\" or \"No\": Really autoselect All? [yes|n|q] (n)"
+ru = "Ответьте yes или no: Действительно выбрать всё? [yes|n|q] (n)"
+
+[2b3ac3dc20a1]
+en = "Take off your gloves despite carrying a dead %s? [yes|no]"
+ru = "Снять перчатки, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}? [yes|no]"
+
+[32ffa4590cf1]
+en = "\"Yes\" or \"No\": Drop the %s corpse without %s protection on? [yes|n] (n)"
+ru = "Ответьте yes или no: Положить труп {1:gen} без защиты на {2:prep}? [yes|n] (n)"
+
+[36a0dd795449]
+en = "Really autoselect All?...? [yes|no]"
+ru = "Действительно выбрать всё...? [yes|no]"
+
+[3739068984dd]
+en = "\"Yes\" or \"No\": Really autoselect All? [yes|no]"
+ru = "Ответьте yes или no: Действительно выбрать всё? [yes|no]"
+
+[3e9de0ec90cd]
+en = "Really autoselect All? [yes|n] (n)"
+ru = "Действительно выбрать всё? [yes|n] (n)"
+
+[3faaf8d86b13]
+en = "\"Yes\" or \"No\": Drop the %s corpse without %s protection on?...? [yes|n|q] (n)"
+ru = "Ответьте yes или no: Положить труп {1:gen} без защиты на {2:prep}...? [yes|n|q] (n)"
+
+[42c42dfbac15]
+en = "\"Yes\" or \"No\": Take off your gloves despite carrying a dead %s?...? [yes|n|q] (n)"
+ru = "Ответьте yes или no: Снять перчатки, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}...? [yes|n|q] (n)"
+
+[447e1f62f2f9]
+en = "\"Yes\" or \"No\": Drop the %s corpse without %s protection on? [yes|no]"
+ru = "Ответьте yes или no: Положить труп {1:gen} без защиты на {2:prep}? [yes|no]"
+
+[4493f61998bf]
+en = "Drop the %s corpse without %s protection on?...? [yes|n] (n)"
+ru = "Положить труп {1:gen} без защиты на {2:prep}...? [yes|n] (n)"
+
+[49b779f31c29]
+en = "Take off your gloves despite carrying a dead %s? [yes|n] (n)"
+ru = "Снять перчатки, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}? [yes|n] (n)"
+
+[5014cffeb592]
+en = "Take off your gloves despite carrying a dead %s?...? [yes|n|q] (n)"
+ru = "Снять перчатки, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}...? [yes|n|q] (n)"
+
+[505b1db4d8a3]
+en = "Take off your gauntlets despite carrying a dead %s?...? [yes|n] (n)"
+ru = "Снять рукавицы, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}...? [yes|n] (n)"
+
+[521882213d16]
+en = "\"Yes\" or \"No\": Drop the %s corpse without %s protection on?...? [yes|no|quit]"
+ru = "Ответьте yes или no: Положить труп {1:gen} без защиты на {2:prep}...? [yes|no|quit]"
+
+[54e203a81f25]
+en = "\"Yes\" or \"No\": Drop the %s corpse without %s protection on?...? [yes|no]"
+ru = "Ответьте yes или no: Положить труп {1:gen} без защиты на {2:prep}...? [yes|no]"
+
+[55241ba61259]
+en = "\"Yes\" or \"No\": Drop the %s corpse without %s protection on?...? [yes|n] (n)"
+ru = "Ответьте yes или no: Положить труп {1:gen} без защиты на {2:prep}...? [yes|n] (n)"
+
+[614c885c0772]
+en = "Really autoselect All? [yes|no]"
+ru = "Действительно выбрать всё? [yes|no]"
+
+[63f102640658]
+en = "Really autoselect All?...? [yes|n|q] (n)"
+ru = "Действительно выбрать всё...? [yes|n|q] (n)"
+
+[651b5a5bcee3]
+en = "Take off your gloves despite carrying a dead %s? [yes|no|quit]"
+ru = "Снять перчатки, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}? [yes|no|quit]"
+
+[66492e439c47]
+en = "Take off your gloves despite carrying a dead %s?...? [yes|n] (n)"
+ru = "Снять перчатки, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}...? [yes|n] (n)"
+
+[664ff7de2194]
+en = "Take off your gauntlets despite carrying a dead %s? [yes|n] (n)"
+ru = "Снять рукавицы, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}? [yes|n] (n)"
+
+[6763d3d9a8b5]
+en = "Drop the %s corpse without %s protection on? [yes|n] (n)"
+ru = "Положить труп {1:gen} без защиты на {2:prep}? [yes|n] (n)"
+
+[6b9e30860f5e]
+en = "Take off your gauntlets despite carrying a dead %s? [yes|no]"
+ru = "Снять рукавицы, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}? [yes|no]"
+
+[6e38301bb847]
+en = "Drop the %s corpse without %s protection on? [yes|no]"
+ru = "Положить труп {1:gen} без защиты на {2:prep}? [yes|no]"
+
+[7226650eca1d]
+en = "Take off your gauntlets despite carrying a dead %s?...? [yes|no|quit]"
+ru = "Снять рукавицы, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}...? [yes|no|quit]"
+
+[77dd661c42d5]
+en = "Drop the %s corpse without %s protection on?...? [yes|no|quit]"
+ru = "Положить труп {1:gen} без защиты на {2:prep}...? [yes|no|quit]"
+
+[7e1ca1b8c4fb]
+en = "Take off your gloves despite carrying a dead %s? [yes|n|q] (n)"
+ru = "Снять перчатки, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}? [yes|n|q] (n)"
+
+[7e460582328f]
+en = "\"Yes\" or \"No\": Take off your gauntlets despite carrying a dead %s? [yes|n|q] (n)"
+ru = "Ответьте yes или no: Снять рукавицы, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}? [yes|n|q] (n)"
+
+[96f513a0bcc7]
+en = "Take off your gloves despite carrying a dead %s?...? [yes|no|quit]"
+ru = "Снять перчатки, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}...? [yes|no|quit]"
+
+[9cc2dd90d26e]
+en = "Take off your gauntlets despite carrying a dead %s? [yes|n|q] (n)"
+ru = "Снять рукавицы, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}? [yes|n|q] (n)"
+
+[a3743d9a8ea9]
+en = "\"Yes\" or \"No\": Take off your gauntlets despite carrying a dead %s?...? [yes|n|q] (n)"
+ru = "Ответьте yes или no: Снять рукавицы, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}...? [yes|n|q] (n)"
+
+[a9be618317b5]
+en = "Drop the %s corpse without %s protection on? [yes|n|q] (n)"
+ru = "Положить труп {1:gen} без защиты на {2:prep}? [yes|n|q] (n)"
+
+[aa76adc2700c]
+en = "Drop the %s corpse without %s protection on?...? [yes|n|q] (n)"
+ru = "Положить труп {1:gen} без защиты на {2:prep}...? [yes|n|q] (n)"
+
+[b1acafe566ce]
+en = "Really autoselect All?...? [yes|no|quit]"
+ru = "Действительно выбрать всё...? [yes|no|quit]"
+
+[b6da26c91966]
+en = "Take off your gauntlets despite carrying a dead %s?...? [yes|no]"
+ru = "Снять рукавицы, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}...? [yes|no]"
+
+[bdb65c7e737d]
+en = "Take off your gauntlets despite carrying a dead %s?...? [yes|n|q] (n)"
+ru = "Снять рукавицы, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}...? [yes|n|q] (n)"
+
+[bfbff40a8cd7]
+en = "\"Yes\" or \"No\": Take off your gloves despite carrying a dead %s? [yes|no]"
+ru = "Ответьте yes или no: Снять перчатки, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}? [yes|no]"
+
+[bfc764d7f941]
+en = "\"Yes\" or \"No\": Take off your gauntlets despite carrying a dead %s? [yes|n] (n)"
+ru = "Ответьте yes или no: Снять рукавицы, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}? [yes|n] (n)"
+
+[c1d95c4b55d3]
+en = "\"Yes\" or \"No\": Drop the %s corpse without %s protection on? [yes|n|q] (n)"
+ru = "Ответьте yes или no: Положить труп {1:gen} без защиты на {2:prep}? [yes|n|q] (n)"
+
+[c2833ff7b557]
+en = "Drop the %s corpse without %s protection on? [yes|no|quit]"
+ru = "Положить труп {1:gen} без защиты на {2:prep}? [yes|no|quit]"
+
+[c613b48058b9]
+en = "\"Yes\" or \"No\": Take off your gauntlets despite carrying a dead %s? [yes|no|quit]"
+ru = "Ответьте yes или no: Снять рукавицы, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}? [yes|no|quit]"
+
+[c77a26e9594d]
+en = "\"Yes\" or \"No\": Take off your gloves despite carrying a dead %s? [yes|n|q] (n)"
+ru = "Ответьте yes или no: Снять перчатки, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}? [yes|n|q] (n)"
+
+[d250ea22333c]
+en = "\"Yes\" or \"No\": Take off your gauntlets despite carrying a dead %s? [yes|no]"
+ru = "Ответьте yes или no: Снять рукавицы, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}? [yes|no]"
+
+[d622af3bc07a]
+en = "Really autoselect All? [yes|n|q] (n)"
+ru = "Действительно выбрать всё? [yes|n|q] (n)"
+
+[d7653971d3ab]
+en = "\"Yes\" or \"No\": Take off your gloves despite carrying a dead %s?...? [yes|no]"
+ru = "Ответьте yes или no: Снять перчатки, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}...? [yes|no]"
+
+[dc2c86f17995]
+en = "\"Yes\" or \"No\": Take off your gauntlets despite carrying a dead %s?...? [yes|n] (n)"
+ru = "Ответьте yes или no: Снять рукавицы, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}...? [yes|n] (n)"
+
+[ddd7cf2ff181]
+en = "Drop the %s corpse without %s protection on?...? [yes|no]"
+ru = "Положить труп {1:gen} без защиты на {2:prep}...? [yes|no]"
+
+[eb8931e77e2c]
+en = "\"Yes\" or \"No\": Take off your gloves despite carrying a dead %s?...? [yes|n] (n)"
+ru = "Ответьте yes или no: Снять перчатки, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}...? [yes|n] (n)"
+
+[eb92bc517a0e]
+en = "\"Yes\" or \"No\": Take off your gloves despite carrying a dead %s? [yes|no|quit]"
+ru = "Ответьте yes или no: Снять перчатки, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}? [yes|no|quit]"
+
+[ed50586b9f71]
+en = "\"Yes\" or \"No\": Really autoselect All?...? [yes|no|quit]"
+ru = "Ответьте yes или no: Действительно выбрать всё...? [yes|no|quit]"
+
+[f7a1d23b4f6d]
+en = "Take off your gloves despite carrying a dead %s?...? [yes|no]"
+ru = "Снять перчатки, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}...? [yes|no]"
+
+[fb4d944afadf]
+en = "\"Yes\" or \"No\": Take off your gauntlets despite carrying a dead %s?...? [yes|no|quit]"
+ru = "Ответьте yes или no: Снять рукавицы, держа {1:gender|мёртвого|мёртвую|мёртвое|мёртвых} {1:acc}...? [yes|no|quit]"
+
+[fd8159973162]
+en = "\"Yes\" or \"No\": Really autoselect All?...? [yes|no]"
+ru = "Ответьте yes или no: Действительно выбрать всё...? [yes|no]"
+
+[fd96dd42409c]
+en = "Really autoselect All? [yes|no|quit]"
+ru = "Действительно выбрать всё? [yes|no|quit]"
+
+[382bffe25a6a]
+en = "Commit suicide?"
+ru = "Покончить с собой?"
+
+[6491b35b0de4]
+en = "Do you want to change into %s?"
+ru = "Превратиться в {1:acc}?"
+
+[96395bd5ec91]
+en = "Really quit without saving?"
+ru = "Действительно выйти без сохранения?"
+
+[bb923370c446]
+en = "Remain in beast form?"
+ru = "Остаться в зверином облике?"
+
+[cf07b98f3c97]
+en = "Perform seppuku?"
+ru = "Совершить сэппуку?"
+
+[f2a15270d60f]
+en = "Save bones?"
+ru = "Сохранить кости?"
+
+[f8ad41e7fcf0]
+en = "Die?"
+ru = "Умереть?"
+
+[a186ead714b7]
+en = "Hide [h] or spin a web [s]?"
+ru = "Спрятаться [h] или сплести паутину [s]?"
+
+[de6c7d592dc3]
+en = "Do you want to enter explore mode?"
+ru = "Перейти в режим исследования?"
+
+[d76c7b6c5dbf]
+en = "What do you look for?"
+ru = "Что вы ищете?"
+
+[de3090869465]
+en = "Are you sure you want to enter?"
+ru = "Вы уверены, что хотите войти?"
+
+[317885e3bba3]
+en = "Try to squeeze through?"
+ru = "Попытаться протиснуться?"
+
+[f2955bbed671]
+en = "Try to squeeze down?"
+ru = "Попытаться протиснуться вниз?"
+
+[b569a8915411]
+en = "Beware, there will be no return!  Still climb?"
+ru = "Берегитесь, пути назад не будет!  Всё равно подняться?"
+
+[12d737be80ba]
+en = "What do you want to name this %s?"
+ru = "Как вы хотите назвать {1:acc}?"
+
+[b6e809ef19b4]
+en = "Call a stream of %s fluid:"
+ru = "Назвать струю жидкости ({1}):"
+
+[7efc981dc350]
+en = "Which %s, Right or Left?"
+ru = "Которое {1}, правое или левое?"
+
+[b3f2a30b3a5d]
+en = "Which ring-%s, Right or Left?"
+ru = "На какой {1} кольцо, правый или левый?"
+
+[42903701a821]
+en = "Kick your steed?"
+ru = "Пнуть своего скакуна?"
+
+[6de42971e269]
+en = "Replace annotation \"%.30s...\" with?"
+ru = "Чем заменить пометку «{1}…»?"
+
+[13a2804a94ae]
+en = "There are %s here; sacrifice one?"
+ru = "Здесь {1:num|лежит|лежат} {1}; принести в жертву?"
+
+[2352f82f24c9]
+en = "There are %s here; tin one?"
+ru = "Здесь {1:num|лежит|лежат} {1}; закатать в банку?"
+
+[26ce2a858fc6]
+en = "There is %s here; eat one?"
+ru = "Здесь {1:num|лежит|лежат} {1}; съесть?"
+
+[3ad334dae193]
+en = "There is %s here; tin it?"
+ru = "Здесь {1:num|лежит|лежат} {1}; закатать в банку?"
+
+[59010bb91be6]
+en = "There are %s here; tin it?"
+ru = "Здесь {1:num|лежит|лежат} {1}; закатать в банку?"
+
+[5e6c3d961bcb]
+en = "There is %s here; sacrifice it?"
+ru = "Здесь {1:num|лежит|лежат} {1}; принести в жертву?"
+
+[6e0675f544e3]
+en = "There are %s here; eat it?"
+ru = "Здесь {1:num|лежит|лежат} {1}; съесть?"
+
+[74cfaba3ddbf]
+en = "There is %s here; tin one?"
+ru = "Здесь {1:num|лежит|лежат} {1}; закатать в банку?"
+
+[75444742c2fd]
+en = "There is %s here; sacrifice one?"
+ru = "Здесь {1:num|лежит|лежат} {1}; принести в жертву?"
+
+[8b00950381d4]
+en = "There are %s here; eat one?"
+ru = "Здесь {1:num|лежит|лежат} {1}; съесть?"
+
+[ba1b77a5b4fe]
+en = "There are %s here; sacrifice it?"
+ru = "Здесь {1:num|лежит|лежат} {1}; принести в жертву?"
+
+[c213ad63fb60]
+en = "Do you want to see what you had when you quit?"
+ru = "Показать, что было при вас, когда вы вышли?"
+
+[a48fcf5db627]
+en = "Switch from the tutorial back to regular play?"
+ru = "Выйти из обучения в обычную игру?"
+
+[9508ca2c2893]
+en = "Do you want to add to the current engraving?"
+ru = "Дописать к уже начертанной надписи?"
+
+[0f9743408b2c]
+en = "Dry up fountain?"
+ru = "Осушить фонтан?"
+
+[66751e7359e4]
+en = "Do what with %s?"
+ru = "Что сделать с {1:ins}?"
+
+[218851265c72]
+en = "What do you want to put on?"
+ru = "Что вы хотите надеть?"
+
+[22fc4c65f75c]
+en = "What do you want to tip?"
+ru = "Что вы хотите опорожнить?"
+
+[29d01261b07b]
+en = "What do you want to eat?"
+ru = "Что вы хотите съесть?"
+
+[2ee6d999aeca]
+en = "What do you want to open?"
+ru = "Что вы хотите открыть?"
+
+[3e39659b7d34]
+en = "What do you want to throw?"
+ru = "Что вы хотите бросить?"
+
+[45fa4ea117e6]
+en = "What do you want to invoke?"
+ru = "Что вы хотите задействовать?"
+
+[47233bcbde37]
+en = "What do you want to rub the royal jelly on?"
+ru = "На что вы хотите намазать маточное молочко?"
+
+[50c3d1bf4f60]
+en = "What do you want to rub on the stone?"
+ru = "Что вы хотите потереть о камень?"
+
+[51d26a41595f]
+en = "What do you want to tin?"
+ru = "Что вы хотите закатать в банку?"
+
+[571d48e4676a]
+en = "What do you want to ready?"
+ru = "Что вы хотите положить в колчан?"
+
+[5aa47c026e4e]
+en = "What do you want to read?"
+ru = "Что вы хотите прочитать?"
+
+[796b346be309]
+en = "What do you want to split?"
+ru = "Что вы хотите разделить?"
+
+[7f23d8ecd0d1]
+en = "What do you want to drop?"
+ru = "Что вы хотите положить?"
+
+[8016dda0b8b0]
+en = "What do you want to stash?"
+ru = "Что вы хотите спрятать?"
+
+[8c27ad96c526]
+en = "What do you want to untrap with?"
+ru = "Чем вы хотите обезвредить ловушку?"
+
+[8df1b124f809]
+en = "What do you want to fire?"
+ru = "Чем вы хотите выстрелить?"
+
+[8fd9fbcdd9fd]
+en = "What do you want to wield?"
+ru = "Чем вы хотите вооружиться?"
+
+[9fd0b16722c9]
+en = "What do you want to dip?"
+ru = "Что вы хотите окунуть?"
+
+[a095170ce523]
+en = "What do you want to grease?"
+ru = "Что вы хотите смазать?"
+
+[a27cbf7a89a0]
+en = "What do you want to adjust?"
+ru = "Что вы хотите переложить?"
+
+[abce9db7e513]
+en = "What do you want to zap?"
+ru = "Чем вы хотите взмахнуть?"
+
+[adee18f21084]
+en = "What do you want to use or apply?"
+ru = "Что вы хотите использовать?"
+
+[b55210066ba7]
+en = "What do you want to sacrifice?"
+ru = "Что вы хотите принести в жертву?"
+
+[b6cc458810c0]
+en = "What do you want to call?"
+ru = "Какой тип предметов вы хотите назвать?"
+
+[befbfdb3eb96]
+en = "What do you want to wear?"
+ru = "Что вы хотите надеть?"
+
+[c50017f1d33f]
+en = "What do you want to remove?"
+ru = "Что вы хотите снять?"
+
+[c6112151a735]
+en = "What do you want to rub on the stones?"
+ru = "Что вы хотите потереть о камни?"
+
+[da2264ba4cde]
+en = "What do you want to write on?"
+ru = "На чём вы хотите писать?"
+
+[da580f33e6b4]
+en = "What do you want to drink?"
+ru = "Что вы хотите выпить?"
+
+[e3eb16e6e641]
+en = "What do you want to write with?"
+ru = "Чем вы хотите писать?"
+
+[ec2fc81a09e8]
+en = "What do you want to destroy?"
+ru = "Что вы хотите уничтожить?"
+
+[f3167b492ffc]
+en = "What do you want to charge?"
+ru = "Что вы хотите зарядить?"
+
+[f8013603a4fb]
+en = "What do you want to rub?"
+ru = "Что вы хотите потереть?"
+
+[039a26f4058a]
+en = "What do you want to charge? [*]"
+ru = "Что вы хотите зарядить? [*]"
+
+[06d1a40001d2]
+en = "What do you want to rub on the stones? [*]"
+ru = "Что вы хотите потереть о камни? [*]"
+
+[106221ca1974]
+en = "What do you want to split? [*]"
+ru = "Что вы хотите разделить? [*]"
+
+[115a041e503a]
+en = "What do you want to open? [%s or ?*]"
+ru = "Что вы хотите открыть? [{1} или ?*]"
+
+[118b3d4cdd7d]
+en = "What do you want to drink? [*]"
+ru = "Что вы хотите выпить? [*]"
+
+[14cf2beee381]
+en = "What do you want to call? [%s or ?*]"
+ru = "Какой тип предметов вы хотите назвать? [{1} или ?*]"
+
+[206de1a86f64]
+en = "What do you want to zap? [%s or ?*]"
+ru = "Чем вы хотите взмахнуть? [{1} или ?*]"
+
+[2822cd76dc70]
+en = "What do you want to name? [*]"
+ru = "Что вы хотите назвать? [*]"
+
+[2e374bc25ae3]
+en = "What do you want to tin? [*]"
+ru = "Что вы хотите закатать в банку? [*]"
+
+[440f945e0861]
+en = "What do you want to wear? [*]"
+ru = "Что вы хотите надеть? [*]"
+
+[44c66cada92b]
+en = "What do you want to call? [*]"
+ru = "Какой тип предметов вы хотите назвать? [*]"
+
+[46f66584b09d]
+en = "What do you want to sacrifice? [*]"
+ru = "Что вы хотите принести в жертву? [*]"
+
+[4b3e6962a167]
+en = "What do you want to drop? [*]"
+ru = "Что вы хотите положить? [*]"
+
+[51852100ebb5]
+en = "What do you want to tip? [%s or ?*]"
+ru = "Что вы хотите опорожнить? [{1} или ?*]"
+
+[5517850eded3]
+en = "What do you want to grease? [%s or ?*]"
+ru = "Что вы хотите смазать? [{1} или ?*]"
+
+[5a1400935dfd]
+en = "What do you want to charge? [%s or ?*]"
+ru = "Что вы хотите зарядить? [{1} или ?*]"
+
+[63682aae2b9a]
+en = "What do you want to write on? [%s or ?*]"
+ru = "На чём вы хотите писать? [{1} или ?*]"
+
+[6a0c8eb471c9]
+en = "What do you want to write on? [*]"
+ru = "На чём вы хотите писать? [*]"
+
+[6b4d5ba0a884]
+en = "What do you want to split? [%s or ?*]"
+ru = "Что вы хотите разделить? [{1} или ?*]"
+
+[6caadcb4a661]
+en = "What do you want to rub? [*]"
+ru = "Что вы хотите потереть? [*]"
+
+[6eb50e7e0870]
+en = "What do you want to open? [*]"
+ru = "Что вы хотите открыть? [*]"
+
+[6eb55461d3aa]
+en = "What do you want to wield? [*]"
+ru = "Чем вы хотите вооружиться? [*]"
+
+[76620173e83a]
+en = "What do you want to zap? [*]"
+ru = "Чем вы хотите взмахнуть? [*]"
+
+[78d6a22e19af]
+en = "What do you want to rub the royal jelly on? [%s or ?*]"
+ru = "На что вы хотите намазать маточное молочко? [{1} или ?*]"
+
+[7c57d05f52e9]
+en = "What do you want to invoke? [%s or ?*]"
+ru = "Что вы хотите задействовать? [{1} или ?*]"
+
+[8079498a66f8]
+en = "What do you want to put on? [%s or ?*]"
+ru = "Что вы хотите надеть? [{1} или ?*]"
+
+[80bf804105a6]
+en = "What do you want to remove? [%s or ?*]"
+ru = "Что вы хотите снять? [{1} или ?*]"
+
+[88fd6def2828]
+en = "What do you want to adjust? [*]"
+ru = "Что вы хотите переложить? [*]"
+
+[8b4d8a8135a3]
+en = "What do you want to untrap with? [%s or ?*]"
+ru = "Чем вы хотите обезвредить ловушку? [{1} или ?*]"
+
+[952f84c29e21]
+en = "What do you want to stash? [%s or ?*]"
+ru = "Что вы хотите спрятать? [{1} или ?*]"
+
+[9c53386a59b0]
+en = "What do you want to rub on the stone? [%s or ?*]"
+ru = "Что вы хотите потереть о камень? [{1} или ?*]"
+
+[9d9e30105994]
+en = "What do you want to tin? [%s or ?*]"
+ru = "Что вы хотите закатать в банку? [{1} или ?*]"
+
+[a2b355015b76]
+en = "What do you want to sacrifice? [%s or ?*]"
+ru = "Что вы хотите принести в жертву? [{1} или ?*]"
+
+[a5592064933b]
+en = "What do you want to take off? [*]"
+ru = "Что вы хотите снять? [*]"
+
+[acdf8572242a]
+en = "What do you want to rub the royal jelly on? [*]"
+ru = "На что вы хотите намазать маточное молочко? [*]"
+
+[b640238d87ea]
+en = "What do you want to untrap with? [*]"
+ru = "Чем вы хотите обезвредить ловушку? [*]"
+
+[bd81ae73c3ad]
+en = "What do you want to destroy? [%s or ?*]"
+ru = "Что вы хотите уничтожить? [{1} или ?*]"
+
+[be88a5846357]
+en = "What do you want to write with? [*]"
+ru = "Чем вы хотите писать? [*]"
+
+[c45261e5794a]
+en = "What do you want to eat? [*]"
+ru = "Что вы хотите съесть? [*]"
+
+[e2ebf865d37b]
+en = "What do you want to destroy? [*]"
+ru = "Что вы хотите уничтожить? [*]"
+
+[e35e26173b6e]
+en = "What do you want to tip? [*]"
+ru = "Что вы хотите опорожнить? [*]"
+
+[e3bac3ca0ddf]
+en = "What do you want to dip? [*]"
+ru = "Что вы хотите окунуть? [*]"
+
+[e6301dd2f3b0]
+en = "What do you want to stash? [*]"
+ru = "Что вы хотите спрятать? [*]"
+
+[e6b20a5fa652]
+en = "What do you want to grease? [*]"
+ru = "Что вы хотите смазать? [*]"
+
+[fa94e2cd1cdd]
+en = "What do you want to write with? [%s or ?*]"
+ru = "Чем вы хотите писать? [{1} или ?*]"
+
+[fd5cdf5fce5b]
+en = "What do you want to use or apply? [*]"
+ru = "Что вы хотите использовать? [*]"
+
+[45434f45fb87]
+en = "Do you want to try to disarm it?"
+ru = "Попробовать обезвредить?"
+
+[5add5bb25d65]
+en = "Unlock it with %s?"
+ru = "Отпереть {1:ins}?"
+
+[ed3e36a52459]
+en = "Check %s for a trap?"
+ru = "Проверить {1:acc} на ловушки?"
+
+[19dbffa1e853]
+en = "There is %s here; fix it?"
+ru = "Здесь {1:num|лежит|лежат} {1}; починить?"
+
+[291a8ba93f7c]
+en = "There is %s here; fix its lock?"
+ru = "Здесь {1:num|лежит|лежат} {1}; починить замок?"
+
+[2cbcdb36426e]
+en = "There is %s here; unlock its lock?"
+ru = "Здесь {1:num|лежит|лежат} {1}; отпереть замок?"
+
+[acb481049184]
+en = "There is %s here; pick its lock?"
+ru = "Здесь {1:num|лежит|лежат} {1}; вскрыть замок?"
+
+[d00361a76157]
+en = "There is %s here; lock it?"
+ru = "Здесь {1:num|лежит|лежат} {1}; запереть?"
+
+[dc93f15ea9d2]
+en = "There is %s here; pick it?"
+ru = "Здесь {1:num|лежит|лежат} {1}; вскрыть?"
+
+[e19e593427b4]
+en = "There is %s here; unlock it?"
+ru = "Здесь {1:num|лежит|лежат} {1}; отпереть?"
+
+[f1452fd62fc5]
+en = "There is %s here; lock its lock?"
+ru = "Здесь {1:num|лежит|лежат} {1}; запереть замок?"
+
+[ce96a1bac93e]
+en = "Check this door for a trap?"
+ru = "Проверить эту дверь на ловушки?"
+
+[23c0b47a506c]
+en = "Unlock it?"
+ru = "Отпереть?"
+
+[c550ab284650]
+en = "Lock it with %s?"
+ru = "Запереть {1:ins}?"
+
+[d04fdebf6a21]
+en = "Lock it?"
+ru = "Запереть?"
+
+[70c538042717]
+en = "There is %s here; force its lock?"
+ru = "Здесь {1:num|лежит|лежат} {1}; взломать замок?"
+
+[745d6498a4b5]
+en = "Kick it?"
+ru = "Пнуть?"
+
+[f277c917d8e3]
+en = "\"That %s looks pretty.  May I have it?\""
+ru = "«{1:gender|Какой красивый|Какая красивая|Какое красивое|Какие красивые} {1}.  Можно мне {1:gender|его|её|его|их} взять?»"
+
+[8e26c6da2d23]
+en = "\"That %s looks pretty.  Would you wear it for me?\""
+ru = "«{1:gender|Какой красивый|Какая красивая|Какое красивое|Какие красивые} {1}.  Наденешь {1:gender|его|её|его|их} для меня?»"
+
+[057359f6af0f]
+en = "\"Shall I remove your dragon scales, sweetheart?\""
+ru = "«Можно снять с тебя драконью чешую, {hero:gender|сладкий|сладкая}?»"
+
+[0673388cd82e]
+en = "\"Shall I remove your cloak, dear?\""
+ru = "«Можно снять с тебя плащ, {hero:gender|дорогой|дорогая}?»"
+
+[084beaf9ddfd]
+en = "\"Shall I remove your gloves, lover?\""
+ru = "«Можно снять с тебя перчатки, {hero:gender|милый|милая}?»"
+
+[097786ed0226]
+en = "\"Shall I remove your smock, lover?\""
+ru = "«Можно снять с тебя халат, {hero:gender|милый|милая}?»"
+
+[0d403a31de97]
+en = "\"Shall I remove your smock, sweetheart?\""
+ru = "«Можно снять с тебя халат, {hero:gender|сладкий|сладкая}?»"
+
+[104b1eba31f3]
+en = "\"Shall I remove your apron, sweetheart?\""
+ru = "«Можно снять с тебя фартук, {hero:gender|сладкий|сладкая}?»"
+
+[11340f77d026]
+en = "\"Shall I remove your shield, sweetheart?\""
+ru = "«Можно снять с тебя щит, {hero:gender|сладкий|сладкая}?»"
+
+[1e94fc258801]
+en = "\"Shall I remove your suit, sweetheart?\""
+ru = "«Можно снять с тебя костюм, {hero:gender|сладкий|сладкая}?»"
+
+[203a8be63a66]
+en = "\"Shall I remove your mail, dear?\""
+ru = "«Можно снять с тебя кольчугу, {hero:gender|дорогой|дорогая}?»"
+
+[279146ab2a8c]
+en = "\"Shall I remove your wrapping, lover?\""
+ru = "«Можно снять с тебя обмотки, {hero:gender|милый|милая}?»"
+
+[2a8b743d457a]
+en = "\"Shall I remove your suit, dear?\""
+ru = "«Можно снять с тебя костюм, {hero:gender|дорогой|дорогая}?»"
+
+[2d3a18ff85e4]
+en = "\"Shall I remove your smock, dear?\""
+ru = "«Можно снять с тебя халат, {hero:gender|дорогой|дорогая}?»"
+
+[3785e83fc378]
+en = "\"Shall I remove your boots, sweetheart?\""
+ru = "«Можно снять с тебя сапоги, {hero:gender|сладкий|сладкая}?»"
+
+[4550db5c7c7a]
+en = "\"Shall I remove your robe, sweetheart?\""
+ru = "«Можно снять с тебя мантию, {hero:gender|сладкий|сладкая}?»"
+
+[4a0abce77424]
+en = "\"Shall I remove your boots, dear?\""
+ru = "«Можно снять с тебя сапоги, {hero:gender|дорогой|дорогая}?»"
+
+[4b23e9476e94]
+en = "\"Shall I remove your robe, lover?\""
+ru = "«Можно снять с тебя мантию, {hero:gender|милый|милая}?»"
+
+[507c8b4a139f]
+en = "\"Shall I remove your mail, sweetheart?\""
+ru = "«Можно снять с тебя кольчугу, {hero:gender|сладкий|сладкая}?»"
+
+[50acc3ac06e2]
+en = "\"Shall I remove your helm, sweetheart?\""
+ru = "«Можно снять с тебя шлем, {hero:gender|сладкий|сладкая}?»"
+
+[53e57cb8415d]
+en = "\"Shall I remove your dragon mail, sweetheart?\""
+ru = "«Можно снять с тебя драконью броню, {hero:gender|сладкий|сладкая}?»"
+
+[589a9a1d1f28]
+en = "\"Shall I remove your suit, lover?\""
+ru = "«Можно снять с тебя костюм, {hero:gender|милый|милая}?»"
+
+[595ee13a75a6]
+en = "\"Shall I remove your dragon scales, dear?\""
+ru = "«Можно снять с тебя драконью чешую, {hero:gender|дорогой|дорогая}?»"
+
+[5d9fefb06937]
+en = "\"Shall I remove your shield, dear?\""
+ru = "«Можно снять с тебя щит, {hero:gender|дорогой|дорогая}?»"
+
+[60bc23df62e8]
+en = "\"Shall I remove your gloves, dear?\""
+ru = "«Можно снять с тебя перчатки, {hero:gender|дорогой|дорогая}?»"
+
+[62b03dcd0962]
+en = "\"Shall I remove your apron, dear?\""
+ru = "«Можно снять с тебя фартук, {hero:gender|дорогой|дорогая}?»"
+
+[6ad8cd316dc2]
+en = "\"Shall I remove your shirt, dear?\""
+ru = "«Можно снять с тебя рубашку, {hero:gender|дорогой|дорогая}?»"
+
+[6b6c91d440b4]
+en = "\"Shall I remove your cloak, lover?\""
+ru = "«Можно снять с тебя плащ, {hero:gender|милый|милая}?»"
+
+[6c0b766f5f7c]
+en = "\"Shall I remove your wrapping, dear?\""
+ru = "«Можно снять с тебя обмотки, {hero:gender|дорогой|дорогая}?»"
+
+[73c045c2a684]
+en = "\"Shall I remove your helm, lover?\""
+ru = "«Можно снять с тебя шлем, {hero:gender|милый|милая}?»"
+
+[7ee4d32d4c96]
+en = "\"Shall I remove your jacket, lover?\""
+ru = "«Можно снять с тебя куртку, {hero:gender|милый|милая}?»"
+
+[7f2c3a63b636]
+en = "\"Shall I remove your cloak, sweetheart?\""
+ru = "«Можно снять с тебя плащ, {hero:gender|сладкий|сладкая}?»"
+
+[826430260f99]
+en = "\"Shall I remove your shirt, lover?\""
+ru = "«Можно снять с тебя рубашку, {hero:gender|милый|милая}?»"
+
+[8294eb7e3a83]
+en = "\"Shall I remove your shield, lover?\""
+ru = "«Можно снять с тебя щит, {hero:gender|милый|милая}?»"
+
+[869d0494a223]
+en = "\"Shall I remove your wrapping, sweetheart?\""
+ru = "«Можно снять с тебя обмотки, {hero:gender|сладкий|сладкая}?»"
+
+[93200ed1243a]
+en = "\"Shall I remove your robe, dear?\""
+ru = "«Можно снять с тебя мантию, {hero:gender|дорогой|дорогая}?»"
+
+[94ee01e6eb0f]
+en = "\"Shall I remove your dragon mail, lover?\""
+ru = "«Можно снять с тебя драконью броню, {hero:gender|милый|милая}?»"
+
+[b0d9ed8a90d4]
+en = "\"Shall I remove your mail, lover?\""
+ru = "«Можно снять с тебя кольчугу, {hero:gender|милый|милая}?»"
+
+[b1035917517d]
+en = "\"Shall I remove your dragon mail, dear?\""
+ru = "«Можно снять с тебя драконью броню, {hero:gender|дорогой|дорогая}?»"
+
+[b6be3e03fb1d]
+en = "\"Shall I remove your apron, lover?\""
+ru = "«Можно снять с тебя фартук, {hero:gender|милый|милая}?»"
+
+[ba6698ed8314]
+en = "\"Shall I remove your dragon scales, lover?\""
+ru = "«Можно снять с тебя драконью чешую, {hero:gender|милый|милая}?»"
+
+[bc5e1ff7dd04]
+en = "\"Shall I remove your hat, lover?\""
+ru = "«Можно снять с тебя шляпу, {hero:gender|милый|милая}?»"
+
+[c9091a7c3c66]
+en = "\"Shall I remove your gloves, sweetheart?\""
+ru = "«Можно снять с тебя перчатки, {hero:gender|сладкий|сладкая}?»"
+
+[ca3cdec1a385]
+en = "\"Shall I remove your jacket, dear?\""
+ru = "«Можно снять с тебя куртку, {hero:gender|дорогой|дорогая}?»"
+
+[ce93489a73ee]
+en = "\"Shall I remove your helm, dear?\""
+ru = "«Можно снять с тебя шлем, {hero:gender|дорогой|дорогая}?»"
+
+[d2249b253e6e]
+en = "\"Shall I remove your hat, dear?\""
+ru = "«Можно снять с тебя шляпу, {hero:gender|дорогой|дорогая}?»"
+
+[d48978d8911c]
+en = "\"Shall I remove your shirt, sweetheart?\""
+ru = "«Можно снять с тебя рубашку, {hero:gender|сладкий|сладкая}?»"
+
+[daf0660ae296]
+en = "\"Shall I remove your boots, lover?\""
+ru = "«Можно снять с тебя сапоги, {hero:gender|милый|милая}?»"
+
+[dcc196237a9e]
+en = "\"Shall I remove your hat, sweetheart?\""
+ru = "«Можно снять с тебя шляпу, {hero:gender|сладкий|сладкая}?»"
+
+[ddb5da7a4c75]
+en = "\"Shall I remove your jacket, sweetheart?\""
+ru = "«Можно снять с тебя куртку, {hero:gender|сладкий|сладкая}?»"
+
+[4927766b0b39]
+en = "How much will you offer (suggested: %ld or %ld)?"
+ru = "Сколько вы предложите (советуем {1} или {2})?"
+
+[552024b571f9]
+en = "How much will you offer?"
+ru = "Сколько вы предложите?"
+
+[8d120d7ab03c]
+en = "Improvise?"
+ru = "Импровизировать?"
+
+[0e817d424dae]
+en = "Play the passtune?"
+ru = "Сыграть пароль?"
+
+[6cb6873f5a3d]
+en = "What tune are you playing? [5 notes, A-G]"
+ru = "Какую мелодию вы играете? [5 нот, A-G]"
+
+[73de65daebe1]
+en = "View discoveries for which sort of objects?"
+ru = "Открытия какого рода предметов показать?"
+
+[2fe5ecbc8e5c]
+en = "What new autopickup exception pattern?"
+ru = "Какой шаблон исключения для автоподбора?"
+
+[6b121389951d]
+en = "What new menucolor pattern?"
+ru = "Какой шаблон цвета меню?"
+
+[7be0f568f8a7]
+en = "What new message pattern?"
+ru = "Какой шаблон сообщения?"
+
+[f0e7ea8b52a2]
+en = "Set %s to what?"
+ru = "Какое значение дать параметру {1}?"
+
+[587ff01306b1]
+en = "More info about \"%s\"?"
+ru = "Подробнее о «{1}»?"
+
+[a200dfd7caa0]
+en = "Specify what? (type the word)"
+ru = "Что именно? (введите слово)"
+
+[5c1ff51290c1]
+en = "What command?"
+ru = "Какая команда?"
+
+[31e20f838c3d]
+en = "You have trouble lifting %s.  Continue?"
+ru = "Вам трудно поднять {1:acc}.  Продолжить?"
+
+[3c76f028f2fb]
+en = "You have a little trouble removing %s.  Continue?"
+ru = "Вам немного трудно вынуть {1:acc}.  Продолжить?"
+
+[4df416ffc953]
+en = "You have trouble removing %s.  Continue?"
+ru = "Вам трудно вынуть {1:acc}.  Продолжить?"
+
+[6a7f96dd7c6e]
+en = "You have a little trouble lifting %s.  Continue?"
+ru = "Вам немного трудно поднять {1:acc}.  Продолжить?"
+
+[6b660a05a41f]
+en = "You have extreme difficulty lifting %s.  Continue?"
+ru = "Вам крайне трудно поднять {1:acc}.  Продолжить?"
+
+[a51469ed9c37]
+en = "You have much trouble lifting %s.  Continue?"
+ru = "Вам очень трудно поднять {1:acc}.  Продолжить?"
+
+[d99bb020c6fd]
+en = "You have extreme difficulty removing %s.  Continue?"
+ru = "Вам крайне трудно вынуть {1:acc}.  Продолжить?"
+
+[fb6e11b8cc5a]
+en = "You have much trouble removing %s.  Continue?"
+ru = "Вам очень трудно вынуть {1:acc}.  Продолжить?"
+
+[2c81971328bf]
+en = "What kinds of thing do you want to put in? [%s]"
+ru = "Какие вещи вы хотите положить внутрь? [{1}]"
+
+[8f2a25964151]
+en = "What kinds of thing do you want to take out? [%s]"
+ru = "Какие вещи вы хотите вынуть? [{1}]"
+
+[cd147934ea30]
+en = "What kinds of thing do you want to pick up? [%s]"
+ru = "Какие вещи вы хотите подобрать? [{1}]"
+
+[0350e3639da7]
+en = "Do you want to remove the saddle from %s?"
+ru = "Снять седло с {1:gen}?"
+
+[99d79daee369]
+en = "Pick up %s?"
+ru = "Подобрать {1:acc}?"
+
+[8000018d0ac9]
+en = "Really confuse %s?"
+ru = "Действительно сбить с толку {1:acc}?"
+
+[06357e84a194]
+en = "Become what kind of monster? [type the name]"
+ru = "В какого монстра превратиться? [введите название]"
+
+[9254005c98f8]
+en = "Become %s?"
+ru = "Стать {1:ins}?"
+
+[4af2a408b764]
+en = "Dip %s into the fountain?"
+ru = "Окунуть {1:acc} в фонтан?"
+
+[4baf67c4a787]
+en = "Dip it into the fountain?"
+ru = "Окунуть это в фонтан?"
+
+[4d87456043e6]
+en = "Dip your %s into the fountain?"
+ru = "Окунуть {1:acc} в фонтан?"
+
+[558bb9807438]
+en = "Dip them into the fountain?"
+ru = "Окунуть их в фонтан?"
+
+[2b5f03f40a33]
+en = "Dip it into the sink?"
+ru = "Окунуть это в раковину?"
+
+[2fcfe9255781]
+en = "Dip %s into the sink?"
+ru = "Окунуть {1:acc} в раковину?"
+
+[67caa1e6c69c]
+en = "Dip them into the sink?"
+ru = "Окунуть их в раковину?"
+
+[77b644a9c78b]
+en = "Dip your %s into the sink?"
+ru = "Окунуть {1:acc} в раковину?"
+
+[08abe5ee52b3]
+en = "Dip %s into the %s?"
+ru = "Окунуть {1:acc} в {2:acc}?"
+
+[3dd51d2fbe06]
+en = "Dip your %s into the %s?"
+ru = "Окунуть {1:acc} в {2:acc}?"
+
+[6d3eb51c7033]
+en = "Dip it into the %s?"
+ru = "Окунуть это в {1:acc}?"
+
+[e0c62737f3db]
+en = "Dip them into the %s?"
+ru = "Окунуть их в {1:acc}?"
+
+[8c4ff3ade0c2]
+en = "Drink from the fountain?"
+ru = "Выпить из фонтана?"
+
+[8cb11b265952]
+en = "Drink from the sink?"
+ru = "Выпить из раковины?"
+
+[54ca708e4183]
+en = "Drink the water around you?"
+ru = "Выпить окружающую вас воду?"
+
+[0af4b98306cf]
+en = "Gift an artifact?"
+ru = "Даровать артефакт?"
+
+[f3d81348e476]
+en = "Force the gods to be pleased?"
+ru = "Заставить богов быть довольными?"
+
+[26ab7da3dd6e]
+en = "What class of monsters do you want to genocide?"
+ru = "Какой класс монстров вы хотите истребить?"
+
+[11265e09c40d]
+en = "What class of monsters do you want to genocide? [enter the symbol or name representing a class, or '?']"
+ru = "Какой класс монстров вы хотите истребить? [введите символ или название класса, или «?»]"
+
+[39dcdcc6d032]
+en = "What class of monsters do you want to genocide? [enter '?' to see previous genocides]"
+ru = "Какой класс монстров вы хотите истребить? [введите «?», чтобы увидеть прежние истребления]"
+
+[91775c5ba49e]
+en = "What type of monster do you want to genocide?"
+ru = "Какой вид монстров вы хотите истребить?"
+
+[494512bbfbe6]
+en = "What type of monster do you want to genocide? [enter '?' to see previous genocides]"
+ru = "Какой вид монстров вы хотите истребить? [введите «?», чтобы увидеть прежние истребления]"
+
+[8094bc02005e]
+en = "What type of monster do you want to genocide? [enter the name of a type of monster, or '?']"
+ru = "Какой вид монстров вы хотите истребить? [введите название вида или «?»]"
+
+[f8d51c365377]
+en = "Create what kind of monster?"
+ru = "Какого монстра создать?"
+
+[00510025ac94]
+en = "Reading mail will violate \"illiterate\" conduct.  Read anyway?"
+ru = "Прочитав письмо, вы нарушите обет «неграмотности».  Всё равно прочитать?"
+
+[ad21f92aece3]
+en = "\"Wilt thou settle for a minor consultation?\" (%d zorkmids)"
+ru = "«Согласен ли ты на малое прорицание?» ({1} {1:plural|зоркмид|зоркмида|зоркмидов})"
+
+[fed5f0d5e0bd]
+en = "\"Wilt thou settle for a minor consultation?\" (%d zorkmid)"
+ru = "«Согласен ли ты на малое прорицание?» ({1} {1:plural|зоркмид|зоркмида|зоркмидов})"
+
+[233e89d9f629]
+en = "\"Then dost thou desire a major one?\" (%d zorkmid)"
+ru = "«Тогда желаешь ли ты великого?» ({1} {1:plural|зоркмид|зоркмида|зоркмидов})"
+
+[d9efeeffc281]
+en = "\"Then dost thou desire a major one?\" (%d zorkmids)"
+ru = "«Тогда желаешь ли ты великого?» ({1} {1:plural|зоркмид|зоркмида|зоркмидов})"
+
+[3f4675b590a2]
+en = "Overwrite the old file?"
+ru = "Перезаписать старый файл?"
+
+[da94bf901d1f]
+en = "Really save?"
+ru = "Действительно сохранить?"
+
+[8f4c2e7b88e6]
+en = "Itemized billing?"
+ru = "Показать счёт по предметам?"
+
+[108dfd549623]
+en = "Will you accept %ld zorkmid in credit for %s?"
+ru = "Примете ли вы {1} {1:plural|зоркмид|зоркмида|зоркмидов} в кредит за {2:acc}?"
+
+[5fb4936e549d]
+en = "Will you accept %ld zorkmids in credit for %s?"
+ru = "Примете ли вы {1} {1:plural|зоркмид|зоркмида|зоркмидов} в кредит за {2:acc}?"
+
+[bd427937268c]
+en = "You did %ld zorkmid worth of damage!  Pay?"
+ru = "Вы нанесли ущерба на {1} {1:plural|зоркмид|зоркмида|зоркмидов}!  Заплатить?"
+
+[e1c44a3aac0f]
+en = "You did %ld zorkmids worth of damage!  Pay?"
+ru = "Вы нанесли ущерба на {1} {1:plural|зоркмид|зоркмида|зоркмидов}!  Заплатить?"
+
+[7b82c1fcf0a9]
+en = "This spellbook is difficult to comprehend.  Continue?"
+ru = "Эта книга заклинаний трудна для понимания.  Продолжить?"
+
+[cef7a3d48c1f]
+en = "This spellbook is very difficult to comprehend.  Continue?"
+ru = "Эта книга заклинаний очень трудна для понимания.  Продолжить?"
+
+[6ea0ab685f4d]
+en = "Cast which spell? [a-%c *?]"
+ru = "Какое заклинание прочесть? [a-{1} *?]"
+
+[92c329c869f8]
+en = "Cast which spell? [a-zA-%c *?]"
+ru = "Какое заклинание прочесть? [a-zA-{1} *?]"
+
+[f79b918e950e]
+en = "Cast which spell? [a *?]"
+ru = "Какое заклинание прочесть? [a *?]"
+
+[f893bd60f8e4]
+en = "Cast which spell? [a-zA *?]"
+ru = "Какое заклинание прочесть? [a-zA *?]"
+
+[11f0b150d8d4]
+en = "Heal your leg?"
+ru = "Вылечить ногу?"
+
+[8ffdb5f0e0a5]
+en = "Heal your legs?"
+ru = "Вылечить ноги?"
+
+[a6c3ff77a5ce]
+en = "There is a level teleporter here. Trigger it?"
+ru = "Здесь телепорт на другой уровень. Задействовать его?"
+
+[3985743ecfe8]
+en = "Jump in?"
+ru = "Прыгнуть внутрь?"
+
+[dd2152d81265]
+en = "To what level do you want to teleport?"
+ru = "На какой уровень вы хотите телепортироваться?"
+
+[94c54715882f]
+en = "To what level do you want to teleport? [type a number or name]"
+ru = "На какой уровень вы хотите телепортироваться? [введите номер или название]"
+
+[a0fa19ae9467]
+en = "To what level do you want to teleport? [type a number, name, or ? for a menu]"
+ru = "На какой уровень вы хотите телепортироваться? [введите номер, название или ? для меню]"
+
+[146c0d7a7e64]
+en = "Go to Nowhere.  Are you sure?"
+ru = "Отправиться в Никуда.  Вы уверены?"
+
+[7cb3aa0366a0]
+en = "Disarm it?"
+ru = "Обезвредить?"
+
+[1e136e2398ee]
+en = "There is %s here.  Check it for traps?"
+ru = "Здесь {1:num|лежит|лежат} {1}.  Проверить на ловушки?"
+
+[66427e852d3c]
+en = "You are required to supply your name. -"
+ru = "Вы должны назвать своё имя. —"
+
+[9cee2fa2391c]
+en = "\"Hello stranger, who are you?\" -"
+ru = "«Привет, незнакомец, кто ты такой?» —"
+
+[12c0880fa94a]
+en = "Advance skills without practice?"
+ru = "Повысить навыки без тренировки?"
+
+[7298751873e7]
+en = "You have %ld %s readied.  Wield one?"
+ru = "У вас в колчане {1} {2:by1}.  Взять {2:sg|один|одну|одно} в руки?"
+
+[b3175842e612]
+en = "Wield all of them instead?"
+ru = "Взять в руки их все?"
+
+[13ab2b9f31df]
+en = "You have those readied.  Wield them instead?"
+ru = "Это у вас в колчане.  Взять их в руки?"
+
+[2cc96915206e]
+en = "You have those readied.  Wield it instead?"
+ru = "Это у вас в колчане.  Взять в руки?"
+
+[3b3f39a317cd]
+en = "You have that readied.  Wield it instead?"
+ru = "Это у вас в колчане.  Взять в руки?"
+
+[757b58383cd8]
+en = "You have that readied.  Wield them instead?"
+ru = "Это у вас в колчане.  Взять их в руки?"
+
+[bdaa0e3bc86d]
+en = "You are wielding %ld %s.  Ready %ld of them?"
+ru = "У вас в руках {1} {2:by1}.  Положить {3} в колчан?"
+
+[47f7537fca35]
+en = "Ready all of them instead?"
+ru = "Положить в колчан их все?"
+
+[207bcff6d0db]
+en = "You are wielding those.  Ready them instead?"
+ru = "Это у вас в руках.  Положить их в колчан?"
+
+[609c2ad5e000]
+en = "You are wielding that.  Ready them instead?"
+ru = "Это у вас в руках.  Положить их в колчан?"
+
+[d0baa58e6095]
+en = "You are wielding that.  Ready it instead?"
+ru = "Это у вас в руках.  Положить в колчан?"
+
+[fa947a780651]
+en = "You are wielding those.  Ready it instead?"
+ru = "Это у вас в руках.  Положить в колчан?"
+
+[2911c3ca7758]
+en = "You are dual wielding %ld %s.  Ready %ld of them?"
+ru = "У вас в обеих руках {1} {2:by1}.  Положить {3} в колчан?"
+
+[ac1a8bfb42f6]
+en = "Your alternate weapon is %ld %s.  Ready %ld of them?"
+ru = "Ваше запасное оружие — {1} {2:by1}.  Положить {3} в колчан?"
+
+[00b7b4a49291]
+en = "Those are your alternate weapon.  Ready it instead?"
+ru = "Это ваше запасное оружие.  Положить его в колчан?"
+
+[3231d33bdd06]
+en = "Those are your second weapon.  Ready them instead?"
+ru = "Это ваше второе оружие.  Положить их в колчан?"
+
+[4bc135cff4c6]
+en = "Those are your second weapon.  Ready it instead?"
+ru = "Это ваше второе оружие.  Положить его в колчан?"
+
+[96b4dd01309c]
+en = "That is your second weapon.  Ready it instead?"
+ru = "Это ваше второе оружие.  Положить его в колчан?"
+
+[d6f2ffe85b59]
+en = "That is your second weapon.  Ready them instead?"
+ru = "Это ваше второе оружие.  Положить их в колчан?"
+
+[dd6f3bc9d7e2]
+en = "That is your alternate weapon.  Ready them instead?"
+ru = "Это ваше запасное оружие.  Положить их в колчан?"
+
+[ffad1fb192ef]
+en = "Those are your alternate weapon.  Ready them instead?"
+ru = "Это ваше запасное оружие.  Положить их в колчан?"
+
+[50e84be44a54]
+en = "What type of scroll do you want to write?"
+ru = "Какой свиток вы хотите написать?"
+
+[ad416dc39578]
+en = "What type of book do you want to write?"
+ru = "Какую книгу вы хотите написать?"
+
+[b7fc65419eac]
+en = "What type of spellbook do you want to write?"
+ru = "Какую книгу заклинаний вы хотите написать?"
+
+[950698d53808]
+en = "For what do you wish"
+ru = "Чего вы желаете"
+
+[1799dfeb9b00]
+en = "For what do you wish (enter 'help' for assistance)?"
+ru = "Чего вы желаете (введите «help» для подсказки)?"
+
+[8f429df2419a]
+en = "For what do you wish?"
+ru = "Чего вы желаете?"
+
+[dafac7e9f837]
+en = "For what do you wish (enter 'help' for assistance)"
+ru = "Чего вы желаете (введите «help» для подсказки)"

@@ -14,6 +14,7 @@
 //! | `{1:cap}`, `{1:ins:cap}` | with its first letter upper-cased |
 //! | `{1:gender\|ударил\|ударила\|ударило\|ударили}` | the form that agrees with argument 1: masculine, feminine, neuter, plural |
 //! | `{1:num\|кусает\|кусают}` | singular or plural, as argument 1 |
+//! | `{1:sg\|один\|одну\|одно}` | the gender of argument 1's noun even when it is plural ("взять одну" of 3 стрелы) |
 //! | `{1:plural\|монету\|монеты\|монет}` | after the number argument 1: one (1, 21), few (2–4, 22–24), many (5–20, 0) |
 //! | `{2:by1}`, `{2:by1:acc}` | argument 2 as counted by the number argument 1: "стрелу", "стрелы", "стрел" |
 //! | `{hero:gender\|сам\|сама}` | as the hero's gender: masculine, feminine |
@@ -65,6 +66,9 @@ pub enum Target {
 pub enum Select {
     /// masculine, feminine, neuter, plural
     Gender([String; 4]),
+    /// masculine, feminine, neuter of the noun even when it is plural (one
+    /// of them: "взять одну")
+    Sg([String; 3]),
     /// the hero's: masculine, feminine
     HeroGender([String; 2]),
     /// singular, plural
@@ -243,6 +247,12 @@ fn render_placeholder(p: &Placeholder, args: &[Value], hero: Gender) -> String {
             };
             forms[k].clone()
         }
+        Some(Select::Sg(forms)) => forms[match v.gender() {
+            Gender::Masc => 0,
+            Gender::Fem => 1,
+            Gender::Neut => 2,
+        }]
+        .clone(),
         Some(Select::Num([sg, pl])) => {
             if v.number() == Number::Plur {
                 pl.clone()
@@ -294,7 +304,7 @@ fn placeholder(src: &str) -> Result<Placeholder, TemplateError> {
     for w in words {
         match w.trim() {
             "cap" => cap = true,
-            s @ ("gender" | "num" | "plural") => selector = Some(s),
+            s @ ("gender" | "sg" | "num" | "plural") => selector = Some(s),
             by if by.starts_with("by") => match by[2..].parse::<usize>() {
                 Ok(k) if k >= 1 => count_by = Some(k - 1),
                 _ => return Err(TemplateError::BadModifier(src.into(), by.into())),
@@ -331,6 +341,14 @@ fn placeholder(src: &str) -> Result<Placeholder, TemplateError> {
                 forms[1].clone(),
                 forms[2].clone(),
                 forms[3].clone(),
+            ]))
+        }
+        (Some("sg"), _) => {
+            want("sg", 3)?;
+            Some(Select::Sg([
+                forms[0].clone(),
+                forms[1].clone(),
+                forms[2].clone(),
             ]))
         }
         (Some("num"), _) => {
@@ -441,6 +459,8 @@ mod tests {
         assert_eq!(render(t, &[newt()]), "тритон умер.");
         assert_eq!(render(t, &[rat()]), "крыса умерла.");
         assert_eq!(render(t, &[arrows()]), "3 стрелы умерли.");
+        let t = "{1:sg|Взять один|Взять одну|Взять одно}?";
+        assert_eq!(render(t, &[arrows()]), "Взять одну?");
         let t = "{1:num|Лежит|Лежат} {1}.";
         assert_eq!(render(t, &[arrows()]), "Лежат 3 стрелы.");
         let t = "{1} {1:plural|монета|монеты|монет}";
