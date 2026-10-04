@@ -325,8 +325,15 @@ impl Translator {
         depth: usize,
     ) -> Output {
         let text = ru.render(values, self.hero);
+        // a text starts with a capital, but a line that goes on with a
+        // sentence ("and 45 pieces of gold, after 678 moves.") does not
+        let goes_on = t.fmt.chars().next().is_some_and(char::is_lowercase);
         Output {
-            text: if depth == 0 { capitalize(&text) } else { text },
+            text: if depth == 0 && !goes_on {
+                capitalize(&text)
+            } else {
+                text
+            },
             status: if whole {
                 Status::Translated
             } else {
@@ -368,9 +375,11 @@ impl Translator {
     /// An argument's value, and whether it is Russian.
     fn value(&self, kind: ConvKind, shown: &str, name: NameKind, depth: usize) -> (Value, bool) {
         match kind {
+            // a number keeps its print where it says more than its digits
+            // (a sign, zero padding: "+3", "18/02")
             ConvKind::Int => match shown.trim().parse::<i64>() {
-                Ok(n) => (Value::Number(n), true),
-                Err(_) => (Value::Text(shown.to_string()), true),
+                Ok(n) if n.to_string() == shown.trim() => (Value::Number(n), true),
+                _ => (Value::Text(shown.to_string()), true),
             },
             ConvKind::Str => self.text_value(shown, name, depth),
             ConvKind::Char | ConvKind::Float | ConvKind::Other => {
