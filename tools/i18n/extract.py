@@ -1059,8 +1059,11 @@ class Context:
         ops = [op for op in self.ops.get(name, []) if since < op.index < pos]
         passed = self.passes.get(name, {}).get(since)
         if passed and self.glob.writes(*passed) and not any(not op.append for op in ops):
-            # written by a call: what it holds is not known
-            return []
+            # written by a call: what it holds is not known, what is
+            # appended to it is, and all there is to say ("%s (current;
+            # limit:%s)": any few of the appends)
+            tails = [t for t in (self.tail(a, since, depth) for a in ops if not a.transform) if t.pieces]
+            return with_tails([("%s", ["text"])], tails, few=True) if tails else []
         if not any(not op.append for op in ops) and since >= 0:
             # appended (or not) to what it held at its last use
             before = self.compositions(name, since, depth)
@@ -1144,19 +1147,19 @@ class Tail:
         self.always = always
 
 
-def with_tails(heads, tails):
+def with_tails(heads, tails, few=False):
     """Each head followed by the appends that always run after it and by
     any ordered subset of the others (they are in branches); by those that
-    always run alone when the others are many. A combination with too
-    many texts has placeholders for the arguments of its most varied
-    appends."""
+    always run alone when the others are many (`few`: by any few of a
+    handful). A combination with too many texts has placeholders for the
+    arguments of its most varied appends."""
     if not heads:
         return []
     optional = [t for t in tails if not t.always]
-    if len(optional) > MAX_APPENDS:
+    if len(optional) > (2 * MAX_APPENDS if few else MAX_APPENDS):
         optional = []
     out = []
-    for r in range(len(optional) + 1):
+    for r in range(min(len(optional), MAX_APPENDS) + 1):
         for chosen in itertools.combinations(optional, r):
             used = [t for t in tails if t.always or t in chosen]
             parts = [heads] + [t.pieces for t in used]
@@ -1173,9 +1176,10 @@ def with_tails(heads, tails):
 
 
 def writable(param):
-    """Is a parameter declaration a `char *` the function may write?"""
+    """Is a parameter declaration a `char *` (or `char name[]`) the
+    function may write?"""
     words = [t.text for t in param]
-    return "char" in words and "*" in words and "const" not in words
+    return "char" in words and ("*" in words or "[" in words) and "const" not in words
 
 
 def product_size(choices):
@@ -1450,6 +1454,10 @@ def add_enlightenment(cat, ctx, name, args, pos, site):
     # (the present and the past double every line)
     while product_size(parts) > 2 * MAX_DERIVED:
         k = max(range(len(parts)), key=lambda i: len(parts[i]))
+        # what the line no longer spells out is a piece of its own
+        # ("%s (current; limit:%s)")
+        for piece, kinds in parts[k]:
+            cat.add(piece, "sprintf", site, kinds)
         parts[k] = [("%s", ["text"])]
     for combo in itertools.product(*parts):
         fmt = " " + "".join(p for p, _ in combo) + "."

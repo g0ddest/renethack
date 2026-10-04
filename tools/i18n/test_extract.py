@@ -95,6 +95,19 @@ class Formats(unittest.TestCase):
         # the last append always runs: no text ends before it
         self.assertNotIn("pline", e[" who is opposed by"].uses)
 
+    def test_what_is_appended_to_a_call_s_text(self):
+        e = catalog_of('static void value(int n, char out[]) { out[0] = 0; }\n'
+                       'void f(int a, int b) {\n'
+                       '    char buf[BUFSZ];\n'
+                       '    value(a, buf);\n'
+                       '    if (a != b)\n'
+                       '        Sprintf(eos(buf), " (current; limit:%d", b);\n'
+                       '    if (a)\n'
+                       '        Strcat(buf, ")");\n'
+                       '    pline("Your strength is %s.", buf);\n}\n')
+        self.assertIn("Your strength is %s (current; limit:%d).", e)
+        self.assertIn("Your strength is %s.", e)
+
     def test_a_call_may_write_a_buffer(self):
         src = ('static void fill(char *out) { out[0] = 0; }\n'
                'static void show(const char *s) { (void) s; }\n'
