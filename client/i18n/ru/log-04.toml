@@ -1,0 +1,1105 @@
+# R6, log messages batch 4: read.c. Syntax: nh-i18n's template.rs.
+
+[6103578ce99f]
+en = "Fortunately, you are wearing a hard helmet."
+ru = "К счастью, на вас прочный шлем."
+
+[c249af7a1682]
+en = "You dream that you feel guilty."
+ru = "Вам снится, что вас мучает совесть."
+
+[5350d7f003de]
+en = "You feel guilty."
+ru = "Вас мучает совесть."
+
+[9a8245e90bcd]
+en = "I've never heard of such monsters."
+ru = "Я никогда не слышал о таких монстрах."
+
+[5735f4f83bb4]
+en = "You have a feeling of loss."
+ru = "Вас охватывает чувство утраты."
+
+[aa1d0d72d04f]
+en = "%s merges and hardens!"
+ru = "{1} {1:num|сливается|сливаются} воедино и {1:num|твердеет|твердеют}!"
+
+[133c1e0922be]
+en = "This is %s!"
+ru = "Это {1}!"
+
+[841c6e395f3b]
+en = "You dream that you feel confused."
+ru = "Вам снится, что вас охватывает замешательство."
+
+[e2eac96813f5]
+en = "You feel confused."
+ru = "Вас охватывает замешательство."
+
+[de0c8b84a159]
+en = "The %s glow of your %s intensifies."
+ru = "{1:n} сияние {2:gender|вашего|вашей|вашего|ваших} {2:gen} усиливается."
+
+[568b25f18ba4]
+en = "You dream that you feel in touch with the Universal Oneness."
+ru = "Вам снится, что вы ощущаете связь со Вселенским Всеединством."
+
+[0d17a5239922]
+en = "You dream that you feel like someone is helping you."
+ru = "Вам снится, что вам кто-то помогает."
+
+[cb04259d0b00]
+en = "You dream that you feel like you need some help."
+ru = "Вам снится, что вам не помешала бы помощь."
+
+[1fcb3b7c4725]
+en = "You dream that you feel the power of the Force against you!"
+ru = "Вам снится, что Сила обратилась против вас!"
+
+[c92c91223488]
+en = "You feel in touch with the Universal Oneness."
+ru = "Вы ощущаете связь со Вселенским Всеединством."
+
+[263cdd56297b]
+en = "You feel like someone is helping you."
+ru = "Вы чувствуете, что кто-то вам помогает."
+
+[214c996a0dd2]
+en = "You feel like you need some help."
+ru = "Вы чувствуете, что вам не помешала бы помощь."
+
+[3d2ddc748548]
+en = "You feel the power of the Force against you!"
+ru = "Вы чувствуете, что Сила обратилась против вас!"
+
+[a47876f628ac]
+en = "The scroll disintegrates."
+ru = "Свиток рассыпается."
+
+[9915615ec765]
+en = "The clasp on your %s vanishes."
+ru = "Оковы у вас на {1:loc} исчезают."
+
+[74198aa786c8]
+en = "Your weapon feels warm for a moment."
+ru = "Ваше оружие на миг теплеет."
+
+[a13b09f50789]
+en = "You have found a scroll of genocide!"
+ru = "Вы нашли свиток геноцида!"
+
+[eed1e45a0538]
+en = "Tiny lights sparkle in the air momentarily."
+ru = "В воздухе на мгновение вспыхивают крошечные огоньки."
+
+[be14dfdc0cdc]
+en = "Lights appear all around you!"
+ru = "Вокруг вас появляются огоньки!"
+
+[e42c30748b23]
+en = "You dream that you feel discharged."
+ru = "Вам снится, что вы — разряженная батарейка."
+
+[b20e8cd6ea00]
+en = "You feel discharged."
+ru = "Вы чувствуете себя разряженной батарейкой."
+
+[9a8080725a7f]
+en = "You dream that you feel charged up!"
+ru = "Вам снится, что вы чувствуете прилив энергии!"
+
+[3c7fb4780582]
+en = "You feel charged up!"
+ru = "Вы чувствуете прилив энергии!"
+
+[7c397bf666d3]
+en = "Your mind releases itself from mundane concerns."
+ru = "Ваш разум освобождается от мирских забот."
+
+[0b48643c1b5c]
+en = "As your mind turns inward on itself, you forget everything else."
+ru = "Ваш разум обращается внутрь себя, и вы забываете обо всём остальном."
+
+[0aa482ba3e0d]
+en = "Who was that Maud person anyway?"
+ru = "А кто вообще такая эта Мод?"
+
+[83faaa429c89]
+en = "Thinking of Maud you forget everything else."
+ru = "Думая о Мод, вы забываете обо всём остальном."
+
+[0067feddd1ed]
+en = "A little %s around you vaporizes."
+ru = "Немного {1:gen} вокруг вас испаряется."
+
+[25652adab839]
+en = "Oh, look, what a pretty fire in your %s."
+ru = "Ой, смотрите, какой красивый огонь у вас в {1:loc}."
+
+[909a21423162]
+en = "You dream that you feel a pleasant warmth in your %s."
+ru = "Вам снится, что вы чувствуете приятное тепло в {1:loc}."
+
+[2e0005480357]
+en = "You feel a pleasant warmth in your %s."
+ru = "Вы чувствуете приятное тепло в {1:loc}."
+
+[3ef6c76f29ab]
+en = "The scroll catches fire and you burn your %s."
+ru = "Свиток вспыхивает, и вы обжигаете себе {1:acc}."
+
+[ddf086db4609]
+en = "The %s around you vaporizes violently!"
+ru = "{1} вокруг вас бурно {1:num|испаряется|испаряются}!"
+
+[589de91d7cc4]
+en = "This is a scroll of fire!"
+ru = "Это свиток огня!"
+
+[0ff06b762b18]
+en = "Where do you want to center the explosion?"
+ru = "Где вы хотите устроить взрыв?"
+
+[bbf020397218]
+en = "The scroll erupts in a tower of flame!"
+ru = "Свиток извергает столб пламени!"
+
+[cfaab4814d40]
+en = "You barely hear rumbling."
+ru = "Вы едва слышите грохот."
+
+[f8520e9d6e39]
+en = "You dream that you hear rumbling."
+ru = "Вам снится, что вы слышите грохот."
+
+[76d7110fc335]
+en = "You hear rumbling."
+ru = "Вы слышите грохот."
+
+[4373df6997c4]
+en = "But nothing else happens."
+ru = "Но больше ничего не происходит."
+
+[4bc58b936220]
+en = "You have found a scroll of stinking cloud!"
+ru = "Вы нашли свиток зловонного облака!"
+
+[26754b9a68c8]
+en = "You don't remember there being any magic words on this scroll."
+ru = "Вы не помните, чтобы на этом свитке были какие-то магические слова."
+
+[8f85e8e85738]
+en = "This scroll seems to be blank."
+ru = "Этот свиток, похоже, чист."
+
+[fc76a688b08c]
+en = "You identify this as an identify scroll."
+ru = "Вы опознаёте в нём свиток опознания."
+
+[44e428446e60]
+en = "This is an identify scroll."
+ru = "Это свиток опознания."
+
+[83903bfd98d8]
+en = "Your mind is filled with crazy lines!"
+ru = "Ваш разум заполняют безумные линии!"
+
+[ebe837294350]
+en = "Wow!  Modern art."
+ru = "Ух ты!  Современное искусство."
+
+[7055904707e5]
+en = "Your %s spins in bewilderment."
+ru = "У вас от растерянности {1:num|кружится|кружатся} {1}."
+
+[d31a31945351]
+en = "Unfortunately, you can't grasp the details."
+ru = "К сожалению, подробности от вас ускользают."
+
+[da5d9c040b35]
+en = "That was a scroll of mail?"
+ru = "Это был свиток почты?"
+
+[6a8abf562edd]
+en = "You barely hear something hit %s %s over your %s!"
+ru = "Вы едва слышите, как что-то бьёт по {2:dat} {1:gen} у вас над {3:ins}!"
+
+[6ad6273842e2]
+en = "You dream that you hear something hit %s %s over your %s!"
+ru = "Вам снится, как что-то бьёт по {2:dat} {1:gen} у вас над {3:ins}!"
+
+[6c034db6db2c]
+en = "You hear something hit %s %s over your %s!"
+ru = "Вы слышите, как что-то бьёт по {2:dat} {1:gen} у вас над {3:ins}!"
+
+[3bfd62300e79]
+en = "Fortunately, %s is wearing a hard helmet."
+ru = "К счастью, на {1:prep} прочный шлем."
+
+[204db2b25473]
+en = "You barely hear a clanging sound."
+ru = "Вы едва слышите металлический звон."
+
+[9e758d3ef702]
+en = "You dream that you hear a clanging sound."
+ru = "Вам снится, что вы слышите металлический звон."
+
+[f180c9832c96]
+en = "You hear a clanging sound."
+ru = "Вы слышите металлический звон."
+
+[b82b2734d603]
+en = "The ambient light seems dimmer."
+ru = "Окружающий свет как будто тускнеет."
+
+[f89ace5caa48]
+en = "It seems even darker in here than before."
+ru = "Здесь, похоже, ещё темнее, чем прежде."
+
+[bdb46f4fceef]
+en = "You are surrounded by darkness!"
+ru = "Вас окружает тьма!"
+
+[9c5f15c2f897]
+en = "%s %s is lit."
+ru = "{2} {1:gen} {2:num|озаряется|озаряются} светом."
+
+[3cccb3310a08]
+en = "%s shines briefly."
+ru = "{1} ненадолго {1:num|озаряется|озаряются} светом."
+
+[548d85cd4994]
+en = "%s glistens."
+ru = "{1} {1:num|поблёскивает|поблёскивают}."
+
+[d5a24b6da8cf]
+en = "All such monsters are already nonexistent."
+ru = "Все такие монстры уже истреблены."
+
+[230ed2e5307d]
+en = "You aren't permitted to genocide such monsters."
+ru = "Вам не позволено истреблять таких монстров."
+
+[07e41ceb8431]
+en = "You die."
+ru = "Вы умираете."
+
+[ae622696c2db]
+en = "%s are already nonexistent."
+ru = "{1} уже истреблены."
+
+[9f4ef6fedb03]
+en = "A thunderous voice booms through the caverns:"
+ru = "Громовой голос разносится по пещерам:"
+
+[85a49270a0ea]
+en = "\"No, mortal!  That will not be done.\""
+ru = "«Нет, {hero:gender|смертный|смертная}!  Этому не бывать.»"
+
+[e7c487903aff]
+en = "Your iron ball gets heavier."
+ru = "Ваше железное ядро становится тяжелее."
+
+[171537d325b3]
+en = "A ball and chain appears, then falls away."
+ru = "Появляется ядро на цепи, но тут же спадает."
+
+[26bb8c7671ba]
+en = "Ugh... someone cut the cheese."
+ru = "Фу... кто-то испортил воздух."
+
+[d48336dd74af]
+en = "Try again (type * for random, ESC to cancel)."
+ru = "Попробуйте ещё раз (* — случайный монстр, ESC — отмена)."
+
+[20a4753a45ca]
+en = "You break up the cookie and throw away the pieces."
+ru = "Вы разламываете печенье и выбрасываете кусочки."
+
+[74a382d66951]
+en = "You can't feel any Braille writing."
+ru = "Вы не нащупываете никаких надписей шрифтом Брайля."
+
+[e99c2d60a8b2]
+en = "You can't find anything to read on this %s."
+ru = "На {1:gender|этом|этой|этом|этих} {1:loc} нечего читать."
+
+[9b4fe6a9b176]
+en = "You feel the embossed numbers:"
+ru = "Вы нащупываете выпуклые цифры:"
+
+[7471e166dc56]
+en = "This %s has no label."
+ru = "На {1:gender|этом|этой|этом|этих} {1:loc} нет этикетки."
+
+[257b50ba6c49]
+en = "\"Magic Marker(TM) %s Red Ink Marker Pen.  Water Soluble.\""
+ru = "«Волшебный маркер(TM) „{1:cap}“ с красными чернилами.  Водорастворимый.»"
+
+[1babe1ba429d]
+en = "You feel the embossed words:"
+ru = "Вы нащупываете выпуклые слова:"
+
+[ac4edd879733]
+en = "You read:"
+ru = "Вы читаете:"
+
+[f3763213bcca]
+en = "\"1 Zorkmid.  857 GUE.  In Frobs We Trust.\""
+ru = "«1 зоркмид.  857 GUE.  На Фробов уповаем.»"
+
+[d89ed424ac52]
+en = "You feel the engraved signature:"
+ru = "Вы нащупываете выгравированную подпись:"
+
+[854cf8e42ee4]
+en = "It is signed:"
+ru = "Подписано:"
+
+[c47045e800ce]
+en = "\"Odin.\""
+ru = "«Один.»"
+
+[48307d231ab3]
+en = "The candy bar's wrapper is blank."
+ru = "На обёртке шоколадного батончика ничего не написано."
+
+[8a39ec4a602f]
+en = "You read the scroll."
+ru = "Вы читаете свиток."
+
+[b5e6e47026cb]
+en = "Being so trippy, you screw up..."
+ru = "Вас так глючит, что вы всё портите..."
+
+[13888283c103]
+en = "Your marker seems permanently dried out."
+ru = "Ваш маркер, похоже, окончательно высох."
+
+[c0c5df9b4190]
+en = "%s go out!"
+ru = "{1} {1:num|гаснет|гаснут}!"
+
+[f979964fb1e9]
+en = "%s goes out!"
+ru = "{1} {1:num|гаснет|гаснут}!"
+
+[4d7e7d1cc71b]
+en = "%s glow %s."
+ru = "{1} {1:num|вспыхивает|вспыхивают} {2:ins} светом."
+
+[9326daca9a2a]
+en = "%s glows %s."
+ru = "{1} {1:num|вспыхивает|вспыхивают} {2:ins} светом."
+
+[6853c63147e8]
+en = "%s vibrate for a moment."
+ru = "{1} на миг {1:num|вибрирует|вибрируют}."
+
+[8d33c6246013]
+en = "%s vibrates for a moment."
+ru = "{1} на миг {1:num|вибрирует|вибрируют}."
+
+[3ba3734ce7b9]
+en = "%s glow %s for a moment."
+ru = "{1} на миг {1:num|вспыхивает|вспыхивают} {2:ins} светом."
+
+[e523b9feb82e]
+en = "%s glows %s for a moment."
+ru = "{1} на миг {1:num|вспыхивает|вспыхивают} {2:ins} светом."
+
+[830a32205251]
+en = "That's enough tries!"
+ru = "Хватит попыток!"
+
+[f10051b64d9a]
+en = "%s vibrate."
+ru = "{1} {1:num|вибрирует|вибрируют}."
+
+[1bb589245f83]
+en = "%s vibrates."
+ru = "{1} {1:num|вибрирует|вибрируют}."
+
+[cafc814eb8f4]
+en = "Nothing interesting happens."
+ru = "Ничего интересного не происходит."
+
+[1000cd4b8cd5]
+en = "%s feel as good as new!"
+ru = "{1} на ощупь как {1:gender|новый|новая|новое|новые}!"
+
+[ae65767acd43]
+en = "%s feels as good as new!"
+ru = "{1} на ощупь как {1:gender|новый|новая|новое|новые}!"
+
+[43b7c72155a2]
+en = "%s look as good as new!"
+ru = "{1} {1:num|выглядит|выглядят} как {1:gender|новый|новая|новое|новые}!"
+
+[c0969c3221c6]
+en = "%s looks as good as new!"
+ru = "{1} {1:num|выглядит|выглядят} как {1:gender|новый|новая|новое|новые}!"
+
+[5b07b4b3f862]
+en = "%s feel warm for a moment."
+ru = "{1} на миг {1:num|теплеет|теплеют}."
+
+[84cc762d15ab]
+en = "%s feels warm for a moment."
+ru = "{1} на миг {1:num|теплеет|теплеют}."
+
+[0cfc11e1b3ef]
+en = "%s are covered by a mottled %s glow!"
+ru = "{1} {1:num|окутывается|окутываются} пятнистым {2:n:ins} сиянием!"
+
+[60b22b0564d6]
+en = "%s are covered by a shimmering %s layer!"
+ru = "{1} {1:num|покрывается|покрываются} мерцающим {2:ins} слоем!"
+
+[0e6adcf340d2]
+en = "%s are covered by a shimmering %s shield!"
+ru = "{1} {1:num|покрывается|покрываются} мерцающим {2:ins} щитом!"
+
+[086eb445243b]
+en = "%s is covered by a mottled %s glow!"
+ru = "{1} {1:num|окутывается|окутываются} пятнистым {2:n:ins} сиянием!"
+
+[7b358b15f737]
+en = "%s is covered by a shimmering %s layer!"
+ru = "{1} {1:num|покрывается|покрываются} мерцающим {2:ins} слоем!"
+
+[fd9c8160576f]
+en = "%s is covered by a shimmering %s shield!"
+ru = "{1} {1:num|покрывается|покрываются} мерцающим {2:ins} щитом!"
+
+[3acd73ee3e98]
+en = "%s violently glow %s for a while, then evaporate."
+ru = "{1} какое-то время неистово {1:num|сияет|сияют} {2:ins} светом, а затем {1:num|испаряется|испаряются}."
+
+[a198534d6e65]
+en = "%s violently glow for a while, then evaporate."
+ru = "{1} какое-то время неистово {1:num|сияет|сияют}, а затем {1:num|испаряется|испаряются}."
+
+[799f7f8ce8c8]
+en = "%s violently glows %s for a while, then evaporates."
+ru = "{1} какое-то время неистово {1:num|сияет|сияют} {2:ins} светом, а затем {1:num|испаряется|испаряются}."
+
+[50ab98f155dd]
+en = "%s violently glows for a while, then evaporates."
+ru = "{1} какое-то время неистово {1:num|сияет|сияют}, а затем {1:num|испаряется|испаряются}."
+
+[d0aa1365f633]
+en = "%s violently vibrate for a while, then evaporate."
+ru = "{1} какое-то время неистово {1:num|вибрирует|вибрируют}, а затем {1:num|испаряется|испаряются}."
+
+[6b79af3fcc60]
+en = "%s violently vibrates for a while, then evaporates."
+ru = "{1} какое-то время неистово {1:num|вибрирует|вибрируют}, а затем {1:num|испаряется|испаряются}."
+
+[fcb848099cf2]
+en = "%s glow %s for a while."
+ru = "{1} какое-то время {1:num|сияет|сияют} {2:ins} светом."
+
+[f30894e45422]
+en = "%s glow for a while."
+ru = "{1} какое-то время {1:num|сияет|сияют}."
+
+[0a45565d4abc]
+en = "%s glows %s for a while."
+ru = "{1} какое-то время {1:num|сияет|сияют} {2:ins} светом."
+
+[b42cfa4d7b3a]
+en = "%s glows for a while."
+ru = "{1} какое-то время {1:num|сияет|сияют}."
+
+[6a06baf41bb7]
+en = "%s vibrate for a while."
+ru = "{1} какое-то время {1:num|вибрирует|вибрируют}."
+
+[7c8af539095e]
+en = "%s vibrates for a while."
+ru = "{1} какое-то время {1:num|вибрирует|вибрируют}."
+
+[7f37d17e698a]
+en = "%s violently glow %s for a moment."
+ru = "{1} на миг неистово {1:num|вспыхивает|вспыхивают} {2:ins} светом."
+
+[daefd8c9fce0]
+en = "%s violently glow %s for a while."
+ru = "{1} какое-то время неистово {1:num|сияет|сияют} {2:ins} светом."
+
+[2f2d491fe199]
+en = "%s violently glow for a moment."
+ru = "{1} на миг неистово {1:num|вспыхивает|вспыхивают}."
+
+[cbebccb1b9b9]
+en = "%s violently glows %s for a moment."
+ru = "{1} на миг неистово {1:num|вспыхивает|вспыхивают} {2:ins} светом."
+
+[39e9696ff00c]
+en = "%s violently glows %s for a while."
+ru = "{1} какое-то время неистово {1:num|сияет|сияют} {2:ins} светом."
+
+[41911724b884]
+en = "%s violently glows for a moment."
+ru = "{1} на миг неистово {1:num|вспыхивает|вспыхивают}."
+
+[8463b2d26ded]
+en = "%s violently vibrate for a moment."
+ru = "{1} на миг неистово {1:num|вибрирует|вибрируют}."
+
+[7c53ec623478]
+en = "%s violently vibrates for a moment."
+ru = "{1} на миг неистово {1:num|вибрирует|вибрируют}."
+
+[7eff37e32fa7]
+en = "%s suddenly vibrate again."
+ru = "{1} вдруг снова {1:num|вибрирует|вибрируют}."
+
+[0ee54e991ea0]
+en = "%s suddenly vibrate unexpectedly."
+ru = "{1} вдруг неожиданно {1:num|вибрирует|вибрируют}."
+
+[c017c5b20fa2]
+en = "%s suddenly vibrates again."
+ru = "{1} вдруг снова {1:num|вибрирует|вибрируют}."
+
+[fca879ca63ec]
+en = "%s suddenly vibrates unexpectedly."
+ru = "{1} вдруг неожиданно {1:num|вибрирует|вибрируют}."
+
+[dd04e1b8006d]
+en = "Your %s begin to tingle."
+ru = "У вас начинает покалывать {1:acc}."
+
+[4177aa36021e]
+en = "A %s glow surrounds your %s."
+ru = "{1:n} сияние окутывает {2:gender|ваш|вашу|ваше|ваши} {2:acc}."
+
+[aecbb5dd743f]
+en = "A faint buzz surrounds your %s."
+ru = "Вокруг {1:gen} у вас раздаётся тихое гудение."
+
+[1630bd9e84ce]
+en = "Your %s tingle even more."
+ru = "У вас ещё сильнее покалывает {1:acc}."
+
+[c1066beae337]
+en = "Your %s tingle."
+ru = "У вас покалывает {1:acc}."
+
+[30eab81d25a1]
+en = "Your %s tingle even more sharply."
+ru = "У вас ещё острее покалывает {1:acc}."
+
+[8e96b161ab6f]
+en = "Your %s tingle very sharply."
+ru = "У вас очень остро покалывает {1:acc}."
+
+[c3dc93fc7c62]
+en = "Your %s glow a brilliant %s."
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|сияет|сияют} ярким {2:ins} светом."
+
+[65bc5fad0787]
+en = "Your %s glow an even more brilliant %s."
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|сияет|сияют} ещё более ярким {2:ins} светом."
+
+[72d4847635e6]
+en = "You barely hear maniacal laughter close by."
+ru = "Вы едва слышите поблизости безумный смех."
+
+[ba628b21d890]
+en = "You barely hear maniacal laughter in the distance."
+ru = "Вы едва слышите вдалеке безумный смех."
+
+[32ae517e0f5a]
+en = "You barely hear sad wailing close by."
+ru = "Вы едва слышите поблизости печальные стенания."
+
+[defc94b9869b]
+en = "You barely hear sad wailing in the distance."
+ru = "Вы едва слышите вдалеке печальные стенания."
+
+[bdf6425d4028]
+en = "You dream that you hear maniacal laughter close by."
+ru = "Вам снится, что вы слышите поблизости безумный смех."
+
+[b66b9ed8a709]
+en = "You dream that you hear maniacal laughter in the distance."
+ru = "Вам снится, что вы слышите вдалеке безумный смех."
+
+[f72cd69e8675]
+en = "You dream that you hear sad wailing close by."
+ru = "Вам снится, что вы слышите поблизости печальные стенания."
+
+[100a44aeaf92]
+en = "You dream that you hear sad wailing in the distance."
+ru = "Вам снится, что вы слышите вдалеке печальные стенания."
+
+[38bfb79e7b1f]
+en = "You hear maniacal laughter close by."
+ru = "Вы слышите поблизости безумный смех."
+
+[d75f05145fb1]
+en = "You hear sad wailing close by."
+ru = "Вы слышите поблизости печальные стенания."
+
+[c3ef473bf5d5]
+en = "You hear sad wailing in the distance."
+ru = "Вы слышите вдалеке печальные стенания."
+
+[c0fc2822ee3f]
+en = "Nothing interesting seems to happen."
+ru = "Кажется, ничего интересного не происходит."
+
+[8feb05e44cbe]
+en = "The neighborhood is friendlier."
+ru = "Окружающие становятся дружелюбнее."
+
+[cde427e3706c]
+en = "The neighborhood is unfriendlier."
+ru = "Окружающие становятся враждебнее."
+
+[e87f7cffbd9b]
+en = "The neighborhood seems friendlier."
+ru = "Кажется, окружающие становятся дружелюбнее."
+
+[132acd6f77c6]
+en = "The neighborhood seems unfriendlier."
+ru = "Кажется, окружающие становятся враждебнее."
+
+[963ced904f6f]
+en = "The %s rumbles above you!"
+ru = "{1} над вами {1:num|грохочет|грохочут}!"
+
+[aca03200fc84]
+en = "The %s rumbles around you!"
+ru = "{1} вокруг вас {1:num|грохочет|грохочут}!"
+
+[0fbd0342f402]
+en = "%s of boulders materialize around you!"
+ru = "{1:skip}Вокруг вас материализуются лавины валунов!"
+
+[bc70067221fd]
+en = "%s of boulders materializes above you!"
+ru = "{1:skip}Над вами материализуется лавина валунов!"
+
+[3dddb7e31ee4]
+en = "You're not carrying anything else to be identified."
+ru = "У вас больше нет ничего, что можно опознать."
+
+[32e23c2fe57a]
+en = "You're not carrying anything to be identified."
+ru = "У вас нет ничего, что можно опознать."
+
+[09fa23dc9264]
+en = "Your %s spins as something blocks the spell!"
+ru = "У вас {1:num|кружится|кружатся} {1} — что-то блокирует заклинание!"
+
+[f60989ec504f]
+en = "This scroll is marked \"Postage Due\"."
+ru = "На этом свитке пометка «Доплатить»."
+
+[b2d35675bbb9]
+en = "This scroll is marked \"Return to Sender\"."
+ru = "На этом свитке пометка «Вернуть отправителю»."
+
+[6ee937945944]
+en = "This seems to be a chain letter threatening your luck."
+ru = "Похоже, это письмо счастья, угрожающее вашей удаче."
+
+[b64e15c17dda]
+en = "This seems to be junk mail addressed to the finder of the Eye of Larn."
+ru = "Похоже, это рекламная рассылка, адресованная нашедшему Око Ларна."
+
+[ec7fc4ec5f20]
+en = "%s's %s does not protect her."
+ru = "{2} {1:gen} её не {2:num|защищает|защищают}."
+
+[261c5a374ef3]
+en = "%s's %s does not protect him."
+ru = "{2} {1:gen} его не {2:num|защищает|защищают}."
+
+[a1a083f87259]
+en = "%s's %s does not protect it."
+ru = "{2} {1:gen} {1:gender|его|её|его|их} не {2:num|защищает|защищают}."
+
+[fa477387e40c]
+en = "%s's %s does not protect them."
+ru = "{2} {1:gen} {1:gender|его|её|его|их} не {2:num|защищает|защищают}."
+
+[37904a7db6e3]
+en = "%s is killed."
+ru = "{1} {1:gender|убит|убита|убито|убиты}."
+
+[a30d2e59f71f]
+en = "%s suddenly explodes!"
+ru = "{1} внезапно {1:num|взрывается|взрываются}!"
+
+[245ac50f83be]
+en = "%s vibrates violently and explodes!"
+ru = "{1} неистово {1:num|вибрирует|вибрируют} и {1:num|взрывается|взрываются}!"
+
+[f317ef549edd]
+en = "A lit field briefly surrounds you!"
+ru = "Вас ненадолго окружает освещённое пространство!"
+
+[0814dd3796c1]
+en = "No class of monsters specified."
+ru = "Класс монстров не указан."
+
+[375291fc52fe]
+en = "Type letter (or punctuation) or name used for a class of monsters or 'none'."
+ru = "Введите букву (или знак препинания), название класса монстров или 'none'."
+
+[819ade4fb77c]
+en = "Eliminated %d monster."
+ru = "{1:plural|Уничтожен|Уничтожено|Уничтожено} {1} {1:plural|монстр|монстра|монстров}."
+
+[ad6807f0339c]
+en = "Eliminated %d monsters."
+ru = "{1:plural|Уничтожен|Уничтожено|Уничтожено} {1} {1:plural|монстр|монстра|монстров}."
+
+[818dfb4a5a96]
+en = "That response does not represent any monster."
+ru = "Этот ответ не обозначает никакого монстра."
+
+[80875af68ea2]
+en = "That symbol does not represent any monster."
+ru = "Этот символ не обозначает никакого монстра."
+
+[699c5ecb8141]
+en = "Wiped out all %s."
+ru = "Уничтожены все {1}."
+
+[bf4d5ae3cfcb]
+en = "You dream that you feel condemned inside."
+ru = "Вам снится, что вы обречены."
+
+[213e2b0df905]
+en = "You dream that you feel dead inside."
+ru = "Вам снится, что вы мертвы внутри."
+
+[fad8c0ab2201]
+en = "You dream that you feel empty inside."
+ru = "Вам снится, что внутри у вас пустота."
+
+[433c5b76fcb3]
+en = "You feel condemned inside."
+ru = "Вы чувствуете внутри обречённость."
+
+[321a1660adfd]
+en = "You feel dead inside."
+ru = "Вы чувствуете себя {hero:gender|мёртвым|мёртвой} внутри."
+
+[0c11b612baa0]
+en = "You feel empty inside."
+ru = "Вы чувствуете внутри пустоту."
+
+[322a5b7f0c1d]
+en = "You aren't permitted to genocide %s."
+ru = "Вам не позволено истребить {1:acc}."
+
+[7fc24cee2df7]
+en = "You aren't permitted to genocide the %s."
+ru = "Вам не позволено истребить {1:acc}."
+
+[9633b02063ed]
+en = "No type of monster specified."
+ru = "Вид монстра не указан."
+
+[f0ecac36c3a0]
+en = "Type the name of a type of monster or 'none'."
+ru = "Введите название вида монстров или 'none'."
+
+[a104692d0735]
+en = "Such creatures do not exist in this world."
+ru = "Таких существ в этом мире нет."
+
+[14de4ba144db]
+en = "Such creatures no longer exist in this world."
+ru = "Таких существ в этом мире больше нет."
+
+[db586c31c7c5]
+en = "Sent in %s."
+ru = "{1:gender|Прислан|Прислана|Прислано|Присланы} {1}."
+
+[3d8caac3e9fc]
+en = "Sent in some %s."
+ru = "Прислано несколько {1:gen}."
+
+[c5f977594bcc]
+en = "Where do you want to center the cloud?"
+ru = "Где вы хотите поместить облако?"
+
+[24ba0ab0f2af]
+en = "Where do you want to center the stinking cloud?"
+ru = "Где вы хотите поместить зловонное облако?"
+
+[b5425c8d0a44]
+en = "The scroll crumbles with a whiff of rotten eggs."
+ru = "Свиток рассыпается, распространяя запах тухлых яиц."
+
+[212ac86a5785]
+en = "You smell a whiff of rotten eggs."
+ru = "Вы улавливаете запах тухлых яиц."
+
+[37784742ff76]
+en = "That shirt is obscured by %sdragon mail."
+ru = "Эту рубашку скрывает драконий доспех.{1:skip}"
+
+[6f017c77c8b3]
+en = "That shirt is obscured by %sdragon scales."
+ru = "Эту рубашку скрывает драконья чешуя.{1:skip}"
+
+[b68f23e855fb]
+en = "That shirt is obscured by %sjacket."
+ru = "Эту рубашку скрывает куртка.{1:skip}"
+
+[181a387c1c37]
+en = "That shirt is obscured by %smail."
+ru = "Эту рубашку скрывает доспех.{1:skip}"
+
+[7c26eb0dece9]
+en = "That shirt is obscured by %ssuit."
+ru = "Эту рубашку скрывает доспех.{1:skip}"
+
+[df3b45bc6f47]
+en = "Your shirt is obscured by %sdragon mail."
+ru = "Вашу рубашку скрывает драконий доспех.{1:skip}"
+
+[76117ce8d5ce]
+en = "Your shirt is obscured by %sdragon scales."
+ru = "Вашу рубашку скрывает драконья чешуя.{1:skip}"
+
+[27dfd8caa811]
+en = "Your shirt is obscured by %sjacket."
+ru = "Вашу рубашку скрывает куртка.{1:skip}"
+
+[3bf884c83a1d]
+en = "Your shirt is obscured by %smail."
+ru = "Вашу рубашку скрывает доспех.{1:skip}"
+
+[9a63621ca22e]
+en = "Your shirt is obscured by %ssuit."
+ru = "Вашу рубашку скрывает доспех.{1:skip}"
+
+[b433f3f0f4a4]
+en = "It features %s."
+ru = "На ней изображено: {1}."
+
+[86292b213419]
+en = "The design features %s."
+ru = "На рисунке изображено: {1}."
+
+[17591f4d2287]
+en = "There is writing on the %s.  It reads:  DUNCE."
+ru = "На {1:loc} есть надпись.  Она гласит:  ТУПИЦА."
+
+[d3eed144d06b]
+en = "There is writing on the %s.  It reads:  WIZZARD."
+ru = "На {1:loc} есть надпись.  Она гласит:  ВАЛШЕБНИК."
+
+[8b3d0c92ccfd]
+en = "You feel lettering on the %s.  It reads:  DUNCE."
+ru = "Вы нащупываете на {1:loc} буквы.  Надпись гласит:  ТУПИЦА."
+
+[906c503f39ab]
+en = "You feel lettering on the %s.  It reads:  WIZZARD."
+ru = "Вы нащупываете на {1:loc} буквы.  Надпись гласит:  ВАЛШЕБНИК."
+
+[9f10e8d878c4]
+en = "\"Ankh-Morpork Merchant's Guild Barter Card\""
+ru = "«Бартерная карта Гильдии торговцев Анк-Морпорка»"
+
+[81a499be95fe]
+en = "\"Ankh-Morpork Thieves' Guild Unlimited Transaction Card\""
+ru = "«Безлимитная карта Гильдии воров Анк-Морпорка»"
+
+[06799236d352]
+en = "\"Bank of Gehennom - 99%% Interest Card\""
+ru = "«Банк Геенны — карта „99% годовых“»"
+
+[15ad9dbed634]
+en = "\"Bank of Zork - Frobozz Magic Card\""
+ru = "«Банк Зорка — волшебная карта Фробозза»"
+
+[996aa0de9f6e]
+en = "\"First Bank of Omega\""
+ru = "«Первый банк Омеги»"
+
+[c7ee0db0b154]
+en = "\"Larn National Bank\""
+ru = "«Национальный банк Ларна»"
+
+[9991a54ad044]
+en = "\"Leprechaun Gold Tru$t - Shamrock Card\""
+ru = "«Золотой тра$т лепреконов — карта „Трилистник“»"
+
+[d64801a21ebd]
+en = "\"Magic Memory Vault Charge Card\""
+ru = "«Платёжная карта Волшебного хранилища памяти»"
+
+[3e513058e1de]
+en = "\"Ransmannsby Moneylenders Association\""
+ru = "«Ассоциация ростовщиков Рансманнсби»"
+
+[dbbe2ef9d0db]
+en = "\"Yendorian Express - Copper Card\""
+ru = "«Йендорский Экспресс — медная карта»"
+
+[0af4b7fe7e6e]
+en = "\"Yendorian Express - Gold Card\""
+ru = "«Йендорский Экспресс — золотая карта»"
+
+[d7d5f1fb7a57]
+en = "\"Yendorian Express - Mithril Card\""
+ru = "«Йендорский Экспресс — мифриловая карта»"
+
+[50fc46374f95]
+en = "\"Yendorian Express - Platinum Card\""
+ru = "«Йендорский Экспресс — платиновая карта»"
+
+[8292a9c85a6a]
+en = "\"Yendorian Express - Silver Card\""
+ru = "«Йендорский Экспресс — серебряная карта»"
+
+[46de2629e7a1]
+en = "The wrapper reads: \"Apollo\"."
+ru = "На обёртке написано: «Аполлон»."
+
+[776492acb9eb]
+en = "The wrapper reads: \"Berry Bar\"."
+ru = "На обёртке написано: «Ягодный батончик»."
+
+[cdae6b565d86]
+en = "The wrapper reads: \"Choco Nummer\"."
+ru = "На обёртке написано: «Шоко-нямка»."
+
+[32dce0044671]
+en = "The wrapper reads: \"Chocolate Nuggie\"."
+ru = "На обёртке написано: «Шоколадный самородок»."
+
+[35a6deab2733]
+en = "The wrapper reads: \"Crispy Yum Yum\"."
+ru = "На обёртке написано: «Хрустящий ням-ням»."
+
+[fcd5028e834f]
+en = "The wrapper reads: \"Fruity Oaty\"."
+ru = "На обёртке написано: «Фруктово-овсяный»."
+
+[72f0d3987a71]
+en = "The wrapper reads: \"Moon Crunchy\"."
+ru = "На обёртке написано: «Лунный хруст»."
+
+[b0ff1472e255]
+en = "The wrapper reads: \"Nilla Crunchie\"."
+ru = "На обёртке написано: «Ванильный хрустик»."
+
+[378aed3695d1]
+en = "The wrapper reads: \"Om-nom\"."
+ru = "На обёртке написано: «Ам-ням»."
+
+[18b17811cde6]
+en = "The wrapper reads: \"Snacky Cake\"."
+ru = "На обёртке написано: «Кексик-перекусик»."
+
+[ba9a7a71b9b4]
+en = "The wrapper reads: \"The Small Bar\"."
+ru = "На обёртке написано: «Маленький батончик»."
+
+[13d65e594c8f]
+en = "The wrapper reads: \"Wonka Bar\"."
+ru = "На обёртке написано: «Батончик Вонки»."
+
+[cf4225f3dee4]
+en = "Being blind, you cannot read the formula on the scroll."
+ru = "Вы слепы и не можете прочесть формулу на свитке."
+
+[38038a672397]
+en = "Being blind, you cannot read the mystic runes."
+ru = "Вы слепы и не можете прочесть мистические руны."
+
+[2210d6578904]
+en = "Being blind, you cannot read the words."
+ru = "Вы слепы и не можете прочесть слова."
+
+[832018d4e860]
+en = "As you cogitate the formula on it, the scroll disappears."
+ru = "Вы мысленно проговариваете начертанную на свитке формулу, и он исчезает."
+
+[8e62d508ca7f]
+en = "As you pronounce the formula on it, the scroll disappears."
+ru = "Вы произносите начертанную на свитке формулу, и он исчезает."
+
+[ac837c80210c]
+en = "You cogitate the formula on the scroll."
+ru = "Вы мысленно проговариваете начертанную на свитке формулу."
+
+[fb5eed0b88c5]
+en = "You pronounce the formula on the scroll."
+ru = "Вы произносите начертанную на свитке формулу."
+
+[12b0ed4245de]
+en = "Being confused, you mispronounce the magic words..."
+ru = "В замешательстве вы неверно произносите магические слова..."
+
+[4fc448a53e28]
+en = "Being confused, you misunderstand the magic words..."
+ru = "В замешательстве вы неверно понимаете магические слова..."
+
+[0b6fdf1b8c67]
+en = "%s vibrate briefly."
+ru = "{1} коротко {1:num|вибрирует|вибрируют}."
+
+[e93301016a6b]
+en = "%s vibrates briefly."
+ru = "{1} коротко {1:num|вибрирует|вибрируют}."
+
+[46f01b51dd96]
+en = "%s glow briefly."
+ru = "{1} коротко {1:num|вспыхивает|вспыхивают}."
+
+[839be02d7579]
+en = "%s glows briefly."
+ru = "{1} коротко {1:num|вспыхивает|вспыхивают}."
+
+[9c8f94872cd3]
+en = "%s glow for a moment."
+ru = "{1} на миг {1:num|вспыхивает|вспыхивают}."
+
+[10a00e39490f]
+en = "%s glows for a moment."
+ru = "{1} на миг {1:num|вспыхивает|вспыхивают}."
+
+[727c0fbf70f1]
+en = "%s glow feebly %s for a moment."
+ru = "{1} на миг слабо {1:num|вспыхивает|вспыхивают} {2:ins} светом."
+
+[abe613955e4b]
+en = "%s glows feebly %s for a moment."
+ru = "{1} на миг слабо {1:num|вспыхивает|вспыхивают} {2:ins} светом."
+
+[821148d7308c]
+en = "%s vibrate feebly for a moment."
+ru = "{1} на миг слабо {1:num|вибрирует|вибрируют}."
+
+[7ce385f4f4d7]
+en = "%s vibrates feebly for a moment."
+ru = "{1} на миг слабо {1:num|вибрирует|вибрируют}."
+
+[e5995811203d]
+en = "%s pulsate momentarily, then explode!"
+ru = "{1} на мгновение {1:num|начинает|начинают} пульсировать, а затем {1:num|взрывается|взрываются}!"
+
+[45ef72fe79ed]
+en = "%s pulsates momentarily, then explodes!"
+ru = "{1} на мгновение {1:num|начинает|начинают} пульсировать, а затем {1:num|взрывается|взрываются}!"
+
+[a5d28919344f]
+en = "%s spins clockwise for a moment."
+ru = "{1} на миг {1:num|проворачивается|проворачиваются} по часовой стрелке."
+
+[d7c397751c3b]
+en = "%s spins counterclockwise for a moment."
+ru = "{1} на миг {1:num|проворачивается|проворачиваются} против часовой стрелки."
