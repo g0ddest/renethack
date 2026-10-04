@@ -26,10 +26,12 @@ pub enum Count {
 /// What follows the head noun.
 #[derive(Debug, Clone)]
 pub enum Tail {
-    /// Words as they are: "по имени Fido", "с надписью ZELGO MER".
+    /// Words as they are: "по имени Fido", "с надписью ЗЕЛГО МЕР".
     Text(String),
     /// Another name in the genitive: труп *тритона*.
     Genitive(Box<RuName>),
+    /// A name in the head's own case: лавочнику *Ицхаку*.
+    Same(Box<RuName>),
 }
 
 /// A name in Russian.
@@ -249,13 +251,14 @@ impl RuName {
         }
     }
 
-    fn tail_text(&self) -> String {
+    fn tail_text(&self, case: Case) -> String {
         let mut out = String::new();
         for t in &self.tails {
             out.push(' ');
             match t {
                 Tail::Text(s) => out.push_str(s),
                 Tail::Genitive(n) => out.push_str(&n.form(Case::Gen)),
+                Tail::Same(n) => out.push_str(&n.form(case)),
             }
         }
         let (g, num) = self.agreement();
@@ -308,7 +311,7 @@ fn ordinal_ending(g: Gender, num: Number, anim: bool, case: Case) -> &'static st
 impl Phrase for RuName {
     fn form(&self, case: Case) -> String {
         let mut s = self.core(case).join(" ");
-        s.push_str(&self.tail_text());
+        s.push_str(&self.tail_text(case));
         s
     }
 

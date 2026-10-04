@@ -26,8 +26,8 @@
 "quivering blob" = { ru = "дрожащий сгусток", src = "chosen", note = "was дрожащая слизь; blob = сгусток" }
 "gelatinous cube" = { ru = "студенистый куб", src = "nethack-ru" }
 # cockatrice
-"chickatrice" = { ru = "птенец кокатрикса", src = "chosen", note = "was цыплёнок-василиск; the family is кокатрикс, as in D&D in Russian" }
-"cockatrice" = { ru = "кокатрикс", src = "chosen", note = "was василиск; василиск is another creature; кокатрикс is the D&D word" }
+"chickatrice" = { ru = "птенец василиска", src = "chosen", note = "owner 2026-10-04 (n10); was птенец кокатрикса" }
+"cockatrice" = { ru = "василиск", src = "chosen", note = "owner 2026-10-04 (n10); was кокатрикс. NetHack has no basilisk monster; bogusmon.txt has one, to be named otherwise" }
 "pyrolisk" = { ru = "пиролиск", src = "nethack-ru" }
 # dog or other canine
 "jackal" = { ru = "шакал", src = "nethack-ru" }
@@ -47,7 +47,7 @@
 "hell hound" = { ru = "адская гончая", src = "nethack-ru" }
 # eye or sphere
 "gas spore" = { ru = "газовая спора", src = "chosen", note = "was газовая пора; пора is a pore" }
-"floating eye" = { ru = "парящий глаз", src = "chosen", note = "was парящее око; око is poetic; глаз reads at once" }
+"floating eye" = { ru = "парящее око", src = "chosen", note = "owner 2026-10-04 (n8); was парящий глаз" }
 "freezing sphere" = { ru = "замораживающая сфера", src = "nethack-ru" }
 "flaming sphere" = { ru = "пылающая сфера", src = "chosen", note = "was пламенеющая сфера" }
 "shocking sphere" = { ru = "электрическая сфера", src = "chosen", note = "was шоковая сфера; шоковая is slang" }
@@ -74,8 +74,8 @@
 "dwarf ruler" = { ru = "правитель дварфов", src = "chosen", note = "was дварф-правитель; family: <title> <race gen. pl.>" }
 "dwarf king" = { ru = "король дварфов", src = "chosen", note = "was дварф-король; family: <title> <race gen. pl.>" }
 "dwarf queen" = { ru = "королева дварфов", src = "chosen", note = "was дварф-королева; family: <title> <race gen. pl.>" }
-"mind flayer" = { ru = "свежеватель разума", src = "chosen", note = "was пожиратель разума; the D&D name in Russian" }
-"master mind flayer" = { ru = "высший свежеватель разума", src = "chosen", note = "was мастер-пожиратель разума; master X = высший X (also master lich)" }
+"mind flayer" = { ru = "пожиратель разума", src = "chosen", note = "owner 2026-10-04 (n15); was свежеватель разума" }
+"master mind flayer" = { ru = "высший пожиратель разума", src = "chosen", note = "owner 2026-10-04 (n15); was высший свежеватель разума" }
 # imp or minor demon
 "manes" = { ru = "манес", src = "chosen", note = "was мана; мана is magic energy; манес after the Latin manes", like = "слон", g = "m" }
 "homunculus" = { ru = "гомункул", src = "nethack-ru" }
@@ -161,7 +161,7 @@
 "long worm" = { ru = "длинный червь", src = "nethack-ru" }
 "purple worm" = { ru = "пурпурный червь", src = "nethack-ru" }
 # xan or other mythical/fantastic insect
-"grid bug" = { ru = "сеточный жук", src = "chosen", note = "was ситовый жучок; it moves along a grid" }
+"grid bug" = { ru = "ситовый жучок", src = "chosen", note = "owner 2026-10-04 (n7); was сеточный жук" }
 "xan" = { ru = "ксан", src = "nethack-ru" }
 # light
 "yellow light" = { ru = "жёлтый огонёк", src = "chosen", note = "was жёлтый свет; a light that moves and explodes: огонёк" }
@@ -561,7 +561,7 @@
 "bill-guisarme" = { ru = "биль-гизарма", src = "nethack-ru", hyphen = "last", g = "f" }
 "lucern hammer" = { ru = "люцернский молот", src = "nethack-ru" }
 "bec de corbin" = { ru = "бек-де-корбен", src = "chosen", note = "was бек де корбен" }
-"dwarvish mattock" = { ru = "дварфийская мотыга", src = "chosen", note = "was дварфийская кирка; кирка is the pick-axe" }
+"dwarvish mattock" = { ru = "дварфийская кирка", src = "chosen", note = "owner 2026-10-04 (n42); was дварфийская мотыга; кирка alone is the pick-axe, its look широкая кирка" }
 "lance" = { ru = "рыцарское копьё", src = "chosen", note = "was пика; a jousting lance; пика is a pike" }
 "mace" = { ru = "булава", src = "nethack-ru" }
 "silver mace" = { ru = "серебряная булава", src = "nethack-ru" }
@@ -780,7 +780,7 @@
 "carrot" = { ru = "морковь", src = "nethack-ru" }
 "sprig of wolfsbane" = { ru = "веточка аконита", src = "nethack-ru" }
 "clove of garlic" = { ru = "зубчик чеснока", src = "nethack-ru" }
-"slime mold" = { ru = "слизевик", src = "chosen", note = "was слизевой гриб; the Russian biological name; the default fruit" }
+"slime mold" = { ru = "слизевой гриб", src = "chosen", note = "owner 2026-10-04 (n31); was слизевик; the default fruit" }
 "lump of royal jelly" = { ru = "комок маточного молочка", src = "nethack-ru" }
 "cream pie" = { ru = "кремовый пирог", src = "nethack-ru" }
 "candy bar" = { ru = "шоколадный батончик", src = "nethack-ru" }
@@ -953,7 +953,7 @@
 "loadstone" = { ru = "магнитный камень", src = "nethack-ru" }
 "touchstone" = { ru = "пробный камень", src = "nethack-ru" }
 "flint stone" = { ru = "кремень", src = "nethack-ru" }
-"rock" = { ru = "булыжник", src = "chosen", note = "was камень; камень is the gray stone's class word: the two must differ" }
+"rock" = { ru = "камень", src = "chosen", note = "owner 2026-10-04 (n38); was булыжник; the class word of an unseen stone is камешек so the two still differ" }
 # rock
 "boulder" = { ru = "валун", src = "nethack-ru" }
 "statue" = { ru = "статуя", src = "nethack-ru" }
@@ -1014,7 +1014,7 @@
 "hooked polearm" = { ru = "крючковое древковое оружие", src = "chosen", note = "was крюкообразное древковое оружие" }
 "pronged polearm" = { ru = "зубчатое древковое оружие", src = "nethack-ru" }
 "beaked polearm" = { ru = "клювовидное древковое оружие", src = "chosen", note = "was древковое оружие с клювом" }
-"broad pick" = { ru = "широкое кайло", src = "nethack-ru" }
+"broad pick" = { ru = "широкая кирка", src = "chosen", note = "owner 2026-10-04 (n42): the mattock unidentified; was широкое кайло" }
 "staff" = { ru = "посох", src = "nethack-ru" }
 "thonged club" = { ru = "дубинка на ремне", src = "chosen", note = "was дубина на ремне" }
 "runed bow" = { ru = "рунный лук", src = "chosen", note = "was рунический лук; runed = рунный" }
@@ -1241,47 +1241,47 @@
 
 [label]
 # scroll labels (scroll labeled X)
-"ZELGO MER" = { ru = "ZELGO MER", src = "chosen", note = "kept in Latin: magic words" }
-"JUYED AWK YACC" = { ru = "JUYED AWK YACC", src = "chosen", note = "kept in Latin: magic words" }
-"NR 9" = { ru = "NR 9", src = "chosen", note = "kept in Latin: magic words" }
-"XIXAXA XOXAXA XUXAXA" = { ru = "XIXAXA XOXAXA XUXAXA", src = "chosen", note = "kept in Latin: magic words" }
-"PRATYAVAYAH" = { ru = "PRATYAVAYAH", src = "chosen", note = "kept in Latin: magic words" }
-"DAIYEN FOOELS" = { ru = "DAIYEN FOOELS", src = "chosen", note = "kept in Latin: magic words" }
-"LEP GEX VEN ZEA" = { ru = "LEP GEX VEN ZEA", src = "chosen", note = "kept in Latin: magic words" }
-"PRIRUTSENIE" = { ru = "PRIRUTSENIE", src = "chosen", note = "kept in Latin: magic words" }
-"ELBIB YLOH" = { ru = "ELBIB YLOH", src = "chosen", note = "kept in Latin: magic words" }
-"VERR YED HORRE" = { ru = "VERR YED HORRE", src = "chosen", note = "kept in Latin: magic words" }
-"VENZAR BORGAVVE" = { ru = "VENZAR BORGAVVE", src = "chosen", note = "kept in Latin: magic words" }
-"THARR" = { ru = "THARR", src = "chosen", note = "kept in Latin: magic words" }
-"YUM YUM" = { ru = "YUM YUM", src = "chosen", note = "kept in Latin: magic words" }
-"KERNOD WEL" = { ru = "KERNOD WEL", src = "chosen", note = "kept in Latin: magic words" }
-"ELAM EBOW" = { ru = "ELAM EBOW", src = "chosen", note = "kept in Latin: magic words" }
-"DUAM XNAHT" = { ru = "DUAM XNAHT", src = "chosen", note = "kept in Latin: magic words" }
-"ANDOVA BEGARIN" = { ru = "ANDOVA BEGARIN", src = "chosen", note = "kept in Latin: magic words" }
-"KIRJE" = { ru = "KIRJE", src = "chosen", note = "kept in Latin: magic words" }
-"VE FORBRYDERNE" = { ru = "VE FORBRYDERNE", src = "chosen", note = "kept in Latin: magic words" }
-"HACKEM MUCHE" = { ru = "HACKEM MUCHE", src = "chosen", note = "kept in Latin: magic words" }
-"VELOX NEB" = { ru = "VELOX NEB", src = "chosen", note = "kept in Latin: magic words" }
-"FOOBIE BLETCH" = { ru = "FOOBIE BLETCH", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ФУБИ БЛЕТЧ)" }
-"TEMOV" = { ru = "TEMOV", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ТЕМОВ)" }
-"GARVEN DEH" = { ru = "GARVEN DEH", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ГАРВЕН ДЕХ)" }
-"READ ME" = { ru = "READ ME", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ПРОЧТИ МЕНЯ)" }
-"ETAOIN SHRDLU" = { ru = "ETAOIN SHRDLU", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ЭТАОИН ШРДЛУ)" }
-"LOREM IPSUM" = { ru = "LOREM IPSUM", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ЛОРЕМ ИПСУМ)" }
-"FNORD" = { ru = "FNORD", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ФНОРД)" }
-"KO BATE" = { ru = "KO BATE", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote КО БАТЕ)" }
-"ABRA KA DABRA" = { ru = "ABRA KA DABRA", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote АБРА КА ДАБРА)" }
-"ASHPD SODALG" = { ru = "ASHPD SODALG", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote АШПД СОДАЛГ)" }
-"ZLORFIK" = { ru = "ZLORFIK", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ЗЛОРФИК)" }
-"GNIK SISI VLE" = { ru = "GNIK SISI VLE", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ГНИК СИСИ ВЛЕ)" }
-"HAPAX LEGOMENON" = { ru = "HAPAX LEGOMENON", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ГАПАКС ЛЕГОМЕНОН)" }
-"EIRIS SAZUN IDISI" = { ru = "EIRIS SAZUN IDISI", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ЭЙРИС САЗУН ИДИСИ)" }
-"PHOL ENDE WODAN" = { ru = "PHOL ENDE WODAN", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ФОЛ ЭНДЕ ВОДАН)" }
-"GHOTI" = { ru = "GHOTI", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ГХОТИ)" }
-"MAPIRO MAHAMA DIROMAT" = { ru = "MAPIRO MAHAMA DIROMAT", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote МАПИРО МАХАМА ДИРОМАТ)" }
-"VAS CORP BET MANI" = { ru = "VAS CORP BET MANI", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote ВАС КОРП БЕТ МАНИ)" }
-"XOR OTA" = { ru = "XOR OTA", src = "chosen", note = "kept in Latin: magic words" }
-"STRC PRST SKRZ KRK" = { ru = "STRC PRST SKRZ KRK", src = "chosen", note = "kept in Latin like every label (nethack-ru wrote СТРЦ ПРСТ СКРЖ КРК)" }
+"ZELGO MER" = { ru = "ЗЕЛГО МЕР", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"JUYED AWK YACC" = { ru = "ДЖУЙЕД АУК ЯКК", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"NR 9" = { ru = "НР 9", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"XIXAXA XOXAXA XUXAXA" = { ru = "КСИКСАКСА КСОКСАКСА КСУКСАКСА", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"PRATYAVAYAH" = { ru = "ПРАТЬЯВАЯХ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"DAIYEN FOOELS" = { ru = "ДАЙЕН ФУЭЛС", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"LEP GEX VEN ZEA" = { ru = "ЛЕП ГЕКС ВЕН ЗЕА", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"PRIRUTSENIE" = { ru = "ПРИРУЦЕНИЕ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"ELBIB YLOH" = { ru = "ЭЛБИБ ЙЛОХ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"VERR YED HORRE" = { ru = "ВЕРР ЙЕД ХОРРЕ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"VENZAR BORGAVVE" = { ru = "ВЕНЗАР БОРГАВВЕ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"THARR" = { ru = "ТАРР", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"YUM YUM" = { ru = "НЯМ-НЯМ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"KERNOD WEL" = { ru = "КЕРНОД ВЕЛ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"ELAM EBOW" = { ru = "ЭЛАМ ЭБОУ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"DUAM XNAHT" = { ru = "ДУАМ КСНАХТ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"ANDOVA BEGARIN" = { ru = "АНДОВА БЕГАРИН", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"KIRJE" = { ru = "КИРЬЕ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"VE FORBRYDERNE" = { ru = "ВЕ ФОРБРЮДЕРНЕ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"HACKEM MUCHE" = { ru = "ХАКЕМ МУХЕ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"VELOX NEB" = { ru = "ВЕЛОКС НЕБ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"FOOBIE BLETCH" = { ru = "ФУБИ БЛЕТЧ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"TEMOV" = { ru = "ТЕМОВ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"GARVEN DEH" = { ru = "ГАРВЕН ДЕХ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"READ ME" = { ru = "ПРОЧТИ МЕНЯ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"ETAOIN SHRDLU" = { ru = "ЭТАОИН ШРДЛУ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"LOREM IPSUM" = { ru = "ЛОРЕМ ИПСУМ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"FNORD" = { ru = "ФНОРД", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"KO BATE" = { ru = "КО БАТЕ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"ABRA KA DABRA" = { ru = "АБРА КА ДАБРА", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"ASHPD SODALG" = { ru = "АШПД СОДАЛГ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"ZLORFIK" = { ru = "ЗЛОРФИК", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"GNIK SISI VLE" = { ru = "ГНИК СИСИ ВЛЕ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"HAPAX LEGOMENON" = { ru = "ГАПАКС ЛЕГОМЕНОН", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"EIRIS SAZUN IDISI" = { ru = "ЭЙРИС САЗУН ИДИСИ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"PHOL ENDE WODAN" = { ru = "ФОЛ ЭНДЕ ВОДАН", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"GHOTI" = { ru = "ГХОТИ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"MAPIRO MAHAMA DIROMAT" = { ru = "МАПИРО МАХАМА ДИРОМАТ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"VAS CORP BET MANI" = { ru = "ВАС КОРП БЕТ МАНИ", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"XOR OTA" = { ru = "КСОР ОТА", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
+"STRC PRST SKRZ KRK" = { ru = "СТРЦ ПРСТ СКРЖ КРК", src = "chosen", note = "owner 2026-10-04 (C1): labels in Cyrillic, as nethack-ru" }
 
 [class]
 # what an object is called before it is seen up close, and the word a "called" name hangs on
@@ -1294,7 +1294,7 @@
 "book" = { ru = "книга", src = "chosen" }
 "novel" = { ru = "роман", src = "chosen" }
 "gem" = { ru = "самоцвет", src = "chosen" }
-"stone" = { ru = "камень", src = "chosen" }
+"stone" = { ru = "камешек", src = "chosen", note = "owner 2026-10-04 (n38): a stone not seen up close; камень is the rock now" }
 "hat" = { ru = "шляпа", src = "chosen" }
 "helm" = { ru = "шлем", src = "chosen" }
 "dragon mail" = { ru = "драконий доспех", src = "chosen" }
@@ -1319,7 +1319,7 @@
 "bolt" = { ru = "болт", src = "chosen", note = "a crossbow bolt" }
 "hook" = { ru = "крюк", src = "chosen", note = "a grappling hook" }
 "glob" = { ru = "комок", src = "chosen" }
-"mattock" = { ru = "мотыга", src = "chosen", note = "a dwarvish mattock" }
+"mattock" = { ru = "большая кирка", src = "chosen", note = "owner 2026-10-04 (n42): weapon_descr() of the mattock, apart from кирка and широкая кирка" }
 # bottlename() (potion.c): what a potion's glass is called, and what a
 # hallucinating hero thinks it is
 "bottle" = { ru = "бутылка", src = "chosen" }
@@ -1370,7 +1370,7 @@
 "Giantslayer" = { ru = "Великаноборец", src = "chosen", note = "was Гигантобоец; giant = великан; the -борец family", like = "иностранец" }
 "Ogresmasher" = { ru = "Крушитель Огров", src = "chosen", note = "was Убийца Огров" }
 "Trollsbane" = { ru = "Троллеборец", src = "chosen", note = "was Троллегуб; the -борец family", like = "иностранец" }
-"Vorpal Blade" = { ru = "Ворпальный Клинок", src = "nethack-ru" }
+"Vorpal Blade" = { ru = "Вострый Клинок", src = "chosen", note = "owner 2026-10-04 (n46); was Ворпальный Клинок; Orlovskaya's вострый меч, as бармаглот" }
 "Snickersnee" = { ru = "Сникерсни", src = "nethack-ru" }
 "Sunsword" = { ru = "Солнечный Меч", src = "nethack-ru" }
 "Orb of Detection" = { ru = "Сфера Обнаружения", src = "nethack-ru" }
@@ -1862,7 +1862,7 @@
 # monster classes (farlook, the / command)
 "ant or other insect" = { ru = "муравей или другое насекомое", src = "chosen" }
 "blob" = { ru = "сгусток", src = "chosen" }
-"cockatrice" = { ru = "кокатрикс", src = "chosen" }
+"cockatrice" = { ru = "василиск", src = "chosen", note = "owner 2026-10-04 (n10); the class of the cockatrice" }
 "dog or other canine" = { ru = "собака или другое псовое", src = "chosen" }
 "eye or sphere" = { ru = "глаз или сфера", src = "chosen" }
 "cat or other feline" = { ru = "кошка или другое кошачье", src = "chosen" }
@@ -2630,357 +2630,359 @@
 
 [name]
 # personal names the engine gives: the default pets (dog.c) and the
-# shopkeepers (shknam.c); in Latin, as every personal name (review: C2).
-# g: f where shknam.c's prefix says female, else m (most are either)
-"Slasher" = { ru = "Slasher", src = "chosen", indecl = true, note = "the Caveman's dog" }
-"Hachi" = { ru = "Hachi", src = "chosen", indecl = true, note = "the Samurai's dog" }
-"Idefix" = { ru = "Idefix", src = "chosen", indecl = true, note = "the Barbarian's dog" }
-"Sirius" = { ru = "Sirius", src = "chosen", indecl = true, note = "the Ranger's dog" }
-"Izchak" = { ru = "Izchak", src = "chosen", indecl = true, note = "the Minetown lighting shop" }
-"Lucrezia" = { ru = "Lucrezia", src = "chosen", indecl = true, g = "f", note = "a shopkeeper when the names run out" }
-"Dirk" = { ru = "Dirk", src = "chosen", indecl = true, note = "a shopkeeper when the names run out" }
-"Njezjin" = { ru = "Njezjin", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Tsjernigof" = { ru = "Tsjernigof", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Ossipewsk" = { ru = "Ossipewsk", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Gorlowka" = { ru = "Gorlowka", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Gomel" = { ru = "Gomel", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Konosja" = { ru = "Konosja", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Weliki Oestjoeg" = { ru = "Weliki Oestjoeg", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Syktywkar" = { ru = "Syktywkar", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Sablja" = { ru = "Sablja", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Narodnaja" = { ru = "Narodnaja", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Kyzyl" = { ru = "Kyzyl", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Walbrzych" = { ru = "Walbrzych", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Swidnica" = { ru = "Swidnica", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Klodzko" = { ru = "Klodzko", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Raciborz" = { ru = "Raciborz", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Gliwice" = { ru = "Gliwice", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Brzeg" = { ru = "Brzeg", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Krnov" = { ru = "Krnov", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Hradec Kralove" = { ru = "Hradec Kralove", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Leuk" = { ru = "Leuk", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Brig" = { ru = "Brig", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Brienz" = { ru = "Brienz", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Thun" = { ru = "Thun", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Sarnen" = { ru = "Sarnen", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Burglen" = { ru = "Burglen", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Elm" = { ru = "Elm", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Flims" = { ru = "Flims", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Vals" = { ru = "Vals", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Schuls" = { ru = "Schuls", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Zum Loch" = { ru = "Zum Loch", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium" }
-"Skibbereen" = { ru = "Skibbereen", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Kanturk" = { ru = "Kanturk", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Rath Luirc" = { ru = "Rath Luirc", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Ennistymon" = { ru = "Ennistymon", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Lahinch" = { ru = "Lahinch", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Kinnegad" = { ru = "Kinnegad", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Lugnaquillia" = { ru = "Lugnaquillia", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Enniscorthy" = { ru = "Enniscorthy", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Gweebarra" = { ru = "Gweebarra", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Kittamagh" = { ru = "Kittamagh", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Nenagh" = { ru = "Nenagh", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Sneem" = { ru = "Sneem", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Ballingeary" = { ru = "Ballingeary", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Kilgarvan" = { ru = "Kilgarvan", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Cahersiveen" = { ru = "Cahersiveen", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Glenbeigh" = { ru = "Glenbeigh", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Kilmihil" = { ru = "Kilmihil", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Kiltamagh" = { ru = "Kiltamagh", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Droichead Atha" = { ru = "Droichead Atha", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Inniscrone" = { ru = "Inniscrone", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Clonegal" = { ru = "Clonegal", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Lisnaskea" = { ru = "Lisnaskea", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Culdaff" = { ru = "Culdaff", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Dunfanaghy" = { ru = "Dunfanaghy", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Inishbofin" = { ru = "Inishbofin", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Kesh" = { ru = "Kesh", src = "chosen", indecl = true, note = "shopkeeper: bookstore" }
-"Demirci" = { ru = "Demirci", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Kalecik" = { ru = "Kalecik", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Boyabai" = { ru = "Boyabai", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Yildizeli" = { ru = "Yildizeli", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Gaziantep" = { ru = "Gaziantep", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Siirt" = { ru = "Siirt", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Akhalataki" = { ru = "Akhalataki", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Tirebolu" = { ru = "Tirebolu", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Aksaray" = { ru = "Aksaray", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Ermenak" = { ru = "Ermenak", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Iskenderun" = { ru = "Iskenderun", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Kadirli" = { ru = "Kadirli", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Siverek" = { ru = "Siverek", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Pervari" = { ru = "Pervari", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Malasgirt" = { ru = "Malasgirt", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Bayburt" = { ru = "Bayburt", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Ayancik" = { ru = "Ayancik", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Zonguldak" = { ru = "Zonguldak", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Balya" = { ru = "Balya", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Tefenni" = { ru = "Tefenni", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Artvin" = { ru = "Artvin", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Kars" = { ru = "Kars", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Makharadze" = { ru = "Makharadze", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Malazgirt" = { ru = "Malazgirt", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Midyat" = { ru = "Midyat", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Birecik" = { ru = "Birecik", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Kirikkale" = { ru = "Kirikkale", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Alaca" = { ru = "Alaca", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Polatli" = { ru = "Polatli", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Nallihan" = { ru = "Nallihan", src = "chosen", indecl = true, note = "shopkeeper: armor shop" }
-"Yr Wyddgrug" = { ru = "Yr Wyddgrug", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Trallwng" = { ru = "Trallwng", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Mallwyd" = { ru = "Mallwyd", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Pontarfynach" = { ru = "Pontarfynach", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Rhaeader" = { ru = "Rhaeader", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Llandrindod" = { ru = "Llandrindod", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Llanfair-ym-muallt" = { ru = "Llanfair-ym-muallt", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Y-Fenni" = { ru = "Y-Fenni", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Maesteg" = { ru = "Maesteg", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Rhydaman" = { ru = "Rhydaman", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Beddgelert" = { ru = "Beddgelert", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Curig" = { ru = "Curig", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Llanrwst" = { ru = "Llanrwst", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Llanerchymedd" = { ru = "Llanerchymedd", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Caergybi" = { ru = "Caergybi", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Nairn" = { ru = "Nairn", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Turriff" = { ru = "Turriff", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Inverurie" = { ru = "Inverurie", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Braemar" = { ru = "Braemar", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Lochnagar" = { ru = "Lochnagar", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Kerloch" = { ru = "Kerloch", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Beinn a Ghlo" = { ru = "Beinn a Ghlo", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Drumnadrochit" = { ru = "Drumnadrochit", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Morven" = { ru = "Morven", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Uist" = { ru = "Uist", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Storr" = { ru = "Storr", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Sgurr na Ciche" = { ru = "Sgurr na Ciche", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Cannich" = { ru = "Cannich", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Gairloch" = { ru = "Gairloch", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Kyleakin" = { ru = "Kyleakin", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Dunvegan" = { ru = "Dunvegan", src = "chosen", indecl = true, note = "shopkeeper: wand shop" }
-"Feyfer" = { ru = "Feyfer", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Flugi" = { ru = "Flugi", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Gheel" = { ru = "Gheel", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Havic" = { ru = "Havic", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Haynin" = { ru = "Haynin", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Hoboken" = { ru = "Hoboken", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Imbyze" = { ru = "Imbyze", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Juyn" = { ru = "Juyn", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Kinsky" = { ru = "Kinsky", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Massis" = { ru = "Massis", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Matray" = { ru = "Matray", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Moy" = { ru = "Moy", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Olycan" = { ru = "Olycan", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Sadelin" = { ru = "Sadelin", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Svaving" = { ru = "Svaving", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Tapper" = { ru = "Tapper", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Terwen" = { ru = "Terwen", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Wirix" = { ru = "Wirix", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Ypey" = { ru = "Ypey", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Rastegaisa" = { ru = "Rastegaisa", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Varjag Njarga" = { ru = "Varjag Njarga", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Kautekeino" = { ru = "Kautekeino", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Abisko" = { ru = "Abisko", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Enontekis" = { ru = "Enontekis", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Rovaniemi" = { ru = "Rovaniemi", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Avasaksa" = { ru = "Avasaksa", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Haparanda" = { ru = "Haparanda", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Lulea" = { ru = "Lulea", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Gellivare" = { ru = "Gellivare", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Oeloe" = { ru = "Oeloe", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Kajaani" = { ru = "Kajaani", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Fauske" = { ru = "Fauske", src = "chosen", indecl = true, note = "shopkeeper: jewelers" }
-"Djasinga" = { ru = "Djasinga", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Tjibarusa" = { ru = "Tjibarusa", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Tjiwidej" = { ru = "Tjiwidej", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Pengalengan" = { ru = "Pengalengan", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Bandjar" = { ru = "Bandjar", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Parbalingga" = { ru = "Parbalingga", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Bojolali" = { ru = "Bojolali", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Sarangan" = { ru = "Sarangan", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Ngebel" = { ru = "Ngebel", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Djombang" = { ru = "Djombang", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Ardjawinangun" = { ru = "Ardjawinangun", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Berbek" = { ru = "Berbek", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Papar" = { ru = "Papar", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Baliga" = { ru = "Baliga", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Tjisolok" = { ru = "Tjisolok", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Siboga" = { ru = "Siboga", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Banjoewangi" = { ru = "Banjoewangi", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Trenggalek" = { ru = "Trenggalek", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Karangkobar" = { ru = "Karangkobar", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Njalindoeng" = { ru = "Njalindoeng", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Pasawahan" = { ru = "Pasawahan", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Pameunpeuk" = { ru = "Pameunpeuk", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Patjitan" = { ru = "Patjitan", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Kediri" = { ru = "Kediri", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Pemboeang" = { ru = "Pemboeang", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Tringanoe" = { ru = "Tringanoe", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Makin" = { ru = "Makin", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Tipor" = { ru = "Tipor", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Semai" = { ru = "Semai", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Berhala" = { ru = "Berhala", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Tegal" = { ru = "Tegal", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Samoe" = { ru = "Samoe", src = "chosen", indecl = true, note = "shopkeeper: delicatessen" }
-"Voulgezac" = { ru = "Voulgezac", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Rouffiac" = { ru = "Rouffiac", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Lerignac" = { ru = "Lerignac", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Touverac" = { ru = "Touverac", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Guizengeard" = { ru = "Guizengeard", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Melac" = { ru = "Melac", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Neuvicq" = { ru = "Neuvicq", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Vanzac" = { ru = "Vanzac", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Picq" = { ru = "Picq", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Urignac" = { ru = "Urignac", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Corignac" = { ru = "Corignac", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Fleac" = { ru = "Fleac", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Lonzac" = { ru = "Lonzac", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Vergt" = { ru = "Vergt", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Queyssac" = { ru = "Queyssac", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Liorac" = { ru = "Liorac", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Echourgnac" = { ru = "Echourgnac", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Cazelon" = { ru = "Cazelon", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Eypau" = { ru = "Eypau", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Carignan" = { ru = "Carignan", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Monbazillac" = { ru = "Monbazillac", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Jonzac" = { ru = "Jonzac", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Pons" = { ru = "Pons", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Jumilhac" = { ru = "Jumilhac", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Fenouilledes" = { ru = "Fenouilledes", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Laguiolet" = { ru = "Laguiolet", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Saujon" = { ru = "Saujon", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Eymoutiers" = { ru = "Eymoutiers", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Eygurande" = { ru = "Eygurande", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Eauze" = { ru = "Eauze", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Labouheyre" = { ru = "Labouheyre", src = "chosen", indecl = true, note = "shopkeeper: weapon shop" }
-"Ymla" = { ru = "Ymla", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Eed-morra" = { ru = "Eed-morra", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Elan Lapinski" = { ru = "Elan Lapinski", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Cubask" = { ru = "Cubask", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Nieb" = { ru = "Nieb", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Bnowr Falr" = { ru = "Bnowr Falr", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Sperc" = { ru = "Sperc", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Noskcirdneh" = { ru = "Noskcirdneh", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Yawolloh" = { ru = "Yawolloh", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Hyeghu" = { ru = "Hyeghu", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Niskal" = { ru = "Niskal", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Trahnil" = { ru = "Trahnil", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Htargcm" = { ru = "Htargcm", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Enrobwem" = { ru = "Enrobwem", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Kachzi Rellim" = { ru = "Kachzi Rellim", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Regien" = { ru = "Regien", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Donmyar" = { ru = "Donmyar", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Yelpur" = { ru = "Yelpur", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Nosnehpets" = { ru = "Nosnehpets", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Stewe" = { ru = "Stewe", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Renrut" = { ru = "Renrut", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Senna Hut" = { ru = "Senna Hut", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Zlaw" = { ru = "Zlaw", src = "chosen", indecl = true, g = "f", note = "shopkeeper: tool shop" }
-"Nosalnef" = { ru = "Nosalnef", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Rewuorb" = { ru = "Rewuorb", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Rellenk" = { ru = "Rellenk", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Yad" = { ru = "Yad", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Cire Htims" = { ru = "Cire Htims", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Y-crad" = { ru = "Y-crad", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Nenilukah" = { ru = "Nenilukah", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Corsh" = { ru = "Corsh", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Aned" = { ru = "Aned", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Dark Eery" = { ru = "Dark Eery", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Niknar" = { ru = "Niknar", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Lapu" = { ru = "Lapu", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Lechaim" = { ru = "Lechaim", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Rebrol-nek" = { ru = "Rebrol-nek", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"AlliWar Wickson" = { ru = "AlliWar Wickson", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Oguhmk" = { ru = "Oguhmk", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Telloc Cyaj" = { ru = "Telloc Cyaj", src = "chosen", indecl = true, note = "shopkeeper: tool shop" }
-"Zarnesti" = { ru = "Zarnesti", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Slanic" = { ru = "Slanic", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Nehoiasu" = { ru = "Nehoiasu", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Ludus" = { ru = "Ludus", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Sighisoara" = { ru = "Sighisoara", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Nisipitu" = { ru = "Nisipitu", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Razboieni" = { ru = "Razboieni", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Bicaz" = { ru = "Bicaz", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Dorohoi" = { ru = "Dorohoi", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Vaslui" = { ru = "Vaslui", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Fetesti" = { ru = "Fetesti", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Tirgu Neamt" = { ru = "Tirgu Neamt", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Babadag" = { ru = "Babadag", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Zimnicea" = { ru = "Zimnicea", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Zlatna" = { ru = "Zlatna", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Jiu" = { ru = "Jiu", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Eforie" = { ru = "Eforie", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Mamaia" = { ru = "Mamaia", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Silistra" = { ru = "Silistra", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Tulovo" = { ru = "Tulovo", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Panagyuritshte" = { ru = "Panagyuritshte", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Smolyan" = { ru = "Smolyan", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Kirklareli" = { ru = "Kirklareli", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Pernik" = { ru = "Pernik", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Lom" = { ru = "Lom", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Haskovo" = { ru = "Haskovo", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Dobrinishte" = { ru = "Dobrinishte", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Varvara" = { ru = "Varvara", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Oryahovo" = { ru = "Oryahovo", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Troyan" = { ru = "Troyan", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Lovech" = { ru = "Lovech", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Sliven" = { ru = "Sliven", src = "chosen", indecl = true, note = "shopkeeper: lighting store" }
-"Hebiwerie" = { ru = "Hebiwerie", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Possogroenoe" = { ru = "Possogroenoe", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Asidonhopo" = { ru = "Asidonhopo", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Manlobbi" = { ru = "Manlobbi", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Adjama" = { ru = "Adjama", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Pakka Pakka" = { ru = "Pakka Pakka", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Kabalebo" = { ru = "Kabalebo", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Wonotobo" = { ru = "Wonotobo", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Akalapi" = { ru = "Akalapi", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Sipaliwini" = { ru = "Sipaliwini", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Annootok" = { ru = "Annootok", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Upernavik" = { ru = "Upernavik", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Angmagssalik" = { ru = "Angmagssalik", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Aklavik" = { ru = "Aklavik", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Inuvik" = { ru = "Inuvik", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Tuktoyaktuk" = { ru = "Tuktoyaktuk", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Chicoutimi" = { ru = "Chicoutimi", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Ouiatchouane" = { ru = "Ouiatchouane", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Chibougamau" = { ru = "Chibougamau", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Matagami" = { ru = "Matagami", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Kipawa" = { ru = "Kipawa", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Kinojevis" = { ru = "Kinojevis", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Abitibi" = { ru = "Abitibi", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Maganasipi" = { ru = "Maganasipi", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Akureyri" = { ru = "Akureyri", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Kopasker" = { ru = "Kopasker", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Budereyri" = { ru = "Budereyri", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Akranes" = { ru = "Akranes", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Bordeyri" = { ru = "Bordeyri", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Holmavik" = { ru = "Holmavik", src = "chosen", indecl = true, note = "shopkeeper: general store" }
-"Ga'er" = { ru = "Ga'er", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Zhangmu" = { ru = "Zhangmu", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Rikaze" = { ru = "Rikaze", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Jiangji" = { ru = "Jiangji", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Changdu" = { ru = "Changdu", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Linzhi" = { ru = "Linzhi", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Shigatse" = { ru = "Shigatse", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Gyantse" = { ru = "Gyantse", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Ganden" = { ru = "Ganden", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Tsurphu" = { ru = "Tsurphu", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Lhasa" = { ru = "Lhasa", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Tsedong" = { ru = "Tsedong", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Drepung" = { ru = "Drepung", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Azura" = { ru = "Azura", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Blaze" = { ru = "Blaze", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Breanna" = { ru = "Breanna", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Breezy" = { ru = "Breezy", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Dharma" = { ru = "Dharma", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Feather" = { ru = "Feather", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Jasmine" = { ru = "Jasmine", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Luna" = { ru = "Luna", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Melody" = { ru = "Melody", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Moonjava" = { ru = "Moonjava", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Petal" = { ru = "Petal", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Rhiannon" = { ru = "Rhiannon", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Starla" = { ru = "Starla", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Tranquilla" = { ru = "Tranquilla", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Windsong" = { ru = "Windsong", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Zennia" = { ru = "Zennia", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Zoe" = { ru = "Zoe", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
-"Zora" = { ru = "Zora", src = "chosen", indecl = true, note = "shopkeeper: health food store" }
+# shopkeepers (shknam.c), transliterated (owner 2026-10-04, C2; a name the
+# player typed stays as typed). A name whose gender the engine gives
+# declines as Russian names do; a shopkeeper's gender is chosen at random,
+# so theirs do not: Асидонхопо, у Чернигов, к Чернигов
+"Slasher" = { ru = "Слэшер", src = "chosen", g = "m", note = "the Caveman's dog; owner 2026-10-04 (C2)" }
+"Hachi" = { ru = "Хати", src = "chosen", indecl = true, note = "the Samurai's dog; owner 2026-10-04 (C2)" }
+"Idefix" = { ru = "Идефикс", src = "chosen", g = "m", note = "the Barbarian's dog; owner 2026-10-04 (C2)" }
+"Sirius" = { ru = "Сириус", src = "chosen", g = "m", note = "the Ranger's dog; owner 2026-10-04 (C2)" }
+"Izchak" = { ru = "Ицхак", src = "chosen", g = "m", note = "the Minetown lighting shop; owner 2026-10-04 (C2)" }
+"Lucrezia" = { ru = "Лукреция", src = "chosen", g = "f", note = "a shopkeeper when the names run out; owner 2026-10-04 (C2)" }
+"Dirk" = { ru = "Дирк", src = "chosen", g = "m", note = "a shopkeeper when the names run out; owner 2026-10-04 (C2)" }
+"Njezjin" = { ru = "Нежин", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Tsjernigof" = { ru = "Чернигов", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Ossipewsk" = { ru = "Осипевск", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Gorlowka" = { ru = "Горловка", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Gomel" = { ru = "Гомель", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Konosja" = { ru = "Коноша", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Weliki Oestjoeg" = { ru = "Великий Устюг", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Syktywkar" = { ru = "Сыктывкар", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Sablja" = { ru = "Сабля", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Narodnaja" = { ru = "Народная", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Kyzyl" = { ru = "Кызыл", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Walbrzych" = { ru = "Валбжих", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Swidnica" = { ru = "Свидница", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Klodzko" = { ru = "Клодзко", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Raciborz" = { ru = "Рацибуж", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Gliwice" = { ru = "Гливице", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Brzeg" = { ru = "Бжег", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Krnov" = { ru = "Крнов", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Hradec Kralove" = { ru = "Градец-Кралове", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Leuk" = { ru = "Лойк", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Brig" = { ru = "Бриг", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Brienz" = { ru = "Бриенц", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Thun" = { ru = "Тун", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Sarnen" = { ru = "Зарнен", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Burglen" = { ru = "Бюрглен", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Elm" = { ru = "Эльм", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Flims" = { ru = "Флимс", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Vals" = { ru = "Вальс", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Schuls" = { ru = "Шульс", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Zum Loch" = { ru = "Цум Лох", src = "chosen", indecl = true, note = "shopkeeper: liquor emporium; owner 2026-10-04 (C2)" }
+"Skibbereen" = { ru = "Скибберин", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Kanturk" = { ru = "Кантерк", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Rath Luirc" = { ru = "Рат-Лерк", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Ennistymon" = { ru = "Эннистимон", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Lahinch" = { ru = "Лахинч", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Kinnegad" = { ru = "Киннегад", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Lugnaquillia" = { ru = "Лугнаквиллия", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Enniscorthy" = { ru = "Эннискорти", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Gweebarra" = { ru = "Гвибарра", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Kittamagh" = { ru = "Киттама", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Nenagh" = { ru = "Нина", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Sneem" = { ru = "Сним", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Ballingeary" = { ru = "Баллинджири", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Kilgarvan" = { ru = "Килгарван", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Cahersiveen" = { ru = "Кахерсивин", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Glenbeigh" = { ru = "Гленбей", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Kilmihil" = { ru = "Килмихил", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Kiltamagh" = { ru = "Килтама", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Droichead Atha" = { ru = "Дрохед-Аха", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Inniscrone" = { ru = "Инискрон", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Clonegal" = { ru = "Клонегал", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Lisnaskea" = { ru = "Лиснаски", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Culdaff" = { ru = "Калдафф", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Dunfanaghy" = { ru = "Данфанахи", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Inishbofin" = { ru = "Инишбофин", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Kesh" = { ru = "Кеш", src = "chosen", indecl = true, note = "shopkeeper: bookstore; owner 2026-10-04 (C2)" }
+"Demirci" = { ru = "Демирджи", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Kalecik" = { ru = "Каледжик", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Boyabai" = { ru = "Боябай", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Yildizeli" = { ru = "Йылдызэли", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Gaziantep" = { ru = "Газиантеп", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Siirt" = { ru = "Сиирт", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Akhalataki" = { ru = "Ахалатаки", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Tirebolu" = { ru = "Тиреболу", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Aksaray" = { ru = "Аксарай", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Ermenak" = { ru = "Эрменак", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Iskenderun" = { ru = "Искендерун", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Kadirli" = { ru = "Кадирли", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Siverek" = { ru = "Сиверек", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Pervari" = { ru = "Первари", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Malasgirt" = { ru = "Маласгирт", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Bayburt" = { ru = "Байбурт", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Ayancik" = { ru = "Аянджик", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Zonguldak" = { ru = "Зонгулдак", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Balya" = { ru = "Балья", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Tefenni" = { ru = "Тефенни", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Artvin" = { ru = "Артвин", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Kars" = { ru = "Карс", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Makharadze" = { ru = "Махарадзе", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Malazgirt" = { ru = "Малазгирт", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Midyat" = { ru = "Мидьят", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Birecik" = { ru = "Биреджик", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Kirikkale" = { ru = "Кырыккале", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Alaca" = { ru = "Аладжа", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Polatli" = { ru = "Полатлы", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Nallihan" = { ru = "Наллыхан", src = "chosen", indecl = true, note = "shopkeeper: armor shop; owner 2026-10-04 (C2)" }
+"Yr Wyddgrug" = { ru = "Ир-Уиддгриг", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Trallwng" = { ru = "Траллунг", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Mallwyd" = { ru = "Маллуид", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Pontarfynach" = { ru = "Понтарвынах", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Rhaeader" = { ru = "Райадр", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Llandrindod" = { ru = "Лландриндод", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Llanfair-ym-muallt" = { ru = "Лланвайр-им-Муаллт", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Y-Fenni" = { ru = "И-Венни", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Maesteg" = { ru = "Майстег", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Rhydaman" = { ru = "Ридаман", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Beddgelert" = { ru = "Беддгелерт", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Curig" = { ru = "Кириг", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Llanrwst" = { ru = "Лланруст", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Llanerchymedd" = { ru = "Лланерхимедд", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Caergybi" = { ru = "Кайргиби", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Nairn" = { ru = "Нэрн", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Turriff" = { ru = "Тарриф", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Inverurie" = { ru = "Инверури", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Braemar" = { ru = "Бремар", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Lochnagar" = { ru = "Лохнагар", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Kerloch" = { ru = "Керлох", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Beinn a Ghlo" = { ru = "Бейн-а-Гло", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Drumnadrochit" = { ru = "Драмнадрохит", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Morven" = { ru = "Морвен", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Uist" = { ru = "Уист", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Storr" = { ru = "Сторр", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Sgurr na Ciche" = { ru = "Скур-на-Кихе", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Cannich" = { ru = "Канних", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Gairloch" = { ru = "Гэрлох", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Kyleakin" = { ru = "Кайлакин", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Dunvegan" = { ru = "Данвеган", src = "chosen", indecl = true, note = "shopkeeper: wand shop; owner 2026-10-04 (C2)" }
+"Feyfer" = { ru = "Фейфер", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Flugi" = { ru = "Флюги", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Gheel" = { ru = "Гел", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Havic" = { ru = "Хавик", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Haynin" = { ru = "Хайнин", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Hoboken" = { ru = "Хобокен", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Imbyze" = { ru = "Имбейзе", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Juyn" = { ru = "Юйн", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Kinsky" = { ru = "Кински", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Massis" = { ru = "Массис", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Matray" = { ru = "Матрей", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Moy" = { ru = "Мой", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Olycan" = { ru = "Оликан", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Sadelin" = { ru = "Саделин", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Svaving" = { ru = "Свавинг", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Tapper" = { ru = "Таппер", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Terwen" = { ru = "Тервен", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Wirix" = { ru = "Вирикс", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Ypey" = { ru = "Ипей", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Rastegaisa" = { ru = "Растегайса", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Varjag Njarga" = { ru = "Варьяг-Ньярга", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Kautekeino" = { ru = "Каутекейно", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Abisko" = { ru = "Абиску", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Enontekis" = { ru = "Энонтекис", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Rovaniemi" = { ru = "Рованиеми", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Avasaksa" = { ru = "Авасакса", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Haparanda" = { ru = "Хапаранда", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Lulea" = { ru = "Лулео", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Gellivare" = { ru = "Елливаре", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Oeloe" = { ru = "Оулу", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Kajaani" = { ru = "Каяни", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Fauske" = { ru = "Фауске", src = "chosen", indecl = true, note = "shopkeeper: jewelers; owner 2026-10-04 (C2)" }
+"Djasinga" = { ru = "Джасинга", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Tjibarusa" = { ru = "Чибаруса", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Tjiwidej" = { ru = "Чивидей", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Pengalengan" = { ru = "Пенгаленган", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Bandjar" = { ru = "Банджар", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Parbalingga" = { ru = "Парбалингга", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Bojolali" = { ru = "Бойолали", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Sarangan" = { ru = "Саранган", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Ngebel" = { ru = "Нгебел", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Djombang" = { ru = "Джомбанг", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Ardjawinangun" = { ru = "Арджавинангун", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Berbek" = { ru = "Бербек", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Papar" = { ru = "Папар", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Baliga" = { ru = "Балига", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Tjisolok" = { ru = "Чисолок", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Siboga" = { ru = "Сибога", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Banjoewangi" = { ru = "Баньюванги", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Trenggalek" = { ru = "Тренггалек", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Karangkobar" = { ru = "Каранкобар", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Njalindoeng" = { ru = "Ньялиндунг", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Pasawahan" = { ru = "Пасавахан", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Pameunpeuk" = { ru = "Памеунпеук", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Patjitan" = { ru = "Пачитан", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Kediri" = { ru = "Кедири", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Pemboeang" = { ru = "Пембуанг", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Tringanoe" = { ru = "Трингану", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Makin" = { ru = "Макин", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Tipor" = { ru = "Типор", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Semai" = { ru = "Семаи", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Berhala" = { ru = "Берхала", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Tegal" = { ru = "Тегал", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Samoe" = { ru = "Саму", src = "chosen", indecl = true, note = "shopkeeper: delicatessen; owner 2026-10-04 (C2)" }
+"Voulgezac" = { ru = "Вульжезак", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Rouffiac" = { ru = "Руффиак", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Lerignac" = { ru = "Лериньяк", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Touverac" = { ru = "Туверак", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Guizengeard" = { ru = "Гизанжар", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Melac" = { ru = "Мелак", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Neuvicq" = { ru = "Нёвик", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Vanzac" = { ru = "Ванзак", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Picq" = { ru = "Пик", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Urignac" = { ru = "Уриньяк", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Corignac" = { ru = "Кориньяк", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Fleac" = { ru = "Флеак", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Lonzac" = { ru = "Лонзак", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Vergt" = { ru = "Вер", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Queyssac" = { ru = "Кейсак", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Liorac" = { ru = "Льорак", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Echourgnac" = { ru = "Эшурньяк", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Cazelon" = { ru = "Казелон", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Eypau" = { ru = "Эпо", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Carignan" = { ru = "Кариньян", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Monbazillac" = { ru = "Монбазийак", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Jonzac" = { ru = "Жонзак", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Pons" = { ru = "Пон", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Jumilhac" = { ru = "Жюмийак", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Fenouilledes" = { ru = "Фенуйед", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Laguiolet" = { ru = "Лагиоле", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Saujon" = { ru = "Сожон", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Eymoutiers" = { ru = "Эмутье", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Eygurande" = { ru = "Эгюранд", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Eauze" = { ru = "Эоз", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Labouheyre" = { ru = "Лабуэр", src = "chosen", indecl = true, note = "shopkeeper: weapon shop; owner 2026-10-04 (C2)" }
+"Ymla" = { ru = "Имла", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Eed-morra" = { ru = "Ид-Морра", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Elan Lapinski" = { ru = "Элан Лапински", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Cubask" = { ru = "Кубаск", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Nieb" = { ru = "Ниб", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Bnowr Falr" = { ru = "Бноур Фалр", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Sperc" = { ru = "Сперк", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Noskcirdneh" = { ru = "Носкирднех", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Yawolloh" = { ru = "Яволлох", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Hyeghu" = { ru = "Хиегу", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Niskal" = { ru = "Нискал", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Trahnil" = { ru = "Трагнил", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Htargcm" = { ru = "Хтаргкм", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Enrobwem" = { ru = "Энробвем", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Kachzi Rellim" = { ru = "Качзи Реллим", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Regien" = { ru = "Региен", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Donmyar" = { ru = "Донмьяр", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Yelpur" = { ru = "Йелпур", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Nosnehpets" = { ru = "Носнехпетс", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Stewe" = { ru = "Стью", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Renrut" = { ru = "Ренрут", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Senna Hut" = { ru = "Сенна Хат", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Zlaw" = { ru = "Злав", src = "chosen", g = "f", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Nosalnef" = { ru = "Носалнеф", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Rewuorb" = { ru = "Ревуорб", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Rellenk" = { ru = "Релленк", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Yad" = { ru = "Йад", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Cire Htims" = { ru = "Кире Хтимс", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Y-crad" = { ru = "И-Крад", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Nenilukah" = { ru = "Ненилуках", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Corsh" = { ru = "Корш", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Aned" = { ru = "Анед", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Dark Eery" = { ru = "Дарк Ири", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Niknar" = { ru = "Никнар", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Lapu" = { ru = "Лапу", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Lechaim" = { ru = "Лехаим", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Rebrol-nek" = { ru = "Реброл-Нек", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"AlliWar Wickson" = { ru = "Алливар Виксон", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Oguhmk" = { ru = "Огухмк", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Telloc Cyaj" = { ru = "Теллок Сайдж", src = "chosen", indecl = true, note = "shopkeeper: tool shop; owner 2026-10-04 (C2)" }
+"Zarnesti" = { ru = "Зэрнешть", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Slanic" = { ru = "Слэник", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Nehoiasu" = { ru = "Нехояшу", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Ludus" = { ru = "Лудуш", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Sighisoara" = { ru = "Сигишоара", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Nisipitu" = { ru = "Нисипиту", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Razboieni" = { ru = "Рэзбоень", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Bicaz" = { ru = "Биказ", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Dorohoi" = { ru = "Дорохой", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Vaslui" = { ru = "Васлуй", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Fetesti" = { ru = "Фетешть", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Tirgu Neamt" = { ru = "Тыргу-Нямц", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Babadag" = { ru = "Бабадаг", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Zimnicea" = { ru = "Зимнича", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Zlatna" = { ru = "Златна", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Jiu" = { ru = "Жиу", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Eforie" = { ru = "Эфорие", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Mamaia" = { ru = "Мамая", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Silistra" = { ru = "Силистра", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Tulovo" = { ru = "Тулово", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Panagyuritshte" = { ru = "Панагюриште", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Smolyan" = { ru = "Смолян", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Kirklareli" = { ru = "Кыркларели", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Pernik" = { ru = "Перник", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Lom" = { ru = "Лом", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Haskovo" = { ru = "Хасково", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Dobrinishte" = { ru = "Добринище", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Varvara" = { ru = "Варвара", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Oryahovo" = { ru = "Оряхово", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Troyan" = { ru = "Троян", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Lovech" = { ru = "Ловеч", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Sliven" = { ru = "Сливен", src = "chosen", indecl = true, note = "shopkeeper: lighting store; owner 2026-10-04 (C2)" }
+"Hebiwerie" = { ru = "Хебиверие", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Possogroenoe" = { ru = "Поссогруну", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Asidonhopo" = { ru = "Асидонхопо", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Manlobbi" = { ru = "Манлобби", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Adjama" = { ru = "Аджама", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Pakka Pakka" = { ru = "Пакка-Пакка", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Kabalebo" = { ru = "Кабалебо", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Wonotobo" = { ru = "Вонотобо", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Akalapi" = { ru = "Акалапи", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Sipaliwini" = { ru = "Сипаливини", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Annootok" = { ru = "Аннуток", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Upernavik" = { ru = "Упернавик", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Angmagssalik" = { ru = "Ангмагссалик", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Aklavik" = { ru = "Аклавик", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Inuvik" = { ru = "Инувик", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Tuktoyaktuk" = { ru = "Туктояктук", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Chicoutimi" = { ru = "Шикутими", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Ouiatchouane" = { ru = "Уиатшуан", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Chibougamau" = { ru = "Шибугамо", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Matagami" = { ru = "Матагами", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Kipawa" = { ru = "Кипава", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Kinojevis" = { ru = "Киноджевис", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Abitibi" = { ru = "Абитиби", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Maganasipi" = { ru = "Маганасипи", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Akureyri" = { ru = "Акюрейри", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Kopasker" = { ru = "Коупаскер", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Budereyri" = { ru = "Бударейри", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Akranes" = { ru = "Акранес", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Bordeyri" = { ru = "Бордейри", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Holmavik" = { ru = "Хоульмавик", src = "chosen", indecl = true, note = "shopkeeper: general store; owner 2026-10-04 (C2)" }
+"Ga'er" = { ru = "Гаэр", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Zhangmu" = { ru = "Чжанму", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Rikaze" = { ru = "Жикацзе", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Jiangji" = { ru = "Цзянцзи", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Changdu" = { ru = "Чанду", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Linzhi" = { ru = "Линьчжи", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Shigatse" = { ru = "Шигадзе", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Gyantse" = { ru = "Гьянгдзе", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Ganden" = { ru = "Ганден", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Tsurphu" = { ru = "Цурпху", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Lhasa" = { ru = "Лхаса", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Tsedong" = { ru = "Цедонг", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Drepung" = { ru = "Дрепунг", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Azura" = { ru = "Азура", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Blaze" = { ru = "Блейз", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Breanna" = { ru = "Брианна", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Breezy" = { ru = "Бризи", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Dharma" = { ru = "Дхарма", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Feather" = { ru = "Фезер", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Jasmine" = { ru = "Жасмин", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Luna" = { ru = "Луна", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Melody" = { ru = "Мелоди", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Moonjava" = { ru = "Мунджава", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Petal" = { ru = "Петал", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Rhiannon" = { ru = "Рианнон", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Starla" = { ru = "Старла", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Tranquilla" = { ru = "Транквилла", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Windsong" = { ru = "Виндсонг", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Zennia" = { ru = "Зенния", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Zoe" = { ru = "Зои", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }
+"Zora" = { ru = "Зора", src = "chosen", indecl = true, note = "shopkeeper: health food store; owner 2026-10-04 (C2)" }

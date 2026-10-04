@@ -602,7 +602,7 @@ const LOOK_CLASSES: [&str; 8] = [
 /// The look obj_typename() puts in parentheses after a known name, in the
 /// nominative: "potion of healing (bubbly)" -> пузырящееся, "elven shield
 /// (blue and green shield)" -> сине-зелёный щит, "scroll of identify
-/// (KIRJE)" -> KIRJE.
+/// (KIRJE)" -> КИРЬЕ.
 fn look(lex: &Lexicon, base: &Base, group: &str) -> Option<String> {
     if !matches!(base, Base::Thing { .. }) {
         return None;
@@ -809,7 +809,7 @@ mod tests {
             ru("a tin of soup made from newt meat", Case::Nom),
             "банка супа из мяса тритона"
         );
-        assert_eq!(ru("a cockatrice egg", Case::Gen), "яйца кокатрикса");
+        assert_eq!(ru("a cockatrice egg", Case::Gen), "яйца василиска");
         assert_eq!(
             ru("a historic statue of Medusa", Case::Nom),
             "историческая статуя Медузы"
@@ -825,7 +825,7 @@ mod tests {
         assert_eq!(ru("your 2 daggers", Case::Nom), "ваши 2 кинжала");
         assert_eq!(
             ru("Asidonhopo's long sword", Case::Nom),
-            "длинный меч Asidonhopo"
+            "длинный меч Асидонхопо"
         );
         assert_eq!(
             ru("the newt's long sword", Case::Nom),
@@ -866,7 +866,7 @@ mod tests {
         );
         assert_eq!(
             ru("scroll of identify (KIRJE)", Case::Nom),
-            "свиток опознания (KIRJE)"
+            "свиток опознания (КИРЬЕ)"
         );
     }
 

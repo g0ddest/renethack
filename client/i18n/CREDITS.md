@@ -21,9 +21,9 @@
 
 Where a creature or a thing already has a Russian name, the glossary uses
 it rather than inventing one; its note names the source. They come from the
-Russian editions of *Dungeons & Dragons* (the D&D monster names: свежеватель
-разума, бурый увалень, ржавник...), J. R. R. Tolkien (умертвие, призрак,
+Russian editions of *Dungeons & Dragons* (the D&D monster names: бурый
+увалень, ржавник...), J. R. R. Tolkien (умертвие, призрак,
 урук-хай, Оркрист, Жало), Lewis Carroll in D. Orlovskaya's translation
-(бармаглот), Terry Pratchett (Двацветок, Анк-Морпорк, Слепой Ио, Оффлер,
+(бармаглот, Вострый Клинок), Terry Pratchett (Двацветок, Анк-Морпорк, Слепой Ио, Оффлер,
 Госпожа), Fritz Leiber (Иссек, Мог, Кос), M. Moorcock (Буревестник) and
 Russian mythology, history and natural history (левкрота, сулица, бердыш).

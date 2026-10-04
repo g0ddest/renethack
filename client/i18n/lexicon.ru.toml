@@ -79,17 +79,17 @@ src = "pymorphy3"
 [monster."chickatrice"]
 g = "m"
 anim = true
-sg = ["птенец кокатрикса", "птенца кокатрикса", "птенцу кокатрикса", "птенца кокатрикса", "птенцом кокатрикса", "птенце кокатрикса"]
-pl = ["птенцы кокатрикса", "птенцов кокатрикса", "птенцам кокатрикса", "птенцов кокатрикса", "птенцами кокатрикса", "птенцах кокатрикса"]
-few = "птенца кокатрикса"
+sg = ["птенец василиска", "птенца василиска", "птенцу василиска", "птенца василиска", "птенцом василиска", "птенце василиска"]
+pl = ["птенцы василиска", "птенцов василиска", "птенцам василиска", "птенцов василиска", "птенцами василиска", "птенцах василиска"]
+few = "птенца василиска"
 src = "pymorphy3"
 
 [monster."cockatrice"]
 g = "m"
 anim = true
-sg = ["кокатрикс", "кокатрикса", "кокатриксу", "кокатрикса", "кокатриксом", "кокатриксе"]
-pl = ["кокатриксы", "кокатриксов", "кокатриксам", "кокатриксов", "кокатриксами", "кокатриксах"]
-few = "кокатрикса"
+sg = ["василиск", "василиска", "василиску", "василиска", "василиском", "василиске"]
+pl = ["василиски", "василисков", "василискам", "василисков", "василисками", "василисках"]
+few = "василиска"
 src = "pymorphy3"
 
 [monster."pyrolisk"]
@@ -229,11 +229,11 @@ few = "газовые споры"
 src = "pymorphy3"
 
 [monster."floating eye"]
-g = "m"
+g = "n"
 anim = true
-sg = ["парящий глаз", "парящего глаза", "парящему глазу", "парящего глаза", "парящим глазом", "парящем глазе"]
-pl = ["парящие глаза", "парящих глаз", "парящим глазам", "парящих глаз", "парящими глазами", "парящих глазах"]
-few = "парящих глаза"
+sg = ["парящее око", "парящего ока", "парящему оку", "парящее око", "парящим оком", "парящем оке"]
+pl = ["парящие очи", "парящих очей", "парящим очам", "парящих очей", "парящими очами", "парящих очах"]
+few = "парящих ока"
 src = "pymorphy3"
 
 [monster."freezing sphere"]
@@ -423,17 +423,17 @@ src = "pymorphy3"
 [monster."mind flayer"]
 g = "m"
 anim = true
-sg = ["свежеватель разума", "свежевателя разума", "свежевателю разума", "свежевателя разума", "свежевателем разума", "свежевателе разума"]
-pl = ["свежеватели разума", "свежевателей разума", "свежевателям разума", "свежевателей разума", "свежевателями разума", "свежевателях разума"]
-few = "свежевателя разума"
+sg = ["пожиратель разума", "пожирателя разума", "пожирателю разума", "пожирателя разума", "пожирателем разума", "пожирателе разума"]
+pl = ["пожиратели разума", "пожирателей разума", "пожирателям разума", "пожирателей разума", "пожирателями разума", "пожирателях разума"]
+few = "пожирателя разума"
 src = "pymorphy3"
 
 [monster."master mind flayer"]
 g = "m"
 anim = true
-sg = ["высший свежеватель разума", "высшего свежевателя разума", "высшему свежевателю разума", "высшего свежевателя разума", "высшим свежевателем разума", "высшем свежевателе разума"]
-pl = ["высшие свежеватели разума", "высших свежевателей разума", "высшим свежевателям разума", "высших свежевателей разума", "высшими свежевателями разума", "высших свежевателях разума"]
-few = "высших свежевателя разума"
+sg = ["высший пожиратель разума", "высшего пожирателя разума", "высшему пожирателю разума", "высшего пожирателя разума", "высшим пожирателем разума", "высшем пожирателе разума"]
+pl = ["высшие пожиратели разума", "высших пожирателей разума", "высшим пожирателям разума", "высших пожирателей разума", "высшими пожирателями разума", "высших пожирателях разума"]
+few = "высших пожирателя разума"
 src = "pymorphy3"
 
 [monster."manes"]
@@ -991,9 +991,9 @@ src = "pymorphy3"
 [monster."grid bug"]
 g = "m"
 anim = true
-sg = ["сеточный жук", "сеточного жука", "сеточному жуку", "сеточного жука", "сеточным жуком", "сеточном жуке"]
-pl = ["сеточные жуки", "сеточных жуков", "сеточным жукам", "сеточных жуков", "сеточными жуками", "сеточных жуках"]
-few = "сеточных жука"
+sg = ["ситовый жучок", "ситового жучка", "ситовому жучку", "ситового жучка", "ситовым жучком", "ситовом жучке"]
+pl = ["ситовые жучки", "ситовых жучков", "ситовым жучкам", "ситовых жучков", "ситовыми жучками", "ситовых жучках"]
+few = "ситовых жучка"
 src = "pymorphy3"
 
 [monster."xan"]
@@ -3629,9 +3629,9 @@ src = "like:слон"
 
 [object."dwarvish mattock"]
 g = "f"
-sg = ["дварфийская мотыга", "дварфийской мотыги", "дварфийской мотыге", "дварфийскую мотыгу", "дварфийской мотыгой", "дварфийской мотыге"]
-pl = ["дварфийские мотыги", "дварфийских мотыг", "дварфийским мотыгам", "дварфийские мотыги", "дварфийскими мотыгами", "дварфийских мотыгах"]
-few = "дварфийские мотыги"
+sg = ["дварфийская кирка", "дварфийской кирки", "дварфийской кирке", "дварфийскую кирку", "дварфийской киркой", "дварфийской кирке"]
+pl = ["дварфийские кирки", "дварфийских кирок", "дварфийским киркам", "дварфийские кирки", "дварфийскими кирками", "дварфийских кирках"]
+few = "дварфийские кирки"
 src = "pymorphy3"
 
 [object."lance"]
@@ -5123,9 +5123,9 @@ src = "pymorphy3"
 
 [object."slime mold"]
 g = "m"
-sg = ["слизевик", "слизевика", "слизевику", "слизевик", "слизевиком", "слизевике"]
-pl = ["слизевики", "слизевиков", "слизевикам", "слизевики", "слизевиками", "слизевиках"]
-few = "слизевика"
+sg = ["слизевой гриб", "слизевого гриба", "слизевому грибу", "слизевой гриб", "слизевым грибом", "слизевом грибе"]
+pl = ["слизевые грибы", "слизевых грибов", "слизевым грибам", "слизевые грибы", "слизевыми грибами", "слизевых грибах"]
+few = "слизевых гриба"
 src = "pymorphy3"
 
 [object."lump of royal jelly"]
@@ -6292,9 +6292,9 @@ src = "pymorphy3"
 
 [object."rock"]
 g = "m"
-sg = ["булыжник", "булыжника", "булыжнику", "булыжник", "булыжником", "булыжнике"]
-pl = ["булыжники", "булыжников", "булыжникам", "булыжники", "булыжниками", "булыжниках"]
-few = "булыжника"
+sg = ["камень", "камня", "камню", "камень", "камнем", "камне"]
+pl = ["камни", "камней", "камням", "камни", "камнями", "камнях"]
+few = "камня"
 src = "pymorphy3"
 
 [object."boulder"]
@@ -6644,10 +6644,10 @@ few = "клювовидных древковых оружия"
 src = "pymorphy3"
 
 [appearance."broad pick"]
-g = "n"
-sg = ["широкое кайло", "широкого кайла", "широкому кайлу", "широкое кайло", "широким кайлом", "широком кайле"]
-pl = ["широкие кайла", "широких кайл", "широким кайлам", "широкие кайла", "широкими кайлами", "широких кайлах"]
-few = "широких кайла"
+g = "f"
+sg = ["широкая кирка", "широкой кирки", "широкой кирке", "широкую кирку", "широкой киркой", "широкой кирке"]
+pl = ["широкие кирки", "широких кирок", "широким киркам", "широкие кирки", "широкими кирками", "широких кирках"]
+few = "широкие кирки"
 src = "pymorphy3"
 
 [appearance."staff"]
@@ -8091,167 +8091,167 @@ pl = ["брызги яда", "брызг яда", "брызгам яда", "бр
 src = "pymorphy3"
 
 [label."ZELGO MER"]
-fixed = "ZELGO MER"
+fixed = "ЗЕЛГО МЕР"
 src = "fixed"
 
 [label."JUYED AWK YACC"]
-fixed = "JUYED AWK YACC"
+fixed = "ДЖУЙЕД АУК ЯКК"
 src = "fixed"
 
 [label."NR 9"]
-fixed = "NR 9"
+fixed = "НР 9"
 src = "fixed"
 
 [label."XIXAXA XOXAXA XUXAXA"]
-fixed = "XIXAXA XOXAXA XUXAXA"
+fixed = "КСИКСАКСА КСОКСАКСА КСУКСАКСА"
 src = "fixed"
 
 [label."PRATYAVAYAH"]
-fixed = "PRATYAVAYAH"
+fixed = "ПРАТЬЯВАЯХ"
 src = "fixed"
 
 [label."DAIYEN FOOELS"]
-fixed = "DAIYEN FOOELS"
+fixed = "ДАЙЕН ФУЭЛС"
 src = "fixed"
 
 [label."LEP GEX VEN ZEA"]
-fixed = "LEP GEX VEN ZEA"
+fixed = "ЛЕП ГЕКС ВЕН ЗЕА"
 src = "fixed"
 
 [label."PRIRUTSENIE"]
-fixed = "PRIRUTSENIE"
+fixed = "ПРИРУЦЕНИЕ"
 src = "fixed"
 
 [label."ELBIB YLOH"]
-fixed = "ELBIB YLOH"
+fixed = "ЭЛБИБ ЙЛОХ"
 src = "fixed"
 
 [label."VERR YED HORRE"]
-fixed = "VERR YED HORRE"
+fixed = "ВЕРР ЙЕД ХОРРЕ"
 src = "fixed"
 
 [label."VENZAR BORGAVVE"]
-fixed = "VENZAR BORGAVVE"
+fixed = "ВЕНЗАР БОРГАВВЕ"
 src = "fixed"
 
 [label."THARR"]
-fixed = "THARR"
+fixed = "ТАРР"
 src = "fixed"
 
 [label."YUM YUM"]
-fixed = "YUM YUM"
+fixed = "НЯМ-НЯМ"
 src = "fixed"
 
 [label."KERNOD WEL"]
-fixed = "KERNOD WEL"
+fixed = "КЕРНОД ВЕЛ"
 src = "fixed"
 
 [label."ELAM EBOW"]
-fixed = "ELAM EBOW"
+fixed = "ЭЛАМ ЭБОУ"
 src = "fixed"
 
 [label."DUAM XNAHT"]
-fixed = "DUAM XNAHT"
+fixed = "ДУАМ КСНАХТ"
 src = "fixed"
 
 [label."ANDOVA BEGARIN"]
-fixed = "ANDOVA BEGARIN"
+fixed = "АНДОВА БЕГАРИН"
 src = "fixed"
 
 [label."KIRJE"]
-fixed = "KIRJE"
+fixed = "КИРЬЕ"
 src = "fixed"
 
 [label."VE FORBRYDERNE"]
-fixed = "VE FORBRYDERNE"
+fixed = "ВЕ ФОРБРЮДЕРНЕ"
 src = "fixed"
 
 [label."HACKEM MUCHE"]
-fixed = "HACKEM MUCHE"
+fixed = "ХАКЕМ МУХЕ"
 src = "fixed"
 
 [label."VELOX NEB"]
-fixed = "VELOX NEB"
+fixed = "ВЕЛОКС НЕБ"
 src = "fixed"
 
 [label."FOOBIE BLETCH"]
-fixed = "FOOBIE BLETCH"
+fixed = "ФУБИ БЛЕТЧ"
 src = "fixed"
 
 [label."TEMOV"]
-fixed = "TEMOV"
+fixed = "ТЕМОВ"
 src = "fixed"
 
 [label."GARVEN DEH"]
-fixed = "GARVEN DEH"
+fixed = "ГАРВЕН ДЕХ"
 src = "fixed"
 
 [label."READ ME"]
-fixed = "READ ME"
+fixed = "ПРОЧТИ МЕНЯ"
 src = "fixed"
 
 [label."ETAOIN SHRDLU"]
-fixed = "ETAOIN SHRDLU"
+fixed = "ЭТАОИН ШРДЛУ"
 src = "fixed"
 
 [label."LOREM IPSUM"]
-fixed = "LOREM IPSUM"
+fixed = "ЛОРЕМ ИПСУМ"
 src = "fixed"
 
 [label."FNORD"]
-fixed = "FNORD"
+fixed = "ФНОРД"
 src = "fixed"
 
 [label."KO BATE"]
-fixed = "KO BATE"
+fixed = "КО БАТЕ"
 src = "fixed"
 
 [label."ABRA KA DABRA"]
-fixed = "ABRA KA DABRA"
+fixed = "АБРА КА ДАБРА"
 src = "fixed"
 
 [label."ASHPD SODALG"]
-fixed = "ASHPD SODALG"
+fixed = "АШПД СОДАЛГ"
 src = "fixed"
 
 [label."ZLORFIK"]
-fixed = "ZLORFIK"
+fixed = "ЗЛОРФИК"
 src = "fixed"
 
 [label."GNIK SISI VLE"]
-fixed = "GNIK SISI VLE"
+fixed = "ГНИК СИСИ ВЛЕ"
 src = "fixed"
 
 [label."HAPAX LEGOMENON"]
-fixed = "HAPAX LEGOMENON"
+fixed = "ГАПАКС ЛЕГОМЕНОН"
 src = "fixed"
 
 [label."EIRIS SAZUN IDISI"]
-fixed = "EIRIS SAZUN IDISI"
+fixed = "ЭЙРИС САЗУН ИДИСИ"
 src = "fixed"
 
 [label."PHOL ENDE WODAN"]
-fixed = "PHOL ENDE WODAN"
+fixed = "ФОЛ ЭНДЕ ВОДАН"
 src = "fixed"
 
 [label."GHOTI"]
-fixed = "GHOTI"
+fixed = "ГХОТИ"
 src = "fixed"
 
 [label."MAPIRO MAHAMA DIROMAT"]
-fixed = "MAPIRO MAHAMA DIROMAT"
+fixed = "МАПИРО МАХАМА ДИРОМАТ"
 src = "fixed"
 
 [label."VAS CORP BET MANI"]
-fixed = "VAS CORP BET MANI"
+fixed = "ВАС КОРП БЕТ МАНИ"
 src = "fixed"
 
 [label."XOR OTA"]
-fixed = "XOR OTA"
+fixed = "КСОР ОТА"
 src = "fixed"
 
 [label."STRC PRST SKRZ KRK"]
-fixed = "STRC PRST SKRZ KRK"
+fixed = "СТРЦ ПРСТ СКРЖ КРК"
 src = "fixed"
 
 [class."potion"]
@@ -8319,9 +8319,9 @@ src = "pymorphy3"
 
 [class."stone"]
 g = "m"
-sg = ["камень", "камня", "камню", "камень", "камнем", "камне"]
-pl = ["камни", "камней", "камням", "камни", "камнями", "камнях"]
-few = "камня"
+sg = ["камешек", "камешка", "камешку", "камешек", "камешком", "камешке"]
+pl = ["камешки", "камешков", "камешкам", "камешки", "камешками", "камешках"]
+few = "камешка"
 src = "pymorphy3"
 
 [class."hat"]
@@ -8484,9 +8484,9 @@ src = "pymorphy3"
 
 [class."mattock"]
 g = "f"
-sg = ["мотыга", "мотыги", "мотыге", "мотыгу", "мотыгой", "мотыге"]
-pl = ["мотыги", "мотыг", "мотыгам", "мотыги", "мотыгами", "мотыгах"]
-few = "мотыги"
+sg = ["большая кирка", "большой кирки", "большой кирке", "большую кирку", "большой киркой", "большой кирке"]
+pl = ["большие кирки", "больших кирок", "большим киркам", "большие кирки", "большими кирками", "больших кирках"]
+few = "большие кирки"
 src = "pymorphy3"
 
 [class."bottle"]
@@ -8779,7 +8779,7 @@ src = "like:иностранец"
 
 [artifact."Vorpal Blade"]
 g = "m"
-sg = ["Ворпальный Клинок", "Ворпального Клинка", "Ворпальному Клинку", "Ворпальный Клинок", "Ворпальным Клинком", "Ворпальном Клинке"]
+sg = ["Вострый Клинок", "Вострого Клинка", "Вострому Клинку", "Вострый Клинок", "Вострым Клинком", "Востром Клинке"]
 src = "pymorphy3"
 
 [artifact."Snickersnee"]
@@ -11888,7 +11888,7 @@ fixed = "сгусток"
 src = "fixed"
 
 [monclass."cockatrice"]
-fixed = "кокатрикс"
+fixed = "василиск"
 src = "fixed"
 
 [monclass."dog or other canine"]
@@ -16199,2815 +16199,2803 @@ src = "pymorphy3"
 [name."Slasher"]
 g = "m"
 anim = true
-sg = ["Slasher", "Slasher", "Slasher", "Slasher", "Slasher", "Slasher"]
-pl = ["Slasher", "Slasher", "Slasher", "Slasher", "Slasher", "Slasher"]
-few = "Slasher"
-src = "indeclinable"
+sg = ["Слэшер", "Слэшера", "Слэшеру", "Слэшера", "Слэшером", "Слэшере"]
+src = "pymorphy3"
 
 [name."Hachi"]
 g = "m"
 anim = true
-sg = ["Hachi", "Hachi", "Hachi", "Hachi", "Hachi", "Hachi"]
-pl = ["Hachi", "Hachi", "Hachi", "Hachi", "Hachi", "Hachi"]
-few = "Hachi"
+sg = ["Хати", "Хати", "Хати", "Хати", "Хати", "Хати"]
+pl = ["Хати", "Хати", "Хати", "Хати", "Хати", "Хати"]
+few = "Хати"
 src = "indeclinable"
 
 [name."Idefix"]
 g = "m"
 anim = true
-sg = ["Idefix", "Idefix", "Idefix", "Idefix", "Idefix", "Idefix"]
-pl = ["Idefix", "Idefix", "Idefix", "Idefix", "Idefix", "Idefix"]
-few = "Idefix"
-src = "indeclinable"
+sg = ["Идефикс", "Идефикса", "Идефиксу", "Идефикса", "Идефиксом", "Идефиксе"]
+src = "pymorphy3"
 
 [name."Sirius"]
 g = "m"
 anim = true
-sg = ["Sirius", "Sirius", "Sirius", "Sirius", "Sirius", "Sirius"]
-pl = ["Sirius", "Sirius", "Sirius", "Sirius", "Sirius", "Sirius"]
-few = "Sirius"
-src = "indeclinable"
+sg = ["Сириус", "Сириуса", "Сириусу", "Сириуса", "Сириусом", "Сириусе"]
+src = "pymorphy3"
 
 [name."Izchak"]
 g = "m"
 anim = true
-sg = ["Izchak", "Izchak", "Izchak", "Izchak", "Izchak", "Izchak"]
-pl = ["Izchak", "Izchak", "Izchak", "Izchak", "Izchak", "Izchak"]
-few = "Izchak"
-src = "indeclinable"
+sg = ["Ицхак", "Ицхака", "Ицхаку", "Ицхака", "Ицхаком", "Ицхаке"]
+src = "pymorphy3"
 
 [name."Lucrezia"]
 g = "f"
 anim = true
-sg = ["Lucrezia", "Lucrezia", "Lucrezia", "Lucrezia", "Lucrezia", "Lucrezia"]
-pl = ["Lucrezia", "Lucrezia", "Lucrezia", "Lucrezia", "Lucrezia", "Lucrezia"]
-few = "Lucrezia"
-src = "indeclinable"
+sg = ["Лукреция", "Лукреции", "Лукреции", "Лукрецию", "Лукрецией", "Лукреции"]
+src = "pymorphy3"
 
 [name."Dirk"]
 g = "m"
 anim = true
-sg = ["Dirk", "Dirk", "Dirk", "Dirk", "Dirk", "Dirk"]
-pl = ["Dirk", "Dirk", "Dirk", "Dirk", "Dirk", "Dirk"]
-few = "Dirk"
-src = "indeclinable"
+sg = ["Дирк", "Дирка", "Дирку", "Дирка", "Дирком", "Дирке"]
+src = "pymorphy3"
 
 [name."Njezjin"]
 g = "m"
 anim = true
-sg = ["Njezjin", "Njezjin", "Njezjin", "Njezjin", "Njezjin", "Njezjin"]
-pl = ["Njezjin", "Njezjin", "Njezjin", "Njezjin", "Njezjin", "Njezjin"]
-few = "Njezjin"
+sg = ["Нежин", "Нежин", "Нежин", "Нежин", "Нежин", "Нежин"]
+pl = ["Нежин", "Нежин", "Нежин", "Нежин", "Нежин", "Нежин"]
+few = "Нежин"
 src = "indeclinable"
 
 [name."Tsjernigof"]
 g = "m"
 anim = true
-sg = ["Tsjernigof", "Tsjernigof", "Tsjernigof", "Tsjernigof", "Tsjernigof", "Tsjernigof"]
-pl = ["Tsjernigof", "Tsjernigof", "Tsjernigof", "Tsjernigof", "Tsjernigof", "Tsjernigof"]
-few = "Tsjernigof"
+sg = ["Чернигов", "Чернигов", "Чернигов", "Чернигов", "Чернигов", "Чернигов"]
+pl = ["Чернигов", "Чернигов", "Чернигов", "Чернигов", "Чернигов", "Чернигов"]
+few = "Чернигов"
 src = "indeclinable"
 
 [name."Ossipewsk"]
 g = "m"
 anim = true
-sg = ["Ossipewsk", "Ossipewsk", "Ossipewsk", "Ossipewsk", "Ossipewsk", "Ossipewsk"]
-pl = ["Ossipewsk", "Ossipewsk", "Ossipewsk", "Ossipewsk", "Ossipewsk", "Ossipewsk"]
-few = "Ossipewsk"
+sg = ["Осипевск", "Осипевск", "Осипевск", "Осипевск", "Осипевск", "Осипевск"]
+pl = ["Осипевск", "Осипевск", "Осипевск", "Осипевск", "Осипевск", "Осипевск"]
+few = "Осипевск"
 src = "indeclinable"
 
 [name."Gorlowka"]
 g = "m"
 anim = true
-sg = ["Gorlowka", "Gorlowka", "Gorlowka", "Gorlowka", "Gorlowka", "Gorlowka"]
-pl = ["Gorlowka", "Gorlowka", "Gorlowka", "Gorlowka", "Gorlowka", "Gorlowka"]
-few = "Gorlowka"
+sg = ["Горловка", "Горловка", "Горловка", "Горловка", "Горловка", "Горловка"]
+pl = ["Горловка", "Горловка", "Горловка", "Горловка", "Горловка", "Горловка"]
+few = "Горловка"
 src = "indeclinable"
 
 [name."Gomel"]
 g = "m"
 anim = true
-sg = ["Gomel", "Gomel", "Gomel", "Gomel", "Gomel", "Gomel"]
-pl = ["Gomel", "Gomel", "Gomel", "Gomel", "Gomel", "Gomel"]
-few = "Gomel"
+sg = ["Гомель", "Гомель", "Гомель", "Гомель", "Гомель", "Гомель"]
+pl = ["Гомель", "Гомель", "Гомель", "Гомель", "Гомель", "Гомель"]
+few = "Гомель"
 src = "indeclinable"
 
 [name."Konosja"]
 g = "m"
 anim = true
-sg = ["Konosja", "Konosja", "Konosja", "Konosja", "Konosja", "Konosja"]
-pl = ["Konosja", "Konosja", "Konosja", "Konosja", "Konosja", "Konosja"]
-few = "Konosja"
+sg = ["Коноша", "Коноша", "Коноша", "Коноша", "Коноша", "Коноша"]
+pl = ["Коноша", "Коноша", "Коноша", "Коноша", "Коноша", "Коноша"]
+few = "Коноша"
 src = "indeclinable"
 
 [name."Weliki Oestjoeg"]
 g = "m"
 anim = true
-sg = ["Weliki Oestjoeg", "Weliki Oestjoeg", "Weliki Oestjoeg", "Weliki Oestjoeg", "Weliki Oestjoeg", "Weliki Oestjoeg"]
-pl = ["Weliki Oestjoeg", "Weliki Oestjoeg", "Weliki Oestjoeg", "Weliki Oestjoeg", "Weliki Oestjoeg", "Weliki Oestjoeg"]
-few = "Weliki Oestjoeg"
+sg = ["Великий Устюг", "Великий Устюг", "Великий Устюг", "Великий Устюг", "Великий Устюг", "Великий Устюг"]
+pl = ["Великий Устюг", "Великий Устюг", "Великий Устюг", "Великий Устюг", "Великий Устюг", "Великий Устюг"]
+few = "Великий Устюг"
 src = "indeclinable"
 
 [name."Syktywkar"]
 g = "m"
 anim = true
-sg = ["Syktywkar", "Syktywkar", "Syktywkar", "Syktywkar", "Syktywkar", "Syktywkar"]
-pl = ["Syktywkar", "Syktywkar", "Syktywkar", "Syktywkar", "Syktywkar", "Syktywkar"]
-few = "Syktywkar"
+sg = ["Сыктывкар", "Сыктывкар", "Сыктывкар", "Сыктывкар", "Сыктывкар", "Сыктывкар"]
+pl = ["Сыктывкар", "Сыктывкар", "Сыктывкар", "Сыктывкар", "Сыктывкар", "Сыктывкар"]
+few = "Сыктывкар"
 src = "indeclinable"
 
 [name."Sablja"]
 g = "m"
 anim = true
-sg = ["Sablja", "Sablja", "Sablja", "Sablja", "Sablja", "Sablja"]
-pl = ["Sablja", "Sablja", "Sablja", "Sablja", "Sablja", "Sablja"]
-few = "Sablja"
+sg = ["Сабля", "Сабля", "Сабля", "Сабля", "Сабля", "Сабля"]
+pl = ["Сабля", "Сабля", "Сабля", "Сабля", "Сабля", "Сабля"]
+few = "Сабля"
 src = "indeclinable"
 
 [name."Narodnaja"]
 g = "m"
 anim = true
-sg = ["Narodnaja", "Narodnaja", "Narodnaja", "Narodnaja", "Narodnaja", "Narodnaja"]
-pl = ["Narodnaja", "Narodnaja", "Narodnaja", "Narodnaja", "Narodnaja", "Narodnaja"]
-few = "Narodnaja"
+sg = ["Народная", "Народная", "Народная", "Народная", "Народная", "Народная"]
+pl = ["Народная", "Народная", "Народная", "Народная", "Народная", "Народная"]
+few = "Народная"
 src = "indeclinable"
 
 [name."Kyzyl"]
 g = "m"
 anim = true
-sg = ["Kyzyl", "Kyzyl", "Kyzyl", "Kyzyl", "Kyzyl", "Kyzyl"]
-pl = ["Kyzyl", "Kyzyl", "Kyzyl", "Kyzyl", "Kyzyl", "Kyzyl"]
-few = "Kyzyl"
+sg = ["Кызыл", "Кызыл", "Кызыл", "Кызыл", "Кызыл", "Кызыл"]
+pl = ["Кызыл", "Кызыл", "Кызыл", "Кызыл", "Кызыл", "Кызыл"]
+few = "Кызыл"
 src = "indeclinable"
 
 [name."Walbrzych"]
 g = "m"
 anim = true
-sg = ["Walbrzych", "Walbrzych", "Walbrzych", "Walbrzych", "Walbrzych", "Walbrzych"]
-pl = ["Walbrzych", "Walbrzych", "Walbrzych", "Walbrzych", "Walbrzych", "Walbrzych"]
-few = "Walbrzych"
+sg = ["Валбжих", "Валбжих", "Валбжих", "Валбжих", "Валбжих", "Валбжих"]
+pl = ["Валбжих", "Валбжих", "Валбжих", "Валбжих", "Валбжих", "Валбжих"]
+few = "Валбжих"
 src = "indeclinable"
 
 [name."Swidnica"]
 g = "m"
 anim = true
-sg = ["Swidnica", "Swidnica", "Swidnica", "Swidnica", "Swidnica", "Swidnica"]
-pl = ["Swidnica", "Swidnica", "Swidnica", "Swidnica", "Swidnica", "Swidnica"]
-few = "Swidnica"
+sg = ["Свидница", "Свидница", "Свидница", "Свидница", "Свидница", "Свидница"]
+pl = ["Свидница", "Свидница", "Свидница", "Свидница", "Свидница", "Свидница"]
+few = "Свидница"
 src = "indeclinable"
 
 [name."Klodzko"]
 g = "m"
 anim = true
-sg = ["Klodzko", "Klodzko", "Klodzko", "Klodzko", "Klodzko", "Klodzko"]
-pl = ["Klodzko", "Klodzko", "Klodzko", "Klodzko", "Klodzko", "Klodzko"]
-few = "Klodzko"
+sg = ["Клодзко", "Клодзко", "Клодзко", "Клодзко", "Клодзко", "Клодзко"]
+pl = ["Клодзко", "Клодзко", "Клодзко", "Клодзко", "Клодзко", "Клодзко"]
+few = "Клодзко"
 src = "indeclinable"
 
 [name."Raciborz"]
 g = "m"
 anim = true
-sg = ["Raciborz", "Raciborz", "Raciborz", "Raciborz", "Raciborz", "Raciborz"]
-pl = ["Raciborz", "Raciborz", "Raciborz", "Raciborz", "Raciborz", "Raciborz"]
-few = "Raciborz"
+sg = ["Рацибуж", "Рацибуж", "Рацибуж", "Рацибуж", "Рацибуж", "Рацибуж"]
+pl = ["Рацибуж", "Рацибуж", "Рацибуж", "Рацибуж", "Рацибуж", "Рацибуж"]
+few = "Рацибуж"
 src = "indeclinable"
 
 [name."Gliwice"]
 g = "m"
 anim = true
-sg = ["Gliwice", "Gliwice", "Gliwice", "Gliwice", "Gliwice", "Gliwice"]
-pl = ["Gliwice", "Gliwice", "Gliwice", "Gliwice", "Gliwice", "Gliwice"]
-few = "Gliwice"
+sg = ["Гливице", "Гливице", "Гливице", "Гливице", "Гливице", "Гливице"]
+pl = ["Гливице", "Гливице", "Гливице", "Гливице", "Гливице", "Гливице"]
+few = "Гливице"
 src = "indeclinable"
 
 [name."Brzeg"]
 g = "m"
 anim = true
-sg = ["Brzeg", "Brzeg", "Brzeg", "Brzeg", "Brzeg", "Brzeg"]
-pl = ["Brzeg", "Brzeg", "Brzeg", "Brzeg", "Brzeg", "Brzeg"]
-few = "Brzeg"
+sg = ["Бжег", "Бжег", "Бжег", "Бжег", "Бжег", "Бжег"]
+pl = ["Бжег", "Бжег", "Бжег", "Бжег", "Бжег", "Бжег"]
+few = "Бжег"
 src = "indeclinable"
 
 [name."Krnov"]
 g = "m"
 anim = true
-sg = ["Krnov", "Krnov", "Krnov", "Krnov", "Krnov", "Krnov"]
-pl = ["Krnov", "Krnov", "Krnov", "Krnov", "Krnov", "Krnov"]
-few = "Krnov"
+sg = ["Крнов", "Крнов", "Крнов", "Крнов", "Крнов", "Крнов"]
+pl = ["Крнов", "Крнов", "Крнов", "Крнов", "Крнов", "Крнов"]
+few = "Крнов"
 src = "indeclinable"
 
 [name."Hradec Kralove"]
 g = "m"
 anim = true
-sg = ["Hradec Kralove", "Hradec Kralove", "Hradec Kralove", "Hradec Kralove", "Hradec Kralove", "Hradec Kralove"]
-pl = ["Hradec Kralove", "Hradec Kralove", "Hradec Kralove", "Hradec Kralove", "Hradec Kralove", "Hradec Kralove"]
-few = "Hradec Kralove"
+sg = ["Градец-Кралове", "Градец-Кралове", "Градец-Кралове", "Градец-Кралове", "Градец-Кралове", "Градец-Кралове"]
+pl = ["Градец-Кралове", "Градец-Кралове", "Градец-Кралове", "Градец-Кралове", "Градец-Кралове", "Градец-Кралове"]
+few = "Градец-Кралове"
 src = "indeclinable"
 
 [name."Leuk"]
 g = "m"
 anim = true
-sg = ["Leuk", "Leuk", "Leuk", "Leuk", "Leuk", "Leuk"]
-pl = ["Leuk", "Leuk", "Leuk", "Leuk", "Leuk", "Leuk"]
-few = "Leuk"
+sg = ["Лойк", "Лойк", "Лойк", "Лойк", "Лойк", "Лойк"]
+pl = ["Лойк", "Лойк", "Лойк", "Лойк", "Лойк", "Лойк"]
+few = "Лойк"
 src = "indeclinable"
 
 [name."Brig"]
 g = "m"
 anim = true
-sg = ["Brig", "Brig", "Brig", "Brig", "Brig", "Brig"]
-pl = ["Brig", "Brig", "Brig", "Brig", "Brig", "Brig"]
-few = "Brig"
+sg = ["Бриг", "Бриг", "Бриг", "Бриг", "Бриг", "Бриг"]
+pl = ["Бриг", "Бриг", "Бриг", "Бриг", "Бриг", "Бриг"]
+few = "Бриг"
 src = "indeclinable"
 
 [name."Brienz"]
 g = "m"
 anim = true
-sg = ["Brienz", "Brienz", "Brienz", "Brienz", "Brienz", "Brienz"]
-pl = ["Brienz", "Brienz", "Brienz", "Brienz", "Brienz", "Brienz"]
-few = "Brienz"
+sg = ["Бриенц", "Бриенц", "Бриенц", "Бриенц", "Бриенц", "Бриенц"]
+pl = ["Бриенц", "Бриенц", "Бриенц", "Бриенц", "Бриенц", "Бриенц"]
+few = "Бриенц"
 src = "indeclinable"
 
 [name."Thun"]
 g = "m"
 anim = true
-sg = ["Thun", "Thun", "Thun", "Thun", "Thun", "Thun"]
-pl = ["Thun", "Thun", "Thun", "Thun", "Thun", "Thun"]
-few = "Thun"
+sg = ["Тун", "Тун", "Тун", "Тун", "Тун", "Тун"]
+pl = ["Тун", "Тун", "Тун", "Тун", "Тун", "Тун"]
+few = "Тун"
 src = "indeclinable"
 
 [name."Sarnen"]
 g = "m"
 anim = true
-sg = ["Sarnen", "Sarnen", "Sarnen", "Sarnen", "Sarnen", "Sarnen"]
-pl = ["Sarnen", "Sarnen", "Sarnen", "Sarnen", "Sarnen", "Sarnen"]
-few = "Sarnen"
+sg = ["Зарнен", "Зарнен", "Зарнен", "Зарнен", "Зарнен", "Зарнен"]
+pl = ["Зарнен", "Зарнен", "Зарнен", "Зарнен", "Зарнен", "Зарнен"]
+few = "Зарнен"
 src = "indeclinable"
 
 [name."Burglen"]
 g = "m"
 anim = true
-sg = ["Burglen", "Burglen", "Burglen", "Burglen", "Burglen", "Burglen"]
-pl = ["Burglen", "Burglen", "Burglen", "Burglen", "Burglen", "Burglen"]
-few = "Burglen"
+sg = ["Бюрглен", "Бюрглен", "Бюрглен", "Бюрглен", "Бюрглен", "Бюрглен"]
+pl = ["Бюрглен", "Бюрглен", "Бюрглен", "Бюрглен", "Бюрглен", "Бюрглен"]
+few = "Бюрглен"
 src = "indeclinable"
 
 [name."Elm"]
 g = "m"
 anim = true
-sg = ["Elm", "Elm", "Elm", "Elm", "Elm", "Elm"]
-pl = ["Elm", "Elm", "Elm", "Elm", "Elm", "Elm"]
-few = "Elm"
+sg = ["Эльм", "Эльм", "Эльм", "Эльм", "Эльм", "Эльм"]
+pl = ["Эльм", "Эльм", "Эльм", "Эльм", "Эльм", "Эльм"]
+few = "Эльм"
 src = "indeclinable"
 
 [name."Flims"]
 g = "m"
 anim = true
-sg = ["Flims", "Flims", "Flims", "Flims", "Flims", "Flims"]
-pl = ["Flims", "Flims", "Flims", "Flims", "Flims", "Flims"]
-few = "Flims"
+sg = ["Флимс", "Флимс", "Флимс", "Флимс", "Флимс", "Флимс"]
+pl = ["Флимс", "Флимс", "Флимс", "Флимс", "Флимс", "Флимс"]
+few = "Флимс"
 src = "indeclinable"
 
 [name."Vals"]
 g = "m"
 anim = true
-sg = ["Vals", "Vals", "Vals", "Vals", "Vals", "Vals"]
-pl = ["Vals", "Vals", "Vals", "Vals", "Vals", "Vals"]
-few = "Vals"
+sg = ["Вальс", "Вальс", "Вальс", "Вальс", "Вальс", "Вальс"]
+pl = ["Вальс", "Вальс", "Вальс", "Вальс", "Вальс", "Вальс"]
+few = "Вальс"
 src = "indeclinable"
 
 [name."Schuls"]
 g = "m"
 anim = true
-sg = ["Schuls", "Schuls", "Schuls", "Schuls", "Schuls", "Schuls"]
-pl = ["Schuls", "Schuls", "Schuls", "Schuls", "Schuls", "Schuls"]
-few = "Schuls"
+sg = ["Шульс", "Шульс", "Шульс", "Шульс", "Шульс", "Шульс"]
+pl = ["Шульс", "Шульс", "Шульс", "Шульс", "Шульс", "Шульс"]
+few = "Шульс"
 src = "indeclinable"
 
 [name."Zum Loch"]
 g = "m"
 anim = true
-sg = ["Zum Loch", "Zum Loch", "Zum Loch", "Zum Loch", "Zum Loch", "Zum Loch"]
-pl = ["Zum Loch", "Zum Loch", "Zum Loch", "Zum Loch", "Zum Loch", "Zum Loch"]
-few = "Zum Loch"
+sg = ["Цум Лох", "Цум Лох", "Цум Лох", "Цум Лох", "Цум Лох", "Цум Лох"]
+pl = ["Цум Лох", "Цум Лох", "Цум Лох", "Цум Лох", "Цум Лох", "Цум Лох"]
+few = "Цум Лох"
 src = "indeclinable"
 
 [name."Skibbereen"]
 g = "m"
 anim = true
-sg = ["Skibbereen", "Skibbereen", "Skibbereen", "Skibbereen", "Skibbereen", "Skibbereen"]
-pl = ["Skibbereen", "Skibbereen", "Skibbereen", "Skibbereen", "Skibbereen", "Skibbereen"]
-few = "Skibbereen"
+sg = ["Скибберин", "Скибберин", "Скибберин", "Скибберин", "Скибберин", "Скибберин"]
+pl = ["Скибберин", "Скибберин", "Скибберин", "Скибберин", "Скибберин", "Скибберин"]
+few = "Скибберин"
 src = "indeclinable"
 
 [name."Kanturk"]
 g = "m"
 anim = true
-sg = ["Kanturk", "Kanturk", "Kanturk", "Kanturk", "Kanturk", "Kanturk"]
-pl = ["Kanturk", "Kanturk", "Kanturk", "Kanturk", "Kanturk", "Kanturk"]
-few = "Kanturk"
+sg = ["Кантерк", "Кантерк", "Кантерк", "Кантерк", "Кантерк", "Кантерк"]
+pl = ["Кантерк", "Кантерк", "Кантерк", "Кантерк", "Кантерк", "Кантерк"]
+few = "Кантерк"
 src = "indeclinable"
 
 [name."Rath Luirc"]
 g = "m"
 anim = true
-sg = ["Rath Luirc", "Rath Luirc", "Rath Luirc", "Rath Luirc", "Rath Luirc", "Rath Luirc"]
-pl = ["Rath Luirc", "Rath Luirc", "Rath Luirc", "Rath Luirc", "Rath Luirc", "Rath Luirc"]
-few = "Rath Luirc"
+sg = ["Рат-Лерк", "Рат-Лерк", "Рат-Лерк", "Рат-Лерк", "Рат-Лерк", "Рат-Лерк"]
+pl = ["Рат-Лерк", "Рат-Лерк", "Рат-Лерк", "Рат-Лерк", "Рат-Лерк", "Рат-Лерк"]
+few = "Рат-Лерк"
 src = "indeclinable"
 
 [name."Ennistymon"]
 g = "m"
 anim = true
-sg = ["Ennistymon", "Ennistymon", "Ennistymon", "Ennistymon", "Ennistymon", "Ennistymon"]
-pl = ["Ennistymon", "Ennistymon", "Ennistymon", "Ennistymon", "Ennistymon", "Ennistymon"]
-few = "Ennistymon"
+sg = ["Эннистимон", "Эннистимон", "Эннистимон", "Эннистимон", "Эннистимон", "Эннистимон"]
+pl = ["Эннистимон", "Эннистимон", "Эннистимон", "Эннистимон", "Эннистимон", "Эннистимон"]
+few = "Эннистимон"
 src = "indeclinable"
 
 [name."Lahinch"]
 g = "m"
 anim = true
-sg = ["Lahinch", "Lahinch", "Lahinch", "Lahinch", "Lahinch", "Lahinch"]
-pl = ["Lahinch", "Lahinch", "Lahinch", "Lahinch", "Lahinch", "Lahinch"]
-few = "Lahinch"
+sg = ["Лахинч", "Лахинч", "Лахинч", "Лахинч", "Лахинч", "Лахинч"]
+pl = ["Лахинч", "Лахинч", "Лахинч", "Лахинч", "Лахинч", "Лахинч"]
+few = "Лахинч"
 src = "indeclinable"
 
 [name."Kinnegad"]
 g = "m"
 anim = true
-sg = ["Kinnegad", "Kinnegad", "Kinnegad", "Kinnegad", "Kinnegad", "Kinnegad"]
-pl = ["Kinnegad", "Kinnegad", "Kinnegad", "Kinnegad", "Kinnegad", "Kinnegad"]
-few = "Kinnegad"
+sg = ["Киннегад", "Киннегад", "Киннегад", "Киннегад", "Киннегад", "Киннегад"]
+pl = ["Киннегад", "Киннегад", "Киннегад", "Киннегад", "Киннегад", "Киннегад"]
+few = "Киннегад"
 src = "indeclinable"
 
 [name."Lugnaquillia"]
 g = "m"
 anim = true
-sg = ["Lugnaquillia", "Lugnaquillia", "Lugnaquillia", "Lugnaquillia", "Lugnaquillia", "Lugnaquillia"]
-pl = ["Lugnaquillia", "Lugnaquillia", "Lugnaquillia", "Lugnaquillia", "Lugnaquillia", "Lugnaquillia"]
-few = "Lugnaquillia"
+sg = ["Лугнаквиллия", "Лугнаквиллия", "Лугнаквиллия", "Лугнаквиллия", "Лугнаквиллия", "Лугнаквиллия"]
+pl = ["Лугнаквиллия", "Лугнаквиллия", "Лугнаквиллия", "Лугнаквиллия", "Лугнаквиллия", "Лугнаквиллия"]
+few = "Лугнаквиллия"
 src = "indeclinable"
 
 [name."Enniscorthy"]
 g = "m"
 anim = true
-sg = ["Enniscorthy", "Enniscorthy", "Enniscorthy", "Enniscorthy", "Enniscorthy", "Enniscorthy"]
-pl = ["Enniscorthy", "Enniscorthy", "Enniscorthy", "Enniscorthy", "Enniscorthy", "Enniscorthy"]
-few = "Enniscorthy"
+sg = ["Эннискорти", "Эннискорти", "Эннискорти", "Эннискорти", "Эннискорти", "Эннискорти"]
+pl = ["Эннискорти", "Эннискорти", "Эннискорти", "Эннискорти", "Эннискорти", "Эннискорти"]
+few = "Эннискорти"
 src = "indeclinable"
 
 [name."Gweebarra"]
 g = "m"
 anim = true
-sg = ["Gweebarra", "Gweebarra", "Gweebarra", "Gweebarra", "Gweebarra", "Gweebarra"]
-pl = ["Gweebarra", "Gweebarra", "Gweebarra", "Gweebarra", "Gweebarra", "Gweebarra"]
-few = "Gweebarra"
+sg = ["Гвибарра", "Гвибарра", "Гвибарра", "Гвибарра", "Гвибарра", "Гвибарра"]
+pl = ["Гвибарра", "Гвибарра", "Гвибарра", "Гвибарра", "Гвибарра", "Гвибарра"]
+few = "Гвибарра"
 src = "indeclinable"
 
 [name."Kittamagh"]
 g = "m"
 anim = true
-sg = ["Kittamagh", "Kittamagh", "Kittamagh", "Kittamagh", "Kittamagh", "Kittamagh"]
-pl = ["Kittamagh", "Kittamagh", "Kittamagh", "Kittamagh", "Kittamagh", "Kittamagh"]
-few = "Kittamagh"
+sg = ["Киттама", "Киттама", "Киттама", "Киттама", "Киттама", "Киттама"]
+pl = ["Киттама", "Киттама", "Киттама", "Киттама", "Киттама", "Киттама"]
+few = "Киттама"
 src = "indeclinable"
 
 [name."Nenagh"]
 g = "m"
 anim = true
-sg = ["Nenagh", "Nenagh", "Nenagh", "Nenagh", "Nenagh", "Nenagh"]
-pl = ["Nenagh", "Nenagh", "Nenagh", "Nenagh", "Nenagh", "Nenagh"]
-few = "Nenagh"
+sg = ["Нина", "Нина", "Нина", "Нина", "Нина", "Нина"]
+pl = ["Нина", "Нина", "Нина", "Нина", "Нина", "Нина"]
+few = "Нина"
 src = "indeclinable"
 
 [name."Sneem"]
 g = "m"
 anim = true
-sg = ["Sneem", "Sneem", "Sneem", "Sneem", "Sneem", "Sneem"]
-pl = ["Sneem", "Sneem", "Sneem", "Sneem", "Sneem", "Sneem"]
-few = "Sneem"
+sg = ["Сним", "Сним", "Сним", "Сним", "Сним", "Сним"]
+pl = ["Сним", "Сним", "Сним", "Сним", "Сним", "Сним"]
+few = "Сним"
 src = "indeclinable"
 
 [name."Ballingeary"]
 g = "m"
 anim = true
-sg = ["Ballingeary", "Ballingeary", "Ballingeary", "Ballingeary", "Ballingeary", "Ballingeary"]
-pl = ["Ballingeary", "Ballingeary", "Ballingeary", "Ballingeary", "Ballingeary", "Ballingeary"]
-few = "Ballingeary"
+sg = ["Баллинджири", "Баллинджири", "Баллинджири", "Баллинджири", "Баллинджири", "Баллинджири"]
+pl = ["Баллинджири", "Баллинджири", "Баллинджири", "Баллинджири", "Баллинджири", "Баллинджири"]
+few = "Баллинджири"
 src = "indeclinable"
 
 [name."Kilgarvan"]
 g = "m"
 anim = true
-sg = ["Kilgarvan", "Kilgarvan", "Kilgarvan", "Kilgarvan", "Kilgarvan", "Kilgarvan"]
-pl = ["Kilgarvan", "Kilgarvan", "Kilgarvan", "Kilgarvan", "Kilgarvan", "Kilgarvan"]
-few = "Kilgarvan"
+sg = ["Килгарван", "Килгарван", "Килгарван", "Килгарван", "Килгарван", "Килгарван"]
+pl = ["Килгарван", "Килгарван", "Килгарван", "Килгарван", "Килгарван", "Килгарван"]
+few = "Килгарван"
 src = "indeclinable"
 
 [name."Cahersiveen"]
 g = "m"
 anim = true
-sg = ["Cahersiveen", "Cahersiveen", "Cahersiveen", "Cahersiveen", "Cahersiveen", "Cahersiveen"]
-pl = ["Cahersiveen", "Cahersiveen", "Cahersiveen", "Cahersiveen", "Cahersiveen", "Cahersiveen"]
-few = "Cahersiveen"
+sg = ["Кахерсивин", "Кахерсивин", "Кахерсивин", "Кахерсивин", "Кахерсивин", "Кахерсивин"]
+pl = ["Кахерсивин", "Кахерсивин", "Кахерсивин", "Кахерсивин", "Кахерсивин", "Кахерсивин"]
+few = "Кахерсивин"
 src = "indeclinable"
 
 [name."Glenbeigh"]
 g = "m"
 anim = true
-sg = ["Glenbeigh", "Glenbeigh", "Glenbeigh", "Glenbeigh", "Glenbeigh", "Glenbeigh"]
-pl = ["Glenbeigh", "Glenbeigh", "Glenbeigh", "Glenbeigh", "Glenbeigh", "Glenbeigh"]
-few = "Glenbeigh"
+sg = ["Гленбей", "Гленбей", "Гленбей", "Гленбей", "Гленбей", "Гленбей"]
+pl = ["Гленбей", "Гленбей", "Гленбей", "Гленбей", "Гленбей", "Гленбей"]
+few = "Гленбей"
 src = "indeclinable"
 
 [name."Kilmihil"]
 g = "m"
 anim = true
-sg = ["Kilmihil", "Kilmihil", "Kilmihil", "Kilmihil", "Kilmihil", "Kilmihil"]
-pl = ["Kilmihil", "Kilmihil", "Kilmihil", "Kilmihil", "Kilmihil", "Kilmihil"]
-few = "Kilmihil"
+sg = ["Килмихил", "Килмихил", "Килмихил", "Килмихил", "Килмихил", "Килмихил"]
+pl = ["Килмихил", "Килмихил", "Килмихил", "Килмихил", "Килмихил", "Килмихил"]
+few = "Килмихил"
 src = "indeclinable"
 
 [name."Kiltamagh"]
 g = "m"
 anim = true
-sg = ["Kiltamagh", "Kiltamagh", "Kiltamagh", "Kiltamagh", "Kiltamagh", "Kiltamagh"]
-pl = ["Kiltamagh", "Kiltamagh", "Kiltamagh", "Kiltamagh", "Kiltamagh", "Kiltamagh"]
-few = "Kiltamagh"
+sg = ["Килтама", "Килтама", "Килтама", "Килтама", "Килтама", "Килтама"]
+pl = ["Килтама", "Килтама", "Килтама", "Килтама", "Килтама", "Килтама"]
+few = "Килтама"
 src = "indeclinable"
 
 [name."Droichead Atha"]
 g = "m"
 anim = true
-sg = ["Droichead Atha", "Droichead Atha", "Droichead Atha", "Droichead Atha", "Droichead Atha", "Droichead Atha"]
-pl = ["Droichead Atha", "Droichead Atha", "Droichead Atha", "Droichead Atha", "Droichead Atha", "Droichead Atha"]
-few = "Droichead Atha"
+sg = ["Дрохед-Аха", "Дрохед-Аха", "Дрохед-Аха", "Дрохед-Аха", "Дрохед-Аха", "Дрохед-Аха"]
+pl = ["Дрохед-Аха", "Дрохед-Аха", "Дрохед-Аха", "Дрохед-Аха", "Дрохед-Аха", "Дрохед-Аха"]
+few = "Дрохед-Аха"
 src = "indeclinable"
 
 [name."Inniscrone"]
 g = "m"
 anim = true
-sg = ["Inniscrone", "Inniscrone", "Inniscrone", "Inniscrone", "Inniscrone", "Inniscrone"]
-pl = ["Inniscrone", "Inniscrone", "Inniscrone", "Inniscrone", "Inniscrone", "Inniscrone"]
-few = "Inniscrone"
+sg = ["Инискрон", "Инискрон", "Инискрон", "Инискрон", "Инискрон", "Инискрон"]
+pl = ["Инискрон", "Инискрон", "Инискрон", "Инискрон", "Инискрон", "Инискрон"]
+few = "Инискрон"
 src = "indeclinable"
 
 [name."Clonegal"]
 g = "m"
 anim = true
-sg = ["Clonegal", "Clonegal", "Clonegal", "Clonegal", "Clonegal", "Clonegal"]
-pl = ["Clonegal", "Clonegal", "Clonegal", "Clonegal", "Clonegal", "Clonegal"]
-few = "Clonegal"
+sg = ["Клонегал", "Клонегал", "Клонегал", "Клонегал", "Клонегал", "Клонегал"]
+pl = ["Клонегал", "Клонегал", "Клонегал", "Клонегал", "Клонегал", "Клонегал"]
+few = "Клонегал"
 src = "indeclinable"
 
 [name."Lisnaskea"]
 g = "m"
 anim = true
-sg = ["Lisnaskea", "Lisnaskea", "Lisnaskea", "Lisnaskea", "Lisnaskea", "Lisnaskea"]
-pl = ["Lisnaskea", "Lisnaskea", "Lisnaskea", "Lisnaskea", "Lisnaskea", "Lisnaskea"]
-few = "Lisnaskea"
+sg = ["Лиснаски", "Лиснаски", "Лиснаски", "Лиснаски", "Лиснаски", "Лиснаски"]
+pl = ["Лиснаски", "Лиснаски", "Лиснаски", "Лиснаски", "Лиснаски", "Лиснаски"]
+few = "Лиснаски"
 src = "indeclinable"
 
 [name."Culdaff"]
 g = "m"
 anim = true
-sg = ["Culdaff", "Culdaff", "Culdaff", "Culdaff", "Culdaff", "Culdaff"]
-pl = ["Culdaff", "Culdaff", "Culdaff", "Culdaff", "Culdaff", "Culdaff"]
-few = "Culdaff"
+sg = ["Калдафф", "Калдафф", "Калдафф", "Калдафф", "Калдафф", "Калдафф"]
+pl = ["Калдафф", "Калдафф", "Калдафф", "Калдафф", "Калдафф", "Калдафф"]
+few = "Калдафф"
 src = "indeclinable"
 
 [name."Dunfanaghy"]
 g = "m"
 anim = true
-sg = ["Dunfanaghy", "Dunfanaghy", "Dunfanaghy", "Dunfanaghy", "Dunfanaghy", "Dunfanaghy"]
-pl = ["Dunfanaghy", "Dunfanaghy", "Dunfanaghy", "Dunfanaghy", "Dunfanaghy", "Dunfanaghy"]
-few = "Dunfanaghy"
+sg = ["Данфанахи", "Данфанахи", "Данфанахи", "Данфанахи", "Данфанахи", "Данфанахи"]
+pl = ["Данфанахи", "Данфанахи", "Данфанахи", "Данфанахи", "Данфанахи", "Данфанахи"]
+few = "Данфанахи"
 src = "indeclinable"
 
 [name."Inishbofin"]
 g = "m"
 anim = true
-sg = ["Inishbofin", "Inishbofin", "Inishbofin", "Inishbofin", "Inishbofin", "Inishbofin"]
-pl = ["Inishbofin", "Inishbofin", "Inishbofin", "Inishbofin", "Inishbofin", "Inishbofin"]
-few = "Inishbofin"
+sg = ["Инишбофин", "Инишбофин", "Инишбофин", "Инишбофин", "Инишбофин", "Инишбофин"]
+pl = ["Инишбофин", "Инишбофин", "Инишбофин", "Инишбофин", "Инишбофин", "Инишбофин"]
+few = "Инишбофин"
 src = "indeclinable"
 
 [name."Kesh"]
 g = "m"
 anim = true
-sg = ["Kesh", "Kesh", "Kesh", "Kesh", "Kesh", "Kesh"]
-pl = ["Kesh", "Kesh", "Kesh", "Kesh", "Kesh", "Kesh"]
-few = "Kesh"
+sg = ["Кеш", "Кеш", "Кеш", "Кеш", "Кеш", "Кеш"]
+pl = ["Кеш", "Кеш", "Кеш", "Кеш", "Кеш", "Кеш"]
+few = "Кеш"
 src = "indeclinable"
 
 [name."Demirci"]
 g = "m"
 anim = true
-sg = ["Demirci", "Demirci", "Demirci", "Demirci", "Demirci", "Demirci"]
-pl = ["Demirci", "Demirci", "Demirci", "Demirci", "Demirci", "Demirci"]
-few = "Demirci"
+sg = ["Демирджи", "Демирджи", "Демирджи", "Демирджи", "Демирджи", "Демирджи"]
+pl = ["Демирджи", "Демирджи", "Демирджи", "Демирджи", "Демирджи", "Демирджи"]
+few = "Демирджи"
 src = "indeclinable"
 
 [name."Kalecik"]
 g = "m"
 anim = true
-sg = ["Kalecik", "Kalecik", "Kalecik", "Kalecik", "Kalecik", "Kalecik"]
-pl = ["Kalecik", "Kalecik", "Kalecik", "Kalecik", "Kalecik", "Kalecik"]
-few = "Kalecik"
+sg = ["Каледжик", "Каледжик", "Каледжик", "Каледжик", "Каледжик", "Каледжик"]
+pl = ["Каледжик", "Каледжик", "Каледжик", "Каледжик", "Каледжик", "Каледжик"]
+few = "Каледжик"
 src = "indeclinable"
 
 [name."Boyabai"]
 g = "m"
 anim = true
-sg = ["Boyabai", "Boyabai", "Boyabai", "Boyabai", "Boyabai", "Boyabai"]
-pl = ["Boyabai", "Boyabai", "Boyabai", "Boyabai", "Boyabai", "Boyabai"]
-few = "Boyabai"
+sg = ["Боябай", "Боябай", "Боябай", "Боябай", "Боябай", "Боябай"]
+pl = ["Боябай", "Боябай", "Боябай", "Боябай", "Боябай", "Боябай"]
+few = "Боябай"
 src = "indeclinable"
 
 [name."Yildizeli"]
 g = "m"
 anim = true
-sg = ["Yildizeli", "Yildizeli", "Yildizeli", "Yildizeli", "Yildizeli", "Yildizeli"]
-pl = ["Yildizeli", "Yildizeli", "Yildizeli", "Yildizeli", "Yildizeli", "Yildizeli"]
-few = "Yildizeli"
+sg = ["Йылдызэли", "Йылдызэли", "Йылдызэли", "Йылдызэли", "Йылдызэли", "Йылдызэли"]
+pl = ["Йылдызэли", "Йылдызэли", "Йылдызэли", "Йылдызэли", "Йылдызэли", "Йылдызэли"]
+few = "Йылдызэли"
 src = "indeclinable"
 
 [name."Gaziantep"]
 g = "m"
 anim = true
-sg = ["Gaziantep", "Gaziantep", "Gaziantep", "Gaziantep", "Gaziantep", "Gaziantep"]
-pl = ["Gaziantep", "Gaziantep", "Gaziantep", "Gaziantep", "Gaziantep", "Gaziantep"]
-few = "Gaziantep"
+sg = ["Газиантеп", "Газиантеп", "Газиантеп", "Газиантеп", "Газиантеп", "Газиантеп"]
+pl = ["Газиантеп", "Газиантеп", "Газиантеп", "Газиантеп", "Газиантеп", "Газиантеп"]
+few = "Газиантеп"
 src = "indeclinable"
 
 [name."Siirt"]
 g = "m"
 anim = true
-sg = ["Siirt", "Siirt", "Siirt", "Siirt", "Siirt", "Siirt"]
-pl = ["Siirt", "Siirt", "Siirt", "Siirt", "Siirt", "Siirt"]
-few = "Siirt"
+sg = ["Сиирт", "Сиирт", "Сиирт", "Сиирт", "Сиирт", "Сиирт"]
+pl = ["Сиирт", "Сиирт", "Сиирт", "Сиирт", "Сиирт", "Сиирт"]
+few = "Сиирт"
 src = "indeclinable"
 
 [name."Akhalataki"]
 g = "m"
 anim = true
-sg = ["Akhalataki", "Akhalataki", "Akhalataki", "Akhalataki", "Akhalataki", "Akhalataki"]
-pl = ["Akhalataki", "Akhalataki", "Akhalataki", "Akhalataki", "Akhalataki", "Akhalataki"]
-few = "Akhalataki"
+sg = ["Ахалатаки", "Ахалатаки", "Ахалатаки", "Ахалатаки", "Ахалатаки", "Ахалатаки"]
+pl = ["Ахалатаки", "Ахалатаки", "Ахалатаки", "Ахалатаки", "Ахалатаки", "Ахалатаки"]
+few = "Ахалатаки"
 src = "indeclinable"
 
 [name."Tirebolu"]
 g = "m"
 anim = true
-sg = ["Tirebolu", "Tirebolu", "Tirebolu", "Tirebolu", "Tirebolu", "Tirebolu"]
-pl = ["Tirebolu", "Tirebolu", "Tirebolu", "Tirebolu", "Tirebolu", "Tirebolu"]
-few = "Tirebolu"
+sg = ["Тиреболу", "Тиреболу", "Тиреболу", "Тиреболу", "Тиреболу", "Тиреболу"]
+pl = ["Тиреболу", "Тиреболу", "Тиреболу", "Тиреболу", "Тиреболу", "Тиреболу"]
+few = "Тиреболу"
 src = "indeclinable"
 
 [name."Aksaray"]
 g = "m"
 anim = true
-sg = ["Aksaray", "Aksaray", "Aksaray", "Aksaray", "Aksaray", "Aksaray"]
-pl = ["Aksaray", "Aksaray", "Aksaray", "Aksaray", "Aksaray", "Aksaray"]
-few = "Aksaray"
+sg = ["Аксарай", "Аксарай", "Аксарай", "Аксарай", "Аксарай", "Аксарай"]
+pl = ["Аксарай", "Аксарай", "Аксарай", "Аксарай", "Аксарай", "Аксарай"]
+few = "Аксарай"
 src = "indeclinable"
 
 [name."Ermenak"]
 g = "m"
 anim = true
-sg = ["Ermenak", "Ermenak", "Ermenak", "Ermenak", "Ermenak", "Ermenak"]
-pl = ["Ermenak", "Ermenak", "Ermenak", "Ermenak", "Ermenak", "Ermenak"]
-few = "Ermenak"
+sg = ["Эрменак", "Эрменак", "Эрменак", "Эрменак", "Эрменак", "Эрменак"]
+pl = ["Эрменак", "Эрменак", "Эрменак", "Эрменак", "Эрменак", "Эрменак"]
+few = "Эрменак"
 src = "indeclinable"
 
 [name."Iskenderun"]
 g = "m"
 anim = true
-sg = ["Iskenderun", "Iskenderun", "Iskenderun", "Iskenderun", "Iskenderun", "Iskenderun"]
-pl = ["Iskenderun", "Iskenderun", "Iskenderun", "Iskenderun", "Iskenderun", "Iskenderun"]
-few = "Iskenderun"
+sg = ["Искендерун", "Искендерун", "Искендерун", "Искендерун", "Искендерун", "Искендерун"]
+pl = ["Искендерун", "Искендерун", "Искендерун", "Искендерун", "Искендерун", "Искендерун"]
+few = "Искендерун"
 src = "indeclinable"
 
 [name."Kadirli"]
 g = "m"
 anim = true
-sg = ["Kadirli", "Kadirli", "Kadirli", "Kadirli", "Kadirli", "Kadirli"]
-pl = ["Kadirli", "Kadirli", "Kadirli", "Kadirli", "Kadirli", "Kadirli"]
-few = "Kadirli"
+sg = ["Кадирли", "Кадирли", "Кадирли", "Кадирли", "Кадирли", "Кадирли"]
+pl = ["Кадирли", "Кадирли", "Кадирли", "Кадирли", "Кадирли", "Кадирли"]
+few = "Кадирли"
 src = "indeclinable"
 
 [name."Siverek"]
 g = "m"
 anim = true
-sg = ["Siverek", "Siverek", "Siverek", "Siverek", "Siverek", "Siverek"]
-pl = ["Siverek", "Siverek", "Siverek", "Siverek", "Siverek", "Siverek"]
-few = "Siverek"
+sg = ["Сиверек", "Сиверек", "Сиверек", "Сиверек", "Сиверек", "Сиверек"]
+pl = ["Сиверек", "Сиверек", "Сиверек", "Сиверек", "Сиверек", "Сиверек"]
+few = "Сиверек"
 src = "indeclinable"
 
 [name."Pervari"]
 g = "m"
 anim = true
-sg = ["Pervari", "Pervari", "Pervari", "Pervari", "Pervari", "Pervari"]
-pl = ["Pervari", "Pervari", "Pervari", "Pervari", "Pervari", "Pervari"]
-few = "Pervari"
+sg = ["Первари", "Первари", "Первари", "Первари", "Первари", "Первари"]
+pl = ["Первари", "Первари", "Первари", "Первари", "Первари", "Первари"]
+few = "Первари"
 src = "indeclinable"
 
 [name."Malasgirt"]
 g = "m"
 anim = true
-sg = ["Malasgirt", "Malasgirt", "Malasgirt", "Malasgirt", "Malasgirt", "Malasgirt"]
-pl = ["Malasgirt", "Malasgirt", "Malasgirt", "Malasgirt", "Malasgirt", "Malasgirt"]
-few = "Malasgirt"
+sg = ["Маласгирт", "Маласгирт", "Маласгирт", "Маласгирт", "Маласгирт", "Маласгирт"]
+pl = ["Маласгирт", "Маласгирт", "Маласгирт", "Маласгирт", "Маласгирт", "Маласгирт"]
+few = "Маласгирт"
 src = "indeclinable"
 
 [name."Bayburt"]
 g = "m"
 anim = true
-sg = ["Bayburt", "Bayburt", "Bayburt", "Bayburt", "Bayburt", "Bayburt"]
-pl = ["Bayburt", "Bayburt", "Bayburt", "Bayburt", "Bayburt", "Bayburt"]
-few = "Bayburt"
+sg = ["Байбурт", "Байбурт", "Байбурт", "Байбурт", "Байбурт", "Байбурт"]
+pl = ["Байбурт", "Байбурт", "Байбурт", "Байбурт", "Байбурт", "Байбурт"]
+few = "Байбурт"
 src = "indeclinable"
 
 [name."Ayancik"]
 g = "m"
 anim = true
-sg = ["Ayancik", "Ayancik", "Ayancik", "Ayancik", "Ayancik", "Ayancik"]
-pl = ["Ayancik", "Ayancik", "Ayancik", "Ayancik", "Ayancik", "Ayancik"]
-few = "Ayancik"
+sg = ["Аянджик", "Аянджик", "Аянджик", "Аянджик", "Аянджик", "Аянджик"]
+pl = ["Аянджик", "Аянджик", "Аянджик", "Аянджик", "Аянджик", "Аянджик"]
+few = "Аянджик"
 src = "indeclinable"
 
 [name."Zonguldak"]
 g = "m"
 anim = true
-sg = ["Zonguldak", "Zonguldak", "Zonguldak", "Zonguldak", "Zonguldak", "Zonguldak"]
-pl = ["Zonguldak", "Zonguldak", "Zonguldak", "Zonguldak", "Zonguldak", "Zonguldak"]
-few = "Zonguldak"
+sg = ["Зонгулдак", "Зонгулдак", "Зонгулдак", "Зонгулдак", "Зонгулдак", "Зонгулдак"]
+pl = ["Зонгулдак", "Зонгулдак", "Зонгулдак", "Зонгулдак", "Зонгулдак", "Зонгулдак"]
+few = "Зонгулдак"
 src = "indeclinable"
 
 [name."Balya"]
 g = "m"
 anim = true
-sg = ["Balya", "Balya", "Balya", "Balya", "Balya", "Balya"]
-pl = ["Balya", "Balya", "Balya", "Balya", "Balya", "Balya"]
-few = "Balya"
+sg = ["Балья", "Балья", "Балья", "Балья", "Балья", "Балья"]
+pl = ["Балья", "Балья", "Балья", "Балья", "Балья", "Балья"]
+few = "Балья"
 src = "indeclinable"
 
 [name."Tefenni"]
 g = "m"
 anim = true
-sg = ["Tefenni", "Tefenni", "Tefenni", "Tefenni", "Tefenni", "Tefenni"]
-pl = ["Tefenni", "Tefenni", "Tefenni", "Tefenni", "Tefenni", "Tefenni"]
-few = "Tefenni"
+sg = ["Тефенни", "Тефенни", "Тефенни", "Тефенни", "Тефенни", "Тефенни"]
+pl = ["Тефенни", "Тефенни", "Тефенни", "Тефенни", "Тефенни", "Тефенни"]
+few = "Тефенни"
 src = "indeclinable"
 
 [name."Artvin"]
 g = "m"
 anim = true
-sg = ["Artvin", "Artvin", "Artvin", "Artvin", "Artvin", "Artvin"]
-pl = ["Artvin", "Artvin", "Artvin", "Artvin", "Artvin", "Artvin"]
-few = "Artvin"
+sg = ["Артвин", "Артвин", "Артвин", "Артвин", "Артвин", "Артвин"]
+pl = ["Артвин", "Артвин", "Артвин", "Артвин", "Артвин", "Артвин"]
+few = "Артвин"
 src = "indeclinable"
 
 [name."Kars"]
 g = "m"
 anim = true
-sg = ["Kars", "Kars", "Kars", "Kars", "Kars", "Kars"]
-pl = ["Kars", "Kars", "Kars", "Kars", "Kars", "Kars"]
-few = "Kars"
+sg = ["Карс", "Карс", "Карс", "Карс", "Карс", "Карс"]
+pl = ["Карс", "Карс", "Карс", "Карс", "Карс", "Карс"]
+few = "Карс"
 src = "indeclinable"
 
 [name."Makharadze"]
 g = "m"
 anim = true
-sg = ["Makharadze", "Makharadze", "Makharadze", "Makharadze", "Makharadze", "Makharadze"]
-pl = ["Makharadze", "Makharadze", "Makharadze", "Makharadze", "Makharadze", "Makharadze"]
-few = "Makharadze"
+sg = ["Махарадзе", "Махарадзе", "Махарадзе", "Махарадзе", "Махарадзе", "Махарадзе"]
+pl = ["Махарадзе", "Махарадзе", "Махарадзе", "Махарадзе", "Махарадзе", "Махарадзе"]
+few = "Махарадзе"
 src = "indeclinable"
 
 [name."Malazgirt"]
 g = "m"
 anim = true
-sg = ["Malazgirt", "Malazgirt", "Malazgirt", "Malazgirt", "Malazgirt", "Malazgirt"]
-pl = ["Malazgirt", "Malazgirt", "Malazgirt", "Malazgirt", "Malazgirt", "Malazgirt"]
-few = "Malazgirt"
+sg = ["Малазгирт", "Малазгирт", "Малазгирт", "Малазгирт", "Малазгирт", "Малазгирт"]
+pl = ["Малазгирт", "Малазгирт", "Малазгирт", "Малазгирт", "Малазгирт", "Малазгирт"]
+few = "Малазгирт"
 src = "indeclinable"
 
 [name."Midyat"]
 g = "m"
 anim = true
-sg = ["Midyat", "Midyat", "Midyat", "Midyat", "Midyat", "Midyat"]
-pl = ["Midyat", "Midyat", "Midyat", "Midyat", "Midyat", "Midyat"]
-few = "Midyat"
+sg = ["Мидьят", "Мидьят", "Мидьят", "Мидьят", "Мидьят", "Мидьят"]
+pl = ["Мидьят", "Мидьят", "Мидьят", "Мидьят", "Мидьят", "Мидьят"]
+few = "Мидьят"
 src = "indeclinable"
 
 [name."Birecik"]
 g = "m"
 anim = true
-sg = ["Birecik", "Birecik", "Birecik", "Birecik", "Birecik", "Birecik"]
-pl = ["Birecik", "Birecik", "Birecik", "Birecik", "Birecik", "Birecik"]
-few = "Birecik"
+sg = ["Биреджик", "Биреджик", "Биреджик", "Биреджик", "Биреджик", "Биреджик"]
+pl = ["Биреджик", "Биреджик", "Биреджик", "Биреджик", "Биреджик", "Биреджик"]
+few = "Биреджик"
 src = "indeclinable"
 
 [name."Kirikkale"]
 g = "m"
 anim = true
-sg = ["Kirikkale", "Kirikkale", "Kirikkale", "Kirikkale", "Kirikkale", "Kirikkale"]
-pl = ["Kirikkale", "Kirikkale", "Kirikkale", "Kirikkale", "Kirikkale", "Kirikkale"]
-few = "Kirikkale"
+sg = ["Кырыккале", "Кырыккале", "Кырыккале", "Кырыккале", "Кырыккале", "Кырыккале"]
+pl = ["Кырыккале", "Кырыккале", "Кырыккале", "Кырыккале", "Кырыккале", "Кырыккале"]
+few = "Кырыккале"
 src = "indeclinable"
 
 [name."Alaca"]
 g = "m"
 anim = true
-sg = ["Alaca", "Alaca", "Alaca", "Alaca", "Alaca", "Alaca"]
-pl = ["Alaca", "Alaca", "Alaca", "Alaca", "Alaca", "Alaca"]
-few = "Alaca"
+sg = ["Аладжа", "Аладжа", "Аладжа", "Аладжа", "Аладжа", "Аладжа"]
+pl = ["Аладжа", "Аладжа", "Аладжа", "Аладжа", "Аладжа", "Аладжа"]
+few = "Аладжа"
 src = "indeclinable"
 
 [name."Polatli"]
 g = "m"
 anim = true
-sg = ["Polatli", "Polatli", "Polatli", "Polatli", "Polatli", "Polatli"]
-pl = ["Polatli", "Polatli", "Polatli", "Polatli", "Polatli", "Polatli"]
-few = "Polatli"
+sg = ["Полатлы", "Полатлы", "Полатлы", "Полатлы", "Полатлы", "Полатлы"]
+pl = ["Полатлы", "Полатлы", "Полатлы", "Полатлы", "Полатлы", "Полатлы"]
+few = "Полатлы"
 src = "indeclinable"
 
 [name."Nallihan"]
 g = "m"
 anim = true
-sg = ["Nallihan", "Nallihan", "Nallihan", "Nallihan", "Nallihan", "Nallihan"]
-pl = ["Nallihan", "Nallihan", "Nallihan", "Nallihan", "Nallihan", "Nallihan"]
-few = "Nallihan"
+sg = ["Наллыхан", "Наллыхан", "Наллыхан", "Наллыхан", "Наллыхан", "Наллыхан"]
+pl = ["Наллыхан", "Наллыхан", "Наллыхан", "Наллыхан", "Наллыхан", "Наллыхан"]
+few = "Наллыхан"
 src = "indeclinable"
 
 [name."Yr Wyddgrug"]
 g = "m"
 anim = true
-sg = ["Yr Wyddgrug", "Yr Wyddgrug", "Yr Wyddgrug", "Yr Wyddgrug", "Yr Wyddgrug", "Yr Wyddgrug"]
-pl = ["Yr Wyddgrug", "Yr Wyddgrug", "Yr Wyddgrug", "Yr Wyddgrug", "Yr Wyddgrug", "Yr Wyddgrug"]
-few = "Yr Wyddgrug"
+sg = ["Ир-Уиддгриг", "Ир-Уиддгриг", "Ир-Уиддгриг", "Ир-Уиддгриг", "Ир-Уиддгриг", "Ир-Уиддгриг"]
+pl = ["Ир-Уиддгриг", "Ир-Уиддгриг", "Ир-Уиддгриг", "Ир-Уиддгриг", "Ир-Уиддгриг", "Ир-Уиддгриг"]
+few = "Ир-Уиддгриг"
 src = "indeclinable"
 
 [name."Trallwng"]
 g = "m"
 anim = true
-sg = ["Trallwng", "Trallwng", "Trallwng", "Trallwng", "Trallwng", "Trallwng"]
-pl = ["Trallwng", "Trallwng", "Trallwng", "Trallwng", "Trallwng", "Trallwng"]
-few = "Trallwng"
+sg = ["Траллунг", "Траллунг", "Траллунг", "Траллунг", "Траллунг", "Траллунг"]
+pl = ["Траллунг", "Траллунг", "Траллунг", "Траллунг", "Траллунг", "Траллунг"]
+few = "Траллунг"
 src = "indeclinable"
 
 [name."Mallwyd"]
 g = "m"
 anim = true
-sg = ["Mallwyd", "Mallwyd", "Mallwyd", "Mallwyd", "Mallwyd", "Mallwyd"]
-pl = ["Mallwyd", "Mallwyd", "Mallwyd", "Mallwyd", "Mallwyd", "Mallwyd"]
-few = "Mallwyd"
+sg = ["Маллуид", "Маллуид", "Маллуид", "Маллуид", "Маллуид", "Маллуид"]
+pl = ["Маллуид", "Маллуид", "Маллуид", "Маллуид", "Маллуид", "Маллуид"]
+few = "Маллуид"
 src = "indeclinable"
 
 [name."Pontarfynach"]
 g = "m"
 anim = true
-sg = ["Pontarfynach", "Pontarfynach", "Pontarfynach", "Pontarfynach", "Pontarfynach", "Pontarfynach"]
-pl = ["Pontarfynach", "Pontarfynach", "Pontarfynach", "Pontarfynach", "Pontarfynach", "Pontarfynach"]
-few = "Pontarfynach"
+sg = ["Понтарвынах", "Понтарвынах", "Понтарвынах", "Понтарвынах", "Понтарвынах", "Понтарвынах"]
+pl = ["Понтарвынах", "Понтарвынах", "Понтарвынах", "Понтарвынах", "Понтарвынах", "Понтарвынах"]
+few = "Понтарвынах"
 src = "indeclinable"
 
 [name."Rhaeader"]
 g = "m"
 anim = true
-sg = ["Rhaeader", "Rhaeader", "Rhaeader", "Rhaeader", "Rhaeader", "Rhaeader"]
-pl = ["Rhaeader", "Rhaeader", "Rhaeader", "Rhaeader", "Rhaeader", "Rhaeader"]
-few = "Rhaeader"
+sg = ["Райадр", "Райадр", "Райадр", "Райадр", "Райадр", "Райадр"]
+pl = ["Райадр", "Райадр", "Райадр", "Райадр", "Райадр", "Райадр"]
+few = "Райадр"
 src = "indeclinable"
 
 [name."Llandrindod"]
 g = "m"
 anim = true
-sg = ["Llandrindod", "Llandrindod", "Llandrindod", "Llandrindod", "Llandrindod", "Llandrindod"]
-pl = ["Llandrindod", "Llandrindod", "Llandrindod", "Llandrindod", "Llandrindod", "Llandrindod"]
-few = "Llandrindod"
+sg = ["Лландриндод", "Лландриндод", "Лландриндод", "Лландриндод", "Лландриндод", "Лландриндод"]
+pl = ["Лландриндод", "Лландриндод", "Лландриндод", "Лландриндод", "Лландриндод", "Лландриндод"]
+few = "Лландриндод"
 src = "indeclinable"
 
 [name."Llanfair-ym-muallt"]
 g = "m"
 anim = true
-sg = ["Llanfair-ym-muallt", "Llanfair-ym-muallt", "Llanfair-ym-muallt", "Llanfair-ym-muallt", "Llanfair-ym-muallt", "Llanfair-ym-muallt"]
-pl = ["Llanfair-ym-muallt", "Llanfair-ym-muallt", "Llanfair-ym-muallt", "Llanfair-ym-muallt", "Llanfair-ym-muallt", "Llanfair-ym-muallt"]
-few = "Llanfair-ym-muallt"
+sg = ["Лланвайр-им-Муаллт", "Лланвайр-им-Муаллт", "Лланвайр-им-Муаллт", "Лланвайр-им-Муаллт", "Лланвайр-им-Муаллт", "Лланвайр-им-Муаллт"]
+pl = ["Лланвайр-им-Муаллт", "Лланвайр-им-Муаллт", "Лланвайр-им-Муаллт", "Лланвайр-им-Муаллт", "Лланвайр-им-Муаллт", "Лланвайр-им-Муаллт"]
+few = "Лланвайр-им-Муаллт"
 src = "indeclinable"
 
 [name."Y-Fenni"]
 g = "m"
 anim = true
-sg = ["Y-Fenni", "Y-Fenni", "Y-Fenni", "Y-Fenni", "Y-Fenni", "Y-Fenni"]
-pl = ["Y-Fenni", "Y-Fenni", "Y-Fenni", "Y-Fenni", "Y-Fenni", "Y-Fenni"]
-few = "Y-Fenni"
+sg = ["И-Венни", "И-Венни", "И-Венни", "И-Венни", "И-Венни", "И-Венни"]
+pl = ["И-Венни", "И-Венни", "И-Венни", "И-Венни", "И-Венни", "И-Венни"]
+few = "И-Венни"
 src = "indeclinable"
 
 [name."Maesteg"]
 g = "m"
 anim = true
-sg = ["Maesteg", "Maesteg", "Maesteg", "Maesteg", "Maesteg", "Maesteg"]
-pl = ["Maesteg", "Maesteg", "Maesteg", "Maesteg", "Maesteg", "Maesteg"]
-few = "Maesteg"
+sg = ["Майстег", "Майстег", "Майстег", "Майстег", "Майстег", "Майстег"]
+pl = ["Майстег", "Майстег", "Майстег", "Майстег", "Майстег", "Майстег"]
+few = "Майстег"
 src = "indeclinable"
 
 [name."Rhydaman"]
 g = "m"
 anim = true
-sg = ["Rhydaman", "Rhydaman", "Rhydaman", "Rhydaman", "Rhydaman", "Rhydaman"]
-pl = ["Rhydaman", "Rhydaman", "Rhydaman", "Rhydaman", "Rhydaman", "Rhydaman"]
-few = "Rhydaman"
+sg = ["Ридаман", "Ридаман", "Ридаман", "Ридаман", "Ридаман", "Ридаман"]
+pl = ["Ридаман", "Ридаман", "Ридаман", "Ридаман", "Ридаман", "Ридаман"]
+few = "Ридаман"
 src = "indeclinable"
 
 [name."Beddgelert"]
 g = "m"
 anim = true
-sg = ["Beddgelert", "Beddgelert", "Beddgelert", "Beddgelert", "Beddgelert", "Beddgelert"]
-pl = ["Beddgelert", "Beddgelert", "Beddgelert", "Beddgelert", "Beddgelert", "Beddgelert"]
-few = "Beddgelert"
+sg = ["Беддгелерт", "Беддгелерт", "Беддгелерт", "Беддгелерт", "Беддгелерт", "Беддгелерт"]
+pl = ["Беддгелерт", "Беддгелерт", "Беддгелерт", "Беддгелерт", "Беддгелерт", "Беддгелерт"]
+few = "Беддгелерт"
 src = "indeclinable"
 
 [name."Curig"]
 g = "m"
 anim = true
-sg = ["Curig", "Curig", "Curig", "Curig", "Curig", "Curig"]
-pl = ["Curig", "Curig", "Curig", "Curig", "Curig", "Curig"]
-few = "Curig"
+sg = ["Кириг", "Кириг", "Кириг", "Кириг", "Кириг", "Кириг"]
+pl = ["Кириг", "Кириг", "Кириг", "Кириг", "Кириг", "Кириг"]
+few = "Кириг"
 src = "indeclinable"
 
 [name."Llanrwst"]
 g = "m"
 anim = true
-sg = ["Llanrwst", "Llanrwst", "Llanrwst", "Llanrwst", "Llanrwst", "Llanrwst"]
-pl = ["Llanrwst", "Llanrwst", "Llanrwst", "Llanrwst", "Llanrwst", "Llanrwst"]
-few = "Llanrwst"
+sg = ["Лланруст", "Лланруст", "Лланруст", "Лланруст", "Лланруст", "Лланруст"]
+pl = ["Лланруст", "Лланруст", "Лланруст", "Лланруст", "Лланруст", "Лланруст"]
+few = "Лланруст"
 src = "indeclinable"
 
 [name."Llanerchymedd"]
 g = "m"
 anim = true
-sg = ["Llanerchymedd", "Llanerchymedd", "Llanerchymedd", "Llanerchymedd", "Llanerchymedd", "Llanerchymedd"]
-pl = ["Llanerchymedd", "Llanerchymedd", "Llanerchymedd", "Llanerchymedd", "Llanerchymedd", "Llanerchymedd"]
-few = "Llanerchymedd"
+sg = ["Лланерхимедд", "Лланерхимедд", "Лланерхимедд", "Лланерхимедд", "Лланерхимедд", "Лланерхимедд"]
+pl = ["Лланерхимедд", "Лланерхимедд", "Лланерхимедд", "Лланерхимедд", "Лланерхимедд", "Лланерхимедд"]
+few = "Лланерхимедд"
 src = "indeclinable"
 
 [name."Caergybi"]
 g = "m"
 anim = true
-sg = ["Caergybi", "Caergybi", "Caergybi", "Caergybi", "Caergybi", "Caergybi"]
-pl = ["Caergybi", "Caergybi", "Caergybi", "Caergybi", "Caergybi", "Caergybi"]
-few = "Caergybi"
+sg = ["Кайргиби", "Кайргиби", "Кайргиби", "Кайргиби", "Кайргиби", "Кайргиби"]
+pl = ["Кайргиби", "Кайргиби", "Кайргиби", "Кайргиби", "Кайргиби", "Кайргиби"]
+few = "Кайргиби"
 src = "indeclinable"
 
 [name."Nairn"]
 g = "m"
 anim = true
-sg = ["Nairn", "Nairn", "Nairn", "Nairn", "Nairn", "Nairn"]
-pl = ["Nairn", "Nairn", "Nairn", "Nairn", "Nairn", "Nairn"]
-few = "Nairn"
+sg = ["Нэрн", "Нэрн", "Нэрн", "Нэрн", "Нэрн", "Нэрн"]
+pl = ["Нэрн", "Нэрн", "Нэрн", "Нэрн", "Нэрн", "Нэрн"]
+few = "Нэрн"
 src = "indeclinable"
 
 [name."Turriff"]
 g = "m"
 anim = true
-sg = ["Turriff", "Turriff", "Turriff", "Turriff", "Turriff", "Turriff"]
-pl = ["Turriff", "Turriff", "Turriff", "Turriff", "Turriff", "Turriff"]
-few = "Turriff"
+sg = ["Тарриф", "Тарриф", "Тарриф", "Тарриф", "Тарриф", "Тарриф"]
+pl = ["Тарриф", "Тарриф", "Тарриф", "Тарриф", "Тарриф", "Тарриф"]
+few = "Тарриф"
 src = "indeclinable"
 
 [name."Inverurie"]
 g = "m"
 anim = true
-sg = ["Inverurie", "Inverurie", "Inverurie", "Inverurie", "Inverurie", "Inverurie"]
-pl = ["Inverurie", "Inverurie", "Inverurie", "Inverurie", "Inverurie", "Inverurie"]
-few = "Inverurie"
+sg = ["Инверури", "Инверури", "Инверури", "Инверури", "Инверури", "Инверури"]
+pl = ["Инверури", "Инверури", "Инверури", "Инверури", "Инверури", "Инверури"]
+few = "Инверури"
 src = "indeclinable"
 
 [name."Braemar"]
 g = "m"
 anim = true
-sg = ["Braemar", "Braemar", "Braemar", "Braemar", "Braemar", "Braemar"]
-pl = ["Braemar", "Braemar", "Braemar", "Braemar", "Braemar", "Braemar"]
-few = "Braemar"
+sg = ["Бремар", "Бремар", "Бремар", "Бремар", "Бремар", "Бремар"]
+pl = ["Бремар", "Бремар", "Бремар", "Бремар", "Бремар", "Бремар"]
+few = "Бремар"
 src = "indeclinable"
 
 [name."Lochnagar"]
 g = "m"
 anim = true
-sg = ["Lochnagar", "Lochnagar", "Lochnagar", "Lochnagar", "Lochnagar", "Lochnagar"]
-pl = ["Lochnagar", "Lochnagar", "Lochnagar", "Lochnagar", "Lochnagar", "Lochnagar"]
-few = "Lochnagar"
+sg = ["Лохнагар", "Лохнагар", "Лохнагар", "Лохнагар", "Лохнагар", "Лохнагар"]
+pl = ["Лохнагар", "Лохнагар", "Лохнагар", "Лохнагар", "Лохнагар", "Лохнагар"]
+few = "Лохнагар"
 src = "indeclinable"
 
 [name."Kerloch"]
 g = "m"
 anim = true
-sg = ["Kerloch", "Kerloch", "Kerloch", "Kerloch", "Kerloch", "Kerloch"]
-pl = ["Kerloch", "Kerloch", "Kerloch", "Kerloch", "Kerloch", "Kerloch"]
-few = "Kerloch"
+sg = ["Керлох", "Керлох", "Керлох", "Керлох", "Керлох", "Керлох"]
+pl = ["Керлох", "Керлох", "Керлох", "Керлох", "Керлох", "Керлох"]
+few = "Керлох"
 src = "indeclinable"
 
 [name."Beinn a Ghlo"]
 g = "m"
 anim = true
-sg = ["Beinn a Ghlo", "Beinn a Ghlo", "Beinn a Ghlo", "Beinn a Ghlo", "Beinn a Ghlo", "Beinn a Ghlo"]
-pl = ["Beinn a Ghlo", "Beinn a Ghlo", "Beinn a Ghlo", "Beinn a Ghlo", "Beinn a Ghlo", "Beinn a Ghlo"]
-few = "Beinn a Ghlo"
+sg = ["Бейн-а-Гло", "Бейн-а-Гло", "Бейн-а-Гло", "Бейн-а-Гло", "Бейн-а-Гло", "Бейн-а-Гло"]
+pl = ["Бейн-а-Гло", "Бейн-а-Гло", "Бейн-а-Гло", "Бейн-а-Гло", "Бейн-а-Гло", "Бейн-а-Гло"]
+few = "Бейн-а-Гло"
 src = "indeclinable"
 
 [name."Drumnadrochit"]
 g = "m"
 anim = true
-sg = ["Drumnadrochit", "Drumnadrochit", "Drumnadrochit", "Drumnadrochit", "Drumnadrochit", "Drumnadrochit"]
-pl = ["Drumnadrochit", "Drumnadrochit", "Drumnadrochit", "Drumnadrochit", "Drumnadrochit", "Drumnadrochit"]
-few = "Drumnadrochit"
+sg = ["Драмнадрохит", "Драмнадрохит", "Драмнадрохит", "Драмнадрохит", "Драмнадрохит", "Драмнадрохит"]
+pl = ["Драмнадрохит", "Драмнадрохит", "Драмнадрохит", "Драмнадрохит", "Драмнадрохит", "Драмнадрохит"]
+few = "Драмнадрохит"
 src = "indeclinable"
 
 [name."Morven"]
 g = "m"
 anim = true
-sg = ["Morven", "Morven", "Morven", "Morven", "Morven", "Morven"]
-pl = ["Morven", "Morven", "Morven", "Morven", "Morven", "Morven"]
-few = "Morven"
+sg = ["Морвен", "Морвен", "Морвен", "Морвен", "Морвен", "Морвен"]
+pl = ["Морвен", "Морвен", "Морвен", "Морвен", "Морвен", "Морвен"]
+few = "Морвен"
 src = "indeclinable"
 
 [name."Uist"]
 g = "m"
 anim = true
-sg = ["Uist", "Uist", "Uist", "Uist", "Uist", "Uist"]
-pl = ["Uist", "Uist", "Uist", "Uist", "Uist", "Uist"]
-few = "Uist"
+sg = ["Уист", "Уист", "Уист", "Уист", "Уист", "Уист"]
+pl = ["Уист", "Уист", "Уист", "Уист", "Уист", "Уист"]
+few = "Уист"
 src = "indeclinable"
 
 [name."Storr"]
 g = "m"
 anim = true
-sg = ["Storr", "Storr", "Storr", "Storr", "Storr", "Storr"]
-pl = ["Storr", "Storr", "Storr", "Storr", "Storr", "Storr"]
-few = "Storr"
+sg = ["Сторр", "Сторр", "Сторр", "Сторр", "Сторр", "Сторр"]
+pl = ["Сторр", "Сторр", "Сторр", "Сторр", "Сторр", "Сторр"]
+few = "Сторр"
 src = "indeclinable"
 
 [name."Sgurr na Ciche"]
 g = "m"
 anim = true
-sg = ["Sgurr na Ciche", "Sgurr na Ciche", "Sgurr na Ciche", "Sgurr na Ciche", "Sgurr na Ciche", "Sgurr na Ciche"]
-pl = ["Sgurr na Ciche", "Sgurr na Ciche", "Sgurr na Ciche", "Sgurr na Ciche", "Sgurr na Ciche", "Sgurr na Ciche"]
-few = "Sgurr na Ciche"
+sg = ["Скур-на-Кихе", "Скур-на-Кихе", "Скур-на-Кихе", "Скур-на-Кихе", "Скур-на-Кихе", "Скур-на-Кихе"]
+pl = ["Скур-на-Кихе", "Скур-на-Кихе", "Скур-на-Кихе", "Скур-на-Кихе", "Скур-на-Кихе", "Скур-на-Кихе"]
+few = "Скур-на-Кихе"
 src = "indeclinable"
 
 [name."Cannich"]
 g = "m"
 anim = true
-sg = ["Cannich", "Cannich", "Cannich", "Cannich", "Cannich", "Cannich"]
-pl = ["Cannich", "Cannich", "Cannich", "Cannich", "Cannich", "Cannich"]
-few = "Cannich"
+sg = ["Канних", "Канних", "Канних", "Канних", "Канних", "Канних"]
+pl = ["Канних", "Канних", "Канних", "Канних", "Канних", "Канних"]
+few = "Канних"
 src = "indeclinable"
 
 [name."Gairloch"]
 g = "m"
 anim = true
-sg = ["Gairloch", "Gairloch", "Gairloch", "Gairloch", "Gairloch", "Gairloch"]
-pl = ["Gairloch", "Gairloch", "Gairloch", "Gairloch", "Gairloch", "Gairloch"]
-few = "Gairloch"
+sg = ["Гэрлох", "Гэрлох", "Гэрлох", "Гэрлох", "Гэрлох", "Гэрлох"]
+pl = ["Гэрлох", "Гэрлох", "Гэрлох", "Гэрлох", "Гэрлох", "Гэрлох"]
+few = "Гэрлох"
 src = "indeclinable"
 
 [name."Kyleakin"]
 g = "m"
 anim = true
-sg = ["Kyleakin", "Kyleakin", "Kyleakin", "Kyleakin", "Kyleakin", "Kyleakin"]
-pl = ["Kyleakin", "Kyleakin", "Kyleakin", "Kyleakin", "Kyleakin", "Kyleakin"]
-few = "Kyleakin"
+sg = ["Кайлакин", "Кайлакин", "Кайлакин", "Кайлакин", "Кайлакин", "Кайлакин"]
+pl = ["Кайлакин", "Кайлакин", "Кайлакин", "Кайлакин", "Кайлакин", "Кайлакин"]
+few = "Кайлакин"
 src = "indeclinable"
 
 [name."Dunvegan"]
 g = "m"
 anim = true
-sg = ["Dunvegan", "Dunvegan", "Dunvegan", "Dunvegan", "Dunvegan", "Dunvegan"]
-pl = ["Dunvegan", "Dunvegan", "Dunvegan", "Dunvegan", "Dunvegan", "Dunvegan"]
-few = "Dunvegan"
+sg = ["Данвеган", "Данвеган", "Данвеган", "Данвеган", "Данвеган", "Данвеган"]
+pl = ["Данвеган", "Данвеган", "Данвеган", "Данвеган", "Данвеган", "Данвеган"]
+few = "Данвеган"
 src = "indeclinable"
 
 [name."Feyfer"]
 g = "m"
 anim = true
-sg = ["Feyfer", "Feyfer", "Feyfer", "Feyfer", "Feyfer", "Feyfer"]
-pl = ["Feyfer", "Feyfer", "Feyfer", "Feyfer", "Feyfer", "Feyfer"]
-few = "Feyfer"
+sg = ["Фейфер", "Фейфер", "Фейфер", "Фейфер", "Фейфер", "Фейфер"]
+pl = ["Фейфер", "Фейфер", "Фейфер", "Фейфер", "Фейфер", "Фейфер"]
+few = "Фейфер"
 src = "indeclinable"
 
 [name."Flugi"]
 g = "m"
 anim = true
-sg = ["Flugi", "Flugi", "Flugi", "Flugi", "Flugi", "Flugi"]
-pl = ["Flugi", "Flugi", "Flugi", "Flugi", "Flugi", "Flugi"]
-few = "Flugi"
+sg = ["Флюги", "Флюги", "Флюги", "Флюги", "Флюги", "Флюги"]
+pl = ["Флюги", "Флюги", "Флюги", "Флюги", "Флюги", "Флюги"]
+few = "Флюги"
 src = "indeclinable"
 
 [name."Gheel"]
 g = "m"
 anim = true
-sg = ["Gheel", "Gheel", "Gheel", "Gheel", "Gheel", "Gheel"]
-pl = ["Gheel", "Gheel", "Gheel", "Gheel", "Gheel", "Gheel"]
-few = "Gheel"
+sg = ["Гел", "Гел", "Гел", "Гел", "Гел", "Гел"]
+pl = ["Гел", "Гел", "Гел", "Гел", "Гел", "Гел"]
+few = "Гел"
 src = "indeclinable"
 
 [name."Havic"]
 g = "m"
 anim = true
-sg = ["Havic", "Havic", "Havic", "Havic", "Havic", "Havic"]
-pl = ["Havic", "Havic", "Havic", "Havic", "Havic", "Havic"]
-few = "Havic"
+sg = ["Хавик", "Хавик", "Хавик", "Хавик", "Хавик", "Хавик"]
+pl = ["Хавик", "Хавик", "Хавик", "Хавик", "Хавик", "Хавик"]
+few = "Хавик"
 src = "indeclinable"
 
 [name."Haynin"]
 g = "m"
 anim = true
-sg = ["Haynin", "Haynin", "Haynin", "Haynin", "Haynin", "Haynin"]
-pl = ["Haynin", "Haynin", "Haynin", "Haynin", "Haynin", "Haynin"]
-few = "Haynin"
+sg = ["Хайнин", "Хайнин", "Хайнин", "Хайнин", "Хайнин", "Хайнин"]
+pl = ["Хайнин", "Хайнин", "Хайнин", "Хайнин", "Хайнин", "Хайнин"]
+few = "Хайнин"
 src = "indeclinable"
 
 [name."Hoboken"]
 g = "m"
 anim = true
-sg = ["Hoboken", "Hoboken", "Hoboken", "Hoboken", "Hoboken", "Hoboken"]
-pl = ["Hoboken", "Hoboken", "Hoboken", "Hoboken", "Hoboken", "Hoboken"]
-few = "Hoboken"
+sg = ["Хобокен", "Хобокен", "Хобокен", "Хобокен", "Хобокен", "Хобокен"]
+pl = ["Хобокен", "Хобокен", "Хобокен", "Хобокен", "Хобокен", "Хобокен"]
+few = "Хобокен"
 src = "indeclinable"
 
 [name."Imbyze"]
 g = "m"
 anim = true
-sg = ["Imbyze", "Imbyze", "Imbyze", "Imbyze", "Imbyze", "Imbyze"]
-pl = ["Imbyze", "Imbyze", "Imbyze", "Imbyze", "Imbyze", "Imbyze"]
-few = "Imbyze"
+sg = ["Имбейзе", "Имбейзе", "Имбейзе", "Имбейзе", "Имбейзе", "Имбейзе"]
+pl = ["Имбейзе", "Имбейзе", "Имбейзе", "Имбейзе", "Имбейзе", "Имбейзе"]
+few = "Имбейзе"
 src = "indeclinable"
 
 [name."Juyn"]
 g = "m"
 anim = true
-sg = ["Juyn", "Juyn", "Juyn", "Juyn", "Juyn", "Juyn"]
-pl = ["Juyn", "Juyn", "Juyn", "Juyn", "Juyn", "Juyn"]
-few = "Juyn"
+sg = ["Юйн", "Юйн", "Юйн", "Юйн", "Юйн", "Юйн"]
+pl = ["Юйн", "Юйн", "Юйн", "Юйн", "Юйн", "Юйн"]
+few = "Юйн"
 src = "indeclinable"
 
 [name."Kinsky"]
 g = "m"
 anim = true
-sg = ["Kinsky", "Kinsky", "Kinsky", "Kinsky", "Kinsky", "Kinsky"]
-pl = ["Kinsky", "Kinsky", "Kinsky", "Kinsky", "Kinsky", "Kinsky"]
-few = "Kinsky"
+sg = ["Кински", "Кински", "Кински", "Кински", "Кински", "Кински"]
+pl = ["Кински", "Кински", "Кински", "Кински", "Кински", "Кински"]
+few = "Кински"
 src = "indeclinable"
 
 [name."Massis"]
 g = "m"
 anim = true
-sg = ["Massis", "Massis", "Massis", "Massis", "Massis", "Massis"]
-pl = ["Massis", "Massis", "Massis", "Massis", "Massis", "Massis"]
-few = "Massis"
+sg = ["Массис", "Массис", "Массис", "Массис", "Массис", "Массис"]
+pl = ["Массис", "Массис", "Массис", "Массис", "Массис", "Массис"]
+few = "Массис"
 src = "indeclinable"
 
 [name."Matray"]
 g = "m"
 anim = true
-sg = ["Matray", "Matray", "Matray", "Matray", "Matray", "Matray"]
-pl = ["Matray", "Matray", "Matray", "Matray", "Matray", "Matray"]
-few = "Matray"
+sg = ["Матрей", "Матрей", "Матрей", "Матрей", "Матрей", "Матрей"]
+pl = ["Матрей", "Матрей", "Матрей", "Матрей", "Матрей", "Матрей"]
+few = "Матрей"
 src = "indeclinable"
 
 [name."Moy"]
 g = "m"
 anim = true
-sg = ["Moy", "Moy", "Moy", "Moy", "Moy", "Moy"]
-pl = ["Moy", "Moy", "Moy", "Moy", "Moy", "Moy"]
-few = "Moy"
+sg = ["Мой", "Мой", "Мой", "Мой", "Мой", "Мой"]
+pl = ["Мой", "Мой", "Мой", "Мой", "Мой", "Мой"]
+few = "Мой"
 src = "indeclinable"
 
 [name."Olycan"]
 g = "m"
 anim = true
-sg = ["Olycan", "Olycan", "Olycan", "Olycan", "Olycan", "Olycan"]
-pl = ["Olycan", "Olycan", "Olycan", "Olycan", "Olycan", "Olycan"]
-few = "Olycan"
+sg = ["Оликан", "Оликан", "Оликан", "Оликан", "Оликан", "Оликан"]
+pl = ["Оликан", "Оликан", "Оликан", "Оликан", "Оликан", "Оликан"]
+few = "Оликан"
 src = "indeclinable"
 
 [name."Sadelin"]
 g = "m"
 anim = true
-sg = ["Sadelin", "Sadelin", "Sadelin", "Sadelin", "Sadelin", "Sadelin"]
-pl = ["Sadelin", "Sadelin", "Sadelin", "Sadelin", "Sadelin", "Sadelin"]
-few = "Sadelin"
+sg = ["Саделин", "Саделин", "Саделин", "Саделин", "Саделин", "Саделин"]
+pl = ["Саделин", "Саделин", "Саделин", "Саделин", "Саделин", "Саделин"]
+few = "Саделин"
 src = "indeclinable"
 
 [name."Svaving"]
 g = "m"
 anim = true
-sg = ["Svaving", "Svaving", "Svaving", "Svaving", "Svaving", "Svaving"]
-pl = ["Svaving", "Svaving", "Svaving", "Svaving", "Svaving", "Svaving"]
-few = "Svaving"
+sg = ["Свавинг", "Свавинг", "Свавинг", "Свавинг", "Свавинг", "Свавинг"]
+pl = ["Свавинг", "Свавинг", "Свавинг", "Свавинг", "Свавинг", "Свавинг"]
+few = "Свавинг"
 src = "indeclinable"
 
 [name."Tapper"]
 g = "m"
 anim = true
-sg = ["Tapper", "Tapper", "Tapper", "Tapper", "Tapper", "Tapper"]
-pl = ["Tapper", "Tapper", "Tapper", "Tapper", "Tapper", "Tapper"]
-few = "Tapper"
+sg = ["Таппер", "Таппер", "Таппер", "Таппер", "Таппер", "Таппер"]
+pl = ["Таппер", "Таппер", "Таппер", "Таппер", "Таппер", "Таппер"]
+few = "Таппер"
 src = "indeclinable"
 
 [name."Terwen"]
 g = "m"
 anim = true
-sg = ["Terwen", "Terwen", "Terwen", "Terwen", "Terwen", "Terwen"]
-pl = ["Terwen", "Terwen", "Terwen", "Terwen", "Terwen", "Terwen"]
-few = "Terwen"
+sg = ["Тервен", "Тервен", "Тервен", "Тервен", "Тервен", "Тервен"]
+pl = ["Тервен", "Тервен", "Тервен", "Тервен", "Тервен", "Тервен"]
+few = "Тервен"
 src = "indeclinable"
 
 [name."Wirix"]
 g = "m"
 anim = true
-sg = ["Wirix", "Wirix", "Wirix", "Wirix", "Wirix", "Wirix"]
-pl = ["Wirix", "Wirix", "Wirix", "Wirix", "Wirix", "Wirix"]
-few = "Wirix"
+sg = ["Вирикс", "Вирикс", "Вирикс", "Вирикс", "Вирикс", "Вирикс"]
+pl = ["Вирикс", "Вирикс", "Вирикс", "Вирикс", "Вирикс", "Вирикс"]
+few = "Вирикс"
 src = "indeclinable"
 
 [name."Ypey"]
 g = "m"
 anim = true
-sg = ["Ypey", "Ypey", "Ypey", "Ypey", "Ypey", "Ypey"]
-pl = ["Ypey", "Ypey", "Ypey", "Ypey", "Ypey", "Ypey"]
-few = "Ypey"
+sg = ["Ипей", "Ипей", "Ипей", "Ипей", "Ипей", "Ипей"]
+pl = ["Ипей", "Ипей", "Ипей", "Ипей", "Ипей", "Ипей"]
+few = "Ипей"
 src = "indeclinable"
 
 [name."Rastegaisa"]
 g = "m"
 anim = true
-sg = ["Rastegaisa", "Rastegaisa", "Rastegaisa", "Rastegaisa", "Rastegaisa", "Rastegaisa"]
-pl = ["Rastegaisa", "Rastegaisa", "Rastegaisa", "Rastegaisa", "Rastegaisa", "Rastegaisa"]
-few = "Rastegaisa"
+sg = ["Растегайса", "Растегайса", "Растегайса", "Растегайса", "Растегайса", "Растегайса"]
+pl = ["Растегайса", "Растегайса", "Растегайса", "Растегайса", "Растегайса", "Растегайса"]
+few = "Растегайса"
 src = "indeclinable"
 
 [name."Varjag Njarga"]
 g = "m"
 anim = true
-sg = ["Varjag Njarga", "Varjag Njarga", "Varjag Njarga", "Varjag Njarga", "Varjag Njarga", "Varjag Njarga"]
-pl = ["Varjag Njarga", "Varjag Njarga", "Varjag Njarga", "Varjag Njarga", "Varjag Njarga", "Varjag Njarga"]
-few = "Varjag Njarga"
+sg = ["Варьяг-Ньярга", "Варьяг-Ньярга", "Варьяг-Ньярга", "Варьяг-Ньярга", "Варьяг-Ньярга", "Варьяг-Ньярга"]
+pl = ["Варьяг-Ньярга", "Варьяг-Ньярга", "Варьяг-Ньярга", "Варьяг-Ньярга", "Варьяг-Ньярга", "Варьяг-Ньярга"]
+few = "Варьяг-Ньярга"
 src = "indeclinable"
 
 [name."Kautekeino"]
 g = "m"
 anim = true
-sg = ["Kautekeino", "Kautekeino", "Kautekeino", "Kautekeino", "Kautekeino", "Kautekeino"]
-pl = ["Kautekeino", "Kautekeino", "Kautekeino", "Kautekeino", "Kautekeino", "Kautekeino"]
-few = "Kautekeino"
+sg = ["Каутекейно", "Каутекейно", "Каутекейно", "Каутекейно", "Каутекейно", "Каутекейно"]
+pl = ["Каутекейно", "Каутекейно", "Каутекейно", "Каутекейно", "Каутекейно", "Каутекейно"]
+few = "Каутекейно"
 src = "indeclinable"
 
 [name."Abisko"]
 g = "m"
 anim = true
-sg = ["Abisko", "Abisko", "Abisko", "Abisko", "Abisko", "Abisko"]
-pl = ["Abisko", "Abisko", "Abisko", "Abisko", "Abisko", "Abisko"]
-few = "Abisko"
+sg = ["Абиску", "Абиску", "Абиску", "Абиску", "Абиску", "Абиску"]
+pl = ["Абиску", "Абиску", "Абиску", "Абиску", "Абиску", "Абиску"]
+few = "Абиску"
 src = "indeclinable"
 
 [name."Enontekis"]
 g = "m"
 anim = true
-sg = ["Enontekis", "Enontekis", "Enontekis", "Enontekis", "Enontekis", "Enontekis"]
-pl = ["Enontekis", "Enontekis", "Enontekis", "Enontekis", "Enontekis", "Enontekis"]
-few = "Enontekis"
+sg = ["Энонтекис", "Энонтекис", "Энонтекис", "Энонтекис", "Энонтекис", "Энонтекис"]
+pl = ["Энонтекис", "Энонтекис", "Энонтекис", "Энонтекис", "Энонтекис", "Энонтекис"]
+few = "Энонтекис"
 src = "indeclinable"
 
 [name."Rovaniemi"]
 g = "m"
 anim = true
-sg = ["Rovaniemi", "Rovaniemi", "Rovaniemi", "Rovaniemi", "Rovaniemi", "Rovaniemi"]
-pl = ["Rovaniemi", "Rovaniemi", "Rovaniemi", "Rovaniemi", "Rovaniemi", "Rovaniemi"]
-few = "Rovaniemi"
+sg = ["Рованиеми", "Рованиеми", "Рованиеми", "Рованиеми", "Рованиеми", "Рованиеми"]
+pl = ["Рованиеми", "Рованиеми", "Рованиеми", "Рованиеми", "Рованиеми", "Рованиеми"]
+few = "Рованиеми"
 src = "indeclinable"
 
 [name."Avasaksa"]
 g = "m"
 anim = true
-sg = ["Avasaksa", "Avasaksa", "Avasaksa", "Avasaksa", "Avasaksa", "Avasaksa"]
-pl = ["Avasaksa", "Avasaksa", "Avasaksa", "Avasaksa", "Avasaksa", "Avasaksa"]
-few = "Avasaksa"
+sg = ["Авасакса", "Авасакса", "Авасакса", "Авасакса", "Авасакса", "Авасакса"]
+pl = ["Авасакса", "Авасакса", "Авасакса", "Авасакса", "Авасакса", "Авасакса"]
+few = "Авасакса"
 src = "indeclinable"
 
 [name."Haparanda"]
 g = "m"
 anim = true
-sg = ["Haparanda", "Haparanda", "Haparanda", "Haparanda", "Haparanda", "Haparanda"]
-pl = ["Haparanda", "Haparanda", "Haparanda", "Haparanda", "Haparanda", "Haparanda"]
-few = "Haparanda"
+sg = ["Хапаранда", "Хапаранда", "Хапаранда", "Хапаранда", "Хапаранда", "Хапаранда"]
+pl = ["Хапаранда", "Хапаранда", "Хапаранда", "Хапаранда", "Хапаранда", "Хапаранда"]
+few = "Хапаранда"
 src = "indeclinable"
 
 [name."Lulea"]
 g = "m"
 anim = true
-sg = ["Lulea", "Lulea", "Lulea", "Lulea", "Lulea", "Lulea"]
-pl = ["Lulea", "Lulea", "Lulea", "Lulea", "Lulea", "Lulea"]
-few = "Lulea"
+sg = ["Лулео", "Лулео", "Лулео", "Лулео", "Лулео", "Лулео"]
+pl = ["Лулео", "Лулео", "Лулео", "Лулео", "Лулео", "Лулео"]
+few = "Лулео"
 src = "indeclinable"
 
 [name."Gellivare"]
 g = "m"
 anim = true
-sg = ["Gellivare", "Gellivare", "Gellivare", "Gellivare", "Gellivare", "Gellivare"]
-pl = ["Gellivare", "Gellivare", "Gellivare", "Gellivare", "Gellivare", "Gellivare"]
-few = "Gellivare"
+sg = ["Елливаре", "Елливаре", "Елливаре", "Елливаре", "Елливаре", "Елливаре"]
+pl = ["Елливаре", "Елливаре", "Елливаре", "Елливаре", "Елливаре", "Елливаре"]
+few = "Елливаре"
 src = "indeclinable"
 
 [name."Oeloe"]
 g = "m"
 anim = true
-sg = ["Oeloe", "Oeloe", "Oeloe", "Oeloe", "Oeloe", "Oeloe"]
-pl = ["Oeloe", "Oeloe", "Oeloe", "Oeloe", "Oeloe", "Oeloe"]
-few = "Oeloe"
+sg = ["Оулу", "Оулу", "Оулу", "Оулу", "Оулу", "Оулу"]
+pl = ["Оулу", "Оулу", "Оулу", "Оулу", "Оулу", "Оулу"]
+few = "Оулу"
 src = "indeclinable"
 
 [name."Kajaani"]
 g = "m"
 anim = true
-sg = ["Kajaani", "Kajaani", "Kajaani", "Kajaani", "Kajaani", "Kajaani"]
-pl = ["Kajaani", "Kajaani", "Kajaani", "Kajaani", "Kajaani", "Kajaani"]
-few = "Kajaani"
+sg = ["Каяни", "Каяни", "Каяни", "Каяни", "Каяни", "Каяни"]
+pl = ["Каяни", "Каяни", "Каяни", "Каяни", "Каяни", "Каяни"]
+few = "Каяни"
 src = "indeclinable"
 
 [name."Fauske"]
 g = "m"
 anim = true
-sg = ["Fauske", "Fauske", "Fauske", "Fauske", "Fauske", "Fauske"]
-pl = ["Fauske", "Fauske", "Fauske", "Fauske", "Fauske", "Fauske"]
-few = "Fauske"
+sg = ["Фауске", "Фауске", "Фауске", "Фауске", "Фауске", "Фауске"]
+pl = ["Фауске", "Фауске", "Фауске", "Фауске", "Фауске", "Фауске"]
+few = "Фауске"
 src = "indeclinable"
 
 [name."Djasinga"]
 g = "m"
 anim = true
-sg = ["Djasinga", "Djasinga", "Djasinga", "Djasinga", "Djasinga", "Djasinga"]
-pl = ["Djasinga", "Djasinga", "Djasinga", "Djasinga", "Djasinga", "Djasinga"]
-few = "Djasinga"
+sg = ["Джасинга", "Джасинга", "Джасинга", "Джасинга", "Джасинга", "Джасинга"]
+pl = ["Джасинга", "Джасинга", "Джасинга", "Джасинга", "Джасинга", "Джасинга"]
+few = "Джасинга"
 src = "indeclinable"
 
 [name."Tjibarusa"]
 g = "m"
 anim = true
-sg = ["Tjibarusa", "Tjibarusa", "Tjibarusa", "Tjibarusa", "Tjibarusa", "Tjibarusa"]
-pl = ["Tjibarusa", "Tjibarusa", "Tjibarusa", "Tjibarusa", "Tjibarusa", "Tjibarusa"]
-few = "Tjibarusa"
+sg = ["Чибаруса", "Чибаруса", "Чибаруса", "Чибаруса", "Чибаруса", "Чибаруса"]
+pl = ["Чибаруса", "Чибаруса", "Чибаруса", "Чибаруса", "Чибаруса", "Чибаруса"]
+few = "Чибаруса"
 src = "indeclinable"
 
 [name."Tjiwidej"]
 g = "m"
 anim = true
-sg = ["Tjiwidej", "Tjiwidej", "Tjiwidej", "Tjiwidej", "Tjiwidej", "Tjiwidej"]
-pl = ["Tjiwidej", "Tjiwidej", "Tjiwidej", "Tjiwidej", "Tjiwidej", "Tjiwidej"]
-few = "Tjiwidej"
+sg = ["Чивидей", "Чивидей", "Чивидей", "Чивидей", "Чивидей", "Чивидей"]
+pl = ["Чивидей", "Чивидей", "Чивидей", "Чивидей", "Чивидей", "Чивидей"]
+few = "Чивидей"
 src = "indeclinable"
 
 [name."Pengalengan"]
 g = "m"
 anim = true
-sg = ["Pengalengan", "Pengalengan", "Pengalengan", "Pengalengan", "Pengalengan", "Pengalengan"]
-pl = ["Pengalengan", "Pengalengan", "Pengalengan", "Pengalengan", "Pengalengan", "Pengalengan"]
-few = "Pengalengan"
+sg = ["Пенгаленган", "Пенгаленган", "Пенгаленган", "Пенгаленган", "Пенгаленган", "Пенгаленган"]
+pl = ["Пенгаленган", "Пенгаленган", "Пенгаленган", "Пенгаленган", "Пенгаленган", "Пенгаленган"]
+few = "Пенгаленган"
 src = "indeclinable"
 
 [name."Bandjar"]
 g = "m"
 anim = true
-sg = ["Bandjar", "Bandjar", "Bandjar", "Bandjar", "Bandjar", "Bandjar"]
-pl = ["Bandjar", "Bandjar", "Bandjar", "Bandjar", "Bandjar", "Bandjar"]
-few = "Bandjar"
+sg = ["Банджар", "Банджар", "Банджар", "Банджар", "Банджар", "Банджар"]
+pl = ["Банджар", "Банджар", "Банджар", "Банджар", "Банджар", "Банджар"]
+few = "Банджар"
 src = "indeclinable"
 
 [name."Parbalingga"]
 g = "m"
 anim = true
-sg = ["Parbalingga", "Parbalingga", "Parbalingga", "Parbalingga", "Parbalingga", "Parbalingga"]
-pl = ["Parbalingga", "Parbalingga", "Parbalingga", "Parbalingga", "Parbalingga", "Parbalingga"]
-few = "Parbalingga"
+sg = ["Парбалингга", "Парбалингга", "Парбалингга", "Парбалингга", "Парбалингга", "Парбалингга"]
+pl = ["Парбалингга", "Парбалингга", "Парбалингга", "Парбалингга", "Парбалингга", "Парбалингга"]
+few = "Парбалингга"
 src = "indeclinable"
 
 [name."Bojolali"]
 g = "m"
 anim = true
-sg = ["Bojolali", "Bojolali", "Bojolali", "Bojolali", "Bojolali", "Bojolali"]
-pl = ["Bojolali", "Bojolali", "Bojolali", "Bojolali", "Bojolali", "Bojolali"]
-few = "Bojolali"
+sg = ["Бойолали", "Бойолали", "Бойолали", "Бойолали", "Бойолали", "Бойолали"]
+pl = ["Бойолали", "Бойолали", "Бойолали", "Бойолали", "Бойолали", "Бойолали"]
+few = "Бойолали"
 src = "indeclinable"
 
 [name."Sarangan"]
 g = "m"
 anim = true
-sg = ["Sarangan", "Sarangan", "Sarangan", "Sarangan", "Sarangan", "Sarangan"]
-pl = ["Sarangan", "Sarangan", "Sarangan", "Sarangan", "Sarangan", "Sarangan"]
-few = "Sarangan"
+sg = ["Саранган", "Саранган", "Саранган", "Саранган", "Саранган", "Саранган"]
+pl = ["Саранган", "Саранган", "Саранган", "Саранган", "Саранган", "Саранган"]
+few = "Саранган"
 src = "indeclinable"
 
 [name."Ngebel"]
 g = "m"
 anim = true
-sg = ["Ngebel", "Ngebel", "Ngebel", "Ngebel", "Ngebel", "Ngebel"]
-pl = ["Ngebel", "Ngebel", "Ngebel", "Ngebel", "Ngebel", "Ngebel"]
-few = "Ngebel"
+sg = ["Нгебел", "Нгебел", "Нгебел", "Нгебел", "Нгебел", "Нгебел"]
+pl = ["Нгебел", "Нгебел", "Нгебел", "Нгебел", "Нгебел", "Нгебел"]
+few = "Нгебел"
 src = "indeclinable"
 
 [name."Djombang"]
 g = "m"
 anim = true
-sg = ["Djombang", "Djombang", "Djombang", "Djombang", "Djombang", "Djombang"]
-pl = ["Djombang", "Djombang", "Djombang", "Djombang", "Djombang", "Djombang"]
-few = "Djombang"
+sg = ["Джомбанг", "Джомбанг", "Джомбанг", "Джомбанг", "Джомбанг", "Джомбанг"]
+pl = ["Джомбанг", "Джомбанг", "Джомбанг", "Джомбанг", "Джомбанг", "Джомбанг"]
+few = "Джомбанг"
 src = "indeclinable"
 
 [name."Ardjawinangun"]
 g = "m"
 anim = true
-sg = ["Ardjawinangun", "Ardjawinangun", "Ardjawinangun", "Ardjawinangun", "Ardjawinangun", "Ardjawinangun"]
-pl = ["Ardjawinangun", "Ardjawinangun", "Ardjawinangun", "Ardjawinangun", "Ardjawinangun", "Ardjawinangun"]
-few = "Ardjawinangun"
+sg = ["Арджавинангун", "Арджавинангун", "Арджавинангун", "Арджавинангун", "Арджавинангун", "Арджавинангун"]
+pl = ["Арджавинангун", "Арджавинангун", "Арджавинангун", "Арджавинангун", "Арджавинангун", "Арджавинангун"]
+few = "Арджавинангун"
 src = "indeclinable"
 
 [name."Berbek"]
 g = "m"
 anim = true
-sg = ["Berbek", "Berbek", "Berbek", "Berbek", "Berbek", "Berbek"]
-pl = ["Berbek", "Berbek", "Berbek", "Berbek", "Berbek", "Berbek"]
-few = "Berbek"
+sg = ["Бербек", "Бербек", "Бербек", "Бербек", "Бербек", "Бербек"]
+pl = ["Бербек", "Бербек", "Бербек", "Бербек", "Бербек", "Бербек"]
+few = "Бербек"
 src = "indeclinable"
 
 [name."Papar"]
 g = "m"
 anim = true
-sg = ["Papar", "Papar", "Papar", "Papar", "Papar", "Papar"]
-pl = ["Papar", "Papar", "Papar", "Papar", "Papar", "Papar"]
-few = "Papar"
+sg = ["Папар", "Папар", "Папар", "Папар", "Папар", "Папар"]
+pl = ["Папар", "Папар", "Папар", "Папар", "Папар", "Папар"]
+few = "Папар"
 src = "indeclinable"
 
 [name."Baliga"]
 g = "m"
 anim = true
-sg = ["Baliga", "Baliga", "Baliga", "Baliga", "Baliga", "Baliga"]
-pl = ["Baliga", "Baliga", "Baliga", "Baliga", "Baliga", "Baliga"]
-few = "Baliga"
+sg = ["Балига", "Балига", "Балига", "Балига", "Балига", "Балига"]
+pl = ["Балига", "Балига", "Балига", "Балига", "Балига", "Балига"]
+few = "Балига"
 src = "indeclinable"
 
 [name."Tjisolok"]
 g = "m"
 anim = true
-sg = ["Tjisolok", "Tjisolok", "Tjisolok", "Tjisolok", "Tjisolok", "Tjisolok"]
-pl = ["Tjisolok", "Tjisolok", "Tjisolok", "Tjisolok", "Tjisolok", "Tjisolok"]
-few = "Tjisolok"
+sg = ["Чисолок", "Чисолок", "Чисолок", "Чисолок", "Чисолок", "Чисолок"]
+pl = ["Чисолок", "Чисолок", "Чисолок", "Чисолок", "Чисолок", "Чисолок"]
+few = "Чисолок"
 src = "indeclinable"
 
 [name."Siboga"]
 g = "m"
 anim = true
-sg = ["Siboga", "Siboga", "Siboga", "Siboga", "Siboga", "Siboga"]
-pl = ["Siboga", "Siboga", "Siboga", "Siboga", "Siboga", "Siboga"]
-few = "Siboga"
+sg = ["Сибога", "Сибога", "Сибога", "Сибога", "Сибога", "Сибога"]
+pl = ["Сибога", "Сибога", "Сибога", "Сибога", "Сибога", "Сибога"]
+few = "Сибога"
 src = "indeclinable"
 
 [name."Banjoewangi"]
 g = "m"
 anim = true
-sg = ["Banjoewangi", "Banjoewangi", "Banjoewangi", "Banjoewangi", "Banjoewangi", "Banjoewangi"]
-pl = ["Banjoewangi", "Banjoewangi", "Banjoewangi", "Banjoewangi", "Banjoewangi", "Banjoewangi"]
-few = "Banjoewangi"
+sg = ["Баньюванги", "Баньюванги", "Баньюванги", "Баньюванги", "Баньюванги", "Баньюванги"]
+pl = ["Баньюванги", "Баньюванги", "Баньюванги", "Баньюванги", "Баньюванги", "Баньюванги"]
+few = "Баньюванги"
 src = "indeclinable"
 
 [name."Trenggalek"]
 g = "m"
 anim = true
-sg = ["Trenggalek", "Trenggalek", "Trenggalek", "Trenggalek", "Trenggalek", "Trenggalek"]
-pl = ["Trenggalek", "Trenggalek", "Trenggalek", "Trenggalek", "Trenggalek", "Trenggalek"]
-few = "Trenggalek"
+sg = ["Тренггалек", "Тренггалек", "Тренггалек", "Тренггалек", "Тренггалек", "Тренггалек"]
+pl = ["Тренггалек", "Тренггалек", "Тренггалек", "Тренггалек", "Тренггалек", "Тренггалек"]
+few = "Тренггалек"
 src = "indeclinable"
 
 [name."Karangkobar"]
 g = "m"
 anim = true
-sg = ["Karangkobar", "Karangkobar", "Karangkobar", "Karangkobar", "Karangkobar", "Karangkobar"]
-pl = ["Karangkobar", "Karangkobar", "Karangkobar", "Karangkobar", "Karangkobar", "Karangkobar"]
-few = "Karangkobar"
+sg = ["Каранкобар", "Каранкобар", "Каранкобар", "Каранкобар", "Каранкобар", "Каранкобар"]
+pl = ["Каранкобар", "Каранкобар", "Каранкобар", "Каранкобар", "Каранкобар", "Каранкобар"]
+few = "Каранкобар"
 src = "indeclinable"
 
 [name."Njalindoeng"]
 g = "m"
 anim = true
-sg = ["Njalindoeng", "Njalindoeng", "Njalindoeng", "Njalindoeng", "Njalindoeng", "Njalindoeng"]
-pl = ["Njalindoeng", "Njalindoeng", "Njalindoeng", "Njalindoeng", "Njalindoeng", "Njalindoeng"]
-few = "Njalindoeng"
+sg = ["Ньялиндунг", "Ньялиндунг", "Ньялиндунг", "Ньялиндунг", "Ньялиндунг", "Ньялиндунг"]
+pl = ["Ньялиндунг", "Ньялиндунг", "Ньялиндунг", "Ньялиндунг", "Ньялиндунг", "Ньялиндунг"]
+few = "Ньялиндунг"
 src = "indeclinable"
 
 [name."Pasawahan"]
 g = "m"
 anim = true
-sg = ["Pasawahan", "Pasawahan", "Pasawahan", "Pasawahan", "Pasawahan", "Pasawahan"]
-pl = ["Pasawahan", "Pasawahan", "Pasawahan", "Pasawahan", "Pasawahan", "Pasawahan"]
-few = "Pasawahan"
+sg = ["Пасавахан", "Пасавахан", "Пасавахан", "Пасавахан", "Пасавахан", "Пасавахан"]
+pl = ["Пасавахан", "Пасавахан", "Пасавахан", "Пасавахан", "Пасавахан", "Пасавахан"]
+few = "Пасавахан"
 src = "indeclinable"
 
 [name."Pameunpeuk"]
 g = "m"
 anim = true
-sg = ["Pameunpeuk", "Pameunpeuk", "Pameunpeuk", "Pameunpeuk", "Pameunpeuk", "Pameunpeuk"]
-pl = ["Pameunpeuk", "Pameunpeuk", "Pameunpeuk", "Pameunpeuk", "Pameunpeuk", "Pameunpeuk"]
-few = "Pameunpeuk"
+sg = ["Памеунпеук", "Памеунпеук", "Памеунпеук", "Памеунпеук", "Памеунпеук", "Памеунпеук"]
+pl = ["Памеунпеук", "Памеунпеук", "Памеунпеук", "Памеунпеук", "Памеунпеук", "Памеунпеук"]
+few = "Памеунпеук"
 src = "indeclinable"
 
 [name."Patjitan"]
 g = "m"
 anim = true
-sg = ["Patjitan", "Patjitan", "Patjitan", "Patjitan", "Patjitan", "Patjitan"]
-pl = ["Patjitan", "Patjitan", "Patjitan", "Patjitan", "Patjitan", "Patjitan"]
-few = "Patjitan"
+sg = ["Пачитан", "Пачитан", "Пачитан", "Пачитан", "Пачитан", "Пачитан"]
+pl = ["Пачитан", "Пачитан", "Пачитан", "Пачитан", "Пачитан", "Пачитан"]
+few = "Пачитан"
 src = "indeclinable"
 
 [name."Kediri"]
 g = "m"
 anim = true
-sg = ["Kediri", "Kediri", "Kediri", "Kediri", "Kediri", "Kediri"]
-pl = ["Kediri", "Kediri", "Kediri", "Kediri", "Kediri", "Kediri"]
-few = "Kediri"
+sg = ["Кедири", "Кедири", "Кедири", "Кедири", "Кедири", "Кедири"]
+pl = ["Кедири", "Кедири", "Кедири", "Кедири", "Кедири", "Кедири"]
+few = "Кедири"
 src = "indeclinable"
 
 [name."Pemboeang"]
 g = "m"
 anim = true
-sg = ["Pemboeang", "Pemboeang", "Pemboeang", "Pemboeang", "Pemboeang", "Pemboeang"]
-pl = ["Pemboeang", "Pemboeang", "Pemboeang", "Pemboeang", "Pemboeang", "Pemboeang"]
-few = "Pemboeang"
+sg = ["Пембуанг", "Пембуанг", "Пембуанг", "Пембуанг", "Пембуанг", "Пембуанг"]
+pl = ["Пембуанг", "Пембуанг", "Пембуанг", "Пембуанг", "Пембуанг", "Пембуанг"]
+few = "Пембуанг"
 src = "indeclinable"
 
 [name."Tringanoe"]
 g = "m"
 anim = true
-sg = ["Tringanoe", "Tringanoe", "Tringanoe", "Tringanoe", "Tringanoe", "Tringanoe"]
-pl = ["Tringanoe", "Tringanoe", "Tringanoe", "Tringanoe", "Tringanoe", "Tringanoe"]
-few = "Tringanoe"
+sg = ["Трингану", "Трингану", "Трингану", "Трингану", "Трингану", "Трингану"]
+pl = ["Трингану", "Трингану", "Трингану", "Трингану", "Трингану", "Трингану"]
+few = "Трингану"
 src = "indeclinable"
 
 [name."Makin"]
 g = "m"
 anim = true
-sg = ["Makin", "Makin", "Makin", "Makin", "Makin", "Makin"]
-pl = ["Makin", "Makin", "Makin", "Makin", "Makin", "Makin"]
-few = "Makin"
+sg = ["Макин", "Макин", "Макин", "Макин", "Макин", "Макин"]
+pl = ["Макин", "Макин", "Макин", "Макин", "Макин", "Макин"]
+few = "Макин"
 src = "indeclinable"
 
 [name."Tipor"]
 g = "m"
 anim = true
-sg = ["Tipor", "Tipor", "Tipor", "Tipor", "Tipor", "Tipor"]
-pl = ["Tipor", "Tipor", "Tipor", "Tipor", "Tipor", "Tipor"]
-few = "Tipor"
+sg = ["Типор", "Типор", "Типор", "Типор", "Типор", "Типор"]
+pl = ["Типор", "Типор", "Типор", "Типор", "Типор", "Типор"]
+few = "Типор"
 src = "indeclinable"
 
 [name."Semai"]
 g = "m"
 anim = true
-sg = ["Semai", "Semai", "Semai", "Semai", "Semai", "Semai"]
-pl = ["Semai", "Semai", "Semai", "Semai", "Semai", "Semai"]
-few = "Semai"
+sg = ["Семаи", "Семаи", "Семаи", "Семаи", "Семаи", "Семаи"]
+pl = ["Семаи", "Семаи", "Семаи", "Семаи", "Семаи", "Семаи"]
+few = "Семаи"
 src = "indeclinable"
 
 [name."Berhala"]
 g = "m"
 anim = true
-sg = ["Berhala", "Berhala", "Berhala", "Berhala", "Berhala", "Berhala"]
-pl = ["Berhala", "Berhala", "Berhala", "Berhala", "Berhala", "Berhala"]
-few = "Berhala"
+sg = ["Берхала", "Берхала", "Берхала", "Берхала", "Берхала", "Берхала"]
+pl = ["Берхала", "Берхала", "Берхала", "Берхала", "Берхала", "Берхала"]
+few = "Берхала"
 src = "indeclinable"
 
 [name."Tegal"]
 g = "m"
 anim = true
-sg = ["Tegal", "Tegal", "Tegal", "Tegal", "Tegal", "Tegal"]
-pl = ["Tegal", "Tegal", "Tegal", "Tegal", "Tegal", "Tegal"]
-few = "Tegal"
+sg = ["Тегал", "Тегал", "Тегал", "Тегал", "Тегал", "Тегал"]
+pl = ["Тегал", "Тегал", "Тегал", "Тегал", "Тегал", "Тегал"]
+few = "Тегал"
 src = "indeclinable"
 
 [name."Samoe"]
 g = "m"
 anim = true
-sg = ["Samoe", "Samoe", "Samoe", "Samoe", "Samoe", "Samoe"]
-pl = ["Samoe", "Samoe", "Samoe", "Samoe", "Samoe", "Samoe"]
-few = "Samoe"
+sg = ["Саму", "Саму", "Саму", "Саму", "Саму", "Саму"]
+pl = ["Саму", "Саму", "Саму", "Саму", "Саму", "Саму"]
+few = "Саму"
 src = "indeclinable"
 
 [name."Voulgezac"]
 g = "m"
 anim = true
-sg = ["Voulgezac", "Voulgezac", "Voulgezac", "Voulgezac", "Voulgezac", "Voulgezac"]
-pl = ["Voulgezac", "Voulgezac", "Voulgezac", "Voulgezac", "Voulgezac", "Voulgezac"]
-few = "Voulgezac"
+sg = ["Вульжезак", "Вульжезак", "Вульжезак", "Вульжезак", "Вульжезак", "Вульжезак"]
+pl = ["Вульжезак", "Вульжезак", "Вульжезак", "Вульжезак", "Вульжезак", "Вульжезак"]
+few = "Вульжезак"
 src = "indeclinable"
 
 [name."Rouffiac"]
 g = "m"
 anim = true
-sg = ["Rouffiac", "Rouffiac", "Rouffiac", "Rouffiac", "Rouffiac", "Rouffiac"]
-pl = ["Rouffiac", "Rouffiac", "Rouffiac", "Rouffiac", "Rouffiac", "Rouffiac"]
-few = "Rouffiac"
+sg = ["Руффиак", "Руффиак", "Руффиак", "Руффиак", "Руффиак", "Руффиак"]
+pl = ["Руффиак", "Руффиак", "Руффиак", "Руффиак", "Руффиак", "Руффиак"]
+few = "Руффиак"
 src = "indeclinable"
 
 [name."Lerignac"]
 g = "m"
 anim = true
-sg = ["Lerignac", "Lerignac", "Lerignac", "Lerignac", "Lerignac", "Lerignac"]
-pl = ["Lerignac", "Lerignac", "Lerignac", "Lerignac", "Lerignac", "Lerignac"]
-few = "Lerignac"
+sg = ["Лериньяк", "Лериньяк", "Лериньяк", "Лериньяк", "Лериньяк", "Лериньяк"]
+pl = ["Лериньяк", "Лериньяк", "Лериньяк", "Лериньяк", "Лериньяк", "Лериньяк"]
+few = "Лериньяк"
 src = "indeclinable"
 
 [name."Touverac"]
 g = "m"
 anim = true
-sg = ["Touverac", "Touverac", "Touverac", "Touverac", "Touverac", "Touverac"]
-pl = ["Touverac", "Touverac", "Touverac", "Touverac", "Touverac", "Touverac"]
-few = "Touverac"
+sg = ["Туверак", "Туверак", "Туверак", "Туверак", "Туверак", "Туверак"]
+pl = ["Туверак", "Туверак", "Туверак", "Туверак", "Туверак", "Туверак"]
+few = "Туверак"
 src = "indeclinable"
 
 [name."Guizengeard"]
 g = "m"
 anim = true
-sg = ["Guizengeard", "Guizengeard", "Guizengeard", "Guizengeard", "Guizengeard", "Guizengeard"]
-pl = ["Guizengeard", "Guizengeard", "Guizengeard", "Guizengeard", "Guizengeard", "Guizengeard"]
-few = "Guizengeard"
+sg = ["Гизанжар", "Гизанжар", "Гизанжар", "Гизанжар", "Гизанжар", "Гизанжар"]
+pl = ["Гизанжар", "Гизанжар", "Гизанжар", "Гизанжар", "Гизанжар", "Гизанжар"]
+few = "Гизанжар"
 src = "indeclinable"
 
 [name."Melac"]
 g = "m"
 anim = true
-sg = ["Melac", "Melac", "Melac", "Melac", "Melac", "Melac"]
-pl = ["Melac", "Melac", "Melac", "Melac", "Melac", "Melac"]
-few = "Melac"
+sg = ["Мелак", "Мелак", "Мелак", "Мелак", "Мелак", "Мелак"]
+pl = ["Мелак", "Мелак", "Мелак", "Мелак", "Мелак", "Мелак"]
+few = "Мелак"
 src = "indeclinable"
 
 [name."Neuvicq"]
 g = "m"
 anim = true
-sg = ["Neuvicq", "Neuvicq", "Neuvicq", "Neuvicq", "Neuvicq", "Neuvicq"]
-pl = ["Neuvicq", "Neuvicq", "Neuvicq", "Neuvicq", "Neuvicq", "Neuvicq"]
-few = "Neuvicq"
+sg = ["Нёвик", "Нёвик", "Нёвик", "Нёвик", "Нёвик", "Нёвик"]
+pl = ["Нёвик", "Нёвик", "Нёвик", "Нёвик", "Нёвик", "Нёвик"]
+few = "Нёвик"
 src = "indeclinable"
 
 [name."Vanzac"]
 g = "m"
 anim = true
-sg = ["Vanzac", "Vanzac", "Vanzac", "Vanzac", "Vanzac", "Vanzac"]
-pl = ["Vanzac", "Vanzac", "Vanzac", "Vanzac", "Vanzac", "Vanzac"]
-few = "Vanzac"
+sg = ["Ванзак", "Ванзак", "Ванзак", "Ванзак", "Ванзак", "Ванзак"]
+pl = ["Ванзак", "Ванзак", "Ванзак", "Ванзак", "Ванзак", "Ванзак"]
+few = "Ванзак"
 src = "indeclinable"
 
 [name."Picq"]
 g = "m"
 anim = true
-sg = ["Picq", "Picq", "Picq", "Picq", "Picq", "Picq"]
-pl = ["Picq", "Picq", "Picq", "Picq", "Picq", "Picq"]
-few = "Picq"
+sg = ["Пик", "Пик", "Пик", "Пик", "Пик", "Пик"]
+pl = ["Пик", "Пик", "Пик", "Пик", "Пик", "Пик"]
+few = "Пик"
 src = "indeclinable"
 
 [name."Urignac"]
 g = "m"
 anim = true
-sg = ["Urignac", "Urignac", "Urignac", "Urignac", "Urignac", "Urignac"]
-pl = ["Urignac", "Urignac", "Urignac", "Urignac", "Urignac", "Urignac"]
-few = "Urignac"
+sg = ["Уриньяк", "Уриньяк", "Уриньяк", "Уриньяк", "Уриньяк", "Уриньяк"]
+pl = ["Уриньяк", "Уриньяк", "Уриньяк", "Уриньяк", "Уриньяк", "Уриньяк"]
+few = "Уриньяк"
 src = "indeclinable"
 
 [name."Corignac"]
 g = "m"
 anim = true
-sg = ["Corignac", "Corignac", "Corignac", "Corignac", "Corignac", "Corignac"]
-pl = ["Corignac", "Corignac", "Corignac", "Corignac", "Corignac", "Corignac"]
-few = "Corignac"
+sg = ["Кориньяк", "Кориньяк", "Кориньяк", "Кориньяк", "Кориньяк", "Кориньяк"]
+pl = ["Кориньяк", "Кориньяк", "Кориньяк", "Кориньяк", "Кориньяк", "Кориньяк"]
+few = "Кориньяк"
 src = "indeclinable"
 
 [name."Fleac"]
 g = "m"
 anim = true
-sg = ["Fleac", "Fleac", "Fleac", "Fleac", "Fleac", "Fleac"]
-pl = ["Fleac", "Fleac", "Fleac", "Fleac", "Fleac", "Fleac"]
-few = "Fleac"
+sg = ["Флеак", "Флеак", "Флеак", "Флеак", "Флеак", "Флеак"]
+pl = ["Флеак", "Флеак", "Флеак", "Флеак", "Флеак", "Флеак"]
+few = "Флеак"
 src = "indeclinable"
 
 [name."Lonzac"]
 g = "m"
 anim = true
-sg = ["Lonzac", "Lonzac", "Lonzac", "Lonzac", "Lonzac", "Lonzac"]
-pl = ["Lonzac", "Lonzac", "Lonzac", "Lonzac", "Lonzac", "Lonzac"]
-few = "Lonzac"
+sg = ["Лонзак", "Лонзак", "Лонзак", "Лонзак", "Лонзак", "Лонзак"]
+pl = ["Лонзак", "Лонзак", "Лонзак", "Лонзак", "Лонзак", "Лонзак"]
+few = "Лонзак"
 src = "indeclinable"
 
 [name."Vergt"]
 g = "m"
 anim = true
-sg = ["Vergt", "Vergt", "Vergt", "Vergt", "Vergt", "Vergt"]
-pl = ["Vergt", "Vergt", "Vergt", "Vergt", "Vergt", "Vergt"]
-few = "Vergt"
+sg = ["Вер", "Вер", "Вер", "Вер", "Вер", "Вер"]
+pl = ["Вер", "Вер", "Вер", "Вер", "Вер", "Вер"]
+few = "Вер"
 src = "indeclinable"
 
 [name."Queyssac"]
 g = "m"
 anim = true
-sg = ["Queyssac", "Queyssac", "Queyssac", "Queyssac", "Queyssac", "Queyssac"]
-pl = ["Queyssac", "Queyssac", "Queyssac", "Queyssac", "Queyssac", "Queyssac"]
-few = "Queyssac"
+sg = ["Кейсак", "Кейсак", "Кейсак", "Кейсак", "Кейсак", "Кейсак"]
+pl = ["Кейсак", "Кейсак", "Кейсак", "Кейсак", "Кейсак", "Кейсак"]
+few = "Кейсак"
 src = "indeclinable"
 
 [name."Liorac"]
 g = "m"
 anim = true
-sg = ["Liorac", "Liorac", "Liorac", "Liorac", "Liorac", "Liorac"]
-pl = ["Liorac", "Liorac", "Liorac", "Liorac", "Liorac", "Liorac"]
-few = "Liorac"
+sg = ["Льорак", "Льорак", "Льорак", "Льорак", "Льорак", "Льорак"]
+pl = ["Льорак", "Льорак", "Льорак", "Льорак", "Льорак", "Льорак"]
+few = "Льорак"
 src = "indeclinable"
 
 [name."Echourgnac"]
 g = "m"
 anim = true
-sg = ["Echourgnac", "Echourgnac", "Echourgnac", "Echourgnac", "Echourgnac", "Echourgnac"]
-pl = ["Echourgnac", "Echourgnac", "Echourgnac", "Echourgnac", "Echourgnac", "Echourgnac"]
-few = "Echourgnac"
+sg = ["Эшурньяк", "Эшурньяк", "Эшурньяк", "Эшурньяк", "Эшурньяк", "Эшурньяк"]
+pl = ["Эшурньяк", "Эшурньяк", "Эшурньяк", "Эшурньяк", "Эшурньяк", "Эшурньяк"]
+few = "Эшурньяк"
 src = "indeclinable"
 
 [name."Cazelon"]
 g = "m"
 anim = true
-sg = ["Cazelon", "Cazelon", "Cazelon", "Cazelon", "Cazelon", "Cazelon"]
-pl = ["Cazelon", "Cazelon", "Cazelon", "Cazelon", "Cazelon", "Cazelon"]
-few = "Cazelon"
+sg = ["Казелон", "Казелон", "Казелон", "Казелон", "Казелон", "Казелон"]
+pl = ["Казелон", "Казелон", "Казелон", "Казелон", "Казелон", "Казелон"]
+few = "Казелон"
 src = "indeclinable"
 
 [name."Eypau"]
 g = "m"
 anim = true
-sg = ["Eypau", "Eypau", "Eypau", "Eypau", "Eypau", "Eypau"]
-pl = ["Eypau", "Eypau", "Eypau", "Eypau", "Eypau", "Eypau"]
-few = "Eypau"
+sg = ["Эпо", "Эпо", "Эпо", "Эпо", "Эпо", "Эпо"]
+pl = ["Эпо", "Эпо", "Эпо", "Эпо", "Эпо", "Эпо"]
+few = "Эпо"
 src = "indeclinable"
 
 [name."Carignan"]
 g = "m"
 anim = true
-sg = ["Carignan", "Carignan", "Carignan", "Carignan", "Carignan", "Carignan"]
-pl = ["Carignan", "Carignan", "Carignan", "Carignan", "Carignan", "Carignan"]
-few = "Carignan"
+sg = ["Кариньян", "Кариньян", "Кариньян", "Кариньян", "Кариньян", "Кариньян"]
+pl = ["Кариньян", "Кариньян", "Кариньян", "Кариньян", "Кариньян", "Кариньян"]
+few = "Кариньян"
 src = "indeclinable"
 
 [name."Monbazillac"]
 g = "m"
 anim = true
-sg = ["Monbazillac", "Monbazillac", "Monbazillac", "Monbazillac", "Monbazillac", "Monbazillac"]
-pl = ["Monbazillac", "Monbazillac", "Monbazillac", "Monbazillac", "Monbazillac", "Monbazillac"]
-few = "Monbazillac"
+sg = ["Монбазийак", "Монбазийак", "Монбазийак", "Монбазийак", "Монбазийак", "Монбазийак"]
+pl = ["Монбазийак", "Монбазийак", "Монбазийак", "Монбазийак", "Монбазийак", "Монбазийак"]
+few = "Монбазийак"
 src = "indeclinable"
 
 [name."Jonzac"]
 g = "m"
 anim = true
-sg = ["Jonzac", "Jonzac", "Jonzac", "Jonzac", "Jonzac", "Jonzac"]
-pl = ["Jonzac", "Jonzac", "Jonzac", "Jonzac", "Jonzac", "Jonzac"]
-few = "Jonzac"
+sg = ["Жонзак", "Жонзак", "Жонзак", "Жонзак", "Жонзак", "Жонзак"]
+pl = ["Жонзак", "Жонзак", "Жонзак", "Жонзак", "Жонзак", "Жонзак"]
+few = "Жонзак"
 src = "indeclinable"
 
 [name."Pons"]
 g = "m"
 anim = true
-sg = ["Pons", "Pons", "Pons", "Pons", "Pons", "Pons"]
-pl = ["Pons", "Pons", "Pons", "Pons", "Pons", "Pons"]
-few = "Pons"
+sg = ["Пон", "Пон", "Пон", "Пон", "Пон", "Пон"]
+pl = ["Пон", "Пон", "Пон", "Пон", "Пон", "Пон"]
+few = "Пон"
 src = "indeclinable"
 
 [name."Jumilhac"]
 g = "m"
 anim = true
-sg = ["Jumilhac", "Jumilhac", "Jumilhac", "Jumilhac", "Jumilhac", "Jumilhac"]
-pl = ["Jumilhac", "Jumilhac", "Jumilhac", "Jumilhac", "Jumilhac", "Jumilhac"]
-few = "Jumilhac"
+sg = ["Жюмийак", "Жюмийак", "Жюмийак", "Жюмийак", "Жюмийак", "Жюмийак"]
+pl = ["Жюмийак", "Жюмийак", "Жюмийак", "Жюмийак", "Жюмийак", "Жюмийак"]
+few = "Жюмийак"
 src = "indeclinable"
 
 [name."Fenouilledes"]
 g = "m"
 anim = true
-sg = ["Fenouilledes", "Fenouilledes", "Fenouilledes", "Fenouilledes", "Fenouilledes", "Fenouilledes"]
-pl = ["Fenouilledes", "Fenouilledes", "Fenouilledes", "Fenouilledes", "Fenouilledes", "Fenouilledes"]
-few = "Fenouilledes"
+sg = ["Фенуйед", "Фенуйед", "Фенуйед", "Фенуйед", "Фенуйед", "Фенуйед"]
+pl = ["Фенуйед", "Фенуйед", "Фенуйед", "Фенуйед", "Фенуйед", "Фенуйед"]
+few = "Фенуйед"
 src = "indeclinable"
 
 [name."Laguiolet"]
 g = "m"
 anim = true
-sg = ["Laguiolet", "Laguiolet", "Laguiolet", "Laguiolet", "Laguiolet", "Laguiolet"]
-pl = ["Laguiolet", "Laguiolet", "Laguiolet", "Laguiolet", "Laguiolet", "Laguiolet"]
-few = "Laguiolet"
+sg = ["Лагиоле", "Лагиоле", "Лагиоле", "Лагиоле", "Лагиоле", "Лагиоле"]
+pl = ["Лагиоле", "Лагиоле", "Лагиоле", "Лагиоле", "Лагиоле", "Лагиоле"]
+few = "Лагиоле"
 src = "indeclinable"
 
 [name."Saujon"]
 g = "m"
 anim = true
-sg = ["Saujon", "Saujon", "Saujon", "Saujon", "Saujon", "Saujon"]
-pl = ["Saujon", "Saujon", "Saujon", "Saujon", "Saujon", "Saujon"]
-few = "Saujon"
+sg = ["Сожон", "Сожон", "Сожон", "Сожон", "Сожон", "Сожон"]
+pl = ["Сожон", "Сожон", "Сожон", "Сожон", "Сожон", "Сожон"]
+few = "Сожон"
 src = "indeclinable"
 
 [name."Eymoutiers"]
 g = "m"
 anim = true
-sg = ["Eymoutiers", "Eymoutiers", "Eymoutiers", "Eymoutiers", "Eymoutiers", "Eymoutiers"]
-pl = ["Eymoutiers", "Eymoutiers", "Eymoutiers", "Eymoutiers", "Eymoutiers", "Eymoutiers"]
-few = "Eymoutiers"
+sg = ["Эмутье", "Эмутье", "Эмутье", "Эмутье", "Эмутье", "Эмутье"]
+pl = ["Эмутье", "Эмутье", "Эмутье", "Эмутье", "Эмутье", "Эмутье"]
+few = "Эмутье"
 src = "indeclinable"
 
 [name."Eygurande"]
 g = "m"
 anim = true
-sg = ["Eygurande", "Eygurande", "Eygurande", "Eygurande", "Eygurande", "Eygurande"]
-pl = ["Eygurande", "Eygurande", "Eygurande", "Eygurande", "Eygurande", "Eygurande"]
-few = "Eygurande"
+sg = ["Эгюранд", "Эгюранд", "Эгюранд", "Эгюранд", "Эгюранд", "Эгюранд"]
+pl = ["Эгюранд", "Эгюранд", "Эгюранд", "Эгюранд", "Эгюранд", "Эгюранд"]
+few = "Эгюранд"
 src = "indeclinable"
 
 [name."Eauze"]
 g = "m"
 anim = true
-sg = ["Eauze", "Eauze", "Eauze", "Eauze", "Eauze", "Eauze"]
-pl = ["Eauze", "Eauze", "Eauze", "Eauze", "Eauze", "Eauze"]
-few = "Eauze"
+sg = ["Эоз", "Эоз", "Эоз", "Эоз", "Эоз", "Эоз"]
+pl = ["Эоз", "Эоз", "Эоз", "Эоз", "Эоз", "Эоз"]
+few = "Эоз"
 src = "indeclinable"
 
 [name."Labouheyre"]
 g = "m"
 anim = true
-sg = ["Labouheyre", "Labouheyre", "Labouheyre", "Labouheyre", "Labouheyre", "Labouheyre"]
-pl = ["Labouheyre", "Labouheyre", "Labouheyre", "Labouheyre", "Labouheyre", "Labouheyre"]
-few = "Labouheyre"
+sg = ["Лабуэр", "Лабуэр", "Лабуэр", "Лабуэр", "Лабуэр", "Лабуэр"]
+pl = ["Лабуэр", "Лабуэр", "Лабуэр", "Лабуэр", "Лабуэр", "Лабуэр"]
+few = "Лабуэр"
 src = "indeclinable"
 
 [name."Ymla"]
 g = "m"
 anim = true
-sg = ["Ymla", "Ymla", "Ymla", "Ymla", "Ymla", "Ymla"]
-pl = ["Ymla", "Ymla", "Ymla", "Ymla", "Ymla", "Ymla"]
-few = "Ymla"
+sg = ["Имла", "Имла", "Имла", "Имла", "Имла", "Имла"]
+pl = ["Имла", "Имла", "Имла", "Имла", "Имла", "Имла"]
+few = "Имла"
 src = "indeclinable"
 
 [name."Eed-morra"]
 g = "m"
 anim = true
-sg = ["Eed-morra", "Eed-morra", "Eed-morra", "Eed-morra", "Eed-morra", "Eed-morra"]
-pl = ["Eed-morra", "Eed-morra", "Eed-morra", "Eed-morra", "Eed-morra", "Eed-morra"]
-few = "Eed-morra"
+sg = ["Ид-Морра", "Ид-Морра", "Ид-Морра", "Ид-Морра", "Ид-Морра", "Ид-Морра"]
+pl = ["Ид-Морра", "Ид-Морра", "Ид-Морра", "Ид-Морра", "Ид-Морра", "Ид-Морра"]
+few = "Ид-Морра"
 src = "indeclinable"
 
 [name."Elan Lapinski"]
 g = "m"
 anim = true
-sg = ["Elan Lapinski", "Elan Lapinski", "Elan Lapinski", "Elan Lapinski", "Elan Lapinski", "Elan Lapinski"]
-pl = ["Elan Lapinski", "Elan Lapinski", "Elan Lapinski", "Elan Lapinski", "Elan Lapinski", "Elan Lapinski"]
-few = "Elan Lapinski"
+sg = ["Элан Лапински", "Элан Лапински", "Элан Лапински", "Элан Лапински", "Элан Лапински", "Элан Лапински"]
+pl = ["Элан Лапински", "Элан Лапински", "Элан Лапински", "Элан Лапински", "Элан Лапински", "Элан Лапински"]
+few = "Элан Лапински"
 src = "indeclinable"
 
 [name."Cubask"]
 g = "m"
 anim = true
-sg = ["Cubask", "Cubask", "Cubask", "Cubask", "Cubask", "Cubask"]
-pl = ["Cubask", "Cubask", "Cubask", "Cubask", "Cubask", "Cubask"]
-few = "Cubask"
+sg = ["Кубаск", "Кубаск", "Кубаск", "Кубаск", "Кубаск", "Кубаск"]
+pl = ["Кубаск", "Кубаск", "Кубаск", "Кубаск", "Кубаск", "Кубаск"]
+few = "Кубаск"
 src = "indeclinable"
 
 [name."Nieb"]
 g = "m"
 anim = true
-sg = ["Nieb", "Nieb", "Nieb", "Nieb", "Nieb", "Nieb"]
-pl = ["Nieb", "Nieb", "Nieb", "Nieb", "Nieb", "Nieb"]
-few = "Nieb"
+sg = ["Ниб", "Ниб", "Ниб", "Ниб", "Ниб", "Ниб"]
+pl = ["Ниб", "Ниб", "Ниб", "Ниб", "Ниб", "Ниб"]
+few = "Ниб"
 src = "indeclinable"
 
 [name."Bnowr Falr"]
 g = "m"
 anim = true
-sg = ["Bnowr Falr", "Bnowr Falr", "Bnowr Falr", "Bnowr Falr", "Bnowr Falr", "Bnowr Falr"]
-pl = ["Bnowr Falr", "Bnowr Falr", "Bnowr Falr", "Bnowr Falr", "Bnowr Falr", "Bnowr Falr"]
-few = "Bnowr Falr"
+sg = ["Бноур Фалр", "Бноур Фалр", "Бноур Фалр", "Бноур Фалр", "Бноур Фалр", "Бноур Фалр"]
+pl = ["Бноур Фалр", "Бноур Фалр", "Бноур Фалр", "Бноур Фалр", "Бноур Фалр", "Бноур Фалр"]
+few = "Бноур Фалр"
 src = "indeclinable"
 
 [name."Sperc"]
 g = "m"
 anim = true
-sg = ["Sperc", "Sperc", "Sperc", "Sperc", "Sperc", "Sperc"]
-pl = ["Sperc", "Sperc", "Sperc", "Sperc", "Sperc", "Sperc"]
-few = "Sperc"
+sg = ["Сперк", "Сперк", "Сперк", "Сперк", "Сперк", "Сперк"]
+pl = ["Сперк", "Сперк", "Сперк", "Сперк", "Сперк", "Сперк"]
+few = "Сперк"
 src = "indeclinable"
 
 [name."Noskcirdneh"]
 g = "m"
 anim = true
-sg = ["Noskcirdneh", "Noskcirdneh", "Noskcirdneh", "Noskcirdneh", "Noskcirdneh", "Noskcirdneh"]
-pl = ["Noskcirdneh", "Noskcirdneh", "Noskcirdneh", "Noskcirdneh", "Noskcirdneh", "Noskcirdneh"]
-few = "Noskcirdneh"
+sg = ["Носкирднех", "Носкирднех", "Носкирднех", "Носкирднех", "Носкирднех", "Носкирднех"]
+pl = ["Носкирднех", "Носкирднех", "Носкирднех", "Носкирднех", "Носкирднех", "Носкирднех"]
+few = "Носкирднех"
 src = "indeclinable"
 
 [name."Yawolloh"]
 g = "m"
 anim = true
-sg = ["Yawolloh", "Yawolloh", "Yawolloh", "Yawolloh", "Yawolloh", "Yawolloh"]
-pl = ["Yawolloh", "Yawolloh", "Yawolloh", "Yawolloh", "Yawolloh", "Yawolloh"]
-few = "Yawolloh"
+sg = ["Яволлох", "Яволлох", "Яволлох", "Яволлох", "Яволлох", "Яволлох"]
+pl = ["Яволлох", "Яволлох", "Яволлох", "Яволлох", "Яволлох", "Яволлох"]
+few = "Яволлох"
 src = "indeclinable"
 
 [name."Hyeghu"]
 g = "m"
 anim = true
-sg = ["Hyeghu", "Hyeghu", "Hyeghu", "Hyeghu", "Hyeghu", "Hyeghu"]
-pl = ["Hyeghu", "Hyeghu", "Hyeghu", "Hyeghu", "Hyeghu", "Hyeghu"]
-few = "Hyeghu"
+sg = ["Хиегу", "Хиегу", "Хиегу", "Хиегу", "Хиегу", "Хиегу"]
+pl = ["Хиегу", "Хиегу", "Хиегу", "Хиегу", "Хиегу", "Хиегу"]
+few = "Хиегу"
 src = "indeclinable"
 
 [name."Niskal"]
 g = "m"
 anim = true
-sg = ["Niskal", "Niskal", "Niskal", "Niskal", "Niskal", "Niskal"]
-pl = ["Niskal", "Niskal", "Niskal", "Niskal", "Niskal", "Niskal"]
-few = "Niskal"
+sg = ["Нискал", "Нискал", "Нискал", "Нискал", "Нискал", "Нискал"]
+pl = ["Нискал", "Нискал", "Нискал", "Нискал", "Нискал", "Нискал"]
+few = "Нискал"
 src = "indeclinable"
 
 [name."Trahnil"]
 g = "m"
 anim = true
-sg = ["Trahnil", "Trahnil", "Trahnil", "Trahnil", "Trahnil", "Trahnil"]
-pl = ["Trahnil", "Trahnil", "Trahnil", "Trahnil", "Trahnil", "Trahnil"]
-few = "Trahnil"
+sg = ["Трагнил", "Трагнил", "Трагнил", "Трагнил", "Трагнил", "Трагнил"]
+pl = ["Трагнил", "Трагнил", "Трагнил", "Трагнил", "Трагнил", "Трагнил"]
+few = "Трагнил"
 src = "indeclinable"
 
 [name."Htargcm"]
 g = "m"
 anim = true
-sg = ["Htargcm", "Htargcm", "Htargcm", "Htargcm", "Htargcm", "Htargcm"]
-pl = ["Htargcm", "Htargcm", "Htargcm", "Htargcm", "Htargcm", "Htargcm"]
-few = "Htargcm"
+sg = ["Хтаргкм", "Хтаргкм", "Хтаргкм", "Хтаргкм", "Хтаргкм", "Хтаргкм"]
+pl = ["Хтаргкм", "Хтаргкм", "Хтаргкм", "Хтаргкм", "Хтаргкм", "Хтаргкм"]
+few = "Хтаргкм"
 src = "indeclinable"
 
 [name."Enrobwem"]
 g = "m"
 anim = true
-sg = ["Enrobwem", "Enrobwem", "Enrobwem", "Enrobwem", "Enrobwem", "Enrobwem"]
-pl = ["Enrobwem", "Enrobwem", "Enrobwem", "Enrobwem", "Enrobwem", "Enrobwem"]
-few = "Enrobwem"
+sg = ["Энробвем", "Энробвем", "Энробвем", "Энробвем", "Энробвем", "Энробвем"]
+pl = ["Энробвем", "Энробвем", "Энробвем", "Энробвем", "Энробвем", "Энробвем"]
+few = "Энробвем"
 src = "indeclinable"
 
 [name."Kachzi Rellim"]
 g = "m"
 anim = true
-sg = ["Kachzi Rellim", "Kachzi Rellim", "Kachzi Rellim", "Kachzi Rellim", "Kachzi Rellim", "Kachzi Rellim"]
-pl = ["Kachzi Rellim", "Kachzi Rellim", "Kachzi Rellim", "Kachzi Rellim", "Kachzi Rellim", "Kachzi Rellim"]
-few = "Kachzi Rellim"
+sg = ["Качзи Реллим", "Качзи Реллим", "Качзи Реллим", "Качзи Реллим", "Качзи Реллим", "Качзи Реллим"]
+pl = ["Качзи Реллим", "Качзи Реллим", "Качзи Реллим", "Качзи Реллим", "Качзи Реллим", "Качзи Реллим"]
+few = "Качзи Реллим"
 src = "indeclinable"
 
 [name."Regien"]
 g = "m"
 anim = true
-sg = ["Regien", "Regien", "Regien", "Regien", "Regien", "Regien"]
-pl = ["Regien", "Regien", "Regien", "Regien", "Regien", "Regien"]
-few = "Regien"
+sg = ["Региен", "Региен", "Региен", "Региен", "Региен", "Региен"]
+pl = ["Региен", "Региен", "Региен", "Региен", "Региен", "Региен"]
+few = "Региен"
 src = "indeclinable"
 
 [name."Donmyar"]
 g = "m"
 anim = true
-sg = ["Donmyar", "Donmyar", "Donmyar", "Donmyar", "Donmyar", "Donmyar"]
-pl = ["Donmyar", "Donmyar", "Donmyar", "Donmyar", "Donmyar", "Donmyar"]
-few = "Donmyar"
+sg = ["Донмьяр", "Донмьяр", "Донмьяр", "Донмьяр", "Донмьяр", "Донмьяр"]
+pl = ["Донмьяр", "Донмьяр", "Донмьяр", "Донмьяр", "Донмьяр", "Донмьяр"]
+few = "Донмьяр"
 src = "indeclinable"
 
 [name."Yelpur"]
 g = "m"
 anim = true
-sg = ["Yelpur", "Yelpur", "Yelpur", "Yelpur", "Yelpur", "Yelpur"]
-pl = ["Yelpur", "Yelpur", "Yelpur", "Yelpur", "Yelpur", "Yelpur"]
-few = "Yelpur"
+sg = ["Йелпур", "Йелпур", "Йелпур", "Йелпур", "Йелпур", "Йелпур"]
+pl = ["Йелпур", "Йелпур", "Йелпур", "Йелпур", "Йелпур", "Йелпур"]
+few = "Йелпур"
 src = "indeclinable"
 
 [name."Nosnehpets"]
 g = "m"
 anim = true
-sg = ["Nosnehpets", "Nosnehpets", "Nosnehpets", "Nosnehpets", "Nosnehpets", "Nosnehpets"]
-pl = ["Nosnehpets", "Nosnehpets", "Nosnehpets", "Nosnehpets", "Nosnehpets", "Nosnehpets"]
-few = "Nosnehpets"
+sg = ["Носнехпетс", "Носнехпетс", "Носнехпетс", "Носнехпетс", "Носнехпетс", "Носнехпетс"]
+pl = ["Носнехпетс", "Носнехпетс", "Носнехпетс", "Носнехпетс", "Носнехпетс", "Носнехпетс"]
+few = "Носнехпетс"
 src = "indeclinable"
 
 [name."Stewe"]
 g = "m"
 anim = true
-sg = ["Stewe", "Stewe", "Stewe", "Stewe", "Stewe", "Stewe"]
-pl = ["Stewe", "Stewe", "Stewe", "Stewe", "Stewe", "Stewe"]
-few = "Stewe"
+sg = ["Стью", "Стью", "Стью", "Стью", "Стью", "Стью"]
+pl = ["Стью", "Стью", "Стью", "Стью", "Стью", "Стью"]
+few = "Стью"
 src = "indeclinable"
 
 [name."Renrut"]
 g = "m"
 anim = true
-sg = ["Renrut", "Renrut", "Renrut", "Renrut", "Renrut", "Renrut"]
-pl = ["Renrut", "Renrut", "Renrut", "Renrut", "Renrut", "Renrut"]
-few = "Renrut"
+sg = ["Ренрут", "Ренрут", "Ренрут", "Ренрут", "Ренрут", "Ренрут"]
+pl = ["Ренрут", "Ренрут", "Ренрут", "Ренрут", "Ренрут", "Ренрут"]
+few = "Ренрут"
 src = "indeclinable"
 
 [name."Senna Hut"]
 g = "m"
 anim = true
-sg = ["Senna Hut", "Senna Hut", "Senna Hut", "Senna Hut", "Senna Hut", "Senna Hut"]
-pl = ["Senna Hut", "Senna Hut", "Senna Hut", "Senna Hut", "Senna Hut", "Senna Hut"]
-few = "Senna Hut"
+sg = ["Сенна Хат", "Сенна Хат", "Сенна Хат", "Сенна Хат", "Сенна Хат", "Сенна Хат"]
+pl = ["Сенна Хат", "Сенна Хат", "Сенна Хат", "Сенна Хат", "Сенна Хат", "Сенна Хат"]
+few = "Сенна Хат"
 src = "indeclinable"
 
 [name."Zlaw"]
 g = "f"
 anim = true
-sg = ["Zlaw", "Zlaw", "Zlaw", "Zlaw", "Zlaw", "Zlaw"]
-pl = ["Zlaw", "Zlaw", "Zlaw", "Zlaw", "Zlaw", "Zlaw"]
-few = "Zlaw"
+sg = ["Злав", "Злав", "Злав", "Злав", "Злав", "Злав"]
+pl = ["Злав", "Злав", "Злав", "Злав", "Злав", "Злав"]
+few = "Злав"
 src = "indeclinable"
 
 [name."Nosalnef"]
 g = "m"
 anim = true
-sg = ["Nosalnef", "Nosalnef", "Nosalnef", "Nosalnef", "Nosalnef", "Nosalnef"]
-pl = ["Nosalnef", "Nosalnef", "Nosalnef", "Nosalnef", "Nosalnef", "Nosalnef"]
-few = "Nosalnef"
+sg = ["Носалнеф", "Носалнеф", "Носалнеф", "Носалнеф", "Носалнеф", "Носалнеф"]
+pl = ["Носалнеф", "Носалнеф", "Носалнеф", "Носалнеф", "Носалнеф", "Носалнеф"]
+few = "Носалнеф"
 src = "indeclinable"
 
 [name."Rewuorb"]
 g = "m"
 anim = true
-sg = ["Rewuorb", "Rewuorb", "Rewuorb", "Rewuorb", "Rewuorb", "Rewuorb"]
-pl = ["Rewuorb", "Rewuorb", "Rewuorb", "Rewuorb", "Rewuorb", "Rewuorb"]
-few = "Rewuorb"
+sg = ["Ревуорб", "Ревуорб", "Ревуорб", "Ревуорб", "Ревуорб", "Ревуорб"]
+pl = ["Ревуорб", "Ревуорб", "Ревуорб", "Ревуорб", "Ревуорб", "Ревуорб"]
+few = "Ревуорб"
 src = "indeclinable"
 
 [name."Rellenk"]
 g = "m"
 anim = true
-sg = ["Rellenk", "Rellenk", "Rellenk", "Rellenk", "Rellenk", "Rellenk"]
-pl = ["Rellenk", "Rellenk", "Rellenk", "Rellenk", "Rellenk", "Rellenk"]
-few = "Rellenk"
+sg = ["Релленк", "Релленк", "Релленк", "Релленк", "Релленк", "Релленк"]
+pl = ["Релленк", "Релленк", "Релленк", "Релленк", "Релленк", "Релленк"]
+few = "Релленк"
 src = "indeclinable"
 
 [name."Yad"]
 g = "m"
 anim = true
-sg = ["Yad", "Yad", "Yad", "Yad", "Yad", "Yad"]
-pl = ["Yad", "Yad", "Yad", "Yad", "Yad", "Yad"]
-few = "Yad"
+sg = ["Йад", "Йад", "Йад", "Йад", "Йад", "Йад"]
+pl = ["Йад", "Йад", "Йад", "Йад", "Йад", "Йад"]
+few = "Йад"
 src = "indeclinable"
 
 [name."Cire Htims"]
 g = "m"
 anim = true
-sg = ["Cire Htims", "Cire Htims", "Cire Htims", "Cire Htims", "Cire Htims", "Cire Htims"]
-pl = ["Cire Htims", "Cire Htims", "Cire Htims", "Cire Htims", "Cire Htims", "Cire Htims"]
-few = "Cire Htims"
+sg = ["Кире Хтимс", "Кире Хтимс", "Кире Хтимс", "Кире Хтимс", "Кире Хтимс", "Кире Хтимс"]
+pl = ["Кире Хтимс", "Кире Хтимс", "Кире Хтимс", "Кире Хтимс", "Кире Хтимс", "Кире Хтимс"]
+few = "Кире Хтимс"
 src = "indeclinable"
 
 [name."Y-crad"]
 g = "m"
 anim = true
-sg = ["Y-crad", "Y-crad", "Y-crad", "Y-crad", "Y-crad", "Y-crad"]
-pl = ["Y-crad", "Y-crad", "Y-crad", "Y-crad", "Y-crad", "Y-crad"]
-few = "Y-crad"
+sg = ["И-Крад", "И-Крад", "И-Крад", "И-Крад", "И-Крад", "И-Крад"]
+pl = ["И-Крад", "И-Крад", "И-Крад", "И-Крад", "И-Крад", "И-Крад"]
+few = "И-Крад"
 src = "indeclinable"
 
 [name."Nenilukah"]
 g = "m"
 anim = true
-sg = ["Nenilukah", "Nenilukah", "Nenilukah", "Nenilukah", "Nenilukah", "Nenilukah"]
-pl = ["Nenilukah", "Nenilukah", "Nenilukah", "Nenilukah", "Nenilukah", "Nenilukah"]
-few = "Nenilukah"
+sg = ["Ненилуках", "Ненилуках", "Ненилуках", "Ненилуках", "Ненилуках", "Ненилуках"]
+pl = ["Ненилуках", "Ненилуках", "Ненилуках", "Ненилуках", "Ненилуках", "Ненилуках"]
+few = "Ненилуках"
 src = "indeclinable"
 
 [name."Corsh"]
 g = "m"
 anim = true
-sg = ["Corsh", "Corsh", "Corsh", "Corsh", "Corsh", "Corsh"]
-pl = ["Corsh", "Corsh", "Corsh", "Corsh", "Corsh", "Corsh"]
-few = "Corsh"
+sg = ["Корш", "Корш", "Корш", "Корш", "Корш", "Корш"]
+pl = ["Корш", "Корш", "Корш", "Корш", "Корш", "Корш"]
+few = "Корш"
 src = "indeclinable"
 
 [name."Aned"]
 g = "m"
 anim = true
-sg = ["Aned", "Aned", "Aned", "Aned", "Aned", "Aned"]
-pl = ["Aned", "Aned", "Aned", "Aned", "Aned", "Aned"]
-few = "Aned"
+sg = ["Анед", "Анед", "Анед", "Анед", "Анед", "Анед"]
+pl = ["Анед", "Анед", "Анед", "Анед", "Анед", "Анед"]
+few = "Анед"
 src = "indeclinable"
 
 [name."Dark Eery"]
 g = "m"
 anim = true
-sg = ["Dark Eery", "Dark Eery", "Dark Eery", "Dark Eery", "Dark Eery", "Dark Eery"]
-pl = ["Dark Eery", "Dark Eery", "Dark Eery", "Dark Eery", "Dark Eery", "Dark Eery"]
-few = "Dark Eery"
+sg = ["Дарк Ири", "Дарк Ири", "Дарк Ири", "Дарк Ири", "Дарк Ири", "Дарк Ири"]
+pl = ["Дарк Ири", "Дарк Ири", "Дарк Ири", "Дарк Ири", "Дарк Ири", "Дарк Ири"]
+few = "Дарк Ири"
 src = "indeclinable"
 
 [name."Niknar"]
 g = "m"
 anim = true
-sg = ["Niknar", "Niknar", "Niknar", "Niknar", "Niknar", "Niknar"]
-pl = ["Niknar", "Niknar", "Niknar", "Niknar", "Niknar", "Niknar"]
-few = "Niknar"
+sg = ["Никнар", "Никнар", "Никнар", "Никнар", "Никнар", "Никнар"]
+pl = ["Никнар", "Никнар", "Никнар", "Никнар", "Никнар", "Никнар"]
+few = "Никнар"
 src = "indeclinable"
 
 [name."Lapu"]
 g = "m"
 anim = true
-sg = ["Lapu", "Lapu", "Lapu", "Lapu", "Lapu", "Lapu"]
-pl = ["Lapu", "Lapu", "Lapu", "Lapu", "Lapu", "Lapu"]
-few = "Lapu"
+sg = ["Лапу", "Лапу", "Лапу", "Лапу", "Лапу", "Лапу"]
+pl = ["Лапу", "Лапу", "Лапу", "Лапу", "Лапу", "Лапу"]
+few = "Лапу"
 src = "indeclinable"
 
 [name."Lechaim"]
 g = "m"
 anim = true
-sg = ["Lechaim", "Lechaim", "Lechaim", "Lechaim", "Lechaim", "Lechaim"]
-pl = ["Lechaim", "Lechaim", "Lechaim", "Lechaim", "Lechaim", "Lechaim"]
-few = "Lechaim"
+sg = ["Лехаим", "Лехаим", "Лехаим", "Лехаим", "Лехаим", "Лехаим"]
+pl = ["Лехаим", "Лехаим", "Лехаим", "Лехаим", "Лехаим", "Лехаим"]
+few = "Лехаим"
 src = "indeclinable"
 
 [name."Rebrol-nek"]
 g = "m"
 anim = true
-sg = ["Rebrol-nek", "Rebrol-nek", "Rebrol-nek", "Rebrol-nek", "Rebrol-nek", "Rebrol-nek"]
-pl = ["Rebrol-nek", "Rebrol-nek", "Rebrol-nek", "Rebrol-nek", "Rebrol-nek", "Rebrol-nek"]
-few = "Rebrol-nek"
+sg = ["Реброл-Нек", "Реброл-Нек", "Реброл-Нек", "Реброл-Нек", "Реброл-Нек", "Реброл-Нек"]
+pl = ["Реброл-Нек", "Реброл-Нек", "Реброл-Нек", "Реброл-Нек", "Реброл-Нек", "Реброл-Нек"]
+few = "Реброл-Нек"
 src = "indeclinable"
 
 [name."AlliWar Wickson"]
 g = "m"
 anim = true
-sg = ["AlliWar Wickson", "AlliWar Wickson", "AlliWar Wickson", "AlliWar Wickson", "AlliWar Wickson", "AlliWar Wickson"]
-pl = ["AlliWar Wickson", "AlliWar Wickson", "AlliWar Wickson", "AlliWar Wickson", "AlliWar Wickson", "AlliWar Wickson"]
-few = "AlliWar Wickson"
+sg = ["Алливар Виксон", "Алливар Виксон", "Алливар Виксон", "Алливар Виксон", "Алливар Виксон", "Алливар Виксон"]
+pl = ["Алливар Виксон", "Алливар Виксон", "Алливар Виксон", "Алливар Виксон", "Алливар Виксон", "Алливар Виксон"]
+few = "Алливар Виксон"
 src = "indeclinable"
 
 [name."Oguhmk"]
 g = "m"
 anim = true
-sg = ["Oguhmk", "Oguhmk", "Oguhmk", "Oguhmk", "Oguhmk", "Oguhmk"]
-pl = ["Oguhmk", "Oguhmk", "Oguhmk", "Oguhmk", "Oguhmk", "Oguhmk"]
-few = "Oguhmk"
+sg = ["Огухмк", "Огухмк", "Огухмк", "Огухмк", "Огухмк", "Огухмк"]
+pl = ["Огухмк", "Огухмк", "Огухмк", "Огухмк", "Огухмк", "Огухмк"]
+few = "Огухмк"
 src = "indeclinable"
 
 [name."Telloc Cyaj"]
 g = "m"
 anim = true
-sg = ["Telloc Cyaj", "Telloc Cyaj", "Telloc Cyaj", "Telloc Cyaj", "Telloc Cyaj", "Telloc Cyaj"]
-pl = ["Telloc Cyaj", "Telloc Cyaj", "Telloc Cyaj", "Telloc Cyaj", "Telloc Cyaj", "Telloc Cyaj"]
-few = "Telloc Cyaj"
+sg = ["Теллок Сайдж", "Теллок Сайдж", "Теллок Сайдж", "Теллок Сайдж", "Теллок Сайдж", "Теллок Сайдж"]
+pl = ["Теллок Сайдж", "Теллок Сайдж", "Теллок Сайдж", "Теллок Сайдж", "Теллок Сайдж", "Теллок Сайдж"]
+few = "Теллок Сайдж"
 src = "indeclinable"
 
 [name."Zarnesti"]
 g = "m"
 anim = true
-sg = ["Zarnesti", "Zarnesti", "Zarnesti", "Zarnesti", "Zarnesti", "Zarnesti"]
-pl = ["Zarnesti", "Zarnesti", "Zarnesti", "Zarnesti", "Zarnesti", "Zarnesti"]
-few = "Zarnesti"
+sg = ["Зэрнешть", "Зэрнешть", "Зэрнешть", "Зэрнешть", "Зэрнешть", "Зэрнешть"]
+pl = ["Зэрнешть", "Зэрнешть", "Зэрнешть", "Зэрнешть", "Зэрнешть", "Зэрнешть"]
+few = "Зэрнешть"
 src = "indeclinable"
 
 [name."Slanic"]
 g = "m"
 anim = true
-sg = ["Slanic", "Slanic", "Slanic", "Slanic", "Slanic", "Slanic"]
-pl = ["Slanic", "Slanic", "Slanic", "Slanic", "Slanic", "Slanic"]
-few = "Slanic"
+sg = ["Слэник", "Слэник", "Слэник", "Слэник", "Слэник", "Слэник"]
+pl = ["Слэник", "Слэник", "Слэник", "Слэник", "Слэник", "Слэник"]
+few = "Слэник"
 src = "indeclinable"
 
 [name."Nehoiasu"]
 g = "m"
 anim = true
-sg = ["Nehoiasu", "Nehoiasu", "Nehoiasu", "Nehoiasu", "Nehoiasu", "Nehoiasu"]
-pl = ["Nehoiasu", "Nehoiasu", "Nehoiasu", "Nehoiasu", "Nehoiasu", "Nehoiasu"]
-few = "Nehoiasu"
+sg = ["Нехояшу", "Нехояшу", "Нехояшу", "Нехояшу", "Нехояшу", "Нехояшу"]
+pl = ["Нехояшу", "Нехояшу", "Нехояшу", "Нехояшу", "Нехояшу", "Нехояшу"]
+few = "Нехояшу"
 src = "indeclinable"
 
 [name."Ludus"]
 g = "m"
 anim = true
-sg = ["Ludus", "Ludus", "Ludus", "Ludus", "Ludus", "Ludus"]
-pl = ["Ludus", "Ludus", "Ludus", "Ludus", "Ludus", "Ludus"]
-few = "Ludus"
+sg = ["Лудуш", "Лудуш", "Лудуш", "Лудуш", "Лудуш", "Лудуш"]
+pl = ["Лудуш", "Лудуш", "Лудуш", "Лудуш", "Лудуш", "Лудуш"]
+few = "Лудуш"
 src = "indeclinable"
 
 [name."Sighisoara"]
 g = "m"
 anim = true
-sg = ["Sighisoara", "Sighisoara", "Sighisoara", "Sighisoara", "Sighisoara", "Sighisoara"]
-pl = ["Sighisoara", "Sighisoara", "Sighisoara", "Sighisoara", "Sighisoara", "Sighisoara"]
-few = "Sighisoara"
+sg = ["Сигишоара", "Сигишоара", "Сигишоара", "Сигишоара", "Сигишоара", "Сигишоара"]
+pl = ["Сигишоара", "Сигишоара", "Сигишоара", "Сигишоара", "Сигишоара", "Сигишоара"]
+few = "Сигишоара"
 src = "indeclinable"
 
 [name."Nisipitu"]
 g = "m"
 anim = true
-sg = ["Nisipitu", "Nisipitu", "Nisipitu", "Nisipitu", "Nisipitu", "Nisipitu"]
-pl = ["Nisipitu", "Nisipitu", "Nisipitu", "Nisipitu", "Nisipitu", "Nisipitu"]
-few = "Nisipitu"
+sg = ["Нисипиту", "Нисипиту", "Нисипиту", "Нисипиту", "Нисипиту", "Нисипиту"]
+pl = ["Нисипиту", "Нисипиту", "Нисипиту", "Нисипиту", "Нисипиту", "Нисипиту"]
+few = "Нисипиту"
 src = "indeclinable"
 
 [name."Razboieni"]
 g = "m"
 anim = true
-sg = ["Razboieni", "Razboieni", "Razboieni", "Razboieni", "Razboieni", "Razboieni"]
-pl = ["Razboieni", "Razboieni", "Razboieni", "Razboieni", "Razboieni", "Razboieni"]
-few = "Razboieni"
+sg = ["Рэзбоень", "Рэзбоень", "Рэзбоень", "Рэзбоень", "Рэзбоень", "Рэзбоень"]
+pl = ["Рэзбоень", "Рэзбоень", "Рэзбоень", "Рэзбоень", "Рэзбоень", "Рэзбоень"]
+few = "Рэзбоень"
 src = "indeclinable"
 
 [name."Bicaz"]
 g = "m"
 anim = true
-sg = ["Bicaz", "Bicaz", "Bicaz", "Bicaz", "Bicaz", "Bicaz"]
-pl = ["Bicaz", "Bicaz", "Bicaz", "Bicaz", "Bicaz", "Bicaz"]
-few = "Bicaz"
+sg = ["Биказ", "Биказ", "Биказ", "Биказ", "Биказ", "Биказ"]
+pl = ["Биказ", "Биказ", "Биказ", "Биказ", "Биказ", "Биказ"]
+few = "Биказ"
 src = "indeclinable"
 
 [name."Dorohoi"]
 g = "m"
 anim = true
-sg = ["Dorohoi", "Dorohoi", "Dorohoi", "Dorohoi", "Dorohoi", "Dorohoi"]
-pl = ["Dorohoi", "Dorohoi", "Dorohoi", "Dorohoi", "Dorohoi", "Dorohoi"]
-few = "Dorohoi"
+sg = ["Дорохой", "Дорохой", "Дорохой", "Дорохой", "Дорохой", "Дорохой"]
+pl = ["Дорохой", "Дорохой", "Дорохой", "Дорохой", "Дорохой", "Дорохой"]
+few = "Дорохой"
 src = "indeclinable"
 
 [name."Vaslui"]
 g = "m"
 anim = true
-sg = ["Vaslui", "Vaslui", "Vaslui", "Vaslui", "Vaslui", "Vaslui"]
-pl = ["Vaslui", "Vaslui", "Vaslui", "Vaslui", "Vaslui", "Vaslui"]
-few = "Vaslui"
+sg = ["Васлуй", "Васлуй", "Васлуй", "Васлуй", "Васлуй", "Васлуй"]
+pl = ["Васлуй", "Васлуй", "Васлуй", "Васлуй", "Васлуй", "Васлуй"]
+few = "Васлуй"
 src = "indeclinable"
 
 [name."Fetesti"]
 g = "m"
 anim = true
-sg = ["Fetesti", "Fetesti", "Fetesti", "Fetesti", "Fetesti", "Fetesti"]
-pl = ["Fetesti", "Fetesti", "Fetesti", "Fetesti", "Fetesti", "Fetesti"]
-few = "Fetesti"
+sg = ["Фетешть", "Фетешть", "Фетешть", "Фетешть", "Фетешть", "Фетешть"]
+pl = ["Фетешть", "Фетешть", "Фетешть", "Фетешть", "Фетешть", "Фетешть"]
+few = "Фетешть"
 src = "indeclinable"
 
 [name."Tirgu Neamt"]
 g = "m"
 anim = true
-sg = ["Tirgu Neamt", "Tirgu Neamt", "Tirgu Neamt", "Tirgu Neamt", "Tirgu Neamt", "Tirgu Neamt"]
-pl = ["Tirgu Neamt", "Tirgu Neamt", "Tirgu Neamt", "Tirgu Neamt", "Tirgu Neamt", "Tirgu Neamt"]
-few = "Tirgu Neamt"
+sg = ["Тыргу-Нямц", "Тыргу-Нямц", "Тыргу-Нямц", "Тыргу-Нямц", "Тыргу-Нямц", "Тыргу-Нямц"]
+pl = ["Тыргу-Нямц", "Тыргу-Нямц", "Тыргу-Нямц", "Тыргу-Нямц", "Тыргу-Нямц", "Тыргу-Нямц"]
+few = "Тыргу-Нямц"
 src = "indeclinable"
 
 [name."Babadag"]
 g = "m"
 anim = true
-sg = ["Babadag", "Babadag", "Babadag", "Babadag", "Babadag", "Babadag"]
-pl = ["Babadag", "Babadag", "Babadag", "Babadag", "Babadag", "Babadag"]
-few = "Babadag"
+sg = ["Бабадаг", "Бабадаг", "Бабадаг", "Бабадаг", "Бабадаг", "Бабадаг"]
+pl = ["Бабадаг", "Бабадаг", "Бабадаг", "Бабадаг", "Бабадаг", "Бабадаг"]
+few = "Бабадаг"
 src = "indeclinable"
 
 [name."Zimnicea"]
 g = "m"
 anim = true
-sg = ["Zimnicea", "Zimnicea", "Zimnicea", "Zimnicea", "Zimnicea", "Zimnicea"]
-pl = ["Zimnicea", "Zimnicea", "Zimnicea", "Zimnicea", "Zimnicea", "Zimnicea"]
-few = "Zimnicea"
+sg = ["Зимнича", "Зимнича", "Зимнича", "Зимнича", "Зимнича", "Зимнича"]
+pl = ["Зимнича", "Зимнича", "Зимнича", "Зимнича", "Зимнича", "Зимнича"]
+few = "Зимнича"
 src = "indeclinable"
 
 [name."Zlatna"]
 g = "m"
 anim = true
-sg = ["Zlatna", "Zlatna", "Zlatna", "Zlatna", "Zlatna", "Zlatna"]
-pl = ["Zlatna", "Zlatna", "Zlatna", "Zlatna", "Zlatna", "Zlatna"]
-few = "Zlatna"
+sg = ["Златна", "Златна", "Златна", "Златна", "Златна", "Златна"]
+pl = ["Златна", "Златна", "Златна", "Златна", "Златна", "Златна"]
+few = "Златна"
 src = "indeclinable"
 
 [name."Jiu"]
 g = "m"
 anim = true
-sg = ["Jiu", "Jiu", "Jiu", "Jiu", "Jiu", "Jiu"]
-pl = ["Jiu", "Jiu", "Jiu", "Jiu", "Jiu", "Jiu"]
-few = "Jiu"
+sg = ["Жиу", "Жиу", "Жиу", "Жиу", "Жиу", "Жиу"]
+pl = ["Жиу", "Жиу", "Жиу", "Жиу", "Жиу", "Жиу"]
+few = "Жиу"
 src = "indeclinable"
 
 [name."Eforie"]
 g = "m"
 anim = true
-sg = ["Eforie", "Eforie", "Eforie", "Eforie", "Eforie", "Eforie"]
-pl = ["Eforie", "Eforie", "Eforie", "Eforie", "Eforie", "Eforie"]
-few = "Eforie"
+sg = ["Эфорие", "Эфорие", "Эфорие", "Эфорие", "Эфорие", "Эфорие"]
+pl = ["Эфорие", "Эфорие", "Эфорие", "Эфорие", "Эфорие", "Эфорие"]
+few = "Эфорие"
 src = "indeclinable"
 
 [name."Mamaia"]
 g = "m"
 anim = true
-sg = ["Mamaia", "Mamaia", "Mamaia", "Mamaia", "Mamaia", "Mamaia"]
-pl = ["Mamaia", "Mamaia", "Mamaia", "Mamaia", "Mamaia", "Mamaia"]
-few = "Mamaia"
+sg = ["Мамая", "Мамая", "Мамая", "Мамая", "Мамая", "Мамая"]
+pl = ["Мамая", "Мамая", "Мамая", "Мамая", "Мамая", "Мамая"]
+few = "Мамая"
 src = "indeclinable"
 
 [name."Silistra"]
 g = "m"
 anim = true
-sg = ["Silistra", "Silistra", "Silistra", "Silistra", "Silistra", "Silistra"]
-pl = ["Silistra", "Silistra", "Silistra", "Silistra", "Silistra", "Silistra"]
-few = "Silistra"
+sg = ["Силистра", "Силистра", "Силистра", "Силистра", "Силистра", "Силистра"]
+pl = ["Силистра", "Силистра", "Силистра", "Силистра", "Силистра", "Силистра"]
+few = "Силистра"
 src = "indeclinable"
 
 [name."Tulovo"]
 g = "m"
 anim = true
-sg = ["Tulovo", "Tulovo", "Tulovo", "Tulovo", "Tulovo", "Tulovo"]
-pl = ["Tulovo", "Tulovo", "Tulovo", "Tulovo", "Tulovo", "Tulovo"]
-few = "Tulovo"
+sg = ["Тулово", "Тулово", "Тулово", "Тулово", "Тулово", "Тулово"]
+pl = ["Тулово", "Тулово", "Тулово", "Тулово", "Тулово", "Тулово"]
+few = "Тулово"
 src = "indeclinable"
 
 [name."Panagyuritshte"]
 g = "m"
 anim = true
-sg = ["Panagyuritshte", "Panagyuritshte", "Panagyuritshte", "Panagyuritshte", "Panagyuritshte", "Panagyuritshte"]
-pl = ["Panagyuritshte", "Panagyuritshte", "Panagyuritshte", "Panagyuritshte", "Panagyuritshte", "Panagyuritshte"]
-few = "Panagyuritshte"
+sg = ["Панагюриште", "Панагюриште", "Панагюриште", "Панагюриште", "Панагюриште", "Панагюриште"]
+pl = ["Панагюриште", "Панагюриште", "Панагюриште", "Панагюриште", "Панагюриште", "Панагюриште"]
+few = "Панагюриште"
 src = "indeclinable"
 
 [name."Smolyan"]
 g = "m"
 anim = true
-sg = ["Smolyan", "Smolyan", "Smolyan", "Smolyan", "Smolyan", "Smolyan"]
-pl = ["Smolyan", "Smolyan", "Smolyan", "Smolyan", "Smolyan", "Smolyan"]
-few = "Smolyan"
+sg = ["Смолян", "Смолян", "Смолян", "Смолян", "Смолян", "Смолян"]
+pl = ["Смолян", "Смолян", "Смолян", "Смолян", "Смолян", "Смолян"]
+few = "Смолян"
 src = "indeclinable"
 
 [name."Kirklareli"]
 g = "m"
 anim = true
-sg = ["Kirklareli", "Kirklareli", "Kirklareli", "Kirklareli", "Kirklareli", "Kirklareli"]
-pl = ["Kirklareli", "Kirklareli", "Kirklareli", "Kirklareli", "Kirklareli", "Kirklareli"]
-few = "Kirklareli"
+sg = ["Кыркларели", "Кыркларели", "Кыркларели", "Кыркларели", "Кыркларели", "Кыркларели"]
+pl = ["Кыркларели", "Кыркларели", "Кыркларели", "Кыркларели", "Кыркларели", "Кыркларели"]
+few = "Кыркларели"
 src = "indeclinable"
 
 [name."Pernik"]
 g = "m"
 anim = true
-sg = ["Pernik", "Pernik", "Pernik", "Pernik", "Pernik", "Pernik"]
-pl = ["Pernik", "Pernik", "Pernik", "Pernik", "Pernik", "Pernik"]
-few = "Pernik"
+sg = ["Перник", "Перник", "Перник", "Перник", "Перник", "Перник"]
+pl = ["Перник", "Перник", "Перник", "Перник", "Перник", "Перник"]
+few = "Перник"
 src = "indeclinable"
 
 [name."Lom"]
 g = "m"
 anim = true
-sg = ["Lom", "Lom", "Lom", "Lom", "Lom", "Lom"]
-pl = ["Lom", "Lom", "Lom", "Lom", "Lom", "Lom"]
-few = "Lom"
+sg = ["Лом", "Лом", "Лом", "Лом", "Лом", "Лом"]
+pl = ["Лом", "Лом", "Лом", "Лом", "Лом", "Лом"]
+few = "Лом"
 src = "indeclinable"
 
 [name."Haskovo"]
 g = "m"
 anim = true
-sg = ["Haskovo", "Haskovo", "Haskovo", "Haskovo", "Haskovo", "Haskovo"]
-pl = ["Haskovo", "Haskovo", "Haskovo", "Haskovo", "Haskovo", "Haskovo"]
-few = "Haskovo"
+sg = ["Хасково", "Хасково", "Хасково", "Хасково", "Хасково", "Хасково"]
+pl = ["Хасково", "Хасково", "Хасково", "Хасково", "Хасково", "Хасково"]
+few = "Хасково"
 src = "indeclinable"
 
 [name."Dobrinishte"]
 g = "m"
 anim = true
-sg = ["Dobrinishte", "Dobrinishte", "Dobrinishte", "Dobrinishte", "Dobrinishte", "Dobrinishte"]
-pl = ["Dobrinishte", "Dobrinishte", "Dobrinishte", "Dobrinishte", "Dobrinishte", "Dobrinishte"]
-few = "Dobrinishte"
+sg = ["Добринище", "Добринище", "Добринище", "Добринище", "Добринище", "Добринище"]
+pl = ["Добринище", "Добринище", "Добринище", "Добринище", "Добринище", "Добринище"]
+few = "Добринище"
 src = "indeclinable"
 
 [name."Varvara"]
 g = "m"
 anim = true
-sg = ["Varvara", "Varvara", "Varvara", "Varvara", "Varvara", "Varvara"]
-pl = ["Varvara", "Varvara", "Varvara", "Varvara", "Varvara", "Varvara"]
-few = "Varvara"
+sg = ["Варвара", "Варвара", "Варвара", "Варвара", "Варвара", "Варвара"]
+pl = ["Варвара", "Варвара", "Варвара", "Варвара", "Варвара", "Варвара"]
+few = "Варвара"
 src = "indeclinable"
 
 [name."Oryahovo"]
 g = "m"
 anim = true
-sg = ["Oryahovo", "Oryahovo", "Oryahovo", "Oryahovo", "Oryahovo", "Oryahovo"]
-pl = ["Oryahovo", "Oryahovo", "Oryahovo", "Oryahovo", "Oryahovo", "Oryahovo"]
-few = "Oryahovo"
+sg = ["Оряхово", "Оряхово", "Оряхово", "Оряхово", "Оряхово", "Оряхово"]
+pl = ["Оряхово", "Оряхово", "Оряхово", "Оряхово", "Оряхово", "Оряхово"]
+few = "Оряхово"
 src = "indeclinable"
 
 [name."Troyan"]
 g = "m"
 anim = true
-sg = ["Troyan", "Troyan", "Troyan", "Troyan", "Troyan", "Troyan"]
-pl = ["Troyan", "Troyan", "Troyan", "Troyan", "Troyan", "Troyan"]
-few = "Troyan"
+sg = ["Троян", "Троян", "Троян", "Троян", "Троян", "Троян"]
+pl = ["Троян", "Троян", "Троян", "Троян", "Троян", "Троян"]
+few = "Троян"
 src = "indeclinable"
 
 [name."Lovech"]
 g = "m"
 anim = true
-sg = ["Lovech", "Lovech", "Lovech", "Lovech", "Lovech", "Lovech"]
-pl = ["Lovech", "Lovech", "Lovech", "Lovech", "Lovech", "Lovech"]
-few = "Lovech"
+sg = ["Ловеч", "Ловеч", "Ловеч", "Ловеч", "Ловеч", "Ловеч"]
+pl = ["Ловеч", "Ловеч", "Ловеч", "Ловеч", "Ловеч", "Ловеч"]
+few = "Ловеч"
 src = "indeclinable"
 
 [name."Sliven"]
 g = "m"
 anim = true
-sg = ["Sliven", "Sliven", "Sliven", "Sliven", "Sliven", "Sliven"]
-pl = ["Sliven", "Sliven", "Sliven", "Sliven", "Sliven", "Sliven"]
-few = "Sliven"
+sg = ["Сливен", "Сливен", "Сливен", "Сливен", "Сливен", "Сливен"]
+pl = ["Сливен", "Сливен", "Сливен", "Сливен", "Сливен", "Сливен"]
+few = "Сливен"
 src = "indeclinable"
 
 [name."Hebiwerie"]
 g = "m"
 anim = true
-sg = ["Hebiwerie", "Hebiwerie", "Hebiwerie", "Hebiwerie", "Hebiwerie", "Hebiwerie"]
-pl = ["Hebiwerie", "Hebiwerie", "Hebiwerie", "Hebiwerie", "Hebiwerie", "Hebiwerie"]
-few = "Hebiwerie"
+sg = ["Хебиверие", "Хебиверие", "Хебиверие", "Хебиверие", "Хебиверие", "Хебиверие"]
+pl = ["Хебиверие", "Хебиверие", "Хебиверие", "Хебиверие", "Хебиверие", "Хебиверие"]
+few = "Хебиверие"
 src = "indeclinable"
 
 [name."Possogroenoe"]
 g = "m"
 anim = true
-sg = ["Possogroenoe", "Possogroenoe", "Possogroenoe", "Possogroenoe", "Possogroenoe", "Possogroenoe"]
-pl = ["Possogroenoe", "Possogroenoe", "Possogroenoe", "Possogroenoe", "Possogroenoe", "Possogroenoe"]
-few = "Possogroenoe"
+sg = ["Поссогруну", "Поссогруну", "Поссогруну", "Поссогруну", "Поссогруну", "Поссогруну"]
+pl = ["Поссогруну", "Поссогруну", "Поссогруну", "Поссогруну", "Поссогруну", "Поссогруну"]
+few = "Поссогруну"
 src = "indeclinable"
 
 [name."Asidonhopo"]
 g = "m"
 anim = true
-sg = ["Asidonhopo", "Asidonhopo", "Asidonhopo", "Asidonhopo", "Asidonhopo", "Asidonhopo"]
-pl = ["Asidonhopo", "Asidonhopo", "Asidonhopo", "Asidonhopo", "Asidonhopo", "Asidonhopo"]
-few = "Asidonhopo"
+sg = ["Асидонхопо", "Асидонхопо", "Асидонхопо", "Асидонхопо", "Асидонхопо", "Асидонхопо"]
+pl = ["Асидонхопо", "Асидонхопо", "Асидонхопо", "Асидонхопо", "Асидонхопо", "Асидонхопо"]
+few = "Асидонхопо"
 src = "indeclinable"
 
 [name."Manlobbi"]
 g = "m"
 anim = true
-sg = ["Manlobbi", "Manlobbi", "Manlobbi", "Manlobbi", "Manlobbi", "Manlobbi"]
-pl = ["Manlobbi", "Manlobbi", "Manlobbi", "Manlobbi", "Manlobbi", "Manlobbi"]
-few = "Manlobbi"
+sg = ["Манлобби", "Манлобби", "Манлобби", "Манлобби", "Манлобби", "Манлобби"]
+pl = ["Манлобби", "Манлобби", "Манлобби", "Манлобби", "Манлобби", "Манлобби"]
+few = "Манлобби"
 src = "indeclinable"
 
 [name."Adjama"]
 g = "m"
 anim = true
-sg = ["Adjama", "Adjama", "Adjama", "Adjama", "Adjama", "Adjama"]
-pl = ["Adjama", "Adjama", "Adjama", "Adjama", "Adjama", "Adjama"]
-few = "Adjama"
+sg = ["Аджама", "Аджама", "Аджама", "Аджама", "Аджама", "Аджама"]
+pl = ["Аджама", "Аджама", "Аджама", "Аджама", "Аджама", "Аджама"]
+few = "Аджама"
 src = "indeclinable"
 
 [name."Pakka Pakka"]
 g = "m"
 anim = true
-sg = ["Pakka Pakka", "Pakka Pakka", "Pakka Pakka", "Pakka Pakka", "Pakka Pakka", "Pakka Pakka"]
-pl = ["Pakka Pakka", "Pakka Pakka", "Pakka Pakka", "Pakka Pakka", "Pakka Pakka", "Pakka Pakka"]
-few = "Pakka Pakka"
+sg = ["Пакка-Пакка", "Пакка-Пакка", "Пакка-Пакка", "Пакка-Пакка", "Пакка-Пакка", "Пакка-Пакка"]
+pl = ["Пакка-Пакка", "Пакка-Пакка", "Пакка-Пакка", "Пакка-Пакка", "Пакка-Пакка", "Пакка-Пакка"]
+few = "Пакка-Пакка"
 src = "indeclinable"
 
 [name."Kabalebo"]
 g = "m"
 anim = true
-sg = ["Kabalebo", "Kabalebo", "Kabalebo", "Kabalebo", "Kabalebo", "Kabalebo"]
-pl = ["Kabalebo", "Kabalebo", "Kabalebo", "Kabalebo", "Kabalebo", "Kabalebo"]
-few = "Kabalebo"
+sg = ["Кабалебо", "Кабалебо", "Кабалебо", "Кабалебо", "Кабалебо", "Кабалебо"]
+pl = ["Кабалебо", "Кабалебо", "Кабалебо", "Кабалебо", "Кабалебо", "Кабалебо"]
+few = "Кабалебо"
 src = "indeclinable"
 
 [name."Wonotobo"]
 g = "m"
 anim = true
-sg = ["Wonotobo", "Wonotobo", "Wonotobo", "Wonotobo", "Wonotobo", "Wonotobo"]
-pl = ["Wonotobo", "Wonotobo", "Wonotobo", "Wonotobo", "Wonotobo", "Wonotobo"]
-few = "Wonotobo"
+sg = ["Вонотобо", "Вонотобо", "Вонотобо", "Вонотобо", "Вонотобо", "Вонотобо"]
+pl = ["Вонотобо", "Вонотобо", "Вонотобо", "Вонотобо", "Вонотобо", "Вонотобо"]
+few = "Вонотобо"
 src = "indeclinable"
 
 [name."Akalapi"]
 g = "m"
 anim = true
-sg = ["Akalapi", "Akalapi", "Akalapi", "Akalapi", "Akalapi", "Akalapi"]
-pl = ["Akalapi", "Akalapi", "Akalapi", "Akalapi", "Akalapi", "Akalapi"]
-few = "Akalapi"
+sg = ["Акалапи", "Акалапи", "Акалапи", "Акалапи", "Акалапи", "Акалапи"]
+pl = ["Акалапи", "Акалапи", "Акалапи", "Акалапи", "Акалапи", "Акалапи"]
+few = "Акалапи"
 src = "indeclinable"
 
 [name."Sipaliwini"]
 g = "m"
 anim = true
-sg = ["Sipaliwini", "Sipaliwini", "Sipaliwini", "Sipaliwini", "Sipaliwini", "Sipaliwini"]
-pl = ["Sipaliwini", "Sipaliwini", "Sipaliwini", "Sipaliwini", "Sipaliwini", "Sipaliwini"]
-few = "Sipaliwini"
+sg = ["Сипаливини", "Сипаливини", "Сипаливини", "Сипаливини", "Сипаливини", "Сипаливини"]
+pl = ["Сипаливини", "Сипаливини", "Сипаливини", "Сипаливини", "Сипаливини", "Сипаливини"]
+few = "Сипаливини"
 src = "indeclinable"
 
 [name."Annootok"]
 g = "m"
 anim = true
-sg = ["Annootok", "Annootok", "Annootok", "Annootok", "Annootok", "Annootok"]
-pl = ["Annootok", "Annootok", "Annootok", "Annootok", "Annootok", "Annootok"]
-few = "Annootok"
+sg = ["Аннуток", "Аннуток", "Аннуток", "Аннуток", "Аннуток", "Аннуток"]
+pl = ["Аннуток", "Аннуток", "Аннуток", "Аннуток", "Аннуток", "Аннуток"]
+few = "Аннуток"
 src = "indeclinable"
 
 [name."Upernavik"]
 g = "m"
 anim = true
-sg = ["Upernavik", "Upernavik", "Upernavik", "Upernavik", "Upernavik", "Upernavik"]
-pl = ["Upernavik", "Upernavik", "Upernavik", "Upernavik", "Upernavik", "Upernavik"]
-few = "Upernavik"
+sg = ["Упернавик", "Упернавик", "Упернавик", "Упернавик", "Упернавик", "Упернавик"]
+pl = ["Упернавик", "Упернавик", "Упернавик", "Упернавик", "Упернавик", "Упернавик"]
+few = "Упернавик"
 src = "indeclinable"
 
 [name."Angmagssalik"]
 g = "m"
 anim = true
-sg = ["Angmagssalik", "Angmagssalik", "Angmagssalik", "Angmagssalik", "Angmagssalik", "Angmagssalik"]
-pl = ["Angmagssalik", "Angmagssalik", "Angmagssalik", "Angmagssalik", "Angmagssalik", "Angmagssalik"]
-few = "Angmagssalik"
+sg = ["Ангмагссалик", "Ангмагссалик", "Ангмагссалик", "Ангмагссалик", "Ангмагссалик", "Ангмагссалик"]
+pl = ["Ангмагссалик", "Ангмагссалик", "Ангмагссалик", "Ангмагссалик", "Ангмагссалик", "Ангмагссалик"]
+few = "Ангмагссалик"
 src = "indeclinable"
 
 [name."Aklavik"]
 g = "m"
 anim = true
-sg = ["Aklavik", "Aklavik", "Aklavik", "Aklavik", "Aklavik", "Aklavik"]
-pl = ["Aklavik", "Aklavik", "Aklavik", "Aklavik", "Aklavik", "Aklavik"]
-few = "Aklavik"
+sg = ["Аклавик", "Аклавик", "Аклавик", "Аклавик", "Аклавик", "Аклавик"]
+pl = ["Аклавик", "Аклавик", "Аклавик", "Аклавик", "Аклавик", "Аклавик"]
+few = "Аклавик"
 src = "indeclinable"
 
 [name."Inuvik"]
 g = "m"
 anim = true
-sg = ["Inuvik", "Inuvik", "Inuvik", "Inuvik", "Inuvik", "Inuvik"]
-pl = ["Inuvik", "Inuvik", "Inuvik", "Inuvik", "Inuvik", "Inuvik"]
-few = "Inuvik"
+sg = ["Инувик", "Инувик", "Инувик", "Инувик", "Инувик", "Инувик"]
+pl = ["Инувик", "Инувик", "Инувик", "Инувик", "Инувик", "Инувик"]
+few = "Инувик"
 src = "indeclinable"
 
 [name."Tuktoyaktuk"]
 g = "m"
 anim = true
-sg = ["Tuktoyaktuk", "Tuktoyaktuk", "Tuktoyaktuk", "Tuktoyaktuk", "Tuktoyaktuk", "Tuktoyaktuk"]
-pl = ["Tuktoyaktuk", "Tuktoyaktuk", "Tuktoyaktuk", "Tuktoyaktuk", "Tuktoyaktuk", "Tuktoyaktuk"]
-few = "Tuktoyaktuk"
+sg = ["Туктояктук", "Туктояктук", "Туктояктук", "Туктояктук", "Туктояктук", "Туктояктук"]
+pl = ["Туктояктук", "Туктояктук", "Туктояктук", "Туктояктук", "Туктояктук", "Туктояктук"]
+few = "Туктояктук"
 src = "indeclinable"
 
 [name."Chicoutimi"]
 g = "m"
 anim = true
-sg = ["Chicoutimi", "Chicoutimi", "Chicoutimi", "Chicoutimi", "Chicoutimi", "Chicoutimi"]
-pl = ["Chicoutimi", "Chicoutimi", "Chicoutimi", "Chicoutimi", "Chicoutimi", "Chicoutimi"]
-few = "Chicoutimi"
+sg = ["Шикутими", "Шикутими", "Шикутими", "Шикутими", "Шикутими", "Шикутими"]
+pl = ["Шикутими", "Шикутими", "Шикутими", "Шикутими", "Шикутими", "Шикутими"]
+few = "Шикутими"
 src = "indeclinable"
 
 [name."Ouiatchouane"]
 g = "m"
 anim = true
-sg = ["Ouiatchouane", "Ouiatchouane", "Ouiatchouane", "Ouiatchouane", "Ouiatchouane", "Ouiatchouane"]
-pl = ["Ouiatchouane", "Ouiatchouane", "Ouiatchouane", "Ouiatchouane", "Ouiatchouane", "Ouiatchouane"]
-few = "Ouiatchouane"
+sg = ["Уиатшуан", "Уиатшуан", "Уиатшуан", "Уиатшуан", "Уиатшуан", "Уиатшуан"]
+pl = ["Уиатшуан", "Уиатшуан", "Уиатшуан", "Уиатшуан", "Уиатшуан", "Уиатшуан"]
+few = "Уиатшуан"
 src = "indeclinable"
 
 [name."Chibougamau"]
 g = "m"
 anim = true
-sg = ["Chibougamau", "Chibougamau", "Chibougamau", "Chibougamau", "Chibougamau", "Chibougamau"]
-pl = ["Chibougamau", "Chibougamau", "Chibougamau", "Chibougamau", "Chibougamau", "Chibougamau"]
-few = "Chibougamau"
+sg = ["Шибугамо", "Шибугамо", "Шибугамо", "Шибугамо", "Шибугамо", "Шибугамо"]
+pl = ["Шибугамо", "Шибугамо", "Шибугамо", "Шибугамо", "Шибугамо", "Шибугамо"]
+few = "Шибугамо"
 src = "indeclinable"
 
 [name."Matagami"]
 g = "m"
 anim = true
-sg = ["Matagami", "Matagami", "Matagami", "Matagami", "Matagami", "Matagami"]
-pl = ["Matagami", "Matagami", "Matagami", "Matagami", "Matagami", "Matagami"]
-few = "Matagami"
+sg = ["Матагами", "Матагами", "Матагами", "Матагами", "Матагами", "Матагами"]
+pl = ["Матагами", "Матагами", "Матагами", "Матагами", "Матагами", "Матагами"]
+few = "Матагами"
 src = "indeclinable"
 
 [name."Kipawa"]
 g = "m"
 anim = true
-sg = ["Kipawa", "Kipawa", "Kipawa", "Kipawa", "Kipawa", "Kipawa"]
-pl = ["Kipawa", "Kipawa", "Kipawa", "Kipawa", "Kipawa", "Kipawa"]
-few = "Kipawa"
+sg = ["Кипава", "Кипава", "Кипава", "Кипава", "Кипава", "Кипава"]
+pl = ["Кипава", "Кипава", "Кипава", "Кипава", "Кипава", "Кипава"]
+few = "Кипава"
 src = "indeclinable"
 
 [name."Kinojevis"]
 g = "m"
 anim = true
-sg = ["Kinojevis", "Kinojevis", "Kinojevis", "Kinojevis", "Kinojevis", "Kinojevis"]
-pl = ["Kinojevis", "Kinojevis", "Kinojevis", "Kinojevis", "Kinojevis", "Kinojevis"]
-few = "Kinojevis"
+sg = ["Киноджевис", "Киноджевис", "Киноджевис", "Киноджевис", "Киноджевис", "Киноджевис"]
+pl = ["Киноджевис", "Киноджевис", "Киноджевис", "Киноджевис", "Киноджевис", "Киноджевис"]
+few = "Киноджевис"
 src = "indeclinable"
 
 [name."Abitibi"]
 g = "m"
 anim = true
-sg = ["Abitibi", "Abitibi", "Abitibi", "Abitibi", "Abitibi", "Abitibi"]
-pl = ["Abitibi", "Abitibi", "Abitibi", "Abitibi", "Abitibi", "Abitibi"]
-few = "Abitibi"
+sg = ["Абитиби", "Абитиби", "Абитиби", "Абитиби", "Абитиби", "Абитиби"]
+pl = ["Абитиби", "Абитиби", "Абитиби", "Абитиби", "Абитиби", "Абитиби"]
+few = "Абитиби"
 src = "indeclinable"
 
 [name."Maganasipi"]
 g = "m"
 anim = true
-sg = ["Maganasipi", "Maganasipi", "Maganasipi", "Maganasipi", "Maganasipi", "Maganasipi"]
-pl = ["Maganasipi", "Maganasipi", "Maganasipi", "Maganasipi", "Maganasipi", "Maganasipi"]
-few = "Maganasipi"
+sg = ["Маганасипи", "Маганасипи", "Маганасипи", "Маганасипи", "Маганасипи", "Маганасипи"]
+pl = ["Маганасипи", "Маганасипи", "Маганасипи", "Маганасипи", "Маганасипи", "Маганасипи"]
+few = "Маганасипи"
 src = "indeclinable"
 
 [name."Akureyri"]
 g = "m"
 anim = true
-sg = ["Akureyri", "Akureyri", "Akureyri", "Akureyri", "Akureyri", "Akureyri"]
-pl = ["Akureyri", "Akureyri", "Akureyri", "Akureyri", "Akureyri", "Akureyri"]
-few = "Akureyri"
+sg = ["Акюрейри", "Акюрейри", "Акюрейри", "Акюрейри", "Акюрейри", "Акюрейри"]
+pl = ["Акюрейри", "Акюрейри", "Акюрейри", "Акюрейри", "Акюрейри", "Акюрейри"]
+few = "Акюрейри"
 src = "indeclinable"
 
 [name."Kopasker"]
 g = "m"
 anim = true
-sg = ["Kopasker", "Kopasker", "Kopasker", "Kopasker", "Kopasker", "Kopasker"]
-pl = ["Kopasker", "Kopasker", "Kopasker", "Kopasker", "Kopasker", "Kopasker"]
-few = "Kopasker"
+sg = ["Коупаскер", "Коупаскер", "Коупаскер", "Коупаскер", "Коупаскер", "Коупаскер"]
+pl = ["Коупаскер", "Коупаскер", "Коупаскер", "Коупаскер", "Коупаскер", "Коупаскер"]
+few = "Коупаскер"
 src = "indeclinable"
 
 [name."Budereyri"]
 g = "m"
 anim = true
-sg = ["Budereyri", "Budereyri", "Budereyri", "Budereyri", "Budereyri", "Budereyri"]
-pl = ["Budereyri", "Budereyri", "Budereyri", "Budereyri", "Budereyri", "Budereyri"]
-few = "Budereyri"
+sg = ["Бударейри", "Бударейри", "Бударейри", "Бударейри", "Бударейри", "Бударейри"]
+pl = ["Бударейри", "Бударейри", "Бударейри", "Бударейри", "Бударейри", "Бударейри"]
+few = "Бударейри"
 src = "indeclinable"
 
 [name."Akranes"]
 g = "m"
 anim = true
-sg = ["Akranes", "Akranes", "Akranes", "Akranes", "Akranes", "Akranes"]
-pl = ["Akranes", "Akranes", "Akranes", "Akranes", "Akranes", "Akranes"]
-few = "Akranes"
+sg = ["Акранес", "Акранес", "Акранес", "Акранес", "Акранес", "Акранес"]
+pl = ["Акранес", "Акранес", "Акранес", "Акранес", "Акранес", "Акранес"]
+few = "Акранес"
 src = "indeclinable"
 
 [name."Bordeyri"]
 g = "m"
 anim = true
-sg = ["Bordeyri", "Bordeyri", "Bordeyri", "Bordeyri", "Bordeyri", "Bordeyri"]
-pl = ["Bordeyri", "Bordeyri", "Bordeyri", "Bordeyri", "Bordeyri", "Bordeyri"]
-few = "Bordeyri"
+sg = ["Бордейри", "Бордейри", "Бордейри", "Бордейри", "Бордейри", "Бордейри"]
+pl = ["Бордейри", "Бордейри", "Бордейри", "Бордейри", "Бордейри", "Бордейри"]
+few = "Бордейри"
 src = "indeclinable"
 
 [name."Holmavik"]
 g = "m"
 anim = true
-sg = ["Holmavik", "Holmavik", "Holmavik", "Holmavik", "Holmavik", "Holmavik"]
-pl = ["Holmavik", "Holmavik", "Holmavik", "Holmavik", "Holmavik", "Holmavik"]
-few = "Holmavik"
+sg = ["Хоульмавик", "Хоульмавик", "Хоульмавик", "Хоульмавик", "Хоульмавик", "Хоульмавик"]
+pl = ["Хоульмавик", "Хоульмавик", "Хоульмавик", "Хоульмавик", "Хоульмавик", "Хоульмавик"]
+few = "Хоульмавик"
 src = "indeclinable"
 
 [name."Ga'er"]
 g = "m"
 anim = true
-sg = ["Ga'er", "Ga'er", "Ga'er", "Ga'er", "Ga'er", "Ga'er"]
-pl = ["Ga'er", "Ga'er", "Ga'er", "Ga'er", "Ga'er", "Ga'er"]
-few = "Ga'er"
+sg = ["Гаэр", "Гаэр", "Гаэр", "Гаэр", "Гаэр", "Гаэр"]
+pl = ["Гаэр", "Гаэр", "Гаэр", "Гаэр", "Гаэр", "Гаэр"]
+few = "Гаэр"
 src = "indeclinable"
 
 [name."Zhangmu"]
 g = "m"
 anim = true
-sg = ["Zhangmu", "Zhangmu", "Zhangmu", "Zhangmu", "Zhangmu", "Zhangmu"]
-pl = ["Zhangmu", "Zhangmu", "Zhangmu", "Zhangmu", "Zhangmu", "Zhangmu"]
-few = "Zhangmu"
+sg = ["Чжанму", "Чжанму", "Чжанму", "Чжанму", "Чжанму", "Чжанму"]
+pl = ["Чжанму", "Чжанму", "Чжанму", "Чжанму", "Чжанму", "Чжанму"]
+few = "Чжанму"
 src = "indeclinable"
 
 [name."Rikaze"]
 g = "m"
 anim = true
-sg = ["Rikaze", "Rikaze", "Rikaze", "Rikaze", "Rikaze", "Rikaze"]
-pl = ["Rikaze", "Rikaze", "Rikaze", "Rikaze", "Rikaze", "Rikaze"]
-few = "Rikaze"
+sg = ["Жикацзе", "Жикацзе", "Жикацзе", "Жикацзе", "Жикацзе", "Жикацзе"]
+pl = ["Жикацзе", "Жикацзе", "Жикацзе", "Жикацзе", "Жикацзе", "Жикацзе"]
+few = "Жикацзе"
 src = "indeclinable"
 
 [name."Jiangji"]
 g = "m"
 anim = true
-sg = ["Jiangji", "Jiangji", "Jiangji", "Jiangji", "Jiangji", "Jiangji"]
-pl = ["Jiangji", "Jiangji", "Jiangji", "Jiangji", "Jiangji", "Jiangji"]
-few = "Jiangji"
+sg = ["Цзянцзи", "Цзянцзи", "Цзянцзи", "Цзянцзи", "Цзянцзи", "Цзянцзи"]
+pl = ["Цзянцзи", "Цзянцзи", "Цзянцзи", "Цзянцзи", "Цзянцзи", "Цзянцзи"]
+few = "Цзянцзи"
 src = "indeclinable"
 
 [name."Changdu"]
 g = "m"
 anim = true
-sg = ["Changdu", "Changdu", "Changdu", "Changdu", "Changdu", "Changdu"]
-pl = ["Changdu", "Changdu", "Changdu", "Changdu", "Changdu", "Changdu"]
-few = "Changdu"
+sg = ["Чанду", "Чанду", "Чанду", "Чанду", "Чанду", "Чанду"]
+pl = ["Чанду", "Чанду", "Чанду", "Чанду", "Чанду", "Чанду"]
+few = "Чанду"
 src = "indeclinable"
 
 [name."Linzhi"]
 g = "m"
 anim = true
-sg = ["Linzhi", "Linzhi", "Linzhi", "Linzhi", "Linzhi", "Linzhi"]
-pl = ["Linzhi", "Linzhi", "Linzhi", "Linzhi", "Linzhi", "Linzhi"]
-few = "Linzhi"
+sg = ["Линьчжи", "Линьчжи", "Линьчжи", "Линьчжи", "Линьчжи", "Линьчжи"]
+pl = ["Линьчжи", "Линьчжи", "Линьчжи", "Линьчжи", "Линьчжи", "Линьчжи"]
+few = "Линьчжи"
 src = "indeclinable"
 
 [name."Shigatse"]
 g = "m"
 anim = true
-sg = ["Shigatse", "Shigatse", "Shigatse", "Shigatse", "Shigatse", "Shigatse"]
-pl = ["Shigatse", "Shigatse", "Shigatse", "Shigatse", "Shigatse", "Shigatse"]
-few = "Shigatse"
+sg = ["Шигадзе", "Шигадзе", "Шигадзе", "Шигадзе", "Шигадзе", "Шигадзе"]
+pl = ["Шигадзе", "Шигадзе", "Шигадзе", "Шигадзе", "Шигадзе", "Шигадзе"]
+few = "Шигадзе"
 src = "indeclinable"
 
 [name."Gyantse"]
 g = "m"
 anim = true
-sg = ["Gyantse", "Gyantse", "Gyantse", "Gyantse", "Gyantse", "Gyantse"]
-pl = ["Gyantse", "Gyantse", "Gyantse", "Gyantse", "Gyantse", "Gyantse"]
-few = "Gyantse"
+sg = ["Гьянгдзе", "Гьянгдзе", "Гьянгдзе", "Гьянгдзе", "Гьянгдзе", "Гьянгдзе"]
+pl = ["Гьянгдзе", "Гьянгдзе", "Гьянгдзе", "Гьянгдзе", "Гьянгдзе", "Гьянгдзе"]
+few = "Гьянгдзе"
 src = "indeclinable"
 
 [name."Ganden"]
 g = "m"
 anim = true
-sg = ["Ganden", "Ganden", "Ganden", "Ganden", "Ganden", "Ganden"]
-pl = ["Ganden", "Ganden", "Ganden", "Ganden", "Ganden", "Ganden"]
-few = "Ganden"
+sg = ["Ганден", "Ганден", "Ганден", "Ганден", "Ганден", "Ганден"]
+pl = ["Ганден", "Ганден", "Ганден", "Ганден", "Ганден", "Ганден"]
+few = "Ганден"
 src = "indeclinable"
 
 [name."Tsurphu"]
 g = "m"
 anim = true
-sg = ["Tsurphu", "Tsurphu", "Tsurphu", "Tsurphu", "Tsurphu", "Tsurphu"]
-pl = ["Tsurphu", "Tsurphu", "Tsurphu", "Tsurphu", "Tsurphu", "Tsurphu"]
-few = "Tsurphu"
+sg = ["Цурпху", "Цурпху", "Цурпху", "Цурпху", "Цурпху", "Цурпху"]
+pl = ["Цурпху", "Цурпху", "Цурпху", "Цурпху", "Цурпху", "Цурпху"]
+few = "Цурпху"
 src = "indeclinable"
 
 [name."Lhasa"]
 g = "m"
 anim = true
-sg = ["Lhasa", "Lhasa", "Lhasa", "Lhasa", "Lhasa", "Lhasa"]
-pl = ["Lhasa", "Lhasa", "Lhasa", "Lhasa", "Lhasa", "Lhasa"]
-few = "Lhasa"
+sg = ["Лхаса", "Лхаса", "Лхаса", "Лхаса", "Лхаса", "Лхаса"]
+pl = ["Лхаса", "Лхаса", "Лхаса", "Лхаса", "Лхаса", "Лхаса"]
+few = "Лхаса"
 src = "indeclinable"
 
 [name."Tsedong"]
 g = "m"
 anim = true
-sg = ["Tsedong", "Tsedong", "Tsedong", "Tsedong", "Tsedong", "Tsedong"]
-pl = ["Tsedong", "Tsedong", "Tsedong", "Tsedong", "Tsedong", "Tsedong"]
-few = "Tsedong"
+sg = ["Цедонг", "Цедонг", "Цедонг", "Цедонг", "Цедонг", "Цедонг"]
+pl = ["Цедонг", "Цедонг", "Цедонг", "Цедонг", "Цедонг", "Цедонг"]
+few = "Цедонг"
 src = "indeclinable"
 
 [name."Drepung"]
 g = "m"
 anim = true
-sg = ["Drepung", "Drepung", "Drepung", "Drepung", "Drepung", "Drepung"]
-pl = ["Drepung", "Drepung", "Drepung", "Drepung", "Drepung", "Drepung"]
-few = "Drepung"
+sg = ["Дрепунг", "Дрепунг", "Дрепунг", "Дрепунг", "Дрепунг", "Дрепунг"]
+pl = ["Дрепунг", "Дрепунг", "Дрепунг", "Дрепунг", "Дрепунг", "Дрепунг"]
+few = "Дрепунг"
 src = "indeclinable"
 
 [name."Azura"]
 g = "m"
 anim = true
-sg = ["Azura", "Azura", "Azura", "Azura", "Azura", "Azura"]
-pl = ["Azura", "Azura", "Azura", "Azura", "Azura", "Azura"]
-few = "Azura"
+sg = ["Азура", "Азура", "Азура", "Азура", "Азура", "Азура"]
+pl = ["Азура", "Азура", "Азура", "Азура", "Азура", "Азура"]
+few = "Азура"
 src = "indeclinable"
 
 [name."Blaze"]
 g = "m"
 anim = true
-sg = ["Blaze", "Blaze", "Blaze", "Blaze", "Blaze", "Blaze"]
-pl = ["Blaze", "Blaze", "Blaze", "Blaze", "Blaze", "Blaze"]
-few = "Blaze"
+sg = ["Блейз", "Блейз", "Блейз", "Блейз", "Блейз", "Блейз"]
+pl = ["Блейз", "Блейз", "Блейз", "Блейз", "Блейз", "Блейз"]
+few = "Блейз"
 src = "indeclinable"
 
 [name."Breanna"]
 g = "m"
 anim = true
-sg = ["Breanna", "Breanna", "Breanna", "Breanna", "Breanna", "Breanna"]
-pl = ["Breanna", "Breanna", "Breanna", "Breanna", "Breanna", "Breanna"]
-few = "Breanna"
+sg = ["Брианна", "Брианна", "Брианна", "Брианна", "Брианна", "Брианна"]
+pl = ["Брианна", "Брианна", "Брианна", "Брианна", "Брианна", "Брианна"]
+few = "Брианна"
 src = "indeclinable"
 
 [name."Breezy"]
 g = "m"
 anim = true
-sg = ["Breezy", "Breezy", "Breezy", "Breezy", "Breezy", "Breezy"]
-pl = ["Breezy", "Breezy", "Breezy", "Breezy", "Breezy", "Breezy"]
-few = "Breezy"
+sg = ["Бризи", "Бризи", "Бризи", "Бризи", "Бризи", "Бризи"]
+pl = ["Бризи", "Бризи", "Бризи", "Бризи", "Бризи", "Бризи"]
+few = "Бризи"
 src = "indeclinable"
 
 [name."Dharma"]
 g = "m"
 anim = true
-sg = ["Dharma", "Dharma", "Dharma", "Dharma", "Dharma", "Dharma"]
-pl = ["Dharma", "Dharma", "Dharma", "Dharma", "Dharma", "Dharma"]
-few = "Dharma"
+sg = ["Дхарма", "Дхарма", "Дхарма", "Дхарма", "Дхарма", "Дхарма"]
+pl = ["Дхарма", "Дхарма", "Дхарма", "Дхарма", "Дхарма", "Дхарма"]
+few = "Дхарма"
 src = "indeclinable"
 
 [name."Feather"]
 g = "m"
 anim = true
-sg = ["Feather", "Feather", "Feather", "Feather", "Feather", "Feather"]
-pl = ["Feather", "Feather", "Feather", "Feather", "Feather", "Feather"]
-few = "Feather"
+sg = ["Фезер", "Фезер", "Фезер", "Фезер", "Фезер", "Фезер"]
+pl = ["Фезер", "Фезер", "Фезер", "Фезер", "Фезер", "Фезер"]
+few = "Фезер"
 src = "indeclinable"
 
 [name."Jasmine"]
 g = "m"
 anim = true
-sg = ["Jasmine", "Jasmine", "Jasmine", "Jasmine", "Jasmine", "Jasmine"]
-pl = ["Jasmine", "Jasmine", "Jasmine", "Jasmine", "Jasmine", "Jasmine"]
-few = "Jasmine"
+sg = ["Жасмин", "Жасмин", "Жасмин", "Жасмин", "Жасмин", "Жасмин"]
+pl = ["Жасмин", "Жасмин", "Жасмин", "Жасмин", "Жасмин", "Жасмин"]
+few = "Жасмин"
 src = "indeclinable"
 
 [name."Luna"]
 g = "m"
 anim = true
-sg = ["Luna", "Luna", "Luna", "Luna", "Luna", "Luna"]
-pl = ["Luna", "Luna", "Luna", "Luna", "Luna", "Luna"]
-few = "Luna"
+sg = ["Луна", "Луна", "Луна", "Луна", "Луна", "Луна"]
+pl = ["Луна", "Луна", "Луна", "Луна", "Луна", "Луна"]
+few = "Луна"
 src = "indeclinable"
 
 [name."Melody"]
 g = "m"
 anim = true
-sg = ["Melody", "Melody", "Melody", "Melody", "Melody", "Melody"]
-pl = ["Melody", "Melody", "Melody", "Melody", "Melody", "Melody"]
-few = "Melody"
+sg = ["Мелоди", "Мелоди", "Мелоди", "Мелоди", "Мелоди", "Мелоди"]
+pl = ["Мелоди", "Мелоди", "Мелоди", "Мелоди", "Мелоди", "Мелоди"]
+few = "Мелоди"
 src = "indeclinable"
 
 [name."Moonjava"]
 g = "m"
 anim = true
-sg = ["Moonjava", "Moonjava", "Moonjava", "Moonjava", "Moonjava", "Moonjava"]
-pl = ["Moonjava", "Moonjava", "Moonjava", "Moonjava", "Moonjava", "Moonjava"]
-few = "Moonjava"
+sg = ["Мунджава", "Мунджава", "Мунджава", "Мунджава", "Мунджава", "Мунджава"]
+pl = ["Мунджава", "Мунджава", "Мунджава", "Мунджава", "Мунджава", "Мунджава"]
+few = "Мунджава"
 src = "indeclinable"
 
 [name."Petal"]
 g = "m"
 anim = true
-sg = ["Petal", "Petal", "Petal", "Petal", "Petal", "Petal"]
-pl = ["Petal", "Petal", "Petal", "Petal", "Petal", "Petal"]
-few = "Petal"
+sg = ["Петал", "Петал", "Петал", "Петал", "Петал", "Петал"]
+pl = ["Петал", "Петал", "Петал", "Петал", "Петал", "Петал"]
+few = "Петал"
 src = "indeclinable"
 
 [name."Rhiannon"]
 g = "m"
 anim = true
-sg = ["Rhiannon", "Rhiannon", "Rhiannon", "Rhiannon", "Rhiannon", "Rhiannon"]
-pl = ["Rhiannon", "Rhiannon", "Rhiannon", "Rhiannon", "Rhiannon", "Rhiannon"]
-few = "Rhiannon"
+sg = ["Рианнон", "Рианнон", "Рианнон", "Рианнон", "Рианнон", "Рианнон"]
+pl = ["Рианнон", "Рианнон", "Рианнон", "Рианнон", "Рианнон", "Рианнон"]
+few = "Рианнон"
 src = "indeclinable"
 
 [name."Starla"]
 g = "m"
 anim = true
-sg = ["Starla", "Starla", "Starla", "Starla", "Starla", "Starla"]
-pl = ["Starla", "Starla", "Starla", "Starla", "Starla", "Starla"]
-few = "Starla"
+sg = ["Старла", "Старла", "Старла", "Старла", "Старла", "Старла"]
+pl = ["Старла", "Старла", "Старла", "Старла", "Старла", "Старла"]
+few = "Старла"
 src = "indeclinable"
 
 [name."Tranquilla"]
 g = "m"
 anim = true
-sg = ["Tranquilla", "Tranquilla", "Tranquilla", "Tranquilla", "Tranquilla", "Tranquilla"]
-pl = ["Tranquilla", "Tranquilla", "Tranquilla", "Tranquilla", "Tranquilla", "Tranquilla"]
-few = "Tranquilla"
+sg = ["Транквилла", "Транквилла", "Транквилла", "Транквилла", "Транквилла", "Транквилла"]
+pl = ["Транквилла", "Транквилла", "Транквилла", "Транквилла", "Транквилла", "Транквилла"]
+few = "Транквилла"
 src = "indeclinable"
 
 [name."Windsong"]
 g = "m"
 anim = true
-sg = ["Windsong", "Windsong", "Windsong", "Windsong", "Windsong", "Windsong"]
-pl = ["Windsong", "Windsong", "Windsong", "Windsong", "Windsong", "Windsong"]
-few = "Windsong"
+sg = ["Виндсонг", "Виндсонг", "Виндсонг", "Виндсонг", "Виндсонг", "Виндсонг"]
+pl = ["Виндсонг", "Виндсонг", "Виндсонг", "Виндсонг", "Виндсонг", "Виндсонг"]
+few = "Виндсонг"
 src = "indeclinable"
 
 [name."Zennia"]
 g = "m"
 anim = true
-sg = ["Zennia", "Zennia", "Zennia", "Zennia", "Zennia", "Zennia"]
-pl = ["Zennia", "Zennia", "Zennia", "Zennia", "Zennia", "Zennia"]
-few = "Zennia"
+sg = ["Зенния", "Зенния", "Зенния", "Зенния", "Зенния", "Зенния"]
+pl = ["Зенния", "Зенния", "Зенния", "Зенния", "Зенния", "Зенния"]
+few = "Зенния"
 src = "indeclinable"
 
 [name."Zoe"]
 g = "m"
 anim = true
-sg = ["Zoe", "Zoe", "Zoe", "Zoe", "Zoe", "Zoe"]
-pl = ["Zoe", "Zoe", "Zoe", "Zoe", "Zoe", "Zoe"]
-few = "Zoe"
+sg = ["Зои", "Зои", "Зои", "Зои", "Зои", "Зои"]
+pl = ["Зои", "Зои", "Зои", "Зои", "Зои", "Зои"]
+few = "Зои"
 src = "indeclinable"
 
 [name."Zora"]
 g = "m"
 anim = true
-sg = ["Zora", "Zora", "Zora", "Zora", "Zora", "Zora"]
-pl = ["Zora", "Zora", "Zora", "Zora", "Zora", "Zora"]
-few = "Zora"
+sg = ["Зора", "Зора", "Зора", "Зора", "Зора", "Зора"]
+pl = ["Зора", "Зора", "Зора", "Зора", "Зора", "Зора"]
+few = "Зора"
 src = "indeclinable"

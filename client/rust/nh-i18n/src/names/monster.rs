@@ -271,7 +271,11 @@ impl MonsterName {
                 title,
             } => {
                 let mut n = RuName::new(noun(section, title));
-                n.tails.push(Tail::Text(name.clone()));
+                // the engine's own names are Russian (Асидонхопо, Ицхак)
+                n.tails.push(match lex.noun("name", name) {
+                    Some(who) => Tail::Same(Box::new(RuName::new(who.clone()))),
+                    None => Tail::Text(name.clone()),
+                });
                 n
             }
             MonsterKind::Of { title, of } => {
@@ -363,8 +367,9 @@ mod tests {
         assert_eq!(ru("dog called Fido", Case::Gen), "собаки по имени Fido");
         assert_eq!(
             ru("Asidonhopo the invisible shopkeeper", Case::Dat),
-            "невидимому лавочнику Asidonhopo"
+            "невидимому лавочнику Асидонхопо"
         );
+        assert_eq!(ru("Izchak the shopkeeper", Case::Dat), "лавочнику Ицхаку");
         assert_eq!(
             ru("the high priestess of Moloch", Case::Nom),
             "верховная жрица Молоха"
@@ -374,7 +379,7 @@ mod tests {
             "мятежного ангела Тота"
         );
         assert_eq!(ru("Bob's ghost", Case::Ins), "привидением Bob");
-        assert_eq!(ru("Asidonhopo's", Case::Gen), "Asidonhopo");
+        assert_eq!(ru("Asidonhopo's", Case::Gen), "Асидонхопо");
         assert_eq!(ru("the gnome's", Case::Gen), "гнома");
         assert_eq!(ru("the gnome lords'", Case::Gen), "лордов гномов");
         assert_eq!(ru("It", Case::Dat), "кому-то");
