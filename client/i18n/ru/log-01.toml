@@ -1,4 +1,4 @@
-# R6, messages batch 1: the most shown log messages of soak seeds 1..8
+# R6, log messages batch 1: the most shown log messages of soak seeds 1..8
 # (i18n-coverage --todo-kind message), and the occupations they name.
 # Syntax: nh-i18n's template.rs; not_terms: English words that are not
 # the glossary's terms there.
