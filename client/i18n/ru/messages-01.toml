@@ -675,7 +675,7 @@ ru = "Вы щёлкаете кнутом в сторону {1:gen}."
 
 [a4b5a648498c]
 en = "You flip through the pages of %s."
-ru = "Вы листаете {1:acc}."
+ru = "Вы листаете {1:acc:own}."
 
 [a722e727991a]
 en = "Crash!"
