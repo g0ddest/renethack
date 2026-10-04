@@ -15,9 +15,10 @@ use std::rc::Rc;
 
 use godot::classes::base_material_3d::BillboardMode;
 use godot::classes::image::{Format, Interpolation};
-use godot::classes::{Image, Label3D, Node, ProjectSettings};
+use godot::classes::light_3d::Param as LightParam;
+use godot::classes::{DirectionalLight3D, Image, Label3D, Node, ProjectSettings, Skeleton3D};
 use godot::prelude::*;
-use nh_protocol::Catalog;
+use nh_protocol::{Catalog, mg};
 use nh_world::achievements::{Achievement, Achievements, Subject};
 
 use crate::art::{Model, ModelLook, Pose};
@@ -38,8 +39,16 @@ const STEAM_SIDE: i32 = 64;
 const SUBJECT: i32 = 200;
 /// The part of the field's diameter a subject's diagonal spans.
 const SUBJECT_SPAN: f32 = 0.9;
-/// The part of a hero's figure (from the top) a portrait shows.
-const PORTRAIT: f32 = 0.52;
+/// A portrait: the head (chin to crown) is this part of the field's
+/// diameter, the face this part of it above the field's middle, and a hat
+/// may widen the field up to this much to keep its top inside.
+const HEAD_SHARE: f32 = 0.4;
+const FACE_ABOVE: f32 = 0.12;
+const HAT_ROOM: f32 = 1.35;
+/// A portrait's view: nearly level and from the right at three quarters
+/// (the stage's own looks down from higher, for things on a floor).
+const PORTRAIT_PITCH: f32 = -6.0;
+const PORTRAIT_YAW: f32 = 24.0;
 
 /// The glyph an emblem is drawn as.
 fn emblem_glyph(name: &str) -> Option<Glyph> {
@@ -111,7 +120,7 @@ pub(crate) fn medallion(
     let c = n / 2.0;
     let outer = c - 1.5;
     let rim = n * 0.075;
-    let inner = outer - rim;
+    let inner = field_radius(side);
     let (gold_dim, gold, gold_bright) = (rgb(0x6e5328), rgb(0xb8893b), rgb(0xf0d48c));
     let (field_mid, field_edge) = (rgb(0x33271c), rgb(0x0b0806));
     let dark = rgb(0x120c07);
@@ -192,6 +201,12 @@ pub(crate) fn medallion(
     out
 }
 
+/// The radius of a medallion's field (inside its rim).
+fn field_radius(side: usize) -> f32 {
+    let n = side as f32;
+    n / 2.0 - 1.5 - n * 0.075
+}
+
 /// The locked state: darkened and nearly grey.
 pub(crate) fn locked(rgba: &[u8]) -> Vec<u8> {
     rgba.chunks(4)
@@ -256,9 +271,16 @@ pub(crate) fn vdf(all: &[Achievement]) -> String {
 
 /// What the stage shows of a subject.
 enum Shown {
-    /// A model; a portrait shows a figure's head and shoulders.
-    Model(Model, bool),
+    /// A model; a portrait (a figure's head and shoulders) with what it
+    /// wears for it, freed with it.
+    Model(Box<Model>, Option<Vec<Gd<Node>>>),
     Numeral(Gd<Label3D>),
+}
+
+impl Shown {
+    fn portrait(&self) -> bool {
+        matches!(self, Shown::Model(_, Some(_)))
+    }
 }
 
 /// Where the picture of one subject is (as the item bake: framed loosely,
@@ -275,6 +297,8 @@ enum Phase {
 /// The whole bake, one frame at a time.
 pub struct Bake {
     stage: Stage,
+    /// A soft light on a portrait's face, from beside the camera.
+    face: Gd<DirectionalLight3D>,
     catalog: Rc<Catalog>,
     all: Vec<Achievement>,
     todo: Vec<usize>,
@@ -322,8 +346,22 @@ impl Bake {
             .filter(|&i| only.is_empty() || only.contains(&all[i].id))
             .collect();
         todo.reverse();
+        let mut stage = Stage::new(parent);
+        let mut face = DirectionalLight3D::new_alloc();
+        face.set_color(Color::from_rgb(1.0, 0.94, 0.86));
+        face.set_param(LightParam::ENERGY, 1.5);
+        face.set_basis(
+            icon_bake::view_basis()
+                * Basis::from_euler(
+                    EulerOrder::YXZ,
+                    Vector3::new((-16f32).to_radians(), (-24f32).to_radians(), 0.0),
+                ),
+        );
+        face.set_visible(false);
+        stage.viewport.add_child(&face);
         Ok(Bake {
-            stage: Stage::new(parent),
+            stage,
+            face,
             catalog,
             all,
             todo,
@@ -368,10 +406,10 @@ impl Bake {
                 };
                 if let Some(glyph) = subject_glyph(subject) {
                     let image = icons::glyph_image(glyph, SUBJECT as usize, true);
-                    return self.write(image).map(|()| true);
+                    return self.write(image.as_ref().and_then(fit)).map(|()| true);
                 }
                 let steel = self.all[i].when.deepest.is_some();
-                let shown = match self.show(subject, steel) {
+                let shown = match self.show(subject, steel, icon.portrait.as_deref()) {
                     Ok(s) => s,
                     Err(e) => return Ok(self.fail(&e)),
                 };
@@ -414,14 +452,20 @@ impl Bake {
                     self.release(shown);
                     return Ok(self.fail("nothing drawn"));
                 };
-                // a portrait: the head and the shoulders
-                let y1 = if matches!(shown, Shown::Model(_, true)) {
-                    y0 + (y1 - y0) * PORTRAIT
-                } else {
-                    y1
-                };
                 let unit = loose / RENDER as f32;
                 let half = RENDER as f32 * 0.5;
+                if let Shown::Model(m, Some(_)) = &shown {
+                    // the highest thing drawn (a hat's top), above the
+                    // middle of the loose frame
+                    let top = (half - y0) * unit;
+                    let Some((centre, side)) = portrait_frame(m, mid, top) else {
+                        self.release(shown);
+                        return Ok(self.fail("a portrait without a head"));
+                    };
+                    self.stage.frame(centre, side * FILL);
+                    self.phase = Phase::Tight(shown, None, 0);
+                    return Ok(false);
+                }
                 let (cx, cy) = ((x0 + x1) * 0.5 - half, (y0 + y1) * 0.5 - half);
                 let centre =
                     mid + icon_bake::view_basis() * Vector3::new(cx * unit, -cy * unit, 0.0);
@@ -437,13 +481,15 @@ impl Bake {
                     Err(data) => return self.wait(Phase::Tight(shown, Some(data), n + 1), n),
                 };
                 icon_bake::debug_save(&image, "tight");
-                let portrait = matches!(shown, Shown::Model(_, true));
+                let portrait = shown.portrait();
                 self.release(shown);
-                let mut subject = icon_bake::finish(&image).ok_or("cannot finish the picture")?;
-                if portrait {
-                    fade_bottom(&mut subject);
-                }
-                self.write(Some(subject))?;
+                let subject = icon_bake::finish(&image).ok_or("cannot finish the picture")?;
+                let fitted = if portrait {
+                    fill_field(&subject)
+                } else {
+                    fit(&subject)
+                };
+                self.write(fitted)?;
                 self.phase = Phase::Clear(0);
                 Ok(true)
             }
@@ -457,53 +503,82 @@ impl Bake {
         }
     }
 
-    /// Put the subject on the stage (a numeral of steel for a depth).
-    fn show(&mut self, subject: Subject, steel: bool) -> Result<Shown, String> {
+    /// Put the subject on the stage (a numeral of steel for a depth; a
+    /// figure in its portrait's `variant`, if one is named).
+    fn show(
+        &mut self,
+        subject: Subject,
+        steel: bool,
+        variant: Option<&str>,
+    ) -> Result<Shown, String> {
         let cat = self.catalog.clone();
-        let look = match subject {
+        let (look, sitter) = match subject {
             Subject::Object(appearance) => {
                 let tile = cat
                     .object_tiles
                     .iter()
                     .find(|t| t.appearance == appearance)
                     .ok_or(format!("no object looks like {appearance:?}"))?;
-                icon_bake::object_look(&self.stage.art, &cat, tile).0
+                (icon_bake::object_look(&self.stage.art, &cat, tile).0, None)
             }
-            Subject::Creature(name) => self.creature(&cat, name)?,
+            Subject::Creature(name) => (self.creature(&cat, name)?, Some(name.to_string())),
             Subject::Role(code) => {
                 let role = cat
                     .roles
                     .iter()
                     .find(|r| r.code == code)
                     .ok_or(format!("no role {code}"))?;
-                self.creature(&cat, role_monster(&role.name.to_lowercase()))?
+                let name = role_monster(&role.name.to_lowercase()).to_string();
+                (self.creature(&cat, &name)?, Some(name))
             }
             Subject::Numeral(n) => return Ok(Shown::Numeral(self.numeral(n, steel))),
             Subject::Glyph(_) | Subject::Emblem(_) => return Err("not a model".into()),
         };
+        // a person (a figure on the characters' rig) is seen as a portrait,
+        // nearly level, in what it wears for it
+        let manifest = self.stage.art.manifest();
+        let person = manifest.model_at(look.art.model).1.rig.is_some();
+        let extras = match (
+            sitter.as_deref().and_then(|n| manifest.portrait(n)),
+            variant,
+        ) {
+            (Some(p), v) => p
+                .extras_of(v)
+                .ok_or(format!("no portrait variant {v:?}"))?
+                .to_vec(),
+            (None, Some(v)) => return Err(format!("no portrait to vary as {v:?}")),
+            (None, None) => Vec::new(),
+        };
         let mut model = self.stage.art.take(&look);
         model.node.set_transform(Transform3D::IDENTITY);
         icon_bake::present(&mut model.node, false);
-        // a person (a figure on the characters' rig) is seen as a portrait
-        let person = self
-            .stage
-            .art
-            .manifest()
-            .model_at(look.art.model)
-            .1
-            .rig
-            .is_some();
-        Ok(Shown::Model(model, person))
+        if !person {
+            return Ok(Shown::Model(Box::new(model), None));
+        }
+        let level = Basis::from_euler(
+            EulerOrder::YXZ,
+            Vector3::new(PORTRAIT_PITCH.to_radians(), PORTRAIT_YAW.to_radians(), 0.0),
+        );
+        model.node.set_transform(Transform3D::new(
+            icon_bake::view_basis() * level.inverse(),
+            Vector3::ZERO,
+        ));
+        let props = self.stage.art.attach(&model, &extras);
+        self.face.set_visible(true);
+        Ok(Shown::Model(Box::new(model), Some(props)))
     }
 
-    /// A monster as its map art draws it, held still in its idle pose.
+    /// A monster as its map art draws it (the variant its portrait sits
+    /// in), held still in its idle pose.
     fn creature(&self, cat: &Catalog, name: &str) -> Result<ModelLook, String> {
         let info = cat
             .monsters
             .iter()
             .find(|m| m.name == name)
             .ok_or(format!("no monster {name:?}"))?;
-        let art = self.stage.art.manifest().monster(info, 0);
+        let manifest = self.stage.art.manifest();
+        let female = manifest.portrait(name).is_some_and(|p| p.female);
+        let art = manifest.monster(info, if female { mg::FEMALE } else { 0 });
         Ok(ModelLook {
             art,
             tint: icon_bake::tint_color(art.tint, info.color),
@@ -534,7 +609,13 @@ impl Bake {
 
     fn release(&mut self, shown: Shown) {
         match shown {
-            Shown::Model(m, _) => self.stage.art.give(m),
+            Shown::Model(m, props) => {
+                for mut p in props.into_iter().flatten() {
+                    p.queue_free();
+                }
+                self.face.set_visible(false);
+                self.stage.art.give(*m);
+            }
             Shown::Numeral(mut l) => l.queue_free(),
         }
     }
@@ -558,12 +639,12 @@ impl Bake {
         true
     }
 
-    /// The medallion of the next achievement with `subject` on it, in both
-    /// states, for the game and for Steam.
+    /// The medallion of the next achievement with `subject` (fitted to
+    /// the field) on it, in both states, for the game and for Steam.
     fn write(&mut self, subject: Option<Gd<Image>>) -> Result<(), String> {
         let i = self.todo.pop().ok_or("no achievement")?;
         let a = self.all[i].clone();
-        let pixels = subject.as_ref().and_then(fit).map(|mut s| {
+        let pixels = subject.map(|mut s| {
             s.convert(Format::RGBA8);
             (
                 s.get_data().to_vec(),
@@ -596,25 +677,51 @@ impl Drop for Bake {
     }
 }
 
-/// A portrait fades out at its bottom (it is cut there).
-fn fade_bottom(image: &mut Gd<Image>) {
-    let (w, h) = (image.get_width(), image.get_height());
-    let Some(used) = Some(image.get_used_rect()).filter(|r| r.size.y > 0) else {
-        return;
-    };
-    let bottom = used.position.y + used.size.y;
-    let band = (used.size.y as f32 * 0.22).max(1.0);
-    for y in 0..h {
-        let t = ((bottom - y) as f32 / band).clamp(0.0, 1.0);
-        if t >= 1.0 {
-            continue;
-        }
-        for x in 0..w {
-            let mut c = image.get_pixel(x, y);
-            c.a *= t * t;
-            image.set_pixel(x, y, c);
-        }
+/// A portrait's square of the world (its middle and side): round the
+/// face of `model` (its rig's `Head` bone), the head HEAD_SHARE of it, the
+/// face FACE_ABOVE of it above the middle; widened (by up to HAT_ROOM) to
+/// keep `top`, the highest thing drawn, inside: its height above `mid`
+/// along the view's up.
+fn portrait_frame(model: &Model, mid: Vector3, top: f32) -> Option<(Vector3, f32)> {
+    let skeleton = model
+        .node
+        .find_children_ex("*")
+        .type_("Skeleton3D")
+        .owned(false)
+        .done()
+        .iter_shared()
+        .find_map(|n| n.try_cast::<Skeleton3D>().ok())?;
+    let bone = skeleton.find_bone("Head");
+    if bone < 0 {
+        return None;
     }
+    let head = skeleton.get_global_transform() * skeleton.get_bone_global_pose(bone);
+    // the bone is at the neck's top; the crown about 0.22 above it, the
+    // chin a little below, the face between
+    let chin = head * Vector3::new(0.0, -0.03, 0.0);
+    let crown = head * Vector3::new(0.0, 0.22, 0.0);
+    let face = head * Vector3::new(0.0, 0.09, 0.0);
+    let mut side = (crown - chin).length() / HEAD_SHARE;
+    let up = icon_bake::view_basis() * Vector3::UP;
+    let mut centre = face - up * (side * FACE_ABOVE);
+    let room = (top + side * 0.04) - ((centre - mid).dot(up) + side * 0.5);
+    if room > 0.0 {
+        let grow = room.min(side * (HAT_ROOM - 1.0));
+        side += grow;
+        centre += up * (grow * 0.5);
+    }
+    Some((centre, side))
+}
+
+/// A portrait fills the field: the camera's square across its diameter
+/// (the rim crops the corners).
+fn fill_field(image: &Gd<Image>) -> Option<Gd<Image>> {
+    let d = (field_radius(SIDE) * 2.0).round() as i32;
+    let mut out = image.duplicate_resource();
+    out.resize_ex(d, d)
+        .interpolation(Interpolation::LANCZOS)
+        .done();
+    Some(out)
 }
 
 /// The subject cropped to what it shows and scaled so that its diagonal
@@ -627,7 +734,7 @@ fn fit(image: &Gd<Image>) -> Option<Gd<Image>> {
     }
     let mut out = image.get_region(used)?;
     let (w, h) = (used.size.x as f32, used.size.y as f32);
-    let field = SIDE as f32 * (1.0 - 2.0 * 0.075) - 3.0;
+    let field = field_radius(SIDE) * 2.0;
     let k = field * SUBJECT_SPAN / (w * w + h * h).sqrt();
     let (nw, nh) = ((w * k).round() as i32, (h * k).round() as i32);
     out.resize_ex(nw.max(1), nh.max(1))
@@ -705,6 +812,21 @@ mod tests {
                 Some(_) => {}
                 None => panic!("{}: no subject", a.id),
             }
+        }
+    }
+
+    #[test]
+    fn every_portrait_variant_named_is_in_the_art() {
+        let path =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../godot/art/manifest.json");
+        let art = nh_art::ArtManifest::load(&path).unwrap();
+        for a in Achievements::built_in().all() {
+            let Some(v) = a.icon.portrait.as_deref() else {
+                continue;
+            };
+            let creature = a.icon.creature.as_deref().expect("a creature's portrait");
+            let p = art.portrait(creature).expect("its portrait");
+            assert!(p.extras_of(Some(v)).is_some(), "{}: {v}", a.id);
         }
     }
 

@@ -16,6 +16,21 @@ fn vivid(c: Color, gain: f32) -> Color {
     Color::from_rgba(s(c.r), s(c.g), s(c.b), 1.0)
 }
 
+fn xyz(v: Vector3) -> [f32; 3] {
+    [v.x, v.y, v.z]
+}
+
+/// The rotation (degrees, as `part` takes it) that turns a part's +y to
+/// `d`.
+fn along(d: Vector3) -> [f32; 3] {
+    let d = d.normalized();
+    [
+        d.y.clamp(-1.0, 1.0).acos().to_degrees(),
+        d.x.atan2(d.z).to_degrees(),
+        0.0,
+    ]
+}
+
 impl Kit<'_> {
     fn mat(&mut self, c: Color, finish: Finish) -> Gd<Material> {
         self.art.flat(c, finish)
@@ -80,6 +95,7 @@ impl Kit<'_> {
             Proc::Mace => self.mace(root),
             Proc::Sword => self.sword(root),
             Proc::Ration => self.ration(root),
+            Proc::Carried => self.carried(root),
             _ => self.simple(kind, root),
         }
     }
@@ -797,7 +813,7 @@ impl Kit<'_> {
                     &dark,
                     [0.0, 0.25, 0.02],
                     FLAT,
-                    [1.0, 0.25, 1.1],
+                    [1.0, 2.2, 1.1],
                 );
                 for s in [-1.0f32, 1.0] {
                     self.part(
@@ -809,6 +825,49 @@ impl Kit<'_> {
                         ONE,
                     );
                 }
+            }
+            "snakes" => self.snakes(root),
+            // a knight's plume alone, for a helmet already worn
+            "plume" => self.plume(root),
+            "eyes" => {
+                // eyes that glow out of a hood's shadow
+                let glow = self.mat(vivid(self.tint, 1.4), Finish::Glow);
+                for side in [-1.0f32, 1.0] {
+                    self.part(
+                        root,
+                        sphere(0.06),
+                        &glow,
+                        [side * 0.14, 0.0, 0.0],
+                        FLAT,
+                        [1.4, 0.8, 0.5],
+                    );
+                }
+            }
+            "halo" => {
+                // a ring of light standing behind the head
+                let glow = self.mat(vivid(self.tint, 1.3), Finish::Ember);
+                self.part(
+                    root,
+                    torus(0.66, 0.74),
+                    &glow,
+                    [0.0, 0.4, -0.4],
+                    [90.0, 0.0, 0.0],
+                    ONE,
+                );
+            }
+            "circlet" => {
+                // a thin gold band round the brow, a stone at the front
+                let gold = self.plain("gilded", Color::from_rgb(0.8, 0.62, 0.22));
+                self.part(
+                    root,
+                    torus(0.4, 0.44),
+                    &gold,
+                    [0.0, 0.0, 0.0],
+                    [-6.0, 0.0, 0.0],
+                    [1.0, 1.6, 1.12],
+                );
+                let stone = self.gem_mat();
+                self.cut_stone(root, &stone, [0.0, -0.05, 0.47], 0.08);
             }
             "cone" => {
                 self.part(
@@ -945,19 +1004,7 @@ impl Kit<'_> {
                             }
                         }
                     }
-                    "plumed" => {
-                        let plume = self.mat(Color::from_rgb(0.62, 0.08, 0.06), Finish::Matte);
-                        for (i, a) in [(0, -30.0f32), (1, -55.0), (2, -80.0)] {
-                            self.part(
-                                root,
-                                capsule(0.07, 0.4),
-                                &plume,
-                                [0.0, 0.62 - i as f32 * 0.06, -0.12 - i as f32 * 0.14],
-                                [a, 0.0, 0.0],
-                                ONE,
-                            );
-                        }
-                    }
+                    "plumed" => self.plume(root),
                     "crested" => self.part(
                         root,
                         prism(0.06, 0.2, 0.7),
@@ -990,6 +1037,186 @@ impl Kit<'_> {
                     _ => {}
                 }
             }
+        }
+    }
+
+    /// A knight's plume: red feathers sweeping back from the crown.
+    fn plume(&mut self, root: &mut Gd<Node3D>) {
+        let plume = self.mat(Color::from_rgb(0.62, 0.08, 0.06), Finish::Matte);
+        for (i, a) in [(0, -30.0f32), (1, -55.0), (2, -80.0)] {
+            self.part(
+                root,
+                capsule(0.07, 0.4),
+                &plume,
+                [0.0, 0.62 - i as f32 * 0.06, -0.12 - i as f32 * 0.14],
+                [a, 0.0, 0.0],
+                ONE,
+            );
+        }
+    }
+
+    /// A gorgon's hair: serpents from the scalp writhing out and up, each
+    /// a tapering chain ending in a head; none hangs over the face (+z).
+    /// About ninety parts: the map has one Medusa.
+    fn snakes(&mut self, root: &mut Gd<Node3D>) {
+        let scales = self.skin.clone();
+        let belly = self.mat(
+            Color::from_rgb(
+                (self.tint.r * 1.2 + 0.1).min(1.0),
+                (self.tint.g * 1.2 + 0.12).min(1.0),
+                (self.tint.b * 1.1 + 0.03).min(1.0),
+            ),
+            Finish::Matte,
+        );
+        // three rings from the crown down; the lower two leave the face
+        let rings: [(usize, f32, f32); 3] = [(6, 1.15, 0.6), (8, 0.65, 0.35), (8, 0.15, -0.1)];
+        for (ring, &(n, e, rise)) in rings.iter().enumerate() {
+            for i in 0..n {
+                let a = (i as f32 + 0.5 * ring as f32) / n as f32 * std::f32::consts::TAU;
+                if ring > 0 && a.cos() > 0.75 {
+                    continue;
+                }
+                self.snake(root, &scales, &belly, a, e, rise, i + ring);
+            }
+        }
+    }
+
+    /// One of a gorgon's snakes, from the scalp at azimuth `a` (from the
+    /// face, +z) and elevation `e`, rising `rise`: four tapering
+    /// segments, scales and belly by turns, and a flattened head.
+    #[allow(clippy::too_many_arguments)]
+    fn snake(
+        &mut self,
+        root: &mut Gd<Node3D>,
+        scales: &Gd<Material>,
+        belly: &Gd<Material>,
+        a: f32,
+        e: f32,
+        rise: f32,
+        i: usize,
+    ) {
+        let out = Vector3::new(a.sin() * e.cos(), e.sin(), a.cos() * e.cos());
+        let side = Vector3::UP.cross(out).normalized();
+        let mut p = Vector3::new(0.0, 0.1, 0.0) + out * 0.34;
+        let mut d = (out + Vector3::UP * rise).normalized();
+        let mut r = 0.06f32;
+        for s in 0..4 {
+            let wave = if (s + i).is_multiple_of(2) {
+                0.55
+            } else {
+                -0.55
+            };
+            d = (d + side * wave + Vector3::DOWN * (0.12 * s as f32)).normalized();
+            let len = 0.16;
+            let mat = if s.is_multiple_of(2) { scales } else { belly };
+            self.part(
+                root,
+                capsule(r, len + 2.0 * r),
+                mat,
+                xyz(p + d * (len * 0.5)),
+                along(d),
+                ONE,
+            );
+            p += d * len;
+            r *= 0.86;
+        }
+        self.part(
+            root,
+            sphere(0.07),
+            scales,
+            xyz(p + d * 0.04),
+            along(d),
+            [1.1, 1.4, 0.75],
+        );
+    }
+
+    /// Small things carried, by shape: a camera on its strap, a seer's
+    /// crystal glowing in its own light, a hand bell.
+    fn carried(&mut self, root: &mut Gd<Node3D>) {
+        match self.shape.as_deref() {
+            Some("camera") => {
+                let body = self.mat(Color::from_rgb(0.07, 0.07, 0.08), Finish::Glossy);
+                let chrome = self.mat(Color::from_rgb(0.78, 0.8, 0.84), Finish::Glossy);
+                let glass = self.mat(Color::from_rgb(0.25, 0.4, 0.6), Finish::Gem);
+                self.part(
+                    root,
+                    cuboid(0.9, 0.5, 0.32),
+                    &body,
+                    [0.0, 0.25, 0.0],
+                    FLAT,
+                    ONE,
+                );
+                self.part(
+                    root,
+                    cuboid(0.92, 0.1, 0.34),
+                    &chrome,
+                    [0.0, 0.52, 0.0],
+                    FLAT,
+                    ONE,
+                );
+                self.part(
+                    root,
+                    cylinder(0.2, 0.23, 0.32),
+                    &body,
+                    [0.05, 0.25, 0.3],
+                    [90.0, 0.0, 0.0],
+                    ONE,
+                );
+                self.part(
+                    root,
+                    cylinder(0.16, 0.16, 0.03),
+                    &glass,
+                    [0.05, 0.25, 0.47],
+                    [90.0, 0.0, 0.0],
+                    ONE,
+                );
+                self.part(
+                    root,
+                    cuboid(0.22, 0.14, 0.16),
+                    &chrome,
+                    [-0.3, 0.62, 0.0],
+                    FLAT,
+                    ONE,
+                );
+            }
+            Some("bell") => {
+                // a hand bell, mouth down: a flared body, a rolled lip, a
+                // domed crown with a loop to hold it by, the clapper
+                // showing under the lip
+                let metal = self.skin.clone();
+                let dark = self.dark();
+                self.part(
+                    root,
+                    cylinder(0.2, 0.4, 0.5),
+                    &metal,
+                    [0.0, 0.33, 0.0],
+                    FLAT,
+                    ONE,
+                );
+                self.part(
+                    root,
+                    torus(0.36, 0.46),
+                    &metal,
+                    [0.0, 0.08, 0.0],
+                    FLAT,
+                    [1.0, 1.8, 1.0],
+                );
+                self.part(root, dome(0.21), &metal, [0.0, 0.57, 0.0], FLAT, ONE);
+                self.part(
+                    root,
+                    torus(0.07, 0.11),
+                    &metal,
+                    [0.0, 0.84, 0.0],
+                    [90.0, 0.0, 0.0],
+                    ONE,
+                );
+                self.part(root, sphere(0.09), &dark, [0.0, 0.06, 0.0], FLAT, ONE);
+            }
+            Some("crystal") => {
+                let glow = self.mat(vivid(self.tint, 1.25), Finish::Ember);
+                self.part(root, sphere(0.5), &glow, [0.0, 0.5, 0.0], FLAT, ONE);
+            }
+            _ => {}
         }
     }
 

@@ -1377,25 +1377,48 @@ impl Art {
             return out;
         };
         for e in &spec.extras {
-            let Some(model) = self.manifest.model_index(&e.model) else {
-                continue;
-            };
-            let tint = e.tint_rgb().map_or(Color::WHITE, rgb);
-            let Some(node) = self.prop(model, tint, look.pose == Pose::Ghost) else {
-                continue;
-            };
-            let mut bone = BoneAttachment3D::new_alloc();
-            bone.set_bone_name(&e.bone);
-            skeleton.add_child(&bone);
-            let k = e.size / self.manifest.model_at(model).1.size;
-            let mut holder = Node3D::new_alloc();
-            holder.set_name(&format!("Extra_{}", e.model));
-            holder.set_transform(transform(e.pos, e.rot, [k, k, k]));
-            holder.add_child(&node);
-            bone.add_child(&holder);
-            out.push((e.slot.clone(), holder));
+            if let Some((_, holder)) = self.attach_extra(&mut skeleton, e, look.pose == Pose::Ghost)
+            {
+                out.push((e.slot.clone(), holder));
+            }
         }
         out
+    }
+
+    /// `extras` on the bones of a model already built, besides its look's
+    /// own (what a portrait adds); the attachments, to free before the
+    /// model goes back to its pool.
+    pub fn attach(&mut self, model: &Model, extras: &[nh_art::Extra]) -> Vec<Gd<Node>> {
+        let Some(mut skeleton) = find::<Skeleton3D>(&model.node.clone().upcast()) else {
+            return Vec::new();
+        };
+        extras
+            .iter()
+            .filter_map(|e| self.attach_extra(&mut skeleton, e, false))
+            .map(|(bone, _)| bone.upcast())
+            .collect()
+    }
+
+    /// One extra on its bone: the attachment and the holder of the model.
+    fn attach_extra(
+        &mut self,
+        skeleton: &mut Gd<Skeleton3D>,
+        e: &nh_art::Extra,
+        ghost: bool,
+    ) -> Option<(Gd<BoneAttachment3D>, Gd<Node3D>)> {
+        let model = self.manifest.model_index(&e.model)?;
+        let tint = e.tint_rgb().map_or(Color::WHITE, rgb);
+        let node = self.prop(model, tint, ghost)?;
+        let mut bone = BoneAttachment3D::new_alloc();
+        bone.set_bone_name(&e.bone);
+        skeleton.add_child(&bone);
+        let k = e.size / self.manifest.model_at(model).1.size;
+        let mut holder = Node3D::new_alloc();
+        holder.set_name(&format!("Extra_{}", e.model));
+        holder.set_transform(transform(e.pos, e.rot, [k, k, k]));
+        holder.add_child(&node);
+        bone.add_child(&holder);
+        Some((bone, holder))
     }
 
     /// A model on its own, dressed in `tint` (a prop worn or carried).

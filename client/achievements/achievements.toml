@@ -397,7 +397,7 @@ desc_en = "Find the vibrating square."
 id = "major_oracle"
 steam = "ACH_MAJOR_ORACLE"
 when = { event = "major_oracle" }
-icon = { creature = "Oracle" }
+icon = { creature = "Oracle", portrait = "major" }
 name = "achievement-major-oracle-name"
 desc = "achievement-major-oracle-desc"
 name_en = "A Major Consultation"

@@ -143,6 +143,9 @@ pub struct Icon {
     pub glyph: Option<String>,
     /// An emblem drawn for the medallion alone.
     pub emblem: Option<String>,
+    /// A creature's portrait other than its own: a variant the art
+    /// manifest's `portraits` names.
+    pub portrait: Option<String>,
     /// Struck through: "never did...".
     #[serde(default)]
     pub crossed: bool,

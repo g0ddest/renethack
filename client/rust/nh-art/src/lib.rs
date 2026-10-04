@@ -82,6 +82,9 @@ pub enum Proc {
     Horn,
     Orb,
     Mirror,
+    /// Small things worn or carried on the body, by shape: a camera on
+    /// its strap, a seer's crystal.
+    Carried,
     Heap,
     /// A mace, morning star, flail or club (by its shape).
     Mace,
@@ -256,6 +259,33 @@ pub struct Extra {
 impl Extra {
     pub fn tint_rgb(&self) -> Option<[f32; 3]> {
         self.tint.as_deref().and_then(hex)
+    }
+}
+
+/// How a monster sits for its portrait (an achievement's medallion): which
+/// of its variants, and what it wears or carries there besides its own
+/// look (a role's hat, a weapon over the shoulder), so that each reads at
+/// 64 px. The map never draws these.
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PortraitSpec {
+    #[serde(default)]
+    pub female: bool,
+    #[serde(default)]
+    pub extras: Vec<Extra>,
+    /// Other medallions of the same monster, by name: their extras
+    /// instead.
+    #[serde(default)]
+    pub variants: BTreeMap<String, Vec<Extra>>,
+}
+
+impl PortraitSpec {
+    /// The extras of `variant` (None: the portrait's own).
+    pub fn extras_of(&self, variant: Option<&str>) -> Option<&[Extra]> {
+        match variant {
+            None => Some(&self.extras),
+            Some(v) => self.variants.get(v).map(Vec::as_slice),
+        }
     }
 }
 
@@ -516,6 +546,9 @@ struct RawManifest {
     held: HeldRules,
     #[serde(default)]
     heads: BTreeMap<String, HeadSpec>,
+    /// By monster name.
+    #[serde(default)]
+    portraits: BTreeMap<String, PortraitSpec>,
 }
 
 /// How specific the art found is (most specific first).
@@ -596,6 +629,7 @@ pub struct ArtManifest {
     held: HeldRules,
     held_models: Vec<(String, HeldSpec)>,
     heads: BTreeMap<String, HeadSpec>,
+    portraits: BTreeMap<String, PortraitSpec>,
 }
 
 /// "#rrggbb" as linear-ish 0..1 components (the client treats them as sRGB).
@@ -771,6 +805,18 @@ impl ArtManifest {
             raw.held
                 .check(|m| model(m).is_some(), |l| raw.libraries.contains_key(l)),
         );
+        for (name, p) in &raw.portraits {
+            for e in p.extras.iter().chain(p.variants.values().flatten()) {
+                if model(&e.model).is_none() {
+                    errors.push(format!("portrait {name}: no extra model {}", e.model));
+                }
+                if let Some(t) = &e.tint
+                    && hex(t).is_none()
+                {
+                    errors.push(format!("portrait {name}: extra tint {t}"));
+                }
+            }
+        }
         for (name, m) in &models {
             for rig in &m.extra_rigs {
                 if !raw.libraries.contains_key(rig) {
@@ -793,6 +839,7 @@ impl ArtManifest {
             held_models: raw.held.models.clone().into_iter().collect(),
             heads: raw.heads,
             held: raw.held,
+            portraits: raw.portraits,
         })
     }
 
@@ -1052,6 +1099,15 @@ impl ArtManifest {
     /// A head built from a base character's (see `HeadSpec`), by name.
     pub fn head(&self, name: &str) -> Option<&HeadSpec> {
         self.heads.get(name)
+    }
+
+    /// How a monster sits for its portrait, by its name.
+    pub fn portrait(&self, monster: &str) -> Option<&PortraitSpec> {
+        self.portraits.get(monster)
+    }
+
+    pub fn portraits(&self) -> impl Iterator<Item = (&str, &PortraitSpec)> {
+        self.portraits.iter().map(|(n, p)| (n.as_str(), p))
     }
 
     /// A material by name (the renderer's own surfaces: water, lava...).
@@ -1522,6 +1578,14 @@ mod tests {
             let file = art.library(lib.unwrap_or("ual")).unwrap();
             let clips = clips_in(&art_dir().join(file)).unwrap();
             assert!(clips.iter().any(|c| c == clip), "no clip {clip} in {file}");
+        }
+    }
+
+    #[test]
+    fn every_portrait_is_of_a_known_monster() {
+        let (art, cat) = (manifest(), catalog());
+        for (name, _) in art.portraits() {
+            assert!(cat.monsters.iter().any(|m| m.name == name), "{name}");
         }
     }
 
