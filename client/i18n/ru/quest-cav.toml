@@ -1,0 +1,267 @@
+# R6 quest texts: Cav (dat/quest.lua).
+
+[2e7de15e3254]
+en = "[Find and defeat %s, recover %s, and return with it.]"
+ru = "[Найдите и победите {1:acc}, отберите {2:acc} и возвращайтесь с {2:gender|ним|ней|ним|ними}.]"
+
+[c3c05a60d8c4]
+en = "\"You are indeed ready now, %s.  I shall tell you a tale of\ngreat suffering among your people:\n\n\"Shortly after you left on your vision quest, the caves were invaded by\nthe creatures sent against us by %s.\n\n\"She, herself, could not attack us due to her great size, but her minions\nhave harassed us ever since.  In the first attacks, many died, and the\nminions of %s managed to steal %s.\nThey took it to %s and there, none of our\n%s warriors have been able to go.\n\n\"You must find %s, and within it wrest\n%s from %s.  She guards it as\njealously as she guards all treasures she attains.  But with it,\nwe can make our caves safe once more.\n\n\"Please, %s, recover %s for us, and return it here.\""
+ru = "«Теперь вы и вправду готовы, {1}.  Я поведаю вам о\nвеликих страданиях вашего народа.\n\nВскоре после того, как вы ушли искать своё видение, на пещеры напали\nтвари, которых наслал на нас {2}.\n\n{2:gender|Сам он|Сама она|Само оно|Сами они} не {2:gender|мог|могла|могло|могли} напасть на нас из-за {2:gender|своего|своего|своего|своего} огромного роста, но {2:gender|его|её|его|их} прислужники\nс тех пор не дают нам покоя.  В первых набегах многие погибли, а\nприслужникам {3:gen} удалось похитить {4:acc}.\nОни унесли {4:gender|его|её|его|их} в {5:acc}, и туда ни один наш\n{6} не смог пробраться.\n\nВы должны найти {7:acc} и там вырвать\n{8:acc} у {9:gen}.  {9:gender|Он стережёт|Она стережёт|Оно стережёт|Они стерегут} {8:gender|его|её|его|их}\nтак же ревниво, как все сокровища, что {9:gender|ему|ей|ему|им} достаются.  Но с {8:gender|ним|ней|ним|ними}\nмы снова сможем обезопасить наши пещеры.\n\nПрошу вас, {10}, верните нам {11:acc} и принесите {11:gender|его|её|его|их} сюда.»"
+
+[835967c1ee11]
+en = "[\"You no longer follow the path of the %s.  Go, and purify yourself.\"]"
+ru = "[«Вы больше не идёте путём {1:pl:gen}.  Ступайте и очиститесь.»]"
+
+[5721d7177176]
+en = "\"%s!  You have deviated from my teachings.  You no longer follow\nthe path of the %s as you should.  I banish you from these caves, to\ngo forth and purify yourself.  Then, you might be able to accomplish this\nquest.\""
+ru = "«{1}!  Вы отступили от моих учений.  Вы больше не идёте\nпутём {2:pl:gen}, как должно.  Я изгоняю вас из этих пещер:\nступайте и очиститесь.  Тогда, быть может, вы сумеете исполнить\nэто задание.»"
+
+[002c5fff4c79]
+en = "[\"%s is too inexperienced.  Come back when you have progressed.\"]"
+ru = "[«{1:hero:cap} слишком неопытен{hero:gender||а}.  Возвращайтесь, когда наберётесь опыта.»]"
+
+[6875026d8940]
+en = "\"Alas, %s, you are as yet too inexperienced to embark upon such\na difficult quest as that I propose to give you.\n\n\"%s could not possibly survive the rigors demanded to find\n%s, never mind to confront %s herself.\n\n\"Adventure some more, and you will learn the skills you will require.\n%s decrees it.\""
+ru = "«Увы, {1}, вы ещё слишком неопытны, чтобы взяться за столь\nтрудное задание, какое я хочу вам дать.\n\n{2:hero:cap} никак не выдержит тягот, что потребуются, чтобы найти\n{3:acc}, не говоря уж о том, чтобы сразиться с {4:ins}.\n\nСтранствуйте ещё, и вы обретёте нужные умения.\nТак велит {5}.»"
+
+[fa1c8d739b01]
+en = "\"You are weak, %s.  No challenge for the Mother of all Dragons.\""
+ru = "«Ты слаб{hero:gender||а}, {1:hero}.  Для Матери всех драконов это не противник.»"
+
+[1e88cfd407a7]
+en = "\"I grow hungry, %s.  You look like a nice appetizer!\""
+ru = "«Я проголодался, {1:hero}.  Ты выглядишь отличной закуской!»"
+
+[3ddc18a40132]
+en = "\"Join me for lunch?  You're the main course, %s.\""
+ru = "«Отобедаешь со мной?  Ты — главное блюдо, {1:hero}.»"
+
+[d91d11dbd4cb]
+en = "\"With %s, I am invincible!  You cannot succeed.\""
+ru = "«С {1:ins} я непобедим!  У тебя ничего не выйдет.»"
+
+[fff958dff301]
+en = "\"Your mentor, %s has failed.  You are nothing to fear.\""
+ru = "«Твой наставник, {1}, потерпел неудачу.  Тебя бояться нечего.»"
+
+[0a945f6adb7f]
+en = "\"You shall die here, %s.  %s cannot hope to defeat me.\""
+ru = "«Ты умрёшь здесь, {1:hero}.  {2:hero:cap} и не надейся меня победить.»"
+
+[9760c97c155c]
+en = "\"You, a mere %s challenge the might of %s?  Hah!\""
+ru = "«Ты, всего лишь {1:hero}, бросаешь вызов могуществу {2:gen}?  Ха!»"
+
+[a56fb2779792]
+en = "\"I am the Mother of all Dragons!  You cannot hope to defeat me.\""
+ru = "«Я Мать всех драконов!  Тебе и не надеяться меня победить.»"
+
+[e174f0c5ec7f]
+en = "\"My claws are sharp now.  I shall rip you to shreds!\""
+ru = "«Мои когти наточены.  Я разорву тебя в клочья!»"
+
+[aae47d821e43]
+en = "\"%s has deserted you, %s.  This is my domain.\""
+ru = "«{1:cap} {1:gender|покинул|покинула|покинуло|покинули} тебя, {2:hero}.  Здесь мои владения.»"
+
+[41c8baa68183]
+en = "\"%s is immune to her own breath weapons. You should use magic upon her that she does not use herself.\""
+ru = "«{1:cap} неуязвим{1:gender||а|о|ы} для своего же дыхания.  Действуйте против {1:gender|него|неё|него|них} той магией, которой {1:gender|он|она|оно|они} сам{1:gender||а|о|и} не пользуется.»"
+
+[f604dee22011]
+en = "\"When you encounter %s, call upon %s for assistance.\""
+ru = "«Когда встретите {1:acc}, призовите на помощь {2:acc}.»"
+
+[5819fa874781]
+en = "\"There will be nowhere to hide inside %s inner sanctum.\""
+ru = "«Во внутреннем святилище {1:gen} негде будет спрятаться.»"
+
+[5cb9d1eff391]
+en = "\"Your best chance with %s will be to keep moving.\""
+ru = "«Ваш лучший шанс против {1:gen} — всё время двигаться.»"
+
+[b9e2ed7483e6]
+en = "\"Do not be distracted by the great treasures in %s lair. Concentrate on %s.\""
+ru = "«Не отвлекайтесь на великие сокровища в логове {1:gen}.  Сосредоточьтесь на {2:prep}.»"
+
+[5c934a15fb24]
+en = "\"%s is the only object that %s truly fears.\""
+ru = "«{1:cap} — единственное, чего {2} по-настоящему боится.»"
+
+[0cbe85e85fa2]
+en = "\"Do not be fooled by %s size.  She is fast, and it is rumored that she uses magic.\""
+ru = "«Пусть вас не обманет размер {1:gen}.  {1:gender|Он|Она|Оно|Они} быстр{1:gender||а|о|ы}, и, говорят, {1:gender|владеет|владеет|владеет|владеют} магией.»"
+
+[de71e986dbee]
+en = "\"I would send a party of %s with you, but we will need all of our strength to defend ourselves.\""
+ru = "«Я послал бы с вами отряд {1:gen}, но нам понадобятся все силы, чтобы защищаться.»"
+
+[3a46d2e4e161]
+en = "\"Remember, be %s at all times.  This is your strength.\""
+ru = "«Помните: всегда оставайтесь {1:hero:ins}.  В этом ваша сила.»"
+
+[16768f273259]
+en = "\"If only we had an amulet of reflection, this would not have happened.\""
+ru = "«Будь у нас амулет отражения, этого бы не случилось.»"
+
+[03de5fbdcc7a]
+en = "[You arrive back at %s, but something is wrong here.]"
+ru = "[Вы возвращаетесь в {1:acc}, но здесь что-то не так.]"
+
+[da97833179c6]
+en = "You descend through a barely familiar stairwell that you remember\n%s showing you when you embarked upon your vision quest.\n\nYou arrive back at %s, but something seems\nwrong here.  The usual smoke and glowing light of the fires of the\nouter caves are absent, and an uneasy quiet fills the damp air."
+ru = "Вы спускаетесь по едва знакомой лестнице, которую, как вы помните,\nпоказал вам {1}, когда вы отправлялись искать своё видение.\n\nВы возвращаетесь в {2:acc}, но здесь, кажется,\nчто-то не так.  Нет привычного дыма и мерцающего света костров\nво внешних пещерах, а сырой воздух наполнен тревожной тишиной."
+
+[b62e2ce80259]
+en = "[You enter a large cavern.  %s is present.]"
+ru = "[Вы входите в большую пещеру.  Здесь {1}.]"
+
+[77fa25f4e0de]
+en = "You find yourself in a large cavern, with neatly polished walls, that\nnevertheless show signs of being scorched by fire.\n\nBones litter the floor, and there are objects scattered everywhere.\nThe air is close with the stench of sulphurous fumes.\n\n%s is clearly visible, but %s seems to be asleep."
+ru = "Вы оказываетесь в большой пещере с гладко отполированными стенами,\nна которых, однако, видны следы огня.\n\nПол усеян костями, всюду разбросаны вещи.\nВоздух тяжёл от смрада серных испарений.\n\n{1:cap} хорошо виден{1:gender||а|о|ы}, но, кажется, {1:gender|он|она|оно|они}{2:skip} спит."
+
+[d05dfdaf8f54]
+en = "Once again, you find yourself in the lair of %s."
+ru = "Вы снова в логове {1:gen}."
+
+[4064f7d330af]
+en = "[%s fills you with a feeling of power.]"
+ru = "[{1:cap} наполняет вас ощущением силы.]"
+
+[25a64640b609]
+en = "As you pick up %s it seems heavy at first, but as you\nhold it strength flows into your arms.\n\nYou suddenly feel full of power, as if nothing could possibly stand\nin your path."
+ru = "Когда вы поднимаете {1:acc}, {1:gender|он кажется|она кажется|оно кажется|они кажутся} поначалу тяжёл{1:gender|ым|ой|ым|ыми}, но\nстоит подержать {1:gender|его|её|его|их}, как в руки вливается сила.\n\nВас внезапно переполняет мощь, будто ничто на свете не устоит\nу вас на пути."
+
+[d8d92dadee4e]
+en = "\"The rains have returned and the land grows lush again.\""
+ru = "«Вернулись дожди, и земля снова зеленеет.»"
+
+[cc7624774fbc]
+en = "\"Peace has returned, give thanks to %s!\""
+ru = "«Вернулся мир — возблагодарим {1:acc}!»"
+
+[d4abcb577415]
+en = "\"Welcome back!  Did you find %s?\""
+ru = "«С возвращением!  Ты наш{hero:gender|ёл|ла} {1:acc}?»"
+
+[bb4c42f6dd38]
+en = "\"So, %s, tell us the story of your fight with %s.\""
+ru = "«Ну, {1}, расскажи нам, как ты бил{hero:gender|ся|ась} с {2:ins}.»"
+
+[32ffcad1f144]
+en = "\"%s grows old.  Perhaps you will guide us after he ascends.\""
+ru = "«{1:cap} стареет.  Может быть, когда он вознесётся, нас поведёшь ты.»"
+not_terms = ["guide"]
+
+[6600c10c9260]
+en = "\"We have not been able to gather as much food since the Giants sealed off our access to the outer world.\""
+ru = "«С тех пор как великаны отрезали нам путь во внешний мир, мы не можем добыть столько еды, сколько прежде.»"
+
+[9dc5f82c3b4e]
+en = "\"Since %s sent her minions, we have been constantly fighting.\""
+ru = "«С тех пор как {1} {1:gender|наслал|наслала|наслало|наслали} своих прислужников, мы всё время сражаемся.»"
+
+[41c6a4d41b99]
+en = "\"I have heard your vision quest was successful.  Is this so?\""
+ru = "«Я слышал, ты нашёл{hero:gender||ла} своё видение.  Это так?»"
+
+[5242f8ebf039]
+en = "\"So, tell me, %s, how have you fared?\""
+ru = "«Ну, расскажи, {1}, как твои дела?»"
+
+[d41ee014fe71]
+en = "\"%s grows old.  We know not who will guide us after he ascends.\""
+ru = "«{1:cap} стареет.  Мы не знаем, кто поведёт нас, когда он вознесётся.»"
+not_terms = ["guide"]
+
+[ed382df96ecd]
+en = "\"You have been successful, I see, %s.\n\n\"Now that the Amulet of Yendor is yours, here is what you must do:\n\n\"Journey upwards to the open air.  The Amulet you carry will then\ntake you into the Astral Planes, where the Great Temple of %s\ncasts its influence throughout our world.\n\n\"Sacrifice the Amulet on the altar.  Thus shall %s become supreme!\""
+ru = "«Вижу, вы преуспели, {1}.\n\nТеперь, когда Амулет Йендора ваш, вот что вы должны сделать:\n\nПоднимайтесь наверх, под открытое небо.  Амулет, что вы несёте, перенесёт\nвас на Астральные планы, где Великий храм {2:gen}\nпростирает своё влияние на весь наш мир.\n\nПринесите Амулет в жертву на алтаре.  Так {3} станет верховным божеством!»"
+
+[6bc32c6de880]
+en = "%s sinks to the ground, her heads flailing about.\nAs she dies, a cloud of noxious fumes billows about her."
+ru = "{1:cap} оседает наземь, мотая головами.\nУмирая, {1:gender|он окутывается|она окутывается|оно окутывается|они окутываются} облаком ядовитых испарений."
+
+[3c9191a07a2d]
+en = "[\"You have returned.  We are in dire need of your help.\"]"
+ru = "[«Вы вернулись.  Нам отчаянно нужна ваша помощь.»]"
+
+[d218bced0865]
+en = "\"You have returned from your vision quest, %s.  Thank %s.\n\n\"We are in dire need of your help, my %s.\n\n\"But first, I must see if you are yet capable of the quest I would\nask you to undertake.\""
+ru = "«Вы вернулись со своим видением, {1}.  Хвала {2:dat}.\n\nНам отчаянно нужна ваша помощь, {hero:gender|сын|дочь} мой{hero:gender||я}{3:skip}.\n\nНо сначала я должен проверить, по силам ли вам задание, о котором\nя хочу вас попросить.»"
+
+[46f51e7150df]
+en = "[\"You have betrayed the %s.  Begone!\"]"
+ru = "[«Вы предали законопослушных{1:skip}.  Прочь!»]"
+
+[dd3d94c74a30]
+en = "\"%s!  You have sealed our fate.  You seem unable to reform yourself,\nso I must select another to take your place.\n\n\"Begone from %s!  You have betrayed us by choosing\nthe path of the %s over the true path of the %s.\n\n\"You no longer live in our eyes.\""
+ru = "«{1}!  Вы решили нашу участь.  Похоже, вам не исправиться,\nтак что мне придётся избрать другого на ваше место.\n\nПрочь из {2:gen}!  Вы предали нас, избрав\nпуть хаотичных{3:skip} вместо истинного пути законопослушных{4:skip}.\n\nДля нас вы больше не живы.»"
+
+[94520e5c9572]
+en = "\"Again, you return to us, %s.  Let me see if you are ready now.\""
+ru = "«Вы снова вернулись к нам, {1}.  Посмотрим, готовы ли вы теперь.»"
+
+[84acb530a9a2]
+en = "\"Ah, %s.  Are you finally ready?\""
+ru = "«А, {1}.  Вы наконец готовы?»"
+
+[2312fa546833]
+en = "[You %s many large claw marks, smell carrion, and notice bones.]"
+ru = "[Вы видите{1:skip} множество огромных следов когтей, чуете падаль и замечаете кости.]"
+
+[6cbdb51a9d3a]
+en = "You %s many large claw marks on the ground.  The tunnels ahead\nof you are larger than most of those in any cave complex you have\never been in before.\n\nYour nose detects the smell of carrion from within, and bones litter\nthe sides of the tunnels."
+ru = "Вы видите{1:skip} на земле множество огромных следов когтей.  Туннели\nвпереди больше почти всех, что вам встречались в каких бы то ни было\nпещерах.\n\nИзнутри тянет падалью, а по краям туннелей\nваляются кости."
+
+[e177c3d7c8c1]
+en = "Once again, you approach %s."
+ru = "Вы снова приближаетесь к {1:dat}."
+
+[311cad20b6b7]
+en = "[%s threatens to eat you.]"
+ru = "[{1:cap} грозится вас съесть.]"
+
+[88a195ee7f31]
+en = "\"So, follower of %s, you seek to invade the lair of\n%s.  Only my meals are allowed down here.  Prepare\nto be eaten!\""
+ru = "«Итак, последовател{hero:gender|ь|ьница} {1:gen}, ты хочешь вторгнуться в логово\n{2:gen}.  Сюда дозволено спускаться лишь моей еде.  Готовься\nбыть съеденн{hero:gender|ым|ой}!»"
+
+[610f95c97ab4]
+en = "\"So, again you face me, %s.  No one has ever before escaped me.\nNow I shall kill you.\""
+ru = "«Итак, ты снова передо мной, {1:hero}.  Никто ещё от меня не уходил.\nТеперь я убью тебя.»"
+
+[0fad86aeb180]
+en = "\"You are getting annoying, %s.  Prepare to die.\""
+ru = "«Ты начинаешь мне надоедать, {1:hero}.  Готовься к смерти.»"
+
+[8c1a6b4e1cc3]
+en = "\"I'll have %s from you, %s.  You shall die.\""
+ru = "«Я заберу у тебя {1:acc}, {2:hero}.  Ты умрёшь.»"
+
+[034a9f2bff2d]
+en = "Once again, you arrive back at %s."
+ru = "Вы снова возвращаетесь в {1:acc}."
+
+[d855542db312]
+en = "[\"Take %s with you.  It will help in your quest for the Amulet of Yendor.\"]"
+ru = "[«Возьмите {1:acc} с собой.  {1:gender|Он поможет|Она поможет|Оно поможет|Они помогут} вам в поисках Амулета Йендора.»]"
+
+[37da101861bb]
+en = "%s glimpses %s in your possession.\nHe smiles and says:\n\n    You have done it!  We are saved.  But I fear that %s\n    will always be a target for %s forces who will want it for their\n    own.\n\n    To prevent further trouble, I would like you, %s,\n    to take %s away with you.  It will help you as you\n    quest for the Amulet of Yendor."
+ru = "{1:cap} замечает у вас {2:acc}.\nОн улыбается и говорит:\n\n    Вам это удалось!  Мы спасены.  Но боюсь, {3}\n    всегда будет целью для сил хаоса{4:skip}, что захотят завладеть\n    {3:gender|им|ею|им|ими}.\n\n    Чтобы избежать новых бед, я хотел бы, {5},\n    чтобы вы забрали {6:acc} с собой.  {6:gender|Он поможет|Она поможет|Оно поможет|Они помогут} вам\n    в поисках Амулета Йендора."
+
+[d8e05388f3d7]
+en = "[\"You are the keeper of %s now.  Return to %s to search for the Amulet.]"
+ru = "[«Теперь вы хранитель {1:gen}.  Вернитесь в {2:acc}, чтобы искать Амулет.]"
+
+[2de7f1a95364]
+en = "%s grasps %s proudly for a moment, then looks at you.\n\n\"You are its keeper now, and the time has come to resume your search\nfor the Amulet.  %s await your return through the\nmagic portal which brought you here.\""
+ru = "{1:cap} с гордостью на миг сжимает {2:acc}, затем смотрит на вас.\n\n«Теперь вы {2:gender|его|её|его|их} хранитель, и пришло время продолжить поиски\nАмулета.  {3:cap} {3:num|ждёт|ждут} вашего возвращения через\nволшебный портал, что привёл вас сюда.»"
+
+[ef77bad78e9c]
+en = "For some reason, you think that this may be the last time you will\nenter %s."
+ru = "Почему-то вам кажется, что вы в последний раз\nвходите в {1:acc}."
+
+[fd1db849d604]
+en = "\"%s!  Welcome back.\nHow goes your quest to recover the Amulet for %s?\""
+ru = "«{1}!  С возвращением.\nКак продвигаются поиски Амулета для {2:gen}?»"
