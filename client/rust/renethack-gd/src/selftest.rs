@@ -1763,6 +1763,19 @@ enum PadEv {
     Axis(godot::global::JoyAxis, f32),
 }
 
+/// The events answer the request pending when they are sent. Sticks let go
+/// answer nothing: the action before them may have had the engine ask its
+/// next question already, and that question belongs to a later step.
+fn pad_answers(evs: &[PadEv]) -> bool {
+    use godot::global::JoyAxis;
+    evs.iter().any(|e| match *e {
+        PadEv::Axis(JoyAxis::LEFT_X | JoyAxis::LEFT_Y | JoyAxis::RIGHT_X | JoyAxis::RIGHT_Y, v) => {
+            v.abs() >= crate::gamepad::DEAD_ZONE
+        }
+        _ => true,
+    })
+}
+
 /// Give Godot a joypad event: delivered to `input()` next frame.
 fn pad_event(ev: PadEv) {
     let mut input = Input::singleton();
@@ -4081,6 +4094,12 @@ impl SelfTest {
         if let Some((id, p)) = &game.pending {
             godot_print!("selftest: pending request {id}: {}", brief(p));
         }
+        // a step waiting for a request newer than this one
+        godot_print!(
+            "selftest: the last input went to request {} of session {}",
+            self.last_req.1,
+            self.last_req.0
+        );
         for i in game.world.inventory.items() {
             godot_print!("selftest: pack: {} {} {}", i.letter, i.class, i.text);
         }
@@ -4259,17 +4278,18 @@ impl SelfTest {
                     for ev in evs {
                         pad_event(*ev);
                     }
-                    if let Some((id, _)) = pending {
+                    if let Some((id, _)) = pending.filter(|_| pad_answers(evs)) {
                         self.last_req = (serial, id);
                     }
                     self.next();
                     return;
                 }
                 Step::PadFrom(_, f) => {
-                    for ev in f(game) {
-                        pad_event(ev);
+                    let evs = f(game);
+                    for ev in &evs {
+                        pad_event(*ev);
                     }
-                    if let Some((id, _)) = pending {
+                    if let Some((id, _)) = pending.filter(|_| pad_answers(&evs)) {
                         self.last_req = (serial, id);
                     }
                     self.next();
@@ -4602,6 +4622,25 @@ fn save_shot(game: &RenethackGame, path: &std::path::Path) -> Result<(), String>
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sticks_let_go_answer_nothing() {
+        use crate::gamepad::PadButton;
+        use godot::global::JoyAxis;
+        let centre = [
+            PadEv::Axis(JoyAxis::LEFT_X, 0.0),
+            PadEv::Axis(JoyAxis::LEFT_Y, 0.0),
+        ];
+        assert!(!pad_answers(&centre));
+        // a flick: pushed and let go in one step
+        assert!(pad_answers(&[
+            PadEv::Axis(JoyAxis::LEFT_X, 1.0),
+            PadEv::Axis(JoyAxis::LEFT_X, 0.0)
+        ]));
+        // the trigger let go closes the radial: its action
+        assert!(pad_answers(&[PadEv::Axis(JoyAxis::TRIGGER_LEFT, 0.0)]));
+        assert!(pad_answers(&[PadEv::Button(PadButton::A, false)]));
+    }
 
     #[test]
     fn words_outside_the_marks_are_found() {
