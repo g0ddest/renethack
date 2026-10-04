@@ -1,0 +1,1014 @@
+# R6, messages batch 3: potion.c, and the messages it shares with other
+# files. Syntax: nh-i18n's template.rs.
+
+[41399fe23a04]
+en = "It turns out to be empty."
+ru = "Она оказывается пустой."
+
+[66acc59bfca0]
+en = "You are frozen in place!"
+ru = "Вы застываете на месте!"
+
+[7a7f2aa23c85]
+en = "%s rusts."
+ru = "{1} {1:num|ржавеет|ржавеют}."
+
+[d4d16ccfd3fe]
+en = "In a cloud of smoke, %s emerges!"
+ru = "В облаке дыма {1:num|появляется|появляются} {1}!"
+
+[36ea4dbb5e35]
+en = "\"You freed me!\""
+ru = "«Вы освободили меня!»"
+
+[1afa3c16e826]
+en = "%s briefly seems to be transparent."
+ru = "{1} на миг {1:num|кажется|кажутся} {1:gender|прозрачным|прозрачной|прозрачным|прозрачными}."
+
+[c0302fee33fb]
+en = "You are shocked back to your senses!"
+ru = "Вы резко приходите в себя!"
+
+[07d9ee928bfa]
+en = "What a trippy feeling!"
+ru = "Какое улётное ощущение!"
+
+[ea24f8e6e00a]
+en = "Huh, What?  Where am I?"
+ru = "А?  Что?  Где я?"
+
+[4ba7512cb58b]
+en = "Ulch!  That potion tasted foul!"
+ru = "Тьфу!  Какое мерзкое зелье!"
+
+[2ee888fc7ecd]
+en = "Your quickness feels very natural."
+ru = "Ваша быстрота кажется вполне естественной."
+
+[dfba6d6e3631]
+en = "It tasted bad."
+ru = "Это было невкусно."
+
+[4f2267e1e33b]
+en = "You rise up, through the %s!"
+ru = "Вы поднимаетесь вверх сквозь {1:acc}!"
+
+[76749f173980]
+en = "You have an uneasy feeling."
+ru = "Вам не по себе."
+
+[9e599e395b4a]
+en = "You dream that you feel completely healed."
+ru = "Вам снится, что вы полностью исцелились."
+
+[dca8adc095ee]
+en = "You feel completely healed."
+ru = "Вы полностью исцелились."
+
+[fc880a5b7de1]
+en = "You hit your %s on the %s."
+ru = "Вы ударяетесь {1:ins} о {2:acc}."
+
+[ccaae82fc208]
+en = "You wobble in the saddle."
+ru = "Вы покачиваетесь в седле."
+
+[3399fe1e50f5]
+en = "You dream that you feel lackluster."
+ru = "Вам снится, что вы чувствуете вялость."
+
+[4b5d8b00a0ba]
+en = "You feel lackluster."
+ru = "Вы чувствуете вялость."
+
+[923e9ae0d9cc]
+en = "Magical energies course through your body."
+ru = "По вашему телу струится магическая энергия."
+
+[98c4714e7827]
+en = "Ahh, a refreshing drink."
+ru = "Ах, освежает."
+
+[b14597031624]
+en = "You burn your %s."
+ru = "Вы обжигаете {1:acc}."
+
+[fe62fc7f9767]
+en = "This tastes like castor oil."
+ru = "На вкус как касторка."
+
+[c2d9145715ca]
+en = "That was smooth!"
+ru = "Пошло мягко!"
+
+[0ff0ba117446]
+en = "You dream that you feel deathly sick."
+ru = "Вам снится, что вы смертельно больны."
+
+[0843d2e008e2]
+en = "You dream that you feel somewhat better."
+ru = "Вам снится, что вам немного лучше."
+
+[2c44ce6c0fad]
+en = "You feel somewhat better."
+ru = "Вам немного лучше."
+
+[5248f035eb7b]
+en = "You dream that you feel cured.  What a relief!"
+ru = "Вам снится, что вы исцелились.  Какое облегчение!"
+
+[d297daeb3074]
+en = "You feel cured.  What a relief!"
+ru = "Вы исцелились.  Какое облегчение!"
+
+[0987dba0350e]
+en = "%s looks sound and hale again."
+ru = "{1} снова в добром здравии."
+
+[493f56d3c470]
+en = "%s looks unharmed."
+ru = "{1}, похоже, не {1:gender|пострадал|пострадала|пострадало|пострадали}."
+
+[10981a954d5c]
+en = "%s looks rather ill."
+ru = "{1} {1:num|выглядит|выглядят} {1:gender|больным|больной|больным|больными}."
+
+[97e2a4845875]
+en = "%s looks healthier."
+ru = "{1} {1:num|выглядит|выглядят} здоровее."
+
+[93dd34caf15e]
+en = "Some vapor passes harmlessly around you."
+ru = "Пары безвредно проходят мимо вас."
+
+[cf46f4288736]
+en = "Ulch!  That potion smells terrible!"
+ru = "Тьфу!  Это зелье ужасно пахнет!"
+
+[87517788e17d]
+en = "You have a momentary vision."
+ru = "На миг вам является видение."
+
+[8376e2ddbcec]
+en = "You dream that you feel somewhat dizzy."
+ru = "Вам снится, что у вас слегка кружится голова."
+
+[401538675a85]
+en = "You feel somewhat dizzy."
+ru = "У вас слегка кружится голова."
+
+[2c4e7f61e18a]
+en = "Your knees seem more flexible now."
+ru = "Ваши колени теперь гнутся лучше."
+
+[8e1c58380b92]
+en = "That is a potion bottle, not a Klein bottle!"
+ru = "Это бутылка из-под зелья, а не бутылка Клейна!"
+
+[903cd6df9ab3]
+en = "You can't fit your %s into the mouth of the bottle!"
+ru = "Вам не просунуть {1:acc} в горлышко бутылки!"
+
+[d0fc5a2515f2]
+en = "You dream that you feel much less nauseated now."
+ru = "Вам снится, что тошнота почти прошла."
+
+[d357eb6a7fd5]
+en = "You feel much less nauseated now."
+ru = "Тошнота почти прошла."
+
+[287622174be1]
+en = "The mixture looks %s."
+ru = "Смесь выглядит {1:f:ins}."
+
+[100d312fe573]
+en = "The towel soaks it up!"
+ru = "Полотенце впитывает это!"
+
+[1474230ee3bc]
+en = "A coating wears off %s."
+ru = "С {1:gen} сходит покрытие."
+
+[41432ecd65bc]
+en = "The potion spills and covers your %s with oil."
+ru = "Зелье проливается и покрывает маслом {1:gender|ваш|вашу|ваше|ваши} {1:acc}."
+
+[13411c47994a]
+en = "You fill %s with oil."
+ru = "Вы заправляете маслом {1:acc:own}."
+
+[a501fa8d8cad]
+en = "Something happens."
+ru = "Что-то происходит."
+
+[81624dc6f6c7]
+en = "Far out!  Everything is all cosmic again!"
+ru = "Улёт!  Всё снова космическое!"
+
+[851aec870e19]
+en = "You smell acrid fumes."
+ru = "Вы чувствуете едкий запах."
+
+[f3bb99aef565]
+en = "\"I am in your debt.  I will grant one wish!\""
+ru = "«Я в долгу перед вами.  Я исполню одно ваше желание!»"
+
+[9fc96e6d17c8]
+en = "\"Thank you for freeing me!\""
+ru = "«Спасибо, что освободили меня!»"
+
+[b753ad98e7c4]
+en = "\"It is about time!\""
+ru = "«Давно пора!»"
+
+[d3cdd89458a1]
+en = "\"You disturbed me, fool!\""
+ru = "«Ты {hero:gender|потревожил|потревожила} меня, глупец!»"
+
+[c1e6f579af2e]
+en = "Your %s get new energy."
+ru = "Ваши {1} наливаются новой силой."
+
+[ab6ef56c65da]
+en = "Oh, bummer!  Everything is dark!  Help!"
+ru = "Облом!  Всё темно!  Помогите!"
+
+[fb7a94d3963a]
+en = "A cloud of darkness falls upon you."
+ru = "На вас опускается облако тьмы."
+
+[bfc275e9a181]
+en = "You are unable to hear anything."
+ru = "Вы ничего не слышите."
+
+[1ae66043602c]
+en = "This bottle turns out to be empty."
+ru = "Бутылка оказывается пустой."
+
+[43b6452fc7e2]
+en = "You are frightened to death, and unable to move."
+ru = "Вы до смерти напуганы и не можете пошевелиться."
+
+[902e384bb0a1]
+en = "You regain your composure."
+ru = "Вы приходите в себя."
+
+[b9241eaedff9]
+en = "If you can't breathe air, how can you drink liquid?"
+ru = "Если вы не дышите воздухом, как вы будете пить?"
+
+[cd390360eb4f]
+en = "Do you know what lives in this water?"
+ru = "А вы знаете, что живёт в этой воде?"
+
+[d513d944edfc]
+en = "Ulch!  This makes you feel mediocre!"
+ru = "Тьфу!  Вы чувствуете себя посредственно!"
+
+[1d272e5d4a0b]
+en = "You perceive yourself..."
+ru = "Вы осознаёте себя..."
+
+[7ac6d67410ad]
+en = "Your awareness re-normalizes."
+ru = "Ваше восприятие приходит в норму."
+
+[8cdb4835802e]
+en = "Your affinity to %s disappears!"
+ru = "Ваше родство с {1:ins} исчезает!"
+
+[b984350edf86]
+en = "You dream that you feel quite proud of yourself."
+ru = "Вам снится, что вы очень гордитесь собой."
+
+[74c9e33218e3]
+en = "You feel quite proud of yourself."
+ru = "Вы очень гордитесь собой."
+
+[885e4813593e]
+en = "You dream that you feel full of awe."
+ru = "Вам снится, что вы преисполняетесь благоговения."
+
+[f802da620b8d]
+en = "You dream that you feel full of dread."
+ru = "Вам снится, что вас охватывает ужас."
+
+[404e3651df1a]
+en = "You feel full of dread."
+ru = "Вас охватывает ужас."
+
+[72fa5ba8676a]
+en = "You pass out."
+ru = "Вы теряете сознание."
+
+[f1ef8a392d50]
+en = "You awake with a headache."
+ru = "Вы просыпаетесь с головной болью."
+
+[0cc171a92f3f]
+en = "You have an uneasy feeling..."
+ru = "Вам не по себе..."
+
+[d3791db8cb40]
+en = "You dream that you feel rather itchy under %s."
+ru = "Вам снится, что у вас чешется под {1:ins:own}."
+
+[a480d6a77e78]
+en = "You feel rather itchy under %s."
+ru = "У вас чешется под {1:ins:own}."
+
+[9f4859b2cf9d]
+en = "For some reason, you feel your presence is known."
+ru = "Почему-то вы чувствуете, что о вашем присутствии знают."
+
+[fa142e7e7c57]
+en = "You can see through yourself, but you are visible!"
+ru = "Вы видите себя насквозь, но вас всё равно видно!"
+
+[82664d298910]
+en = "You stiffen momentarily."
+ru = "На миг вы цепенеете."
+
+[0b34dbce339f]
+en = "You are motionlessly suspended."
+ru = "Вы неподвижно зависаете в воздухе."
+
+[43f4b3cc02dd]
+en = "Your %s are frozen to the %s!"
+ru = "Ваши {1} примерзают к {2:dat}!"
+
+[687e58cf216b]
+en = "You yawn."
+ru = "Вы зеваете."
+
+[3cb2721e9e25]
+en = "You suddenly fall asleep!"
+ru = "Вы внезапно засыпаете!"
+
+[a8600aa0c51c]
+en = "You dream that you feel lonely."
+ru = "Вам снится, что вам одиноко."
+
+[70cb2bf4ab97]
+en = "You feel lonely."
+ru = "Вам одиноко."
+
+[90919eb34435]
+en = "Yecch!  This stuff tastes like poison."
+ru = "Фу!  На вкус как яд."
+
+[c95cfb42e2d8]
+en = "(But in fact it was mildly stale %s.)"
+ru = "(На самом деле {1:gender|это был слегка подпорченный|это была слегка подпорченная|это было слегка подпорченное|это были слегка подпорченные} {1}.)"
+
+[802bbab29363]
+en = "(But in fact it was biologically contaminated %s.)"
+ru = "(На самом деле {1:gender|это был биологически заражённый|это была биологически заражённая|это было биологически заражённое|это были биологически заражённые} {1}.)"
+
+[b5bfb26e1613]
+en = "Fortunately, you have been immunized."
+ru = "К счастью, у вас иммунитет."
+
+[f5f1e5f853bd]
+en = "Nothing seems to happen."
+ru = "Кажется, ничего не происходит."
+
+[8bc396c6c665]
+en = "Nothing happens."
+ru = "Ничего не происходит."
+
+[bcb7e5b32f8d]
+en = "You dream that you feel better."
+ru = "Вам снится, что вам лучше."
+
+[2aef044debb3]
+en = "Your %s stop itching."
+ru = "Ваши {1} перестают чесаться."
+
+[72f2a2dfbfb4]
+en = "Your %s itch."
+ru = "Ваши {1} чешутся."
+
+[e5bdfc612a79]
+en = "Your vision quickly clears."
+ru = "Ваше зрение быстро проясняется."
+
+[ec36ed68fe65]
+en = "You feel like a million zorkmid!"
+ru = "Вы чувствуете себя на миллион зоркмидов!"
+
+[ceb3659861b1]
+en = "You feel like a million zorkmids!"
+ru = "Вы чувствуете себя на миллион зоркмидов!"
+
+[5fa2b959fae6]
+en = "You feel worried about your future financial situation."
+ru = "Вас беспокоит ваше будущее финансовое положение."
+
+[08c7435e8e09]
+en = "You feel interested in %s financial situation."
+ru = "Вас интересует финансовое положение {1:gen}."
+
+[4ae72a7723e1]
+en = "You feel materially poor."
+ru = "Вы чувствуете себя материально {hero:gender|бедным|бедной}."
+
+[a92239122deb]
+en = "Your %s twitches then starts to tingle."
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|дёргается|дёргаются} и начинает зудеть."
+
+[063fdb34199e]
+en = "Your %s twitches."
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|дёргается|дёргаются}."
+
+[b78e70f49fc8]
+en = "%s vanishes."
+ru = "{1} {1:num|исчезает|исчезают}."
+
+[1fdfbe6a41ad]
+en = "What a pity--you just ruined a future piece of art!"
+ru = "Какая жалость — вы только что испортили будущее произведение искусства!"
+
+[2774aee8f2ae]
+en = "What a pity--you just ruined a future piece of fine art!"
+ru = "Какая жалость — вы только что испортили будущий шедевр!"
+
+[340c539915a5]
+en = "You feel limber!"
+ru = "Вы чувствуете гибкость!"
+
+[21bb0acd5817]
+en = "Wow!  This makes you feel great!"
+ru = "Ух ты!  Вы чувствуете себя отлично!"
+
+[f83816089afd]
+en = "Your skin itches."
+ru = "У вас чешется кожа."
+
+[7e3083699f37]
+en = "%s appears!"
+ru = "{1} {1:num|появляется|появляются}!"
+
+[1fd48bd6c6e8]
+en = "Something speaks."
+ru = "Что-то говорит."
+
+[6b8ad57e0351]
+en = "You turn to stone!"
+ru = "Вы превращаетесь в камень!"
+
+[934ddaa579b2]
+en = "You no longer seem to be petrifying."
+ru = "Похоже, вы больше не каменеете."
+
+[40bcdafe28a6]
+en = "The slime burns away!"
+ru = "Слизь выгорает!"
+
+[99ec697d6d24]
+en = "You dream that you feel much better."
+ru = "Вам снится, что вам гораздо лучше."
+
+[c63a4715d345]
+en = "You dream that you feel a bit steadier now."
+ru = "Вам снится, что вы держитесь на ногах чуть твёрже."
+
+[c65af3194220]
+en = "You dream that you feel less wobbly now."
+ru = "Вам снится, что вас уже не так шатает."
+
+[9d79e8f1e031]
+en = "You feel a bit steadier now."
+ru = "Вы держитесь на ногах чуть твёрже."
+
+[1d55e2902039]
+en = "You feel less wobbly now."
+ru = "Вас уже не так шатает."
+
+[936987857b53]
+en = "This tastes sour."
+ru = "На вкус кисло."
+
+[a835acdbc1bf]
+en = "This tastes tangy."
+ru = "На вкус терпко."
+
+[ca777dea5b67]
+en = "This burns a little!"
+ru = "Немного жжёт!"
+
+[75e006c18642]
+en = "This burns a lot!"
+ru = "Сильно жжёт!"
+
+[fa07469e927e]
+en = "This burns like acid!"
+ru = "Жжёт, как кислота!"
+
+[ffaa41b66e63]
+en = "You dream that you feel a little normal."
+ru = "Вам снится, что вы чувствуете себя почти нормально."
+
+[49bef13154d5]
+en = "You dream that you feel a little strange."
+ru = "Вам снится, что вы чувствуете себя немного странно."
+
+[1023f815be5e]
+en = "You feel a little normal."
+ru = "Вы чувствуете себя почти нормально."
+
+[f6348f2f3ae9]
+en = "You feel a little strange."
+ru = "Вы чувствуете себя немного странно."
+
+[828b2efe628d]
+en = "You have a strange feeling for a moment, then it passes."
+ru = "На миг у вас возникает странное чувство, но оно проходит."
+
+[f6c794f8d096]
+en = "%s glow with %s aura."
+ru = "{1} {1:num|окутывается|окутываются} {2:f:ins} аурой."
+
+[eda7a393aa29]
+en = "%s glows with %s aura."
+ru = "{1} {1:num|окутывается|окутываются} {2:f:ins} аурой."
+
+[fdff539d4f78]
+en = "You feel a lack of something."
+ru = "Вам чего-то не хватает."
+
+[a9d3cb5a5d82]
+en = "You feel threatened."
+ru = "Вы чувствуете угрозу."
+
+[c0be9971bd42]
+en = "You get the heebie jeebies."
+ru = "Вас бросает в дрожь."
+
+[04f22fa733dc]
+en = "Your %s twitch."
+ru = "Ваши {1} дёргаются."
+
+[3f271c747c6c]
+en = "Your bones itch."
+ru = "У вас чешутся кости."
+
+[5635a6173af0]
+en = "Your right %s tingles."
+ru = "{1:gender|Правый|Правую|Правое|Правые} {1:acc} покалывает."
+
+[f916a16ba765]
+en = "Your skin feels warm for a moment."
+ru = "На миг вашей коже становится тепло."
+
+[2403341d0022]
+en = "Your skin glows then fades."
+ru = "Ваша кожа вспыхивает светом и гаснет."
+
+[4076a5459d8b]
+en = "You dream that you feel even worse."
+ru = "Вам снится, что вам ещё хуже."
+
+[4d96d6b459e7]
+en = "You dream that you feel much worse."
+ru = "Вам снится, что вам гораздо хуже."
+
+[e71d6dcf01d8]
+en = "You feel even worse."
+ru = "Вам ещё хуже."
+
+[b9c0cf539437]
+en = "You feel much worse."
+ru = "Вам гораздо хуже."
+
+[321809211fb8]
+en = "The %s crashes on %s body and breaks into shards."
+ru = "{1} {1:num|разбивается|разбиваются} о тело {2:gen} вдребезги."
+
+[35f5d9e2037c]
+en = "The %s crashes on %s head and breaks into shards."
+ru = "{1} {1:num|разбивается|разбиваются} о голову {2:gen} вдребезги."
+
+[2567254331f2]
+en = "The %s crashes on %s saddle and breaks into shards."
+ru = "{1} {1:num|разбивается|разбиваются} о седло {2:gen} вдребезги."
+
+[a470aa654d76]
+en = "%s evaporate."
+ru = "{1} {1:num|испаряется|испаряются}."
+
+[56c2a0455831]
+en = "This burns!"
+ru = "Жжёт!"
+
+[a252b28ad7de]
+en = "%s %s get wet."
+ru = "{2} {1:gen} {2:num|намокает|намокают}."
+
+[bd2377f966ee]
+en = "%s %s gets wet."
+ru = "{2} {1:gen} {2:num|намокает|намокают}."
+
+[b487ed2c59ab]
+en = "%s shrieks in pain!"
+ru = "{1} {1:num|визжит|визжат} от боли!"
+
+[f57f788a07f8]
+en = "%s writhes in pain!"
+ru = "{1} {1:num|корчится|корчатся} от боли!"
+
+[698bfcfc21bd]
+en = "Your %s sting!"
+ru = "У вас щиплет {1:acc}!"
+
+[bc2dbf96b2f9]
+en = "Your %s stings!"
+ru = "У вас щиплет {1:acc}!"
+
+[b8fd502f7b9c]
+en = "For an instant you could see right through yourself!"
+ru = "На миг вы видите себя насквозь!"
+
+[f6b84ec6e39c]
+en = "For an instant you couldn't see yourself!"
+ru = "На миг вы перестаёте себя видеть!"
+
+[d1aa93f1929a]
+en = "Something seems to be holding you."
+ru = "Что-то вас удерживает."
+
+[768285896634]
+en = "The slime disappears!"
+ru = "Слизь исчезает!"
+
+[94d354a9728e]
+en = "The slime disappears."
+ru = "Слизь исчезает."
+
+[e841cf01e260]
+en = "The slime that covers you is burned away!"
+ru = "Покрывающая вас слизь выгорает!"
+
+[696e9ec0ed92]
+en = "You are still turning into slime."
+ru = "Вы всё ещё превращаетесь в слизь."
+
+[7ea709495d81]
+en = "You are turning into slime."
+ru = "Вы превращаетесь в слизь."
+
+[9ab2f7fb2472]
+en = "You are still turning into stone."
+ru = "Вы всё ещё превращаетесь в камень."
+
+[36052cdeb757]
+en = "You are turning into stone."
+ru = "Вы превращаетесь в камень."
+
+[aacfc469aab6]
+en = "You feel more limber."
+ru = "Вы чувствуете себя гибче."
+
+[cc976a1a821b]
+en = "BOOM!  They explode!"
+ru = "БАБАХ!  Они взрываются!"
+
+[a7ea0c00300f]
+en = "They explode!"
+ru = "Они взрываются!"
+
+[88267c998c1e]
+en = "%ld of the %s mix with %s..."
+ru = "{1} из {2:gen} {1:plural|смешивается|смешиваются|смешиваются} с {3:ins}..."
+
+[4c199c9f5565]
+en = "%ld of the %s mix with one of %s..."
+ru = "{1} из {2:gen} {1:plural|смешивается|смешиваются|смешиваются} с одним из {3:gen}..."
+
+[8f29e67e72e9]
+en = "%ld of the %s mixes with %s..."
+ru = "{1} из {2:gen} {1:plural|смешивается|смешиваются|смешиваются} с {3:ins}..."
+
+[769750eb7746]
+en = "%ld of the %s mixes with one of %s..."
+ru = "{1} из {2:gen} {1:plural|смешивается|смешиваются|смешиваются} с одним из {3:gen}..."
+
+[b21a4236ecc8]
+en = "The %s mix with %s..."
+ru = "{1} {1:num|смешивается|смешиваются} с {2:ins}..."
+
+[02938e38d431]
+en = "The %s mix with one of %s..."
+ru = "{1} {1:num|смешивается|смешиваются} с одним из {2:gen}..."
+
+[ffd2713dea51]
+en = "The %s mixes with %s..."
+ru = "{1} {1:num|смешивается|смешиваются} с {2:ins}..."
+
+[35cdda5dc434]
+en = "The %s mixes with one of %s..."
+ru = "{1} {1:num|смешивается|смешиваются} с одним из {2:gen}..."
+
+[10304b10bf2f]
+en = "The mixture evaporates."
+ru = "Смесь испаряется."
+
+[791715242fc2]
+en = "The mixture glows brightly and evaporates."
+ru = "Смесь ярко вспыхивает и испаряется."
+
+[f624f44b8a24]
+en = "The mixture bubbles, then clears."
+ru = "Смесь пузырится, а затем светлеет."
+
+[3f35558d08ea]
+en = "The mixture bubbles."
+ru = "Смесь пузырится."
+
+[da1a8d253b82]
+en = "%s turn %s around the edges."
+ru = "Края {1:gen} становятся {2:pl:ins}."
+
+[026d07712fda]
+en = "%s turn wrinkled around the edges."
+ru = "Края {1:gen} сморщиваются."
+
+[b225b49f6c6c]
+en = "%s turns %s around the edges."
+ru = "Края {1:gen} становятся {2:pl:ins}."
+
+[ec0e46acb974]
+en = "%s turns wrinkled around the edges."
+ru = "Края {1:gen} сморщиваются."
+
+[a785d488f9fa]
+en = "One of %s forms a coating on %s."
+ru = "Одно из {1:gen} покрывает {2:acc} налётом."
+
+[d73ba38ee90e]
+en = "%s gleam with an oily sheen."
+ru = "{1} {1:num|лоснится|лоснятся} от масла."
+
+[2d554a67dc1f]
+en = "%s gleams with an oily sheen."
+ru = "{1} {1:num|лоснится|лоснятся} от масла."
+
+[6782df0750bd]
+en = "%s feel oily."
+ru = "{1} на ощупь {1:gender|маслянистый|маслянистая|маслянистое|маслянистые}."
+
+[16328d868cf4]
+en = "%s feels oily."
+ru = "{1} на ощупь {1:gender|маслянистый|маслянистая|маслянистое|маслянистые}."
+
+[b23e4c68c49f]
+en = "%s are less corroded and rusty."
+ru = "Коррозии и ржавчины на {1:loc} стало меньше."
+
+[6bb6c86bba3d]
+en = "%s are less corroded."
+ru = "Коррозии на {1:loc} стало меньше."
+
+[3fc411522190]
+en = "%s are less rusty."
+ru = "Ржавчины на {1:loc} стало меньше."
+
+[4840d61ff031]
+en = "%s feel less corroded and rusty."
+ru = "На ощупь коррозии и ржавчины на {1:loc} стало меньше."
+
+[21bddbbc27e7]
+en = "%s feel less corroded."
+ru = "На ощупь коррозии на {1:loc} стало меньше."
+
+[497e69da6f26]
+en = "%s feel less rusty."
+ru = "На ощупь ржавчины на {1:loc} стало меньше."
+
+[a501b86a2e89]
+en = "%s feels less corroded and rusty."
+ru = "На ощупь коррозии и ржавчины на {1:loc} стало меньше."
+
+[efd991ec8469]
+en = "%s feels less corroded."
+ru = "На ощупь коррозии на {1:loc} стало меньше."
+
+[742d8edccfbc]
+en = "%s feels less rusty."
+ru = "На ощупь ржавчины на {1:loc} стало меньше."
+
+[6484e3566878]
+en = "%s is less corroded and rusty."
+ru = "Коррозии и ржавчины на {1:loc} стало меньше."
+
+[2846211ac8bb]
+en = "%s is less corroded."
+ru = "Коррозии на {1:loc} стало меньше."
+
+[3712bb95f020]
+en = "%s is less rusty."
+ru = "Ржавчины на {1:loc} стало меньше."
+
+[a73754edd08b]
+en = "%s are full."
+ru = "{1} уже {1:gender|полон|полна|полно|полны}."
+
+[fe6036be7ed2]
+en = "%s is full."
+ru = "{1} уже {1:gender|полон|полна|полно|полны}."
+
+[d8342f7fb7ba]
+en = "The %s potion clears."
+ru = "{1:n} зелье светлеет."
+
+[92dd21270b78]
+en = "The %s potion that you dipped into clears."
+ru = "{1:n} зелье, в которое вы окунули предмет, светлеет."
+
+[f1d56bb55d07]
+en = "The %s potion that you dipped into turns %s."
+ru = "{1:n} зелье, в которое вы окунули предмет, становится {2:n:ins}."
+
+[a555cded7776]
+en = "The %s potion turns %s."
+ru = "{1:n} зелье становится {2:n:ins}."
+
+[af57194425f1]
+en = "The potion clears."
+ru = "Зелье светлеет."
+
+[56cbc88e8d15]
+en = "The potion that you dipped into clears."
+ru = "Зелье, в которое вы окунули предмет, светлеет."
+
+[c48fc021c4ca]
+en = "The potion that you dipped into turns %s."
+ru = "Зелье, в которое вы окунули предмет, становится {1:n:ins}."
+
+[e99fe71d1c64]
+en = "The potion turns %s."
+ru = "Зелье становится {1:n:ins}."
+
+[d6805363bc47]
+en = "You multiply from %s heat!"
+ru = "Вы размножаетесь от жара {1:gen}!"
+
+[202b78ee021a]
+en = "You multiply!"
+ru = "Вы размножаетесь!"
+
+[6131a0236022]
+en = "%s multiplies from %s heat!"
+ru = "{1} {1:num|размножается|размножаются} от жара {2:gen}!"
+
+[4b5677bdf042]
+en = "%s multiplies!"
+ru = "{1} {1:num|размножается|размножаются}!"
+
+[7789e8674537]
+en = "You are suddenly moving faster."
+ru = "Вы внезапно двигаетесь быстрее."
+
+[d4b2f7917f2c]
+en = "You are suddenly moving much faster."
+ru = "Вы внезапно двигаетесь гораздо быстрее."
+
+[56c2a7bd747f]
+en = "Your %s momentarily itch."
+ru = "Ваши {1} на миг начинают чесаться."
+
+[6dd166524d5e]
+en = "Your %s momentarily itches."
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} на миг {1:num|начинает|начинают} чесаться."
+
+[fa79862958bd]
+en = "Your vision seems to brighten for a moment but is normal now."
+ru = "Ваше зрение на миг будто проясняется, но теперь оно в норме."
+
+[a1f52e992340]
+en = "Your vision seems to brighten for a moment but is sadder now."
+ru = "Ваше зрение на миг будто проясняется, но теперь оно печальнее."
+
+[9983e501ef29]
+en = "Your %s momentarily twitch."
+ru = "Ваши {1} на миг дёргаются."
+
+[ed636b149a2b]
+en = "Your %s momentarily twitches."
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} на миг {1:num|дёргается|дёргаются}."
+
+[0fecf437a6a1]
+en = "Your vision seems to dim for a moment but is happier now."
+ru = "Ваше зрение на миг будто тускнеет, но теперь оно веселее."
+
+[4c93b65af9fe]
+en = "Your vision seems to dim for a moment but is normal now."
+ru = "Ваше зрение на миг будто тускнеет, но теперь оно в норме."
+
+[4678f3db3242]
+en = "Your vision seems to flatten for a moment but is normal now."
+ru = "Ваше зрение на миг будто становится плоским, но теперь оно в норме."
+
+[cea861191f49]
+en = "Everything feels SO boring now."
+ru = "Теперь всё на ощупь ТАКОЕ скучное."
+
+[67979f48c72b]
+en = "Everything looks SO boring now."
+ru = "Теперь всё выглядит ТАКИМ скучным."
+
+[14204d1db20d]
+en = "Oh wow!  Everything feels so cosmic!"
+ru = "Ух ты!  Всё на ощупь такое космическое!"
+
+[07351bd2fa70]
+en = "Oh wow!  Everything looks so cosmic!"
+ru = "Ух ты!  Всё выглядит таким космическим!"
+
+[ee7503a50d59]
+en = "Far out, man!  You can see right through yourself."
+ru = "Улёт, чувак!  Вы видите себя насквозь."
+
+[b68d32304535]
+en = "Far out, man!  You can't see yourself."
+ru = "Улёт, чувак!  Вы себя не видите."
+
+[4cb41c9bd137]
+en = "Gee!  All of a sudden, you can see right through yourself."
+ru = "Ого!  Внезапно вы видите себя насквозь."
+
+[750fa152699e]
+en = "Gee!  All of a sudden, you can't see yourself."
+ru = "Ого!  Внезапно вы перестаёте себя видеть."
+
+[5e3f3d1099a8]
+en = "As you open the bottle, something emerges."
+ru = "Когда вы открываете бутылку, из неё что-то появляется."
+
+[08a36a7485f7]
+en = "As you open the bottle, an enormous ghost emerges!"
+ru = "Когда вы открываете бутылку, из неё появляется огромное привидение!"
+
+[ca22fa70291c]
+en = "You have a normal feeling for a moment, then it passes."
+ru = "На миг у вас возникает обычное чувство, но оно проходит."
+
+[9983e36c9fd1]
+en = "You have a peculiar feeling for a moment, then it passes."
+ru = "На миг у вас возникает необычное чувство, но оно проходит."
+
+[c53ee2ce4f58]
+en = "Wow!  This makes you feel better!"
+ru = "Ух ты!  Вам становится лучше!"
+
+[ccc3e2e7c24c]
+en = "Wow!  This makes you feel good!"
+ru = "Ух ты!  Вам становится хорошо!"
+
+[adb491bdfa89]
+en = "Ooph!  This tastes like dandelion wine!"
+ru = "Ух!  На вкус как одуванчиковое вино!"
+
+[047281758c6c]
+en = "Ooph!  This tastes like liquid fire!"
+ru = "Ух!  На вкус как жидкий огонь!"
+
+[83809a136e6c]
+en = "Ooph!  This tastes like watered down dandelion wine!"
+ru = "Ух!  На вкус как разбавленное одуванчиковое вино!"
+
+[3b8f33ded347]
+en = "Ooph!  This tastes like watered down liquid fire!"
+ru = "Ух!  На вкус как разбавленный жидкий огонь!"
+
+[a314f25d1cd7]
+en = "Yecch!  This tastes overripe."
+ru = "Фу!  На вкус как перезрелое."
+
+[5a8ae5798f29]
+en = "Yecch!  This tastes rotten."
+ru = "Фу!  На вкус как гнилое."
+
+[db4140da9385]
+en = "This tastes like 10%% real %s all-natural beverage."
+ru = "На вкус как натуральный напиток, на 10% из настоящего {1:gen}."
+
+[85a616290ea1]
+en = "This tastes like 10%% real reconstituted %s all-natural beverage."
+ru = "На вкус как натуральный напиток, на 10% из настоящего восстановленного {1:gen}."
+
+[f401e11e426e]
+en = "This tastes like reconstituted %s."
+ru = "На вкус как {1:gender|восстановленный|восстановленная|восстановленное|восстановленные} {1}."
+
+[3aa32efcb4e6]
+en = "You dream that you feel less confused now."
+ru = "Вам снится, что ваше замешательство проходит."
+
+[4b1f3df33649]
+en = "You dream that you feel less trippy now."
+ru = "Вам снится, что вас уже не так глючит."
+
+[616359174bdc]
+en = "You feel less trippy now."
+ru = "Вас уже не так глючит."
