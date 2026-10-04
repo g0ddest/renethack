@@ -214,7 +214,7 @@ impl Translator {
         let found = self.catalog.find(text, channel);
         if found
             .as_ref()
-            .is_none_or(|m| m.template.letters() < STRONG_LETTERS)
+            .is_none_or(|m| !says_more_than_a_name(m.template))
         {
             // a template that says almost nothing ("%s of %s") loses to a
             // name the lexicon reads whole ("a scroll of identify"), and to
@@ -422,7 +422,7 @@ impl Translator {
         // nothing and the lexicon reads the text as a name
         let strong = found
             .as_ref()
-            .is_some_and(|m| m.template.letters() >= STRONG_LETTERS);
+            .is_some_and(|m| says_more_than_a_name(m.template));
         if !strong && let Some(p) = self.names.parse(NameKind::Any, shown) {
             return (Value::Phrase(p), true);
         }
@@ -434,6 +434,14 @@ impl Translator {
         }
         (Value::Text(shown.to_string()), false)
     }
+}
+
+/// Does a template say more than a name the lexicon reads in the same
+/// text? Not when it has almost no words of its own ("%s of %s"), nor when
+/// it is only a piece of a longer text, as the pieces names are built of
+/// are ("%s corpse").
+fn says_more_than_a_name(t: &Template) -> bool {
+    t.letters() >= STRONG_LETTERS && !t.uses.iter().all(|u| *u == crate::catalog::Use::Piece)
 }
 
 /// A phrase with the spaces that stood around its English.
