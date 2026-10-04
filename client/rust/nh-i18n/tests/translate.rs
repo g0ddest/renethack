@@ -163,6 +163,22 @@ fn the_hero_gender_is_the_translators() {
 }
 
 #[test]
+fn a_window_of_paragraphs() {
+    // the Oracle's words under its heading: each paragraph a text of the
+    // catalog
+    let t = translator();
+    let passage = "Though the shopkeepers be wary, thieves have nevertheless stolen much by using\n\
+                   their digging wands to hasten exits through the pavement.";
+    let out = t.window(&format!(
+        "The Oracle meditates for a moment and then intones:\n\n{passage}\n"
+    ));
+    assert_eq!(out.status, Status::Translated, "{}", out.text);
+    let (head, body) = out.text.split_once("\n\n").unwrap();
+    assert!(head.starts_with("Оракул"), "{head}");
+    assert!(body.starts_with("Хоть лавочники"), "{body}");
+}
+
+#[test]
 fn windows_headings_and_names() {
     let russian = Russian::parse(&[(
         "t.toml".into(),

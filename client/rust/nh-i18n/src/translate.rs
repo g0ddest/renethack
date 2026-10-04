@@ -181,24 +181,44 @@ impl Translator {
         if whole.status != Status::Unknown || !text.contains('\n') {
             return whole;
         }
+        // a window of paragraphs, one a text of the catalog (the Oracle's
+        // words under its heading), else line by line
+        let parts: Vec<Output> = if text.contains("\n\n") {
+            text.split("\n\n").map(|p| self.paragraph(p)).collect()
+        } else {
+            text.split('\n').map(|l| self.line(l)).collect()
+        };
+        let sep = if text.contains("\n\n") { "\n\n" } else { "\n" };
+        Output {
+            text: parts
+                .iter()
+                .map(|o| o.text.as_str())
+                .collect::<Vec<_>>()
+                .join(sep),
+            status: worst(&parts),
+            template: None,
+        }
+    }
+
+    /// A paragraph of a window: a text of the catalog as a whole, else
+    /// line by line.
+    fn paragraph(&self, text: &str) -> Output {
+        let whole = self.by_text(text, Channel::Window);
+        if whole.status != Status::Unknown || !text.contains('\n') {
+            return if text.trim().is_empty() {
+                Output::english(text, Status::Translated, None)
+            } else {
+                whole
+            };
+        }
         let lines: Vec<Output> = text.split('\n').map(|l| self.line(l)).collect();
-        let worst = lines
-            .iter()
-            .map(|o| o.status)
-            .max_by_key(|s| match s {
-                Status::Translated => 0,
-                Status::Partial => 1,
-                Status::Untranslated => 2,
-                Status::Unknown => 3,
-            })
-            .unwrap_or(Status::Translated);
         Output {
             text: lines
                 .iter()
                 .map(|o| o.text.as_str())
                 .collect::<Vec<_>>()
                 .join("\n"),
-            status: worst,
+            status: worst(&lines),
             template: None,
         }
     }
@@ -454,6 +474,20 @@ impl Translator {
         // inventory letters "aefgh") is shown as it is; words are not
         (Value::Text(shown.to_string()), verbatim(shown))
     }
+}
+
+/// The least translated of some outputs.
+fn worst(parts: &[Output]) -> Status {
+    parts
+        .iter()
+        .map(|o| o.status)
+        .max_by_key(|s| match s {
+            Status::Translated => 0,
+            Status::Partial => 1,
+            Status::Untranslated => 2,
+            Status::Unknown => 3,
+        })
+        .unwrap_or(Status::Translated)
 }
 
 /// The arguments P7 sent for template `t`, one printed text per
