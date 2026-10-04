@@ -68,7 +68,21 @@ mod tests {
         assert!(first.is_some());
         assert!(lock_playground(&dir).unwrap().is_none());
         drop(first);
-        assert!(lock_playground(&dir).unwrap().is_some());
+        // flock() belongs to the open file, not to the process: a child that
+        // a test running beside this one forks holds a copy of the lock's
+        // descriptor until it execs (close-on-exec drops it), so the lock
+        // can stay taken for a moment after the drop
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        let again = loop {
+            if let Some(lock) = lock_playground(&dir).unwrap() {
+                break Some(lock);
+            }
+            if std::time::Instant::now() >= deadline {
+                break None;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        };
+        assert!(again.is_some());
     }
 
     #[test]
