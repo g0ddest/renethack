@@ -49,10 +49,10 @@ GLOSSARY = os.path.join(ROOT, "client", "i18n", "glossary.ru.toml")
 LEXICON = os.path.join(ROOT, "client", "i18n", "lexicon.ru.toml")
 
 # how a section's names are declined
-ANIMATE = {"monster", "role", "rank", "god", "name"}
+ANIMATE = {"monster", "role", "rank", "god", "name", "race"}
 PROPER = {"artifact", "god", "place", "name"}
 ADJECTIVES = {"adjective", "color", "gender"}
-FIXED = {"label", "status", "heading", "condition", "monclass"}
+FIXED = {"label", "status", "heading", "condition", "monclass", "greeting", "note"}
 # words that join a name to what follows it, fixed: "по имени", "на уровень"
 LINKS = {"called", "named", "labeled", "to level", "to", "out of the dungeon", "to the Elemental Planes",
          "to the end game"}

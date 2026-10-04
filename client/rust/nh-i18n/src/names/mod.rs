@@ -39,7 +39,7 @@ const OBJECT_SECTIONS: [&str; 4] = ["object", "appearance", "class", "artifact"]
 
 /// The sections of words: what a message names that is neither a thing
 /// nor a creature, in the order a word is looked up.
-const WORD_SECTIONS: [&str; 24] = [
+const WORD_SECTIONS: [&str; 26] = [
     "terrain",
     "surface",
     "liquid",
@@ -64,6 +64,8 @@ const WORD_SECTIONS: [&str; 24] = [
     "bodypart",
     "adjective",
     "label",
+    "greeting",
+    "note",
 ];
 
 /// The lookups the parsers need, made once per lexicon.

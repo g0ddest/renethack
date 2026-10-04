@@ -1314,6 +1314,11 @@
 "pair of shoes" = { ru = "башмаки", src = "chosen" }
 "pair of boots" = { ru = "сапоги", src = "chosen" }
 "bag" = { ru = "сумка", src = "chosen" }
+# weapon_descr(): the kind of a missile thrown by hand
+"bolt" = { ru = "болт", src = "chosen", note = "a crossbow bolt" }
+"hook" = { ru = "крюк", src = "chosen", note = "a grappling hook" }
+"glob" = { ru = "комок", src = "chosen" }
+"mattock" = { ru = "мотыга", src = "chosen", note = "a dwarvish mattock" }
 
 [artifact]
 "Excalibur" = { ru = "Экскалибур", src = "nethack-ru" }
@@ -1579,21 +1584,21 @@
 
 [race]
 "human" = { ru = "человек", src = "nethack-ru" }
-"humanity" = { ru = "человечество", src = "nethack-ru", note = "collective" }
+"humanity" = { ru = "человечество", src = "nethack-ru", note = "collective", anim = false }
 "man" = { ru = "мужчина", src = "nethack-ru" }
 "woman" = { ru = "женщина", src = "nethack-ru" }
 "elf" = { ru = "эльф", src = "nethack-ru" }
 "elven" = { ru = "эльфийский", src = "nethack-ru", note = "adjective" }
-"elvenkind" = { ru = "эльфийский народ", src = "nethack-ru", note = "collective" }
+"elvenkind" = { ru = "эльфийский народ", src = "nethack-ru", note = "collective", anim = false }
 "dwarf" = { ru = "дварф", src = "nethack-ru" }
 "dwarven" = { ru = "дварфийский", src = "nethack-ru", note = "adjective" }
-"dwarvenkind" = { ru = "дварфийский народ", src = "nethack-ru", note = "collective" }
+"dwarvenkind" = { ru = "дварфийский народ", src = "nethack-ru", note = "collective", anim = false }
 "gnome" = { ru = "гном", src = "nethack-ru" }
 "gnomish" = { ru = "гномий", src = "nethack-ru", note = "adjective", like = "волчий" }
-"gnomehood" = { ru = "гномий народ", src = "nethack-ru", note = "collective" }
+"gnomehood" = { ru = "гномий народ", src = "nethack-ru", note = "collective", anim = false }
 "orc" = { ru = "орк", src = "nethack-ru" }
 "orcish" = { ru = "орочий", src = "chosen", note = "was оркский; orcish = орочий throughout" }
-"orcdom" = { ru = "орочье племя", src = "nethack-ru", note = "collective" }
+"orcdom" = { ru = "орочье племя", src = "nethack-ru", note = "collective", anim = false }
 
 [alignment]
 "lawful" = { ru = "законопослушный", src = "nethack-ru" }
@@ -2544,6 +2549,36 @@
 "molten" = { ru = "расплавленный", src = "chosen" }
 "frozen" = { ru = "замёрзший", src = "chosen" }
 "deep" = { ru = "глубокий", src = "chosen" }
+
+[greeting]
+# Hello() and Goodbye() (role.c): the hero's greeting by role; foreign ones
+# keep their flavour in Cyrillic
+"Hello" = { ru = "Здравствуйте", src = "chosen" }
+"Salutations" = { ru = "Приветствую", src = "chosen", note = "the Knight's Olde English" }
+"Konnichi wa" = { ru = "Конничива", src = "chosen", note = "the Samurai's" }
+"Irasshaimase" = { ru = "Ирассяимасэ", src = "chosen", note = "a shopkeeper to a Samurai" }
+"Aloha" = { ru = "Алоха", src = "chosen", note = "the Tourist's hello and goodbye" }
+"Velkommen" = { ru = "Велкоммен", src = "chosen", note = "the Valkyrie's" }
+"Hallo" = { ru = "Халло", src = "chosen", note = "the mail daemon to a Valkyrie" }
+"Goodbye" = { ru = "До свидания", src = "chosen" }
+"Fare thee well" = { ru = "Счастливо оставаться", src = "chosen", note = "the Knight's" }
+"Sayonara" = { ru = "Сайонара", src = "chosen" }
+"Farvel" = { ru = "Фарвел", src = "chosen" }
+
+[note]
+# trapnote() (trap.c): the note a squeaky board plays
+"C note" = { ru = "до", src = "chosen" }
+"D flat" = { ru = "ре-бемоль", src = "chosen" }
+"D note" = { ru = "ре", src = "chosen" }
+"E flat" = { ru = "ми-бемоль", src = "chosen" }
+"E note" = { ru = "ми", src = "chosen" }
+"F note" = { ru = "фа", src = "chosen" }
+"F sharp" = { ru = "фа-диез", src = "chosen" }
+"G note" = { ru = "соль", src = "chosen" }
+"G sharp" = { ru = "соль-диез", src = "chosen" }
+"A note" = { ru = "ля", src = "chosen" }
+"B flat" = { ru = "си-бемоль", src = "chosen" }
+"B note" = { ru = "си", src = "chosen" }
 
 [name]
 # personal names the engine gives: the default pets (dog.c) and the

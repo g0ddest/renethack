@@ -95,6 +95,15 @@ pub(super) fn parse_monster(
     if text.is_empty() {
         return None;
     }
+    // s_suffix(): "Asidonhopo's", "the gnome's"; the template puts the
+    // owner in the genitive after what is his
+    if !text.ends_with("'s ghost")
+        && let Some(owner) = text
+            .strip_suffix("'s")
+            .or_else(|| text.strip_suffix("s'").map(|_| &text[..text.len() - 1]))
+    {
+        return parse_monster(lex, index, owner, lenient);
+    }
     let low = uncapitalized(text);
     if PRONOUNS.contains(&low.as_str()) {
         return Some(MonsterName {
@@ -351,6 +360,9 @@ mod tests {
             "мятежного ангела Тота"
         );
         assert_eq!(ru("Bob's ghost", Case::Ins), "привидением Bob");
+        assert_eq!(ru("Asidonhopo's", Case::Gen), "Asidonhopo");
+        assert_eq!(ru("the gnome's", Case::Gen), "гнома");
+        assert_eq!(ru("the gnome lords'", Case::Gen), "лордов гномов");
         assert_eq!(ru("It", Case::Dat), "кому-то");
         assert_eq!(ru("you", Case::Acc), "вас");
         assert_eq!(ru("the stripling", Case::Gen), "новобранца");
