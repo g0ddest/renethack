@@ -12,6 +12,8 @@ A lexicon entry mirrors its glossary entry, section and English key:
     sg = [six cases]            nom, gen, dat, acc, ins, prep
     pl = [six cases]
     few = "тритона"             the nominative after 2, 3, 4 (2 тритона)
+    loc = "полу"                the singular after в/на of a place, when it
+                                is not the prepositional (на полу)
     unit = "pair"               counted in pairs: 2 пары сапог
     src = "pymorphy3"           how the forms were made (below)
 
@@ -93,7 +95,7 @@ def build_noun(section, en, g_entry):
         adjnoun=g_entry.get("adjnoun", False), hyphen=g_entry.get("hyphen", "all"), lemma=g_entry.get("lemma"),
     )
     out = {"g": f["g"], "anim": anim, "src": f["how"]}
-    for k in ("sg", "pl", "few"):
+    for k in ("sg", "pl", "few", "loc"):
         if k in f:
             out[k] = f[k]
     if unit:
@@ -117,8 +119,8 @@ def _plural_only(ru):
 
 
 def build_adjective(ru, g_entry):
-    if " " not in ru and not ru.endswith(("ый", "ий", "ой")) and not any(
-            p.tag.POS == "ADJF" for p in lm.morph().parse(ru)):
+    if g_entry.get("indecl") or (" " not in ru and not ru.endswith(("ый", "ий", "ой", "ийся", "ыйся")) and not any(
+            p.tag.POS in ("ADJF", "PRTF") for p in lm.morph().parse(ru))):
         return {"fixed": ru, "src": "fixed"}
     if g_entry.get("like"):
         forms, how = lm.adjective_like(ru, g_entry["like"]), "like:" + g_entry["like"]
@@ -140,7 +142,7 @@ def build(section, en, g_entry):
 def write_entry(lines, section, en, e):
     lines.append("")
     lines.append("[%s.%s]" % (section, key(en)))
-    for k in ("fixed", "g", "anim", "unit", "sg", "pl", "few", "m", "f", "n"):
+    for k in ("fixed", "g", "anim", "unit", "sg", "pl", "few", "loc", "m", "f", "n"):
         if k not in e:
             continue
         v = e[k]

@@ -411,6 +411,9 @@ def phrase(text, anim, g=None, head=None, plural_only=False, like=None, indeclin
             src = 1 if i == 3 and anim and g == "m" else i
             sg.append(" ".join([mf[src] for mf in ms] + [sg_h[i]]) + tail_s)
         out["sg"] = sg
+        loc = None if anim or adjnoun or how != "pymorphy3" or " " in h or "-" in h else locative(h)
+        if loc:
+            out["loc"] = " ".join([mf[5] for mf in ms] + [loc]) + tail_s
     if pl_h is not None:
         mp = [adj_forms(m, None, "plur") for m in mods]
         pl = []
@@ -427,6 +430,26 @@ def phrase(text, anim, g=None, head=None, plural_only=False, like=None, indeclin
                 head_few = sg_h[1]
             out["few"] = " ".join([mf[0] if g == "f" else mf[1] for mf in mp] + [head_few]) + tail_s
     return out
+
+
+# second locatives OpenCorpora has that the written language does not
+# take for a place: на щите, в роге, в супе, в форте (в цвету is in bloom)
+NO_LOC2 = {"хвост", "цвет", "час", "вид", "дом", "род", "счёт", "остров", "щит", "рог", "болт", "форт", "суп"}
+
+
+def locative(word):
+    """The second locative of a noun, after в and на of a place (пол: на
+    полу, лёд: во льду), or None when it takes the prepositional."""
+    p = noun_parse(word)
+    if p is None or "Fixd" in p.tag or p.normal_form in NO_LOC2:
+        return None
+    f = p.inflect({"loc2", "sing"})
+    if f is None or "loc2" not in f.tag:
+        return None
+    prep = p.inflect({"loct", "sing"})
+    if prep is not None and prep.word == f.word:
+        return None
+    return _keep_case(word, f.word)
 
 
 def _adjectival(sg):

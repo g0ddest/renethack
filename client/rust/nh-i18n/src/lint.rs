@@ -67,7 +67,7 @@ impl Glossary {
                     .get(section)
                     .and_then(|s| s.get(en))
                     .and_then(toml::Value::as_table);
-                for key in ["sg", "pl", "few", "m", "f", "n", "fixed"] {
+                for key in ["sg", "pl", "few", "loc", "m", "f", "n", "fixed"] {
                     match forms.and_then(|f| f.get(key)) {
                         Some(toml::Value::String(form)) => ru.push(form.clone()),
                         Some(toml::Value::Array(row)) => {

@@ -272,7 +272,7 @@ fn ordinal_ending(g: Gender, num: Number, anim: bool, case: Case) -> &'static st
         (Number::Sing, Gender::Neut, Case::Acc) => "е",
         (Number::Sing, _, Case::Gen | Case::Acc) => "го",
         (Number::Sing, _, Case::Dat) => "му",
-        (Number::Sing, _, Case::Ins | Case::Prep) => "м",
+        (Number::Sing, _, Case::Ins | Case::Prep | Case::Loc) => "м",
     }
 }
 

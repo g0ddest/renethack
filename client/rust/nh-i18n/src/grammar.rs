@@ -4,7 +4,8 @@
 use std::fmt;
 use std::str::FromStr;
 
-/// The six cases of Russian, in the order of a row of forms.
+/// The six cases of Russian, in the order of a row of forms, and the
+/// locative.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Case {
     Nom,
@@ -13,6 +14,10 @@ pub enum Case {
     Acc,
     Ins,
     Prep,
+    /// The second prepositional, after в and на of a place: на полу, во
+    /// льду, на мосту. It has no cell of its own: a noun without one (на
+    /// столе), a plural and an adjective take the prepositional.
+    Loc,
 }
 
 impl Case {
@@ -26,7 +31,7 @@ impl Case {
     ];
 
     /// The name templates and the lexicon use: "nom", "gen", "dat", "acc",
-    /// "ins", "prep".
+    /// "ins", "prep", "loc".
     pub fn name(self) -> &'static str {
         match self {
             Case::Nom => "nom",
@@ -35,12 +40,17 @@ impl Case {
             Case::Acc => "acc",
             Case::Ins => "ins",
             Case::Prep => "prep",
+            Case::Loc => "loc",
         }
     }
 
-    /// The position in `ALL`: the index into a row of six forms.
+    /// The position in `ALL`: the index into a row of six forms. The
+    /// locative's is the prepositional's.
     pub fn index(self) -> usize {
-        self as usize
+        match self {
+            Case::Loc => Case::Prep as usize,
+            c => c as usize,
+        }
     }
 }
 
@@ -56,8 +66,9 @@ impl FromStr for Case {
     fn from_str(s: &str) -> Result<Case, String> {
         Case::ALL
             .into_iter()
+            .chain([Case::Loc])
             .find(|c| c.name() == s)
-            .ok_or_else(|| format!("no case {s:?} (nom, gen, dat, acc, ins, prep)"))
+            .ok_or_else(|| format!("no case {s:?} (nom, gen, dat, acc, ins, prep, loc)"))
     }
 }
 
@@ -161,5 +172,13 @@ mod tests {
             assert_eq!(c.name().parse::<Case>(), Ok(c));
         }
         assert!("вин".parse::<Case>().is_err());
+    }
+
+    #[test]
+    fn the_locative_reads_the_prepositional_cell() {
+        assert_eq!("loc".parse::<Case>(), Ok(Case::Loc));
+        assert_eq!(Case::Loc.index(), Case::Prep.index());
+        assert!(!Case::ALL.contains(&Case::Loc));
+        assert_eq!(counted_form(5, Case::Loc, false), (Number::Plur, Case::Loc));
     }
 }

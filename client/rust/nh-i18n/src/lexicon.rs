@@ -31,6 +31,9 @@ pub struct Noun {
     sg: Option<[String; 6]>,
     pl: Option<[String; 6]>,
     few: Option<String>,
+    /// The singular after в and на of a place, when it is not the
+    /// prepositional: полу (на полу), мосту.
+    loc: Option<String>,
     /// The English key of the part ("pair", "set") a count of these is
     /// made of: 2 пары сапог.
     pub unit: Option<String>,
@@ -46,12 +49,18 @@ impl Noun {
             sg: Some(std::array::from_fn(|_| text.to_string())),
             pl: None,
             few: None,
+            loc: None,
             unit: None,
         }
     }
 
     /// The singular form in `case`; a plural-only noun gives its plural.
     pub fn singular(&self, case: Case) -> &str {
+        if case == Case::Loc
+            && let Some(loc) = &self.loc
+        {
+            return loc;
+        }
         match (&self.sg, &self.pl) {
             (Some(sg), _) => &sg[case.index()],
             (None, Some(pl)) => &pl[case.index()],
@@ -91,6 +100,7 @@ impl Noun {
             sg: self.sg.as_ref().map(|a| a.each_ref().map(lower)),
             pl: self.pl.as_ref().map(|a| a.each_ref().map(lower)),
             few: self.few.as_ref().map(lower),
+            loc: self.loc.as_ref().map(lower),
             ..self.clone()
         }
     }
@@ -108,7 +118,8 @@ impl Noun {
             .iter()
             .chain(self.pl.iter())
             .flat_map(|a| a.iter().map(String::as_str))
-            .chain(self.few.as_deref());
+            .chain(self.few.as_deref())
+            .chain(self.loc.as_deref());
         for f in all {
             if !out.contains(&f) {
                 out.push(f);
@@ -162,6 +173,7 @@ impl Adjective {
             sg: Some(sg),
             pl: Some(self.pl.clone()),
             few: Some(self.pl[if gender == Gender::Fem { 0 } else { 1 }].clone()),
+            loc: None,
             unit: None,
         }
     }
@@ -246,6 +258,7 @@ struct RawEntry {
     sg: Option<[String; 6]>,
     pl: Option<[String; 6]>,
     few: Option<String>,
+    loc: Option<String>,
     m: Option<[String; 6]>,
     f: Option<[String; 6]>,
     n: Option<[String; 6]>,
@@ -353,6 +366,9 @@ fn convert(e: RawEntry) -> Result<Entry, &'static str> {
     if plural_only && e.pl.is_none() {
         return Err("a plural-only noun needs pl forms");
     }
+    if e.loc.is_some() && e.sg.is_none() {
+        return Err("a locative is a singular form: the noun needs sg forms");
+    }
     Ok(Entry::Noun(Arc::new(Noun {
         gender,
         plural_only,
@@ -360,6 +376,7 @@ fn convert(e: RawEntry) -> Result<Entry, &'static str> {
         sg: e.sg,
         pl: e.pl,
         few: e.few,
+        loc: e.loc,
         unit: e.unit,
     })))
 }
@@ -424,6 +441,24 @@ mod tests {
             "{forms:?}"
         );
         assert!(lex.forms("no such thing").is_none());
+    }
+
+    #[test]
+    fn the_locative_is_its_own_form_or_the_prepositional() {
+        let lex = Lexicon::from_toml(concat!(
+            "[surface.\"floor\"]\ng = \"m\"\n",
+            "sg = [\"пол\", \"пола\", \"полу\", \"пол\", \"полом\", \"поле\"]\n",
+            "pl = [\"полы\", \"полов\", \"полам\", \"полы\", \"полами\", \"полах\"]\n",
+            "loc = \"полу\"\nsrc = \"hand\"\n",
+        ))
+        .unwrap();
+        let floor = lex.noun("surface", "floor").unwrap();
+        assert_eq!(floor.singular(Case::Loc), "полу");
+        assert_eq!(floor.singular(Case::Prep), "поле");
+        assert_eq!(floor.plural(Case::Loc), "полах");
+        assert!(floor.forms().contains(&"полу"));
+        let newt = Lexicon::ru().noun("monster", "newt").unwrap();
+        assert_eq!(newt.singular(Case::Loc), "тритоне");
     }
 
     #[test]

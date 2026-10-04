@@ -238,6 +238,23 @@ mod tests {
     }
 
     #[test]
+    fn a_place_takes_its_locative() {
+        let p = parse(NameKind::Word, "ice");
+        assert_eq!(
+            (p.form(Case::Loc), p.form(Case::Prep)),
+            ("льду".into(), "льде".into())
+        );
+        let p = parse(NameKind::Word, "lowered drawbridge");
+        assert_eq!(p.form(Case::Loc), "опущенном подъёмном мосту");
+        let p = parse(NameKind::Object, "an uncursed grappling hook");
+        assert_eq!(p.form(Case::Loc), "непроклятом абордажном крюку");
+        let p = parse(NameKind::Object, "2 grappling hooks");
+        assert_eq!(p.form(Case::Loc), "2 абордажных крюках");
+        let p = parse(NameKind::Monster, "the newt");
+        assert_eq!(p.form(Case::Loc), "тритоне");
+    }
+
+    #[test]
     fn an_unknown_monster_is_a_name_only_when_one_is_expected() {
         let lex = Lexicon::ru();
         assert_eq!(parse(NameKind::Monster, "Fido").form(Case::Dat), "Fido");
