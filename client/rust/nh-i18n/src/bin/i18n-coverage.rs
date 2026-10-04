@@ -19,7 +19,9 @@ use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use nh_i18n::{Arg, Catalog, NameKind, Names, Output, Phrase, Russian, Status, Translator};
+use nh_i18n::{
+    Arg, Catalog, Channel, NameKind, Names, Output, Phrase, Russian, Status, Translator, Use,
+};
 use serde::Deserialize;
 
 /// `--no-lexicon`: every name stays English.
@@ -155,10 +157,20 @@ fn run(
                 }
                 "window" => {
                     let whole = translator.window(&shown.text);
-                    if whole.template.is_some() || !shown.text.contains('\n') {
+                    let lines: Vec<&str> = shown
+                        .text
+                        .lines()
+                        .filter(|l| !l.trim().is_empty())
+                        .collect();
+                    if whole.template.is_some() || lines.len() < 2 {
                         items.push(("window".into(), shown.text.clone(), whole));
+                    } else if lines.iter().any(|l| is_layout(&translator, l)) {
+                        // the tombstone, #overview, a list: the client draws
+                        // it from data
+                        report.layout += 1;
+                        report.layout_lines += lines.len();
                     } else {
-                        for l in shown.text.lines().filter(|l| !l.trim().is_empty()) {
+                        for l in lines {
                             items.push(("window-line".into(), l.to_string(), translator.text(l)));
                         }
                     }
@@ -176,6 +188,8 @@ fn run(
 
     let mut out = String::new();
     let Report {
+        layout,
+        layout_lines,
         tallies,
         unknown,
         untranslated,
@@ -225,6 +239,11 @@ fn run(
          partial: a name in it stays English; weak: only a template like \"%s of %s\""
     );
     let _ = writeln!(out, "messages with their format (P7): {with_fmt}");
+    let _ = writeln!(
+        out,
+        "laid out by the client, not counted: {layout} windows of {layout_lines} lines \
+         (the tombstone, #overview, the vanquished list)"
+    );
     let mut misses: Vec<_> = unknown.into_iter().collect();
     misses.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
     let _ = writeln!(out, "\nno template ({} distinct):", misses.len());
@@ -278,9 +297,20 @@ fn run(
     Ok(out)
 }
 
+/// Is a line one of a picture or a table the client draws from data?
+fn is_layout(translator: &Translator, line: &str) -> bool {
+    translator
+        .catalog()
+        .find(line, Channel::Window)
+        .is_some_and(|m| m.template.has_use(Use::Layout))
+}
+
 /// What the texts of a corpus came to.
 #[derive(Default)]
 struct Report {
+    /// windows laid out as a picture or a table, and their lines
+    layout: usize,
+    layout_lines: usize,
     tallies: HashMap<String, Tally>,
     /// "[kind] text" no template matched
     unknown: HashMap<String, usize>,

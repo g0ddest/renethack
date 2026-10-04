@@ -47,6 +47,9 @@ pub enum Use {
     /// A text of `dat/`: rumours, oracles, epitaphs, engravings, quest
     /// texts, level messages, hallucinatory names.
     Data,
+    /// A picture or a table the client draws from data: the tombstone,
+    /// #overview, the vanquished and genocided lists.
+    Layout,
     /// raw_printf and livelog lines.
     Other,
 }
@@ -64,6 +67,7 @@ impl Use {
             "death" => Use::Death,
             "rumor" | "oracle" | "epitaph" | "engraving" | "bogusmon" | "quest" | "level"
             | "tutorial" | "dungeon" => Use::Data,
+            "layout" => Use::Layout,
             _ => Use::Other,
         }
     }

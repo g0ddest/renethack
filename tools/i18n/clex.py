@@ -250,8 +250,9 @@ class Unit:
     strings: dict = field(default_factory=dict)
     # struct tag -> its members' names, in order
     structs: dict = field(default_factory=dict)
-    # name -> (struct tag, rows): `struct tag name[] = { {...}, {...} }`,
-    # each row its initializer's elements as token lists
+    # name -> (struct tag or None, rows): `struct tag name[] = { {...} }`
+    # or `const char *name[N][3] = { {...} }`, each row its initializer's
+    # elements as token lists
     tables: dict = field(default_factory=dict)
 
 
@@ -299,9 +300,10 @@ def scan_unit(path, src):
             if name and values is not None:
                 unit.arrays[name] = values
             elif name:
+                # a table of structs, or of rows of strings (x[N][3]: no tag)
                 rows = struct_rows(toks, i + 1, end)
                 tag = declared_struct(toks, i)
-                if rows and tag:
+                if rows:
                     unit.tables[name] = (tag, rows)
             i = end + 1
             continue

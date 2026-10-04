@@ -98,6 +98,25 @@ class Formats(unittest.TestCase):
         self.assertIn("That thing is %s!", e)
         self.assertEqual(e["That thing is %s!"].args, [{"monster"}])
 
+    def test_questions_built_by_helpers(self):
+        e = catalog_of('static void ask(const char *prompt) { getlin(prompt, NULL); }\n'
+                       'void f(struct obj *o) {\n'
+                       '    char qbuf[QBUFSZ];\n'
+                       '    (void) safe_qbuf(qbuf, "Call ", ":", o, xname, simpleonames, "thing");\n'
+                       '    ask(qbuf);\n'
+                       '    Sprintf(qbuf, "There %s ", otense(o, "are"));\n'
+                       '    (void) safe_qbuf(qbuf, qbuf, " here; eat it?", o, doname, xname, "it");\n'
+                       '    (void) yn_function(qbuf, ynchars, 0, TRUE);\n}\n')
+        self.assertEqual(e["Call %s:"].args, [{"object"}])
+        self.assertIn("There is %s here; eat it?", e)
+
+    def test_tables_of_rows(self):
+        e = catalog_of('static const char *const orders[2][2] = { {"a", "alphabetically"}, {"n", "by count"} };\n'
+                       'void f(int i) { add_menu(w, g, &a, 0, 0, 0, 0, orders[i][1], 0); }\n')
+        self.assertIn("alphabetically", e)
+        self.assertIn("by count", e)
+        self.assertNotIn("a", e)
+
     def test_helpers_returns_and_parameters(self):
         e = catalog_of('static const char *exclam(int d) { return d > 4 ? "!" : "."; }\n'
                        'static void hit(const char *what, int d) { You("hit %s%s", what, exclam(d)); }\n'

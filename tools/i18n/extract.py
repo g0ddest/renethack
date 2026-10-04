@@ -158,6 +158,16 @@ NOT_SHOWN = {"impossible", "panic", "debugpline0", "debugpline1", "debugpline2",
              "nhl_add_table_entry_str", "nhl_add_table_entry_int",
              "nhl_add_table_entry_bool", "nhl_add_table_entry_char",
              "dump_plines", "putmsghistory"}
+# Texts laid out as a picture or a table rather than said: the tombstone,
+# #overview, the vanquished and genocided lists. Their entries are used as
+# "layout": the client draws them from data, and the coverage of messages
+# leaves them out.
+LAYOUT_FUNCS = {"genl_outrip", "center", "list_vanquished", "list_genocided",
+                "print_mapseen", "print_branch", "show_overview",
+                "traverse_mapseenchn", "dooverview", "overview_stats"}
+# The tombstone's lines with text centered between its sides
+# ("                  |       Hero       |"): a pattern per side.
+RIP_SIDE = re.compile(r"^( *\*?)\|( +)\|( *\*?)$")
 # The enlightenment lines of ^X: enl_msg(prefix, present, past, suffix, ps)
 # shows " <prefix><present or past><suffix><ps>."
 ENL = {
@@ -373,6 +383,8 @@ class Op:
         self.line = line
         self.call = call
         self.transform = transform
+        # safe_qbuf: (prefix, suffix) around an object's name
+        self.around = None
 
 
 def squeeze(fmt):
@@ -406,12 +418,33 @@ class Globals:
         self.prototypes = {}
         self.defs = {}  # function name -> [Context]
         self.callers = {}  # function name -> [(Context, args)]
+        # function name -> [(Context, args, token index of the call)]
+        self.call_sites_at = {}
         self.memo = {}
 
     def index(self, ctx):
         self.defs.setdefault(ctx.func.name, []).append(ctx)
-        for name, args in ctx.calls:
+        for name, args, pos in ctx.calls:
             self.callers.setdefault(name, []).append((ctx, args))
+            self.call_sites_at.setdefault(name, []).append((ctx, args, pos))
+
+    def param_pieces(self, ctx, name, depth):
+        """What callers pass for a parameter that is no literal: the texts
+        of the buffers they hand over ("Call %s:" to name_from_player)."""
+        def compute():
+            k = ctx.param_list.index(name)
+            sites = self.call_sites_at.get(ctx.func.name, [])
+            if len(self.defs.get(ctx.func.name, [])) > 1:
+                sites = [x for x in sites if x[0].unit is ctx.unit]
+            out = []
+            for caller, args, pos in sites:
+                if k >= len(args) or caller.values(args[k]) is not None:
+                    continue
+                t = strip_expr(args[k])
+                if len(t) == 1 and t[0].kind == "ident" and t[0].text in caller.ops:
+                    out += caller.compositions(t[0].text, pos, depth + 1)
+            return dedupe(out)[:MAX_DERIVED]
+        return self._memo(("ppc", ctx.unit.path, ctx.func.name, name, depth), compute, [])
 
     def _memo(self, key, compute, unknown=None):
         if key in self.memo:
@@ -549,14 +582,17 @@ class Context:
                     and t.text not in BUFFER_OPS):
                 close = match_close(toks, i + 1)
                 args = split_args(toks, i + 1, close)
-                self.calls.append((t.text, args))
+                self.calls.append((t.text, args, i))
                 if t.text not in BUFFER_QUERIES:
                     # a call that shows the buffer reads it; a function whose
                     # parameter is a `char *` may write it
-                    # (fmt_elapsed_time(buf, final)): resolved later
+                    # (fmt_elapsed_time(buf, final)): resolved later.
+                    # safe_qbuf writes its first argument (an op), reading it
+                    # first as its prefix: no use of that buffer there
+                    written = destination(args[0])[0] if t.text == "safe_qbuf" and args else None
                     for k, a in enumerate(args):
                         a = strip_expr(a)
-                        if len(a) == 1 and a[0].kind == "ident":
+                        if len(a) == 1 and a[0].kind == "ident" and a[0].text != written:
                             self.uses.setdefault(a[0].text, []).append(i)
                             self.passes.setdefault(a[0].text, {})[i] = (t.text, k)
             if t.text == "=" and toks[i - 1].kind == "ident" and toks[i - 2].text not in (".", "->"):
@@ -616,6 +652,17 @@ class Context:
                     and toks[i + 3].text in ("'\\0'", "0") and toks[i - 1].text in (";", "{", "}", ")")):
                 self.ops.setdefault(toks[i + 1].text, []).append(
                     Op(i, False, [clex.Tok("string", '""', t.line, "")], [], False, t.line, "="))
+            if (t.kind == "ident" and t.text == "safe_qbuf" and toks[i + 1].text == "("
+                    and toks[i - 1].text not in (".", "->")):
+                # safe_qbuf(buf, prefix, suffix, obj, ...): prefix, the
+                # object's name, suffix
+                close = match_close(toks, i + 1)
+                args = split_args(toks, i + 1, close)
+                dest, _ = destination(args[0]) if args else (None, False)
+                if dest and len(args) >= 3:
+                    op = Op(i, False, [], [], False, t.line, t.text)
+                    op.around = (args[1], args[2])
+                    self.ops.setdefault(dest, []).append(op)
             if (t.kind == "ident" and t.text in BUFFER_OPS and toks[i + 1].text == "("
                     and toks[i - 1].text not in (".", "->")):
                 close = match_close(toks, i + 1)
@@ -742,6 +789,13 @@ class Context:
             column = self.column(toks[0].text, toks[-1].text)
             if column:
                 return column
+        # rows[i][k]: column k of a table of rows of strings
+        if (toks[0].kind == "ident" and len(toks) >= 7 and toks[1].text == "["
+                and toks[-1].text == "]" and toks[-3].text == "[" and toks[-2].kind == "number"
+                and toks[-2].text.isdigit() and match_close(toks, 1) == len(toks) - 4):
+            column = self.column(toks[0].text, int(toks[-2].text))
+            if column:
+                return column
         return None
 
     def column(self, table, member):
@@ -751,10 +805,13 @@ class Context:
         if not found:
             return None
         tag, rows = found
-        members = self.unit.structs.get(tag) or self.glob.structs.get(tag)
-        if not members or member not in members:
-            return None
-        k = members.index(member)
+        if isinstance(member, int):
+            k = member
+        else:
+            members = (self.unit.structs.get(tag) or self.glob.structs.get(tag)) if tag else None
+            if not members or member not in members:
+                return None
+            k = members.index(member)
         out = []
         for row in rows:
             if k >= len(row):
@@ -854,10 +911,12 @@ class Context:
             return self.compositions(name, pos, depth + 1) or placeholder
         out = []
         if name in self.params:
-            # the literals some callers pass, and the placeholder for the
-            # others
+            # the literals some callers pass, the buffers others hand over,
+            # and the placeholder for the rest
             known = self.glob.param_values_partial(self, name)
-            out += [(escape(x), []) for x in known] + placeholder
+            out += [(escape(x), []) for x in known]
+            out += self.glob.param_pieces(self, name, depth)
+            out += placeholder
         if name in self.assigns:
             for rhs in self.assigns[name]:
                 if source_text(rhs) in NULL_POINTERS:
@@ -910,6 +969,14 @@ class Context:
         """What one buffer operation writes."""
         if op.transform:
             return []
+        if op.around:
+            parts = [self.pieces(op.around[0], op.index, depth + 1), [("%s", ["object"])],
+                     self.pieces(op.around[1], op.index, depth + 1)]
+            while product_size(parts) > MAX_DERIVED:
+                k = max((0, 2), key=lambda i: len(parts[i]))
+                parts[k] = [("%s", ["text"])]
+            return [("".join(p for p, _ in combo), [x for _, ks in combo for x in ks])
+                    for combo in itertools.product(*parts)]
         if op.printf:
             fmts = self.values(op.text)
             if fmts is None:
@@ -1122,6 +1189,31 @@ class Catalog:
                     base.expanded = True
 
 
+class LayoutCatalog:
+    """The catalog seen from a layout function: everything it adds is
+    used as layout."""
+
+    def __init__(self, cat):
+        self.cat = cat
+
+    def add(self, fmt, use, site, kinds, base=None, force=False):
+        return self.cat.add(fmt, "layout", site, kinds, base, force)
+
+    def add_all(self, use, site, generic, variants, prefixes=("",), suffix=""):
+        return self.cat.add_all("layout", site, generic, variants, prefixes, suffix)
+
+
+def add_rip(cat, unit):
+    """The tombstone's lines (rip_txt), as layout: each line as it is, and
+    a line with text centered between its sides as a pattern."""
+    for line in unit.arrays.get("rip_txt", []):
+        site = f"src/{unit.path}:0 rip_txt"
+        cat.add(escape(line), "layout", site, [], force=True)
+        m = RIP_SIDE.match(line)
+        if m:
+            cat.add(escape(m.group(1)) + "|%s|" + escape(m.group(3)), "layout", site, ["text"], force=True)
+
+
 def site_text(path, func, line, call, args):
     shown = ", ".join(source_text(a) for a in args)
     if len(shown) > 120:
@@ -1132,6 +1224,8 @@ def site_text(path, func, line, call, args):
 def scan_function(cat, ctx):
     glob, unit, func = ctx.glob, ctx.unit, ctx.func
     toks = unit.toks
+    if func.name in LAYOUT_FUNCS:
+        cat = LayoutCatalog(cat)
     start, end = func.body
     path = "src/" + unit.path
     i = start
@@ -1355,6 +1449,9 @@ def extract():
     cat = Catalog()
     for ctx in contexts:
         scan_function(cat, ctx)
+    for unit in units:
+        if unit.path == "rip.c":
+            add_rip(cat, unit)
     for fmt, use, site, kinds in datfiles.extract(UPSTREAM):
         cat.add(fmt, use, site, kinds)
     return cat
