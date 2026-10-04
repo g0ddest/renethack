@@ -11003,6 +11003,8 @@ do nothing  [bdbd93292417]
   =   Ничего не делать
 done  [e5fd9cfe0e80]
   =   Готово
+east  [25038d9da464]
+  =   Восток
 eating %s  [2b1954b820f9]
   m   Есть тритона
   f   Есть крысу
@@ -11031,6 +11033,8 @@ gloved %s (no weapon)  [593711cbbe9d]
   f   Крыса в перчатках (без оружия)
   n   Копьё в перчатках (без оружия)
   pl  3 стрелы в перчатках (без оружия)
+here  [0154c0dabe71]
+  =   Здесь
 internal levl[][].typ codes in base-36  [1e084b5f095b]
   =   Внутренние коды levl[][].typ в base-36
 known map without monsters  [401558128991]
@@ -11057,6 +11061,12 @@ nearby traps  [86d07fe8cd4e]
   =   Ловушки поблизости
 no matches  [e6f1d34932f2]
   =   Совпадений нет
+north  [3099447db4c8]
+  =   Север
+northeast  [31a33b664a0c]
+  =   Северо-восток
+northwest  [638f1d0c45c8]
+  =   Северо-запад
 nothing: unbind the key  [b6318c7d87a5]
   =   Ничего: снять назначение клавиши
 on the floor  [433ba7d6d866]
@@ -11139,6 +11149,12 @@ something you're carrying  [a8fddf821eae]
   =   Что-нибудь из ваших вещей
 sortloot order (by class with some sub-class groupings)  [738d911d4514]
   =   Порядок sortloot (по классам, внутри некоторых — по группам)
+south  [7e3fb5d99b37]
+  =   Юг
+southeast  [9dfb52edfd99]
+  =   Юго-восток
+southwest  [c748b5788afa]
+  =   Юго-запад
 start the game with this character  [b6dc862d36a0]
   =   Начать игру этим персонажем
 stash one item into %s  [a3753fa72fb5]
@@ -11187,6 +11203,8 @@ went to your reward with %ld points,  [ef776f988a9f]
   f   Отправились за наградой, набрав 3 очка,
   n   Отправились за наградой, набрав 5 очков,
   pl  Отправились за наградой, набрав 21 очко,
+west  [d63eba28afc0]
+  =   Запад
 which direction?  [65f7c4b89317]
   =   В каком направлении?
 wiping off your %s  [c5d2b2cafecc]
