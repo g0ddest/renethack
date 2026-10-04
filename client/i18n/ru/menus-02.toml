@@ -1,0 +1,1900 @@
+# R6, batch 4: the engine's menus beyond the soak: what can be done
+# here and with an item, picking up and looting, identification, the
+# orderings of discoveries and spells, #enhance, the look and help
+# menus, the role selection, the extended commands list.
+
+[f0f20e0e2396]
+en = "an object on the %s"
+ru = "предмет на {1:loc}"
+
+[670f80e4c425]
+en = "the %s"
+ru = "{1}"
+
+[4e90fb513fa1]
+en = "Aim for what?"
+ru = "Что зацепить?"
+
+[9e21c7a5446a]
+en = "Open a portal to which dungeon?"
+ru = "В какое подземелье открыть портал?"
+
+[603daf804e63]
+en = "full map without monsters, objects, and traps"
+ru = "вся карта без монстров, предметов и ловушек"
+
+[1e084b5f095b]
+en = "internal levl[][].typ codes in base-36"
+ru = "внутренние коды levl[][].typ в base-36"
+
+[97d569433c15]
+en = "legend of base-36 levl[][].typ codes"
+ru = "расшифровка кодов levl[][].typ в base-36"
+
+[27cc4e1e8b68]
+en = "Key '%s' is currently bound to \"%s\"."
+ru = "Клавиша '{1}' сейчас назначена на \"{2}\"."
+
+[e0ffc7c5b7f8]
+en = "Key '%s' is not bound to anything."
+ru = "Клавиша '{1}' ни на что не назначена."
+
+[b6318c7d87a5]
+en = "nothing: unbind the key"
+ru = "ничего: снять назначение клавиши"
+
+[8d9281045ed3]
+en = "Bind '%s' to what command?"
+ru = "На какую команду назначить '{1}'?"
+
+[5e0a29593a0d]
+en = "Bind what command?"
+ru = "Какую команду назначить?"
+
+[895f190b2fa7]
+en = "bind key to a command"
+ru = "назначить клавишу команде"
+
+[d32f66454340]
+en = "bind command to a key"
+ru = "назначить команду клавише"
+
+[448b77ff9950]
+en = "view changed key binds"
+ru = "показать изменённые назначения клавиш"
+
+[7edd183afd84]
+en = "Do what?"
+ru = "Что сделать?"
+
+[2c3b3348a955]
+en = "Which commands autocomplete?"
+ru = "Какие команды дополняются автоматически?"
+
+[03401467299c]
+en = "Talk to %s"
+ru = "Поговорить с {1:ins}"
+
+[054d1e91de6b]
+en = "Kick the door"
+ru = "Пнуть дверь"
+
+[088518d10e60]
+en = "Travel here"
+ru = "Идти сюда"
+
+[16d58fe2cd1a]
+en = "unlock the door"
+ru = "отпереть дверь"
+
+[20204bbc407e]
+en = "Pick up items"
+ru = "Подобрать предметы"
+
+[2496bab07169]
+en = "Rename %s"
+ru = "Переименовать {1:acc}"
+
+[2cb3611bc190]
+en = "Put saddle on %s"
+ru = "Надеть седло на {1:acc}"
+
+[2ccf49712240]
+en = "Look at map symbol"
+ru = "Рассмотреть символ на карте"
+
+[2fa3a0511091]
+en = "Tip %s"
+ru = "Вытряхнуть {1:acc}"
+
+[3567cf50cdaf]
+en = "Remove saddle from %s"
+ru = "Снять седло с {1:gen}"
+
+[366f8571aa10]
+en = "Open the door"
+ru = "Открыть дверь"
+
+[3c9e34fa34be]
+en = "Close the door"
+ru = "Закрыть дверь"
+
+[433c2dd44d43]
+en = "Push the boulder"
+ru = "Толкнуть валун"
+
+[4749e847f9cb]
+en = "Go up the stairs"
+ru = "Подняться по лестнице"
+
+[60faf4d61364]
+en = "Swap places with %s"
+ru = "Поменяться местами с {1:ins}"
+
+[668756245b3e]
+en = "Attempt to disarm trap"
+ru = "Попытаться обезвредить ловушку"
+
+[75b71efad8b6]
+en = "Go down the stairs"
+ru = "Спуститься по лестнице"
+
+[87ed071ab015]
+en = "Ride %s"
+ru = "Сесть верхом на {1:acc}"
+
+[8d0ec830a3c6]
+en = "Pick up %s"
+ru = "Подобрать {1:acc}"
+
+[90106354bb94]
+en = "Name %s"
+ru = "Дать имя {1:dat}"
+
+[934ab889bb68]
+en = "Attack %s"
+ru = "Атаковать {1:acc}"
+
+[9354dc250a90]
+en = "Go down the ladder"
+ru = "Спуститься по приставной лестнице"
+
+[9977d99afaf2]
+en = "Loot %s"
+ru = "Обыскать {1:acc}"
+
+[a28b4e6636b7]
+en = "Sit on the throne"
+ru = "Сесть на трон"
+
+[ad3a9f554977]
+en = "Drink from the %s"
+ru = "Выпить из {1:gen}"
+
+[b17dc354c3bf]
+en = "Eat %s"
+ru = "Съесть {1:acc}"
+
+[b40971ecea1f]
+en = "Examine trap"
+ru = "Осмотреть ловушку"
+
+[bdd8f5a491b6]
+en = "Attack unseen creature"
+ru = "Атаковать невидимое существо"
+
+[bf0ea9623779]
+en = "Sacrifice something on the altar"
+ru = "Принести что-нибудь в жертву на алтаре"
+
+[c4e63dc345a6]
+en = "Search the door for a trap"
+ru = "Проверить дверь на ловушки"
+
+[cc32d8987b60]
+en = "lock or unlock the door"
+ru = "запереть или отпереть дверь"
+
+[ccac69bf4eda]
+en = "Go up the ladder"
+ru = "Подняться по приставной лестнице"
+
+[d625d9c42fcb]
+en = "Cast a spell"
+ru = "Произнести заклинание"
+
+[d7b64c4850d1]
+en = "Throw something"
+ru = "Бросить что-нибудь"
+
+[f46026084f4d]
+en = "Dismount %s"
+ru = "Слезть с {1:gen}"
+
+[f85b872781b7]
+en = "Dip something into the fountain"
+ru = "Окунуть что-нибудь в фонтан"
+
+[f8d31c621db5]
+en = "Move on the trap"
+ru = "Встать на ловушку"
+
+[37f5f64ccfa5]
+en = "[A] Command autocompletes"
+ru = "[A] Команда дополняется автоматически"
+
+[50491bdaf137]
+en = "[m] Command accepts '%s' prefix"
+ru = "[m] Команда принимает префикс '{1}'"
+
+[1a2285d8881f]
+en = "Quit"
+ru = "Отмена"
+
+[34d8b60fe253]
+en = "Hide"
+ru = "Спрятаться"
+
+[5397e0583f14]
+en = "Yes"
+ru = "Да"
+
+[6a72085653e4]
+en = "All"
+ru = "Все"
+
+[7f8f8573f85e]
+en = "Spin a web"
+ru = "Сплести паутину"
+
+[816c52fd2bdd]
+en = "No"
+ru = "Нет"
+
+[8ae1c34bd37f]
+en = "Left"
+ru = "Левая"
+
+[954daa8b0033]
+en = "Right"
+ru = "Правая"
+
+[fd63e7d1c8cc]
+en = "Extended Commands List"
+ru = "Список расширенных команд"
+
+[7afa43b77568]
+en = "Switch to excluding commands that don't autocomplete"
+ru = "Скрыть команды без автодополнения"
+
+[ee5bd41dfc82]
+en = "Switch to including commands that don't autocomplete"
+ru = "Показать и команды без автодополнения"
+
+[14e08f7d24f6]
+en = "Search extended commands"
+ru = "Искать среди расширенных команд"
+
+[ae581c84175f]
+en = "Switch back from search"
+ru = "Выйти из поиска"
+
+[1a73d2172bad]
+en = "Switch back from search (\"\")"
+ru = "Выйти из поиска (\"\")"
+
+[50c192808377]
+en = "Switch to showing debugging commands in separate section"
+ru = "Показать отладочные команды отдельным разделом"
+
+[c2843d99df85]
+en = "Switch to showing all alphabetically, including debugging commands"
+ru = "Показать все по алфавиту, вместе с отладочными командами"
+
+[6fb66a6db854]
+en = "Extended commands"
+ru = "Расширенные команды"
+
+[cafef674cd85]
+en = "Debugging Extended Commands"
+ru = "Отладочные расширенные команды"
+
+[e6f1d34932f2]
+en = "no matches"
+ru = "совпадений нет"
+
+[4430cf069d96]
+en = "or %s [%s]"
+ru = "или {1} [{2}]"
+
+[f833e3a6294d]
+en = "or %s or %s"
+ru = "или {1} или {2}"
+
+[439ac6327d9e]
+en = " or "
+ru = " или "
+
+[f5de698a150d]
+en = "Extended Command: "
+ru = "Расширенная команда: "
+
+[4eb87fb193bd]
+en = "Extended Command: %s"
+ru = "Расширенная команда: {1}"
+
+[310fb65723ae]
+en = "or %s [%s] or "
+ru = "или {1} [{2}] или "
+
+[3e2f606c9895]
+en = "or %s or %s%s"
+ru = "или {1} или {2}{3}"
+
+[565320a99768]
+en = "or %s or %s or "
+ru = "или {1} или {2} или "
+
+[5a415ed83fed]
+en = "%s [%s] or %s"
+ru = "{1} [{2}] или {3}"
+
+[796abeea8fce]
+en = " or %s"
+ru = " или {1}"
+
+[bb3732118c92]
+en = "%s or %s or "
+ru = "{1} или {2} или "
+
+[ccbe23284c20]
+en = "or %s or %s or %s"
+ru = "или {1} или {2} или {3}"
+
+[cdd11d917c4a]
+en = "%s or %s or %s"
+ru = "{1} или {2} или {3}"
+
+[d14323cea893]
+en = "%s or %s%s"
+ru = "{1} или {2}{3}"
+
+[e66802e4c3eb]
+en = "or %s [%s]%s"
+ru = "или {1} [{2}]{3}"
+
+[ee1bd3af5481]
+en = "%s [%s] or "
+ru = "{1} [{2}] или "
+
+[f45086748643]
+en = "or %s [%s] or %s"
+ru = "или {1} [{2}] или {3}"
+
+[25916d2786e3]
+en = "Contents of %s:"
+ru = "Содержимое {1:gen}:"
+
+[56de9e60b84b]
+en = "Pick %s in this area for travel destination"
+ru = "Выберите {1:acc} в этой области как цель путешествия"
+
+[a1949c0031e9]
+en = "Pick %s for travel destination"
+ru = "Выберите {1:acc} как цель путешествия"
+
+[c2c0364601d0]
+en = "Pick %s"
+ru = "Выберите {1:acc}"
+
+[d4b4833b9124]
+en = "Pick %s in view"
+ru = "Выберите {1:acc} в поле зрения"
+
+[e8c1239a557f]
+en = "Pick %s in view for travel destination"
+ru = "Выберите {1:acc} в поле зрения как цель путешествия"
+
+[ef259c6c3b3a]
+en = "Pick %s in this area"
+ru = "Выберите {1:acc} в этой области"
+
+[0351bf2f280d]
+en = "Open this tin and eat the contents"
+ru = "Открыть эту банку и съесть содержимое"
+
+[0748e56cbeca]
+en = "Eat this"
+ru = "Съесть это"
+
+[08ef617cc804]
+en = "Quiver '%c' to un-wield these %s"
+ru = "Убрать из колчана ('{1}'){2:skip}"
+
+[0c136f0c1cc5]
+en = "Dip something into this potions"
+ru = "Окунуть что-нибудь в это зелье"
+
+[0f7a50fbe2b9]
+en = "Zap this wand to release its magic"
+ru = "Взмахнуть этой палочкой, чтобы высвободить её магию"
+
+[167302754a9e]
+en = "Wield '%c' to un-ready this item"
+ru = "Убрать из рук ('{1}')"
+
+[16b14e11be79]
+en = "Light this %s"
+ru = "Зажечь {1:gender|этот|эту|это|эти} {1:acc}"
+
+[175140090ae0]
+en = "Rub something on this stone"
+ru = "Потереть что-нибудь об этот камень"
+
+[1782c523ea88]
+en = "Quiver '%c' to un-wield this %s"
+ru = "Убрать из колчана ('{1}'){2:skip}"
+
+[1caa4b1bac2c]
+en = "Light this oil"
+ru = "Поджечь это масло"
+
+[1e37bb084ecb]
+en = "Wield '%c' to un-wield this weapon"
+ru = "Убрать из рук ('{1}')"
+
+[1f00dffe33f7]
+en = "Adjust inventory by splitting this stack"
+ru = "Разделить эту стопку в инвентаре"
+
+[20ac2b0fac89]
+en = "Light the candelabrum"
+ru = "Зажечь канделябр"
+
+[231ab90d3087]
+en = "Extinguish this oil"
+ru = "Погасить это масло"
+
+[2350a71c4be8]
+en = "Lash out with this whip"
+ru = "Хлестнуть этим кнутом"
+
+[2439938989a5]
+en = "Attach these to your candelabrum, or extinguish it"
+ru = "Прикрепить к канделябру или погасить"
+
+[2552fbe02e91]
+en = "Extinguish this light source"
+ru = "Погасить этот источник света"
+
+[29d5ee68d172]
+en = "Wield '%c' to un-ready these %s"
+ru = "Убрать из рук ('{1}'){2:skip}"
+
+[308c50b6a2ef]
+en = "Blow this whistle"
+ru = "Подуть в этот свисток"
+
+[32338ebcde68]
+en = "Extinguish the candelabrum"
+ru = "Погасить канделябр"
+
+[35ae90d2d2d7]
+en = "Wield '%c' to un-wield this %s"
+ru = "Убрать из рук ('{1}'){2:skip}"
+
+[391f6f818db2]
+en = "Quiver '%c' to un-ready this item"
+ru = "Убрать из колчана ('{1}')"
+
+[3b5a90562104]
+en = "Make this figurine transform"
+ru = "Оживить эту статуэтку"
+
+[3c9b8c9188b7]
+en = "Wield '%c' to un-ready these weapon"
+ru = "Убрать из рук ('{1}')"
+
+[442a68156245]
+en = "Swap this with your main weapon"
+ru = "Поменять местами с основным оружием"
+
+[49eec5e37d2b]
+en = "Place this saddle on a pet"
+ru = "Надеть это седло на питомца"
+
+[4a7c9d960eac]
+en = "Attach these to your candelabrum, or light it"
+ru = "Прикрепить к канделябру или зажечь"
+
+[4d326ac95bd8]
+en = "Wipe the floor with this towel"
+ru = "Протереть пол этим полотенцем"
+
+[52a5883c950b]
+en = "Tie a pet to this leash"
+ru = "Привязать питомца к этому поводку"
+
+[53279e71d664]
+en = "Light these %s"
+ru = "Зажечь эти {1:acc}"
+
+[55a00edf34ef]
+en = "Use this tool to pick a lock"
+ru = "Вскрыть замок этим инструментом"
+
+[5605e18a0063]
+en = "Write on something with this marker"
+ru = "Написать что-нибудь этим маркером"
+
+[56e8d362a866]
+en = "Play this musical instrument"
+ru = "Сыграть на этом музыкальном инструменте"
+
+[57b8727372e0]
+en = "Attach this to your candelabrum, or light it"
+ru = "Прикрепить к канделябру или зажечь"
+
+[586e8522c7c1]
+en = "Show something its reflection"
+ru = "Показать кому-нибудь его отражение"
+
+[5983e23ebca8]
+en = "Wield '%c' to un-wield this item"
+ru = "Убрать из рук ('{1}')"
+
+[5df2aea1098f]
+en = "Break this wand"
+ru = "Сломать эту палочку"
+
+[5fdb873075e1]
+en = "Eat one of these"
+ru = "Съесть один из них"
+
+[6a8c13f710cc]
+en = "Ring the bell"
+ru = "Позвонить в колокольчик"
+
+[6ba90296c8d3]
+en = "Quiver '%c' to un-ready these item"
+ru = "Убрать из колчана ('{1}')"
+
+[703156c568e5]
+en = "Drop this stack"
+ru = "Положить эту стопку"
+
+[7139387f594c]
+en = "Attach these to your candelabrum, or light them"
+ru = "Прикрепить к канделябру или зажечь"
+
+[718090e5839e]
+en = "Extinguish this %s"
+ru = "Погасить {1:gender|этот|эту|это|эти} {1:acc}"
+
+[75e9e8150477]
+en = "Clean yourself off with this towel"
+ru = "Вытереться этим полотенцем"
+
+[778022cea923]
+en = "Quiver '%c' to un-ready these weapon"
+ru = "Убрать из колчана ('{1}')"
+
+[77d3f6c94e44]
+en = "Offer this amulet as a sacrifice at this altar"
+ru = "Принести этот амулет в жертву на этом алтаре"
+
+[797da636d254]
+en = "Wield the tin opener to easily open tins"
+ru = "Взять в руки консервный нож, чтобы легко открывать банки"
+
+[861dbbd8b1bb]
+en = "Light this light source"
+ru = "Зажечь этот источник света"
+
+[88c795af73fb]
+en = "Quiver '%c' to un-wield these item"
+ru = "Убрать из колчана ('{1}')"
+
+[8c28d4ee56e8]
+en = "Use this kit to tin a corpse"
+ru = "Закатать труп в банку этим набором"
+
+[8d841567433c]
+en = "Take a photograph"
+ru = "Сделать снимок"
+
+[8df46b48d5e2]
+en = "Quiver '%c' to un-wield these weapon"
+ru = "Убрать из колчана ('{1}')"
+
+[9025f9d0a770]
+en = "Wield '%c' to un-wield these item"
+ru = "Убрать из рук ('{1}')"
+
+[95c638f72e4b]
+en = "Dip something into this potion"
+ru = "Окунуть что-нибудь в это зелье"
+
+[973ec40fb171]
+en = "Offer this corpse as a sacrifice at this altar"
+ru = "Принести этот труп в жертву на этом алтаре"
+
+[9c1d6fe96648]
+en = "Quiver '%c' to un-ready these %s"
+ru = "Убрать из колчана ('{1}'){2:skip}"
+
+[9c55cd10dc1b]
+en = "Take off this armor"
+ru = "Снять это"
+
+[9d2abb5c01ab]
+en = "Swap this with your alternate weapon"
+ru = "Поменять местами с запасным оружием"
+
+[9fc03f6f6d04]
+en = "Quiver '%c' to un-ready this weapon"
+ru = "Убрать из колчана ('{1}')"
+
+[a08c6c58a52c]
+en = "Reach into this bag"
+ru = "Запустить руку в этот мешок"
+
+[a6ab32abf0aa]
+en = "Use this leaf as a whistle"
+ru = "Свистнуть в этот лист"
+
+[a7e54f4a6579]
+en = "Open this tin with your tin opener and eat the contents"
+ru = "Открыть эту банку консервным ножом и съесть содержимое"
+
+[b14d0cd58b85]
+en = "Flip a coin"
+ru = "Подбросить монетку"
+
+[b48557e46b20]
+en = "Listen through the stethoscope"
+ru = "Послушать стетоскопом"
+
+[b4ad193fa0f5]
+en = "Open one of these tins with your tin opener and eat the contents"
+ru = "Открыть одну из этих банок консервным ножом и съесть содержимое"
+
+[b53b486e7055]
+en = "Use this unicorn horn"
+ru = "Применить этот рог единорога"
+
+[b8e08cf29dc6]
+en = "Scribble graffiti on the floor"
+ru = "Нарисовать граффити на полу"
+
+[baefefaebce2]
+en = "Tip all the contents out of this container"
+ru = "Вытряхнуть всё содержимое этого контейнера"
+
+[beb92fce344c]
+en = "Attach this to your candelabrum, or extinguish it"
+ru = "Прикрепить к канделябру или погасить"
+
+[bfa231ea2eea]
+en = "Extinguish these %s"
+ru = "Погасить эти {1:acc}"
+
+[c1de135f4fff]
+en = "Dip something into one of these potions"
+ru = "Окунуть что-нибудь в одно из этих зелий"
+
+[c43d3d115fbc]
+en = "Attach this to your candelabrum, or light them"
+ru = "Прикрепить к канделябру или зажечь"
+
+[c4a2c9403841]
+en = "Try to invoke a unique power of this object"
+ru = "Попытаться пробудить особую силу этого предмета"
+
+[ca6a556a5d36]
+en = "Attach this to your candelabrum, or extinguish them"
+ru = "Прикрепить к канделябру или погасить"
+
+[cb9b76ff89b4]
+en = "Attach these to your candelabrum, or extinguish them"
+ru = "Прикрепить к канделябру или погасить"
+
+[cc74571ee247]
+en = "Wield '%c' to un-ready this %s"
+ru = "Убрать из рук ('{1}'){2:skip}"
+
+[cd736d973436]
+en = "Blow into the horn of plenty"
+ru = "Подуть в рог изобилия"
+
+[cf17b060e77d]
+en = "Dip something into one of these potion"
+ru = "Окунуть что-нибудь в одно из этих зелий"
+
+[d299de10b6ac]
+en = "Open this container"
+ru = "Открыть этот контейнер"
+
+[d29c051a771a]
+en = "Hit yourself with this cream pie"
+ru = "Ударить себя этим кремовым пирогом"
+
+[d33cba690245]
+en = "Quiver '%c' to un-ready this %s"
+ru = "Убрать из колчана ('{1}'){2:skip}"
+
+[d4272b988892]
+en = "Quiver '%c' to un-wield this item"
+ru = "Убрать из колчана ('{1}')"
+
+[d7bb7ae3d036]
+en = "Wield '%c' to un-ready this weapon"
+ru = "Убрать из рук ('{1}')"
+
+[dae46cd84e76]
+en = "Dig with this digging tool"
+ru = "Копать этим инструментом"
+
+[dd73362e21a5]
+en = "Wield '%c' to un-wield these weapon"
+ru = "Убрать из рук ('{1}')"
+
+[dd8d51491d07]
+en = "Grapple something with this hook"
+ru = "Зацепить что-нибудь этим крюком"
+
+[dea5bf3d9053]
+en = "Ready this as an alternate weapon"
+ru = "Сделать это запасным оружием"
+
+[dfe372753a5f]
+en = "Adjust inventory by assigning new letter"
+ru = "Сменить букву предмета в инвентаре"
+
+[e5432735052f]
+en = "Open one of these tins and eat the contents"
+ru = "Открыть одну из этих банок и съесть содержимое"
+
+[e5cf1a81f101]
+en = "Use the can to grease an item"
+ru = "Смазать предмет из этой банки"
+
+[e72093118cf8]
+en = "Drop this item"
+ru = "Положить этот предмет"
+
+[eb5c06c44e61]
+en = "Wield '%c' to un-wield these %s"
+ru = "Убрать из рук ('{1}'){2:skip}"
+
+[ee16d5b5243b]
+en = "Peer into this crystal ball"
+ru = "Заглянуть в этот хрустальный шар"
+
+[f609368b9bed]
+en = "Arm this trap"
+ru = "Взвести эту ловушку"
+
+[f7b4942ffc7c]
+en = "Wield '%c' to un-ready these item"
+ru = "Убрать из рук ('{1}')"
+
+[fe874527f107]
+en = "Quiver '%c' to un-wield this weapon"
+ru = "Убрать из колчана ('{1}')"
+
+[02f5fbc8fcae]
+en = " You started out neuter."
+ru = " Изначально вы были бесполым существом."
+
+[04c823c35b6f]
+en = " You started out male%s."
+ru = " Изначально вы были мужчиной{1}."
+
+[1048ea9f1351]
+en = " You are %s, belatedly on a mission for %s"
+ru = " Вы — {1}, в итоге исполняете волю {2:gen}"
+
+[1be692f2ec01]
+en = " Your wallet contains %ld zorkmid, but"
+ru = " В вашем кошельке {1} {1:plural|зоркмид|зоркмида|зоркмидов}, но"
+
+[25a737c4b756]
+en = " Your wallet contained %ld zorkmid"
+ru = " В вашем кошельке было {1} {1:plural|зоркмид|зоркмида|зоркмидов}"
+
+[28e2f3c9282a]
+en = " You are %s, nominally on a mission for %s"
+ru = " Вы — {1}, номинально исполняете волю {2:gen}"
+
+[29b8d05bc4ef]
+en = " Your wallet contained %ld zorkmid, but"
+ru = " В вашем кошельке было {1} {1:plural|зоркмид|зоркмида|зоркмидов}, но"
+
+[2a463c361b08]
+en = " Your wallet contained %ld zorkmids."
+ru = " В вашем кошельке было {1} {1:plural|зоркмид|зоркмида|зоркмидов}."
+
+[31908318e97d]
+en = " [Unexpected achievement #%d.]"
+ru = " [Неожиданное достижение №{1}.]"
+
+[33a245c24fd1]
+en = " Your wallet is empty, and"
+ru = " Ваш кошелёк пуст, и"
+
+[3873093c298d]
+en = " You turned into slime."
+ru = " Вы превратились в слизь."
+
+[399880b1850e]
+en = " Your character was not rerolled."
+ru = " Ваш персонаж не пересоздавался."
+
+[3e793f76fe6c]
+en = " Bad things happened on Friday the 13th."
+ru = " В пятницу 13-го случилось что-то плохое."
+
+[4189c9f8d086]
+en = " Your wallet contained %ld zorkmids, and"
+ru = " В вашем кошельке было {1} {1:plural|зоркмид|зоркмида|зоркмидов}, и"
+
+[423f6092d2fe]
+en = " Your character was rerolled %s."
+ru = " Ваш персонаж пересоздавался {1}."
+
+[5385f62d3094]
+en = " You started out male."
+ru = " Изначально вы были мужчиной."
+
+[5967e17ad078]
+en = " You entered the dungeon %ld turn ago."
+ru = " Вы вошли в подземелье {1} {1:plural|ход|хода|ходов} назад."
+
+[5d7afddb0c5e]
+en = " You are %s, currently on a mission for %s"
+ru = " Вы — {1}, сейчас исполняете волю {2:gen}"
+
+[5d7ffb0f07ef]
+en = " You were %s, belatedly on a mission for %s"
+ru = " Вы были: {1}, в итоге исполняли волю {2:gen}"
+
+[60ecfc69a44a]
+en = " Your wallet contained %ld zorkmid, and"
+ru = " В вашем кошельке было {1} {1:plural|зоркмид|зоркмида|зоркмидов}, и"
+
+[6d73817406ae]
+en = " You started out %s."
+ru = " Изначально ваше мировоззрение было {1:ins}."
+
+[6eca21156458]
+en = " Your wallet is empty, but"
+ru = " Ваш кошелёк пуст, но"
+
+[75e0c9ce5602]
+en = " You started out neuter%s."
+ru = " Изначально вы были бесполым существом{1}."
+
+[76db10f98c8e]
+en = " Your wallet contained %ld zorkmid."
+ru = " В вашем кошельке было {1} {1:plural|зоркмид|зоркмида|зоркмидов}."
+
+[76ef67ccde5e]
+en = " You were %s, now on a mission for %s"
+ru = " Вы были: {1}, в итоге исполняли волю {2:gen}"
+
+[7a930b48674c]
+en = " Your wallet contains %ld zorkmid, and"
+ru = " В вашем кошельке {1} {1:plural|зоркмид|зоркмида|зоркмидов}, и"
+
+[8057a341502d]
+en = " Bad things can happen on Friday the 13th."
+ru = " В пятницу 13-го может случиться что-то плохое."
+
+[81ef7c281a37]
+en = " You were %s, currently on a mission for %s"
+ru = " Вы были: {1}, на тот момент исполняли волю {2:gen}"
+
+[82dbe8b9e46b]
+en = " You are %s, temporarily on a mission for %s"
+ru = " Вы — {1}, временно исполняете волю {2:gen}"
+
+[897f761cf3a8]
+en = " You were %s, nominally on a mission for %s"
+ru = " Вы были: {1}, номинально исполняли волю {2:gen}"
+
+[8f09ce33a4aa]
+en = " Your wallet contains %ld zorkmid"
+ru = " В вашем кошельке {1} {1:plural|зоркмид|зоркмида|зоркмидов}"
+
+[93afdc3470c1]
+en = " Your wallet was empty, but"
+ru = " Ваш кошелёк был пуст, но"
+
+[9ba38045bc12]
+en = " You started out neuter and %s."
+ru = " Изначально вы были бесполым существом, а ваше мировоззрение было {1:ins}."
+
+[9d4ba20b2d9e]
+en = " You started out female."
+ru = " Изначально вы были женщиной."
+
+[a261768e7965]
+en = " Your wallet contains %ld zorkmids"
+ru = " В вашем кошельке {1} {1:plural|зоркмид|зоркмида|зоркмидов}"
+
+[a3acd9548433]
+en = " Your wallet is empty"
+ru = " Ваш кошелёк пуст"
+
+[a67ad5d5713a]
+en = " Your wallet contains %ld zorkmids, but"
+ru = " В вашем кошельке {1} {1:plural|зоркмид|зоркмида|зоркмидов}, но"
+
+[af2eadd1655b]
+en = " You were %s, temporarily on a mission for %s"
+ru = " Вы были: {1}, временно исполняли волю {2:gen}"
+
+[b720222bcc11]
+en = " You died from strangulation."
+ru = " Вы умерли от удушья."
+
+[b8087185e5ee]
+en = "Attributes:"
+ru = "Свойства:"
+
+[b818bfb943b6]
+en = " You started out female and %s."
+ru = " Изначально вы были женщиной, а ваше мировоззрение было {1:ins}."
+
+[c164ebde6365]
+en = " You ascended!"
+ru = " Вы вознеслись!"
+
+[c602848ca874]
+en = " You turned into stone."
+ru = " Вы превратились в камень."
+
+[cf850aa4aafe]
+en = " Bad things could have happened on Friday the 13th."
+ru = " В пятницу 13-го могло случиться что-то плохое."
+
+[d0f7cb4a9291]
+en = " Your wallet was empty"
+ru = " Ваш кошелёк был пуст"
+
+[d348698c65b7]
+en = " Your wallet contains %ld zorkmid."
+ru = " В вашем кошельке {1} {1:plural|зоркмид|зоркмида|зоркмидов}."
+
+[d4dd2e8376ce]
+en = " You started out male and %s."
+ru = " Изначально вы были мужчиной, а ваше мировоззрение было {1:ins}."
+
+[d54e54987703]
+en = " Your wallet contained %ld zorkmids"
+ru = " В вашем кошельке было {1} {1:plural|зоркмид|зоркмида|зоркмидов}"
+
+[d92b142fd6f3]
+en = " You are %s, now on a mission for %s"
+ru = " Вы — {1}, теперь исполняете волю {2:gen}"
+
+[f0475331e55e]
+en = " Your wallet contains %ld zorkmids."
+ru = " В вашем кошельке {1} {1:plural|зоркмид|зоркмида|зоркмидов}."
+
+[f47a5c1994a3]
+en = " You entered %s."
+ru = " Вы вошли в {1:acc}."
+
+[f8f84dfbb2b9]
+en = " Your wallet was empty, and"
+ru = " Ваш кошелёк был пуст, и"
+
+[fabfbebb84ca]
+en = " You died from terminal illness."
+ru = " Вы умерли от смертельной болезни."
+
+[fb0c24c3f4df]
+en = " You died from food poisoning."
+ru = " Вы умерли от пищевого отравления."
+
+[fcf660030756]
+en = " Your wallet contained %ld zorkmids, but"
+ru = " В вашем кошельке было {1} {1:plural|зоркмид|зоркмида|зоркмидов}, но"
+
+[fd596625e898]
+en = " You started out female%s."
+ru = " Изначально вы были женщиной{1}."
+
+[ffdea73323d1]
+en = " Your wallet contains %ld zorkmids, and"
+ru = " В вашем кошельке {1} {1:plural|зоркмид|зоркмида|зоркмидов}, и"
+
+[2c9da0cfcfd7]
+en = "alphabetically, unique monsters and others intermixed"
+ru = "по алфавиту, уникальные монстры вперемешку с остальными"
+
+[a42d3877dabe]
+en = "by monster class, high to low level within class"
+ru = "по классам монстров, внутри класса — по убыванию уровня"
+
+[fe9aae5bece3]
+en = "alphabetically"
+ru = "по алфавиту"
+
+[f6c074bb5511]
+en = "Sort order for genocided monster types (also vanquished counts)"
+ru = "Порядок списка истреблённых видов (и побеждённых монстров)"
+
+[6f5b69119072]
+en = "%ld times"
+ru = "{1} {1:plural|раз|раза|раз}"
+
+[1863835675e3]
+en = "once"
+ru = "один раз"
+
+[f99abcfae6c3]
+en = "twice"
+ru = "дважды"
+
+[3fec9f7e5ca9]
+en = "thrice"
+ru = "трижды"
+
+[b6dc862d36a0]
+en = "start the game with this character"
+ru = "начать игру этим персонажем"
+
+[4dd11715d49c]
+en = "reroll another character"
+ru = "создать другого персонажа"
+
+[23c67b25aa24]
+en = "What would you like to identify next?"
+ru = "Что вы хотите опознать следующим?"
+
+[921c1aa5daf3]
+en = "What would you like to identify first?"
+ru = "Что вы хотите опознать первым?"
+
+[50ba0172a20c]
+en = "Debug Identify"
+ru = "Отладочное опознание"
+
+[56d01726e8fe]
+en = "Debug Identify -- unidentified or partially identified item"
+ru = "Отладочное опознание — неопознанный или частично опознанный предмет"
+
+[7bfde4ebedc9]
+en = "Debug Identify -- unidentified or partially identified items"
+ru = "Отладочное опознание — неопознанные или частично опознанные предметы"
+
+[17cb473a79a3]
+en = "(all items are permanently identified already)"
+ru = "(все предметы уже опознаны навсегда)"
+
+[a11d6209144c]
+en = "select it to permanently identify"
+ru = "выберите его, чтобы опознать навсегда"
+
+[a7ad43dbf974]
+en = "select any or all of them to permanently identify"
+ru = "выберите любые из них, чтобы опознать навсегда"
+
+[2584a79ccde6]
+en = "select it to permanently identify (%s for all)"
+ru = "выберите его, чтобы опознать навсегда ({1} — все)"
+
+[96e0bdc37681]
+en = "select any or all of them to permanently identify (%s for all)"
+ru = "выберите любые из них, чтобы опознать навсегда ({1} — все)"
+
+[593711cbbe9d]
+en = "gloved %s (no weapon)"
+ru = "{1} в перчатках (без оружия)"
+
+[e091dc615fc4]
+en = "bare %s (no weapon)"
+ru = "голые {1} (без оружия)"
+
+[a66df639f9f2]
+en = "(list everything)"
+ru = "(показать всё)"
+
+[c47badf2215f]
+en = "(list likely candidates)"
+ru = "(показать подходящее)"
+
+[0005dcd479e3]
+en = "Not using any items"
+ru = "Вы не используете ни одного предмета"
+
+[58f098e45fbb]
+en = "Not carrying anything"
+ru = "Вы ничего не несёте"
+
+[84beadb5341f]
+en = "Only carrying gold"
+ru = "У вас только золото"
+
+[8e48d10561a7]
+en = "Inventory letters used:"
+ru = "Занятые буквы инвентаря:"
+
+[98358c9c1c9e]
+en = "Contents of %s %s"
+ru = "Содержимое {2:gen} {1:gen}"
+
+[981a8f5cf04f]
+en = "You feel"
+ru = "На ощупь"
+
+[3c6b183d348f]
+en = "(none)"
+ru = "(нет)"
+
+[48b2f0579d65]
+en = "(empty)"
+ru = "(пусто)"
+
+[045c711fb95a]
+en = "%s armament:"
+ru = "Снаряжение {1:gen}:"
+
+[85ebbb711d8b]
+en = "%s possessions:"
+ru = "Имущество {1:gen}:"
+
+[7869bf37f60c]
+en = "You feel:"
+ru = "На ощупь:"
+
+[b4afc1edd39f]
+en = "Contents of %s %s:"
+ru = "Содержимое {2:gen} {1:gen}:"
+
+[d75a7948b0e7]
+en = "Things that are under the %s here:"
+ru = "Что лежит здесь под {1:ins}:"
+
+[0104f4efc7f1]
+en = "Things that are buried beneath it:"
+ru = "Что зарыто под этим предметом:"
+
+[1549e991e5e3]
+en = "Things that are buried under them:"
+ru = "Что зарыто под этими предметами:"
+
+[adbbaa80f736]
+en = "Things that are buried beneath them:"
+ru = "Что зарыто под этими предметами:"
+
+[b933268e149b]
+en = "Things that are buried here:"
+ru = "Что зарыто здесь:"
+
+[738d911d4514]
+en = "sortloot order (by class with some sub-class groupings)"
+ru = "порядок sortloot (по классам, внутри некоторых — по группам)"
+
+[9f2e2ec0b59b]
+en = "by order of discovery within each class"
+ru = "в порядке открытия внутри каждого класса"
+
+[c7ff5b1ab178]
+en = "alphabetical across all classes"
+ru = "по алфавиту, все классы вместе"
+
+[d41ee3ba451d]
+en = "alphabetical within each class"
+ru = "по алфавиту внутри каждого класса"
+
+[2ccde7e6bab1]
+en = "Note: full alphabetical and alphabetical within class"
+ru = "Примечание: полный алфавитный порядок и алфавитный внутри класса"
+
+[2dad8c334f64]
+en = "      are equivalent for single class discovery, but"
+ru = "      для открытий одного класса совпадают, но"
+
+[8f30f3a5c35d]
+en = "      will matter for future use of total discoveries."
+ru = "      будут различаться для общего списка открытий."
+
+[0d3c985c8d6e]
+en = "Ordering of discoveries"
+ru = "Порядок открытий"
+
+[4e4cf8e68552]
+en = "unique items or relics"
+ru = "уникальные предметы или реликвии"
+
+[3dc52886d656]
+en = "artifacts"
+ru = "артефакты"
+
+[14992c2de04e]
+en = "something on the map"
+ru = "что-нибудь на карте"
+
+[a8fddf821eae]
+en = "something you're carrying"
+ru = "что-нибудь из ваших вещей"
+
+[ba7a2058b254]
+en = "something else (by symbol or name)"
+ru = "что-нибудь ещё (по символу или названию)"
+
+[e1ead6c18b11]
+en = "nearby monsters"
+ru = "монстров поблизости"
+
+[3b9007e0c748]
+en = "all monsters shown on map"
+ru = "всех монстров на карте"
+
+[279bfb3441ea]
+en = "nearby objects"
+ru = "предметы поблизости"
+
+[c4be73ceb83a]
+en = "all objects shown on map"
+ru = "все предметы на карте"
+
+[86d07fe8cd4e]
+en = "nearby traps"
+ru = "ловушки поблизости"
+
+[c301b2003e56]
+en = "all seen or remembered traps"
+ru = "все увиденные или запомненные ловушки"
+
+[96ac55478262]
+en = "nearby engravings"
+ru = "надписи поблизости"
+
+[37d5d98c07f9]
+en = "all seen or remembered engravings"
+ru = "все увиденные или запомненные надписи"
+
+[c0bce59f551b]
+en = "What do you want to look at:"
+ru = "Что осмотреть:"
+
+[4d9d4cb415cd]
+en = "Select one item:"
+ru = "Выберите пункт:"
+
+[878617b7d0d2]
+en = "Engulfed Creatures"
+ru = "Поглощённые существа"
+
+[be0332c450bf]
+en = "Swallowed Creatures"
+ru = "Проглоченные существа"
+
+[e4fa7c280722]
+en = "Take out what?"
+ru = "Что вынуть?"
+
+[386aaaffbb6a]
+en = "Auto-select every item being worn or wielded"
+ru = "Выбрать всё надетое и всё, что в руках"
+
+[9756b2a90191]
+en = "    (if no other choices are picked, 'a' is implied)"
+ru = "    (если не выбрано ничего другого, подразумевается 'a')"
+
+[a980392af9fa]
+en = "Unpaid items"
+ru = "Неоплаченные предметы"
+
+[f25a9200bbe2]
+en = "Unpaid items already used up"
+ru = "Неоплаченные предметы, уже израсходованные"
+
+[8f986e879d20]
+en = "Items known to be Cursed"
+ru = "Предметы, известные как проклятые"
+
+[d4dee3aa0f5d]
+en = "Items of unknown Bless/Curse status"
+ru = "Предметы, чья святость неизвестна"
+
+[bf8231949896]
+en = "Just picked up: %s"
+ru = "Только что подобрано: {1}"
+
+[5ca19d76aeef]
+en = "Items you just picked up"
+ru = "Только что подобранные предметы"
+
+[638f3bd981f3]
+en = "Take out what type of objects?"
+ru = "Какие предметы вынуть?"
+
+[44d1dbf2e2ad]
+en = "Loot which containers?"
+ru = "Какие контейнеры обыскать?"
+
+[0001712882a1]
+en = "take something out"
+ru = "вынуть что-нибудь"
+
+[9abec961401d]
+en = "both; take out, then put in"
+ru = "и то и другое: вынуть, затем положить"
+
+[b1d802c1e28c]
+en = "take out, then put in"
+ru = "вынуть, затем положить"
+
+[f481e9156b9c]
+en = "both reversed; put in, then take out"
+ru = "и то и другое наоборот: положить, затем вынуть"
+
+[e502b0c12788]
+en = "loot next container"
+ru = "обыскать следующий контейнер"
+
+[e5fd9cfe0e80]
+en = "done"
+ru = "готово"
+
+[05493338d86f]
+en = "tip something being carried"
+ru = "вытряхнуть что-нибудь из ваших вещей"
+
+[2bc817077686]
+en = "Tip which container?"
+ru = "Какой контейнер вытряхнуть?"
+
+[433ba7d6d866]
+en = "on the floor"
+ru = "на пол"
+
+[399ef6607ea9]
+en = "Where to tip the contents of %s"
+ru = "Куда вытряхнуть содержимое {1:gen}"
+
+[4e0be7ee6a48]
+en = "Pick %d of what?"
+ru = "Что взять ({1} шт.)?"
+
+[a363203e9145]
+en = "Pick up what?"
+ru = "Что подобрать?"
+
+[bba68b2cd70a]
+en = "Select one of your saved games"
+ru = "Выберите одну из сохранённых игр"
+
+[fddf85e7341e]
+en = "Start a new character"
+ru = "Создать нового персонажа"
+
+[9dc20cdb8a59]
+en = "Never mind (quit)"
+ru = "Неважно (выйти)"
+
+[0585d3df22ff]
+en = "%4sfilter forces male"
+ru = "{1}фильтр оставляет мужской пол"
+
+[06af50bf2f87]
+en = "%4srace forces unaligned"
+ru = "{1}раса оставляет безверие"
+
+[09d1bfb5b0d3]
+en = "%4sfilter forces race"
+ru = "{1}фильтр оставляет одну расу"
+
+[16e3d1ddff9e]
+en = "%4srole forces gender"
+ru = "{1}профессия оставляет один пол"
+
+[2106d7cba0da]
+en = "%4srole forces lawful"
+ru = "{1}профессия оставляет законопослушное мировоззрение"
+
+[22f2f10d06e2]
+en = "%4srace forces neuter"
+ru = "{1}раса оставляет средний пол"
+
+[2504b4b1ee96]
+en = "%4srole forces race"
+ru = "{1}профессия оставляет одну расу"
+
+[2523eb70fdf2]
+en = "%4srace forces gender"
+ru = "{1}раса оставляет один пол"
+
+[34e5c6cf00f1]
+en = "%4srace forces lawful"
+ru = "{1}раса оставляет законопослушное мировоззрение"
+
+[4182bd010fc4]
+en = "%4sfilter forces %s"
+ru = "{1}фильтр оставляет: {2}"
+
+[48c6f0993fa3]
+en = "%4srace forces female"
+ru = "{1}раса оставляет женский пол"
+
+[4b0587ea901e]
+en = "%4srole forces chaotic"
+ru = "{1}профессия оставляет хаотичное мировоззрение"
+
+[4f297916d714]
+en = "%4sfilter forces chaotic"
+ru = "{1}фильтр оставляет хаотичное мировоззрение"
+
+[4f769ed8669f]
+en = "%4srole forces alignment"
+ru = "{1}профессия оставляет одно мировоззрение"
+
+[502427929439]
+en = "%4sfilter forces neutral"
+ru = "{1}фильтр оставляет нейтральное мировоззрение"
+
+[52f0e6bc5225]
+en = "%4sfilter forces lawful"
+ru = "{1}фильтр оставляет законопослушное мировоззрение"
+
+[5c56ed95254b]
+en = "%4sfilter forces unaligned"
+ru = "{1}фильтр оставляет безверие"
+
+[6935c6f90c84]
+en = "%4srole forces male"
+ru = "{1}профессия оставляет мужской пол"
+
+[6d78b6c86080]
+en = "%4srole forces neutral"
+ru = "{1}профессия оставляет нейтральное мировоззрение"
+
+[734f6834680b]
+en = "%4srace forces chaotic"
+ru = "{1}раса оставляет хаотичное мировоззрение"
+
+[78f685289fa1]
+en = "%4srace forces neutral"
+ru = "{1}раса оставляет нейтральное мировоззрение"
+
+[78fdf25b4608]
+en = "%4srole forces female"
+ru = "{1}профессия оставляет женский пол"
+
+[890a29a8c008]
+en = "%4sfilter forces female"
+ru = "{1}фильтр оставляет женский пол"
+
+[895702d2057f]
+en = "%4srace forces male"
+ru = "{1}раса оставляет мужской пол"
+
+[98bf18657693]
+en = "%4srace forces alignment"
+ru = "{1}раса оставляет одно мировоззрение"
+
+[9dceda244fec]
+en = "%4sfilter forces alignment"
+ru = "{1}фильтр оставляет одно мировоззрение"
+
+[ab628b1b5870]
+en = "%4sfilter forces neuter"
+ru = "{1}фильтр оставляет средний пол"
+
+[b2707603d7d0]
+en = "%4srole forces %s"
+ru = "{1}профессия оставляет: {2}"
+
+[c2fc33167bc9]
+en = "%4srace forces race"
+ru = "{1}раса оставляет одну расу"
+
+[c978561bb3f1]
+en = "%4srace forces %s"
+ru = "{1}раса оставляет: {2}"
+
+[cc6b38be08d9]
+en = "%4srace forces role"
+ru = "{1}раса оставляет одну профессию"
+
+[cdf15b497b08]
+en = "%4srole forces unaligned"
+ru = "{1}профессия оставляет безверие"
+
+[ea80d0079e90]
+en = "%4srole forces role"
+ru = "{1}профессия оставляет одну профессию"
+
+[ebe34dd345a0]
+en = "%4sfilter forces role"
+ru = "{1}фильтр оставляет одну профессию"
+
+[ec66233f2710]
+en = "%4srole forces neuter"
+ru = "{1}профессия оставляет средний пол"
+
+[f1ed08dbf724]
+en = "%4sfilter forces gender"
+ru = "{1}фильтр оставляет один пол"
+
+[08e23acdc987]
+en = "Pick alignment first"
+ru = "Сначала выберите мировоззрение"
+
+[2258a6d7af18]
+en = "Pick another name first"
+ru = "Сначала выберите другое имя"
+
+[378948e0217b]
+en = "Pick role first"
+ru = "Сначала выберите профессию"
+
+[3ce3b78aba83]
+en = "Pick another race first"
+ru = "Сначала выберите другую расу"
+
+[5c312e240e63]
+en = "Pick race first"
+ru = "Сначала выберите расу"
+
+[65c10986ccad]
+en = "Pick name first"
+ru = "Сначала выберите имя"
+
+[b4297b10141c]
+en = "Pick gender first"
+ru = "Сначала выберите пол"
+
+[b89e53add1f4]
+en = "Pick another alignment first"
+ru = "Сначала выберите другое мировоззрение"
+
+[d8f2286bd098]
+en = "Pick another role first"
+ru = "Сначала выберите другую профессию"
+
+[fcbc26c65143]
+en = "Pick another gender first"
+ru = "Сначала выберите другой пол"
+
+[bd11b8267ed7]
+en = "Reset role/race/&c filtering"
+ru = "Сбросить фильтр профессий, рас и прочего"
+
+[ce53424ae990]
+en = "Set role/race/&c filtering"
+ru = "Задать фильтр профессий, рас и прочего"
+
+[58d888c08aa5]
+en = "Random"
+ru = "Случайный выбор"
+
+[41a79b321e88]
+en = "Pick a role or profession"
+ru = "Выберите профессию"
+
+[4585f6abc5c0]
+en = "Pick a race or species"
+ru = "Выберите расу"
+
+[1ee44feb0e67]
+en = "Pick a gender or sex"
+ru = "Выберите пол"
+
+[14a308b3f7a2]
+en = "Pick an alignment or creed"
+ru = "Выберите мировоззрение"
+
+[a03832dd3642]
+en = "Yes; start game"
+ru = "Да, начать игру"
+
+[795fc9dc9a01]
+en = "No; choose role again"
+ru = "Нет, выбрать профессию заново"
+
+[dee9aad00ac0]
+en = "Not yet; choose another name"
+ru = "Пока нет, выбрать другое имя"
+
+[281b7c52cb8f]
+en = "Is this ok? [ynaq]"
+ru = "Всё верно? [ynaq]"
+
+[cdaa87122186]
+en = "Is this ok? [ynq]"
+ru = "Всё верно? [ynq]"
+
+[4f16713d6929]
+en = "Unacceptable roles"
+ru = "Недопустимые профессии"
+
+[64676c9d62fd]
+en = "Unacceptable races"
+ru = "Недопустимые расы"
+
+[cd796815fb21]
+en = "Unacceptable genders"
+ru = "Недопустимый пол"
+
+[a7b23be49dca]
+en = "Unacceptable alignments"
+ru = "Недопустимые мировоззрения"
+
+[65ced289833e]
+en = "Pick all that apply"
+ru = "Выберите всё подходящее"
+
+[f7b282d199c2]
+en = "Pick all that apply and/or unpick any that no longer apply"
+ru = "Выберите всё подходящее и снимите выбор с того, что больше не подходит"
+
+[20f398908696]
+en = "Used up item:"
+ru = "Израсходованный предмет:"
+
+[eda847f6b2fa]
+en = "Used up items:"
+ru = "Израсходованные предметы:"
+
+[18897992dbfc]
+en = "Unpaid item:"
+ru = "Неоплаченный предмет:"
+
+[4dd4a12ed71d]
+en = "Unpaid items:"
+ru = "Неоплаченные предметы:"
+
+[367599488153]
+en = "%*ld Zm, %s"
+ru = "{1} зм, {2}"
+
+[edb57756ff8c]
+en = "Pay for which items?"
+ru = "За какие предметы заплатить?"
+
+[05ec1b0bf8a1]
+en = "by level, low to high"
+ru = "по уровню, по возрастанию"
+
+[0778f6fa3c24]
+en = "by skill group, alphabetized within each group"
+ru = "по школам, внутри школы — по алфавиту"
+
+[57d610e33768]
+en = "maintain current ordering"
+ru = "оставить текущий порядок"
+
+[57def19ad8e6]
+en = "by skill group, low to high level within group"
+ru = "по школам, внутри школы — по возрастанию уровня"
+
+[5c272e02c8df]
+en = "reassign casting letters to retain current order"
+ru = "переназначить буквы, сохранив текущий порядок"
+
+[a8f40a415869]
+en = "by casting letter"
+ru = "по букве заклинания"
+
+[da56c9c4bc1d]
+en = "by skill group, high to low level within group"
+ru = "по школам, внутри школы — по убыванию уровня"
+
+[ea0b74c6d288]
+en = "by level, high to low"
+ru = "по уровню, по убыванию"
+
+[348b69f4cf1c]
+en = "View known spells list sorted"
+ru = "Как упорядочить список известных заклинаний"
+
+[772bc0604a8b]
+en = "Reordering spells; swap '%c' with"
+ru = "Перестановка заклинаний: поменять '{1}' с"
+
+[309778d2923f]
+en = "    %-20s Level %-12s Fail Retention"
+ru = "    {1:skip}Название             Уровень {2:skip}Школа        Провал Память"
+
+[b5ad39778022]
+en = "%-20s Level %-12s Fail Retention"
+ru = "{1:skip}Название             Уровень {2:skip}Школа        Провал Память"
+
+[407c8027e581]
+en = "Name\tLevel\tCategory\tFail\tRetention"
+ru = "Название\tУровень\tШкола\tПровал\tПамять"
+
+[321565ee23cb]
+en = "%s\t%-d\tescape\t%-d%%\t%s"
+ru = "{1}\t{2}\tбегство\t{3}%\t{4}"
+
+[5f3d2df29301]
+en = "%s\t%-d\tmatter\t%-d%%\t%s"
+ru = "{1}\t{2}\tматерия\t{3}%\t{4}"
+
+[b4d6af228960]
+en = "%s\t%-d\thealing\t%-d%%\t%s"
+ru = "{1}\t{2}\tлечение\t{3}%\t{4}"
+
+[b8603c8dc040]
+en = "%s\t%-d\tdivination\t%-d%%\t%s"
+ru = "{1}\t{2}\tпрорицание\t{3}%\t{4}"
+
+[d2b3f822e14e]
+en = "%s\t%-d\tenchantment\t%-d%%\t%s"
+ru = "{1}\t{2}\tочарование\t{3}%\t{4}"
+
+[d5e2890c92dd]
+en = "%s\t%-d\tclerical\t%-d%%\t%s"
+ru = "{1}\t{2}\tжреческие\t{3}%\t{4}"
+
+[d8a6f626549e]
+en = "%s\t%-d\tattack\t%-d%%\t%s"
+ru = "{1}\t{2}\tатака\t{3}%\t{4}"
+
+[3b376b528947]
+en = "%s\t%-d\tattack\t%-d%%\t%s%c%6d"
+ru = "{1}\t{2}\tатака\t{3}%\t{4}{5}{6}"
+
+[54f15b3abf95]
+en = "%s\t%-d\tmatter\t%-d%%\t%s%c%6d"
+ru = "{1}\t{2}\tматерия\t{3}%\t{4}{5}{6}"
+
+[676683be57a5]
+en = "%s\t%-d\tdivination\t%-d%%\t%s%c%6d"
+ru = "{1}\t{2}\tпрорицание\t{3}%\t{4}{5}{6}"
+
+[793e72ae720d]
+en = "%s\t%-d\tenchantment\t%-d%%\t%s%c%6d"
+ru = "{1}\t{2}\tочарование\t{3}%\t{4}{5}{6}"
+
+[c2bb923eb899]
+en = "%s\t%-d\thealing\t%-d%%\t%s%c%6d"
+ru = "{1}\t{2}\tлечение\t{3}%\t{4}{5}{6}"
+
+[e9a676d79b61]
+en = "%s\t%-d\tclerical\t%-d%%\t%s%c%6d"
+ru = "{1}\t{2}\tжреческие\t{3}%\t{4}{5}{6}"
+
+[ed0a7f3c04ea]
+en = "%s\t%-d\tescape\t%-d%%\t%s%c%6d"
+ru = "{1}\t{2}\tбегство\t{3}%\t{4}{5}{6}"
+
+[699ad472c862]
+en = "[sort spells]"
+ru = "[упорядочить заклинания]"
+
+[1216eeda3735]
+en = "Choose which spell to cast"
+ru = "Выберите заклинание"
+
+[ad7cc3284c0d]
+en = "Currently known spells"
+ru = "Известные заклинания"
+
+[922b0bc0cce4]
+en = "(gone)"
+ru = "(забыто)"
+
+[fea10ee28fb7]
+en = "Cast which spell?"
+ru = "Какое заклинание произнести?"
+
+[a09f582df694]
+en = "Which way do you want to teleport?"
+ru = "Куда телепортироваться?"
+
+[2cd5164fefcf]
+en = "(Skill flagged by \"*\" may be enhanced when you're more experienced.)"
+ru = "(Навык, отмеченный «*», можно будет улучшить, когда вы наберётесь опыта.)"
+
+[45fa812d3480]
+en = "(Skills flagged by \"*\" may be enhanced if skill slots become available.)"
+ru = "(Навыки, отмеченные «*», можно будет улучшить, когда появятся свободные слоты навыков.)"
+
+[bdaddc0f10aa]
+en = "(Skills flagged by \"*\" may be enhanced when you're more experienced.)"
+ru = "(Навыки, отмеченные «*», можно будет улучшить, когда вы наберётесь опыта.)"
+
+[ef6dfe915411]
+en = "(Skill flagged by \"*\" may be enhanced if skill slots become available.)"
+ru = "(Навык, отмеченный «*», можно будет улучшить, когда появятся свободные слоты навыков.)"
+
+[a79a123f14ed]
+en = "(Skills flagged by \"#\" cannot be enhanced any further.)"
+ru = "(Навыки, отмеченные «#», улучшить больше нельзя.)"
+
+[eb2ddc4740c1]
+en = "(Skill flagged by \"#\" cannot be enhanced any further.)"
+ru = "(Навык, отмеченный «#», улучшить больше нельзя.)"
+
+[22ca06624e36]
+en = "Pick a skill to advance:"
+ru = "Выберите навык для улучшения:"
+
+[60d366a454bc]
+en = "Current skills:  (%d slot available)"
+ru = "Текущие навыки:  (свободных слотов: {1})"
+
+[85307973e10f]
+en = "Pick a skill to advance:  (%d slot available)"
+ru = "Выберите навык для улучшения:  (свободных слотов: {1})"
+
+[9406bb9acff4]
+en = "Current skills:  (%d slots available)"
+ru = "Текущие навыки:  (свободных слотов: {1})"
+
+[ed32870d53cc]
+en = "Pick a skill to advance:  (%d slots available)"
+ru = "Выберите навык для улучшения:  (свободных слотов: {1})"
+
+[996811299eef]
+en = "%c  All classes of objects"
+ru = "{1}  Все классы предметов"
+
+[30571162ace7]
+en = "Note: when no choices are selected, \"all\" is implied."
+ru = "Примечание: если ничего не выбрано, подразумевается «всё»."
+
+[6022376a8483]
+en = "Toggle off 'autopickup' to not pick up anything."
+ru = "Выключите 'autopickup', чтобы ничего не подбирать."
+
+[7ce30c746039]
+en = "Toggle on 'autopickup' to automatically pick these things up."
+ru = "Включите 'autopickup', чтобы подбирать эти вещи автоматически."
+
+[1d7e87b0cb3b]
+en = "Autopickup what?"
+ru = "Что подбирать автоматически?"
+
+[0cb8311ca133]
+en = "    %-20s Level %-12s Fail Retention%c%6s"
+ru = "    {1:skip}Название             Уровень {2:skip}Школа        Провал Память{3}  ходы{4:skip}"
+
+[20716e9262a7]
+en = "In use"
+ru = "Используется"
+
+[272e5dc25e55]
+en = "Compounds (selecting will prompt for new value):"
+ru = "Составные (выбор запросит новое значение):"
+
+[476dc63b64fb]
+en = "%-20s Level %-12s Fail Retention%c%6s"
+ru = "{1:skip}Название             Уровень {2:skip}Школа        Провал Память{3}  ходы{4:skip}"
+
+[5f2cbd107037]
+en = "Miscellaneous"
+ru = "Разное"
+
+[6d2795daff98]
+en = "Booleans (selecting will toggle value):"
+ru = "Флажки (выбор переключает значение):"
+
+[7afc8eb98f8b]
+en = "Inventory in use"
+ru = "Используемые предметы"
+
+[942078ca2d04]
+en = "Special"
+ru = "Особое"
+
+[a586b42a2007]
+en = "Always pickup '<'; never pickup '>'"
+ru = "Всегда подбирать '<'; никогда не подбирать '>'"
+
+[d8281bf39a1a]
+en = "Name\tLevel\tCategory\tFail\tRetention%c%6s"
+ru = "Название\tУровень\tШкола\tПровал\tПамять{1}ходы{2:skip}"
+
+[0b8a7f9f4b05]
+en = "Wish what?"
+ru = "Что пожелать?"

@@ -144,11 +144,12 @@ fn what_cannot_be_translated_stays_english() {
     // no template at all
     let (text, status) = say("Xyzzy plugh");
     assert_eq!((text.as_str(), status), ("Xyzzy plugh", Status::Unknown));
-    // a name the lexicon does not know: the template is Russian, the name not
+    // a name the lexicon does not know: the template is Russian, the name
+    // not (but its article goes: Russian has none)
     let (text, status) = say("You kill the flaming sphere!");
     assert_eq!(
         (text.as_str(), status),
-        ("Вы убиваете the flaming sphere!", Status::Partial)
+        ("Вы убиваете flaming sphere!", Status::Partial)
     );
 }
 
