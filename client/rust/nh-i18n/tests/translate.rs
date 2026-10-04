@@ -186,3 +186,12 @@ ru = "Гномьи копи"
     assert_eq!(out.status, Status::Unknown);
     assert_eq!(out.text, "Вы уже здесь.\nXyzzy plugh");
 }
+
+#[test]
+fn names_alone() {
+    let t = translator();
+    assert_eq!(t.name("dart").text, "дротик");
+    assert_eq!(t.name("Your kitten").text, "Ваш котёнок");
+    // not a name: a text of the catalog
+    assert_eq!(t.name("You are already here.").text, "Вы уже здесь.");
+}

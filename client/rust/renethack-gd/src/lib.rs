@@ -8,6 +8,7 @@ mod art;
 mod batch;
 mod branch_look;
 mod dialogs;
+mod engine_text;
 mod gallery;
 mod game;
 mod gamepad;

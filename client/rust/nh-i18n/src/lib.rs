@@ -24,6 +24,7 @@
 //! translations; `src/bin/i18n-coverage.rs` measures a soak's coverage.
 
 mod catalog;
+mod data;
 mod format;
 mod grammar;
 pub mod lexicon;
@@ -35,6 +36,7 @@ mod template;
 mod translate;
 
 pub use catalog::*;
+pub use data::*;
 pub use format::*;
 pub use grammar::*;
 pub use lint::*;

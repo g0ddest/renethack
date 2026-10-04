@@ -486,6 +486,7 @@ dependencies = [
  "godot",
  "libc",
  "nh-art",
+ "nh-i18n",
  "nh-link",
  "nh-protocol",
  "nh-world",

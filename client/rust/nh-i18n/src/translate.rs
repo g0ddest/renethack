@@ -154,6 +154,23 @@ impl Translator {
         self.by_text(text, Channel::Window)
     }
 
+    /// A name the engine printed alone (a role, a monster, an object, a
+    /// word of the status line): the lexicon reads it, in the nominative,
+    /// capitalised as the English was; else it is a text.
+    pub fn name(&self, english: &str) -> Output {
+        let bare = english.trim();
+        if let Some(p) = self.names.parse(NameKind::Any, bare) {
+            let ru = p.form(crate::grammar::Case::Nom);
+            let upper = bare.chars().next().is_some_and(char::is_uppercase);
+            return Output {
+                text: if upper { capitalize(&ru) } else { ru },
+                status: Status::Translated,
+                template: None,
+            };
+        }
+        self.text(english)
+    }
+
     /// The lines of a text window, joined by newlines: a text of the
     /// catalog as a whole (a quest message, an oracle), else line by line.
     pub fn window(&self, text: &str) -> Output {
