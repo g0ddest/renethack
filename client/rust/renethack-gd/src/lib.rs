@@ -13,6 +13,7 @@ mod engine_text;
 mod gallery;
 mod game;
 mod gamepad;
+mod help_panel;
 mod hero;
 mod hud;
 mod i18n;

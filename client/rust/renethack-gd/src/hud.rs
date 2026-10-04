@@ -42,8 +42,13 @@ const LOG_W: f32 = 404.0;
 const LOG_H: f32 = 260.0;
 /// The docked log of the compact layout: on the XP bar, from the bar's
 /// left end, clear of the gamepad's hints on the right; this many lines.
-const LOG_COMPACT_W: f32 = 460.0;
+const LOG_COMPACT_W: f32 = 436.0;
 const LOG_COMPACT_LINES: f32 = 4.0;
+/// The micro-buttons over the bar's right end: how many, how wide, the gap
+/// (the docked log keeps clear of them).
+const MICRO_BUTTONS: usize = 8;
+const MICRO_W: f32 = 32.0;
+const MICRO_GAP: i32 = 4;
 /// The log's text: Alegreya Sans 16 and 2 px between lines.
 const LOG_FONT: i32 = 16;
 const LOG_LINE_GAP: i32 = 2;
@@ -740,7 +745,7 @@ fn ctrl(c: char) -> KeyInput {
 /// An icon-only button (36×28) with a tooltip naming it and its key.
 fn micro_button(glyph: i32, tip: &'static str, queue: &UiQueue, ev: UiEvent) -> Gd<Button> {
     let mut b = theme::button("", queue, ev);
-    b.set_custom_minimum_size(Vector2::new(36.0, 28.0));
+    b.set_custom_minimum_size(Vector2::new(MICRO_W, 28.0));
     i18n::tip(&b, tip);
     b.set_mouse_filter(MouseFilter::STOP);
     for state in ["normal", "hover", "pressed", "hover_pressed", "disabled"] {
@@ -1056,7 +1061,7 @@ impl Hud {
         cluster_parts.push(("XP bar", xp_frame.clone().upcast()));
         solid.push(xp_frame.clone().upcast());
 
-        let mut micro = hbox(4);
+        let mut micro = hbox(MICRO_GAP);
         micro.set_alignment(AlignmentMode::END);
         let micro_y = xp_y - 6.0 - 28.0;
         place(
@@ -1065,15 +1070,17 @@ impl Hud {
             [bar_x, micro_y, bar_x + BAR_W, micro_y + 28.0],
         );
         let plain = |c| key_event(KeyInput::plain(Key::Char(c)));
-        for (glyph, tip, ev) in [
+        let buttons: [(i32, &'static str, UiEvent); MICRO_BUTTONS] = [
             (0, "hud-inventory-tip", plain('i')),
             (1, "hud-spells-tip", plain('+')),
             (2, "hud-character-tip", key_event(ctrl('x'))),
             (3, "hud-overview-tip", key_event(ctrl('o'))),
             (4, "hud-history-tip", UiEvent::ToggleFullLog),
             (8, "hud-achievements-tip", UiEvent::OpenAchievements),
+            (9, "hud-help-tip", UiEvent::ToggleHelp),
             (7, "hud-settings-tip", UiEvent::OpenSettings),
-        ] {
+        ];
+        for (glyph, tip, ev) in buttons {
             let b = micro_button(glyph, tip, &queue, ev);
             micro.add_child(&b);
             solid.push(b.upcast());
@@ -2583,9 +2590,9 @@ mod tests {
         assert_eq!(left, -CLUSTER_W / 2.0 + orb::SIZE + 4.0);
         // the micro-buttons' bottom, 6 above the XP bar
         assert_eq!(bottom, -CLUSTER_BOTTOM - BAR_H - 6.0 - 22.0 - 6.0);
-        // clear of the micro-buttons at the bar's right end (5 of 28 and
-        // 4 between)
-        let micro_left = left + BAR_W - (5.0 * 28.0 + 4.0 * 4.0);
+        // clear of the micro-buttons at the bar's right end
+        let n = MICRO_BUTTONS as f32;
+        let micro_left = left + BAR_W - (n * MICRO_W + (n - 1.0) * MICRO_GAP as f32);
         assert!(left + LOG_COMPACT_W + 12.0 <= micro_left);
     }
 

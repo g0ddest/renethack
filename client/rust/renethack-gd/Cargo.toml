@@ -22,6 +22,9 @@ nh-art = { path = "../nh-art" }
 # the engine's texts in Russian, and the lexicon's names for the
 # Russian input pickers
 nh-i18n = { path = "../nh-i18n" }
+# the help's books (client/help/guidebook.*.json)
+serde.workspace = true
+serde_json.workspace = true
 steamworks = { version = "0.13", optional = true }
 # the client's own words in the player's language (Project Fluent)
 fluent-bundle = "0.16"

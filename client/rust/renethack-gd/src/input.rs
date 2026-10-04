@@ -184,6 +184,7 @@ pub fn client_key(k: &KeyInput) -> Option<UiEvent> {
     }
     match (k.key, k.mods.ctrl) {
         (Key::F(9), _) => Some(UiEvent::ToggleFullLog),
+        (Key::F(1), _) => Some(UiEvent::ToggleHelp),
         (Key::F(5), _) => Some(UiEvent::Rest),
         (Key::F(8), _) | (Key::Char('0'), true) => Some(UiEvent::ToggleOverview),
         (Key::Char('-' | '_'), true) => Some(UiEvent::Zoom(1.0)),
@@ -396,6 +397,7 @@ mod tests {
         };
         let plain = |k| client_key(&KeyInput::plain(k));
         assert_eq!(plain(Key::F(9)), Some(UiEvent::ToggleFullLog));
+        assert_eq!(plain(Key::F(1)), Some(UiEvent::ToggleHelp));
         assert_eq!(plain(Key::F(8)), Some(UiEvent::ToggleOverview));
         assert_eq!(plain(Key::F(5)), Some(UiEvent::Rest));
         assert_eq!(client_key(&ctrl('0')), Some(UiEvent::ToggleOverview));

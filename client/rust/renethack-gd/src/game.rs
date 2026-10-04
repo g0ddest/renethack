@@ -155,6 +155,7 @@ pub struct Ui {
     pub hud: Hud,
     pub inventory: InventoryPanel,
     pub dialogs: Dialogs,
+    pub help: crate::help_panel::HelpPanel,
     pub pad: crate::pad_view::PadView,
     pub screens: Screens,
     /// An achievement just earned, under the prompt banner.
@@ -553,6 +554,8 @@ impl INode for RenethackGame {
             ("HudLayer", 1),
             ("PanelLayer", 2),
             ("DialogLayer", 3),
+            // over the dialogs (the same layer, later), under the hints
+            ("HelpLayer", 3),
             ("PadLayer", 4),
             ("ScreenLayer", 5),
         ] {
@@ -595,12 +598,13 @@ impl INode for RenethackGame {
         self.base_mut().add_child(&toast_layer);
         let queue = self.queue.clone();
         let mut layers = layers.into_iter();
-        let mut next = || layers.next().expect("five layers");
+        let mut next = || layers.next().expect("six layers");
         self.ui = Some(Ui {
             map: MapView::new(map_root),
             hud: Hud::new(next(), queue.clone()),
             inventory: InventoryPanel::new(next(), queue.clone()),
             dialogs: Dialogs::new(next(), queue.clone()),
+            help: crate::help_panel::HelpPanel::new(next(), queue.clone()),
             pad: crate::pad_view::PadView::new(next()),
             screens: Screens::new(next(), queue),
             toast: crate::achievement_view::Toast::new(toast_layer),
@@ -753,10 +757,9 @@ impl INode for RenethackGame {
             return;
         };
         self.pad.active = false;
-        let text = self
-            .ui
-            .as_ref()
-            .is_some_and(|ui| ui.dialogs.wants_text() || ui.inventory.wants_text());
+        let text = self.ui.as_ref().is_some_and(|ui| {
+            ui.dialogs.wants_text() || ui.inventory.wants_text() || ui.help.wants_text()
+        });
         if !key.is_pressed() {
             // letting go ends holding it down (text fields keep theirs)
             if !text && let Some(k) = key_release(&key) {
@@ -786,7 +789,7 @@ impl INode for RenethackGame {
         let Some(ui) = self.ui.as_mut() else {
             return;
         };
-        if ui.dialogs.is_open() {
+        if ui.dialogs.is_open() || ui.help.is_open() {
             return;
         }
         // hovering follows the recorded mouse position (update_hover)
@@ -1521,6 +1524,7 @@ impl RenethackGame {
         let blocked = !playing
             || ui.dialogs.is_open()
             || ui.inventory.is_open()
+            || ui.help.is_open()
             || ui.hud.full_log_open()
             || ui.screens.current().is_some();
         ui.toast.tick(dt, blocked);
@@ -1566,6 +1570,15 @@ impl RenethackGame {
         if self.settings_open() {
             if k.key == Key::Escape && !k.echo {
                 self.close_settings();
+            }
+            return;
+        }
+        // the help has them while it is open (F1 closes it too)
+        if self.ui.as_ref().is_some_and(|ui| ui.help.is_open()) {
+            if client_key(&k) == Some(UiEvent::ToggleHelp) {
+                self.on_ui_event(UiEvent::ToggleHelp);
+            } else {
+                self.ui_mut().help.key(&k);
             }
             return;
         }
@@ -1721,6 +1734,9 @@ impl RenethackGame {
         // a page over everything: the d-pad's arrows, A and B
         if self.achievements_open() {
             return PadCtx::Other;
+        }
+        if ui.help.is_open() {
+            return PadCtx::Help;
         }
         if ui.dialogs.is_open() {
             return match ui.dialogs.kind_name() {
@@ -2036,13 +2052,15 @@ impl RenethackGame {
         // a gamepad: its hints, the bar's chords, dialogs with a focus
         let pad = self.pad.active.then_some(self.pad.kind);
         ui.dialogs.set_pad(pad.is_some());
+        ui.help.set_pad(pad.is_some());
         ui.inventory.set_pad(pad);
         ui.pad.show_hints(pad.map(|k| (k, ctx)));
         // the hints go into the panel on top: a dialog's, else the
         // inventory's, which keep room for them
         let panel = ui
-            .dialogs
-            .panel_rect()
+            .help
+            .frame_rect()
+            .or_else(|| ui.dialogs.panel_rect())
             .or_else(|| ui.inventory.frame_rect());
         ui.pad.dock_hints(panel, ui.hud.log_rect());
         let room = if pad.is_some() {
@@ -2425,6 +2443,16 @@ impl RenethackGame {
                 self.driver.interrupt(Stop::Panel);
                 self.ui_mut().hud.toggle_full_log();
             }
+            UiEvent::ToggleHelp if self.state == GameState::Playing => {
+                self.driver.interrupt(Stop::Panel);
+                let help = &mut self.ui_mut().help;
+                if help.is_open() {
+                    help.close();
+                } else {
+                    help.open();
+                }
+            }
+            UiEvent::Help(input) => self.ui_mut().help.input(input),
             UiEvent::KeyUp(k) => self.on_key_up(k),
             UiEvent::FocusLost => {
                 self.pad.release_all();
@@ -2606,6 +2634,7 @@ impl RenethackGame {
         };
         ui.hud.relang();
         ui.inventory.relang();
+        ui.help.relang();
         ui.dialogs.relang(catalog.as_deref());
         ui.pad.relang();
         ui.screens.relang();

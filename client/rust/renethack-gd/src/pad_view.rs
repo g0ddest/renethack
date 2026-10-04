@@ -122,6 +122,11 @@ pub fn hints(ctx: PadCtx) -> Vec<(Vec<PadButton>, &'static str)> {
             (vec![Start], "hint-english"),
             (vec![B], "hint-cancel"),
         ],
+        PadCtx::Help => vec![
+            (vec![Up, Down], "hint-chapter"),
+            (vec![Lb, Rb], "hint-scroll"),
+            (vec![B], "hint-close"),
+        ],
         PadCtx::Picker { wish: false } => vec![
             (vec![A], "hint-choose"),
             (vec![Start], "hint-english"),

@@ -191,6 +191,12 @@ plain question back. An engraving goes in Latin letters (the engine wears
 an engraving away a byte at a time): Cyrillic is transliterated, and
 "Элберет" is written "Elbereth". The `pickers` scenario plays them in a
 debug-mode game.
+The help (F1, or the `?` among the HUD's buttons) is NetHack's Guidebook
+in the interface's language, by chapters, with a search: the English of
+NetHack's own `doc/Guidebook.mn`, the Russian of Vadim Velikodniy's
+translation (`client/help/CREDITS.md`). `make help` builds both from their
+sources with `tools/help/guidebook.py`; `make help-check` runs its tests
+and fails when a built book is stale. The `help` scenario searches both.
 `--lang=qps` is a pseudo-language for the self-tests: words through the
 catalogs show ⟦so⟧ and the engine's ⟪so⟫, and a screen a scenario shoots
 fails on any word outside the marks. `make test-client` also runs
@@ -308,3 +314,5 @@ NetHack General Public License (see `engine/upstream/dat/license`).
 cJSON: MIT (`engine/host/third_party/cjson/LICENSE`).
 Art: CC0; fonts: SIL OFL 1.1 (`client/godot/art/CREDITS.md`).
 The Russian names: sources and credits in `client/i18n/CREDITS.md`.
+The help's Guidebooks: `client/help/CREDITS.md` (NetHack General Public
+License).

@@ -11,6 +11,8 @@
 #   make art          fetch the CC0 art again (tools/fetch_art.py; needs Pillow)
 #   make i18n-catalog extract the English catalog of every text the engine shows
 #   make i18n-check   the extractor's tests; fail if the catalog is out of date
+#   make help         the help's Guidebooks (client/help): the Russian fetched again
+#   make help-check   the help builder's tests; fail if a Guidebook is out of date
 #   make lint         rustfmt and clippy, warnings are errors
 
 GODOT ?= godot
@@ -19,17 +21,17 @@ override GODOT := $(if $(filter %.app %.app/,$(GODOT)),$(patsubst %/,%,$(GODOT))
 # GNU coreutils' timeout; Homebrew's coreutils names it gtimeout on macOS
 TIMEOUT ?= $(shell command -v timeout || command -v gtimeout)
 GODOT_PROJECT := client/godot
-SELFTESTS := smoke keys save close crash menus text dialogs moves orders inventory bar gamepad equipment item-use combat roles branches soak language pickers achievements
+SELFTESTS := smoke keys save close crash menus text dialogs moves orders inventory bar gamepad equipment item-use combat roles branches soak language pickers achievements help
 # again at the Steam Deck's 1280×800 (its 120 % UI scale, the compact
 # layout): every screen a scenario would shoot must fit the canvas
 DECK_SELFTESTS := smoke inventory hud gamepad
 # the same in Russian (a third longer than English), at the Deck's size and
 # at 1920×1080
-RU_DECK_SELFTESTS := smoke inventory hud dialogs gamepad pickers achievements
+RU_DECK_SELFTESTS := smoke inventory hud dialogs gamepad pickers achievements help
 RU_SELFTESTS := smoke inventory dialogs achievements
 # in the pseudo-language (--lang=qps): every word on the screens a scenario
 # would shoot came through the client's catalogs or the engine's translator
-PSEUDO_SELFTESTS := smoke keys dialogs orders inventory gamepad hud pickers achievements
+PSEUDO_SELFTESTS := smoke keys dialogs orders inventory gamepad hud pickers achievements help
 # `make deck`: the same screens shot at a real 1280×800, into DECK_DIR
 # (`make deck DECK_ARGS=--lang=ru`: in Russian)
 DECK_SHOTS := smoke tour inventory bar hud dialogs gamepad
@@ -41,7 +43,7 @@ SOAK_CI := 2000
 SOAK_SEEDS := 1 2 3 4 5 6 7 8
 
 .PHONY: all engine client steam import run test test-client soak lint need-timeout art icons achievement-icons achievement-vdf deck \
-	i18n-catalog i18n-check
+	i18n-catalog i18n-check help help-check
 all: engine
 
 engine:
@@ -210,3 +212,13 @@ lint:
 	cd client/rust && cargo fmt --all -- --check
 	cd client/rust && cargo clippy --all-targets -- -D warnings
 	cd client/rust && cargo clippy -p renethack-gd --all-targets --features steam -- -D warnings
+
+# The help's Guidebooks: NetHack's own in English, the Russian fetched at
+# the commit help.lock.json pins (its sha256 checked), both made into
+# chapters for the help panel (client/help/guidebook.*.json, committed)
+help:
+	python3 tools/help/guidebook.py --fetch
+
+help-check:
+	python3 tools/help/test_guidebook.py
+	python3 tools/help/guidebook.py --check

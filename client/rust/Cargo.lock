@@ -490,6 +490,8 @@ dependencies = [
  "nh-link",
  "nh-protocol",
  "nh-world",
+ "serde",
+ "serde_json",
  "steamworks",
  "unic-langid",
 ]

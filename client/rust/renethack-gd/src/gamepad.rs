@@ -284,6 +284,8 @@ pub enum PadCtx {
     Picker {
         wish: bool,
     },
+    /// The help: chapters and their text.
+    Help,
     /// The inventory panel: browse, a question, or a menu of items.
     PanelBrowse,
     PanelSelect,
@@ -528,7 +530,7 @@ impl Pad {
                             echo: false,
                         }));
                     }
-                    PadCtx::Menu { .. } | PadCtx::Other => {
+                    PadCtx::Menu { .. } | PadCtx::Other | PadCtx::Help => {
                         out.push(PadOut::Key(key(if b == Lb {
                             Key::PageUp
                         } else {

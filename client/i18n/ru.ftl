@@ -647,3 +647,14 @@ achievement-ascend-petless-name = Вознесение без питомца
 achievement-ascend-petless-desc = Вознеситесь, ни разу не заведя питомца.
 achievement-sokoban-purist-name = Честный Сокобан
 achievement-sokoban-purist-desc = Заберите награду Сокобана, ни разу не нарушив его правил.
+
+## Справка: руководство по NetHack
+
+hud-help-tip = Справка: руководство (F1)
+help-title = Справка — { $book }
+help-close-tip = Закрыть (Esc, F1)
+help-search-placeholder = Поиск по руководству
+help-nothing = Ничего не найдено
+help-hint = ↑↓: глава · PgUp PgDn: прокрутка · Esc: закрыть
+hint-chapter = Глава
+hint-scroll = Прокрутка

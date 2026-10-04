@@ -64,6 +64,10 @@ pub enum UiEvent {
     AchievementPick(usize),
     /// The interface's language chosen (settings, character creation).
     SetLanguage(crate::i18n::Lang),
+    /// The help, open or closed (F1, the HUD's button).
+    ToggleHelp,
+    /// From the help panel.
+    Help(crate::help_panel::HelpInput),
 }
 
 #[derive(Debug, Clone, PartialEq)]

@@ -28,6 +28,8 @@ use nh_link::save_exists;
 
 #[path = "selftest_achievements.rs"]
 mod achievements;
+#[path = "selftest_help.rs"]
+mod help_tests;
 #[path = "selftest_hero.rs"]
 mod hero;
 #[path = "selftest_input.rs"]
@@ -4017,6 +4019,7 @@ impl SelfTest {
             "roles" => hero::roles(),
             "branches" => world_looks::branches(),
             "pickers" => input_ru::pickers(),
+            "help" => help_tests::help(),
             "inventory" => inventory(),
             "gamepad" => gamepad(),
             "bar" => bar(),
@@ -4399,6 +4402,7 @@ fn layout_fits(game: &RenethackGame) -> Result<(), String> {
     let panel = ui.inventory.frame_rect();
     all.extend(panel.map(|r| ("inventory panel", r)));
     all.extend(ui.dialogs.panel_rect().map(|r| ("dialog", r)));
+    all.extend(ui.help.frame_rect().map(|r| ("help", r)));
     for (name, r) in &all {
         if !canvas.encloses(*r) {
             return Err(format!(

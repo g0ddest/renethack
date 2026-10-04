@@ -2,7 +2,7 @@
 // exists: one stroke weight, gold on transparent. `icon` picks the glyph:
 // 0 bag (inventory), 1 book (spells), 2 bust (character), 3 map
 // (overview), 4 scroll (message history), 5 shield (AC), 6 coin (gold),
-// 7 gear (settings), 8 medal (achievements).
+// 7 gear (settings), 8 medal (achievements), 9 question mark (help).
 shader_type canvas_item;
 render_mode unshaded;
 
@@ -108,6 +108,19 @@ float glyph(vec2 p) {
 		float teeth = 0.44 + 0.12 * smoothstep(-0.25, 0.25, cos(a * 8.0));
 		d = ring(length(p) - teeth);
 		d = min(d, ring(sd_circle(p, 0.17)));
+	} else if (icon == 9) {
+		// a question mark in a ring: the hook round from the left over the
+		// top to the right, down to the stem; a dot under it
+		d = ring(sd_circle(p, 0.62));
+		vec2 c = vec2(0.0, -0.2);
+		vec2 q = p - c;
+		float a = atan(q.y, q.x);
+		float hook = a > 0.6 && a < 3.0 ? 1e3 : line(abs(length(q) - 0.2));
+		d = min(d, hook);
+		vec2 end = c + 0.2 * vec2(cos(0.6), sin(0.6));
+		d = min(d, line(sd_segment(p, end, vec2(0.0, 0.1))));
+		d = min(d, line(sd_segment(p, vec2(0.0, 0.1), vec2(0.0, 0.17))));
+		d = min(d, sd_circle(p - vec2(0.0, 0.33), 0.055));
 	} else {
 		// a coin with a milled edge
 		d = ring(sd_circle(p, 0.56));

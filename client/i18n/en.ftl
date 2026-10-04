@@ -642,3 +642,14 @@ achievement-ascend-petless-name = Petless Ascension
 achievement-ascend-petless-desc = Ascend without ever having a pet.
 achievement-sokoban-purist-name = Sokoban Purist
 achievement-sokoban-purist-desc = Claim the Sokoban prize without breaking Sokoban's rules.
+
+## The help: NetHack's Guidebook
+
+hud-help-tip = Help: the Guidebook (F1)
+help-title = Help — { $book }
+help-close-tip = Close (Esc, F1)
+help-search-placeholder = Search the Guidebook
+help-nothing = Nothing found
+help-hint = ↑↓: chapter · PgUp PgDn: scroll · Esc: close
+hint-chapter = Chapter
+hint-scroll = Scroll
