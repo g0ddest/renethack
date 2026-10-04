@@ -1163,7 +1163,8 @@ def with_tails(heads, tails, few=False):
     if len(optional) > (2 * MAX_APPENDS if few else MAX_APPENDS):
         optional = []
     out = []
-    for r in range(min(len(optional), MAX_APPENDS) + 1):
+    # (after a placeholder, one more: the appends are the whole text)
+    for r in range(min(len(optional), MAX_APPENDS + few) + 1):
         for chosen in itertools.combinations(optional, r):
             used = [t for t in tails if t.always or t in chosen]
             parts = [heads] + [t.pieces for t in used]
