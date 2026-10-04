@@ -174,6 +174,12 @@ pub fn tr_with(id: &str, args: Option<&FluentArgs>) -> String {
     }
 }
 
+/// The string of `id` in `lang` alone, without the pseudo-language's
+/// marks (files made for others: Steam's achievements).
+pub fn tr_in(lang: Lang, id: &str) -> Option<String> {
+    CATALOG.with(|c| c.format(lang, id, None))
+}
+
 /// The catalogs have a string for `id`.
 pub fn has(id: &str) -> bool {
     CATALOG.with(|c| c.bundles[Lang::En.index()].has_message(id))
@@ -676,13 +682,17 @@ mod tests {
             .collect();
         assert!(missing.is_empty(), "not in en.ftl: {missing:?}");
         // the achievements' names and descriptions are keys their
-        // definitions name (until the catalogs have them, the definitions'
-        // English shows)
+        // definitions name
         let achievements: Vec<String> = nh_world::achievements::Achievements::built_in()
             .all()
             .iter()
             .flat_map(|a| [a.name.clone(), a.desc.clone()])
             .collect();
+        let missing: Vec<&String> = achievements.iter().filter(|k| !keys.contains(k)).collect();
+        assert!(
+            missing.is_empty(),
+            "achievements not in en.ftl: {missing:?}"
+        );
         let unused: Vec<&String> = keys
             .iter()
             .filter(|k| !named.iter().any(|(_, n)| n == *k) && !achievements.contains(k))

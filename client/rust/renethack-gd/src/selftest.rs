@@ -26,6 +26,8 @@ use nh_world::{
 
 use nh_link::save_exists;
 
+#[path = "selftest_achievements.rs"]
+mod achievements;
 #[path = "selftest_hero.rs"]
 mod hero;
 #[path = "selftest_input.rs"]
@@ -3998,6 +4000,7 @@ impl SelfTest {
             "gallery" => gallery(),
             "icons" => icons(),
             "achievement-icons" => achievement_icons(),
+            "achievements" => achievements::achievements(),
             "smoke" => smoke(),
             "keys" => keys(),
             "save" => save(),

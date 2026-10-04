@@ -2,6 +2,7 @@
 //! `RenethackGame`, runs nh-engine and draws the game.
 
 mod achievement_bake;
+mod achievement_view;
 mod action_bar;
 mod animator;
 mod art;

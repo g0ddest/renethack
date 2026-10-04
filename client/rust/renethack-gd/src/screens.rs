@@ -210,6 +210,8 @@ pub struct Screens {
     title: (Vec<SavedGame>, Option<String>),
     /// The settings page was opened from a game (Back returns to it).
     settings_in_game: bool,
+    /// The achievements page was opened from a game.
+    achievements_in_game: bool,
 }
 
 /// The game's name on the title: a name, the same in every language.
@@ -306,6 +308,7 @@ impl Screens {
             end: None,
             title: (Vec::new(), None),
             settings_in_game: false,
+            achievements_in_game: false,
         }
     }
 
@@ -349,6 +352,11 @@ impl Screens {
             let ev = UiEvent::ContinueGame(s.name.clone());
             col.add_child(&wide(theme::button(&text, &self.queue, ev)));
         }
+        col.add_child(&wide(theme::button(
+            &tr!("title-achievements"),
+            &self.queue,
+            UiEvent::OpenAchievements,
+        )));
         col.add_child(&wide(theme::button(
             &tr!("title-settings"),
             &self.queue,
@@ -402,6 +410,19 @@ impl Screens {
     /// The settings page was opened from a game.
     pub fn settings_in_game(&self) -> bool {
         self.settings_in_game
+    }
+
+    /// The achievements page (`achievement_view::Page`); `in_game`:
+    /// opened from a game, Back returns to it.
+    pub fn show_achievements(&mut self, page: &Gd<Control>, in_game: bool) {
+        self.form = None;
+        self.achievements_in_game = in_game;
+        self.page("achievements", page);
+    }
+
+    /// The achievements page was opened from a game.
+    pub fn achievements_in_game(&self) -> bool {
+        self.achievements_in_game
     }
 
     /// The page again in the language now (the creation form keeps what
@@ -728,7 +749,8 @@ impl Screens {
         self.root.set_visible(false);
     }
 
-    /// "title", "settings", "creation", "end", "error" or None.
+    /// "title", "settings", "achievements", "creation", "end", "error" or
+    /// None.
     pub fn current(&self) -> Option<&'static str> {
         self.current
     }

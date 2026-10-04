@@ -19,17 +19,17 @@ override GODOT := $(if $(filter %.app %.app/,$(GODOT)),$(patsubst %/,%,$(GODOT))
 # GNU coreutils' timeout; Homebrew's coreutils names it gtimeout on macOS
 TIMEOUT ?= $(shell command -v timeout || command -v gtimeout)
 GODOT_PROJECT := client/godot
-SELFTESTS := smoke keys save close crash menus text dialogs moves orders inventory bar gamepad equipment item-use combat roles branches soak language pickers
+SELFTESTS := smoke keys save close crash menus text dialogs moves orders inventory bar gamepad equipment item-use combat roles branches soak language pickers achievements
 # again at the Steam Deck's 1280×800 (its 120 % UI scale, the compact
 # layout): every screen a scenario would shoot must fit the canvas
 DECK_SELFTESTS := smoke inventory hud gamepad
 # the same in Russian (a third longer than English), at the Deck's size and
 # at 1920×1080
-RU_DECK_SELFTESTS := smoke inventory hud dialogs gamepad pickers
-RU_SELFTESTS := smoke inventory dialogs
+RU_DECK_SELFTESTS := smoke inventory hud dialogs gamepad pickers achievements
+RU_SELFTESTS := smoke inventory dialogs achievements
 # in the pseudo-language (--lang=qps): every word on the screens a scenario
 # would shoot came through the client's catalogs or the engine's translator
-PSEUDO_SELFTESTS := smoke keys dialogs orders inventory gamepad hud pickers
+PSEUDO_SELFTESTS := smoke keys dialogs orders inventory gamepad hud pickers achievements
 # `make deck`: the same screens shot at a real 1280×800, into DECK_DIR
 # (`make deck DECK_ARGS=--lang=ru`: in Russian)
 DECK_SHOTS := smoke tour inventory bar hud dialogs gamepad
@@ -40,7 +40,7 @@ DECK_ARGS ?=
 SOAK_CI := 2000
 SOAK_SEEDS := 1 2 3 4 5 6 7 8
 
-.PHONY: all engine client steam import run test test-client soak lint need-timeout art icons achievement-icons deck \
+.PHONY: all engine client steam import run test test-client soak lint need-timeout art icons achievement-icons achievement-vdf deck \
 	i18n-catalog i18n-check
 all: engine
 
@@ -177,6 +177,16 @@ achievement-icons: all client
 	grep '^selftest: achievement-icons' $$pg/achievement-icons.log; \
 	grep -q 'SELFTEST PASS achievement-icons' $$pg/achievement-icons.log \
 		|| { tail -40 $$pg/achievement-icons.log; exit 1; }; \
+	rm -rf $$pg
+
+# steam/achievements.vdf alone (the names and descriptions changed in the
+# catalogs): the bake with no medallion to draw, headless
+achievement-vdf: all client
+	@pg=$$(mktemp -d); RENETHACK_ACHIEVEMENTS_ONLY=- $(if $(TIMEOUT),$(TIMEOUT) 300) $(GODOT) --headless \
+		--path $(GODOT_PROJECT) -- --selftest=achievement-icons --playground=$$pg/playground \
+		> $$pg/achievement-vdf.log 2>&1; \
+	grep -q 'SELFTEST PASS achievement-icons' $$pg/achievement-vdf.log \
+		|| { tail -40 $$pg/achievement-vdf.log; exit 1; }; \
 	rm -rf $$pg
 
 # The art is committed; this re-fetches it from Poly Haven and itch.io and

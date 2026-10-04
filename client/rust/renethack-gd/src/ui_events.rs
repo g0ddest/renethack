@@ -57,6 +57,11 @@ pub enum UiEvent {
     /// The client's settings page (the title's button, the HUD's gear).
     OpenSettings,
     CloseSettings,
+    /// The achievements page (the title's button, the HUD's medal), and
+    /// a medallion on it clicked or hovered.
+    OpenAchievements,
+    CloseAchievements,
+    AchievementPick(usize),
     /// The interface's language chosen (settings, character creation).
     SetLanguage(crate::i18n::Lang),
 }

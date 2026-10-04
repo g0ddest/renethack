@@ -758,6 +758,13 @@ fn micro_button(glyph: i32, tip: &'static str, queue: &UiQueue, ev: UiEvent) -> 
     b
 }
 
+/// How wide a banner at the top centre may be on a canvas `width` wide:
+/// it fits between the portrait block and the minimap.
+pub fn banner_room(width: f32) -> f32 {
+    let room = width - 2.0 * (EDGE + PORTRAIT_W.max(MINIMAP_W) + 16.0);
+    room.clamp(320.0, 960.0)
+}
+
 /// Queue a key from a signal: the same as pressing it.
 fn key_event(k: KeyInput) -> UiEvent {
     UiEvent::Key(k)
@@ -1064,6 +1071,7 @@ impl Hud {
             (2, "hud-character-tip", key_event(ctrl('x'))),
             (3, "hud-overview-tip", key_event(ctrl('o'))),
             (4, "hud-history-tip", UiEvent::ToggleFullLog),
+            (8, "hud-achievements-tip", UiEvent::OpenAchievements),
             (7, "hud-settings-tip", UiEvent::OpenSettings),
         ] {
             let b = micro_button(glyph, tip, &queue, ev);
@@ -1748,9 +1756,7 @@ impl Hud {
             });
             self.log_key = None;
         }
-        // the banner fits between the portrait block and the minimap
-        let room = size.x - 2.0 * (EDGE + PORTRAIT_W.max(MINIMAP_W) + 16.0);
-        let max = room.clamp(320.0, 960.0);
+        let max = banner_room(size.x);
         self.prompt.set_custom_minimum_size(Vector2::new(0.0, 24.0));
         self.prompt_row.set_meta("max_width", &max.to_variant());
         self.fit_prompt();

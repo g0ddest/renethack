@@ -469,6 +469,8 @@ pub struct Tracker {
     fresh: Vec<String>,
     /// What went wrong with the store, for the log.
     trouble: Option<String>,
+    /// Self-tests only: a debug game earns as a normal one would.
+    debug_earns: bool,
 }
 
 impl Tracker {
@@ -507,7 +509,16 @@ impl Tracker {
             seen: (0, 0),
             fresh: Vec::new(),
             trouble,
+            debug_earns: false,
         }
+    }
+
+    /// Self-tests only (the achievements scenario plays in debug mode to
+    /// reach the branches): a debug game earns as a normal one would; the
+    /// last notice is looked at again.
+    pub fn debug_earns(&mut self, on: bool) {
+        self.debug_earns = on;
+        self.seen = (0, 0);
     }
 
     /// Look at the world's last progress notice if it is new: what it
@@ -529,10 +540,27 @@ impl Tracker {
         let Some(p) = world.progress() else {
             return Vec::new();
         };
+        let tested;
+        let p = if self.debug_earns && p.mode == "debug" {
+            tested = ProgressNotice {
+                mode: "normal".into(),
+                ..p.clone()
+            };
+            &tested
+        } else {
+            p
+        };
+        // the turn of the change the notice tells (older hosts: the
+        // status line's)
+        let turn = if p.turn > 0 {
+            p.turn
+        } else {
+            world.turn().unwrap_or(0)
+        };
         let hero = Hero {
             role: Some(p.role.clone()).filter(|r| !r.is_empty()),
             character: character.to_string(),
-            turn: world.turn().unwrap_or(0),
+            turn,
             time: now,
         };
         let earned: Vec<Achievement> = self
@@ -911,7 +939,8 @@ mod tests {
     const MINES: &str = r#"{"mode":"normal","role":"Arc","achieved":[15],"events":{},
         "deepest":3,"conduct":{"pets":1},"roleplay":{},"gameover":false,"how":null}"#;
     const MINETOWN: &str = r#"{"mode":"normal","role":"Arc","achieved":[15,16],"events":{},
-        "deepest":5,"conduct":{"pets":1},"roleplay":{},"gameover":false,"how":null}"#;
+        "deepest":5,"conduct":{"pets":1},"roleplay":{},"gameover":false,"how":null,
+        "turn":812}"#;
 
     #[test]
     fn a_tracker_unlocks_each_notice_once_and_tells_the_backend() {
@@ -942,10 +971,13 @@ mod tests {
         assert_eq!(*mock.unlocked.borrow(), ["ACH_MINES", "ACH_MINETOWN"]);
         assert_eq!(t.take_fresh(), ["mines", "minetown"]);
         assert!(t.take_fresh().is_empty());
-        // kept on disk, with the role from the notice
+        // kept on disk, with the role and the turn from the notice (none
+        // told: the status line's, here none)
         let saved = Store::load(&path).unwrap();
         assert_eq!(saved.unlocked["mines"].role, "Arc");
         assert_eq!(saved.unlocked["minetown"].character, "Indy");
+        assert_eq!(saved.unlocked["minetown"].turn, 812);
+        assert_eq!(saved.unlocked["mines"].turn, 0);
     }
 
     #[test]
@@ -1000,6 +1032,18 @@ mod tests {
         let w = world_after(&[&MINES.replace("\"normal\"", "\"debug\"")]);
         assert!(t.update(&w, 1, "Wizard", 1).is_empty());
         assert!(mock.unlocked.borrow().is_empty());
+    }
+
+    #[test]
+    fn the_self_tests_override_lets_a_debug_game_earn() {
+        let mock = Mock::default();
+        let mut t = Tracker::start(Achievements::built_in(), None, Box::new(mock.clone()));
+        let w = world_after(&[&MINES.replace("\"normal\"", "\"debug\"")]);
+        assert!(t.update(&w, 1, "Wizard", 1).is_empty());
+        // the same notice, looked at again with the override
+        t.debug_earns(true);
+        assert_eq!(t.update(&w, 1, "Wizard", 2).len(), 1);
+        assert_eq!(*mock.unlocked.borrow(), ["ACH_MINES"]);
     }
 
     #[test]

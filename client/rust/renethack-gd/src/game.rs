@@ -157,6 +157,8 @@ pub struct Ui {
     pub dialogs: Dialogs,
     pub pad: crate::pad_view::PadView,
     pub screens: Screens,
+    /// An achievement just earned, under the prompt banner.
+    pub toast: crate::achievement_view::Toast,
 }
 
 /// What the prompt line says while `prompt` waits.
@@ -290,6 +292,8 @@ pub struct RenethackGame {
     /// The achievements: earned as the progress notices tell, kept in the
     /// local store, sent to Steam when it runs.
     pub(crate) achievements: Option<Tracker>,
+    /// The achievements page while it is open.
+    pub(crate) achievement_page: Option<crate::achievement_view::Page>,
     /// A reply could not be written: the engine is gone.
     link_error: Option<String>,
     close_deadline: Option<Instant>,
@@ -456,6 +460,7 @@ impl INode for RenethackGame {
             session_serial: 0,
             name: None,
             achievements: None,
+            achievement_page: None,
             link_error: None,
             close_deadline: None,
             quitting: false,
@@ -583,6 +588,11 @@ impl INode for RenethackGame {
         self.veil = Some(veil);
         self.veil_cue = Some(cue);
         self.headless = godot::classes::DisplayServer::singleton().get_name() == "headless";
+        // the toast over the HUD, under the panels and dialogs
+        let mut toast_layer = CanvasLayer::new_alloc();
+        toast_layer.set_name("ToastLayer");
+        toast_layer.set_layer(1);
+        self.base_mut().add_child(&toast_layer);
         let queue = self.queue.clone();
         let mut layers = layers.into_iter();
         let mut next = || layers.next().expect("five layers");
@@ -593,6 +603,7 @@ impl INode for RenethackGame {
             dialogs: Dialogs::new(next(), queue.clone()),
             pad: crate::pad_view::PadView::new(next()),
             screens: Screens::new(next(), queue),
+            toast: crate::achievement_view::Toast::new(toast_layer),
         });
         self.show_game(false);
 
@@ -676,7 +687,7 @@ impl INode for RenethackGame {
             }
         }
         self.watch_engine();
-        self.achieve();
+        self.achieve(delta);
         if !self.quitting
             && let Some(mut test) = self.selftest.take()
         {
@@ -703,7 +714,8 @@ impl INode for RenethackGame {
             }
             Err(event) => event,
         };
-        if self.state != GameState::Playing {
+        // the achievements page takes keys and the gamepad on the title too
+        if self.state != GameState::Playing && !self.achievements_open() {
             return;
         }
         // a gamepad: what its buttons and sticks mean on this screen
@@ -1476,9 +1488,9 @@ impl RenethackGame {
         self.show_title(notice);
     }
 
-    /// What the last progress notice newly earns, kept and sent on (the
-    /// toast comes with the achievements panel); the backend's work.
-    fn achieve(&mut self) {
+    /// What the last progress notice newly earns, kept, sent on and told
+    /// (the toast, `dt` seconds on); the backend's work.
+    fn achieve(&mut self, dt: f64) {
         let Some(t) = self.achievements.as_mut() else {
             return;
         };
@@ -1493,6 +1505,25 @@ impl RenethackGame {
             godot_warn!("renethack: achievements: {e}");
         }
         t.tick();
+        let fresh: Vec<_> = t
+            .take_fresh()
+            .iter()
+            .filter_map(|id| t.achievements().get(id).cloned())
+            .collect();
+        let playing = self.state == GameState::Playing;
+        let Some(ui) = self.ui.as_mut() else {
+            return;
+        };
+        for a in fresh {
+            ui.toast.push(a);
+        }
+        // anything over the map holds the toast back
+        let blocked = !playing
+            || ui.dialogs.is_open()
+            || ui.inventory.is_open()
+            || ui.hud.full_log_open()
+            || ui.screens.current().is_some();
+        ui.toast.tick(dt, blocked);
     }
 
     /// Run `recover` on every interrupted game; what happened, if anything.
@@ -1523,6 +1554,11 @@ impl RenethackGame {
     // ---- input ----
 
     fn on_key(&mut self, k: KeyInput) {
+        // the achievements page has the keys, over the title or the game
+        if self.achievements_open() {
+            self.achievements_key(k);
+            return;
+        }
         if self.state != GameState::Playing {
             return;
         }
@@ -1682,6 +1718,10 @@ impl RenethackGame {
         let Some(ui) = self.ui.as_ref() else {
             return PadCtx::Other;
         };
+        // a page over everything: the d-pad's arrows, A and B
+        if self.achievements_open() {
+            return PadCtx::Other;
+        }
         if ui.dialogs.is_open() {
             return match ui.dialogs.kind_name() {
                 Some("menu") => PadCtx::Menu {
@@ -1718,7 +1758,7 @@ impl RenethackGame {
 
     /// Held sticks repeat.
     fn pad_tick(&mut self) {
-        if self.state != GameState::Playing {
+        if self.state != GameState::Playing && !self.achievements_open() {
             return;
         }
         let ctx = self.pad_ctx();
@@ -2407,6 +2447,13 @@ impl RenethackGame {
             UiEvent::Inventory(ev) if self.state == GameState::Playing => self.on_inventory(ev),
             UiEvent::OpenSettings => self.open_settings(),
             UiEvent::CloseSettings => self.close_settings(),
+            UiEvent::OpenAchievements => self.open_achievements(),
+            UiEvent::CloseAchievements => self.close_achievements(),
+            UiEvent::AchievementPick(i) => {
+                if let Some(p) = self.achievement_page.as_mut() {
+                    p.select(i);
+                }
+            }
             UiEvent::SetLanguage(lang) => self.set_language(lang),
             other => godot_warn!("renethack: {other:?} ignored while a game runs"),
         }
@@ -2437,6 +2484,81 @@ impl RenethackGame {
             ui.screens.hide();
         } else {
             self.show_title(None);
+        }
+    }
+
+    /// The achievements page, over the title or the game (its orders
+    /// stop): every achievement, earned or not, as the local store has
+    /// them.
+    fn open_achievements(&mut self) {
+        let in_game = match self.state {
+            GameState::Title => false,
+            GameState::Playing => true,
+            _ => return,
+        };
+        if in_game {
+            self.driver.interrupt(Stop::Panel);
+        }
+        self.build_achievements(in_game, None);
+    }
+
+    /// The page made anew (on opening, and in another language), its
+    /// choice kept.
+    fn build_achievements(&mut self, in_game: bool, selected: Option<usize>) {
+        let canvas = self.canvas_size();
+        let (all, store) = match self.achievements.as_ref() {
+            Some(t) => (t.achievements().clone(), t.store().clone()),
+            None => (Achievements::built_in(), Default::default()),
+        };
+        let queue = self.queue.clone();
+        let mut page = crate::achievement_view::Page::new(&all, &store, &queue, canvas);
+        if let Some(i) = selected {
+            page.select(i);
+        }
+        self.ui_mut()
+            .screens
+            .show_achievements(&page.root(), in_game);
+        self.achievement_page = Some(page);
+    }
+
+    fn close_achievements(&mut self) {
+        if !self.achievements_open() {
+            return;
+        }
+        self.achievement_page = None;
+        let in_game = self
+            .ui
+            .as_ref()
+            .is_some_and(|ui| ui.screens.achievements_in_game());
+        if in_game && self.state == GameState::Playing {
+            self.ui_mut().screens.hide();
+        } else {
+            self.show_title(None);
+        }
+    }
+
+    /// The achievements page is up (keys and the gamepad are its own).
+    pub(crate) fn achievements_open(&self) -> bool {
+        self.ui
+            .as_ref()
+            .is_some_and(|ui| ui.screens.current() == Some("achievements"))
+    }
+
+    /// A key on the achievements page: the arrows choose, Esc goes back.
+    fn achievements_key(&mut self, k: KeyInput) {
+        let step = match k.key {
+            Key::Left => (-1, 0),
+            Key::Right => (1, 0),
+            Key::Up => (0, -1),
+            Key::Down => (0, 1),
+            Key::Escape if !k.echo => {
+                self.close_achievements();
+                return;
+            }
+            _ => return,
+        };
+        if let Some(p) = self.achievement_page.as_mut() {
+            p.step(step.0, step.1);
         }
     }
 
@@ -2487,8 +2609,14 @@ impl RenethackGame {
         ui.dialogs.relang(catalog.as_deref());
         ui.pad.relang();
         ui.screens.relang();
+        ui.toast.relang();
         if line.is_some() {
             ui.hud.set_prompt_line(line.as_deref());
+        }
+        // the achievements page is made anew in the language, its choice kept
+        if let Some(selected) = self.achievement_page.as_ref().map(|p| p.selected()) {
+            let in_game = ui.screens.achievements_in_game();
+            self.build_achievements(in_game, Some(selected));
         }
     }
 

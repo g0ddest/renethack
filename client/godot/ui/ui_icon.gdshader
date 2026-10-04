@@ -2,7 +2,7 @@
 // exists: one stroke weight, gold on transparent. `icon` picks the glyph:
 // 0 bag (inventory), 1 book (spells), 2 bust (character), 3 map
 // (overview), 4 scroll (message history), 5 shield (AC), 6 coin (gold),
-// 7 gear (settings).
+// 7 gear (settings), 8 medal (achievements).
 shader_type canvas_item;
 render_mode unshaded;
 
@@ -90,6 +90,18 @@ float glyph(vec2 p) {
 		float shield = max(max(top, side), max(tip, q.y - 0.75));
 		d = ring(shield);
 		d = min(d, abs(sd_segment(p, vec2(0.0, -0.45), vec2(0.0, 0.55))) - stroke * 0.3);
+	} else if (icon == 8) {
+		// a medal on a ribbon: the ribbon's two strips, a disc with a star
+		d = line(sd_segment(p, vec2(-0.34, -0.66), vec2(-0.08, -0.16)));
+		d = min(d, line(sd_segment(p, vec2(0.34, -0.66), vec2(0.08, -0.16))));
+		vec2 m = p - vec2(0.0, 0.24);
+		d = min(d, ring(sd_circle(m, 0.4)));
+		float star = 1e3;
+		for (int i = 0; i < 5; i++) {
+			float a = float(i) * 1.256637 - 1.570796;
+			star = min(star, sd_segment(m, vec2(0.0), vec2(cos(a), sin(a)) * 0.22));
+		}
+		d = min(d, abs(star) - stroke * 0.35);
 	} else if (icon == 7) {
 		// a gear: a toothed rim around a hub
 		float a = atan(p.y, p.x);

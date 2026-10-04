@@ -37,6 +37,7 @@ thread_local! {
 pub fn clear() {
     ITEMS.with(|i| i.borrow_mut().clear());
     GLYPHS.with(|g| g.borrow_mut().clear());
+    crate::achievement_view::clear();
     crate::theme::clear_fonts();
 }
 
