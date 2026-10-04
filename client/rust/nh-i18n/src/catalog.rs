@@ -453,11 +453,12 @@ fn match_from(t: &Template, seg: usize, text: &str, caps: &mut Vec<String>, conv
             None => false,
         },
         Segment::Conv(c) => {
-            let next_lit = match t.segments.get(seg + 1) {
-                Some(Segment::Lit(l)) => Some(l.as_str()),
-                _ => None,
+            let next = match t.segments.get(seg + 1) {
+                Some(Segment::Lit(l)) => Next::Lit(l.as_str()),
+                Some(Segment::Conv(_)) => Next::Conv,
+                None => Next::End,
             };
-            for end in candidate_ends(c.kind, c.width, c.precision, text, next_lit) {
+            for end in candidate_ends(c.kind, c.width, c.precision, text, next) {
                 let piece = &text[..end];
                 if !plausible(t, conv, c.kind, piece) {
                     continue;
@@ -473,13 +474,22 @@ fn match_from(t: &Template, seg: usize, text: &str, caps: &mut Vec<String>, conv
     }
 }
 
+/// What follows a conversion in its template.
+#[derive(Clone, Copy)]
+enum Next<'t> {
+    Lit(&'t str),
+    /// Another conversion: the two part anywhere ("%s%s is empty").
+    Conv,
+    End,
+}
+
 /// Where the text of a conversion may end, shortest first.
 fn candidate_ends(
     kind: ConvKind,
     width: Option<usize>,
     precision: Option<usize>,
     text: &str,
-    next_lit: Option<&str>,
+    next: Next,
 ) -> Vec<usize> {
     match kind {
         ConvKind::Int | ConvKind::Float => {
@@ -507,10 +517,15 @@ fn candidate_ends(
             .map(|c| vec![c.len_utf8()])
             .unwrap_or_default(),
         ConvKind::Str | ConvKind::Other => {
-            let mut ends: Vec<usize> = match next_lit {
+            let mut ends: Vec<usize> = match next {
                 // the next literal must follow: only where it starts
-                Some(l) => text.match_indices(l).map(|(i, _)| i).collect(),
-                None => vec![text.len()],
+                Next::Lit(l) => text.match_indices(l).map(|(i, _)| i).collect(),
+                Next::Conv => text
+                    .char_indices()
+                    .map(|(i, _)| i)
+                    .chain([text.len()])
+                    .collect(),
+                Next::End => vec![text.len()],
             };
             if let Some(p) = precision {
                 ends.retain(|&e| text[..e].chars().count() <= p);
@@ -630,6 +645,18 @@ mod tests {
             m.captures,
             vec!["e", "a +0 pick-axe (weapon in right hand)"]
         );
+    }
+
+    #[test]
+    fn touching_conversions_part_anywhere() {
+        let c = Catalog::parse(&SAMPLE.replace(
+            r#"{"id": "a9", "fmt": "a doorway", "uses": ["sprintf"], "sites": []}"#,
+            r#"{"id": "a9", "fmt": "%s%s is empty.", "uses": ["menu"], "args": ["text", "object"], "sites": []}"#,
+        ))
+        .unwrap();
+        let m = c.find("Your sack is empty.", Channel::Window).unwrap();
+        assert_eq!(m.template.id, "a9");
+        assert_eq!(m.captures, vec!["", "Your sack"]);
     }
 
     #[test]
