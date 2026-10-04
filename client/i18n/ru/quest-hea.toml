@@ -1,0 +1,265 @@
+# R6 quest texts: Hea (dat/quest.lua).
+
+[60d4703f5a71]
+en = "[Travel to %s on your way to recover %s from %s.]"
+ru = "[Отправляйтесь в {1:acc}, чтобы отнять {2:acc} у {3:gen}.]"
+
+[ec2a4d226466]
+en = "For the first time, you sense a smile on %s face.\n\n    \"You have indeed learned as much as we can teach you in preparation\n    for this task.  Let me tell you what I know of the symptoms and hope\n    that you can provide a cure.\n\n    \"A short while ago, the dreaded %s was fooled by the gods\n    into thinking that %s could use %s to find a\n    cure for old age.  Think of it, eternal youth!  But %s good\n    health is accomplished by drawing the health from those around %s.\n\n    \"He has exhausted %s own supply of healthy people and now %s seeks to\n    extend %s influence into our world.  You must recover from %s\n    %s and break the spell.\n\n    \"You must travel into the swamps to %s, and from there\n    follow the trail to %s island lair.  Be careful.\""
+ru = "Впервые вы замечаете улыбку на лице {1:gen}.\n\n    «Вы и впрямь узнали всё, чему мы можем научить вас, готовя\n    к этому делу.  Позвольте рассказать, что я знаю о симптомах, в надежде,\n    что вы найдёте лекарство.\n\n    Недавно боги обманули грозного {2:acc},\n    внушив ему{3:skip}, будто {4} поможет найти\n    лекарство от старости.  Подумать только — вечная молодость!  Но здоровье\n    его{5:skip} держится тем, что он вытягивает здоровье из всех вокруг себя{6:skip}.\n\n    Он истощил всех здоровых людей{7:skip} в своих краях и теперь{8:skip} стремится\n    распространить своё{9:skip} влияние на наш мир.  Вы должны отнять у него{10:skip}\n    {11:acc} и разрушить чары.\n\n    Отправляйтесь через болота в {12:acc}, а оттуда\n    идите по следу к островному логову {13:gen}.  Будьте осторожны.»"
+
+[fd67c10d5634]
+en = "[Return when you are more %s.]"
+ru = "[Возвращайтесь, когда станете более {1:hero:ins}.]"
+
+[8d9f0538cb2c]
+en = "\"You have learned much of the remedies that benefit, but you must also\nknow which physic for which ail.  That is why %s teachings are a\npart of your training.\n\n\"Return to us when you have healed thyself.\""
+ru = "«Вы многое узнали о целебных средствах, но надо ещё\nзнать, какое снадобье от какой хвори.  Потому-то учения {1:gen}\nи входят в ваше обучение.\n\nВозвращайтесь к нам, когда исцелите себя сами.»"
+
+[16b8f6e743ea]
+en = "[You are too inexperienced.  Return when you are %s.]"
+ru = "[Вы слишком неопытны.  Возвращайтесь, когда станете {1:hero:ins}.]"
+
+[9a717f2e9d3e]
+en = "\"Alas, %s, you are yet too inexperienced to deal with the rigors\nof such a task.  You must be able to draw on the knowledge of botany,\nalchemy and veterinary practices before I can send you on this quest \nwith good conscience.\n\n\"Return when you wear %s's caduceus.\""
+ru = "«Увы, {1}, вы ещё слишком неопытны, чтобы вынести тяготы\nтакого дела.  Вы должны владеть познаниями в ботанике,\nалхимии и врачевании животных, прежде чем я с чистой совестью\nсмогу послать вас на это задание.\n\nВозвращайтесь, когда будете носить кадуцей {2:hero:gen}.»"
+
+[20802e545515]
+en = "\"They might as well give scalpels to wizards as to let you try to use %s!\""
+ru = "«С тем же успехом скальпели можно давать волшебникам, что и позволять тебе пользоваться {1:ins}!»"
+
+[9ebbfb53236a]
+en = "\"If I could strike %s, surrounded by %s %s, imagine what I can do to you here by yourself.\""
+ru = "«Если уж я сумел поразить {1:acc} в окружении его{2:skip} {3:gen}, представь, что я сделаю с тобой здесь, когда ты один{hero:gender||а}.»"
+
+[f42120ff571a]
+en = "\"I will put my %s to work making a physic out of your ashes.\""
+ru = "«Я велю своим {1:dat} сварить снадобье из твоего пепла.»"
+
+[3f976f92b100]
+en = "\"As we speak, Hades gathers your patients to join you.\""
+ru = "«Пока мы говорим, Аид собирает твоих пациентов, чтобы они присоединились к тебе.»"
+
+[5dfc19710a71]
+en = "\"After I'm done with you, I'll destroy %s as well.\""
+ru = "«Покончив с тобой, я уничтожу и {1:acc}.»"
+
+[93fa17b7843d]
+en = "\"You will have to kill me if you ever hope to leave this place.\""
+ru = "«Тебе придётся убить меня, если хочешь когда-нибудь покинуть это место.»"
+
+[7c13b6cf03c7]
+en = "\"I will impale your head on my caduceus for all to see.\""
+ru = "«Я насажу твою голову на свой кадуцей на всеобщее обозрение.»"
+
+[908eb77b51c3]
+en = "\"There is no materia medica in your sack which will cure you of me!\""
+ru = "«Нет в твоём мешке такого лекарства, что исцелит тебя от меня!»"
+
+[878ea5c8a3c8]
+en = "\"Do not fight too hard, I want your soul strong, not weakened!\""
+ru = "«Не надрывайся так, мне нужна твоя душа сильной, а не ослабленной!»"
+
+[0d3ecffb92cb]
+en = "\"You should have stopped studying at veterinary.\""
+ru = "«Надо было тебе остановиться на ветеринарии.»"
+
+[ad5aae7c1a0e]
+en = "\"Remember, %s, to always wash your hands before operating.\""
+ru = "«Помните, {1}: перед операцией всегда мойте руки.»"
+
+[298b5cc8f8b2]
+en = "\"%s has no real magic of %s own.  To this %s is vulnerable.\""
+ru = "«У {1:gen} нет собственной настоящей магии{2:skip}.  В этом его{3:skip} уязвимость.»"
+
+[857eb062de8b]
+en = "\"If you have been true to %s, you can draw on the power of %s.\""
+ru = "«Если вы были верны {1:dat}, вы сможете черпать силу {2:gen}.»"
+
+[6ac4d4ec6986]
+en = "\"Bring with you antidotes for poisons.\""
+ru = "«Возьмите с собой противоядия.»"
+
+[0044218cc7b7]
+en = "\"Remember this, %s can twist the powers of %s to hurt instead of heal.\""
+ru = "«Помните: {1} может обратить силу {2:gen} во вред, а не во исцеление.»"
+
+[1756df163995]
+en = "\"I have sent for Chiron, but I am afraid he will come too late.\""
+ru = "«Я послал за Хироном, но боюсь, он придёт слишком поздно.»"
+
+[5f0bc44e7ecc]
+en = "\"Maybe when you return the snakes will once again begin to shed.\""
+ru = "«Может быть, когда вы вернётесь, змеи снова начнут сбрасывать кожу.»"
+
+[9528e0588839]
+en = "\"The plague grows worse as we speak.  Hurry, %s!\""
+ru = "«Пока мы говорим, мор всё ширится.  Скорее, {1}!»"
+
+[5fd63a11b65b]
+en = "\"Many times %s has caused trouble in these lands.  It is time that %s was eradicated like the diseases %s has caused.\""
+ru = "«Не раз {1} приносил беды этим землям.  Пора искоренить его{2:skip}, как и болезни, что он{3:skip} насылал.»"
+
+[ac4320fcd16b]
+en = "\"With but one eye, %s should be easy to blind.  Remember this.\""
+ru = "«У {1:gen} всего один глаз — ослепить его будет нетрудно.  Помните об этом.»"
+
+[2f8f460f4b09]
+en = "[You arrive back at %s and must find %s.]"
+ru = "[Вы возвращаетесь в {1:acc} и должны найти {2:acc}.]"
+
+[460fe2a1c0d9]
+en = "What sorcery has brought you back to %s?  The smell\nof fresh funeral pyres tells you that something is amiss with the healing\npowers that used to practice here.\n\nNo rhizotomists are tending the materia medica gardens, and where are the\ncommon folk who used to come for the cures?\n\nYou know that you must quickly make your way to the collegium, and\n%s iatreion, and find out what has happened in your absence."
+ru = "Какое колдовство вернуло вас в {1:acc}?  Запах\nсвежих погребальных костров говорит вам, что с целительными\nсилами, что когда-то здесь трудились, случилась беда.\n\nТравники не ухаживают за лекарственными садами, а где же\nпростые люди, что приходили сюда за исцелением?\n\nВы знаете, что должны поскорее добраться до коллегии,\nдо ятрейона {2:gen}, и узнать, что случилось в ваше отсутствие."
+
+[ac98ca81a5c6]
+en = "[You have reached the lair of %s.  Take %s away from %s.]"
+ru = "[Вы добрались до логова {1:gen}.  Отнимите {2:acc} у него.{3:skip}]"
+
+[8e6fa8b48dfa]
+en = "You stand within sight of the infamous Isle of %s.  Even\nthe words of %s had not prepared you for this.\n\nSteeling yourself against the wails of the ill that pierce your ears,\nyou hurry on your task.  Maybe with %s you can\nheal them on your return, but not now."
+ru = "Перед вами печально известный Остров {1:gen}.  Даже\nслова {2:gen} не подготовили вас к такому.\n\nЗакалив сердце против стонов больных, что режут вам слух,\nвы спешите исполнить задуманное.  Быть может, с {3:ins} вы\nисцелите их на обратном пути, но не сейчас."
+
+[bad58eb02be7]
+en = "Once again, you %s the Isle of %s in the distance."
+ru = "Вы снова видите{1:skip} вдали Остров {2:gen}."
+
+[7d57be7729eb]
+en = "[You feel the healing power of %s and should return it to %s.]"
+ru = "[Вы чувствуете целительную силу {1:gen} и должны вернуть {1:gender|его|её|его|их} {2:dat}.]"
+
+[7dd28b97767a]
+en = "As you pick up %s, you feel its healing begin to\nwarm your soul.  You curse Zeus for taking it from its rightful owner,\nbut at least you hope that %s can put it to good use once\nagain."
+ru = "Едва вы поднимаете {1:acc}, как {1:gender|его|её|его|их} целительная сила\nсогревает вам душу.  Вы проклинаете Зевса за то, что он отнял {1:gender|его|её|его|их} у законного\nвладельца, но надеетесь, что хоть {2} снова найдёт {1:gender|ему|ей|ему|им}\nдостойное применение."
+
+[683412d6e493]
+en = "\"Did you read that new treatise on the therapeutic use of leeches?\""
+ru = "«Читали новый трактат о лечебном применении пиявок?»"
+
+[2a526dc14a68]
+en = "\"Paint a red caduceus on your shield and monsters won't hit you.\""
+ru = "«Нарисуйте на щите красный кадуцей, и монстры не станут вас бить.»"
+
+[0de6cc84ff44]
+en = "\"How are you feeling?  Perhaps a good bleeding will improve your spirits.\""
+ru = "«Как самочувствие?  Может, хорошее кровопускание поднимет вам настроение?»"
+
+[0d0a1b4061cf]
+en = "\"Have you heard the absurd new theory that diseases are caused by microscopic organisms, and not ill humors?\""
+ru = "«Слыхали новую нелепую теорию, будто болезни вызывают крошечные организмы, а не дурные соки?»"
+
+[2948584fb7c5]
+en = "\"I see that you bring %s, now you can cure this plague!\""
+ru = "«Вижу, вы принесли {1:acc}, — теперь вы сможете излечить этот мор!»"
+
+[f58cd44f9489]
+en = "\"I passed handwriting so they are demoting me a rank.\""
+ru = "«Я сдал чистописание, так что меня понижают в звании.»"
+
+[1c05710e622d]
+en = "\"I've heard that even %s has not been able to cure Chiron.\""
+ru = "«Говорят, даже {1} не смог исцелить Хирона.»"
+
+[bc6abb686fb0]
+en = "\"We think %s has used %s alchemists, and %s, to unleash a new disease we call 'the cold' on Gehennom.\""
+ru = "«Мы думаем, {1} с помощью своих{2:skip} алхимиков и {3:gen} наслал на Геенну новую болезнь, которую мы зовём „простудой“.»"
+
+[d1fc94329e98]
+en = "[\"You have recovered the Amulet.  Travel to the Astral Plane and return it to %s.\"]"
+ru = "[«Вы добыли Амулет.  Отправляйтесь на Астральный план и верните его {1:dat}.»]"
+
+[3aaa46c554e3]
+en = "\"Ah, you have recovered the Amulet, %s.  Well done!\n\n\"Now, you should know that you must travel through the Elemental Planes\nto the Astral, and there return the Amulet to %s.  Go forth and\nmay our prayers be as a wind upon your back.\""
+ru = "«А, вы добыли Амулет, {1}.  Отлично!\n\nТеперь знайте: вам предстоит пройти через Стихийные планы\nна Астральный и там вернуть Амулет {2:dat}.  Ступайте, и\nпусть наши молитвы будут вам попутным ветром.»"
+
+[4deb3792324b]
+en = "[%s curses you as %s dies.]"
+ru = "[Умирая, {1} проклинает вас.{2:skip}]"
+
+[5ddde4969500]
+en = "The battered body of %s slumps to the ground and gasps\nout one last curse:\n\n    \"You have defeated me, %s, but I shall have my revenge.\n    How, I shall not say, but this curse shall be like a cancer\n    on you.\"\n\nWith that %s dies."
+ru = "Изувеченное тело {1:gen} оседает на землю, и он хрипит\nпоследнее проклятие:\n\n    «Ты победил{hero:gender||а} меня, {2}, но я отомщу.\n    Как — не скажу, но это проклятие будет точить\n    тебя, как рак.»\n\nС этими словами {3} умирает."
+
+[11803b6bfe07]
+en = "[%s is weak from the struggle with %s.  %s wants to examine you.]"
+ru = "[{1:cap} ослаб в борьбе с {2:ins}.  Он хочет вас осмотреть.{3:skip}]"
+
+[f4cdce26b7b4]
+en = "Feebly, %s raises %s head to look at you.\n\n\"It is good to see you again, %s.  I see the concern in your\neyes, but do not worry for me.  I am not ready for Hades yet.  We have\nexhausted much of our healing powers holding off %s.\nI need your fresh strength to carry on our work.\n\n\"Come closer and let me lay hands on you, and determine if you have\nthe skills necessary to accomplish this mission.\""
+ru = "{1:cap} с трудом поднимает голову{2:skip}, чтобы взглянуть на вас.\n\n«Рад снова видеть вас, {3}.  Я вижу тревогу в ваших\nглазах, но не беспокойтесь за меня.  Я ещё не готов к Аиду.  Мы\nистратили почти все свои целительные силы, сдерживая {4:acc}.\nМне нужны ваши свежие силы, чтобы продолжить нашу работу.\n\nПодойдите ближе, позвольте мне возложить на вас руки и узнать, есть ли у вас\nумения, нужные для этой миссии.»"
+
+[fdd3d0e29712]
+en = "[You are a failure as a healer.]"
+ru = "[Целитель из вас никудышный.]"
+
+[752569f41048]
+en = "\"You have failed us, %s.  You are a quack!  A charlatan!\n\n\"Hades will be happy to hear that you are once again practicing your\narts on the unsuspecting.\""
+ru = "«Вы нас подвели, {1}.  Вы шарлатан!  Знахар{hero:gender|ь|ка}!\n\nАид будет рад услышать, что вы снова\nпрактикуете своё искусство на ничего не подозревающих.»"
+
+[7fdf9d6a4f69]
+en = "\"Again you return to me, %s.  I sense that each trip back\nthe pleurisy and maladies of our land begin to infect you.  Let us\nhope and pray to %s that you become ready for your task before\nyou fall victim to the bad humors.\""
+ru = "«Вы снова вернулись ко мне, {1}.  Я чувствую, что с каждым возвращением\nплевриты и хвори нашей земли всё сильнее вас заражают.  Будем\nнадеяться и молить {2:acc}, чтобы вы были готовы к своему делу прежде,\nчем падёте жертвой дурных соков.»"
+
+[cb2fa8e13fd7]
+en = "\"Chiron has fallen, Hermes has fallen, what else must I tell you to\nimpress upon you the importance of your mission!  I hope that you\nhave come prepared this time.\""
+ru = "«Пал Хирон, пал Гермес — что ещё мне сказать, чтобы вы\nпоняли, как важна ваша миссия?  Надеюсь, на этот раз\nвы пришли подготовленн{hero:gender|ым|ой}.»"
+
+[b3b03c57770c]
+en = "[You have reached %s but all is not well.]"
+ru = "[Вы добрались до {1:gen}, но там неладно.]"
+
+[3139a96b3b92]
+en = "You stand before the entrance to %s.  Strange\nscratching noises come from within the building.\n\nThe swampy ground around you seems to stink with disease."
+ru = "Вы стоите у входа в {1:acc}.  Изнутри здания\nдоносится странное царапанье.\n\nБолотистая земля вокруг, кажется, смердит болезнью."
+
+[098cb75a5a92]
+en = "Once again you stand at the entrance to %s."
+ru = "Вы снова стоите у входа в {1:acc}."
+
+[a4500e3bc34c]
+en = "[\"I will take your life, then defeat %s.\"]"
+ru = "[«Я заберу твою жизнь, а потом одолею {1:acc}.»]"
+
+[e78293c4e7f9]
+en = "\"They have made a mistake in sending you, %s.\n\n\"When I add your youth to mine, it will just make it easier for me\nto defeat %s.\""
+ru = "«Зря они послали тебя, {1}.\n\nКогда я добавлю твою молодость к своей, мне будет только легче\nодолеть {2:acc}.»"
+
+[ca44951bb85a]
+en = "\"Unlike your patients, you seem to keep coming back, %s!\""
+ru = "«В отличие от твоих пациентов, ты всё время возвращаешься, {1}!»"
+
+[4e9c33d67da7]
+en = "\"Which would you like, %s?  Boils, pleurisy, convulsions?\""
+ru = "«Что тебе больше по душе, {1}?  Нарывы, плеврит, судороги?»"
+
+[dcd4d8bd8468]
+en = "\"I'll have %s back from you, %s.  You are\nnot going to live to escape this place.\""
+ru = "«Я верну себе {1:acc}, {2:hero}.  Жив{hero:gender|ым|ой} тебе\nотсюда не уйти.»"
+
+[bd1274866276]
+en = "After your last experience you expected to be here, but you certainly\ndid not expect to see things so much worse.  This time you must succeed."
+ru = "После прошлого раза вы ожидали оказаться здесь, но никак\nне думали, что всё станет настолько хуже.  На этот раз вы должны преуспеть."
+
+[7e86cf0f8851]
+en = "[%s touches %s and tells %s %s to do so too, then tells you to take it with you.]"
+ru = "[{1:cap} касается {2:gen}, велит своим{3:skip} {4:dat} сделать то же, а затем велит вам взять {2:gender|его|её|его|их} с собой.]"
+
+[8f63d3e8b740]
+en = "As soon as %s sees %s %s summons %s\n%s.\n\nGently, %s reaches out and touches %s.\nHe instructs each of the assembled to do the same.  When everyone\nhas finished %s speaks to you.\n\n    \"Now that we have been replenished we can defeat this plague.  You must\n    take %s with you and replenish the worlds you have\n    been called upon to travel next.  I wish you could ride Chiron to the\n    end of your journey, but I need him to help me spread the cure.  Go\n    now and continue your journey.\""
+ru = "Едва {1} видит {2:acc}, как созывает своих{3:skip}{4:skip}\n{5:acc}.\n\n{6:cap} бережно протягивает руку и касается {7:gen}.\nОн велит каждому из собравшихся сделать то же.  Когда все\nзакончили, он{8:skip} обращается к вам.\n\n    «Теперь, когда наши силы восполнены, мы одолеем этот мор.  Вы должны\n    взять {9:acc} с собой и исцелять миры, по которым вам\n    суждено странствовать дальше.  Я бы хотел, чтобы вы доехали на Хироне\n    до конца пути, но он нужен мне, чтобы разносить лекарство.  Ступайте\n    же и продолжайте свой путь.»"
+
+[d958fde6945c]
+en = "[%s tells you to keep %s and return to %s to search for the Amulet.]"
+ru = "[{1:cap} велит вам оставить {2:acc} у себя и вернуться в {3:acc}, чтобы искать Амулет.]"
+
+[81a7be46c305]
+en = "%s cautiously handles %s while watching you.\n\n\"You are its keeper now, and the time has come to resume your search\nfor the Amulet.  %s await your return through the\nmagic portal which brought you here.\""
+ru = "{1:cap} осторожно держит {2:acc}, глядя на вас.\n\n«Теперь вы {2:gender|его|её|его|их} хранитель, и пришло время продолжить поиски\nАмулета.  {3:cap} {3:num|ждёт|ждут} вашего возвращения через\nволшебный портал, что привёл вас сюда.»"
+
+[8187bef4a787]
+en = "Again, you %s %s in the distance.\n\nThe smell of death and disease permeates the air.  You do not have\nto be %s to know that %s is on the verge of victory."
+ru = "Вдали снова виднеется{1:skip} {2}.\n\nВоздух пропитан запахом смерти и болезни.  Не нужно\nбыть {3:hero:ins}, чтобы понять: {4} близок к победе."
+
+[76370ca2d7da]
+en = "\"You have again returned to us, %s.  We have done well in your\nabsence, yes?  How fare you upon your quest for the Amulet?\""
+ru = "«Вы снова вернулись к нам, {1}.  Мы неплохо справлялись в ваше\nотсутствие, не так ли?  Как продвигаются ваши поиски Амулета?»"
