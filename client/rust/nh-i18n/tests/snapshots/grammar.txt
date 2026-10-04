@@ -2992,6 +2992,8 @@
   f    у вас 3 зоркмида спрятано в рюкзаке.
   n    у вас 5 зоркмидов спрятано в рюкзаке.
   pl   у вас 21 зоркмид спрятано в рюкзаке.
+!#?&* elf kibble!  [93481d4be717]
+  =   !#?&* эльфийский корм!
 "%s cannot protect you now.  Here, you die."  [c89c4b2da460]
   m   «Тритон тебя теперь не защитит.  Здесь ты и умрёшь.»
   f   «Крыса тебя теперь не защитит.  Здесь ты и умрёшь.»
@@ -3244,6 +3246,8 @@
   =   «Ты пьян или всегда такой неуклюжий?»
 "Hast thou considered masking thine odour?"  [192077760360]
   =   «Ты не думал как-нибудь скрыть свою вонь?»
+"Heigh-ho, ho-hum, I think I'll skip work today."  [8c19cea66e5d]
+  =   «Хей-хо, ох-хо-хо, сегодня я, пожалуй, прогуляю работу.»
 "Hello stranger, who are you?" -  [9cee2fa2391c]
   =   «Привет, незнакомец, кто ты такой?» —
 "Hey man, got any potions of hallucination for sale?"  [0289315a452a]
@@ -4558,6 +4562,11 @@
   f   Тело крысы вновь собирается прямо перед вашей крысой!
   n   Тело копья вновь собирается прямо перед вашим копьём!
   pl  Тело 3 стрел вновь собирается прямо перед вашими 3 стрелами!
+%s brain is eaten!  [d109ae90cf15]
+  m   Мозг тритона съеден!
+  f   Мозг крысы съеден!
+  n   Мозг копья съеден!
+  pl  Мозг 3 стрел съеден!
 %s briefly seems to be transparent.  [1afa3c16e826]
   m   Тритон на миг кажется прозрачным.
   f   Крыса на миг кажется прозрачной.
@@ -4623,6 +4632,11 @@
   f   Крыса не сдвигается с места.
   n   Копьё не сдвигается с места.
   pl  3 стрелы не сдвигаются с места.
+%s doesn't notice.  [132427bcf409]
+  m   Тритон ничего не замечает.
+  f   Крыса ничего не замечает.
+  n   Копьё ничего не замечает.
+  pl  3 стрелы ничего не замечают.
 %s drinks %s!  [3aadd6163860]
   m   Тритон выпивает тритона!
   f   Крыса выпивает крысу!
@@ -5053,11 +5067,21 @@
   f   Крыса швыряет крысу!
   n   Копьё швыряет копьё!
   pl  3 стрелы швыряют 3 стрелы!
+%s is %s%c  [1e182937416a]
+  m   Тритон тритонx
+  f   Крыса крысаx
+  n   Копьё копьёx
+  pl  3 стрелы 3 стрелыx
 %s is almost hit by %s!  [9d21a95154d4]
   m   Тритон едва не попадает в тритона!
   f   Крыса едва не попадает в крысу!
   n   Копьё едва не попадает в копьё!
   pl  3 стрелы едва не попадают в 3 стрелы!
+%s is copacetic%c  [21cb23647a90]
+  m   Тритон клёвыйx
+  f   Крыса клёваяx
+  n   Копьё клёвоеx
+  pl  3 стрелы клёвыеx
 %s is covered by a mottled %s glow!  [086eb445243b]
   m   Тритон окутывается пятнистым тритоном сиянием!
   f   Крыса окутывается пятнистым крысой сиянием!
@@ -5073,6 +5097,16 @@
   f   Крыса покрывается мерцающим крысой щитом!
   n   Копьё покрывается мерцающим копьём щитом!
   pl  3 стрелы покрываются мерцающим 3 стрелами щитом!
+%s is delicious!  [5d7699b85c0c]
+  m   Тритон восхитителен!
+  f   Крыса восхитительна!
+  n   Копьё восхитительно!
+  pl  3 стрелы восхитительны!
+%s is delicious%c  [a879e72179ab]
+  m   Тритон восхитителенx
+  f   Крыса восхитительнаx
+  n   Копьё восхитительноx
+  pl  3 стрелы восхитительныx
 %s is destroyed!  [a5b8ab032e90]
   m   Тритон уничтожен!
   f   Крыса уничтожена!
@@ -5098,6 +5132,21 @@
   f   Крыса в ярости!
   n   Копьё в ярости!
   pl  3 стрелы в ярости!
+%s is gnarly%c  [0ac6e2046697]
+  m   Тритон отпадныйx
+  f   Крыса отпаднаяx
+  n   Копьё отпадноеx
+  pl  3 стрелы отпадныеx
+%s is gr-r-reat%c  [29999dc63de3]
+  m   Тритон гр-р-рандиозныйx
+  f   Крыса гр-р-рандиознаяx
+  n   Копьё гр-р-рандиозноеx
+  pl  3 стрелы гр-р-рандиозныеx
+%s is grody%c  [0052485a7568]
+  m   Тритон отстойныйx
+  f   Крыса отстойнаяx
+  n   Копьё отстойноеx
+  pl  3 стрелы отстойныеx
 %s is hit by %s!  [17bda323346e]
   m   В тритона попадает тритон!
   f   В крысу попадает крыса!
@@ -5243,6 +5292,11 @@
   f   Крыса хлещет крысой.
   n   Копьё хлещет копьём.
   pl  3 стрелы хлещут 3 стрелами.
+%s last thought fades away...  [64c1a1bf1edd]
+  m   Последняя мысль тритона угасает...
+  f   Последняя мысль крысы угасает...
+  n   Последняя мысль копья угасает...
+  pl  Последняя мысль 3 стрел угасает...
 %s look as good as new!  [43b7c72155a2]
   m   Тритон выглядит как новый!
   f   Крыса выглядит как новая!
@@ -6263,6 +6317,21 @@
   f   Крыса рассуждает о проблеме магазинных воров.
   n   Копьё рассуждает о проблеме магазинных воров.
   pl  3 стрелы рассуждают о проблеме магазинных воров.
+%s tastes %s%c  [6e105f615faf]
+  m   Тритон на вкус ничегоx
+  f   Крыса на вкус ничегоx
+  n   Копьё на вкус ничегоx
+  pl  3 стрелы на вкус ничегоx
+%s tastes delicious%c  [710c8341ee6c]
+  m   Тритон на вкус восхитителенx
+  f   Крыса на вкус восхитительнаx
+  n   Копьё на вкус восхитительноx
+  pl  3 стрелы на вкус восхитительныx
+%s tastes terrible%c  [2dc1b1db2267]
+  m   Тритон на вкус ужасенx
+  f   Крыса на вкус ужаснаx
+  n   Копьё на вкус ужасноx
+  pl  3 стрелы на вкус ужасныx
 %s the %s's attributes:  [f1eb3d2fddd2]
   m   Свойства героя по имени тритон (тритон):
   f   Свойства героя по имени крыса (крыса):
@@ -6368,6 +6437,11 @@
   f   Крыса обращается в плоть!
   n   Копьё обращается в плоть!
   pl  3 стрелы обращаются в плоть!
+%s turns to stone!  [6b27a6a55a52]
+  m   Тритон превращается в камень!
+  f   Крыса превращается в камень!
+  n   Копьё превращается в камень!
+  pl  3 стрелы превращаются в камень!
 %s turns transparent!  [867f4ba6503c]
   m   Тритон становится прозрачным!
   f   Крыса становится прозрачной!
@@ -7370,8 +7444,30 @@ Bind what command?  [5e0a29593a0d]
   =   Какую команду назначить?
 Blank scrolls make more interesting reading.  [6b57fd90fda1]
   =   Чистые свитки читать куда интереснее.
+Blecch!  Awful gold!  [544cba4b02b0]
+  =   Фу!  Мерзкое золото!
+Blecch!  Awful metal!  [ff0e4f710a92]
+  =   Фу!  Мерзкий металл!
+Blecch!  Awful mithril!  [c5843d9203f5]
+  =   Фу!  Мерзкий мифрил!
+Blecch!  Awful plastic!  [90864b6114ff]
+  =   Фу!  Мерзкий пластик!
+Blecch!  Awful platinum!  [bcd27a20b71b]
+  =   Фу!  Мерзкая платина!
+Blecch!  Awful silver!  [685b0ef8fbf4]
+  =   Фу!  Мерзкое серебро!
+Blecch!  Rotten cloth!  [205557184cc6]
+  =   Фу!  Гнилая ткань!
 Blecch!  Rotten food!  [51a3917713c8]
   =   Фу!  Тухлятина!
+Blecch!  Rotten leather!  [c307dd487459]
+  =   Фу!  Гнилая кожа!
+Blecch!  Rotten paper!  [c095646a6f43]
+  =   Фу!  Гнилая бумага!
+Blecch!  Rotten wax!  [098a70ac2234]
+  =   Фу!  Прогорклый воск!
+Blecch!  Rotten wood!  [365da013161b]
+  =   Фу!  Гнилое дерево!
 Blind?  Catch a floating eye!  [4503891e916b]
   =   Ослепли?  Самое время бить парящее око!
 Blood boils at your %s.  [2f91be34541c]
@@ -7427,6 +7523,8 @@ Buried the cat.  Took an hour.  Damn thing kept fighting.  [b57d56fdc759]
   =   Похоронил кота.  Ушёл целый час.  Проклятая тварь всё сопротивлялась.
 Burninated  [5aad2ec2d17b]
   =   Испепелён
+Bus error -- core dumped.  [2dd4ba6c62ea]
+  =   Ошибка шины — огрызок сброшен на диск.
 But I disarmed the trap!  [b300e6615587]
   =   Но я же обезвредил ловушку!
 But nothing else happens.  [4373df6997c4]
@@ -7629,6 +7727,8 @@ Continue your attempt to set %s?  [6a098606bed4]
   pl  Продолжить устанавливать 3 стрелы?
 Cooties?  Ain't no cooties on me!  [166dbcd5fb2d]
   =   Вши?  Нет на мне никаких вшей!
+Core dumped.  [65bcab01273d]
+  =   Огрызок сброшен на диск.
 Could somebody get this noose off me?  [8cab926bfa0f]
   =   Кто-нибудь снимет с меня эту петлю?
 Could you check again?  My name MUST be there.  [9610ec26a1a8]
@@ -7997,6 +8097,16 @@ Eat this  [0748e56cbeca]
   =   Съесть это
 Eat your carrots.  They're good for your eyes.  [dc41b9f47b9f]
   =   Ешьте морковь.  Она полезна для глаз.
+Eating %s food made your %s even more slippery.  [71b4776b55bb]
+  m   От тритона еды ваши тритон становятся ещё более скользкими.
+  f   От крысы еды ваши крыса становятся ещё более скользкими.
+  n   От копья еды ваши копьё становятся ещё более скользкими.
+  pl  От 3 стрел еды ваши 3 стрелы становятся ещё более скользкими.
+Eating %s food made your %s very slippery.  [c9730c20e556]
+  m   От тритона еды ваши тритон становятся очень скользкими.
+  f   От крысы еды ваши крыса становятся очень скользкими.
+  n   От копья еды ваши копьё становятся очень скользкими.
+  pl  От 3 стрел еды ваши 3 стрелы становятся очень скользкими.
 Eating a freezing sphere is like eating a yeti.  [10c8f2395fe3]
   =   Съесть замораживающую сферу — всё равно что съесть йети.
 Eating a killer bee is like eating a scorpion.  [d9ef062f1f66]
@@ -8005,8 +8115,12 @@ Eating a tengu is like eating a nymph.  [0e33093546a4]
   =   Съесть тэнгу — всё равно что съесть нимфу.
 Eating a wraith is a rewarding experience!  [c7dba131460d]
   =   Съеденный призрак прибавит вам опыта!
+Eating that is instantly fatal.  [e0678f9c9396]
+  =   Съесть такое — мгновенная смерть.
 Eating unpaid leprechauns may be advantageous.  [cd2b356a863e]
   =   Съесть неоплаченного лепрекона бывает выгодно.
+Ecch - that must have been poisonous!  [99651cda7173]
+  =   Фу, похоже, это было ядовито!
 Eels hide under mud.  Use a unicorn to clear the water and make them visible.  [674e3272358e]
   =   Угри прячутся в иле.  Чтобы очистить воду и увидеть их, позовите единорога.
 Eels will help you tie your shoes.  [a98909226ea1]
@@ -8226,6 +8340,8 @@ For some moments in life, there are no words.  [59879ea0b029]
   =   В жизни бывают мгновения, когда слов нет.
 For some reason you are not affected.  [9770483e1064]
   =   Почему-то на вас это не действует.
+For some reason, that tasted bland.  [e95dc0a81016]
+  =   Почему-то вкус показался пресным.
 For some reason, you feel your presence is known.  [9f4859b2cf9d]
   =   Почему-то вы чувствуете, что о вашем присутствии знают.
 For what do you wish  [950698d53808]
@@ -8251,6 +8367,8 @@ Fortunately, you are wearing a hard helmet.  [6103578ce99f]
   =   К счастью, на вас прочный шлем.
 Fortunately, you have been immunized.  [b5bfb26e1613]
   =   К счастью, у вас иммунитет.
+Four out of five dentists agree.  [3fab91476d9d]
+  =   Четыре стоматолога из пяти рекомендуют.
 Frodo lives  [69736eb9d11d]
   =   Фродо жив
 Funeral - Real fun.  [511190e9e80f]
@@ -8608,6 +8726,8 @@ If you ask really nicely, the Wizard will give you the Amulet.  [fe60878e84b4]
   =   Если очень вежливо попросить, Волшебник отдаст вам Амулет.
 If you can read these words then you are not only a nerd but probably dead.  [c297e98d7937]
   =   Если вы можете прочесть эти слова, то вы не просто ботан, но, скорее всего, ещё и покойник.
+If you can't breathe air, how can you consume solids?  [ffa9401a671f]
+  =   Если вы не дышите воздухом, как вы будете есть?
 If you can't breathe air, how can you drink liquid?  [b9241eaedff9]
   =   Если вы не дышите воздухом, как вы будете пить?
 If you can't learn to do it well, learn to enjoy doing it badly.  [3ed909150793]
@@ -8671,6 +8791,8 @@ In what direction?  [23ff0855b202]
   =   В каком направлении?
 Increase mindpower:  Tame your own ghost!  [96376c0ccf06]
   =   Развивайте силу разума: приручите собственное привидение!
+Ingesting that is fatal.  [b4b035de5714]
+  =   Проглотить такое — верная смерть.
 Inside a shop you better take a look at the price tags before buying anything.  [83664fec9fa0]
   =   В лавке лучше посмотреть на ценники, прежде чем что-то покупать.
 Interesting...  [ecd6a5986385]
@@ -8693,6 +8815,17 @@ Is this ok? [ynaq]  [281b7c52cb8f]
   =   Всё верно? [ynaq]
 Is this ok? [ynq]  [cdaa87122186]
   =   Всё верно? [ynq]
+It contains some decaying %s substance.  [8175218e222b]
+  m   В ней какое-то разлагающееся тритон вещество.
+  f   В ней какое-то разлагающееся крыса вещество.
+  n   В ней какое-то разлагающееся копьё вещество.
+  pl  В ней какое-то разлагающееся 3 стрелы вещество.
+It contains some decaying substance.  [f6614a7ceec8]
+  =   В ней какое-то разлагающееся вещество.
+It contains spinach.  [d21a2209c3a6]
+  =   В ней шпинат.
+It doesn't seem at all sickening, though...  [bbb785178077]
+  =   Впрочем, вас от этого ничуть не тошнит...
 It features %s.  [b433f3f0f4a4]
   m   На ней изображено: тритон.
   f   На ней изображено: крыса.
@@ -8714,6 +8847,8 @@ It is missed.  [9d5b30aa2c0e]
   =   Снаряд пролетает мимо.
 It is not always a good idea to whistle for your dog.  [c91600b29dc7]
   =   Не всегда стоит подзывать собаку свистком.
+It is not so easy to open this tin.  [90f70563caee]
+  =   Открыть эту банку не так-то просто.
 It is rumored that the Wizard has hired some help.  [dd963db26c63]
   =   Ходят слухи, что Волшебник нанял помощников.
 It is said that thou mayst gain entry to Moloch's sanctuary, if thou\ndarest, from a place where the ground vibrateth in the deepest depths of\nGehennom.  Thou needs must have the aid of three magical items.  The\npure sound of a silver bell shall announce thee.  The terrible runes,\nread from Moloch's book, shall cause the earth to tremble mightily.  The\nlight of an enchanted candelabrum shall show thee the way.  [23b0d3294b0d]
@@ -8744,6 +8879,8 @@ It seems even darker in here than before.  [f89ace5caa48]
   =   Здесь, похоже, ещё темнее, чем прежде.
 It seems even stronger than before.  [7ed75384524b]
   =   Похоже, монстр стал ещё сильнее, чем прежде.
+It smells like chicken.  [d97f7ea907d7]
+  =   Пахнет курицей.
 It suddenly comes alive as %s!  [7adfee1aec3c]
   m   Что-то внезапно оживает в виде тритона!
   f   Что-то внезапно оживает в виде крысы!
@@ -8778,6 +8915,10 @@ It's a 'd' eats 'd' world.  [26b9cb26ee88]
   =   В этом мире 'd' ест 'd'.
 It's easy to overlook a monster in a wood.  [26d8d301870a]
   =   Монстра в лесу легко не заметить.
+It's full of air elemental souffle.  [a849728d22e9]
+  =   Она полна суфле из воздушного элементаля.
+It's full of dehydrated water.  [70a4f3b59c19]
+  =   Она полна обезвоженной воды.
 It's like talking to a wall.  [b36ee16b6d60]
   =   Всё равно что разговаривать со стеной.
 Itemized billing?  [8f4c2e7b88e6]
@@ -8962,6 +9103,10 @@ Made in Taiwan  [3486a014ad35]
   =   Сделано на Тайване
 Madge Ination -- It wasn't all in my head  [c7b515a2febe]
   =   Ира Воображалова — не всё было у меня в голове
+Magic spreads through your body as you digest the amulet.  [7a3c97fe9814]
+  =   Пока вы перевариваете амулет, по вашему телу растекается магия.
+Magic spreads through your body as you digest the ring.  [18e0a2c000e3]
+  =   Пока вы перевариваете кольцо, по вашему телу растекается магия.
 Magic wands are used with '%s'  [8780db7b46d3]
   m   Волшебными палочками взмахивают клавишей 'тритон'
   f   Волшебными палочками взмахивают клавишей 'крыса'
@@ -8985,6 +9130,8 @@ Miscellaneous:  [69aa5db4d883]
   =   Разное:
 Missiles, such as rocks, work better when fired from appropriate launcher  [eeaaf052be93]
   =   Снаряды вроде камней лучше пускать из подходящего метательного оружия
+Mmm, tripe... not bad!  [b284365f4849]
+  =   Ммм, рубец... неплохо!
 Money lost, little lost; honor lost, much lost; pluck lost, all lost.  [e0185d0cb2cb]
   =   Деньги потерять — ничего не потерять; честь потерять — много потерять; мужество потерять — всё потерять.
 Money to invest?  Take it to the local branch of the Magic Memory Vault!  [0209bde3424e]
@@ -9041,6 +9188,16 @@ Music hath charms to soothe the savage beast.  [ea72718bada6]
   =   Музыка способна усмирить дикого зверя.
 My heart is not in this  [a468fc551efb]
   =   Моего сердца здесь нет
+My, this is a primo %s!  [1aa659f9333e]
+  m   Ах, какой зачётный тритон!
+  f   Ах, какая зачётная крыса!
+  n   Ах, какое зачётное копьё!
+  pl  Ах, какие зачётные 3 стрелы!
+My, this is a yummy %s!  [74a05a38f3db]
+  m   Ах, какой вкуснющий тритон!
+  f   Ах, какая вкуснющая крыса!
+  n   Ах, какое вкуснющее копьё!
+  pl  Ах, какие вкуснющие 3 стрелы!
 Name	Level	Category	Fail	Retention  [407c8027e581]
   =   Название	Уровень	Школа	Провал	Память
 Name	Level	Category	Fail	Retention%c%6s  [d8281bf39a1a]
@@ -9055,6 +9212,8 @@ Name %s  [90106354bb94]
   pl  Дать имя 3 стрелам
 Need a light?  Come visit the Minetown branch of Izchak's Lighting Store!  [530bb78e37ab]
   =   Нужен свет?  Заглядывайте в филиал магазина светильников Ицхака в Шахтёрском городке!
+Needs salt...  [156f4b08103c]
+  =   Недосолено...
 NetHack is addictive.  Too late, you're already hooked.  [11edddaf1ba2]
   =   NetHack вызывает привыкание.  Поздно, вы уже на крючке.
 Never ask a shopkeeper for a price list.  [3895ff902c60]
@@ -9180,6 +9339,10 @@ Oh wow!  Everything feels so cosmic!  [14204d1db20d]
   =   Ух ты!  Всё на ощупь такое космическое!
 Oh wow!  Everything looks so cosmic!  [07351bd2fa70]
   =   Ух ты!  Всё выглядит таким космическим!
+Oh wow!  Great stuff!  [2b125c08ea95]
+  =   Ух ты!  Забористая штука!
+Oh wow, like, superior, man!  [d526eae5ddee]
+  =   Ух ты, типа, высший класс, чувак!
 Oh! An untimely death.  [e4fcdd413b4c]
   =   Ох! Безвременная смерть.
 Oh, bummer!  Everything is dark!  Help!  [ab6ef56c65da]
@@ -9786,6 +9949,8 @@ Seepage?  Leaky pipes?  Rising damp?  Summon the plumber!  [cd9c313bf2f2]
   =   Протечки?  Трубы текут?  Сырость ползёт по стенам?  Вызовите сантехника!
 Segmentation fault (core dumped).  [a878c7c7d629]
   =   Ошибка сегментирования (стек памяти сброшен на диск).
+Segmentation fault -- core dumped.  [3b7683126a8c]
+  =   Ошибка сегментирования — огрызок сброшен на диск.
 Select one item:  [4d9d4cb415cd]
   =   Выберите пункт:
 Select one of your saved games  [bba68b2cd70a]
@@ -10040,6 +10205,8 @@ Suddenly one of the Vault's %s enters!  [daed7fef9855]
   f   Внезапно входит один из крысы хранилища!
   n   Внезапно входит один из копья хранилища!
   pl  Внезапно входит один из 3 стрел хранилища!
+Suddenly you can see yourself.  [9ae8d2aa425a]
+  =   Внезапно вы видите себя.
 Suddenly you cannot see %s.  [9ecdebeef5ba]
   m   Внезапно вы перестаёте видеть тритона.
   f   Внезапно вы перестаёте видеть крысу.
@@ -10215,6 +10382,8 @@ Talking to yourself is a bad habit for a dungeoneer.  [d2926e9e2e18]
   =   Говорить с самим собой — дурная привычка для того, кто бродит по подземельям.
 Taming a mail daemon may cause a system security violation.  [b026b05037fd]
   =   Приручение почтового демона может привести к нарушению безопасности системы.
+Tastes great!  Less filling!  [cd85055eb7ce]
+  =   Отличный вкус!  Меньше калорий!
 Telepathy is just a trick:  once you know how to do it, it's easy.  [529150b37030]
   =   Телепатия — просто фокус: стоит понять, как это делается, и всё легко.
 Thank God I wore my corset, because I think my sides have split.  [d3372acb7cd6]
@@ -10282,6 +10451,8 @@ That symbol does not represent any monster.  [80875af68ea2]
   =   Этот символ не обозначает никакого монстра.
 That was a scroll of mail?  [da5d9c040b35]
   =   Это был свиток почты?
+That was pure chewing satisfaction!  [4aa67359cf65]
+  =   Вот это настоящее жевательное удовольствие!
 That was smooth!  [c2d9145715ca]
   =   Пошло мягко!
 That's enough tries!  [830a32205251]
@@ -10361,11 +10532,41 @@ The %s glow of your %s intensifies.  [de0c8b84a159]
   f   Крыса сияние вашей крысы усиливается.
   n   Копьё сияние вашего копья усиливается.
   pl  3 стрелы сияние ваших 3 стрел усиливается.
+The %s is %s%c  [d2f6f78852cf]
+  m   Тритон тритонx
+  f   Крыса крысаx
+  n   Копьё копьёx
+  pl  3 стрелы 3 стрелыx
 The %s is bridged with ice!  [1979feb5d5bc]
   m   Через тритона перекидывается ледяной мост!
   f   Через крысу перекидывается ледяной мост!
   n   Через копьё перекидывается ледяной мост!
   pl  Через 3 стрелы перекидывается ледяной мост!
+The %s is copacetic%c  [42ce6709e393]
+  m   Тритон клёвыйx
+  f   Крыса клёваяx
+  n   Копьё клёвоеx
+  pl  3 стрелы клёвыеx
+The %s is delicious%c  [ac930ea0c4dd]
+  m   Тритон восхитителенx
+  f   Крыса восхитительнаx
+  n   Копьё восхитительноx
+  pl  3 стрелы восхитительныx
+The %s is gnarly%c  [99d0c7dfdcf2]
+  m   Тритон отпадныйx
+  f   Крыса отпаднаяx
+  n   Копьё отпадноеx
+  pl  3 стрелы отпадныеx
+The %s is gr-r-reat%c  [34b2a38bfd96]
+  m   Тритон гр-р-рандиозныйx
+  f   Крыса гр-р-рандиознаяx
+  n   Копьё гр-р-рандиозноеx
+  pl  3 стрелы гр-р-рандиозныеx
+The %s is grody%c  [6838d092d860]
+  m   Тритон отстойныйx
+  f   Крыса отстойнаяx
+  n   Копьё отстойноеx
+  pl  3 стрелы отстойныеx
 The %s melt somewhat but remain intact.  [25da141f47e9]
   m   Тритон немного оплавляется, но остаётся целым.
   f   Крыса немного оплавляется, но остаётся целой.
@@ -10431,6 +10632,21 @@ The %s shatters.  [9c2e017b26a7]
   f   Крыса разлетается на куски.
   n   Копьё разлетается на куски.
   pl  3 стрелы разлетаются на куски.
+The %s tastes %s%c  [7f8b1e2fe3ad]
+  m   Тритон на вкус ничегоx
+  f   Крыса на вкус ничегоx
+  n   Копьё на вкус ничегоx
+  pl  3 стрелы на вкус ничегоx
+The %s tastes delicious%c  [8fa40aac3f3a]
+  m   Тритон на вкус восхитителенx
+  f   Крыса на вкус восхитительнаx
+  n   Копьё на вкус восхитительноx
+  pl  3 стрелы на вкус восхитительныx
+The %s tastes terrible%c  [8ee92da81646]
+  m   Тритон на вкус ужасенx
+  f   Крыса на вкус ужаснаx
+  n   Копьё на вкус ужасноx
+  pl  3 стрелы на вкус ужасныx
 The '%s' prefix should be followed by a movement command.  [37b621a30e7f]
   m   После префикса 'тритон' нужна команда движения.
   f   После префикса 'крыса' нужна команда движения.
@@ -10481,6 +10697,8 @@ The clasp on your %s vanishes.  [9915615ec765]
   pl  Оковы у вас на 3 стрелах исчезают.
 The cliche of the kitchen sink swallowing any unfortunate rings that contact\nits pernicious surface reflecteth greater truth than many homilies, yet\neven so, few have developed the skill to identify enchanted rings by the\ntransfigurations effected upon the voracious device's frame.  [632c382d6538]
   =   Избитая присказка о кухонной раковине, что глотает всякое несчастное\nкольцо, коснувшееся её пагубной поверхности, правдивее многих поучений; и\nвсё же немногие овладели искусством распознавать зачарованные кольца по\nпеременам, что они творят с обликом прожорливого устройства.
+The corpse rots away completely.  [f02de9d51e59]
+  =   Труп сгнивает без остатка.
 The crowd was so tough, the Stooges won't play the Dungeon anymore, nyuk nyuk.  [d91c6239b97c]
   =   Публика была такой суровой, что «Три балбеса» больше не играют в Подземелье, ньюк-ньюк.
 The dart was poisoned!  [8f78a62bd20b]
@@ -10595,6 +10813,8 @@ The moon is not the only heavenly body to influence this game.  [95cf17774717]
   =   Луна — не единственное небесное тело, что влияет на эту игру.
 The more you use the E word, the better.  [ed7df3a32f11]
   =   Чем чаще вы пишете слово на букву «E», тем лучше.
+The munchies are interfering with your motor capabilities.  [dda1410212e4]
+  =   Жор мешает вашей моторике.
 The name of Elbereth may strike fear into the hearts of thine enemies, if\nthou dost write it upon the ground at thy feet.  If thou maintainest the\nutmost calm, thy safety will be aided greatly, but beware lest thy clumsy\nfeet scuff the inscription, cancelling its potence, or thy wayward\nsword-arm break the truce.  [eda01d5f4659]
   =   Имя Elbereth может вселить страх в сердца твоих врагов, коли начертаешь\nего на земле у себя под ногами. Коли сохранишь величайшее спокойствие, это\nвесьма поможет тебе уцелеть, но берегись, как бы неуклюжие ноги не стёрли\nнадпись, лишив её силы, или своенравная рука с мечом не нарушила\nперемирие.
 The neighborhood is friendlier.  [8feb05e44cbe]
@@ -10673,6 +10893,15 @@ The stairs seem to ripple momentarily.  [d98f071fa0d4]
   =   Лестница на миг словно подёргивается рябью.
 The statue shatters.  [179a4b5272ac]
   =   Статуя разлетается на куски.
+The tin opens like magic!  [0b956fdefc3e]
+  =   Банка открывается как по волшебству!
+The tin seems easy to open.  [5483c4963247]
+  =   Похоже, банку легко открыть.
+The tin slips from your %s.  [73d4fe6e1528]
+  m   Банка выскальзывает у вас из тритона.
+  f   Банка выскальзывает у вас из крысы.
+  n   Банка выскальзывает у вас из копья.
+  pl  Банка выскальзывает у вас из 3 стрел.
 The towel soaks it up!  [100d312fe573]
   =   Полотенце впитывает это!
 The trapdoor beneath you shatters.  [14eaf588580b]
@@ -10689,6 +10918,15 @@ The water evaporates.  [ba489bd21c61]
   =   Вода испаряется.
 The world spins and goes dark.  [d98d9ab86122]
   =   Мир кружится и меркнет.
+The world spins and you lose control of yourself.  [b85d85b68b8c]
+  =   Мир кружится, и вы теряете контроль над собой.
+The world spins and you slap against the %s.  [168279a4ba89]
+  m   Мир кружится, и вы валитесь на тритона.
+  f   Мир кружится, и вы валитесь на крысу.
+  n   Мир кружится, и вы валитесь на копьё.
+  pl  Мир кружится, и вы валитесь на 3 стрелы.
+The world spins and you slap against the saddle.  [f7854e9f6a35]
+  =   Мир кружится, и вы валитесь на седло.
 The wrapper reads: "Apollo".  [46de2629e7a1]
   =   На обёртке написано: «Аполлон».
 The wrapper reads: "Berry Bar".  [776492acb9eb]
@@ -10767,6 +11005,10 @@ There are containers and %s here.  Remove %s?  [59951b0ea936]
   pl  Здесь контейнеры и 3 стрелы.  Убрать 3 стрелы?
 There are four traps next to you! Search for them.  [2c27810d29c5]
   =   Рядом с вами четыре ловушки! Найдите их.
+There are iron bars here but you are too full to eat them.  [557fd2538d4f]
+  =   Здесь железная решётка, но вы слишком сыты, чтобы её есть.
+There are iron bars here but you cannot eat them.  [dde79cf24e04]
+  =   Здесь железная решётка, но вы не можете её съесть.
 There are iron bars here; eat them?  [30fe7f0db64b]
   =   Здесь железная решётка; съесть её?
 There are iron bars here; resume eating them?  [c012321be1a1]
@@ -11660,16 +11902,76 @@ This %s has no label.  [7471e166dc56]
   f   На этой крысе нет этикетки.
   n   На этом копье нет этикетки.
   pl  На этих 3 стрелах нет этикетки.
+This %s is %s%c  [668fc2870eff]
+  m   Этот тритон тритонx
+  f   Эта крыса крысаx
+  n   Это копьё копьёx
+  pl  Эти 3 стрелы 3 стрелыx
 This %s is bland.  [49d4720cdbaa]
   m   Этот тритон пресный.
   f   Эта крыса пресная.
   n   Это копьё пресное.
   pl  Эти 3 стрелы пресные.
+This %s is copacetic%c  [f1d3c901f6fb]
+  m   Этот тритон клёвыйx
+  f   Эта крыса клёваяx
+  n   Это копьё клёвоеx
+  pl  Эти 3 стрелы клёвыеx
 This %s is delicious!  [5ce1b563b1eb]
   m   Этот тритон восхитителен!
   f   Эта крыса восхитительна!
   n   Это копьё восхитительно!
   pl  Эти 3 стрелы восхитительны!
+This %s is delicious%c  [0fcb4e6d2a17]
+  m   Этот тритон восхитителенx
+  f   Эта крыса восхитительнаx
+  n   Это копьё восхитительноx
+  pl  Эти 3 стрелы восхитительныx
+This %s is gnarly!  [3e98837a234b]
+  m   Этот тритон отпадный!
+  f   Эта крыса отпадная!
+  n   Это копьё отпадное!
+  pl  Эти 3 стрелы отпадные!
+This %s is gnarly%c  [75db85d14fbc]
+  m   Этот тритон отпадныйx
+  f   Эта крыса отпаднаяx
+  n   Это копьё отпадноеx
+  pl  Эти 3 стрелы отпадныеx
+This %s is gr-r-reat%c  [886510347136]
+  m   Этот тритон гр-р-рандиозныйx
+  f   Эта крыса гр-р-рандиознаяx
+  n   Это копьё гр-р-рандиозноеx
+  pl  Эти 3 стрелы гр-р-рандиозныеx
+This %s is grody!  [d43ecd9da5c5]
+  m   Этот тритон отстойный!
+  f   Эта крыса отстойная!
+  n   Это копьё отстойное!
+  pl  Эти 3 стрелы отстойные!
+This %s is grody%c  [7a63512bc649]
+  m   Этот тритон отстойныйx
+  f   Эта крыса отстойнаяx
+  n   Это копьё отстойноеx
+  pl  Эти 3 стрелы отстойныеx
+This %s is terrible!  [d5f312ed88e6]
+  m   Этот тритон ужасен!
+  f   Эта крыса ужасна!
+  n   Это копьё ужасно!
+  pl  Эти 3 стрелы ужасны!
+This %s tastes %s%c  [97224e10f693]
+  m   Этот тритон на вкус ничегоx
+  f   Эта крыса на вкус ничегоx
+  n   Это копьё на вкус ничегоx
+  pl  Эти 3 стрелы на вкус ничегоx
+This %s tastes delicious%c  [42df950bbd66]
+  m   Этот тритон на вкус восхитителенx
+  f   Эта крыса на вкус восхитительнаx
+  n   Это копьё на вкус восхитительноx
+  pl  Эти 3 стрелы на вкус восхитительныx
+This %s tastes terrible%c  [85b4234bc25f]
+  m   Этот тритон на вкус ужасенx
+  f   Эта крыса на вкус ужаснаx
+  n   Это копьё на вкус ужасноx
+  pl  Эти 3 стрелы на вкус ужасныx
 This bottle turns out to be empty.  [1ae66043602c]
   =   Бутылка оказывается пустой.
 This burns a little!  [ca777dea5b67]
@@ -11708,6 +12010,8 @@ This elevator doesn't go to Heaven  [e544e60d7d15]
   =   Этот лифт не идёт на небеса
 This food really hits the spot!  [d670ef61b5da]
   =   Эта еда пришлась как нельзя кстати!
+This gold is delicious!  [ea6274ae6f88]
+  =   Это золото восхитительно!
 This gravestone is shareware.  To register, please send me 10 zorkmids  [beb759d1784d]
   =   Это надгробие — условно-бесплатное.  Для регистрации пришлите мне 10 зоркмидов
 This gravestone provided by The Yendorian Grave Services Inc.  [1df5caeafd1f]
@@ -11729,10 +12033,22 @@ This is not an important part of my life.  [d3ce0f7b6d3f]
   =   Это не важная часть моей жизни.
 This is not the dungeon you are looking for.  [32f8328e8406]
   =   Это не то подземелье, которое вы ищете.
+This junk mail is less than satisfying.  [551fdfc0788e]
+  =   Этот спам не очень-то сытный.
+This makes you feel like Bluto!  [4647bd7d5267]
+  =   Вы чувствуете себя Блуто!
+This makes you feel like Olive Oyl!  [71191d4dcbb6]
+  =   Вы чувствуете себя Олив Ойл!
+This makes you feel like Popeye!  [74a8cf0587d2]
+  =   Вы чувствуете себя моряком Попаем!
+This makes you feel like Swee'pea!  [a8a4d316bdd4]
+  =   Вы чувствуете себя малышом Свипи!
 This one's on me.  [a7a76e374bb6]
   =   Этот за мой счёт.
 This release contains 10%% recycled material.  [8dc9109be48d]
   =   Эта версия на 10% состоит из переработанных материалов.
+This ring is indigestible!  [4fc283693261]
+  =   Это кольцо не переваривается!
 This satiates your %s!  [d931d7633b85]
   m   Это насыщает ваш тритона!
   f   Это насыщает вашу крысу!
@@ -11756,6 +12072,8 @@ This spellbook is very difficult to comprehend.  Continue?  [cef7a3d48c1f]
   =   Эта книга заклинаний очень трудна для понимания.  Продолжить?
 This square deliberately left blank.  [8895d3130600]
   =   Эта клетка намеренно оставлена пустой.
+This tastes just like chicken!  [0b0faf97d8a9]
+  =   На вкус совсем как курица!
 This tastes like %s.  [47266a6b2f6c]
   m   На вкус как тритон.
   f   На вкус как крыса.
@@ -11782,6 +12100,8 @@ This tastes sour.  [936987857b53]
   =   На вкус кисло.
 This tastes tangy.  [a835acdbc1bf]
   =   На вкус терпко.
+This tripe ration is surprisingly good!  [1aa3c54b5a85]
+  =   Этот рубец на удивление хорош!
 This was actually just a pit, but since there was a corpse, we filled it  [2759907ca290]
   =   Вообще-то это была просто яма, но раз уж в ней лежал труп, мы её засыпали
 This way to the crypt  [cb1d9dd73c24]
@@ -11921,10 +12241,27 @@ Type the name of a type of monster or 'none'.  [f0ecac36c3a0]
   =   Введите название вида монстров или 'none'.
 UNDER CONSTRUCTION  [37ccbf8f5dd9]
   =   ИДЁТ СТРОИТЕЛЬСТВО
+Ugh.  Rotten egg.  [f6ff68d70901]
+  =   Фу.  Тухлое яйцо.
 Ugh... someone cut the cheese.  [26bb8c7671ba]
   =   Фу... кто-то испортил воздух.
+Ulch - that %s was rustproofed!  [e7b2e383bd39]
+  m   Тьфу, этот тритон оказался нержавеющим!
+  f   Тьфу, эта крыса оказалась нержавеющей!
+  n   Тьфу, это копьё оказалось нержавеющим!
+  pl  Тьфу, эти 3 стрелы оказались нержавеющими!
+Ulch - that fungoid vegetation was tainted!  [7d67929f9d01]
+  =   Тьфу, эта грибная растительность испорчена!
+Ulch - that fungoid vegetation was tainted, you cannibal!  [bca61da634f9]
+  =   Тьфу, эта грибная растительность испорчена, каннибал!
 Ulch - that meat was tainted!  [57560e3af672]
   =   Тьфу, это мясо испорчено!
+Ulch - that meat was tainted, you cannibal!  [1a8fdff08913]
+  =   Тьфу, это мясо испорчено, каннибал!
+Ulch - that protoplasm was tainted!  [3a7969694321]
+  =   Тьфу, эта протоплазма испорчена!
+Ulch - that protoplasm was tainted, you cannibal!  [db6b40a1929f]
+  =   Тьфу, эта протоплазма испорчена, каннибал!
 Ulch!  That meat was painted!  [0235c096e70a]
   =   Тьфу!  Это мясо было крашеное!
 Ulch!  That potion smells terrible!  [cf46f4288736]
@@ -11943,6 +12280,8 @@ Unacceptable roles  [4f16713d6929]
   =   Недопустимые профессии
 Unfortunately you don't have enough energy to cast spells.  [889a035f48d1]
   =   К сожалению, вам не хватает энергии на заклинания.
+Unfortunately your brain is still gone.  [27cb5001620e]
+  =   К сожалению, мозга у вас по-прежнему нет.
 Unfortunately, nothing happens.  [af131e96b0b8]
   =   К сожалению, ничего не происходит.
 Unfortunately, this message was left intentionally blank.  [1aaadeb6bc3e]
@@ -12031,6 +12370,11 @@ Used up item:  [20f398908696]
   =   Израсходованный предмет:
 Used up items:  [eda847f6b2fa]
   =   Израсходованные предметы:
+Using %s you try to open the tin.  [5ea9f0050182]
+  m   Вы пытаетесь открыть банку тритоном.
+  f   Вы пытаетесь открыть банку крысой.
+  n   Вы пытаетесь открыть банку копьём.
+  pl  Вы пытаетесь открыть банку 3 стрелами.
 Using a morning star in the evening has no effect.  [a73e19a38f2b]
   =   Моргенштерн вечером не действует.
 VACANCY  [ad327cb9206b]
@@ -12813,6 +13157,10 @@ X marks the spot.  [a053ba02e4d4]
   =   Место отмечено крестиком.
 Ya really had me going baby, but now I'm gone.  [f76244a5a617]
   =   Ты меня реально завела, детка, а теперь меня нет.
+Yabba-dabba delicious!  [6ecc5ed5c85a]
+  =   Ябба-дабба-вкусно!
+Yak - dog food!  [12e11dad3a64]
+  =   Фу, корм для собак!
 Yea, it got me too  [15f6401bef9b]
   =   Ага, меня оно тоже достало
 Yecch!  This stuff tastes like poison.  [90919eb34435]
@@ -12836,6 +13184,8 @@ Yet again you have a chance to infiltrate %s.  [9a06174f17f1]
   f   У вас снова есть шанс проникнуть в крысу.
   n   У вас снова есть шанс проникнуть в копьё.
   pl  У вас снова есть шанс проникнуть в 3 стрелы.
+Yo' mama -- core dumped.  [8f72d2271414]
+  =   Твоя мамаша — огрызок сброшен на диск.
 You "quaff" potions with '%s'  [ec3b0298d645]
   m   Зелья пьют клавишей 'тритон'
   f   Зелья пьют клавишей 'крыса'
@@ -12930,6 +13280,8 @@ You are frozen by %s gaze!  [9b56cbd427b1]
   pl  Вас сковывает взгляд 3 стрел!
 You are frozen in place!  [66acc59bfca0]
   =   Вы застываете на месте!
+You are getting the munchies.  [cb5a4dd5b33d]
+  =   У вас начинается жор.
 You are hit by %s!  [9cafb6f7752a]
   m   В вас попадает тритон!
   f   В вас попадает крыса!
@@ -12999,8 +13351,12 @@ You are suddenly moving faster.  [7789e8674537]
   =   Вы внезапно двигаетесь быстрее.
 You are suddenly moving much faster.  [d4b2f7917f2c]
   =   Вы внезапно двигаетесь гораздо быстрее.
+You are suddenly very feminine!  [c24a7e111a3d]
+  =   Вы внезапно становитесь очень женственной!
 You are suddenly very hot!  [252e28dc29a4]
   =   Вам внезапно становится очень жарко!
+You are suddenly very masculine!  [90977ec8fefc]
+  =   Вы внезапно становитесь очень мужественным!
 You are surrounded by a shimmering light.  [94bc0b86c577]
   =   Вас окружает мерцающий свет.
 You are surrounded by darkness!  [bdb46f4fceef]
@@ -13143,6 +13499,8 @@ You barely hear sad wailing close by.  [32ae517e0f5a]
   =   Вы едва слышите поблизости печальные стенания.
 You barely hear sad wailing in the distance.  [defc94b9869b]
   =   Вы едва слышите вдалеке печальные стенания.
+You barely hear sinister laughter as you fall asleep...  [203d543b6d14]
+  =   Засыпая, вы едва слышите зловещий смех...
 You barely hear something hit %s %s over your %s!  [6a8abf562edd]
   m   Вы едва слышите, как что-то бьёт по тритону тритона у вас над тритоном!
   f   Вы едва слышите, как что-то бьёт по крысе крысы у вас над крысой!
@@ -13150,6 +13508,8 @@ You barely hear something hit %s %s over your %s!  [6a8abf562edd]
   pl  Вы едва слышите, как что-то бьёт по 3 стрелам 3 стрел у вас над 3 стрелами!
 You bash yourself!  [e6e9b48ee4ac]
   =   Вы бьёте сами себя!
+You be chillin'.  [3dc1da074397]
+  =   Вы чилите.
 You begin bashing monsters with %s.  [a0051d0a4f52]
   m   Вы начинаете колотить монстров тритоном.
   f   Вы начинаете колотить монстров крысой.
@@ -13169,8 +13529,12 @@ You begin to memorize the runes.  [20042ac7ce40]
   =   Вы начинаете запоминать руны.
 You begin two-weapon combat.  [8764d6ddafe7]
   =   Вы начинаете бой с двух рук.
+You bite right into the metal tin...  [6f5cc140eb3a]
+  =   Вы вгрызаетесь прямо в металлическую банку...
 You break up the cookie and throw away the pieces.  [20a4753a45ca]
   =   Вы разламываете печенье и выбрасываете кусочки.
+You breathe acid on yourself...  [4e5ea1833a68]
+  =   Вы обдаёте себя кислотой...
 You burn to a crisp...  [ccffe64e3d36]
   =   Вы сгораете дотла...
 You burn your %s.  [b14597031624]
@@ -13250,6 +13614,8 @@ You can wait a turn with '%s'  [ec959bcc4fe8]
   pl  Пропустить ход можно клавишей '3 стрелы'
 You can't bribe soldier ants.  [bb34df60978e]
   =   Муравьёв-солдат не подкупишь.
+You can't eat something you're wearing.  [2412fe212a04]
+  =   Нельзя съесть то, что на вас надето.
 You can't feel any Braille writing.  [74a382d66951]
   =   Вы не нащупываете никаких надписей шрифтом Брайля.
 You can't find anything to read on this %s.  [e99c2d60a8b2]
@@ -13287,8 +13653,18 @@ You can't reach the bottom of the pit.  [08f116a728c3]
   =   Вам не дотянуться до дна ямы.
 You can't reflect explosions.  But you might resist them.  [b3bad735728d]
   =   Взрыв не отразить.  Но устоять перед ним можно.
+You can't resist the temptation to mimic a pile of gold.  [f53d25864041]
+  =   Вы не можете удержаться и прикидываетесь кучкой золота.
+You can't resist the temptation to mimic an orange.  [dc9fd3fa2f4e]
+  =   Вы не можете удержаться и прикидываетесь апельсином.
+You can't sacrifice that!  [517a2e052378]
+  =   Это нельзя принести в жертву!
+You can't tin that!  [e2f6c8ac480f]
+  =   Это нельзя законсервировать!
 You can't use two weapons while wearing a shield.  [ac719b38c89a]
   =   Нельзя сражаться с двух рук со щитом.
+You cannibal!  You will regret this!  [ccbfaebbe589]
+  =   Каннибал!  Вы об этом пожалеете!
 You cannot drop something you are wearing.  [169f7d147cf4]
   =   Нельзя бросить то, что на вас надето.
 You cannot eat that!  [06314ea5dc82]
@@ -13298,6 +13674,8 @@ You cannot escape from %s!  [752eb0e1b6b6]
   f   Вам не вырваться от крысы!
   n   Вам не вырваться от копья!
   pl  Вам не вырваться от 3 стрел!
+You cannot handle the tin properly to open it.  [f2a50b88c298]
+  =   Вам никак не ухватить банку, чтобы её открыть.
 You cannot ready that!  [8f205b5a8d7f]
   =   Это нельзя приготовить к стрельбе!
 You cannot stash something you are wearing.  [9f9ccbbde6ac]
@@ -13308,6 +13686,34 @@ You cannot throw something you are wearing.  [124e17e06f6c]
   =   Нельзя метнуть то, что на вас надето.
 You cannot wield that!  [12d28375e654]
   =   Это нельзя взять в руки!
+You choke over it.  [dcb317b56579]
+  =   Вы давитесь.
+You choke over your cloth.  [227b61abf8d7]
+  =   Вы давитесь тканью.
+You choke over your food.  [5b1a3b013d74]
+  =   Вы давитесь едой.
+You choke over your gold.  [d0e6e4453acf]
+  =   Вы давитесь золотом.
+You choke over your leather.  [40fc2ed03884]
+  =   Вы давитесь кожей.
+You choke over your metal.  [17e5f2c01c89]
+  =   Вы давитесь металлом.
+You choke over your mithril.  [ad02eed2040c]
+  =   Вы давитесь мифрилом.
+You choke over your paper.  [76456fea172b]
+  =   Вы давитесь бумагой.
+You choke over your plastic.  [2a3beb633e12]
+  =   Вы давитесь пластиком.
+You choke over your platinum.  [cb45ee9b7097]
+  =   Вы давитесь платиной.
+You choke over your silver.  [d9d0b8b9a3bb]
+  =   Вы давитесь серебром.
+You choke over your wax.  [61bca6a0815e]
+  =   Вы давитесь воском.
+You choke over your wood.  [d3b7d3336072]
+  =   Вы давитесь деревом.
+You choke, but recover your composure.  [5b8a772fac46]
+  =   Вы давитесь, но приходите в себя.
 You choked beyond the confines of the dungeon with %ld point,  [2adf848079f6]
   m   Вы подавились за пределами подземелья, набрав 1 очко,
   f   Вы подавились за пределами подземелья, набрав 3 очка,
@@ -13350,6 +13756,11 @@ You choked in The Astral Plane with %ld points,  [b4f348ffe541]
   pl  Вы подавились на Астральном плане, набрав 21 очко,
 You cogitate the formula on the scroll.  [ac837c80210c]
   =   Вы мысленно проговариваете начертанную на свитке формулу.
+You consume %s %s.  [f5807fbfb44e]
+  m   Вы подкрепляетесь тритоном тритоном.
+  f   Вы подкрепляетесь крысой крысой.
+  n   Вы подкрепляетесь копьём копьём.
+  pl  Вы подкрепляетесь 3 стрелами 3 стрелами.
 You consume the last bite of your meal.  [7d16150abb92]
   =   Вы доедаете последний кусок.
 You continue digging downward.  [7522d78d6574]
@@ -13395,6 +13806,8 @@ You didn't beat your previous score of %ld points.  [448724a88ed4]
   f   Вам не удалось побить свой прежний рекорд: 3 очка.
   n   Вам не удалось побить свой прежний рекорд: 5 очков.
   pl  Вам не удалось побить свой прежний рекорд: 21 очко.
+You die from hunger and exhaustion.  [9357e441cc2d]
+  =   Вы умираете от голода и истощения.
 You die from starvation.  [8109de2f779d]
   =   Вы умираете от голода.
 You die from your illness.  [07d26437445c]
@@ -13473,6 +13886,8 @@ You dig %s through the ground.  [318ca4923b42]
   f   Вы прокапываете крысу в земле.
   n   Вы прокапываете копьё в земле.
   pl  Вы прокапываете 3 стрелы в земле.
+You discard the open tin.  [06557ab8e33c]
+  =   Вы выбрасываете открытую банку.
 You disrupt %s!  [354ac2283be7]
   m   Вы нарушаете целостность тритона!
   f   Вы нарушаете целостность крысы!
@@ -13533,6 +13948,8 @@ You don't feel sleepy!  [599ffd1826fa]
   =   Вас не клонит в сон!
 You don't feel sleepy.  [7067665817f7]
   =   Вас не клонит в сон.
+You don't feel very well.  [735caf932a6e]
+  =   Вам как-то нехорошо.
 You don't find anything here to loot.  [1208b69c42b1]
   =   Здесь нечего обыскивать.
 You don't find anything there to loot.  [a35ce7b59b2b]
@@ -13588,15 +14005,21 @@ You dream that you feel a little normal.  [ffaa41b66e63]
   =   Вам снится, что вы чувствуете себя почти нормально.
 You dream that you feel a little strange.  [49bef13154d5]
   =   Вам снится, что вы чувствуете себя немного странно.
+You dream that you feel a mild buzz.  [d35a94c035cb]
+  =   Вам снится, что вы чувствуете лёгкий прилив энергии.
 You dream that you feel a pleasant warmth in your %s.  [909a21423162]
   m   Вам снится, что вы чувствуете приятное тепло в тритоне.
   f   Вам снится, что вы чувствуете приятное тепло в крысе.
   n   Вам снится, что вы чувствуете приятное тепло в копье.
   pl  Вам снится, что вы чувствуете приятное тепло в 3 стрелах.
+You dream that you feel a strange mental acuity.  [09d1a71adc31]
+  =   Вам снится, что вы чувствуете странную остроту ума.
 You dream that you feel a sudden rush of air!  [1073ce4040f9]
   =   Вам снится, что вас обдаёт внезапным порывом воздуха!
 You dream that you feel better.  [bcb7e5b32f8d]
   =   Вам снится, что вам лучше.
+You dream that you feel centered in your personal space.  [d36560a5bcf8]
+  =   Вам снится, что вы в центре своего личного пространства.
 You dream that you feel charged up!  [9a8080725a7f]
   =   Вам снится, что вы чувствуете прилив энергии!
 You dream that you feel completely healed.  [9e599e395b4a]
@@ -13613,10 +14036,14 @@ You dream that you feel dead inside.  [213e2b0df905]
   =   Вам снится, что вы мертвы внутри.
 You dream that you feel deathly sick.  [0ff0ba117446]
   =   Вам снится, что вы смертельно больны.
+You dream that you feel diffuse.  [9a3540172920]
+  =   Вам снится, что вы расплываетесь в пространстве.
 You dream that you feel discharged.  [e42c30748b23]
   =   Вам снится, что вы — разряженная батарейка.
 You dream that you feel empty inside.  [fad8c0ab2201]
   =   Вам снится, что внутри у вас пустота.
+You dream that you feel especially healthy.  [dff777c1dd05]
+  =   Вам снится, что вы чувствуете себя на редкость здоровым.
 You dream that you feel even worse.  [4076a5459d8b]
   =   Вам снится, что вам ещё хуже.
 You dream that you feel frightened and even more stunned.  [42efa7dd2527]
@@ -13627,14 +14054,30 @@ You dream that you feel full of awe.  [885e4813593e]
   =   Вам снится, что вы преисполняетесь благоговения.
 You dream that you feel full of dread.  [f802da620b8d]
   =   Вам снится, что вас охватывает ужас.
+You dream that you feel full of hot air.  [0c758359c725]
+  =   Вам снится, что вас распирает горячий воздух.
+You dream that you feel grounded in reality.  [94085331776b]
+  =   Вам снится, что вы прочно заземлены в реальности.
 You dream that you feel guilty about damaging such a historic statue.  [d965941514d5]
   =   Вам снится, что вы испытываете вину за то, что повредили столь историческую статую.
 You dream that you feel guilty.  [c249af7a1682]
   =   Вам снится, что вас мучает совесть.
+You dream that you feel healthy.  [e87ec8e330c7]
+  =   Вам снится, что вы чувствуете себя здоровым.
+You dream that you feel hidden!  [ad599eb4be43]
+  =   Вам снится, что вы чувствуете себя невидимкой!
+You dream that you feel in control of yourself.  [8b55ca212f4b]
+  =   Вам снится, что вы владеете собой.
 You dream that you feel in touch with the Universal Oneness.  [568b25f18ba4]
   =   Вам снится, что вы ощущаете связь со Вселенским Всеединством.
+You dream that you feel in touch with the cosmos.  [dcf51fdd7790]
+  =   Вам снится, что вы чувствуете связь с космосом.
 You dream that you feel lackluster.  [3399fe1e50f5]
   =   Вам снится, что вы чувствуете вялость.
+You dream that you feel less concerned about becoming petrified.  [41e3493fe13e]
+  =   Вам снится, что вы меньше опасаетесь окаменеть.
+You dream that you feel less concerned about being harmed by acid.  [1d6398c8fb62]
+  =   Вам снится, что вы меньше опасаетесь кислоты.
 You dream that you feel less confused now.  [3aa32efcb4e6]
   =   Вам снится, что ваше замешательство проходит.
 You dream that you feel less trippy now.  [4b1f3df33649]
@@ -13643,12 +14086,18 @@ You dream that you feel less wobbly now.  [c65af3194220]
   =   Вам снится, что вас уже не так шатает.
 You dream that you feel light headed.  [746d9eefa39a]
   =   Вам снится, что вы чувствуете лёгкость в голове.
+You dream that you feel like a glutton!  [3a142e3479cb]
+  =   Вам снится, что вы чувствуете себя обжорой!
+You dream that you feel like a scarecrow.  [fbe43a0b88bf]
+  =   Вам снится, что вы чувствуете себя Страшилой.
 You dream that you feel like someone is helping you.  [0d17a5239922]
   =   Вам снится, что вам кто-то помогает.
 You dream that you feel like you need some help.  [cb04259d0b00]
   =   Вам снится, что вам не помешала бы помощь.
 You dream that you feel lonely.  [a8600aa0c51c]
   =   Вам снится, что вам одиноко.
+You dream that you feel momentarily different.  [b77fc4caeebf]
+  =   Вам снится, что на миг вы чувствуете себя иначе.
 You dream that you feel much better.  [99ec697d6d24]
   =   Вам снится, что вам гораздо лучше.
 You dream that you feel much less nauseated now.  [d0fc5a2515f2]
@@ -13657,6 +14106,11 @@ You dream that you feel much worse.  [4d96d6b459e7]
   =   Вам снится, что вам гораздо хуже.
 You dream that you feel quite proud of yourself.  [b984350edf86]
   =   Вам снится, что вы очень гордитесь собой.
+You dream that you feel rather %s.  [86f454575e77]
+  m   Вам снится, что вы чувствуете тритона.
+  f   Вам снится, что вы чувствуете крысу.
+  n   Вам снится, что вы чувствуете копьё.
+  pl  Вам снится, что вы чувствуете 3 стрелы.
 You dream that you feel rather itchy under %s.  [d3791db8cb40]
   m   Вам снится, что у вас чешется под тритоном.
   f   Вам снится, что у вас чешется под крысой.
@@ -13664,20 +14118,43 @@ You dream that you feel rather itchy under %s.  [d3791db8cb40]
   pl  Вам снится, что у вас чешется под 3 стрелами.
 You dream that you feel rather tired.  [c5bc2425dc17]
   =   Вам снится, что вы довольно устали.
+You dream that you feel rather trippy.  [68708ca4c311]
+  =   Вам снится, что вас порядком глючит.
 You dream that you feel rather warm.  [98f776ab69aa]
   =   Вам снится, что вам довольно тепло.
+You dream that you feel secure from flashbacks.  [5f932f726711]
+  =   Вам снится, что флешбэки вам больше не грозят.
 You dream that you feel self-knowledgeable...  [c92413120a3e]
   =   Вам снится, что вы познаёте себя...
 You dream that you feel shuddering vibrations.  [072d2ad1b1a3]
   =   Вам снится, что всё вокруг содрогается.
+You dream that you feel sick.  [b834d06ccab4]
+  =   Вам снится, что вам плохо.
 You dream that you feel somewhat better.  [0843d2e008e2]
   =   Вам снится, что вам немного лучше.
 You dream that you feel somewhat dizzy.  [8376e2ddbcec]
   =   Вам снится, что у вас слегка кружится голова.
+You dream that you feel that eating the %s was a bad idea.  [6e8f0e918d6e]
+  m   Вам снится, что вы зря съели тритона.
+  f   Вам снится, что вы зря съели крысу.
+  n   Вам снится, что вы зря съели копьё.
+  pl  Вам снится, что вы зря съели 3 стрелы.
 You dream that you feel the power of the Force against you!  [1fcb3b7c4725]
   =   Вам снится, что Сила обратилась против вас!
+You dream that you feel totally together, man.  [1502ab318262]
+  =   Вам снится, что вы полностью собраны, чувак.
+You dream that you feel unusually limber.  [d993a4eddfe5]
+  =   Вам снится, что вы чувствуете необычайную гибкость.
+You dream that you feel very firm.  [935d337fd94d]
+  =   Вам снится, что вы чувствуете в себе небывалую прочность.
+You dream that you feel very jumpy.  [76f4d97d4f33]
+  =   Вам снится, что вам совсем не сидится на месте.
+You dream that you feel very sick.  [df7488324208]
+  =   Вам снится, что вам очень плохо.
 You dream that you feel vibrations.  [54ea72bb6249]
   =   Вам снится, что вы чувствуете вибрацию.
+You dream that you feel wide awake.  [bc4cd1f223cc]
+  =   Вам снится, что у вас сна ни в одном глазу.
 You dream that you hear %s reviving.  [7954ea3525b8]
   m   Вам снится, что вы слышите, как тритон оживает.
   f   Вам снится, что вы слышите, как крыса оживает.
@@ -13714,6 +14191,8 @@ You dream that you hear sad wailing close by.  [f72cd69e8675]
   =   Вам снится, что вы слышите поблизости печальные стенания.
 You dream that you hear sad wailing in the distance.  [100a44aeaf92]
   =   Вам снится, что вы слышите вдалеке печальные стенания.
+You dream that you hear sinister laughter as you fall asleep...  [603fb5597676]
+  =   Вам снится, что, засыпая, вы слышите зловещий смех...
 You dream that you hear something hit %s %s over your %s!  [6ad6273842e2]
   m   Вам снится, как что-то бьёт по тритону тритона у вас над тритоном!
   f   Вам снится, как что-то бьёт по крысе крысы у вас над крысой!
@@ -13764,6 +14243,18 @@ You drowned in The Astral Plane with %ld points,  [a9b18f36d1db]
   f   Вы утонули на Астральном плане, набрав 3 очка,
   n   Вы утонули на Астральном плане, набрав 5 очков,
   pl  Вы утонули на Астральном плане, набрав 21 очко,
+You easily open the tin.  [3dcb914240d1]
+  =   Вы легко открываете банку.
+You eat %s brain!  [ab37c5d6ef7a]
+  m   Вы съедаете мозг тритона!
+  f   Вы съедаете мозг крысы!
+  n   Вы съедаете мозг копья!
+  pl  Вы съедаете мозг 3 стрел!
+You eat %s.  [e176c2ce4af4]
+  m   Вы съедаете тритона.
+  f   Вы съедаете крысу.
+  n   Вы съедаете копьё.
+  pl  Вы съедаете 3 стрелы.
 You escape a %s.  [3242c647d5f6]
   m   Вы избегаете тритона.
   f   Вы избегаете крысы.
@@ -13825,6 +14316,8 @@ You faint from lack of food.  [8d7c93579184]
   =   Вы теряете сознание от голода.
 You fall asleep!  [591e428c73bd]
   =   Вы засыпаете!
+You fall asleep.  [5e54438358f9]
+  =   Вы засыпаете.
 You fall down the stairs.  [e3d739608d6f]
   =   Вы падаете с лестницы.
 You fall into a pit!  [45d04ae383e8]
@@ -13842,6 +14335,8 @@ You feel a bit steadier now.  [9d79e8f1e031]
   =   Вы держитесь на ногах чуть твёрже.
 You feel a burst of cool air.  [cd4bae7aa4bf]
   =   Вы чувствуете порыв прохладного воздуха.
+You feel a change coming over you.  [733d3f59f181]
+  =   Вы чувствуете, как в вас что-то меняется.
 You feel a lack of something.  [fdff539d4f78]
   =   Вам чего-то не хватает.
 You feel a little chill.  [043408a70b13]
@@ -13854,17 +14349,25 @@ You feel a little strange.  [f6348f2f3ae9]
   =   Вы чувствуете себя немного странно.
 You feel a malignant aura surround you.  [62aa3d21529b]
   =   Вы чувствуете, как вас окружает зловещая аура.
+You feel a mild buzz.  [07e512d8364c]
+  =   Вы чувствуете лёгкий прилив энергии.
+You feel a momentary chill.  [ac72a9521b54]
+  =   Вас на миг пробирает холодок.
 You feel a pleasant warmth in your %s.  [2e0005480357]
   m   Вы чувствуете приятное тепло в тритоне.
   f   Вы чувствуете приятное тепло в крысе.
   n   Вы чувствуете приятное тепло в копье.
   pl  Вы чувствуете приятное тепло в 3 стрелах.
+You feel a strange mental acuity.  [a96bfc870c14]
+  =   Вы чувствуете странную остроту ума.
 You feel a sudden rush of air!  [1bfb8dde6dd4]
   =   Вас обдаёт внезапным порывом воздуха!
 You feel a wrenching sensation.  [cbf20d8b3e68]
   =   Вас словно выворачивает наизнанку.
 You feel better.  [214a62526c70]
   =   Вам лучше.
+You feel centered in your personal space.  [c712ce78ddf1]
+  =   Вы чувствуете себя в центре своего личного пространства.
 You feel charged up!  [3c7fb4780582]
   =   Вы чувствуете прилив энергии!
 You feel clumsy!  [16550c51a412]
@@ -13883,10 +14386,14 @@ You feel dead inside.  [321a1660adfd]
   =   Вы чувствуете себя мёртвым внутри.
 You feel deathly sick.  [50f1903b3465]
   =   Вы смертельно больны.
+You feel diffuse.  [e713f0455b0a]
+  =   Вы будто расплываетесь в пространстве.
 You feel discharged.  [b20e8cd6ea00]
   =   Вы чувствуете себя разряженной батарейкой.
 You feel empty inside.  [0c11b612baa0]
   =   Вы чувствуете внутри пустоту.
+You feel especially healthy.  [c298ca59160a]
+  =   Вы чувствуете себя на редкость здоровым.
 You feel even worse.  [e71d6dcf01d8]
   =   Вам ещё хуже.
 You feel feverish.  [5bac0e61e72f]
@@ -13901,12 +14408,26 @@ You feel full of awe.  [a8b02fdd8725]
   =   Вы преисполняетесь благоговения.
 You feel full of dread.  [404e3651df1a]
   =   Вас охватывает ужас.
+You feel full of hot air.  [7c0484447852]
+  =   Вас распирает горячий воздух.
+You feel grounded in reality.  [a2208ffd944a]
+  =   Вы прочно заземлены в реальности.
 You feel guilty about damaging such a historic statue.  [8bd23f77349c]
   =   Вы испытываете вину за то, что повредили столь историческую статую.
 You feel guilty.  [5350d7f003de]
   =   Вас мучает совесть.
+You feel healthy.  [d0f0cdd7500e]
+  =   Вы чувствуете себя здоровым.
+You feel hidden!  [facb1858f547]
+  =   Вы чувствуете себя невидимкой!
+You feel hungry.  [9555003540d5]
+  =   Вы чувствуете голод.
+You feel in control of yourself.  [1ac5a77e50da]
+  =   Вы чувствуете, что владеете собой.
 You feel in touch with the Universal Oneness.  [c92c91223488]
   =   Вы ощущаете связь со Вселенским Всеединством.
+You feel in touch with the cosmos.  [c7eb0b44f7d1]
+  =   Вы чувствуете связь с космосом.
 You feel interested in %s financial situation.  [08c7435e8e09]
   m   Вас интересует финансовое положение тритона.
   f   Вас интересует финансовое положение крысы.
@@ -13914,6 +14435,10 @@ You feel interested in %s financial situation.  [08c7435e8e09]
   pl  Вас интересует финансовое положение 3 стрел.
 You feel lackluster.  [4b5d8b00a0ba]
   =   Вы чувствуете вялость.
+You feel less concerned about becoming petrified.  [8cf0e29a1b68]
+  =   Вы меньше опасаетесь окаменеть.
+You feel less concerned about being harmed by acid.  [a433e213e22c]
+  =   Вы меньше опасаетесь кислоты.
 You feel less confused now.  [5bb5470bf8db]
   =   Ваше замешательство проходит.
 You feel less trippy now.  [616359174bdc]
@@ -13932,10 +14457,14 @@ You feel lettering on the %s.  It reads:  WIZZARD.  [906c503f39ab]
   pl  Вы нащупываете на 3 стрелах буквы.  Надпись гласит:  ВАЛШЕБНИК.
 You feel light headed.  [8097ed978af0]
   =   Вы чувствуете лёгкость в голове.
+You feel like a glutton!  [911bd21b9237]
+  =   Вы чувствуете себя обжорой!
 You feel like a million zorkmid!  [ec36ed68fe65]
   =   Вы чувствуете себя на миллион зоркмидов!
 You feel like a million zorkmids!  [ceb3659861b1]
   =   Вы чувствуете себя на миллион зоркмидов!
+You feel like a scarecrow.  [f0164ad9e139]
+  =   Вы чувствуете себя Страшилой.
 You feel like someone is helping you.  [263cdd56297b]
   =   Вы чувствуете, что кто-то вам помогает.
 You feel like someone is pulling your leg.  [f78bdd5ffba7]
@@ -13948,6 +14477,8 @@ You feel lonely.  [70cb2bf4ab97]
   =   Вам одиноко.
 You feel materially poor.  [4ae72a7723e1]
   =   Вы чувствуете себя материально бедным.
+You feel momentarily different.  [9f67d865d3d0]
+  =   На миг вы чувствуете себя иначе.
 You feel more experienced.  [95e98a6c26d9]
   =   Вы чувствуете себя опытнее.
 You feel more limber.  [aacfc469aab6]
@@ -13976,12 +14507,18 @@ You feel rather itchy under %s.  [a480d6a77e78]
   pl  У вас чешется под 3 стрелами.
 You feel rather tired.  [fac3cf21e04d]
   =   Вы чувствуете себя довольно уставшим.
+You feel rather trippy.  [5267bf8d3412]
+  =   Вас порядком глючит.
 You feel rather warm.  [61ff95efca78]
   =   Вам довольно тепло.
+You feel secure from flashbacks.  [123ca9b18d2e]
+  =   Флешбэки вам больше не грозят.
 You feel self-knowledgeable...  [ab99cb5a917b]
   =   Вы чувствуете, что познаёте себя...
 You feel shuddering vibrations.  [978d73b669d1]
   =   Вы чувствуете, как всё вокруг содрогается.
+You feel sick.  [948b4649ab34]
+  =   Вам плохо.
 You feel somewhat better.  [2c44ce6c0fad]
   =   Вам немного лучше.
 You feel somewhat dizzy.  [401538675a85]
@@ -13996,6 +14533,11 @@ You feel that %s is pleased.  [9306acdccebd]
   f   Вы чувствуете, что крыса довольна.
   n   Вы чувствуете, что копьё довольно.
   pl  Вы чувствуете, что 3 стрелы довольны.
+You feel that eating the %s was a bad idea.  [2169d2549633]
+  m   Вы чувствуете, что зря съели тритона.
+  f   Вы чувствуете, что зря съели крысу.
+  n   Вы чувствуете, что зря съели копьё.
+  pl  Вы чувствуете, что зря съели 3 стрелы.
 You feel that monsters have difficulty pinpointing your location.  [3e200d4b70df]
   =   Вы чувствуете, что монстрам трудно понять, где вы находитесь.
 You feel that monsters no longer have difficulty pinpointing your location.  [454a7d969d10]
@@ -14010,10 +14552,24 @@ You feel the power of the Force against you!  [3d2ddc748548]
   =   Вы чувствуете, что Сила обратилась против вас!
 You feel threatened.  [a9d3cb5a5d82]
   =   Вы чувствуете угрозу.
+You feel totally together, man.  [9f5f888d99ce]
+  =   Вы полностью собраны, чувак.
 You feel tough!  [e0bbd4f63591]
   =   Вы чувствуете себя крепче!
+You feel unusually limber.  [a121ee4eabfb]
+  =   Вы чувствуете необычайную гибкость.
+You feel very firm.  [af26aee78b42]
+  =   Вы чувствуете в себе небывалую прочность.
+You feel very jumpy.  [9c7be0325dff]
+  =   Вам совсем не сидится на месте.
+You feel very sick.  [ab4732d767e4]
+  =   Вам очень плохо.
 You feel vibrations.  [27280e6cd35c]
   =   Вы чувствуете вибрацию.
+You feel weak.  [2aa44640db3c]
+  =   Вы чувствуете слабость.
+You feel wide awake.  [b44f99dca6ef]
+  =   У вас сна ни в одном глазу.
 You feel worried about your future financial situation.  [5fa2b959fae6]
   =   Вас беспокоит ваше будущее финансовое положение.
 You feel your magical energy drain away%c  [be3553989457]
@@ -14051,6 +14607,11 @@ You finish %s.  [18c2feb65720]
   f   Вы заканчиваете крыса.
   n   Вы заканчиваете копьё.
   pl  Вы заканчиваете 3 стрелы.
+You finish consuming %s.  [a1b53fd3c634]
+  m   Вы доедаете тритона.
+  f   Вы доедаете крысу.
+  n   Вы доедаете копьё.
+  pl  Вы доедаете 3 стрелы.
 You finish eating %s.  [d4988d25efb2]
   m   Вы доедаете тритона.
   f   Вы доедаете крысу.
@@ -14094,6 +14655,8 @@ You give %s the %ld gold pieces she asked for.  [0338b67cb612]
   f   Вы отдаёте крысе 3 золотые монеты, как она и просила.
   n   Вы отдаёте копью 5 золотых монет, как она и просила.
   pl  Вы отдаёте 3 стрелам 21 золотую монету, как она и просила.
+You give up your attempt to open the tin.  [819d5bd8ca89]
+  =   Вы бросаете попытки открыть банку.
 You harmlessly attack %s.  [8bfb3b9a937d]
   m   Вы безрезультатно атакуете тритона.
   f   Вы безрезультатно атакуете крысу.
@@ -14104,6 +14667,8 @@ You have %ld %s readied.  Wield one?  [7298751873e7]
   f   У вас в колчане 3 крысы.  Взять одну в руки?
   n   У вас в колчане 5 копий.  Взять одно в руки?
   pl  У вас в колчане 21 стрела.  Взять одну в руки?
+You have a bad feeling deep inside.  [5a7687051f69]
+  =   В глубине души у вас нехорошее предчувствие.
 You have a feeling of loss.  [5735f4f83bb4]
   =   Вас охватывает чувство утраты.
 You have a little trouble lifting %s.  Continue?  [6a7f96dd7c6e]
@@ -14122,10 +14687,14 @@ You have a normal feeling for a moment, then it passes.  [ca22fa70291c]
   =   На миг у вас возникает обычное чувство, но оно проходит.
 You have a peculiar feeling for a moment, then it passes.  [9983e36c9fd1]
   =   На миг у вас возникает необычное чувство, но оно проходит.
+You have a sad thought for a moment, then it passes.  [b14e792a8f87]
+  =   На миг вас посещает грустная мысль, но она проходит.
 You have a sense of deja vu.  [2c073bb3521e]
   =   У вас чувство дежавю.
 You have a strange feeling for a moment, then it passes.  [828b2efe628d]
   =   На миг у вас возникает странное чувство, но оно проходит.
+You have a very bad case of stomach acid.  [0d855f6c9fb8]
+  =   У вас жуткая изжога.
 You have already identified all of your possessions.  [8e0032ffc809]
   =   Вы уже опознали всё своё имущество.
 You have an uneasy feeling.  [76749f173980]
@@ -14266,6 +14835,8 @@ You hear sad wailing close by.  [d75f05145fb1]
   =   Вы слышите поблизости печальные стенания.
 You hear sad wailing in the distance.  [c3ef473bf5d5]
   =   Вы слышите вдалеке печальные стенания.
+You hear sinister laughter as you fall asleep...  [265521bb772b]
+  =   Засыпая, вы слышите зловещий смех...
 You hear some noises in the distance.  [c4149322f716]
   =   Вы слышите какой-то шум вдалеке.
 You hear some noises.  [3048c9596d67]
@@ -14421,6 +14992,8 @@ You no longer seem to be petrifying.  [934ddaa579b2]
   =   Похоже, вы больше не каменеете.
 You notice that there is no gravity here.  [2442f1605479]
   =   Вы замечаете, что здесь нет силы тяжести.
+You now have a lesser case of the munchies.  [66513b1f6442]
+  =   Жор понемногу отпускает.
 You now have no ammunition readied.  [48f01745280a]
   =   Теперь у вас нет снарядов наготове.
 You now wield %s.  [6a176b4bc6dd]
@@ -14432,6 +15005,10 @@ You offend Shai-Hulud by sheathing your crysknife without having drawn blood.  [
   =   Вы оскорбляете Шаи-Хулуда, вложив криснож в ножны, не пролив крови.
 You only feel hungry now.  [9e55596ef49e]
   =   Теперь вы лишь голодны.
+You only manage to disarm the bear trap.  [762e19792097]
+  =   Вам удаётся лишь обезвредить медвежий капкан.
+You only manage to free yourself from the bear trap.  [85ddd4644109]
+  =   Вам удаётся лишь высвободиться из медвежьего капкана.
 You panicked beyond the confines of the dungeon with %ld point,  [8600504434d7]
   m   Вы запаниковали за пределами подземелья, набрав 1 очко,
   f   Вы запаниковали за пределами подземелья, набрав 3 очка,
@@ -14486,6 +15063,10 @@ You passed away beyond the confines of the dungeon with %ld points,  [80fddea37d
   f   Вы скончались за пределами подземелья, набрав 3 очка,
   n   Вы скончались за пределами подземелья, набрав 5 очков,
   pl  Вы скончались за пределами подземелья, набрав 21 очко,
+You pause to swallow.  [0c382a4f0faf]
+  =   Вы прерываетесь, чтобы проглотить кусок.
+You peck the eyeball with delight.  [1ff883bc3100]
+  =   Вы с наслаждением клюёте глазное яблоко.
 You perceive yourself...  [1d272e5d4a0b]
   =   Вы осознаёте себя...
 You probe beneath it.  [13c81d429c6d]
@@ -14607,6 +15188,8 @@ You release %s.  [56caed11467a]
   pl  Вы отпускаете 3 стрелы.
 You resume your meal.  [0e6a4be39e7c]
   =   Вы возвращаетесь к еде.
+You revive.  [28728488967f]
+  =   Вы приходите в чувство.
 You ring %s.  [4292cbc3f475]
   m   Вы звоните в тритона.
   f   Вы звоните в крысу.
@@ -14639,8 +15222,14 @@ You see no door there.  [22b8fc39f20d]
   =   Вы не видите там двери.
 You see no objects here.  [9e72cd8ce22e]
   =   Вы не видите здесь никаких предметов.
+You seem faster.  [6500106d320c]
+  =   Кажется, вы стали быстрее.
 You seem no deader than before.  [d04be81eaba8]
   =   Похоже, мертвее вы не стали.
+You seem slower.  [bda447903849]
+  =   Кажется, вы стали медленнее.
+You seem unaffected by the poison.  [f04835f41247]
+  =   Яд, похоже, на вас не действует.
 You seem unaffected.  [6b6ff5beb4f9]
   =   Похоже, на вас это не действует.
 You sense alarm, hostility, and excitement in the air!  [12f1df209a23]
@@ -14674,6 +15263,16 @@ You smell smoke.  [7af2e7abba87]
   =   Вы чувствуете запах дыма.
 You smell the odor of meat.  [0827aa9918cb]
   =   Вы чувствуете запах мяса.
+You spit %s out onto the %s.  [ad418f4ae545]
+  m   Вы выплёвываете тритона на тритона.
+  f   Вы выплёвываете крысу на крысу.
+  n   Вы выплёвываете копьё на копьё.
+  pl  Вы выплёвываете 3 стрелы на 3 стрелы.
+You spit out %s.  [4043c8cf7067]
+  m   Вы выплёвываете тритона.
+  f   Вы выплёвываете крысу.
+  n   Вы выплёвываете копьё.
+  pl  Вы выплёвываете 3 стрелы.
 You start digging downward.  [f2176d6bc4e8]
   =   Вы начинаете копать вниз.
 You start digging.  [f3d764b9f47c]
@@ -14725,6 +15324,8 @@ You starved in The Astral Plane with %ld points,  [b52283ca278a]
   pl  Вы умерли от голода на Астральном плане, набрав 21 очко,
 You stiffen momentarily.  [82664d298910]
   =   На миг вы цепенеете.
+You still have the munchies.  [a4b3abba99ec]
+  =   Жор всё не отпускает.
 You stop %s.  [c3da5e802a80]
   m   Вы перестаёте тритон.
   f   Вы перестаёте крыса.
@@ -14744,6 +15345,8 @@ You stuff yourself and then vomit voluminously.  [66f13cb61bd0]
   =   Вы объедаетесь, и вас обильно рвёт.
 You succeed in cutting away some rock.  [b6b789b014a6]
   =   Вам удаётся отколоть немного камня.
+You succeed in opening the tin.  [a55b09e87cf4]
+  =   Вам удаётся открыть банку.
 You suddenly fall asleep!  [3cb2721e9e25]
   =   Вы внезапно засыпаете!
 You sure are noisy.  [ea32202a132c]
@@ -14777,6 +15380,8 @@ You try to move %s, but in vain.  [8484e0d0bf63]
   pl  Вы пытаетесь сдвинуть 3 стрелы, но тщетно.
 You turn to stone!  [6b8ad57e0351]
   =   Вы превращаетесь в камень!
+You turn to stone.  [c1499efeef71]
+  =   Вы превращаетесь в камень.
 You turned into slime beyond the confines of the dungeon with %ld point,  [65ee890aa15d]
   m   Вы превратились в слизь за пределами подземелья, набрав 1 очко,
   f   Вы превратились в слизь за пределами подземелья, набрав 3 очка,
@@ -14857,6 +15462,8 @@ You turned to stone in The Astral Plane with %ld points,  [e9582535970b]
   f   Вы окаменели на Астральном плане, набрав 3 очка,
   n   Вы окаменели на Астральном плане, набрав 5 очков,
   pl  Вы окаменели на Астральном плане, набрав 21 очко,
+You undergo a freakish metamorphosis.  [acb663c2d313]
+  =   С вами происходит чудовищная метаморфоза.
 You wake up.  [e5435e98c0d4]
   =   Вы просыпаетесь.
 You want to regain strength?  Two levels ahead is a guesthouse!  [e017fb43828b]
@@ -15266,6 +15873,11 @@ Your %s glow an even more brilliant %s.  [65bc5fad0787]
   f   Ваша крыса сияет ещё более ярким крысой светом.
   n   Ваше копьё сияет ещё более ярким копьём светом.
   pl  Ваши 3 стрелы сияют ещё более ярким 3 стрелами светом.
+Your %s heaves convulsively!  [028df0f7cf8d]
+  m   Ваш тритон судорожно сжимается!
+  f   Ваша крыса судорожно сжимается!
+  n   Ваше копьё судорожно сжимается!
+  pl  Ваши 3 стрелы судорожно сжимаются!
 Your %s is already clean.  [f1347654d2d3]
   m   Ваш тритон и так чистый.
   f   Ваша крыса и так чистая.
@@ -15331,6 +15943,11 @@ Your %s stop itching.  [2aef044debb3]
   f   Ваши крыса перестают чесаться.
   n   Ваши копьё перестают чесаться.
   pl  Ваши 3 стрелы перестают чесаться.
+Your %s stops tingling and your sense of smell returns to normal.  [4aa3c4e49829]
+  m   У вас перестаёт покалывать тритона, и обоняние приходит в норму.
+  f   У вас перестаёт покалывать крысу, и обоняние приходит в норму.
+  n   У вас перестаёт покалывать копьё, и обоняние приходит в норму.
+  pl  У вас перестаёт покалывать 3 стрелы, и обоняние приходит в норму.
 Your %s tingle even more sharply.  [30eab81d25a1]
   m   У вас ещё острее покалывает тритона.
   f   У вас ещё острее покалывает крысу.
@@ -15392,16 +16009,26 @@ Your body rises from the dead as %s...  [921252285de7]
   f   Ваше тело восстаёт из мёртвых в виде крысы...
   n   Ваше тело восстаёт из мёртвых в виде копья...
   pl  Ваше тело восстаёт из мёртвых в виде 3 стрел...
+Your body takes on a normal transparency...  [d0349f2e3571]
+  =   Ваше тело обретает обычную прозрачность...
+Your body takes on a strange transparency...  [58173b194698]
+  =   Ваше тело обретает странную прозрачность...
 Your bolt reveals a secret door.  [362eb42cb4eb]
   =   Ваш луч обнаруживает потайную дверь.
 Your bones itch.  [3f271c747c6c]
   =   У вас чешутся кости.
+Your brain is eaten!  [51b5fe733087]
+  =   Ваш мозг съеден!
+Your brain is unharmed.  [27ee39c8752c]
+  =   Ваш мозг не пострадал.
 Your dog knows what to eat; maybe you should take lessons.  [589ec0a60ab0]
   =   Ваша собака знает, что есть; может, вам стоит у неё поучиться.
 Your game may go down the drain if you have extra potions or rings.  [6c864ac3afd4]
   =   Ваша игра может утечь в слив, если у вас лишние зелья или кольца.
 Your hat does not protect you.  [80f686a3b0b8]
   =   Ваша шляпа вас не защищает.
+Your health currently feels amplified!  [56f22817f5e5]
+  =   Ваше здоровье будто подзарядилось!
 Your help is urgently needed at %s!  [758e7a572f8a]
   m   Ваша помощь срочно нужна в тритоне!
   f   Ваша помощь срочно нужна в крысе!
@@ -15409,6 +16036,8 @@ Your help is urgently needed at %s!  [758e7a572f8a]
   pl  Ваша помощь срочно нужна в 3 стрелах!
 Your iron ball gets heavier.  [e7c487903aff]
   =   Ваше железное ядро становится тяжелее.
+Your jaw gapes convulsively.  [f760ddada977]
+  =   У вас судорожно отвисает челюсть.
 Your knees seem more flexible now.  [2c4e7f61e18a]
   =   Ваши колени теперь гнутся лучше.
 Your knowledge of "%s" is keener.  [65052901b88c]
@@ -15416,6 +16045,8 @@ Your knowledge of "%s" is keener.  [65052901b88c]
   f   Вы лучше знаете «крыса».
   n   Вы лучше знаете «копьё».
   pl  Вы лучше знаете «3 стрелы».
+Your last thought fades away.  [f59f68158b80]
+  =   Ваша последняя мысль угасает.
 Your left %s is empty.  [38513a6dbefd]
   m   Ваш левый тритон пуст.
   f   Ваша левая крыса пуста.
@@ -15485,6 +16116,8 @@ Your spell reveals a secret door.  [bca73f3482b8]
   =   Ваше заклинание обнаруживает потайную дверь.
 Your stomach acid melts straight through the ice!  [5657ea276535]
   =   Ваша желудочная кислота прожигает лёд насквозь!
+Your velocity suddenly seems very uncertain!  [2d5433263757]
+  =   Ваша скорость вдруг становится весьма неопределённой!
 Your vision quickly clears.  [e5bdfc612a79]
   =   Ваше зрение быстро проясняется.
 Your vision seems to brighten for a moment but is normal now.  [fa79862958bd]
@@ -15499,6 +16132,18 @@ Your vision seems to flatten for a moment but is normal now.  [4678f3db3242]
   =   Ваше зрение на миг будто становится плоским, но теперь оно в норме.
 Your weapon feels warm for a moment.  [74198aa786c8]
   =   Ваше оружие на миг теплеет.
+Yuck%c  [2474abe51382]
+  m   Фуx
+  f   Фуx
+  n   Фуx
+  pl  Фуx
+Yum!  That was real brain food!  [8ca298a70e1c]
+  =   Ням!  Вот это настоящая пища для ума!
+Yum%c  [ae064276e745]
+  m   Нямx
+  f   Нямx
+  n   Нямx
+  pl  Нямx
 Zap this wand to release its magic  [0f7a50fbe2b9]
   =   Взмахнуть этой палочкой, чтобы высвободить её магию
 Zap yourself and see what happens...  [c5f8f95fc41a]

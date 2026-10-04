@@ -1,0 +1,950 @@
+# R6, log messages batch 6: eat.c. Syntax: nh-i18n's template.rs.
+
+[c1499efeef71]
+en = "You turn to stone."
+ru = "Вы превращаетесь в камень."
+
+[3dc1da074397]
+en = "You be chillin'."
+ru = "Вы чилите."
+
+[ac72a9521b54]
+en = "You feel a momentary chill."
+ru = "Вас на миг пробирает холодок."
+
+[bc4cd1f223cc]
+en = "You dream that you feel wide awake."
+ru = "Вам снится, что у вас сна ни в одном глазу."
+
+[b44f99dca6ef]
+en = "You feel wide awake."
+ru = "У вас сна ни в одном глазу."
+
+[0c758359c725]
+en = "You dream that you feel full of hot air."
+ru = "Вам снится, что вас распирает горячий воздух."
+
+[7c0484447852]
+en = "You feel full of hot air."
+ru = "Вас распирает горячий воздух."
+
+[1502ab318262]
+en = "You dream that you feel totally together, man."
+ru = "Вам снится, что вы полностью собраны, чувак."
+
+[935d337fd94d]
+en = "You dream that you feel very firm."
+ru = "Вам снится, что вы чувствуете в себе небывалую прочность."
+
+[9f5f888d99ce]
+en = "You feel totally together, man."
+ru = "Вы полностью собраны, чувак."
+
+[af26aee78b42]
+en = "You feel very firm."
+ru = "Вы чувствуете в себе небывалую прочность."
+
+[94085331776b]
+en = "You dream that you feel grounded in reality."
+ru = "Вам снится, что вы прочно заземлены в реальности."
+
+[a2208ffd944a]
+en = "You feel grounded in reality."
+ru = "Вы прочно заземлены в реальности."
+
+[56f22817f5e5]
+en = "Your health currently feels amplified!"
+ru = "Ваше здоровье будто подзарядилось!"
+
+[dff777c1dd05]
+en = "You dream that you feel especially healthy."
+ru = "Вам снится, что вы чувствуете себя на редкость {hero:gender|здоровым|здоровой}."
+
+[e87ec8e330c7]
+en = "You dream that you feel healthy."
+ru = "Вам снится, что вы чувствуете себя {hero:gender|здоровым|здоровой}."
+
+[c298ca59160a]
+en = "You feel especially healthy."
+ru = "Вы чувствуете себя на редкость {hero:gender|здоровым|здоровой}."
+
+[d0f0cdd7500e]
+en = "You feel healthy."
+ru = "Вы чувствуете себя {hero:gender|здоровым|здоровой}."
+
+[9a3540172920]
+en = "You dream that you feel diffuse."
+ru = "Вам снится, что вы расплываетесь в пространстве."
+
+[76f4d97d4f33]
+en = "You dream that you feel very jumpy."
+ru = "Вам снится, что вам совсем не сидится на месте."
+
+[e713f0455b0a]
+en = "You feel diffuse."
+ru = "Вы будто расплываетесь в пространстве."
+
+[9c7be0325dff]
+en = "You feel very jumpy."
+ru = "Вам совсем не сидится на месте."
+
+[d36560a5bcf8]
+en = "You dream that you feel centered in your personal space."
+ru = "Вам снится, что вы в центре своего личного пространства."
+
+[8b55ca212f4b]
+en = "You dream that you feel in control of yourself."
+ru = "Вам снится, что вы владеете собой."
+
+[c712ce78ddf1]
+en = "You feel centered in your personal space."
+ru = "Вы чувствуете себя в центре своего личного пространства."
+
+[1ac5a77e50da]
+en = "You feel in control of yourself."
+ru = "Вы чувствуете, что владеете собой."
+
+[09d1a71adc31]
+en = "You dream that you feel a strange mental acuity."
+ru = "Вам снится, что вы чувствуете странную остроту ума."
+
+[dcf51fdd7790]
+en = "You dream that you feel in touch with the cosmos."
+ru = "Вам снится, что вы чувствуете связь с космосом."
+
+[a96bfc870c14]
+en = "You feel a strange mental acuity."
+ru = "Вы чувствуете странную остроту ума."
+
+[c7eb0b44f7d1]
+en = "You feel in touch with the cosmos."
+ru = "Вы чувствуете связь с космосом."
+
+[d35a94c035cb]
+en = "You dream that you feel a mild buzz."
+ru = "Вам снится, что вы чувствуете лёгкий прилив энергии."
+
+[07e512d8364c]
+en = "You feel a mild buzz."
+ru = "Вы чувствуете лёгкий прилив энергии."
+
+[ad599eb4be43]
+en = "You dream that you feel hidden!"
+ru = "Вам снится, что вы чувствуете себя невидимкой!"
+
+[facb1858f547]
+en = "You feel hidden!"
+ru = "Вы чувствуете себя невидимкой!"
+
+[2d5433263757]
+en = "Your velocity suddenly seems very uncertain!"
+ru = "Ваша скорость вдруг становится весьма неопределённой!"
+
+[bda447903849]
+en = "You seem slower."
+ru = "Кажется, вы стали медленнее."
+
+[6500106d320c]
+en = "You seem faster."
+ru = "Кажется, вы стали быстрее."
+
+[b77fc4caeebf]
+en = "You dream that you feel momentarily different."
+ru = "Вам снится, что на миг вы чувствуете себя иначе."
+
+[9f67d865d3d0]
+en = "You feel momentarily different."
+ru = "На миг вы чувствуете себя иначе."
+
+[8ca298a70e1c]
+en = "Yum!  That was real brain food!"
+ru = "Ням!  Вот это настоящая пища для ума!"
+
+[e95dc0a81016]
+en = "For some reason, that tasted bland."
+ru = "Почему-то вкус показался пресным."
+
+[2b125c08ea95]
+en = "Oh wow!  Great stuff!"
+ru = "Ух ты!  Забористая штука!"
+
+[06557ab8e33c]
+en = "You discard the open tin."
+ru = "Вы выбрасываете открытую банку."
+
+[f5807fbfb44e]
+en = "You consume %s %s."
+ru = "Вы подкрепляетесь {1:like2:ins} {2:ins}."
+
+[d21a2209c3a6]
+en = "It contains spinach."
+ru = "В ней шпинат."
+
+[819d5bd8ca89]
+en = "You give up your attempt to open the tin."
+ru = "Вы бросаете попытки открыть банку."
+
+[f2a50b88c298]
+en = "You cannot handle the tin properly to open it."
+ru = "Вам никак не ухватить банку, чтобы её открыть."
+
+[5483c4963247]
+en = "The tin seems easy to open."
+ru = "Похоже, банку легко открыть."
+
+[5ea9f0050182]
+en = "Using %s you try to open the tin."
+ru = "Вы пытаетесь открыть банку {1:ins:own}."
+
+[90f70563caee]
+en = "It is not so easy to open this tin."
+ru = "Открыть эту банку не так-то просто."
+
+[73d4fe6e1528]
+en = "The tin slips from your %s."
+ru = "Банка выскальзывает у вас из {1:gen}."
+
+[68708ca4c311]
+en = "You dream that you feel rather trippy."
+ru = "Вам снится, что вас порядком глючит."
+
+[5267bf8d3412]
+en = "You feel rather trippy."
+ru = "Вас порядком глючит."
+
+[86f454575e77]
+en = "You dream that you feel rather %s."
+ru = "Вам снится, что вы чувствуете {1:acc}."
+
+[bbb785178077]
+en = "It doesn't seem at all sickening, though..."
+ru = "Впрочем, вас от этого ничуть не тошнит..."
+
+[0d855f6c9fb8]
+en = "You have a very bad case of stomach acid."
+ru = "У вас жуткая изжога."
+
+[99651cda7173]
+en = "Ecch - that must have been poisonous!"
+ru = "Фу, похоже, это было ядовито!"
+
+[f04835f41247]
+en = "You seem unaffected by the poison."
+ru = "Яд, похоже, на вас не действует."
+
+[f02de9d51e59]
+en = "The corpse rots away completely."
+ru = "Труп сгнивает без остатка."
+
+[0b0faf97d8a9]
+en = "This tastes just like chicken!"
+ru = "На вкус совсем как курица!"
+
+[1ff883bc3100]
+en = "You peck the eyeball with delight."
+ru = "Вы с наслаждением клюёте глазное яблоко."
+
+[f6ff68d70901]
+en = "Ugh.  Rotten egg."
+ru = "Фу.  Тухлое яйцо."
+
+[1aa3c54b5a85]
+en = "This tripe ration is surprisingly good!"
+ru = "Этот рубец на удивление хорош!"
+
+[b284365f4849]
+en = "Mmm, tripe... not bad!"
+ru = "Ммм, рубец... неплохо!"
+
+[cd85055eb7ce]
+en = "Tastes great!  Less filling!"
+ru = "Отличный вкус!  Меньше калорий!"
+
+[12e11dad3a64]
+en = "Yak - dog food!"
+ru = "Фу, корм для собак!"
+
+[65bcab01273d]
+en = "Core dumped."
+ru = "Огрызок сброшен на диск."
+
+[551fdfc0788e]
+en = "This junk mail is less than satisfying."
+ru = "Этот спам не очень-то сытный."
+
+[2474abe51382]
+en = "Yuck%c"
+ru = "Фу{1}"
+
+[ae064276e745]
+en = "Yum%c"
+ru = "Ням{1}"
+
+[156f4b08103c]
+en = "Needs salt..."
+ru = "Недосолено..."
+
+[3fab91476d9d]
+en = "Four out of five dentists agree."
+ru = "Четыре стоматолога из пяти рекомендуют."
+
+[4aa67359cf65]
+en = "That was pure chewing satisfaction!"
+ru = "Вот это настоящее жевательное удовольствие!"
+
+[6ecc5ed5c85a]
+en = "Yabba-dabba delicious!"
+ru = "Ябба-дабба-вкусно!"
+
+[3a142e3479cb]
+en = "You dream that you feel like a glutton!"
+ru = "Вам снится, что вы чувствуете себя обжорой!"
+
+[911bd21b9237]
+en = "You feel like a glutton!"
+ru = "Вы чувствуете себя обжорой!"
+
+[8c19cea66e5d]
+en = "\"Heigh-ho, ho-hum, I think I'll skip work today.\""
+ru = "«Хей-хо, ох-хо-хо, сегодня я, пожалуй, прогуляю работу.»"
+
+[5e54438358f9]
+en = "You fall asleep."
+ru = "Вы засыпаете."
+
+[203d543b6d14]
+en = "You barely hear sinister laughter as you fall asleep..."
+ru = "Засыпая, вы едва слышите зловещий смех..."
+
+[603fb5597676]
+en = "You dream that you hear sinister laughter as you fall asleep..."
+ru = "Вам снится, что, засыпая, вы слышите зловещий смех..."
+
+[265521bb772b]
+en = "You hear sinister laughter as you fall asleep..."
+ru = "Засыпая, вы слышите зловещий смех..."
+
+[5b8a772fac46]
+en = "You choke, but recover your composure."
+ru = "Вы давитесь, но приходите в себя."
+
+[dcb317b56579]
+en = "You choke over it."
+ru = "Вы давитесь."
+
+[ffa9401a671f]
+en = "If you can't breathe air, how can you consume solids?"
+ru = "Если вы не дышите воздухом, как вы будете есть?"
+
+[4aa3c4e49829]
+en = "Your %s stops tingling and your sense of smell returns to normal."
+ru = "У вас перестаёт покалывать {1:acc}, и обоняние приходит в норму."
+
+[0c382a4f0faf]
+en = "You pause to swallow."
+ru = "Вы прерываетесь, чтобы проглотить кусок."
+
+[e7b2e383bd39]
+en = "Ulch - that %s was rustproofed!"
+ru = "Тьфу, {1:gender|этот|эта|это|эти} {1} {1:gender|оказался|оказалась|оказалось|оказались} {1:gender|нержавеющим|нержавеющей|нержавеющим|нержавеющими}!"
+
+[4043c8cf7067]
+en = "You spit out %s."
+ru = "Вы выплёвываете {1:acc}."
+
+[ad418f4ae545]
+en = "You spit %s out onto the %s."
+ru = "Вы выплёвываете {1:acc} на {2:acc}."
+
+[4fc283693261]
+en = "This ring is indigestible!"
+ru = "Это кольцо не переваривается!"
+
+[28728488967f]
+en = "You revive."
+ru = "Вы приходите в чувство."
+
+[cb5a4dd5b33d]
+en = "You are getting the munchies."
+ru = "У вас начинается жор."
+
+[66513b1f6442]
+en = "You now have a lesser case of the munchies."
+ru = "Жор понемногу отпускает."
+
+[dda1410212e4]
+en = "The munchies are interfering with your motor capabilities."
+ru = "Жор мешает вашей моторике."
+
+[a4b3abba99ec]
+en = "You still have the munchies."
+ru = "Жор всё не отпускает."
+
+[9357e441cc2d]
+en = "You die from hunger and exhaustion."
+ru = "Вы умираете от голода и истощения."
+
+[f760ddada977]
+en = "Your jaw gapes convulsively."
+ru = "У вас судорожно отвисает челюсть."
+
+[028df0f7cf8d]
+en = "Your %s heaves convulsively!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} судорожно {1:num|сжимается|сжимаются}!"
+
+[4e5ea1833a68]
+en = "You breathe acid on yourself..."
+ru = "Вы обдаёте себя кислотой..."
+
+[ab37c5d6ef7a]
+en = "You eat %s brain!"
+ru = "Вы съедаете мозг {1:gen}!"
+
+[51b5fe733087]
+en = "Your brain is eaten!"
+ru = "Ваш мозг съеден!"
+
+[d109ae90cf15]
+en = "%s brain is eaten!"
+ru = "Мозг {1:gen} съеден!"
+
+[6b27a6a55a52]
+en = "%s turns to stone!"
+ru = "{1} {1:num|превращается|превращаются} в камень!"
+
+[b14e792a8f87]
+en = "You have a sad thought for a moment, then it passes."
+ru = "На миг вас посещает грустная мысль, но она проходит."
+
+[132427bcf409]
+en = "%s doesn't notice."
+ru = "{1} ничего не {1:num|замечает|замечают}."
+
+[b4b035de5714]
+en = "Ingesting that is fatal."
+ru = "Проглотить такое — верная смерть."
+
+[27cb5001620e]
+en = "Unfortunately your brain is still gone."
+ru = "К сожалению, мозга у вас по-прежнему нет."
+
+[f59f68158b80]
+en = "Your last thought fades away."
+ru = "Ваша последняя мысль угасает."
+
+[fbe43a0b88bf]
+en = "You dream that you feel like a scarecrow."
+ru = "Вам снится, что вы чувствуете себя Страшилой."
+
+[f0164ad9e139]
+en = "You feel like a scarecrow."
+ru = "Вы чувствуете себя Страшилой."
+
+[64c1a1bf1edd]
+en = "%s last thought fades away..."
+ru = "Последняя мысль {1:gen} угасает..."
+
+[5a7687051f69]
+en = "You have a bad feeling deep inside."
+ru = "В глубине души у вас нехорошее предчувствие."
+
+[ccbfaebbe589]
+en = "You cannibal!  You will regret this!"
+ru = "Каннибал!  Вы об этом пожалеете!"
+
+[6e8f0e918d6e]
+en = "You dream that you feel that eating the %s was a bad idea."
+ru = "Вам снится, что вы зря съели {1:acc}."
+
+[2169d2549633]
+en = "You feel that eating the %s was a bad idea."
+ru = "Вы чувствуете, что зря съели {1:acc}."
+
+[e0678f9c9396]
+en = "Eating that is instantly fatal."
+ru = "Съесть такое — мгновенная смерть."
+
+[735caf932a6e]
+en = "You don't feel very well."
+ru = "Вам как-то нехорошо."
+
+[d0349f2e3571]
+en = "Your body takes on a normal transparency..."
+ru = "Ваше тело обретает обычную прозрачность..."
+
+[58173b194698]
+en = "Your body takes on a strange transparency..."
+ru = "Ваше тело обретает странную прозрачность..."
+
+[c24a7e111a3d]
+en = "You are suddenly very feminine!"
+ru = "Вы внезапно становитесь очень женственной!"
+
+[90977ec8fefc]
+en = "You are suddenly very masculine!"
+ru = "Вы внезапно становитесь очень мужественным!"
+
+[9ae8d2aa425a]
+en = "Suddenly you can see yourself."
+ru = "Внезапно вы видите себя."
+
+[1d6398c8fb62]
+en = "You dream that you feel less concerned about being harmed by acid."
+ru = "Вам снится, что вы меньше опасаетесь кислоты."
+
+[5f932f726711]
+en = "You dream that you feel secure from flashbacks."
+ru = "Вам снится, что флешбэки вам больше не грозят."
+
+[a433e213e22c]
+en = "You feel less concerned about being harmed by acid."
+ru = "Вы меньше опасаетесь кислоты."
+
+[123ca9b18d2e]
+en = "You feel secure from flashbacks."
+ru = "Флешбэки вам больше не грозят."
+
+[41e3493fe13e]
+en = "You dream that you feel less concerned about becoming petrified."
+ru = "Вам снится, что вы меньше опасаетесь окаменеть."
+
+[d993a4eddfe5]
+en = "You dream that you feel unusually limber."
+ru = "Вам снится, что вы чувствуете необычайную гибкость."
+
+[8cf0e29a1b68]
+en = "You feel less concerned about becoming petrified."
+ru = "Вы меньше опасаетесь окаменеть."
+
+[a121ee4eabfb]
+en = "You feel unusually limber."
+ru = "Вы чувствуете необычайную гибкость."
+
+[f53d25864041]
+en = "You can't resist the temptation to mimic a pile of gold."
+ru = "Вы не можете удержаться и прикидываетесь кучкой золота."
+
+[dc9fd3fa2f4e]
+en = "You can't resist the temptation to mimic an orange."
+ru = "Вы не можете удержаться и прикидываетесь апельсином."
+
+[733d3f59f181]
+en = "You feel a change coming over you."
+ru = "Вы чувствуете, как в вас что-то меняется."
+
+[acb663c2d313]
+en = "You undergo a freakish metamorphosis."
+ru = "С вами происходит чудовищная метаморфоза."
+
+[0b956fdefc3e]
+en = "The tin opens like magic!"
+ru = "Банка открывается как по волшебству!"
+
+[6f5cc140eb3a]
+en = "You bite right into the metal tin..."
+ru = "Вы вгрызаетесь прямо в металлическую банку..."
+
+[3dcb914240d1]
+en = "You easily open the tin."
+ru = "Вы легко открываете банку."
+
+[a55b09e87cf4]
+en = "You succeed in opening the tin."
+ru = "Вам удаётся открыть банку."
+
+[a849728d22e9]
+en = "It's full of air elemental souffle."
+ru = "Она полна суфле из воздушного элементаля."
+
+[70a4f3b59c19]
+en = "It's full of dehydrated water."
+ru = "Она полна обезвоженной воды."
+
+[d97f7ea907d7]
+en = "It smells like chicken."
+ru = "Пахнет курицей."
+
+[71b4776b55bb]
+en = "Eating %s food made your %s even more slippery."
+ru = "От {1:f:gen} еды ваши {2} становятся ещё более скользкими."
+
+[c9730c20e556]
+en = "Eating %s food made your %s very slippery."
+ru = "От {1:f:gen} еды ваши {2} становятся очень скользкими."
+
+[8175218e222b]
+en = "It contains some decaying %s substance."
+ru = "В ней какое-то разлагающееся {1:n} вещество."
+
+[f6614a7ceec8]
+en = "It contains some decaying substance."
+ru = "В ней какое-то разлагающееся вещество."
+
+[4647bd7d5267]
+en = "This makes you feel like Bluto!"
+ru = "Вы чувствуете себя Блуто!"
+
+[71191d4dcbb6]
+en = "This makes you feel like Olive Oyl!"
+ru = "Вы чувствуете себя Олив Ойл!"
+
+[74a8cf0587d2]
+en = "This makes you feel like Popeye!"
+ru = "Вы чувствуете себя моряком Попаем!"
+
+[a8a4d316bdd4]
+en = "This makes you feel like Swee'pea!"
+ru = "Вы чувствуете себя малышом Свипи!"
+
+[544cba4b02b0]
+en = "Blecch!  Awful gold!"
+ru = "Фу!  Мерзкое золото!"
+
+[ff0e4f710a92]
+en = "Blecch!  Awful metal!"
+ru = "Фу!  Мерзкий металл!"
+
+[c5843d9203f5]
+en = "Blecch!  Awful mithril!"
+ru = "Фу!  Мерзкий мифрил!"
+
+[90864b6114ff]
+en = "Blecch!  Awful plastic!"
+ru = "Фу!  Мерзкий пластик!"
+
+[bcd27a20b71b]
+en = "Blecch!  Awful platinum!"
+ru = "Фу!  Мерзкая платина!"
+
+[685b0ef8fbf4]
+en = "Blecch!  Awful silver!"
+ru = "Фу!  Мерзкое серебро!"
+
+[205557184cc6]
+en = "Blecch!  Rotten cloth!"
+ru = "Фу!  Гнилая ткань!"
+
+[c307dd487459]
+en = "Blecch!  Rotten leather!"
+ru = "Фу!  Гнилая кожа!"
+
+[c095646a6f43]
+en = "Blecch!  Rotten paper!"
+ru = "Фу!  Гнилая бумага!"
+
+[098a70ac2234]
+en = "Blecch!  Rotten wax!"
+ru = "Фу!  Прогорклый воск!"
+
+[365da013161b]
+en = "Blecch!  Rotten wood!"
+ru = "Фу!  Гнилое дерево!"
+
+[b85d85b68b8c]
+en = "The world spins and you lose control of yourself."
+ru = "Мир кружится, и вы теряете контроль над собой."
+
+[168279a4ba89]
+en = "The world spins and you slap against the %s."
+ru = "Мир кружится, и вы валитесь на {1:acc}."
+
+[f7854e9f6a35]
+en = "The world spins and you slap against the saddle."
+ru = "Мир кружится, и вы валитесь на седло."
+
+[7d67929f9d01]
+en = "Ulch - that fungoid vegetation was tainted!"
+ru = "Тьфу, эта грибная растительность испорчена!"
+
+[bca61da634f9]
+en = "Ulch - that fungoid vegetation was tainted, you cannibal!"
+ru = "Тьфу, эта грибная растительность испорчена, каннибал!"
+
+[1a8fdff08913]
+en = "Ulch - that meat was tainted, you cannibal!"
+ru = "Тьфу, это мясо испорчено, каннибал!"
+
+[3a7969694321]
+en = "Ulch - that protoplasm was tainted!"
+ru = "Тьфу, эта протоплазма испорчена!"
+
+[db6b40a1929f]
+en = "Ulch - that protoplasm was tainted, you cannibal!"
+ru = "Тьфу, эта протоплазма испорчена, каннибал!"
+
+[b834d06ccab4]
+en = "You dream that you feel sick."
+ru = "Вам снится, что вам плохо."
+
+[df7488324208]
+en = "You dream that you feel very sick."
+ru = "Вам снится, что вам очень плохо."
+
+[948b4649ab34]
+en = "You feel sick."
+ru = "Вам плохо."
+
+[ab4732d767e4]
+en = "You feel very sick."
+ru = "Вам очень плохо."
+
+[1e182937416a]
+en = "%s is %s%c"
+ru = "{1} {2:like1}{3}"
+
+[21cb23647a90]
+en = "%s is copacetic%c"
+ru = "{1} {1:gender|клёвый|клёвая|клёвое|клёвые}{2}"
+
+[a879e72179ab]
+en = "%s is delicious%c"
+ru = "{1} {1:gender|восхитителен|восхитительна|восхитительно|восхитительны}{2}"
+
+[0ac6e2046697]
+en = "%s is gnarly%c"
+ru = "{1} {1:gender|отпадный|отпадная|отпадное|отпадные}{2}"
+
+[29999dc63de3]
+en = "%s is gr-r-reat%c"
+ru = "{1} {1:gender|гр-р-рандиозный|гр-р-рандиозная|гр-р-рандиозное|гр-р-рандиозные}{2}"
+
+[0052485a7568]
+en = "%s is grody%c"
+ru = "{1} {1:gender|отстойный|отстойная|отстойное|отстойные}{2}"
+
+[6e105f615faf]
+en = "%s tastes %s%c"
+ru = "{1} на вкус{2:skip} ничего{3}"
+
+[710c8341ee6c]
+en = "%s tastes delicious%c"
+ru = "{1} на вкус {1:gender|восхитителен|восхитительна|восхитительно|восхитительны}{2}"
+
+[2dc1b1db2267]
+en = "%s tastes terrible%c"
+ru = "{1} на вкус {1:gender|ужасен|ужасна|ужасно|ужасны}{2}"
+
+[d2f6f78852cf]
+en = "The %s is %s%c"
+ru = "{1} {2:like1}{3}"
+
+[42ce6709e393]
+en = "The %s is copacetic%c"
+ru = "{1} {1:gender|клёвый|клёвая|клёвое|клёвые}{2}"
+
+[ac930ea0c4dd]
+en = "The %s is delicious%c"
+ru = "{1} {1:gender|восхитителен|восхитительна|восхитительно|восхитительны}{2}"
+
+[99d0c7dfdcf2]
+en = "The %s is gnarly%c"
+ru = "{1} {1:gender|отпадный|отпадная|отпадное|отпадные}{2}"
+
+[34b2a38bfd96]
+en = "The %s is gr-r-reat%c"
+ru = "{1} {1:gender|гр-р-рандиозный|гр-р-рандиозная|гр-р-рандиозное|гр-р-рандиозные}{2}"
+
+[6838d092d860]
+en = "The %s is grody%c"
+ru = "{1} {1:gender|отстойный|отстойная|отстойное|отстойные}{2}"
+
+[7f8b1e2fe3ad]
+en = "The %s tastes %s%c"
+ru = "{1} на вкус{2:skip} ничего{3}"
+
+[8fa40aac3f3a]
+en = "The %s tastes delicious%c"
+ru = "{1} на вкус {1:gender|восхитителен|восхитительна|восхитительно|восхитительны}{2}"
+
+[8ee92da81646]
+en = "The %s tastes terrible%c"
+ru = "{1} на вкус {1:gender|ужасен|ужасна|ужасно|ужасны}{2}"
+
+[668fc2870eff]
+en = "This %s is %s%c"
+ru = "{1:gender|Этот|Эта|Это|Эти} {1} {2:like1}{3}"
+
+[f1d3c901f6fb]
+en = "This %s is copacetic%c"
+ru = "{1:gender|Этот|Эта|Это|Эти} {1} {1:gender|клёвый|клёвая|клёвое|клёвые}{2}"
+
+[0fcb4e6d2a17]
+en = "This %s is delicious%c"
+ru = "{1:gender|Этот|Эта|Это|Эти} {1} {1:gender|восхитителен|восхитительна|восхитительно|восхитительны}{2}"
+
+[75db85d14fbc]
+en = "This %s is gnarly%c"
+ru = "{1:gender|Этот|Эта|Это|Эти} {1} {1:gender|отпадный|отпадная|отпадное|отпадные}{2}"
+
+[886510347136]
+en = "This %s is gr-r-reat%c"
+ru = "{1:gender|Этот|Эта|Это|Эти} {1} {1:gender|гр-р-рандиозный|гр-р-рандиозная|гр-р-рандиозное|гр-р-рандиозные}{2}"
+
+[7a63512bc649]
+en = "This %s is grody%c"
+ru = "{1:gender|Этот|Эта|Это|Эти} {1} {1:gender|отстойный|отстойная|отстойное|отстойные}{2}"
+
+[97224e10f693]
+en = "This %s tastes %s%c"
+ru = "{1:gender|Этот|Эта|Это|Эти} {1} на вкус{2:skip} ничего{3}"
+
+[42df950bbd66]
+en = "This %s tastes delicious%c"
+ru = "{1:gender|Этот|Эта|Это|Эти} {1} на вкус {1:gender|восхитителен|восхитительна|восхитительно|восхитительны}{2}"
+
+[85b4234bc25f]
+en = "This %s tastes terrible%c"
+ru = "{1:gender|Этот|Эта|Это|Эти} {1} на вкус {1:gender|ужасен|ужасна|ужасно|ужасны}{2}"
+
+[d526eae5ddee]
+en = "Oh wow, like, superior, man!"
+ru = "Ух ты, типа, высший класс, чувак!"
+
+[93481d4be717]
+en = "!#?&* elf kibble!"
+ru = "!#?&* эльфийский корм!"
+
+[1aa659f9333e]
+en = "My, this is a primo %s!"
+ru = "Ах, {1:gender|какой|какая|какое|какие} {1:gender|зачётный|зачётная|зачётное|зачётные} {1}!"
+
+[74a05a38f3db]
+en = "My, this is a yummy %s!"
+ru = "Ах, {1:gender|какой|какая|какое|какие} {1:gender|вкуснющий|вкуснющая|вкуснющее|вкуснющие} {1}!"
+
+[2dd4ba6c62ea]
+en = "Bus error -- core dumped."
+ru = "Ошибка шины — огрызок сброшен на диск."
+
+[3b7683126a8c]
+en = "Segmentation fault -- core dumped."
+ru = "Ошибка сегментирования — огрызок сброшен на диск."
+
+[8f72d2271414]
+en = "Yo' mama -- core dumped."
+ru = "Твоя мамаша — огрызок сброшен на диск."
+
+[3e98837a234b]
+en = "This %s is gnarly!"
+ru = "{1:gender|Этот|Эта|Это|Эти} {1} {1:gender|отпадный|отпадная|отпадное|отпадные}!"
+
+[d43ecd9da5c5]
+en = "This %s is grody!"
+ru = "{1:gender|Этот|Эта|Это|Эти} {1} {1:gender|отстойный|отстойная|отстойное|отстойные}!"
+
+[d5f312ed88e6]
+en = "This %s is terrible!"
+ru = "{1:gender|Этот|Эта|Это|Эти} {1} {1:gender|ужасен|ужасна|ужасно|ужасны}!"
+
+[7a3c97fe9814]
+en = "Magic spreads through your body as you digest the amulet."
+ru = "Пока вы перевариваете амулет, по вашему телу растекается магия."
+
+[18e0a2c000e3]
+en = "Magic spreads through your body as you digest the ring."
+ru = "Пока вы перевариваете кольцо, по вашему телу растекается магия."
+
+[227b61abf8d7]
+en = "You choke over your cloth."
+ru = "Вы давитесь тканью."
+
+[5b1a3b013d74]
+en = "You choke over your food."
+ru = "Вы давитесь едой."
+
+[d0e6e4453acf]
+en = "You choke over your gold."
+ru = "Вы давитесь золотом."
+
+[40fc2ed03884]
+en = "You choke over your leather."
+ru = "Вы давитесь кожей."
+
+[17e5f2c01c89]
+en = "You choke over your metal."
+ru = "Вы давитесь металлом."
+
+[ad02eed2040c]
+en = "You choke over your mithril."
+ru = "Вы давитесь мифрилом."
+
+[76456fea172b]
+en = "You choke over your paper."
+ru = "Вы давитесь бумагой."
+
+[2a3beb633e12]
+en = "You choke over your plastic."
+ru = "Вы давитесь пластиком."
+
+[cb45ee9b7097]
+en = "You choke over your platinum."
+ru = "Вы давитесь платиной."
+
+[d9d0b8b9a3bb]
+en = "You choke over your silver."
+ru = "Вы давитесь серебром."
+
+[61bca6a0815e]
+en = "You choke over your wax."
+ru = "Вы давитесь воском."
+
+[d3b7d3336072]
+en = "You choke over your wood."
+ru = "Вы давитесь деревом."
+
+[5d7699b85c0c]
+en = "%s is delicious!"
+ru = "{1} {1:gender|восхитителен|восхитительна|восхитительно|восхитительны}!"
+
+[ea6274ae6f88]
+en = "This gold is delicious!"
+ru = "Это золото восхитительно!"
+
+[2412fe212a04]
+en = "You can't eat something you're wearing."
+ru = "Нельзя съесть то, что на вас надето."
+
+[e176c2ce4af4]
+en = "You eat %s."
+ru = "Вы съедаете {1:acc}."
+
+[9555003540d5]
+en = "You feel hungry."
+ru = "Вы чувствуете голод."
+
+[2aa44640db3c]
+en = "You feel weak."
+ru = "Вы чувствуете слабость."
+
+[762e19792097]
+en = "You only manage to disarm the bear trap."
+ru = "Вам удаётся лишь обезвредить медвежий капкан."
+
+[85ddd4644109]
+en = "You only manage to free yourself from the bear trap."
+ru = "Вам удаётся лишь высвободиться из медвежьего капкана."
+
+[557fd2538d4f]
+en = "There are iron bars here but you are too full to eat them."
+ru = "Здесь железная решётка, но вы слишком сыты, чтобы её есть."
+
+[dde79cf24e04]
+en = "There are iron bars here but you cannot eat them."
+ru = "Здесь железная решётка, но вы не можете её съесть."
+
+[517a2e052378]
+en = "You can't sacrifice that!"
+ru = "Это нельзя принести в жертву!"
+
+[e2f6c8ac480f]
+en = "You can't tin that!"
+ru = "Это нельзя законсервировать!"
+not_terms = ["tin"]
+
+[a1b53fd3c634]
+en = "You finish consuming %s."
+ru = "Вы доедаете {1:acc}."
+
+[27ee39c8752c]
+en = "Your brain is unharmed."
+ru = "Ваш мозг не пострадал."
