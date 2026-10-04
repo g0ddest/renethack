@@ -207,7 +207,18 @@ mod tests {
         assert_eq!(hit.as_deref(), Some("Вы бьёте тритона."));
         // a template without a translation yet, a text the catalog does not
         // know, another language: the English shows
-        assert_eq!(ru(EngineKind::Message, "You are still in a pit."), None);
+        let untranslated = {
+            let inner = t.translator.borrow();
+            let tr = inner.as_ref().expect("the translator");
+            tr.catalog()
+                .templates()
+                .iter()
+                .filter(|x| x.arity() == 0 && tr.russian().get(&x.id).is_none())
+                .find(|x| tr.text(&x.fmt).template.as_deref() == Some(x.id.as_str()))
+                .map(|x| x.fmt.clone())
+                .expect("a template without Russian")
+        };
+        assert_eq!(ru(EngineKind::Message, &untranslated), None);
         assert_eq!(ru(EngineKind::Window, "Xyzzy plugh"), None);
         assert_eq!(
             t.translate(Lang::En, EngineKind::Message, "Never mind."),

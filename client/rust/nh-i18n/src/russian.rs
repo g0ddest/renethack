@@ -62,6 +62,8 @@ struct RawEntry {
     forms: Option<Vec<String>>,
     #[serde(default)]
     gender: Option<String>,
+    #[serde(default)]
+    not_terms: Vec<String>,
 }
 
 /// The translation of one template.
@@ -76,6 +78,9 @@ pub struct Translation {
     /// Case forms, for a piece used as an argument.
     pub forms: Option<[String; 6]>,
     pub gender: Option<(Gender, Number)>,
+    /// English words of the format that are not the glossary's terms there
+    /// ("tin" as a verb, "rock" as the stuff): the linter lets them be.
+    pub not_terms: Vec<String>,
     /// The file it came from.
     pub file: String,
 }
@@ -217,6 +222,7 @@ fn parse_file(name: &str, text: &str) -> Result<Vec<Translation>, RussianError> 
             template,
             forms,
             gender,
+            not_terms: e.not_terms,
             file: name.into(),
         });
     }

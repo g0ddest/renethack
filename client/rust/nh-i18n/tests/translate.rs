@@ -127,11 +127,19 @@ fn messages_with_their_format() {
 
 #[test]
 fn what_cannot_be_translated_stays_english() {
-    // a template without Russian yet
-    let (text, status) = say("You are still in a pit.");
+    // a template without Russian yet: one the translator takes as itself
+    let catalog = catalog();
+    let russian = russian();
+    let untranslated = catalog
+        .templates()
+        .iter()
+        .filter(|t| t.arity() == 0 && russian.get(&t.id).is_none())
+        .find(|t| translator().text(&t.fmt).template.as_deref() == Some(t.id.as_str()))
+        .expect("a template without Russian");
+    let (text, status) = say(&untranslated.fmt);
     assert_eq!(
         (text.as_str(), status),
-        ("You are still in a pit.", Status::Untranslated)
+        (untranslated.fmt.as_str(), Status::Untranslated)
     );
     // no template at all
     let (text, status) = say("Xyzzy plugh");

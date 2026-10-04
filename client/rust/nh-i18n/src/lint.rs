@@ -25,7 +25,16 @@ pub const ENFORCED: [&str; 8] = [
 ];
 
 /// Names of the glossary that are everyday words in a sentence.
-const NOT_TERMS: [&str; 4] = ["you", "it", "someone", "something"];
+const NOT_TERMS: [&str; 8] = [
+    "you",
+    "it",
+    "someone",
+    "something",
+    "himself",
+    "herself",
+    "itself",
+    "themselves",
+];
 
 /// The canonical names the translations must use.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -180,16 +189,41 @@ fn check(catalog: &Catalog, tr: &Translation, glossary: &Glossary) -> Vec<String
         }
     }
     let ru_lower = tr.ru.to_lowercase();
-    for term in &glossary.terms {
-        if names_term(&tr.en, &term.en)
-            && !term.ru.iter().any(|f| ru_lower.contains(&f.to_lowercase()))
+    // the longest terms first, each blanked out of the English once found,
+    // so that the "axe" of "pick-axe" is no term of its own
+    let mut en = tr.en.clone();
+    let mut terms: Vec<&Term> = glossary.terms.iter().collect();
+    terms.sort_by_key(|t| std::cmp::Reverse(t.en.len()));
+    for term in terms {
+        if !names_term(&en, &term.en) {
+            continue;
+        }
+        en = blank(&en, &term.en);
+        if tr
+            .not_terms
+            .iter()
+            .any(|w| w.eq_ignore_ascii_case(&term.en))
         {
+            continue;
+        }
+        if !term.ru.iter().any(|f| ru_lower.contains(&f.to_lowercase())) {
             out.push(format!(
                 "{:?} is in the glossary: use {}",
                 term.en,
                 term.ru.first().map_or("its term", String::as_str)
             ));
         }
+    }
+    out
+}
+
+/// `en` with every occurrence of `term`, in any case, made spaces.
+fn blank(en: &str, term: &str) -> String {
+    let low = en.to_ascii_lowercase();
+    let t = term.to_ascii_lowercase();
+    let mut out = en.to_string();
+    for (i, _) in low.match_indices(&t) {
+        out.replace_range(i..i + t.len(), &" ".repeat(t.len()));
     }
     out
 }
@@ -294,5 +328,44 @@ ru = "нет"
             "no template zz in the catalog: \"gone\"",
         ];
         assert_eq!(p, want);
+    }
+
+    #[test]
+    fn the_longest_term_counts_and_a_word_can_be_no_term() {
+        let catalog = Catalog::parse(
+            r#"{"format": 1, "entries": [
+{"id": "b1", "fmt": "Leave your pick-axe outside.", "args": []},
+{"id": "b2", "fmt": "You have nothing to tin.", "args": []}
+]}"#,
+        )
+        .unwrap();
+        let russian = Russian::parse(&[(
+            "t.toml".into(),
+            r#"
+[b1]
+en = "Leave your pick-axe outside."
+ru = "Оставьте кирку снаружи."
+[b2]
+en = "You have nothing to tin."
+ru = "Вам нечего консервировать."
+not_terms = ["tin"]
+"#
+            .into(),
+        )])
+        .unwrap();
+        let term = |en: &str, ru: &str| Term {
+            en: en.into(),
+            ru: vec![ru.into()],
+        };
+        let glossary = Glossary::new(vec![
+            term("axe", "топор"),
+            term("pick-axe", "кирк"),
+            term("tin", "банк"),
+        ]);
+        let p: Vec<String> = lint(&catalog, &russian, &glossary)
+            .into_iter()
+            .map(|p| p.what)
+            .collect();
+        assert!(p.is_empty(), "{p:?}");
     }
 }
