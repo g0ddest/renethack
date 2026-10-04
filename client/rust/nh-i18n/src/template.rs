@@ -18,6 +18,7 @@
 //! | `{1:plural\|монету\|монеты\|монет}` | after the number argument 1: one (1, 21), few (2–4, 22–24), many (5–20, 0) |
 //! | `{2:by1}`, `{2:by1:acc}` | argument 2 as counted by the number argument 1: "стрелу", "стрелы", "стрел" |
 //! | `{hero:gender\|сам\|сама}` | as the hero's gender: masculine, feminine |
+//! | `{1:skip}` | nothing: the Russian says otherwise what argument 1 says (a heading's fixed word, the "weapons" of a menu about the item itself) |
 //!
 //! "You hit %s." → `"Вы бьёте {1:acc}."`; "%s bites!" →
 //! `"{1} кусает!"` (the message's first letter is upper-cased anyway);
@@ -51,6 +52,8 @@ pub enum TemplateError {
     SelectorWithCase(String),
     #[error("placeholder {{{0}}}: `hero` only selects by gender")]
     Hero(String),
+    #[error("placeholder {{{0}}}: `skip` takes no other modifier")]
+    Skip(String),
 }
 
 /// What a placeholder refers to.
@@ -85,6 +88,8 @@ pub struct Placeholder {
     pub select: Option<Select>,
     /// `{2:by1}`: argument 2 as counted by the number argument 1.
     pub count_by: Option<usize>,
+    /// `{2:skip}`: the argument is not shown.
+    pub skip: bool,
     /// As written, without the braces.
     pub source: String,
 }
@@ -231,7 +236,7 @@ fn render_placeholder(p: &Placeholder, args: &[Value], hero: Gender) -> String {
     let Target::Arg(i) = p.target else {
         unreachable!("the hero is handled above")
     };
-    let Some(v) = args.get(i) else {
+    let Some(v) = args.get(i).filter(|_| !p.skip) else {
         return String::new();
     };
     match &p.select {
@@ -301,9 +306,11 @@ fn placeholder(src: &str) -> Result<Placeholder, TemplateError> {
     let mut cap = false;
     let mut selector = None;
     let mut count_by = None;
+    let mut skip = false;
     for w in words {
         match w.trim() {
             "cap" => cap = true,
+            "skip" => skip = true,
             s @ ("gender" | "sg" | "num" | "plural") => selector = Some(s),
             by if by.starts_with("by") => match by[2..].parse::<usize>() {
                 Ok(k) if k >= 1 => count_by = Some(k - 1),
@@ -367,12 +374,16 @@ fn placeholder(src: &str) -> Result<Placeholder, TemplateError> {
     if select.is_some() && (case.is_some() || cap || count_by.is_some()) {
         return Err(TemplateError::SelectorWithCase(src.into()));
     }
+    if skip && (select.is_some() || case.is_some() || cap || count_by.is_some()) {
+        return Err(TemplateError::Skip(src.into()));
+    }
     Ok(Placeholder {
         target,
         case,
         cap,
         select,
         count_by,
+        skip,
         source: src.into(),
     })
 }
@@ -486,6 +497,10 @@ mod tests {
             render("{1:acc}", &[Value::Phrase(Box::new(Fixed::new("Fido")))]),
             "Fido"
         );
+        assert_eq!(
+            render("Убрать из колчана{1:skip}", &[arrows()]),
+            "Убрать из колчана"
+        );
     }
 
     #[test]
@@ -511,5 +526,6 @@ mod tests {
         assert!(matches!(err("{1"), TemplateError::Unclosed(0)));
         assert!(matches!(err("a } b"), TemplateError::LoneBrace(2)));
         assert!(matches!(err("{hero}"), TemplateError::Hero(_)));
+        assert!(matches!(err("{1:skip:acc}"), TemplateError::Skip(_)));
     }
 }

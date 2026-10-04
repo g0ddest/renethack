@@ -504,6 +504,7 @@ fn identity(t: &Template) -> RuTemplate {
                     cap: false,
                     select: None,
                     count_by: None,
+                    skip: false,
                     source: (i + 1).to_string(),
                 }));
                 i += 1;
