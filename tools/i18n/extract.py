@@ -443,7 +443,8 @@ class Globals:
                 t = strip_expr(args[k])
                 if len(t) == 1 and t[0].kind == "ident" and t[0].text in caller.ops:
                     out += caller.compositions(t[0].text, pos, depth + 1)
-            return dedupe(out)[:MAX_DERIVED]
+            # (every caller's texts: as many as a buffer holds)
+            return dedupe(out)[:MAX_HELD]
         return self._memo(("ppc", ctx.unit.path, ctx.func.name, name, depth), compute, [])
 
     def _memo(self, key, compute, unknown=None):
@@ -927,7 +928,7 @@ class Context:
                     continue
                 out += self.pieces(rhs, pos, depth + 1, seen + (name,))
         out = dedupe(out)
-        return out[:MAX_DERIVED] if out else placeholder
+        return out[:MAX_HELD] if out else placeholder
 
     def variants(self, fmt, args, pos, depth=0):
         """Every text of format `fmt` with its arguments: literal arguments
