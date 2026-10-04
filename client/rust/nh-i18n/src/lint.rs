@@ -8,7 +8,7 @@ use crate::catalog::Catalog;
 use crate::format::{ConvKind, convs};
 use crate::lexicon::Lexicon;
 use crate::russian::{Russian, Translation};
-use crate::template::{Select, Target};
+use crate::template::{Agree, Select, Target};
 
 /// A term of the glossary: its English name and the Russian forms a
 /// translation may use (any case or number; a stem matches the words it
@@ -173,6 +173,15 @@ fn check(catalog: &Catalog, tr: &Translation, glossary: &Glossary) -> Vec<String
             if number {
                 out.push(format!("{{{}}}: a number is not counted", p.source));
             }
+        }
+        if let Some(Agree::Arg(j)) = p.agree
+            && (j == i || kinds.get(j).is_none_or(|k| *k == ConvKind::Int))
+        {
+            out.push(format!(
+                "{{{}}}: argument {} is no other name to agree with",
+                p.source,
+                j + 1
+            ));
         }
     }
     for (i, u) in used.iter().enumerate() {
