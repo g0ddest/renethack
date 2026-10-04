@@ -73,6 +73,10 @@ pub enum DialogEvent {
     Close,
     /// A key of the on-screen keyboard (row, column) clicked.
     OskKey(usize, usize),
+    /// A picker of names: the highlighted one (or the best match) chosen.
+    PickConfirm,
+    /// A picker of names: type the answer in English instead.
+    PickManual,
 }
 
 /// Role, race, gender and alignment codes ("random" allowed).

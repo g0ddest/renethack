@@ -16,15 +16,18 @@ use godot::classes::text_server::{AutowrapMode, OverrunBehavior};
 use godot::classes::texture_rect::{ExpandMode, StretchMode};
 use godot::classes::{
     Button, CanvasLayer, ColorRect, Control, DisplayServer, Font, HBoxContainer, Label, LineEdit,
-    PanelContainer, RichTextLabel, ScrollContainer, StyleBox, StyleBoxEmpty, StyleBoxFlat,
-    TextureRect, VBoxContainer,
+    OptionButton, PanelContainer, RichTextLabel, ScrollContainer, StyleBox, StyleBoxEmpty,
+    StyleBoxFlat, TextureRect, VBoxContainer,
 };
 use godot::global::{HorizontalAlignment, VerticalAlignment};
 use godot::prelude::*;
 use nh_protocol::{Catalog, ESC, PickHow, Reply};
 use nh_world::{Key, KeyInput, MenuEntry, MenuOutcome, MenuState, Prompt, TextLine, choice_answer};
 
+use nh_i18n::lexicon::Lexicon;
+
 use crate::i18n::{self, EngineKind, Lang};
+use crate::pickers::{self, Ask, ObjClass, Pick, Wish};
 use crate::theme::{self, Face, Frame, bbcode_escape, hex, nh_color, place};
 use crate::tr;
 use crate::ui_events::{DialogEvent, UiEvent, UiQueue, push};
@@ -60,6 +63,10 @@ const REFERENCE_SCREEN: Vector2 = theme::DESIGN;
 const SIDE_MARGIN: f32 = 80.0;
 /// Rows the palette shows at once.
 const PALETTE_ROWS: f32 = 12.0;
+/// Rows a picker of names shows at once, and the most it lists (a longer
+/// list says how many more a search would narrow).
+const PICKER_ROWS: f32 = 10.0;
+const PICKER_SLOTS: usize = 80;
 /// The most rows an engine menu shows at once.
 const MENU_ROWS: f32 = 18.0;
 /// Unselectable menu lines: grey, still easy to read.
@@ -854,6 +861,220 @@ fn fill_palette(palette: &Rc<RefCell<Palette>>) {
     }
 }
 
+/// One row of a picker of names: a class's symbol, the name as the
+/// player reads it, the English the engine knows.
+#[derive(Clone)]
+struct PickSlot {
+    button: Gd<Button>,
+    symbol: Gd<Label>,
+    name: Gd<Label>,
+    english: Gd<Label>,
+}
+
+/// The wish's builder: the count, the blessing, the enchantment.
+#[derive(Clone)]
+struct WishControls {
+    count: Gd<Label>,
+    buc: Gd<Button>,
+    ench: Gd<Label>,
+    /// The wish as the player reads it, and the English the engine is sent.
+    shown: Gd<Label>,
+    english: Gd<Label>,
+}
+
+/// A picker of names (Russian input): what the engine asks the name of,
+/// found by any form of its name in the player's language or in English;
+/// the engine is sent the English.
+struct Picker {
+    ask: Ask,
+    picks: Vec<Pick>,
+    /// Indexes into `picks`, the best match first.
+    shown: Vec<usize>,
+    /// Position in `shown` that Enter picks.
+    selected: Option<usize>,
+    /// The search less what the wish's builder took from it.
+    query: String,
+    /// The class the list keeps to (None: every class), and the classes
+    /// the class picker offers after "every class" (empty: no picker).
+    class: Option<ObjClass>,
+    classes: Vec<ObjClass>,
+    class_option: Option<Gd<OptionButton>>,
+    wish: Wish,
+    wish_controls: Option<WishControls>,
+    slots: Vec<PickSlot>,
+    list: Scroller,
+    more: Gd<Label>,
+    look: Look,
+}
+
+impl Picker {
+    /// The search as typed: a wish's count, blessing and enchantment go to
+    /// the builder, the rest names the thing.
+    fn retype(&mut self, text: &str) {
+        if self.ask == Ask::Wish {
+            let w = pickers::parse_wish(Lexicon::ru(), text);
+            if let Some(c) = w.count {
+                self.wish.count = c;
+            }
+            if let Some(b) = w.buc {
+                self.wish.buc = b;
+            }
+            if let Some(e) = w.ench {
+                self.wish.ench = Some(e);
+            }
+            self.query = w.rest;
+        } else {
+            self.query = text.to_string();
+        }
+        self.refilter();
+    }
+
+    fn refilter(&mut self) {
+        self.shown = pickers::search(&self.picks, &self.query, self.class);
+        self.selected = (!self.query.trim().is_empty() && !self.shown.is_empty()).then_some(0);
+    }
+
+    /// The pick Enter takes: the highlighted one.
+    fn chosen(&self) -> Option<usize> {
+        self.selected.and_then(|s| self.shown.get(s)).copied()
+    }
+
+    /// What the engine is sent for `picks[i]`.
+    fn reply(&self, i: usize) -> String {
+        let pick = &self.picks[i];
+        match self.ask {
+            Ask::Wish => self.wish.english(&pick.english),
+            _ => pick.reply.clone(),
+        }
+    }
+
+    /// The highlight a row up or down (a page: ten).
+    fn step(&mut self, by: i64) {
+        let n = self.shown.len().min(self.slots.len()) as i64;
+        if n == 0 {
+            return;
+        }
+        let cur = self.selected.map_or(-1, |s| s as i64);
+        let next = if cur < 0 && by < 0 {
+            n - 1
+        } else {
+            (cur + by).clamp(0, n - 1)
+        };
+        self.selected = Some(next as usize);
+    }
+
+    /// The next class (`by` 1) or the previous one, round through "every
+    /// class".
+    fn turn_class(&mut self, by: i32) {
+        if self.classes.is_empty() {
+            return;
+        }
+        let n = self.classes.len() as i32 + 1;
+        let now = self
+            .class
+            .and_then(|c| self.classes.iter().position(|x| *x == c))
+            .map_or(0, |i| i as i32 + 1);
+        let next = (now + by).rem_euclid(n);
+        self.class = (next > 0).then(|| self.classes[next as usize - 1]);
+        if let Some(mut o) = self.class_option.clone() {
+            o.select(next);
+        }
+        self.refilter();
+    }
+
+    /// The wish's count (by 1), blessing (round) or enchantment (by 1).
+    fn adjust(&mut self, count: i32, buc: bool, ench: i32) {
+        let c = self.wish.count as i32 + count;
+        self.wish.count = c.clamp(1, pickers::MAX_COUNT as i32) as u32;
+        if buc {
+            self.wish.buc = self.wish.buc.next();
+        }
+        if ench != 0 {
+            let e = self.wish.ench.unwrap_or(0) + ench;
+            self.wish.ench = Some(e.clamp(-pickers::MAX_ENCH, pickers::MAX_ENCH));
+        }
+    }
+}
+
+/// Show the picker's rows, the highlight, the wish. The borrow is released
+/// before Godot is called.
+fn fill_picker(picker: &Rc<RefCell<Picker>>) {
+    let (rows, selected, more, slots, wish, look) = {
+        let p = picker.borrow();
+        let rows: Vec<(String, String, String)> = p
+            .shown
+            .iter()
+            .take(p.slots.len())
+            .map(|&i| {
+                let pick = &p.picks[i];
+                let symbol = pick.symbol.map_or(String::new(), |c| c.to_string());
+                (symbol, pick.shown.clone(), pick.english.clone())
+            })
+            .collect();
+        let more = if p.shown.is_empty() {
+            Some(tr!("picker-none"))
+        } else if p.shown.len() > p.slots.len() {
+            Some(tr!("picker-more", n = p.shown.len() - p.slots.len()))
+        } else {
+            None
+        };
+        // the wish: what the highlighted (else the first) thing makes
+        let wish = p.wish_controls.clone().map(|c| {
+            let target = p.chosen().or_else(|| p.shown.first().copied());
+            let english = target.map(|i| p.reply(i));
+            (c, p.wish, english)
+        });
+        (
+            rows,
+            p.selected,
+            more,
+            p.slots.clone(),
+            wish,
+            p.look.clone(),
+        )
+    };
+    for (i, mut slot) in slots.into_iter().enumerate() {
+        let Some((symbol, name, english)) = rows.get(i) else {
+            slot.button.set_visible(false);
+            continue;
+        };
+        slot.symbol.set_text(symbol);
+        slot.name.set_text(name);
+        slot.english.set_text(english);
+        look.style_row(&mut slot.button, false, selected == Some(i));
+        slot.button.set_visible(true);
+    }
+    {
+        let mut p = picker.borrow_mut();
+        match &more {
+            Some(t) => p.more.set_text(t),
+            None => p.more.set_text(""),
+        }
+        p.more.set_visible(more.is_some());
+        match selected {
+            Some(i) => p.list.reveal(i as f32 * ROW_H, ROW_H),
+            None => p.list.scroll_to(0.0),
+        }
+    }
+    if let Some((mut c, wish, english)) = wish {
+        c.count.set_text(&wish.count.to_string());
+        c.buc.set_text(&i18n::tr(wish.buc.key()));
+        c.ench
+            .set_text(&wish.ench.map_or("0".to_string(), |e| format!("{e:+}")));
+        match english {
+            Some(e) => {
+                let shown = pickers::wish_shown(Lexicon::ru(), &e);
+                c.shown.set_text(&tr!("wish-shown", wish = shown));
+                c.english.set_text(&e);
+            }
+            None => {
+                c.shown.set_text(&tr!("wish-pick"));
+                c.english.set_text("");
+            }
+        }
+    }
+}
+
 enum Kind {
     Menu(Box<MenuView>),
     Choice {
@@ -867,6 +1088,13 @@ enum Kind {
         edit: Gd<LineEdit>,
         /// The on-screen keyboard (a gamepad).
         osk: Option<Osk>,
+        /// An engraving: it goes to the engine in Latin letters.
+        engrave: bool,
+    },
+    /// A name the engine asks for, picked in the player's language.
+    Picker {
+        edit: Gd<LineEdit>,
+        picker: Rc<RefCell<Picker>>,
     },
     ExtCmd {
         edit: Gd<LineEdit>,
@@ -889,6 +1117,8 @@ struct Open {
     kind: Kind,
     shade: Gd<ColorRect>,
     panel: Gd<PanelContainer>,
+    /// Room at the bottom of the panel for a gamepad's hints.
+    pad_room: Option<Gd<Control>>,
 }
 
 pub struct Dialogs {
@@ -1544,6 +1774,7 @@ impl Dialogs {
         req: u64,
         query: &str,
         name: bool,
+        engrave: bool,
     ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
         let width = self.fit_width(query.chars().count().min(70), 0.0, 560.0);
         let (shade, panel, mut col) = self.frame_at(width, Some(query), Place::Top);
@@ -1552,6 +1783,23 @@ impl Dialogs {
             edit.set_placeholder(&tr!("text-name-placeholder"));
         }
         col.add_child(&edit);
+        // an engraving goes in Latin letters: what they will be, under it
+        if engrave {
+            let mut latin = theme::styled_label("", Face::Body, 15, theme::ACCENT);
+            latin.set_autowrap_mode(AutowrapMode::WORD_SMART);
+            latin.set_custom_minimum_size(Vector2::new(width, 0.0));
+            latin.set_visible(false);
+            col.add_child(&latin);
+            let mut l = latin.clone();
+            edit.signals().text_changed().connect(move |text: GString| {
+                let text = text.to_string();
+                let shown = !text.is_ascii();
+                if shown {
+                    l.set_text(&tr!("text-latin", text = pickers::latin(&text)));
+                }
+                l.set_visible(shown);
+            });
+        }
         let mut bytes = theme::styled_label(
             &tr!("text-bytes", len = 0, max = MAX_TEXT_BYTES),
             Face::Body,
@@ -1609,7 +1857,252 @@ impl Dialogs {
         if osk.is_none() && !self.warming {
             edit.call_deferred("grab_focus", &[]);
         }
-        (Kind::Text { edit, osk }, shade, panel)
+        (Kind::Text { edit, osk, engrave }, shade, panel)
+    }
+
+    /// A picker of names for what `ask` asks (None: nothing to pick from,
+    /// such as monster classes before the engine's catalog came).
+    fn open_picker(
+        &mut self,
+        req: u64,
+        title: &str,
+        ask: Ask,
+        catalog: Option<&Catalog>,
+    ) -> Option<(Kind, Gd<ColorRect>, Gd<PanelContainer>)> {
+        let lex = Lexicon::ru();
+        let (picks, class) = match ask {
+            Ask::Wish => (pickers::objects(lex), None),
+            Ask::Write(c) => (pickers::objects(lex), Some(c)),
+            Ask::Monster => (pickers::monsters(lex, catalog), None),
+            Ask::MonsterClass => (pickers::monster_classes(lex, catalog), None),
+        };
+        if picks.is_empty() {
+            return None;
+        }
+        let look = self.look.clone();
+        let max_w = (self.screen().x - 2.0 * SIDE_MARGIN).max(480.0);
+        let width = 660.0f32.min(max_w);
+        let (shade, panel, mut col) = self.frame(width, Some(title));
+        let small = |text: &str| {
+            let mut b = Button::new_alloc();
+            b.set_text(text);
+            b.set_focus_mode(FocusMode::NONE);
+            b.set_custom_minimum_size(Vector2::new(34.0, 32.0));
+            b
+        };
+        let value = |w: f32| {
+            let mut l = theme::styled_label("", Face::BodyBold, 18, theme::GOLD_BRIGHT);
+            l.set_horizontal_alignment(HorizontalAlignment::CENTER);
+            l.set_custom_minimum_size(Vector2::new(w, 0.0));
+            l
+        };
+        // the wish's builder: count, blessing, enchantment
+        let mut builder_buttons: Vec<(Gd<Button>, i32, bool, i32)> = Vec::new();
+        let wish_controls = (ask == Ask::Wish).then(|| {
+            let mut row = HBoxContainer::new_alloc();
+            row.add_theme_constant_override("separation", 6);
+            row.add_child(&theme::label(&tr!("wish-count")));
+            let less = small("−");
+            let count = value(40.0);
+            let more = small("+");
+            row.add_child(&less);
+            row.add_child(&count);
+            row.add_child(&more);
+            builder_buttons.push((less, -1, false, 0));
+            builder_buttons.push((more, 1, false, 0));
+            let mut gap = Control::new_alloc();
+            gap.set_custom_minimum_size(Vector2::new(18.0, 0.0));
+            row.add_child(&gap);
+            let mut buc = Button::new_alloc();
+            buc.set_focus_mode(FocusMode::NONE);
+            buc.set_custom_minimum_size(Vector2::new(190.0, 32.0));
+            row.add_child(&buc);
+            builder_buttons.push((buc.clone(), 0, true, 0));
+            let mut gap = Control::new_alloc();
+            gap.set_custom_minimum_size(Vector2::new(18.0, 0.0));
+            row.add_child(&gap);
+            row.add_child(&theme::label(&tr!("wish-ench")));
+            let down = small("−");
+            let ench = value(44.0);
+            let up = small("+");
+            row.add_child(&down);
+            row.add_child(&ench);
+            row.add_child(&up);
+            builder_buttons.push((down, 0, false, -1));
+            builder_buttons.push((up, 0, false, 1));
+            col.add_child(&row);
+            let shown = theme::styled_label("", Face::BodyBold, 17, theme::TEXT);
+            let mut english = theme::styled_label("", Face::Body, 15, theme::TEXT_DIM);
+            // what the engine is sent, as it is sent
+            i18n::verbatim(&english);
+            english.set_clip_text(true);
+            (count, buc, ench, shown, english)
+        });
+        // the class a wish keeps to
+        let classes: Vec<ObjClass> = match ask {
+            Ask::Wish => ObjClass::ALL.to_vec(),
+            _ => Vec::new(),
+        };
+        let class_option = (!classes.is_empty()).then(|| {
+            let mut row = HBoxContainer::new_alloc();
+            row.add_theme_constant_override("separation", 10);
+            row.add_child(&theme::label(&tr!("picker-class")));
+            let mut ob = OptionButton::new_alloc();
+            ob.set_focus_mode(FocusMode::NONE);
+            ob.add_item(&tr!("picker-class-all"));
+            for c in &classes {
+                ob.add_item(&i18n::tr(c.key()));
+            }
+            ob.select(0);
+            ob.set_custom_minimum_size(Vector2::new(260.0, 0.0));
+            row.add_child(&ob);
+            col.add_child(&row);
+            ob
+        });
+        let mut edit = self.line_edit(req);
+        edit.set_placeholder(&i18n::tr(match ask {
+            Ask::Wish => "picker-placeholder-wish",
+            Ask::Monster => "picker-placeholder-monster",
+            Ask::MonsterClass => "picker-placeholder-class",
+            Ask::Write(_) => "picker-placeholder-write",
+        }));
+        col.add_child(&edit);
+        // the list: a slot a row
+        let n = picks.len().min(PICKER_SLOTS);
+        let max_h = (self.screen().y - LIST_CHROME - 120.0).max(ROW_H * 4.0);
+        let view_h = (n as f32 * ROW_H).clamp(ROW_H, max_h.min(PICKER_ROWS * ROW_H));
+        let list = Scroller::new(width, view_h, false);
+        let req_cell = Rc::new(std::cell::Cell::new(req));
+        let mut rows_box = VBoxContainer::new_alloc();
+        rows_box.add_theme_constant_override("separation", 0);
+        rows_box.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        let symbols = picks.iter().any(|p| p.symbol.is_some());
+        let english_w = 230.0;
+        let mut slots = Vec::with_capacity(n);
+        for i in 0..n {
+            let mut symbol = cell(
+                "",
+                theme::ACCENT,
+                Some(&look.bold),
+                Some(if symbols { 22.0 } else { 0.0 }),
+            );
+            symbol.set_visible(symbols);
+            // a monster's class symbol, as the map draws it
+            i18n::verbatim(&symbol);
+            let mut name = cell("", theme::TEXT, Some(&look.body_bold), None);
+            name.add_theme_font_size_override("font_size", BODY_SIZE);
+            let mut english = cell("", theme::TEXT_DIM, Some(&look.body), Some(english_w));
+            english.add_theme_font_size_override("font_size", BODY_SIZE - 2);
+            english.set_clip_text(true);
+            english.set_horizontal_alignment(HorizontalAlignment::RIGHT);
+            // the engine's English for it, as the manual entry takes it
+            i18n::verbatim(&english);
+            let button = self.row_button_at(
+                req_cell.clone(),
+                i,
+                &[symbol.clone(), name.clone(), english.clone()],
+            );
+            rows_box.add_child(&button);
+            slots.push(PickSlot {
+                button,
+                symbol,
+                name,
+                english,
+            });
+        }
+        let mut scroll = list.scroll.clone();
+        scroll.add_child(&rows_box);
+        col.add_child(&scroll);
+        let mut more = theme::styled_label("", Face::Body, 15, theme::TEXT_DIM);
+        more.set_visible(false);
+        col.add_child(&more);
+        let wish_controls = wish_controls.map(|(count, buc, ench, shown, english)| {
+            col.add_child(&shown);
+            col.add_child(&english);
+            WishControls {
+                count,
+                buc,
+                ench,
+                shown,
+                english,
+            }
+        });
+        let hint = if ask == Ask::Wish {
+            tr!("picker-hint-wish")
+        } else {
+            tr!("picker-hint")
+        };
+        self.hint(&mut col, &hint, width);
+        let confirm = if ask == Ask::Wish {
+            tr!("picker-wish")
+        } else {
+            tr!("picker-choose")
+        };
+        self.buttons(
+            &mut col,
+            &[
+                (confirm, dialog_ui(req, DialogEvent::PickConfirm)),
+                (
+                    tr!("picker-manual"),
+                    dialog_ui(req, DialogEvent::PickManual),
+                ),
+                (
+                    tr!("dlg-cancel"),
+                    dialog_ui(req, DialogEvent::TextCancelled),
+                ),
+            ],
+        );
+        let mut picker = Picker {
+            ask,
+            picks,
+            shown: Vec::new(),
+            selected: None,
+            query: String::new(),
+            class,
+            classes,
+            class_option: class_option.clone(),
+            wish: Wish::default(),
+            wish_controls,
+            slots,
+            list,
+            more,
+            look,
+        };
+        picker.refilter();
+        let picker = Rc::new(RefCell::new(picker));
+        fill_picker(&picker);
+        // searching, the class and the builder are the picker's own: they
+        // never touch the game
+        let p = picker.clone();
+        edit.signals().text_changed().connect(move |text: GString| {
+            p.borrow_mut().retype(&text.to_string());
+            fill_picker(&p);
+        });
+        if let Some(ob) = class_option {
+            let p = picker.clone();
+            ob.signals().item_selected().connect(move |i: i64| {
+                {
+                    let mut pk = p.borrow_mut();
+                    pk.class = (i > 0)
+                        .then(|| pk.classes.get(i as usize - 1).copied())
+                        .flatten();
+                    pk.refilter();
+                }
+                fill_picker(&p);
+            });
+        }
+        for (b, count, buc, ench) in builder_buttons {
+            let p = picker.clone();
+            b.signals().pressed().connect(move || {
+                p.borrow_mut().adjust(count, buc, ench);
+                fill_picker(&p);
+            });
+        }
+        // a gamepad picks from the list; a keyboard types into the search
+        if !self.warming && !self.pad {
+            edit.call_deferred("grab_focus", &[]);
+        }
+        Some((Kind::Picker { edit, picker }, shade, panel))
     }
 
     fn open_show(
@@ -1759,7 +2252,21 @@ impl Dialogs {
                 }
                 (kind, shade, panel)
             }
-            Prompt::Text { query, name } => self.open_text(req, query, *name),
+            Prompt::Text { query, name } => {
+                // the engine's own question decides (the shown one may be
+                // translated)
+                let english = match original {
+                    Prompt::Text { query, .. } => query.as_str(),
+                    _ => query.as_str(),
+                };
+                let ask = (i18n::lang() != Lang::En)
+                    .then(|| pickers::ask_of(english))
+                    .flatten();
+                match ask.and_then(|a| self.open_picker(req, query, a, catalog)) {
+                    Some(opened) => opened,
+                    None => self.open_text(req, query, *name, pickers::is_engraving(english)),
+                }
+            }
             Prompt::ExtCmd => self.open_palette(req, catalog),
             Prompt::Show { title, lines } => self.open_show(title.as_deref(), lines, req),
             Prompt::MessageMenu { letter, mesg, pick } => {
@@ -1801,13 +2308,25 @@ impl Dialogs {
                 return;
             }
         };
+        let pad_room = add_pad_room(&panel);
         self.open = Some(Open {
             req,
             prompt: original.clone(),
             kind,
             shade,
             panel,
+            pad_room,
         });
+    }
+
+    /// Room at the bottom of the open dialog for a gamepad's hints, as
+    /// high as they are (0: no gamepad).
+    pub fn set_pad_room(&mut self, h: f32) {
+        if let Some(mut room) = self.open.as_ref().and_then(|o| o.pad_room.clone())
+            && room.get_custom_minimum_size().y != h
+        {
+            room.set_custom_minimum_size(Vector2::new(0.0, h));
+        }
     }
 
     pub fn is_open(&self) -> bool {
@@ -1818,7 +2337,7 @@ impl Dialogs {
     pub fn wants_text(&self) -> bool {
         matches!(
             self.open.as_ref().map(|o| &o.kind),
-            Some(Kind::Text { .. } | Kind::ExtCmd { .. })
+            Some(Kind::Text { .. } | Kind::ExtCmd { .. } | Kind::Picker { .. })
         )
     }
 
@@ -1833,6 +2352,7 @@ impl Dialogs {
             Kind::Menu(_) => "menu",
             Kind::Choice { .. } => "choice",
             Kind::Text { .. } => "text",
+            Kind::Picker { .. } => "picker",
             Kind::ExtCmd { .. } => "extcmd",
             Kind::Show { .. } => "show",
             Kind::MessageMenu { .. } => "message",
@@ -1958,15 +2478,21 @@ impl Dialogs {
         let Kind::Text {
             edit,
             osk: Some(osk),
+            engrave,
         } = &mut open.kind
         else {
             return None;
         };
         let text = edit.get_text().to_string();
+        let sent = if *engrave {
+            pickers::latin(&text)
+        } else {
+            text.clone()
+        };
         match op {
             OskOp::Move(dx, dy) => osk.step(dx, dy, &self.look),
             OskOp::Layout => osk.switch(),
-            OskOp::Submit => return Some(Reply::Text(truncate_bytes(&text, MAX_TEXT_BYTES))),
+            OskOp::Submit => return Some(Reply::Text(truncate_bytes(&sent, MAX_TEXT_BYTES))),
             OskOp::Back if text.is_empty() => return Some(open.prompt.escape_reply()),
             OskOp::Back => {
                 let mut t = text;
@@ -1988,7 +2514,7 @@ impl Dialogs {
                 }
                 OskKey::Shift => osk.shift(),
                 OskKey::Layout => osk.switch(),
-                OskKey::Ok => return Some(Reply::Text(truncate_bytes(&text, MAX_TEXT_BYTES))),
+                OskKey::Ok => return Some(Reply::Text(truncate_bytes(&sent, MAX_TEXT_BYTES))),
             },
         }
         None
@@ -2057,9 +2583,9 @@ impl Dialogs {
     /// The text field's contents.
     pub fn text(&self) -> Option<String> {
         match self.open.as_ref().map(|o| &o.kind) {
-            Some(Kind::Text { edit, .. } | Kind::ExtCmd { edit, .. }) => {
-                Some(edit.get_text().to_string())
-            }
+            Some(
+                Kind::Text { edit, .. } | Kind::ExtCmd { edit, .. } | Kind::Picker { edit, .. },
+            ) => Some(edit.get_text().to_string()),
             _ => None,
         }
     }
@@ -2067,9 +2593,82 @@ impl Dialogs {
     /// Does the text field have the keyboard?
     pub fn text_has_focus(&self) -> bool {
         match self.open.as_ref().map(|o| &o.kind) {
-            Some(Kind::Text { edit, .. } | Kind::ExtCmd { edit, .. }) => edit.has_focus(),
+            Some(
+                Kind::Text { edit, .. } | Kind::ExtCmd { edit, .. } | Kind::Picker { edit, .. },
+            ) => edit.has_focus(),
             _ => false,
         }
+    }
+
+    /// The open picker is a wish's (its builder takes a gamepad's X and Y).
+    pub fn pick_is_wish(&self) -> bool {
+        matches!(self.open.as_ref().map(|o| &o.kind), Some(Kind::Picker { picker, .. }) if picker.borrow().ask == Ask::Wish)
+    }
+
+    /// The open picker's list, as the English the engine knows (self-tests).
+    pub fn pick_list(&self) -> Option<Vec<String>> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::Picker { picker, .. }) => {
+                let p = picker.borrow();
+                Some(
+                    p.shown
+                        .iter()
+                        .map(|&i| p.picks[i].english.clone())
+                        .collect(),
+                )
+            }
+            _ => None,
+        }
+    }
+
+    /// What the open picker would send now (self-tests).
+    pub fn pick_reply(&self) -> Option<String> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::Picker { picker, .. }) => {
+                let p = picker.borrow();
+                p.chosen().map(|i| p.reply(i))
+            }
+            _ => None,
+        }
+    }
+
+    /// Type `text` into the open picker's search, as a player would.
+    pub fn type_pick(&mut self, text: &str) -> bool {
+        let Some(Kind::Picker { edit, picker }) = self.open.as_mut().map(|o| &mut o.kind) else {
+            return false;
+        };
+        edit.set_text(text);
+        picker.borrow_mut().retype(text);
+        fill_picker(picker);
+        true
+    }
+
+    /// A gamepad's button in a picker: the wish's blessing or enchantment,
+    /// or the answer typed in English instead.
+    pub fn pick_op(&mut self, op: crate::gamepad::PickOp) -> Option<Reply> {
+        use crate::gamepad::PickOp;
+        let Some(Kind::Picker { picker, .. }) = self.open.as_ref().map(|o| &o.kind) else {
+            return None;
+        };
+        let picker = picker.clone();
+        match op {
+            PickOp::Buc => picker.borrow_mut().adjust(0, true, 0),
+            PickOp::Ench => {
+                let mut p = picker.borrow_mut();
+                // up to the most, then round to the least
+                if p.wish.ench.unwrap_or(0) >= pickers::MAX_ENCH {
+                    p.wish.ench = Some(-pickers::MAX_ENCH);
+                } else {
+                    p.adjust(0, false, 1);
+                }
+            }
+            PickOp::Manual => {
+                let req = self.open.as_ref()?.req;
+                return self.dialog_event(req, &DialogEvent::PickManual);
+            }
+        }
+        fill_picker(&picker);
+        None
     }
 
     pub fn key(&mut self, input: &KeyInput) -> Option<Reply> {
@@ -2107,6 +2706,32 @@ impl Dialogs {
             }
             // a held key never answers: Esc cancels only when pressed
             Kind::Text { .. } => (input.key == Key::Escape && !input.echo).then_some(escape),
+            Kind::Picker { edit, picker } => {
+                let typing = edit.has_focus();
+                {
+                    let mut p = picker.borrow_mut();
+                    match input.key {
+                        Key::Escape if input.echo => return None,
+                        Key::Escape => return Some(escape),
+                        // a gamepad's A (a keyboard's Enter goes to the field)
+                        Key::Enter | Key::KeypadEnter if !input.echo => {
+                            return p.chosen().map(|i| Reply::Text(p.reply(i)));
+                        }
+                        Key::Up => p.step(-1),
+                        Key::Down => p.step(1),
+                        Key::PageUp => p.step(-10),
+                        Key::PageDown => p.step(10),
+                        Key::Tab => p.turn_class(if input.mods.shift { -1 } else { 1 }),
+                        // the d-pad's ← → count a wish (the field's caret
+                        // takes them while typing)
+                        Key::Left if !typing && p.ask == Ask::Wish => p.adjust(-1, false, 0),
+                        Key::Right if !typing && p.ask == Ask::Wish => p.adjust(1, false, 0),
+                        _ => return None,
+                    }
+                }
+                fill_picker(picker);
+                None
+            }
             Kind::ExtCmd { edit, palette, .. } => {
                 let step = match input.key {
                     Key::Escape | Key::Tab if input.echo => return None,
@@ -2175,6 +2800,29 @@ impl Dialogs {
     }
 
     pub fn dialog_event(&mut self, req: u64, ev: &DialogEvent) -> Option<Reply> {
+        // a picker given up for the English the engine reads: the plain
+        // question in its place
+        if matches!(ev, DialogEvent::PickManual) {
+            let open = self
+                .open
+                .take_if(|o| o.req == req && matches!(o.kind, Kind::Picker { .. }))?;
+            let prompt = open.prompt.clone();
+            self.retire(open);
+            let Prompt::Text { query, name } = shown_prompt(&prompt) else {
+                return None;
+            };
+            let (kind, shade, panel) = self.open_text(req, &query, name, false);
+            let pad_room = add_pad_room(&panel);
+            self.open = Some(Open {
+                req,
+                prompt,
+                kind,
+                shade,
+                panel,
+                pad_room,
+            });
+            return None;
+        }
         // a key of the on-screen keyboard clicked: as if A typed it
         if let DialogEvent::OskKey(r, c) = ev {
             if let Some(Open {
@@ -2202,9 +2850,33 @@ impl Dialogs {
             (Kind::Choice { allowed, .. }, DialogEvent::Choice(c)) => {
                 allowed.contains(c).then_some(Reply::Char(*c as i32))
             }
-            (Kind::Text { .. }, DialogEvent::TextSubmitted(s)) => {
-                Some(Reply::Text(truncate_bytes(s, MAX_TEXT_BYTES)))
+            (Kind::Text { engrave, .. }, DialogEvent::TextSubmitted(s)) => {
+                let s = if *engrave {
+                    pickers::latin(s)
+                } else {
+                    s.clone()
+                };
+                Some(Reply::Text(truncate_bytes(&s, MAX_TEXT_BYTES)))
             }
+            (
+                Kind::Picker { picker, .. },
+                DialogEvent::TextSubmitted(_) | DialogEvent::PickConfirm,
+            ) => {
+                let p = picker.borrow();
+                p.chosen()
+                    .or_else(|| {
+                        p.shown
+                            .first()
+                            .copied()
+                            .filter(|_| !p.query.trim().is_empty())
+                    })
+                    .map(|i| Reply::Text(p.reply(i)))
+            }
+            (Kind::Picker { picker, .. }, DialogEvent::MenuClick(i)) => {
+                let p = picker.borrow();
+                p.shown.get(*i).map(|&i| Reply::Text(p.reply(i)))
+            }
+            (Kind::Picker { .. }, DialogEvent::TextCancelled) => Some(escape),
             (Kind::Text { .. }, DialogEvent::TextCancelled) => Some(escape),
             (Kind::ExtCmd { palette, edit, .. }, DialogEvent::TextSubmitted(text)) => {
                 let p = palette.borrow();
@@ -2627,6 +3299,16 @@ impl Osk {
         self.upper = !self.upper;
         self.relabel();
     }
+}
+
+/// An empty row at the end of a dialog's column: room a gamepad's hints
+/// take inside the panel (`Dialogs::set_pad_room`).
+fn add_pad_room(panel: &Gd<PanelContainer>) -> Option<Gd<Control>> {
+    let mut col = panel.get_child(0)?.try_cast::<VBoxContainer>().ok()?;
+    let mut room = Control::new_alloc();
+    room.set_mouse_filter(MouseFilter::IGNORE);
+    col.add_child(&room);
+    Some(room)
 }
 
 fn dialog_ui(req: u64, ev: DialogEvent) -> UiEvent {

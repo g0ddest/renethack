@@ -279,6 +279,11 @@ pub enum PadCtx {
     },
     /// A text field: the on-screen keyboard.
     Text,
+    /// A picker of names (a wish, a monster): the list and, for a wish,
+    /// its builder.
+    Picker {
+        wish: bool,
+    },
     /// The inventory panel: browse, a question, or a menu of items.
     PanelBrowse,
     PanelSelect,
@@ -302,6 +307,15 @@ pub enum OskOp {
     Back,
     Layout,
     Submit,
+}
+
+/// A picker's buttons beyond the list: the wish's blessing and
+/// enchantment, and the answer typed in English instead.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PickOp {
+    Buc,
+    Ench,
+    Manual,
 }
 
 /// What the game does for the pad.
@@ -329,6 +343,7 @@ pub enum PadOut {
     RadialHover(Option<usize>),
     RadialClose(Option<usize>),
     Osk(OskOp),
+    Pick(PickOp),
 }
 
 fn key(k: Key) -> KeyInput {
@@ -500,7 +515,10 @@ impl Pad {
                 }
                 // a bumper alone: filters in the inventory, pages in menus
                 match ctx {
-                    PadCtx::PanelBrowse | PadCtx::PanelSelect | PadCtx::PanelMenu => {
+                    PadCtx::PanelBrowse
+                    | PadCtx::PanelSelect
+                    | PadCtx::PanelMenu
+                    | PadCtx::Picker { .. } => {
                         out.push(PadOut::Key(KeyInput {
                             key: Key::Tab,
                             mods: Mods {
@@ -546,13 +564,16 @@ impl Pad {
             (B, _) => PadOut::Key(key(Key::Escape)),
             (X, PadCtx::World) => PadOut::Key(ch('s')),
             (X, PadCtx::PanelBrowse) => PadOut::Key(ch(' ')),
+            (X, PadCtx::Picker { wish: true }) => PadOut::Pick(PickOp::Buc),
             (X, _) => return out,
             (Y, PadCtx::World) => PadOut::Key(ch('i')),
             (Y, PadCtx::PanelBrowse) => PadOut::Carry,
             (Y, PadCtx::Text) => PadOut::Osk(OskOp::Layout),
+            (Y, PadCtx::Picker { wish: true }) => PadOut::Pick(PickOp::Ench),
             (Y, _) => return out,
             (Start, PadCtx::World) => PadOut::Key(ch('#')),
             (Start, PadCtx::Text) => PadOut::Osk(OskOp::Submit),
+            (Start, PadCtx::Picker { .. }) => PadOut::Pick(PickOp::Manual),
             (Start, PadCtx::PanelMenu | PadCtx::Menu { .. }) => PadOut::Key(key(Key::Enter)),
             (Start, _) => PadOut::Key(key(Key::Enter)),
             (Back, _) => PadOut::History,

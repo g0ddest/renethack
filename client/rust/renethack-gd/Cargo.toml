@@ -19,7 +19,8 @@ nh-protocol = { path = "../nh-protocol" }
 nh-link = { path = "../nh-link" }
 nh-world = { path = "../nh-world" }
 nh-art = { path = "../nh-art" }
-# the engine's texts in Russian
+# the engine's texts in Russian, and the lexicon's names for the
+# Russian input pickers
 nh-i18n = { path = "../nh-i18n" }
 steamworks = { version = "0.13", optional = true }
 # the client's own words in the player's language (Project Fluent)

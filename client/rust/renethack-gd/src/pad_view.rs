@@ -113,6 +113,20 @@ pub fn hints(ctx: PadCtx) -> Vec<(Vec<PadButton>, &'static str)> {
             (vec![Y], "hint-layout"),
             (vec![Start], "hint-ok"),
         ],
+        PadCtx::Picker { wish: true } => vec![
+            (vec![A], "hint-wish"),
+            (vec![Left, Right], "hint-count"),
+            (vec![X], "hint-blessing"),
+            (vec![Y], "hint-enchantment"),
+            (vec![Lb, Rb], "hint-class"),
+            (vec![Start], "hint-english"),
+            (vec![B], "hint-cancel"),
+        ],
+        PadCtx::Picker { wish: false } => vec![
+            (vec![A], "hint-choose"),
+            (vec![Start], "hint-english"),
+            (vec![B], "hint-cancel"),
+        ],
         _ => vec![(vec![A], "hint-ok"), (vec![B], "hint-back")],
     }
 }
@@ -333,6 +347,15 @@ impl PadView {
                 [0.0, 1.0, 1.0, 1.0],
                 [log.end().x.max(0.0) + 24.0, -232.0, -24.0, -200.0],
             ),
+        }
+    }
+
+    /// How high the strip is (0: hidden): the room a dialog keeps for it.
+    pub fn strip_height(&self) -> f32 {
+        if self.strip.is_visible() {
+            self.strip.get_size().y
+        } else {
+            0.0
         }
     }
 

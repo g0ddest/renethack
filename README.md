@@ -180,6 +180,17 @@ once and is kept in the profile (`profile.json` in the playground) and in
 the character's UI state. At start: `--lang=ru`, else `RENETHACK_LANG`,
 else the profile, else the system's language. The `language` scenario
 switches in the settings and back, the log keeping the engine's English.
+Where the engine asks for the name of a thing in English (a wish, a
+genocide, a polymorph, what to write with a magic marker), a language
+other than English opens a picker instead: the lexicon's names
+(`client/i18n/lexicon.ru.toml`) searched by any of their forms, and for a
+wish a builder of count, blessing and enchantment that also reads them from
+what is typed ("благословенный +2 длинный меч"); the engine is sent the
+English ("blessed +2 long sword"), and "Ввести по-английски" gives the
+plain question back. An engraving goes in Latin letters (the engine wears
+an engraving away a byte at a time): Cyrillic is transliterated, and
+"Элберет" is written "Elbereth". The `pickers` scenario plays them in a
+debug-mode game.
 `--lang=qps` is a pseudo-language for the self-tests: words through the
 catalogs show ⟦so⟧ and the engine's ⟪so⟫, and a screen a scenario shoots
 fails on any word outside the marks. `make test-client` also runs

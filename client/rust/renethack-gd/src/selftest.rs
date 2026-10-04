@@ -28,6 +28,8 @@ use nh_link::save_exists;
 
 #[path = "selftest_hero.rs"]
 mod hero;
+#[path = "selftest_input.rs"]
+mod input_ru;
 #[path = "selftest_world.rs"]
 mod world_looks;
 
@@ -4011,6 +4013,7 @@ impl SelfTest {
             "combat" => hero::combat(),
             "roles" => hero::roles(),
             "branches" => world_looks::branches(),
+            "pickers" => input_ru::pickers(),
             "inventory" => inventory(),
             "gamepad" => gamepad(),
             "bar" => bar(),

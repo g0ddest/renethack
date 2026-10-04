@@ -25,6 +25,7 @@ mod minimap;
 mod orb;
 mod pad_view;
 mod paths;
+mod pickers;
 mod rehearsal;
 mod screens;
 mod selftest;

@@ -445,3 +445,47 @@ radial-save = Save
 ## The action bar, more
 
 bar-slot-empty = Slot { $key } (empty)
+
+## Pickers of names: a wish, a monster, a class (Russian input)
+
+picker-none = Nothing matches
+picker-more = { $n } more: narrow the search
+picker-class = Class
+picker-class-all = All classes
+picker-class-weapon = Weapons
+picker-class-armor = Armor
+picker-class-ring = Rings
+picker-class-amulet = Amulets
+picker-class-tool = Tools
+picker-class-food = Food
+picker-class-potion = Potions
+picker-class-scroll = Scrolls
+picker-class-spellbook = Spellbooks
+picker-class-wand = Wands
+picker-class-coin = Coins
+picker-class-gem = Gems and stones
+picker-class-heavy = Boulders, statues, iron
+picker-placeholder-wish = For example: blessed +2 long sword
+picker-placeholder-monster = A monster's name
+picker-placeholder-class = A class, or one of its monsters
+picker-placeholder-write = What to write
+picker-hint-wish = Type the wish: a count, blessed or cursed, +enchantment, the thing · Enter: wish · ↑↓: choose · Esc: cancel
+picker-hint = Enter: choose · ↑↓: move · Esc: cancel
+picker-wish = Wish
+picker-choose = Choose
+picker-manual = Type in English
+wish-count = Count
+wish-ench = Enchantment
+wish-buc-any = Blessing: any
+wish-buc-blessed = Blessed
+wish-buc-uncursed = Uncursed
+wish-buc-cursed = Cursed
+wish-shown = You wish for: { $wish }
+wish-pick = Choose the thing in the list
+text-latin = Engraved in Latin letters: { $text }
+hint-wish = Wish
+hint-count = Count
+hint-blessing = Blessing
+hint-enchantment = Enchantment
+hint-class = Class
+hint-english = In English

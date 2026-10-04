@@ -1689,6 +1689,9 @@ impl RenethackGame {
                 },
                 Some("choice") => PadCtx::Choice,
                 Some("text") => PadCtx::Text,
+                Some("picker") => PadCtx::Picker {
+                    wish: ui.dialogs.pick_is_wish(),
+                },
                 Some("message") => match ui.dialogs.message_letter() {
                     Some(letter) => PadCtx::Message { letter },
                     None => PadCtx::Other,
@@ -1762,6 +1765,7 @@ impl RenethackGame {
                     }
                 }
                 PadOut::Osk(op) => self.osk(op),
+                PadOut::Pick(op) => self.pick_op(op),
             }
         }
     }
@@ -1774,6 +1778,18 @@ impl RenethackGame {
             return;
         }
         if let Some(r) = ui.dialogs.osk(op) {
+            self.reply(r);
+        }
+    }
+
+    /// A picker's button (a gamepad's).
+    fn pick_op(&mut self, op: crate::gamepad::PickOp) {
+        let pending = self.pending.as_ref().map(|(id, _)| *id);
+        let ui = self.ui_mut();
+        if ui.dialogs.open_req() != pending {
+            return;
+        }
+        if let Some(r) = ui.dialogs.pick_op(op) {
             self.reply(r);
         }
     }
@@ -1982,8 +1998,19 @@ impl RenethackGame {
         ui.dialogs.set_pad(pad.is_some());
         ui.inventory.set_pad(pad);
         ui.pad.show_hints(pad.map(|k| (k, ctx)));
-        ui.pad
-            .dock_hints(ui.inventory.frame_rect(), ui.hud.log_rect());
+        // the hints go into the panel on top: a dialog's, else the
+        // inventory's, which keep room for them
+        let panel = ui
+            .dialogs
+            .panel_rect()
+            .or_else(|| ui.inventory.frame_rect());
+        ui.pad.dock_hints(panel, ui.hud.log_rect());
+        let room = if pad.is_some() {
+            ui.pad.strip_height() + 6.0
+        } else {
+            0.0
+        };
+        ui.dialogs.set_pad_room(room);
         let labels = pad.map(|k| (k, self.pad.page()));
         if self.pad_labels != Some(labels) {
             self.pad_labels = Some(labels);

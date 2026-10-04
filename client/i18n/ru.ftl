@@ -450,3 +450,47 @@ radial-save = Сохранить
 ## Панель действий, ещё
 
 bar-slot-empty = Ячейка { $key } (пусто)
+
+## Выбор названий: желание, чудовище, класс (ввод по-русски)
+
+picker-none = Ничего не найдено
+picker-more = Ещё { $n }: уточните поиск
+picker-class = Класс
+picker-class-all = Все классы
+picker-class-weapon = Оружие
+picker-class-armor = Доспехи
+picker-class-ring = Кольца
+picker-class-amulet = Амулеты
+picker-class-tool = Инструменты
+picker-class-food = Еда
+picker-class-potion = Зелья
+picker-class-scroll = Свитки
+picker-class-spellbook = Книги заклинаний
+picker-class-wand = Жезлы
+picker-class-coin = Монеты
+picker-class-gem = Самоцветы и камни
+picker-class-heavy = Валуны, статуи, железо
+picker-placeholder-wish = Например: благословенный +2 длинный меч
+picker-placeholder-monster = Название чудовища
+picker-placeholder-class = Класс или одно из его чудовищ
+picker-placeholder-write = Что написать
+picker-hint-wish = Пишите желание: количество, благословение, +зачарование, предмет · Enter: загадать · ↑↓: выбор · Esc: отмена
+picker-hint = Enter: выбрать · ↑↓: выбор · Esc: отмена
+picker-wish = Загадать
+picker-choose = Выбрать
+picker-manual = Ввести по-английски
+wish-count = Количество
+wish-ench = Зачарование
+wish-buc-any = Благословение: любое
+wish-buc-blessed = Благословенный
+wish-buc-uncursed = Непроклятый
+wish-buc-cursed = Проклятый
+wish-shown = Желание: { $wish }
+wish-pick = Выберите предмет в списке
+text-latin = Будет написано латиницей: { $text }
+hint-wish = Загадать
+hint-count = Количество
+hint-blessing = Благословение
+hint-enchantment = Зачарование
+hint-class = Класс
+hint-english = По-английски
