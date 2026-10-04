@@ -127,11 +127,12 @@ impl Template {
     }
 
     /// Is conversion `i` a name the player typed (kind "player": the
-    /// hero's name, a fruit's), shown as typed?
+    /// hero's name, a fruit's; a quest text's %p), shown as typed?
     pub fn is_typed(&self, i: usize) -> bool {
-        self.kinds
-            .get(i)
-            .is_some_and(|k| k.split('|').all(|p| p == "player"))
+        self.kinds.get(i).is_some_and(|k| {
+            k.split('|')
+                .all(|p| p == "player" || p.starts_with("quest:p"))
+        })
     }
 
     /// The number of conversions (placeholders {1}..{n} of a translation).
