@@ -2,7 +2,8 @@
 //!
 //! 1. A message with its format (P7): the template with that format; a
 //!    template derived from it that matches the text says more (a literal
-//!    argument put in), so it goes first.
+//!    argument put in), so it goes first. Either takes P7's arguments,
+//!    which split the text truly where two conversions touch.
 //! 2. Else the text matched against every template (the Sprintf pieces
 //!    among them).
 //! 3. Else the English text, reported as unknown.
@@ -10,7 +11,8 @@
 //! An argument of a template becomes, in this order: a translated piece of
 //! the catalog ("digging"), a name the lexicon parses ("the newt"), a text
 //! another template makes (a buffer the engine built), any name, or the
-//! English text (the translation is then partial).
+//! English text (the translation is then partial). A name the player typed
+//! (the hero's, a fruit's) is shown as typed.
 
 use crate::catalog::{Catalog, Channel, Match, Template};
 use crate::format::{ConvKind, Segment, convs};
@@ -127,10 +129,17 @@ impl Translator {
         {
             let derived = self.catalog.derived(i);
             let found = self.catalog.best_of(derived, text, Channel::Message);
-            if let Some(m) = &found
-                && let Some(out) = self.render_match(m, 0)
-            {
-                return out;
+            if let Some(m) = &found {
+                // the arguments P7 sent split the text truly ("the
+                // gnome's" | "hand"); the text's captures only guess
+                let base = &self.catalog.templates()[i];
+                let rendered = match p7_captures(base, m.template, args) {
+                    Some(captures) => self.render_captures(m.template, &captures, 0),
+                    None => self.render_match(m, 0),
+                };
+                if let Some(out) = rendered {
+                    return out;
+                }
             }
             // a format of conversions alone ("%s %s%s%s") says nothing its
             // derived templates did not: the text decides
@@ -280,14 +289,19 @@ impl Translator {
 
     /// The Russian of a matched template, None when it has none.
     fn render_match(&self, m: &Match, depth: usize) -> Option<Output> {
-        let t = m.template;
+        self.render_captures(m.template, &m.captures, depth)
+    }
+
+    /// The Russian of template `t` with its conversions printed as
+    /// `captures`, None when it has none.
+    fn render_captures(&self, t: &Template, captures: &[String], depth: usize) -> Option<Output> {
         let ru = self.russian_of(t)?;
         let mut whole = true;
         let values: Vec<Value> = convs(&t.segments)
-            .zip(&m.captures)
+            .zip(captures)
             .enumerate()
             .map(|(i, (c, cap))| {
-                let (v, ok) = self.value(c.kind, cap, t.name_kind(i), depth);
+                let (v, ok) = self.arg_value(t, i, c.kind, cap, depth);
                 whole &= ok;
                 v
             })
@@ -299,34 +313,7 @@ impl Translator {
     /// when it has none or the arguments do not fit its conversions.
     fn render_args(&self, index: usize, args: &[Arg]) -> Option<Output> {
         let t = &self.catalog.templates()[index];
-        let ru = self.russian_of(t)?;
-        let cs: Vec<_> = convs(&t.segments).collect();
-        let stars: usize = cs.iter().map(|c| c.stars).sum();
-        // a `*` width or precision takes an argument of its own, unless the
-        // host left it out
-        let with_stars = args.len() == cs.len() + stars && stars > 0;
-        if !with_stars && args.len() != cs.len() {
-            return None;
-        }
-        let mut whole = true;
-        let mut k = 0;
-        let mut values = Vec::new();
-        for (i, c) in cs.iter().enumerate() {
-            if with_stars {
-                k += c.stars;
-            }
-            let shown = match &args[k] {
-                Arg::Str(s) => s.clone(),
-                Arg::Int(n) => n.to_string(),
-                Arg::Num(x) => x.to_string(),
-                Arg::Null => "(null)".to_string(),
-            };
-            k += 1;
-            let (v, ok) = self.value(c.kind, &shown, t.name_kind(i), 0);
-            whole &= ok;
-            values.push(v);
-        }
-        Some(self.output(t, &ru, &values, whole, 0))
+        self.render_captures(t, &shown_args(t, args)?, 0)
     }
 
     fn output(
@@ -360,6 +347,22 @@ impl Translator {
             Segment::Conv(_) => true,
         });
         wordless.then(|| identity(t))
+    }
+
+    /// Conversion `i` of template `t` printed as `shown`: its value, and
+    /// whether it is Russian. A name the player typed is shown as typed.
+    fn arg_value(
+        &self,
+        t: &Template,
+        i: usize,
+        kind: ConvKind,
+        shown: &str,
+        depth: usize,
+    ) -> (Value, bool) {
+        if t.is_typed(i) {
+            return (Value::Text(shown.to_string()), true);
+        }
+        self.value(kind, shown, t.name_kind(i), depth)
     }
 
     /// An argument's value, and whether it is Russian.
@@ -412,9 +415,9 @@ impl Translator {
                 return (Value::Phrase(tr.phrase()), true);
             }
         }
-        if name != NameKind::Any
-            && let Some(p) = self.names.parse(name, shown)
-        {
+        // a name read whole is the surest reading, even of a slot that
+        // says nothing of its kind: "the goblin" is no "the %s"
+        if let Some(p) = self.names.parse(name, shown) {
             return (Value::Phrase(p), true);
         }
         let found = if depth < MAX_NESTING {
@@ -441,6 +444,126 @@ impl Translator {
         // what stays English: a name or a code of one word (a pet's name,
         // inventory letters "aefgh") is shown as it is; words are not
         (Value::Text(shown.to_string()), verbatim(shown))
+    }
+}
+
+/// The arguments P7 sent for template `t`, one printed text per
+/// conversion; None when they do not fit its conversions. A `*` width or
+/// precision takes an argument of its own, unless the host left it out.
+fn shown_args(t: &Template, args: &[Arg]) -> Option<Vec<String>> {
+    let cs: Vec<_> = convs(&t.segments).collect();
+    let stars: usize = cs.iter().map(|c| c.stars).sum();
+    let with_stars = args.len() == cs.len() + stars && stars > 0;
+    if !with_stars && args.len() != cs.len() {
+        return None;
+    }
+    let mut k = 0;
+    let mut out = Vec::new();
+    for c in &cs {
+        if with_stars {
+            k += c.stars;
+        }
+        out.push(match &args[k] {
+            Arg::Str(s) => s.clone(),
+            Arg::Int(n) => n.to_string(),
+            Arg::Num(x) => x.to_string(),
+            Arg::Null => "(null)".to_string(),
+        });
+        k += 1;
+    }
+    Some(out)
+}
+
+/// The printed conversions of `derived`, a template derived from `base`,
+/// taken from P7's arguments for `base`: None when the two do not line
+/// up. `derived` is `base` with conversions put in as literal text
+/// ("%s %s to %s %s!" → "%s welds itself to %s %s!", P7's arguments "The
+/// crossbow welds", "itself", "the gnome's", "hand"): each conversion of
+/// `base` became a run of `derived`, literal text and conversions, and
+/// its argument must read as that run.
+fn p7_captures(base: &Template, derived: &Template, args: &[Arg]) -> Option<Vec<String>> {
+    let shown = shown_args(base, args)?;
+    let mut runs = Vec::new();
+    search(
+        &toks(&base.segments),
+        &toks(&derived.segments),
+        &mut runs,
+        &shown,
+    )
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum Tok {
+    Conv,
+    Char(char),
+}
+
+fn toks(segments: &[Segment]) -> Vec<Tok> {
+    segments
+        .iter()
+        .flat_map(|s| match s {
+            Segment::Lit(l) => l.chars().map(Tok::Char).collect::<Vec<_>>(),
+            Segment::Conv(_) => vec![Tok::Conv],
+        })
+        .collect()
+}
+
+/// Lines up the base's tokens `b` with the derived template's `d`, each
+/// base conversion with a run of `d` (`runs`, in order); the derived
+/// conversions' texts when every argument reads as its run.
+fn search<'d>(
+    b: &[Tok],
+    d: &'d [Tok],
+    runs: &mut Vec<&'d [Tok]>,
+    shown: &[String],
+) -> Option<Vec<String>> {
+    let Some(first) = b.first() else {
+        return d.is_empty().then(|| captures(runs, shown)).flatten();
+    };
+    if let Tok::Char(c) = first {
+        return (d.first() == Some(&Tok::Char(*c)))
+            .then(|| search(&b[1..], &d[1..], runs, shown))
+            .flatten();
+    }
+    let arg = shown.get(runs.len())?;
+    for n in 0..=d.len() {
+        // a run the argument does not read as goes no further
+        if fit(&d[..n], arg).is_none() {
+            continue;
+        }
+        runs.push(&d[..n]);
+        if let Some(found) = search(&b[1..], &d[n..], runs, shown) {
+            return Some(found);
+        }
+        runs.pop();
+    }
+    None
+}
+
+/// Each argument read as its run: the texts of the run's conversions, in
+/// order; None when an argument does not read so.
+fn captures(runs: &[&[Tok]], shown: &[String]) -> Option<Vec<String>> {
+    let mut out = Vec::new();
+    for (run, arg) in runs.iter().zip(shown) {
+        out.extend(fit(run, arg)?);
+    }
+    (runs.len() == shown.len()).then_some(out)
+}
+
+/// `text` read as `run`: its conversions' texts, the shortest first.
+fn fit(run: &[Tok], text: &str) -> Option<Vec<String>> {
+    match run.first() {
+        None => text.is_empty().then(Vec::new),
+        Some(Tok::Char(c)) => fit(&run[1..], text.strip_prefix(*c)?),
+        Some(Tok::Conv) => text
+            .char_indices()
+            .map(|(i, _)| i)
+            .chain([text.len()])
+            .find_map(|end| {
+                let mut rest = fit(&run[1..], &text[end..])?;
+                rest.insert(0, text[..end].to_string());
+                Some(rest)
+            }),
     }
 }
 
@@ -533,4 +656,56 @@ fn identity(t: &Template) -> RuTemplate {
         }
     }
     RuTemplate { parts }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::format::parse_format;
+
+    fn lined_up(base: &str, derived: &str, args: &[&str]) -> Option<Vec<String>> {
+        let shown: Vec<String> = args.iter().map(|a| a.to_string()).collect();
+        let derived = toks(&parse_format(derived));
+        search(
+            &toks(&parse_format(base)),
+            &derived,
+            &mut Vec::new(),
+            &shown,
+        )
+    }
+
+    fn texts(v: &[&str]) -> Option<Vec<String>> {
+        Some(v.iter().map(|s| s.to_string()).collect())
+    }
+
+    #[test]
+    fn a_derived_template_takes_p7_s_arguments() {
+        // the verb put in with its object, the touching names split as P7 did
+        assert_eq!(
+            lined_up(
+                "%s %s to %s %s!",
+                "%s welds itself to %s %s!",
+                &["The crossbow welds", "itself", "the gnome's", "hand"]
+            ),
+            texts(&["The crossbow", "the gnome's", "hand"])
+        );
+        assert_eq!(
+            lined_up("%s %s%s%s", "%s bites!", &["The newt", "bites", "", "!"]),
+            texts(&["The newt"])
+        );
+        // one argument holding several conversions of the derived template
+        assert_eq!(
+            lined_up(
+                "%s %s, welcome!  You are a%s.",
+                "%s %s, welcome!  You are a %s male %s %s.",
+                &["Konnichi wa", "Hero", " lawful male human Samurai"]
+            ),
+            texts(&["Konnichi wa", "Hero", "lawful", "human", "Samurai"])
+        );
+        // arguments that do not read as the derived template says
+        assert_eq!(
+            lined_up("%s %s%s%s", "%s bites!", &["The newt", "stings", "", "!"]),
+            None
+        );
+    }
 }

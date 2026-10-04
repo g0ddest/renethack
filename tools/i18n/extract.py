@@ -866,6 +866,9 @@ class Context:
                 return kinds.pop()
             return "text"
         text = source_text(toks)
+        if re.search(r"\b(plname|pl_fruit)\b", text):
+            # typed by the player: shown as typed
+            return "player"
         if re.search(r"pmnames\s*\[|^mons\[", text):
             return "species"
         if re.search(r"oc_name|oc_descr|OBJ_NAME|OBJ_DESCR", text):

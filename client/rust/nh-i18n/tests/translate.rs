@@ -92,9 +92,10 @@ fn messages_by_their_text() {
 #[test]
 fn messages_with_their_format() {
     let t = translator();
-    // P7: hitmsg's generic format; the derived "%s bites!" says more
+    // P7: hitmsg's generic format; the derived "%s bites!" says more, its
+    // conversion lined up with P7's first argument
     let args = [
-        Arg::Str("The jackal".into()),
+        Arg::Str("The newt".into()),
         Arg::Str("bites".into()),
         Arg::Str(String::new()),
         Arg::Str("!".into()),

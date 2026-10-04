@@ -126,6 +126,14 @@ impl Template {
         }
     }
 
+    /// Is conversion `i` a name the player typed (kind "player": the
+    /// hero's name, a fruit's), shown as typed?
+    pub fn is_typed(&self, i: usize) -> bool {
+        self.kinds
+            .get(i)
+            .is_some_and(|k| k.split('|').all(|p| p == "player"))
+    }
+
     /// The number of conversions (placeholders {1}..{n} of a translation).
     pub fn arity(&self) -> usize {
         convs(&self.segments).count()
