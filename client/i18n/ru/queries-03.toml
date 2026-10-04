@@ -1,0 +1,718 @@
+# R6, batch 3: questions put together from pieces: the smell of food,
+# dipping, a shopkeeper's offers and bills, a metallivore's meals.
+
+[bb9650ffe6e3]
+en = "Get bones?"
+ru = "Загрузить кости?"
+
+[37b3acc2a5df]
+en = "Unlink bones?"
+ru = "Удалить кости?"
+
+[451a0ce00d53]
+en = "Choose %s text value to match:"
+ru = "Выберите текст для {1}:"
+
+[ab6b5c6209b5]
+en = "Enter %s text value to match:"
+ru = "Введите текст для {1}:"
+
+[f4b9a4e76e90]
+en = "Enter value for %s threshold:"
+ru = "Введите порог для {1}:"
+
+[ff42bbd593e6]
+en = "Enter percentage value for %s threshold:"
+ru = "Введите порог для {1} в процентах:"
+
+[f5a25a6cb6eb]
+en = "Eat it?"
+ru = "Съесть?"
+
+[3d2608e1d393]
+en = "%s smells like it could be tainted!"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}!"
+
+[5d73a74d4e2f]
+en = "%s smell like it could be tainted!"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}!"
+
+[acebf3dadbd4]
+en = "%s smells like they could be tainted!"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}!"
+
+[bbda6b7e6fb3]
+en = "%s smell like they could be tainted!"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}!"
+
+[4de5a2881494]
+en = "%s smells like it could be something very dangerous!"
+ru = "{1} {1:num|пахнет|пахнут} чем-то очень опасным!"
+
+[79c1fa768deb]
+en = "%s smells like they could be something very dangerous!"
+ru = "{1} {1:num|пахнет|пахнут} чем-то очень опасным!"
+
+[85ed869ab791]
+en = "%s smell like it could be something very dangerous!"
+ru = "{1} {1:num|пахнет|пахнут} чем-то очень опасным!"
+
+[d19d2fe00d7f]
+en = "%s smell like they could be something very dangerous!"
+ru = "{1} {1:num|пахнет|пахнут} чем-то очень опасным!"
+
+[22a67231eee2]
+en = "%s smells like they could be tainted."
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}."
+
+[5ccddac9510a]
+en = "%s smell like they could be tainted."
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}."
+
+[cd1fa2bd2987]
+en = "%s smells like it could be tainted."
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}."
+
+[e35074e9adbc]
+en = "%s smell like it could be tainted."
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}."
+
+[0fb0d7bb55b0]
+en = "%s smells like it could be rotten!"
+ru = "{1} {1:num|пахнет|пахнут} тухлятиной!"
+
+[50cc3275c903]
+en = "%s smell like it could be rotten!"
+ru = "{1} {1:num|пахнет|пахнут} тухлятиной!"
+
+[559b8237cfdc]
+en = "%s smell like they could be rotten!"
+ru = "{1} {1:num|пахнет|пахнут} тухлятиной!"
+
+[c8f6317f1607]
+en = "%s smells like they could be rotten!"
+ru = "{1} {1:num|пахнет|пахнут} тухлятиной!"
+
+[48b6c5f50d31]
+en = "%s smell like it might be poisonous!"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|ядовит|ядовита|ядовито|ядовиты}!"
+
+[a993114e415f]
+en = "%s smells like they might be poisonous!"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|ядовит|ядовита|ядовито|ядовиты}!"
+
+[bcb53cbb4c93]
+en = "%s smells like it might be poisonous!"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|ядовит|ядовита|ядовито|ядовиты}!"
+
+[c1898f62359a]
+en = "%s smell like they might be poisonous!"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|ядовит|ядовита|ядовито|ядовиты}!"
+
+[9019513a303a]
+en = "%s smells like they might have been poisoned."
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|отравлен|отравлена|отравлено|отравлены}."
+
+[92da592c60d3]
+en = "%s smells like it might have been poisoned."
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|отравлен|отравлена|отравлено|отравлены}."
+
+[d06ba518a1a1]
+en = "%s smell like it might have been poisoned."
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|отравлен|отравлена|отравлено|отравлены}."
+
+[d6b0d4428016]
+en = "%s smell like they might have been poisoned."
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|отравлен|отравлена|отравлено|отравлены}."
+
+[aaeda870b70d]
+en = "%s smell unhealthy."
+ru = "{1} {1:num|пахнет|пахнут} нездорово."
+
+[c82bfc3552b7]
+en = "%s smells unhealthy."
+ru = "{1} {1:num|пахнет|пахнут} нездорово."
+
+[0d4fcb01c1a3]
+en = "%s smells rather acidic."
+ru = "{1} {1:num|пахнет|пахнут} довольно кисло."
+
+[43100133e58c]
+en = "%s smell rather acidic."
+ru = "{1} {1:num|пахнет|пахнут} довольно кисло."
+
+[21eee5e2ea7d]
+en = "%s smell disgusting to you right now."
+ru = "Запах {1:gen} сейчас вам отвратителен."
+
+[6973e8875825]
+en = "%s smells disgusting to you right now."
+ru = "Запах {1:gen} сейчас вам отвратителен."
+
+[0b947feef218]
+en = "%s smell foul and unfamiliar to you."
+ru = "{1} {1:num|пахнет|пахнут} мерзко и незнакомо."
+
+[15cebaf7573c]
+en = "%s smells foul and unfamiliar to you."
+ru = "{1} {1:num|пахнет|пахнут} мерзко и незнакомо."
+
+[2c11df1537b8]
+en = "%s smell unfamiliar to you."
+ru = "Запах {1:gen} вам незнаком."
+
+[f25d95ba5f70]
+en = "%s smells unfamiliar to you."
+ru = "Запах {1:gen} вам незнаком."
+
+[ae8486876fff]
+en = "  Eat it anyway?"
+ru = "  Всё равно съесть?"
+
+[04a238cd7abc]
+en = "%s smell like it could be rotten!  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} тухлятиной!  Всё равно съесть?"
+
+[04d19dc58ec3]
+en = "%s smells like it might be poisonous!  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|ядовит|ядовита|ядовито|ядовиты}!  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[07f7da477b27]
+en = "%s smell like they could be tainted.  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}.  Всё равно съесть?"
+
+[0ad029d636a6]
+en = "%s smell like they could be something very dangerous!  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} чем-то очень опасным!  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[0c90136ebe15]
+en = "%s smells like it might have been poisoned.  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|отравлен|отравлена|отравлено|отравлены}.  Всё равно съесть?"
+
+[0ebed463aeb3]
+en = "%s smell like they might be poisonous!  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|ядовит|ядовита|ядовито|ядовиты}!  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[0ee5a2388589]
+en = "%s smells like they could be tainted.  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}.  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[0ffc2c0926fe]
+en = "%s smells like they might be poisonous!  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|ядовит|ядовита|ядовито|ядовиты}!  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[103fa43b1d74]
+en = "%s smells like they could be something very dangerous!  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} чем-то очень опасным!  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[138f0e32d9e1]
+en = "%s smells like they could be rotten!  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} тухлятиной!  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[14973dafd89e]
+en = "%s smells like it could be tainted.  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}.  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[181a638d1423]
+en = "%s smells foul and unfamiliar to you.  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} мерзко и незнакомо.  Всё равно съесть?"
+
+[197424b247b2]
+en = "%s smells disgusting to you right now.  Eat one anyway?"
+ru = "Запах {1:gen} сейчас вам отвратителен.  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[1e5abec870e7]
+en = "%s smell like it might have been poisoned.  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|отравлен|отравлена|отравлено|отравлены}.  Всё равно съесть?"
+
+[2b1038f9bc7a]
+en = "%s smell like they could be something very dangerous!  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} чем-то очень опасным!  Всё равно съесть?"
+
+[2d184d393a07]
+en = "%s smells disgusting to you right now.  Eat it anyway?"
+ru = "Запах {1:gen} сейчас вам отвратителен.  Всё равно съесть?"
+
+[346c827ffdaa]
+en = "%s smells like they might have been poisoned.  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|отравлен|отравлена|отравлено|отравлены}.  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[39dd0d974c6c]
+en = "%s smell like it could be something very dangerous!  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} чем-то очень опасным!  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[3c6dab537597]
+en = "%s smell like it could be rotten!  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} тухлятиной!  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[3e0c0935fa6e]
+en = "%s smells like they could be tainted.  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}.  Всё равно съесть?"
+
+[428c6d356614]
+en = "%s smells like they might have been poisoned.  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|отравлен|отравлена|отравлено|отравлены}.  Всё равно съесть?"
+
+[43486e08671b]
+en = "%s smells unfamiliar to you.  Eat one anyway?"
+ru = "Запах {1:gen} вам незнаком.  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[436a659f1ab8]
+en = "%s smell foul and unfamiliar to you.  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} мерзко и незнакомо.  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[45b819f9fa06]
+en = "%s smell like they could be rotten!  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} тухлятиной!  Всё равно съесть?"
+
+[495dc9ae4a8e]
+en = "%s smells like they might be poisonous!  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|ядовит|ядовита|ядовито|ядовиты}!  Всё равно съесть?"
+
+[52d7c32392f3]
+en = "%s smell like they might have been poisoned.  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|отравлен|отравлена|отравлено|отравлены}.  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[5a6ad7599af3]
+en = "%s smells like they could be something very dangerous!  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} чем-то очень опасным!  Всё равно съесть?"
+
+[5ca790ca5041]
+en = "%s smells like it might have been poisoned.  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|отравлен|отравлена|отравлено|отравлены}.  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[624af577e3bb]
+en = "%s smell unfamiliar to you.  Eat one anyway?"
+ru = "Запах {1:gen} вам незнаком.  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[638f6c3c3a48]
+en = "%s smell like they could be tainted.  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}.  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[6810567ff163]
+en = "%s smell like it might be poisonous!  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|ядовит|ядовита|ядовито|ядовиты}!  Всё равно съесть?"
+
+[6fc6b278c7cd]
+en = "%s smell like it could be tainted!  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}!  Всё равно съесть?"
+
+[7b28fdc34c89]
+en = "%s smells like it could be tainted!  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}!  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[7c6fdc95f067]
+en = "%s smell like they could be rotten!  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} тухлятиной!  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[7fbac220d99b]
+en = "%s smell disgusting to you right now.  Eat one anyway?"
+ru = "Запах {1:gen} сейчас вам отвратителен.  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[7fd04f5469c5]
+en = "%s smell like it could be tainted.  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}.  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[80954d778c62]
+en = "%s smells like it could be tainted!  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}!  Всё равно съесть?"
+
+[8373b838b593]
+en = "%s smells like it could be tainted.  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}.  Всё равно съесть?"
+
+[8742c9e98f13]
+en = "%s smells like it might be poisonous!  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|ядовит|ядовита|ядовито|ядовиты}!  Всё равно съесть?"
+
+[886f75b5a09c]
+en = "%s smell unfamiliar to you.  Eat it anyway?"
+ru = "Запах {1:gen} вам незнаком.  Всё равно съесть?"
+
+[8affcc82d50d]
+en = "%s smell unhealthy.  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} нездорово.  Всё равно съесть?"
+
+[8ba78ff54980]
+en = "%s smell like they could be tainted!  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}!  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[8df70cc43a6a]
+en = "%s smell foul and unfamiliar to you.  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} мерзко и незнакомо.  Всё равно съесть?"
+
+[91d7a6d2a676]
+en = "%s smells unfamiliar to you.  Eat it anyway?"
+ru = "Запах {1:gen} вам незнаком.  Всё равно съесть?"
+
+[95d7c3ae9f33]
+en = "%s smell like it might have been poisoned.  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|отравлен|отравлена|отравлено|отравлены}.  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[9720419e0cf4]
+en = "%s smell like they might have been poisoned.  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|отравлен|отравлена|отравлено|отравлены}.  Всё равно съесть?"
+
+[9b343d37c8e6]
+en = "%s smell like it could be something very dangerous!  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} чем-то очень опасным!  Всё равно съесть?"
+
+[9b7cc4e92ca9]
+en = "%s smells like it could be rotten!  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} тухлятиной!  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[9bd86490dadb]
+en = "%s smells like it could be something very dangerous!  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} чем-то очень опасным!  Всё равно съесть?"
+
+[9c7a881d6c88]
+en = "%s smell like it could be tainted.  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}.  Всё равно съесть?"
+
+[a751dbf57e15]
+en = "%s smells rather acidic.  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} довольно кисло.  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[a81c6cdf6318]
+en = "%s smells like they could be tainted!  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}!  Всё равно съесть?"
+
+[b1431c21e5fe]
+en = "%s smells foul and unfamiliar to you.  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} мерзко и незнакомо.  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[b45abf2d3037]
+en = "%s smells like it could be rotten!  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} тухлятиной!  Всё равно съесть?"
+
+[b4a8a4ad57a3]
+en = "%s smells like they could be tainted!  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}!  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[b8c55de29120]
+en = "%s smell rather acidic.  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} довольно кисло.  Всё равно съесть?"
+
+[c414cac651fa]
+en = "%s smells like they could be rotten!  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} тухлятиной!  Всё равно съесть?"
+
+[d3948ea7c2a0]
+en = "%s smells unhealthy.  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} нездорово.  Всё равно съесть?"
+
+[d6b83457ce94]
+en = "%s smells unhealthy.  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} нездорово.  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[d9f93c7d9b8a]
+en = "%s smell like it could be tainted!  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}!  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[e02f15f7fcdc]
+en = "%s smell disgusting to you right now.  Eat it anyway?"
+ru = "Запах {1:gen} сейчас вам отвратителен.  Всё равно съесть?"
+
+[e70f6d7e10d8]
+en = "%s smell like they might be poisonous!  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|ядовит|ядовита|ядовито|ядовиты}!  Всё равно съесть?"
+
+[e99fe9e51a73]
+en = "%s smell rather acidic.  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} довольно кисло.  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[eb02885f3fcd]
+en = "%s smell like they could be tainted!  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|испорчен|испорчена|испорчено|испорчены}!  Всё равно съесть?"
+
+[ed7e911a45f3]
+en = "%s smell like it might be poisonous!  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} так, будто {1:gender|ядовит|ядовита|ядовито|ядовиты}!  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[eecaaf28a01a]
+en = "%s smell unhealthy.  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} нездорово.  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[fd59e46bf3d2]
+en = "%s smells rather acidic.  Eat it anyway?"
+ru = "{1} {1:num|пахнет|пахнут} довольно кисло.  Всё равно съесть?"
+
+[fefce8af154c]
+en = "%s smells like it could be something very dangerous!  Eat one anyway?"
+ru = "{1} {1:num|пахнет|пахнут} чем-то очень опасным!  Всё равно съесть {1:sg|один|одну|одно}?"
+
+[4504b2794899]
+en = "There is a bear trap here (holding you); eat it?"
+ru = "Здесь медвежий капкан (держит вас); съесть его?"
+
+[f5a8c0c73048]
+en = "There is a bear trap here (armed); eat it?"
+ru = "Здесь медвежий капкан (взведённый); съесть его?"
+
+[30fe7f0db64b]
+en = "There are iron bars here; eat them?"
+ru = "Здесь железная решётка; съесть её?"
+
+[c012321be1a1]
+en = "There are iron bars here; resume eating them?"
+ru = "Здесь железная решётка; продолжить её есть?"
+
+[d97e7a6f4c72]
+en = "There is 1 gold piece here; eat it?"
+ru = "Здесь лежит 1 золотая монета; съесть её?"
+
+[813e2babaf67]
+en = "Enter debugger?"
+ru = "Войти в отладчик?"
+
+[dca069048d7a]
+en = "Create SnapShot?"
+ru = "Сделать снимок?"
+
+[f8ee5656245d]
+en = "Dump core?"
+ru = "Сбросить дамп памяти?"
+
+[08ddd4d3d52f]
+en = "What do you want to dip it into?"
+ru = "Во что вы хотите это окунуть?"
+
+[0f3fc14bab6d]
+en = "What do you want to dip %s into?"
+ru = "Во что вы хотите окунуть {1:acc}?"
+
+[35238ec0cd6e]
+en = "What do you want to dip into one of %s?"
+ru = "Что вы хотите окунуть в {1:sg|один|одну|одно} из {1:gen}?"
+
+[cb0b4b17ded4]
+en = "What do you want to dip into %s?"
+ru = "Что вы хотите окунуть в {1:acc}?"
+
+[f850f67f0fa0]
+en = "What do you want to dip them into?"
+ru = "Во что вы хотите их окунуть?"
+
+[1af47208273e]
+en = "What do you want to dip %s into? [%s or ?*]"
+ru = "Во что вы хотите окунуть {1:acc}? [{2} или ?*]"
+
+[25ff0d9c066e]
+en = "What do you want to dip into one of %s? [%s or ?*]"
+ru = "Что вы хотите окунуть в {1:sg|один|одну|одно} из {1:gen}? [{2} или ?*]"
+
+[70570e8fc880]
+en = "What do you want to dip it into? [%s or ?*]"
+ru = "Во что вы хотите это окунуть? [{1} или ?*]"
+
+[cec781af4551]
+en = "What do you want to dip into %s? [%s or ?*]"
+ru = "Что вы хотите окунуть в {1:acc}? [{2} или ?*]"
+
+[ea5398ed8512]
+en = "What do you want to dip them into? [%s or ?*]"
+ru = "Во что вы хотите их окунуть? [{1} или ?*]"
+
+[72a8d7b071f4]
+en = "Change %s @ %s into what?"
+ru = "Во что превратить {1:acc} @ {2}?"
+
+[29f196501647]
+en = "Dump information about all artifacts?"
+ru = "Вывести сведения обо всех артефактах?"
+
+[d5f445afe493]
+en = "Override glob weight limit?"
+ru = "Превысить предельный вес сгустка?"
+
+[aa5f58e73f10]
+en = "%s%s is empty.  Do what with it?"
+ru = "{1}{2} {2:gender|пуст|пуста|пусто|пусты}.  Что с {2:gender|ним|ней|ним|ними} сделать?"
+
+[9f0a6e0cd252]
+en = "Report now?"
+ru = "Сообщить сейчас?"
+
+[a0331986023d]
+en = "Creating %s instead; force %s?"
+ru = "Вместо этого создаётся {1}; принудительно создать {2:acc}?"
+
+[1f42c7b924ea]
+en = "%s%s for %ld zorkmid.  Pay?"
+ru = "{1}{2} за {3} {3:plural|зоркмид|зоркмида|зоркмидов}.  Заплатить?"
+
+[351daf67b9b6]
+en = "%s%s for %ld zorkmids.  Pay?"
+ru = "{1}{2} за {3} {3:plural|зоркмид|зоркмида|зоркмидов}.  Заплатить?"
+
+[0736cf1bc447]
+en = "Will you accept %ld zorkmids in credit for "
+ru = "Примете ли вы {1} {1:plural|зоркмид|зоркмида|зоркмидов} в кредит за "
+
+[d37e471b0255]
+en = "Will you accept %ld zorkmid in credit for "
+ru = "Примете ли вы {1} {1:plural|зоркмид|зоркмида|зоркмидов} в кредит за "
+
+[0e1e4d7cb6fa]
+en = "%s offers only %ld gold piece for your item in your "
+ru = "{1} предлагает только {2} {2:plural|золотую монету|золотые монеты|золотых монет} за ваш предмет в "
+
+[43d3a6270c35]
+en = "%s offers %ld gold piece for the "
+ru = "{1} предлагает {2} {2:plural|золотую монету|золотые монеты|золотых монет} за "
+
+[4f67a362d308]
+en = "%s offers %ld gold pieces for your item in your "
+ru = "{1} предлагает {2} {2:plural|золотую монету|золотые монеты|золотых монет} за ваш предмет в "
+
+[527d1c8c4b21]
+en = "%s offers only %ld gold pieces for your items in your "
+ru = "{1} предлагает только {2} {2:plural|золотую монету|золотые монеты|золотых монет} за ваши предметы в "
+
+[566189879058]
+en = "%s offers only %ld gold pieces for your "
+ru = "{1} предлагает только {2} {2:plural|золотую монету|золотые монеты|золотых монет} за "
+
+[5a5c9e461cf6]
+en = "%s offers %ld gold piece for your items in your "
+ru = "{1} предлагает {2} {2:plural|золотую монету|золотые монеты|золотых монет} за ваши предметы в "
+
+[6dca3da2f35b]
+en = "%s offers %ld gold pieces for your items in your "
+ru = "{1} предлагает {2} {2:plural|золотую монету|золотые монеты|золотых монет} за ваши предметы в "
+
+[6e08a5c57e7a]
+en = "%s offers %ld gold piece for your items in the "
+ru = "{1} предлагает {2} {2:plural|золотую монету|золотые монеты|золотых монет} за ваши предметы в "
+
+[7201392a4bb3]
+en = "%s offers only %ld gold piece for your item in the "
+ru = "{1} предлагает только {2} {2:plural|золотую монету|золотые монеты|золотых монет} за ваш предмет в "
+
+[798264559d9b]
+en = "%s offers only %ld gold piece for the "
+ru = "{1} предлагает только {2} {2:plural|золотую монету|золотые монеты|золотых монет} за "
+
+[7af1fc2a36fa]
+en = "%s offers only %ld gold pieces for your items in the "
+ru = "{1} предлагает только {2} {2:plural|золотую монету|золотые монеты|золотых монет} за ваши предметы в "
+
+[8124e9e436e1]
+en = "%s offers %ld gold pieces for the "
+ru = "{1} предлагает {2} {2:plural|золотую монету|золотые монеты|золотых монет} за "
+
+[902e194116da]
+en = "%s offers only %ld gold piece for your items in the "
+ru = "{1} предлагает только {2} {2:plural|золотую монету|золотые монеты|золотых монет} за ваши предметы в "
+
+[9bdd0b512faf]
+en = "%s offers only %ld gold piece for your items in your "
+ru = "{1} предлагает только {2} {2:plural|золотую монету|золотые монеты|золотых монет} за ваши предметы в "
+
+[b120809f9abf]
+en = "%s offers %ld gold pieces for your item in the "
+ru = "{1} предлагает {2} {2:plural|золотую монету|золотые монеты|золотых монет} за ваш предмет в "
+
+[cdd30ed12ca9]
+en = "%s offers only %ld gold pieces for your item in your "
+ru = "{1} предлагает только {2} {2:plural|золотую монету|золотые монеты|золотых монет} за ваш предмет в "
+
+[d012d1334040]
+en = "%s offers only %ld gold piece for your "
+ru = "{1} предлагает только {2} {2:plural|золотую монету|золотые монеты|золотых монет} за "
+
+[d13dbfbb0996]
+en = "%s offers %ld gold piece for your item in the "
+ru = "{1} предлагает {2} {2:plural|золотую монету|золотые монеты|золотых монет} за ваш предмет в "
+
+[e47ae25d3df3]
+en = "%s offers %ld gold piece for your item in your "
+ru = "{1} предлагает {2} {2:plural|золотую монету|золотые монеты|золотых монет} за ваш предмет в "
+
+[e5abc247b968]
+en = "%s offers only %ld gold pieces for the "
+ru = "{1} предлагает только {2} {2:plural|золотую монету|золотые монеты|золотых монет} за "
+
+[e649ad146f30]
+en = "%s offers %ld gold pieces for your "
+ru = "{1} предлагает {2} {2:plural|золотую монету|золотые монеты|золотых монет} за "
+
+[e9e5ed9cd1bf]
+en = "%s offers %ld gold pieces for your items in the "
+ru = "{1} предлагает {2} {2:plural|золотую монету|золотые монеты|золотых монет} за ваши предметы в "
+
+[f31fbc37cf92]
+en = "%s offers only %ld gold pieces for your item in the "
+ru = "{1} предлагает только {2} {2:plural|золотую монету|золотые монеты|золотых монет} за ваш предмет в "
+
+[fa2e3e2c3e5b]
+en = "%s offers %ld gold piece for your "
+ru = "{1} предлагает {2} {2:plural|золотую монету|золотые монеты|золотых монет} за "
+
+[076f7bc23409]
+en = "%s%s and item inside.  Sell them?"
+ru = "{1}{2:acc} и предмет внутри.  Продать их?"
+
+[30a42db9bbab]
+en = "%s%s.  Sell them?"
+ru = "{1}{2:acc}.  Продать их?"
+
+[4230cdbccb8d]
+en = "%s%s and its contents.  Sell it?"
+ru = "{1}{2:acc} вместе с содержимым.  Продать его?"
+
+[473569930b0e]
+en = "%s%s and its contents.  Sell them?"
+ru = "{1}{2:acc} вместе с содержимым.  Продать их?"
+
+[6fc80135ed0c]
+en = "%s%s and items inside.  Sell them?"
+ru = "{1}{2:acc} и предметы внутри.  Продать их?"
+
+[8a6906d40479]
+en = "%s%s.  Sell it?"
+ru = "{1}{2:acc}.  Продать его?"
+
+[c0e3ebc4b4f0]
+en = "%s%s and items inside.  Sell it?"
+ru = "{1}{2:acc} и предметы внутри.  Продать его?"
+
+[da66d4819d1f]
+en = "%s%s and item inside.  Sell it?"
+ru = "{1}{2:acc} и предмет внутри.  Продать его?"
+
+[950c6e9e51c7]
+en = "Analyze throne?"
+ru = "Исследовать трон?"
+
+[5a342da55f60]
+en = "Throne sit effect (1..13) [0=random]"
+ru = "Эффект трона (1..13) [0 — случайный]"
+
+[14d1d962a035]
+en = "Force the mount to succeed?"
+ru = "Заставить посадку удаться?"
+
+[0861f4661ca2]
+en = "<%d,%d> is not considered viable; force anyway?"
+ru = "<{1},{2}> не годится; всё равно?"
+
+[c976a831674d]
+en = "Override?"
+ru = "Переопределить?"
+
+[04a0fbf0925d]
+en = "There are containers and %s here.  Disarm %s?"
+ru = "Здесь контейнеры и {1}.  Обезвредить {2:acc}?"
+
+[59951b0ea936]
+en = "There are containers and %s here.  Remove %s?"
+ru = "Здесь контейнеры и {1}.  Убрать {2:acc}?"
+
+[725e5d4a9746]
+en = "There is a container and %s here.  Remove %s?"
+ru = "Здесь контейнер и {1}.  Убрать {2:acc}?"
+
+[f18471421fa7]
+en = "There is a container and %s here.  Disarm %s?"
+ru = "Здесь контейнер и {1}.  Обезвредить {2:acc}?"
