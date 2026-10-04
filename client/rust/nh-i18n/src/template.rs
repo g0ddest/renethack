@@ -10,7 +10,7 @@
 //! | placeholder | renders |
 //! |---|---|
 //! | `{1}` | argument 1 in the nominative (a number as its digits, text as it is) |
-//! | `{1:acc}` | in a case: `nom`, `gen`, `dat`, `acc`, `ins`, `prep` |
+//! | `{1:acc}` | in a case: `nom`, `gen`, `dat`, `acc`, `ins`, `prep`; `loc` after в/на of a place (на полу, the prepositional where a noun has no locative) |
 //! | `{1:cap}`, `{1:ins:cap}` | with its first letter upper-cased |
 //! | `{1:gender\|ударил\|ударила\|ударило\|ударили}` | the form that agrees with argument 1: masculine, feminine, neuter, plural |
 //! | `{1:num\|кусает\|кусают}` | singular or plural, as argument 1 |

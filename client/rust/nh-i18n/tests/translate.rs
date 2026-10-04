@@ -5,6 +5,7 @@ mod support;
 
 use std::sync::OnceLock;
 
+use nh_i18n::lexicon::Lexicon;
 use nh_i18n::{Arg, Catalog, Gender, Glossary, Russian, Status, Translator, lint};
 
 use support::{TestNames, i18n_dir};
@@ -35,8 +36,8 @@ fn the_catalog_and_the_translations_agree() {
     let russian = russian();
     assert!(russian.len() >= 50, "{} translations", russian.len());
     let read = |name: &str| std::fs::read_to_string(i18n_dir().join(name)).expect(name);
-    let glossary = Glossary::from_toml(&read("glossary.ru.toml"), &read("lexicon.ru.toml"))
-        .expect("the glossary and the lexicon");
+    let glossary =
+        Glossary::from_toml(&read("glossary.ru.toml"), Lexicon::ru()).expect("the glossary");
     assert!(
         glossary.terms.len() > 1000,
         "{} terms",

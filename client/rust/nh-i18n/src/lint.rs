@@ -6,6 +6,7 @@
 
 use crate::catalog::Catalog;
 use crate::format::{ConvKind, convs};
+use crate::lexicon::Lexicon;
 use crate::russian::{Russian, Translation};
 use crate::template::{Select, Target};
 
@@ -38,15 +39,13 @@ impl Glossary {
     }
 
     /// The glossary of `client/i18n/glossary.ru.toml` (sections of
-    /// `"English" = { ru = "..." }`), every term with all the forms
-    /// `client/i18n/lexicon.ru.toml` gives it (`sg`, `pl`, `few`, an
-    /// adjective's `m`, `f`, `n`). Only the sections of things with a name
-    /// of their own bind a message's words ([`ENFORCED`]): "empty" or
-    /// "food" in a sentence are words, not the glossary's terms.
-    pub fn from_toml(glossary: &str, lexicon: &str) -> Result<Glossary, String> {
+    /// `"English" = { ru = "..." }`), every term with all the forms the
+    /// lexicon gives it. Only the sections of things with a name of their
+    /// own bind a message's words ([`ENFORCED`]): "empty" or "food" in a
+    /// sentence are words, not the glossary's terms.
+    pub fn from_toml(glossary: &str, lexicon: &Lexicon) -> Result<Glossary, String> {
         let glossary: toml::Table =
             toml::from_str(glossary).map_err(|e| format!("glossary: {e}"))?;
-        let lexicon: toml::Table = toml::from_str(lexicon).map_err(|e| format!("lexicon: {e}"))?;
         let mut terms = Vec::new();
         for (section, entries) in &glossary {
             let Some(entries) = entries.as_table() else {
@@ -63,18 +62,8 @@ impl Glossary {
                 if let Some(lemma) = entry.get("ru").and_then(toml::Value::as_str) {
                     ru.push(lemma.to_string());
                 }
-                let forms = lexicon
-                    .get(section)
-                    .and_then(|s| s.get(en))
-                    .and_then(toml::Value::as_table);
-                for key in ["sg", "pl", "few", "loc", "m", "f", "n", "fixed"] {
-                    match forms.and_then(|f| f.get(key)) {
-                        Some(toml::Value::String(form)) => ru.push(form.clone()),
-                        Some(toml::Value::Array(row)) => {
-                            ru.extend(row.iter().filter_map(|v| v.as_str().map(str::to_string)))
-                        }
-                        _ => {}
-                    }
+                if let Some(forms) = lexicon.get(section, en) {
+                    ru.extend(forms.forms().into_iter().map(str::to_string));
                 }
                 ru.dedup();
                 if !ru.is_empty() {
