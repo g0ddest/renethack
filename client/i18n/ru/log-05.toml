@@ -1,0 +1,977 @@
+# R6, log messages batch 5: zap.c. Syntax: nh-i18n's template.rs.
+
+[4326ba4e53eb]
+en = "%s opens its mouth!"
+ru = "{1} {1:num|открывает|открывают} пасть!"
+
+[56caed11467a]
+en = "You release %s."
+ru = "Вы отпускаете {1:acc}."
+
+[c92413120a3e]
+en = "You dream that you feel self-knowledgeable..."
+ru = "Вам снится, что вы познаёте себя..."
+
+[ab99cb5a917b]
+en = "You feel self-knowledgeable..."
+ru = "Вы чувствуете, что познаёте себя..."
+
+[0e8bc0bdb948]
+en = "The feeling subsides."
+ru = "Это чувство проходит."
+
+[1de0974e1707]
+en = "The missiles bounce off!"
+ru = "Волшебные стрелы отскакивают от вас!"
+
+[d04be81eaba8]
+en = "You seem no deader than before."
+ru = "Похоже, мертвее вы не стали."
+
+[3df1e316d968]
+en = "%s shudders!"
+ru = "{1} {1:num|содрогается|содрогаются}!"
+
+[1dc4cbe46a5c]
+en = "Boing!"
+ru = "Бдзынь!"
+
+[c873793509ac]
+en = "%s glows a strange %s, but remains intact."
+ru = "{1} {1:num|испускает|испускают} странное {2:n} сияние, но {1:num|остаётся|остаются} {1:gender|целым|целой|целым|целыми}."
+
+[3e8d53ec2d9b]
+en = "%s doesn't budge."
+ru = "{1} не {1:num|сдвигается|сдвигаются} с места."
+
+[8e67d99dcdf6]
+en = "%s glows iridescently."
+ru = "{1} {1:num|переливается|переливаются} всеми цветами радуги."
+
+[88a47a03ce53]
+en = "A corpse is resuscitated."
+ru = "Какой-то труп оживает."
+
+[3bb8997806c8]
+en = "%s is suddenly drawn into its former body!"
+ru = "{1} внезапно {1:num|втягивается|втягиваются} в своё прежнее тело!"
+
+[10175e076c11]
+en = "You shudder in dread."
+ru = "Вы содрогаетесь от ужаса."
+
+[0827aa9918cb]
+en = "You smell the odor of meat."
+ru = "Вы чувствуете запах мяса."
+
+[35e52fae1fce]
+en = "You smell a delicious smell."
+ru = "Вы чувствуете восхитительный запах."
+
+[662b0a3ca631]
+en = "You aren't sure whether %s has %s or its corpse inside."
+ru = "Вы не можете понять, что в {1:loc}: {2} или труп {2:gen}."
+
+[354ac2283be7]
+en = "You disrupt %s!"
+ru = "Вы нарушаете целостность {1:gen}!"
+
+[12075927af74]
+en = "A huge hole opens up..."
+ru = "Образуется огромная брешь..."
+
+[ff9402710365]
+en = "You barely hear a crumbling sound."
+ru = "Вы едва слышите, как что-то крошится."
+
+[8fa3c4e9df71]
+en = "You dream that you hear a crumbling sound."
+ru = "Вам снится, что вы слышите, как что-то крошится."
+
+[af28da658eea]
+en = "You hear a crumbling sound."
+ru = "Вы слышите, как что-то крошится."
+
+[9c2e017b26a7]
+en = "The %s shatters."
+ru = "{1} {1:num|разлетается|разлетаются} на куски."
+
+[71d6435895e8]
+en = "%s is resurrected!"
+ru = "{1} {1:num|воскресает|воскресают}!"
+
+[5628cf0da113]
+en = "You barely hear %s reviving."
+ru = "Вы едва слышите, как {1} {1:num|оживает|оживают}."
+
+[7954ea3525b8]
+en = "You dream that you hear %s reviving."
+ru = "Вам снится, что вы слышите, как {1} {1:num|оживает|оживают}."
+
+[2b0377b4db77]
+en = "You hear %s reviving."
+ru = "Вы слышите, как {1} {1:num|оживает|оживают}."
+
+[fe8eb2581d9e]
+en = "You barely hear a defibrillator."
+ru = "Вы едва слышите, как работает дефибриллятор."
+
+[c924ce6dc960]
+en = "You dream that you hear a defibrillator."
+ru = "Вам снится, что вы слышите, как работает дефибриллятор."
+
+[dc8548f15370]
+en = "You hear a defibrillator."
+ru = "Вы слышите, как работает дефибриллятор."
+
+[9a97ac3b8346]
+en = "You wrest one last charge from the worn-out wand."
+ru = "Вы выжимаете последний заряд из истощённой палочки."
+
+[af131e96b0b8]
+en = "Unfortunately, nothing happens."
+ru = "К сожалению, ничего не происходит."
+
+[7e3c20333443]
+en = "You aren't able to zap anything in your current form."
+ru = "В нынешнем облике вы не можете пользоваться палочками."
+
+[54b1631e0e0e]
+en = "%s glows and fades."
+ru = "{1} {1:num|вспыхивает|вспыхивают} и {1:num|гаснет|гаснут}."
+
+[e6e9b48ee4ac]
+en = "You bash yourself!"
+ru = "Вы бьёте сами себя!"
+
+[2057d1a2acb8]
+en = "You shock yourself!"
+ru = "Вы бьёте себя током!"
+
+[9171fac65218]
+en = "You zap yourself, but seem unharmed."
+ru = "Вы направляете палочку на себя, но, похоже, остаётесь невредимы."
+
+[dec359e53ece]
+en = "You explode a fireball on top of yourself!"
+ru = "Вы взрываете огненный шар прямо над собой!"
+
+[98f776ab69aa]
+en = "You dream that you feel rather warm."
+ru = "Вам снится, что вам довольно тепло."
+
+[61ff95efca78]
+en = "You feel rather warm."
+ru = "Вам довольно тепло."
+
+[fcf23389723d]
+en = "You've set yourself afire!"
+ru = "Вы подожгли себя!"
+
+[530783d8a54d]
+en = "You dream that you feel a little chill."
+ru = "Вам снится, что вас пробирает лёгкий холодок."
+
+[043408a70b13]
+en = "You feel a little chill."
+ru = "Вас пробирает лёгкий холодок."
+
+[4b6a4950f435]
+en = "You imitate a popsicle!"
+ru = "Вы изображаете эскимо на палочке!"
+
+[866af8fcd16f]
+en = "The missiles bounce!"
+ru = "Волшебные стрелы отскакивают!"
+
+[31f1dd8bf48a]
+en = "Idiot!  You've shot yourself!"
+ru = "{hero:gender|Идиот|Идиотка}!  Вы подстрелили себя!"
+
+[599ffd1826fa]
+en = "You don't feel sleepy!"
+ru = "Вас не клонит в сон!"
+
+[08aa58eb1702]
+en = "The sleep ray hits you!"
+ru = "Усыпляющий луч попадает в вас!"
+
+[591e428c73bd]
+en = "You fall asleep!"
+ru = "Вы засыпаете!"
+
+[9ce778a4996a]
+en = "The wand shoots an apparently harmless beam at you."
+ru = "Палочка выпускает в вас на вид безвредный луч."
+
+[72c3169404d4]
+en = "You irradiate yourself with pure energy!"
+ru = "Вы облучаете себя чистой энергией!"
+
+[c3a673d83877]
+en = "Ow, that light hurts%c"
+ru = "Ай, от этого света больно{1}"
+
+[086a2ac76690]
+en = "Your amulet grows hot for a moment, then cools."
+ru = "Ваш амулет на миг раскаляется, а затем остывает."
+
+[167b388397c3]
+en = "You probe towards the %s."
+ru = "Вы зондируете {1:acc}."
+
+[5e435ac6e32f]
+en = "Your probe reveals nothing."
+ru = "Зондирование ничего не обнаруживает."
+
+[d98f071fa0d4]
+en = "The stairs seem to ripple momentarily."
+ru = "Лестница на миг словно подёргивается рябью."
+
+[d5acd5050292]
+en = "A rock is dislodged from the %s and falls on your %s."
+ru = "С {1:gen} срывается камень и падает вам на {2:acc}."
+
+[7539abb5396c]
+en = "There's a trapdoor beneath you; it shatters."
+ru = "Под вами оказывается люк, и он разлетается вдребезги."
+
+[14eaf588580b]
+en = "The trapdoor beneath you shatters."
+ru = "Люк под вами разлетается вдребезги."
+
+[036e04b11b1d]
+en = "A trapdoor appears beneath you."
+ru = "Под вами появляется люк."
+
+[261a5401cdba]
+en = "Blood drips on your %s."
+ru = "Кровь капает вам на {1:acc}."
+
+[072d2ad1b1a3]
+en = "You dream that you feel shuddering vibrations."
+ru = "Вам снится, что всё вокруг содрогается."
+
+[978d73b669d1]
+en = "You feel shuddering vibrations."
+ru = "Вы чувствуете, как всё вокруг содрогается."
+
+[867f4ba6503c]
+en = "%s turns transparent!"
+ru = "{1} {1:num|становится|становятся} {1:gender|прозрачным|прозрачной|прозрачным|прозрачными}!"
+
+[8943a95fcd6b]
+en = "The edges on the floor get smoother."
+ru = "Края вырезанной на полу надписи сглаживаются."
+
+[63c8e5a36fc6]
+en = "The floor runs like butter!"
+ru = "Пол растекается, как масло!"
+
+[674f21105383]
+en = "Probing reveals a secret door."
+ru = "Зондирование обнаруживает потайную дверь."
+
+[33b75f3d573d]
+en = "Probing exposes a secret corridor."
+ru = "Зондирование обнаруживает потайной коридор."
+
+[f2a7e086fe73]
+en = "You find %s%c"
+ru = "Вы обнаруживаете {1:acc}{2}"
+
+[c565b7643c61]
+en = "%s gets stuck in a web!"
+ru = "{1} {1:num|застревает|застревают} в паутине!"
+
+[2e5c19c94b8f]
+en = "You barely hear %s skip."
+ru = "Вы едва слышите, как {1} {1:num|прыгает|прыгают} по воде."
+
+[96523d58e12f]
+en = "You dream that you hear %s skip."
+ru = "Вам снится, что вы слышите, как {1} {1:num|прыгает|прыгают} по воде."
+
+[493364631b3f]
+en = "You hear %s skip."
+ru = "Вы слышите, как {1} {1:num|прыгает|прыгают} по воде."
+
+[8dbf508ea185]
+en = "%s is knocked back!"
+ru = "{1:acc} отбрасывает назад!"
+
+[c72a0f168a07]
+en = "%s jerks to an abrupt halt."
+ru = "{1} с рывком {1:num|останавливается|останавливаются}."
+
+[7959fe3d3127]
+en = "You skillfully catch the boomerang."
+ru = "Вы ловко ловите бумеранг."
+
+[12fcb4f304fd]
+en = "Klonk!"
+ru = "Бряк!"
+
+[ff5e756feaec]
+en = "You don't feel hot!"
+ru = "Вам не жарко!"
+
+[03725457facc]
+en = "You don't feel cold."
+ru = "Вам не холодно."
+
+[7067665817f7]
+en = "You don't feel sleepy."
+ru = "Вас не клонит в сон."
+
+[7c9b46ca86e1]
+en = "You are not disintegrated."
+ru = "Вы не распадаетесь на атомы."
+
+[58e48cc7039b]
+en = "You aren't affected."
+ru = "На вас это не действует."
+
+[d06a01079a04]
+en = "The %s doesn't hurt."
+ru = "{1} не {1:num|причиняет|причиняют} вам вреда."
+
+[08e31a602edf]
+en = "The %s burns!"
+ru = "{1} {1:num|обжигает|обжигают}!"
+
+[2a987216037c]
+en = "%ld %s burn."
+ru = "{1} {2:by1} {1:plural|сгорает|сгорают|сгорают}."
+
+[2abfa6b31cff]
+en = "%s burns."
+ru = "{1} {1:num|сгорает|сгорают}."
+
+[0b6d1a4afce1]
+en = "%s is disintegrated!"
+ru = "{1} {1:num|распадается|распадаются} на атомы!"
+
+[6e49007c8b6b]
+en = "%s disintegrates."
+ru = "{1} {1:num|распадается|распадаются} на атомы."
+
+[a6387ac689b9]
+en = "%s body reintegrates before your %s!"
+ru = "Тело {1:gen} вновь собирается прямо {2:gender|перед вашим|перед вашей|перед вашим|перед вашими} {2:ins}!"
+
+[a11970b663de]
+en = "%s resurrects!"
+ru = "{1} {1:num|воскресает|воскресают}!"
+
+[7ed75384524b]
+en = "It seems even stronger than before."
+ru = "Похоже, монстр стал ещё сильнее, чем прежде."
+
+[2fff6ce5ada0]
+en = "%s %s is disintegrated!"
+ru = "{2} {1:gen} {2:num|распадается|распадаются} на атомы!"
+
+[9770483e1064]
+en = "For some reason you are not affected."
+ru = "Почему-то на вас это не действует."
+
+[178da7177cb6]
+en = "Your %s tingles."
+ru = "У вас покалывает {1:acc}."
+
+[0d4f40985a1b]
+en = "%s settles..."
+ru = "{1} {1:num|оседает|оседают}..."
+
+[cc3e6dff9cc7]
+en = "A web bursts into flames!"
+ru = "Паутина вспыхивает пламенем!"
+
+[8a8698cc6e06]
+en = "Steam billows from the fountain."
+ru = "Из фонтана валит пар."
+
+[2cefdd037b30]
+en = "The %s freezes for a moment."
+ru = "{1} на миг {1:num|застывает|застывают}."
+
+[6c7f89245b01]
+en = "You barely hear a soft crackling."
+ru = "Вы едва слышите тихое потрескивание."
+
+[f4e07efe1b49]
+en = "You dream that you hear a soft crackling."
+ru = "Вам снится, что вы слышите тихое потрескивание."
+
+[289b0707b381]
+en = "You hear a soft crackling."
+ru = "Вы слышите тихое потрескивание."
+
+[d3395409255c]
+en = "The %s cools and solidifies."
+ru = "{1} {1:num|остывает|остывают} и {1:num|затвердевает|затвердевают}."
+
+[1979feb5d5bc]
+en = "The %s is bridged with ice!"
+ru = "Через {1:acc} перекидывается ледяной мост!"
+
+[89bf600598c4]
+en = "The %s freezes."
+ru = "{1} {1:num|замерзает|замерзают}."
+
+[3330b72ef37d]
+en = "You barely hear a crackling sound."
+ru = "Вы едва слышите треск."
+
+[85842a73992c]
+en = "You dream that you hear a crackling sound."
+ru = "Вам снится, что вы слышите треск."
+
+[2f6b9ac3a56e]
+en = "You hear a crackling sound."
+ru = "Вы слышите треск."
+
+[e4a7edb0b242]
+en = "You pass through the now-solid rock."
+ru = "Вы проходите сквозь застывший камень."
+
+[86749fdb2071]
+en = "You are firmly stuck in the cooling rock."
+ru = "Вы намертво застреваете в остывающем камне."
+
+[0b9f547ee8dd]
+en = "%s suddenly seems weaker!"
+ru = "{1} внезапно {1:num|слабеет|слабеют}!"
+
+[57daefa0b2f4]
+en = "The door remains intact."
+ru = "Дверь остаётся целой."
+
+[54ea72bb6249]
+en = "You dream that you feel vibrations."
+ru = "Вам снится, что вы чувствуете вибрацию."
+
+[27280e6cd35c]
+en = "You feel vibrations."
+ru = "Вы чувствуете вибрацию."
+
+[fd0c6604ab5f]
+en = "You fracture %s %s."
+ru = "Вы раскалываете {2:acc} {1:gen}."
+
+[d965941514d5]
+en = "You dream that you feel guilty about damaging such a historic statue."
+ru = "Вам снится, что вы испытываете вину за то, что повредили столь историческую статую."
+
+[8bd23f77349c]
+en = "You feel guilty about damaging such a historic statue."
+ru = "Вы испытываете вину за то, что повредили столь историческую статую."
+
+[1073ce4040f9]
+en = "You dream that you feel a sudden rush of air!"
+ru = "Вам снится, что вас обдаёт внезапным порывом воздуха!"
+
+[1bfb8dde6dd4]
+en = "You feel a sudden rush of air!"
+ru = "Вас обдаёт внезапным порывом воздуха!"
+
+[9a6e1f0a9853]
+en = "You aren't hurt!"
+ru = "Вы не пострадали!"
+
+[8e88febed5a8]
+en = "You may wish for an object."
+ru = "Вы можете пожелать любой предмет."
+
+[9d07ae175ef3]
+en = "Nothing fitting that description exists in the game."
+ru = "В игре нет ничего, что подходило бы под такое описание."
+
+[79d6af0741b1]
+en = "%s twitches feebly."
+ru = "{1} слабо {1:num|подёргивается|подёргиваются}."
+
+[059cc0a40e72]
+en = "You see a puff of smoke."
+ru = "Вы видите облачко дыма."
+
+[7af2e7abba87]
+en = "You smell smoke."
+ru = "Вы чувствуете запах дыма."
+
+[22731bc1a18d]
+en = "The boulder falls apart."
+ru = "Валун разваливается на куски."
+
+[179a4b5272ac]
+en = "The statue shatters."
+ru = "Статуя разлетается на куски."
+
+[8ed51a964892]
+en = "%s appears."
+ru = "{1} {1:num|появляется|появляются}."
+
+[e8238661a996]
+en = "%s turns to dust."
+ru = "{1} {1:num|рассыпается|рассыпаются} в прах."
+
+[bb8d5dc95c91]
+en = "The door crashes open!"
+ru = "Дверь с грохотом распахивается!"
+
+[a19e481f19f5]
+en = "%s looks better."
+ru = "{1} {1:num|выглядит|выглядят} лучше."
+
+[6b6ff5beb4f9]
+en = "You seem unaffected."
+ru = "Похоже, на вас это не действует."
+
+[b193a8c37f1f]
+en = "%s gets angry!"
+ru = "{1} {1:num|злится|злятся}!"
+
+[7c947a9f9d19]
+en = "%s looks much better."
+ru = "{1} {1:num|выглядит|выглядят} гораздо лучше."
+
+[b3b8bc8554c0]
+en = "%s is furious!"
+ru = "{1} в ярости!"
+
+[6ae54044b88d]
+en = "%s disappears."
+ru = "{1} {1:num|исчезает|исчезают}."
+
+[2cf2e61402bf]
+en = "Some writing vanishes from your head!"
+ru = "С вашей головы исчезает какая-то надпись!"
+
+[ab96b7dddb15]
+en = "%s suddenly comes alive as %s!"
+ru = "{1} внезапно {1:num|оживает|оживают} в виде {2:gen}!"
+
+[0fd1f2ed7363]
+en = "%s suddenly comes alive!"
+ru = "{1} внезапно {1:num|оживает|оживают}!"
+
+[ac8003a4614f]
+en = "%s suddenly reanimates as %s!"
+ru = "{1} внезапно {1:num|восстаёт|восстают} в виде {2:gen}!"
+
+[4a233dc71107]
+en = "%s suddenly reanimates!"
+ru = "{1} внезапно {1:num|восстаёт|восстают}!"
+
+[7adfee1aec3c]
+en = "It suddenly comes alive as %s!"
+ru = "Что-то внезапно оживает в виде {1:gen}!"
+
+[b38e987cff5b]
+en = "It suddenly comes alive!"
+ru = "Что-то внезапно оживает!"
+
+[280965711c7b]
+en = "It suddenly reanimates as %s!"
+ru = "Что-то внезапно восстаёт в виде {1:gen}!"
+
+[418a019d8e11]
+en = "It suddenly reanimates!"
+ru = "Что-то внезапно восстаёт!"
+
+[42efa7dd2527]
+en = "You dream that you feel frightened and even more stunned."
+ru = "Вам снится, что вы напуганы и оглушены ещё сильнее."
+
+[d7d9921f1894]
+en = "You dream that you feel frightened and stunned."
+ru = "Вам снится, что вы напуганы и оглушены."
+
+[2ebb5da62e0c]
+en = "You feel frightened and even more stunned."
+ru = "Вы напуганы и оглушены ещё сильнее."
+
+[074da6eb6c05]
+en = "You feel frightened and stunned."
+ru = "Вы напуганы и оглушены."
+
+[f7a5f2e7f8ca]
+en = "Some bony objects meld, and %s arises from the pile!"
+ru = "Несколько костяных предметов сливаются воедино, и из груды {1:num|поднимается|поднимаются} {1}!"
+
+[e60d2711ee0a]
+en = "Some cloth objects meld, and %s arises from the pile!"
+ru = "Несколько матерчатых предметов сливаются воедино, и из груды {1:num|поднимается|поднимаются} {1}!"
+
+[919a2e73a20a]
+en = "Some glassy objects meld, and %s arises from the pile!"
+ru = "Несколько стеклянных предметов сливаются воедино, и из груды {1:num|поднимается|поднимаются} {1}!"
+
+[b73a901a08ce]
+en = "Some gold objects meld, and %s arises from the pile!"
+ru = "Несколько золотых предметов сливаются воедино, и из груды {1:num|поднимается|поднимаются} {1}!"
+
+[3cb465f3ed28]
+en = "Some leather objects meld, and %s arises from the pile!"
+ru = "Несколько кожаных предметов сливаются воедино, и из груды {1:num|поднимается|поднимаются} {1}!"
+
+[395bcbdb2965]
+en = "Some lithic objects meld, and %s arises from the pile!"
+ru = "Несколько каменных предметов сливаются воедино, и из груды {1:num|поднимается|поднимаются} {1}!"
+
+[3fa466089bcf]
+en = "Some metal objects meld, and %s arises from the pile!"
+ru = "Несколько металлических предметов сливаются воедино, и из груды {1:num|поднимается|поднимаются} {1}!"
+
+[71ad018096b8]
+en = "Some objects meld, and %s arises from the pile!"
+ru = "Несколько предметов сливаются воедино, и из груды {1:num|поднимается|поднимаются} {1}!"
+
+[d149849a1413]
+en = "Some organic objects meld, and %s arises from the pile!"
+ru = "Несколько органических предметов сливаются воедино, и из груды {1:num|поднимается|поднимаются} {1}!"
+
+[7bd48afa03f7]
+en = "Some paper objects meld, and %s arises from the pile!"
+ru = "Несколько бумажных предметов сливаются воедино, и из груды {1:num|поднимается|поднимаются} {1}!"
+
+[b2c4b2077547]
+en = "Some wood objects meld, and %s arises from the pile!"
+ru = "Несколько деревянных предметов сливаются воедино, и из груды {1:num|поднимается|поднимаются} {1}!"
+
+[0c0d8c7de202]
+en = "The figurine animates!"
+ru = "Статуэтка оживает!"
+
+[97a3760775c6]
+en = "The figurine turns to flesh and animates!"
+ru = "Статуэтка обращается в плоть и оживает!"
+
+[10a9cab5ce9c]
+en = "%s is trapped!"
+ru = "На {1:loc} ловушка!"
+
+[6ee2bf6f3395]
+en = "You dream that you feel dark headed."
+ru = "Вам снится, что вы чувствуете темноту в голове."
+
+[746d9eefa39a]
+en = "You dream that you feel light headed."
+ru = "Вам снится, что вы чувствуете лёгкость в голове."
+
+[7bb2f330adf4]
+en = "You feel dark headed."
+ru = "Вы чувствуете темноту в голове."
+
+[8097ed978af0]
+en = "You feel light headed."
+ru = "Вы чувствуете лёгкость в голове."
+
+[13c81d429c6d]
+en = "You probe beneath it."
+ru = "Вы зондируете то, что скрыто внизу."
+
+[b31509ec83f2]
+en = "Something beneath you shatters."
+ru = "Что-то под вами разлетается вдребезги."
+
+[cfb69682a7ce]
+en = "Some dust swirls beneath you."
+ru = "Под вами клубится пыль."
+
+[84c425a48f38]
+en = "Some frost swirls beneath you."
+ru = "Под вами кружится иней."
+
+[2f91be34541c]
+en = "Blood boils at your %s."
+ru = "У {1:gender|вашего|вашей|вашего|ваших} {1:gen} вскипает кровь."
+
+[d9f6a96b8f10]
+en = "Blood boils beneath your %s."
+ru = "Под {1:gender|вашим|вашей|вашим|вашими} {1:ins} вскипает кровь."
+
+[8d733bbcf275]
+en = "Blood pools at your %s."
+ru = "У {1:gender|вашего|вашей|вашего|ваших} {1:gen} растекается лужа крови."
+
+[25d6d6f24d05]
+en = "Blood pools beneath your %s."
+ru = "Под {1:gender|вашим|вашей|вашим|вашими} {1:ins} растекается лужа крови."
+
+[c38d2bdc2d99]
+en = "%s hit %s!"
+ru = "{1} {1:num|попадает|попадают} в {2:acc}!"
+
+[bac222302036]
+en = "%s hit %s."
+ru = "{1} {1:num|попадает|попадают} в {2:acc}."
+
+[e00d09baecb4]
+en = "%s hit %s?"
+ru = "{1} {1:num|попадает|попадают} в {2:acc}?"
+
+[01f018b8d676]
+en = "%s hit it!"
+ru = "{1} {1:num|попадает|попадают} в кого-то!"
+
+[a71999d97ea8]
+en = "%s hit it."
+ru = "{1} {1:num|попадает|попадают} в кого-то."
+
+[c5194fb35dfc]
+en = "%s hit it?"
+ru = "{1} {1:num|попадает|попадают} в кого-то?"
+
+[4cc6759f0c14]
+en = "%s hits %s but does no harm."
+ru = "{1} {1:num|попадает|попадают} в {2:acc}, но не {1:num|причиняет|причиняют} вреда."
+
+[c13dd77118aa]
+en = "%s hits %s but doesn't hurt."
+ru = "{1} {1:num|попадает|попадают} в {2:acc}, но не {1:num|причиняет|причиняют} боли."
+
+[2f3314d2eeb7]
+en = "%s hits %s but passes harmlessly through %.9s."
+ru = "{1} {1:num|попадает|попадают} в {2:acc}, но безвредно {1:num|проходит|проходят} насквозь{3:skip}."
+
+[9e2b73943f3d]
+en = "%s hits %s?"
+ru = "{1} {1:num|попадает|попадают} в {2:acc}?"
+
+[2a2b9ccf0b73]
+en = "%s hits it but does no harm."
+ru = "{1} {1:num|попадает|попадают} в кого-то, но не {1:num|причиняет|причиняют} вреда."
+
+[9b336dd7a200]
+en = "%s hits it but passes harmlessly through %.9s."
+ru = "{1} {1:num|попадает|попадают} в кого-то, но безвредно {1:num|проходит|проходят} насквозь{2:skip}."
+
+[ea4618694de5]
+en = "%s hits it!"
+ru = "{1} {1:num|попадает|попадают} в кого-то!"
+
+[f751c2a40707]
+en = "%s hits it?"
+ru = "{1} {1:num|попадает|попадают} в кого-то?"
+
+[72c810edd2e5]
+en = "%s miss %s."
+ru = "{1} {1:num|пролетает|пролетают} мимо {2:gen}."
+
+[f05174dc2306]
+en = "%s miss it."
+ru = "{1} не {1:num|попадает|попадают} в кого-то."
+
+[200cf5142b4a]
+en = "%s skips again."
+ru = "{1} снова {1:num|прыгает|прыгают} по воде."
+
+[5c0148bbacf9]
+en = "%s skips."
+ru = "{1} {1:num|прыгает|прыгают} по воде."
+
+[a9ae60be8994]
+en = "%s passes over %s."
+ru = "{1} {1:num|пролетает|пролетают} над {2:ins}."
+
+[176ad473da75]
+en = "%s %s falls to the %s."
+ru = "{2} {1:gen} {2:num|падает|падают} на {3:acc}."
+
+[2ca702e8c697]
+en = "%s %s falls off."
+ru = "{2} {1:gen} {2:num|сваливается|сваливаются}."
+
+[ba7072fee360]
+en = "%s absorbs the deadly blast!"
+ru = "{1} {1:num|поглощает|поглощают} смертоносный удар!"
+
+[b5067d64d9e9]
+en = "%s absorbs the deadly ray!"
+ru = "{1} {1:num|поглощает|поглощают} смертоносный луч!"
+
+[dc428564f716]
+en = "%s looks rather fleshy for a moment."
+ru = "{1} на миг будто {1:num|обретает|обретают} плоть."
+
+[0e7ddb6a5b35]
+en = "%s seems fleshier..."
+ru = "{1}, кажется, {1:num|становится|становятся} ещё мясистее..."
+
+[2a2a6c7bef27]
+en = "%s turns to flesh!"
+ru = "{1} {1:num|обращается|обращаются} в плоть!"
+
+[82b271d4f3e9]
+en = "Some ice melts away."
+ru = "Часть льда тает."
+
+[471ac9eeae45]
+en = "The ice crackles and melts."
+ru = "Лёд трещит и тает."
+
+[5657ea276535]
+en = "Your stomach acid melts straight through the ice!"
+ru = "Ваша желудочная кислота прожигает лёд насквозь!"
+
+[ee5f94a82ff6]
+en = "Some water boils."
+ru = "Часть воды вскипает."
+
+[29f1858b4432]
+en = "Some water evaporates."
+ru = "Часть воды испаряется."
+
+[87a174272786]
+en = "That seemed remarkably uneventful."
+ru = "Всё прошло на удивление тихо."
+
+[ba489bd21c61]
+en = "The water evaporates."
+ru = "Вода испаряется."
+
+[058560336b7d]
+en = "You hear hissing gas."
+ru = "Вы слышите шипение пара."
+
+[4f57bfc1e083]
+en = "The %s corrode somewhat but remain intact."
+ru = "{1} немного {1:num|разъедается|разъедаются}, но {1:num|остаётся|остаются} {1:gender|целым|целой|целым|целыми}."
+
+[25da141f47e9]
+en = "The %s melt somewhat but remain intact."
+ru = "{1} немного {1:num|оплавляется|оплавляются}, но {1:num|остаётся|остаются} {1:gender|целым|целой|целым|целыми}."
+
+[d8aa22e6afde]
+en = "The %s corrode away."
+ru = "{1} {1:num|разъедается|разъедаются} без остатка."
+
+[3ed83092aafd]
+en = "The %s melt."
+ru = "{1} {1:num|плавится|плавятся}."
+
+[2127b8b64da4]
+en = "The blast reveals a secret door."
+ru = "Удар обнаруживает потайную дверь."
+
+[64d8e1d4c8e5]
+en = "The bolt reveals a secret door."
+ru = "Луч обнаруживает потайную дверь."
+
+[2c8b4682c602]
+en = "The spell reveals a secret door."
+ru = "Заклинание обнаруживает потайную дверь."
+
+[69b966218fda]
+en = "Your blast reveals a secret door."
+ru = "Ваш удар обнаруживает потайную дверь."
+
+[362eb42cb4eb]
+en = "Your bolt reveals a secret door."
+ru = "Ваш луч обнаруживает потайную дверь."
+
+[bca73f3482b8]
+en = "Your spell reveals a secret door."
+ru = "Ваше заклинание обнаруживает потайную дверь."
+
+[811aa6f5f798]
+en = "The door absorbs the blast!"
+ru = "Дверь поглощает удар!"
+
+[e8a01543f014]
+en = "The door absorbs the bolt!"
+ru = "Дверь поглощает луч!"
+
+[408c27bfce7e]
+en = "The door absorbs the spell!"
+ru = "Дверь поглощает заклинание!"
+
+[49062c64a0d7]
+en = "The door absorbs your blast!"
+ru = "Дверь поглощает ваш удар!"
+
+[1e9eb87814f0]
+en = "The door absorbs your bolt!"
+ru = "Дверь поглощает ваш луч!"
+
+[b2e8de2a96cc]
+en = "The door absorbs your spell!"
+ru = "Дверь поглощает ваше заклинание!"
+
+[34a1a8267184]
+en = "The door disintegrates!"
+ru = "Дверь распадается на атомы!"
+
+[81a4a1306731]
+en = "The door freezes and shatters!"
+ru = "Дверь промерзает и разлетается вдребезги!"
+
+[1641b764cc4b]
+en = "The door is consumed in flames!"
+ru = "Дверь сгорает в пламени!"
+
+[16fc01512a97]
+en = "The door splinters!"
+ru = "Дверь разлетается в щепки!"
+
+[cd4bae7aa4bf]
+en = "You feel a burst of cool air."
+ru = "Вы чувствуете порыв прохладного воздуха."
+
+[7fd5a138fc26]
+en = "You barely hear a deep cracking sound."
+ru = "Вы едва слышите гулкий треск."
+
+[3a2c412ac956]
+en = "You barely hear crackling."
+ru = "Вы едва слышите потрескивание."
+
+[77c083ae8e82]
+en = "You barely hear crashing wood."
+ru = "Вы едва слышите треск ломающегося дерева."
+
+[1e9182ac8521]
+en = "You dream that you hear a deep cracking sound."
+ru = "Вам снится, что вы слышите гулкий треск."
+
+[7aace99ca754]
+en = "You dream that you hear crackling."
+ru = "Вам снится, что вы слышите потрескивание."
+
+[00079a899fe5]
+en = "You dream that you hear crashing wood."
+ru = "Вам снится, что вы слышите треск ломающегося дерева."
+
+[57e6b24f57fa]
+en = "You hear a deep cracking sound."
+ru = "Вы слышите гулкий треск."
+
+[898308d4b611]
+en = "You hear crackling."
+ru = "Вы слышите потрескивание."
+
+[0bef0ebb1a83]
+en = "You hear crashing wood."
+ru = "Вы слышите треск ломающегося дерева."
+
+[c07b33934b9c]
+en = "You smell a whiff of smoke."
+ru = "Вы чувствуете слабый запах дыма."
+
+[2d54cb7757f3]
+en = "You are released by %s."
+ru = "{1} {1:num|отпускает|отпускают} вас."
+
+[5c4f9b865b59]
+en = "You are released from %s grasp."
+ru = "Вы освобождаетесь из хватки {1:gen}."
+
+[244404cd3722]
+en = "%s is not carrying anything besides you."
+ru = "У {1:gen} при себе ничего нет, кроме вас."
+
+[a581e76eb805]
+en = "%s is not carrying anything."
+ru = "У {1:gen} при себе ничего нет."
