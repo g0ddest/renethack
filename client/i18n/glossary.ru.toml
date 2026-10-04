@@ -130,6 +130,7 @@
 "giant rat" = { ru = "гигантская крыса", src = "nethack-ru" }
 "rabid rat" = { ru = "бешеная крыса", src = "nethack-ru" }
 "wererat" = { ru = "крыса-оборотень", src = "nethack-ru" }
+"rat" = { ru = "крыса", src = "chosen", note = "a wererat's animal form, as new_were() names it" }
 "rock mole" = { ru = "каменный крот", src = "nethack-ru" }
 "woodchuck" = { ru = "лесной сурок", src = "nethack-ru" }
 # arachnid or centipede
@@ -1319,6 +1320,37 @@
 "hook" = { ru = "крюк", src = "chosen", note = "a grappling hook" }
 "glob" = { ru = "комок", src = "chosen" }
 "mattock" = { ru = "мотыга", src = "chosen", note = "a dwarvish mattock" }
+# bottlename() (potion.c): what a potion's glass is called, and what a
+# hallucinating hero thinks it is
+"bottle" = { ru = "бутылка", src = "chosen" }
+"phial" = { ru = "склянка", src = "chosen" }
+"flagon" = { ru = "фляга", src = "chosen" }
+"carafe" = { ru = "графин", src = "chosen" }
+"flask" = { ru = "флакон", src = "chosen" }
+"jar" = { ru = "баночка", src = "chosen", note = "банка is the tin" }
+"vial" = { ru = "пузырёк", src = "chosen" }
+"jug" = { ru = "кувшин", src = "chosen" }
+"pitcher" = { ru = "кувшинчик", src = "chosen" }
+"barrel" = { ru = "бочка", src = "chosen" }
+"box" = { ru = "коробка", src = "chosen" }
+"glass" = { ru = "стакан", src = "chosen" }
+"beaker" = { ru = "мензурка", src = "chosen" }
+"tumbler" = { ru = "бокал", src = "chosen" }
+"vase" = { ru = "ваза", src = "chosen" }
+"flowerpot" = { ru = "цветочный горшок", src = "chosen" }
+"pan" = { ru = "сковорода", src = "chosen" }
+"thingy" = { ru = "штуковина", src = "chosen" }
+"mug" = { ru = "кружка", src = "chosen" }
+"teacup" = { ru = "чашка", src = "chosen" }
+"teapot" = { ru = "чайник", src = "chosen" }
+"keg" = { ru = "бочонок", src = "chosen" }
+"bucket" = { ru = "ведро", src = "chosen" }
+"thermos" = { ru = "термос", src = "chosen" }
+"amphora" = { ru = "амфора", src = "chosen" }
+"wineskin" = { ru = "бурдюк", src = "chosen" }
+"parcel" = { ru = "посылка", src = "chosen" }
+"bowl" = { ru = "миска", src = "chosen" }
+"ampoule" = { ru = "ампула", src = "chosen" }
 
 [artifact]
 "Excalibur" = { ru = "Экскалибур", src = "nethack-ru" }
