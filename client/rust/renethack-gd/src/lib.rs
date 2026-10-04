@@ -34,6 +34,7 @@ mod selftest;
 mod steam;
 mod surface;
 mod theme;
+mod title_scene;
 mod ui_events;
 mod vfx;
 

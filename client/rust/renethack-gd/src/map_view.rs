@@ -117,6 +117,21 @@ fn build_order(hero: Option<(i32, i32)>) -> Vec<(i32, i32)> {
 
 /// Seconds a new level takes to come up out of black.
 const LEVEL_FADE_SECS: f32 = 0.25;
+/// Seconds the title scene takes to come up out of black over a title
+/// already shown (it is drawn under the start-up veil otherwise).
+const TITLE_FADE_SECS: f32 = 0.8;
+/// Under the start-up veil the title scene is drawn as fast as the
+/// rehearsal; the brightness of its fires (as the branch's torches').
+const TITLE_VEILED_BUILD: std::time::Duration = std::time::Duration::from_millis(20);
+const TITLE_FIRE_ENERGY: f32 = 1.2;
+/// The glow of a fire's coals, its charred logs, and its flames' energy
+/// when there are several (the torches' is 1.3).
+const EMBER_GLOW: Color = Color::from_rgb(1.0, 0.36, 0.08);
+const CHARRED: Color = Color::from_rgb(0.035, 0.024, 0.018);
+const MANY_FLAMES_ENERGY: f32 = 0.85;
+/// Where the depth fog begins and is whole on the title (metres).
+const TITLE_FOG: (f32, f32) = (11.5, 14.5);
+
 /// Seconds from the start of a strike to the blow landing.
 const CONTACT_SECS: f32 = 0.16;
 /// Descent per step when a pointer ray is walked through the raised geometry.
@@ -218,6 +233,7 @@ const ROOM_LIGHT_ENERGY: f32 = 0.3;
 const TORCH: Color = Color::from_rgb(1.0, 0.66, 0.38);
 const TORCH_RANGE: f32 = 5.5;
 const TORCH_SHADOWS: usize = 3;
+const TITLE_TORCH_SHADOWS: usize = 1;
 /// Torches made before any level is shown.
 const TORCHES_AHEAD: usize = 16;
 /// The branches' doors and candles made ahead.
@@ -1377,13 +1393,42 @@ fn terrain_base(
         }
         Terrain::Altar => {
             floor(look);
-            let stone = main(90);
-            look.solid(bevel(0.76, 0.45, 0.56), stone, at(0.0, 0.225, 0.0));
-            look.solid(bevel(0.9, 0.06, 0.7), main(SHADE_LIT), at(0.0, 0.48, 0.0));
-            // the altar's alignment colour as a runner cloth
+            // dressed stone on a step, carved panels on its face, a
+            // cornice under an overhanging top
+            look.solid(bevel(0.98, 0.1, 0.8), main(70), at(0.0, 0.05, 0.0));
+            look.solid(bevel(0.78, 0.38, 0.56), main(90), at(0.0, 0.29, 0.0));
+            for x in [-0.19f32, 0.19] {
+                look.solid(bevel(0.28, 0.24, 0.02), main(62), at(x, 0.29, 0.285));
+            }
+            look.solid(
+                bevel(0.86, 0.05, 0.64),
+                main(SHADE_LIT),
+                at(0.0, 0.505, 0.0),
+            );
+            look.solid(
+                bevel(0.94, 0.07, 0.72),
+                main(SHADE_LIT),
+                at(0.0, 0.565, 0.0),
+            );
+            // the altar's alignment colour as a cloth over its front
             let cloth = Paint::Flat(darker(nh_color(c), 0.35), Finish::Matte);
-            look.solid(cuboid(0.3, 0.012, 0.72), cloth, at(0.0, 0.516, 0.0));
-            look.ground = 0.51;
+            look.solid(cuboid(0.34, 0.012, 0.74), cloth, at(0.0, 0.606, 0.0));
+            look.solid(cuboid(0.34, 0.3, 0.012), cloth, at(0.0, 0.46, 0.367));
+            // a brass candelabra of three burning at its back
+            look.props.push(PlacedProp {
+                prop: Prop::Candelabra,
+                pos: at(0.0, 0.6, -0.22),
+                yaw: 0.0,
+                scale: Vector3::new(1.0, 1.0, 1.0),
+            });
+            let flame = Paint::Flat(Color::from_rgb(1.0, 0.7, 0.35), Finish::Glow);
+            for x in [-0.112f32, 0.0, 0.112] {
+                look.solid(sphere(0.012), flame, at(x, 0.6 + 0.41, -0.22));
+                if let Some(s) = look.solids.last_mut() {
+                    s.shadow = false;
+                }
+            }
+            look.ground = 0.61;
         }
         Terrain::Throne => {
             floor(look);
@@ -2392,6 +2437,24 @@ pub struct MapView {
     hero_gear: crate::hero::HeroGear,
     /// How far above the ground the camera aims (self-test close-ups).
     aim_lift: f32,
+    /// The scene behind the title menu once the rehearsal is over, the
+    /// hero it shows (a role's name or code, a woman's look: a Valkyrie),
+    /// and the catalog it is laid from (again when the title comes back
+    /// after a game).
+    title: Option<crate::title_scene::TitleScene>,
+    /// The title scene is what the map draws (the title camera frames it).
+    titled: bool,
+    title_hero: (String, bool),
+    title_catalog: Option<Catalog>,
+    /// Whether the start-up veil is down (the game tells; None: never
+    /// told, the rehearsal judges by itself).
+    veiled: Option<bool>,
+    /// The title scene's fires (made once, shown with it): each its node
+    /// and its light, where that burns and its flicker's phase.
+    title_fires: Vec<(Gd<Node3D>, Gd<OmniLight3D>, Vector3, f64)>,
+    /// How far the 3D is hidden in black while it is not to be seen (the
+    /// rehearsal behind the title page): 1 hidden, 0 shown.
+    cover: f32,
     /// The effects of the items the hero uses.
     hero_fx: crate::hero::HeroFx,
 }
@@ -2489,6 +2552,39 @@ fn sway(t: f64) -> Vector3 {
         0.0,
         0.02 * (t * 8.7 * tau).sin() + 0.01 * (t * 5.1 * tau + 2.1).sin(),
     )
+}
+
+/// The height of a model's meshes (its bounds), in its own units.
+fn model_height(model: &Gd<Node3D>) -> f32 {
+    let mut lo = f32::MAX;
+    let mut hi = f32::MIN;
+    for n in model
+        .find_children_ex("*")
+        .type_("MeshInstance3D")
+        .owned(false)
+        .done()
+        .iter_shared()
+    {
+        if let Ok(mi) = n.try_cast::<MeshInstance3D>() {
+            let b = mi.get_aabb();
+            // the mesh's own transform up to the model (scales and offsets)
+            let mut t = mi.get_transform();
+            let mut p = mi.get_parent();
+            while let Some(node) = p {
+                if node.instance_id() == model.instance_id() {
+                    break;
+                }
+                p = node.get_parent();
+                if let Ok(n3) = node.try_cast::<Node3D>() {
+                    t = n3.get_transform() * t;
+                }
+            }
+            let b = t * b;
+            lo = lo.min(b.position.y);
+            hi = hi.max(b.position.y + b.size.y);
+        }
+    }
+    if hi > lo { hi - lo } else { 0.0 }
 }
 
 /// The camera's pitch at a distance: from the side close in, from above
@@ -2869,6 +2965,13 @@ impl MapView {
             hero_gear: crate::hero::HeroGear::default(),
             aim_lift: 0.0,
             hero_fx,
+            title: None,
+            titled: false,
+            title_hero: ("valkyrie".to_string(), true),
+            title_catalog: None,
+            veiled: None,
+            title_fires: Vec::new(),
+            cover: 1.0,
         };
         view.set_branch(Branch::Main);
         // torches are made ahead by the rehearsal, a frame each (a
@@ -3292,10 +3395,34 @@ impl MapView {
         } else {
             return;
         }
+        self.show_fade();
+    }
+
+    /// The black over the 3D: the new level's fade, or the cover.
+    fn show_fade(&mut self) {
         if let Some(m) = self.post_mat.as_mut() {
-            let shown = 1.0 - self.fade;
+            let shown = 1.0 - self.fade.max(self.cover);
             let f = 1.0 - shown * shown * (3.0 - 2.0 * shown);
             m.set_shader_parameter("fade", &f.to_variant());
+        }
+    }
+
+    /// The cover over the 3D: down while the map plays its rehearsal
+    /// behind the title page, lifted over the title scene once it is
+    /// drawn (at once under the start-up veil), never over a game.
+    fn uncover(&mut self, delta: f32) {
+        let hidden = !self.shown && !self.titled;
+        let target = if hidden { 1.0 } else { 0.0 };
+        let next = if self.shown || hidden || self.veiled.unwrap_or(true) {
+            target
+        } else if self.building.is_empty() && self.fade <= 0.0 {
+            (self.cover - delta.min(1.0 / 30.0) / TITLE_FADE_SECS).max(0.0)
+        } else {
+            self.cover
+        };
+        if next != self.cover {
+            self.cover = next;
+            self.show_fade();
         }
     }
 
@@ -3567,7 +3694,13 @@ impl MapView {
             .map(|(i, t)| (t.at.distance_squared_to(hero), i))
             .collect();
         near.sort_by(|a, b| a.0.total_cmp(&b.0));
-        let shadowed: HashSet<usize> = near.iter().take(TORCH_SHADOWS).map(|&(_, i)| i).collect();
+        // on the title only the nearest: it runs as long as the menu is read
+        let shadows = if self.titled && !self.shown {
+            TITLE_TORCH_SHADOWS
+        } else {
+            TORCH_SHADOWS
+        };
+        let shadowed: HashSet<usize> = near.iter().take(shadows).map(|&(_, i)| i).collect();
         let clock = self.clock;
         let (color, energy) = (self.branch_look.torch, self.branch_look.torch_energy);
         for (i, t) in self.torches.iter_mut().enumerate() {
@@ -3889,8 +4022,18 @@ impl MapView {
 
     /// Forget every cell (a new game).
     pub fn clear(&mut self) {
-        // a game starts: the rehearsal is over, the gallery's light off
+        // a game starts: the rehearsal is over, the title scene gone, the
+        // gallery's light off
         self.rehearsal = None;
+        self.title = None;
+        if std::mem::take(&mut self.titled) {
+            self.env.set_bg_color(self.branch_look.darkness);
+            self.env.set_fog_light_color(self.branch_look.darkness);
+        }
+        for (node, light, _, _) in &mut self.title_fires {
+            node.set_visible(false);
+            light.set_visible(false);
+        }
         self.build_budget = BUILD_BUDGET;
         self.set_showcase(false);
         self.building.clear();
@@ -4126,7 +4269,7 @@ impl MapView {
     /// one frame draws it all for the first time: the world, then the
     /// vignette, the mist, the dust.
     fn show_parts(&mut self) {
-        let parts = if self.shown {
+        let parts = if self.shown || self.title.is_some() {
             SHOW_ALL
         } else if self.rehearsal.is_some() {
             self.showing
@@ -4177,6 +4320,7 @@ impl MapView {
                 self.rehearsal = Some(r);
                 more = true;
             } else {
+                // the title scene follows it (below)
                 self.clear();
                 self.set_visible(self.shown);
                 if self.stats_window.is_some() {
@@ -4187,6 +4331,22 @@ impl MapView {
                 }
             }
         }
+        // the title scene after the rehearsal, and again on the title
+        // after a game (or wherever no game is shown: the pages over it
+        // are opaque but the title's)
+        if !self.shown && self.rehearsed && self.rehearsal.is_none() && self.title.is_none() {
+            self.show_title_scene();
+        }
+        if let Some(mut t) = self.title.take() {
+            if !self.shown {
+                let veiled = self.veiled.unwrap_or(true);
+                self.set_build_budget(veiled.then_some(TITLE_VEILED_BUILD));
+                let (world, catalog) = t.parts();
+                self.sync(world, catalog, self.root.get_process_delta_time());
+            }
+            self.title = Some(t);
+        }
+        self.title_frame_update(self.root.get_process_delta_time());
         if self.stats_window.is_some()
             && self.rehearsal_first_draws_done()
             && !std::mem::replace(&mut self.first_draws_told, true)
@@ -4217,6 +4377,12 @@ impl MapView {
     /// `preload_step`: nothing is loaded ahead in it, and the title's
     /// frame times stay a frame each.
     pub fn title_tick(&mut self) {
+        // the title scene's camera moves on all the same
+        let delta = self.root.get_process_delta_time();
+        if self.titled && !self.shown {
+            self.clock += delta;
+        }
+        self.title_frame_update(delta);
         let none = std::time::Duration::ZERO;
         let doing = Some("a frame left to other work".to_string());
         self.title_frame(std::time::Instant::now(), none, none, doing);
@@ -4250,11 +4416,199 @@ impl MapView {
     }
 
     /// The rehearsal has drawn everything a game draws for the first time
-    /// (its first stage built, its effects gone off): the long frames of
-    /// first draws are behind (the start-up veil waits for this). False
-    /// until `warm_up` has started it; true once it is over.
+    /// and the title scene after it is drawn: the long frames of first
+    /// draws are behind, and the title has its scene (the start-up veil
+    /// waits for this). False until `warm_up` has started the rehearsal;
+    /// true once a game has started.
     pub fn rehearsal_first_draws_done(&self) -> bool {
-        self.rehearsed && self.rehearsal.as_ref().is_none_or(|r| r.first_draws_done())
+        self.rehearsed
+            && self.rehearsal.is_none()
+            && (self.shown || self.title.is_none() || self.title_drawn())
+    }
+
+    /// The title scene is what the map draws (self-tests).
+    pub fn title_shown(&self) -> bool {
+        self.titled && !self.shown
+    }
+
+    /// Put the title camera's sway at `secs` (self-test pictures of both
+    /// ends of it).
+    pub(crate) fn set_title_clock(&mut self, secs: f64) {
+        self.clock = secs;
+        self.place_camera();
+    }
+
+    /// The title scene is all drawn and lit, up out of black.
+    pub fn title_drawn(&self) -> bool {
+        self.title.is_some()
+            && self.building.is_empty()
+            && self.fade <= 0.0
+            && self.cover <= 0.0
+            && self.models_pending() == 0
+    }
+
+    /// Whether the start-up veil is down: while it is, the rehearsal
+    /// keeps no frame's budget (nothing of it shows).
+    pub fn set_veiled(&mut self, veiled: bool) {
+        self.veiled = Some(veiled);
+    }
+
+    /// Whether the rehearsal is drawn under the start-up veil; unless the
+    /// game tells, until its first draws are done.
+    pub(crate) fn under_veil(&self, first_draws_done: bool) -> bool {
+        self.veiled.unwrap_or(!first_draws_done)
+    }
+
+    /// Lay the title scene; nothing before the rehearsal is over.
+    fn show_title_scene(&mut self) {
+        let Some(catalog) = self.title_catalog.clone() else {
+            return;
+        };
+        self.clear();
+        let (role, female) = &self.title_hero;
+        self.title = Some(crate::title_scene::TitleScene::new(&catalog, role, *female));
+        self.titled = true;
+        self.light_title_fires();
+        // black past the far wall (the branch's darkness is a deep blue)
+        self.env.set_bg_color(Color::BLACK);
+        self.env.set_fog_light_color(Color::BLACK);
+        self.show_parts();
+    }
+
+    /// A title frame: the camera round the hero, the fires flickering,
+    /// the cover lifting.
+    fn title_frame_update(&mut self, delta: f64) {
+        if self.titled && !self.shown {
+            self.hero_ring.set_visible(false);
+            self.place_camera();
+            let energy = self.branch_look.torch_energy;
+            for (_, light, at, phase) in &mut self.title_fires {
+                let time = self.clock + *phase;
+                light.set_param(Param::ENERGY, energy * TITLE_FIRE_ENERGY * flicker(time));
+                light.set_position(*at + sway(time));
+            }
+        }
+        self.uncover(delta as f32);
+    }
+
+    /// Light the title scene's fires (made the first time).
+    fn light_title_fires(&mut self) {
+        use crate::title_scene::FIRES;
+        if self.title_fires.is_empty() {
+            for (i, &(fire, (x, z))) in FIRES.iter().enumerate() {
+                let made = self.title_fire(fire, Vector3::new(x, 0.0, z), i as f64 * 2.3);
+                self.title_fires.push(made);
+            }
+        }
+        for (node, light, _, _) in &mut self.title_fires {
+            node.set_visible(true);
+            light.set_visible(true);
+        }
+    }
+
+    /// One fire of the title scene: its model, a flame of the torches'
+    /// (crossed, it stands free), their halo and embers, and a light.
+    fn title_fire(
+        &mut self,
+        fire: crate::title_scene::Fire,
+        place: Vector3,
+        phase: f64,
+    ) -> (Gd<Node3D>, Gd<OmniLight3D>, Vector3, f64) {
+        let crate::title_scene::FireLook {
+            scene,
+            height,
+            burns,
+            size,
+            flames,
+            coals,
+        } = fire.look();
+        let mut node = Node3D::new_alloc();
+        node.set_position(place);
+        if let Some(mut model) = godot::tools::try_load::<PackedScene>(scene)
+            .ok()
+            .and_then(|s| s.instantiate())
+            .and_then(|n| n.try_cast::<Node3D>().ok())
+        {
+            let tall = model_height(&model);
+            if tall > 0.0 {
+                let k = height / tall;
+                model.set_scale(Vector3::new(k, k, k));
+            }
+            node.add_child(&model);
+        }
+        // the torches' flame (it turns to face the camera); a fire of
+        // several a little dimmer, or where they cross they burn white
+        let mut flame_mat = self.flame_mat.clone();
+        if flames.len() > 1
+            && let Ok(mut m) = self
+                .flame_mat
+                .duplicate_resource()
+                .try_cast::<ShaderMaterial>()
+        {
+            m.set_shader_parameter("energy", &MANY_FLAMES_ENERGY.to_variant());
+            flame_mat = m.upcast();
+        }
+        let mut quad = godot::classes::QuadMesh::new_gd();
+        quad.set_size(Vector2::new(0.26 * size, 0.52 * size));
+        quad.set_center_offset(at(0.0, 0.22 * size, 0.0));
+        for (i, &(fx, fz)) in flames.iter().enumerate() {
+            let mut flame = MeshInstance3D::new_alloc();
+            flame.set_mesh(&quad);
+            flame.set_material_override(&flame_mat);
+            flame.set_position(at(fx, burns, fz));
+            let p = phase as f32 + i as f32 * 3.7;
+            flame.set_instance_shader_parameter("phase", &p.to_variant());
+            no_shadow(&mut flame);
+            node.add_child(&flame);
+        }
+        if coals > 0.0 {
+            // charred logs across the pit, glowing coals between them
+            let wood = self.art.flat(CHARRED, Finish::Matte);
+            let log = self.art.mesh(cylinder(0.045, 0.05, coals * 1.7));
+            for (k, yaw) in [15.0f32, 75.0, 135.0].into_iter().enumerate() {
+                let mut l = MeshInstance3D::new_alloc();
+                l.set_mesh(&log);
+                l.set_material_override(&wood);
+                l.set_position(at(0.0, 0.07 + 0.04 * k as f32, 0.0));
+                l.set_rotation_degrees(at(90.0, yaw, 0.0));
+                node.add_child(&l);
+            }
+            let glow = self.art.flat(EMBER_GLOW, Finish::Glow);
+            let coal = self.art.mesh(sphere(0.045));
+            for k in 0..9 {
+                let a = (k as f32 * 137.5).to_radians();
+                let r = coals * 0.75 * ((k as f32 + 0.5) / 9.0).sqrt();
+                let mut c = MeshInstance3D::new_alloc();
+                c.set_mesh(&coal);
+                c.set_material_override(&glow);
+                c.set_position(at(r * a.cos(), 0.04, r * a.sin()));
+                c.set_scale(at(1.2, 0.45, 1.0));
+                no_shadow(&mut c);
+                node.add_child(&c);
+            }
+        }
+        let mut halo = MeshInstance3D::new_alloc();
+        let mut disc = godot::classes::QuadMesh::new_gd();
+        disc.set_size(Vector2::new(0.9 * size, 0.9 * size));
+        halo.set_mesh(&disc);
+        halo.set_material_override(&self.halo_mat);
+        halo.set_position(at(0.0, burns + 0.2 * size, 0.1));
+        no_shadow(&mut halo);
+        node.add_child(&halo);
+        let mut embers = self.vfx.embers();
+        embers.set_position(at(0.0, burns + 0.1, 0.0));
+        node.add_child(&embers);
+        self.root.add_child(&node);
+        let lit = place + Vector3::new(0.0, burns + 0.4 * size, 0.0);
+        let mut light = OmniLight3D::new_alloc();
+        light.set_color(TORCH);
+        light.set_param(Param::RANGE, TORCH_RANGE * size.max(1.0));
+        light.set_param(Param::ATTENUATION, 1.2);
+        light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 1.5);
+        light.set_position(lit);
+        light.set_shadow(false);
+        self.root.add_child(&light);
+        (node, light, lit, phase)
     }
 
     /// Nothing is left to load ahead (self-tests start a game then).
@@ -4275,6 +4629,8 @@ impl MapView {
             }
             let fetch = self.prefetch_paths();
             self.rehearsal = Some(crate::rehearsal::Rehearsal::new(catalog, fetch));
+            // the title scene after it is laid from the same catalog
+            self.title_catalog = Some(catalog.clone());
             self.set_visible(self.shown);
         }
         let names: Vec<&str> = match role {
@@ -4380,6 +4736,26 @@ impl MapView {
     }
 
     fn place_camera(&mut self) {
+        if self.titled && !self.shown {
+            use crate::title_scene::{AIM, DISTANCE, PITCH_DEG, SWAY_DEG, SWAY_SECS};
+            let phase = (self.clock as f32 / SWAY_SECS * std::f32::consts::TAU).sin();
+            let yaw = (SWAY_DEG * phase).to_radians();
+            let pitch = PITCH_DEG.to_radians();
+            let aim = Vector3::new(AIM.0, AIM.1, AIM.2);
+            let offset = Vector3::new(
+                yaw.sin() * pitch.cos(),
+                pitch.sin(),
+                yaw.cos() * pitch.cos(),
+            ) * DISTANCE;
+            // the dark closes in just past the far wall
+            self.env.set_fog_depth_begin(TITLE_FOG.0);
+            self.env.set_fog_depth_end(TITLE_FOG.1);
+            self.camera.look_at_from_position(aim + offset, aim);
+            self.eye = aim + offset;
+            RenderingServer::singleton()
+                .global_shader_parameter_set("eye_pos", &self.eye.to_variant());
+            return;
+        }
         let distance = self.camera_distance();
         let pitch = pitch_at(distance);
         // the darkness closes in at the same depth behind what is framed,

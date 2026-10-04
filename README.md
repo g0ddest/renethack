@@ -145,7 +145,10 @@ scenario opens the panel, filters it, wields by a drag and by the context
 menu, answers a getobj question in selection mode and drops through the
 panel's `D` menu; `bar` binds the food ration to a slot, follows it through
 `#adjust`, eats it with `2`, and counts 20 searches with `n20s` (Modern) and
-`Alt`+`2` `Alt`+`0` `s` (Classic). With `--screenshots` the soak saves the screen
+`Alt`+`2` `Alt`+`0` `s` (Classic). The `title` scenario checks the scene
+behind the title menu: drawn before the start-up veil lifts, the hero in
+their gear, both ends of the camera's sway, put away by a game and laid
+again on the title after it. With `--screenshots` the soak saves the screen
 every 60 answers. The scenarios take
 screenshots under a display:
 
@@ -157,7 +160,7 @@ Screenshots are 1920×1080 unless `--size=1280x800` (or Godot's own
 screenshot is not the size asked for, and at a set size every screen a
 scenario shoots must fit the canvas (the HUD's blocks inside it and apart,
 the log in whole lines). `make test-client` also runs `smoke`, `inventory`,
-`hud` and `gamepad` headless at 1280×800, the Steam Deck's screen with its
+`hud`, `gamepad` and `title` headless at 1280×800, the Steam Deck's screen with its
 120 % UI scale; `make deck` shoots `smoke`, `tour`, `inventory`, `bar`,
 `hud`, `dialogs` and `gamepad` at a real 1280×800.
 

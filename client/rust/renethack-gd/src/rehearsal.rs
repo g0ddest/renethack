@@ -193,7 +193,7 @@ impl Rehearsal {
     pub fn step(&mut self, map: &mut MapView, delta: f64) -> bool {
         // under the start-up veil nothing shows: no frame's budget is
         // kept, the sooner it is done the sooner the title shows
-        let veiled = !self.first_draws_done();
+        let veiled = map.under_veil(self.first_draws_done());
         let started = std::time::Instant::now();
         let in_time = |t: std::time::Instant| !veiled || t.elapsed() < VEILED_FRAME;
         match self.phase {
@@ -504,7 +504,7 @@ impl Rehearsal {
     }
 }
 
-fn glyph(kind: GlyphKind, ch: i32) -> Glyph {
+pub(crate) fn glyph(kind: GlyphKind, ch: i32) -> Glyph {
     Glyph {
         glyph: None,
         ch,

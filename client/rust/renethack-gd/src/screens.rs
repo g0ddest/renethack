@@ -6,8 +6,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use godot::classes::control::{FocusMode, MouseFilter, SizeFlags};
 use godot::classes::{
-    Button, CanvasLayer, CenterContainer, ColorRect, Control, GridContainer, HBoxContainer, Label,
-    LineEdit, OptionButton, PanelContainer, RichTextLabel, VBoxContainer,
+    Button, CanvasLayer, CenterContainer, ColorRect, Control, Gradient, GradientTexture2D,
+    GridContainer, HBoxContainer, Label, LineEdit, OptionButton, PanelContainer, RichTextLabel,
+    TextureRect, VBoxContainer,
 };
 use godot::global::HorizontalAlignment;
 use godot::prelude::*;
@@ -201,6 +202,9 @@ impl Form {
 
 pub struct Screens {
     root: Gd<Control>,
+    /// The page's background: opaque, but on the title, where the scene
+    /// behind it shows through.
+    bg: Gd<ColorRect>,
     content: Option<Gd<Control>>,
     queue: UiQueue,
     current: Option<&'static str>,
@@ -216,6 +220,38 @@ pub struct Screens {
 
 /// The game's name on the title: a name, the same in every language.
 const GAME_NAME: &str = "renethack";
+
+/// The share of the title's width the menu stands in (on the left).
+const TITLE_MENU_WIDTH: f32 = 0.42;
+
+/// The title's shade over its scene (`across`): the ink of the pages
+/// under the menu on the left, clearing towards the right; else (down)
+/// the top edge, over the dark past the chamber, and a little of the
+/// bottom.
+fn title_shade(across: bool) -> Gd<GradientTexture2D> {
+    let ink = |a: f32| theme::BG.with_alpha(a);
+    let (offsets, alphas): (&[f32], &[f32]) = if across {
+        (&[0.0, 0.3, 0.5, 0.68, 1.0], &[0.9, 0.78, 0.4, 0.0, 0.0])
+    } else {
+        (&[0.0, 0.17, 0.75, 1.0], &[0.95, 0.0, 0.0, 0.5])
+    };
+    let colors: Vec<Color> = alphas.iter().map(|&a| ink(a)).collect();
+    let mut g = Gradient::new_gd();
+    g.set_offsets(&PackedFloat32Array::from(offsets));
+    g.set_colors(&PackedColorArray::from(&colors[..]));
+    let mut t = GradientTexture2D::new_gd();
+    t.set_gradient(&g);
+    let (w, h) = if across { (256, 4) } else { (4, 256) };
+    t.set_width(w);
+    t.set_height(h);
+    t.set_fill_from(Vector2::new(0.0, 0.0));
+    t.set_fill_to(if across {
+        Vector2::new(1.0, 0.0)
+    } else {
+        Vector2::new(0.0, 1.0)
+    });
+    t
+}
 
 /// A picker of the interface's language, each in its own name; a choice
 /// switches at once.
@@ -301,6 +337,7 @@ impl Screens {
         layer.add_child(&root);
         Screens {
             root,
+            bg,
             content: None,
             queue,
             current: None,
@@ -321,6 +358,35 @@ impl Screens {
         self.root.add_child(&center);
         self.content = Some(center.upcast());
         self.current = Some(name);
+        self.bg.set_color(theme::BG);
+        self.root.set_visible(true);
+    }
+
+    /// The title page: the scene behind it shows through, darkened under
+    /// `inner` (the menu), which stands on the left.
+    fn title_page(&mut self, inner: &Gd<Control>) {
+        self.hide();
+        let mut page = Control::new_alloc();
+        theme::full_rect_ignore(&page);
+        for across in [true, false] {
+            let mut shade = TextureRect::new_alloc();
+            shade.set_texture(&title_shade(across));
+            shade.set_expand_mode(godot::classes::texture_rect::ExpandMode::IGNORE_SIZE);
+            shade.set_stretch_mode(godot::classes::texture_rect::StretchMode::SCALE);
+            shade.set_mouse_filter(MouseFilter::IGNORE);
+            theme::place(&shade, [0.0, 0.0, 1.0, 1.0], [0.0; 4]);
+            page.add_child(&shade);
+        }
+        let mut left = CenterContainer::new_alloc();
+        left.set_mouse_filter(MouseFilter::IGNORE);
+        theme::place(&left, [0.0, 0.0, TITLE_MENU_WIDTH, 1.0], [0.0; 4]);
+        left.add_child(inner);
+        page.add_child(&left);
+        self.root.add_child(&page);
+        self.content = Some(page.upcast());
+        self.current = Some("title");
+        // the page still takes the clicks: none reaches the scene
+        self.bg.set_color(Color::from_rgba(0.0, 0.0, 0.0, 0.0));
         self.root.set_visible(true);
     }
 
@@ -376,7 +442,7 @@ impl Screens {
             col.add_child(&l);
         }
         self.form = None;
-        self.page("title", &col.upcast());
+        self.title_page(&col.upcast());
     }
 
     /// The client's own settings: the language. `in_game`: opened from a

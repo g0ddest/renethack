@@ -655,6 +655,11 @@ impl INode for RenethackGame {
         let stats = std::env::var_os("RENETHACK_FRAME_STATS").is_some();
         self.time_title_frame(stats);
         self.lift_veil(stats);
+        // the map keeps no frame's budget while nothing of it shows
+        let veiled = self.veil.is_some() && self.veil_lift.is_none();
+        if let Some(ui) = self.ui.as_mut() {
+            ui.map.set_veiled(veiled);
+        }
         self.warm_up();
         self.prof = stats.then(Vec::new);
         let t = Instant::now();

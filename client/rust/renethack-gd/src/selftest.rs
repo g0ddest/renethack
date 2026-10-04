@@ -4039,6 +4039,7 @@ impl SelfTest {
             "combat" => hero::combat(),
             "roles" => hero::roles(),
             "branches" => world_looks::branches(),
+            "title" => world_looks::title(),
             "pickers" => input_ru::pickers(),
             "help" => help_tests::help(),
             "inventory" => inventory(),
