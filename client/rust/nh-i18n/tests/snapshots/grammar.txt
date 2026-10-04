@@ -110,6 +110,8 @@
   =    Была ночь.
  It was the midnight hour.  [38c2343a19a6]
   =    Была полночь.
+ No  Points     Name  [c8f82355c443]
+  =    №   Очки       Имя
  There is a first quarter moon in effect when your adventure ended.  [1030f453663a]
   =    Когда ваше приключение закончилось, была луна в первой четверти.
  There is a first quarter moon in effect.  [9de3bc447a67]
@@ -3986,6 +3988,21 @@
   f   Крыса выбирается из ямы.
   n   Копьё выбирается из ямы.
   pl  3 стрелы выбираются из ямы.
+%s currently shown near %s:  [2d6be1f93d65]
+  m   Видно поблизости от тритон:
+  f   Видно поблизости от крыса:
+  n   Видно поблизости от копьё:
+  pl  Видно поблизости от 3 стрелы:
+%s currently shown near you:  [4c283f2e8c24]
+  m   Видно поблизости от вас:
+  f   Видно поблизости от вас:
+  n   Видно поблизости от вас:
+  pl  Видно поблизости от вас:
+%s currently shown near your position:  [ed30917f5194]
+  m   Видно поблизости от вашего места:
+  f   Видно поблизости от вашего места:
+  n   Видно поблизости от вашего места:
+  pl  Видно поблизости от вашего места:
 %s disappears!  [e3403b506732]
   m   Тритон исчезает!
   f   Крыса исчезает!
@@ -5386,6 +5403,26 @@
   f   Крысакрысу.  Продать их?
   n   Копьёкопьё.  Продать их?
   pl  3 стрелы3 стрелы.  Продать их?
+%s, %ld zorkmid  [cd3cf1b40c4c]
+  m   Тритон, 1 зоркмид
+  f   Крыса, 3 зоркмида
+  n   Копьё, 5 зоркмидов
+  pl  3 стрелы, 21 зоркмид
+%s, %ld zorkmid each  [1f128a2e67c5]
+  m   Тритон, 1 зоркмид за штуку
+  f   Крыса, 3 зоркмида за штуку
+  n   Копьё, 5 зоркмидов за штуку
+  pl  3 стрелы, 21 зоркмид за штуку
+%s, %ld zorkmids  [3c5fc6dba275]
+  m   Тритон, 1 зоркмид
+  f   Крыса, 3 зоркмида
+  n   Копьё, 5 зоркмидов
+  pl  3 стрелы, 21 зоркмид
+%s, %ld zorkmids each  [2ad901c3b5a3]
+  m   Тритон, 1 зоркмид за штуку
+  f   Крыса, 3 зоркмида за штуку
+  n   Копьё, 5 зоркмидов за штуку
+  pl  3 стрелы, 21 зоркмид за штуку
 %s, chaotic female %s %s  [775dc2f1d201]
   m   Тритон, хаотичная тритон тритон
   f   Крыса, хаотичная крыса крыса
@@ -5416,6 +5453,11 @@
   f   Крыса, нейтральный крыса крыса
   n   Копьё, нейтральный копьё копьё
   pl  3 стрелы, нейтральный 3 стрелы 3 стрелы
+%s, no charge  [1727b76bd0f5]
+  m   Тритон, бесплатно
+  f   Крыса, бесплатно
+  n   Копьё, бесплатно
+  pl  3 стрелы, бесплатно
 %s, unaligned female %s %s  [5321b0606c86]
   m   Тритон, безверная тритон тритон
   f   Крыса, безверная крыса крыса
@@ -5450,6 +5492,66 @@
   =   (Навыки, отмеченные «*», можно будет улучшить, когда появятся свободные слоты навыков.)
 (Skills flagged by "*" may be enhanced when you're more experienced.)  [bdaddc0f10aa]
   =   (Навыки, отмеченные «*», можно будет улучшить, когда вы наберётесь опыта.)
+(There are %d more unpaid object on or under the floor.)  [82f097442bd3]
+  m   (Ещё 1 неоплаченный предмет на полу или под ним.)
+  f   (Ещё 3 неоплаченных предмета на полу или под ним.)
+  n   (Ещё 5 неоплаченных предметов на полу или под ним.)
+  pl  (Ещё 21 неоплаченный предмет на полу или под ним.)
+(There are %d more unpaid object on the floor.)  [a4e650520e3b]
+  m   (Ещё 1 неоплаченный предмет на полу.)
+  f   (Ещё 3 неоплаченных предмета на полу.)
+  n   (Ещё 5 неоплаченных предметов на полу.)
+  pl  (Ещё 21 неоплаченный предмет на полу.)
+(There are %d more unpaid object under the floor.)  [c6b81b3a9ecd]
+  m   (Ещё 1 неоплаченный предмет под полом.)
+  f   (Ещё 3 неоплаченных предмета под полом.)
+  n   (Ещё 5 неоплаченных предметов под полом.)
+  pl  (Ещё 21 неоплаченный предмет под полом.)
+(There are %d more unpaid objects on or under the floor.)  [b67aa543f52f]
+  m   (Ещё 1 неоплаченный предмет на полу или под ним.)
+  f   (Ещё 3 неоплаченных предмета на полу или под ним.)
+  n   (Ещё 5 неоплаченных предметов на полу или под ним.)
+  pl  (Ещё 21 неоплаченный предмет на полу или под ним.)
+(There are %d more unpaid objects on the floor.)  [80a7180934fb]
+  m   (Ещё 1 неоплаченный предмет на полу.)
+  f   (Ещё 3 неоплаченных предмета на полу.)
+  n   (Ещё 5 неоплаченных предметов на полу.)
+  pl  (Ещё 21 неоплаченный предмет на полу.)
+(There are %d more unpaid objects under the floor.)  [eeae4e10c8a3]
+  m   (Ещё 1 неоплаченный предмет под полом.)
+  f   (Ещё 3 неоплаченных предмета под полом.)
+  n   (Ещё 5 неоплаченных предметов под полом.)
+  pl  (Ещё 21 неоплаченный предмет под полом.)
+(There is %d more unpaid object on or under the floor.)  [e1fa9627aa1d]
+  m   (Ещё 1 неоплаченный предмет на полу или под ним.)
+  f   (Ещё 3 неоплаченных предмета на полу или под ним.)
+  n   (Ещё 5 неоплаченных предметов на полу или под ним.)
+  pl  (Ещё 21 неоплаченный предмет на полу или под ним.)
+(There is %d more unpaid object on the floor.)  [ebce9e07b0e6]
+  m   (Ещё 1 неоплаченный предмет на полу.)
+  f   (Ещё 3 неоплаченных предмета на полу.)
+  n   (Ещё 5 неоплаченных предметов на полу.)
+  pl  (Ещё 21 неоплаченный предмет на полу.)
+(There is %d more unpaid object under the floor.)  [589a648c7fc7]
+  m   (Ещё 1 неоплаченный предмет под полом.)
+  f   (Ещё 3 неоплаченных предмета под полом.)
+  n   (Ещё 5 неоплаченных предметов под полом.)
+  pl  (Ещё 21 неоплаченный предмет под полом.)
+(There is %d more unpaid objects on or under the floor.)  [e14080a6df2d]
+  m   (Ещё 1 неоплаченный предмет на полу или под ним.)
+  f   (Ещё 3 неоплаченных предмета на полу или под ним.)
+  n   (Ещё 5 неоплаченных предметов на полу или под ним.)
+  pl  (Ещё 21 неоплаченный предмет на полу или под ним.)
+(There is %d more unpaid objects on the floor.)  [f2113ff56eda]
+  m   (Ещё 1 неоплаченный предмет на полу.)
+  f   (Ещё 3 неоплаченных предмета на полу.)
+  n   (Ещё 5 неоплаченных предметов на полу.)
+  pl  (Ещё 21 неоплаченный предмет на полу.)
+(There is %d more unpaid objects under the floor.)  [213749b75054]
+  m   (Ещё 1 неоплаченный предмет под полом.)
+  f   (Ещё 3 неоплаченных предмета под полом.)
+  n   (Ещё 5 неоплаченных предметов под полом.)
+  pl  (Ещё 21 неоплаченный предмет под полом.)
 (Tip: use '%s' prefix to step in if you really want to.)  [55f7d2a42dac]
   m   (Совет: если вы правда хотите туда шагнуть, используйте префикс 'тритон'.)
   f   (Совет: если вы правда хотите туда шагнуть, используйте префикс 'крыса'.)
@@ -5604,6 +5706,10 @@ Aim for what?  [4e90fb513fa1]
   =   Что зацепить?
 All  [6a72085653e4]
   =   Все
+All monsters currently shown on the map:  [97ce1d62141b]
+  =   Все монстры на карте:
+All objects currently shown on the map:  [f25ae82aa4f5]
+  =   Все предметы на карте:
 All types  [30c8a0fc9c1a]
   =   Все типы
 All worn and wielded types  [70cb28745864]
@@ -5635,6 +5741,8 @@ Are you waiting to get hit?  Use '%s' prefix to force a no-op (to rest).  [915ab
   pl  Ждёте, когда вас ударят?  Чтобы всё равно пропустить ход (отдохнуть), используйте префикс '3 стрелы'.
 Arm this trap  [f609368b9bed]
   =   Взвести эту ловушку
+Artifacts  [a5b79f5961a2]
+  =   Артефакты
 As Crom is my witness, I'll never go hungry again!  [81cac726e739]
   =   Кром мне свидетель, я больше никогда не буду голодать!
 As you kick the door, it crashes open!  [c3905ce69e13]
@@ -5742,6 +5850,10 @@ Boom!  [96e930300eb5]
   =   Бабах!
 Break this wand  [5df2aea1098f]
   =   Сломать эту палочку
+Buy this unpaid item  [38beac67c21a]
+  =   Купить этот неоплаченный предмет
+Buy this unpaid stack  [15e4157ded82]
+  =   Купить эту неоплаченную стопку
 Call %s:  [776121bc49d1]
   m   Назвать тритона:
   f   Назвать крысу:
@@ -5964,8 +6076,31 @@ Dip your %s into the sink?  [77b644a9c78b]
   pl  Окунуть 3 стрелы в раковину?
 Disarm it?  [7cb3aa0366a0]
   =   Обезвредить?
+Discovered %s in 'sortloot' order  [0f1e37e3398d]
+  m   Открытые тритон в порядке sortloot
+  f   Открытые крыса в порядке sortloot
+  n   Открытые копьё в порядке sortloot
+  pl  Открытые 3 стрелы в порядке sortloot
+Discovered %s in alphabetical order  [4b8c773584e8]
+  m   Открытые тритон по алфавиту
+  f   Открытые крыса по алфавиту
+  n   Открытые копьё по алфавиту
+  pl  Открытые 3 стрелы по алфавиту
+Discovered %s in order of discovery  [12f1422034f7]
+  m   Открытые тритон в порядке открытия
+  f   Открытые крыса в порядке открытия
+  n   Открытые копьё в порядке открытия
+  pl  Открытые 3 стрелы в порядке открытия
+Discovered items  [d3f210ad054f]
+  =   Открытые предметы
+Discoveries, alphabetical across all classes  [2eb68b980bba]
+  =   Открытия, по алфавиту, все классы вместе
+Discoveries, alphabetical within each class  [5464b59c09e5]
+  =   Открытия, по алфавиту внутри каждого класса
 Discoveries, by order of discovery within each class  [32812993da26]
   =   Открытия, по порядку открытия в каждом классе
+Discoveries, sortloot order (by class with some sub-class groupings)  [1fa5a8ec9653]
+  =   Открытия, порядок sortloot (по классам, внутри некоторых — по группам)
 Dismount %s  [f46026084f4d]
   m   Слезть с тритона
   f   Слезть с крысы
@@ -6139,6 +6274,16 @@ Elven cloaks cannot rust.  [55826e9385e2]
   =   Эльфийские плащи не ржавеют.
 Elves can help you feel less tired.  [167ac2f15fc4]
   =   Эльфы помогут вам не засыпать на ходу.
+Engrave on the %s with one of these items  [21f379975475]
+  m   Вырезать надпись на тритоне одним из этих предметов
+  f   Вырезать надпись на крысе одним из этих предметов
+  n   Вырезать надпись на копье одним из этих предметов
+  pl  Вырезать надпись на 3 стрелах одним из этих предметов
+Engrave on the %s with this item  [444c64b7c517]
+  m   Вырезать надпись на тритоне этим предметом
+  f   Вырезать надпись на крысе этим предметом
+  n   Вырезать надпись на копье этим предметом
+  pl  Вырезать надпись на 3 стрелах этим предметом
 Engulfed Creatures  [878617b7d0d2]
   =   Поглощённые существа
 Enter %s text value to match:  [ab6b5c6209b5]
@@ -6225,6 +6370,8 @@ Final Characteristics:  [e0ec341b4e35]
   =   Итоговые характеристики:
 Final Status:  [c7ffea839993]
   =   Итоговое состояние:
+Fine goods for sale:  [63bd0b029bf3]
+  =   Отличные товары на продажу:
 Flip a coin  [b14d0cd58b85]
   =   Подбросить монетку
 For a good time engrave `Elbereth'.  [7b757d3c7d25]
@@ -6247,6 +6394,8 @@ Force the mount to succeed?  [14d1d962a035]
   =   Заставить посадку удаться?
 Fortunately, you have been immunized.  [b5bfb26e1613]
   =   К счастью, у вас иммунитет.
+Game over:  [253ba4d66b23]
+  =   Игра окончена:
 Gee!  All of a sudden, you can see right through yourself.  [4cb41c9bd137]
   =   Ого!  Внезапно вы видите себя насквозь.
 Gee!  All of a sudden, you can't see yourself.  [750fa152699e]
@@ -6521,6 +6670,10 @@ Look inside %s  [c89a4bdde11e]
   f   Заглянуть в крысу
   n   Заглянуть в копьё
   pl  Заглянуть в 3 стрелы
+Look up information about these  [16dedf3305bc]
+  =   Узнать о них подробнее
+Look up information about this  [eec57ee20d60]
+  =   Узнать об этом подробнее
 Loot %s  [9977d99afaf2]
   m   Обыскать тритона
   f   Обыскать крысу
@@ -6675,6 +6828,10 @@ Orcs do not procreate in dark rooms.  [f556a7ba3a56]
   =   Орки не размножаются в тёмных комнатах.
 Ordering of discoveries  [0d3c985c8d6e]
   =   Порядок открытий
+Other things that are here:  [ab3172954f0e]
+  =   Что ещё здесь есть:
+Other things that you feel here:  [2882dea71e0a]
+  =   Что ещё вы нащупываете здесь:
 Ouch!  That hurts!  [b26effd89232]
   =   Ой!  Больно!
 Ouch!  You bump into a door.  [62ba78627eb0]
@@ -6830,6 +6987,20 @@ Put saddle on %s  [2cb3611bc190]
   f   Надеть седло на крысу
   n   Надеть седло на копьё
   pl  Надеть седло на 3 стрелы
+Put these lenses on  [feeb5fd13027]
+  =   Надеть эти линзы
+Put this amulet on  [9a89b97390e0]
+  =   Надеть этот амулет
+Put this on  [f296d98fc667]
+  =   Надеть это
+Put this on to blindfold yourself  [49befb3284de]
+  =   Надеть это как повязку на глаза
+Put this ring on  [581499d34c62]
+  =   Надеть это кольцо
+Quaff (drink) one of these potions  [3911729745fc]
+  =   Выпить одно из этих зелий
+Quaff (drink) this potion  [0a281528f67d]
+  =   Выпить это зелье
 Quit  [1a2285d8881f]
   =   Отмена
 Quiver '%c' to un-ready these %s  [9c1d6fe96648]
@@ -6892,6 +7063,14 @@ Quiver '%c' to un-wield this weapon  [fe874527f107]
   f   Убрать из колчана ('x')
   n   Убрать из колчана ('x')
   pl  Убрать из колчана ('x')
+Quiver this item for easy shooting with 'f'ire  [b68495de4d7a]
+  =   Положить в колчан, чтобы стрелять клавишей 'f'
+Quiver this item for easy throwing with 'f'ire  [c249149895c3]
+  =   Положить в колчан, чтобы метать клавишей 'f'
+Quiver this stack for easy shooting with 'f'ire  [b2ef1336b389]
+  =   Положить стопку в колчан, чтобы стрелять клавишей 'f'
+Quiver this stack for easy throwing with 'f'ire  [21cae8c5bf01]
+  =   Положить стопку в колчан, чтобы метать клавишей 'f'
 Random  [58d888c08aa5]
   =   Случайный выбор
 Rays aren't boomerangs, of course, but still...  [ad3a3edc39be]
@@ -6963,6 +7142,14 @@ Remove saddle from %s  [3567cf50cdaf]
   f   Снять седло с крысы
   n   Снять седло с копья
   pl  Снять седло с 3 стрел
+Remove this accessory  [4ce1854651f1]
+  =   Снять это украшение
+Remove this amulet  [6e264d7eecab]
+  =   Снять этот амулет
+Remove this eyewear  [f0f763ec7263]
+  =   Снять это с глаз
+Remove this ring  [8e99fc5d67f0]
+  =   Снять это кольцо
 Rename %s  [2496bab07169]
   m   Переименовать тритона
   f   Переименовать крысу
@@ -6985,10 +7172,14 @@ Replace annotation "%.30s..." with?  [6de42971e269]
   pl  Чем заменить пометку «3 стрелы…»?
 Report now?  [9f0a6e0cd252]
   =   Сообщить сейчас?
+Reroll this character?  [b03d18671aed]
+  =   Пересоздать этого персонажа?
 Reset role/race/&c filtering  [bd11b8267ed7]
   =   Сбросить фильтр профессий, рас и прочего
 Rest one turn  [08578042b110]
   =   Отдохнуть один ход
+Restoring:  [873ad926717a]
+  =   Восстановление:
 Ride %s  [87ed071ab015]
   m   Сесть верхом на тритона
   f   Сесть верхом на крысу
@@ -7002,6 +7193,11 @@ Ring the bell  [6a8c13f710cc]
   =   Позвонить в колокольчик
 Rub something on this stone  [175140090ae0]
   =   Потереть что-нибудь об этот камень
+Rub this %s  [4a65d2284b52]
+  m   Потереть этот тритона
+  f   Потереть эту крысу
+  n   Потереть это копьё
+  pl  Потереть эти 3 стрелы
 Rust monsters love water.  There are potions they hate, however.  [2752830ea386]
   =   Ржавники обожают воду.  Но есть зелья, которых они терпеть не могут.
 Sacks protect contents from temperatures up to 452 degrees fahrenheit.  [0fd690279cf8]
@@ -7010,6 +7206,8 @@ Sacrifice something on the altar  [bf0ea9623779]
   =   Принести что-нибудь в жертву на алтаре
 Save bones?  [f2a15270d60f]
   =   Сохранить кости?
+Saving:  [852759f4dbd2]
+  =   Сохранение:
 Scribble graffiti on the floor  [b8e08cf29dc6]
   =   Нарисовать граффити на полу
 Scrolls fading?  It's not the heat, it's the humidity.  [2249cae5f24a]
@@ -7038,6 +7236,30 @@ She stole %s.  [46860e8172a5]
   f   Она украла крысу.
   n   Она украла копьё.
   pl  Она украла 3 стрелы.
+Shoot one of these  [d4ecc4171cc2]
+  =   Выстрелить одним из них
+Shoot one of these (same as 'f')  [f6fa5b70c524]
+  =   Выстрелить одним из них (то же, что 'f')
+Shoot one of these with your wielded %s  [b9a6cd97c285]
+  m   Выстрелить одним из них из тритона
+  f   Выстрелить одним из них из крысы
+  n   Выстрелить одним из них из копья
+  pl  Выстрелить одним из них из 3 стрел
+Shoot them  [2d19691612d4]
+  =   Выстрелить ими
+Shoot them (same as 'f')  [439f77f409d7]
+  =   Выстрелить ими (то же, что 'f')
+Shoot this  [ac11cdd16ab2]
+  =   Выстрелить этим
+Shoot this item  [95769fc09d3e]
+  =   Выстрелить этим предметом
+Shoot this item (same as 'f')  [c52ffbe2ea28]
+  =   Выстрелить этим предметом (то же, что 'f')
+Shoot this with your wielded %s  [948efc753dba]
+  m   Выстрелить этим из тритона
+  f   Выстрелить этим из крысы
+  n   Выстрелить этим из копья
+  pl  Выстрелить этим из 3 стрел
 Shopkeepers accept credit cards, as long as you pay cash.  [b844d62a94f2]
   =   Лавочники принимают кредитные карты — при условии, что вы платите наличными.
 Shopkeepers can spot a tourist a mile away with those Hawaiian shirts.  [667ea662826d]
@@ -7054,6 +7276,10 @@ Shopkeepers value money more than revenge.  [bcadcd8e4e7d]
   =   Деньги лавочник ценит выше мести.
 Show something its reflection  [586e8522c7c1]
   =   Показать кому-нибудь его отражение
+Since you were in discover mode, the score list will not be checked.  [f88b6b8a8606]
+  =   Вы были в режиме исследования, поэтому таблица рекордов не проверяется.
+Since you were in wizard mode, the score list will not be checked.  [d5b73f82db90]
+  =   Вы были в режиме отладки, поэтому таблица рекордов не проверяется.
 Sit on the throne  [a28b4e6636b7]
   =   Сесть на трон
 Snap!  [0ea9539ce8be]
@@ -7372,6 +7598,10 @@ The '%s' prefix should be followed by a movement command.  [37b621a30e7f]
   pl  После префикса '3 стрелы' нужна команда движения.
 The Leprechaun Gold Tru$t is no division of the Magic Memory Vault.  [42a452a5da9d]
   =   «Золотой Тра$т Лепреконов» не имеет отношения к «Волшебному Хранилищу Памяти».
+The Oracle meditates for a moment and then intones:  [52c62898c6a3]
+  =   Оракул на миг погружается в раздумья и возглашает:
+The Oracle scornfully takes all your gold and says:  [d4d8c465c8ba]
+  =   Оракул презрительно забирает всё ваше золото и говорит:
 The Wizard finds death to be quite an experience.  [75b6b67ad22c]
   =   Для Волшебника смерть — то ещё приключение.
 The air crackles around %s.  [f653cffe3626]
@@ -7401,6 +7631,8 @@ The magical ink in this spellbook is fresh.  [da43fd8e577b]
   =   Волшебные чернила в этой книге заклинаний ещё свежие.
 The magical ink in this spellbook is slightly faded.  [261a2ccaadde]
   =   Волшебные чернила в этой книге заклинаний слегка выцвели.
+The message reads:  [afc260d0ae38]
+  =   В послании сказано:
 The mixture bubbles, then clears.  [f624f44b8a24]
   =   Смесь пузырится, а затем светлеет.
 The mixture bubbles.  [3f35558d08ea]
@@ -7468,6 +7700,11 @@ There are %ld gold pieces here; eat them?  [eb0208287c0b]
   f   Здесь лежат 3 золотые монеты; съесть их?
   n   Здесь лежат 5 золотых монет; съесть их?
   pl  Здесь лежит 21 золотая монета; съесть её?
+There are %s here.  [c144c1c8983e]
+  m   Здесь тритон.
+  f   Здесь крыса.
+  n   Здесь копьё.
+  pl  Здесь 3 стрелы.
 There are %s here; eat it?  [6e0675f544e3]
   m   Здесь лежит тритон; съесть?
   f   Здесь лежит крыса; съесть?
@@ -8026,6 +8263,8 @@ Things that are under the %s here:  [d75a7948b0e7]
   f   Что лежит здесь под крысой:
   n   Что лежит здесь под копьём:
   pl  Что лежит здесь под 3 стрелами:
+Things that you feel here:  [39b1d160ae57]
+  =   Что вы нащупываете здесь:
 This %s is bland.  [49d4720cdbaa]
   m   Этот тритон пресный.
   f   Эта крыса пресная.
@@ -8114,8 +8353,32 @@ Those who wield a cockatrice corpse have a rocky road ahead of them.  [65913db42
   =   Кто держит в руках труп василиска, тому предстоит каменистый путь.
 Throne sit effect (1..13) [0=random]  [5a342da55f60]
   =   Эффект трона (1..13) [0 — случайный]
+Throw one of these  [a8747a1a5c8b]
+  =   Бросить один из них
+Throw one of these (same as 'f')  [9520df9a3421]
+  =   Бросить один из них (то же, что 'f')
+Throw one of these with your wielded %s  [2cb08984c5be]
+  m   Бросить один из них с помощью тритона
+  f   Бросить один из них с помощью крысы
+  n   Бросить один из них с помощью копья
+  pl  Бросить один из них с помощью 3 стрел
 Throw something  [d7b64c4850d1]
   =   Бросить что-нибудь
+Throw them  [ad4fe74283ae]
+  =   Бросить их
+Throw them (same as 'f')  [6023eb24d8fe]
+  =   Бросить их (то же, что 'f')
+Throw this  [daef4b444670]
+  =   Бросить это
+Throw this item  [c7748394d54a]
+  =   Бросить этот предмет
+Throw this item (same as 'f')  [cd9bc473d724]
+  =   Бросить этот предмет (то же, что 'f')
+Throw this with your wielded %s  [58c4ddc724a7]
+  m   Бросить это с помощью тритона
+  f   Бросить это с помощью крысы
+  n   Бросить это с помощью копья
+  pl  Бросить это с помощью 3 стрел
 Throwing food at a wild dog might tame him.  [c368c12d17a5]
   =   Если бросить еду дикой собаке, её можно приручить.
 Thump!  [847197203499]
@@ -8147,6 +8410,10 @@ Toggle off 'autopickup' to not pick up anything.  [6022376a8483]
   =   Выключите 'autopickup', чтобы ничего не подбирать.
 Toggle on 'autopickup' to automatically pick these things up.  [7ce30c746039]
   =   Включите 'autopickup', чтобы подбирать эти вещи автоматически.
+Toggle two-weapon combat off  [fc432f1c758a]
+  =   Выключить бой с двух рук
+Toggle two-weapon combat on  [fa59135fd2b3]
+  =   Включить бой с двух рук
 Too close!  [fd40207178de]
   =   Слишком близко!
 Too far!  [e408642d7551]
@@ -8185,6 +8452,8 @@ Unacceptable roles  [4f16713d6929]
   =   Недопустимые профессии
 Unicorn horns can cleanse things other than yourself.  [90f81498003f]
   =   Рогом единорога можно очищать не только себя.
+Unique items or Relics  [60ad9e96153d]
+  =   Уникальные предметы или реликвии
 Unknown direction: '%s' (aborted).  [f503b67707a8]
   m   Неизвестное направление: 'тритон' (отменено).
   f   Неизвестное направление: 'крыса' (отменено).
@@ -8204,6 +8473,8 @@ Unlock it with %s?  [5add5bb25d65]
   pl  Отпереть 3 стрелами?
 Unlock it?  [23c0b47a506c]
   =   Отпереть?
+Unpaid articles already used up:  [02edd48e8b2b]
+  =   Неоплаченные товары, уже израсходованные:
 Unpaid item:  [18897992dbfc]
   =   Неоплаченный предмет:
 Unpaid items  [a980392af9fa]
@@ -8259,6 +8530,8 @@ Water traps have no effect on dragons.  [64beabacd9ef]
   =   Водяные ловушки на драконов не действуют.
 Weapon Skills  [b2925617dd26]
   =   Владение оружием
+Wear this armor  [fa9ab533c33d]
+  =   Надеть эти доспехи
 Welcome to experience level %d.  [f8909c52be7b]
   m   Вы достигли 1-го уровня опыта.
   f   Вы достигли 3-го уровня опыта.
@@ -8693,6 +8966,8 @@ What type of monster do you want to genocide? [enter '?' to see previous genocid
   =   Какой вид монстров вы хотите истребить? [введите «?», чтобы увидеть прежние истребления]
 What type of monster do you want to genocide? [enter the name of a type of monster, or '?']  [8094bc02005e]
   =   Какой вид монстров вы хотите истребить? [введите название вида или «?»]
+What type of object do you want an inventory of?  [6c1750afcb59]
+  =   Какие предметы инвентаря показать?
 What type of scroll do you want to write?  [50e84be44a54]
   =   Какой свиток вы хотите написать?
 What type of spellbook do you want to write?  [b7fc65419eac]
@@ -8802,6 +9077,20 @@ Wield all of them instead?  [b3175842e612]
   =   Взять в руки их все?
 Wield the tin opener to easily open tins  [797da636d254]
   =   Взять в руки консервный нож, чтобы легко открывать банки
+Wield this item as your weapon  [dbd776fba7f0]
+  =   Взять этот предмет как оружие
+Wield this item in your %s  [d5edb8524cb0]
+  m   Взять этот предмет в тритона
+  f   Взять этот предмет в крысу
+  n   Взять этот предмет в копьё
+  pl  Взять этот предмет в 3 стрелы
+Wield this stack as your weapon  [f18125f65df5]
+  =   Взять эту стопку как оружие
+Wield this stack in your %s  [f54c603de2a7]
+  m   Взять эту стопку в тритона
+  f   Взять эту стопку в крысу
+  n   Взять эту стопку в копьё
+  pl  Взять эту стопку в 3 стрелы
 Will you accept %ld zorkmid in credit for   [d37e471b0255]
   m   Примете ли вы 1 зоркмид в кредит за 
   f   Примете ли вы 3 зоркмида в кредит за 
@@ -8841,6 +9130,16 @@ Wow!  This makes you feel great!  [21bb0acd5817]
   =   Ух ты!  Вы чувствуете себя отлично!
 Write on something with this marker  [5605e18a0063]
   =   Написать что-нибудь этим маркером
+Write on the %s with one of these items  [7d163a970d27]
+  m   Написать на тритоне одним из этих предметов
+  f   Написать на крысе одним из этих предметов
+  n   Написать на копье одним из этих предметов
+  pl  Написать на 3 стрелах одним из этих предметов
+Write on the %s with this item  [b09c6376a473]
+  m   Написать на тритоне этим предметом
+  f   Написать на крысе этим предметом
+  n   Написать на копье этим предметом
+  pl  Написать на 3 стрелах этим предметом
 Yecch!  This stuff tastes like poison.  [90919eb34435]
   =   Фу!  На вкус как яд.
 Yecch!  This tastes overripe.  [a314f25d1cd7]
@@ -8866,6 +9165,8 @@ You and %s and Schroedinger's cat  [f23b599f7c63]
   f   Вы, крыса и кот Шрёдингера
   n   Вы, копьё и кот Шрёдингера
   pl  Вы, 3 стрелы и кот Шрёдингера
+You and Schroedinger's cat  [4cc144864b08]
+  =   Вы и кот Шрёдингера
 You are almost hit by %s.  [d5c3e68649f8]
   m   Тритон едва не попадает в вас.
   f   Крыса едва не попадает в вас.
@@ -9257,6 +9558,11 @@ You did %ld zorkmids worth of damage!  Pay?  [e1c44a3aac0f]
   f   Вы нанесли ущерба на 3 зоркмида!  Заплатить?
   n   Вы нанесли ущерба на 5 зоркмидов!  Заплатить?
   pl  Вы нанесли ущерба на 21 зоркмид!  Заплатить?
+You didn't beat your previous score of %ld points.  [448724a88ed4]
+  m   Вам не удалось побить свой прежний рекорд: 1 очко.
+  f   Вам не удалось побить свой прежний рекорд: 3 очка.
+  n   Вам не удалось побить свой прежний рекорд: 5 очков.
+  pl  Вам не удалось побить свой прежний рекорд: 21 очко.
 You die from starvation.  [8109de2f779d]
   =   Вы умираете от голода.
 You die from your illness.  [07d26437445c]
@@ -9977,6 +10283,8 @@ You lash %s.  [486cb6019661]
   f   Вы хлещете крысу.
   n   Вы хлещете копьё.
   pl  Вы хлещете 3 стрелы.
+You made the top ten list!  [02cf73edadde]
+  =   Вы попали в первую десятку!
 You make an opening in the wall.  [1f1f7402a887]
   =   Вы проделываете проход в стене.
 You materialize in a different location!  [96ce8fe89692]
@@ -10131,6 +10439,26 @@ You quit in The Astral Plane with %ld points,  [d05dc4627df9]
   f   Вы сдались на Астральном плане, набрав 3 очка,
   n   Вы сдались на Астральном плане, набрав 5 очков,
   pl  Вы сдались на Астральном плане, набрав 21 очко,
+You reached the %dnd place on the top %d list.  [51c3315c81de]
+  m   Вы заняли 1-е место в таблице лучших (1).
+  f   Вы заняли 3-е место в таблице лучших (3).
+  n   Вы заняли 5-е место в таблице лучших (5).
+  pl  Вы заняли 21-е место в таблице лучших (21).
+You reached the %drd place on the top %d list.  [53e5adc52042]
+  m   Вы заняли 1-е место в таблице лучших (1).
+  f   Вы заняли 3-е место в таблице лучших (3).
+  n   Вы заняли 5-е место в таблице лучших (5).
+  pl  Вы заняли 21-е место в таблице лучших (21).
+You reached the %dst place on the top %d list.  [fc3b7b460127]
+  m   Вы заняли 1-е место в таблице лучших (1).
+  f   Вы заняли 3-е место в таблице лучших (3).
+  n   Вы заняли 5-е место в таблице лучших (5).
+  pl  Вы заняли 21-е место в таблице лучших (21).
+You reached the %dth place on the top %d list.  [8158bc97be60]
+  m   Вы заняли 1-е место в таблице лучших (1).
+  f   Вы заняли 3-е место в таблице лучших (3).
+  n   Вы заняли 5-е место в таблице лучших (5).
+  pl  Вы заняли 21-е место в таблице лучших (21).
 You read: "%s"  [d4acda9a63b9]
   m   Вы читаете: «тритон»
   f   Вы читаете: «крыса»
@@ -10902,6 +11230,20 @@ Zapping a wand of undead turning might bring your dog back to life.  [0ec0375106
   =   Палочка изгнания нежити может вернуть вашу собаку к жизни.
 [A] Command autocompletes  [37f5f64ccfa5]
   =   [A] Команда дополняется автоматически
+[already wearing %s]  [17db2b2f90b9]
+  m   [уже надет тритон]
+  f   [уже надета крыса]
+  n   [уже надето копьё]
+  pl  [уже надеты 3 стрелы]
+[already wearing an amulet]  [5f321e823569]
+  =   [амулет уже надет]
+[already wearing eyewear]  [b2fa366de018]
+  =   [на глазах уже что-то есть]
+[both ring %s in use]  [e47662f7d983]
+  m   [свободных тритона для колец нет]
+  f   [свободных крысы для колец нет]
+  n   [свободных копья для колец нет]
+  pl  [свободных 3 стрел для колец нет]
 [m] Command accepts '%s' prefix  [50491bdaf137]
   m   [m] Команда принимает префикс 'тритон'
   f   [m] Команда принимает префикс 'крыса'
@@ -11173,6 +11515,31 @@ the %s  [670f80e4c425]
   f   Крыса
   n   Копьё
   pl  3 стрелы
+the contents of %s, %ld zorkmid  [5e08fe3ae15c]
+  m   Содержимое тритона, 1 зоркмид
+  f   Содержимое крысы, 3 зоркмида
+  n   Содержимое копья, 5 зоркмидов
+  pl  Содержимое 3 стрел, 21 зоркмид
+the contents of %s, %ld zorkmid each  [a5e36fedffc1]
+  m   Содержимое тритона, 1 зоркмид за штуку
+  f   Содержимое крысы, 3 зоркмида за штуку
+  n   Содержимое копья, 5 зоркмидов за штуку
+  pl  Содержимое 3 стрел, 21 зоркмид за штуку
+the contents of %s, %ld zorkmids  [ba5875dd8397]
+  m   Содержимое тритона, 1 зоркмид
+  f   Содержимое крысы, 3 зоркмида
+  n   Содержимое копья, 5 зоркмидов
+  pl  Содержимое 3 стрел, 21 зоркмид
+the contents of %s, %ld zorkmids each  [fc1fbf55b2b3]
+  m   Содержимое тритона, 1 зоркмид за штуку
+  f   Содержимое крысы, 3 зоркмида за штуку
+  n   Содержимое копья, 5 зоркмидов за штуку
+  pl  Содержимое 3 стрел, 21 зоркмид за штуку
+the contents of %s, no charge  [07bcea93922b]
+  m   Содержимое тритона, бесплатно
+  f   Содержимое крысы, бесплатно
+  n   Содержимое копья, бесплатно
+  pl  Содержимое 3 стрел, бесплатно
 the type of an object in inventory  [d5213ef88090]
   =   Тип предмета в инвентаре
 the type of an object on discoveries list  [be8fd5977d20]

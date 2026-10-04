@@ -1,0 +1,456 @@
+# R6, batch 6: the windows and menus a game still showed in English:
+# an item's actions, the inventory's and the discoveries' headings,
+# what lies here, the Oracle's words, a shop's prices, the top ten.
+
+[a5b79f5961a2]
+en = "Artifacts"
+ru = "Артефакты"
+
+[0a281528f67d]
+en = "Quaff (drink) this potion"
+ru = "Выпить это зелье"
+
+[15e4157ded82]
+en = "Buy this unpaid stack"
+ru = "Купить эту неоплаченную стопку"
+
+[16dedf3305bc]
+en = "Look up information about these"
+ru = "Узнать о них подробнее"
+
+[17db2b2f90b9]
+en = "[already wearing %s]"
+ru = "[уже {1:gender|надет|надета|надето|надеты} {1}]"
+
+[21cae8c5bf01]
+en = "Quiver this stack for easy throwing with 'f'ire"
+ru = "Положить стопку в колчан, чтобы метать клавишей 'f'"
+
+[21f379975475]
+en = "Engrave on the %s with one of these items"
+ru = "Вырезать надпись на {1:loc} одним из этих предметов"
+
+[2cb08984c5be]
+en = "Throw one of these with your wielded %s"
+ru = "Бросить один из них с помощью {1:gen}"
+
+[2d19691612d4]
+en = "Shoot them"
+ru = "Выстрелить ими"
+
+[38beac67c21a]
+en = "Buy this unpaid item"
+ru = "Купить этот неоплаченный предмет"
+
+[3911729745fc]
+en = "Quaff (drink) one of these potions"
+ru = "Выпить одно из этих зелий"
+
+[439f77f409d7]
+en = "Shoot them (same as 'f')"
+ru = "Выстрелить ими (то же, что 'f')"
+
+[444c64b7c517]
+en = "Engrave on the %s with this item"
+ru = "Вырезать надпись на {1:loc} этим предметом"
+
+[49befb3284de]
+en = "Put this on to blindfold yourself"
+ru = "Надеть это как повязку на глаза"
+
+[4a65d2284b52]
+en = "Rub this %s"
+ru = "Потереть {1:gender|этот|эту|это|эти} {1:acc}"
+
+[4ce1854651f1]
+en = "Remove this accessory"
+ru = "Снять это украшение"
+
+[581499d34c62]
+en = "Put this ring on"
+ru = "Надеть это кольцо"
+
+[58c4ddc724a7]
+en = "Throw this with your wielded %s"
+ru = "Бросить это с помощью {1:gen}"
+
+[5f321e823569]
+en = "[already wearing an amulet]"
+ru = "[амулет уже надет]"
+
+[6023eb24d8fe]
+en = "Throw them (same as 'f')"
+ru = "Бросить их (то же, что 'f')"
+
+[6e264d7eecab]
+en = "Remove this amulet"
+ru = "Снять этот амулет"
+
+[7d163a970d27]
+en = "Write on the %s with one of these items"
+ru = "Написать на {1:loc} одним из этих предметов"
+
+[8e99fc5d67f0]
+en = "Remove this ring"
+ru = "Снять это кольцо"
+
+[948efc753dba]
+en = "Shoot this with your wielded %s"
+ru = "Выстрелить этим из {1:gen}"
+
+[9520df9a3421]
+en = "Throw one of these (same as 'f')"
+ru = "Бросить один из них (то же, что 'f')"
+
+[95769fc09d3e]
+en = "Shoot this item"
+ru = "Выстрелить этим предметом"
+
+[9a89b97390e0]
+en = "Put this amulet on"
+ru = "Надеть этот амулет"
+
+[a8747a1a5c8b]
+en = "Throw one of these"
+ru = "Бросить один из них"
+
+[ac11cdd16ab2]
+en = "Shoot this"
+ru = "Выстрелить этим"
+
+[ad4fe74283ae]
+en = "Throw them"
+ru = "Бросить их"
+
+[b09c6376a473]
+en = "Write on the %s with this item"
+ru = "Написать на {1:loc} этим предметом"
+
+[b2ef1336b389]
+en = "Quiver this stack for easy shooting with 'f'ire"
+ru = "Положить стопку в колчан, чтобы стрелять клавишей 'f'"
+
+[b2fa366de018]
+en = "[already wearing eyewear]"
+ru = "[на глазах уже что-то есть]"
+
+[b68495de4d7a]
+en = "Quiver this item for easy shooting with 'f'ire"
+ru = "Положить в колчан, чтобы стрелять клавишей 'f'"
+
+[b9a6cd97c285]
+en = "Shoot one of these with your wielded %s"
+ru = "Выстрелить одним из них из {1:gen}"
+
+[c249149895c3]
+en = "Quiver this item for easy throwing with 'f'ire"
+ru = "Положить в колчан, чтобы метать клавишей 'f'"
+
+[c52ffbe2ea28]
+en = "Shoot this item (same as 'f')"
+ru = "Выстрелить этим предметом (то же, что 'f')"
+
+[c7748394d54a]
+en = "Throw this item"
+ru = "Бросить этот предмет"
+
+[cd9bc473d724]
+en = "Throw this item (same as 'f')"
+ru = "Бросить этот предмет (то же, что 'f')"
+
+[d4ecc4171cc2]
+en = "Shoot one of these"
+ru = "Выстрелить одним из них"
+
+[d5edb8524cb0]
+en = "Wield this item in your %s"
+ru = "Взять этот предмет в {1:acc}"
+
+[daef4b444670]
+en = "Throw this"
+ru = "Бросить это"
+
+[dbd776fba7f0]
+en = "Wield this item as your weapon"
+ru = "Взять этот предмет как оружие"
+
+[e47662f7d983]
+en = "[both ring %s in use]"
+ru = "[свободных {1:gen} для колец нет]"
+
+[eec57ee20d60]
+en = "Look up information about this"
+ru = "Узнать об этом подробнее"
+
+[f0f763ec7263]
+en = "Remove this eyewear"
+ru = "Снять это с глаз"
+
+[f18125f65df5]
+en = "Wield this stack as your weapon"
+ru = "Взять эту стопку как оружие"
+
+[f296d98fc667]
+en = "Put this on"
+ru = "Надеть это"
+
+[f54c603de2a7]
+en = "Wield this stack in your %s"
+ru = "Взять эту стопку в {1:acc}"
+
+[f6fa5b70c524]
+en = "Shoot one of these (same as 'f')"
+ru = "Выстрелить одним из них (то же, что 'f')"
+
+[fa59135fd2b3]
+en = "Toggle two-weapon combat on"
+ru = "Включить бой с двух рук"
+
+[fa9ab533c33d]
+en = "Wear this armor"
+ru = "Надеть эти доспехи"
+
+[fc432f1c758a]
+en = "Toggle two-weapon combat off"
+ru = "Выключить бой с двух рук"
+
+[feeb5fd13027]
+en = "Put these lenses on"
+ru = "Надеть эти линзы"
+
+[b03d18671aed]
+en = "Reroll this character?"
+ru = "Пересоздать этого персонажа?"
+
+[213749b75054]
+en = "(There is %d more unpaid objects under the floor.)"
+ru = "(Ещё {1} {1:plural|неоплаченный предмет|неоплаченных предмета|неоплаченных предметов} под полом.)"
+
+[589a648c7fc7]
+en = "(There is %d more unpaid object under the floor.)"
+ru = "(Ещё {1} {1:plural|неоплаченный предмет|неоплаченных предмета|неоплаченных предметов} под полом.)"
+
+[80a7180934fb]
+en = "(There are %d more unpaid objects on the floor.)"
+ru = "(Ещё {1} {1:plural|неоплаченный предмет|неоплаченных предмета|неоплаченных предметов} на полу.)"
+
+[82f097442bd3]
+en = "(There are %d more unpaid object on or under the floor.)"
+ru = "(Ещё {1} {1:plural|неоплаченный предмет|неоплаченных предмета|неоплаченных предметов} на полу или под ним.)"
+
+[a4e650520e3b]
+en = "(There are %d more unpaid object on the floor.)"
+ru = "(Ещё {1} {1:plural|неоплаченный предмет|неоплаченных предмета|неоплаченных предметов} на полу.)"
+
+[b67aa543f52f]
+en = "(There are %d more unpaid objects on or under the floor.)"
+ru = "(Ещё {1} {1:plural|неоплаченный предмет|неоплаченных предмета|неоплаченных предметов} на полу или под ним.)"
+
+[c6b81b3a9ecd]
+en = "(There are %d more unpaid object under the floor.)"
+ru = "(Ещё {1} {1:plural|неоплаченный предмет|неоплаченных предмета|неоплаченных предметов} под полом.)"
+
+[e14080a6df2d]
+en = "(There is %d more unpaid objects on or under the floor.)"
+ru = "(Ещё {1} {1:plural|неоплаченный предмет|неоплаченных предмета|неоплаченных предметов} на полу или под ним.)"
+
+[e1fa9627aa1d]
+en = "(There is %d more unpaid object on or under the floor.)"
+ru = "(Ещё {1} {1:plural|неоплаченный предмет|неоплаченных предмета|неоплаченных предметов} на полу или под ним.)"
+
+[ebce9e07b0e6]
+en = "(There is %d more unpaid object on the floor.)"
+ru = "(Ещё {1} {1:plural|неоплаченный предмет|неоплаченных предмета|неоплаченных предметов} на полу.)"
+
+[eeae4e10c8a3]
+en = "(There are %d more unpaid objects under the floor.)"
+ru = "(Ещё {1} {1:plural|неоплаченный предмет|неоплаченных предмета|неоплаченных предметов} под полом.)"
+
+[f2113ff56eda]
+en = "(There is %d more unpaid objects on the floor.)"
+ru = "(Ещё {1} {1:plural|неоплаченный предмет|неоплаченных предмета|неоплаченных предметов} на полу.)"
+
+[6c1750afcb59]
+en = "What type of object do you want an inventory of?"
+ru = "Какие предметы инвентаря показать?"
+
+[c144c1c8983e]
+en = "There are %s here."
+ru = "Здесь {1}."
+
+[2882dea71e0a]
+en = "Other things that you feel here:"
+ru = "Что ещё вы нащупываете здесь:"
+
+[39b1d160ae57]
+en = "Things that you feel here:"
+ru = "Что вы нащупываете здесь:"
+
+[ab3172954f0e]
+en = "Other things that are here:"
+ru = "Что ещё здесь есть:"
+
+[0f1e37e3398d]
+en = "Discovered %s in 'sortloot' order"
+ru = "Открытые {1} в порядке sortloot"
+
+[12f1422034f7]
+en = "Discovered %s in order of discovery"
+ru = "Открытые {1} в порядке открытия"
+
+[4b8c773584e8]
+en = "Discovered %s in alphabetical order"
+ru = "Открытые {1} по алфавиту"
+
+[1fa5a8ec9653]
+en = "Discoveries, sortloot order (by class with some sub-class groupings)"
+ru = "Открытия, порядок sortloot (по классам, внутри некоторых — по группам)"
+
+[2eb68b980bba]
+en = "Discoveries, alphabetical across all classes"
+ru = "Открытия, по алфавиту, все классы вместе"
+
+[5464b59c09e5]
+en = "Discoveries, alphabetical within each class"
+ru = "Открытия, по алфавиту внутри каждого класса"
+
+[60ad9e96153d]
+en = "Unique items or Relics"
+ru = "Уникальные предметы или реликвии"
+
+[d3f210ad054f]
+en = "Discovered items"
+ru = "Открытые предметы"
+
+[4c283f2e8c24]
+en = "%s currently shown near you:"
+ru = "{1:skip}Видно поблизости от вас:"
+
+[ed30917f5194]
+en = "%s currently shown near your position:"
+ru = "{1:skip}Видно поблизости от вашего места:"
+
+[2d6be1f93d65]
+en = "%s currently shown near %s:"
+ru = "{1:skip}Видно поблизости от {2}:"
+
+[97ce1d62141b]
+en = "All monsters currently shown on the map:"
+ru = "Все монстры на карте:"
+
+[f25ae82aa4f5]
+en = "All objects currently shown on the map:"
+ru = "Все предметы на карте:"
+
+[873ad926717a]
+en = "Restoring:"
+ru = "Восстановление:"
+
+[52c62898c6a3]
+en = "The Oracle meditates for a moment and then intones:"
+ru = "Оракул на миг погружается в раздумья и возглашает:"
+
+[d4d8c465c8ba]
+en = "The Oracle scornfully takes all your gold and says:"
+ru = "Оракул презрительно забирает всё ваше золото и говорит:"
+
+[afc260d0ae38]
+en = "The message reads:"
+ru = "В послании сказано:"
+
+[852759f4dbd2]
+en = "Saving:"
+ru = "Сохранение:"
+
+[02edd48e8b2b]
+en = "Unpaid articles already used up:"
+ru = "Неоплаченные товары, уже израсходованные:"
+
+[63bd0b029bf3]
+en = "Fine goods for sale:"
+ru = "Отличные товары на продажу:"
+
+[07bcea93922b]
+en = "the contents of %s, no charge"
+ru = "содержимое {1:gen}, бесплатно"
+
+[1727b76bd0f5]
+en = "%s, no charge"
+ru = "{1}, бесплатно"
+
+[1f128a2e67c5]
+en = "%s, %ld zorkmid each"
+ru = "{1}, {2} {2:plural|зоркмид|зоркмида|зоркмидов} за штуку"
+
+[2ad901c3b5a3]
+en = "%s, %ld zorkmids each"
+ru = "{1}, {2} {2:plural|зоркмид|зоркмида|зоркмидов} за штуку"
+
+[3c5fc6dba275]
+en = "%s, %ld zorkmids"
+ru = "{1}, {2} {2:plural|зоркмид|зоркмида|зоркмидов}"
+
+[5e08fe3ae15c]
+en = "the contents of %s, %ld zorkmid"
+ru = "содержимое {1:gen}, {2} {2:plural|зоркмид|зоркмида|зоркмидов}"
+
+[a5e36fedffc1]
+en = "the contents of %s, %ld zorkmid each"
+ru = "содержимое {1:gen}, {2} {2:plural|зоркмид|зоркмида|зоркмидов} за штуку"
+
+[ba5875dd8397]
+en = "the contents of %s, %ld zorkmids"
+ru = "содержимое {1:gen}, {2} {2:plural|зоркмид|зоркмида|зоркмидов}"
+
+[cd3cf1b40c4c]
+en = "%s, %ld zorkmid"
+ru = "{1}, {2} {2:plural|зоркмид|зоркмида|зоркмидов}"
+
+[fc1fbf55b2b3]
+en = "the contents of %s, %ld zorkmids each"
+ru = "содержимое {1:gen}, {2} {2:plural|зоркмид|зоркмида|зоркмидов} за штуку"
+
+[02cf73edadde]
+en = "You made the top ten list!"
+ru = "Вы попали в первую десятку!"
+
+[448724a88ed4]
+en = "You didn't beat your previous score of %ld points."
+ru = "Вам не удалось побить свой прежний рекорд: {1} {1:plural|очко|очка|очков}."
+
+[51c3315c81de]
+en = "You reached the %dnd place on the top %d list."
+ru = "Вы заняли {1}-е место в таблице лучших ({2})."
+
+[53e5adc52042]
+en = "You reached the %drd place on the top %d list."
+ru = "Вы заняли {1}-е место в таблице лучших ({2})."
+
+[8158bc97be60]
+en = "You reached the %dth place on the top %d list."
+ru = "Вы заняли {1}-е место в таблице лучших ({2})."
+
+[c8f82355c443]
+en = " No  Points     Name"
+ru = " №   Очки       Имя"
+
+[d5b73f82db90]
+en = "Since you were in wizard mode, the score list will not be checked."
+ru = "Вы были в режиме отладки, поэтому таблица рекордов не проверяется."
+not_terms = ["wizard"]
+
+[f88b6b8a8606]
+en = "Since you were in discover mode, the score list will not be checked."
+ru = "Вы были в режиме исследования, поэтому таблица рекордов не проверяется."
+
+[fc3b7b460127]
+en = "You reached the %dst place on the top %d list."
+ru = "Вы заняли {1}-е место в таблице лучших ({2})."
+
+[253ba4d66b23]
+en = "Game over:"
+ru = "Игра окончена:"
+
+[4cc144864b08]
+en = "You and Schroedinger's cat"
+ru = "Вы и кот Шрёдингера"
