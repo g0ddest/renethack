@@ -258,12 +258,13 @@ fn latin_words(s: &str) -> Vec<&str> {
         .collect()
 }
 
-/// Does `text` hold `word` with no letter right before or after it?
+/// Does `text` hold `word` with no letter right before or after it (a
+/// word as `latin_words` cuts them: "south" of "3south")?
 fn has_word(text: &str, word: &str) -> bool {
     text.match_indices(word).any(|(i, _)| {
         let before = text[..i].chars().next_back();
         let after = text[i + word.len()..].chars().next();
-        !before.is_some_and(char::is_alphanumeric) && !after.is_some_and(char::is_alphanumeric)
+        !before.is_some_and(char::is_alphabetic) && !after.is_some_and(char::is_alphabetic)
     })
 }
 

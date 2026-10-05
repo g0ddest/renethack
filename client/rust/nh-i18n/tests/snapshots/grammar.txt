@@ -78,6 +78,16 @@
   f    крыса сильно гневалась на вас.
   n    копьё сильно гневалось на вас.
   pl   3 стрелы сильно гневались на вас.
+ 0 (off)  [1e61b10e117b]
+  =    0 (выкл.)
+ 1 (on)  [961e60edc045]
+  =    1 (вкл.)
+ 2 (on, MSDOS compatible)  [6e70c3d90e8c]
+  =    2 (вкл., как в MSDOS)
+ 3 (on, phone-style digit layout)  [ebe3d0be6182]
+  =    3 (вкл., цифры как на телефоне)
+ 4 (on, phone-style layout, MSDOS compatible)  [1f11c151eddd]
+  =    4 (вкл., как на телефоне, как в MSDOS)
  Autopickup is off.  [af5ecca78740]
   =    Автоподбор выключен.
  Autopickup is on.  [e000806fcc9e]
@@ -8736,6 +8746,8 @@
   f   Тело крысы начинает съёживаться, и она хрипит:\n\n    «Я буду преследовать тебя до скончания времён.  Тысяча проклятий\n    тебе и крысе.»\n\nЗатем тело рассыпается облаком удушливой пыли, и её уносит ветром.
   n   Тело копья начинает съёживаться, и оно хрипит:\n\n    «Я буду преследовать тебя до скончания времён.  Тысяча проклятий\n    тебе и копью.»\n\nЗатем тело рассыпается облаком удушливой пыли, и её уносит ветром.
   pl  Тело 3 стрел начинает съёживаться, и они хрипит:\n\n    «Я буду преследовать тебя до скончания времён.  Тысяча проклятий\n    тебе и 3 стрелам.»\n\nЗатем тело рассыпается облаком удушливой пыли, и её уносит ветром.
+'m' prefix necessary to deliberately walk into lava or water  [05d5141b7416]
+  =   Чтобы нарочно шагнуть в лаву или воду, нужна приставка «m»
 (But in fact it was biologically contaminated %s.)  [802bbab29363]
   m   (На самом деле это был биологически заражённый тритон.)
   f   (На самом деле это была биологически заражённая крыса.)
@@ -8839,16 +8851,28 @@
   =   (показать подходящее)
 (none)  [3c6b183d348f]
   =   (нет)
+(not applicable)  [6e5da7497da5]
+  =   (неприменимо)
+(not available)  [6063620034de]
+  =   (недоступно)
+-1 (off, 'z' to move upper-left, 'y' to zap wands)  [f3ab3cf79950]
+  =   -1 (выкл., «z» — шаг вверх-влево, «y» — взмах палочкой)
 ...and they made me engrave my own headstone too!  [0245decc5af6]
   =   ...и надгробие мне тоже пришлось гравировать самому!
 ...but the blood has stopped pumping and I am left to decay...  [333e441466ea]
   =   ...но кровь перестала течь, и мне осталось лишь тлеть...
 ...for famous men have the whole earth as their memorial  [83ab99eb0eb5]
   =   ...ибо для славных мужей вся земля — памятник
+0 (off), 1 (on), 2 (auto)  [3a4c003fff95]
+  =   0 (выкл.), 1 (вкл.), 2 (авто)
+0=no status highlighting, N=show highlights for N turns  [6f874b68ecc6]
+  =   0 — без подсветки состояния, N — подсветка на N ходов
 1994-1995. The Longest-Lived Hacker Ever  [664a46aacea0]
   =   1994–1995. Самый долгоживущий хакер в истории
 1st Law of Hacking:  leaving is much more difficult than entering.  [2b22b6fbebf2]
   =   Первый закон хакинга: выйти гораздо труднее, чем войти.
+2 or 3 lines for status display  [6310c0fe07df]
+  =   2 или 3 строки состояния
 2nd Law of Hacking:  first in, first out.  [f49b5e8dd59a]
   =   Второй закон хакинга: первым вошёл — первым вышел.
 3rd Law of Hacking:  the last blow counts most.  [7d699b2c504a]
@@ -9068,6 +9092,8 @@ Achievements:  [6f1fcb999220]
   =   Достижения:
 Acid blobs should be attacked bare-handed.  [fe64830b94e5]
   =   Кислотные сгустки лучше бить голыми руками.
+Actions requiring extra confirmation:  [c58374b86a51]
+  =   Действия, требующие подтверждения:
 Adapt.  Enjoy.  Survive.  [b72d0a5cc062]
   =   Приспосабливайся.  Наслаждайся.  Выживай.
 Adjust inventory by assigning new letter  [dfe372753a5f]
@@ -9081,6 +9107,8 @@ Adjust letter to what [%s] (? see used letters)?  [92346ad5b823]
   pl  Какую букву дать [3 стрелы] (? — занятые буквы)?
 Advance skills without practice?  [12c0880fa94a]
   =   Повысить навыки без тренировки?
+Advanced  [4d064726954a]
+  =   Дополнительно
 Adventure, hah!  Excitement, hah!  [643c79f96faa]
   =   Приключения, ха!  Острые ощущения, ха!
 Affairs with nymphs are often very expensive.  [b2972950c346]
@@ -9193,6 +9221,10 @@ Always attack a floating eye from behind!  [b354491ec5f7]
   =   Парящее око всегда атакуйте со спины!
 Always be aware of the phase of the moon!  [ad2bc5f14895]
   =   Всегда помните о фазе луны!
+Always disclose, pick sort order from menu  [203a93bfe5ce]
+  =   Всегда раскрывать, порядок выбрать в меню
+Always disclose, without prompting  [8c225d5e6f83]
+  =   Всегда раскрывать, не спрашивая
 Always pickup '<'; never pickup '>'  [a586b42a2007]
   =   Всегда подбирать '<'; никогда не подбирать '>'
 Always sweep the floor before engraving important messages.  [8da40fa2c9d1]
@@ -9468,6 +9500,10 @@ Auribus teneo lupum  [24e737a01def]
   =   Держу волка за уши
 Austin Powers says: My Mojo is back!  Yeah, baby!  [7ef017e97684]
   =   Остин Пауэрс говорит: моё моджо снова со мной!  Йе, бейби!
+Auto, except forced off for perm_invent  [540e1e3baa55]
+  =   Авто, но выкл. для perm_invent
+Auto, on if display is at least (24+2)x(80+2)  [b2058d98e125]
+  =   Авто, вкл. на экране от (24+2)x(80+2)
 Auto-select every item being worn or wielded  [386aaaffbb6a]
   =   Выбрать всё надетое и всё, что в руках
 Auto-select every relevant item  [625f1902b43e]
@@ -9527,6 +9563,8 @@ Beetlejuice Beetlejuice Beetlejuice  [e1e25442ed48]
   =   Битлджус Битлджус Битлджус
 Beg your pardon, didn't recognize you, I've changed a lot.  [b26a3a742fad]
   =   Простите, не узнал вас, я сильно изменился.
+Behavior  [70cb647a88bd]
+  =   Поведение
 Behind this door is a dark corridor  [eb9e3a60b211]
   =   За этой дверью тёмный коридор
 Behold the cockatrice, whose diminutive stature belies its hidden might.  The\ncockatrice can petrify any ordinary being it contacts--save those wise\nadventurers who eat a dead lizard or blob of acid when they feel themselves\nslowly turning to stone.  [1780f93e1704]
@@ -9739,6 +9777,8 @@ Change %s @ %s into what?  [72a8d7b071f4]
   f   Во что превратить крысу @ крыса?
   n   Во что превратить копьё @ копьё?
   pl  Во что превратить 3 стрелы @ 3 стрелы?
+Change which disclosure options categories:  [8d2b5dad8f44]
+  =   Какие сведения о конце игры изменить:
 Changing your suit without dropping your sword?  You must be kidding!  [0943168bd087]
   =   Переодеться, не выпуская меча?  Вы шутите!
 Chaos, panic and disorder.  My work here is done.  [111629683511]
@@ -9765,6 +9805,8 @@ Choose %s text value to match:  [451a0ce00d53]
   f   Выберите текст для крыса:
   n   Выберите текст для копьё:
   pl  Выберите текст для 3 стрелы:
+Choose permanent inventory mode:  [b47d2992ecf4]
+  =   Режим постоянного инвентаря:
 Choose which spell to cast  [1216eeda3735]
   =   Выберите заклинание
 Christmas-tree monster  [dcc456b5d4d7]
@@ -9820,6 +9862,8 @@ Commodore Business Machines, Inc.  Died for our sins.  [6ed37137a8ed]
   =   «Коммодор Бизнес Машинс».  Умерла за наши грехи.
 Complain to one who can help you  [fa70e776d5bb]
   =   Жалуйтесь тому, кто может помочь
+Compound options:  [a5dd77a94d0a]
+  =   Составные параметры:
 Compounds (selecting will prompt for new value):  [272e5dc25e55]
   =   Составные (выбор запросит новое значение):
 Concise conquest:  Control, confuse, conjure, condemn.  [65882aea9e66]
@@ -10042,6 +10086,18 @@ Direct a direct hit on your direct opponent, directing in the right direction.  
   =   Направьте прямой удар на прямого противника, направляя в правильном направлении.
 Disarm it?  [7cb3aa0366a0]
   =   Обезвредить?
+Disclosure options for attributes:  [1a2709eb1fa3]
+  =   Раскрытие атрибутов:
+Disclosure options for conduct:  [8b1d736598b3]
+  =   Раскрытие поведения:
+Disclosure options for genocides:  [6db8d616922d]
+  =   Раскрытие геноцидов:
+Disclosure options for inventory:  [72c3844cf7bf]
+  =   Раскрытие инвентаря:
+Disclosure options for overview:  [119d369fd625]
+  =   Раскрытие обзора:
+Disclosure options for vanquished:  [3216db82dbcc]
+  =   Раскрытие побеждённых:
 Discovered %s in 'sortloot' order  [0f1e37e3398d]
   m   Открытые тритон в порядке sortloot
   f   Открытые крыса в порядке sortloot
@@ -10248,6 +10304,10 @@ Dump information about all artifacts?  [29f196501647]
   =   Вывести сведения обо всех артефактах?
 Dwarves use their cloaks to keep their drinks cool.  [a5737f4c2dc0]
   =   Дварфы прячут напитки под плащом, чтобы те не грелись.
+ERROR  [0b99cebe5658]
+  =   ОШИБКА
+ERROR  (for autopickup)  [2733167405bc]
+  =   ОШИБКА  (для автоподбора)
 Eat %s  [b17dc354c3bf]
   m   Съесть тритона
   f   Съесть крысу
@@ -10587,6 +10647,8 @@ Gems are too precious to be thrown away carelessly.  [5ef1196112f9]
   =   Самоцветы слишком дороги, чтобы швыряться ими почём зря.
 Gems/Stones  [73021e2b7615]
   =   Самоцветы/камни
+General  [9239ee2cda84]
+  =   Общие
 Genuine Exploding Gravestone.  (c)Acme Gravestones Inc.  [89a366280efe]
   =   Подлинное взрывающееся надгробие.  (c) ООО «Акме Надгробия»
 Get back here!  I'm not finished yet...  [094fd3cc04d1]
@@ -10786,6 +10848,8 @@ How much will you offer (suggested: %ld or %ld)?  [4927766b0b39]
   pl  Сколько вы предложите (советуем 21 или 21)?
 How much will you offer?  [552024b571f9]
   =   Сколько вы предложите?
+How to show the message  [677329774755]
+  =   Как показывать сообщение
 Huh, What?  Where am I?  [ea24f8e6e00a]
   =   А?  Что?  Где я?
 Humpty Dumpty, a Bad Egg.  He was pushed off the wall.  [87fbab943bda]
@@ -11266,6 +11330,12 @@ Lights appear all around you!  [be14dfdc0cdc]
   =   Вокруг вас появляются огоньки!
 Liquor sellers do not drink; they hate to see you twice.  [177ab7b59172]
   =   Торговцы выпивкой не пьют: им противно видеть вас дважды.
+List of autopickup exceptions  [dcc30f3d7259]
+  =   Исключения автоподбора
+List of menu colors  [c0367c5137e5]
+  =   Цвета меню
+List of message types  [c6357c96bfac]
+  =   Типы сообщений
 Listen through the stethoscope  [b48557e46b20]
   =   Послушать стетоскопом
 Lizard corpses protect against cockatrices.  [68388994d7a8]
@@ -11343,12 +11413,16 @@ Major events:  [e143972abc38]
   =   Главные события:
 Make this figurine transform  [3b5a90562104]
   =   Оживить эту статуэтку
+Map  [ab478f3efc84]
+  =   Карта
 Mary had a little lamb/Its fleece was white as snow/When Mary was in trouble/The lamb was first to go  [0799e93d6a42]
   =   У Мэри был барашек,/Он белым был, как снег;/Когда пришлось ей туго,/Он сгинул раньше всех
 Meet me in Heaven  [6bd524880f16]
   =   Встретимся на небесах
 Meeting your own ghost decreases your luck considerably!  [c8bbcc651148]
   =   Встреча с собственным привидением сильно уменьшает удачу!
+Menu control keys:  [25cf758f5395]
+  =   Клавиши управления меню:
 Miscellaneous  [5f2cbd107037]
   =   Разное
 Miscellaneous:  [69aa5db4d883]
@@ -11451,6 +11525,8 @@ Never attack a guard.  [233f1789e365]
   =   Никогда не нападайте на стража.
 Never burn a tree, unless you like getting whacked with a +5 shovel.  [08b58986ebeb]
   =   Никогда не жгите деревья, если не любите получать по голове лопатой +5.
+Never disclose, without prompting  [27f83ac9ebbe]
+  =   Никогда не раскрывать, не спрашивая
 Never eat with glowing hands!  [b408a66c9a02]
   =   Никогда не ешьте светящимися руками!
 Never mind (quit)  [9dc20cdb8a59]
@@ -11563,6 +11639,8 @@ OK, here is a question: Where ARE your tanlines?  [8558749b0396]
   =   Ладно, вопрос: а ГДЕ у вас следы загара?
 Obesa Cantavit  [1bc9b5a3e56b]
   =   Толстуха спела
+Off, never show borders  [98e8f26ab99b]
+  =   Выкл., рамок нет
 Offer this amulet as a sacrifice at this altar  [77d3f6c94e44]
   =   Принести этот амулет в жертву на этом алтаре
 Offer this corpse as a sacrifice at this altar  [973ec40fb171]
@@ -11598,6 +11676,10 @@ On the whole, I'd rather be in Minetown  [f598194fcf37]
   =   В общем и целом я бы предпочёл быть в Шахтёрском городке
 On vacation  [0233d933cc4e]
   =   В отпуске
+On, always show borders  [4e3d44a08751]
+  =   Вкл., рамки всегда
+On, except forced off for perm_invent  [eaa3ede0fe4e]
+  =   Вкл., но выкл. для perm_invent
 Once again you stand at the entrance to %s.  [098cb75a5a92]
   m   Вы снова стоите у входа в тритона.
   f   Вы снова стоите у входа в крысу.
@@ -11757,12 +11839,16 @@ Opening a tin is difficult, especially when you attempt it bare handed!  [5f6b43
   =   Открыть банку непросто, особенно голыми руками!
 Operation OVERKILL has started now.  [852e5d79e7b6]
   =   Операция ТОТАЛЬНОЕ УНИЧТОЖЕНИЕ началась.
+Options  [6bf5da9c080b]
+  =   Параметры
 Orcs and killer bees share their lifestyle.  [b83a5800e348]
   =   У орков и пчёл-убийц схожий образ жизни.
 Orcs do not procreate in dark rooms.  [f556a7ba3a56]
   =   Орки не размножаются в тёмных комнатах.
 Ordering of discoveries  [0d3c985c8d6e]
   =   Порядок открытий
+Other settings:  [69ed6aedb5fe]
+  =   Прочие настройки:
 Other things that are here:  [ab3172954f0e]
   =   Что ещё здесь есть:
 Other things that you feel here:  [2882dea71e0a]
@@ -11963,6 +12049,12 @@ Probing exposes a secret corridor.  [33b75f3d573d]
   =   Зондирование обнаруживает потайной коридор.
 Probing reveals a secret door.  [674f21105383]
   =   Зондирование обнаруживает потайную дверь.
+Prompt, with default answer of "Ask" to request sort menu  [519aac985245]
+  =   Спрашивать, по умолчанию «спросить» — меню порядка
+Prompt, with default answer of "No"  [896456ee6453]
+  =   Спрашивать, по умолчанию «нет»
+Prompt, with default answer of "Yes"  [0cab27e296df]
+  =   Спрашивать, по умолчанию «да»
 Prove thyself worthy or perish!  [63896aea153d]
   =   Докажи, что достоин, или погибни!
 Psst!  It's done with mirrors!  [7f5472148f57]
@@ -12168,6 +12260,12 @@ Remove this eyewear  [f0f763ec7263]
   =   Снять это с глаз
 Remove this ring  [8e99fc5d67f0]
   =   Снять это кольцо
+Remove which autopickup exceptions  [bef0da932d65]
+  =   Какие исключения автоподбора удалить
+Remove which menu colors  [2f684c392139]
+  =   Какие цвета меню удалить
+Remove which message types  [a830405f2c14]
+  =   Какие типы сообщений удалить
 Rename %s  [2496bab07169]
   m   Переименовать тритона
   f   Переименовать крысу
@@ -12258,6 +12356,8 @@ Search for secret doors  [a834c8892bb5]
   =   Искать потайные двери
 Search the door for a trap  [c4e63dc345a6]
   =   Проверить дверь на ловушки
+See NetHack's "Guidebook" for details.  [6e8fd28de7ca]
+  =   Подробности — в «Руководстве» NetHack.
 See you next Wednesday  [352bb84b951d]
   =   Увидимся в следующую среду
 Seepage?  Leaky pipes?  Rising damp?  Summon the plumber!  [cd9c313bf2f2]
@@ -12266,10 +12366,39 @@ Segmentation fault (core dumped).  [a878c7c7d629]
   =   Ошибка сегментирования (стек памяти сброшен на диск).
 Segmentation fault -- core dumped.  [3b7683126a8c]
   =   Ошибка сегментирования — огрызок сброшен на диск.
+Select '%.20s' actions:  [0421f6187c1d]
+  m   Действия для «тритон»:
+  f   Действия для «крыса»:
+  n   Действия для «копьё»:
+  pl  Действия для «3 стрелы»:
+Select coordinate display when auto-describing a map position:  [e81ede1b4548]
+  =   Показ координат при описании места на карте:
+Select encumbrance level:  [ebd97c8d5126]
+  =   Уровень нагрузки:
+Select location filtering when going for next/previous map position:  [5e34691d9849]
+  =   Отбор мест при переходе к следующему или предыдущему:
+Select loot sorting type:  [68b2269620b4]
+  =   Сортировка добычи:
+Select menustyle:  [73dbd48da2aa]
+  =   Способ выбора предметов:
+Select message history display type:  [6b757a5c0306]
+  =   Как показывать историю сообщений:
+Select message window placement relative to the map:  [46b30c9962c8]
+  =   Положение окна сообщений относительно карты:
+Select number_pad mode:  [4d505735dcb9]
+  =   Режим number_pad:
 Select one item:  [4d9d4cb415cd]
   =   Выберите пункт:
 Select one of your saved games  [bba68b2cd70a]
   =   Выберите одну из сохранённых игр
+Select run/travel display mode:  [42616e7524fa]
+  =   Показ бега и перемещения:
+Select status window placement relative to the map:  [9fc2e9f31b9e]
+  =   Положение окна состояния относительно карты:
+Select version information flags:  [09aa55796641]
+  =   Что показывать о версии:
+Select window borders mode:  [fd7b4975d059]
+  =   Режим рамок окон:
 Semigorgon  [a375137c0ea5]
   =   Полугоргона
 Sent in %s.  [db586c31c7c5]
@@ -12287,8 +12416,17 @@ Set %s to what?  [f0e7ea8b52a2]
   f   Какое значение дать параметру крыса?
   n   Какое значение дать параметру копьё?
   pl  Какое значение дать параметру 3 стрелы?
+Set object symbols in menus to what?  [147a4b650724]
+  =   Какие символы предметов показывать в меню?
+Set options as OPTIONS=<options> in %s  [5bbc71b71789]
+  m   Задавайте параметры как OPTIONS=<параметры> в тритон
+  f   Задавайте параметры как OPTIONS=<параметры> в крыса
+  n   Задавайте параметры как OPTIONS=<параметры> в копьё
+  pl  Задавайте параметры как OPTIONS=<параметры> в 3 стрелы
 Set role/race/&c filtering  [ce53424ae990]
   =   Задать фильтр профессий, рас и прочего
+Set what options?  [d300b7092f3e]
+  =   Какие параметры изменить?
 She always said her feet were killing her but nobody believed her.  [819fa43d31cd]
   =   Она всегда жаловалась, что ноги её в гроб сведут, но никто ей не верил.
 She died of a chest cold.  [77ee699ea1bf]
@@ -12509,6 +12647,8 @@ Spinach, carrot, and jelly -- a meal fit for a nurse!  [a3c20d660d20]
   =   Шпинат, морковь и желе — обед, достойный медсестры!
 Start a new character  [fddf85e7341e]
   =   Создать нового персонажа
+Status  [bae7d5be7082]
+  =   Состояние
 Status:  [11dc9e195292]
   =   Состояние:
 Steam billows from the fountain.  [8a8698cc6e06]
@@ -14743,6 +14883,8 @@ Use '%s' to use two weapons at once  [15fcaf6a8b25]
   f   Клавишей 'крыса' сражайтесь двумя оружиями сразу
   n   Клавишей 'копьё' сражайтесь двумя оружиями сразу
   pl  Клавишей '3 стрелы' сражайтесь двумя оружиями сразу
+Use command '#optionsfull' to get the complete options list.  [020b8579f7ce]
+  =   Полный список параметров — команда «#optionsfull».
 Use the can to grease an item  [e5cf1a81f101]
   =   Смазать предмет из этой банки
 Use this kit to tin a corpse  [8c28d4ee56e8]
@@ -19578,16 +19720,22 @@ a monster  [c332f989e893]
   =   Монстра
 a particular object in inventory  [193ae7129821]
   =   Определённый предмет в инвентаре
+a status highlighting rule (can occur multiple times)  [3dbd483460c8]
+  =   Правило подсветки состояния (может повторяться)
 aardvark  [ff49abca9701]
   =   Трубкозуб
 acid blog  [ec62c11f2090]
   =   Кислотный блог
 acorn  [f5d193d9beee]
   =   Жёлудь
+action to take when encountering locked door or chest  [c7ea07715c8e]
+  =   Что делать с запертой дверью или сундуком
 acute blob  [b3562951eb7e]
   =   Кислый сгусток
 ad aerarium  [04b2adcce743]
   =   Ad aerarium
+add location information to messages  [d831042dac6e]
+  =   Добавлять к сообщениям сведения о месте
 aliasing priest  [400634aab95b]
   =   Жрец под псевдонимом
 aligned parasite  [e347144211fd]
@@ -19604,6 +19752,16 @@ all seen or remembered engravings  [37d5d98c07f9]
   =   Все увиденные или запомненные надписи
 all seen or remembered traps  [c301b2003e56]
   =   Все увиденные или запомненные ловушки
+allow loading bones files  [ca8394ac6c15]
+  =   Разрешить загрузку файлов костей
+allow nulls to be sent to terminal  [b04a0dff623b]
+  =   Разрешить посылать в терминал нулевые символы
+allow rerolling of starting inventory and items  [603aeb284d30]
+  =   Разрешить пересоздание начального снаряжения
+allow the status lines to update  [75a774bf526e]
+  =   Обновлять строки состояния
+allow use to raw I/O  [ed69e508fdd7]
+  =   Разрешить прямой ввод-вывод
 alphabetical across all classes  [c7ff5b1ab178]
   =   По алфавиту, все классы вместе
 alphabetical within each class  [d41ee3ba451d]
@@ -19614,8 +19772,14 @@ alphabetically, first unique monsters, then others  [53cf80a57e8d]
   =   По алфавиту: сначала уникальные монстры, затем остальные
 alphabetically, unique monsters and others intermixed  [2c9da0cfcfd7]
   =   По алфавиту, уникальные монстры вперемешку с остальными
+alternative key handling  [22bad510122c]
+  =   Другая обработка клавиш
+always pick from inventory for Remove and Takeoff  [247955ef00c3]
+  =   Для Remove и Takeoff всегда выбирать из инвентаря
 amazon  [1e17fd881eba]
   =   Амазонка
+amount to scroll map when scroll_margin is reached  [5d19e743ee60]
+  =   На сколько прокручивать карту у края scroll_margin
 amphisbaena  [25745760b10f]
   =   Амфисбена
 an object on the %s  [f0f20e0e2396]
@@ -19657,8 +19821,24 @@ aria elemental  [2ddc6f3f9059]
   =   Душный элементаль
 artifacts  [3dc52886d656]
   =   Артефакты
+ask before hitting tame or peaceful monsters  [33e8388d7a16]
+  =   Спрашивать, прежде чем бить ручных или мирных монстров
+ask if you want the tutorial  [eacd37b44869]
+  =   Спрашивать, нужно ли обучение
 attorney  [027fb6799b65]
   =   Адвокат
+attributes for highlighting pets  [8530a38c5365]
+  =   Атрибуты выделения питомцев
+autocompletions  [af172e30fbd3]
+  =   Автодополнения
+automatically pick up objects  [afff13b13784]
+  =   Подбирать предметы автоматически
+autopickup exceptions  [65325fe26c4c]
+  =   Исключения автоподбора
+autopickup stolen items  [ec8b69322dc1]
+  =   Автоподбор украденных предметов
+autopickup thrown items  [4f83d974a05f]
+  =   Автоподбор брошенных предметов
 baby balky dragon  [1842ead7faff]
   =   Детёныш чёрствого дракона
 baby blues dragon  [3285f657bfee]
@@ -19702,6 +19882,8 @@ bind command to a key  [d32f66454340]
   =   Назначить команду клавише
 bind key to a command  [895f190b2fa7]
   =   Назначить клавишу команде
+bind keys  [7aeae4c2c7ab]
+  =   Назначение клавиш
 blancmange  [c19f66080c5b]
   =   Бланманже
 bluebird of happiness  [40b40d71e338]
@@ -19760,12 +19942,20 @@ by skill group, low to high level within group  [57def19ad8e6]
   =   По школам, внутри школы — по возрастанию уровня
 cacodemon  [83ceb99f1ff2]
   =   Какодемон
+can your character hear anything  [e95f77197077]
+  =   Слышит ли ваш персонаж хоть что-нибудь
 cardboard golem  [b66d3821b091]
   =   Картонный голем
 catoblepas  [0ab6a1c27a59]
   =   Катоблепас
 ceiling cat  [c53eb1788f16]
   =   Потолочный кот
+change colors used in menus  [5af4fdc7befc]
+  =   Изменить цвета меню
+change status condition highlighting  [41cbe1f30eee]
+  =   Изменить подсветку состояний
+change status line highlighting  [d25abb368a58]
+  =   Изменить подсветку строки состояния
 chess pawn  [a0d124cc70c8]
   =   Шахматная пешка
 chiasmus  [0e6935165a85]
@@ -19774,16 +19964,32 @@ chicken  [cef7e59218e3]
   =   Курица
 chocolate pudding  [7899bdb90a02]
   =   Шоколадный пудинг
+choose character via dialog or prompts  [df934f3488b6]
+  =   Выбор персонажа в окне или вопросами
 choplet  [e6f661e59142]
   =   Отбивнушка
 chopping  [515238e64e8f]
   =   Рубить
+classify gold as unknown or uncursed  [cffde6c3074a]
+  =   Считать золото неизвестным или непроклятым
 clown  [6725c9e20e61]
   =   Клоун
 clue golem  [0b19a5a6708b]
   =   Клюквенный голем
 coelacanth  [1439990fd724]
   =   Латимерия
+color mappings for internal screen routines  [fa9a0f5c0bb2]
+  =   Цвета для внутренних процедур экрана
+commands asking for inventory item show a menu  [d2c192381805]
+  =   Команды, которым нужен предмет, показывают меню
+compass ('east' or '3s' or '2n,4w')  [f8e88a461f89]
+  =   Компас («east», «3s» или «2n,4w»)
+control monster polymorphs  [acae2be8af1e]
+  =   Управлять превращениями монстров
+control monster teleport destinations  [deb7e00120a8]
+  =   Управлять, куда телепортируются монстры
+control of "view previous message(s)" (^P) behavior  [131206d33afc]
+  =   Просмотр прошлых сообщений (^P)
 conventioneer  [51e1f17b46e8]
   =   Делегат съезда
 corpulent porpoise  [1d052b3ad046]
@@ -19796,18 +20002,48 @@ dangling pointer  [5e1e28469735]
   =   Висячий указатель
 dementor  [c27b09d77f6a]
   =   Дементор
+deprecated (use S_boulder in sym file instead)  [865efd1b05ab]
+  =   Устарело (используйте S_boulder в файле символов)
+deprecated; use gender:female  [affdb4c59e90]
+  =   Устарело; используйте gender:female
+describe terrain under cursor  [db8aa8a14d06]
+  =   Описывать местность под курсором
+deselect all items in a menu  [b2dc1fda627f]
+  =   Снять выбор со всех пунктов меню
+deselect all items on this page of a menu  [a5391e563ce9]
+  =   Снять выбор с пунктов на этой странице меню
 dhole  [6067e3d2545f]
   =   Красный волк
 diagonally moving grid bug  [561c018a84af]
   =   Диагональный ситовый жучок
+dig if moving and wielding a digging tool  [d7fcd5d4b43d]
+  =   Копать на ходу, если в руках инструмент для копания
 digging  [77a3d5a2586c]
   =   Копать
 dingbat  [de9c5b6181ee]
   =   Дингбат
 dinkus  [ae3e4cc07378]
   =   Динкус
+display characters for warnings  [edaeff904dbc]
+  =   Символы предупреждений
+display detected monsters in inverse  [223894d608cf]
+  =   Показывать обнаруженных монстров инверсно
+display frequency when `running' or `travelling'  [abb4d271eed2]
+  =   Частота показа при беге и перемещении
+display game turns in status line  [256724c26083]
+  =   Ходы игры в строке состояния
+display prices you have seen for unidentified objects  [e0cf16b3b133]
+  =   Показывать виденные цены неопознанных предметов
+display sparkly effect when resisting magic  [d94eae518b3a]
+  =   Искрящийся эффект при сопротивлении магии
+display style for menu headings  [9098c56bfff0]
+  =   Вид заголовков меню
 do nothing  [bdbd93292417]
   =   Ничего не делать
+don't autopickup dropped items  [aa159eefd19e]
+  =   Не подбирать брошенные предметы
+don't use terminal bell  [08d3a5d42969]
+  =   Без звонка терминала
 done  [e5fd9cfe0e80]
   =   Готово
 doozer  [3c6cb4e7becb]
@@ -19833,6 +20069,14 @@ eating %s  [2b1954b820f9]
   pl  Есть 3 стрелы
 eating non-food  [7580961984e3]
   =   Есть несъедобное
+edit autocompletions  [34e79ef675c3]
+  =   Изменить автодополнения
+edit autopickup exceptions  [f3fe92dae046]
+  =   Изменить исключения автоподбора
+edit key binds  [44c5531b00e9]
+  =   Изменить назначения клавиш
+edit message types  [cc6504357606]
+  =   Изменить типы сообщений
 efreeti  [2d99e9685e9a]
   =   Ифрит
 elastic eel  [565c40a9e286]
@@ -19843,8 +20087,14 @@ electrocardiogram eel  [9500bb8b653f]
   =   Электрокардиографический угорь
 elwedritsche  [0e08dd49973b]
   =   Эльведрич
+email address for reporting  [cf4b3308b93e]
+  =   Адрес эл. почты для отчётов
 emu  [6551e7972400]
   =   Эму
+enable the mail daemon  [c75419196c04]
+  =   Включить почтового демона
+enable traveling via mouse click  [2e894895bf6d]
+  =   Перемещение щелчком мыши
 enderman  [6795212b4b4e]
   =   Эндермен
 engraving  [61ce7aff649b]
@@ -19865,6 +20115,12 @@ evil overlord  [5abc830f65b5]
   =   Злой властелин
 existential angst  [de01c973ef76]
   =   Экзистенциальная тоска
+experimental behavior of menu inverts  [9d892392184b]
+  =   Опытное обращение выбора в меню
+extra information for 'showvers'  [6b4d59933fa1]
+  =   Дополнительные сведения для showvers
+extra prompting in certain situations  [841f721fe7f6]
+  =   Дополнительные подтверждения в некоторых случаях
 fallacy golem  [8eece73abc6d]
   =   Голем-софизм
 feather golem  [20bdb0b0812f]
@@ -19873,8 +20129,14 @@ fierceness sphere  [0264c218b755]
   =   Завораживающая сфера
 figment of your imagination  [a818a89b90bd]
   =   Плод вашего воображения
+fill empty quiver automatically when firing  [e227f81c7356]
+  =   При стрельбе пополнять пустой колчан автоматически
+filter coordinate locations when targeting next or previous  [885ff86b9468]
+  =   Отбирать места при выборе следующего или предыдущего
 fir elemental  [efc5cad82777]
   =   Еловый элементаль
+fire-command tries to be helpful  [e198f6eeb879]
+  =   Команда стрельбы старается помочь
 first category perpetual motion device  [e8b03291bbc3]
   =   Вечный двигатель первого рода
 flamingo sphere  [650544752627]
@@ -19891,6 +20153,18 @@ flying monkey  [7342c1f50302]
   =   Летучая мартышка
 flying pig  [81cc707db091]
   =   Летающая свинья
+font to use in menus  [6635ef8860c8]
+  =   Шрифт меню
+font to use in status window  [40c642ec0fd4]
+  =   Шрифт окна состояния
+font to use in text windows  [5c8203d72fcd]
+  =   Шрифт текстовых окон
+font to use in the map window  [98403c750651]
+  =   Шрифт окна карты
+font to use in the message window  [320fa1b17b0c]
+  =   Шрифт окна сообщений
+for "yes" confirmations, require "no" to reject  [f5a8c4e3cb36]
+  =   Для подтверждений «yes» отказ — только «no»
 forcing the lock  [0c60fd41cd80]
   =   Взламывать замок
 forest centerfold  [93984b92bb3e]
@@ -19905,8 +20179,14 @@ frog prince  [3fa8f2fbcf5c]
   =   Принц-лягушонок
 frosted giant  [9d2322dd359f]
   =   Глазированный великан
+full compass ('east' or '3south' or '2north,4west')  [ec8983c4b8fa]
+  =   Полный компас («east», «3south» или «2north,4west»)
 full map without monsters, objects, and traps  [603daf804e63]
   =   Вся карта без монстров, предметов и ловушек
+game name  [81e1e111c0b4]
+  =   Название игры
+game receives click info from mouse  [6034a2039329]
+  =   Игра получает щелчки мыши
 gazebo  [66b8a4249113]
   =   Беседка
 geriatric snake  [86d85ca8a88e]
@@ -19925,6 +20205,14 @@ giant slug  [068e17f7dba3]
   =   Гигантский слизень
 giant tetrapod  [c7434fdf4794]
   =   Гигантский тетрапод
+give feedback when interesting map locations change  [1d00d4d6bf84]
+  =   Сообщать, когда меняются примечательные места карты
+give feedback when walking into walls  [aca35a00ce33]
+  =   Сообщать, когда упираетесь в стену
+give feedback when walking over interesting features  [1c8df67905b5]
+  =   Сообщать, когда идёте по чему-то примечательному
+give help for errors on direction input  [725c4f547c8b]
+  =   Подсказывать при ошибках ввода направления
 gloating eye  [b32022c1f40d]
   =   Злорадное око
 glossy golem  [a7e2cf7cd366]
@@ -19942,6 +20230,10 @@ gnome laureate  [9b62555dcd88]
   =   Гном-лауреат
 gnu  [336da558f641]
   =   Гну
+go to the next menu page  [9053512853c8]
+  =   К следующей странице меню
+go to the previous menu page  [b842ee1b43b9]
+  =   К предыдущей странице меню
 gonzo journalist  [5d7b1e6e898e]
   =   Гонзо-журналист
 gooier ooze  [d8f7f5518084]
@@ -19950,6 +20242,8 @@ grant beetle  [a3647606e191]
   =   Грантовый жук
 gray goo  [85b74fc4b035]
   =   Серая жижа
+gray shades to map to black/gray/white  [73a10e460ea7]
+  =   Оттенки серого для чёрного/серого/белого
 greater snake  [c4a05fb36bdc]
   =   Великая змея
 green slide  [8363214b6e25]
@@ -19958,6 +20252,8 @@ griffin  [38d889b4f12e]
   =   Грифон
 grind bug  [962946208002]
   =   Сытый жучок
+group inventory items by type  [8b0293bc60e9]
+  =   Группировать инвентарь по видам
 grue  [c088537dd721]
   =   Грю
 guardian nacho  [c5eb03d0352d]
@@ -19974,14 +20270,22 @@ harpy  [29e2ef5cceba]
   =   Гарпия
 hearse  [31b292894e69]
   =   Катафалк
+height of tiles  [75a171c08da4]
+  =   Высота тайлов
 heisenbug  [2c6aeb07d21f]
   =   Гейзенбаг
 hell hound pun  [959b351e5181]
   =   Каламбур адской гончей
 here  [0154c0dabe71]
   =   Здесь
+hide help  [4b3b8e96e83d]
+  =   Скрыть справку
 high purist  [34046aadd632]
   =   Верховный пурист
+highlight control  [87594b7329f0]
+  =   Управление подсветкой
+highlight piles of items  [070c137dbe00]
+  =   Выделять кучи предметов
 hippocampus  [cf8b334b177c]
   =   Гиппокамп
 hippogriff  [28834c6e1841]
@@ -19996,14 +20300,30 @@ ice monster  [7c245ea2757c]
   =   Ледяное чудище
 ice trowel  [ed626c6a2ee1]
   =   Ледяной троллейбус
+ignore interrupt signals  [570ee7530fa5]
+  =   Не замечать сигналов прерывания
+in same area  [11ad47c87cc5]
+  =   Только в той же области
+in view only  [913283a5e96e]
+  =   Только в поле зрения
 internal levl[][].typ codes in base-36  [1e084b5f095b]
   =   Внутренние коды levl[][].typ в base-36
+inventory items keep their letters  [94fb8bf5f5cc]
+  =   Предметы инвентаря сохраняют свои буквы
+invert all items in a menu  [4a869a832307]
+  =   Обратить выбор всех пунктов меню
+invert all items on this page of a menu  [af0ad16e69cd]
+  =   Обратить выбор пунктов на этой странице меню
 jackalope  [ecea0495c11c]
   =   Зайцелоп
 jester  [deff1d836528]
   =   Шут
 jumbo shrimp  [1d6b15097147]
   =   Исполинская креветка
+jump to the first page in a menu  [959e95211714]
+  =   К первой странице меню
+jump to the last page in a menu  [6444d76581a2]
+  =   К последней странице меню
 kelpie  [8d972c4aa8d8]
   =   Келпи
 kestrel  [9d65c9c5a1ed]
@@ -20036,8 +20356,12 @@ legend of base-36 levl[][].typ codes  [97d569433c15]
   =   Расшифровка кодов levl[][].typ в base-36
 lemming  [6806c1fde49b]
   =   Лемминг
+length of longest url we can generate  [e960610f13a6]
+  =   Наибольшая длина создаваемой ссылки
 lernaean hydra  [621d03f2ae91]
   =   Лернейская гидра
+level generation can overwrite stairs  [9ae9b833c7d2]
+  =   Создание уровня может стереть лестницы
 lhurgoyf  [9dd07deb1432]
   =   Лургойф
 ligature  [8e7c24b56442]
@@ -20046,8 +20370,28 @@ liger  [42feee0501c7]
   =   Лигр
 lion-dog  [b83795248d46]
   =   Львопёс
+list of symbols to use for monsters  [001dc00f95dc]
+  =   Символы монстров
+list of symbols to use for objects  [d9dd53c94efc]
+  =   Символы предметов
+list of symbols to use in drawing special effects  [29e640286d6d]
+  =   Символы для особых эффектов
+list of symbols to use in drawing the dungeon map  [4616ffb8d83e]
+  =   Символы для карты подземелья
+list of symbols to use in drawing traps  [edc7bc4e6079]
+  =   Символы ловушек
 little green man  [1a2266fd1d8b]
   =   Зелёный человечек
+load DECGraphics display symbols into symset  [91bfabfd7b23]
+  =   Загрузить символы DECGraphics в набор символов
+load IBMGraphics display symbols into symset  [80e8d03c5b30]
+  =   Загрузить символы IBMGraphics в набор символов
+load a set of display symbols from symbols file  [0c017431efd7]
+  =   Загрузить набор символов из файла символов
+load a set of rogue display symbols from symbols file  [878010fe27ed]
+  =   Загрузить набор символов rogue из файла символов
+load curses display symbols into symset  [d5832541e1f6]
+  =   Загрузить символы curses в набор символов
 loan shark  [cb00a2451d35]
   =   Кредитная акула
 lock or unlock the door  [cc32d8987b60]
@@ -20072,16 +20416,38 @@ manbearpig  [46416886a34d]
   =   Человекомедведосвин
 mandelbug  [7e6e70086503]
   =   Мандельбаг
+map <x,y>  [de1ca8256f99]
+  =   Карта <x,y>
+map display mode under Windows  [ec924f26d3cc]
+  =   Режим показа карты в Windows
 marid  [94207238d2a8]
   =   Марид
 martyr orc  [a37999fb9d33]
   =   Мордастый орк
 master lichen  [f42d26931f0e]
   =   Высший лишайник
+maximum burden picked up before prompt  [a120f4e46827]
+  =   Наибольшая ноша, которую поднимать без вопроса
 maxotaur  [ef3f3fd9c6ad]
   =   Максотавр
 meeple  [4196fef9cffb]
   =   Мипл
+menu colors  [bafc47bb3d6d]
+  =   Цвета меню
+menu formatting  [f52bee34e499]
+  =   Оформление меню
+menus overlay and align to right  [1b585d9100df]
+  =   Меню поверх карты, справа
+message types  [d665474f2dc9]
+  =   Типы сообщений
+message when hero sees monster movement  [6e693c71cffb]
+  =   Сообщать, когда герой видит движение монстра
+message when hero spots a monster  [5457958e0f9c]
+  =   Сообщать, когда герой замечает монстра
+message window alignment  [264decf0c976]
+  =   Положение окна сообщений
+method of video updating  [95e769c41225]
+  =   Способ обновления экрана
 microscopic space fleet  [e5649b4dfb2d]
   =   Микроскопический космический флот
 millitaur  [93d4c1944a9d]
@@ -20104,6 +20470,16 @@ mother-in-law  [15abc87f9a02]
   =   Тёща
 mountain lymph  [f123139baf9d]
   =   Горная лимфа
+name of a fruit you enjoy eating  [80e8d3a457da]
+  =   Название вашего любимого фрукта
+name of tile file  [c1709a616352]
+  =   Имя файла тайлов
+name of your starting pet if it is a kitten  [38f56f6e77cc]
+  =   Имя начального питомца, если это котёнок
+name of your starting pet if it is a little dog  [8b6ec6f03bfc]
+  =   Имя начального питомца, если это собачка
+name of your starting pet if it is a pony  [34f0087c901f]
+  =   Имя начального питомца, если это пони
 nearby engravings  [96ac55478262]
   =   Надписи поблизости
 nearby monsters  [e1ead6c18b11]
@@ -20122,8 +20498,18 @@ nightmare  [0ffa93269022]
   =   Кошмар
 ninja pirate zombie robot  [f82ce61a9b08]
   =   Ниндзя-пират-зомби-робот
+no filtering  [0dce15d98fe3]
+  =   Без отбора
+no hunger  [392b418b6b34]
+  =   Без голода
 no matches  [e6f1d34932f2]
   =   Совпадений нет
+no random monster generation  [e622a721ccc6]
+  =   Без случайного появления монстров
+none (no coordinates displayed)  [11b4bf46182b]
+  =   Нет (координаты не показываются)
+normal play, non-scoring explore mode, or debug mode  [09da1da0dccb]
+  =   Обычная игра, режим исследования без счёта или режим отладки
 north  [3099447db4c8]
   =   Север
 northeast  [31a33b664a0c]
@@ -20134,6 +20520,12 @@ notary sojak  [59c902b19d14]
   =   Нотари сожак
 nothing: unbind the key  [b6318c7d87a5]
   =   Ничего: снять назначение клавиши
+number of columns  [efbb40d8fe0d]
+  =   Число столбцов
+number of rows  [216ea83026b6]
+  =   Число строк
+number of top line messages to save  [1dcc595aec2c]
+  =   Сколько сообщений хранить
 nyaasu  [1bf41a041bb0]
   =   Няасу
 nyan cat  [d49f82290c79]
@@ -20146,6 +20538,8 @@ octarine dragon  [095b29fe34c8]
   =   Октариновый дракон
 ohmu  [11fc5c60646f]
   =   Ому
+omit "uncursed" from inventory  [751a58708160]
+  =   Не писать «непроклятый» в инвентаре
 omnibus  [6211588f3a56]
   =   Омнибус
 on the floor  [433ba7d6d866]
@@ -20202,10 +20596,24 @@ or %s or %s%s  [3e2f606c9895]
   pl  Или 3 стрелы или 3 стрелы3 стрелы
 orcus cosmicus  [25e90894bea0]
   =   Оркус Космикус
+output sound data in special escape codes  [6f35962e271c]
+  =   Выводить звуковые данные особыми управляющими кодами
+output special escape codes  [b37724805cf9]
+  =   Выводить особые управляющие коды
+override keystroke value  [e679368711f2]
+  =   Переопределить код клавиши
 owlpug  [9f1aba586291]
   =   Совомопс
 pager golem  [5082bad5fda3]
   =   Пейджерный голем
+palette (00c/880/-fff is blue/yellow/reverse white)  [fd826f142cd9]
+  =   Палитра (00c/880/-fff — синий/жёлтый/инверсный белый)
+palette (adjust an RGB color in palette (color/R-G-B)  [bb2c0d7010ea]
+  =   Палитра (задать цвет RGB в палитре (цвет/R-G-B)
+pan current menu page left  [317c322b2662]
+  =   Сдвинуть страницу меню влево
+pan current menu page right  [223343244cd3]
+  =   Сдвинуть страницу меню вправо
 particle man  [261b67bee3aa]
   =   Человек-частица
 paskald  [577d80400e96]
@@ -20214,6 +20622,8 @@ peddler  [bf3227bd3d17]
   =   Коробейник
 peer  [2b974ba4b46a]
   =   Пэр
+perform data sanity checks  [4166b56a514a]
+  =   Проверять целостность данных
 phantom  [d969e7e0b057]
   =   Фантом
 phelddagrif  [d029e06bc798]
@@ -20238,6 +20648,22 @@ poultrygeist  [3fba73c1c2d8]
   =   Куртергейст
 praying mantis  [975656040292]
   =   Богомол
+preferred order when displaying discovered objects  [c9e74d67ce5a]
+  =   Порядок показа открытых предметов
+preferred order when displaying vanquished monsters  [6d0ce97a14f5]
+  =   Порядок показа побеждённых монстров
+prefix for cond_ options  [9bf194ef05f9]
+  =   Приставка параметров cond_
+prefix for font options  [bf1ec36f3b28]
+  =   Приставка параметров шрифта
+prefix for old micro IBM_ options  [db09b65cc14c]
+  =   Приставка старых параметров IBM_
+prevent waiting next to hostiles  [482633c58d72]
+  =   Не давать ждать рядом с врагами
+prevent you from hitting pets  [3def5bb73ac3]
+  =   Не давать бить питомцев
+previous weapon goes to secondary slot  [fe673857d5f6]
+  =   Прежнее оружие уходит во второй слот
 prophylactic worm  [0364a2c19bde]
   =   Профилактический червь
 pterodactyl  [0a5cd6b94160]
@@ -20298,18 +20724,32 @@ roomba  [d9dfd4e3d3a5]
   =   Робот-пылесос
 rot grub  [5214bc36ee52]
   =   Гнилостная личинка
+same as palette, only order is reversed  [92d63bb9d24f]
+  =   Как palette, но в обратном порядке
 samurai rabbit  [a5cfe20c44e6]
   =   Кролик-самурай
+save game state after each level change  [1ec9e0490d9e]
+  =   Сохранять игру при каждой смене уровня
 schroedinbug  [55cf10734df1]
   =   Шрёдинбаг
 scone giant  [d74f33524879]
   =   Пышечный великан
 scrag  [81bd671a3bad]
   =   Скрэг
+screen [row,column]  [321b6ea93b9f]
+  =   Экран [строка,столбец]
+scroll map when this far from the edge  [2030321512ed]
+  =   Прокручивать карту на таком расстоянии от края
 sea cucumber  [5426dfc270e4]
   =   Морской огурец
+search for a menu item  [faf202f021f7]
+  =   Поиск пункта меню
 seesawing sphere  [118a4311d3cf]
   =   Качельная сфера
+select all items in a menu  [2439570f12dc]
+  =   Выбрать все пункты меню
+select all items on this page of a menu  [4b81bfb8ca6e]
+  =   Выбрать пункты на этой странице меню
 select any or all of them to permanently identify  [a7ad43dbf974]
   =   Выберите любые из них, чтобы опознать навсегда
 select any or all of them to permanently identify (%s for all)  [96e0bdc37681]
@@ -20324,18 +20764,84 @@ select it to permanently identify (%s for all)  [2584a79ccde6]
   f   Выберите его, чтобы опознать навсегда (крыса — все)
   n   Выберите его, чтобы опознать навсегда (копьё — все)
   pl  Выберите его, чтобы опознать навсегда (3 стрелы — все)
+send 8-bit characters directly to terminal  [8bd9aaaec0ac]
+  =   Посылать 8-битные символы прямо в терминал
+set representation of a glyph to a unicode value and color  [98ab1b4822a6]
+  =   Задать глифу символ юникода и цвет
 setting the trap  [bfb4b4e728c1]
   =   Устанавливать ловушку
 shadow  [ed9d3d832af8]
   =   Сумрачная тень
 shallow one  [bd7e039effd6]
   =   Мелководный
+show all available info when using whatis-command  [be5d06f62978]
+  =   Все сведения по команде «что это»
+show any news at game start  [9aa83282e4ee]
+  =   Показывать новости в начале игры
+show colored bar for hit points  [25183a996488]
+  =   Цветная полоса очков здоровья
+show commands available in this location  [8aa573546dbd]
+  =   Показывать команды, доступные на этом месте
+show coordinates when auto-describing cursor position  [9e7400a5070f]
+  =   Координаты при описании места под курсором
+show current score in status line  [00705059fe8e]
+  =   Текущий счёт в строке состояния
+show currently wielded weapon in a status field  [91e238bbfafa]
+  =   Оружие в руках в поле состояния
+show damage hero takes in message line  [48b122b94cf6]
+  =   Показывать полученный урон в сообщениях
+show dark corridors as lit if in sight  [c859d487e670]
+  =   Показывать тёмные коридоры в поле зрения освещёнными
+show experience points in status line  [fc474452df31]
+  =   Очки опыта в строке состояния
+show floor outside line of sight differently  [e7f9898ecfc0]
+  =   Показывать пол вне поля зрения иначе
+show help  [a7bd8e0c78a7]
+  =   Показать справку
+show hero's location as a status field  [d7f61ea0b14a]
+  =   Место героя в поле состояния
+show introductory message  [4135fb2cae3c]
+  =   Показывать вступление
+show map as text  [74aa41092a1d]
+  =   Показывать карту текстом
+show menu when getting a map location  [1d31c71e4d34]
+  =   Меню при выборе места на карте
+show more old messages at a time  [437c933fcffe]
+  =   Показывать больше старых сообщений за раз
+show object symbols in menus  [45c12e5cd70d]
+  =   Показывать символы предметов в меню
+show persistent inventory window  [902650796169]
+  =   Постоянное окно инвентаря
+show some helpful tips during gameplay  [9b73ee3e2d10]
+  =   Полезные советы во время игры
+show tombstone when your character dies  [e0e65d00d9ac]
+  =   Надгробие, когда персонаж умирает
+show top scores in window  [e971b97b680a]
+  =   Лучшие результаты в окне
+show version info on status line  [ee00b0b5d2a5]
+  =   Версия в строке состояния
+show your character by race rather than role  [4619cedbdf56]
+  =   Показывать персонажа по расе, а не по роли
 shrinking violet  [180db37d9a31]
   =   Застенчивая фиалка
 simile mimic  [0735d8e2d669]
   =   Милый мимик
 siren  [dcb01c3c1f19]
   =   Сирена
+size of the map font  [2b69aaa09d5f]
+  =   Размер шрифта карты
+size of the menu font  [f51e040c87ed]
+  =   Размер шрифта меню
+size of the message font  [966329c7771c]
+  =   Размер шрифта сообщений
+size of the status font  [99efca44b3e6]
+  =   Размер шрифта состояния
+size of the text font  [f1cf010460e7]
+  =   Размер шрифта текста
+skip map browse when forced to looked at map  [04b451369ad3]
+  =   Не листать карту, когда её показывают
+skip same glyph when getting map location  [02e6ea537c68]
+  =   Пропускать одинаковые глифы при выборе места
 skvader  [5e4ceb3a68b6]
   =   Сквадер
 sleazoid  [b8f86bb47e1b]
@@ -20362,14 +20868,20 @@ something on the map  [14992c2de04e]
   =   Что-нибудь на карте
 something you're carrying  [a8fddf821eae]
   =   Что-нибудь из ваших вещей
+sort object selection lists by description  [56e3e6f70bf6]
+  =   Сортировать списки предметов по описанию
 sortloot order (by class with some sub-class groupings)  [738d911d4514]
   =   Порядок sortloot (по классам, внутри некоторых — по группам)
+soundlib interface to use (if any)  [98975cb07825]
+  =   Звуковая библиотека (если есть)
 south  [7e3fb5d99b37]
   =   Юг
 southeast  [9dfb52edfd99]
   =   Юго-восток
 southwest  [c748b5788afa]
   =   Юго-запад
+space bar is bound to the rest-command  [81afe5b964d4]
+  =   Пробел — команда отдыха
 spelling bee  [8d274061e416]
   =   Пчела-грамотейка
 spherical cow  [e061fa718234]
@@ -20382,11 +20894,21 @@ star-nosed mole  [807d37031b7b]
   =   Звездорыл
 start the game with this character  [b6dc862d36a0]
   =   Начать игру этим персонажем
+start your character without any items  [a33a2c417445]
+  =   Начать без единого предмета
+start your character without armor  [fcbb549666ea]
+  =   Начать без доспехов
 stash one item into %s  [a3753fa72fb5]
   m   Положить один предмет в тритона
   f   Положить один предмет в крысу
   n   Положить один предмет в копьё
   pl  Положить один предмет в 3 стрелы
+status condition fields  [1d6a51bb6726]
+  =   Поля состояний
+status highlight rules  [265ccf679bf8]
+  =   Правила подсветки состояния
+status window alignment  [5426e95f60a8]
+  =   Положение окна состояния
 steam dragon  [5ff126eaa07a]
   =   Паровой дракон
 stray tab  [ddfd06769a0b]
@@ -20395,6 +20917,10 @@ studying  [74314b82bff3]
   =   Изучать книгу
 stuffed raccoon puppet  [7e32c2c7a553]
   =   Набивной енот-марионетка
+summarize currently worn armor in a status field  [ed25a2e1244f]
+  =   Сводка надетых доспехов в поле состояния
+suppress alerts about version-specific features  [8715c9c4c249]
+  =   Не предупреждать о возможностях отдельных версий
 take out, then put in  [b1d802c1e28c]
   =   Вынуть, затем положить
 take something out  [0001712882a1]
@@ -20439,6 +20965,14 @@ the contents of %s, no charge  [07bcea93922b]
   f   Содержимое крысы, бесплатно
   n   Содержимое копья, бесплатно
   pl  Содержимое 3 стрел, бесплатно
+the foreground/background colors of windows  [2aa3c4de9f90]
+  =   Цвета текста и фона окон
+the inventory order of the items in your pack  [8fe976483949]
+  =   Порядок предметов в инвентаре
+the kinds of information to disclose at end of game  [d7b501d06f11]
+  =   Какие сведения раскрывать в конце игры
+the parts of the score list you wish to see  [2923ef8bb954]
+  =   Какие части списка рекордов показывать
 the type of an object in inventory  [d5213ef88090]
   =   Тип предмета в инвентаре
 the type of an object on discoveries list  [be8fd5977d20]
@@ -20449,6 +20983,8 @@ third eye  [01c1d2b94f46]
   =   Третий глаз
 three-headed monkey  [1c95db689dc2]
   =   Трёхголовая мартышка
+threshold for "there are many objects here"  [1c14fe0fc47d]
+  =   Порог для «здесь много предметов»
 thrice  [3fec9f7e5ca9]
   =   Трижды
 tie-thulu  [6d80a6a18d66]
@@ -20461,16 +20997,22 @@ tire elemental  [89edd5e5d90a]
   =   Шинный элементаль
 tofurkey  [a77b95e0d575]
   =   Тофундюк
+toggle fullscreen  [2e2f5046b579]
+  =   Полноэкранный режим
 toothsayer  [1ea7077a675f]
   =   Зубовидец
 traditional: by monster level, by internal monster index  [faaae6cf861b]
   =   Традиционный: по уровню монстра, затем по внутреннему номеру
+treat "ESC c" as M-c (Meta+c, 8th bit set)  [7ca13d2135b5]
+  =   Считать «ESC c» за M-c (Meta+c, с восьмым битом)
 tribble  [97fb97439625]
   =   Трибл
 tridude  [0c12b171b311]
   =   Тричувак
 twice  [f99abcfae6c3]
   =   Дважды
+types of objects to pick up automatically  [a136c84a5db2]
+  =   Виды предметов для автоподбора
 tyrannosaurus rex  [91e2bec8c744]
   =   Тираннозавр рекс
 uberhulk  [01bbbdc201d5]
@@ -20483,6 +21025,44 @@ unique items or relics  [4e4cf8e68552]
   =   Уникальные предметы или реликвии
 unlock the door  [16d58fe2cd1a]
   =   Отпереть дверь
+update checkpoint file if input is idle for 10 seconds  [a21dc538f20c]
+  =   Обновлять файл сохранения, если ввода нет 10 секунд
+use IBM ROM BIOS calls  [38c0a4776716]
+  =   Использовать вызовы IBM ROM BIOS
+use a menu for yes/no queries  [ffa5c16c2461]
+  =   Меню для вопросов «да/нет»
+use a/b/c rather than o/i/c when looting  [2a3a80f3059d]
+  =   A/b/c вместо o/i/c при обыске
+use background color for some map hilighting  [090db147c5b9]
+  =   Подсвечивать часть карты цветом фона
+use bold black color instead of blue  [a23c60305a44]
+  =   Жирный чёрный вместо синего
+use color for UI  [d5464770cc5f]
+  =   Цвета в интерфейсе
+use color in map  [f1b9f966aeb7]
+  =   Цвета на карте
+use colors in menus  [1fb16ac3df37]
+  =   Цвета в меню
+use custom colors in map  [9d926197916a]
+  =   Свои цвета на карте
+use custom utf8 symbols in map  [1682afac9e9b]
+  =   Свои символы utf8 на карте
+use delay when pausing for display effects  [e878426f596b]
+  =   Задержка при показе эффектов
+use highlight for pets  [8ce5014d45c1]
+  =   Выделять питомцев
+use integrated sound effects  [74d3760df2c4]
+  =   Встроенные звуковые эффекты
+use menu for getting extended commands  [070fced2a1ca]
+  =   Меню для расширенных команд
+use sounds  [8c46db31f364]
+  =   Звуки
+use standout for --more--  [abb5c935c909]
+  =   Выделять --more--
+use the number pad for movement  [f462046b35ef]
+  =   Ходить цифровой клавиатурой
+user interface for object selection  [91bac77a80a2]
+  =   Способ выбора предметов
 vampire mace  [4e4f53f71391]
   =   Булава-вампир
 vampiric watermelon  [300822cbc512]
@@ -20495,8 +21075,16 @@ verbal jabberwock  [74fed73d7328]
   =   Вербальный бармаглот
 vermicious knid  [b0a8765388fc]
   =   Вермишельный книд
+version number  [88ace02d9a57]
+  =   Номер версии
+video height  [56eb6fa14336]
+  =   Высота экрана
+video width  [bdd1aa8768b4]
+  =   Ширина экрана
 view changed key binds  [448b77ff9950]
   =   Показать изменённые назначения клавиш
+view help for options menu  [7f373d11d3f1]
+  =   Справка по меню параметров
 viking  [3e2573a75821]
   =   Викинг
 voluptuous ampersand  [345821a94026]
@@ -20505,6 +21093,8 @@ voussoir  [87f2325b8f03]
   =   Вуссуар
 walking disk drive  [8d11f28ec990]
   =   Ходячий дисковод
+walking into a door attempts to open it  [ca0aee8d18d1]
+  =   Шаг в дверь пытается её открыть
 wandering eye  [64de38e369ae]
   =   Блуждающее око
 water lemon  [4dd4a0f8d1da]
@@ -20533,10 +21123,14 @@ wereplatypus  [3226c5c302d2]
   =   Утконос-оборотень
 west  [d63eba28afc0]
   =   Запад
+what to show in persistent inventory window  [3945fc53ba3b]
+  =   Что показывать в постоянном окне инвентаря
 which direction?  [65f7c4b89317]
   =   В каком направлении?
 white rabbit  [b9afa1a45363]
   =   Белый кролик
+width of tiles  [f25ba36c70f1]
+  =   Ширина тайлов
 wiggle  [5339c1c6e80d]
   =   Извивашка
 wight supremacist  [ff582c97e100]
@@ -20545,6 +21139,10 @@ wiki  [d5ea4e40ddbf]
   =   Вики
 wild haggis  [45c49fc8ab04]
   =   Дикий хаггис
+window processor to use  [51d50768b926]
+  =   Обработчик окон
+windowing system to use (should be specified first)  [6d848d949fe2]
+  =   Оконная система (указывается первой)
 winged grizzly  [b0da04f0668d]
   =   Крылатый гризли
 wiping off your %s  [c5d2b2cafecc]
@@ -20562,11 +21160,49 @@ womble  [14bd96940426]
   =   Вомбл
 xeroc  [04dba72d59ae]
   =   Ксерок
+y required to enter known trap unless considered harmless  [eb6ddddbcbb9]
+  =   Y, чтобы ступить в известную ловушку, если она не безвредна
+y required to pick filter choice 'A' for menustyle:Full  [1f4e6c632677]
+  =   Y, чтобы выбрать «A» в menustyle:Full
+y required to pray (supersedes old "prayconfirm" option)  [616b4d61eb7c]
+  =   Y, чтобы молиться (вместо старого prayconfirm)
 yeek  [3bfd98f34a9c]
   =   Йик
 yellow wight  [fd86f72d3b09]
   =   Жёлтое умертвие
+yes vs y to attack a peaceful monster  [f1b23c7c9904]
+  =   Yes, а не y, чтобы напасть на мирного монстра
+yes vs y to break a wand via (a)pply  [ed1aa56398da]
+  =   Yes, а не y, чтобы сломать палочку через (a)pply
+yes vs y to change form when lycanthropy is controllable  [df61698cf610]
+  =   Yes, а не y, чтобы сменить облик при управляемой ликантропии
+yes vs y to continue eating after first bite when satiated  [9b62518a1d15]
+  =   Yes, а не y, чтобы есть дальше сытым после первого куска
+yes vs y to die (explore mode or debug mode)  [1d9bb19ca8ea]
+  =   Yes, а не y, чтобы умереть (в режиме исследования или отладки)
+yes vs y to quit or to enter explore mode  [e530873c03ad]
+  =   Yes, а не y, чтобы выйти или войти в режим исследования
+yes vs y to save bones data when dying in debug mode  [437000eedcbf]
+  =   Yes, а не y, чтобы сохранить кости при смерти в режиме отладки
 youma  [180900bf991b]
   =   Ёма
+your character is permanently blind  [ba9ac05d953e]
+  =   Ваш персонаж слеп навсегда
+your character is permanently deaf  [c400e71f0cc6]
+  =   Ваш персонаж глух навсегда
+your character's name (e.g., name:Merlin-W)  [9677a57f04d7]
+  =   Имя вашего персонажа (например, name:Merlin-W)
+your name for reporting  [eb63db9ded50]
+  =   Ваше имя для отчётов
+your preferred initial pet type  [e4633bbef638]
+  =   Желаемый вид начального питомца
+your starting alignment (lawful, neutral, or chaotic)  [347c156a1b14]
+  =   Ваше начальное мировоззрение (lawful, neutral или chaotic)
+your starting gender (male or female)  [824a0c7947ea]
+  =   Ваш начальный пол (male или female)
+your starting race (e.g., Human, Elf)  [b14c35e4d46a]
+  =   Ваша начальная раса (например, Human, Elf)
+your starting role (e.g., Barbarian, Valkyrie)  [2d666ff0b019]
+  =   Ваша начальная роль (например, Barbarian, Valkyrie)
 zergling  [dc6e407d6f7b]
   =   Зерглинг

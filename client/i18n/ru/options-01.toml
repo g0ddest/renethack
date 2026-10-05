@@ -1,0 +1,1277 @@
+# R6 'O': the options menu, the options' descriptions (include/optlist.h),
+# their own menus and the help window. An option's name and its values
+# stay English: they are what the configuration file takes.
+
+[9239ee2cda84]
+en = "General"
+ru = "Общие"
+
+[70cb647a88bd]
+en = "Behavior"
+ru = "Поведение"
+
+[ab478f3efc84]
+en = "Map"
+ru = "Карта"
+
+[bae7d5be7082]
+en = "Status"
+ru = "Состояние"
+
+[4d064726954a]
+en = "Advanced"
+ru = "Дополнительно"
+
+[6bf5da9c080b]
+en = "Options"
+ru = "Параметры"
+
+[a7bd8e0c78a7]
+en = "show help"
+ru = "показать справку"
+
+[4b3b8e96e83d]
+en = "hide help"
+ru = "скрыть справку"
+
+[020b8579f7ce]
+en = "Use command '#optionsfull' to get the complete options list."
+ru = "Полный список параметров — команда «#optionsfull»."
+
+[0b99cebe5658]
+en = "ERROR"
+ru = "ОШИБКА"
+
+[2733167405bc]
+en = "ERROR  (for autopickup)"
+ru = "ОШИБКА  (для автоподбора)"
+
+[7f373d11d3f1]
+en = "view help for options menu"
+ru = "справка по меню параметров"
+
+[d300b7092f3e]
+en = "Set what options?"
+ru = "Какие параметры изменить?"
+
+[6d848d949fe2]
+en = "windowing system to use (should be specified first)"
+ru = "оконная система (указывается первой)"
+
+[09da1da0dccb]
+en = "normal play, non-scoring explore mode, or debug mode"
+ru = "обычная игра, режим исследования без счёта или режим отладки"
+
+[9677a57f04d7]
+en = "your character's name (e.g., name:Merlin-W)"
+ru = "имя вашего персонажа (например, name:Merlin-W)"
+
+[2d666ff0b019]
+en = "your starting role (e.g., Barbarian, Valkyrie)"
+ru = "ваша начальная роль (например, Barbarian, Valkyrie)"
+not_terms = ["Barbarian", "Valkyrie"]
+
+[b14c35e4d46a]
+en = "your starting race (e.g., Human, Elf)"
+ru = "ваша начальная раса (например, Human, Elf)"
+not_terms = ["Human", "Elf"]
+
+[824a0c7947ea]
+en = "your starting gender (male or female)"
+ru = "ваш начальный пол (male или female)"
+
+[347c156a1b14]
+en = "your starting alignment (lawful, neutral, or chaotic)"
+ru = "ваше начальное мировоззрение (lawful, neutral или chaotic)"
+
+[d831042dac6e]
+en = "add location information to messages"
+ru = "добавлять к сообщениям сведения о месте"
+
+[e95f77197077]
+en = "can your character hear anything"
+ru = "слышит ли ваш персонаж хоть что-нибудь"
+
+[264decf0c976]
+en = "message window alignment"
+ru = "положение окна сообщений"
+
+[5426e95f60a8]
+en = "status window alignment"
+ru = "положение окна состояния"
+
+[22bad510122c]
+en = "alternative key handling"
+ru = "другая обработка клавиш"
+
+[6e5da7497da5]
+en = "(not applicable)"
+ru = "(неприменимо)"
+
+[7ca13d2135b5]
+en = "treat \"ESC c\" as M-c (Meta+c, 8th bit set)"
+ru = "считать «ESC c» за M-c (Meta+c, с восьмым битом)"
+
+[ed25a2e1244f]
+en = "summarize currently worn armor in a status field"
+ru = "сводка надетых доспехов в поле состояния"
+
+[74aa41092a1d]
+en = "show map as text"
+ru = "показывать карту текстом"
+
+[af172e30fbd3]
+en = "autocompletions"
+ru = "автодополнения"
+
+[34e79ef675c3]
+en = "edit autocompletions"
+ru = "изменить автодополнения"
+
+[db8aa8a14d06]
+en = "describe terrain under cursor"
+ru = "описывать местность под курсором"
+
+[d7fcd5d4b43d]
+en = "dig if moving and wielding a digging tool"
+ru = "копать на ходу, если в руках инструмент для копания"
+
+[ca0aee8d18d1]
+en = "walking into a door attempts to open it"
+ru = "шаг в дверь пытается её открыть"
+
+[afff13b13784]
+en = "automatically pick up objects"
+ru = "подбирать предметы автоматически"
+
+[65325fe26c4c]
+en = "autopickup exceptions"
+ru = "исключения автоподбора"
+
+[f3fe92dae046]
+en = "edit autopickup exceptions"
+ru = "изменить исключения автоподбора"
+
+[e227f81c7356]
+en = "fill empty quiver automatically when firing"
+ru = "при стрельбе пополнять пустой колчан автоматически"
+
+[c7ea07715c8e]
+en = "action to take when encountering locked door or chest"
+ru = "что делать с запертой дверью или сундуком"
+
+[090db147c5b9]
+en = "use background color for some map hilighting"
+ru = "подсвечивать часть карты цветом фона"
+
+[7aeae4c2c7ab]
+en = "bind keys"
+ru = "назначение клавиш"
+
+[44c5531b00e9]
+en = "edit key binds"
+ru = "изменить назначения клавиш"
+
+[38c0a4776716]
+en = "use IBM ROM BIOS calls"
+ru = "использовать вызовы IBM ROM BIOS"
+
+[ba9ac05d953e]
+en = "your character is permanently blind"
+ru = "ваш персонаж слеп навсегда"
+
+[ca8394ac6c15]
+en = "allow loading bones files"
+ru = "разрешить загрузку файлов костей"
+
+[865efd1b05ab]
+en = "deprecated (use S_boulder in sym file instead)"
+ru = "устарело (используйте S_boulder в файле символов)"
+not_terms = ["boulder"]
+
+[38f56f6e77cc]
+en = "name of your starting pet if it is a kitten"
+ru = "имя начального питомца, если это котёнок"
+
+[1ec9e0490d9e]
+en = "save game state after each level change"
+ru = "сохранять игру при каждой смене уровня"
+
+[725c4f547c8b]
+en = "give help for errors on direction input"
+ru = "подсказывать при ошибках ввода направления"
+
+[f1b9f966aeb7]
+en = "use color in map"
+ru = "цвета на карте"
+
+[33e8388d7a16]
+en = "ask before hitting tame or peaceful monsters"
+ru = "спрашивать, прежде чем бить ручных или мирных монстров"
+
+[cf4b3308b93e]
+en = "email address for reporting"
+ru = "адрес эл. почты для отчётов"
+
+[eb63db9ded50]
+en = "your name for reporting"
+ru = "ваше имя для отчётов"
+
+[e960610f13a6]
+en = "length of longest url we can generate"
+ru = "наибольшая длина создаваемой ссылки"
+
+[d5832541e1f6]
+en = "load curses display symbols into symset"
+ru = "загрузить символы curses в набор символов"
+
+[9d926197916a]
+en = "use custom colors in map"
+ru = "свои цвета на карте"
+
+[1682afac9e9b]
+en = "use custom utf8 symbols in map"
+ru = "свои символы utf8 на карте"
+
+[e7f9898ecfc0]
+en = "show floor outside line of sight differently"
+ru = "показывать пол вне поля зрения иначе"
+
+[c400e71f0cc6]
+en = "your character is permanently deaf"
+ru = "ваш персонаж глух навсегда"
+
+[91bfabfd7b23]
+en = "load DECGraphics display symbols into symset"
+ru = "загрузить символы DECGraphics в набор символов"
+
+[392b418b6b34]
+en = "no hunger"
+ru = "без голода"
+
+[e622a721ccc6]
+en = "no random monster generation"
+ru = "без случайного появления монстров"
+
+[9ae9b833c7d2]
+en = "level generation can overwrite stairs"
+ru = "создание уровня может стереть лестницы"
+
+[d7b501d06f11]
+en = "the kinds of information to disclose at end of game"
+ru = "какие сведения раскрывать в конце игры"
+
+[8b6ec6f03bfc]
+en = "name of your starting pet if it is a little dog"
+ru = "имя начального питомца, если это собачка"
+
+[aa159eefd19e]
+en = "don't autopickup dropped items"
+ru = "не подбирать брошенные предметы"
+
+[4616ffb8d83e]
+en = "list of symbols to use in drawing the dungeon map"
+ru = "символы для карты подземелья"
+
+[29e640286d6d]
+en = "list of symbols to use in drawing special effects"
+ru = "символы для особых эффектов"
+
+[8bd9aaaec0ac]
+en = "send 8-bit characters directly to terminal"
+ru = "посылать 8-битные символы прямо в терминал"
+
+[070fced2a1ca]
+en = "use menu for getting extended commands"
+ru = "меню для расширенных команд"
+
+[affdb4c59e90]
+en = "deprecated; use gender:female"
+ru = "устарело; используйте gender:female"
+
+[e198f6eeb879]
+en = "fire-command tries to be helpful"
+ru = "команда стрельбы старается помочь"
+
+[94fb8bf5f5cc]
+en = "inventory items keep their letters"
+ru = "предметы инвентаря сохраняют свои буквы"
+
+[98403c750651]
+en = "font to use in the map window"
+ru = "шрифт окна карты"
+
+[6635ef8860c8]
+en = "font to use in menus"
+ru = "шрифт меню"
+
+[320fa1b17b0c]
+en = "font to use in the message window"
+ru = "шрифт окна сообщений"
+
+[2b69aaa09d5f]
+en = "size of the map font"
+ru = "размер шрифта карты"
+
+[f51e040c87ed]
+en = "size of the menu font"
+ru = "размер шрифта меню"
+
+[966329c7771c]
+en = "size of the message font"
+ru = "размер шрифта сообщений"
+
+[99efca44b3e6]
+en = "size of the status font"
+ru = "размер шрифта состояния"
+
+[f1cf010460e7]
+en = "size of the text font"
+ru = "размер шрифта текста"
+
+[40c642ec0fd4]
+en = "font to use in status window"
+ru = "шрифт окна состояния"
+
+[5c8203d72fcd]
+en = "font to use in text windows"
+ru = "шрифт текстовых окон"
+
+[d2c192381805]
+en = "commands asking for inventory item show a menu"
+ru = "команды, которым нужен предмет, показывают меню"
+
+[80e8d3a457da]
+en = "name of a fruit you enjoy eating"
+ru = "название вашего любимого фрукта"
+
+[2e2f5046b579]
+en = "toggle fullscreen"
+ru = "полноэкранный режим"
+
+[98ab1b4822a6]
+en = "set representation of a glyph to a unicode value and color"
+ru = "задать глифу символ юникода и цвет"
+
+[cffde6c3074a]
+en = "classify gold as unknown or uncursed"
+ru = "считать золото неизвестным или непроклятым"
+
+[d5464770cc5f]
+en = "use color for UI"
+ru = "цвета в интерфейсе"
+
+[be5d06f62978]
+en = "show all available info when using whatis-command"
+ru = "все сведения по команде «что это»"
+
+[8aa573546dbd]
+en = "show commands available in this location"
+ru = "показывать команды, доступные на этом месте"
+
+[92d63bb9d24f]
+en = "same as palette, only order is reversed"
+ru = "как palette, но в обратном порядке"
+
+[8ce5014d45c1]
+en = "use highlight for pets"
+ru = "выделять питомцев"
+
+[070c137dbe00]
+en = "highlight piles of items"
+ru = "выделять кучи предметов"
+
+[3dbd483460c8]
+en = "a status highlighting rule (can occur multiple times)"
+ru = "правило подсветки состояния (может повторяться)"
+
+[6063620034de]
+en = "(not available)"
+ru = "(недоступно)"
+
+[25183a996488]
+en = "show colored bar for hit points"
+ru = "цветная полоса очков здоровья"
+
+[34f0087c901f]
+en = "name of your starting pet if it is a pony"
+ru = "имя начального питомца, если это пони"
+
+[80e8d03c5b30]
+en = "load IBMGraphics display symbols into symset"
+ru = "загрузить символы IBMGraphics в набор символов"
+
+[a21dc538f20c]
+en = "update checkpoint file if input is idle for 10 seconds"
+ru = "обновлять файл сохранения, если ввода нет 10 секунд"
+
+[570ee7530fa5]
+en = "ignore interrupt signals"
+ru = "не замечать сигналов прерывания"
+
+[751a58708160]
+en = "omit \"uncursed\" from inventory"
+ru = "не писать «непроклятый» в инвентаре"
+
+[4135fb2cae3c]
+en = "show introductory message"
+ru = "показывать вступление"
+
+[c859d487e670]
+en = "show dark corridors as lit if in sight"
+ru = "показывать тёмные коридоры в поле зрения освещёнными"
+
+[2a3a80f3059d]
+en = "use a/b/c rather than o/i/c when looting"
+ru = "a/b/c вместо o/i/c при обыске"
+
+[c75419196c04]
+en = "enable the mail daemon"
+ru = "включить почтового демона"
+
+[ec924f26d3cc]
+en = "map display mode under Windows"
+ru = "режим показа карты в Windows"
+
+[1c8df67905b5]
+en = "give feedback when walking over interesting features"
+ru = "сообщать, когда идёте по чему-то примечательному"
+
+[1d00d4d6bf84]
+en = "give feedback when interesting map locations change"
+ru = "сообщать, когда меняются примечательные места карты"
+
+[aca35a00ce33]
+en = "give feedback when walking into walls"
+ru = "сообщать, когда упираетесь в стену"
+
+[b2dc1fda627f]
+en = "deselect all items in a menu"
+ru = "снять выбор со всех пунктов меню"
+
+[a5391e563ce9]
+en = "deselect all items on this page of a menu"
+ru = "снять выбор с пунктов на этой странице меню"
+not_terms = ["page"]
+
+[959e95211714]
+en = "jump to the first page in a menu"
+ru = "к первой странице меню"
+not_terms = ["page"]
+
+[9098c56bfff0]
+en = "display style for menu headings"
+ru = "вид заголовков меню"
+
+[4a869a832307]
+en = "invert all items in a menu"
+ru = "обратить выбор всех пунктов меню"
+
+[af0ad16e69cd]
+en = "invert all items on this page of a menu"
+ru = "обратить выбор пунктов на этой странице меню"
+not_terms = ["page"]
+
+[6444d76581a2]
+en = "jump to the last page in a menu"
+ru = "к последней странице меню"
+not_terms = ["page"]
+
+[9053512853c8]
+en = "go to the next menu page"
+ru = "к следующей странице меню"
+not_terms = ["page"]
+
+[45c12e5cd70d]
+en = "show object symbols in menus"
+ru = "показывать символы предметов в меню"
+
+[1b585d9100df]
+en = "menus overlay and align to right"
+ru = "меню поверх карты, справа"
+
+[b842ee1b43b9]
+en = "go to the previous menu page"
+ru = "к предыдущей странице меню"
+not_terms = ["page"]
+
+[faf202f021f7]
+en = "search for a menu item"
+ru = "поиск пункта меню"
+
+[2439570f12dc]
+en = "select all items in a menu"
+ru = "выбрать все пункты меню"
+
+[4b81bfb8ca6e]
+en = "select all items on this page of a menu"
+ru = "выбрать пункты на этой странице меню"
+not_terms = ["page"]
+
+[317c322b2662]
+en = "pan current menu page left"
+ru = "сдвинуть страницу меню влево"
+not_terms = ["page"]
+
+[223343244cd3]
+en = "pan current menu page right"
+ru = "сдвинуть страницу меню вправо"
+not_terms = ["page"]
+
+[f52bee34e499]
+en = "menu formatting"
+ru = "оформление меню"
+
+[1fb16ac3df37]
+en = "use colors in menus"
+ru = "цвета в меню"
+
+[5af4fdc7befc]
+en = "change colors used in menus"
+ru = "изменить цвета меню"
+
+[bafc47bb3d6d]
+en = "menu colors"
+ru = "цвета меню"
+
+[9d892392184b]
+en = "experimental behavior of menu inverts"
+ru = "опытное обращение выбора в меню"
+
+[91bac77a80a2]
+en = "user interface for object selection"
+ru = "способ выбора предметов"
+
+[cc6504357606]
+en = "edit message types"
+ru = "изменить типы сообщений"
+
+[d665474f2dc9]
+en = "message types"
+ru = "типы сообщений"
+
+[6e693c71cffb]
+en = "message when hero sees monster movement"
+ru = "сообщать, когда герой видит движение монстра"
+
+[acae2be8af1e]
+en = "control monster polymorphs"
+ru = "управлять превращениями монстров"
+
+[deb7e00120a8]
+en = "control monster teleport destinations"
+ru = "управлять, куда телепортируются монстры"
+
+[001dc00f95dc]
+en = "list of symbols to use for monsters"
+ru = "символы монстров"
+
+[6034a2039329]
+en = "game receives click info from mouse"
+ru = "игра получает щелчки мыши"
+
+[131206d33afc]
+en = "control of \"view previous message(s)\" (^P) behavior"
+ru = "просмотр прошлых сообщений (^P)"
+
+[1dcc595aec2c]
+en = "number of top line messages to save"
+ru = "сколько сообщений хранить"
+
+[9aa83282e4ee]
+en = "show any news at game start"
+ru = "показывать новости в начале игры"
+
+[fcbb549666ea]
+en = "start your character without armor"
+ru = "начать без доспехов"
+
+[b04a0dff623b]
+en = "allow nulls to be sent to terminal"
+ru = "разрешить посылать в терминал нулевые символы"
+
+[f462046b35ef]
+en = "use the number pad for movement"
+ru = "ходить цифровой клавиатурой"
+
+[d9dd53c94efc]
+en = "list of symbols to use for objects"
+ru = "символы предметов"
+
+[8fe976483949]
+en = "the inventory order of the items in your pack"
+ru = "порядок предметов в инвентаре"
+
+[bb2c0d7010ea]
+en = "palette (adjust an RGB color in palette (color/R-G-B)"
+ru = "палитра (задать цвет RGB в палитре (цвет/R-G-B)"
+
+[fd826f142cd9]
+en = "palette (00c/880/-fff is blue/yellow/reverse white)"
+ru = "палитра (00c/880/-fff — синий/жёлтый/инверсный белый)"
+
+[841f721fe7f6]
+en = "extra prompting in certain situations"
+ru = "дополнительные подтверждения в некоторых случаях"
+
+[a33a2c417445]
+en = "start your character without any items"
+ru = "начать без единого предмета"
+
+[902650796169]
+en = "show persistent inventory window"
+ru = "постоянное окно инвентаря"
+
+[3945fc53ba3b]
+en = "what to show in persistent inventory window"
+ru = "что показывать в постоянном окне инвентаря"
+
+[8530a38c5365]
+en = "attributes for highlighting pets"
+ru = "атрибуты выделения питомцев"
+
+[e4633bbef638]
+en = "your preferred initial pet type"
+ru = "желаемый вид начального питомца"
+
+[a120f4e46827]
+en = "maximum burden picked up before prompt"
+ru = "наибольшая ноша, которую поднимать без вопроса"
+
+[ec8b69322dc1]
+en = "autopickup stolen items"
+ru = "автоподбор украденных предметов"
+
+[4f83d974a05f]
+en = "autopickup thrown items"
+ru = "автоподбор брошенных предметов"
+
+[a136c84a5db2]
+en = "types of objects to pick up automatically"
+ru = "виды предметов для автоподбора"
+
+[1c14fe0fc47d]
+en = "threshold for \"there are many objects here\""
+ru = "порог для «здесь много предметов»"
+
+[df934f3488b6]
+en = "choose character via dialog or prompts"
+ru = "выбор персонажа в окне или вопросами"
+
+[e0cf16b3b133]
+en = "display prices you have seen for unidentified objects"
+ru = "показывать виденные цены неопознанных предметов"
+
+[fe673857d5f6]
+en = "previous weapon goes to secondary slot"
+ru = "прежнее оружие уходит во второй слот"
+
+[ffa5c16c2461]
+en = "use a menu for yes/no queries"
+ru = "меню для вопросов «да/нет»"
+
+[04b451369ad3]
+en = "skip map browse when forced to looked at map"
+ru = "не листать карту, когда её показывают"
+
+[ed69e508fdd7]
+en = "allow use to raw I/O"
+ru = "разрешить прямой ввод-вывод"
+
+[603aeb284d30]
+en = "allow rerolling of starting inventory and items"
+ru = "разрешить пересоздание начального снаряжения"
+
+[81afe5b964d4]
+en = "space bar is bound to the rest-command"
+ru = "пробел — команда отдыха"
+
+[878010fe27ed]
+en = "load a set of rogue display symbols from symbols file"
+ru = "загрузить набор символов rogue из файла символов"
+not_terms = ["rogue"]
+
+[abb4d271eed2]
+en = "display frequency when `running' or `travelling'"
+ru = "частота показа при беге и перемещении"
+
+[3def5bb73ac3]
+en = "prevent you from hitting pets"
+ru = "не давать бить питомцев"
+
+[482633c58d72]
+en = "prevent waiting next to hostiles"
+ru = "не давать ждать рядом с врагами"
+
+[4166b56a514a]
+en = "perform data sanity checks"
+ru = "проверять целостность данных"
+
+[2923ef8bb954]
+en = "the parts of the score list you wish to see"
+ru = "какие части списка рекордов показывать"
+
+[5d19e743ee60]
+en = "amount to scroll map when scroll_margin is reached"
+ru = "на сколько прокручивать карту у края scroll_margin"
+
+[2030321512ed]
+en = "scroll map when this far from the edge"
+ru = "прокручивать карту на таком расстоянии от края"
+
+[48b122b94cf6]
+en = "show damage hero takes in message line"
+ru = "показывать полученный урон в сообщениях"
+
+[fc474452df31]
+en = "show experience points in status line"
+ru = "очки опыта в строке состояния"
+
+[4619cedbdf56]
+en = "show your character by race rather than role"
+ru = "показывать персонажа по расе, а не по роли"
+
+[00705059fe8e]
+en = "show current score in status line"
+ru = "текущий счёт в строке состояния"
+
+[ee00b0b5d2a5]
+en = "show version info on status line"
+ru = "версия в строке состояния"
+
+[08d3a5d42969]
+en = "don't use terminal bell"
+ru = "без звонка терминала"
+not_terms = ["bell"]
+
+[c9e74d67ce5a]
+en = "preferred order when displaying discovered objects"
+ru = "порядок показа открытых предметов"
+
+[56e3e6f70bf6]
+en = "sort object selection lists by description"
+ru = "сортировать списки предметов по описанию"
+
+[8b0293bc60e9]
+en = "group inventory items by type"
+ru = "группировать инвентарь по видам"
+
+[6d0ce97a14f5]
+en = "preferred order when displaying vanquished monsters"
+ru = "порядок показа побеждённых монстров"
+
+[98975cb07825]
+en = "soundlib interface to use (if any)"
+ru = "звуковая библиотека (если есть)"
+
+[74d3760df2c4]
+en = "use integrated sound effects"
+ru = "встроенные звуковые эффекты"
+
+[8c46db31f364]
+en = "use sounds"
+ru = "звуки"
+
+[d94eae518b3a]
+en = "display sparkly effect when resisting magic"
+ru = "искрящийся эффект при сопротивлении магии"
+
+[5457958e0f9c]
+en = "message when hero spots a monster"
+ru = "сообщать, когда герой замечает монстра"
+
+[abb5c935c909]
+en = "use standout for --more--"
+ru = "выделять --more--"
+
+[75a774bf526e]
+en = "allow the status lines to update"
+ru = "обновлять строки состояния"
+
+[41cbe1f30eee]
+en = "change status condition highlighting"
+ru = "изменить подсветку состояний"
+
+[1d6a51bb6726]
+en = "status condition fields"
+ru = "поля состояний"
+
+[6f874b68ecc6]
+en = "0=no status highlighting, N=show highlights for N turns"
+ru = "0 — без подсветки состояния, N — подсветка на N ходов"
+
+[d25abb368a58]
+en = "change status line highlighting"
+ru = "изменить подсветку строки состояния"
+
+[265ccf679bf8]
+en = "status highlight rules"
+ru = "правила подсветки состояния"
+
+[87594b7329f0]
+en = "highlight control"
+ru = "управление подсветкой"
+
+[6310c0fe07df]
+en = "2 or 3 lines for status display"
+ru = "2 или 3 строки состояния"
+
+[e679368711f2]
+en = "override keystroke value"
+ru = "переопределить код клавиши"
+
+[8715c9c4c249]
+en = "suppress alerts about version-specific features"
+ru = "не предупреждать о возможностях отдельных версий"
+
+[0c017431efd7]
+en = "load a set of display symbols from symbols file"
+ru = "загрузить набор символов из файла символов"
+
+[efbb40d8fe0d]
+en = "number of columns"
+ru = "число столбцов"
+
+[216ea83026b6]
+en = "number of rows"
+ru = "число строк"
+
+[d7f61ea0b14a]
+en = "show hero's location as a status field"
+ru = "место героя в поле состояния"
+
+[c1709a616352]
+en = "name of tile file"
+ru = "имя файла тайлов"
+
+[75a171c08da4]
+en = "height of tiles"
+ru = "высота тайлов"
+
+[f25ba36c70f1]
+en = "width of tiles"
+ru = "ширина тайлов"
+
+[256724c26083]
+en = "display game turns in status line"
+ru = "ходы игры в строке состояния"
+
+[e878426f596b]
+en = "use delay when pausing for display effects"
+ru = "задержка при показе эффектов"
+
+[9b73ee3e2d10]
+en = "show some helpful tips during gameplay"
+ru = "полезные советы во время игры"
+
+[e0e65d00d9ac]
+en = "show tombstone when your character dies"
+ru = "надгробие, когда персонаж умирает"
+
+[e971b97b680a]
+en = "show top scores in window"
+ru = "лучшие результаты в окне"
+
+[edc7bc4e6079]
+en = "list of symbols to use in drawing traps"
+ru = "символы ловушек"
+
+[2e894895bf6d]
+en = "enable traveling via mouse click"
+ru = "перемещение щелчком мыши"
+
+[eacd37b44869]
+en = "ask if you want the tutorial"
+ru = "спрашивать, нужно ли обучение"
+
+[a23c60305a44]
+en = "use bold black color instead of blue"
+ru = "жирный чёрный вместо синего"
+
+[223894d608cf]
+en = "display detected monsters in inverse"
+ru = "показывать обнаруженных монстров инверсно"
+
+[437c933fcffe]
+en = "show more old messages at a time"
+ru = "показывать больше старых сообщений за раз"
+
+[6b4d59933fa1]
+en = "extra information for 'showvers'"
+ru = "дополнительные сведения для showvers"
+
+[95e769c41225]
+en = "method of video updating"
+ru = "способ обновления экрана"
+
+[fa9a0f5c0bb2]
+en = "color mappings for internal screen routines"
+ru = "цвета для внутренних процедур экрана"
+
+[73a10e460ea7]
+en = "gray shades to map to black/gray/white"
+ru = "оттенки серого для чёрного/серого/белого"
+
+[bdd1aa8768b4]
+en = "video width"
+ru = "ширина экрана"
+
+[56eb6fa14336]
+en = "video height"
+ru = "высота экрана"
+
+[b37724805cf9]
+en = "output special escape codes"
+ru = "выводить особые управляющие коды"
+
+[6f35962e271c]
+en = "output sound data in special escape codes"
+ru = "выводить звуковые данные особыми управляющими кодами"
+
+[edaeff904dbc]
+en = "display characters for warnings"
+ru = "символы предупреждений"
+
+[91e238bbfafa]
+en = "show currently wielded weapon in a status field"
+ru = "оружие в руках в поле состояния"
+
+[9e7400a5070f]
+en = "show coordinates when auto-describing cursor position"
+ru = "координаты при описании места под курсором"
+
+[885ff86b9468]
+en = "filter coordinate locations when targeting next or previous"
+ru = "отбирать места при выборе следующего или предыдущего"
+
+[1d31c71e4d34]
+en = "show menu when getting a map location"
+ru = "меню при выборе места на карте"
+
+[02e6ea537c68]
+en = "skip same glyph when getting map location"
+ru = "пропускать одинаковые глифы при выборе места"
+
+[3a4c003fff95]
+en = "0 (off), 1 (on), 2 (auto)"
+ru = "0 (выкл.), 1 (вкл.), 2 (авто)"
+
+[51d50768b926]
+en = "window processor to use"
+ru = "обработчик окон"
+
+[2aa3c4de9f90]
+en = "the foreground/background colors of windows"
+ru = "цвета текста и фона окон"
+
+[9bf194ef05f9]
+en = "prefix for cond_ options"
+ru = "приставка параметров cond_"
+
+[bf1ec36f3b28]
+en = "prefix for font options"
+ru = "приставка параметров шрифта"
+
+[db09b65cc14c]
+en = "prefix for old micro IBM_ options"
+ru = "приставка старых параметров IBM_"
+
+[73dbd48da2aa]
+en = "Select menustyle:"
+ru = "Способ выбора предметов:"
+
+[46b30c9962c8]
+en = "Select message window placement relative to the map:"
+ru = "Положение окна сообщений относительно карты:"
+
+[9fc2e9f31b9e]
+en = "Select status window placement relative to the map:"
+ru = "Положение окна состояния относительно карты:"
+
+[0421f6187c1d]
+en = "Select '%.20s' actions:"
+ru = "Действия для «{1}»:"
+
+[8d2b5dad8f44]
+en = "Change which disclosure options categories:"
+ru = "Какие сведения о конце игры изменить:"
+
+[1a2709eb1fa3]
+en = "Disclosure options for attributes:"
+ru = "Раскрытие атрибутов:"
+
+[8b1d736598b3]
+en = "Disclosure options for conduct:"
+ru = "Раскрытие поведения:"
+
+[6db8d616922d]
+en = "Disclosure options for genocides:"
+ru = "Раскрытие геноцидов:"
+
+[72c3844cf7bf]
+en = "Disclosure options for inventory:"
+ru = "Раскрытие инвентаря:"
+
+[119d369fd625]
+en = "Disclosure options for overview:"
+ru = "Раскрытие обзора:"
+
+[3216db82dbcc]
+en = "Disclosure options for vanquished:"
+ru = "Раскрытие побеждённых:"
+
+[27f83ac9ebbe]
+en = "Never disclose, without prompting"
+ru = "Никогда не раскрывать, не спрашивая"
+
+[8c225d5e6f83]
+en = "Always disclose, without prompting"
+ru = "Всегда раскрывать, не спрашивая"
+
+[203a93bfe5ce]
+en = "Always disclose, pick sort order from menu"
+ru = "Всегда раскрывать, порядок выбрать в меню"
+
+[896456ee6453]
+en = "Prompt, with default answer of \"No\""
+ru = "Спрашивать, по умолчанию «нет»"
+
+[0cab27e296df]
+en = "Prompt, with default answer of \"Yes\""
+ru = "Спрашивать, по умолчанию «да»"
+
+[519aac985245]
+en = "Prompt, with default answer of \"Ask\" to request sort menu"
+ru = "Спрашивать, по умолчанию «спросить» — меню порядка"
+
+[147a4b650724]
+en = "Set object symbols in menus to what?"
+ru = "Какие символы предметов показывать в меню?"
+
+[6b757a5c0306]
+en = "Select message history display type:"
+ru = "Как показывать историю сообщений:"
+
+[1e61b10e117b]
+en = " 0 (off)"
+ru = " 0 (выкл.)"
+
+[961e60edc045]
+en = " 1 (on)"
+ru = " 1 (вкл.)"
+
+[6e70c3d90e8c]
+en = " 2 (on, MSDOS compatible)"
+ru = " 2 (вкл., как в MSDOS)"
+
+[ebe3d0be6182]
+en = " 3 (on, phone-style digit layout)"
+ru = " 3 (вкл., цифры как на телефоне)"
+
+[1f11c151eddd]
+en = " 4 (on, phone-style layout, MSDOS compatible)"
+ru = " 4 (вкл., как на телефоне, как в MSDOS)"
+
+[f3ab3cf79950]
+en = "-1 (off, 'z' to move upper-left, 'y' to zap wands)"
+ru = "-1 (выкл., «z» — шаг вверх-влево, «y» — взмах палочкой)"
+
+[4d505735dcb9]
+en = "Select number_pad mode:"
+ru = "Режим number_pad:"
+
+[05d5141b7416]
+en = "'m' prefix necessary to deliberately walk into lava or water"
+ru = "чтобы нарочно шагнуть в лаву или воду, нужна приставка «m»"
+
+[247955ef00c3]
+en = "always pick from inventory for Remove and Takeoff"
+ru = "для Remove и Takeoff всегда выбирать из инвентаря"
+
+[f5a8c4e3cb36]
+en = "for \"yes\" confirmations, require \"no\" to reject"
+ru = "для подтверждений «yes» отказ — только «no»"
+
+[eb6ddddbcbb9]
+en = "y required to enter known trap unless considered harmless"
+ru = "y, чтобы ступить в известную ловушку, если она не безвредна"
+
+[1f4e6c632677]
+en = "y required to pick filter choice 'A' for menustyle:Full"
+ru = "y, чтобы выбрать «A» в menustyle:Full"
+
+[616b4d61eb7c]
+en = "y required to pray (supersedes old \"prayconfirm\" option)"
+ru = "y, чтобы молиться (вместо старого prayconfirm)"
+
+[f1b23c7c9904]
+en = "yes vs y to attack a peaceful monster"
+ru = "yes, а не y, чтобы напасть на мирного монстра"
+
+[ed1aa56398da]
+en = "yes vs y to break a wand via (a)pply"
+ru = "yes, а не y, чтобы сломать палочку через (a)pply"
+
+[df61698cf610]
+en = "yes vs y to change form when lycanthropy is controllable"
+ru = "yes, а не y, чтобы сменить облик при управляемой ликантропии"
+
+[9b62518a1d15]
+en = "yes vs y to continue eating after first bite when satiated"
+ru = "yes, а не y, чтобы есть дальше сытым после первого куска"
+
+[1d9bb19ca8ea]
+en = "yes vs y to die (explore mode or debug mode)"
+ru = "yes, а не y, чтобы умереть (в режиме исследования или отладки)"
+
+[e530873c03ad]
+en = "yes vs y to quit or to enter explore mode"
+ru = "yes, а не y, чтобы выйти или войти в режим исследования"
+
+[437000eedcbf]
+en = "yes vs y to save bones data when dying in debug mode"
+ru = "yes, а не y, чтобы сохранить кости при смерти в режиме отладки"
+
+[c58374b86a51]
+en = "Actions requiring extra confirmation:"
+ru = "Действия, требующие подтверждения:"
+
+[b47d2992ecf4]
+en = "Choose permanent inventory mode:"
+ru = "Режим постоянного инвентаря:"
+
+[ebd97c8d5126]
+en = "Select encumbrance level:"
+ru = "Уровень нагрузки:"
+
+[42616e7524fa]
+en = "Select run/travel display mode:"
+ru = "Показ бега и перемещения:"
+
+[68b2269620b4]
+en = "Select loot sorting type:"
+ru = "Сортировка добычи:"
+
+[f8e88a461f89]
+en = "compass ('east' or '3s' or '2n,4w')"
+ru = "компас («east», «3s» или «2n,4w»)"
+
+[ec8983c4b8fa]
+en = "full compass ('east' or '3south' or '2north,4west')"
+ru = "полный компас («east», «3south» или «2north,4west»)"
+
+[de1ca8256f99]
+en = "map <x,y>"
+ru = "карта <x,y>"
+
+[321b6ea93b9f]
+en = "screen [row,column]"
+ru = "экран [строка,столбец]"
+
+[11b4bf46182b]
+en = "none (no coordinates displayed)"
+ru = "нет (координаты не показываются)"
+
+[e81ede1b4548]
+en = "Select coordinate display when auto-describing a map position:"
+ru = "Показ координат при описании места на карте:"
+
+[0dce15d98fe3]
+en = "no filtering"
+ru = "без отбора"
+
+[913283a5e96e]
+en = "in view only"
+ru = "только в поле зрения"
+
+[11ad47c87cc5]
+en = "in same area"
+ru = "только в той же области"
+
+[5e34691d9849]
+en = "Select location filtering when going for next/previous map position:"
+ru = "Отбор мест при переходе к следующему или предыдущему:"
+
+[dcc30f3d7259]
+en = "List of autopickup exceptions"
+ru = "Исключения автоподбора"
+
+[bef0da932d65]
+en = "Remove which autopickup exceptions"
+ru = "Какие исключения автоподбора удалить"
+
+[c0367c5137e5]
+en = "List of menu colors"
+ru = "Цвета меню"
+
+[2f684c392139]
+en = "Remove which menu colors"
+ru = "Какие цвета меню удалить"
+
+[c6357c96bfac]
+en = "List of message types"
+ru = "Типы сообщений"
+
+[a830405f2c14]
+en = "Remove which message types"
+ru = "Какие типы сообщений удалить"
+
+[88ace02d9a57]
+en = "version number"
+ru = "номер версии"
+
+[81e1e111c0b4]
+en = "game name"
+ru = "название игры"
+
+[09aa55796641]
+en = "Select version information flags:"
+ru = "Что показывать о версии:"
+
+[540e1e3baa55]
+en = "Auto, except forced off for perm_invent"
+ru = "Авто, но выкл. для perm_invent"
+
+[b2058d98e125]
+en = "Auto, on if display is at least (24+2)x(80+2)"
+ru = "Авто, вкл. на экране от (24+2)x(80+2)"
+
+[98e8f26ab99b]
+en = "Off, never show borders"
+ru = "Выкл., рамок нет"
+
+[4e3d44a08751]
+en = "On, always show borders"
+ru = "Вкл., рамки всегда"
+
+[eaa3ede0fe4e]
+en = "On, except forced off for perm_invent"
+ru = "Вкл., но выкл. для perm_invent"
+
+[fd7b4975d059]
+en = "Select window borders mode:"
+ru = "Режим рамок окон:"
+
+[677329774755]
+en = "How to show the message"
+ru = "Как показывать сообщение"
+
+[25cf758f5395]
+en = "Menu control keys:"
+ru = "Клавиши управления меню:"
+
+[5bbc71b71789]
+en = "Set options as OPTIONS=<options> in %s"
+ru = "Задавайте параметры как OPTIONS=<параметры> в {1}"
+
+[a5dd77a94d0a]
+en = "Compound options:"
+ru = "Составные параметры:"
+
+[69ed6aedb5fe]
+en = "Other settings:"
+ru = "Прочие настройки:"
+
+[6e8fd28de7ca]
+en = "See NetHack's \"Guidebook\" for details."
+ru = "Подробности — в «Руководстве» NetHack."
