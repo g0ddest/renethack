@@ -120,6 +120,14 @@ class Formats(unittest.TestCase):
         self.assertIn("First text more!", catalog_of(src.replace("CALL", "show")))
         self.assertNotIn("First text more!", catalog_of(src.replace("CALL", "fill")))
 
+    def test_one_of_an_array(self):
+        e = catalog_of('static const char *const sounds[] = { "beep", "boing" };\n'
+                       'void f(struct monst *m) {\n'
+                       '    const char *verb = ROLL_FROM(sounds);\n'
+                       '    pline("%s %s!", Monnam(m), vtense((char *) 0, verb));\n}\n')
+        self.assertIn("%s beeps!", e)
+        self.assertIn("%s boings!", e)
+
     def test_a_call_s_text_and_a_write_in_a_branch(self):
         # insight.c: "You have been killed 3 times" (N_times writes it) or
         # "You are dead (2nd time!)", or "You are dead"

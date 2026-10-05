@@ -745,6 +745,11 @@ class Context:
                 verbs = self.values(args[1], depth + 1, seen)
                 if verbs is not None:
                     return dedupe([f for v in verbs for f in (v, verb_s(v))])
+            if name == "ROLL_FROM" and len(args) == 1:
+                # ROLL_FROM(h_sounds): one of the array's strings
+                arg = strip_expr(args[0])
+                if len(arg) == 1 and arg[0].kind == "ident":
+                    return self.array(arg[0].text)
             if name in ("upstart", "capitalize", "highc") and len(args) == 1:
                 inner = self.values(args[0], depth + 1, seen)
                 if inner is not None:
