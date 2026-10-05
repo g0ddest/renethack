@@ -38,9 +38,32 @@ AO/roughness/metal and emission; nothing else was changed.
 Godot writes an `.import` file next to every asset when it imports the
 project (committed, as usual for Godot projects: they hold the import
 settings, e.g. mipmaps and GPU compression for the textures) and extracts
-the textures embedded in `bestiary/*.glb` and `sigilsvault/dungeon/*/*.glb`
-next to them (`Imp_T_Imp_*.jpg`, `Puglin_T_Puglin_*.jpg`, `<piece>_TrimSheet_*.jpg`…). `manifest.json` says which
+the textures embedded in `bestiary/*.glb`, `sigilsvault/dungeon/*/*.glb` and
+the models made in Blender next to them (`Imp_T_Imp_*.jpg`,
+`Puglin_T_Puglin_*.jpg`, `<piece>_TrimSheet_*.jpg`, `Centaur_T_*.jpg`…). `manifest.json` says which
 model, material and animation draws each monster, object and map feature.
+
+## CC-BY
+
+The models under `ccby/` are under the Creative Commons Attribution 3.0
+license (https://creativecommons.org/licenses/by/3.0/), from Poly Pizza.
+They came as static meshes; `tools/blender/rig_quadruped.py` welded and
+scaled them, skinned them to the skeleton of Quaternius's bull or wolf
+(above, CC0) and gave them its clips; the armadillo got antennae. The
+textures were scaled down.
+
+| Where | What | Author | Source |
+|---|---|---|---|
+| `ccby/polypizza/Elephant.glb` | Elephant (mumakil) | Poly by Google | https://poly.pizza/m/cx0-TiCjDOx |
+| `ccby/polypizza/ElephantDark.glb` | Elephant (mastodons) | Poly by Google | https://poly.pizza/m/a27MA0rXyyj |
+| `ccby/polypizza/Rhinoceros.glb` | Rhinoceros (titanotheres) | Poly by Google | https://poly.pizza/m/11qk1uy0YGH |
+| `ccby/polypizza/RhinocerosDark.glb` | Rhinoceros (baluchitheria) | Poly by Google | https://poly.pizza/m/7XutktqrTj_ |
+| `ccby/polypizza/GroundSloth.glb` | Ground sloth (wumpuses) | Poly by Google | https://poly.pizza/m/34WS63awSqJ |
+| `ccby/polypizza/Gorilla.glb` | Gorilla (apes, yetis, sasquatches) | jeremy | https://poly.pizza/m/1aReOCuu0TY |
+| `ccby/polypizza/Baboon.glb` | Baboon (monkeys) | Poly by Google | https://poly.pizza/m/aeLFKp6X19x |
+| `ccby/polypizza/Bear.glb` | Bear (owlbears) | Poly by Google | https://poly.pizza/m/0PXWfxfb0Hu |
+| `ccby/polypizza/Hyena.glb` | Spotted hyena (leocrottas) | Poly by Google | https://poly.pizza/m/0yU1LU3Nkpu |
+| `ccby/polypizza/Armadillo.glb` | Armadillo (rust monsters, disenchanters) | Poly by Google | https://poly.pizza/m/dZ3EWgIsSJQ |
 
 ## Fonts
 
