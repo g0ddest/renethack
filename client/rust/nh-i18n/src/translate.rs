@@ -458,24 +458,34 @@ impl Translator {
         }
     }
 
-    /// A translated piece of the catalog that is `text` ("digging"), or
-    /// one of the game's data behind an article ("the jumbo shrimp": a
-    /// hallucinated name).
-    fn piece(&self, text: &str) -> Option<&Translation> {
+    /// A translated piece of the catalog that is `text` ("digging"), one
+    /// of the game's data behind an article ("the jumbo shrimp": a
+    /// hallucinated name), or one the engine lower-cased ("unskilled" of
+    /// "Unskilled").
+    fn piece(&self, text: &str) -> Option<Box<dyn Phrase>> {
         let find = |s: &str, data: bool| {
             let i = self.catalog.by_fmt(&s.replace('%', "%%"))?;
             let t = &self.catalog.templates()[i];
             if t.arity() > 0 || (data && !t.has_use(Use::Data)) {
                 return None;
             }
-            self.russian.get(&t.id)
+            self.russian.get(&t.id).map(Translation::phrase)
         };
-        find(text, false).or_else(|| {
-            let bare = ["the ", "The ", "a ", "A ", "an ", "An "]
-                .iter()
-                .find_map(|a| text.strip_prefix(a))?;
-            find(bare, true)
-        })
+        find(text, false)
+            .or_else(|| {
+                let bare = ["the ", "The ", "a ", "A ", "an ", "An "]
+                    .iter()
+                    .find_map(|a| text.strip_prefix(a))?;
+                find(bare, true)
+            })
+            .or_else(|| {
+                let first = text.chars().next().filter(|c| c.is_lowercase())?;
+                let upper = capitalize(text);
+                (!upper.starts_with(first))
+                    .then(|| find(&upper, false))
+                    .flatten()
+                    .map(|p| Box::new(Lowered(p)) as Box<dyn Phrase>)
+            })
     }
 
     /// The Russian of template `t` with its conversions printed as
@@ -598,8 +608,8 @@ impl Translator {
             return (Value::Text(String::new()), true);
         }
         // a piece of the catalog that is translated
-        if let Some(tr) = self.piece(shown) {
-            return (Value::Phrase(tr.phrase()), true);
+        if let Some(p) = self.piece(shown) {
+            return (Value::Phrase(p), true);
         }
         // a name read whole is the surest reading, even of a slot that
         // says nothing of its kind: "the goblin" is no "the %s"
@@ -885,6 +895,31 @@ fn verbatim(s: &str) -> bool {
 /// are ("%s corpse").
 fn says_more_than_a_name(t: &Template) -> bool {
     t.letters() >= STRONG_LETTERS && !t.uses.iter().all(|u| *u == crate::catalog::Use::Piece)
+}
+
+/// A piece the engine lower-cased: its forms with a small first letter.
+struct Lowered(Box<dyn Phrase>);
+
+impl Phrase for Lowered {
+    fn form(&self, case: Case) -> String {
+        lower_first(&self.0.form(case))
+    }
+
+    fn gender(&self) -> Gender {
+        self.0.gender()
+    }
+
+    fn number(&self) -> crate::grammar::Number {
+        self.0.number()
+    }
+}
+
+fn lower_first(s: &str) -> String {
+    let mut cs = s.chars();
+    match cs.next() {
+        Some(c) => c.to_lowercase().chain(cs).collect(),
+        None => String::new(),
+    }
 }
 
 /// A phrase with the spaces that stood around its English.

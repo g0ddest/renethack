@@ -1,6 +1,7 @@
 # R6, batch 6: the windows and menus a game still showed in English:
 # an item's actions, the inventory's and the discoveries' headings,
-# what lies here, the Oracle's words, a shop's prices, the top ten.
+# what lies here, the Oracle's words, a shop's prices, the top ten; the
+# ^X lines and the skill levels the 69 seeds of the Russian soak showed.
 
 [a5b79f5961a2]
 en = "Artifacts"
@@ -454,3 +455,75 @@ ru = "Игра окончена:"
 [4cc144864b08]
 en = "You and Schroedinger's cat"
 ru = "Вы и кот Шрёдингера"
+
+[04deda56c8ee]
+en = "unencumbered"
+ru = "без нагрузки"
+
+[6253e3ffc23d]
+en = "Unskilled"
+ru = "Неопытный"
+
+[aa2c96dacf00]
+en = "Basic"
+ru = "Базовый"
+
+[d96b2d38b337]
+en = "Skilled"
+ru = "Опытный"
+
+[d7a501f83242]
+en = "Expert"
+ru = "Эксперт"
+
+[c8f4d5591513]
+en = " You have followed a strict vegan diet."
+ru = " Вы строго соблюдали веганскую диету."
+
+[1c55e69d04ec]
+en = " You are warded."
+ru = " Вы ограждены."
+
+[30bd6ddff415]
+en = " You were warded."
+ru = " Вы были ограждены."
+
+[2ee150c2fa77]
+en = " You are guarded."
+ru = " Вы под охраной."
+
+[524a1413b75f]
+en = " You were guarded."
+ru = " Вы были под охраной."
+
+[dcef91d4bdbb]
+en = " You are wielding some %s."
+ru = " У вас в руках {1}."
+
+[da9ca85225fb]
+en = " You were wielding some %s."
+ru = " У вас в руках {1:gender|был|была|было|были} {1}."
+
+[d99651132faf]
+en = "%s into that vapor cloud?"
+ru = "{1:skip}Войти в это облако пара?"
+
+[153a43e8d5c2]
+en = "%s into that poison gas cloud?"
+ru = "{1:skip}Войти в это облако ядовитого газа?"
+
+[9ad4f831bcd0]
+en = "Name this specific %s"
+ru = "Дать имя именно этому {1:dat}"
+
+[b323068c2222]
+en = "Name this stack of %s"
+ru = "Дать имя этой кучке {1:gen}"
+
+[1b9dac310f79]
+en = "Rename or un-name this specific %s"
+ru = "Переименовать именно {1:acc} или убрать имя"
+
+[5960bc97546b]
+en = "Rename or un-name this stack of %s"
+ru = "Переименовать кучку {1:gen} или убрать имя"

@@ -113,6 +113,26 @@ fn a_heading_in_its_padding() {
 }
 
 #[test]
+fn a_piece_the_engine_lower_cased() {
+    // weapon_insight: lcase(skill_level_name()), "Unskilled" made small
+    let t = with(&[
+        (
+            " You are %s in %s.",
+            r#"ru = " Ваш уровень владения {2:ins}: {1}.""#,
+        ),
+        ("Unskilled", r#"ru = "Неопытный""#),
+    ]);
+    let out = t.text(" You are unskilled in dagger.");
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        (
+            " Ваш уровень владения кинжалом: неопытный.",
+            Status::Translated
+        )
+    );
+}
+
+#[test]
 fn a_text_before_a_character() {
     // "This %s tastes %s%c": the %s ends where the "." begins
     check("This newt corpse tastes okay.", "Этот труп тритона на вкус");
