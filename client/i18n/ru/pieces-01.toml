@@ -1,5 +1,6 @@
 # Pieces other texts are made of, with their forms: the directions
-# ("held by a lichen (southwest)", "as far north as possible").
+# ("held by a lichen (southwest)", "as far north as possible"); the part
+# of a stack and a corpse's name, as other messages' arguments.
 
 [3099447db4c8]
 en = "north"
@@ -52,3 +53,11 @@ gender = "m"
 [0154c0dabe71]
 en = "here"
 ru = "здесь"
+
+[1611fd837486]
+en = "One of %s"
+ru = "{1:sg|один|одна|одно} из {1:gen}"
+
+[2685117d8cb6]
+en = "%s corpse"
+ru = "труп {1:gen}"

@@ -149,6 +149,13 @@ impl Template {
         })
     }
 
+    /// Can conversion `i` be the hero ("you"): is it a monster's name?
+    pub fn can_be_hero(&self, i: usize) -> bool {
+        self.kinds
+            .get(i)
+            .is_some_and(|k| k.split('|').any(|p| p == "monster"))
+    }
+
     pub fn literal_len(&self) -> usize {
         self.literal_len
     }
@@ -433,8 +440,8 @@ fn anchor(segments: &[Segment]) -> Option<&str> {
 
 /// Match a whole text against a template: the text of each conversion, or
 /// None. Conversions take the shortest text that lets the rest match;
-/// a name's text is never empty nor "You", no capture leaves a bracket or
-/// a quote open nor spans lines.
+/// a name's text is never empty nor "You" ("you" only where a monster
+/// is), no capture leaves a bracket or a quote open nor spans lines.
 pub fn match_template(t: &Template, text: &str) -> Option<Vec<String>> {
     let mut caps = Vec::new();
     if match_from(t, 0, text, &mut caps, 0) {
@@ -539,7 +546,8 @@ fn candidate_ends(
 
 const NOT_NAMES: [&str; 4] = ["You", "you", "Your", "your"];
 
-fn plausible(t: &Template, conv: usize, kind: ConvKind, piece: &str) -> bool {
+/// Can `piece` be the text of conversion `conv` of `t`?
+pub(crate) fn plausible(t: &Template, conv: usize, kind: ConvKind, piece: &str) -> bool {
     if kind != ConvKind::Str {
         return true;
     }
@@ -549,7 +557,10 @@ fn plausible(t: &Template, conv: usize, kind: ConvKind, piece: &str) -> bool {
     }
     if t.is_name(conv) {
         let p = piece.trim();
-        if p.is_empty() || NOT_NAMES.contains(&p) {
+        // the hero is a monster's "you" ("The rock hits you"); a sentence
+        // that starts with "You" has a template of its own
+        let hero = p == "you" && t.can_be_hero(conv);
+        if p.is_empty() || (NOT_NAMES.contains(&p) && !hero) {
             return false;
         }
     }
@@ -658,6 +669,24 @@ mod tests {
         let m = c.find("Your sack is empty.", Channel::Window).unwrap();
         assert_eq!(m.template.id, "a9");
         assert_eq!(m.captures, vec!["", "Your sack"]);
+    }
+
+    #[test]
+    fn the_hero_in_a_monster_s_place() {
+        let c = Catalog::parse(&SAMPLE.replace(
+            r#"{"id": "a9", "fmt": "a doorway", "uses": ["sprintf"], "sites": []}"#,
+            r#"{"id": "a9", "fmt": "%s hits %s but doesn't hurt.", "uses": ["pline"], "args": ["object", "monster"], "sites": []},
+{"id": "b1", "fmt": "%s can't move.", "uses": ["pline"], "args": ["monster"], "sites": []}"#,
+        ))
+        .unwrap();
+        let m = c
+            .find("The rock hits you but doesn't hurt.", Channel::Message)
+            .unwrap();
+        assert_eq!(m.template.id, "a9");
+        assert_eq!(m.captures, vec!["The rock", "you"]);
+        // "You" begins a sentence of the hero's own: its verb is not a
+        // monster's
+        assert!(c.find("You can't move.", Channel::Message).is_none());
     }
 
     #[test]

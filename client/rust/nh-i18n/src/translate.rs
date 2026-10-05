@@ -5,20 +5,22 @@
 //!    argument put in), so it goes first. Either takes P7's arguments,
 //!    which split the text truly where two conversions touch.
 //! 2. Else the text matched against every template (the Sprintf pieces
-//!    among them).
+//!    among them). Where only a space parts two conversions, the lexicon
+//!    says where the one name ends ("The pony's" | "saddle").
 //! 3. Else the English text, reported as unknown.
 //!
 //! An argument of a template becomes, in this order: a translated piece of
-//! the catalog ("digging"), a name the lexicon parses ("the newt"), a text
+//! the catalog ("digging", a hallucinated "jumbo shrimp" behind its
+//! article), a name the lexicon parses ("the newt"), a text
 //! another template makes (a buffer the engine built), any name, or the
 //! English text (the translation is then partial). A name the player typed
 //! (the hero's, a fruit's) is shown as typed.
 
-use crate::catalog::{Catalog, Channel, Match, Template, Use};
+use crate::catalog::{Catalog, Channel, Match, Template, Use, plausible};
 use crate::format::{ConvKind, Segment, convs};
-use crate::grammar::Gender;
+use crate::grammar::{Case, Gender};
 use crate::phrase::{NameKind, Names, Phrase};
-use crate::russian::Russian;
+use crate::russian::{Russian, Translation};
 use crate::template::{Part, Placeholder, RuTemplate, Target, Value, capitalize};
 
 /// How deep a text made of texts is followed.
@@ -27,6 +29,8 @@ const MAX_NESTING: usize = 3;
 /// ("%s of %s", "%s (%s)", "the %s", "%s and %s"): a name the lexicon reads
 /// goes first.
 const STRONG_LETTERS: usize = 4;
+/// How many splits of the conversions that spaces part are weighed.
+const MAX_SPLITS: usize = 256;
 
 /// An argument of a message as P7 sends it.
 #[derive(Debug, Clone, PartialEq)]
@@ -278,7 +282,7 @@ impl Translator {
     fn whole_name(&self, text: &str) -> Option<Output> {
         let bare = text.trim();
         let p = self.names.parse(NameKind::Any, bare)?;
-        let ru = p.form(crate::grammar::Case::Nom);
+        let ru = p.form(Case::Nom);
         let upper = bare.chars().next().is_some_and(char::is_uppercase);
         Some(Output {
             text: if upper { capitalize(&ru) } else { ru },
@@ -322,7 +326,117 @@ impl Translator {
 
     /// The Russian of a matched template, None when it has none.
     fn render_match(&self, m: &Match, depth: usize) -> Option<Output> {
-        self.render_captures(m.template, &m.captures, depth)
+        let captures = self.resplit(m.template, &m.captures);
+        self.render_captures(m.template, &captures, depth)
+    }
+
+    /// The captures of a match by its text, the conversions that only
+    /// spaces part ("%s %s falls to the %s.") split where the lexicon reads
+    /// them best. The matcher gives the first of them the shortest text
+    /// ("The" | "pony's saddle"); the split that leaves the fewest words
+    /// unread wins ("The pony's" | "saddle"), an owner going with the name
+    /// before it.
+    fn resplit(&self, t: &Template, captures: &[String]) -> Vec<String> {
+        let mut caps = captures.to_vec();
+        let kinds: Vec<ConvKind> = convs(&t.segments).map(|c| c.kind).collect();
+        if caps.len() != kinds.len() {
+            return caps;
+        }
+        let joints = joints(&t.segments);
+        let mut i = 0;
+        while i < caps.len() {
+            let mut j = i;
+            while j + 1 < caps.len()
+                && kinds[j] == ConvKind::Str
+                && kinds[j + 1] == ConvKind::Str
+                && joints[j].is_some()
+            {
+                j += 1;
+            }
+            if j > i {
+                let seps: Vec<&str> = joints[i..j].iter().map(|s| s.unwrap_or("")).collect();
+                let mut joined = caps[i].clone();
+                for (sep, cap) in seps.iter().zip(&caps[i + 1..=j]) {
+                    joined.push_str(sep);
+                    joined.push_str(cap);
+                }
+                let mut best = (self.unread_run(t, i, &caps[i..=j]), caps[i..=j].to_vec());
+                let mut tried = 0;
+                splits(&joined, &seps, &mut Vec::new(), &mut |pieces| {
+                    tried += 1;
+                    let fits = pieces
+                        .iter()
+                        .enumerate()
+                        .all(|(k, p)| plausible(t, i + k, ConvKind::Str, p));
+                    if fits {
+                        let unread = self.unread_run(t, i, pieces);
+                        if unread < best.0 {
+                            best = (unread, pieces.iter().map(|p| p.to_string()).collect());
+                        }
+                    }
+                    tried < MAX_SPLITS
+                });
+                caps.splice(i..=j, best.1);
+            }
+            i = j + 1;
+        }
+        caps
+    }
+
+    /// The words of a run of conversions (from conversion `first`) the
+    /// lexicon does not read, and one more for an owner ("the gnome's")
+    /// left at the head of a name after another name: it is that one's.
+    fn unread_run<S: AsRef<str>>(&self, t: &Template, first: usize, pieces: &[S]) -> usize {
+        pieces
+            .iter()
+            .enumerate()
+            .map(|(k, p)| {
+                let p = p.as_ref();
+                let owner = k > 0 && t.is_name(first + k - 1) && has_owner(p);
+                self.unread(t, first + k, p) + usize::from(owner)
+            })
+            .sum()
+    }
+
+    /// The words of conversion `i`'s text the lexicon does not read: none
+    /// of a translated piece, those a name keeps English, all of a text.
+    fn unread(&self, t: &Template, i: usize, text: &str) -> usize {
+        let text = text.trim();
+        let words = english_words(text);
+        if words == 0 || t.is_typed(i) || self.piece(text).is_some() {
+            return 0;
+        }
+        // a monster's name the lexicon knows (a monster read leniently is
+        // any name at all)
+        let kind = match t.name_kind(i) {
+            NameKind::Object => NameKind::Object,
+            NameKind::Word => NameKind::Word,
+            NameKind::Monster | NameKind::Any => NameKind::Any,
+        };
+        match self.names.parse(kind, text) {
+            Some(p) => english_words(&p.form(Case::Nom)).min(words),
+            None => words,
+        }
+    }
+
+    /// A translated piece of the catalog that is `text` ("digging"), or
+    /// one of the game's data behind an article ("the jumbo shrimp": a
+    /// hallucinated name).
+    fn piece(&self, text: &str) -> Option<&Translation> {
+        let find = |s: &str, data: bool| {
+            let i = self.catalog.by_fmt(&s.replace('%', "%%"))?;
+            let t = &self.catalog.templates()[i];
+            if t.arity() > 0 || (data && !t.has_use(Use::Data)) {
+                return None;
+            }
+            self.russian.get(&t.id)
+        };
+        find(text, false).or_else(|| {
+            let bare = ["the ", "The ", "a ", "A ", "an ", "An "]
+                .iter()
+                .find_map(|a| text.strip_prefix(a))?;
+            find(bare, true)
+        })
     }
 
     /// The Russian of template `t` with its conversions printed as
@@ -449,13 +563,8 @@ impl Translator {
             return (Value::Text(String::new()), true);
         }
         // a piece of the catalog that is translated
-        if let Some(i) = self.catalog.by_fmt(&shown.replace('%', "%%")) {
-            let t = &self.catalog.templates()[i];
-            if t.arity() == 0
-                && let Some(tr) = self.russian.get(&t.id)
-            {
-                return (Value::Phrase(tr.phrase()), true);
-            }
+        if let Some(tr) = self.piece(shown) {
+            return (Value::Phrase(tr.phrase()), true);
         }
         // a name read whole is the surest reading, even of a slot that
         // says nothing of its kind: "the goblin" is no "the %s"
@@ -487,6 +596,78 @@ impl Translator {
         // inventory letters "aefgh") is shown as it is; words are not
         (Value::Text(shown.to_string()), verbatim(shown))
     }
+}
+
+/// For each conversion but the last, the literal between it and the next
+/// when only spaces are (or nothing is): there the matcher's split is a
+/// guess.
+fn joints(segments: &[Segment]) -> Vec<Option<&str>> {
+    let mut out = Vec::new();
+    for (k, s) in segments.iter().enumerate() {
+        if !matches!(s, Segment::Conv(_)) {
+            continue;
+        }
+        out.push(match (segments.get(k + 1), segments.get(k + 2)) {
+            (Some(Segment::Conv(_)), _) => Some(""),
+            (Some(Segment::Lit(l)), Some(Segment::Conv(_))) if l.chars().all(|c| c == ' ') => {
+                Some(l.as_str())
+            }
+            _ => None,
+        });
+    }
+    out.pop();
+    out
+}
+
+/// Every split of `text` into one piece more than `seps`, piece k and k + 1
+/// parted by `seps[k]` (anywhere for ""), shortest first; `each` says
+/// whether to go on.
+fn splits<'a>(
+    text: &'a str,
+    seps: &[&str],
+    pieces: &mut Vec<&'a str>,
+    each: &mut dyn FnMut(&[&'a str]) -> bool,
+) -> bool {
+    let Some((sep, rest)) = seps.split_first() else {
+        pieces.push(text);
+        let go_on = each(pieces);
+        pieces.pop();
+        return go_on;
+    };
+    let ends: Vec<usize> = if sep.is_empty() {
+        text.char_indices()
+            .map(|(i, _)| i)
+            .chain([text.len()])
+            .collect()
+    } else {
+        text.match_indices(sep).map(|(i, _)| i).collect()
+    };
+    for end in ends {
+        pieces.push(&text[..end]);
+        let go_on = splits(&text[end + sep.len()..], rest, pieces, each);
+        pieces.pop();
+        if !go_on {
+            return false;
+        }
+    }
+    true
+}
+
+/// The words of a text in Latin letters.
+fn english_words(text: &str) -> usize {
+    text.split(|c: char| !(c.is_ascii_alphabetic() || c == '\''))
+        .filter(|w| w.chars().any(|c| c.is_ascii_alphabetic()))
+        .count()
+}
+
+/// Does a text hold an owner before more words ("gnome's hand",
+/// "the dogs' bowl")?
+fn has_owner(text: &str) -> bool {
+    let words: Vec<&str> = text.split_whitespace().collect();
+    words.len() > 1
+        && words[..words.len() - 1]
+            .iter()
+            .any(|w| w.ends_with("'s") || (w.ends_with("s'") && w.len() > 2))
 }
 
 /// The least translated of some outputs.
@@ -648,7 +829,7 @@ struct Padded {
 }
 
 impl Phrase for Padded {
-    fn form(&self, case: crate::grammar::Case) -> String {
+    fn form(&self, case: Case) -> String {
         format!("{}{}{}", self.before, self.inner.form(case), self.after)
     }
 
@@ -660,7 +841,7 @@ impl Phrase for Padded {
         self.inner.number()
     }
 
-    fn counted(&self, n: u64, case: crate::grammar::Case) -> String {
+    fn counted(&self, n: u64, case: Case) -> String {
         format!(
             "{}{}{}",
             self.before,
@@ -669,16 +850,11 @@ impl Phrase for Padded {
         )
     }
 
-    fn own(&self, case: crate::grammar::Case) -> String {
+    fn own(&self, case: Case) -> String {
         format!("{}{}{}", self.before, self.inner.own(case), self.after)
     }
 
-    fn agreeing(
-        &self,
-        gender: Gender,
-        number: crate::grammar::Number,
-        case: crate::grammar::Case,
-    ) -> String {
+    fn agreeing(&self, gender: Gender, number: crate::grammar::Number, case: Case) -> String {
         format!(
             "{}{}{}",
             self.before,
@@ -732,6 +908,32 @@ mod tests {
 
     fn texts(v: &[&str]) -> Option<Vec<String>> {
         Some(v.iter().map(|s| s.to_string()).collect())
+    }
+
+    #[test]
+    fn where_spaces_part_conversions() {
+        let joined = |fmt: &str| {
+            joints(&parse_format(fmt))
+                .into_iter()
+                .map(|j| j.map(str::to_string))
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            joined("%s %s falls to the %s."),
+            [Some(" ".to_string()), None]
+        );
+        assert_eq!(joined("%s%s is empty."), [Some(String::new())]);
+        assert_eq!(joined("%s hits %s."), [None]);
+        let mut all = Vec::new();
+        splits("The giant beetle's", &[" "], &mut Vec::new(), &mut |p| {
+            all.push(p.join("|"));
+            true
+        });
+        assert_eq!(all, ["The|giant beetle's", "The giant|beetle's"]);
+        assert!(has_owner("gnome's hand"));
+        assert!(has_owner("the dogs' bowl"));
+        assert!(!has_owner("The gnome's"));
+        assert_eq!(english_words("плащ beetle"), 1);
     }
 
     #[test]
