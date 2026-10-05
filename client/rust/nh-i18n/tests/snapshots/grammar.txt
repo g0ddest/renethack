@@ -8891,6 +8891,8 @@ An umber hulk can be a confusing sight.  [949be91e1158]
   =   От вида бурого увальня можно растеряться.
 Analyze throne?  [950c6e9e51c7]
   =   Исследовать трон?
+Ancient Multi-Hued Dragon  [3214d88084e3]
+  =   Древний Многоцветный Дракон
 And I can still crawl, I'm not dead yet!  [eaaf59e8dad5]
   =   А я ещё ползаю, я ещё не умер!
 And all I wanted was a free lunch  [7383c86bd6d1]
@@ -9128,6 +9130,8 @@ Attributes:  [b8087185e5ee]
   =   Свойства:
 Audi Partem Alteram  [9cd48e230154]
   =   Выслушай и другую сторону
+Audrey II  [8182372c531b]
+  =   Одри II
 Auri sacra fames  [189a9514928f]
   =   Проклятая жажда золота
 Auribus teneo lupum  [24e737a01def]
@@ -9156,6 +9160,8 @@ Banana peels work especially well against Keystone Kops.  [06dd8fe124d3]
   =   Банановая кожура особенно хорошо действует на кистоунских копов.
 Bandaging wounds helps keep up appearances.  [21ca14bf18a6]
   =   Перевязанные раны помогают сохранить приличный вид.
+Barney the dinosaur  [71fe4fc26804]
+  =   Динозаврик Барни
 Bashing monsters with a bow is not such a good idea.  [7a4f1c0d2e7a]
   =   Колотить монстров луком — не лучшая мысль.
 Basics:  [f2a317699c1c]
@@ -9297,12 +9303,16 @@ Bloody Hell...  [923c0b483e2b]
   =   Чёрт побери...
 Bloody barbarians!  [7f72f3414ee5]
   =   Проклятые варвары!
+Blork the orc  [543072d0618e]
+  =   Орк Блорк
 Blow into the horn of plenty  [cd736d973436]
   =   Подуть в рог изобилия
 Blow this whistle  [308c50b6a2ef]
   =   Подуть в этот свисток
 Blown upward out of sight: He sought the leak by candlelight  [6c1a8a2eacca]
   =   Он утечку газа искал со свечой — теперь он где-то над землёй
+Bob the angry flower  [c462cd029ef3]
+  =   Злой цветок Боб
 Boing!  [1dc4cbe46a5c]
   =   Бдзынь!
 Bones file already exists.  Replace it?  [7962ad62486d]
@@ -9313,6 +9323,8 @@ Booleans (selecting will toggle value):  [6d2795daff98]
   =   Флажки (выбор переключает значение):
 Boom!  [96e930300eb5]
   =   Бабах!
+Borg  [dc34d241cb5d]
+  =   Борг
 Brains... Brains... Fresh human brains...  [7fca3355a377]
   =   Мозги... Мозги... Свежие мозги людей...
 Break this wand  [5df2aea1098f]
@@ -9333,6 +9345,8 @@ Buy this unpaid item  [38beac67c21a]
   =   Купить этот неоплаченный предмет
 Buy this unpaid stack  [15e4157ded82]
   =   Купить эту неоплаченную стопку
+COBOL  [90a2fc9d8928]
+  =   Кобол
 CONNECT 1964 - NO CARRIER 1994  [a232e5f55b2d]
   =   СОЕДИНЕНИЕ 1964 — НЕТ НЕСУЩЕЙ 1994
 Call %s:  [776121bc49d1]
@@ -9423,6 +9437,8 @@ Choose %s text value to match:  [451a0ce00d53]
   pl  Выберите текст для 3 стрелы:
 Choose which spell to cast  [1216eeda3735]
   =   Выберите заклинание
+Christmas-tree monster  [dcc456b5d4d7]
+  =   Ёлочное чудище
 Clean yourself off with this towel  [75e9e8150477]
   =   Вытереться этим полотенцем
 Click!  %s triggers a rolling boulder trap.  [5ec0ec5ab9e5]
@@ -9554,6 +9570,8 @@ Creating %s instead; force %s?  [a0331986023d]
   pl  Вместо этого создаётся 3 стрелы; принудительно создать 3 стрелы?
 Cross my fingers for me.  [69add9961a60]
   =   Скрестите за меня пальцы.
+Crow T. Robot  [67dc4f453c8d]
+  =   Кроу Т. Робот
 Current skills:  [545b9247278d]
   =   Текущие навыки:
 Current skills:  (%d slot available)  [60d366a454bc]
@@ -9572,6 +9590,8 @@ Curse god and die  [612f736525c3]
   =   Похули Бога и умри
 Cut to fit  [178366153e52]
   =   Подрезано по размеру
+Dalek  [d9ac7c9a82eb]
+  =   Далек
 Dark room?  Your chance to develop your photographs!  [3fe277d1b011]
   =   Тёмная комната?  Самое время проявить фотографии!
 Dark rooms are not *completely* dark:  just wait and let your eyes adjust...  [54148a192ced]
@@ -9761,6 +9781,8 @@ Dogs are superstitious; they never step on cursed items.  [d94b8b019e45]
   =   Собаки суеверны: на проклятые вещи они не наступают.
 Dogs of ghosts aren't angry, just hungry.  [326b7b09784d]
   =   Собаки привидений не злые, просто голодные.
+Domo-kun  [a03e34f09c75]
+  =   Домо-кун
 Don't be daft, they couldn't hit an elephant at this dist-  [e2a77300a663]
   =   Не глупите, отсюда они и в слона не попадут с такого рассто-
 Don't bother wishing for things.  You'll probably find one on the next level.  [1d122dcb0490]
@@ -9870,6 +9892,8 @@ Drop your vanity and get rid of your jewels!  Pickpockets about!  [d1cd49081a7f]
   =   Оставьте тщеславие и избавьтесь от драгоценностей!  Кругом карманники!
 Dry up fountain?  [0f9743408b2c]
   =   Осушить фонтан?
+Dudley  [35a0170d43b4]
+  =   Дадли
 Dulce et decorum est pro patria mori  [a27485a9b333]
   =   Сладко и почётно умереть за отечество
 Dumb move!  You strain a muscle.  [57461d3230d8]
@@ -9925,6 +9949,8 @@ Eels will help you tie your shoes.  [a98909226ea1]
   =   Угри помогут вам завязать шнурки.
 Either I'm dead or my watch has stopped.  [989cd658e802]
   =   Либо я умер, либо у меня остановились часы.
+El Pollo Diablo  [f1cdf37f2282]
+  =   Эль Польо Дьябло
 Elbereth  [a9bb2aa3d007]
   =   Elbereth
 Elbereth has quite a reputation around these parts.  [f40a1e79b70d]
@@ -9969,6 +9995,8 @@ Engrave your wishes with a wand of wishing.  [e7156f05915f]
   =   Записывайте свои желания палочкой желаний.
 Engulfed Creatures  [878617b7d0d2]
   =   Поглощённые существа
+Ent  [6496b10bea69]
+  =   Энт
 Enter %s text value to match:  [ab6b5c6209b5]
   m   Введите текст для тритон:
   f   Введите текст для крыса:
@@ -10047,6 +10075,10 @@ Everything suddenly goes dark.  [8230a6dad8dd]
   =   Всё внезапно погружается во тьму.
 Evil I did dwell;  lewd did I live  [5bbba0e00e2c]
   =   Я иду с мечем судия
+Evil Iggy  [51fac9cf9262]
+  =   Злой Игги
+Ewok  [2138050eebab]
+  =   Эвок
 Ex post fucto  [b94dd0899bb5]
   =   Пост-фак-тум
 Examine trap  [b40971ecea1f]
@@ -10126,6 +10158,8 @@ Flip a coin  [b14d0cd58b85]
   =   Подбросить монетку
 Floating eyes can't stand Hawaiian shirts.  [e1cab72d7af0]
   =   Парящие очи не выносят гавайских рубашек.
+Flying Spaghetti Monster  [b6dfedbd69d0]
+  =   Летающий Макаронный Монстр
 Follow me to hell  [567818922a19]
   =   Следуй за мной в ад
 For a Breath, I Tarry...  [01cc190e789a]
@@ -10223,6 +10257,8 @@ Giant bats turn into giant vampires.  [3a6b4ead3b82]
   =   Гигантские летучие мыши превращаются в гигантских вампиров.
 Gift an artifact?  [0af4b98306cf]
   =   Даровать артефакт?
+Gloorx Vloq  [ff99b4ef0aa5]
+  =   Глоркс Влок
 Go Team Ant!  [f3e6bf2b8353]
   =   Вперёд, команда муравьёв!
 Go ahead, I dare you to!  [55de22d95086]
@@ -10251,6 +10287,8 @@ Gods look down their noses at demigods.  [4e2f88540201]
   =   Боги смотрят на полубогов свысока.
 Gods love cats and dogs.  [89f2cf3d8fab]
   =   Боги любят кошек и собак.
+Godzilla  [f52ba2f1bf32]
+  =   Годзилла
 Goldilocks -- This casket is just right  [930a17952f4e]
   =   Златовласка — этот гроб в самый раз
 Gone But Not Forgotten  [d0450ee2ac8a]
@@ -10277,6 +10315,8 @@ Grave robbers sometimes get rich.  [dff8afa918c1]
   =   Грабители могил порой богатеют.
 Grave?  But I was cremated!  [814f46a7f3fc]
   =   Могила?  Но меня же кремировали!
+Greater Hell Beast  [823eb72b11f9]
+  =   Великий Адский Зверь
 Greetings from Hell - Wish you were here.  [b820d153b8ca]
   =   Привет из ада.  Жаль, что вас здесь нет.
 Guy Montag keeps his scrolls in a bag.  [ce56d6c3ef57]
@@ -10582,6 +10622,8 @@ Ignorance kills daily.  [e246c83f763e]
   =   Невежество убивает ежедневно.
 Ignore me... I'm just here for my looks!  [fb06a0ad266f]
   =   Не обращайте внимания... я тут только для красоты!
+Ijyb  [fea4b339b13a]
+  =   Иджиб
 Ilene Toofar -- Fell off a cliff  [16a647945708]
   =   Перегнула Палкина — упала со скалы
 Illegal move!  [1fbe810f114c]
@@ -10630,6 +10672,10 @@ Inventory letters used:  [8e48d10561a7]
   =   Занятые буквы инвентаря:
 Inventory:  [5f5a3fc65a12]
   =   Инвентарь:
+Invid  [84f4414ea11b]
+  =   Инвид
+Invisible Pink Unicorn  [49878b08fc22]
+  =   Невидимый Розовый Единорог
 Is that all?  [58daf246d7ba]
   =   И это всё?
 Is there life before Death?  [4025a0f41209]
@@ -10811,6 +10857,10 @@ Killer bunnies can be tamed with carrots only.  [54625e25c02a]
   =   Кроликов-убийц можно приручить только морковью.
 Kilroy was here  [f7597f3eb8a9]
   =   Здесь был Вася
+King Kong  [fa7d1af6af89]
+  =   Кинг-Конг
+Klingon  [3c7268d03793]
+  =   Клингон
 Klonk!  [12fcb4f304fd]
   =   Бряк!
 Knights can jump with '%s'  [1b6caa74f930]
@@ -10920,6 +10970,10 @@ Loot in what direction?  [0bf0ead6b5d7]
   =   В каком направлении обыскать?
 Loot which containers?  [44d1dbf2e2ad]
   =   Какие контейнеры обыскать?
+Lord British  [b24d815ad98e]
+  =   Лорд Бритиш
+Luggage  [b6bd8cb22ca2]
+  =   Сундук
 Lunar eclipse tonight.  May as well quit now!  [6d8035c28092]
   =   Сегодня лунное затмение.  Можно сразу сдаваться!
 Madam, in Eden, I'm Adam.  [a768a5cd9b7b]
@@ -10937,6 +10991,8 @@ Magic wands are used with '%s'  [8780db7b46d3]
   f   Волшебными палочками взмахивают клавишей 'крыса'
   n   Волшебными палочками взмахивают клавишей 'копьё'
   pl  Волшебными палочками взмахивают клавишей '3 стрелы'
+Magical Trevor  [c5f6b4ad2a93]
+  =   Волшебный Тревор
 Magical energies course through your body.  [923e9ae0d9cc]
   =   По вашему телу струится магическая энергия.
 Major events:  [e143972abc38]
@@ -10972,6 +11028,8 @@ More info about "%s"?  [587ff01306b1]
   pl  Подробнее о «3 стрелы»?
 Moreover, you have no gold.  [df3ee140da5c]
   =   К тому же у вас нет золота.
+Morgoth  [a257ec27316d]
+  =   Моргот
 Most monsters can't swim.  [d78b96d4f6d8]
   =   Большинство монстров не умеет плавать.
 Most monsters prefer minced meat.  That's why they are hitting you!  [c649e5ff830e]
@@ -11039,6 +11097,8 @@ Need a light?  Come visit the Minetown branch of Izchak's Lighting Store!  [530b
   =   Нужен свет?  Заглядывайте в филиал магазина светильников Ицхака в Шахтёрском городке!
 Needs salt...  [156f4b08103c]
   =   Недосолено...
+Nessie  [29d0940aed31]
+  =   Несси
 NetHack is addictive.  Too late, you're already hooked.  [11edddaf1ba2]
   =   NetHack вызывает привыкание.  Поздно, вы уже на крючке.
 Never ask a shopkeeper for a price list.  [3895ff902c60]
@@ -11551,6 +11611,8 @@ Potions don't usually mix, but sometimes...  [a9f50b88bcbc]
   =   Зелья обычно не смешиваются, но иногда...
 Praying will frighten demons.  [b7d264ebcac9]
   =   Молитва отпугивает демонов.
+Predator  [c5b3b9f5cd30]
+  =   Хищник
 Prepare to meet me in Heaven  [3a4b3af0b869]
   =   Готовьтесь к встрече со мной на небесах
 Probing exposes a secret corridor.  [33b75f3d573d]
@@ -11671,6 +11733,8 @@ R2D2 -- Rest, Tin Piece  [e84ccd7006c9]
   =   R2D2 — Покойся, жестянка
 Random  [58d888c08aa5]
   =   Случайный выбор
+Ravenous Bugblatter Beast of Traal  [accbf2846380]
+  =   Прожорливый Заглотный Зверь с Трааля
 Rays aren't boomerangs, of course, but still...  [ad3a3edc39be]
   =   Лучи, конечно, не бумеранги, но всё же...
 Reach into this bag  [a08c6c58a52c]
@@ -11862,6 +11926,8 @@ Select one item:  [4d9d4cb415cd]
   =   Выберите пункт:
 Select one of your saved games  [bba68b2cd70a]
   =   Выберите одну из сохранённых игр
+Semigorgon  [a375137c0ea5]
+  =   Полугоргона
 Sent in %s.  [db586c31c7c5]
   m   Прислан тритон.
   f   Прислана крыса.
@@ -11932,12 +11998,16 @@ Shopkeepers value money more than revenge.  [bcadcd8e4e7d]
   =   Деньги лавочник ценит выше мести.
 Show something its reflection  [586e8522c7c1]
   =   Показать кому-нибудь его отражение
+Sigmund  [7273fb96099e]
+  =   Зигмунд
 Since you were in discover mode, the score list will not be checked.  [f88b6b8a8606]
   =   Вы были в режиме исследования, поэтому таблица рекордов не проверяется.
 Since you were in wizard mode, the score list will not be checked.  [d5b73f82db90]
   =   Вы были в режиме отладки, поэтому таблица рекордов не проверяется.
 Sit on the throne  [a28b4e6636b7]
   =   Сесть на трон
+Smokey Bear  [043d72d7571f]
+  =   Медведь Смоки
 Snakes on the Astral Plane - Soon in a dungeon near you  [14cef42fb55f]
   =   Змеи на Астральном плане — скоро в подземельях вашего города
 Snap!  [0ea9539ce8be]
@@ -12105,6 +12175,8 @@ Sticks and stones may break your bones but manes will never hurt you.  [c46c9a1e
   =   Палки и камни ломают кости, а манесы — никогда.
 Stormbringer doesn't steal souls.  People steal souls.  [d6caea1effdf]
   =   Буревестник не крадёт души.  Души крадут люди.
+Strong Bad  [9165cb48f5a2]
+  =   Стронг Бэд
 Such creatures do not exist in this world.  [a104692d0735]
   =   Таких существ в этом мире нет.
 Such creatures no longer exist in this world.  [14de4ba144db]
@@ -12295,6 +12367,8 @@ Tastes great!  Less filling!  [cd85055eb7ce]
   =   Отличный вкус!  Меньше калорий!
 Telepathy is just a trick:  once you know how to do it, it's easy.  [529150b37030]
   =   Телепатия — просто фокус: стоит понять, как это делается, и всё легко.
+Terminator  [23118a0033dd]
+  =   Терминатор
 Thank God I wore my corset, because I think my sides have split.  [d3372acb7cd6]
   =   Слава богу, на мне был корсет: кажется, я лопнул со смеху.
 Thankful that your %s at %s cannot see\nyour fear, you prepare again to advance.  [e65dda1f2873]
@@ -14162,6 +14236,8 @@ Too close!  [fd40207178de]
   =   Слишком близко!
 Too far!  [e408642d7551]
   =   Слишком далеко!
+Totoro  [6e9c7185b09f]
+  =   Тоторо
 Tourists wear shirts loud enough to wake the dead.  [cac398eedd31]
   =   Туристы носят такие кричащие рубашки, что мёртвые просыпаются.
 Travel across the level with '%s'  [bade22a985ca]
@@ -14350,6 +14426,8 @@ Vault guards never disturb their Lords.  [95873c978ef6]
   =   Стражи хранилищ никогда не беспокоят своих Лордов.
 Vegetarians enjoy lichen and seaweed.  [c5ac1d92e189]
   =   Вегетарианцы любят лишайник и водоросли.
+Vendor of Yizard  [906d603e7e17]
+  =   Йолшебник Вендора
 View discoveries for which sort of objects?  [73de65daebe1]
   =   Открытия какого рода предметов показать?
 View known spells list sorted  [348b69f4cf1c]
@@ -14364,6 +14442,8 @@ Vlad was here  [67fdd5db8578]
   =   Здесь был Влад
 Voluntary challenges:  [9f3bbf1f4b54]
   =   Добровольные испытания:
+Vorlon  [428810f01932]
+  =   Ворлон
 Wait!  There's %s hiding under %s!  [74e8d72dbd50]
   m   Стойте!  Под тритоном прячется тритон!
   f   Стойте!  Под крысой прячется крыса!
@@ -15134,6 +15214,8 @@ X marks the spot  [3f131b327ecc]
   =   Место отмечено крестиком
 X marks the spot.  [a053ba02e4d4]
   =   Место отмечено крестиком.
+Y2K bug  [2b521d71dbf0]
+  =   Баг-2000
 Ya really had me going baby, but now I'm gone.  [f76244a5a617]
   =   Ты меня реально завела, детка, а теперь меня нет.
 Yabba-dabba delicious!  [6ecc5ed5c85a]
@@ -19003,8 +19085,24 @@ a monster  [c332f989e893]
   =   Монстра
 a particular object in inventory  [193ae7129821]
   =   Определённый предмет в инвентаре
+aardvark  [ff49abca9701]
+  =   Трубкозуб
+acid blog  [ec62c11f2090]
+  =   Кислотный блог
+acorn  [f5d193d9beee]
+  =   Жёлудь
+acute blob  [b3562951eb7e]
+  =   Кислый сгусток
 ad aerarium  [04b2adcce743]
   =   Ad aerarium
+aliasing priest  [400634aab95b]
+  =   Жрец под псевдонимом
+aligned parasite  [e347144211fd]
+  =   Выровненный паразит
+aligned parquet  [76c787f19d3b]
+  =   Выровненный паркет
+aligned proctor  [ac6786146ee7]
+  =   Выровненный пристав
 all monsters shown on map  [3b9007e0c748]
   =   Всех монстров на карте
 all objects shown on map  [c4be73ceb83a]
@@ -19023,6 +19121,10 @@ alphabetically, first unique monsters, then others  [53cf80a57e8d]
   =   По алфавиту: сначала уникальные монстры, затем остальные
 alphabetically, unique monsters and others intermixed  [2c9da0cfcfd7]
   =   По алфавиту, уникальные монстры вперемешку с остальными
+amazon  [1e17fd881eba]
+  =   Амазонка
+amphisbaena  [25745760b10f]
+  =   Амфисбена
 an object on the %s  [f0f20e0e2396]
   m   Предмет на тритоне
   f   Предмет на крысе
@@ -19048,21 +19150,97 @@ and %ld pieces of gold, after %ld moves.  [78e2caae88dc]
   f   И 3 золотые монеты за 3 хода.
   n   И 5 золотых монет за 5 ходов.
   pl  И 21 золотую монету за 21 ход.
+angry mariachi  [27e70f3488af]
+  =   Сердитый мариачи
+antagonistic undecagonstring  [cd13d9db82e3]
+  =   Враждебная одиннадцатиугольная струна
+apostrophe golem  [5ad2baf2f32d]
+  =   Апострофный голем
+aquator  [1bd838478262]
+  =   Акватор
+arch-pedant  [90e0e631bbf8]
+  =   Архипедант
+aria elemental  [2ddc6f3f9059]
+  =   Душный элементаль
 artifacts  [3dc52886d656]
   =   Артефакты
+attorney  [027fb6799b65]
+  =   Адвокат
+baby balky dragon  [1842ead7faff]
+  =   Детёныш чёрствого дракона
+baby blues dragon  [3285f657bfee]
+  =   Детёныш синюшного дракона
+baby bong worm  [943415e03eb0]
+  =   Детёныш блинного червя
+baby caricature  [8bb3aab1eff7]
+  =   Детёныш кракозябры
+baby crochet  [67218ab545c1]
+  =   Детёныш крокета
+baby grainy dragon  [e1a755de7b19]
+  =   Детёныш сырого дракона
+baby long word  [90dd99fd22f0]
+  =   Детёныш длинного слова
+baby parable worm  [4351f1a54116]
+  =   Детёныш пупырчатого червя
 bare %s (no weapon)  [e091dc615fc4]
   m   Голые тритон (без оружия)
   f   Голые крыса (без оружия)
   n   Голые копьё (без оружия)
   pl  Голые 3 стрелы (без оружия)
+barfed devil  [ecb49fb43554]
+  =   Шипучий дьявол
+barking spider  [b8a393600e5b]
+  =   Лающий паук
+basement cat  [d3bda2b1007c]
+  =   Подвальный кот
+basilisk  [4bde28c14f8a]
+  =   Базилиск
+battlemech  [c6950ca7791e]
+  =   Боевой мех
+beer wight  [c029d498780c]
+  =   Пивное умертвие
+beholder  [afb0bddfc59e]
+  =   Созерцатель
+beluga whale  [fc14dc2c3644]
+  =   Белуха
+big dumb object  [36eaf7228f8e]
+  =   Большой тупой объект
 bind command to a key  [d32f66454340]
   =   Назначить команду клавише
 bind key to a command  [895f190b2fa7]
   =   Назначить клавишу команде
+blancmange  [c19f66080c5b]
+  =   Бланманже
+bluebird of happiness  [40b40d71e338]
+  =   Синяя птица счастья
+bohrbug  [c4b8e6e4ef1a]
+  =   Борбаг
+bold face  [d86d1f959e4a]
+  =   Жирный шрифт
+bonsai-kitten  [808ff4623b02]
+  =   Котёнок-бонсай
+bookworm  [56f462a77c81]
+  =   Книжный червь
+boomer  [947c844d900b]
+  =   Бумер
+boor wight  [4691a053e510]
+  =   Хулиганное умертвие
 both reversed; put in, then take out  [f481e9156b9c]
   =   И то и другое наоборот: положить, затем вынуть
 both; take out, then put in  [9abec961401d]
   =   И то и другое: вынуть, затем положить
+bouncing eye  [ba88dc739233]
+  =   Прыгучее око
+boustrophedon  [fa26bdefdc24]
+  =   Бустрофедон
+brawny mold  [81bfb7ecf2af]
+  =   Бравая плесень
+brogmoid  [bb488eda6f71]
+  =   Брогмоид
+buffer overflow  [43186ef06c52]
+  =   Переполнение буфера
+bust vortex  [f9fd71ced046]
+  =   Пылкий вихрь
 by casting letter  [a8f40a415869]
   =   По букве заклинания
 by count, high to low, by internal index within tied count  [d7ba52e4791b]
@@ -19087,14 +19265,72 @@ by skill group, high to low level within group  [da56c9c4bc1d]
   =   По школам, внутри школы — по убыванию уровня
 by skill group, low to high level within group  [57def19ad8e6]
   =   По школам, внутри школы — по возрастанию уровня
+cacodemon  [83ceb99f1ff2]
+  =   Какодемон
+cardboard golem  [b66d3821b091]
+  =   Картонный голем
+catoblepas  [0ab6a1c27a59]
+  =   Катоблепас
+ceiling cat  [c53eb1788f16]
+  =   Потолочный кот
+chess pawn  [a0d124cc70c8]
+  =   Шахматная пешка
+chiasmus  [0e6935165a85]
+  =   Хиазм
+chicken  [cef7e59218e3]
+  =   Курица
+chocolate pudding  [7899bdb90a02]
+  =   Шоколадный пудинг
+choplet  [e6f661e59142]
+  =   Отбивнушка
 chopping  [515238e64e8f]
   =   Рубить
+clown  [6725c9e20e61]
+  =   Клоун
+clue golem  [0b19a5a6708b]
+  =   Клюквенный голем
+coelacanth  [1439990fd724]
+  =   Латимерия
+conventioneer  [51e1f17b46e8]
+  =   Делегат съезда
+corpulent porpoise  [1d052b3ad046]
+  =   Тучная морская свинья
+creeping coins  [6aba8421848e]
+  =   Ползучие монеты
+dahu  [1c8dd8eaf121]
+  =   Дахю
+dangling pointer  [5e1e28469735]
+  =   Висячий указатель
+dementor  [c27b09d77f6a]
+  =   Дементор
+dhole  [6067e3d2545f]
+  =   Красный волк
+diagonally moving grid bug  [561c018a84af]
+  =   Диагональный ситовый жучок
 digging  [77a3d5a2586c]
   =   Копать
+dingbat  [de9c5b6181ee]
+  =   Дингбат
+dinkus  [ae3e4cc07378]
+  =   Динкус
 do nothing  [bdbd93292417]
   =   Ничего не делать
 done  [e5fd9cfe0e80]
   =   Готово
+doozer  [3c6cb4e7becb]
+  =   Дузер
+dornbeast  [63b4bce034a7]
+  =   Дорн-зверь
+dropbear  [bc3857bb7338]
+  =   Медведь-десантник
+duct tape golem  [80b8a0747cb5]
+  =   Голем из скотча
+dungeon core  [551924779b0f]
+  =   Ядро подземелья
+dust speck  [e55ad2f35bf7]
+  =   Пылинка
+earthquake beast  [cfadfb7b15ed]
+  =   Зверь землетрясений
 east  [25038d9da464]
   =   Восток
 eating %s  [2b1954b820f9]
@@ -19104,8 +19340,24 @@ eating %s  [2b1954b820f9]
   pl  Есть 3 стрелы
 eating non-food  [7580961984e3]
   =   Есть несъедобное
+efreeti  [2d99e9685e9a]
+  =   Ифрит
+elastic eel  [565c40a9e286]
+  =   Эластичный угорь
+electric giraffe  [2b20bc6ffb10]
+  =   Электрический жираф
+electrocardiogram eel  [9500bb8b653f]
+  =   Электрокардиографический угорь
+elwedritsche  [0e08dd49973b]
+  =   Эльведрич
+emu  [6551e7972400]
+  =   Эму
+enderman  [6795212b4b4e]
+  =   Эндермен
 engraving  [61ce7aff649b]
   =   Делать надпись
+errata elemental  [e2881abc2ee7]
+  =   Опечаточный элементаль
 escaped from the dungeon with %ld point,  [a8fb11549201]
   m   Сбежали из подземелья, набрав 1 очко,
   f   Сбежали из подземелья, набрав 3 очка,
@@ -19116,33 +19368,249 @@ escaped from the dungeon with %ld points,  [f86b21ba623c]
   f   Сбежали из подземелья, набрав 3 очка,
   n   Сбежали из подземелья, набрав 5 очков,
   pl  Сбежали из подземелья, набрав 21 очко,
+evil overlord  [5abc830f65b5]
+  =   Злой властелин
+existential angst  [de01c973ef76]
+  =   Экзистенциальная тоска
+fallacy golem  [8eece73abc6d]
+  =   Голем-софизм
+feather golem  [20bdb0b0812f]
+  =   Пернатый голем
+fierceness sphere  [0264c218b755]
+  =   Завораживающая сфера
+figment of your imagination  [a818a89b90bd]
+  =   Плод вашего воображения
+fir elemental  [efc5cad82777]
+  =   Еловый элементаль
+first category perpetual motion device  [e8b03291bbc3]
+  =   Вечный двигатель первого рода
+flamingo sphere  [650544752627]
+  =   Фламинговая сфера
+flash of insight  [e8f8f8fdae7c]
+  =   Проблеск озарения
+floating nose  [2374cdfcf58d]
+  =   Парящий нос
+floating point  [008d70830513]
+  =   Плавающая точка
+flush golem  [3d810bb31fff]
+  =   Голем из плова
+flying monkey  [7342c1f50302]
+  =   Летучая мартышка
+flying pig  [81cc707db091]
+  =   Летающая свинья
 forcing the lock  [0c60fd41cd80]
   =   Взламывать замок
+forest centerfold  [93984b92bb3e]
+  =   Лесная красотка с разворота
+fraggle  [75cc7b301070]
+  =   Фрэггл
+frizzed centaur  [ed606e118b20]
+  =   Кудрявый кентавр
+frog cloud  [a28b88905f4a]
+  =   Туканное облако
+frog prince  [3fa8f2fbcf5c]
+  =   Принц-лягушонок
+frosted giant  [9d2322dd359f]
+  =   Глазированный великан
 full map without monsters, objects, and traps  [603daf804e63]
   =   Вся карта без монстров, предметов и ловушек
+gazebo  [66b8a4249113]
+  =   Беседка
+geriatric snake  [86d85ca8a88e]
+  =   Подагрическая змея
+ghoti  [ba475addc302]
+  =   Рыбко
+giant bath  [4e6b12339e8f]
+  =   Гигантская летучая ванна
+giant cockroach  [2b8333dd6162]
+  =   Гигантский таракан
+giant mango  [840be30de23f]
+  =   Манго великана
+giant pigmy  [2ddd7f6d6e0a]
+  =   Великан-пигмей
+giant slug  [068e17f7dba3]
+  =   Гигантский слизень
+giant tetrapod  [c7434fdf4794]
+  =   Гигантский тетрапод
+gloating eye  [b32022c1f40d]
+  =   Злорадное око
+glossy golem  [a7e2cf7cd366]
+  =   Глянцевый голем
 gloved %s (no weapon)  [593711cbbe9d]
   m   Тритон в перчатках (без оружия)
   f   Крыса в перчатках (без оружия)
   n   Копьё в перчатках (без оружия)
   pl  3 стрелы в перчатках (без оружия)
+gnat ant  [6b33cb0d91cc]
+  =   Гнусный муравей
+gnome dummy  [ebe20eb57811]
+  =   Муляж гнома
+gnome laureate  [9b62555dcd88]
+  =   Гном-лауреат
+gnu  [336da558f641]
+  =   Гну
+gonzo journalist  [5d7b1e6e898e]
+  =   Гонзо-журналист
+gooier ooze  [d8f7f5518084]
+  =   Склизкая слизь
+grant beetle  [a3647606e191]
+  =   Грантовый жук
+gray goo  [85b74fc4b035]
+  =   Серая жижа
+greater snake  [c4a05fb36bdc]
+  =   Великая змея
+green slide  [8363214b6e25]
+  =   Зелёная слива
+griffin  [38d889b4f12e]
+  =   Грифон
+grind bug  [962946208002]
+  =   Сытый жучок
+grue  [c088537dd721]
+  =   Грю
+guardian nacho  [c5eb03d0352d]
+  =   Начо-хранитель
+guillemet  [f610a7189d8a]
+  =   Кавычка-ёлочка
+hag of bolding  [764cf5227fb5]
+  =   Карга облысения
+haggler  [42ce4ad4c04a]
+  =   Торгаш
+hairnet devil  [cf33e1b2a7b6]
+  =   Дьявол в бигуди
+harpy  [29e2ef5cceba]
+  =   Гарпия
+hearse  [31b292894e69]
+  =   Катафалк
+heisenbug  [2c6aeb07d21f]
+  =   Гейзенбаг
+hell hound pun  [959b351e5181]
+  =   Каламбур адской гончей
 here  [0154c0dabe71]
   =   Здесь
+high purist  [34046aadd632]
+  =   Верховный пурист
+hippocampus  [cf8b334b177c]
+  =   Гиппокамп
+hippogriff  [28834c6e1841]
+  =   Гиппогриф
+holloway  [897bf5680593]
+  =   Холлоуэй
+hologram  [ba1a91b4a623]
+  =   Голограмма
+hydra  [a9bb669e8681]
+  =   Гидра
+ice monster  [7c245ea2757c]
+  =   Ледяное чудище
+ice trowel  [ed626c6a2ee1]
+  =   Ледяной троллейбус
 internal levl[][].typ codes in base-36  [1e084b5f095b]
   =   Внутренние коды levl[][].typ в base-36
+jackalope  [ecea0495c11c]
+  =   Зайцелоп
+jester  [deff1d836528]
+  =   Шут
+jumbo shrimp  [1d6b15097147]
+  =   Исполинская креветка
+kelpie  [8d972c4aa8d8]
+  =   Келпи
+kestrel  [9d65c9c5a1ed]
+  =   Пустельга
+killer beet  [7705cf86872e]
+  =   Свёкла-убийца
+killer bunny  [094a29527452]
+  =   Кролик-убийца
+killer penguin  [1697d5b659ab]
+  =   Пингвин-убийца
+killer tomato  [8924f521e679]
+  =   Помидор-убийца
+kitten prospecting robot  [d99a5d8bd9e4]
+  =   Робот-искатель котят
 known map without monsters  [401558128991]
   =   Известная карта без монстров
 known map without monsters and objects  [07fde20b433f]
   =   Известная карта без монстров и предметов
 known map without monsters, objects, and traps  [7e081a2a83c3]
   =   Известная карта без монстров, предметов и ловушек
+lag monster  [4d2fd9cd132e]
+  =   Лаг-монстр
+land octopus  [a4fa77c498a4]
+  =   Сухопутный осьминог
+large microbat  [5d604e1cb70d]
+  =   Крупный микрокрылан
+leathery-winged avian  [fa116dbdbbec]
+  =   Кожистокрылая птица
 legend of base-36 levl[][].typ codes  [97d569433c15]
   =   Расшифровка кодов levl[][].typ в base-36
+lemming  [6806c1fde49b]
+  =   Лемминг
+lernaean hydra  [621d03f2ae91]
+  =   Лернейская гидра
+lhurgoyf  [9dd07deb1432]
+  =   Лургойф
+ligature  [8e7c24b56442]
+  =   Лигатура
+liger  [42feee0501c7]
+  =   Лигр
+lion-dog  [b83795248d46]
+  =   Львопёс
+little green man  [1a2266fd1d8b]
+  =   Зелёный человечек
+loan shark  [cb00a2451d35]
+  =   Кредитная акула
 lock or unlock the door  [cc32d8987b60]
   =   Запереть или отпереть дверь
+looooooooooooong cat  [206c055bbdad]
+  =   Длииииииииииинный кот
 loot next container  [e502b0c12788]
   =   Обыскать следующий контейнер
+lounge worm  [20d16c5fa5a1]
+  =   Диванный червь
+luck sucker  [ce5ea40617e7]
+  =   Удачесос
+lungfish  [9cf60fe2411a]
+  =   Двоякодышащая рыба
+maggot  [a32f14c1aab3]
+  =   Опарыш
+magnetic monopole  [6f2c9e56fcc5]
+  =   Магнитный монополь
 maintain current ordering  [57d610e33768]
   =   Оставить текущий порядок
+manbearpig  [46416886a34d]
+  =   Человекомедведосвин
+mandelbug  [7e6e70086503]
+  =   Мандельбаг
+marid  [94207238d2a8]
+  =   Марид
+martyr orc  [a37999fb9d33]
+  =   Мордастый орк
+master lichen  [f42d26931f0e]
+  =   Высший лишайник
+maxotaur  [ef3f3fd9c6ad]
+  =   Максотавр
+meeple  [4196fef9cffb]
+  =   Мипл
+microscopic space fleet  [e5649b4dfb2d]
+  =   Микроскопический космический флот
+millitaur  [93d4c1944a9d]
+  =   Миллитавр
+mime  [c6d51ab09f96]
+  =   Мим
+mimmoth  [8668e1a54950]
+  =   Мимонт
+miniature blimp  [2e554b4fbcc0]
+  =   Миниатюрный дирижабль
+mock role  [d9e93cae756a]
+  =   Краменный кот
+moldier ant  [af44d6adb30e]
+  =   Муравей-салат
+monorail cat  [57ea55ffabd3]
+  =   Монорельсовый кот
+mortar orc  [b4dc5730b0e7]
+  =   Мортирный орк
+mother-in-law  [15abc87f9a02]
+  =   Тёща
+mountain lymph  [f123139baf9d]
+  =   Горная лимфа
 nearby engravings  [96ac55478262]
   =   Надписи поблизости
 nearby monsters  [e1ead6c18b11]
@@ -19151,6 +19619,16 @@ nearby objects  [279bfb3441ea]
   =   Предметы поблизости
 nearby traps  [86d07fe8cd4e]
   =   Ловушки поблизости
+netsplit  [124ba9cb80e5]
+  =   Нетсплит
+newsgroup troll  [fdf0b853f94c]
+  =   Форумный тролль
+nickelpede  [c99f4b5e6a13]
+  =   Пятаконожка
+nightmare  [0ffa93269022]
+  =   Кошмар
+ninja pirate zombie robot  [f82ce61a9b08]
+  =   Ниндзя-пират-зомби-робот
 no matches  [e6f1d34932f2]
   =   Совпадений нет
 north  [3099447db4c8]
@@ -19163,10 +19641,30 @@ notary sojak  [59c902b19d14]
   =   Нотари сожак
 nothing: unbind the key  [b6318c7d87a5]
   =   Ничего: снять назначение клавиши
+nyaasu  [1bf41a041bb0]
+  =   Няасу
+nyan cat  [d49f82290c79]
+  =   Нян-кот
+obelus  [4fd2ae97ed69]
+  =   Обелюс
+octahedron  [49fd82347ad1]
+  =   Октаэдр
+octarine dragon  [095b29fe34c8]
+  =   Октариновый дракон
+ohmu  [11fc5c60646f]
+  =   Ому
+omnibus  [6211588f3a56]
+  =   Омнибус
 on the floor  [433ba7d6d866]
   =   На пол
 once  [1863835675e3]
   =   Один раз
+one-eyed one-horned flying purple people eater  [af691090ffd3]
+  =   Одноглазый однорогий летучий лиловый людоед
+one-winged dewinged stab-bat  [976bc05edb6a]
+  =   Однокрылая обескрыленная колючая летучая мышь
+ooblecks  [4eac803e4d74]
+  =   Ублеки
 opening the tin  [92fa0394470d]
   =   Открывать банку
 or %s [%s]  [4430cf069d96]
@@ -19209,16 +19707,116 @@ or %s or %s%s  [3e2f606c9895]
   f   Или крыса или крысакрыса
   n   Или копьё или копьёкопьё
   pl  Или 3 стрелы или 3 стрелы3 стрелы
+orcus cosmicus  [25e90894bea0]
+  =   Оркус Космикус
+owlpug  [9f1aba586291]
+  =   Совомопс
+pager golem  [5082bad5fda3]
+  =   Пейджерный голем
+particle man  [261b67bee3aa]
+  =   Человек-частица
+paskald  [577d80400e96]
+  =   Паскальд
+peddler  [bf3227bd3d17]
+  =   Коробейник
+peer  [2b974ba4b46a]
+  =   Пэр
+phantom  [d969e7e0b057]
+  =   Фантом
+phelddagrif  [d029e06bc798]
+  =   Фелддагриф
+phoenix  [41880ee3438c]
+  =   Феникс
+pie fiend  [f31dc5dac8c7]
+  =   Исчадие пекарни
+pigasus  [8af91bc884bb]
+  =   Свинопегас
+plaid unicorn  [44d1cedf3b33]
+  =   Клетчатый единорог
+poison cackler  [e433e1f5eaa8]
+  =   Ядовитый хохотун
+pommelbug  [3c193ea9b9d8]
+  =   Жук-навершие
+possessed waffle iron  [40b14c4fac4b]
+  =   Одержимая вафельница
+potoo  [da9e5b6c59b7]
+  =   Лесной козодой
+poultrygeist  [3fba73c1c2d8]
+  =   Куртергейст
+praying mantis  [975656040292]
+  =   Богомол
+prophylactic worm  [0364a2c19bde]
+  =   Профилактический червь
+pterodactyl  [0a5cd6b94160]
+  =   Птеродактиль
+pugasus  [73825cf63667]
+  =   Мопсопегас
+pushmi-pullyu  [0580b01a6f4e]
+  =   Тяни-толкай
 put in, then take out  [1cc6e20e5e56]
   =   Положить, затем вынуть
 put something in  [7de13db595f6]
   =   Положить что-нибудь внутрь
+quagga  [816fb6255d6c]
+  =   Квагга
+quale  [fa8e8f05228f]
+  =   Квале
+quest sprout  [c88545a57a9a]
+  =   Квестовый росток
+questing beast  [3d10c0b9c383]
+  =   Рыкающий зверь
+quokka  [795e5e60d964]
+  =   Квокка
+quylthulg  [4cecbeb8f369]
+  =   Квилтульг
+raging nerd  [93e7cc7d246d]
+  =   Разъярённый ботан
+rapier tapir  [19564be5bc72]
+  =   Тапир с рапирой
+rat-ant  [ff5b0c7afdce]
+  =   Крысомуравей
+rattlesnake  [46c5908d8cbf]
+  =   Гремучая змея
+rave spider  [d8510a7a7c78]
+  =   Печёный паук
 reassign casting letters to retain current order  [5c272e02c8df]
   =   Переназначить буквы, сохранив текущий порядок
+rebus  [9b901e314ecf]
+  =   Ребус
 record an annotation for the current level  [3a567dbcdf23]
   =   Сделать пометку для текущего уровня
+red dot  [6a589754e75e]
+  =   Красная точка
+regex engine  [8f72e74c39f5]
+  =   Движок регулярок
 reroll another character  [4dd11715d49c]
   =   Создать другого персонажа
+rhinovirus  [4e940df9f6d3]
+  =   Риновирус
+robot  [b232ae125d1a]
+  =   Робот
+robot chicken  [27ff56d281dd]
+  =   Робоцып
+rodent of unusual size  [54f531d366b7]
+  =   Грызун необычных размеров
+rogue piercer  [ccc1712db921]
+  =   Плутовской пронзатель
+roomba  [d9dfd4e3d3a5]
+  =   Робот-пылесос
+rot grub  [5214bc36ee52]
+  =   Гнилостная личинка
+samurai rabbit  [a5cfe20c44e6]
+  =   Кролик-самурай
+schroedinbug  [55cf10734df1]
+  =   Шрёдинбаг
+scone giant  [d74f33524879]
+  =   Пышечный великан
+scrag  [81bd671a3bad]
+  =   Скрэг
+sea cucumber  [5426dfc270e4]
+  =   Морской огурец
+seesawing sphere  [118a4311d3cf]
+  =   Качельная сфера
 select any or all of them to permanently identify  [a7ad43dbf974]
   =   Выберите любые из них, чтобы опознать навсегда
 select any or all of them to permanently identify (%s for all)  [96e0bdc37681]
@@ -19235,6 +19833,36 @@ select it to permanently identify (%s for all)  [2584a79ccde6]
   pl  Выберите его, чтобы опознать навсегда (3 стрелы — все)
 setting the trap  [bfb4b4e728c1]
   =   Устанавливать ловушку
+shadow  [ed9d3d832af8]
+  =   Сумрачная тень
+shallow one  [bd7e039effd6]
+  =   Мелководный
+shrinking violet  [180db37d9a31]
+  =   Застенчивая фиалка
+simile mimic  [0735d8e2d669]
+  =   Милый мимик
+siren  [dcb01c3c1f19]
+  =   Сирена
+skvader  [5e4ceb3a68b6]
+  =   Сквадер
+sleazoid  [b8f86bb47e1b]
+  =   Мерзоид
+slinky  [ed98383f3fad]
+  =   Пружинка-радуга
+slow loris  [d25f74832a49]
+  =   Толстый лори
+smakken  [2c27d93bdcda]
+  =   Смаккен
+small megabat  [e965a57255cc]
+  =   Мелкий мегакрылан
+smurf  [2e8175c327a6]
+  =   Смурф
+snark  [a0570221c529]
+  =   Снарк
+sock mole  [05dcc1c7ccd0]
+  =   Носочный крот
+solidus  [41d37f7d44f6]
+  =   Косая черта
 something else (by symbol or name)  [ba7a2058b254]
   =   Что-нибудь ещё (по символу или названию)
 something on the map  [14992c2de04e]
@@ -19249,6 +19877,16 @@ southeast  [9dfb52edfd99]
   =   Юго-восток
 southwest  [c748b5788afa]
   =   Юго-запад
+spelling bee  [8d274061e416]
+  =   Пчела-грамотейка
+spherical cow  [e061fa718234]
+  =   Сферический конь в вакууме
+stain vortex  [68aaa085b334]
+  =   Пятнистый вихрь
+stainless steel rat  [461e11e0256c]
+  =   Крыса из нержавеющей стали
+star-nosed mole  [807d37031b7b]
+  =   Звездорыл
 start the game with this character  [b6dc862d36a0]
   =   Начать игру этим персонажем
 stash one item into %s  [a3753fa72fb5]
@@ -19256,12 +19894,28 @@ stash one item into %s  [a3753fa72fb5]
   f   Положить один предмет в крысу
   n   Положить один предмет в копьё
   pl  Положить один предмет в 3 стрелы
+steam dragon  [5ff126eaa07a]
+  =   Паровой дракон
+stray tab  [ddfd06769a0b]
+  =   Шальная табуляция
 studying  [74314b82bff3]
   =   Изучать книгу
+stuffed raccoon puppet  [7e32c2c7a553]
+  =   Набивной енот-марионетка
 take out, then put in  [b1d802c1e28c]
   =   Вынуть, затем положить
 take something out  [0001712882a1]
   =   Вынуть что-нибудь
+tangle tree  [1acdd66ede6f]
+  =   Цепкое дерево
+tapeworm  [5a3da57c0cd5]
+  =   Солитёр
+tatzelwurm  [7d0f3b69c1e3]
+  =   Татцельвурм
+teenage mutant ninja turtle  [c8191df2df90]
+  =   Черепашка-ниндзя
+terracotta warrior  [995e2c8be547]
+  =   Терракотовый воин
 the %s  [670f80e4c425]
   m   Тритон
   f   Крыса
@@ -19298,20 +19952,76 @@ the type of an object on discoveries list  [be8fd5977d20]
   =   Тип предмета из списка открытий
 the type of an object upon the floor  [fcf3fc918a6e]
   =   Тип предмета на полу
+third eye  [01c1d2b94f46]
+  =   Третий глаз
+three-headed monkey  [1c95db689dc2]
+  =   Трёхголовая мартышка
 thrice  [3fec9f7e5ca9]
   =   Трижды
+tie-thulu  [6d80a6a18d66]
+  =   Галстуктулху
+tiktaalik  [4d5ef165db14]
+  =   Тиктаалик
 tip something being carried  [05493338d86f]
   =   Вытряхнуть что-нибудь из ваших вещей
+tire elemental  [89edd5e5d90a]
+  =   Шинный элементаль
+tofurkey  [a77b95e0d575]
+  =   Тофундюк
+toothsayer  [1ea7077a675f]
+  =   Зубовидец
 traditional: by monster level, by internal monster index  [faaae6cf861b]
   =   Традиционный: по уровню монстра, затем по внутреннему номеру
+tribble  [97fb97439625]
+  =   Трибл
+tridude  [0c12b171b311]
+  =   Тричувак
 twice  [f99abcfae6c3]
   =   Дважды
+tyrannosaurus rex  [91e2bec8c744]
+  =   Тираннозавр рекс
+uberhulk  [01bbbdc201d5]
+  =   Сверхувалень
+umbrella hulk  [67bb3a89df40]
+  =   Зонтичный увалень
+unicorn pegasus kitten  [ed4a75946b27]
+  =   Котёнок-единорог-пегас
 unique items or relics  [4e4cf8e68552]
   =   Уникальные предметы или реликвии
 unlock the door  [16d58fe2cd1a]
   =   Отпереть дверь
+vampire mace  [4e4f53f71391]
+  =   Булава-вампир
+vampiric watermelon  [300822cbc512]
+  =   Арбуз-вампир
+velociraptor  [b32754debd14]
+  =   Велоцираптор
+venus flytrap  [a9367f19209e]
+  =   Венерина мухоловка
+verbal jabberwock  [74fed73d7328]
+  =   Вербальный бармаглот
+vermicious knid  [b0a8765388fc]
+  =   Вермишельный книд
 view changed key binds  [448b77ff9950]
   =   Показать изменённые назначения клавиш
+viking  [3e2573a75821]
+  =   Викинг
+voluptuous ampersand  [345821a94026]
+  =   Пышнотелый амперсанд
+voussoir  [87f2325b8f03]
+  =   Вуссуар
+walking disk drive  [8d11f28ec990]
+  =   Ходячий дисковод
+wandering eye  [64de38e369ae]
+  =   Блуждающее око
+water lemon  [4dd4a0f8d1da]
+  =   Водяной лимон
+water melon  [ad34dd249922]
+  =   Водяная дыня
+wee green blobbie  [8d14fab2e7d3]
+  =   Махонький зелёный сгусточек
+weighted Companion Cube  [0b47d587554c]
+  =   Утяжелённый куб-компаньон
 went to your reward with %ld point,  [a19e385f0624]
   m   Отправились за наградой, набрав 1 очко,
   f   Отправились за наградой, набрав 3 очка,
@@ -19322,12 +20032,48 @@ went to your reward with %ld points,  [ef776f988a9f]
   f   Отправились за наградой, набрав 3 очка,
   n   Отправились за наградой, набрав 5 очков,
   pl  Отправились за наградой, набрав 21 очко,
+were-rabbit  [75ebf49a2e96]
+  =   Кролик-оборотень
+weremoustache  [96f9b411e4cc]
+  =   Ус-оборотень
+wereplatypus  [3226c5c302d2]
+  =   Утконос-оборотень
 west  [d63eba28afc0]
   =   Запад
 which direction?  [65f7c4b89317]
   =   В каком направлении?
+white rabbit  [b9afa1a45363]
+  =   Белый кролик
+wiggle  [5339c1c6e80d]
+  =   Извивашка
+wight supremacist  [ff582c97e100]
+  =   Сторонник превосходства умертвий
+wiki  [d5ea4e40ddbf]
+  =   Вики
+wild haggis  [45c49fc8ab04]
+  =   Дикий хаггис
+winged grizzly  [b0da04f0668d]
+  =   Крылатый гризли
 wiping off your %s  [c5d2b2cafecc]
   m   Вытирать тритона
   f   Вытирать крысу
   n   Вытирать копьё
   pl  Вытирать 3 стрелы
+wire shark  [a4bd78e21e19]
+  =   Проводная акула
+witch doctor  [674b4906f9c2]
+  =   Знахарь
+wolpertinger  [729185f001b7]
+  =   Вольпертингер
+womble  [14bd96940426]
+  =   Вомбл
+xeroc  [04dba72d59ae]
+  =   Ксерок
+yeek  [3bfd98f34a9c]
+  =   Йик
+yellow wight  [fd86f72d3b09]
+  =   Жёлтое умертвие
+youma  [180900bf991b]
+  =   Ёма
+zergling  [dc6e407d6f7b]
+  =   Зерглинг
