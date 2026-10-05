@@ -76,6 +76,10 @@ pub struct HeldSpec {
     /// From the model's own space to the held frame.
     #[serde(default)]
     pub grip: Grip,
+    /// The grip on the back, where it is not the hand's (a pole carried
+    /// head up, while in the hand it stands butt down).
+    #[serde(default)]
+    pub back: Option<Grip>,
     /// Meshes of the scene not shown (a dagger's scabbard).
     #[serde(default)]
     pub hide: Vec<String>,
@@ -139,6 +143,10 @@ pub struct HeldRules {
     /// The held model on the back for what is quivered.
     #[serde(default)]
     pub quiver: Option<String>,
+    /// What the quiver holds: words of the appearance of what is quivered
+    /// ("arrow": arrows and ya, not darts); none: anything.
+    #[serde(default)]
+    pub quivers: Vec<String>,
     /// Colours of appearances ("ruby": "#9b1b30"): a drink's sparkle.
     #[serde(default)]
     pub colors: BTreeMap<String, String>,
@@ -154,6 +162,14 @@ pub struct HeldRules {
     /// The clip of each use (`UseKind` in snake case: "quaff", "zap"...).
     #[serde(default)]
     pub uses: BTreeMap<String, String>,
+}
+
+impl HeldRules {
+    /// Whether the quiver shows for a quivered thing of this appearance.
+    fn quivered(&self, appearance: &str) -> bool {
+        let a = appearance.to_lowercase();
+        self.quivers.is_empty() || self.quivers.iter().any(|w| has_words(&a, w))
+    }
 }
 
 /// The "library" of the clips built in code (`proc/read`).
@@ -392,6 +408,7 @@ impl ArtManifest {
         if let (Some(q), Some(name)) = (pack.in_slot(&Slot::Quiver), &self.held.quiver)
             && q.class == ')'
             && let Some(t) = tile(q)
+            && self.held.quivered(&t.appearance)
         {
             g.quiver = self.held_named(name, t, Level::Class);
         }

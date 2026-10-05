@@ -167,7 +167,7 @@ pub(super) fn equipment() -> Vec<Step> {
     steps.extend(close_up());
     steps.extend(shown(
         "the bullwhip in hand, the fedora on",
-        |g| Ok(holds(g, "hand_r", &["missile"])? && holds(g, "Head", &["helm"])?),
+        |g| Ok(holds(g, "hand_r", &["whip"])? && holds(g, "Head", &["helm"])?),
         "equip-archeologist",
     ));
     steps.extend([
@@ -541,6 +541,185 @@ pub(super) fn combat() -> Vec<Step> {
         }),
     ]);
     steps.extend(quit());
+    steps
+}
+
+/// The roles of `kits`, each a man and a woman: role, alignment.
+const KIT_ROLES: [(&str, &str); 13] = [
+    ("archeologist", "neutral"),
+    ("barbarian", "neutral"),
+    ("caveman", "neutral"),
+    ("healer", "neutral"),
+    ("knight", "lawful"),
+    ("monk", "neutral"),
+    ("priest", "neutral"),
+    ("ranger", "neutral"),
+    ("rogue", "chaotic"),
+    ("samurai", "lawful"),
+    ("tourist", "neutral"),
+    ("valkyrie", "neutral"),
+    ("wizard", "neutral"),
+];
+const KIT_GENDERS: [&str; 2] = ["male", "female"];
+
+/// The `kits` hero `i`: (role, gender).
+fn kit_hero(i: usize) -> (&'static str, &'static str) {
+    (KIT_ROLES[i / 2].0, KIT_GENDERS[i % 2])
+}
+
+/// The hero of `kits` being looked at.
+static KIT_AT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
+/// The names of the held models on a bone ("-" for none).
+fn kit_slot(g: &RenethackGame, bone: &str) -> Result<String, String> {
+    let (names, lit) = held_on(g, bone)?;
+    let mut s = if names.is_empty() {
+        "-".to_string()
+    } else {
+        names.join("+")
+    };
+    if lit {
+        s.push_str(" (lit)");
+    }
+    Ok(s)
+}
+
+/// What each role's starting kit shows: (in the right hand, on the left
+/// arm, on the back, on the head), the Barbarian's one of his two kits.
+/// The rest of a kit is in the pack: the Healer's stethoscope, the
+/// Samurai's yumi, the Tourist's camera (worn on its strap by the look).
+fn kit_shown(role: &str) -> &'static [[&'static str; 4]] {
+    match role {
+        "archeologist" => &[["whip", "-", "pick", "helm"]],
+        "barbarian" => &[
+            ["great_blade", "-", "axe", "-"],
+            ["great_axe", "-", "short_blade", "-"],
+        ],
+        "caveman" => &[["mace", "-", "missile", "-"]],
+        "healer" => &[["dagger", "-", "-", "-"]],
+        "knight" => &[["long_blade", "round_shield", "lance", "helm"]],
+        "monk" | "tourist" => &[["-", "-", "-", "-"]],
+        "priest" => &[["mace", "round_shield", "-", "-"]],
+        "ranger" => &[["dagger", "-", "bow+quiver", "-"]],
+        "rogue" => &[["short_blade", "-", "dagger", "-"]],
+        "samurai" => &[["curved_blade", "-", "short_blade+quiver", "-"]],
+        "valkyrie" => &[["spear", "round_shield", "dagger", "-"]],
+        "wizard" => &[["staff", "-", "-", "-"]],
+        _ => &[],
+    }
+}
+
+/// The hero turned to `yaw` degrees (0: facing the camera).
+fn kit_turn(g: &RenethackGame, yaw: f32) -> Result<(), String> {
+    let map = map_view(g)?;
+    let m = map.hero_model().ok_or("no hero model")?;
+    let node: Gd<Node> = m.node.clone().upcast();
+    let mut inner = node.get_child(0).ok_or("no model node")?.cast::<Node3D>();
+    let mut r = inner.get_rotation_degrees();
+    r.y = yaw;
+    inner.set_rotation_degrees(r);
+    Ok(())
+}
+
+/// The hero mid-blow, turned three-quarters on: the attack clip of their
+/// gear, a moment before contact, held there.
+fn kit_blow(g: &mut RenethackGame) -> Result<(), String> {
+    let map = map_view(g)?;
+    let (_, attack) = map.hero_fight_clips();
+    let attack = attack.ok_or("no attack clip")?;
+    let m = map.hero_model().ok_or("no hero model")?;
+    let mut p = m.player().cloned().ok_or("no animation player")?;
+    p.play_ex().name(attack.as_str()).custom_blend(0.0).done();
+    p.seek_ex(0.24).update(true).done();
+    p.pause();
+    kit_turn(g, 70.0)
+}
+
+/// Every role in both genders with the starting kit NetHack gives it:
+/// what the hero holds, on which arm, on the back and on the head is that
+/// kit's (logged too), at rest facing the camera and mid-blow; pictures
+/// of each with `--screenshots`. RENETHACK_ROLES=knight,priest: only
+/// those; RENETHACK_KITS_LOOK=1: pictures only.
+pub(super) fn kits() -> Vec<Step> {
+    let mut steps = vec![Step::Call("seed 1, the first hero", |g| {
+        g.seed = Some(1);
+        KIT_AT.store(0, Ordering::Relaxed);
+        Ok(())
+    })];
+    let only: Option<Vec<String>> = std::env::var("RENETHACK_ROLES")
+        .ok()
+        .map(|v| v.split(',').map(str::to_string).collect());
+    let mut first = true;
+    for i in 0..KIT_ROLES.len() * KIT_GENDERS.len() {
+        let (role, gender) = kit_hero(i);
+        let align = KIT_ROLES[i / 2].1;
+        // the pictures' names, made once for the test's life
+        let rest: &'static str = format!("kit-{role}-{}", &gender[..1]).leak();
+        let blow: &'static str = format!("{rest}-blow").leak();
+        if i > 0 {
+            steps.push(Step::Call("the next hero", |_| {
+                KIT_AT.fetch_add(1, Ordering::Relaxed);
+                Ok(())
+            }));
+        }
+        if only.as_ref().is_some_and(|o| !o.iter().any(|x| x == role)) {
+            continue;
+        }
+        if !first {
+            steps.push(Step::Push(UiEvent::BackToTitle));
+        }
+        first = false;
+        steps.extend(start_as(CharacterChoice {
+            align: align.into(),
+            ..choice(role, gender)
+        }));
+        steps.extend([
+            Step::Wait("the hero on the map", |g| {
+                Ok(map_view(g)?.hero_model().is_some())
+            }),
+            Step::Call("close up, the HUD out of the picture", |g| {
+                let ui = g.ui.as_mut().ok_or("no UI")?;
+                ui.map.set_distance(2.8, 0.5);
+                ui.hud.set_visible(false);
+                Ok(())
+            }),
+            Step::Wait("the hero's pose", pose_settled),
+            Step::Wait("the camera on the hero", camera_settled),
+            Step::Call("the kit as NetHack gives it", |g| {
+                let (role, gender) = kit_hero(KIT_AT.load(Ordering::Relaxed));
+                let shown = [
+                    kit_slot(g, "hand_r")?,
+                    kit_slot(g, "lowerarm_l")?,
+                    kit_slot(g, "spine_03")?,
+                    kit_slot(g, "Head")?,
+                ];
+                let (idle, attack) = map_view(g)?.hero_fight_clips();
+                godot_print!(
+                    "selftest: kit: {role} {gender}: hand {} | arm {} | back {} | head {} | idle {idle:?} attack {attack:?}",
+                    shown[0],
+                    shown[1],
+                    shown[2],
+                    shown[3],
+                );
+                // RENETHACK_KITS_LOOK=1: only look (an older build's kits)
+                let look = std::env::var_os("RENETHACK_KITS_LOOK").is_some();
+                if !look && !kit_shown(role).contains(&shown.each_ref().map(String::as_str)) {
+                    return Err(format!("the {role}'s kit shows {shown:?}"));
+                }
+                kit_turn(g, 0.0)
+            }),
+            Step::Wait("a frame", |_| Ok(true)),
+            Step::Shot(rest),
+            Step::Call("mid-blow", kit_blow),
+            Step::Wait("a frame", |_| Ok(true)),
+            Step::Shot(blow),
+            Step::Call("the HUD back", |g| {
+                g.ui.as_mut().ok_or("no UI")?.hud.set_visible(true);
+                Ok(())
+            }),
+        ]);
+        steps.extend(quit());
+    }
     steps
 }
 

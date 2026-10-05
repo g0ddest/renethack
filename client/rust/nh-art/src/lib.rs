@@ -1552,6 +1552,34 @@ mod tests {
     }
 
     #[test]
+    fn the_quiver_shows_arrows_and_a_pole_goes_head_up_on_the_back() {
+        use nh_protocol::Slot;
+        let (art, cat) = (manifest(), catalog());
+        let quiver = |quivered: &str| {
+            let items = vec![
+                inv(&cat, 'a', ")", "dagger", vec![Slot::Weapon], false),
+                inv(&cat, 'b', ")", quivered, vec![Slot::Quiver], false),
+            ];
+            art.gear(&pack(items, false), &cat).quiver
+        };
+        // a Ranger's arrows and a Samurai's ya fill the quiver on the back;
+        // a Tourist's darts are no arrows
+        assert!(quiver("arrow").is_some());
+        assert!(quiver("bamboo arrow").is_some());
+        assert!(quiver("crossbow bolt").is_some());
+        assert_eq!(quiver("dart"), None);
+        // a Knight's lance and an Archeologist's whip are their own, and
+        // a pole on the back is carried head up, not in the hand's grip
+        let h = |class: &str, a: &str| held_name(&art, art.held(tile(&cat, class, a)));
+        assert_eq!(h(")", "lance"), Some("lance"));
+        assert_eq!(h(")", "bullwhip"), Some("whip"));
+        for pole in ["lance", "spear", "polearm", "staff"] {
+            let spec = art.held_at(art.held_index(pole).unwrap()).1;
+            assert!(spec.back.is_some_and(|b| b != spec.grip), "{pole}");
+        }
+    }
+
+    #[test]
     fn worn_armour_shows_on_the_outfit_parts() {
         use nh_protocol::Slot;
         let (art, cat) = (manifest(), catalog());

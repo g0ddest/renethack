@@ -4301,6 +4301,16 @@ impl MapView {
         nodes.look.entity.and_then(|i| nodes.models.get(i))
     }
 
+    /// The clips the hero's model rests and fights with now, the gear's:
+    /// (idle, attack) (self-tests).
+    pub fn hero_fight_clips(&self) -> (Option<String>, Option<String>) {
+        let Some(m) = self.hero_model() else {
+            return (None, None);
+        };
+        let c = self.art.clips(m, false);
+        (c.idle, c.attack)
+    }
+
     /// The art gallery's lighting (for review): a key light over the
     /// hall, the fills and the ambient raised. A new game ends it.
     pub fn set_showcase(&mut self, on: bool) {

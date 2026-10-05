@@ -345,7 +345,11 @@ impl Art {
         // sizes are the body's own (a character 1.6 tall): the bone scales
         // them with it
         let k = h.scale;
-        let grip = transform(spec.grip.pos, spec.grip.rot, [k, k, k]);
+        let g = match spec.back {
+            Some(back) if slot == "back" => back,
+            _ => spec.grip,
+        };
+        let grip = transform(g.pos, g.rot, [k, k, k]);
         let mut holder = Node3D::new_alloc();
         holder.set_transform(grip);
         holder.add_child(&model);

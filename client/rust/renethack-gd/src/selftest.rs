@@ -4079,6 +4079,7 @@ impl SelfTest {
             "item-use" => hero::item_use(),
             "combat" => hero::combat(),
             "roles" => hero::roles(),
+            "kits" => hero::kits(),
             "branches" => world_looks::branches(),
             "title" => world_looks::title(),
             "bestiary" => world_looks::bestiary(),
