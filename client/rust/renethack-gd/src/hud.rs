@@ -1276,6 +1276,8 @@ impl Hud {
 
         let mut mode_panel = theme::framed(Frame::Banner);
         mode_panel.set_mouse_filter(MouseFilter::IGNORE);
+        // a longer word than the badge widens it leftwards, on screen
+        mode_panel.set_h_grow_direction(GrowDirection::BEGIN);
         place(
             &mode_panel,
             [1.0, 0.0, 1.0, 0.0],
@@ -1667,6 +1669,15 @@ impl Hud {
         self.show_subtitle();
         if let Some(combat) = self.combat.take() {
             self.set_mode(combat, false);
+            // the banner still fading out says its word again
+            if self.flash_since.is_some() {
+                let word = if combat {
+                    tr!("mode-combat")
+                } else {
+                    tr!("mode-explore")
+                };
+                self.flash.set_text(&word);
+            }
         }
         self.hp.relang();
         self.pw.relang();
