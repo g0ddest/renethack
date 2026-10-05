@@ -62,6 +62,33 @@ fn holds(g: &RenethackGame, bone: &str, want: &[&str]) -> Result<bool, String> {
     Ok(names == want)
 }
 
+/// How far the shaft of the held `name` on `bone` leans from the upright,
+/// in degrees (a pole lies along its model's z).
+fn lean(g: &RenethackGame, bone: &str, name: &str) -> Result<f32, String> {
+    let map = map_view(g)?;
+    let m = map.hero_model().ok_or("no hero model")?;
+    let node: Gd<Node> = m.node.clone().upcast();
+    let held = node
+        .find_child_ex(&format!("Gear_{bone}"))
+        .owned(false)
+        .done()
+        .and_then(|att| {
+            att.find_child_ex(&format!("{HELD_NODE}_{name}"))
+                .owned(false)
+                .done()
+        })
+        .ok_or_else(|| format!("no {name} on {bone}"))?;
+    let holder = held
+        .get_child(0)
+        .ok_or("an empty held node")?
+        .cast::<Node3D>();
+    let along = (holder.get_global_transform().basis * Vector3::BACK).normalized();
+    Ok(along.y.abs().clamp(0.0, 1.0).acos().to_degrees())
+}
+
+/// A pole at rest stands upright beside the boot: within this of it.
+const UPRIGHT_DEG: f32 = 12.0;
+
 /// Close to the hero for the pictures.
 fn close_up() -> Vec<Step> {
     vec![
@@ -93,9 +120,9 @@ fn shown(
     ]
 }
 
-/// Seed 42's Valkyrie: the spear in the right hand and the shield on the
-/// left forearm; `x` takes the dagger; taking the shield off leaves the
-/// arm bare. Seed 2's Archeologist: the fedora on the head, the bullwhip in
+/// Seed 42's Valkyrie: the spear upright in the right hand (its butt on
+/// the floor by her boot) and the shield on the left forearm; `x` takes
+/// the dagger; taking the shield off leaves the arm bare. Seed 2's Archeologist: the fedora on the head, the bullwhip in
 /// hand; applying the oil lamp lights it in the left hand (with a light),
 /// applying it again snuffs it.
 pub(super) fn equipment() -> Vec<Step> {
@@ -105,8 +132,12 @@ pub(super) fn equipment() -> Vec<Step> {
     })]);
     steps.extend(close_up());
     steps.extend(shown(
-        "the spear in hand, the shield on the arm",
-        |g| Ok(holds(g, "hand_r", &["spear"])? && holds(g, "lowerarm_l", &["round_shield"])?),
+        "the spear in hand upright, the shield on the arm",
+        |g| {
+            Ok(holds(g, "hand_r", &["spear"])?
+                && holds(g, "lowerarm_l", &["round_shield"])?
+                && lean(g, "hand_r", "spear")? < UPRIGHT_DEG)
+        },
         "equip-valkyrie",
     ));
     steps.extend([key('x'), Step::Request("a command after x", command)]);
@@ -213,11 +244,11 @@ fn using(g: &RenethackGame, clip: &str, fx: &str, held: Option<&str>) -> Result<
     Ok(started)
 }
 
-/// Seed 5's Wizard drinks a potion, reads a scroll, zaps a wand (a beam
-/// to the wall) and casts
-/// force bolt; seed 2's Archeologist eats, applies the lamp and throws a
-/// stone. Each use starts its clip and its effect (a picture of each,
-/// mid-motion).
+/// Seed 5's Wizard, at rest with his quarterstaff upright at his side,
+/// drinks a potion, reads a scroll, zaps a wand (a beam to the wall) and
+/// casts force bolt; seed 2's Archeologist eats, applies the lamp and
+/// throws a stone. Each use starts its clip and its effect (a picture of
+/// each, mid-motion).
 pub(super) fn item_use() -> Vec<Step> {
     let mut steps = vec![Step::Call("seed 5", |g| {
         g.seed = Some(5);
@@ -228,6 +259,11 @@ pub(super) fn item_use() -> Vec<Step> {
         Ok(g.world.map.hero().is_some())
     }));
     steps.extend(close_up());
+    steps.extend(shown(
+        "the quarterstaff in hand, upright",
+        |g| Ok(holds(g, "hand_r", &["staff"])? && lean(g, "hand_r", "staff")? < UPRIGHT_DEG),
+        "use-wizard",
+    ));
     let getobj = |p: &Prompt| {
         matches!(
             p,
