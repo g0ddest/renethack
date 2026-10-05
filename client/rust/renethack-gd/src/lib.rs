@@ -21,6 +21,7 @@ mod icon_bake;
 mod icons;
 mod input;
 mod inventory_panel;
+mod layouts;
 mod map_view;
 mod meshes;
 mod minimap;
@@ -35,6 +36,7 @@ mod steam;
 mod surface;
 mod theme;
 mod title_scene;
+mod tombstone;
 mod ui_events;
 mod vfx;
 

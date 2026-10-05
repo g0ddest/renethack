@@ -7,6 +7,7 @@
 //! itself. No dialog grows past the window: long content scrolls.
 
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use godot::classes::box_container::AlignmentMode;
@@ -27,6 +28,7 @@ use nh_world::{Key, KeyInput, MenuEntry, MenuOutcome, MenuState, Prompt, TextLin
 use nh_i18n::lexicon::Lexicon;
 
 use crate::i18n::{self, EngineKind, Lang};
+use crate::layouts::{self, Genocided, GoneRow, KillRow, OverviewRow, Vanquished};
 use crate::pickers::{self, Ask, ObjClass, Pick, Wish};
 use crate::theme::{self, Face, Frame, bbcode_escape, hex, nh_color, place};
 use crate::tr;
@@ -442,6 +444,140 @@ impl Look {
     fn chars(&self, n: usize) -> f32 {
         n as f32 * self.char_w
     }
+}
+
+/// The creature lists' badge, and the overview's.
+const TOKEN_W: f32 = 26.0;
+const BADGE_W: f32 = 34.0;
+/// A line under a level of the overview.
+const DETAIL_H: f32 = 26.0;
+
+/// A row of a list of creatures as shown.
+enum CreatureRow {
+    Class(String),
+    Kind {
+        symbol: Option<(char, Color)>,
+        name: String,
+        unique: bool,
+        /// How many, or what became of them.
+        right: String,
+    },
+}
+
+/// A creature's map symbol and colour, from the catalog.
+fn creature_symbol(catalog: Option<&Catalog>, english: &str) -> Option<(char, Color)> {
+    let m = layouts::monster(catalog, english)?;
+    Some((m.class.chars().next()?, nh_color(m.color)))
+}
+
+/// A row of the overview as shown.
+enum OverviewLine {
+    Dungeon {
+        name: String,
+        levels: Option<String>,
+    },
+    Level {
+        badge: String,
+        title: String,
+        note: Option<String>,
+        here: Option<String>,
+        /// The hero is on it now.
+        current: bool,
+    },
+    Detail {
+        mark: &'static str,
+        text: String,
+        /// One of the dead under "Final resting place for".
+        deep: bool,
+    },
+}
+
+impl OverviewLine {
+    fn of(row: &OverviewRow) -> OverviewLine {
+        let detail = |mark: &'static str, text: String| OverviewLine::Detail {
+            mark,
+            text,
+            deep: false,
+        };
+        match row {
+            OverviewRow::Dungeon { name, levels, up } => OverviewLine::Dungeon {
+                name: layouts::dungeon_name(name),
+                levels: levels.map(|(a, b)| layouts::levels(a, b, *up)),
+            },
+            OverviewRow::Level {
+                place,
+                proto,
+                note,
+                here,
+            } => OverviewLine::Level {
+                badge: match place {
+                    layouts::Place::Level(n) => n.to_string(),
+                    layouts::Place::Astral => "✶".into(),
+                    _ => "◆".into(),
+                },
+                title: match proto {
+                    Some(p) => format!("{} [{}]", layouts::place(place), layouts::typed(p)),
+                    None => layouts::place(place),
+                },
+                note: note.as_deref().map(layouts::note),
+                here: here.map(layouts::here),
+                current: *here == Some(layouts::Here::Are),
+            },
+            OverviewRow::Features(fs) => detail(
+                "•",
+                fs.iter()
+                    .map(|f| layouts::upstart(&layouts::feature_text(f)))
+                    .collect::<Vec<_>>()
+                    .join(" · "),
+            ),
+            OverviewRow::Special(s) => detail("◇", layouts::special(s)),
+            OverviewRow::Summoned(l) => detail("◇", layouts::summoned(l)),
+            OverviewRow::Branch { kind, to, level } => {
+                detail("↳", layouts::branch(*kind, to, *level))
+            }
+            OverviewRow::RestingPlace => detail("✝", tr!("overview-resting")),
+            OverviewRow::Dead { who, how } => OverviewLine::Detail {
+                mark: "",
+                text: layouts::dead(who.as_deref(), how),
+                deep: true,
+            },
+            OverviewRow::Other(t) => detail("", i18n::engine(EngineKind::Menu, t).into_owned()),
+        }
+    }
+}
+
+/// A thin gold line under a heading.
+fn rule() -> Gd<ColorRect> {
+    let mut r = ColorRect::new_alloc();
+    r.set_color(Color {
+        a: 0.55,
+        ..theme::GOLD_DIM
+    });
+    r.set_custom_minimum_size(Vector2::new(0.0, 1.0));
+    r.set_mouse_filter(MouseFilter::IGNORE);
+    r
+}
+
+/// Where the hero is, on a pill at the end of the level's row: in gold
+/// for the level the hero is on, dimmer at the game's end.
+fn here_pill(text: &str, current: bool, look: &Look) -> Gd<Label> {
+    let color = if current { theme::ACCENT } else { theme::GOLD };
+    let mut sb = StyleBoxFlat::new_gd();
+    sb.set_bg_color(Color { a: 0.14, ..color });
+    sb.set_border_width_all(1);
+    sb.set_border_color(Color { a: 0.8, ..color });
+    sb.set_corner_radius_all(10);
+    sb.set_content_margin(godot::builtin::Side::LEFT, 10.0);
+    sb.set_content_margin(godot::builtin::Side::RIGHT, 10.0);
+    sb.set_content_margin(godot::builtin::Side::TOP, 1.0);
+    sb.set_content_margin(godot::builtin::Side::BOTTOM, 1.0);
+    let w = look.text_w(text, &look.body_bold, BODY_SIZE - 2) + 22.0;
+    let mut l = cell(text, color, Some(&look.body_bold), Some(w));
+    l.set_horizontal_alignment(HorizontalAlignment::CENTER);
+    l.add_theme_font_size_override("font_size", BODY_SIZE - 2);
+    l.set_v_size_flags(SizeFlags::SHRINK_CENTER);
+    l.add_theme_stylebox_override("normal", &sb);
+    l
 }
 
 /// One column of a list row: a label in `color`; `width` in pixels, or None
@@ -1104,6 +1240,9 @@ enum Kind {
     },
     Show {
         text: Scroller,
+        /// The engine's window laid out from its English ("vanquished",
+        /// "genocided", "overview"), or None for its lines as written.
+        layout: Option<&'static str>,
     },
     MessageMenu {
         letter: char,
@@ -2193,7 +2332,375 @@ impl Dialogs {
             &mut col,
             &[(tr!("dlg-ok"), dialog_ui(req, DialogEvent::Close))],
         );
-        (Kind::Show { text }, shade, panel)
+        (Kind::Show { text, layout: None }, shade, panel)
+    }
+
+    /// #vanquished: a kind of creature a row (its symbol in its colour, its
+    /// name, how many died), the headings of the list by class, the total.
+    fn open_vanquished(
+        &mut self,
+        req: u64,
+        v: &Vanquished,
+        catalog: Option<&Catalog>,
+    ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        let rows: Vec<CreatureRow> = v
+            .rows
+            .iter()
+            .map(|r| match r {
+                KillRow::Class(c) => CreatureRow::Class(layouts::class_name(c)),
+                KillRow::Kind {
+                    name,
+                    count,
+                    unique,
+                } => CreatureRow::Kind {
+                    symbol: creature_symbol(catalog, name),
+                    name: layouts::name(name),
+                    unique: *unique,
+                    right: count.to_string(),
+                },
+            })
+            .collect();
+        let totals: Vec<String> = v
+            .total
+            .iter()
+            .map(|&n| tr!("vanquished-total", count = n))
+            .collect();
+        let title = tr!("vanquished-title");
+        self.open_creatures(req, &title, &rows, &totals, "vanquished")
+    }
+
+    /// #genocided: a species a row, the extinct ones said so, the totals.
+    fn open_genocided(
+        &mut self,
+        req: u64,
+        g: &Genocided,
+        plurals: &HashMap<String, String>,
+        catalog: Option<&Catalog>,
+    ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        let rows: Vec<CreatureRow> = g
+            .rows
+            .iter()
+            .map(|r| match r {
+                GoneRow::Class(c) => CreatureRow::Class(layouts::class_name(c)),
+                GoneRow::Species { plural, extinct } => CreatureRow::Kind {
+                    symbol: creature_symbol(
+                        catalog,
+                        plurals.get(plural).map_or(plural.as_str(), String::as_str),
+                    ),
+                    name: layouts::name(plural),
+                    unique: false,
+                    right: if *extinct {
+                        tr!("genocided-extinct")
+                    } else {
+                        String::new()
+                    },
+                },
+            })
+            .collect();
+        let mut totals = Vec::new();
+        if let Some(n) = g.genocided {
+            totals.push(tr!("genocided-total", count = n));
+        }
+        if let Some(n) = g.extinct {
+            totals.push(tr!("extinct-total", count = n));
+        }
+        let title = layouts::gone_heading(g.heading);
+        self.open_creatures(req, &title, &rows, &totals, "genocided")
+    }
+
+    /// A list of creatures: a row each, under the headings of their
+    /// classes, the totals under a rule.
+    fn open_creatures(
+        &mut self,
+        req: u64,
+        title: &str,
+        rows: &[CreatureRow],
+        totals: &[String],
+        layout: &'static str,
+    ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        let look = self.look.clone();
+        let right_w = rows
+            .iter()
+            .filter_map(|r| match r {
+                CreatureRow::Kind { right, .. } => {
+                    Some(look.text_w(right, &look.body_bold, BODY_SIZE))
+                }
+                CreatureRow::Class(_) => None,
+            })
+            .fold(0.0f32, f32::max)
+            + 12.0;
+        let left_w = rows
+            .iter()
+            .map(|r| match r {
+                CreatureRow::Class(c) => look.text_w(c, &look.title, BODY_SIZE + 3),
+                CreatureRow::Kind { name, .. } => {
+                    TOKEN_W + 12.0 + look.text_w(name, &look.body_bold, BODY_SIZE)
+                }
+            })
+            .fold(0.0f32, f32::max);
+        let totals_w = totals
+            .iter()
+            .map(|t| look.text_w(t, &look.body_bold, BODY_SIZE))
+            .fold(0.0f32, f32::max);
+        let title_w = look.text_w(title, &look.body_bold, 20);
+        // the scroll bar and a little air
+        let max_w = (self.screen().x - 2.0 * SIDE_MARGIN).max(420.0);
+        let width = (left_w + 12.0 + right_w + 30.0)
+            .max(totals_w + 30.0)
+            .max(title_w + 40.0)
+            .clamp(420.0, max_w.min(760.0));
+        let mut list = VBoxContainer::new_alloc();
+        list.add_theme_constant_override("separation", 0);
+        list.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        let mut content_h = 0.0;
+        for r in rows {
+            match r {
+                CreatureRow::Class(c) => {
+                    let mut l = cell(c, theme::ACCENT, Some(&look.title), None);
+                    l.add_theme_font_size_override("font_size", BODY_SIZE + 3);
+                    l.set_custom_minimum_size(Vector2::new(0.0, ROW_H + 4.0));
+                    list.add_child(&l);
+                    content_h += ROW_H + 4.0;
+                }
+                CreatureRow::Kind {
+                    symbol,
+                    name,
+                    unique,
+                    right,
+                } => {
+                    let mut row = HBoxContainer::new_alloc();
+                    row.add_theme_constant_override("separation", 12);
+                    row.set_custom_minimum_size(Vector2::new(0.0, ROW_H));
+                    row.add_child(&self.token(*symbol));
+                    // a unique creature by its own name, in gold
+                    let (color, font) = if *unique {
+                        (theme::GOLD_BRIGHT, &look.body_bold)
+                    } else {
+                        (theme::TEXT, &look.body)
+                    };
+                    let mut n = cell(name, color, Some(font), None);
+                    n.add_theme_font_size_override("font_size", BODY_SIZE);
+                    row.add_child(&n);
+                    let mut c = cell(
+                        right,
+                        theme::GOLD_BRIGHT,
+                        Some(&look.body_bold),
+                        Some(right_w),
+                    );
+                    c.add_theme_font_size_override("font_size", BODY_SIZE);
+                    c.set_horizontal_alignment(HorizontalAlignment::RIGHT);
+                    row.add_child(&c);
+                    list.add_child(&row);
+                    content_h += ROW_H;
+                }
+            }
+        }
+        let below = totals.len() as f32 * ROW_H + 12.0;
+        let max_h = (self.screen().y - TEXT_CHROME - below).max(ROW_H * 4.0);
+        let text = Scroller::new(width, content_h.min(max_h).max(ROW_H), false);
+        let (shade, panel, mut col) = self.frame(width, Some(title));
+        let mut scroll = text.scroll.clone();
+        scroll.add_child(&list);
+        col.add_child(&scroll);
+        if !totals.is_empty() {
+            col.add_child(&rule());
+            for t in totals {
+                let mut l = cell(t, theme::TEXT_DIM, Some(&look.body_bold), None);
+                l.add_theme_font_size_override("font_size", BODY_SIZE);
+                l.set_horizontal_alignment(HorizontalAlignment::RIGHT);
+                col.add_child(&l);
+            }
+        }
+        if content_h > max_h {
+            self.hint(&mut col, &tr!("show-hint"), width);
+        }
+        self.buttons(
+            &mut col,
+            &[(tr!("dlg-ok"), dialog_ui(req, DialogEvent::Close))],
+        );
+        (
+            Kind::Show {
+                text,
+                layout: Some(layout),
+            },
+            shade,
+            panel,
+        )
+    }
+
+    /// A creature's symbol on a badge, in its colour.
+    fn token(&self, symbol: Option<(char, Color)>) -> Gd<Label> {
+        let (text, color) = symbol.map_or((String::new(), theme::TEXT_DIM), |(c, color)| {
+            (c.to_string(), color)
+        });
+        let mut t = cell(&text, color, Some(&self.look.bold), Some(TOKEN_W));
+        t.add_theme_font_size_override("font_size", 17);
+        t.set_horizontal_alignment(HorizontalAlignment::CENTER);
+        t.set_v_size_flags(SizeFlags::SHRINK_CENTER);
+        t.set_custom_minimum_size(Vector2::new(TOKEN_W, 24.0));
+        t.add_theme_stylebox_override("normal", &self.look.badge);
+        // a map's letter, the same in every language
+        i18n::verbatim(&t);
+        t
+    }
+
+    /// #overview: a dungeon a heading with the levels reached, a level a
+    /// row (its number on a badge, the player's note, where the hero is),
+    /// what is on the level under it.
+    fn open_overview(
+        &mut self,
+        req: u64,
+        rows: &[OverviewRow],
+    ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        let look = self.look.clone();
+        let lines: Vec<OverviewLine> = rows.iter().map(OverviewLine::of).collect();
+        let indent = BADGE_W + 12.0;
+        let line_w = |l: &OverviewLine| match l {
+            OverviewLine::Dungeon { name, levels } => {
+                look.text_w(name, &look.title, BODY_SIZE + 4)
+                    + 24.0
+                    + levels
+                        .as_deref()
+                        .map_or(0.0, |t| look.text_w(t, &look.body, BODY_SIZE - 1))
+            }
+            OverviewLine::Level {
+                title, note, here, ..
+            } => {
+                indent
+                    + look.text_w(title, &look.body_bold, BODY_SIZE)
+                    + note
+                        .as_deref()
+                        .map_or(0.0, |n| 12.0 + look.text_w(n, &look.body, BODY_SIZE))
+                    + here.as_deref().map_or(0.0, |h| {
+                        28.0 + look.text_w(h, &look.body_bold, BODY_SIZE - 2)
+                    })
+            }
+            OverviewLine::Detail { text, deep, .. } => {
+                indent
+                    + if *deep { 22.0 } else { 0.0 }
+                    + 20.0
+                    + look.text_w(text, &look.body, BODY_SIZE - 1)
+            }
+        };
+        let longest = lines.iter().map(line_w).fold(0.0f32, f32::max);
+        let title = tr!("overview-title");
+        let title_w = look.text_w(&title, &look.body_bold, 20);
+        let max_w = (self.screen().x - 2.0 * SIDE_MARGIN).max(420.0);
+        let width = (longest + 40.0).max(title_w + 40.0).clamp(480.0, max_w);
+        let mut list = VBoxContainer::new_alloc();
+        list.add_theme_constant_override("separation", 0);
+        list.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        let mut content_h = 0.0;
+        for (i, l) in lines.iter().enumerate() {
+            let (row, h) = match l {
+                OverviewLine::Dungeon { name, levels } => {
+                    let mut head = HBoxContainer::new_alloc();
+                    head.add_theme_constant_override("separation", 24);
+                    let mut n = cell(name, theme::ACCENT, Some(&look.title), None);
+                    n.add_theme_font_size_override("font_size", BODY_SIZE + 4);
+                    head.add_child(&n);
+                    if let Some(levels) = levels {
+                        let w = look.text_w(levels, &look.body, BODY_SIZE - 1) + 4.0;
+                        let mut r = cell(levels, theme::TEXT_DIM, Some(&look.body), Some(w));
+                        r.add_theme_font_size_override("font_size", BODY_SIZE - 1);
+                        r.set_horizontal_alignment(HorizontalAlignment::RIGHT);
+                        head.add_child(&r);
+                    }
+                    head.set_custom_minimum_size(Vector2::new(0.0, ROW_H + 2.0));
+                    let mut block = VBoxContainer::new_alloc();
+                    block.add_theme_constant_override("separation", 2);
+                    // air between dungeons
+                    let gap = if i == 0 { 0.0 } else { 10.0 };
+                    let mut air = Control::new_alloc();
+                    air.set_custom_minimum_size(Vector2::new(0.0, gap));
+                    block.add_child(&air);
+                    block.add_child(&head);
+                    block.add_child(&rule());
+                    (block.upcast::<Control>(), ROW_H + 2.0 + gap + 7.0)
+                }
+                OverviewLine::Level {
+                    badge,
+                    title,
+                    note,
+                    here,
+                    current,
+                } => {
+                    let mut row = HBoxContainer::new_alloc();
+                    row.add_theme_constant_override("separation", 12);
+                    let mut b = cell(
+                        badge,
+                        theme::GOLD_BRIGHT,
+                        Some(&look.body_bold),
+                        Some(BADGE_W),
+                    );
+                    b.add_theme_font_size_override("font_size", BODY_SIZE - 1);
+                    b.set_horizontal_alignment(HorizontalAlignment::CENTER);
+                    b.set_v_size_flags(SizeFlags::SHRINK_CENTER);
+                    b.set_custom_minimum_size(Vector2::new(BADGE_W, 24.0));
+                    let style = if *current { &look.mark_on } else { &look.badge };
+                    b.add_theme_stylebox_override("normal", style);
+                    row.add_child(&b);
+                    let w = look.text_w(title, &look.body_bold, BODY_SIZE) + 4.0;
+                    let mut t = cell(title, theme::TEXT, Some(&look.body_bold), Some(w));
+                    t.add_theme_font_size_override("font_size", BODY_SIZE);
+                    row.add_child(&t);
+                    // the player's note takes what room there is
+                    let mut n = cell(
+                        note.as_deref().unwrap_or(""),
+                        theme::GOLD,
+                        Some(&look.body),
+                        None,
+                    );
+                    n.add_theme_font_size_override("font_size", BODY_SIZE);
+                    row.add_child(&n);
+                    if let Some(h) = here {
+                        row.add_child(&here_pill(h, *current, &look));
+                    }
+                    row.set_custom_minimum_size(Vector2::new(0.0, ROW_H));
+                    (row.upcast::<Control>(), ROW_H)
+                }
+                OverviewLine::Detail { mark, text, deep } => {
+                    let mut row = HBoxContainer::new_alloc();
+                    row.add_theme_constant_override("separation", 6);
+                    let mut pad = Control::new_alloc();
+                    let deeper = if *deep { 22.0 } else { 0.0 };
+                    pad.set_custom_minimum_size(Vector2::new(indent + deeper - 6.0, 0.0));
+                    row.add_child(&pad);
+                    let mut m = cell(mark, theme::GOLD_DIM, Some(&look.body_bold), Some(14.0));
+                    m.add_theme_font_size_override("font_size", BODY_SIZE - 1);
+                    i18n::verbatim(&m);
+                    row.add_child(&m);
+                    let mut t = cell(text, INFO_TEXT, Some(&look.body), None);
+                    t.add_theme_font_size_override("font_size", BODY_SIZE - 1);
+                    row.add_child(&t);
+                    row.set_custom_minimum_size(Vector2::new(0.0, DETAIL_H));
+                    (row.upcast::<Control>(), DETAIL_H)
+                }
+            };
+            list.add_child(&row);
+            content_h += h;
+        }
+        let max_h = (self.screen().y - TEXT_CHROME).max(ROW_H * 4.0);
+        let text = Scroller::new(width, content_h.min(max_h).max(ROW_H), false);
+        let (shade, panel, mut col) = self.frame(width, Some(&title));
+        let mut scroll = text.scroll.clone();
+        scroll.add_child(&list);
+        col.add_child(&scroll);
+        if content_h > max_h {
+            self.hint(&mut col, &tr!("show-hint"), width);
+        }
+        self.buttons(
+            &mut col,
+            &[(tr!("dlg-ok"), dialog_ui(req, DialogEvent::Close))],
+        );
+        (
+            Kind::Show {
+                text,
+                layout: Some("overview"),
+            },
+            shade,
+            panel,
+        )
     }
 
     /// Open the UI for Menu, Choice, Text, ExtCmd, Show, MessageMenu (other
@@ -2207,7 +2714,39 @@ impl Dialogs {
         let (kind, shade, panel) = match prompt {
             Prompt::Menu {
                 how, title, items, ..
-            } => self.open_menu(req, *how, title.as_deref(), items),
+            } => {
+                // #overview: laid out from the engine's English
+                let english = match original {
+                    Prompt::Menu { items, .. } => items.as_slice(),
+                    _ => items.as_slice(),
+                };
+                let texts: Vec<&str> = english
+                    .iter()
+                    .map(|i| i.str.as_deref().unwrap_or(""))
+                    .collect();
+                match layouts::overview(&texts) {
+                    Some(rows) if *how == PickHow::None => self.open_overview(req, &rows),
+                    // `m` #overview picks a level to annotate: the menu, in
+                    // the language now
+                    Some(_) => {
+                        let shown: Vec<nh_protocol::MenuItem> = english
+                            .iter()
+                            .map(|i| nh_protocol::MenuItem {
+                                str: i.str.as_deref().map(|t| {
+                                    if t.trim().is_empty() {
+                                        t.to_string()
+                                    } else {
+                                        layouts::overview_line(&layouts::overview_row(t))
+                                    }
+                                }),
+                                ..i.clone()
+                            })
+                            .collect();
+                        self.open_menu(req, *how, Some(&tr!("overview-title")), &shown)
+                    }
+                    None => self.open_menu(req, *how, title.as_deref(), items),
+                }
+            }
             Prompt::Choice {
                 query,
                 visible,
@@ -2268,7 +2807,26 @@ impl Dialogs {
                 }
             }
             Prompt::ExtCmd => self.open_palette(req, catalog),
-            Prompt::Show { title, lines } => self.open_show(title.as_deref(), lines, req),
+            Prompt::Show { title, lines } => {
+                // #vanquished, #genocided, #overview (a menu of no choice
+                // comes as a text window): laid out from the engine's English
+                let english = match original {
+                    Prompt::Show { lines, .. } => lines.as_slice(),
+                    _ => lines.as_slice(),
+                };
+                let texts: Vec<&str> = english.iter().map(|l| l.text.as_str()).collect();
+                let plurals = layouts::kinds_by_plural(catalog);
+                let singular = |p: &str| plurals.get(p).cloned();
+                if let Some(v) = layouts::vanquished(&texts, &singular) {
+                    self.open_vanquished(req, &v, catalog)
+                } else if let Some(g) = layouts::genocided(&texts) {
+                    self.open_genocided(req, &g, &plurals, catalog)
+                } else if let Some(rows) = layouts::overview(&texts) {
+                    self.open_overview(req, &rows)
+                } else {
+                    self.open_show(title.as_deref(), lines, req)
+                }
+            }
             Prompt::MessageMenu { letter, mesg, pick } => {
                 let width = self.fit_width(mesg.chars().count().min(80), 0.0, 420.0);
                 let (shade, panel, mut col) = self.frame_at(width, Some(mesg), Place::Top);
@@ -2357,6 +2915,32 @@ impl Dialogs {
             Kind::Show { .. } => "show",
             Kind::MessageMenu { .. } => "message",
         })
+    }
+
+    /// The engine's window the open dialog lays out from its English:
+    /// "vanquished", "genocided", "overview".
+    pub fn layout_name(&self) -> Option<&'static str> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::Show { layout, .. }) => *layout,
+            _ => None,
+        }
+    }
+
+    /// Every label's text in the open dialog, in order (self-tests).
+    pub fn panel_texts(&self) -> Vec<String> {
+        fn walk(node: &Gd<Node>, out: &mut Vec<String>) {
+            if let Ok(l) = node.clone().try_cast::<Label>() {
+                out.push(l.get_text().to_string());
+            }
+            for c in node.get_children().iter_shared() {
+                walk(&c, out);
+            }
+        }
+        let mut out = Vec::new();
+        if let Some(o) = self.open.as_ref() {
+            walk(&o.panel.clone().upcast(), &mut out);
+        }
+        out
     }
 
     /// One frame of the warm-up behind the title screen: the dialogs drawn
@@ -2556,7 +3140,7 @@ impl Dialogs {
     pub fn list_top(&self) -> Option<f32> {
         match self.open.as_ref().map(|o| &o.kind) {
             Some(Kind::Menu(view)) => Some(view.list.top()),
-            Some(Kind::Show { text }) => Some(text.top()),
+            Some(Kind::Show { text, .. }) => Some(text.top()),
             _ => None,
         }
     }
@@ -2775,7 +3359,7 @@ impl Dialogs {
                 fill_palette(palette);
                 None
             }
-            Kind::Show { text } => {
+            Kind::Show { text, .. } => {
                 if let Some(k) = nav(input) {
                     text.key(k, self.look.line_h);
                     return None;

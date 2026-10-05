@@ -200,6 +200,14 @@ NetHack's own `doc/Guidebook.mn`, the Russian of Vadim Velikodniy's
 translation (`client/help/CREDITS.md`). `make help` builds both from their
 sources with `tools/help/guidebook.py`; `make help-check` runs its tests
 and fails when a built book is stale. The `help` scenario searches both.
+The engine's pictures and tables (the tombstone, `#vanquished`,
+`#genocided`, `#overview`), whose lines the catalog knows only as layout,
+are drawn by the client from their English (`layouts.rs`): the tombstone
+as a carved stone on the end screen (`ui/ui_tombstone.gdshader`), the
+lists as rows with each creature's map symbol, the overview as the
+dungeons' levels with their features and where the hero is; the client's
+words come from Fluent, the engine's names through the lexicon. The
+`layouts` scenario plays them in a debug-mode game, to its death.
 `--lang=qps` is a pseudo-language for the self-tests: words through the
 catalogs show ⟦so⟧ and the engine's ⟪so⟫, and a screen a scenario shoots
 fails on any word outside the marks. `make test-client` also runs

@@ -34,6 +34,8 @@ mod help_tests;
 mod hero;
 #[path = "selftest_input.rs"]
 mod input_ru;
+#[path = "selftest_layouts.rs"]
+mod layouts_tests;
 #[path = "selftest_world.rs"]
 mod world_looks;
 
@@ -4082,6 +4084,7 @@ impl SelfTest {
             "bestiary" => world_looks::bestiary(),
             "pickers" => input_ru::pickers(),
             "help" => help_tests::help(),
+            "layouts" => layouts_tests::layouts(),
             "inventory" => inventory(),
             "gamepad" => gamepad(),
             "bar" => bar(),

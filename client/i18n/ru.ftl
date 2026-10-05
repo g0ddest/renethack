@@ -665,3 +665,127 @@ hud-dlvl = Глубина { $level }
 hud-tutorial-level = Обучение { $level }
 hud-exp = Опыт { $exp }
 hud-score = Очки { $score }
+
+## Картины и таблицы игры, которые раскладывает клиент: надгробие,
+## #vanquished, #genocided, #overview
+
+rip-rest-in-peace =
+    ПОКОЙСЯ
+    С
+    МИРОМ
+rip-gold = { $gold } Au
+vanquished-title = Побеждённые существа
+vanquished-rider = Всадник
+vanquished-total =
+    { $count ->
+        [one] Побеждено { $count } существо
+        [few] Побеждено { $count } существа
+       *[many] Побеждено { $count } существ
+    }
+genocided-title = Истреблённые виды
+genocided-title-extinct = Вымершие виды
+genocided-title-both = Истреблённые и вымершие виды
+genocided-extinct = вымер
+genocided-total = Истреблено видов: { $count }
+extinct-total = Вымерло видов: { $count }
+overview-title = Обзор подземелья
+overview-levels = уровни { $from }–{ $to }
+overview-levels-up = уровни с { $from } вверх до { $to }
+overview-level = Уровень { $level }
+overview-astral = Астральный план
+overview-plane-earth = План Земли
+overview-plane-air = План Воздуха
+overview-plane-fire = План Огня
+overview-plane-water = План Воды
+overview-here = Вы здесь
+overview-left-from = Отсюда вы ушли
+overview-were = Вы были здесь
+overview-note = «{ $note }»
+overview-shops =
+    { $seen ->
+        [two] 2 лавки
+       *[many] много лавок
+    }
+overview-temples =
+    { $seen ->
+        [one] храм
+        [two] 2 храма
+       *[many] много храмов
+    }
+overview-temples-to =
+    { $seen ->
+        [one] храм { $god }
+        [two] 2 храма { $god }
+       *[many] много храмов { $god }
+    }
+overview-altars =
+    { $seen ->
+        [one] алтарь
+        [two] 2 алтаря
+       *[many] много алтарей
+    }
+overview-altars-to =
+    { $seen ->
+        [one] алтарь { $god }
+        [two] 2 алтаря { $god }
+       *[many] много алтарей { $god }
+    }
+overview-thrones =
+    { $seen ->
+        [one] трон
+        [two] 2 трона
+       *[many] много тронов
+    }
+overview-fountains =
+    { $seen ->
+        [one] фонтан
+        [two] 2 фонтана
+       *[many] много фонтанов
+    }
+overview-sinks =
+    { $seen ->
+        [one] раковина
+        [two] 2 раковины
+       *[many] много раковин
+    }
+overview-graves =
+    { $seen ->
+        [one] могила
+        [two] 2 могилы
+       *[many] много могил
+    }
+overview-trees =
+    { $seen ->
+        [one] дерево
+        [two] 2 дерева
+       *[many] много деревьев
+    }
+overview-oracle = Дельфийский оракул
+overview-sokoban-solved = Решён
+overview-sokoban-unsolved = Не решён
+overview-bigroom = Очень большой зал
+overview-rogue = Первобытный край
+overview-home = Дом
+overview-home-lost = Дом (пути назад нет…)
+overview-quest-done = Выполнено задание { $leader }
+overview-quest-given = Задание получено от { $leader }
+overview-summoned = Призыв от { $leader }
+overview-ludios = Форт Лудиос
+overview-castle = Замок
+overview-castle-notes = Замок: сыграйте { $notes }, чтобы опустить или поднять подъёмный мост
+overview-castle-tune = Замок: сыграйте мелодию из пяти нот, чтобы опустить или поднять подъёмный мост
+overview-valley = Долина Мёртвых
+overview-gateway = Врата в Святилище Молоха
+overview-sanctum = Святилище Молоха
+overview-stairs-up = Лестница вверх в { $place }
+overview-stairs-down = Лестница вниз в { $place }
+overview-one-way-up = Лестница в один конец вверх в { $place }
+overview-one-way-down = Лестница в один конец вниз в { $place }
+overview-portal = Портал в { $place }
+overview-sealed-portal = Закрытый портал в { $place }
+overview-connection = Проход в { $place }
+overview-unknown-way = Путь в { $place }
+overview-branch-level = { $branch }, уровень { $level }
+overview-resting = Здесь покоятся
+overview-dead-you = вы, { $how }
+overview-dead = { $who }, { $how }

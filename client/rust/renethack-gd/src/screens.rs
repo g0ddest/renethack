@@ -17,7 +17,9 @@ use nh_protocol::Catalog;
 use nh_world::KeyProfile;
 
 use crate::i18n::{self, EngineKind, Lang};
+use crate::layouts;
 use crate::theme::{self, bbcode_escape, hex};
+use crate::tombstone;
 use crate::tr;
 use crate::ui_events::{CharacterChoice, UiEvent, UiQueue, push};
 
@@ -286,6 +288,22 @@ fn title_label(text: &str, size: i32) -> Gd<Label> {
 fn wide(mut b: Gd<Button>) -> Gd<Button> {
     b.set_custom_minimum_size(Vector2::new(460.0, 44.0));
     b
+}
+
+/// Lines without blank ones at either end, and at most one blank line
+/// between paragraphs.
+fn paragraphs<'a>(lines: &[&'a str]) -> Vec<&'a str> {
+    let mut out: Vec<&str> = Vec::new();
+    for l in lines {
+        if l.trim().is_empty() && out.last().is_none_or(|p| p.trim().is_empty()) {
+            continue;
+        }
+        out.push(l);
+    }
+    while out.last().is_some_and(|l| l.trim().is_empty()) {
+        out.pop();
+    }
+    out
 }
 
 fn column() -> Gd<VBoxContainer> {
@@ -710,10 +728,25 @@ impl Screens {
         let mut panel = PanelContainer::new_alloc();
         let mut col = column();
         col.add_child(&title_label(&tr!("end-title"), 32));
+        // the tombstone is drawn: its lines apart from the window's others
+        let stone = layouts::tombstone(&summary.text);
+        let rest: Vec<&str> = match &stone {
+            Some((_, at)) => summary.text[..at.start]
+                .iter()
+                .chain(&summary.text[at.end..])
+                .map(String::as_str)
+                .collect(),
+            None => summary.text.iter().map(String::as_str).collect(),
+        };
+        let rest = paragraphs(&rest);
         let mut text = RichTextLabel::new_alloc();
         text.set_use_bbcode(true);
         text.set_focus_mode(FocusMode::NONE);
-        text.set_custom_minimum_size(Vector2::new(980.0, 600.0));
+        let width = if stone.is_some() { 700.0 } else { 980.0 };
+        text.set_custom_minimum_size(Vector2::new(width, 600.0));
+        // the top ten's columns line up in the monospace face
+        text.add_theme_font_override("mono_font", &theme::font(theme::Face::Mono));
+        text.add_theme_font_size_override("mono_font_size", theme::MONO_SIZE - 1);
         let mut parts: Vec<String> = Vec::new();
         if !summary.last_messages.is_empty() {
             let msgs: Vec<String> = summary
@@ -727,12 +760,10 @@ impl Screens {
                 msgs.join("\n")
             ));
         }
-        if !summary.text.is_empty() {
-            let lines: Vec<String> = summary
-                .text
-                .iter()
-                .map(|l| bbcode_escape(&i18n::engine(EngineKind::Window, l)))
-                .collect();
+        if !rest.is_empty() {
+            let shown = i18n::engine_window(&rest)
+                .unwrap_or_else(|| rest.iter().map(|l| l.to_string()).collect());
+            let lines: Vec<String> = shown.iter().map(|l| bbcode_escape(l)).collect();
             parts.push(lines.join("\n"));
         }
         if !summary.scores.is_empty() {
@@ -742,13 +773,22 @@ impl Screens {
                 .map(|l| bbcode_escape(&i18n::engine(EngineKind::Window, l)))
                 .collect();
             parts.push(format!(
-                "[color={}]{}[/color]",
+                "[code][color={}]{}[/color][/code]",
                 hex(theme::ACCENT),
                 lines.join("\n")
             ));
         }
         text.set_text(&parts.join("\n\n"));
-        col.add_child(&text);
+        match &stone {
+            Some((t, _)) => {
+                let mut body = HBoxContainer::new_alloc();
+                body.add_theme_constant_override("separation", 28);
+                body.add_child(&tombstone::view(t));
+                body.add_child(&text);
+                col.add_child(&body);
+            }
+            None => col.add_child(&text),
+        }
         let mut buttons = row();
         buttons.add_child(&theme::button(
             &tr!("end-new-game"),
@@ -831,6 +871,21 @@ impl Screens {
         fn walk(node: &Gd<Node>, text: &str) -> bool {
             if let Ok(b) = node.clone().try_cast::<Button>()
                 && b.get_text().to_string().starts_with(text)
+            {
+                return true;
+            }
+            node.get_children().iter_shared().any(|c| walk(&c, text))
+        }
+        self.content
+            .as_ref()
+            .is_some_and(|c| walk(&c.clone().upcast(), text))
+    }
+
+    /// Is there a label with this text on the page? (self-tests)
+    pub fn has_label(&self, text: &str) -> bool {
+        fn walk(node: &Gd<Node>, text: &str) -> bool {
+            if let Ok(l) = node.clone().try_cast::<Label>()
+                && l.get_text() == text
             {
                 return true;
             }

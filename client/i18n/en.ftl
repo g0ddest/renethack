@@ -660,3 +660,126 @@ hud-dlvl = Dlvl { $level }
 hud-tutorial-level = Tutorial { $level }
 hud-exp = Exp { $exp }
 hud-score = Score { $score }
+
+## The engine's pictures and tables, laid out by the client: the
+## tombstone, #vanquished, #genocided, #overview
+
+rip-rest-in-peace =
+    REST
+    IN
+    PEACE
+rip-gold = { $gold } Au
+vanquished-title = Vanquished creatures
+vanquished-rider = Rider
+vanquished-total =
+    { $count ->
+        [one] { $count } creature vanquished
+       *[other] { $count } creatures vanquished
+    }
+genocided-title = Genocided species
+genocided-title-extinct = Extinct species
+genocided-title-both = Genocided or extinct species
+genocided-extinct = extinct
+genocided-total = { $count } species genocided
+extinct-total = { $count } species extinct
+overview-title = Dungeon overview
+overview-levels = levels { $from }–{ $to }
+overview-levels-up = levels { $from } up to { $to }
+overview-level = Level { $level }
+overview-astral = Astral Plane
+overview-plane-earth = Plane of Earth
+overview-plane-air = Plane of Air
+overview-plane-fire = Plane of Fire
+overview-plane-water = Plane of Water
+overview-here = You are here
+overview-left-from = You left from here
+overview-were = You were here
+overview-note = “{ $note }”
+overview-shops =
+    { $seen ->
+        [two] 2 shops
+       *[many] many shops
+    }
+overview-temples =
+    { $seen ->
+        [one] temple
+        [two] 2 temples
+       *[many] many temples
+    }
+overview-temples-to =
+    { $seen ->
+        [one] temple to { $god }
+        [two] 2 temples to { $god }
+       *[many] many temples to { $god }
+    }
+overview-altars =
+    { $seen ->
+        [one] altar
+        [two] 2 altars
+       *[many] many altars
+    }
+overview-altars-to =
+    { $seen ->
+        [one] altar to { $god }
+        [two] 2 altars to { $god }
+       *[many] many altars to { $god }
+    }
+overview-thrones =
+    { $seen ->
+        [one] throne
+        [two] 2 thrones
+       *[many] many thrones
+    }
+overview-fountains =
+    { $seen ->
+        [one] fountain
+        [two] 2 fountains
+       *[many] many fountains
+    }
+overview-sinks =
+    { $seen ->
+        [one] sink
+        [two] 2 sinks
+       *[many] many sinks
+    }
+overview-graves =
+    { $seen ->
+        [one] grave
+        [two] 2 graves
+       *[many] many graves
+    }
+overview-trees =
+    { $seen ->
+        [one] tree
+        [two] 2 trees
+       *[many] many trees
+    }
+overview-oracle = Oracle of Delphi
+overview-sokoban-solved = Solved
+overview-sokoban-unsolved = Unsolved
+overview-bigroom = A very big room
+overview-rogue = A primitive area
+overview-home = Home
+overview-home-lost = Home (no way back…)
+overview-quest-done = Completed quest for { $leader }
+overview-quest-given = Given quest by { $leader }
+overview-summoned = Summoned by { $leader }
+overview-ludios = Fort Ludios
+overview-castle = The castle
+overview-castle-notes = The castle: play { $notes } to open or close the drawbridge
+overview-castle-tune = The castle: play the 5-note tune to open or close the drawbridge
+overview-valley = Valley of the Dead
+overview-gateway = Gateway to Moloch's Sanctum
+overview-sanctum = Moloch's Sanctum
+overview-stairs-up = Stairs up to { $place }
+overview-stairs-down = Stairs down to { $place }
+overview-one-way-up = One-way stairs up to { $place }
+overview-one-way-down = One-way stairs down to { $place }
+overview-portal = Portal to { $place }
+overview-sealed-portal = Sealed portal to { $place }
+overview-connection = Connection to { $place }
+overview-unknown-way = A way to { $place }
+overview-branch-level = { $branch }, level { $level }
+overview-resting = Final resting place for
+overview-dead-you = you, { $how }
+overview-dead = { $who }, { $how }
