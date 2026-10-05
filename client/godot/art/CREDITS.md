@@ -19,6 +19,7 @@ the recipe in `sources.json` and checks the downloads against `art.lock.json`.
 | `cc0/quaternius/props/` | Fantasy Props MegaKit (Standard), a selection | Quaternius | https://quaternius.itch.io/fantasy-props-megakit |
 | `cc0/quaternius/monsters/Spider.glb`, `Snake.glb`, `Bat.glb`, `Dragon.glb`, `Wasp.glb` | Animated monsters: spider, snake, bat, dragon, wasp | Quaternius | fetched from Poly Pizza: https://poly.pizza/m/yRYJiAJyiM, https://poly.pizza/m/x9x0viZs8V, https://poly.pizza/m/hNO9XvjlKa, https://poly.pizza/m/VBvzjFIYws, https://poly.pizza/m/3aQgc75sUR |
 | `cc0/quaternius/animals/Pug.fbx`, `Pig.fbx`, `Sheep.fbx` | Farm Animals Animated: pug, pig, sheep | Quaternius | https://quaternius.itch.io/lowpoly-animated-animals |
+| `cc0/made/Centaur.glb`, `CentaurFemale.glb` | Centaurs put together in Blender (`tools/blender/centaur.py`): the horse above without its neck and head, a base character's upper body (posed by the Universal Animation Library's idle) in their place | Quaternius | made here from the files above |
 | `cc0/sigilsvault/dungeon/` | Modular Dungeon Kit v1.0: pieces and props (GLB) | Kevin Barany (SigilsVault) | https://sigilsvault.itch.io/modular-dungeon-kit-v10 |
 | `cc0/unity-labs/flipbooks/` | VFX flipbooks: Flame02, Flame03, FireBall01–04, WispySmoke01, CandleSmoke01, Explosion02HD | Unity Technologies (Unity Labs Paris) | https://unity.com/blog/engine-platform/free-vfx-image-sequences-flipbooks |
 | `cc0/ambientcg/` | Lava003, Rock035, Rock058 (1K, maps repacked) | ambientCG (Lennart Demes) | https://ambientcg.com |

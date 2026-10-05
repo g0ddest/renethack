@@ -218,7 +218,7 @@
   {"id": "Rock035", "url": "https://ambientcg.com/get?file=Rock035_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "ao": "*_AmbientOcclusion.jpg", "roughness": "*_Roughness.jpg"}, "dest": "ambientcg", "use": "dark cave walls (Mines, Earth)"},
   {"id": "Rock058", "url": "https://ambientcg.com/get?file=Rock058_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "ao": "*_AmbientOcclusion.jpg", "roughness": "*_Roughness.jpg"}, "dest": "ambientcg", "use": "obsidian walls (Gehennom, Vlad's Tower)"}
  ],
- "blender_comment": "Models made in Blender by tools/blender/<script>.py: static models rigged with the skeleton and clips of a Quaternius animal (rig_quadruped). URLs are downloaded (and locked); other paths are files above. fetch_art.py runs Blender when it finds one ($BLENDER, `blender` on the PATH, /Applications/Blender.app); without it the committed models are kept and only the downloads are checked. CC-BY models go to ccby/, see CREDITS.md.",
+ "blender_comment": "Models made in Blender by tools/blender/<script>.py: static models rigged with the skeleton and clips of a Quaternius animal (rig_quadruped), centaurs put together from the horse and a base character (centaur). URLs are downloaded (and locked); other paths are files above. fetch_art.py runs Blender when it finds one ($BLENDER, `blender` on the PATH, /Applications/Blender.app); without it the committed models are kept and only the downloads are checked. CC-BY models go to ccby/, see CREDITS.md.",
  "blender": [
   {"script": "rig_quadruped", "out": "ccby/polypizza/Elephant.glb", "name": "Elephant", "texture_max": 512,
    "target": "https://static.poly.pizza/2bc73032-37c9-4276-a620-437df45db428.glb",
@@ -261,7 +261,23 @@
    "template": "cc0/quaternius/animals/Wolf.glb", "actions": {"Idle": "Idle", "Walk": "Walk", "Gallop": "Gallop", "Attack": "Attack", "Hit": "Idle_HitReact_Left", "Death": "Death"},
    "parts": [{"material": "Antenna", "color": [0.22, 0.16, 0.1], "radius": 0.06, "bones": ["Ear1.L", "Ear2.L", "Ear3.L", "Ear4.L"],
               "points": [[0.08, -1.9, 1.2], [0.18, -2.15, 1.6], [0.3, -2.35, 2.0], [0.42, -2.45, 2.35], [0.55, -2.45, 2.65]]}],
-   "use": "rust monsters and disenchanters (Armadillo by Poly by Google, CC-BY 3.0: https://poly.pizza/m/dZ3EWgIsSJQ) on the wolf's skeleton and clips, with antennae on its ears"}
+   "use": "rust monsters and disenchanters (Armadillo by Poly by Google, CC-BY 3.0: https://poly.pizza/m/dZ3EWgIsSJQ) on the wolf's skeleton and clips, with antennae on its ears"},
+  {"script": "centaur", "out": "cc0/made/Centaur.glb", "name": "Centaur",
+   "horse": "cc0/quaternius/animals/Horse.glb", "body": "cc0/quaternius/base/Superhero_Male_FullBody.gltf",
+   "skin": "cc0/quaternius/base/T_Superhero_Male_Ligh.png",
+   "hair": ["cc0/quaternius/base/hair/Hair_Long.gltf", "cc0/quaternius/base/hair/Hair_Beard.gltf"],
+   "pose": "cc0/quaternius/animations/UAL1_Standard.glb", "clip": "Idle_Loop",
+   "cut": {"point": [0, -1.55, 2.85], "normal": [0, -0.8, 0.6]}, "seat": [0, -1.7, 2.75], "height": 1.85, "waist": 1.0, "bone": "Torso3",
+   "actions": {"Idle": "Idle", "Walk": "Walk", "Gallop": "Gallop", "Attack": "Attack_Kick", "Hit": "Idle_HitReact_Left", "Death": "Death"},
+   "texture_max": 512, "use": "centaurs: the horse without its neck and head, a base character's upper body in their place"},
+  {"script": "centaur", "out": "cc0/made/CentaurFemale.glb", "name": "CentaurFemale",
+   "horse": "cc0/quaternius/animals/Horse.glb", "body": "cc0/quaternius/base/Superhero_Female_FullBody.gltf",
+   "skin": "cc0/quaternius/base/T_Superhero_Female_Light_BaseColor.png",
+   "hair": ["cc0/quaternius/base/hair/Hair_Long.gltf"],
+   "pose": "cc0/quaternius/animations/UAL1_Standard.glb", "clip": "Idle_Loop",
+   "cut": {"point": [0, -1.55, 2.85], "normal": [0, -0.8, 0.6]}, "seat": [0, -1.7, 2.75], "height": 1.75, "waist": 0.97, "bone": "Torso3",
+   "actions": {"Idle": "Idle", "Walk": "Walk", "Gallop": "Gallop", "Attack": "Attack_Kick", "Hit": "Idle_HitReact_Left", "Death": "Death"},
+   "texture_max": 512, "use": "female centaurs"}
  ],
  "fonts_comment": "SIL OFL 1.1 fonts of the UI (not CC0): fetched from the google/fonts repository at a fixed commit into client/godot/fonts/<dest>/ with their OFL.txt.",
  "fonts": [
