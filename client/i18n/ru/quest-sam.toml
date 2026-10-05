@@ -1,0 +1,271 @@
+# R6 quest texts: Sam (dat/quest.lua).
+
+[de5e236eed50]
+en = "[You must enter %s, then regain %s from %s.]"
+ru = "[Проникните в {1:acc} и отберите {2:acc} у {3:gen}.]"
+
+[00bc70d438fe]
+en = "\"Domo %s-san, indeed you are ready.  I can now tell you what\nit is that I require of you.\n\n\"The daimyo, %s, has betrayed us.  He has stolen from us\n%s and taken it to his donjon deep within\n%s.\n\n\"If I cannot show the emperor %s when he comes\nfor the festival he will know that I have failed in my duty, and\nrequest that I commit seppuku.\n\n\"You must gain entrance to %s and retrieve the\nemperor's property.  Be quick!  The emperor will be here for the\ncha-no-you in 5 sticks.\n\n\"Wakarimasu ka?\""
+ru = "«Домо, {1}-сан, вы и впрямь готовы.  Теперь я могу сказать, чего от вас\nжду.\n\nДаймё {2} предал нас.  Он похитил у нас {3:acc} и унёс\n{3:gender|его|её|его|их} в свой донжон в глубине {4:gen}.\n\nЕсли я не смогу показать императору {5:acc}, когда он прибудет на\nпраздник, он поймёт, что я не исполнил свой долг, и повелит мне\nсовершить сэппуку.\n\nВы должны проникнуть в {6:acc} и вернуть собственность императора.\nСпешите!  Император прибудет на тя-но ю через пять благовонных палочек.\n\nВакаримасу ка?»"
+
+[c94525518b13]
+en = "[When you can think %s and act %s then return.]"
+ru = "[Возвращайтесь, когда ваши мысли и дела станут {1:pl:ins}{2:skip}.]"
+
+[4e436419ab51]
+en = "\"%s-san, you would do better to join the kyokaku.\n\n\"You have skills, but until you can call upon the bushido to know when and\nhow to use them you are not samurai.  When you can think %s and\nact %s then return.\""
+ru = "«{1}-сан, вам бы лучше примкнуть к кёкаку.\n\nУмения у вас есть, но пока вы не научитесь обращаться к бусидо, чтобы\nзнать, когда и как их применять, вы не самурай.  Возвращайтесь, когда\nваши мысли и дела станут {2:pl:ins}{3:skip}.»"
+
+[a7180b6607a1]
+en = "[\"I require %s to defeat %s.  Return when you are ready.\"]"
+ru = "[«Чтобы победить {2:acc}, мне {hero:gender|нужен|нужна} {1:hero}.  Возвращайтесь, когда будете готовы.»]"
+
+[2b05016603ea]
+en = "\"%s-san, you have learned well and honored your family.\nI require the skills of %s in order to defeat %s.\nGo and seek out teachers.  Learn what they have learned.  When you\nare ready, return to me.\""
+ru = "«{1}-сан, вы хорошо учились и принесли честь своей семье.  Но чтобы\nпобедить {3:acc}, мне нужно мастерство {2:hero:gen}.  Ступайте и найдите\nучителей.  Познайте то, что познали они.  Когда будете готовы,\nвозвращайтесь ко мне.»"
+
+[01c9ea19cca9]
+en = "\"Ahh, I finally meet the daimyo of the kyokaku!\""
+ru = "«А-а, наконец-то я встречаю даймё кёкаку!»"
+
+[893f9264ce5e]
+en = "\"There is no honor for me in your death.\""
+ru = "«Твоя смерть не принесёт мне чести.»"
+
+[f54bbf130946]
+en = "\"You know that I cannot resash my swords until they have killed.\""
+ru = "«Ты ведь знаешь: я не могу вложить мечи в ножны, пока они не убьют.»"
+
+[fdb83990f697]
+en = "\"Your presence only compounds the dishonor of %s in not coming %sself.\""
+ru = "«Твоё появление лишь умножает бесчестье {1:gen}, что не явил{1:gender|ся|ась|ось|ись} сам{1:gender||а|о|и}{2:skip}.»"
+
+[1c50cd17a8b8]
+en = "\"I will make tea with your hair and serve it to %s.\""
+ru = "«Я заварю чай из твоих волос и подам его {1:dat}.»"
+
+[aa3897bdddc0]
+en = "\"Your fear shows in your eyes, coward!\""
+ru = "«Страх так и написан у тебя в глазах, трус{hero:gender||иха}!»"
+
+[1d3902fe0ed4]
+en = "\"I have not heard of you, %s-san; has your life been that unworthy?\""
+ru = "«Я ничего о тебе не слышал, {1}-сан; неужели твоя жизнь была столь недостойной?»"
+
+[3f046b0087b5]
+en = "\"If you will not obey me, you will die.\""
+ru = "«Не подчинишься — умрёшь.»"
+
+[3659fd85835e]
+en = "\"Kneel now and make the two cuts of honor.  I will tell your %s of your honorable death.\""
+ru = "«Встань на колени и сделай два надреза чести.  Я расскажу твоим {hero:gender|братьям|сёстрам}{1:skip} о твоей достойной смерти.»"
+
+[7ee7010fb415]
+en = "\"Your master was a poor teacher.  You will pay for his mistakes in your teaching.\""
+ru = "«Твой учитель учил скверно.  Ты заплатишь за его ошибки в твоём обучении.»"
+
+[8334316f6757]
+en = "\"To defeat %s you must overcome the seven emotions: hate, adoration, joy, anxiety, anger, grief, and fear.\""
+ru = "«Чтобы победить {1:acc}, вы должны превозмочь семь чувств: ненависть, обожание, радость, тревогу, гнев, скорбь и страх.»"
+
+[bcb50e1d83ab]
+en = "\"Remember your honor is my honor, you perform in my name.\""
+ru = "«Помните: ваша честь — моя честь, вы действуете от моего имени.»"
+
+[510d5984f107]
+en = "\"I will go to the temple and burn incense for your safe return.\""
+ru = "«Я пойду в храм и воскурю благовония, чтобы вы вернулись {hero:gender|невредимым|невредимой}.»"
+
+[07f74f67fa92]
+en = "\"Sayonara.\""
+ru = "«Сайонара.»"
+
+[a94c5c60392f]
+en = "\"There can be honor in defeat, but no gain.\""
+ru = "«В поражении может быть честь, но не выгода.»"
+
+[78d570775a3d]
+en = "\"Your kami must be strong in order to succeed.\""
+ru = "«Чтобы преуспеть, ваш ками должен быть силён.»"
+
+[72f73ef09114]
+en = "\"You are indeed a worthy %s, but now you must be a worthy samurai.\""
+ru = "«Вы и впрямь {hero:gender|достойный|достойная} {1:hero}, но теперь вы должны стать {hero:gender|достойным|достойной} самураем.»"
+
+[2e1f7059ffe3]
+en = "\"If you fail, %s will be like a tai-fun on the land.\""
+ru = "«Если вы потерпите неудачу, {1} пронесётся по земле, как тай-фун.»"
+
+[456c9b9de8ac]
+en = "\"If you are truly %s, %s will listen.\""
+ru = "«Если вы и вправду верны пути {1:pl:gen}, {2} вас услышит.»"
+
+[93a3153f4e3e]
+en = "\"Sharpen your swords and your wits for the task before you.\""
+ru = "«Наточите мечи и ум перед тем, что вам предстоит.»"
+
+[fbaa21397c60]
+en = "[The banner of %s flies above town.  What has happened to %s?]"
+ru = "[Над городом реет знамя {1:gen}.  Что случилось с {2:ins}?]"
+
+[c28a5f3cf495]
+en = "Even before your senses adjust, you recognize the kami of\n%s.\n\nYou %s the standard of your teki, %s, flying above\nthe town.  How could such a thing have happened?  Why are ninja\nwandering freely; where are the samurai of your daimyo, %s?\n\nYou quickly say a prayer to Izanagi and Izanami and walk towards\ntown."
+ru = "Ещё прежде, чем чувства успевают прийти в себя, вы узнаёте ками {1:gen}.\n\nНад городом{2:skip} реет знамя вашего тэки — {3:gen}.  Как такое могло\nслучиться?  Почему здесь свободно бродят ниндзя, где самураи вашего\nдаймё, {4:gen}?\n\nВы торопливо возносите молитву Идзанаги и Идзанами и идёте к городу."
+
+[6888b2e6c411]
+en = "As you arrive once again at the home of %s."
+ru = "Вы снова прибываете в обитель {1:gen}."
+
+[e266429093e4]
+en = "[You feel the taunts %s, but after offering a prayer to %s, you proceed.]"
+ru = "[Вас терзают насмешки {1:gen}, но, вознеся молитву {2:dat}, вы идёте дальше.]"
+
+[bd4c7ae168a2]
+en = "In your mind, you hear the taunts of %s.\n\nYou become like the rice plant and bend to the ground, offering a\nprayer to %s.  But when the wind has passed, you stand\nproudly again.  Putting your kami in the hands of fate, you advance."
+ru = "В мыслях вы слышите насмешки {1:gen}.\n\nВы уподобляетесь рисовому стеблю и склоняетесь к земле, вознося молитву\n{2:dat}.  Но когда ветер стихает, вы снова гордо выпрямляетесь.  Вверив\nсвой ками судьбе, вы идёте вперёд."
+
+[e219f0e859fa]
+en = "As you arrive once again at the home of %s, your thoughts\nturn only to %s."
+ru = "Когда вы снова прибываете в обитель {1:gen}, все ваши мысли — лишь о\n{2:prep}."
+
+[05e6926dac23]
+en = "[You feel the power of %s and are humbled.]"
+ru = "[Вы чувствуете силу {1:gen}, и вас охватывает смирение.]"
+
+[b38f0e9b27c2]
+en = "As you pick up %s, you feel the strength of its karma.\nYou realize at once why so many good samurai had to die to defend it.\nYou are humbled knowing that you hold one of the artifacts of the\nsun goddess."
+ru = "Едва вы берёте {1:acc}, как чувствуете силу {1:gender|его|её|его|их}\nкармы.  Вы сразу понимаете, почему столько доблестных самураев отдали\nжизнь, защищая {1:gender|его|её|его|их}.  Вас охватывает смирение: вы\nдержите в руках один из артефактов богини солнца."
+
+[ea42bd4a8826]
+en = "\"Come, join us in celebrating with some sake.\""
+ru = "«Идёмте, отпразднуйте с нами — выпьем сакэ.»"
+
+[42fccd3213fb]
+en = "\"Ikaga desu ka?\""
+ru = "«Икага дэсу ка?»"
+
+[4b8b9460f434]
+en = "\"You have brought our clan and %s much honor.\""
+ru = "«Вы принесли нашему клану и {1:dat} великую честь.»"
+
+[2e24485c150f]
+en = "\"Please %s, sit for a while and tell us how you overcame the Ninja.\""
+ru = "«Прошу, {1:hero}, присядьте и расскажите, как вы одолели ниндзя.»"
+
+[40e218b7f734]
+en = "\"%s still lives!  You have saved us from becoming ronin.\""
+ru = "«{1:cap} жив{1:gender||а|о|ы}!  Вы спасли нас от участи ронинов.»"
+
+[39ce5dd7871a]
+en = "\"To succeed, you must walk like a butterfly on the wind.\""
+ru = "«Чтобы преуспеть, вы должны ступать, как бабочка на ветру.»"
+
+[25556ad08b68]
+en = "\"I fear for The Land of The Gods.\""
+ru = "«Я боюсь за Страну Богов.»"
+
+[735c2d8f8ab2]
+en = "\"%s has hired the Ninja -- be careful.\""
+ru = "«{1:cap} нанял{1:gender||а|о|и} ниндзя — будьте осторожны.»"
+
+[759a2ace7c87]
+en = "\"If %s is not returned, we will all be ronin.\""
+ru = "«Если {1} не вернётся к нам, все мы станем ронинами.»"
+
+[646c9c4d0e75]
+en = "[Take the Amulet to the Astral Plane to finish your task.]"
+ru = "[Отнесите Амулет на Астральный план и исполните свой долг до конца.]"
+
+[8199e17d29da]
+en = "\"Ah, %s-sama.  You have wasted your efforts returning home.\nNow that you are in possession of the Amulet, you are honor-bound to\nfinish the quest you have undertaken.  There will be plenty of time\nfor saki and stories when you have finished.\n\n\"Go now, and may our prayers be a wind at your back.\""
+ru = "«А, {1}-сама.  Зря вы утруждали себя возвращением домой.  Теперь, когда\nАмулет у вас, долг чести велит вам завершить начатый поход.  Для сакэ и\nрассказов времени будет вдоволь, когда вы закончите.\n\nСтупайте же, и пусть наши молитвы будут попутным ветром у вас за\nспиной.»"
+
+[20809928b497]
+en = "[%s dies without honor.]"
+ru = "[{1:cap} умирает без чести.]"
+
+[e49cba772178]
+en = "Your healing skills tell you that %s wounds are mortal.\n\nYou know that the bushido tells you to finish him and let his kami\ndie with honor, but the thought of so many samurai dead due to this\nman's dishonor prevents you from giving the final blow.\n\nYou order that his unwashed head be given to the crows and his body\nthrown into the sea."
+ru = "Ваши познания во врачевании подсказывают вам, что раны {1:gen}\nсмертельны.\n\nБусидо велит вам добить его и позволить его ками умереть с честью, но\nмысль о том, сколько самураев погибло из-за бесчестья этого человека,\nудерживает вашу руку от последнего удара.\n\nВы приказываете отдать его немытую голову воронам, а тело бросить в\nморе."
+
+[556c1f6f7c15]
+en = "[%s needs someone to lead %s samurai against %s.  Are you ready?]"
+ru = "[{1:dat:cap} нужен кто-то, кто поведёт {1:gender|его|её|его|их}{2:skip} самураев на {3:acc}.  Вы готовы?]"
+
+[2fb444607739]
+en = "\"Ah, %s-san, it is good to see you again.  I need someone who can\nlead my samurai against %s.  If you are ready, you will be\nthat person.\""
+ru = "«А, {1}-сан, рад снова вас видеть.  Мне нужен кто-то, кто сможет повести\nмоих самураев на {2:acc}.  Если вы готовы, этим человеком станете вы.»"
+
+[ef10a504f4ba]
+en = "[Leave and do not come back.]"
+ru = "[Уходите и не возвращайтесь.]"
+
+[7d02f3776917]
+en = "\"You are no longer my samurai, %s.\n\n\"Hara-kiri is denied.  You are ordered to shave your head and then to\nbecome a monk.  Your fief and family are forfeit.  Wakarimasu ka?\""
+ru = "«Вы больше не мой самурай, {1}.\n\nВ харакири вам отказано.  Вам велено обрить голову и стать\n{hero:gender|монахом|монахиней}.  Ваши земли и семья отходят в казну.\nВакаримасу ка?»"
+
+[4150f4be648a]
+en = "\"Once again, %s-san, you kneel before me.  Are you yet capable of\nbeing my vassal?\""
+ru = "«И снова, {1}-сан, вы преклоняете передо мной колени.  Способны ли вы\nтеперь быть моим вассалом?»"
+
+[2410c98124d9]
+en = "[Are you truly a samurai?]"
+ru = "[Истинный ли вы самурай?]"
+
+[6ae9f4b2f784]
+en = "\"You begin to test my matsu, %s-san.\nIf you cannot determine what I want in a samurai, how can I rely on you\nto figure out what I need from a samurai?\""
+ru = "«Вы начинаете испытывать моё мацу, {1}-сан.  Если вы не понимаете, каким\nя хочу видеть самурая, как мне положиться на вас в том, что мне нужно от\nсамурая?»"
+
+[ac98521c37d7]
+en = "You instinctively reach for your swords.  You do not recognize the\nlay of this land, but you know that your teki are everywhere."
+ru = "Вы невольно тянетесь к мечам.  Эти места вам незнакомы, но вы знаете,\nчто ваши тэки повсюду."
+
+[e65dda1f2873]
+en = "Thankful that your %s at %s cannot see\nyour fear, you prepare again to advance."
+ru = "Радуясь, что ваши {hero:gender|братья|сёстры}{1:skip} в {2:loc} не видят\nвашего страха, вы снова готовитесь идти вперёд."
+
+[74d5e053192e]
+en = "\"Ah, so it is to be you, %s-san.  I offer you seppuku.\nI will be your second if you wish.\""
+ru = "«А, так значит, это будешь ты, {1}-сан.  Предлагаю тебе сэппуку.  Если\nпожелаешь, я буду твоим кайсяку.»"
+
+[4427785c7b88]
+en = "\"I have offered you the honorable exit.  Now I will have your\nhead to send unwashed to %s.\""
+ru = "«Я предложил тебе достойный уход.  Теперь я возьму твою голову и отошлю\nеё немытой {1:dat}.»"
+
+[46e49613f94f]
+en = "\"After I have dispatched you, I will curse your kami.\""
+ru = "«Покончив с тобой, я прокляну твой ками.»"
+
+[ad2805c4d7c9]
+en = "\"You have fought my samurai; surely you must know that you\nwill not be able to take %s back to\n%s.\""
+ru = "«Ты сражал{hero:gender|ся|ась} с моими самураями; ты же понимаешь, что\nтебе не унести {1:acc} обратно в {2:acc}.»"
+
+[70acec67eb71]
+en = "[The emperor wants you to take %s and recover the Amulet.]"
+ru = "[Император желает, чтобы вы взяли {1:acc} и добыли Амулет.]"
+
+[d9c0739318e9]
+en = "As you bow before %s, he welcomes you:\n\n    \"You have brought your family great honor, %s-sama.\n\n    \"While you have been gone the emperor's advisors have discovered in\n    the ancient texts that the karma of the samurai who seeks to recover\n    the Amulet and the karma of %s are joined\n    as the seasons join to make a year.\n\n    \"Because you have shown such fidelity, the emperor requests\n    that you take leave of other obligations and continue on the\n    road that fate has set your feet upon.  I would consider it\n    an honor if you would allow me to watch your household until\n    you return with the Amulet.\"\n\nWith that, %s bows, and places his sword atop\n%s."
+ru = "Когда вы кланяетесь {1:dat}, он приветствует вас:\n\n    «Вы принесли своей семье великую честь, {2}-сама.\n\n    Пока вас не было, советники императора отыскали в древних текстах,\n    что карма самурая, который ищет Амулет, и карма {3:gen} соединены,\n    как времена года, что слагаются в год.\n\n    Поскольку вы проявили такую верность, император просит вас оставить\n    прочие обязанности и продолжить путь, на который вас поставила\n    судьба.  Я почту за честь, если вы позволите мне присматривать за\n    вашим домом, пока вы не вернётесь с Амулетом.»\n\nС этими словами {4} кланяется и кладёт свой меч поверх {5:gen}."
+not_terms = ["bow"]
+
+[a9cd6cd81c8f]
+en = "[Take %s, return to %s, and recover the Amulet.]"
+ru = "[Возьмите {1:acc}, вернитесь в {2:acc} и добудьте Амулет.]"
+
+[1a4a2658cedc]
+en = "%s holds %s tightly for a moment, then returns\nhis gaze to you.\n\n\"The time is ripe to recover the Amulet.  Return to %s\nthrough the magic portal that transported you here so that you may\nachieve the destiny which awaits you.\""
+ru = "{1:cap} на миг крепко сжимает {2:acc}, а затем снова обращает взгляд к\nвам.\n\n«Пришло время добыть Амулет.  Возвращайтесь в {3:acc} через волшебный\nпортал, что перенёс вас сюда, и исполните судьбу, что вас ожидает.»"
+
+[a22b0009e5f7]
+en = "[%s is threatened by %s.]"
+ru = "[{1:dat:cap} угрожает {2}.]"
+
+[853fcbe93a3e]
+en = "You are back at %s.\n\nInstantly you sense a subtle change in your karma.  You seem to know that\nif you do not succeed in your quest, %s will have destroyed\nthe kami of %s before you return again."
+ru = "Вы снова в {1:loc}.\n\nВы тотчас ощущаете едва уловимую перемену в своей карме.  Вы будто\nзнаете: если ваш поход не удастся, {2} уничтожит ками {3:gen} прежде,\nчем вы вернётесь сюда снова."
+
+[dc17d790065e]
+en = "%s bows.  \"%s-sama, tell us of your search for the Amulet.\""
+ru = "{1:cap} кланяется.  «{2}-сама, поведайте нам о ваших поисках Амулета.»"
+not_terms = ["bow"]
