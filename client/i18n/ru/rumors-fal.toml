@@ -92,8 +92,8 @@ ru = "Палочка вибрации может обрушить вам на г
 en = "A winner never quits.  A quitter never wins."
 ru = "Победитель никогда не сдаётся.  Сдавшийся никогда не побеждает."
 
-[88dffd9dc546]
-en = "[cookie] A wish?  Okay, make me a fortune cookie!"
+[25f635b6bda1]
+en = "A wish?  Okay, make me a fortune cookie!"
 ru = "Желание?  Ладно, сделайте из меня печенье с предсказанием!"
 
 [c97f17a81e41]
@@ -313,8 +313,8 @@ ru = "Хороший день для преодоления препятстви
 en = "Half Moon tonight.  (At least it's better than no Moon at all.)"
 ru = "Сегодня половина луны.  (Всё лучше, чем совсем без луны.)"
 
-[51a6616d0b56]
-en = "[cookie] Help!  I'm being held prisoner in a fortune cookie factory!"
+[8c27ca979358]
+en = "Help!  I'm being held prisoner in a fortune cookie factory!"
 ru = "Помогите!  Я узник фабрики печенья с предсказанием!"
 
 [5be4aea537a7]
@@ -517,8 +517,8 @@ ru = "Никогда не пользуйтесь палочкой смерти."
 en = "No level contains two shops.  The maze is no level.  So..."
 ru = "Ни на одном уровне нет двух лавок.  Лабиринт — не уровень.  Значит..."
 
-[7b6f36fac5cb]
-en = "[cookie] No part of this fortune may be reproduced, stored in a retrieval system, ..."
+[b82a8ab99a23]
+en = "No part of this fortune may be reproduced, stored in a retrieval system, ..."
 ru = "Никакая часть этого предсказания не может быть воспроизведена, сохранена в информационной системе, ..."
 
 [5f00e579a3d8]
@@ -629,8 +629,8 @@ ru = "На некоторые вопросы Сфинкса ответов *не
 en = "Sometimes \"mu\" is the answer."
 ru = "Иногда ответ — \"му\"."
 
-[afea93f56572]
-en = "[cookie] Sorry, no fortune this time.  Better luck next cookie!"
+[369832f00547]
+en = "Sorry, no fortune this time.  Better luck next cookie!"
 ru = "Простите, на этот раз без предсказания.  Удачи в следующем печенье!"
 
 [f434daa22835]
@@ -761,12 +761,12 @@ ru = "Говорят, лорд дварфов может носить кирку
 en = "They say that a floating eye can defeat Medusa."
 ru = "Говорят, парящее око может одолеть Медузу."
 
-[30042a358ff3]
-en = "[cookie] They say that a fortune only has 1 line and you can't read between it."
+[e86223d75892]
+en = "They say that a fortune only has 1 line and you can't read between it."
 ru = "Говорят, у предсказания всего одна строка, и между строк его не прочесть."
 
-[a9fd31c017ea]
-en = "[cookie] They say that a fortune only has 1 line, but you can read between it."
+[b8aff4852d44]
+en = "They say that a fortune only has 1 line, but you can read between it."
 ru = "Говорят, у предсказания всего одна строка, но между строк его прочесть можно."
 
 [948bde9875e9]
@@ -781,8 +781,8 @@ ru = "Говорят, золотой дублон стоит больше, че�
 en = "They say that a grid bug won't pay a shopkeeper for zapping you in a shop."
 ru = "Говорят, ситовый жучок не заплатит лавочнику за то, что пальнул в вас в лавке."
 
-[9629c252371e]
-en = "[cookie] They say that a gypsy could tell your fortune for a price."
+[854af48b6f35]
+en = "They say that a gypsy could tell your fortune for a price."
 ru = "Говорят, гадалка предскажет вам судьбу за плату."
 
 [c9cbc05a5e6b]
@@ -1002,8 +1002,8 @@ ru = "Говорят, найти выигрышную стратегию — о�
 en = "They say that finding worthless glass is worth something."
 ru = "Говорят, найти бесполезное стекло — тоже чего-то стоит."
 
-[935b6196739b]
-en = "[cookie] They say that fortune cookies are food for thought."
+[a3e2ba4f6628]
+en = "They say that fortune cookies are food for thought."
 ru = "Говорят, печенье с предсказанием — пища для размышлений."
 
 [33102e3a5337]
@@ -1405,12 +1405,12 @@ ru = "Говорят, никогда не пытайтесь покинуть п
 en = "They say that you should remove your armor before sitting on a throne."
 ru = "Говорят, прежде чем сесть на трон, снимите доспехи."
 
-[940c88e23a9b]
-en = "[cookie] This fortune cookie is copy protected."
+[5e8ba4c52393]
+en = "This fortune cookie is copy protected."
 ru = "Это печенье с предсказанием защищено от копирования."
 
-[b19c792f2759]
-en = "[cookie] This fortune cookie is the property of Fortune Cookies, Inc."
+[16c1a8b69574]
+en = "This fortune cookie is the property of Fortune Cookies, Inc."
 ru = "Это печенье с предсказанием — собственность ООО «Печенье с предсказаниями»."
 
 [8dc9109be48d]
@@ -1469,8 +1469,8 @@ ru = "Хотите вознестись побыстрее?  Обращайте�
 en = "Wanted: shopkeepers.  Send a scroll of mail to Mage of Yendor/Level 35/Dungeon."
 ru = "Требуются лавочники.  Присылайте почтовый свиток по адресу: Архимаг Йендора/Уровень 35/Подземелье."
 
-[b0d914b07d32]
-en = "[cookie] Warning:  fortune reading can be hazardous to your health."
+[e24bdc2d0dca]
+en = "Warning:  fortune reading can be hazardous to your health."
 ru = "Минздрав предупреждает: чтение предсказаний опасно для вашего здоровья."
 
 [05aa7b4a833f]
@@ -1481,8 +1481,8 @@ ru = "У нас есть новые способы распознавать пр
 en = "Wet towels make great weapons!"
 ru = "Мокрое полотенце — отличное оружие!"
 
-[f739c28034e5]
-en = "[cookie] What a pity, you cannot read it!"
+[59f173130988]
+en = "What a pity, you cannot read it!"
 ru = "Какая жалость, вы не можете это прочесть!"
 
 [7b6861593015]
@@ -1501,8 +1501,8 @@ ru = "В лабиринте держитесь правой стены — и н
 en = "When you have a key, you don't have to wait for the guard."
 ru = "Если у вас есть ключ, стража можно не ждать."
 
-[3fdae60303ad]
-en = "[cookie] Why are you wasting time reading fortunes?"
+[c9a581a7914e]
+en = "Why are you wasting time reading fortunes?"
 ru = "Зачем вы тратите время на чтение предсказаний?"
 
 [4fc8399c3e39]
@@ -1522,8 +1522,8 @@ ru = "Ого!  А ведь мог быть флакон фруктового с�
 en = "Yet Another Silly Message (YASM)."
 ru = "Ещё Одно Глупое Сообщение (ЕОГС)."
 
-[61fca93fe899]
-en = "[cookie] You are destined to be misled by a fortune."
+[44f847a95584]
+en = "You are destined to be misled by a fortune."
 ru = "Предсказанию суждено вас обмануть."
 
 [2078d6796ac7]
@@ -1542,8 +1542,8 @@ ru = "От чёрных драконов можно защититься так:
 en = "You can't get by the snake."
 ru = "Мимо змеи не пройти."
 
-[199ec69767aa]
-en = "[cookie] You choke on the fortune cookie.  --More--"
+[fdfdd8a84871]
+en = "You choke on the fortune cookie.  --More--"
 ru = "Вы подавились печеньем с предсказанием.  --Дальше--"
 
 [f78bdd5ffba7]
@@ -1554,8 +1554,8 @@ ru = "Кажется, кто-то водит вас за нос."
 en = "You have to outwit the Sphynx or pay her."
 ru = "Сфинкса нужно перехитрить или заплатить ей."
 
-[d70c1f03d80a]
-en = "[cookie] You hear the fortune cookie's hissing!"
+[dd06956592a1]
+en = "You hear the fortune cookie's hissing!"
 ru = "Вы слышите шипение печенья с предсказанием!"
 
 [39607d49c07b]
@@ -1566,8 +1566,8 @@ ru = "На продаже писем можно разбогатеть, но б�
 en = "You offend Shai-Hulud by sheathing your crysknife without having drawn blood."
 ru = "Вы оскорбляете Шаи-Хулуда, вложив криснож в ножны, не пролив крови."
 
-[57a29d7f6751]
-en = "[cookie] You swallowed the fortune!"
+[4e4d3638c1f5]
+en = "You swallowed the fortune!"
 ru = "Вы проглотили предсказание!"
 
 [e017fb43828b]

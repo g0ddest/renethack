@@ -47,6 +47,10 @@ def quest_format(text):
     return "".join(out), kinds
 
 
+# the marker of rumors.fal's lines fit only for a fortune cookie
+COOKIE = "[cookie] "
+
+
 def text_lines(path):
     with open(path, encoding="latin-1") as f:
         for n, line in enumerate(f, 1):
@@ -66,6 +70,8 @@ def extract(upstream):
     for name, use in (("rumors.tru", "rumor"), ("rumors.fal", "rumor"),
                       ("epitaph.txt", "epitaph"), ("engrave.txt", "engraving")):
         for n, line in text_lines(os.path.join(dat, name)):
+            # getrumor() shows a fortune cookie's rumor without its marker
+            line = line.removeprefix(COOKIE)
             yield escape(line), use, f"dat/{name}:{n}", []
     for n, line in text_lines(os.path.join(dat, "bogusmon.txt")):
         # a leading -, _, +, | or = says the gender and whether it is a

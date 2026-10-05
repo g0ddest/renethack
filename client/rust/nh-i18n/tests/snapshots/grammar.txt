@@ -7651,6 +7651,8 @@ A web bursts into flames!  [cc3e6dff9cc7]
   =   Паутина вспыхивает пламенем!
 A winner never quits.  A quitter never wins.  [fb49bf6b1351]
   =   Победитель никогда не сдаётся.  Сдавшийся никогда не побеждает.
+A wish?  Okay, make me a fortune cookie!  [25f635b6bda1]
+  =   Желание?  Ладно, сделайте из меня печенье с предсказанием!
 A.S. ->  [2c5609394a8f]
   =   А. С. ->
 Ach, 'twas a wee monster in the loch  [6c9459562af6]
@@ -9156,6 +9158,8 @@ Heavy-duty boots can protect more than just your feet.  [bcead42e2a73]
   =   Крепкие сапоги берегут не только ноги.
 Hello, World!  [0a0a9f2a6772]
   =   Привет, мир!
+Help!  I'm being held prisoner in a fortune cookie factory!  [8c27ca979358]
+  =   Помогите!  Я узник фабрики печенья с предсказанием!
 Help! I've fallen and I can't get up!  [9bb525d58691]
   =   Помогите! Я упал и не могу встать!
 Help, I can't wake up!  [f735448cb582]
@@ -9902,6 +9906,8 @@ No level contains two shops.  The maze is no level.  So...  [b63e40dc69c9]
   =   Ни на одном уровне нет двух лавок.  Лабиринт — не уровень.  Значит...
 No one ever died from it  [3257ad9d638d]
   =   От этого ещё никто не умирал
+No part of this fortune may be reproduced, stored in a retrieval system, ...  [b82a8ab99a23]
+  =   Никакая часть этого предсказания не может быть воспроизведена, сохранена в информационной системе, ...
 No relevant items selected.  [1c8456c38e24]
   =   Подходящие предметы не выбраны.
 No type of monster specified.  [9633b02063ed]
@@ -10840,6 +10846,8 @@ Soon you'll join this fellow in hell! -- the Wizard of Yendor  [8e84f4e92ca9]
   =   Скоро вы составите компанию этому парню в аду! — Волшебник Йендора
 Sorry, I don't know how to use that.  [9e526edab5a9]
   =   Извините, я не знаю, как это использовать.
+Sorry, no fortune this time.  Better luck next cookie!  [369832f00547]
+  =   Простите, на этот раз без предсказания.  Удачи в следующем печенье!
 Sort order for genocided monster types (also vanquished counts)  [f6c074bb5511]
   =   Порядок списка истреблённых видов (и побеждённых монстров)
 Sort order for vanquished monster counts (also genocided types)  [3324d8858cf9]
@@ -11921,6 +11929,10 @@ They say that a dwarf lord can carry a pick-axe because his armor is light.  [49
   =   Говорят, лорд дварфов может носить кирку, потому что у него лёгкая броня.
 They say that a floating eye can defeat Medusa.  [9ea32451249b]
   =   Говорят, парящее око может одолеть Медузу.
+They say that a fortune only has 1 line and you can't read between it.  [e86223d75892]
+  =   Говорят, у предсказания всего одна строка, и между строк его не прочесть.
+They say that a fortune only has 1 line, but you can read between it.  [b8aff4852d44]
+  =   Говорят, у предсказания всего одна строка, но между строк его прочесть можно.
 They say that a fountain looks nothing like a regularly erupting geyser.  [948bde9875e9]
   =   Говорят, фонтан совсем не похож на регулярно извергающийся гейзер.
 They say that a gelatinous cube makes a healthy breakfast.  [6f382dadde98]
@@ -11933,6 +11945,8 @@ They say that a grid bug won't hit you when you cross it.  [29b07de603bb]
   =   Говорят, ситовый жучок вас не тронет, если зайти к нему по диагонали.
 They say that a grid bug won't pay a shopkeeper for zapping you in a shop.  [fbf95d6c43bc]
   =   Говорят, ситовый жучок не заплатит лавочнику за то, что пальнул в вас в лавке.
+They say that a gypsy could tell your fortune for a price.  [854af48b6f35]
+  =   Говорят, гадалка предскажет вам судьбу за плату.
 They say that a hacker named Alice once level teleported by using a mirror.  [c9cbc05a5e6b]
   =   Говорят, хакер по имени Алиса однажды переместилась на другой уровень через зеркало.
 They say that a hacker named David once slew a giant with a sling and a rock.  [e570b755b955]
@@ -12125,6 +12139,8 @@ They say that finding a winning strategy is a deliberate move on your part.  [e6
   =   Говорят, найти выигрышную стратегию — обдуманный ход с вашей стороны.
 They say that finding worthless glass is worth something.  [98c2c40c93f2]
   =   Говорят, найти бесполезное стекло — тоже чего-то стоит.
+They say that fortune cookies are food for thought.  [a3e2ba4f6628]
+  =   Говорят, печенье с предсказанием — пища для размышлений.
 They say that gaining a level is an experience that can raise your sights.  [ff84757fb4e4]
   =   Говорят, новый уровень — это опыт, который расширяет горизонты.
 They say that garter snake meat may not taste good but it's still healthy.  [006baac6a891]
@@ -12691,6 +12707,10 @@ This elevator doesn't go to Heaven  [e544e60d7d15]
   =   Этот лифт не идёт на небеса
 This food really hits the spot!  [d670ef61b5da]
   =   Эта еда пришлась как нельзя кстати!
+This fortune cookie is copy protected.  [5e8ba4c52393]
+  =   Это печенье с предсказанием защищено от копирования.
+This fortune cookie is the property of Fortune Cookies, Inc.  [16c1a8b69574]
+  =   Это печенье с предсказанием — собственность ООО «Печенье с предсказаниями».
 This gold is delicious!  [ea6274ae6f88]
   =   Это золото восхитительно!
 This gravestone is shareware.  To register, please send me 10 zorkmids  [beb759d1784d]
@@ -13106,6 +13126,8 @@ Warily you scan your surroundings, all of your senses alert for signs\nof possib
   pl  Вы настороженно осматриваетесь, все чувства начеку в ожидании\nопасности.  Вдали виднеются знакомые очертания\n3 стрел.\n\nНо почему, думаете вы, 3 стрелы должны быть там?\n\nВнезапно волосы у вас на затылке встают дыбом: вы ощущаете в воздухе\nауру злой магии.\n\nНе раздумывая, вы готовите оружие и бормочете себе под нос:\n\n    «Клянусь 3 стрелами, сегодня прольётся кровь.»
 Warning, Exploding runes!  [ae6c519fde20]
   =   Осторожно, взрывные руны!
+Warning:  fortune reading can be hazardous to your health.  [e24bdc2d0dca]
+  =   Минздрав предупреждает: чтение предсказаний опасно для вашего здоровья.
 Watch out, the Wizard might come back.  [6497d1b21753]
   =   Берегитесь: Волшебник может вернуться.
 Watch out, there's a gnome with a wand of death behind that door!  [4ac1d3c62188]
@@ -13152,6 +13174,8 @@ Wet towels make great weapons!  [05154f30ca60]
   =   Мокрое полотенце — отличное оружие!
 Whammm!!  [74ba1a1e775e]
   =   Бамм!!
+What a pity, you cannot read it!  [59f173130988]
+  =   Какая жалость, вы не можете это прочесть!
 What a pity--you just ruined a future piece of art!  [1fdfbe6a41ad]
   =   Какая жалость — вы только что испортили будущее произведение искусства!
 What a pity--you just ruined a future piece of fine art!  [2774aee8f2ae]
@@ -13668,6 +13692,8 @@ Who needs an apron if they're made of glass?  [82c2eac4f731]
   =   Зачем фартук тому, кто сделан из стекла?
 Who was that Maud person anyway?  [0aa482ba3e0d]
   =   А кто вообще такая эта Мод?
+Why are you wasting time reading fortunes?  [c9a581a7914e]
+  =   Зачем вы тратите время на чтение предсказаний?
 Why do you suppose they call them MAGIC markers?  [760af3515ba8]
   =   Как вы думаете, почему их называют ВОЛШЕБНЫМИ маркерами?
 Why do you think they call them mercenaries?  [d6d99cdeea90]
@@ -13953,6 +13979,8 @@ You are caught in the %s explosion!  [85369e21cb12]
   pl  Вас задевает взрыв 3 стрел!
 You are conscious again.  [d5fc88130fba]
   =   Вы снова в сознании.
+You are destined to be misled by a fortune.  [44f847a95584]
+  =   Предсказанию суждено вас обмануть.
 You are dual wielding %ld %s.  Ready %ld of them?  [2911c3ca7758]
   m   У вас в обеих руках 1 тритон.  Положить 1 в колчан?
   f   У вас в обеих руках 3 крысы.  Положить 3 в колчан?
@@ -14377,6 +14405,8 @@ You cannot throw something you are wearing.  [124e17e06f6c]
   =   Нельзя метнуть то, что на вас надето.
 You cannot wield that!  [12d28375e654]
   =   Это нельзя взять в руки!
+You choke on the fortune cookie.  --More--  [fdfdd8a84871]
+  =   Вы подавились печеньем с предсказанием.  --Дальше--
 You choke over it.  [dcb317b56579]
   =   Вы давитесь.
 You choke over your cloth.  [227b61abf8d7]
@@ -15562,6 +15592,8 @@ You hear the chime of a cash register.  [8aa2c9244387]
   =   Вы слышите звон кассового аппарата.
 You hear the footsteps of a guard on patrol.  [76b13de14bce]
   =   Вы слышите шаги стража, совершающего обход.
+You hear the fortune cookie's hissing!  [dd06956592a1]
+  =   Вы слышите шипение печенья с предсказанием!
 You hear the rumble of distant thunder...  [27ee74ffbbce]
   =   Вы слышите раскаты далёкого грома...
 You hear the splashing of a naiad.  [bdf7fb6c18b0]
@@ -16072,6 +16104,8 @@ You suddenly fall asleep!  [3cb2721e9e25]
   =   Вы внезапно засыпаете!
 You sure are noisy.  [ea32202a132c]
   =   Ну и шум вы поднимаете.
+You swallowed the fortune!  [4e4d3638c1f5]
+  =   Вы проглотили предсказание!
 You swap places with %s.  [8e3761e5ea42]
   m   Вы меняетесь местами с тритоном.
   f   Вы меняетесь местами с крысой.
@@ -17228,40 +17262,6 @@ Zapping a wand of undead turning might bring your dog back to life.  [0ec0375106
   f   [свободных крысы для колец нет]
   n   [свободных копья для колец нет]
   pl  [свободных 3 стрел для колец нет]
-[cookie] A wish?  Okay, make me a fortune cookie!  [88dffd9dc546]
-  =   Желание?  Ладно, сделайте из меня печенье с предсказанием!
-[cookie] Help!  I'm being held prisoner in a fortune cookie factory!  [51a6616d0b56]
-  =   Помогите!  Я узник фабрики печенья с предсказанием!
-[cookie] No part of this fortune may be reproduced, stored in a retrieval system, ...  [7b6f36fac5cb]
-  =   Никакая часть этого предсказания не может быть воспроизведена, сохранена в информационной системе, ...
-[cookie] Sorry, no fortune this time.  Better luck next cookie!  [afea93f56572]
-  =   Простите, на этот раз без предсказания.  Удачи в следующем печенье!
-[cookie] They say that a fortune only has 1 line and you can't read between it.  [30042a358ff3]
-  =   Говорят, у предсказания всего одна строка, и между строк его не прочесть.
-[cookie] They say that a fortune only has 1 line, but you can read between it.  [a9fd31c017ea]
-  =   Говорят, у предсказания всего одна строка, но между строк его прочесть можно.
-[cookie] They say that a gypsy could tell your fortune for a price.  [9629c252371e]
-  =   Говорят, гадалка предскажет вам судьбу за плату.
-[cookie] They say that fortune cookies are food for thought.  [935b6196739b]
-  =   Говорят, печенье с предсказанием — пища для размышлений.
-[cookie] This fortune cookie is copy protected.  [940c88e23a9b]
-  =   Это печенье с предсказанием защищено от копирования.
-[cookie] This fortune cookie is the property of Fortune Cookies, Inc.  [b19c792f2759]
-  =   Это печенье с предсказанием — собственность ООО «Печенье с предсказаниями».
-[cookie] Warning:  fortune reading can be hazardous to your health.  [b0d914b07d32]
-  =   Минздрав предупреждает: чтение предсказаний опасно для вашего здоровья.
-[cookie] What a pity, you cannot read it!  [f739c28034e5]
-  =   Какая жалость, вы не можете это прочесть!
-[cookie] Why are you wasting time reading fortunes?  [3fdae60303ad]
-  =   Зачем вы тратите время на чтение предсказаний?
-[cookie] You are destined to be misled by a fortune.  [61fca93fe899]
-  =   Предсказанию суждено вас обмануть.
-[cookie] You choke on the fortune cookie.  --More--  [199ec69767aa]
-  =   Вы подавились печеньем с предсказанием.  --Дальше--
-[cookie] You hear the fortune cookie's hissing!  [d70c1f03d80a]
-  =   Вы слышите шипение печенья с предсказанием!
-[cookie] You swallowed the fortune!  [57a29d7f6751]
-  =   Вы проглотили предсказание!
 [m] Command accepts '%s' prefix  [50491bdaf137]
   m   [m] Команда принимает префикс 'тритон'
   f   [m] Команда принимает префикс 'крыса'
