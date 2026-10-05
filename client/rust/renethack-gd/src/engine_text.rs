@@ -187,13 +187,31 @@ impl EngineText for EngineTranslator {
             .rev()
             .take_while(|l| l.trim().is_empty())
             .count();
-        self.cached(EngineKind::Window, &whole, None, |t| t.window(&whole))
-            .map(|text| {
-                let mut out = vec![String::new(); lead];
-                out.extend(text.split('\n').map(str::to_string));
-                out.extend(std::iter::repeat_n(String::new(), trail));
-                out
-            })
+        self.cached(EngineKind::Window, &whole, None, |t| {
+            if t.is_layout(&whole) {
+                // the tombstone, #overview, the vanquished: the client lays
+                // them out from their English
+                return Output {
+                    text: whole.clone(),
+                    status: Status::Unknown,
+                    template: None,
+                };
+            }
+            let mut out = t.window(&whole);
+            // some lines in Russian and some not yet: the Russian ones show
+            if matches!(out.status, Status::Untranslated | Status::Unknown)
+                && out.text != whole.trim_matches(|c: char| c == '\n' || c == '\r')
+            {
+                out.status = Status::Partial;
+            }
+            out
+        })
+        .map(|text| {
+            let mut out = vec![String::new(); lead];
+            out.extend(text.split('\n').map(str::to_string));
+            out.extend(std::iter::repeat_n(String::new(), trail));
+            out
+        })
     }
 
     fn set_hero_female(&self, female: bool) {
@@ -254,6 +272,21 @@ mod tests {
             Some("Законопослушный")
         );
         assert_eq!(t.hero_word(Lang::En, "Chaotic"), None);
+    }
+
+    #[test]
+    fn a_window_shows_its_russian_lines_and_layout_stays() {
+        let t = loaded();
+        // a line in Russian, a line no template knows: the Russian shows
+        let lines = ["", " You are hungry.", " Xyzzy plugh frobnicates.", ""];
+        let out = t.window(Lang::Ru, &lines).expect("the Russian lines");
+        assert_eq!(out, ["", " Вы голодны.", " Xyzzy plugh frobnicates.", ""]);
+        // a tombstone's line: the client draws it from the English
+        let rip = [
+            "                       ----------",
+            "                      /          \\",
+        ];
+        assert_eq!(t.window(Lang::Ru, &rip), None);
     }
 
     #[test]

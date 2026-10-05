@@ -14,7 +14,7 @@
 //! English text (the translation is then partial). A name the player typed
 //! (the hero's, a fruit's) is shown as typed.
 
-use crate::catalog::{Catalog, Channel, Match, Template};
+use crate::catalog::{Catalog, Channel, Match, Template, Use};
 use crate::format::{ConvKind, Segment, convs};
 use crate::grammar::Gender;
 use crate::phrase::{NameKind, Names, Phrase};
@@ -198,6 +198,19 @@ impl Translator {
             status: worst(&parts),
             template: None,
         }
+    }
+
+    /// Is a window one the client lays out from its English (the
+    /// tombstone, #overview, the vanquished): a line of it a text the
+    /// catalog knows only as layout?
+    pub fn is_layout(&self, text: &str) -> bool {
+        text.lines().filter(|l| !l.trim().is_empty()).any(|l| {
+            self.catalog.find(l, Channel::Window).is_some_and(|m| {
+                let uses = &m.template.uses;
+                uses.contains(&Use::Layout)
+                    && uses.iter().all(|u| matches!(u, Use::Layout | Use::Piece))
+            })
+        })
     }
 
     /// A paragraph of a window: a text of the catalog as a whole, else

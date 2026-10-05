@@ -20,9 +20,7 @@ use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use nh_i18n::{
-    Arg, Catalog, Channel, NameKind, Names, Output, Phrase, Russian, Status, Translator, Use,
-};
+use nh_i18n::{Arg, Catalog, NameKind, Names, Output, Phrase, Russian, Status, Translator};
 use serde::Deserialize;
 
 /// `--no-lexicon`: every name stays English.
@@ -174,7 +172,7 @@ fn run(
                         .collect();
                     if whole.template.is_some() || lines.len() < 2 {
                         items.push(("window".into(), shown.text.clone(), whole));
-                    } else if lines.iter().any(|l| is_layout(&translator, l)) {
+                    } else if translator.is_layout(&shown.text) {
                         // the tombstone, #overview, a list: the client draws
                         // it from data
                         report.layout += 1;
@@ -312,14 +310,6 @@ fn run(
         );
     }
     Ok(out)
-}
-
-/// Is a line one of a picture or a table the client draws from data?
-fn is_layout(translator: &Translator, line: &str) -> bool {
-    translator
-        .catalog()
-        .find(line, Channel::Window)
-        .is_some_and(|m| m.template.has_use(Use::Layout))
 }
 
 /// What the texts of a corpus came to.
