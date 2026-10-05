@@ -4459,6 +4459,23 @@ impl MapView {
         self.veiled.unwrap_or(!first_draws_done)
     }
 
+    /// The hero the title scene shows: of `role` (a role's name or code,
+    /// "Val"), a woman's look when `female`. Laid again when it changes.
+    pub fn set_title_hero(&mut self, role: &str, female: bool) {
+        let hero = (role.to_string(), female);
+        if self.title_hero != hero {
+            self.title_hero = hero;
+            if self.titled && !self.shown {
+                self.show_title_scene();
+            }
+        }
+    }
+
+    /// The title scene's hero: (role, a woman) (self-tests).
+    pub fn title_hero(&self) -> (&str, bool) {
+        (&self.title_hero.0, self.title_hero.1)
+    }
+
     /// Lay the title scene; nothing before the rehearsal is over.
     fn show_title_scene(&mut self) {
         let Some(catalog) = self.title_catalog.clone() else {

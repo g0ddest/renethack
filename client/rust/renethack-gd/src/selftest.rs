@@ -408,9 +408,15 @@ fn welcome_back(g: &RenethackGame) -> Result<bool, String> {
     Ok(g.world.log.iter().any(|m| m.text.contains("welcome back")))
 }
 
-/// Save with `S`, see it on the title screen, continue it, quit.
+/// Save with `S` (a man, a Wizard), see it on the title screen, whose
+/// scene now shows that hero (kept in the profile), continue it, quit.
 fn save() -> Vec<Step> {
-    let mut steps = start();
+    // a man of another role than the title's default (a woman Valkyrie)
+    let mut steps = start_as(CharacterChoice {
+        role: "wizard".into(),
+        gender: "male".into(),
+        ..smoke_choice()
+    });
     steps.extend([
         key('l'),
         Step::Request("a command after a step", command),
@@ -426,6 +432,22 @@ fn save() -> Vec<Step> {
             Ok(screen(g) == Some("title") && ui.screens.has_button(&continue_label("Hero")))
         }),
         Step::Shot("saved"),
+        // the title shows the hero of the game just played, and the
+        // profile keeps them for the next start
+        Step::Call("the last hero on the title and in the profile", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            if ui.map.title_hero() != ("Wiz", false) {
+                return Err(format!("the title's hero is {:?}", ui.map.title_hero()));
+            }
+            let pg = g.paths.as_ref().ok_or("no paths")?.playground.clone();
+            let profile = nh_link::read_profile(&pg)
+                .map(|t| nh_world::Profile::from_json(&t))
+                .unwrap_or_default();
+            if profile.last_role.as_deref() != Some("Wiz") || profile.last_female != Some(false) {
+                return Err(format!("the profile keeps {profile:?}"));
+            }
+            Ok(())
+        }),
         Step::Push(UiEvent::ContinueGame("Hero".into())),
         Step::Request("the first command of the restored game", command),
         Step::Wait("\"welcome back\" in the log", welcome_back),

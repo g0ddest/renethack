@@ -586,11 +586,18 @@ impl UiState {
 }
 
 /// The client's own settings, the same for every character
-/// (`<playground>/profile.json`): the last language chosen.
+/// (`<playground>/profile.json`): the last language chosen, the hero of
+/// the last game played (the title scene shows them).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Profile {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub lang: Option<String>,
+    /// The last hero's role, as the engine's code ("Val").
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last_role: Option<String>,
+    /// The last hero is a woman.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last_female: Option<bool>,
 }
 
 impl Profile {
@@ -1014,9 +1021,18 @@ mod tests {
         assert_eq!(back.lang.as_deref(), Some("ru"));
         let profile = Profile {
             lang: Some("ru".into()),
+            ..Profile::default()
         };
         assert_eq!(Profile::from_json(&profile.to_json()), profile);
         assert_eq!(Profile::from_json("broken"), Profile::default());
+        // the last hero: kept beside the language, an older file reads
+        let hero = Profile {
+            last_role: Some("Val".into()),
+            last_female: Some(true),
+            ..profile.clone()
+        };
+        assert_eq!(Profile::from_json(&hero.to_json()), hero);
+        assert_eq!(Profile::from_json(r#"{"lang": "ru"}"#), profile);
     }
 
     #[test]

@@ -298,6 +298,8 @@ pub struct RenethackGame {
     /// The hero's gender as the map draws the hero, told to the engine's
     /// translator (the words that agree with the hero).
     hero_female: Option<bool>,
+    /// The session whose hero went to the profile and the title scene.
+    last_hero_of: Option<u64>,
     /// A reply could not be written: the engine is gone.
     link_error: Option<String>,
     close_deadline: Option<Instant>,
@@ -465,6 +467,7 @@ impl INode for RenethackGame {
             name: None,
             achievements: None,
             hero_female: None,
+            last_hero_of: None,
             achievement_page: None,
             link_error: None,
             close_deadline: None,
@@ -625,6 +628,13 @@ impl INode for RenethackGame {
             paths.playground.display()
         );
         self.paths = Some(paths.clone());
+        // the title scene shows the hero of the last game played
+        if let Some(p) = read_profile(&paths.playground).map(|t| Profile::from_json(&t))
+            && let Some(role) = p.last_role.as_deref()
+            && let Some(ui) = self.ui.as_mut()
+        {
+            ui.map.set_title_hero(role, p.last_female.unwrap_or(false));
+        }
         self.seed = args.seed;
         // the soak plays many orders: quickly
         let soak = args.selftest.as_deref() == Some("soak");
@@ -2638,19 +2648,52 @@ impl RenethackGame {
             return;
         }
         i18n::set_lang(lang);
-        let playground = self.playground();
-        let mut profile = read_profile(&playground)
-            .map(|t| Profile::from_json(&t))
-            .unwrap_or_default();
-        profile.lang = Some(lang.code().to_string());
-        if let Err(e) = write_profile(&playground, &profile.to_json()) {
-            godot_warn!("renethack: cannot keep the profile: {e}");
-        }
+        self.update_profile(|p| p.lang = Some(lang.code().to_string()));
         if self.session.is_some() {
             self.ui_state.lang = Some(lang.code().to_string());
             self.save_ui_state();
         }
         self.relang();
+    }
+
+    /// The profile read, changed by `change`, written back (what else it
+    /// keeps stays).
+    fn update_profile(&self, change: impl FnOnce(&mut Profile)) {
+        let playground = self.playground();
+        let mut profile = read_profile(&playground)
+            .map(|t| Profile::from_json(&t))
+            .unwrap_or_default();
+        change(&mut profile);
+        if let Err(e) = write_profile(&playground, &profile.to_json()) {
+            godot_warn!("renethack: cannot keep the profile: {e}");
+        }
+    }
+
+    /// The hero of this game, once the engine has told the role and the
+    /// map has drawn the hero: the title scene's hero from now on, kept in
+    /// the profile for the next start (once a game, so a polymorph later
+    /// does not change it).
+    fn sync_last_hero(&mut self) {
+        if self.last_hero_of == Some(self.session_serial) {
+            return;
+        }
+        let (Some(role), Some(female)) = (
+            self.world.progress().map(|p| p.role.clone()),
+            self.hero_female,
+        ) else {
+            return;
+        };
+        if role.is_empty() {
+            return;
+        }
+        self.last_hero_of = Some(self.session_serial);
+        self.update_profile(|p| {
+            p.last_role = Some(role.clone());
+            p.last_female = Some(female);
+        });
+        if let Some(ui) = self.ui.as_mut() {
+            ui.map.set_title_hero(&role, female);
+        }
     }
 
     /// Everything on screen in the language now.
@@ -3006,6 +3049,7 @@ impl RenethackGame {
         ui.hud.sync(&mut self.world, catalog.as_deref());
         self.lap("hud", t);
         self.sync_hero_gender();
+        self.sync_last_hero();
         let t = Instant::now();
         self.sync_inventory();
         self.lap("inventory", t);
