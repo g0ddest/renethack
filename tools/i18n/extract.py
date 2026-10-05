@@ -97,6 +97,7 @@ SINKS = {
     "putstr": [("window", 2)],
     "add_menu": [("menu", 7)],
     "add_menu_str": [("menu", 1)],
+    "add_menu_heading": [("menu", 1)],
     "end_menu": [("menu", 1)],
     "yn_function": [("query", 0)],
     "y_n": [("query", 0)],
@@ -1320,6 +1321,31 @@ def add_rip(cat, unit):
             cat.add(escape(m.group(1)) + "|%s|" + escape(m.group(3)), "layout", site, ["text"], force=True)
 
 
+OPTION_MACROS = ("NHOPTB", "NHOPTC", "NHOPTP", "NHOPTO")
+
+
+def add_options(cat, units):
+    """What 'O' shows of the options: their descriptions (the last argument
+    of each NHOPTB/C/P/O() of include/optlist.h: "can your character hear
+    anything"), as its help lists them; an "other setting"'s name
+    ("autopickup exceptions"); the sections of its menu ("General")."""
+    with open(os.path.join(UPSTREAM, "include", "optlist.h"), encoding="latin-1") as f:
+        toks = clex.scan_unit("optlist.h", f.read()).toks
+    for i, t in enumerate(toks):
+        if t.kind != "ident" or t.text not in OPTION_MACROS or toks[i + 1].text != "(":
+            continue
+        args = split_args(toks, i + 1, match_close(toks, i + 1))
+        other = t.text == "NHOPTO"
+        name = source_text(args[2] if other else args[0])
+        for arg in [args[-1]] + ([args[0]] if other else []):
+            if arg and all(x.kind == "string" for x in arg):
+                text = "".join(x.value for x in arg)
+                cat.add(escape(text), "sprintf", f"include/optlist.h:{t.line} {name}", [])
+    for unit in units:
+        for section in unit.arrays.get("OptS_type", []) if unit.path == "options.c" else []:
+            cat.add(escape(section), "sprintf", "src/options.c:0 OptS_type", [])
+
+
 def site_text(path, func, line, call, args):
     shown = ", ".join(source_text(a) for a in args)
     if len(shown) > 120:
@@ -1562,6 +1588,7 @@ def extract():
     for unit in units:
         if unit.path == "rip.c":
             add_rip(cat, unit)
+    add_options(cat, units)
     for fmt, use, site, kinds in datfiles.extract(UPSTREAM):
         cat.add(fmt, use, site, kinds)
     return cat
