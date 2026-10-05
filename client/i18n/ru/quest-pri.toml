@@ -1,0 +1,139 @@
+# R6 quest texts: Pri (dat/quest.lua).
+
+[fc217d092967]
+en = "[%s invaded %s and captured %s.  Defeat %s and retrieve %s.]"
+ru = "[{1:cap} вторгся в {2:acc} и захватил {3:acc}.  Одолейте его{4:skip} и верните её{5:skip}.]"
+
+[22c8f501e06b]
+en = "\"Yes, %s.  You are truly ready now.  Attend to me and I shall\ntell you of what has transpired:\n\n\"At one of the Great Festivals a short time ago, %s and a legion\nof undead invaded %s.  Many %s were killed, including\nthe one carrying %s.\n\n\"As a final act of vengefulness, %s desecrated the altar here.\nWithout it, we could not mount a counter-attack.  Now, there are\nbarely enough %s left to keep the undead at bay.\n\n\"We need you to find %s, then, from there, travel\nto %s lair.  If you can manage to defeat %s and return\n%s here, we can then drive off the legions of\nundead that befoul the land.\n\n\"Go with %s as your guide, %s.\""
+ru = "«Да, {1}.  Теперь вы воистину готовы.  Внимайте мне, и я поведаю\nвам о том, что случилось.\n\nНедавно, во время одного из Великих Празднеств, {2} и легион\nнежити вторглись в {3:acc}.  Погибло много {4:gen}, в том числе\nтот, кто нёс {5:acc}.\n\nВ довершение своей мести {6} осквернил здешний алтарь.\nБез него мы не смогли перейти в наступление.  Теперь {7:gen}\nедва хватает, чтобы сдерживать нежить.\n\nНам нужно, чтобы вы нашли {8:acc}, а оттуда отправились\nв логово {9:gen}.  Если вам удастся одолеть {10:acc} и вернуть\nсюда {11:acc}, мы сможем прогнать легионы\nнежити, что оскверняют эту землю.\n\nИдите, и пусть {12} будет вам {12:gender|проводником|проводницей|проводником|проводниками}, {13}.»"
+
+[7bbb838f22c9]
+en = "[You have deviated from the path.  Return when you have purified yourself.]"
+ru = "[Вы сошли с пути.  Возвращайтесь, когда очиститесь.]"
+
+[b36f0e9fa16b]
+en = "[%s cannot withstand %s.  Come back when you are %s.]"
+ru = "[{1:hero:dat:cap} не выстоять против {2:gen}.  Возвращайтесь, когда станете {3:hero:ins}.]"
+
+[ed1f526c7d6d]
+en = "\"Alas, %s, it is not yet to be.  A mere %s could never\nwithstand the might of %s.  Go forth, again into the world, and return\nwhen you have attained the post of %s.\""
+ru = "«Увы, {1}, этому ещё не время.  {hero:gender|Простому|Простой} {2:hero:dat} никогда не выстоять\nпротив мощи {3:gen}.  Ступайте снова в мир и возвращайтесь,\nкогда достигнете звания {4:hero:gen}.»"
+
+[3daf69ce896d]
+en = "\"Beware, %s is surrounded by a great graveyard.\""
+ru = "«Берегитесь: {1} окружён огромным кладбищем.»"
+
+[dd360696f343]
+en = "\"You may be able to affect %s with magical cold.\""
+ru = "«Возможно, на {1:acc} подействует магический холод.»"
+
+[f1445e7117f6]
+en = "\"Acquire and wear %s if you can.  It will aid you against %s.\""
+ru = "«Добудьте и наденьте {1:acc}, если сможете.  Она поможет вам против {2:gen}.»"
+
+[330792ff03b4]
+en = "\"The undead legions are weakest during the daylight hours.\""
+ru = "«Легионы нежити слабее всего в светлое время суток.»"
+
+[8b4150b1d088]
+en = "\"Wear %s.  It will assist you against the undead.\""
+ru = "«Наденьте {1:acc}.  Она поможет вам против нежити.»"
+
+[7326d58b6d62]
+en = "[You are at %s; the doors are closed.  %s needs your help!]"
+ru = "[Вы у {1:gen}; двери закрыты.  {2:cap} нуждается в вашей помощи!]"
+
+[f3ad8e94a6f7]
+en = "You find yourself standing in sight of %s.  Something\nis obviously wrong here.  The doors to %s, which usually\nstand open, are closed.  Strange human shapes shamble around\noutside.\n\nYou realize that %s needs your assistance!"
+ru = "Вы оказываетесь неподалёку от {1:gen}.  Здесь явно\nчто-то не так.  Двери {2:gen}, обычно\nраспахнутые, закрыты.  Снаружи бродят какие-то\nстранные человеческие фигуры.\n\nВы понимаете, что {3} нуждается в вашей помощи!"
+not_terms = ["human"]
+
+[ada4d3eaf4b6]
+en = "[The stench of brimstone surrounds you, the shrieks and moans are endless.]"
+ru = "[Вас окружает смрад серы, вопли и стоны не смолкают.]"
+
+[d855fad82920]
+en = "The stench of brimstone is all about you, and the shrieks and moans\nof tortured souls assault your psyche.\n\nAhead, there is a small clearing amidst the bubbling pits of lava..."
+ru = "Вокруг стоит смрад серы, а вопли и стоны\nизмученных душ терзают ваш рассудок.\n\nВпереди среди булькающих лавовых ям виднеется небольшая поляна..."
+
+[a586780f5f7e]
+en = "[You feel %s as you pick up %s; return %s to %s.]"
+ru = "[Подняв {2:acc}, вы чувствуете присутствие {1:gen}; отнесите её{3:skip} {4:dat}.]"
+
+[1f4ecae8d8b5]
+en = "As you pick up %s, you feel the essence of\n%s fill your soul.  You know now why %s stole it from\n%s, for with it, %s of %s could\neasily defeat his plans.\n\nYou sense a message from %s.  Though not verbal, you\nget the impression that you must return to %s as soon\nas possible."
+ru = "Едва вы поднимаете {1:acc}, как чувствуете, что сущность\n{2:gen} наполняет вашу душу.  Теперь вы знаете, зачем {3} похитил её из\n{4:gen}: с ней {5:hero} {6:gen} мог{hero:gender||ла} бы\nбез труда расстроить его замыслы.\n\nВы чувствуете послание от {7:gen}.  Пусть и без слов, но вы\nпонимаете, что должны как можно скорее вернуться к\n{8:dat}."
+
+[01b0b830d55f]
+en = "\"Greetings, %s.  It is good to see you again.\""
+ru = "«Приветствуем, {1:hero}.  Рады снова вас видеть.»"
+
+[8b9fcf639155]
+en = "\"Welcome back, %s!  With %s, no undead can stand against us.\""
+ru = "«С возвращением, {hero:gender|брат|сестра}{1:skip}!  С {2:ins} никакая нежить нам не страшна.»"
+
+[d7783715b940]
+en = "\"Praise be to %s, for delivering us from %s.\""
+ru = "«Хвала {1:dat} за избавление от {2:gen}.»"
+
+[bfbbe10acf79]
+en = "\"Greetings, honored %s.  It is good to see you.\""
+ru = "«Приветствуем, {hero:gender|почтенный|почтенная} {1:hero}.  Рады вас видеть.»"
+
+[cb06e1fec7bf]
+en = "[Take the Amulet to the Astral Plane and offer it on %s altar.]"
+ru = "[Отнесите Амулет на Астральный план и принесите его в жертву на алтаре {1:gen}.]"
+
+[f6251585f7fe]
+en = "\"You have prevailed, %s!  %s is surely with you.  Now,\nyou must take the amulet, and sacrifice it on %s altar on\nthe Astral Plane.  I suspect that I shall never see you again in this\nlife, but I hope to at %s feet.\""
+ru = "«Вы победили, {1}!  {2:cap} воистину с вами.  Теперь\nвы должны отнести Амулет и принести его в жертву на алтаре {3:gen}\nна Астральном плане.  Чувствую, что в этой жизни я больше\nвас не увижу, но надеюсь встретить вас у ног {4:gen}.»"
+
+[9f72e9ffa5d7]
+en = "[%s dies.  Moloch is aware of you and angry at %s.]"
+ru = "[{1:cap} умирает.  Молох знает о вас и гневается на {2:acc}.]"
+
+[06a83cd0cc87]
+en = "You feel a wrenching shift in the ether as %s body dissolves\ninto a cloud of noxious gas.\n\nSuddenly, a voice booms out:\n\n    \"Thou hast defeated the least of my minions, %s.\n    Know now that Moloch is aware of thy presence.\n    As for thee, %s, I shall deal with thy failure\n    at my leisure.\"\n\nYou then hear the voice of %s, screaming in terror..."
+ru = "Вы чувствуете, как эфир мучительно содрогается, а тело {1:gen}\nрастворяется облаком ядовитого газа.\n\nВнезапно гремит голос:\n\n    «Ты одолел{hero:gender||а} ничтожнейшего из моих прислужников, {2:hero}.\n    Знай же: Молох ведает о твоём присутствии.\n    А с тобой, {3}, я разберусь за твою неудачу\n    на досуге.»\n\nЗатем вы слышите голос {4:gen}, вопящего от ужаса..."
+
+[4fb1e209352f]
+en = "[You have returned and we need your help.  Are you ready?]"
+ru = "[Вы вернулись, и нам нужна ваша помощь.  Вы готовы?]"
+
+[368fe9410865]
+en = "[You are a heretic who has deviated from the teachings of %s.]"
+ru = "[Вы {hero:gender|еретик, отступивший|еретичка, отступившая} от учения {1:gen}.]"
+
+[e20af7217174]
+en = "[You have found %s.  The trail to %s lies ahead.]"
+ru = "[Вы нашли {1:acc}.  Впереди лежит путь к {2:dat}.]"
+
+[0c0c0915d6dc]
+en = "You stand facing a large graveyard.  The sky above is filled with clouds\nthat seem to get thicker closer to the center.  You sense the presence of\nundead in larger numbers than you have ever encountered before.\n\nYou remember the descriptions of %s, given to you by\n%s.  It is ahead that you will find %s trail."
+ru = "Перед вами огромное кладбище.  Небо над ним затянуто тучами,\nкоторые словно сгущаются ближе к середине.  Вы чувствуете присутствие\nнежити в таком числе, какого вам ещё не встречалось.\n\nВы вспоминаете описание {1:gen}, которое дал вам\n{2}.  Именно там, впереди, вы найдёте след {3:gen}."
+
+[fc5e5d098765]
+en = "[%s has sent you, but you are no %s.  I shall destroy you.]"
+ru = "[{1:cap} прислал тебя, но ты не {2}.  Я уничтожу тебя.]"
+
+[dee5a0297ac6]
+en = "[Congratulations, %s.  Keep %s; go and recover the Amulet.]"
+ru = "[Поздравляем, {1}.  Оставьте {2:acc} себе; ступайте и добудьте Амулет.]"
+
+[46cf7b87033a]
+en = "\"You have returned, %s.  And with %s, I see.\nCongratulations.\n\n\"I have been in meditation, and have received direction from\na minion of %s.  %s commands that you retain\n%s.  With it, you must recover the Amulet\nof Yendor.\n\n\"Go forth, and let %s guide your steps.\""
+ru = "«Вы вернулись, {1}.  И, я вижу, с {2:ins}.\nПоздравляю.\n\nЯ пребывал в медитации и получил наставление от\nслуги {3:gen}.  {4:cap} повелевает, чтобы вы сохранили\n{5:acc} у себя.  С ней вы должны добыть Амулет\nЙендора.\n\nСтупайте, и пусть {6} направляет ваши стопы.»"
+not_terms = ["guide"]
+
+[08646c7b9d04]
+en = "[%s is yours now.  Return to %s and find the Amulet.]"
+ru = "[Теперь {1} ваша.  Вернитесь в {2:acc} и найдите Амулет.]"
+
+[6f165b132b51]
+en = "%s reiterates that %s is yours now.\n\n\"The time has come to resume your search for the Amulet.\n%s await your return through the magic portal\nthat brought you here.\""
+ru = "{1:cap} повторяет, что {2} теперь ваша.\n\n«Пришло время продолжить поиски Амулета.\n{3:cap} {3:num|ждёт|ждут} вашего возвращения через волшебный портал,\nчто привёл вас сюда.»"
+
+[a9c850427543]
+en = "Again you face %s.  Your intuition hints that this may be\nthe final time you come here."
+ru = "Вы снова перед {1:ins}.  Чутьё подсказывает вам, что, быть может,\nвы приходите сюда в последний раз."
