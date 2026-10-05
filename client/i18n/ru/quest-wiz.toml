@@ -23,7 +23,7 @@ ru = "[Ступайте; возвращайтесь, когда станете {
 
 [551d872c11e2]
 en = "\"Alas, %s, you have not yet shown your proficiency as a worthy\nspellcaster.  As %s, you would surely be overcome in the challenge\nahead.  Go, now, expand your horizons, and return when you have attained\nrenown as %s.\""
-ru = "«Увы, {1}, вы ещё не показали себя {hero:gender|достойным\nзаклинателем|достойной заклинательницей}.  Будучи {2:hero:ins}, вы\nнаверняка не выдержите грядущего испытания.  Ступайте, расширьте свои\nгоризонты и возвращайтесь, когда прославитесь как {3:hero}.»"
+ru = "«Увы, {1}, вы ещё не показали себя\n{hero:gender|достойным заклинателем|достойной заклинательницей}.  Будучи\n{2:hero:ins}, вы наверняка не выдержите грядущего испытания.  Ступайте,\nрасширьте свои горизонты и возвращайтесь, когда прославитесь как\n{3:hero}.»"
 
 [13293c7c15d5]
 en = "\"Your puny powers are no match for me, fool!\""
@@ -207,7 +207,7 @@ ru = "[«Уничтожить тебя будет славной забавой.
 
 [c32962aa8ebe]
 en = "\"Ah, I recognize you, %s.  So, %s has sent you to steal\n%s from me, hmmm?  Well, %s is a fool to send such\na mental weakling against me.\n\n\"Your destruction, however, should make for good sport.  In the end, you\nshall beg me to kill you!\""
-ru = "«А, я узнаю тебя, {1}.  Значит, {2}\n{2:gender|послал|послала|послало|послали} тебя украсть у меня {3:acc},\nхм?  Что ж, лишь {2:gender|глупец|глупая|глупое|глупцы}{4:skip}\nмог{2:gender||ла|ло|ли} отправить против меня {hero:gender|такого\nскудоумного слабака|такую скудоумную слабачку}.\n\nВпрочем, уничтожить тебя будет славной забавой.  В конце концов ты\nбудешь умолять меня убить тебя!»"
+ru = "«А, я узнаю тебя, {1}.  Значит, {2}\n{2:gender|послал|послала|послало|послали} тебя украсть у меня {3:acc},\nхм?  Что ж, лишь {2:gender|глупец|глупая|глупое|глупцы}{4:skip}\nмог{2:gender||ла|ло|ли} отправить против меня\n{hero:gender|такого скудоумного слабака|такую скудоумную слабачку}.\n\nВпрочем, уничтожить тебя будет славной забавой.  В конце концов ты\nбудешь умолять меня убить тебя!»"
 
 [98734d05ad5c]
 en = "[\"Your soul shall soon be mine to command.\"]"

@@ -26,7 +26,7 @@ ru = "[Вы слишком неопытны.  Возвращайтесь, ког
 
 [45a4e65b4bab]
 en = "\"%s, you are yet too inexperienced to withstand the demands of that\nwhich we need you to do.  %s might just be able to do this thing.\n\n\"Return to us when you have learned more, my %s.\""
-ru = "«{1}, вы ещё слишком неопытны, чтобы выдержать то, чего мы от вас ждём.\nРазве что {2:hero} сумел{hero:gender||а} бы с этим справиться.\n\nВозвращайтесь к нам, когда научитесь большему, {hero:gender|сын мой|дочь\nмоя}{3:skip}.»"
+ru = "«{1}, вы ещё слишком неопытны, чтобы выдержать то, чего мы от вас ждём.\nРазве что {2:hero} сумел{hero:gender||а} бы с этим справиться.\n\nВозвращайтесь к нам, когда научитесь большему,\n{hero:gender|сын мой|дочь моя}{3:skip}.»"
 
 [3e54ae170f45]
 en = "\"Your %s is nothing, %s.  You are mine now!\""
