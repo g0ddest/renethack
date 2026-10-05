@@ -506,7 +506,9 @@ pub(crate) const ROLES: [&str; 13] = [
     "wizard",
 ];
 
-/// The monsters met most on the first levels, and the pets.
+/// The monsters met most on the first levels, and the pets, with one of
+/// each model met later (a spider, a snake, a bee, a dragon): the
+/// rehearsal draws each model once.
 pub(crate) const WARM_MONSTERS: &[&str] = &[
     "kitten",
     "little dog",
@@ -516,20 +518,20 @@ pub(crate) const WARM_MONSTERS: &[&str] = &[
     "sewer rat",
     "grid bug",
     "fox",
-    "coyote",
+    "cave spider",
     "kobold",
-    "large kobold",
+    "garter snake",
     "goblin",
     "lichen",
     "gecko",
-    "giant rat",
+    "killer bee",
     "yellow mold",
     "acid blob",
     "floating eye",
     "gnome",
-    "gnome lord",
+    "gnome leader",
     "hobbit",
-    "kobold zombie",
+    "baby red dragon",
     "gnome zombie",
     "homunculus",
     "giant bat",

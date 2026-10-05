@@ -1331,7 +1331,7 @@ mod tests {
         // no gait: swayed by the map
         assert_eq!(anims("dog").gait(true), None);
         assert_eq!(anims("rat").gait(false), None);
-        assert_eq!(anims("serpent").gait(false), None);
+        assert_eq!(anims("blob").gait(false), None);
         // a walk without a run walks in a hurry too
         let only_walk = Anims {
             walk: Some("Walk".into()),
