@@ -1090,6 +1090,15 @@ class Context:
                 if a.transform:
                     built = [(a.transform(f), kinds) for f, kinds in built]
             out += built
+        first = next((op for op in ops if not op.append), None)
+        if (first and passed and self.glob.writes(*passed)
+                and not self.always_after(since, first.index)):
+            # a call wrote it, and the write after it is in a branch the
+            # call is not in ("if (final) N_times(n, buf); else if (n > 1)
+            # Sprintf(buf, ...);"): the call's text goes on in the others
+            appends = [a for a in ops if a.append and a.index < first.index and not a.transform]
+            tails = [t for t in (self.tail(a, since, depth) for a in appends) if t.pieces]
+            out += with_tails([("%s", ["text"])], tails, few=True)
         return dedupe(out)[:MAX_HELD]
 
     def formats(self, toks, pos):

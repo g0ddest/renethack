@@ -120,6 +120,27 @@ class Formats(unittest.TestCase):
         self.assertIn("First text more!", catalog_of(src.replace("CALL", "show")))
         self.assertNotIn("First text more!", catalog_of(src.replace("CALL", "fill")))
 
+    def test_a_call_s_text_and_a_write_in_a_branch(self):
+        # insight.c: "You have been killed 3 times" (N_times writes it) or
+        # "You are dead (2nd time!)", or "You are dead"
+        src = ('static const char You_[] = "You ";\n'
+               'static void count(long n, char *out) { out[0] = 0; }\n'
+               'void f(int final, long n) {\n'
+               '    char buf[BUFSZ];\n'
+               '    buf[0] = 0;\n'
+               '    if (final < 2)\n'
+               '        count(n, buf);\n'
+               '    else if (n > 1)\n'
+               '        Sprintf(buf, " (%ld times!)", n);\n'
+               '    enl_msg(You_, "have been killed ", "are dead", buf, "");\n}\n')
+        e = catalog_of(src)
+        self.assertIn(" You are dead (%ld times!).", e)
+        self.assertIn(" You have been killed %s.", e)
+        # one after the other: the write is what shows
+        e = catalog_of(src.replace("if (final < 2)", "").replace("else if (n > 1)", ""))
+        self.assertIn(" You are dead (%ld times!).", e)
+        self.assertNotIn(" You have been killed %s.", e)
+
     def test_a_format_built_in_a_buffer(self):
         e = catalog_of('void f(struct monst *m, int p) {\n'
                        '    char fmtbuf[BUFSZ];\n'

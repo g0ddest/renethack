@@ -3369,3 +3369,19 @@ ru = "Вы вознеслись в {1:loc} на {2}-м уровне подзем
 [ff1a455f673a]
 en = "You drowned in %s with %ld point,"
 ru = "Вы утонули в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+
+[40c132f3c15e]
+en = " You are dead%s."
+ru = " Вы мертвы{1}."
+
+[c6926d4d8011]
+en = " You have been killed %s."
+ru = " Вас убивали {1}."
+
+[8c79cbe6775c]
+en = " You survived after being killed %s."
+ru = " Вы выжили, хотя вас убивали {1}."
+
+[9daf3b9a3171]
+en = " You survived%s."
+ru = " Вы выжили{1}."
