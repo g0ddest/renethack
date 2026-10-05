@@ -7,7 +7,9 @@
 The recipe is client/godot/art/sources.json: Poly Haven textures and models
 (through their public API) and the free files of itch.io packs (the site's own
 "no thanks, just take me to the downloads" flow), files and zips at fixed
-URLs (VFX flipbooks, particles, icons), and the OFL fonts of the UI
+URLs (VFX flipbooks, particles, icons), models made from those in Blender
+by tools/blender (static models rigged with a Quaternius animal's skeleton),
+and the OFL fonts of the UI
 (the google/fonts repository at a fixed commit, into client/godot/fonts). Textures larger than
 `texture_max` are scaled down and stored as JPEG; glTF files are rewritten to
 point at the converted images. client/godot/art/art.lock.json records the
@@ -15,7 +17,8 @@ sha256 of every downloaded source, so a later run proves it started from the
 same files (the prepared output is committed; image encoders may differ
 byte for byte between Pillow versions).
 
-Only the Python standard library and Pillow are needed.
+Only the Python standard library and Pillow are needed; Blender only to
+make the "blender" models again (without it their committed output is kept).
 """
 import argparse
 import fnmatch
@@ -26,6 +29,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 import urllib.parse
@@ -34,6 +38,7 @@ import zipfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ART = os.path.join(ROOT, "client", "godot", "art")
+BLENDER_SCRIPTS = os.path.join(ROOT, "tools", "blender")
 FONTS = os.path.join(ROOT, "client", "godot", "fonts")
 RECIPE = os.path.join(ART, "sources.json")
 LOCK = os.path.join(ART, "art.lock.json")
@@ -167,9 +172,16 @@ def put_gltf(w, dest_dir, name, gltf_bytes, read_rel, max_size):
     w.put(f"{dest_dir}/{name}", json.dumps(doc, indent=1).encode())
 
 
-def shrink_glb(data, max_size):
+def palette(data):
+    """An image of a few texels: a low-poly model's colour swatches."""
+    from PIL import Image
+    return max(Image.open(io.BytesIO(data)).size) <= 64
+
+
+def shrink_glb(data, max_size, keep_small=False):
     """A GLB with its embedded images scaled down and re-encoded; buffer
-    views are laid out again, everything else is kept."""
+    views are laid out again, everything else is kept. With `keep_small`
+    a palette stays as it is (its few texels would blur as JPEG)."""
     import struct
     magic, version, _ = struct.unpack_from("<III", data, 0)
     if magic != 0x46546C67 or version != 2:
@@ -186,8 +198,9 @@ def shrink_glb(data, max_size):
         start = v.get("byteOffset", 0)
         chunk = bin_in[start:start + v["byteLength"]]
         if i in image_views:
-            chunk, ext = convert_image(chunk, max_size, keep_alpha=True)
-            image_views[i]["mimeType"] = "image/png" if ext == ".png" else "image/jpeg"
+            if not (keep_small and palette(chunk)):
+                chunk, ext = convert_image(chunk, max_size, keep_alpha=True)
+                image_views[i]["mimeType"] = "image/png" if ext == ".png" else "image/jpeg"
             # Godot extracts the image under this name; make needs paths without spaces
             if "name" in image_views[i]:
                 image_views[i]["name"] = image_views[i]["name"].replace(" ", "_")
@@ -341,6 +354,58 @@ def unpack(w, blob, what, item, max_size):
         w.put(f"{dest}/{rel}", z.read(lic))
 
 
+def find_blender():
+    """$BLENDER, `blender` on the PATH, or the macOS app; None without one."""
+    for c in (os.environ.get("BLENDER"), shutil.which("blender"),
+              "/Applications/Blender.app/Contents/MacOS/Blender"):
+        if c and os.path.exists(c):
+            return c
+    return None
+
+
+def in_art(v):
+    """Model and image paths (also in lists) as files under ART."""
+    if isinstance(v, list):
+        return [in_art(x) for x in v]
+    if isinstance(v, str) and v.endswith((".glb", ".gltf", ".fbx", ".png", ".jpg")):
+        return os.path.join(ART, v)
+    return v
+
+
+def do_blender(op, item, blender, max_size):
+    """A model made by tools/blender/<script>.py: the item is its spec, with
+    URLs downloaded first and other model paths taken under ART. Returns
+    the bytes of `out` (its textures scaled down), or None without Blender
+    (the downloads are still checked against the lock)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        spec = {}
+        for k, v in item.items():
+            if k in ("script", "use", "texture_max"):
+                continue
+            if isinstance(v, str) and v.startswith("https://"):
+                data = cached(v, lambda v=v: fetch(op, v))
+                v = os.path.join(tmp, k + os.path.splitext(urllib.parse.urlparse(v).path)[1])
+                with open(v, "wb") as f:
+                    f.write(data)
+            elif k != "out":
+                v = in_art(v)
+            spec[k] = v
+        if blender is None:
+            return None
+        spec["out"] = os.path.join(tmp, "out" + os.path.splitext(item["out"])[1])
+        with open(os.path.join(tmp, "spec.json"), "w") as f:
+            json.dump(spec, f)
+        script = os.path.join(BLENDER_SCRIPTS, item["script"] + ".py")
+        r = subprocess.run([blender, "-b", "--factory-startup", "--python-exit-code", "1",
+                            "--python", script, "--",
+                            os.path.join(tmp, "spec.json")], capture_output=True, text=True)
+        if r.returncode != 0 or not os.path.exists(spec["out"]):
+            print(r.stdout[-3000:], r.stderr[-3000:], sep="\n")
+            raise SystemExit(f"{item['out']}: {item['script']} failed")
+        with open(spec["out"], "rb") as f:
+            return shrink_glb(f.read(), item.get("texture_max", max_size), keep_small=True)
+
+
 def do_fonts(op, item):
     """OFL fonts go to client/godot/fonts/<dest>/, outside the CC0 tree."""
     for name in item["files"]:
@@ -362,6 +427,15 @@ def main():
     op = opener()
     w = Writer()
     out_root = os.path.join(ART, recipe["out"])
+    blender = find_blender()
+    # without Blender its models stay as committed (those under out_root
+    # are read before it is emptied)
+    kept = {}
+    for item in recipe.get("blender", []):
+        path = os.path.join(ART, item["out"])
+        if blender is None and os.path.exists(path):
+            with open(path, "rb") as f:
+                kept[item["out"]] = f.read()
     if os.path.isdir(out_root):
         shutil.rmtree(out_root)
     w_prefix = recipe["out"]
@@ -382,6 +456,15 @@ def main():
     for item in recipe.get("pbr_zips", []):
         print("textures", item["id"], flush=True)
         do_pbr_zip(op, w, item, max_size)
+    for item in recipe.get("blender", []):
+        print("blender", item["script"], item["out"], flush=True)
+        data = do_blender(op, item, blender, max_size)
+        if data is None:
+            if item["out"] not in kept:
+                raise SystemExit(f"{item['out']}: needs Blender (set BLENDER=...)")
+            print("  no Blender: the committed model is kept", flush=True)
+            data = kept[item["out"]]
+        real_put(item["out"], data)
     for item in recipe.get("fonts", []):
         print("fonts", item["dest"], flush=True)
         do_fonts(op, item)
