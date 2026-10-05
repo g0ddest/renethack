@@ -1153,7 +1153,7 @@ impl Art {
             }
             let dye = recolor
                 .iter()
-                .find(|(k, _, _)| !head && name.ends_with(k.as_str()));
+                .find(|(k, _, _)| !head && !k.starts_with('@') && name.ends_with(k.as_str()));
             let tint = match dye {
                 Some((_, c, false)) => mul(tint, *c),
                 Some((_, c, true)) => mul(look.tint, *c),
@@ -1172,6 +1172,18 @@ impl Art {
                             let tone = mul(look.tint, skin_tone);
                             return self.derive(&src, tone, ghost, None);
                         }
+                        // a surface dyed by its material's name ("@Main"):
+                        // one mesh of several materials, its coat apart
+                        // from its horns and eyes
+                        let material = src.get_name().to_string();
+                        let own = recolor.iter().find(|(k, _, _)| {
+                            !head && k.strip_prefix('@') == Some(material.as_str())
+                        });
+                        let (tint, flat) = match own {
+                            Some((_, c, false)) => (mul(tint, *c), false),
+                            Some((_, c, true)) => (mul(look.tint, *c), true),
+                            None => (tint, flat),
+                        };
                         let src = if flat { self.undyed(&src) } else { src };
                         self.derive(&src, tint, ghost, finish)
                     }),

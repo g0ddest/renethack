@@ -82,6 +82,9 @@
   "unicorn": {"smooth": true, "scene": "cc0/quaternius/animals/WhiteHorse.glb", "shade": "#e8e2d8", "metallic": 0.0, "roughness": 0.85, "size": 4.8, "anims": {"idle": "Idle", "walk": "Walk", "run": "Gallop", "attack": "Attack_Headbutt", "hit": "Idle_HitReact_Left", "death": "Death"},
    "extras": [{"model": "horn", "bone": "Head", "pos": [0.0, 0.0053, 0.0083], "rot": [-25, 0, 0], "size": 0.0105}]},
   "cow": {"smooth": true, "scene": "cc0/quaternius/animals/Cow.glb", "shade": "#e8e2d8", "metallic": 0.0, "roughness": 0.85, "size": 4.6, "size_factor": 0.9, "anims": {"idle": "Idle", "walk": "Walk", "run": "Gallop", "attack": "Attack_Headbutt", "hit": "Idle_HitReact_Left", "death": "Death"}},
+  "bull": {"smooth": true, "scene": "cc0/quaternius/animals/Bull.glb", "metallic": 0.0, "roughness": 0.85, "size": 4.6, "size_factor": 0.9,
+   "recolor": {"@Main": "=#3c2c20", "@Main_Light": "=#54402e", "@Muzzle": "=#261e18", "@Hooves": "=#1e1a17"},
+   "anims": {"idle": "Idle_Headlow", "walk": "Walk", "run": "Gallop", "attack": "Attack_Headbutt", "hit": "Idle_HitReact_Left", "death": "Death"}},
   "pig": {"smooth": true, "scene": "cc0/quaternius/animals/Pig.fbx", "shade": "#d8d0c4", "size": 3.1, "size_factor": 0.8,
    "anims": {"idle": "Armature|Idle", "attack": "Armature|Jump"}},
   "sheep": {"smooth": true, "scene": "cc0/quaternius/animals/Sheep.fbx", "shade": "#d8d0c4", "size": 4.0, "size_factor": 0.8,
@@ -401,7 +404,7 @@
    "black unicorn": {"model": "unicorn", "tint": "#181818", "tint_strength": 0.75},
    "ki-rin": {"model": "unicorn", "tint": "#d0b040", "tint_strength": 0.6},
 
-   "rothe": {"model": "cow", "tint": "#4a3020", "tint_strength": 0.6},
+   "rothe": {"model": "bull"},
    "mumak": {"model": "cow", "tint": "#6a6a6a", "tint_strength": 0.7},
    "leocrotta": {"model": "horse", "tint": "#6a5a40", "tint_strength": 0.6},
    "wumpus": {"model": "pig", "tint": "#305a70", "tint_strength": 0.6},

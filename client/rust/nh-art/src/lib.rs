@@ -222,7 +222,9 @@ pub struct ModelSpec {
     pub smooth: bool,
     /// Multiplies the meshes whose names end so ("_Arms": "#c89070"):
     /// sleeves the colour of bare skin; "=#rrggbb" dyes them that colour
-    /// outright (a white robe: a product only darkens).
+    /// outright (a white robe: a product only darkens). A key "@Name" takes
+    /// the surfaces whose material is so named instead: one mesh of several
+    /// materials (a bull's coat, not its horns and eyes).
     #[serde(default)]
     pub recolor: BTreeMap<String, String>,
     /// Things worn on the rig's bones: a hat, a winged helm, a cape.
