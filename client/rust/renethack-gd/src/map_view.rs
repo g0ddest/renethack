@@ -2357,6 +2357,10 @@ pub struct MapView {
     fade: f32,
     /// Frame times being summed (RENETHACK_FRAME_STATS).
     stats_window: Option<FrameStats>,
+    /// RENETHACK_DUMP_SIGHTINGS=<file>: each turn, the creatures on the
+    /// map and the art each is drawn with, appended as a JSON line (which
+    /// bodies are seen most), and the turn last written.
+    sightings: Option<(std::fs::File, Option<i64>)>,
     /// The art loaded ahead has been told of (RENETHACK_FRAME_STATS).
     preload_told: bool,
     /// The rehearsal's first draws done has been told of (stats).
@@ -2917,6 +2921,14 @@ impl MapView {
             branch: Branch::Main,
             branch_look: crate::branch_look::look_of(Branch::Main),
             stats_window: std::env::var_os("RENETHACK_FRAME_STATS").map(|_| FrameStats::default()),
+            sightings: std::env::var_os("RENETHACK_DUMP_SIGHTINGS").and_then(|p| {
+                std::fs::OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(p)
+                    .ok()
+                    .map(|f| (f, None))
+            }),
             preload_told: false,
             first_draws_told: false,
             rehearsal: None,
@@ -3216,6 +3228,7 @@ impl MapView {
         // a long frame is told of with the sync before it (this one's
         // numbers are for the next)
         self.frame_stats(delta);
+        self.tell_sightings(world, catalog);
         if let Some(stats) = self.stats_window.as_mut() {
             let ms = sync_start.elapsed().as_secs_f64() * 1000.0;
             if ms > 10.0 {
@@ -3224,6 +3237,49 @@ impl MapView {
             stats.last_sync = sync_start.elapsed().as_secs_f64() * 1000.0;
             stats.last_built = self.art.counts().1 - built_before;
         }
+    }
+
+    /// With RENETHACK_DUMP_SIGHTINGS set, once a turn: the creatures on
+    /// the map but the hero, each with the model it is drawn as (and
+    /// whether that is a procedural body).
+    fn tell_sightings(&mut self, world: &World, catalog: &Catalog) {
+        use std::io::Write;
+        let Some((file, last)) = self.sightings.as_mut() else {
+            return;
+        };
+        let turn = world.turn();
+        if turn.is_none() || turn == *last {
+            return;
+        }
+        *last = turn;
+        let art = self.art.manifest();
+        let mut seen = Vec::new();
+        for y in 0..ROWNO {
+            for x in 0..COLNO {
+                let Some(g) = world.map.cell(x, y).and_then(|c| c.glyph.as_ref()) else {
+                    continue;
+                };
+                if g.kind != GlyphKind::Mon || g.flags & mg::HERO != 0 {
+                    continue;
+                }
+                let Some(info) = g
+                    .mon
+                    .and_then(|i| catalog.monsters.iter().find(|m| m.idx == i))
+                else {
+                    continue;
+                };
+                let (model, spec) = art.model_at(art.monster(info, g.flags).model);
+                let body = if spec.proc.is_some() { "proc" } else { "scene" };
+                seen.push(format!("[{:?},{:?},{:?}]", info.name, model, body));
+            }
+        }
+        let _ = writeln!(
+            file,
+            "{{\"turn\":{},\"branch\":{:?},\"seen\":[{}]}}",
+            turn.unwrap_or(0),
+            format!("{:?}", self.branch),
+            seen.join(",")
+        );
     }
 
     /// With RENETHACK_FRAME_STATS set, the frame and GPU times every two

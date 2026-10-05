@@ -319,6 +319,27 @@ fn object(cat: &Catalog, class: &str, appearance: &str, pile: bool) -> Result<Gl
     })
 }
 
+/// One monster alone on a small lit floor, the hero two cells to its side
+/// for scale (the `bestiary` self-test's close-ups); the view centres on
+/// the monster.
+pub fn lay_out_one(world: &mut World, cat: &Catalog, name: &str) -> Result<(i32, i32), String> {
+    let map = &mut world.map;
+    map.clear();
+    let floor = cmap(cat, "S_room")?;
+    let (cx, cy) = (40, 10);
+    for y in cy - 4..=cy + 4 {
+        for x in cx - 6..=cx + 6 {
+            map.print(x, y, &floor, None);
+        }
+    }
+    let g = monster(cat, name, 0, GlyphKind::Mon)?;
+    map.print(cx, cy, &g, Some(&floor));
+    let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    map.print(cx + 2, cy, &hero, Some(&floor));
+    world.view_center = Some((cx, cy));
+    Ok((cx, cy))
+}
+
 /// The whole map at once: rooms of lit and remembered floor between walls,
 /// corridors, doors, a few monsters and objects. The heaviest redraw a
 /// level can ask for (magic mapping, a return to an explored level).

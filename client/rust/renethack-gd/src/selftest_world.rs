@@ -4,7 +4,10 @@
 //! by the debug level teleport's menu (Fort Ludios is out of its reach
 //! until its portal is made), and checks that each is drawn in its own
 //! materials, with a picture of each. `title` checks the scene behind the
-//! title menu.
+//! title menu; `bestiary` shoots the creatures a game meets most, one by
+//! one.
+
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use nh_world::{Branch, KeyInput, Prompt};
 
@@ -182,4 +185,79 @@ pub(super) fn title() -> Vec<Step> {
         }),
     ]);
     steps
+}
+
+/// The creatures drawn in code that a game meets most (a soak of 24 seeds
+/// counted them), and the rest of their kinds, each alone and close up:
+/// `bestiary-<name>.png`, for the contact sheets. Not part of
+/// `make test-client`.
+const BESTIARY: &[&str] = &[
+    "kitten",
+    "housecat",
+    "newt",
+    "gecko",
+    "crocodile",
+    "grid bug",
+    "giant ant",
+    "soldier ant",
+    "killer bee",
+    "giant beetle",
+    "lichen",
+    "brown mold",
+    "yellow mold",
+    "red mold",
+    "acid blob",
+    "blue jelly",
+    "gas spore",
+    "floating eye",
+    "bat",
+    "giant bat",
+    "cave spider",
+    "giant spider",
+    "centipede",
+    "garter snake",
+    "cobra",
+    "baby red dragon",
+    "red dragon",
+    "long worm",
+    "purple worm",
+];
+
+pub(super) fn bestiary() -> Vec<Step> {
+    let mut steps = start();
+    steps.push(Step::Wait("the hero on the map", |g| {
+        Ok(g.world.map.hero().is_some())
+    }));
+    for name in BESTIARY {
+        let shot: &'static str =
+            Box::leak(format!("bestiary-{}", name.replace(' ', "-")).into_boxed_str());
+        steps.extend([
+            Step::Call("lay out the next creature", |g| {
+                let i = NEXT_CREATURE.fetch_add(1, Ordering::Relaxed);
+                one(g, i)
+            }),
+            Step::Wait("the creature drawn", |g| {
+                let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+                Ok(drawn == Some(g.world.map.generation()))
+            }),
+            Step::Wait("the camera on it", camera_settled),
+            Step::Shot(shot),
+        ]);
+    }
+    steps.extend(quit());
+    steps
+}
+
+/// The next creature of `BESTIARY` to lay out (steps are plain functions).
+static NEXT_CREATURE: AtomicUsize = AtomicUsize::new(0);
+
+/// Lay out creature `i` of `BESTIARY` alone, the camera close.
+fn one(g: &mut RenethackGame, i: usize) -> Result<(), String> {
+    let cat = g.catalog.clone().ok_or("no catalog")?;
+    let name = BESTIARY.get(i).ok_or("no more creatures")?;
+    crate::gallery::lay_out_one(&mut g.world, &cat, name)?;
+    let ui = g.ui.as_mut().ok_or("no UI")?;
+    ui.map.set_showcase(true);
+    ui.map.set_distance(4.2, 0.3);
+    Ok(())
 }

@@ -4079,6 +4079,7 @@ impl SelfTest {
             "roles" => hero::roles(),
             "branches" => world_looks::branches(),
             "title" => world_looks::title(),
+            "bestiary" => world_looks::bestiary(),
             "pickers" => input_ru::pickers(),
             "help" => help_tests::help(),
             "inventory" => inventory(),

@@ -252,6 +252,13 @@ the art out for screenshots:
 
     godot --path client/godot -- --selftest=gallery --screenshots=/tmp/shots
 
+The `bestiary` self-test shoots the creatures a game meets most, one by one
+and close up (`bestiary-<name>.png`, for contact sheets).
+`RENETHACK_DUMP_SIGHTINGS=<file>` makes the map append, once a turn, the
+creatures on it and the model each is drawn as, a procedural body or a
+scene (JSON lines): a soak over several seeds counts which bodies are seen
+most.
+
 ## Translation
 
 The engine stays English; the client translates what it shows. The pieces
