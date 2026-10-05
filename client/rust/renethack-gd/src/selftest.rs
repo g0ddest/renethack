@@ -448,6 +448,10 @@ fn save() -> Vec<Step> {
             }
             Ok(())
         }),
+        Step::Wait("the title scene built again for him", |g| {
+            Ok(map_view(g)?.title_drawn())
+        }),
+        Step::Shot("saved-title"),
         Step::Push(UiEvent::ContinueGame("Hero".into())),
         Step::Request("the first command of the restored game", command),
         Step::Wait("\"welcome back\" in the log", welcome_back),
