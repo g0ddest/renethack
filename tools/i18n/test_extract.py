@@ -185,6 +185,35 @@ class Data(unittest.TestCase):
         parts = datfiles.concat_parts(datfiles.engraving_texts(args)[0])
         self.assertEqual(parts, ["Use '", None, "' to go up"])
 
+    def test_a_local_of_formats(self):
+        # themerms.lua: the engraving that points at a buried treasure
+        src = """
+            local dig = "";
+            if (tx == 0 and ty == 0) then
+               dig = " here";
+            else
+               if (tx ~= 0) then
+                  dig = string.format(" %i %s", math.abs(tx), (tx > 0) and "east" or "west");
+               end
+               if (ty ~= 0) then
+                  dig = dig .. string.format(" %i %s", math.abs(ty), (ty > 0) and "south" or "north");
+               end
+            end
+            des.engraving({ coord = pos, type = "burn", text = "Dig" .. dig });
+        """
+        toks = datfiles.lua_lex(src)
+        at = next(i for i, t in enumerate(toks) if t.text == "engraving")
+        expr = datfiles.engraving_texts(datfiles.lua_args(toks, at + 1))[0]
+        texts = dict(datfiles.local_texts(toks, expr, at))
+        self.assertEqual(texts["Dig here"], [])
+        self.assertEqual(texts["Dig %d %s"], ["number", "word"])
+        self.assertEqual(texts["Dig %d %s %d %s"], ["number", "word", "number", "word"])
+        # a part this reader does not evaluate: nothing more
+        toks = datfiles.lua_lex('local k = key("up"); des.engraving({ text = "Use " .. k })')
+        at = next(i for i, t in enumerate(toks) if t.text == "engraving")
+        expr = datfiles.engraving_texts(datfiles.lua_args(toks, at + 1))[0]
+        self.assertEqual(datfiles.local_texts(toks, expr, at), [])
+
 
 if __name__ == "__main__":
     unittest.main()

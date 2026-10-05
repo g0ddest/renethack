@@ -9628,8 +9628,22 @@ Didn't your mother tell you not to eat food off the floor?  [23103ef89b85]
   =   Разве мама не говорила вам не есть с пола?
 Die?  [f8ad41e7fcf0]
   =   Умереть?
+Dig  [294caf41828d]
+  =   Копай
+Dig %d %s  [a61b80ad1bb8]
+  m   Копай: 1 шаг на тритона
+  f   Копай: 3 шага на крысу
+  n   Копай: 5 шагов на копьё
+  pl  Копай: 21 шаг на 3 стрелы
+Dig %d %s %d %s  [f9dcecd57713]
+  m   Копай: 1 шаг на тритона, 1 шаг на тритона
+  f   Копай: 3 шага на крысу, 3 шага на крысу
+  n   Копай: 5 шагов на копьё, 5 шагов на копьё
+  pl  Копай: 21 шаг на 3 стрелы, 21 шаг на 3 стрелы
 Dig for Victory here  [4fd0b38184c8]
   =   Копай здесь ради Победы
+Dig here  [b8e7b05d5f92]
+  =   Копай здесь
 Dig with this digging tool  [dae46cd84e76]
   =   Копать этим инструментом
 Digging up a grave could be a bad idea...  [2411c77b2db5]

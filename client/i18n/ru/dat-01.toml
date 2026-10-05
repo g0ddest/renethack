@@ -1,5 +1,6 @@
 # R6, dat texts, part 1: the tutorial's engravings and words, the
-# levels' own messages (the Astral Plane, the Planes).
+# levels' own messages (the Astral Plane, the Planes), the themed rooms'
+# engraving that points at a buried treasure.
 
 [d5335a1468c3]
 en = "What a strange feeling!"
@@ -264,3 +265,19 @@ ru = "Клавишей '{1}' поднимайтесь по лестнице"
 [ed4e03c83e0b]
 en = "You find yourself suspended in an air bubble surrounded by water."
 ru = "Вы оказываетесь в воздушном пузыре посреди воды."
+
+[294caf41828d]
+en = "Dig"
+ru = "Копай"
+
+[b8e7b05d5f92]
+en = "Dig here"
+ru = "Копай здесь"
+
+[a61b80ad1bb8]
+en = "Dig %d %s"
+ru = "Копай: {1} {1:plural|шаг|шага|шагов} на {2:acc}"
+
+[f9dcecd57713]
+en = "Dig %d %s %d %s"
+ru = "Копай: {1} {1:plural|шаг|шага|шагов} на {2:acc}, {3} {3:plural|шаг|шага|шагов} на {4:acc}"

@@ -1,6 +1,7 @@
 //! The matcher on the lines it once got wrong, over the built-in catalog,
 //! translations and lexicon: the names the game wrote side by side, the
-//! hero in a monster's place, a %s before a %c, a hallucinated name.
+//! hero in a monster's place, a %s before a %c, a hallucinated name, an
+//! engraving a level's Lua builds.
 
 use std::sync::OnceLock;
 
@@ -67,6 +68,17 @@ fn the_hero_fills_a_monster_s_place() {
 fn a_text_before_a_character() {
     // "This %s tastes %s%c": the %s ends where the "." begins
     check("This newt corpse tastes okay.", "Этот труп тритона на вкус");
+}
+
+#[test]
+fn an_engraving_of_a_lua_local() {
+    // themerms.lua: "Dig" .. dig, dig a string.format() of steps
+    check(
+        "You read: \"Dig 3 east 2 south\".",
+        "«Копай: 3 шага на восток, 2 шага на юг»",
+    );
+    check("You read: \"Dig 1 west\".", "«Копай: 1 шаг на запад»");
+    check("You read: \"Dig here\".", "«Копай здесь»");
 }
 
 #[test]

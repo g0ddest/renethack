@@ -326,8 +326,12 @@ def level_texts(path):
                     kinds += k
                 else:
                     fmt.append(escape(lit))
+            site = f"dat/{name}:{t.line} {call}"
             # a window's text: the blank lines around it are not shown
-            yield "".join(fmt).strip("\n"), use, f"dat/{name}:{t.line} {call}", kinds
+            yield "".join(fmt).strip("\n"), use, site, kinds
+            if call != "des.message":
+                for fmt, kinds in local_texts(toks, expr, i):
+                    yield fmt, use, site, kinds
 
 
 def lua_args(toks, open_i):
@@ -379,6 +383,96 @@ def engraving_texts(args):
     if len(args) >= 3:
         return [args[2]]
     return []
+
+
+def local_texts(toks, expr, before):
+    """The texts of `"a" .. name` where `name` is a local the code sets to
+    strings and string.format()s ("Dig" .. dig: "Dig here", "Dig %d %s",
+    "Dig %d %s %d %s"): (fmt, kinds) for each, or nothing when a part is
+    something else."""
+    parts = concat_tokens(expr)
+    if not any(len(p) == 1 and p[0].kind == "name" for p in parts):
+        return []
+    texts = [("", [])]
+    for part in parts:
+        if len(part) == 1 and part[0].kind == "string":
+            values = [(escape(part[0].value), [])]
+        elif len(part) == 1 and part[0].kind == "name":
+            values = local_values(toks, part[0].text, before)
+            if not values:
+                return []
+        else:
+            return []
+        texts = [(f + g, k + h) for f, k in texts for g, h in values]
+    return list(dict((f.strip("\n"), (f.strip("\n"), k)) for f, k in texts).values())
+
+
+def local_values(toks, name, before):
+    """What a Lua local can hold where token `before` reads it: each of its
+    assignments since `local name`, a string, a string.format() (its format,
+    %i as %d) or `name ..` one of those, whatever branches they are in;
+    (fmt, kinds) pairs, or None when one is something else."""
+    start = next((j for j in range(before - 1, 0, -1)
+                  if toks[j].text == name and toks[j - 1].text == "local"), None)
+    if start is None:
+        return None
+    try:
+        return assigned_values(toks, name, start, before)
+    except IndexError:
+        return None
+
+
+def assigned_values(toks, name, start, before):
+    values = []
+    for j in range(start, before):
+        if toks[j].text != name or toks[j + 1].text != "=":
+            continue
+        new = [("", [])]
+        k = j + 2
+        while True:
+            t = toks[k]
+            if t.kind == "string":
+                one, k = [(escape(t.value), [])], k + 1
+            elif t.text == name:
+                one, k = values, k + 1
+            elif ([x.text for x in toks[k:k + 4]] == ["string", ".", "format", "("]
+                  and toks[k + 4].kind == "string"):
+                f = toks[k + 4].value.replace("%i", "%d")
+                one = [(f, ["number" if c == "d" else "word"
+                            for c in re.findall(r"%[-+ #0]*\d*(?:\.\d+)?([a-z%])", f)
+                            if c != "%"])]
+                depth = 0
+                for k in range(k + 3, len(toks)):
+                    depth += {"(": 1, ")": -1}.get(toks[k].text, 0)
+                    if depth == 0:
+                        break
+                k += 1
+            else:
+                return None
+            new = [(f + g, a + b) for f, a in new for g, b in one]
+            if toks[k].text != "..":
+                break
+            k += 1
+        values += [v for v in new if v not in values]
+    return values
+
+
+def concat_tokens(expr):
+    """The parts of `"a" .. f(x) .. "b"`, as token lists."""
+    parts = []
+    cur = []
+    depth = 0
+    for t in expr + [LuaTok("op", "..", 0)]:
+        if t.text in ("(", "{", "["):
+            depth += 1
+        elif t.text in (")", "}", "]"):
+            depth -= 1
+        if t.text == ".." and depth == 0:
+            parts.append(cur)
+            cur = []
+        else:
+            cur.append(t)
+    return parts
 
 
 def concat_parts(expr):

@@ -1,4 +1,4 @@
-{"format": 1, "engine": "NetHack-5.0.0_Released", "count": 27227, "entries": [
+{"format": 1, "engine": "NetHack-5.0.0_Released", "count": 27232, "entries": [
 {"id": "a053ba02e4d4", "fmt": "X marks the spot.", "uses": ["engraving"], "sites": ["dat/Arc-loca.lua:90 des.engraving", "dat/Arc-loca.lua:91 des.engraving", "dat/Arc-loca.lua:92 des.engraving", "dat/Arc-loca.lua:93 des.engraving"]},
 {"id": "d5335a1468c3", "fmt": "What a strange feeling!", "uses": ["level"], "sites": ["dat/air.lua:12 des.message"]},
 {"id": "2442f1605479", "fmt": "You notice that there is no gravity here.", "uses": ["level"], "sites": ["dat/air.lua:13 des.message"]},
@@ -2511,6 +2511,11 @@
 {"id": "6c864ac3afd4", "fmt": "Your game may go down the drain if you have extra potions or rings.", "uses": ["rumor"], "sites": ["dat/rumors.tru:388"]},
 {"id": "c5f8f95fc41a", "fmt": "Zap yourself and see what happens...", "uses": ["rumor"], "sites": ["dat/rumors.tru:389"]},
 {"id": "0ec037510621", "fmt": "Zapping a wand of undead turning might bring your dog back to life.", "uses": ["rumor"], "sites": ["dat/rumors.tru:390"]},
+{"id": "294caf41828d", "fmt": "Dig", "uses": ["engraving"], "sites": ["dat/themerms.lua:1068 des.engraving"]},
+{"id": "a61b80ad1bb8", "fmt": "Dig %d %s", "uses": ["engraving"], "args": ["number", "word"], "sites": ["dat/themerms.lua:1068 des.engraving"]},
+{"id": "f9dcecd57713", "fmt": "Dig %d %s %d %s", "uses": ["engraving"], "args": ["number", "word", "number", "word"], "sites": ["dat/themerms.lua:1068 des.engraving"]},
+{"id": "b8e7b05d5f92", "fmt": "Dig here", "uses": ["engraving"], "sites": ["dat/themerms.lua:1068 des.engraving"]},
+{"id": "f3f335131bcd", "fmt": "Dig here %d %s", "uses": ["engraving"], "args": ["number", "word"], "sites": ["dat/themerms.lua:1068 des.engraving"]},
 {"id": "d61d71895a45", "fmt": "Dig%s", "uses": ["engraving"], "args": ["text"], "sites": ["dat/themerms.lua:1068 des.engraving"]},
 {"id": "37bbc5c5ef2c", "fmt": "Note: Outside the tutorial, Ctrl-key combinations are shown prefixed with a caret, like '^%s'", "uses": ["tutorial"], "args": ["text"], "sites": ["dat/tut-1.lua:24 des.engraving"]},
 {"id": "af77bc72187c", "fmt": "Move around with %s", "uses": ["tutorial"], "args": ["text"], "sites": ["dat/tut-1.lua:80 des.engraving"]},
