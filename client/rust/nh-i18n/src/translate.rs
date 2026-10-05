@@ -268,14 +268,53 @@ impl Translator {
         match found {
             Some(m) => self.render_or_base(&m, text, 0).unwrap_or_else(|| {
                 // no Russian for the template yet: a heading the glossary
-                // names ("Armor") still reads as a name
-                match self.whole_name(text) {
-                    Some(out) => out,
-                    None => Output::english(text, Status::Untranslated, Some(m.template)),
-                }
+                // names ("Armor") still reads as a name, a format of
+                // conversions alone may hold it all ("x - 12 gold pieces."
+                // is "%c - %s." more than "%s gold %s.")
+                self.whole_name(text)
+                    .or_else(|| self.wordless(text, channel))
+                    .unwrap_or_else(|| {
+                        Output::english(text, Status::Untranslated, Some(m.template))
+                    })
             }),
-            None => Output::english(text, Status::Unknown, None),
+            None => self
+                .padded(text, channel)
+                .unwrap_or_else(|| Output::english(text, Status::Unknown, None)),
         }
+    }
+
+    /// The text by a format of conversions and punctuation alone ("%c -
+    /// %s."), when its arguments are all Russian then.
+    fn wordless(&self, text: &str, channel: Channel) -> Option<Output> {
+        self.catalog
+            .matches(text, channel)
+            .iter()
+            .filter(|m| m.template.letters() == 0)
+            .filter_map(|m| self.render_match(m, 0))
+            .find(|out| out.status == Status::Translated)
+    }
+
+    /// A text no template makes with its spaces, translated without them
+    /// and put back between them: a menu's heading (" General   "), an
+    /// option's help ("    can your character hear anything").
+    fn padded(&self, text: &str, channel: Channel) -> Option<Output> {
+        let bare = text.trim_matches(' ');
+        if bare.is_empty() || bare.len() == text.len() {
+            return None;
+        }
+        let out = self.by_text(bare, channel);
+        (out.status != Status::Unknown).then(|| {
+            let start = text.len() - text.trim_start_matches(' ').len();
+            Output {
+                text: format!(
+                    "{}{}{}",
+                    &text[..start],
+                    out.text,
+                    &text[start + bare.len()..]
+                ),
+                ..out
+            }
+        })
     }
 
     /// The whole text as a name the lexicon reads, capitalised as it was.
@@ -453,7 +492,8 @@ impl Translator {
                 v
             })
             .collect();
-        Some(self.output(t, &ru, &values, whole, depth))
+        let upper = depth == 0 && starts_upper(t, captures);
+        Some(self.output(t, &ru, &values, whole, upper))
     }
 
     /// The Russian of template `index` with the arguments P7 sent; None
@@ -463,24 +503,19 @@ impl Translator {
         self.render_captures(t, &shown_args(t, args)?, 0)
     }
 
+    /// The Russian of `t` with its values, a capital first where the
+    /// English has one.
     fn output(
         &self,
         t: &Template,
         ru: &RuTemplate,
         values: &[Value],
         whole: bool,
-        depth: usize,
+        upper: bool,
     ) -> Output {
         let text = ru.render(values, self.hero);
-        // a text starts with a capital, but a line that goes on with a
-        // sentence ("and 45 pieces of gold, after 678 moves.") does not
-        let goes_on = t.fmt.chars().next().is_some_and(char::is_lowercase);
         Output {
-            text: if depth == 0 && !goes_on {
-                capitalize(&text)
-            } else {
-                text
-            },
+            text: if upper { capitalize(&text) } else { text },
             status: if whole {
                 Status::Translated
             } else {
@@ -681,6 +716,24 @@ fn has_owner(text: &str) -> bool {
         && words[..words.len() - 1]
             .iter()
             .any(|w| w.ends_with("'s") || (w.ends_with("s'") && w.len() > 2))
+}
+
+/// Does the English that template `t` printed as `captures` start with a
+/// capital? A sentence does; a line that goes on with one ("and 45
+/// pieces of gold, after 678 moves."), a menu's item ("a - a +1 long
+/// sword", "autopickup [X]") and a name ("newt corpse") do not.
+fn starts_upper(t: &Template, captures: &[String]) -> bool {
+    let mut caps = captures.iter();
+    t.segments
+        .iter()
+        .find_map(|s| {
+            let text = match s {
+                Segment::Lit(l) => l.as_str(),
+                Segment::Conv(_) => caps.next().map_or("", String::as_str),
+            };
+            text.chars().find(|c| c.is_alphabetic())
+        })
+        .is_some_and(char::is_uppercase)
 }
 
 /// The least translated of some outputs.

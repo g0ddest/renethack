@@ -90,6 +90,29 @@ fn an_owner_the_lexicon_reads_without_its_mark() {
 }
 
 #[test]
+fn a_capital_where_the_english_has_one() {
+    let t = translator();
+    // an inventory letter keeps its case, and a format of conversions
+    // alone holds the line rather than an untranslated "%s gold %s."
+    let out = t.message(None, &[], "x - 12 gold pieces.");
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        ("x - 12 золотых монет.", Status::Translated)
+    );
+    assert_eq!(t.text("newt corpse").text, "труп тритона");
+}
+
+#[test]
+fn a_heading_in_its_padding() {
+    let t = with(&[("General", r#"ru = "Общие""#)]);
+    let out = t.text(" General                        ");
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        (" Общие                        ", Status::Translated)
+    );
+}
+
+#[test]
 fn a_text_before_a_character() {
     // "This %s tastes %s%c": the %s ends where the "." begins
     check("This newt corpse tastes okay.", "Этот труп тритона на вкус");
