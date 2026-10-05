@@ -65,6 +65,31 @@ fn the_hero_fills_a_monster_s_place() {
 }
 
 #[test]
+fn an_owner_the_lexicon_reads_without_its_mark() {
+    // a god's name (a quest text's "%ds") is a word, not a monster
+    let t = with(&[(
+        "\"You have prevailed, %s!  %s is surely with you.  Now,\n\
+         you must take the Amulet, and sacrifice it on %s altar on\n\
+         the Astral Plane.  I suspect that I shall never see you again in this\n\
+         life, but I hope to at %s feet.\"",
+        r#"ru = "«{1}, {2}: на алтаре {3:gen}, у ног {4:gen}.»""#,
+    )]);
+    let out = t.window(
+        "\"You have prevailed, Hero!  Shan Lai Ching is surely with you.  Now,\n\
+         you must take the Amulet, and sacrifice it on Shan Lai Ching's altar on\n\
+         the Astral Plane.  I suspect that I shall never see you again in this\n\
+         life, but I hope to at Shan Lai Ching's feet.\"",
+    );
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        (
+            "«Hero, Шань Лай Цин: на алтаре Шань Лай Цин, у ног Шань Лай Цин.»",
+            Status::Translated
+        )
+    );
+}
+
+#[test]
 fn a_text_before_a_character() {
     // "This %s tastes %s%c": the %s ends where the "." begins
     check("This newt corpse tastes okay.", "Этот труп тритона на вкус");
@@ -83,50 +108,39 @@ fn an_engraving_of_a_lua_local() {
 
 #[test]
 fn a_hallucinated_name_behind_an_article() {
+    let t = with(&[
+        ("You kill %s!", r#"ru = "Вы убиваете {1:acc}!""#),
+        (
+            "jumbo shrimp",
+            r#"ru = "гигантская креветка"
+forms = ["гигантская креветка", "гигантской креветки", "гигантской креветке", "гигантскую креветку", "гигантской креветкой", "гигантской креветке"]
+gender = "f""#,
+        ),
+    ]);
+    for en in ["You kill the jumbo shrimp!", "You kill a jumbo shrimp!"] {
+        let out = t.message(None, &[], en);
+        assert_eq!(
+            (out.text.as_str(), out.status),
+            ("Вы убиваете гигантскую креветку!", Status::Translated),
+            "{en}"
+        );
+    }
+}
+
+/// The built-in catalog and lexicon with these translations only: (the
+/// English format, the rest of its entry).
+fn with(entries: &[(&str, &str)]) -> Translator {
     let text = std::fs::read_to_string(
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../i18n/catalog.en.json"),
     )
     .unwrap();
     let catalog = Catalog::parse(&text).unwrap();
-    let id = |fmt: &str| {
+    let mut toml = String::new();
+    for (fmt, rest) in entries {
         let i = catalog.by_fmt(fmt).unwrap_or_else(|| panic!("{fmt}"));
-        catalog.templates()[i].id.clone()
-    };
-    let russian = Russian::parse(&[(
-        "t.toml".into(),
-        format!(
-            r#"
-[{}]
-en = "You kill %s!"
-ru = "Вы убиваете {{1:acc}}!"
-
-[{}]
-en = "jumbo shrimp"
-ru = "гигантская креветка"
-forms = ["гигантская креветка", "гигантской креветки", "гигантской креветке", "гигантскую креветку", "гигантской креветкой", "гигантской креветке"]
-gender = "f"
-"#,
-            id("You kill %s!"),
-            id("jumbo shrimp")
-        ),
-    )])
-    .unwrap();
-    let t = Translator::new(catalog, russian, Box::new(Lexicon::ru()));
-    for (en, ru) in [
-        (
-            "You kill the jumbo shrimp!",
-            "Вы убиваете гигантскую креветку!",
-        ),
-        (
-            "You kill a jumbo shrimp!",
-            "Вы убиваете гигантскую креветку!",
-        ),
-    ] {
-        let out = t.message(None, &[], en);
-        assert_eq!(
-            (out.text.as_str(), out.status),
-            (ru, Status::Translated),
-            "{en}"
-        );
+        let en = serde_json::to_string(fmt).unwrap();
+        toml += &format!("[{}]\nen = {en}\n{rest}\n\n", catalog.templates()[i].id);
     }
+    let russian = Russian::parse(&[("t.toml".into(), toml)]).unwrap();
+    Translator::new(catalog, russian, Box::new(Lexicon::ru()))
 }

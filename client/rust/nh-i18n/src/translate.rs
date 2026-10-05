@@ -571,6 +571,11 @@ impl Translator {
         if let Some(p) = self.names.parse(name, shown) {
             return (Value::Phrase(p), true);
         }
+        // an owner, read without its "'s" ("Shan Lai Ching's altar"): the
+        // Russian says whose by a case
+        if let Some(p) = owner(shown).and_then(|o| self.names.parse(name, o)) {
+            return (Value::Phrase(p), true);
+        }
         let found = if depth < MAX_NESTING {
             self.catalog
                 .find(shown, Channel::Any)
@@ -658,6 +663,14 @@ fn english_words(text: &str) -> usize {
     text.split(|c: char| !(c.is_ascii_alphabetic() || c == '\''))
         .filter(|w| w.chars().any(|c| c.is_ascii_alphabetic()))
         .count()
+}
+
+/// The name of an owner ("Shan Lai Ching's", "Croesus'"), without its
+/// mark.
+fn owner(text: &str) -> Option<&str> {
+    text.strip_suffix("'s")
+        .or_else(|| text.strip_suffix('\'').filter(|o| o.ends_with('s')))
+        .filter(|o| !o.is_empty())
 }
 
 /// Does a text hold an owner before more words ("gnome's hand",
