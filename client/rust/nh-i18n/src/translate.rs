@@ -997,8 +997,16 @@ impl Phrase for Declined {
 }
 
 /// What a regular English plural can be the plural of: "shrimps" of
-/// "shrimp", "foxes" of "fox", "flies" of "fly", "firemen" of "fireman".
+/// "shrimp", "foxes" of "fox", "flies" of "fly", "firemen" of "fireman";
+/// "bluebirds of happiness" of "bluebird of happiness" (makeplural()
+/// makes the words before " of " plural).
 fn singulars(text: &str) -> Vec<String> {
+    if let Some((head, tail)) = text.split_once(" of ") {
+        return singulars(head)
+            .into_iter()
+            .map(|h| format!("{h} of {tail}"))
+            .collect();
+    }
     let mut out = Vec::new();
     if let Some(s) = text.strip_suffix("ies") {
         out.push(format!("{s}y"));
@@ -1211,6 +1219,23 @@ mod tests {
         assert!(has_owner("the dogs' bowl"));
         assert!(!has_owner("The gnome's"));
         assert_eq!(english_words("плащ beetle"), 1);
+    }
+
+    #[test]
+    fn what_an_english_plural_is_the_plural_of() {
+        for (plural, one) in [
+            ("jumbo shrimps", "jumbo shrimp"),
+            ("giant pigmies", "giant pigmy"),
+            ("frog princes", "frog prince"),
+            ("particle men", "particle man"),
+            ("bluebirds of happiness", "bluebird of happiness"),
+        ] {
+            assert!(
+                singulars(plural).iter().any(|s| s == one),
+                "{plural}: {:?}",
+                singulars(plural)
+            );
+        }
     }
 
     #[test]
