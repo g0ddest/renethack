@@ -15,6 +15,10 @@
 //! gender = "n"
 //! ```
 //!
+//! A template with arguments may give its forms too, each a template
+//! ("взрыв {1:gen}", "взрыва {1:gen}"…): a text it makes, the argument of
+//! another, then takes that one's case ("убит взрывом газовой споры").
+//!
 //! `en` repeats the English format: a reviewer reads it, and the linter
 //! tells when the catalog no longer has it. `gender` is "m", "f", "n" or
 //! "pl" (a plural).
@@ -77,6 +81,8 @@ pub struct Translation {
     pub template: RuTemplate,
     /// Case forms, for a piece used as an argument.
     pub forms: Option<[String; 6]>,
+    /// The case forms as templates, for a translation with arguments.
+    pub form_templates: Option<Vec<RuTemplate>>,
     pub gender: Option<(Gender, Number)>,
     /// English words of the format that are not the glossary's terms there
     /// ("tin" as a verb, "rock" as the stuff): the linter lets them be.
@@ -207,6 +213,19 @@ fn parse_file(name: &str, text: &str) -> Result<Vec<Translation>, RussianError> 
                     .map_err(|f| invalid(format!("{} forms, not six", f.len())))?,
             ),
         };
+        let form_templates = match &forms {
+            Some(f) if f.iter().any(|x| x.contains('{')) => Some(
+                f.iter()
+                    .map(|x| RuTemplate::parse(x))
+                    .collect::<Result<Vec<_>, _>>()
+                    .map_err(|err| RussianError::Template {
+                        file: name.into(),
+                        id: id.clone(),
+                        err,
+                    })?,
+            ),
+            _ => None,
+        };
         let gender = match e.gender.as_deref() {
             None => None,
             Some("m") => Some((Gender::Masc, Number::Sing)),
@@ -221,6 +240,7 @@ fn parse_file(name: &str, text: &str) -> Result<Vec<Translation>, RussianError> 
             ru: e.ru,
             template,
             forms,
+            form_templates,
             gender,
             not_terms: e.not_terms,
             file: name.into(),
@@ -270,6 +290,27 @@ gender = "pl"
             (plain.form(Case::Gen), plain.number()),
             ("поиски".to_string(), Number::Plur)
         );
+    }
+
+    #[test]
+    fn forms_of_a_template_with_arguments() {
+        let ru = Russian::parse(&files(
+            r#"
+[e1]
+en = "%s explosion"
+ru = "взрыв {1:gen}"
+forms = ["взрыв {1:gen}", "взрыва {1:gen}", "взрыву {1:gen}", "взрыв {1:gen}", "взрывом {1:gen}", "взрыве {1:gen}"]
+gender = "m"
+"#,
+        ))
+        .unwrap();
+        let t = ru.get("e1").unwrap();
+        assert_eq!(t.form_templates.as_ref().map(Vec::len), Some(6));
+        let err = Russian::parse(&files(
+            "[x]\nen = \"%s\"\nru = \"{1}\"\nforms = [\"{1:вин}\", \"a\", \"a\", \"a\", \"a\", \"a\"]\n",
+        ))
+        .unwrap_err();
+        assert!(err.to_string().starts_with("t.toml: [x]:"), "{err}");
     }
 
     #[test]

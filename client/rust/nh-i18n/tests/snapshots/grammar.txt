@@ -78,6 +78,12 @@
   f    крыса сильно гневалась на вас.
   n    копьё сильно гневалось на вас.
   pl   3 стрелы сильно гневались на вас.
+ (in celestial disgrace)  [2909d7eac07f]
+  =    (в небесной немилости)
+ (with a fake Amulet)  [9533402d71fb]
+  =    (с поддельным Амулетом)
+ (with the Amulet)  [13e7b3176f40]
+  =    (с Амулетом)
  0 (off)  [1e61b10e117b]
   =    0 (выкл.)
  1 (on)  [961e60edc045]
@@ -6631,6 +6637,11 @@
   f   Крыса испаряется.
   n   Копьё испаряется.
   pl  3 стрелы испаряются.
+%s explosion  [871c45b04935]
+  m   Взрыв тритона
+  f   Взрыв крысы
+  n   Взрыв копья
+  pl  Взрыв 3 стрел
 %s falls asleep.  [17aee62eba2b]
   m   Тритон засыпает.
   f   Крыса засыпает.
@@ -19784,6 +19795,12 @@ aardvark  [ff49abca9701]
   =   Трубкозуб
 acid blog  [ec62c11f2090]
   =   Кислотный блог
+acidic chair  [6c10c3457df7]
+  =   Кислотное кресло
+acidic corpse  [e7f995b1323f]
+  =   Кислотный труп
+acidic glob  [7d377c94fabd]
+  =   Кислотный сгусток
 acorn  [f5d193d9beee]
   =   Жёлудь
 action to take when encountering locked door or chest  [c7ea07715c8e]
@@ -19794,6 +19811,8 @@ ad aerarium  [04b2adcce743]
   =   Ad aerarium
 add location information to messages  [d831042dac6e]
   =   Добавлять к сообщениям сведения о месте
+alchemic blast  [4b7fccbbdb30]
+  =   Алхимический взрыв
 aliasing priest  [400634aab95b]
   =   Жрец под псевдонимом
 aligned parasite  [e347144211fd]
@@ -19879,6 +19898,8 @@ aria elemental  [2ddc6f3f9059]
   =   Душный элементаль
 artifacts  [3dc52886d656]
   =   Артефакты
+ascended  [b3a0b6607def]
+  =   Вознёсся
 ask before hitting tame or peaceful monsters  [33e8388d7a16]
   =   Спрашивать, прежде чем бить ручных или мирных монстров
 ask if you want the tutorial  [eacd37b44869]
@@ -19913,6 +19934,10 @@ baby long word  [90dd99fd22f0]
   =   Детёныш длинного слова
 baby parable worm  [4351f1a54116]
   =   Детёныш пупырчатого червя
+ball of cold  [1e514a1af452]
+  =   Шар холода
+ball of lightning  [98adb42e3093]
+  =   Шаровая молния
 bare %s (no weapon)  [e091dc615fc4]
   m   Голые тритон (без оружия)
   f   Голые крыса (без оружия)
@@ -19932,6 +19957,14 @@ beer wight  [c029d498780c]
   =   Пивное умертвие
 beholder  [afb0bddfc59e]
   =   Созерцатель
+being frightened to death  [ea423eb3fc8d]
+  =   В смертельном испуге
+being scared stiff  [d673853e3fa0]
+  =   Оцепенев от страха
+being terrified of a demon  [6ac39249edf3]
+  =   В ужасе перед демоном
+being terrified of a ghost  [22e24223dd4c]
+  =   В ужасе перед привидением
 beluga whale  [fc14dc2c3644]
   =   Белуха
 big dumb object  [36eaf7228f8e]
@@ -19944,12 +19977,38 @@ bind keys  [7aeae4c2c7ab]
   =   Назначение клавиш
 blancmange  [c19f66080c5b]
   =   Бланманже
+blast of acid  [fd9532703624]
+  =   Кислотное дыхание
+blast of disintegration  [74d5b6b11b6b]
+  =   Дыхание распада
+blast of fire  [b4a516c7dcde]
+  =   Огненное дыхание
+blast of frost  [e122a4f43074]
+  =   Ледяное дыхание
+blast of lightning  [c578e7307cd4]
+  =   Дыхание молнией
+blast of missiles  [f07eadb6e9a6]
+  =   Шквал волшебных стрел
+blast of poison gas  [c13581d2d40c]
+  =   Ядовитое дыхание
+blast of sleep gas  [f69aecc5e8d0]
+  =   Дыхание усыпляющим газом
 bluebird of happiness  [40b40d71e338]
   =   Синяя птица счастья
 bohrbug  [c4b8e6e4ef1a]
   =   Борбаг
+boiling potion  [40280c6d2e9a]
+  =   Кипящее зелье
+boiling water  [2498e2925224]
+  =   Кипяток
 bold face  [d86d1f959e4a]
   =   Жирный шрифт
+bolt of cold  [f25b12074560]
+  =   Луч холода
+bolt of fire  [633fd58c0dc1]
+  =   Луч огня
+bolt of lightning  [73ab524d740a]
+  =   Молния
 bonsai-kitten  [808ff4623b02]
   =   Котёнок-бонсай
 bookworm  [56f462a77c81]
@@ -19966,12 +20025,37 @@ bouncing eye  [ba88dc739233]
   =   Прыгучее око
 boustrophedon  [fa26bdefdc24]
   =   Бустрофедон
+brainlessness  [8e7e4f6723c8]
+  =   Безмозглость
 brawny mold  [81bfb7ecf2af]
   =   Бравая плесень
 brogmoid  [bb488eda6f71]
   =   Брогмоид
 buffer overflow  [43186ef06c52]
   =   Переполнение буфера
+burned by %s  [a3fe9875703a]
+  m   Сожжён тритоном
+  f   Сожжён крысой
+  n   Сожжён копьём
+  pl  Сожжён 3 стрелами
+burned by %s, while %s  [2081d6e71b6c]
+  m   Сожжён тритоном, тритон
+  f   Сожжён крысой, крыса
+  n   Сожжён копьём, копьё
+  pl  Сожжён 3 стрелами, 3 стрелы
+burned by %s, while helpless  [bd8b8d82ff0f]
+  m   Сожжён тритоном, в беспомощном состоянии
+  f   Сожжён крысой, в беспомощном состоянии
+  n   Сожжён копьём, в беспомощном состоянии
+  pl  Сожжён 3 стрелами, в беспомощном состоянии
+burning  [347ff910b7ac]
+  =   Сожжение
+burning book  [03199fb43017]
+  =   Горящая книга
+burning oil  [b1b53117444e]
+  =   Горящее масло
+burning scroll  [9f6bcb9fe507]
+  =   Горящий свиток
 bust vortex  [f9fd71ced046]
   =   Пылкий вихрь
 by casting letter  [a8f40a415869]
@@ -20000,6 +20084,8 @@ by skill group, low to high level within group  [57def19ad8e6]
   =   По школам, внутри школы — по возрастанию уровня
 cacodemon  [83ceb99f1ff2]
   =   Какодемон
+cadaver  [b13d6b26950b]
+  =   Мертвечина
 can your character hear anything  [e95f77197077]
   =   Слышит ли ваш персонаж хоть что-нибудь
 cardboard golem  [b66d3821b091]
@@ -20022,6 +20108,23 @@ chicken  [cef7e59218e3]
   =   Курица
 chocolate pudding  [7899bdb90a02]
   =   Шоколадный пудинг
+choked  [2359cd55df4f]
+  =   Подавился
+choked on %s  [ae6e78fe05b5]
+  m   Подавился тритоном
+  f   Подавился крысой
+  n   Подавился копьём
+  pl  Подавился 3 стрелами
+choked on %s, while %s  [e6413fc003a7]
+  m   Подавился тритоном, тритон
+  f   Подавился крысой, крыса
+  n   Подавился копьём, копьё
+  pl  Подавился 3 стрелами, 3 стрелы
+choked on %s, while helpless  [f43e2699649f]
+  m   Подавился тритоном, в беспомощном состоянии
+  f   Подавился крысой, в беспомощном состоянии
+  n   Подавился копьём, в беспомощном состоянии
+  pl  Подавился 3 стрелами, в беспомощном состоянии
 choose character via dialog or prompts  [df934f3488b6]
   =   Выбор персонажа в окне или вопросами
 choplet  [e6f661e59142]
@@ -20030,18 +20133,34 @@ chopping  [515238e64e8f]
   =   Рубить
 classify gold as unknown or uncursed  [cffde6c3074a]
   =   Считать золото неизвестным или непроклятым
+closing drawbridge  [58182f985f05]
+  =   Закрывающийся подъёмный мост
+cloud of poison gas  [84f9d8eab19a]
+  =   Облако ядовитого газа
 clown  [6725c9e20e61]
   =   Клоун
 clue golem  [0b19a5a6708b]
   =   Клюквенный голем
 coelacanth  [1439990fd724]
   =   Латимерия
+collapsing drawbridge  [3cff9f6729b7]
+  =   Рушащийся подъёмный мост
 color mappings for internal screen routines  [fa9a0f5c0bb2]
   =   Цвета для внутренних процедур экрана
 commands asking for inventory item show a menu  [d2c192381805]
   =   Команды, которым нужен предмет, показывают меню
+committed suicide  [d54acec040e3]
+  =   Покончил с собой
 compass ('east' or '3s' or '2n,4w')  [f8e88a461f89]
   =   Компас («east», «3s» или «2n,4w»)
+cone of cold  [3d66a278c3cc]
+  =   Конус холода
+contaminated potion  [29ea208a4b05]
+  =   Заражённое зелье
+contaminated tap water  [f4698f8c7c58]
+  =   Заражённая водопроводная вода
+contaminated water  [26784fde30ca]
+  =   Заражённая вода
 control monster polymorphs  [acae2be8af1e]
   =   Управлять превращениями монстров
 control monster teleport destinations  [deb7e00120a8]
@@ -20054,10 +20173,43 @@ corpulent porpoise  [1d052b3ad046]
   =   Тучная морская свинья
 creeping coins  [6aba8421848e]
   =   Ползучие монеты
+crushed  [71141819f343]
+  =   Раздавлен
+crushed to death by %s  [d5506319e651]
+  m   Раздавлен насмерть тритоном
+  f   Раздавлен насмерть крысой
+  n   Раздавлен насмерть копьём
+  pl  Раздавлен насмерть 3 стрелами
+crushed to death by %s, while %s  [3230284d77fb]
+  m   Раздавлен насмерть тритоном, тритон
+  f   Раздавлен насмерть крысой, крыса
+  n   Раздавлен насмерть копьём, копьё
+  pl  Раздавлен насмерть 3 стрелами, 3 стрелы
+crushed to death by %s, while helpless  [4276b797058e]
+  m   Раздавлен насмерть тритоном, в беспомощном состоянии
+  f   Раздавлен насмерть крысой, в беспомощном состоянии
+  n   Раздавлен насмерть копьём, в беспомощном состоянии
+  pl  Раздавлен насмерть 3 стрелами, в беспомощном состоянии
+crushed to death underneath a drawbridge  [ab5a84e5e67b]
+  =   Раздавлен насмерть подъёмным мостом
+cursed throne  [99e71102692e]
+  =   Проклятый трон
 dahu  [1c8dd8eaf121]
   =   Дахю
+dangerous winds  [b7a8b3883d3f]
+  =   Опасные ветра
 dangling pointer  [5e1e28469735]
   =   Висячий указатель
+death field  [576f940ef775]
+  =   Поле смерти
+death ray  [a9099e304a3d]
+  =   Луч смерти
+deep water  [a153dba5e67a]
+  =   Глубокая вода
+deliberately plunged into a pit  [d5dcfb154ce3]
+  =   Нарочно прыгнул в яму
+deliberately plunged into a pit of iron spikes  [bfa7311ed5f6]
+  =   Нарочно прыгнул в яму с железными шипами
 dementor  [c27b09d77f6a]
   =   Дементор
 deprecated (use S_boulder in sym file instead)  [865efd1b05ab]
@@ -20074,14 +20226,35 @@ dhole  [6067e3d2545f]
   =   Красный волк
 diagonally moving grid bug  [561c018a84af]
   =   Диагональный ситовый жучок
+died  [af135611eb53]
+  =   Умер
+died of %s  [fdae69a2c7ac]
+  m   Умер от тритона
+  f   Умер от крысы
+  n   Умер от копья
+  pl  Умер от 3 стрел
+died of %s, while %s  [c6a9641a4aa3]
+  m   Умер от тритона, тритон
+  f   Умер от крысы, крыса
+  n   Умер от копья, копьё
+  pl  Умер от 3 стрел, 3 стрелы
+died of %s, while helpless  [854107b2c206]
+  m   Умер от тритона, в беспомощном состоянии
+  f   Умер от крысы, в беспомощном состоянии
+  n   Умер от копья, в беспомощном состоянии
+  pl  Умер от 3 стрел, в беспомощном состоянии
 dig if moving and wielding a digging tool  [d7fcd5d4b43d]
   =   Копать на ходу, если в руках инструмент для копания
+digesting something  [4a1f43304135]
+  =   Переваривая добычу
 digging  [77a3d5a2586c]
   =   Копать
 dingbat  [de9c5b6181ee]
   =   Дингбат
 dinkus  [ae3e4cc07378]
   =   Динкус
+disintegration field  [7a4f07aac956]
+  =   Поле распада
 display characters for warnings  [edaeff904dbc]
   =   Символы предупреждений
 display detected monsters in inverse  [223894d608cf]
@@ -20096,6 +20269,25 @@ display sparkly effect when resisting magic  [d94eae518b3a]
   =   Искрящийся эффект при сопротивлении магии
 display style for menu headings  [9098c56bfff0]
   =   Вид заголовков меню
+disrobing  [196dd64b8cff]
+  =   Раздеваясь
+dissolved in %s  [bb098897fb1f]
+  m   Растворился в тритоне
+  f   Растворился в крысе
+  n   Растворился в копье
+  pl  Растворился в 3 стрелах
+dissolved in %s, while %s  [4b9b91c1ab8a]
+  m   Растворился в тритоне, тритон
+  f   Растворился в крысе, крыса
+  n   Растворился в копье, копьё
+  pl  Растворился в 3 стрелах, 3 стрелы
+dissolved in %s, while helpless  [8755af4e6c2f]
+  m   Растворился в тритоне, в беспомощном состоянии
+  f   Растворился в крысе, в беспомощном состоянии
+  n   Растворился в копье, в беспомощном состоянии
+  pl  Растворился в 3 стрелах, в беспомощном состоянии
+dissolving under the heat and pressure  [b7a21ca0aaff]
+  =   Растворился от жара и давления
 do nothing  [bdbd93292417]
   =   Ничего не делать
 don't autopickup dropped items  [aa159eefd19e]
@@ -20108,8 +20300,29 @@ doozer  [3c6cb4e7becb]
   =   Дузер
 dornbeast  [63b4bce034a7]
   =   Дорн-зверь
+dragging an iron ball  [b2fde79416cf]
+  =   Волоча железное ядро
+dressing up  [5776fc3e1a12]
+  =   Одеваясь
 dropbear  [bc3857bb7338]
   =   Медведь-десантник
+drowned in %s  [7747b7ded711]
+  m   Утонул в тритоне
+  f   Утонул в крысе
+  n   Утонул в копье
+  pl  Утонул в 3 стрелах
+drowned in %s, while %s  [0841d56754dd]
+  m   Утонул в тритоне, тритон
+  f   Утонул в крысе, крыса
+  n   Утонул в копье, копьё
+  pl  Утонул в 3 стрелах, 3 стрелы
+drowned in %s, while helpless  [d1ad70cfca84]
+  m   Утонул в тритоне, в беспомощном состоянии
+  f   Утонул в крысе, в беспомощном состоянии
+  n   Утонул в копье, в беспомощном состоянии
+  pl  Утонул в 3 стрелах, в беспомощном состоянии
+drowning  [1ac494692d24]
+  =   Утопление
 duct tape golem  [80b8a0747cb5]
   =   Голем из скотча
 dungeon core  [551924779b0f]
@@ -20139,10 +20352,16 @@ efreeti  [2d99e9685e9a]
   =   Ифрит
 elastic eel  [565c40a9e286]
   =   Эластичный угорь
+electric chair  [b0e9a8e14904]
+  =   Электрический стул
 electric giraffe  [2b20bc6ffb10]
   =   Электрический жираф
+electric shock  [da057141a8ff]
+  =   Удар током
 electrocardiogram eel  [9500bb8b653f]
   =   Электрокардиографический угорь
+elementary physics  [cd9896a4869e]
+  =   Элементарная физика
 elwedritsche  [0e08dd49973b]
   =   Эльведрич
 email address for reporting  [cf4b3308b93e]
@@ -20159,6 +20378,8 @@ engraving  [61ce7aff649b]
   =   Делать надпись
 errata elemental  [e2881abc2ee7]
   =   Опечаточный элементаль
+escaped  [28fa0807bebb]
+  =   Сбежал
 escaped from the dungeon with %ld point,  [a8fb11549201]
   m   Сбежали из подземелья, набрав 1 очко,
   f   Сбежали из подземелья, набрав 3 очка,
@@ -20171,18 +20392,54 @@ escaped from the dungeon with %ld points,  [f86b21ba623c]
   pl  Сбежали из подземелья, набрав 21 очко,
 evil overlord  [5abc830f65b5]
   =   Злой властелин
+exhaustion  [8bebf68bd167]
+  =   Истощение
 existential angst  [de01c973ef76]
   =   Экзистенциальная тоска
 experimental behavior of menu inverts  [9d892392184b]
   =   Опытное обращение выбора в меню
+exploding crystal ball  [56044648a251]
+  =   Взорвавшийся хрустальный шар
+exploding drawbridge  [a5c6d879963e]
+  =   Взорвавшийся подъёмный мост
+exploding glob of slime  [95b02495a9e7]
+  =   Взорвавшийся сгусток слизи
+exploding potion  [ddb2177a79b3]
+  =   Взорвавшееся зелье
+exploding ring  [f0554d79a4bb]
+  =   Взорвавшееся кольцо
+exploding rune  [8295b8480e57]
+  =   Взорвавшаяся руна
+exploding wand  [14bef6f001e8]
+  =   Взорвавшаяся палочка
+explosion  [e6b620d135f9]
+  =   Взрыв
 extra information for 'showvers'  [6b4d59933fa1]
   =   Дополнительные сведения для showvers
 extra prompting in certain situations  [841f721fe7f6]
   =   Дополнительные подтверждения в некоторых случаях
+fainted from lack of food  [98f0904d838b]
+  =   В голодном обмороке
 fallacy golem  [8eece73abc6d]
   =   Голем-софизм
+falling drawbridge  [c6ddcb985531]
+  =   Падающий подъёмный мост
+falling object  [e1e8c5dc64a0]
+  =   Падающий предмет
+falling rock  [09d15c6cbf12]
+  =   Падающий камень
 feather golem  [20bdb0b0812f]
   =   Пернатый голем
+fell from a drawbridge  [596842758bca]
+  =   Упал с подъёмного моста
+fell into a chasm  [212f422b47ec]
+  =   Упал в пропасть
+fell into a pit  [93139efe67ea]
+  =   Упал в яму
+fell into a pit of iron spikes  [867d08523a11]
+  =   Упал в яму с железными шипами
+fell onto a sink  [41e8d75eb6aa]
+  =   Упал на раковину
 fierceness sphere  [0264c218b755]
   =   Завораживающая сфера
 figment of your imagination  [a818a89b90bd]
@@ -20191,10 +20448,14 @@ fill empty quiver automatically when firing  [e227f81c7356]
   =   При стрельбе пополнять пустой колчан автоматически
 filter coordinate locations when targeting next or previous  [885ff86b9468]
   =   Отбирать места при выборе следующего или предыдущего
+finger of death  [f3355c7ed251]
+  =   Перст смерти
 fir elemental  [efc5cad82777]
   =   Еловый элементаль
 fire-command tries to be helpful  [e198f6eeb879]
   =   Команда стрельбы старается помочь
+fireball  [6b9b01998d37]
+  =   Огненный шар
 first category perpetual motion device  [e8b03291bbc3]
   =   Вечный двигатель первого рода
 flamingo sphere  [650544752627]
@@ -20237,18 +20498,40 @@ frog prince  [3fa8f2fbcf5c]
   =   Принц-лягушонок
 frosted giant  [9d2322dd359f]
   =   Глазированный великан
+frozen by a monster's gaze  [9f5290a6424e]
+  =   Оцепенев от взгляда монстра
+frozen by a potion  [f599c017afe6]
+  =   Оцепенев от зелья
+frozen by a trap  [68d73ccb977b]
+  =   Оцепенев от ловушки
 full compass ('east' or '3south' or '2north,4west')  [ec8983c4b8fa]
   =   Полный компас («east», «3south» или «2north,4west»)
 full map without monsters, objects, and traps  [603daf804e63]
   =   Вся карта без монстров, предметов и ловушек
+fumbling  [15facb484868]
+  =   Спотыкаясь
 game name  [81e1e111c0b4]
   =   Название игры
 game receives click info from mouse  [6034a2039329]
   =   Игра получает щелчки мыши
+gas cloud  [2078f04647e3]
+  =   Облако газа
 gazebo  [66b8a4249113]
   =   Беседка
+gazing into a Magic 8-Ball (tm)  [594db818126f]
+  =   Глядя в Magic 8-Ball (tm)
+gazing into a crystal ball  [8fc9f4c8df8c]
+  =   Глядя в хрустальный шар
+gazing into a mirror  [fe091d782a62]
+  =   Глядя в зеркало
+genocidal confusion  [6680fe109e8e]
+  =   Геноцидная путаница
+genocided  [03bc7c5d91d4]
+  =   Истреблён
 geriatric snake  [86d85ca8a88e]
   =   Подагрическая змея
+getting stoned  [0a01d46f90ca]
+  =   Каменея
 ghoti  [ba475addc302]
   =   Рыбко
 giant bath  [4e6b12339e8f]
@@ -20334,10 +20617,14 @@ heisenbug  [2c6aeb07d21f]
   =   Гейзенбаг
 hell hound pun  [959b351e5181]
   =   Каламбур адской гончей
+her own player  [4a19a8f80741]
+  =   Собственный игрок
 here  [0154c0dabe71]
   =   Здесь
 hide help  [4b3b8e96e83d]
   =   Скрыть справку
+hiding from thunderstorm  [eb3a181fb360]
+  =   Прячась от грозы
 high purist  [34046aadd632]
   =   Верховный пурист
 highlight control  [87594b7329f0]
@@ -20348,10 +20635,14 @@ hippocampus  [cf8b334b177c]
   =   Гиппокамп
 hippogriff  [28834c6e1841]
   =   Гиппогриф
+his own player  [70efe8121507]
+  =   Собственный игрок
 holloway  [897bf5680593]
   =   Холлоуэй
 hologram  [ba1a91b4a623]
   =   Голограмма
+hurt in a chasm  [0b32df3e8421]
+  =   Покалечился в пропасти
 hydra  [a9bb669e8681]
   =   Гидра
 ice monster  [7c245ea2757c]
@@ -20360,6 +20651,8 @@ ice trowel  [ed626c6a2ee1]
   =   Ледяной троллейбус
 ignore interrupt signals  [570ee7530fa5]
   =   Не замечать сигналов прерывания
+imperious order  [f68226dba640]
+  =   Властный приказ
 in same area  [11ad47c87cc5]
   =   Только в той же области
 in view only  [913283a5e96e]
@@ -20372,6 +20665,8 @@ invert all items in a menu  [4a869a832307]
   =   Обратить выбор всех пунктов меню
 invert all items on this page of a menu  [af0ad16e69cd]
   =   Обратить выбор пунктов на этой странице меню
+iron ball collision  [1f18acf2dce5]
+  =   Столкновение с железным ядром
 jackalope  [ecea0495c11c]
   =   Зайцелоп
 jester  [deff1d836528]
@@ -20382,10 +20677,36 @@ jump to the first page in a menu  [959e95211714]
   =   К первой странице меню
 jump to the last page in a menu  [6444d76581a2]
   =   К последней странице меню
+jumping around  [680e3714136d]
+  =   Прыгая
 kelpie  [8d972c4aa8d8]
   =   Келпи
 kestrel  [9d65c9c5a1ed]
   =   Пустельга
+kicking %s  [2e1474182d23]
+  m   Удар ногой по тритону
+  f   Удар ногой по крысе
+  n   Удар ногой по копью
+  pl  Удар ногой по 3 стрелам
+killed by %s  [48ef1c5f5997]
+  m   Убит тритоном
+  f   Убит крысой
+  n   Убит копьём
+  pl  Убит 3 стрелами
+killed by %s, while %s  [0b3756765bf7]
+  m   Убит тритоном, тритон
+  f   Убит крысой, крыса
+  n   Убит копьём, копьё
+  pl  Убит 3 стрелами, 3 стрелы
+killed by %s, while helpless  [515ad804b9bf]
+  m   Убит тритоном, в беспомощном состоянии
+  f   Убит крысой, в беспомощном состоянии
+  n   Убит копьём, в беспомощном состоянии
+  pl  Убит 3 стрелами, в беспомощном состоянии
+killed by petrification  [8b1c24fe51ee]
+  =   Убит окаменением
+killed while stuck in creature form  [7ebaf616bbca]
+  =   Убит, застряв в облике существа
 killer beet  [7705cf86872e]
   =   Свёкла-убийца
 killer bunny  [094a29527452]
@@ -20404,6 +20725,8 @@ known map without monsters, objects, and traps  [7e081a2a83c3]
   =   Известная карта без монстров, предметов и ловушек
 lag monster  [4d2fd9cd132e]
   =   Лаг-монстр
+land mine  [43620463d83d]
+  =   Мина
 land octopus  [a4fa77c498a4]
   =   Сухопутный осьминог
 large microbat  [5d604e1cb70d]
@@ -20422,6 +20745,8 @@ level generation can overwrite stairs  [9ae9b833c7d2]
   =   Создание уровня может стереть лестницы
 lhurgoyf  [9dd07deb1432]
   =   Лургойф
+life drainage  [49e113e41476]
+  =   Потеря жизненной силы
 ligature  [8e7c24b56442]
   =   Лигатура
 liger  [42feee0501c7]
@@ -20438,6 +20763,8 @@ list of symbols to use in drawing the dungeon map  [4616ffb8d83e]
   =   Символы для карты подземелья
 list of symbols to use in drawing traps  [edc7bc4e6079]
   =   Символы ловушек
+little dart  [d7f59ec4c6ea]
+  =   Маленький дротик
 little green man  [1a2266fd1d8b]
   =   Зелёный человечек
 load DECGraphics display symbols into symset  [91bfabfd7b23]
@@ -20466,6 +20793,12 @@ lungfish  [9cf60fe2411a]
   =   Двоякодышащая рыба
 maggot  [a32f14c1aab3]
   =   Опарыш
+magic missile  [d6b9218f1343]
+  =   Волшебная стрела
+magical blast  [9be0103af495]
+  =   Магический удар
+magical explosion  [f668a13501b0]
+  =   Магический взрыв
 magnetic monopole  [6f2c9e56fcc5]
   =   Магнитный монополь
 maintain current ordering  [57d610e33768]
@@ -20508,6 +20841,10 @@ method of video updating  [95e769c41225]
   =   Способ обновления экрана
 microscopic space fleet  [e5649b4dfb2d]
   =   Микроскопический космический флот
+mildly contaminated potion  [5c0df7252230]
+  =   Слегка заражённое зелье
+mildly contaminated tap water  [80104d7ea95d]
+  =   Слегка заражённая водопроводная вода
 millitaur  [93d4c1944a9d]
   =   Миллитавр
 mime  [c6d51ab09f96]
@@ -20520,6 +20857,8 @@ mock role  [d9e93cae756a]
   =   Краменный кот
 moldier ant  [af44d6adb30e]
   =   Муравей-салат
+molten lava  [3393b93ddd1b]
+  =   Расплавленная лава
 monorail cat  [57ea55ffabd3]
   =   Монорельсовый кот
 mortar orc  [b4dc5730b0e7]
@@ -20528,6 +20867,8 @@ mother-in-law  [15abc87f9a02]
   =   Тёща
 mountain lymph  [f123139baf9d]
   =   Горная лимфа
+moving through the air  [53c9c098ad98]
+  =   В полёте по воздуху
 name of a fruit you enjoy eating  [80e8d3a457da]
   =   Название вашего любимого фрукта
 name of tile file  [c1709a616352]
@@ -20610,6 +20951,8 @@ one-winged dewinged stab-bat  [976bc05edb6a]
   =   Однокрылая обескрыленная колючая летучая мышь
 ooblecks  [4eac803e4d74]
   =   Ублеки
+opening a container  [e04434014bc3]
+  =   Открывая контейнер
 opening the tin  [92fa0394470d]
   =   Открывать банку
 or %s [%s]  [4430cf069d96]
@@ -20658,6 +21001,8 @@ output sound data in special escape codes  [6f35962e271c]
   =   Выводить звуковые данные особыми управляющими кодами
 output special escape codes  [b37724805cf9]
   =   Выводить особые управляющие коды
+overexertion  [09ab419d36d9]
+  =   Перенапряжение
 override keystroke value  [e679368711f2]
   =   Переопределить код клавиши
 owlpug  [9f1aba586291]
@@ -20672,6 +21017,10 @@ pan current menu page left  [317c322b2662]
   =   Сдвинуть страницу меню влево
 pan current menu page right  [223343244cd3]
   =   Сдвинуть страницу меню вправо
+panic  [c1ab1b730f1d]
+  =   Паника
+paralyzed by a monster  [e0b2798b1308]
+  =   В параличе от монстра
 particle man  [261b67bee3aa]
   =   Человек-частица
 paskald  [577d80400e96]
@@ -20682,6 +21031,21 @@ peer  [2b974ba4b46a]
   =   Пэр
 perform data sanity checks  [4166b56a514a]
   =   Проверять целостность данных
+petrified by %s  [9a93bb6239ed]
+  m   Окаменел от тритона
+  f   Окаменел от крысы
+  n   Окаменел от копья
+  pl  Окаменел от 3 стрел
+petrified by %s, while %s  [14774e17cbc7]
+  m   Окаменел от тритона, тритон
+  f   Окаменел от крысы, крыса
+  n   Окаменел от копья, копьё
+  pl  Окаменел от 3 стрел, 3 стрелы
+petrified by %s, while helpless  [9f8138936ef1]
+  m   Окаменел от тритона, в беспомощном состоянии
+  f   Окаменел от крысы, в беспомощном состоянии
+  n   Окаменел от копья, в беспомощном состоянии
+  pl  Окаменел от 3 стрел, в беспомощном состоянии
 phantom  [d969e7e0b057]
   =   Фантом
 phelddagrif  [d029e06bc798]
@@ -20696,14 +21060,45 @@ plaid unicorn  [44d1cedf3b33]
   =   Клетчатый единорог
 poison cackler  [e433e1f5eaa8]
   =   Ядовитый хохотун
+poison gas cloud  [d2a480eb815e]
+  =   Облако ядовитого газа
+poisoned  [0abe202c8080]
+  =   Отравлен
+poisoned blast  [65103da531c2]
+  =   Отравленный взрыв
+poisoned by %s  [208595c9a48e]
+  m   Отравлен тритоном
+  f   Отравлен крысой
+  n   Отравлен копьём
+  pl  Отравлен 3 стрелами
+poisoned by %s, while %s  [0c35e4241cd0]
+  m   Отравлен тритоном, тритон
+  f   Отравлен крысой, крыса
+  n   Отравлен копьём, копьё
+  pl  Отравлен 3 стрелами, 3 стрелы
+poisoned by %s, while helpless  [9d438af6a8e4]
+  m   Отравлен тритоном, в беспомощном состоянии
+  f   Отравлен крысой, в беспомощном состоянии
+  n   Отравлен копьём, в беспомощном состоянии
+  pl  Отравлен 3 стрелами, в беспомощном состоянии
+poisoned needle  [fb230feafa00]
+  =   Отравленная игла
+poisonous corpse  [7f8626ac3ead]
+  =   Ядовитый труп
+poisonous glob  [55a40eaa8b05]
+  =   Ядовитый сгусток
 pommelbug  [3c193ea9b9d8]
   =   Жук-навершие
 possessed waffle iron  [40b14c4fac4b]
   =   Одержимая вафельница
+potion of acid  [d840ed8d1a70]
+  =   Флакон кислоты
 potoo  [da9e5b6c59b7]
   =   Лесной козодой
 poultrygeist  [3fba73c1c2d8]
   =   Куртергейст
+praying  [3727d25d1cd2]
+  =   Во время молитвы
 praying mantis  [975656040292]
   =   Богомол
 preferred order when displaying discovered objects  [c9e74d67ce5a]
@@ -20716,14 +21111,20 @@ prefix for font options  [bf1ec36f3b28]
   =   Приставка параметров шрифта
 prefix for old micro IBM_ options  [db09b65cc14c]
   =   Приставка старых параметров IBM_
+pretending to be a pile of gold  [5bbdb68ce0f0]
+  =   Притворяясь кучкой золота
 prevent waiting next to hostiles  [482633c58d72]
   =   Не давать ждать рядом с врагами
 prevent you from hitting pets  [3def5bb73ac3]
   =   Не давать бить питомцев
 previous weapon goes to secondary slot  [fe673857d5f6]
   =   Прежнее оружие уходит во второй слот
+propelled potion  [1f2148c3f0a0]
+  =   Запущенное зелье
 prophylactic worm  [0364a2c19bde]
   =   Профилактический червь
+psychic blast  [839e91b815b6]
+  =   Психический удар
 pterodactyl  [0a5cd6b94160]
   =   Птеродактиль
 pugasus  [73825cf63667]
@@ -20742,6 +21143,12 @@ quest sprout  [c88545a57a9a]
   =   Квестовый росток
 questing beast  [3d10c0b9c383]
   =   Рыкающий зверь
+quick snack  [8a23fc6a1d2e]
+  =   Быстрый перекус
+quit  [f59118712ff4]
+  =   Сдался
+quit while already on Charon's boat  [26664b5ea3e2]
+  =   Сдался, уже сидя в лодке Харона
 quokka  [795e5e60d964]
   =   Квокка
 quylthulg  [4cecbeb8f369]
@@ -20756,6 +21163,8 @@ rattlesnake  [46c5908d8cbf]
   =   Гремучая змея
 rave spider  [d8510a7a7c78]
   =   Печёный паук
+reading a book  [68e71f57512c]
+  =   Читая книгу
 reassign casting letters to retain current order  [5c272e02c8df]
   =   Переназначить буквы, сохранив текущий порядок
 rebus  [9b901e314ecf]
@@ -20770,6 +21179,8 @@ reroll another character  [4dd11715d49c]
   =   Создать другого персонажа
 rhinovirus  [4e940df9f6d3]
   =   Риновирус
+riding accident  [cbe5dd33c425]
+  =   Падение с ездового животного
 robot  [b232ae125d1a]
   =   Робот
 robot chicken  [27ff56d281dd]
@@ -20782,12 +21193,16 @@ roomba  [d9dfd4e3d3a5]
   =   Робот-пылесос
 rot grub  [5214bc36ee52]
   =   Гнилостная личинка
+rotted glob  [645364ae3bbc]
+  =   Гнилой сгусток
 same as palette, only order is reversed  [92d63bb9d24f]
   =   Как palette, но в обратном порядке
 samurai rabbit  [a5cfe20c44e6]
   =   Кролик-самурай
 save game state after each level change  [1ec9e0490d9e]
   =   Сохранять игру при каждой смене уровня
+scared by rattling  [e3fc42cfe636]
+  =   В испуге от грохота
 schroedinbug  [55cf10734df1]
   =   Шрёдинбаг
 scone giant  [d74f33524879]
@@ -20798,6 +21213,12 @@ screen [row,column]  [321b6ea93b9f]
   =   Экран [строка,столбец]
 scroll map when this far from the edge  [2030321512ed]
   =   Прокручивать карту на таком расстоянии от края
+scroll of earth  [c1c999f6908e]
+  =   Свиток земли
+scroll of fire  [95e128554e68]
+  =   Свиток огня
+scroll of genocide  [83b75052f2cf]
+  =   Свиток геноцида
 sea cucumber  [5426dfc270e4]
   =   Морской огурец
 search for a menu item  [faf202f021f7]
@@ -20822,6 +21243,8 @@ select it to permanently identify (%s for all)  [2584a79ccde6]
   f   Выберите его, чтобы опознать навсегда (крыса — все)
   n   Выберите его, чтобы опознать навсегда (копьё — все)
   pl  Выберите его, чтобы опознать навсегда (3 стрелы — все)
+self-genocide  [9044d33413ba]
+  =   Самоистребление
 send 8-bit characters directly to terminal  [8bd9aaaec0ac]
   =   Посылать 8-битные символы прямо в терминал
 set representation of a glyph to a unicode value and color  [98ab1b4822a6]
@@ -20832,6 +21255,8 @@ shadow  [ed9d3d832af8]
   =   Сумрачная тень
 shallow one  [bd7e039effd6]
   =   Мелководный
+shattered potion  [9724927c290e]
+  =   Разбитое зелье
 show all available info when using whatis-command  [be5d06f62978]
   =   Все сведения по команде «что это»
 show any news at game start  [9aa83282e4ee]
@@ -20904,6 +21329,12 @@ skvader  [5e4ceb3a68b6]
   =   Сквадер
 sleazoid  [b8f86bb47e1b]
   =   Мерзоид
+sleep ray  [b44b50f2e3d5]
+  =   Усыпляющий луч
+sleeping  [f1218e3a24f5]
+  =   Во сне
+sleeping off a magical draught  [ab8c1eed25fe]
+  =   Отсыпаясь после волшебного зелья
 slinky  [ed98383f3fad]
   =   Пружинка-радуга
 slow loris  [d25f74832a49]
@@ -20944,6 +21375,8 @@ spelling bee  [8d274061e416]
   =   Пчела-грамотейка
 spherical cow  [e061fa718234]
   =   Сферический конь в вакууме
+splash of acid  [bf37a0ecf0dd]
+  =   Брызги кислоты
 stain vortex  [68aaa085b334]
   =   Пятнистый вихрь
 stainless steel rat  [461e11e0256c]
@@ -20956,6 +21389,8 @@ start your character without any items  [a33a2c417445]
   =   Начать без единого предмета
 start your character without armor  [fcbb549666ea]
   =   Начать без доспехов
+starvation  [b8a321a7aaf8]
+  =   Голод
 stash one item into %s  [a3753fa72fb5]
   m   Положить один предмет в тритона
   f   Положить один предмет в крысу
@@ -20969,20 +21404,34 @@ status window alignment  [5426e95f60a8]
   =   Положение окна состояния
 steam dragon  [5ff126eaa07a]
   =   Паровой дракон
+stepped into a pit of iron spikes  [32b2b1bfb633]
+  =   Ступил в яму с железными шипами
+strangulation  [c0083daff756]
+  =   Удушение
 stray tab  [ddfd06769a0b]
   =   Шальная табуляция
+stuck in a spider web  [6b786a7b1ee1]
+  =   Застряв в паутине
 studying  [74314b82bff3]
   =   Изучать книгу
 stuffed raccoon puppet  [7e32c2c7a553]
   =   Набивной енот-марионетка
+stumbled into a pit of iron spikes  [01f5317dbc87]
+  =   Свалился в яму с железными шипами
+suffocation  [a3d1fed40580]
+  =   Удушье
 summarize currently worn armor in a status field  [ed25a2e1244f]
   =   Сводка надетых доспехов в поле состояния
 suppress alerts about version-specific features  [8715c9c4c249]
   =   Не предупреждать о возможностях отдельных версий
+system shock  [eb9b4b0ffae1]
+  =   Системный шок
 take out, then put in  [b1d802c1e28c]
   =   Вынуть, затем положить
 take something out  [0001712882a1]
   =   Вынуть что-нибудь
+taking off clothes  [0f3e7294118a]
+  =   Снимая одежду
 tangle tree  [1acdd66ede6f]
   =   Цепкое дерево
 tapeworm  [5a3da57c0cd5]
@@ -20991,6 +21440,8 @@ tatzelwurm  [7d0f3b69c1e3]
   =   Татцельвурм
 teenage mutant ninja turtle  [c8191df2df90]
   =   Черепашка-ниндзя
+terminal frailty  [024ae1f7e1a6]
+  =   Смертельная немощь
 terracotta warrior  [995e2c8be547]
   =   Терракотовый воин
 the %s  [670f80e4c425]
@@ -21037,6 +21488,11 @@ the type of an object on discoveries list  [be8fd5977d20]
   =   Тип предмета из списка открытий
 the type of an object upon the floor  [fcf3fc918a6e]
   =   Тип предмета на полу
+the wrath of %s  [d47309837050]
+  m   Гнев тритона
+  f   Гнев крысы
+  n   Гнев копья
+  pl  Гнев 3 стрел
 third eye  [01c1d2b94f46]
   =   Третий глаз
 three-headed monkey  [1c95db689dc2]
@@ -21045,12 +21501,16 @@ threshold for "there are many objects here"  [1c14fe0fc47d]
   =   Порог для «здесь много предметов»
 thrice  [3fec9f7e5ca9]
   =   Трижды
+thrown potion  [26b59857213e]
+  =   Брошенное зелье
 tie-thulu  [6d80a6a18d66]
   =   Галстуктулху
 tiktaalik  [4d5ef165db14]
   =   Тиктаалик
 tip something being carried  [05493338d86f]
   =   Вытряхнуть что-нибудь из ваших вещей
+tipping a container  [8be332a1d0ad]
+  =   Опрокидывая контейнер
 tire elemental  [89edd5e5d90a]
   =   Шинный элементаль
 tofurkey  [a77b95e0d575]
@@ -21059,14 +21519,51 @@ toggle fullscreen  [2e2f5046b579]
   =   Полноэкранный режим
 toothsayer  [1ea7077a675f]
   =   Зубовидец
+touching %s  [596829913451]
+  m   Прикосновение к тритону
+  f   Прикосновение к крысе
+  n   Прикосновение к копью
+  pl  Прикосновение к 3 стрелам
+touching %s bare-handed  [41f192963930]
+  m   Прикосновение голыми руками к тритону
+  f   Прикосновение голыми руками к крысе
+  n   Прикосновение голыми руками к копью
+  pl  Прикосновение голыми руками к 3 стрелам
+tower of flame  [7d350fd19b08]
+  =   Столб пламени
 traditional: by monster level, by internal monster index  [faaae6cf861b]
   =   Традиционный: по уровню монстра, затем по внутреннему номеру
 treat "ESC c" as M-c (Meta+c, 8th bit set)  [7ca13d2135b5]
   =   Считать «ESC c» за M-c (Meta+c, с восьмым битом)
 tribble  [97fb97439625]
   =   Трибл
+trickery  [9ebbf313e4b8]
+  =   Обман
 tridude  [0c12b171b311]
   =   Тричувак
+trying to turn the monsters  [39e317d70ab1]
+  =   Пытаясь изгнать монстров
+turned into green slime  [db66befe8b40]
+  =   Превратился в зелёную слизь
+turned into slime  [e704ce97b4d7]
+  =   Обращён в слизь
+turned to slime by %s  [fb7752aa5af4]
+  m   Превращён в слизь тритоном
+  f   Превращён в слизь крысой
+  n   Превращён в слизь копьём
+  pl  Превращён в слизь 3 стрелами
+turned to slime by %s, while %s  [0d4809fef025]
+  m   Превращён в слизь тритоном, тритон
+  f   Превращён в слизь крысой, крыса
+  n   Превращён в слизь копьём, копьё
+  pl  Превращён в слизь 3 стрелами, 3 стрелы
+turned to slime by %s, while helpless  [328490d91968]
+  m   Превращён в слизь тритоном, в беспомощном состоянии
+  f   Превращён в слизь крысой, в беспомощном состоянии
+  n   Превращён в слизь копьём, в беспомощном состоянии
+  pl  Превращён в слизь 3 стрелами, в беспомощном состоянии
+turned to stone  [f481e9fd5961]
+  =   Обращён в камень
 twice  [f99abcfae6c3]
   =   Дважды
 types of objects to pick up automatically  [a136c84a5db2]
@@ -21077,6 +21574,8 @@ uberhulk  [01bbbdc201d5]
   =   Сверхувалень
 umbrella hulk  [67bb3a89df40]
   =   Зонтичный увалень
+unconscious from rotten food  [d06b66427de0]
+  =   Без сознания от гнилой пищи
 unencumbered  [04deda56c8ee]
   =   Без нагрузки
 unicorn pegasus kitten  [ed4a75946b27]
@@ -21085,6 +21584,10 @@ unique items or relics  [4e4cf8e68552]
   =   Уникальные предметы или реликвии
 unlock the door  [16d58fe2cd1a]
   =   Отпереть дверь
+unrefrigerated sip of juice  [83f639d1af99]
+  =   Глоток несвежего сока
+unsuccessful polymorph  [6546cae5a98c]
+  =   Неудачное превращение
 update checkpoint file if input is idle for 10 seconds  [a21dc538f20c]
   =   Обновлять файл сохранения, если ввода нет 10 секунд
 use IBM ROM BIOS calls  [38c0a4776716]
@@ -21137,6 +21640,8 @@ vermicious knid  [b0a8765388fc]
   =   Вермишельный книд
 version number  [88ace02d9a57]
   =   Номер версии
+very rich meal  [113075af080a]
+  =   Слишком сытная еда
 video height  [56eb6fa14336]
   =   Высота экрана
 video width  [bdd1aa8768b4]
@@ -21149,6 +21654,8 @@ viking  [3e2573a75821]
   =   Викинг
 voluptuous ampersand  [345821a94026]
   =   Пышнотелый амперсанд
+vomiting  [54caab2e437e]
+  =   Во время рвоты
 voussoir  [87f2325b8f03]
   =   Вуссуар
 walking disk drive  [8d11f28ec990]
@@ -21165,6 +21672,8 @@ wee green blobbie  [8d14fab2e7d3]
   =   Махонький зелёный сгусточек
 weighted Companion Cube  [0b47d587554c]
   =   Утяжелённый куб-компаньон
+went to heaven prematurely  [d9ac849b9108]
+  =   Отправился на небеса раньше срока
 went to your reward with %ld point,  [a19e385f0624]
   m   Отправились за наградой, набрав 1 очко,
   f   Отправились за наградой, набрав 3 очка,
@@ -21191,6 +21700,11 @@ white rabbit  [b9afa1a45363]
   =   Белый кролик
 width of tiles  [f25ba36c70f1]
   =   Ширина тайлов
+wielding %s bare-handed  [dbc5b9cd530b]
+  m   Взятие голыми руками тритона
+  f   Взятие голыми руками крысы
+  n   Взятие голыми руками копья
+  pl  Взятие голыми руками 3 стрел
 wiggle  [5339c1c6e80d]
   =   Извивашка
 wight supremacist  [ff582c97e100]

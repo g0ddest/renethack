@@ -6,7 +6,7 @@
 use std::sync::OnceLock;
 
 use nh_i18n::lexicon::Lexicon;
-use nh_i18n::{Catalog, Russian, Status, Translator};
+use nh_i18n::{Catalog, Gender, Russian, Status, Translator};
 
 fn translator() -> &'static Translator {
     static T: OnceLock<Translator> = OnceLock::new();
@@ -130,6 +130,49 @@ fn a_piece_the_engine_lower_cased() {
             Status::Translated
         )
     );
+}
+
+#[test]
+fn the_death_text_in_the_hero_s_gender() {
+    // topten.c formatkiller(), as the tombstone and #overview's graves show
+    // it (the client sends it whole)
+    let lines = [
+        ("killed by a jackal", "убит шакалом", "убита шакалом"),
+        (
+            "choked on a lichen corpse",
+            "подавился трупом лишайника",
+            "подавилась трупом лишайника",
+        ),
+        (
+            "petrified by touching a cockatrice corpse",
+            "окаменел от прикосновения к трупу василиска",
+            "окаменела от прикосновения к трупу василиска",
+        ),
+        (
+            "killed by a fox, while fainted from lack of food",
+            "убит лисой, в голодном обмороке",
+            "убита лисой, в голодном обмороке",
+        ),
+        (
+            "killed by a gas spore's explosion",
+            "убит взрывом газовой споры",
+            "убита взрывом газовой споры",
+        ),
+        ("died of starvation", "умер от голода", "умерла от голода"),
+        ("quit", "сдался", "сдалась"),
+    ];
+    for (gender, pick) in [(Gender::Masc, 0), (Gender::Fem, 1)] {
+        let mut t = Translator::built_in().expect("the built-in translator");
+        t.set_hero(gender);
+        for (en, m, f) in lines {
+            let out = t.window(en);
+            assert_eq!(
+                (out.text.as_str(), out.status),
+                ([m, f][pick], Status::Translated),
+                "{en}"
+            );
+        }
+    }
 }
 
 #[test]

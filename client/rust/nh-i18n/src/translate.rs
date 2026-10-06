@@ -249,7 +249,7 @@ impl Translator {
     }
 
     fn by_text(&self, text: &str, channel: Channel) -> Output {
-        let found = self.catalog.find(text, channel);
+        let found = self.best_match(text, channel);
         if found
             .as_ref()
             .is_none_or(|m| !says_more_than_a_name(m.template))
@@ -268,11 +268,11 @@ impl Translator {
         match found {
             Some(m) => self.render_or_base(&m, text, 0).unwrap_or_else(|| {
                 // no Russian for the template yet: a heading the glossary
-                // names ("Armor") still reads as a name, a format of
-                // conversions alone may hold it all ("x - 12 gold pieces."
-                // is "%c - %s." more than "%s gold %s.")
+                // names ("Armor") still reads as a name, another template
+                // may hold it all ("x - 12 gold pieces." is "%c - %s."
+                // more than "%s gold %s.")
                 self.whole_name(text)
-                    .or_else(|| self.wordless(text, channel))
+                    .or_else(|| self.fallback(text, channel))
                     .unwrap_or_else(|| {
                         Output::english(text, Status::Untranslated, Some(m.template))
                     })
@@ -283,13 +283,36 @@ impl Translator {
         }
     }
 
-    /// The text by a format of conversions and punctuation alone ("%c -
-    /// %s."), when its arguments are all Russian then.
-    fn wordless(&self, text: &str, channel: Channel) -> Option<Output> {
+    /// The best template for `text`; of those the catalog ranks alike (as
+    /// much literal text, as many conversions), the one whose arguments
+    /// the lexicon reads best: "killed by a gas spore's explosion" is
+    /// "killed by %s" more than "%s explosion".
+    fn best_match(&self, text: &str, channel: Channel) -> Option<Match<'_>> {
+        let mut all = self.catalog.matches(text, channel);
+        let key = |m: &Match| (m.template.literal_len(), m.template.arity());
+        let top = key(all.first()?);
+        let tied = all.iter().take_while(|m| key(m) == top).count();
+        let best = if tied < 2 {
+            0
+        } else {
+            (0..tied)
+                .min_by_key(|&k| {
+                    let m = &all[k];
+                    self.unread_run(m.template, 0, &self.resplit(m.template, &m.captures))
+                })
+                .unwrap_or(0)
+        };
+        Some(all.swap_remove(best))
+    }
+
+    /// The text by another template it matches, when its best one has no
+    /// Russian, and if all its arguments are Russian then: "x - 12 gold
+    /// pieces." by "%c - %s." rather than "%s gold %s.", "drowned in a
+    /// pool of water" by "drowned in %s" rather than "%spool of water".
+    fn fallback(&self, text: &str, channel: Channel) -> Option<Output> {
         self.catalog
             .matches(text, channel)
             .iter()
-            .filter(|m| m.template.letters() == 0)
             .filter_map(|m| self.render_match(m, 0))
             .find(|out| out.status == Status::Translated)
     }
@@ -459,33 +482,65 @@ impl Translator {
     }
 
     /// A translated piece of the catalog that is `text` ("digging"), one
-    /// of the game's data behind an article ("the jumbo shrimp": a
-    /// hallucinated name), or one the engine lower-cased ("unskilled" of
-    /// "Unskilled").
+    /// behind an article ("the jumbo shrimp": a hallucinated name; "a
+    /// falling rock", "a bolt of lightning"), or one the engine
+    /// lower-cased ("unskilled" of "Unskilled").
     fn piece(&self, text: &str) -> Option<Box<dyn Phrase>> {
-        let find = |s: &str, data: bool| {
+        let find = |s: &str| {
             let i = self.catalog.by_fmt(&s.replace('%', "%%"))?;
             let t = &self.catalog.templates()[i];
-            if t.arity() > 0 || (data && !t.has_use(Use::Data)) {
+            if t.arity() > 0 {
                 return None;
             }
             self.russian.get(&t.id).map(Translation::phrase)
         };
-        find(text, false)
+        find(text)
             .or_else(|| {
                 let bare = ["the ", "The ", "a ", "A ", "an ", "An "]
                     .iter()
                     .find_map(|a| text.strip_prefix(a))?;
-                find(bare, true)
+                find(bare)
             })
             .or_else(|| {
                 let first = text.chars().next().filter(|c| c.is_lowercase())?;
                 let upper = capitalize(text);
                 (!upper.starts_with(first))
-                    .then(|| find(&upper, false))
+                    .then(|| find(&upper))
                     .flatten()
                     .map(|p| Box::new(Lowered(p)) as Box<dyn Phrase>)
             })
+    }
+
+    /// A matched template whose translation gives its case forms, as a
+    /// phrase of them ("взрыв газовой споры", "взрывом газовой споры"…),
+    /// and whether it is Russian.
+    fn declined(&self, m: &Match, depth: usize) -> Option<(Value, bool)> {
+        let t = m.template;
+        let tr = self.russian.get(&t.id)?;
+        let forms = tr.form_templates.as_ref()?;
+        let captures = self.resplit(t, &m.captures);
+        let mut whole = true;
+        let values: Vec<Value> = convs(&t.segments)
+            .zip(&captures)
+            .enumerate()
+            .map(|(i, (c, cap))| {
+                let (v, ok) = self.arg_value(t, i, c.kind, cap, depth);
+                whole &= ok;
+                v
+            })
+            .collect();
+        let forms: Vec<String> = forms.iter().map(|f| f.render(&values, self.hero)).collect();
+        let (gender, number) = tr
+            .gender
+            .unwrap_or((Gender::Masc, crate::grammar::Number::Sing));
+        Some((
+            Value::Phrase(Box::new(Declined {
+                forms,
+                gender,
+                number,
+            })),
+            whole,
+        ))
     }
 
     /// The Russian of template `t` with its conversions printed as
@@ -636,11 +691,15 @@ impl Translator {
         if !strong && let Some(p) = self.names.parse(NameKind::Any, shown) {
             return (Value::Phrase(p), true);
         }
-        if let Some(m) = found
-            && let Some(out) = self.render_or_base(&m, shown, depth + 1)
-        {
-            let ok = out.status == Status::Translated;
-            return (Value::Text(out.text), ok);
+        if let Some(m) = found {
+            // a text with case forms takes the case asked of it
+            if let Some(declined) = self.declined(&m, depth + 1) {
+                return declined;
+            }
+            if let Some(out) = self.render_or_base(&m, shown, depth + 1) {
+                let ok = out.status == Status::Translated;
+                return (Value::Text(out.text), ok);
+            }
         }
         // what stays English: a name or a code of one word (a pet's name,
         // inventory letters "aefgh") is shown as it is; words are not
@@ -895,6 +954,28 @@ fn verbatim(s: &str) -> bool {
 /// are ("%s corpse").
 fn says_more_than_a_name(t: &Template) -> bool {
     t.letters() >= STRONG_LETTERS && !t.uses.iter().all(|u| *u == crate::catalog::Use::Piece)
+}
+
+/// A text another template made, in the case forms its translation
+/// gives.
+struct Declined {
+    forms: Vec<String>,
+    gender: Gender,
+    number: crate::grammar::Number,
+}
+
+impl Phrase for Declined {
+    fn form(&self, case: Case) -> String {
+        self.forms.get(case.index()).cloned().unwrap_or_default()
+    }
+
+    fn gender(&self) -> Gender {
+        self.gender
+    }
+
+    fn number(&self) -> crate::grammar::Number {
+        self.number
+    }
 }
 
 /// A piece the engine lower-cased: its forms with a small first letter.
