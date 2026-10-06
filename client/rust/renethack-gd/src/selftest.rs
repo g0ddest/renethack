@@ -2152,6 +2152,71 @@ fn inv_from(
     Step::Inv(what, f)
 }
 
+/// Lay out `name` alone where the gallery puts a creature, the camera
+/// close.
+fn creature_alone(g: &mut RenethackGame, name: &str) -> Result<(), String> {
+    let cat = g.catalog.clone().ok_or("no catalog")?;
+    crate::gallery::lay_out_one(&mut g.world, &cat, name)?;
+    let ui = g.ui.as_mut().ok_or("no UI")?;
+    ui.map.set_showcase(true);
+    ui.map.set_distance(4.2, 0.3);
+    Ok(())
+}
+
+/// The creature the gallery laid out is drawn.
+fn creature_drawn(g: &RenethackGame) -> Result<bool, String> {
+    let map = map_view(g)?;
+    Ok(map.drawn_generation() == Some(g.world.map.generation())
+        && map.entity_scale(40, 10).is_some())
+}
+
+/// The creature drawn has the size its look asks for.
+fn creature_sized(g: &mut RenethackGame) -> Result<(), String> {
+    let (model, want, have) = map_view(g)?
+        .entity_scale(40, 10)
+        .ok_or("no creature drawn")?;
+    godot_print!("selftest: pool-sizes: model {model}, scale {have} for {want}");
+    if (want - have).abs() > 1e-3 {
+        return Err(format!(
+            "model {model} has scale {have}, its look asks for {want}"
+        ));
+    }
+    Ok(())
+}
+
+/// A model given back to the pool comes back at the size of its next look:
+/// a hobbit's body (the same model and tint) is the shopkeeper's next, a
+/// gnome zombie's the human zombie's. The title's rehearsal leaves a
+/// hobbit in the pool, and shopkeepers came out child-sized.
+fn pool_sizes() -> Vec<Step> {
+    let mut steps = start();
+    steps.extend([
+        Step::Wait("the hero on the map", |g| Ok(g.world.map.hero().is_some())),
+        Step::Call("a hobbit", |g| creature_alone(g, "hobbit")),
+        Step::Wait("the hobbit drawn", creature_drawn),
+        Step::Wait("the camera on it", camera_settled),
+        Step::Shot("pool-hobbit"),
+        Step::Call("the hobbit at its size", creature_sized),
+        Step::Call("a shopkeeper", |g| creature_alone(g, "shopkeeper")),
+        Step::Wait("the shopkeeper drawn", creature_drawn),
+        Step::Wait("the camera on it", camera_settled),
+        Step::Shot("pool-shopkeeper"),
+        Step::Call("the shopkeeper at its size", creature_sized),
+        Step::Call("a gnome zombie", |g| creature_alone(g, "gnome zombie")),
+        Step::Wait("the gnome zombie drawn", creature_drawn),
+        Step::Wait("the camera on it", camera_settled),
+        Step::Shot("pool-gnome-zombie"),
+        Step::Call("the gnome zombie at its size", creature_sized),
+        Step::Call("a human zombie", |g| creature_alone(g, "human zombie")),
+        Step::Wait("the human zombie drawn", creature_drawn),
+        Step::Wait("the camera on it", camera_settled),
+        Step::Shot("pool-human-zombie"),
+        Step::Call("the human zombie at its size", creature_sized),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
 /// The engine's pause on the map (its "--More--" after a trap found, a
 /// detection, a mimic's corpse eaten) ends with Space while the inventory
 /// panel is open: the panel's browsing took the key, and the soak of seed
@@ -4134,6 +4199,7 @@ impl SelfTest {
             "layouts" => layouts_tests::layouts(),
             "inventory" => inventory(),
             "map-pause" => map_pause(),
+            "pool-sizes" => pool_sizes(),
             "gamepad" => gamepad(),
             "bar" => bar(),
             _ => Vec::new(),

@@ -4295,6 +4295,18 @@ impl MapView {
             .then(|| p.get_current_animation().to_string())
     }
 
+    /// The monster or object on a cell: its model's index, the scale its
+    /// look asks for and the scale its instance has (self-tests: a pooled
+    /// instance comes back at its own size).
+    pub fn entity_scale(&self, x: i32, y: i32) -> Option<(usize, f32, f32)> {
+        let nodes = self.cells.get(&(x, y))?;
+        let i = nodes.look.entity?;
+        let want = nodes.look.models.get(i)?.look.art.scale;
+        let m = nodes.models.get(i)?;
+        let inner = m.node.get_child(0)?.try_cast::<Node3D>().ok()?;
+        Some((m.model_index(), want, inner.get_scale().x))
+    }
+
     /// The hero's model (self-tests look at its gear).
     pub fn hero_model(&self) -> Option<&Model> {
         let nodes = self.cells.get(&self.hero_at?)?;

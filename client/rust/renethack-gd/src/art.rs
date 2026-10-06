@@ -94,6 +94,9 @@ type Extras = Vec<(Option<String>, Gd<Node3D>)>;
 pub struct Model {
     /// Placed by the map; its child holds the model's own transform.
     pub node: Gd<Node3D>,
+    /// That child: the model at its look's size, lift and turn (None while
+    /// a stand-in).
+    inner: Option<Gd<Node3D>>,
     key: PoolKey,
     player: Option<Gd<AnimationPlayer>>,
     /// What it carries (the hero only).
@@ -146,6 +149,22 @@ fn mul(a: Color, b: Color) -> Color {
 
 fn deg(v: [f32; 3]) -> Vector3 {
     Vector3::new(v[0], v[1], v[2]) * (std::f32::consts::PI / 180.0)
+}
+
+/// A model's own transform for a look: its size, its lift off the ground
+/// and its turn; a corpse with no death clip on its side.
+fn inner_transform(look: &ModelLook, spec: &nh_art::ModelSpec) -> Transform3D {
+    let r = look.art;
+    let lying = look.pose == Pose::Corpse && spec.anims.death.is_none();
+    let mut rot = r.rot;
+    let mut lift = r.lift;
+    if lying {
+        // on its side, in the cell
+        rot[2] += 88.0;
+        lift += r.height * 0.22;
+    }
+    let s = r.scale;
+    transform([0.0, lift, 0.0], rot, [s, s, s])
 }
 
 fn transform(pos: [f32; 3], rot: [f32; 3], scale: [f32; 3]) -> Transform3D {
@@ -747,6 +766,7 @@ impl Art {
             self.pending += 1;
             return Model {
                 node,
+                inner: None,
                 key,
                 player: None,
                 worn: None,
@@ -795,7 +815,8 @@ impl Art {
         }
         let start = std::time::Instant::now();
         self.built += 1;
-        let (player, extras) = self.build_into(&m.node, &look);
+        let (inner, player, extras) = self.build_into(&m.node, &look);
+        m.inner = Some(inner);
         m.player = player;
         m.extras = extras;
         m.worn = None;
@@ -902,13 +923,18 @@ impl Art {
         true
     }
 
-    /// Start the look's animation: idle with a random phase; a corpse lies
-    /// at the end of its death; a statue stands still.
+    /// Start the look: its size, lift and turn (an instance from the pool
+    /// was another look's of the same model and tint, a hobbit's body the
+    /// shopkeeper's next), then its animation: idle with a random phase; a
+    /// corpse lies at the end of its death; a statue stands still.
     fn start(&mut self, m: &mut Model, look: &ModelLook) {
+        let spec = self.manifest.model_at(look.art.model).1;
+        if let Some(inner) = m.inner.as_mut() {
+            inner.set_transform(inner_transform(look, spec));
+        }
         let Some(player) = m.player.as_mut() else {
             return;
         };
-        let spec = self.manifest.model_at(look.art.model).1;
         let proc = spec.proc.is_some();
         let (idle, death) = if proc {
             (Some("idle".to_string()), None)
@@ -986,10 +1012,11 @@ impl Art {
 
     fn build(&mut self, look: &ModelLook, key: PoolKey) -> Model {
         let holder = Node3D::new_alloc();
-        let (player, extras) = self.build_into(&holder, look);
+        let (inner, player, extras) = self.build_into(&holder, look);
         self.root.add_child(&holder);
         Model {
             node: holder,
+            inner: Some(inner),
             key,
             player,
             worn: None,
@@ -998,12 +1025,13 @@ impl Art {
         }
     }
 
-    /// The look's model under `holder`: its animation player and extras.
+    /// The look's model under `holder`: its own node, its animation player
+    /// and extras.
     fn build_into(
         &mut self,
         holder: &Gd<Node3D>,
         look: &ModelLook,
-    ) -> (Option<Gd<AnimationPlayer>>, Extras) {
+    ) -> (Gd<Node3D>, Option<Gd<AnimationPlayer>>, Extras) {
         let r = look.art;
         let spec = self.manifest.model_at(r.model).1.clone();
         let mut holder = holder.clone();
@@ -1030,23 +1058,14 @@ impl Art {
             }
             (None, None) => self.build_proc(Proc::Blob, &spec, look),
         };
-        let lying = look.pose == Pose::Corpse && spec.anims.death.is_none();
-        let mut rot = r.rot;
-        let mut lift = r.lift;
-        if lying {
-            // on its side, in the cell
-            rot[2] += 88.0;
-            lift += r.height * 0.22;
-        }
-        let s = r.scale;
-        inner.set_transform(transform([0.0, lift, 0.0], rot, [s, s, s]));
+        inner.set_transform(inner_transform(look, &spec));
         let extras = if spec.proc.is_none() {
             self.attach_extras(&inner, &spec, look)
         } else {
             Vec::new()
         };
         holder.add_child(&inner);
-        (player, extras)
+        (inner, player, extras)
     }
 
     /// The scene's own AnimationPlayer, or a new one with the rig's
