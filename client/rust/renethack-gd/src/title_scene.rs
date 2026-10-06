@@ -2,11 +2,11 @@
 //! game's own art, which the map draws as a level of its own. An altar
 //! under the torches of the far wall, a fountain, rubble in a corner, and
 //! the hero of the role last played (a Valkyrie the first time) standing
-//! in their gear, in the dust of the main dungeon. The near side is open
-//! to the camera, which sways slowly round the hero (the map's title
-//! camera).
+//! in the kit NetHack starts that role with, in the dust of the main
+//! dungeon. The near side is open to the camera, which sways slowly round
+//! the hero (the map's title camera).
 
-use nh_protocol::{Catalog, Glyph, GlyphKind, InvItem, Inventory, LevelNotice, Slot, mg};
+use nh_protocol::{Catalog, Glyph, GlyphKind, LevelNotice, mg};
 use nh_world::World;
 
 use crate::map_view::role_monster;
@@ -90,42 +90,6 @@ impl Fire {
     }
 }
 
-/// What a role's hero holds on the title, as the game names the things
-/// unidentified (the first one the catalog has): in hand, on the arm, on
-/// the back.
-type Held = (
-    &'static [&'static str],
-    &'static [&'static str],
-    &'static [&'static str],
-);
-
-fn held(role: &str) -> Held {
-    match role {
-        "archeologist" => (&["bullwhip"], &[], &["pick-axe"]),
-        "barbarian" => (&["two-handed sword"], &[], &["axe"]),
-        "caveman" | "cavewoman" => (&["club"], &[], &[]),
-        "healer" => (&["scalpel"], &[], &[]),
-        "knight" => (
-            &["long sword"],
-            &["small shield", "wooden shield"],
-            &["lance"],
-        ),
-        "monk" => (&[], &[], &[]),
-        "priest" | "priestess" => (&["mace"], &[], &[]),
-        "rogue" => (&["short sword"], &[], &["dagger"]),
-        "ranger" => (&["dagger"], &[], &["bow"]),
-        "samurai" => (&["samurai sword"], &[], &["long bow"]),
-        "tourist" => (&["expensive camera"], &[], &[]),
-        "wizard" => (&["staff"], &[], &[]),
-        // a Valkyrie, and anyone else
-        _ => (
-            &["long sword"],
-            &["small shield", "wooden shield"],
-            &["dagger"],
-        ),
-    }
-}
-
 /// The title's chamber, ready for the map to draw.
 pub struct TitleScene {
     world: World,
@@ -155,7 +119,13 @@ impl TitleScene {
             plane: None,
         });
         lay(&mut world, catalog, &role, female);
-        world.inventory.replace(&gear(catalog, &role));
+        // the kit NetHack starts the role with (the first of the
+        // Barbarian's two), as the `kits` self-test holds the game to it
+        if let Some(kit) = crate::kits::kits(&role).first() {
+            world
+                .inventory
+                .replace(&crate::kits::inventory(catalog, kit));
+        }
         TitleScene {
             world,
             catalog: catalog.clone(),
@@ -165,41 +135,6 @@ impl TitleScene {
     /// The world and catalog the map draws it from.
     pub fn parts(&mut self) -> (&mut World, &Catalog) {
         (&mut self.world, &self.catalog)
-    }
-}
-
-/// The hero's things: what `held` names, wielded, worn and kept.
-fn gear(catalog: &Catalog, role: &str) -> Inventory {
-    let (hand, arm, back) = held(role);
-    let mut items = Vec::new();
-    let mut letters = 'a'..='z';
-    for (names, slot) in [
-        (hand, Slot::Weapon),
-        (arm, Slot::Shield),
-        (back, Slot::Alternate),
-    ] {
-        let found = names.iter().find_map(|name| {
-            catalog
-                .object_tiles
-                .iter()
-                .find(|t| t.appearance == *name)
-                .map(|t| (name, t))
-        });
-        if let (Some((name, t)), Some(letter)) = (found, letters.next()) {
-            items.push(InvItem {
-                letter,
-                class: t.class.chars().next().unwrap_or(')'),
-                tile: t.tile,
-                quan: 1,
-                slots: vec![slot],
-                lit: false,
-                text: format!("a {name}"),
-            });
-        }
-    }
-    Inventory {
-        items,
-        twoweap: false,
     }
 }
 
@@ -326,7 +261,7 @@ mod tests {
             let mut t = TitleScene::new(&cat, role, true);
             let (world, _) = t.parts();
             let wielded = world.inventory.wielded().map(|i| i.text.as_str());
-            assert_eq!(wielded, Some("a long sword"), "{role}");
+            assert_eq!(wielded, Some("a spear"), "{role}");
         }
         let mut t = TitleScene::new(&cat, "Wiz", false);
         let (world, _) = t.parts();
@@ -334,8 +269,11 @@ mod tests {
             world.inventory.wielded().map(|i| i.text.as_str()),
             Some("a staff")
         );
-        // a monk fights bare-handed
-        let mut t = TitleScene::new(&cat, "Monk", false);
-        assert!(t.parts().0.inventory.wielded().is_none());
+        // a monk fights bare-handed, and a tourist starts with nothing
+        // wielded either (the camera stays in the pack)
+        for role in ["Monk", "Tourist"] {
+            let mut t = TitleScene::new(&cat, role, false);
+            assert!(t.parts().0.inventory.wielded().is_none(), "{role}");
+        }
     }
 }

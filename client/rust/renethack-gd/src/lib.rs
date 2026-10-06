@@ -21,6 +21,7 @@ mod icon_bake;
 mod icons;
 mod input;
 mod inventory_panel;
+mod kits;
 mod layouts;
 mod map_view;
 mod meshes;
