@@ -6928,6 +6928,11 @@
   f   Крыса ест крысу.
   n   Копьё ест копьё.
   pl  3 стрелы едят 3 стрелы.
+%s egg  [b8c5fb2d5cbe]
+  m   Яйцо тритона
+  f   Яйцо крысы
+  n   Яйцо копья
+  pl  Яйцо 3 стрел
 %s engulfs %s.  [7a27de6dafc6]
   m   Тритон поглощает тритона.
   f   Крыса поглощает крысу.
@@ -7373,6 +7378,11 @@
   f   Крыса швыряет крысу!
   n   Копьё швыряет копьё!
   pl  3 стрелы швыряют 3 стрелы!
+%s indifference  [b935c3d2970d]
+  m   Безразличие тритона
+  f   Безразличие крысы
+  n   Безразличие копья
+  pl  Безразличие 3 стрел
 %s into that poison gas cloud?  [153a43e8d5c2]
   m   Войти в это облако ядовитого газа?
   f   Войти в это облако ядовитого газа?
@@ -20457,6 +20467,8 @@ Zapping a wand of undead turning might bring your dog back to life.  [0ec0375106
   =   [упорядочить заклинания]
 ^?MAIL  [0de62859d1e5]
   =   ^?ПОЧТА
+a bad experience sitting on a throne  [cf2533c96eac]
+  =   Неудачное сидение на троне
 a monster  [c332f989e893]
   =   Монстра
 a particular object in inventory  [193ae7129821]
@@ -20560,6 +20572,8 @@ angry mariachi  [27e70f3488af]
   =   Сердитый мариачи
 antagonistic undecagonstring  [cd13d9db82e3]
   =   Враждебная одиннадцатиугольная струна
+anti-magic implosion  [b899390dcf71]
+  =   Антимагическое схлопывание
 apostrophe golem  [5ad2baf2f32d]
   =   Апострофный голем
 aquator  [1bd838478262]
@@ -20568,6 +20582,8 @@ arch-pedant  [90e0e631bbf8]
   =   Архипедант
 aria elemental  [2ddc6f3f9059]
   =   Душный элементаль
+arrow  [39a531d92bbe]
+  =   Стрела
 artifacts  [3dc52886d656]
   =   Артефакты
 ascended  [b3a0b6607def]
@@ -20576,6 +20592,8 @@ ask before hitting tame or peaceful monsters  [33e8388d7a16]
   =   Спрашивать, прежде чем бить ручных или мирных монстров
 ask if you want the tutorial  [eacd37b44869]
   =   Спрашивать, нужно ли обучение
+attempting to cheat Death  [2e1a01e0c433]
+  =   Попытка обмануть Смерть
 attorney  [027fb6799b65]
   =   Адвокат
 attributes for highlighting pets  [8530a38c5365]
@@ -20637,6 +20655,8 @@ being terrified of a demon  [6ac39249edf3]
   =   В ужасе перед демоном
 being terrified of a ghost  [22e24223dd4c]
   =   В ужасе перед привидением
+being toyed with by Fate  [880610865a78]
+  =   Игра Судьбы
 beluga whale  [fc14dc2c3644]
   =   Белуха
 big dumb object  [36eaf7228f8e]
@@ -20708,6 +20728,8 @@ bookworm  [56f462a77c81]
   =   Книжный червь
 boomer  [947c844d900b]
   =   Бумер
+boomerang  [4b9b4385b1a9]
+  =   Бумеранг
 boor wight  [4691a053e510]
   =   Хулиганное умертвие
 both reversed; put in, then take out  [f481e9156b9c]
@@ -20726,6 +20748,21 @@ brogmoid  [bb488eda6f71]
   =   Брогмоид
 buffer overflow  [43186ef06c52]
   =   Переполнение буфера
+bumping into %s  [d073e496df38]
+  m   Удар о тритона
+  f   Удар о крысу
+  n   Удар о копьё
+  pl  Удар о 3 стрелы
+bumping into a boulder  [37de2567c723]
+  =   Удар о валун
+bumping into a closed door  [ca43bbcc7955]
+  =   Удар о закрытую дверь
+bumping into a door frame  [55b08bc7a0f9]
+  =   Удар о дверной косяк
+bumping into a tree  [70527fab2f7d]
+  =   Удар о дерево
+bumping into a wall  [72a0e3ea8860]
+  =   Удар о стену
 burned by %s  [a3fe9875703a]
   m   Сожжён тритоном
   f   Сожжён крысой
@@ -20783,6 +20820,8 @@ can your character hear anything  [e95f77197077]
   =   Слышит ли ваш персонаж хоть что-нибудь
 cardboard golem  [b66d3821b091]
   =   Картонный голем
+carnivorous bag  [8cde8e07a0de]
+  =   Плотоядная сумка
 catoblepas  [0ab6a1c27a59]
   =   Катоблепас
 caught herself in a %s  [b7137c461365]
@@ -20897,6 +20936,8 @@ coelacanth  [1439990fd724]
   =   Латимерия
 collapsing drawbridge  [3cff9f6729b7]
   =   Рушащийся подъёмный мост
+colliding with the ceiling  [86a37bd1a446]
+  =   Столкновение с потолком
 color mappings for internal screen routines  [fa9a0f5c0bb2]
   =   Цвета для внутренних процедур экрана
 commands asking for inventory item show a menu  [d2c192381805]
@@ -20919,10 +20960,14 @@ control monster teleport destinations  [deb7e00120a8]
   =   Управлять, куда телепортируются монстры
 control of "view previous message(s)" (^P) behavior  [131206d33afc]
   =   Просмотр прошлых сообщений (^P)
+contusion from a small passage  [0623d125db73]
+  =   Ушиб в узком проходе
 conventioneer  [51e1f17b46e8]
   =   Делегат съезда
 corpulent porpoise  [1d052b3ad046]
   =   Тучная морская свинья
+crashing into iron bars  [56de6559e4b7]
+  =   Удар о железные прутья
 creeping coins  [6aba8421848e]
   =   Ползучие монеты
 crushed  [71141819f343]
@@ -20958,6 +21003,8 @@ death ray  [a9099e304a3d]
   =   Луч смерти
 deep water  [a153dba5e67a]
   =   Глубокая вода
+deliberately meeting Medusa's gaze  [758173ab972b]
+  =   Намеренный взгляд в глаза Медузе
 deliberately plunged into a pit  [d5dcfb154ce3]
   =   Нарочно прыгнул в яму
 deliberately plunged into a pit of iron spikes  [bfa7311ed5f6]
@@ -21164,6 +21211,11 @@ existential angst  [de01c973ef76]
   =   Экзистенциальная тоска
 experimental behavior of menu inverts  [9d892392184b]
   =   Опытное обращение выбора в меню
+exploding %s  [934cce093af0]
+  m   Взрыв тритона
+  f   Взрыв крысы
+  n   Взрыв копья
+  pl  Взрыв 3 стрел
 exploding crystal ball  [56044648a251]
   =   Взорвавшийся хрустальный шар
 exploding drawbridge  [a5c6d879963e]
@@ -21188,10 +21240,14 @@ fainted from lack of food  [98f0904d838b]
   =   В голодном обмороке
 fallacy golem  [8eece73abc6d]
   =   Голем-софизм
+falling down a mine shaft  [8e3a8501a310]
+  =   Падение в шахту
 falling drawbridge  [c6ddcb985531]
   =   Падающий подъёмный мост
 falling object  [e1e8c5dc64a0]
   =   Падающий предмет
+falling off a ladder  [72e01bb3b923]
+  =   Падение со стремянки
 falling rock  [09d15c6cbf12]
   =   Падающий камень
 feather golem  [20bdb0b0812f]
@@ -21983,6 +22039,8 @@ put in, then take out  [1cc6e20e5e56]
   =   Положить, затем вынуть
 put something in  [7de13db595f6]
   =   Положить что-нибудь внутрь
+quaffing a burning potion of oil  [74f3a1c2e356]
+  =   Питьё горящего масла
 quagga  [816fb6255d6c]
   =   Квагга
 quale  [fa8e8f05228f]
@@ -22025,6 +22083,8 @@ regex engine  [8f72e74c39f5]
   =   Движок регулярок
 reroll another character  [4dd11715d49c]
   =   Создать другого персонажа
+residual undead turning effect  [50341d1d99b3]
+  =   Остаточное изгнание нежити
 rhinovirus  [4e940df9f6d3]
   =   Риновирус
 riding accident  [cbe5dd33c425]
@@ -22043,6 +22103,8 @@ rot grub  [5214bc36ee52]
   =   Гнилостная личинка
 rotted glob  [645364ae3bbc]
   =   Гнилой сгусток
+rusting away  [7452c6298ae6]
+  =   Ржавчина
 same as palette, only order is reversed  [92d63bb9d24f]
   =   Как palette, но в обратном порядке
 samurai rabbit  [a5cfe20c44e6]
@@ -22165,6 +22227,12 @@ simile mimic  [0735d8e2d669]
   =   Милый мимик
 siren  [dcb01c3c1f19]
   =   Сирена
+sitting in lava  [96422f3379b5]
+  =   Сидение в лаве
+sitting on an iron spike  [ee4bab0708e9]
+  =   Сидение на железном шипе
+sitting on lava  [93ace811fc5b]
+  =   Сидение на лаве
 size of the map font  [2b69aaa09d5f]
   =   Размер шрифта карты
 size of the menu font  [f51e040c87ed]
@@ -22235,6 +22303,8 @@ spherical cow  [e061fa718234]
   =   Сферический конь в вакууме
 splash of acid  [bf37a0ecf0dd]
   =   Брызги кислоты
+squished under a boulder  [e89236c4c549]
+  =   Раздавлен валуном
 stain vortex  [68aaa085b334]
   =   Пятнистый вихрь
 stainless steel rat  [461e11e0256c]
@@ -22294,6 +22364,11 @@ tangle tree  [1acdd66ede6f]
   =   Цепкое дерево
 tapeworm  [5a3da57c0cd5]
   =   Солитёр
+tasting %s meat  [16355e4821a8]
+  m   Проба мяса тритона
+  f   Проба мяса крысы
+  n   Проба мяса копья
+  pl  Проба мяса 3 стрел
 tatzelwurm  [7d0f3b69c1e3]
   =   Татцельвурм
 teenage mutant ninja turtle  [c8191df2df90]
@@ -22393,6 +22468,8 @@ touching %s bare-handed  [41f192963930]
   f   Прикосновение голыми руками к крысе
   n   Прикосновение голыми руками к копью
   pl  Прикосновение голыми руками к 3 стрелам
+touching the edge of the universe  [c93ad4629e9e]
+  =   Прикосновение к краю вселенной
 tower of flame  [7d350fd19b08]
   =   Столб пламени
 traditional: by monster level, by internal monster index  [faaae6cf861b]
@@ -22405,8 +22482,15 @@ trickery  [9ebbf313e4b8]
   =   Обман
 tridude  [0c12b171b311]
   =   Тричувак
+tripping over %s corpse  [955acced72ff]
+  m   Падение через труп тритона
+  f   Падение через труп крысы
+  n   Падение через труп копья
+  pl  Падение через труп 3 стрел
 trying to turn the monsters  [39e317d70ab1]
   =   Пытаясь изгнать монстров
+tumbling down a flight of stairs  [4d04fc3fac05]
+  =   Падение с лестницы
 turned into green slime  [db66befe8b40]
   =   Превратился в зелёную слизь
 turned into slime  [e704ce97b4d7]
@@ -22452,6 +22536,21 @@ unrefrigerated sip of juice  [83f639d1af99]
   =   Глоток несвежего сока
 unsuccessful polymorph  [6546cae5a98c]
   =   Неудачное превращение
+unwisely ate the body of %s  [41df4f08827a]
+  m   Опрометчиво съел тело тритона
+  f   Опрометчиво съел тело крысы
+  n   Опрометчиво съел тело копья
+  pl  Опрометчиво съел тело 3 стрел
+unwisely ate the brain of %s  [0e40b5d98223]
+  m   Опрометчиво съел мозг тритона
+  f   Опрометчиво съел мозг крысы
+  n   Опрометчиво съел мозг копья
+  pl  Опрометчиво съел мозг 3 стрел
+unwisely tried to eat %s  [961f57ed1670]
+  m   Опрометчиво попытался съесть тритона
+  f   Опрометчиво попытался съесть крысу
+  n   Опрометчиво попытался съесть копьё
+  pl  Опрометчиво попытался съесть 3 стрелы
 update checkpoint file if input is idle for 10 seconds  [a21dc538f20c]
   =   Обновлять файл сохранения, если ввода нет 10 секунд
 use IBM ROM BIOS calls  [38c0a4776716]
@@ -22532,12 +22631,16 @@ walking disk drive  [8d11f28ec990]
   =   Ходячий дисковод
 walking into a door attempts to open it  [ca0aee8d18d1]
   =   Шаг в дверь пытается её открыть
+wand  [4be59aff41e1]
+  =   Палочка
 wandering eye  [64de38e369ae]
   =   Блуждающее око
 water lemon  [4dd4a0f8d1da]
   =   Водяной лимон
 water melon  [ad34dd249922]
   =   Водяная дыня
+wedging into a narrow crevice  [466b0eb38534]
+  =   Застревание в узкой расщелине
 wee green blobbie  [8d14fab2e7d3]
   =   Махонький зелёный сгусточек
 weighted Companion Cube  [0b47d587554c]
