@@ -111,7 +111,7 @@ ru = " У вас {1} {1:plural|очко|очка|очков} опыта."
 
 [a52a1b755406]
 en = " You have %s skill with %s."
-ru = " Ваше владение {2:ins}: {1}."
+ru = " Ваш уровень владения {2:ins}: {1}."
 
 [bb2b509937fb]
 en = " You have never polymorphed an object."
@@ -303,7 +303,7 @@ ru = " Вы {hero:gender|были пацифистом|были пацифист
 
 [e2a904eeb921]
 en = " You had %s skill with %s."
-ru = " Ваше владение {2:ins} было: {1}."
+ru = " Ваш уровень владения {2:ins} был: {1}."
 
 [e434c64939e1]
 en = " You were wielding %s."

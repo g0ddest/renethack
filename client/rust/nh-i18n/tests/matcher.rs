@@ -187,6 +187,30 @@ fn the_death_text_in_the_hero_s_gender() {
 }
 
 #[test]
+fn what_a_helper_writes() {
+    // ^X: trap_predicament() writes the trap, piousness() returns the
+    // piety, lcase(skill_level_name()) the skill's level
+    check(" You are trapped in a pit.", "Вы застряли в яме");
+    check(
+        " You are piously aligned.",
+        "Вы благочестиво преданы своему мировоззрению",
+    );
+    check(
+        " You are unskilled in dagger.",
+        "Ваш уровень владения кинжалом: неопытный",
+    );
+    // shk.c: append_honorific() adds to "For you, "
+    check(
+        "\"For you, esteemed sir; only 789 zorkmids for this large box and its contents.\"",
+        "«Для вас, уважаемый господин, всего 789 зоркмидов",
+    );
+    check(
+        "\"For you, scum; 133 zorkmids for this lamp.\"",
+        "«Для тебя, негодяй, 133 зоркмида за лампу.»",
+    );
+}
+
+#[test]
 fn a_text_before_a_character() {
     // "This %s tastes %s%c": the %s ends where the "." begins
     check("This newt corpse tastes okay.", "Этот труп тритона на вкус");

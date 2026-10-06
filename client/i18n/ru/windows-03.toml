@@ -527,3 +527,227 @@ ru = "Переименовать именно {1:acc} или убрать имя
 [5960bc97546b]
 en = "Rename or un-name this stack of %s"
 ru = "Переименовать кучку {1:gen} или убрать имя"
+
+[9902675050ea]
+en = " You are trapped in %s."
+ru = " Вы застряли в {1:loc}."
+
+[12ab491c4ae8]
+en = " You are trapped."
+ru = " Вы в ловушке."
+
+[f30a13520f75]
+en = " You are stuck in %s."
+ru = " Вы застряли в {1:loc}."
+
+[86d1581d34e6]
+en = " You are sinking into %s."
+ru = " Вы тонете в {1:loc}."
+
+[95caf2de77ff]
+en = " You are sinking into lava."
+ru = " Вы тонете в лаве."
+
+[0d8f29a6718a]
+en = " You are tethered to something buried."
+ru = " Вы привязаны к чему-то зарытому."
+
+[79a9a0e48087]
+en = " You were trapped in %s."
+ru = " Вы застряли в {1:loc}."
+
+[3d5b90f21849]
+en = " You were trapped."
+ru = " Вы были в ловушке."
+
+[e5f67abb9a25]
+en = " You were stuck in %s."
+ru = " Вы застряли в {1:loc}."
+
+[04f96baf6755]
+en = " You were sinking into %s."
+ru = " Вы тонули в {1:loc}."
+
+[b799df6f4fa8]
+en = " You were sinking into lava."
+ru = " Вы тонули в лаве."
+
+[f7052d95e3db]
+en = " You were tethered to something buried."
+ru = " Вы были привязаны к чему-то зарытому."
+
+[dd20790fa381]
+en = " You are piously aligned."
+ru = " Вы благочестиво преданы своему мировоззрению."
+
+[b506cadf6a2a]
+en = " You were piously aligned."
+ru = " Вы были благочестиво преданы своему мировоззрению."
+
+[a607b8a6faf9]
+en = " You are devoutly aligned."
+ru = " Вы истово преданы своему мировоззрению."
+
+[ca0507029b4a]
+en = " You were devoutly aligned."
+ru = " Вы были истово преданы своему мировоззрению."
+
+[4a04f5fd9fcb]
+en = " You are fervently aligned."
+ru = " Вы ревностно преданы своему мировоззрению."
+
+[20da2e9f16bc]
+en = " You were fervently aligned."
+ru = " Вы были ревностно преданы своему мировоззрению."
+
+[106d8adc851c]
+en = " You are stridently aligned."
+ru = " Вы рьяно преданы своему мировоззрению."
+
+[5b4921109b93]
+en = " You were stridently aligned."
+ru = " Вы были рьяно преданы своему мировоззрению."
+
+[206e42776965]
+en = " You are haltingly aligned."
+ru = " Вы нерешительно преданы своему мировоззрению."
+
+[3e332bf04c3e]
+en = " You were haltingly aligned."
+ru = " Вы были нерешительно преданы своему мировоззрению."
+
+[3e3ea935f565]
+en = " You are nominally aligned."
+ru = " Вы номинально преданы своему мировоззрению."
+
+[626623fdfab4]
+en = " You were nominally aligned."
+ru = " Вы были номинально преданы своему мировоззрению."
+
+[7e0db3cb7b8e]
+en = " You are insufficiently aligned."
+ru = " Вы недостаточно преданы своему мировоззрению."
+
+[e27c83af2bee]
+en = " You were insufficiently aligned."
+ru = " Вы были недостаточно преданы своему мировоззрению."
+
+[4467a6d0b328]
+en = " You are aligned."
+ru = " Вы преданы своему мировоззрению."
+
+[47a53d318202]
+en = " You were aligned."
+ru = " Вы были преданы своему мировоззрению."
+
+[76cccea5d859]
+en = " You have strayed."
+ru = " Вы сбились с пути."
+
+[226dee662295]
+en = " You have sinned."
+ru = " Вы согрешили."
+
+[04d3d9767309]
+en = " You have transgressed."
+ru = " Вы преступили закон своего бога."
+
+[d9c7f08d1d48]
+en = " You had strayed."
+ru = " Вы сбились с пути."
+
+[052bf30a67a8]
+en = " You had sinned."
+ru = " Вы согрешили."
+
+[9f6a2af977d5]
+en = " You had transgressed."
+ru = " Вы преступили закон своего бога."
+
+[c7e9fa86075a]
+en = " You are %s in %s."
+ru = " Ваш уровень владения {2:ins}: {1}."
+
+[3fef34d66fa8]
+en = " You are %s in %s and can enhance that."
+ru = " Ваш уровень владения {2:ins}: {1}; его можно повысить."
+
+[0f5cb36b1037]
+en = " You are %s in %s and could have enhanced that."
+ru = " Ваш уровень владения {2:ins}: {1}; его можно было повысить."
+
+[faa359ba6be4]
+en = " You are %s skill with %s."
+ru = " Ваш уровень владения {2:ins}: {1}."
+
+[28db204e0f1b]
+en = " You are %s skill with %s and can enhance that."
+ru = " Ваш уровень владения {2:ins}: {1}; его можно повысить."
+
+[29376f810c18]
+en = " You are %s skill with %s and could have enhanced that."
+ru = " Ваш уровень владения {2:ins}: {1}; его можно было повысить."
+
+[ac7f7d38a15d]
+en = " You were %s in %s."
+ru = " Ваш уровень владения {2:ins} был: {1}."
+
+[abcaad823205]
+en = " You were %s in %s and can enhance that."
+ru = " Ваш уровень владения {2:ins} был: {1}; его можно повысить."
+
+[f97abe3f0fe4]
+en = " You were %s in %s and could have enhanced that."
+ru = " Ваш уровень владения {2:ins} был: {1}; его можно было повысить."
+
+[f09de7b7b8cc]
+en = " You were %s skill with %s."
+ru = " Ваш уровень владения {2:ins} был: {1}."
+
+[82ce62a0ab93]
+en = " You were %s skill with %s and can enhance that."
+ru = " Ваш уровень владения {2:ins} был: {1}; его можно повысить."
+
+[924823d4d727]
+en = " You were %s skill with %s and could have enhanced that."
+ru = " Ваш уровень владения {2:ins} был: {1}; его можно было повысить."
+
+[1090080be60d]
+en = " You have %s in %s."
+ru = " Ваш уровень владения {2:ins}: {1}."
+
+[0ffb52612e9a]
+en = " You have %s in %s and can enhance that."
+ru = " Ваш уровень владения {2:ins}: {1}; его можно повысить."
+
+[798694a21af8]
+en = " You have %s in %s and could have enhanced that."
+ru = " Ваш уровень владения {2:ins}: {1}; его можно было повысить."
+
+[0a99a0b9458e]
+en = " You have %s skill with %s and can enhance that."
+ru = " Ваш уровень владения {2:ins}: {1}; его можно повысить."
+
+[dc5e6688f4ef]
+en = " You have %s skill with %s and could have enhanced that."
+ru = " Ваш уровень владения {2:ins}: {1}; его можно было повысить."
+
+[668b80af9b63]
+en = " You had %s in %s."
+ru = " Ваш уровень владения {2:ins} был: {1}."
+
+[09193132dc51]
+en = " You had %s in %s and can enhance that."
+ru = " Ваш уровень владения {2:ins} был: {1}; его можно повысить."
+
+[59c4b7996019]
+en = " You had %s in %s and could have enhanced that."
+ru = " Ваш уровень владения {2:ins} был: {1}; его можно было повысить."
+
+[678eed46b35c]
+en = " You had %s skill with %s and can enhance that."
+ru = " Ваш уровень владения {2:ins} был: {1}; его можно повысить."
+
+[0e81975153a6]
+en = " You had %s skill with %s and could have enhanced that."
+ru = " Ваш уровень владения {2:ins} был: {1}; его можно было повысить."

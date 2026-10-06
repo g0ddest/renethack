@@ -1,0 +1,238 @@
+# R6: the shopkeeper's price quote (shk.c), polite with the honorific
+# append_honorific() adds ("esteemed sir"), and angry.
+
+[c97265b2cdf0]
+en = "\"For you, %s; only %ld zorkmid for this %s.\""
+ru = "«Для вас, {1}, всего {2} {2:plural|зоркмид|зоркмида|зоркмидов} за {3:acc}.»"
+
+[d9945d78712a]
+en = "\"For you, scum; %ld zorkmid for this %s.\""
+ru = "«Для тебя, {hero:gender|негодяй|негодяйка}, {1} {1:plural|зоркмид|зоркмида|зоркмидов} за {2:acc}.»"
+
+[911b023e80e5]
+en = "\"For you, %s; only %ld zorkmid for this %s and its contents.\""
+ru = "«Для вас, {1}, всего {2} {2:plural|зоркмид|зоркмида|зоркмидов} за {3:acc} вместе с содержимым.»"
+
+[58bd43572903]
+en = "\"For you, scum; %ld zorkmid for this %s and its contents.\""
+ru = "«Для тебя, {hero:gender|негодяй|негодяйка}, {1} {1:plural|зоркмид|зоркмида|зоркмидов} за {2:acc} вместе с содержимым.»"
+
+[4c29153af7d7]
+en = "\"For you, %s; only %ld zorkmid per %s.\""
+ru = "«Для вас, {1}, всего {2} {2:plural|зоркмид|зоркмида|зоркмидов} за {3:gender|каждый|каждую|каждое|каждые} {3:acc}.»"
+
+[fb86b4b53601]
+en = "\"For you, scum; %ld zorkmid per %s.\""
+ru = "«Для тебя, {hero:gender|негодяй|негодяйка}, {1} {1:plural|зоркмид|зоркмида|зоркмидов} за {2:gender|каждый|каждую|каждое|каждые} {2:acc}.»"
+
+[f62830f8cced]
+en = "\"For you, %s; only %ld zorkmid per %s and its contents.\""
+ru = "«Для вас, {1}, всего {2} {2:plural|зоркмид|зоркмида|зоркмидов} за {3:gender|каждый|каждую|каждое|каждые} {3:acc} вместе с содержимым.»"
+
+[30bf656f6ab8]
+en = "\"For you, scum; %ld zorkmid per %s and its contents.\""
+ru = "«Для тебя, {hero:gender|негодяй|негодяйка}, {1} {1:plural|зоркмид|зоркмида|зоркмидов} за {2:gender|каждый|каждую|каждое|каждые} {2:acc} вместе с содержимым.»"
+
+[63155cd42836]
+en = "\"For you, %s; only %ld zorkmid for the contents of this %s.\""
+ru = "«Для вас, {1}, всего {2} {2:plural|зоркмид|зоркмида|зоркмидов} за содержимое {3:gen}.»"
+
+[4d81fdab7805]
+en = "\"For you, scum; %ld zorkmid for the contents of this %s.\""
+ru = "«Для тебя, {hero:gender|негодяй|негодяйка}, {1} {1:plural|зоркмид|зоркмида|зоркмидов} за содержимое {2:gen}.»"
+
+[00f5fe6b5e64]
+en = "\"For you, %s; only %ld zorkmid for the contents of this %s and its contents.\""
+ru = "«Для вас, {1}, всего {2} {2:plural|зоркмид|зоркмида|зоркмидов} за содержимое {3:gen} вместе с содержимым.»"
+
+[9c69c48c322f]
+en = "\"For you, scum; %ld zorkmid for the contents of this %s and its contents.\""
+ru = "«Для тебя, {hero:gender|негодяй|негодяйка}, {1} {1:plural|зоркмид|зоркмида|зоркмидов} за содержимое {2:gen} вместе с содержимым.»"
+
+[f81926e6305f]
+en = "\"For you, %s; only %ld zorkmids for this %s.\""
+ru = "«Для вас, {1}, всего {2} {2:plural|зоркмид|зоркмида|зоркмидов} за {3:acc}.»"
+
+[4b1e383c28c8]
+en = "\"For you, scum; %ld zorkmids for this %s.\""
+ru = "«Для тебя, {hero:gender|негодяй|негодяйка}, {1} {1:plural|зоркмид|зоркмида|зоркмидов} за {2:acc}.»"
+
+[2e0a97f51ce0]
+en = "\"For you, %s; only %ld zorkmids for this %s and its contents.\""
+ru = "«Для вас, {1}, всего {2} {2:plural|зоркмид|зоркмида|зоркмидов} за {3:acc} вместе с содержимым.»"
+
+[68eccdd3e884]
+en = "\"For you, scum; %ld zorkmids for this %s and its contents.\""
+ru = "«Для тебя, {hero:gender|негодяй|негодяйка}, {1} {1:plural|зоркмид|зоркмида|зоркмидов} за {2:acc} вместе с содержимым.»"
+
+[206512b41053]
+en = "\"For you, %s; only %ld zorkmids per %s.\""
+ru = "«Для вас, {1}, всего {2} {2:plural|зоркмид|зоркмида|зоркмидов} за {3:gender|каждый|каждую|каждое|каждые} {3:acc}.»"
+
+[775a6b4a390e]
+en = "\"For you, scum; %ld zorkmids per %s.\""
+ru = "«Для тебя, {hero:gender|негодяй|негодяйка}, {1} {1:plural|зоркмид|зоркмида|зоркмидов} за {2:gender|каждый|каждую|каждое|каждые} {2:acc}.»"
+
+[fdfdcd5b1467]
+en = "\"For you, %s; only %ld zorkmids per %s and its contents.\""
+ru = "«Для вас, {1}, всего {2} {2:plural|зоркмид|зоркмида|зоркмидов} за {3:gender|каждый|каждую|каждое|каждые} {3:acc} вместе с содержимым.»"
+
+[279828139889]
+en = "\"For you, scum; %ld zorkmids per %s and its contents.\""
+ru = "«Для тебя, {hero:gender|негодяй|негодяйка}, {1} {1:plural|зоркмид|зоркмида|зоркмидов} за {2:gender|каждый|каждую|каждое|каждые} {2:acc} вместе с содержимым.»"
+
+[2eaef89dabee]
+en = "\"For you, %s; only %ld zorkmids for the contents of this %s.\""
+ru = "«Для вас, {1}, всего {2} {2:plural|зоркмид|зоркмида|зоркмидов} за содержимое {3:gen}.»"
+
+[bc2339941758]
+en = "\"For you, scum; %ld zorkmids for the contents of this %s.\""
+ru = "«Для тебя, {hero:gender|негодяй|негодяйка}, {1} {1:plural|зоркмид|зоркмида|зоркмидов} за содержимое {2:gen}.»"
+
+[2ce568acf1d2]
+en = "\"For you, %s; only %ld zorkmids for the contents of this %s and its contents.\""
+ru = "«Для вас, {1}, всего {2} {2:plural|зоркмид|зоркмида|зоркмидов} за содержимое {3:gen} вместе с содержимым.»"
+
+[58eac6f20271]
+en = "\"For you, scum; %ld zorkmids for the contents of this %s and its contents.\""
+ru = "«Для тебя, {hero:gender|негодяй|негодяйка}, {1} {1:plural|зоркмид|зоркмида|зоркмидов} за содержимое {2:gen} вместе с содержимым.»"
+
+[bc24d8e1b37c]
+en = "good sir"
+ru = "добрый господин"
+
+[ebf74d6dd373]
+en = "good lady"
+ru = "добрая госпожа"
+
+[babb8728e43f]
+en = "good creature"
+ru = "доброе создание"
+
+[41cb75c0e534]
+en = "good dark lord"
+ru = "добрый тёмный властелин"
+
+[b35c401097d8]
+en = "good dark lady"
+ru = "добрая тёмная госпожа"
+
+[ef9a00dbb720]
+en = "good hir"
+ru = "добрый хир"
+
+[a878dc3d7654]
+en = "good hiril"
+ru = "добрая хирил"
+
+[ea23fb52a19b]
+en = "honored sir"
+ru = "почтенный господин"
+
+[55a7e2d71540]
+en = "honored lady"
+ru = "почтенная госпожа"
+
+[5fb92a62236e]
+en = "honored creature"
+ru = "почтенное создание"
+
+[89ae671ffd78]
+en = "honored dark lord"
+ru = "почтенный тёмный властелин"
+
+[bb54c1dfedb4]
+en = "honored dark lady"
+ru = "почтенная тёмная госпожа"
+
+[97fc03336c18]
+en = "honored hir"
+ru = "почтенный хир"
+
+[1dbddfd671c8]
+en = "honored hiril"
+ru = "почтенная хирил"
+
+[86887d103314]
+en = "most gracious sir"
+ru = "милостивейший господин"
+
+[bf77ff403da6]
+en = "most gracious lady"
+ru = "милостивейшая госпожа"
+
+[84b047237538]
+en = "most gracious creature"
+ru = "милостивейшее создание"
+
+[a281d3e78f4e]
+en = "most gracious dark lord"
+ru = "милостивейший тёмный властелин"
+
+[dd5101114513]
+en = "most gracious dark lady"
+ru = "милостивейшая тёмная госпожа"
+
+[753851acd335]
+en = "most gracious hir"
+ru = "милостивейший хир"
+
+[61362a7fc362]
+en = "most gracious hiril"
+ru = "милостивейшая хирил"
+
+[3035d308fafe]
+en = "esteemed sir"
+ru = "уважаемый господин"
+
+[b6be416de4db]
+en = "esteemed lady"
+ru = "уважаемая госпожа"
+
+[86052a973c20]
+en = "esteemed creature"
+ru = "уважаемое создание"
+
+[d82fbd4744d8]
+en = "esteemed dark lord"
+ru = "уважаемый тёмный властелин"
+
+[717246cadc41]
+en = "esteemed dark lady"
+ru = "уважаемая тёмная госпожа"
+
+[3dc2faf97338]
+en = "esteemed hir"
+ru = "уважаемый хир"
+
+[c644fd4cfbe5]
+en = "esteemed hiril"
+ru = "уважаемая хирил"
+
+[74592a7b1a33]
+en = "most renowned and sacred sir"
+ru = "прославленный и священный господин"
+
+[414328d0348d]
+en = "most renowned and sacred lady"
+ru = "прославленная и священная госпожа"
+
+[9813caf64c35]
+en = "most renowned and sacred creature"
+ru = "прославленное и священное создание"
+
+[f699351dfaa7]
+en = "most renowned and sacred dark lord"
+ru = "прославленный и священный тёмный властелин"
+
+[9b70d2896a09]
+en = "most renowned and sacred dark lady"
+ru = "прославленная и священная тёмная госпожа"
+
+[ab3d13f25102]
+en = "most renowned and sacred hir"
+ru = "прославленный и священный хир"
+
+[63a84a052cf1]
+en = "most renowned and sacred hiril"
+ru = "прославленная и священная хирил"
