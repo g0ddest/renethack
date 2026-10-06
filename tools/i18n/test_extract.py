@@ -120,6 +120,25 @@ class Formats(unittest.TestCase):
         self.assertIn("First text more!", catalog_of(src.replace("CALL", "show")))
         self.assertNotIn("First text more!", catalog_of(src.replace("CALL", "fill")))
 
+    def test_what_a_helper_writes_or_appends(self):
+        src = ('static char *trap_predicament(char *outbuf) {\n'
+               '    Strcpy(outbuf, "trapped");\n'
+               '    Strcat(outbuf, " in a pit");\n'
+               '    return outbuf;\n}\n'
+               'static void append_honorific(char *buf) { Strcat(buf, "esteemed sir"); }\n'
+               'void f(int angry) {\n'
+               '    char p[BUFSZ], buf[BUFSZ];\n'
+               '    (void) trap_predicament(p);\n'
+               '    pline("You are %s.", p);\n'
+               '    Strcpy(buf, "For you,");\n'
+               '    if (angry) Strcat(buf, " scum;");\n'
+               '    else { Strcat(buf, " "); append_honorific(buf); Strcat(buf, "; only"); }\n'
+               '    pline("%s %d zorkmids.", buf, 5);\n}\n')
+        e = catalog_of(src)
+        self.assertIn("You are trapped in a pit.", e)
+        self.assertIn("For you, %s; only %d zorkmids.", e)
+        self.assertIn("For you, scum; %d zorkmids.", e)
+
     def test_one_of_an_array(self):
         e = catalog_of('static const char *const sounds[] = { "beep", "boing" };\n'
                        'void f(struct monst *m) {\n'

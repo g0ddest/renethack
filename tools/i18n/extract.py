@@ -214,6 +214,13 @@ for _k, _names in {
 WRAPPERS = set("""an An the The upstart upwords lcase ucase s_suffix makeplural
     makesingular ing_suffix strip_the_prefix just_an capitalize highc
     trimspaces mungspaces""".split())
+# Helpers whose text in a buffer argument is read from their definition
+# (insight.c's ^X lines): the call writes what the helper leaves there
+WRITTEN_BY = {"trap_predicament"}
+# ... or appends it to what the buffer held ("For you, " + "esteemed sir")
+APPENDED_BY = {"append_honorific"}
+# Helpers that return a static buffer: what that buffer holds
+RETURNED_BUFFER = {"piousness"}
 # x(obj, "verb") is "<the object's name> verb[s]"
 OBJVERB = {"aobjnam", "yobjnam", "Yobjnam2", "Tobjnam"}
 # calls and names whose value is one of a few literals
@@ -404,6 +411,19 @@ def upper_first(fmt):
 TRANSFORMS = {"mungspaces": squeeze, "trimspaces": squeeze, "upstart": upper_first}
 
 
+def lower_all(fmt):
+    """lcase(): every letter small but the conversions'."""
+    out, last = [], 0
+    for m in CONV_RE.finditer(fmt):
+        out += [fmt[last:m.start()].lower(), m.group(0)]
+        last = m.end()
+    return "".join(out) + fmt[last:].lower()
+
+
+# the case a call's text gets from a call around it: lcase(f(…, buf))
+CASE_WRAPPERS = {"lcase": lower_all, "upstart": upper_first}
+
+
 class Globals:
     """What every file sees: string macros of the headers, the common
     strings (nothing_happens...), the tables of words; every function's
@@ -497,6 +517,36 @@ class Globals:
         proto = self.prototypes.get(fname)
         return bool(proto and k < len(proto) and proto[k])
 
+    def param_writes(self, fname, k, unit, depth):
+        """What function `fname` leaves in its argument k, a buffer it
+        writes: what that buffer holds at the end of its body
+        (trap_predicament: "trapped in %s", "stuck in %s"...), or None."""
+        def compute():
+            out = []
+            for d in self.definitions(fname, unit):
+                if k >= len(d.param_list) or d.param_list[k] not in d.ops:
+                    return None
+                held = d.compositions(d.param_list[k], d.func.body[1], depth + 1)
+                if not held:
+                    return None
+                out += held
+            return dedupe(out)[:MAX_HELD] if out else None
+        return self._memo(("pw", unit.path, fname, k), compute)
+
+    def returned_buffer(self, fname, unit, depth):
+        """What a function of RETURNED_BUFFER returns: what the buffer it
+        returns holds there (piousness: "piously aligned"...), or None."""
+        def compute():
+            out = []
+            for d in self.definitions(fname, unit):
+                for expr in d.returns:
+                    t = strip_expr(expr)
+                    if len(t) != 1 or t[0].text not in d.ops:
+                        return None
+                    out += d.compositions(t[0].text, d.func.body[1], depth + 1)
+            return dedupe(out)[:MAX_HELD] if out else None
+        return self._memo(("rb", unit.path, fname), compute)
+
     def param_values_partial(self, ctx, name):
         """The literals the callers that pass literals give a parameter."""
         def compute():
@@ -573,6 +623,8 @@ class Context:
         # shown (or handed on) there; a call that may write it clobbers it
         self.uses = {}
         self.passes = {}
+        # a call wrapped in lcase()/upstart(), by its token index
+        self.cased = {}
         self._depths = None
         start, end = func.body
         i = start + 1
@@ -598,6 +650,9 @@ class Context:
                         if len(a) == 1 and a[0].kind == "ident" and a[0].text != written:
                             self.uses.setdefault(a[0].text, []).append(i)
                             self.passes.setdefault(a[0].text, {})[i] = (t.text, k)
+                    if toks[i - 1].text == "(" and toks[i - 2].text in CASE_WRAPPERS:
+                        # lcase(skill_level_name(w, buf)): the text it writes, so
+                        self.cased[i] = CASE_WRAPPERS[toks[i - 2].text]
             if t.text == "=" and toks[i - 1].kind == "ident" and toks[i - 2].text not in (".", "->"):
                 name = toks[i - 1].text
                 if toks[i + 1].text == "{":
@@ -910,6 +965,10 @@ class Context:
             return dedupe(self.pieces(tern[1], pos, depth + 1, seen)
                           + self.pieces(tern[2], pos, depth + 1, seen))[:MAX_DERIVED]
         call = call_parts(t)
+        if call and call[0] in RETURNED_BUFFER:
+            held = self.glob.returned_buffer(call[0], self.unit, depth)
+            if held:
+                return held
         if call and call[0] in OBJVERB and len(call[1]) == 2:
             verbs = self.values(call[1][1])
             if verbs is not None:
@@ -920,6 +979,15 @@ class Context:
         name = t[0].text
         if name in self.ops:
             return self.compositions(name, pos, depth + 1) or placeholder
+        # a buffer only a helper writes: trap_predicament(predicament, …),
+        # by the last call before `pos` that may write it
+        writes = [(u, p) for u, p in self.passes.get(name, {}).items()
+                  if u < pos and self.glob.writes(*p)]
+        if writes:
+            at, passed = max(writes)
+            written = self.written(name, at, passed, depth + 1)
+            if written:
+                return written
         out = []
         if name in self.params:
             # the literals some callers pass, the buffers others hand over,
@@ -1068,11 +1136,31 @@ class Context:
         since = max(uses) if uses else -1
         ops = [op for op in self.ops.get(name, []) if since < op.index < pos]
         passed = self.passes.get(name, {}).get(since)
+        if passed and passed[0] in APPENDED_BY and not any(not op.append for op in ops):
+            # a helper appended to it ("For you, " + "esteemed sir"): one
+            # text more after what it held there; a call in a branch may
+            # not have run ("For you, scum;")
+            before = self.compositions(name, since, depth)
+            built = with_tails(before, [Tail([("%s", ["text"])], ("%s", ["text"]), True)])
+            appends = [a for a in ops if not a.transform]
+            tails = [t for t in (self.tail(a, since, depth) for a in appends) if t.pieces]
+            out = with_tails(built, tails)
+            d = self.depths()
+            if self.guarded(since) or d[since] > d.get(pos, 0):
+                # the appends of the call's own block went with it
+                outer = [t for t in (self.tail(a, since, depth) for a in appends
+                                     if d[a.index] < d[since]) if t.pieces]
+                out = dedupe(out + with_tails(before, outer))
+            return out
         if passed and self.glob.writes(*passed) and not any(not op.append for op in ops):
-            # written by a call: what it holds is not known, what is
-            # appended to it is, and all there is to say ("%s (current;
-            # limit:%s)": any few of the appends)
+            # written by a call: what it holds is not known (but for a few
+            # helpers read from their definition), what is appended to it
+            # is, and all there is to say ("%s (current; limit:%s)": any
+            # few of the appends)
             tails = [t for t in (self.tail(a, since, depth) for a in ops if not a.transform) if t.pieces]
+            written = self.written(name, since, passed, depth)
+            if written is not None:
+                return with_tails(written, tails)
             return with_tails([("%s", ["text"])], tails, few=True) if tails else []
         if not any(not op.append for op in ops) and since >= 0:
             # appended (or not) to what it held at its last use
@@ -1104,8 +1192,23 @@ class Context:
             # Sprintf(buf, ...);"): the call's text goes on in the others
             appends = [a for a in ops if a.append and a.index < first.index and not a.transform]
             tails = [t for t in (self.tail(a, since, depth) for a in appends) if t.pieces]
-            out += with_tails([("%s", ["text"])], tails, few=True)
+            written = self.written(name, since, passed, depth)
+            out += (with_tails(written, tails) if written is not None
+                    else with_tails([("%s", ["text"])], tails, few=True))
         return dedupe(out)[:MAX_HELD]
+
+    def written(self, name, at, passed, depth):
+        """What the call at token `at` (`passed`: name, argument index)
+        leaves in buffer `name`, for the helpers of WRITTEN_BY; None for
+        any other."""
+        fname, k = passed
+        if fname not in WRITTEN_BY or depth > MAX_DEPTH:
+            return None
+        held = self.glob.param_writes(fname, k, self.unit, depth)
+        if held is None:
+            return None
+        cased = self.cased.get(at)
+        return [(cased(f), kinds) for f, kinds in held] if cased else held
 
     def formats(self, toks, pos):
         """The formats a format argument can be: its literals, or what the
@@ -1358,6 +1461,28 @@ def add_killers(cat, contexts):
         if text[1:] != e.fmt:
             kinds = ["|".join(sorted(k)) for k in (e.args or [])]
             cat.add(text[1:], "death", "src/dungeon.c:3711 print_mapseen", kinds)
+
+
+def add_appended(cat, contexts):
+    """What a helper of APPENDED_BY appends, as pieces of their own: the
+    appends that always run, then one of those in a branch ("esteemed" +
+    " sir"), the argument of "For you, %s; only ..." """
+    for ctx in contexts:
+        if ctx.func.name not in APPENDED_BY or not ctx.param_list:
+            continue
+        param = ctx.param_list[0]
+        start = ctx.func.body[0]
+        tails = [ctx.tail(op, start + 1, 1) for op in ctx.ops.get(param, [])
+                 if op.append and not op.transform]
+        heads = [("", [])]
+        for t in tails:
+            if t.always:
+                heads = [(f + g, k + h) for f, k in heads for g, h in t.pieces]
+        branches = [p for t in tails if not t.always for p in t.pieces]
+        site = f"src/{ctx.unit.path}:{ctx.unit.toks[start].line} {ctx.func.name}"
+        for f, k in heads:
+            for g, h in branches or [("", [])]:
+                cat.add(f + g, "sprintf", site, k + h)
 
 
 OPTION_MACROS = ("NHOPTB", "NHOPTC", "NHOPTP", "NHOPTO")
@@ -1629,6 +1754,7 @@ def extract():
             add_rip(cat, unit)
     add_options(cat, units)
     add_killers(cat, contexts)
+    add_appended(cat, contexts)
     for fmt, use, site, kinds in datfiles.extract(UPSTREAM):
         cat.add(fmt, use, site, kinds)
     return cat
