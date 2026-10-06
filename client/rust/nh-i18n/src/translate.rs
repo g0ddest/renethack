@@ -486,21 +486,34 @@ impl Translator {
     /// falling rock", "a bolt of lightning"), or one the engine
     /// lower-cased ("unskilled" of "Unskilled").
     fn piece(&self, text: &str) -> Option<Box<dyn Phrase>> {
-        let find = |s: &str| {
+        self.bare_piece(text).or_else(|| {
+            // "your jumbo shrimp": a hallucinated pet
+            let rest = text
+                .strip_prefix("your ")
+                .or_else(|| text.strip_prefix("Your "))?;
+            self.bare_piece(rest)
+                .map(|p| Box::new(Owned(p)) as Box<dyn Phrase>)
+        })
+    }
+
+    /// A translated piece of the catalog that is `text`, behind an
+    /// article, lower-cased, or in the plural ("the jumbo shrimps", when
+    /// its translation gives the plural's forms).
+    fn bare_piece(&self, text: &str) -> Option<Box<dyn Phrase>> {
+        let translation = |s: &str| {
             let i = self.catalog.by_fmt(&s.replace('%', "%%"))?;
             let t = &self.catalog.templates()[i];
             if t.arity() > 0 {
                 return None;
             }
-            self.russian.get(&t.id).map(Translation::phrase)
+            self.russian.get(&t.id)
         };
+        let find = |s: &str| translation(s).map(Translation::phrase);
+        let bare = ["the ", "The ", "a ", "A ", "an ", "An "]
+            .iter()
+            .find_map(|a| text.strip_prefix(a));
         find(text)
-            .or_else(|| {
-                let bare = ["the ", "The ", "a ", "A ", "an ", "An "]
-                    .iter()
-                    .find_map(|a| text.strip_prefix(a))?;
-                find(bare)
-            })
+            .or_else(|| find(bare?))
             .or_else(|| {
                 let first = text.chars().next().filter(|c| c.is_lowercase())?;
                 let upper = capitalize(text);
@@ -508,6 +521,11 @@ impl Translator {
                     .then(|| find(&upper))
                     .flatten()
                     .map(|p| Box::new(Lowered(p)) as Box<dyn Phrase>)
+            })
+            .or_else(|| {
+                singulars(bare.unwrap_or(text))
+                    .iter()
+                    .find_map(|s| translation(s)?.plural_phrase())
             })
     }
 
@@ -975,6 +993,83 @@ impl Phrase for Declined {
 
     fn number(&self) -> crate::grammar::Number {
         self.number
+    }
+}
+
+/// What a regular English plural can be the plural of: "shrimps" of
+/// "shrimp", "foxes" of "fox", "flies" of "fly", "firemen" of "fireman".
+fn singulars(text: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    if let Some(s) = text.strip_suffix("ies") {
+        out.push(format!("{s}y"));
+    }
+    if let Some(s) = text.strip_suffix("men") {
+        out.push(format!("{s}man"));
+    }
+    if let Some(s) = text.strip_suffix("es") {
+        out.push(s.to_string());
+    }
+    if let Some(s) = text.strip_suffix('s') {
+        out.push(s.to_string());
+    }
+    out
+}
+
+/// A piece with "your" before it: ваш, agreeing, or свой where the hero
+/// does the thing.
+struct Owned(Box<dyn Phrase>);
+
+impl Owned {
+    /// The pronoun of `table` (ваш, свой: the stem and its endings by
+    /// gender) agreeing with the piece in `case`.
+    fn pronoun(&self, table: [&str; 4], case: Case) -> String {
+        let row = match (self.0.number(), self.0.gender()) {
+            (crate::grammar::Number::Plur, _) => table[3],
+            (_, Gender::Masc) => table[0],
+            (_, Gender::Fem) => table[1],
+            (_, Gender::Neut) => table[2],
+        };
+        let forms: Vec<&str> = row.split(' ').collect();
+        let k = case.index().min(5);
+        // a creature's accusative is its genitive (вашего, ваших)
+        let animate = self.0.form(Case::Acc) == self.0.form(Case::Gen);
+        let k = if k == 3 && animate && row != table[1] && row != table[2] {
+            1
+        } else {
+            k
+        };
+        forms[k].to_string()
+    }
+}
+
+const VASH: [&str; 4] = [
+    "ваш вашего вашему ваш вашим вашем",
+    "ваша вашей вашей вашу вашей вашей",
+    "ваше вашего вашему ваше вашим вашем",
+    "ваши ваших вашим ваши вашими ваших",
+];
+const SVOJ: [&str; 4] = [
+    "свой своего своему свой своим своём",
+    "своя своей своей свою своей своей",
+    "своё своего своему своё своим своём",
+    "свои своих своим свои своими своих",
+];
+
+impl Phrase for Owned {
+    fn form(&self, case: Case) -> String {
+        format!("{} {}", self.pronoun(VASH, case), self.0.form(case))
+    }
+
+    fn own(&self, case: Case) -> String {
+        format!("{} {}", self.pronoun(SVOJ, case), self.0.form(case))
+    }
+
+    fn gender(&self) -> Gender {
+        self.0.gender()
+    }
+
+    fn number(&self) -> crate::grammar::Number {
+        self.0.number()
     }
 }
 

@@ -224,6 +224,50 @@ gender = "f""#,
     }
 }
 
+#[test]
+fn a_hallucinated_name_in_the_plural_and_after_your() {
+    let t = with(&[
+        ("You kill %s!", r#"ru = "Вы убиваете {1:acc}!""#),
+        ("You hit %s.", r#"ru = "Вы бьёте {1:acc}.""#),
+        ("%s bites!", r#"ru = "{1} {1:num|кусает|кусают}!""#),
+        (
+            "jumbo shrimp",
+            r#"ru = "гигантская креветка"
+forms = ["гигантская креветка", "гигантской креветки", "гигантской креветке", "гигантскую креветку", "гигантской креветкой", "гигантской креветке"]
+plural = ["гигантские креветки", "гигантских креветок", "гигантским креветкам", "гигантских креветок", "гигантскими креветками", "гигантских креветках"]
+gender = "f""#,
+        ),
+        (
+            "gnu",
+            r#"ru = "гну"
+forms = ["гну", "гну", "гну", "гну", "гну", "гну"]
+gender = "m""#,
+        ),
+    ]);
+    for (en, ru) in [
+        (
+            "You kill the jumbo shrimps!",
+            "Вы убиваете гигантских креветок!",
+        ),
+        (
+            "Your jumbo shrimp bites!",
+            "Ваша гигантская креветка кусает!",
+        ),
+        (
+            "You hit your jumbo shrimp.",
+            "Вы бьёте вашу гигантскую креветку.",
+        ),
+        ("You hit your gnu.", "Вы бьёте вашего гну."),
+    ] {
+        let out = t.message(None, &[], en);
+        assert_eq!(
+            (out.text.as_str(), out.status),
+            (ru, Status::Translated),
+            "{en}"
+        );
+    }
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {

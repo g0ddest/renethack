@@ -15,6 +15,9 @@
 //! gender = "n"
 //! ```
 //!
+//! A piece that names a creature may give its plural's forms too
+//! (`plural = [...]`, six, in the same order): "the jumbo shrimps".
+//!
 //! A template with arguments may give its forms too, each a template
 //! ("взрыв {1:gen}", "взрыва {1:gen}"…): a text it makes, the argument of
 //! another, then takes that one's case ("убит взрывом газовой споры").
@@ -65,6 +68,8 @@ struct RawEntry {
     #[serde(default)]
     forms: Option<Vec<String>>,
     #[serde(default)]
+    plural: Option<Vec<String>>,
+    #[serde(default)]
     gender: Option<String>,
     #[serde(default)]
     not_terms: Vec<String>,
@@ -83,6 +88,8 @@ pub struct Translation {
     pub forms: Option<[String; 6]>,
     /// The case forms as templates, for a translation with arguments.
     pub form_templates: Option<Vec<RuTemplate>>,
+    /// The plural's case forms, for a piece that names a creature.
+    pub plural: Option<[String; 6]>,
     pub gender: Option<(Gender, Number)>,
     /// English words of the format that are not the glossary's terms there
     /// ("tin" as a verb, "rock" as the stuff): the linter lets them be.
@@ -105,6 +112,18 @@ impl Translation {
             gender,
             number,
         })
+    }
+}
+
+impl Translation {
+    /// The piece in the plural, when its translation gives the forms.
+    pub fn plural_phrase(&self) -> Option<Box<dyn Phrase>> {
+        let gender = self.gender.map_or(Gender::Masc, |(g, _)| g);
+        Some(Box::new(Piece {
+            forms: self.plural.clone()?,
+            gender,
+            number: Number::Plur,
+        }))
     }
 }
 
@@ -213,6 +232,13 @@ fn parse_file(name: &str, text: &str) -> Result<Vec<Translation>, RussianError> 
                     .map_err(|f| invalid(format!("{} forms, not six", f.len())))?,
             ),
         };
+        let plural = match e.plural {
+            None => None,
+            Some(f) => Some(
+                <[String; 6]>::try_from(f)
+                    .map_err(|f| invalid(format!("{} plural forms, not six", f.len())))?,
+            ),
+        };
         let form_templates = match &forms {
             Some(f) if f.iter().any(|x| x.contains('{')) => Some(
                 f.iter()
@@ -241,6 +267,7 @@ fn parse_file(name: &str, text: &str) -> Result<Vec<Translation>, RussianError> 
             template,
             forms,
             form_templates,
+            plural,
             gender,
             not_terms: e.not_terms,
             file: name.into(),
@@ -320,6 +347,11 @@ gender = "m"
         let err =
             Russian::parse(&files("[x]\nen = \"a\"\nru = \"b\"\nforms = [\"a\"]\n")).unwrap_err();
         assert!(err.to_string().contains("1 forms"), "{err}");
+        let err = Russian::parse(&files(
+            "[x]\nen = \"a\"\nru = \"b\"\nplural = [\"a\", \"b\"]\n",
+        ))
+        .unwrap_err();
+        assert!(err.to_string().contains("2 plural forms"), "{err}");
         let err = Russian::parse(&files("[x]\nen = \"a\"\nru = \"b\"\nnote = 1\n")).unwrap_err();
         assert!(matches!(err, RussianError::Toml(..)), "{err}");
         let twice = vec![
