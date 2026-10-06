@@ -1,0 +1,1315 @@
+# R6: the extended commands' descriptions (cmd.c extcmdlist[]): the
+# `#` palette and the `#?` list. The commands' names stay English: they
+# are what one types.
+
+[33481946d900]
+en = "enter and perform an extended command"
+ru = "ввести и выполнить расширенную команду"
+
+[71165da591c6]
+en = "list all extended commands"
+ru = "список всех расширенных команд"
+
+[2965e7f31584]
+en = "adjust inventory letters"
+ru = "переназначить буквы инвентаря"
+
+[9213a2ffc40c]
+en = "name current level"
+ru = "дать имя текущему уровню"
+
+[06cb00ad26fb]
+en = "apply (use) a tool (pick-axe, key, lamp...)"
+ru = "применить инструмент (кирку, ключ, лампу...)"
+
+[1cd90a220d55]
+en = "show your attributes"
+ru = "показать ваши характеристики"
+
+[6eebb7eafd07]
+en = "toggle the 'autopickup' option on/off"
+ru = "включить или выключить автоподбор"
+
+[ebefab78606e]
+en = "file a bug report"
+ru = "сообщить об ошибке"
+
+[a8dddb3d955b]
+en = "name a monster, specific object, or type of object"
+ru = "дать имя монстру, предмету или виду предметов"
+
+[3559425038ab]
+en = "zap (cast) a spell"
+ru = "произнести заклинание"
+
+[611497aa8ab1]
+en = "talk to someone"
+ru = "поговорить с кем-нибудь"
+
+[297edb0b0fd4]
+en = "show journal of major events"
+ru = "показать дневник важных событий"
+
+[f4dcb2f9dc5f]
+en = "close a door"
+ru = "закрыть дверь"
+
+[51c5f50d56ef]
+en = "list voluntary challenges you have maintained"
+ru = "список добровольных испытаний, которые вы соблюдали"
+
+[2f7f92e36f55]
+en = "start the fuzz tester"
+ru = "запустить фаззинг-тестер"
+
+[d6c815836344]
+en = "dip an object into something"
+ru = "окунуть предмет во что-нибудь"
+
+[5c07b5783dd9]
+en = "go down a staircase"
+ru = "спуститься по лестнице"
+
+[f8824a213f4c]
+en = "drop an item"
+ru = "положить предмет"
+
+[cffa6eba9f82]
+en = "drop specific item types"
+ru = "положить предметы выбранных видов"
+
+[6cc3ad633973]
+en = "eat something"
+ru = "съесть что-нибудь"
+
+[4aaabbfe804a]
+en = "engrave writing on the floor"
+ru = "написать что-нибудь на полу"
+
+[120310547a2a]
+en = "advance or check weapon and spell skills"
+ru = "повысить или проверить навыки оружия и заклинаний"
+
+[d914dedd9b07]
+en = "enter explore (discovery) mode"
+ru = "перейти в режим исследования"
+
+[3a3b41d5db7e]
+en = "prefix: force fight even if you don't see a monster"
+ru = "приставка: атаковать, даже не видя монстра"
+
+[91136be9075d]
+en = "fire ammunition from quiver"
+ru = "выстрелить из колчана"
+
+[9843ffcbfb62]
+en = "force a lock"
+ru = "взломать замок"
+
+[9c29be5b44c2]
+en = "list monsters that have been genocided or become extinct"
+ru = "список истреблённых и вымерших монстров"
+
+[98f77650a48a]
+en = "list monsters that have been genocided"
+ru = "список истреблённых монстров"
+
+[95bfe3f89382]
+en = "show what type of thing a map symbol corresponds to"
+ru = "показать, что означает символ карты"
+
+[d5d3d3896696]
+en = "give a help message"
+ru = "показать справку"
+
+[be46f024b4fa]
+en = "show menu of commands you can do here"
+ru = "показать меню команд, доступных здесь"
+
+[7a3e3f9c59a7]
+en = "show a summary of the game's development"
+ru = "показать историю создания игры"
+
+[bc4c7e7328c5]
+en = "show your inventory"
+ru = "показать инвентарь"
+
+[456096e763c5]
+en = "show inventory of one specific item class"
+ru = "показать инвентарь одного класса предметов"
+
+[c85110371515]
+en = "invoke an object's special powers"
+ru = "задействовать особые силы предмета"
+
+[c03762deceda]
+en = "jump to another location"
+ru = "прыгнуть в другое место"
+
+[277ccddd70e9]
+en = "kick something"
+ru = "пнуть что-нибудь"
+
+[345b406b9749]
+en = "show what object types have been discovered"
+ru = "показать открытые виды предметов"
+
+[10aa81eaf0dc]
+en = "show discovered types for one class of objects"
+ru = "показать открытые виды одного класса предметов"
+
+[471ee8877e7c]
+en = "change experience level"
+ru = "изменить уровень опыта"
+
+[bbc025f265e4]
+en = "show mobile light sources"
+ru = "показать подвижные источники света"
+
+[5d0c6d03d3fa]
+en = "look at what is here"
+ru = "осмотреть то, что здесь лежит"
+
+[3ad1794048d7]
+en = "describe what you can see"
+ru = "описать то, что видно вокруг"
+
+[c442c2499bb0]
+en = "loot a box on the floor"
+ru = "обыскать ящик на полу"
+
+[8ecede57d27e]
+en = "use monster's special ability"
+ru = "применить особую способность монстра"
+
+[f6b856929c37]
+en = "same as call; name a monster or object or object type"
+ru = "то же, что call: дать имя монстру, предмету или виду предметов"
+
+[8c78c50e1425]
+en = "offer a sacrifice to the gods"
+ru = "принести жертву богам"
+
+[4c11217b03dd]
+en = "open a door"
+ru = "открыть дверь"
+
+[505f4a78bd93]
+en = "show option settings"
+ru = "показать параметры"
+
+[4a9a97128898]
+en = "show all option settings, possibly change them"
+ru = "показать все параметры и, может быть, изменить их"
+
+[3bc439b013cb]
+en = "show a summary of the explored dungeon"
+ru = "показать обзор исследованного подземелья"
+
+[3075935efc4a]
+en = "test panic routine (fatal to game)"
+ru = "проверить аварийное завершение (смертельно для игры)"
+
+[cefe00e14450]
+en = "pay your shopping bill"
+ru = "оплатить покупки"
+
+[ec356415ba30]
+en = "scroll persistent inventory display"
+ru = "прокрутить постоянное окно инвентаря"
+
+[689cf21ca8b5]
+en = "pick up things at the current location"
+ru = "поднять предметы на этом месте"
+
+[1615233f8886]
+en = "polymorph self"
+ru = "превратиться"
+
+[a933a17c327e]
+en = "pray to the gods for help"
+ru = "помолиться богам о помощи"
+
+[f98a290f6ef1]
+en = "view recent game messages"
+ru = "просмотреть недавние сообщения"
+
+[a7003e2b78cb]
+en = "put on an accessory (ring, amulet, etc)"
+ru = "надеть украшение (кольцо, амулет и т. п.)"
+
+[10dc060bfd81]
+en = "quaff (drink) something"
+ru = "выпить что-нибудь"
+
+[320b77526dbd]
+en = "exit without saving current game"
+ru = "выйти, не сохраняя игру"
+
+[f01199434aa7]
+en = "select ammunition for quiver"
+ru = "выбрать снаряды для колчана"
+
+[5355da6de3f1]
+en = "read a scroll or spellbook"
+ru = "прочесть свиток или книгу заклинаний"
+
+[13e82ab2090e]
+en = "redraw screen"
+ru = "перерисовать экран"
+
+[c134de5373b4]
+en = "remove an accessory (ring, amulet, etc)"
+ru = "снять украшение (кольцо, амулет и т. п.)"
+
+[bb0b4cdddcbe]
+en = "repeat a previous command"
+ru = "повторить предыдущую команду"
+
+[d6c9e1bd5b3b]
+en = "prefix: request menu or modify command"
+ru = "приставка: запросить меню или изменить команду"
+
+[38ce603ad418]
+en = "travel to previously selected travel location"
+ru = "отправиться в выбранное ранее место"
+
+[75e18a93528e]
+en = "mount or dismount a saddled steed"
+ru = "сесть на осёдланного скакуна или спешиться"
+
+[811a4c8fb2d6]
+en = "rub a lamp or a stone"
+ru = "потереть лампу или камень"
+
+[f26ff2230e69]
+en = "prefix: run until something interesting is seen"
+ru = "приставка: бежать, пока не попадётся что-то интересное"
+
+[6ba5287d0f60]
+en = "prefix: rush until something interesting is seen"
+ru = "приставка: мчаться, пока не попадётся что-то интересное"
+
+[78a7915225ec]
+en = "save the game and exit"
+ru = "сохранить игру и выйти"
+
+[8cd00715bb26]
+en = "save the game configuration"
+ru = "сохранить настройки игры"
+
+[875397fc812b]
+en = "search for traps and secret doors"
+ru = "искать ловушки и потайные двери"
+
+[7ef053899a35]
+en = "show all equipment in use"
+ru = "показать всё используемое снаряжение"
+
+[6e5a05e04686]
+en = "show the amulet currently worn"
+ru = "показать надетый амулет"
+
+[593be3cec277]
+en = "show the armor currently worn"
+ru = "показать надетые доспехи"
+
+[a6b42e34e82e]
+en = "show the ring(s) currently worn"
+ru = "показать надетые кольца"
+
+[4c4a97a91e72]
+en = "show the tools currently in use"
+ru = "показать используемые инструменты"
+
+[dcf8b82a7812]
+en = "show the weapon currently wielded"
+ru = "показать оружие в руках"
+
+[9079f5b60f88]
+en = "leave game to enter a sub-shell ('exit' to come back)"
+ru = "выйти в оболочку (вернуться — «exit»)"
+
+[c94a423de542]
+en = "show gold, possibly shop credit or debt"
+ru = "показать золото, кредит или долг в лавке"
+
+[58643dc30734]
+en = "list and reorder known spells"
+ru = "показать и упорядочить известные заклинания"
+
+[34e713fe6291]
+en = "describe an adjacent, discovered trap"
+ru = "описать соседнюю обнаруженную ловушку"
+
+[1e3845ae2b66]
+en = "sit down"
+ru = "сесть"
+
+[d742cf0d56c1]
+en = "show memory statistics"
+ru = "показать расход памяти"
+
+[947ca3d275f0]
+en = "push game to background ('fg' to come back)"
+ru = "отправить игру в фон (вернуться — «fg»)"
+
+[2402ece02eef]
+en = "swap wielded and secondary weapons"
+ru = "поменять основное и запасное оружие"
+
+[5d8d002f47ae]
+en = "take off one piece of armor"
+ru = "снять один предмет доспехов"
+
+[bae69ff7179a]
+en = "remove all armor"
+ru = "снять все доспехи"
+
+[82dacef0184a]
+en = "teleport around the level"
+ru = "телепортироваться по уровню"
+
+[b1c7bea23054]
+en = "view map without monsters or objects obstructing it"
+ru = "смотреть карту без монстров и предметов"
+
+[d51468f43587]
+en = "menu of commands you can do from here to adjacent spot"
+ru = "меню команд для соседней клетки"
+
+[cb681274ae9d]
+en = "throw something"
+ru = "бросить что-нибудь"
+
+[4fa340092e35]
+en = "look at timeout queue and hero's timed intrinsics"
+ru = "посмотреть очередь таймеров и временные свойства героя"
+
+[b0d14f5b6a6b]
+en = "empty a container"
+ru = "опорожнить контейнер"
+
+[fbe38754cc96]
+en = "toggle boolean option"
+ru = "переключить логический параметр"
+
+[0943806f3359]
+en = "travel to a specific location on the map"
+ru = "отправиться в выбранное место на карте"
+
+[218a4f297ced]
+en = "turn undead away"
+ru = "изгнать нежить"
+
+[78361c10a411]
+en = "toggle two-weapon combat"
+ru = "включить или выключить бой с оружием в обеих руках"
+
+[b4d95def9f4b]
+en = "untrap something"
+ru = "обезвредить что-нибудь"
+
+[29e1196f86a5]
+en = "go up a staircase"
+ru = "подняться по лестнице"
+
+[4920f23efad3]
+en = "list vanquished monsters"
+ru = "список побеждённых монстров"
+
+[35e0fbbe4402]
+en = "list compile time options for this version of NetHack"
+ru = "список параметров сборки этой версии NetHack"
+
+[aaaa02511f3f]
+en = "show version and date+time program was built"
+ru = "показать версию и дату сборки"
+
+[c5e3affc4a03]
+en = "show vision array"
+ru = "показать массив видимости"
+
+[8f7ec1adc393]
+en = "rest one move while doing nothing"
+ru = "отдохнуть один ход"
+
+[d854680d69c3]
+en = "wear a piece of armor"
+ru = "надеть доспех"
+
+[235e86dba15f]
+en = "tell what a command does"
+ru = "рассказать, что делает команда"
+
+[ab0e3ca56765]
+en = "show what type of thing a symbol corresponds to"
+ru = "показать, что означает символ"
+
+[55e688145a2e]
+en = "wield (put in use) a weapon"
+ru = "взять оружие в руки"
+
+[f3beb7878281]
+en = "wipe off your face"
+ru = "вытереть лицо"
+
+[67c2641cf65b]
+en = "show stats of monsters created"
+ru = "показать статистику созданных монстров"
+
+[bfc1488c56ed]
+en = "bury objs under and around you"
+ru = "закопать предметы под вами и вокруг"
+
+[39b52048f73e]
+en = "cast any spell"
+ru = "произнести любое заклинание"
+
+[73a78b689479]
+en = "show customized glyphs"
+ru = "показать изменённые глифы"
+
+[6feec5a04f8c]
+en = "reveal hidden things within a small radius"
+ru = "раскрыть скрытое поблизости"
+
+[f434c7f0bb6b]
+en = "validate the display macro ranges"
+ru = "проверить диапазоны макросов отображения"
+
+[2a5d3efa32b5]
+en = "flip the level"
+ru = "отразить уровень"
+
+[be308637e6a4]
+en = "create a monster"
+ru = "создать монстра"
+
+[a35b1248d59b]
+en = "identify all items in inventory"
+ru = "опознать весь инвентарь"
+
+[fbcd01bf5f7b]
+en = "set an intrinsic"
+ru = "задать врождённое свойство"
+
+[41c3238e3921]
+en = "slay a monster"
+ru = "убить монстра"
+
+[8c6bc4e12d50]
+en = "teleport to another level"
+ru = "телепортироваться на другой уровень"
+
+[e64a7f1f85a8]
+en = "load and execute a des-file lua script"
+ru = "загрузить и выполнить des-скрипт на lua"
+
+[c07632c692a5]
+en = "load and execute a lua script"
+ru = "загрузить и выполнить скрипт на lua"
+
+[79ebdf8893a5]
+en = "list object generation probabilities"
+ru = "список вероятностей появления предметов"
+
+[71a5e278bb04]
+en = "recreate the current level"
+ru = "пересоздать текущий уровень"
+
+[07ffd424280f]
+en = "map the level"
+ru = "нанести уровень на карту"
+
+[f465249e0f13]
+en = "validate the difficulty ratings of monsters"
+ru = "проверить сложность монстров"
+
+[a9a8de85b773]
+en = "verify rumor boundaries"
+ru = "проверить границы слухов"
+
+[2590fef14917]
+en = "show map locations' seen vectors"
+ru = "показать векторы видимости клеток"
+
+[3f5af84598fd]
+en = "show NHUUID for this game"
+ru = "показать NHUUID этой игры"
+
+[3014ecd257c4]
+en = "smell monster"
+ru = "понюхать монстра"
+
+[009614a01cab]
+en = "telekinesis"
+ru = "телекинез"
+
+[4d643fae927e]
+en = "show locations of special levels"
+ru = "показать, где особые уровни"
+
+[c7d17cb37e0e]
+en = "wish for something"
+ru = "загадать желание"
+
+[5d0673d903b0]
+en = "show wall modes"
+ru = "показать режимы стен"
+
+[dce18ecf110e]
+en = "zap a wand"
+ru = "взмахнуть палочкой"
+
+[893d6eef1024]
+en = "move west (screen left)"
+ru = "шагнуть на запад (влево на экране)"
+
+[49ff05756abf]
+en = "move northwest (screen upper left)"
+ru = "шагнуть на северо-запад (влево вверх на экране)"
+
+[43c087985685]
+en = "move north (screen up)"
+ru = "шагнуть на север (вверх на экране)"
+
+[b91c7431ed3b]
+en = "move northeast (screen upper right)"
+ru = "шагнуть на северо-восток (вправо вверх на экране)"
+
+[ac3595a86ce7]
+en = "move east (screen right)"
+ru = "шагнуть на восток (вправо на экране)"
+
+[44d88d661e27]
+en = "move southeast (screen lower right)"
+ru = "шагнуть на юго-восток (вправо вниз на экране)"
+
+[a2e006b9c163]
+en = "move south (screen down)"
+ru = "шагнуть на юг (вниз на экране)"
+
+[09487286cb93]
+en = "move southwest (screen lower left)"
+ru = "шагнуть на юго-запад (влево вниз на экране)"
+
+[eba2cef53f2f]
+en = "rush west (screen left)"
+ru = "мчаться на запад (влево на экране)"
+
+[cc87a5f87e9b]
+en = "rush northwest (screen upper left)"
+ru = "мчаться на северо-запад (влево вверх на экране)"
+
+[2db2f237b904]
+en = "rush north (screen up)"
+ru = "мчаться на север (вверх на экране)"
+
+[1e158b462cc8]
+en = "rush northeast (screen upper right)"
+ru = "мчаться на северо-восток (вправо вверх на экране)"
+
+[e4e5b20695cc]
+en = "rush east (screen right)"
+ru = "мчаться на восток (вправо на экране)"
+
+[f1e22867df81]
+en = "rush southeast (screen lower right)"
+ru = "мчаться на юго-восток (вправо вниз на экране)"
+
+[b710aa6e50b1]
+en = "rush south (screen down)"
+ru = "мчаться на юг (вниз на экране)"
+
+[5eb7c0fad985]
+en = "rush southwest (screen lower left)"
+ru = "мчаться на юго-запад (влево вниз на экране)"
+
+[7fe9261b4dfd]
+en = "run west (screen left)"
+ru = "бежать на запад (влево на экране)"
+
+[31a47345cbe0]
+en = "run northwest (screen upper left)"
+ru = "бежать на северо-запад (влево вверх на экране)"
+
+[4330423fce49]
+en = "run north (screen up)"
+ru = "бежать на север (вверх на экране)"
+
+[a01d1995ecb8]
+en = "run northeast (screen upper right)"
+ru = "бежать на северо-восток (вправо вверх на экране)"
+
+[df2050fa274b]
+en = "run east (screen right)"
+ru = "бежать на восток (вправо на экране)"
+
+[670d5aa22c9c]
+en = "run southeast (screen lower right)"
+ru = "бежать на юго-восток (вправо вниз на экране)"
+
+[44358b70faaa]
+en = "run south (screen down)"
+ru = "бежать на юг (вниз на экране)"
+
+[d68a456fd099]
+en = "run southwest (screen lower left)"
+ru = "бежать на юго-запад (влево вниз на экране)"
+
+# The `#?` list's rows (doextlist's " %-14s %4s %s"): the name as it
+# is, the flags, the description (a piece above, translated on its
+# own); after a name of no letters it stays in the row.
+
+[1a28f8ac5106]
+en = " #              %4s enter and perform an extended command"
+ru = " #              {1} ввести и выполнить расширенную команду"
+
+[c22137c1550d]
+en = " ?              %4s list all extended commands"
+ru = " ?              {1} список всех расширенных команд"
+
+[54c7bd03d23f]
+en = " adjust         %4s %s"
+ru = " adjust         {1} {2}"
+
+[6d7565e4cf30]
+en = " annotate       %4s %s"
+ru = " annotate       {1} {2}"
+
+[8c9e0eb85638]
+en = " apply          %4s %s"
+ru = " apply          {1} {2}"
+
+[0ad7668a69ff]
+en = " attributes     %4s %s"
+ru = " attributes     {1} {2}"
+
+[02b0fa7822b8]
+en = " autopickup     %4s %s"
+ru = " autopickup     {1} {2}"
+
+[27751bb31a0a]
+en = " bugreport      %4s %s"
+ru = " bugreport      {1} {2}"
+
+[8cb1183610a8]
+en = " call           %4s %s"
+ru = " call           {1} {2}"
+
+[a6eab9a214e5]
+en = " cast           %4s %s"
+ru = " cast           {1} {2}"
+
+[e95d69a59d53]
+en = " chat           %4s %s"
+ru = " chat           {1} {2}"
+
+[1d628817d74d]
+en = " chronicle      %4s %s"
+ru = " chronicle      {1} {2}"
+
+[16c62d4d3522]
+en = " close          %4s %s"
+ru = " close          {1} {2}"
+
+[2b8cbc5c8f58]
+en = " conduct        %4s %s"
+ru = " conduct        {1} {2}"
+
+[09f602e27ba4]
+en = " debugfuzzer    %4s %s"
+ru = " debugfuzzer    {1} {2}"
+
+[b1a467f10c25]
+en = " dip            %4s %s"
+ru = " dip            {1} {2}"
+
+[e31c0e6d1ab2]
+en = " down           %4s %s"
+ru = " down           {1} {2}"
+
+[881c6f4a0d72]
+en = " drop           %4s %s"
+ru = " drop           {1} {2}"
+
+[dc36e51a6991]
+en = " droptype       %4s %s"
+ru = " droptype       {1} {2}"
+
+[cf107ba4d988]
+en = " eat            %4s %s"
+ru = " eat            {1} {2}"
+
+[4efd12f44dc0]
+en = " engrave        %4s %s"
+ru = " engrave        {1} {2}"
+
+[03f5b1404c0d]
+en = " enhance        %4s %s"
+ru = " enhance        {1} {2}"
+
+[09a3293196bb]
+en = " exploremode    %4s %s"
+ru = " exploremode    {1} {2}"
+
+[45d7c9de4356]
+en = " fight          %4s %s"
+ru = " fight          {1} {2}"
+
+[7c8957586675]
+en = " fire           %4s %s"
+ru = " fire           {1} {2}"
+
+[742e064e8848]
+en = " force          %4s %s"
+ru = " force          {1} {2}"
+
+[0a9a82445f8d]
+en = " genocided      %4s %s"
+ru = " genocided      {1} {2}"
+
+[63f2c35a300a]
+en = " glance         %4s %s"
+ru = " glance         {1} {2}"
+
+[a4da64bb2024]
+en = " help           %4s %s"
+ru = " help           {1} {2}"
+
+[37242564112d]
+en = " herecmdmenu    %4s %s"
+ru = " herecmdmenu    {1} {2}"
+
+[84994db039d3]
+en = " history        %4s %s"
+ru = " history        {1} {2}"
+
+[f4872ee0cdad]
+en = " inventory      %4s %s"
+ru = " inventory      {1} {2}"
+
+[e22ab0f60a10]
+en = " inventtype     %4s %s"
+ru = " inventtype     {1} {2}"
+
+[b24a6af0b65d]
+en = " invoke         %4s %s"
+ru = " invoke         {1} {2}"
+
+[b4730753405d]
+en = " jump           %4s %s"
+ru = " jump           {1} {2}"
+
+[5a830a67d6cb]
+en = " kick           %4s %s"
+ru = " kick           {1} {2}"
+
+[5aeb5697bbe1]
+en = " known          %4s %s"
+ru = " known          {1} {2}"
+
+[9092be397532]
+en = " knownclass     %4s %s"
+ru = " knownclass     {1} {2}"
+
+[56f11a19b0d8]
+en = " levelchange    %4s %s"
+ru = " levelchange    {1} {2}"
+
+[28cf4eb324c2]
+en = " lightsources   %4s %s"
+ru = " lightsources   {1} {2}"
+
+[84879f2ec04a]
+en = " look           %4s %s"
+ru = " look           {1} {2}"
+
+[525321389fa0]
+en = " lookaround     %4s %s"
+ru = " lookaround     {1} {2}"
+
+[d4f8b7801048]
+en = " loot           %4s %s"
+ru = " loot           {1} {2}"
+
+[cf3d5dd08b30]
+en = " monster        %4s %s"
+ru = " monster        {1} {2}"
+
+[bf9abef8a321]
+en = " moveeast       %4s %s"
+ru = " moveeast       {1} {2}"
+
+[39b40529ab0e]
+en = " movenorth      %4s %s"
+ru = " movenorth      {1} {2}"
+
+[17251cc8e691]
+en = " movenortheast  %4s %s"
+ru = " movenortheast  {1} {2}"
+
+[d7e7ff60138a]
+en = " movenorthwest  %4s %s"
+ru = " movenorthwest  {1} {2}"
+
+[9be7c142170d]
+en = " movesouth      %4s %s"
+ru = " movesouth      {1} {2}"
+
+[b20b1c9240c7]
+en = " movesoutheast  %4s %s"
+ru = " movesoutheast  {1} {2}"
+
+[41cb565d3b19]
+en = " movesouthwest  %4s %s"
+ru = " movesouthwest  {1} {2}"
+
+[dcdcf8338aa7]
+en = " movewest       %4s %s"
+ru = " movewest       {1} {2}"
+
+[0acbb692b7c2]
+en = " name           %4s %s"
+ru = " name           {1} {2}"
+
+[01ec31764307]
+en = " offer          %4s %s"
+ru = " offer          {1} {2}"
+
+[743e2348390a]
+en = " open           %4s %s"
+ru = " open           {1} {2}"
+
+[d5abac1d0397]
+en = " options        %4s %s"
+ru = " options        {1} {2}"
+
+[8368d4b8268c]
+en = " optionsfull    %4s %s"
+ru = " optionsfull    {1} {2}"
+
+[5d1909ff3305]
+en = " overview       %4s %s"
+ru = " overview       {1} {2}"
+
+[d8e5d5818dc2]
+en = " panic          %4s %s"
+ru = " panic          {1} {2}"
+
+[b6bbe9a43538]
+en = " pay            %4s %s"
+ru = " pay            {1} {2}"
+
+[2b7fad1c355e]
+en = " perminv        %4s %s"
+ru = " perminv        {1} {2}"
+
+[0f91fdd41103]
+en = " pickup         %4s %s"
+ru = " pickup         {1} {2}"
+
+[ffa5dea514dc]
+en = " polyself       %4s %s"
+ru = " polyself       {1} {2}"
+
+[aa3386f3d193]
+en = " pray           %4s %s"
+ru = " pray           {1} {2}"
+
+[7f2d07a9d8cc]
+en = " prevmsg        %4s %s"
+ru = " prevmsg        {1} {2}"
+
+[f78f37dd25f7]
+en = " puton          %4s %s"
+ru = " puton          {1} {2}"
+
+[e6842c2096d2]
+en = " quaff          %4s %s"
+ru = " quaff          {1} {2}"
+
+[b58d20a9b23d]
+en = " quit           %4s %s"
+ru = " quit           {1} {2}"
+
+[2745801359e0]
+en = " quiver         %4s %s"
+ru = " quiver         {1} {2}"
+
+[3d1030555bcb]
+en = " read           %4s %s"
+ru = " read           {1} {2}"
+
+[6b45009ad8d1]
+en = " redraw         %4s %s"
+ru = " redraw         {1} {2}"
+
+[1ed7343848f3]
+en = " remove         %4s %s"
+ru = " remove         {1} {2}"
+
+[2c4e913beb37]
+en = " repeat         %4s %s"
+ru = " repeat         {1} {2}"
+
+[522f51a2c8aa]
+en = " reqmenu        %4s %s"
+ru = " reqmenu        {1} {2}"
+
+[d3e79e1a7fa3]
+en = " retravel       %4s %s"
+ru = " retravel       {1} {2}"
+
+[dfcfb2518ebd]
+en = " ride           %4s %s"
+ru = " ride           {1} {2}"
+
+[2c153ece6afe]
+en = " rub            %4s %s"
+ru = " rub            {1} {2}"
+
+[8d586c26d4e2]
+en = " run            %4s %s"
+ru = " run            {1} {2}"
+
+[886ec4eb7399]
+en = " runeast        %4s %s"
+ru = " runeast        {1} {2}"
+
+[d18bc01f90d4]
+en = " runnorth       %4s %s"
+ru = " runnorth       {1} {2}"
+
+[5eb3ada2b756]
+en = " runnortheast   %4s %s"
+ru = " runnortheast   {1} {2}"
+
+[0d404d5628e8]
+en = " runnorthwest   %4s %s"
+ru = " runnorthwest   {1} {2}"
+
+[310b150bedec]
+en = " runsouth       %4s %s"
+ru = " runsouth       {1} {2}"
+
+[05a9f7cf71c3]
+en = " runsoutheast   %4s %s"
+ru = " runsoutheast   {1} {2}"
+
+[778866f44eed]
+en = " runsouthwest   %4s %s"
+ru = " runsouthwest   {1} {2}"
+
+[7c031824802f]
+en = " runwest        %4s %s"
+ru = " runwest        {1} {2}"
+
+[ed59345ed6ff]
+en = " rush           %4s %s"
+ru = " rush           {1} {2}"
+
+[e92c153369ae]
+en = " rusheast       %4s %s"
+ru = " rusheast       {1} {2}"
+
+[6f78a14994ff]
+en = " rushnorth      %4s %s"
+ru = " rushnorth      {1} {2}"
+
+[23264ddd3cad]
+en = " rushnortheast  %4s %s"
+ru = " rushnortheast  {1} {2}"
+
+[ed47311fea92]
+en = " rushnorthwest  %4s %s"
+ru = " rushnorthwest  {1} {2}"
+
+[2dfd97f20e0a]
+en = " rushsouth      %4s %s"
+ru = " rushsouth      {1} {2}"
+
+[073b14927ae3]
+en = " rushsoutheast  %4s %s"
+ru = " rushsoutheast  {1} {2}"
+
+[b476fa24a445]
+en = " rushsouthwest  %4s %s"
+ru = " rushsouthwest  {1} {2}"
+
+[398f8c5613a2]
+en = " rushwest       %4s %s"
+ru = " rushwest       {1} {2}"
+
+[e9902aaabef1]
+en = " save           %4s %s"
+ru = " save           {1} {2}"
+
+[326af3d5d8f6]
+en = " saveoptions    %4s %s"
+ru = " saveoptions    {1} {2}"
+
+[040f8e73d009]
+en = " search         %4s %s"
+ru = " search         {1} {2}"
+
+[bec00d01d8bc]
+en = " seeall         %4s %s"
+ru = " seeall         {1} {2}"
+
+[a6b3a88c2c55]
+en = " seeamulet      %4s %s"
+ru = " seeamulet      {1} {2}"
+
+[e77d1d620412]
+en = " seearmor       %4s %s"
+ru = " seearmor       {1} {2}"
+
+[fb6acb5ca4fe]
+en = " seerings       %4s %s"
+ru = " seerings       {1} {2}"
+
+[d579e182d6fc]
+en = " seetools       %4s %s"
+ru = " seetools       {1} {2}"
+
+[b7a257e0b783]
+en = " seeweapon      %4s %s"
+ru = " seeweapon      {1} {2}"
+
+[a9cb97337c22]
+en = " shell          %4s %s"
+ru = " shell          {1} {2}"
+
+[e782e4b8b28a]
+en = " showgold       %4s %s"
+ru = " showgold       {1} {2}"
+
+[406d027191a0]
+en = " showspells     %4s %s"
+ru = " showspells     {1} {2}"
+
+[5b069f9e2292]
+en = " showtrap       %4s %s"
+ru = " showtrap       {1} {2}"
+
+[9c9721468889]
+en = " sit            %4s %s"
+ru = " sit            {1} {2}"
+
+[9233f41de4a8]
+en = " stats          %4s %s"
+ru = " stats          {1} {2}"
+
+[8222ab5fc7e3]
+en = " suspend        %4s %s"
+ru = " suspend        {1} {2}"
+
+[5051ff305dc3]
+en = " swap           %4s %s"
+ru = " swap           {1} {2}"
+
+[49e16fc3a434]
+en = " takeoff        %4s %s"
+ru = " takeoff        {1} {2}"
+
+[5bf3948d31d8]
+en = " takeoffall     %4s %s"
+ru = " takeoffall     {1} {2}"
+
+[db0afd4e19de]
+en = " teleport       %4s %s"
+ru = " teleport       {1} {2}"
+
+[df70ebe01c5e]
+en = " terrain        %4s %s"
+ru = " terrain        {1} {2}"
+
+[3e51f3b01f7c]
+en = " therecmdmenu   %4s %s"
+ru = " therecmdmenu   {1} {2}"
+
+[4aba6a2fa5e9]
+en = " throw          %4s %s"
+ru = " throw          {1} {2}"
+
+[5cf6e9e13058]
+en = " timeout        %4s %s"
+ru = " timeout        {1} {2}"
+
+[4582d06fa278]
+en = " tip            %4s %s"
+ru = " tip            {1} {2}"
+
+[69f008d57786]
+en = " toggle         %4s %s"
+ru = " toggle         {1} {2}"
+
+[c2343e9a84fe]
+en = " travel         %4s %s"
+ru = " travel         {1} {2}"
+
+[667744ccccb3]
+en = " turn           %4s %s"
+ru = " turn           {1} {2}"
+
+[1f5e012c8ddd]
+en = " twoweapon      %4s %s"
+ru = " twoweapon      {1} {2}"
+
+[38d1191f7fbf]
+en = " untrap         %4s %s"
+ru = " untrap         {1} {2}"
+
+[74e6d14300b0]
+en = " up             %4s %s"
+ru = " up             {1} {2}"
+
+[68f091bd86e7]
+en = " vanquished     %4s %s"
+ru = " vanquished     {1} {2}"
+
+[88cb89f80e85]
+en = " version        %4s %s"
+ru = " version        {1} {2}"
+
+[efd03a18ef64]
+en = " versionshort   %4s %s"
+ru = " versionshort   {1} {2}"
+
+[5ec93faedc35]
+en = " vision         %4s %s"
+ru = " vision         {1} {2}"
+
+[24395b805700]
+en = " wait           %4s %s"
+ru = " wait           {1} {2}"
+
+[fe3fefc75e4c]
+en = " wear           %4s %s"
+ru = " wear           {1} {2}"
+
+[3ea12ce60500]
+en = " whatdoes       %4s %s"
+ru = " whatdoes       {1} {2}"
+
+[a7fa429deb7d]
+en = " whatis         %4s %s"
+ru = " whatis         {1} {2}"
+
+[b0dd67236b19]
+en = " wield          %4s %s"
+ru = " wield          {1} {2}"
+
+[97b0b9a93539]
+en = " wipe           %4s %s"
+ru = " wipe           {1} {2}"
+
+[214e0ceb0e74]
+en = " wizborn        %4s %s"
+ru = " wizborn        {1} {2}"
+
+[9e60f053d28d]
+en = " wizbury        %4s %s"
+ru = " wizbury        {1} {2}"
+
+[bad34a9fd9ff]
+en = " wizcast        %4s %s"
+ru = " wizcast        {1} {2}"
+
+[1eb2c8b28680]
+en = " wizcustom      %4s %s"
+ru = " wizcustom      {1} {2}"
+
+[7ac88259846b]
+en = " wizdetect      %4s %s"
+ru = " wizdetect      {1} {2}"
+
+[fa6783228afb]
+en = " wizdispmacros  %4s %s"
+ru = " wizdispmacros  {1} {2}"
+
+[34cde2722311]
+en = " wizfliplevel   %4s %s"
+ru = " wizfliplevel   {1} {2}"
+
+[902897a65f75]
+en = " wizgenesis     %4s %s"
+ru = " wizgenesis     {1} {2}"
+
+[42617e842184]
+en = " wizidentify    %4s %s"
+ru = " wizidentify    {1} {2}"
+
+[865fa95f1b32]
+en = " wizintrinsic   %4s %s"
+ru = " wizintrinsic   {1} {2}"
+
+[f6589fe9594f]
+en = " wizkill        %4s %s"
+ru = " wizkill        {1} {2}"
+
+[7dc5fd875688]
+en = " wizlevelport   %4s %s"
+ru = " wizlevelport   {1} {2}"
+
+[5a9807bec3b3]
+en = " wizloaddes     %4s %s"
+ru = " wizloaddes     {1} {2}"
+
+[90af37b01e4d]
+en = " wizloadlua     %4s %s"
+ru = " wizloadlua     {1} {2}"
+
+[58374923836c]
+en = " wizmakemap     %4s %s"
+ru = " wizmakemap     {1} {2}"
+
+[199a302a5514]
+en = " wizmap         %4s %s"
+ru = " wizmap         {1} {2}"
+
+[30590a801e6c]
+en = " wizmondiff     %4s %s"
+ru = " wizmondiff     {1} {2}"
+
+[66cc73705639]
+en = " wizobjprobs    %4s %s"
+ru = " wizobjprobs    {1} {2}"
+
+[6de289a1dace]
+en = " wizrumorcheck  %4s %s"
+ru = " wizrumorcheck  {1} {2}"
+
+[24b33f625ef9]
+en = " wizseenv       %4s %s"
+ru = " wizseenv       {1} {2}"
+
+[cebec0af095e]
+en = " wizshownhuuid  %4s %s"
+ru = " wizshownhuuid  {1} {2}"
+
+[9000a8e4b103]
+en = " wizsmell       %4s %s"
+ru = " wizsmell       {1} {2}"
+
+[2559254994e0]
+en = " wiztelekinesis %4s %s"
+ru = " wiztelekinesis {1} {2}"
+
+[34c129971ef6]
+en = " wizwhere       %4s %s"
+ru = " wizwhere       {1} {2}"
+
+[223a82e8c130]
+en = " wizwish        %4s %s"
+ru = " wizwish        {1} {2}"
+
+[230f607d54e0]
+en = " wmode          %4s %s"
+ru = " wmode          {1} {2}"
+
+[d619579cc7f8]
+en = " zap            %4s %s"
+ru = " zap            {1} {2}"

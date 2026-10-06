@@ -18,6 +18,11 @@
   =       (не учитывается, если не выбрано что-то ещё)
   Eat it anyway?  [ae8486876fff]
   =     Всё равно съесть?
+ #              %4s enter and perform an extended command  [1a28f8ac5106]
+  m    #              тритон ввести и выполнить расширенную команду
+  f    #              крыса ввести и выполнить расширенную команду
+  n    #              копьё ввести и выполнить расширенную команду
+  pl   #              3 стрелы ввести и выполнить расширенную команду
  %s is angry with you (%d).  [e93e1cb3db19]
   m    тритон гневается на вас (1).
   f    крыса гневается на вас (3).
@@ -94,6 +99,11 @@
   =    3 (вкл., цифры как на телефоне)
  4 (on, phone-style layout, MSDOS compatible)  [1f11c151eddd]
   =    4 (вкл., как на телефоне, как в MSDOS)
+ ?              %4s list all extended commands  [c22137c1550d]
+  m    ?              тритон список всех расширенных команд
+  f    ?              крыса список всех расширенных команд
+  n    ?              копьё список всех расширенных команд
+  pl   ?              3 стрелы список всех расширенных команд
  Autopickup is off.  [af5ecca78740]
   =    Автоподбор выключен.
  Autopickup is on.  [e000806fcc9e]
@@ -3175,6 +3185,106 @@
   f    [Неожиданное достижение №3.]
   n    [Неожиданное достижение №5.]
   pl   [Неожиданное достижение №21.]
+ adjust         %4s %s  [54c7bd03d23f]
+  m    adjust         тритон тритон
+  f    adjust         крыса крыса
+  n    adjust         копьё копьё
+  pl   adjust         3 стрелы 3 стрелы
+ annotate       %4s %s  [6d7565e4cf30]
+  m    annotate       тритон тритон
+  f    annotate       крыса крыса
+  n    annotate       копьё копьё
+  pl   annotate       3 стрелы 3 стрелы
+ apply          %4s %s  [8c9e0eb85638]
+  m    apply          тритон тритон
+  f    apply          крыса крыса
+  n    apply          копьё копьё
+  pl   apply          3 стрелы 3 стрелы
+ attributes     %4s %s  [0ad7668a69ff]
+  m    attributes     тритон тритон
+  f    attributes     крыса крыса
+  n    attributes     копьё копьё
+  pl   attributes     3 стрелы 3 стрелы
+ autopickup     %4s %s  [02b0fa7822b8]
+  m    autopickup     тритон тритон
+  f    autopickup     крыса крыса
+  n    autopickup     копьё копьё
+  pl   autopickup     3 стрелы 3 стрелы
+ bugreport      %4s %s  [27751bb31a0a]
+  m    bugreport      тритон тритон
+  f    bugreport      крыса крыса
+  n    bugreport      копьё копьё
+  pl   bugreport      3 стрелы 3 стрелы
+ call           %4s %s  [8cb1183610a8]
+  m    call           тритон тритон
+  f    call           крыса крыса
+  n    call           копьё копьё
+  pl   call           3 стрелы 3 стрелы
+ cast           %4s %s  [a6eab9a214e5]
+  m    cast           тритон тритон
+  f    cast           крыса крыса
+  n    cast           копьё копьё
+  pl   cast           3 стрелы 3 стрелы
+ chat           %4s %s  [e95d69a59d53]
+  m    chat           тритон тритон
+  f    chat           крыса крыса
+  n    chat           копьё копьё
+  pl   chat           3 стрелы 3 стрелы
+ chronicle      %4s %s  [1d628817d74d]
+  m    chronicle      тритон тритон
+  f    chronicle      крыса крыса
+  n    chronicle      копьё копьё
+  pl   chronicle      3 стрелы 3 стрелы
+ close          %4s %s  [16c62d4d3522]
+  m    close          тритон тритон
+  f    close          крыса крыса
+  n    close          копьё копьё
+  pl   close          3 стрелы 3 стрелы
+ conduct        %4s %s  [2b8cbc5c8f58]
+  m    conduct        тритон тритон
+  f    conduct        крыса крыса
+  n    conduct        копьё копьё
+  pl   conduct        3 стрелы 3 стрелы
+ debugfuzzer    %4s %s  [09f602e27ba4]
+  m    debugfuzzer    тритон тритон
+  f    debugfuzzer    крыса крыса
+  n    debugfuzzer    копьё копьё
+  pl   debugfuzzer    3 стрелы 3 стрелы
+ dip            %4s %s  [b1a467f10c25]
+  m    dip            тритон тритон
+  f    dip            крыса крыса
+  n    dip            копьё копьё
+  pl   dip            3 стрелы 3 стрелы
+ down           %4s %s  [e31c0e6d1ab2]
+  m    down           тритон тритон
+  f    down           крыса крыса
+  n    down           копьё копьё
+  pl   down           3 стрелы 3 стрелы
+ drop           %4s %s  [881c6f4a0d72]
+  m    drop           тритон тритон
+  f    drop           крыса крыса
+  n    drop           копьё копьё
+  pl   drop           3 стрелы 3 стрелы
+ droptype       %4s %s  [dc36e51a6991]
+  m    droptype       тритон тритон
+  f    droptype       крыса крыса
+  n    droptype       копьё копьё
+  pl   droptype       3 стрелы 3 стрелы
+ eat            %4s %s  [cf107ba4d988]
+  m    eat            тритон тритон
+  f    eat            крыса крыса
+  n    eat            копьё копьё
+  pl   eat            3 стрелы 3 стрелы
+ engrave        %4s %s  [4efd12f44dc0]
+  m    engrave        тритон тритон
+  f    engrave        крыса крыса
+  n    engrave        копьё копьё
+  pl   engrave        3 стрелы 3 стрелы
+ enhance        %4s %s  [03f5b1404c0d]
+  m    enhance        тритон тритон
+  f    enhance        крыса крыса
+  n    enhance        копьё копьё
+  pl   enhance        3 стрелы 3 стрелы
  escaped from the dungeon with %ld point,  [bbdcde226ec0]
   m    сбежали из подземелья, набрав 1 очко,
   f    сбежали из подземелья, набрав 3 очка,
@@ -3185,8 +3295,183 @@
   f    сбежали из подземелья, набрав 3 очка,
   n    сбежали из подземелья, набрав 5 очков,
   pl   сбежали из подземелья, набрав 21 очко,
+ exploremode    %4s %s  [09a3293196bb]
+  m    exploremode    тритон тритон
+  f    exploremode    крыса крыса
+  n    exploremode    копьё копьё
+  pl   exploremode    3 стрелы 3 стрелы
+ fight          %4s %s  [45d7c9de4356]
+  m    fight          тритон тритон
+  f    fight          крыса крыса
+  n    fight          копьё копьё
+  pl   fight          3 стрелы 3 стрелы
+ fire           %4s %s  [7c8957586675]
+  m    fire           тритон тритон
+  f    fire           крыса крыса
+  n    fire           копьё копьё
+  pl   fire           3 стрелы 3 стрелы
+ force          %4s %s  [742e064e8848]
+  m    force          тритон тритон
+  f    force          крыса крыса
+  n    force          копьё копьё
+  pl   force          3 стрелы 3 стрелы
+ genocided      %4s %s  [0a9a82445f8d]
+  m    genocided      тритон тритон
+  f    genocided      крыса крыса
+  n    genocided      копьё копьё
+  pl   genocided      3 стрелы 3 стрелы
+ glance         %4s %s  [63f2c35a300a]
+  m    glance         тритон тритон
+  f    glance         крыса крыса
+  n    glance         копьё копьё
+  pl   glance         3 стрелы 3 стрелы
+ help           %4s %s  [a4da64bb2024]
+  m    help           тритон тритон
+  f    help           крыса крыса
+  n    help           копьё копьё
+  pl   help           3 стрелы 3 стрелы
+ herecmdmenu    %4s %s  [37242564112d]
+  m    herecmdmenu    тритон тритон
+  f    herecmdmenu    крыса крыса
+  n    herecmdmenu    копьё копьё
+  pl   herecmdmenu    3 стрелы 3 стрелы
+ history        %4s %s  [84994db039d3]
+  m    history        тритон тритон
+  f    history        крыса крыса
+  n    history        копьё копьё
+  pl   history        3 стрелы 3 стрелы
+ inventory      %4s %s  [f4872ee0cdad]
+  m    inventory      тритон тритон
+  f    inventory      крыса крыса
+  n    inventory      копьё копьё
+  pl   inventory      3 стрелы 3 стрелы
+ inventtype     %4s %s  [e22ab0f60a10]
+  m    inventtype     тритон тритон
+  f    inventtype     крыса крыса
+  n    inventtype     копьё копьё
+  pl   inventtype     3 стрелы 3 стрелы
+ invoke         %4s %s  [b24a6af0b65d]
+  m    invoke         тритон тритон
+  f    invoke         крыса крыса
+  n    invoke         копьё копьё
+  pl   invoke         3 стрелы 3 стрелы
+ jump           %4s %s  [b4730753405d]
+  m    jump           тритон тритон
+  f    jump           крыса крыса
+  n    jump           копьё копьё
+  pl   jump           3 стрелы 3 стрелы
+ kick           %4s %s  [5a830a67d6cb]
+  m    kick           тритон тритон
+  f    kick           крыса крыса
+  n    kick           копьё копьё
+  pl   kick           3 стрелы 3 стрелы
+ known          %4s %s  [5aeb5697bbe1]
+  m    known          тритон тритон
+  f    known          крыса крыса
+  n    known          копьё копьё
+  pl   known          3 стрелы 3 стрелы
+ knownclass     %4s %s  [9092be397532]
+  m    knownclass     тритон тритон
+  f    knownclass     крыса крыса
+  n    knownclass     копьё копьё
+  pl   knownclass     3 стрелы 3 стрелы
+ levelchange    %4s %s  [56f11a19b0d8]
+  m    levelchange    тритон тритон
+  f    levelchange    крыса крыса
+  n    levelchange    копьё копьё
+  pl   levelchange    3 стрелы 3 стрелы
+ lightsources   %4s %s  [28cf4eb324c2]
+  m    lightsources   тритон тритон
+  f    lightsources   крыса крыса
+  n    lightsources   копьё копьё
+  pl   lightsources   3 стрелы 3 стрелы
+ look           %4s %s  [84879f2ec04a]
+  m    look           тритон тритон
+  f    look           крыса крыса
+  n    look           копьё копьё
+  pl   look           3 стрелы 3 стрелы
+ lookaround     %4s %s  [525321389fa0]
+  m    lookaround     тритон тритон
+  f    lookaround     крыса крыса
+  n    lookaround     копьё копьё
+  pl   lookaround     3 стрелы 3 стрелы
+ loot           %4s %s  [d4f8b7801048]
+  m    loot           тритон тритон
+  f    loot           крыса крыса
+  n    loot           копьё копьё
+  pl   loot           3 стрелы 3 стрелы
+ monster        %4s %s  [cf3d5dd08b30]
+  m    monster        тритон тритон
+  f    monster        крыса крыса
+  n    monster        копьё копьё
+  pl   monster        3 стрелы 3 стрелы
+ moveeast       %4s %s  [bf9abef8a321]
+  m    moveeast       тритон тритон
+  f    moveeast       крыса крыса
+  n    moveeast       копьё копьё
+  pl   moveeast       3 стрелы 3 стрелы
+ movenorth      %4s %s  [39b40529ab0e]
+  m    movenorth      тритон тритон
+  f    movenorth      крыса крыса
+  n    movenorth      копьё копьё
+  pl   movenorth      3 стрелы 3 стрелы
+ movenortheast  %4s %s  [17251cc8e691]
+  m    movenortheast  тритон тритон
+  f    movenortheast  крыса крыса
+  n    movenortheast  копьё копьё
+  pl   movenortheast  3 стрелы 3 стрелы
+ movenorthwest  %4s %s  [d7e7ff60138a]
+  m    movenorthwest  тритон тритон
+  f    movenorthwest  крыса крыса
+  n    movenorthwest  копьё копьё
+  pl   movenorthwest  3 стрелы 3 стрелы
+ movesouth      %4s %s  [9be7c142170d]
+  m    movesouth      тритон тритон
+  f    movesouth      крыса крыса
+  n    movesouth      копьё копьё
+  pl   movesouth      3 стрелы 3 стрелы
+ movesoutheast  %4s %s  [b20b1c9240c7]
+  m    movesoutheast  тритон тритон
+  f    movesoutheast  крыса крыса
+  n    movesoutheast  копьё копьё
+  pl   movesoutheast  3 стрелы 3 стрелы
+ movesouthwest  %4s %s  [41cb565d3b19]
+  m    movesouthwest  тритон тритон
+  f    movesouthwest  крыса крыса
+  n    movesouthwest  копьё копьё
+  pl   movesouthwest  3 стрелы 3 стрелы
+ movewest       %4s %s  [dcdcf8338aa7]
+  m    movewest       тритон тритон
+  f    movewest       крыса крыса
+  n    movewest       копьё копьё
+  pl   movewest       3 стрелы 3 стрелы
+ name           %4s %s  [0acbb692b7c2]
+  m    name           тритон тритон
+  f    name           крыса крыса
+  n    name           копьё копьё
+  pl   name           3 стрелы 3 стрелы
  none  [df27d9f3ff9e]
   =    нет
+ offer          %4s %s  [01ec31764307]
+  m    offer          тритон тритон
+  f    offer          крыса крыса
+  n    offer          копьё копьё
+  pl   offer          3 стрелы 3 стрелы
+ open           %4s %s  [743e2348390a]
+  m    open           тритон тритон
+  f    open           крыса крыса
+  n    open           копьё копьё
+  pl   open           3 стрелы 3 стрелы
+ options        %4s %s  [d5abac1d0397]
+  m    options        тритон тритон
+  f    options        крыса крыса
+  n    options        копьё копьё
+  pl   options        3 стрелы 3 стрелы
+ optionsfull    %4s %s  [8368d4b8268c]
+  m    optionsfull    тритон тритон
+  f    optionsfull    крыса крыса
+  n    optionsfull    копьё копьё
+  pl   optionsfull    3 стрелы 3 стрелы
  or   [439ac6327d9e]
   =    или 
  or %s  [796abeea8fce]
@@ -3194,6 +3479,381 @@
   f    или крыса
   n    или копьё
   pl   или 3 стрелы
+ overview       %4s %s  [5d1909ff3305]
+  m    overview       тритон тритон
+  f    overview       крыса крыса
+  n    overview       копьё копьё
+  pl   overview       3 стрелы 3 стрелы
+ panic          %4s %s  [d8e5d5818dc2]
+  m    panic          тритон тритон
+  f    panic          крыса крыса
+  n    panic          копьё копьё
+  pl   panic          3 стрелы 3 стрелы
+ pay            %4s %s  [b6bbe9a43538]
+  m    pay            тритон тритон
+  f    pay            крыса крыса
+  n    pay            копьё копьё
+  pl   pay            3 стрелы 3 стрелы
+ perminv        %4s %s  [2b7fad1c355e]
+  m    perminv        тритон тритон
+  f    perminv        крыса крыса
+  n    perminv        копьё копьё
+  pl   perminv        3 стрелы 3 стрелы
+ pickup         %4s %s  [0f91fdd41103]
+  m    pickup         тритон тритон
+  f    pickup         крыса крыса
+  n    pickup         копьё копьё
+  pl   pickup         3 стрелы 3 стрелы
+ polyself       %4s %s  [ffa5dea514dc]
+  m    polyself       тритон тритон
+  f    polyself       крыса крыса
+  n    polyself       копьё копьё
+  pl   polyself       3 стрелы 3 стрелы
+ pray           %4s %s  [aa3386f3d193]
+  m    pray           тритон тритон
+  f    pray           крыса крыса
+  n    pray           копьё копьё
+  pl   pray           3 стрелы 3 стрелы
+ prevmsg        %4s %s  [7f2d07a9d8cc]
+  m    prevmsg        тритон тритон
+  f    prevmsg        крыса крыса
+  n    prevmsg        копьё копьё
+  pl   prevmsg        3 стрелы 3 стрелы
+ puton          %4s %s  [f78f37dd25f7]
+  m    puton          тритон тритон
+  f    puton          крыса крыса
+  n    puton          копьё копьё
+  pl   puton          3 стрелы 3 стрелы
+ quaff          %4s %s  [e6842c2096d2]
+  m    quaff          тритон тритон
+  f    quaff          крыса крыса
+  n    quaff          копьё копьё
+  pl   quaff          3 стрелы 3 стрелы
+ quit           %4s %s  [b58d20a9b23d]
+  m    quit           тритон тритон
+  f    quit           крыса крыса
+  n    quit           копьё копьё
+  pl   quit           3 стрелы 3 стрелы
+ quiver         %4s %s  [2745801359e0]
+  m    quiver         тритон тритон
+  f    quiver         крыса крыса
+  n    quiver         копьё копьё
+  pl   quiver         3 стрелы 3 стрелы
+ read           %4s %s  [3d1030555bcb]
+  m    read           тритон тритон
+  f    read           крыса крыса
+  n    read           копьё копьё
+  pl   read           3 стрелы 3 стрелы
+ redraw         %4s %s  [6b45009ad8d1]
+  m    redraw         тритон тритон
+  f    redraw         крыса крыса
+  n    redraw         копьё копьё
+  pl   redraw         3 стрелы 3 стрелы
+ remove         %4s %s  [1ed7343848f3]
+  m    remove         тритон тритон
+  f    remove         крыса крыса
+  n    remove         копьё копьё
+  pl   remove         3 стрелы 3 стрелы
+ repeat         %4s %s  [2c4e913beb37]
+  m    repeat         тритон тритон
+  f    repeat         крыса крыса
+  n    repeat         копьё копьё
+  pl   repeat         3 стрелы 3 стрелы
+ reqmenu        %4s %s  [522f51a2c8aa]
+  m    reqmenu        тритон тритон
+  f    reqmenu        крыса крыса
+  n    reqmenu        копьё копьё
+  pl   reqmenu        3 стрелы 3 стрелы
+ retravel       %4s %s  [d3e79e1a7fa3]
+  m    retravel       тритон тритон
+  f    retravel       крыса крыса
+  n    retravel       копьё копьё
+  pl   retravel       3 стрелы 3 стрелы
+ ride           %4s %s  [dfcfb2518ebd]
+  m    ride           тритон тритон
+  f    ride           крыса крыса
+  n    ride           копьё копьё
+  pl   ride           3 стрелы 3 стрелы
+ rub            %4s %s  [2c153ece6afe]
+  m    rub            тритон тритон
+  f    rub            крыса крыса
+  n    rub            копьё копьё
+  pl   rub            3 стрелы 3 стрелы
+ run            %4s %s  [8d586c26d4e2]
+  m    run            тритон тритон
+  f    run            крыса крыса
+  n    run            копьё копьё
+  pl   run            3 стрелы 3 стрелы
+ runeast        %4s %s  [886ec4eb7399]
+  m    runeast        тритон тритон
+  f    runeast        крыса крыса
+  n    runeast        копьё копьё
+  pl   runeast        3 стрелы 3 стрелы
+ runnorth       %4s %s  [d18bc01f90d4]
+  m    runnorth       тритон тритон
+  f    runnorth       крыса крыса
+  n    runnorth       копьё копьё
+  pl   runnorth       3 стрелы 3 стрелы
+ runnortheast   %4s %s  [5eb3ada2b756]
+  m    runnortheast   тритон тритон
+  f    runnortheast   крыса крыса
+  n    runnortheast   копьё копьё
+  pl   runnortheast   3 стрелы 3 стрелы
+ runnorthwest   %4s %s  [0d404d5628e8]
+  m    runnorthwest   тритон тритон
+  f    runnorthwest   крыса крыса
+  n    runnorthwest   копьё копьё
+  pl   runnorthwest   3 стрелы 3 стрелы
+ runsouth       %4s %s  [310b150bedec]
+  m    runsouth       тритон тритон
+  f    runsouth       крыса крыса
+  n    runsouth       копьё копьё
+  pl   runsouth       3 стрелы 3 стрелы
+ runsoutheast   %4s %s  [05a9f7cf71c3]
+  m    runsoutheast   тритон тритон
+  f    runsoutheast   крыса крыса
+  n    runsoutheast   копьё копьё
+  pl   runsoutheast   3 стрелы 3 стрелы
+ runsouthwest   %4s %s  [778866f44eed]
+  m    runsouthwest   тритон тритон
+  f    runsouthwest   крыса крыса
+  n    runsouthwest   копьё копьё
+  pl   runsouthwest   3 стрелы 3 стрелы
+ runwest        %4s %s  [7c031824802f]
+  m    runwest        тритон тритон
+  f    runwest        крыса крыса
+  n    runwest        копьё копьё
+  pl   runwest        3 стрелы 3 стрелы
+ rush           %4s %s  [ed59345ed6ff]
+  m    rush           тритон тритон
+  f    rush           крыса крыса
+  n    rush           копьё копьё
+  pl   rush           3 стрелы 3 стрелы
+ rusheast       %4s %s  [e92c153369ae]
+  m    rusheast       тритон тритон
+  f    rusheast       крыса крыса
+  n    rusheast       копьё копьё
+  pl   rusheast       3 стрелы 3 стрелы
+ rushnorth      %4s %s  [6f78a14994ff]
+  m    rushnorth      тритон тритон
+  f    rushnorth      крыса крыса
+  n    rushnorth      копьё копьё
+  pl   rushnorth      3 стрелы 3 стрелы
+ rushnortheast  %4s %s  [23264ddd3cad]
+  m    rushnortheast  тритон тритон
+  f    rushnortheast  крыса крыса
+  n    rushnortheast  копьё копьё
+  pl   rushnortheast  3 стрелы 3 стрелы
+ rushnorthwest  %4s %s  [ed47311fea92]
+  m    rushnorthwest  тритон тритон
+  f    rushnorthwest  крыса крыса
+  n    rushnorthwest  копьё копьё
+  pl   rushnorthwest  3 стрелы 3 стрелы
+ rushsouth      %4s %s  [2dfd97f20e0a]
+  m    rushsouth      тритон тритон
+  f    rushsouth      крыса крыса
+  n    rushsouth      копьё копьё
+  pl   rushsouth      3 стрелы 3 стрелы
+ rushsoutheast  %4s %s  [073b14927ae3]
+  m    rushsoutheast  тритон тритон
+  f    rushsoutheast  крыса крыса
+  n    rushsoutheast  копьё копьё
+  pl   rushsoutheast  3 стрелы 3 стрелы
+ rushsouthwest  %4s %s  [b476fa24a445]
+  m    rushsouthwest  тритон тритон
+  f    rushsouthwest  крыса крыса
+  n    rushsouthwest  копьё копьё
+  pl   rushsouthwest  3 стрелы 3 стрелы
+ rushwest       %4s %s  [398f8c5613a2]
+  m    rushwest       тритон тритон
+  f    rushwest       крыса крыса
+  n    rushwest       копьё копьё
+  pl   rushwest       3 стрелы 3 стрелы
+ save           %4s %s  [e9902aaabef1]
+  m    save           тритон тритон
+  f    save           крыса крыса
+  n    save           копьё копьё
+  pl   save           3 стрелы 3 стрелы
+ saveoptions    %4s %s  [326af3d5d8f6]
+  m    saveoptions    тритон тритон
+  f    saveoptions    крыса крыса
+  n    saveoptions    копьё копьё
+  pl   saveoptions    3 стрелы 3 стрелы
+ search         %4s %s  [040f8e73d009]
+  m    search         тритон тритон
+  f    search         крыса крыса
+  n    search         копьё копьё
+  pl   search         3 стрелы 3 стрелы
+ seeall         %4s %s  [bec00d01d8bc]
+  m    seeall         тритон тритон
+  f    seeall         крыса крыса
+  n    seeall         копьё копьё
+  pl   seeall         3 стрелы 3 стрелы
+ seeamulet      %4s %s  [a6b3a88c2c55]
+  m    seeamulet      тритон тритон
+  f    seeamulet      крыса крыса
+  n    seeamulet      копьё копьё
+  pl   seeamulet      3 стрелы 3 стрелы
+ seearmor       %4s %s  [e77d1d620412]
+  m    seearmor       тритон тритон
+  f    seearmor       крыса крыса
+  n    seearmor       копьё копьё
+  pl   seearmor       3 стрелы 3 стрелы
+ seerings       %4s %s  [fb6acb5ca4fe]
+  m    seerings       тритон тритон
+  f    seerings       крыса крыса
+  n    seerings       копьё копьё
+  pl   seerings       3 стрелы 3 стрелы
+ seetools       %4s %s  [d579e182d6fc]
+  m    seetools       тритон тритон
+  f    seetools       крыса крыса
+  n    seetools       копьё копьё
+  pl   seetools       3 стрелы 3 стрелы
+ seeweapon      %4s %s  [b7a257e0b783]
+  m    seeweapon      тритон тритон
+  f    seeweapon      крыса крыса
+  n    seeweapon      копьё копьё
+  pl   seeweapon      3 стрелы 3 стрелы
+ shell          %4s %s  [a9cb97337c22]
+  m    shell          тритон тритон
+  f    shell          крыса крыса
+  n    shell          копьё копьё
+  pl   shell          3 стрелы 3 стрелы
+ showgold       %4s %s  [e782e4b8b28a]
+  m    showgold       тритон тритон
+  f    showgold       крыса крыса
+  n    showgold       копьё копьё
+  pl   showgold       3 стрелы 3 стрелы
+ showspells     %4s %s  [406d027191a0]
+  m    showspells     тритон тритон
+  f    showspells     крыса крыса
+  n    showspells     копьё копьё
+  pl   showspells     3 стрелы 3 стрелы
+ showtrap       %4s %s  [5b069f9e2292]
+  m    showtrap       тритон тритон
+  f    showtrap       крыса крыса
+  n    showtrap       копьё копьё
+  pl   showtrap       3 стрелы 3 стрелы
+ sit            %4s %s  [9c9721468889]
+  m    sit            тритон тритон
+  f    sit            крыса крыса
+  n    sit            копьё копьё
+  pl   sit            3 стрелы 3 стрелы
+ stats          %4s %s  [9233f41de4a8]
+  m    stats          тритон тритон
+  f    stats          крыса крыса
+  n    stats          копьё копьё
+  pl   stats          3 стрелы 3 стрелы
+ suspend        %4s %s  [8222ab5fc7e3]
+  m    suspend        тритон тритон
+  f    suspend        крыса крыса
+  n    suspend        копьё копьё
+  pl   suspend        3 стрелы 3 стрелы
+ swap           %4s %s  [5051ff305dc3]
+  m    swap           тритон тритон
+  f    swap           крыса крыса
+  n    swap           копьё копьё
+  pl   swap           3 стрелы 3 стрелы
+ takeoff        %4s %s  [49e16fc3a434]
+  m    takeoff        тритон тритон
+  f    takeoff        крыса крыса
+  n    takeoff        копьё копьё
+  pl   takeoff        3 стрелы 3 стрелы
+ takeoffall     %4s %s  [5bf3948d31d8]
+  m    takeoffall     тритон тритон
+  f    takeoffall     крыса крыса
+  n    takeoffall     копьё копьё
+  pl   takeoffall     3 стрелы 3 стрелы
+ teleport       %4s %s  [db0afd4e19de]
+  m    teleport       тритон тритон
+  f    teleport       крыса крыса
+  n    teleport       копьё копьё
+  pl   teleport       3 стрелы 3 стрелы
+ terrain        %4s %s  [df70ebe01c5e]
+  m    terrain        тритон тритон
+  f    terrain        крыса крыса
+  n    terrain        копьё копьё
+  pl   terrain        3 стрелы 3 стрелы
+ therecmdmenu   %4s %s  [3e51f3b01f7c]
+  m    therecmdmenu   тритон тритон
+  f    therecmdmenu   крыса крыса
+  n    therecmdmenu   копьё копьё
+  pl   therecmdmenu   3 стрелы 3 стрелы
+ throw          %4s %s  [4aba6a2fa5e9]
+  m    throw          тритон тритон
+  f    throw          крыса крыса
+  n    throw          копьё копьё
+  pl   throw          3 стрелы 3 стрелы
+ timeout        %4s %s  [5cf6e9e13058]
+  m    timeout        тритон тритон
+  f    timeout        крыса крыса
+  n    timeout        копьё копьё
+  pl   timeout        3 стрелы 3 стрелы
+ tip            %4s %s  [4582d06fa278]
+  m    tip            тритон тритон
+  f    tip            крыса крыса
+  n    tip            копьё копьё
+  pl   tip            3 стрелы 3 стрелы
+ toggle         %4s %s  [69f008d57786]
+  m    toggle         тритон тритон
+  f    toggle         крыса крыса
+  n    toggle         копьё копьё
+  pl   toggle         3 стрелы 3 стрелы
+ travel         %4s %s  [c2343e9a84fe]
+  m    travel         тритон тритон
+  f    travel         крыса крыса
+  n    travel         копьё копьё
+  pl   travel         3 стрелы 3 стрелы
+ turn           %4s %s  [667744ccccb3]
+  m    turn           тритон тритон
+  f    turn           крыса крыса
+  n    turn           копьё копьё
+  pl   turn           3 стрелы 3 стрелы
+ twoweapon      %4s %s  [1f5e012c8ddd]
+  m    twoweapon      тритон тритон
+  f    twoweapon      крыса крыса
+  n    twoweapon      копьё копьё
+  pl   twoweapon      3 стрелы 3 стрелы
+ untrap         %4s %s  [38d1191f7fbf]
+  m    untrap         тритон тритон
+  f    untrap         крыса крыса
+  n    untrap         копьё копьё
+  pl   untrap         3 стрелы 3 стрелы
+ up             %4s %s  [74e6d14300b0]
+  m    up             тритон тритон
+  f    up             крыса крыса
+  n    up             копьё копьё
+  pl   up             3 стрелы 3 стрелы
+ vanquished     %4s %s  [68f091bd86e7]
+  m    vanquished     тритон тритон
+  f    vanquished     крыса крыса
+  n    vanquished     копьё копьё
+  pl   vanquished     3 стрелы 3 стрелы
+ version        %4s %s  [88cb89f80e85]
+  m    version        тритон тритон
+  f    version        крыса крыса
+  n    version        копьё копьё
+  pl   version        3 стрелы 3 стрелы
+ versionshort   %4s %s  [efd03a18ef64]
+  m    versionshort   тритон тритон
+  f    versionshort   крыса крыса
+  n    versionshort   копьё копьё
+  pl   versionshort   3 стрелы 3 стрелы
+ vision         %4s %s  [5ec93faedc35]
+  m    vision         тритон тритон
+  f    vision         крыса крыса
+  n    vision         копьё копьё
+  pl   vision         3 стрелы 3 стрелы
+ wait           %4s %s  [24395b805700]
+  m    wait           тритон тритон
+  f    wait           крыса крыса
+  n    wait           копьё копьё
+  pl   wait           3 стрелы 3 стрелы
+ wear           %4s %s  [fe3fefc75e4c]
+  m    wear           тритон тритон
+  f    wear           крыса крыса
+  n    wear           копьё копьё
+  pl   wear           3 стрелы 3 стрелы
  went to your reward with %ld point,  [650d5bd735a5]
   m    отправились за наградой, набрав 1 очко,
   f    отправились за наградой, набрав 3 очка,
@@ -3204,6 +3864,16 @@
   f    отправились за наградой, набрав 3 очка,
   n    отправились за наградой, набрав 5 очков,
   pl   отправились за наградой, набрав 21 очко,
+ whatdoes       %4s %s  [3ea12ce60500]
+  m    whatdoes       тритон тритон
+  f    whatdoes       крыса крыса
+  n    whatdoes       копьё копьё
+  pl   whatdoes       3 стрелы 3 стрелы
+ whatis         %4s %s  [a7fa429deb7d]
+  m    whatis         тритон тритон
+  f    whatis         крыса крыса
+  n    whatis         копьё копьё
+  pl   whatis         3 стрелы 3 стрелы
  who is opposed by %s (%s) and %s (%s).  [3ec28242a8a4]
   m    чьи противники — тритон (тритон) и тритон (тритон).
   f    чьи противники — крыса (крыса) и крыса (крыса).
@@ -3214,6 +3884,146 @@
   f    чьими противниками были крыса (крыса) и крыса (крыса).
   n    чьими противниками были копьё (копьё) и копьё (копьё).
   pl   чьими противниками были 3 стрелы (3 стрелы) и 3 стрелы (3 стрелы).
+ wield          %4s %s  [b0dd67236b19]
+  m    wield          тритон тритон
+  f    wield          крыса крыса
+  n    wield          копьё копьё
+  pl   wield          3 стрелы 3 стрелы
+ wipe           %4s %s  [97b0b9a93539]
+  m    wipe           тритон тритон
+  f    wipe           крыса крыса
+  n    wipe           копьё копьё
+  pl   wipe           3 стрелы 3 стрелы
+ wizborn        %4s %s  [214e0ceb0e74]
+  m    wizborn        тритон тритон
+  f    wizborn        крыса крыса
+  n    wizborn        копьё копьё
+  pl   wizborn        3 стрелы 3 стрелы
+ wizbury        %4s %s  [9e60f053d28d]
+  m    wizbury        тритон тритон
+  f    wizbury        крыса крыса
+  n    wizbury        копьё копьё
+  pl   wizbury        3 стрелы 3 стрелы
+ wizcast        %4s %s  [bad34a9fd9ff]
+  m    wizcast        тритон тритон
+  f    wizcast        крыса крыса
+  n    wizcast        копьё копьё
+  pl   wizcast        3 стрелы 3 стрелы
+ wizcustom      %4s %s  [1eb2c8b28680]
+  m    wizcustom      тритон тритон
+  f    wizcustom      крыса крыса
+  n    wizcustom      копьё копьё
+  pl   wizcustom      3 стрелы 3 стрелы
+ wizdetect      %4s %s  [7ac88259846b]
+  m    wizdetect      тритон тритон
+  f    wizdetect      крыса крыса
+  n    wizdetect      копьё копьё
+  pl   wizdetect      3 стрелы 3 стрелы
+ wizdispmacros  %4s %s  [fa6783228afb]
+  m    wizdispmacros  тритон тритон
+  f    wizdispmacros  крыса крыса
+  n    wizdispmacros  копьё копьё
+  pl   wizdispmacros  3 стрелы 3 стрелы
+ wizfliplevel   %4s %s  [34cde2722311]
+  m    wizfliplevel   тритон тритон
+  f    wizfliplevel   крыса крыса
+  n    wizfliplevel   копьё копьё
+  pl   wizfliplevel   3 стрелы 3 стрелы
+ wizgenesis     %4s %s  [902897a65f75]
+  m    wizgenesis     тритон тритон
+  f    wizgenesis     крыса крыса
+  n    wizgenesis     копьё копьё
+  pl   wizgenesis     3 стрелы 3 стрелы
+ wizidentify    %4s %s  [42617e842184]
+  m    wizidentify    тритон тритон
+  f    wizidentify    крыса крыса
+  n    wizidentify    копьё копьё
+  pl   wizidentify    3 стрелы 3 стрелы
+ wizintrinsic   %4s %s  [865fa95f1b32]
+  m    wizintrinsic   тритон тритон
+  f    wizintrinsic   крыса крыса
+  n    wizintrinsic   копьё копьё
+  pl   wizintrinsic   3 стрелы 3 стрелы
+ wizkill        %4s %s  [f6589fe9594f]
+  m    wizkill        тритон тритон
+  f    wizkill        крыса крыса
+  n    wizkill        копьё копьё
+  pl   wizkill        3 стрелы 3 стрелы
+ wizlevelport   %4s %s  [7dc5fd875688]
+  m    wizlevelport   тритон тритон
+  f    wizlevelport   крыса крыса
+  n    wizlevelport   копьё копьё
+  pl   wizlevelport   3 стрелы 3 стрелы
+ wizloaddes     %4s %s  [5a9807bec3b3]
+  m    wizloaddes     тритон тритон
+  f    wizloaddes     крыса крыса
+  n    wizloaddes     копьё копьё
+  pl   wizloaddes     3 стрелы 3 стрелы
+ wizloadlua     %4s %s  [90af37b01e4d]
+  m    wizloadlua     тритон тритон
+  f    wizloadlua     крыса крыса
+  n    wizloadlua     копьё копьё
+  pl   wizloadlua     3 стрелы 3 стрелы
+ wizmakemap     %4s %s  [58374923836c]
+  m    wizmakemap     тритон тритон
+  f    wizmakemap     крыса крыса
+  n    wizmakemap     копьё копьё
+  pl   wizmakemap     3 стрелы 3 стрелы
+ wizmap         %4s %s  [199a302a5514]
+  m    wizmap         тритон тритон
+  f    wizmap         крыса крыса
+  n    wizmap         копьё копьё
+  pl   wizmap         3 стрелы 3 стрелы
+ wizmondiff     %4s %s  [30590a801e6c]
+  m    wizmondiff     тритон тритон
+  f    wizmondiff     крыса крыса
+  n    wizmondiff     копьё копьё
+  pl   wizmondiff     3 стрелы 3 стрелы
+ wizobjprobs    %4s %s  [66cc73705639]
+  m    wizobjprobs    тритон тритон
+  f    wizobjprobs    крыса крыса
+  n    wizobjprobs    копьё копьё
+  pl   wizobjprobs    3 стрелы 3 стрелы
+ wizrumorcheck  %4s %s  [6de289a1dace]
+  m    wizrumorcheck  тритон тритон
+  f    wizrumorcheck  крыса крыса
+  n    wizrumorcheck  копьё копьё
+  pl   wizrumorcheck  3 стрелы 3 стрелы
+ wizseenv       %4s %s  [24b33f625ef9]
+  m    wizseenv       тритон тритон
+  f    wizseenv       крыса крыса
+  n    wizseenv       копьё копьё
+  pl   wizseenv       3 стрелы 3 стрелы
+ wizshownhuuid  %4s %s  [cebec0af095e]
+  m    wizshownhuuid  тритон тритон
+  f    wizshownhuuid  крыса крыса
+  n    wizshownhuuid  копьё копьё
+  pl   wizshownhuuid  3 стрелы 3 стрелы
+ wizsmell       %4s %s  [9000a8e4b103]
+  m    wizsmell       тритон тритон
+  f    wizsmell       крыса крыса
+  n    wizsmell       копьё копьё
+  pl   wizsmell       3 стрелы 3 стрелы
+ wiztelekinesis %4s %s  [2559254994e0]
+  m    wiztelekinesis тритон тритон
+  f    wiztelekinesis крыса крыса
+  n    wiztelekinesis копьё копьё
+  pl   wiztelekinesis 3 стрелы 3 стрелы
+ wizwhere       %4s %s  [34c129971ef6]
+  m    wizwhere       тритон тритон
+  f    wizwhere       крыса крыса
+  n    wizwhere       копьё копьё
+  pl   wizwhere       3 стрелы 3 стрелы
+ wizwish        %4s %s  [223a82e8c130]
+  m    wizwish        тритон тритон
+  f    wizwish        крыса крыса
+  n    wizwish        копьё копьё
+  pl   wizwish        3 стрелы 3 стрелы
+ wmode          %4s %s  [230f607d54e0]
+  m    wmode          тритон тритон
+  f    wmode          крыса крыса
+  n    wmode          копьё копьё
+  pl   wmode          3 стрелы 3 стрелы
  you had %ld more stashed away in your pack.  [f28fba700cd4]
   m    у вас было ещё 1 спрятано в рюкзаке.
   f    у вас было ещё 3 спрятано в рюкзаке.
@@ -3244,6 +4054,11 @@
   f    у вас 3 зоркмида спрятано в рюкзаке.
   n    у вас 5 зоркмидов спрятано в рюкзаке.
   pl   у вас 21 зоркмид спрятано в рюкзаке.
+ zap            %4s %s  [d619579cc7f8]
+  m    zap            тритон тритон
+  f    zap            крыса крыса
+  n    zap            копьё копьё
+  pl   zap            3 стрелы 3 стрелы
 !#?&* elf kibble!  [93481d4be717]
   =   !#?&* эльфийский корм!
 "%s and his kind have always hated us."  [1a5927b2882b]
@@ -20495,6 +21310,10 @@ ad aerarium  [04b2adcce743]
   =   Ad aerarium
 add location information to messages  [d831042dac6e]
   =   Добавлять к сообщениям сведения о месте
+adjust inventory letters  [2965e7f31584]
+  =   Переназначить буквы инвентаря
+advance or check weapon and spell skills  [120310547a2a]
+  =   Повысить или проверить навыки оружия и заклинаний
 alchemic blast  [4b7fccbbdb30]
   =   Алхимический взрыв
 aliasing priest  [400634aab95b]
@@ -20576,6 +21395,8 @@ anti-magic implosion  [b899390dcf71]
   =   Антимагическое схлопывание
 apostrophe golem  [5ad2baf2f32d]
   =   Апострофный голем
+apply (use) a tool (pick-axe, key, lamp...)  [06cb00ad26fb]
+  =   Применить инструмент (кирку, ключ, лампу...)
 aquator  [1bd838478262]
   =   Акватор
 arch-pedant  [90e0e631bbf8]
@@ -20786,6 +21607,8 @@ burning oil  [b1b53117444e]
   =   Горящее масло
 burning scroll  [9f6bcb9fe507]
   =   Горящий свиток
+bury objs under and around you  [bfc1488c56ed]
+  =   Закопать предметы под вами и вокруг
 bust vortex  [f9fd71ced046]
   =   Пылкий вихрь
 by casting letter  [a8f40a415869]
@@ -20822,6 +21645,8 @@ cardboard golem  [b66d3821b091]
   =   Картонный голем
 carnivorous bag  [8cde8e07a0de]
   =   Плотоядная сумка
+cast any spell  [39b52048f73e]
+  =   Произнести любое заклинание
 catoblepas  [0ab6a1c27a59]
   =   Катоблепас
 caught herself in a %s  [b7137c461365]
@@ -20868,6 +21693,8 @@ ceiling cat  [c53eb1788f16]
   =   Потолочный кот
 change colors used in menus  [5af4fdc7befc]
   =   Изменить цвета меню
+change experience level  [471ee8877e7c]
+  =   Изменить уровень опыта
 change sort order from "alphabetically" to "by ranking"  [b53632de0624]
   =   Сменить порядок «по алфавиту» на «по важности»
 change sort order from "by ranking" to "alphabetically"  [06b3b0c11d07]
@@ -20924,6 +21751,8 @@ chopping off your own %s  [7e7570cc83b5]
   pl  Отрубание собственных 3 стрел
 classify gold as unknown or uncursed  [cffde6c3074a]
   =   Считать золото неизвестным или непроклятым
+close a door  [f4dcb2f9dc5f]
+  =   Закрыть дверь
 closing drawbridge  [58182f985f05]
   =   Закрывающийся подъёмный мост
 cloud of poison gas  [84f9d8eab19a]
@@ -20968,6 +21797,8 @@ corpulent porpoise  [1d052b3ad046]
   =   Тучная морская свинья
 crashing into iron bars  [56de6559e4b7]
   =   Удар о железные прутья
+create a monster  [be308637e6a4]
+  =   Создать монстра
 creeping coins  [6aba8421848e]
   =   Ползучие монеты
 crushed  [71141819f343]
@@ -21015,8 +21846,12 @@ deprecated (use S_boulder in sym file instead)  [865efd1b05ab]
   =   Устарело (используйте S_boulder в файле символов)
 deprecated; use gender:female  [affdb4c59e90]
   =   Устарело; используйте gender:female
+describe an adjacent, discovered trap  [34e713fe6291]
+  =   Описать соседнюю обнаруженную ловушку
 describe terrain under cursor  [db8aa8a14d06]
   =   Описывать местность под курсором
+describe what you can see  [3ad1794048d7]
+  =   Описать то, что видно вокруг
 deselect all items in a menu  [b2dc1fda627f]
   =   Снять выбор со всех пунктов меню
 deselect all items on this page of a menu  [a5391e563ce9]
@@ -21052,6 +21887,8 @@ dingbat  [de9c5b6181ee]
   =   Дингбат
 dinkus  [ae3e4cc07378]
   =   Динкус
+dip an object into something  [d6c815836344]
+  =   Окунуть предмет во что-нибудь
 disintegration field  [7a4f07aac956]
   =   Поле распада
 display characters for warnings  [edaeff904dbc]
@@ -21103,6 +21940,10 @@ dragging an iron ball  [b2fde79416cf]
   =   Волоча железное ядро
 dressing up  [5776fc3e1a12]
   =   Одеваясь
+drop an item  [f8824a213f4c]
+  =   Положить предмет
+drop specific item types  [cffa6eba9f82]
+  =   Положить предметы выбранных видов
 dropbear  [bc3857bb7338]
   =   Медведь-десантник
 drowned in %s  [7747b7ded711]
@@ -21132,6 +21973,8 @@ earthquake beast  [cfadfb7b15ed]
   =   Зверь землетрясений
 east  [25038d9da464]
   =   Восток
+eat something  [6cc3ad633973]
+  =   Съесть что-нибудь
 eating %s  [2b1954b820f9]
   m   Есть тритона
   f   Есть крысу
@@ -21165,6 +22008,8 @@ elwedritsche  [0e08dd49973b]
   =   Эльведрич
 email address for reporting  [cf4b3308b93e]
   =   Адрес эл. почты для отчётов
+empty a container  [b0d14f5b6a6b]
+  =   Опорожнить контейнер
 emu  [6551e7972400]
   =   Эму
 enable the mail daemon  [c75419196c04]
@@ -21173,8 +22018,14 @@ enable traveling via mouse click  [2e894895bf6d]
   =   Перемещение щелчком мыши
 enderman  [6795212b4b4e]
   =   Эндермен
+engrave writing on the floor  [4aaabbfe804a]
+  =   Написать что-нибудь на полу
 engraving  [61ce7aff649b]
   =   Делать надпись
+enter and perform an extended command  [33481946d900]
+  =   Ввести и выполнить расширенную команду
+enter explore (discovery) mode  [d914dedd9b07]
+  =   Перейти в режим исследования
 errata elemental  [e2881abc2ee7]
   =   Опечаточный элементаль
 escaped  [28fa0807bebb]
@@ -21209,6 +22060,8 @@ exhaustion  [8bebf68bd167]
   =   Истощение
 existential angst  [de01c973ef76]
   =   Экзистенциальная тоска
+exit without saving current game  [320b77526dbd]
+  =   Выйти, не сохраняя игру
 experimental behavior of menu inverts  [9d892392184b]
   =   Опытное обращение выбора в меню
 exploding %s  [934cce093af0]
@@ -21266,6 +22119,8 @@ fierceness sphere  [0264c218b755]
   =   Завораживающая сфера
 figment of your imagination  [a818a89b90bd]
   =   Плод вашего воображения
+file a bug report  [ebefab78606e]
+  =   Сообщить об ошибке
 fill empty quiver automatically when firing  [e227f81c7356]
   =   При стрельбе пополнять пустой колчан автоматически
 filter coordinate locations when targeting next or previous  [885ff86b9468]
@@ -21274,6 +22129,8 @@ finger of death  [f3355c7ed251]
   =   Перст смерти
 fir elemental  [efc5cad82777]
   =   Еловый элементаль
+fire ammunition from quiver  [91136be9075d]
+  =   Выстрелить из колчана
 fire-command tries to be helpful  [e198f6eeb879]
   =   Команда стрельбы старается помочь
 fireball  [6b9b01998d37]
@@ -21284,6 +22141,8 @@ flamingo sphere  [650544752627]
   =   Фламинговая сфера
 flash of insight  [e8f8f8fdae7c]
   =   Проблеск озарения
+flip the level  [2a5d3efa32b5]
+  =   Отразить уровень
 floating nose  [2374cdfcf58d]
   =   Парящий нос
 floating point  [008d70830513]
@@ -21306,6 +22165,8 @@ font to use in the message window  [320fa1b17b0c]
   =   Шрифт окна сообщений
 for "yes" confirmations, require "no" to reject  [f5a8c4e3cb36]
   =   Для подтверждений «yes» отказ — только «no»
+force a lock  [9843ffcbfb62]
+  =   Взломать замок
 forcing the lock  [0c60fd41cd80]
   =   Взламывать замок
 forest centerfold  [93984b92bb3e]
@@ -21368,6 +22229,8 @@ giant slug  [068e17f7dba3]
   =   Гигантский слизень
 giant tetrapod  [c7434fdf4794]
   =   Гигантский тетрапод
+give a help message  [d5d3d3896696]
+  =   Показать справку
 give feedback when interesting map locations change  [1d00d4d6bf84]
   =   Сообщать, когда меняются примечательные места карты
 give feedback when walking into walls  [aca35a00ce33]
@@ -21393,10 +22256,14 @@ gnome laureate  [9b62555dcd88]
   =   Гном-лауреат
 gnu  [336da558f641]
   =   Гну
+go down a staircase  [5c07b5783dd9]
+  =   Спуститься по лестнице
 go to the next menu page  [9053512853c8]
   =   К следующей странице меню
 go to the previous menu page  [b842ee1b43b9]
   =   К предыдущей странице меню
+go up a staircase  [29e1196f86a5]
+  =   Подняться по лестнице
 gonzo journalist  [5d7b1e6e898e]
   =   Гонзо-журналист
 good creature  [babb8728e43f]
@@ -21509,6 +22376,8 @@ ice monster  [7c245ea2757c]
   =   Ледяное чудище
 ice trowel  [ed626c6a2ee1]
   =   Ледяной троллейбус
+identify all items in inventory  [a35b1248d59b]
+  =   Опознать весь инвентарь
 ignore interrupt signals  [570ee7530fa5]
   =   Не замечать сигналов прерывания
 imperious order  [f68226dba640]
@@ -21525,6 +22394,8 @@ invert all items in a menu  [4a869a832307]
   =   Обратить выбор всех пунктов меню
 invert all items on this page of a menu  [af0ad16e69cd]
   =   Обратить выбор пунктов на этой странице меню
+invoke an object's special powers  [c85110371515]
+  =   Задействовать особые силы предмета
 iron ball collision  [1f18acf2dce5]
   =   Столкновение с железным ядром
 jackalope  [ecea0495c11c]
@@ -21533,6 +22404,8 @@ jester  [deff1d836528]
   =   Шут
 jumbo shrimp  [1d6b15097147]
   =   Исполинская креветка
+jump to another location  [c03762deceda]
+  =   Прыгнуть в другое место
 jump to the first page in a menu  [959e95211714]
   =   К первой странице меню
 jump to the last page in a menu  [6444d76581a2]
@@ -21543,6 +22416,8 @@ kelpie  [8d972c4aa8d8]
   =   Келпи
 kestrel  [9d65c9c5a1ed]
   =   Пустельга
+kick something  [277ccddd70e9]
+  =   Пнуть что-нибудь
 kicking %s  [2e1474182d23]
   m   Удар ногой по тритону
   f   Удар ногой по крысе
@@ -21609,6 +22484,8 @@ large microbat  [5d604e1cb70d]
   =   Крупный микрокрылан
 leathery-winged avian  [fa116dbdbbec]
   =   Кожистокрылая птица
+leave game to enter a sub-shell ('exit' to come back)  [9079f5b60f88]
+  =   Выйти в оболочку (вернуться — «exit»)
 legend of base-36 levl[][].typ codes  [97d569433c15]
   =   Расшифровка кодов levl[][].typ в base-36
 lemming  [6806c1fde49b]
@@ -21629,6 +22506,18 @@ liger  [42feee0501c7]
   =   Лигр
 lion-dog  [b83795248d46]
   =   Львопёс
+list all extended commands  [71165da591c6]
+  =   Список всех расширенных команд
+list and reorder known spells  [58643dc30734]
+  =   Показать и упорядочить известные заклинания
+list compile time options for this version of NetHack  [35e0fbbe4402]
+  =   Список параметров сборки этой версии NetHack
+list monsters that have been genocided  [98f77650a48a]
+  =   Список истреблённых монстров
+list monsters that have been genocided or become extinct  [9c29be5b44c2]
+  =   Список истреблённых и вымерших монстров
+list object generation probabilities  [79ebdf8893a5]
+  =   Список вероятностей появления предметов
 list of symbols to use for monsters  [001dc00f95dc]
   =   Символы монстров
 list of symbols to use for objects  [d9dd53c94efc]
@@ -21639,6 +22528,10 @@ list of symbols to use in drawing the dungeon map  [4616ffb8d83e]
   =   Символы для карты подземелья
 list of symbols to use in drawing traps  [edc7bc4e6079]
   =   Символы ловушек
+list vanquished monsters  [4920f23efad3]
+  =   Список побеждённых монстров
+list voluntary challenges you have maintained  [51c5f50d56ef]
+  =   Список добровольных испытаний, которые вы соблюдали
 little dart  [d7f59ec4c6ea]
   =   Маленький дротик
 little green man  [1a2266fd1d8b]
@@ -21651,14 +22544,24 @@ load a set of display symbols from symbols file  [0c017431efd7]
   =   Загрузить набор символов из файла символов
 load a set of rogue display symbols from symbols file  [878010fe27ed]
   =   Загрузить набор символов rogue из файла символов
+load and execute a des-file lua script  [e64a7f1f85a8]
+  =   Загрузить и выполнить des-скрипт на lua
+load and execute a lua script  [c07632c692a5]
+  =   Загрузить и выполнить скрипт на lua
 load curses display symbols into symset  [d5832541e1f6]
   =   Загрузить символы curses в набор символов
 loan shark  [cb00a2451d35]
   =   Кредитная акула
 lock or unlock the door  [cc32d8987b60]
   =   Запереть или отпереть дверь
+look at timeout queue and hero's timed intrinsics  [4fa340092e35]
+  =   Посмотреть очередь таймеров и временные свойства героя
+look at what is here  [5d0c6d03d3fa]
+  =   Осмотреть то, что здесь лежит
 looooooooooooong cat  [206c055bbdad]
   =   Длииииииииииинный кот
+loot a box on the floor  [c442c2499bb0]
+  =   Обыскать ящик на полу
 loot next container  [e502b0c12788]
   =   Обыскать следующий контейнер
 lounge worm  [20d16c5fa5a1]
@@ -21687,6 +22590,8 @@ map <x,y>  [de1ca8256f99]
   =   Карта <x,y>
 map display mode under Windows  [ec924f26d3cc]
   =   Режим показа карты в Windows
+map the level  [07ffd424280f]
+  =   Нанести уровень на карту
 marid  [94207238d2a8]
   =   Марид
 martyr orc  [a37999fb9d33]
@@ -21703,6 +22608,8 @@ menu colors  [bafc47bb3d6d]
   =   Цвета меню
 menu formatting  [f52bee34e499]
   =   Оформление меню
+menu of commands you can do from here to adjacent spot  [d51468f43587]
+  =   Меню команд для соседней клетки
 menus overlay and align to right  [1b585d9100df]
   =   Меню поверх карты, справа
 message types  [d665474f2dc9]
@@ -21769,10 +22676,32 @@ most renowned and sacred sir  [74592a7b1a33]
   =   Прославленный и священный господин
 mother-in-law  [15abc87f9a02]
   =   Тёща
+mount or dismount a saddled steed  [75e18a93528e]
+  =   Сесть на осёдланного скакуна или спешиться
 mountain lymph  [f123139baf9d]
   =   Горная лимфа
+move east (screen right)  [ac3595a86ce7]
+  =   Шагнуть на восток (вправо на экране)
+move north (screen up)  [43c087985685]
+  =   Шагнуть на север (вверх на экране)
+move northeast (screen upper right)  [b91c7431ed3b]
+  =   Шагнуть на северо-восток (вправо вверх на экране)
+move northwest (screen upper left)  [49ff05756abf]
+  =   Шагнуть на северо-запад (влево вверх на экране)
+move south (screen down)  [a2e006b9c163]
+  =   Шагнуть на юг (вниз на экране)
+move southeast (screen lower right)  [44d88d661e27]
+  =   Шагнуть на юго-восток (вправо вниз на экране)
+move southwest (screen lower left)  [09487286cb93]
+  =   Шагнуть на юго-запад (влево вниз на экране)
+move west (screen left)  [893d6eef1024]
+  =   Шагнуть на запад (влево на экране)
 moving through the air  [53c9c098ad98]
   =   В полёте по воздуху
+name a monster, specific object, or type of object  [a8dddb3d955b]
+  =   Дать имя монстру, предмету или виду предметов
+name current level  [9213a2ffc40c]
+  =   Дать имя текущему уровню
 name of a fruit you enjoy eating  [80e8d3a457da]
   =   Название вашего любимого фрукта
 name of tile file  [c1709a616352]
@@ -21839,6 +22768,8 @@ octahedron  [49fd82347ad1]
   =   Октаэдр
 octarine dragon  [095b29fe34c8]
   =   Октариновый дракон
+offer a sacrifice to the gods  [8c78c50e1425]
+  =   Принести жертву богам
 ohmu  [11fc5c60646f]
   =   Ому
 omit "uncursed" from inventory  [751a58708160]
@@ -21855,6 +22786,8 @@ one-winged dewinged stab-bat  [976bc05edb6a]
   =   Однокрылая обескрыленная колючая летучая мышь
 ooblecks  [4eac803e4d74]
   =   Ублеки
+open a door  [4c11217b03dd]
+  =   Открыть дверь
 opening a container  [e04434014bc3]
   =   Открывая контейнер
 opening the tin  [92fa0394470d]
@@ -21929,6 +22862,8 @@ particle man  [261b67bee3aa]
   =   Человек-частица
 paskald  [577d80400e96]
   =   Паскальд
+pay your shopping bill  [cefe00e14450]
+  =   Оплатить покупки
 peddler  [bf3227bd3d17]
   =   Коробейник
 peer  [2b974ba4b46a]
@@ -21956,6 +22891,8 @@ phelddagrif  [d029e06bc798]
   =   Фелддагриф
 phoenix  [41880ee3438c]
   =   Феникс
+pick up things at the current location  [689cf21ca8b5]
+  =   Поднять предметы на этом месте
 pie fiend  [f31dc5dac8c7]
   =   Исчадие пекарни
 pigasus  [8af91bc884bb]
@@ -21991,6 +22928,8 @@ poisonous corpse  [7f8626ac3ead]
   =   Ядовитый труп
 poisonous glob  [55a40eaa8b05]
   =   Ядовитый сгусток
+polymorph self  [1615233f8886]
+  =   Превратиться
 pommelbug  [3c193ea9b9d8]
   =   Жук-навершие
 possessed waffle iron  [40b14c4fac4b]
@@ -22001,6 +22940,8 @@ potoo  [da9e5b6c59b7]
   =   Лесной козодой
 poultrygeist  [3fba73c1c2d8]
   =   Куртергейст
+pray to the gods for help  [a933a17c327e]
+  =   Помолиться богам о помощи
 praying  [3727d25d1cd2]
   =   Во время молитвы
 praying mantis  [975656040292]
@@ -22015,6 +22956,14 @@ prefix for font options  [bf1ec36f3b28]
   =   Приставка параметров шрифта
 prefix for old micro IBM_ options  [db09b65cc14c]
   =   Приставка старых параметров IBM_
+prefix: force fight even if you don't see a monster  [3a3b41d5db7e]
+  =   Приставка: атаковать, даже не видя монстра
+prefix: request menu or modify command  [d6c9e1bd5b3b]
+  =   Приставка: запросить меню или изменить команду
+prefix: run until something interesting is seen  [f26ff2230e69]
+  =   Приставка: бежать, пока не попадётся что-то интересное
+prefix: rush until something interesting is seen  [6ba5287d0f60]
+  =   Приставка: мчаться, пока не попадётся что-то интересное
 pretending to be a pile of gold  [5bbdb68ce0f0]
   =   Притворяясь кучкой золота
 prevent waiting next to hostiles  [482633c58d72]
@@ -22033,12 +22982,18 @@ pterodactyl  [0a5cd6b94160]
   =   Птеродактиль
 pugasus  [73825cf63667]
   =   Мопсопегас
+push game to background ('fg' to come back)  [947ca3d275f0]
+  =   Отправить игру в фон (вернуться — «fg»)
 pushmi-pullyu  [0580b01a6f4e]
   =   Тяни-толкай
 put in, then take out  [1cc6e20e5e56]
   =   Положить, затем вынуть
+put on an accessory (ring, amulet, etc)  [a7003e2b78cb]
+  =   Надеть украшение (кольцо, амулет и т. п.)
 put something in  [7de13db595f6]
   =   Положить что-нибудь внутрь
+quaff (drink) something  [10dc060bfd81]
+  =   Выпить что-нибудь
 quaffing a burning potion of oil  [74f3a1c2e356]
   =   Питьё горящего масла
 quagga  [816fb6255d6c]
@@ -22069,6 +23024,8 @@ rattlesnake  [46c5908d8cbf]
   =   Гремучая змея
 rave spider  [d8510a7a7c78]
   =   Печёный паук
+read a scroll or spellbook  [5355da6de3f1]
+  =   Прочесть свиток или книгу заклинаний
 reading a book  [68e71f57512c]
   =   Читая книгу
 reassign casting letters to retain current order  [5c272e02c8df]
@@ -22077,14 +23034,28 @@ rebus  [9b901e314ecf]
   =   Ребус
 record an annotation for the current level  [3a567dbcdf23]
   =   Сделать пометку для текущего уровня
+recreate the current level  [71a5e278bb04]
+  =   Пересоздать текущий уровень
 red dot  [6a589754e75e]
   =   Красная точка
+redraw screen  [13e82ab2090e]
+  =   Перерисовать экран
 regex engine  [8f72e74c39f5]
   =   Движок регулярок
+remove all armor  [bae69ff7179a]
+  =   Снять все доспехи
+remove an accessory (ring, amulet, etc)  [c134de5373b4]
+  =   Снять украшение (кольцо, амулет и т. п.)
+repeat a previous command  [bb0b4cdddcbe]
+  =   Повторить предыдущую команду
 reroll another character  [4dd11715d49c]
   =   Создать другого персонажа
 residual undead turning effect  [50341d1d99b3]
   =   Остаточное изгнание нежити
+rest one move while doing nothing  [8f7ec1adc393]
+  =   Отдохнуть один ход
+reveal hidden things within a small radius  [6feec5a04f8c]
+  =   Раскрыть скрытое поблизости
 rhinovirus  [4e940df9f6d3]
   =   Риновирус
 riding accident  [cbe5dd33c425]
@@ -22103,14 +23074,54 @@ rot grub  [5214bc36ee52]
   =   Гнилостная личинка
 rotted glob  [645364ae3bbc]
   =   Гнилой сгусток
+rub a lamp or a stone  [811a4c8fb2d6]
+  =   Потереть лампу или камень
+run east (screen right)  [df2050fa274b]
+  =   Бежать на восток (вправо на экране)
+run north (screen up)  [4330423fce49]
+  =   Бежать на север (вверх на экране)
+run northeast (screen upper right)  [a01d1995ecb8]
+  =   Бежать на северо-восток (вправо вверх на экране)
+run northwest (screen upper left)  [31a47345cbe0]
+  =   Бежать на северо-запад (влево вверх на экране)
+run south (screen down)  [44358b70faaa]
+  =   Бежать на юг (вниз на экране)
+run southeast (screen lower right)  [670d5aa22c9c]
+  =   Бежать на юго-восток (вправо вниз на экране)
+run southwest (screen lower left)  [d68a456fd099]
+  =   Бежать на юго-запад (влево вниз на экране)
+run west (screen left)  [7fe9261b4dfd]
+  =   Бежать на запад (влево на экране)
+rush east (screen right)  [e4e5b20695cc]
+  =   Мчаться на восток (вправо на экране)
+rush north (screen up)  [2db2f237b904]
+  =   Мчаться на север (вверх на экране)
+rush northeast (screen upper right)  [1e158b462cc8]
+  =   Мчаться на северо-восток (вправо вверх на экране)
+rush northwest (screen upper left)  [cc87a5f87e9b]
+  =   Мчаться на северо-запад (влево вверх на экране)
+rush south (screen down)  [b710aa6e50b1]
+  =   Мчаться на юг (вниз на экране)
+rush southeast (screen lower right)  [f1e22867df81]
+  =   Мчаться на юго-восток (вправо вниз на экране)
+rush southwest (screen lower left)  [5eb7c0fad985]
+  =   Мчаться на юго-запад (влево вниз на экране)
+rush west (screen left)  [eba2cef53f2f]
+  =   Мчаться на запад (влево на экране)
 rusting away  [7452c6298ae6]
   =   Ржавчина
+same as call; name a monster or object or object type  [f6b856929c37]
+  =   То же, что call: дать имя монстру, предмету или виду предметов
 same as palette, only order is reversed  [92d63bb9d24f]
   =   Как palette, но в обратном порядке
 samurai rabbit  [a5cfe20c44e6]
   =   Кролик-самурай
 save game state after each level change  [1ec9e0490d9e]
   =   Сохранять игру при каждой смене уровня
+save the game and exit  [78a7915225ec]
+  =   Сохранить игру и выйти
+save the game configuration  [8cd00715bb26]
+  =   Сохранить настройки игры
 scared by rattling  [e3fc42cfe636]
   =   В испуге от грохота
 schroedinbug  [55cf10734df1]
@@ -22129,16 +23140,22 @@ scroll of fire  [95e128554e68]
   =   Свиток огня
 scroll of genocide  [83b75052f2cf]
   =   Свиток геноцида
+scroll persistent inventory display  [ec356415ba30]
+  =   Прокрутить постоянное окно инвентаря
 sea cucumber  [5426dfc270e4]
   =   Морской огурец
 search for a menu item  [faf202f021f7]
   =   Поиск пункта меню
+search for traps and secret doors  [875397fc812b]
+  =   Искать ловушки и потайные двери
 seesawing sphere  [118a4311d3cf]
   =   Качельная сфера
 select all items in a menu  [2439570f12dc]
   =   Выбрать все пункты меню
 select all items on this page of a menu  [4b81bfb8ca6e]
   =   Выбрать пункты на этой странице меню
+select ammunition for quiver  [f01199434aa7]
+  =   Выбрать снаряды для колчана
 select any or all of them to permanently identify  [a7ad43dbf974]
   =   Выберите любые из них, чтобы опознать навсегда
 select any or all of them to permanently identify (%s for all)  [96e0bdc37681]
@@ -22157,6 +23174,8 @@ self-genocide  [9044d33413ba]
   =   Самоистребление
 send 8-bit characters directly to terminal  [8bd9aaaec0ac]
   =   Посылать 8-битные символы прямо в терминал
+set an intrinsic  [fbcd01bf5f7b]
+  =   Задать врождённое свойство
 set representation of a glyph to a unicode value and color  [98ab1b4822a6]
   =   Задать глифу символ юникода и цвет
 setting the trap  [bfb4b4e728c1]
@@ -22173,8 +23192,18 @@ shot himself with a death ray  [2f556a7073a0]
   =   Застрелил себя лучом смерти
 shot yourself with a death ray  [4b81bec83865]
   =   Застрелил себя лучом смерти
+show NHUUID for this game  [3f5af84598fd]
+  =   Показать NHUUID этой игры
+show a summary of the explored dungeon  [3bc439b013cb]
+  =   Показать обзор исследованного подземелья
+show a summary of the game's development  [7a3e3f9c59a7]
+  =   Показать историю создания игры
 show all available info when using whatis-command  [be5d06f62978]
   =   Все сведения по команде «что это»
+show all equipment in use  [7ef053899a35]
+  =   Показать всё используемое снаряжение
+show all option settings, possibly change them  [4a9a97128898]
+  =   Показать все параметры и, может быть, изменить их
 show any news at game start  [9aa83282e4ee]
   =   Показывать новости в начале игры
 show colored bar for hit points  [25183a996488]
@@ -22187,46 +23216,98 @@ show current score in status line  [00705059fe8e]
   =   Текущий счёт в строке состояния
 show currently wielded weapon in a status field  [91e238bbfafa]
   =   Оружие в руках в поле состояния
+show customized glyphs  [73a78b689479]
+  =   Показать изменённые глифы
 show damage hero takes in message line  [48b122b94cf6]
   =   Показывать полученный урон в сообщениях
 show dark corridors as lit if in sight  [c859d487e670]
   =   Показывать тёмные коридоры в поле зрения освещёнными
+show discovered types for one class of objects  [10aa81eaf0dc]
+  =   Показать открытые виды одного класса предметов
 show experience points in status line  [fc474452df31]
   =   Очки опыта в строке состояния
 show floor outside line of sight differently  [e7f9898ecfc0]
   =   Показывать пол вне поля зрения иначе
+show gold, possibly shop credit or debt  [c94a423de542]
+  =   Показать золото, кредит или долг в лавке
 show help  [a7bd8e0c78a7]
   =   Показать справку
 show hero's location as a status field  [d7f61ea0b14a]
   =   Место героя в поле состояния
 show introductory message  [4135fb2cae3c]
   =   Показывать вступление
+show inventory of one specific item class  [456096e763c5]
+  =   Показать инвентарь одного класса предметов
+show journal of major events  [297edb0b0fd4]
+  =   Показать дневник важных событий
+show locations of special levels  [4d643fae927e]
+  =   Показать, где особые уровни
 show map as text  [74aa41092a1d]
   =   Показывать карту текстом
+show map locations' seen vectors  [2590fef14917]
+  =   Показать векторы видимости клеток
+show memory statistics  [d742cf0d56c1]
+  =   Показать расход памяти
+show menu of commands you can do here  [be46f024b4fa]
+  =   Показать меню команд, доступных здесь
 show menu when getting a map location  [1d31c71e4d34]
   =   Меню при выборе места на карте
+show mobile light sources  [bbc025f265e4]
+  =   Показать подвижные источники света
 show more old messages at a time  [437c933fcffe]
   =   Показывать больше старых сообщений за раз
 show object symbols in menus  [45c12e5cd70d]
   =   Показывать символы предметов в меню
+show option settings  [505f4a78bd93]
+  =   Показать параметры
 show persistent inventory window  [902650796169]
   =   Постоянное окно инвентаря
 show some helpful tips during gameplay  [9b73ee3e2d10]
   =   Полезные советы во время игры
+show stats of monsters created  [67c2641cf65b]
+  =   Показать статистику созданных монстров
+show the amulet currently worn  [6e5a05e04686]
+  =   Показать надетый амулет
+show the armor currently worn  [593be3cec277]
+  =   Показать надетые доспехи
+show the ring(s) currently worn  [a6b42e34e82e]
+  =   Показать надетые кольца
+show the tools currently in use  [4c4a97a91e72]
+  =   Показать используемые инструменты
+show the weapon currently wielded  [dcf8b82a7812]
+  =   Показать оружие в руках
 show tombstone when your character dies  [e0e65d00d9ac]
   =   Надгробие, когда персонаж умирает
 show top scores in window  [e971b97b680a]
   =   Лучшие результаты в окне
+show version and date+time program was built  [aaaa02511f3f]
+  =   Показать версию и дату сборки
 show version info on status line  [ee00b0b5d2a5]
   =   Версия в строке состояния
+show vision array  [c5e3affc4a03]
+  =   Показать массив видимости
+show wall modes  [5d0673d903b0]
+  =   Показать режимы стен
+show what object types have been discovered  [345b406b9749]
+  =   Показать открытые виды предметов
+show what type of thing a map symbol corresponds to  [95bfe3f89382]
+  =   Показать, что означает символ карты
+show what type of thing a symbol corresponds to  [ab0e3ca56765]
+  =   Показать, что означает символ
+show your attributes  [1cd90a220d55]
+  =   Показать ваши характеристики
 show your character by race rather than role  [4619cedbdf56]
   =   Показывать персонажа по расе, а не по роли
+show your inventory  [bc4c7e7328c5]
+  =   Показать инвентарь
 shrinking violet  [180db37d9a31]
   =   Застенчивая фиалка
 simile mimic  [0735d8e2d669]
   =   Милый мимик
 siren  [dcb01c3c1f19]
   =   Сирена
+sit down  [1e3845ae2b66]
+  =   Сесть
 sitting in lava  [96422f3379b5]
   =   Сидение в лаве
 sitting on an iron spike  [ee4bab0708e9]
@@ -22249,6 +23330,8 @@ skip same glyph when getting map location  [02e6ea537c68]
   =   Пропускать одинаковые глифы при выборе места
 skvader  [5e4ceb3a68b6]
   =   Сквадер
+slay a monster  [41c3238e3921]
+  =   Убить монстра
 sleazoid  [b8f86bb47e1b]
   =   Мерзоид
 sleep ray  [b44b50f2e3d5]
@@ -22265,6 +23348,8 @@ smakken  [2c27d93bdcda]
   =   Смаккен
 small megabat  [e965a57255cc]
   =   Мелкий мегакрылан
+smell monster  [3014ecd257c4]
+  =   Понюхать монстра
 smurf  [2e8175c327a6]
   =   Смурф
 snark  [a0570221c529]
@@ -22311,6 +23396,8 @@ stainless steel rat  [461e11e0256c]
   =   Крыса из нержавеющей стали
 star-nosed mole  [807d37031b7b]
   =   Звездорыл
+start the fuzz tester  [2f7f92e36f55]
+  =   Запустить фаззинг-тестер
 start the game with this character  [b6dc862d36a0]
   =   Начать игру этим персонажем
 start your character without any items  [a33a2c417445]
@@ -22352,14 +23439,20 @@ summarize currently worn armor in a status field  [ed25a2e1244f]
   =   Сводка надетых доспехов в поле состояния
 suppress alerts about version-specific features  [8715c9c4c249]
   =   Не предупреждать о возможностях отдельных версий
+swap wielded and secondary weapons  [2402ece02eef]
+  =   Поменять основное и запасное оружие
 system shock  [eb9b4b0ffae1]
   =   Системный шок
+take off one piece of armor  [5d8d002f47ae]
+  =   Снять один предмет доспехов
 take out, then put in  [b1d802c1e28c]
   =   Вынуть, затем положить
 take something out  [0001712882a1]
   =   Вынуть что-нибудь
 taking off clothes  [0f3e7294118a]
   =   Снимая одежду
+talk to someone  [611497aa8ab1]
+  =   Поговорить с кем-нибудь
 tangle tree  [1acdd66ede6f]
   =   Цепкое дерево
 tapeworm  [5a3da57c0cd5]
@@ -22373,16 +23466,26 @@ tatzelwurm  [7d0f3b69c1e3]
   =   Татцельвурм
 teenage mutant ninja turtle  [c8191df2df90]
   =   Черепашка-ниндзя
+telekinesis  [009614a01cab]
+  =   Телекинез
+teleport around the level  [82dacef0184a]
+  =   Телепортироваться по уровню
+teleport to another level  [8c6bc4e12d50]
+  =   Телепортироваться на другой уровень
 teleported out of the dungeon and fell to her death  [dfca3dbd6e6e]
   =   Телепортировался из подземелья и разбился насмерть
 teleported out of the dungeon and fell to his death  [3e34b55e1f24]
   =   Телепортировался из подземелья и разбился насмерть
 teleported out of the dungeon and fell to your death  [e9a1ab3d3586]
   =   Телепортировался из подземелья и разбился насмерть
+tell what a command does  [235e86dba15f]
+  =   Рассказать, что делает команда
 terminal frailty  [024ae1f7e1a6]
   =   Смертельная немощь
 terracotta warrior  [995e2c8be547]
   =   Терракотовый воин
+test panic routine (fatal to game)  [3075935efc4a]
+  =   Проверить аварийное завершение (смертельно для игры)
 the %s  [670f80e4c425]
   m   Тритон
   f   Крыса
@@ -22440,6 +23543,8 @@ threshold for "there are many objects here"  [1c14fe0fc47d]
   =   Порог для «здесь много предметов»
 thrice  [3fec9f7e5ca9]
   =   Трижды
+throw something  [cb681274ae9d]
+  =   Бросить что-нибудь
 thrown potion  [26b59857213e]
   =   Брошенное зелье
 tie-thulu  [6d80a6a18d66]
@@ -22454,8 +23559,14 @@ tire elemental  [89edd5e5d90a]
   =   Шинный элементаль
 tofurkey  [a77b95e0d575]
   =   Тофундюк
+toggle boolean option  [fbe38754cc96]
+  =   Переключить логический параметр
 toggle fullscreen  [2e2f5046b579]
   =   Полноэкранный режим
+toggle the 'autopickup' option on/off  [6eebb7eafd07]
+  =   Включить или выключить автоподбор
+toggle two-weapon combat  [78361c10a411]
+  =   Включить или выключить бой с оружием в обеих руках
 toothsayer  [1ea7077a675f]
   =   Зубовидец
 touching %s  [596829913451]
@@ -22474,6 +23585,10 @@ tower of flame  [7d350fd19b08]
   =   Столб пламени
 traditional: by monster level, by internal monster index  [faaae6cf861b]
   =   Традиционный: по уровню монстра, затем по внутреннему номеру
+travel to a specific location on the map  [0943806f3359]
+  =   Отправиться в выбранное место на карте
+travel to previously selected travel location  [38ce603ad418]
+  =   Отправиться в выбранное ранее место
 treat "ESC c" as M-c (Meta+c, 8th bit set)  [7ca13d2135b5]
   =   Считать «ESC c» за M-c (Meta+c, с восьмым битом)
 tribble  [97fb97439625]
@@ -22491,6 +23606,8 @@ trying to turn the monsters  [39e317d70ab1]
   =   Пытаясь изгнать монстров
 tumbling down a flight of stairs  [4d04fc3fac05]
   =   Падение с лестницы
+turn undead away  [218a4f297ced]
+  =   Изгнать нежить
 turned into green slime  [db66befe8b40]
   =   Превратился в зелёную слизь
 turned into slime  [e704ce97b4d7]
@@ -22536,6 +23653,8 @@ unrefrigerated sip of juice  [83f639d1af99]
   =   Глоток несвежего сока
 unsuccessful polymorph  [6546cae5a98c]
   =   Неудачное превращение
+untrap something  [b4d95def9f4b]
+  =   Обезвредить что-нибудь
 unwisely ate the body of %s  [41df4f08827a]
   m   Опрометчиво съел тело тритона
   f   Опрометчиво съел тело крысы
@@ -22581,6 +23700,8 @@ use integrated sound effects  [74d3760df2c4]
   =   Встроенные звуковые эффекты
 use menu for getting extended commands  [070fced2a1ca]
   =   Меню для расширенных команд
+use monster's special ability  [8ecede57d27e]
+  =   Применить особую способность монстра
 use sounds  [8c46db31f364]
   =   Звуки
 use standout for --more--  [abb5c935c909]
@@ -22595,6 +23716,10 @@ using a magical horn on himself  [a68566322b66]
   =   Применение волшебного рога на себе
 using a magical horn on yourself  [244d68ecf6d5]
   =   Применение волшебного рога на себе
+validate the difficulty ratings of monsters  [f465249e0f13]
+  =   Проверить сложность монстров
+validate the display macro ranges  [f434c7f0bb6b]
+  =   Проверить диапазоны макросов отображения
 vampire mace  [4e4f53f71391]
   =   Булава-вампир
 vampiric watermelon  [300822cbc512]
@@ -22605,6 +23730,8 @@ venus flytrap  [a9367f19209e]
   =   Венерина мухоловка
 verbal jabberwock  [74fed73d7328]
   =   Вербальный бармаглот
+verify rumor boundaries  [a9a8de85b773]
+  =   Проверить границы слухов
 vermicious knid  [b0a8765388fc]
   =   Вермишельный книд
 version number  [88ace02d9a57]
@@ -22619,6 +23746,10 @@ view changed key binds  [448b77ff9950]
   =   Показать изменённые назначения клавиш
 view help for options menu  [7f373d11d3f1]
   =   Справка по меню параметров
+view map without monsters or objects obstructing it  [b1c7bea23054]
+  =   Смотреть карту без монстров и предметов
+view recent game messages  [f98a290f6ef1]
+  =   Просмотреть недавние сообщения
 viking  [3e2573a75821]
   =   Викинг
 voluptuous ampersand  [345821a94026]
@@ -22639,6 +23770,8 @@ water lemon  [4dd4a0f8d1da]
   =   Водяной лимон
 water melon  [ad34dd249922]
   =   Водяная дыня
+wear a piece of armor  [d854680d69c3]
+  =   Надеть доспех
 wedging into a narrow crevice  [466b0eb38534]
   =   Застревание в узкой расщелине
 wee green blobbie  [8d14fab2e7d3]
@@ -22673,6 +23806,8 @@ white rabbit  [b9afa1a45363]
   =   Белый кролик
 width of tiles  [f25ba36c70f1]
   =   Ширина тайлов
+wield (put in use) a weapon  [55e688145a2e]
+  =   Взять оружие в руки
 wielding %s bare-handed  [dbc5b9cd530b]
   m   Взятие голыми руками тритона
   f   Взятие голыми руками крысы
@@ -22692,6 +23827,8 @@ windowing system to use (should be specified first)  [6d848d949fe2]
   =   Оконная система (указывается первой)
 winged grizzly  [b0da04f0668d]
   =   Крылатый гризли
+wipe off your face  [f3beb7878281]
+  =   Вытереть лицо
 wiping off your %s  [c5d2b2cafecc]
   m   Вытирать тритона
   f   Вытирать крысу
@@ -22699,6 +23836,8 @@ wiping off your %s  [c5d2b2cafecc]
   pl  Вытирать 3 стрелы
 wire shark  [a4bd78e21e19]
   =   Проводная акула
+wish for something  [c7d17cb37e0e]
+  =   Загадать желание
 witch doctor  [674b4906f9c2]
   =   Знахарь
 wolpertinger  [729185f001b7]
@@ -22758,6 +23897,10 @@ your starting race (e.g., Human, Elf)  [b14c35e4d46a]
   =   Ваша начальная раса (например, Human, Elf)
 your starting role (e.g., Barbarian, Valkyrie)  [2d666ff0b019]
   =   Ваша начальная роль (например, Barbarian, Valkyrie)
+zap (cast) a spell  [3559425038ab]
+  =   Произнести заклинание
+zap a wand  [dce18ecf110e]
+  =   Взмахнуть палочкой
 zapped herself with %s  [f4397e3c1b34]
   m   Поразил себя тритоном
   f   Поразил себя крысой

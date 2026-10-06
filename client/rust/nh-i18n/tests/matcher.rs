@@ -292,6 +292,72 @@ gender = "m""#,
     }
 }
 
+#[test]
+fn a_row_of_the_extended_commands_list() {
+    let t = with(&[
+        (
+            " apply          %4s %s",
+            r#"ru = " apply          {1} {2}""#,
+        ),
+        (
+            "apply (use) a tool (pick-axe, key, lamp...)",
+            r#"ru = "применить инструмент (кирку, ключ, лампу...)""#,
+        ),
+        (
+            " annotate       %4s %s",
+            r#"ru = " annotate       {1} {2}""#,
+        ),
+        ("name current level", r#"ru = "дать имя текущему уровню""#),
+        (
+            " ?              %4s list all extended commands",
+            r#"ru = " ?              {1} список всех расширенных команд""#,
+        ),
+    ]);
+    // doextlist's " %-14s %4s %s"
+    let row = |name: &str, flags: &str, desc: &str| format!(" {name:<14} {flags:>4} {desc}");
+    for (en, ru) in [
+        (
+            row(
+                "apply",
+                "[A]",
+                "apply (use) a tool (pick-axe, key, lamp...)",
+            ),
+            row(
+                "apply",
+                "[A]",
+                "применить инструмент (кирку, ключ, лампу...)",
+            ),
+        ),
+        (
+            row(
+                "apply",
+                "[mA]",
+                "apply (use) a tool (pick-axe, key, lamp...)",
+            ),
+            row(
+                "apply",
+                "[mA]",
+                "применить инструмент (кирку, ключ, лампу...)",
+            ),
+        ),
+        (
+            row("annotate", "", "name current level"),
+            row("annotate", "", "дать имя текущему уровню"),
+        ),
+        (
+            row("?", "[A]", "list all extended commands"),
+            row("?", "[A]", "список всех расширенных команд"),
+        ),
+    ] {
+        let out = t.text(&en);
+        assert_eq!(
+            (out.text.as_str(), out.status),
+            (ru.as_str(), Status::Translated),
+            "{en}"
+        );
+    }
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {
