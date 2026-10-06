@@ -19993,6 +19993,27 @@ blast of poison gas  [c13581d2d40c]
   =   Ядовитое дыхание
 blast of sleep gas  [f69aecc5e8d0]
   =   Дыхание усыпляющим газом
+blasted herself with %s  [fb8f4125928e]
+  m   Сразил себя тритоном
+  f   Сразил себя крысой
+  n   Сразил себя копьём
+  pl  Сразил себя 3 стрелами
+blasted herself with spell of light  [40f812982529]
+  =   Сразил себя заклинанием света
+blasted himself with %s  [949503baffa6]
+  m   Сразил себя тритоном
+  f   Сразил себя крысой
+  n   Сразил себя копьём
+  pl  Сразил себя 3 стрелами
+blasted himself with spell of light  [084a0cc58c27]
+  =   Сразил себя заклинанием света
+blasted yourself with %s  [612ef5c10935]
+  m   Сразил себя тритоном
+  f   Сразил себя крысой
+  n   Сразил себя копьём
+  pl  Сразил себя 3 стрелами
+blasted yourself with spell of light  [8eb5be396881]
+  =   Сразил себя заклинанием света
 bluebird of happiness  [40b40d71e338]
   =   Синяя птица счастья
 bohrbug  [c4b8e6e4ef1a]
@@ -20092,6 +20113,46 @@ cardboard golem  [b66d3821b091]
   =   Картонный голем
 catoblepas  [0ab6a1c27a59]
   =   Катоблепас
+caught herself in a %s  [b7137c461365]
+  m   Попал в тритона
+  f   Попал в крысу
+  n   Попал в копьё
+  pl  Попал в 3 стрелы
+caught herself in her own %s  [1285e48a4ad5]
+  m   Попал в собственный тритона
+  f   Попал в собственную крысу
+  n   Попал в собственное копьё
+  pl  Попал в собственные 3 стрелы
+caught herself in his own %s  [4d4f4afc0b91]
+  m   Попал в собственный тритона
+  f   Попал в собственную крысу
+  n   Попал в собственное копьё
+  pl  Попал в собственные 3 стрелы
+caught himself in a %s  [13bad288bddf]
+  m   Попал в тритона
+  f   Попал в крысу
+  n   Попал в копьё
+  pl  Попал в 3 стрелы
+caught himself in her own %s  [0d15249fa641]
+  m   Попал в собственный тритона
+  f   Попал в собственную крысу
+  n   Попал в собственное копьё
+  pl  Попал в собственные 3 стрелы
+caught himself in his own %s  [780185045c5d]
+  m   Попал в собственный тритона
+  f   Попал в собственную крысу
+  n   Попал в собственное копьё
+  pl  Попал в собственные 3 стрелы
+caught yourself in a %s  [0291e346b8ae]
+  m   Попал в тритона
+  f   Попал в крысу
+  n   Попал в копьё
+  pl  Попал в 3 стрелы
+caught yourself in your own %s  [eb4607a07605]
+  m   Попал в собственный тритона
+  f   Попал в собственную крысу
+  n   Попал в собственное копьё
+  pl  Попал в собственные 3 стрелы
 ceiling cat  [c53eb1788f16]
   =   Потолочный кот
 change colors used in menus  [5af4fdc7befc]
@@ -20131,6 +20192,21 @@ choplet  [e6f661e59142]
   =   Отбивнушка
 chopping  [515238e64e8f]
   =   Рубить
+chopping off her own %s  [7eb75d223709]
+  m   Отрубание собственного тритона
+  f   Отрубание собственной крысы
+  n   Отрубание собственного копья
+  pl  Отрубание собственных 3 стрел
+chopping off his own %s  [067ecfaae0c7]
+  m   Отрубание собственного тритона
+  f   Отрубание собственной крысы
+  n   Отрубание собственного копья
+  pl  Отрубание собственных 3 стрел
+chopping off your own %s  [7e7570cc83b5]
+  m   Отрубание собственного тритона
+  f   Отрубание собственной крысы
+  n   Отрубание собственного копья
+  pl  Отрубание собственных 3 стрел
 classify gold as unknown or uncursed  [cffde6c3074a]
   =   Считать золото неизвестным или непроклятым
 closing drawbridge  [58182f985f05]
@@ -20617,6 +20693,11 @@ heisenbug  [2c6aeb07d21f]
   =   Гейзенбаг
 hell hound pun  [959b351e5181]
   =   Каламбур адской гончей
+her own %s  [9b8f692f0848]
+  m   Собственный тритон
+  f   Собственная крыса
+  n   Собственное копьё
+  pl  Собственные 3 стрелы
 her own player  [4a19a8f80741]
   =   Собственный игрок
 here  [0154c0dabe71]
@@ -20635,6 +20716,11 @@ hippocampus  [cf8b334b177c]
   =   Гиппокамп
 hippogriff  [28834c6e1841]
   =   Гиппогриф
+his own %s  [123a05807b4e]
+  m   Собственный тритон
+  f   Собственная крыса
+  n   Собственное копьё
+  pl  Собственные 3 стрелы
 his own player  [70efe8121507]
   =   Собственный игрок
 holloway  [897bf5680593]
@@ -20705,8 +20791,24 @@ killed by %s, while helpless  [515ad804b9bf]
   pl  Убит 3 стрелами, в беспомощном состоянии
 killed by petrification  [8b1c24fe51ee]
   =   Убит окаменением
+killed herself by breaking a wand  [19d5ffb7b22e]
+  =   Убил себя, сломав палочку
+killed herself with her bullwhip  [a499ba572c94]
+  =   Убил себя своим кнутом
+killed herself with his bullwhip  [33b88e7fdb94]
+  =   Убил себя своим кнутом
+killed himself by breaking a wand  [3c5d4d489a90]
+  =   Убил себя, сломав палочку
+killed himself with her bullwhip  [e04d95d7da09]
+  =   Убил себя своим кнутом
+killed himself with his bullwhip  [1755dfa88523]
+  =   Убил себя своим кнутом
 killed while stuck in creature form  [7ebaf616bbca]
   =   Убит, застряв в облике существа
+killed yourself by breaking a wand  [b56ea0f13140]
+  =   Убил себя, сломав палочку
+killed yourself with your bullwhip  [f0ff6447790e]
+  =   Убил себя своим кнутом
 killer beet  [7705cf86872e]
   =   Свёкла-убийца
 killer bunny  [094a29527452]
@@ -21257,6 +21359,12 @@ shallow one  [bd7e039effd6]
   =   Мелководный
 shattered potion  [9724927c290e]
   =   Разбитое зелье
+shot herself with a death ray  [51c5078910e4]
+  =   Застрелил себя лучом смерти
+shot himself with a death ray  [2f556a7073a0]
+  =   Застрелил себя лучом смерти
+shot yourself with a death ray  [4b81bec83865]
+  =   Застрелил себя лучом смерти
 show all available info when using whatis-command  [be5d06f62978]
   =   Все сведения по команде «что это»
 show any news at game start  [9aa83282e4ee]
@@ -21440,6 +21548,12 @@ tatzelwurm  [7d0f3b69c1e3]
   =   Татцельвурм
 teenage mutant ninja turtle  [c8191df2df90]
   =   Черепашка-ниндзя
+teleported out of the dungeon and fell to her death  [dfca3dbd6e6e]
+  =   Телепортировался из подземелья и разбился насмерть
+teleported out of the dungeon and fell to his death  [3e34b55e1f24]
+  =   Телепортировался из подземелья и разбился насмерть
+teleported out of the dungeon and fell to your death  [e9a1ab3d3586]
+  =   Телепортировался из подземелья и разбился насмерть
 terminal frailty  [024ae1f7e1a6]
   =   Смертельная немощь
 terracotta warrior  [995e2c8be547]
@@ -21626,6 +21740,12 @@ use the number pad for movement  [f462046b35ef]
   =   Ходить цифровой клавиатурой
 user interface for object selection  [91bac77a80a2]
   =   Способ выбора предметов
+using a magical horn on herself  [be43aa4af250]
+  =   Применение волшебного рога на себе
+using a magical horn on himself  [a68566322b66]
+  =   Применение волшебного рога на себе
+using a magical horn on yourself  [244d68ecf6d5]
+  =   Применение волшебного рога на себе
 vampire mace  [4e4f53f71391]
   =   Булава-вампир
 vampiric watermelon  [300822cbc512]
@@ -21768,6 +21888,13 @@ your character's name (e.g., name:Merlin-W)  [9677a57f04d7]
   =   Имя вашего персонажа (например, name:Merlin-W)
 your name for reporting  [eb63db9ded50]
   =   Ваше имя для отчётов
+your own %s  [4eee9122f51c]
+  m   Собственный тритон
+  f   Собственная крыса
+  n   Собственное копьё
+  pl  Собственные 3 стрелы
+your own player  [ddbd425111dc]
+  =   Собственный игрок
 your preferred initial pet type  [e4633bbef638]
   =   Желаемый вид начального питомца
 your starting alignment (lawful, neutral, or chaotic)  [347c156a1b14]
@@ -21778,5 +21905,32 @@ your starting race (e.g., Human, Elf)  [b14c35e4d46a]
   =   Ваша начальная раса (например, Human, Elf)
 your starting role (e.g., Barbarian, Valkyrie)  [2d666ff0b019]
   =   Ваша начальная роль (например, Barbarian, Valkyrie)
+zapped herself with %s  [f4397e3c1b34]
+  m   Поразил себя тритоном
+  f   Поразил себя крысой
+  n   Поразил себя копьём
+  pl  Поразил себя 3 стрелами
+zapped herself with a spell  [5505f1e664e8]
+  =   Поразил себя заклинанием
+zapped herself with spell of light  [316f771be677]
+  =   Поразил себя заклинанием света
+zapped himself with %s  [aa747356b18c]
+  m   Поразил себя тритоном
+  f   Поразил себя крысой
+  n   Поразил себя копьём
+  pl  Поразил себя 3 стрелами
+zapped himself with a spell  [57f2aab8a1ba]
+  =   Поразил себя заклинанием
+zapped himself with spell of light  [327774706ab7]
+  =   Поразил себя заклинанием света
+zapped yourself with %s  [ad2741c3d92e]
+  m   Поразил себя тритоном
+  f   Поразил себя крысой
+  n   Поразил себя копьём
+  pl  Поразил себя 3 стрелами
+zapped yourself with a spell  [66296e2431cf]
+  =   Поразил себя заклинанием
+zapped yourself with spell of light  [065210bbdd1c]
+  =   Поразил себя заклинанием света
 zergling  [dc6e407d6f7b]
   =   Зерглинг

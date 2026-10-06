@@ -160,6 +160,17 @@ fn the_death_text_in_the_hero_s_gender() {
         ),
         ("died of starvation", "умер от голода", "умерла от голода"),
         ("quit", "сдался", "сдалась"),
+        // #overview's grave of the hero, "his" made "your"
+        (
+            "killed by your own player",
+            "убит собственным игроком",
+            "убита собственным игроком",
+        ),
+        (
+            "killed yourself with your bullwhip",
+            "убил себя своим кнутом",
+            "убила себя своим кнутом",
+        ),
     ];
     for (gender, pick) in [(Gender::Masc, 0), (Gender::Fem, 1)] {
         let mut t = Translator::built_in().expect("the built-in translator");

@@ -1347,6 +1347,17 @@ def add_killers(cat, contexts):
         if ctx.unit.path == "dokick.c" and ctx.func.name == "kickstr":
             line = ctx.unit.toks[ctx.func.body[0]].line
             cat.add("kicking %s", "death", f"src/dokick.c:{line} kickstr", ["object|text"])
+    # #overview's grave of the hero says it of "you" (dungeon.c, strsubst
+    # of the first " himself", " herself", " his ", " her "): "killed by
+    # your own player", "killed yourself with your bullwhip"
+    for e in [e for e in cat.entries.values() if "death" in e.uses]:
+        text = " " + e.fmt
+        for old, new in ((" himself", " yourself"), (" herself", " yourself"),
+                         (" his ", " your "), (" her ", " your ")):
+            text = text.replace(old, new, 1)
+        if text[1:] != e.fmt:
+            kinds = ["|".join(sorted(k)) for k in (e.args or [])]
+            cat.add(text[1:], "death", "src/dungeon.c:3711 print_mapseen", kinds)
 
 
 OPTION_MACROS = ("NHOPTB", "NHOPTC", "NHOPTP", "NHOPTO")
