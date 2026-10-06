@@ -1485,6 +1485,58 @@ def add_appended(cat, contexts):
                 cat.add(f + g, "sprintf", site, k + h)
 
 
+EXTCMD_ROW = re.compile(r" %-(\d+)s %4s %s")
+
+
+def add_extcmds(cat, units):
+    """The extended commands' descriptions (cmd.c extcmdlist[]: "apply
+    (use) a tool (pick-axe, key, lamp...)"), which the `#` palette and the
+    `#?` list show, and each command's row of the `#?` list."""
+    for unit in units:
+        if unit.path != "cmd.c":
+            continue
+        toks = unit.toks
+        # doextlist's " %-14s %4s %s": name, flags, description
+        rows = [(t.line, int(m.group(1))) for t in toks if t.kind == "string"
+                for m in [EXTCMD_ROW.fullmatch(t.value)] if m]
+        for i, t in enumerate(toks):
+            if not (t.text == "extcmdlist" and toks[i + 1].text == "["
+                    and toks[i + 3].text == "=" and toks[i + 4].text == "{"):
+                continue
+            close = match_close(toks, i + 4)
+            j = i + 5
+            while j < close:
+                if toks[j].text != "{":
+                    j += 1
+                    continue
+                end = match_close(toks, j)
+                row = split_args(toks, j, end)
+                if len(row) >= 3 and row[2] and all(x.kind == "string" for x in row[2]):
+                    name = "".join(x.value for x in row[1]) if row[1] and all(
+                        x.kind == "string" for x in row[1]) else "?"
+                    desc = "".join(x.value for x in row[2])
+                    cat.add(escape(desc), "menu", f"src/cmd.c:{toks[j].line} extcmdlist {name}", [])
+                    for line, width in rows:
+                        add_extcmd_row(cat, f"src/cmd.c:{line} doextlist {name}", name, desc, width)
+                j = end + 1
+
+
+def add_extcmd_row(cat, site, name, desc, width):
+    """A command's row of the `#?` list with its name in place, as it is: a
+    format of conversions and spaces alone is found by no text. The
+    description is a piece, translated on its own; after a name of no
+    letters ("?"), which anchors nothing, it stays in the row. A game in
+    neither wizard nor explore mode lists #genocided as only genocided."""
+    head = " " + escape(name.ljust(width)) + " %4s "
+    if " been genocided or become extinct" in desc:
+        short = desc.replace(" been genocided or become extinct", " been genocided")
+        cat.add(escape(short), "menu", site, [])
+    if re.search(r"[A-Za-z]", name):
+        cat.add(head + "%s", "menu", site, ["text", "text"])
+    else:
+        cat.add(head + escape(desc), "menu", site, ["text"])
+
+
 OPTION_MACROS = ("NHOPTB", "NHOPTC", "NHOPTP", "NHOPTO")
 
 
@@ -1753,6 +1805,7 @@ def extract():
         if unit.path == "rip.c":
             add_rip(cat, unit)
     add_options(cat, units)
+    add_extcmds(cat, units)
     add_killers(cat, contexts)
     add_appended(cat, contexts)
     for fmt, use, site, kinds in datfiles.extract(UPSTREAM):

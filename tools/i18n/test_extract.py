@@ -195,6 +195,25 @@ class Formats(unittest.TestCase):
         self.assertIn("by count", e)
         self.assertNotIn("a", e)
 
+    def test_the_extended_commands(self):
+        unit = clex.scan_unit("cmd.c", (
+            'struct ext_func_tab extcmdlist[] = {\n'
+            '    { \'#\', "#", "enter and perform an extended command", doextcmd, 0, NULL },\n'
+            '    { M(\'a\'), "adjust", "adjust inventory letters", doorganize, 0, NULL },\n'
+            '    { 0, "genocided", "list monsters that have been genocided or become extinct",\n'
+            '      dogenocided, 0, NULL },\n'
+            '    { 0, (char *) 0, (char *) 0, donull, 0, (char *) 0 }\n'
+            '};\n'
+            'int doextlist(void) { Sprintf(buf, " %-14s %4s %s", efp->ef_txt, fl, desc); }\n'))
+        cat = extract.Catalog()
+        extract.add_extcmds(cat, [unit])
+        e = cat.entries
+        self.assertIn("adjust inventory letters", e)
+        self.assertEqual(e[" adjust         %4s %s"].sites, ["src/cmd.c:8 doextlist adjust"])
+        self.assertIn(" #              %4s enter and perform an extended command", e)
+        self.assertIn("list monsters that have been genocided", e)
+        self.assertEqual(len(e), 7)
+
     def test_helpers_returns_and_parameters(self):
         e = catalog_of('static const char *exclam(int d) { return d > 4 ? "!" : "."; }\n'
                        'static void hit(const char *what, int d) { You("hit %s%s", what, exclam(d)); }\n'
