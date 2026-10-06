@@ -1,6 +1,8 @@
 # R6 'O': the options menu, the options' descriptions (include/optlist.h),
-# their own menus and the help window. An option's name and its values
-# stay English: they are what the configuration file takes.
+# their own menus and the help window, the status highlights' menus. An
+# option's name and its values stay English: they are what the
+# configuration file takes (and a colour or an alignment word is other
+# messages' argument, which the lexicon declines).
 
 [9239ee2cda84]
 en = "General"
@@ -1275,3 +1277,335 @@ ru = "Прочие настройки:"
 [6e8fd28de7ca]
 en = "See NetHack's \"Guidebook\" for details."
 ru = "Подробности — в «Руководстве» NetHack."
+
+[b53632de0624]
+en = "change sort order from \"alphabetically\" to \"by ranking\""
+ru = "сменить порядок «по алфавиту» на «по важности»"
+
+[06b3b0c11d07]
+en = "change sort order from \"by ranking\" to \"alphabetically\""
+ru = "сменить порядок «по важности» на «по алфавиту»"
+
+[9baea98bd917]
+en = "sorted alphabetically"
+ru = "по алфавиту"
+
+[a8e5232a3f11]
+en = "sorted by ranking"
+ru = "по важности"
+
+[e93f76dcb3de]
+en = "Choose status conditions to toggle"
+ru = "Какие состояния показывать"
+
+[2b8e60c9870d]
+en = "Choose status conditions"
+ru = "Выберите состояния"
+
+[9970ea7d10cc]
+en = "Select a hilite field:"
+ru = "Поле для подсветки:"
+
+[22eb49c5a334]
+en = "Always highlight %s"
+ru = "Всегда подсвечивать {1}"
+
+[891582177091]
+en = "Bitmask of conditions"
+ru = "Набор состояний"
+
+[6cccb13b93f8]
+en = "%s value changes"
+ru = "Изменение {1}"
+
+[1e2463aa8146]
+en = "Number threshold"
+ru = "Порог числом"
+
+[6bf1336dd63f]
+en = "Percentage threshold"
+ru = "Порог в процентах"
+
+[9bbc4c338374]
+en = "Highlight critically low %s"
+ru = "Подсвечивать опасно низкое {1}"
+
+[6cf127f38c9d]
+en = "%s text match"
+ru = "Текст {1}"
+
+[e3e37b1c0ae1]
+en = "Select %s field hilite behavior:"
+ru = "Как подсвечивать поле {1}:"
+
+[e76f8b5f5a5a]
+en = "Better (lower) than %s"
+ru = "Лучше (ниже) {1}"
+
+[63c8ddbc47b8]
+en = "Less than %s"
+ru = "Меньше {1}"
+
+[3d54efea27f7]
+en = "Value goes down"
+ru = "Значение падает"
+
+[ccf5635ad36f]
+en = "%s or better (lower)"
+ru = "{1} или лучше (ниже)"
+
+[9e6ba4058c08]
+en = "%s or less"
+ru = "{1} или меньше"
+
+[12f0b7e6e818]
+en = "Exactly %s"
+ru = "Ровно {1}"
+
+[9048d55369f7]
+en = "Value changes"
+ru = "Значение меняется"
+
+[1dc839aafd8e]
+en = "%s or more"
+ru = "{1} или больше"
+
+[20832edfdce6]
+en = "%s or worse (higher)"
+ru = "{1} или хуже (выше)"
+
+[65e0a18c02c3]
+en = "More than %s"
+ru = "Больше {1}"
+
+[8958a3ea2446]
+en = "Worse (higher) than %s"
+ru = "Хуже (выше) {1}"
+
+[671d13e2e3b7]
+en = "Value goes up"
+ru = "Значение растёт"
+
+[5a5c40d2fe6c]
+en = "Select field %s value:"
+ru = "Значение поля {1}:"
+
+[6f9efb529312]
+en = "Choose a color for when %s changes:"
+ru = "Цвет, когда {1} меняется:"
+
+[70285c805d8c]
+en = "Choose a color for when %s decreases:"
+ru = "Цвет, когда {1} падает:"
+
+[b188ba2a079d]
+en = "Choose a color for when %s increases:"
+ru = "Цвет, когда {1} растёт:"
+
+[182278669fdb]
+en = "Choose attribute for when %s changes:"
+ru = "Атрибут, когда {1} меняется:"
+
+[1a900e66248d]
+en = "Choose attribute for when %s decreases:"
+ru = "Атрибут, когда {1} падает:"
+
+[47bc46f0737e]
+en = "Choose attribute for when %s increases:"
+ru = "Атрибут, когда {1} растёт:"
+
+[4870be37ecf6]
+en = "Choose a color for conditions %s:"
+ru = "Цвет состояний {1}:"
+
+[62064abbd83a]
+en = "Choose attribute for conditions %s:"
+ru = "Атрибут состояний {1}:"
+
+[ca77bc3ce3be]
+en = "Choose a color for when %s is '%s':"
+ru = "Цвет, когда {1} — «{2}»:"
+
+[7bf3dd47b06b]
+en = "Choose attribute for when %s is '%s':"
+ru = "Атрибут, когда {1} — «{2}»:"
+
+[adba0f2947a8]
+en = "Choose a color to always hilite %s:"
+ru = "Цвет постоянной подсветки {1}:"
+
+[df9d4a07fd43]
+en = "Choose attribute to always hilite %s:"
+ru = "Атрибут постоянной подсветки {1}:"
+
+[b96fa827c145]
+en = "No current hilites for %s"
+ru = "У {1} нет подсветок"
+
+[4faa8a2b947a]
+en = "Remove selected hilites"
+ru = "Удалить выбранные подсветки"
+
+[a607a520a267]
+en = "Add new hilites"
+ru = "Добавить подсветки"
+
+[de2dac00d48c]
+en = "Current %s hilites:"
+ru = "Подсветки {1}:"
+
+[236f19214658]
+en = "View all hilites in config format"
+ru = "Все подсветки в виде настроек"
+
+[018269ccf855]
+en = "%-18s (%d defined)"
+ru = "{1} (задано: {2})"
+
+[8f770a3bfbaa]
+en = "Status hilites:"
+ru = "Подсветка состояния:"
+
+[50379ed9c497]
+en = "Choose a color for when %s is %s:"
+ru = "Цвет, когда {1} — {2}:"
+
+[b4112f52ddb3]
+en = "Choose a color for when %s is %s or less:"
+ru = "Цвет, когда {1} — {2} или меньше:"
+
+[0f38c53e546d]
+en = "Choose a color for when %s is %s or more:"
+ru = "Цвет, когда {1} — {2} или больше:"
+
+[222c78fd75b4]
+en = "Choose a color for when %s is %s%%:"
+ru = "Цвет, когда {1} — {2}%:"
+
+[81adf5decfe8]
+en = "Choose a color for when %s is %s%% or less:"
+ru = "Цвет, когда {1} — {2}% или меньше:"
+
+[5f6d8e7336e6]
+en = "Choose a color for when %s is %s%% or more:"
+ru = "Цвет, когда {1} — {2}% или больше:"
+
+[005720de2dda]
+en = "Choose a color for when %s is less than %s:"
+ru = "Цвет, когда {1} — меньше {2}:"
+
+[059bd625cb77]
+en = "Choose a color for when %s is less than %s or less:"
+ru = "Цвет, когда {1} — меньше {2} или меньше:"
+
+[2da348ff408b]
+en = "Choose a color for when %s is less than %s or more:"
+ru = "Цвет, когда {1} — меньше {2} или больше:"
+
+[b48aa5cafc6d]
+en = "Choose a color for when %s is less than %s%%:"
+ru = "Цвет, когда {1} — меньше {2}%:"
+
+[880513da27ce]
+en = "Choose a color for when %s is less than %s%% or less:"
+ru = "Цвет, когда {1} — меньше {2}% или меньше:"
+
+[e33fe9f6d8d2]
+en = "Choose a color for when %s is less than %s%% or more:"
+ru = "Цвет, когда {1} — меньше {2}% или больше:"
+
+[050dba84a952]
+en = "Choose a color for when %s is more than %s:"
+ru = "Цвет, когда {1} — больше {2}:"
+
+[7fca0628e601]
+en = "Choose a color for when %s is more than %s or less:"
+ru = "Цвет, когда {1} — больше {2} или меньше:"
+
+[59733c80ae4a]
+en = "Choose a color for when %s is more than %s or more:"
+ru = "Цвет, когда {1} — больше {2} или больше:"
+
+[3a9d8709d5dc]
+en = "Choose a color for when %s is more than %s%%:"
+ru = "Цвет, когда {1} — больше {2}%:"
+
+[12d58892f42e]
+en = "Choose a color for when %s is more than %s%% or less:"
+ru = "Цвет, когда {1} — больше {2}% или меньше:"
+
+[def34cf6fe13]
+en = "Choose a color for when %s is more than %s%% or more:"
+ru = "Цвет, когда {1} — больше {2}% или больше:"
+
+[10d9416b96f8]
+en = "Choose attribute for when %s is %s:"
+ru = "Атрибут, когда {1} — {2}:"
+
+[307794ab4a1c]
+en = "Choose attribute for when %s is %s or less:"
+ru = "Атрибут, когда {1} — {2} или меньше:"
+
+[cd014e2aad7f]
+en = "Choose attribute for when %s is %s or more:"
+ru = "Атрибут, когда {1} — {2} или больше:"
+
+[da81f483ffaf]
+en = "Choose attribute for when %s is %s%%:"
+ru = "Атрибут, когда {1} — {2}%:"
+
+[fc08bc044a0f]
+en = "Choose attribute for when %s is %s%% or less:"
+ru = "Атрибут, когда {1} — {2}% или меньше:"
+
+[401ecafe1b94]
+en = "Choose attribute for when %s is %s%% or more:"
+ru = "Атрибут, когда {1} — {2}% или больше:"
+
+[dc658e4b6b18]
+en = "Choose attribute for when %s is less than %s:"
+ru = "Атрибут, когда {1} — меньше {2}:"
+
+[a81266b1f3fa]
+en = "Choose attribute for when %s is less than %s or less:"
+ru = "Атрибут, когда {1} — меньше {2} или меньше:"
+
+[588984e0a485]
+en = "Choose attribute for when %s is less than %s or more:"
+ru = "Атрибут, когда {1} — меньше {2} или больше:"
+
+[cbafc5fe024c]
+en = "Choose attribute for when %s is less than %s%%:"
+ru = "Атрибут, когда {1} — меньше {2}%:"
+
+[3b17c168a6a1]
+en = "Choose attribute for when %s is less than %s%% or less:"
+ru = "Атрибут, когда {1} — меньше {2}% или меньше:"
+
+[72fe93a830e2]
+en = "Choose attribute for when %s is less than %s%% or more:"
+ru = "Атрибут, когда {1} — меньше {2}% или больше:"
+
+[a01379cff1df]
+en = "Choose attribute for when %s is more than %s:"
+ru = "Атрибут, когда {1} — больше {2}:"
+
+[79e0f1d5733b]
+en = "Choose attribute for when %s is more than %s or less:"
+ru = "Атрибут, когда {1} — больше {2} или меньше:"
+
+[2c80b8c97c6a]
+en = "Choose attribute for when %s is more than %s or more:"
+ru = "Атрибут, когда {1} — больше {2} или больше:"
+
+[0def676ff21c]
+en = "Choose attribute for when %s is more than %s%%:"
+ru = "Атрибут, когда {1} — больше {2}%:"
+
+[36c9b3340961]
+en = "Choose attribute for when %s is more than %s%% or less:"
+ru = "Атрибут, когда {1} — больше {2}% или меньше:"
+
+[4e9b5ccbe03d]
+en = "Choose attribute for when %s is more than %s%% or more:"
+ru = "Атрибут, когда {1} — больше {2}% или больше:"
