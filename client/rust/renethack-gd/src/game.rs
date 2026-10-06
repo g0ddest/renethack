@@ -1628,16 +1628,24 @@ impl RenethackGame {
                 return;
             }
         }
-        let Some((_, prompt)) = &self.pending else {
+        let Some((id, prompt)) = &self.pending else {
             self.typeahead.push(k);
             return;
         };
+        let id = *id;
         let command = *prompt == Prompt::Command && !self.world.getpos;
-        // the open panel first (not under a dialog of its own); a count
-        // being typed keeps its Esc
+        // the open panel first (not under a dialog of its own), at the
+        // command prompt and for a request it answers itself; a request it
+        // does not answer (the engine's pause on the map, a direction,
+        // getpos) takes the key: Space ends a --More-- with the panel open.
+        // A count being typed keeps its Esc.
+        let panel_asks = self
+            .ui
+            .as_ref()
+            .is_some_and(|ui| ui.inventory.request() == Some(id));
         let typing_count = command && self.count.shown().is_some();
         let dialog = self.ui.as_ref().is_some_and(|ui| ui.dialogs.is_open());
-        if !dialog && !(typing_count && k.key == Key::Escape) {
+        if !dialog && (command || panel_asks) && !(typing_count && k.key == Key::Escape) {
             match self.ui_mut().inventory.key(&k, command) {
                 KeyUse::Used => return,
                 KeyUse::Then(intent) => {

@@ -2152,6 +2152,52 @@ fn inv_from(
     Step::Inv(what, f)
 }
 
+/// The engine's pause on the map (its "--More--" after a trap found, a
+/// detection, a mimic's corpse eaten) ends with Space while the inventory
+/// panel is open: the panel's browsing took the key, and the soak of seed
+/// 321 stalled on a trap found with the panel open. A debug-mode game eats
+/// a small mimic's corpse with the panel open, which makes the hero mimic
+/// a pile of gold and shows it on the map.
+fn map_pause() -> Vec<Step> {
+    let mut steps = vec![Step::Call("debug mode", |g: &mut RenethackGame| {
+        g.debug_mode = true;
+        // no monster comes to interrupt the meal
+        g.seed = Some(1);
+        Ok(())
+    })];
+    steps.extend(start());
+    steps.extend([
+        Step::Key(ctrl_key('w')),
+        Step::Request(
+            "the wish",
+            |p| matches!(p, Prompt::Text { query, .. } if query.starts_with("For what do you wish")),
+        ),
+        Step::Dialog(DialogEvent::TextSubmitted("small mimic corpse".into())),
+        Step::Request("a command after the wish", command),
+        key('i'),
+        Step::Wait("the panel open", |g| {
+            Ok(panel(g)?.mode_name() == Some("browse"))
+        }),
+        key('e'),
+        Step::Request("what to eat", |p| !matches!(p, Prompt::Command)),
+        Step::KeyFrom("the corpse", |g| {
+            let c = letter_of(g, "mimic corpse").ok_or("no corpse")?;
+            Ok(KeyInput::plain(Key::Char(c)))
+        }),
+        Step::AnswerUntil('n', "the pause on the map", |g| {
+            fail_on_error_screen(g)?;
+            Ok(matches!(g.pending, Some((_, Prompt::MapPause))))
+        }),
+        Step::Wait("the panel still open over it", |g| {
+            Ok(panel(g)?.mode_name() == Some("browse"))
+        }),
+        key(' '),
+        Step::Request("a command after the pause", command),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
 /// The inventory panel (ui-design §2, §3): `i` opens it on every item,
 /// a filter shows only weapons, the dagger is wielded by a drag to the
 /// main hand and the long sword again by its context menu (the
@@ -4087,6 +4133,7 @@ impl SelfTest {
             "help" => help_tests::help(),
             "layouts" => layouts_tests::layouts(),
             "inventory" => inventory(),
+            "map-pause" => map_pause(),
             "gamepad" => gamepad(),
             "bar" => bar(),
             _ => Vec::new(),
