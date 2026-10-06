@@ -1326,6 +1326,29 @@ def add_rip(cat, unit):
             cat.add(escape(m.group(1)) + "|%s|" + escape(m.group(3)), "layout", site, ["text"], force=True)
 
 
+def add_killers(cat, contexts):
+    """The death text formatkiller() writes (topten.c) by hand, its prefix
+    then the killer with a loop of its own: "killed by %s", "choked on
+    %s"..., and ", while %s" when the hero was helpless ("killed by a
+    jackal, while fainted from lack of food"). The tombstone, #overview's
+    graves and a grave's text show it."""
+    for ctx in contexts:
+        if ctx.unit.path != "topten.c" or ctx.func.name != "formatkiller":
+            continue
+        site = f"src/topten.c:{ctx.unit.toks[ctx.func.body[0]].line} formatkiller"
+        killer = "monster|object|text"
+        for prefix in dedupe([p for p in ctx.arrays.get("killed_by_prefix", []) if p]):
+            head = escape(prefix) + "%s"
+            cat.add(head, "death", site, [killer])
+            cat.add(head + ", while %s", "death", site, [killer, "text"])
+            cat.add(head + ", while helpless", "death", site, [killer])
+    # dokick.c kickstr(): strcat(strcpy(buf, "kicking "), what)
+    for ctx in contexts:
+        if ctx.unit.path == "dokick.c" and ctx.func.name == "kickstr":
+            line = ctx.unit.toks[ctx.func.body[0]].line
+            cat.add("kicking %s", "death", f"src/dokick.c:{line} kickstr", ["object|text"])
+
+
 OPTION_MACROS = ("NHOPTB", "NHOPTC", "NHOPTP", "NHOPTO")
 
 
@@ -1594,6 +1617,7 @@ def extract():
         if unit.path == "rip.c":
             add_rip(cat, unit)
     add_options(cat, units)
+    add_killers(cat, contexts)
     for fmt, use, site, kinds in datfiles.extract(UPSTREAM):
         cat.add(fmt, use, site, kinds)
     return cat
