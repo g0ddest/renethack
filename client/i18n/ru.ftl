@@ -787,5 +787,6 @@ overview-connection = Проход в { $place }
 overview-unknown-way = Путь в { $place }
 overview-branch-level = { $branch }, уровень { $level }
 overview-resting = Здесь покоятся
-overview-dead-you = вы, { $how }
+overview-resting-you = Здесь покоитесь вы
+overview-dead-you = { $how }
 overview-dead = { $who }, { $how }

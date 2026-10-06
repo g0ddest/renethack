@@ -224,7 +224,7 @@ pub(super) fn layouts() -> Vec<Step> {
         Step::Wait("the hero's resting place laid out", |g| {
             Ok(
                 laid_out(g, "overview", &layouts::here(layouts::Here::Were))?
-                    && laid_out(g, "overview", &tr!("overview-resting"))?,
+                    && laid_out(g, "overview", &layouts::resting(true))?,
             )
         }),
         Step::Shot("overview-end"),

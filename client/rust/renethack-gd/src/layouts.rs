@@ -823,6 +823,18 @@ pub fn branch(kind: BranchKind, to: &str, level: Option<i32>) -> String {
     }
 }
 
+/// The heading over the dead of a level: over the hero ("Здесь покоитесь
+/// вы": the death's words say the hero in the third person, as on the
+/// stone, which a "вы" before them would not agree with) or over the
+/// bones' heroes.
+pub fn resting(hero: bool) -> String {
+    if hero {
+        tr!("overview-resting-you")
+    } else {
+        tr!("overview-resting")
+    }
+}
+
 pub fn dead(who: Option<&str>, how: &str) -> String {
     match who {
         None => tr!("overview-dead-you", how = death(how)),
@@ -1228,6 +1240,7 @@ mod tests {
         assert_eq!(place(&Place::Level(3)), "Level 3");
         assert_eq!(levels(1, 5, false), "levels 1–5");
         assert_eq!(dead(None, "killed by a jackal"), "you, killed by a jackal");
+        assert_eq!(resting(true), resting(false));
     }
 
     #[test]
@@ -1244,6 +1257,9 @@ mod tests {
             special(&Special::QuestGiven("Norn".into())),
             levels(1, 5, false),
             class_name("Dog or other canine"),
+            // the hero under a heading of their own, the death's words alone
+            resting(true),
+            dead(None, "killed by a jackal"),
         ];
         crate::i18n::set_lang(Lang::En);
         assert_eq!(
@@ -1254,6 +1270,8 @@ mod tests {
                 "Задание получено от Норны",
                 "уровни 1–5",
                 "Собака или другое псовое",
+                "Здесь покоитесь вы",
+                "killed by a jackal",
             ]
         );
     }

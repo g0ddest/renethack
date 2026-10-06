@@ -535,7 +535,7 @@ impl OverviewLine {
             OverviewRow::Branch { kind, to, level } => {
                 detail("↳", layouts::branch(*kind, to, *level))
             }
-            OverviewRow::RestingPlace => detail("✝", tr!("overview-resting")),
+            OverviewRow::RestingPlace => detail("✝", layouts::resting(false)),
             OverviewRow::Dead { who, how } => OverviewLine::Detail {
                 mark: "",
                 text: layouts::dead(who.as_deref(), how),
@@ -544,6 +544,46 @@ impl OverviewLine {
             OverviewRow::Other(t) => detail("", i18n::engine(EngineKind::Menu, t).into_owned()),
         }
     }
+}
+
+/// The overview's rows as shown. The dead of a level come under their
+/// heading: the hero under one of their own, the bones' heroes under the
+/// other, which shows only where its words differ ("Final resting place
+/// for" over both in English; "Здесь покоитесь вы", then "Здесь покоятся").
+fn overview_lines(rows: &[OverviewRow]) -> Vec<OverviewLine> {
+    let mut out = Vec::with_capacity(rows.len() + 1);
+    let mut i = 0;
+    while i < rows.len() {
+        if rows[i] != OverviewRow::RestingPlace {
+            out.push(OverviewLine::of(&rows[i]));
+            i += 1;
+            continue;
+        }
+        let dead: Vec<&OverviewRow> = rows[i + 1..]
+            .iter()
+            .take_while(|r| matches!(r, OverviewRow::Dead { .. }))
+            .collect();
+        let (hero, others): (Vec<&OverviewRow>, Vec<&OverviewRow>) = dead
+            .iter()
+            .partition(|r| matches!(r, OverviewRow::Dead { who: None, .. }));
+        let heading = |text: String| OverviewLine::Detail {
+            mark: "✝",
+            text,
+            deep: false,
+        };
+        let first = layouts::resting(!hero.is_empty());
+        out.push(heading(first.clone()));
+        out.extend(hero.iter().map(|r| OverviewLine::of(r)));
+        if !hero.is_empty() && !others.is_empty() {
+            let theirs = layouts::resting(false);
+            if theirs != first {
+                out.push(heading(theirs));
+            }
+        }
+        out.extend(others.iter().map(|r| OverviewLine::of(r)));
+        i += 1 + dead.len();
+    }
+    out
 }
 
 /// A thin gold line under a heading.
@@ -2553,7 +2593,7 @@ impl Dialogs {
         rows: &[OverviewRow],
     ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
         let look = self.look.clone();
-        let lines: Vec<OverviewLine> = rows.iter().map(OverviewLine::of).collect();
+        let lines = overview_lines(rows);
         let indent = BADGE_W + 12.0;
         let line_w = |l: &OverviewLine| match l {
             OverviewLine::Dungeon { name, levels } => {

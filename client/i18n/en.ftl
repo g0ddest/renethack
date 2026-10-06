@@ -781,5 +781,6 @@ overview-connection = Connection to { $place }
 overview-unknown-way = A way to { $place }
 overview-branch-level = { $branch }, level { $level }
 overview-resting = Final resting place for
+overview-resting-you = Final resting place for
 overview-dead-you = you, { $how }
 overview-dead = { $who }, { $how }
