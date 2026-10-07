@@ -242,14 +242,19 @@ specific rule to the most general (crate `nh-art`):
 
 - an object in the hero's hands or on their body: the `held` section, again
   by appearance only (the head noun of the appearance, else the class); it
-  says the model, its grip on the bone, the sub-meshes to hide and the metal.
+  says the model, its grip on the bone, the sub-meshes to hide and the metal;
+- what a worn thing does to the outfit: the `worn` section, by appearance
+  too: the material of metal body armour over the tunic (chain mail, plate),
+  the leather of gloves over the hands, the model of a thing hung round the
+  neck (a stethoscope), fitted to each body.
 
 The hero shows their gear from the inventory the host sends before each
 input wait: the weapon in the right hand, the shield on the left forearm, a
 lit lamp in the left hand (with its own light), the alternate weapon and
-the quiver on the back, armour pieces on the outfit. Using an item (quaff,
-read, zap, cast, eat, apply, throw, fire, wear, pick up, kick) plays a clip
-with the item in hand and an effect.
+the quiver on the back, armour pieces on the outfit, mail and plate in their
+metal, gloves on the hands, a stethoscope round the neck. Using an item
+(quaff, read, zap, cast, eat, apply, throw, fire, wear, pick up, kick) plays
+a clip with the item in hand and an effect.
 
 The inventory icons are baked from the same art: `make icons` (needs a
 display, about a minute) renders every object appearance tile into

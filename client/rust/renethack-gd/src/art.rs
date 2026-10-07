@@ -29,8 +29,11 @@ use nh_art::{ArtManifest, MaterialSpec, Proc, Resolved, Skin};
 
 #[path = "equip.rs"]
 mod equip;
+#[path = "outfit.rs"]
+mod outfit;
 
 pub use equip::{HELD_NODE, LAMP_LIGHT, THROW_LETS_GO, USE_NODE, Worn};
+pub use outfit::{GLOVES_NODE, NECK_NODE};
 
 use crate::meshes::{MeshKey, capsule, cuboid, cylinder, dome, facets, prism, sphere, torus};
 
@@ -218,6 +221,8 @@ pub struct Art {
     /// The base characters' bodies cut to a region, by (base, region, cut
     /// in mm).
     bodies: HashMap<(String, u8, i32), CutBody>,
+    /// What the worn things put on an outfit, built once.
+    outfits: outfit::Outfits,
     pool: HashMap<PoolKey, Vec<Model>>,
     warned: HashSet<String>,
     /// Instances handed out and not given back.
@@ -285,6 +290,7 @@ impl Art {
             smoothed: HashMap::new(),
             heads: HashMap::new(),
             bodies: HashMap::new(),
+            outfits: outfit::Outfits::default(),
             pool: HashMap::new(),
             warned: HashSet::new(),
             live: 0,
@@ -698,8 +704,9 @@ impl Art {
             if let Some(orm) = orm {
                 m.set_texture(TextureParam::ORM, &orm);
             }
-            m.set_flag(Flags::UV1_USE_TRIPLANAR, true);
-            m.set_flag(Flags::UV1_USE_WORLD_TRIPLANAR, world);
+            // a pattern on a body that bends is by the mesh's own UVs
+            m.set_flag(Flags::UV1_USE_TRIPLANAR, !spec.uv);
+            m.set_flag(Flags::UV1_USE_WORLD_TRIPLANAR, world && !spec.uv);
             let s = spec.uv_scale;
             m.set_uv1_scale(Vector3::new(s, s, s));
         }

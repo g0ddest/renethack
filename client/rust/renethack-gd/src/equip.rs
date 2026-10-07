@@ -44,6 +44,8 @@ pub struct Worn {
     held: Vec<(&'static str, Gd<Node3D>)>,
     /// The outfit's meshes some part rule governs, and the rule.
     parts: Option<Vec<(Gd<MeshInstance3D>, usize)>>,
+    /// What the things worn put on the outfit (mail, gloves, a stethoscope).
+    dressed: super::outfit::Dressed,
     /// An item used, in a hand for a few seconds more.
     in_use: Option<(Gd<Node3D>, f32, &'static str)>,
     /// Seconds more the weapon in the right hand stands upright (the other
@@ -187,6 +189,10 @@ impl Art {
             show_slot(&mut worn, hand, false);
         }
         self.show_parts(&mut worn, &gear.worn);
+        if let Some(skeleton) = worn.skeleton.clone() {
+            let shade = super::rgb(self.manifest.model_at(m.key.model).1.shade_rgb());
+            self.wear(&mut worn.dressed, &skeleton, gear, shade);
+        }
         // a role's hat, cape or shield steps aside for what is worn there
         for (slot, node) in &m.extras {
             let Some(slot) = slot else { continue };
@@ -266,6 +272,7 @@ impl Art {
                 mi.set_visible(true);
             }
         }
+        self.take_off(&mut worn.dressed);
         worn.gear = Gear::default();
         for (_, node) in &m.extras {
             let mut node = node.clone();

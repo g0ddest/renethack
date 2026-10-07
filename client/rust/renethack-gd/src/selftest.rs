@@ -38,6 +38,8 @@ mod input_ru;
 mod layouts_tests;
 #[path = "selftest_world.rs"]
 mod world_looks;
+#[path = "selftest_worn.rs"]
+mod worn_looks;
 
 use crate::dialogs::ROW_H;
 use crate::game::{Args, GameState, RenethackGame, SELFTEST_SEED, env_number};
@@ -4462,6 +4464,7 @@ impl SelfTest {
             "combat" => hero::combat(),
             "roles" => hero::roles(),
             "kits" => hero::kits(),
+            "worn" => worn_looks::worn(),
             "branches" => world_looks::branches(),
             "title" => world_looks::title(),
             "bestiary" => world_looks::bestiary(),
