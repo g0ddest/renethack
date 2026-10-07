@@ -133,6 +133,21 @@ fn a_piece_the_engine_lower_cased() {
 }
 
 #[test]
+fn a_question_the_catalog_knows_as_a_piece() {
+    // doengrave: a Sprintf into a member that getlin shows is a piece to
+    // the catalog, and without its mark the text is a "%s into %s" too
+    let t = with(&[(
+        "What do you want to burn into the %s here?",
+        r#"ru = "Что вы хотите выжечь на {1:loc}?""#,
+    )]);
+    let out = t.text("What do you want to burn into the floor here?");
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        ("Что вы хотите выжечь на полу?", Status::Translated)
+    );
+}
+
+#[test]
 fn the_death_text_in_the_hero_s_gender() {
     // topten.c formatkiller(), as the tombstone and #overview's graves show
     // it (the client sends it whole)

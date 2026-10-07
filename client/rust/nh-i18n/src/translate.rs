@@ -250,6 +250,7 @@ impl Translator {
 
     fn by_text(&self, text: &str, channel: Channel) -> Output {
         let found = self.best_match(text, channel);
+        let mut unmarked = None;
         if found
             .as_ref()
             .is_none_or(|m| !says_more_than_a_name(m.template))
@@ -261,25 +262,29 @@ impl Translator {
             if let Some(out) = self.whole_name(text) {
                 return out;
             }
-            if let Some(out) = self.without_mark(text, channel) {
-                return out;
+            match self.without_mark(text, channel) {
+                Some(out) if out.status != Status::Untranslated => return out,
+                other => unmarked = other,
             }
         }
-        match found {
-            Some(m) => self.render_or_base(&m, text, 0).unwrap_or_else(|| {
-                // no Russian for the template yet: a heading the glossary
-                // names ("Armor") still reads as a name, another template
-                // may hold it all ("x - 12 gold pieces." is "%c - %s."
-                // more than "%s gold %s.")
-                self.whole_name(text)
-                    .or_else(|| self.fallback(text, channel))
-                    .unwrap_or_else(|| {
-                        Output::english(text, Status::Untranslated, Some(m.template))
-                    })
-            }),
-            None => self
-                .padded(text, channel)
-                .unwrap_or_else(|| Output::english(text, Status::Unknown, None)),
+        let Some(m) = found else {
+            return unmarked
+                .or_else(|| self.padded(text, channel))
+                .unwrap_or_else(|| Output::english(text, Status::Unknown, None));
+        };
+        match self.render_or_base(&m, text, 0) {
+            // a reading without the mark that has no Russian hides none of
+            // this one's: "What do you want to burn into the %s here?", to
+            // the catalog only a piece, is no "%s into %s"
+            Some(out) if out.status == Status::Translated || unmarked.is_none() => out,
+            // no Russian for the template yet: a heading the glossary
+            // names ("Armor") still reads as a name, another template
+            // may hold it all ("x - 12 gold pieces." is "%c - %s."
+            // more than "%s gold %s.")
+            _ => unmarked
+                .or_else(|| self.whole_name(text))
+                .or_else(|| self.fallback(text, channel))
+                .unwrap_or_else(|| Output::english(text, Status::Untranslated, Some(m.template))),
         }
     }
 
