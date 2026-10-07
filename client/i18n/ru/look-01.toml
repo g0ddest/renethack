@@ -1,0 +1,294 @@
+# R6: pager.c's line about a map symbol (`;`, `/`), which the translator reads part by
+# part (nh-i18n src/translate/look.rs): "d        a dog or other canine (tame little dog
+# called Rex) [seen: telepathy]". The lexicon names what a symbol can be and what is
+# there; here is the rest.
+#
+# What a symbol can be, where the line's own format names it. The reader takes the
+# Russian after the eight spaces: keep them.
+
+[b4705b938ae3]
+en = "%s        a trap"
+ru = "{1}        ловушка"
+
+[4c847542b468]
+en = "%s        can be many things"
+ru = "{1}        может означать многое"
+
+[c7ec16d2b456]
+en = "%s        the interior of a monster"
+ru = "{1}        нутро монстра"
+
+[eec403dab592]
+en = "%s        unexplored"
+ru = "{1}        неисследованное место"
+
+[2510c533e9c1]
+en = "%s        land"
+ru = "{1}        суша"
+
+[e5c327a49624]
+en = "%s        unreconnoitered"
+ru = "{1}        неразведанное место"
+
+[aeadc34873b5]
+en = "%s        unknown creature causing you worry"
+ru = "{1}        неизвестное существо, которое внушает вам беспокойство"
+
+[9a623e54c8af]
+en = "%s        unknown creature causing you concern"
+ru = "{1}        неизвестное существо, которое внушает вам озабоченность"
+
+[2d23f8614fad]
+en = "%s        unknown creature causing you anxiety"
+ru = "{1}        неизвестное существо, которое внушает вам тревогу"
+
+[c71775fef101]
+en = "%s        unknown creature causing you disquiet"
+ru = "{1}        неизвестное существо, которое внушает вам смятение"
+
+[3be57b9172c5]
+en = "%s        unknown creature causing you alarm"
+ru = "{1}        неизвестное существо, которое внушает вам страх"
+
+[2a0c7baf5e9c]
+en = "%s        unknown creature causing you dread"
+ru = "{1}        неизвестное существо, которое внушает вам ужас"
+
+# What is there, when no name alone says it; what pager.c adds after a name; how the
+# hero sees it.
+
+[c8b633c5614a]
+en = "%s altar"
+ru = "{1:m} алтарь"
+
+[ec0133bc082d]
+en = "%s high altar"
+ru = "{1:m} верховный алтарь"
+
+[1d7373bf5e19]
+en = "aligned altar"
+ru = "алтарь неведомого мировоззрения"
+
+[b73316549932]
+en = "aligned high altar"
+ru = "верховный алтарь неведомого мировоззрения"
+
+[74844baca69e]
+en = "interior of %s"
+ru = "нутро {1:gen}"
+
+[39c7373eec09]
+en = "tail of a %s"
+ru = "хвост {1:gen}"
+
+[87fb8118879c]
+en = "tail of %s"
+ru = "хвост {1:gen}"
+
+[cdf21c654e7c]
+en = "tail of a tame %s"
+ru = "хвост ручного {1:gen}"
+
+[5190d9be7e59]
+en = "tail of tame %s"
+ru = "хвост ручного {1:gen}"
+
+[01ca94c8fd1e]
+en = "tail of a peaceful %s"
+ru = "хвост мирного {1:gen}"
+
+[4ec4b19f95b4]
+en = "tail of peaceful %s"
+ru = "хвост мирного {1:gen}"
+
+[ab89a4b4954d]
+en = "%s %s called %s"
+ru = "{1:hero} {2:hero} по имени {3}"
+
+[c282e8f96a50]
+en = "invisible %s %s called %s"
+ru = "{hero:gender|невидимый|невидимая} {1:hero} {2:hero} по имени {3}"
+
+[2fd728f452cc]
+en = "%s called %s"
+ru = "{1} по имени {2}"
+
+[fa0dcfed9bb1]
+en = "invisible %s called %s"
+ru = "{1:gender|невидимый|невидимая|невидимое|невидимые} {1} по имени {2}"
+
+[7feba47cd937]
+en = ", asleep"
+ru = ", спит"
+
+[04520d25c322]
+en = ", meditating"
+ru = ", медитирует"
+
+[fabebfc3d204]
+en = ", engulfing you"
+ru = ", поглощает вас"
+
+[94f85c1abaa5]
+en = ", swallowing you"
+ru = ", глотает вас"
+
+[445c8e1b563c]
+en = ", holding you"
+ru = ", держит вас"
+
+[e2c3a10922da]
+en = ", being held"
+ru = ", в вашей хватке"
+
+[6809575950c1]
+en = ", can't move (paralyzed or sleeping or busy)"
+ru = ", не двигается (паралич, сон или занятость)"
+
+[b6656f18e2cf]
+en = ", leashed to you"
+ru = ", на вашем поводке"
+
+[615f37b09417]
+en = ", trapped in %s"
+ru = ", в ловушке ({1})"
+
+[37cbeff1e476]
+en = ", in a cloud of vapor"
+ru = ", в облаке пара"
+
+[783ab534cfcc]
+en = ", in a cloud of poison gas"
+ru = ", в облаке ядовитого газа"
+
+[4468834c38e8]
+en = ", mounted on %s"
+ru = ", верхом на {1:loc}"
+
+[90725f517f5c]
+en = ", chained to %s"
+ru = ", на цепи с {1:ins}"
+
+[af9871f1fc2b]
+en = ", hiding"
+ru = ", прячется"
+
+[94db57dab518]
+en = " (buried)"
+ru = " (в земле)"
+
+[25861ca47d72]
+en = " stuck in a tree"
+ru = " (на дереве)"
+
+[6594593ce131]
+en = " dangling in a tree"
+ru = " (висит на дереве)"
+
+[f42c02232af7]
+en = " embedded in stone"
+ru = " (в толще камня)"
+
+[678427e131ee]
+en = " embedded in a wall"
+ru = " (в стене)"
+
+[596f4a02ac2e]
+en = " embedded in a door"
+ru = " (в двери)"
+
+[c7988926950b]
+en = " in water"
+ru = " (в воде)"
+
+[b13ed70d57c3]
+en = " in molten lava"
+ru = " (в расплавленной лаве)"
+
+[4a6ec1d8322a]
+en = " with remembered text: \"%s\""
+ru = " с запомненным текстом: «{1}»"
+
+[d42b1ed50790]
+en = " with headstone reading: \"%s\""
+ru = " с надписью на надгробии: «{1}»"
+
+[2d9cc231b263]
+en = " that you haven't read"
+ru = ", которую вы не читали"
+
+[20abef464ea5]
+en = " whose headstone you haven't read"
+ru = " с непрочитанным надгробием"
+
+[8d215a5e4589]
+en = " co-located with a boulder"
+ru = " (на одной клетке с валуном)"
+
+[33f176dc80b6]
+en = " [seen: %s]"
+ru = " [видно: {1}]"
+
+[989333794de2]
+en = "normal vision"
+ru = "обычное зрение"
+
+[be0b518ee4af]
+en = "see invisible"
+ru = "видение невидимого"
+
+[41eee2cc2a8c]
+en = "infravision"
+ru = "инфравидение"
+
+[dec7356b342f]
+en = "telepathy"
+ru = "телепатия"
+
+[b59b5c5c16fe]
+en = "astral vision"
+ru = "астральное зрение"
+
+[c8c00a72d90e]
+en = "monster detection"
+ru = "обнаружение монстров"
+
+[a0fe135bc9ea]
+en = "paranoid delusion"
+ru = "параноидальный бред"
+
+[e8733efade98]
+en = "warned of %s"
+ru = "чутьё на {1:acc}"
+
+[d4cbb2d5acce]
+en = "remembered, unseen, creature"
+ru = "запомненное невидимое существо"
+
+[d3ddf59b2626]
+en = "unexplored area"
+ru = "неисследованная область"
+
+[2a5fc4195a36]
+en = "blocked staircase down"
+ru = "перекрытая лестница вниз"
+
+[35b946259c53]
+en = "cloudy area"
+ru = "облачная область"
+
+[d54fe6588962]
+en = "fog/vapor cloud"
+ru = "облако тумана или пара"
+
+[07d0d1a2eb54]
+en = " in murky water"
+ru = " в мутной воде"
+
+[09d8da28221a]
+en = " on the ceiling"
+ru = " на потолке"
+
+[2a3d6728437a]
+en = " on the %s"
+ru = " на {1:loc}"

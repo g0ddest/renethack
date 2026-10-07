@@ -23,6 +23,8 @@ use crate::phrase::{NameKind, Names, Phrase};
 use crate::russian::{Russian, Translation};
 use crate::template::{Part, Placeholder, RuTemplate, Target, Value, capitalize};
 
+mod look;
+
 /// How deep a text made of texts is followed.
 const MAX_NESTING: usize = 3;
 /// A template with fewer letters of its own than this says almost nothing
@@ -249,6 +251,12 @@ impl Translator {
     }
 
     fn by_text(&self, text: &str, channel: Channel) -> Output {
+        // pager.c's line about a map symbol is no template's
+        if channel == Channel::Message
+            && let Some(out) = self.look(text)
+        {
+            return out;
+        }
         let found = self.best_match(text, channel);
         let mut unmarked = None;
         if found
