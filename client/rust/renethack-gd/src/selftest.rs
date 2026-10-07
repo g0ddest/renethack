@@ -10,7 +10,7 @@
 //! RENETHACK_DUMP_MESSAGES=<file> appends every shown text to the file, for
 //! nh-i18n's i18n-coverage).
 
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Mutex, Once};
@@ -3147,6 +3147,14 @@ const SOAK_MUST_DESCEND: u32 = 1000;
 const SOAK_STALL: Duration = Duration::from_secs(30);
 /// With `--screenshots`, the soak saves the screen every this many answers.
 const SOAK_SHOT_EVERY: u32 = 60;
+/// And the first dialogs of each kind as the player meets them, this many
+/// of a kind, each question once.
+const SOAK_DIALOG_SHOTS: usize = 6;
+/// A screenshot is taken once the screen has held still this many frames
+/// (a dialog is laid out at the end of the frame it opens in), or has not
+/// for this many (two and a half seconds).
+const SOAK_SHOT_STILL: u32 = 6;
+const SOAK_SHOT_WAIT: u32 = 150;
 /// The scene may grow this much over the first level change's node count
 /// (bigger levels, more kinds of models in the pools), and no more.
 const NODE_GROWTH: f64 = 2.0;
@@ -3408,6 +3416,72 @@ fn check_dialog(g: &RenethackGame, id: u64, prompt: &Prompt) -> Result<(), Strin
     }
 }
 
+/// What request `id` puts before the player: a dialog ("menu", "choice",
+/// "text", "extcmd", "show", "message") or the inventory panel answering
+/// it ("select", "menu"); None for a request answered on the map.
+fn shown_for(g: &RenethackGame, id: u64) -> Option<&'static str> {
+    let ui = g.ui.as_ref()?;
+    if ui.inventory.request() == Some(id) {
+        return ui.inventory.mode_name();
+    }
+    ui.dialogs
+        .kind_name()
+        .filter(|_| ui.dialogs.open_req() == Some(id))
+}
+
+/// What a request asks, without what changes from one asking to the next
+/// (the letters to choose from).
+fn topic(p: &Prompt) -> String {
+    let text = match p {
+        Prompt::Choice { query, .. }
+        | Prompt::FreeKey { query, .. }
+        | Prompt::Text { query, .. } => query.as_str(),
+        Prompt::Menu { title, .. } => title.as_deref().unwrap_or(""),
+        Prompt::Show { title, lines } => title
+            .as_deref()
+            .or_else(|| lines.iter().map(|l| l.text.trim()).find(|t| !t.is_empty()))
+            .unwrap_or(""),
+        Prompt::MessageMenu { mesg, .. } => mesg.as_str(),
+        _ => "",
+    };
+    text.split('[').next().unwrap_or(text).trim().to_string()
+}
+
+/// The map holds still: the camera has caught up, the level is drawn and
+/// come up out of black, and nobody is between two cells.
+fn map_still(g: &RenethackGame) -> bool {
+    g.ui.as_ref()
+        .is_some_and(|ui| ui.map.is_settled() && ui.map.steps_under_way() == (false, 0))
+}
+
+/// A screenshot the soak owes.
+struct DueShot {
+    path: PathBuf,
+    /// Frames it has waited, all told.
+    waited: u32,
+    /// Frames the screen has held still, and the request it showed all
+    /// the while (None: no game's).
+    still: u32,
+    shown: Option<(u64, u64)>,
+}
+
+impl DueShot {
+    fn new(path: PathBuf) -> DueShot {
+        DueShot {
+            path,
+            waited: 0,
+            still: 0,
+            shown: None,
+        }
+    }
+}
+
+/// A screenshot is taken now: the screen has held still long enough, or
+/// has not for too long.
+fn shot_ready(waited: u32, still: u32) -> bool {
+    still >= SOAK_SHOT_STILL || waited >= SOAK_SHOT_WAIT
+}
+
 /// A short account of a request for the trace.
 fn brief(p: &Prompt) -> String {
     match p {
@@ -3477,15 +3551,17 @@ pub struct Soak {
     seen: u64,
     /// Screenshots of the play now and then (`--screenshots`).
     shots: Option<PathBuf>,
+    /// A screenshot due once the screen holds still: the soak answers
+    /// nothing meanwhile.
+    shot_due: Option<DueShot>,
+    /// What the dialogs pictured so far asked, by kind.
+    dialog_shots: HashMap<&'static str, Vec<String>>,
     /// Nodes in the scene tree at the first level change, and the most
     /// seen at any later one (model instances are pooled, cells reused).
     nodes: Option<(f64, f64)>,
     /// The request a click or F5 went to: when it started no order, the
     /// request is still open and is decided again.
     maybe_refused: Option<(u64, u64)>,
-    /// The request whose answer a picture goes with, seen in the frame it
-    /// opened: it is answered and pictured in the next one.
-    shot_waits: Option<(u64, u64)>,
     /// RENETHACK_DUMP_MESSAGES=<file>: every text shown (messages,
     /// questions, menus, text windows) appended as JSON lines, the corpus
     /// of the translation's coverage report.
@@ -3522,9 +3598,10 @@ impl Soak {
             verbose: std::env::var_os("RENETHACK_SOAK_TRACE").is_some(),
             seen: 0,
             shots: None,
+            shot_due: None,
+            dialog_shots: HashMap::new(),
             nodes: None,
             maybe_refused: None,
-            shot_waits: None,
             dump: std::env::var_os("RENETHACK_DUMP_MESSAGES").and_then(|p| {
                 std::fs::File::options()
                     .create(true)
@@ -3674,6 +3751,9 @@ impl Soak {
             let what = g.failure.clone().unwrap_or_default();
             return Err(format!("the error screen came up: {what}"));
         }
+        if self.shoot_when_still(g)? {
+            return Ok(false);
+        }
         if self.progress.elapsed() > SOAK_STALL {
             let what = match &g.pending {
                 Some((id, p)) => format!("request {id} ({}) is not answered", brief(p)),
@@ -3727,6 +3807,49 @@ impl Soak {
             Some(other) => Err(format!("unexpected screen {other:?}")),
             None => self.play(g),
         }
+    }
+
+    /// The screenshot due, taken once the screen holds still, as a player
+    /// sees it who looks before they act: taken with the answer, it showed
+    /// the camera on its way and the hero between two cells. Ok(true)
+    /// while it waits.
+    fn shoot_when_still(&mut self, g: &RenethackGame) -> Result<bool, String> {
+        let Some(due) = self.shot_due.as_mut() else {
+            return Ok(false);
+        };
+        let playing = g.state == GameState::Playing;
+        // an order walks on by itself: the picture is of where it ends
+        let walking = playing && g.driver.is_active();
+        // in a game the engine has taken the last answer and asks again
+        // (or the answer was one it never hears of: a panel's key, a
+        // click that starts nothing); the other screens do not move
+        let shown = g
+            .pending
+            .as_ref()
+            .filter(|_| playing)
+            .map(|(id, _)| (g.session_serial, *id));
+        let still = match shown {
+            _ if !playing => true,
+            Some(req) => (req > self.last_req || self.maybe_refused == Some(req)) && map_still(g),
+            None => false,
+        };
+        if still && !walking && due.shown == shown {
+            due.still += 1;
+        } else {
+            due.still = u32::from(still && !walking);
+            due.shown = shown;
+        }
+        if !walking {
+            due.waited += 1;
+        }
+        if !shot_ready(due.waited, due.still) {
+            self.progress = Instant::now();
+            return Ok(true);
+        }
+        save_shot(g, &due.path)?;
+        godot_print!("selftest: screenshot {}", due.path.display());
+        self.shot_due = None;
+        Ok(false)
     }
 
     fn enter(&mut self, screen: &'static str) {
@@ -3813,14 +3936,19 @@ impl Soak {
         if req <= self.last_req && self.maybe_refused != Some(req) {
             return Ok(false);
         }
-        // a picture shows a frame the player saw: the frame a dialog opens
-        // in has not laid it out yet (Godot sorts its containers at the
-        // frame's end), and a picture forced then had the palette's rows
-        // spilling over the HUD; the request waits a frame
-        let pictured = self.shots.is_some() && (self.answered + 1).is_multiple_of(SOAK_SHOT_EVERY);
-        if pictured && self.shot_waits != Some(req) {
-            self.shot_waits = Some(req);
-            return Ok(false);
+        // with screenshots, the first dialogs of each kind as the player
+        // meets them, before the answer
+        if let Some(dir) = &self.shots
+            && let Some(kind) = shown_for(g, id)
+        {
+            let asks = topic(&prompt);
+            let shot = self.dialog_shots.entry(kind).or_default();
+            if shot.len() < SOAK_DIALOG_SHOTS && !shot.contains(&asks) {
+                shot.push(asks);
+                let name = format!("dlg-{kind}-{}-{:05}.png", self.seed, self.answered);
+                self.shot_due = Some(DueShot::new(dir.join(name)));
+                return Ok(false);
+            }
         }
         if req <= self.last_req {
             self.maybe_refused = None;
@@ -3893,8 +4021,9 @@ impl Soak {
         if let Some(dir) = &self.shots
             && self.answered.is_multiple_of(SOAK_SHOT_EVERY)
         {
+            // once the answer has played out
             let path = dir.join(format!("soak-{}-{:05}.png", self.seed, self.answered));
-            save_shot(g, &path)?;
+            self.shot_due = Some(DueShot::new(path));
         }
         if self.answered.is_multiple_of(100) {
             godot_print!(
@@ -4974,6 +5103,34 @@ mod tests {
         assert!(tells_death(&summary(&["You drown."])));
         assert!(!tells_death(&summary(&["You quit.", "killed by quitting"])));
         assert!(!tells_death(&summary(&["Be seeing you..."])));
+    }
+
+    #[test]
+    fn soak_pictures_a_question_once_whatever_letters_it_lists() {
+        let getobj = |query: &str| Prompt::FreeKey {
+            query: query.into(),
+            directions: false,
+        };
+        assert_eq!(
+            topic(&getobj("What do you want to wield? [- ab or ?*]")),
+            topic(&getobj("What do you want to wield? [- a-d or ?*]"))
+        );
+        assert_ne!(
+            topic(&getobj("What do you want to wield? [- ab or ?*]")),
+            topic(&getobj("What do you want to eat? [c or ?*]"))
+        );
+        assert_eq!(topic(&Prompt::ExtCmd), "");
+    }
+
+    #[test]
+    fn soak_shoots_a_screen_that_holds_still_or_has_not_for_too_long() {
+        // a screen that holds still has its frames to be laid out first
+        assert!(!shot_ready(1, 1));
+        assert!(!shot_ready(40, SOAK_SHOT_STILL - 1));
+        assert!(shot_ready(40, SOAK_SHOT_STILL));
+        // one that moves is waited for, but not for ever
+        assert!(!shot_ready(SOAK_SHOT_WAIT - 1, 0));
+        assert!(shot_ready(SOAK_SHOT_WAIT, 0));
     }
 
     #[test]

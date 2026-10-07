@@ -149,8 +149,13 @@ panel's `D` menu; `bar` binds the food ration to a slot, follows it through
 behind the title menu: drawn before the start-up veil lifts, the hero in
 their gear, both ends of the camera's sway, put away by a game and laid
 again on the title after it. With `--screenshots` the soak saves the screen
-every 60 answers. The scenarios take
-screenshots under a display:
+every 60 answers (`soak-<seed>-<answers>.png`) and the first dialogs of each
+kind as the player meets them, each question once
+(`dlg-<kind>-<seed>-<answers>.png`). A picture waits for the screen to hold
+still, as a player sees it who looks before they act: the answer played
+out, the camera on the hero, nobody between two cells, an order walked to
+its end (two and a half seconds at most; without `--screenshots` the soak
+waits for nothing). The scenarios take screenshots under a display:
 
     cd client/godot
     godot --path . -- --selftest=smoke --screenshots=/tmp/shots --playground=/tmp/pg
