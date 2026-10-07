@@ -10,7 +10,7 @@ use nh_protocol::{Catalog, InvItem, ObjectTile, Slot};
 use nh_world::Pack;
 use serde::Deserialize;
 
-use crate::{ArtManifest, Level, Skin, Tint, appearance_matches, has_words, hex};
+use crate::{ArtManifest, Level, Look, Skin, Tint, appearance_matches, has_words, hex};
 
 /// A transform in a parent's space: metres, degrees (Euler YXZ).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Deserialize)]
@@ -291,6 +291,11 @@ pub struct Gear {
     /// Armour slots worn: "body", "cloak", "helmet", "gloves", "boots",
     /// "shirt".
     pub worn: Vec<&'static str>,
+    /// What is worn round the neck (a rule of `worn.neck`), and how the body
+    /// armour and the gloves look (see `WornRules`).
+    pub neck: Option<usize>,
+    pub armour: Option<Look>,
+    pub gloves: Option<Look>,
     pub idle: Option<String>,
     pub attack: Option<String>,
 }
@@ -382,7 +387,8 @@ impl ArtManifest {
 
     /// What the hero shows of the pack: weapon, shield, a lit light, the
     /// alternate weapon and the quiver on the back, a helmet, and the
-    /// armour slots worn; the idle and attack clips they call for.
+    /// armour slots worn and how they look; the idle and attack clips they
+    /// call for.
     pub fn gear(&self, pack: &Pack, catalog: &Catalog) -> Gear {
         let tile = |i: &InvItem| catalog.object_tiles.iter().find(|t| t.tile == i.tile);
         let held = |i: Option<&InvItem>| i.and_then(|i| self.held(tile(i)?));
@@ -412,6 +418,7 @@ impl ArtManifest {
         {
             g.quiver = self.held_named(name, t, Level::Class);
         }
+        (g.neck, g.armour, g.gloves) = self.worn_looks(pack, catalog);
         for (slot, name) in [
             (Slot::Body, "body"),
             (Slot::Cloak, "cloak"),

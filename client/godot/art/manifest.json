@@ -57,7 +57,10 @@
   "glow": {"color": "#ffffff", "emission": "#ffffff", "emission_energy": 2.5},
   "clay": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 2.0, "color": "#a06a44"},
   "paper": {"color": "#e4dcc4", "roughness": 0.95},
-  "straw": {"textures": "cc0/polyhaven/textures/old_planks_02/old_planks_02", "uv_scale": 3.0, "color": "#d8b060"}
+  "straw": {"textures": "cc0/polyhaven/textures/old_planks_02/old_planks_02", "uv_scale": 3.0, "color": "#d8b060"},
+  "chain_mail": {"textures": "cc0/ambientcg/Chainmail004/Chainmail004", "uv": true, "uv_scale": 16.0, "metallic": 0.3},
+  "plate_mail": {"textures": "cc0/ambientcg/Metal038/Metal038", "uv": true, "uv_scale": 3.0, "metallic": 0.3},
+  "glove_leather": {"color": "#ffffff", "roughness": 0.6}
  },
  "models": {
   "human_male": {"extra_rigs": ["ual2"], "scene": "cc0/quaternius/outfits/Outfits/Male_Peasant.gltf", "size": 1.6, "rig": "ual", "head": "human_m", "shade": "#a0968c",
@@ -229,6 +232,9 @@
   "chain": {"scene": "cc0/quaternius/props/Chain_Coil.gltf", "shade": "#b4aca2", "size": 1.07, "target": 0.6},
   "carrot": {"scene": "cc0/quaternius/props/Carrot.gltf", "shade": "#b4aca2", "size": 0.566, "rot": [0, 0, 90], "lift": 0.114, "target": 0.42},
   "rope": {"scene": "cc0/quaternius/props/Rope_1.gltf", "shade": "#b4aca2", "size": 0.61, "lift": 0.027, "target": 0.5},
+  "stethoscope": {"scene": "cc0/made/Stethoscope.glb", "size": 0.264, "target": 0.45},
+  "stethoscope_man": {"scene": "cc0/made/StethoscopeMan.glb", "size": 0.35},
+  "stethoscope_woman": {"scene": "cc0/made/StethoscopeWoman.glb", "size": 0.35},
   "barrel": {"scene": "cc0/quaternius/props/Barrel.gltf", "shade": "#b4aca2", "size": 0.9, "target": 0.45},
   "plate": {"scene": "cc0/quaternius/props/Table_Plate.gltf", "shade": "#b4aca2", "size": 0.34, "lift": 0.001, "target": 0.4},
 
@@ -747,7 +753,7 @@
    {"class": "(", "words": ["drum"], "art": {"model": "barrel"}},
    {"class": "(", "words": ["bell", "silver bell"], "art": {"model": "bell"}},
    {"class": "(", "words": ["tin opener"], "art": {"model": "key"}},
-   {"class": "(", "words": ["stethoscope"], "art": {"model": "rope", "size": 0.35}},
+   {"class": "(", "words": ["stethoscope"], "art": {"model": "stethoscope", "size": 0.45}},
    {"class": "(", "words": ["tinning kit", "can of grease"], "art": {"model": "bottle"}},
    {"class": "(", "words": ["figurine"], "art": {"model": "statue", "size": 0.32}},
    {"class": "(", "words": ["beartrap", "land mine"], "art": {"model": "chain", "size": 0.5}},
@@ -987,5 +993,37 @@
   "Oracle": {"female": true, "extras": [{"model": "crystal", "bone": "spine_03", "pos": [0.0, 0.08, 0.3], "rot": [0, 0, 0], "size": 0.13, "tint": "#5aa8ff"}],
    "variants": {"major": [{"model": "crystal", "bone": "spine_03", "pos": [0.0, 0.08, 0.3], "rot": [0, 0, 0], "size": 0.15, "tint": "#ffc040"}, {"model": "helm_halo", "bone": "Head", "pos": [0.0, 0.0, 0.0], "rot": [0, 0, 0], "size": 0.42, "tint": "#ffc850"}]}},
   "watchman": {"extras": [{"model": "pole_halberd", "bone": "spine_03", "pos": [-0.34, -0.5, 0.08], "rot": [-90.0, 0.0, 0], "size": 1.8}]}
+ },
+ "worn": {
+  "neck": [
+   {"class": "(", "words": ["stethoscope"], "models": ["stethoscope_man", "stethoscope_woman"]}
+  ],
+  "armour": [
+   {"words": ["gray dragon"], "material": "plate_mail", "tint": "#8c9098", "parts": ["_Body", "_Arms", "_Acc_Pauldron", "_Acc_Pauldrons"]},
+   {"words": ["silver dragon"], "material": "plate_mail", "tint": "#dce2ec", "parts": ["_Body", "_Arms", "_Acc_Pauldron", "_Acc_Pauldrons"]},
+   {"words": ["gold dragon"], "material": "plate_mail", "tint": "#d8a840", "parts": ["_Body", "_Arms", "_Acc_Pauldron", "_Acc_Pauldrons"]},
+   {"words": ["red dragon"], "material": "plate_mail", "tint": "#a8301e", "parts": ["_Body", "_Arms", "_Acc_Pauldron", "_Acc_Pauldrons"]},
+   {"words": ["white dragon"], "material": "plate_mail", "tint": "#e8eaee", "parts": ["_Body", "_Arms", "_Acc_Pauldron", "_Acc_Pauldrons"]},
+   {"words": ["orange dragon"], "material": "plate_mail", "tint": "#d06a20", "parts": ["_Body", "_Arms", "_Acc_Pauldron", "_Acc_Pauldrons"]},
+   {"words": ["black dragon"], "material": "plate_mail", "tint": "#3c3842", "parts": ["_Body", "_Arms", "_Acc_Pauldron", "_Acc_Pauldrons"]},
+   {"words": ["blue dragon"], "material": "plate_mail", "tint": "#3a58b0", "parts": ["_Body", "_Arms", "_Acc_Pauldron", "_Acc_Pauldrons"]},
+   {"words": ["green dragon"], "material": "plate_mail", "tint": "#3a8a40", "parts": ["_Body", "_Arms", "_Acc_Pauldron", "_Acc_Pauldrons"]},
+   {"words": ["yellow dragon"], "material": "plate_mail", "tint": "#d8c040", "parts": ["_Body", "_Arms", "_Acc_Pauldron", "_Acc_Pauldrons"]},
+   {"exact": ["plate mail", "banded mail"], "material": "plate_mail", "tint": "#d8dce4", "parts": ["_Body", "_Arms", "_Acc_Pauldron", "_Acc_Pauldrons"]},
+   {"exact": ["crystal plate mail"], "material": "plate_mail", "tint": "#d8f0ff", "parts": ["_Body", "_Arms", "_Acc_Pauldron", "_Acc_Pauldrons"]},
+   {"exact": ["bronze plate mail"], "material": "plate_mail", "tint": "#c88a48", "parts": ["_Body", "_Arms", "_Acc_Pauldron", "_Acc_Pauldrons"]},
+   {"exact": ["splint mail"], "material": "plate_mail", "tint": "#7c7468", "parts": ["_Body", "_Arms", "_Acc_Pauldron", "_Acc_Pauldrons"]},
+   {"exact": ["scale mail"], "material": "plate_mail", "tint": "#a8a090", "parts": ["_Body", "_Arms", "_Acc_Pauldron", "_Acc_Pauldrons"]},
+   {"words": ["mithril-coat"], "material": "chain_mail", "tint": "#eef4ff", "parts": ["_Body", "_Arms"]},
+   {"exact": ["crude chain mail", "crude ring mail"], "material": "chain_mail", "tint": "#8a7e70", "parts": ["_Body", "_Arms"]},
+   {"exact": ["chain mail", "ring mail"], "material": "chain_mail", "tint": "#c8ccd4", "parts": ["_Body", "_Arms"]}
+  ],
+  "gloves": [
+   {"exact": ["old gloves"], "material": "glove_leather", "tint": "#6a4628"},
+   {"exact": ["padded gloves"], "material": "glove_leather", "tint": "#8c7448"},
+   {"exact": ["riding gloves"], "material": "glove_leather", "tint": "#33221a"},
+   {"exact": ["fencing gloves"], "material": "glove_leather", "tint": "#d2cabb"},
+   {"material": "glove_leather", "tint": "#5c4028"}
+  ]
  }
 }

@@ -19,10 +19,11 @@ the recipe in `sources.json` and checks the downloads against `art.lock.json`.
 | `cc0/quaternius/props/` | Fantasy Props MegaKit (Standard), a selection | Quaternius | https://quaternius.itch.io/fantasy-props-megakit |
 | `cc0/quaternius/monsters/Spider.glb`, `Snake.glb`, `Bat.glb`, `Dragon.glb`, `Wasp.glb` | Animated monsters: spider, snake, bat, dragon, wasp | Quaternius | fetched from Poly Pizza: https://poly.pizza/m/yRYJiAJyiM, https://poly.pizza/m/x9x0viZs8V, https://poly.pizza/m/hNO9XvjlKa, https://poly.pizza/m/VBvzjFIYws, https://poly.pizza/m/3aQgc75sUR |
 | `cc0/quaternius/animals/Pug.fbx`, `Pig.fbx`, `Sheep.fbx` | Farm Animals Animated: pug, pig, sheep | Quaternius | https://quaternius.itch.io/lowpoly-animated-animals |
+| `cc0/made/Stethoscope.glb`, `StethoscopeMan.glb`, `StethoscopeWoman.glb` | A stethoscope (rubber tube, binaural, chest piece) built from curves: coiled on the floor, and round the neck of the peasant outfits above, fitted to them and skinned to their skeletons | this project | made here by `tools/blender/stethoscope.py` |
 | `cc0/made/Centaur.glb`, `CentaurFemale.glb` | Centaurs put together in Blender (`tools/blender/centaur.py`): the horse above without its neck and head, a base character's upper body (posed by the Universal Animation Library's idle) in their place | Quaternius | made here from the files above |
 | `cc0/sigilsvault/dungeon/` | Modular Dungeon Kit v1.0: pieces and props (GLB) | Kevin Barany (SigilsVault) | https://sigilsvault.itch.io/modular-dungeon-kit-v10 |
 | `cc0/unity-labs/flipbooks/` | VFX flipbooks: Flame02, Flame03, FireBall01–04, WispySmoke01, CandleSmoke01, Explosion02HD | Unity Technologies (Unity Labs Paris) | https://unity.com/blog/engine-platform/free-vfx-image-sequences-flipbooks |
-| `cc0/ambientcg/` | Lava003, Rock035, Rock058 (1K, maps repacked) | ambientCG (Lennart Demes) | https://ambientcg.com |
+| `cc0/ambientcg/` | Lava003, Rock035, Rock058, Chainmail004, Metal038 (1K, maps repacked) | ambientCG (Lennart Demes) | https://ambientcg.com |
 | `cc0/texturecan/` | Volcanic Lava Flow (ground_0027), Icy Rock (ground_0031) (1K, maps repacked) | TextureCan | https://www.texturecan.com (CC0: https://www.texturecan.com/terms/) |
 | `cc0/binbun/` | Hit FX, Explosion FX and Flame FX, the free versions (Godot 4 shaders, scripts and effect scenes; their `res://` paths rewritten to this folder) | Binbun3D | https://binbun3d.itch.io |
 | `cc0/rpicster/` | Godot particle and VFX textures (256 px, alpha) | Raffaele Picca | https://github.com/RPicster/Godot-particle-and-vfx-textures |
@@ -34,7 +35,9 @@ the recipe in `sources.json` and checks the downloads against `art.lock.json`.
 Textures larger than 1024 px (512 px for the SigilsVault kit) were scaled
 down and re-encoded, and the flipbooks were converted from TGA to PNG at full
 size; ambientCG and TextureCan maps were repacked as albedo, OpenGL normal,
-AO/roughness/metal and emission; nothing else was changed.
+AO/roughness/metal and emission, and the armours' metals (Chainmail004,
+Metal038) were given a brighter albedo and more roughness (the recipe's
+`gain`: a true metal is black in a dim dungeon); nothing else was changed.
 
 Godot writes an `.import` file next to every asset when it imports the
 project (committed, as usual for Godot projects: they hold the import

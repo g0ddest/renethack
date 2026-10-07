@@ -22,8 +22,10 @@ use nh_world::Terrain;
 use serde::Deserialize;
 
 mod held;
+mod worn;
 
 pub use held::*;
+pub use worn::*;
 
 /// Where the manifest lives, relative to the Godot project.
 pub const MANIFEST_PATH: &str = "art/manifest.json";
@@ -343,9 +345,15 @@ pub struct MaterialSpec {
     /// Albedo colour ("#rrggbb"), multiplied with the texture.
     #[serde(default)]
     pub color: Option<String>,
-    /// World-space texture repeats per metre (triplanar).
+    /// Texture repeats per metre (triplanar), or per unit of the mesh's
+    /// own UVs with `uv`.
     #[serde(default = "one")]
     pub uv_scale: f32,
+    /// By the mesh's own UVs, not triplanar: a pattern that bends with a
+    /// body (chain mail over an outfit; its UVs are about as dense
+    /// everywhere).
+    #[serde(default)]
+    pub uv: bool,
     #[serde(default)]
     pub roughness: Option<f32>,
     #[serde(default)]
@@ -551,6 +559,8 @@ struct RawManifest {
     /// By monster name.
     #[serde(default)]
     portraits: BTreeMap<String, PortraitSpec>,
+    #[serde(default)]
+    worn: WornRules,
 }
 
 /// How specific the art found is (most specific first).
@@ -632,6 +642,7 @@ pub struct ArtManifest {
     held_models: Vec<(String, HeldSpec)>,
     heads: BTreeMap<String, HeadSpec>,
     portraits: BTreeMap<String, PortraitSpec>,
+    worn: WornRules,
 }
 
 /// "#rrggbb" as linear-ish 0..1 components (the client treats them as sRGB).
@@ -807,6 +818,10 @@ impl ArtManifest {
             raw.held
                 .check(|m| model(m).is_some(), |l| raw.libraries.contains_key(l)),
         );
+        errors.extend(raw.worn.check(
+            |m| model(m).is_some_and(|i| models[i].1.scene.is_some()),
+            |m| mat(m).is_some(),
+        ));
         for (name, p) in &raw.portraits {
             for e in p.extras.iter().chain(p.variants.values().flatten()) {
                 if model(&e.model).is_none() {
@@ -842,6 +857,7 @@ impl ArtManifest {
             heads: raw.heads,
             held: raw.held,
             portraits: raw.portraits,
+            worn: raw.worn,
         })
     }
 
@@ -1596,6 +1612,93 @@ mod tests {
         assert!(!rule("_Arms_Bracer").shown(&g.worn));
         assert!(!rule("_Head_Hood").shown(&g.worn));
         assert!(rule("_Head_Hood").shown(&[]));
+    }
+
+    #[test]
+    fn metal_body_armour_and_gloves_look_by_their_appearance() {
+        use nh_protocol::Slot;
+        let (art, cat) = (manifest(), catalog());
+        let worn = |items: Vec<nh_protocol::InvItem>| {
+            let g = art.gear(&pack(items, false), &cat);
+            (g.armour, g.gloves)
+        };
+        let rules = art.worn_rules();
+        let material = |l: Option<Look>, of: &[WornLook]| {
+            l.and_then(|l| of[l.rule].material.as_deref().map(str::to_string))
+        };
+        // a Knight: ring mail is chain mail, the old gloves are leather
+        let (armour, gloves) = worn(vec![
+            inv(&cat, 'a', "[", "ring mail", vec![Slot::Body], false),
+            inv(&cat, 'b', "[", "old gloves", vec![Slot::Gloves], false),
+        ]);
+        assert_eq!(
+            material(armour, &rules.armour).as_deref(),
+            Some("chain_mail")
+        );
+        assert_eq!(
+            material(gloves, &rules.gloves).as_deref(),
+            Some("glove_leather")
+        );
+        // carried, not worn: nothing
+        let (armour, gloves) = worn(vec![
+            inv(&cat, 'a', "[", "ring mail", vec![], false),
+            inv(&cat, 'b', "[", "old gloves", vec![], false),
+        ]);
+        assert_eq!((armour, gloves), (None, None));
+        // every metal body armour has its look, leather keeps the outfit's
+        for t in cat.object_tiles.iter().filter(|t| t.class == "[") {
+            let a = t.appearance.as_str();
+            let metal = a.ends_with(" mail") || a.contains("mithril") || a.contains("dragon");
+            let leather = a.contains("leather");
+            if !metal && !leather {
+                continue;
+            }
+            let (armour, _) = worn(vec![inv(&cat, 'a', "[", a, vec![Slot::Body], false)]);
+            assert_eq!(armour.is_some(), metal, "{a}");
+        }
+        let tint = |a: &str| {
+            worn(vec![inv(&cat, 'a', "[", a, vec![Slot::Body], false)])
+                .0
+                .map(|l| l.tint)
+        };
+        // splint mail is plate, darker than plate mail; a red dragon's
+        // scales are red
+        let plate = |a: &str| {
+            let l = worn(vec![inv(&cat, 'a', "[", a, vec![Slot::Body], false)]).0;
+            material(l, &rules.armour)
+        };
+        assert_eq!(plate("splint mail").as_deref(), Some("plate_mail"));
+        assert!(tint("splint mail").unwrap()[0] < tint("plate mail").unwrap()[0]);
+        assert!(tint("red dragon scale mail").is_some_and(|c| c[0] > 2.0 * c[1]));
+        assert_eq!(tint("red dragon scales"), tint("red dragon scale mail"));
+        // the gloves' colour is their appearance's, whatever they are
+        let glove = |a: &str| {
+            worn(vec![inv(&cat, 'a', "[", a, vec![Slot::Gloves], false)])
+                .1
+                .map(|l| l.tint[0])
+        };
+        assert!(glove("riding gloves") < glove("old gloves"));
+        assert!(glove("old gloves") < glove("fencing gloves"));
+    }
+
+    #[test]
+    fn a_stethoscope_carried_is_worn_round_the_neck() {
+        use nh_protocol::Slot;
+        let (art, cat) = (manifest(), catalog());
+        let items = vec![
+            inv(&cat, 'a', ")", "scalpel", vec![Slot::Weapon], false),
+            inv(&cat, 'b', "(", "stethoscope", vec![], false),
+        ];
+        let g = art.gear(&pack(items.clone(), false), &cat);
+        let rule = &art.worn_rules().neck[g.neck.unwrap()];
+        assert_eq!(rule.models, ["stethoscope_man", "stethoscope_woman"]);
+        for m in &rule.models {
+            assert!(art.model_index(m).is_some(), "{m}");
+        }
+        assert_eq!(art.gear(&pack(items[..1].to_vec(), false), &cat).neck, None);
+        // on the floor it lies coiled, a model of its own
+        let floor = art.object(tile(&cat, "(", "stethoscope"));
+        assert_eq!(art.model_at(floor.model).0, "stethoscope");
     }
 
     #[test]

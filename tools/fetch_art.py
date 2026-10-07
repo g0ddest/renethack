@@ -262,7 +262,8 @@ def do_pbr_zip(op, w, item, max_size):
     names a texture set, <dest>/<id>/<id>_albedo.jpg, _normal.jpg, _arm.jpg
     (ambient occlusion, roughness, metalness in R, G, B; a map the zip lacks
     is white AO, mid roughness, no metal) and _emission.jpg when there is
-    one."""
+    one. `gain` multiplies a map's values (a true metal is dark and
+    mirror-smooth: black in a dungeon with nothing to reflect)."""
     from PIL import Image
     ua = BROWSER_UA if item.get("browser") else None
     blob = cached(item["url"], lambda: fetch(op, item["url"], ua=ua))
@@ -272,7 +273,14 @@ def do_pbr_zip(op, w, item, max_size):
     def find(key):
         pat = item["maps"].get(key)
         hits = [n for n in names if pat and fnmatch.fnmatch(os.path.basename(n), pat)]
-        return Image.open(io.BytesIO(z.read(hits[0]))) if hits else None
+        if not hits:
+            return None
+        img = Image.open(io.BytesIO(z.read(hits[0])))
+        gain = item.get("gain", {}).get(key)
+        if gain:
+            img = img.convert("RGB" if key == "albedo" else "L")
+            img = img.point(lambda v: min(255, round(v * gain)))
+        return img
 
     base = f"{item['dest']}/{item['id']}/{item['id']}"
 

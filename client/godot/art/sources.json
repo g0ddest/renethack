@@ -210,15 +210,17 @@
    "use": "OSARE weapons and armour, 64 px (Blarumyrran)"},
   {"url": "https://github.com/RPicster/Godot-particle-and-vfx-textures/archive/refs/heads/main.zip", "root": "Godot-particle-and-vfx-textures-main/textures/256/alpha/", "files": ["*.png"], "dest": "rpicster/256", "license_files": ["Godot-particle-and-vfx-textures-main/LICENSE"], "use": "flares, glows and starbursts for particles (Raffaele Picca)"}
  ],
- "pbr_zips_comment": "Zips of PBR maps at fixed URLs (ambientCG, TextureCan): written as <dest>/<id>/<id>_albedo/normal/arm(/emission).jpg; `browser` fetches with a browser's User-Agent.",
+ "pbr_zips_comment": "Zips of PBR maps at fixed URLs (ambientCG, TextureCan): written as <dest>/<id>/<id>_albedo/normal/arm(/emission).jpg; `browser` fetches with a browser's User-Agent; `gain` multiplies a map's values (the armours' metals: a brighter albedo and more roughness, for a true metal is black in a dim dungeon).",
  "pbr_zips": [
   {"id": "lava_flow", "url": "https://www.texturecan.com/downloads/ground_0027/ground_0027_1k_kRh2Tv.zip", "browser": true, "maps": {"albedo": "*_color_1k.jpg", "normal": "*_normal_opengl_1k.png", "ao": "*_ao_1k.jpg", "roughness": "*_roughness_1k.jpg", "emission": "*_emissive_1k.jpg"}, "dest": "texturecan", "use": "lava: crust and molten channels (TextureCan ground_0027)"},
   {"id": "icy_rock", "url": "https://www.texturecan.com/downloads/ground_0031/ground_0031_1k_s6SWdZ.zip", "browser": true, "maps": {"albedo": "*_color_1k.jpg", "normal": "*_normal_opengl_1k.png", "ao": "*_ao_1k.jpg", "roughness": "*_roughness_1k.jpg"}, "dest": "texturecan", "use": "ice floors (TextureCan ground_0031)"},
   {"id": "Lava003", "url": "https://ambientcg.com/get?file=Lava003_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "roughness": "*_Roughness.jpg", "emission": "*_Emission.jpg"}, "dest": "ambientcg", "use": "Gehennom floors: crust with glowing veins"},
   {"id": "Rock035", "url": "https://ambientcg.com/get?file=Rock035_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "ao": "*_AmbientOcclusion.jpg", "roughness": "*_Roughness.jpg"}, "dest": "ambientcg", "use": "dark cave walls (Mines, Earth)"},
-  {"id": "Rock058", "url": "https://ambientcg.com/get?file=Rock058_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "ao": "*_AmbientOcclusion.jpg", "roughness": "*_Roughness.jpg"}, "dest": "ambientcg", "use": "obsidian walls (Gehennom, Vlad's Tower)"}
+  {"id": "Rock058", "url": "https://ambientcg.com/get?file=Rock058_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "ao": "*_AmbientOcclusion.jpg", "roughness": "*_Roughness.jpg"}, "dest": "ambientcg", "use": "obsidian walls (Gehennom, Vlad's Tower)"},
+  {"id": "Chainmail004", "url": "https://ambientcg.com/get?file=Chainmail004_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "roughness": "*_Roughness.jpg", "metal": "*_Metalness.jpg"}, "gain": {"albedo": 1.75, "roughness": 1.9}, "dest": "ambientcg", "use": "chain and ring mail on the hero"},
+  {"id": "Metal038", "url": "https://ambientcg.com/get?file=Metal038_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "roughness": "*_Roughness.jpg", "metal": "*_Metalness.jpg"}, "gain": {"albedo": 2.2, "roughness": 1.3}, "dest": "ambientcg", "use": "plate, splint, scale and dragon scale mail on the hero"}
  ],
- "blender_comment": "Models made in Blender by tools/blender/<script>.py: static models rigged with the skeleton and clips of a Quaternius animal (rig_quadruped), centaurs put together from the horse and a base character (centaur). URLs are downloaded (and locked); other paths are files above. fetch_art.py runs Blender when it finds one ($BLENDER, `blender` on the PATH, /Applications/Blender.app); without it the committed models are kept and only the downloads are checked. CC-BY models go to ccby/, see CREDITS.md.",
+ "blender_comment": "Models made in Blender by tools/blender/<script>.py: static models rigged with the skeleton and clips of a Quaternius animal (rig_quadruped), centaurs put together from the horse and a base character (centaur), a stethoscope on the floor and round the neck of each outfit body it is fitted to (stethoscope). URLs are downloaded (and locked); other paths are files above. fetch_art.py runs Blender when it finds one ($BLENDER, `blender` on the PATH, /Applications/Blender.app); without it the committed models are kept and only the downloads are checked. CC-BY models go to ccby/, see CREDITS.md.",
  "blender": [
   {"script": "rig_quadruped", "out": "ccby/polypizza/Elephant.glb", "name": "Elephant", "texture_max": 512,
    "target": "https://static.poly.pizza/2bc73032-37c9-4276-a620-437df45db428.glb",
@@ -277,7 +279,14 @@
    "pose": "cc0/quaternius/animations/UAL1_Standard.glb", "clip": "Idle_Loop",
    "cut": {"point": [0, -1.55, 2.85], "normal": [0, -0.8, 0.6]}, "seat": [0, -1.7, 2.75], "height": 1.75, "waist": 0.97, "bone": "Torso3",
    "actions": {"Idle": "Idle", "Walk": "Walk", "Gallop": "Gallop", "Attack": "Attack_Kick", "Hit": "Idle_HitReact_Left", "Death": "Death"},
-   "texture_max": 512, "use": "female centaurs"}
+   "texture_max": 512, "use": "female centaurs"},
+  {"script": "stethoscope", "out": "cc0/made/Stethoscope.glb", "name": "Stethoscope", "use": "a stethoscope on the floor"},
+  {"script": "stethoscope", "out": "cc0/made/StethoscopeMan.glb", "name": "StethoscopeMan",
+   "rig": "cc0/quaternius/outfits/Outfits/Male_Peasant.gltf", "head": "cc0/quaternius/base/Superhero_Male_FullBody.gltf", "cut": 1.55,
+   "use": "a stethoscope round a man's neck, fitted to the peasant outfit and skinned to its skeleton"},
+  {"script": "stethoscope", "out": "cc0/made/StethoscopeWoman.glb", "name": "StethoscopeWoman",
+   "rig": "cc0/quaternius/outfits/Outfits/Female_Peasant.gltf", "head": "cc0/quaternius/base/Superhero_Female_FullBody.gltf", "cut": 1.51,
+   "use": "a stethoscope round a woman's neck"}
  ],
  "fonts_comment": "SIL OFL 1.1 fonts of the UI (not CC0): fetched from the google/fonts repository at a fixed commit into client/godot/fonts/<dest>/ with their OFL.txt.",
  "fonts": [
