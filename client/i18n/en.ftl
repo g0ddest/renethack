@@ -303,11 +303,27 @@ class-iron-chain = Iron chain
 class-venom = Venom
 class-coins = Coins
 class-item = Item
-fact-blessed = Blessed
-fact-uncursed = Uncursed
-fact-cursed = Cursed
+# $form: the item's gender and number (m, f, n, pl), for the languages
+# whose words agree with it
+fact-blessed =
+    { $form ->
+       *[m] Blessed
+    }
+fact-uncursed =
+    { $form ->
+       *[m] Uncursed
+    }
+fact-cursed =
+    { $form ->
+       *[m] Cursed
+    }
 fact-enchantment = Enchantment { $value }
 fact-containing = Containing { $what }
+fact-containing-items =
+    { $n ->
+        [one] Containing { $n } item
+       *[other] Containing { $n } items
+    }
 fact-name = Name: { $name }
 fact-called = You called this type: { $name }
 doll-helmet = Helmet

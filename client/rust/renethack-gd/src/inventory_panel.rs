@@ -29,6 +29,8 @@ use godot::classes::{
 };
 use godot::global::{HorizontalAlignment, MouseButton, VerticalAlignment};
 use godot::prelude::*;
+use nh_i18n::lexicon::Lexicon;
+use nh_i18n::{Case, Gender, Number};
 use nh_protocol::{InvItem, MenuItem, PickHow, Reply, Slot};
 use nh_world::{
     Buc, GridCell, InvFilter, ItemAction, ItemActionKind, ItemQuestion, Key, KeyInput, Macro,
@@ -37,7 +39,7 @@ use nh_world::{
 };
 
 use crate::gamepad::{PadButton, PadKind};
-use crate::i18n::{self, EngineKind};
+use crate::i18n::{self, EngineKind, Lang};
 use crate::icons::{self, Glyph};
 use crate::theme::{self, Face, Frame, place};
 use crate::tr;
@@ -175,6 +177,39 @@ fn groups(text: &str) -> Vec<String> {
     out
 }
 
+/// The parenthesized groups of an item's name as the player reads them.
+/// The engine's translator says a group with the name it belongs to (a
+/// state agrees with its item: надет, надета, надеты), so the name is
+/// translated whole and its groups are taken from that; where that gives
+/// other groups (a language that marks the whole name), each group alone.
+fn shown_groups(text: &str, english: &[String]) -> Vec<String> {
+    let whole = i18n::engine(EngineKind::Name, text);
+    let shown = groups(&whole);
+    if shown.len() == english.len() {
+        return shown;
+    }
+    english
+        .iter()
+        .map(|g| i18n::engine(EngineKind::Name, g).into_owned())
+        .collect()
+}
+
+/// The gender and number an item's own words take (Russian: its name's
+/// noun in the lexicon; None in a language whose words do not agree, and
+/// for a name the lexicon does not know).
+fn agreement(item: &InvItem) -> Option<(Gender, Number)> {
+    if i18n::lang() != Lang::Ru {
+        return None;
+    }
+    let lex = Lexicon::ru();
+    let head = lex.parse_object(&item.text)?.ru(lex).head;
+    let plural = item.quan > 1 || head.plural_only;
+    Some((
+        head.gender,
+        if plural { Number::Plur } else { Number::Sing },
+    ))
+}
+
 /// The doname without its parenthesized groups.
 fn bare(text: &str) -> &str {
     let mut rest = text.trim();
@@ -205,7 +240,9 @@ pub fn title_of(item: &InvItem) -> String {
 pub fn facts(item: &InvItem) -> Vec<Fact> {
     let name = parse_item_name(&item.text);
     let mut out = Vec::new();
-    for g in groups(&item.text) {
+    let english = groups(&item.text);
+    let shown = shown_groups(&item.text, &english);
+    for (g, shown) in english.iter().zip(shown) {
         if let Some((a, b)) = g.split_once(':')
             && let (Ok(r), Ok(n)) = (a.parse::<i32>(), b.parse::<i32>())
         {
@@ -214,27 +251,35 @@ pub fn facts(item: &InvItem) -> Vec<Fact> {
             out.push(fact(tr!("fact-charges", n = n)));
         } else if g.starts_with("unpaid") || g.starts_with("for sale") || g == "no charge" {
             out.push(Fact {
-                text: capitalized(&i18n::engine(EngineKind::Name, &g)),
+                text: capitalized(&shown),
                 color: Some(theme::WARN),
             });
         } else {
             out.push(Fact {
-                text: capitalized(&i18n::engine(EngineKind::Name, &g)),
+                text: capitalized(&shown),
                 color: Some(theme::GOLD_BRIGHT),
             });
         }
     }
+    // the curse status and the state words agree with the item
+    let agrees = agreement(item);
+    let form = match agrees {
+        Some((_, Number::Plur)) => "pl",
+        Some((Gender::Fem, _)) => "f",
+        Some((Gender::Neut, _)) => "n",
+        _ => "m",
+    };
     match name.buc {
         Some(Buc::Blessed) => out.push(Fact {
-            text: tr!("fact-blessed"),
+            text: tr!("fact-blessed", form = form),
             color: Some(BLESSED),
         }),
         Some(Buc::Uncursed) => out.push(Fact {
-            text: tr!("fact-uncursed"),
+            text: tr!("fact-uncursed", form = form),
             color: Some(UNCURSED),
         }),
         Some(Buc::Cursed) => out.push(Fact {
-            text: tr!("fact-cursed"),
+            text: tr!("fact-cursed", form = form),
             color: Some(CURSED),
         }),
         None => {}
@@ -253,7 +298,11 @@ pub fn facts(item: &InvItem) -> Vec<Fact> {
                 start -= 1;
             }
             let state = words[start..=i].join(" ");
-            out.push(fact(capitalized(&i18n::engine(EngineKind::Name, &state))));
+            let shown = match agrees.zip(Lexicon::ru().adjective(&state)) {
+                Some(((g, num), a)) => a.form(g, num, false, Case::Nom).to_string(),
+                None => i18n::engine(EngineKind::Name, &state).into_owned(),
+            };
+            out.push(fact(capitalized(&shown)));
         }
         if w == "named" || w == "called" || w == "containing" {
             break;
@@ -263,8 +312,18 @@ pub fn facts(item: &InvItem) -> Vec<Fact> {
     let text = bare(&item.text);
     if let Some(at) = text.find(" containing ") {
         let what = &text[at + 12..];
-        let what = i18n::engine(EngineKind::Name, what).into_owned();
-        out.push(fact(tr!("fact-containing", what = what)));
+        // "containing 3 items": the count in the language's own plural
+        let items = what
+            .strip_suffix(" items")
+            .or_else(|| what.strip_suffix(" item"))
+            .and_then(|n| n.parse::<i64>().ok());
+        match items {
+            Some(n) => out.push(fact(tr!("fact-containing-items", n = n))),
+            None => {
+                let what = i18n::engine(EngineKind::Name, what).into_owned();
+                out.push(fact(tr!("fact-containing", what = what)));
+            }
+        }
     }
     let stem = &name.stem;
     if let Some(at) = stem.find(" named ") {
@@ -3752,6 +3811,63 @@ mod tests {
             lit: false,
             text: text.into(),
         }
+    }
+
+    /// The engine's translator in this test's thread, loaded; Russian.
+    fn russian() {
+        use crate::i18n::EngineText;
+        let t = crate::engine_text::EngineTranslator::new();
+        let start = std::time::Instant::now();
+        while t.translate(Lang::Ru, EngineKind::Name, "newt").is_none() {
+            assert!(
+                start.elapsed() < std::time::Duration::from_secs(120),
+                "the translator does not load"
+            );
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        i18n::set_engine_text(Some(Box::new(t)));
+        i18n::set_lang(Lang::Ru);
+    }
+
+    #[test]
+    fn the_detail_is_russian_and_agrees_with_the_item() {
+        russian();
+        let facts_of = |text: &str, quan: i64| -> Vec<String> {
+            let it = InvItem {
+                quan,
+                ..item('a', ')', text, &[])
+            };
+            facts(&it).into_iter().map(|f| f.text).collect()
+        };
+        let whip = facts_of("a +2 bullwhip (weapon in right hand)", 1);
+        let fedora = facts_of("an uncursed +0 fedora (being worn)", 1);
+        let mail = facts_of("an uncursed ring mail (being worn)", 1);
+        let ring = facts_of("a cursed ring of protection (on left hand)", 1);
+        let daggers = facts_of("2 cursed -1 very rusty daggers (in quiver pouch)", 2);
+        let gloves = facts_of(
+            "a blessed greased +1 pair of leather gloves (being worn; slippery)",
+            1,
+        );
+        let sack = facts_of("an uncursed sack containing 3 items", 1);
+        i18n::set_lang(Lang::En);
+        i18n::set_engine_text(None);
+        // the usage as the translator says it with the name: no English left
+        let latin = |t: &str| t.chars().any(|c| c.is_ascii_alphabetic());
+        for f in [&whip, &fedora, &mail, &ring, &daggers, &gloves, &sack] {
+            assert!(!f.iter().any(|t| latin(t)), "{f:?}");
+        }
+        // a hat is worn as a hat is (надета), a mail as a mail (надет)
+        assert_ne!(fedora[0], mail[0]);
+        // the curse status in the item's gender and number
+        assert_eq!(fedora[1], "Не проклята");
+        assert_eq!(mail[1], "Не проклят");
+        assert_eq!(ring[1], "Проклято");
+        assert_eq!(daggers[1], "Прокляты");
+        assert_eq!(gloves[1], "Благословлены");
+        // and the state words
+        assert_eq!(daggers[3], "Очень ржавые");
+        assert_eq!(gloves[3], "Смазанные");
+        assert_eq!(sack, ["Не проклят", "Внутри 3 предмета"]);
     }
 
     #[test]

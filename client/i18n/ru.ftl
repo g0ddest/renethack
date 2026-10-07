@@ -305,11 +305,35 @@ class-iron-chain = Железная цепь
 class-venom = Яд
 class-coins = Монеты
 class-item = Предмет
-fact-blessed = Благословлён
-fact-uncursed = Не проклят
-fact-cursed = Проклят
+fact-blessed =
+    { $form ->
+        [f] Благословлена
+        [n] Благословлено
+        [pl] Благословлены
+       *[m] Благословлён
+    }
+fact-uncursed =
+    { $form ->
+        [f] Не проклята
+        [n] Не проклято
+        [pl] Не прокляты
+       *[m] Не проклят
+    }
+fact-cursed =
+    { $form ->
+        [f] Проклята
+        [n] Проклято
+        [pl] Прокляты
+       *[m] Проклят
+    }
 fact-enchantment = Зачарование { $value }
 fact-containing = Внутри: { $what }
+fact-containing-items =
+    { $n ->
+        [one] Внутри { $n } предмет
+        [few] Внутри { $n } предмета
+       *[many] Внутри { $n } предметов
+    }
 fact-name = Имя: { $name }
 fact-called = Вы назвали этот вид: { $name }
 doll-helmet = Шлем
