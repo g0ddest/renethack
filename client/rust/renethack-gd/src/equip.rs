@@ -21,7 +21,7 @@ use godot::classes::{
 use godot::prelude::*;
 use nh_art::{Gear, HeldArt, LightSpec, PROC_CLIPS, Resolved, Tint};
 
-use super::{Art, Finish, Model, ModelLook, Pose, find, transform};
+use super::{Art, Finish, Model, ModelLook, Pose, find, set_layer_mask, transform};
 use crate::meshes::sphere;
 
 /// The node names under a bone attachment (self-tests look for them).
@@ -83,7 +83,7 @@ fn set_layers(node: &Gd<Node>, mask: u32) {
         .iter_shared()
     {
         if let Ok(mut v) = n.try_cast::<godot::classes::VisualInstance3D>() {
-            v.set_layer_mask(mask);
+            set_layer_mask(&mut v, mask);
         }
     }
 }

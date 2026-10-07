@@ -33,7 +33,7 @@ use godot::classes::{
     Camera3D, CanvasLayer, ColorRect, Decal, DirectionalLight3D, Environment, FogMaterial,
     FogVolume, GeometryInstance3D, Label3D, Material, MeshInstance3D, Node3D, OmniLight3D,
     PackedScene, RenderingServer, Shader, ShaderMaterial, StandardMaterial3D, SurfaceTool,
-    SystemFont, WorldEnvironment,
+    SystemFont, VisualInstance3D, WorldEnvironment,
 };
 use godot::prelude::*;
 use nh_art::{ArtManifest, Tint};
@@ -44,7 +44,7 @@ use nh_world::{
 };
 
 use crate::animator::{Motion, pace, yaw_toward};
-use crate::art::{Art, Finish, Model, ModelLook, Pose, build_flat, no_shadow};
+use crate::art::{Art, Finish, Model, ModelLook, Pose, build_flat, no_shadow, set_layer_mask};
 use crate::batch::{Batches, Slot};
 use crate::branch_look::{BranchLook, Prop};
 use crate::meshes::{
@@ -2216,8 +2216,7 @@ impl CellNodes {
 }
 
 impl CellLamp {
-    /// Put out, to be lit again elsewhere: a light freed while the
-    /// renderer pairs it with geometry upsets Godot (a crash at exit).
+    /// Put out, to be lit again elsewhere (lamps are reused, not freed).
     fn hidden(mut self) -> CellLamp {
         self.light.set_visible(false);
         if let Some(m) = self.mist.as_mut() {
@@ -2606,11 +2605,10 @@ fn pitch_at(distance: f32) -> f32 {
     deg.to_radians()
 }
 
-/// Every mesh under `node` on these render layers.
+/// Every mesh under `node` on these render layers (the lights the hero
+/// carries, a lamp, keep their own). The model is in view: see
+/// `art::set_layer_mask` for why the change goes through it.
 fn set_layers(node: &Gd<Node3D>, mask: u32) {
-    // geometry only: the lights the hero carries (a lamp) keep their own
-    // layers, and a light's layers changed while the renderer pairs it
-    // with geometry crashes Godot at exit
     for n in node
         .find_children_ex("*")
         .type_("GeometryInstance3D")
@@ -2618,10 +2616,8 @@ fn set_layers(node: &Gd<Node3D>, mask: u32) {
         .done()
         .iter_shared()
     {
-        if let Ok(mut g) = n.try_cast::<GeometryInstance3D>()
-            && g.get_layer_mask() != mask
-        {
-            g.set_layer_mask(mask);
+        if let Ok(mut v) = n.try_cast::<VisualInstance3D>() {
+            set_layer_mask(&mut v, mask);
         }
     }
 }
@@ -3181,9 +3177,8 @@ impl MapView {
         if std::mem::take(&mut self.hints_dirty) {
             self.show_hints();
         }
-        // its mesh is laid once a level is all drawn (a mesh swapped
-        // under an instance the lights pair with, frame after frame,
-        // crashes Godot at exit)
+        // its mesh is laid once a level is all drawn, not again in every
+        // frame of the drawing
         if self.building.is_empty() && std::mem::take(&mut self.bedrock_dirty) {
             let __t = std::time::Instant::now();
             self.lay_bedrock();
@@ -3789,8 +3784,7 @@ impl MapView {
         {
             return;
         }
-        // a model given back to the pool may be on its way out: never
-        // touch one being freed (Godot crashes at exit)
+        // a model given back to the pool may be on its way out: leave it be
         let alive = |n: &Gd<Node3D>| n.is_instance_valid() && !n.is_queued_for_deletion();
         if let Some(old) = self.rim_model.take().filter(alive) {
             set_layers(&old, 1);

@@ -22,7 +22,8 @@ use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::{
     Animation, AnimationLibrary, AnimationPlayer, ArrayMesh, BaseMaterial3D, BoneAttachment3D,
     FileAccess, Material, Mesh, MeshInstance3D, Node, Node3D, OrmMaterial3D, PackedScene,
-    ResourceLoader, Skeleton3D, Skin as GdSkin, StandardMaterial3D, Texture2D,
+    RenderingServer, ResourceLoader, Skeleton3D, Skin as GdSkin, StandardMaterial3D, Texture2D,
+    VisualInstance3D,
 };
 use godot::prelude::*;
 use nh_art::{ArtManifest, MaterialSpec, Proc, Resolved, Skin};
@@ -3067,4 +3068,31 @@ fn lit_skin(color: Color, glow: f32) -> Gd<Material> {
 /// Cast shadows off for flat ground geometry (map_view).
 pub fn no_shadow(mi: &mut Gd<MeshInstance3D>) {
     mi.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+}
+
+/// Put a mesh or a light on these render layers.
+///
+/// Godot 4.7.2's Forward+ renderer keeps a mesh paired with the lights that
+/// reach it when its layers change, and it never unpairs a mesh from a light
+/// whose cull mask does not take the mesh's layers: a mesh moved off a
+/// light's layer stays on that light's list for good. The light is then
+/// freed with the mesh still listed ("BUG, indexing did not unpair
+/// geometries from light"), the mesh keeps a pointer to the freed light, and
+/// Godot crashes when it next updates the mesh, on quit at the latest.
+/// (Fixed upstream after 4.7.2: godotengine/godot#122064.) A hidden instance
+/// has no pairs, so a mesh in view changes layers hidden for that moment and
+/// is paired again by its new layers.
+pub fn set_layer_mask(v: &mut Gd<VisualInstance3D>, mask: u32) {
+    if v.get_layer_mask() == mask {
+        return;
+    }
+    let paired = v.is_inside_tree() && v.is_visible_in_tree() && v.is_class("GeometryInstance3D");
+    let rid = v.get_instance();
+    if paired {
+        RenderingServer::singleton().instance_set_visible(rid, false);
+    }
+    v.set_layer_mask(mask);
+    if paired {
+        RenderingServer::singleton().instance_set_visible(rid, true);
+    }
 }
