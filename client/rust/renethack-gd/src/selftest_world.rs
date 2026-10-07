@@ -5,15 +5,15 @@
 //! until its portal is made), and checks that each is drawn in its own
 //! materials, with a picture of each. `title` checks the scene behind the
 //! title menu; `bestiary` shoots the creatures a game meets most, one by
-//! one.
+//! one, then those told apart by colour side by side, then a game's start.
 
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use nh_world::{Branch, KeyInput, Prompt};
 
 use super::{
-    DialogEvent, Step, UiEvent, camera_settled, ctrl_key, entry_key, is_menu, map_view, quit,
-    screen, start,
+    CharacterChoice, DialogEvent, Step, UiEvent, camera_settled, ctrl_key, entry_key, is_menu,
+    map_view, quit, screen, smoke_choice, start, start_as,
 };
 use godot::classes::{Node, Node3D};
 use godot::prelude::*;
@@ -223,6 +223,37 @@ const BESTIARY: &[&str] = &[
     "purple worm",
 ];
 
+/// The creatures a player tells apart by their colour, in rows (the
+/// spacing, the names): the fungi, the small and the many-legged, the
+/// worms and a blob.
+const COLOUR_ROWS: &[(i32, &[&str])] = &[
+    (
+        1,
+        &[
+            "lichen",
+            "brown mold",
+            "yellow mold",
+            "green mold",
+            "red mold",
+            "shrieker",
+            "violet fungus",
+        ],
+    ),
+    (
+        1,
+        &[
+            "newt",
+            "gecko",
+            "giant ant",
+            "soldier ant",
+            "fire ant",
+            "grid bug",
+            "floating eye",
+        ],
+    ),
+    (3, &["long worm", "purple worm", "acid blob"]),
+];
+
 pub(super) fn bestiary() -> Vec<Step> {
     let mut steps = start();
     steps.push(Step::Wait("the hero on the map", |g| {
@@ -244,8 +275,62 @@ pub(super) fn bestiary() -> Vec<Step> {
             Step::Shot(shot),
         ]);
     }
+    steps.extend([
+        Step::Call("lay out the colour rows", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            crate::gallery::lay_out_rows(&mut g.world, &cat, COLOUR_ROWS)?;
+            let ui = g.ui.as_mut().ok_or("no UI")?;
+            ui.map.set_showcase(true);
+            ui.map.set_distance(9.5, 0.2);
+            Ok(())
+        }),
+        Step::Wait("the rows drawn", |g| {
+            let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+            Ok(drawn == Some(g.world.map.generation()))
+        }),
+        Step::Wait("the camera on them", camera_settled),
+        Step::Shot("colours"),
+    ]);
+    steps.extend(quit());
+    // and in a game: a wizard's kitten at the start, as far as a game
+    // begins and as close as a player zooms
+    steps.extend([
+        Step::Call("seed 1", |g| {
+            g.seed = Some(1);
+            Ok(())
+        }),
+        Step::Push(UiEvent::BackToTitle),
+    ]);
+    steps.extend(start_as(CharacterChoice {
+        role: "wizard".into(),
+        gender: "male".into(),
+        ..smoke_choice()
+    }));
+    let shots: [(&'static str, Act); 2] = [
+        ("ingame-wizard", |g| far(g, 11.0)),
+        ("ingame-wizard-close", |g| far(g, 7.0)),
+    ];
+    for (shot, distance) in shots {
+        steps.extend([
+            Step::Wait("the hero on the map", |g| {
+                Ok(map_view(g)?.hero_model().is_some())
+            }),
+            Step::Call("the camera's distance", distance),
+            Step::Wait("the camera on the hero", camera_settled),
+            Step::Shot(shot),
+        ]);
+    }
     steps.extend(quit());
     steps
+}
+
+/// The camera `distance` from the hero, aimed as in a game.
+fn far(g: &mut RenethackGame, distance: f32) -> Result<(), String> {
+    g.ui.as_mut()
+        .ok_or("no UI")?
+        .map
+        .set_distance(distance, 0.0);
+    Ok(())
 }
 
 /// The next creature of `BESTIARY` to lay out (steps are plain functions).
@@ -256,8 +341,21 @@ fn one(g: &mut RenethackGame, i: usize) -> Result<(), String> {
     let cat = g.catalog.clone().ok_or("no catalog")?;
     let name = BESTIARY.get(i).ok_or("no more creatures")?;
     crate::gallery::lay_out_one(&mut g.world, &cat, name)?;
+    // as close as the creature is small
+    let size = cat
+        .monsters
+        .iter()
+        .find(|m| m.name == *name)
+        .map(|m| m.size.as_str());
+    let (distance, lift) = match size {
+        Some("tiny") => (1.3, 0.1),
+        Some("small") => (2.0, 0.15),
+        Some("medium") => (3.2, 0.25),
+        Some("large") => (4.4, 0.3),
+        _ => (6.0, 0.4),
+    };
     let ui = g.ui.as_mut().ok_or("no UI")?;
     ui.map.set_showcase(true);
-    ui.map.set_distance(4.2, 0.3);
+    ui.map.set_distance(distance, lift);
     Ok(())
 }

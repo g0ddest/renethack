@@ -266,7 +266,11 @@ the art out for screenshots:
     godot --path client/godot -- --selftest=gallery --screenshots=/tmp/shots
 
 The `bestiary` self-test shoots the creatures a game meets most, one by one
-and close up (`bestiary-<name>.png`, for contact sheets).
+and close up (`bestiary-<name>.png`, for contact sheets). It then shoots, side
+by side under the same light, the ones a player tells apart by their colour
+(`colours.png`: the fungi, the ants, the newt, the worms). Last comes a
+wizard's start with the kitten, at the distance a game begins at and as close
+as a player zooms (`ingame-wizard*.png`).
 `RENETHACK_DUMP_SIGHTINGS=<file>` makes the map append, once a turn, the
 creatures on it and the model each is drawn as, a procedural body or a
 scene (JSON lines): a soak over several seeds counts which bodies are seen

@@ -340,6 +340,47 @@ pub fn lay_out_one(world: &mut World, cat: &Catalog, name: &str) -> Result<(i32,
     Ok((cx, cy))
 }
 
+/// Rows of monsters side by side under the same light (the `bestiary`
+/// self-test's colour rows: those a player tells apart by colour), each
+/// row its spacing apart, the hero at the end of the last for scale; the
+/// view centres a cell north of the rows, which keeps the far row clear
+/// of the HUD's top panels.
+pub fn lay_out_rows(
+    world: &mut World,
+    cat: &Catalog,
+    rows: &[(i32, &[&str])],
+) -> Result<(i32, i32), String> {
+    let map = &mut world.map;
+    map.clear();
+    let floor = cmap(cat, "S_room")?;
+    let (cx, cy) = (40, 10);
+    let span = |&(gap, names): &(i32, &[&str])| gap * (names.len() as i32 - 1);
+    let wide = rows.iter().map(span).max().unwrap_or(0);
+    let top = cy - (rows.len() as i32 - 1);
+    let bottom = top + 2 * (rows.len() as i32 - 1);
+    for y in top - 2..=bottom + 2 {
+        for x in cx - wide / 2 - 2..=cx + wide / 2 + 4 {
+            map.print(x, y, &floor, None);
+        }
+    }
+    for (i, row) in rows.iter().enumerate() {
+        let left = cx - span(row) / 2;
+        for (j, name) in row.1.iter().enumerate() {
+            let g = monster(cat, name, 0, GlyphKind::Mon)?;
+            map.print(
+                left + row.0 * j as i32,
+                top + 2 * i as i32,
+                &g,
+                Some(&floor),
+            );
+        }
+    }
+    let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    map.print(cx + wide / 2 + 3, bottom, &hero, Some(&floor));
+    world.view_center = Some((cx, cy - 1));
+    Ok((cx, cy))
+}
+
 /// The whole map at once: rooms of lit and remembered floor between walls,
 /// corridors, doors, a few monsters and objects. The heaviest redraw a
 /// level can ask for (magic mapping, a return to an explored level).
