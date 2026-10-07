@@ -1,0 +1,2623 @@
+# R6, log messages batch 10: the lines the Russian soak showed most without a translation. Syntax: nh-i18n's template.rs.
+
+[477a0294aca3]
+en = "%s%s remains as secondary weapon."
+ru = "{1:like2}{2} {2:num|остаётся|остаются} запасным оружием."
+
+[d576bd42db75]
+en = "%s%s remain as secondary weapon."
+ru = "{1:like2}{2} {2:num|остаётся|остаются} запасным оружием."
+
+[210125cecc34]
+en = "%s%s remains wielded."
+ru = "{1:like2}{2} {2:num|остаётся|остаются} в руке."
+
+[afbfde652930]
+en = "%s%s remain wielded."
+ru = "{1:like2}{2} {2:num|остаётся|остаются} в руке."
+
+[fb9d56a97f69]
+en = "%s%s remains readied."
+ru = "{1:like2}{2} {2:num|остаётся|остаются} наготове."
+
+[047d4dba290c]
+en = "%s%s remain readied."
+ru = "{1:like2}{2} {2:num|остаётся|остаются} наготове."
+
+[02463f61c8f7]
+en = "%s %s reluctantly onto %s."
+ru = "{1} неохотно {1:num|наступает|наступают} на {3:acc}.{2:skip}"
+
+[1676ea74603a]
+en = "%s %s reluctantly onto something."
+ru = "{1} неохотно {1:num|наступает|наступают} на что-то.{2:skip}"
+
+[2c1a11babe0c]
+en = "%s %s reluctantly over %s."
+ru = "{1} неохотно {1:num|пролетает|пролетают} над {3:ins}.{2:skip}"
+
+[3244b55badfc]
+en = "%s %s reluctantly over something."
+ru = "{1} неохотно {1:num|пролетает|пролетают} над чем-то.{2:skip}"
+
+[208cb987caa1]
+en = "%s is confused from hunger."
+ru = "{1} плохо {1:num|соображает|соображают} от голода."
+
+[4e469b293ff9]
+en = "The %s bounces!"
+ru = "{1} {1:num|рикошетит|рикошетят}!"
+
+[80b784d22ca7]
+en = "%s hits you!"
+ru = "{1} {1:num|попадает|попадают} в вас!"
+
+[2ff53f7ea743]
+en = "%s whizzes by you!"
+ru = "{1} {1:num|проносится|проносятся} мимо вас!"
+
+[20c4f58b974f]
+en = "%s is killed by the %s!"
+ru = "{1} {1:gender|убит|убита|убито|убиты} {2:ins}!"
+
+[5ed6e551c39f]
+en = "%s is destroyed by the %s!"
+ru = "{1} {1:gender|уничтожен|уничтожена|уничтожено|уничтожены} {2:ins}!"
+
+[0f74837271cb]
+en = "%s is killed by the fire!"
+ru = "{1} {1:gender|убит|убита|убито|убиты} огнём!"
+
+[519b5f5967f7]
+en = "%s is destroyed by the fire!"
+ru = "{1} {1:gender|уничтожен|уничтожена|уничтожено|уничтожены} огнём!"
+
+[0b241f003f9a]
+en = "%s is killed by the gas cloud!"
+ru = "{1} {1:gender|убит|убита|убито|убиты} облаком газа!"
+
+[9b13893d7524]
+en = "%s is destroyed by the gas cloud!"
+ru = "{1} {1:gender|уничтожен|уничтожена|уничтожено|уничтожены} облаком газа!"
+
+[171d6d48957f]
+en = "Pheew!  That was close."
+ru = "Фух!  Пронесло."
+
+[3899c508074d]
+en = "You sink like a rock."
+ru = "Вы камнем идёте ко дну."
+
+[717188a922b7]
+en = "You sink like the Titanic."
+ru = "Вы идёте ко дну, как «Титаник»."
+
+[499b7d39f911]
+en = "You try to crawl out of the %s."
+ru = "Вы пытаетесь выбраться из {1:gen}."
+
+[d9f5b7946e74]
+en = "You fall into the %s%c"
+ru = "Вы падаете в {1:acc}{2}"
+
+[0475dcec834b]
+en = "You plunge into the %s%c"
+ru = "Вы погружаетесь в {1:acc}{2}"
+
+[c693002e0a67]
+en = "Some %s gets into your %s!"
+ru = "В {2:gender|ваш|вашу|ваше|ваши} {2:acc} попадает немного {1:gen}!"
+
+[fb617c84701d]
+en = "You slip on the ice."
+ru = "Вы поскальзываетесь на льду."
+
+[cd83f1703c49]
+en = "You slide on the ice."
+ru = "Вы скользите по льду."
+
+[a8a7c4d79d93]
+en = "You slip off the ice."
+ru = "Вы поскальзываетесь, сходя со льда."
+
+[5f8328222598]
+en = "You slide off the ice."
+ru = "Вы съезжаете со льда."
+
+[95cff34701b4]
+en = "%s slips on the ice."
+ru = "{1} {1:num|поскальзывается|поскальзываются} на льду."
+
+[3767f30ad69c]
+en = "%s slides on the ice."
+ru = "{1} {1:num|скользит|скользят} по льду."
+
+[47fa1acabbf6]
+en = "%s slips off the ice."
+ru = "{1} {1:num|поскальзывается|поскальзываются}, сходя со льда."
+
+[cf4821e0bdf2]
+en = "%s slides off the ice."
+ru = "{1} {1:num|съезжает|съезжают} со льда."
+
+[5c9a4d5953ba]
+en = "%s wakes up."
+ru = "{1} {1:num|просыпается|просыпаются}."
+
+[d15cfe84c4cb]
+en = "%s wakes up. It's alive!"
+ru = "{1} {1:num|просыпается|просыпаются}. Оно живое!"
+
+[9c28e013d8e9]
+en = "%s wakes up! It's alive!"
+ru = "{1} {1:num|просыпается|просыпаются}! Оно живое!"
+
+[d63001229890]
+en = "%slamp is now on."
+ru = "Лампа теперь горит.{1:skip}"
+
+[29203bf15d64]
+en = "%slantern is now on."
+ru = "Фонарь теперь горит.{1:skip}"
+
+[b30ef95e99ed]
+en = "%slamp is now off."
+ru = "Лампа теперь погашена.{1:skip}"
+
+[8b4fbb9beedc]
+en = "%slantern is now off."
+ru = "Фонарь теперь выключен.{1:skip}"
+
+[03c5b71b3283]
+en = "You don't have enough stamina to move."
+ru = "У вас нет сил сдвинуться с места."
+
+[25f34f83bf33]
+en = "You avoid %s into the %s."
+ru = "Вы решаете не лезть в {2:acc}.{1:skip}"
+
+[cc81b2b22b05]
+en = "You stop, unsure which way to go."
+ru = "Вы останавливаетесь, не зная, куда идти дальше."
+
+[42fc9d153226]
+en = "You move right into %s."
+ru = "Вы натыкаетесь прямо на {1:acc}."
+
+[2908829f92e4]
+en = "However, you can squeeze yourself into a small opening."
+ru = "Впрочем, вы можете протиснуться в узкую щель."
+
+[28ae54afc584]
+en = "You pick up %s tongue."
+ru = "Вы подбираете язык {1:gen}."
+
+[65722e55b6de]
+en = "But it's kind of slimy, so you drop it."
+ru = "Но он какой-то склизкий, и вы его бросаете."
+
+[f0b3118874d1]
+en = "You don't see anything in here to pick up."
+ru = "Вы не видите здесь ничего, что можно подобрать."
+
+[3dec66d8f68e]
+en = "You don't feel anything in here to pick up."
+ru = "Вы не нащупываете здесь ничего, что можно подобрать."
+
+[21afd2f25a5e]
+en = "You cannot dive into the %s to pick things up."
+ru = "Вы не можете нырнуть в {1:acc} за вещами."
+
+[83fd9e0c08ed]
+en = "You can't even see the bottom, let alone pick up something."
+ru = "Вы даже дна не видите, где уж тут что-то подбирать."
+
+[72dc00c8ecc1]
+en = "You can't reach the bottom to pick things up."
+ru = "Вам не дотянуться до дна, чтобы подобрать вещи."
+
+[75b17abc5733]
+en = "You would burn to a crisp trying to pick things up."
+ru = "Вы сгорите дотла, пытаясь подобрать вещи."
+
+[1eb4d37fd74d]
+en = "It must weigh a ton!"
+ru = "Да он, должно быть, тонну весит!"
+
+[66f5bfbea793]
+en = "It must weigh almost a ton!"
+ru = "Да он, должно быть, почти тонну весит!"
+
+[abc09e533a7c]
+en = "The plumbing connects it to the floor."
+ru = "Трубы намертво соединяют её с полом."
+
+[1f08fc8a3050]
+en = "You don't need a gravestone.  Yet."
+ru = "Надгробие вам не нужно.  Пока."
+
+[df137f37935c]
+en = "Moving the altar would be a very bad idea."
+ru = "Двигать алтарь — очень плохая идея."
+
+[cd6636457586]
+en = "You don't have anything to adjust."
+ru = "Вам нечего перекладывать."
+
+[a3a33dbbe498]
+en = "You don't have anything else to adjust."
+ru = "Вам больше нечего перекладывать."
+
+[f94eefd7cc96]
+en = "You don't have anything to call."
+ru = "Вам нечего называть."
+
+[4d3e7bfc87d3]
+en = "You don't have anything else to call."
+ru = "Вам больше нечего называть."
+
+[d085793b3b8c]
+en = "You don't have anything to charge."
+ru = "Вам нечего заряжать."
+
+[80887b8da86a]
+en = "You don't have anything else to charge."
+ru = "Вам больше нечего заряжать."
+
+[771507267097]
+en = "You don't have anything to destroy."
+ru = "Вам нечего уничтожать."
+
+[d88fbd4a5c0f]
+en = "You don't have anything else to destroy."
+ru = "Вам больше нечего уничтожать."
+
+[90e175deee50]
+en = "You don't have anything to dip into %s."
+ru = "Вам нечего окунуть в {1:acc}."
+
+[ae5b9048b49c]
+en = "You don't have anything else to dip into %s."
+ru = "Вам больше нечего окунуть в {1:acc}."
+
+[3c561e13dd03]
+en = "You don't have anything to dip into one of %s."
+ru = "Вам нечего окунуть в {1:sg|один|одну|одно} из {1:gen}."
+
+[0f74711a8a5d]
+en = "You don't have anything else to dip into one of %s."
+ru = "Вам больше нечего окунуть в {1:sg|один|одну|одно} из {1:gen}."
+
+[6a1408fb8013]
+en = "You don't have anything else to dip %s into."
+ru = "Вам больше не во что окунуть {1:acc}."
+
+[fdec75513fe9]
+en = "You don't have anything to dip it into."
+ru = "Вам не во что это окунуть."
+
+[df4788cf35af]
+en = "You don't have anything else to dip it into."
+ru = "Вам больше не во что это окунуть."
+
+[eb0157e95919]
+en = "You don't have anything to dip them into."
+ru = "Вам не во что их окунуть."
+
+[cbf8154f084d]
+en = "You don't have anything else to dip them into."
+ru = "Вам больше не во что их окунуть."
+
+[4d2dbcd8be89]
+en = "You don't have anything to dip your %s into."
+ru = "Вам не во что окунуть {1:acc}."
+
+[8c12b312c18a]
+en = "You don't have anything else to dip your %s into."
+ru = "Вам больше не во что окунуть {1:acc}."
+
+[d4ef78356afb]
+en = "You don't have anything to dip."
+ru = "Вам нечего окунать."
+
+[8e63f266b28b]
+en = "You don't have anything else to dip."
+ru = "Вам больше нечего окунать."
+
+[65caec0aa4d9]
+en = "You don't have anything else to drink."
+ru = "Вам больше нечего пить."
+
+[28792096e994]
+en = "You don't have anything to drop."
+ru = "Вам нечего положить."
+
+[265b8af27fd0]
+en = "You don't have anything else to drop."
+ru = "Вам больше нечего положить."
+
+[7c4743437dba]
+en = "You don't have anything else to eat."
+ru = "Вам больше нечего есть."
+
+[452c149365fe]
+en = "You don't have anything to fire."
+ru = "Вам нечем стрелять."
+
+[d96143e4dd90]
+en = "You don't have anything else to fire."
+ru = "Вам больше нечем стрелять."
+
+[b98ed6b0a3a6]
+en = "You don't have anything to grease."
+ru = "Вам нечего смазывать."
+
+[868ad87058f4]
+en = "You don't have anything else to grease."
+ru = "Вам больше нечего смазывать."
+
+[bf1a280e317a]
+en = "You don't have anything to invoke."
+ru = "Вам нечего задействовать."
+
+[05f29e1b045b]
+en = "You don't have anything else to invoke."
+ru = "Вам больше нечего задействовать."
+
+[6f096f5b22f0]
+en = "You don't have anything to name."
+ru = "Вам нечего называть."
+
+[788ca20b42c5]
+en = "You don't have anything else to name."
+ru = "Вам больше нечего называть."
+
+[f3c97028cf72]
+en = "You don't have anything to open."
+ru = "Вам нечего открывать."
+
+[e790adea56c6]
+en = "You don't have anything else to open."
+ru = "Вам больше нечего открывать."
+
+[5742179c9705]
+en = "You don't have anything to read."
+ru = "Вам нечего читать."
+
+[516047b24e81]
+en = "You don't have anything else to read."
+ru = "Вам больше нечего читать."
+
+[5c6ecd141d99]
+en = "You don't have anything to ready."
+ru = "Вам нечего положить в колчан."
+
+[586a43193be4]
+en = "You don't have anything else to ready."
+ru = "Вам больше нечего положить в колчан."
+
+[3276a20b3c7f]
+en = "You don't have anything to remove."
+ru = "Вам нечего снимать."
+
+[2cf868ac3a82]
+en = "You don't have anything else to remove."
+ru = "Вам больше нечего снимать."
+
+[fcad260a9c0a]
+en = "You don't have anything to rub on the stone."
+ru = "Вам нечего потереть о камень."
+
+[5e3fbef5d35a]
+en = "You don't have anything else to rub on the stone."
+ru = "Вам больше нечего потереть о камень."
+
+[4893e043fb0d]
+en = "You don't have anything to rub on the stones."
+ru = "Вам нечего потереть о камни."
+
+[92d31bdbc453]
+en = "You don't have anything else to rub on the stones."
+ru = "Вам больше нечего потереть о камни."
+
+[857d4aebe466]
+en = "You don't have anything to rub the royal jelly on."
+ru = "Вам не на что намазать маточное молочко."
+
+[1a901bb2ce22]
+en = "You don't have anything else to rub the royal jelly on."
+ru = "Вам больше не на что намазать маточное молочко."
+
+[b87a7765ed9d]
+en = "You don't have anything else to rub."
+ru = "Вам больше нечего потереть."
+
+[296982ba9e9e]
+en = "You don't have anything to sacrifice."
+ru = "Вам нечего принести в жертву."
+
+[78e3b5e4a473]
+en = "You don't have anything else to sacrifice."
+ru = "Вам больше нечего принести в жертву."
+
+[29048d1292d7]
+en = "You don't have anything to split."
+ru = "Вам нечего разделять."
+
+[f6fbb05125b5]
+en = "You don't have anything else to split."
+ru = "Вам больше нечего разделять."
+
+[0ea402909e48]
+en = "You don't have anything to stash."
+ru = "Вам нечего прятать."
+
+[aa2a555017c2]
+en = "You don't have anything else to stash."
+ru = "Вам больше нечего прятать."
+
+[0350d36f7352]
+en = "You don't have anything to take off."
+ru = "Вам нечего снимать."
+
+[3c5f489d411f]
+en = "You don't have anything else to take off."
+ru = "Вам больше нечего снимать."
+
+[aad638ca6c1e]
+en = "You don't have anything to throw."
+ru = "Вам нечего бросать."
+
+[1170aeca5441]
+en = "You don't have anything else to throw."
+ru = "Вам больше нечего бросать."
+
+[6a3c7b5d51b6]
+en = "You don't have anything else to tin."
+ru = "Вам больше нечего консервировать."
+not_terms = ["tin"]
+
+[ebcee104e56c]
+en = "You don't have anything to tip."
+ru = "Вам нечего опорожнять."
+
+[f8be20658db8]
+en = "You don't have anything else to tip."
+ru = "Вам больше нечего опорожнять."
+
+[3ca30616be6f]
+en = "You don't have anything to untrap with."
+ru = "Вам нечем обезвредить ловушку."
+
+[541e7a581035]
+en = "You don't have anything else to untrap with."
+ru = "Вам больше нечем обезвредить ловушку."
+
+[9440dbe6a41a]
+en = "You don't have anything else to use or apply."
+ru = "Вам больше нечего использовать."
+
+[e3c8dafdb7ed]
+en = "You don't have anything to wield."
+ru = "Вам нечем вооружиться."
+
+[3a8ecea56179]
+en = "You don't have anything else to wield."
+ru = "Вам больше нечем вооружиться."
+
+[18e635f1d35b]
+en = "You don't have anything to write on."
+ru = "Вам не на чем писать."
+
+[99b60aadfade]
+en = "You don't have anything else to write on."
+ru = "Вам больше не на чем писать."
+
+[d412f1de1d94]
+en = "You don't have anything to write with."
+ru = "Вам нечем писать."
+
+[a7720f0958dd]
+en = "You don't have anything else to write with."
+ru = "Вам больше нечем писать."
+
+[c2122495a698]
+en = "You don't have anything else to zap."
+ru = "Вам больше нечем взмахнуть."
+
+[284ee765bc54]
+en = "You don't have anything to put in."
+ru = "Вам нечего положить внутрь."
+
+[6dcb6fd59d3d]
+en = "You don't have anything else to put in."
+ru = "Вам больше нечего положить внутрь."
+
+[273aae356297]
+en = "You aren't carrying anything to adjust."
+ru = "Вам нечего перекладывать."
+
+[dd3e77832acf]
+en = "You aren't carrying anything adjustable."
+ru = "У вас нет ничего, что можно переложить."
+
+[a04e269f787c]
+en = "You have nothing to drop."
+ru = "Вам нечего положить."
+
+[fd21f74c3022]
+en = "You have nothing to identify."
+ru = "Вам нечего опознавать."
+
+[b01514031783]
+en = "You have nothing to take off."
+ru = "Вам нечего снимать."
+
+[aa3bf04c41c8]
+en = "You cannot fire that!"
+ru = "Этим нельзя выстрелить!"
+
+[314009f78e44]
+en = "Some text has been burned into the %s here."
+ru = "Здесь на {1:loc} выжжен какой-то текст."
+
+[ff4b9ddc002a]
+en = "Some text has been melted into the %s here."
+ru = "Здесь на {1:loc} выплавлен какой-то текст."
+
+[28036787e706]
+en = "%s rises from the dead!"
+ru = "{1} {1:num|восстаёт|восстают} из мёртвых!"
+
+[6127ffc55a87]
+en = "%s rises from the dead in a whirl of spectral skulls!"
+ru = "{1} {1:num|восстаёт|восстают} из мёртвых в вихре призрачных черепов!"
+
+[11dd6de43260]
+en = "%s rises from the dead in a churning pillar of flies!"
+ru = "{1} {1:num|восстаёт|восстают} из мёртвых в клубящемся столбе мух!"
+
+[eda207e25a08]
+en = "%s rises from the dead in a ring of withered crops!"
+ru = "{1} {1:num|восстаёт|восстают} из мёртвых в кольце увядших посевов!"
+
+[bda5915723ae]
+en = "You hear scratching noises."
+ru = "Вы слышите, как кто-то скребётся."
+
+[772fd77b5844]
+en = "You barely hear scratching noises."
+ru = "Вы едва слышите, как кто-то скребётся."
+
+[06a1826ac5ee]
+en = "You dream that you hear scratching noises."
+ru = "Вам снится, что кто-то скребётся."
+
+[c99942aa307d]
+en = "You %s up the stairs."
+ru = "Вы поднимаетесь по лестнице.{1:skip}"
+
+[e53c1652ae29]
+en = "You %s up the ladder."
+ru = "Вы поднимаетесь по приставной лестнице.{1:skip}"
+
+[87abb32e9c26]
+en = "You %s up along the ladder."
+ru = "Вы поднимаетесь вдоль приставной лестницы.{1:skip}"
+
+[640379efc2f3]
+en = "With great effort, you %s up the stairs."
+ru = "С огромным трудом вы поднимаетесь по лестнице.{1:skip}"
+
+[778b2578fead]
+en = "With great effort, you %s up the ladder."
+ru = "С огромным трудом вы поднимаетесь по приставной лестнице.{1:skip}"
+
+[1483d77fce0d]
+en = "With great effort, you %s up along the ladder."
+ru = "С огромным трудом вы поднимаетесь вдоль приставной лестницы.{1:skip}"
+
+[f08afcb990d5]
+en = "An alarm sounds!"
+ru = "Звучит тревога!"
+
+[7433c85f380d]
+en = "You fall into your pit!"
+ru = "Вы падаете в собственную яму!"
+
+[83fff096b88e]
+en = "You plunge into your pit!"
+ru = "Вы срываетесь в собственную яму!"
+
+[96e0c53068b0]
+en = "You plunge into a pit!"
+ru = "Вы срываетесь в яму!"
+
+[de2837299ec4]
+en = "You dive into a pit!"
+ru = "Вы ныряете в яму!"
+
+[cc329c4f07d2]
+en = "You dive into your pit!"
+ru = "Вы ныряете в собственную яму!"
+
+[6c4cb63fd78a]
+en = "You and %s fall into a pit!"
+ru = "Вы вместе с {1:ins} падаете в яму!"
+
+[e86e6d4ea524]
+en = "You and %s fall into your pit!"
+ru = "Вы вместе с {1:ins} падаете в собственную яму!"
+
+[7f01f3ece1a2]
+en = "You lead %s into a pit!"
+ru = "Вы заводите {1:acc} в яму!"
+
+[1d9c77b21cb3]
+en = "You lead %s into your pit!"
+ru = "Вы заводите {1:acc} в собственную яму!"
+
+[f338815d988d]
+en = "You land on a set of sharp iron spikes!"
+ru = "Вы падаете на острые железные шипы!"
+
+[ff4567e3f17d]
+en = "You fall down a shaft!"
+ru = "Вы падаете в шахту!"
+
+[5df8eb20faed]
+en = "You fall down a deep shaft!"
+ru = "Вы падаете в глубокую шахту!"
+
+[7e33035c96e6]
+en = "You fall down a very deep shaft!"
+ru = "Вы падаете в очень глубокую шахту!"
+
+[fd7cfa23da49]
+en = "You fly down a shaft!"
+ru = "Вы летите вниз по шахте!"
+
+[8256a22f0451]
+en = "You fly down a deep shaft!"
+ru = "Вы летите вниз по глубокой шахте!"
+
+[9b77a39dddec]
+en = "You fly down a very deep shaft!"
+ru = "Вы летите вниз по очень глубокой шахте!"
+
+[0ee7a8bb15d9]
+en = "A tower of flame erupts from %s!"
+ru = "Из {1:gen} вырывается столб пламени!"
+
+[e06e21744b6a]
+en = "A tower of flame bursts from %s!"
+ru = "Из {1:gen} вырывается столб пламени!"
+
+[c283b25f01cf]
+en = "A cascade of steamy bubbles erupts from %s!"
+ru = "Из {1:gen} вырывается каскад пузырей пара!"
+
+[2343eada4d07]
+en = "A gush of water hits your right %s!"
+ru = "Струя воды бьёт вас по {1:gender|правому|правой|правому|правым} {1:dat}!"
+
+[84e011362c5b]
+en = "A gush of water hits %s's left %s!"
+ru = "Струя воды бьёт {1:acc} по {2:gender|левому|левой|левому|левым} {2:dat}!"
+
+[356c5e602f2b]
+en = "KABOOM!!  %s was booby-trapped!"
+ru = "БА-БАХ!!  {1} {1:gender|был заминирован|была заминирована|было заминировано|были заминированы}!"
+
+[1d83810a66d2]
+en = "Fortunately for you, no boulder was released."
+ru = "К счастью для вас, валун так и не выкатился."
+
+[2fca28db0ddb]
+en = "You suddenly yearn for your distant homeland."
+ru = "Вас вдруг охватывает тоска по далёкой родине."
+
+[a252a046cca4]
+en = "You smell charred flesh."
+ru = "Вы чувствуете запах горелой плоти."
+
+[100158c0ef8f]
+en = "You smell hamburgers."
+ru = "Вы чувствуете запах гамбургеров."
+
+[8a72a2e1c0e2]
+en = "You feel very lethargic."
+ru = "Вас одолевает сильная вялость."
+
+[dd5b7d3eb129]
+en = "You dream that you feel very lethargic."
+ru = "Вам снится, что вас одолевает сильная вялость."
+
+[d24c176d19d6]
+en = "You feel sluggish."
+ru = "Вы чувствуете вялость."
+
+[03d163a29c32]
+en = "You dream that you feel sluggish."
+ru = "Вам снится, что вы чувствуете вялость."
+
+[170c7fbe8c20]
+en = "You feel unbearably torpid!"
+ru = "Вас сковывает невыносимое оцепенение!"
+
+[962d5c5cc0d9]
+en = "You dream that you feel unbearably torpid!"
+ru = "Вам снится, что вас сковывает невыносимое оцепенение!"
+
+[3b3851e31938]
+en = "You start to float in the air!"
+ru = "Вы начинаете парить в воздухе!"
+
+[95df35bbd548]
+en = "The %s falls into the %s!"
+ru = "{1} {1:num|падает|падают} в {2:acc}!"
+
+[fd732f51199b]
+en = "The adjacent object falls %s."
+ru = "Лежащий рядом предмет падает вниз.{1:skip}"
+
+[1140eb161467]
+en = "All the adjacent objects fall %s."
+ru = "Все лежащие рядом предметы падают вниз.{1:skip}"
+
+[7b990d80678c]
+en = "One of the adjacent objects falls %s."
+ru = "Один из лежащих рядом предметов падает вниз.{1:skip}"
+
+[e87b3eeb3ada]
+en = "Some of the adjacent objects fall %s."
+ru = "Часть лежащих рядом предметов падает вниз.{1:skip}"
+
+[87daeafd6934]
+en = "From the impact, another object falls."
+ru = "От удара падает ещё один предмет."
+
+[03ac1aa60a2f]
+en = "From the impact, the other object falls."
+ru = "От удара падает и второй предмет."
+
+[cfaf15228147]
+en = "From the impact, other objects fall."
+ru = "От удара падают и другие предметы."
+
+[5d1896945492]
+en = "From the impact, the other objects fall."
+ru = "От удара падают и остальные предметы."
+
+[2c3fe06199be]
+en = "%s reels from the blow."
+ru = "{1} {1:num|шатается|шатаются} от удара."
+
+[e6a971011ade]
+en = "Your load is too heavy to balance yourself for a kick."
+ru = "С такой тяжёлой ношей вам не удержать равновесие для пинка."
+
+[16779e293c04]
+en = "You are feeling mildly nauseated."
+ru = "Вас слегка подташнивает."
+
+[14ed072ee9ce]
+en = "You feel slightly confused."
+ru = "У вас слегка путаются мысли."
+
+[748b9d47ef4b]
+en = "You can't seem to think straight."
+ru = "Вам никак не удаётся собраться с мыслями."
+
+[157870e94132]
+en = "You feel incredibly sick."
+ru = "Вас невыносимо мутит."
+
+[0ca969db389a]
+en = "You are about to vomit."
+ru = "Вас вот-вот вырвет."
+
+[c076e7cd0672]
+en = "You are about to hurl!"
+ru = "Вас сейчас вывернет наизнанку!"
+
+[52cec701f694]
+en = "You gag uncontrollably."
+ru = "Вас сотрясают рвотные позывы."
+
+[034bc891cabd]
+en = "You vomit!"
+ru = "Вас рвёт!"
+
+[c06734c0838f]
+en = "You feel strong!"
+ru = "Вы чувствуете себя сильнее!"
+
+[1ddf2b360336]
+en = "You feel very strong!"
+ru = "Вы чувствуете себя гораздо сильнее!"
+
+[d9953be08f9d]
+en = "You feel weak!"
+ru = "Вы чувствуете себя слабее!"
+
+[e86404229eca]
+en = "You feel very weak!"
+ru = "Вы чувствуете себя гораздо слабее!"
+
+[e01adb65a0cd]
+en = "You feel smart!"
+ru = "Вы чувствуете себя умнее!"
+
+[c31e67afdeec]
+en = "You feel very smart!"
+ru = "Вы чувствуете себя гораздо умнее!"
+
+[791e566559f4]
+en = "You feel stupid!"
+ru = "Вы чувствуете себя тупее!"
+
+[bbbbf4259fdc]
+en = "You feel very stupid!"
+ru = "Вы чувствуете себя гораздо тупее!"
+
+[d9e6b69f69ba]
+en = "You feel wise!"
+ru = "Вы чувствуете себя мудрее!"
+
+[14a0b5148e6e]
+en = "You feel very wise!"
+ru = "Вы чувствуете себя гораздо мудрее!"
+
+[e317fad612ce]
+en = "You feel very foolish!"
+ru = "Вы чувствуете себя гораздо глупее!"
+
+[d1ced6d82620]
+en = "You feel agile!"
+ru = "Вы чувствуете себя ловчее!"
+
+[89a1ead04801]
+en = "You feel very agile!"
+ru = "Вы чувствуете себя гораздо ловчее!"
+
+[b040d657ded8]
+en = "You feel very clumsy!"
+ru = "Вы чувствуете себя очень неуклюже!"
+
+[99b536e97c05]
+en = "You feel very tough!"
+ru = "Вы чувствуете себя гораздо крепче!"
+
+[b0e59129fbbd]
+en = "You feel fragile!"
+ru = "Вы чувствуете себя уязвимее!"
+
+[2c36fd39f6eb]
+en = "You feel very fragile!"
+ru = "Вы чувствуете себя гораздо уязвимее!"
+
+[dbbb35abf70d]
+en = "You feel charismatic!"
+ru = "Вы чувствуете себя обаятельнее!"
+
+[9825adfc7918]
+en = "You feel very charismatic!"
+ru = "Вы чувствуете себя гораздо обаятельнее!"
+
+[46ef662b5834]
+en = "You feel repulsive!"
+ru = "Вы чувствуете себя отталкивающе!"
+
+[7af7db6fffc1]
+en = "You feel very repulsive!"
+ru = "Вы чувствуете себя крайне отталкивающе!"
+
+[90eaf3d15943]
+en = "%s vanishes and reappears."
+ru = "{1} {1:num|исчезает|исчезают} и {1:num|появляется|появляются} снова."
+
+[f66662b389aa]
+en = "%s vanishes and reappears next to you."
+ru = "{1} {1:num|исчезает|исчезают} и {1:num|появляется|появляются} рядом с вами."
+
+[4ce1033df902]
+en = "%s vanishes and reappears closer to you."
+ru = "{1} {1:num|исчезает|исчезают} и {1:num|появляется|появляются} ближе к вам."
+
+[c9cb2fa0c120]
+en = "%s vanishes and reappears farther away."
+ru = "{1} {1:num|исчезает|исчезают} и {1:num|появляется|появляются} подальше."
+
+[382387cd400f]
+en = "%s vanishes and reappears%s."
+ru = "{1} {1:num|исчезает|исчезают} и {1:num|появляется|появляются} неподалёку.{2:skip}"
+
+[8225054e55d2]
+en = "You and %s teleport together."
+ru = "Вы и {1} телепортируетесь вместе."
+
+[0844cf0bb023]
+en = "You see a gas cloud dissipate."
+ru = "Вы видите, как рассеивается облако газа."
+
+[1e304a7e3d34]
+en = "You see some gas clouds dissipate."
+ru = "Вы видите, как рассеиваются облака газа."
+
+[8ce6765235c6]
+en = "You dream that you see a gas cloud dissipate."
+ru = "Вам снится, что рассеивается облако газа."
+
+[4b5a1d687497]
+en = "You dream that you see some gas clouds dissipate."
+ru = "Вам снится, что рассеиваются облака газа."
+
+[055b72e6568f]
+en = "You sense a gas cloud dissipate."
+ru = "Вы ощущаете, как рассеивается облако газа."
+
+[d65360ddacc6]
+en = "You sense some gas clouds dissipate."
+ru = "Вы ощущаете, как рассеиваются облака газа."
+
+[2d177c498efe]
+en = "The gas cloud around you dissipates."
+ru = "Облако газа вокруг вас рассеивается."
+
+[0932fce17a47]
+en = "You hear a horn being played nearby."
+ru = "Вы слышите, как неподалёку трубят в рог."
+
+[4694074bf521]
+en = "You hear a horn being played in the distance."
+ru = "Вы слышите, как вдалеке трубят в рог."
+
+[174a993ce247]
+en = "You barely hear a horn being played nearby."
+ru = "Вы едва слышите, как неподалёку трубят в рог."
+
+[691d318e2933]
+en = "You barely hear a horn being played in the distance."
+ru = "Вы едва слышите, как вдалеке трубят в рог."
+
+[ab9ad756d20f]
+en = "You dream that you hear a horn being played nearby."
+ru = "Вам снится, что неподалёку трубят в рог."
+
+[2dcad949ab28]
+en = "You dream that you hear a horn being played in the distance."
+ru = "Вам снится, что вдалеке трубят в рог."
+
+[8ab5ef1305a0]
+en = "%s plays %s directed at you!"
+ru = "{1} {1:num|трубит|трубят} в {2:acc}, направив {2:gender|его|её|его|их} на вас!"
+
+[2a1e55252667]
+en = "You hear a distant zap."
+ru = "Вы слышите вдалеке треск волшебной палочки."
+
+[1f9bdcff6fc2]
+en = "%s flicks a bullwhip towards your %s!"
+ru = "{1} {1:num|щёлкает|щёлкают} кнутом в сторону {2:gender|вашего|вашей|вашего|ваших} {2:gen}!"
+
+[91f31e069a17]
+en = "The bullwhip wraps around %s you're wielding!"
+ru = "Кнут обвивает {1:acc}, {1:gender|который|которую|которое|которые} вы держите!"
+
+[0859354bbd1e]
+en = "%s yanks %s from your %s!"
+ru = "{1} {1:num|вырывает|вырывают} {2:acc} из {3:gender|вашего|вашей|вашего|ваших} {3:gen}!"
+
+[4e89a8d34c74]
+en = "%s yanks %s to the %s!"
+ru = "{1} {1:num|сдёргивает|сдёргивают} {2:acc} на {3:acc}!"
+
+[9fbb7c271d56]
+en = "The bullwhip slips free."
+ru = "Кнут соскальзывает."
+
+[d5f2fcf7f274]
+en = "%s seems more experienced."
+ru = "{1} {1:num|выглядит|выглядят} опытнее."
+
+[c26ea07bcecc]
+en = "%s shudders for a moment."
+ru = "{1} на миг {1:num|содрогается|содрогаются}."
+
+[0c8345ac8d4f]
+en = "%s secures the tether on %s."
+ru = "{1} {1:num|закрепляет|закрепляют} привязь на {2:loc}."
+
+[3fc85dd65833]
+en = "%s%s puts on %s."
+ru = "{1} {1:num|надевает|надевают} {3:acc}.{2:skip}"
+
+[572bf5de7548]
+en = "%s removes %s and puts on %s."
+ru = "{1} {1:num|снимает|снимают} {2:acc} и {1:num|надевает|надевают} {3:acc}."
+
+[fc4846df27a4]
+en = "%s disarms %s."
+ru = "{1} {1:num|отбирает|отбирают} {2:acc}."
+
+[a379bb2f87ba]
+en = "%s tries to rob you, but there is nothing to steal!"
+ru = "{1} {1:num|пытается|пытаются} вас обокрасть, но красть нечего!"
+
+[e8f5d4fd5503]
+en = "%s charms you.  You gladly hand over your %s."
+ru = "{1} {1:num|очаровывает|очаровывают} вас.  Вы с радостью отдаёте {2:gender|свой|свою|своё|свои} {2:acc}."
+
+[2cdef196d75a]
+en = "%s is hit!"
+ru = "В {1:acc} попадает снаряд!"
+
+[740ae29eb4f7]
+en = "Splat!  %s is hit!"
+ru = "Шмяк!  В {1:acc} попадает снаряд!"
+
+[1b136cccc7b9]
+en = "Splat!  %s is hit."
+ru = "Шмяк!  В {1:acc} попадает снаряд."
+
+[04478707014e]
+en = "You are hit!"
+ru = "В вас попали!"
+
+[9edbbf55f3ff]
+en = "Yecch!  You've been creamed."
+ru = "Тьфу!  Вас измазали кремом."
+
+[aca75ecfdbd9]
+en = "Flapp!"
+ru = "Хлоп!"
+
+[248548b891b9]
+en = "%s pretends to be friendly to %s."
+ru = "{1} {1:num|притворяется|притворяются}, будто {1:gender|дружелюбен|дружелюбна|дружелюбно|дружелюбны} к {2:dat}."
+
+[692e1eca390b]
+en = "You dream that you hear some noises."
+ru = "Вам снится какой-то шум."
+
+[6c05eb925210]
+en = "You dream that you hear some noises in the distance."
+ru = "Вам снится какой-то шум вдалеке."
+
+[b77445e8564f]
+en = "The combat suddenly awakens you."
+ru = "Вас внезапно будит шум боя."
+
+[c0372fa3c2ac]
+en = "You smell a peculiar odor..."
+ru = "Вы чувствуете странный запах..."
+
+[d763b57d0b46]
+en = "%s shatters!"
+ru = "{1} {1:num|разбивается|разбиваются} вдребезги!"
+
+[e221c6ea4163]
+en = "%s shatter!"
+ru = "{1} {1:num|разбивается|разбиваются} вдребезги!"
+
+[8cc6d119ff14]
+en = "%s shatters into a thousand pieces!"
+ru = "{1} {1:num|разлетается|разлетаются} на тысячу осколков!"
+
+[f56cf9509fe8]
+en = "%s shatter into a thousand pieces!"
+ru = "{1} {1:num|разлетается|разлетаются} на тысячу осколков!"
+
+[2eb706370277]
+en = "The gold hits the %s."
+ru = "Золото падает на {1:acc}."
+
+[941a0ce6eb99]
+en = "You cannot throw gold at yourself."
+ru = "Нельзя бросить золото в себя."
+
+[193f139d838b]
+en = "You hurtle in the opposite direction."
+ru = "Вас отбрасывает в противоположную сторону."
+
+[2f282e1a702f]
+en = "Ouch!"
+ru = "Ой!"
+
+[0b2a48024760]
+en = "You can't see through all the sticky goop on your %s."
+ru = "Вы ничего не видите сквозь липкую массу на {1:loc}."
+
+[49e06674eec0]
+en = "You immerse your %s in %s."
+ru = "Вы погружаете {1:acc} в {2:acc}."
+
+[2a3d75dc1c38]
+en = "You immerse your %s in one of %s."
+ru = "Вы погружаете {1:acc} в {2:sg|один|одну|одно} из {2:gen}."
+
+[8b17413a6311]
+en = "You can't rub %s on itself."
+ru = "Нельзя потереть {1:acc} о {1:gender|самого|саму|само|самих} себя."
+
+[b9c81d9d2c3b]
+en = "Raising %s high above your %s, you snap it in two!"
+ru = "Подняв {1:acc:own} высоко над {2:ins}, вы переламываете {1:gender|его|её|его|их} пополам!"
+
+[037abb6b6fb8]
+en = "Raising %s high above your %s, you break it in two!"
+ru = "Подняв {1:acc:own} высоко над {2:ins}, вы разламываете {1:gender|его|её|его|их} пополам!"
+
+[2506756d430a]
+en = "There doesn't seem to be any sort of lock here."
+ru = "Похоже, здесь нет никакого замка."
+
+[d8332a394d73]
+en = "I don't think %s would appreciate that."
+ru = "Вряд ли {1:dat} это понравится."
+
+[90c66740a65e]
+en = "Seems like something lootable over there."
+ru = "Похоже, там есть чем поживиться."
+
+[54b11d082da3]
+en = "Feels like something lootable over there."
+ru = "На ощупь там есть чем поживиться."
+
+[dc005cc3a72c]
+en = "You destroy the bear trap with %s."
+ru = "Вы разбиваете медвежий капкан {1:ins:own}."
+
+[47dd10691a99]
+en = "%s merely scratches the %s."
+ru = "{1} лишь {1:num|царапает|царапают} {2:acc}."
+
+[1889e34378f3]
+en = "You feel like a despicable grave-robber!"
+ru = "Вы чувствуете себя {hero:gender|гнусным расхитителем|гнусной расхитительницей} могил!"
+
+[f51d1e7205cd]
+en = "You dream that you feel like a despicable grave-robber!"
+ru = "Вам снится, что вы {hero:gender|гнусный расхититель|гнусная расхитительница} могил!"
+
+[1f3bc158ab78]
+en = "You've disturbed a tomb!"
+ru = "Вы потревожили гробницу!"
+
+[8b01e91e2367]
+en = "\"Madam, do not damage the floor here!\""
+ru = "«Сударыня, не портите здесь пол!»"
+
+[ba10b086aff2]
+en = "\"Be careful, madam, or you might fall through the floor.\""
+ru = "«Осторожнее, сударыня, а то провалитесь сквозь пол.»"
+
+[50501eb72eb6]
+en = "\"Out of my way, scum!\""
+ru = "«Прочь с дороги, отребье!»"
+
+[0f60402bf67c]
+en = "You escaped the shop without paying!"
+ru = "Вы сбежали из лавки, не заплатив!"
+
+[81304331e402]
+en = "You stole %ld zorkmids worth of merchandise."
+ru = "Вы украли товара на {1} {1:plural|зоркмид|зоркмида|зоркмидов}."
+
+[2523d93b2c52]
+en = "You stole %ld zorkmid worth of merchandise."
+ru = "Вы украли товара на {1} {1:plural|зоркмид|зоркмида|зоркмидов}."
+
+[be0898c98e52]
+en = "The Keystone Kops are after you!"
+ru = "За вами гонятся кистоунские копы!"
+
+[fca726bed777]
+en = "You have established %ld zorkmids credit."
+ru = "Вы открываете кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов}."
+
+[28c2ab4fb1b1]
+en = "You owe %s %ld zorkmids for goods lost."
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за пропавший товар."
+
+[0da8324d36fc]
+en = "You owe %s %ld zorkmid for goods lost."
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за пропавший товар."
+
+[321d19fc7ab0]
+en = "You relinquish %s and receive %ld gold pieces in compensation."
+ru = "Вы отдаёте {1:acc} и получаете {2} {2:plural|золотую монету|золотые монеты|золотых монет} в возмещение."
+
+[3c516774d275]
+en = "You relinquish %s and receive %ld gold piece in compensation."
+ru = "Вы отдаёте {1:acc} и получаете {2} {2:plural|золотую монету|золотые монеты|золотых монет} в возмещение."
+
+[86b1bc420786]
+en = "%s comes and takes all your possessions."
+ru = "{1} {1:num|приходит|приходят} и {1:num|забирает|забирают} всё ваше имущество."
+
+[1e27de7317bb]
+en = "Welcome to David's treasure zoo!"
+ru = "Добро пожаловать в сокровищный зоопарк Давида!"
+
+[99705d91c861]
+en = "\"%s, %s, welcome to Delphi!\""
+ru = "«{1}, {2}, добро пожаловать в Дельфы!»"
+
+[5ac87c4cb1dc]
+en = "Automatic description is on."
+ru = "Автоописание включено."
+
+[f9ae1076b1ee]
+en = "Automatic description of features under cursor is on."
+ru = "Автоописание того, что под курсором, включено."
+
+[f62570f5a72a]
+en = "Automatic description of features under cursor is off."
+ru = "Автоописание того, что под курсором, выключено."
+
+[4c90bf54049e]
+en = "Double fight prefix, canceled."
+ru = "Префикс боя набран дважды, отменено."
+
+[59c696b186f9]
+en = "What are you looking for?  The exit?"
+ru = "Что вы ищете?  Выход?"
+
+[90b4de159ff9]
+en = "You feel an unseen monster!"
+ru = "Вы нащупываете невидимого монстра!"
+
+[33e59aecb524]
+en = "You dream that you feel an unseen monster!"
+ru = "Вам снится, что вы нащупываете невидимого монстра!"
+
+[c58829573df1]
+en = "You learn more about your items by comparing them."
+ru = "Сравнивая свои вещи, вы узнаёте о них больше."
+
+[c2b953b227bb]
+en = "You have a sad feeling for a moment, then it passes."
+ru = "На миг вам становится грустно, но это проходит."
+
+[b134d38a1504]
+en = "You rebalance your load.  Movement is difficult."
+ru = "Вы перекладываете ношу поудобнее.  Двигаться трудно."
+
+[9f0bd66ed85a]
+en = "You feel cooler."
+ru = "Вам становится прохладнее."
+
+[d572666fd1ce]
+en = "You dream that you feel cooler."
+ru = "Вам снится, что вам становится прохладнее."
+
+[7260dcba8955]
+en = "You see a door open."
+ru = "Вы видите, как открывается дверь."
+
+[a1174a811f9a]
+en = "You dream that you see a door open."
+ru = "Вам снится, что открывается дверь."
+
+[e4946b17bec2]
+en = "Suddenly, %s disappears."
+ru = "Внезапно {1} {1:num|исчезает|исчезают}."
+
+[1aef6c1e4595]
+en = "Program in disorder!  (Saving and reloading may fix this problem.)"
+ru = "Сбой в программе!  (Возможно, поможет сохранение и перезагрузка.)"
+
+[3c8009a2f505]
+en = "Please report these messages to %s."
+ru = "Пожалуйста, сообщите об этих сообщениях по адресу {1}."
+
+[ca8e44bcf9d3]
+en = "Please report these messages to devteam@nethack.org."
+ru = "Пожалуйста, сообщите об этих сообщениях по адресу devteam@nethack.org."
+
+[c310a0b133f2]
+en = "You remember this level as %s."
+ru = "Вы помните этот уровень как «{1}»."
+
+[7196ffd588f8]
+en = "You are caught in the magical blast!"
+ru = "Вас накрывает магическим взрывом!"
+
+[15de07cbd0f4]
+en = "It smells like %s."
+ru = "Пахнет {1:ins}."
+
+[e9f933a288ac]
+en = "You hear a sceptre pounded in judgment."
+ru = "Вы слышите, как судейский скипетр стучит об пол."
+
+[38877e723902]
+en = "You barely hear a sceptre pounded in judgment."
+ru = "Вы едва слышите, как судейский скипетр стучит об пол."
+
+[b772f9991f89]
+en = "You dream that you hear a sceptre pounded in judgment."
+ru = "Вам снится, что судейский скипетр стучит об пол."
+
+[968108bd2a7c]
+en = "Someone shouts \"Off with his head!\""
+ru = "Кто-то кричит: «Голову ему с плеч!»"
+
+[8983c06eef34]
+en = "Someone shouts \"Off with her head!\""
+ru = "Кто-то кричит: «Голову ей с плеч!»"
+
+[a2f424927660]
+en = "You hear a sound reminiscent of an elephant stepping on a peanut."
+ru = "Вы слышите звук, будто слон наступил на арахис."
+
+[dbe91c7c27b7]
+en = "You barely hear a sound reminiscent of an elephant stepping on a peanut."
+ru = "Вы едва слышите звук, будто слон наступил на арахис."
+
+[f29c4e24cdad]
+en = "You dream that you hear a sound reminiscent of an elephant stepping on a peanut."
+ru = "Вам снится звук, будто слон наступил на арахис."
+
+[5f94a1e5ae22]
+en = "You hear a boulder fall."
+ru = "Вы слышите, как падает валун."
+
+[a1f888d7a94d]
+en = "%s bites again!"
+ru = "{1} снова {1:num|кусает|кусают}!"
+
+[94e4c2f9689d]
+en = "%s butts!"
+ru = "{1} {1:num|бодает|бодают}!"
+
+[9a8e27bc750f]
+en = "%s butts again!"
+ru = "{1} снова {1:num|бодает|бодают}!"
+
+[bce46d472028]
+en = "%s kicks!"
+ru = "{1} {1:num|бьёт|бьют} ногой!"
+
+[2d0c6f0104a9]
+en = "%s kicks again!"
+ru = "{1} снова {1:num|бьёт|бьют} ногой!"
+
+[3578db2a1b9a]
+en = "%s kicks."
+ru = "{1} {1:num|бьёт|бьют} ногой."
+
+[f9611a57fcbe]
+en = "%s kicks again."
+ru = "{1} снова {1:num|бьёт|бьют} ногой."
+
+[05732c4b7a08]
+en = "%s stings!"
+ru = "{1} {1:num|жалит|жалят}!"
+
+[902819286c07]
+en = "%s stings again!"
+ru = "{1} снова {1:num|жалит|жалят}!"
+
+[e16bd1023c9d]
+en = "%s touches you again!"
+ru = "{1} снова {1:num|касается|касаются} вас!"
+
+[66746fd73f60]
+en = "%s tentacles suck your brain!"
+ru = "Щупальца {1:gen} высасывают ваш мозг!"
+
+[274c28df57f6]
+en = "%s tentacles suck your brain again!"
+ru = "Щупальца {1:gen} снова высасывают ваш мозг!"
+
+[fa834cc157cf]
+en = "%s explodes!"
+ru = "{1} {1:num|взрывается|взрываются}!"
+
+[92f74270210f]
+en = "%s swings his %s at %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:ins} на {3:acc}."
+
+[36d44744472d]
+en = "%s swings its %s at %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:ins} на {3:acc}."
+
+[1146495f7be6]
+en = "%s swings their %s at %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:ins} на {3:acc}."
+
+[b5a1e7f39163]
+en = "%s swings one of her %s at %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:sg|одним|одной|одним} из своих {2:gen} на {3:acc}."
+
+[646e5cd1ebe6]
+en = "%s swings one of his %s at %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:sg|одним|одной|одним} из своих {2:gen} на {3:acc}."
+
+[39e589420051]
+en = "%s swings one of its %s at %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:sg|одним|одной|одним} из своих {2:gen} на {3:acc}."
+
+[598e6679398e]
+en = "%s swings one of their %s at %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:sg|одним|одной|одним} из своих {2:gen} на {3:acc}."
+
+[7d08b734a817]
+en = "%s thrusts its %s at %s."
+ru = "{1} {1:num|делает|делают} выпад {2:ins} в сторону {3:gen}."
+
+[546ab4fd767b]
+en = "%s thrusts their %s at %s."
+ru = "{1} {1:num|делает|делают} выпад {2:ins} в сторону {3:gen}."
+
+[3618c65d39f4]
+en = "%s thrusts one of its %s at %s."
+ru = "{1} {1:num|делает|делают} выпад {2:sg|одним|одной|одним} из своих {2:gen} в сторону {3:gen}."
+
+[a7320dac5cd6]
+en = "%s thrusts one of their %s at %s."
+ru = "{1} {1:num|делает|делают} выпад {2:sg|одним|одной|одним} из своих {2:gen} в сторону {3:gen}."
+
+[c3893d9f9ad4]
+en = "%s lashes her %s at %s."
+ru = "{1} {1:num|хлещет|хлещут} {2:ins} в сторону {3:gen}."
+
+[5011d9e8acd9]
+en = "%s lashes his %s at %s."
+ru = "{1} {1:num|хлещет|хлещут} {2:ins} в сторону {3:gen}."
+
+[385328ba22b0]
+en = "%s lashes its %s at %s."
+ru = "{1} {1:num|хлещет|хлещут} {2:ins} в сторону {3:gen}."
+
+[89fa1c2d5267]
+en = "%s lashes their %s at %s."
+ru = "{1} {1:num|хлещет|хлещут} {2:ins} в сторону {3:gen}."
+
+[e430ae06e145]
+en = "%s lashes one of her %s at %s."
+ru = "{1} {1:num|хлещет|хлещут} {2:sg|одним|одной|одним} из своих {2:gen} в сторону {3:gen}."
+
+[95429a1583c2]
+en = "%s lashes one of his %s at %s."
+ru = "{1} {1:num|хлещет|хлещут} {2:sg|одним|одной|одним} из своих {2:gen} в сторону {3:gen}."
+
+[edc5298805f8]
+en = "%s lashes one of its %s at %s."
+ru = "{1} {1:num|хлещет|хлещут} {2:sg|одним|одной|одним} из своих {2:gen} в сторону {3:gen}."
+
+[71331c8d47f7]
+en = "%s lashes one of their %s at %s."
+ru = "{1} {1:num|хлещет|хлещут} {2:sg|одним|одной|одним} из своих {2:gen} в сторону {3:gen}."
+
+[a9415e8584cd]
+en = "%s bashes with her %s at %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:ins} на {3:acc}."
+
+[45089f87383e]
+en = "%s bashes with his %s at %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:ins} на {3:acc}."
+
+[4982940c378d]
+en = "%s bashes with its %s at %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:ins} на {3:acc}."
+
+[578e5f9947d8]
+en = "%s bashes with their %s at %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:ins} на {3:acc}."
+
+[1e3b704a576b]
+en = "%s bashes with one of her %s at %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:sg|одним|одной|одним} из своих {2:gen} на {3:acc}."
+
+[7aec8e11b08b]
+en = "%s bashes with one of his %s at %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:sg|одним|одной|одним} из своих {2:gen} на {3:acc}."
+
+[2f2ead1707f5]
+en = "%s bashes with one of its %s at %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:sg|одним|одной|одним} из своих {2:gen} на {3:acc}."
+
+[ecf9e078bf3e]
+en = "%s bashes with one of their %s at %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:sg|одним|одной|одним} из своих {2:gen} на {3:acc}."
+
+[2a2593a36fd5]
+en = "%s removes %s."
+ru = "{1} {1:num|снимает|снимают} {2:acc}."
+
+[9a7fa0a95e09]
+en = "%s takes off %s."
+ru = "{1} {1:num|снимает|снимают} {2:acc}."
+
+[010c2b26175d]
+en = "Merging: %s"
+ru = "Объединено: {1}"
+
+[1ad559907e14]
+en = "Splitting: %s"
+ru = "Отделено: {1}"
+
+[eef87ea1963e]
+en = "Splitting and merging: %s"
+ru = "Отделено и объединено: {1}"
+
+[3622f7027866]
+en = "Collecting: %s"
+ru = "Собрано: {1}"
+
+[322f8f03087c]
+en = "You find old loot: %s"
+ru = "Вы находите старую добычу: {1}"
+
+[2e5e344c425d]
+en = "Endgame prerequisite: %s"
+ru = "Необходимо для финала: {1}"
+
+[96de21ce96d9]
+en = "%s lifting %s"
+ru = "Поднято с трудом: {2}{1:skip}"
+
+[71b809faed81]
+en = "%s removing %s"
+ru = "Вынуто с трудом: {2}{1:skip}"
+
+[993f4ce9dec1]
+en = "You have extreme difficulty lifting %s"
+ru = "Поднято с огромным трудом: {1}"
+
+[2011fb3b5fd7]
+en = "You have extreme difficulty removing %s"
+ru = "Вынуто с огромным трудом: {1}"
+
+[1e204627df23]
+en = "You ready: %s (%ld in total)."
+ru = "Наготове: {1} (всего {2})."
+
+[e72a8e30414a]
+en = "Moving: %s (%ld in total)."
+ru = "Перемещено: {1} (всего {2})."
+
+[66af811449a2]
+en = "Merging: %s (%ld in total)."
+ru = "Объединено: {1} (всего {2})."
+
+[6c657d2a8434]
+en = "Splitting: %s (%ld in total)."
+ru = "Отделено: {1} (всего {2})."
+
+[0c08962a9d74]
+en = "Splitting and merging: %s (%ld in total)."
+ru = "Отделено и объединено: {1} (всего {2})."
+
+[e83eb2a017d3]
+en = "Swapping: %s (%ld in total)."
+ru = "Обмен: {1} (всего {2})."
+
+[7a6ff87e132e]
+en = "Collecting: %s (%ld in total)."
+ru = "Собрано: {1} (всего {2})."
+
+[69b350795da9]
+en = "You find old loot: %s (%ld in total)."
+ru = "Вы находите старую добычу: {1} (всего {2})."
+
+[cf9079f65563]
+en = "%s lifting %s (%ld in total)."
+ru = "Поднято с трудом: {2} (всего {3}).{1:skip}"
+
+[e82c40b9f0cc]
+en = "%s removing %s (%ld in total)."
+ru = "Вынуто с трудом: {2} (всего {3}).{1:skip}"
+
+[45d1edb2d0cc]
+en = "You have extreme difficulty lifting %s (%ld in total)."
+ru = "Поднято с огромным трудом: {1} (всего {2})."
+
+[16af9915de33]
+en = "You have extreme difficulty removing %s (%ld in total)."
+ru = "Вынуто с огромным трудом: {1} (всего {2})."
+
+[d94c1ae80eb7]
+en = "%s (%ld in total)."
+ru = "{1} (всего {2})."
+
+[c612df180c0b]
+en = "You feel here %s."
+ru = "Вы нащупываете здесь {1:acc}."
+
+[3ea978b03af1]
+en = "You catch the %s!"
+ru = "Вы ловите {1:acc}!"
+
+[bb82f2426bff]
+en = "You catch the %s."
+ru = "Вы ловите {1:acc}."
+
+[0b541a622cbb]
+en = "%s looks a little more polished now."
+ru = "{1} теперь {1:num|блестит|блестят} чуть ярче."
+
+[6cf267665541]
+en = "This %s creature is called %s and cannot be renamed."
+ru = "Это {1:n} создание зовут {2}, и переименовать его нельзя."
+
+[770a51c283a6]
+en = "Your %s are filthier than ever!"
+ru = "Ваши {1} грязнее прежнего!"
+
+[401b77c95920]
+en = "Your %s get slimy!"
+ru = "Ваши {1} становятся склизкими!"
+
+[f8d5cb5e0f8f]
+en = "You are enveloped in a cloud of steam!"
+ru = "Вас окутывает облако пара!"
+
+[b9f3a0c04375]
+en = "You are enveloped in a cloud of noxious gas!"
+ru = "Вас окутывает облако ядовитого газа!"
+
+[42e3ae26fd0e]
+en = "Several flies buzz angrily around the sink."
+ru = "Вокруг раковины сердито жужжит несколько мух."
+
+[702dcdc33971]
+en = "Several %s buzz angrily around the sink."
+ru = "Вокруг раковины сердито жужжит несколько {1:gen}."
+
+[fa62427bc598]
+en = "Several flies buzz around the sink."
+ru = "Вокруг раковины жужжит несколько мух."
+
+[ba536dbb739b]
+en = "You hear someone summoning %s."
+ru = "Вы слышите, как кто-то призывает {1:acc}."
+
+[7884f5a31ba6]
+en = "You hear someone summoning insects."
+ru = "Вы слышите, как кто-то призывает насекомых."
+
+[ab6bcd50dcd6]
+en = "You hear someone summoning snakes."
+ru = "Вы слышите, как кто-то призывает змей."
+
+[0bed7e2accfc]
+en = "You barely hear someone summoning %s."
+ru = "Вы едва слышите, как кто-то призывает {1:acc}."
+
+[b7daedc6ee02]
+en = "You barely hear someone summoning insects."
+ru = "Вы едва слышите, как кто-то призывает насекомых."
+
+[26451c5eab8d]
+en = "You barely hear someone summoning snakes."
+ru = "Вы едва слышите, как кто-то призывает змей."
+
+[711e6747973e]
+en = "You dream that you hear someone summoning %s."
+ru = "Вам снится, что кто-то призывает {1:acc}."
+
+[cd7629715bda]
+en = "You dream that you hear someone summoning insects."
+ru = "Вам снится, что кто-то призывает насекомых."
+
+[1740b5a36911]
+en = "You dream that you hear someone summoning snakes."
+ru = "Вам снится, что кто-то призывает змей."
+
+[7ece901bb138]
+en = "You hear someone summoning something, and %s appear."
+ru = "Вы слышите, как кто-то что-то призывает, и появляются {1}."
+
+[4a89b76000dc]
+en = "You hear someone summoning something, and %s appears."
+ru = "Вы слышите, как кто-то что-то призывает, и появляется {1}."
+
+[ec4f78005100]
+en = "You barely hear someone summoning something, and %s appear."
+ru = "Вы едва слышите, как кто-то что-то призывает, и появляются {1}."
+
+[cb8dfad156b4]
+en = "You barely hear someone summoning something, and %s appears."
+ru = "Вы едва слышите, как кто-то что-то призывает, и появляется {1}."
+
+[65592b84b959]
+en = "You dream that you hear someone summoning something, and %s appear."
+ru = "Вам снится, что кто-то что-то призывает и появляются {1}."
+
+[41262c295377]
+en = "You dream that you hear someone summoning something, and %s appears."
+ru = "Вам снится, что кто-то что-то призывает и появляется {1}."
+
+[ac9b6bbcb40c]
+en = "%s roars!"
+ru = "{1} {1:num|ревёт|ревут}!"
+
+[571d63b0fe93]
+en = "%s bellows!"
+ru = "{1} {1:num|утробно ревёт|утробно ревут}!"
+
+[c4461852bbcf]
+en = "%s buzzes!"
+ru = "{1} {1:num|жужжит|жужжат}!"
+
+[d57492523179]
+en = "%s squeals!"
+ru = "{1} {1:num|визжит|визжат}!"
+
+[93809915039e]
+en = "%s screeches!"
+ru = "{1} {1:num|пронзительно кричит|пронзительно кричат}!"
+
+[3147bd21dd9b]
+en = "%s neighs!"
+ru = "{1} {1:num|ржёт|ржут}!"
+
+[07e5ce294c6c]
+en = "%s wails!"
+ru = "{1} {1:num|завывает|завывают}!"
+
+[3cb21ac6b026]
+en = "%s groans!"
+ru = "{1} {1:num|стонет|стонут}!"
+
+[ad6334b7ea0f]
+en = "%s lows!"
+ru = "{1} {1:num|мычит|мычат}!"
+
+[5f0516af2586]
+en = "%s screams!"
+ru = "{1} {1:num|кричит|кричат}!"
+
+[faf61fcb5616]
+en = "%s yowls!"
+ru = "{1} {1:num|истошно мяукает|истошно мяукают}!"
+
+[999ee507237c]
+en = "%s arches!"
+ru = "{1} {1:num|выгибает спину|выгибают спину}!"
+
+[3d7c65cc9814]
+en = "%s yelps!"
+ru = "{1} {1:num|взвизгивает|взвизгивают}!"
+
+[df50a595c732]
+en = "%s recoils!"
+ru = "{1} {1:num|отшатывается|отшатываются}!"
+
+[91c9adce0b26]
+en = "%s snarls!"
+ru = "{1} {1:num|огрызается|огрызаются}!"
+
+[5039c07cfd88]
+en = "%s bluffs!"
+ru = "{1} {1:num|угрожающе скалится|угрожающе скалятся}!"
+
+[83ab103ccb6b]
+en = "%s quivers!"
+ru = "{1} {1:num|вздрагивает|вздрагивают}!"
+
+[28597d1f2719]
+en = "%s screaks!"
+ru = "{1} {1:num|пронзительно вскрикивает|пронзительно вскрикивают}!"
+
+[d002fda7370c]
+en = "%s thrashes!"
+ru = "{1} {1:num|мечется|мечутся}!"
+
+[a551ae5945c5]
+en = "%s cringes!"
+ru = "{1} {1:num|съёживается|съёживаются}!"
+
+[15cbbbcbd088]
+en = "%s coughs!"
+ru = "{1} {1:num|кашляет|кашляют}!"
+
+[31db553ac76c]
+en = "%s beeps!"
+ru = "{1} {1:num|бибикает|бибикают}!"
+
+[2084bb97fd47]
+en = "%s boings!"
+ru = "{1} {1:num|пружинит|пружинят}!"
+
+[c8747cbcaa94]
+en = "%s sings!"
+ru = "{1} {1:num|поёт|поют}!"
+
+[33e5e4c507db]
+en = "%s belches!"
+ru = "{1} {1:num|рыгает|рыгают}!"
+
+[5d6897066fc6]
+en = "%s creaks!"
+ru = "{1} {1:num|скрипит|скрипят}!"
+
+[3b0c8911a3c9]
+en = "%s rattles!"
+ru = "{1} {1:num|дребезжит|дребезжат}!"
+
+[296a6edaa2e3]
+en = "%s ululates!"
+ru = "{1} {1:num|улюлюкает|улюлюкают}!"
+
+[cab1e667e84c]
+en = "%s pops!"
+ru = "{1} {1:num|хлопает|хлопают}!"
+
+[fff0a0869247]
+en = "%s jingles!"
+ru = "{1} {1:num|бренчит|бренчат}!"
+
+[2cbade9a8ed2]
+en = "%s sniffles!"
+ru = "{1} {1:num|шмыгает носом|шмыгают носом}!"
+
+[e30c760524f1]
+en = "%s tinkles!"
+ru = "{1} {1:num|позвякивает|позвякивают}!"
+
+[429a3892a248]
+en = "%s eeps!"
+ru = "{1} {1:num|пикает|пикают}!"
+
+[6f58713a7eda]
+en = "%s clatters!"
+ru = "{1} {1:num|грохочет|грохочут}!"
+
+[b0811c28f314]
+en = "%s hums!"
+ru = "{1} {1:num|гудит|гудят}!"
+
+[7d2615841253]
+en = "%s sizzles!"
+ru = "{1} {1:num|шкворчит|шкворчат}!"
+
+[9a82864315f7]
+en = "%s twitters!"
+ru = "{1} {1:num|щебечет|щебечут}!"
+
+[6cf7ca4bbef4]
+en = "%s wheezes!"
+ru = "{1} {1:num|хрипит|хрипят}!"
+
+[5c0964d7c13b]
+en = "%s rustles!"
+ru = "{1} {1:num|шуршит|шуршат}!"
+
+[cf5cf30e1921]
+en = "%s honks!"
+ru = "{1} {1:num|гогочет|гогочут}!"
+
+[40798787fb06]
+en = "%s lisps!"
+ru = "{1} {1:num|шепелявит|шепелявят}!"
+
+[c557bce7fff8]
+en = "%s yodels!"
+ru = "{1} {1:num|поёт йодлем|поют йодлем}!"
+
+[af84588df62f]
+en = "%s coos!"
+ru = "{1} {1:num|воркует|воркуют}!"
+
+[64e49b8d45da]
+en = "%s burps!"
+ru = "{1} {1:num|отрыгивает|отрыгивают}!"
+
+[595e8586d651]
+en = "%s moos!"
+ru = "{1} {1:num|мычит|мычат}!"
+
+[ce05995d94d0]
+en = "%s booms!"
+ru = "{1} {1:num|бухает|бухают}!"
+
+[8e2fe70fd9f1]
+en = "%s murmurs!"
+ru = "{1} {1:num|бормочет|бормочут}!"
+
+[7a8901c24b56]
+en = "%s oinks!"
+ru = "{1} {1:num|хрюкает|хрюкают}!"
+
+[d7dafea87863]
+en = "%s quacks!"
+ru = "{1} {1:num|крякает|крякают}!"
+
+[212c6b65fc28]
+en = "%s rumbles!"
+ru = "{1} {1:num|рокочет|рокочут}!"
+
+[9c52fc9e38f4]
+en = "%s twangs!"
+ru = "{1} {1:num|тренькает|тренькают}!"
+
+[a788d31d1a4f]
+en = "%s toots!"
+ru = "{1} {1:num|дудит|дудят}!"
+
+[081e45d22b2d]
+en = "%s gargles!"
+ru = "{1} {1:num|полощет горло|полощут горло}!"
+
+[90207eccf83a]
+en = "%s hoots!"
+ru = "{1} {1:num|ухает|ухают}!"
+
+[905a91dbf5bc]
+en = "%s warbles!"
+ru = "{1} {1:num|заливается трелью|заливаются трелью}!"
+
+[fab77b52497f]
+en = "%s whimpers."
+ru = "{1} {1:num|жалобно хнычет|жалобно хнычут}."
+
+[30cb2be6a81a]
+en = "%s whines."
+ru = "{1} {1:num|скулит|скулят}."
+
+[5a33821d8fdd]
+en = "%s squeals."
+ru = "{1} {1:num|визжит|визжат}."
+
+[1f99f0399317]
+en = "%s coughs."
+ru = "{1} {1:num|кашляет|кашляют}."
+
+[86693880d3a7]
+en = "%s beeps."
+ru = "{1} {1:num|бибикает|бибикают}."
+
+[062054a2a3dc]
+en = "%s boings."
+ru = "{1} {1:num|пружинит|пружинят}."
+
+[74c2f7010060]
+en = "%s sings."
+ru = "{1} {1:num|поёт|поют}."
+
+[efe4183cf072]
+en = "%s belches."
+ru = "{1} {1:num|рыгает|рыгают}."
+
+[78521ad9f33e]
+en = "%s creaks."
+ru = "{1} {1:num|скрипит|скрипят}."
+
+[d26b1ffd2f3d]
+en = "%s rattles."
+ru = "{1} {1:num|дребезжит|дребезжат}."
+
+[bd74ebc2e17f]
+en = "%s ululates."
+ru = "{1} {1:num|улюлюкает|улюлюкают}."
+
+[21aa14be61c1]
+en = "%s pops."
+ru = "{1} {1:num|хлопает|хлопают}."
+
+[e494289d8187]
+en = "%s jingles."
+ru = "{1} {1:num|бренчит|бренчат}."
+
+[941649b9f8c8]
+en = "%s sniffles."
+ru = "{1} {1:num|шмыгает носом|шмыгают носом}."
+
+[85c5c7820e22]
+en = "%s tinkles."
+ru = "{1} {1:num|позвякивает|позвякивают}."
+
+[d0f57ca25234]
+en = "%s eeps."
+ru = "{1} {1:num|пикает|пикают}."
+
+[1a505d5cd413]
+en = "%s clatters."
+ru = "{1} {1:num|грохочет|грохочут}."
+
+[b938d2a9ac45]
+en = "%s hums."
+ru = "{1} {1:num|гудит|гудят}."
+
+[7df94c103356]
+en = "%s sizzles."
+ru = "{1} {1:num|шкворчит|шкворчат}."
+
+[f74188f256b3]
+en = "%s twitters."
+ru = "{1} {1:num|щебечет|щебечут}."
+
+[15c86f8e6a7f]
+en = "%s wheezes."
+ru = "{1} {1:num|хрипит|хрипят}."
+
+[15cd2c290b50]
+en = "%s rustles."
+ru = "{1} {1:num|шуршит|шуршат}."
+
+[807f37bd0185]
+en = "%s honks."
+ru = "{1} {1:num|гогочет|гогочут}."
+
+[b91f08955546]
+en = "%s lisps."
+ru = "{1} {1:num|шепелявит|шепелявят}."
+
+[afa72335d7a3]
+en = "%s yodels."
+ru = "{1} {1:num|поёт йодлем|поют йодлем}."
+
+[b84f99ca8959]
+en = "%s coos."
+ru = "{1} {1:num|воркует|воркуют}."
+
+[375b91735c7a]
+en = "%s burps."
+ru = "{1} {1:num|отрыгивает|отрыгивают}."
+
+[c3bc070da46d]
+en = "%s moos."
+ru = "{1} {1:num|мычит|мычат}."
+
+[7185c361db91]
+en = "%s booms."
+ru = "{1} {1:num|бухает|бухают}."
+
+[72a1a2c73229]
+en = "%s murmurs."
+ru = "{1} {1:num|бормочет|бормочут}."
+
+[86b3b5fa71fc]
+en = "%s oinks."
+ru = "{1} {1:num|хрюкает|хрюкают}."
+
+[8ff1c0c51f90]
+en = "%s quacks."
+ru = "{1} {1:num|крякает|крякают}."
+
+[087a423db8bd]
+en = "%s rumbles."
+ru = "{1} {1:num|рокочет|рокочут}."
+
+[55051a333a73]
+en = "%s twangs."
+ru = "{1} {1:num|тренькает|тренькают}."
+
+[2d2c4705edc2]
+en = "%s toots."
+ru = "{1} {1:num|дудит|дудят}."
+
+[4b22845f4faa]
+en = "%s gargles."
+ru = "{1} {1:num|полощет горло|полощут горло}."
+
+[4da6c8083923]
+en = "%s hoots."
+ru = "{1} {1:num|ухает|ухают}."
+
+[a377dc333284]
+en = "%s warbles."
+ru = "{1} {1:num|заливается трелью|заливаются трелью}."
+
+[c82867e80905]
+en = "%s barks."
+ru = "{1} {1:num|лает|лают}."
+
+[17371e471144]
+en = "%s mews."
+ru = "{1} {1:num|мяукает|мяукают}."
+
+[22d63c2d2328]
+en = "%s meows."
+ru = "{1} {1:num|мяукает|мяукают}."
+
+[00c1af79fe28]
+en = "%s purrs."
+ru = "{1} {1:num|мурлычет|мурлычут}."
+
+[b73f2160056a]
+en = "%s yowls."
+ru = "{1} истошно {1:num|мяукает|мяукают}."
+
+[2036114e2d9b]
+en = "%s growls."
+ru = "{1} {1:num|рычит|рычат}."
+
+[67fdeb54a0fc]
+en = "%s snarls."
+ru = "{1} {1:num|огрызается|огрызаются}."
+
+[bffcaebe28cc]
+en = "%s howls."
+ru = "{1} {1:num|воет|воют}."
+
+[22b88ba16eb5]
+en = "%s yips."
+ru = "{1} {1:num|тявкает|тявкают}."
+
+[a10d6a926142]
+en = "%s squeaks."
+ru = "{1} {1:num|пищит|пищат}."
+
+[c11b6135db71]
+en = "%s squawks."
+ru = "{1} хрипло {1:num|кричит|кричат}."
+
+[83ad7f0a376c]
+en = "%s chirps."
+ru = "{1} {1:num|чирикает|чирикают}."
+
+[98da0876e69e]
+en = "%s buzzes angrily."
+ru = "{1} сердито {1:num|жужжит|жужжат}."
+
+[c4e0262c1d3a]
+en = "%s drones."
+ru = "{1} {1:num|гудит|гудят}."
+
+[259c1bdd1d00]
+en = "%s grunts."
+ru = "{1} {1:num|ворчит|ворчат}."
+
+[2542f3c5c341]
+en = "%s neighs."
+ru = "{1} {1:num|ржёт|ржут}."
+
+[c0b55a86d1de]
+en = "%s whinnies."
+ru = "{1} тихонько {1:num|ржёт|ржут}."
+
+[17b6d1f014f3]
+en = "%s whickers."
+ru = "{1} {1:num|фыркает|фыркают}."
+
+[884d8b447095]
+en = "%s wails mournfully."
+ru = "{1} скорбно {1:num|завывает|завывают}."
+
+[13734561ed44]
+en = "%s gurgles."
+ru = "{1} {1:num|булькает|булькают}."
+
+[9e3fc5f26fda]
+en = "%s burbles."
+ru = "{1} {1:num|бурчит|бурчат}."
+
+[7bb464c6a818]
+en = "%s trumpets!"
+ru = "{1} {1:num|трубит|трубят}!"
+
+[6595618c9e8a]
+en = "%s groans."
+ru = "{1} {1:num|стонет|стонут}."
+
+[f5507a83733c]
+en = "%s moans."
+ru = "{1} протяжно {1:num|стонет|стонут}."
+
+[f35323fd8670]
+en = "%s laughs."
+ru = "{1} {1:num|смеётся|смеются}."
+
+[a474e9c26f6c]
+en = "%s giggles."
+ru = "{1} {1:num|хихикает|хихикают}."
+
+[b3029c24c901]
+en = "%s snickers."
+ru = "{1} {1:num|посмеивается|посмеиваются}."
+
+[42c653c5f051]
+en = "%s mumbles incomprehensibly."
+ru = "{1} невнятно {1:num|бормочет|бормочут}."
+
+[3925f3ad27f2]
+en = "%s seems to mutter a cantrip."
+ru = "{1}, похоже, {1:num|бормочет|бормочут} заклинание."
+
+[f7e60e806cb8]
+en = "%s imitates you."
+ru = "{1} {1:num|передразнивает|передразнивают} вас."
+
+[6fc2880169cb]
+en = "%s cajoles you."
+ru = "{1} {1:num|обхаживает|обхаживают} вас."
+
+[0b6d9591f41b]
+en = "%s comes on to you."
+ru = "{1} {1:num|заигрывает|заигрывают} с вами."
+
+[a7c4b1f220fa]
+en = "%s threatens you."
+ru = "{1} {1:num|угрожает|угрожают} вам."
+
+[ba1201303b0b]
+en = "%s wants nothing to do with you."
+ru = "{1} не {1:num|желает|желают} иметь с вами дела."
+
+[d2316875001e]
+en = "%s talks about mining."
+ru = "{1} {1:num|рассуждает|рассуждают} о горном деле."
+
+[abd9c364a9d5]
+en = "%s talks about spellcraft."
+ru = "{1} {1:num|рассуждает|рассуждают} о волшебстве."
+
+[95bee2880563]
+en = "%s discusses dungeon exploration."
+ru = "{1} {1:num|рассуждает|рассуждают} об исследовании подземелий."
+
+[b8bb39341846]
+en = "%s discusses hunting."
+ru = "{1} {1:num|рассуждает|рассуждают} об охоте."
+
+[834751a0e68d]
+en = "%s complains about a diet of mutton."
+ru = "{1} {1:num|жалуется|жалуются}, что приходится есть одну баранину."
+
+[070a73ef185c]
+en = "%s complains about unpleasant dungeon conditions."
+ru = "{1} {1:num|жалуется|жалуются} на скверные условия в подземелье."
+
+[9660182ec900]
+en = "%s curses orcs."
+ru = "{1} {1:num|проклинает|проклинают} орков."
+
+[600938b11a24]
+en = "%s asks for a potion of healing."
+ru = "{1} {1:num|просит|просят} зелье лечения."
+
+[2ce3964eef32]
+en = "%s asks you about the One Ring."
+ru = "{1} {1:num|расспрашивает|расспрашивают} вас о Кольце Всевластья."
+
+[8ca7b91f9e6b]
+en = "%s describes a recent article in \"Spelunker Today\" magazine."
+ru = "{1} {1:num|пересказывает|пересказывают} свежую статью из журнала «Спелеолог сегодня»."
+not_terms = ["Spelunker"]
+
+[207fd427f137]
+en = "%s is busy reading a copy of Sandman #8."
+ru = "{1} {1:gender|занят|занята|занято|заняты} чтением восьмого выпуска «Песочного человека»."
+
+[010e9efea8bd]
+en = "%s shouts \"Fee Fie Foe Foo!\" and guffaws."
+ru = "{1} {1:num|кричит|кричат} «Фи-фай-фо-фам!» и {1:num|гогочет|гогочут}."
+
+[0efd49a86c5e]
+en = "%s whispers inaudibly.  All you can make out is \"moon\"."
+ru = "{1} неслышно {1:num|шепчет|шепчут}.  Вы разбираете только слово «луна»."
+
+[825b115e0817]
+en = "%s seems famished."
+ru = "{1}, похоже, {1:num|умирает|умирают} с голоду."
+
+[61b55607c1a0]
+en = "\"I'm hungry.\""
+ru = "«Я хочу есть.»"
+
+[e19d1da89028]
+en = "You hear %s squeak nearby."
+ru = "Вы слышите, как неподалёку что-то скрипит на ноте {1}."
+
+[2dd6badd8710]
+en = "You take %s off of %s."
+ru = "Вы снимаете {1:acc} с {2:gen}."
+
+[d7fe0d52df5a]
+en = "%s returns to %s %s!"
+ru = "{1} {1:num|возвращается|возвращаются} в {3:acc} владельца!{2:skip}"
+
+[795730441f0e]
+en = "You see %s %s under %s."
+ru = "Вы видите, как {1} {1:num|прячется|прячутся} под {3:acc}.{2:skip}"
+
+[d674af67a507]
+en = "You continue your efforts to memorize the spell."
+ru = "Вы продолжаете заучивать заклинание."
+
+[103d6775ad4f]
+en = "You continue your efforts to read the novel."
+ru = "Вы продолжаете читать роман."
+
+[d1e3388bcf0d]
+en = "You are being held, and cannot go down."
+ru = "Вас держат, и спуститься вы не можете."
+
+[c39e3e6555e2]
+en = "You are being held, and cannot go up."
+ru = "Вас держат, и подняться вы не можете."
+
+[c8b6ad13a254]
+en = "You are swallowed, and cannot go down."
+ru = "Вас проглотили, и спуститься вы не можете."
+
+[17e48290df29]
+en = "You are swallowed, and cannot go up."
+ru = "Вас проглотили, и подняться вы не можете."
+
+[20facfa33d90]
+en = "You are engulfed, and cannot go down."
+ru = "Вас поглотили, и спуститься вы не можете."
+
+[b1654c61ea11]
+en = "You are engulfed, and cannot go up."
+ru = "Вас поглотили, и подняться вы не можете."
+
+[28f7a14355ec]
+en = "Showing known terrain only..."
+ru = "Показана только известная местность..."
+
+[8d11a2849785]
+en = "Showing known terrain and traps only..."
+ru = "Показаны только известная местность и ловушки..."
+
+[1f9c4a4afedd]
+en = "Showing known terrain and objects only..."
+ru = "Показаны только известная местность и предметы..."
+
+[590dbb17fdc2]
+en = "Showing known terrain, traps, and objects only..."
+ru = "Показаны только известная местность, ловушки и предметы..."
+
+[f2630ffa200d]
+en = "Showing known terrain and monsters only..."
+ru = "Показаны только известная местность и монстры..."
+
+[0a2e1e405f16]
+en = "Showing known terrain, traps, and monsters only..."
+ru = "Показаны только известная местность, ловушки и монстры..."
+
+[d63a0cf001de]
+en = "Showing known terrain, objects, and monsters only..."
+ru = "Показаны только известная местность, предметы и монстры..."
+
+[9bc82b75cd37]
+en = "Showing known terrain, traps, objects, and monsters only..."
+ru = "Показаны только известная местность, ловушки, предметы и монстры..."
+
+[7f15daa5b2c0]
+en = "Showing underlying terrain only..."
+ru = "Показана только сама местность..."
+
+[49e534c056cf]
+en = "This wall seems too hard to dig into."
+ru = "Похоже, эта стена слишком прочна, чтобы её пробить."
+
+[62214b5278a1]
+en = "This door seems too hard to dig into."
+ru = "Похоже, эта дверь слишком прочна, чтобы её пробить."
+
+[0bc89239c022]
+en = "This wall seems too hard to chop through."
+ru = "Похоже, эта стена слишком прочна, чтобы её прорубить."
+
+[6179e3a7493e]
+en = "This door seems too hard to chop through."
+ru = "Похоже, эта дверь слишком прочна, чтобы её прорубить."
+
+[69054a379a6e]
+en = "Your left %s is in no shape for kicking."
+ru = "{1:gender|Ваш левый|Ваша левая|Ваше левое|Ваши левые} {1} не в том состоянии, чтобы пинаться."
+
+[003716c9d8ee]
+en = "Your %s are in no shape for kicking."
+ru = "Ваши {1} не в том состоянии, чтобы пинаться."
+
+[4e378b5577a3]
+en = "Your left %s is in no shape for jumping."
+ru = "{1:gender|Ваш левый|Ваша левая|Ваше левое|Ваши левые} {1} не в том состоянии, чтобы прыгать."
+
+[00b00a7a0885]
+en = "Your right %s is in no shape for jumping."
+ru = "{1:gender|Ваш правый|Ваша правая|Ваше правое|Ваши правые} {1} не в том состоянии, чтобы прыгать."
+
+[e2bfa879c185]
+en = "Your %s are in no shape for jumping."
+ru = "Ваши {1} не в том состоянии, чтобы прыгать."
+
+[722558a5a90d]
+en = "Your left %s is in no shape for riding."
+ru = "{1:gender|Ваш левый|Ваша левая|Ваше левое|Ваши левые} {1} не в том состоянии, чтобы ездить верхом."
+
+[37b970a8b508]
+en = "Your right %s is in no shape for riding."
+ru = "{1:gender|Ваш правый|Ваша правая|Ваше правое|Ваши правые} {1} не в том состоянии, чтобы ездить верхом."
+
+[5981f630c56b]
+en = "Your %s are in no shape for riding."
+ru = "Ваши {1} не в том состоянии, чтобы ездить верхом."
+
+[dfff9e589a6f]
+en = "\"%s, %s!  Welcome to %s liquor emporium!\""
+ru = "«{1}, {2}!  Добро пожаловать в винную лавку {3:gen}!»"
+
+[4f00f5b6835b]
+en = "\"%s, %s!  Welcome again to %s liquor emporium!\""
+ru = "«{1}, {2}!  Снова добро пожаловать в винную лавку {3:gen}!»"
+
+[012442625b23]
+en = "\"%s, %s!  Welcome to %s antique weapons outlet!\""
+ru = "«{1}, {2}!  Добро пожаловать в антикварную оружейную лавку {3:gen}!»"
+
+[0521aa791964]
+en = "\"%s, %s!  Welcome again to %s antique weapons outlet!\""
+ru = "«{1}, {2}!  Снова добро пожаловать в антикварную оружейную лавку {3:gen}!»"
+
+[1f4ffb7895ea]
+en = "\"%s, %s!  Welcome to %s lighting store!\""
+ru = "«{1}, {2}!  Добро пожаловать в магазин светильников {3:gen}!»"
+
+[afb663c55552]
+en = "\"%s, %s!  Welcome again to %s lighting store!\""
+ru = "«{1}, {2}!  Снова добро пожаловать в магазин светильников {3:gen}!»"
+
+[bb7d13673ab4]
+en = "\"%s, %s!  Welcome to %s quality apparel and accessories!\""
+ru = "«{1}, {2}!  Добро пожаловать в салон одежды и аксессуаров {3:gen}!»"
+
+[e814d35bc2d7]
+en = "\"%s, %s!  Welcome again to %s quality apparel and accessories!\""
+ru = "«{1}, {2}!  Снова добро пожаловать в салон одежды и аксессуаров {3:gen}!»"
+
+[756f53f874dc]
+en = "\"%s, %s!  Welcome to %s rare books!\""
+ru = "«{1}, {2}!  Добро пожаловать в лавку редких книг {3:gen}!»"
+
+[f1dd1962bc98]
+en = "\"%s, %s!  Welcome again to %s rare books!\""
+ru = "«{1}, {2}!  Снова добро пожаловать в лавку редких книг {3:gen}!»"
+
+[968f176d984e]
+en = "\"%s, %s!  Welcome again to %s hardware store!\""
+ru = "«{1}, {2}!  Снова добро пожаловать в скобяную лавку {3:gen}!»"
+
+[1e45c5347d04]
+en = "\"%s, %s!  Welcome again to %s health food store!\""
+ru = "«{1}, {2}!  Снова добро пожаловать в магазин здорового питания {3:gen}!»"
+
+[5207ec740601]
+en = "You owe %s %ld zorkmid!"
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов}!"
+
+[98faea0d6d33]
+en = "You owe %s %ld zorkmid for it!"
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за это!"
+
+[67bb1d35c353]
+en = "You owe %s %ld zorkmid for them!"
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за них!"
+
+[c2d51a502fd0]
+en = "You owe %s %ld zorkmid for its contents!"
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за содержимое!"
+
+[67c29f37d4db]
+en = "You owe %s %ld zorkmid for it and its contents!"
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за это вместе с содержимым!"
+
+[3a4b495dfdac]
+en = "You owe %s %ld zorkmid for some of its contents!"
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за часть содержимого!"
+
+[a0c0d9daa540]
+en = "You owe %s %ld zorkmid for it and some of its contents!"
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за это и часть содержимого!"
+
+[e027b0ad5ab0]
+en = "You owe %s %ld zorkmids!"
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов}!"
+
+[bb068c43dc92]
+en = "You owe %s %ld zorkmids for it!"
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за это!"
+
+[32aa60be016f]
+en = "You owe %s %ld zorkmids for them!"
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за них!"
+
+[02ddb1589a6c]
+en = "You owe %s %ld zorkmids for its contents!"
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за содержимое!"
+
+[9440e56ef6c7]
+en = "You owe %s %ld zorkmids for it and its contents!"
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за это вместе с содержимым!"
+
+[4792f4dc10e4]
+en = "You owe %s %ld zorkmids for some of its contents!"
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за часть содержимого!"
+
+[6a6b384eb692]
+en = "You owe %s %ld zorkmids for it and some of its contents!"
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за это и часть содержимого!"
+
+[96583cc2ec73]
+en = "You still owe %s %ld zorkmid!"
+ru = "Вы всё ещё должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов}!"
+
+[2d364c3dbda4]
+en = "You still owe %s %ld zorkmid for it!"
+ru = "Вы всё ещё должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за это!"
+
+[ddf6033c3aed]
+en = "You still owe %s %ld zorkmid for them!"
+ru = "Вы всё ещё должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за них!"
+
+[333b9b81e6a6]
+en = "You still owe %s %ld zorkmid for its contents!"
+ru = "Вы всё ещё должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за содержимое!"
+
+[8fa65c6608d2]
+en = "You still owe %s %ld zorkmid for it and its contents!"
+ru = "Вы всё ещё должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за это вместе с содержимым!"
+
+[79d42d336892]
+en = "You still owe %s %ld zorkmid for some of its contents!"
+ru = "Вы всё ещё должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за часть содержимого!"
+
+[7e8d5a32aeab]
+en = "You still owe %s %ld zorkmid for it and some of its contents!"
+ru = "Вы всё ещё должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за это и часть содержимого!"
+
+[4559d92306cb]
+en = "You still owe %s %ld zorkmids!"
+ru = "Вы всё ещё должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов}!"
+
+[d22d983abe3f]
+en = "You still owe %s %ld zorkmids for it!"
+ru = "Вы всё ещё должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за это!"
+
+[16591aca7ec3]
+en = "You still owe %s %ld zorkmids for them!"
+ru = "Вы всё ещё должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за них!"
+
+[662bdd51bc07]
+en = "You still owe %s %ld zorkmids for its contents!"
+ru = "Вы всё ещё должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за содержимое!"
+
+[5d0c87515a19]
+en = "You still owe %s %ld zorkmids for it and its contents!"
+ru = "Вы всё ещё должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за это вместе с содержимым!"
+
+[9e2a666ccd87]
+en = "You still owe %s %ld zorkmids for some of its contents!"
+ru = "Вы всё ещё должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за часть содержимого!"
+
+[6fd33e4cb94a]
+en = "You still owe %s %ld zorkmids for it and some of its contents!"
+ru = "Вы всё ещё должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за это и часть содержимого!"
+
+[0be15c215178]
+en = "You have %ld zorkmids credit remaining."
+ru = "У вас остаётся кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов}."
+
+[dd51b629605d]
+en = "You have %ld zorkmid credit remaining."
+ru = "У вас остаётся кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов}."
+
+[09fb33e8dcb2]
+en = "You have no credit remaining."
+ru = "У вас не осталось кредита."
+
+[490c4969ac30]
+en = "You %s..."
+ru = "Вас шатает...{1:skip}"
+
+[373f595e654f]
+en = "You %s and get dizzy..."
+ru = "Вас шатает, кружится голова...{1:skip}"
+
+[47ab47c2e193]
+en = "You %s and your vision blurs..."
+ru = "Вас шатает, в глазах плывёт...{1:skip}"
+
+[29949b67477f]
+en = "You boil away..."
+ru = "Вы выкипаете..."
