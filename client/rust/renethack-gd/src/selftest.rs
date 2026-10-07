@@ -2205,6 +2205,82 @@ fn palette() -> Vec<Step> {
     steps
 }
 
+/// Where the view looks from the jackal of `threat_arrow`, a cell offset
+/// for each of its steps, and the arrows seen so far.
+const THREAT_VIEWS: [(i32, i32); 8] = [
+    (12, 8),
+    (14, 0),
+    (12, -8),
+    (0, -9),
+    (-12, -8),
+    (-14, 0),
+    (-12, 8),
+    (0, 9),
+];
+static THREAT_VIEW: AtomicU32 = AtomicU32::new(0);
+static THREAT_ARROWS: AtomicU32 = AtomicU32::new(0);
+
+/// The red arrow toward a hostile out of the frame keeps off the HUD's
+/// own panels: it sat on the portrait's numbers, the minimap's corner and
+/// the log. A jackal alone on a floor, the view looking away from it to
+/// each side in turn: wherever the arrow shows, no block of the HUD is
+/// under it.
+fn threat_arrow() -> Vec<Step> {
+    let mut steps = start();
+    steps.push(Step::Wait("the hero on the map", |g| {
+        Ok(g.world.map.hero().is_some())
+    }));
+    for (i, _) in THREAT_VIEWS.iter().enumerate() {
+        steps.extend([
+            Step::Call("the jackal out of the frame", |g| {
+                let i = THREAT_VIEW.fetch_add(1, Ordering::Relaxed) as usize;
+                let (dx, dy) = THREAT_VIEWS[i % THREAT_VIEWS.len()];
+                let cat = g.catalog.clone().ok_or("no catalog")?;
+                let (x, y) = crate::gallery::lay_out_one(&mut g.world, &cat, "jackal")?;
+                g.world.view_center = Some((x + dx, y + dy));
+                Ok(())
+            }),
+            Step::Wait("the view drawn", |g| {
+                let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+                Ok(drawn == Some(g.world.map.generation()))
+            }),
+            Step::Wait("the camera there", camera_settled),
+        ]);
+        // the arrow on the portrait's side, pictured
+        if i == 0 {
+            steps.push(Step::Shot("threat-arrow"));
+        }
+        steps.push(Step::Call("the arrow off the HUD's blocks", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let Some(p) = ui.hud.threat_arrow() else {
+                return Ok(());
+            };
+            THREAT_ARROWS.fetch_add(1, Ordering::Relaxed);
+            match ui
+                .hud
+                .blocks()
+                .into_iter()
+                .find(|(_, r)| r.grow(8.0).contains_point(p))
+            {
+                Some((name, r)) => Err(format!(
+                    "the threat arrow at {:.0},{:.0} is on the {name} ({:.0},{:.0} {:.0}×{:.0})",
+                    p.x, p.y, r.position.x, r.position.y, r.size.x, r.size.y
+                )),
+                None => Ok(()),
+            }
+        }));
+    }
+    steps.push(Step::Call("arrows were shown", |_| {
+        let n = THREAT_ARROWS.load(Ordering::Relaxed);
+        if n < 6 {
+            return Err(format!("only {n} of the 8 views showed an arrow"));
+        }
+        Ok(())
+    }));
+    steps.extend(quit());
+    steps
+}
+
 /// Lay out `name` alone where the gallery puts a creature, the camera
 /// close.
 fn creature_alone(g: &mut RenethackGame, name: &str) -> Result<(), String> {
@@ -4267,6 +4343,7 @@ impl SelfTest {
             "map-pause" => map_pause(),
             "pool-sizes" => pool_sizes(),
             "palette" => palette(),
+            "threat-arrow" => threat_arrow(),
             "gamepad" => gamepad(),
             "bar" => bar(),
             _ => Vec::new(),

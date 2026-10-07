@@ -501,6 +501,64 @@ pub fn edge_arrow(at: Option<Vector2>, view: Vector2) -> Option<(Vector2, f32)> 
 /// The arrow keeps this far from the screen's edges.
 const ARROW_MARGIN: f32 = 48.0;
 
+/// And its middle this far from a panel of the HUD: half its length and a
+/// little air.
+const ARROW_PAD: f32 = 28.0;
+
+/// The arrow at `p` off the HUD's own blocks (the portrait, the minimap
+/// and its badge, the log): a point one of `panels` covers leaves it by
+/// its nearest side that keeps the arrow in the frame, and points at
+/// `target` from there.
+pub fn off_panels(
+    p: Vector2,
+    angle: f32,
+    target: Vector2,
+    view: Vector2,
+    panels: &[Rect2],
+) -> (Vector2, f32) {
+    let (left, top) = (ARROW_MARGIN, ARROW_MARGIN);
+    let (right, bottom) = (
+        view.x - ARROW_MARGIN,
+        view.y - CLUSTER_BOTTOM - CLUSTER_H - ARROW_MARGIN,
+    );
+    let in_frame = |q: &Vector2| (left..=right).contains(&q.x) && (top..=bottom).contains(&q.y);
+    let mut at = p;
+    // the way out of one may end on its neighbour (the badge under the
+    // minimap)
+    for _ in 0..4 {
+        let Some(r) = panels
+            .iter()
+            .map(|r| r.grow(ARROW_PAD))
+            .find(|r| r.contains_point(at))
+        else {
+            break;
+        };
+        let outs = [
+            Vector2::new(r.position.x - 1.0, at.y),
+            Vector2::new(r.end().x + 1.0, at.y),
+            Vector2::new(at.x, r.position.y - 1.0),
+            Vector2::new(at.x, r.end().y + 1.0),
+        ];
+        let nearest = outs
+            .into_iter()
+            .filter(in_frame)
+            .min_by(|a, b| a.distance_to(at).total_cmp(&b.distance_to(at)));
+        let Some(out) = nearest else {
+            break;
+        };
+        at = out;
+    }
+    if at == p {
+        return (p, angle);
+    }
+    let d = target - at;
+    if d.length() > ARROW_PAD {
+        (at, d.y.atan2(d.x))
+    } else {
+        (at, angle)
+    }
+}
+
 /// The docked log's bottom-left corner (from the bottom centre): the action
 /// bar's left end, on the XP bar like the micro-buttons.
 fn compact_log_corner() -> (f32, f32) {
@@ -1588,6 +1646,16 @@ impl Hud {
         let edge = edge_arrow(at, view).or(over);
         match edge {
             Some((p, angle)) => {
+                // never on the HUD's own blocks: the hostile may stand
+                // under one, or the edge's corner lie on it
+                let (p, angle) = match at {
+                    Some(target) => {
+                        let panels: Vec<Rect2> =
+                            self.blocks().into_iter().map(|(_, r)| r).collect();
+                        off_panels(p, angle, target, view, &panels)
+                    }
+                    None => (p, angle),
+                };
                 self.threat.set_position(p);
                 self.threat.set_rotation(angle);
                 let a = 0.65 + 0.35 * pulse_now(now);
@@ -1596,6 +1664,11 @@ impl Hud {
             }
             None => self.threat.set_visible(false),
         }
+    }
+
+    /// Where the threat arrow is, while it shows (self-tests).
+    pub fn threat_arrow(&self) -> Option<Vector2> {
+        self.threat.is_visible().then(|| self.threat.get_position())
     }
 
     /// The minimap's frame takes the shape of what it shows (right
@@ -2696,6 +2769,52 @@ mod tests {
         let (p, a) = edge_arrow(Some(Vector2::new(960.0, -900.0)), view).unwrap();
         assert!((p.y - ARROW_MARGIN).abs() < 0.5);
         assert!((a + std::f32::consts::FRAC_PI_2).abs() < 0.1);
+    }
+
+    #[test]
+    fn the_threat_arrow_keeps_off_the_panels() {
+        let view = Vector2::new(1920.0, 1080.0);
+        let rect =
+            |x: f32, y: f32, w: f32, h: f32| Rect2::new(Vector2::new(x, y), Vector2::new(w, h));
+        // the portrait, the minimap and the badge under it
+        let panels = [
+            rect(24.0, 24.0, 520.0, 176.0),
+            rect(1716.0, 24.0, 180.0, 150.0),
+            rect(1656.0, 182.0, 240.0, 32.0),
+        ];
+        let on_panel = |p: Vector2| {
+            panels
+                .iter()
+                .any(|r| r.grow(ARROW_PAD - 0.5).contains_point(p))
+        };
+        let in_frame = |p: Vector2| {
+            (ARROW_MARGIN..=1920.0 - ARROW_MARGIN).contains(&p.x) && p.y >= ARROW_MARGIN
+        };
+        // a hostile far up and to the left: the edge there is the portrait's
+        for target in [Vector2::new(-900.0, -400.0), Vector2::new(-2000.0, -500.0)] {
+            let (p, a) = edge_arrow(Some(target), view).unwrap();
+            assert!(on_panel(p), "{p:?}");
+            let (q, b) = off_panels(p, a, target, view, &panels);
+            assert!(!on_panel(q) && in_frame(q), "{q:?}");
+            let d = target - q;
+            assert!(
+                (d.y.atan2(d.x) - b).abs() < 1e-3,
+                "it points at the hostile"
+            );
+        }
+        // up and to the right: clear of the minimap and of its badge
+        let target = Vector2::new(2500.0, -200.0);
+        let (p, a) = edge_arrow(Some(target), view).unwrap();
+        assert!(on_panel(p), "{p:?}");
+        let (q, _) = off_panels(p, a, target, view, &panels);
+        assert!(!on_panel(q) && in_frame(q), "{q:?}");
+        // a hostile in the frame under the portrait: its marker beside it
+        let head = Vector2::new(300.0, 120.0);
+        let (q, _) = off_panels(head, 1.5, Vector2::new(300.0, 190.0), view, &panels);
+        assert!(!on_panel(q) && in_frame(q), "{q:?}");
+        // clear of every panel: where it was
+        let free = Vector2::new(900.0, ARROW_MARGIN);
+        assert_eq!(off_panels(free, 0.3, target, view, &panels), (free, 0.3));
     }
 
     #[test]
