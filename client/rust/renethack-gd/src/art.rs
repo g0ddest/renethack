@@ -208,7 +208,7 @@ pub struct Art {
     scenes: HashMap<usize, Option<Gd<PackedScene>>>,
     libraries: HashMap<(String, bool), Option<Gd<AnimationLibrary>>>,
     derived: HashMap<(i64, u32, bool, Option<usize>), Gd<Material>>,
-    proc_anims: HashMap<Proc, Gd<AnimationLibrary>>,
+    proc_anims: HashMap<(Proc, Option<String>), Gd<AnimationLibrary>>,
     /// The clips built in code on the characters' skeleton (`proc/read`).
     proc_clips: Option<Gd<AnimationLibrary>>,
     /// Meshes shaded smooth, by the source mesh's id.
@@ -889,6 +889,7 @@ impl Art {
         if spec.proc.is_some() {
             return Clips {
                 idle: has(Some("idle")),
+                gait: has(Some("walk")),
                 player: Some(player),
                 ..Clips::default()
             };
@@ -1585,8 +1586,9 @@ impl Art {
         out
     }
 
-    fn proc_library(&mut self, kind: Proc) -> Option<Gd<AnimationLibrary>> {
-        if let Some(l) = self.proc_anims.get(&kind) {
+    fn proc_library(&mut self, kind: Proc, shape: Option<&str>) -> Option<Gd<AnimationLibrary>> {
+        let key = (kind, shape.map(str::to_string));
+        if let Some(l) = self.proc_anims.get(&key) {
             return Some(l.clone());
         }
         let waves = proc_waves(kind);
@@ -1594,8 +1596,13 @@ impl Art {
             return None;
         }
         let mut lib = AnimationLibrary::new_gd();
-        let _ = lib.add_animation("idle", &wave_animation(&waves));
-        self.proc_anims.insert(kind, lib.clone());
+        let _ = lib.add_animation("idle", &wave_animation(&waves, WAVE_PERIOD));
+        // the bodies of creature_kit walk on their legs (the rest hop)
+        let walk = creature_kit::walk_waves(kind, shape);
+        if !walk.is_empty() {
+            let _ = lib.add_animation("walk", &wave_animation(&walk, creature_kit::WALK_PERIOD));
+        }
+        self.proc_anims.insert(key, lib.clone());
         Some(lib)
     }
 
@@ -1629,13 +1636,16 @@ impl Art {
         };
         let mut root = Node3D::new_alloc();
         kit.body(kind, &mut root);
-        let player = kit.art.proc_library(kind).map(|lib| {
-            let mut p = AnimationPlayer::new_alloc();
-            p.set_name("AnimationPlayer");
-            let _ = p.add_animation_library("", &lib);
-            root.add_child(&p);
-            p
-        });
+        let player = kit
+            .art
+            .proc_library(kind, spec.shape.as_deref())
+            .map(|lib| {
+                let mut p = AnimationPlayer::new_alloc();
+                p.set_name("AnimationPlayer");
+                let _ = p.add_animation_library("", &lib);
+                root.add_child(&p);
+                p
+            });
         (root, player)
     }
 }
@@ -1775,9 +1785,9 @@ enum Wave {
 const WAVE_PERIOD: f32 = 1.6;
 const WAVE_KEYS: i32 = 16;
 
-fn wave_animation(waves: &[Wave]) -> Gd<Animation> {
+fn wave_animation(waves: &[Wave], period: f32) -> Gd<Animation> {
     let mut a = Animation::new_gd();
-    a.set_length(WAVE_PERIOD);
+    a.set_length(period);
     a.set_loop_mode(LoopMode::LINEAR);
     let tau = std::f32::consts::TAU;
     for w in waves {
@@ -1790,7 +1800,7 @@ fn wave_animation(waves: &[Wave]) -> Gd<Animation> {
         a.track_set_path(t, &NodePath::from(path));
         for k in 0..=WAVE_KEYS {
             let f = k as f32 / WAVE_KEYS as f32;
-            let time = f64::from(f * WAVE_PERIOD);
+            let time = f64::from(f * period);
             match *w {
                 Wave::Rock(_, axis, amp, ph) => {
                     let angle = (amp * (tau * (f + ph)).sin()).to_radians();
@@ -1826,8 +1836,8 @@ fn proc_waves(kind: Proc) -> Vec<Wave> {
             Wave::Rock("Neck", x, 0.0, 0.0),
         ],
         Proc::Worm => vec![
-            Wave::Rock("Front", y, 10.0, 0.0),
-            Wave::Rock("Back", y, 8.0, 0.5),
+            Wave::Rock("Body", y, 4.0, 0.0),
+            Wave::Pulse("Body", 0.02, 0.25),
         ],
         Proc::Bug | Proc::Spider => vec![
             Wave::Rock("LegsL", z, 6.0, 0.0),
@@ -2170,17 +2180,28 @@ impl Kit<'_> {
     fn body(&mut self, kind: Proc, root: &mut Gd<Node3D>) {
         match kind {
             Proc::Serpent => self.serpent(root),
-            Proc::Worm => self.worm(root),
-            Proc::Bug => self.bug(root, 3, false),
+            Proc::Worm => self.worm_body(root),
+            Proc::Bug => match self.shape.as_deref() {
+                Some("beetle") => self.beetle_body(root),
+                Some("grid") => self.ant_body(root, true),
+                _ => self.ant_body(root, false),
+            },
             Proc::Spider => self.bug(root, 4, true),
             Proc::Bat => self.bat(root),
             Proc::Bird => self.bird(root),
-            Proc::Blob => self.blob(root),
-            Proc::Eye => self.floating_eye(root),
-            Proc::Light => self.light(root),
+            Proc::Blob => self.blob_body(root),
+            Proc::Eye => self.eye_body(root),
+            Proc::Light => match self.shape.as_deref() {
+                Some("spore") => self.spore_body(root),
+                _ => self.light(root),
+            },
             Proc::Vortex => self.vortex(root),
-            Proc::Fungus => self.fungus(root),
-            Proc::Lizard => self.lizard(root, false),
+            Proc::Fungus => match self.shape.as_deref() {
+                Some("lichen") => self.lichen(root),
+                Some("mold") => self.mold(root),
+                _ => self.fungus(root),
+            },
+            Proc::Lizard => self.lizard_body(root),
             Proc::Dragon => self.lizard(root, true),
             Proc::Fish => self.fish(root),
             Proc::Piercer => self.piercer(root),
@@ -2231,52 +2252,6 @@ impl Kit<'_> {
             [0.0; 3],
             [1.0; 3],
         );
-    }
-
-    fn worm(&mut self, root: &mut Gd<Node3D>) {
-        // segments along z, thick in the middle, a round maw in front
-        let mut front = self.pivot(root, "Front", [0.0, 0.0, 0.3]);
-        let mut back = self.pivot(root, "Back", [0.0, 0.0, -0.3]);
-        let segs = [
-            (-1.6f32, 0.28f32),
-            (-1.15, 0.36),
-            (-0.7, 0.44),
-            (-0.25, 0.5),
-            (0.2, 0.5),
-            (0.65, 0.46),
-            (1.05, 0.42),
-        ];
-        for (i, (z, r)) in segs.into_iter().enumerate() {
-            let x = (i as f32 * 1.3).sin() * 0.12;
-            let (node, dz) = if z < 0.0 {
-                (&mut back, 0.3)
-            } else {
-                (&mut front, -0.3)
-            };
-            let mesh = sphere(r);
-            self.skin(node, mesh, [x, r, z + dz], [0.0; 3], [1.0, 1.0, 0.9]);
-        }
-        let maw = self.dark();
-        self.part(
-            &mut front,
-            cylinder(0.26, 0.3, 0.06),
-            &maw,
-            [0.0, 0.42, 1.12],
-            [90.0, 0.0, 0.0],
-            [1.0; 3],
-        );
-        let teeth = self.bone();
-        for a in 0..6 {
-            let t = a as f32 / 6.0 * std::f32::consts::TAU;
-            self.part(
-                &mut front,
-                cylinder(0.0, 0.03, 0.08),
-                &teeth,
-                [t.cos() * 0.22, 0.42 + t.sin() * 0.22, 1.16],
-                [90.0, 0.0, 0.0],
-                [1.0; 3],
-            );
-        }
     }
 
     fn bug(&mut self, root: &mut Gd<Node3D>, pairs: usize, spider: bool) {
@@ -2485,81 +2460,6 @@ impl Kit<'_> {
             [-50.0, 0.0, 0.0],
             [1.0; 3],
         );
-    }
-
-    fn blob(&mut self, root: &mut Gd<Node3D>) {
-        let mut body = self.pivot(root, "Body", [0.0, 0.0, 0.0]);
-        self.skin(
-            &mut body,
-            sphere(0.5),
-            [0.0, 0.42, 0.0],
-            [0.0; 3],
-            [1.3, 0.85, 1.2],
-        );
-        for (x, y, z, r) in [
-            (0.4f32, 0.22f32, 0.3f32, 0.2f32),
-            (-0.45, 0.2, 0.1, 0.24),
-            (0.1, 0.15, -0.5, 0.22),
-            (-0.2, 0.75, 0.2, 0.14),
-        ] {
-            self.skin(&mut body, sphere(r), [x, y, z], [0.0; 3], [1.0, 0.8, 1.0]);
-        }
-        let inner = self.dark();
-        self.part(
-            &mut body,
-            sphere(0.18),
-            &inner,
-            [0.1, 0.4, 0.1],
-            [0.0; 3],
-            [1.0; 3],
-        );
-    }
-
-    fn floating_eye(&mut self, root: &mut Gd<Node3D>) {
-        let mut body = self.pivot(root, "Body", [0.0, 0.0, 0.0]);
-        let white = self
-            .art
-            .flat(Color::from_rgb(0.85, 0.82, 0.78), Finish::Glossy);
-        self.part(
-            &mut body,
-            sphere(0.5),
-            &white,
-            [0.0, 0.5, 0.0],
-            [0.0; 3],
-            [1.0; 3],
-        );
-        let skin = self.skin.clone();
-        self.part(
-            &mut body,
-            cylinder(0.26, 0.26, 0.06),
-            &skin,
-            [0.0, 0.5, 0.46],
-            [90.0, 0.0, 0.0],
-            [1.0; 3],
-        );
-        let pupil = self.eye();
-        self.part(
-            &mut body,
-            cylinder(0.12, 0.12, 0.07),
-            &pupil,
-            [0.0, 0.5, 0.48],
-            [90.0, 0.0, 0.0],
-            [1.0; 3],
-        );
-        let vein = self
-            .art
-            .flat(Color::from_rgb(0.5, 0.08, 0.06), Finish::Matte);
-        for a in [30.0f32, 150.0, 260.0] {
-            let t = a.to_radians();
-            self.part(
-                &mut body,
-                cylinder(0.008, 0.008, 0.4),
-                &vein,
-                [t.cos() * 0.35, 0.5 + t.sin() * 0.35, 0.28],
-                [0.0, 0.0, a],
-                [1.0; 3],
-            );
-        }
     }
 
     fn light(&mut self, root: &mut Gd<Node3D>) {
@@ -2831,7 +2731,7 @@ impl Kit<'_> {
 
     fn beast(&mut self, root: &mut Gd<Node3D>) {
         if self.shape.as_deref() == Some("cat") {
-            self.cat(root);
+            self.cat_body(root);
             return;
         }
         self.skin(
@@ -2886,97 +2786,11 @@ impl Kit<'_> {
     }
 }
 
-impl Kit<'_> {
-    /// A cat: a long slender body, a round head with pointed ears and eyes
-    /// that catch the light, thin legs and a long tail carried high.
-    fn cat(&mut self, root: &mut Gd<Node3D>) {
-        let one = [1.0f32; 3];
-        self.skin(
-            root,
-            sphere(0.26),
-            [0.0, 0.5, -0.02],
-            [0.0; 3],
-            [0.72, 0.68, 1.55],
-        );
-        self.skin(
-            root,
-            sphere(0.2),
-            [0.0, 0.56, 0.24],
-            [0.0; 3],
-            [0.85, 0.85, 1.0],
-        );
-        let mut head = self.pivot(root, "Head", [0.0, 0.74, 0.42]);
-        self.skin(
-            &mut head,
-            sphere(0.15),
-            [0.0, 0.0, 0.04],
-            [0.0; 3],
-            [1.0, 0.88, 0.92],
-        );
-        self.skin(
-            &mut head,
-            sphere(0.065),
-            [0.0, -0.05, 0.16],
-            [0.0; 3],
-            [1.1, 0.8, 0.9],
-        );
-        let nose = self
-            .art
-            .flat(Color::from_rgb(0.55, 0.3, 0.3), Finish::Matte);
-        self.part(
-            &mut head,
-            sphere(0.018),
-            &nose,
-            [0.0, -0.025, 0.215],
-            [0.0; 3],
-            one,
-        );
-        self.eyes(&mut head, [0.0, 0.03, 0.155], 0.058, 0.024, true);
-        for s in [-1.0f32, 1.0] {
-            self.skin(
-                &mut head,
-                cylinder(0.0, 0.055, 0.12),
-                [s * 0.085, 0.15, 0.0],
-                [-10.0, 0.0, s * -18.0],
-                one,
-            );
-        }
-        let mut tail = self.pivot(root, "Tail", [0.0, 0.58, -0.42]);
-        self.skin(
-            &mut tail,
-            cylinder(0.022, 0.034, 0.34),
-            [0.0, 0.08, -0.14],
-            [-35.0, 0.0, 0.0],
-            one,
-        );
-        self.skin(
-            &mut tail,
-            cylinder(0.014, 0.022, 0.28),
-            [0.0, 0.33, -0.25],
-            [-8.0, 0.0, 0.0],
-            one,
-        );
-        for (x, z) in [(-1.0f32, 0.3f32), (1.0, 0.3), (-1.0, -0.3), (1.0, -0.3)] {
-            self.skin(
-                root,
-                capsule(0.045, 0.52),
-                [x * 0.11, 0.25, z],
-                [0.0; 3],
-                one,
-            );
-            self.skin(
-                root,
-                sphere(0.05),
-                [x * 0.11, 0.03, z + 0.03],
-                [0.0; 3],
-                [1.0, 0.6, 1.3],
-            );
-        }
-    }
-}
-
 #[path = "object_kit.rs"]
 mod object_kit;
+
+#[path = "creature_kit.rs"]
+mod creature_kit;
 
 /// A base head's meshes and their skins.
 /// A mesh cut from another, and the source surfaces it keeps.

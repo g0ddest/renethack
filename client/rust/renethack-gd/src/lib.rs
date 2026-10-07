@@ -27,6 +27,7 @@ mod map_view;
 mod meshes;
 mod minimap;
 mod orb;
+mod organic;
 mod pad_view;
 mod paths;
 mod pickers;

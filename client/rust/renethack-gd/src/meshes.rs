@@ -1,5 +1,6 @@
 //! Primitive meshes by shape, in centimetres so they can be cached and
-//! compared: the map's own geometry and the procedural bodies of `art.rs`.
+//! compared: the map's own geometry and the procedural bodies of `art.rs`
+//! (and the smooth shapes of `organic.rs`, by name).
 
 use godot::classes::mesh::PrimitiveType;
 use godot::classes::{
@@ -35,6 +36,9 @@ pub enum MeshKey {
     /// fine grids (the map's shader breaks them up), without a bottom:
     /// width, height, depth.
     Rock(u16, u16, u16),
+    /// A smooth shape of a creature's, lofted or merged from many pieces
+    /// (`organic.rs`).
+    Organic(crate::organic::Organic),
 }
 
 pub fn cm(metres: f32) -> u16 {
@@ -104,6 +108,7 @@ impl MeshKey {
             MeshKey::Sphere(r) | MeshKey::Facets(r, _) => metres(r),
             MeshKey::Dome(r) => metres(r) / 2.0,
             MeshKey::Torus(i, o) => metres(o.saturating_sub(i)) / 2.0,
+            MeshKey::Organic(o) => o.half_height(),
         }
     }
 
@@ -179,6 +184,7 @@ impl MeshKey {
                 bevel_mesh(half, metres(r))
             }
             MeshKey::Rock(x, y, z) => rock_mesh(Vector3::new(metres(x), metres(y), metres(z))),
+            MeshKey::Organic(o) => o.build(),
         }
     }
 }
