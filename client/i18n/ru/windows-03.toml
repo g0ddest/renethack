@@ -751,3 +751,74 @@ ru = " Ваш уровень владения {2:ins} был: {1}; его мож
 [0e81975153a6]
 en = " You had %s skill with %s and could have enhanced that."
 ru = " Ваш уровень владения {2:ins} был: {1}; его можно было повысить."
+
+# ^X and #conduct lines the Russian soak's seeds 70-138 showed in English,
+# and their kin.
+
+[50d2779c0e4e]
+en = " You have been vegetarian."
+ru = " Вы {hero:gender|были вегетарианцем|были вегетарианкой}."
+
+[eeb90c2b1b5f]
+en = " You have been faithfully nudist."
+ru = " Вы {hero:gender|были верным нудистом|были верной нудисткой}."
+
+[e4c1b3845ae1]
+en = " You have been blind from birth."
+ru = " Вы были слепы от рождения."
+
+[3fb114546709]
+en = " You have been deaf from birth."
+ru = " Вы были глухи от рождения."
+
+[a935e54bd561]
+en = " You will confuse monsters when hitting them."
+ru = " Ваши удары будут приводить монстров в замешательство."
+
+[01ef67c3fc7c]
+en = " You will confuse monsters when hitting them (next hit only)."
+ru = " Ваш следующий удар приведёт монстра в замешательство."
+
+[6047a639a92c]
+en = " You will confuse monsters when hitting them (next %u hits)."
+ru = " Ваши удары будут приводить монстров в замешательство ({1:plural|следующий|следующие|следующие} {1} {1:plural|удар|удара|ударов})."
+
+[d57ce559bf63]
+en = " You would have confused monsters when hitting them."
+ru = " Ваши удары приводили бы монстров в замешательство."
+
+[30f61e366d14]
+en = " You would have confused monsters when hitting them (next hit only)."
+ru = " Ваш следующий удар привёл бы монстра в замешательство."
+
+[10eb3c1dcabc]
+en = " You would have confused monsters when hitting them (next %u hits)."
+ru = " Ваши удары приводили бы монстров в замешательство ({1:plural|следующий|следующие|следующие} {1} {1:plural|удар|удара|ударов})."
+
+[a9ee9a006357]
+en = " Your skill in %s is limited by being %s with two weapons."
+ru = " Ваше владение {1:ins} ограничено навыком боя с двух рук ({2})."
+
+[e30f32195b66]
+en = " Your skill in %s was limited by being %s with two weapons."
+ru = " Ваше владение {1:ins} было ограничено навыком боя с двух рук ({2})."
+
+[9bafbc3a880c]
+en = " Your two weapon skill is limited by being %s with %s."
+ru = " Ваш навык боя с двух рук ограничен уровнем владения {2:ins} ({1})."
+
+[09af69546700]
+en = " Your two weapon skill was limited by being %s with %s."
+ru = " Ваш навык боя с двух рук был ограничен уровнем владения {2:ins} ({1})."
+
+[4a96409ca42a]
+en = " Your two weapon skill is limited by having no skill with %s."
+ru = " Ваш навык боя с двух рук ограничен тем, что вы не владеете {1:ins}."
+
+[deae459c706c]
+en = " Your two weapon skill was limited by having no skill with %s."
+ru = " Ваш навык боя с двух рук был ограничен тем, что вы не владели {1:ins}."
+
+[cf4d2385b843]
+en = "restricted"
+ru = "недоступен"

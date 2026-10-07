@@ -716,3 +716,78 @@ ru = "Здесь контейнер и {1}.  Убрать {2:acc}?"
 [f18471421fa7]
 en = "There is a container and %s here.  Disarm %s?"
 ru = "Здесь контейнер и {1}.  Обезвредить {2:acc}?"
+
+# The engrave prompt, a text for each way of writing (doengrave_ctx_verb);
+# what the Russian soak's seeds 70-138 still asked in English.
+
+[278f1e9f4b8f]
+en = "What do you want to write in the %s here?"
+ru = "Что вы хотите здесь написать?{1:skip}"
+
+[69770b17c4ec]
+en = "What do you want to add to the writing in the %s here?"
+ru = "Что вы хотите дописать к здешней надписи?{1:skip}"
+
+[04f796a8f222]
+en = "What do you want to engrave on the %s here?"
+ru = "Что вы хотите выгравировать на {1:loc}?"
+
+[b1dc48a84180]
+en = "What do you want to add to the epitaph on the %s here?"
+ru = "Что вы хотите дописать к эпитафии на {1:loc}?"
+
+[adf757d204c6]
+en = "What do you want to engrave in the %s here?"
+ru = "Что вы хотите выгравировать на {1:loc}?"
+
+[76059714c7d0]
+en = "What do you want to add to the engraving in the %s here?"
+ru = "Что вы хотите дописать к гравировке на {1:loc}?"
+
+[153277455219]
+en = "What do you want to burn into the %s here?"
+ru = "Что вы хотите выжечь на {1:loc}?"
+
+[1d67a25e0b7f]
+en = "What do you want to melt into the %s here?"
+ru = "Что вы хотите выплавить на {1:loc}?"
+
+[2b3e6ba13c98]
+en = "What do you want to add to the text burned into the %s here?"
+ru = "Что вы хотите дописать к тексту, выжженному на {1:loc}?"
+
+[e25cbfcbdfb8]
+en = "What do you want to add to the text melted into the %s here?"
+ru = "Что вы хотите дописать к тексту, выплавленному на {1:loc}?"
+
+[51759f97a0e6]
+en = "What do you want to scribble on the %s here?"
+ru = "Что вы хотите накалякать на {1:loc}?"
+
+[db314f38af21]
+en = "What do you want to add to the graffiti on the %s here?"
+ru = "Что вы хотите дописать к каракулям на {1:loc}?"
+
+[41978cf34e74]
+en = "What do you want to scrawl on the %s here?"
+ru = "Что вы хотите намалевать на {1:loc}?"
+
+[4db49e38259d]
+en = "What do you want to add to the scrawl on the %s here?"
+ru = "Что вы хотите дописать к мазне на {1:loc}?"
+
+[f40ed20194ec]
+en = "What do you want to write strangely on the %s here?"
+ru = "Что вы хотите странным образом написать на {1:loc}?"
+
+[ea023fbbf1e0]
+en = "What do you want to add to the weird writing on the %s here?"
+ru = "Что вы хотите дописать к странной надписи на {1:loc}?"
+
+[9e975f5d0079]
+en = "Extended command list search phrase?"
+ru = "Что искать в списке расширенных команд?"
+
+[2d657351df6a]
+en = "Split off how many?"
+ru = "Сколько отделить?"
