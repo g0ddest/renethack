@@ -2152,6 +2152,59 @@ fn inv_from(
     Step::Inv(what, f)
 }
 
+/// The palette's panel as it first opened, and the frames since it opened
+/// now (steps are plain functions).
+static PALETTE_SIZE: Mutex<Option<(f32, f32)>> = Mutex::new(None);
+static PALETTE_FRAMES: AtomicU32 = AtomicU32::new(0);
+
+/// The command palette is one panel reused from an opening to the next,
+/// and keeps its size: it grew a gap each time it opened (the room for a
+/// gamepad's hints was added again and never taken away), an empty band
+/// under Cancel a little taller with every `#`.
+fn palette() -> Vec<Step> {
+    let mut steps = start();
+    steps.push(Step::Wait("the hero on the map", |g| {
+        Ok(g.world.map.hero().is_some())
+    }));
+    for shot in [None, None, None, Some("palette-fourth")] {
+        steps.extend([
+            key('#'),
+            Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
+            Step::Call("count its frames", |_| {
+                PALETTE_FRAMES.store(0, Ordering::Relaxed);
+                Ok(())
+            }),
+            Step::Wait("the palette laid out, the size it first had", |g| {
+                // a few frames: its containers settle at a frame's end
+                if PALETTE_FRAMES.fetch_add(1, Ordering::Relaxed) < 4 {
+                    return Ok(false);
+                }
+                let ui = g.ui.as_ref().ok_or("no UI")?;
+                let size = ui.dialogs.panel_size().ok_or("no dialog")?;
+                let mut first = PALETTE_SIZE.lock().map_err(|e| e.to_string())?;
+                match *first {
+                    None => *first = Some((size.x, size.y)),
+                    Some((w, h)) if (w - size.x).abs() > 0.5 || (h - size.y).abs() > 0.5 => {
+                        return Err(format!(
+                            "the palette is {}x{} now, {w}x{h} when it first opened",
+                            size.x, size.y
+                        ));
+                    }
+                    Some(_) => {}
+                }
+                Ok(true)
+            }),
+        ]);
+        steps.extend(shot.map(Step::Shot));
+        steps.extend([
+            Step::Dialog(DialogEvent::ExtCmd(None)),
+            Step::Request("a command after the palette", command),
+        ]);
+    }
+    steps.extend(quit());
+    steps
+}
+
 /// Lay out `name` alone where the gallery puts a creature, the camera
 /// close.
 fn creature_alone(g: &mut RenethackGame, name: &str) -> Result<(), String> {
@@ -3354,6 +3407,9 @@ pub struct Soak {
     /// The request a click or F5 went to: when it started no order, the
     /// request is still open and is decided again.
     maybe_refused: Option<(u64, u64)>,
+    /// The request whose answer a picture goes with, seen in the frame it
+    /// opened: it is answered and pictured in the next one.
+    shot_waits: Option<(u64, u64)>,
     /// RENETHACK_DUMP_MESSAGES=<file>: every text shown (messages,
     /// questions, menus, text windows) appended as JSON lines, the corpus
     /// of the translation's coverage report.
@@ -3392,6 +3448,7 @@ impl Soak {
             shots: None,
             nodes: None,
             maybe_refused: None,
+            shot_waits: None,
             dump: std::env::var_os("RENETHACK_DUMP_MESSAGES").and_then(|p| {
                 std::fs::File::options()
                     .create(true)
@@ -3676,11 +3733,20 @@ impl Soak {
             return Ok(false);
         };
         let req = (g.session_serial, id);
+        // a click or F5 that started no order leaves the request open
+        if req <= self.last_req && self.maybe_refused != Some(req) {
+            return Ok(false);
+        }
+        // a picture shows a frame the player saw: the frame a dialog opens
+        // in has not laid it out yet (Godot sorts its containers at the
+        // frame's end), and a picture forced then had the palette's rows
+        // spilling over the HUD; the request waits a frame
+        let pictured = self.shots.is_some() && (self.answered + 1).is_multiple_of(SOAK_SHOT_EVERY);
+        if pictured && self.shot_waits != Some(req) {
+            self.shot_waits = Some(req);
+            return Ok(false);
+        }
         if req <= self.last_req {
-            // a click or F5 that started no order leaves the request open
-            if self.maybe_refused != Some(req) {
-                return Ok(false);
-            }
             self.maybe_refused = None;
         }
         if self.verbose {
@@ -4200,6 +4266,7 @@ impl SelfTest {
             "inventory" => inventory(),
             "map-pause" => map_pause(),
             "pool-sizes" => pool_sizes(),
+            "palette" => palette(),
             "gamepad" => gamepad(),
             "bar" => bar(),
             _ => Vec::new(),

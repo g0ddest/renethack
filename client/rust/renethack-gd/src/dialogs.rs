@@ -1817,6 +1817,10 @@ impl Dialogs {
             edit.set_text("");
             palette.borrow_mut().refilter("");
             fill_palette(&palette);
+            // as tall as its rows again: a panel grows to what it holds
+            // and never shrinks by itself
+            panel.set_offset(godot::builtin::Side::TOP, -40.0);
+            panel.set_offset(godot::builtin::Side::BOTTOM, 40.0);
             shade.set_visible(true);
             panel.set_visible(true);
             if !self.warming {
@@ -2957,6 +2961,11 @@ impl Dialogs {
         })
     }
 
+    /// The open dialog's panel: its size on screen (self-tests).
+    pub fn panel_size(&self) -> Option<Vector2> {
+        self.open.as_ref().map(|o| o.panel.get_size())
+    }
+
     /// The engine's window the open dialog lays out from its English:
     /// "vanquished", "genocided", "overview".
     pub fn layout_name(&self) -> Option<&'static str> {
@@ -3553,6 +3562,15 @@ impl Dialogs {
     fn retire(&mut self, mut open: Open) {
         // the palette is hidden for the next time
         if let Kind::ExtCmd { edit, palette, req } = open.kind {
+            // without the room its opening gave a gamepad's hints: the next
+            // one adds its own, and a room kept each time made the panel a
+            // gap taller with every opening
+            if let Some(mut room) = open.pad_room.take() {
+                if let Some(mut col) = room.get_parent() {
+                    col.remove_child(&room);
+                }
+                room.queue_free();
+            }
             open.panel.set_visible(false);
             open.shade.set_visible(false);
             let mut e = edit.clone();
