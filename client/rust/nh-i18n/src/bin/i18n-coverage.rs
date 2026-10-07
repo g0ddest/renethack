@@ -1,7 +1,7 @@
 //! How much of what the game showed the catalog knows and the Russian
 //! translates.
 //!
-//!     cargo run -p nh-i18n --bin i18n-coverage -- [--todo FILE N [--todo-kind KINDS]] [--no-lexicon] CORPUS...
+//!     cargo run -p nh-i18n --bin i18n-coverage -- [--todo FILE N [--todo-kind KINDS]] [--no-lexicon] [--all] CORPUS...
 //!
 //! A corpus is the soak's dump (`RENETHACK_DUMP_MESSAGES=<file>`: JSON
 //! lines `{"kind", "text"}`, with `fmt` and `args` for a message when the
@@ -13,7 +13,8 @@
 //! templates as stubs to translate, of the kinds given (`--todo-kind
 //! query,menu,window`; message, query, menu, window). The names in the texts are declined by
 //! the lexicon (`client/i18n/lexicon.ru.toml`); `--no-lexicon` leaves them
-//! English, to see the templates alone.
+//! English, to see the templates alone. `--all` gives the report's lists
+//! whole, not only their heads.
 
 use std::collections::{BTreeSet, HashMap};
 use std::fmt::Write as _;
@@ -73,11 +74,14 @@ fn main() -> ExitCode {
     let mut todo: Option<(PathBuf, usize)> = None;
     let mut corpora = Vec::new();
     let mut lexicon = true;
+    let mut all = false;
     let mut kinds: Vec<String> = Vec::new();
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         if a == "--no-lexicon" {
             lexicon = false;
+        } else if a == "--all" {
+            all = true;
         } else if a == "--todo-kind" {
             kinds.extend(
                 args.next()
@@ -100,10 +104,10 @@ fn main() -> ExitCode {
         }
     }
     if corpora.is_empty() {
-        eprintln!("usage: i18n-coverage [--todo FILE N] [--no-lexicon] CORPUS...");
+        eprintln!("usage: i18n-coverage [--todo FILE N] [--no-lexicon] [--all] CORPUS...");
         return ExitCode::FAILURE;
     }
-    match run(&corpora, todo, &kinds, lexicon) {
+    match run(&corpora, todo, &kinds, lexicon, all) {
         Ok(report) => {
             print!("{report}");
             ExitCode::SUCCESS
@@ -124,6 +128,7 @@ fn run(
     todo: Option<(PathBuf, usize)>,
     todo_kinds: &[String],
     lexicon: bool,
+    all: bool,
 ) -> Result<String, String> {
     let dir = i18n_dir();
     let catalog_text =
@@ -256,7 +261,8 @@ fn run(
     let mut misses: Vec<_> = unknown.into_iter().collect();
     misses.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
     let _ = writeln!(out, "\nno template ({} distinct):", misses.len());
-    for (text, n) in misses.iter().take(60) {
+    let head = |n: usize| if all { usize::MAX } else { n };
+    for (text, n) in misses.iter().take(head(60)) {
         let _ = writeln!(out, "{n:>6} {text}");
     }
     let mut halves: Vec<_> = partial.into_iter().collect();
@@ -266,7 +272,7 @@ fn run(
         "\ntranslated but for a name the lexicon does not read ({} distinct):",
         halves.len()
     );
-    for (text, n) in halves.iter().take(30) {
+    for (text, n) in halves.iter().take(head(30)) {
         let _ = writeln!(out, "{n:>6} {text}");
     }
     let mut todo_list: Vec<_> = untranslated.into_iter().collect();
@@ -277,7 +283,7 @@ fn run(
         todo_list.len()
     );
     let catalog = translator.catalog();
-    for (id, n) in todo_list.iter().take(40) {
+    for (id, n) in todo_list.iter().take(head(40)) {
         let fmt = catalog.by_id(id).map_or("?", |t| t.fmt.as_str());
         let _ = writeln!(out, "{n:>6} [{id}] {fmt:?}");
     }
