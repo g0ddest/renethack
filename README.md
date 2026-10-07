@@ -129,7 +129,7 @@ priests excepted.
     make              # engine/build/nh-engine, recover and data
     make test         # C unit tests, engine smoke test, Rust tests
     make lint
-    make test-client  # headless self-tests of the Godot client (needs Godot)
+    make test-client  # self-tests of the Godot client: headless, one in a window (needs Godot)
     make soak         # random play through the client, seeds 1..8 (long)
     make deck         # screenshots at the Steam Deck's 1280×800 (needs a display)
 
@@ -168,6 +168,16 @@ the log in whole lines). `make test-client` also runs `smoke`, `inventory`,
 `hud`, `gamepad` and `title` headless at 1280×800, the Steam Deck's screen with its
 120 % UI scale; `make deck` shoots `smoke`, `tour`, `inventory`, `bar`,
 `hud`, `dialogs` and `gamepad` at a real 1280×800.
+
+A headless run draws nothing, so what upsets Godot's renderer never shows
+in one. `make test-client` therefore ends with the `rim` scenario in a
+window (it needs a display; `xvfb-run make test-client` without one, or
+`make test-client WINDOW_SELFTESTS=` to skip it): the hero's rim light's
+layer stays on the hero's own model, and a model in view changes layers
+without leaving the renderer a pair it cannot undo. Every run, headless or
+not, passes only with its PASS line, exit status 0 and no error of Godot's
+that says "BUG": a crash on quit, after the PASS line, fails it.
+`make soak SOAK_WINDOW=1` plays the soak in a window, the renderer at work.
 
 ## Languages
 

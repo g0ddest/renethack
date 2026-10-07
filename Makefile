@@ -33,6 +33,10 @@ RU_SELFTESTS := smoke inventory dialogs achievements
 # in the pseudo-language (--lang=qps): every word on the screens a scenario
 # would shoot came through the client's catalogs or the engine's translator
 PSEUDO_SELFTESTS := smoke keys dialogs orders inventory gamepad hud pickers achievements help layouts
+# with a window: a headless run draws nothing, and what upsets the renderer
+# shows only when it runs, as a "BUG" error of Godot's or a crash on quit.
+# Needs a display (without one: xvfb-run, or WINDOW_SELFTESTS= to skip)
+WINDOW_SELFTESTS ?= rim
 # `make deck`: the same screens shot at a real 1280×800, into DECK_DIR
 # (`make deck DECK_ARGS=--lang=ru`: in Russian)
 DECK_SHOTS := smoke tour inventory bar hud dialogs gamepad
@@ -42,6 +46,8 @@ DECK_ARGS ?=
 # soak fails unless the level changes); `make soak` runs the default, 2000
 SOAK_CI := 2000
 SOAK_SEEDS := 1 2 3 4 5 6 7 8
+# `make soak SOAK_WINDOW=1`: the soak with a window, the renderer at work
+SOAK_WINDOW ?=
 
 .PHONY: all engine client steam import run test test-client soak lint need-timeout art app-icon icons achievement-icons achievement-vdf deck \
 	i18n-catalog i18n-check help help-check
@@ -101,15 +107,19 @@ test: engine
 
 # One self-test in its own Godot process and playground: $(1) scenario,
 # $(2) more arguments, $(3) timeout in seconds, $(4) its name in messages,
-# $(5) empty for a headless run, else it gets a window (screenshots).
-# It passes only with exit status 0 and its "SELFTEST PASS" line.
+# $(5) empty for a headless run, else it gets a window (screenshots, and
+# the real renderer). It passes only with exit status 0 (a crash on quit,
+# after the PASS line, fails it), its "SELFTEST PASS" line, and no error
+# of Godot's that says "BUG": its renderer's bookkeeping broke, and a crash
+# follows sooner or later.
 define run_selftest
 pg=$$(mktemp -d); log=$$pg/selftest.log; \
 echo "selftest $(4)"; \
 status=0; $(TIMEOUT) $(3) $(GODOT) $(if $(5),,--headless) --path $(GODOT_PROJECT) \
 	-- --selftest=$(1) $(2) --playground=$$pg/playground > $$log 2>&1 || status=$$?; \
 if [ $$status -ne 0 ] || ! grep -q 'Initialize godot-rust' $$log \
-	|| ! grep -q "SELFTEST PASS $(1)" $$log; then \
+	|| ! grep -q "SELFTEST PASS $(1)" $$log \
+	|| grep -Eq '^ERROR: (.*[^[:alpha:]])?BUG([^[:alpha:]]|$$)' $$log; then \
 	tail -60 $$log; echo "selftest $(4) FAILED (status $$status)" >&2; exit 1; \
 fi; \
 grep '^selftest: soak: [0-9]* requests' $$log || true; \
@@ -125,7 +135,7 @@ need-timeout:
 
 # every scenario but tour (map screenshots); the soak with seed 42 and
 # $(SOAK_CI) requests; then $(DECK_SELFTESTS) at the Deck's size, the
-# Russian runs and the pseudo-language's
+# Russian runs, the pseudo-language's, and $(WINDOW_SELFTESTS) in a window
 test-client: need-timeout all client
 	@set -e; for s in $(SELFTESTS); do \
 		args=""; if [ $$s = soak ]; then args="--soak=$(SOAK_CI)"; fi; \
@@ -142,9 +152,12 @@ test-client: need-timeout all client
 	done; \
 	for s in $(PSEUDO_SELFTESTS); do \
 		$(call run_selftest,$$s,--lang=qps,180,$$s in the pseudo-language); \
+	done; \
+	for s in $(WINDOW_SELFTESTS); do \
+		$(call run_selftest,$$s,,180,$$s in a window,window); \
 	done; echo "selftests passed: $(SELFTESTS); at 1280x800: $(DECK_SELFTESTS);" \
 		"in Russian: $(RU_DECK_SELFTESTS) at 1280x800, $(RU_SELFTESTS) at 1920x1080;" \
-		"in the pseudo-language: $(PSEUDO_SELFTESTS)"
+		"in the pseudo-language: $(PSEUDO_SELFTESTS); in a window: $(WINDOW_SELFTESTS)"
 
 # The Steam Deck's screen for review: $(DECK_SHOTS) shot at a real
 # 1280×800 into $(DECK_DIR)/<scenario>. A run fails when the window is not
@@ -159,7 +172,7 @@ deck: need-timeout all client
 # random play through the UI with each of $(SOAK_SEEDS) and the default budget
 soak: need-timeout all client
 	@set -e; for seed in $(SOAK_SEEDS); do \
-		$(call run_selftest,soak,--seed=$$seed,900,soak seed $$seed); \
+		$(call run_selftest,soak,--seed=$$seed,900,soak seed $$seed,$(SOAK_WINDOW)); \
 	done; echo "soak passed with seeds $(SOAK_SEEDS)"
 
 # Bake the item icons (client/godot/art/icons/items/<tile>.png) from the

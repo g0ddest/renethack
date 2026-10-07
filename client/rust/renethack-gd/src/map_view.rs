@@ -4310,6 +4310,28 @@ impl MapView {
         nodes.look.entity.and_then(|i| nodes.models.get(i))
     }
 
+    /// The node of the monster or object on a cell, and whether its meshes
+    /// are on the hero's rim layer (self-tests: only the hero's are).
+    pub fn entity_rim(&self, x: i32, y: i32) -> Option<(Gd<Node3D>, bool)> {
+        let nodes = self.cells.get(&(x, y))?;
+        let node = nodes.models.get(nodes.look.entity?)?.node.clone();
+        let rim = node
+            .find_children_ex("*")
+            .type_("GeometryInstance3D")
+            .owned(false)
+            .done()
+            .iter_shared()
+            .filter_map(|n| n.try_cast::<GeometryInstance3D>().ok())
+            .any(|g| g.get_layer_mask() & RIM_LAYER != 0);
+        Some((node, rim))
+    }
+
+    /// Put a model on the hero's rim layer, or take it off (self-tests: a
+    /// model in view changes layers as the hero's does).
+    pub fn set_rim(node: &Gd<Node3D>, on: bool) {
+        set_layers(node, if on { 1 | RIM_LAYER } else { 1 });
+    }
+
     /// The clips the hero's model rests and fights with now, the gear's:
     /// (idle, attack) (self-tests).
     pub fn hero_fight_clips(&self) -> (Option<String>, Option<String>) {

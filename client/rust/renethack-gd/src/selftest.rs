@@ -36,6 +36,8 @@ mod hero;
 mod input_ru;
 #[path = "selftest_layouts.rs"]
 mod layouts_tests;
+#[path = "selftest_rim.rs"]
+mod rim_tests;
 #[path = "selftest_world.rs"]
 mod world_looks;
 #[path = "selftest_worn.rs"]
@@ -4471,6 +4473,7 @@ impl SelfTest {
             "pickers" => input_ru::pickers(),
             "help" => help_tests::help(),
             "layouts" => layouts_tests::layouts(),
+            "rim" => rim_tests::rim(),
             "inventory" => inventory(),
             "map-pause" => map_pause(),
             "pool-sizes" => pool_sizes(),
