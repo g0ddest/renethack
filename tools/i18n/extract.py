@@ -332,6 +332,21 @@ def ternary(toks):
     return None
 
 
+def literal_values(toks):
+    """The literals an expression of literals and conditions can be
+    (`a ? "x" : b ? "y" : "z"`), or None."""
+    toks = strip_expr(toks)
+    if not toks:
+        return None
+    tern = ternary(toks)
+    if tern:
+        a, b = literal_values(tern[1]), literal_values(tern[2])
+        return None if a is None or b is None else dedupe(a + b)
+    if all(t.kind == "string" for t in toks):
+        return ["".join(t.value for t in toks)]
+    return None
+
+
 def call_parts(toks):
     """(name, args) when the expression is one call `name(args)`."""
     if (len(toks) >= 3 and toks[0].kind == "ident" and toks[1].text == "("
@@ -391,8 +406,16 @@ class Op:
         self.line = line
         self.call = call
         self.transform = transform
+        # the change may not happen (strsubst that finds nothing, or in a
+        # branch): the text as it was, too
+        self.either = False
         # safe_qbuf: (prefix, suffix) around an object's name
         self.around = None
+
+    def changed(self, built):
+        """A buffer's texts after this change in place."""
+        out = [(self.transform(f), kinds) for f, kinds in built]
+        return dedupe(built + out) if self.either else out
 
 
 def squeeze(fmt):
@@ -547,6 +570,27 @@ class Globals:
             return dedupe(out)[:MAX_HELD] if out else None
         return self._memo(("rb", unit.path, fname), compute)
 
+    def member_values(self, unit, member):
+        """The literals a struct member is set to in `unit`, when it is set
+        to nothing else (doengrave_ctx_verb's `de->everb = de->adding ?
+        "add to the writing in" : "write in"`), or None."""
+        def compute():
+            toks = unit.toks
+            out = []
+            for i, t in enumerate(toks):
+                if not (t.kind == "ident" and t.text == member and 0 < i < len(toks) - 1
+                        and toks[i - 1].text in ("->", ".") and toks[i + 1].text == "="):
+                    continue
+                j = i + 2
+                while j < len(toks) and toks[j].text != ";":
+                    j = match_close(toks, j) + 1 if toks[j].text in "([{" else j + 1
+                v = literal_values(toks[i + 2:j])
+                if v is None:
+                    return None
+                out += v
+            return dedupe(out) or None
+        return self._memo(("mv", unit.path, member), compute)
+
     def param_values_partial(self, ctx, name):
         """The literals the callers that pass literals give a parameter."""
         def compute():
@@ -693,6 +737,18 @@ class Context:
                 # mungspaces(buf); (or after a (void) cast)
                 self.ops.setdefault(toks[i + 2].text, []).append(
                     Op(i, True, [], [], False, t.line, t.text, TRANSFORMS[t.text]))
+            if (t.kind == "ident" and t.text == "strsubst" and toks[i + 1].text == "("
+                    and toks[i + 2].kind == "ident" and toks[i + 3].text == ","
+                    and toks[i + 4].kind == "string" and toks[i + 5].text == ","
+                    and toks[i + 6].kind == "string" and toks[i + 7].text == ")"
+                    and toks[i - 1].text in (";", "{", "}", ")") and toks[i + 8].text == ";"):
+                # (void) strsubst(buf, "limbs", "extremities"): the first
+                # of the one is the other
+                was, now = escape(toks[i + 4].value), escape(toks[i + 6].value)
+                op = Op(i, True, [], [], False, t.line, t.text,
+                        lambda f, was=was, now=now: f.replace(was, now, 1))
+                op.either = True
+                self.ops.setdefault(toks[i + 2].text, []).append(op)
             if (t.text == "*" and toks[i + 1].kind == "ident" and toks[i + 2].text == "="
                     and toks[i + 3].text in ("lowc", "highc") and toks[i + 4].text == "("
                     and toks[i + 5].text == "*" and toks[i + 6].text == toks[i + 1].text):
@@ -817,6 +873,10 @@ class Context:
                 # lexicon's, not one entry per word
                 return None
             return returned
+        # x->member: what its unit sets it to
+        if (len(toks) == 3 and toks[0].kind == "ident" and toks[1].text in ("->", ".")
+                and toks[2].kind == "ident"):
+            return self.glob.member_values(self.unit, toks[2].text)
         if len(toks) == 1 and toks[0].kind == "ident":
             name = toks[0].text
             if name in LITERAL_CALLS:
@@ -1169,7 +1229,7 @@ class Context:
             built = with_tails(before, tails)
             for a in ops:
                 if a.transform:
-                    built = [(a.transform(f), kinds) for f, kinds in built]
+                    built = a.changed(built)
             return built
         out = []
         for k, op in enumerate(ops):
@@ -1182,7 +1242,7 @@ class Context:
             built = with_tails(heads, tails)
             for a in later:
                 if a.transform:
-                    built = [(a.transform(f), kinds) for f, kinds in built]
+                    built = a.changed(built)
             out += built
         first = next((op for op in ops if not op.append), None)
         if (first and passed and self.glob.writes(*passed)

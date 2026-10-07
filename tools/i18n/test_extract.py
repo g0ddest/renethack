@@ -63,6 +63,31 @@ class Formats(unittest.TestCase):
         self.assertIn("%s glows bes.", e)
         self.assertEqual(e["%s glow be."].args, [{"object"}])
 
+    def test_a_member_its_unit_sets(self):
+        e = catalog_of('static void verb(struct ctx *de) {\n'
+                       '    de->everb = de->adding ? "add to the writing in" : "write in";\n'
+                       '    de->eloc = "dust";\n}\n'
+                       'void f(struct ctx *de) {\n'
+                       '    de->eloc = surface(u.ux, u.uy);\n'
+                       '    verb(de);\n'
+                       '    You("%s the %s.", de->everb, de->eloc);\n}\n')
+        self.assertIn("You write in the %s.", e)
+        self.assertIn("You add to the writing in the %s.", e)
+        # set to something else too: no literal of its own
+        self.assertNotIn("You write in the dust.", e)
+
+    def test_one_text_for_another_in_a_buffer(self):
+        e = catalog_of('static const char *const texts[] = {\n'
+                       '    "You are slowing down.", "Your limbs are stiffening."\n};\n'
+                       'void f(int i) {\n    char buf[BUFSZ];\n'
+                       '    Strcpy(buf, texts[i]);\n'
+                       '    if (nolimbs(d) && strstri(buf, "limbs"))\n'
+                       '        (void) strsubst(buf, "limbs", "extremities");\n'
+                       '    urgent_pline("%s", buf);\n}\n')
+        self.assertEqual(e["Your limbs are stiffening."].uses, {"pline", "sprintf"})
+        self.assertEqual(e["Your extremities are stiffening."].uses, {"pline"})
+        self.assertIn("You are slowing down.", e)
+
     def test_buffers_are_inlined(self):
         e = catalog_of('void f(struct monst *m) {\n'
                        '    char buf[BUFSZ];\n'
