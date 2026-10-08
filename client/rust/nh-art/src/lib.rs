@@ -239,6 +239,14 @@ pub struct ModelSpec {
     /// With `bare_arms`, the chest bare too (hide the outfit's body).
     #[serde(default)]
     pub bare_chest: bool,
+    /// How broad and deep the model is for its height (a dwarf is stocky:
+    /// 1.25).
+    #[serde(default = "one")]
+    pub girth: f32,
+    /// How big the head is for the body, with what it wears (a gnome's:
+    /// 1.3): the rig's `Head` bone scaled.
+    #[serde(default = "one")]
+    pub head_scale: f32,
 }
 
 /// A model worn on a bone of a character (a role's hat or cape), hidden
@@ -684,6 +692,9 @@ impl ArtManifest {
             if m.size <= 0.0 {
                 errors.push(format!("model {name}: size {}", m.size));
             }
+            if m.girth <= 0.0 || m.head_scale <= 0.0 {
+                errors.push(format!("model {name}: girth or head_scale"));
+            }
             if let Some(rig) = &m.rig
                 && !raw.libraries.contains_key(rig)
             {
@@ -1111,6 +1122,8 @@ impl ArtManifest {
             extras: Vec::new(),
             bare_arms: None,
             bare_chest: false,
+            girth: 1.0,
+            head_scale: 1.0,
         };
     }
 
@@ -1282,6 +1295,47 @@ mod tests {
         // words match whole: a monkey is not a key
         assert!(has_words("skeleton key", "key") && !has_words("monkey", "key"));
         assert!(has_words("large box", "large box") && !has_words("box", "large box"));
+    }
+
+    /// The Mines are mostly gnomes and dwarves: each kind and its women
+    /// have a model of their own, a gnome under a hat, a dwarf helmed with
+    /// a pick or a mattock in hand, a hobbit bare-headed.
+    #[test]
+    fn the_people_of_the_mines_are_told_apart() {
+        let (art, cat) = (manifest(), catalog());
+        let model = |n: &str, flags: u32| {
+            let m = cat.monsters.iter().find(|m| m.name == n).unwrap();
+            art.model_at(art.monster(m, flags).model)
+        };
+        let kinds = [
+            "gnome",
+            "gnome leader",
+            "gnomish wizard",
+            "gnome ruler",
+            "dwarf",
+            "dwarf leader",
+            "dwarf ruler",
+            "hobbit",
+        ];
+        let mut seen = Vec::new();
+        for kind in kinds {
+            for flags in [0, mg::FEMALE] {
+                let (name, spec) = model(kind, flags);
+                assert!(!seen.contains(&name), "{kind}: {name} again");
+                seen.push(name);
+                let on = |bone: &str| spec.extras.iter().any(|e| e.bone == bone);
+                assert_eq!(on("Head"), kind != "hobbit", "{name}: a hat");
+                let armed = kind.starts_with("dwarf") || kind == "gnomish wizard";
+                assert_eq!(on("hand_r"), armed, "{name}: in hand");
+                // nobody is the plain peasant, or a man under a woman's name
+                let woman = spec.scene.as_deref().is_some_and(|s| s.contains("Female"));
+                assert_eq!(woman, flags != 0, "{name}");
+                assert_ne!(spec.head.as_deref(), Some("bearded"), "{name}");
+            }
+        }
+        // a dwarf is stocky, a gnome's head is big
+        assert!(model("dwarf", 0).1.girth > 1.1);
+        assert!(model("gnome", 0).1.head_scale > 1.1);
     }
 
     /// How many monsters and object tiles resolve at each level of the

@@ -168,7 +168,8 @@ fn inner_transform(look: &ModelLook, spec: &nh_art::ModelSpec) -> Transform3D {
         lift += r.height * 0.22;
     }
     let s = r.scale;
-    transform([0.0, lift, 0.0], rot, [s, s, s])
+    let girth = s * spec.girth;
+    transform([0.0, lift, 0.0], rot, [girth, s, girth])
 }
 
 fn transform(pos: [f32; 3], rot: [f32; 3], scale: [f32; 3]) -> Transform3D {
@@ -1003,13 +1004,14 @@ impl Art {
             self.manifest.library(name).and_then(|path| {
                 let scene =
                     godot::tools::try_load::<PackedScene>(&format!("{ART_ROOT}{path}")).ok()?;
-                library_in(&scene).or_else(|| {
+                let lib = library_in(&scene).or_else(|| {
                     let mut inst = scene.instantiate()?;
                     let lib =
                         find::<AnimationPlayer>(&inst).and_then(|p| p.get_animation_library(""));
                     inst.queue_free();
                     lib
-                })
+                });
+                lib.inspect(unscale_head)
             })
         };
         if lib.is_none() {
@@ -1060,6 +1062,9 @@ impl Art {
                 }
                 if let Some(kind) = spec.bare_arms.as_deref() {
                     self.attach_base_head(&inner, kind, Region::bare(&spec));
+                }
+                if spec.head_scale != 1.0 {
+                    scale_head(&inner, spec.head_scale);
                 }
                 let shade = rgb(spec.shade_rgb());
                 self.dress(&inner, look, shade);
@@ -1666,6 +1671,46 @@ fn find<T: GodotClass + Inherits<Node>>(root: &Gd<Node>) -> Option<Gd<T>> {
         .iter_shared()
         .next()
         .and_then(|n| n.try_cast::<T>().ok())
+}
+
+/// The clips' scale track of the `Head` bone dropped where it only ever
+/// says 1 (every clip of the rigs has one for every bone): a model's own
+/// head size stands then (`scale_head`).
+fn unscale_head(lib: &Gd<AnimationLibrary>) {
+    let mut head: Option<NodePath> = None;
+    for name in lib.get_animation_list().iter_shared() {
+        let Some(mut a) = lib.get_animation(&name) else {
+            continue;
+        };
+        if head.is_none() {
+            head = (0..a.get_track_count())
+                .map(|t| a.track_get_path(t))
+                .find(|p| p.to_string().ends_with(":Head"));
+        }
+        let Some(path) = &head else {
+            return;
+        };
+        let t = a.find_track(path, TrackType::SCALE_3D);
+        let ones = t >= 0
+            && (0..a.track_get_key_count(t)).all(|k| {
+                let v = a.track_get_key_value(t, k).try_to::<Vector3>();
+                v.is_ok_and(|v| v.distance_to(Vector3::ONE) < 1e-3)
+            });
+        if ones {
+            a.remove_track(t);
+        }
+    }
+}
+
+/// The head `k` times its size, with what it wears: the `Head` bone's own
+/// scale (no clip scales it: see `unscale_head`).
+fn scale_head(inner: &Gd<Node3D>, k: f32) {
+    if let Some(mut skeleton) = find::<Skeleton3D>(&inner.clone().upcast()) {
+        let head = skeleton.find_bone("Head");
+        if head >= 0 {
+            skeleton.set_bone_pose_scale(head, Vector3::ONE * k);
+        }
+    }
 }
 
 /// A copy of a library without position tracks (the pelvis height of a

@@ -869,6 +869,34 @@ impl Kit<'_> {
                 let stone = self.gem_mat();
                 self.cut_stone(root, &stone, [0.0, -0.05, 0.47], 0.08);
             }
+            "cap" => {
+                // a gnome's: a tall cone with no brim, its tip flopped
+                // back, a rolled band at the brow
+                self.part(
+                    root,
+                    cylinder(0.14, 0.33, 0.62),
+                    &skin,
+                    [0.0, 0.33, 0.0],
+                    [-5.0, 0.0, 0.0],
+                    ONE,
+                );
+                self.part(
+                    root,
+                    cylinder(0.0, 0.14, 0.44),
+                    &skin,
+                    [0.0, 0.8, -0.1],
+                    [-30.0, 0.0, 0.0],
+                    ONE,
+                );
+                self.part(
+                    root,
+                    torus(0.27, 0.37),
+                    &dark,
+                    [0.0, 0.04, 0.0],
+                    FLAT,
+                    [1.0, 1.5, 1.0],
+                );
+            }
             "cone" => {
                 self.part(
                     root,
