@@ -7,7 +7,7 @@ use std::collections::{HashMap, HashSet};
 use aho_corasick::AhoCorasick;
 use serde::Deserialize;
 
-use crate::format::{ConvKind, Segment, convs, parse_format};
+use crate::format::{Conv, ConvKind, Segment, convs, parse_format};
 use crate::phrase::NameKind;
 
 /// Where the catalog lives, from the repository root.
@@ -471,7 +471,7 @@ fn match_from(t: &Template, seg: usize, text: &str, caps: &mut Vec<String>, conv
                 Some(Segment::Conv(_)) => Next::Conv,
                 None => Next::End,
             };
-            for end in candidate_ends(c.kind, c.width, c.precision, text, next) {
+            for end in candidate_ends(c, text, next) {
                 let piece = &text[..end];
                 if !plausible(t, conv, c.kind, piece) {
                     continue;
@@ -497,13 +497,8 @@ enum Next<'t> {
 }
 
 /// Where the text of a conversion may end, shortest first.
-fn candidate_ends(
-    kind: ConvKind,
-    width: Option<usize>,
-    precision: Option<usize>,
-    text: &str,
-    next: Next,
-) -> Vec<usize> {
+fn candidate_ends(conv: &Conv, text: &str, next: Next) -> Vec<usize> {
+    let (kind, width, precision) = (conv.kind, conv.width, conv.precision);
     match kind {
         ConvKind::Int | ConvKind::Float => {
             let b = text.as_bytes();
@@ -513,7 +508,10 @@ fn candidate_ends(
                     i += 1;
                 }
             }
-            if i < b.len() && (b[i] == b'-' || b[i] == b'+') {
+            // printf writes a '+' only when the conversion asks for it: a
+            // price ("%6ld") is no "+1" of an enchantment
+            let signed = conv.spec.contains('+');
+            if i < b.len() && (b[i] == b'-' || (b[i] == b'+' && signed)) {
                 i += 1;
             }
             let start = i;

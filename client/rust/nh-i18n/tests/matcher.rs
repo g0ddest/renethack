@@ -585,6 +585,36 @@ fn a_thing_as_its_owner_s() {
     );
 }
 
+#[test]
+fn an_enchantment_is_no_price() {
+    // xprname(): "%c - %s." of a thing picked up; with a price it is
+    // "%c - %-45.*s%c%6ld %.50s", which took "a" for the name's end and
+    // "+1" for the price
+    let t = translator();
+    for (en, thing) in [
+        ("c - a +1 dagger.", "a +1 dagger"),
+        ("a - a blessed +2 bullwhip.", "a blessed +2 bullwhip"),
+        (
+            "b - a +2 sling named Elbereth.",
+            "a +2 sling named Elbereth",
+        ),
+        ("b - a +0 axe.", "a +0 axe"),
+        ("d - 3 +0 daggers.", "3 +0 daggers"),
+    ] {
+        let name = t.name(thing);
+        assert_eq!(name.status, Status::Translated, "{thing}");
+        let out = t.message(None, &[], en);
+        assert_eq!(
+            (out.text.as_str(), out.status),
+            (
+                format!("{} - {}.", &en[..1], name.text).as_str(),
+                Status::Translated
+            ),
+            "{en}"
+        );
+    }
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {

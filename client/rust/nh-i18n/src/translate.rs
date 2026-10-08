@@ -281,8 +281,13 @@ impl Translator {
             if let Some(out) = self.whole_name(text) {
                 return out;
             }
+            // (a name, or a template with words of its own: a format of
+            // conversions alone that takes the text without its mark says
+            // no more than the one that took it with it)
             match self.without_mark(text, channel) {
-                Some(out) if out.status != Status::Untranslated => return out,
+                Some(out) if out.status != Status::Untranslated && self.says_something(&out) => {
+                    return out;
+                }
                 other => unmarked = other,
             }
         }
@@ -305,6 +310,14 @@ impl Translator {
                 .or_else(|| self.fallback(text, channel, 0))
                 .unwrap_or_else(|| Output::english(text, Status::Untranslated, Some(m.template))),
         }
+    }
+
+    /// Is a reading a name's or a template's that has words of its own?
+    fn says_something(&self, out: &Output) -> bool {
+        out.template
+            .as_deref()
+            .and_then(|id| self.catalog.by_id(id))
+            .is_none_or(|t| t.letters() >= STRONG_LETTERS)
     }
 
     /// The best template for `text`; of those the catalog ranks alike (as
