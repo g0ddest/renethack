@@ -562,6 +562,30 @@ mod tests {
     }
 
     #[test]
+    fn a_heroine_s_rank_is_feminine() {
+        let lex = Lexicon::ru();
+        let her = |w: &str, case| {
+            lex.word(w)
+                .unwrap()
+                .agreeing(Gender::Fem, Number::Sing, case)
+        };
+        assert_eq!(her("Student of Stones", Case::Nom), "Ученица Камня");
+        assert_eq!(her("Student of Stones", Case::Dat), "Ученице Камня");
+        assert_eq!(her("Initiate", Case::Acc), "Посвящённую");
+        assert_eq!(her("Field Worker", Case::Ins), "Полевой работницей");
+        assert_eq!(her("Stripling", Case::Nom), "Юница");
+        // a title with no feminine noun of its own keeps its word
+        assert_eq!(her("Sergeant", Case::Nom), "Сержант");
+        assert_eq!(her("Hatamoto", Case::Gen), "Хатамото");
+        // and a man keeps his
+        let him = lex.word("Student of Stones").unwrap();
+        assert_eq!(
+            him.agreeing(Gender::Masc, Number::Sing, Case::Nom),
+            "Ученик Камня"
+        );
+    }
+
+    #[test]
     fn an_unknown_monster_is_a_name_only_when_one_is_expected() {
         let lex = Lexicon::ru();
         assert_eq!(parse(NameKind::Monster, "Fido").form(Case::Dat), "Fido");

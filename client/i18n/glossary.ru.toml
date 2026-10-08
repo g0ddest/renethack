@@ -1810,6 +1810,10 @@
 "expanse above" = { ru = "простор над головой", src = "chosen", note = "the Quest" }
 "water's surface" = { ru = "поверхность воды", src = "chosen" }
 "rock cavern" = { ru = "каменный свод", src = "chosen" }
+# what an engraving in the dust is written in (engrave.c doengrave_ctx_verb()):
+# You write in the dust / in the frost
+"dust" = { ru = "пыль", src = "chosen" }
+"frost" = { ru = "иней", src = "chosen" }
 
 [liquid]
 # what hliquid() (do_name.c) calls a liquid: the real one, or what a
@@ -2679,6 +2683,82 @@
 "Samurai" = { ru = "Женщина-самурай", src = "chosen" }
 "Tourist" = { ru = "Туристка", src = "chosen" }
 "Wizard" = { ru = "Волшебница", src = "chosen" }
+# the feminine of a rank whose English is the same for both genders (a
+# rank the engine names by gender, Plunderess or Medica ossium, is its
+# own entry under [rank]). A title with no feminine noun of its own keeps
+# its word for a heroine, as Russian titles do (Сержант, Паладин, Мастер,
+# Куратор, Хирург, Маг, Сёгун...), and so do the nouns of common gender
+# (Бродяга, Рубака, Зевака) and the ones that never change (Хатамото, Даймё).
+# Archeologist
+"Field Worker" = { ru = "Полевая работница", src = "chosen" }
+"Investigator" = { ru = "Изыскательница", src = "chosen" }
+"Excavator" = { ru = "Раскопщица", src = "chosen" }
+"Spelunker" = { ru = "Спелеолог-любительница", src = "chosen", g = "f" }
+"Collector" = { ru = "Коллекционерка", src = "chosen" }
+# Barbarian
+"Pillager" = { ru = "Разорительница", src = "chosen" }
+"Bandit" = { ru = "Бандитка", src = "chosen" }
+"Brigand" = { ru = "Разбойница", src = "chosen" }
+"Raider" = { ru = "Налётчица", src = "chosen" }
+"Reaver" = { ru = "Опустошительница", src = "chosen" }
+"Slayer" = { ru = "Истребительница", src = "chosen" }
+# Cavewoman
+"Troglodyte" = { ru = "Троглодитка", src = "chosen" }
+"Aborigine" = { ru = "Аборигенка", src = "chosen" }
+"Wanderer" = { ru = "Странница", src = "chosen" }
+"Wayfarer" = { ru = "Путница", src = "chosen" }
+"Roamer" = { ru = "Скиталица", src = "chosen" }
+"Nomad" = { ru = "Кочевница", src = "chosen" }
+"Pioneer" = { ru = "Первооткрывательница", src = "chosen" }
+# Healer
+"Embalmer" = { ru = "Бальзамировщица", src = "chosen" }
+"Dresser" = { ru = "Перевязчица", src = "chosen" }
+"Herbalist" = { ru = "Травница", src = "chosen" }
+"Physician" = { ru = "Лекарка", src = "chosen" }
+# Knight
+"Gallant" = { ru = "Отважная", src = "chosen", adjnoun = true, g = "f", note = "Удалец has no feminine" }
+# Monk
+"Candidate" = { ru = "Кандидатка", src = "chosen" }
+"Novice" = { ru = "Послушница", src = "chosen" }
+"Initiate" = { ru = "Посвящённая", src = "chosen", adjnoun = true, g = "f" }
+"Student of Stones" = { ru = "Ученица Камня", src = "chosen" }
+"Student of Waters" = { ru = "Ученица Воды", src = "chosen" }
+"Student of Metals" = { ru = "Ученица Металла", src = "chosen" }
+"Student of Winds" = { ru = "Ученица Ветра", src = "chosen" }
+"Student of Fire" = { ru = "Ученица Огня", src = "chosen" }
+# Priestess
+"Aspirant" = { ru = "Соискательница", src = "chosen" }
+"Adept" = { ru = "Адептка", src = "chosen" }
+# Rogue
+"Footpad" = { ru = "Уличная воровка", src = "chosen" }
+"Cutpurse" = { ru = "Карманница", src = "chosen" }
+"Pilferer" = { ru = "Мелкая воровка", src = "chosen" }
+"Robber" = { ru = "Грабительница", src = "chosen" }
+"Burglar" = { ru = "Взломщица", src = "chosen" }
+"Thief" = { ru = "Воровка", src = "chosen" }
+# Ranger
+"Lookout" = { ru = "Дозорная", src = "chosen", adjnoun = true, g = "f" }
+"Trailblazer" = { ru = "Первопроходица", src = "chosen" }
+"Arbalester" = { ru = "Арбалетчица", src = "chosen" }
+"Archer" = { ru = "Лучница", src = "chosen" }
+# Tourist
+"Excursionist" = { ru = "Экскурсантка", src = "chosen" }
+"Traveler" = { ru = "Путешественница", src = "chosen" }
+"Journeyer" = { ru = "Странствовательница", src = "chosen" }
+"Voyager" = { ru = "Вояжёрка", src = "chosen" }
+"Explorer" = { ru = "Исследовательница", src = "chosen" }
+"Adventurer" = { ru = "Искательница приключений", src = "chosen" }
+# Valkyrie: every one is a woman, so these are the titles a player reads
+"Stripling" = { ru = "Юница", src = "chosen", note = "Новобранец has no feminine" }
+"Skirmisher" = { ru = "Застрельщица", src = "chosen" }
+"Fighter" = { ru = "Ратница", src = "chosen", note = "Боец has no feminine" }
+"Warrior" = { ru = "Воительница", src = "chosen" }
+"Champion" = { ru = "Чемпионка", src = "chosen" }
+# Wizard
+"Evoker" = { ru = "Призывательница", src = "chosen" }
+"Conjurer" = { ru = "Кудесница", src = "chosen" }
+"Thaumaturge" = { ru = "Чудотворица", src = "chosen" }
+"Necromancer" = { ru = "Некромантка", src = "chosen" }
 
 [word]
 # common nouns the engine passes as an argument and no other section
