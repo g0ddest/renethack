@@ -192,45 +192,245 @@ ru = "Почему-то на ваши перчатки жар не действ�
 en = "Somehow, your gloves are not affected by the oxidation."
 ru = "Почему-то на ваши перчатки ржавчина не действует."
 
-[7f200afeb3fb]
-en = "%s %s %s completely!"
-ru = "{2} {1:gen} {2:num|портится|портятся} окончательно!{3:skip}"
+[2a5d00d91d18]
+en = "%s %s smoulder completely!"
+ru = "{2} {1:gen} {2:num|тлеет|тлеют} окончательно!"
 
-[b43e9cb4cacd]
-en = "%s %s %s further!"
-ru = "{2} {1:gen} {2:num|портится|портятся} ещё сильнее!{3:skip}"
+[3abf71d5066b]
+en = "%s %s smoulders completely!"
+ru = "{2} {1:gen} {2:num|тлеет|тлеют} окончательно!"
 
-[9130f0617c4b]
-en = "%s gloves %s completely!"
-ru = "Перчатки {1:gen} портятся окончательно!{2:skip}"
+[ea0d17ffbccf]
+en = "%s %s rust completely!"
+ru = "{2} {1:gen} {2:num|ржавеет|ржавеют} окончательно!"
 
-[f8d9650ed1ac]
-en = "%s gloves %s further!"
-ru = "Перчатки {1:gen} портятся ещё сильнее!{2:skip}"
+[b9c632ecc30a]
+en = "%s %s rusts completely!"
+ru = "{2} {1:gen} {2:num|ржавеет|ржавеют} окончательно!"
 
-[a0603889b383]
-en = "The %s %s completely!"
-ru = "{1} {1:num|портится|портятся} окончательно!{2:skip}"
+[d3ad26846d6b]
+en = "%s %s rot completely!"
+ru = "{2} {1:gen} {2:num|гниёт|гниют} окончательно!"
 
-[8972dca3867e]
-en = "The %s %s further!"
-ru = "{1} {1:num|портится|портятся} ещё сильнее!{2:skip}"
+[981b0a35f112]
+en = "%s %s rots completely!"
+ru = "{2} {1:gen} {2:num|гниёт|гниют} окончательно!"
 
-[b50e53aa6255]
-en = "Your %s %s completely!"
-ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|портится|портятся} окончательно!{2:skip}"
+[7d9e88712952]
+en = "%s %s corrode completely!"
+ru = "{2} {1:gen} {2:num|разъедается|разъедаются} окончательно!"
 
-[dce3b235f35b]
-en = "Your %s %s further!"
-ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|портится|портятся} ещё сильнее!{2:skip}"
+[d178a402afc6]
+en = "%s %s corrodes completely!"
+ru = "{2} {1:gen} {2:num|разъедается|разъедаются} окончательно!"
 
-[c4670c95f6a7]
-en = "Your gloves %s completely!"
-ru = "Ваши перчатки портятся окончательно!{1:skip}"
+[d18014036a87]
+en = "%s %s crack completely!"
+ru = "{2} {1:gen} {2:num|трескается|трескаются} окончательно!"
 
-[aec6d15b1ec8]
-en = "Your gloves %s further!"
-ru = "Ваши перчатки портятся ещё сильнее!{1:skip}"
+[ef120819ac9b]
+en = "%s %s cracks completely!"
+ru = "{2} {1:gen} {2:num|трескается|трескаются} окончательно!"
+
+[da0cf18ba58e]
+en = "%s %s smoulder further!"
+ru = "{2} {1:gen} {2:num|тлеет|тлеют} ещё сильнее!"
+
+[05106b8e2929]
+en = "%s %s smoulders further!"
+ru = "{2} {1:gen} {2:num|тлеет|тлеют} ещё сильнее!"
+
+[64d784d1ac55]
+en = "%s %s rust further!"
+ru = "{2} {1:gen} {2:num|ржавеет|ржавеют} ещё сильнее!"
+
+[d584885efcaa]
+en = "%s %s rusts further!"
+ru = "{2} {1:gen} {2:num|ржавеет|ржавеют} ещё сильнее!"
+
+[690f7abe5c7b]
+en = "%s %s rot further!"
+ru = "{2} {1:gen} {2:num|гниёт|гниют} ещё сильнее!"
+
+[0b9ac4b20f3a]
+en = "%s %s rots further!"
+ru = "{2} {1:gen} {2:num|гниёт|гниют} ещё сильнее!"
+
+[66d8da104e84]
+en = "%s %s corrode further!"
+ru = "{2} {1:gen} {2:num|разъедается|разъедаются} ещё сильнее!"
+
+[3d613be0eac1]
+en = "%s %s corrodes further!"
+ru = "{2} {1:gen} {2:num|разъедается|разъедаются} ещё сильнее!"
+
+[fac626b37326]
+en = "%s %s crack further!"
+ru = "{2} {1:gen} {2:num|трескается|трескаются} ещё сильнее!"
+
+[cf922bc1debc]
+en = "%s %s cracks further!"
+ru = "{2} {1:gen} {2:num|трескается|трескаются} ещё сильнее!"
+
+[589e79022a6c]
+en = "The %s smoulder completely!"
+ru = "{1} {1:num|тлеет|тлеют} окончательно!"
+
+[eebc01fe5db0]
+en = "The %s smoulders completely!"
+ru = "{1} {1:num|тлеет|тлеют} окончательно!"
+
+[bd6a00732f0e]
+en = "The %s rust completely!"
+ru = "{1} {1:num|ржавеет|ржавеют} окончательно!"
+
+[e6f738cbd824]
+en = "The %s rusts completely!"
+ru = "{1} {1:num|ржавеет|ржавеют} окончательно!"
+
+[ad41dc005f46]
+en = "The %s rot completely!"
+ru = "{1} {1:num|гниёт|гниют} окончательно!"
+
+[543e9800e705]
+en = "The %s rots completely!"
+ru = "{1} {1:num|гниёт|гниют} окончательно!"
+
+[a7f7b6edfe7f]
+en = "The %s corrode completely!"
+ru = "{1} {1:num|разъедается|разъедаются} окончательно!"
+
+[d9ad2204b6c8]
+en = "The %s corrodes completely!"
+ru = "{1} {1:num|разъедается|разъедаются} окончательно!"
+
+[0631ff62a45c]
+en = "The %s crack completely!"
+ru = "{1} {1:num|трескается|трескаются} окончательно!"
+
+[a3b88cc06584]
+en = "The %s cracks completely!"
+ru = "{1} {1:num|трескается|трескаются} окончательно!"
+
+[2c441312d15a]
+en = "The %s smoulder further!"
+ru = "{1} {1:num|тлеет|тлеют} ещё сильнее!"
+
+[7ace6ae56129]
+en = "The %s smoulders further!"
+ru = "{1} {1:num|тлеет|тлеют} ещё сильнее!"
+
+[e19384cc3b05]
+en = "The %s rust further!"
+ru = "{1} {1:num|ржавеет|ржавеют} ещё сильнее!"
+
+[98f331233fa5]
+en = "The %s rusts further!"
+ru = "{1} {1:num|ржавеет|ржавеют} ещё сильнее!"
+
+[7cbf9f27f975]
+en = "The %s rot further!"
+ru = "{1} {1:num|гниёт|гниют} ещё сильнее!"
+
+[b413f67a5eb9]
+en = "The %s rots further!"
+ru = "{1} {1:num|гниёт|гниют} ещё сильнее!"
+
+[3de5282f3b8c]
+en = "The %s corrode further!"
+ru = "{1} {1:num|разъедается|разъедаются} ещё сильнее!"
+
+[627f60500a0f]
+en = "The %s corrodes further!"
+ru = "{1} {1:num|разъедается|разъедаются} ещё сильнее!"
+
+[e28b890ae86c]
+en = "The %s crack further!"
+ru = "{1} {1:num|трескается|трескаются} ещё сильнее!"
+
+[d58baa75fde6]
+en = "The %s cracks further!"
+ru = "{1} {1:num|трескается|трескаются} ещё сильнее!"
+
+[4fffd27b01a3]
+en = "Your %s smoulder completely!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|тлеет|тлеют} окончательно!"
+
+[0e6a78a7a87b]
+en = "Your %s smoulders completely!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|тлеет|тлеют} окончательно!"
+
+[ffeb5573f6fa]
+en = "Your %s rust completely!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|ржавеет|ржавеют} окончательно!"
+
+[260bf5fff778]
+en = "Your %s rusts completely!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|ржавеет|ржавеют} окончательно!"
+
+[aec08da1cb07]
+en = "Your %s rot completely!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|гниёт|гниют} окончательно!"
+
+[febabc820d21]
+en = "Your %s rots completely!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|гниёт|гниют} окончательно!"
+
+[45f05d806734]
+en = "Your %s corrode completely!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|разъедается|разъедаются} окончательно!"
+
+[45b89ae5a07a]
+en = "Your %s corrodes completely!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|разъедается|разъедаются} окончательно!"
+
+[8d1c52725bcb]
+en = "Your %s crack completely!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|трескается|трескаются} окончательно!"
+
+[fed146c2cadf]
+en = "Your %s cracks completely!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|трескается|трескаются} окончательно!"
+
+[a9a20b272f26]
+en = "Your %s smoulder further!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|тлеет|тлеют} ещё сильнее!"
+
+[d256d0318149]
+en = "Your %s smoulders further!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|тлеет|тлеют} ещё сильнее!"
+
+[8c7c27d2478c]
+en = "Your %s rust further!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|ржавеет|ржавеют} ещё сильнее!"
+
+[37cf40d80a1c]
+en = "Your %s rusts further!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|ржавеет|ржавеют} ещё сильнее!"
+
+[c037d2d125c5]
+en = "Your %s rot further!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|гниёт|гниют} ещё сильнее!"
+
+[f4fdfb054175]
+en = "Your %s rots further!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|гниёт|гниют} ещё сильнее!"
+
+[b28bc5404a99]
+en = "Your %s corrode further!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|разъедается|разъедаются} ещё сильнее!"
+
+[9e3d4547a5ba]
+en = "Your %s corrodes further!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|разъедается|разъедаются} ещё сильнее!"
+
+[2a2ec1d893d7]
+en = "Your %s crack further!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|трескается|трескаются} ещё сильнее!"
+
+[f101a56baa47]
+en = "Your %s cracks further!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|трескается|трескаются} ещё сильнее!"
 
 [09e411e470e7]
 en = "%s %s smoulder away!"

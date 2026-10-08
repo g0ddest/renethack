@@ -173,6 +173,49 @@ class Formats(unittest.TestCase):
                          {"%s wobbles for a moment.", "%s lurches for a moment.", "%s staggers for a moment."})
         self.assertIn("You finish disarming.", e)
 
+    def test_a_format_a_variable_holds_and_a_creature_doing_it_to_itself(self):
+        e = catalog_of('void f(struct monst *m) {\n'
+                       '    static const char *const fam[3] = { "You have a sense of deja vu.",\n'
+                       '        "This place %s familiar...", 0 };\n'
+                       '    const char *mesg = fam[rn2(3)];\n    char buf[BUFSZ];\n'
+                       '    if (mesg && strchr(mesg, \'%\')) {\n'
+                       '        Sprintf(buf, mesg, !Blind ? "looks" : "seems");\n        mesg = buf;\n    }\n'
+                       '    if (mesg) pline1(mesg);\n'
+                       '    pline("%s with %s!", monverbself(m, Monnam(m), "zap", (char *) 0), doname(o));\n}\n')
+        self.assertIn("This place looks familiar...", e)
+        self.assertIn("This place seems familiar...", e)
+        self.assertEqual(e["%s zaps herself with %s!"].args, [{"monster"}, {"object"}])
+        self.assertIn("%s zap themselves with %s!", e)
+
+    def test_a_name_goes_before_a_verb(self):
+        callers = "".join(f'void c{i}(struct obj *o) {{ erode_obj(o, "{w}", {i}); }}\n'
+                          for i, w in enumerate(["gloves", "boots", "cloak"]))
+        e = catalog_of('int erode_obj(struct obj *o, const char *ostr, int type) {\n'
+                       '    static const char *const action[] = { "smoulder", "rust", "rot", "corrode", "crack" };\n'
+                       '    const char *adverb = full ? " completely" : some ? " further" : "";\n'
+                       '    pline("%s %s %s%s!", uvictim ? "Your" : !vismon ? "The" : s_suffix(Monnam(victim)),\n'
+                       '          ostr, vtense(ostr, action[type]), adverb);\n    return 0;\n}\n'
+                       'void d(struct obj *o) { erode_obj(o, xname(o), 1); }\n' + callers)
+        self.assertIn("Your %s rusts further!", e)
+        self.assertIn("The %s crack completely!", e)
+        self.assertNotIn("Your gloves %s further!", e)
+
+    def test_what_a_poisoned_hero_is_told(self):
+        unit = clex.scan_unit("attrib.c", (
+            'static const struct poison_effect_message {\n    void (*delivery_func)(const char *, ...);\n'
+            '    const char *effect_msg;\n} poiseff[] = {\n    { You_feel, "weaker" },\n'
+            '    { Your, "brain is on fire" },\n};\n'
+            'void poisontell(int typ, boolean exclaim) {\n'
+            '    void (*func)(const char *, ...) = poiseff[typ].delivery_func;\n'
+            '    const char *msg_txt = poiseff[typ].effect_msg;\n'
+            '    if (typ == A_STR && ACURR(A_STR) == STR19(25))\n        msg_txt = "innately weaker";\n'
+            '    (*func)("%s%c", msg_txt, exclaim ? \'!\' : \'.\');\n}\n'))
+        cat = extract.Catalog()
+        extract.add_poiseff(cat, [unit])
+        self.assertEqual({k for k in cat.entries if not k.startswith("You dream")},
+                         {"You feel weaker.", "You feel weaker!", "Your brain is on fire.", "Your brain is on fire!",
+                          "You feel innately weaker.", "You feel innately weaker!"})
+
     def test_buffers_are_inlined(self):
         e = catalog_of('void f(struct monst *m) {\n'
                        '    char buf[BUFSZ];\n'

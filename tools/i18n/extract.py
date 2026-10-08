@@ -224,6 +224,10 @@ WRAPPERS = set("""an An the The upstart upwords lcase ucase s_suffix makeplural
 WRITTEN_BY = {"trap_predicament"}
 # ... or appends it to what the buffer held ("For you, " + "esteemed sir")
 APPENDED_BY = {"append_honorific"}
+# The functions whose formats, when they have too many texts, lose a thing's
+# few literal names before anything else (as a rule for all it moved eight
+# translated lines of uhitm.c)
+THINGS_GO_FIRST = {"erode_obj"}
 # Helpers whose parameter is their caller's own: its literals are those the
 # caller is given (getobj's word, which silly_thing says)
 HANDED_ON = {"silly_thing"}
@@ -1166,6 +1170,22 @@ class Context:
             held = self.glob.returned_buffer(call[0], self.unit, depth)
             if held:
                 return held
+        if call and call[0] == "monverbself" and len(call[1]) == 4:
+            # monverbself(mon, Monnam(mon), "zap", other): "<name> zaps
+            # [other ]herself", the verb in the plural before "themselves"
+            verbs = self.values(call[1][2])
+            null = source_text(strip_expr(call[1][3])) in NULL_POINTERS
+            other = [""] if null else self.values(call[1][3])
+            if verbs is not None:
+                mids = [" %s"] if other is None else [" " + escape(o) if o else "" for o in other]
+                kinds = [self.kind(call[1][1])] + (["text"] if other is None else [])
+                out = []
+                for v in verbs:
+                    for mid in mids:
+                        out += [(f"%s {escape(verb_s(v))}{mid} {who}", kinds)
+                                for who in ("himself", "herself", "itself")]
+                        out.append((f"%s {escape(v)}{mid} themselves", kinds))
+                return out
         if call and call[0] in OBJVERB and len(call[1]) == 2:
             verbs = self.values(call[1][1])
             if verbs is not None:
@@ -1216,7 +1236,11 @@ class Context:
         # and the sentences among their texts pieces of their own
         # (godvoice's "Thou hast angered me.")
         while product_size(choices) > MAX_DERIVED:
-            k = max(range(len(choices)), key=lambda c: len(choices[c]))
+            # (in erode_obj first the thing, a name anyway with a literal or
+            # two beside: "gloves" goes, the five verbs and "Your"/"The" stay)
+            things = [c for c in range(len(choices)) if self.func.name in THINGS_GO_FIRST
+                      and len(choices[c]) > 1 and any(kinds == ["object"] for _, kinds in choices[c])]
+            k = things[0] if things else max(range(len(choices)), key=lambda c: len(choices[c]))
             self.left_out += [text for text, kinds in choices[k] if not kinds and " " in text.strip()]
             choices[k] = [(convs[k].group(0), [conv_kind(convs[k])])]
         out = []
@@ -1462,6 +1486,13 @@ class Context:
             return [(f, None) for f in self.glob.param_values_partial(self, toks[0].text)]
         if len(toks) == 1 and toks[0].kind == "ident" and toks[0].text in self.ops:
             return [(f, kinds) for f, kinds in self.compositions(toks[0].text, pos, 1)]
+        if len(toks) == 1 and toks[0].kind == "ident" and toks[0].text in self.assigns:
+            # a format a variable holds: those of its values that are known
+            # (familiar_level_msg's mesg is one of two tables' strings, then
+            # the buffer made of it)
+            known = [f for rhs in self.assigns[toks[0].text] for f in self.values(rhs) or []]
+            if known:
+                return [(f, None) for f in dedupe(known)]
         # &buf[i], buf + i: what it holds from offset i ("Wait!  " left out)
         name, offsets = None, None
         if (len(toks) >= 5 and toks[0].text == "&" and toks[1].kind == "ident"
@@ -1726,6 +1757,36 @@ def add_appended(cat, contexts):
         for f, k in heads:
             for g, h in branches or [("", [])]:
                 cat.add(f + g, "sprintf", site, k + h)
+
+
+ATTRIBUTES = ["A_STR", "A_INT", "A_WIS", "A_DEX", "A_CON", "A_CHA"]
+
+
+def add_poiseff(cat, units):
+    """What a poisoned hero is told (attrib.c poisontell()): poiseff[] pairs
+    a pline with a text for each attribute, called through a pointer, "You
+    feel weaker." or "Your brain is on fire!"; an attribute at its limit
+    has another text ("innately weaker")."""
+    for unit in units:
+        found = unit.tables.get("poiseff")
+        func = next((f for f in unit.functions if f.name == "poisontell"), None)
+        if unit.path != "attrib.c" or not found or not func:
+            continue
+        rows = [(source_text(row[0]), literal_values(row[1])) for row in found[1] if len(row) == 2]
+        toks = unit.toks
+        attr = None
+        for i in range(func.body[0], func.body[1]):
+            if toks[i].text == "typ" and toks[i + 1].text == "==" and toks[i + 2].text in ATTRIBUTES:
+                attr = ATTRIBUTES.index(toks[i + 2].text)
+            if (toks[i].text == "msg_txt" and toks[i + 1].text == "=" and toks[i + 2].kind == "string"
+                    and attr is not None and attr < len(rows)):
+                rows.append((rows[attr][0], [toks[i + 2].value]))
+        site = f"src/attrib.c:{func.line} poisontell (*func)(\"%s%c\", msg_txt, exclaim ? '!' : '.')"
+        for name, texts in rows:
+            for prefix in PLINE.get(name, (0, []))[1]:
+                for text in texts or []:
+                    for mark in ".!":
+                        cat.add(escape(prefix + text + mark), "pline", site, [])
 
 
 EXTCMD_ROW = re.compile(r" %-(\d+)s %4s %s")
@@ -2052,6 +2113,7 @@ def extract():
             add_rip(cat, unit)
     add_options(cat, units)
     add_extcmds(cat, units)
+    add_poiseff(cat, units)
     add_killers(cat, contexts)
     add_appended(cat, contexts)
     for fmt, use, site, kinds in datfiles.extract(UPSTREAM):
