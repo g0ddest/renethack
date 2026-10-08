@@ -1,0 +1,1054 @@
+# R6, log messages batch 14: trap.c, floating, burning, drowning, untrapping. Syntax: nh-i18n's template.rs.
+
+[ec4608ea0ece]
+en = "Falling, %s touches %s."
+ru = "Падая, {1} {1:num|касается|касаются} {2:gen}."
+
+[a1bb0da266fc]
+en = "No longer petrify-resistant, %s touches %s."
+ru = "Лишившись защиты от окаменения, {1} {1:num|касается|касаются} {2:gen}."
+
+[b15aec332dd7]
+en = "You float up, out of the %s!"
+ru = "Вы поднимаетесь в воздух и выплываете из {1:gen}!"
+
+[7e28ee66bf76]
+en = "Your body pulls upward, but your %s are still stuck."
+ru = "Ваше тело тянет вверх, но {1:acc} всё ещё не вытащить."
+
+[80d8e19f5019]
+en = "You feel lighter, but your %s is still chained to the floor."
+ru = "Вы чувствуете себя легче, но {1:gender|ваш|ваша|ваше|ваши} {1} всё ещё {1:gender|прикован|прикована|приковано|прикованы} к полу."
+
+[17d2180c1a9c]
+en = "You feel lighter, but your %s is still chained to the ground."
+ru = "Вы чувствуете себя легче, но {1:gender|ваш|ваша|ваше|ваши} {1} всё ещё {1:gender|прикован|прикована|приковано|прикованы} к земле."
+
+[13b786003a7c]
+en = "You float up slightly, but you are still stuck in the %s."
+ru = "Вы слегка приподнимаетесь в воздух, но всё ещё не можете вырваться из {1:gen}."
+
+[82936e4b0f6c]
+en = "You float up slightly, but your %s is still stuck."
+ru = "Вы слегка приподнимаетесь в воздух, но {1:gender|ваш|ваша|ваше|ваши} {1} всё ещё в ловушке."
+
+[b03722e0332e]
+en = "You float away from the %s."
+ru = "Вы приподнимаетесь над {1:ins}."
+
+[b5bda8b56dee]
+en = "You spiral up into %s."
+ru = "Вы по спирали взмываете вглубь {1:gen}."
+
+[ad2147f3c629]
+en = "Up, up, and awaaaay!  You're walking on air!"
+ru = "Вверх, вверх и прооочь!  Вы шагаете по воздуху!"
+
+[2fec60805b86]
+en = "You gain control over your movements."
+ru = "Вы обретаете контроль над своими движениями."
+
+[d7452a9b788b]
+en = "%s magically floats up!"
+ru = "{1} волшебным образом {1:num|поднимается|поднимаются} в воздух!"
+
+[d047f6af59ca]
+en = "You cannot stay on %s."
+ru = "Вам не удержаться на {1:prep}."
+
+[3a325d45db20]
+en = "You are no longer able to control your flight."
+ru = "Вы больше не можете управлять своим полётом."
+
+[d5d24871fe7f]
+en = "You are no longer trying to float up from the chain."
+ru = "Вас больше не тянет вверх на цепи."
+
+[0bbae623a382]
+en = "You are no longer trying to float up from the ground."
+ru = "Вас больше не тянет вверх из земли."
+
+[3d232648963b]
+en = "You are no longer trying to float up from the lava."
+ru = "Вас больше не тянет вверх из лавы."
+
+[273dd5c7a23d]
+en = "You are no longer trying to float up from the trap's jaws."
+ru = "Вас больше не тянет вверх из челюстей капкана."
+
+[9af3bc35bf9f]
+en = "You are no longer trying to float up from the web."
+ru = "Вас больше не тянет вверх из паутины."
+
+[f685c6c50d86]
+en = "You have stopped levitating and are now flying."
+ru = "Вы больше не левитируете и теперь летите."
+
+[d9f693e167c9]
+en = "You float down, but you are still engulfed."
+ru = "Вы опускаетесь, но по-прежнему поглощены."
+
+[c99e91824031]
+en = "You float down, but you are still swallowed."
+ru = "Вы опускаетесь, но по-прежнему проглочены."
+
+[0c54260b6c71]
+en = "You aren't able to maintain your hold on %s."
+ru = "Вам не удаётся удержать {1:acc}."
+
+[8f43b97a0e8f]
+en = "Startled, %s can no longer hold you!"
+ru = "От неожиданности {1} больше не {1:num|может|могут} вас удерживать!"
+
+[0eaeccac3d3a]
+en = "You begin to tumble in place."
+ru = "Вы начинаете кувыркаться на месте."
+
+[4787e71c1bdd]
+en = "You dream that you feel heavier."
+ru = "Вам снится, что вы чувствуете себя тяжелее."
+
+[84492455f650]
+en = "You feel heavier."
+ru = "Вы чувствуете себя тяжелее."
+
+[c9ac6161d794]
+en = "Bummer!  You've crashed."
+ru = "Облом!  Вы потерпели крушение."
+
+[49aa8c9e69ba]
+en = "You fall over."
+ru = "Вас сбивает с ног."
+
+[471b3670c22b]
+en = "You settle more firmly in the saddle."
+ru = "Вы плотнее усаживаетесь в седле."
+
+[eb39c8a8556a]
+en = "Bummer!  You've hit the ground."
+ru = "Облом!  Вы грохнулись на землю."
+
+[52dac5a53405]
+en = "Bummer!  You've splashed down."
+ru = "Облом!  Вы приводнились."
+
+[c0f295a837fe]
+en = "You float gently to the %s."
+ru = "Вы плавно опускаетесь на {1:acc}."
+
+[13e82c43a510]
+en = "You ascend from the %s."
+ru = "Вы поднимаетесь из {1:gen}."
+
+[9d42f2e973aa]
+en = "Your %s gets stuck in a crevice."
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|застревает|застревают} в расщелине."
+
+[66fcc07bd21b]
+en = "You free your %s."
+ru = "Вы высвобождаете {1:acc}."
+
+[f4558ce7ec06]
+en = "You %s from the %s."
+ru = "Вы выбираетесь из {2:gen}.{1:skip}"
+
+[cfe224291178]
+en = "You ride to the edge of the %s."
+ru = "Вы подъезжаете к краю {1:gen}."
+
+[5ffbc35913cf]
+en = "You struggle against the air currents and float to the edge of the %s."
+ru = "Вы боретесь с воздушными потоками и подплываете к краю {1:gen}."
+
+[5cf766d9622e]
+en = "%s is still in a pit."
+ru = "{1} всё ещё в яме."
+
+[97464dc1de8e]
+en = "You've fallen, and you can't get up."
+ru = "Вы упали и не можете встать."
+
+[90ed82595a4f]
+en = "You are uninjured."
+ru = "Вы невредимы."
+
+[8670a3c96e15]
+en = "You smell paper burning."
+ru = "Вы чувствуете запах горящей бумаги."
+
+[64fa52eea840]
+en = "You dream that you see a flash of light!"
+ru = "Вам снится вспышка света!"
+
+[6ec2a6240d49]
+en = "You see a flash of light!"
+ru = "Вы видите вспышку света!"
+
+[9f0584a3706a]
+en = "You barely hear a deafening roar!"
+ru = "Вы едва слышите оглушительный рёв!"
+
+[ed34b712f458]
+en = "You dream that you hear a deafening roar!"
+ru = "Вам снится, что вы слышите оглушительный рёв!"
+
+[57e8b74c5c2f]
+en = "You dream that you feel rankled."
+ru = "Вам снится, что вы чувствуете глухое раздражение."
+
+[196f2899fc29]
+en = "You feel rankled."
+ru = "Вы чувствуете глухое раздражение."
+
+[fadd0bfbb580]
+en = "You barely hear a low hum."
+ru = "Вы едва слышите низкий гул."
+
+[6515a9a8f030]
+en = "You dream that you hear a low hum."
+ru = "Вам снится, что вы слышите низкий гул."
+
+[4ea6446d4f52]
+en = "You hear a low hum."
+ru = "Вы слышите низкий гул."
+
+[8953016932e8]
+en = "You can see yourself again!"
+ru = "Вы снова видите себя!"
+
+[c4ad95fdd3b6]
+en = "You can't see through yourself anymore."
+ru = "Вы больше не видите себя насквозь."
+
+[a0168a0ece37]
+en = "You dream that you feel a little more hidden now."
+ru = "Вам снится, что теперь вы чувствуете себя чуть незаметнее."
+
+[6a68c002ed8c]
+en = "You dream that you feel a little more obvious now."
+ru = "Вам снится, что теперь вы чувствуете себя чуть заметнее."
+
+[108e5ff11a8e]
+en = "You feel a little more hidden now."
+ru = "Теперь вы чувствуете себя чуть незаметнее."
+
+[f2f02cc60aad]
+en = "You feel a little more obvious now."
+ru = "Теперь вы чувствуете себя чуть заметнее."
+
+[3197c095324c]
+en = "You barely hear distant howling."
+ru = "Вы едва слышите далёкий вой."
+
+[76c0febeb38b]
+en = "You barely hear the moon howling at you."
+ru = "Вы едва слышите, как луна воет на вас."
+
+[deaf2b0f654a]
+en = "You dream that you hear distant howling."
+ru = "Вам снится, что вы слышите далёкий вой."
+
+[c8ae990e918a]
+en = "You dream that you hear the moon howling at you."
+ru = "Вам снится, что луна воет на вас."
+
+[b989d9f66e03]
+en = "You hear distant howling."
+ru = "Вы слышите далёкий вой."
+
+[4ec4bf77949e]
+en = "You hear the moon howling at you."
+ru = "Вы слышите, как луна воет на вас."
+
+[dd1841ebca34]
+en = "You dream that you feel like the prodigal son."
+ru = "Вам снится, что вы чувствуете себя блудным сыном."
+
+[a1f1cfb1e42d]
+en = "You dream that you feel oddly like the prodigal son."
+ru = "Вам снится, что вы почему-то чувствуете себя блудным сыном."
+
+[3417f02b03fe]
+en = "You feel like the prodigal son."
+ru = "Вы чувствуете себя блудным сыном."
+
+[427fd8d8d6dd]
+en = "You feel oddly like the prodigal son."
+ru = "Вы почему-то чувствуете себя блудным сыном."
+
+[416614de162a]
+en = "You suddenly yearn for Cleveland."
+ru = "Вас вдруг охватывает тоска по Кливленду."
+
+[c1db915c5179]
+en = "You suddenly yearn for your nearby homeland."
+ru = "Вас вдруг охватывает тоска по близкой родине."
+
+[168d37d68e72]
+en = "Your pack shakes violently!"
+ru = "Ваш рюкзак неистово трясётся!"
+
+[1e3e3aa6aed2]
+en = "You dream that you feel tired."
+ru = "Вам снится, что вы устали."
+
+[b8d59c966600]
+en = "You feel tired."
+ru = "Вы чувствуете себя {hero:gender|уставшим|уставшей}."
+
+[b9cf96dd75ac]
+en = "%s catches fire and burns."
+ru = "{1} {1:num|загорается|загораются} и {1:num|сгорает|сгорают}."
+
+[e880e3aa42ec]
+en = "Its contents fall out."
+ru = "Содержимое вываливается наружу."
+
+[f2f4bf82b5fd]
+en = "Smoke rises from %s."
+ru = "От {1:gen} поднимается дым."
+
+[791d7b596f8c]
+en = "It burns up!"
+ru = "Предмет сгорает дотла!"
+
+[1f2ccb3b1433]
+en = "They burn up!"
+ru = "Предметы сгорают дотла!"
+
+[98a00f086fbb]
+en = "You dream that you see %s hit lava and burn up!"
+ru = "Вам снится, что {1} {1:num|падает|падают} в лаву и {1:num|сгорает|сгорают} дотла!"
+
+[c2b4372d7fd0]
+en = "You see %s hit lava and burn up!"
+ru = "Вы видите, как {1} {1:num|падает|падают} в лаву и {1:num|сгорает|сгорают} дотла!"
+
+[0931712c7752]
+en = "Your %s fade."
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|выцветает|выцветают}."
+
+[fa4efdfd81f5]
+en = "Your %s fades."
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|выцветает|выцветают}."
+
+[8b54fb474311]
+en = "%s %s fade."
+ru = "У {1:gen} {2:num|выцветает|выцветают} {2}."
+
+[5c4ce40272ba]
+en = "%s %s fades."
+ru = "У {1:gen} {2:num|выцветает|выцветают} {2}."
+
+[6d3d7380760a]
+en = "The potion explodes!"
+ru = "Зелье взрывается!"
+
+[f7930810ecdf]
+en = "The potions explode!"
+ru = "Зелья взрываются!"
+
+[3286d7765c19]
+en = "A %s explodes!"
+ru = "{1} {1:num|взрывается|взрываются}!"
+
+[ab356f7c3da7]
+en = "Another %s explodes!"
+ru = "Ещё {1:sg|один|одна|одно} {1} {1:num|взрывается|взрываются}!"
+
+[367577079f3c]
+en = "More %s explode!"
+ru = "Ещё несколько {1:gen} взрываются!"
+
+[ec8f231ec675]
+en = "Some %s explode!"
+ru = "Несколько {1:gen} взрываются!"
+
+[7ece2af29fc5]
+en = "The grease on %s washes off."
+ru = "Смазка смывается с {1:gen}."
+
+[fc31c6817cb2]
+en = "Steam rises from %s."
+ru = "От {1:gen} поднимается пар."
+
+[e1c4b80d7c01]
+en = "Your %s dilute further."
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|разбавляется|разбавляются} ещё сильнее."
+
+[238ca5c569a5]
+en = "Your %s dilutes further."
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|разбавляется|разбавляются} ещё сильнее."
+
+[93c1e7bf5710]
+en = "Your %s dilute."
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|разбавляется|разбавляются}."
+
+[73ba6913fc99]
+en = "Your %s dilutes."
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|разбавляется|разбавляются}."
+
+[0203ea01711e]
+en = "Back in %s."
+ru = "Снова в {1:loc}."
+
+[e5bbaff954fe]
+en = "Back on %s."
+ru = "Снова на {1:loc}."
+
+[38c1c896bb86]
+en = "Back on solid ground."
+ru = "Снова на твёрдой земле."
+
+[9cc66984bd6d]
+en = "Back over %s."
+ru = "Снова над {1:ins}."
+
+[62ca2faaa7a1]
+en = "Back over solid ground."
+ru = "Снова над твёрдой землёй."
+
+[1c356a433736]
+en = "You are back in %s."
+ru = "Вы снова в {1:loc}."
+
+[0f03435eb121]
+en = "You are back on %s."
+ru = "Вы снова на {1:loc}."
+
+[537b536834b7]
+en = "You are back on solid ground."
+ru = "Вы снова на твёрдой земле."
+
+[99f315d22694]
+en = "You are back over %s."
+ru = "Вы снова над {1:ins}."
+
+[d437274f95d6]
+en = "You are back over solid ground."
+ru = "Вы снова над твёрдой землёй."
+
+[d10d76c50bbc]
+en = "You find yourself in %s."
+ru = "Вы оказываетесь в {1:loc}."
+
+[e7f4e8d5780e]
+en = "You find yourself on %s."
+ru = "Вы оказываетесь на {1:loc}."
+
+[58d17cc63c40]
+en = "You find yourself on solid ground."
+ru = "Вы оказываетесь на твёрдой земле."
+
+[23dc2e45e66f]
+en = "You find yourself over %s."
+ru = "Вы оказываетесь над {1:ins}."
+
+[258f05a2de3a]
+en = "You find yourself over solid ground."
+ru = "Вы оказываетесь над твёрдой землёй."
+
+[a7334edc0962]
+en = "You find yourself in the midst of %s."
+ru = "Вы оказываетесь в толще {1:gen}."
+
+[7a8104a133b8]
+en = "You find yourself on top of %s."
+ru = "Вы оказываетесь на поверхности {1:gen}."
+
+[90f69387014e]
+en = "You find yourself in an air bubble."
+ru = "Вы оказываетесь в воздушном пузыре."
+
+[0c4174e6edb7]
+en = "You find yourself in mid air."
+ru = "Вы оказываетесь прямо в воздухе."
+
+[69176efb830c]
+en = "The leash slips loose."
+ru = "Поводок соскальзывает."
+
+[7f4c2ea3004b]
+en = "The leashes slip loose."
+ru = "Поводки соскальзывают."
+
+[d4e2c3499843]
+en = "But you aren't drowning."
+ru = "Но вы не тонете."
+
+[4c2f7e0f5df9]
+en = "Your keel hits the bottom."
+ru = "Ваш киль задевает дно."
+
+[70a690d0c5e8]
+en = "You touch bottom."
+ru = "Вы касаетесь дна."
+
+[3e1f6e3a8dea]
+en = "You attempt a teleport spell."
+ru = "Вы пытаетесь применить заклинание телепортации."
+
+[16f604f87cb6]
+en = "The attempted teleport spell fails."
+ru = "Заклинание телепортации не срабатывает."
+
+[fda4b5a0b8a8]
+en = "Suddenly you wake up!"
+ru = "Внезапно вы просыпаетесь!"
+
+[681216f115a5]
+en = "You dump some of your gear to lose weight..."
+ru = "Вы сбрасываете часть снаряжения, чтобы стать легче..."
+
+[28c1dbc1f5a1]
+en = "But in vain."
+ru = "Но тщетно."
+
+[9c6ec86034cb]
+en = "You drown."
+ru = "Вы тонете."
+
+[8ae5ecf554ec]
+en = "You're still drowning."
+ru = "Вы всё ещё тонете."
+
+[d29bbf754c8e]
+en = "You dream that you feel momentarily lethargic%c"
+ru = "Вам снится, что на миг вас одолевает вялость{1}"
+
+[9eea5ff67717]
+en = "You dream that you feel your magical energy drain away%c"
+ru = "Вам снится, что ваша магическая энергия утекает{1}"
+
+[96f3fb9ee257]
+en = "You feel momentarily lethargic%c"
+ru = "На миг вас одолевает вялость{1}"
+
+[7ce23cfddca0]
+en = "You're too strained to do that."
+ru = "Вы слишком перегружены для этого."
+
+[1083d1cf0c9a]
+en = "And just how do you expect to do that?"
+ru = "И как вы себе это представляете?"
+
+[86e341d5e05b]
+en = "You'll have to let go of %s first."
+ru = "Сначала вам придётся отпустить {1:acc}."
+
+[ad3fb6d94c8a]
+en = "Your %s seem to be too busy for that."
+ru = "Ваши {1}, похоже, слишком заняты для этого."
+
+[37d2bc573ca6]
+en = "Fortunately, you don't move into it."
+ru = "К счастью, вы туда не попадаете."
+
+[e5d32c775908]
+en = "Fortunately, you don't move onto it."
+ru = "К счастью, вы на неё не наступаете."
+
+[5e2174a5ea37]
+en = "%s is in the way."
+ru = "{1} {1:num|стоит|стоят} на пути."
+
+[18a2f91d019b]
+en = "There is a boulder in your way."
+ru = "У вас на пути валун."
+
+[ca83aeb502d1]
+en = "You are unable to reach the %s!"
+ru = "Вам не дотянуться до {1:gen}!"
+
+[a9e293bd1477]
+en = "Whoops..."
+ru = "Упс..."
+
+[48851585e28b]
+en = "The web sticks to you.  You're caught too!"
+ru = "Паутина прилипает к вам.  Вы тоже попались!"
+
+[5b2355d91bab]
+en = "%s remains entangled."
+ru = "{1} {1:num|остаётся|остаются} в паутине."
+
+[201c0bad575f]
+en = "That %s is difficult to disarm."
+ru = "{1:gender|Тот|Ту|То|Те} {1:acc} трудно обезвредить."
+
+[6b0be3800c0c]
+en = "That %s is difficult to remove."
+ru = "{1:gender|Тот|Ту|То|Те} {1:acc} трудно убрать."
+
+[482edc73782f]
+en = "This %s is difficult to disarm."
+ru = "{1:gender|Этот|Эту|Это|Эти} {1:acc} трудно обезвредить."
+
+[a42ea94a6b32]
+en = "This %s is difficult to remove."
+ru = "{1:gender|Этот|Эту|Это|Эти} {1:acc} трудно убрать."
+
+[44b55d88587c]
+en = "Your %s is difficult to disarm."
+ru = "{1:gender|Ваш|Вашу|Ваше|Ваши} {1:acc} трудно обезвредить."
+
+[b8f96751f66a]
+en = "Your %s is difficult to remove."
+ru = "{1:gender|Ваш|Вашу|Ваше|Ваши} {1:acc} трудно убрать."
+
+[4b67b3f1b6a9]
+en = "%s is grateful."
+ru = "{1} вам {1:gender|благодарен|благодарна|благодарно|благодарны}."
+
+[2c5e7bbebabb]
+en = "You dream that you feel that you did the right thing."
+ru = "Вам снится, что вы поступили правильно."
+
+[e98d3000c427]
+en = "You feel that you did the right thing."
+ru = "Вы чувствуете, что поступили правильно."
+
+[09afa1b561ba]
+en = "You extract %s from %s bear trap."
+ru = "Вы вызволяете {1:acc} из медвежьего капкана.{2:skip}"
+
+[c803706a92ad]
+en = "You extract %s from %s web."
+ru = "Вы вызволяете {1:acc} из паутины.{2:skip}"
+
+[b04782292fff]
+en = "You disarm %s bear trap."
+ru = "Вы обезвреживаете медвежий капкан.{1:skip}"
+
+[a1b1b06a8f2d]
+en = "%s burns through %s web!"
+ru = "{1} {1:num|прожигает|прожигают} паутину!{2:skip}"
+
+[2e9c97709832]
+en = "%s cuts through %s web!"
+ru = "{1} {1:num|рассекает|рассекают} паутину!{2:skip}"
+
+[8f736ada2ba7]
+en = "You cut through %s web."
+ru = "Вы рассекаете паутину.{1:skip}"
+
+[59b0c97ef7cb]
+en = "You succeed in removing %s web."
+ru = "Вам удаётся убрать паутину.{1:skip}"
+
+[48ddaeef90d4]
+en = "You disarm %s land mine."
+ru = "Вы обезвреживаете мину.{1:skip}"
+
+[3fd47472aa15]
+en = "You repair the squeaky board."
+ru = "Вы чините скрипучую половицу."
+
+[407deca879fc]
+en = "You disarm %s trap."
+ru = "Вы обезвреживаете ловушку.{1:skip}"
+
+[43d9436a92cb]
+en = "%s is carrying too much for you to lift."
+ru = "{1} {1:num|несёт|несут} слишком много, и вам {1:gender|его|её|его|их} не поднять."
+
+[0def70a72d47]
+en = "%s is too heavy for you to lift."
+ru = "{1} слишком {1:gender|тяжёл|тяжела|тяжело|тяжелы}, и вам {1:gender|его|её|его|их} не поднять."
+
+[cc7879d9b2cc]
+en = "%s thinks it was nice of you to try."
+ru = "{1} {1:num|считает|считают}, что с вашей стороны было мило попытаться."
+
+[fdedb742667a]
+en = "%s isn't trapped."
+ru = "{1} не в ловушке."
+
+[1d47c77c27f6]
+en = "You try to reach out your %s, but %s backs away skeptically."
+ru = "Вы пытаетесь протянуть {1:acc}, но {2} недоверчиво {2:num|пятится|пятятся}."
+
+[0bf12b82644b]
+en = "You grab the trapped %s using your bare %s."
+ru = "Вы хватаете {1:gender|попавшего|попавшую|попавшее|попавших} в ловушку {1:acc} голыми {2:ins}."
+
+[9281ba408cd9]
+en = "You try to grab %s, but cannot get a firm grasp."
+ru = "Вы пытаетесь схватить {1:acc}, но не можете как следует ухватиться."
+
+[416b957621a3]
+en = "%s awakens."
+ru = "{1} {1:num|просыпается|просыпаются}."
+
+[e6fe1f0b730e]
+en = "You reach out your %s and grab %s."
+ru = "Вы протягиваете {1:acc} и хватаете {2:acc}."
+
+[8772f9ab3bd1]
+en = "You pull %s out of the pit."
+ru = "Вы вытаскиваете {1:acc} из ямы."
+
+[248c4a7bc875]
+en = "You disarm it!"
+ru = "Вы обезвреживаете ловушку!"
+
+[b37d93640402]
+en = "That %s was not trapped."
+ru = "На {1:gender|этом|этой|этом|этих} {1:loc} не было ловушки."
+
+[e8130afac713]
+en = "You find a trap on %s!"
+ru = "Вы находите на {1:loc} ловушку!"
+
+[236306e1bc7f]
+en = "There's a trap on %s."
+ru = "На {1:loc} ловушка."
+
+[014dacd5987c]
+en = "You find no traps on %s."
+ru = "Вы не находите на {1:loc} ловушек."
+
+[32e500613193]
+en = "The perils lurking there are beyond your grasp."
+ru = "До таящихся там опасностей вам не дотянуться."
+
+[5085d0a039d3]
+en = "There are %s here but you can't reach them while mounted."
+ru = "Здесь {1}, но верхом вам до них не дотянуться."
+
+[c2947f9d3523]
+en = "There are %s here but you can't reach them."
+ru = "Здесь {1}, но вам до них не дотянуться."
+
+[e93264abf68b]
+en = "There is %s here but you can't reach it while mounted."
+ru = "Здесь {1}, но верхом вам не дотянуться."
+
+[7fe481bec6b4]
+en = "There is %s here but you can't reach it."
+ru = "Здесь {1}, но вам не дотянуться."
+
+[7ed3ca3a0c1b]
+en = "There is %s there but you can't reach it while mounted."
+ru = "Там {1}, но верхом вам не дотянуться."
+
+[9a3baf780a33]
+en = "There is %s there but you can't reach it."
+ru = "Там {1}, но вам не дотянуться."
+
+[9b1a7991ed80]
+en = "You can't do much about %s that you're stuck in."
+ru = "Вы мало что можете поделать с {1:ins}, в {1:gender|котором|которой|котором|которых} застряли."
+
+[4efdfd942ed4]
+en = "You can't do much about %s while standing on the edge of it."
+ru = "Вы мало что можете поделать с {1:ins}, стоя на {1:gender|его|её|его|их} краю."
+
+[ca194237ca9b]
+en = "You cannot deal with %s while trapped in it!"
+ru = "Вам не справиться с {1:ins}, пока вы сами в {1:gender|нём|ней|нём|них}!"
+
+[b2d23fb2c3a2]
+en = "You cannot deal with %s while trapped!"
+ru = "Вам не справиться с {1:ins}, пока вы сами в ловушке!"
+
+[18694bc22714]
+en = "You are already on the edge of the pit."
+ru = "Вы и так стоите на краю ямы."
+
+[be4ab6e7cd82]
+en = "Try filling the pit instead."
+ru = "Лучше попробуйте засыпать яму."
+
+[f3d59109db49]
+en = "You cannot disable that trap."
+ru = "Ту ловушку вам не обезвредить."
+
+[989a1aba0151]
+en = "You cannot disable this trap."
+ru = "Эту ловушку вам не обезвредить."
+
+[b46e8e475f40]
+en = "There are no other chests or boxes here."
+ru = "Других сундуков или ящиков здесь нет."
+
+[d4b72ef3d8b9]
+en = "This door is safely open."
+ru = "Эта дверь уже благополучно открыта."
+
+[5f033b3cfbd0]
+en = "You find a trap on the door!"
+ru = "Вы находите на двери ловушку!"
+
+[21386be63695]
+en = "You set it off!"
+ru = "Вы приводите ловушку в действие!"
+
+[2d46274776d9]
+en = "This door was not trapped."
+ru = "На этой двери не было ловушки."
+
+[9d63a1a935d9]
+en = "You find no traps on the door."
+ru = "Вы не находите на двери ловушек."
+
+[9a2c2340c150]
+en = "%s is released from %s."
+ru = "{1} {1:num|высвобождается|высвобождаются} из {2:gen}."
+
+[5ca73c29b6c0]
+en = "%s is released from %sground."
+ru = "{1} {1:num|высвобождается|высвобождаются} из земли.{2:skip}"
+
+[79b62cb87cfb]
+en = "%s is released from %smolten lava."
+ru = "{1} {1:num|высвобождается|высвобождаются} из расплавленной лавы.{2:skip}"
+
+[1b27b81355ef]
+en = "%s is released from %strap."
+ru = "{1} {1:num|высвобождается|высвобождаются} из медвежьего капкана.{2:skip}"
+
+[45adcf9d60a2]
+en = "%s is released from %s%s."
+ru = "{1} {1:num|высвобождается|высвобождаются} из {3:gen}.{2:skip}"
+
+[c1a063e55a07]
+en = "You and %s are released from your anchor."
+ru = "Вы вместе с {1:ins} освобождаетесь от своего якоря."
+
+[b1154a0b760d]
+en = "You are released from %s%s."
+ru = "Вы высвобождаетесь из {2:gen}.{1:skip}"
+
+[d7050c0cbd44]
+en = "You are released from %s."
+ru = "Вы высвобождаетесь из {1:gen}."
+
+[50e24bbef9ca]
+en = "You are released from %sground."
+ru = "Вы высвобождаетесь из земли.{1:skip}"
+
+[f1973cce2149]
+en = "You are released from %smolten lava."
+ru = "Вы высвобождаетесь из расплавленной лавы.{1:skip}"
+
+[54617f168cb1]
+en = "You are released from %strap."
+ru = "Вы высвобождаетесь из медвежьего капкана.{1:skip}"
+
+[e4656f87c382]
+en = "You are released from your anchor."
+ru = "Вы освобождаетесь от своего якоря."
+
+[721d31b3a7f3]
+en = "Something is released from %s%s."
+ru = "Что-то высвобождается из {2:gen}.{1:skip}"
+
+[71709738c320]
+en = "Something is released from %s."
+ru = "Что-то высвобождается из {1:gen}."
+
+[cf03a9f5a43d]
+en = "Something is released from %strap."
+ru = "Что-то высвобождается из медвежьего капкана.{1:skip}"
+
+[1ae5b175c2e9]
+en = "%strap opens."
+ru = "Медвежий капкан раскрывается.{1:skip}"
+
+[9cb0584f337f]
+en = "You trigger a trap!"
+ru = "Вы приводите в действие ловушку!"
+
+[8fd5fafa4fe8]
+en = "But luckily the electric charge is grounded!"
+ru = "Но, к счастью, электрический заряд уходит в землю!"
+
+[cb8d416948ca]
+en = "But luckily the explosive charge is a dud!"
+ru = "Но, к счастью, заряд взрывчатки даёт осечку!"
+
+[fb34ddba763e]
+en = "But luckily the flame fizzles out!"
+ru = "Но, к счастью, пламя с шипением гаснет!"
+
+[070d99db41f3]
+en = "But luckily the gas cloud blows away!"
+ru = "Но, к счастью, облако газа развеивается!"
+
+[ef6d6290e09b]
+en = "But luckily the poisoned needle misses!"
+ru = "Но, к счастью, отравленная игла пролетает мимо!"
+
+[fceb76f7c034]
+en = "You owe %ld zorkmid for objects destroyed."
+ru = "Вы должны {1} {1:plural|зоркмид|зоркмида|зоркмидов} за уничтоженные предметы."
+
+[85663cd33c98]
+en = "You owe %ld zorkmids for objects destroyed."
+ru = "Вы должны {1} {1:plural|зоркмид|зоркмида|зоркмидов} за уничтоженные предметы."
+
+[e85acbed890d]
+en = "You caused %ld zorkmid worth of damage!"
+ru = "Вы нанесли ущерб на {1} {1:plural|зоркмид|зоркмида|зоркмидов}!"
+
+[618f09b65bae]
+en = "You caused %ld zorkmids worth of damage!"
+ru = "Вы нанесли ущерб на {1} {1:plural|зоркмид|зоркмида|зоркмидов}!"
+
+[f10c8751ed16]
+en = "A cloud of noxious gas billows from %s."
+ru = "Из {1:gen} вырывается облако ядовитого газа."
+
+[eb3601feb400]
+en = "You dream that you feel a needle prick your %s."
+ru = "Вам снится, что игла колет вас в {1:acc}."
+
+[5a657852848e]
+en = "You feel a needle prick your %s."
+ru = "Вы чувствуете, как игла колет вас в {1:acc}."
+
+[b65840c9c035]
+en = "needle"
+ru = "игла"
+forms = ["игла", "иглы", "игле", "иглу", "иглой", "игле"]
+gender = "f"
+
+[8d8e9784ef33]
+en = "You are jolted by a surge of electricity!"
+ru = "Вас встряхивает мощный электрический разряд!"
+
+[7526058b50c8]
+en = "You don't seem to be affected."
+ru = "Похоже, на вас это не действует."
+
+[d319800a7c38]
+en = "Suddenly you are frozen in place!"
+ru = "Внезапно вы застываете на месте!"
+
+[fe82ef0e21e8]
+en = "A cloud of acrid gas billows from %s."
+ru = "Из {1:gen} вырывается облако едкого газа."
+
+[b6d766a5f712]
+en = "A cloud of biting gas billows from %s."
+ru = "Из {1:gen} вырывается облако жгучего газа."
+
+[ace02799dd4a]
+en = "A cloud of chilling gas billows from %s."
+ru = "Из {1:gen} вырывается облако леденящего газа."
+
+[fa458e595208]
+en = "A cloud of humid gas billows from %s."
+ru = "Из {1:gen} вырывается облако влажного газа."
+
+[6cbf0266e7e7]
+en = "A cloud of odorless gas billows from %s."
+ru = "Из {1:gen} вырывается облако газа без запаха."
+
+[a286f319b3aa]
+en = "A cloud of pungent gas billows from %s."
+ru = "Из {1:gen} вырывается облако резко пахнущего газа."
+
+[699c7cc1a522]
+en = "What a groovy feeling!"
+ru = "Какое кайфовое ощущение!"
+
+[f357465fa765]
+en = "%s is hit by %s but is not harmed."
+ru = "В {1:acc} {2:num|попадает|попадают} {2}, но не {2:num|причиняет|причиняют} вреда."
+
+[153cc1ac9c30]
+en = "%s burst into flame!"
+ru = "{1} {1:num|вспыхивает|вспыхивают} пламенем!"
+
+[25b49e85d063]
+en = "%s bursts into flame!"
+ru = "{1} {1:num|вспыхивает|вспыхивают} пламенем!"
+
+[292ccd79a54e]
+en = "The %s here burns you!"
+ru = "{1} здесь {1:num|обжигает|обжигают} вас!"
+
+[fa753ab9836d]
+en = "An item in your inventory has been destroyed."
+ru = "Один предмет в вашем инвентаре уничтожен."
+
+[c7cd470376fe]
+en = "Another item in your inventory has been destroyed."
+ru = "Ещё один предмет в вашем инвентаре уничтожен."
+
+[335af0f88750]
+en = "Other items in your inventory have been destroyed."
+ru = "Уничтожены и другие предметы в вашем инвентаре."
+
+[6cb311c2e5c3]
+en = "Some items in your inventory have been destroyed."
+ru = "Несколько предметов в вашем инвентаре уничтожено."
+
+[9c2b9c4e7117]
+en = "You're still burning."
+ru = "Вы всё ещё горите."
+
+[fbea6106c8c8]
+en = "You sink into the %s and are about to be immolated!"
+ru = "Вы погружаетесь в {1:acc} и вот-вот сгорите заживо!"
+
+[db02d923b26b]
+en = "You sink into the %s, but it only burns slightly!"
+ru = "Вы погружаетесь в {1:acc}, но вас лишь слегка обжигает!"
+
+[455a2bea310c]
+en = "You sink below the surface and die."
+ru = "Вы скрываетесь под поверхностью и умираете."
+
+[7a09c0c32899]
+en = "You sink deeper into the lava."
+ru = "Вы погружаетесь в лаву всё глубже."
+
+# What no stub named: expanded bases, the pieces of built texts, attrib.c's lines a
+# chest's trap sets off.
+
+[533f996a0fb1]
+en = "The %s cannot get into your %s."
+ru = "{1} не {1:num|может|могут} попасть в {2:gender|ваш|вашу|ваше|ваши} {2:acc}."
+
+[f0eb4f435859]
+en = "A cloud of %s gas billows from %s."
+ru = "Из {2:gen} вырывается облако {1:m:gen} газа."
+
+[e4e1f60b763e]
+en = "%s%s opens."
+ru = "{2} {2:num|раскрывается|раскрываются}.{1:skip}"
+
+[e0d40d45cfab]
+en = "%s stirs."
+ru = "{1} {1:num|шевелится|шевелятся}."
+
+[de690ab26b21]
+en = "You owe %ld %s for objects destroyed."
+ru = "Вы должны {1} {2:by1:acc} за уничтоженные предметы."
+
+[26ca908f7189]
+en = "You caused %ld %s worth of damage!"
+ru = "Вы нанесли ущерб на {1} {2:by1:acc}!"
+
+[fdc366f96b77]
+en = "a container"
+ru = "контейнер"
+forms = ["контейнер", "контейнера", "контейнеру", "контейнер", "контейнером", "контейнере"]
+gender = "m"
+
+[642b5cd982d4]
+en = "containers"
+ru = "контейнеры"
+forms = ["контейнеры", "контейнеров", "контейнерам", "контейнеры", "контейнерами", "контейнерах"]
+gender = "pl"
+
+[2e3fc60ed387]
+en = "The needle was poisoned!"
+ru = "Игла была отравлена!"
+
+[abe67617fb48]
+en = "The gas cloud was poisoned!"
+ru = "Облако газа было отравлено!"
