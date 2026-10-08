@@ -236,7 +236,9 @@ impl Lexicon {
             NameKind::Object => object(),
             // an article marks a common noun the monsters lack ("a cat"
             // in Schroedinger's box), not a name someone was given
-            NameKind::Monster => monster(false)
+            NameKind::Monster => self
+                .owner_pronoun(english)
+                .or_else(|| monster(false))
                 .or_else(|| {
                     ["the", "an", "a"]
                         .iter()
@@ -250,6 +252,18 @@ impl Lexicon {
                 .or_else(|| monster(false))
                 .or_else(|| self.word(english)),
         }
+    }
+
+    /// What s_suffix() makes of the two names that take no "'s": "Its" of
+    /// a monster nobody sees, "your" of the hero. Only where a monster is
+    /// expected: where a word is, "its" is mhis() of one that is seen.
+    fn owner_pronoun(&self, english: &str) -> Option<RuName> {
+        let pronoun = match english::uncapitalized(english).as_str() {
+            "its" => "it",
+            "your" => "you",
+            _ => return None,
+        };
+        self.parse_monster(pronoun, true).map(|m| m.ru(self))
     }
 
     /// Names parted by "or", as farlook lists what a symbol may be
@@ -506,6 +520,50 @@ mod tests {
             parse(NameKind::Any, "Fred's ghost").form(Case::Nom),
             "привидение Fred"
         );
+    }
+
+    #[test]
+    fn an_owner_with_no_name_to_decline() {
+        use crate::grammar::Gender;
+        // s_suffix() of a monster nobody sees: чья-то шляпа, чью-то шляпу
+        let its = parse(NameKind::Monster, "Its");
+        let whose = |g, n, c| its.whose(g, n, c);
+        assert_eq!(
+            whose(Gender::Fem, Number::Sing, Case::Nom).as_deref(),
+            Some("чья-то")
+        );
+        assert_eq!(
+            whose(Gender::Fem, Number::Sing, Case::Acc).as_deref(),
+            Some("чью-то")
+        );
+        assert_eq!(
+            whose(Gender::Masc, Number::Sing, Case::Acc).as_deref(),
+            Some("чей-то")
+        );
+        assert_eq!(
+            whose(Gender::Neut, Number::Plur, Case::Ins).as_deref(),
+            Some("чьими-то")
+        );
+        // "Someone's", as the translator hands it over without its mark
+        assert_eq!(
+            parse(NameKind::Monster, "Someone")
+                .whose(Gender::Masc, Number::Sing, Case::Nom)
+                .as_deref(),
+            Some("чей-то")
+        );
+        // the hero's
+        assert_eq!(
+            parse(NameKind::Monster, "your")
+                .whose(Gender::Neut, Number::Sing, Case::Nom)
+                .as_deref(),
+            Some("ваше")
+        );
+        // an owner with a name follows the thing, in the genitive
+        let newt = parse(NameKind::Monster, "the newt's");
+        assert_eq!(newt.whose(Gender::Fem, Number::Sing, Case::Nom), None);
+        assert_eq!(newt.form(Case::Gen), "тритона");
+        // where a word is expected "its" is a seen monster's mhis()
+        assert!(Lexicon::ru().parse(NameKind::Word, "its").is_none());
     }
 
     #[test]

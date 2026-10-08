@@ -262,7 +262,16 @@ impl MonsterName {
                     .map(|f| Arc::new(f.uncapitalized()));
                 n
             }
-            MonsterKind::Pronoun(k) => RuName::new(noun("monster", k)),
+            MonsterKind::Pronoun(k) => {
+                // what an owner with no name is said with: чья-то шляпа
+                let mut n = RuName::new(noun("monster", k));
+                n.whose = match k.as_str() {
+                    "it" | "someone" => lex.adjective("someone's").cloned(),
+                    "you" => lex.adjective("your").cloned(),
+                    _ => None,
+                };
+                n
+            }
             MonsterKind::Called { species, name } => {
                 let mut n = RuName::new(noun("monster", species));
                 n.tails

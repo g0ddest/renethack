@@ -810,15 +810,15 @@ ru = "«Так умри же, {hero:gender|смертный|смертная}!»
 
 [ba692c375dc5]
 en = "%s drops into %s %s."
-ru = "{1} {1:num|падает|падают} в {3:acc} {2:gen}."
+ru = "{1} {1:num|падает|падают} в {3:of2:acc}."
 
 [d4feb93bbbc4]
 en = "A sword drops into %s %s."
-ru = "Меч падает в {2:acc} {1:gen}."
+ru = "Меч падает в {2:of1:acc}."
 
 [81c4e341734a]
 en = "Something drops into %s %s."
-ru = "Что-то падает в {2:acc} {1:gen}."
+ru = "Что-то падает в {2:of1:acc}."
 
 [2dfe971c5d24]
 en = "%s appears at your %s!"

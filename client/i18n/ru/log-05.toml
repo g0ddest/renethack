@@ -370,7 +370,7 @@ ru = "Похоже, монстр стал ещё сильнее, чем преж
 
 [2fff6ce5ada0]
 en = "%s %s is disintegrated!"
-ru = "{2} {1:gen} {2:num|распадается|распадаются} на атомы!"
+ru = "{2:of1} {2:num|распадается|распадаются} на атомы!"
 
 [9770483e1064]
 en = "For some reason you are not affected."
@@ -458,7 +458,7 @@ ru = "Вы чувствуете вибрацию."
 
 [fd0c6604ab5f]
 en = "You fracture %s %s."
-ru = "Вы раскалываете {2:acc} {1:gen}."
+ru = "Вы раскалываете {2:of1:acc}."
 
 [d965941514d5]
 en = "You dream that you feel guilty about damaging such a historic statue."
@@ -778,11 +778,11 @@ ru = "{1} {1:num|пролетает|пролетают} над {2:ins}."
 
 [176ad473da75]
 en = "%s %s falls to the %s."
-ru = "{2} {1:gen} {2:num|падает|падают} на {3:acc}."
+ru = "{2:of1} {2:num|падает|падают} на {3:acc}."
 
 [2ca702e8c697]
 en = "%s %s falls off."
-ru = "{2} {1:gen} {2:num|сваливается|сваливаются}."
+ru = "{2:of1} {2:num|сваливается|сваливаются}."
 
 [ba7072fee360]
 en = "%s absorbs the deadly blast!"

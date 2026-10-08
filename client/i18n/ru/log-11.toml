@@ -202,7 +202,7 @@ gender = "f"
 
 [dcf2635e342d]
 en = "You brush against %s %s."
-ru = "Вы задеваете {2:acc} {1:gen}."
+ru = "Вы задеваете {2:of1:acc}."
 
 [7aedc828d31a]
 en = "Some writing vanishes from %s head!"

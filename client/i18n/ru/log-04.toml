@@ -222,15 +222,15 @@ ru = "Это был свиток почты?"
 
 [6a8abf562edd]
 en = "You barely hear something hit %s %s over your %s!"
-ru = "Вы едва слышите, как что-то бьёт по {2:dat} {1:gen} у вас над {3:ins}!"
+ru = "Вы едва слышите, как что-то бьёт по {2:of1:dat} у вас над {3:ins}!"
 
 [6ad6273842e2]
 en = "You dream that you hear something hit %s %s over your %s!"
-ru = "Вам снится, как что-то бьёт по {2:dat} {1:gen} у вас над {3:ins}!"
+ru = "Вам снится, как что-то бьёт по {2:of1:dat} у вас над {3:ins}!"
 
 [6c034db6db2c]
 en = "You hear something hit %s %s over your %s!"
-ru = "Вы слышите, как что-то бьёт по {2:dat} {1:gen} у вас над {3:ins}!"
+ru = "Вы слышите, как что-то бьёт по {2:of1:dat} у вас над {3:ins}!"
 
 [3bfd62300e79]
 en = "Fortunately, %s is wearing a hard helmet."
@@ -262,7 +262,7 @@ ru = "Вас окружает тьма!"
 
 [9c5f15c2f897]
 en = "%s %s is lit."
-ru = "{2} {1:gen} {2:num|озаряется|озаряются} светом."
+ru = "{2:of1} {2:num|озаряется|озаряются} светом."
 
 [3cccb3310a08]
 en = "%s shines briefly."
@@ -714,19 +714,19 @@ ru = "Похоже, это рекламная рассылка, адресова
 
 [ec7fc4ec5f20]
 en = "%s's %s does not protect her."
-ru = "{2} {1:gen} её не {2:num|защищает|защищают}."
+ru = "{2:of1} её не {2:num|защищает|защищают}."
 
 [261c5a374ef3]
 en = "%s's %s does not protect him."
-ru = "{2} {1:gen} его не {2:num|защищает|защищают}."
+ru = "{2:of1} его не {2:num|защищает|защищают}."
 
 [a1a083f87259]
 en = "%s's %s does not protect it."
-ru = "{2} {1:gen} {1:gender|его|её|его|их} не {2:num|защищает|защищают}."
+ru = "{2:of1} {1:gender|его|её|его|их} не {2:num|защищает|защищают}."
 
 [fa477387e40c]
 en = "%s's %s does not protect them."
-ru = "{2} {1:gen} {1:gender|его|её|его|их} не {2:num|защищает|защищают}."
+ru = "{2:of1} {1:gender|его|её|его|их} не {2:num|защищает|защищают}."
 
 [37904a7db6e3]
 en = "%s is killed."

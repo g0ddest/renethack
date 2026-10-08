@@ -2671,6 +2671,7 @@
 "grand" = { ru = "большой", src = "chosen", note = "the grand poohbah: большая шишка" }
 "your" = { ru = "ваш", src = "chosen", note = "possessive; agrees with the name" }
 "own" = { ru = "свой", src = "chosen", note = "your where the hero does the thing ({1:own}): вы бьёте своим топором" }
+"someone's" = { ru = "чей-то", src = "chosen", note = "the owner nobody sees, s_suffix(\"It\") = \"Its\": {2:of1} says чья-то шляпа, the pronoun before the thing and agreeing with it" }
 "human" = { ru = "человеческий", src = "chosen", note = "the race adjective (role.c races[].adj)" }
 "unpaid" = { ru = "неоплаченный", src = "chosen", note = "paydoname(): an unpaid bag" }
 "right" = { ru = "правый", src = "chosen" }

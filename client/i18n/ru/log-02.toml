@@ -190,7 +190,7 @@ ru = "{1} {1:num|испаряется|испаряются}."
 
 [3b143a22350a]
 en = "You are splashed by %s %s!"
-ru = "Вас забрызгивает {2:ins} {1:gen}!"
+ru = "Вас забрызгивает {2:of1:ins}!"
 
 [45d04ae383e8]
 en = "You fall into a pit!"

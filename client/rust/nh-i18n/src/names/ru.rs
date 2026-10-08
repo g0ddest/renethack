@@ -69,6 +69,10 @@ pub struct RuName {
     pub as_adjective: Option<Arc<Adjective>>,
     /// The feminine of a role, for a heroine (Целительница).
     pub female: Option<Arc<Noun>>,
+    /// The pronoun the name owns a thing with, where it has no genitive
+    /// to follow the thing: чей-то of an owner nobody sees ("Its"), ваш of
+    /// the hero ("your").
+    pub whose: Option<Arc<Adjective>>,
 }
 
 impl RuName {
@@ -88,6 +92,7 @@ impl RuName {
             quote: None,
             as_adjective: None,
             female: None,
+            whose: None,
         }
     }
 
@@ -366,6 +371,12 @@ impl Phrase for RuName {
             }
             _ => self.form(case),
         }
+    }
+
+    /// What is owned is a thing: the accusative is the inanimate one.
+    fn whose(&self, gender: Gender, number: Number, case: Case) -> Option<String> {
+        let pronoun = self.whose.as_ref()?;
+        Some(pronoun.form(gender, number, false, case).to_string())
     }
 }
 

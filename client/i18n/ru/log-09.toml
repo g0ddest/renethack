@@ -646,7 +646,7 @@ ru = "Вы отпускаете {1:acc}!"
 
 [9b0a21f26f15]
 en = "%s %s was poisoned!"
-ru = "{2:cap} {1:gen} {2:gender|был отравлен|была отравлена|было отравлено|были отравлены}!"
+ru = "{2:of1:cap} {2:gender|был отравлен|была отравлена|было отравлено|были отравлены}!"
 
 [59563e2943a6]
 en = "Your kick passes harmlessly through %s."
@@ -794,11 +794,11 @@ ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} больше не {1:gend
 
 [137905dcb25b]
 en = "%s %s pass harmlessly through %s."
-ru = "{2:cap} {1:gen} безвредно {2:num|проходит|проходят} сквозь {3:acc}."
+ru = "{2:of1:cap} безвредно {2:num|проходит|проходят} сквозь {3:acc}."
 
 [2565e13accae]
 en = "%s %s passes harmlessly through %s."
-ru = "{2:cap} {1:gen} безвредно {2:num|проходит|проходят} сквозь {3:acc}."
+ru = "{2:of1:cap} безвредно {2:num|проходит|проходят} сквозь {3:acc}."
 
 [715753313132]
 en = "%s attack passes harmlessly through %s."
