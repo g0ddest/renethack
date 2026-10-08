@@ -68,7 +68,7 @@ uniform float rim = 0.0;
 uniform float natural_top = 0.0;
 // how much a surface glows with its own colour: in view, and remembered
 uniform float glow = 0.0;
-uniform float memory_glow = 0.06;
+uniform float memory_glow = 1.0;
 // the ground under the level: rock that fades into darkness away from
 // what is known
 uniform float void_fade = 0.0;

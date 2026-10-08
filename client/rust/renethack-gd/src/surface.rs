@@ -230,7 +230,7 @@ impl Surfaces {
                 set(&mut mat, "detail_strength", 0.4);
                 set(&mut mat, "detail_scale", 3.0);
                 set(&mut mat, "glow", 0.05);
-                set(&mut mat, "memory_glow", 0.04);
+                set(&mut mat, "memory_glow", 0.6);
             }
             Role::Void => {
                 set(&mut mat, "void_fade", 1.0);

@@ -297,6 +297,9 @@ const TORCH_SHADOWS: usize = 3;
 /// than half a body.
 const SCONCE_SCALE: f32 = 1.2;
 const SIDE_REACH: f32 = 0.55;
+/// How much the haze in the air glows by itself (the fog's emission, as
+/// strong as the fog is dense): the veil over what no light reaches.
+const HAZE: f32 = 1.2;
 /// A lantern in the torch's place hangs this far out and this high over
 /// the torch's mount, and on a side wall smaller and closer by this much.
 const LANTERN_OUT: f32 = 0.32;
@@ -3003,6 +3006,9 @@ impl MapView {
             light.set_color(color);
             light.set_param(Param::ENERGY, energy);
             light.set_cull_mask(RIM_LAYER);
+            // (the mask keeps it off the level's surfaces, not out of the
+            // level's haze: it would light the air of the whole map)
+            light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
             light.set_shadow(false);
             studio_frame.add_child(&light);
         }
@@ -3627,6 +3633,10 @@ impl MapView {
         });
         env.set_volumetric_fog_albedo(l.fog);
         env.set_volumetric_fog_density(l.fog_density);
+        // the air's own faint glow, in its colour: what no light reaches
+        // is dark, never black
+        env.set_volumetric_fog_emission(l.fog);
+        env.set_volumetric_fog_emission_energy(HAZE * l.haze);
         let g = l.grade;
         env.set_adjustment_saturation(g.saturation);
         env.set_adjustment_contrast(g.contrast);

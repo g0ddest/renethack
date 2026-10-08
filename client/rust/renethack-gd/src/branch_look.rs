@@ -103,9 +103,11 @@ pub struct BranchLook {
     pub fill_scale: f32,
     pub ambient: Color,
     pub ambient_energy: f32,
-    /// The haze: its albedo and its density.
+    /// The haze: its albedo and its density, and how much it glows by
+    /// itself (1: the main dungeon's; it glows the more the denser it is).
     pub fog: Color,
     pub fog_density: f32,
+    pub haze: f32,
     /// The darkness at the frame's depth.
     pub darkness: Color,
     /// Floors crack and glow from below (lava under them).
@@ -145,6 +147,7 @@ const MAIN: BranchLook = BranchLook {
     ambient_energy: 0.12,
     fog: Color::from_rgb(0.60, 0.60, 0.66),
     fog_density: 0.003,
+    haze: 1.0,
     darkness: Color::from_rgb(0.008, 0.009, 0.013),
     cracks: 0.0,
     dust: 1.0,
@@ -173,6 +176,9 @@ pub fn look_of(branch: Branch) -> BranchLook {
             ambient: rgb(0.36, 0.3, 0.26),
             fog: rgb(0.7, 0.6, 0.5),
             fog_density: 0.006,
+            // thick air round the torches; in the dark it must not lie
+            // over everything as brown murk
+            haze: 0.4,
             darkness: rgb(0.012, 0.009, 0.007),
             dust: 2.5,
             grade: Grade {
