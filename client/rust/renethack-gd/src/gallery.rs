@@ -351,6 +351,29 @@ pub fn lay_out_one(world: &mut World, cat: &Catalog, name: &str) -> Result<(i32,
     Ok((cx, cy))
 }
 
+/// One monster in a corridor a cell wide, the hero in the next cell (the
+/// `bestiary` self-test's corridor fights: a body too long for its cell
+/// stands in the hero and in the rock); the view centres on the monster.
+pub fn lay_out_corridor(
+    world: &mut World,
+    cat: &Catalog,
+    name: &str,
+) -> Result<(i32, i32), String> {
+    let map = &mut world.map;
+    map.clear();
+    let corr = cmap(cat, "S_corr")?;
+    let (cx, cy) = (40, 10);
+    for x in cx - 5..=cx + 5 {
+        map.print(x, cy, &corr, None);
+    }
+    let g = monster(cat, name, 0, GlyphKind::Mon)?;
+    map.print(cx, cy, &g, Some(&corr));
+    let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    map.print(cx + 1, cy, &hero, Some(&corr));
+    world.view_center = Some((cx, cy));
+    Ok((cx, cy))
+}
+
 /// Rows of monsters side by side under the same light (the `bestiary`
 /// self-test's colour rows: those a player tells apart by colour), each
 /// row its spacing apart, the hero at the end of the last for scale; the

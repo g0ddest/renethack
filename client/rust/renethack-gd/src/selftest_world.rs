@@ -225,7 +225,8 @@ const BESTIARY: &[&str] = &[
 ];
 
 /// RENETHACK_BESTIARY=gnome,gnome (F);dwarf,dwarf leader: these creatures
-/// instead, each alone and then together in rows (`;` between rows; the
+/// instead, each alone, each in a corridor with the hero in the next cell
+/// (`corridor-<name>`), and then together in rows (`;` between rows; the
 /// picture `rows`), for sheets of a kind before and after a change. A
 /// name ending in " (F)" is the female.
 fn asked() -> Option<&'static [Vec<&'static str>]> {
@@ -304,6 +305,28 @@ pub(super) fn bestiary() -> Vec<Step> {
         ]);
     }
     if asked().is_some() {
+        for name in creatures() {
+            let file = name.replace(" (F)", "-f").replace(' ', "-");
+            let shot: &'static str = Box::leak(format!("corridor-{file}").into_boxed_str());
+            steps.extend([
+                Step::Call("the next creature in a corridor", |g| {
+                    let cat = g.catalog.clone().ok_or("no catalog")?;
+                    let i = NEXT_CORRIDOR.fetch_add(1, Ordering::Relaxed);
+                    let name = creatures().get(i).copied().ok_or("no more creatures")?;
+                    crate::gallery::lay_out_corridor(&mut g.world, &cat, name)?;
+                    let ui = g.ui.as_mut().ok_or("no UI")?;
+                    ui.map.set_showcase(true);
+                    ui.map.set_distance(5.0, 0.3);
+                    Ok(())
+                }),
+                Step::Wait("the corridor drawn", |g| {
+                    let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+                    Ok(drawn == Some(g.world.map.generation()))
+                }),
+                Step::Wait("the camera on it", camera_settled),
+                Step::Shot(shot),
+            ]);
+        }
         steps.extend([
             Step::Call("lay out the rows asked for", |g| {
                 let cat = g.catalog.clone().ok_or("no catalog")?;
@@ -388,6 +411,8 @@ fn far(g: &mut RenethackGame, distance: f32) -> Result<(), String> {
 
 /// The next creature of `BESTIARY` to lay out (steps are plain functions).
 static NEXT_CREATURE: AtomicUsize = AtomicUsize::new(0);
+/// The next creature asked for to put in a corridor.
+static NEXT_CORRIDOR: AtomicUsize = AtomicUsize::new(0);
 
 /// Lay out creature `i` of `BESTIARY` alone, the camera close.
 fn one(g: &mut RenethackGame, i: usize) -> Result<(), String> {
