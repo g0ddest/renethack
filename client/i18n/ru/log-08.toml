@@ -1,0 +1,966 @@
+# R6, log messages batch 8: do_wear.c. Syntax: nh-i18n's template.rs.
+
+[85b7afb2b2dc]
+en = "You don't feel like yourself."
+ru = "Вы сами не свои."
+
+[d09531048cba]
+en = "The amulet disintegrates!"
+ru = "Амулет рассыпается!"
+
+[6698a4c6f562]
+en = "It constricts your throat!"
+ru = "Амулет сдавливает вам горло!"
+
+[f4d69073b726]
+en = "You are now in flight."
+ru = "Теперь вы летите."
+
+[08dcf13d453d]
+en = "You suddenly inhale an unhealthy amount of %s!"
+ru = "Вы внезапно вдыхаете вредное для здоровья количество {1:gen}!"
+
+[90bd324cf2dd]
+en = "You are breathing poison gas!"
+ru = "Вы дышите ядовитым газом!"
+
+[c53340c04e75]
+en = "Your %s is no longer constricted!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} больше не {1:gender|сдавлен|сдавлена|сдавлено|сдавлены}!"
+
+[08aeea81bfa1]
+en = "You can breathe more easily!"
+ru = "Вам становится легче дышать!"
+
+[755462bf8966]
+en = "You float imperceptibly."
+ru = "Вы парите совершенно неслышно."
+
+[0ed4615ad724]
+en = "You walk very quietly."
+ru = "Вы ступаете очень тихо."
+
+[4755c74310a3]
+en = "Suddenly you are transparent, but there!"
+ru = "Внезапно вы прозрачны, но всё-таки здесь!"
+
+[b490295bace0]
+en = "You can't see any more."
+ru = "Вы больше ничего не видите."
+
+[7d8e498fba73]
+en = "For the first time in your life, you can see!"
+ru = "Впервые в жизни вы видите!"
+
+[31f9e15f074a]
+en = "You can see!"
+ru = "Вы прозрели!"
+
+[00b1634d7406]
+en = "You still cannot see."
+ru = "Вы по-прежнему ничего не видите."
+
+[5c20109e5049]
+en = "You can't see anything now!"
+ru = "Теперь вы ничего не видите!"
+
+[cfaa9616a037]
+en = "Despite your slippery %s, you can't."
+ru = "Несмотря на скользкие {1:acc}, у вас ничего не выходит."
+
+[990ffe8ee304]
+en = "You can't wear any armor in your current form."
+ru = "В нынешнем облике вы не можете носить доспехи."
+
+[d4bef3dfb318]
+en = "You cannot wear a shield while wielding two weapons."
+ru = "Нельзя надеть щит, сражаясь с двух рук."
+
+[051ceacb862e]
+en = "You have no feet..."
+ru = "У вас нет ног..."
+
+[057715c06aeb]
+en = "Your %s is trapped!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} в капкане!"
+
+[9f0ab822d724]
+en = "Your %s are stuck in the %s!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:gender|застрял|застряла|застряло|застряли} в {2:loc}!"
+
+[bffa04448aa1]
+en = "Your %s is attached to the buried ball!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:gender|прикован|прикована|приковано|прикованы} к зарытому ядру!"
+
+[1f0f5bf98042]
+en = "You narrowly avoid losing all chance at your goal."
+ru = "Вы едва не лишаетесь всякого шанса достичь своей цели."
+
+[cc7d5121cbea]
+en = "You are suddenly overcome with shame and change your mind."
+ru = "Вас внезапно охватывает стыд, и вы передумываете."
+
+[3b22ea34759b]
+en = "You cannot make the ring stick to your body."
+ru = "Вам не удаётся закрепить кольцо на своём теле."
+
+[c927eea8e566]
+en = "You cannot free your weapon %s to put on the ring."
+ru = "Вы не можете освободить {1:acc} от оружия, чтобы надеть кольцо."
+
+[3f53dd298d20]
+en = "You have no head to wear %s on."
+ru = "У вас нет головы, чтобы надеть {1:acc}."
+
+[a24d34f65215]
+en = "Your %s is already covered by a towel."
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} уже {1:gender|закрыт|закрыта|закрыто|закрыты} полотенцем."
+
+[e49767fa890b]
+en = "You can't wear that!"
+ru = "Это нельзя надеть!"
+
+[78381a4681e2]
+en = "Don't even bother."
+ru = "Даже не пытайтесь."
+
+[bdd52cca07b7]
+en = "You are already wearing a full complement of armor."
+ru = "На вас и так полный комплект доспехов."
+
+[7e3180b9e11d]
+en = "The ring is stuck."
+ru = "Кольцо застряло."
+
+[f9ec65792d82]
+en = "The bear trap prevents you from pulling your %s out."
+ru = "Медвежий капкан не даёт вам вытащить {1:acc}."
+
+[5d7f3a935b0d]
+en = "You are stuck in the %s, and cannot pull your %s out."
+ru = "Вы застряли в {1:loc} и не можете вытащить {2:acc}."
+
+[4d8325673c53]
+en = "You are no longer wielding either weapon."
+ru = "У вас в руках больше нет ни того, ни другого оружия."
+
+[410664c8606b]
+en = "You continue %s."
+ru = "Вы продолжаете{1:skip} снимать с себя снаряжение."
+
+[ab320343ebb6]
+en = "My brain hurts!"
+ru = "У меня болит мозг!"
+
+[e7e8a799c5b4]
+en = "You slow down."
+ru = "Вы замедляетесь."
+
+[00b9e0d5fa72]
+en = "You are no longer bothered by the poison gas."
+ru = "Ядовитый газ вас больше не беспокоит."
+
+[41db97ca7473]
+en = "Your body seems to unfade..."
+ru = "Ваше тело словно проявляется..."
+
+[97d17a14256e]
+en = "You land."
+ru = "Вы приземляетесь."
+
+[1f48600bd8f6]
+en = "You stop flying."
+ru = "Вы больше не летите."
+
+[9e8cc49d02ce]
+en = "You and %s are noisy."
+ru = "Вы и {1} шумите."
+
+[984330e873f7]
+en = "Your body seems to unfade completely."
+ru = "Ваше тело словно проявляется полностью."
+
+[e45f54b6cc1d]
+en = "You stop putting on %s."
+ru = "Вы перестаёте надевать {1:acc}."
+
+[9890fa8a8374]
+en = "You stop taking off %s."
+ru = "Вы перестаёте снимать {1:acc}."
+
+[0f16871c0daf]
+en = "You dream that you feel that monsters have difficulty pinpointing your location."
+ru = "Вам снится, что монстрам трудно понять, где вы находитесь."
+
+[ed43078cd665]
+en = "You dream that you feel that monsters no longer have difficulty pinpointing your location."
+ru = "Вам снится, что монстрам больше не трудно понять, где вы находитесь."
+
+[7126492c1cce]
+en = "You can't take that off without taking off your apron and dragon mail first."
+ru = "Это не снять, пока на вас фартук и драконий доспех."
+
+[480f273b2822]
+en = "You can't take that off without taking off your apron and dragon scales first."
+ru = "Это не снять, пока на вас фартук и драконья чешуя."
+
+[98dc1255e311]
+en = "You can't take that off without taking off your apron and jacket first."
+ru = "Это не снять, пока на вас фартук и куртка."
+
+[397d0f0351f3]
+en = "You can't take that off without taking off your apron and mail first."
+ru = "Это не снять, пока на вас фартук и доспех."
+
+[e01381f0b819]
+en = "You can't take that off without taking off your apron and suit first."
+ru = "Это не снять, пока на вас фартук и доспех."
+
+[f0ac2bda4c12]
+en = "You can't take that off without taking off your apron first."
+ru = "Это не снять, пока на вас фартук."
+
+[3c58395cd188]
+en = "You can't take that off without taking off your cloak and dragon mail first."
+ru = "Это не снять, пока на вас плащ и драконий доспех."
+
+[2ae404c91d25]
+en = "You can't take that off without taking off your cloak and dragon scales first."
+ru = "Это не снять, пока на вас плащ и драконья чешуя."
+
+[1b6693ccb4ae]
+en = "You can't take that off without taking off your cloak and jacket first."
+ru = "Это не снять, пока на вас плащ и куртка."
+
+[3e02ec861e85]
+en = "You can't take that off without taking off your cloak and mail first."
+ru = "Это не снять, пока на вас плащ и доспех."
+
+[01d6d475d5b4]
+en = "You can't take that off without taking off your cloak and suit first."
+ru = "Это не снять, пока на вас плащ и доспех."
+
+[f73fbe2761f8]
+en = "You can't take that off without taking off your cloak first."
+ru = "Это не снять, пока на вас плащ."
+
+[d8ce3b383519]
+en = "You can't take that off without taking off your dragon mail first."
+ru = "Это не снять, пока на вас драконий доспех."
+
+[7c5fca519147]
+en = "You can't take that off without taking off your dragon scales first."
+ru = "Это не снять, пока на вас драконья чешуя."
+
+[367f9b497114]
+en = "You can't take that off without taking off your jacket first."
+ru = "Это не снять, пока на вас куртка."
+
+[0947e6bc18fa]
+en = "You can't take that off without taking off your mail first."
+ru = "Это не снять, пока на вас доспех."
+
+[23cb2ce0d1eb]
+en = "You can't take that off without taking off your robe and dragon mail first."
+ru = "Это не снять, пока на вас мантия и драконий доспех."
+
+[bf034f435bcf]
+en = "You can't take that off without taking off your robe and dragon scales first."
+ru = "Это не снять, пока на вас мантия и драконья чешуя."
+
+[05bd73064f99]
+en = "You can't take that off without taking off your robe and jacket first."
+ru = "Это не снять, пока на вас мантия и куртка."
+
+[2c55634404e4]
+en = "You can't take that off without taking off your robe and mail first."
+ru = "Это не снять, пока на вас мантия и доспех."
+
+[5cb1185650cd]
+en = "You can't take that off without taking off your robe and suit first."
+ru = "Это не снять, пока на вас мантия и доспех."
+
+[861572f4773a]
+en = "You can't take that off without taking off your robe first."
+ru = "Это не снять, пока на вас мантия."
+
+[19db302ca1a1]
+en = "You can't take that off without taking off your smock and dragon mail first."
+ru = "Это не снять, пока на вас фартук и драконий доспех."
+
+[6d8cdc05341d]
+en = "You can't take that off without taking off your smock and dragon scales first."
+ru = "Это не снять, пока на вас фартук и драконья чешуя."
+
+[da57e2f218c6]
+en = "You can't take that off without taking off your smock and jacket first."
+ru = "Это не снять, пока на вас фартук и куртка."
+
+[856a1cf0f277]
+en = "You can't take that off without taking off your smock and mail first."
+ru = "Это не снять, пока на вас фартук и доспех."
+
+[51958ea77570]
+en = "You can't take that off without taking off your smock and suit first."
+ru = "Это не снять, пока на вас фартук и доспех."
+
+[9bca630d7524]
+en = "You can't take that off without taking off your smock first."
+ru = "Это не снять, пока на вас фартук."
+
+[d12216e95583]
+en = "You can't take that off without taking off your suit first."
+ru = "Это не снять, пока на вас доспех."
+
+[938e575c07e2]
+en = "You can't take that off without taking off your wrapping and dragon mail first."
+ru = "Это не снять, пока на вас обмотка и драконий доспех."
+
+[9f8e8eb428ef]
+en = "You can't take that off without taking off your wrapping and dragon scales first."
+ru = "Это не снять, пока на вас обмотка и драконья чешуя."
+
+[5961d30e1857]
+en = "You can't take that off without taking off your wrapping and jacket first."
+ru = "Это не снять, пока на вас обмотка и куртка."
+
+[2a502feadddc]
+en = "You can't take that off without taking off your wrapping and mail first."
+ru = "Это не снять, пока на вас обмотка и доспех."
+
+[afedd17eb6aa]
+en = "You can't take that off without taking off your wrapping and suit first."
+ru = "Это не снять, пока на вас обмотка и доспех."
+
+[3ab37b5a4c6a]
+en = "You can't take that off without taking off your wrapping first."
+ru = "Это не снять, пока на вас обмотка."
+
+[e4f99db15274]
+en = "You can't take that off; it's embedded."
+ru = "Это не снять: оно вросло в вашу кожу."
+
+[acb7ccc841a5]
+en = "The dragon scale mail is merged with your skin!"
+ru = "Доспех из драконьей чешуи сросся с вашей кожей!"
+not_terms = ["scale mail"]
+
+[22ddd072cba3]
+en = "The dragon scales are merged with your skin!"
+ru = "Драконья чешуя срослась с вашей кожей!"
+
+[fce49c22e103]
+en = "You can't.  It is cursed."
+ru = "Не получается.  Эта вещь проклята."
+
+[cbf875a9af54]
+en = "You can't.  They are cursed."
+ru = "Не получается.  Они прокляты."
+
+[0e35f3c3252d]
+en = "You are already wearing a blindfold%c"
+ru = "На вас и так надета повязка на глаза{1}"
+
+[f09400d4d1ff]
+en = "You are already wearing an amulet%c"
+ru = "На вас и так надет амулет{1}"
+
+[a294cf0bf976]
+en = "You are already wearing boots%c"
+ru = "На вас и так надеты сапоги{1}"
+
+[d96dd1f6e471]
+en = "You are already wearing gloves%c"
+ru = "На вас и так надеты перчатки{1}"
+
+[6050df82aba4]
+en = "You are already wearing some armor%c"
+ru = "На вас и так надет доспех{1}"
+
+[39a65f516954]
+en = "You are already wearing some lenses%c"
+ru = "На вас и так надеты очки{1}"
+
+[67ff7a72d315]
+en = "You are already wearing something%c"
+ru = "На вас и так что-то надето{1}"
+
+[8c14223d5a17]
+en = "You can't wear a blindfold because you're wearing some lenses there already."
+ru = "Нельзя надеть повязку на глаза: на вас уже очки."
+
+[59b2b5b0b34f]
+en = "You can't wear lenses because you're wearing a blindfold there already."
+ru = "Нельзя надеть очки: на вас уже повязка на глаза."
+
+[23767c58c73f]
+en = "The cloak will not fit on your body."
+ru = "Плащ на вас не налезет."
+
+[c3f8d4f9bde5]
+en = "The shirt will not fit on your body."
+ru = "Рубашка на вас не налезет."
+
+[df3361e82bb1]
+en = "You cannot do that while holding your sword."
+ru = "Этого не сделать, пока у вас в руках меч."
+
+[627c12a3b05f]
+en = "You cannot do that while holding your weapon."
+ru = "Этого не сделать, пока у вас в руках оружие."
+
+[8ebce432aca6]
+en = "The hat won't fit over your horn."
+ru = "Шляпа не налезет на ваш рог."
+
+[b44b56971ce7]
+en = "The hat won't fit over your horns."
+ru = "Шляпа не налезет на ваши рога."
+
+[3b8fbd4fa145]
+en = "The helm won't fit over your horn."
+ru = "Шлем не налезет на ваш рог."
+
+[522e0c2f1ef4]
+en = "The helm won't fit over your horns."
+ru = "Шлем не налезет на ваши рога."
+
+[0fb1637cf62d]
+en = "You cannot wear a shield while wielding a two-handed axe."
+ru = "Нельзя надеть щит, держа в руках двуручный топор."
+
+[20a4bbb4f1f1]
+en = "You cannot wear a shield while wielding a two-handed sword."
+ru = "Нельзя надеть щит, держа в руках двуручный меч."
+
+[5612ea789912]
+en = "You cannot wear a shield while wielding a two-handed weapon."
+ru = "Нельзя надеть щит, держа в руках двуручное оружие."
+
+[86052eb1aba5]
+en = "You have too many hooves to wear boots."
+ru = "У вас слишком много копыт, чтобы носить сапоги."
+
+[db6c858fbf2d]
+en = "You cannot wear gloves over your sword."
+ru = "Нельзя надеть перчатки поверх меча."
+
+[0f099a1761c9]
+en = "You cannot wear gloves over your weapon."
+ru = "Нельзя надеть перчатки поверх оружия."
+
+[ce2045d3822b]
+en = "Your %s are too slippery to pull on gauntlets."
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} слишком {1:gender|скользкий|скользкая|скользкое|скользкие}, чтобы натянуть рукавицы."
+
+[2b1bb7bd1a6a]
+en = "Your %s are too slippery to pull on gloves."
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} слишком {1:gender|скользкий|скользкая|скользкое|скользкие}, чтобы натянуть перчатки."
+
+[399de023281e]
+en = "You can't wear that over your apron."
+ru = "Это нельзя надеть поверх фартука."
+
+[ae80ae056c12]
+en = "You can't wear that over your armor."
+ru = "Это нельзя надеть поверх доспеха."
+
+[e8ee6ee33919]
+en = "You can't wear that over your cloak."
+ru = "Это нельзя надеть поверх плаща."
+
+[ad9314c0802c]
+en = "You can't wear that over your robe."
+ru = "Это нельзя надеть поверх мантии."
+
+[066e329db82a]
+en = "You can't wear that over your smock."
+ru = "Это нельзя надеть поверх фартука."
+
+[d1805462e7c5]
+en = "You can't wear that over your wrapping."
+ru = "Это нельзя надеть поверх обмотки."
+
+[3ecbf81428c3]
+en = "You cannot wear armor over a apron."
+ru = "Нельзя надеть доспех поверх фартука."
+
+[0998093c6673]
+en = "You cannot wear armor over a cloak."
+ru = "Нельзя надеть доспех поверх плаща."
+
+[d7750c45cccb]
+en = "You cannot wear armor over a robe."
+ru = "Нельзя надеть доспех поверх мантии."
+
+[86b6d147cea8]
+en = "You cannot wear armor over a smock."
+ru = "Нельзя надеть доспех поверх фартука."
+
+[c73177b48ee6]
+en = "You cannot wear armor over a wrapping."
+ru = "Нельзя надеть доспех поверх обмотки."
+
+[1bbd4a531874]
+en = "You dream that you feel yourself speed up a bit more."
+ru = "Вам снится, что вы становитесь ещё немного быстрее."
+
+[0d29f393d07b]
+en = "You dream that you feel yourself speed up."
+ru = "Вам снится, что вы ускоряетесь."
+
+[015866188502]
+en = "You feel yourself speed up a bit more."
+ru = "Вы чувствуете, что становитесь ещё немного быстрее."
+
+[5c432ec00012]
+en = "You feel yourself speed up."
+ru = "Вы чувствуете, что ускоряетесь."
+
+[234391e51538]
+en = "There are no more %s to fill."
+ru = "Свободных {1:gen} для колец больше нет."
+
+[56ef7aaf19a4]
+en = "There are no more ring-%s to fill."
+ru = "Свободных {1:gen} для колец больше нет."
+
+[f547f0c57626]
+en = "Your gauntlets are too slippery to remove, so you cannot put on the ring."
+ru = "Ваши рукавицы слишком скользкие, чтобы их снять, так что кольцо не надеть."
+
+[63336458916a]
+en = "Your gloves are too slippery to remove, so you cannot put on the ring."
+ru = "Ваши перчатки слишком скользкие, чтобы их снять, так что кольцо не надеть."
+
+[a46fc9ab592f]
+en = "You cannot remove your gloves to put on the ring."
+ru = "Вы не можете снять перчатки, чтобы надеть кольцо."
+
+[3627436f60bb]
+en = "Your %s are full, and you're already wearing an amulet and a blindfold."
+ru = "{1:gender|Весь|Вся|Всё|Все} {1} {1:gender|занят|занята|занято|заняты} кольцами, а амулет и повязка на глаза уже на вас."
+
+[2bf91fa16683]
+en = "Your %s are full, and you're already wearing an amulet and some lenses."
+ru = "{1:gender|Весь|Вся|Всё|Все} {1} {1:gender|занят|занята|занято|заняты} кольцами, а амулет и очки уже на вас."
+
+[20d96db65b94]
+en = "Your ring-%s are full, and you're already wearing an amulet and a blindfold."
+ru = "{1:gender|Весь|Вся|Всё|Все} {1} {1:gender|занят|занята|занято|заняты} кольцами, а амулет и повязка на глаза уже на вас."
+
+[3fd9de6f0d48]
+en = "Your ring-%s are full, and you're already wearing an amulet and some lenses."
+ru = "{1:gender|Весь|Вся|Всё|Все} {1} {1:gender|занят|занята|занято|заняты} кольцами, а амулет и очки уже на вас."
+
+[cd6ca997f92f]
+en = "Your ring slips off your %s."
+ru = "Ваше кольцо соскальзывает с {1:gen}."
+
+[5d301f8d39ab]
+en = "Your rings slip off your %s."
+ru = "Ваши кольца соскальзывают с {1:gen}."
+
+[47b0116061ee]
+en = "Your %s also slip from your %s."
+ru = "{1} тоже {1:num|выскальзывает|выскальзывают} у вас из {2:gen}."
+
+[bc16347e4da1]
+en = "Your %s also slip from your left %s."
+ru = "{1} тоже {1:num|выскальзывает|выскальзывают} у вас из {2:gender|левого|левой|левого|левых} {2:gen}."
+
+[c51a6504e2ed]
+en = "Your %s also slip from your right %s."
+ru = "{1} тоже {1:num|выскальзывает|выскальзывают} у вас из {2:gender|правого|правой|правого|правых} {2:gen}."
+
+[cebb569f507e]
+en = "Your %s also slips from your %s."
+ru = "{1} тоже {1:num|выскальзывает|выскальзывают} у вас из {2:gen}."
+
+[0df126638705]
+en = "Your %s also slips from your left %s."
+ru = "{1} тоже {1:num|выскальзывает|выскальзывают} у вас из {2:gender|левого|левой|левого|левых} {2:gen}."
+
+[fe15401b9f40]
+en = "Your %s also slips from your right %s."
+ru = "{1} тоже {1:num|выскальзывает|выскальзывают} у вас из {2:gender|правого|правой|правого|правых} {2:gen}."
+
+[68e2d4487e66]
+en = "Your %s slip from your %s."
+ru = "{1} {1:num|выскальзывает|выскальзывают} у вас из {2:gen}."
+
+[4ead8995d247]
+en = "Your %s slip from your left %s."
+ru = "{1} {1:num|выскальзывает|выскальзывают} у вас из {2:gender|левого|левой|левого|левых} {2:gen}."
+
+[85e49e0e140e]
+en = "Your %s slip from your right %s."
+ru = "{1} {1:num|выскальзывает|выскальзывают} у вас из {2:gender|правого|правой|правого|правых} {2:gen}."
+
+[674722155568]
+en = "Your %s slips from your %s."
+ru = "{1} {1:num|выскальзывает|выскальзывают} у вас из {2:gen}."
+
+[27d24c665bd2]
+en = "Your %s slips from your left %s."
+ru = "{1} {1:num|выскальзывает|выскальзывают} у вас из {2:gender|левого|левой|левого|левых} {2:gen}."
+
+[7cfabc5b26ba]
+en = "Your %s slips from your right %s."
+ru = "{1} {1:num|выскальзывает|выскальзывают} у вас из {2:gender|правого|правой|правого|правых} {2:gen}."
+
+[1e97c4c8ad7f]
+en = "Your sword also slips from your %s."
+ru = "Меч тоже выскальзывает у вас из {1:gen}."
+
+[f70ee3998821]
+en = "Your sword also slips from your left %s."
+ru = "Меч тоже выскальзывает у вас из {1:gender|левого|левой|левого|левых} {1:gen}."
+
+[072edc7ecdaf]
+en = "Your sword also slips from your right %s."
+ru = "Меч тоже выскальзывает у вас из {1:gender|правого|правой|правого|правых} {1:gen}."
+
+[127cc4e3b8c8]
+en = "Your sword slips from your %s."
+ru = "Меч выскальзывает у вас из {1:gen}."
+
+[8e159ea3982d]
+en = "Your sword slips from your left %s."
+ru = "Меч выскальзывает у вас из {1:gender|левого|левой|левого|левых} {1:gen}."
+
+[324b4438a9f8]
+en = "Your sword slips from your right %s."
+ru = "Меч выскальзывает у вас из {1:gender|правого|правой|правого|правых} {1:gen}."
+
+[3cca67b9f7b6]
+en = "The %s also slip from your %s."
+ru = "{1} тоже {1:num|выскальзывает|выскальзывают} у вас из {2:gen}."
+
+[cb1aa847240b]
+en = "The %s also slips from your %s."
+ru = "{1} тоже {1:num|выскальзывает|выскальзывают} у вас из {2:gen}."
+
+[1459ab651739]
+en = "The %s slip from your %s."
+ru = "{1} {1:num|выскальзывает|выскальзывают} у вас из {2:gen}."
+
+[ca640f489256]
+en = "The %s slips from your %s."
+ru = "{1} {1:num|выскальзывает|выскальзывают} у вас из {2:gen}."
+
+[bae015991a00]
+en = "Your other %s also slip from your left %s."
+ru = "{1:gender|Второй|Вторая|Второе|Остальные} {1} тоже {1:num|выскальзывает|выскальзывают} у вас из {2:gender|левого|левой|левого|левых} {2:gen}."
+
+[7bbaaad7243b]
+en = "Your other %s also slip from your right %s."
+ru = "{1:gender|Второй|Вторая|Второе|Остальные} {1} тоже {1:num|выскальзывает|выскальзывают} у вас из {2:gender|правого|правой|правого|правых} {2:gen}."
+
+[8133a9c51460]
+en = "Your other %s also slips from your left %s."
+ru = "{1:gender|Второй|Вторая|Второе|Остальные} {1} тоже {1:num|выскальзывает|выскальзывают} у вас из {2:gender|левого|левой|левого|левых} {2:gen}."
+
+[61c04ace5f75]
+en = "Your other %s also slips from your right %s."
+ru = "{1:gender|Второй|Вторая|Второе|Остальные} {1} тоже {1:num|выскальзывает|выскальзывают} у вас из {2:gender|правого|правой|правого|правых} {2:gen}."
+
+[0f229d61e322]
+en = "Your other sword also slips from your left %s."
+ru = "Второй меч тоже выскальзывает у вас из {1:gender|левого|левой|левого|левых} {1:gen}."
+
+[df93bc5f58eb]
+en = "Your other sword also slips from your right %s."
+ru = "Второй меч тоже выскальзывает у вас из {1:gender|правого|правой|правого|правых} {1:gen}."
+
+[6feb41667068]
+en = "You cannot free a weapon %s to remove the ring."
+ru = "Вы не можете освободить {1:acc} от оружия, чтобы снять кольцо."
+
+[646ef8b9a754]
+en = "You cannot take off your gauntlets to remove the ring."
+ru = "Вы не можете снять рукавицы, а без этого кольцо не снять."
+
+[978a027b1ab7]
+en = "You cannot take off your gloves to remove the ring."
+ru = "Вы не можете снять перчатки, а без этого кольцо не снять."
+
+[9aba360cb0d8]
+en = "You cannot take off your slippery gauntlets to remove the ring."
+ru = "Вы не можете снять скользкие рукавицы, а без этого кольцо не снять."
+
+[4a8fd258f4e9]
+en = "You cannot take off your slippery gloves to remove the ring."
+ru = "Вы не можете снять скользкие перчатки, а без этого кольцо не снять."
+
+[7a5db3acad5f]
+en = "You are unable to take off your gloves while wielding that sword."
+ru = "Вы не можете снять перчатки, пока держите этот меч."
+
+[3f047a78285f]
+en = "You are unable to take off your gloves while wielding that weapon."
+ru = "Вы не можете снять перчатки, пока держите это оружие."
+
+[d06b45b2e187]
+en = "The gauntlets are too slippery to take off."
+ru = "Рукавицы слишком скользкие, чтобы их снять."
+
+[82187137bb34]
+en = "The gloves are too slippery to take off."
+ru = "Перчатки слишком скользкие, чтобы их снять."
+
+[e27e212db15e]
+en = "Your gauntlets are too slippery to take off."
+ru = "Ваши рукавицы слишком скользкие, чтобы их снять."
+
+[2de7c755b27c]
+en = "Your gloves are too slippery to take off."
+ru = "Ваши перчатки слишком скользкие, чтобы их снять."
+
+[b8c236e8be55]
+en = "You dream that you feel yourself slow down a bit."
+ru = "Вам снится, что вы немного замедляетесь."
+
+[e1262b15149a]
+en = "You dream that you feel yourself slow down."
+ru = "Вам снится, что вы замедляетесь."
+
+[f4f8150700c0]
+en = "You feel yourself slow down a bit."
+ru = "Вы чувствуете, что немного замедляетесь."
+
+[f54f5d780e72]
+en = "You feel yourself slow down."
+ru = "Вы чувствуете, что замедляетесь."
+
+[452b072ae7a5]
+en = "You cannot release your axe to take off %s."
+ru = "Вы не можете выпустить из рук топор, а без этого не снять {1:acc}."
+
+[8afc91759124]
+en = "You cannot release your sword to take off %s."
+ru = "Вы не можете выпустить из рук меч, а без этого не снять {1:acc}."
+
+[28dc9cada2d0]
+en = "You cannot release your weapon to take off %s."
+ru = "Вы не можете выпустить из рук оружие, а без этого не снять {1:acc}."
+
+[cde794d5b1e3]
+en = "You cannot remove your apron to take off %s."
+ru = "Вы не можете снять фартук, а без этого не снять {1:acc}."
+
+[47b7acc5a6a4]
+en = "You cannot remove your cloak to take off %s."
+ru = "Вы не можете снять плащ, а без этого не снять {1:acc}."
+
+[c0d259c1c584]
+en = "You cannot remove your robe to take off %s."
+ru = "Вы не можете снять мантию, а без этого не снять {1:acc}."
+
+[7247373387cc]
+en = "You cannot remove your smock to take off %s."
+ru = "Вы не можете снять фартук, а без этого не снять {1:acc}."
+
+[bd4e2ef8b809]
+en = "You cannot remove your suit to take off %s."
+ru = "Вы не можете снять доспех, а без этого не снять {1:acc}."
+
+[614530acecca]
+en = "You cannot remove your wrapping to take off %s."
+ru = "Вы не можете снять обмотку, а без этого не снять {1:acc}."
+
+[fd824d9bc137]
+en = "You are not wielding anything."
+ru = "Вы ничем не вооружены."
+
+[e16a2ff0b926]
+en = "You are no longer wielding two weapons at once."
+ru = "Вы больше не сражаетесь с двух рук."
+
+[21592e621a36]
+en = "Your apron crumbles and turns to dust!"
+ru = "Ваш фартук истлевает и рассыпается в прах!"
+
+[cc2efe40f42d]
+en = "Your cloak crumbles and turns to dust!"
+ru = "Ваш плащ истлевает и рассыпается в прах!"
+
+[8cb822ba5f42]
+en = "Your robe crumbles and turns to dust!"
+ru = "Ваша мантия истлевает и рассыпается в прах!"
+
+[2b681a22e418]
+en = "Your smock crumbles and turns to dust!"
+ru = "Ваш фартук истлевает и рассыпается в прах!"
+
+[13bd6e06e380]
+en = "Your wrapping crumbles and turns to dust!"
+ru = "Ваша обмотка истлевает и рассыпается в прах!"
+
+[d1a944a9ad1d]
+en = "Your dragon mail turns to dust and falls to the %s!"
+ru = "Ваш драконий доспех обращается в прах и осыпается на {1:acc}!"
+
+[d6458fa76f85]
+en = "Your dragon scales turn to dust and fall to the %s!"
+ru = "Ваша драконья чешуя обращается в прах и осыпается на {1:acc}!"
+
+[65bc7c47e20c]
+en = "Your jacket turns to dust and falls to the %s!"
+ru = "Ваша куртка обращается в прах и осыпается на {1:acc}!"
+
+[4448d0e32609]
+en = "Your mail turns to dust and falls to the %s!"
+ru = "Ваш доспех обращается в прах и осыпается на {1:acc}!"
+
+[8e23618eb257]
+en = "Your suit turns to dust and falls to the %s!"
+ru = "Ваш доспех обращается в прах и осыпается на {1:acc}!"
+
+[b4654356ff7f]
+en = "Your shirt crumbles into tiny threads and falls apart!"
+ru = "Ваша рубашка расползается на мелкие нитки и рассыпается!"
+
+[bea1e28773e8]
+en = "Your hat turns to dust and is blown away!"
+ru = "Ваша шляпа обращается в прах и развеивается по ветру!"
+
+[bf8c808b5124]
+en = "Your helm turns to dust and is blown away!"
+ru = "Ваш шлем обращается в прах и развеивается по ветру!"
+
+[62249f3c284b]
+en = "Your gauntlets vanish!"
+ru = "Ваши рукавицы исчезают!"
+
+[c9bebb4bc990]
+en = "Your gloves vanish!"
+ru = "Ваши перчатки исчезают!"
+
+[945dbd89ad1a]
+en = "Your boots disintegrate!"
+ru = "Ваши сапоги рассыпаются!"
+
+[a46f200ef392]
+en = "Your shoes disintegrate!"
+ru = "Ваши башмаки рассыпаются!"
+
+[c7c29311ba38]
+en = "Your shield crumbles away!"
+ru = "Ваш щит крошится и рассыпается!"
+
+[b454bc12fcf5]
+en = "Your silver shield crumbles away!"
+ru = "Ваш серебряный щит крошится и рассыпается!"
+
+[459881c57f7e]
+en = "Your smooth shield crumbles away!"
+ru = "Ваш гладкий щит крошится и рассыпается!"
+
+[76e3ae4aaf4e]
+en = "You need to take off %s to dip %s."
+ru = "Вам нужно снять {1:acc:own}, чтобы окунуть {2:acc:own}."
+
+[bee901eab3e5]
+en = "You need to take off %s to grease %s."
+ru = "Вам нужно снять {1:acc:own}, чтобы смазать {2:acc:own}."
+
+[9eb906bfcba5]
+en = "You need to take off %s and %s to dip %s."
+ru = "Вам нужно снять {1:acc:own} и {2:acc:own}, чтобы окунуть {3:acc:own}."
+
+[b6da9a2997eb]
+en = "You need to take off %s and %s to grease %s."
+ru = "Вам нужно снять {1:acc:own} и {2:acc:own}, чтобы смазать {3:acc:own}."
+
+[b19f5840c423]
+en = "You can no longer see through yourself!"
+ru = "Вы больше не видите себя насквозь!"
+
+[eb7ec37ccc57]
+en = "You can see yourself!"
+ru = "Вы видите себя!"
+
+[9b8306917ec5]
+en = "Suddenly you can see through yourself."
+ru = "Внезапно вы видите себя насквозь."
+
+[7d8409ec5412]
+en = "Suddenly you cannot see yourself."
+ru = "Внезапно вы перестаёте себя видеть."
+
+[5eb08b9859f1]
+en = "%s fits very tightly."
+ru = "{1} {1:num|сидит|сидят} на вас очень плотно."
+
+[3f9f643cb11b]
+en = "You can no longer see yourself."
+ru = "Вы больше себя не видите."
+
+[3fdae4df477c]
+en = "You can see through yourself."
+ru = "Вы видите себя насквозь."
+
+[3f8da0810379]
+en = "Suddenly you can no longer see through yourself."
+ru = "Внезапно вы перестаёте видеть себя насквозь."
+
+[e104b226010a]
+en = "You dream that you feel giddy."
+ru = "Вам снится, что у вас голова идёт кругом."
+
+[7a76ed742251]
+en = "You dream that you feel like sitting in a corner."
+ru = "Вам снится, что вам хочется встать в угол."
+
+[e524d4fde49c]
+en = "You feel giddy."
+ru = "У вас голова идёт кругом."
+
+[1e3216672437]
+en = "You feel like sitting in a corner."
+ru = "Вам хочется встать в угол."
+
+[d08fbb4fd21b]
+en = "You are wielding %s in your bare %s."
+ru = "Вы держите {1:acc} {2:gender|голым|голой|голым|голыми} {2:ins}."
+
+[5f484aee19fe]
+en = "You now wield %s in your bare %s."
+ru = "Теперь вы держите {1:acc} {2:gender|голым|голой|голым|голыми} {2:ins}."
+
+[31dcf76748ac]
+en = "You speed up a bit more."
+ru = "Вы становитесь ещё немного быстрее."
+
+[a6d5511e92ba]
+en = "You speed up."
+ru = "Вы ускоряетесь."
+
+[83fbb8dba916]
+en = "%s begins to shine brightly!"
+ru = "{1} {1:num|начинает|начинают} ярко сиять!"
+
+[8f96f63dfa61]
+en = "%s begins to shine brilliantly!"
+ru = "{1} {1:num|начинает|начинают} ослепительно сиять!"
+
+[64b2c6e9645b]
+en = "%s begins to shine dimly!"
+ru = "{1} {1:num|начинает|начинают} тускло светиться!"
+
+[03581bf304bf]
+en = "%s begins to shine radiantly!"
+ru = "{1} {1:num|начинает|начинают} лучезарно сиять!"
+
+[cbb5f1315872]
+en = "%s begins to shine strangely!"
+ru = "{1} {1:num|начинает|начинают} странно светиться!"
+
+[c3df851a0930]
+en = "%s stops shining."
+ru = "{1} {1:num|перестаёт|перестают} сиять."
+
+[ad52acbc3c2a]
+en = "You are now wearing %s around your %s."
+ru = "Теперь у вас на {2:loc} {1}."

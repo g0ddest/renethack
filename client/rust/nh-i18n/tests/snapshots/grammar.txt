@@ -8106,6 +8106,31 @@
   f   Крыса бибикает.
   n   Копьё бибикает.
   pl  3 стрелы бибикают.
+%s begins to shine brightly!  [83fbb8dba916]
+  m   Тритон начинает ярко сиять!
+  f   Крыса начинает ярко сиять!
+  n   Копьё начинает ярко сиять!
+  pl  3 стрелы начинают ярко сиять!
+%s begins to shine brilliantly!  [8f96f63dfa61]
+  m   Тритон начинает ослепительно сиять!
+  f   Крыса начинает ослепительно сиять!
+  n   Копьё начинает ослепительно сиять!
+  pl  3 стрелы начинают ослепительно сиять!
+%s begins to shine dimly!  [64b2c6e9645b]
+  m   Тритон начинает тускло светиться!
+  f   Крыса начинает тускло светиться!
+  n   Копьё начинает тускло светиться!
+  pl  3 стрелы начинают тускло светиться!
+%s begins to shine radiantly!  [03581bf304bf]
+  m   Тритон начинает лучезарно сиять!
+  f   Крыса начинает лучезарно сиять!
+  n   Копьё начинает лучезарно сиять!
+  pl  3 стрелы начинают лучезарно сиять!
+%s begins to shine strangely!  [cbb5f1315872]
+  m   Тритон начинает странно светиться!
+  f   Крыса начинает странно светиться!
+  n   Копьё начинает странно светиться!
+  pl  3 стрелы начинают странно светиться!
 %s belches!  [33e5e4c507db]
   m   Тритон рыгает!
   f   Крыса рыгает!
@@ -8576,6 +8601,11 @@
   f   Крыса на миг теплеет.
   n   Копьё на миг теплеет.
   pl  3 стрелы на миг теплеют.
+%s fits very tightly.  [5eb08b9859f1]
+  m   Тритон сидит на вас очень плотно.
+  f   Крыса сидит на вас очень плотно.
+  n   Копьё сидит на вас очень плотно.
+  pl  3 стрелы сидят на вас очень плотно.
 %s flexes %s reverently.\n\n"With this wondrous bow, one need never run out of arrows.\nYou are its keeper now, and the time has come to resume your\nsearch for the Amulet.  %s await your return\nthrough the magic portal that brought you here."  [ddbb755d85c0]
   m   Тритон благоговейно натягивает тритона.\n\n«С этим чудесным луком стрелы никогда не кончатся.  Теперь вы\nего хранитель, и пришло время продолжить\nпоиски Амулета.  Тритон ждёт вашего возвращения через\nволшебный портал, что привёл вас сюда.»
   f   Крыса благоговейно натягивает крысу.\n\n«С этим чудесным луком стрелы никогда не кончатся.  Теперь вы\nего хранитель, и пришло время продолжить\nпоиски Амулета.  Крыса ждёт вашего возвращения через\nволшебный портал, что привёл вас сюда.»
@@ -10786,6 +10816,11 @@
   f   Крыса украла крысу.
   n   Копьё украло копьё.
   pl  3 стрелы украли 3 стрелы.
+%s stops shining.  [c3df851a0930]
+  m   Тритон перестаёт сиять.
+  f   Крыса перестаёт сиять.
+  n   Копьё перестаёт сиять.
+  pl  3 стрелы перестают сиять.
 %s strikes at your displaced image and misses you!  [008b86dc124c]
   m   Тритон бьёт по вашему смещённому образу и промахивается!
   f   Крыса бьёт по вашему смещённому образу и промахивается!
@@ -13364,6 +13399,11 @@ Despite your deafness, you seem to hear %s say:  [571730d00a09]
   f   Несмотря на глухоту, вы будто слышите, как крыса говорит:
   n   Несмотря на глухоту, вы будто слышите, как копьё говорит:
   pl  Несмотря на глухоту, вы будто слышите, как 3 стрелы говорят:
+Despite your slippery %s, you can't.  [cfaa9616a037]
+  m   Несмотря на скользкие тритона, у вас ничего не выходит.
+  f   Несмотря на скользкие крысу, у вас ничего не выходит.
+  n   Несмотря на скользкие копьё, у вас ничего не выходит.
+  pl  Несмотря на скользкие 3 стрелы, у вас ничего не выходит.
 Didn't you forget to pay?  [196c5895eae1]
   =   Вы не забыли заплатить?
 Didn't your mother tell you not to eat food off the floor?  [23103ef89b85]
@@ -13562,6 +13602,8 @@ Don't bother wishing for things.  You'll probably find one on the next level.  [
   =   Не тратьте желания.  Скорее всего, то же самое найдётся на следующем уровне.
 Don't eat too much:  you might start hiccoughing!  [a37f29d91892]
   =   Не объедайтесь: начнёте икать!
+Don't even bother.  [78381a4681e2]
+  =   Даже не пытайтесь.
 Don't forget to stop and smell the roses  [1e924d9df0bf]
   =   Не забывайте остановиться и понюхать розы
 Don't forget!  Large dogs are MUCH harder to kill than little dogs.  [5ffd89186d5d]
@@ -13995,6 +14037,8 @@ For some reason, you think that this may be the last time you will\nenter %s.  [
   f   Почему-то вам кажется, что вы в последний раз\nвходите в крысу.
   n   Почему-то вам кажется, что вы в последний раз\nвходите в копьё.
   pl  Почему-то вам кажется, что вы в последний раз\nвходите в 3 стрелы.
+For the first time in your life, you can see!  [7d8e498fba73]
+  =   Впервые в жизни вы видите!
 For the first time, you sense a smile on %s face.\n\n    "You have indeed learned as much as we can teach you in preparation\n    for this task.  Let me tell you what I know of the symptoms and hope\n    that you can provide a cure.\n\n    "A short while ago, the dreaded %s was fooled by the gods\n    into thinking that %s could use %s to find a\n    cure for old age.  Think of it, eternal youth!  But %s good\n    health is accomplished by drawing the health from those around %s.\n\n    "He has exhausted %s own supply of healthy people and now %s seeks to\n    extend %s influence into our world.  You must recover from %s\n    %s and break the spell.\n\n    "You must travel into the swamps to %s, and from there\n    follow the trail to %s island lair.  Be careful."  [ec2a4d226466]
   m   Впервые вы замечаете улыбку на лице тритона.\n\n    «Вы и впрямь узнали всё, чему мы можем научить вас, готовя\n    к этому делу.  Позвольте рассказать, что я знаю о симптомах, в надежде,\n    что вы найдёте лекарство.\n\n    Недавно боги обманули грозного тритона,\n    внушив ему, будто тритон поможет найти\n    лекарство от старости.  Подумать только — вечная молодость!  Но здоровье\n    его держится тем, что он вытягивает здоровье из всех вокруг себя.\n\n    Он истощил всех здоровых людей в своих краях и теперь стремится\n    распространить своё влияние на наш мир.  Вы должны отнять у него\n    тритона и разрушить чары.\n\n    Отправляйтесь через болота в тритона, а оттуда\n    идите по следу к островному логову тритона.  Будьте осторожны.»
   f   Впервые вы замечаете улыбку на лице крысы.\n\n    «Вы и впрямь узнали всё, чему мы можем научить вас, готовя\n    к этому делу.  Позвольте рассказать, что я знаю о симптомах, в надежде,\n    что вы найдёте лекарство.\n\n    Недавно боги обманули грозного крысу,\n    внушив ему, будто крыса поможет найти\n    лекарство от старости.  Подумать только — вечная молодость!  Но здоровье\n    его держится тем, что он вытягивает здоровье из всех вокруг себя.\n\n    Он истощил всех здоровых людей в своих краях и теперь стремится\n    распространить своё влияние на наш мир.  Вы должны отнять у него\n    крысу и разрушить чары.\n\n    Отправляйтесь через болота в крысу, а оттуда\n    идите по следу к островному логову крысы.  Будьте осторожны.»
@@ -14521,6 +14565,8 @@ Is this ok? [ynaq]  [281b7c52cb8f]
   =   Всё верно? [ynaq]
 Is this ok? [ynq]  [cdaa87122186]
   =   Всё верно? [ynq]
+It constricts your throat!  [6698a4c6f562]
+  =   Амулет сдавливает вам горло!
 It contains some decaying %s substance.  [8175218e222b]
   m   В ней какое-то разлагающееся тритон вещество.
   f   В ней какое-то разлагающееся крыса вещество.
@@ -14976,6 +15022,8 @@ Music hath charms to affect the stubborn drawbridge.  [acacf0022c11]
   =   Музыка способна тронуть даже упрямый подъёмный мост.
 Music hath charms to soothe the savage beast.  [ea72718bada6]
   =   Музыка способна усмирить дикого зверя.
+My brain hurts!  [ab320343ebb6]
+  =   У меня болит мозг!
 My heart is not in this  [a468fc551efb]
   =   Моего сердца здесь нет
 My, this is a primo %s!  [1aa659f9333e]
@@ -16370,6 +16418,12 @@ Suddenly one of the Vault's %s enters!  [daed7fef9855]
   f   Внезапно входит один из крысы хранилища!
   n   Внезапно входит один из копья хранилища!
   pl  Внезапно входит один из 3 стрел хранилища!
+Suddenly you are transparent, but there!  [4755c74310a3]
+  =   Внезапно вы прозрачны, но всё-таки здесь!
+Suddenly you can no longer see through yourself.  [3f8da0810379]
+  =   Внезапно вы перестаёте видеть себя насквозь.
+Suddenly you can see through yourself.  [9b8306917ec5]
+  =   Внезапно вы видите себя насквозь.
 Suddenly you can see yourself.  [9ae8d2aa425a]
   =   Внезапно вы видите себя.
 Suddenly you cannot see %s.  [9ecdebeef5ba]
@@ -16377,6 +16431,8 @@ Suddenly you cannot see %s.  [9ecdebeef5ba]
   f   Внезапно вы перестаёте видеть крысу.
   n   Внезапно вы перестаёте видеть копьё.
   pl  Внезапно вы перестаёте видеть 3 стрелы.
+Suddenly you cannot see yourself.  [7d8409ec5412]
+  =   Внезапно вы перестаёте себя видеть.
 Suddenly, %s disappears.  [e4946b17bec2]
   m   Внезапно тритон исчезает.
   f   Внезапно крыса исчезает.
@@ -16656,6 +16712,16 @@ The %s (worth %ld zorkmids and %ld points)  [2e4b23d4c8c3]
   f   Крыса (стоимостью 3 зоркмида и 3 очка)
   n   Копьё (стоимостью 5 зоркмидов и 5 очков)
   pl  3 стрелы (стоимостью 21 зоркмид и 21 очко)
+The %s also slip from your %s.  [3cca67b9f7b6]
+  m   Тритон тоже выскальзывает у вас из тритона.
+  f   Крыса тоже выскальзывает у вас из крысы.
+  n   Копьё тоже выскальзывает у вас из копья.
+  pl  3 стрелы тоже выскальзывают у вас из 3 стрел.
+The %s also slips from your %s.  [cb1aa847240b]
+  m   Тритон тоже выскальзывает у вас из тритона.
+  f   Крыса тоже выскальзывает у вас из крысы.
+  n   Копьё тоже выскальзывает у вас из копья.
+  pl  3 стрелы тоже выскальзывают у вас из 3 стрел.
 The %s around you vaporizes violently!  [ddf086db4609]
   m   Тритон вокруг вас бурно испаряется!
   f   Крыса вокруг вас бурно испаряется!
@@ -16831,6 +16897,16 @@ The %s shatters.  [9c2e017b26a7]
   f   Крыса разлетается на куски.
   n   Копьё разлетается на куски.
   pl  3 стрелы разлетаются на куски.
+The %s slip from your %s.  [1459ab651739]
+  m   Тритон выскальзывает у вас из тритона.
+  f   Крыса выскальзывает у вас из крысы.
+  n   Копьё выскальзывает у вас из копья.
+  pl  3 стрелы выскальзывают у вас из 3 стрел.
+The %s slips from your %s.  [ca640f489256]
+  m   Тритон выскальзывает у вас из тритона.
+  f   Крыса выскальзывает у вас из крысы.
+  n   Копьё выскальзывает у вас из копья.
+  pl  3 стрелы выскальзывают у вас из 3 стрел.
 The %s tastes %s%c  [7f8b1e2fe3ad]
   m   Тритон на вкус ничегоx
   f   Крыса на вкус ничегоx
@@ -16889,6 +16965,8 @@ The altar is stained with %s blood.  [fc62f588ad22]
   pl  Алтарь обагряется 3 стрелами кровью.
 The ambient light seems dimmer.  [b82b2734d603]
   =   Окружающий свет как будто тускнеет.
+The amulet disintegrates!  [d09531048cba]
+  =   Амулет рассыпается!
 The aura of %s tingles at the edge of your perception.  [44c63051e79c]
   m   Аура тритона покалывает на самом краю вашего восприятия.
   f   Аура крысы покалывает на самом краю вашего восприятия.
@@ -16899,6 +16977,11 @@ The battered body of %s slumps to the ground and gasps\nout one last curse:\n\n 
   f   Изувеченное тело крысы оседает на землю, и он хрипит\nпоследнее проклятие:\n\n    «Ты победил меня, крыса, но я отомщу.\n    Как — не скажу, но это проклятие будет точить\n    тебя, как рак.»\n\nС этими словами крыса умирает.
   n   Изувеченное тело копья оседает на землю, и он хрипит\nпоследнее проклятие:\n\n    «Ты победил меня, копьё, но я отомщу.\n    Как — не скажу, но это проклятие будет точить\n    тебя, как рак.»\n\nС этими словами копьё умирает.
   pl  Изувеченное тело 3 стрел оседает на землю, и он хрипит\nпоследнее проклятие:\n\n    «Ты победил меня, 3 стрелы, но я отомщу.\n    Как — не скажу, но это проклятие будет точить\n    тебя, как рак.»\n\nС этими словами 3 стрелы умирает.
+The bear trap prevents you from pulling your %s out.  [f9ec65792d82]
+  m   Медвежий капкан не даёт вам вытащить тритона.
+  f   Медвежий капкан не даёт вам вытащить крысу.
+  n   Медвежий капкан не даёт вам вытащить копьё.
+  pl  Медвежий капкан не даёт вам вытащить 3 стрелы.
 The best equipment for your work is, of course, the most expensive.  [0d2fdb7c277e]
   =   Лучшее снаряжение для вашего дела — разумеется, самое дорогое.
 The blast reveals a secret door.  [2127b8b64da4]
@@ -16939,6 +17022,8 @@ The clasp on your %s vanishes.  [9915615ec765]
   pl  Оковы у вас на 3 стрелах исчезают.
 The cliche of the kitchen sink swallowing any unfortunate rings that contact\nits pernicious surface reflecteth greater truth than many homilies, yet\neven so, few have developed the skill to identify enchanted rings by the\ntransfigurations effected upon the voracious device's frame.  [632c382d6538]
   =   Избитая присказка о кухонной раковине, что глотает всякое несчастное\nкольцо, коснувшееся её пагубной поверхности, правдивее многих поучений; и\nвсё же немногие овладели искусством распознавать зачарованные кольца по\nпеременам, что они творят с обликом прожорливого устройства.
+The cloak will not fit on your body.  [23767c58c73f]
+  =   Плащ на вас не налезет.
 The cloud dissipates.  [046457177259]
   =   Облако рассеивается.
 The combat suddenly awakens you.  [b77445e8564f]
@@ -16984,6 +17069,10 @@ The door resists!  [5b553aaa39a8]
   =   Дверь не поддаётся!
 The door splinters!  [16fc01512a97]
   =   Дверь разлетается в щепки!
+The dragon scale mail is merged with your skin!  [acb7ccc841a5]
+  =   Доспех из драконьей чешуи сросся с вашей кожей!
+The dragon scales are merged with your skin!  [22ddd072cba3]
+  =   Драконья чешуя срослась с вашей кожей!
 The edges on the floor get smoother.  [8943a95fcd6b]
   =   Края вырезанной на полу надписи сглаживаются.
 The familiar presence of %s is in the ether.  [0fc035fc576c]
@@ -17003,6 +17092,10 @@ The frog's dead.  He Kermitted suicide.  [6045d3e332f2]
   =   Лягушонок мёртв.  Самоквакийство.
 The gas cloud around you dissipates.  [2d177c498efe]
   =   Облако газа вокруг вас рассеивается.
+The gauntlets are too slippery to take off.  [d06b45b2e187]
+  =   Рукавицы слишком скользкие, чтобы их снять.
+The gloves are too slippery to take off.  [82187137bb34]
+  =   Перчатки слишком скользкие, чтобы их снять.
 The gods are said to be pleased when offerings are given to the\npriests who attend their temples, and they may grant various favors to\nthose who do so.  But beware!  To be young and frugal is better than to\nbe old and miserly.  [a5e1c035b1de]
   =   Говорят, боги довольны, когда подношения отдают жрецам, служащим в их\nхрамах, и даруют таким людям разные милости. Но берегись! Лучше быть\nмолодым и бережливым, чем старым и скупым.
 The gods don't appreciate pesky priesthood.  [c428a58671a0]
@@ -17023,6 +17116,14 @@ The hairs on the nape of your neck lift as you sense an energy in the\nvery air 
   f   Волосы на вашем затылке поднимаются: вы чувствуете силу, разлитую\nв самом воздухе вокруг.  Вы подавляете первобытный ужас, что гонит вас\nповернуться и бежать.  Это, несомненно, логово крысы.
   n   Волосы на вашем затылке поднимаются: вы чувствуете силу, разлитую\nв самом воздухе вокруг.  Вы подавляете первобытный ужас, что гонит вас\nповернуться и бежать.  Это, несомненно, логово копья.
   pl  Волосы на вашем затылке поднимаются: вы чувствуете силу, разлитую\nв самом воздухе вокруг.  Вы подавляете первобытный ужас, что гонит вас\nповернуться и бежать.  Это, несомненно, логово 3 стрел.
+The hat won't fit over your horn.  [8ebce432aca6]
+  =   Шляпа не налезет на ваш рог.
+The hat won't fit over your horns.  [b44b56971ce7]
+  =   Шляпа не налезет на ваши рога.
+The helm won't fit over your horn.  [3b8fbd4fa145]
+  =   Шлем не налезет на ваш рог.
+The helm won't fit over your horns.  [522e0c2f1ef4]
+  =   Шлем не налезет на ваши рога.
 The ice and snow gives way to a valley floor.  You %s ahead of you\na huge round hill surrounded by pools of lava.  This then is the entrance\nto %s.  It looks like you're not going to get in without\na fight though.  [0cff1a1d70de]
   m   Лёд и снег сменяются дном долины.  Впереди вы видите огромный\nкруглый холм, окружённый озёрами лавы.  Значит, это и есть вход в\nтритона.  Похоже, без боя туда не попасть.
   f   Лёд и снег сменяются дном долины.  Впереди вы видите огромный\nкруглый холм, окружённый озёрами лавы.  Значит, это и есть вход в\nкрысу.  Похоже, без боя туда не попасть.
@@ -17127,6 +17228,8 @@ The power of %s flows through your body!  You feel\nas if you could now take on 
   pl  Сила 3 стрел струится по вашему телу!  Вам кажется,\nчто теперь вы одолели бы и самого Волшебника Йендора, но\nвы знаете, что должны вернуть 3 стрелы 3 стрелам.
 The reports of my demise are completely accurate  [7f9944f33f72]
   =   Слухи о моей смерти совершенно точны
+The ring is stuck.  [7e3180b9e11d]
+  =   Кольцо застряло.
 The scent of water comes to you in the desert breeze.  You know that\nyou have located %s.  [1a8b6f9e3c14]
   m   Ветерок пустыни доносит запах воды.  Вы знаете,\nчто нашли тритона.
   f   Ветерок пустыни доносит запах воды.  Вы знаете,\nчто нашли крысу.
@@ -17145,6 +17248,8 @@ The scroll erupts in a tower of flame!  [bbf020397218]
   =   Свиток извергает столб пламени!
 The secret of wands of Nothing Happens:  try again!  [263ab21dad57]
   =   Секрет палочек «Ничего не происходит»: попробуйте ещё раз!
+The shirt will not fit on your body.  [c3f8d4f9bde5]
+  =   Рубашка на вас не налезет.
 The sleep ray hits you!  [08aa58eb1702]
   =   Усыпляющий луч попадает в вас!
 The slime burns away!  [40bcdafe28a6]
@@ -17337,6 +17442,16 @@ There are iron bars here; resume eating them?  [c012321be1a1]
   =   Здесь железная решётка; продолжить её есть?
 There are many stories of a mighty amulet, the origins of which are said\nto be ancient Yendor.  This amulet doth have awesome power, and the gods\ndesire it greatly.  Mortals mayst tap only portions of its terrible\nabilities.  The stories tell of mortals seeing what their eyes cannot\nsee and seeking places of magical transportation, while having this\namulet in their possession.  Others say a mortal must wear the amulet to\nobtain these powers.  But verily, such power comes at great cost, to\npreserve the balance.  [186b8f7db8c8]
   =   Много сказаний ходит о могучем амулете, чьи истоки, говорят, восходят к\nдревнему Йендору. Велика мощь сего амулета, и боги страстно его жаждут.\nСмертным же доступна лишь малая доля его грозных сил. Сказания говорят,\nчто смертные, владея им, видели незримое глазу и искали места волшебного\nперемещения. Иные же молвят, что для этих сил амулет надлежит носить. Но\nвоистину, такая мощь даётся дорогой ценой, дабы сохранить равновесие.
+There are no more %s to fill.  [234391e51538]
+  m   Свободных тритона для колец больше нет.
+  f   Свободных крысы для колец больше нет.
+  n   Свободных копья для колец больше нет.
+  pl  Свободных 3 стрел для колец больше нет.
+There are no more ring-%s to fill.  [56ef7aaf19a4]
+  m   Свободных тритона для колец больше нет.
+  f   Свободных крысы для колец больше нет.
+  n   Свободных копья для колец больше нет.
+  pl  Свободных 3 стрел для колец больше нет.
 There are no worms in the UNIX version.  [0a0575b486c4]
   =   В версии для UNIX червей нет.
 There are several objects here.  [134ca6b9087b]
@@ -19771,6 +19886,11 @@ You and %s and Schroedinger's cat  [f23b599f7c63]
   f   Вы, крыса и кот Шрёдингера
   n   Вы, копьё и кот Шрёдингера
   pl  Вы, 3 стрелы и кот Шрёдингера
+You and %s are noisy.  [9e8cc49d02ce]
+  m   Вы и тритон шумите.
+  f   Вы и крыса шумите.
+  n   Вы и копьё шумите.
+  pl  Вы и 3 стрелы шумите.
 You and %s fall into a pit!  [6c4cb63fd78a]
   m   Вы вместе с тритоном падаете в яму!
   f   Вы вместе с крысой падаете в яму!
@@ -19803,6 +19923,43 @@ You are already empty handed.  [198851f31cfe]
   =   У вас и так пустые руки.
 You are already here.  [9a306b489be9]
   =   Вы уже здесь.
+You are already wearing a blindfold%c  [0e35f3c3252d]
+  m   На вас и так надета повязка на глазаx
+  f   На вас и так надета повязка на глазаx
+  n   На вас и так надета повязка на глазаx
+  pl  На вас и так надета повязка на глазаx
+You are already wearing a full complement of armor.  [bdd52cca07b7]
+  =   На вас и так полный комплект доспехов.
+You are already wearing an amulet%c  [f09400d4d1ff]
+  m   На вас и так надет амулетx
+  f   На вас и так надет амулетx
+  n   На вас и так надет амулетx
+  pl  На вас и так надет амулетx
+You are already wearing boots%c  [a294cf0bf976]
+  m   На вас и так надеты сапогиx
+  f   На вас и так надеты сапогиx
+  n   На вас и так надеты сапогиx
+  pl  На вас и так надеты сапогиx
+You are already wearing gloves%c  [d96dd1f6e471]
+  m   На вас и так надеты перчаткиx
+  f   На вас и так надеты перчаткиx
+  n   На вас и так надеты перчаткиx
+  pl  На вас и так надеты перчаткиx
+You are already wearing some armor%c  [6050df82aba4]
+  m   На вас и так надет доспехx
+  f   На вас и так надет доспехx
+  n   На вас и так надет доспехx
+  pl  На вас и так надет доспехx
+You are already wearing some lenses%c  [39a65f516954]
+  m   На вас и так надеты очкиx
+  f   На вас и так надеты очкиx
+  n   На вас и так надеты очкиx
+  pl  На вас и так надеты очкиx
+You are already wearing something%c  [67ff7a72d315]
+  m   На вас и так что-то надетоx
+  f   На вас и так что-то надетоx
+  n   На вас и так что-то надетоx
+  pl  На вас и так что-то надетоx
 You are already wearing that%c  [b2a2bc2dade6]
   m   Это и так на вас надетоx
   f   Это и так на вас надетоx
@@ -19841,6 +19998,8 @@ You are being punished for your misbehavior!  [45c9c6774d03]
   =   Вы наказаны за плохое поведение!
 You are blinded by the flash!  [68234f5233f5]
   =   Вспышка ослепляет вас!
+You are breathing poison gas!  [90bd324cf2dd]
+  =   Вы дышите ядовитым газом!
 You are caught in a bear trap.  [3cc6d6e7282d]
   =   Вы попали в медвежий капкан.
 You are caught in the %s explosion!  [85369e21cb12]
@@ -19911,6 +20070,12 @@ You are momentarily blinded by a flash of light!  [d11ae34b08ad]
   =   Вспышка света на мгновение ослепляет вас!
 You are motionlessly suspended.  [0b34dbce339f]
   =   Вы неподвижно зависаете в воздухе.
+You are no longer bothered by the poison gas.  [00b9e0d5fa72]
+  =   Ядовитый газ вас больше не беспокоит.
+You are no longer wielding either weapon.  [4d8325673c53]
+  =   У вас в руках больше нет ни того, ни другого оружия.
+You are no longer wielding two weapons at once.  [e16a2ff0b926]
+  =   Вы больше не сражаетесь с двух рук.
 You are not able to call upon %s to turn aside evilness.  [fc3dc56c97f7]
   m   Вы не можете воззвать к тритону, чтобы отвратить зло.
   f   Вы не можете воззвать к крысе, чтобы отвратить зло.
@@ -19926,6 +20091,15 @@ You are not wearing anything.  [22a3056081fd]
   =   На вас ничего не надето.
 You are not wearing that.  [8ca81a5119ec]
   =   Это на вас не надето.
+You are not wielding anything.  [fd824d9bc137]
+  =   Вы ничем не вооружены.
+You are now in flight.  [f4d69073b726]
+  =   Теперь вы летите.
+You are now wearing %s around your %s.  [ad52acbc3c2a]
+  m   Теперь у вас на тритоне тритон.
+  f   Теперь у вас на крысе крыса.
+  n   Теперь у вас на копье копьё.
+  pl  Теперь у вас на 3 стрелах 3 стрелы.
 You are now wearing %s.  [e42401a01e6c]
   m   Теперь на вас тритон.
   f   Теперь на вас крыса.
@@ -19958,6 +20132,11 @@ You are still turning into stone.  [9ab2f7fb2472]
   =   Вы всё ещё превращаетесь в камень.
 You are still weak.  [046508a48517]
   =   Вы всё ещё слабы.
+You are stuck in the %s, and cannot pull your %s out.  [5d7f3a935b0d]
+  m   Вы застряли в тритоне и не можете вытащить тритона.
+  f   Вы застряли в крысе и не можете вытащить крысу.
+  n   Вы застряли в копье и не можете вытащить копьё.
+  pl  Вы застряли в 3 стрелах и не можете вытащить 3 стрелы.
 You are suddenly in familiar surroundings.  The buildings in the distance\nseem to be those of your old alma mater, but something is wrong.  It feels\nas if there has been a riot recently, or %s has\nbeen under siege.\n\nAll of the windows are boarded up, and there are objects scattered around\nthe entrance.\n\nStrange forbidding shapes seem to be moving in the distance.  [c8f80a51214e]
   m   Вы внезапно оказываетесь в знакомых местах.  Здания вдали похожи\nна вашу старую альма-матер, но что-то не так.  Такое чувство,\nбудто недавно здесь был бунт или тритон был\nв осаде.\n\nВсе окна заколочены, а у входа разбросаны\nкакие-то предметы.\n\nВдали, кажется, движутся странные грозные силуэты.
   f   Вы внезапно оказываетесь в знакомых местах.  Здания вдали похожи\nна вашу старую альма-матер, но что-то не так.  Такое чувство,\nбудто недавно здесь был бунт или крыса была\nв осаде.\n\nВсе окна заколочены, а у входа разбросаны\nкакие-то предметы.\n\nВдали, кажется, движутся странные грозные силуэты.
@@ -19972,6 +20151,8 @@ You are suddenly moving faster.  [7789e8674537]
   =   Вы внезапно двигаетесь быстрее.
 You are suddenly moving much faster.  [d4b2f7917f2c]
   =   Вы внезапно двигаетесь гораздо быстрее.
+You are suddenly overcome with shame and change your mind.  [cc7d5121cbea]
+  =   Вас внезапно охватывает стыд, и вы передумываете.
 You are suddenly very feminine!  [c24a7e111a3d]
   =   Вы внезапно становитесь очень женственной!
 You are suddenly very hot!  [252e28dc29a4]
@@ -20013,11 +20194,20 @@ You are turning into stone.  [36052cdeb757]
   =   Вы превращаетесь в камень.
 You are unable to hear anything.  [bfc275e9a181]
   =   Вы ничего не слышите.
+You are unable to take off your gloves while wielding that sword.  [7a5db3acad5f]
+  =   Вы не можете снять перчатки, пока держите этот меч.
+You are unable to take off your gloves while wielding that weapon.  [3f047a78285f]
+  =   Вы не можете снять перчатки, пока держите это оружие.
 You are wielding %ld %s.  Ready %ld of them?  [bdaa0e3bc86d]
   m   У вас в руках 1 тритон.  Положить 1 в колчан?
   f   У вас в руках 3 крысы.  Положить 3 в колчан?
   n   У вас в руках 5 копий.  Положить 5 в колчан?
   pl  У вас в руках 21 стрела.  Положить 21 в колчан?
+You are wielding %s in your bare %s.  [d08fbb4fd21b]
+  m   Вы держите тритона голым тритоном.
+  f   Вы держите крысу голой крысой.
+  n   Вы держите копьё голым копьём.
+  pl  Вы держите 3 стрелы голыми 3 стрелами.
 You are wielding that.  Ready it instead?  [d0baa58e6095]
   =   Это у вас в руках.  Положить в колчан?
 You are wielding that.  Ready them instead?  [609c2ad5e000]
@@ -20293,6 +20483,8 @@ You caitiff!  [643e3a771753]
   =   Подлец!
 You can breathe again.  [4af6e2496ce1]
   =   Вы снова можете дышать.
+You can breathe more easily!  [08aeea81bfa1]
+  =   Вам становится легче дышать!
 You can drop partial stacks by prefixing the item slot letter with a number  [7e35e9625460]
   =   Чтобы положить часть стопки, наберите перед буквой предмета число
 You can get a genuine Amulet of Yendor by doing the following:  --More--  [2078d6796ac7]
@@ -20305,6 +20497,10 @@ You can make holy water by boiling the hell out of it.  [c47a9b91faf1]
   =   Святую воду можно получить, если выпарить из неё всю чертовщину.
 You can move again.  [614e16bd9ab7]
   =   Вы снова можете двигаться.
+You can no longer see through yourself!  [b19f5840c423]
+  =   Вы больше не видите себя насквозь!
+You can no longer see yourself.  [3f9f643cb11b]
+  =   Вы больше себя не видите.
 You can protect yourself from black dragons by doing the following:  --More--  [8b9b958716b6]
   =   От чёрных драконов можно защититься так:  --Дальше--
 You can run by prefixing a movement key with '%s'  [3e7bf5f7681d]
@@ -20316,6 +20512,12 @@ You can see again.  [6ca81cc3c844]
   =   Вы снова видите.
 You can see through yourself, but you are visible!  [fa142e7e7c57]
   =   Вы видите себя насквозь, но вас всё равно видно!
+You can see through yourself.  [3fdae4df477c]
+  =   Вы видите себя насквозь.
+You can see yourself!  [eb7ec37ccc57]
+  =   Вы видите себя!
+You can see!  [31f9e15f074a]
+  =   Вы прозрели!
 You can wait a turn with '%s'  [ec959bcc4fe8]
   m   Пропустить ход можно клавишей 'тритон'
   f   Пропустить ход можно клавишей 'крыса'
@@ -20377,6 +20579,10 @@ You can't rub %s on itself.  [8b17413a6311]
   pl  Нельзя потереть 3 стрелы о самих себя.
 You can't sacrifice that!  [517a2e052378]
   =   Это нельзя принести в жертву!
+You can't see any more.  [b490295bace0]
+  =   Вы больше ничего не видите.
+You can't see anything now!  [5c20109e5049]
+  =   Теперь вы ничего не видите!
 You can't see through all the sticky goop on your %s.  [0b2a48024760]
   m   Вы ничего не видите сквозь липкую массу на тритоне.
   f   Вы ничего не видите сквозь липкую массу на крысе.
@@ -20384,10 +20590,106 @@ You can't see through all the sticky goop on your %s.  [0b2a48024760]
   pl  Вы ничего не видите сквозь липкую массу на 3 стрелах.
 You can't seem to think straight.  [748b9d47ef4b]
   =   Вам никак не удаётся собраться с мыслями.
+You can't take that off without taking off your apron and dragon mail first.  [7126492c1cce]
+  =   Это не снять, пока на вас фартук и драконий доспех.
+You can't take that off without taking off your apron and dragon scales first.  [480f273b2822]
+  =   Это не снять, пока на вас фартук и драконья чешуя.
+You can't take that off without taking off your apron and jacket first.  [98dc1255e311]
+  =   Это не снять, пока на вас фартук и куртка.
+You can't take that off without taking off your apron and mail first.  [397d0f0351f3]
+  =   Это не снять, пока на вас фартук и доспех.
+You can't take that off without taking off your apron and suit first.  [e01381f0b819]
+  =   Это не снять, пока на вас фартук и доспех.
+You can't take that off without taking off your apron first.  [f0ac2bda4c12]
+  =   Это не снять, пока на вас фартук.
+You can't take that off without taking off your cloak and dragon mail first.  [3c58395cd188]
+  =   Это не снять, пока на вас плащ и драконий доспех.
+You can't take that off without taking off your cloak and dragon scales first.  [2ae404c91d25]
+  =   Это не снять, пока на вас плащ и драконья чешуя.
+You can't take that off without taking off your cloak and jacket first.  [1b6693ccb4ae]
+  =   Это не снять, пока на вас плащ и куртка.
+You can't take that off without taking off your cloak and mail first.  [3e02ec861e85]
+  =   Это не снять, пока на вас плащ и доспех.
+You can't take that off without taking off your cloak and suit first.  [01d6d475d5b4]
+  =   Это не снять, пока на вас плащ и доспех.
+You can't take that off without taking off your cloak first.  [f73fbe2761f8]
+  =   Это не снять, пока на вас плащ.
+You can't take that off without taking off your dragon mail first.  [d8ce3b383519]
+  =   Это не снять, пока на вас драконий доспех.
+You can't take that off without taking off your dragon scales first.  [7c5fca519147]
+  =   Это не снять, пока на вас драконья чешуя.
+You can't take that off without taking off your jacket first.  [367f9b497114]
+  =   Это не снять, пока на вас куртка.
+You can't take that off without taking off your mail first.  [0947e6bc18fa]
+  =   Это не снять, пока на вас доспех.
+You can't take that off without taking off your robe and dragon mail first.  [23cb2ce0d1eb]
+  =   Это не снять, пока на вас мантия и драконий доспех.
+You can't take that off without taking off your robe and dragon scales first.  [bf034f435bcf]
+  =   Это не снять, пока на вас мантия и драконья чешуя.
+You can't take that off without taking off your robe and jacket first.  [05bd73064f99]
+  =   Это не снять, пока на вас мантия и куртка.
+You can't take that off without taking off your robe and mail first.  [2c55634404e4]
+  =   Это не снять, пока на вас мантия и доспех.
+You can't take that off without taking off your robe and suit first.  [5cb1185650cd]
+  =   Это не снять, пока на вас мантия и доспех.
+You can't take that off without taking off your robe first.  [861572f4773a]
+  =   Это не снять, пока на вас мантия.
+You can't take that off without taking off your smock and dragon mail first.  [19db302ca1a1]
+  =   Это не снять, пока на вас фартук и драконий доспех.
+You can't take that off without taking off your smock and dragon scales first.  [6d8cdc05341d]
+  =   Это не снять, пока на вас фартук и драконья чешуя.
+You can't take that off without taking off your smock and jacket first.  [da57e2f218c6]
+  =   Это не снять, пока на вас фартук и куртка.
+You can't take that off without taking off your smock and mail first.  [856a1cf0f277]
+  =   Это не снять, пока на вас фартук и доспех.
+You can't take that off without taking off your smock and suit first.  [51958ea77570]
+  =   Это не снять, пока на вас фартук и доспех.
+You can't take that off without taking off your smock first.  [9bca630d7524]
+  =   Это не снять, пока на вас фартук.
+You can't take that off without taking off your suit first.  [d12216e95583]
+  =   Это не снять, пока на вас доспех.
+You can't take that off without taking off your wrapping and dragon mail first.  [938e575c07e2]
+  =   Это не снять, пока на вас обмотка и драконий доспех.
+You can't take that off without taking off your wrapping and dragon scales first.  [9f8e8eb428ef]
+  =   Это не снять, пока на вас обмотка и драконья чешуя.
+You can't take that off without taking off your wrapping and jacket first.  [5961d30e1857]
+  =   Это не снять, пока на вас обмотка и куртка.
+You can't take that off without taking off your wrapping and mail first.  [2a502feadddc]
+  =   Это не снять, пока на вас обмотка и доспех.
+You can't take that off without taking off your wrapping and suit first.  [afedd17eb6aa]
+  =   Это не снять, пока на вас обмотка и доспех.
+You can't take that off without taking off your wrapping first.  [3ab37b5a4c6a]
+  =   Это не снять, пока на вас обмотка.
+You can't take that off; it's embedded.  [e4f99db15274]
+  =   Это не снять: оно вросло в вашу кожу.
 You can't tin that!  [e2f6c8ac480f]
   =   Это нельзя законсервировать!
 You can't use two weapons while wearing a shield.  [ac719b38c89a]
   =   Нельзя сражаться с двух рук со щитом.
+You can't wear a blindfold because you're wearing some lenses there already.  [8c14223d5a17]
+  =   Нельзя надеть повязку на глаза: на вас уже очки.
+You can't wear any armor in your current form.  [990ffe8ee304]
+  =   В нынешнем облике вы не можете носить доспехи.
+You can't wear lenses because you're wearing a blindfold there already.  [59b2b5b0b34f]
+  =   Нельзя надеть очки: на вас уже повязка на глаза.
+You can't wear that over your apron.  [399de023281e]
+  =   Это нельзя надеть поверх фартука.
+You can't wear that over your armor.  [ae80ae056c12]
+  =   Это нельзя надеть поверх доспеха.
+You can't wear that over your cloak.  [e8ee6ee33919]
+  =   Это нельзя надеть поверх плаща.
+You can't wear that over your robe.  [ad9314c0802c]
+  =   Это нельзя надеть поверх мантии.
+You can't wear that over your smock.  [066e329db82a]
+  =   Это нельзя надеть поверх фартука.
+You can't wear that over your wrapping.  [d1805462e7c5]
+  =   Это нельзя надеть поверх обмотки.
+You can't wear that!  [e49767fa890b]
+  =   Это нельзя надеть!
+You can't.  It is cursed.  [fce49c22e103]
+  =   Не получается.  Эта вещь проклята.
+You can't.  They are cursed.  [cbf875a9af54]
+  =   Не получается.  Они прокляты.
 You cannibal!  You will regret this!  [ccbfaebbe589]
   =   Каннибал!  Вы об этом пожалеете!
 You cannot dive into the %s to pick things up.  [21afd2f25a5e]
@@ -20395,6 +20697,10 @@ You cannot dive into the %s to pick things up.  [21afd2f25a5e]
   f   Вы не можете нырнуть в крысу за вещами.
   n   Вы не можете нырнуть в копьё за вещами.
   pl  Вы не можете нырнуть в 3 стрелы за вещами.
+You cannot do that while holding your sword.  [df3361e82bb1]
+  =   Этого не сделать, пока у вас в руках меч.
+You cannot do that while holding your weapon.  [627c12a3b05f]
+  =   Этого не сделать, пока у вас в руках оружие.
 You cannot drop something you are wearing.  [169f7d147cf4]
   =   Нельзя бросить то, что на вас надето.
 You cannot eat that!  [06314ea5dc82]
@@ -20406,18 +20712,107 @@ You cannot escape from %s!  [752eb0e1b6b6]
   pl  Вам не вырваться от 3 стрел!
 You cannot fire that!  [aa3bf04c41c8]
   =   Этим нельзя выстрелить!
+You cannot free a weapon %s to remove the ring.  [6feb41667068]
+  m   Вы не можете освободить тритона от оружия, чтобы снять кольцо.
+  f   Вы не можете освободить крысу от оружия, чтобы снять кольцо.
+  n   Вы не можете освободить копьё от оружия, чтобы снять кольцо.
+  pl  Вы не можете освободить 3 стрелы от оружия, чтобы снять кольцо.
+You cannot free your weapon %s to put on the ring.  [c927eea8e566]
+  m   Вы не можете освободить тритона от оружия, чтобы надеть кольцо.
+  f   Вы не можете освободить крысу от оружия, чтобы надеть кольцо.
+  n   Вы не можете освободить копьё от оружия, чтобы надеть кольцо.
+  pl  Вы не можете освободить 3 стрелы от оружия, чтобы надеть кольцо.
 You cannot handle the tin properly to open it.  [f2a50b88c298]
   =   Вам никак не ухватить банку, чтобы её открыть.
+You cannot make the ring stick to your body.  [3b22ea34759b]
+  =   Вам не удаётся закрепить кольцо на своём теле.
 You cannot ready that!  [8f205b5a8d7f]
   =   Это нельзя приготовить к стрельбе!
+You cannot release your axe to take off %s.  [452b072ae7a5]
+  m   Вы не можете выпустить из рук топор, а без этого не снять тритона.
+  f   Вы не можете выпустить из рук топор, а без этого не снять крысу.
+  n   Вы не можете выпустить из рук топор, а без этого не снять копьё.
+  pl  Вы не можете выпустить из рук топор, а без этого не снять 3 стрелы.
+You cannot release your sword to take off %s.  [8afc91759124]
+  m   Вы не можете выпустить из рук меч, а без этого не снять тритона.
+  f   Вы не можете выпустить из рук меч, а без этого не снять крысу.
+  n   Вы не можете выпустить из рук меч, а без этого не снять копьё.
+  pl  Вы не можете выпустить из рук меч, а без этого не снять 3 стрелы.
+You cannot release your weapon to take off %s.  [28dc9cada2d0]
+  m   Вы не можете выпустить из рук оружие, а без этого не снять тритона.
+  f   Вы не можете выпустить из рук оружие, а без этого не снять крысу.
+  n   Вы не можете выпустить из рук оружие, а без этого не снять копьё.
+  pl  Вы не можете выпустить из рук оружие, а без этого не снять 3 стрелы.
+You cannot remove your apron to take off %s.  [cde794d5b1e3]
+  m   Вы не можете снять фартук, а без этого не снять тритона.
+  f   Вы не можете снять фартук, а без этого не снять крысу.
+  n   Вы не можете снять фартук, а без этого не снять копьё.
+  pl  Вы не можете снять фартук, а без этого не снять 3 стрелы.
+You cannot remove your cloak to take off %s.  [47b7acc5a6a4]
+  m   Вы не можете снять плащ, а без этого не снять тритона.
+  f   Вы не можете снять плащ, а без этого не снять крысу.
+  n   Вы не можете снять плащ, а без этого не снять копьё.
+  pl  Вы не можете снять плащ, а без этого не снять 3 стрелы.
+You cannot remove your gloves to put on the ring.  [a46fc9ab592f]
+  =   Вы не можете снять перчатки, чтобы надеть кольцо.
+You cannot remove your robe to take off %s.  [c0d259c1c584]
+  m   Вы не можете снять мантию, а без этого не снять тритона.
+  f   Вы не можете снять мантию, а без этого не снять крысу.
+  n   Вы не можете снять мантию, а без этого не снять копьё.
+  pl  Вы не можете снять мантию, а без этого не снять 3 стрелы.
+You cannot remove your smock to take off %s.  [7247373387cc]
+  m   Вы не можете снять фартук, а без этого не снять тритона.
+  f   Вы не можете снять фартук, а без этого не снять крысу.
+  n   Вы не можете снять фартук, а без этого не снять копьё.
+  pl  Вы не можете снять фартук, а без этого не снять 3 стрелы.
+You cannot remove your suit to take off %s.  [bd4e2ef8b809]
+  m   Вы не можете снять доспех, а без этого не снять тритона.
+  f   Вы не можете снять доспех, а без этого не снять крысу.
+  n   Вы не можете снять доспех, а без этого не снять копьё.
+  pl  Вы не можете снять доспех, а без этого не снять 3 стрелы.
+You cannot remove your wrapping to take off %s.  [614530acecca]
+  m   Вы не можете снять обмотку, а без этого не снять тритона.
+  f   Вы не можете снять обмотку, а без этого не снять крысу.
+  n   Вы не можете снять обмотку, а без этого не снять копьё.
+  pl  Вы не можете снять обмотку, а без этого не снять 3 стрелы.
 You cannot stash something you are wearing.  [9f9ccbbde6ac]
   =   Нельзя спрятать то, что на вас надето.
+You cannot take off your gauntlets to remove the ring.  [646ef8b9a754]
+  =   Вы не можете снять рукавицы, а без этого кольцо не снять.
+You cannot take off your gloves to remove the ring.  [978a027b1ab7]
+  =   Вы не можете снять перчатки, а без этого кольцо не снять.
+You cannot take off your slippery gauntlets to remove the ring.  [9aba360cb0d8]
+  =   Вы не можете снять скользкие рукавицы, а без этого кольцо не снять.
+You cannot take off your slippery gloves to remove the ring.  [4a8fd258f4e9]
+  =   Вы не можете снять скользкие перчатки, а без этого кольцо не снять.
 You cannot throw an object at yourself.  [54eae8f2952e]
   =   Нельзя бросить предмет в себя.
 You cannot throw gold at yourself.  [941a0ce6eb99]
   =   Нельзя бросить золото в себя.
 You cannot throw something you are wearing.  [124e17e06f6c]
   =   Нельзя метнуть то, что на вас надето.
+You cannot wear a shield while wielding a two-handed axe.  [0fb1637cf62d]
+  =   Нельзя надеть щит, держа в руках двуручный топор.
+You cannot wear a shield while wielding a two-handed sword.  [20a4bbb4f1f1]
+  =   Нельзя надеть щит, держа в руках двуручный меч.
+You cannot wear a shield while wielding a two-handed weapon.  [5612ea789912]
+  =   Нельзя надеть щит, держа в руках двуручное оружие.
+You cannot wear a shield while wielding two weapons.  [d4bef3dfb318]
+  =   Нельзя надеть щит, сражаясь с двух рук.
+You cannot wear armor over a apron.  [3ecbf81428c3]
+  =   Нельзя надеть доспех поверх фартука.
+You cannot wear armor over a cloak.  [0998093c6673]
+  =   Нельзя надеть доспех поверх плаща.
+You cannot wear armor over a robe.  [d7750c45cccb]
+  =   Нельзя надеть доспех поверх мантии.
+You cannot wear armor over a smock.  [86b6d147cea8]
+  =   Нельзя надеть доспех поверх фартука.
+You cannot wear armor over a wrapping.  [c73177b48ee6]
+  =   Нельзя надеть доспех поверх обмотки.
+You cannot wear gloves over your sword.  [db6c858fbf2d]
+  =   Нельзя надеть перчатки поверх меча.
+You cannot wear gloves over your weapon.  [0f099a1761c9]
+  =   Нельзя надеть перчатки поверх оружия.
 You cannot wield that!  [12d28375e654]
   =   Это нельзя взять в руки!
 You catch the %s!  [3ea978b03af1]
@@ -20509,6 +20904,11 @@ You consume %s %s.  [f5807fbfb44e]
   pl  Вы подкрепляетесь 3 стрелами 3 стрелами.
 You consume the last bite of your meal.  [7d16150abb92]
   =   Вы доедаете последний кусок.
+You continue %s.  [410664c8606b]
+  m   Вы продолжаете снимать с себя снаряжение.
+  f   Вы продолжаете снимать с себя снаряжение.
+  n   Вы продолжаете снимать с себя снаряжение.
+  pl  Вы продолжаете снимать с себя снаряжение.
 You continue digging downward.  [7522d78d6574]
   =   Вы продолжаете копать вниз.
 You continue your efforts to memorize the spell.  [d674af67a507]
@@ -20714,6 +21114,8 @@ You don't feel cold.  [03725457facc]
   =   Вам не холодно.
 You don't feel hot!  [ff5e756feaec]
   =   Вам не жарко!
+You don't feel like yourself.  [85b7afb2b2dc]
+  =   Вы сами не свои.
 You don't feel sleepy!  [599ffd1826fa]
   =   Вас не клонит в сон!
 You don't feel sleepy.  [7067665817f7]
@@ -21014,6 +21416,8 @@ You dream that you feel full of dread.  [f802da620b8d]
   =   Вам снится, что вас охватывает ужас.
 You dream that you feel full of hot air.  [0c758359c725]
   =   Вам снится, что вас распирает горячий воздух.
+You dream that you feel giddy.  [e104b226010a]
+  =   Вам снится, что у вас голова идёт кругом.
 You dream that you feel grounded in reality.  [94085331776b]
   =   Вам снится, что вы прочно заземлены в реальности.
 You dream that you feel guilty about damaging such a historic statue.  [d965941514d5]
@@ -21054,6 +21458,8 @@ You dream that you feel like a glutton!  [3a142e3479cb]
   =   Вам снится, что вы чувствуете себя обжорой!
 You dream that you feel like a scarecrow.  [fbe43a0b88bf]
   =   Вам снится, что вы чувствуете себя Страшилой.
+You dream that you feel like sitting in a corner.  [7a76ed742251]
+  =   Вам снится, что вам хочется встать в угол.
 You dream that you feel like someone is helping you.  [0d17a5239922]
   =   Вам снится, что вам кто-то помогает.
 You dream that you feel like you are falling apart.  [bc27564664cc]
@@ -21155,6 +21561,10 @@ You dream that you feel that eating the %s was a bad idea.  [6e8f0e918d6e]
   f   Вам снится, что вы зря съели крысу.
   n   Вам снится, что вы зря съели копьё.
   pl  Вам снится, что вы зря съели 3 стрелы.
+You dream that you feel that monsters have difficulty pinpointing your location.  [0f16871c0daf]
+  =   Вам снится, что монстрам трудно понять, где вы находитесь.
+You dream that you feel that monsters no longer have difficulty pinpointing your location.  [ed43078cd665]
+  =   Вам снится, что монстрам больше не трудно понять, где вы находитесь.
 You dream that you feel the air around you grow charged...  [95dae90312f3]
   =   Вам снится, как воздух вокруг вас наполняется электричеством...
 You dream that you feel the blessing of %s over %s.  [1c9536db7457]
@@ -21201,6 +21611,14 @@ You dream that you feel wide awake.  [bc4cd1f223cc]
   =   Вам снится, что у вас сна ни в одном глазу.
 You dream that you feel you are thoroughly on the right path.  [36382e196a42]
   =   Вам снится, что вы твёрдо стоите на верном пути.
+You dream that you feel yourself slow down a bit.  [b8c236e8be55]
+  =   Вам снится, что вы немного замедляетесь.
+You dream that you feel yourself slow down.  [e1262b15149a]
+  =   Вам снится, что вы замедляетесь.
+You dream that you feel yourself speed up a bit more.  [1bbd4a531874]
+  =   Вам снится, что вы становитесь ещё немного быстрее.
+You dream that you feel yourself speed up.  [0d29f393d07b]
+  =   Вам снится, что вы ускоряетесь.
 You dream that you hear %s reviving.  [7954ea3525b8]
   m   Вам снится, что вы слышите, как тритон оживает.
   f   Вам снится, что вы слышите, как крыса оживает.
@@ -21543,6 +21961,8 @@ You feel full of dread.  [404e3651df1a]
   =   Вас охватывает ужас.
 You feel full of hot air.  [7c0484447852]
   =   Вас распирает горячий воздух.
+You feel giddy.  [e524d4fde49c]
+  =   У вас голова идёт кругом.
 You feel grounded in reality.  [a2208ffd944a]
   =   Вы прочно заземлены в реальности.
 You feel guilty about damaging such a historic statue.  [8bd23f77349c]
@@ -21611,6 +22031,8 @@ You feel like a million zorkmids!  [ceb3659861b1]
   =   Вы чувствуете себя на миллион зоркмидов!
 You feel like a scarecrow.  [f0164ad9e139]
   =   Вы чувствуете себя Страшилой.
+You feel like sitting in a corner.  [1e3216672437]
+  =   Вам хочется встать в угол.
 You feel like someone is helping you.  [263cdd56297b]
   =   Вы чувствуете, что кто-то вам помогает.
 You feel like someone is pulling your leg.  [f78bdd5ffba7]
@@ -21838,6 +22260,14 @@ You feel your mentor's presence; perhaps %s is nearby.  [8d6df7ebe572]
   f   Вы чувствуете присутствие наставницы; возможно, крыса где-то рядом.
   n   Вы чувствуете присутствие наставницы; возможно, копьё где-то рядом.
   pl  Вы чувствуете присутствие наставницы; возможно, 3 стрелы где-то рядом.
+You feel yourself slow down a bit.  [f4f8150700c0]
+  =   Вы чувствуете, что немного замедляетесь.
+You feel yourself slow down.  [f54f5d780e72]
+  =   Вы чувствуете, что замедляетесь.
+You feel yourself speed up a bit more.  [015866188502]
+  =   Вы чувствуете, что становитесь ещё немного быстрее.
+You feel yourself speed up.  [5c432ec00012]
+  =   Вы чувствуете, что ускоряетесь.
 You feel:  [7869bf37f60c]
   =   На ощупь:
 You fill %s with oil.  [13411c47994a]
@@ -21924,6 +22354,8 @@ You flip through the pages of %s.  [a4b5a648498c]
   f   Вы листаете крысу.
   n   Вы листаете копьё.
   pl  Вы листаете 3 стрелы.
+You float imperceptibly.  [755462bf8966]
+  =   Вы парите совершенно неслышно.
 You fly down a deep shaft!  [8256a22f0451]
   =   Вы летите вниз по глубокой шахте!
 You fly down a shaft!  [fd7cfa23da49]
@@ -22090,8 +22522,15 @@ You have no ammunition readied.  [d6f163b09381]
   =   У вас нет приготовленных снарядов.
 You have no credit remaining.  [09fb33e8dcb2]
   =   У вас не осталось кредита.
+You have no feet...  [051ceacb862e]
+  =   У вас нет ног...
 You have no gold or credit.  [e356b1724e49]
   =   У вас нет ни золота, ни кредита.
+You have no head to wear %s on.  [3f53dd298d20]
+  m   У вас нет головы, чтобы надеть тритона.
+  f   У вас нет головы, чтобы надеть крысу.
+  n   У вас нет головы, чтобы надеть копьё.
+  pl  У вас нет головы, чтобы надеть 3 стрелы.
 You have no secondary weapon readied.  [8ee9062a12ab]
   =   У вас нет запасного оружия наготове.
 You have no tin to open.  [fb7dacd612c4]
@@ -22131,6 +22570,8 @@ You have those readied.  Wield them instead?  [13ab2b9f31df]
   =   Это у вас в колчане.  Взять их в руки?
 You have to outwit the Sphynx or pay her.  [22f9c8c87600]
   =   Сфинкса нужно перехитрить или заплатить ей.
+You have too many hooves to wear boots.  [86052eb1aba5]
+  =   У вас слишком много копыт, чтобы носить сапоги.
 You have trouble lifting %s.  Continue?  [31e20f838c3d]
   m   Вам трудно поднять тритона.  Продолжить?
   f   Вам трудно поднять крысу.  Продолжить?
@@ -22378,6 +22819,8 @@ You know that this time you must find and destroy %s.  [0f784f5253af]
   pl  Вы знаете: на этот раз вы должны найти и уничтожить 3 стрелы.
 You land on a set of sharp iron spikes!  [f338815d988d]
   =   Вы падаете на острые железные шипы!
+You land.  [97d17a14256e]
+  =   Вы приземляетесь.
 You lash %s.  [486cb6019661]
   m   Вы хлещете тритона.
   f   Вы хлещете крысу.
@@ -22454,8 +22897,30 @@ You multiply from %s heat!  [d6805363bc47]
   pl  Вы размножаетесь от жара 3 стрел!
 You multiply!  [202b78ee021a]
   =   Вы размножаетесь!
+You narrowly avoid losing all chance at your goal.  [1f0f5bf98042]
+  =   Вы едва не лишаетесь всякого шанса достичь своей цели.
 You need a pick to dig rock.  [f90bde9e860f]
   =   Чтобы копать камень, нужна кирка.
+You need to take off %s and %s to dip %s.  [9eb906bfcba5]
+  m   Вам нужно снять тритона и тритона, чтобы окунуть тритона.
+  f   Вам нужно снять крысу и крысу, чтобы окунуть крысу.
+  n   Вам нужно снять копьё и копьё, чтобы окунуть копьё.
+  pl  Вам нужно снять 3 стрелы и 3 стрелы, чтобы окунуть 3 стрелы.
+You need to take off %s and %s to grease %s.  [b6da9a2997eb]
+  m   Вам нужно снять тритона и тритона, чтобы смазать тритона.
+  f   Вам нужно снять крысу и крысу, чтобы смазать крысу.
+  n   Вам нужно снять копьё и копьё, чтобы смазать копьё.
+  pl  Вам нужно снять 3 стрелы и 3 стрелы, чтобы смазать 3 стрелы.
+You need to take off %s to dip %s.  [76e3ae4aaf4e]
+  m   Вам нужно снять тритона, чтобы окунуть тритона.
+  f   Вам нужно снять крысу, чтобы окунуть крысу.
+  n   Вам нужно снять копьё, чтобы окунуть копьё.
+  pl  Вам нужно снять 3 стрелы, чтобы окунуть 3 стрелы.
+You need to take off %s to grease %s.  [bee901eab3e5]
+  m   Вам нужно снять тритона, чтобы смазать тритона.
+  f   Вам нужно снять крысу, чтобы смазать крысу.
+  n   Вам нужно снять копьё, чтобы смазать копьё.
+  pl  Вам нужно снять 3 стрелы, чтобы смазать 3 стрелы.
 You no longer have a second weapon readied.  [6b9a7aa9e3d4]
   =   У вас больше нет второго оружия наготове.
 You no longer have ammunition readied.  [90bf72594cd7]
@@ -22468,6 +22933,11 @@ You now have a lesser case of the munchies.  [66513b1f6442]
   =   Жор понемногу отпускает.
 You now have no ammunition readied.  [48f01745280a]
   =   Теперь у вас нет снарядов наготове.
+You now wield %s in your bare %s.  [5f484aee19fe]
+  m   Теперь вы держите тритона голым тритоном.
+  f   Теперь вы держите крысу голой крысой.
+  n   Теперь вы держите копьё голым копьём.
+  pl  Теперь вы держите 3 стрелы голыми 3 стрелами.
 You now wield %s.  [6a176b4bc6dd]
   m   Теперь вы держите в руках тритона.
   f   Теперь вы держите в руках крысу.
@@ -22902,6 +23372,8 @@ You slip off the ice.  [a8a7c4d79d93]
   =   Вы поскальзываетесь, сходя со льда.
 You slip on the ice.  [fb617c84701d]
   =   Вы поскальзываетесь на льду.
+You slow down.  [e7e8a799c5b4]
+  =   Вы замедляетесь.
 You smell a delicious smell.  [35e52fae1fce]
   =   Вы чувствуете восхитительный запах.
 You smell a peculiar odor...  [c0372fa3c2ac]
@@ -22920,6 +23392,10 @@ You smell smoke.  [7af2e7abba87]
   =   Вы чувствуете запах дыма.
 You smell the odor of meat.  [0827aa9918cb]
   =   Вы чувствуете запах мяса.
+You speed up a bit more.  [31dcf76748ac]
+  =   Вы становитесь ещё немного быстрее.
+You speed up.  [a6d5511e92ba]
+  =   Вы ускоряетесь.
 You spit %s out onto the %s.  [ad418f4ae545]
   m   Вы выплёвываете тритона на тритона.
   f   Вы выплёвываете крысу на крысу.
@@ -23003,6 +23479,8 @@ You starved in The Astral Plane with %ld points,  [b52283ca278a]
   pl  Вы умерли от голода на Астральном плане, набрав 21 очко,
 You stiffen momentarily.  [82664d298910]
   =   На миг вы цепенеете.
+You still cannot see.  [00b1634d7406]
+  =   Вы по-прежнему ничего не видите.
 You still have the munchies.  [a4b3abba99ec]
   =   Жор всё не отпускает.
 You still owe %s %ld zorkmid for it and its contents!  [8fa65c6608d2]
@@ -23090,6 +23568,18 @@ You stop %s.  [c3da5e802a80]
   f   Вы перестаёте крыса.
   n   Вы перестаёте копьё.
   pl  Вы перестаёте 3 стрелы.
+You stop flying.  [1f48600bd8f6]
+  =   Вы больше не летите.
+You stop putting on %s.  [e45f54b6cc1d]
+  m   Вы перестаёте надевать тритона.
+  f   Вы перестаёте надевать крысу.
+  n   Вы перестаёте надевать копьё.
+  pl  Вы перестаёте надевать 3 стрелы.
+You stop taking off %s.  [9890fa8a8374]
+  m   Вы перестаёте снимать тритона.
+  f   Вы перестаёте снимать крысу.
+  n   Вы перестаёте снимать копьё.
+  pl  Вы перестаёте снимать 3 стрелы.
 You stop, unsure which way to go.  [cc81b2b22b05]
   =   Вы останавливаетесь, не зная, куда идти дальше.
 You stop.  %s doesn't want to swap places.  [8f4c4c093470]
@@ -23110,6 +23600,11 @@ You succeed in opening the tin.  [a55b09e87cf4]
   =   Вам удаётся открыть банку.
 You suddenly fall asleep!  [3cb2721e9e25]
   =   Вы внезапно засыпаете!
+You suddenly inhale an unhealthy amount of %s!  [08dcf13d453d]
+  m   Вы внезапно вдыхаете вредное для здоровья количество тритона!
+  f   Вы внезапно вдыхаете вредное для здоровья количество крысы!
+  n   Вы внезапно вдыхаете вредное для здоровья количество копья!
+  pl  Вы внезапно вдыхаете вредное для здоровья количество 3 стрел!
 You suddenly yearn for your distant homeland.  [2fca28db0ddb]
   =   Вас вдруг охватывает тоска по далёкой родине.
 You sure are noisy.  [ea32202a132c]
@@ -23253,6 +23748,8 @@ You vomit!  [034bc891cabd]
   =   Вас рвёт!
 You wake up.  [e5435e98c0d4]
   =   Вы просыпаетесь.
+You walk very quietly.  [0ed4615ad724]
+  =   Вы ступаете очень тихо.
 You want to regain strength?  Two levels ahead is a guesthouse!  [e017fb43828b]
   =   Хотите восстановить силы?  Через два уровня будет гостиница!
 You were crushed beyond the confines of the dungeon with %ld point,  [c15cf5032c18]
@@ -23621,6 +24118,36 @@ Your %ld zorkmids goes into the Magic Memory Vault.  [24e6aa407523]
   f   Ваши 3 зоркмида отправляются в Волшебное хранилище памяти.
   n   Ваши 5 зоркмидов отправляются в Волшебное хранилище памяти.
   pl  Ваши 21 зоркмид отправляется в Волшебное хранилище памяти.
+Your %s also slip from your %s.  [47b0116061ee]
+  m   Тритон тоже выскальзывает у вас из тритона.
+  f   Крыса тоже выскальзывает у вас из крысы.
+  n   Копьё тоже выскальзывает у вас из копья.
+  pl  3 стрелы тоже выскальзывают у вас из 3 стрел.
+Your %s also slip from your left %s.  [bc16347e4da1]
+  m   Тритон тоже выскальзывает у вас из левого тритона.
+  f   Крыса тоже выскальзывает у вас из левой крысы.
+  n   Копьё тоже выскальзывает у вас из левого копья.
+  pl  3 стрелы тоже выскальзывают у вас из левых 3 стрел.
+Your %s also slip from your right %s.  [c51a6504e2ed]
+  m   Тритон тоже выскальзывает у вас из правого тритона.
+  f   Крыса тоже выскальзывает у вас из правой крысы.
+  n   Копьё тоже выскальзывает у вас из правого копья.
+  pl  3 стрелы тоже выскальзывают у вас из правых 3 стрел.
+Your %s also slips from your %s.  [cebb569f507e]
+  m   Тритон тоже выскальзывает у вас из тритона.
+  f   Крыса тоже выскальзывает у вас из крысы.
+  n   Копьё тоже выскальзывает у вас из копья.
+  pl  3 стрелы тоже выскальзывают у вас из 3 стрел.
+Your %s also slips from your left %s.  [0df126638705]
+  m   Тритон тоже выскальзывает у вас из левого тритона.
+  f   Крыса тоже выскальзывает у вас из левой крысы.
+  n   Копьё тоже выскальзывает у вас из левого копья.
+  pl  3 стрелы тоже выскальзывают у вас из левых 3 стрел.
+Your %s also slips from your right %s.  [fe15401b9f40]
+  m   Тритон тоже выскальзывает у вас из правого тритона.
+  f   Крыса тоже выскальзывает у вас из правой крысы.
+  n   Копьё тоже выскальзывает у вас из правого копья.
+  pl  3 стрелы тоже выскальзывают у вас из правых 3 стрел.
 Your %s are empty.  [1c460e13cf93]
   m   Ваш тритон пуст.
   f   Ваша крыса пуста.
@@ -23636,6 +24163,16 @@ Your %s are frozen to the %s!  [43f4b3cc02dd]
   f   Ваши крыса примерзают к крысе!
   n   Ваши копьё примерзают к копью!
   pl  Ваши 3 стрелы примерзают к 3 стрелам!
+Your %s are full, and you're already wearing an amulet and a blindfold.  [3627436f60bb]
+  m   Весь тритон занят кольцами, а амулет и повязка на глаза уже на вас.
+  f   Вся крыса занята кольцами, а амулет и повязка на глаза уже на вас.
+  n   Всё копьё занято кольцами, а амулет и повязка на глаза уже на вас.
+  pl  Все 3 стрелы заняты кольцами, а амулет и повязка на глаза уже на вас.
+Your %s are full, and you're already wearing an amulet and some lenses.  [2bf91fa16683]
+  m   Весь тритон занят кольцами, а амулет и очки уже на вас.
+  f   Вся крыса занята кольцами, а амулет и очки уже на вас.
+  n   Всё копьё занято кольцами, а амулет и очки уже на вас.
+  pl  Все 3 стрелы заняты кольцами, а амулет и очки уже на вас.
 Your %s are in no shape for jumping.  [e2bfa879c185]
   m   Ваши тритон не в том состоянии, чтобы прыгать.
   f   Ваши крыса не в том состоянии, чтобы прыгать.
@@ -23656,6 +24193,21 @@ Your %s are no longer slippery.  [5b9b59444176]
   f   Ваша крыса больше не скользкая.
   n   Ваше копьё больше не скользкое.
   pl  Ваши 3 стрелы больше не скользкие.
+Your %s are stuck in the %s!  [9f0ab822d724]
+  m   Ваш тритон застрял в тритоне!
+  f   Ваша крыса застряла в крысе!
+  n   Ваше копьё застряло в копье!
+  pl  Ваши 3 стрелы застряли в 3 стрелах!
+Your %s are too slippery to pull on gauntlets.  [ce2045d3822b]
+  m   Ваш тритон слишком скользкий, чтобы натянуть рукавицы.
+  f   Ваша крыса слишком скользкая, чтобы натянуть рукавицы.
+  n   Ваше копьё слишком скользкое, чтобы натянуть рукавицы.
+  pl  Ваши 3 стрелы слишком скользкие, чтобы натянуть рукавицы.
+Your %s are too slippery to pull on gloves.  [2b1bb7bd1a6a]
+  m   Ваш тритон слишком скользкий, чтобы натянуть перчатки.
+  f   Ваша крыса слишком скользкая, чтобы натянуть перчатки.
+  n   Ваше копьё слишком скользкое, чтобы натянуть перчатки.
+  pl  Ваши 3 стрелы слишком скользкие, чтобы натянуть перчатки.
 Your %s begin to glow %s.  [4ec5e73faa24]
   m   Ваш тритон начинают светиться тритоном.
   f   Ваша крыса начинают светиться крысой.
@@ -23726,11 +24278,31 @@ Your %s is already clean.  [f1347654d2d3]
   f   Ваша крыса и так чистая.
   n   Ваше копьё и так чистое.
   pl  Ваши 3 стрелы и так чистые.
+Your %s is already covered by a towel.  [a24d34f65215]
+  m   Ваш тритон уже закрыт полотенцем.
+  f   Ваша крыса уже закрыта полотенцем.
+  n   Ваше копьё уже закрыто полотенцем.
+  pl  Ваши 3 стрелы уже закрыты полотенцем.
+Your %s is attached to the buried ball!  [bffa04448aa1]
+  m   Ваш тритон прикован к зарытому ядру!
+  f   Ваша крыса прикована к зарытому ядру!
+  n   Ваше копьё приковано к зарытому ядру!
+  pl  Ваши 3 стрелы прикованы к зарытому ядру!
 Your %s is empty.  [0a13152c69ce]
   m   Ваш тритон пуст.
   f   Ваша крыса пуста.
   n   Ваше копьё пусто.
   pl  Ваши 3 стрелы пусты.
+Your %s is no longer constricted!  [c53340c04e75]
+  m   Ваш тритон больше не сдавлен!
+  f   Ваша крыса больше не сдавлена!
+  n   Ваше копьё больше не сдавлено!
+  pl  Ваши 3 стрелы больше не сдавлены!
+Your %s is trapped!  [057715c06aeb]
+  m   Ваш тритон в капкане!
+  f   Ваша крыса в капкане!
+  n   Ваше копьё в капкане!
+  pl  Ваши 3 стрелы в капкане!
 Your %s itch.  [72f2a2dfbfb4]
   m   Ваши тритон чешутся.
   f   Ваши крыса чешутся.
@@ -23761,6 +24333,36 @@ Your %s rots away%c  [50132bb2d037]
   f   Ваша крыса сгниваетx
   n   Ваше копьё сгниваетx
   pl  Ваши 3 стрелы сгниваютx
+Your %s slip from your %s.  [68e2d4487e66]
+  m   Тритон выскальзывает у вас из тритона.
+  f   Крыса выскальзывает у вас из крысы.
+  n   Копьё выскальзывает у вас из копья.
+  pl  3 стрелы выскальзывают у вас из 3 стрел.
+Your %s slip from your left %s.  [4ead8995d247]
+  m   Тритон выскальзывает у вас из левого тритона.
+  f   Крыса выскальзывает у вас из левой крысы.
+  n   Копьё выскальзывает у вас из левого копья.
+  pl  3 стрелы выскальзывают у вас из левых 3 стрел.
+Your %s slip from your right %s.  [85e49e0e140e]
+  m   Тритон выскальзывает у вас из правого тритона.
+  f   Крыса выскальзывает у вас из правой крысы.
+  n   Копьё выскальзывает у вас из правого копья.
+  pl  3 стрелы выскальзывают у вас из правых 3 стрел.
+Your %s slips from your %s.  [674722155568]
+  m   Тритон выскальзывает у вас из тритона.
+  f   Крыса выскальзывает у вас из крысы.
+  n   Копьё выскальзывает у вас из копья.
+  pl  3 стрелы выскальзывают у вас из 3 стрел.
+Your %s slips from your left %s.  [27d24c665bd2]
+  m   Тритон выскальзывает у вас из левого тритона.
+  f   Крыса выскальзывает у вас из левой крысы.
+  n   Копьё выскальзывает у вас из левого копья.
+  pl  3 стрелы выскальзывают у вас из левых 3 стрел.
+Your %s slips from your right %s.  [7cfabc5b26ba]
+  m   Тритон выскальзывает у вас из правого тритона.
+  f   Крыса выскальзывает у вас из правой крысы.
+  n   Копьё выскальзывает у вас из правого копья.
+  pl  3 стрелы выскальзывают у вас из правых 3 стрел.
 Your %s spins as something blocks the spell!  [09fa23dc9264]
   m   У вас кружится тритон — что-то блокирует заклинание!
   f   У вас кружится крыса — что-то блокирует заклинание!
@@ -23850,6 +24452,8 @@ Your amulet grows hot for a moment, then cools.  [086a2ac76690]
   =   Ваш амулет на миг раскаляется, а затем остывает.
 Your amulet vanishes!  [c5742c6bc87c]
   =   Ваш амулет исчезает!
+Your apron crumbles and turns to dust!  [21592e621a36]
+  =   Ваш фартук истлевает и рассыпается в прах!
 Your awareness re-normalizes.  [7ac6d67410ad]
   =   Ваше восприятие приходит в норму.
 Your blast reveals a secret door.  [69b966218fda]
@@ -23859,6 +24463,10 @@ Your body rises from the dead as %s...  [921252285de7]
   f   Ваше тело восстаёт из мёртвых в виде крысы...
   n   Ваше тело восстаёт из мёртвых в виде копья...
   pl  Ваше тело восстаёт из мёртвых в виде 3 стрел...
+Your body seems to unfade completely.  [984330e873f7]
+  =   Ваше тело словно проявляется полностью.
+Your body seems to unfade...  [41db97ca7473]
+  =   Ваше тело словно проявляется...
 Your body takes on a normal transparency...  [d0349f2e3571]
   =   Ваше тело обретает обычную прозрачность...
 Your body takes on a strange transparency...  [58173b194698]
@@ -23867,22 +24475,50 @@ Your bolt reveals a secret door.  [362eb42cb4eb]
   =   Ваш луч обнаруживает потайную дверь.
 Your bones itch.  [3f271c747c6c]
   =   У вас чешутся кости.
+Your boots disintegrate!  [945dbd89ad1a]
+  =   Ваши сапоги рассыпаются!
 Your brain is eaten!  [51b5fe733087]
   =   Ваш мозг съеден!
 Your brain is unharmed.  [27ee39c8752c]
   =   Ваш мозг не пострадал.
 Your chain disappears.  [e66f45d32f75]
   =   Ваша цепь исчезает.
+Your cloak crumbles and turns to dust!  [cc2efe40f42d]
+  =   Ваш плащ истлевает и рассыпается в прах!
 Your dog knows what to eat; maybe you should take lessons.  [589ec0a60ab0]
   =   Ваша собака знает, что есть; может, вам стоит у неё поучиться.
+Your dragon mail turns to dust and falls to the %s!  [d1a944a9ad1d]
+  m   Ваш драконий доспех обращается в прах и осыпается на тритона!
+  f   Ваш драконий доспех обращается в прах и осыпается на крысу!
+  n   Ваш драконий доспех обращается в прах и осыпается на копьё!
+  pl  Ваш драконий доспех обращается в прах и осыпается на 3 стрелы!
+Your dragon scales turn to dust and fall to the %s!  [d6458fa76f85]
+  m   Ваша драконья чешуя обращается в прах и осыпается на тритона!
+  f   Ваша драконья чешуя обращается в прах и осыпается на крысу!
+  n   Ваша драконья чешуя обращается в прах и осыпается на копьё!
+  pl  Ваша драконья чешуя обращается в прах и осыпается на 3 стрелы!
 Your game may go down the drain if you have extra potions or rings.  [6c864ac3afd4]
   =   Ваша игра может утечь в слив, если у вас лишние зелья или кольца.
 Your gauntlets are no longer slippery.  [0348c0d9db00]
   =   Ваши рукавицы больше не скользкие.
+Your gauntlets are too slippery to remove, so you cannot put on the ring.  [f547f0c57626]
+  =   Ваши рукавицы слишком скользкие, чтобы их снять, так что кольцо не надеть.
+Your gauntlets are too slippery to take off.  [e27e212db15e]
+  =   Ваши рукавицы слишком скользкие, чтобы их снять.
+Your gauntlets vanish!  [62249f3c284b]
+  =   Ваши рукавицы исчезают!
 Your gloves are no longer slippery.  [66d7e197269b]
   =   Ваши перчатки больше не скользкие.
+Your gloves are too slippery to remove, so you cannot put on the ring.  [63336458916a]
+  =   Ваши перчатки слишком скользкие, чтобы их снять, так что кольцо не надеть.
+Your gloves are too slippery to take off.  [2de7c755b27c]
+  =   Ваши перчатки слишком скользкие, чтобы их снять.
+Your gloves vanish!  [c9bebb4bc990]
+  =   Ваши перчатки исчезают!
 Your hat does not protect you.  [80f686a3b0b8]
   =   Ваша шляпа вас не защищает.
+Your hat turns to dust and is blown away!  [bea1e28773e8]
+  =   Ваша шляпа обращается в прах и развеивается по ветру!
 Your healing skills tell you that %s wounds are mortal.\n\nYou know that the bushido tells you to finish him and let his kami\ndie with honor, but the thought of so many samurai dead due to this\nman's dishonor prevents you from giving the final blow.\n\nYou order that his unwashed head be given to the crows and his body\nthrown into the sea.  [e49cba772178]
   m   Ваши познания во врачевании подсказывают вам, что раны тритона\nсмертельны.\n\nБусидо велит вам добить его и позволить его ками умереть с честью, но\nмысль о том, сколько самураев погибло из-за бесчестья этого человека,\nудерживает вашу руку от последнего удара.\n\nВы приказываете отдать его немытую голову воронам, а тело бросить в\nморе.
   f   Ваши познания во врачевании подсказывают вам, что раны крысы\nсмертельны.\n\nБусидо велит вам добить его и позволить его ками умереть с честью, но\nмысль о том, сколько самураев погибло из-за бесчестья этого человека,\nудерживает вашу руку от последнего удара.\n\nВы приказываете отдать его немытую голову воронам, а тело бросить в\nморе.
@@ -23890,6 +24526,8 @@ Your healing skills tell you that %s wounds are mortal.\n\nYou know that the bus
   pl  Ваши познания во врачевании подсказывают вам, что раны 3 стрел\nсмертельны.\n\nБусидо велит вам добить его и позволить его ками умереть с честью, но\nмысль о том, сколько самураев погибло из-за бесчестья этого человека,\nудерживает вашу руку от последнего удара.\n\nВы приказываете отдать его немытую голову воронам, а тело бросить в\nморе.
 Your health currently feels amplified!  [56f22817f5e5]
   =   Ваше здоровье будто подзарядилось!
+Your helm turns to dust and is blown away!  [bf8c808b5124]
+  =   Ваш шлем обращается в прах и развеивается по ветру!
 Your help is urgently needed at %s!  [758e7a572f8a]
   m   Ваша помощь срочно нужна в тритоне!
   f   Ваша помощь срочно нужна в крысе!
@@ -23897,6 +24535,11 @@ Your help is urgently needed at %s!  [758e7a572f8a]
   pl  Ваша помощь срочно нужна в 3 стрелах!
 Your iron ball gets heavier.  [e7c487903aff]
   =   Ваше железное ядро становится тяжелее.
+Your jacket turns to dust and falls to the %s!  [65bc7c47e20c]
+  m   Ваша куртка обращается в прах и осыпается на тритона!
+  f   Ваша куртка обращается в прах и осыпается на крысу!
+  n   Ваша куртка обращается в прах и осыпается на копьё!
+  pl  Ваша куртка обращается в прах и осыпается на 3 стрелы!
 Your jaw gapes convulsively.  [f760ddada977]
   =   У вас судорожно отвисает челюсть.
 Your knees seem more flexible now.  [2c4e7f61e18a]
@@ -23945,6 +24588,11 @@ Your left ring softly glows %s.  [5b1cb6e41196]
   pl  Ваше левое кольцо мягко сияет 3 стрелами светом.
 Your load is too heavy to balance yourself for a kick.  [e6a971011ade]
   =   С такой тяжёлой ношей вам не удержать равновесие для пинка.
+Your mail turns to dust and falls to the %s!  [4448d0e32609]
+  m   Ваш доспех обращается в прах и осыпается на тритона!
+  f   Ваш доспех обращается в прах и осыпается на крысу!
+  n   Ваш доспех обращается в прах и осыпается на копьё!
+  pl  Ваш доспех обращается в прах и осыпается на 3 стрелы!
 Your marker seems permanently dried out.  [13888283c103]
   =   Ваш маркер, похоже, окончательно высох.
 Your mind is filled with crazy lines!  [83903bfd98d8]
@@ -23955,6 +24603,36 @@ Your movements are now unencumbered.  [8b1107111a2b]
   =   Ваши движения больше ничем не стеснены.
 Your movements are slowed slightly because of your load.  [513e51009f34]
   =   Груз слегка замедляет ваши движения.
+Your other %s also slip from your left %s.  [bae015991a00]
+  m   Второй тритон тоже выскальзывает у вас из левого тритона.
+  f   Вторая крыса тоже выскальзывает у вас из левой крысы.
+  n   Второе копьё тоже выскальзывает у вас из левого копья.
+  pl  Остальные 3 стрелы тоже выскальзывают у вас из левых 3 стрел.
+Your other %s also slip from your right %s.  [7bbaaad7243b]
+  m   Второй тритон тоже выскальзывает у вас из правого тритона.
+  f   Вторая крыса тоже выскальзывает у вас из правой крысы.
+  n   Второе копьё тоже выскальзывает у вас из правого копья.
+  pl  Остальные 3 стрелы тоже выскальзывают у вас из правых 3 стрел.
+Your other %s also slips from your left %s.  [8133a9c51460]
+  m   Второй тритон тоже выскальзывает у вас из левого тритона.
+  f   Вторая крыса тоже выскальзывает у вас из левой крысы.
+  n   Второе копьё тоже выскальзывает у вас из левого копья.
+  pl  Остальные 3 стрелы тоже выскальзывают у вас из левых 3 стрел.
+Your other %s also slips from your right %s.  [61c04ace5f75]
+  m   Второй тритон тоже выскальзывает у вас из правого тритона.
+  f   Вторая крыса тоже выскальзывает у вас из правой крысы.
+  n   Второе копьё тоже выскальзывает у вас из правого копья.
+  pl  Остальные 3 стрелы тоже выскальзывают у вас из правых 3 стрел.
+Your other sword also slips from your left %s.  [0f229d61e322]
+  m   Второй меч тоже выскальзывает у вас из левого тритона.
+  f   Второй меч тоже выскальзывает у вас из левой крысы.
+  n   Второй меч тоже выскальзывает у вас из левого копья.
+  pl  Второй меч тоже выскальзывает у вас из левых 3 стрел.
+Your other sword also slips from your right %s.  [df93bc5f58eb]
+  m   Второй меч тоже выскальзывает у вас из правого тритона.
+  f   Второй меч тоже выскальзывает у вас из правой крысы.
+  n   Второй меч тоже выскальзывает у вас из правого копья.
+  pl  Второй меч тоже выскальзывает у вас из правых 3 стрел.
 Your probe reveals nothing.  [5e435ac6e32f]
   =   Зондирование ничего не обнаруживает.
 Your quickness feels very natural.  [2ee888fc7ecd]
@@ -23989,6 +24667,28 @@ Your right ring softly glows %s.  [f6bb97cd7ce6]
   f   Ваше правое кольцо мягко сияет крысой светом.
   n   Ваше правое кольцо мягко сияет копьём светом.
   pl  Ваше правое кольцо мягко сияет 3 стрелами светом.
+Your ring slips off your %s.  [cd6ca997f92f]
+  m   Ваше кольцо соскальзывает с тритона.
+  f   Ваше кольцо соскальзывает с крысы.
+  n   Ваше кольцо соскальзывает с копья.
+  pl  Ваше кольцо соскальзывает с 3 стрел.
+Your ring-%s are full, and you're already wearing an amulet and a blindfold.  [20d96db65b94]
+  m   Весь тритон занят кольцами, а амулет и повязка на глаза уже на вас.
+  f   Вся крыса занята кольцами, а амулет и повязка на глаза уже на вас.
+  n   Всё копьё занято кольцами, а амулет и повязка на глаза уже на вас.
+  pl  Все 3 стрелы заняты кольцами, а амулет и повязка на глаза уже на вас.
+Your ring-%s are full, and you're already wearing an amulet and some lenses.  [3fd9de6f0d48]
+  m   Весь тритон занят кольцами, а амулет и очки уже на вас.
+  f   Вся крыса занята кольцами, а амулет и очки уже на вас.
+  n   Всё копьё занято кольцами, а амулет и очки уже на вас.
+  pl  Все 3 стрелы заняты кольцами, а амулет и очки уже на вас.
+Your rings slip off your %s.  [5d301f8d39ab]
+  m   Ваши кольца соскальзывают с тритона.
+  f   Ваши кольца соскальзывают с крысы.
+  n   Ваши кольца соскальзывают с копья.
+  pl  Ваши кольца соскальзывают с 3 стрел.
+Your robe crumbles and turns to dust!  [8cb822ba5f42]
+  =   Ваша мантия истлевает и рассыпается в прах!
 Your sacrifice collapses into a cloud of dancing particles and fades away!  [6601c2d92f18]
   =   Ваша жертва рассыпается облаком пляшущих частиц и тает в воздухе!
 Your sacrifice disappears!  [574b0c2c67e7]
@@ -24005,6 +24705,10 @@ Your sacrifice sprouts wings and a propeller and roars away!  [fb0536a7019d]
   =   У вашей жертвы вырастают крылья и пропеллер, и она с рёвом уносится прочь!
 Your shape becomes uncertain.  [5686d9414e38]
   =   Ваш облик становится зыбким.
+Your shield crumbles away!  [c7c29311ba38]
+  =   Ваш щит крошится и рассыпается!
+Your shirt crumbles into tiny threads and falls apart!  [b4654356ff7f]
+  =   Ваша рубашка расползается на мелкие нитки и рассыпается!
 Your shirt is obscured by %sdragon mail.  [df3b45bc6f47]
   m   Вашу рубашку скрывает драконий доспех.
   f   Вашу рубашку скрывает драконий доспех.
@@ -24030,20 +24734,63 @@ Your shirt is obscured by %ssuit.  [9a63621ca22e]
   f   Вашу рубашку скрывает доспех.
   n   Вашу рубашку скрывает доспех.
   pl  Вашу рубашку скрывает доспех.
+Your shoes disintegrate!  [a46f200ef392]
+  =   Ваши башмаки рассыпаются!
+Your silver shield crumbles away!  [b454bc12fcf5]
+  =   Ваш серебряный щит крошится и рассыпается!
 Your skin feels warm for a moment.  [f916a16ba765]
   =   На миг вашей коже становится тепло.
 Your skin glows then fades.  [2403341d0022]
   =   Ваша кожа вспыхивает светом и гаснет.
 Your skin itches.  [f83816089afd]
   =   У вас чешется кожа.
+Your smock crumbles and turns to dust!  [2b681a22e418]
+  =   Ваш фартук истлевает и рассыпается в прах!
+Your smooth shield crumbles away!  [459881c57f7e]
+  =   Ваш гладкий щит крошится и рассыпается!
 Your spell reveals a secret door.  [bca73f3482b8]
   =   Ваше заклинание обнаруживает потайную дверь.
 Your stomach acid melts straight through the ice!  [5657ea276535]
   =   Ваша желудочная кислота прожигает лёд насквозь!
+Your suit turns to dust and falls to the %s!  [8e23618eb257]
+  m   Ваш доспех обращается в прах и осыпается на тритона!
+  f   Ваш доспех обращается в прах и осыпается на крысу!
+  n   Ваш доспех обращается в прах и осыпается на копьё!
+  pl  Ваш доспех обращается в прах и осыпается на 3 стрелы!
 Your surroundings change.  [69498b00a147]
   =   Обстановка вокруг вас меняется.
+Your sword also slips from your %s.  [1e97c4c8ad7f]
+  m   Меч тоже выскальзывает у вас из тритона.
+  f   Меч тоже выскальзывает у вас из крысы.
+  n   Меч тоже выскальзывает у вас из копья.
+  pl  Меч тоже выскальзывает у вас из 3 стрел.
+Your sword also slips from your left %s.  [f70ee3998821]
+  m   Меч тоже выскальзывает у вас из левого тритона.
+  f   Меч тоже выскальзывает у вас из левой крысы.
+  n   Меч тоже выскальзывает у вас из левого копья.
+  pl  Меч тоже выскальзывает у вас из левых 3 стрел.
+Your sword also slips from your right %s.  [072edc7ecdaf]
+  m   Меч тоже выскальзывает у вас из правого тритона.
+  f   Меч тоже выскальзывает у вас из правой крысы.
+  n   Меч тоже выскальзывает у вас из правого копья.
+  pl  Меч тоже выскальзывает у вас из правых 3 стрел.
 Your sword shines brightly for a moment.  [c3a8b1236b3e]
   =   Ваш меч на миг ярко вспыхивает.
+Your sword slips from your %s.  [127cc4e3b8c8]
+  m   Меч выскальзывает у вас из тритона.
+  f   Меч выскальзывает у вас из крысы.
+  n   Меч выскальзывает у вас из копья.
+  pl  Меч выскальзывает у вас из 3 стрел.
+Your sword slips from your left %s.  [8e159ea3982d]
+  m   Меч выскальзывает у вас из левого тритона.
+  f   Меч выскальзывает у вас из левой крысы.
+  n   Меч выскальзывает у вас из левого копья.
+  pl  Меч выскальзывает у вас из левых 3 стрел.
+Your sword slips from your right %s.  [324b4438a9f8]
+  m   Меч выскальзывает у вас из правого тритона.
+  f   Меч выскальзывает у вас из правой крысы.
+  n   Меч выскальзывает у вас из правого копья.
+  pl  Меч выскальзывает у вас из правых 3 стрел.
 Your velocity suddenly seems very uncertain!  [2d5433263757]
   =   Ваша скорость вдруг становится весьма неопределённой!
 Your vision quickly clears.  [e5bdfc612a79]
@@ -24060,6 +24807,8 @@ Your vision seems to flatten for a moment but is normal now.  [4678f3db3242]
   =   Ваше зрение на миг будто становится плоским, но теперь оно в норме.
 Your weapon feels warm for a moment.  [74198aa786c8]
   =   Ваше оружие на миг теплеет.
+Your wrapping crumbles and turns to dust!  [13bd6e06e380]
+  =   Ваша обмотка истлевает и рассыпается в прах!
 Yuck%c  [2474abe51382]
   m   Фуx
   f   Фуx
