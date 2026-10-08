@@ -5,11 +5,11 @@
 //! not unpair geometries from light" on quit and a crash after it. Both
 //! come after the PASS line; the Makefile fails the run for either.
 //!
-//! First the map is drawn as a swap with the pet looks between two frames
-//! (the engine redraws one cell, then the other; a missile flying at that
-//! moment puts a frame between them): the pet on the cell the hero left,
-//! the hero on none. The hero's last known cell then holds the pet's
-//! model, which must not take the hero's layer. Then the pet's model, in
+//! First the map is drawn as it is for a hero the engine does not draw
+//! (invisible, hiding) with something else on their cell, here the pet:
+//! the pet's glyph on the hero's cell, the hero on none, and a command
+//! asked. The hero's last known cell then holds the pet's model, which
+//! must not take the hero's layer. Then the pet's model, in
 //! view beside the rim light, is put on that layer in the frame it is
 //! shown and taken off it again, as the hero's own is when it changes.
 
@@ -144,6 +144,9 @@ pub(super) fn rim() -> Vec<Step> {
                     .instance_id(),
             };
             draw(g, hero, &d.pet_glyph);
+            // drawn over the hero, it only passes; at the engine's next
+            // command it is what their cell shows
+            g.world.map.settle();
             *DRAWN.lock().map_err(|e| e.to_string())? = Some(d);
             Ok(())
         }),

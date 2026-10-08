@@ -301,6 +301,7 @@ mod tests {
             glyph: Some(g.clone()),
             bk: None,
             terrain: Some(floor()),
+            over: None,
         };
         let text = describe_cell(&cell(&sack), &cat).unwrap();
         assert_eq!(text, "bag (tools)\nfloor of a room");
@@ -331,6 +332,7 @@ mod tests {
                     glyph: Some(g),
                     bk: None,
                     terrain: None,
+                    over: None,
                 },
                 &cat,
             )
@@ -360,6 +362,7 @@ mod tests {
                     glyph: Some(odd),
                     bk: None,
                     terrain: None,
+                    over: None,
                 },
                 &cat
             ),

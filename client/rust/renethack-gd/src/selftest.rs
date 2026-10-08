@@ -4,7 +4,7 @@
 //! synchronously. The verdict is one "SELFTEST PASS <name>" or
 //! "SELFTEST FAIL <name>: <reason>" line and the exit code.
 //!
-//! Scenarios: smoke, keys, save, close, crash, menus, text, moves, orders, and soak
+//! Scenarios: smoke, keys, save, close, crash, menus, text, moves, passing, orders, and soak
 //! (random play: `--soak=N` answered requests, `--seed=S` or
 //! RENETHACK_SEED; RENETHACK_SOAK_TRACE=1 prints every decision;
 //! RENETHACK_DUMP_MESSAGES=<file> appends every shown text to the file, for
@@ -38,6 +38,8 @@ mod hero;
 mod input_ru;
 #[path = "selftest_layouts.rs"]
 mod layouts_tests;
+#[path = "selftest_passing.rs"]
+mod passing_tests;
 #[path = "selftest_rim.rs"]
 mod rim_tests;
 #[path = "selftest_footprints.rs"]
@@ -1212,6 +1214,23 @@ fn check_midstep(g: &mut RenethackGame) -> Result<(), String> {
     Ok(())
 }
 
+/// Every ring on the ground lies under its creature (a pet's, the hero's),
+/// also while they walk between cells.
+fn rings_under(g: &RenethackGame) -> Result<(), String> {
+    for (whose, cell, gap) in map_view(g)?.ring_gaps() {
+        match gap {
+            Some(d) if d <= 0.05 => {}
+            Some(d) => {
+                return Err(format!(
+                    "the {whose}'s ring of cell {cell:?} lies {d:.2} from its model"
+                ));
+            }
+            None => return Err(format!("the {whose}'s ring of cell {cell:?} has no model")),
+        }
+    }
+    Ok(())
+}
+
 /// Seed 42's first steps (as in `tour`), each stopped midway: the hero and
 /// the kitten between two cells, walking and facing the way they go; with
 /// `--screenshots`, a picture of each. The scene must catch up with every
@@ -1241,7 +1260,10 @@ fn moves() -> Vec<Step> {
         steps.extend([
             key(c),
             Step::Request("a command after a move", command),
-            Step::Wait("the motions midway", |g| Ok(map_view(g)?.motions_held())),
+            Step::Wait("the motions midway, the rings along", |g| {
+                rings_under(g)?;
+                Ok(map_view(g)?.motions_held())
+            }),
             Step::Call("the hero between cells, facing the way", check_midstep),
             Step::Wait("the camera on the walking hero", camera_settled),
             Step::Call("frame the hero's cell", |g| {
@@ -1259,7 +1281,8 @@ fn moves() -> Vec<Step> {
                 g.ui.as_mut().ok_or("no UI")?.map.set_hover(None);
                 hold_at(g, None)
             }),
-            Step::Wait("everyone arrived", |g| {
+            Step::Wait("everyone arrived, the rings along", |g| {
+                rings_under(g)?;
                 Ok(map_view(g)?.steps_under_way() == (false, 0))
             }),
             Step::Call("stop motions midway", |g| hold_at(g, Some(MIDWAY))),
@@ -4481,6 +4504,7 @@ impl SelfTest {
             "help" => help_tests::help(),
             "layouts" => layouts_tests::layouts(),
             "rim" => rim_tests::rim(),
+            "passing" => passing_tests::passing(),
             "inventory" => inventory(),
             "map-pause" => map_pause(),
             "pool-sizes" => pool_sizes(),

@@ -3088,6 +3088,26 @@ impl InventoryPanel {
         self.hero_rect.is_visible()
     }
 
+    /// The share of the doll's render that is drawn on: next to none when
+    /// its camera sees no hero. None without a renderer (self-tests).
+    pub fn doll_drawn(&self) -> Option<f32> {
+        let image = self.doll_view.viewport.get_texture()?.get_image()?;
+        let (w, h) = (image.get_width(), image.get_height());
+        if w == 0 || h == 0 {
+            return None;
+        }
+        // every eighth pixel each way tells as much
+        let cells = (0..h)
+            .step_by(8)
+            .flat_map(|y| (0..w).step_by(8).map(move |x| (x, y)));
+        let (mut drawn, mut all) = (0u32, 0u32);
+        for (x, y) in cells {
+            all += 1;
+            drawn += u32::from(image.get_pixel(x, y).a > 0.5);
+        }
+        Some(drawn as f32 / all as f32)
+    }
+
     /// Place and scale the panel above the HUD's bottom cluster.
     fn layout(&mut self) {
         let view = self.root.get_viewport_rect().size;

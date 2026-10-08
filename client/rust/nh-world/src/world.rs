@@ -316,6 +316,7 @@ impl World {
                 self.getpos = *getpos;
                 if !getpos {
                     self.getpos_goal = None;
+                    self.map.settle();
                     self.hero_at_command = self.cursor;
                 }
                 Prompt::Command
@@ -413,9 +414,10 @@ impl World {
         self.transient = None;
     }
 
-    /// Where the hero is: the cell drawn with MG_HERO, else (an invisible
-    /// or hiding hero is not drawn) where the core put the cursor for the
-    /// last command.
+    /// Where the hero is: the cell drawn with MG_HERO (they stay there under
+    /// a missile, a ray or a sparkle drawn over them), else (an invisible or
+    /// hiding hero is not drawn) where the core put the cursor for the last
+    /// command.
     pub fn hero(&self) -> Option<(i32, i32)> {
         self.map.hero().or(self.hero_at_command)
     }

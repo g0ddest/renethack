@@ -343,6 +343,8 @@ struct Look {
     /// Which of `models` is the monster or object on the cell (it is
     /// carried along when it steps to another cell).
     entity: Option<usize>,
+    /// The entity is the hero (not what an unseen hero stands on).
+    hero: bool,
     /// A wall at full height (a torch can hang on it).
     wall: bool,
     /// Something here lies below the ground (the bedrock under the level
@@ -1911,6 +1913,7 @@ fn entity_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
                 };
                 look.model(ModelLook { art: r, tint, pose }, here, yaw);
                 look.entity = Some(look.models.len() - 1);
+                look.hero = hero;
             }
             look.hostile = !hero && g.flags & mg::PET == 0;
             if g.flags & mg::PET != 0 {
@@ -2190,19 +2193,32 @@ fn look_of(cell: &Cell, near: Near, ctx: &Ctx) -> Look {
         },
         None => rock_look(&mut look, &near, ctx),
     }
-    match &cell.glyph {
-        Some(g) if g.kind == GlyphKind::Cmap => {
-            if cmap_sym(g, catalog).is_some_and(|s| terrain_of(s) == Terrain::Effect) {
-                bright_flash(&mut look, g, ctx);
-                if cmap_sym(g, catalog).is_some_and(|s| s.starts_with("S_expl")) {
-                    look.blast = Some(lighter(nh_color(g.color), 0.2));
-                }
-            }
-        }
-        Some(g) => entity_look(&mut look, g, ctx),
-        None => {}
+    if let Some(g) = &cell.glyph {
+        glyph_look(&mut look, g, ctx);
+    }
+    // what passes over the cell: a flash over who stands there, a missile
+    // at the feet of the hero it reaches (another creature drawn over the
+    // hero is on its way to its own cell). Who stood there stays the
+    // cell's entity
+    if let Some(g) = cell.over.as_ref().filter(|g| g.kind != GlyphKind::Mon) {
+        let entity = look.entity;
+        glyph_look(&mut look, g, ctx);
+        look.entity = entity;
     }
     look
+}
+
+/// What a glyph adds to its cell's look: an effect flashes, a creature or
+/// a thing stands there (terrain is the cell's own, remembered).
+fn glyph_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
+    if g.kind != GlyphKind::Cmap {
+        entity_look(look, g, ctx);
+    } else if cmap_sym(g, ctx.catalog).is_some_and(|s| terrain_of(s) == Terrain::Effect) {
+        bright_flash(look, g, ctx);
+        if cmap_sym(g, ctx.catalog).is_some_and(|s| s.starts_with("S_expl")) {
+            look.blast = Some(lighter(nh_color(g.color), 0.2));
+        }
+    }
 }
 
 /// A feature's light (and mist) on its cell.
@@ -3812,10 +3828,9 @@ impl MapView {
     }
 
     /// The hero's model (and only it) takes the rim light: `hero` is the
-    /// cell the map draws them on. A hero not drawn (unseen; or stepped off
-    /// a cell and not yet shown on the next, while a missile flies) leaves
-    /// the cell they were last known on to what else is there, a thing on
-    /// the floor or the pet they swapped with: its model is not theirs.
+    /// cell the map draws them on. A hero not drawn (invisible, hiding)
+    /// leaves the cell they were last known on to what else is there, a
+    /// thing on the floor: its model is not theirs.
     fn rim_hero(&mut self, hero: Option<(i32, i32)>) {
         let node = hero
             .and_then(|h| self.cells.get(&h))
@@ -4240,7 +4255,8 @@ impl MapView {
             }
             (c, (dx, dy))
         });
-        let Some(nodes) = self.cells.get_mut(&at) else {
+        // an unseen hero has no model to show the use with
+        let Some(nodes) = self.cells.get_mut(&at).filter(|n| n.look.hero) else {
             return;
         };
         let Some(i) = nodes.look.entity.filter(|&i| i < nodes.models.len()) else {
@@ -4365,6 +4381,7 @@ impl MapView {
         let Some(m) = self
             .cells
             .get_mut(&at)
+            .filter(|n| n.look.hero)
             .and_then(|n| n.look.entity.and_then(|i| n.models.get_mut(i)))
         else {
             return;
@@ -4431,9 +4448,48 @@ impl MapView {
         Some((m.model_index(), want, inner.get_scale().y))
     }
 
-    /// The hero's model (self-tests look at its gear).
+    /// The rings on the ground, and how far each lies from the model it is
+    /// for, on the ground's plane: a pet's from the creature on its cell,
+    /// the hero's from the hero's model (None: there is none) (self-tests:
+    /// a ring is under its creature, also while that walks between cells).
+    pub fn ring_gaps(&self) -> Vec<(&'static str, (i32, i32), Option<f32>)> {
+        let flat = |a: Vector3, b: Vector3| Vector2::new(a.x - b.x, a.z - b.z).length();
+        let place = |m: &Model| {
+            (m.node.is_instance_valid() && m.node.is_inside_tree())
+                .then(|| m.node.get_global_position())
+        };
+        let mut gaps: Vec<_> = self
+            .cells
+            .iter()
+            .filter_map(|(c, n)| {
+                let ring = n.ring.as_ref()?;
+                let model = n.look.entity.and_then(|i| n.models.get(i)).and_then(place);
+                Some((
+                    "pet",
+                    *c,
+                    model.map(|p| flat(p, ring.get_global_position())),
+                ))
+            })
+            .collect();
+        gaps.sort_by_key(|g| g.1);
+        if let Some(c) = self.hero_at.filter(|_| self.hero_ring.is_visible()) {
+            let model = self.hero_model().and_then(place);
+            let gap = model.map(|p| flat(p, self.hero_ring.get_global_position()));
+            gaps.push(("hero", c, gap));
+        }
+        gaps
+    }
+
+    /// The hero's cell, when the hero's own model is on it. A hero the map
+    /// does not draw (invisible, hiding) leaves their cell to what else is
+    /// there, a thing on the floor: its model is not theirs.
+    fn hero_cell(&self) -> Option<&CellNodes> {
+        self.cells.get(&self.hero_at?).filter(|n| n.look.hero)
+    }
+
+    /// The hero's model (the doll shows it; self-tests look at its gear).
     pub fn hero_model(&self) -> Option<&Model> {
-        let nodes = self.cells.get(&self.hero_at?)?;
+        let nodes = self.hero_cell()?;
         nodes.look.entity.and_then(|i| nodes.models.get(i))
     }
 
@@ -5861,13 +5917,7 @@ impl MapView {
 
     /// The hero's model plays its idle clip (after an order's last step).
     fn settle_hero(&mut self) {
-        let Some(at) = self.hero_at else {
-            return;
-        };
-        let Some(nodes) = self.cells.get(&at) else {
-            return;
-        };
-        let Some(model) = nodes.look.entity.and_then(|i| nodes.models.get(i)) else {
+        let Some(model) = self.hero_model() else {
             return;
         };
         let mut clips = self.art.clips(model, false);
@@ -5881,10 +5931,7 @@ impl MapView {
 
     /// The clip the hero's model plays now, and its idle clip (self-tests).
     pub fn hero_animation(&mut self) -> (Option<String>, Option<String>) {
-        let Some(nodes) = self.hero_at.and_then(|at| self.cells.get(&at)) else {
-            return (None, None);
-        };
-        let Some(model) = nodes.look.entity.and_then(|i| nodes.models.get(i)) else {
+        let Some(model) = self.hero_model() else {
             return (None, None);
         };
         let clips = self.art.clips(model, false);
@@ -6298,6 +6345,7 @@ mod tests {
             glyph: Some(g),
             bk: None,
             terrain: Some(cmap(cat, "S_room")),
+            over: None,
         }
     }
 
@@ -6328,6 +6376,7 @@ mod tests {
             glyph: Some(cmap(cat, sym)),
             bk: None,
             terrain: Some(cmap(cat, sym)),
+            over: None,
         }
     }
 
@@ -6678,6 +6727,7 @@ mod tests {
                 glyph: Some(cmap(cat, &info.sym)),
                 bk: None,
                 terrain: (t != Terrain::Effect).then(|| cmap(cat, &info.sym)),
+                over: None,
             };
             let look = f.look(&cell);
             let drawn = !matches!(t, Terrain::Stone);
@@ -6911,6 +6961,7 @@ mod tests {
             glyph: Some(g),
             bk: None,
             terrain: None,
+            over: None,
         };
         let hero = monster(cat, "newt", mg::HERO);
         assert_eq!(top("S_hwall", &unseen(hero)), CUT_HEIGHT);
@@ -6970,6 +7021,7 @@ mod tests {
             glyph: Some(monster(cat, "newt", 0)),
             bk: None,
             terrain: None,
+            over: None,
         };
         assert_eq!(
             f.look(&under).solids[0].paint,
@@ -6985,6 +7037,7 @@ mod tests {
             glyph: Some(glyph(GlyphKind::Obj, '(')),
             bk: None,
             terrain: None,
+            over: None,
         };
         let tile = |near: [Option<&Cell>; 4]| look_of(&under, Near::orth(near), &f.ctx()).solids[0];
         let (lit, dark, corr) = (
@@ -7090,5 +7143,51 @@ mod tests {
         assert!(!up.letters.is_empty() && up.letters.iter().all(|l| l.hint));
         // a full wall carries a torch, a wall cut down does not
         assert!(f.look(&feature(cat, "S_hwall")).wall);
+    }
+
+    #[test]
+    fn what_passes_over_a_cell_leaves_who_stands_there() {
+        let f = Fixture::new();
+        let cat = &f.cat;
+        let under = |g: &Glyph, over: Glyph| Cell {
+            over: Some(over),
+            ..on_floor(cat, g.clone())
+        };
+        let alone = |g: &Glyph| f.look(&on_floor(cat, g.clone()));
+        let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE);
+        let pet = monster(cat, "kitten", mg::PET);
+        let dagger = object(cat, ")", "dagger");
+        // a thrown dagger drawn on the hero's cell as it reaches them: the
+        // hero is still the cell's entity, their model where it was among
+        // the cell's, the dagger one more
+        let (stood, hit) = (alone(&hero), f.look(&under(&hero, dagger.clone())));
+        assert!(stood.hero && hit.hero);
+        assert_eq!(hit.entity, stood.entity);
+        assert_eq!(hit.models.len(), stood.models.len() + 1);
+        assert_eq!(hit.models[..stood.models.len()], stood.models[..]);
+        // a ray over the pet: the pet and its ring stay, the ray flashes
+        let (stood, rayed) = (
+            alone(&pet),
+            f.look(&under(&pet, glyph(GlyphKind::Zap, '-'))),
+        );
+        assert!(stood.ray.is_none() && rayed.ray.is_some());
+        assert_eq!(
+            (rayed.entity, &rayed.models, rayed.ring),
+            (stood.entity, &stood.models, stood.ring)
+        );
+        assert!(stood.ring.is_some() && !rayed.hero);
+        // a sparkle over the hero, an explosion over a thing
+        let sparkled = f.look(&under(&hero, cmap(cat, "S_ss1")));
+        assert!(sparkled.hero && sparkled.glint.is_some());
+        let blasted = f.look(&under(&dagger, glyph(GlyphKind::Explosion, '#')));
+        assert_eq!(blasted.models, alone(&dagger).models);
+        assert!(blasted.blast.is_some());
+        // the floor drawn over a hero who steps off it (the next cell comes
+        // a frame later), or the pet they swap places with: nothing to add
+        for over in [cmap(cat, "S_room"), pet] {
+            assert_eq!(f.look(&under(&hero, over)), alone(&hero));
+        }
+        // what an unseen hero stands on is not the hero
+        assert!(!alone(&dagger).hero);
     }
 }
