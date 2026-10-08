@@ -822,3 +822,74 @@ ru = " Ваш навык боя с двух рук был ограничен т�
 [cf4d2385b843]
 en = "restricted"
 ru = "недоступен"
+
+# ^X, a second weapon in the other hand: the line's head, and a tail that says the rest
+# (weapon_insight puts one of three heads before one of many tails).
+
+[61f87b2dd6b3]
+en = " You have %s skill with %s and two weapons."
+ru = " Ваш уровень владения {2:ins} и боя с двух рук: {1}."
+
+[42b5d2bcaf69]
+en = " You had %s skill with %s and two weapons."
+ru = " Ваш уровень владения {2:ins} и боя с двух рук: {1}."
+
+[7687003a6049]
+en = " You are %s in %s and two weapons."
+ru = " Ваш уровень владения {2:ins} и боя с двух рук: {1}."
+
+[729642529531]
+en = " You were %s in %s and two weapons."
+ru = " Ваш уровень владения {2:ins} и боя с двух рук: {1}."
+
+[f45d29947058]
+en = " Your skill in %s is%s."
+ru = " Ваше владение {1:ins}{2}."
+
+[f9fe663c5a81]
+en = " Your skill in %s was%s."
+ru = " Ваше владение {1:ins} было{2}."
+
+[b66c71b1bdba]
+en = " Your two weapon skill is%s."
+ru = " Ваш навык боя с двух рук{1}."
+
+[fb1ea6af01e9]
+en = " Your two weapon skill was%s."
+ru = " Ваш навык боя с двух рук был{1}."
+
+[72d1e9640c36]
+en = " You also have%s."
+ru = " Также{1}."
+
+[2732beff62fc]
+en = " You also had%s."
+ru = " Также{1}."
+
+[f0a7a6a26b9b]
+en = " You also are%s."
+ru = " Также{1}."
+
+[539aa55b6f46]
+en = " You also were%s."
+ru = " Также{1}."
+
+[dd7dcebb343e]
+en = " also limited by being %s with two weapons"
+ru = " также ограничено навыком боя с двух рук ({1})"
+
+[ee135a63d9b9]
+en = " also limited by being %s with %s"
+ru = " также ограничен уровнем владения {2:ins} ({1})"
+
+[b9b60ca3f979]
+en = " also limited by having no skill with %s"
+ru = " также ограничен тем, что вы не владеете {1:ins}"
+
+[0d5d40dbd82c]
+en = " %s skill with %s and two weapons"
+ru = " ваш уровень владения {2:ins} и боя с двух рук: {1}"
+
+[3c0c94dae443]
+en = " %s in %s and two weapons"
+ru = " ваш уровень владения {2:ins} и боя с двух рук: {1}"
