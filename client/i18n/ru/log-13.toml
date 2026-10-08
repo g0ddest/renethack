@@ -642,7 +642,7 @@ ru = "{2:of1} {2:gender|защищён|защищена|защищено|защ�
 
 [bdee9d74d723]
 en = "%s are protected by the layer of grease!"
-ru = "{1} {1:gender|защищён|защищена|защищено|защищены} слоем смазки!"
+ru = "{1:pl} защищены слоем смазки!"
 
 [c1183f6a3211]
 en = "%s is protected by the layer of grease!"

@@ -1114,7 +1114,7 @@ ru = "Вас сдавливают."
 
 [cbb2197ade91]
 en = "%s seem less effective."
-ru = "{1}, похоже, {1:num|теряет|теряют} часть своей силы."
+ru = "{1:pl}, похоже, теряют часть своей силы."
 
 [eaa75bb2993c]
 en = "%s seems less effective."

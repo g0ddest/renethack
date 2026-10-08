@@ -6,7 +6,7 @@ ru = "{1:like2}{2} {2:num|остаётся|остаются} запасным о
 
 [d576bd42db75]
 en = "%s%s remain as secondary weapon."
-ru = "{1:like2}{2} {2:num|остаётся|остаются} запасным оружием."
+ru = "{1:pl}{2:pl} остаются запасным оружием."
 
 [210125cecc34]
 en = "%s%s remains wielded."
@@ -14,7 +14,7 @@ ru = "{1:like2}{2} {2:num|остаётся|остаются} в руке."
 
 [afbfde652930]
 en = "%s%s remain wielded."
-ru = "{1:like2}{2} {2:num|остаётся|остаются} в руке."
+ru = "{1:pl}{2:pl} остаются в руке."
 
 [fb9d56a97f69]
 en = "%s%s remains readied."
@@ -22,7 +22,7 @@ ru = "{1:like2}{2} {2:num|остаётся|остаются} наготове."
 
 [047d4dba290c]
 en = "%s%s remain readied."
-ru = "{1:like2}{2} {2:num|остаётся|остаются} наготове."
+ru = "{1:pl}{2:pl} остаются наготове."
 
 [02463f61c8f7]
 en = "%s %s reluctantly onto %s."
