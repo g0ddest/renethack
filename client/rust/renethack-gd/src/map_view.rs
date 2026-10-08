@@ -233,6 +233,50 @@ const LAMP_POOL_ENERGY: f32 = 0.8;
 const LAMP_POOL_RANGE: f32 = 4.5;
 const RIM_LIGHT: Color = Color::from_rgb(0.62, 0.70, 1.0);
 const RIM_LAYER: u32 = 1 << 1;
+/// The hero's own key and fills on the map: which way each shines in the
+/// studio's frame, its colour and its energy. They light the hero's model
+/// alone (`RIM_LAYER`), whatever the dungeon's light: an outfit reads by
+/// them. They were made for the inventory's doll, whose camera never saw
+/// them (a camera takes only the lights on a layer it sees): they lit the
+/// hero here instead, from wherever that camera last stood.
+const HERO_STUDIO: [(Vector3, Color, f32); 5] = [
+    // the key, from the upper left, not too steep: the legs get it too
+    (
+        Vector3::new(-0.3, -0.55, 0.0),
+        Color::from_rgb(1.0, 0.9, 0.78),
+        3.4,
+    ),
+    (
+        Vector3::new(-0.2, 0.7, 0.0),
+        Color::from_rgb(0.9, 0.8, 0.7),
+        1.1,
+    ),
+    // a warm bounce from below, as off a lit floor
+    (
+        Vector3::new(0.45, 0.3, 0.0),
+        Color::from_rgb(1.0, 0.82, 0.62),
+        2.6,
+    ),
+    // a level fill for the legs and the boots
+    (
+        Vector3::new(0.05, -0.35, 0.0),
+        Color::from_rgb(0.95, 0.88, 0.8),
+        1.2,
+    ),
+    // and a cold one from behind
+    (
+        Vector3::new(-0.3, 2.6, 0.0),
+        Color::from_rgb(0.62, 0.7, 1.0),
+        1.6,
+    ),
+];
+/// Where the studio is seen from, for its lights' ways: south of the
+/// hero and a little to the east and above, looking at them, as the
+/// doll's camera stood when a game began.
+const HERO_STUDIO_FROM: Vector3 = Vector3::new(1.78, 0.4, 3.69);
+/// The inventory doll's own lights are on this layer: the doll's camera
+/// sees it, the map's does not, so they light the hero on the doll alone.
+pub const DOLL_LAYER: u32 = 1 << 4;
 /// Torch sconces: lit by everything but their own flames (which would
 /// blow them out, a hand away).
 const SCONCE_LAYER: u32 = 1 << 2;
@@ -2786,6 +2830,9 @@ impl MapView {
         let mut camera = Camera3D::new_alloc();
         camera.set_fov(FOV_DEG);
         camera.set_current(true);
+        // everything but the doll's lights
+        let seen = camera.get_cull_mask() & !DOLL_LAYER;
+        camera.set_cull_mask(seen);
         root.add_child(&camera);
 
         let mut cells_root = Node3D::new_alloc();
@@ -2860,6 +2907,20 @@ impl MapView {
         rim.set_cull_mask(RIM_LAYER);
         rim.set_visible(false);
         root.add_child(&rim);
+        let mut studio_frame = Node3D::new_alloc();
+        studio_frame.set_transform(
+            Transform3D::new(Basis::IDENTITY, HERO_STUDIO_FROM).looking_at(Vector3::ZERO),
+        );
+        for (way, color, energy) in HERO_STUDIO {
+            let mut light = DirectionalLight3D::new_alloc();
+            light.set_rotation(way);
+            light.set_color(color);
+            light.set_param(Param::ENERGY, energy);
+            light.set_cull_mask(RIM_LAYER);
+            light.set_shadow(false);
+            studio_frame.add_child(&light);
+        }
+        root.add_child(&studio_frame);
 
         let mut bedrock = MeshInstance3D::new_alloc();
         bedrock.set_cast_shadows_setting(ShadowCastingSetting::OFF);

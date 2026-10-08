@@ -934,14 +934,18 @@ fn hands_as_held(g: &RenethackGame) -> Result<(), String> {
     }
 }
 
+/// Frames the inventory's doll has been given to render a kit's hero.
+static DOLL_FRAMES: AtomicU64 = AtomicU64::new(0);
+
 /// Every role in both genders with the starting kit NetHack gives it
 /// (`kits.rs`, after u_init.c): what the hero holds, on which arm, on the
 /// back and on the head, what hangs round the neck and covers the hands,
 /// and the clips that calls for, are that kit's (logged too), and the left
 /// hand is on a weapon of both hands and on no other; at rest facing the
-/// camera and mid-blow; then the title shows the same hero in the same
-/// kit. Pictures of each with `--screenshots`. RENETHACK_ROLES=knight,
-/// priest: only those; RENETHACK_KITS_LOOK=1: pictures only.
+/// camera and mid-blow; then the inventory's doll renders them; then the
+/// title shows the same hero in the same kit. Pictures of each with
+/// `--screenshots`. RENETHACK_ROLES=knight,priest: only those;
+/// RENETHACK_KITS_LOOK=1: pictures only.
 pub(super) fn kits() -> Vec<Step> {
     let mut steps = vec![Step::Call("seed 1, the first hero", |g| {
         g.seed = Some(1);
@@ -957,6 +961,7 @@ pub(super) fn kits() -> Vec<Step> {
         let rest: &'static str = format!("kit-{role}-{}", &gender[..1]).leak();
         let blow: &'static str = format!("{rest}-blow").leak();
         let title: &'static str = format!("{rest}-title").leak();
+        let doll: &'static str = format!("{rest}-doll").leak();
         if i > 0 {
             steps.push(Step::Call("the next hero", |_| {
                 KIT_AT.fetch_add(1, Ordering::Relaxed);
@@ -1013,6 +1018,21 @@ pub(super) fn kits() -> Vec<Step> {
             Step::Shot(blow),
             Step::Call("the HUD back", |g| {
                 g.ui.as_mut().ok_or("no UI")?.hud.set_visible(true);
+                Ok(())
+            }),
+            Step::Call("the inventory open", |g| {
+                g.ui.as_mut().ok_or("no UI")?.inventory.open();
+                Ok(())
+            }),
+            Step::Wait("the doll renders the hero", |g| {
+                Ok(g.ui.as_ref().ok_or("no UI")?.inventory.doll_rendered())
+            }),
+            Step::Wait("a few frames of it", |_| {
+                Ok(DOLL_FRAMES.fetch_add(1, Ordering::Relaxed) % 30 == 29)
+            }),
+            Step::Shot(doll),
+            Step::Call("the inventory closed", |g| {
+                g.ui.as_mut().ok_or("no UI")?.inventory.close();
                 Ok(())
             }),
         ]);

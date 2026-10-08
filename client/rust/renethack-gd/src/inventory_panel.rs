@@ -18,14 +18,14 @@ use std::rc::Rc;
 
 use godot::builtin::Side;
 use godot::classes::control::{FocusMode, MouseFilter, SizeFlags};
+use godot::classes::light_3d::Param;
 use godot::classes::sub_viewport::UpdateMode;
 use godot::classes::text_server::AutowrapMode;
 use godot::classes::texture_rect::{ExpandMode, StretchMode};
 use godot::classes::{
-    Button, Camera3D, CanvasLayer, ColorRect, Control, DirectionalLight3D, Environment,
-    GridContainer, HBoxContainer, InputEvent, InputEventMouseButton, InputEventMouseMotion, Label,
-    LineEdit, Node3D, PanelContainer, StyleBoxFlat, SubViewport, Texture2D, TextureRect, Time,
-    VBoxContainer,
+    Button, Camera3D, CanvasLayer, ColorRect, Control, Environment, GridContainer, HBoxContainer,
+    InputEvent, InputEventMouseButton, InputEventMouseMotion, Label, LineEdit, Node3D, OmniLight3D,
+    PanelContainer, StyleBoxFlat, SubViewport, Texture2D, TextureRect, Time, VBoxContainer,
 };
 use godot::global::{HorizontalAlignment, MouseButton, VerticalAlignment};
 use godot::prelude::*;
@@ -41,6 +41,7 @@ use nh_world::{
 use crate::gamepad::{PadButton, PadKind};
 use crate::i18n::{self, EngineKind, Lang};
 use crate::icons::{self, Glyph};
+use crate::map_view::DOLL_LAYER;
 use crate::theme::{self, Face, Frame, place};
 use crate::tr;
 use crate::ui_events::{UiEvent, UiQueue, push};
@@ -1078,17 +1079,49 @@ impl Socket {
 }
 
 /// The render layer only the hero's model and what it holds are on (the
-/// map's rim light layer): the doll's camera sees nothing else.
+/// map's rim light layer): the doll's camera sees it, and the layer of the
+/// doll's own lights (`DOLL_LAYER`), and nothing else.
 const HERO_LAYER: u32 = 1 << 1;
 /// The doll's render, twice the area it is shown in for sharpness.
 const DOLL_PX: Vector2i = Vector2i::new(480, 880);
 
-/// A camera in the map's own world that sees only the hero, lit by a key
-/// and a fill that light only the hero, on a clear background: the doll
-/// shows the hero in their gear as the map does.
+/// The doll's own lamps, hung on its camera: where each stands (the
+/// camera looks down -z at the hero, some four metres off), its colour and
+/// its energy. A soft key from the upper left; a cooler fill from the
+/// right; a rim from behind that draws the figure's outline against the
+/// panel. They light the hero's model alone, and only for this camera:
+/// no light of the dungeon's falls on the doll.
+const DOLL_LIGHTS: [(Vector3, Color, f32); 3] = [
+    (
+        Vector3::new(-2.6, 2.6, -0.6),
+        Color::from_rgb(1.0, 0.95, 0.88),
+        DOLL_KEY,
+    ),
+    (
+        Vector3::new(3.4, 0.4, -1.4),
+        Color::from_rgb(0.8, 0.86, 1.0),
+        DOLL_FILL,
+    ),
+    (
+        Vector3::new(1.8, 2.6, -7.4),
+        Color::from_rgb(0.8, 0.88, 1.0),
+        DOLL_RIM,
+    ),
+];
+const DOLL_KEY: f32 = 3.2;
+const DOLL_FILL: f32 = 0.9;
+const DOLL_RIM: f32 = 4.5;
+/// What the doll's lights do not reach is not black: dark clothes keep
+/// their folds in the shade.
+const DOLL_AMBIENT: f32 = 0.4;
+
+/// A camera in the map's own world that sees only the hero and its own
+/// lights, on a clear background: the doll shows the hero in their gear
+/// as the map does, lit for the panel and not by the dungeon.
 struct DollView {
     viewport: Gd<SubViewport>,
     camera: Gd<Camera3D>,
+    lights: Vec<Gd<OmniLight3D>>,
     hero: Option<Gd<Node3D>>,
     /// When it last rendered: it renders at `DOLL_FPS`, the game's frames
     /// in between have one 3D view fewer to draw.
@@ -1106,60 +1139,41 @@ impl DollView {
         viewport.set_msaa_3d(godot::classes::viewport::Msaa::MSAA_4X);
         viewport.set_update_mode(UpdateMode::DISABLED);
         let mut camera = Camera3D::new_alloc();
-        camera.set_cull_mask(HERO_LAYER);
+        // the hero, and the lights made for this camera: a camera takes
+        // only the lights on a layer it sees, the dungeon's are on another
+        camera.set_cull_mask(HERO_LAYER | DOLL_LAYER);
         camera.set_fov(24.0);
         let mut env = Environment::new_gd();
         env.set_background(godot::classes::environment::BgMode::CLEAR_COLOR);
         env.set_ambient_source(godot::classes::environment::AmbientSource::COLOR);
-        env.set_ambient_light_color(Color::from_rgb(0.55, 0.5, 0.46));
-        env.set_ambient_light_energy(1.9);
+        env.set_ambient_light_color(Color::from_rgb(0.52, 0.52, 0.56));
+        env.set_ambient_light_energy(DOLL_AMBIENT);
         env.set_tonemapper(godot::classes::environment::ToneMapper::AGX);
         env.set_tonemap_exposure(1.25);
         camera.set_environment(&env);
-        // a warm key from the upper left, a cold rim from behind
-        for (rot, color, energy) in [
-            // the key, not too steep: the legs get it too
-            (
-                Vector3::new(-0.3, -0.55, 0.0),
-                Color::from_rgb(1.0, 0.9, 0.78),
-                3.4,
-            ),
-            (
-                Vector3::new(-0.2, 0.7, 0.0),
-                Color::from_rgb(0.9, 0.8, 0.7),
-                1.1,
-            ),
-            // a warm bounce from below, as off a lit floor
-            (
-                Vector3::new(0.45, 0.3, 0.0),
-                Color::from_rgb(1.0, 0.82, 0.62),
-                2.6,
-            ),
-            // and a level fill for the legs and the boots
-            (
-                Vector3::new(0.05, -0.35, 0.0),
-                Color::from_rgb(0.95, 0.88, 0.8),
-                1.2,
-            ),
-            (
-                Vector3::new(-0.3, 2.6, 0.0),
-                Color::from_rgb(0.62, 0.7, 1.0),
-                1.6,
-            ),
-        ] {
-            let mut light = DirectionalLight3D::new_alloc();
-            light.set_rotation(rot);
-            light.set_color(color);
-            light.set_param(godot::classes::light_3d::Param::ENERGY, energy);
-            light.set_cull_mask(HERO_LAYER);
-            light.set_shadow(false);
-            camera.add_child(&light);
-        }
+        let lights = DOLL_LIGHTS
+            .into_iter()
+            .map(|(at, color, energy)| {
+                let mut light = OmniLight3D::new_alloc();
+                light.set_position(at);
+                light.set_color(color);
+                light.set_param(Param::ENERGY, energy);
+                // as even over the figure as a far lamp's
+                light.set_param(Param::RANGE, 16.0);
+                light.set_param(Param::ATTENUATION, 0.0);
+                light.set_cull_mask(HERO_LAYER);
+                light.set_layer_mask(DOLL_LAYER);
+                light.set_shadow(false);
+                camera.add_child(&light);
+                light
+            })
+            .collect();
         viewport.add_child(&camera);
         parent.add_child(&viewport);
         DollView {
             viewport,
             camera,
+            lights,
             hero: None,
             last: f64::NEG_INFINITY,
         }
@@ -3097,21 +3111,42 @@ impl InventoryPanel {
     /// The share of the doll's render whose colour `pick` takes. None
     /// without a renderer (self-tests).
     pub fn doll_share(&self, pick: fn(Color) -> bool) -> Option<f32> {
+        let pixels = self.doll_pixels()?;
+        let picked = pixels.iter().filter(|c| pick(**c)).count();
+        Some(picked as f32 / pixels.len() as f32)
+    }
+
+    /// How bright the doll's render is where it is drawn on, 0 to 1. None
+    /// without a renderer, or with nothing drawn (self-tests).
+    pub fn doll_luma(&self) -> Option<f32> {
+        let pixels = self.doll_pixels()?;
+        let drawn: Vec<f32> = pixels
+            .iter()
+            .filter(|c| c.a > 0.5)
+            .map(|c| c.luminance() as f32)
+            .collect();
+        (!drawn.is_empty()).then(|| drawn.iter().sum::<f32>() / drawn.len() as f32)
+    }
+
+    /// The doll's own lights on or off (self-tests: they light the hero on
+    /// the doll, and nowhere else).
+    pub fn doll_lights(&mut self, on: bool) {
+        for light in &mut self.doll_view.lights {
+            light.set_visible(on);
+        }
+    }
+
+    /// The doll's render, every fourth pixel each way (that tells as much).
+    fn doll_pixels(&self) -> Option<Vec<Color>> {
         let image = self.doll_view.viewport.get_texture()?.get_image()?;
         let (w, h) = (image.get_width(), image.get_height());
         if w == 0 || h == 0 {
             return None;
         }
-        // every fourth pixel each way tells as much
         let cells = (0..h)
             .step_by(4)
             .flat_map(|y| (0..w).step_by(4).map(move |x| (x, y)));
-        let (mut picked, mut all) = (0u32, 0u32);
-        for (x, y) in cells {
-            all += 1;
-            picked += u32::from(pick(image.get_pixel(x, y)));
-        }
-        Some(picked as f32 / all as f32)
+        Some(cells.map(|(x, y)| image.get_pixel(x, y)).collect())
     }
 
     /// Place and scale the panel above the HUD's bottom cluster.

@@ -1,5 +1,14 @@
-//! `doll`: the inventory's doll shows the hero as they are, not as the map
-//! marks them. While a wall hides the hero from the map's camera, their
+//! `doll`: the inventory's doll shows the hero as they are, in its own
+//! light, and not as the map marks them.
+//!
+//! The doll's camera looks at the hero's own model in the map's world, and
+//! a camera takes only the lights on a layer it sees: the doll's key, fill
+//! and rim are on a layer of their own that the map's camera leaves out.
+//! Put out, they leave the doll in its dim ambient light and the hero on
+//! the map as lit as before. (The doll's first lights were on the map's
+//! layer: they lit the hero on the map, and the doll not at all.)
+//!
+//! While a wall hides the hero from the map's camera, their
 //! model wears the x-ray overlay: a tint drawn wherever something nearer
 //! covers it. The doll's camera looks at the same model from close by, and
 //! there what is nearer is the hero's own shield, weapon and limbs.
@@ -11,7 +20,9 @@
 //! must draw it still, and the doll's render must have none of it. With
 //! `--screenshots`, a picture of each.
 
+use std::sync::Mutex;
 use std::sync::atomic::{AtomicU32, Ordering};
+use std::time::{Duration, Instant};
 
 use godot::classes::{DisplayServer, RenderingServer};
 use godot::prelude::*;
@@ -20,9 +31,51 @@ use super::{Step, camera_settled, map_view, panel, quit, start};
 use crate::game::RenethackGame;
 
 static FRAMES: AtomicU32 = AtomicU32::new(0);
-/// Frames for the doll to render the hero anew a few times (it renders
-/// every other frame at most).
+static SINCE: Mutex<Option<Instant>> = Mutex::new(None);
+/// Frames, and the time, for the doll to render the hero anew a few times
+/// (it renders thirty times a second at most, however fast the frames
+/// come).
 const FRAMES_RENDERED: u32 = 20;
+const TIME_RENDERED: Duration = Duration::from_millis(300);
+
+/// How bright the doll and the hero on the map were, the doll's lights out.
+static UNLIT: Mutex<Option<(f32, f32)>> = Mutex::new(None);
+
+/// How bright the map's picture is where the hero stands (the window's
+/// last frame, drawn whatever the system thinks of the window).
+fn map_hero_luma(g: &RenethackGame) -> Result<f32, String> {
+    RenderingServer::singleton().force_draw();
+    let ui = g.ui.as_ref().ok_or("no UI")?;
+    let hero = ui
+        .hud
+        .threat_beside()
+        .0
+        .ok_or("the hero is not on screen")?;
+    let image = g.viewport_image().ok_or("no picture of the map")?;
+    // the HUD's canvas may be scaled against the window's pixels
+    let scale = image.get_width() as f32 / g.canvas_size().x.max(1.0);
+    let (x0, x1) = (hero.position.x * scale, hero.end().x * scale);
+    let (y0, y1) = (hero.position.y * scale, hero.end().y * scale);
+    let cells = ((y0 as i32).max(0)..(y1 as i32).min(image.get_height()))
+        .step_by(2)
+        .flat_map(|y| {
+            ((x0 as i32).max(0)..(x1 as i32).min(image.get_width()))
+                .step_by(2)
+                .map(move |x| (x, y))
+        });
+    let lumas: Vec<f32> = cells
+        .map(|(x, y)| image.get_pixel(x, y).luminance() as f32)
+        .collect();
+    if lumas.is_empty() {
+        return Err("the hero's place on screen is empty".into());
+    }
+    Ok(lumas.iter().sum::<f32>() / lumas.len() as f32)
+}
+
+fn doll_lights(g: &mut RenethackGame, on: bool) -> Result<(), String> {
+    g.ui.as_mut().ok_or("no UI")?.inventory.doll_lights(on);
+    Ok(())
+}
 
 /// The probe's colour as the doll's render shows it: a strong magenta.
 fn probe(c: Color) -> bool {
@@ -41,12 +94,21 @@ fn probed(g: &mut RenethackGame, on: bool) -> Result<(), String> {
     }
 }
 
+/// Frames drawn whatever the window: macOS does not draw one it thinks
+/// nobody sees, and the doll renders only when a frame is drawn. A check
+/// made on a doll not rendered since would look at the old picture.
 fn rendered(what: &'static str) -> Step {
     Step::Wait(what, |_| {
-        if FRAMES.fetch_add(1, Ordering::Relaxed) + 1 < FRAMES_RENDERED {
+        RenderingServer::singleton().force_draw();
+        let mut since = SINCE.lock().map_err(|e| e.to_string())?;
+        let begun = *since.get_or_insert_with(Instant::now);
+        if FRAMES.fetch_add(1, Ordering::Relaxed) + 1 < FRAMES_RENDERED
+            || begun.elapsed() < TIME_RENDERED
+        {
             return Ok(false);
         }
         FRAMES.store(0, Ordering::Relaxed);
+        *since = None;
         Ok(true)
     })
 }
@@ -70,6 +132,7 @@ pub(super) fn doll() -> Vec<Step> {
             Ok(())
         }),
         Step::Wait("the doll renders the hero", |g| {
+            RenderingServer::singleton().force_draw();
             let p = panel(g)?;
             Ok(p.doll_rendered() && p.doll_share(drawn).is_some_and(|s| s > 0.05))
         }),
@@ -79,6 +142,51 @@ pub(super) fn doll() -> Vec<Step> {
             if share > 0.0 {
                 return Err(format!(
                     "the hero wears the probe's colour ({share:.4} of the doll's render)"
+                ));
+            }
+            Ok(())
+        }),
+        // the doll's own lights: put out, the doll is dimmer and the hero
+        // on the map is not
+        Step::Shot("doll-lit"),
+        Step::Call("the doll's lights out", |g| doll_lights(g, false)),
+        rendered("the doll in its ambient light alone"),
+        Step::Shot("doll-unlit"),
+        Step::Call("how bright the doll is without them", |g| {
+            let doll = panel(g)?.doll_luma().ok_or("no doll render")?;
+            g.ui.as_mut().ok_or("no UI")?.inventory.close();
+            *UNLIT.lock().map_err(|e| e.to_string())? = Some((doll, 0.0));
+            Ok(())
+        }),
+        rendered("the map without the panel, the doll's lights out"),
+        Step::Call("how bright the hero on the map is without them", |g| {
+            let map = map_hero_luma(g)?;
+            if let Some(unlit) = UNLIT.lock().map_err(|e| e.to_string())?.as_mut() {
+                unlit.1 = map;
+            }
+            doll_lights(g, true)
+        }),
+        rendered("the map, the doll's lights lit again"),
+        Step::Call("the doll's lights do not light the map's hero", |g| {
+            let (_, unlit) = UNLIT.lock().map_err(|e| e.to_string())?.ok_or("not measured")?;
+            let lit = map_hero_luma(g)?;
+            godot_print!("selftest: doll: the map's hero is {unlit:.4} bright, {lit:.4} with the doll's lights");
+            if (lit - unlit).abs() > 0.05 * unlit.max(0.02) {
+                return Err(format!(
+                    "the doll's lights light the hero on the map: {unlit:.4} without them, {lit:.4} with"
+                ));
+            }
+            g.ui.as_mut().ok_or("no UI")?.inventory.open();
+            Ok(())
+        }),
+        rendered("the doll in its lights again"),
+        Step::Call("the doll's lights light the doll", |g| {
+            let (unlit, _) = UNLIT.lock().map_err(|e| e.to_string())?.ok_or("not measured")?;
+            let lit = panel(g)?.doll_luma().ok_or("no doll render")?;
+            godot_print!("selftest: doll: the doll is {unlit:.4} bright, {lit:.4} in its lights");
+            if lit < unlit * 1.3 {
+                return Err(format!(
+                    "the doll's lights do not light the doll: {unlit:.4} without them, {lit:.4} with"
                 ));
             }
             Ok(())
