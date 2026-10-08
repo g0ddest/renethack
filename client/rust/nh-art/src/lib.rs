@@ -1421,6 +1421,40 @@ mod tests {
         assert!(model("gnome", 0).1.head_scale > 1.1);
     }
 
+    /// Orcs were one dark figure in leather, told apart by a faint tint,
+    /// and their women were women in leather: each kind has its gear now.
+    #[test]
+    fn the_orcs_are_told_apart() {
+        let (art, cat) = (manifest(), catalog());
+        let model = |n: &str, flags: u32| {
+            let m = cat.monsters.iter().find(|m| m.name == n).unwrap();
+            art.model_at(art.monster(m, flags).model)
+        };
+        let kinds = [
+            "hill orc",
+            "Mordor orc",
+            "Uruk-hai",
+            "orc shaman",
+            "orc-captain",
+        ];
+        let mut seen = Vec::new();
+        for kind in kinds {
+            for flags in [0, mg::FEMALE] {
+                let (name, spec) = model(kind, flags);
+                assert!(!seen.contains(&name), "{kind}: {name} again");
+                seen.push(name);
+                // green-skinned to the hands, tusked and long-eared
+                let head = if flags == 0 { "orc" } else { "orc_f" };
+                assert_eq!(spec.head.as_deref(), Some(head), "{name}");
+                assert_eq!(spec.bare_arms.as_deref(), Some(head), "{name}");
+                let horns = spec.extras.iter().filter(|e| e.model == "horn").count();
+                assert_eq!(horns, 4, "{name}: two tusks and two ears");
+            }
+        }
+        // the head's hair is not a woman's long hair
+        assert!(!art.head("orc_f").unwrap().hair[0].contains("Long"));
+    }
+
     /// A mumak was drawn two cells long and a baluchitherium four: they hid
     /// the hero they fought and went through a corridor's rock.
     #[test]
