@@ -513,6 +513,42 @@ fn a_god_speaks_to_a_heroine() {
     );
 }
 
+#[test]
+fn a_plural_spelled_like_its_singular() {
+    // vtense() says the number in the verb, the name does not
+    let t = with(&[
+        (
+            "%s slip from your %s.",
+            r#"ru = "{1:pl:cap} выскальзывают у вас из рук.{2:skip}""#,
+        ),
+        (
+            "%s slips from your %s.",
+            r#"ru = "{1:cap} выскальзывает у вас из рук.{2:skip}""#,
+        ),
+    ]);
+    let many = t.message(None, &[], "Your shuriken slip from your hands.");
+    let one = t.message(None, &[], "Your shuriken slips from your hands.");
+    assert_eq!(many.status, Status::Translated, "{}", many.text);
+    assert!(
+        one.text.ends_with(" выскальзывает у вас из рук."),
+        "{}",
+        one.text
+    );
+    assert!(
+        many.text.ends_with(" выскальзывают у вас из рук."),
+        "{}",
+        many.text
+    );
+    // «Ваши сюрикены», not «Ваш сюрикен»
+    assert_ne!(
+        many.text.trim_end_matches(" выскальзывают у вас из рук."),
+        one.text.trim_end_matches(" выскальзывает у вас из рук."),
+        "{} / {}",
+        many.text,
+        one.text
+    );
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {

@@ -28,8 +28,9 @@ pub trait Phrase {
     }
     /// The phrase agreeing with a noun of that gender and number, in
     /// `case`: a word that is an adjective takes that gender ("lawful":
-    /// законопослушная), a role its feminine. By default its form in that
-    /// case.
+    /// законопослушная), a role its feminine, a noun among many its plural
+    /// (the English "shuriken" does not say how many). By default its form
+    /// in that case.
     fn agreeing(&self, gender: Gender, number: Number, case: Case) -> String {
         let _ = (gender, number);
         self.form(case)

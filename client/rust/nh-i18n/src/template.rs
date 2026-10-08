@@ -18,7 +18,7 @@
 //! | `{1:plural\|монету\|монеты\|монет}` | after the number argument 1: one (1, 21), few (2–4, 22–24), many (5–20, 0) |
 //! | `{2:by1}`, `{2:by1:acc}` | argument 2 as counted by the number argument 1: "стрелу", "стрелы", "стрел" |
 //! | `{2:ins:own}` | argument 2 with its "your" as свой, where the hero does the thing: "Вы бьёте {2:ins:own}" → своим топором |
-//! | `{3:hero}`, `{3:f}`, `{3:pl:gen}` | argument 3 agreeing with the hero, or with a masculine (`m`), feminine (`f`), neuter (`n`) or plural (`pl`) noun: a word that is an adjective takes that gender ("lawful": законопослушная), a role its feminine (Целительница); any other name stays as it is |
+//! | `{3:hero}`, `{3:f}`, `{3:pl:gen}` | argument 3 agreeing with the hero, or with a masculine (`m`), feminine (`f`), neuter (`n`) or plural (`pl`) noun: a word that is an adjective takes that gender ("lawful": законопослушная), a role its feminine (Целительница); a noun asked for the plural (`pl`) is put in it ("shuriken" before "slip": сюрикены), any other name stays as it is |
 //! | `{2:like1}` | argument 2 agreeing with argument 1's gender and number: "Бригита ({2:like1})" → (нейтральная) |
 //! | `{hero:gender\|сам\|сама}` | as the hero's gender: masculine, feminine |
 //! | `{1:skip}` | nothing: the Russian says otherwise what argument 1 says (a heading's fixed word, the "weapons" of a menu about the item itself) |

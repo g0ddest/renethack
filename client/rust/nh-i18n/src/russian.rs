@@ -117,6 +117,7 @@ impl Translation {
             forms,
             gender,
             number,
+            plural: self.plural.clone(),
         })
     }
 }
@@ -129,6 +130,7 @@ impl Translation {
             forms: self.plural.clone()?,
             gender,
             number: Number::Plur,
+            plural: None,
         }))
     }
 }
@@ -138,6 +140,8 @@ struct Piece {
     forms: [String; 6],
     gender: Gender,
     number: Number,
+    /// Its plural's forms, when the translation gives them.
+    plural: Option<[String; 6]>,
 }
 
 impl Phrase for Piece {
@@ -151,6 +155,14 @@ impl Phrase for Piece {
 
     fn number(&self) -> Number {
         self.number
+    }
+
+    /// Among many it is many, when its plural is known.
+    fn agreeing(&self, _gender: Gender, number: Number, case: Case) -> String {
+        match &self.plural {
+            Some(many) if number == Number::Plur => many[case.index()].clone(),
+            _ => self.form(case),
+        }
     }
 }
 

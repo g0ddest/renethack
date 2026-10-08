@@ -107,6 +107,12 @@ impl RuName {
             she.female = None;
             return she.form(case);
         }
+        // a noun among many is many: "shuriken" before "slip"
+        if number == Number::Plur && self.count == Count::One {
+            let mut many = self.clone();
+            many.count = Count::Some;
+            return many.form(case);
+        }
         self.form(case)
     }
 
