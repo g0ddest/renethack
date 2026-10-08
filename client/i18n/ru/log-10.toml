@@ -757,21 +757,69 @@ ru = "Вы начинаете парить в воздухе!"
 en = "The %s falls into the %s!"
 ru = "{1} {1:num|падает|падают} в {2:acc}!"
 
-[fd732f51199b]
-en = "The adjacent object falls %s."
-ru = "Лежащий рядом предмет падает вниз.{1:skip}"
+[58b01c713306]
+en = "The adjacent object falls down the stairs."
+ru = "Лежащий рядом предмет падает вниз по лестнице."
 
-[1140eb161467]
-en = "All the adjacent objects fall %s."
-ru = "Все лежащие рядом предметы падают вниз.{1:skip}"
+[83b5a4387e1d]
+en = "The adjacent object falls down the ladder."
+ru = "Лежащий рядом предмет падает вниз по приставной лестнице."
 
-[7b990d80678c]
-en = "One of the adjacent objects falls %s."
-ru = "Один из лежащих рядом предметов падает вниз.{1:skip}"
+[c0256e0a8b42]
+en = "The adjacent object falls through the trap door."
+ru = "Лежащий рядом предмет падает в люк."
 
-[e87b3eeb3ada]
-en = "Some of the adjacent objects fall %s."
-ru = "Часть лежащих рядом предметов падает вниз.{1:skip}"
+[e423378dcf03]
+en = "The adjacent object falls through the hole."
+ru = "Лежащий рядом предмет падает в дыру."
+
+[701bd73aea38]
+en = "All the adjacent objects fall down the stairs."
+ru = "Все лежащие рядом предметы падают вниз по лестнице."
+
+[968182410838]
+en = "All the adjacent objects fall down the ladder."
+ru = "Все лежащие рядом предметы падают вниз по приставной лестнице."
+
+[35d4684bd736]
+en = "All the adjacent objects fall through the trap door."
+ru = "Все лежащие рядом предметы падают в люк."
+
+[bb63eafd41d0]
+en = "All the adjacent objects fall through the hole."
+ru = "Все лежащие рядом предметы падают в дыру."
+
+[f72ccac50598]
+en = "One of the adjacent objects falls down the stairs."
+ru = "Один из лежащих рядом предметов падает вниз по лестнице."
+
+[64c8dcc9795c]
+en = "One of the adjacent objects falls down the ladder."
+ru = "Один из лежащих рядом предметов падает вниз по приставной лестнице."
+
+[6519a0c611df]
+en = "One of the adjacent objects falls through the trap door."
+ru = "Один из лежащих рядом предметов падает в люк."
+
+[f1998ab81731]
+en = "One of the adjacent objects falls through the hole."
+ru = "Один из лежащих рядом предметов падает в дыру."
+
+[3d22a4217225]
+en = "Some of the adjacent objects fall down the stairs."
+ru = "Часть лежащих рядом предметов падает вниз по лестнице."
+
+[00157d55baea]
+en = "Some of the adjacent objects fall down the ladder."
+ru = "Часть лежащих рядом предметов падает вниз по приставной лестнице."
+
+[72591108dfc4]
+en = "Some of the adjacent objects fall through the trap door."
+ru = "Часть лежащих рядом предметов падает в люк."
+
+[7ac2f5a5b78f]
+en = "Some of the adjacent objects fall through the hole."
+ru = "Часть лежащих рядом предметов падает в дыру."
 
 [87daeafd6934]
 en = "From the impact, another object falls."

@@ -474,18 +474,11 @@ fn an_owner_the_engine_printed_apart() {
 
 #[test]
 fn what_the_russian_leaves_out_may_stay_english() {
-    let t = with(&[(
-        "The adjacent object falls %s.",
-        r#"ru = "Лежащий рядом предмет падает вниз.{1:skip}""#,
-    )]);
-    let out = t.message(
-        None,
-        &[],
-        "The adjacent object falls through the trap door.",
-    );
+    let t = with(&[("You hit %s.", r#"ru = "Вы попадаете.{1:skip}""#)]);
+    let out = t.message(None, &[], "You hit the frobnicating zzyzx.");
     assert_eq!(
         (out.text.as_str(), out.status),
-        ("Лежащий рядом предмет падает вниз.", Status::Translated)
+        ("Вы попадаете.", Status::Translated)
     );
 }
 

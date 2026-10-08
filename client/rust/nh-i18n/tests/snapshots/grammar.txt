@@ -13048,11 +13048,14 @@ All right, we'll call it a draw!  [6c212036f1b7]
   =   Ладно, назовём это ничьей!
 All such monsters are already nonexistent.  [d5a24b6da8cf]
   =   Все такие монстры уже истреблены.
-All the adjacent objects fall %s.  [1140eb161467]
-  m   Все лежащие рядом предметы падают вниз.
-  f   Все лежащие рядом предметы падают вниз.
-  n   Все лежащие рядом предметы падают вниз.
-  pl  Все лежащие рядом предметы падают вниз.
+All the adjacent objects fall down the ladder.  [968182410838]
+  =   Все лежащие рядом предметы падают вниз по приставной лестнице.
+All the adjacent objects fall down the stairs.  [701bd73aea38]
+  =   Все лежащие рядом предметы падают вниз по лестнице.
+All the adjacent objects fall through the hole.  [bb63eafd41d0]
+  =   Все лежащие рядом предметы падают в дыру.
+All the adjacent objects fall through the trap door.  [35d4684bd736]
+  =   Все лежащие рядом предметы падают в люк.
 All types  [30c8a0fc9c1a]
   =   Все типы
 All worn and wielded types  [70cb28745864]
@@ -16110,11 +16113,14 @@ One of %s forms a coating on %s.  [a785d488f9fa]
   f   Одно из крысы покрывает крысу налётом.
   n   Одно из копья покрывает копьё налётом.
   pl  Одно из 3 стрел покрывает 3 стрелы налётом.
-One of the adjacent objects falls %s.  [7b990d80678c]
-  m   Один из лежащих рядом предметов падает вниз.
-  f   Один из лежащих рядом предметов падает вниз.
-  n   Один из лежащих рядом предметов падает вниз.
-  pl  Один из лежащих рядом предметов падает вниз.
+One of the adjacent objects falls down the ladder.  [64c8dcc9795c]
+  =   Один из лежащих рядом предметов падает вниз по приставной лестнице.
+One of the adjacent objects falls down the stairs.  [f72ccac50598]
+  =   Один из лежащих рядом предметов падает вниз по лестнице.
+One of the adjacent objects falls through the hole.  [f1998ab81731]
+  =   Один из лежащих рядом предметов падает в дыру.
+One of the adjacent objects falls through the trap door.  [6519a0c611df]
+  =   Один из лежащих рядом предметов падает в люк.
 One of the potions on the altar glows %s for a moment.  [3fc824a3398a]
   m   Одно из зелий на алтаре на миг вспыхивает тритоном светом.
   f   Одно из зелий на алтаре на миг вспыхивает крысой светом.
@@ -16993,11 +16999,14 @@ Some objects meld, and %s arises from the pile!  [71ad018096b8]
   f   Несколько предметов сливаются воедино, и из груды поднимается крыса!
   n   Несколько предметов сливаются воедино, и из груды поднимается копьё!
   pl  Несколько предметов сливаются воедино, и из груды поднимаются 3 стрелы!
-Some of the adjacent objects fall %s.  [e87b3eeb3ada]
-  m   Часть лежащих рядом предметов падает вниз.
-  f   Часть лежащих рядом предметов падает вниз.
-  n   Часть лежащих рядом предметов падает вниз.
-  pl  Часть лежащих рядом предметов падает вниз.
+Some of the adjacent objects fall down the ladder.  [00157d55baea]
+  =   Часть лежащих рядом предметов падает вниз по приставной лестнице.
+Some of the adjacent objects fall down the stairs.  [3d22a4217225]
+  =   Часть лежащих рядом предметов падает вниз по лестнице.
+Some of the adjacent objects fall through the hole.  [7ac2f5a5b78f]
+  =   Часть лежащих рядом предметов падает в дыру.
+Some of the adjacent objects fall through the trap door.  [72591108dfc4]
+  =   Часть лежащих рядом предметов падает в люк.
 Some of the potions on the altar glow %s for a moment.  [611879fee410]
   m   Некоторые зелья на алтаре на миг вспыхивают тритоном светом.
   f   Некоторые зелья на алтаре на миг вспыхивают крысой светом.
@@ -17761,11 +17770,14 @@ The Vibrating Square  [4897138d2ce1]
   =   Вибрирующий квадрат
 The Wizard finds death to be quite an experience.  [75b6b67ad22c]
   =   Для Волшебника смерть — то ещё приключение.
-The adjacent object falls %s.  [fd732f51199b]
-  m   Лежащий рядом предмет падает вниз.
-  f   Лежащий рядом предмет падает вниз.
-  n   Лежащий рядом предмет падает вниз.
-  pl  Лежащий рядом предмет падает вниз.
+The adjacent object falls down the ladder.  [83b5a4387e1d]
+  =   Лежащий рядом предмет падает вниз по приставной лестнице.
+The adjacent object falls down the stairs.  [58b01c713306]
+  =   Лежащий рядом предмет падает вниз по лестнице.
+The adjacent object falls through the hole.  [e423378dcf03]
+  =   Лежащий рядом предмет падает в дыру.
+The adjacent object falls through the trap door.  [c0256e0a8b42]
+  =   Лежащий рядом предмет падает в люк.
 The air around %s crackles with electricity.  [c09d808606ee]
   m   Воздух вокруг тритона трещит от электричества.
   f   Воздух вокруг крысы трещит от электричества.

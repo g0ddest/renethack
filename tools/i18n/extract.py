@@ -219,6 +219,9 @@ WRAPPERS = set("""an An the The upstart upwords lcase ucase s_suffix makeplural
 WRITTEN_BY = {"trap_predicament"}
 # ... or appends it to what the buffer held ("For you, " + "esteemed sir")
 APPENDED_BY = {"append_honorific"}
+# Helpers whose parameter is their caller's own: its literals are those the
+# caller is given (getobj's word, which silly_thing says)
+HANDED_ON = {"silly_thing"}
 # Helpers that return a static buffer: what that buffer holds
 RETURNED_BUFFER = {"piousness"}
 # x(obj, "verb") is "<the object's name> verb[s]"
@@ -584,6 +587,8 @@ class Globals:
                 j = i + 2
                 while j < len(toks) and toks[j].text != ";":
                     j = match_close(toks, j) + 1 if toks[j].text in "([{" else j + 1
+                if source_text(strip_expr(toks[i + 2:j])) in NULL_POINTERS:
+                    continue
                 v = literal_values(toks[i + 2:j])
                 if v is None:
                     return None
@@ -599,8 +604,14 @@ class Globals:
             for caller, args in self.call_sites(ctx):
                 if k < len(args):
                     v = caller.values(args[k])
+                    a = strip_expr(args[k])
                     if v is not None:
                         out += v
+                    elif (ctx.func.name in HANDED_ON and len(a) == 1 and a[0].kind == "ident"
+                          and a[0].text in caller.params):
+                        # a parameter handed on: what its own callers give
+                        # (getobj's word to silly_thing)
+                        out += self.param_values_partial(caller, a[0].text)
             return dedupe(out)
         return self._memo(("pp", ctx.unit.path, ctx.func.name, name), compute, [])
 
@@ -901,10 +912,21 @@ class Context:
                     return None
                 out += v
             return dedupe(out) if out else None
-        # table[i]
+        # text + 2: the text from its third character ("unlocking" + 2)
+        if len(toks) >= 3 and toks[-2].text == "+" and toks[-1].kind == "number" and toks[-1].text.isdigit():
+            inner = self.values(toks[:-2], depth + 1, seen)
+            n = int(toks[-1].text)
+            if inner is not None and all(len(v) > n for v in inner):
+                return dedupe([v[n:] for v in inner])
+            return None
+        # table[i]; table[3] is that one
         if (toks[0].kind == "ident" and len(toks) >= 4 and toks[1].text == "["
                 and match_close(toks, 1) == len(toks) - 1):
             table = self.array(toks[0].text)
+            if table and len(toks) == 4 and toks[2].kind == "number" and toks[2].text.isdigit():
+                k = int(toks[2].text)
+                if k < len(table):
+                    return [table[k]]
             if table:
                 return dedupe(table)
         # rows[i].member: the member of every row of a struct table
@@ -921,6 +943,15 @@ class Context:
             column = self.column(toks[0].text, int(toks[-2].text))
             if column:
                 return column
+        # rows[i][c ? 0 : 1]: the columns the index chooses between
+        # (exertext[i][(mod > 0) ? 0 : 1])
+        if toks[0].kind == "ident" and len(toks) >= 7 and toks[1].text == "[" and toks[-1].text == "]":
+            close = match_close(toks, 1)
+            if close + 1 < len(toks) and toks[close + 1].text == "[" and match_close(toks, close + 1) == len(toks) - 1:
+                ks = self.int_values(toks[close + 2:-1])
+                columns = [self.column(toks[0].text, k) for k in ks or []]
+                if columns and all(columns):
+                    return dedupe([v for c in columns for v in c])
         return None
 
     def column(self, table, member):
@@ -1282,6 +1313,10 @@ class Context:
         if v is not None:
             return [(f, None) for f in v]
         toks = strip_expr(toks)
+        if len(toks) == 1 and toks[0].kind == "ident" and toks[0].text in self.params:
+            # a format handed in: those the callers that give a literal give
+            # (liquid_flow's fillmsg)
+            return [(f, None) for f in self.glob.param_values_partial(self, toks[0].text)]
         if len(toks) == 1 and toks[0].kind == "ident" and toks[0].text in self.ops:
             return [(f, kinds) for f, kinds in self.compositions(toks[0].text, pos, 1)]
         # &buf[i], buf + i: what it holds from offset i ("Wait!  " left out)

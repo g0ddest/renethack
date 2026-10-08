@@ -65,6 +65,7 @@ class Formats(unittest.TestCase):
 
     def test_a_member_its_unit_sets(self):
         e = catalog_of('static void verb(struct ctx *de) {\n'
+                       '    de->everb = 0;\n'
                        '    de->everb = de->adding ? "add to the writing in" : "write in";\n'
                        '    de->eloc = "dust";\n}\n'
                        'void f(struct ctx *de) {\n'
@@ -98,6 +99,37 @@ class Formats(unittest.TestCase):
         self.assertEqual(e["A voice v3: %s"].uses, {"pline"})
         self.assertEqual(e["Thou art number 7."].uses, {"sprintf"})
         self.assertNotIn("A voice v3: Thou art number 7.", e)
+
+    def test_a_text_from_its_third_character_and_one_of_a_table(self):
+        e = catalog_of('static const char *action(int lock) {\n'
+                       '    static const char *const actions[] = { "unlocking the door", "picking the lock" };\n'
+                       '    if (lock) return actions[0] + 2;\n'
+                       '    return pick ? actions[1] : actions[0];\n}\n'
+                       'void f(void) { You("succeed in %s.", action(x)); }\n')
+        self.assertEqual({k for k in e if k.startswith("You succeed") and "%" not in k},
+                         {"You succeed in locking the door.", "You succeed in unlocking the door.",
+                          "You succeed in picking the lock."})
+
+    def test_the_columns_an_index_chooses_between(self):
+        e = catalog_of('static const char *const exertext[3][2] = {\n'
+                       '    { "exercising diligently", "exercising properly" }, { 0, 0 },\n'
+                       '    { "very observant", "paying attention" } };\n'
+                       'void f(int i, int mod) {\n'
+                       '    You("%s %s.", (mod > 0) ? "must have been" : "haven\'t been",\n'
+                       '        exertext[i][(mod > 0) ? 0 : 1]);\n}\n')
+        self.assertIn("You must have been very observant.", e)
+        self.assertIn("You haven't been paying attention.", e)
+
+    def test_a_format_and_a_word_handed_on(self):
+        e = catalog_of('static void flow(const char *fillmsg) { pline(fillmsg, hliquid("water")); }\n'
+                       'void a(void) { flow("The hole fills with %s!"); }\n'
+                       'void b(const char *m) { flow(m); }\n'
+                       'static void silly_thing(const char *word) { pline("That is a silly thing to %s.", word); }\n'
+                       'static void getobj(const char *word) { silly_thing(word); }\n'
+                       'void c(void) { getobj("eat"); }\n'
+                       'void d(char *w) { getobj(w); }\n')
+        self.assertIn("The hole fills with %s!", e)
+        self.assertIn("That is a silly thing to eat.", e)
 
     def test_buffers_are_inlined(self):
         e = catalog_of('void f(struct monst *m) {\n'
