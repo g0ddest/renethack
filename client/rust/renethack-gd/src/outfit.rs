@@ -19,8 +19,9 @@ use super::{Art, cut, is_skin, mul, rgb};
 pub const NECK_NODE: &str = "WornNeck";
 pub const GLOVES_NODE: &str = "WornGloves";
 
-/// How far up the forearm a glove's cuff reaches from the wrist, metres.
-const CUFF: f32 = 0.035;
+/// How far up the forearm a glove's cuff reaches from the wrist, metres
+/// (and where a sleeve ends that leaves the hand bare).
+pub(super) const CUFF: f32 = 0.035;
 /// How thick a glove is over the hand it covers.
 const GLOVE: f32 = 0.003;
 /// A mesh with a hand reaches at least this far past the wrist.
@@ -112,20 +113,36 @@ fn put_on(
     mi
 }
 
+/// How far from the body's middle the wrists of a mesh skinned by `skin`
+/// lie, its arms out at rest: where the skin binds the left hand.
+pub(super) fn wrist_of(skin: &Gd<Skin>) -> Option<f32> {
+    let hand = StringName::from("hand_l");
+    (0..skin.get_bind_count())
+        .find(|&i| skin.get_bind_name(i) == hand)
+        .map(|i| skin.get_bind_pose(i).affine_inverse().origin.x.abs())
+}
+
+/// Whether `mesh` reaches past the wrists as far as fingers do: it has
+/// the hands (a bracer or a short sleeve does not).
+pub(super) fn has_hands(mesh: &Gd<ArrayMesh>, wrist: f32) -> bool {
+    let bounds = mesh.get_aabb();
+    bounds.position.x.abs().max(bounds.end().x.abs()) >= wrist + FINGERS
+}
+
 /// The gloves over the hands of `mesh` (a body's or a sleeve's, skinned by
 /// `skin`): its faces from a cuff's length above the wrists outward, a
 /// glove's thickness out along their normals. None when it has no hand.
 fn gloves_over(mesh: &Gd<ArrayMesh>, skin: &Gd<Skin>) -> Option<Gd<ArrayMesh>> {
-    let hand = StringName::from("hand_l");
-    let wrist = (0..skin.get_bind_count())
-        .find(|&i| skin.get_bind_name(i) == hand)
-        .map(|i| skin.get_bind_pose(i).affine_inverse().origin.x.abs())?;
-    let bounds = mesh.get_aabb();
-    let reach = bounds.position.x.abs().max(bounds.end().x.abs());
-    if reach < wrist + FINGERS {
-        return None;
-    }
+    let wrist = wrist_of(skin).filter(|w| has_hands(mesh, *w))?;
     let (hands, _) = cut(mesh, |v| v.x.abs() > wrist - CUFF);
+    let out = swollen(&hands, GLOVE)?;
+    (out.get_surface_count() > 0).then_some(out)
+}
+
+/// `mesh` with every vertex moved `by` out along its normal (a layer
+/// over the same body); its surfaces keep their materials.
+pub(super) fn swollen(mesh: &Gd<ArrayMesh>, by: f32) -> Option<Gd<ArrayMesh>> {
+    let hands = mesh;
     let mut out = ArrayMesh::new_gd();
     for i in 0..hands.get_surface_count() {
         let mut arrays = hands.surface_get_arrays(i);
@@ -135,7 +152,7 @@ fn gloves_over(mesh: &Gd<ArrayMesh>, skin: &Gd<Skin>) -> Option<Gd<ArrayMesh>> {
             .as_slice()
             .iter()
             .zip(normals.as_slice())
-            .map(|(v, n)| *v + *n * GLOVE)
+            .map(|(v, n)| *v + *n * by)
             .collect();
         if out_by.len() != verts.len() {
             return None;
@@ -148,8 +165,11 @@ fn gloves_over(mesh: &Gd<ArrayMesh>, skin: &Gd<Skin>) -> Option<Gd<ArrayMesh>> {
         out.add_surface_from_arrays_ex(PrimitiveType::TRIANGLES, &arrays)
             .flags(ArrayFormat::from_ord(eight))
             .done();
+        if let Some(m) = hands.surface_get_material(i) {
+            out.surface_set_material(i, &m);
+        }
     }
-    (out.get_surface_count() > 0).then_some(out)
+    Some(out)
 }
 
 impl Art {

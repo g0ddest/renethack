@@ -220,6 +220,8 @@ pub struct Art {
     proc_clips: Option<Gd<AnimationLibrary>>,
     /// Meshes shaded smooth, by the source mesh's id.
     smoothed: HashMap<i64, Gd<Mesh>>,
+    /// Sleeves cut free of their hands, by the source mesh's id.
+    handless: HashMap<i64, Gd<ArrayMesh>>,
     /// The meshes (and their skins) of each base head, built once.
     heads: HashMap<String, Option<HeadParts>>,
     /// The base characters' bodies cut to a region, by (base, region, cut
@@ -292,6 +294,7 @@ impl Art {
             proc_anims: HashMap::new(),
             proc_clips: None,
             smoothed: HashMap::new(),
+            handless: HashMap::new(),
             heads: HashMap::new(),
             bodies: HashMap::new(),
             outfits: outfit::Outfits::default(),
@@ -1102,6 +1105,13 @@ impl Art {
                 }
                 if let Some(kind) = spec.bare_arms.as_deref() {
                     self.attach_base_head(&inner, kind, Region::bare(&spec));
+                } else if let Some(kind) = spec.head.as_deref()
+                    && let Some((sleeves, wrist)) = clothed_hands(&inner)
+                    && self.attach_base_head(&inner, kind, Region::Hands)
+                {
+                    // an outfit's own hands that are not skin (the peasant
+                    // woman's sleeves end in gloves) give way to the head's
+                    self.bare_the_hands(sleeves, wrist);
                 }
                 if spec.head_scale != 1.0 {
                     scale_head(&inner, spec.head_scale);
@@ -1219,8 +1229,9 @@ impl Art {
                 continue;
             }
             let name = mi.get_name().to_string();
-            // a base head keeps its own skin and hair (only a ghost's fades)
-            let head = name.starts_with("BaseHead");
+            // a base character's head, arms and hands keep their own skin
+            // and hair (only a ghost's fade)
+            let head = name.starts_with(BASE_PART);
             if head && !ghost {
                 continue;
             }
@@ -1326,7 +1337,7 @@ impl Art {
         };
         for (i, (mesh, skin, materials)) in parts.iter().enumerate() {
             let mut mi = MeshInstance3D::new_alloc();
-            mi.set_name(&format!("BaseHead{i}"));
+            mi.set_name(&format!("{BASE_PART}{region:?}{i}"));
             mi.set_mesh(mesh);
             for (s, m) in materials.iter().enumerate() {
                 if let Some(m) = m {
@@ -1340,6 +1351,24 @@ impl Art {
             mi.set_skeleton_path(&NodePath::from(".."));
         }
         true
+    }
+
+    /// The outfit's mesh whose sleeves end in hands, left without them
+    /// (cut at the cuff, once per mesh): the base character's show there.
+    fn bare_the_hands(&mut self, mut sleeves: Gd<MeshInstance3D>, wrist: f32) {
+        let Some(mesh) = sleeves
+            .get_mesh()
+            .and_then(|m| m.try_cast::<ArrayMesh>().ok())
+        else {
+            return;
+        };
+        let key = mesh.instance_id().to_i64();
+        let cuffed = self
+            .handless
+            .entry(key)
+            .or_insert_with(|| cut(&mesh, |v| v.x.abs() <= wrist - outfit::CUFF).0)
+            .clone();
+        sleeves.set_mesh(&cuffed);
     }
 
     /// A base head's meshes, built once.
@@ -1400,7 +1429,14 @@ impl Art {
                     continue;
                 }
                 let (mesh, worn) = if body {
-                    let (cut, kept) = self.body_cut(&path, region, spec.cut, &mesh);
+                    // the head is cut at its height, the hands at the wrists
+                    let wrist = mi.get_skin().and_then(|s| outfit::wrist_of(&s));
+                    let at = match (region, wrist) {
+                        (Region::Hands, Some(w)) => w,
+                        (Region::Hands, None) => return None,
+                        _ => spec.cut,
+                    };
+                    let (cut, kept) = self.body_cut(&path, region, at, &mesh);
                     let worn = kept
                         .iter()
                         .map(|&i| worn.get(i).cloned().flatten())
@@ -1436,6 +1472,8 @@ impl Art {
             return c.clone();
         }
         let c = match region {
+            // from inside the sleeve's end (`at`: the wrists from the middle)
+            Region::Hands => cut(mesh, |v| v.x.abs() > at - outfit::CUFF - TUCK),
             Region::Head => cut(mesh, |v| v.y >= at),
             // in the rest pose the arms reach out sideways from the
             // shoulders
@@ -2997,6 +3035,13 @@ type CutBody = (Gd<ArrayMesh>, Vec<usize>);
 /// surfaces.
 type HeadParts = Vec<(Gd<Mesh>, Option<Gd<GdSkin>>, Vec<Option<Gd<Material>>>)>;
 
+/// The names of a base character's parts worn on an outfit's skeleton
+/// begin so (then the region and a number): their skin is the head's own,
+/// no outfit's dye or shade touches it.
+const BASE_PART: &str = "Base";
+/// How far into a sleeve a base character's hand begins.
+const TUCK: f32 = 0.012;
+
 /// Which part of a base character is worn.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Region {
@@ -3004,6 +3049,8 @@ enum Region {
     Arms,
     /// The arms and the chest.
     Torso,
+    /// The hands alone, over an outfit's that are not skin.
+    Hands,
 }
 
 impl Region {
@@ -3020,6 +3067,34 @@ impl Region {
 /// A mesh's material that is skin (the outfits' bare hands).
 fn is_skin(m: &Gd<Material>) -> bool {
     m.get_name().to_string().starts_with("MI_Regular")
+}
+
+/// The mesh of an outfit whose own hands are not skin, and its wrists'
+/// distance from the middle: its sleeves end in gloves (the peasant
+/// woman's, painted on the cloth's one surface), which a dye of the
+/// sleeves would colour too.
+fn clothed_hands(inner: &Gd<Node3D>) -> Option<(Gd<MeshInstance3D>, f32)> {
+    for node in inner
+        .find_children_ex("*")
+        .type_("MeshInstance3D")
+        .owned(false)
+        .done()
+        .iter_shared()
+    {
+        let Ok(mi) = node.try_cast::<MeshInstance3D>() else {
+            continue;
+        };
+        let mesh = mi.get_mesh().and_then(|m| m.try_cast::<ArrayMesh>().ok());
+        let (Some(mesh), Some(skin)) = (mesh.filter(|_| mi.is_visible()), mi.get_skin()) else {
+            continue;
+        };
+        if let Some(wrist) = outfit::wrist_of(&skin).filter(|w| outfit::has_hands(&mesh, *w)) {
+            let skin = (0..mesh.get_surface_count())
+                .any(|s| mesh.surface_get_material(s).is_some_and(|m| is_skin(&m)));
+            return (!skin).then_some((mi, wrist));
+        }
+    }
+    None
 }
 
 /// `mesh` with each corner's normal averaged over every face that meets at
