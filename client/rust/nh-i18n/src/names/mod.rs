@@ -496,6 +496,11 @@ mod tests {
             parse(NameKind::Word, "the gnome lord's hands").form(Case::Acc),
             "руки лорда гномов"
         );
+        // trap.c takes the "rear " off a steed's "rear hooves"
+        assert_eq!(
+            parse(NameKind::Word, "the pony's hooves").form(Case::Ins),
+            "копытами пони"
+        );
         // a ghost keeps its owner's name
         assert_eq!(
             parse(NameKind::Any, "Fred's ghost").form(Case::Nom),
@@ -513,6 +518,39 @@ mod tests {
                 .parse(NameKind::Any, "this and that")
                 .is_none()
         );
+        // the_trap of #untrap (trap.c): a trap and what holds another
+        let p = parse(NameKind::Word, "a bear trap and a container");
+        assert_eq!(p.form(Case::Nom), "медвежий капкан и контейнер");
+        assert_eq!(p.number(), Number::Plur);
+        assert_eq!(
+            parse(NameKind::Word, "a pit and containers").form(Case::Nom),
+            "яма и контейнеры"
+        );
+    }
+
+    #[test]
+    fn what_a_hallucinating_hero_reads_for_a_trap() {
+        // trapname()'s halu_trapnames[]
+        for (english, case, russian) in [
+            ("a tourist trap", Case::Nom, "ловушка для туристов"),
+            ("the bottomless pit", Case::Gen, "бездонной ямы"),
+            (
+                "your electrified web",
+                Case::Gen,
+                "вашей паутины под напряжением",
+            ),
+            ("roach motel (tm)", Case::Ins, "тараканьим мотелем (tm)"),
+            ("an owlbear trap", Case::Acc, "совомедвежий капкан"),
+            ("the uneven floor", Case::Loc, "неровном полу"),
+            ("an imperial fleet", Case::Loc, "имперском флоте"),
+            ("garden rake", Case::Gen, "садовых грабель"),
+        ] {
+            assert_eq!(
+                parse(NameKind::Word, english).form(case),
+                russian,
+                "{english}"
+            );
+        }
     }
 
     #[test]

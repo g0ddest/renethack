@@ -1,14 +1,15 @@
 //! The features of a spot as dfeature_at(), stairs_description(),
 //! ice_descr() and waterbody_name() describe them: "staircase up to level
 //! 3", "branch staircase down to the Gnomish Mines", "high altar to Moloch
-//! (unaligned)", "thin ice", "pool of yoghurt", "frozen water".
+//! (unaligned)", "thin ice", "pool of yoghurt", "frozen water"; and the
+//! trap a hallucinating hero reads its own role into.
 
 use crate::grammar::{Case, Gender, Number};
 use crate::lexicon::Lexicon;
 use crate::phrase::Phrase;
 
 use super::monster::link;
-use super::ru::{RuName, Tail};
+use super::ru::{Count, RuName, Tail};
 use super::status::Status;
 
 /// What the ice is like (ice_descr()) and what the liquid is like
@@ -29,6 +30,29 @@ pub(super) fn parse(lex: &Lexicon, text: &str) -> Option<RuName> {
         .or_else(|| altar(lex, text))
         .or_else(|| water(lex, text))
         .or_else(|| interior(lex, text))
+        .or_else(|| role_trap(lex, text))
+}
+
+/// The last of the traps a hallucinating hero reads (trap.c trapname()):
+/// the hero's own role or rank in lower case before " trap", after
+/// "tourist trap". "valkyrie trap" is ловушка для валькирий, in lower
+/// case as the engine's.
+fn role_trap(lex: &Lexicon, text: &str) -> Option<RuName> {
+    let who = text.strip_suffix(" trap").filter(|w| !w.is_empty())?;
+    let role = ["role", "rank"].iter().find_map(|section| {
+        lex.entries(section)
+            .find(|(key, _)| key.to_lowercase() == who)
+            .and_then(|(_, entry)| entry.noun().cloned())
+    })?;
+    let mut many = RuName::new(role);
+    many.count = Count::Some;
+    let mut name = RuName::new(lex.noun("terrain", "trap")?.clone());
+    name.tails.push(Tail::Text(format!(
+        "{} {}",
+        link(lex, "for"),
+        many.form(Case::Gen).to_lowercase()
+    )));
+    Some(name)
 }
 
 /// What farlook calls the spots around a swallowed hero (pager.c):
@@ -189,6 +213,24 @@ mod tests {
             "нутро пурпурного червя"
         );
         assert_eq!(word("interior of it", Case::Loc), "нутре кого-то");
+    }
+
+    #[test]
+    fn a_trap_for_the_hero_s_own_kind() {
+        assert_eq!(word("valkyrie trap", Case::Nom), "ловушка для валькирий");
+        assert_eq!(
+            word("the student of stones trap", Case::Gen),
+            "ловушки для учеников камня"
+        );
+        assert_eq!(
+            word("a cavewoman trap", Case::Acc),
+            "ловушку для пещерных женщин"
+        );
+        // the tourist's own is the trap everyone falls into
+        assert_eq!(word("tourist trap", Case::Nom), "ловушка для туристов");
+        // a trap that is one, and a trap for nobody
+        assert_eq!(word("bear trap", Case::Nom), "медвежий капкан");
+        assert!(Lexicon::ru().word("newt trap").is_none());
     }
 
     #[test]

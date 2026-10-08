@@ -1889,6 +1889,70 @@
 "vibrating square" = { ru = "вибрирующий квадрат", src = "nethack-ru" }
 "trapped door" = { ru = "дверь-ловушка", src = "nethack-ru" }
 "trapped chest" = { ru = "сундук-ловушка", src = "nethack-ru" }
+# what a hallucinating hero reads for a trap: trapname()'s halu_trapnames[]
+# (trap.c); the 63rd, "<role or rank> trap", is read by names/feature.rs
+"bottomless pit" = { ru = "бездонная яма", src = "chosen" }
+"polymorphism trap" = { ru = "ловушка полиморфизма", src = "chosen" }
+"devil teleporter" = { ru = "дьявольский телепорт", src = "chosen" }
+"falling boulder trap" = { ru = "ловушка с падающим валуном", src = "chosen" }
+"anti-anti-magic field" = { ru = "анти-антимагическое поле", src = "chosen" }
+"weeping gas trap" = { ru = "ловушка со слезоточивым газом", src = "chosen" }
+"queasy board" = { ru = "скрипичная половица", src = "chosen", note = "squeaky -> queasy: скрипучая -> скрипичная" }
+"electrified web" = { ru = "паутина под напряжением", src = "chosen" }
+"owlbear trap" = { ru = "совомедвежий капкан", src = "chosen" }
+"sand mine" = { ru = "песчаная мина", src = "chosen" }
+"vacillating triangle" = { ru = "колеблющийся треугольник", src = "chosen" }
+"death trap" = { ru = "смертельная ловушка", src = "chosen" }
+"disintegration trap" = { ru = "ловушка распада", src = "chosen" }
+"ice trap" = { ru = "ледяная ловушка", src = "chosen" }
+"monochrome trap" = { ru = "монохромная ловушка", src = "chosen" }
+"axeblade trap" = { ru = "ловушка с лезвием топора", src = "chosen" }
+"pool of boiling oil" = { ru = "лужа кипящего масла", src = "chosen" }
+"pool of quicksand" = { ru = "зыбучие пески", src = "chosen", plural = true, lemma = "песок" }
+"field of caltrops" = { ru = "поле железных шипов", src = "chosen" }
+"buzzsaw trap" = { ru = "ловушка с циркулярной пилой", src = "chosen" }
+"spiked floor" = { ru = "пол с шипами", src = "chosen" }
+"revolving wall" = { ru = "вращающаяся стена", src = "chosen" }
+"uneven floor" = { ru = "неровный пол", src = "chosen" }
+"finger trap" = { ru = "ловушка для пальцев", src = "chosen" }
+"jack-in-a-box" = { ru = "чёртик из табакерки", src = "chosen" }
+"yellow snow" = { ru = "жёлтый снег", src = "chosen" }
+"booby trap" = { ru = "мина-ловушка", src = "chosen" }
+"rat trap" = { ru = "крысоловка", src = "chosen" }
+"poisoned nail" = { ru = "отравленный гвоздь", src = "chosen" }
+"snare" = { ru = "силок", src = "chosen" }
+"whirlpool" = { ru = "водоворот", src = "chosen" }
+"trip wire" = { ru = "растяжка", src = "chosen" }
+"roach motel (tm)" = { ru = "тараканий мотель (tm)", src = "chosen" }
+"negative space" = { ru = "отрицательное пространство", src = "chosen" }
+"tensor field" = { ru = "тензорное поле", src = "chosen" }
+"singularity" = { ru = "сингулярность", src = "chosen" }
+"imperial fleet" = { ru = "имперский флот", src = "chosen", note = "It's a trap!" }
+"black hole" = { ru = "чёрная дыра", src = "chosen" }
+"thermal detonator" = { ru = "термальный детонатор", src = "chosen" }
+"event horizon" = { ru = "горизонт событий", src = "chosen" }
+"entoptic phenomenon" = { ru = "энтоптическое явление", src = "chosen" }
+"sweet-smelling gas vent" = { ru = "отдушина со сладковатым газом", src = "chosen" }
+"phone booth" = { ru = "телефонная будка", src = "chosen" }
+"exploding runes" = { ru = "взрывные руны", src = "chosen", plural = true, lemma = "руна" }
+"never-ending elevator" = { ru = "бесконечный лифт", src = "chosen" }
+"slime pit" = { ru = "яма со слизью", src = "chosen" }
+"warp zone" = { ru = "варп-зона", src = "chosen", hyphen = "last", g = "f" }
+"illusory floor" = { ru = "иллюзорный пол", src = "chosen" }
+"pile of poo" = { ru = "куча какашек", src = "chosen" }
+"honey trap" = { ru = "медовая ловушка", src = "chosen" }
+"tourist trap" = { ru = "ловушка для туристов", src = "chosen" }
+"banana peel" = { ru = "банановая кожура", src = "chosen" }
+"garden rake" = { ru = "садовые грабли", src = "chosen", plural = true }
+"whoopie cushion" = { ru = "подушка-пердушка", src = "chosen" }
+"box and stick trap" = { ru = "коробка на палочке", src = "chosen" }
+"fly trap" = { ru = "мухоловка", src = "chosen" }
+"legal trap" = { ru = "юридическая ловушка", src = "chosen" }
+"pit of snakes" = { ru = "яма со змеями", src = "chosen" }
+"pollywog trap" = { ru = "ловушка для головастиков", src = "chosen" }
+"slippery slope" = { ru = "скользкая дорожка", src = "chosen" }
+"thirst trap" = { ru = "ловушка для жаждущих", src = "chosen" }
+"suntrap" = { ru = "солнцепёк", src = "chosen" }
 
 [monclass]
 # monster classes (farlook, the / command)
@@ -2152,6 +2216,7 @@
 "out of the dungeon" = { ru = "из подземелья", src = "chosen", note = "the up stairs of level 1" }
 "to the Elemental Planes" = { ru = "к Стихийным планам", src = "chosen" }
 "to the end game" = { ru = "к финалу игры", src = "chosen" }
+"for" = { ru = "для", src = "chosen", note = "<role or rank> trap, what a hallucinating hero reads after \"tourist trap\": ловушка для валькирий (the role in the genitive plural)" }
 
 [status]
 "being worn" = { ru = "{надет|надета|надето|надеты}", src = "chosen", note = "{m|f|n|pl}: agrees with the item" }
@@ -2448,6 +2513,7 @@
 "foreleg" = { ru = "передняя нога", src = "chosen" }
 "hoof tip" = { ru = "кончик копыта", src = "chosen", ru_pl = "кончики копыт" }
 "rear hoof" = { ru = "заднее копыто", src = "chosen" }
+"hoof" = { ru = "копыто", src = "chosen", note = "trap.c takes the \"rear \" off \"rear hooves\" (a vibration beneath the pony's hooves)" }
 "rear leg" = { ru = "задняя нога", src = "chosen" }
 "backbone" = { ru = "хребет", src = "chosen" }
 "rear hoof tip" = { ru = "кончик заднего копыта", src = "chosen", ru_pl = "кончики задних копыт" }
@@ -2779,6 +2845,10 @@
 # clairvoyant or blind hero knows of
 "demon" = { ru = "демон", src = "chosen", anim = true }
 "unseen creature" = { ru = "невидимое существо", src = "chosen" }
+# the_trap of #untrap (trap.c): "There are a pit and a container here"
+"container" = { ru = "контейнер", src = "chosen" }
+# mimic_obj_name() (mhitu.c): a hero hiding as a strange object
+"whatcha-may-callit" = { ru = "штуковина", src = "chosen" }
 
 [name]
 # personal names the engine gives: the default pets (dog.c) and the

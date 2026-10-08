@@ -433,9 +433,10 @@ def phrase(text, anim, g=None, head=None, plural_only=False, like=None, indeclin
 
 
 # second locatives OpenCorpora has that the written language does not
-# take for a place: на щите, в роге, в супе, в форте (в цвету is in bloom)
+# take for a place: на щите, в роге, в супе, в форте, во флоте (в цвету is
+# in bloom)
 NO_LOC2 = {"хвост", "цвет", "час", "вид", "дом", "род", "счёт", "остров", "щит", "рог", "болт", "форт", "суп",
-           "корень", "язык", "свет", "сок", "крем", "чай"}
+           "корень", "язык", "свет", "сок", "крем", "чай", "флот"}
 
 
 def locative(word):
