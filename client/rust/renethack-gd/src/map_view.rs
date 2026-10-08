@@ -3155,7 +3155,7 @@ impl MapView {
                 // while a level is drawn the hero's cell may still hold the
                 // last level's model
                 if self.building.is_empty() {
-                    self.rim_hero((x, y));
+                    self.rim_hero(world.map.hero());
                 }
                 let __t = std::time::Instant::now();
                 self.equip_hero((x, y), world, catalog, delta as f32);
@@ -3772,11 +3772,14 @@ impl MapView {
         }
     }
 
-    /// The hero's model (and only it) takes the rim light.
-    fn rim_hero(&mut self, hero: (i32, i32)) {
-        let node = self
-            .cells
-            .get(&hero)
+    /// The hero's model (and only it) takes the rim light: `hero` is the
+    /// cell the map draws them on. A hero not drawn (unseen; or stepped off
+    /// a cell and not yet shown on the next, while a missile flies) leaves
+    /// the cell they were last known on to what else is there, a thing on
+    /// the floor or the pet they swapped with: its model is not theirs.
+    fn rim_hero(&mut self, hero: Option<(i32, i32)>) {
+        let node = hero
+            .and_then(|h| self.cells.get(&h))
             .and_then(|n| n.look.entity.and_then(|i| n.models.get(i)))
             .map(|m| m.node.clone());
         if node.as_ref().map(|n| n.instance_id())
