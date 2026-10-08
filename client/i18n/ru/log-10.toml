@@ -1605,13 +1605,29 @@ ru = "Вы находите старую добычу: {1}"
 en = "Endgame prerequisite: %s"
 ru = "Необходимо для финала: {1}"
 
-[96de21ce96d9]
-en = "%s lifting %s"
-ru = "Поднято с трудом: {2}{1:skip}"
+[2095c0fb077f]
+en = "You have a little trouble lifting %s"
+ru = "Поднято с небольшим трудом: {1}"
 
-[71b809faed81]
-en = "%s removing %s"
-ru = "Вынуто с трудом: {2}{1:skip}"
+[aafa6ffcabba]
+en = "You have trouble lifting %s"
+ru = "Поднято с трудом: {1}"
+
+[477f8645a5a0]
+en = "You have much trouble lifting %s"
+ru = "Поднято с большим трудом: {1}"
+
+[a37c7a891567]
+en = "You have a little trouble removing %s"
+ru = "Вынуто с небольшим трудом: {1}"
+
+[52793cce92c2]
+en = "You have trouble removing %s"
+ru = "Вынуто с трудом: {1}"
+
+[84d43e20fcea]
+en = "You have much trouble removing %s"
+ru = "Вынуто с большим трудом: {1}"
 
 [993f4ce9dec1]
 en = "You have extreme difficulty lifting %s"
@@ -1653,13 +1669,29 @@ ru = "Собрано: {1} (всего {2})."
 en = "You find old loot: %s (%ld in total)."
 ru = "Вы находите старую добычу: {1} (всего {2})."
 
-[cf9079f65563]
-en = "%s lifting %s (%ld in total)."
-ru = "Поднято с трудом: {2} (всего {3}).{1:skip}"
+[d0bc9907161a]
+en = "You have a little trouble lifting %s (%ld in total)."
+ru = "Поднято с небольшим трудом: {1} (всего {2})."
 
-[e82c40b9f0cc]
-en = "%s removing %s (%ld in total)."
-ru = "Вынуто с трудом: {2} (всего {3}).{1:skip}"
+[3a56deceef01]
+en = "You have trouble lifting %s (%ld in total)."
+ru = "Поднято с трудом: {1} (всего {2})."
+
+[4fae82d857d7]
+en = "You have much trouble lifting %s (%ld in total)."
+ru = "Поднято с большим трудом: {1} (всего {2})."
+
+[26807bf83db8]
+en = "You have a little trouble removing %s (%ld in total)."
+ru = "Вынуто с небольшим трудом: {1} (всего {2})."
+
+[d61edcb30d48]
+en = "You have trouble removing %s (%ld in total)."
+ru = "Вынуто с трудом: {1} (всего {2})."
+
+[2d52c6a87914]
+en = "You have much trouble removing %s (%ld in total)."
+ru = "Вынуто с большим трудом: {1} (всего {2})."
 
 [45d1edb2d0cc]
 en = "You have extreme difficulty lifting %s (%ld in total)."
@@ -2658,13 +2690,53 @@ ru = "У вас не осталось кредита."
 en = "You %s..."
 ru = "Вас шатает...{1:skip}"
 
-[373f595e654f]
-en = "You %s and get dizzy..."
-ru = "Вас шатает, кружится голова...{1:skip}"
+[b9c0c8390d62]
+en = "You falter and get dizzy..."
+ru = "Вас шатает, кружится голова..."
 
-[47ab47c2e193]
-en = "You %s and your vision blurs..."
-ru = "Вас шатает, в глазах плывёт...{1:skip}"
+[c69f0b890b67]
+en = "You flutter and get dizzy..."
+ru = "Вас шатает, кружится голова..."
+
+[02d3d778a193]
+en = "You pulsate and get dizzy..."
+ru = "Вас шатает, кружится голова..."
+
+[ec042526dc48]
+en = "You stagger and get dizzy..."
+ru = "Вас шатает, кружится голова..."
+
+[63957929f0da]
+en = "You tremble and get dizzy..."
+ru = "Вас шатает, кружится голова..."
+
+[bef9d3e9e3c5]
+en = "You wobble and get dizzy..."
+ru = "Вас шатает, кружится голова..."
+
+[28c5cf39b227]
+en = "You falter and your vision blurs..."
+ru = "Вас шатает, в глазах плывёт..."
+
+[f77ff72a0b3e]
+en = "You flutter and your vision blurs..."
+ru = "Вас шатает, в глазах плывёт..."
+
+[9f84f7047f83]
+en = "You pulsate and your vision blurs..."
+ru = "Вас шатает, в глазах плывёт..."
+
+[0b223fa0327a]
+en = "You stagger and your vision blurs..."
+ru = "Вас шатает, в глазах плывёт..."
+
+[a3e0aea07187]
+en = "You tremble and your vision blurs..."
+ru = "Вас шатает, в глазах плывёт..."
+
+[70cbc67338b9]
+en = "You wobble and your vision blurs..."
+ru = "Вас шатает, в глазах плывёт..."
 
 [29949b67477f]
 en = "You boil away..."

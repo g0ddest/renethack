@@ -61,6 +61,8 @@ MAX_HELD = 4 * MAX_DERIVED
 MAX_DEPTH = 3
 # a text with more Strcats after its Sprintf is a list: only its pieces
 MAX_APPENDS = 3
+# an(x) is derived for an x of no more words than this
+MAX_ARTICLED = 6
 
 # ---------------------------------------------------------------- calls
 
@@ -210,6 +212,9 @@ for _k, _names in {
 }.items():
     for _n in _names.split():
         KIND_FUNCS[_n] = _k
+# ... whose words are no names but what a sentence says of its subject ("The
+# newt is on fire!"): an entry each, however many
+SENTENCE_WORDS = {"on_fire"}
 # x(name) keeps name's kind: an(xname(obj)) is an object
 WRAPPERS = set("""an An the The upstart upwords lcase ucase s_suffix makeplural
     makesingular ing_suffix strip_the_prefix just_an capitalize highc
@@ -222,6 +227,9 @@ APPENDED_BY = {"append_honorific"}
 # Helpers whose parameter is their caller's own: its literals are those the
 # caller is given (getobj's word, which silly_thing says)
 HANDED_ON = {"silly_thing"}
+# Members a text is copied into, by name (most are the player's or a save
+# file's to fill: svp.plname): takeoff.disrobing is "disrobing" or "disarming"
+COPIED_INTO = {"disrobing"}
 # Helpers that return a static buffer: what that buffer holds
 RETURNED_BUFFER = {"piousness"}
 # x(obj, "verb") is "<the object's name> verb[s]"
@@ -279,6 +287,40 @@ def verb_s(verb):
     return verb + "s"
 
 
+def ing_suffix(verb):
+    """hacklib.c ing_suffix(): bash, bashing; strike, striking; tip,
+    tipping; put on, putting on."""
+    vowel = "aeiouwy"
+    tail = ""
+    if verb.lower().endswith((" on", " off", " with")):
+        k = verb.rindex(" ")
+        verb, tail = verb[:k], verb[k:]
+    low = verb.lower()
+    if low.endswith("er"):
+        pass
+    elif len(verb) >= 3 and verb[-1] not in vowel and verb[-2] in vowel and verb[-3] not in vowel:
+        verb += verb[-1]
+    elif low.endswith("ie"):
+        verb = verb[:-2] + "y"
+    elif verb.endswith("e"):
+        verb = verb[:-1]
+    return verb + "ing" + tail
+
+
+def an(text):
+    """objnam.c an(): the text behind its article."""
+    low = text.lower()
+    if len(text) == 1 or text[1:2] == " ":
+        return ("an " if low[0] in "aefhilmnosx" else "a ") + text
+    if low.startswith("the ") or low in ("molten lava", "iron bars", "ice"):
+        return text
+    wun = low.startswith("one") and (len(low) == 3 or low[3] in "-_ ")
+    long_u = low.startswith(("eu", "uke", "ukulele", "unicorn", "uranium", "useful"))
+    if (low[0] in "aeiou" and not wun and not long_u) or (low[0] == "x" and low[1] not in "aeiou"):
+        return "an " + text
+    return "a " + text
+
+
 def strip_expr(toks):
     """Drop enclosing parentheses and leading casts."""
     while toks:
@@ -333,6 +375,19 @@ def ternary(toks):
                 return toks[:q], toks[q + 1:i], toks[i + 1:]
             nest -= 1
     return None
+
+
+def match_open(toks, i):
+    """The index of the bracket that toks[i] closes."""
+    depth = 0
+    for j in range(i, -1, -1):
+        if toks[j].text in (")", "]", "}"):
+            depth += 1
+        elif toks[j].text in ("(", "[", "{"):
+            depth -= 1
+            if depth == 0:
+                return j
+    return 0
 
 
 def literal_values(toks):
@@ -582,7 +637,21 @@ class Globals:
             out = []
             for i, t in enumerate(toks):
                 if not (t.kind == "ident" and t.text == member and 0 < i < len(toks) - 1
-                        and toks[i - 1].text in ("->", ".") and toks[i + 1].text == "="):
+                        and toks[i - 1].text in ("->", ".")):
+                    continue
+                if toks[i + 1].text == "," and member in COPIED_INTO:
+                    # strncpy(x.member, "text", n): a text copied into it
+                    k = i
+                    while k > 0 and toks[k].text != "(":
+                        k -= 1
+                    if toks[k - 1].text in ("Strcpy", "strcpy", "strncpy"):
+                        args = split_args(toks, k, match_close(toks, k))
+                        v = literal_values(args[1]) if len(args) > 1 else None
+                        if v is None:
+                            return None
+                        out += v
+                    continue
+                if toks[i + 1].text != "=":
                     continue
                 j = i + 2
                 while j < len(toks) and toks[j].text != ";":
@@ -683,6 +752,7 @@ class Context:
         # the texts of an argument a format had too many of to derive
         self.left_out = []
         self._depths = None
+        self._opens = None
         start, end = func.body
         i = start + 1
         while i < end:
@@ -852,10 +922,11 @@ class Context:
             return None
         tern = ternary(toks)
         if tern:
-            a = self.values(tern[1], depth + 1, seen)
-            b = self.values(tern[2], depth + 1, seen)
-            if a is not None and b is not None:
-                return dedupe(a + b)
+            # (a null arm is no text: `which = … ? c_suit : 0`, shown if set)
+            arms = [[] if source_text(strip_expr(x)) in NULL_POINTERS else self.values(x, depth + 1, seen)
+                    for x in tern[1:]]
+            if None not in arms and any(arms):
+                return dedupe(arms[0] + arms[1])
             return None
         if all(t.kind == "string" or (t.kind == "ident" and self.string_const(t.text) is not None)
                for t in toks):
@@ -878,18 +949,34 @@ class Context:
                 inner = self.values(args[0], depth + 1, seen)
                 if inner is not None:
                     return [v[:1].upper() + v[1:] for v in inner]
+            if name == "ing_suffix" and len(args) == 1:
+                inner = self.values(args[0], depth + 1, seen)
+                return inner and [ing_suffix(v) for v in inner]
+            if name == "stagger" and len(args) == 2:
+                return self.stagger_verbs(args[1])
+            if (name == "makeplural" and len(args) == 1 and (inner := call_parts(strip_expr(args[0])))
+                    and inner[0] == "stagger" and len(inner[1]) == 2):
+                # makeplural(stagger(ptr, "stagger")): the verb in the third person
+                verbs = self.stagger_verbs(inner[1][1])
+                return verbs and [verb_s(v) for v in verbs]
+            if name == "an" and len(args) == 1:
+                # an(c_shield), an(helm_simple_name(uarmh)): of a few words
+                inner = self.values(args[0], depth + 1, seen)
+                if inner is not None and 0 < len(inner) <= MAX_ARTICLED and all(inner):
+                    return [an(v) for v in inner]
+                return None
             if name in WRAPPERS or name in OBJVERB:
                 return None
             returned = self.glob.return_values(name, self.unit)
-            if name in KIND_FUNCS and returned is not None and len(returned) > 4:
+            if name in KIND_FUNCS and name not in SENTENCE_WORDS and returned is not None and len(returned) > 4:
                 # a word of a large set (a body part, a colour): the
                 # lexicon's, not one entry per word
                 return None
             return returned
-        # x->member: what its unit sets it to
-        if (len(toks) == 3 and toks[0].kind == "ident" and toks[1].text in ("->", ".")
-                and toks[2].kind == "ident"):
-            return self.glob.member_values(self.unit, toks[2].text)
+        # x->member, a.b.member: what its unit sets it to
+        if (len(toks) >= 3 and len(toks) % 2 and all(t.kind == "ident" for t in toks[::2])
+                and all(t.text in ("->", ".") for t in toks[1::2])):
+            return self.glob.member_values(self.unit, toks[-1].text)
         if len(toks) == 1 and toks[0].kind == "ident":
             name = toks[0].text
             if name in LITERAL_CALLS:
@@ -953,6 +1040,23 @@ class Context:
                 if columns and all(columns):
                     return dedupe([v for c in columns for v in c])
         return None
+
+    def stagger_verbs(self, default):
+        """mondata.c stagger(ptr, "stagger"): how a creature of each way of
+        moving does it (wobble, flutter, lurch…), from the tables stagger()
+        indexes: their third word for a small-letter default, their fourth
+        for a capital."""
+        default = self.values(default)
+        defs = self.glob.defs.get("stagger")
+        if not default or len(default) != 1 or not defs or not defs[0].returns:
+            return None
+        k = 3 if default[0][:1].isupper() else 2
+        toks = defs[0].returns[0]
+        tables = [defs[0].unit.arrays.get(t.text) or self.glob.arrays.get(t.text)
+                  for i, t in enumerate(toks[:-1]) if t.kind == "ident" and toks[i + 1].text == "["]
+        if not tables or not all(a and len(a) > k for a in tables):
+            return None
+        return dedupe([a[k] for a in tables] + default)
 
     def column(self, table, member):
         """The literals of `member` in every row of struct table `table`;
@@ -1230,7 +1334,10 @@ class Context:
         runs is not followed: an over-approximation."""
         uses = [u for u in self.uses.get(name, []) if u < pos]
         since = max(uses) if uses else -1
-        ops = [op for op in self.ops.get(name, []) if since < op.index < pos]
+        # (emptied in another arm of an if/else is not emptied in this one)
+        arms = self.other_arms(pos)
+        ops = [op for op in self.ops.get(name, []) if since < op.index < pos
+               and not (op.call == "=" and any(a <= op.index <= b for a, b in arms))]
         passed = self.passes.get(name, {}).get(since)
         if passed and passed[0] in APPENDED_BY and not any(not op.append for op in ops):
             # a helper appended to it ("For you, " + "esteemed sir"): one
@@ -1292,6 +1399,42 @@ class Context:
             out += (with_tails(written, tails) if written is not None
                     else with_tails([("%s", ["text"])], tails, few=True))
         return dedupe(out)[:MAX_HELD]
+
+    def other_arms(self, pos):
+        """The token ranges that did not run if `pos` does: the earlier
+        arms `{...}` of each if/else chain it is in (pray.c's fix_worst_
+        trouble empties repair_buf in the arm of a cursed weapon; the arm
+        of an uncursed one shows what was written before both)."""
+        toks = self.unit.toks
+        if self._opens is None:
+            # for each token of the body, the open braces around it
+            self._opens = {}
+            stack = []
+            for i in range(self.func.body[0], self.func.body[1] + 1):
+                if toks[i].text == "}":
+                    stack.pop()
+                self._opens[i] = tuple(stack)
+                if toks[i].text == "{":
+                    stack.append(i)
+        out = []
+        for k in self._opens.get(pos, ())[1:]:
+            j = k - 1
+            if toks[j].text == ")":
+                j = match_open(toks, j) - 1
+                if toks[j].text != "if":
+                    continue
+                j -= 1
+            while toks[j].text == "else" and toks[j - 1].text == "}":
+                a = match_open(toks, j - 1)
+                out.append((a, j - 1))
+                j = a - 1
+                if toks[j].text != ")":
+                    break
+                j = match_open(toks, j) - 1
+                if toks[j].text != "if":
+                    break
+                j -= 1
+        return out
 
     def written(self, name, at, passed, depth):
         """What the call at token `at` (`passed`: name, argument index)

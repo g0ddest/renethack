@@ -1392,13 +1392,21 @@ ru = "Вы чувствуете, что {1:acc} оттолкнуло!"
 en = "You feel %s be knocked backward!"
 ru = "Вы чувствуете, что {1:acc} отбросило!"
 
-[2f1b5f8fe81e]
-en = "You begin %s monsters with your bare %s."
-ru = "Вы начинаете колотить{1:skip} монстров голыми {2:ins}."
+[c0d4d9709144]
+en = "You begin bashing monsters with your bare %s."
+ru = "Вы начинаете колотить монстров голыми {1:ins}."
 
-[5338ac6a0a26]
-en = "You begin %s monsters with your gloved %s."
-ru = "Вы начинаете колотить{1:skip} монстров {2:ins} в перчатках."
+[e4f1a15916e4]
+en = "You begin striking monsters with your bare %s."
+ru = "Вы начинаете бить монстров голыми {1:ins}."
+
+[81e2b0ba7837]
+en = "You begin bashing monsters with your gloved %s."
+ru = "Вы начинаете колотить монстров {1:ins} в перчатках."
+
+[53ffb9be609d]
+en = "You begin striking monsters with your gloved %s."
+ru = "Вы начинаете бить монстров {1:ins} в перчатках."
 
 [b3a3093606d5]
 en = "You smile at %s engagingly."

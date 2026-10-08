@@ -131,6 +131,48 @@ class Formats(unittest.TestCase):
         self.assertIn("The hole fills with %s!", e)
         self.assertIn("That is a silly thing to eat.", e)
 
+    def test_an_article_a_null_arm_and_an_ing_form(self):
+        for verb, ing in [("bash", "bashing"), ("strike", "striking"), ("tip", "tipping"),
+                          ("slither", "slithering"), ("vie", "vying"), ("put on", "putting on")]:
+            self.assertEqual(extract.ing_suffix(verb), ing)
+        for text, articled in [("apron", "an apron"), ("helm", "a helm"), ("unicorn horn", "a unicorn horn"),
+                               ("iron bars", "iron bars"), ("x", "an x"), ("one-eyed orc", "a one-eyed orc")]:
+            self.assertEqual(extract.an(text), articled)
+        e = catalog_of('static const char c_shield[] = "shield", c_suit[] = "suit", c_cloak[] = "cloak";\n'
+                       'static void already(const char *cc) { You("are already wearing %s.", cc); }\n'
+                       'void f(struct obj *o) {\n'
+                       '    const char *which = is_cloak(o) ? c_cloak : is_suit(o) ? c_suit : 0;\n'
+                       '    already(an(c_shield));\n'
+                       '    if (which) pline_The("%s will not fit.", which);\n'
+                       '    You("begin %s monsters.", ing_suffix(monk ? "strike" : "bash"));\n}\n')
+        self.assertIn("You are already wearing a shield.", e)
+        self.assertIn("The suit will not fit.", e)
+        self.assertIn("The cloak will not fit.", e)
+        self.assertIn("You begin striking monsters.", e)
+
+    def test_emptied_in_another_arm(self):
+        e = catalog_of('void f(struct obj *w) {\n    char buf[BUFSZ];\n    *buf = \'\\0\';\n'
+                       '    if (w->oeroded) Sprintf(buf, " and %s now as good as new", otense(w, "are"));\n'
+                       '    if (w->cursed) {\n        pline("%s amber%s.", Yobjnam2(w, "glow"), buf);\n'
+                       '        *buf = \'\\0\';\n    } else if (!w->blessed) {\n'
+                       '        pline("%s with an aura%s.", Yobjnam2(w, "glow"), buf);\n    }\n}\n')
+        self.assertIn("%s glows with an aura and is now as good as new.", e)
+        self.assertIn("%s glows with an aura.", e)
+
+    def test_how_a_creature_staggers_and_a_text_copied_into_a_member(self):
+        e = catalog_of('static const char *const levitate[4] = { "float", "Float", "wobble", "Wobble" },\n'
+                       '    *const crawl[4] = { "crawl", "Crawl", "lurch", "Lurch" };\n'
+                       'const char *stagger(const struct permonst *ptr, const char *def) {\n'
+                       '    int locoindx = (*def != highc(*def)) ? 2 : 3;\n'
+                       '    return (is_floater(ptr) ? levitate[locoindx] : nolimbs(ptr) ? crawl[locoindx] : def);\n}\n'
+                       'void f(struct monst *m) {\n'
+                       '    pline("%s %s for a moment.", Monnam(m), makeplural(stagger(m->data, "stagger")));\n'
+                       '    (void) strncpy(svc.context.takeoff.disrobing, (mask ? "disrobing" : "disarming"), 10);\n'
+                       '    You("finish %s.", svc.context.takeoff.disrobing);\n}\n')
+        self.assertEqual({k for k in e if k.endswith("for a moment.") and k.count("%") == 1},
+                         {"%s wobbles for a moment.", "%s lurches for a moment.", "%s staggers for a moment."})
+        self.assertIn("You finish disarming.", e)
+
     def test_buffers_are_inlined(self):
         e = catalog_of('void f(struct monst *m) {\n'
                        '    char buf[BUFSZ];\n'

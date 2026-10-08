@@ -375,29 +375,149 @@ ru = "или {1} [{2}] или {3}"
 en = "Contents of %s:"
 ru = "Содержимое {1:gen}:"
 
-[56de9e60b84b]
-en = "Pick %s in this area for travel destination"
-ru = "Выберите {1:acc} в этой области как цель путешествия"
+[8a2df9fcc45d]
+en = "Pick a monster in this area for travel destination"
+ru = "Выберите монстра в этой области как цель путешествия"
 
-[a1949c0031e9]
-en = "Pick %s for travel destination"
-ru = "Выберите {1:acc} как цель путешествия"
+[f72aeebd12d0]
+en = "Pick an item in this area for travel destination"
+ru = "Выберите предмет в этой области как цель путешествия"
 
-[c2c0364601d0]
-en = "Pick %s"
-ru = "Выберите {1:acc}"
+[5b457e387d6d]
+en = "Pick a door in this area for travel destination"
+ru = "Выберите дверь в этой области как цель путешествия"
 
-[d4b4833b9124]
-en = "Pick %s in view"
-ru = "Выберите {1:acc} в поле зрения"
+[4543681b7c4f]
+en = "Pick an unexplored area in this area for travel destination"
+ru = "Выберите неисследованную область в этой области как цель путешествия"
 
-[e8c1239a557f]
-en = "Pick %s in view for travel destination"
-ru = "Выберите {1:acc} в поле зрения как цель путешествия"
+[1a6007078b9f]
+en = "Pick an interesting thing in this area for travel destination"
+ru = "Выберите что-нибудь интересное в этой области как цель путешествия"
 
-[ef259c6c3b3a]
-en = "Pick %s in this area"
-ru = "Выберите {1:acc} в этой области"
+[483dd5c51825]
+en = "Pick a valid location in this area for travel destination"
+ru = "Выберите допустимое место в этой области как цель путешествия"
+
+[599d0bf8686c]
+en = "Pick a monster for travel destination"
+ru = "Выберите монстра как цель путешествия"
+
+[bb6b95a9ac49]
+en = "Pick an item for travel destination"
+ru = "Выберите предмет как цель путешествия"
+
+[f94daeb6a482]
+en = "Pick a door for travel destination"
+ru = "Выберите дверь как цель путешествия"
+
+[9de8669213d5]
+en = "Pick an unexplored area for travel destination"
+ru = "Выберите неисследованную область как цель путешествия"
+
+[2843dc322887]
+en = "Pick an interesting thing for travel destination"
+ru = "Выберите что-нибудь интересное как цель путешествия"
+
+[62ffc7c61133]
+en = "Pick a valid location for travel destination"
+ru = "Выберите допустимое место как цель путешествия"
+
+[6bb8370a1a95]
+en = "Pick a monster"
+ru = "Выберите монстра"
+
+[87c5484edf18]
+en = "Pick an item"
+ru = "Выберите предмет"
+
+[211cfbde4595]
+en = "Pick a door"
+ru = "Выберите дверь"
+
+[7ae2ac12d045]
+en = "Pick an unexplored area"
+ru = "Выберите неисследованную область"
+
+[33569ad99f5b]
+en = "Pick an interesting thing"
+ru = "Выберите что-нибудь интересное"
+
+[e92cb98ef62c]
+en = "Pick a valid location"
+ru = "Выберите допустимое место"
+
+[980fa084b29d]
+en = "Pick a monster in view"
+ru = "Выберите монстра в поле зрения"
+
+[d482635249bb]
+en = "Pick an item in view"
+ru = "Выберите предмет в поле зрения"
+
+[b1d1c310a582]
+en = "Pick a door in view"
+ru = "Выберите дверь в поле зрения"
+
+[185184503698]
+en = "Pick an unexplored area in view"
+ru = "Выберите неисследованную область в поле зрения"
+
+[6feacec2548a]
+en = "Pick an interesting thing in view"
+ru = "Выберите что-нибудь интересное в поле зрения"
+
+[7887add6ff77]
+en = "Pick a valid location in view"
+ru = "Выберите допустимое место в поле зрения"
+
+[779c3cc59e0c]
+en = "Pick a monster in view for travel destination"
+ru = "Выберите монстра в поле зрения как цель путешествия"
+
+[ed5ca32dfe4b]
+en = "Pick an item in view for travel destination"
+ru = "Выберите предмет в поле зрения как цель путешествия"
+
+[d08dc4de8b33]
+en = "Pick a door in view for travel destination"
+ru = "Выберите дверь в поле зрения как цель путешествия"
+
+[f1d4c020e431]
+en = "Pick an unexplored area in view for travel destination"
+ru = "Выберите неисследованную область в поле зрения как цель путешествия"
+
+[18e2daf277c4]
+en = "Pick an interesting thing in view for travel destination"
+ru = "Выберите что-нибудь интересное в поле зрения как цель путешествия"
+
+[624bdc3a8bef]
+en = "Pick a valid location in view for travel destination"
+ru = "Выберите допустимое место в поле зрения как цель путешествия"
+
+[c3134d3bf867]
+en = "Pick a monster in this area"
+ru = "Выберите монстра в этой области"
+
+[f7f950418ab6]
+en = "Pick an item in this area"
+ru = "Выберите предмет в этой области"
+
+[1de848c0b2b5]
+en = "Pick a door in this area"
+ru = "Выберите дверь в этой области"
+
+[899af7233419]
+en = "Pick an unexplored area in this area"
+ru = "Выберите неисследованную область в этой области"
+
+[55b7e3e0d0f4]
+en = "Pick an interesting thing in this area"
+ru = "Выберите что-нибудь интересное в этой области"
+
+[a25efca275be]
+en = "Pick a valid location in this area"
+ru = "Выберите допустимое место в этой области"
 
 [0351bf2f280d]
 en = "Open this tin and eat the contents"
