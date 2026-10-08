@@ -13,8 +13,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use nh_world::{Branch, KeyInput, Prompt};
 
 use super::{
-    CharacterChoice, DialogEvent, Step, UiEvent, camera_settled, ctrl_key, entry_key, is_menu,
-    map_view, quit, screen, smoke_choice, start, start_as,
+    CharacterChoice, DialogEvent, MIDWAY, Step, UiEvent, camera_settled, ctrl_key, entry_key,
+    hold_at, is_menu, map_view, quit, screen, smoke_choice, start, start_as,
 };
 use godot::classes::{Node, Node3D};
 use godot::prelude::*;
@@ -225,10 +225,11 @@ const BESTIARY: &[&str] = &[
 ];
 
 /// RENETHACK_BESTIARY=gnome,gnome (F);dwarf,dwarf leader: these creatures
-/// instead, each alone, each in a corridor with the hero in the next cell
-/// (`corridor-<name>`), and then together in rows (`;` between rows; the
-/// picture `rows`), for sheets of a kind before and after a change. A
-/// name ending in " (F)" is the female.
+/// instead, each alone, then midway through a step (`step-<name>`), each
+/// in a corridor with the hero in the next cell (`corridor-<name>`), and
+/// then together in rows (`;` between rows; the picture `rows`), for
+/// sheets of a kind before and after a change. A name ending in " (F)" is
+/// the female.
 fn asked() -> Option<&'static [Vec<&'static str>]> {
     static ASKED: OnceLock<Option<Vec<Vec<&'static str>>>> = OnceLock::new();
     ASKED
@@ -303,6 +304,28 @@ pub(super) fn bestiary() -> Vec<Step> {
             Step::Wait("the camera on it", camera_settled),
             Step::Shot(shot),
         ]);
+        if asked().is_some() {
+            // and a step west, stopped midway: its legs as it walks
+            let shot: &'static str = Box::leak(format!("step-{file}").into_boxed_str());
+            steps.extend([
+                Step::Call("stop motions midway", |g| hold_at(g, Some(MIDWAY))),
+                Step::Call("the creature steps west", |g| {
+                    let cat = g.catalog.clone().ok_or("no catalog")?;
+                    let i = NEXT_CREATURE.load(Ordering::Relaxed) - 1;
+                    let name = creatures().get(i).copied().ok_or("no such creature")?;
+                    crate::gallery::step_one(&mut g.world, &cat, name)
+                }),
+                Step::Wait("the step midway", |g| {
+                    let map = map_view(g)?;
+                    Ok(map.steps_under_way().1 == 1 && map.motions_held())
+                }),
+                Step::Shot(shot),
+                Step::Call("let it arrive", |g| hold_at(g, None)),
+                Step::Wait("the creature arrived", |g| {
+                    Ok(map_view(g)?.steps_under_way() == (false, 0))
+                }),
+            ]);
+        }
     }
     if asked().is_some() {
         for name in creatures() {

@@ -351,6 +351,17 @@ pub fn lay_out_one(world: &mut World, cat: &Catalog, name: &str) -> Result<(i32,
     Ok((cx, cy))
 }
 
+/// The monster of `lay_out_one` a cell west of where it stood: it walks
+/// there (a step stopped midway shows its legs under it).
+pub fn step_one(world: &mut World, cat: &Catalog, name: &str) -> Result<(), String> {
+    let floor = cmap(cat, "S_room")?;
+    let (cx, cy) = (40, 10);
+    let g = monster(cat, name, 0, GlyphKind::Mon)?;
+    world.map.print(cx, cy, &floor, None);
+    world.map.print(cx - 1, cy, &g, Some(&floor));
+    Ok(())
+}
+
 /// One monster in a corridor a cell wide, the hero in the next cell (the
 /// `bestiary` self-test's corridor fights: a body too long for its cell
 /// stands in the hero and in the rock); the view centres on the monster.
