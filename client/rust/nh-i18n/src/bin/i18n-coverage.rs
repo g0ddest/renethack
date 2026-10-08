@@ -15,6 +15,13 @@
 //! the lexicon (`client/i18n/lexicon.ru.toml`); `--no-lexicon` leaves them
 //! English, to see the templates alone. `--all` gives the report's lists
 //! whole, not only their heads.
+//!
+//! A text that came out as translated and still holds an English word is
+//! counted apart, as mixed: «c - a +1 кинжал.» is no translation. A word
+//! in Latin letters is English there unless the template's own Russian
+//! has it (an option's or a command's name, a unit), the player typed it
+//! (a name after "called", a text in quotes), or it is one letter (an
+//! inventory letter) and no article.
 
 use std::collections::{BTreeSet, HashMap};
 use std::fmt::Write as _;
@@ -68,6 +75,8 @@ struct Tally {
     /// Matched only by a template of almost no words of its own ("%s of
     /// %s"): a name the lexicon should read.
     weak: usize,
+    /// Came out as translated with an English word left in it.
+    mixed: usize,
 }
 
 fn main() -> ExitCode {
@@ -208,6 +217,7 @@ fn run(
         untranslated,
         shown_as,
         partial,
+        mixed,
     } = report;
     let mut kinds: Vec<_> = tallies.iter().collect();
     kinds.sort_by_key(|(k, t)| (std::cmp::Reverse(t.shown), (*k).clone()));
@@ -217,6 +227,7 @@ fn run(
         a.translated += t.translated;
         a.partial += t.partial;
         a.weak += t.weak;
+        a.mixed += t.mixed;
         a
     });
     let pct = |a: usize, b: usize| {
@@ -228,8 +239,8 @@ fn run(
     };
     let _ = writeln!(
         out,
-        "{:<14} {:>7} {:>9} {:>11} {:>9} {:>9}",
-        "kind", "shown", "matched", "translated", "partial", "weak"
+        "{:<14} {:>7} {:>9} {:>11} {:>9} {:>9} {:>9}",
+        "kind", "shown", "matched", "translated", "mixed", "partial", "weak"
     );
     for (k, t) in kinds
         .iter()
@@ -238,11 +249,12 @@ fn run(
     {
         let _ = writeln!(
             out,
-            "{:<14} {:>7} {:>8.2}% {:>10.2}% {:>8.2}% {:>8.2}%",
+            "{:<14} {:>7} {:>8.2}% {:>10.2}% {:>8.2}% {:>8.2}% {:>8.2}%",
             k,
             t.shown,
             pct(t.matched, t.shown),
             pct(t.translated, t.shown),
+            pct(t.mixed, t.shown),
             pct(t.partial, t.shown),
             pct(t.weak, t.shown)
         );
@@ -250,6 +262,7 @@ fn run(
     let _ = writeln!(
         out,
         "matched: a template with words of its own (or a name the lexicon reads); \
+         mixed: came out as translated with an English word left; \
          partial: a name in it stays English; weak: only a template like \"%s of %s\""
     );
     let _ = writeln!(out, "messages with their format (P7): {with_fmt}");
@@ -263,6 +276,17 @@ fn run(
     let _ = writeln!(out, "\nno template ({} distinct):", misses.len());
     let head = |n: usize| if all { usize::MAX } else { n };
     for (text, n) in misses.iter().take(head(60)) {
+        let _ = writeln!(out, "{n:>6} {text}");
+    }
+    let mut left: Vec<_> = mixed.into_iter().collect();
+    left.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+    let _ = writeln!(
+        out,
+        "\nmixed: as translated, with English left ({} distinct, {} shown):",
+        left.len(),
+        left.iter().map(|(_, n)| n).sum::<usize>()
+    );
+    for (text, n) in left.iter().take(head(30)) {
         let _ = writeln!(out, "{n:>6} {text}");
     }
     let mut halves: Vec<_> = partial.into_iter().collect();
@@ -333,6 +357,8 @@ struct Report {
     shown_as: HashMap<String, BTreeSet<String>>,
     /// "[kind] text" translated but for a name
     partial: HashMap<String, usize>,
+    /// "[kind] text -> its Russian  {the English left}"
+    mixed: HashMap<String, usize>,
 }
 
 impl Report {
@@ -374,12 +400,221 @@ impl Report {
             }
             Status::Translated => {
                 t.matched += 1;
-                t.translated += 1;
+                let left = english_left(translator, &out, text);
+                if left.is_empty() {
+                    t.translated += 1;
+                } else {
+                    t.mixed += 1;
+                    let entry = format!("[{kind}] {text} -> {}  {{{}}}", out.text, left.join(", "));
+                    *self.mixed.entry(entry).or_default() += 1;
+                }
             }
         }
     }
 }
 
+/// English function words: left in a Russian text they are a miss whatever
+/// length they have and whoever else wrote them somewhere.
+const ENGLISH: [&str; 3] = ["a", "an", "the"];
+/// Names that stay in Latin letters on purpose: the soak's hero, what it
+/// calls everything it may name, the game.
+const KEPT: [&str; 3] = ["Hero", "Elbereth", "NetHack"];
+
+/// The words in Latin letters of a text, with where each starts.
+fn latin_words(text: &str) -> Vec<(usize, &str)> {
+    let mut out = Vec::new();
+    let mut start = None;
+    for (i, c) in text.char_indices().chain([(text.len(), ' ')]) {
+        match (c.is_ascii_alphabetic(), start) {
+            (true, None) => start = Some(i),
+            (false, Some(s)) => {
+                out.push((s, &text[s..i]));
+                start = None;
+            }
+            _ => {}
+        }
+    }
+    out
+}
+
+/// What the player typed, in the English of a text: a name after "called"
+/// or "named" (to the next comma), a text in double quotes, whose ghost
+/// it is (a bones file's hero).
+fn typed(english: &str) -> BTreeSet<String> {
+    let named = [" called ", " named "]
+        .into_iter()
+        .flat_map(|by| english.match_indices(by).map(move |(i, _)| i + by.len()))
+        .map(|i| english[i..].split(',').next().unwrap_or(""));
+    let quoted = english.split('"').skip(1).step_by(2);
+    let ghosts = english
+        .match_indices("'s ghost")
+        .map(|(i, _)| english[..i].rsplit(' ').next().unwrap_or(""));
+    named
+        .chain(quoted)
+        .chain(ghosts)
+        .flat_map(latin_words)
+        .map(|(_, w)| w.to_lowercase())
+        .collect()
+}
+
+/// The keys a question lists in brackets, which are no words: inventory
+/// letters ("[afgh or ?*]", "[- a or ?*]"), directions ("[ykunjb>]").
+fn keys(english: &str) -> BTreeSet<String> {
+    let mut out = BTreeSet::new();
+    let mut rest = english;
+    while let Some(open) = rest.find('[') {
+        let Some(len) = rest[open..].find(']') else {
+            break;
+        };
+        let inside = &rest[open + 1..open + len];
+        let list = inside.strip_suffix(" or ?*").unwrap_or(inside);
+        // one run of keys, or a few behind "- " (nothing, as a choice)
+        if !list.trim_start_matches("- ").contains(' ') {
+            out.extend(latin_words(list).into_iter().map(|(_, w)| w.to_lowercase()));
+        }
+        rest = &rest[open + len + 1..];
+    }
+    out
+}
+
+/// The English words left in a text that came out as translated.
+fn english_left(translator: &Translator, out: &Output, english: &str) -> Vec<String> {
+    if !out.text.bytes().any(|b| b.is_ascii_alphabetic()) {
+        return Vec::new();
+    }
+    // what the template's own Russian says in Latin letters is meant
+    let own: BTreeSet<String> = out
+        .template
+        .as_deref()
+        .and_then(|id| translator.russian().get(id))
+        .map(|tr| {
+            latin_words(&tr.ru)
+                .into_iter()
+                .map(|(_, w)| w.to_lowercase())
+                .collect()
+        })
+        .unwrap_or_default();
+    left_in(&out.text, english, &own)
+}
+
+/// The words in Latin letters of `ru`, the Russian of `english`, that are
+/// English left over: of three letters or more, or an article; not what
+/// the template itself says (`own`), what the player typed, a key, a
+/// name kept as it is.
+fn left_in(ru: &str, english: &str, own: &BTreeSet<String>) -> Vec<String> {
+    let mut typed = typed(english);
+    let keys = keys(english);
+    typed.extend(keys.iter().cloned());
+    let mut left = Vec::new();
+    for (at, word) in latin_words(ru) {
+        let low = word.to_lowercase();
+        let (before, after) = (&ru[..at], &ru[at + word.len()..]);
+        let long = word.len() >= 3;
+        // "a - меч" is the item's letter and "A-G" a range of notes, "a +1
+        // кинжал" an article
+        let article =
+            ENGLISH.contains(&low.as_str()) && !after.starts_with(" - ") && !after.starts_with('-');
+        if !(long || article) || KEPT.contains(&word) || typed.contains(&low) {
+            continue;
+        }
+        // a key shown in quotes ('a'), or alone in a list of keys ("[a или ?*]")
+        let quoted = before.ends_with('\'') && after.starts_with('\'');
+        let key =
+            before.ends_with(['[', ' ']) && after.starts_with([' ', ']']) && keys.contains(&low);
+        if !long && (quoted || key) {
+            continue;
+        }
+        if own.contains(&low) && !article {
+            continue;
+        }
+        if !left.contains(&word.to_string()) {
+            left.push(word.to_string());
+        }
+    }
+    left
+}
+
 fn toml_string(s: &str) -> String {
     serde_json::to_string(s).unwrap_or_default()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn left(english: &str, ru: &str) -> Vec<String> {
+        left_in(ru, english, &BTreeSet::new())
+    }
+
+    #[test]
+    fn english_left_in_a_russian_text() {
+        assert_eq!(left("c - a +1 dagger.", "c - a +1 кинжал."), ["a"]);
+        assert_eq!(
+            left("b - a +0 short sword.", "b - a +0 short меч."),
+            ["a", "short"]
+        );
+        assert_eq!(
+            left(
+                "What do you want to call this dungeon level?",
+                "Как вы хотите назвать this dungeon level?"
+            ),
+            ["this", "dungeon", "level"]
+        );
+        assert_eq!(
+            left("Contents of the sack:", "Содержимое мешка the:"),
+            ["the"]
+        );
+    }
+
+    #[test]
+    fn letters_keys_and_names_are_no_english() {
+        for (english, ru) in [
+            // the item's letter is a, the thing has no article
+            ("a - a +1 dagger.", "a - +1 кинжал."),
+            (
+                "What do you want to use or apply? [afgh or ?*]",
+                "Что вы хотите использовать? [afgh или ?*]",
+            ),
+            (
+                "What do you want to wield? [- a or ?*]",
+                "Чем вы хотите вооружиться? [- a или ?*]",
+            ),
+            (
+                "In what direction do you want to dig? [ykunjb>]",
+                "В каком направлении копать? [ykunjb>]",
+            ),
+            (
+                "What tune are you playing? [5 notes, A-G]",
+                "Какую мелодию вы играете? [5 нот, A-G]",
+            ),
+            (
+                "Reordering spells; swap 'a' with",
+                "Перестановка заклинаний: поменять 'a' с",
+            ),
+            // what the player typed, a bones file's hero, the soak's names
+            ("You read: \"ad aquarium\".", "Вы читаете: «ad aquarium»."),
+            (
+                "Your kitten called tom purrs.",
+                "Ваш котёнок по имени tom мурлычет.",
+            ),
+            ("Mike's ghost touches you!", "Привидение Mike касается вас!"),
+            (
+                "You swap places with Elbereth.",
+                "Вы меняетесь местами с Elbereth.",
+            ),
+            (
+                "Hello Hero, welcome to NetHack!",
+                "Привет, Hero, добро пожаловать в NetHack!",
+            ),
+        ] {
+            assert_eq!(left(english, ru), Vec::<String>::new(), "{ru}");
+        }
+        // what the template itself says in Latin letters is meant
+        let own: BTreeSet<String> = ["autopickup".to_string()].into();
+        assert!(left_in("Включить autopickup", "Toggle autopickup", &own).is_empty());
+        assert_eq!(
+            left_in("Включить autopickup", "Toggle autopickup", &BTreeSet::new()),
+            ["autopickup"]
+        );
+    }
 }
