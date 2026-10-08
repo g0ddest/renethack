@@ -224,6 +224,9 @@ WRAPPERS = set("""an An the The upstart upwords lcase ucase s_suffix makeplural
 WRITTEN_BY = {"trap_predicament"}
 # ... or appends it to what the buffer held ("For you, " + "esteemed sir")
 APPENDED_BY = {"append_honorific"}
+# The functions whose "%-12s" of a few known words is those words in their
+# width (as a rule for all it moved the options' and the role menu's lines)
+COLUMNS_OF_WORDS = {"dospellmenu"}
 # The functions whose formats, when they have too many texts, lose a thing's
 # few literal names before anything else (as a rule for all it moved eight
 # translated lines of uhitm.c)
@@ -1147,6 +1150,14 @@ class Context:
         (format text, kinds of its conversions)."""
         plain = m.group("conv") == "s" and m.group("width") is None and m.group("prec") is None
         if not plain:
+            # a column of a few known words is those words in their width
+            # (the spell menu's "%-12s" of a spell's school: "attack      ")
+            width = m.group("width") or ""
+            words = (self.values(arg) if self.func.name in COLUMNS_OF_WORDS and m.group("conv") == "s"
+                     and width.isdigit() and m.group("prec") is None else None)
+            if words and len(words) <= 12 and all(len(w) <= int(width) for w in words):
+                left = "-" in m.group("flags")
+                return [(escape(w.ljust(int(width)) if left else w.rjust(int(width))), []) for w in words]
             return [(m.group(0), [conv_kind(m)])]
         return self.pieces(arg, pos, depth)
 

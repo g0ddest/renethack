@@ -216,6 +216,14 @@ class Formats(unittest.TestCase):
                          {"You feel weaker.", "You feel weaker!", "Your brain is on fire.", "Your brain is on fire!",
                           "You feel innately weaker.", "You feel innately weaker!"})
 
+    def test_a_column_of_a_few_words(self):
+        e = catalog_of('static const char *school(int s) { switch (s) { case 1: return "attack"; default: return ""; } }\n'
+                       'void dospellmenu(void) {\n    const char *fmt = tabs ? "%s\\t%s" : "%-20s  %2d   %-12s %3d%%";\n'
+                       '    Sprintf(buf, fmt, spellname(i), spellev(i), school(i), fail(i));\n'
+                       '    add_menu(w, g, &a, 0, 0, 0, 0, buf, 0);\n}\n')
+        self.assertIn("%-20s  %2d   attack       %3d%%", e)
+        self.assertNotIn("%-20s  %2d   %-12s %3d%%", [k for k in e if e[k].uses == {"menu"}])
+
     def test_buffers_are_inlined(self):
         e = catalog_of('void f(struct monst *m) {\n'
                        '    char buf[BUFSZ];\n'

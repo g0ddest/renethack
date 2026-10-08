@@ -1819,13 +1819,13 @@ ru = "Как упорядочить список известных заклин
 en = "Reordering spells; swap '%c' with"
 ru = "Перестановка заклинаний: поменять '{1}' с"
 
-[309778d2923f]
-en = "    %-20s Level %-12s Fail Retention"
-ru = "    {1:skip}Название             Уровень {2:skip}Школа        Провал Память"
+[028c6f817372]
+en = "    Name                 Level Category     Fail Retention"
+ru = "    Название  Уровень  Школа  Провал  Память"
 
-[b5ad39778022]
-en = "%-20s Level %-12s Fail Retention"
-ru = "{1:skip}Название             Уровень {2:skip}Школа        Провал Память"
+[936a0d54aa5d]
+en = "Name                 Level Category     Fail Retention"
+ru = "Название  Уровень  Школа  Провал  Память"
 
 [407c8027e581]
 en = "Name\tLevel\tCategory\tFail\tRetention"
@@ -1975,9 +1975,9 @@ ru = "Включите 'autopickup', чтобы подбирать эти вещ
 en = "Autopickup what?"
 ru = "Что подбирать автоматически?"
 
-[0cb8311ca133]
-en = "    %-20s Level %-12s Fail Retention%c%6s"
-ru = "    {1:skip}Название             Уровень {2:skip}Школа        Провал Память{3}  ходы{4:skip}"
+[db0d6343e0cd]
+en = "    Name                 Level Category     Fail Retention%c turns"
+ru = "    Название  Уровень  Школа  Провал  Память{1}  ходы"
 
 [20716e9262a7]
 en = "In use"
@@ -1987,9 +1987,9 @@ ru = "Используется"
 en = "Compounds (selecting will prompt for new value):"
 ru = "Составные (выбор запросит новое значение):"
 
-[476dc63b64fb]
-en = "%-20s Level %-12s Fail Retention%c%6s"
-ru = "{1:skip}Название             Уровень {2:skip}Школа        Провал Память{3}  ходы{4:skip}"
+[f9d0df524137]
+en = "Name                 Level Category     Fail Retention%c turns"
+ru = "Название  Уровень  Школа  Провал  Память{1}  ходы"
 
 [5f2cbd107037]
 en = "Miscellaneous"
@@ -2011,10 +2011,69 @@ ru = "Особое"
 en = "Always pickup '<'; never pickup '>'"
 ru = "Всегда подбирать '<'; никогда не подбирать '>'"
 
-[d8281bf39a1a]
-en = "Name\tLevel\tCategory\tFail\tRetention%c%6s"
-ru = "Название\tУровень\tШкола\tПровал\tПамять{1}ходы{2:skip}"
+[2659dff20f38]
+en = "Name\tLevel\tCategory\tFail\tRetention%c turns"
+ru = "Название\tУровень\tШкола\tПровал\tПамять{1}ходы"
 
 [0b8a7f9f4b05]
 en = "Wish what?"
 ru = "Что пожелать?"
+
+# The spell menu's rows (dospellmenu): a spell, its level, its school, the chance to fail,
+# how well it is remembered. The client draws a row's cells apart: two spaces part them.
+
+[b84aa045a324]
+en = "%-20s  %2d   attack       %3d%% %9s"
+ru = "{1}  {2}  бой  {3}%  {4}"
+
+[248f58c1fa44]
+en = "%-20s  %2d   attack       %3d%% %9s%c%6d"
+ru = "{1}  {2}  бой  {3}%  {4}{5}  {6}"
+
+[e4ccae546232]
+en = "%-20s  %2d   healing      %3d%% %9s"
+ru = "{1}  {2}  лечение  {3}%  {4}"
+
+[04b93bf2cb45]
+en = "%-20s  %2d   healing      %3d%% %9s%c%6d"
+ru = "{1}  {2}  лечение  {3}%  {4}{5}  {6}"
+
+[9bb024d24611]
+en = "%-20s  %2d   divination   %3d%% %9s"
+ru = "{1}  {2}  прорицание  {3}%  {4}"
+
+[6671c79cdcd6]
+en = "%-20s  %2d   divination   %3d%% %9s%c%6d"
+ru = "{1}  {2}  прорицание  {3}%  {4}{5}  {6}"
+
+[1cb08c20fcc7]
+en = "%-20s  %2d   enchantment  %3d%% %9s"
+ru = "{1}  {2}  очарование  {3}%  {4}"
+
+[421072a5414b]
+en = "%-20s  %2d   enchantment  %3d%% %9s%c%6d"
+ru = "{1}  {2}  очарование  {3}%  {4}{5}  {6}"
+
+[f3fb5006c431]
+en = "%-20s  %2d   clerical     %3d%% %9s"
+ru = "{1}  {2}  жречество  {3}%  {4}"
+
+[b26d539fef67]
+en = "%-20s  %2d   clerical     %3d%% %9s%c%6d"
+ru = "{1}  {2}  жречество  {3}%  {4}{5}  {6}"
+
+[38e4716c060d]
+en = "%-20s  %2d   escape       %3d%% %9s"
+ru = "{1}  {2}  бегство  {3}%  {4}"
+
+[7862094ea8cb]
+en = "%-20s  %2d   escape       %3d%% %9s%c%6d"
+ru = "{1}  {2}  бегство  {3}%  {4}{5}  {6}"
+
+[424699354b70]
+en = "%-20s  %2d   matter       %3d%% %9s"
+ru = "{1}  {2}  материя  {3}%  {4}"
+
+[68d4309c097e]
+en = "%-20s  %2d   matter       %3d%% %9s%c%6d"
+ru = "{1}  {2}  материя  {3}%  {4}{5}  {6}"

@@ -549,6 +549,21 @@ fn a_plural_spelled_like_its_singular() {
     );
 }
 
+#[test]
+fn a_row_of_the_spell_menu() {
+    // dospellmenu: "%-20s  %2d   %-12s %3d%% %9s", the school in its column
+    let out = translator().text("force bolt             1   attack         0%  91%-100%");
+    assert_eq!(out.status, Status::Translated, "{}", out.text);
+    assert!(
+        !out.text.chars().any(|c| c.is_ascii_alphabetic()),
+        "{}",
+        out.text
+    );
+    // five cells two spaces apart, as the client parts them
+    let cells = out.text.split("  ").filter(|c| !c.trim().is_empty());
+    assert_eq!(cells.count(), 5, "{}", out.text);
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {
