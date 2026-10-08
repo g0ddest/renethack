@@ -492,8 +492,10 @@ pub struct CorridorScene {
 }
 
 /// The hero in each kind of corridor and doorway, small monsters next to
-/// them and off to a side (a fight there must show).
-pub const CORRIDOR_SCENES: [CorridorScene; 9] = [
+/// them and off to a side (a fight there must show); and by the torches
+/// on a room's side walls (their pictures: a torch must not draw over
+/// who stands beside it).
+pub const CORRIDOR_SCENES: [CorridorScene; 11] = [
     CorridorScene {
         name: "row",
         hero: (13, 3),
@@ -546,6 +548,16 @@ pub const CORRIDOR_SCENES: [CorridorScene; 9] = [
             ("newt", (24, 4)),
             ("sewer rat", (15, 3)),
         ],
+    },
+    CorridorScene {
+        name: "torch-east",
+        hero: (9, 4),
+        others: &[("jackal", (8, 4))],
+    },
+    CorridorScene {
+        name: "torch-west",
+        hero: (3, 4),
+        others: &[("jackal", (3, 3))],
     },
 ];
 

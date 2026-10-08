@@ -245,6 +245,18 @@ const ROOM_LIGHT_ENERGY: f32 = 0.3;
 const TORCH: Color = Color::from_rgb(1.0, 0.66, 0.38);
 const TORCH_RANGE: f32 = 5.5;
 const TORCH_SHADOWS: usize = 3;
+/// How big the sconce's model is drawn, and how much of its depth it
+/// keeps on a side wall: the camera sees an east or west wall's torch
+/// from its side, level with the head of whoever stands by the wall, so
+/// there it keeps to the wall, clear of the middle of the cell by more
+/// than half a body.
+const SCONCE_SCALE: f32 = 1.2;
+const SIDE_REACH: f32 = 0.55;
+/// A lantern in the torch's place hangs this far out and this high over
+/// the torch's mount, and on a side wall smaller and closer by this much.
+const LANTERN_OUT: f32 = 0.32;
+const LANTERN_HANG: f32 = 0.8;
+const SIDE_LANTERN: f32 = 0.55;
 const TITLE_TORCH_SHADOWS: usize = 1;
 /// Torches made before any level is shown.
 const TORCHES_AHEAD: usize = 16;
@@ -2333,7 +2345,9 @@ struct Torch {
     /// branches that have them (made when first needed).
     fire: Gd<Node3D>,
     lantern: Option<Gd<Node3D>>,
+    sconce: Option<Gd<Node3D>>,
     flame: Gd<MeshInstance3D>,
+    halo: Gd<MeshInstance3D>,
     embers: Gd<godot::classes::GpuParticles3D>,
     light: Gd<OmniLight3D>,
     /// Where the light burns when it does not flicker.
@@ -3646,8 +3660,21 @@ impl MapView {
             t.node
                 .set_transform(Transform3D::new(basis, face + at(0.0, 1.45, 0.0)));
             t.node.set_visible(true);
+            // on a side wall it keeps to the wall
+            let reach = if dx != 0 { SIDE_REACH } else { 1.0 };
+            if let Some(sconce) = t.sconce.as_mut() {
+                sconce.set_scale(Vector3::new(
+                    SCONCE_SCALE,
+                    SCONCE_SCALE,
+                    SCONCE_SCALE * reach,
+                ));
+            }
+            t.flame.set_position(at(0.0, 0.46, 0.3 * reach));
+            t.halo.set_position(at(0.0, 0.62, 0.32 * reach));
+            t.embers.set_position(at(0.0, 0.58, 0.3 * reach));
             // at the flame, a little out from it
-            t.at = face + Vector3::new(fx * 0.45, 2.0, fz * 0.45);
+            let out = 0.15 + 0.3 * reach;
+            t.at = face + Vector3::new(fx * out, 2.0, fz * out);
             t.phase = f64::from(cell_noise(x, y, 13)) * 10.0;
             t.flame
                 .set_instance_shader_parameter("phase", &(t.phase as f32).to_variant());
@@ -3661,6 +3688,10 @@ impl MapView {
             let t = &mut self.torches[i];
             if let Some(l) = t.lantern.as_mut() {
                 l.set_visible(lanterns);
+                // smaller and closer on a side wall, hung as high
+                let k = if dx != 0 { SIDE_LANTERN } else { 1.0 };
+                l.set_scale(Vector3::new(k, k, k));
+                l.set_position(at(0.0, LANTERN_HANG * (1.0 - k), 0.0));
             }
         }
         for t in self.torches.iter_mut().skip(walls.len()) {
@@ -3683,7 +3714,7 @@ impl MapView {
         {
             // hung from a bracket over the room, out of its own light
             let mut lamp = Node3D::new_alloc();
-            l.set_position(at(0.0, 0.8, 0.32));
+            l.set_position(at(0.0, LANTERN_HANG, LANTERN_OUT));
             l.set_scale(Vector3::new(0.5, 0.5, 0.5));
             set_layers(&l, SCONCE_LAYER);
             lamp.add_child(&l);
@@ -3694,7 +3725,7 @@ impl MapView {
                 let mut core = MeshInstance3D::new_alloc();
                 core.set_mesh(&flame_mesh);
                 core.set_material_override(&warm);
-                core.set_position(at(x, 0.55, 0.32 + z));
+                core.set_position(at(x, 0.55, LANTERN_OUT + z));
                 no_shadow(&mut core);
                 lamp.add_child(&core);
             }
@@ -3716,13 +3747,13 @@ impl MapView {
         let mut node = Node3D::new_alloc();
         // the torch itself (a lantern may hang there instead)
         let mut fire = Node3D::new_alloc();
-        if let Some(mut sconce) = self
+        let mut sconce = self
             .torch_scene
             .as_ref()
             .and_then(|s| s.instantiate())
-            .and_then(|n| n.try_cast::<Node3D>().ok())
-        {
-            sconce.set_scale(Vector3::new(1.2, 1.2, 1.2));
+            .and_then(|n| n.try_cast::<Node3D>().ok());
+        if let Some(sconce) = sconce.as_mut() {
+            sconce.set_scale(Vector3::new(SCONCE_SCALE, SCONCE_SCALE, SCONCE_SCALE));
             for n in sconce
                 .find_children_ex("*")
                 .type_("GeometryInstance3D")
@@ -3735,7 +3766,7 @@ impl MapView {
                     g.set_layer_mask(SCONCE_LAYER);
                 }
             }
-            fire.add_child(&sconce);
+            fire.add_child(&*sconce);
         }
         // the flame licks up from the torch's head, embers rise from it
         let mut flame = MeshInstance3D::new_alloc();
@@ -3783,7 +3814,9 @@ impl MapView {
             node,
             fire,
             lantern: None,
+            sconce,
             flame,
+            halo,
             embers,
             light,
             at: Vector3::ZERO,
@@ -6430,6 +6463,19 @@ mod tests {
             })
             .count();
         assert!(candles > 2 && candles < 30, "{candles}");
+    }
+
+    #[test]
+    fn a_side_walls_torch_keeps_clear_of_whoever_stands_beside_it() {
+        // the sconce's own depth (Torch_Metal), and half a body's width
+        // about the middle of the cell, half a metre from the wall
+        let depth = 0.39 * SCONCE_SCALE;
+        let body = 0.5 - 0.25;
+        assert!(depth * SIDE_REACH <= body + 0.02, "{}", depth * SIDE_REACH);
+        // the lantern hung there instead: its middle and half its width
+        // (the chandelier is 0.29 m across as it is drawn)
+        let lantern = (LANTERN_OUT + 0.145) * SIDE_LANTERN;
+        assert!(lantern <= body + 0.02, "{lantern}");
     }
 
     #[test]

@@ -5,12 +5,15 @@
 //! camera, at its default distance and as close as a player may zoom,
 //! nothing may stand between the eye and the feet of any of them: no rock
 //! in front of a corridor, no wall below a doorway. With `--screenshots`,
-//! a picture of each.
+//! a picture of each. RENETHACK_CORRIDORS_IN=mines (sokoban, gehennom,
+//! vlad, ludios, quest): the same as a level of that branch, for the
+//! pictures of its look (the checks hold in any).
 
 use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
 
 use super::{Step, camera_settled, map_view, quit, start};
 use godot::prelude::*;
+use nh_protocol::LevelNotice;
 
 use crate::gallery::{CORRIDOR_SCENES, corridor_cell, lay_out_corridors};
 use crate::game::RenethackGame;
@@ -20,9 +23,32 @@ static SCENE: AtomicUsize = AtomicUsize::new(0);
 /// The camera's distance in a game (bits of an f32).
 static DISTANCE: AtomicU32 = AtomicU32::new(0);
 
+/// The dungeon RENETHACK_CORRIDORS_IN names, as a level notice names it.
+fn other_dungeon() -> Result<Option<&'static str>, String> {
+    let Ok(name) = std::env::var("RENETHACK_CORRIDORS_IN") else {
+        return Ok(None);
+    };
+    Ok(Some(match name.as_str() {
+        "mines" => "The Gnomish Mines",
+        "sokoban" => "Sokoban",
+        "gehennom" => "Gehennom",
+        "vlad" => "Vlad's Tower",
+        "ludios" => "Fort Ludios",
+        "quest" => "The Quest",
+        other => return Err(format!("RENETHACK_CORRIDORS_IN: no branch {other:?}")),
+    }))
+}
+
 fn lay_out(g: &mut RenethackGame) -> Result<(), String> {
     let cat = g.catalog.clone().ok_or("no catalog")?;
     lay_out_corridors(&mut g.world, &cat, SCENE.load(Ordering::Relaxed))?;
+    if let Some(dungeon) = other_dungeon()? {
+        g.world.level = Some(LevelNotice {
+            dungeon: dungeon.to_string(),
+            depth: 3,
+            plane: None,
+        });
+    }
     let ui = g.ui.as_mut().ok_or("no UI")?;
     ui.map.set_showcase(false);
     ui.map
