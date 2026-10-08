@@ -4548,6 +4548,33 @@ impl MapView {
         set_layers(node, if on { 1 | RIM_LAYER } else { 1 });
     }
 
+    /// The x-ray overlay on the hero's model, as while a wall hides them,
+    /// in a colour no hero wears and with no depth kept back for the model
+    /// itself: it then shows on every part of the hero another part covers
+    /// (self-tests: the doll's camera draws none of it). `false` takes it
+    /// off and gives the overlay its own colour and depth back. False when
+    /// there is no hero's model or no overlay to put on it.
+    pub fn probe_xray(&mut self, on: bool) -> bool {
+        let alive = |n: &Gd<Node3D>| n.is_instance_valid() && !n.is_queued_for_deletion();
+        let (Some(node), Some(xray)) = (self.rim_model.clone().filter(alive), self.xray.clone())
+        else {
+            return false;
+        };
+        if let Ok(mut m) = xray.clone().try_cast::<ShaderMaterial>() {
+            let (color, pull) = if on {
+                (Color::from_rgba(1.0, 0.0, 1.0, 1.0), 0.0f32.to_variant())
+            } else {
+                (XRAY, Variant::nil())
+            };
+            m.set_shader_parameter("color", &color.to_variant());
+            m.set_shader_parameter("pull", &pull);
+        }
+        set_overlay(&node, on.then_some(&xray));
+        // as `show_through` left it: it puts its own on when a wall hides them
+        self.xray_on = false;
+        true
+    }
+
     /// The clips the hero's model rests and fights with now, the gear's:
     /// (idle, attack) (self-tests).
     pub fn hero_fight_clips(&self) -> (Option<String>, Option<String>) {

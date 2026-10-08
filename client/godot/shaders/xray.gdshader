@@ -3,6 +3,9 @@
 // drawn only where something nearer the camera covers the model (the depth
 // test inverted), a flat tinted silhouette. Pulled towards the camera by
 // about a body's depth first, so the model never shows through itself.
+// Not for the inventory's doll: its camera sees the hero's layer alone,
+// from close by, and there what is nearer than a limb is the hero's own
+// shield or arm.
 shader_type spatial;
 render_mode unshaded, blend_mix, depth_test_inverted, depth_draw_never, cull_back, shadows_disabled, fog_disabled, skip_vertex_transform;
 
@@ -16,6 +19,10 @@ void vertex() {
 }
 
 void fragment() {
+	// a camera that does not see the map's own layer is the doll's
+	if ((CAMERA_VISIBLE_LAYERS & 1u) == 0u) {
+		discard;
+	}
 	float rim = 1.0 - abs(dot(normalize(NORMAL), normalize(VIEW)));
 	ALBEDO = color.rgb * (0.7 + rim * 0.8);
 	ALPHA = color.a * (0.6 + rim * 0.4);

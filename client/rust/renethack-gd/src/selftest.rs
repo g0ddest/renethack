@@ -30,6 +30,8 @@ use nh_link::save_exists;
 mod achievements;
 #[path = "selftest_corridors.rs"]
 mod corridors;
+#[path = "selftest_doll.rs"]
+mod doll_tests;
 #[path = "selftest_help.rs"]
 mod help_tests;
 #[path = "selftest_hero.rs"]
@@ -4504,6 +4506,7 @@ impl SelfTest {
             "help" => help_tests::help(),
             "layouts" => layouts_tests::layouts(),
             "rim" => rim_tests::rim(),
+            "doll" => doll_tests::doll(),
             "passing" => passing_tests::passing(),
             "inventory" => inventory(),
             "map-pause" => map_pause(),

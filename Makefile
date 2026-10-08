@@ -34,9 +34,10 @@ RU_SELFTESTS := smoke inventory dialogs achievements
 # would shoot came through the client's catalogs or the engine's translator
 PSEUDO_SELFTESTS := smoke keys dialogs orders inventory gamepad hud pickers achievements help layouts
 # with a window: a headless run draws nothing, and what upsets the renderer
-# shows only when it runs, as a "BUG" error of Godot's or a crash on quit.
+# shows only when it runs, as a "BUG" error of Godot's or a crash on quit;
+# nor does it render the inventory's doll.
 # Needs a display (without one: xvfb-run, or WINDOW_SELFTESTS= to skip)
-WINDOW_SELFTESTS ?= rim
+WINDOW_SELFTESTS ?= rim doll
 # `make deck`: the same screens shot at a real 1280×800, into DECK_DIR
 # (`make deck DECK_ARGS=--lang=ru`: in Russian)
 DECK_SHOTS := smoke tour inventory bar hud dialogs gamepad

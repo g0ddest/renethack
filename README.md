@@ -129,7 +129,7 @@ priests excepted.
     make              # engine/build/nh-engine, recover and data
     make test         # C unit tests, engine smoke test, Rust tests
     make lint
-    make test-client  # self-tests of the Godot client: headless, one in a window (needs Godot)
+    make test-client  # self-tests of the Godot client: headless, two in a window (needs Godot)
     make soak         # random play through the client, seeds 1..8 (long)
     make deck         # screenshots at the Steam Deck's 1280×800 (needs a display)
 
@@ -138,9 +138,14 @@ in its own headless Godot process with a fixed seed: every scenario except
 `tour`, a walk through the first rooms for map screenshots, and `gallery`,
 the art laid out page by page. The `moves` scenario stops each of the first
 steps midway (with `--screenshots`, a picture of the hero and the pet
-between cells). The `orders` scenario walks, holds, counts, stops a walk
-with a key, takes the stairs, and meets a hostile that stops a walk (with
-`--screenshots`, the way previewed and the combat banner). The `inventory`
+between cells), each ring under its creature in every frame. The `passing`
+scenario draws on the map what the engine draws in passing (a thrown dagger
+on the hero's cell, a ray over the pet, a sparkle over the hero, the cell
+the hero steps off a frame before the next): the hero and the pet stay,
+their rings under them and the hero on the inventory's doll. The `orders`
+scenario walks, holds, counts, stops a walk with a key, takes the stairs,
+and meets a hostile that stops a walk (with `--screenshots`, the way
+previewed and the combat banner). The `inventory`
 scenario opens the panel, filters it, wields by a drag and by the context
 menu, answers a getobj question in selection mode and drops through the
 panel's `D` menu; `bar` binds the food ration to a slot, follows it through
@@ -170,11 +175,13 @@ the log in whole lines). `make test-client` also runs `smoke`, `inventory`,
 `hud`, `dialogs` and `gamepad` at a real 1280×800.
 
 A headless run draws nothing, so what upsets Godot's renderer never shows
-in one. `make test-client` therefore ends with the `rim` scenario in a
-window (it needs a display; `xvfb-run make test-client` without one, or
-`make test-client WINDOW_SELFTESTS=` to skip it): the hero's rim light's
-layer stays on the hero's own model, and a model in view changes layers
-without leaving the renderer a pair it cannot undo. Every run, headless or
+in one. `make test-client` therefore ends with two scenarios in a window
+(they need a display; `xvfb-run make test-client` without one, or
+`make test-client WINDOW_SELFTESTS=` to skip them). In `rim` the hero's rim
+light's layer stays on the hero's own model, and a model in view changes
+layers without leaving the renderer a pair it cannot undo. In `doll` the
+inventory's doll shows the hero without the tint their model wears on the
+map while a wall hides them. Every run, headless or
 not, passes only with its PASS line, exit status 0 and no error of Godot's
 that says "BUG": a crash on quit, after the PASS line, fails it.
 `make soak SOAK_WINDOW=1` plays the soak in a window, the renderer at work.
