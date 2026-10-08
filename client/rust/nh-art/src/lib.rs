@@ -1485,6 +1485,50 @@ mod tests {
         assert!(!art.head("orc_f").unwrap().hair[0].contains("Long"));
     }
 
+    /// Zombies and mummies were peasants with a tint, every kind the same:
+    /// each is the corpse of its race now, rotten or wound in linen.
+    #[test]
+    fn the_dead_are_told_apart_by_what_they_were() {
+        let (art, cat) = (manifest(), catalog());
+        let model = |n: &str| {
+            let m = cat.monsters.iter().find(|m| m.name == n).unwrap();
+            art.model_at(art.monster(m, 0).model)
+        };
+        let races = [
+            "kobold", "gnome", "orc", "dwarf", "elf", "human", "ettin", "giant",
+        ];
+        for (kind, skin) in [("zombie", "zombie_m.jpg"), ("mummy", "mummy_m.jpg")] {
+            let mut seen = Vec::new();
+            for race in races {
+                let (name, spec) = model(&format!("{race} {kind}"));
+                assert!(!seen.contains(&name), "{race} {kind}: {name} again");
+                seen.push(name);
+                // they shamble
+                assert_eq!(spec.anims.idle.as_deref(), Some("ual2/Zombie_Idle"));
+                assert_eq!(spec.anims.run, None, "{name}");
+                // a kobold's corpse is a kobold's body, the others wear the
+                // skin of the dead on a head of their own
+                let own = match race {
+                    "kobold" => spec.albedo.clone(),
+                    _ => spec.head.as_deref().and_then(|h| art.head(h)?.skin.clone()),
+                };
+                assert!(own.is_some_and(|s| s.contains("made/skins/")), "{name}");
+                if race != "kobold" {
+                    let head = art.head(spec.head.as_deref().unwrap()).unwrap();
+                    assert!(head.skin.as_deref().unwrap().ends_with(skin), "{name}");
+                    assert_eq!(spec.bare_legs, kind == "mummy", "{name}");
+                }
+                assert_eq!(spec.second_head.is_some(), race == "ettin", "{name}");
+            }
+        }
+        // the small ones keep their big heads, a dwarf its breadth
+        assert!(model("gnome zombie").1.head_scale > 1.2);
+        assert!(model("gnome mummy").1.head_scale > 1.2);
+        assert!(model("dwarf zombie").1.girth > 1.2);
+        assert!(model("dwarf mummy").1.girth > 1.2);
+        assert_eq!(model("skeleton").0, "skeleton");
+    }
+
     /// A mumak was drawn two cells long and a baluchitherium four: they hid
     /// the hero they fought and went through a corridor's rock.
     #[test]

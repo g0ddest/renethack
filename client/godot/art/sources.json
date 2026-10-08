@@ -197,6 +197,7 @@
   {"url": "https://static.poly.pizza/4ae13ae9-c257-41ed-86b5-1b4760924ebc.glb", "name": "Bat.glb", "dest": "quaternius/monsters", "use": "bats (animated, by Quaternius, CC0, on Poly Pizza: https://poly.pizza/m/hNO9XvjlKa)"},
   {"url": "https://static.poly.pizza/9714f533-5d2d-4cfd-b8f1-c8dfff64a672.glb", "name": "Dragon.glb", "dest": "quaternius/monsters", "use": "dragons and baby dragons (animated, by Quaternius, CC0, on Poly Pizza: https://poly.pizza/m/VBvzjFIYws)"},
   {"url": "https://static.poly.pizza/71cadefd-8e65-423a-9a95-3cdf7e012586.glb", "name": "Wasp.glb", "dest": "quaternius/monsters", "use": "killer bees and queen bees (animated, by Quaternius, CC0, on Poly Pizza: https://poly.pizza/m/3aQgc75sUR)"},
+  {"url": "https://static.poly.pizza/b1ea7fcc-7d7f-4e93-aac5-507358399a7b.glb", "name": "Skeleton.glb", "dest": "quaternius/monsters", "use": "skeletons (animated, by Quaternius, CC0, on Poly Pizza: https://poly.pizza/m/wODZYCgX5Z)"},
   {"url": "https://kenney.nl/media/pages/assets/particle-pack/f8fe0f8cb8-1677578741/kenney_particle-pack.zip",
    "root": "PNG (Transparent)/", "files": ["*.png"], "license_files": ["License.txt"], "dest": "kenney/particles",
    "use": "sparks, flares, magic circles, slashes, scorch marks, smoke puffs (grayscale, tinted in the shader)"},
@@ -219,6 +220,17 @@
   {"id": "Rock058", "url": "https://ambientcg.com/get?file=Rock058_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "ao": "*_AmbientOcclusion.jpg", "roughness": "*_Roughness.jpg"}, "dest": "ambientcg", "use": "the rock the main dungeon is cut into; obsidian walls (Gehennom, Vlad's Tower)"},
   {"id": "Chainmail004", "url": "https://ambientcg.com/get?file=Chainmail004_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "roughness": "*_Roughness.jpg", "metal": "*_Metalness.jpg"}, "gain": {"albedo": 1.75, "roughness": 1.9}, "dest": "ambientcg", "use": "chain and ring mail on the hero"},
   {"id": "Metal038", "url": "https://ambientcg.com/get?file=Metal038_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "roughness": "*_Roughness.jpg", "metal": "*_Metalness.jpg"}, "gain": {"albedo": 2.2, "roughness": 1.3}, "dest": "ambientcg", "use": "plate, splint, scale and dragon scale mail on the hero"}
+ ],
+ "painted_comment": "Textures painted by tools/art_paint.py, from one written before in the run when `from` names it (`image`: one inside a GLB): `rot` turns a base character's skin into a corpse's (`eyes`: where they lie in the image, to sink them), `wraps` winds linen over the image (open at the `eyes`), `pale` takes a coat's colour away so that a tint shows as itself.",
+ "painted": [
+  {"paint": "rot", "from": "cc0/quaternius/base/T_Superhero_Male_Ligh.png", "eyes": [[0.137, 0.178], [0.235, 0.178]], "out": "made/skins/zombie_m.jpg",
+   "use": "zombies: the base character's skin, dead"},
+  {"paint": "wraps", "eyes": [[0.137, 0.178], [0.235, 0.178]], "out": "made/skins/mummy_m.jpg",
+   "use": "mummies: the base character wound in linen, by its skin's layout"},
+  {"paint": "wraps", "out": "made/skins/wraps.jpg",
+   "use": "a kobold mummy: the Puglin wound in linen"},
+  {"paint": "pale", "from": "cc0/quaternius/bestiary/Puglin.glb", "image": "T_Puglin_BaseColor", "light": 0.6, "out": "made/skins/puglin_pale.jpg",
+   "use": "the Puglin without its green, for a kind's own colour: a kobold zombie"}
  ],
  "blender_comment": "Models made in Blender by tools/blender/<script>.py: static models rigged with the skeleton and clips of a Quaternius animal (rig_quadruped), centaurs put together from the horse and a base character (centaur), a stethoscope on the floor and round the neck of each outfit body it is fitted to (stethoscope). URLs are downloaded (and locked); other paths are files above. fetch_art.py runs Blender when it finds one ($BLENDER, `blender` on the PATH, /Applications/Blender.app); without it the committed models are kept and only the downloads are checked. CC-BY models go to ccby/, see CREDITS.md.",
  "blender": [

@@ -7,9 +7,10 @@
 The recipe is client/godot/art/sources.json: Poly Haven textures and models
 (through their public API) and the free files of itch.io packs (the site's own
 "no thanks, just take me to the downloads" flow), files and zips at fixed
-URLs (VFX flipbooks, particles, icons), models made from those in Blender
-by tools/blender (static models rigged with a Quaternius animal's skeleton),
-and the OFL fonts of the UI
+URLs (VFX flipbooks, particles, icons), textures painted from those by
+tools/art_paint.py (a corpse's skin, a mummy's linen), models made from
+those in Blender by tools/blender (static models rigged with a Quaternius
+animal's skeleton), and the OFL fonts of the UI
 (the google/fonts repository at a fixed commit, into client/godot/fonts). Textures larger than
 `texture_max` are scaled down and stored as JPEG; glTF files are rewritten to
 point at the converted images. client/godot/art/art.lock.json records the
@@ -414,6 +415,51 @@ def do_blender(op, item, blender, max_size):
             return shrink_glb(f.read(), item.get("texture_max", max_size), keep_small=True)
 
 
+def glb_images(data):
+    """The images embedded in a GLB, by name."""
+    import struct
+    jlen = struct.unpack_from("<I", data, 12)[0]
+    doc = json.loads(data[20:20 + jlen])
+    chunk = data[20 + jlen + 8:]
+    views = doc.get("bufferViews", [])
+    out = {}
+    for img in doc.get("images", []):
+        if "bufferView" in img:
+            v = views[img["bufferView"]]
+            start = v.get("byteOffset", 0)
+            out[img.get("name", "")] = chunk[start:start + v["byteLength"]]
+    return out
+
+
+def do_painted(w, item):
+    """A texture painted by tools/art_paint.py: from one written before in
+    this run when `from` names it (a path under ART; `image`: the name of
+    one inside a GLB)."""
+    from PIL import Image
+    import art_paint
+
+    def source():
+        with open(os.path.join(ART, item["from"]), "rb") as f:
+            data = f.read()
+        if item["from"].endswith(".glb"):
+            data = next(d for n, d in sorted(glb_images(data).items()) if item["image"] in n)
+        return Image.open(io.BytesIO(data)).convert("RGB")
+
+    size = (item.get("size", 1024),) * 2
+    eyes = [tuple(e) for e in item.get("eyes", [])]
+    if item["paint"] == "rot":
+        image = art_paint.rot(source().resize(size, Image.LANCZOS), eyes)
+    elif item["paint"] == "wraps":
+        image = art_paint.wraps(size, eyes)
+    elif item["paint"] == "pale":
+        image = art_paint.pale(source(), item["light"])
+    else:
+        raise SystemExit(f"{item['out']}: no paint {item['paint']}")
+    out = io.BytesIO()
+    image.save(out, "JPEG", quality=88, optimize=True)
+    w.put(item["out"], out.getvalue())
+
+
 def do_fonts(op, item):
     """OFL fonts go to client/godot/fonts/<dest>/, outside the CC0 tree."""
     for name in item["files"]:
@@ -464,6 +510,9 @@ def main():
     for item in recipe.get("pbr_zips", []):
         print("textures", item["id"], flush=True)
         do_pbr_zip(op, w, item, max_size)
+    for item in recipe.get("painted", []):
+        print("painted", item["out"], flush=True)
+        do_painted(w, item)
     for item in recipe.get("blender", []):
         print("blender", item["script"], item["out"], flush=True)
         data = do_blender(op, item, blender, max_size)
