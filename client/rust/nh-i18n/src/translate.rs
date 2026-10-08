@@ -168,6 +168,13 @@ impl Translator {
             if let Some(out) = self.render_args(i, args) {
                 return out;
             }
+            // nothing of this format has Russian, but the text may be
+            // another template's whole: "You feel weaker." is poisontell's
+            // own, sent through the "You feel %s%c" of other texts
+            let other = self.by_text(text, Channel::Message);
+            if other.status == Status::Translated && self.says_something(&other) {
+                return other;
+            }
             let shown = found
                 .as_ref()
                 .map_or(&self.catalog.templates()[i], |m| m.template);

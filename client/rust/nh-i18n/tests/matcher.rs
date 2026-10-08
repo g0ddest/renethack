@@ -615,6 +615,23 @@ fn an_enchantment_is_no_price() {
     }
 }
 
+#[test]
+fn a_text_of_another_format_s_template() {
+    // poisontell() calls You_feel("%s%c", …) through a pointer: the text is
+    // a template of its own, the format another call's with other texts
+    let t = with(&[("You feel weaker.", r#"ru = "Вы слабеете.""#)]);
+    let args = [Arg::Str("weaker".to_string()), Arg::Str(".".to_string())];
+    let out = t.message(Some("You feel %s%c"), &args, "You feel weaker.");
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        ("Вы слабеете.", Status::Translated)
+    );
+    // a text nothing translates keeps its format's template, for the lists
+    let out = t.message(Some("You feel %s%c"), &args, "You feel very odd.");
+    assert_eq!(out.status, Status::Untranslated, "{}", out.text);
+    assert!(out.template.is_some());
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {
