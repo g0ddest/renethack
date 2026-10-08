@@ -35,6 +35,14 @@ pub trait Phrase {
         let _ = (gender, number);
         self.form(case)
     }
+    /// The pronoun this owner is said with before what it owns, agreeing
+    /// with that, when it has no name to put in the genitive (an unseen
+    /// "Its": чей-то, чья-то). By default none: the owner follows what it
+    /// owns, in the genitive.
+    fn whose(&self, gender: Gender, number: Number, case: Case) -> Option<String> {
+        let _ = (gender, number, case);
+        None
+    }
 }
 
 /// What an argument of a message names, as the catalog knows it from the C

@@ -20,6 +20,7 @@
 //! | `{2:ins:own}` | argument 2 with its "your" as свой, where the hero does the thing: "Вы бьёте {2:ins:own}" → своим топором |
 //! | `{3:hero}`, `{3:f}`, `{3:pl:gen}` | argument 3 agreeing with the hero, or with a masculine (`m`), feminine (`f`), neuter (`n`) or plural (`pl`) noun: a word that is an adjective takes that gender ("lawful": законопослушная), a role its feminine (Целительница); a noun asked for the plural (`pl`) is put in it ("shuriken" before "slip": сюрикены), any other name stays as it is |
 //! | `{2:like1}` | argument 2 agreeing with argument 1's gender and number: "Бригита ({2:like1})" → (нейтральная) |
+//! | `{2:of1}`, `{2:of1:acc}`, `{2:of1:cap}` | argument 2 as argument 1's: the owner after it in the genitive ("шляпа тритона"), or before it as a pronoun that agrees, when the owner is one with no name to decline (an unseen "Its": "чья-то шляпа") |
 //! | `{hero:gender\|сам\|сама}` | as the hero's gender: masculine, feminine |
 //! | `{1:skip}` | nothing: the Russian says otherwise what argument 1 says (a heading's fixed word, the "weapons" of a menu about the item itself) |
 //!
@@ -97,6 +98,8 @@ pub struct Placeholder {
     pub agree: Option<Agree>,
     /// `{2:own}`: its "your" as свой.
     pub own: bool,
+    /// `{2:of1}`: argument 2 as argument 1's.
+    pub owner: Option<usize>,
     /// As written, without the braces.
     pub source: String,
 }
@@ -303,8 +306,28 @@ fn render_placeholder(p: &Placeholder, args: &[Value], hero: Gender) -> String {
                 },
                 _ => v.form(case),
             };
+            let form = match p.owner.and_then(|j| args.get(j)) {
+                Some(owner) => owned(&form, owner, v, case),
+                None => form,
+            };
             if p.cap { capitalize(&form) } else { form }
         }
+    }
+}
+
+/// `thing` (in `case`, as `form`) as `owner`'s: a pronoun that agrees
+/// before it when the owner is said so («чья-то шляпа»), else the owner
+/// after it in the genitive («шляпа тритона»); alone when there is none.
+fn owned(form: &str, owner: &Value, thing: &Value, case: Case) -> String {
+    if let Value::Phrase(o) = owner
+        && let Some(whose) = o.whose(thing.gender(), thing.number(), case)
+    {
+        return format!("{whose} {form}");
+    }
+    let whose = owner.form(Case::Gen);
+    match whose.trim() {
+        "" => form.to_string(),
+        whose => format!("{form} {whose}"),
     }
 }
 
@@ -335,6 +358,7 @@ fn placeholder(src: &str) -> Result<Placeholder, TemplateError> {
     let mut skip = false;
     let mut agree = None;
     let mut own = false;
+    let mut owner = None;
     for w in words {
         match w.trim() {
             "cap" => cap = true,
@@ -349,6 +373,10 @@ fn placeholder(src: &str) -> Result<Placeholder, TemplateError> {
             like if like.starts_with("like") => match like[4..].parse::<usize>() {
                 Ok(k) if k >= 1 => agree = Some(Agree::Arg(k - 1)),
                 _ => return Err(TemplateError::BadModifier(src.into(), like.into())),
+            },
+            of if of.starts_with("of") => match of[2..].parse::<usize>() {
+                Ok(k) if k >= 1 => owner = Some(k - 1),
+                _ => return Err(TemplateError::BadModifier(src.into(), of.into())),
             },
             by if by.starts_with("by") => match by[2..].parse::<usize>() {
                 Ok(k) if k >= 1 => count_by = Some(k - 1),
@@ -409,17 +437,11 @@ fn placeholder(src: &str) -> Result<Placeholder, TemplateError> {
             ]))
         }
     };
-    if select.is_some() && (case.is_some() || cap || count_by.is_some() || agree.is_some() || own) {
+    let shaped = count_by.is_some() || agree.is_some() || own || owner.is_some();
+    if select.is_some() && (case.is_some() || cap || shaped) {
         return Err(TemplateError::SelectorWithCase(src.into()));
     }
-    if skip
-        && (select.is_some()
-            || case.is_some()
-            || cap
-            || count_by.is_some()
-            || agree.is_some()
-            || own)
-    {
+    if skip && (select.is_some() || case.is_some() || cap || shaped) {
         return Err(TemplateError::Skip(src.into()));
     }
     Ok(Placeholder {
@@ -432,6 +454,7 @@ fn placeholder(src: &str) -> Result<Placeholder, TemplateError> {
         agree,
         own,
         source: src.into(),
+        owner,
     })
 }
 
@@ -498,6 +521,88 @@ mod tests {
 
     fn render(t: &str, args: &[Value]) -> String {
         RuTemplate::parse(t).unwrap().render(args, Gender::Masc)
+    }
+
+    /// An owner nobody sees: "Its", said as чей-то before what it owns.
+    struct Someone;
+
+    impl Phrase for Someone {
+        fn form(&self, case: Case) -> String {
+            [
+                "кто-то",
+                "кого-то",
+                "кому-то",
+                "кого-то",
+                "кем-то",
+                "ком-то",
+            ][case.index()]
+            .to_string()
+        }
+
+        fn gender(&self) -> Gender {
+            Gender::Masc
+        }
+
+        fn number(&self) -> Number {
+            Number::Sing
+        }
+
+        fn whose(&self, gender: Gender, number: Number, case: Case) -> Option<String> {
+            let nom = match (number, gender) {
+                (Number::Plur, _) => "чьи-то",
+                (_, Gender::Masc) => "чей-то",
+                (_, Gender::Fem) => "чья-то",
+                (_, Gender::Neut) => "чьё-то",
+            };
+            Some(match (case, gender, number) {
+                (Case::Acc, Gender::Fem, Number::Sing) => "чью-то".to_string(),
+                _ => nom.to_string(),
+            })
+        }
+    }
+
+    #[test]
+    fn a_thing_and_its_owner() {
+        let someone = || Value::Phrase(Box::new(Someone));
+        // the owner after the thing, in the genitive
+        assert_eq!(
+            render("{2:of1:cap} мешает.", &[newt(), rat()]),
+            "Крыса тритона мешает."
+        );
+        assert_eq!(
+            render("Вы бьёте {2:of1:acc}.", &[newt(), rat()]),
+            "Вы бьёте крысу тритона."
+        );
+        // an owner said by a pronoun stands before it and agrees
+        assert_eq!(
+            render("{2:of1:cap} мешает.", &[someone(), rat()]),
+            "Чья-то крыса мешает."
+        );
+        assert_eq!(
+            render("Вы бьёте {2:of1:acc}.", &[someone(), rat()]),
+            "Вы бьёте чью-то крысу."
+        );
+        assert_eq!(
+            render("{2:of1:cap} летят.", &[someone(), arrows()]),
+            "Чьи-то 3 стрелы летят."
+        );
+        // no owner, or one that stayed English
+        assert_eq!(
+            render("{2:of1:cap}!", &[Value::Text(String::new()), rat()]),
+            "Крыса!"
+        );
+        assert_eq!(
+            render("{2:of1}", &[Value::Text("Rex's ".into()), rat()]),
+            "крыса Rex's"
+        );
+        assert!(matches!(
+            RuTemplate::parse("{2:of1|a|b}"),
+            Err(TemplateError::FormsWithoutSelector(_))
+        ));
+        assert!(matches!(
+            RuTemplate::parse("{2:of0}"),
+            Err(TemplateError::BadModifier(..))
+        ));
     }
 
     #[test]

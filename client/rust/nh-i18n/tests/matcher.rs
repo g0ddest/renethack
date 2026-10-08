@@ -564,6 +564,27 @@ fn a_row_of_the_spell_menu() {
     assert_eq!(cells.count(), 5, "{}", out.text);
 }
 
+#[test]
+fn a_thing_as_its_owner_s() {
+    // "%s %s was poisoned!": the owner and the thing are two arguments
+    let t = with(&[(
+        "%s %s was poisoned!",
+        r#"ru = "{2:of1:cap} {2:gender|был отравлен|была отравлена|было отравлено|были отравлены}!""#,
+    )]);
+    let out = t.message(None, &[], "The newt's dagger was poisoned!");
+    assert_eq!(out.status, Status::Translated, "{}", out.text);
+    assert!(
+        out.text.starts_with("Кинжал ") && out.text.ends_with(" был отравлен!"),
+        "{}",
+        out.text
+    );
+    assert!(
+        !out.text.chars().any(|c| c.is_ascii_alphabetic()),
+        "{}",
+        out.text
+    );
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {

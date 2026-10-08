@@ -594,7 +594,7 @@ impl Translator {
         // (what the Russian leaves out may stay English)
         let shown = |i: usize| {
             ru.placeholders()
-                .any(|p| p.target == Target::Arg(i) && !p.skip)
+                .any(|p| !p.skip && (p.target == Target::Arg(i) || p.owner == Some(i)))
         };
         let mut whole = true;
         let values: Vec<Value> = convs(&t.segments)
@@ -1251,6 +1251,10 @@ impl Phrase for Padded {
             self.after
         )
     }
+
+    fn whose(&self, gender: Gender, number: crate::grammar::Number, case: Case) -> Option<String> {
+        self.inner.whose(gender, number, case)
+    }
 }
 
 /// A Russian template that is the format itself: "%c - %s." → "{1} - {2}.".
@@ -1270,6 +1274,7 @@ fn identity(t: &Template) -> RuTemplate {
                     skip: false,
                     agree: None,
                     own: false,
+                    owner: None,
                     source: (i + 1).to_string(),
                 }));
                 i += 1;

@@ -174,6 +174,13 @@ fn check(catalog: &Catalog, tr: &Translation, glossary: &Glossary) -> Vec<String
                 out.push(format!("{{{}}}: a number is not counted", p.source));
             }
         }
+        if let Some(j) = p.owner {
+            if j == i || kinds.get(j).is_none_or(|k| *k == ConvKind::Int) {
+                out.push(format!("{{{}}}: argument {} is no owner", p.source, j + 1));
+            } else {
+                used[j] = true;
+            }
+        }
         if let Some(Agree::Arg(j)) = p.agree
             && (j == i || kinds.get(j).is_none_or(|k| *k == ConvKind::Int))
         {
