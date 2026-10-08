@@ -1373,6 +1373,14 @@ fn two_game(choice: CharacterChoice) -> Vec<Step> {
         Step::Wait("the hero on the map", |g| {
             Ok(map_view(g)?.hero_model().is_some())
         }),
+        Step::Call("a new hero faces the camera", |g| {
+            // not the way the last game's hero last turned (the Samurai
+            // to the spot his lance struck)
+            match map_view(g)?.hero_yaw() {
+                0.0 => Ok(()),
+                yaw => Err(format!("the new game's hero faces {yaw}")),
+            }
+        }),
         Step::Call("close up, the HUD out of the picture", |g| {
             let ui = g.ui.as_mut().ok_or("no UI")?;
             ui.map.set_distance(3.6, 1.3);

@@ -4198,6 +4198,8 @@ impl MapView {
         self.engulf.set_visible(false);
         self.snap = true;
         self.hero_at = None;
+        // a new hero faces the camera, not the way the last one turned
+        self.hero_yaw = 0.0;
         self.set_path(&[], false);
         self.hero_gear.reset();
         self.hero_fx.clear();
