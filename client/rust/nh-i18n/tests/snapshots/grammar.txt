@@ -14829,6 +14829,11 @@ Are unicorns supposedly peaceful if you're a virgin?  Hah!  [c1f6b53d8427]
   =   Говорят, единороги мирные, если вы девственны?  Ха!
 Are we all being disintegrated, or is it just me?  [6bdf2aa22e45]
   =   Нас всех распыляет, или только меня?
+Are you really sure you want to break %s?  [6f27c7f995ce]
+  m   Вы действительно хотите сломать тритона?
+  f   Вы действительно хотите сломать крысу?
+  n   Вы действительно хотите сломать копьё?
+  pl  Вы действительно хотите сломать 3 стрелы?
 Are you sure you want to enter?  [de3090869465]
   =   Вы уверены, что хотите войти?
 Are you sure you want to pray?  [e37d6de15075]
@@ -14999,6 +15004,11 @@ At times, the gods may favor worthy supplicants with named blades whose\npowers 
   =   Порой боги жалуют достойных просителей именными клинками, чья сила гремит\nв легендах. Сведущие же странники умеют воссоздавать клинки эльфийского\nрода, ненавистные оркам, и без подобного заступничества.
 At whom? (in what direction)  [39015019ee75]
   =   В кого? (в каком направлении)
+Attach %s to %s?  [efc5123f5af0]
+  m   Прикрепить тритона к тритону?
+  f   Прикрепить крысу к крысе?
+  n   Прикрепить копьё к копью?
+  pl  Прикрепить 3 стрелы к 3 стрелам?
 Attach these to your candelabrum, or extinguish it  [2439938989a5]
   =   Прикрепить к канделябру или погасить
 Attach these to your candelabrum, or extinguish them  [cb9b76ff89b4]
@@ -18557,6 +18567,11 @@ Really quit without saving?  [96395bd5ec91]
   =   Действительно выйти без сохранения?
 Really save?  [da94bf901d1f]
   =   Действительно сохранить?
+Really wield %s?  [640ee7b52f1d]
+  m   Действительно вооружиться тритоном?
+  f   Действительно вооружиться крысой?
+  n   Действительно вооружиться копьём?
+  pl  Действительно вооружиться 3 стрелами?
 Refresh your memory anyway?  [2f2d42fb3b3b]
   =   Всё равно освежить память?
 Relax.  Nothing ever happens on the first level.  [988e28cf3524]
@@ -20852,6 +20867,11 @@ There is %s here, but you cannot lift any more.  [c7ed67dc9d37]
   f   Здесь лежит крыса, но вы больше ничего не можете поднять.
   n   Здесь лежит копьё, но вы больше ничего не можете поднять.
   pl  Здесь лежат 3 стрелы, но вы больше ничего не можете поднять.
+There is %s here, tip it?  [73d525dcc8da]
+  m   Здесь лежит тритон; опорожнить?
+  f   Здесь лежит крыса; опорожнить?
+  n   Здесь лежит копьё; опорожнить?
+  pl  Здесь лежат 3 стрелы; опорожнить?
 There is %s here.  [611b3e3324ee]
   m   Здесь тритон.
   f   Здесь крыса.

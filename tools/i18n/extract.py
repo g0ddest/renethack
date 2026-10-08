@@ -1181,6 +1181,14 @@ class Context:
             held = self.glob.returned_buffer(call[0], self.unit, depth)
             if held:
                 return held
+        if call and call[0] == "safe_qbuf" and len(call[1]) >= 3:
+            # safe_qbuf(buf, "Are you really sure you want to break ", "?",
+            # obj, …) as an argument: the thing's name between the two
+            parts = [self.pieces(call[1][1], pos, depth + 1, seen), [("%s", ["object"])],
+                     self.pieces(call[1][2], pos, depth + 1, seen)]
+            if product_size(parts) <= MAX_DERIVED:
+                return [("".join(f for f, _ in combo), [k for _, ks in combo for k in ks])
+                        for combo in itertools.product(*parts)]
         if call and call[0] == "monverbself" and len(call[1]) == 4:
             # monverbself(mon, Monnam(mon), "zap", other): "<name> zaps
             # [other ]herself", the verb in the plural before "themselves"
@@ -1800,6 +1808,27 @@ def add_poiseff(cat, units):
                         cat.add(escape(prefix + text + mark), "pline", site, [])
 
 
+def add_seamed(cat, units):
+    """A question safe_qbuf() builds in two steps around a seam it marks
+    with an escape character and then takes out (apply.c use_candle: the
+    candles, " to\\033", the candelabrum): its text with the seam closed,
+    "Attach %s to %s?"."""
+    for unit in units:
+        toks = unit.toks
+        for i, t in enumerate(toks):
+            if not (t.kind == "ident" and t.text == "safe_qbuf" and toks[i + 1].text == "("):
+                continue
+            args = split_args(toks, i + 1, match_close(toks, i + 1))
+            if len(args) < 3 or not all(len(a) == 1 for a in args[1:3]) or args[1][0].kind != "string":
+                continue
+            # its suffix is a buffer some Sprintf filled with " <word>\033%s<mark>"
+            for j, u in enumerate(toks):
+                if (u.kind == "string" and "\033%s" in u.value and toks[j - 1].text == ","
+                        and toks[j - 2].text == args[2][0].text and toks[j - 4].text == "Sprintf"):
+                    fmt = escape(args[1][0].value) + "%s" + u.value.replace("\033", " ")
+                    cat.add(fmt, "query", f"src/{unit.path}:{t.line} safe_qbuf {source_text(args[1])}", ["object", "object"])
+
+
 EXTCMD_ROW = re.compile(r" %-(\d+)s %4s %s")
 
 
@@ -2125,6 +2154,7 @@ def extract():
     add_options(cat, units)
     add_extcmds(cat, units)
     add_poiseff(cat, units)
+    add_seamed(cat, units)
     add_killers(cat, contexts)
     add_appended(cat, contexts)
     for fmt, use, site, kinds in datfiles.extract(UPSTREAM):

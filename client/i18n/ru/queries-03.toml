@@ -791,3 +791,21 @@ ru = "Что искать в списке расширенных команд?"
 [2d657351df6a]
 en = "Split off how many?"
 ru = "Сколько отделить?"
+
+# Questions safe_qbuf() puts around a thing's name right in the call that asks.
+
+[6f27c7f995ce]
+en = "Are you really sure you want to break %s?"
+ru = "Вы действительно хотите сломать {1:acc}?"
+
+[640ee7b52f1d]
+en = "Really wield %s?"
+ru = "Действительно вооружиться {1:ins}?"
+
+[73d525dcc8da]
+en = "There is %s here, tip it?"
+ru = "Здесь {1:num|лежит|лежат} {1}; опорожнить?"
+
+[efc5123f5af0]
+en = "Attach %s to %s?"
+ru = "Прикрепить {1:acc} к {2:dat}?"

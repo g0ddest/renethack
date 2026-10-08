@@ -224,6 +224,22 @@ class Formats(unittest.TestCase):
         self.assertIn("%-20s  %2d   attack       %3d%%", e)
         self.assertNotIn("%-20s  %2d   %-12s %3d%%", [k for k in e if e[k].uses == {"menu"}])
 
+    def test_a_question_around_a_name_in_the_call_that_asks(self):
+        e = catalog_of('void f(struct obj *o) {\n    char confirm[QBUFSZ];\n'
+                       '    if (ynq(safe_qbuf(confirm, "Really wield ", "?", o, yname, ysimple_name, "that")) == \'y\')\n'
+                       '        return;\n}\n')
+        self.assertEqual(e["Really wield %s?"].args, [{"object"}])
+
+    def test_a_question_with_a_seam(self):
+        unit = clex.scan_unit("apply.c", (
+            'void use_candle(struct obj *obj, struct obj *otmp) {\n    char qbuf[QBUFSZ], qsfx[QBUFSZ], *q;\n'
+            '    Sprintf(qsfx, " to\\033%s?", thesimpleoname(otmp));\n'
+            '    (void) safe_qbuf(qbuf, "Attach ", qsfx, obj, yname, thesimpleoname, s);\n'
+            '    if ((q = strstri(qbuf, " to\\033")) != 0)\n        Strcpy(q, " to ");\n}\n'))
+        cat = extract.Catalog()
+        extract.add_seamed(cat, [unit])
+        self.assertEqual(list(cat.entries), ["Attach %s to %s?"])
+
     def test_buffers_are_inlined(self):
         e = catalog_of('void f(struct monst *m) {\n'
                        '    char buf[BUFSZ];\n'
