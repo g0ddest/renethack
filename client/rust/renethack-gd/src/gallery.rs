@@ -461,6 +461,146 @@ pub fn lay_out_full(world: &mut World, cat: &Catalog) -> Result<(i32, i32), Stri
     Ok((40, 10))
 }
 
+/// A stretch of level for the `corridors` self-test: two rooms, and
+/// between them corridors of every shape (along a row, along a column,
+/// stepping down, bends, doorways in side walls and in a south wall), and
+/// nothing known beyond them. `.` a lit floor, `#` a corridor, `+` a
+/// doorway, `|` and `-` walls, `r 7 L J` their corners.
+const CORRIDORS: [&str; 13] = [
+    "                            ",
+    "  r-------7                 ",
+    "  |.......|    ##########   ",
+    "  |.......+#####        #   ",
+    "  |.......|             ##  ",
+    "  |.......|              ## ",
+    "  L---+---J               ##",
+    "      #                    #",
+    "      #          r-----7   #",
+    "      ####       |.....|   #",
+    "         ########+.....+####",
+    "                 |.....|    ",
+    "                 L-----J    ",
+];
+/// Where the stretch lies on the map.
+const CORRIDORS_AT: (i32, i32) = (20, 4);
+
+/// Who stands where in the corridors, by column and row of `CORRIDORS`.
+pub struct CorridorScene {
+    pub name: &'static str,
+    pub hero: (i32, i32),
+    pub others: &'static [(&'static str, (i32, i32))],
+}
+
+/// The hero in each kind of corridor and doorway, small monsters next to
+/// them and off to a side (a fight there must show).
+pub const CORRIDOR_SCENES: [CorridorScene; 9] = [
+    CorridorScene {
+        name: "row",
+        hero: (13, 3),
+        others: &[("newt", (12, 3)), ("jackal", (14, 3))],
+    },
+    CorridorScene {
+        name: "door-east",
+        hero: (10, 3),
+        others: &[("jackal", (11, 3)), ("newt", (9, 3))],
+    },
+    CorridorScene {
+        name: "column",
+        hero: (6, 8),
+        others: &[("newt", (6, 7)), ("jackal", (6, 9))],
+    },
+    CorridorScene {
+        name: "bend",
+        hero: (9, 9),
+        others: &[("newt", (9, 10)), ("jackal", (8, 9))],
+    },
+    CorridorScene {
+        name: "column-aside",
+        hero: (10, 10),
+        others: &[("jackal", (6, 8)), ("newt", (6, 7)), ("sewer rat", (7, 9))],
+    },
+    CorridorScene {
+        name: "door-west",
+        hero: (17, 10),
+        others: &[("newt", (16, 10)), ("jackal", (18, 10))],
+    },
+    CorridorScene {
+        name: "door-south",
+        hero: (6, 6),
+        others: &[("newt", (6, 7)), ("jackal", (6, 5))],
+    },
+    CorridorScene {
+        name: "steps",
+        hero: (25, 5),
+        others: &[
+            ("newt", (25, 4)),
+            ("jackal", (26, 5)),
+            ("sewer rat", (26, 6)),
+        ],
+    },
+    CorridorScene {
+        name: "steps-aside",
+        hero: (20, 2),
+        others: &[
+            ("jackal", (24, 3)),
+            ("newt", (24, 4)),
+            ("sewer rat", (15, 3)),
+        ],
+    },
+];
+
+/// A cell of `CORRIDORS` on the map.
+pub fn corridor_cell((col, row): (i32, i32)) -> (i32, i32) {
+    (CORRIDORS_AT.0 + col, CORRIDORS_AT.1 + row)
+}
+
+/// Replace the map with the corridors and scene `scene` of
+/// `CORRIDOR_SCENES` in them; the camera follows the hero as in a game.
+pub fn lay_out_corridors(world: &mut World, cat: &Catalog, scene: usize) -> Result<(), String> {
+    let scene = CORRIDOR_SCENES.get(scene).ok_or("no such scene")?;
+    let map = &mut world.map;
+    map.clear();
+    let sym = |ch: char| match ch {
+        '.' => Some("S_room"),
+        '#' => Some("S_corr"),
+        '+' => Some("S_ndoor"),
+        '|' => Some("S_vwall"),
+        '-' => Some("S_hwall"),
+        'r' => Some("S_tlcorn"),
+        '7' => Some("S_trcorn"),
+        'L' => Some("S_blcorn"),
+        'J' => Some("S_brcorn"),
+        _ => None,
+    };
+    let ground = |(col, row): (i32, i32)| {
+        let ch = usize::try_from(row)
+            .ok()
+            .and_then(|r| CORRIDORS.get(r))
+            .and_then(|line| line.chars().nth(usize::try_from(col).ok()?));
+        ch.and_then(sym)
+            .ok_or_else(|| format!("nothing to stand on at {col},{row}"))
+            .and_then(|s| cmap(cat, s))
+    };
+    for (row, line) in CORRIDORS.iter().enumerate() {
+        for (col, ch) in line.chars().enumerate() {
+            if let Some(s) = sym(ch) {
+                let (x, y) = corridor_cell((col as i32, row as i32));
+                map.print(x, y, &cmap(cat, s)?, None);
+            }
+        }
+    }
+    for &(name, at) in scene.others {
+        let (x, y) = corridor_cell(at);
+        let g = monster(cat, name, 0, GlyphKind::Mon)?;
+        map.print(x, y, &g, Some(&ground(at)?));
+    }
+    let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    let (x, y) = corridor_cell(scene.hero);
+    map.print(x, y, &hero, Some(&ground(scene.hero)?));
+    world.view_center = None;
+    Ok(())
+}
+
 /// Replace the map with page `page`: a lit hall, a brick wall behind it,
 /// the hero at its south edge. Returns the cell to look at.
 pub fn lay_out(world: &mut World, cat: &Catalog, page: usize) -> Result<(i32, i32), String> {

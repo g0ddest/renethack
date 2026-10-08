@@ -28,6 +28,8 @@ use nh_link::save_exists;
 
 #[path = "selftest_achievements.rs"]
 mod achievements;
+#[path = "selftest_corridors.rs"]
+mod corridors;
 #[path = "selftest_help.rs"]
 mod help_tests;
 #[path = "selftest_hero.rs"]
@@ -4474,6 +4476,7 @@ impl SelfTest {
             "branches" => world_looks::branches(),
             "title" => world_looks::title(),
             "bestiary" => world_looks::bestiary(),
+            "corridors" => corridors::corridors(),
             "pickers" => input_ru::pickers(),
             "help" => help_tests::help(),
             "layouts" => layouts_tests::layouts(),

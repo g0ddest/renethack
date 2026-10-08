@@ -9,7 +9,7 @@
   "brick": {"textures": "cc0/polyhaven/textures/castle_brick_07/castle_brick_07", "uv_scale": 0.5, "color": "#8c8480"},
   "dirt": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 0.5, "color": "#7a6a5a"},
   "masonry": {"textures": "cc0/polyhaven/textures/stone_wall_04/stone_wall_04", "uv_scale": 0.4, "color": "#8a8580"},
-  "bedrock": {"textures": "cc0/polyhaven/textures/rock_wall_13/rock_wall_13", "uv_scale": 0.45, "color": "#34312f"},
+  "bedrock": {"textures": "cc0/ambientcg/Rock058/Rock058", "uv_scale": 0.4, "color": "#34312f"},
   "rock": {"textures": "cc0/polyhaven/textures/rock_wall_08/rock_wall_08", "uv_scale": 0.5},
   "cave": {"textures": "cc0/ambientcg/Rock035/Rock035", "uv_scale": 0.35, "color": "#a08a70"},
   "cave_rock": {"textures": "cc0/ambientcg/Rock035/Rock035", "uv_scale": 0.4, "color": "#4a3e34"},

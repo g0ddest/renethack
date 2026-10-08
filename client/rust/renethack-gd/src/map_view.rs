@@ -147,16 +147,21 @@ const DOOR_HEIGHT: f32 = 1.8;
 const LINTEL: f32 = 0.2;
 /// Walls and doors in front of open ground, seen from the camera's side.
 const CUT_HEIGHT: f32 = 0.35;
+/// A wall two cells in front of open ground, behind such a stump: broken
+/// off low enough to hide nobody who stands there, however close the
+/// camera (a full wall would stand between the eye and their feet).
+const HALF_HEIGHT: f32 = 1.1;
 /// The dark rock slab on top of a wall.
 const CAP_HEIGHT: f32 = 0.1;
 /// How high a built place's iron band runs round its walls.
 const BAND_Y: f32 = 1.2;
 /// A plinth along a wall's foot where open ground is next to it.
 const PLINTH_HEIGHT: f32 = 0.22;
-/// The rock around the level: its top, and cut down in front of open
-/// ground (one cell or two north of it).
+/// The rock around the level: its top, and cut down to a lip in front of
+/// open ground (`rock_look`: the camera looks north and down, and a block
+/// hides what lies behind it and to its sides).
 const ROCK_HEIGHT: f32 = 2.05;
-const ROCK_CUT: f32 = 0.45;
+const ROCK_CUT: f32 = 0.35;
 /// Label3D font size; a letter's height is about `FONT_PX * pixel size`.
 const FONT_PX: i32 = 96;
 const PX_MONSTER: f32 = 0.0068;
@@ -180,7 +185,10 @@ const SHOW_ALL: u8 = 4;
 const UNDERGLOW_RANGE: f32 = 4.5;
 const UNDERGLOW_ENERGY: f32 = 0.9;
 const GALLERY_FILL: f32 = 2.5;
-const SHADE_ROCK: u8 = 70;
+/// The faces of the rock mass, a little over the material's own colour:
+/// in the hero's light they are what shows of the rock (its tops and the
+/// ground beyond lie in the dark).
+const SHADE_ROCK: u8 = 120;
 /// Stones at the foot of a wall: of the rock, darker still.
 const SHADE_RUBBLE: u8 = 55;
 /// A wall cut down in front of open ground.
@@ -640,6 +648,8 @@ struct Around {
     /// Which of them are water or lava, and which a room's floor.
     liquid: [bool; 4],
     floor: [bool; 4],
+    /// Open ground two cells north (in front of the cell north of here).
+    far_open: bool,
 }
 
 impl Around {
@@ -663,6 +673,7 @@ impl Around {
             sides,
             liquid,
             floor,
+            far_open: is_open(near.far_north, catalog),
         }
     }
 
@@ -1005,11 +1016,16 @@ fn terrain_base(
     match t {
         Terrain::Stone | Terrain::Effect | Terrain::Unknown => {}
         Terrain::Wall => {
+            // behind a stump (open ground two cells north), a wall is
+            // broken off half way up
+            let half = !cut && around.far_open;
+            let wall_h = if half { HALF_HEIGHT } else { wall_h };
+            let low = cut || half;
             // masonry under a slab of dark rock a little wider than it; a
             // corner or junction is a pier, wider and taller
             let pier = is_pier(sym);
             let (w, top) = if pier {
-                (1.08, wall_h + if cut { 0.06 } else { 0.18 })
+                (1.08, wall_h + if low { 0.06 } else { 0.18 })
             } else {
                 (1.0, wall_h)
             };
@@ -1021,10 +1037,10 @@ fn terrain_base(
                 if let Some(s) = look.solids.last_mut() {
                     s.shadow = !cut;
                 }
-                if ctx.branch.supports && !cut {
+                if ctx.branch.supports && !low {
                     mine_support(look, around, ctx);
                 }
-            } else if cut {
+            } else if low {
                 // cut down, it is the stump of a wall: courses of masonry
                 // broken off unevenly, darker than the wall that stands
                 let ruin = pbr(art.material, SHADE_RUIN, Role::Ruin, FLOOR_UNSEEN);
@@ -1056,13 +1072,13 @@ fn terrain_base(
                 look.solid(mesh, plinth, pos);
             }
             look.ground = top;
-            look.wall = !cut;
+            look.wall = !low;
             look.masonry = true;
             // candles on some walls' tops beside a room (no object ever
             // lies there)
             let beside_room = around.sides.contains(&Side::Open);
             let lights = ctx.noise(91);
-            if ctx.branch.candles && !cut && !ctx.branch.cave && beside_room && lights < 0.14 {
+            if ctx.branch.candles && !low && !ctx.branch.cave && beside_room && lights < 0.14 {
                 // a brass candelabra of three, its flames
                 look.props.push(PlacedProp {
                     prop: Prop::Candelabra,
@@ -1077,7 +1093,7 @@ fn terrain_base(
                         s.shadow = false;
                     }
                 }
-            } else if ctx.branch.candles && !cut && !ctx.branch.cave && beside_room && lights < 0.3
+            } else if ctx.branch.candles && !low && !ctx.branch.cave && beside_room && lights < 0.3
             {
                 for (i, dx) in [-0.18f32, 0.16].into_iter().enumerate() {
                     let h = 1.2 + 0.4 * ctx.noise(92 + i as u32);
@@ -1101,7 +1117,7 @@ fn terrain_base(
             }
             // the face the camera sees: a tower's narrow pointed windows
             // (the night cold through them) and its banners
-            let facing = !cut && !pier && !ctx.branch.cave && around.sides[1] == Side::Open;
+            let facing = !low && !pier && !ctx.branch.cave && around.sides[1] == Side::Open;
             let decor = ctx.noise(97);
             let window = facing && ctx.branch.windows && decor < 0.25;
             let banner = facing && ctx.branch.banners && (0.25..0.6).contains(&decor);
@@ -1141,7 +1157,7 @@ fn terrain_base(
                 look.solid(cuboid(0.04, 0.88, 0.016), gold, at(0.0, 1.5, face + 0.045));
             }
             // a built place's iron bands round the faces beside a room
-            if let (Some(band), false, false) = (ctx.branch.bands, cut, ctx.branch.cave) {
+            if let (Some(band), false, false) = (ctx.branch.bands, low, ctx.branch.cave) {
                 let iron = pbr(ctx.mat(band), SHADE_LIT, Role::Trim, DEEP);
                 let out = w / 2.0 + 0.02;
                 for (i, (dx, dz)) in SIDES.iter().enumerate() {
@@ -1801,8 +1817,10 @@ fn trap_look(look: &mut Look, sym: &str, color: Color, ctx: &Ctx) {
 /// The rock the level is cut into, on a cell nothing is known of (or
 /// solid stone): next to a corridor or a doorway, or on the outer side of
 /// a wall (a wall and no floor next to it: a dark room's unexplored floor
-/// is stone too). Corridors become trenches in it. In front of open ground
-/// (one or two cells north) it is cut down so it hides nothing.
+/// is stone too). A corridor runs under a face of it. In front of open
+/// ground (up to three cells north, or north and to a side) it is cut
+/// down to a lip, so it hides nothing and nobody: it stands tall only
+/// behind what is open, as a room's north wall does.
 fn rock_look(look: &mut Look, near: &Near, ctx: &Ctx) {
     let catalog = ctx.catalog;
     let mut corridor = false;
@@ -1832,8 +1850,16 @@ fn rock_look(look: &mut Look, near: &Near, ctx: &Ctx) {
         return;
     };
     // one or two cells south of open ground (behind a room's south wall
-    // cut down, too) it would hide the ground from the camera
-    let h = if is_open(near.cells[0], catalog) || is_open(near.far_north, catalog) {
+    // cut down, too) it would hide the ground from the camera; south and
+    // to a side, what stands there, seen from where the hero is; and a
+    // row further still it would stand over the stumps and ledges in
+    // front of that ground, a black block before all that is lit
+    let front = [near.cells[0], near.cells[4], near.cells[5], near.far_north];
+    let h = if front
+        .into_iter()
+        .chain(near.beyond)
+        .any(|c| is_open(c, catalog))
+    {
         ROCK_CUT
     } else {
         ROCK_HEIGHT
@@ -1848,8 +1874,7 @@ fn rock_look(look: &mut Look, near: &Near, ctx: &Ctx) {
     if let Some(s) = look.solids.last_mut() {
         s.shadow = false;
     }
-    // its broken top reaches a little higher
-    look.reach(h + 0.08);
+    // (the shader breaks it in chunks: its top only ever lies lower)
     look.ground = h;
     look.rock = true;
     look.seen = Seen::Rock;
@@ -2055,11 +2080,14 @@ pub(crate) fn is_open(cell: Option<&Cell>, catalog: &Catalog) -> bool {
 }
 
 /// The neighbours of a cell: north (y - 1), south, west, east, then
-/// north-west, north-east, south-west, south-east; and the cell two north.
+/// north-west, north-east, south-west, south-east; the cell two north;
+/// and the rest of what a block standing here would have in front of it,
+/// seen from the camera: two north and one to each side, and three north.
 #[derive(Clone, Copy, Default)]
 struct Near<'a> {
     cells: [Option<&'a Cell>; 8],
     far_north: Option<&'a Cell>,
+    beyond: [Option<&'a Cell>; 3],
 }
 
 impl<'a> Near<'a> {
@@ -2076,6 +2104,11 @@ impl<'a> Near<'a> {
                 map.cell(x + 1, y + 1),
             ],
             far_north: map.cell(x, y - 2),
+            beyond: [
+                map.cell(x - 1, y - 2),
+                map.cell(x + 1, y - 2),
+                map.cell(x, y - 3),
+            ],
         }
     }
 
@@ -3050,7 +3083,7 @@ impl MapView {
                 .flat_map(|&(x, y)| {
                     (-1..=1)
                         .flat_map(move |dy| (-1..=1).map(move |dx| (x + dx, y + dy)))
-                        .chain([(x, y + 2)])
+                        .chain([(x, y + 2), (x - 1, y + 2), (x + 1, y + 2), (x, y + 3)])
                 })
                 .filter(|&(x, y)| in_field(x, y))
                 .collect();
@@ -4010,6 +4043,28 @@ impl MapView {
         pick_cell(origin, dir, |x, y| {
             self.cells.get(&(x, y)).map_or(0.0, |n| n.look.top)
         })
+    }
+
+    /// Does no wall or rock stand between the camera and the ground in
+    /// the middle of a cell, where the feet of whoever is there are
+    /// (self-tests: nobody in a corridor is hidden)? On the screen or off
+    /// to its side: the eye's own line to the cell.
+    pub fn feet_in_view(&self, (x, y): (i32, i32)) -> bool {
+        if !self.camera.is_inside_tree() {
+            return false;
+        }
+        let origin = self.camera.get_global_position();
+        let feet = Vector3::new(x as f32, 0.0, y as f32);
+        // what stands on the ground (a creature nearer the camera) hides
+        // no more than it would in a room
+        let hit = pick_cell(origin, (feet - origin).normalized(), |cx, cy| {
+            if (cx, cy) == (x, y) {
+                0.0
+            } else {
+                self.ground(cx, cy)
+            }
+        });
+        hit == Some((x, y))
     }
 
     pub fn set_hover(&mut self, cell: Option<(i32, i32)>) {
@@ -6380,6 +6435,7 @@ mod tests {
             let near = Near {
                 cells,
                 far_north: far,
+                ..Near::default()
             };
             look_of(&unknown, near, &f.ctx())
         };
@@ -6400,10 +6456,41 @@ mod tests {
         // south of a corridor, or of a wall cut down in front of one: low
         let mut south = none;
         south[0] = Some(&corr);
-        assert!((at(south, None).ground - ROCK_CUT).abs() < 1e-3);
+        let lip = at(south, None);
+        assert!((lip.ground - ROCK_CUT).abs() < 1e-3);
+        // a lip is no taller than it stands: it hides nobody's feet
+        assert!((lip.top - ROCK_CUT).abs() < 1e-3);
         let mut behind = none;
         behind[0] = Some(&wall);
         assert!((at(behind, Some(&floor)).ground - ROCK_CUT).abs() < 1e-3);
+        // south and to a side of a corridor (the camera sees past its
+        // corner to what stands there): low too
+        for i in [4, 5] {
+            let mut diagonal = none;
+            diagonal[i] = Some(&corr);
+            assert!((at(diagonal, None).ground - ROCK_CUT).abs() < 1e-3, "{i}");
+        }
+        // behind a corridor (north of it, or north and to a side): tall
+        for i in [1, 6, 7] {
+            let mut back = none;
+            back[i] = Some(&corr);
+            assert!((at(back, None).ground - ROCK_HEIGHT).abs() < 1e-3, "{i}");
+        }
+        // outside a wall it stands tall, unless open ground lies a row
+        // further in front of it still (it would stand, a black block,
+        // over the stumps and ledges before that ground)
+        for i in 0..3 {
+            let mut beyond = [None; 3];
+            beyond[i] = Some(&floor);
+            let near = Near {
+                cells: behind,
+                far_north: None,
+                beyond,
+            };
+            let r = look_of(&unknown, near, &f.ctx());
+            assert!((r.ground - ROCK_CUT).abs() < 1e-3, "{i}");
+        }
+        assert!((at(behind, None).ground - ROCK_HEIGHT).abs() < 1e-3);
         // outside a wall: rock; beside a wall and a floor (a dark room's
         // unexplored floor): nothing
         assert!(at(behind, None).rock);
@@ -6414,6 +6501,7 @@ mod tests {
         let near = Near {
             cells: beside,
             far_north: None,
+            ..Near::default()
         };
         assert!(look_of(&stone, near, &f.ctx()).rock);
     }
@@ -6736,6 +6824,32 @@ mod tests {
         assert!((top("S_hcdoor", &floor) - CUT_HEIGHT).abs() < 0.01);
         // a side wall below a doorway would hide whoever stands in it
         assert_eq!(top("S_vwall", &feature(cat, "S_ndoor")), CUT_HEIGHT);
+        // and the wall below that stump their feet, seen from close: it
+        // is broken off half way, and carries no torch
+        let doorway = feature(cat, "S_ndoor");
+        let stump = feature(cat, "S_vwall");
+        let below = |sym: &str, ctx: &Ctx| {
+            let near = Near {
+                far_north: Some(&doorway),
+                ..Near::orth([Some(&stump), None, None, None])
+            };
+            look_of(&feature(cat, sym), near, ctx)
+        };
+        let half = below("S_vwall", &f.ctx());
+        assert_eq!(half.top, HALF_HEIGHT);
+        assert!(!half.wall && half.masonry);
+        assert!(
+            half.solids
+                .iter()
+                .any(|s| matches!(s.paint, Paint::Pbr(_, _, Role::Ruin)))
+        );
+        // a cave's rock wall the same
+        let mines = crate::branch_look::look_of(Branch::Mines);
+        let cave = Ctx {
+            branch: &mines,
+            ..f.ctx()
+        };
+        assert_eq!(below("S_vwall", &cave).ground, HALF_HEIGHT);
         // walls with rock or wall behind stand
         assert_eq!(top("S_vwall", &feature(cat, "S_vwall")), WALL_HEIGHT);
         // a door stands in its frame, the wall closed above it

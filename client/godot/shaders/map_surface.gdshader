@@ -33,6 +33,9 @@ uniform float roughness_bias = 0.0;
 uniform float metallic = 0.0;
 // untextured: a plain roughness
 uniform float roughness = 1.0;
+// how much a surface mirrors the lights (dry rock hardly does: under a
+// light held close, a sheen over it reads as cloth or as wet)
+uniform float specular = 0.5;
 // albedo varies over the level by this much
 uniform float macro = 1.0;
 // wet patches (floors): darker and glossy
@@ -42,13 +45,23 @@ uniform float grime = 0.0;
 // dithers away between the eye and the hero, all but its top line
 uniform float occlude = 0.0;
 uniform float solid_top = 2.0;
-// rock: broken up by a noise of the world position (metres), and cut in
-// facets
+// a broken stump of masonry: pushed by a noise of the world position
+// (metres), its top in ridges
 uniform float displace = 0.0;
+// rock: broken in chunks, each pushed its own way by up to this (metres),
+// as rock breaks along its joints
+uniform float chunks = 0.0;
+// lit as it is cut: each face of the mesh by its own slope, flat
 uniform float facets = 0.0;
+// how dark the tops of rock lie over its lit faces (1: as the faces):
+// what stands tall, and what is cut down to a ledge at the hero's feet
+// (that one shows as rock in their light, not as a hole in the floor)
+uniform float top_shade = 1.0;
+uniform float ledge_shade = 1.0;
 // natural rock: the texture's blocks give way to a noise of the place,
-// its relief to the facets
+// and this much of its relief to the noise's own
 uniform float natural = 0.0;
+uniform float natural_relief = 1.0;
 // a faint cold light along the edges the camera sees grazing (rock)
 uniform float rim = 0.0;
 // the same on the tops only (a wall's rock top)
@@ -139,10 +152,69 @@ vec3 displacement(vec3 w) {
 	return dw;
 }
 
+vec3 hash32(vec2 p) {
+	vec3 q = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
+	q += dot(q, q.yxz + 33.33);
+	return fract((q.xxy + q.yzz) * q.zyx);
+}
+
+// the column of rock a point stands in, seen from above (the nearest of
+// a scattered grid's points): where that point is, and three numbers of
+// the column's own in 0..1
+void column(vec2 q, out vec2 at, out vec3 id) {
+	vec2 i = floor(q);
+	vec2 f = fract(q);
+	float best = 8.0;
+	at = i;
+	id = vec3(0.0);
+	for (int y = -1; y <= 1; y++) {
+		for (int x = -1; x <= 1; x++) {
+			vec2 g = vec2(float(x), float(y));
+			vec3 h = hash32(i + g);
+			vec2 r = g + 0.1 + 0.8 * h.xy - f;
+			float d = dot(r, r);
+			if (d < best) {
+				best = d;
+				at = i + g;
+				id = vec3(h.z, hash32(i + g + 71.3).xy);
+			}
+		}
+	}
+}
+
+// how far the rock at a world point is pushed (again a function of the
+// point only: blocks share their corners). Rock breaks along its joints:
+// it stands in columns about 0.6 m across, each split in layers of its
+// own, and every chunk is pushed in or out a little as a whole, its faces
+// left flat. Nothing leans out at the foot, where the floor's edge is and
+// somebody may stand; and a top is only ever broken lower, never higher
+// than the block is cut.
+vec3 chunk_push(vec3 w) {
+	vec2 at;
+	vec3 id;
+	column(w.xz * 1.6, at, id);
+	float layer = floor(w.y / mix(0.4, 0.75, id.x) + id.y * 5.0);
+	vec3 own = hash32(at + layer * 7.31);
+	float rise = smoothstep(0.0, 0.3, w.y);
+	vec3 d = vec3(own.x - 0.5, 0.0, own.y - 0.5) * 2.0 * chunks * rise;
+	// and the whole face wanders in and out over a few metres, more the
+	// higher it stands: no cliff runs along a ruled line
+	vec2 wander = vec2(tl2(w.xz * 0.21 + 3.7), tl2(w.zx * 0.21 + 9.1)) - 0.5;
+	d.xz += wander * 4.0 * chunks * smoothstep(0.3, 1.8, w.y);
+	// (a ledge cut low is broken the more: it is all top)
+	d.y = -id.z * chunks * mix(1.5, 1.0, smoothstep(0.5, 1.2, w.y)) * rise;
+	return d;
+}
+
 void vertex() {
 	vec3 w = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	vec3 n = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
-	if (displace > 0.0) {
+	if (chunks > 0.0) {
+		// its faces are lit as they are cut (the fragments' facets)
+		vec3 dw = chunk_push(w);
+		w += dw;
+		VERTEX += transpose(mat3(MODEL_MATRIX)) * dw;
+	} else if (displace > 0.0) {
 		vec3 dw = displacement(w);
 		// the normal of the pushed surface, from two neighbours pushed too
 		vec3 t = normalize(abs(n.y) > 0.9 ? cross(n, vec3(1.0, 0.0, 0.0)) : cross(n, vec3(0.0, 1.0, 0.0)));
@@ -229,7 +301,11 @@ void fragment() {
 		wn += bent(tn, n.xy, n.z) * bw.z;
 	}
 	wn = normalize(wn);
-	float nat = max(natural, natural_top * smoothstep(0.5, 0.9, bw.y));
+	// the top of a block of rock is all of its top face, however its
+	// chunks are tilted
+	// (and of every ledge on its faces: they lie in their own shadow)
+	float up = chunks > 0.0 ? max(smoothstep(0.3, 0.7, normalize(wnrm).y), smoothstep(0.35, 0.8, n.y)) : bw.y;
+	float nat = max(natural, natural_top * smoothstep(0.5, 0.9, up));
 	if (nat > 0.0) {
 		// mottled at two scales, never a pattern that could be paving
 		float grain = tn3(wpos * 1.1) * 0.6 + tn3(wpos * 4.7) * 0.4;
@@ -239,7 +315,8 @@ void fragment() {
 		float cn = tn3(wpos * 2.2 + 3.1);
 		float crack = smoothstep(0.46, 0.5, cn) - smoothstep(0.5, 0.54, cn);
 		vec3 rock = base * mix(0.6, 1.3, grain) * mix(1.0, mix(0.9, 1.05, strata), 1.0 - bw.y);
-		rock *= 1.0 - 0.45 * crack;
+		// (fainter on rock's lit faces: dark veins there are marble's)
+		rock *= 1.0 - (chunks > 0.0 ? 0.3 : 0.45) * crack;
 		albedo = mix(albedo, rock, nat);
 		// its relief from the noise's slope, not from the mesh's grid
 		const float STEP = 0.04;
@@ -248,10 +325,11 @@ void fragment() {
 		vec3 grad = vec3(tn3(q + vec3(STEP, 0, 0)), tn3(q + vec3(0, STEP, 0)), tn3(q + vec3(0, 0, STEP))) - h0;
 		grad /= STEP;
 		vec3 bump = normalize(n - (grad - dot(grad, n) * n) * 0.16);
-		wn = normalize(mix(wn, bump, nat));
+		wn = normalize(mix(wn, bump, nat * natural_relief));
 		// nor the texture's cavities and gloss: the noise's own
-		orm = mix(orm, vec3(mix(0.55, 1.0, smoothstep(0.25, 0.6, h0)), mix(0.55, 0.9, grain), 0.0), nat);
+		orm = mix(orm, vec3(mix(0.55, 1.0, smoothstep(0.25, 0.6, h0)), mix(0.55, 0.9, grain), 0.0), nat * natural_relief);
 	}
+	albedo *= mix(1.0, mix(ledge_shade, top_shade, smoothstep(0.5, 1.2, wpos.y)), up);
 
 	// slow variation over the level, a little warmer or cooler by place
 	float m = tn2(wpos.xz * 0.12 + wpos.y * 0.05);
@@ -302,6 +380,8 @@ void fragment() {
 
 	ALBEDO = color;
 	ROUGHNESS = rough;
+	// rock's tops and ledges mirror nothing at all
+	SPECULAR = chunks > 0.0 ? specular * (1.0 - up) : specular;
 	METALLIC = metallic * orm.b;
 	AO = orm.r;
 	AO_LIGHT_AFFECT = 0.3;

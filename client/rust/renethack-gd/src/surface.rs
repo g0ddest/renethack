@@ -144,12 +144,6 @@ impl Surfaces {
         };
         for (prefix, spec) in [("side", &side), ("top", &top)] {
             let c = spec.albedo();
-            // the rock's tops are darker than its cut faces
-            let k = if role == Role::Rock && prefix == "top" {
-                k * 0.6
-            } else {
-                k
-            };
             let color = Color::from_rgb(c[0] * k, c[1] * k, c[2] * k);
             mat.set_shader_parameter(&format!("{prefix}_color"), &color.to_variant());
             mat.set_shader_parameter(&format!("{prefix}_scale"), &spec.uv_scale.to_variant());
@@ -217,17 +211,31 @@ impl Surfaces {
                 set(&mut mat, "glow", 0.03);
             }
             Role::Rock => {
-                set(&mut mat, "displace", 0.06);
-                // the texture's own relief shows through the mottling
+                set(&mut mat, "chunks", 0.12);
+                set(&mut mat, "facets", 1.0);
+                // broken in chunks along its joints, lit as it is cut;
+                // its faces are mottled rock in the relief of the
+                // texture's own cracks; its tops are plain rock and lie
+                // in the dark over them, a tall block's all but black, a
+                // ledge cut down in front of open ground dim (a ledge at
+                // the hero's feet, not a slab as lit as the floor); and
+                // it mirrors next to nothing: under a light held this
+                // close a sheen makes cloth of it
                 set(&mut mat, "natural", 0.7);
-                set(&mut mat, "detail_strength", 1.1);
+                set(&mut mat, "natural_relief", 0.25);
+                set(&mut mat, "natural_top", 1.0);
+                set(&mut mat, "top_shade", 0.12);
+                set(&mut mat, "ledge_shade", 0.6);
+                set(&mut mat, "specular", 0.12);
+                set(&mut mat, "detail_strength", 0.4);
                 set(&mut mat, "detail_scale", 3.0);
-                set(&mut mat, "rim", 0.02);
                 set(&mut mat, "glow", 0.05);
                 set(&mut mat, "memory_glow", 0.04);
             }
             Role::Void => {
                 set(&mut mat, "void_fade", 1.0);
+                // no sheen on it either: by its own colour alone, dark
+                set(&mut mat, "specular", 0.0);
                 set(&mut mat, "memory", 0.0);
                 set(&mut mat, "glow", 0.02);
                 set(&mut mat, "macro", 1.4);

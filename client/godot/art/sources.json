@@ -15,7 +15,7 @@
   {"id": "monastery_stone_floor", "use": "room floors (dark irregular flags)"},
   {"id": "rock_tile_floor_02", "use": "room floors (dark square flags)"},
   {"id": "volcanic_rock_tiles", "use": "Gehennom walls and floors"},
-  {"id": "rock_wall_13", "use": "crypt and Gehennom walls (dark rubble)"}
+  {"id": "rock_wall_13", "use": "crypt and Gehennom walls (dark rubble); no material reads it now"}
  ],
  "polyhaven_models": [
   {"id": "street_rat", "use": "rats"},
@@ -216,7 +216,7 @@
   {"id": "icy_rock", "url": "https://www.texturecan.com/downloads/ground_0031/ground_0031_1k_s6SWdZ.zip", "browser": true, "maps": {"albedo": "*_color_1k.jpg", "normal": "*_normal_opengl_1k.png", "ao": "*_ao_1k.jpg", "roughness": "*_roughness_1k.jpg"}, "dest": "texturecan", "use": "ice floors (TextureCan ground_0031)"},
   {"id": "Lava003", "url": "https://ambientcg.com/get?file=Lava003_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "roughness": "*_Roughness.jpg", "emission": "*_Emission.jpg"}, "dest": "ambientcg", "use": "Gehennom floors: crust with glowing veins"},
   {"id": "Rock035", "url": "https://ambientcg.com/get?file=Rock035_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "ao": "*_AmbientOcclusion.jpg", "roughness": "*_Roughness.jpg"}, "dest": "ambientcg", "use": "dark cave walls (Mines, Earth)"},
-  {"id": "Rock058", "url": "https://ambientcg.com/get?file=Rock058_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "ao": "*_AmbientOcclusion.jpg", "roughness": "*_Roughness.jpg"}, "dest": "ambientcg", "use": "obsidian walls (Gehennom, Vlad's Tower)"},
+  {"id": "Rock058", "url": "https://ambientcg.com/get?file=Rock058_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "ao": "*_AmbientOcclusion.jpg", "roughness": "*_Roughness.jpg"}, "dest": "ambientcg", "use": "the rock the main dungeon is cut into; obsidian walls (Gehennom, Vlad's Tower)"},
   {"id": "Chainmail004", "url": "https://ambientcg.com/get?file=Chainmail004_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "roughness": "*_Roughness.jpg", "metal": "*_Metalness.jpg"}, "gain": {"albedo": 1.75, "roughness": 1.9}, "dest": "ambientcg", "use": "chain and ring mail on the hero"},
   {"id": "Metal038", "url": "https://ambientcg.com/get?file=Metal038_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "roughness": "*_Roughness.jpg", "metal": "*_Metalness.jpg"}, "gain": {"albedo": 2.2, "roughness": 1.3}, "dest": "ambientcg", "use": "plate, splint, scale and dragon scale mail on the hero"}
  ],
