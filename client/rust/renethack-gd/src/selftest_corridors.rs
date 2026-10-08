@@ -6,8 +6,9 @@
 //! nothing may stand between the eye and the feet of any of them: no rock
 //! in front of a corridor, no wall below a doorway. With `--screenshots`,
 //! a picture of each. RENETHACK_CORRIDORS_IN=mines (sokoban, gehennom,
-//! vlad, ludios, quest): the same as a level of that branch, for the
-//! pictures of its look (the checks hold in any).
+//! vlad, ludios, quest, main): the same as a level of that branch, for
+//! the pictures of its look (the checks hold in any); with ",unlit" after
+//! it (mines,unlit), a level with no light but the hero's.
 
 use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
 
@@ -23,12 +24,18 @@ static SCENE: AtomicUsize = AtomicUsize::new(0);
 /// The camera's distance in a game (bits of an f32).
 static DISTANCE: AtomicU32 = AtomicU32::new(0);
 
-/// The dungeon RENETHACK_CORRIDORS_IN names, as a level notice names it.
-fn other_dungeon() -> Result<Option<&'static str>, String> {
+/// The dungeon RENETHACK_CORRIDORS_IN names, as a level notice names it,
+/// and whether the level is to be unlit.
+fn other_level() -> Result<Option<(&'static str, bool)>, String> {
     let Ok(name) = std::env::var("RENETHACK_CORRIDORS_IN") else {
         return Ok(None);
     };
-    Ok(Some(match name.as_str() {
+    let (name, unlit) = match name.strip_suffix(",unlit") {
+        Some(name) => (name, true),
+        None => (name.as_str(), false),
+    };
+    let dungeon = match name {
+        "main" => "The Dungeons of Doom",
         "mines" => "The Gnomish Mines",
         "sokoban" => "Sokoban",
         "gehennom" => "Gehennom",
@@ -36,13 +43,16 @@ fn other_dungeon() -> Result<Option<&'static str>, String> {
         "ludios" => "Fort Ludios",
         "quest" => "The Quest",
         other => return Err(format!("RENETHACK_CORRIDORS_IN: no branch {other:?}")),
-    }))
+    };
+    Ok(Some((dungeon, unlit)))
 }
 
 fn lay_out(g: &mut RenethackGame) -> Result<(), String> {
     let cat = g.catalog.clone().ok_or("no catalog")?;
-    lay_out_corridors(&mut g.world, &cat, SCENE.load(Ordering::Relaxed))?;
-    if let Some(dungeon) = other_dungeon()? {
+    let other = other_level()?;
+    let unlit = other.is_some_and(|(_, unlit)| unlit);
+    lay_out_corridors(&mut g.world, &cat, SCENE.load(Ordering::Relaxed), unlit)?;
+    if let Some((dungeon, _)) = other {
         g.world.level = Some(LevelNotice {
             dungeon: dungeon.to_string(),
             depth: 3,

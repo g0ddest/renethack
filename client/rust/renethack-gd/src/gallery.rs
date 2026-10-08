@@ -579,11 +579,19 @@ pub fn corridor_cell((col, row): (i32, i32)) -> (i32, i32) {
 
 /// Replace the map with the corridors and scene `scene` of
 /// `CORRIDOR_SCENES` in them; the camera follows the hero as in a game.
-pub fn lay_out_corridors(world: &mut World, cat: &Catalog, scene: usize) -> Result<(), String> {
+/// `unlit`: the rooms are dark, their floors only remembered (a level
+/// with no light but the hero's).
+pub fn lay_out_corridors(
+    world: &mut World,
+    cat: &Catalog,
+    scene: usize,
+    unlit: bool,
+) -> Result<(), String> {
     let scene = CORRIDOR_SCENES.get(scene).ok_or("no such scene")?;
     let map = &mut world.map;
     map.clear();
     let sym = |ch: char| match ch {
+        '.' if unlit => Some("S_darkroom"),
         '.' => Some("S_room"),
         '#' => Some("S_corr"),
         '+' => Some("S_ndoor"),

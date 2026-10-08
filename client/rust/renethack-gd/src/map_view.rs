@@ -161,6 +161,7 @@ const PLINTH_HEIGHT: f32 = 0.22;
 /// open ground (`rock_look`: the camera looks north and down, and a block
 /// hides what lies behind it and to its sides).
 const ROCK_HEIGHT: f32 = 2.05;
+const ROCK_HALF: f32 = 1.05;
 const ROCK_CUT: f32 = 0.35;
 /// Label3D font size; a letter's height is about `FONT_PX * pixel size`.
 const FONT_PX: i32 = 96;
@@ -710,12 +711,40 @@ struct Around {
     /// Which of them are water or lava, and which a room's floor.
     liquid: [bool; 4],
     floor: [bool; 4],
-    /// Open ground two cells north (in front of the cell north of here).
+    /// Open ground north of here (a doorway too), and two cells north (in
+    /// front of the cell north of here).
+    north_open: bool,
     far_open: bool,
+    /// Open ground north and to a side, and two cells north and to a
+    /// side: what a block here hides from a camera not straight south of
+    /// it.
+    aside_open: bool,
+    far_aside_open: bool,
+    /// The wall west or east of here stands cut down in front of open
+    /// ground (a corner between it and a wall that stands joins it).
+    beside_cut: bool,
+    /// The corner south of here is cut down so.
+    south_cut: bool,
+}
+
+/// How much of a wall stands.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Stand {
+    Full,
+    /// Broken off half way up (`HALF_HEIGHT`).
+    Half,
+    /// A stump (`CUT_HEIGHT`).
+    Cut,
 }
 
 impl Around {
     fn of(near: &Near, catalog: &Catalog) -> Around {
+        let side_of = |cell: Option<&Cell>| match cell.and_then(|c| cell_terrain(c, catalog)) {
+            Some(Terrain::Wall | Terrain::LavaWall) => Side::Wall,
+            Some(Terrain::ClosedDoor | Terrain::OpenDoor | Terrain::Doorway) => Side::Wall,
+            _ if is_open(cell, catalog) => Side::Open,
+            _ => Side::Solid,
+        };
         let mut sides = [Side::Solid; 4];
         let mut liquid = [false; 4];
         let mut floor = [false; 4];
@@ -724,18 +753,53 @@ impl Around {
             let t = cell.and_then(|c| cell_terrain(c, catalog));
             liquid[i] = matches!(t, Some(Terrain::Pool | Terrain::Water | Terrain::Lava));
             floor[i] = matches!(t, Some(Terrain::Floor | Terrain::DarkFloor));
-            *side = match t {
-                Some(Terrain::Wall | Terrain::LavaWall) => Side::Wall,
-                Some(Terrain::ClosedDoor | Terrain::OpenDoor | Terrain::Doorway) => Side::Wall,
-                _ if is_open(cell, catalog) => Side::Open,
-                _ => Side::Solid,
-            };
+            *side = side_of(cell);
         }
+        let open = |cell: Option<&Cell>| is_open(cell, catalog);
+        let wall = |cell: Option<&Cell>| side_of(cell) == Side::Wall;
+        let [n, s, w, e, nw, ne, sw, se] = near.cells;
+        let south_pier = s
+            .and_then(|c| c.terrain.as_ref())
+            .and_then(|g| cmap_sym(g, catalog))
+            .is_some_and(is_pier);
         Around {
             sides,
             liquid,
             floor,
-            far_open: is_open(near.far_north, catalog),
+            north_open: open(n),
+            far_open: open(near.far_north),
+            aside_open: open(nw) || open(ne),
+            far_aside_open: open(near.beyond[0]) || open(near.beyond[1]),
+            beside_cut: !open(n) && ((wall(w) && open(nw)) || (wall(e) && open(ne))),
+            south_cut: wall(s) && south_pier && ((wall(sw) && open(w)) || (wall(se) && open(e))),
+        }
+    }
+
+    /// How much of a wall here stands, so that it hides nobody. Built
+    /// walls: a stump in front of open ground (the camera looks north),
+    /// a corner with the stumps it joins, and the wall behind a stump
+    /// (open ground two cells north, or a corner cut down south of it)
+    /// half its height, or a stump too between two stumps: a room's side
+    /// walls step down towards the camera. A cave's rock has no sides to
+    /// keep: a lip wherever open ground lies north of it or north and to
+    /// a side, and half its height a row behind that.
+    fn wall_stand(&self, pier: bool, cave: bool) -> Stand {
+        let north_open = self.north_open;
+        if cave {
+            return if north_open || self.aside_open {
+                Stand::Cut
+            } else if self.far_open || self.far_aside_open {
+                Stand::Half
+            } else {
+                Stand::Full
+            };
+        }
+        if north_open || (pier && self.beside_cut) || (self.far_open && self.south_cut) {
+            Stand::Cut
+        } else if self.far_open || self.south_cut {
+            Stand::Half
+        } else {
+            Stand::Full
         }
     }
 
@@ -1080,14 +1144,19 @@ fn terrain_base(
     match t {
         Terrain::Stone | Terrain::Effect | Terrain::Unknown => {}
         Terrain::Wall => {
-            // behind a stump (open ground two cells north), a wall is
-            // broken off half way up
-            let half = !cut && around.far_open;
-            let wall_h = if half { HALF_HEIGHT } else { wall_h };
-            let low = cut || half;
             // masonry under a slab of dark rock a little wider than it; a
             // corner or junction is a pier, wider and taller
-            let pier = is_pier(sym);
+            let corner = is_pier(sym);
+            let stand = around.wall_stand(corner, ctx.branch.cave);
+            // (a cave's rock has no piers)
+            let pier = corner && !ctx.branch.cave;
+            let (cut, half) = (stand == Stand::Cut, stand == Stand::Half);
+            let wall_h = match stand {
+                Stand::Cut => CUT_HEIGHT,
+                Stand::Half => HALF_HEIGHT,
+                Stand::Full => WALL_HEIGHT,
+            };
+            let low = cut || half;
             let (w, top) = if pier {
                 (1.08, wall_h + if low { 0.06 } else { 0.18 })
             } else {
@@ -1919,12 +1988,29 @@ fn rock_look(look: &mut Look, near: &Near, ctx: &Ctx) {
     // row further still it would stand over the stumps and ledges in
     // front of that ground, a black block before all that is lit
     let front = [near.cells[0], near.cells[4], near.cells[5], near.far_north];
-    let h = if front
+    let front_open = front
         .into_iter()
         .chain(near.beyond)
-        .any(|c| is_open(c, catalog))
-    {
+        .any(|c| is_open(c, catalog));
+    // outside a room's south corners it steps down with the room's walls
+    // (the corner a stump, the side wall above it half its height):
+    // never a dark tower at the front of a room
+    let corner = |i: usize, sym: &str| {
+        near.cells[i]
+            .and_then(|c| c.terrain.as_ref())
+            .and_then(|g| cmap_sym(g, catalog))
+            == Some(sym)
+    };
+    let [_, _, w, e, nw, ne, sw, se] = [0, 1, 2, 3, 4, 5, 6, 7];
+    let by_corner = corner(e, "S_blcorn")
+        || corner(ne, "S_blcorn")
+        || corner(w, "S_brcorn")
+        || corner(nw, "S_brcorn");
+    let over_corner = corner(se, "S_blcorn") || corner(sw, "S_brcorn");
+    let h = if front_open || by_corner {
         ROCK_CUT
+    } else if over_corner {
+        ROCK_HALF
     } else {
         ROCK_HEIGHT
     };
@@ -6446,6 +6532,59 @@ mod tests {
         fn look(&self, cell: &Cell) -> Look {
             look_of(cell, Near::default(), &self.ctx())
         }
+
+        /// The look of a cell of a level (`level`), as a level of `branch`.
+        fn look_in(&self, map: &MapState, (x, y): (i32, i32), branch: Branch) -> Look {
+            let look = crate::branch_look::look_of(branch);
+            let ctx = Ctx {
+                branch: &look,
+                ..self.ctx_at(x, y, None)
+            };
+            let cell = map.cell(x, y).cloned().unwrap_or_default();
+            look_of(&cell, Near::of(map, x, y), &ctx)
+        }
+    }
+
+    /// Where a level's picture lies on the map.
+    const PICTURE_AT: (i32, i32) = (10, 5);
+
+    /// A level from its picture: `.` a lit floor, `#` a corridor, `+` a
+    /// doorway, `|` and `-` walls, `r 7 L J` their corners.
+    fn level(cat: &Catalog, rows: &[&str]) -> MapState {
+        let mut map = MapState::new();
+        for (row, line) in rows.iter().enumerate() {
+            for (col, ch) in line.chars().enumerate() {
+                let sym = match ch {
+                    '.' => "S_room",
+                    '#' => "S_corr",
+                    '+' => "S_ndoor",
+                    '|' => "S_vwall",
+                    '-' => "S_hwall",
+                    'r' => "S_tlcorn",
+                    '7' => "S_trcorn",
+                    'L' => "S_blcorn",
+                    'J' => "S_brcorn",
+                    _ => continue,
+                };
+                let (x, y) = (PICTURE_AT.0 + col as i32, PICTURE_AT.1 + row as i32);
+                map.print(x, y, &cmap(cat, sym), None);
+            }
+        }
+        map
+    }
+
+    /// How high the cells of a level's picture stand, row by row.
+    fn heights(f: &Fixture, map: &MapState, branch: Branch, cols: i32, rows: i32) -> Vec<Vec<f32>> {
+        (0..rows)
+            .map(|row| {
+                (0..cols)
+                    .map(|col| {
+                        let at = (PICTURE_AT.0 + col, PICTURE_AT.1 + row);
+                        f.look_in(map, at, branch).ground
+                    })
+                    .collect()
+            })
+            .collect()
     }
 
     fn glyph(kind: GlyphKind, ch: char) -> Glyph {
@@ -6561,6 +6700,95 @@ mod tests {
             })
             .count();
         assert!(candles > 2 && candles < 30, "{candles}");
+    }
+
+    #[test]
+    fn a_rooms_walls_step_down_towards_the_camera() {
+        let f = Fixture::new();
+        // (a column of nothing known on each side: the rock outside)
+        let map = level(
+            &f.cat,
+            &[
+                "        ", " r----7 ", " |....| ", " |....+#", " |....| ", " |....| ", " |....| ",
+                " L----J ", "        ",
+            ],
+        );
+        let h = heights(&f, &map, Branch::Main, 8, 9);
+        let (cut, half, full) = (CUT_HEIGHT, HALF_HEIGHT, WALL_HEIGHT);
+        let near = |a: f32, b: f32| (a - b).abs() < 1e-3;
+        // the north wall stands, its corners a little taller
+        assert!(h[1][2..6].iter().all(|&v| near(v, full)), "{:?}", h[1]);
+        assert!(h[1][1] > full && h[1][6] > full);
+        // the south wall is stumps (the floor lies north of it), and its
+        // corners with it: no pier stands at the front of a room
+        assert!(h[7][2..6].iter().all(|&v| near(v, cut)), "{:?}", h[7]);
+        assert!(h[7][1] < 0.5 && h[7][6] < 0.5, "{:?}", h[7]);
+        // the west wall: whole down to the cell over the corner, that one
+        // broken off half way
+        let west: Vec<f32> = (2..7).map(|row| h[row][1]).collect();
+        assert!(west[..4].iter().all(|&v| near(v, full)), "{west:?}");
+        assert!(near(west[4], half), "{west:?}");
+        // the east wall: whole over its doorway; under it a stump, the
+        // next half its height, and the one over the corner too
+        let east: Vec<f32> = (2..7).map(|row| h[row][6]).collect();
+        assert!(near(east[0], full) && near(east[1], 0.0), "{east:?}");
+        assert!(near(east[2], cut), "{east:?}");
+        assert!(near(east[3], half) && near(east[4], half), "{east:?}");
+        // the rock outside steps down with them: tall beside the walls
+        // that stand, half over the corner's row, a lip beside the corner
+        // and south of it
+        let outside: Vec<f32> = (1..9).map(|row| h[row][0]).collect();
+        assert!(
+            outside[..5].iter().all(|&v| near(v, ROCK_HEIGHT)),
+            "{outside:?}"
+        );
+        assert!(near(outside[5], ROCK_HALF), "{outside:?}");
+        assert!(
+            near(outside[6], ROCK_CUT) && near(outside[7], ROCK_CUT),
+            "{outside:?}"
+        );
+        assert!(h[8][1..7].iter().all(|&v| near(v, ROCK_CUT)), "{:?}", h[8]);
+        // a doorway two cells over the corner: stumps all the way down
+        let low = level(&f.cat, &["r--7", "|..+", "|..|", "|..|", "L--J"]);
+        let h = heights(&f, &low, Branch::Main, 4, 5);
+        assert!(
+            near(h[2][3], cut) && near(h[3][3], cut) && h[4][3] < 0.5,
+            "{h:?}"
+        );
+        // no torch hangs on what is not whole
+        let (x, y) = (PICTURE_AT.0 + 3, PICTURE_AT.1 + 2);
+        assert!(!f.look_in(&low, (x, y), Branch::Main).wall);
+    }
+
+    #[test]
+    fn a_caves_rock_keeps_no_sides_before_open_ground() {
+        let f = Fixture::new();
+        let map = level(
+            &f.cat,
+            &[
+                "r----7", "|....|", "|....|", "|....|", "L----J", "------", "------",
+            ],
+        );
+        let h = heights(&f, &map, Branch::Mines, 6, 7);
+        let near = |a: f32, b: f32| (a - b).abs() < 1e-3;
+        // the back wall stands
+        assert!(h[0].iter().all(|&v| near(v, WALL_HEIGHT)), "{:?}", h[0]);
+        // the rock at the sides: whole only beside the far row of the
+        // floor (nothing open lies north of it); a lip from there on,
+        // wherever open ground lies north and to a side
+        assert!(near(h[1][0], WALL_HEIGHT) && near(h[1][5], WALL_HEIGHT));
+        for row in &h[2..5] {
+            assert!(near(row[0], ROCK_CUT) && near(row[5], ROCK_CUT), "{row:?}");
+        }
+        // in front of the floor a lip, behind the lip rock half its
+        // height, and whole behind that
+        assert!(h[4].iter().all(|&v| near(v, ROCK_CUT)), "{:?}", h[4]);
+        assert!(h[5].iter().all(|&v| near(v, HALF_HEIGHT)), "{:?}", h[5]);
+        assert!(
+            h[6][1..5].iter().all(|&v| near(v, WALL_HEIGHT)),
+            "{:?}",
+            h[6]
+        );
     }
 
     #[test]
