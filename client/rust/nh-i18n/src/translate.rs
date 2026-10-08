@@ -134,11 +134,19 @@ impl Translator {
             .and_then(|f| self.catalog.by_fmt(f))
         {
             let derived = self.catalog.derived(i);
-            let found = self.catalog.best_of(derived, text, Channel::Message);
+            let base = &self.catalog.templates()[i];
+            // of the derived templates the text matches, the one P7's
+            // arguments line up with: "greased" and "slippery cloak" are
+            // "…%s greased %s!", though "…%s slippery cloak!" has more of
+            // the text in its own words
+            let mut matched = self.catalog.matches_of(derived, text, Channel::Message);
+            let fits = matched
+                .iter()
+                .position(|m| p7_captures(base, m.template, args).is_some());
+            let found = (!matched.is_empty()).then(|| matched.swap_remove(fits.unwrap_or(0)));
             if let Some(m) = &found {
                 // the arguments P7 sent split the text truly ("the
                 // gnome's" | "hand"); the text's captures only guess
-                let base = &self.catalog.templates()[i];
                 let rendered = match p7_captures(base, m.template, args) {
                     Some(captures) => self.render_captures(m.template, &captures, 0),
                     None => self.render_match(m, 0),

@@ -6,7 +6,7 @@
 use std::sync::OnceLock;
 
 use nh_i18n::lexicon::Lexicon;
-use nh_i18n::{Catalog, Gender, Russian, Status, Translator};
+use nh_i18n::{Arg, Catalog, Gender, Russian, Status, Translator};
 
 fn translator() -> &'static Translator {
     static T: OnceLock<Translator> = OnceLock::new();
@@ -420,6 +420,38 @@ fn a_text_in_a_text_by_any_template_that_holds_it() {
     assert_eq!(out.status, Status::Translated, "{}", out.text);
     assert!(out.text.starts_with("Наготове: b - "), "{}", out.text);
     assert!(!out.text.contains("tin"), "{}", out.text);
+}
+
+#[test]
+fn the_derived_template_the_arguments_line_up_with() {
+    // m_slips_free: You("%s %s %s %s!", …, "greased", xname(obj)), the
+    // cloak not yet known as oilskin
+    let t = with(&[
+        (
+            "You grab, but cannot hold onto %s greased %s!",
+            r#"ru = "Вы хватаете, но не можете удержать {2:acc} в жире ({1:gen})!""#,
+        ),
+        (
+            "You grab, but cannot hold onto %s slippery cloak!",
+            r#"ru = "Вы хватаете, но не можете удержать скользкий плащ {1:gen}!""#,
+        ),
+    ]);
+    let args: Vec<Arg> = [
+        "grab, but cannot hold onto",
+        "the gnome's",
+        "greased",
+        "slippery cloak",
+    ]
+    .iter()
+    .map(|a| Arg::Str(a.to_string()))
+    .collect();
+    let out = t.message(
+        Some("You %s %s %s %s!"),
+        &args,
+        "You grab, but cannot hold onto the gnome's greased slippery cloak!",
+    );
+    assert_eq!(out.status, Status::Translated, "{}", out.text);
+    assert!(out.text.contains(" в жире (гнома)!"), "{}", out.text);
 }
 
 /// The built-in catalog and lexicon with these translations only: (the

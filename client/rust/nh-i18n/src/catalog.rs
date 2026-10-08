@@ -385,12 +385,17 @@ impl Catalog {
 
     /// The best of templates `indexes` for `text`.
     pub fn best_of(&self, indexes: &[usize], text: &str, channel: Channel) -> Option<Match<'_>> {
+        self.matches_of(indexes, text, channel).into_iter().next()
+    }
+
+    /// Those of templates `indexes` that `text` matches, the best first.
+    pub fn matches_of(&self, indexes: &[usize], text: &str, channel: Channel) -> Vec<Match<'_>> {
         let mut found: Vec<Match> = indexes
             .iter()
             .filter_map(|&i| self.match_index(i, text))
             .collect();
         found.sort_by_key(|m| rank(m, channel));
-        found.into_iter().next()
+        found
     }
 }
 
