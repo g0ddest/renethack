@@ -1,0 +1,517 @@
+# R6, log messages batch 11: dying slowly (timeout.c), engraving, what a god says, taking armor off. Syntax: nh-i18n's template.rs.
+
+[e38e41934360]
+en = "You are slowing down."
+ru = "Вы замедляетесь."
+
+[08e7106218f4]
+en = "Your limbs are stiffening."
+ru = "Ваши конечности деревенеют."
+
+[3f1a7e1f19c8]
+en = "Your limbs have turned to stone."
+ru = "Ваши конечности обратились в камень."
+
+[c60facf50367]
+en = "Your extremities are stiffening."
+ru = "Ваши оконечности деревенеют."
+
+[31d6f59e19fa]
+en = "Your extremities have turned to stone."
+ru = "Ваши оконечности обратились в камень."
+
+[eba65be6ab75]
+en = "You have turned to stone."
+ru = "Вы обратились в камень."
+
+[6bbe77c06b93]
+en = "You are a statue."
+ru = "Вы — статуя."
+
+[bf4622958bfa]
+en = "You hurl chunks!"
+ru = "Вы мечете харчи!"
+
+[585d08044ac2]
+en = "You find it hard to breathe."
+ru = "Вам трудно дышать."
+
+[446bc0c610df]
+en = "You're gasping for air."
+ru = "Вы хватаете ртом воздух."
+
+[4de07c95eb25]
+en = "You can no longer breathe."
+ru = "Вы больше не можете дышать."
+
+[14373b0687a6]
+en = "You're turning %s."
+ru = "Вы становитесь {1:hero:ins}."
+
+[9e42bfb6a654]
+en = "You suffocate."
+ru = "Вы задыхаетесь."
+
+[05e0f2338cdb]
+en = "Your %s is becoming constricted."
+ru = "{1:gender|Ваш|Вашу|Ваше|Ваши} {1:acc} сдавливает."
+
+[5d7ef46af6af]
+en = "Your blood is having trouble reaching your brain."
+ru = "Кровь с трудом поступает к вашему мозгу."
+
+[84ac0bdd4982]
+en = "The pressure on your %s increases."
+ru = "Давление на {1:gender|ваш|вашу|ваше|ваши} {1:acc} нарастает."
+
+[ea1ee88286ee]
+en = "Your consciousness is fading."
+ru = "Ваше сознание меркнет."
+
+[22e7e715584f]
+en = "Your illness feels worse."
+ru = "Ваша болезнь обостряется."
+
+[0d142210bfd3]
+en = "Your illness is severe."
+ru = "Ваша болезнь очень тяжела."
+
+[87b008a67ba7]
+en = "Your sickness feels worse."
+ru = "Ваше отравление обостряется."
+
+[d97e5a4f7754]
+en = "Your sickness is severe."
+ru = "Ваше отравление очень тяжело."
+
+[d4f1b8dfea78]
+en = "You are at Death's door.  %s is inviting you in."
+ru = "Вы на пороге смерти.  Вас приглашают войти.{1:skip}"
+
+[107e24ecfee9]
+en = "You are at Death's door.  %s are inviting you in."
+ru = "Вы на пороге смерти.  Вас приглашают войти.{1:skip}"
+
+[aeae8bcc43e9]
+en = "You float slightly lower."
+ru = "Вы опускаетесь чуть ниже."
+
+[144df3441554]
+en = "You wobble unsteadily in the air."
+ru = "Вы неустойчиво покачиваетесь в воздухе."
+
+[802792a9c408]
+en = "You wobble unsteadily over the %s."
+ru = "Вы неустойчиво покачиваетесь над {1:ins}."
+
+[75d1656f8857]
+en = "You are turning a little %s."
+ru = "Вы становитесь слегка {1:hero:ins}."
+
+[ff26b49da2ac]
+en = "Your limbs are getting oozy."
+ru = "Ваши конечности становятся склизкими."
+
+[85175eaf97cc]
+en = "Your extremities are getting oozy."
+ru = "Ваши оконечности становятся склизкими."
+
+[1c646cb3e482]
+en = "Your skin begins to peel away."
+ru = "Ваша кожа начинает слезать."
+
+[c8798339525e]
+en = "You are turning into %s."
+ru = "Вы превращаетесь в {1:acc}."
+
+[4489b6cd4d48]
+en = "You have become %s."
+ru = "Вы стали {1:ins}."
+
+[d22cb2c523fd]
+en = "You start to feel bloated."
+ru = "Вас начинает распирать."
+
+[00d8c174c035]
+en = "You are feeling rather flabby."
+ru = "Вы чувствуете себя довольно {hero:gender|дряблым|дряблой}."
+
+[da2680fedf9b]
+en = "You seem to have some trouble breathing."
+ru = "Кажется, вам становится трудно дышать."
+
+[c5212a24b345]
+en = "The air here seems foul."
+ru = "Воздух здесь какой-то спёртый."
+
+[666aa23d00b0]
+en = "Thou hast angered me."
+ru = "Ты навлекаешь на себя мой гнев."
+
+[3013fd966b7f]
+en = "I believe it not!"
+ru = "Быть того не может!"
+
+[ba9755b4973d]
+en = "Thou hast pleased me with thy progress,"
+ru = "Твои успехи радуют меня,"
+
+[63569eb6a753]
+en = "Mortal, thou hast done well!"
+ru = "Славная работа, о смертное создание!"
+
+[774583207e70]
+en = "Suffer, infidel!"
+ru = "Страдай за своё неверие!"
+
+[2821c9e7289e]
+en = "Use my gift wisely!"
+ru = "Распорядись моим даром мудро!"
+
+[e7f6f7a7a70d]
+en = "Vile creature, thou durst call upon me?"
+ru = "Мерзкая тварь, ты смеешь взывать ко мне?"
+
+[17e5924f0377]
+en = "Walk no more, perversion of nature!"
+ru = "Не ходить тебе более по земле, извращение природы!"
+
+[4f1ee73cecc6]
+en = "How darest thou desecrate my altar!"
+ru = "Как смеешь ты осквернять мой алтарь!"
+
+[67396858767b]
+en = "So, mortal!  You dare desecrate my altar!"
+ru = "Так, смертное создание!  Ты смеешь осквернять мой алтарь!"
+
+[29df5137c0b9]
+en = "So, mortal!  You dare desecrate my High Temple!"
+ru = "Так, смертное создание!  Ты смеешь осквернять мой Верховный храм!"
+
+[071f44ddc012]
+en = "%s sword"
+ru = "{1:m} меч"
+forms = ["{1:m} меч", "{1:m:gen} меча", "{1:m:dat} мечу", "{1:m:acc} меч", "{1:m:ins} мечом", "{1:m:prep} мече"]
+gender = "m"
+
+[f2edced62756]
+en = "a doodad"
+ru = "штуковина"
+forms = ["штуковина", "штуковины", "штуковине", "штуковину", "штуковиной", "штуковине"]
+gender = "f"
+
+[dcf2635e342d]
+en = "You brush against %s %s."
+ru = "Вы задеваете {2:acc} {1:gen}."
+
+[7aedc828d31a]
+en = "Some writing vanishes from %s head!"
+ru = "С головы {1:gen} исчезает какая-то надпись!"
+
+[577e3cac3ebb]
+en = "You finish engraving."
+ru = "Вы заканчиваете вырезать надпись."
+
+[e5558277e4f8]
+en = "You finish writing in the dust."
+ru = "Вы заканчиваете писать в пыли."
+
+[a7e96779125f]
+en = "You finish writing in the frost."
+ru = "Вы заканчиваете писать на инее."
+
+[8bef84fcd426]
+en = "You finish burning your message into the floor."
+ru = "Вы заканчиваете выжигать своё послание на полу."
+
+[c987e38d2e60]
+en = "You finish melting your message into the ice."
+ru = "Вы заканчиваете выплавлять своё послание во льду."
+
+[1613dbac6d64]
+en = "You finish defacing the dungeon."
+ru = "Вы заканчиваете портить подземелье своими каракулями."
+
+[aa23f3d6fc17]
+en = "You finish scrawling."
+ru = "Вы заканчиваете малевать."
+
+[330aa21f712e]
+en = "You finish your weird engraving."
+ru = "Вы заканчиваете свою странную надпись."
+
+[ab1da5ea209f]
+en = "You finish taking off your apron."
+ru = "Вы заканчиваете снимать фартук."
+
+[8e2f04c378ff]
+en = "You finish taking off your boots."
+ru = "Вы заканчиваете снимать сапоги."
+
+[634c60216a9f]
+en = "You finish taking off your cloak."
+ru = "Вы заканчиваете снимать плащ."
+
+[f77158d58ed7]
+en = "You finish taking off your dragon mail."
+ru = "Вы заканчиваете снимать драконий доспех."
+
+[62f11a639ef8]
+en = "You finish taking off your dragon scales."
+ru = "Вы заканчиваете снимать драконью чешую."
+
+[61eb62d00db0]
+en = "You finish taking off your gauntlets."
+ru = "Вы заканчиваете снимать рукавицы."
+
+[029a50810069]
+en = "You finish taking off your gloves."
+ru = "Вы заканчиваете снимать перчатки."
+
+[7c7d6a2370aa]
+en = "You finish taking off your hat."
+ru = "Вы заканчиваете снимать шляпу."
+
+[f1ca75216dad]
+en = "You finish taking off your helm."
+ru = "Вы заканчиваете снимать шлем."
+
+[15e09a5e1c82]
+en = "You finish taking off your jacket."
+ru = "Вы заканчиваете снимать куртку."
+
+[5c8ca7b3589a]
+en = "You finish taking off your mail."
+ru = "Вы заканчиваете снимать доспех."
+
+[415ef64a8aa3]
+en = "You finish taking off your robe."
+ru = "Вы заканчиваете снимать мантию."
+
+[4d30a32283da]
+en = "You finish taking off your shield."
+ru = "Вы заканчиваете снимать щит."
+
+[a2dab109b7be]
+en = "You finish taking off your shirt."
+ru = "Вы заканчиваете снимать рубашку."
+
+[55fa93a30c9a]
+en = "You finish taking off your shoes."
+ru = "Вы заканчиваете снимать башмаки."
+
+[ac711bd31315]
+en = "You finish taking off your silver shield."
+ru = "Вы заканчиваете снимать серебряный щит."
+
+[a2ac53e744b0]
+en = "You finish taking off your smock."
+ru = "Вы заканчиваете снимать фартук."
+
+[9dbd514074c5]
+en = "You finish taking off your smooth shield."
+ru = "Вы заканчиваете снимать гладкий щит."
+
+[b73fc50269ed]
+en = "You finish taking off your suit."
+ru = "Вы заканчиваете снимать доспех."
+
+[82081f815089]
+en = "You finish taking off your wrapping."
+ru = "Вы заканчиваете снимать обмотку."
+
+[1a6e75eb0bd1]
+en = "You finish taking off your %s."
+ru = "Вы заканчиваете снимать {1:acc}."
+
+[4b9fb3a90c97]
+en = "You write in the %s with %s."
+ru = "Вы пишете {2:ins:own} по {1:dat}."
+
+[9799563db4e2]
+en = "You write in the %s with 1 of %s."
+ru = "Вы пишете {2:sg|одним|одной|одним} из {2:gen:own} по {1:dat}."
+
+[bca6db449a54]
+en = "You write in the %s with your %s."
+ru = "Вы пишете {2:ins} по {1:dat}."
+
+[e3a66318bf10]
+en = "You add to the writing in the %s with %s."
+ru = "Вы дописываете {2:ins:own} к надписи в {1:loc}."
+
+[8dbd096b0e91]
+en = "You add to the writing in the %s with 1 of %s."
+ru = "Вы дописываете {2:sg|одним|одной|одним} из {2:gen:own} к надписи в {1:loc}."
+
+[691c2b166890]
+en = "You add to the writing in the %s with your %s."
+ru = "Вы дописываете {2:ins} к надписи в {1:loc}."
+
+[6123cb667afe]
+en = "You engrave in the %s with %s."
+ru = "Вы вырезаете {2:ins:own} надпись на {1:loc}."
+
+[d6f6bd415ca4]
+en = "You engrave in the %s with 1 of %s."
+ru = "Вы вырезаете {2:sg|одним|одной|одним} из {2:gen:own} надпись на {1:loc}."
+
+[fd0c5a871584]
+en = "You engrave in the %s with your %s."
+ru = "Вы вырезаете {2:ins} надпись на {1:loc}."
+
+[ab5fa100de52]
+en = "You add to the engraving in the %s with %s."
+ru = "Вы дополняете {2:ins:own} гравировку на {1:loc}."
+
+[06d7e22f4a99]
+en = "You add to the engraving in the %s with 1 of %s."
+ru = "Вы дополняете {2:sg|одним|одной|одним} из {2:gen:own} гравировку на {1:loc}."
+
+[acb1c7287548]
+en = "You add to the engraving in the %s with your %s."
+ru = "Вы дополняете {2:ins} гравировку на {1:loc}."
+
+[f0b6f16b959c]
+en = "You engrave on the %s with %s."
+ru = "Вы вырезаете {2:ins:own} надпись на {1:loc}."
+
+[77903b638f89]
+en = "You engrave on the %s with 1 of %s."
+ru = "Вы вырезаете {2:sg|одним|одной|одним} из {2:gen:own} надпись на {1:loc}."
+
+[b55637fec295]
+en = "You engrave on the %s with your %s."
+ru = "Вы вырезаете {2:ins} надпись на {1:loc}."
+
+[f22a060b8dcd]
+en = "You add to the epitaph on the %s with %s."
+ru = "Вы дополняете {2:ins:own} эпитафию на {1:loc}."
+
+[1627f85131aa]
+en = "You add to the epitaph on the %s with 1 of %s."
+ru = "Вы дополняете {2:sg|одним|одной|одним} из {2:gen:own} эпитафию на {1:loc}."
+
+[2342f2d0bd09]
+en = "You add to the epitaph on the %s with your %s."
+ru = "Вы дополняете {2:ins} эпитафию на {1:loc}."
+
+[85701ae47ddf]
+en = "You burn into the %s with %s."
+ru = "Вы выжигаете {2:ins:own} надпись на {1:loc}."
+
+[eefd24dc2739]
+en = "You burn into the %s with 1 of %s."
+ru = "Вы выжигаете {2:sg|одним|одной|одним} из {2:gen:own} надпись на {1:loc}."
+
+[7070115e635f]
+en = "You burn into the %s with your %s."
+ru = "Вы выжигаете {2:ins} надпись на {1:loc}."
+
+[5611ca3f7b16]
+en = "You add to the text burned into the %s with %s."
+ru = "Вы дополняете {2:ins:own} текст, выжженный на {1:loc}."
+
+[b9f4a933e34e]
+en = "You add to the text burned into the %s with 1 of %s."
+ru = "Вы дополняете {2:sg|одним|одной|одним} из {2:gen:own} текст, выжженный на {1:loc}."
+
+[5f88f24c0a9e]
+en = "You add to the text burned into the %s with your %s."
+ru = "Вы дополняете {2:ins} текст, выжженный на {1:loc}."
+
+[aca69e0aecb5]
+en = "You melt into the %s with %s."
+ru = "Вы выплавляете {2:ins:own} надпись на {1:loc}."
+
+[5fe445cd1fe6]
+en = "You melt into the %s with 1 of %s."
+ru = "Вы выплавляете {2:sg|одним|одной|одним} из {2:gen:own} надпись на {1:loc}."
+
+[7a15cac1ec7a]
+en = "You melt into the %s with your %s."
+ru = "Вы выплавляете {2:ins} надпись на {1:loc}."
+
+[bb86f470d916]
+en = "You add to the text melted into the %s with %s."
+ru = "Вы дополняете {2:ins:own} текст, выплавленный на {1:loc}."
+
+[46574f23f144]
+en = "You add to the text melted into the %s with 1 of %s."
+ru = "Вы дополняете {2:sg|одним|одной|одним} из {2:gen:own} текст, выплавленный на {1:loc}."
+
+[e3c53be85751]
+en = "You add to the text melted into the %s with your %s."
+ru = "Вы дополняете {2:ins} текст, выплавленный на {1:loc}."
+
+[e0339f8d488c]
+en = "You scribble on the %s with %s."
+ru = "Вы черкаете {2:ins:own} на {1:loc}."
+
+[860fc4205a5a]
+en = "You scribble on the %s with 1 of %s."
+ru = "Вы черкаете {2:sg|одним|одной|одним} из {2:gen:own} на {1:loc}."
+
+[83e27e1dc506]
+en = "You scribble on the %s with your %s."
+ru = "Вы черкаете {2:ins} на {1:loc}."
+
+[6022cb9c4308]
+en = "You add to the graffiti on the %s with %s."
+ru = "Вы дополняете {2:ins:own} каракули на {1:loc}."
+
+[98724df1b921]
+en = "You add to the graffiti on the %s with 1 of %s."
+ru = "Вы дополняете {2:sg|одним|одной|одним} из {2:gen:own} каракули на {1:loc}."
+
+[a7d0ca2ac5c3]
+en = "You add to the graffiti on the %s with your %s."
+ru = "Вы дополняете {2:ins} каракули на {1:loc}."
+
+[aa3f235d5c2d]
+en = "You scrawl on the %s with %s."
+ru = "Вы малюете {2:ins:own} на {1:loc}."
+
+[45e205de0ad8]
+en = "You scrawl on the %s with 1 of %s."
+ru = "Вы малюете {2:sg|одним|одной|одним} из {2:gen:own} на {1:loc}."
+
+[61ba78f4f8d3]
+en = "You scrawl on the %s with your %s."
+ru = "Вы малюете {2:ins} на {1:loc}."
+
+[db3517d04e95]
+en = "You add to the scrawl on the %s with %s."
+ru = "Вы дополняете {2:ins:own} мазню на {1:loc}."
+
+[2809f308c2d1]
+en = "You add to the scrawl on the %s with 1 of %s."
+ru = "Вы дополняете {2:sg|одним|одной|одним} из {2:gen:own} мазню на {1:loc}."
+
+[7572e662f5ae]
+en = "You add to the scrawl on the %s with your %s."
+ru = "Вы дополняете {2:ins} мазню на {1:loc}."
+
+[bf7af51876e7]
+en = "You write strangely on the %s with %s."
+ru = "Вы выводите {2:ins:own} странную надпись на {1:loc}."
+
+[31baeec99c40]
+en = "You write strangely on the %s with 1 of %s."
+ru = "Вы выводите {2:sg|одним|одной|одним} из {2:gen:own} странную надпись на {1:loc}."
+
+[71f43418d66b]
+en = "You write strangely on the %s with your %s."
+ru = "Вы выводите {2:ins} странную надпись на {1:loc}."
+
+[234fb5e99431]
+en = "You add to the weird writing on the %s with %s."
+ru = "Вы дополняете {2:ins:own} странную надпись на {1:loc}."
+
+[ef4610d2e218]
+en = "You add to the weird writing on the %s with 1 of %s."
+ru = "Вы дополняете {2:sg|одним|одной|одним} из {2:gen:own} странную надпись на {1:loc}."
+
+[93e61063d136]
+en = "You add to the weird writing on the %s with your %s."
+ru = "Вы дополняете {2:ins} странную надпись на {1:loc}."

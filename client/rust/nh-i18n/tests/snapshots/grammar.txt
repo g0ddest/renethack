@@ -11640,6 +11640,11 @@
   f   Крыса замахивается крысой на крысу.
   n   Копьё замахивается копьём на копьё.
   pl  3 стрелы замахиваются 3 стрелами на 3 стрелы.
+%s sword  [071f44ddc012]
+  m   Тритон меч
+  f   Крыса меч
+  n   Копьё меч
+  pl  3 стрелы меч
 %s takes all your possessions.  [531ba0e0daa1]
   m   Тритон забирает всё ваше имущество.
   f   Крыса забирает всё ваше имущество.
@@ -15056,6 +15061,8 @@ Horses trust their riders, even when not so deserved.  [f90fa5e0a058]
   =   Лошади доверяют своим всадникам, даже когда те этого не заслуживают.
 Housecats have nine lives, kittens only one.  [5be4aea537a7]
   =   У домашних кошек девять жизней, а у котят — только одна.
+How darest thou desecrate my altar!  [4f1ee73cecc6]
+  =   Как смеешь ты осквернять мой алтарь!
 How long can you tread water?  [7413e83d57d5]
   =   Долго вы продержитесь на плаву?
 How much will you offer (suggested: %ld or %ld)?  [4927766b0b39]
@@ -15091,6 +15098,8 @@ I am here.  Wish you were fine.  [90ff7292ebb7]
   =   Я на месте.  Жаль, что вы здоровы.
 I am not dead yet, but watch for further reports.  [f55a742ea9be]
   =   Я ещё не умер, но следите за новостями.
+I believe it not!  [3013fd966b7f]
+  =   Быть того не может!
 I believe them bones are me.  [4fbe1f79a02c]
   =   Похоже, эти кости — это я.
 I broke his brain.  [c61fe5816bb1]
@@ -15490,9 +15499,9 @@ Just picked up: %s  [bf8231949896]
 KAABLAMM!!!  You triggered a land mine!  [80a1795b1eaa]
   =   БАБАХ!!!  Вы наступили на мину!
 KABOOM!!  %s was booby-trapped!  [356c5e602f2b]
-  m   БА-БАХ!!  тритон был заминирован!
-  f   БА-БАХ!!  крыса была заминирована!
-  n   БА-БАХ!!  копьё было заминировано!
+  m   БА-БАХ!!  Тритон был заминирован!
+  f   БА-БАХ!!  Крыса была заминирована!
+  n   БА-БАХ!!  Копьё было заминировано!
   pl  БА-БАХ!!  3 стрелы были заминированы!
 Katanas are very sharp; watch you don't cut yourself.  [6a724e1f7587]
   =   Катаны очень острые: смотрите не порежьтесь.
@@ -15746,6 +15755,8 @@ Moreover, you have no gold.  [df3ee140da5c]
   =   К тому же у вас нет золота.
 Morgoth  [a257ec27316d]
   =   Моргот
+Mortal, thou hast done well!  [63569eb6a753]
+  =   Славная работа, о смертное создание!
 Most monsters can't swim.  [d78b96d4f6d8]
   =   Большинство монстров не умеет плавать.
 Most monsters prefer minced meat.  That's why they are hitting you!  [c649e5ff830e]
@@ -16938,6 +16949,10 @@ So then I says, How do I know you're the real angel of death?  [2ecc7bcc7e0f]
   =   А я ему: откуда мне знать, что ты настоящий ангел смерти?
 So this is how you repay loyalty?  [b16871555609]
   =   Так-то вы платите за верность?
+So, mortal!  You dare desecrate my High Temple!  [29df5137c0b9]
+  =   Так, смертное создание!  Ты смеешь осквернять мой Верховный храм!
+So, mortal!  You dare desecrate my altar!  [67396858767b]
+  =   Так, смертное создание!  Ты смеешь осквернять мой алтарь!
 Some %s gets into your %s!  [c693002e0a67]
   m   В ваш тритона попадает немного тритона!
   f   В вашу крысу попадает немного крысы!
@@ -17058,6 +17073,11 @@ Some wood objects meld, and %s arises from the pile!  [b2c4b2077547]
   f   Несколько деревянных предметов сливаются воедино, и из груды поднимается крыса!
   n   Несколько деревянных предметов сливаются воедино, и из груды поднимается копьё!
   pl  Несколько деревянных предметов сливаются воедино, и из груды поднимаются 3 стрелы!
+Some writing vanishes from %s head!  [7aedc828d31a]
+  m   С головы тритона исчезает какая-то надпись!
+  f   С головы крысы исчезает какая-то надпись!
+  n   С головы копья исчезает какая-то надпись!
+  pl  С головы 3 стрел исчезает какая-то надпись!
 Some writing vanishes from your head!  [2cf2e61402bf]
   =   С вашей головы исчезает какая-то надпись!
 Someone once said that what goes up < might come down >.  [9214f640ba9e]
@@ -17259,6 +17279,8 @@ Suddenly, you realize that %s has noticed you...  [b8765efb1935]
   f   Внезапно вы понимаете, что крыса заметила вас...
   n   Внезапно вы понимаете, что копьё заметило вас...
   pl  Внезапно вы понимаете, что 3 стрелы заметили вас...
+Suffer, infidel!  [774583207e70]
+  =   Страдай за своё неверие!
 Sum quod eris  [b2e142da49f6]
   =   Я — то, чем будешь ты
 Sure, trust me, I'm a lawyer...  [3921dbfcf11b]
@@ -17788,6 +17810,8 @@ The air crackles around %s.  [f653cffe3626]
   f   Воздух вокруг крысы потрескивает.
   n   Воздух вокруг копья потрескивает.
   pl  Воздух вокруг 3 стрел потрескивает.
+The air here seems foul.  [c5212a24b345]
+  =   Воздух здесь какой-то спёртый.
 The altar glows %s.  [cb2f8e7bdfde]
   m   Алтарь вспыхивает тритоном светом.
   f   Алтарь вспыхивает крысой светом.
@@ -18110,6 +18134,11 @@ The power of %s flows through your body!  You feel\nas if you could now take on 
   f   Сила крысы струится по вашему телу!  Вам кажется,\nчто теперь вы одолели бы и самого Волшебника Йендора, но\nвы знаете, что должны вернуть крысу крысе.
   n   Сила копья струится по вашему телу!  Вам кажется,\nчто теперь вы одолели бы и самого Волшебника Йендора, но\nвы знаете, что должны вернуть копьё копью.
   pl  Сила 3 стрел струится по вашему телу!  Вам кажется,\nчто теперь вы одолели бы и самого Волшебника Йендора, но\nвы знаете, что должны вернуть 3 стрелы 3 стрелам.
+The pressure on your %s increases.  [84ac0bdd4982]
+  m   Давление на ваш тритона нарастает.
+  f   Давление на вашу крысу нарастает.
+  n   Давление на ваше копьё нарастает.
+  pl  Давление на ваши 3 стрелы нарастает.
 The reports of my demise are completely accurate  [7f9944f33f72]
   =   Слухи о моей смерти совершенно точны
 The ring is stuck.  [7e3180b9e11d]
@@ -19503,6 +19532,10 @@ Those damn little hairs tell you that you are nearer to %s.  [6e7e3c1afe3a]
   pl  Проклятые волоски подсказывают вам, что вы ближе к 3 стрелам.
 Those who wield a cockatrice corpse have a rocky road ahead of them.  [65913db4248c]
   =   Кто держит в руках труп василиска, тому предстоит каменистый путь.
+Thou hast angered me.  [666aa23d00b0]
+  =   Ты навлекаешь на себя мой гнев.
+Thou hast pleased me with thy progress,  [ba9755b4973d]
+  =   Твои успехи радуют меня,
 Though the shopkeepers be wary, thieves have nevertheless stolen much by using\ntheir digging wands to hasten exits through the pavement.  [84749e351cde]
   =   Хоть лавочники и осторожны, воры немало у них похитили, прорывая себе\nпалочками копания поспешный выход сквозь пол.
 Throne sit effect (1..13) [0=random]  [5a342da55f60]
@@ -19768,6 +19801,8 @@ Use '%s' to use two weapons at once  [15fcaf6a8b25]
   pl  Клавишей '3 стрелы' сражайтесь двумя оружиями сразу
 Use command '#optionsfull' to get the complete options list.  [020b8579f7ce]
   =   Полный список параметров — команда «#optionsfull».
+Use my gift wisely!  [2821c9e7289e]
+  =   Распорядись моим даром мудро!
 Use the can to grease an item  [e5cf1a81f101]
   =   Смазать предмет из этой банки
 Use this kit to tin a corpse  [8c28d4ee56e8]
@@ -19815,6 +19850,8 @@ View known spells list sorted  [348b69f4cf1c]
   =   Как упорядочить список известных заклинаний
 View which?  [01588766108a]
   =   Что показать?
+Vile creature, thou durst call upon me?  [e7f6f7a7a70d]
+  =   Мерзкая тварь, ты смеешь взывать ко мне?
 Virtually Alive  [d8bdfb4bd50e]
   =   Виртуально жив
 Visitors are requested not to apply genocide to shopkeepers.  [0a2e8cec180d]
@@ -19849,6 +19886,8 @@ Wait!  There's something hiding under %s!  [c75cf21b3f5f]
   pl  Стойте!  Под 3 стрелами что-то прячется!
 Wait!  There's something there you can't see!  [73850eeb8f93]
   =   Стойте!  Там что-то, чего вы не видите!
+Walk no more, perversion of nature!  [17e5924f0377]
+  =   Не ходить тебе более по земле, извращение природы!
 Waltz, dumb nymph, for quick jigs vex.  [88c022dbe34a]
   =   Съешь же ещё этих мягких французских булок, нимфа, да выпей чаю.
 Want a hint?  Zap a wand of make invisible on your weapon!  [1ea28c4ed96c]
@@ -20793,6 +20832,126 @@ You %s...  [490c4969ac30]
   f   Вас шатает...
   n   Вас шатает...
   pl  Вас шатает...
+You add to the engraving in the %s with %s.  [ab5fa100de52]
+  m   Вы дополняете тритоном гравировку на тритоне.
+  f   Вы дополняете крысой гравировку на крысе.
+  n   Вы дополняете копьём гравировку на копье.
+  pl  Вы дополняете 3 стрелами гравировку на 3 стрелах.
+You add to the engraving in the %s with 1 of %s.  [06d7e22f4a99]
+  m   Вы дополняете одним из тритона гравировку на тритоне.
+  f   Вы дополняете одной из крысы гравировку на крысе.
+  n   Вы дополняете одним из копья гравировку на копье.
+  pl  Вы дополняете одной из 3 стрел гравировку на 3 стрелах.
+You add to the engraving in the %s with your %s.  [acb1c7287548]
+  m   Вы дополняете тритоном гравировку на тритоне.
+  f   Вы дополняете крысой гравировку на крысе.
+  n   Вы дополняете копьём гравировку на копье.
+  pl  Вы дополняете 3 стрелами гравировку на 3 стрелах.
+You add to the epitaph on the %s with %s.  [f22a060b8dcd]
+  m   Вы дополняете тритоном эпитафию на тритоне.
+  f   Вы дополняете крысой эпитафию на крысе.
+  n   Вы дополняете копьём эпитафию на копье.
+  pl  Вы дополняете 3 стрелами эпитафию на 3 стрелах.
+You add to the epitaph on the %s with 1 of %s.  [1627f85131aa]
+  m   Вы дополняете одним из тритона эпитафию на тритоне.
+  f   Вы дополняете одной из крысы эпитафию на крысе.
+  n   Вы дополняете одним из копья эпитафию на копье.
+  pl  Вы дополняете одной из 3 стрел эпитафию на 3 стрелах.
+You add to the epitaph on the %s with your %s.  [2342f2d0bd09]
+  m   Вы дополняете тритоном эпитафию на тритоне.
+  f   Вы дополняете крысой эпитафию на крысе.
+  n   Вы дополняете копьём эпитафию на копье.
+  pl  Вы дополняете 3 стрелами эпитафию на 3 стрелах.
+You add to the graffiti on the %s with %s.  [6022cb9c4308]
+  m   Вы дополняете тритоном каракули на тритоне.
+  f   Вы дополняете крысой каракули на крысе.
+  n   Вы дополняете копьём каракули на копье.
+  pl  Вы дополняете 3 стрелами каракули на 3 стрелах.
+You add to the graffiti on the %s with 1 of %s.  [98724df1b921]
+  m   Вы дополняете одним из тритона каракули на тритоне.
+  f   Вы дополняете одной из крысы каракули на крысе.
+  n   Вы дополняете одним из копья каракули на копье.
+  pl  Вы дополняете одной из 3 стрел каракули на 3 стрелах.
+You add to the graffiti on the %s with your %s.  [a7d0ca2ac5c3]
+  m   Вы дополняете тритоном каракули на тритоне.
+  f   Вы дополняете крысой каракули на крысе.
+  n   Вы дополняете копьём каракули на копье.
+  pl  Вы дополняете 3 стрелами каракули на 3 стрелах.
+You add to the scrawl on the %s with %s.  [db3517d04e95]
+  m   Вы дополняете тритоном мазню на тритоне.
+  f   Вы дополняете крысой мазню на крысе.
+  n   Вы дополняете копьём мазню на копье.
+  pl  Вы дополняете 3 стрелами мазню на 3 стрелах.
+You add to the scrawl on the %s with 1 of %s.  [2809f308c2d1]
+  m   Вы дополняете одним из тритона мазню на тритоне.
+  f   Вы дополняете одной из крысы мазню на крысе.
+  n   Вы дополняете одним из копья мазню на копье.
+  pl  Вы дополняете одной из 3 стрел мазню на 3 стрелах.
+You add to the scrawl on the %s with your %s.  [7572e662f5ae]
+  m   Вы дополняете тритоном мазню на тритоне.
+  f   Вы дополняете крысой мазню на крысе.
+  n   Вы дополняете копьём мазню на копье.
+  pl  Вы дополняете 3 стрелами мазню на 3 стрелах.
+You add to the text burned into the %s with %s.  [5611ca3f7b16]
+  m   Вы дополняете тритоном текст, выжженный на тритоне.
+  f   Вы дополняете крысой текст, выжженный на крысе.
+  n   Вы дополняете копьём текст, выжженный на копье.
+  pl  Вы дополняете 3 стрелами текст, выжженный на 3 стрелах.
+You add to the text burned into the %s with 1 of %s.  [b9f4a933e34e]
+  m   Вы дополняете одним из тритона текст, выжженный на тритоне.
+  f   Вы дополняете одной из крысы текст, выжженный на крысе.
+  n   Вы дополняете одним из копья текст, выжженный на копье.
+  pl  Вы дополняете одной из 3 стрел текст, выжженный на 3 стрелах.
+You add to the text burned into the %s with your %s.  [5f88f24c0a9e]
+  m   Вы дополняете тритоном текст, выжженный на тритоне.
+  f   Вы дополняете крысой текст, выжженный на крысе.
+  n   Вы дополняете копьём текст, выжженный на копье.
+  pl  Вы дополняете 3 стрелами текст, выжженный на 3 стрелах.
+You add to the text melted into the %s with %s.  [bb86f470d916]
+  m   Вы дополняете тритоном текст, выплавленный на тритоне.
+  f   Вы дополняете крысой текст, выплавленный на крысе.
+  n   Вы дополняете копьём текст, выплавленный на копье.
+  pl  Вы дополняете 3 стрелами текст, выплавленный на 3 стрелах.
+You add to the text melted into the %s with 1 of %s.  [46574f23f144]
+  m   Вы дополняете одним из тритона текст, выплавленный на тритоне.
+  f   Вы дополняете одной из крысы текст, выплавленный на крысе.
+  n   Вы дополняете одним из копья текст, выплавленный на копье.
+  pl  Вы дополняете одной из 3 стрел текст, выплавленный на 3 стрелах.
+You add to the text melted into the %s with your %s.  [e3c53be85751]
+  m   Вы дополняете тритоном текст, выплавленный на тритоне.
+  f   Вы дополняете крысой текст, выплавленный на крысе.
+  n   Вы дополняете копьём текст, выплавленный на копье.
+  pl  Вы дополняете 3 стрелами текст, выплавленный на 3 стрелах.
+You add to the weird writing on the %s with %s.  [234fb5e99431]
+  m   Вы дополняете тритоном странную надпись на тритоне.
+  f   Вы дополняете крысой странную надпись на крысе.
+  n   Вы дополняете копьём странную надпись на копье.
+  pl  Вы дополняете 3 стрелами странную надпись на 3 стрелах.
+You add to the weird writing on the %s with 1 of %s.  [ef4610d2e218]
+  m   Вы дополняете одним из тритона странную надпись на тритоне.
+  f   Вы дополняете одной из крысы странную надпись на крысе.
+  n   Вы дополняете одним из копья странную надпись на копье.
+  pl  Вы дополняете одной из 3 стрел странную надпись на 3 стрелах.
+You add to the weird writing on the %s with your %s.  [93e61063d136]
+  m   Вы дополняете тритоном странную надпись на тритоне.
+  f   Вы дополняете крысой странную надпись на крысе.
+  n   Вы дополняете копьём странную надпись на копье.
+  pl  Вы дополняете 3 стрелами странную надпись на 3 стрелах.
+You add to the writing in the %s with %s.  [e3a66318bf10]
+  m   Вы дописываете тритоном к надписи в тритоне.
+  f   Вы дописываете крысой к надписи в крысе.
+  n   Вы дописываете копьём к надписи в копье.
+  pl  Вы дописываете 3 стрелами к надписи в 3 стрелах.
+You add to the writing in the %s with 1 of %s.  [8dbd096b0e91]
+  m   Вы дописываете одним из тритона к надписи в тритоне.
+  f   Вы дописываете одной из крысы к надписи в крысе.
+  n   Вы дописываете одним из копья к надписи в копье.
+  pl  Вы дописываете одной из 3 стрел к надписи в 3 стрелах.
+You add to the writing in the %s with your %s.  [691c2b166890]
+  m   Вы дописываете тритоном к надписи в тритоне.
+  f   Вы дописываете крысой к надписи в крысе.
+  n   Вы дописываете копьём к надписи в копье.
+  pl  Вы дописываете 3 стрелами к надписи в 3 стрелах.
 You again sense %s demanding your attendance.  [2fd0251a65df]
   m   Вы снова чувствуете, как тритон требует вашего присутствия.
   f   Вы снова чувствуете, как крыса требует вашего присутствия.
@@ -20845,6 +21004,8 @@ You and %s teleport together.  [8225054e55d2]
   pl  Вы и 3 стрелы телепортируетесь вместе.
 You and Schroedinger's cat  [4cc144864b08]
   =   Вы и кот Шрёдингера
+You are a statue.  [6bbe77c06b93]
+  =   Вы — статуя.
 You are about to hurl!  [c076e7cd0672]
   =   Вас сейчас вывернет наизнанку!
 You are about to vomit.  [0ca969db389a]
@@ -20906,6 +21067,16 @@ You are already wielding that!  [b3a34a96c47d]
   =   Вы и так это держите!
 You are at Death's door.  [cfda0b23a659]
   =   Вы на пороге смерти.
+You are at Death's door.  %s are inviting you in.  [107e24ecfee9]
+  m   Вы на пороге смерти.  Вас приглашают войти.
+  f   Вы на пороге смерти.  Вас приглашают войти.
+  n   Вы на пороге смерти.  Вас приглашают войти.
+  pl  Вы на пороге смерти.  Вас приглашают войти.
+You are at Death's door.  %s is inviting you in.  [d4f1b8dfea78]
+  m   Вы на пороге смерти.  Вас приглашают войти.
+  f   Вы на пороге смерти.  Вас приглашают войти.
+  n   Вы на пороге смерти.  Вас приглашают войти.
+  pl  Вы на пороге смерти.  Вас приглашают войти.
 You are back at %s.\n\nInstantly you sense a subtle change in your karma.  You seem to know that\nif you do not succeed in your quest, %s will have destroyed\nthe kami of %s before you return again.  [853fcbe93a3e]
   m   Вы снова в тритоне.\n\nВы тотчас ощущаете едва уловимую перемену в своей карме.  Вы будто\nзнаете: если ваш поход не удастся, тритон уничтожит ками тритона прежде,\nчем вы вернётесь сюда снова.
   f   Вы снова в крысе.\n\nВы тотчас ощущаете едва уловимую перемену в своей карме.  Вы будто\nзнаете: если ваш поход не удастся, крыса уничтожит ками крысы прежде,\nчем вы вернётесь сюда снова.
@@ -20971,6 +21142,8 @@ You are enveloped in a cloud of steam!  [f8d5cb5e0f8f]
   =   Вас окутывает облако пара!
 You are feeling mildly nauseated.  [16779e293c04]
   =   Вас слегка подташнивает.
+You are feeling rather flabby.  [00d8c174c035]
+  =   Вы чувствуете себя довольно дряблым.
 You are firmly stuck in the cooling rock.  [86749fdb2071]
   =   Вы намертво застреваете в остывающем камне.
 You are frightened to death, and unable to move.  [43b6452fc7e2]
@@ -21084,6 +21257,8 @@ You are required to supply your name. -  [66427e852d3c]
   =   Вы должны назвать своё имя. —
 You are shocked back to your senses!  [c0302fee33fb]
   =   Вы резко приходите в себя!
+You are slowing down.  [e38e41934360]
+  =   Вы замедляетесь.
 You are splashed by %s %s!  [3b143a22350a]
   m   Вас забрызгивает тритоном тритона!
   f   Вас забрызгивает крысой крысы!
@@ -21157,6 +21332,16 @@ You are thrown off of %s!  [d8adbe80cbf4]
   pl  Вас сбрасывает с 3 стрел!
 You are too impaired to perform the rite.  [26388d81ad2c]
   =   Вы не в том состоянии, чтобы совершить обряд.
+You are turning a little %s.  [75d1656f8857]
+  m   Вы становитесь слегка тритоном.
+  f   Вы становитесь слегка крысой.
+  n   Вы становитесь слегка копьём.
+  pl  Вы становитесь слегка 3 стрелами.
+You are turning into %s.  [c8798339525e]
+  m   Вы превращаетесь в тритона.
+  f   Вы превращаетесь в крысу.
+  n   Вы превращаетесь в копьё.
+  pl  Вы превращаетесь в 3 стрелы.
 You are turning into slime.  [7ea709495d81]
   =   Вы превращаетесь в слизь.
 You are turning into stone.  [36052cdeb757]
@@ -21444,6 +21629,11 @@ You breathe a sigh of relief as you find yourself back in the familiar\nsurround
   pl  Вы облегчённо вздыхаете, оказавшись в знакомых местах 3 стрел.\n\nНо вскоре вы замечаете, что всё выглядит не так, как до вашего отъезда.\nГород тёмен и тих.  Из-за городских стен не доносится ни звука, в полях\nне горят костры.  По правде говоря, в полях вы вообще не\nзамечаете никакого движения, а посевы будто много недель стоят\nбез присмотра.
 You breathe acid on yourself...  [4e5ea1833a68]
   =   Вы обдаёте себя кислотой...
+You brush against %s %s.  [dcf2635e342d]
+  m   Вы задеваете тритона тритона.
+  f   Вы задеваете крысу крысы.
+  n   Вы задеваете копьё копья.
+  pl  Вы задеваете 3 стрелы 3 стрел.
 You brush against %s tail.  [537de788485a]
   m   Вы задеваете хвост тритона.
   f   Вы задеваете хвост крысы.
@@ -21454,6 +21644,21 @@ You brush against %s.  [3016a5119a33]
   f   Вы задеваете крысу.
   n   Вы задеваете копьё.
   pl  Вы задеваете 3 стрелы.
+You burn into the %s with %s.  [85701ae47ddf]
+  m   Вы выжигаете тритоном надпись на тритоне.
+  f   Вы выжигаете крысой надпись на крысе.
+  n   Вы выжигаете копьём надпись на копье.
+  pl  Вы выжигаете 3 стрелами надпись на 3 стрелах.
+You burn into the %s with 1 of %s.  [eefd24dc2739]
+  m   Вы выжигаете одним из тритона надпись на тритоне.
+  f   Вы выжигаете одной из крысы надпись на крысе.
+  n   Вы выжигаете одним из копья надпись на копье.
+  pl  Вы выжигаете одной из 3 стрел надпись на 3 стрелах.
+You burn into the %s with your %s.  [7070115e635f]
+  m   Вы выжигаете тритоном надпись на тритоне.
+  f   Вы выжигаете крысой надпись на крысе.
+  n   Вы выжигаете копьём надпись на копье.
+  pl  Вы выжигаете 3 стрелами надпись на 3 стрелах.
 You burn to a crisp...  [ccffe64e3d36]
   =   Вы сгораете дотла...
 You burn your %s.  [b14597031624]
@@ -21519,6 +21724,8 @@ You can make holy water by boiling the hell out of it.  [c47a9b91faf1]
   =   Святую воду можно получить, если выпарить из неё всю чертовщину.
 You can move again.  [614e16bd9ab7]
   =   Вы снова можете двигаться.
+You can no longer breathe.  [4de07c95eb25]
+  =   Вы больше не можете дышать.
 You can no longer see through yourself!  [b19f5840c423]
   =   Вы больше не видите себя насквозь!
 You can no longer see yourself.  [3f9f643cb11b]
@@ -22879,6 +23086,36 @@ You englut %s.  [462fccb98699]
   f   Вы заглатываете крысу.
   n   Вы заглатываете копьё.
   pl  Вы заглатываете 3 стрелы.
+You engrave in the %s with %s.  [6123cb667afe]
+  m   Вы вырезаете тритоном надпись на тритоне.
+  f   Вы вырезаете крысой надпись на крысе.
+  n   Вы вырезаете копьём надпись на копье.
+  pl  Вы вырезаете 3 стрелами надпись на 3 стрелах.
+You engrave in the %s with 1 of %s.  [d6f6bd415ca4]
+  m   Вы вырезаете одним из тритона надпись на тритоне.
+  f   Вы вырезаете одной из крысы надпись на крысе.
+  n   Вы вырезаете одним из копья надпись на копье.
+  pl  Вы вырезаете одной из 3 стрел надпись на 3 стрелах.
+You engrave in the %s with your %s.  [fd0c5a871584]
+  m   Вы вырезаете тритоном надпись на тритоне.
+  f   Вы вырезаете крысой надпись на крысе.
+  n   Вы вырезаете копьём надпись на копье.
+  pl  Вы вырезаете 3 стрелами надпись на 3 стрелах.
+You engrave on the %s with %s.  [f0b6f16b959c]
+  m   Вы вырезаете тритоном надпись на тритоне.
+  f   Вы вырезаете крысой надпись на крысе.
+  n   Вы вырезаете копьём надпись на копье.
+  pl  Вы вырезаете 3 стрелами надпись на 3 стрелах.
+You engrave on the %s with 1 of %s.  [77903b638f89]
+  m   Вы вырезаете одним из тритона надпись на тритоне.
+  f   Вы вырезаете одной из крысы надпись на крысе.
+  n   Вы вырезаете одним из копья надпись на копье.
+  pl  Вы вырезаете одной из 3 стрел надпись на 3 стрелах.
+You engrave on the %s with your %s.  [b55637fec295]
+  m   Вы вырезаете тритоном надпись на тритоне.
+  f   Вы вырезаете крысой надпись на крысе.
+  n   Вы вырезаете копьём надпись на копье.
+  pl  Вы вырезаете 3 стрелами надпись на 3 стрелах.
 You engulf %s!  [4415cbb6efff]
   m   Вы поглощаете тритона!
   f   Вы поглощаете крысу!
@@ -23451,6 +23688,8 @@ You find a hidden door.  [547db6aa041f]
   =   Вы находите потайную дверь.
 You find a hidden passage.  [386d7f68438a]
   =   Вы находите потайной проход.
+You find it hard to breathe.  [585d08044ac2]
+  =   Вам трудно дышать.
 You find old loot: %s  [322f8f03087c]
   m   Вы находите старую добычу: тритон
   f   Вы находите старую добычу: крыса
@@ -23481,24 +23720,85 @@ You find yourself standing in sight of %s.  Something\nis obviously wrong here. 
 You find yourself suspended in an air bubble surrounded by water.  [ed4e03c83e0b]
   =   Вы оказываетесь в воздушном пузыре посреди воды.
 You finish %s.  [18c2feb65720]
-  m   Вы заканчиваете тритон.
-  f   Вы заканчиваете крыса.
-  n   Вы заканчиваете копьё.
-  pl  Вы заканчиваете 3 стрелы.
+  m   Вы заканчиваете снимать с себя снаряжение.
+  f   Вы заканчиваете снимать с себя снаряжение.
+  n   Вы заканчиваете снимать с себя снаряжение.
+  pl  Вы заканчиваете снимать с себя снаряжение.
+You finish burning your message into the floor.  [8bef84fcd426]
+  =   Вы заканчиваете выжигать своё послание на полу.
 You finish consuming %s.  [a1b53fd3c634]
   m   Вы доедаете тритона.
   f   Вы доедаете крысу.
   n   Вы доедаете копьё.
   pl  Вы доедаете 3 стрелы.
+You finish defacing the dungeon.  [1613dbac6d64]
+  =   Вы заканчиваете портить подземелье своими каракулями.
 You finish eating %s.  [d4988d25efb2]
   m   Вы доедаете тритона.
   f   Вы доедаете крысу.
   n   Вы доедаете копьё.
   pl  Вы доедаете 3 стрелы.
+You finish engraving.  [577e3cac3ebb]
+  =   Вы заканчиваете вырезать надпись.
+You finish melting your message into the ice.  [c987e38d2e60]
+  =   Вы заканчиваете выплавлять своё послание во льду.
+You finish scrawling.  [aa23f3d6fc17]
+  =   Вы заканчиваете малевать.
+You finish taking off your %s.  [1a6e75eb0bd1]
+  m   Вы заканчиваете снимать тритона.
+  f   Вы заканчиваете снимать крысу.
+  n   Вы заканчиваете снимать копьё.
+  pl  Вы заканчиваете снимать 3 стрелы.
+You finish taking off your apron.  [ab1da5ea209f]
+  =   Вы заканчиваете снимать фартук.
+You finish taking off your boots.  [8e2f04c378ff]
+  =   Вы заканчиваете снимать сапоги.
+You finish taking off your cloak.  [634c60216a9f]
+  =   Вы заканчиваете снимать плащ.
+You finish taking off your dragon mail.  [f77158d58ed7]
+  =   Вы заканчиваете снимать драконий доспех.
+You finish taking off your dragon scales.  [62f11a639ef8]
+  =   Вы заканчиваете снимать драконью чешую.
+You finish taking off your gauntlets.  [61eb62d00db0]
+  =   Вы заканчиваете снимать рукавицы.
+You finish taking off your gloves.  [029a50810069]
+  =   Вы заканчиваете снимать перчатки.
+You finish taking off your hat.  [7c7d6a2370aa]
+  =   Вы заканчиваете снимать шляпу.
+You finish taking off your helm.  [f1ca75216dad]
+  =   Вы заканчиваете снимать шлем.
+You finish taking off your jacket.  [15e09a5e1c82]
+  =   Вы заканчиваете снимать куртку.
+You finish taking off your mail.  [5c8ca7b3589a]
+  =   Вы заканчиваете снимать доспех.
+You finish taking off your robe.  [415ef64a8aa3]
+  =   Вы заканчиваете снимать мантию.
+You finish taking off your shield.  [4d30a32283da]
+  =   Вы заканчиваете снимать щит.
+You finish taking off your shirt.  [a2dab109b7be]
+  =   Вы заканчиваете снимать рубашку.
+You finish taking off your shoes.  [55fa93a30c9a]
+  =   Вы заканчиваете снимать башмаки.
+You finish taking off your silver shield.  [ac711bd31315]
+  =   Вы заканчиваете снимать серебряный щит.
+You finish taking off your smock.  [a2ac53e744b0]
+  =   Вы заканчиваете снимать фартук.
+You finish taking off your smooth shield.  [9dbd514074c5]
+  =   Вы заканчиваете снимать гладкий щит.
+You finish taking off your suit.  [b73fc50269ed]
+  =   Вы заканчиваете снимать доспех.
+You finish taking off your wrapping.  [82081f815089]
+  =   Вы заканчиваете снимать обмотку.
+You finish writing in the dust.  [e5558277e4f8]
+  =   Вы заканчиваете писать в пыли.
+You finish writing in the frost.  [a7e96779125f]
+  =   Вы заканчиваете писать на инее.
 You finish your dressing maneuver.  [b12a787866e8]
   =   Вы заканчиваете одеваться.
 You finish your prayer.  [7486143d6542]
   =   Вы заканчиваете молитву.
+You finish your weird engraving.  [330aa21f712e]
+  =   Вы заканчиваете свою странную надпись.
 You flick a bug off of the %s.  [db657b7217f8]
   m   Вы сбиваете жука с тритона.
   f   Вы сбиваете жука с крысы.
@@ -23516,6 +23816,8 @@ You flip through the pages of %s.  [a4b5a648498c]
   pl  Вы листаете 3 стрелы.
 You float imperceptibly.  [755462bf8966]
   =   Вы парите совершенно неслышно.
+You float slightly lower.  [aeae8bcc43e9]
+  =   Вы опускаетесь чуть ниже.
 You fly down a deep shaft!  [8256a22f0451]
   =   Вы летите вниз по глубокой шахте!
 You fly down a shaft!  [fd7cfa23da49]
@@ -23677,6 +23979,11 @@ You have an uneasy feeling.  [76749f173980]
   =   Вам не по себе.
 You have an uneasy feeling...  [0cc171a92f3f]
   =   Вам не по себе...
+You have become %s.  [4489b6cd4d48]
+  m   Вы стали тритоном.
+  f   Вы стали крысой.
+  n   Вы стали копьём.
+  pl  Вы стали 3 стрелами.
 You have established %ld zorkmid credit.  [410ed227e384]
   m   Вы открываете кредит в 1 зоркмид.
   f   Вы открываете кредит в 3 зоркмида.
@@ -23797,6 +24104,8 @@ You have trouble removing %s.  Continue?  [4df416ffc953]
   f   Вам трудно вынуть крысу.  Продолжить?
   n   Вам трудно вынуть копьё.  Продолжить?
   pl  Вам трудно вынуть 3 стрелы.  Продолжить?
+You have turned to stone.  [eba65be6ab75]
+  =   Вы обратились в камень.
 You head butt %s.  [2ca13b934cfb]
   m   Вы бодаете тритона.
   f   Вы бодаете крысу.
@@ -24025,6 +24334,8 @@ You hug %s.  [492b6c59f880]
   f   Вы обхватываете крысу.
   n   Вы обхватываете копьё.
   pl  Вы обхватываете 3 стрелы.
+You hurl chunks!  [bf4622958bfa]
+  =   Вы мечете харчи!
 You hurriedly regurgitate the sizzling in your %s.  [9f41ea49ba9f]
   m   Вы поспешно отрыгиваете то, что шипит у вас в тритоне.
   f   Вы поспешно отрыгиваете то, что шипит у вас в крысе.
@@ -24183,6 +24494,21 @@ You may want to dip into a potion of bottled blessings.  [ad80e2818800]
   =   Вам, пожалуй, стоит окунуть что-нибудь в зелье разлитых по бутылкам благословений.
 You may wish for an object.  [8e88febed5a8]
   =   Вы можете пожелать любой предмет.
+You melt into the %s with %s.  [aca69e0aecb5]
+  m   Вы выплавляете тритоном надпись на тритоне.
+  f   Вы выплавляете крысой надпись на крысе.
+  n   Вы выплавляете копьём надпись на копье.
+  pl  Вы выплавляете 3 стрелами надпись на 3 стрелах.
+You melt into the %s with 1 of %s.  [5fe445cd1fe6]
+  m   Вы выплавляете одним из тритона надпись на тритоне.
+  f   Вы выплавляете одной из крысы надпись на крысе.
+  n   Вы выплавляете одним из копья надпись на копье.
+  pl  Вы выплавляете одной из 3 стрел надпись на 3 стрелах.
+You melt into the %s with your %s.  [7a15cac1ec7a]
+  m   Вы выплавляете тритоном надпись на тритоне.
+  f   Вы выплавляете крысой надпись на крысе.
+  n   Вы выплавляете копьём надпись на копье.
+  pl  Вы выплавляете 3 стрелами надпись на 3 стрелах.
 You might be able to bribe a demon lord.  [a16e86e5da6d]
   =   Демона-лорда можно и подкупить.
 You might trick a shopkeeper if you're invisible.  [8eea77fbd1cd]
@@ -24625,6 +24951,36 @@ You rust!  [1f9588d1deb6]
   =   Вы ржавеете!
 You said it wasn't poisonous!  [26288cbee97b]
   =   Вы говорили, что оно не ядовитое!
+You scrawl on the %s with %s.  [aa3f235d5c2d]
+  m   Вы малюете тритоном на тритоне.
+  f   Вы малюете крысой на крысе.
+  n   Вы малюете копьём на копье.
+  pl  Вы малюете 3 стрелами на 3 стрелах.
+You scrawl on the %s with 1 of %s.  [45e205de0ad8]
+  m   Вы малюете одним из тритона на тритоне.
+  f   Вы малюете одной из крысы на крысе.
+  n   Вы малюете одним из копья на копье.
+  pl  Вы малюете одной из 3 стрел на 3 стрелах.
+You scrawl on the %s with your %s.  [61ba78f4f8d3]
+  m   Вы малюете тритоном на тритоне.
+  f   Вы малюете крысой на крысе.
+  n   Вы малюете копьём на копье.
+  pl  Вы малюете 3 стрелами на 3 стрелах.
+You scribble on the %s with %s.  [e0339f8d488c]
+  m   Вы черкаете тритоном на тритоне.
+  f   Вы черкаете крысой на крысе.
+  n   Вы черкаете копьём на копье.
+  pl  Вы черкаете 3 стрелами на 3 стрелах.
+You scribble on the %s with 1 of %s.  [860fc4205a5a]
+  m   Вы черкаете одним из тритона на тритоне.
+  f   Вы черкаете одной из крысы на крысе.
+  n   Вы черкаете одним из копья на копье.
+  pl  Вы черкаете одной из 3 стрел на 3 стрелах.
+You scribble on the %s with your %s.  [83e27e1dc506]
+  m   Вы черкаете тритоном на тритоне.
+  f   Вы черкаете крысой на крысе.
+  n   Вы черкаете копьём на копье.
+  pl  Вы черкаете 3 стрелами на 3 стрелах.
 You seduce %s and he starts to take off her clothes.  [9228eaee614e]
   m   Вы соблазняете тритона, и он начинает раздеваться.
   f   Вы соблазняете крысу, и она начинает раздеваться.
@@ -24747,6 +25103,8 @@ You seem no deader than before.  [d04be81eaba8]
   =   Похоже, мертвее вы не стали.
 You seem slower.  [bda447903849]
   =   Кажется, вы стали медленнее.
+You seem to have some trouble breathing.  [da2680fedf9b]
+  =   Кажется, вам становится трудно дышать.
 You seem unaffected by the poison.  [f04835f41247]
   =   Яд, похоже, на вас не действует.
 You seem unaffected.  [6b6ff5beb4f9]
@@ -24908,6 +25266,8 @@ You start playing %s.  [b7fb5fe95834]
   f   Вы начинаете играть на крысе.
   n   Вы начинаете играть на копье.
   pl  Вы начинаете играть на 3 стрелах.
+You start to feel bloated.  [d22cb2c523fd]
+  =   Вас начинает распирать.
 You start to float in the air!  [3b3851e31938]
   =   Вы начинаете парить в воздухе!
 You starved beyond the confines of the dungeon with %ld point,  [8ece5211dc78]
@@ -25097,6 +25457,8 @@ You suddenly inhale an unhealthy amount of %s!  [08dcf13d453d]
   pl  Вы внезапно вдыхаете вредное для здоровья количество 3 стрел!
 You suddenly yearn for your distant homeland.  [2fca28db0ddb]
   =   Вас вдруг охватывает тоска по далёкой родине.
+You suffocate.  [9e42bfb6a654]
+  =   Вы задыхаетесь.
 You sure are noisy.  [ea32202a132c]
   =   Ну и шум вы поднимаете.
 You swallow %s whole!  [02601f1b50fb]
@@ -25608,6 +25970,13 @@ You will encounter a tall, dark, and gruesome creature...  [0745bad463fc]
   =   Вы встретите высокое, тёмное и жуткое существо...
 You wobble in the saddle.  [ccaae82fc208]
   =   Вы покачиваетесь в седле.
+You wobble unsteadily in the air.  [144df3441554]
+  =   Вы неустойчиво покачиваетесь в воздухе.
+You wobble unsteadily over the %s.  [802792a9c408]
+  m   Вы неустойчиво покачиваетесь над тритоном.
+  f   Вы неустойчиво покачиваетесь над крысой.
+  n   Вы неустойчиво покачиваетесь над копьём.
+  pl  Вы неустойчиво покачиваетесь над 3 стрелами.
 You won't always get a second chance, even with life saving.  [7a5b4374aeaf]
   =   Второго шанса может и не быть, даже со спасением жизни.
 You won't get it up the steps  [87675925587e]
@@ -25618,6 +25987,36 @@ You would burn to a crisp trying to pick things up.  [75b17abc5733]
   =   Вы сгорите дотла, пытаясь подобрать вещи.
 You wrest one last charge from the worn-out wand.  [9a97ac3b8346]
   =   Вы выжимаете последний заряд из истощённой палочки.
+You write in the %s with %s.  [4b9fb3a90c97]
+  m   Вы пишете тритоном по тритону.
+  f   Вы пишете крысой по крысе.
+  n   Вы пишете копьём по копью.
+  pl  Вы пишете 3 стрелами по 3 стрелам.
+You write in the %s with 1 of %s.  [9799563db4e2]
+  m   Вы пишете одним из тритона по тритону.
+  f   Вы пишете одной из крысы по крысе.
+  n   Вы пишете одним из копья по копью.
+  pl  Вы пишете одной из 3 стрел по 3 стрелам.
+You write in the %s with your %s.  [bca6db449a54]
+  m   Вы пишете тритоном по тритону.
+  f   Вы пишете крысой по крысе.
+  n   Вы пишете копьём по копью.
+  pl  Вы пишете 3 стрелами по 3 стрелам.
+You write strangely on the %s with %s.  [bf7af51876e7]
+  m   Вы выводите тритоном странную надпись на тритоне.
+  f   Вы выводите крысой странную надпись на крысе.
+  n   Вы выводите копьём странную надпись на копье.
+  pl  Вы выводите 3 стрелами странную надпись на 3 стрелах.
+You write strangely on the %s with 1 of %s.  [31baeec99c40]
+  m   Вы выводите одним из тритона странную надпись на тритоне.
+  f   Вы выводите одной из крысы странную надпись на крысе.
+  n   Вы выводите одним из копья странную надпись на копье.
+  pl  Вы выводите одной из 3 стрел странную надпись на 3 стрелах.
+You write strangely on the %s with your %s.  [71f43418d66b]
+  m   Вы выводите тритоном странную надпись на тритоне.
+  f   Вы выводите крысой странную надпись на крысе.
+  n   Вы выводите копьём странную надпись на копье.
+  pl  Вы выводите 3 стрелами странную надпись на 3 стрелах.
 You yawn.  [687e58cf216b]
   =   Вы зеваете.
 You zap yourself, but seem unharmed.  [9171fac65218]
@@ -25643,6 +26042,8 @@ You're covered in frost!  [a9d314cdb783]
   =   Вы покрываетесь инеем!
 You're finally finished.  [1ba436d3d3ad]
   =   Наконец-то вы закончили.
+You're gasping for air.  [446bc0c610df]
+  =   Вы хватаете ртом воздух.
 You're going into the morgue at midnight???  [1627a5121e14]
   =   Вы идёте в морг в полночь???
 You're having a hard time getting all of it down.  [49f7c6c628a6]
@@ -25651,6 +26052,11 @@ You're not carrying anything else to be identified.  [3dddb7e31ee4]
   =   У вас больше нет ничего, что можно опознать.
 You're not carrying anything to be identified.  [32e23c2fe57a]
   =   У вас нет ничего, что можно опознать.
+You're turning %s.  [14373b0687a6]
+  m   Вы становитесь тритоном.
+  f   Вы становитесь крысой.
+  n   Вы становитесь копьём.
+  pl  Вы становитесь 3 стрелами.
 You've disturbed a tomb!  [1f3bc158ab78]
   =   Вы потревожили гробницу!
 You've got mail!  [40e18a8a0c61]
@@ -25832,6 +26238,11 @@ Your %s is attached to the buried ball!  [bffa04448aa1]
   f   Ваша крыса прикована к зарытому ядру!
   n   Ваше копьё приковано к зарытому ядру!
   pl  Ваши 3 стрелы прикованы к зарытому ядру!
+Your %s is becoming constricted.  [05e0f2338cdb]
+  m   Ваш тритона сдавливает.
+  f   Вашу крысу сдавливает.
+  n   Ваше копьё сдавливает.
+  pl  Ваши 3 стрелы сдавливает.
 Your %s is empty.  [0a13152c69ce]
   m   Ваш тритон пуст.
   f   Ваша крыса пуста.
@@ -26054,6 +26465,8 @@ Your bite passes harmlessly through %s.  [460d3fbb4398]
   pl  Ваш укус безвредно проходит сквозь 3 стрелы.
 Your blast reveals a secret door.  [69b966218fda]
   =   Ваш удар обнаруживает потайную дверь.
+Your blood is having trouble reaching your brain.  [5d7ef46af6af]
+  =   Кровь с трудом поступает к вашему мозгу.
 Your bloodthirsty blade attacks!  [b16d9bf621fb]
   =   Ваш кровожадный клинок атакует!
 Your body rises from the dead as %s...  [921252285de7]
@@ -26083,6 +26496,8 @@ Your chain disappears.  [e66f45d32f75]
   =   Ваша цепь исчезает.
 Your cloak crumbles and turns to dust!  [cc2efe40f42d]
   =   Ваш плащ истлевает и рассыпается в прах!
+Your consciousness is fading.  [ea1ee88286ee]
+  =   Ваше сознание меркнет.
 Your dog knows what to eat; maybe you should take lessons.  [589ec0a60ab0]
   =   Ваша собака знает, что есть; может, вам стоит у неё поучиться.
 Your dragon mail turns to dust and falls to the %s!  [d1a944a9ad1d]
@@ -26095,6 +26510,12 @@ Your dragon scales turn to dust and fall to the %s!  [d6458fa76f85]
   f   Ваша драконья чешуя обращается в прах и осыпается на крысу!
   n   Ваша драконья чешуя обращается в прах и осыпается на копьё!
   pl  Ваша драконья чешуя обращается в прах и осыпается на 3 стрелы!
+Your extremities are getting oozy.  [85175eaf97cc]
+  =   Ваши оконечности становятся склизкими.
+Your extremities are stiffening.  [c60facf50367]
+  =   Ваши оконечности деревенеют.
+Your extremities have turned to stone.  [31d6f59e19fa]
+  =   Ваши оконечности обратились в камень.
 Your game may go down the drain if you have extra potions or rings.  [6c864ac3afd4]
   =   Ваша игра может утечь в слив, если у вас лишние зелья или кольца.
 Your gauntlets are no longer slippery.  [0348c0d9db00]
@@ -26150,6 +26571,10 @@ Your hug passes harmlessly through %s.  [6d92eeddf8a0]
   f   Ваши объятия безвредно проходят сквозь крысу.
   n   Ваши объятия безвредно проходят сквозь копьё.
   pl  Ваши объятия безвредно проходят сквозь 3 стрелы.
+Your illness feels worse.  [22e7e715584f]
+  =   Ваша болезнь обостряется.
+Your illness is severe.  [0d142210bfd3]
+  =   Ваша болезнь очень тяжела.
 Your iron ball gets heavier.  [e7c487903aff]
   =   Ваше железное ядро становится тяжелее.
 Your jacket turns to dust and falls to the %s!  [65bc7c47e20c]
@@ -26208,6 +26633,12 @@ Your left ring softly glows %s.  [5b1cb6e41196]
   f   Ваше левое кольцо мягко сияет крысой светом.
   n   Ваше левое кольцо мягко сияет копьём светом.
   pl  Ваше левое кольцо мягко сияет 3 стрелами светом.
+Your limbs are getting oozy.  [ff26b49da2ac]
+  =   Ваши конечности становятся склизкими.
+Your limbs are stiffening.  [08e7106218f4]
+  =   Ваши конечности деревенеют.
+Your limbs have turned to stone.  [3f1a7e1f19c8]
+  =   Ваши конечности обратились в камень.
 Your load is too heavy to balance yourself for a kick.  [e6a971011ade]
   =   С такой тяжёлой ношей вам не удержать равновесие для пинка.
 Your mail turns to dust and falls to the %s!  [4448d0e32609]
@@ -26366,8 +26797,14 @@ Your shirt is obscured by %ssuit.  [9a63621ca22e]
   pl  Вашу рубашку скрывает доспех.
 Your shoes disintegrate!  [a46f200ef392]
   =   Ваши башмаки рассыпаются!
+Your sickness feels worse.  [87b008a67ba7]
+  =   Ваше отравление обостряется.
+Your sickness is severe.  [d97e5a4f7754]
+  =   Ваше отравление очень тяжело.
 Your silver shield crumbles away!  [b454bc12fcf5]
   =   Ваш серебряный щит крошится и рассыпается!
+Your skin begins to peel away.  [1c646cb3e482]
+  =   Ваша кожа начинает слезать.
 Your skin feels warm for a moment.  [f916a16ba765]
   =   На миг вашей коже становится тепло.
 Your skin glows then fades.  [2403341d0022]
@@ -27354,6 +27791,8 @@ Zapping a wand of undead turning might bring your dog back to life.  [0ec0375106
   =   ^?ПОЧТА
 a bad experience sitting on a throne  [cf2533c96eac]
   =   Неудачное сидение на троне
+a doodad  [f2edced62756]
+  =   Штуковина
 a monster  [c332f989e893]
   =   Монстра
 a particular object in inventory  [193ae7129821]
