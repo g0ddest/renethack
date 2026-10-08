@@ -9,6 +9,11 @@ config/name="renethack"
 config/description="NetHack 5.0 with a modern presentation"
 run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.5")
+; the hero's "@" on a medallion (tools/app_icon.py, `make app-icon`); the
+; native icons are what the Dock and the taskbar show
+config/icon="res://icon.png"
+config/macos_native_icon="res://icon.icns"
+config/windows_native_icon="res://icon.ico"
 ; the boot splash is the title's own colour, without the engine's logo:
 ; the game keeps it up for its first frames (game.rs, the start-up veil)
 boot_splash/bg_color=Color(0.043137256, 0.03529412, 0.03137255, 1)

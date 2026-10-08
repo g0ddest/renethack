@@ -260,6 +260,13 @@ The inventory icons are baked from the same art: `make icons` (needs a
 display, about a minute) renders every object appearance tile into
 `client/godot/art/icons/items/<tile>.png`; they are committed.
 
+The game's own icon is the hero's `@` in gold on the medallion the
+achievements wear. `make app-icon` (needs Pillow) draws it again:
+`client/godot/icon.png` for the window, and `icon.icns` and `icon.ico` for
+the Dock and the taskbar. Steamworks takes those two as its client icons
+for macOS and Windows; `steam/icon/` has the rest it asks for, the client
+icon for Linux (a zip of PNGs) and the 184×184 community icon.
+
 The renderer is Forward+ (Vulkan, Metal or D3D12). `RENETHACK_FRAME_STATS=1`
 logs frame times every two seconds; `RENETHACK_UI_SCALE` (percent, 80–140)
 scales the interface (120 % by default on a 1280×800 screen).

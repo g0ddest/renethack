@@ -9,6 +9,7 @@
 #   make deck         screenshots at the Steam Deck's 1280×800 (needs a display)
 #   make soak         random play through the client UI, seeds 1..8
 #   make art          fetch the CC0 art again (tools/fetch_art.py; needs Pillow)
+#   make app-icon     draw the game's icon again (tools/app_icon.py; needs Pillow)
 #   make i18n-catalog extract the English catalog of every text the engine shows
 #   make i18n-check   the extractor's tests; fail if the catalog is out of date
 #   make help         the help's Guidebooks (client/help): the Russian fetched again
@@ -42,7 +43,7 @@ DECK_ARGS ?=
 SOAK_CI := 2000
 SOAK_SEEDS := 1 2 3 4 5 6 7 8
 
-.PHONY: all engine client steam import run test test-client soak lint need-timeout art icons achievement-icons achievement-vdf deck \
+.PHONY: all engine client steam import run test test-client soak lint need-timeout art app-icon icons achievement-icons achievement-vdf deck \
 	i18n-catalog i18n-check help help-check
 all: engine
 
@@ -60,7 +61,7 @@ engine:
 IMPORT_STAMP := $(GODOT_PROJECT)/.godot/renethack-import.stamp
 IMPORT_INPUTS := $(shell find $(GODOT_PROJECT)/art $(GODOT_PROJECT)/fonts $(GODOT_PROJECT)/ui -type f 2>/dev/null) \
 	$(GODOT_PROJECT)/project.godot $(GODOT_PROJECT)/renethack.gdextension \
-	$(GODOT_PROJECT)/main.tscn
+	$(GODOT_PROJECT)/main.tscn $(GODOT_PROJECT)/icon.png
 
 client:
 	cd client/rust && cargo build -p renethack-gd
@@ -196,6 +197,12 @@ achievement-vdf: all client
 # then imports what changed
 art:
 	python3 tools/fetch_art.py
+
+# The game's icon (committed): client/godot/icon.png for the window,
+# icon.icns and icon.ico for macOS and Windows, and steam/icon/ with what
+# else Steamworks asks for; the same bytes on every run
+app-icon:
+	python3 tools/app_icon.py
 
 # The English catalog the translation keys on (committed): every pline,
 # Sprintf, menu, question and dat/ text of engine/upstream, with its call
