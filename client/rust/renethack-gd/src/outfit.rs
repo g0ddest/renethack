@@ -76,11 +76,18 @@ fn meshes(skeleton: &Gd<Skeleton3D>) -> Vec<Gd<MeshInstance3D>> {
         .collect()
 }
 
+/// Off the skeleton at once, freed when the frame ends: what is put on
+/// next in the same frame (other gloves on a model kept dressed) takes
+/// the same name, and Godot would give it another while the old is there.
 fn free(meshes: &mut Vec<Gd<MeshInstance3D>>) {
     for mut mi in meshes.drain(..) {
-        if mi.is_instance_valid() {
-            mi.queue_free();
+        if !mi.is_instance_valid() {
+            continue;
         }
+        if let Some(mut parent) = mi.get_parent() {
+            parent.remove_child(&mi);
+        }
+        mi.queue_free();
     }
 }
 

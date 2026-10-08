@@ -2,7 +2,8 @@
 //! scene tree of the hero's model: a Healer's stethoscope hangs round the
 //! neck, the one fitted to a man on him and to a woman on her, and comes
 //! off when it is put down; gloves cover the hands until they are taken
-//! off; a Knight's and a Barbarian's ring mail is chain mail over the
+//! off, and the title's hero, dressed again in the role's kit, wears them
+//! too; a Knight's and a Barbarian's ring mail is chain mail over the
 //! tunic, a Samurai's splint mail is plate, and the tunic is the outfit's
 //! own again with the armour off.
 
@@ -186,6 +187,17 @@ pub(super) fn worn() -> Vec<Step> {
         }),
     ]);
     steps.extend(next_hero());
+    // the title shows the hero just played, kept and dressed again in the
+    // role's kit: the gloves made in the frame the old ones go are under
+    // their own name (Godot renames a node whose name a sibling has)
+    steps.push(Step::Wait(
+        "the title's Healer in gloves under their name",
+        |g| {
+            let map = map_view(g)?;
+            let shown = map.title_drawn() && map.hero_model().is_some_and(|m| !m.is_pending());
+            Ok(shown && looks(g)?.gloves > 0)
+        },
+    ));
     // on a woman, the one fitted to her
     steps.extend(hero("healer", "female", "neutral"));
     steps.extend(shown(
