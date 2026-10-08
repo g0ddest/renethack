@@ -1048,10 +1048,26 @@ fn fit(run: &[Tok], text: &str) -> Option<Vec<String>> {
 /// Is a text fine shown as it is in a Russian sentence: one word at most
 /// (a name, letters, a number), not English words?
 fn verbatim(s: &str) -> bool {
-    s.split(|c: char| !c.is_alphabetic())
-        .filter(|w| w.chars().count() >= 2)
-        .count()
-        <= 1
+    letter_list(s)
+        || s.split(|c: char| !c.is_alphabetic())
+            .filter(|w| w.chars().count() >= 2)
+            .count()
+            <= 1
+}
+
+/// Inventory letters as a question lists them ("bce-hB", "$abd-fhi"):
+/// each after the one before, the small ones first, ranges with a '-'.
+fn letter_list(s: &str) -> bool {
+    let mut last = None;
+    !s.is_empty()
+        && s.chars().all(|c| match c {
+            '-' | '$' | '#' => true,
+            c if c.is_ascii_alphabetic() => {
+                let key = (c.is_ascii_uppercase(), c);
+                last.replace(key).is_none_or(|before| before < key)
+            }
+            _ => false,
+        })
 }
 
 /// Does a template say more than a name the lexicon reads in the same
@@ -1355,5 +1371,15 @@ mod tests {
             lined_up("%s %s%s%s", "%s bites!", &["The newt", "stings", "", "!"]),
             None
         );
+    }
+
+    #[test]
+    fn letters_a_question_lists_are_no_words() {
+        for letters in ["bce-hB", "$abd-fhi", "aeg-ir", "a-zA-Z", "x"] {
+            assert!(verbatim(letters), "{letters}");
+        }
+        for words in ["pick-axe", "long sword", "be-all", "zy-ba"] {
+            assert!(!verbatim(words), "{words}");
+        }
     }
 }
