@@ -18,12 +18,20 @@ nearest bones where that finds nothing.
 Optional keys: "turn" (degrees about the up axis to face the template's
 way), "feet", "head", "neck", "tail" (landmarks in the scaled target's
 space, when finding them fails), "tail_scale", "width_scale", "smooth",
-"parts" (tapered tubes added along given bones: antennae).
+"coat" ("#rrggbb": the body's painted texture in shades of this colour, as
+light on the whole as it), "materials" ({"name": "#rrggbb"}: the faces of a
+body painted from a palette texture go to flat materials so named, each to
+the colour nearest its own),
+"parts" (tubes added along given bones, one on each side unless "mirror" is
+false: antennae, a beak; "taper" is how much thinner a tube ends than it
+starts, 0.8 unless said, "tip" how far its point stands out for its
+radius: a flat one is an eye).
 """
 import bpy
 import bmesh
 import json
 import math
+import numpy
 import os
 import sys
 from mathutils import Matrix, Vector
@@ -73,6 +81,70 @@ for o in new:
 target.name = target.data.name = spec["name"]
 target.rotation_euler.rotate(Matrix.Rotation(math.radians(spec.get("turn", 0.0)), 3, "Z").to_euler())
 bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+
+
+def srgb(colour):
+    return [int(colour[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+
+
+def painted(material):
+    """The image a material takes its colour from."""
+    for node in material.node_tree.nodes:
+        if node.type == "TEX_IMAGE" and node.image and any(
+                link.to_socket.name == "Base Color" for link in node.outputs["Color"].links):
+            return node.image
+    raise SystemExit(f"{spec['name']}: {material.name} is not painted from an image")
+
+
+def texels(me):
+    """Per face: its area, and where its middle lies in its material's
+    image (the image's pixels, the offset of the texel)."""
+    images = [painted(m) for m in me.materials]
+    pixels = [numpy.array(image.pixels, dtype=numpy.float32) for image in images]
+    uvs = me.uv_layers.active.data
+    for poly in me.polygons:
+        w, h = images[poly.material_index].size
+        u = sum(uvs[i].uv.x for i in poly.loop_indices) / poly.loop_total
+        v = sum(uvs[i].uv.y for i in poly.loop_indices) / poly.loop_total
+        at = 4 * (min(int(v % 1 * h), h - 1) * w + min(int(u % 1 * w), w - 1))
+        yield poly.area, pixels[poly.material_index], at
+
+
+if spec.get("coat"):
+    # a coat painted too dark for a dungeon, or another beast's: its
+    # strokes kept in shades of the colour asked, the body as light on the
+    # whole as that colour
+    me = target.data
+    seen = [(area, px[at:at + 3].mean()) for area, px, at in texels(me)]
+    mean = sum(a * light for a, light in seen) / sum(a for a, _ in seen)
+    for image in dict.fromkeys(painted(m) for m in me.materials):
+        px = numpy.array(image.pixels, dtype=numpy.float32).reshape(-1, 4)
+        light = px[:, :3].mean(axis=1, keepdims=True) / mean
+        px[:, :3] = numpy.clip(numpy.array(srgb(spec["coat"]), dtype=numpy.float32) * light, 0, 1)
+        image.pixels.foreach_set(px.ravel())
+        image.pack()
+if spec.get("materials"):
+    # a body painted from a palette texture: its faces sorted into flat
+    # materials by their colour, so the coat can be dyed apart from the skin
+    def linear(c):
+        return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+    me = target.data
+    names = sorted(spec["materials"])
+    colours = [srgb(spec["materials"][n]) for n in names]
+    slots = [min(range(len(names)),
+                 key=lambda i: sum((a - b) ** 2 for a, b in zip(colours[i], px[at:at + 3])))
+             for _, px, at in texels(me)]
+    me.materials.clear()
+    for name, colour in zip(names, colours):
+        mat = bpy.data.materials.new(name)
+        mat.use_nodes = True
+        bsdf = mat.node_tree.nodes["Principled BSDF"]
+        bsdf.inputs["Base Color"].default_value = (*map(linear, colour), 1.0)
+        bsdf.inputs["Roughness"].default_value = 1.0
+        me.materials.append(mat)
+    for poly, slot in zip(me.polygons, slots):
+        poly.material_index = slot
 lo, hi = world_bounds([target])
 length_t = t_hi.y - t_lo.y
 k = length_t / (hi.y - lo.y)
@@ -233,7 +305,7 @@ for part in spec.get("parts", []):
     mat.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (*part["color"], 1.0)
     target.data.materials.append(mat)
     slot = len(target.data.materials) - 1
-    for side in (1, -1):
+    for side in (1, -1) if part.get("mirror", True) else (1,):
         pts = [Vector((p[0] * side, p[1], p[2])) for p in part["points"]]
         bm = bmesh.new()
         bm.from_mesh(target.data)
@@ -242,14 +314,14 @@ for part in spec.get("parts", []):
             d = (pts[min(i + 1, len(pts) - 1)] - pts[max(i - 1, 0)]).normalized()
             u = d.cross(Vector((0, 0, 1)) if abs(d.z) < 0.9 else Vector((1, 0, 0))).normalized()
             w = d.cross(u)
-            r = part["radius"] * (1 - 0.8 * i / (len(pts) - 1))
+            r = part["radius"] * (1 - part.get("taper", 0.8) * i / (len(pts) - 1))
             rings.append([bm.verts.new(p + (u * math.cos(a) + w * math.sin(a)) * r)
                           for a in (2 * math.pi * j / 5 for j in range(5))])
         for a, b in zip(rings, rings[1:]):
             for j in range(5):
                 f = bm.faces.new((a[j], a[(j + 1) % 5], b[(j + 1) % 5], b[j]))
                 f.material_index = slot
-        tip = bm.verts.new(pts[-1] + (pts[-1] - pts[-2]).normalized() * part["radius"])
+        tip = bm.verts.new(pts[-1] + (pts[-1] - pts[-2]).normalized() * part["radius"] * part.get("tip", 1.0))
         for j in range(5):
             bm.faces.new((rings[-1][j], rings[-1][(j + 1) % 5], tip)).material_index = slot
         bm.to_mesh(target.data)

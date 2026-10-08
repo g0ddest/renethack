@@ -11,12 +11,14 @@ and "clip" (the one whose first frame poses the body), "cut" (a plane in
 the horse's space, {"point", "normal"}, beyond which its neck and head go),
 "seat" (where the body's waist sits, horse space), "height" (waist to the
 crown), "waist" (the body's waist height, its own space), "bone" (the horse
-bone the body rides on), "skin" (another albedo for the body), "actions"
-({"new name": "horse clip"}), "name", "out".
+bone the body rides on), "skin" (another albedo for the body), "cloth"
+("#rrggbb": the linen painted on the body's skin dyed so, leather at the
+waist), "actions" ({"new name": "horse clip"}), "name", "out".
 """
 import bpy
 import bmesh
 import json
+import numpy
 import os
 import sys
 from mathutils import Matrix, Vector
@@ -78,18 +80,35 @@ pose_objs = imported(spec["pose"])
 clip = bpy.data.actions[spec["clip"]]
 for o in pose_objs:
     bpy.data.objects.remove(o, do_unlink=True)
+
+
+def dyed(image, colour):
+    """The pale linen painted on the skin (far bluer than any skin) dyed
+    `colour`, its folds kept."""
+    px = numpy.empty(len(image.pixels), dtype=numpy.float32)
+    image.pixels.foreach_get(px)
+    px = px.reshape(-1, 4)
+    cloth = px[:, 2] > 0.75 * px[:, 0]
+    light = px[cloth, :3].mean(axis=1, keepdims=True)
+    px[cloth, :3] = numpy.array(colour, dtype=numpy.float32) * light / light.mean()
+    image.pixels.foreach_set(px.ravel())
+    image.pack()
+
+
 body_objs = imported(spec["body"])
 body_rig, body = bake_pose(body_objs, clip)
-if "skin" in spec:
-    # another albedo for the skin (the base characters come dark)
-    skin = bpy.data.images.load(spec["skin"])
-    for m in body:
-        for slot in m.material_slots:
-            nodes = slot.material.node_tree.nodes if slot.material and slot.material.use_nodes else []
-            for n in nodes:
-                if (n.type == "TEX_IMAGE" and n.image and n.image.name.startswith("T_Superhero")
-                        and not any(w in n.image.name for w in ("Normal", "Roughness"))):
-                    n.image = skin
+# another albedo for the skin (the base characters come dark)
+skin = bpy.data.images.load(spec["skin"]) if "skin" in spec else None
+for m in body:
+    for slot in m.material_slots:
+        nodes = slot.material.node_tree.nodes if slot.material and slot.material.use_nodes else []
+        for n in nodes:
+            if (n.type == "TEX_IMAGE" and n.image and n.image.name.startswith("T_Superhero")
+                    and not any(w in n.image.name for w in ("Normal", "Roughness"))):
+                n.image = skin or n.image
+                skin = n.image
+if "cloth" in spec:
+    dyed(skin, [int(spec["cloth"][i:i + 2], 16) / 255 for i in (1, 3, 5)])
 head = body_rig.pose.bones["Head"]
 head_posed = body_rig.matrix_world @ head.matrix
 parts = list(body)

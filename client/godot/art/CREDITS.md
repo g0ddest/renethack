@@ -20,7 +20,7 @@ the recipe in `sources.json` and checks the downloads against `art.lock.json`.
 | `cc0/quaternius/monsters/Spider.glb`, `Snake.glb`, `Bat.glb`, `Dragon.glb`, `Wasp.glb` | Animated monsters: spider, snake, bat, dragon, wasp | Quaternius | fetched from Poly Pizza: https://poly.pizza/m/yRYJiAJyiM, https://poly.pizza/m/x9x0viZs8V, https://poly.pizza/m/hNO9XvjlKa, https://poly.pizza/m/VBvzjFIYws, https://poly.pizza/m/3aQgc75sUR |
 | `cc0/quaternius/animals/Pug.fbx`, `Pig.fbx`, `Sheep.fbx` | Farm Animals Animated: pug, pig, sheep | Quaternius | https://quaternius.itch.io/lowpoly-animated-animals |
 | `cc0/made/Stethoscope.glb`, `StethoscopeMan.glb`, `StethoscopeWoman.glb` | A stethoscope (rubber tube, binaural, chest piece) built from curves: coiled on the floor, and round the neck of the peasant outfits above, fitted to them and skinned to their skeletons | this project | made here by `tools/blender/stethoscope.py` |
-| `cc0/made/Centaur.glb`, `CentaurFemale.glb` | Centaurs put together in Blender (`tools/blender/centaur.py`): the horse above without its neck and head, a base character's upper body (posed by the Universal Animation Library's idle) in their place | Quaternius | made here from the files above |
+| `cc0/made/Centaur.glb`, `CentaurFemale.glb` | Centaurs put together in Blender (`tools/blender/centaur.py`): the horse above without its neck and head, a base character's upper body (posed by the Universal Animation Library's idle) in their place, the linen painted on its skin dyed leather | Quaternius | made here from the files above |
 | `cc0/sigilsvault/dungeon/` | Modular Dungeon Kit v1.0: pieces and props (GLB) | Kevin Barany (SigilsVault) | https://sigilsvault.itch.io/modular-dungeon-kit-v10 |
 | `cc0/unity-labs/flipbooks/` | VFX flipbooks: Flame02, Flame03, FireBall01–04, WispySmoke01, CandleSmoke01, Explosion02HD | Unity Technologies (Unity Labs Paris) | https://unity.com/blog/engine-platform/free-vfx-image-sequences-flipbooks |
 | `cc0/ambientcg/` | Lava003, Rock035, Rock058, Chainmail004, Metal038 (1K, maps repacked) | ambientCG (Lennart Demes) | https://ambientcg.com |
@@ -53,8 +53,10 @@ The models under `ccby/` are under the Creative Commons Attribution 3.0
 license (https://creativecommons.org/licenses/by/3.0/), from Poly Pizza.
 They came as static meshes; `tools/blender/rig_quadruped.py` welded and
 scaled them, skinned them to the skeleton of Quaternius's bull or wolf
-(above, CC0) and gave them its clips; the armadillo got antennae. The
-textures were scaled down.
+(above, CC0) and gave them its clips; the armadillo got antennae, the
+bear an owl's beak, eyes and ear tufts, the ground sloth's coat was painted
+again in shades of blue-green, and the gorilla's four painted colours
+became four plain materials. The textures were scaled down.
 
 | Where | What | Author | Source |
 |---|---|---|---|
@@ -63,7 +65,7 @@ textures were scaled down.
 | `ccby/polypizza/Rhinoceros.glb` | Rhinoceros (titanotheres) | Poly by Google | https://poly.pizza/m/11qk1uy0YGH |
 | `ccby/polypizza/RhinocerosDark.glb` | Rhinoceros (baluchitheria) | Poly by Google | https://poly.pizza/m/7XutktqrTj_ |
 | `ccby/polypizza/GroundSloth.glb` | Ground sloth (wumpuses) | Poly by Google | https://poly.pizza/m/34WS63awSqJ |
-| `ccby/polypizza/Gorilla.glb` | Gorilla (apes, yetis, sasquatches) | jeremy | https://poly.pizza/m/1aReOCuu0TY |
+| `ccby/polypizza/Gorilla.glb` | Gorilla (apes, yetis, sasquatches) | Poly by Google | https://poly.pizza/m/bmfQ1j9CeO2 |
 | `ccby/polypizza/Baboon.glb` | Baboon (monkeys) | Poly by Google | https://poly.pizza/m/aeLFKp6X19x |
 | `ccby/polypizza/Bear.glb` | Bear (owlbears) | Poly by Google | https://poly.pizza/m/0PXWfxfb0Hu |
 | `ccby/polypizza/Hyena.glb` | Spotted hyena (leocrottas) | Poly by Google | https://poly.pizza/m/0yU1LU3Nkpu |
