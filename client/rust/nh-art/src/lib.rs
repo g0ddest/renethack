@@ -435,6 +435,10 @@ pub struct MaterialSpec {
     /// Below 1: see-through.
     #[serde(default)]
     pub alpha: Option<f32>,
+    /// A shader of the client's own (`shaders/<name>.gdshader`) in place
+    /// of the PBR material; it takes the colour and the roughness.
+    #[serde(default)]
+    pub shader: Option<String>,
 }
 
 impl MaterialSpec {
@@ -1252,6 +1256,14 @@ mod tests {
             .filter(|f| !art_dir().join(f).is_file())
             .collect();
         assert!(missing.is_empty(), "missing: {missing:?}");
+        // and every shader a material is made by
+        let shaders = art_dir().join("../shaders");
+        for (_, name, m) in art.materials() {
+            if let Some(shader) = &m.shader {
+                let file = shaders.join(format!("{shader}.gdshader"));
+                assert!(file.is_file(), "{name}: no {}", file.display());
+            }
+        }
     }
 
     #[test]
@@ -1334,8 +1346,16 @@ mod tests {
         let (art, cat) = (manifest(), catalog());
         let dog = cat.monsters.iter().find(|m| m.name == "dog").unwrap();
         let s = art.statue(Some(dog), 0);
-        assert!(matches!(s.skin, Skin::Material(_)));
         assert_eq!(s.model, art.monster(dog, 0).model);
+        // its stone is cold whatever lights it (the client's own shader),
+        // a grey on the blue side of neutral: never a skin's tone
+        let Skin::Material(stone) = s.skin else {
+            panic!("{:?}", s.skin);
+        };
+        let stone = art.material_at(stone).1;
+        assert_eq!(stone.shader.as_deref(), Some("statue"));
+        let [r, g, b] = stone.albedo();
+        assert!(r < g && g < b, "{r} {g} {b}");
         let unknown = art.statue(None, 0);
         assert!(exists(&art, &unknown));
     }

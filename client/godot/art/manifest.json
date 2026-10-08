@@ -31,7 +31,7 @@
   "wood": {"textures": "cc0/polyhaven/textures/old_planks_02/old_planks_02", "uv_scale": 1.0},
   "iron": {"textures": "cc0/polyhaven/textures/rusty_metal_02/rusty_metal_02", "uv_scale": 2.0, "color": "#6c6660"},
   "marble": {"textures": "cc0/polyhaven/textures/marble_01/marble_01", "uv_scale": 1.0, "color": "#a8a49e"},
-  "statue": {"textures": "cc0/polyhaven/textures/marble_01/marble_01", "uv_scale": 2.0, "color": "#8c8a86", "roughness": 0.85},
+  "statue": {"shader": "statue", "color": "#6c747e", "roughness": 0.95},
   "gilded": {"textures": "cc0/polyhaven/textures/rusty_metal_02/rusty_metal_02", "uv_scale": 2.0, "color": "#c89a48", "metallic": 0.45, "roughness": 0.35},
   "water": {"color": "#1c3844", "roughness": 0.03, "metallic": 0.15, "alpha": 0.9, "emission": "#061a22", "emission_energy": 1.0},
   "ice": {"textures": "cc0/texturecan/icy_rock/icy_rock", "uv_scale": 0.5, "color": "#d8e8f2", "roughness": 0.2},

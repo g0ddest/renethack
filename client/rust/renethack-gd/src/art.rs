@@ -22,8 +22,8 @@ use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::{
     Animation, AnimationLibrary, AnimationPlayer, ArrayMesh, BaseMaterial3D, BoneAttachment3D,
     FileAccess, Material, Mesh, MeshInstance3D, Node, Node3D, OrmMaterial3D, PackedScene,
-    RenderingServer, ResourceLoader, Skeleton3D, Skin as GdSkin, StandardMaterial3D, Texture2D,
-    VisualInstance3D,
+    RenderingServer, ResourceLoader, Shader, ShaderMaterial, Skeleton3D, Skin as GdSkin,
+    StandardMaterial3D, Texture2D, VisualInstance3D,
 };
 use godot::prelude::*;
 use nh_art::{ArtManifest, MaterialSpec, Proc, Resolved, Skin};
@@ -671,6 +671,26 @@ impl Art {
         world: bool,
         tint: Color,
     ) -> Gd<Material> {
+        // a shader of the client's own in place of the PBR material (a
+        // statue's stone)
+        if let Some(name) = &spec.shader {
+            let path = format!("res://shaders/{name}.gdshader");
+            match godot::tools::try_load::<Shader>(&path) {
+                Ok(shader) => {
+                    let base = mul(rgb(spec.albedo()), tint);
+                    let k = f32::from(shade) / 100.0;
+                    let color = Color::from_rgb(base.r * k, base.g * k, base.b * k);
+                    let mut m = ShaderMaterial::new_gd();
+                    m.set_shader(&shader);
+                    m.set_shader_parameter("color", &color.to_variant());
+                    if let Some(r) = spec.roughness {
+                        m.set_shader_parameter("roughness", &r.to_variant());
+                    }
+                    return m.upcast();
+                }
+                Err(_) => self.warn_once(format!("shader {path} is missing")),
+            }
+        }
         let maps = match (spec.albedo_path(), spec.normal_path(), spec.arm_path()) {
             (Some(a), Some(n), Some(orm)) => Some((a, n, orm)),
             _ => None,
