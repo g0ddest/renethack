@@ -81,11 +81,14 @@ pub enum Fx {
         anchor: Option<Gd<Node3D>>,
         impact: Option<VfxKind>,
     },
-    /// A thrown thing's model flying from one point to another.
+    /// A thrown thing's model flying from one point to another: from
+    /// where `anchor` is when it starts (the hand that lets go), else
+    /// `from`.
     Throw {
         model: Option<Gd<Node3D>>,
         from: Vector3,
         to: Vector3,
+        anchor: Option<Gd<Node3D>>,
     },
 }
 
@@ -124,6 +127,12 @@ impl HeroFx {
     /// Effects still to come, or a thing in flight.
     pub fn busy(&self) -> bool {
         !self.pending.is_empty() || !self.flights.is_empty()
+    }
+
+    /// The things in flight: (its node, where it set off) (self-tests).
+    pub fn flights(&self) -> Vec<(Gd<Node3D>, Vector3)> {
+        let flying = self.flights.iter().filter(|f| f.node.is_instance_valid());
+        flying.map(|f| (f.node.clone(), f.from)).collect()
     }
 
     /// End everything at once (a new level, a new game).
@@ -211,8 +220,14 @@ impl HeroFx {
                     );
                 }
             }
-            Fx::Throw { model, from, to } => {
+            Fx::Throw {
+                model,
+                from,
+                to,
+                anchor,
+            } => {
                 self.started.push("throw");
+                let from = where_now(anchor.as_ref(), from);
                 let mut node = Node3D::new_alloc();
                 node.set_name("Fx_throw");
                 node.set_position(from);

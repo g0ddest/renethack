@@ -219,6 +219,10 @@ const XRAY: Color = Color::from_rgba(0.55, 0.68, 1.0, 0.45);
 /// The hero's own dim pool of light, over their head (no lamp: the client
 /// does not know of one yet), and a cold rim light from behind that only
 /// the hero's model takes (`RIM_LAYER`).
+/// A thing thrown is at least this big in flight, metres across its
+/// model's unit (a hand's breadth: at 16 cm a flint flew the size of the
+/// thrower's head).
+const FLIGHT_MIN: f32 = 0.09;
 const HERO_LIGHT: Color = Color::from_rgb(0.9, 0.84, 0.76);
 const HERO_LIGHT_ENERGY: f32 = 2.4;
 const HERO_LIGHT_RANGE: f32 = 5.5;
@@ -4309,13 +4313,14 @@ impl MapView {
                 _ => end + Vector3::new(0.0, hand.y, 0.0),
             }
         });
+        let lets_go = anchor.clone();
         for (delay, fx) in use_effects(u, color, hand, anchor, ahead) {
             self.hero_fx.after(delay, fx);
         }
         if matches!(u.kind, UseKind::Throw | UseKind::Fire) {
-            // never smaller than a hand's breadth in flight: a stone of
-            // 6 cm would vanish at the camera's distance
-            let model = held.and_then(|h| self.art.held_prop(h, (0.16 / h.scale).max(0.7)));
+            // never smaller than a hand's breadth in flight: a gem of 6 cm
+            // would vanish at the camera's distance
+            let model = held.and_then(|h| self.art.held_prop(h, (FLIGHT_MIN / h.scale).max(0.7)));
             let to = ahead.unwrap_or(hand + facing * 3.0);
             self.hero_fx.after(
                 THROW_AT + 0.25,
@@ -4332,6 +4337,7 @@ impl MapView {
                     model,
                     from: hand,
                     to,
+                    anchor: lets_go,
                 },
             );
         }

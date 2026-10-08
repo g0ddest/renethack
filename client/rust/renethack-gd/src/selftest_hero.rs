@@ -256,11 +256,32 @@ fn using(g: &RenethackGame, clip: &str, fx: &str, held: Option<&str>) -> Result<
     Ok(started)
 }
 
+/// A small thing thrown (a stone, a gem) is at most this big in flight,
+/// metres.
+const THROWN_MAX: f32 = 0.11;
+
+/// How big a thing in flight is across, whichever way it tumbles: the
+/// longest side of its meshes at their size, metres.
+fn flight_span(thing: &Gd<Node3D>) -> f32 {
+    thing
+        .find_children_ex("*")
+        .type_("MeshInstance3D")
+        .owned(false)
+        .done()
+        .iter_shared()
+        .filter_map(|n| n.try_cast::<godot::classes::MeshInstance3D>().ok())
+        .map(|mi| {
+            let size = mi.get_aabb().size * mi.get_global_transform().basis.get_scale();
+            size.x.max(size.y).max(size.z)
+        })
+        .fold(0.0, f32::max)
+}
+
 /// Seed 5's Wizard, at rest with his quarterstaff upright at his side,
 /// drinks a potion, reads a scroll, zaps a wand (a beam to the wall) and
 /// casts force bolt; seed 2's Archeologist eats, applies the lamp and
-/// throws a stone. Each use starts its clip and its effect (a picture of
-/// each, mid-motion).
+/// throws a stone, which leaves her right hand no bigger than a fist. Each
+/// use starts its clip and its effect (a picture of each, mid-motion).
 pub(super) fn item_use() -> Vec<Step> {
     let mut steps = vec![Step::Call("seed 5", |g| {
         g.seed = Some(5);
@@ -397,10 +418,32 @@ pub(super) fn item_use() -> Vec<Step> {
             let map = map_view(g)?;
             let clip = map.hero_clip();
             let flying = map.hero_fx().started().contains(&"throw");
-            if flying && clip.as_deref() != Some("proc/throw") {
+            if !flying {
+                return Ok(false);
+            }
+            if clip.as_deref() != Some("proc/throw") {
                 return Err(format!("the throw plays {clip:?}"));
             }
-            Ok(flying)
+            // it leaves the hand that threw it, no bigger than a fist
+            let flights = map.hero_fx().flights();
+            let (stone, from) = flights.first().ok_or("nothing in flight")?;
+            let node: Gd<Node> = map.hero_model().ok_or("no hero model")?.node.clone().upcast();
+            let hand = node
+                .find_child_ex("Gear_hand_r")
+                .owned(false)
+                .done()
+                .ok_or("no right hand")?
+                .cast::<Node3D>()
+                .get_global_position();
+            let (span, off) = (flight_span(stone), from.distance_to(hand));
+            godot_print!("selftest: item-use: the stone in flight {span:.3} m across, off the hand by {off:.3} m");
+            if span > THROWN_MAX {
+                return Err(format!("the stone flies {span:.2} m across"));
+            }
+            if off > 0.05 {
+                return Err(format!("the stone sets off {off:.2} m from the hand"));
+            }
+            Ok(true)
         }),
         Step::Shot("use-throw"),
         Step::Wait("the hero idle again", |g| {
