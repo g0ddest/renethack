@@ -482,6 +482,37 @@ fn what_the_russian_leaves_out_may_stay_english() {
     );
 }
 
+#[test]
+fn a_god_speaks_to_a_heroine() {
+    // godvoice(): what is said is a piece put into the voice's line
+    let mut t = with(&[
+        (
+            "The voice of %s booms: \"%s\"",
+            r#"ru = "Голос {1:gen} гремит: «{2}»""#,
+        ),
+        (
+            "Thou hast angered me.",
+            r#"ru = "Ты {hero:gender|прогневал|прогневала} меня.""#,
+        ),
+    ]);
+    let line = "The voice of Mitra booms: \"Thou hast angered me.\"";
+    assert!(
+        t.message(None, &[], line)
+            .text
+            .ends_with("«Ты прогневал меня.»"),
+        "{}",
+        t.message(None, &[], line).text
+    );
+    t.set_hero(Gender::Fem);
+    assert!(
+        t.message(None, &[], line)
+            .text
+            .ends_with("«Ты прогневала меня.»"),
+        "{}",
+        t.message(None, &[], line).text
+    );
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {

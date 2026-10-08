@@ -20,7 +20,7 @@ use crate::catalog::{Catalog, Channel, Match, Template, Use, plausible};
 use crate::format::{ConvKind, Segment, convs};
 use crate::grammar::{Case, Gender, euphony};
 use crate::phrase::{NameKind, Names, Phrase};
-use crate::russian::{Russian, Translation};
+use crate::russian::Russian;
 use crate::template::{Part, Placeholder, RuTemplate, Target, Value, capitalize};
 
 mod look;
@@ -534,7 +534,7 @@ impl Translator {
             }
             self.russian.get(&t.id)
         };
-        let find = |s: &str| translation(s).map(Translation::phrase);
+        let find = |s: &str| translation(s).map(|t| t.phrase(self.hero));
         let bare = ["the ", "The ", "a ", "A ", "an ", "An "]
             .iter()
             .find_map(|a| text.strip_prefix(a));

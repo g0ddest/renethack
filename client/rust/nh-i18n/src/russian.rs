@@ -101,12 +101,18 @@ pub struct Translation {
 impl Translation {
     /// The translation as an argument of another message: its case forms
     /// when it has them, else its text in every case.
-    pub fn phrase(&self) -> Box<dyn Phrase> {
+    pub fn phrase(&self, hero: Gender) -> Box<dyn Phrase> {
         let (gender, number) = self.gender.unwrap_or((Gender::Masc, Number::Sing));
-        let forms = self.forms.clone().unwrap_or_else(|| {
-            let plain = self.template.render(&[], Gender::Masc);
-            std::array::from_fn(|_| plain.clone())
-        });
+        // what a piece says of the hero ("Thou hast angered me.":
+        // {hero:gender|прогневал|прогневала}) follows the hero
+        let forms = match (&self.form_templates, &self.forms) {
+            (Some(forms), _) => std::array::from_fn(|k| forms[k].render(&[], hero)),
+            (None, Some(forms)) => forms.clone(),
+            (None, None) => {
+                let plain = self.template.render(&[], hero);
+                std::array::from_fn(|_| plain.clone())
+            }
+        };
         Box::new(Piece {
             forms,
             gender,
@@ -307,12 +313,12 @@ gender = "pl"
         .unwrap();
         assert_eq!(ru.len(), 3);
         assert_eq!(ru.get("a1").unwrap().en, "You hit %s.");
-        let p = ru.get("d1").unwrap().phrase();
+        let p = ru.get("d1").unwrap().phrase(Gender::Masc);
         assert_eq!(
             (p.form(Case::Ins), p.gender()),
             ("копанием".to_string(), Gender::Neut)
         );
-        let plain = ru.get("s1").unwrap().phrase();
+        let plain = ru.get("s1").unwrap().phrase(Gender::Masc);
         assert_eq!(
             (plain.form(Case::Gen), plain.number()),
             ("поиски".to_string(), Number::Plur)
@@ -368,5 +374,27 @@ gender = "m"
             Russian::parse(&twice),
             Err(RussianError::Twice(..))
         ));
+    }
+
+    #[test]
+    fn a_piece_that_speaks_of_the_hero() {
+        let ru = Russian::parse(&files(
+            r#"
+[g1]
+en = "Thou hast angered me."
+ru = "Ты {hero:gender|прогневал|прогневала} меня."
+
+[g2]
+en = "fool"
+ru = "{hero:gender|глупец|глупица}"
+forms = ["{hero:gender|глупец|глупица}", "{hero:gender|глупца|глупицы}", "{hero:gender|глупцу|глупице}", "{hero:gender|глупца|глупицу}", "{hero:gender|глупцом|глупицей}", "{hero:gender|глупце|глупице}"]
+"#,
+        ))
+        .unwrap();
+        let said = |id: &str, hero, case| ru.get(id).unwrap().phrase(hero).form(case);
+        assert_eq!(said("g1", Gender::Masc, Case::Nom), "Ты прогневал меня.");
+        assert_eq!(said("g1", Gender::Fem, Case::Nom), "Ты прогневала меня.");
+        assert_eq!(said("g2", Gender::Fem, Case::Ins), "глупицей");
+        assert_eq!(said("g2", Gender::Masc, Case::Gen), "глупца");
     }
 }
