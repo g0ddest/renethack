@@ -1,8 +1,9 @@
 //! The starting kits NetHack gives each role (u_init.c), as far as they
 //! show on the hero: what is wielded, the alternate weapon and the quiver,
-//! the shield, the armour worn. The title scene dresses its hero in them,
-//! and the `kits` self-test holds the game's hero to them, so the two
-//! cannot drift apart.
+//! the shield, the armour worn, and what shows though only carried (a
+//! Healer's stethoscope, round the neck). The title scene dresses its hero
+//! in them, and the `kits` self-test holds the game's hero to them, so the
+//! two cannot drift apart.
 
 use nh_protocol::{Catalog, InvItem, Inventory, Slot};
 
@@ -19,11 +20,14 @@ pub enum Wear {
     Cloak,
     Gloves,
     Shirt,
+    /// In the pack only, yet shown.
+    Carried,
 }
 
 impl Wear {
-    pub fn slot(self) -> Slot {
-        match self {
+    /// The slot it is in; none for a thing only carried.
+    pub fn slot(self) -> Option<Slot> {
+        Some(match self {
             Wear::Wielded => Slot::Weapon,
             Wear::Alternate => Slot::Alternate,
             Wear::Quiver => Slot::Quiver,
@@ -33,7 +37,8 @@ impl Wear {
             Wear::Cloak => Slot::Cloak,
             Wear::Gloves => Slot::Gloves,
             Wear::Shirt => Slot::Shirt,
-        }
+            Wear::Carried => return None,
+        })
     }
 }
 
@@ -85,7 +90,11 @@ const CAVEMAN: &[KitItem] = &[
     (Alternate, &["sling"]),
     (Body, &["leather armor"]),
 ];
-const HEALER: &[KitItem] = &[(Wielded, &["scalpel"]), (Gloves, GLOVES)];
+const HEALER: &[KitItem] = &[
+    (Wielded, &["scalpel"]),
+    (Gloves, GLOVES),
+    (Carried, &["stethoscope"]),
+];
 const KNIGHT: &[KitItem] = &[
     (Wielded, &["long sword"]),
     (Alternate, &["lance"]),
@@ -182,7 +191,7 @@ pub fn inventory(catalog: &Catalog, kit: &[KitItem]) -> Inventory {
                 class: t.class.chars().next().unwrap_or(')'),
                 tile: t.tile,
                 quan: 1,
-                slots: vec![wear.slot()],
+                slots: wear.slot().into_iter().collect(),
                 lit: false,
                 text: format!("a {name}"),
             })
@@ -218,6 +227,20 @@ mod tests {
                 assert_eq!(inv.items.len(), kit.len(), "{role}: {kit:?}");
             }
         }
+    }
+
+    #[test]
+    fn the_healer_has_the_stethoscope_round_the_neck() {
+        let cat = catalog();
+        let art = nh_art::ArtManifest::parse(include_str!("../../../godot/art/manifest.json"));
+        let art = art.unwrap();
+        let neck = |role: &str| {
+            let mut pack = nh_world::Pack::new();
+            pack.replace(&inventory(&cat, kits(role)[0]));
+            art.gear(&pack, &cat).neck
+        };
+        assert!(neck("healer").is_some());
+        assert_eq!(neck("priest"), None);
     }
 
     #[test]

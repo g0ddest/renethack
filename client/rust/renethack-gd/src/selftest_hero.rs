@@ -15,7 +15,7 @@ use super::{
     CharacterChoice, DialogEvent, Step, UiEvent, camera_settled, command, ctrl_key,
     fail_on_error_screen, idle_command, key, map_view, quit, smoke_choice, start_as,
 };
-use crate::art::{HELD_NODE, LAMP_LIGHT, OFF_HAND, USE_NODE};
+use crate::art::{GLOVES_NODE, HELD_NODE, LAMP_LIGHT, NECK_NODE, OFF_HAND, USE_NODE};
 use crate::game::RenethackGame;
 use crate::off_hand::OffHand;
 
@@ -590,8 +590,20 @@ fn kit_slot(g: &RenethackGame, bone: &str) -> Result<String, String> {
 
 /// What a hero shows of a kit: the held models on the right hand, the
 /// left forearm, the back (the quiver after the alternate weapon) and the
-/// head, as `kit_slot` names them; the idle and attack clips.
-type KitLook = ([String; 4], Option<String>, Option<String>);
+/// head, as `kit_slot` names them, then what the outfit has on of the
+/// things worn ("neck", "gloves"); the idle and attack clips.
+type KitLook = ([String; 5], Option<String>, Option<String>);
+
+/// "neck" and "gloves", those of them that are there ("-" for none).
+fn kit_worn(neck: bool, gloves: bool) -> String {
+    let on = [(neck, "neck"), (gloves, "gloves")];
+    let names: Vec<&str> = on.into_iter().filter(|o| o.0).map(|o| o.1).collect();
+    if names.is_empty() {
+        "-".to_string()
+    } else {
+        names.join("+")
+    }
+}
 
 /// The art's manifest, read once.
 fn kit_art() -> Result<&'static nh_art::ArtManifest, String> {
@@ -627,8 +639,15 @@ fn kit_look(g: &RenethackGame, kit: &[crate::kits::KitItem]) -> Result<KitLook, 
             .chain(name(gear.quiver))
             .collect(),
     );
+    let worn = kit_worn(gear.neck.is_some(), gear.gloves.is_some());
     Ok((
-        [one(gear.hand_r), one(gear.arm_l), back, one(gear.head)],
+        [
+            one(gear.hand_r),
+            one(gear.arm_l),
+            back,
+            one(gear.head),
+            worn,
+        ],
         gear.idle,
         gear.attack,
     ))
@@ -636,13 +655,30 @@ fn kit_look(g: &RenethackGame, kit: &[crate::kits::KitItem]) -> Result<KitLook, 
 
 /// What the hero on the map (the game's or the title's) shows.
 fn hero_look(g: &RenethackGame) -> Result<KitLook, String> {
-    let (idle, attack) = map_view(g)?.hero_fight_clips();
+    let map = map_view(g)?;
+    let (idle, attack) = map.hero_fight_clips();
+    // the meshes the things worn put on the skeleton
+    let node: Gd<Node> = map
+        .hero_model()
+        .ok_or("no hero model")?
+        .node
+        .clone()
+        .upcast();
+    let on = |prefix: &str| {
+        node.find_children_ex(&format!("{prefix}*"))
+            .type_("MeshInstance3D")
+            .owned(false)
+            .done()
+            .iter_shared()
+            .any(|n| !n.is_queued_for_deletion())
+    };
     Ok((
         [
             kit_slot(g, "hand_r")?,
             kit_slot(g, "lowerarm_l")?,
             kit_slot(g, "spine_03")?,
             kit_slot(g, "Head")?,
+            kit_worn(on(NECK_NODE), on(GLOVES_NODE)),
         ],
         idle,
         attack,
@@ -857,11 +893,12 @@ fn hands_as_held(g: &RenethackGame) -> Result<(), String> {
 
 /// Every role in both genders with the starting kit NetHack gives it
 /// (`kits.rs`, after u_init.c): what the hero holds, on which arm, on the
-/// back and on the head, and the clips that calls for, are that kit's
-/// (logged too), at rest facing the camera and mid-blow; then the title
-/// shows the same hero in the same kit. Pictures of each with
-/// `--screenshots`. RENETHACK_ROLES=knight,priest: only those;
-/// RENETHACK_KITS_LOOK=1: pictures only.
+/// back and on the head, what hangs round the neck and covers the hands,
+/// and the clips that calls for, are that kit's (logged too), and the left
+/// hand is on a weapon of both hands and on no other; at rest facing the
+/// camera and mid-blow; then the title shows the same hero in the same
+/// kit. Pictures of each with `--screenshots`. RENETHACK_ROLES=knight,
+/// priest: only those; RENETHACK_KITS_LOOK=1: pictures only.
 pub(super) fn kits() -> Vec<Step> {
     let mut steps = vec![Step::Call("seed 1, the first hero", |g| {
         g.seed = Some(1);
