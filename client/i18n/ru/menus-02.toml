@@ -2077,3 +2077,85 @@ ru = "{1}  {2}  материя  {3}%  {4}"
 [68d4309c097e]
 en = "%-20s  %2d   matter       %3d%% %9s%c%6d"
 ru = "{1}  {2}  материя  {3}%  {4}{5}  {6}"
+
+# An item's own menu (iactions.c): what the catalog knows only as a buffer's text.
+
+[8c685bfa62c9]
+en = "Name the %s"
+ru = "Дать имя {1:dat}"
+
+[2b06e4759c76]
+en = "Rename or un-name the %s"
+ru = "Переименовать {1:acc} или убрать имя"
+
+[3a71b9442f22]
+en = "Call the type for %s"
+ru = "Дать название виду: {1}"
+
+[279cc29ff3cf]
+en = "Re-call or un-call the type for %s"
+ru = "Изменить или убрать название вида: {1}"
+
+[f495d1951ca9]
+en = "Read the message inside this cookie"
+ru = "Прочесть послание в этом печенье"
+
+[9d133f8283c4]
+en = "Read the slogan on the shirt"
+ru = "Прочесть надпись на рубашке"
+
+[f89e626c9703]
+en = "Read the slogan on the apron"
+ru = "Прочесть надпись на фартуке"
+
+[4ae99bda3d19]
+en = "Look at the pattern on the shirt"
+ru = "Рассмотреть узор на рубашке"
+
+[d49537026e9b]
+en = "Read this scroll"
+ru = "Прочесть этот свиток"
+
+[a842e7e1c125]
+en = "Read this scroll to activate its magic"
+ru = "Прочесть этот свиток, чтобы пробудить его магию"
+
+[e234a10a4f88]
+en = "Examine this %s"
+ru = "Осмотреть {1:gender|этот|эту|это|эти} {1:acc}"
+
+[b8b8b3293b54]
+en = "Examine this spellbook"
+ru = "Осмотреть эту книгу заклинаний"
+
+[7488669c920e]
+en = "Examine this tome"
+ru = "Осмотреть этот фолиант"
+
+[4d5cbd263d34]
+en = "Read this %s"
+ru = "Прочесть {1:gender|этот|эту|это|эти} {1:acc}"
+
+[0185ebc01718]
+en = "Read this spellbook"
+ru = "Прочесть эту книгу заклинаний"
+
+[32c48babb6ef]
+en = "Read this tome"
+ru = "Прочесть этот фолиант"
+
+[95a69bb3dd7e]
+en = "Study this %s"
+ru = "Изучить {1:gender|этот|эту|это|эти} {1:acc}"
+
+[fbd7fe49cfc8]
+en = "Study this spellbook"
+ru = "Изучить эту книгу заклинаний"
+
+[fd3073c4493b]
+en = "Study this tome"
+ru = "Изучить этот фолиант"
+
+[c4658d8aaccb]
+en = " with your wielded %s"
+ru = " из {1:gen} в ваших руках"

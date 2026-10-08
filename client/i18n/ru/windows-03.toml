@@ -893,3 +893,45 @@ ru = " ваш уровень владения {2:ins} и боя с двух ру
 [3c0c94dae443]
 en = " %s in %s and two weapons"
 ru = " ваш уровень владения {2:ins} и боя с двух рук: {1}"
+
+# ^X: what the hero carries and how it slows them (each load has its one word for how much).
+
+[a81be0c94b9b]
+en = " You are burdened; movement %s %s%s."
+ru = " У вас нагрузка; движение слегка замедлено.{1:skip}{2:skip}{3:skip}"
+
+[1d0079d4e96b]
+en = " You were burdened; movement %s %s%s."
+ru = " У вас была нагрузка; движение было слегка замедлено.{1:skip}{2:skip}{3:skip}"
+
+[8dc3d4cd59d6]
+en = " You are stressed; movement %s %s%s."
+ru = " У вас перегрузка; движение заметно замедлено.{1:skip}{2:skip}{3:skip}"
+
+[e341e017dd3d]
+en = " You were stressed; movement %s %s%s."
+ru = " У вас была перегрузка; движение было заметно замедлено.{1:skip}{2:skip}{3:skip}"
+
+[02a8921fedb7]
+en = " You are strained; movement %s %s%s."
+ru = " У вас сильная перегрузка; движение сильно замедлено.{1:skip}{2:skip}{3:skip}"
+
+[5fa1a9daa21a]
+en = " You were strained; movement %s %s%s."
+ru = " У вас была сильная перегрузка; движение было сильно замедлено.{1:skip}{2:skip}{3:skip}"
+
+[b7ba27a64e0f]
+en = " You are overtaxed; movement %s %s%s."
+ru = " У вас тяжкая перегрузка; движение крайне замедлено.{1:skip}{2:skip}{3:skip}"
+
+[697eaa579dba]
+en = " You were overtaxed; movement %s %s%s."
+ru = " У вас была тяжкая перегрузка; движение было крайне замедлено.{1:skip}{2:skip}{3:skip}"
+
+[9c51057850e8]
+en = " You are overloaded; movement %s %s%s."
+ru = " У вас неподъёмный груз; двигаться невозможно.{1:skip}{2:skip}{3:skip}"
+
+[70b3c68d0aac]
+en = " You were overloaded; movement %s %s%s."
+ru = " У вас был неподъёмный груз; двигаться было невозможно.{1:skip}{2:skip}{3:skip}"
