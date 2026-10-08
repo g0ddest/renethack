@@ -88,6 +88,17 @@ class Formats(unittest.TestCase):
         self.assertEqual(e["Your extremities are stiffening."].uses, {"pline"})
         self.assertIn("You are slowing down.", e)
 
+    def test_the_sentences_of_an_argument_too_varied_to_derive(self):
+        voices = ", ".join(f'"v{i}"' for i in range(9))
+        calls = "".join(f'void c{i}(void) {{ say("Thou art number {i}."); }}\n' for i in range(12))
+        e = catalog_of(f'static const char *const voices[] = {{ {voices} }};\n'
+                       'static void say(const char *words) {\n'
+                       '    pline("A voice %s: %s", voices[rn2(9)], words);\n}\n' + calls)
+        # 9 voices by 12 sentences: the voices are put in, the sentences are pieces
+        self.assertEqual(e["A voice v3: %s"].uses, {"pline"})
+        self.assertEqual(e["Thou art number 7."].uses, {"sprintf"})
+        self.assertNotIn("A voice v3: Thou art number 7.", e)
+
     def test_buffers_are_inlined(self):
         e = catalog_of('void f(struct monst *m) {\n'
                        '    char buf[BUFSZ];\n'

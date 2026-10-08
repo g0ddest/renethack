@@ -669,6 +669,8 @@ class Context:
         self.passes = {}
         # a call wrapped in lcase()/upstart(), by its token index
         self.cased = {}
+        # the texts of an argument a format had too many of to derive
+        self.left_out = []
         self._depths = None
         start, end = func.body
         i = start + 1
@@ -1075,9 +1077,12 @@ class Context:
             arg = args[ai] if ai < len(args) else []
             ai += 1
             choices.append(self.alternatives(m, arg, pos, depth))
-        # too many combinations: the most varied arguments stay placeholders
+        # too many combinations: the most varied arguments stay placeholders,
+        # and the sentences among their texts pieces of their own
+        # (godvoice's "Thou hast angered me.")
         while product_size(choices) > MAX_DERIVED:
             k = max(range(len(choices)), key=lambda c: len(choices[c]))
+            self.left_out += [text for text, kinds in choices[k] if not kinds and " " in text.strip()]
             choices[k] = [(convs[k].group(0), [conv_kind(convs[k])])]
         out = []
         for combo in itertools.product(*choices):
@@ -1696,6 +1701,9 @@ def add_printf(cat, ctx, use, fmt_toks, args, pos, site, prefixes, name):
             cat.add_all(use, site, as_format(ctx, fmt, kinds, args), [], prefixes, suffix)
             continue
         cat.add_all(use, site, ctx.generic(fmt, args), ctx.variants(fmt, args, pos), prefixes, suffix)
+        for text in dedupe(ctx.left_out):
+            cat.add(text, "sprintf", site, [])
+        ctx.left_out = []
 
 
 def as_format(ctx, held, kinds, args):
