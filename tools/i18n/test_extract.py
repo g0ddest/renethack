@@ -240,6 +240,23 @@ class Formats(unittest.TestCase):
         extract.add_seamed(cat, [unit])
         self.assertEqual(list(cat.entries), ["Attach %s to %s?"])
 
+    def test_a_list_of_counted_units(self):
+        e = catalog_of('static char *fmt_elapsed_time(char *outbuf, int final) {\n'
+                       '    Strcpy(outbuf, fieldcnt ? "" : " none");\n'
+                       '    if (ehours) {\n        Sprintf(eos(outbuf), " %ld hour%s", ehours, plur(ehours));\n'
+                       '        if (fieldcnt > 1) Strcat(outbuf, (fieldcnt == 2) ? " and" : ",");\n    }\n'
+                       '    if (eminutes) {\n        Sprintf(eos(outbuf), " %ld minute%s", eminutes, plur(eminutes));\n'
+                       '        if (fieldcnt > 1) Strcat(outbuf, " and");\n    }\n'
+                       '    if (eseconds) Sprintf(eos(outbuf), " %ld second%s", eseconds, plur(eseconds));\n'
+                       '    return outbuf;\n}\n'
+                       'void f(int final) {\n    char buf[BUFSZ];\n    (void) fmt_elapsed_time(buf, final);\n'
+                       '    pline("Playing time:%s.", buf);\n}\n')
+        took = {k for k in e if k.startswith("Playing time:") and k != "Playing time:%s."}
+        self.assertEqual(len(took), 8)
+        self.assertIn("Playing time: none.", took)
+        self.assertIn("Playing time: %ld hour%s, %ld minute%s and %ld second%s.", took)
+        self.assertIn("Playing time: %ld hour%s and %ld second%s.", took)
+
     def test_buffers_are_inlined(self):
         e = catalog_of('void f(struct monst *m) {\n'
                        '    char buf[BUFSZ];\n'

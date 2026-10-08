@@ -237,6 +237,9 @@ HANDED_ON = {"silly_thing"}
 # Members a text is copied into, by name (most are the player's or a save
 # file's to fill: svp.plname): takeoff.disrobing is "disrobing" or "disarming"
 COPIED_INTO = {"disrobing"}
+# Helpers that leave in their buffer a list of counted units, those not zero
+# (fmt_elapsed_time: " 2 hours, 5 minutes and 12 seconds")
+COUNTED_LISTS = {"fmt_elapsed_time"}
 # Helpers that return a static buffer: what that buffer holds
 RETURNED_BUFFER = {"piousness"}
 # x(obj, "verb") is "<the object's name> verb[s]"
@@ -620,6 +623,26 @@ class Globals:
                 out += held
             return dedupe(out)[:MAX_HELD] if out else None
         return self._memo(("pw", unit.path, fname, k), compute)
+
+    def counted_list(self, fname, k, unit):
+        """What fmt_elapsed_time() leaves in its buffer: " none", or those of
+        its counted units that are not zero, in their order (" %ld day%s",
+        " %ld hour%s"…), a comma after each but the last two, which " and"
+        joins."""
+        def compute():
+            for d in self.definitions(fname, unit):
+                ops = d.ops.get(d.param_list[k], []) if k < len(d.param_list) else []
+                units = [f for op in ops if op.printf and op.append for f in d.values(op.text) or []]
+                out = [(escape(v), []) for op in ops if not op.append
+                       for v in d.values(op.text) or [] if v.strip()]
+                for n in range(1, 2 ** len(units)):
+                    chosen = [u for i, u in enumerate(units) if n >> i & 1]
+                    text = "".join(u + (" and" if len(chosen) - i == 2 else "," if len(chosen) - i > 2 else "")
+                                   for i, u in enumerate(chosen))
+                    out.append((text, ["number", "text"] * len(chosen)))
+                return out or None
+            return None
+        return self._memo(("cl", unit.path, fname, k), compute)
 
     def returned_buffer(self, fname, unit, depth):
         """What a function of RETURNED_BUFFER returns: what the buffer it
@@ -1484,6 +1507,8 @@ class Context:
         leaves in buffer `name`, for the helpers of WRITTEN_BY; None for
         any other."""
         fname, k = passed
+        if fname in COUNTED_LISTS:
+            return self.glob.counted_list(fname, k, self.unit)
         if fname not in WRITTEN_BY or depth > MAX_DEPTH:
             return None
         held = self.glob.param_writes(fname, k, self.unit, depth)

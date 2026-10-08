@@ -632,6 +632,37 @@ fn a_text_of_another_format_s_template() {
     assert!(out.template.is_some());
 }
 
+#[test]
+fn the_time_a_game_took() {
+    // ^X: fmt_elapsed_time() lists the units that are not zero
+    let t = translator();
+    for (en, ru) in [
+        (
+            " Total elapsed playing time is none.",
+            " Общее время игры: меньше секунды.",
+        ),
+        (
+            " Total elapsed playing time is 1 hour, 5 minutes and 12 seconds.",
+            " Общее время игры: 1 час, 5 минут и 12 секунд.",
+        ),
+        (
+            " Total elapsed playing time was 2 days and 1 second.",
+            " Общее время игры: 2 дня и 1 секунда.",
+        ),
+        (
+            " Total elapsed playing time is 21 minutes.",
+            " Общее время игры: 21 минута.",
+        ),
+    ] {
+        let out = t.text(en);
+        assert_eq!(
+            (out.text.as_str(), out.status),
+            (ru, Status::Translated),
+            "{en}"
+        );
+    }
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {

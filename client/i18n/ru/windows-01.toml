@@ -49,9 +49,69 @@ ru = " Сейчас полночь."
 en = " Autopickup is off."
 ru = " Автоподбор выключен."
 
-[bdad26f53576]
-en = " Total elapsed playing time is%s."
-ru = " Общее время игры:{1}."
+[69788dd1b5fd]
+en = " Total elapsed playing time is none."
+ru = " Общее время игры: меньше секунды."
+
+[355a2523a4be]
+en = " Total elapsed playing time is %ld day%s."
+ru = " Общее время игры: {1} {1:plural|день|дня|дней}{2:skip}."
+
+[f5c8aad143a2]
+en = " Total elapsed playing time is %ld hour%s."
+ru = " Общее время игры: {1} {1:plural|час|часа|часов}{2:skip}."
+
+[70ef25cff50c]
+en = " Total elapsed playing time is %ld day%s and %ld hour%s."
+ru = " Общее время игры: {1} {1:plural|день|дня|дней}{2:skip} и {3} {3:plural|час|часа|часов}{4:skip}."
+
+[6ed2c0299e8e]
+en = " Total elapsed playing time is %ld minute%s."
+ru = " Общее время игры: {1} {1:plural|минута|минуты|минут}{2:skip}."
+
+[645061133263]
+en = " Total elapsed playing time is %ld day%s and %ld minute%s."
+ru = " Общее время игры: {1} {1:plural|день|дня|дней}{2:skip} и {3} {3:plural|минута|минуты|минут}{4:skip}."
+
+[d14b2d08c56e]
+en = " Total elapsed playing time is %ld hour%s and %ld minute%s."
+ru = " Общее время игры: {1} {1:plural|час|часа|часов}{2:skip} и {3} {3:plural|минута|минуты|минут}{4:skip}."
+
+[733aa8be4e0f]
+en = " Total elapsed playing time is %ld day%s, %ld hour%s and %ld minute%s."
+ru = " Общее время игры: {1} {1:plural|день|дня|дней}{2:skip}, {3} {3:plural|час|часа|часов}{4:skip} и {5} {5:plural|минута|минуты|минут}{6:skip}."
+
+[e242dc4858e0]
+en = " Total elapsed playing time is %ld second%s."
+ru = " Общее время игры: {1} {1:plural|секунда|секунды|секунд}{2:skip}."
+
+[f27980bb675b]
+en = " Total elapsed playing time is %ld day%s and %ld second%s."
+ru = " Общее время игры: {1} {1:plural|день|дня|дней}{2:skip} и {3} {3:plural|секунда|секунды|секунд}{4:skip}."
+
+[2118a5791364]
+en = " Total elapsed playing time is %ld hour%s and %ld second%s."
+ru = " Общее время игры: {1} {1:plural|час|часа|часов}{2:skip} и {3} {3:plural|секунда|секунды|секунд}{4:skip}."
+
+[8a97920e861b]
+en = " Total elapsed playing time is %ld day%s, %ld hour%s and %ld second%s."
+ru = " Общее время игры: {1} {1:plural|день|дня|дней}{2:skip}, {3} {3:plural|час|часа|часов}{4:skip} и {5} {5:plural|секунда|секунды|секунд}{6:skip}."
+
+[b2e40a2b4d2b]
+en = " Total elapsed playing time is %ld minute%s and %ld second%s."
+ru = " Общее время игры: {1} {1:plural|минута|минуты|минут}{2:skip} и {3} {3:plural|секунда|секунды|секунд}{4:skip}."
+
+[f8c497cb15cc]
+en = " Total elapsed playing time is %ld day%s, %ld minute%s and %ld second%s."
+ru = " Общее время игры: {1} {1:plural|день|дня|дней}{2:skip}, {3} {3:plural|минута|минуты|минут}{4:skip} и {5} {5:plural|секунда|секунды|секунд}{6:skip}."
+
+[4c376c3680b8]
+en = " Total elapsed playing time is %ld hour%s, %ld minute%s and %ld second%s."
+ru = " Общее время игры: {1} {1:plural|час|часа|часов}{2:skip}, {3} {3:plural|минута|минуты|минут}{4:skip} и {5} {5:plural|секунда|секунды|секунд}{6:skip}."
+
+[a29095114330]
+en = " Total elapsed playing time is %ld day%s, %ld hour%s, %ld minute%s and %ld second%s."
+ru = " Общее время игры: {1} {1:plural|день|дня|дней}{2:skip}, {3} {3:plural|час|часа|часов}{4:skip}, {5} {5:plural|минута|минуты|минут}{6:skip} и {7} {7:plural|секунда|секунды|секунд}{8:skip}."
 
 [c7b1907066bf]
 en = " You are right-handed."
@@ -265,9 +325,69 @@ ru = " Автоподбор был выключен."
 en = " You had %d out of %d hit points."
 ru = " Здоровье было: {1} из {2}."
 
-[9a8bbac17bff]
-en = " Total elapsed playing time was%s."
-ru = " Общее время игры:{1}."
+[0e352d222718]
+en = " Total elapsed playing time was none."
+ru = " Общее время игры: меньше секунды."
+
+[b46b54913508]
+en = " Total elapsed playing time was %ld day%s."
+ru = " Общее время игры: {1} {1:plural|день|дня|дней}{2:skip}."
+
+[99e147779e44]
+en = " Total elapsed playing time was %ld hour%s."
+ru = " Общее время игры: {1} {1:plural|час|часа|часов}{2:skip}."
+
+[ca9bc1ebb672]
+en = " Total elapsed playing time was %ld day%s and %ld hour%s."
+ru = " Общее время игры: {1} {1:plural|день|дня|дней}{2:skip} и {3} {3:plural|час|часа|часов}{4:skip}."
+
+[08c5ce1f483e]
+en = " Total elapsed playing time was %ld minute%s."
+ru = " Общее время игры: {1} {1:plural|минута|минуты|минут}{2:skip}."
+
+[a60da257c023]
+en = " Total elapsed playing time was %ld day%s and %ld minute%s."
+ru = " Общее время игры: {1} {1:plural|день|дня|дней}{2:skip} и {3} {3:plural|минута|минуты|минут}{4:skip}."
+
+[a858d1f4c96b]
+en = " Total elapsed playing time was %ld hour%s and %ld minute%s."
+ru = " Общее время игры: {1} {1:plural|час|часа|часов}{2:skip} и {3} {3:plural|минута|минуты|минут}{4:skip}."
+
+[ada3a11821eb]
+en = " Total elapsed playing time was %ld day%s, %ld hour%s and %ld minute%s."
+ru = " Общее время игры: {1} {1:plural|день|дня|дней}{2:skip}, {3} {3:plural|час|часа|часов}{4:skip} и {5} {5:plural|минута|минуты|минут}{6:skip}."
+
+[7c05c0b0f091]
+en = " Total elapsed playing time was %ld second%s."
+ru = " Общее время игры: {1} {1:plural|секунда|секунды|секунд}{2:skip}."
+
+[1b32b71cf5cb]
+en = " Total elapsed playing time was %ld day%s and %ld second%s."
+ru = " Общее время игры: {1} {1:plural|день|дня|дней}{2:skip} и {3} {3:plural|секунда|секунды|секунд}{4:skip}."
+
+[96eeefa69f3e]
+en = " Total elapsed playing time was %ld hour%s and %ld second%s."
+ru = " Общее время игры: {1} {1:plural|час|часа|часов}{2:skip} и {3} {3:plural|секунда|секунды|секунд}{4:skip}."
+
+[a8f2bd42cfda]
+en = " Total elapsed playing time was %ld day%s, %ld hour%s and %ld second%s."
+ru = " Общее время игры: {1} {1:plural|день|дня|дней}{2:skip}, {3} {3:plural|час|часа|часов}{4:skip} и {5} {5:plural|секунда|секунды|секунд}{6:skip}."
+
+[9ff026add124]
+en = " Total elapsed playing time was %ld minute%s and %ld second%s."
+ru = " Общее время игры: {1} {1:plural|минута|минуты|минут}{2:skip} и {3} {3:plural|секунда|секунды|секунд}{4:skip}."
+
+[cb3fd1a3c262]
+en = " Total elapsed playing time was %ld day%s, %ld minute%s and %ld second%s."
+ru = " Общее время игры: {1} {1:plural|день|дня|дней}{2:skip}, {3} {3:plural|минута|минуты|минут}{4:skip} и {5} {5:plural|секунда|секунды|секунд}{6:skip}."
+
+[570e95c2b742]
+en = " Total elapsed playing time was %ld hour%s, %ld minute%s and %ld second%s."
+ru = " Общее время игры: {1} {1:plural|час|часа|часов}{2:skip}, {3} {3:plural|минута|минуты|минут}{4:skip} и {5} {5:plural|секунда|секунды|секунд}{6:skip}."
+
+[dfa133a54158]
+en = " Total elapsed playing time was %ld day%s, %ld hour%s, %ld minute%s and %ld second%s."
+ru = " Общее время игры: {1} {1:plural|день|дня|дней}{2:skip}, {3} {3:plural|час|часа|часов}{4:skip}, {5} {5:plural|минута|минуты|минут}{6:skip} и {7} {7:plural|секунда|секунды|секунд}{8:skip}."
 
 [9dbdd1685673]
 en = " Your charisma was %s."
