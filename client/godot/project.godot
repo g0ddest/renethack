@@ -9,8 +9,8 @@ config/name="renethack"
 config/description="NetHack 5.0 with a modern presentation"
 run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.5")
-; the hero's "@" on a medallion (tools/app_icon.py, `make app-icon`); the
-; native icons are what the Dock and the taskbar show
+; a shield before crossed swords, after NetHack's own icon (tools/app_icon.py,
+; `make app-icon`); the native icons are what the Dock and the taskbar show
 config/icon="res://icon.png"
 config/macos_native_icon="res://icon.icns"
 config/windows_native_icon="res://icon.ico"

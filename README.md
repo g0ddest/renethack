@@ -270,8 +270,10 @@ The inventory icons are baked from the same art: `make icons` (needs a
 display, about a minute) renders every object appearance tile into
 `client/godot/art/icons/items/<tile>.png`; they are committed.
 
-The game's own icon is the hero's `@` in gold on the medallion the
-achievements wear. `make app-icon` (needs Pillow) draws it again:
+The game's own icon follows NetHack's: a shield with a blue field before
+two crossed swords, drawn afresh in the game's steel and gold, with the
+hero's `@` as the shield's device. `make app-icon` (needs Pillow) draws it
+again:
 `client/godot/icon.png` for the window, and `icon.icns` and `icon.ico` for
 the Dock and the taskbar. Steamworks takes those two as its client icons
 for macOS and Windows; `steam/icon/` has the rest it asks for, the client
