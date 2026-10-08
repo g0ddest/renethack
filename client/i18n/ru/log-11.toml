@@ -188,12 +188,6 @@ ru = "Так, {hero:gender|смертный|смертная}!  Ты смееш�
 en = "So, mortal!  You dare desecrate my High Temple!"
 ru = "Так, {hero:gender|смертный|смертная}!  Ты смеешь осквернять мой Верховный храм!"
 
-[071f44ddc012]
-en = "%s sword"
-ru = "{1:m} меч"
-forms = ["{1:m} меч", "{1:m:gen} меча", "{1:m:dat} мечу", "{1:m:acc} меч", "{1:m:ins} мечом", "{1:m:prep} мече"]
-gender = "m"
-
 [f2edced62756]
 en = "a doodad"
 ru = "штуковина"

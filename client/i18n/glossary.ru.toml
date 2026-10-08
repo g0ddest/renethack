@@ -2850,6 +2850,9 @@
 "container" = { ru = "контейнер", src = "chosen" }
 # mimic_obj_name() (mhitu.c): a hero hiding as a strange object
 "whatcha-may-callit" = { ru = "штуковина", src = "chosen" }
+# gcrownu() (pray.c): the sword a god sends, "A sword" and hcolor() before it
+# ("A black sword appears at your feet!"; any colour to a hallucinating hero)
+"sword" = { ru = "меч", src = "chosen" }
 
 [name]
 # personal names the engine gives: the default pets (dog.c) and the

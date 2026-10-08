@@ -194,6 +194,24 @@ impl Lexicon {
             .or_else(|| feature::parse(self, bare))
             .or_else(|| self.juice(bare))
             .or_else(|| self.owned(text))
+            .or_else(|| self.colored(bare))
+    }
+
+    /// A word after its colour, as hcolor() names it: "black sword", the
+    /// sword a god sends (pray.c gcrownu), of any colour to a hero who
+    /// hallucinates.
+    fn colored(&self, text: &str) -> Option<RuName> {
+        // the longest colour: "light blue", not "light"
+        let (color, rest) = self
+            .entries("color")
+            .filter_map(|(key, entry)| {
+                let rest = text.strip_prefix(key)?.strip_prefix(' ')?;
+                Some((entry.adjective()?.clone(), rest))
+            })
+            .min_by_key(|(_, rest)| rest.len())?;
+        let mut name = self.word(rest)?;
+        name.adjectives.insert(0, color);
+        Some(name)
     }
 
     /// A word after its owner, as s_suffix() and body_part() make it:
@@ -584,6 +602,18 @@ mod tests {
             parse(NameKind::Word, "a pit and containers").form(Case::Nom),
             "яма и контейнеры"
         );
+    }
+
+    #[test]
+    fn a_word_after_its_colour() {
+        // gcrownu(): the sword a god sends
+        let w = |t: &str, c| parse(NameKind::Word, t).form(c);
+        assert_eq!(w("A sword", Case::Nom), "меч");
+        assert_eq!(w("A black sword", Case::Nom), "чёрный меч");
+        assert_eq!(w("your black sword", Case::Ins), "вашим чёрным мечом");
+        assert_eq!(w("a light blue sword", Case::Gen), "светло-синего меча");
+        // a colour before no word of the lexicon is no name
+        assert!(Lexicon::ru().word("black thing").is_none());
     }
 
     #[test]
