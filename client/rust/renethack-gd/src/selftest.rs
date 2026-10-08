@@ -8,7 +8,9 @@
 //! (random play: `--soak=N` answered requests, `--seed=S` or
 //! RENETHACK_SEED; RENETHACK_SOAK_TRACE=1 prints every decision;
 //! RENETHACK_DUMP_MESSAGES=<file> appends every shown text to the file, for
-//! nh-i18n's i18n-coverage).
+//! nh-i18n's i18n-coverage; RENETHACK_SOAK_CURIOUS=<percent> makes that
+//! share of its commands ones that only show something: `;`, the spells,
+//! ^X, the discoveries, #overview, #chat, #pray).
 
 use std::collections::{HashMap, VecDeque};
 use std::path::PathBuf;
@@ -3291,6 +3293,7 @@ fn soak(args: &Args) -> Vec<Step> {
     let budget = args.soak.unwrap_or(SOAK_BUDGET);
     let mut soak = Soak::new(budget, seed);
     soak.shots = args.screenshots.clone();
+    soak.curious = env_number("RENETHACK_SOAK_CURIOUS").unwrap_or(0);
     vec![Step::Soak(Box::new(soak))]
 }
 
@@ -3604,6 +3607,12 @@ pub struct Soak {
     plan: VecDeque<KeyInput>,
     /// The next palette runs #pray.
     pray: bool,
+    /// The next palette runs this command.
+    say: Option<&'static str>,
+    /// Of a hundred commands, how many only look at something
+    /// (`RENETHACK_SOAK_CURIOUS`; none unless asked: a seed's play stays
+    /// what it was).
+    curious: usize,
     /// The answer to the next direction question ('o', `^D`, 'F', digging).
     dir_answer: Option<char>,
     /// The hero may carry a digging tool (it was seen, or the role starts
@@ -3663,6 +3672,8 @@ impl Soak {
             next_explore: EXPLORE_EVERY,
             plan: VecDeque::new(),
             pray: false,
+            say: None,
+            curious: 0,
             dir_answer: None,
             can_dig: false,
             dig_letter: None,
@@ -4277,7 +4288,9 @@ impl Soak {
                     .map(|e| e.name.as_str())
                     .filter(|n| SAFE_EXTCMDS.contains(n))
                     .collect();
-                if std::mem::take(&mut self.pray) {
+                if let Some(name) = self.say.take() {
+                    vec![dialog(DialogEvent::TextSubmitted(name.into()))]
+                } else if std::mem::take(&mut self.pray) {
                     vec![dialog(DialogEvent::TextSubmitted("pray".into()))]
                 } else if self.rng.chance(15) || safe.is_empty() {
                     if self.rng.chance(50) {
@@ -4375,6 +4388,9 @@ impl Soak {
             self.plan.push_back(plain('.'));
             return plain('_');
         }
+        if self.curious > 0 && self.rng.chance(self.curious) {
+            return self.look_around(dirs);
+        }
         let dir = self.rng.pick(dirs);
         match self.rng.below(200) {
             // hold a direction for a few steps
@@ -4420,6 +4436,40 @@ impl Soak {
                 } else {
                     plain(self.rng.pick(&['D', 'A', '^']))
                 }
+            }
+        }
+    }
+
+    /// A command that only shows something, for a soak run for the texts
+    /// it reads: what is where (`;`, the cursor hopped to a monster, a
+    /// thing, a door, or left by the hero), the spells, ^X, the
+    /// discoveries, the overview, a word with a neighbour, a prayer.
+    fn look_around(&mut self, dirs: &[char]) -> KeyInput {
+        match self.rng.below(12) {
+            0..=4 => {
+                for _ in 0..self.rng.below(4) {
+                    let hop = self.rng.pick(&['m', 'o', 'd', 'a', 'x', '<', '>', '_']);
+                    self.plan.push_back(plain(hop));
+                }
+                let pick = self.rng.pick(&['.', ',', ';', ':']);
+                self.plan.push_back(plain(pick));
+                plain(';')
+            }
+            5 => plain('+'),
+            6 => ctrl('x'),
+            7 => plain('\\'),
+            8 => {
+                self.say = Some("overview");
+                plain('#')
+            }
+            9 | 10 => {
+                self.say = Some("chat");
+                self.dir_answer = Some(self.rng.pick(dirs));
+                plain('#')
+            }
+            _ => {
+                self.pray = true;
+                plain('#')
             }
         }
     }
