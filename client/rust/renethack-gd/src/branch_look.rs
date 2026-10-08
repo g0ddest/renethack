@@ -89,6 +89,10 @@ pub struct BranchLook {
     pub cave: bool,
     /// Wooden props along the walls: mine supports.
     pub supports: bool,
+    /// Stones fallen from the rock lie at the foot of walls and along
+    /// corridors (a built place's floors are swept: on Sokoban's planks
+    /// every thing on the floor is a thing to reckon with).
+    pub rubble: bool,
     /// What lies on a wall's top (its cap), by manifest name.
     pub cap: &'static str,
     pub torch: Color,
@@ -131,6 +135,7 @@ const MAIN: BranchLook = BranchLook {
     remap: &[],
     cave: false,
     supports: false,
+    rubble: true,
     cap: "bedrock",
     torch: Color::from_rgb(1.0, 0.66, 0.38),
     torch_energy: 2.4,
@@ -181,6 +186,7 @@ pub fn look_of(branch: Branch) -> BranchLook {
         // built: brick, planks and iron, an even cold light
         Branch::Sokoban => BranchLook {
             remap: &[("masonry", "soko_wall"), ("floor", "planks")],
+            rubble: false,
             cap: "iron",
             bands: Some("iron"),
             torch: rgb(0.86, 0.9, 1.0),
@@ -249,6 +255,7 @@ pub fn look_of(branch: Branch) -> BranchLook {
         // a treasury: pale walls, marble, gilded caps
         Branch::Ludios => BranchLook {
             remap: &[("masonry", "ludios_wall"), ("floor", "marble_floor")],
+            rubble: false,
             cap: "gilded",
             door: Some(Prop::CastleDoor),
             lanterns: true,
@@ -264,6 +271,7 @@ pub fn look_of(branch: Branch) -> BranchLook {
         // a gothic tower: dark stone, cold violet light
         Branch::Vlad => BranchLook {
             remap: &[("masonry", "gothic"), ("floor", "gothic_floor")],
+            rubble: false,
             door: Some(Prop::IronGate),
             lanterns: true,
             candles: true,

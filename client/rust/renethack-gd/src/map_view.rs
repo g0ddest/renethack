@@ -769,8 +769,10 @@ fn is_pier(sym: &str) -> bool {
 }
 
 /// A few stones at the foot of the walls beside a floor cell, placed by the
-/// cell (the same every time): small, half sunk and of the rock, never
-/// like something lying there to pick up.
+/// cell (the same every time): small, sunk in the floor to their middle
+/// and of the rock, never like something lying there to pick up (a stone
+/// standing on the floor reads as a ball). None where the branch's floors
+/// are swept.
 fn rubble(
     look: &mut Look,
     around: &Around,
@@ -779,7 +781,7 @@ fn rubble(
     edge: Side,
     chance: f32,
 ) {
-    let Some(m) = rock else {
+    let Some(m) = rock.filter(|_| ctx.branch.rubble) else {
         return;
     };
     for (i, (dx, dz)) in SIDES.iter().enumerate() {
@@ -800,7 +802,7 @@ fn rubble(
             };
             let rot = at(ctx.noise(salt + 3) * 90.0, ctx.noise(salt + 4) * 360.0, 0.0);
             let paint = Paint::Pbr(m, SHADE_RUBBLE, Role::Trim);
-            look.turned(facets(r, 5), paint, at(x, r * 0.25, z), rot);
+            look.turned(facets(r, 5), paint, at(x, -r * 0.4, z), rot);
             if let Some(s) = look.solids.last_mut() {
                 s.shadow = false;
             }
@@ -1204,13 +1206,13 @@ fn terrain_base(
             };
             rubble(look, &rooms, bedrock, ctx, Side::Open, 0.7);
             // gravel trodden into the earth: a path, not a tile of colour
-            if let Some(m) = bedrock {
+            if let Some(m) = bedrock.filter(|_| ctx.branch.rubble) {
                 for k in 0..5u32 {
                     let r = 0.025 + 0.02 * ctx.noise(70 + k);
                     let (x, z) = (ctx.noise(75 + k) - 0.5, ctx.noise(80 + k) - 0.5);
                     let rot = at(ctx.noise(85 + k) * 90.0, ctx.noise(90 + k) * 360.0, 0.0);
                     let paint = Paint::Pbr(m, SHADE_RUBBLE, Role::Trim);
-                    look.turned(facets(r, 5), paint, at(x * 0.8, r * 0.15, z * 0.8), rot);
+                    look.turned(facets(r, 5), paint, at(x * 0.8, -r * 0.3, z * 0.8), rot);
                     if let Some(s) = look.solids.last_mut() {
                         s.shadow = false;
                     }
@@ -6379,6 +6381,44 @@ mod tests {
             })
             .count();
         assert!(candles > 2 && candles < 30, "{candles}");
+    }
+
+    #[test]
+    fn stones_lie_sunk_at_the_foot_of_walls_and_none_on_swept_floors() {
+        let f = Fixture::new();
+        let cat = &f.cat;
+        let (floor, wall) = (feature(cat, "S_room"), feature(cat, "S_vwall"));
+        // floors with a wall on both sides, all along a row
+        let stones = |branch: Branch| -> Vec<Solid> {
+            let look = crate::branch_look::look_of(branch);
+            (1..40)
+                .flat_map(|x| {
+                    let ctx = Ctx {
+                        branch: &look,
+                        ..f.ctx_at(x, 7, None)
+                    };
+                    let near = Near::orth([None, None, Some(&wall), Some(&wall)]);
+                    look_of(&floor, near, &ctx).solids
+                })
+                .filter(|s| matches!(s.mesh, MeshKey::Facets(..)))
+                .collect()
+        };
+        for b in [Branch::Main, Branch::Mines, Branch::Gehennom] {
+            let stones = stones(b);
+            assert!(stones.len() > 5, "{b:?}: {}", stones.len());
+            // sunk to their middle or deeper: a stone, not a ball on the floor
+            for s in &stones {
+                let MeshKey::Facets(r, _) = s.mesh else {
+                    unreachable!()
+                };
+                assert!(s.pos.y < 0.0 && s.pos.y + crate::meshes::metres(r) > 0.0);
+            }
+        }
+        // a built place's floors are swept (on Sokoban's planks a stone
+        // reads as a thing to pick up)
+        for b in [Branch::Sokoban, Branch::Ludios, Branch::Vlad] {
+            assert!(stones(b).is_empty(), "{b:?}");
+        }
     }
 
     #[test]
