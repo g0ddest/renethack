@@ -38,6 +38,8 @@ mod input_ru;
 mod layouts_tests;
 #[path = "selftest_rim.rs"]
 mod rim_tests;
+#[path = "selftest_footprints.rs"]
+mod sizes;
 #[path = "selftest_world.rs"]
 mod world_looks;
 #[path = "selftest_worn.rs"]
@@ -4468,6 +4470,7 @@ impl SelfTest {
             "kits" => hero::kits(),
             "two-hands" => hero::two_hands(),
             "worn" => worn_looks::worn(),
+            "footprints" => sizes::footprints(),
             "branches" => world_looks::branches(),
             "title" => world_looks::title(),
             "bestiary" => world_looks::bestiary(),

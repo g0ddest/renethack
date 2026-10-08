@@ -148,6 +148,18 @@ fn one() -> f32 {
     1.0
 }
 
+/// A creature lies about this long on the floor at most, in cells (a cell
+/// is a metre): a longer one stands in its neighbours' cells, hides the
+/// hero it fights and goes through the walls of a corridor.
+pub const MAX_FOOTPRINT: f32 = 1.3;
+/// How much longer than that the biggest may be: the bigger of two long
+/// bodies still looks the bigger.
+pub const FOOTPRINT_GIVE: f32 = 0.15;
+/// A body too long for its cell is first drawn up to this much shorter
+/// for its height (never narrower than it is wide), then smaller: a
+/// compact elephant as tall as an elephant, not a long one knee-high.
+const FOOTPRINT_SQUASH: f32 = 0.65;
+
 /// A model: a scene under `client/godot/art` or a procedural body.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -247,6 +259,13 @@ pub struct ModelSpec {
     /// 1.3): the rig's `Head` bone scaled.
     #[serde(default = "one")]
     pub head_scale: f32,
+    /// How wide (x) and how long (z) the model lies on the floor as it
+    /// stands idle, in its own units: a body that would outgrow its cell
+    /// is fitted by it (`fitted`). None: no longer than a cell at any
+    /// size (an upright body). The `footprints` self-test measures every
+    /// monster's and names the models that must say theirs.
+    #[serde(default)]
+    pub footprint: Option<[f32; 2]>,
 }
 
 /// A model worn on a bone of a character (a role's hat or cape), hidden
@@ -316,6 +335,47 @@ impl ModelSpec {
             .as_deref()
             .and_then(hex)
             .unwrap_or([1.0, 1.0, 1.0])
+    }
+
+    /// The longer of the body's sides on the floor in its own units (its
+    /// girth counted), and the least it may be drawn shorter for its
+    /// height: by `FOOTPRINT_SQUASH`, never narrower than its other side.
+    fn long_side(&self) -> Option<(f32, f32)> {
+        let [x, z] = self.footprint?;
+        let (long, short) = (x.max(z) * self.girth, x.min(z) * self.girth);
+        (long > 0.0).then(|| (long, FOOTPRINT_SQUASH.max(short / long)))
+    }
+
+    /// The height a body that would stand `height` tall is drawn at. Its
+    /// own, while its long side fits a cell with the squash's help; a
+    /// longer body is drawn smaller, to lie between `MAX_FOOTPRINT` and
+    /// `FOOTPRINT_GIVE` more of it (the more, the bigger it would have
+    /// been).
+    pub fn fitted(&self, height: f32) -> f32 {
+        let Some((long, least)) = self.long_side() else {
+            return height;
+        };
+        let lies = long * height / self.size;
+        let fits = MAX_FOOTPRINT / least;
+        if lies <= fits {
+            return height;
+        }
+        let drawn = fits * (1.0 + FOOTPRINT_GIVE * ((lies - fits) / fits).tanh());
+        height * drawn / lies
+    }
+
+    /// The scales across (x) and along (z) the floor of a body drawn at
+    /// `scale`, for its height: its long side shortened to a cell's, as
+    /// far as `fitted` counts on.
+    pub fn squash(&self, scale: f32) -> [f32; 2] {
+        let Some((long, least)) = self.long_side() else {
+            return [1.0; 2];
+        };
+        let k = (MAX_FOOTPRINT / (long * scale)).clamp(least, 1.0);
+        match self.footprint {
+            Some([x, z]) if x > z => [k, 1.0],
+            _ => [1.0, k],
+        }
     }
 }
 
@@ -934,6 +994,8 @@ impl ArtManifest {
 
     fn placed(&self, model: usize, target: f32, level: Level) -> Resolved {
         let spec = &self.models[model].1;
+        // a body too long for its cell at that height is drawn smaller
+        let target = spec.fitted(target);
         let scale = target / spec.size;
         Resolved {
             model,
@@ -1124,6 +1186,7 @@ impl ArtManifest {
             bare_chest: false,
             girth: 1.0,
             head_scale: 1.0,
+            footprint: None,
         };
     }
 
@@ -1336,6 +1399,59 @@ mod tests {
         // a dwarf is stocky, a gnome's head is big
         assert!(model("dwarf", 0).1.girth > 1.1);
         assert!(model("gnome", 0).1.head_scale > 1.1);
+    }
+
+    /// A mumak was drawn two cells long and a baluchitherium four: they hid
+    /// the hero they fought and went through a corridor's rock.
+    #[test]
+    fn a_long_body_is_fitted_to_its_cell() {
+        let (art, cat) = (manifest(), catalog());
+        let find = |n: &str| cat.monsters.iter().find(|m| m.name == n).unwrap();
+        // how long a monster lies as it is drawn, by its model's footprint
+        let lies = |r: &Resolved| {
+            let spec = art.model_at(r.model).1;
+            spec.footprint.map(|[x, z]| {
+                let [across, along] = spec.squash(r.scale);
+                (x * across).max(z * along) * spec.girth * r.scale
+            })
+        };
+        let most = MAX_FOOTPRINT * (1.0 + FOOTPRINT_GIVE) + 1e-3;
+        for m in &cat.monsters {
+            for flags in [0, mg::FEMALE] {
+                let l = lies(&art.monster(m, flags));
+                assert!(l.is_none_or(|l| l <= most), "{}: {l:?} m long", m.name);
+            }
+        }
+        let height = |n: &str| art.monster(find(n), 0).height;
+        for huge in ["mumak", "mastodon", "titanothere", "baluchitherium"] {
+            let l = lies(&art.monster(find(huge), 0)).unwrap();
+            assert!(l > MAX_FOOTPRINT && l <= most, "{huge}: {l}");
+            println!("{huge}: {:.2} m tall, {l:.2} m long", height(huge));
+        }
+        // a mumak still stands as tall as a hero, and over a horse; the
+        // long, low rhinos reach the hero's chest
+        assert!(height("mumak") > 1.6 && height("mastodon") > 1.4);
+        assert!(height("mumak") > height("horse"));
+        assert!(height("titanothere") > 0.95 && height("baluchitherium") > 0.95);
+        // a horse and a dog keep their height: only shorter in the back
+        let sizes = &art.monsters.sizes;
+        assert_eq!(height("horse"), sizes["large"]);
+        assert_eq!(height("dog"), art.monster(find("large dog"), 0).height);
+        // of two long bodies of one model, the one that would have been
+        // bigger is still the bigger
+        assert!(height("winter wolf") > height("wolf"));
+        assert!(height("wolf") > height("jackal"));
+        assert!(height("warhorse") > height("pony"));
+        // an upright body is as tall as its size says
+        assert_eq!(height("giant"), sizes["huge"]);
+        // and a boulder on the floor is no smaller for the earth elemental
+        // that is drawn as one
+        let boulder = cat
+            .object_tiles
+            .iter()
+            .find(|t| t.appearance == "boulder")
+            .unwrap();
+        assert_eq!(art.object(boulder).height, 0.9);
     }
 
     /// How many monsters and object tiles resolve at each level of the

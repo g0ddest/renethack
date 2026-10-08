@@ -4328,13 +4328,42 @@ impl MapView {
     /// The monster or object on a cell: its model's index, the scale its
     /// look asks for and the scale its instance has (self-tests: a pooled
     /// instance comes back at its own size).
+    /// How wide and how long each monster of the catalog lies on the floor
+    /// as it is drawn: its name (with " (F)" for a woman of her own model),
+    /// its model, the sides in metres and the model's scale.
+    pub fn footprints(&mut self, catalog: &Catalog) -> Vec<(String, String, [f32; 2], f32)> {
+        let mut out = Vec::new();
+        for info in &catalog.monsters {
+            let male = self.art.manifest().monster(info, 0);
+            for flags in [0, mg::FEMALE] {
+                let r = self.art.manifest().monster(info, flags);
+                if flags != 0 && r.model == male.model {
+                    continue;
+                }
+                let look = ModelLook {
+                    art: r,
+                    tint: Color::WHITE,
+                    pose: Pose::Alive,
+                };
+                let name = match flags {
+                    0 => info.name.clone(),
+                    _ => format!("{} (F)", info.name),
+                };
+                let model = self.art.manifest().model_at(r.model).0.to_string();
+                out.push((name, model, self.art.footprint(&look), r.scale));
+            }
+        }
+        out
+    }
+
     pub fn entity_scale(&self, x: i32, y: i32) -> Option<(usize, f32, f32)> {
         let nodes = self.cells.get(&(x, y))?;
         let i = nodes.look.entity?;
         let want = nodes.look.models.get(i)?.look.art.scale;
         let m = nodes.models.get(i)?;
         let inner = m.node.get_child(0)?.try_cast::<Node3D>().ok()?;
-        Some((m.model_index(), want, inner.get_scale().x))
+        // its height's: a stocky or a fitted body is another size across
+        Some((m.model_index(), want, inner.get_scale().y))
     }
 
     /// The hero's model (self-tests look at its gear).

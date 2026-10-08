@@ -169,7 +169,9 @@ fn inner_transform(look: &ModelLook, spec: &nh_art::ModelSpec) -> Transform3D {
     }
     let s = r.scale;
     let girth = s * spec.girth;
-    transform([0.0, lift, 0.0], rot, [girth, s, girth])
+    // a body longer than its cell is drawn shorter for its height
+    let [across, along] = spec.squash(s);
+    transform([0.0, lift, 0.0], rot, [girth * across, s, girth * along])
 }
 
 fn transform(pos: [f32; 3], rot: [f32; 3], scale: [f32; 3]) -> Transform3D {
@@ -754,6 +756,24 @@ impl Art {
         let m = build_flat(color, finish);
         self.flat.insert(key, m.clone());
         m
+    }
+
+    /// How wide (x) and how long (z) the model of `look` lies on the floor,
+    /// in metres: the bounds of its meshes as it stands idle (a self-test
+    /// holds every creature to its cell by them). Built at once, whatever
+    /// the frame's budget.
+    pub fn footprint(&mut self, look: &ModelLook) -> [f32; 2] {
+        let spent = self.spent.take();
+        let mut m = self.take(look);
+        // as it stands: its idle's pose on the bones now
+        if let Some(p) = m.player.as_mut() {
+            p.advance(0.0);
+        }
+        // in the model's own turn: the map turns its holder
+        let reach = reach_of(&m.node);
+        self.give(m);
+        self.spent = spent;
+        reach
     }
 
     /// A model instance for this look: one given back before, or a new one
@@ -1671,6 +1691,110 @@ fn find<T: GodotClass + Inherits<Node>>(root: &Gd<Node>) -> Option<Gd<T>> {
         .iter_shared()
         .next()
         .and_then(|n| n.try_cast::<T>().ok())
+}
+
+/// `node`'s transform in the space of `root`, an ancestor of it.
+fn within(root: &Gd<Node3D>, node: &Gd<Node>) -> Transform3D {
+    let mut to_root = Transform3D::IDENTITY;
+    let mut at = node.clone();
+    while at != root.clone().upcast::<Node>() {
+        if let Ok(n) = at.clone().try_cast::<Node3D>() {
+            to_root = n.get_transform() * to_root;
+        }
+        let Some(parent) = at.get_parent() else {
+            break;
+        };
+        at = parent;
+    }
+    to_root
+}
+
+/// The sides on the ground (x, z) of the bounds of the meshes shown under
+/// `root`, in its space. A skinned mesh is measured as it is posed now:
+/// every few of its vertices, moved by their bones.
+fn reach_of(root: &Gd<Node3D>) -> [f32; 2] {
+    use godot::classes::mesh::ArrayType;
+    // one vertex in so many is enough for the bounds
+    const EVERY: usize = 5;
+    // (x, z) of the bounds' lowest and highest corners
+    let (mut lo, mut hi) = ([f32::MAX; 2], [f32::MIN; 2]);
+    let mut reach = |p: Vector3| {
+        lo = [lo[0].min(p.x), lo[1].min(p.z)];
+        hi = [hi[0].max(p.x), hi[1].max(p.z)];
+    };
+    for node in root
+        .find_children_ex("*")
+        .type_("MeshInstance3D")
+        .owned(false)
+        .done()
+        .iter_shared()
+    {
+        let Ok(mi) = node.try_cast::<MeshInstance3D>() else {
+            continue;
+        };
+        let Some(mesh) = mi.get_mesh().filter(|_| mi.is_visible()) else {
+            continue;
+        };
+        let skeleton = mi
+            .get_node_or_null(&mi.get_skeleton_path())
+            .and_then(|n| n.try_cast::<Skeleton3D>().ok());
+        let skinned = mi
+            .get_skin()
+            .filter(|s| s.get_bind_count() > 0)
+            .zip(skeleton);
+        let Some((skin, skeleton)) = skinned else {
+            let to_root = within(root, &mi.clone().upcast());
+            let bounds = mesh.get_aabb();
+            for corner in 0..8 {
+                let pick = |bit: i32, size: f32| if corner & bit != 0 { size } else { 0.0 };
+                let s = bounds.size;
+                reach(
+                    to_root
+                        * (bounds.position
+                            + Vector3::new(pick(1, s.x), pick(2, s.y), pick(4, s.z))),
+                );
+            }
+            continue;
+        };
+        // where each bind's bone carries the mesh's own space
+        let to_root = within(root, &skeleton.clone().upcast());
+        let binds: Vec<Transform3D> = (0..skin.get_bind_count())
+            .map(|b| {
+                let name = skin.get_bind_name(b).to_string();
+                let bone = if name.is_empty() {
+                    skin.get_bind_bone(b)
+                } else {
+                    skeleton.find_bone(name.as_str())
+                };
+                to_root * skeleton.get_bone_global_pose(bone.max(0)) * skin.get_bind_pose(b)
+            })
+            .collect();
+        for surface in 0..mesh.get_surface_count() {
+            let arrays = mesh.surface_get_arrays(surface);
+            let get = |a: ArrayType| arrays.at(a.ord() as usize);
+            let verts: PackedVector3Array = get(ArrayType::VERTEX).to();
+            let bones: PackedInt32Array = get(ArrayType::BONES).try_to().unwrap_or_default();
+            let weights: PackedFloat32Array = get(ArrayType::WEIGHTS).try_to().unwrap_or_default();
+            let per = bones.len().checked_div(verts.len()).unwrap_or(0);
+            if per == 0 || weights.len() != bones.len() {
+                continue;
+            }
+            let (bones, weights) = (bones.as_slice(), weights.as_slice());
+            for (v, p) in verts.as_slice().iter().enumerate().step_by(EVERY) {
+                let mut at = Vector3::ZERO;
+                for k in v * per..(v + 1) * per {
+                    if let Some(bind) = binds.get(bones[k] as usize).filter(|_| weights[k] > 0.0) {
+                        at += (*bind * *p) * weights[k];
+                    }
+                }
+                reach(at);
+            }
+        }
+    }
+    if lo[0] > hi[0] {
+        return [0.0; 2];
+    }
+    [hi[0] - lo[0], hi[1] - lo[1]]
 }
 
 /// The clips' scale track of the `Head` bone dropped where it only ever
