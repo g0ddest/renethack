@@ -18,7 +18,7 @@
 
 use crate::catalog::{Catalog, Channel, Match, Template, Use, plausible};
 use crate::format::{ConvKind, Segment, convs};
-use crate::grammar::{Case, Gender};
+use crate::grammar::{Case, Gender, euphony};
 use crate::phrase::{NameKind, Names, Phrase};
 use crate::russian::{Russian, Translation};
 use crate::template::{Part, Placeholder, RuTemplate, Target, Value, capitalize};
@@ -611,7 +611,7 @@ impl Translator {
         whole: bool,
         upper: bool,
     ) -> Output {
-        let text = ru.render(values, self.hero);
+        let text = euphony(&ru.render(values, self.hero)).into_owned();
         Output {
             text: if upper { capitalize(&text) } else { text },
             status: if whole {

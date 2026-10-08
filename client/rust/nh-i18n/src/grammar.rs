@@ -139,6 +139,98 @@ pub fn counted_form(n: u64, case: Case, animate: bool) -> (Number, Case) {
     }
 }
 
+/// A preposition of one consonant takes a vowel before a word it would
+/// stick to: в → во (во льду, во флаконе), с → со (со свитком, со мной),
+/// к → ко (ко мне). A template writes "в {1:loc}" and cannot know the
+/// word that comes.
+pub fn euphony(text: &str) -> std::borrow::Cow<'_, str> {
+    let mut out: Option<String> = None;
+    let mut last = 0;
+    let mut before: Option<char> = None;
+    for (i, c) in text.char_indices() {
+        let lone = !before.is_some_and(char::is_alphabetic);
+        before = Some(c);
+        if !lone || !"вВсСкК".contains(c) {
+            continue;
+        }
+        let after = i + c.len_utf8();
+        let Some(rest) = text[after..].strip_prefix(' ') else {
+            continue;
+        };
+        let word: String = rest
+            .chars()
+            .take_while(|l| l.is_alphabetic())
+            .flat_map(char::to_lowercase)
+            .collect();
+        let takes = match c {
+            'в' | 'В' => vo(&word),
+            'с' | 'С' => so(&word),
+            _ => ko(&word),
+        };
+        if takes {
+            let out = out.get_or_insert_with(String::new);
+            out.push_str(&text[last..after]);
+            out.push('о');
+            last = after;
+        }
+    }
+    match out {
+        Some(mut out) => {
+            out.push_str(&text[last..]);
+            out.into()
+        }
+        None => text.into(),
+    }
+}
+
+/// Does a word start with one of `first` and then a consonant?
+fn cluster(word: &str, first: &str) -> bool {
+    let mut letters = word.chars();
+    letters.next().is_some_and(|c| first.contains(c))
+        && letters
+            .next()
+            .is_some_and(|c| "бвгджзйклмнпрстфхцчшщ".contains(c))
+}
+
+fn starts(word: &str, stems: &[&str]) -> bool {
+    stems.iter().any(|s| word.starts_with(s))
+}
+
+/// во власти, во флаконе; во льду, во рту, во сне, во мне, во дворе.
+fn vo(word: &str) -> bool {
+    cluster(word, "вф")
+        || starts(
+            word,
+            &["льд", "льв", "мгл", "мрак", "мног", "множ", "тьм", "двор"],
+        )
+        || [
+            "рту",
+            "лбу",
+            "рву",
+            "ржи",
+            "сне",
+            "мне",
+            "весь",
+            "что",
+            "имя",
+            "благо",
+        ]
+        .contains(&word)
+}
+
+/// со свитком, со змеёй, со шлемом, со щитом; со мной, со льдом, со дна.
+fn so(word: &str) -> bool {
+    cluster(word, "сзшж")
+        || starts(word, &["щ", "льд", "льв", "мно", "двор", "вс", "лб"])
+        || ["рта", "ртом", "дна", "рвом", "лжи"].contains(&word)
+}
+
+/// ко мне, ко всем, ко льду, ко дну.
+fn ko(word: &str) -> bool {
+    starts(word, &["мно", "вс", "двор", "льд", "льв", "втор"])
+        || ["мне", "рту", "лбу", "дну", "сну", "рву"].contains(&word)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -180,5 +272,37 @@ mod tests {
         assert_eq!(Case::Loc.index(), Case::Prep.index());
         assert!(!Case::ALL.contains(&Case::Loc));
         assert_eq!(counted_form(5, Case::Loc, false), (Number::Plur, Case::Loc));
+    }
+
+    #[test]
+    fn a_preposition_before_a_word_it_sticks_to() {
+        for (written, said) in [
+            ("Вы стоите в льду.", "Вы стоите во льду."),
+            (
+                "В флаконе пусто, в рту сухо.",
+                "Во флаконе пусто, во рту сухо.",
+            ),
+            ("Вы бьёте с свитком в руке", "Вы бьёте со свитком в руке"),
+            (
+                "с змеёй, с шлемом, с щитом, с мной",
+                "со змеёй, со шлемом, со щитом, со мной",
+            ),
+            ("к мне (к всем)", "ко мне (ко всем)"),
+            // nothing to change
+            (
+                "в полу, в воде, с зомби, с мечом, к двери",
+                "в полу, в воде, с зомби, с мечом, к двери",
+            ),
+            (
+                "в рот, в ртути, с ртутью, в двери",
+                "в рот, в ртути, с ртутью, в двери",
+            ),
+            // a letter of a word, an inventory letter
+            ("лев с львицей: в - свиток", "лев со львицей: в - свиток"),
+            ("x - свиток (в сумке)", "x - свиток (в сумке)"),
+        ] {
+            assert_eq!(euphony(written), said);
+        }
+        assert!(matches!(euphony("в полу"), std::borrow::Cow::Borrowed(_)));
     }
 }
