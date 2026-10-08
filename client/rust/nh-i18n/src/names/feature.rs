@@ -28,6 +28,16 @@ pub(super) fn parse(lex: &Lexicon, text: &str) -> Option<RuName> {
     stairs(lex, text)
         .or_else(|| altar(lex, text))
         .or_else(|| water(lex, text))
+        .or_else(|| interior(lex, text))
+}
+
+/// What farlook calls the spots around a swallowed hero (pager.c):
+/// "interior of the purple worm".
+fn interior(lex: &Lexicon, text: &str) -> Option<RuName> {
+    let monster = lex.parse_monster(text.strip_prefix("interior of ")?, true)?;
+    let mut name = RuName::new(lex.noun("bodypart", "interior")?.clone());
+    name.tails.push(Tail::Genitive(Box::new(monster.ru(lex))));
+    Some(name)
 }
 
 /// "staircase up", "ladder down to level 4", "branch staircase down to the
@@ -170,6 +180,15 @@ mod tests {
             word("high altar to Moloch (unaligned)", Case::Prep),
             "главном алтаре Молоха (безверный)"
         );
+    }
+
+    #[test]
+    fn the_interior_of_whoever_swallowed_the_hero() {
+        assert_eq!(
+            word("interior of the purple worm", Case::Nom),
+            "нутро пурпурного червя"
+        );
+        assert_eq!(word("interior of it", Case::Loc), "нутре кого-то");
     }
 
     #[test]

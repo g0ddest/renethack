@@ -14000,10 +14000,10 @@ Here lies the body of Jonathan Blake.  Stepped on the gas instead of the brake. 
 Here lies the left foot of Jack, killed by a land mine.  Let us know if you find any more of him  [caadca272dfa]
   =   Здесь лежит левая нога Джека, погибшего на мине.  Если найдёте от него что-нибудь ещё, сообщите нам
 Here the High Temple of %s is located.  [6184af80d855]
-  m   Здесь находится Высший храм тритона.
-  f   Здесь находится Высший храм крысы.
-  n   Здесь находится Высший храм копья.
-  pl  Здесь находится Высший храм 3 стрел.
+  m   Здесь находится Верховный храм тритона.
+  f   Здесь находится Верховный храм крысы.
+  n   Здесь находится Верховный храм копья.
+  pl  Здесь находится Верховный храм 3 стрел.
 Here there be dragons  [30921cc4e86e]
   =   Здесь водятся драконы
 Hey, I didn't write this stuff!  [62c575eb42f5]
@@ -18422,7 +18422,7 @@ Want to ascend in a hurry?  Apply at Gizmonic Institute.  [ada06f4a0bfa]
 Want to heal faster?  Dip your potions of healing in a potion of speed!  [642b42c04f7d]
   =   Хотите лечиться быстрее?  Окуните зелья лечения в зелье скорости!
 Wanted: shopkeepers.  Send a scroll of mail to Mage of Yendor/Level 35/Dungeon.  [15a35d2326fb]
-  =   Требуются лавочники.  Присылайте почтовый свиток по адресу: Архимаг Йендора/Уровень 35/Подземелье.
+  =   Требуются лавочники.  Присылайте свиток почты по адресу: Архимаг Йендора/Уровень 35/Подземелье.
 Warily you scan your surroundings, all of your senses alert for signs\nof possible danger.  Off in the distance, you can %s the familiar shapes\nof %s.\n\nBut why, you think, should %s be there?\n\nSuddenly, the hairs on your neck stand on end as you detect the aura of\nevil magic in the air.\n\nWithout thought, you ready your weapon, and mutter under your breath:\n\n    "By %s, there will be blood spilt today."  [b2874f22100c]
   m   Вы настороженно осматриваетесь, все чувства начеку в ожидании\nопасности.  Вдали виднеются знакомые очертания\nтритона.\n\nНо почему, думаете вы, тритон должен быть там?\n\nВнезапно волосы у вас на затылке встают дыбом: вы ощущаете в воздухе\nауру злой магии.\n\nНе раздумывая, вы готовите оружие и бормочете себе под нос:\n\n    «Клянусь тритоном, сегодня прольётся кровь.»
   f   Вы настороженно осматриваетесь, все чувства начеку в ожидании\nопасности.  Вдали виднеются знакомые очертания\nкрысы.\n\nНо почему, думаете вы, крыса должна быть там?\n\nВнезапно волосы у вас на затылке встают дыбом: вы ощущаете в воздухе\nауру злой магии.\n\nНе раздумывая, вы готовите оружие и бормочете себе под нос:\n\n    «Клянусь крысой, сегодня прольётся кровь.»

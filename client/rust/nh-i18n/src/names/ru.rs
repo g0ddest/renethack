@@ -32,6 +32,12 @@ pub enum Tail {
     Genitive(Box<RuName>),
     /// A name in the head's own case: лавочнику *Ицхаку*.
     Same(Box<RuName>),
+    /// Another name it may be instead, in the head's own case: дверной
+    /// проём *или пол комнаты*.
+    Or(Box<RuName>),
+    /// A second name with it, in the head's own case: вас *и вашего пони*.
+    /// The two are a plural.
+    And(Box<RuName>),
 }
 
 /// A name in Russian.
@@ -117,6 +123,9 @@ impl RuName {
         } else {
             Number::Sing
         };
+        if self.tails.iter().any(|t| matches!(t, Tail::And(_))) {
+            return (self.head.gender, Number::Plur);
+        }
         match self.count {
             Count::One => (self.head.gender, head_number),
             Count::Some => (self.head.gender, Number::Plur),
@@ -259,6 +268,14 @@ impl RuName {
                 Tail::Text(s) => out.push_str(s),
                 Tail::Genitive(n) => out.push_str(&n.form(Case::Gen)),
                 Tail::Same(n) => out.push_str(&n.form(case)),
+                Tail::Or(n) => {
+                    out.push_str("или ");
+                    out.push_str(&n.form(case));
+                }
+                Tail::And(n) => {
+                    out.push_str("и ");
+                    out.push_str(&n.form(case));
+                }
             }
         }
         let (g, num) = self.agreement();

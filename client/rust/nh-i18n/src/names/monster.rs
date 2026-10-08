@@ -190,7 +190,11 @@ fn kind(
     {
         return Some((MonsterKind::Ghost(name.to_string()), Count::One));
     }
-    if let Some((name, title)) = rest.split_once(" the ") {
+    // "Bob the stripling": a name the engine capitalized, not words that
+    // happen to stand before a "the" ("interior of the purple worm")
+    if let Some((name, title)) = rest.split_once(" the ")
+        && !name.starts_with(char::is_lowercase)
+    {
         let mut t = title;
         let mut title_adjectives = Vec::new();
         while let Some((a, r)) = ADJECTIVES.iter().find_map(|a| {

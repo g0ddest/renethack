@@ -843,6 +843,7 @@
 "scroll of punishment" = { ru = "свиток наказания", src = "nethack-ru" }
 "scroll of charging" = { ru = "свиток подзарядки", src = "chosen", note = "was свиток зарядки" }
 "scroll of stinking cloud" = { ru = "свиток зловонного облака", src = "nethack-ru" }
+"scroll of mail" = { ru = "свиток почты", src = "chosen", note = "the mail daemon's scroll (MAIL_STRUCTURES)" }
 "scroll of blank paper" = { ru = "чистый свиток", src = "chosen", note = "was свиток чистого листа" }
 # spellbook
 "spellbook of dig" = { ru = "книга копания", src = "nethack-ru" }
@@ -1147,6 +1148,7 @@
 "clear potion" = { ru = "прозрачное зелье", src = "nethack-ru" }
 # scroll
 "unlabeled scroll" = { ru = "свиток без надписи", src = "chosen", note = "was без надписи" }
+"stamped scroll" = { ru = "свиток с маркой", src = "chosen", note = "the scroll of mail before it is read" }
 # spellbook
 "parchment spellbook" = { ru = "пергаментная книга заклинаний", src = "nethack-ru" }
 "vellum spellbook" = { ru = "веленевая книга заклинаний", src = "nethack-ru" }
@@ -1314,12 +1316,29 @@
 "pair of gauntlets" = { ru = "рукавицы", src = "chosen" }
 "pair of shoes" = { ru = "башмаки", src = "chosen" }
 "pair of boots" = { ru = "сапоги", src = "chosen" }
+# gloves_simple_name(), boots_simple_name() and suit_simple_name() (objnam.c)
+# name the worn thing without its "pair of" or "set of": Your gauntlets...
+"gloves" = { ru = "перчатки", src = "chosen" }
+"gauntlets" = { ru = "рукавицы", src = "chosen" }
+"shoes" = { ru = "башмаки", src = "chosen" }
+"boots" = { ru = "сапоги", src = "chosen" }
+"dragon scales" = { ru = "драконья чешуя", src = "chosen" }
 "bag" = { ru = "сумка", src = "chosen" }
 # weapon_descr(): the kind of a missile thrown by hand
 "bolt" = { ru = "болт", src = "chosen", note = "a crossbow bolt" }
 "hook" = { ru = "крюк", src = "chosen", note = "a grappling hook" }
 "glob" = { ru = "комок", src = "chosen" }
 "mattock" = { ru = "большая кирка", src = "chosen", note = "owner 2026-10-04 (n42): weapon_descr() of the mattock, apart from кирка and широкая кирка" }
+# weapon_descr(): makesingular() of a skill's or an object class's name
+"polearm" = { ru = "древковое оружие", src = "chosen" }
+"saber" = { ru = "сабля", src = "chosen" }
+"hammer" = { ru = "молот", src = "chosen" }
+"whip" = { ru = "кнут", src = "chosen" }
+"tool" = { ru = "инструмент", src = "chosen" }
+"coin" = { ru = "монета", src = "chosen" }
+"chain" = { ru = "цепь", src = "chosen" }
+"venom" = { ru = "яд", src = "chosen" }
+"large stone" = { ru = "крупный камень", src = "chosen" }
 # bottlename() (potion.c): what a potion's glass is called, and what a
 # hallucinating hero thinks it is
 "bottle" = { ru = "бутылка", src = "chosen" }
@@ -1734,6 +1753,15 @@
 "valid position" = { ru = "допустимая позиция", src = "chosen", note = "was подходящая позиция" }
 "broken door" = { ru = "сломанная дверь", src = "chosen" }
 "doorless doorway" = { ru = "пустой проём", src = "chosen" }
+# what the messages call any door (b_trapped(), lock.c, dig.c), and what
+# farlook (pager.c) says of a spot besides its defsym.h name
+"door" = { ru = "дверь", src = "chosen" }
+"secret door" = { ru = "потайная дверь", src = "chosen" }
+"interior of a monster" = { ru = "нутро монстра", src = "chosen", note = "farlook while swallowed" }
+"unexplored area" = { ru = "неисследованная область", src = "chosen" }
+"land" = { ru = "суша", src = "chosen", note = "seen from under water" }
+"unknown" = { ru = "неизвестно что", src = "chosen", indecl = true, note = "mapped once, not seen from under water" }
+"trap" = { ru = "ловушка", src = "chosen", note = "any trap; the status condition is \"Trap\"" }
 # what dfeature_at() (invent.c) and waterbody_name() (pager.c) call the
 # features of a spot: There is a doorway here.
 "stairs up" = { ru = "лестница вверх", src = "chosen" }
@@ -2200,6 +2228,11 @@
 "nemesis" = { ru = "заклятый враг", src = "chosen", note = "the quest nemesis" }
 "artifact" = { ru = "артефакт", src = "chosen" }
 "Excalibur" = { ru = "Экскалибур", src = "chosen", note = "also an artifact" }
+# what a crowning god names the hero (pray.c gcrownu(), insight.c), and
+# Moloch's temple in the Sanctum
+"Hand of Elbereth" = { ru = "Длань Elbereth", src = "chosen", note = "team-lead 2026-10-07; Elbereth stays Latin, as it is engraved" }
+"Envoy of Balance" = { ru = "Посланник Равновесия", src = "chosen", note = "team-lead 2026-10-07; a heroine is Посланница Равновесия" }
+"High Temple" = { ru = "Верховный храм", src = "chosen", note = "team-lead 2026-10-07; as Верховный жрец" }
 
 [currency]
 "zorkmid" = { ru = "зоркмид", src = "chosen" }
@@ -2373,7 +2406,7 @@
 "face" = { ru = "лицо", src = "chosen" }
 "finger" = { ru = "палец", src = "chosen" }
 "fingertip" = { ru = "кончик пальца", src = "chosen", ru_pl = "кончики пальцев" }
-"foot" = { ru = "ступня", src = "chosen", note = "the leg is нога" }
+"foot" = { ru = "нога", src = "chosen", note = "was ступня; at your feet: у ваших ног; the leg is нога too" }
 "head" = { ru = "голова", src = "chosen" }
 "leg" = { ru = "нога", src = "chosen" }
 "light headed" = { ru = "головокружение", src = "chosen", note = "a state: You feel rather light headed" }
@@ -2582,6 +2615,25 @@
 "molten" = { ru = "расплавленный", src = "chosen" }
 "frozen" = { ru = "замёрзший", src = "chosen" }
 "deep" = { ru = "глубокий", src = "chosen" }
+# eatcorpse() (eat.c): what a palatable corpse is
+"stringy" = { ru = "жилистый", src = "chosen" }
+"gamey" = { ru = "с душком", src = "chosen", indecl = true }
+"fatty" = { ru = "жирный", src = "chosen" }
+"tough" = { ru = "жёсткий", src = "chosen" }
+# tintxts[] (eat.c) as "You consume %s %s." prints it; a tin's name says
+# банка супа из мяса <monster>
+"soup made from" = { ru = "сваренный в суп", src = "chosen" }
+# beautiful() (apply.c): the hero by Charisma, from 25 down to 3; "plain"
+# and "beautiful" are above
+"sublime" = { ru = "несравненный", src = "chosen" }
+"splendorous" = { ru = "великолепный", src = "chosen" }
+"handsome" = { ru = "красивый", src = "chosen" }
+"winsome" = { ru = "миловидный", src = "chosen" }
+"amiable" = { ru = "обаятельный", src = "chosen" }
+"cute" = { ru = "милый", src = "chosen" }
+"homely" = { ru = "неказистый", src = "chosen" }
+"ugly" = { ru = "уродливый", src = "chosen" }
+"hideous" = { ru = "безобразный", src = "chosen" }
 
 [greeting]
 # Hello() and Goodbye() (role.c): the hero's greeting by role; foreign ones
@@ -2627,6 +2679,26 @@
 "Samurai" = { ru = "Женщина-самурай", src = "chosen" }
 "Tourist" = { ru = "Туристка", src = "chosen" }
 "Wizard" = { ru = "Волшебница", src = "chosen" }
+
+[word]
+# common nouns the engine passes as an argument and no other section
+# names: an(Hallucination ? rndmonnam() : "cat") in Schroedinger's box
+# (zap.c), zap_type_text "spell" (zap.c: The spell hits it), farlook's
+# "can be many things" (pager.c)
+"cat" = { ru = "кошка", src = "chosen", anim = true }
+"spell" = { ru = "заклинание", src = "chosen" }
+"can be many things" = { ru = "может быть чем угодно", src = "chosen", indecl = true }
+"juice" = { ru = "сок", src = "chosen", note = "fruitname(TRUE): <fruit> juice, сок <fruit gen.>; a fruit the player named stays as typed" }
+# mpoisons_subj() (mhitu.c): what of a monster was poisoned ("attack" and
+# "weapon" are named elsewhere)
+"sting" = { ru = "жало", src = "chosen" }
+"bite" = { ru = "укус", src = "chosen" }
+"gaze" = { ru = "взгляд", src = "chosen" }
+"contact" = { ru = "касание", src = "chosen" }
+# look_at_monster() (pager.c): "warned of demons", and a creature a
+# clairvoyant or blind hero knows of
+"demon" = { ru = "демон", src = "chosen", anim = true }
+"unseen creature" = { ru = "невидимое существо", src = "chosen" }
 
 [name]
 # personal names the engine gives: the default pets (dog.c) and the

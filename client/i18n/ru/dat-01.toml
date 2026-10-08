@@ -16,7 +16,7 @@ ru = "Вы прибываете на Астральный план!"
 
 [6184af80d855]
 en = "Here the High Temple of %s is located."
-ru = "Здесь находится Высший храм {1:gen}."
+ru = "Здесь находится Верховный храм {1:gen}."
 
 [12f1df209a23]
 en = "You sense alarm, hostility, and excitement in the air!"
