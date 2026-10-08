@@ -241,6 +241,11 @@ pub struct ModelSpec {
     /// materials (a bull's coat, not its horns and eyes).
     #[serde(default)]
     pub recolor: BTreeMap<String, String>,
+    /// Another albedo texture (relative to `client/godot/art`) for the
+    /// scene's own materials: a coat left pale to take a tint, linen wound
+    /// over a body. Their relief, gloss and glow stay.
+    #[serde(default)]
+    pub albedo: Option<String>,
     /// Things worn on the rig's bones: a hat, a winged helm, a cape.
     #[serde(default)]
     pub extras: Vec<Extra>,
@@ -251,6 +256,15 @@ pub struct ModelSpec {
     /// With `bare_arms`, the chest bare too (hide the outfit's body).
     #[serde(default)]
     pub bare_chest: bool,
+    /// With `bare_chest`, the legs and feet bare too (hide the outfit's):
+    /// the whole base character in the head's skin (a mummy wound in
+    /// linen from crown to sole).
+    #[serde(default)]
+    pub bare_legs: bool,
+    /// A second head of this kind beside the first, the two leaning apart
+    /// from one neck (an ettin).
+    #[serde(default)]
+    pub second_head: Option<String>,
     /// How broad and deep the model is for its height (a dwarf is stocky:
     /// 1.25).
     #[serde(default = "one")]
@@ -401,6 +415,9 @@ pub struct HeadSpec {
     /// Multiplies the hair ("#rrggbb").
     #[serde(default)]
     pub hair_color: Option<String>,
+    /// Without the base's eyebrows (a face under wrappings).
+    #[serde(default)]
+    pub browless: bool,
 }
 
 /// A PBR material: `<textures>_albedo.jpg`, `_normal.jpg` and `_arm.jpg`
@@ -798,6 +815,16 @@ impl ArtManifest {
             if m.bare_chest && m.bare_arms.is_none() {
                 errors.push(format!("model {name}: a bare chest without bare arms"));
             }
+            if m.bare_legs && !m.bare_chest {
+                errors.push(format!("model {name}: bare legs without a bare chest"));
+            }
+            if let Some(h) = &m.second_head
+                && (!raw.heads.contains_key(h) || m.head.is_none())
+            {
+                errors.push(format!(
+                    "model {name}: a second head {h} of no kind, or alone"
+                ));
+            }
             for e in &m.extras {
                 if model(&e.model).is_none() {
                     errors.push(format!("model {name}: no extra model {}", e.model));
@@ -1185,9 +1212,12 @@ impl ArtManifest {
             glow_energy: 0.0,
             smooth: false,
             recolor: BTreeMap::new(),
+            albedo: None,
             extras: Vec::new(),
             bare_arms: None,
             bare_chest: false,
+            bare_legs: false,
+            second_head: None,
             girth: 1.0,
             head_scale: 1.0,
             footprint: None,
@@ -1536,17 +1566,28 @@ mod tests {
     #[test]
     fn every_clip_the_manifest_names_is_in_its_file() {
         let art = manifest();
+        // each file read once: (its clips, its bytes)
+        let mut files: BTreeMap<String, (Option<Vec<String>>, Vec<u8>)> = BTreeMap::new();
         for (_, name, spec) in art.models() {
             let file = match (&spec.rig, &spec.scene) {
                 (Some(rig), _) => art.library(rig).unwrap().to_string(),
                 (None, Some(scene)) => scene.clone(),
                 (None, None) => continue,
             };
-            let path = art_dir().join(&file);
-            let clips = clips_in(&path);
-            let bytes = std::fs::read(&path).unwrap();
             for clip in spec.anims.names() {
-                let found = match &clips {
+                // "<library>/<clip>" is a clip of another library on the
+                // same skeleton
+                let (file, clip) = match clip.split_once('/') {
+                    Some((lib, clip)) if spec.extra_rigs.iter().any(|r| r == lib) => {
+                        (art.library(lib).unwrap().to_string(), clip)
+                    }
+                    _ => (file.clone(), clip),
+                };
+                let (clips, bytes) = files.entry(file.clone()).or_insert_with(|| {
+                    let path = art_dir().join(&file);
+                    (clips_in(&path), std::fs::read(&path).unwrap())
+                });
+                let found = match clips {
                     Some(c) => c.iter().any(|c| c == clip),
                     None => bytes.windows(clip.len()).any(|w| w == clip.as_bytes()),
                 };

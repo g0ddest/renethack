@@ -220,6 +220,9 @@ pub struct Art {
     proc_clips: Option<Gd<AnimationLibrary>>,
     /// Meshes shaded smooth, by the source mesh's id.
     smoothed: HashMap<i64, Gd<Mesh>>,
+    /// Materials with another albedo, by the source material's id and the
+    /// texture's path.
+    repainted: HashMap<(i64, String), Option<Gd<Material>>>,
     /// Sleeves cut free of their hands, by the source mesh's id.
     handless: HashMap<i64, Gd<ArrayMesh>>,
     /// The meshes (and their skins) of each base head, built once.
@@ -294,6 +297,7 @@ impl Art {
             proc_anims: HashMap::new(),
             proc_clips: None,
             smoothed: HashMap::new(),
+            repainted: HashMap::new(),
             handless: HashMap::new(),
             heads: HashMap::new(),
             bodies: HashMap::new(),
@@ -347,8 +351,8 @@ impl Art {
             .manifest
             .models()
             .flat_map(|(_, _, m)| {
-                let head = m.head.clone().map(|h| (h, Region::Head));
-                head.into_iter()
+                let head = m.head.iter().chain(&m.second_head).cloned();
+                head.map(|h| (h, Region::Head))
                     .chain(m.bare_arms.clone().map(|a| (a, Region::bare(m))))
             })
             .filter(|(h, _)| self.manifest.head(h).is_some())
@@ -380,7 +384,8 @@ impl Art {
                 if spec.smooth {
                     q.push(Preload::Smooth(look.art.model));
                 }
-                q.extend(spec.head.clone().map(|h| Preload::Head(h, Region::Head)));
+                let heads = spec.head.iter().chain(&spec.second_head).cloned();
+                q.extend(heads.map(|h| Preload::Head(h, Region::Head)));
                 q.extend(
                     spec.bare_arms
                         .clone()
@@ -467,7 +472,7 @@ impl Art {
                 self.scene(i);
             }
             Preload::Head(kind, region) => {
-                self.head_parts(&kind, region);
+                self.head_parts(&kind, region, Lean::Upright, None);
             }
             Preload::Smooth(i) => {
                 if let Some(scene) = self.scene(i) {
@@ -497,7 +502,11 @@ impl Art {
     /// The files an item reads (`res://` paths).
     fn files_of(&self, item: &Preload) -> Vec<String> {
         let full = |p: &str| format!("{ART_ROOT}{p}");
-        let scene = |i: usize| self.manifest.model_at(i).1.scene.as_deref().map(full);
+        // a scene, and the albedo its model wears instead of its own
+        let scene = |i: usize| {
+            let spec = self.manifest.model_at(i).1;
+            spec.scene.iter().chain(&spec.albedo).map(|p| full(p))
+        };
         let library = |n: &str| self.manifest.library(n).map(&full);
         let head = |kind: &str, region: Region| -> Vec<String> {
             let Some(h) = self.manifest.head(kind) else {
@@ -513,20 +522,19 @@ impl Art {
         match item {
             Preload::Texture(t) => vec![full(t)],
             Preload::Library(n, _) => library(n).into_iter().collect(),
-            Preload::Scene(i) | Preload::Smooth(i) | Preload::Prop(i) => {
-                scene(*i).into_iter().collect()
-            }
+            Preload::Scene(i) | Preload::Smooth(i) | Preload::Prop(i) => scene(*i).collect(),
             Preload::Head(kind, region) => head(kind, *region),
             Preload::Warm(look) => {
                 let spec = self.manifest.model_at(look.art.model).1;
-                let mut out: Vec<String> = scene(look.art.model).into_iter().collect();
+                let mut out: Vec<String> = scene(look.art.model).collect();
                 out.extend(
                     spec.rig
                         .iter()
                         .chain(&spec.extra_rigs)
                         .filter_map(|r| library(r)),
                 );
-                out.extend(spec.head.iter().flat_map(|h| head(h, Region::Head)));
+                let heads = spec.head.iter().chain(&spec.second_head);
+                out.extend(heads.flat_map(|h| head(h, Region::Head)));
                 out.extend(
                     spec.bare_arms
                         .iter()
@@ -536,7 +544,7 @@ impl Art {
                     spec.extras
                         .iter()
                         .filter_map(|e| self.manifest.model_index(&e.model))
-                        .filter_map(scene),
+                        .flat_map(scene),
                 );
                 out
             }
@@ -1096,12 +1104,23 @@ impl Art {
                 if spec.smooth {
                     self.smooth(&inner);
                 }
+                if let Some(albedo) = spec.albedo.as_deref() {
+                    self.repaint(&inner, albedo);
+                }
                 let player = self.animate_scene(&inner, &spec);
-                if let Some(kind) = spec.head.as_deref() {
-                    // a base character's head, else the procedural one
-                    if !self.attach_base_head(&inner, kind, Region::Head) {
-                        self.attach_head(&inner, kind);
+                match (spec.head.as_deref(), spec.second_head.as_deref()) {
+                    // two heads lean apart on one neck
+                    (Some(kind), Some(other)) => {
+                        self.attach_leaning(&inner, kind, Region::Head, Lean::Left);
+                        self.attach_leaning(&inner, other, Region::Head, Lean::Right);
                     }
+                    // a base character's head, else the procedural one
+                    (Some(kind), None) => {
+                        if !self.attach_base_head(&inner, kind, Region::Head) {
+                            self.attach_head(&inner, kind);
+                        }
+                    }
+                    (None, _) => {}
                 }
                 if let Some(kind) = spec.bare_arms.as_deref() {
                     self.attach_base_head(&inner, kind, Region::bare(&spec));
@@ -1279,6 +1298,40 @@ impl Art {
         }
     }
 
+    /// A scene's meshes in their own materials with the albedo texture at
+    /// `path` (each material copied once per texture).
+    fn repaint(&mut self, inner: &Gd<Node3D>, path: &str) {
+        let Some(texture) = self.texture(path) else {
+            return;
+        };
+        for node in inner
+            .find_children_ex("*")
+            .type_("MeshInstance3D")
+            .owned(false)
+            .done()
+            .iter_shared()
+        {
+            let Ok(mut mi) = node.try_cast::<MeshInstance3D>() else {
+                continue;
+            };
+            let n = mi.get_mesh().map_or(0, |m| m.get_surface_count());
+            for i in 0..n {
+                let Some(src) = mi.get_active_material(i) else {
+                    continue;
+                };
+                let key = (src.instance_id().to_i64(), path.to_string());
+                let painted = self.repainted.entry(key).or_insert_with(|| {
+                    recoloured(&[Some(src)], None, Some(texture.clone()))
+                        .pop()
+                        .flatten()
+                });
+                if let Some(m) = painted {
+                    mi.set_surface_override_material(i, &*m);
+                }
+            }
+        }
+    }
+
     /// Shade a scene's meshes smooth: each corner's normal is the mean of
     /// the faces around its place, across the seams that split a low-poly
     /// model's corners (the skin weights stay); once per mesh, shared by
@@ -1326,18 +1379,33 @@ impl Art {
     /// names are the same: one skeleton). False when there is no such head
     /// (the procedural one is drawn instead).
     fn attach_base_head(&mut self, inner: &Gd<Node3D>, kind: &str, region: Region) -> bool {
+        self.attach_leaning(inner, kind, region, Lean::Upright)
+    }
+
+    /// As `attach_base_head`, the head leaning as one of a pair does.
+    fn attach_leaning(
+        &mut self,
+        inner: &Gd<Node3D>,
+        kind: &str,
+        region: Region,
+        lean: Lean,
+    ) -> bool {
         if self.manifest.head(kind).is_none() {
             return false;
         }
         let Some(mut skeleton) = find::<Skeleton3D>(&inner.clone().upcast()) else {
             return false;
         };
-        let Some(parts) = self.head_parts(kind, region) else {
+        // a pair leans apart about the neck's foot
+        let neck = skeleton.find_bone("neck_01");
+        let turn = lean.turn(skeleton.get_bone_global_rest(neck.max(0)).origin);
+        let Some(parts) = self.head_parts(kind, region, lean, turn) else {
             return false;
         };
+        let tag = if lean == Lean::Right { "Second" } else { "" };
         for (i, (mesh, skin, materials)) in parts.iter().enumerate() {
             let mut mi = MeshInstance3D::new_alloc();
-            mi.set_name(&format!("{BASE_PART}{region:?}{i}"));
+            mi.set_name(&format!("{BASE_PART}{region:?}{i}{tag}"));
             mi.set_mesh(mesh);
             for (s, m) in materials.iter().enumerate() {
                 if let Some(m) = m {
@@ -1371,13 +1439,35 @@ impl Art {
         sleeves.set_mesh(&cuffed);
     }
 
-    /// A base head's meshes, built once.
-    fn head_parts(&mut self, kind: &str, region: Region) -> Option<HeadParts> {
-        let key = format!("{kind}{region:?}");
+    /// A base head's meshes, built once; leaning by `turn` when it is one
+    /// of a pair.
+    fn head_parts(
+        &mut self,
+        kind: &str,
+        region: Region,
+        lean: Lean,
+        turn: Option<Transform3D>,
+    ) -> Option<HeadParts> {
+        let key = match lean {
+            Lean::Upright => format!("{kind}{region:?}"),
+            _ => format!("{kind}{region:?}{lean:?}"),
+        };
         if let Some(p) = self.heads.get(&key) {
             return p.clone();
         }
-        let p = self.build_head(kind, region);
+        let p = match turn {
+            None => self.build_head(kind, region),
+            Some(turn) => self
+                .head_parts(kind, region, Lean::Upright, None)
+                .and_then(|parts| {
+                    parts
+                        .into_iter()
+                        .map(|(mesh, skin, materials)| {
+                            Some((turned(&mesh, turn)?, skin, materials))
+                        })
+                        .collect()
+                }),
+        };
         if p.is_none() {
             self.warn_once(format!("head {kind} does not load"));
         }
@@ -1448,6 +1538,9 @@ impl Art {
                 // the base's own eyebrows take the hair's colour; its eyes
                 // keep theirs
                 let brows = mi.get_name().to_string().contains("Eyebrow");
+                if brows && spec.browless {
+                    continue;
+                }
                 let colour = match (body, base) {
                     (true, _) => tint,
                     (false, true) if brows => hair_tint,
@@ -1480,6 +1573,7 @@ impl Art {
             Region::Arms => cut(mesh, |v| v.x.abs() > 0.2 && v.y > 1.2),
             // from the waist (under the trousers' top) to the neck
             Region::Torso => cut(mesh, |v| v.y > 1.06 && v.y < at + 0.03),
+            Region::Body => cut(mesh, |v| v.y < at + 0.03),
         };
         self.bodies.insert(key, c.clone());
         c
@@ -1838,11 +1932,21 @@ fn reach_of(root: &Gd<Node3D>) -> [f32; 2] {
                 continue;
             }
             let (bones, weights) = (bones.as_slice(), weights.as_slice());
-            for (v, p) in verts.as_slice().iter().enumerate().step_by(EVERY) {
+            // the vertices its triangles use: a mesh cut from a bigger one
+            // keeps the rest unseen
+            let index: PackedInt32Array = get(ArrayType::INDEX).try_to().unwrap_or_default();
+            let used: Vec<usize> = match index.len() {
+                0 => (0..verts.len()).collect(),
+                _ => index.as_slice().iter().map(|&i| i as usize).collect(),
+            };
+            for &v in used.iter().step_by(EVERY) {
+                let Some(p) = verts.get(v) else {
+                    continue;
+                };
                 let mut at = Vector3::ZERO;
                 for k in v * per..(v + 1) * per {
                     if let Some(bind) = binds.get(bones[k] as usize).filter(|_| weights[k] > 0.0) {
-                        at += (*bind * *p) * weights[k];
+                        at += (*bind * p) * weights[k];
                     }
                 }
                 reach(at);
@@ -3051,16 +3155,49 @@ enum Region {
     Torso,
     /// The hands alone, over an outfit's that are not skin.
     Hands,
+    /// All of it under the head.
+    Body,
 }
 
 impl Region {
     /// What a model shows of its base character's body.
     fn bare(spec: &nh_art::ModelSpec) -> Region {
-        if spec.bare_chest {
+        if spec.bare_legs {
+            Region::Body
+        } else if spec.bare_chest {
             Region::Torso
         } else {
             Region::Arms
         }
+    }
+}
+
+/// How a base head stands on its neck: upright, or one of a pair leaning
+/// apart (an ettin's).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Lean {
+    Upright,
+    Left,
+    Right,
+}
+
+impl Lean {
+    /// How far a head of a pair leans from upright, and how far it stands
+    /// from the middle (metres).
+    const ANGLE: f32 = 0.42;
+    const APART: f32 = 0.03;
+
+    /// The turn that leans a head about the neck's foot (`neck`, in the
+    /// head's own rest pose); None for a head upright.
+    fn turn(self, neck: Vector3) -> Option<Transform3D> {
+        let side = match self {
+            Lean::Upright => return None,
+            Lean::Left => 1.0,
+            Lean::Right => -1.0,
+        };
+        let lean = Basis::from_axis_angle(Vector3::BACK, -side * Lean::ANGLE);
+        let at = neck + Vector3::new(side * Lean::APART, 0.0, 0.0);
+        Some(Transform3D::new(lean, at) * Transform3D::new(Basis::IDENTITY, -neck))
     }
 }
 
@@ -3278,6 +3415,67 @@ fn cut(mesh: &Gd<ArrayMesh>, keep: impl Fn(Vector3) -> bool) -> CutBody {
         kept_surfaces.push(i as usize);
     }
     (out, kept_surfaces)
+}
+
+/// `mesh` moved rigidly by `by` in its own rest pose (its normals and
+/// tangents turn along); its surfaces keep their materials and weights.
+fn turned(mesh: &Gd<Mesh>, by: Transform3D) -> Option<Gd<Mesh>> {
+    use godot::classes::mesh::{ArrayFormat, ArrayType, PrimitiveType};
+    let src = mesh.clone().try_cast::<ArrayMesh>().ok()?;
+    let mut out = ArrayMesh::new_gd();
+    for i in 0..src.get_surface_count() {
+        let mut arrays = src.surface_get_arrays(i);
+        let verts: PackedVector3Array = arrays.at(ArrayType::VERTEX.ord() as usize).to();
+        let moved: Vec<Vector3> = verts.as_slice().iter().map(|v| by * *v).collect();
+        arrays.set(
+            ArrayType::VERTEX.ord() as usize,
+            &PackedVector3Array::from(moved.as_slice()).to_variant(),
+        );
+        if let Ok(normals) = arrays
+            .at(ArrayType::NORMAL.ord() as usize)
+            .try_to::<PackedVector3Array>()
+        {
+            let turned: Vec<Vector3> = normals.as_slice().iter().map(|n| by.basis * *n).collect();
+            arrays.set(
+                ArrayType::NORMAL.ord() as usize,
+                &PackedVector3Array::from(turned.as_slice()).to_variant(),
+            );
+        }
+        if let Ok(tangents) = arrays
+            .at(ArrayType::TANGENT.ord() as usize)
+            .try_to::<PackedFloat32Array>()
+        {
+            let turned: Vec<f32> = tangents
+                .as_slice()
+                .chunks_exact(4)
+                .flat_map(|t| {
+                    let v = by.basis * Vector3::new(t[0], t[1], t[2]);
+                    [v.x, v.y, v.z, t[3]]
+                })
+                .collect();
+            arrays.set(
+                ArrayType::TANGENT.ord() as usize,
+                &PackedFloat32Array::from(turned.as_slice()).to_variant(),
+            );
+        }
+        // as `cut` does: nothing here uses the custom channels
+        for custom in [
+            ArrayType::CUSTOM0,
+            ArrayType::CUSTOM1,
+            ArrayType::CUSTOM2,
+            ArrayType::CUSTOM3,
+        ] {
+            arrays.set(custom.ord() as usize, &Variant::nil());
+        }
+        let eight = src.surface_get_format(i).ord() & ArrayFormat::FLAG_USE_8_BONE_WEIGHTS.ord();
+        out.add_surface_from_arrays_ex(PrimitiveType::TRIANGLES, &arrays)
+            .flags(ArrayFormat::from_ord(eight))
+            .done();
+        if let Some(m) = src.surface_get_material(i) {
+            out.surface_set_material(i, &m);
+        }
+    }
+    Some(out.upcast())
 }
 
 /// `materials` multiplied by `colour` and taking `texture` as their albedo
