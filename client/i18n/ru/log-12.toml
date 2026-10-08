@@ -1,0 +1,1360 @@
+# R6, log messages batch 12: mhitu.c. Syntax: nh-i18n's template.rs.
+
+[4aa1d9916bcf]
+en = "%s smiles at you engagingly."
+ru = "{1} обаятельно {1:num|улыбается|улыбаются} вам."
+
+[30bacd033e4a]
+en = "%s smiles at you seductively."
+ru = "{1} соблазнительно {1:num|улыбается|улыбаются} вам."
+
+[54c9a9d6af8b]
+en = "%s talks to you engagingly."
+ru = "{1} обаятельно {1:num|заговаривает|заговаривают} с вами."
+
+[6bf46f720c24]
+en = "%s talks to you seductively."
+ru = "{1} соблазнительно {1:num|заговаривает|заговаривают} с вами."
+
+[a79f71983f76]
+en = "%s touches you engagingly."
+ru = "{1} ласково {1:num|касается|касаются} вас."
+
+[651ddef49be0]
+en = "%s touches you seductively."
+ru = "{1} соблазнительно {1:num|касается|касаются} вас."
+
+[97a01e7e087c]
+en = "%s pretends to be friendly."
+ru = "{1} {1:num|притворяется|притворяются} {1:gender|дружелюбным|дружелюбной|дружелюбным|дружелюбными}."
+
+[188447a3fb05]
+en = "%s bashes with her %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:ins}."
+
+[15ecb40594ba]
+en = "%s bashes with his %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:ins}."
+
+[cc0de0fea80f]
+en = "%s bashes with its %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:ins}."
+
+[d021d11cc938]
+en = "%s bashes with one of her %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:sg|одним|одной|одним} из своих {2:gen}."
+
+[008a0165b498]
+en = "%s bashes with one of his %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:sg|одним|одной|одним} из своих {2:gen}."
+
+[c2a7d201682d]
+en = "%s bashes with one of its %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:sg|одним|одной|одним} из своих {2:gen}."
+
+[db304cb83ed0]
+en = "%s bashes with one of their %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:sg|одним|одной|одним} из своих {2:gen}."
+
+[2442a63a6591]
+en = "%s bashes with their %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:ins}."
+
+[9b1c16d3fccd]
+en = "%s lashes its %s."
+ru = "{1} {1:num|хлещет|хлещут} {2:ins}."
+
+[86a05ab227fe]
+en = "%s lashes one of her %s."
+ru = "{1} {1:num|хлещет|хлещут} {2:sg|одним|одной|одним} из своих {2:gen}."
+
+[2e891e57a9af]
+en = "%s lashes one of his %s."
+ru = "{1} {1:num|хлещет|хлещут} {2:sg|одним|одной|одним} из своих {2:gen}."
+
+[556ce482a966]
+en = "%s lashes one of its %s."
+ru = "{1} {1:num|хлещет|хлещут} {2:sg|одним|одной|одним} из своих {2:gen}."
+
+[13904043eaeb]
+en = "%s lashes one of their %s."
+ru = "{1} {1:num|хлещет|хлещут} {2:sg|одним|одной|одним} из своих {2:gen}."
+
+[0c23e662ff96]
+en = "%s lashes their %s."
+ru = "{1} {1:num|хлещет|хлещут} {2:ins}."
+
+[bd577de500c2]
+en = "%s swings its %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:ins}."
+
+[13eff11546dc]
+en = "%s swings one of her %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:sg|одним|одной|одним} из своих {2:gen}."
+
+[291708b6574a]
+en = "%s swings one of his %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:sg|одним|одной|одним} из своих {2:gen}."
+
+[2526a85b6d6e]
+en = "%s swings one of its %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:sg|одним|одной|одним} из своих {2:gen}."
+
+[61e1d981621c]
+en = "%s swings one of their %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:sg|одним|одной|одним} из своих {2:gen}."
+
+[1bb6d7abd8f9]
+en = "%s swings their %s."
+ru = "{1} {1:num|замахивается|замахиваются} {2:ins}."
+
+[5a2b4fb01426]
+en = "%s thrusts its %s."
+ru = "{1} {1:num|делает|делают} выпад {2:ins}."
+
+[725b59f8d85c]
+en = "%s thrusts one of its %s."
+ru = "{1} {1:num|делает|делают} выпад {2:sg|одним|одной|одним} из своих {2:gen}."
+
+[596f88ebca2e]
+en = "%s thrusts one of their %s."
+ru = "{1} {1:num|делает|делают} выпад {2:sg|одним|одной|одним} из своих {2:gen}."
+
+[42e04e7c5f66]
+en = "%s thrusts their %s."
+ru = "{1} {1:num|делает|делают} выпад {2:ins}."
+
+[c7370146daf1]
+en = "Your quickness feels less natural."
+ru = "Ваша быстрота кажется уже не такой естественной."
+
+[ab806d75739b]
+en = "%s tries to touch you and misses!"
+ru = "{1} {1:num|пытается|пытаются} коснуться вас и {1:num|промахивается|промахиваются}!"
+
+[1acca423e03a]
+en = "%s kicks wildly and misses!"
+ru = "{1} {1:num|бьёт|бьют} ногой наугад и {1:num|промахивается|промахиваются}!"
+
+[9e4d47972e72]
+en = "%s lunges wildly and misses!"
+ru = "{1} {1:num|бросается|бросаются} наугад и {1:num|промахивается|промахиваются}!"
+
+[5447b846b10e]
+en = "%s snaps wildly and misses!"
+ru = "{1} {1:num|щёлкает|щёлкают} зубами наугад и {1:num|промахивается|промахиваются}!"
+
+[6bbbe348efc4]
+en = "%s swings wildly and misses!"
+ru = "{1} {1:num|бьёт|бьют} наугад и {1:num|промахивается|промахиваются}!"
+
+[a1c926a4b31d]
+en = "%s attacks a spot beside you."
+ru = "{1} {1:num|атакует|атакуют} пустое место рядом с вами."
+
+[8e20698f762a]
+en = "%s strikes at empty water!"
+ru = "{1} {1:num|бьёт|бьют} по пустой воде!"
+
+[4dc1c900d280]
+en = "%s strikes at thin air!"
+ru = "{1} {1:num|бьёт|бьют} в пустоту!"
+
+[1dcf6dbdca7f]
+en = "%s smiles engagingly at your displaced image..."
+ru = "{1} обаятельно {1:num|улыбается|улыбаются} вашему смещённому образу..."
+
+[bcf1d3fd4dfd]
+en = "%s smiles engagingly at your invisible displaced image..."
+ru = "{1} обаятельно {1:num|улыбается|улыбаются} вашему невидимому смещённому образу..."
+
+[44301e9aec91]
+en = "%s smiles seductively at your displaced image..."
+ru = "{1} соблазнительно {1:num|улыбается|улыбаются} вашему смещённому образу..."
+
+[4e0c60a97cd7]
+en = "%s smiles seductively at your invisible displaced image..."
+ru = "{1} соблазнительно {1:num|улыбается|улыбаются} вашему невидимому смещённому образу..."
+
+[bc8cd9607434]
+en = "%s strikes at your invisible displaced image and misses you!"
+ru = "{1} {1:num|бьёт|бьют} по вашему невидимому смещённому образу и {1:num|промахивается|промахиваются}!"
+
+[ef879a4cc53a]
+en = "%s reaches towards your distorted image."
+ru = "{1} {1:num|тянется|тянутся} к вашему искажённому образу."
+
+[d576bf25c5f9]
+en = "%s is fooled by water reflections and misses!"
+ru = "{1} {1:num|принимает|принимают} блики в воде за вас и {1:num|промахивается|промахиваются}!"
+
+[a73b34dccbab]
+en = "You get regurgitated!"
+ru = "Вас отрыгивают!"
+
+[40866666f4eb]
+en = "%s unfolds and you are released!"
+ru = "{1} {1:num|разворачивается|разворачиваются} и {1:num|отпускает|отпускают} вас!"
+
+[dbc132059f24]
+en = "You get expelled from %s in a blast of frost!"
+ru = "{1} {1:num|исторгает|исторгают} вас в клубах инея!"
+
+[7051b452af36]
+en = "You get expelled from %s in a shower of sparks!"
+ru = "{1} {1:num|исторгает|исторгают} вас в снопе искр!"
+
+[32b2c9d6c324]
+en = "You get expelled from %s with a squelch!"
+ru = "{1} с хлюпаньем {1:num|исторгает|исторгают} вас!"
+
+[08269e41f90a]
+en = "You get expelled from %s!"
+ru = "{1} {1:num|исторгает|исторгают} вас!"
+
+[2c5b9ea81c43]
+en = "Brrooaa...  You land hard at some distance."
+ru = "Буэ-э-э...  Вы жёстко приземляетесь поодаль."
+
+[934714f61e1b]
+en = "You fall from the %s!"
+ru = "Вы падаете с {1:gen}!"
+
+[8c236b4cb7ad]
+en = "%s draws back as you drop!"
+ru = "{1} {1:num|отшатывается|отшатываются}, когда вы падаете!"
+
+[453fbb013d0c]
+en = "Your blow glances off %s helm."
+ru = "Ваш удар соскальзывает со шлема {1:gen}."
+
+[fb8a7534e9a0]
+en = "%s is hit by a falling piercer (you)!"
+ru = "В {1:acc} попадает падающий пронзатель (вы)!"
+
+[a61b5e7d660f]
+en = "%s is almost hit by a falling piercer (you)!"
+ru = "В {1:acc} чуть не попадает падающий пронзатель (вы)!"
+
+[ab59f5fcfe6a]
+en = "It tries to move where you are hiding."
+ru = "Кто-то пытается занять место, где вы прячетесь."
+
+[4a52cd4253af]
+en = "Wait, %s!  There's a hidden %s named %s there!"
+ru = "Стой, {1}!  Там {2:num|прячется|прячутся} {2} по имени {3}!"
+
+[c2a5f2292cd6]
+en = "Wait, %s!  There's a %s named %s hiding under %s!"
+ru = "Стой, {1}!  Под {4:ins} {2:num|прячется|прячутся} {2} по имени {3}!"
+
+[0992065d42e8]
+en = "It gets stuck on you."
+ru = "Кто-то прилипает к вам."
+
+[7483ff902eae]
+en = "Wait, %s!  That's a %s named %s!"
+ru = "Стой, {1}!  Это {2} по имени {3}!"
+
+[a7511be0a9ef]
+en = "Something disturbs you!"
+ru = "Что-то тревожит вас!"
+
+[799cd4c29bf5]
+en = "Something tries to pick you up!"
+ru = "Что-то пытается вас подобрать!"
+
+[7a99b8a51134]
+en = "Wait, %s!  That %s is really %s named %s!"
+ru = "Стой, {1}!  {2:gender|Этот|Эта|Это|Эти} {2} на самом деле — {3:hero} по имени {4}!"
+
+[6ec3013090e7]
+en = "You appear to be yourself again."
+ru = "Вы снова похожи на себя."
+
+[ec6e0dd1d4d7]
+en = "%s loosens its grip slightly."
+ru = "{1} слегка {1:num|ослабляет|ослабляют} хватку."
+
+[65c95462d93b]
+en = "You dream that you feel something move nearby."
+ru = "Вам снится, что рядом что-то движется."
+
+[889aa68a37a5]
+en = "You feel something move nearby."
+ru = "Вы чувствуете, как рядом что-то движется."
+
+[3c1aee14ef97]
+en = "%s gulps some air!"
+ru = "{1} {1:num|глотает|глотают} воздух!"
+
+[80f5a4189684]
+en = "%s lunges forward and recoils!"
+ru = "{1} {1:num|бросается|бросаются} вперёд и {1:num|отшатывается|отшатываются}!"
+
+[7465dad7add1]
+en = "You dream that you hear a rushing noise nearby."
+ru = "Вам снится, что вы слышите поблизости свист ветра."
+
+[9286745ec837]
+en = "You dream that you hear a splat nearby."
+ru = "Вам снится, что вы слышите поблизости шлепок."
+
+[93e89951254c]
+en = "You hear a rushing noise nearby."
+ru = "Вы слышите поблизости свист ветра."
+
+[d9a4d3d6e47e]
+en = "You hear a splat nearby."
+ru = "Вы слышите поблизости шлепок."
+
+[f09e96a1a9b6]
+en = "You dream that you feel hemmed in."
+ru = "Вам снится, что вас окружают."
+
+[680c6d77b3ab]
+en = "You feel hemmed in."
+ru = "Вы чувствуете, что вас окружают."
+
+[396a129a8137]
+en = "But none comes."
+ru = "Но никто не приходит."
+
+[301562e34c97]
+en = "You dream that you feel a slight illness."
+ru = "Вам снится, что вы чувствуете лёгкое недомогание."
+
+[e3b51f2e9a6c]
+en = "You feel a slight illness."
+ru = "Вы чувствуете лёгкое недомогание."
+
+[3418237b367a]
+en = "%s grabs you, but cannot hold onto your greased %s!"
+ru = "{1} {1:num|хватает|хватают} вас, но не {1:num|может|могут} удержаться за {2:gender|ваш смазанный|вашу смазанную|ваше смазанное|ваши смазанные} {2:acc}!"
+
+[c8c94c8700ea]
+en = "%s grabs you, but cannot hold onto your greased apron!"
+ru = "{1} {1:num|хватает|хватают} вас, но не {1:num|может|могут} удержаться за ваш смазанный фартук!"
+
+[da2678f3c5a1]
+en = "%s grabs you, but cannot hold onto your greased robe!"
+ru = "{1} {1:num|хватает|хватают} вас, но не {1:num|может|могут} удержаться за вашу смазанную мантию!"
+
+[5489f87735b9]
+en = "%s grabs you, but cannot hold onto your slippery %s!"
+ru = "{1} {1:num|хватает|хватают} вас, но не {1:num|может|могут} удержаться за {2:gender|ваш скользкий|вашу скользкую|ваше скользкое|ваши скользкие} {2:acc}!"
+
+[d85c03c215f7]
+en = "%s grabs you, but cannot hold onto your slippery cloak!"
+ru = "{1} {1:num|хватает|хватают} вас, но не {1:num|может|могут} удержаться за ваш скользкий плащ!"
+
+[158f8869ca0e]
+en = "%s slips off of your greased %s!"
+ru = "{1} {1:num|соскальзывает|соскальзывают} с {2:gender|вашего смазанного|вашей смазанной|вашего смазанного|ваших смазанных} {2:gen}!"
+
+[6017d51b3080]
+en = "%s slips off of your greased apron!"
+ru = "{1} {1:num|соскальзывает|соскальзывают} с вашего смазанного фартука!"
+
+[91b486097d91]
+en = "%s slips off of your greased robe!"
+ru = "{1} {1:num|соскальзывает|соскальзывают} с вашей смазанной мантии!"
+
+[caa2c47a384f]
+en = "%s slips off of your slippery %s!"
+ru = "{1} {1:num|соскальзывает|соскальзывают} с {2:gender|вашего скользкого|вашей скользкой|вашего скользкого|ваших скользких} {2:gen}!"
+
+[ace44dff43fd]
+en = "%s slips off of your slippery cloak!"
+ru = "{1} {1:num|соскальзывает|соскальзывают} с вашего скользкого плаща!"
+
+[d2c9d6f94f9a]
+en = "%s was hidden under something!"
+ru = "{1} {1:gender|прятался|пряталась|пряталось|прятались} под чем-то!"
+
+[406bbd7031d7]
+en = "%s was hidden under the water!"
+ru = "{1} {1:gender|прятался|пряталась|пряталось|прятались} под водой!"
+
+[03654e5db6aa]
+en = "Something was hidden under %s!"
+ru = "Что-то пряталось под {1:ins}!"
+
+[41ab265fa9e2]
+en = "Something was hidden under something!"
+ru = "Что-то пряталось под чем-то!"
+
+[7364d6bee002]
+en = "Something was hidden under the water!"
+ru = "Что-то пряталось под водой!"
+
+[e46a27539e31]
+en = "%s lunges forward and plucks you off %s!"
+ru = "{1} {1:num|бросается|бросаются} вперёд и {1:num|срывает|срывают} вас с {2:gen}!"
+
+[0cb35f225b18]
+en = "%s oozes forward and plucks you off %s!"
+ru = "{1} {1:num|наползает|наползают} и {1:num|срывает|срывают} вас с {2:gen}!"
+
+[aa0e1afcdc3b]
+en = "%s whirls forward and plucks you off %s!"
+ru = "{1} {1:num|налетает|налетают} вихрем и {1:num|срывает|срывают} вас с {2:gen}!"
+
+[b35186aced61]
+en = "%s folds itself around you!"
+ru = "{1} {1:num|обёртывается|обёртываются} вокруг вас!"
+
+[f37e0535cd0f]
+en = "%s swallows you whole!"
+ru = "{1} {1:num|проглатывает|проглатывают} вас целиком!"
+
+[2312b944e0c5]
+en = "You are released from the trap!"
+ru = "Вы освобождаетесь из ловушки!"
+
+[d324c0d07a91]
+en = "You are released from the web!"
+ru = "Вы освобождаетесь из паутины!"
+
+[d02034901f5b]
+en = "The leash snaps loose."
+ru = "Поводок срывается."
+
+[b3f97f2dafa3]
+en = "The leashes snap loose."
+ru = "Поводки срываются."
+
+[4ca5ccf114fb]
+en = "%s totally digests you!"
+ru = "{1} полностью {1:num|переваривает|переваривают} вас!"
+
+[23d176867784]
+en = "%s digests you!"
+ru = "{1} {1:num|переваривает|переваривают} вас!"
+
+[80225469b99f]
+en = "%s thoroughly digests you!"
+ru = "{1} основательно {1:num|переваривает|переваривают} вас!"
+
+[f0555981712f]
+en = "%s utterly digests you!"
+ru = "{1} почти полностью {1:num|переваривает|переваривают} вас!"
+
+[462950d70af0]
+en = "You are laden with moisture and are smoldering out!"
+ru = "Вас окутывает сырость, и ваше пламя угасает!"
+
+[42016771477e]
+en = "You are laden with moisture and feel comforted."
+ru = "Вас окутывает сырость, и вам от этого уютно."
+
+[facad8b75551]
+en = "You are laden with moisture and find it mildly uncomfortable."
+ru = "Вас окутывает сырость, и вам слегка не по себе."
+
+[ce82bafb0119]
+en = "You are being squashed!"
+ru = "Вас сдавливают в лепёшку!"
+
+[b2eafdcd6f84]
+en = "You are pummeled with debris!"
+ru = "Обломки молотят вас!"
+
+[7b541bf6f7cd]
+en = "You are covered with a seemingly harmless goo."
+ru = "Вас обволакивает безобидная на вид жижа."
+
+[0aa703be991f]
+en = "Ouch!  You've been slimed!"
+ru = "Ой!  Вас заляпало слизью!"
+
+[8d2c70a7586e]
+en = "You are covered in slime!  It burns!"
+ru = "Вас обволакивает слизь!  Жжётся!"
+
+[e0e2aeb50932]
+en = "You can't see in here!"
+ru = "Вы ничего не видите здесь, внутри!"
+
+[799863f9b928]
+en = "The air around you crackles with electricity."
+ru = "Воздух вокруг вас трещит от электричества."
+
+[e3cb1d44f99d]
+en = "You seem unhurt."
+ru = "Вы, похоже, целы."
+
+[f55bd032b540]
+en = "You dream that you feel mildly chilly."
+ru = "Вам снится, что вам слегка прохладно."
+
+[43327b48579b]
+en = "You feel mildly chilly."
+ru = "Вам слегка прохладно."
+
+[f7db28a009ea]
+en = "You are freezing to death!"
+ru = "Вы замерзаете насмерть!"
+
+[e9a154a25e13]
+en = "You dream that you feel mildly hot."
+ru = "Вам снится, что вам слегка жарко."
+
+[a3097ffdeb1e]
+en = "You feel mildly hot."
+ru = "Вам слегка жарко."
+
+[902cc7ab0dac]
+en = "You are burning to a crisp!"
+ru = "Вы сгораете дотла!"
+
+[8a356dc79254]
+en = "%s very hurriedly expels you!"
+ru = "{1} весьма поспешно {1:num|исторгает|исторгают} вас!"
+
+[e82b5e2008b5]
+en = "%s very hurriedly regurgitates you!"
+ru = "{1} весьма поспешно {1:num|отрыгивает|отрыгивают} вас!"
+
+[893f747220e1]
+en = "%s very hurriedly releases you!"
+ru = "{1} весьма поспешно {1:num|отпускает|отпускают} вас!"
+
+[33cae07dbf29]
+en = "You get expelled!"
+ru = "Вас исторгают!"
+
+[f8583b3f4d6f]
+en = "You get released!"
+ru = "Вас отпускают!"
+
+[2a1c7198d4d2]
+en = "Obviously %s doesn't like your taste."
+ru = "Очевидно, вы {1:dat} не по вкусу."
+
+[606c4e1c2a54]
+en = "%s explodes at a spot in empty water!"
+ru = "{1} {1:num|взрывается|взрываются} в пустой воде!"
+
+[513859f6b5e8]
+en = "%s explodes at a spot in thin air!"
+ru = "{1} {1:num|взрывается|взрываются} на пустом месте!"
+
+[5f8382d3bfd7]
+en = "It explodes at a spot in empty water!"
+ru = "Что-то взрывается в пустой воде!"
+
+[e93b41ea116c]
+en = "It explodes at a spot in thin air!"
+ru = "Что-то взрывается на пустом месте!"
+
+[c305cee0b06e]
+en = "You are blinded by a blast of light!"
+ru = "Взрыв света ослепляет вас!"
+
+[adc2e7cf63e1]
+en = "You get the impression it was not terribly bright."
+ru = "У вас складывается впечатление, что это было не слишком блестяще."
+
+[094593010475]
+en = "You are caught in a blast of kaleidoscopic light!"
+ru = "Вас накрывает взрыв калейдоскопического света!"
+
+[56d285ba0f01]
+en = "You are freaked out."
+ru = "У вас едет крыша."
+
+[6c90297dd1cf]
+en = "You seem unaffected by it."
+ru = "На вас это, похоже, не действует."
+
+[06d8ec83fbb8]
+en = "Someone seems overdue for a serpent cut."
+ru = "Кому-то давно пора подстричь змей."
+
+[1ca6ce7b73ac]
+en = "%s gazes ineffectually."
+ru = "{1} безуспешно {1:num|сверлит|сверлят} вас взглядом."
+
+[122c3f3877b9]
+en = "%s doesn't seem to notice that her gaze was reflected."
+ru = "{1}, похоже, не {1:num|замечает|замечают}, что {1:gender|его|её|его|их} взгляд отразился."
+
+[56dd5a40dcdf]
+en = "%s doesn't seem to notice that his gaze was reflected."
+ru = "{1}, похоже, не {1:num|замечает|замечают}, что {1:gender|его|её|его|их} взгляд отразился."
+
+[0021d2f43cc0]
+en = "%s doesn't seem to notice that its gaze was reflected."
+ru = "{1}, похоже, не {1:num|замечает|замечают}, что {1:gender|его|её|его|их} взгляд отразился."
+
+[9eabefd5e6ff]
+en = "%s doesn't seem to notice that their gaze was reflected."
+ru = "{1}, похоже, не {1:num|замечает|замечают}, что {1:gender|его|её|его|их} взгляд отразился."
+
+[e424caf50866]
+en = "%s is turned to stone!"
+ru = "{1} {1:num|превращается|превращаются} в камень!"
+
+[957344cd3e81]
+en = "You meet %s gaze."
+ru = "Вы встречаетесь взглядом с {1:ins}."
+
+[5a0a9c164629]
+en = "You turn to stone..."
+ru = "Вы превращаетесь в камень..."
+
+[2506de05096b]
+en = "%s gaze confuses you!"
+ru = "Взгляд {1:gen} приводит вас в замешательство!"
+
+[303b3733638c]
+en = "You are getting more and more confused."
+ru = "Вы приходите во всё большее замешательство."
+
+[fcbeaab75182]
+en = "%s stares piercingly at you!"
+ru = "{1} {1:num|впивается|впиваются} в вас пронзительным взглядом!"
+
+[dff07858fea4]
+en = "You are blinded by %s radiance!"
+ru = "Сияние {1:gen} ослепляет вас!"
+
+[ee45116d7b6c]
+en = "%s attacks you with a fiery gaze!"
+ru = "{1} {1:num|атакует|атакуют} вас огненным взглядом!"
+
+[d321b8665119]
+en = "%s looks a bit confused."
+ru = "{1}, похоже, в лёгком замешательстве."
+
+[01a66538362f]
+en = "%s looks a bit dazzled."
+ru = "{1}, похоже, слегка {1:gender|ослеплён|ослеплена|ослеплено|ослеплены}."
+
+[9c4010dfb971]
+en = "%s looks a bit dulled."
+ru = "{1}, похоже, слегка {1:gender|заторможен|заторможена|заторможено|заторможены}."
+
+[14e187820557]
+en = "%s looks a bit inflamed."
+ru = "{1}, похоже, слегка {1:gender|распалён|распалена|распалено|распалены}."
+
+[f95031ba6c7c]
+en = "%s looks a bit irritated."
+ru = "{1}, похоже, слегка {1:gender|раздражён|раздражена|раздражено|раздражены}."
+
+[f1a85fdc4ccd]
+en = "%s looks a bit puzzled."
+ru = "{1}, похоже, слегка {1:gender|озадачен|озадачена|озадачено|озадачены}."
+
+[2521429475c3]
+en = "%s looks a bit stunned."
+ru = "{1}, похоже, слегка {1:gender|оглушён|оглушена|оглушено|оглушены}."
+
+[918fc11f93d5]
+en = "%s looks a bit tired."
+ru = "{1}, похоже, слегка {1:gender|устал|устала|устало|устали}."
+
+[17a239c35c08]
+en = "%s looks dazzled."
+ru = "{1}, похоже, {1:gender|ослеплён|ослеплена|ослеплено|ослеплены}."
+
+[346b2bcfef39]
+en = "%s looks dulled."
+ru = "{1}, похоже, {1:gender|заторможен|заторможена|заторможено|заторможены}."
+
+[7f9206445ec2]
+en = "%s looks inflamed."
+ru = "{1}, похоже, {1:gender|распалён|распалена|распалено|распалены}."
+
+[ca30a1981db6]
+en = "%s looks irritated."
+ru = "{1}, похоже, {1:gender|раздражён|раздражена|раздражено|раздражены}."
+
+[5c31bbcc8186]
+en = "%s looks puzzled."
+ru = "{1}, похоже, {1:gender|озадачен|озадачена|озадачено|озадачены}."
+
+[ad1c86484730]
+en = "%s looks quite confused."
+ru = "{1}, похоже, в изрядном замешательстве."
+
+[d2af6bbca7f4]
+en = "%s looks quite dazzled."
+ru = "{1}, похоже, изрядно {1:gender|ослеплён|ослеплена|ослеплено|ослеплены}."
+
+[dcfc1e3f8ce5]
+en = "%s looks quite dulled."
+ru = "{1}, похоже, изрядно {1:gender|заторможен|заторможена|заторможено|заторможены}."
+
+[6ac195dcb20b]
+en = "%s looks quite inflamed."
+ru = "{1}, похоже, изрядно {1:gender|распалён|распалена|распалено|распалены}."
+
+[180dbcb0717b]
+en = "%s looks quite irritated."
+ru = "{1}, похоже, изрядно {1:gender|раздражён|раздражена|раздражено|раздражены}."
+
+[c58da68470b7]
+en = "%s looks quite puzzled."
+ru = "{1}, похоже, изрядно {1:gender|озадачен|озадачена|озадачено|озадачены}."
+
+[1c4262c2b03b]
+en = "%s looks quite stunned."
+ru = "{1}, похоже, изрядно {1:gender|оглушён|оглушена|оглушено|оглушены}."
+
+[1910e18a217e]
+en = "%s looks quite tired."
+ru = "{1}, похоже, изрядно {1:gender|устал|устала|устало|устали}."
+
+[49698934c458]
+en = "%s looks somewhat confused."
+ru = "{1}, похоже, в некотором замешательстве."
+
+[af8ad6ed272b]
+en = "%s looks somewhat dazzled."
+ru = "{1}, похоже, несколько {1:gender|ослеплён|ослеплена|ослеплено|ослеплены}."
+
+[47c5569ee234]
+en = "%s looks somewhat dulled."
+ru = "{1}, похоже, несколько {1:gender|заторможен|заторможена|заторможено|заторможены}."
+
+[4ed3253c0acb]
+en = "%s looks somewhat inflamed."
+ru = "{1}, похоже, несколько {1:gender|распалён|распалена|распалено|распалены}."
+
+[950797acd3f0]
+en = "%s looks somewhat irritated."
+ru = "{1}, похоже, несколько {1:gender|раздражён|раздражена|раздражено|раздражены}."
+
+[fa155f0f3c33]
+en = "%s looks somewhat puzzled."
+ru = "{1}, похоже, несколько {1:gender|озадачен|озадачена|озадачено|озадачены}."
+
+[b58712ae4aa7]
+en = "%s looks somewhat stunned."
+ru = "{1}, похоже, несколько {1:gender|оглушён|оглушена|оглушено|оглушены}."
+
+[3a24cbb897d9]
+en = "%s looks somewhat tired."
+ru = "{1}, похоже, несколько {1:gender|устал|устала|устало|устали}."
+
+[ea84bfc9e30b]
+en = "%s looks stunned."
+ru = "{1}, похоже, {1:gender|оглушён|оглушена|оглушено|оглушены}."
+
+[ddf8f9e19ac1]
+en = "%s looks tired."
+ru = "{1}, похоже, {1:gender|устал|устала|устало|устали}."
+
+[19acc0df698f]
+en = "%s acts as though he has got a headache."
+ru = "{1} {1:num|делает|делают} вид, что болит голова."
+
+[2cd9fd4f5f47]
+en = "%s acts as though he has got a severe headache."
+ru = "{1} {1:num|делает|делают} вид, что голова просто раскалывается."
+
+[b89555d5bdca]
+en = "%s acts as though it has got a headache."
+ru = "{1} {1:num|делает|делают} вид, что болит голова."
+
+[f954ffd47868]
+en = "%s acts as though it has got a severe headache."
+ru = "{1} {1:num|делает|делают} вид, что голова просто раскалывается."
+
+[2bd4bf680152]
+en = "%s acts as though she has got a headache."
+ru = "{1} {1:num|делает|делают} вид, что болит голова."
+
+[d7f18c06b22d]
+en = "%s acts as though she has got a severe headache."
+ru = "{1} {1:num|делает|делают} вид, что голова просто раскалывается."
+
+[90090c2e311a]
+en = "%s acts as though they has got a headache."
+ru = "{1} {1:num|делает|делают} вид, что болит голова."
+
+[97694475a366]
+en = "%s acts as though they has got a severe headache."
+ru = "{1} {1:num|делает|делают} вид, что голова просто раскалывается."
+
+[15482dbd7a7e]
+en = "%s seems dismayed at your lack of response."
+ru = "{1}, похоже, {1:gender|обескуражен|обескуражена|обескуражено|обескуражены} вашей безучастностью."
+
+[df8e3189d755]
+en = "Someone caresses you..."
+ru = "Кто-то ласкает вас..."
+
+[b0ed74f268f2]
+en = "You dream that you feel very attracted to %s."
+ru = "Вам снится, что вас сильно влечёт к {1:dat}."
+
+[721a3ed1951f]
+en = "You feel very attracted to %s."
+ru = "Вас сильно влечёт к {1:dat}."
+
+[ed1793e637d8]
+en = "She decides she'd like %s, and takes it."
+ru = "Она решает оставить {1:acc} себе и забирает {1:gender|его|её|его|их}."
+
+[54c066fe18e0]
+en = "He decides you'd look prettier wearing %s,"
+ru = "Он решает, что {1} вас {1:num|украсит|украсят},"
+
+[871daf6a3ddd]
+en = "and puts it on your finger."
+ru = "и надевает его вам на палец."
+
+[3983830b5e42]
+en = "He puts %s on your right %s."
+ru = "Он надевает {1:acc} на {2:gender|ваш правый|вашу правую|ваше правое|ваши правые} {2:acc}."
+
+[ab6a6d0daa0e]
+en = "He puts %s on your left %s."
+ru = "Он надевает {1:acc} на {2:gender|ваш левый|вашу левую|ваше левое|ваши левые} {2:acc}."
+
+[fb90dbeab12d]
+en = "He replaces %s with %s."
+ru = "Он меняет {1:acc} на {2:acc}."
+
+[629b5751349f]
+en = "%s murmurs in your ear, while helping you undress."
+ru = "{1} что-то {1:num|шепчет|шепчут} вам на ухо, помогая раздеться."
+
+[228b2f10fe2b]
+en = "%s murmurs sweet nothings into your ear."
+ru = "{1} {1:num|нашёптывает|нашёптывают} вам на ухо милые глупости."
+
+[b8dca8af5d71]
+en = "%s seems to murmur into your ear, while helping you undress."
+ru = "{1}, кажется, что-то {1:num|шепчет|шепчут} вам на ухо, помогая раздеться."
+
+[79f96bdfe550]
+en = "%s seems to murmur into your ear."
+ru = "{1}, кажется, что-то {1:num|шепчет|шепчут} вам на ухо."
+
+[a029326da449]
+en = "He murmurs in your ear, while helping you undress."
+ru = "Он что-то шепчет вам на ухо, помогая раздеться."
+
+[63414f18e19f]
+en = "He murmurs sweet nothings into your ear."
+ru = "Он нашёптывает вам на ухо милые глупости."
+
+[795e6d391a8f]
+en = "He seems to murmur into your ear, while helping you undress."
+ru = "Он, кажется, что-то шепчет вам на ухо, помогая раздеться."
+
+[63bdf3b67a21]
+en = "He seems to murmur into your ear."
+ru = "Он, кажется, что-то шепчет вам на ухо."
+
+[980a87fae4cb]
+en = "She murmurs in your ear, while helping you undress."
+ru = "Она что-то шепчет вам на ухо, помогая раздеться."
+
+[18b6d0acd322]
+en = "She murmurs sweet nothings into your ear."
+ru = "Она нашёптывает вам на ухо милые глупости."
+
+[e43727367a38]
+en = "She seems to murmur into your ear, while helping you undress."
+ru = "Она, кажется, что-то шепчет вам на ухо, помогая раздеться."
+
+[78ce875c8092]
+en = "She seems to murmur into your ear."
+ru = "Она, кажется, что-то шепчет вам на ухо."
+
+[965c739722ed]
+en = "\"You're such a nice guy; I wish...\""
+ru = "«Ты такой славный парень; ах, если бы...»"
+
+[884798064e4e]
+en = "\"You're such a sweet lady; I wish...\""
+ru = "«Ты такая милая леди; ах, если бы...»"
+
+[12d220c76bbe]
+en = "\"Well, then you owe me %s and eleven more pairs of gloves!\""
+ru = "«Что ж, тогда ты {hero:gender|должен|должна} мне {1:acc:own} и ещё одиннадцать пар перчаток!»"
+
+[0df169ca6cb4]
+en = "\"Well, then you owe me twelve pairs of gloves!\""
+ru = "«Что ж, тогда ты {hero:gender|должен|должна} мне двенадцать пар перчаток!»"
+
+[c1af15c6cef6]
+en = "%s appears to sigh."
+ru = "{1}, кажется, {1:num|вздыхает|вздыхают}."
+
+[3b938d2c27dd]
+en = "Time stands still while you and %s lie in each other's arms..."
+ru = "Время замирает, пока вы и {1} лежите в объятиях друг друга..."
+
+[69b644df4edb]
+en = "%s seems to have enjoyed it more than you..."
+ru = "Похоже, {1:dat} это понравилось больше, чем вам..."
+
+[5169df68dfd8]
+en = "You dream that you feel drained of energy."
+ru = "Вам снится, что из вас вытянули всю энергию."
+
+[64beabbccf13]
+en = "You feel drained of energy."
+ru = "Вы чувствуете, что из вас вытянули всю энергию."
+
+[7791d76ac3d8]
+en = "You are down in the dumps."
+ru = "Вы в глубоком унынии."
+
+[a3e8f037d5b0]
+en = "Your senses are dulled."
+ru = "Ваши чувства притупляются."
+
+[b6554bca5c1e]
+en = "You dream that you feel out of shape."
+ru = "Вам снится, что вы не в форме."
+
+[1f3aad5eafdb]
+en = "You feel out of shape."
+ru = "Вы чувствуете себя не в форме."
+
+[27e8acffcf2d]
+en = "You have a curious feeling..."
+ru = "У вас возникает любопытное ощущение..."
+
+[830e29698241]
+en = "You dream that you feel exhausted."
+ru = "Вам снится, что вы совершенно обессилены."
+
+[bc9db4631580]
+en = "You feel exhausted."
+ru = "Вы совершенно обессилены."
+
+[2a307d7376c6]
+en = "You seem to have enjoyed it more than %s..."
+ru = "Похоже, вам это понравилось больше, чем {1:dat}..."
+
+[3bff1d9e7a4f]
+en = "You dream that you feel raised to your full potential."
+ru = "Вам снится, что вы достигли пика своих возможностей."
+
+[acdd7c277157]
+en = "You feel raised to your full potential."
+ru = "Вы чувствуете, что достигли пика своих возможностей."
+
+[0bbd48a18cc0]
+en = "You dream that you feel good enough to do it again."
+ru = "Вам снится, что вы чувствуете в себе силы это повторить."
+
+[a4b045c16747]
+en = "You feel good enough to do it again."
+ru = "Вы чувствуете в себе силы это повторить."
+
+[f491fb236856]
+en = "You will always remember %s..."
+ru = "Вы навсегда запомните {1:acc}..."
+
+[a0b31fe85491]
+en = "That was a very educational experience."
+ru = "Это был весьма познавательный опыт."
+
+[19ced4963350]
+en = "You dream that you feel restored to health!"
+ru = "Вам снится, что к вам возвращается здоровье!"
+
+[5227783323c7]
+en = "You feel restored to health!"
+ru = "Вы чувствуете, как к вам возвращается здоровье!"
+
+[ff6bfe486acc]
+en = "%s demands that you pay her, but you refuse..."
+ru = "{1} {1:num|требует|требуют} платы, но вы отказываетесь..."
+
+[b5b2216ef1b3]
+en = "%s demands that you pay him, but you refuse..."
+ru = "{1} {1:num|требует|требуют} платы, но вы отказываетесь..."
+
+[fbd3645848e0]
+en = "%s demands that you pay it, but you refuse..."
+ru = "{1} {1:num|требует|требуют} платы, но вы отказываетесь..."
+
+[9cbf64be2aa1]
+en = "%s demands that you pay them, but you refuse..."
+ru = "{1} {1:num|требует|требуют} платы, но вы отказываетесь..."
+
+[cea59cf8d5bb]
+en = "%s tries to take your gold, but fails..."
+ru = "{1} {1:num|пытается|пытаются} забрать ваше золото, но безуспешно..."
+
+[51008caf0b44]
+en = "\"It's on the house!\""
+ru = "«Это за счёт заведения!»"
+
+[20778a7692b4]
+en = "No charge."
+ru = "Бесплатно."
+
+[63b97eb131cb]
+en = "%s takes %ld zorkmid for services rendered!"
+ru = "{1} {1:num|берёт|берут} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за оказанные услуги!"
+
+[a10bc24bf315]
+en = "%s takes %ld zorkmids for services rendered!"
+ru = "{1} {1:num|берёт|берут} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за оказанные услуги!"
+
+[b4374ce0860f]
+en = "%s takes off your apron."
+ru = "{1} {1:num|снимает|снимают} с вас фартук."
+
+[6e51b5929832]
+en = "%s takes off your boots."
+ru = "{1} {1:num|снимает|снимают} с вас сапоги."
+
+[b421c33c7467]
+en = "%s takes off your cloak."
+ru = "{1} {1:num|снимает|снимают} с вас плащ."
+
+[138de574a9ab]
+en = "%s takes off your dragon mail."
+ru = "{1} {1:num|снимает|снимают} с вас драконий доспех."
+
+[9a96243199c7]
+en = "%s takes off your dragon scales."
+ru = "{1} {1:num|снимает|снимают} с вас драконью чешую."
+
+[3139d76a1bc0]
+en = "%s takes off your gloves."
+ru = "{1} {1:num|снимает|снимают} с вас перчатки."
+
+[0b4841e2729f]
+en = "%s takes off your hat."
+ru = "{1} {1:num|снимает|снимают} с вас шляпу."
+
+[eabf50230f2d]
+en = "%s takes off your helm."
+ru = "{1} {1:num|снимает|снимают} с вас шлем."
+
+[e4b02cfedaff]
+en = "%s takes off your jacket."
+ru = "{1} {1:num|снимает|снимают} с вас куртку."
+
+[ce4df2da55d4]
+en = "%s takes off your mail."
+ru = "{1} {1:num|снимает|снимают} с вас доспех."
+
+[983920bcd673]
+en = "%s takes off your robe."
+ru = "{1} {1:num|снимает|снимают} с вас мантию."
+
+[dcba6bbe8683]
+en = "%s takes off your shield."
+ru = "{1} {1:num|снимает|снимают} с вас щит."
+
+[6484c66ad488]
+en = "%s takes off your shirt."
+ru = "{1} {1:num|снимает|снимают} с вас рубашку."
+
+[003328c8b276]
+en = "%s takes off your smock."
+ru = "{1} {1:num|снимает|снимают} с вас фартук."
+
+[afaa936c5825]
+en = "%s takes off your suit."
+ru = "{1} {1:num|снимает|снимают} с вас доспех."
+
+[4eed6152a5aa]
+en = "%s takes off your wrapping."
+ru = "{1} {1:num|снимает|снимают} с вас обмотку."
+
+[4dc3a8bb4c42]
+en = "He takes off your apron."
+ru = "Он снимает с вас фартук."
+
+[cae0d40d6fd3]
+en = "He takes off your boots."
+ru = "Он снимает с вас сапоги."
+
+[1e2be4b12596]
+en = "He takes off your cloak."
+ru = "Он снимает с вас плащ."
+
+[4c495ae8dba7]
+en = "He takes off your dragon mail."
+ru = "Он снимает с вас драконий доспех."
+
+[46db6d574b45]
+en = "He takes off your dragon scales."
+ru = "Он снимает с вас драконью чешую."
+
+[d5060bf2b667]
+en = "He takes off your gloves."
+ru = "Он снимает с вас перчатки."
+
+[b3329faf6ff7]
+en = "He takes off your hat."
+ru = "Он снимает с вас шляпу."
+
+[a56f2e1195fa]
+en = "He takes off your helm."
+ru = "Он снимает с вас шлем."
+
+[bc00c2bd61ab]
+en = "He takes off your jacket."
+ru = "Он снимает с вас куртку."
+
+[97bd65d09946]
+en = "He takes off your mail."
+ru = "Он снимает с вас доспех."
+
+[eefda23d3565]
+en = "He takes off your robe."
+ru = "Он снимает с вас мантию."
+
+[7eb61e82ce98]
+en = "He takes off your shield."
+ru = "Он снимает с вас щит."
+
+[c0644cdc93b0]
+en = "He takes off your shirt."
+ru = "Он снимает с вас рубашку."
+
+[fe36985a68c2]
+en = "He takes off your smock."
+ru = "Он снимает с вас фартук."
+
+[edf43b6f7f9e]
+en = "He takes off your suit."
+ru = "Он снимает с вас доспех."
+
+[b3a196530dec]
+en = "He takes off your wrapping."
+ru = "Он снимает с вас обмотку."
+
+[bd274239a384]
+en = "She takes off your apron."
+ru = "Она снимает с вас фартук."
+
+[66fe9fc10497]
+en = "She takes off your boots."
+ru = "Она снимает с вас сапоги."
+
+[33857e8a029a]
+en = "She takes off your cloak."
+ru = "Она снимает с вас плащ."
+
+[d4c10b6535d6]
+en = "She takes off your dragon mail."
+ru = "Она снимает с вас драконий доспех."
+
+[3f22c8ce3170]
+en = "She takes off your dragon scales."
+ru = "Она снимает с вас драконью чешую."
+
+[6c60b47ad926]
+en = "She takes off your gloves."
+ru = "Она снимает с вас перчатки."
+
+[a18620ca1d91]
+en = "She takes off your hat."
+ru = "Она снимает с вас шляпу."
+
+[bb39d8443fda]
+en = "She takes off your helm."
+ru = "Она снимает с вас шлем."
+
+[c2b3dd06352a]
+en = "She takes off your jacket."
+ru = "Она снимает с вас куртку."
+
+[c84110dd63fb]
+en = "She takes off your mail."
+ru = "Она снимает с вас доспех."
+
+[e2308565db31]
+en = "She takes off your robe."
+ru = "Она снимает с вас мантию."
+
+[a641b30c6c21]
+en = "She takes off your shield."
+ru = "Она снимает с вас щит."
+
+[84544b685293]
+en = "She takes off your shirt."
+ru = "Она снимает с вас рубашку."
+
+[e63a654d09b1]
+en = "She takes off your smock."
+ru = "Она снимает с вас фартук."
+
+[d32b244f172d]
+en = "She takes off your suit."
+ru = "Она снимает с вас доспех."
+
+[52d182463c83]
+en = "She takes off your wrapping."
+ru = "Она снимает с вас обмотку."
+
+[bbb3f09b631a]
+en = "\"Take off your apron; it's in the way.\""
+ru = "«Сними фартук — он мешает.»"
+
+[73010f75085f]
+en = "\"Take off your boots; let me rub your feet.\""
+ru = "«Сними сапоги — дай я разомну тебе ноги.»"
+
+[7456a09760d7]
+en = "\"Take off your cloak; it's in the way.\""
+ru = "«Сними плащ — он мешает.»"
+
+[d7c3fc006830]
+en = "\"Take off your dragon mail; let's get a little closer.\""
+ru = "«Сними драконий доспех — давай станем немного ближе.»"
+
+[c154d3427e8c]
+en = "\"Take off your dragon scales; let's get a little closer.\""
+ru = "«Сними драконью чешую — давай станем немного ближе.»"
+
+[325762bb7975]
+en = "\"Take off your gloves; %s.\""
+ru = "«Сними перчатки — в них так неловко{1:skip}.»"
+
+[30fe5534cf44]
+en = "\"Take off your hat; %s.\""
+ru = "«Сними шляпу — {1}.»"
+
+[3225ba9f1150]
+en = "\"Take off your helm; %s.\""
+ru = "«Сними шлем — {1}.»"
+
+[d1f341d5c8d0]
+en = "\"Take off your jacket; let's get a little closer.\""
+ru = "«Сними куртку — давай станем немного ближе.»"
+
+[5486d0897f7d]
+en = "\"Take off your mail; let's get a little closer.\""
+ru = "«Сними доспех — давай станем немного ближе.»"
+
+[e3d9b02af2a3]
+en = "\"Take off your robe; it's in the way.\""
+ru = "«Сними мантию — она мешает.»"
+
+[478831a20713]
+en = "\"Take off your shield; it's in the way.\""
+ru = "«Сними щит — он мешает.»"
+
+[969c85797394]
+en = "\"Take off your shirt; %s.\""
+ru = "«Сними рубашку — дай я сделаю тебе массаж{1:skip}.»"
+
+[c7b3321f5a9e]
+en = "\"Take off your smock; it's in the way.\""
+ru = "«Сними фартук — он мешает.»"
+
+[b80aa8085d9a]
+en = "\"Take off your suit; let's get a little closer.\""
+ru = "«Сними доспех — давай станем немного ближе.»"
+
+[af2d68704c3d]
+en = "\"Take off your wrapping; it's in the way.\""
+ru = "«Сними обмотку — она мешает.»"
+
+[08578d5b6be3]
+en = "%s is splashed by %s!"
+ru = "{2:cap} {2:num|забрызгивает|забрызгивают} {1:acc}!"
+
+[59e5585f4bde]
+en = "%s is splashed by your %s!"
+ru = "{2:gender|Ваш|Ваша|Ваше|Ваши} {2} {2:num|забрызгивает|забрызгивают} {1:acc}!"
+
+[04a9aeb3f16f]
+en = "As a blind %s, you cannot defend yourself."
+ru = "Будучи {1:gender|слепым|слепой|слепым|слепыми} {1:ins}, вы не можете защищаться."
+
+[92a44d8e2f54]
+en = "%s is frozen by your gaze!"
+ru = "Ваш взгляд сковывает {1:acc}!"
+
+[e9aa6813595b]
+en = "%s is frozen by you."
+ru = "Вы сковываете {1:acc}."
+
+[cee67420a3fb]
+en = "%s is mildly chilly."
+ru = "{1:dat} слегка прохладно."
+
+[b8e103a10c10]
+en = "%s is suddenly very cold!"
+ru = "{1:dat} внезапно становится очень холодно!"
+
+[a0d15ba9a1d1]
+en = "%s is mildly warm."
+ru = "{1:dat} слегка тепло."
+
+[dbd77b694d01]
+en = "%s is suddenly very hot!"
+ru = "{1:dat} внезапно становится очень жарко!"
+
+[d2744c890b56]
+en = "%s is slightly tingled."
+ru = "{1} {1:num|чувствует|чувствуют} лёгкое покалывание."
+
+[78d3f9026abc]
+en = "%s is jolted with your electricity!"
+ru = "Ваш электрический разряд встряхивает {1:acc}!"
+
+# What no stub named: the bases a seen monster, a hallucinated coin or the hero's other shape
+# go through, and the pieces of built texts.
+
+[1038c3827322]
+en = "%s decides she'd like %s, and takes it."
+ru = "{1} {1:num|решает|решают} оставить {2:acc} себе и {1:num|забирает|забирают} {2:gender|его|её|его|их}."
+
+[bc27f9aaac4a]
+en = "%s decides you'd look prettier wearing %s,"
+ru = "{1} {1:num|решает|решают}, что {2} вас {2:num|украсит|украсят},"
+
+[621876ac8297]
+en = "%s puts %s on your right %s."
+ru = "{1} {1:num|надевает|надевают} {2:acc} на {3:gender|ваш правый|вашу правую|ваше правое|ваши правые} {3:acc}."
+
+[6548ef4c9296]
+en = "%s puts %s on your left %s."
+ru = "{1} {1:num|надевает|надевают} {2:acc} на {3:gender|ваш левый|вашу левую|ваше левое|ваши левые} {3:acc}."
+
+[7366fe641676]
+en = "%s replaces %s with %s."
+ru = "{1} {1:num|меняет|меняют} {2:acc} на {3:acc}."
+
+[5ad00ff2bfa5]
+en = "You appear to be %s again."
+ru = "Вы снова похожи на {1:acc}."
+
+[3d01e2f0e23b]
+en = "%s takes %ld %s for services rendered!"
+ru = "{1} {1:num|берёт|берут} {2} {3:by2:acc} за оказанные услуги!"
+
+[240105a9f15c]
+en = "let me run my fingers through your %s"
+ru = "дай мне запустить пальцы в {1:gender|твой|твою|твоё|твои} {1:acc}"
+
+[36d4abad343a]
+en = "%s from nowhere!"
+ru = "{1} из ниоткуда!"
+
+[d9748032a3c4]
+en = "%s appears"
+ru = "{1} {1:num|появляется|появляются}"
+
+[bb549d44ff5c]
+en = "%s appear"
+ru = "{1} {1:num|появляется|появляются}"
+
+[1f4d2aa0a558]
+en = "A monster appears from nowhere!"
+ru = "Монстр появляется из ниоткуда!"
+
+[0a67e23f6e92]
+en = "Monsters appear from nowhere!"
+ru = "Монстры появляются из ниоткуда!"
