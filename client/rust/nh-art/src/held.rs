@@ -80,6 +80,22 @@ pub struct HeldSpec {
     /// head up, while in the hand it stands butt down).
     #[serde(default)]
     pub back: Option<Grip>,
+    /// Held in both hands: where the off hand grips it, from the right
+    /// hand's grip, in the held frame (metres along the haft or the hilt).
+    #[serde(default)]
+    pub two: Option<[f32; 3]>,
+    /// Held steady in both hands outside a blow, whatever the legs do: the
+    /// right arm stays in the first pose of its attack (a two-handed sword
+    /// or an axe held up at the ready, as `proc/chop` begins; a pole
+    /// upright at the side, as `proc/pole` does), not swinging with the
+    /// walk.
+    #[serde(default)]
+    pub guard: bool,
+    /// Applied, it is used in the right hand as a weapon is (a pick-axe
+    /// digs, a lance or a polearm strikes from afar), not shown in the
+    /// left.
+    #[serde(default)]
+    pub apply: Option<Applied>,
     /// Meshes of the scene not shown (a dagger's scabbard).
     #[serde(default)]
     pub hide: Vec<String>,
@@ -91,6 +107,32 @@ pub struct HeldSpec {
     /// A lit one's light.
     #[serde(default)]
     pub light: Option<LightSpec>,
+}
+
+/// How a held thing applied is used in the right hand.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Applied {
+    /// The clip it plays (a pick-axe digging sideways, a polearm striking).
+    pub clip: String,
+    /// The clip applied downwards (`>`: a pick-axe digging down), if not
+    /// `clip`.
+    #[serde(default)]
+    pub down: Option<String>,
+    /// Where the off hand grips it meanwhile, as `HeldSpec::two`; none:
+    /// one-handed.
+    #[serde(default)]
+    pub two: Option<[f32; 3]>,
+}
+
+impl Applied {
+    /// The clip applied this way (`down`: at the floor).
+    pub fn clip(&self, down: bool) -> &str {
+        match &self.down {
+            Some(d) if down => d,
+            _ => &self.clip,
+        }
+    }
 }
 
 /// A held model by appearance: the class (any when absent) and an exact
@@ -224,15 +266,7 @@ impl HeldRules {
                 errors.push(format!("held colour {n}: {c}"));
             }
         }
-        let clips = self
-            .models
-            .values()
-            .flat_map(|h| h.idle.iter().chain(&h.attack));
-        for clip in clips
-            .chain(self.idle.values())
-            .chain(self.attack.values())
-            .chain(self.uses.values())
-        {
+        for clip in self.named_clips() {
             if let Some((lib, _)) = clip.split_once('/')
                 && lib != PROC_CLIPS
                 && !library(lib)
@@ -243,15 +277,26 @@ impl HeldRules {
         errors
     }
 
-    /// Every clip named: (library or None for the rig's own, clip).
-    pub fn clips(&self) -> Vec<(Option<&str>, &str)> {
-        let mut out: Vec<(Option<&str>, &str)> = self
-            .models
+    /// Every clip the rules name, as named ("proc/chop", "Idle").
+    fn named_clips(&self) -> impl Iterator<Item = &String> {
+        self.models
             .values()
-            .flat_map(|h| h.idle.iter().chain(&h.attack))
+            .flat_map(|h| {
+                let applied = h
+                    .apply
+                    .iter()
+                    .flat_map(|a| std::iter::once(&a.clip).chain(&a.down));
+                h.idle.iter().chain(&h.attack).chain(applied)
+            })
             .chain(self.idle.values())
             .chain(self.attack.values())
             .chain(self.uses.values())
+    }
+
+    /// Every clip named: (library or None for the rig's own, clip).
+    pub fn clips(&self) -> Vec<(Option<&str>, &str)> {
+        let mut out: Vec<(Option<&str>, &str)> = self
+            .named_clips()
             .map(|c| match c.split_once('/') {
                 Some((l, n)) => (Some(l), n),
                 None => (None, c.as_str()),

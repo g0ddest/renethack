@@ -1,10 +1,11 @@
 //! What the hero uses, told from what the client sent (spec decision 8):
 //! the command key, the letter answered to the engine's getobj() question
-//! and the direction answered to getdir(). Once the turn resolves (the next
-//! command prompt) the use is complete and the client shows it: the item's
-//! appearance tile is taken when its letter is answered, so a potion drunk
-//! to the last drop is still known. Nothing here knows more than the
-//! player: the tile is the appearance, the letter the player's own answer.
+//! and the direction answered to getdir(), or the spot picked on the map
+//! for getpos(). Once the turn resolves (the next command prompt) the use
+//! is complete and the client shows it: the item's appearance tile is taken
+//! when its letter is answered, so a potion drunk to the last drop is still
+//! known. Nothing here knows more than the player: the tile is the
+//! appearance, the letter the player's own answer.
 
 use nh_protocol::{ESC, Reply, Slot};
 
@@ -104,6 +105,9 @@ pub struct ItemUse {
     pub dir: Option<(i32, i32)>,
     /// Up or down ('<', '>') instead of a direction on the map.
     pub vertical: Option<char>,
+    /// The spot picked on the map instead (a polearm applied asks where to
+    /// hit).
+    pub spot: Option<(i32, i32)>,
 }
 
 impl ItemUse {
@@ -115,6 +119,7 @@ impl ItemUse {
             class: None,
             dir: None,
             vertical: None,
+            spot: None,
         }
     }
 }
@@ -196,6 +201,18 @@ impl UseTracker {
         match (prompt, reply) {
             (Prompt::Command | Prompt::Key, Reply::Key(k)) if !world.getpos => {
                 self.on_key(*k, world, *prompt == Prompt::Command)
+            }
+            // getpos: the spot under the cursor is picked, or one clicked
+            (Prompt::Command | Prompt::Key, Reply::Key(k)) => {
+                let picks = u8::try_from(*k).is_ok_and(|c| b".,;:".contains(&c));
+                if let Some(a) = self.armed.as_mut().filter(|_| picks) {
+                    a.u.spot = world.cursor;
+                }
+            }
+            (_, Reply::Click { x, y, .. }) if world.getpos => {
+                if let Some(a) = self.armed.as_mut() {
+                    a.u.spot = Some((*x, *y));
+                }
             }
             (Prompt::ExtCmd, Reply::ExtCmd(Some(name))) => {
                 self.armed = UseKind::of_ext(name).map(|kind| arm(kind, world));
@@ -611,6 +628,39 @@ mod tests {
             (u.kind, u.letter, u.tile),
             (UseKind::Wield, Some('-'), None)
         );
+    }
+
+    #[test]
+    fn a_spot_picked_on_the_map_is_told() {
+        let mut w = world();
+        let mut t = UseTracker::new();
+        t.on_reply(&Prompt::Command, &key('a'), &w);
+        t.on_reply(&getobj("use or apply"), &ch('a'), &w);
+        // getpos: the cursor two cells east, picked with '.'
+        w.getpos = true;
+        w.cursor = Some((12, 5));
+        t.on_reply(&Prompt::Command, &key('l'), &w);
+        w.cursor = Some((13, 5));
+        t.on_reply(&Prompt::Command, &key('.'), &w);
+        w.getpos = false;
+        let u = t.on_prompt(&Prompt::Command, &w).unwrap();
+        assert_eq!(
+            (u.kind, u.spot, u.dir),
+            (UseKind::Apply, Some((13, 5)), None)
+        );
+        // or clicked
+        t.on_reply(&Prompt::Command, &key('a'), &w);
+        t.on_reply(&getobj("use or apply"), &ch('a'), &w);
+        w.getpos = true;
+        let click = Reply::Click {
+            x: 9,
+            y: 7,
+            modifier: 1,
+        };
+        t.on_reply(&Prompt::Command, &click, &w);
+        w.getpos = false;
+        let u = t.on_prompt(&Prompt::Command, &w).unwrap();
+        assert_eq!(u.spot, Some((9, 7)));
     }
 
     #[test]

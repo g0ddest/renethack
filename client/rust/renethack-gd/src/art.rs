@@ -33,7 +33,7 @@ mod equip;
 #[path = "outfit.rs"]
 mod outfit;
 
-pub use equip::{HELD_NODE, LAMP_LIGHT, THROW_LETS_GO, USE_NODE, Worn};
+pub use equip::{HELD_NODE, LAMP_LIGHT, OFF_HAND, THROW_LETS_GO, USE_NODE, Worn};
 pub use outfit::{GLOVES_NODE, NECK_NODE};
 
 use crate::meshes::{MeshKey, capsule, cuboid, cylinder, dome, facets, prism, sphere, torus};

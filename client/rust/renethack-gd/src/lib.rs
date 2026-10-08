@@ -26,6 +26,7 @@ mod layouts;
 mod map_view;
 mod meshes;
 mod minimap;
+mod off_hand;
 mod orb;
 mod organic;
 mod pad_view;

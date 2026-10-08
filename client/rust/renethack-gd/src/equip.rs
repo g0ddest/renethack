@@ -16,17 +16,24 @@ use godot::classes::base_material_3d::{
 use godot::classes::light_3d::Param;
 use godot::classes::{
     Animation, AnimationLibrary, AnimationPlayer, BoneAttachment3D, MeshInstance3D, Node, Node3D,
-    OmniLight3D, QuadMesh, Skeleton3D, StandardMaterial3D,
+    OmniLight3D, QuadMesh, Skeleton3D, SkeletonModifier3D, StandardMaterial3D,
 };
 use godot::prelude::*;
 use nh_art::{Gear, HeldArt, LightSpec, PROC_CLIPS, Resolved, Tint};
 
 use super::{Art, Finish, Model, ModelLook, Pose, find, set_layer_mask, transform};
 use crate::meshes::sphere;
+use crate::off_hand::{GuardClips, OffHand};
+
+/// Seconds the left hand takes to go to a two-handed weapon's haft, or
+/// leave it.
+const BOTH_HANDS_SECS: f32 = 0.2;
 
 /// The node names under a bone attachment (self-tests look for them).
 pub const HELD_NODE: &str = "Held";
 pub const USE_NODE: &str = "InUse";
+/// The off hand's solver under the skeleton.
+pub const OFF_HAND: &str = "OffHand";
 pub const LAMP_LIGHT: &str = "LampLight";
 /// Visual layers of held things: the map's and the hero's rim light's.
 const HELD_LAYERS: u32 = 1 | 1 << 1;
@@ -47,10 +54,21 @@ pub struct Worn {
     /// What the things worn put on the outfit (mail, gloves, a stethoscope).
     dressed: super::outfit::Dressed,
     /// An item used, in a hand for a few seconds more.
-    in_use: Option<(Gd<Node3D>, f32, &'static str)>,
+    in_use: Option<InUse>,
     /// Seconds more the weapon in the right hand stands upright (the other
     /// hand casts).
     upright: f32,
+    /// The left arm's IK onto a two-handed weapon's haft (`off_hand.rs`).
+    off_hand: Option<Gd<OffHand>>,
+}
+
+/// An item used: its node, the seconds it stays in the hand, the hand's
+/// slot, and where the off hand grips it meanwhile (a pick-axe digging).
+struct InUse {
+    node: Gd<Node3D>,
+    left: f32,
+    hand: &'static str,
+    two: Option<Vector3>,
 }
 
 impl Worn {
@@ -135,10 +153,18 @@ impl Art {
         if worn.skeleton.is_none() {
             return false;
         }
-        if let Some((node, left, hand)) = worn.in_use.as_mut() {
-            *left -= delta;
-            if *left <= 0.0 {
-                let (mut node, hand) = (node.clone(), *hand);
+        if self.hold_both_hands(worn, gear, delta) {
+            // the off hand's solver, just made: what is wielded already
+            // may hold a guard
+            let guard = self.guard(m.player.clone(), gear);
+            if let Some(ik) = worn.off_hand.as_mut() {
+                ik.bind_mut().set_guard(guard);
+            }
+        }
+        if let Some(u) = worn.in_use.as_mut() {
+            u.left -= delta;
+            if u.left <= 0.0 {
+                let (mut node, hand) = (u.node.clone(), u.hand);
                 if node.is_instance_valid() {
                     node.queue_free();
                 }
@@ -185,7 +211,7 @@ impl Art {
                 worn.held.push((slot, node));
             }
         }
-        if let Some((_, _, hand)) = worn.in_use {
+        if let Some(hand) = worn.in_use.as_ref().map(|u| u.hand) {
             show_slot(&mut worn, hand, false);
         }
         self.show_parts(&mut worn, &gear.worn);
@@ -204,6 +230,21 @@ impl Art {
             }
         }
         worn.gear = gear.clone();
+        // a proc clip the gear rests or strikes with, and the guard of a
+        // weapon held steady in both hands
+        let is_proc = |c: &Option<String>| {
+            c.as_deref()
+                .is_some_and(|c| c.starts_with(&format!("{PROC_CLIPS}/")))
+        };
+        if let Some(mut p) = m.player.clone()
+            && (is_proc(&gear.idle) || is_proc(&gear.attack))
+        {
+            self.add_proc_clips(&mut p);
+        }
+        let guard = self.guard(m.player.clone(), gear);
+        if let Some(ik) = worn.off_hand.as_mut() {
+            ik.bind_mut().set_guard(guard);
+        }
         m.worn = Some(worn);
         // the idle the gear calls for, unless the model is busy
         let spec = self.manifest.model_at(m.key.model).1;
@@ -228,6 +269,103 @@ impl Art {
         gear.lit()
     }
 
+    /// The guard of what the gear wields, if it holds one: the model's
+    /// player and the clips that move the right arm themselves, the gear's
+    /// blow first, then the clips the weapon is applied with ("proc/" ones
+    /// are built).
+    fn guard(&mut self, player: Option<Gd<AnimationPlayer>>, gear: &Gear) -> Option<GuardClips> {
+        let mut p = player?;
+        let spec = self.manifest.held_at(gear.hand_r?.held).1;
+        if !spec.guard {
+            return None;
+        }
+        let applied = spec
+            .apply
+            .iter()
+            .flat_map(|a| [Some(&a.clip), a.down.as_ref()]);
+        let names: Vec<String> = std::iter::once(gear.attack.as_ref())
+            .chain(applied)
+            .flatten()
+            .cloned()
+            .collect();
+        if names
+            .iter()
+            .any(|n| n.starts_with(&format!("{PROC_CLIPS}/")))
+        {
+            self.add_proc_clips(&mut p);
+        }
+        // no blow in the player: no guard
+        let blow = p.get_animation(names.first()?.as_str())?;
+        let mut clips = vec![(names[0].clone(), blow)];
+        for name in &names[1..] {
+            if let Some(clip) = p.get_animation(name.as_str())
+                && !clips.iter().any(|(n, _)| n == name)
+            {
+                clips.push((name.clone(), clip));
+            }
+        }
+        Some((p, clips))
+    }
+
+    /// A two-handed weapon in the right hand takes the left hand onto its
+    /// haft (the IK fades in over a fifth of a second), as does a thing
+    /// applied in both (a pick-axe digging), unless the left hand is busy:
+    /// a shield or a light, a second weapon, a spell cast, another item
+    /// used in either hand. The solver is made when first called for (a
+    /// hero who never holds a thing in both hands has none) and sleeps
+    /// while it holds nothing. True in the frame it is made.
+    fn hold_both_hands(&self, worn: &mut Worn, gear: &Gear, delta: f32) -> bool {
+        let free = gear.hand_l.is_none() && gear.arm_l.is_none() && worn.upright <= 0.0;
+        let wielded = || {
+            gear.hand_r
+                .and_then(|h| self.manifest.held_at(h.held).1.two)
+                .map(|t| Vector3::new(t[0], t[1], t[2]))
+        };
+        let want = match &worn.in_use {
+            _ if !free => None,
+            Some(u) => u.two.filter(|_| u.hand == "hand_r"),
+            None => wielded(),
+        };
+        let made = worn.off_hand.is_none();
+        if made {
+            let (Some(_), Some(mut skeleton)) = (want, worn.skeleton.clone()) else {
+                return false;
+            };
+            let slot = |s: &str| {
+                self.manifest
+                    .held_slot(s)
+                    .map_or(Transform3D::IDENTITY, |s| transform(s.pos, s.rot, [1.0; 3]))
+            };
+            let mut ik = OffHand::new_alloc();
+            ik.set_name(OFF_HAND);
+            ik.bind_mut().set_slots(slot("hand_r"), slot("hand_l"));
+            let mut modifier: Gd<SkeletonModifier3D> = ik.clone().upcast();
+            modifier.set_influence(0.0);
+            modifier.set_active(false);
+            skeleton.add_child(&modifier);
+            worn.off_hand = Some(ik);
+        }
+        let Some(ik) = worn.off_hand.as_mut() else {
+            return false;
+        };
+        let mut modifier: Gd<SkeletonModifier3D> = ik.clone().upcast();
+        let now = modifier.get_influence();
+        let to = if want.is_some() { 1.0 } else { 0.0 };
+        let next = if to > now {
+            (now + delta / BOTH_HANDS_SECS).min(to)
+        } else {
+            (now - delta / BOTH_HANDS_SECS).max(to)
+        };
+        if want.is_some() || next <= 0.0 {
+            ik.bind_mut().set_grip(want);
+        }
+        if next != now {
+            modifier.set_influence(next);
+            modifier.set_active(next > 0.0);
+        }
+        made
+    }
+
     /// While the left hand casts, the weapon in the right stands upright
     /// in it for `secs` (a staff planted at the side, not across the hips
     /// of a hand that opens).
@@ -243,7 +381,7 @@ impl Art {
         let Some(worn) = m.worn.as_mut() else {
             return;
         };
-        if let Some((mut node, _, hand)) = worn.in_use.take() {
+        if let Some(InUse { mut node, hand, .. }) = worn.in_use.take() {
             if node.is_instance_valid() {
                 node.queue_free();
             }
@@ -261,10 +399,20 @@ impl Art {
                 node.queue_free();
             }
         }
-        if let Some((mut node, _, _)) = worn.in_use.take()
+        if let Some(InUse { mut node, .. }) = worn.in_use.take()
             && node.is_instance_valid()
         {
             node.queue_free();
+        }
+        // the off hand lets go at once: the next to wear this model may be
+        // no hero, with no one to tell it so
+        if let Some(ik) = worn.off_hand.as_mut() {
+            let mut modifier: Gd<SkeletonModifier3D> = ik.clone().upcast();
+            modifier.set_influence(0.0);
+            modifier.set_active(false);
+            let mut ik = ik.bind_mut();
+            ik.set_grip(None);
+            ik.set_guard(None);
         }
         if let Some(parts) = &worn.parts {
             for (mi, _) in parts {
@@ -282,22 +430,35 @@ impl Art {
         }
     }
 
-    /// Show an item in the right hand for `secs` (a potion drunk, a wand
-    /// zapped); the weapon there steps aside meanwhile.
-    pub fn hold_for(&mut self, m: &mut Model, h: HeldArt, secs: f32, hand: &'static str) -> bool {
+    /// Show an item in a hand for `secs` (a potion drunk, a wand zapped),
+    /// held in both if `two` says where the off hand grips it (a pick-axe
+    /// digging); what the hand held steps aside meanwhile.
+    pub fn hold_for(
+        &mut self,
+        m: &mut Model,
+        h: HeldArt,
+        secs: f32,
+        hand: &'static str,
+        two: Option<[f32; 3]>,
+    ) -> bool {
         let Some(mut worn) = m.worn.take() else {
             return false;
         };
-        if let Some((mut old, _, hand)) = worn.in_use.take() {
-            if old.is_instance_valid() {
-                old.queue_free();
+        if let Some(InUse { mut node, hand, .. }) = worn.in_use.take() {
+            if node.is_instance_valid() {
+                node.queue_free();
             }
             show_slot(&mut worn, hand, true);
         }
         let node = self.hold(&mut worn, hand, h, USE_NODE);
         let shown = node.is_some();
         if let Some(node) = node {
-            worn.in_use = Some((node, secs, hand));
+            worn.in_use = Some(InUse {
+                node,
+                left: secs,
+                hand,
+                two: two.map(|t| Vector3::new(t[0], t[1], t[2])),
+            });
             show_slot(&mut worn, hand, false);
         }
         m.worn = Some(worn);
@@ -524,6 +685,11 @@ impl Art {
     /// manifest's `held.uses` ("proc/read" is built here).
     pub fn use_clip(&mut self, m: &Model, kind: &str) -> Option<String> {
         let name = self.manifest.held_rules().uses.get(kind)?.clone();
+        self.clip_on(m, name)
+    }
+
+    /// The clip `name` if the model has it (a "proc/" one is built).
+    pub fn clip_on(&mut self, m: &Model, name: String) -> Option<String> {
         let mut player = m.player.clone()?;
         if name.starts_with(&format!("{PROC_CLIPS}/")) && !player.has_animation(name.as_str()) {
             self.add_proc_clips(&mut player);
@@ -531,9 +697,11 @@ impl Art {
         player.has_animation(name.as_str()).then_some(name)
     }
 
-    /// The clips built in code on the shared skeleton: `read` (a page held
-    /// up, the head bowed to it) and `throw` (an upright overhand throw),
-    /// both the idle with a few bones turned.
+    /// The clips built in code on the shared skeleton (`PROC_POSES`):
+    /// `read` (a page held up, the head bowed to it), `throw` (an upright
+    /// overhand throw), `chop` (a two-handed blow from the guard), `pole`
+    /// (a blow with a pole held at the side) and `dig` (a pick struck at
+    /// the floor), each the idle with a few bones turned.
     fn add_proc_clips(&mut self, player: &mut Gd<AnimationPlayer>) {
         if player.has_animation_library(PROC_CLIPS) {
             return;
@@ -545,8 +713,9 @@ impl Art {
                     return;
                 };
                 let mut lib = AnimationLibrary::new_gd();
-                let _ = lib.add_animation("read", &pose_clip(&idle, READ_SECS, READ_POSE));
-                let _ = lib.add_animation("throw", &pose_clip(&idle, THROW_SECS, THROW_POSE));
+                for (name, secs, pose) in PROC_POSES {
+                    let _ = lib.add_animation(name, &pose_clip(&idle, secs, pose));
+                }
                 self.proc_clips = Some(lib.clone());
                 lib
             }
@@ -561,6 +730,7 @@ type PoseTrack = (&'static str, Vector3, &'static [(f32, f32)]);
 
 const X: Vector3 = Vector3::new(1.0, 0.0, 0.0);
 const Y: Vector3 = Vector3::new(0.0, 1.0, 0.0);
+const Z: Vector3 = Vector3::new(0.0, 0.0, 1.0);
 
 /// Reading: in the idle both arms hang with their x to the hero's right,
 /// so a turn about x swings them forward (the page held up); the head
@@ -640,6 +810,129 @@ const THROW_SECS: f32 = 0.9;
 const THROW_RELEASE: f32 = 0.55;
 pub const THROW_LETS_GO: f32 = THROW_SECS * THROW_RELEASE;
 
+/// The keys of a turn at these shares of the clip.
+const fn keys<const N: usize>(at: [f32; N], deg: [f32; N]) -> [(f32, f32); N] {
+    let mut k = [(0.0, 0.0); N];
+    let mut i = 0;
+    while i < N {
+        k[i] = (at[i], deg[i]);
+        i += 1;
+    }
+    k
+}
+
+/// The chop's keys: the guard, wound up, struck, followed through, the
+/// guard.
+const CHOP_AT: [f32; 5] = [0.0, 0.14, 0.27, 0.45, 1.0];
+/// A two-handed blow (a two-handed sword, an axe): from the guard (the
+/// weapon held up before the right shoulder, the blade back), wound up
+/// over the shoulder, struck down and forward before the hero, at
+/// contact a quarter second in, and back to the guard. The left hand
+/// follows on the hilt by IK (`off_hand.rs`), within its reach all along.
+const CHOP_POSE: &[PoseTrack] = &[
+    (
+        "upperarm_r",
+        X,
+        &keys(CHOP_AT, [20.0, -20.0, 60.0, 70.0, 20.0]),
+    ),
+    (
+        "upperarm_r",
+        Z,
+        &keys(CHOP_AT, [40.0, 40.0, 20.0, 20.0, 40.0]),
+    ),
+    (
+        "lowerarm_r",
+        X,
+        &keys(CHOP_AT, [50.0, 110.0, 0.0, 10.0, 50.0]),
+    ),
+    ("hand_r", X, &keys(CHOP_AT, [0.0, 0.0, -90.0, -100.0, 0.0])),
+    ("hand_r", Z, &keys(CHOP_AT, [0.0, 0.0, 30.0, 30.0, 0.0])),
+    ("spine_02", X, &keys(CHOP_AT, [0.0, -8.0, 12.0, 14.0, 0.0])),
+];
+const CHOP_SECS: f32 = 0.9;
+
+/// The pole's keys: at rest, its head drawn back, struck, held there, at
+/// rest.
+const POLE_AT: [f32; 5] = [0.0, 0.16, 0.32, 0.5, 1.0];
+/// A blow with a pole held upright at the side (a quarterstaff, a
+/// polearm, a lance applied): its head drawn back, then swung forward and
+/// down at the foe as the hero leans in, the right hand pushed out before
+/// the hips and the wrist turned under; back to rest. The left hand, on
+/// the shaft above the right, stays within its reach all along.
+const POLE_POSE: &[PoseTrack] = &[
+    (
+        "upperarm_r",
+        X,
+        &keys(POLE_AT, [0.0, 18.0, 58.0, 55.0, 0.0]),
+    ),
+    ("upperarm_r", Z, &keys(POLE_AT, [0.0, 5.0, 15.0, 15.0, 0.0])),
+    (
+        "upperarm_r",
+        Y,
+        &keys(POLE_AT, [0.0, -10.0, -48.0, -45.0, 0.0]),
+    ),
+    ("lowerarm_r", X, &keys(POLE_AT, [0.0, 30.0, 0.0, 5.0, 0.0])),
+    ("lowerarm_r", Y, &keys(POLE_AT, [0.0, 5.0, 23.0, 20.0, 0.0])),
+    ("hand_r", X, &keys(POLE_AT, [0.0, -10.0, -60.0, -55.0, 0.0])),
+    ("hand_r", Z, &keys(POLE_AT, [0.0, 5.0, 27.0, 25.0, 0.0])),
+    ("spine_02", X, &keys(POLE_AT, [0.0, -6.0, 24.0, 22.0, 0.0])),
+];
+const POLE_SECS: f32 = 0.9;
+
+/// The dig's keys: the guard, then twice wound up, struck and left in the
+/// ground; the guard.
+const DIG_AT: [f32; 8] = [0.0, 0.1, 0.2, 0.3, 0.45, 0.56, 0.66, 1.0];
+/// Digging down with a pick: two strokes from the guard (as the chop's),
+/// each struck down before the feet with the back bent, left in the
+/// ground a moment and wrenched out; back to the guard.
+const DIG_POSE: &[PoseTrack] = &[
+    (
+        "upperarm_r",
+        X,
+        &keys(DIG_AT, [20.0, -20.0, 45.0, 42.0, -20.0, 45.0, 42.0, 20.0]),
+    ),
+    (
+        "upperarm_r",
+        Z,
+        &keys(DIG_AT, [40.0, 40.0, 35.0, 35.0, 40.0, 35.0, 35.0, 40.0]),
+    ),
+    (
+        "upperarm_r",
+        Y,
+        &keys(DIG_AT, [0.0, 0.0, 29.0, 29.0, 0.0, 29.0, 29.0, 0.0]),
+    ),
+    (
+        "lowerarm_r",
+        X,
+        &keys(DIG_AT, [50.0, 110.0, 0.0, 5.0, 110.0, 0.0, 5.0, 50.0]),
+    ),
+    (
+        "hand_r",
+        X,
+        &keys(DIG_AT, [0.0, 0.0, -75.0, -75.0, 0.0, -75.0, -75.0, 0.0]),
+    ),
+    (
+        "spine_01",
+        X,
+        &keys(DIG_AT, [0.0, -3.0, 15.0, 15.0, -3.0, 15.0, 15.0, 0.0]),
+    ),
+    (
+        "spine_02",
+        X,
+        &keys(DIG_AT, [0.0, -8.0, 30.0, 28.0, -8.0, 30.0, 28.0, 0.0]),
+    ),
+];
+const DIG_SECS: f32 = 1.6;
+
+/// The clips of the "proc" library: name, seconds, pose.
+const PROC_POSES: [(&str, f32, &[PoseTrack]); 5] = [
+    ("read", READ_SECS, READ_POSE),
+    ("throw", THROW_SECS, THROW_POSE),
+    ("chop", CHOP_SECS, CHOP_POSE),
+    ("pole", POLE_SECS, POLE_POSE),
+    ("dig", DIG_SECS, DIG_POSE),
+];
+
 /// A pose's turn at share `f` of the clip.
 fn turn_at(keys: &[(f32, f32)], f: f32) -> f32 {
     for w in keys.windows(2) {
@@ -718,6 +1011,35 @@ fn show_slot(worn: &mut Worn, slot: &str, on: bool) {
         if *s == slot && node.is_instance_valid() {
             let mut node = node.clone();
             node.set_visible(on);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_proc_clip_the_manifest_names_is_built() {
+        let art = nh_art::ArtManifest::parse(super::super::BUILT_IN_MANIFEST).unwrap();
+        for (lib, clip) in art.held_rules().clips() {
+            if lib == Some(PROC_CLIPS) {
+                assert!(
+                    PROC_POSES.iter().any(|(name, _, _)| *name == clip),
+                    "no proc/{clip}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn every_pose_keys_its_whole_clip_in_order() {
+        for (name, _, pose) in PROC_POSES {
+            for (bone, _, keys) in pose {
+                assert_eq!(keys.first().map(|k| k.0), Some(0.0), "{name} {bone}");
+                assert_eq!(keys.last().map(|k| k.0), Some(1.0), "{name} {bone}");
+                assert!(keys.windows(2).all(|w| w[0].0 < w[1].0), "{name} {bone}");
+            }
         }
     }
 }

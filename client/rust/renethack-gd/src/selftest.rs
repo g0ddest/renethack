@@ -4466,6 +4466,7 @@ impl SelfTest {
             "combat" => hero::combat(),
             "roles" => hero::roles(),
             "kits" => hero::kits(),
+            "two-hands" => hero::two_hands(),
             "worn" => worn_looks::worn(),
             "branches" => world_looks::branches(),
             "title" => world_looks::title(),

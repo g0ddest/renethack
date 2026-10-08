@@ -2034,7 +2034,7 @@ fn bright_flash(look: &mut Look, g: &Glyph, ctx: &Ctx) {
 
 /// Can something north of a wall be seen or stood on (so the wall would
 /// hide it)?
-fn is_open(cell: Option<&Cell>, catalog: &Catalog) -> bool {
+pub(crate) fn is_open(cell: Option<&Cell>, catalog: &Catalog) -> bool {
     let Some(cell) = cell else {
         return false;
     };
@@ -4155,6 +4155,16 @@ impl MapView {
         let held = tile.and_then(|t| self.art.manifest().held(t));
         let color = use_color(u, tile, self.art.manifest());
         let dir = u.dir.filter(|&d| d != (0, 0));
+        // a thing applied as a weapon is wielded (a pick-axe digging, a
+        // polearm striking a spot picked on the map)
+        let applied = held
+            .filter(|_| u.kind == UseKind::Apply)
+            .and_then(|h| self.art.manifest().held_at(h.held).1.apply.clone());
+        let spot = u
+            .spot
+            .filter(|_| applied.is_some())
+            .map(|(x, y)| (x - at.0, y - at.1))
+            .filter(|&d| d != (0, 0));
         // where it goes: on until something solid, a few cells at most
         let reach = dir.map(|(dx, dy)| {
             let mut c = at;
@@ -4175,16 +4185,34 @@ impl MapView {
         };
         let placed = &mut nodes.look.models[i];
         let yaw_from = placed.yaw;
-        let yaw_to = dir.map_or(yaw_from, |d| yaw_toward((0, 0), d));
+        let yaw_to = dir.or(spot).map_or(yaw_from, |d| yaw_toward((0, 0), d));
         placed.yaw = yaw_to;
         let height = placed.look.art.height;
         let pos = Vector3::new(at.0 as f32, 0.0, at.1 as f32) + placed.pos;
         let m = &mut nodes.models[i];
         let mut clips = self.art.clips(m, false);
-        clips.attack = self.art.use_clip(m, use_name(u.kind));
-        let hand_slot = use_hand(u.kind);
-        if let (Some(h), Some(secs)) = (held, in_hand(u.kind)) {
-            self.art.hold_for(m, h, secs, hand_slot);
+        // (its clip, how long it lasts, where the off hand grips)
+        let applied = applied.and_then(|a| {
+            let clip = self
+                .art
+                .clip_on(m, a.clip(u.vertical == Some('>')).to_string())?;
+            let secs = clips
+                .player
+                .as_ref()?
+                .get_animation(clip.as_str())?
+                .get_length();
+            Some((clip, secs, a.two))
+        });
+        let (hand_slot, secs, two) = match &applied {
+            Some((_, secs, two)) => ("hand_r", Some(*secs), *two),
+            None => (use_hand(u.kind), in_hand(u.kind), None),
+        };
+        clips.attack = match applied {
+            Some((clip, ..)) => Some(clip),
+            None => self.art.use_clip(m, use_name(u.kind)),
+        };
+        if let (Some(h), Some(secs)) = (held, secs) {
+            self.art.hold_for(m, h, secs, hand_slot, two);
         } else {
             // a use with nothing in hand (a spell): the last item used is
             // put away, not left in a hand that opens
@@ -4257,6 +4285,11 @@ impl MapView {
     /// The effects of the hero's uses (self-tests).
     pub fn hero_fx(&self) -> &crate::hero::HeroFx {
         &self.hero_fx
+    }
+
+    /// The way the hero faces, in degrees (self-tests).
+    pub fn hero_yaw(&self) -> f32 {
+        self.hero_yaw
     }
 
     /// The hero's model shows their gear; with a lamp lit in hand, the

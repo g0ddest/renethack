@@ -33,6 +33,8 @@ const RUN_SPEED: f32 = 1.25;
 /// How far a body without an attack clip lunges at its target (metres).
 const LUNGE: f32 = 0.3;
 const NUDGE: f32 = 0.08;
+/// Seconds the idle takes to blend in after an attack clip.
+const AFTER_BLOW: f64 = 0.15;
 /// Roll of a swaying body (degrees).
 const SWAY_ROLL: f32 = 6.0;
 
@@ -179,6 +181,9 @@ impl Motion {
             (Some(p), Some(attack)) => {
                 p.play_ex().name(attack.as_str()).custom_blend(0.08).done();
                 if let Some(idle) = &clips.idle {
+                    // a blow that does not end as the idle stands (a dig
+                    // ends with the pick raised) eases into it
+                    p.set_blend_time(attack.as_str(), idle.as_str(), AFTER_BLOW);
                     p.queue(idle.as_str());
                 }
                 NUDGE

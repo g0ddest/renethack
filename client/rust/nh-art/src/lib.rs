@@ -1527,6 +1527,8 @@ mod tests {
         assert_eq!(h(")", "hilted polearm"), Some("polearm"));
         assert_eq!(h(")", "double-headed axe"), Some("great_axe"));
         assert_eq!(h(")", "axe"), Some("axe"));
+        assert_eq!(h(")", "broad pick"), Some("mattock"));
+        assert_eq!(h("(", "pick-axe"), Some("pick"));
         assert_eq!(h(")", "crossbow"), Some("bow"));
         assert_eq!(h("[", "large round shield"), Some("round_shield"));
         assert_eq!(h("[", "polished silver shield"), Some("kite_shield"));
@@ -1647,6 +1649,70 @@ mod tests {
             let spec = art.held_at(art.held_index(pole).unwrap()).1;
             assert!(spec.back.is_some_and(|b| b != spec.grip), "{pole}");
         }
+    }
+
+    #[test]
+    fn what_nethack_wields_in_both_hands_is_held_in_both() {
+        let (art, cat) = (manifest(), catalog());
+        let spec = |class: &str, a: &str| {
+            let h = art
+                .held(tile(&cat, class, a))
+                .unwrap_or_else(|| panic!("{a}"));
+            art.held_at(h.held).1
+        };
+        // objects.h's bimanual weapons, by their appearances
+        let both = [
+            "two-handed sword",
+            "long samurai sword",
+            "double-headed axe",
+            "broad pick",
+            "staff",
+            "vulgar polearm",
+            "hilted polearm",
+            "forked polearm",
+            "single-edged polearm",
+            "angled poleaxe",
+            "long poleaxe",
+            "pole cleaver",
+            "pole sickle",
+            "pruning hook",
+            "hooked polearm",
+            "pronged polearm",
+            "beaked polearm",
+        ];
+        for a in both {
+            let s = spec(")", a);
+            assert!(s.two.is_some(), "{a}: no grip for the off hand");
+            // held steady whatever the legs do, by a blow built for it
+            assert!(s.guard, "{a}");
+            let blow = s.attack.as_deref().unwrap_or_default();
+            assert!(blow.starts_with("proc/"), "{a} strikes with {blow}");
+        }
+        for a in ["spear", "lance", "long sword", "axe", "trident", "mace"] {
+            assert_eq!(spec(")", a).two, None, "{a}");
+        }
+        assert_eq!(spec("(", "pick-axe").two, None);
+        // a pick digs and a pole strikes from afar in both hands; an axe
+        // or a whip applied is swung in the one that wields it
+        let applied = |class: &str, a: &str| spec(class, a).apply.clone();
+        let dig = applied("(", "pick-axe").unwrap();
+        assert_eq!((dig.clip(false), dig.clip(true)), ("proc/chop", "proc/dig"));
+        assert!(dig.two.is_some());
+        assert_eq!(applied(")", "broad pick").unwrap().clip(true), "proc/dig");
+        for pole in ["lance", "single-edged polearm"] {
+            let a = applied(")", pole).unwrap();
+            assert_eq!(
+                (a.clip(true), a.two.is_some()),
+                ("proc/pole", true),
+                "{pole}"
+            );
+        }
+        assert!(applied(")", "double-headed axe").unwrap().two.is_some());
+        for one in ["axe", "bullwhip"] {
+            assert_eq!(applied(")", one).unwrap().two, None, "{one}");
+        }
+        assert_eq!(applied(")", "long sword"), None);
+        assert_eq!(applied("(", "lamp"), None);
     }
 
     #[test]
