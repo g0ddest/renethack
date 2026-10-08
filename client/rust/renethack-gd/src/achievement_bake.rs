@@ -23,7 +23,7 @@ use nh_world::achievements::{Achievement, Achievements, Subject};
 
 use crate::art::{Model, ModelLook, Pose};
 use crate::i18n::{self, Lang};
-use crate::icon_bake::{self, FILL, RENDER, STILL_FRAMES, Stage};
+use crate::icon_bake::{self, Drawn, FILL, RENDER, STILL_FRAMES, Stage};
 use crate::icons::{self, Glyph};
 use crate::map_view::role_monster;
 use crate::theme::{self, Face};
@@ -303,6 +303,7 @@ pub struct Bake {
     all: Vec<Achievement>,
     todo: Vec<usize>,
     phase: Phase,
+    drawn: Drawn,
     game_dir: PathBuf,
     steam_dir: PathBuf,
     pub written: usize,
@@ -366,6 +367,7 @@ impl Bake {
             all,
             todo,
             phase: Phase::Next,
+            drawn: Drawn::new(),
             game_dir,
             steam_dir,
             written: 0,
@@ -393,8 +395,13 @@ impl Bake {
         std::fs::write(&path, vdf(&self.all)).map_err(|e| format!("{}: {e}", path.display()))
     }
 
-    /// One frame of work; true when a medallion was saved (or failed).
+    /// One frame of work, on a new picture of the stage
+    /// (`icon_bake::Drawn`); true when a medallion was saved (or failed).
     pub fn tick(&mut self) -> Result<bool, String> {
+        if matches!(self.phase, Phase::Next) && self.todo.is_empty() {
+            return Ok(true);
+        }
+        self.drawn.frame();
         match std::mem::replace(&mut self.phase, Phase::Next) {
             Phase::Next => {
                 let Some(&i) = self.todo.last() else {

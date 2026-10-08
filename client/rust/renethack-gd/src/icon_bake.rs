@@ -14,8 +14,8 @@ use godot::classes::light_3d::Param as LightParam;
 use godot::classes::sub_viewport::UpdateMode;
 use godot::classes::viewport::Msaa;
 use godot::classes::{
-    Camera3D, DirectionalLight3D, Environment, Image, MeshInstance3D, Node, Node3D, OmniLight3D,
-    ProjectSettings, SubViewport, WorldEnvironment,
+    Camera3D, DirectionalLight3D, Engine, Environment, Image, MeshInstance3D, Node, Node3D,
+    OmniLight3D, ProjectSettings, RenderingServer, SubViewport, WorldEnvironment,
 };
 use godot::prelude::*;
 use nh_art::{Level, Tint};
@@ -363,6 +363,35 @@ pub(crate) fn object_look(art: &Art, cat: &Catalog, tile: &ObjectTile) -> (Model
     (look, r.level)
 }
 
+/// A new picture of the stage for each step of a bake. Godot goes on
+/// processing a window that nobody sees (covered or minimised, on macOS)
+/// but draws none of it, or a frame now and then, and the stage's picture
+/// stays what was last drawn, whatever stands on the stage now: a bake
+/// that stepped with the frames processed took the last subject's picture
+/// for the next one's, or lost patience before a stage that only looked
+/// empty. The stage needs no window: when no frame was drawn since the
+/// last step, one is drawn here.
+pub(crate) struct Drawn {
+    /// The frames Godot had drawn at the last step.
+    seen: i32,
+}
+
+impl Drawn {
+    pub(crate) fn new() -> Drawn {
+        Drawn {
+            seen: Engine::singleton().get_frames_drawn(),
+        }
+    }
+
+    /// The stage as it stands now is in its picture.
+    pub(crate) fn frame(&mut self) {
+        let now = Engine::singleton().get_frames_drawn();
+        if std::mem::replace(&mut self.seen, now) == now {
+            RenderingServer::singleton().force_draw();
+        }
+    }
+}
+
 /// Where the bake of one icon is. Godot moves nodes and cameras in the
 /// renderer once a frame, so each view is drawn over frames: framed
 /// loosely by the meshes' boxes, then tightly by the pixels drawn.
@@ -381,6 +410,7 @@ pub struct Bake {
     dir: PathBuf,
     todo: Vec<usize>,
     phase: Phase,
+    drawn: Drawn,
     pub report: Report,
     failed: Vec<String>,
 }
@@ -412,6 +442,7 @@ impl Bake {
             dir,
             todo,
             phase: Phase::Next,
+            drawn: Drawn::new(),
             report: Report::default(),
             failed: Vec::new(),
         })
@@ -426,8 +457,13 @@ impl Bake {
         &self.failed
     }
 
-    /// One frame of work; true when an icon was saved (or failed).
+    /// One frame of work, on a new picture of the stage (`Drawn`); true
+    /// when an icon was saved (or failed).
     pub fn tick(&mut self) -> Result<bool, String> {
+        if matches!(self.phase, Phase::Next) && self.todo.is_empty() {
+            return Ok(true);
+        }
+        self.drawn.frame();
         match std::mem::replace(&mut self.phase, Phase::Next) {
             Phase::Next => {
                 let Some(&i) = self.todo.last() else {
