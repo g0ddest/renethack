@@ -410,10 +410,22 @@ fn language() -> Vec<Step> {
         }),
         Step::Shot("language-inventory-ru"),
         inv(crate::inventory_panel::InvInput::Close),
+        // the command palette, made ahead in the language of the start
+        key('#'),
+        Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
+        Step::Call("the palette in Russian", palette_in_language),
+        Step::Shot("language-palette-ru"),
+        Step::Dialog(DialogEvent::ExtCmd(None)),
+        Step::Request("a command after the palette", command),
         Step::Push(UiEvent::SetLanguage(Lang::En)),
         Step::Wait("English again", |g| {
             Ok(badge(g).is_some_and(|b| b.starts_with("EXPLORING")))
         }),
+        key('#'),
+        Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
+        Step::Call("the palette in English again", palette_in_language),
+        Step::Dialog(DialogEvent::ExtCmd(None)),
+        Step::Request("a command after the palette", command),
     ]);
     steps.extend(quit());
     steps
@@ -2236,8 +2248,74 @@ fn palette() -> Vec<Step> {
             Step::Request("a command after the palette", command),
         ]);
     }
+    // the words change under the palette put away (the engine's translator
+    // loads after the palette was made, or the language is another): it
+    // is made again in them
+    steps.extend([
+        Step::Call("another language under the palette put away", |_| {
+            let was = i18n::lang();
+            *PALETTE_LANG.lock().map_err(|e| e.to_string())? = Some(was);
+            // not through the settings, which make every view again
+            i18n::set_lang(if was == Lang::Ru { Lang::En } else { Lang::Ru });
+            Ok(())
+        }),
+        Step::Wait("the engine's words in that language", |g| {
+            // its translator loads on a thread
+            let cmds = crate::dialogs::palette_cmds(g.catalog.as_deref());
+            let russian =
+                |c: &crate::dialogs::PaletteCmd| c.desc.chars().any(|c| ('а'..='я').contains(&c));
+            Ok(i18n::lang() != Lang::Ru || cmds.iter().any(russian))
+        }),
+        key('#'),
+        Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
+        Step::Shot("palette-language"),
+        Step::Call("the palette reads in that language", palette_in_language),
+        Step::Dialog(DialogEvent::ExtCmd(None)),
+        Step::Request("a command after the palette", command),
+        Step::Call("the language as it was", |_| {
+            if let Some(was) = PALETTE_LANG.lock().map_err(|e| e.to_string())?.take() {
+                i18n::set_lang(was);
+            }
+            Ok(())
+        }),
+    ]);
     steps.extend(quit());
     steps
+}
+
+/// The language the `palette` scenario started in.
+static PALETTE_LANG: Mutex<Option<Lang>> = Mutex::new(None);
+
+/// The open palette reads as the language now words its commands.
+fn palette_in_language(g: &mut RenethackGame) -> Result<(), String> {
+    let ui = g.ui.as_ref().ok_or("no UI")?;
+    let rows = ui.dialogs.palette_rows().ok_or("no palette open")?;
+    let cmds = crate::dialogs::palette_cmds(g.catalog.as_deref());
+    if rows.len() != cmds.len() {
+        return Err(format!(
+            "the palette lists {} commands of {}",
+            rows.len(),
+            cmds.len()
+        ));
+    }
+    let russian = |s: &str| s.chars().any(|c| ('а'..='я').contains(&c));
+    if (i18n::lang() == Lang::Ru) != rows.iter().any(|(_, desc)| russian(desc)) {
+        return Err(format!(
+            "the palette's descriptions are not in {:?}",
+            i18n::lang()
+        ));
+    }
+    for (name, desc) in &rows {
+        let cmd = cmds.iter().find(|c| c.name == *name);
+        let cmd = cmd.ok_or_else(|| format!("the palette lists #{name}, the catalog does not"))?;
+        if cmd.desc != *desc {
+            return Err(format!(
+                "#{name} reads \"{desc}\" in the palette, \"{}\" in the language now",
+                cmd.desc
+            ));
+        }
+    }
+    Ok(())
 }
 
 /// Where the view looks from the jackal of `threat_arrow`, a cell offset

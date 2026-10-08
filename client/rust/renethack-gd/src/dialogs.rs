@@ -1801,11 +1801,18 @@ impl Dialogs {
         catalog: Option<&Catalog>,
     ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
         let cmds = palette_cmds(catalog);
-        if let Some(pool) = self
-            .palette_pool
-            .take()
-            .filter(|p| p.palette.borrow().cmds.len() == cmds.len())
-        {
+        // the palette put away serves again only if it reads the same: the
+        // engine's translator may have loaded since it was made, or the
+        // language be another
+        let pool = self.palette_pool.take().and_then(|mut pool| {
+            if pool.palette.borrow().cmds == cmds {
+                return Some(pool);
+            }
+            pool.panel.queue_free();
+            pool.shade.queue_free();
+            None
+        });
+        if let Some(pool) = pool {
             let PalettePool {
                 mut shade,
                 mut panel,
@@ -3203,6 +3210,20 @@ impl Dialogs {
     }
 
     /// The commands the palette lists now, in order.
+    /// The open palette's rows as they read: the name and the description
+    /// of each row shown (self-tests).
+    pub fn palette_rows(&self) -> Option<Vec<(String, String)>> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::ExtCmd { palette, .. }) => {
+                let p = palette.borrow();
+                let shown = p.slots.iter().filter(|s| s.button.is_visible());
+                let text = |l: &Gd<Label>| l.get_text().to_string();
+                Some(shown.map(|s| (text(&s.name), text(&s.desc))).collect())
+            }
+            _ => None,
+        }
+    }
+
     pub fn palette_names(&self) -> Option<Vec<String>> {
         match self.open.as_ref().map(|o| &o.kind) {
             Some(Kind::ExtCmd { palette, .. }) => {
