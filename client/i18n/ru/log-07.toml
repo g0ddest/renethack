@@ -1,0 +1,876 @@
+# R6, log messages batch 7: pray.c. Syntax: nh-i18n's template.rs.
+
+[dcb20e8a3a78]
+en = "Divine knowledge of %s fills your mind!  Spell '%c'."
+ru = "Божественное знание заклинания «{1}» наполняет ваш разум!  Буква заклинания: '{2}'."
+
+[d310af180f9c]
+en = "You dream that you feel the power of %s over %s."
+ru = "Вам снится, что вы чувствуете власть {1:gen} над {2:ins:own}."
+
+[5d91ab76b911]
+en = "You feel the power of %s over %s."
+ru = "Вы чувствуете власть {1:gen} над {2:ins:own}."
+
+[1c9536db7457]
+en = "You dream that you feel the blessing of %s over %s."
+ru = "Вам снится, как {1} {1:num|благословляет|благословляют} {2:acc}."
+
+[2dc18797e2e5]
+en = "You feel the blessing of %s over %s."
+ru = "Вы чувствуете, как {1} {1:num|благословляет|благословляют} {2:acc}."
+
+[78dcee6020ea]
+en = "\"To enter the castle, thou must play the right tune!\""
+ru = "«Дабы войти в Замок, тебе надлежит сыграть верную мелодию!»"
+
+[2c946096c9b5]
+en = "You barely hear a divine music..."
+ru = "Вы едва слышите божественную музыку..."
+
+[3650fffd6345]
+en = "You dream that you hear a divine music..."
+ru = "Вам снится, что вы слышите божественную музыку..."
+
+[6310267bbb44]
+en = "You hear a divine music..."
+ru = "Вы слышите божественную музыку..."
+
+[1484904cafd6]
+en = "It sounds like:  \"%s\"."
+ru = "Мелодия звучит так:  «{1}»."
+
+[8a839e2d1105]
+en = "You are surrounded by %s glow."
+ru = "Вас окутывает {1:n} сияние."
+
+[95bc1789c69a]
+en = "You dream that you feel the power of %s."
+ru = "Вам снится, что вы чувствуете могущество {1:gen}."
+
+[c67c8ed45bd6]
+en = "You feel the power of %s."
+ru = "Вы чувствуете могущество {1:gen}."
+
+[93f1275c1a9b]
+en = "You are surrounded by %s aura."
+ru = "Вас окутывает {1:f} аура."
+
+[f5e0ff7d96f4]
+en = "\"Use it wisely in my name!\""
+ru = "«Распорядись им мудро во имя моё!»"
+
+[fb0536a7019d]
+en = "Your sacrifice sprouts wings and a propeller and roars away!"
+ru = "У вашей жертвы вырастают крылья и пропеллер, и она с рёвом уносится прочь!"
+
+[d3a0dd3886d2]
+en = "Your sacrifice puffs up, swelling bigger and bigger, and pops!"
+ru = "Ваша жертва раздувается, становясь всё больше и больше, и лопается!"
+
+[6601c2d92f18]
+en = "Your sacrifice collapses into a cloud of dancing particles and fades away!"
+ru = "Ваша жертва рассыпается облаком пляшущих частиц и тает в воздухе!"
+
+[574b0c2c67e7]
+en = "Your sacrifice disappears!"
+ru = "Ваша жертва исчезает!"
+
+[95dae90312f3]
+en = "You dream that you feel the air around you grow charged..."
+ru = "Вам снится, как воздух вокруг вас наполняется электричеством..."
+
+[50737c15800d]
+en = "You feel the air around you grow charged..."
+ru = "Вы чувствуете, как воздух вокруг вас наполняется электричеством..."
+
+[b8765efb1935]
+en = "Suddenly, you realize that %s has noticed you..."
+ru = "Внезапно вы понимаете, что {1} {1:gender|заметил|заметила|заметило|заметили} вас..."
+
+[efc194c5fe11]
+en = "You offer the Amulet of Yendor to %s..."
+ru = "Вы приносите Амулет Йендора в дар {1:dat}..."
+
+[cdb6a4525649]
+en = "An invisible choir chants, and you are bathed in darkness..."
+ru = "Незримый хор заводит песнопение, и вы погружаетесь во тьму..."
+
+[1c3993f7f6ff]
+en = "then mercilessly snuffs out your life."
+ru = "а затем безжалостно гасит вашу жизнь."
+
+[50f81b8cf8a9]
+en = "A cloud of %s smoke surrounds you..."
+ru = "Вас окутывает облако {1:m:gen} дыма..."
+
+[59d3964d302b]
+en = "%s accepts your gift, and gains dominion over %s..."
+ru = "{1} {1:num|принимает|принимают} ваш дар и {1:num|обретает|обретают} власть над {2:ins}..."
+
+[3f6c1dd6d36c]
+en = "%s is enraged..."
+ru = "{1} в ярости..."
+
+[7b15157981fc]
+en = "Fortunately, %s permits you to live..."
+ru = "К счастью, {1} {1:num|дозволяет|дозволяют} вам жить..."
+
+[df52f543464e]
+en = "An invisible choir sings, and you are bathed in radiance..."
+ru = "Незримый хор поёт, и вас заливает сияние..."
+
+[6910237b2eec]
+en = "\"In return for thy service, I grant thee the gift of Immortality!\""
+ru = "«В награду за твою службу я дарую тебе Бессмертие!»"
+
+[3858a99c2acd]
+en = "You barely hear a nearby thunderclap."
+ru = "Вы едва слышите раскат грома поблизости."
+
+[f7ca4b4e3183]
+en = "You dream that you hear a nearby thunderclap."
+ru = "Вам снится, что вы слышите раскат грома поблизости."
+
+[a873a65b6553]
+en = "You hear a nearby thunderclap."
+ru = "Вы слышите раскат грома поблизости."
+
+[1d60d9dc8590]
+en = "Oh, no."
+ru = "О нет."
+
+[ac4156721806]
+en = "You have a strong feeling that %s is angry..."
+ru = "Вы остро чувствуете, что {1} {1:num|гневается|гневаются}..."
+
+[f96ad2f88231]
+en = "%s accepts your allegiance."
+ru = "{1} {1:num|принимает|принимают} вашу клятву верности."
+
+[56ecd7d39861]
+en = "%s rejects your sacrifice!"
+ru = "{1} {1:num|отвергает|отвергают} вашу жертву!"
+
+[29731d396359]
+en = "You sense a conflict between %s and %s."
+ru = "Вы ощущаете противоборство между {1:ins} и {2:ins}."
+
+[a06a67568217]
+en = "You dream that you feel the power of %s increase."
+ru = "Вам снится, как растёт могущество {1:gen}."
+
+[443b5340b9ba]
+en = "You feel the power of %s increase."
+ru = "Вы чувствуете, как растёт могущество {1:gen}."
+
+[cb2f8e7bdfde]
+en = "The altar glows %s."
+ru = "Алтарь вспыхивает {1:ins} светом."
+
+[907ca63f67c0]
+en = "Unluckily, you feel the power of %s decrease."
+ru = "К несчастью, вы чувствуете, как слабеет могущество {1:gen}."
+
+[79e5848474a4]
+en = "You find the idea very satisfying."
+ru = "Эта мысль вам очень по душе."
+
+[e6894554d283]
+en = "You'll regret this infamous offense!"
+ru = "Вы пожалеете об этом гнусном злодеянии!"
+
+[fc62f588ad22]
+en = "The altar is stained with %s blood."
+ru = "Алтарь обагряется {1:f:ins} кровью."
+
+[f2a0957e6370]
+en = "The blood floods the altar, which vanishes in %s cloud!"
+ru = "Кровь заливает алтарь, и тот исчезает в {1:n:prep} облаке!"
+
+[9ab5e70041ba]
+en = "The blood covers the altar!"
+ru = "Кровь покрывает алтарь!"
+
+[761eca9a485b]
+en = "You are terrified, and unable to move."
+ru = "Вас сковывает ужас, вы не можете пошевелиться."
+
+[26388d81ad2c]
+en = "You are too impaired to perform the rite."
+ru = "Вы не в том состоянии, чтобы совершить обряд."
+
+[083a2f6b3f36]
+en = "You dream that you feel appropriately %s."
+ru = "Вам снится, что вы чувствуете себя подобающе {1:hero:ins}."
+
+[1b9987706e53]
+en = "You feel appropriately %s."
+ru = "Вы чувствуете себя подобающе {1:hero:ins}."
+
+[36382e196a42]
+en = "You dream that you feel you are thoroughly on the right path."
+ru = "Вам снится, что вы твёрдо стоите на верном пути."
+
+[e0e48b6f7c9e]
+en = "You feel you are thoroughly on the right path."
+ru = "Вы чувствуете, что твёрдо стоите на верном пути."
+
+[b16871555609]
+en = "So this is how you repay loyalty?"
+ru = "Так-то вы платите за верность?"
+
+[b41fe4201526]
+en = "The gods seem tall."
+ru = "Боги кажутся высокими."
+
+[6a9133ee82ba]
+en = "You have a feeling of inadequacy."
+ru = "Вас охватывает чувство собственной несостоятельности."
+
+[fdbfb8dfb727]
+en = "You dream that you feel partially absolved."
+ru = "Вам снится, что вы отчасти прощены."
+
+[9133dce265b5]
+en = "You feel partially absolved."
+ru = "Вы чувствуете, что отчасти прощены."
+
+[abd94d2a0f05]
+en = "You realize that the gods are not like you and I."
+ru = "Вы понимаете, что боги не такие, как мы с вами."
+
+[ac7a6300fec6]
+en = "You have a hopeful feeling."
+ru = "В вас пробуждается надежда."
+
+[7b45c9b42fa3]
+en = "Overall, there is a smell of fried onions."
+ru = "В целом пахнет жареным луком."
+
+[d469aaf0e60d]
+en = "You have a feeling of reconciliation."
+ru = "Вас наполняет чувство примирения."
+
+[2efb636f9174]
+en = "You glimpse a four-leaf clover at your %s."
+ru = "Вы замечаете у {1:gender|своего|своей|своего|своих} {1:gen} четырёхлистный клевер."
+
+[f04702bbc46b]
+en = "You see crabgrass at your %s.  A funny thing in a dungeon."
+ru = "Вы видите у {1:gender|своего|своей|своего|своих} {1:gen} пырей.  Забавная находка для подземелья."
+
+[c63262ca06de]
+en = "Nothing else happens."
+ru = "Больше ничего не происходит."
+
+[bc27564664cc]
+en = "You dream that you feel like you are falling apart."
+ru = "Вам снится, что вы разваливаетесь на части."
+
+[d39942d679c4]
+en = "You feel like you are falling apart."
+ru = "Вам кажется, что вы разваливаетесь на части."
+
+[03cd62119928]
+en = "Unfortunately, your voice falters."
+ru = "К несчастью, ваш голос срывается."
+
+[9e4b6496f8ec]
+en = "You don't know how to turn undead!"
+ru = "Вы не умеете изгонять нежить!"
+
+[7fcd001b7ede]
+en = "For some reason, %s seems to ignore you."
+ru = "Почему-то {1}, похоже, не {1:num|обращает|обращают} на вас внимания."
+
+[a7ea5a4c01fd]
+en = "Calling upon %s, you chant an arcane formula."
+ru = "Воззвав к {1:dat}, вы нараспев произносите тайную формулу."
+
+[c530df7ed898]
+en = "\"Thou shalt pay, infidel!\""
+ru = "«Ты поплатишься, {hero:gender|неверный|неверная}!»"
+
+[c5742c6bc87c]
+en = "Your amulet vanishes!"
+ru = "Ваш амулет исчезает!"
+
+[4af6e2496ce1]
+en = "You can breathe again."
+ru = "Вы снова можете дышать."
+
+[69498b00a147]
+en = "Your surroundings change."
+ru = "Обстановка вокруг вас меняется."
+
+[847a622f5a38]
+en = "You dream that you feel much slimmer."
+ru = "Вам снится, что вы чувствуете себя гораздо стройнее."
+
+[ad29b42a9f48]
+en = "You feel much slimmer."
+ru = "Вы чувствуете себя гораздо стройнее."
+
+[5686d9414e38]
+en = "Your shape becomes uncertain."
+ru = "Ваш облик становится зыбким."
+
+[e66f45d32f75]
+en = "Your chain disappears."
+ru = "Ваша цепь исчезает."
+
+[3f0a76f9b848]
+en = "There's a tiger in your tank."
+ru = "У вас тигр в бензобаке."
+
+[defce1fbce86]
+en = "You dream that you feel in good health again."
+ru = "Вам снится, что вы снова в добром здравии."
+
+[4244d06f7dd1]
+en = "You feel in good health again."
+ru = "Вы снова в добром здравии."
+
+[2245d1a0a299]
+en = "Looks like you are back in Kansas."
+ru = "Похоже, вы снова в Канзасе."
+
+[c426563a276f]
+en = "Suddenly a bolt of lightning comes down at you from the heavens!"
+ru = "Внезапно с небес в вас бьёт молния!"
+
+[c92859936552]
+en = "It strikes %s!"
+ru = "Молния поражает {1:acc}!"
+
+[c6c7c4445498]
+en = "%s fries to a crisp!"
+ru = "{1} {1:num|сгорает|сгорают} дотла!"
+
+[6cc7692add21]
+en = "%s seems unaffected."
+ru = "Похоже, на {1:acc} это не действует."
+
+[e7c72407ef78]
+en = "Suddenly, a bolt of lightning strikes you!"
+ru = "Внезапно в вас ударяет молния!"
+
+[e2cd77fba590]
+en = "For some reason you're unaffected."
+ru = "Почему-то на вас это не действует."
+
+[4426c9099bee]
+en = "It seems not to affect you."
+ru = "Похоже, молния на вас не действует."
+
+[6e9943868ee8]
+en = "%s is not deterred..."
+ru = "{1} не {1:num|унимается|унимаются}..."
+
+[f206b1c518b2]
+en = "A wide-angle disintegration beam aimed at you hits %s!"
+ru = "Широкоугольный луч распада, нацеленный в вас, попадает в {1:acc}!"
+
+[8c415f44581b]
+en = "%s disintegrates into a pile of dust!"
+ru = "{1} {1:num|рассыпается|рассыпаются} в прах!"
+
+[98230285847d]
+en = "A wide-angle disintegration beam hits you!"
+ru = "Широкоугольный луч распада попадает в вас!"
+
+[925c6e049bb3]
+en = "You bask in its %s glow for a minute..."
+ru = "Вы с минуту нежитесь в {1:n:prep} сиянии луча..."
+
+[6b4816328b39]
+en = "\"Thou cannot escape my wrath, mortal!\""
+ru = "«Тебе не уйти от моего гнева, {hero:gender|смертный|смертная}!»"
+
+[419ad844536e]
+en = "\"I crown thee...  The Hand of Elbereth!\""
+ru = "«Нарекаю тебя...  Дланью Elbereth!»"
+
+[b0014424fa29]
+en = "\"Thou shalt be my Envoy of Balance!\""
+ru = "«Ты будешь {hero:gender|моим Посланником Равновесия|моей Посланницей Равновесия}!»"
+
+[c3a8b1236b3e]
+en = "Your sword shines brightly for a moment."
+ru = "Ваш меч на миг ярко вспыхивает."
+
+[87af23c1e74e]
+en = "Your %s goes snicker-snack!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|стрижает|стрижают}: взы-взы!"
+
+[e2cebae99674]
+en = "You dream that you feel unworthy."
+ru = "Вам снится, что вы недостойны."
+
+[e0edc9b9c7f0]
+en = "You feel unworthy."
+ru = "Вы чувствуете, что недостойны."
+
+[abdfa60d84f0]
+en = "Your %s feel better."
+ru = "{1:gender|Вашему|Вашей|Вашему|Вашим} {1:dat} лучше."
+
+[4d31e1c422d7]
+en = "You think something brushed your %s."
+ru = "Вам кажется, будто что-то задело {1:gender|ваш|вашу|ваше|ваши} {1:acc}."
+
+[afd60aa1c209]
+en = "Your knowledge of spell '%c' - %s is refreshed."
+ru = "Ваше знание заклинания «{2}» ('{1}') освежено."
+
+[8c1e2c41d6e5]
+en = "Your knowledge of spell '%c' - %s is restored."
+ru = "Ваше знание заклинания «{2}» ('{1}') восстановлено."
+
+[8d610116e4a7]
+en = "You dream that you feel that %s is full."
+ru = "Вам снится, что {1} {1:gender|сыт|сыта|сыто|сыты}."
+
+[5b2e9736fb8c]
+en = "You dream that you feel that %s is pleased as punch."
+ru = "Вам снится, что {1} {1:gender|рад-радёшенек|рада-радёшенька|радо-радёшенько|рады-радёшеньки}."
+
+[e99be8a9d024]
+en = "You dream that you feel that %s is pleased."
+ru = "Вам снится, что {1} {1:gender|доволен|довольна|довольно|довольны}."
+
+[c9f1824b6d99]
+en = "You dream that you feel that %s is satisfied."
+ru = "Вам снится, что {1} {1:gender|удовлетворён|удовлетворена|удовлетворено|удовлетворены}."
+
+[74d373a92773]
+en = "You dream that you feel that %s is ticklish."
+ru = "Вам снится, что {1} {1:num|боится|боятся} щекотки."
+
+[31279cb3f80d]
+en = "You dream that you feel that %s is well-pleased."
+ru = "Вам снится, что {1} весьма {1:gender|доволен|довольна|довольно|довольны}."
+
+[8aab8b079872]
+en = "You feel that %s is full."
+ru = "Вы чувствуете, что {1} {1:gender|сыт|сыта|сыто|сыты}."
+
+[dd5a98a9e391]
+en = "You feel that %s is pleased as punch."
+ru = "Вы чувствуете, что {1} {1:gender|рад-радёшенек|рада-радёшенька|радо-радёшенько|рады-радёшеньки}."
+
+[21204ab748a6]
+en = "You feel that %s is satisfied."
+ru = "Вы чувствуете, что {1} {1:gender|удовлетворён|удовлетворена|удовлетворено|удовлетворены}."
+
+[47e3f3f028b1]
+en = "You feel that %s is ticklish."
+ru = "Вы чувствуете, что {1} {1:num|боится|боятся} щекотки."
+
+[799b10d4a5e4]
+en = "You feel that %s is well-pleased."
+ru = "Вы чувствуете, что {1} весьма {1:gender|доволен|довольна|довольно|довольны}."
+
+[f9ad1be263ca]
+en = "%s softly glow %s and are now as good as new."
+ru = "{1} мягко {1:num|сияет|сияют} {2:ins} светом и теперь как {1:gender|новый|новая|новое|новые}."
+
+[c9d7c11e546d]
+en = "%s softly glows %s and is now as good as new."
+ru = "{1} мягко {1:num|сияет|сияют} {2:ins} светом и теперь как {1:gender|новый|новая|новое|новые}."
+
+[4c7b4d72808e]
+en = "%s softly glow with %s aura."
+ru = "{1} {1:num|окутывается|окутываются} мягкой {2:f:ins} аурой."
+
+[b25b3111d9c4]
+en = "%s softly glows with %s aura."
+ru = "{1} {1:num|окутывается|окутываются} мягкой {2:f:ins} аурой."
+
+[54c946caac49]
+en = "\"Hark, creature!\""
+ru = "«Внемли, создание!»"
+
+[22fb6e8b2131]
+en = "\"Hark, mortal!\""
+ru = "«Внемли, {hero:gender|смертный|смертная}!»"
+
+[7a92226f3766]
+en = "\"and thus I grant thee the gift of Telepathy!\""
+ru = "«и посему я наделяю тебя даром Телепатии!»"
+
+[787c7a45343a]
+en = "\"and thus I grant thee the gift of Speed!\""
+ru = "«и посему я наделяю тебя даром Скорости!»"
+
+[60dfd73fd830]
+en = "\"and thus I grant thee the gift of Stealth!\""
+ru = "«и посему я наделяю тебя даром Скрытности!»"
+
+[774fe97369ba]
+en = "\"and thus I grant thee the gift of my protection!\""
+ru = "«и посему я наделяю тебя даром моей защиты!»"
+
+[3fc824a3398a]
+en = "One of the potions on the altar glows %s for a moment."
+ru = "Одно из зелий на алтаре на миг вспыхивает {1:ins} светом."
+
+[611879fee410]
+en = "Some of the potions on the altar glow %s for a moment."
+ru = "Некоторые зелья на алтаре на миг вспыхивают {1:ins} светом."
+
+[85625353bdcc]
+en = "The potion on the altar glows %s for a moment."
+ru = "Зелье на алтаре на миг вспыхивает {1:ins} светом."
+
+[82ef9e66cf75]
+en = "The potions on the altar glow %s for a moment."
+ru = "Зелья на алтаре на миг вспыхивают {1:ins} светом."
+
+[e95e2d53607f]
+en = "The voice of %s booms out: \"%s\""
+ru = "Голос {1:gen} раскатисто гремит: «{2}»"
+
+[82d581fcf6c9]
+en = "The voice of %s booms out: %s"
+ru = "Голос {1:gen} раскатисто гремит: {2}"
+
+[fdd71842ebdc]
+en = "The voice of %s booms: \"%s\""
+ru = "Голос {1:gen} гремит: «{2}»"
+
+[1c151e3266e5]
+en = "The voice of %s booms: %s"
+ru = "Голос {1:gen} гремит: {2}"
+
+[4b033a15e06b]
+en = "The voice of %s rings out: \"%s\""
+ru = "Голос {1:gen} разносится: «{2}»"
+
+[2b4427851ace]
+en = "The voice of %s rings out: %s"
+ru = "Голос {1:gen} разносится: {2}"
+
+[7a8fd4e3a5b8]
+en = "The voice of %s thunders: \"%s\""
+ru = "Голос {1:gen} грохочет: «{2}»"
+
+[7ceb42f5a2f3]
+en = "The voice of %s thunders: %s"
+ru = "Голос {1:gen} грохочет: {2}"
+
+[042d4b0e3c2a]
+en = "Your sacrifice is consumed in a burst of flame!"
+ru = "Ваша жертва исчезает во вспышке пламени!"
+
+[29edf3aa29eb]
+en = "Your sacrifice is consumed in a flash of light!"
+ru = "Ваша жертва исчезает во вспышке света!"
+
+[dc65577b5c5a]
+en = "Your sacrifice is consumed in a plume of smoke!"
+ru = "Ваша жертва исчезает в клубах дыма!"
+
+[4ade7fa97007]
+en = "You dream that you feel an urge to return to the surface."
+ru = "Вам снится, что вас тянет вернуться на поверхность."
+
+[4956f7766d25]
+en = "You dream that you feel ashamed."
+ru = "Вам снится, что вам стыдно."
+
+[3e9747cf3b91]
+en = "You dream that you feel homesick."
+ru = "Вам снится, что вы тоскуете по дому."
+
+[1f6e753dc849]
+en = "You feel an urge to return to the surface."
+ru = "Вас тянет вернуться на поверхность."
+
+[8c904710f5d1]
+en = "You feel ashamed."
+ru = "Вам стыдно."
+
+[999ec7507613]
+en = "You feel homesick."
+ru = "Вы тоскуете по дому."
+
+[58cc2e5f0db7]
+en = "Moloch shrugs and retains dominion over %s,"
+ru = "Молох пожимает плечами и сохраняет власть над {1:ins},"
+
+[75203334c2a1]
+en = "Moloch snarls and tries again..."
+ru = "Молох рычит и пробует снова..."
+
+[5e72dc7490de]
+en = "You ascend to the status of Demigod..."
+ru = "Вы возноситесь и становитесь полубогом..."
+
+[2fb099c7e0a2]
+en = "You ascend to the status of Demigoddess..."
+ru = "Вы возноситесь и становитесь полубогиней..."
+
+[b25a5b443264]
+en = "You realize you have made a boo-boo."
+ru = "Вы понимаете, что накосячили."
+
+[4be036edf8d0]
+en = "You realize you have made a mistake."
+ru = "Вы понимаете, что совершили ошибку."
+
+[f27cf4ba567c]
+en = "You have summoned something dreadful!"
+ru = "Вы призвали нечто ужасное!"
+
+[5a92daaaf60c]
+en = "The blood coagulates."
+ru = "Кровь сворачивается."
+
+[046457177259]
+en = "The cloud dissipates."
+ru = "Облако рассеивается."
+
+[d10003b20f46]
+en = "You are not over an altar."
+ru = "Вы парите не над алтарём."
+
+[2f4aa792f3c3]
+en = "Such an action is an insult to balance!"
+ru = "Такой поступок оскорбляет само равновесие!"
+
+[c5e696d26ee5]
+en = "Such an action is an insult to chaos!"
+ru = "Такой поступок оскорбляет сам хаос!"
+
+[d847742dd42f]
+en = "Such an action is an insult to law!"
+ru = "Такой поступок оскорбляет сам закон!"
+
+[b783153ea7bb]
+en = "%s seems groovy."
+ru = "{1}, похоже, {1:num|ловит|ловят} кайф."
+
+[52716ec6ecb1]
+en = "%s seems slightly mollified."
+ru = "{1}, похоже, немного {1:num|смягчается|смягчаются}."
+
+[411c82c41e94]
+en = "%s seems cosmic (not a new fact)."
+ru = "{1} {1:num|кажется|кажутся} {1:gender|космическим|космической|космическим|космическими} (и это не новость)."
+
+[5a2a5b50a4a3]
+en = "%s seems mollified."
+ru = "{1}, похоже, {1:num|сменяет|сменяют} гнев на милость."
+
+[edf32a9764df]
+en = "The very idea of praying to a lawful god is repugnant to you."
+ru = "Сама мысль о молитве законопослушному богу вам отвратительна."
+
+[f527a5234126]
+en = "The very idea of praying to a neutral god is repugnant to you."
+ru = "Сама мысль о молитве нейтральному богу вам отвратительна."
+
+[48d6e44192af]
+en = "You hear diabolical laughter all around you..."
+ru = "Вы слышите вокруг дьявольский хохот..."
+
+[96e7a6917acc]
+en = "You intuit diabolical laughter all around you..."
+ru = "Вы нутром чуете вокруг дьявольский хохот..."
+
+[f4de4ecac6dc]
+en = "Since you are in Gehennom, %s can't help you."
+ru = "Раз вы в Геенне, {1} не {1:num|может|могут} вам помочь."
+
+[2080d6d351fc]
+en = "You are incapable of calling upon %s to turn aside evilness."
+ru = "Вы не способны воззвать к {1:dat}, чтобы отвратить зло."
+
+[fc3dc56c97f7]
+en = "You are not able to call upon %s to turn aside evilness."
+ru = "Вы не можете воззвать к {1:dat}, чтобы отвратить зло."
+
+[f29cdc9241ce]
+en = "Since you are in Gehennom, %s won't help you."
+ru = "Раз вы в Геенне, {1} не {1:num|станет|станут} вам помогать."
+
+[e90e9bb633d4]
+en = "A voice (could it be %s?) whispers:"
+ru = "Чей-то голос (уж не {1:gen} ли?) шепчет:"
+
+[571730d00a09]
+en = "Despite your deafness, you seem to hear %s say:"
+ru = "Несмотря на глухоту, вы будто слышите, как {1} {1:num|говорит|говорят}:"
+
+[0348c0d9db00]
+en = "Your gauntlets are no longer slippery."
+ru = "Ваши рукавицы больше не скользкие."
+
+[66d7e197269b]
+en = "Your gloves are no longer slippery."
+ru = "Ваши перчатки больше не скользкие."
+
+[f983d5434c06]
+en = "%s softly glow %s."
+ru = "{1} мягко {1:num|сияет|сияют} {2:ins} светом."
+
+[66bb56a9254c]
+en = "%s softly glows %s."
+ru = "{1} мягко {1:num|сияет|сияют} {2:ins} светом."
+
+[5b1cb6e41196]
+en = "Your left ring softly glows %s."
+ru = "Ваше левое кольцо мягко сияет {1:ins} светом."
+
+[f6bb97cd7ce6]
+en = "Your right ring softly glows %s."
+ru = "Ваше правое кольцо мягко сияет {1:ins} светом."
+
+[8fb9e0d8c807]
+en = "You dream that you feel much stronger."
+ru = "Вам снится, что вы чувствуете себя гораздо сильнее."
+
+[f92621e56ddf]
+en = "You dream that you feel stronger."
+ru = "Вам снится, что вы чувствуете себя сильнее."
+
+[2a79aa638e01]
+en = "You feel much stronger."
+ru = "Вы чувствуете себя гораздо сильнее."
+
+[58f31fcaa100]
+en = "You feel stronger."
+ru = "Вы чувствуете себя сильнее."
+
+[f2f22d430116]
+en = "Your %s feel better and you can hear again."
+ru = "{1:gender|Вашему|Вашей|Вашему|Вашим} {1:dat} лучше, и вы снова слышите."
+
+[9c5ab271cba0]
+en = "Your %s feels better and you can hear again."
+ru = "{1:gender|Вашему|Вашей|Вашему|Вашим} {1:dat} лучше, и вы снова слышите."
+
+[d669d35d727f]
+en = "\"Destroy her, my servants!\""
+ru = "«Уничтожьте её, слуги мои!»"
+
+[e06b31811b2b]
+en = "\"Destroy him, my servants!\""
+ru = "«Уничтожьте его, слуги мои!»"
+
+[9a74fd0a9a7c]
+en = "You disintegrate into a pile of dust!"
+ru = "Вы рассыпаетесь в прах!"
+
+[57dc5433f6ce]
+en = "You fry to a crisp!"
+ru = "Вы сгораете дотла!"
+
+[1deab71a92df]
+en = "You dream that you feel that %s is bummed."
+ru = "Вам снится, что {1} {1:gender|обломался|обломалась|обломалось|обломались}."
+
+[fd8e65e3066a]
+en = "You dream that you feel that %s is displeased."
+ru = "Вам снится, что {1} {1:gender|недоволен|недовольна|недовольно|недовольны}."
+
+[dc5cbffb822e]
+en = "You feel that %s is bummed."
+ru = "Вы чувствуете, что {1} {1:gender|обломался|обломалась|обломалось|обломались}."
+
+[1e03690c02d4]
+en = "\"Thou art arrogant, creature.\""
+ru = "«{hero:gender|Ты высокомерен|Ты высокомерна}, тварь.»"
+
+[cd76ddb4e162]
+en = "\"Thou hast strayed from the path, creature.\""
+ru = "«{hero:gender|Ты сбился|Ты сбилась} с пути, тварь.»"
+
+[0442eeaa9410]
+en = "\"Thou hast strayed from the path, mortal.\""
+ru = "«{hero:gender|Ты сбился с пути, смертный|Ты сбилась с пути, смертная}.»"
+
+[b9133fe9d047]
+en = "\"Thou durst call upon me?\""
+ru = "«Ты смеешь взывать ко мне?»"
+
+[365baab38ecf]
+en = "\"Thou durst scorn me?\""
+ru = "«Ты смеешь пренебрегать мною?»"
+
+[b64a4c33a78c]
+en = "\"Then die, creature!\""
+ru = "«Так умри же, тварь!»"
+
+[e640611fe195]
+en = "\"Then die, mortal!\""
+ru = "«Так умри же, {hero:gender|смертный|смертная}!»"
+
+[ba692c375dc5]
+en = "%s drops into %s %s."
+ru = "{1} {1:num|падает|падают} в {3:acc} {2:gen}."
+
+[d4feb93bbbc4]
+en = "A sword drops into %s %s."
+ru = "Меч падает в {2:acc} {1:gen}."
+
+[81c4e341734a]
+en = "Something drops into %s %s."
+ru = "Что-то падает в {2:acc} {1:gen}."
+
+[2dfe971c5d24]
+en = "%s appears at your %s!"
+ru = "У {2:gender|вашего|вашей|вашего|ваших} {2:gen} {1:num|появляется|появляются} {1}!"
+
+[32f79ef3b648]
+en = "%s appears beneath your %s!"
+ru = "Под {2:gender|вашим|вашей|вашим|вашими} {2:ins} {1:num|появляется|появляются} {1}!"
+
+[eef8261b66a2]
+en = "%s lands at your %s!"
+ru = "{1} {1:num|падает|падают} к {2:gender|вашему|вашей|вашему|вашим} {2:dat}!"
+
+[ab9b78cd3fe6]
+en = "%s lands beneath your %s!"
+ru = "{1} {1:num|падает|падают} под {2:gender|ваш|вашу|ваше|ваши} {2:acc}!"
+
+[cd35b5019889]
+en = "A sword appears at your %s!"
+ru = "У {1:gender|вашего|вашей|вашего|ваших} {1:gen} появляется меч!"
+
+[306054fa2fbf]
+en = "A sword appears beneath your %s!"
+ru = "Под {1:gender|вашим|вашей|вашим|вашими} {1:ins} появляется меч!"
+
+[d814b2511c98]
+en = "Something lands at your %s!"
+ru = "Что-то падает к {1:gender|вашему|вашей|вашему|вашим} {1:dat}!"
+
+[55539e2103b9]
+en = "Something lands beneath your %s!"
+ru = "Что-то падает под {1:gender|ваш|вашу|ваше|ваши} {1:acc}!"
+
+[9bb218371d35]
+en = "\"Thou art chosen to steal souls for My Glory!\""
+ru = "«{hero:gender|Ты избран|Ты избрана} красть души во Славу Мою!»"
+
+[8a5f63cbb1d1]
+en = "\"Thou art chosen to take lives for My Glory!\""
+ru = "«{hero:gender|Ты избран|Ты избрана} отнимать жизни во Славу Мою!»"
+
+[92b54a5895c5]
+en = "Your %s sword hums ominously!"
+ru = "Ваш {1:m} меч зловеще гудит!"
+
+# Not stubs: base formats of pray.c the worklist skips as "expanded",
+# whose %s is also a name no derived variant covers.
+
+[2a60077a59ab]
+en = "You have summoned %s!"
+ru = "Вы призвали {1:acc}!"
+
+[5b9b59444176]
+en = "Your %s are no longer slippery."
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} больше не {1:gender|скользкий|скользкая|скользкое|скользкие}."
