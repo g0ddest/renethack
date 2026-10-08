@@ -7,6 +7,7 @@
 //! title menu; `bestiary` shoots the creatures a game meets most, one by
 //! one, then those told apart by colour side by side, then a game's start.
 
+use std::sync::OnceLock;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use nh_world::{Branch, KeyInput, Prompt};
@@ -223,6 +224,33 @@ const BESTIARY: &[&str] = &[
     "purple worm",
 ];
 
+/// RENETHACK_BESTIARY=gnome,gnome (F);dwarf,dwarf leader: these creatures
+/// instead, each alone and then together in rows (`;` between rows; the
+/// picture `rows`), for sheets of a kind before and after a change. A
+/// name ending in " (F)" is the female.
+fn asked() -> Option<&'static [Vec<&'static str>]> {
+    static ASKED: OnceLock<Option<Vec<Vec<&'static str>>>> = OnceLock::new();
+    ASKED
+        .get_or_init(|| {
+            let rows = std::env::var("RENETHACK_BESTIARY").ok()?;
+            let rows: &'static str = rows.leak();
+            Some(
+                rows.split(';')
+                    .map(|r| r.split(',').map(str::trim).collect())
+                    .collect(),
+            )
+        })
+        .as_deref()
+}
+
+/// The creatures shot one by one.
+fn creatures() -> Vec<&'static str> {
+    match asked() {
+        Some(rows) => rows.iter().flatten().copied().collect(),
+        None => BESTIARY.to_vec(),
+    }
+}
+
 /// The creatures a player tells apart by their colour, in rows (the
 /// spacing, the names): the fungi, the small and the many-legged, the
 /// worms and a blob.
@@ -259,9 +287,9 @@ pub(super) fn bestiary() -> Vec<Step> {
     steps.push(Step::Wait("the hero on the map", |g| {
         Ok(g.world.map.hero().is_some())
     }));
-    for name in BESTIARY {
-        let shot: &'static str =
-            Box::leak(format!("bestiary-{}", name.replace(' ', "-")).into_boxed_str());
+    for name in creatures() {
+        let file = name.replace(" (F)", "-f").replace(' ', "-");
+        let shot: &'static str = Box::leak(format!("bestiary-{file}").into_boxed_str());
         steps.extend([
             Step::Call("lay out the next creature", |g| {
                 let i = NEXT_CREATURE.fetch_add(1, Ordering::Relaxed);
@@ -274,6 +302,31 @@ pub(super) fn bestiary() -> Vec<Step> {
             Step::Wait("the camera on it", camera_settled),
             Step::Shot(shot),
         ]);
+    }
+    if asked().is_some() {
+        steps.extend([
+            Step::Call("lay out the rows asked for", |g| {
+                let cat = g.catalog.clone().ok_or("no catalog")?;
+                let rows: Vec<(i32, &[&str])> = asked()
+                    .unwrap_or_default()
+                    .iter()
+                    .map(|r| (2, r.as_slice()))
+                    .collect();
+                crate::gallery::lay_out_rows(&mut g.world, &cat, &rows)?;
+                let ui = g.ui.as_mut().ok_or("no UI")?;
+                ui.map.set_showcase(true);
+                ui.map.set_distance(8.0, 0.2);
+                Ok(())
+            }),
+            Step::Wait("the rows drawn", |g| {
+                let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+                Ok(drawn == Some(g.world.map.generation()))
+            }),
+            Step::Wait("the camera on them", camera_settled),
+            Step::Shot("rows"),
+        ]);
+        steps.extend(quit());
+        return steps;
     }
     steps.extend([
         Step::Call("lay out the colour rows", |g| {
@@ -339,13 +392,14 @@ static NEXT_CREATURE: AtomicUsize = AtomicUsize::new(0);
 /// Lay out creature `i` of `BESTIARY` alone, the camera close.
 fn one(g: &mut RenethackGame, i: usize) -> Result<(), String> {
     let cat = g.catalog.clone().ok_or("no catalog")?;
-    let name = BESTIARY.get(i).ok_or("no more creatures")?;
+    let name = creatures().get(i).copied().ok_or("no more creatures")?;
     crate::gallery::lay_out_one(&mut g.world, &cat, name)?;
     // as close as the creature is small
+    let kind = crate::gallery::named(name).0;
     let size = cat
         .monsters
         .iter()
-        .find(|m| m.name == *name)
+        .find(|m| m.name == kind)
         .map(|m| m.size.as_str());
     let (distance, lift) = match size {
         Some("tiny") => (1.3, 0.1),
@@ -354,6 +408,8 @@ fn one(g: &mut RenethackGame, i: usize) -> Result<(), String> {
         Some("large") => (4.4, 0.3),
         _ => (6.0, 0.4),
     };
+    // those asked for may wear a tall hat
+    let lift = lift + if asked().is_some() { 0.12 } else { 0.0 };
     let ui = g.ui.as_mut().ok_or("no UI")?;
     ui.map.set_showcase(true);
     ui.map.set_distance(distance, lift);

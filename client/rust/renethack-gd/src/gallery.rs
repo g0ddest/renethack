@@ -251,7 +251,18 @@ fn cmap(cat: &Catalog, sym: &str) -> Result<Glyph, String> {
     })
 }
 
+/// A monster's name and sex flag from a name that may end in " (F)" (the
+/// female, where a kind has its own look for her).
+pub fn named(name: &str) -> (&str, u32) {
+    match name.strip_suffix(" (F)") {
+        Some(n) => (n, mg::FEMALE),
+        None => (name, 0),
+    }
+}
+
 fn monster(cat: &Catalog, name: &str, flags: u32, kind: GlyphKind) -> Result<Glyph, String> {
+    let (name, female) = named(name);
+    let flags = flags | female;
     let m = cat
         .monsters
         .iter()
