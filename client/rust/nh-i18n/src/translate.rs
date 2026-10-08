@@ -291,7 +291,7 @@ impl Translator {
             // more than "%s gold %s.")
             _ => unmarked
                 .or_else(|| self.whole_name(text))
-                .or_else(|| self.fallback(text, channel))
+                .or_else(|| self.fallback(text, channel, 0))
                 .unwrap_or_else(|| Output::english(text, Status::Untranslated, Some(m.template))),
         }
     }
@@ -322,11 +322,11 @@ impl Translator {
     /// Russian, and if all its arguments are Russian then: "x - 12 gold
     /// pieces." by "%c - %s." rather than "%s gold %s.", "drowned in a
     /// pool of water" by "drowned in %s" rather than "%spool of water".
-    fn fallback(&self, text: &str, channel: Channel) -> Option<Output> {
+    fn fallback(&self, text: &str, channel: Channel, depth: usize) -> Option<Output> {
         self.catalog
             .matches(text, channel)
             .iter()
-            .filter_map(|m| self.render_match(m, 0))
+            .filter_map(|m| self.render_match(m, depth))
             .find(|out| out.status == Status::Translated)
     }
 
@@ -475,8 +475,8 @@ impl Translator {
 
     /// The words of conversion `i`'s text the lexicon does not read: none
     /// of a translated piece, those a name keeps English, all of a text.
-    fn unread(&self, t: &Template, i: usize, text: &str) -> usize {
-        let text = text.trim();
+    fn unread(&self, t: &Template, i: usize, shown: &str) -> usize {
+        let text = shown.trim();
         let words = english_words(text);
         if words == 0 || t.is_typed(i) || self.piece(text).is_some() {
             return 0;
@@ -490,6 +490,8 @@ impl Translator {
         };
         match self.names.parse(kind, text) {
             Some(p) => english_words(&p.form(Case::Nom)).min(words),
+            // a text with its own spaces that a template makes
+            None if text.len() < shown.len() && self.spaced(shown, 1).is_some() => 0,
             None => words,
         }
     }
@@ -675,7 +677,13 @@ impl Translator {
         }
         let start = shown.len() - shown.trim_start().len();
         let (before, after) = (&shown[..start], &shown[start + trimmed.len()..]);
-        match self.bare_text_value(trimmed, name, depth) {
+        let read = self.bare_text_value(trimmed, name, depth);
+        if !read.1
+            && let Some(text) = self.spaced(shown, depth)
+        {
+            return (Value::Text(text), true);
+        }
+        match read {
             (Value::Phrase(p), ok) => (
                 Value::Phrase(Box::new(Padded {
                     inner: p,
@@ -687,6 +695,29 @@ impl Translator {
             (Value::Text(t), ok) => (Value::Text(format!("{before}{t}{after}")), ok),
             (v, ok) => (v, ok),
         }
+    }
+
+    /// A text the engine wrote with spaces at its ends, as a template with
+    /// those spaces makes it: a question's head ("Demirci offers 12 gold
+    /// pieces for your "), what follows a verb (" also limited by being
+    /// unskilled with two weapons"). Without them no template is its own.
+    fn spaced(&self, shown: &str, depth: usize) -> Option<String> {
+        if depth >= MAX_NESTING {
+            return None;
+        }
+        let (head, tail) = (shown.starts_with(' '), shown.ends_with(' '));
+        self.catalog
+            .matches(shown, Channel::Any)
+            .iter()
+            .filter(|m| {
+                let fmt = &m.template.fmt;
+                m.template.letters() >= STRONG_LETTERS
+                    && (!head || fmt.starts_with(' '))
+                    && (!tail || fmt.ends_with(' '))
+            })
+            .filter_map(|m| self.render_match(m, depth + 1))
+            .find(|out| out.status == Status::Translated)
+            .map(|out| out.text)
     }
 
     fn bare_text_value(&self, shown: &str, name: NameKind, depth: usize) -> (Value, bool) {
@@ -731,6 +762,14 @@ impl Translator {
                 let ok = out.status == Status::Translated;
                 return (Value::Text(out.text), ok);
             }
+        }
+        // another template may hold it all, as it may a whole text ("b - a
+        // tin of newt meat." after "You ready: "), if it leaves less English
+        if depth < MAX_NESTING
+            && let Some(out) = self.fallback(shown, Channel::Any, depth + 1)
+            && english_words(&out.text) < english_words(shown)
+        {
+            return (Value::Text(out.text), true);
         }
         // what stays English: a name or a code of one word (a pet's name,
         // inventory letters "aefgh") is shown as it is; words are not

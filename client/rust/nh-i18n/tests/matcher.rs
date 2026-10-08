@@ -373,6 +373,55 @@ fn a_row_of_the_extended_commands_list() {
     }
 }
 
+#[test]
+fn a_text_with_spaces_of_its_own_at_its_ends() {
+    // sellobj: a head that ends " for your ", then the thing
+    let t = with(&[
+        ("%s%s.  Sell it?", r#"ru = "{1}{2:acc}.  Продать его?""#),
+        (
+            "%s offers %ld gold pieces for your ",
+            r#"ru = "{1} предлагает {2} {2:plural|золотую монету|золотые монеты|золотых монет} за ""#,
+        ),
+        // weapon_insight: one of three heads, then a tail after its verb
+        (
+            " Your skill in %s is%s.",
+            r#"ru = " Ваше владение {1:ins}{2}.""#,
+        ),
+        (
+            " also limited by being %s with two weapons",
+            r#"ru = " также ограничено навыком боя с двух рук ({1})""#,
+        ),
+        ("Unskilled", r#"ru = "Неопытный""#),
+    ]);
+    let out = t.text("Asidonhopo offers 12 gold pieces for your bullwhip.  Sell it?");
+    assert_eq!(out.status, Status::Translated, "{}", out.text);
+    assert!(
+        out.text
+            .ends_with(" предлагает 12 золотых монет за кнут.  Продать его?"),
+        "{}",
+        out.text
+    );
+    let out = t.text(" Your skill in whip is also limited by being unskilled with two weapons.");
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        (
+            " Ваше владение кнутом также ограничено навыком боя с двух рук (неопытный).",
+            Status::Translated
+        )
+    );
+}
+
+#[test]
+fn a_text_in_a_text_by_any_template_that_holds_it() {
+    // prinv: "You ready: " and an inventory line, which "%s of %s" matches
+    // first and "%c - %s." holds
+    let t = with(&[("You ready: %s", r#"ru = "Наготове: {1}""#)]);
+    let out = t.message(None, &[], "You ready: b - an uncursed tin of newt meat.");
+    assert_eq!(out.status, Status::Translated, "{}", out.text);
+    assert!(out.text.starts_with("Наготове: b - "), "{}", out.text);
+    assert!(!out.text.contains("tin"), "{}", out.text);
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {
