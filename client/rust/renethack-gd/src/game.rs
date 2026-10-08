@@ -3047,12 +3047,29 @@ impl RenethackGame {
             _ => None,
         };
         let threat = threat.and_then(|t| on_screen(t, 0.8));
+        // the hero's body on screen: feet to head, a shoulder either side
+        let stands = self.ui.as_ref().and_then(|ui| ui.map.hero_stands());
+        let hero_box = stands.zip(camera.as_ref()).and_then(|((p, tall), cam)| {
+            if cam.is_position_behind(p) {
+                return None;
+            }
+            let feet = cam.unproject_position(p);
+            let head = cam.unproject_position(p + Vector3::new(0.0, tall, 0.0));
+            let half = (cam.unproject_position(p + Vector3::new(0.4, 0.0, 0.0)).x - feet.x).abs();
+            Some(Rect2::new(
+                Vector2::new(feet.x - half, head.y),
+                Vector2::new(2.0 * half, feet.y - head.y),
+            ))
+        });
         let Some(ui) = self.ui.as_mut() else {
             return;
         };
         ui.hud.set_cursor_at(cursor);
-        ui.hud
-            .set_threat(threat, Time::singleton().get_ticks_msec() as f64 / 1000.0);
+        ui.hud.set_threat(
+            threat,
+            hero_box,
+            Time::singleton().get_ticks_msec() as f64 / 1000.0,
+        );
         let t = Instant::now();
         ui.hud.sync(&mut self.world, catalog.as_deref());
         self.lap("hud", t);

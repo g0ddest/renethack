@@ -559,6 +559,45 @@ pub fn off_panels(
     }
 }
 
+/// The arrow over a hostile's head at `p` off the hero's own body (`hero`,
+/// on screen): a hostile in the cell south of the hero stands before them,
+/// and what is over its head is the hero's waist. The arrow then goes
+/// beside the hero, level with where it was, and points at `target` from
+/// there. `side` is the side it went to last (true: the right), kept
+/// while it stays beside them, so that it does not jump over as the
+/// hostile sways; None again once it is clear.
+pub fn off_hero(
+    p: Vector2,
+    angle: f32,
+    target: Vector2,
+    view: Vector2,
+    hero: Option<Rect2>,
+    side: &mut Option<bool>,
+) -> (Vector2, f32) {
+    let Some(body) = hero
+        .map(|r| r.grow(ARROW_PAD))
+        .filter(|r| r.contains_point(p))
+    else {
+        *side = None;
+        return (p, angle);
+    };
+    let x = |right: bool| {
+        if right {
+            body.end().x + 1.0
+        } else {
+            body.position.x - 1.0
+        }
+    };
+    let in_frame = |x: f32| (ARROW_MARGIN..=view.x - ARROW_MARGIN).contains(&x);
+    // the side the hostile leans to, if the frame has room there
+    let wish = side.unwrap_or(target.x >= body.center().x);
+    let right = if in_frame(x(wish)) { wish } else { !wish };
+    *side = Some(right);
+    let at = Vector2::new(x(right), p.y);
+    let d = target - at;
+    (at, d.y.atan2(d.x))
+}
+
 /// The docked log's bottom-left corner (from the bottom centre): the action
 /// bar's left end, on the XP bar like the micro-buttons.
 fn compact_log_corner() -> (f32, f32) {
@@ -962,6 +1001,11 @@ pub struct Hud {
     transient_shown: Option<(String, bool)>,
     /// The arrow at the screen's edge toward a hostile out of the frame.
     threat: Gd<Control>,
+    /// The side of the hero the arrow went to, while their body is where
+    /// it would be (true: the right).
+    threat_side: Option<bool>,
+    /// The hero's body on screen, as the arrow was last placed by.
+    hero_box: Option<Rect2>,
 
     // minimap, mode badge and order line, top right
     minimap_panel: Gd<PanelContainer>,
@@ -1541,6 +1585,8 @@ impl Hud {
             cursor_note_panel,
             cursor_note,
             cursor_at: None,
+            threat_side: None,
+            hero_box: None,
             transient_shown: None,
             threat,
             minimap_panel: minimap_frame,
@@ -1634,16 +1680,24 @@ impl Hud {
 
     /// A hostile the hero sees at `at` on screen: when it is out of the
     /// frame, an arrow at the edge points to it.
-    pub fn set_threat(&mut self, at: Option<Vector2>, now: f64) {
+    pub fn set_threat(&mut self, at: Option<Vector2>, hero: Option<Rect2>, now: f64) {
         let view = self.root.get_viewport_rect().size;
+        self.hero_box = hero;
         // in a fight a hostile in the frame gets the arrow over its head
-        // (a doorway's wall may hide it), pointing down and bobbing
+        // (a doorway's wall may hide it), pointing down and bobbing; not
+        // on the hero it stands in front of: beside them then
+        let mut side = self.threat_side.take();
         let over = at.filter(|_| self.combat == Some(true)).map(|p| {
+            let head = Vector2::new(p.x, p.y - 70.0);
+            let down = std::f32::consts::FRAC_PI_2;
+            let (q, angle) = off_hero(head, down, p, view, hero, &mut side);
             let bob = 6.0 * (now * TAU * 1.2).sin() as f32;
-            let y = (p.y - 70.0 - bob).max(ARROW_MARGIN);
-            (Vector2::new(p.x, y), std::f32::consts::FRAC_PI_2)
+            (Vector2::new(q.x, (q.y - bob).max(ARROW_MARGIN)), angle)
         });
-        let edge = edge_arrow(at, view).or(over);
+        let edge = edge_arrow(at, view);
+        // kept only while the arrow is beside the hero
+        self.threat_side = side.filter(|_| over.is_some() && edge.is_none());
+        let edge = edge.or(over);
         match edge {
             Some((p, angle)) => {
                 // never on the HUD's own blocks: the hostile may stand
@@ -1669,6 +1723,12 @@ impl Hud {
     /// Where the threat arrow is, while it shows (self-tests).
     pub fn threat_arrow(&self) -> Option<Vector2> {
         self.threat.is_visible().then(|| self.threat.get_position())
+    }
+
+    /// The hero's body on screen and the side of it the threat arrow
+    /// keeps to while it would lie on them (self-tests).
+    pub fn threat_beside(&self) -> (Option<Rect2>, Option<bool>) {
+        (self.hero_box, self.threat_side)
     }
 
     /// The minimap's frame takes the shape of what it shows (right
@@ -2815,6 +2875,52 @@ mod tests {
         // clear of every panel: where it was
         let free = Vector2::new(900.0, ARROW_MARGIN);
         assert_eq!(off_panels(free, 0.3, target, view, &panels), (free, 0.3));
+    }
+
+    #[test]
+    fn the_threat_arrow_keeps_off_the_hero() {
+        let view = Vector2::new(1920.0, 1080.0);
+        let rect =
+            |x: f32, y: f32, w: f32, h: f32| Rect2::new(Vector2::new(x, y), Vector2::new(w, h));
+        let down = std::f32::consts::FRAC_PI_2;
+        // the hero in the middle of the screen, feet at y 550
+        let hero = rect(915.0, 380.0, 90.0, 170.0);
+        let on_hero = |p: Vector2| hero.grow(ARROW_PAD - 0.5).contains_point(p);
+        // a hostile in the cell south of them: over its head is their
+        // waist; the arrow goes beside them and points at it from there
+        let target = Vector2::new(962.0, 610.0);
+        let head = Vector2::new(target.x, target.y - 70.0);
+        assert!(on_hero(head));
+        let mut side = None;
+        let (p, a) = off_hero(head, down, target, view, Some(hero), &mut side);
+        assert!(!on_hero(p) && p.y == head.y && p.x > hero.end().x, "{p:?}");
+        assert_eq!(side, Some(true), "the side the hostile leans to");
+        let d = target - p;
+        assert!(
+            (d.y.atan2(d.x) - a).abs() < 1e-3,
+            "it points at the hostile"
+        );
+        // the hostile sways past their middle: the arrow stays on its side
+        let swayed = Vector2::new(955.0, 610.0);
+        let head = Vector2::new(swayed.x, swayed.y - 70.0);
+        let (q, _) = off_hero(head, down, swayed, view, Some(hero), &mut side);
+        assert!(q.x > hero.end().x && side == Some(true), "{q:?}");
+        // no room on that side of the frame: the other
+        let by_edge = rect(1800.0, 380.0, 90.0, 170.0);
+        let (mut side, target) = (None, Vector2::new(1850.0, 610.0));
+        let head = Vector2::new(target.x, target.y - 70.0);
+        let (q, _) = off_hero(head, down, target, view, Some(by_edge), &mut side);
+        assert!(q.x < by_edge.position.x && side == Some(false), "{q:?}");
+        // a hostile north of the hero: its arrow is clear of them where it
+        // is, and no side is kept
+        let mut side = Some(true);
+        let target = Vector2::new(960.0, 300.0);
+        let head = Vector2::new(target.x, target.y - 70.0);
+        let clear = off_hero(head, down, target, view, Some(hero), &mut side);
+        assert_eq!((clear, side), ((head, down), None));
+        // a hero not on screen
+        let off = off_hero(head, down, target, view, None, &mut side);
+        assert_eq!(off, (head, down));
     }
 
     #[test]

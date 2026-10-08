@@ -4520,6 +4520,16 @@ impl MapView {
         self.cells.get(&self.hero_at?).filter(|n| n.look.hero)
     }
 
+    /// Where the hero's model stands now (between two cells while it
+    /// walks) and how tall it is: the HUD keeps its arrow off them.
+    pub fn hero_stands(&self) -> Option<(Vector3, f32)> {
+        let nodes = self.hero_cell()?;
+        let i = nodes.look.entity?;
+        let (model, placed) = (nodes.models.get(i)?, nodes.look.models.get(i)?);
+        (model.node.is_instance_valid() && model.node.is_inside_tree())
+            .then(|| (model.node.get_global_position(), placed.look.art.height))
+    }
+
     /// The hero's model (the doll shows it; self-tests look at its gear).
     pub fn hero_model(&self) -> Option<&Model> {
         let nodes = self.hero_cell()?;

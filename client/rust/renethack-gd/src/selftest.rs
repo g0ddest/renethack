@@ -2310,6 +2310,51 @@ fn threat_arrow() -> Vec<Step> {
         }
         Ok(())
     }));
+    // a hostile in the cell south of the hero stands before them: what is
+    // over its head on screen is the hero
+    steps.extend([
+        Step::Call("the jackal in the cell south of the hero, a fight", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            let (x, y) = crate::gallery::lay_out_one(&mut g.world, &cat, "jackal")?;
+            let hero = g.world.map.hero().ok_or("no hero laid out")?;
+            let glyph = |x: i32, y: i32| g.world.map.cell(x, y).and_then(|c| c.glyph.clone());
+            let jackal = glyph(x, y).ok_or("no jackal laid out")?;
+            let floor = glyph(x - 1, y).ok_or("no floor laid out")?;
+            g.world.map.print(x, y, &floor, None);
+            g.world.map.print(hero.0, hero.1 + 1, &jackal, None);
+            g.world.view_center = Some(hero);
+            // the tick's moment, as at a command: a hostile beside the
+            // hero is a fight
+            g.driver.observe(&g.world, &cat);
+            if g.driver.mode() != nh_world::Mode::Combat {
+                return Err("a jackal beside the hero is no fight".into());
+            }
+            Ok(())
+        }),
+        Step::Wait("the view drawn", |g| {
+            let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+            Ok(drawn == Some(g.world.map.generation()))
+        }),
+        Step::Wait("the camera there", camera_settled),
+        Step::Wait("the hero's model, and the arrow", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(ui.hud.threat_beside().0.is_some() && ui.hud.threat_arrow().is_some())
+        }),
+        Step::Shot("threat-arrow-hero"),
+        Step::Call("the arrow beside the hero, not on them", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let p = ui.hud.threat_arrow().ok_or("no arrow for the jackal")?;
+            let (hero, side) = ui.hud.threat_beside();
+            let hero = hero.ok_or("the hero is not on screen")?;
+            if hero.grow(8.0).contains_point(p) || side.is_none() {
+                return Err(format!(
+                    "the threat arrow at {:.0},{:.0} is on the hero ({:.0},{:.0} {:.0}×{:.0})",
+                    p.x, p.y, hero.position.x, hero.position.y, hero.size.x, hero.size.y
+                ));
+            }
+            Ok(())
+        }),
+    ]);
     steps.extend(quit());
     steps
 }
