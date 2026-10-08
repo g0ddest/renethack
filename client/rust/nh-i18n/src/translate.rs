@@ -148,7 +148,10 @@ impl Translator {
                 // the arguments P7 sent split the text truly ("the
                 // gnome's" | "hand"); the text's captures only guess
                 let rendered = match p7_captures(base, m.template, args) {
-                    Some(captures) => self.render_captures(m.template, &captures, 0),
+                    Some(mut captures) => {
+                        with_owners(m.template, &mut captures);
+                        self.render_captures(m.template, &captures, 0)
+                    }
                     None => self.render_match(m, 0),
                 };
                 if let Some(out) = rendered {
@@ -588,13 +591,18 @@ impl Translator {
     /// `captures`, None when it has none.
     fn render_captures(&self, t: &Template, captures: &[String], depth: usize) -> Option<Output> {
         let ru = self.russian_of(t)?;
+        // (what the Russian leaves out may stay English)
+        let shown = |i: usize| {
+            ru.placeholders()
+                .any(|p| p.target == Target::Arg(i) && !p.skip)
+        };
         let mut whole = true;
         let values: Vec<Value> = convs(&t.segments)
             .zip(captures)
             .enumerate()
             .map(|(i, (c, cap))| {
                 let (v, ok) = self.arg_value(t, i, c.kind, cap, depth);
-                whole &= ok;
+                whole &= ok || !shown(i);
                 v
             })
             .collect();
@@ -606,7 +614,9 @@ impl Translator {
     /// when it has none or the arguments do not fit its conversions.
     fn render_args(&self, index: usize, args: &[Arg]) -> Option<Output> {
         let t = &self.catalog.templates()[index];
-        self.render_captures(t, &shown_args(t, args)?, 0)
+        let mut captures = shown_args(t, args)?;
+        with_owners(t, &mut captures);
+        self.render_captures(t, &captures, 0)
     }
 
     /// The Russian of `t` with its values, a capital first where the
@@ -922,6 +932,24 @@ fn shown_args(t: &Template, args: &[Arg]) -> Option<Vec<String>> {
         k += 1;
     }
     Some(out)
+}
+
+/// An owner the engine printed apart from its name ("%s%s remains…" with
+/// "Asidonhopo's " and "mace") goes into the name's conversion, as the
+/// text read without arguments has it: the Russian says whose after the
+/// name, in a case.
+fn with_owners(t: &Template, captures: &mut [String]) {
+    let joints = joints(&t.segments);
+    for k in 0..captures.len().saturating_sub(1) {
+        let apart = joints.get(k) == Some(&Some(""))
+            && captures[k]
+                .strip_suffix(' ')
+                .is_some_and(|o| owner(o).is_some());
+        if apart {
+            let whose = std::mem::take(&mut captures[k]);
+            captures[k + 1].insert_str(0, &whose);
+        }
+    }
 }
 
 /// The printed conversions of `derived`, a template derived from `base`,

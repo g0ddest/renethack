@@ -454,6 +454,41 @@ fn the_derived_template_the_arguments_line_up_with() {
     assert!(out.text.contains(" в жире (гнома)!"), "{}", out.text);
 }
 
+#[test]
+fn an_owner_the_engine_printed_apart() {
+    // doquiver_core: pline("%s%s remains as secondary weapon.", …)
+    let t = with(&[(
+        "%s%s remains as secondary weapon.",
+        r#"ru = "{1:like2}{2:cap} остаётся запасным оружием.""#,
+    )]);
+    let text = "Asidonhopo's mace remains as secondary weapon.";
+    let by_text = t.message(None, &[], text);
+    let args = [
+        Arg::Str("Asidonhopo's ".to_string()),
+        Arg::Str("mace".to_string()),
+    ];
+    let by_args = t.message(Some("%s%s remains as secondary weapon."), &args, text);
+    assert_eq!(by_args, by_text);
+    assert_eq!(by_args.status, Status::Translated, "{}", by_args.text);
+}
+
+#[test]
+fn what_the_russian_leaves_out_may_stay_english() {
+    let t = with(&[(
+        "The adjacent object falls %s.",
+        r#"ru = "Лежащий рядом предмет падает вниз.{1:skip}""#,
+    )]);
+    let out = t.message(
+        None,
+        &[],
+        "The adjacent object falls through the trap door.",
+    );
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        ("Лежащий рядом предмет падает вниз.", Status::Translated)
+    );
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {
