@@ -17702,7 +17702,7 @@ Moreover, you have no gold.  [df3ee140da5c]
 Morgoth  [a257ec27316d]
   =   Моргот
 Mortal, thou hast done well!  [63569eb6a753]
-  =   Славная работа, о смертное создание!
+  =   Смертный, ты славно потрудился!
 Most monsters can't swim.  [d78b96d4f6d8]
   =   Большинство монстров не умеет плавать.
 Most monsters prefer minced meat.  That's why they are hitting you!  [c649e5ff830e]
@@ -19062,9 +19062,9 @@ So then I says, How do I know you're the real angel of death?  [2ecc7bcc7e0f]
 So this is how you repay loyalty?  [b16871555609]
   =   Так-то вы платите за верность?
 So, mortal!  You dare desecrate my High Temple!  [29df5137c0b9]
-  =   Так, смертное создание!  Ты смеешь осквернять мой Верховный храм!
+  =   Так, смертный!  Ты смеешь осквернять мой Верховный храм!
 So, mortal!  You dare desecrate my altar!  [67396858767b]
-  =   Так, смертное создание!  Ты смеешь осквернять мой алтарь!
+  =   Так, смертный!  Ты смеешь осквернять мой алтарь!
 Some %s explode!  [ec8f231ec675]
   m   Несколько тритона взрываются!
   f   Несколько крысы взрываются!
@@ -19602,7 +19602,7 @@ Suddenly, you realize that %s has noticed you...  [b8765efb1935]
   n   Внезапно вы понимаете, что копьё заметило вас...
   pl  Внезапно вы понимаете, что 3 стрелы заметили вас...
 Suffer, infidel!  [774583207e70]
-  =   Страдай за своё неверие!
+  =   Страдай, неверный!
 Sum quod eris  [b2e142da49f6]
   =   Я — то, чем будешь ты
 Sure, trust me, I'm a lawyer...  [3921dbfcf11b]
@@ -22156,9 +22156,9 @@ Those damn little hairs tell you that you are nearer to %s.  [6e7e3c1afe3a]
 Those who wield a cockatrice corpse have a rocky road ahead of them.  [65913db4248c]
   =   Кто держит в руках труп василиска, тому предстоит каменистый путь.
 Thou hast angered me.  [666aa23d00b0]
-  =   Ты навлекаешь на себя мой гнев.
+  =   Ты прогневал меня.
 Thou hast pleased me with thy progress,  [ba9755b4973d]
-  =   Твои успехи радуют меня,
+  =   Ты порадовал меня своими успехами,
 Though the shopkeepers be wary, thieves have nevertheless stolen much by using\ntheir digging wands to hasten exits through the pavement.  [84749e351cde]
   =   Хоть лавочники и осторожны, воры немало у них похитили, прорывая себе\nпалочками копания поспешный выход сквозь пол.
 Throne sit effect (1..13) [0=random]  [5a342da55f60]
