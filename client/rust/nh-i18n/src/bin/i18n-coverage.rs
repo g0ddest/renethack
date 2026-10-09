@@ -1,7 +1,7 @@
 //! How much of what the game showed the catalog knows and the Russian
 //! translates.
 //!
-//!     cargo run -p nh-i18n --bin i18n-coverage -- [--todo FILE N [--todo-kind KINDS]] [--no-lexicon] [--all] CORPUS...
+//!     cargo run -p nh-i18n --bin i18n-coverage -- [--todo FILE N [--todo-kind KINDS]] [--no-lexicon] [--all] [--dump FILE] CORPUS...
 //!
 //! A corpus is the soak's dump (`RENETHACK_DUMP_MESSAGES=<file>`: JSON
 //! lines `{"kind", "text"}`, with `fmt` and `args` for a message when the
@@ -14,7 +14,9 @@
 //! query,menu,window`; message, query, menu, window). The names in the texts are declined by
 //! the lexicon (`client/i18n/lexicon.ru.toml`); `--no-lexicon` leaves them
 //! English, to see the templates alone. `--all` gives the report's lists
-//! whole, not only their heads.
+//! whole, not only their heads. `--dump FILE` writes every distinct text
+//! with what it came to, sorted: what a change to the matcher did to a
+//! corpus is the diff of two dumps.
 //!
 //! A text that came out as translated and still holds an English word is
 //! counted apart, as mixed: «c - a +1 кинжал.» is no translation. A word
@@ -23,7 +25,7 @@
 //! (a name after "called", a text in quotes), or it is one letter (an
 //! inventory letter) and no article.
 
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -84,6 +86,7 @@ fn main() -> ExitCode {
     let mut corpora = Vec::new();
     let mut lexicon = true;
     let mut all = false;
+    let mut dump: Option<PathBuf> = None;
     let mut kinds: Vec<String> = Vec::new();
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
@@ -91,6 +94,12 @@ fn main() -> ExitCode {
             lexicon = false;
         } else if a == "--all" {
             all = true;
+        } else if a == "--dump" {
+            dump = args.next().map(PathBuf::from);
+            if dump.is_none() {
+                eprintln!("--dump FILE");
+                return ExitCode::FAILURE;
+            }
         } else if a == "--todo-kind" {
             kinds.extend(
                 args.next()
@@ -113,10 +122,12 @@ fn main() -> ExitCode {
         }
     }
     if corpora.is_empty() {
-        eprintln!("usage: i18n-coverage [--todo FILE N] [--no-lexicon] [--all] CORPUS...");
+        eprintln!(
+            "usage: i18n-coverage [--todo FILE N] [--no-lexicon] [--all] [--dump FILE] CORPUS..."
+        );
         return ExitCode::FAILURE;
     }
-    match run(&corpora, todo, &kinds, lexicon, all) {
+    match run(&corpora, todo, &kinds, lexicon, all, dump.as_deref()) {
         Ok(report) => {
             print!("{report}");
             ExitCode::SUCCESS
@@ -138,6 +149,7 @@ fn run(
     todo_kinds: &[String],
     lexicon: bool,
     all: bool,
+    dump: Option<&Path>,
 ) -> Result<String, String> {
     let dir = i18n_dir();
     let catalog_text =
@@ -218,7 +230,21 @@ fn run(
         shown_as,
         partial,
         mixed,
+        came_to,
     } = report;
+    if let Some(file) = dump {
+        let mut lines = String::new();
+        for ((kind, text, status, ru), n) in &came_to {
+            let flat = |s: &str| s.replace('\n', "\\n");
+            let _ = writeln!(
+                lines,
+                "{n}\t[{kind}] {}\t{status}\t{}",
+                flat(text),
+                flat(ru)
+            );
+        }
+        std::fs::write(file, lines).map_err(|e| format!("{}: {e}", file.display()))?;
+    }
     let mut kinds: Vec<_> = tallies.iter().collect();
     kinds.sort_by_key(|(k, t)| (std::cmp::Reverse(t.shown), (*k).clone()));
     let total = kinds.iter().fold(Tally::default(), |mut a, (_, t)| {
@@ -359,10 +385,19 @@ struct Report {
     partial: HashMap<String, usize>,
     /// "[kind] text -> its Russian  {the English left}"
     mixed: HashMap<String, usize>,
+    /// (kind, text, status, its Russian) -> times shown
+    came_to: BTreeMap<(String, String, String, String), usize>,
 }
 
 impl Report {
     fn tally(&mut self, translator: &Translator, kind: &str, text: &str, out: Output) {
+        let key = (
+            kind.to_string(),
+            text.to_string(),
+            format!("{:?}", out.status),
+            out.text.clone(),
+        );
+        *self.came_to.entry(key).or_default() += 1;
         let t = self.tallies.entry(kind.to_string()).or_default();
         t.shown += 1;
         let weak = out
