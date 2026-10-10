@@ -705,6 +705,43 @@ fn a_line_of_the_encyclopedia_stays_english() {
     assert_eq!(out.text, entry);
 }
 
+#[test]
+fn the_template_that_leaves_the_fewest_words_unread() {
+    // the template with the most text of its own read a creature, a
+    // monster's owner, an object where none is: «труп j - a newt.»,
+    // «Труп Eat a lichen», «Собачка Name», «Содержимое мешка the:»
+    let t = translator();
+    for (en, ru) in [
+        ("j - a newt corpse.", "j - труп тритона."),
+        ("e - a giant rat corpse.", "e - труп гигантской крысы."),
+        ("Eat a lichen corpse", "Съесть труп лишайника"),
+        ("Name the little dog", "Дать имя собачке"),
+        ("Contents of the sack:", "Содержимое мешка:"),
+        // the tie it once broke: "killed by %s", not "%s explosion"
+        (
+            "killed by a gas spore's explosion",
+            "убит взрывом газовой споры",
+        ),
+    ] {
+        let out = t.text(en);
+        assert_eq!(
+            (out.text.as_str(), out.status),
+            (ru, Status::Translated),
+            "{en}"
+        );
+    }
+}
+
+#[test]
+fn a_name_keeps_its_indent() {
+    // a line of the discoveries, read whole as a name
+    let out = translator().window_line("  sack (bag)");
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        ("  мешок (сумка)", Status::Translated)
+    );
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {

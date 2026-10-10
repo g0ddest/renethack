@@ -33,6 +33,8 @@ const MAX_NESTING: usize = 3;
 const STRONG_LETTERS: usize = 4;
 /// How many splits of the conversions that spaces part are weighed.
 const MAX_SPLITS: usize = 256;
+/// How many of the templates a text matches are weighed for the best.
+const MAX_WEIGHED: usize = 16;
 
 /// An argument of a message as P7 sends it.
 #[derive(Debug, Clone, PartialEq)]
@@ -261,9 +263,10 @@ impl Translator {
     }
 
     /// One line of a window: an empty or blank line is translated as it
-    /// is. A line that only a piece of the catalog reads, and not all of it,
-    /// is no line of the game's: a line of the encyclopedia ("The male is
-    /// called a dog,") stays English whole.
+    /// is. A line that only a piece of the catalog reads, or a template of
+    /// almost no words, and not all of it, is no line of the game's: a line
+    /// of the encyclopedia ("The male is called a dog,", "[ Hippocrates'
+    /// Oath, translated by Francis Adams ]") stays English whole.
     pub fn window_line(&self, line: &str) -> Output {
         if line.trim().is_empty() {
             return Output::english(line, Status::Translated, None);
@@ -273,7 +276,9 @@ impl Translator {
             .template
             .as_deref()
             .and_then(|id| self.catalog.by_id(id))
-            .is_some_and(|t| t.uses.iter().all(|u| *u == Use::Piece));
+            .is_some_and(|t| {
+                t.uses.iter().all(|u| *u == Use::Piece) || t.letters() < STRONG_LETTERS
+            });
         if out.status == Status::Partial && piece {
             return Output::english(line, Status::Unknown, None);
         }
@@ -342,23 +347,40 @@ impl Translator {
     /// The best template for `text`; of those the catalog ranks alike (as
     /// much literal text, as many conversions), the one whose arguments
     /// the lexicon reads best: "killed by a gas spore's explosion" is
-    /// "killed by %s" more than "%s explosion".
+    /// "killed by %s" more than "%s explosion". One with less text of its
+    /// own goes before them if it has Russian and leaves fewer words
+    /// unread: "j - a newt corpse." is "%c - %s." more than "%s corpse",
+    /// whose creature would be "j - a newt".
     fn best_match(&self, text: &str, channel: Channel) -> Option<Match<'_>> {
         let mut all = self.catalog.matches(text, channel);
+        let unread = |m: &Match| self.unread_match(m);
         let key = |m: &Match| (m.template.literal_len(), m.template.arity());
         let top = key(all.first()?);
         let tied = all.iter().take_while(|m| key(m) == top).count();
-        let best = if tied < 2 {
-            0
-        } else {
-            (0..tied)
-                .min_by_key(|&k| {
-                    let m = &all[k];
-                    self.unread_run(m.template, 0, &self.resplit(m.template, &m.captures))
-                })
-                .unwrap_or(0)
-        };
-        Some(all.swap_remove(best))
+        let rivals = all
+            .iter()
+            .take(MAX_WEIGHED)
+            .skip(tied)
+            .any(|m| self.has_russian(m.template));
+        if tied < 2 && !rivals {
+            return Some(all.swap_remove(0));
+        }
+        let mut best = (0..tied)
+            .map(|k| (unread(&all[k]), k))
+            .min()
+            .unwrap_or((0, 0));
+        for (k, m) in all.iter().enumerate().take(MAX_WEIGHED).skip(tied) {
+            if best.0 == 0 {
+                break;
+            }
+            if self.has_russian(m.template) {
+                let n = self.unread_run(m.template, 0, &m.captures);
+                if n < best.0 {
+                    best = (n, k);
+                }
+            }
+        }
+        Some(all.swap_remove(best.1))
     }
 
     /// The text by another template it matches, when its best one has no
@@ -396,14 +418,22 @@ impl Translator {
         })
     }
 
-    /// The whole text as a name the lexicon reads, capitalised as it was.
+    /// The whole text as a name the lexicon reads, capitalised as it was,
+    /// between the spaces it had ("  wakizashi [short sword]", a line of
+    /// the discoveries).
     fn whole_name(&self, text: &str) -> Option<Output> {
         let bare = text.trim();
         let p = self.names.parse(NameKind::Any, bare)?;
         let ru = p.form(Case::Nom);
         let upper = bare.chars().next().is_some_and(char::is_uppercase);
+        let start = text.len() - text.trim_start().len();
         Some(Output {
-            text: if upper { capitalize(&ru) } else { ru },
+            text: format!(
+                "{}{}{}",
+                &text[..start],
+                if upper { capitalize(&ru) } else { ru },
+                &text[start + bare.len()..]
+            ),
             status: Status::Translated,
             template: None,
         })
@@ -501,6 +531,34 @@ impl Translator {
         caps
     }
 
+    /// The words a match leaves unread, as `unread_run` counts them; where
+    /// a conversion takes a text, one that another template with words of
+    /// its own makes counts that one's ("One of your newt corpses" is read
+    /// as "One of %s" reads it).
+    fn unread_match(&self, m: &Match) -> usize {
+        let t = m.template;
+        let captures = self.resplit(t, &m.captures);
+        let mut total = self.unread_run(t, 0, &captures);
+        if total == 0 {
+            return 0;
+        }
+        for (i, shown) in captures.iter().enumerate() {
+            let alone = self.unread(t, i, shown);
+            if alone == 0 || !t.takes_text(i) {
+                continue;
+            }
+            let nested = self
+                .catalog
+                .find(shown.trim(), Channel::Any)
+                .filter(|n| n.template.letters() >= STRONG_LETTERS && self.has_russian(n.template))
+                .map(|n| self.unread_run(n.template, 0, &self.resplit(n.template, &n.captures)));
+            if let Some(n) = nested.filter(|n| *n < alone) {
+                total -= alone - n;
+            }
+        }
+        total
+    }
+
     /// The words of a run of conversions (from conversion `first`) the
     /// lexicon does not read, and one more for an owner ("the gnome's")
     /// left at the head of a name after another name: it is that one's.
@@ -519,6 +577,13 @@ impl Translator {
     /// The words of conversion `i`'s text the lexicon does not read: none
     /// of a translated piece, those a name keeps English, all of a text.
     fn unread(&self, t: &Template, i: usize, shown: &str) -> usize {
+        // a letter, a number: no word
+        if convs(&t.segments)
+            .nth(i)
+            .is_some_and(|c| c.kind != ConvKind::Str)
+        {
+            return 0;
+        }
         let text = shown.trim();
         let words = english_words(text);
         if words == 0 || t.is_typed(i) || self.piece(text).is_some() {
@@ -679,11 +744,12 @@ impl Translator {
         if let Some(tr) = self.russian.get(&t.id) {
             return Some(tr.template.clone());
         }
-        let wordless = t.segments.iter().all(|s| match s {
-            Segment::Lit(l) => !l.chars().any(char::is_alphabetic),
-            Segment::Conv(_) => true,
-        });
-        wordless.then(|| identity(t))
+        wordless(t).then(|| identity(t))
+    }
+
+    /// Has a template Russian, as `russian_of` finds it?
+    fn has_russian(&self, t: &Template) -> bool {
+        self.russian.get(&t.id).is_some() || wordless(t)
     }
 
     /// Conversion `i` of template `t` printed as `shown`: its value, and
@@ -1311,6 +1377,14 @@ impl Phrase for Padded {
 }
 
 /// A Russian template that is the format itself: "%c - %s." → "{1} - {2}.".
+/// Is a format punctuation and conversions only ("%c - %s.")?
+fn wordless(t: &Template) -> bool {
+    t.segments.iter().all(|s| match s {
+        Segment::Lit(l) => !l.chars().any(char::is_alphabetic),
+        Segment::Conv(_) => true,
+    })
+}
+
 fn identity(t: &Template) -> RuTemplate {
     let mut parts = Vec::new();
     let mut i = 0;

@@ -140,6 +140,14 @@ impl Template {
         convs(&self.segments).count()
     }
 
+    /// May conversion `i` print a text another template makes (a buffer
+    /// the engine built), not only a name?
+    pub fn takes_text(&self, i: usize) -> bool {
+        self.kinds
+            .get(i)
+            .is_none_or(|k| k.split('|').any(|p| p == "text"))
+    }
+
     /// Is conversion `i` a name a lexicon declines (not a number, not a
     /// character)?
     pub fn is_name(&self, i: usize) -> bool {
