@@ -160,7 +160,8 @@ kind as the player meets them, each question once
 still, as a player sees it who looks before they act: the answer played
 out, the camera on the hero, nobody between two cells, an order walked to
 its end (two and a half seconds at most; without `--screenshots` the soak
-waits for nothing). The scenarios take screenshots under a display:
+waits for nothing). The soak fails when the engine calls impossible()
+("Program in disorder!"). The scenarios take screenshots under a display:
 
     cd client/godot
     godot --path . -- --selftest=smoke --screenshots=/tmp/shots --playground=/tmp/pg

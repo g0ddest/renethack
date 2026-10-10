@@ -4134,6 +4134,10 @@ impl Soak {
             );
         }
         self.dump_shown(g, &prompt);
+        // the engine's impossible(): its rules lost track of something
+        if let Some(what) = g.world.log.impossible_since(self.seen) {
+            return Err(format!("the engine's impossible(): {what}"));
+        }
         self.seen = g.world.log.last_seq();
         check_dialog(g, id, &prompt)?;
         let events = self.decide(g, id, &prompt)?;

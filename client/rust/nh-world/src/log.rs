@@ -10,6 +10,9 @@ pub const ATR_NOHISTORY: i32 = 32;
 /// How many messages the log keeps.
 pub const LOG_CAPACITY: usize = 1000;
 
+/// The line NetHack's impossible() adds after its complaint.
+const IMPOSSIBLE_MARK: &str = "Program in disorder!";
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Message {
     /// 1, 2, 3... in arrival order; never reused.
@@ -112,6 +115,21 @@ impl MessageLog {
         self.messages.iter().filter(move |m| m.seq > seq)
     }
 
+    /// The engine's own complaint among the messages newer than `seq`:
+    /// NetHack's impossible() says what went wrong, then "Program in
+    /// disorder!" (and to report it). The complaint, or the marker itself
+    /// when nothing came before it.
+    pub fn impossible_since(&self, seq: u64) -> Option<String> {
+        let mut before: Option<&Message> = None;
+        for m in &self.messages {
+            if m.seq > seq && m.text.starts_with(IMPOSSIBLE_MARK) {
+                return Some(before.unwrap_or(m).text.clone());
+            }
+            before = Some(m);
+        }
+        None
+    }
+
     pub fn len(&self) -> usize {
         self.messages.len()
     }
@@ -145,6 +163,44 @@ mod tests {
         assert_eq!(log.last_seq(), 1006);
         log.push("next".into(), 0, None, false);
         assert_eq!(log.iter().next_back().unwrap().seq, 1007);
+    }
+
+    #[test]
+    fn the_engines_complaints_are_found_with_what_they_say() {
+        let mut log = MessageLog::new();
+        log.push("Suddenly, the guard disappears.".into(), 0, None, false);
+        let seen = log.last_seq();
+        assert_eq!(log.impossible_since(0), None);
+        log.push(
+            "newsym: attempting screen update for <0,0>".into(),
+            0,
+            None,
+            false,
+        );
+        log.push(
+            "Program in disorder!  (Saving and reloading may fix this problem.)".into(),
+            0,
+            None,
+            false,
+        );
+        log.push(
+            "Please report these messages to devteam@nethack.org.".into(),
+            0,
+            None,
+            false,
+        );
+        assert_eq!(
+            log.impossible_since(seen).as_deref(),
+            Some("newsym: attempting screen update for <0,0>")
+        );
+        assert_eq!(log.impossible_since(log.last_seq()), None, "already seen");
+        // the marker alone, when the log lost what came before
+        let mut short = MessageLog::new();
+        short.push("Program in disorder!".into(), 0, None, false);
+        assert_eq!(
+            short.impossible_since(0).as_deref(),
+            Some("Program in disorder!")
+        );
     }
 
     #[test]
