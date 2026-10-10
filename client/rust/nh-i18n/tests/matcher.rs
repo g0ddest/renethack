@@ -694,6 +694,17 @@ fn a_text_where_a_monster_is_expected_is_no_name() {
     assert_eq!(out.status, Status::Partial, "{}", out.text);
 }
 
+#[test]
+fn a_line_of_the_encyclopedia_stays_english() {
+    // dat/data.base is not translated: "%s %s called %s" (the hero's own
+    // farlook line) read a dog's entry half, «The male is по имени a dog,»
+    let entry = "Dogs are the domestic form of the wolf, of\n\
+                 which numerous breeds exist.  The male is called a dog,\n\
+                 while the female is called a bitch.  Because of its known";
+    let out = translator().window(entry);
+    assert_eq!(out.text, entry);
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {

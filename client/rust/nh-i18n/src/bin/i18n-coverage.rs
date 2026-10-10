@@ -205,7 +205,11 @@ fn run(
                         report.layout_lines += lines.len();
                     } else {
                         for l in lines {
-                            items.push(("window-line".into(), l.to_string(), translator.text(l)));
+                            items.push((
+                                "window-line".into(),
+                                l.to_string(),
+                                translator.window_line(l),
+                            ));
                         }
                     }
                 }

@@ -210,7 +210,7 @@ impl Translator {
         let parts: Vec<Output> = if text.contains("\n\n") {
             text.split("\n\n").map(|p| self.paragraph(p)).collect()
         } else {
-            text.split('\n').map(|l| self.line(l)).collect()
+            text.split('\n').map(|l| self.window_line(l)).collect()
         };
         let sep = if text.contains("\n\n") { "\n\n" } else { "\n" };
         Output {
@@ -248,7 +248,7 @@ impl Translator {
                 whole
             };
         }
-        let lines: Vec<Output> = text.split('\n').map(|l| self.line(l)).collect();
+        let lines: Vec<Output> = text.split('\n').map(|l| self.window_line(l)).collect();
         Output {
             text: lines
                 .iter()
@@ -260,12 +260,24 @@ impl Translator {
         }
     }
 
-    /// One line of a window: an empty or blank line is translated as it is.
-    fn line(&self, line: &str) -> Output {
+    /// One line of a window: an empty or blank line is translated as it
+    /// is. A line that only a piece of the catalog reads, and not all of it,
+    /// is no line of the game's: a line of the encyclopedia ("The male is
+    /// called a dog,") stays English whole.
+    pub fn window_line(&self, line: &str) -> Output {
         if line.trim().is_empty() {
             return Output::english(line, Status::Translated, None);
         }
-        self.by_text(line, Channel::Window)
+        let out = self.by_text(line, Channel::Window);
+        let piece = out
+            .template
+            .as_deref()
+            .and_then(|id| self.catalog.by_id(id))
+            .is_some_and(|t| t.uses.iter().all(|u| *u == Use::Piece));
+        if out.status == Status::Partial && piece {
+            return Output::english(line, Status::Unknown, None);
+        }
+        out
     }
 
     fn by_text(&self, text: &str, channel: Channel) -> Output {
