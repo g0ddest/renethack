@@ -90,6 +90,11 @@
   f    крыса сильно гневалась на вас.
   n    копьё сильно гневалось на вас.
   pl   3 стрелы сильно гневались на вас.
+ (%ld in total).  [17811f0693a4]
+  m    (всего 1).
+  f    (всего 3).
+  n    (всего 5).
+  pl   (всего 21).
  (buried)  [94db57dab518]
   =    (в земле)
  (in celestial disgrace)  [2909d7eac07f]
@@ -8824,6 +8829,26 @@
   f   Крыса слишком далеко, чтобы разглядеть себя в темноте.
   n   Копьё слишком далеко, чтобы разглядеть себя в темноте.
   pl  3 стрелы слишком далеко, чтобы разглядеть себя в темноте.
+%s are welded to her %s!  [2db781f6814b]
+  m   Тритон приварены к её тритону!
+  f   Крыса приварены к её крысе!
+  n   Копьё приварены к её копью!
+  pl  3 стрелы приварены к её 3 стрелам!
+%s are welded to his %s!  [e476e7e3fc03]
+  m   Тритон приварены к его тритону!
+  f   Крыса приварены к его крысе!
+  n   Копьё приварены к его копью!
+  pl  3 стрелы приварены к его 3 стрелам!
+%s are welded to its %s!  [a19bc3018054]
+  m   Тритон приварены к его тритону!
+  f   Крыса приварены к его крысе!
+  n   Копьё приварены к его копью!
+  pl  3 стрелы приварены к его 3 стрелам!
+%s are welded to their %s!  [4735f1ef6d50]
+  m   Тритон приварены к их тритону!
+  f   Крыса приварены к их крысе!
+  n   Копьё приварены к их копью!
+  pl  3 стрелы приварены к их 3 стрелам!
 %s aren't able to use two weapons at once.  [745d2fda50c2]
   m   Тритон не умеет сражаться двумя оружиями сразу.
   f   Крыса не умеет сражаться двумя оружиями сразу.
@@ -8979,6 +9004,11 @@
   f   Крыса замахивается крысой.
   n   Копьё замахивается копьём.
   pl  3 стрелы замахиваются 3 стрелами.
+%s becomes %s.  [5aa69ad584bf]
+  m   Тритон становится тритоном.
+  f   Крыса становится крысой.
+  n   Копьё становится копьём.
+  pl  3 стрелы становятся 3 стрелами.
 %s becomes weaker!  [90c758e4ad85]
   m   Тритон слабеет!
   f   Крыса слабеет!
@@ -9289,6 +9319,11 @@
   f   Крыса осторожно держит крысу, глядя на вас.\n\n«Теперь вы её хранитель, и пришло время продолжить поиски\nАмулета.  Крыса ждёт вашего возвращения через\nволшебный портал, что привёл вас сюда.»
   n   Копьё осторожно держит копьё, глядя на вас.\n\n«Теперь вы его хранитель, и пришло время продолжить поиски\nАмулета.  Копьё ждёт вашего возвращения через\nволшебный портал, что привёл вас сюда.»
   pl  3 стрелы осторожно держит 3 стрелы, глядя на вас.\n\n«Теперь вы их хранитель, и пришло время продолжить поиски\nАмулета.  3 стрелы ждут вашего возвращения через\nволшебный портал, что привёл вас сюда.»
+%s changes into %s.  [183365074f53]
+  m   Тритон превращается в тритона.
+  f   Крыса превращается в крысу.
+  n   Копьё превращается в копьё.
+  pl  3 стрелы превращаются в 3 стрелы.
 %s changes into a %s.  [90013785d751]
   m   Тритон превращается в тритона.
   f   Крыса превращается в крысу.
@@ -9784,11 +9819,41 @@
   f   Крыса не замечает вашей крысы.
   n   Копьё не замечает вашего копья.
   pl  3 стрелы не замечают ваших 3 стрел.
+%s fall down the ladder.  [81ba922b0efb]
+  m   Тритон падают вниз по приставной лестнице.
+  f   Крыса падают вниз по приставной лестнице.
+  n   Копьё падают вниз по приставной лестнице.
+  pl  3 стрелы падают вниз по приставной лестнице.
+%s fall down the stairs.  [bed231f73f22]
+  m   Тритон падают вниз по лестнице.
+  f   Крыса падают вниз по лестнице.
+  n   Копьё падают вниз по лестнице.
+  pl  3 стрелы падают вниз по лестнице.
+%s fall through the hole.  [6a2d000c8f37]
+  m   Тритон падают в дыру.
+  f   Крыса падают в дыру.
+  n   Копьё падают в дыру.
+  pl  3 стрелы падают в дыру.
+%s fall through the trap door.  [7054dfd7cfe5]
+  m   Тритон падают в люк.
+  f   Крыса падают в люк.
+  n   Копьё падают в люк.
+  pl  3 стрелы падают в люк.
 %s falls asleep.  [17aee62eba2b]
   m   Тритон засыпает.
   f   Крыса засыпает.
   n   Копьё засыпает.
   pl  3 стрелы засыпают.
+%s falls down the ladder.  [ec6af04b631e]
+  m   Тритон падает вниз по приставной лестнице.
+  f   Крыса падает вниз по приставной лестнице.
+  n   Копьё падает вниз по приставной лестнице.
+  pl  3 стрелы падают вниз по приставной лестнице.
+%s falls down the stairs.  [5202c5c449de]
+  m   Тритон падает вниз по лестнице.
+  f   Крыса падает вниз по лестнице.
+  n   Копьё падает вниз по лестнице.
+  pl  3 стрелы падают вниз по лестнице.
 %s falls into a pit!  [ae544aed4279]
   m   Тритон падает в яму!
   f   Крыса падает в яму!
@@ -9804,6 +9869,16 @@
   f   Крыса падает в вашу яму!
   n   Копьё падает в вашу яму!
   pl  3 стрелы падают в вашу яму!
+%s falls through the hole.  [ab29d042bc23]
+  m   Тритон падает в дыру.
+  f   Крыса падает в дыру.
+  n   Копьё падает в дыру.
+  pl  3 стрелы падают в дыру.
+%s falls through the trap door.  [fd3651fa4c5c]
+  m   Тритон падает в люк.
+  f   Крыса падает в люк.
+  n   Копьё падает в люк.
+  pl  3 стрелы падают в люк.
 %s falls through...  [a141ac7deb77]
   m   Тритон проваливается...
   f   Крыса проваливается...
@@ -9994,6 +10069,16 @@
   f   Крыса щёлкает кнутом в сторону вашей крысы!
   n   Копьё щёлкает кнутом в сторону вашего копья!
   pl  3 стрелы щёлкают кнутом в сторону ваших 3 стрел!
+%s floats, easily evading your clumsy kick.  [7ae03b21573a]
+  m   Тритон отплывает в сторону, легко уклоняясь от вашего неуклюжего пинка.
+  f   Крыса отплывает в сторону, легко уклоняясь от вашего неуклюжего пинка.
+  n   Копьё отплывает в сторону, легко уклоняясь от вашего неуклюжего пинка.
+  pl  3 стрелы отплывают в сторону, легко уклоняясь от вашего неуклюжего пинка.
+%s floats, nimbly evading your kick.  [3aad39e3fa2c]
+  m   Тритон отплывает в сторону, ловко уклоняясь от вашего пинка.
+  f   Крыса отплывает в сторону, ловко уклоняясь от вашего пинка.
+  n   Копьё отплывает в сторону, ловко уклоняясь от вашего пинка.
+  pl  3 стрелы отплывают в сторону, ловко уклоняясь от вашего пинка.
 %s flows through a spider web.  [1e2eb32ea39f]
   m   Тритон просачивается сквозь паутину.
   f   Крыса просачивается сквозь паутину.
@@ -11259,6 +11344,21 @@
   f   Крыса приварена к её крысе!
   n   Копьё приварено к её копью!
   pl  3 стрелы приварены к её 3 стрелам!
+%s is welded to his %s!  [90ef660e6127]
+  m   Тритон приварен к его тритону!
+  f   Крыса приварена к его крысе!
+  n   Копьё приварено к его копью!
+  pl  3 стрелы приварены к его 3 стрелам!
+%s is welded to its %s!  [c41d6a4b4d7f]
+  m   Тритон приварен к его тритону!
+  f   Крыса приварена к его крысе!
+  n   Копьё приварено к его копью!
+  pl  3 стрелы приварены к его 3 стрелам!
+%s is welded to their %s!  [2730a692f31b]
+  m   Тритон приварен к их тритону!
+  f   Крыса приварена к их крысе!
+  n   Копьё приварено к их копью!
+  pl  3 стрелы приварены к их 3 стрелам!
 %s is zapped!  [91a5559f029b]
   m   Тритон получает удар током!
   f   Крыса получает удар током!
@@ -12914,6 +13014,16 @@
   f   Крыса скользит по льду.
   n   Копьё скользит по льду.
   pl  3 стрелы скользят по льду.
+%s slides, easily evading your clumsy kick.  [83a7da9ce29e]
+  m   Тритон отползает в сторону, легко уклоняясь от вашего неуклюжего пинка.
+  f   Крыса отползает в сторону, легко уклоняясь от вашего неуклюжего пинка.
+  n   Копьё отползает в сторону, легко уклоняясь от вашего неуклюжего пинка.
+  pl  3 стрелы отползают в сторону, легко уклоняясь от вашего неуклюжего пинка.
+%s slides, nimbly evading your kick.  [0e2eff589ef3]
+  m   Тритон отползает в сторону, ловко уклоняясь от вашего пинка.
+  f   Крыса отползает в сторону, ловко уклоняясь от вашего пинка.
+  n   Копьё отползает в сторону, ловко уклоняясь от вашего пинка.
+  pl  3 стрелы отползают в сторону, ловко уклоняясь от вашего пинка.
 %s slip from your %s.  [69cd2600e6a1]
   m   Тритон выскальзывают у вас из тритона.
   f   Крыса выскальзывают у вас из крысы.
@@ -13524,6 +13634,11 @@
   f   Крыса огрызается.
   n   Копьё огрызается.
   pl  3 стрелы огрызаются.
+%s snatches %s!  [aa86eab3c086]
+  m   Тритон выхватывает тритона!
+  f   Крыса выхватывает крысу!
+  n   Копьё выхватывает копьё!
+  pl  3 стрелы выхватывают 3 стрелы!
 %s snatches the boulder.  [d8d9d9f17fb3]
   m   Тритон перехватывает валун.
   f   Крыса перехватывает валун.
@@ -13929,6 +14044,16 @@
   f   Крыса бьёт наугад и промахивается!
   n   Копьё бьёт наугад и промахивается!
   pl  3 стрелы бьют наугад и промахиваются!
+%s swoops, easily evading your clumsy kick.  [592c8ecd3d7d]
+  m   Тритон взмывает в воздух, легко уклоняясь от вашего неуклюжего пинка.
+  f   Крыса взмывает в воздух, легко уклоняясь от вашего неуклюжего пинка.
+  n   Копьё взмывает в воздух, легко уклоняясь от вашего неуклюжего пинка.
+  pl  3 стрелы взмывают в воздух, легко уклоняясь от вашего неуклюжего пинка.
+%s swoops, nimbly evading your kick.  [6d3a3e86609d]
+  m   Тритон взмывает в воздух, ловко уклоняясь от вашего пинка.
+  f   Крыса взмывает в воздух, ловко уклоняясь от вашего пинка.
+  n   Копьё взмывает в воздух, ловко уклоняясь от вашего пинка.
+  pl  3 стрелы взмывают в воздух, ловко уклоняясь от вашего пинка.
 %s takes %ld %s for services rendered!  [3d01e2f0e23b]
   m   Тритон берёт 1 тритона за оказанные услуги!
   f   Крыса берёт 3 крыс за оказанные услуги!
@@ -14089,6 +14214,16 @@
   f   Крыса прорывается сквозь вашу паутину!
   n   Копьё прорывается сквозь вашу паутину!
   pl  3 стрелы прорываются сквозь вашу паутину!
+%s teleports, easily evading your clumsy kick.  [597b7aefe77f]
+  m   Тритон телепортируется, легко уклоняясь от вашего неуклюжего пинка.
+  f   Крыса телепортируется, легко уклоняясь от вашего неуклюжего пинка.
+  n   Копьё телепортируется, легко уклоняясь от вашего неуклюжего пинка.
+  pl  3 стрелы телепортируются, легко уклоняясь от вашего неуклюжего пинка.
+%s teleports, nimbly evading your kick.  [a0d766481aeb]
+  m   Тритон телепортируется, ловко уклоняясь от вашего пинка.
+  f   Крыса телепортируется, ловко уклоняясь от вашего пинка.
+  n   Копьё телепортируется, ловко уклоняясь от вашего пинка.
+  pl  3 стрелы телепортируются, ловко уклоняясь от вашего пинка.
 %s tentacles suck your brain again!  [274c28df57f6]
   m   Щупальца тритона снова высасывают ваш мозг!
   f   Щупальца крысы снова высасывают ваш мозг!
@@ -17036,6 +17171,10 @@ Crash course in brain surgery  [908e9ed1a17e]
   =   Ускоренный курс нейрохирургии
 Crash!  [a722e727991a]
   =   Дзынь!
+Crash!  You kick open a secret door!  [427413175593]
+  =   Трах!  Вы выбиваете потайную дверь!
+Crash!  Your kick uncovers a secret door!  [fa52e9860619]
+  =   Трах!  Ваш пинок открывает потайную дверь!
 Create SnapShot?  [dca069048d7a]
   =   Сделать снимок?
 Create what kind of monster?  [f8d51c365377]
@@ -17761,6 +17900,11 @@ For some reason you are not affected.  [9770483e1064]
   =   Почему-то на вас это не действует.
 For some reason you're unaffected.  [e2cd77fba590]
   =   Почему-то на вас это не действует.
+For some reason, %s presence is known to you.  [52a6bfedddb9]
+  m   Почему-то вы ощущаете присутствие тритона.
+  f   Почему-то вы ощущаете присутствие крысы.
+  n   Почему-то вы ощущаете присутствие копья.
+  pl  Почему-то вы ощущаете присутствие 3 стрел.
 For some reason, %s seems to ignore you.  [7fcd001b7ede]
   m   Почему-то тритон, похоже, не обращает на вас внимания.
   f   Почему-то крыса, похоже, не обращает на вас внимания.
@@ -21316,6 +21460,8 @@ That was pure chewing satisfaction!  [4aa67359cf65]
   =   Вот это настоящее жевательное удовольствие!
 That was smooth!  [c2d9145715ca]
   =   Пошло мягко!
+That would be an interesting topological exercise.  [933dea4952be]
+  =   Это было бы занятное упражнение по топологии.
 That's %s!  [f2e396a79cf9]
   m   Это тритон!
   f   Это крыса!
@@ -22048,6 +22194,8 @@ The door absorbs your bolt!  [1e9eb87814f0]
   =   Дверь поглощает ваш луч!
 The door absorbs your spell!  [b2e8de2a96cc]
   =   Дверь поглощает ваше заклинание!
+The door closes.  [882d2ea4c8ab]
+  =   Дверь закрывается.
 The door crashes open!  [bb8d5dc95c91]
   =   Дверь с грохотом распахивается!
 The door disintegrates!  [34a1a8267184]
@@ -26307,6 +26455,8 @@ You barely hear %s squeak nearby.  [70277e247405]
   f   Вы едва слышите, как неподалёку что-то скрипит на ноте крыса.
   n   Вы едва слышите, как неподалёку что-то скрипит на ноте копьё.
   pl  Вы едва слышите, как неподалёку что-то скрипит на ноте 3 стрелы.
+You barely hear Queen Beruthiel's cats!  [0394a456fa07]
+  =   Вы едва слышите кошек королевы Берутиэль!
 You barely hear a clanging sound.  [204db2b25473]
   =   Вы едва слышите металлический звон.
 You barely hear a cough from %s!  [852df29a658a]
@@ -26324,10 +26474,16 @@ You barely hear a deep cracking sound.  [7fd5a138fc26]
   =   Вы едва слышите гулкий треск.
 You barely hear a defibrillator.  [fe8eb2581d9e]
   =   Вы едва слышите, как работает дефибриллятор.
+You barely hear a distant explosion.  [16664e9e361b]
+  =   Вы едва слышите взрыв вдалеке.
 You barely hear a divine music...  [2c946096c9b5]
   =   Вы едва слышите божественную музыку...
+You barely hear a door open.  [e0b90181894a]
+  =   Вы едва слышите, как открывается дверь.
 You barely hear a faint typing noise.  [e86a78914610]
   =   Вы едва слышите тихий стук клавиш.
+You barely hear a gurgling noise.  [af3cc926b99c]
+  =   Вы едва слышите бульканье.
 You barely hear a hollow sound.  This must be a secret door!  [9ba399aa97e5]
   =   Вы едва слышите гулкий звук.  Должно быть, это потайная дверь!
 You barely hear a hollow sound.  This must be a secret passage!  [f4d441545b73]
@@ -26351,12 +26507,18 @@ You barely hear a monster behind %s.  [2f2c86cf6487]
   f   Вы едва слышите монстра за крысой.
   n   Вы едва слышите монстра за копьём.
   pl  Вы едва слышите монстра за 3 стрелами.
+You barely hear a nearby explosion.  [08f57b1f16f9]
+  =   Вы едва слышите взрыв неподалёку.
 You barely hear a nearby thunderclap.  [3858a99c2acd]
   =   Вы едва слышите раскат грома поблизости.
 You barely hear a rumbling stop abruptly.  [b4cdeac66d23]
   =   Вы едва слышите, как грохот резко обрывается.
 You barely hear a sceptre pounded in judgment.  [38877e723902]
   =   Вы едва слышите, как судейский скипетр стучит об пол.
+You barely hear a slow drip.  [9323a5a452c4]
+  =   Вы едва слышите медленную капель.
+You barely hear a soda fountain!  [3fcb14fdfd29]
+  =   Вы едва слышите автомат с газировкой!
 You barely hear a soft click.  [65e65f716ce8]
   =   Вы едва слышите тихий щелчок.
 You barely hear a soft crackling.  [6c7f89245b01]
@@ -26372,10 +26534,14 @@ You barely hear a voice say, "They're dead, Jim."  [b7f1be7a4ca3]
   =   Вы едва слышите чей-то голос: «Они мертвы, Джим.»
 You barely hear a voice say, "You're both stoned, Jim."  [de3526b4dd61]
   =   Вы едва слышите чей-то голос: «Вы оба окаменели, Джим.»
+You barely hear bubbling water.  [81ec264ed006]
+  =   Вы едва слышите журчание воды.
 You barely hear crackling.  [3a2c412ac956]
   =   Вы едва слышите потрескивание.
 You barely hear crashing wood.  [77c083ae8e82]
   =   Вы едва слышите треск ломающегося дерева.
+You barely hear dishes being washed!  [db392c949f44]
+  =   Вы едва слышите, как моют посуду!
 You barely hear distant howling.  [3197c095324c]
   =   Вы едва слышите далёкий вой.
 You barely hear faint splashing.  [afe62a38c6b6]
@@ -26432,6 +26598,8 @@ You barely hear something stop moving.  [c85cfd0ea063]
   =   Вы едва слышите, как что-то перестаёт двигаться.
 You barely hear the crackling of hellfire.  [94275f9267c8]
   =   Вы едва слышите потрескивание адского пламени.
+You barely hear the footsteps of a guard on patrol.  [09857ad70f56]
+  =   Вы едва слышите шаги стража, совершающего обход.
 You barely hear the howling of the CwnAnnwn...  [23cce22d938a]
   =   Вы едва слышите завывание гончих Аннуна...
 You barely hear the moon howling at you.  [76c0febeb38b]
@@ -26440,8 +26608,14 @@ You barely hear the roaring of a confused bear!  [072e70e4af9f]
   =   Вы едва слышите рёв озадаченного медведя!
 You barely hear the roaring of an angry bear!  [e0dc95db04f9]
   =   Вы едва слышите рёв разъярённого медведя!
+You barely hear the splashing of a naiad.  [72162c74b087]
+  =   Вы едва слышите плеск наяды.
+You barely hear the tones of courtly conversation.  [03dbfc1d8fe7]
+  =   Вы едва слышите обрывки учтивой придворной беседы.
 You barely hear the wailing of the Banshee...  [dc63691691a9]
   =   Вы едва слышите вой банши...
+You barely hear water falling on coins.  [96fc78013d2e]
+  =   Вы едва слышите, как вода падает на монеты.
 You barely hear your heart beat.  [ef3e1541a96a]
   =   Вы едва слышите биение своего сердца.
 You bash %s!  [e0ff4580c84b]
@@ -26539,6 +26713,13 @@ You break out in hives!  [4c97a8c1a15e]
   =   Вы покрываетесь крапивницей!
 You break out in hives.  [830f35f08afe]
   =   Вы покрываетесь крапивницей.
+You break through a secret door!  [c4da99600c20]
+  =   Вы пробиваетесь сквозь потайную дверь!
+You break through the door with your %s.  [ba2d3775a339]
+  m   Вы проламываете дверь тритоном.
+  f   Вы проламываете дверь крысой.
+  n   Вы проламываете дверь копьём.
+  pl  Вы проламываете дверь 3 стрелами.
 You break up the cookie and throw away the pieces.  [20a4753a45ca]
   =   Вы разламываете печенье и выбрасываете кусочки.
 You breathe a sigh of relief as you find yourself back in the familiar\nsurroundings of %s.\n\nYou quickly notice that things do not appear the way they did when you\nleft.  The town is dark and quiet.  There are no sounds coming from\nbehind the town walls, and no campfires burning in the fields.  As a\nmatter of fact, you do not %s any movement in the fields at all, and\nthe crops seem as though they have been untended for many weeks.  [36df3d4dfc9e]
@@ -26729,6 +26910,8 @@ You can't force anything with that weapon.  [afc88279f2f9]
   =   Этим оружием ничего не взломать.
 You can't force anything with those weapons.  [de55948b6c2e]
   =   Этим оружием ничего не взломать.
+You can't force anything without a proper weapon.  [c4a2f317b932]
+  =   Без подходящего оружия ничего не взломать.
 You can't get by the snake.  [a98436835287]
   =   Мимо змеи не пройти.
 You can't go down here.  [b2336d9d07bf]
@@ -27351,6 +27534,8 @@ You crawl to the edge of the %s.  [5194eb52864e]
   f   Вы подползаете к краю крысы.
   n   Вы подползаете к краю копья.
   pl  Вы подползаете к краю 3 стрел.
+You cut down the tree.  [113fd8ca5ae7]
+  =   Вы срубаете дерево.
 You cut through %s web.  [8f736ada2ba7]
   m   Вы рассекаете паутину.
   f   Вы рассекаете паутину.
@@ -27858,6 +28043,8 @@ You don't have the strength to break %s!  [01dd7ad79005]
   f   У вас не хватает сил сломать крысу!
   n   У вас не хватает сил сломать копьё!
   pl  У вас не хватает сил сломать 3 стрелы!
+You don't know any spells right now.  [cc01f1a6aa02]
+  =   Сейчас вы не знаете ни одного заклинания.
 You don't know how to turn undead!  [9e4b6496f8ec]
   =   Вы не умеете изгонять нежить!
 You don't need a gravestone.  Yet.  [1f08fc8a3050]
@@ -27920,6 +28107,11 @@ You dream that you feel a strange vibration under your %s.  [3b253b6046ff]
   pl  Вам снится странная вибрация под 3 стрелами.
 You dream that you feel a sudden rush of air!  [1073ce4040f9]
   =   Вам снится, что вас обдаёт внезапным порывом воздуха!
+You dream that you feel aggravated at %s.  [0cd09cf085a3]
+  m   Вам снится, что вас раздражает тритон.
+  f   Вам снится, что вас раздражает крыса.
+  n   Вам снится, что вас раздражает копьё.
+  pl  Вам снится, что вас раздражает 3 стрелы.
 You dream that you feel an unseen monster!  [33e59aecb524]
   =   Вам снится, что вы нащупываете невидимого монстра!
 You dream that you feel an urge to return to the surface.  [4ade7fa97007]
@@ -28277,6 +28469,8 @@ You dream that you hear %s squeak nearby.  [a3314e71d5a9]
   f   Вам снится, что вы слышите, как неподалёку что-то скрипит на ноте крыса.
   n   Вам снится, что вы слышите, как неподалёку что-то скрипит на ноте копьё.
   pl  Вам снится, что вы слышите, как неподалёку что-то скрипит на ноте 3 стрелы.
+You dream that you hear Queen Beruthiel's cats!  [cdfcdab9be03]
+  =   Вам снится, что вы слышите кошек королевы Берутиэль!
 You dream that you hear a clanging sound.  [9e758d3ef702]
   =   Вам снится, что вы слышите металлический звон.
 You dream that you hear a cough from %s!  [fcbbf0fce3fa]
@@ -28294,10 +28488,16 @@ You dream that you hear a deep cracking sound.  [1e9182ac8521]
   =   Вам снится, что вы слышите гулкий треск.
 You dream that you hear a defibrillator.  [c924ce6dc960]
   =   Вам снится, что вы слышите, как работает дефибриллятор.
+You dream that you hear a distant explosion.  [4620a2d30b8a]
+  =   Вам снится, что вы слышите взрыв вдалеке.
 You dream that you hear a divine music...  [3650fffd6345]
   =   Вам снится, что вы слышите божественную музыку...
+You dream that you hear a door open.  [3fbe3ddb5f9c]
+  =   Вам снится, что вы слышите, как открывается дверь.
 You dream that you hear a faint typing noise.  [89d680c52113]
   =   Вам снится, что вы слышите тихий стук клавиш.
+You dream that you hear a gurgling noise.  [6f5aeb39490b]
+  =   Вам снится, что вы слышите бульканье.
 You dream that you hear a hollow sound.  This must be a secret door!  [14b72161c6fd]
   =   Вам снится, что вы слышите гулкий звук.  Должно быть, это потайная дверь!
 You dream that you hear a hollow sound.  This must be a secret passage!  [71f7366f3b17]
@@ -28321,6 +28521,8 @@ You dream that you hear a monster behind %s.  [54d1171c3e47]
   f   Вам снится, что вы слышите монстра за крысой.
   n   Вам снится, что вы слышите монстра за копьём.
   pl  Вам снится, что вы слышите монстра за 3 стрелами.
+You dream that you hear a nearby explosion.  [3a24ed0aea85]
+  =   Вам снится, что вы слышите взрыв неподалёку.
 You dream that you hear a nearby thunderclap.  [f7ca4b4e3183]
   =   Вам снится, что вы слышите раскат грома поблизости.
 You dream that you hear a rumbling stop abruptly.  [19dc8adfec6d]
@@ -28329,6 +28531,10 @@ You dream that you hear a rushing noise nearby.  [7465dad7add1]
   =   Вам снится, что вы слышите поблизости свист ветра.
 You dream that you hear a sceptre pounded in judgment.  [b772f9991f89]
   =   Вам снится, что судейский скипетр стучит об пол.
+You dream that you hear a slow drip.  [eb7f5dc5e7f5]
+  =   Вам снится, что вы слышите медленную капель.
+You dream that you hear a soda fountain!  [48971ead2bad]
+  =   Вам снится, что вы слышите автомат с газировкой!
 You dream that you hear a soft click.  [eb54087c87e6]
   =   Вам снится, что вы слышите тихий щелчок.
 You dream that you hear a soft crackling.  [f4e07efe1b49]
@@ -28346,10 +28552,14 @@ You dream that you hear a voice say, "They're dead, Jim."  [197d0f4fbd8b]
   =   Вам снится, что вы слышите чей-то голос: «Они мертвы, Джим.»
 You dream that you hear a voice say, "You're both stoned, Jim."  [e31678b81f72]
   =   Вам снится, что вы слышите чей-то голос: «Вы оба окаменели, Джим.»
+You dream that you hear bubbling water.  [772f865ac21f]
+  =   Вам снится, что вы слышите журчание воды.
 You dream that you hear crackling.  [7aace99ca754]
   =   Вам снится, что вы слышите потрескивание.
 You dream that you hear crashing wood.  [00079a899fe5]
   =   Вам снится, что вы слышите треск ломающегося дерева.
+You dream that you hear dishes being washed!  [43255840559b]
+  =   Вам снится, что вы слышите, как моют посуду!
 You dream that you hear distant howling.  [deaf2b0f654a]
   =   Вам снится, что вы слышите далёкий вой.
 You dream that you hear faint splashing.  [e4f4642005fc]
@@ -28410,6 +28620,8 @@ You dream that you hear something stop moving.  [d535e0d42ad0]
   =   Вам снится, что вы слышите, как что-то перестаёт двигаться.
 You dream that you hear the crackling of hellfire.  [ba530190d932]
   =   Вам снится, что вы слышите потрескивание адского пламени.
+You dream that you hear the footsteps of a guard on patrol.  [17d0608833c9]
+  =   Вам снится, что вы слышите шаги стража, совершающего обход.
 You dream that you hear the howling of the CwnAnnwn...  [1910ae9423aa]
   =   Вам снится, что вы слышите завывание гончих Аннуна...
 You dream that you hear the moon howling at you.  [c8ae990e918a]
@@ -28418,8 +28630,14 @@ You dream that you hear the roaring of a confused bear!  [dfa5c712bf8e]
   =   Вам снится, что вы слышите рёв озадаченного медведя!
 You dream that you hear the roaring of an angry bear!  [278698a3c699]
   =   Вам снится, что вы слышите рёв разъярённого медведя!
+You dream that you hear the splashing of a naiad.  [b86ce24f831d]
+  =   Вам снится, что вы слышите плеск наяды.
+You dream that you hear the tones of courtly conversation.  [b90b528218a2]
+  =   Вам снится, что вы слышите обрывки учтивой придворной беседы.
 You dream that you hear the wailing of the Banshee...  [1accb546226e]
   =   Вам снится, что вы слышите вой банши...
+You dream that you hear water falling on coins.  [cc4162aa9f72]
+  =   Вам снится, что вы слышите, как вода падает на монеты.
 You dream that you hear your heart beat.  [e9349c58e96c]
   =   Вам снится, что вы слышите биение своего сердца.
 You dream that you see %s %s out of %s pack and %s under %s!  [63a50037a6de]
@@ -28929,6 +29147,11 @@ You feel a wrenching shift in the ether as %s body dissolves\ninto a cloud of no
   f   Вы чувствуете, как эфир мучительно содрогается, а тело крысы\nрастворяется облаком ядовитого газа.\n\nВнезапно гремит голос:\n\n    «Ты одолел ничтожнейшего из моих прислужников, крыса.\n    Знай же: Молох ведает о твоём присутствии.\n    А с тобой, крыса, я разберусь за твою неудачу\n    на досуге.»\n\nЗатем вы слышите голос крысы, вопящего от ужаса...
   n   Вы чувствуете, как эфир мучительно содрогается, а тело копья\nрастворяется облаком ядовитого газа.\n\nВнезапно гремит голос:\n\n    «Ты одолел ничтожнейшего из моих прислужников, копьё.\n    Знай же: Молох ведает о твоём присутствии.\n    А с тобой, копьё, я разберусь за твою неудачу\n    на досуге.»\n\nЗатем вы слышите голос копья, вопящего от ужаса...
   pl  Вы чувствуете, как эфир мучительно содрогается, а тело 3 стрел\nрастворяется облаком ядовитого газа.\n\nВнезапно гремит голос:\n\n    «Ты одолел ничтожнейшего из моих прислужников, 3 стрелы.\n    Знай же: Молох ведает о твоём присутствии.\n    А с тобой, 3 стрелы, я разберусь за твою неудачу\n    на досуге.»\n\nЗатем вы слышите голос 3 стрел, вопящего от ужаса...
+You feel aggravated at %s.  [ea0fa5c07a68]
+  m   Вас раздражает тритон.
+  f   Вас раздражает крыса.
+  n   Вас раздражает копьё.
+  pl  Вас раздражает 3 стрелы.
 You feel agile!  [d1ced6d82620]
   =   Вы чувствуете себя ловчее!
 You feel an unseen monster!  [90b4de159ff9]
@@ -30072,6 +30295,8 @@ You have nothing to ready for firing.  [b92a2643b1c4]
   =   Вам нечего приготовить к стрельбе.
 You have nothing to take off.  [b01514031783]
   =   Вам нечего снимать.
+You have recovered from your illness.  [8b2399e0e0be]
+  =   Вы оправились от болезни.
 You have returned to %s lair.  [17a1f57256b2]
   m   Вы вернулись в логово тритона.
   f   Вы вернулись в логово крысы.
@@ -30168,6 +30393,8 @@ You hear %s squeak nearby.  [e19d1da89028]
   f   Вы слышите, как неподалёку что-то скрипит на ноте крыса.
   n   Вы слышите, как неподалёку что-то скрипит на ноте копьё.
   pl  Вы слышите, как неподалёку что-то скрипит на ноте 3 стрелы.
+You hear Queen Beruthiel's cats!  [2a833864b8b9]
+  =   Вы слышите кошек королевы Берутиэль!
 You hear a boulder fall.  [5f94a1e5ae22]
   =   Вы слышите, как падает валун.
 You hear a chugging sound.  [d3579943e06d]
@@ -30189,6 +30416,8 @@ You hear a deep cracking sound.  [57e6b24f57fa]
   =   Вы слышите гулкий треск.
 You hear a defibrillator.  [dc8548f15370]
   =   Вы слышите, как работает дефибриллятор.
+You hear a distant explosion.  [5db5511c292f]
+  =   Вы слышите взрыв вдалеке.
 You hear a distant zap.  [2a1e55252667]
   =   Вы слышите вдалеке треск волшебной палочки.
 You hear a divine music...  [6310267bbb44]
@@ -30224,6 +30453,8 @@ You hear a monster behind %s.  [1512206c2def]
   f   Вы слышите монстра за крысой.
   n   Вы слышите монстра за копьём.
   pl  Вы слышите монстра за 3 стрелами.
+You hear a nearby explosion.  [d7c70d2ae2db]
+  =   Вы слышите взрыв неподалёку.
 You hear a nearby thunderclap.  [a873a65b6553]
   =   Вы слышите раскат грома поблизости.
 You hear a nearby zap.  [18281bfcfa2f]
@@ -30236,6 +30467,8 @@ You hear a sceptre pounded in judgment.  [e9f933a288ac]
   =   Вы слышите, как судейский скипетр стучит об пол.
 You hear a slow drip.  [e1e84b390ade]
   =   Вы слышите медленную капель.
+You hear a soda fountain!  [2763000b494c]
+  =   Вы слышите автомат с газировкой!
 You hear a soft click.  [c435408cfff6]
   =   Вы слышите тихий щелчок.
 You hear a soft crackling.  [289b0707b381]
@@ -30265,6 +30498,8 @@ You hear crashing wood.  [0bef0ebb1a83]
   =   Вы слышите треск ломающегося дерева.
 You hear diabolical laughter all around you...  [48d6e44192af]
   =   Вы слышите вокруг дьявольский хохот...
+You hear dishes being washed!  [e76ff36dd1bd]
+  =   Вы слышите, как моют посуду!
 You hear distant howling.  [b989d9f66e03]
   =   Вы слышите далёкий вой.
 You hear faint splashing.  [5edce1b1b078]
@@ -30362,6 +30597,8 @@ You hear the rumble of distant thunder...  [27ee74ffbbce]
   =   Вы слышите раскаты далёкого грома...
 You hear the splashing of a naiad.  [bdf7fb6c18b0]
   =   Вы слышите плеск наяды.
+You hear the tones of courtly conversation.  [ed0fc5e91174]
+  =   Вы слышите обрывки учтивой придворной беседы.
 You hear the wailing of the Banshee...  [9656576e731f]
   =   Вы слышите вой банши...
 You hear water falling on coins.  [1bbe2f35f48f]
@@ -31850,6 +32087,13 @@ You sink like a rock.  [3899c508074d]
   =   Вы камнем идёте ко дну.
 You sink like the Titanic.  [717188a922b7]
   =   Вы идёте ко дну, как «Титаник».
+You sit on the %s.  [5187878ebad6]
+  m   Вы садитесь на тритона.
+  f   Вы садитесь на крысу.
+  n   Вы садитесь на копьё.
+  pl  Вы садитесь на 3 стрелы.
+You sit on the stairs.  [37eebc27bebc]
+  =   Вы садитесь на ступеньки.
 You skillfully catch the boomerang.  [7959fe3d3127]
   =   Вы ловко ловите бумеранг.
 You slide off the ice.  [5f8328222598]

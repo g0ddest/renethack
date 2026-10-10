@@ -1,0 +1,297 @@
+# R6, log messages batch 22: what the looking-around soak still showed in English. Syntax: nh-i18n's template.rs.
+
+[cc01f1a6aa02]
+en = "You don't know any spells right now."
+ru = "Сейчас вы не знаете ни одного заклинания."
+
+[5187878ebad6]
+en = "You sit on the %s."
+ru = "Вы садитесь на {1:acc}."
+
+[37eebc27bebc]
+en = "You sit on the stairs."
+ru = "Вы садитесь на ступеньки."
+
+[09857ad70f56]
+en = "You barely hear the footsteps of a guard on patrol."
+ru = "Вы едва слышите шаги стража, совершающего обход."
+
+[17d0608833c9]
+en = "You dream that you hear the footsteps of a guard on patrol."
+ru = "Вам снится, что вы слышите шаги стража, совершающего обход."
+
+[2763000b494c]
+en = "You hear a soda fountain!"
+ru = "Вы слышите автомат с газировкой!"
+
+[3fcb14fdfd29]
+en = "You barely hear a soda fountain!"
+ru = "Вы едва слышите автомат с газировкой!"
+
+[48971ead2bad]
+en = "You dream that you hear a soda fountain!"
+ru = "Вам снится, что вы слышите автомат с газировкой!"
+
+[81ec264ed006]
+en = "You barely hear bubbling water."
+ru = "Вы едва слышите журчание воды."
+
+[772f865ac21f]
+en = "You dream that you hear bubbling water."
+ru = "Вам снится, что вы слышите журчание воды."
+
+[72162c74b087]
+en = "You barely hear the splashing of a naiad."
+ru = "Вы едва слышите плеск наяды."
+
+[b86ce24f831d]
+en = "You dream that you hear the splashing of a naiad."
+ru = "Вам снится, что вы слышите плеск наяды."
+
+[96fc78013d2e]
+en = "You barely hear water falling on coins."
+ru = "Вы едва слышите, как вода падает на монеты."
+
+[cc4162aa9f72]
+en = "You dream that you hear water falling on coins."
+ru = "Вам снится, что вы слышите, как вода падает на монеты."
+
+[e76ff36dd1bd]
+en = "You hear dishes being washed!"
+ru = "Вы слышите, как моют посуду!"
+
+[db392c949f44]
+en = "You barely hear dishes being washed!"
+ru = "Вы едва слышите, как моют посуду!"
+
+[43255840559b]
+en = "You dream that you hear dishes being washed!"
+ru = "Вам снится, что вы слышите, как моют посуду!"
+
+[9323a5a452c4]
+en = "You barely hear a slow drip."
+ru = "Вы едва слышите медленную капель."
+
+[eb7f5dc5e7f5]
+en = "You dream that you hear a slow drip."
+ru = "Вам снится, что вы слышите медленную капель."
+
+[af3cc926b99c]
+en = "You barely hear a gurgling noise."
+ru = "Вы едва слышите бульканье."
+
+[6f5aeb39490b]
+en = "You dream that you hear a gurgling noise."
+ru = "Вам снится, что вы слышите бульканье."
+
+[ed0fc5e91174]
+en = "You hear the tones of courtly conversation."
+ru = "Вы слышите обрывки учтивой придворной беседы."
+
+[03dbfc1d8fe7]
+en = "You barely hear the tones of courtly conversation."
+ru = "Вы едва слышите обрывки учтивой придворной беседы."
+
+[b90b528218a2]
+en = "You dream that you hear the tones of courtly conversation."
+ru = "Вам снится, что вы слышите обрывки учтивой придворной беседы."
+
+[2a833864b8b9]
+en = "You hear Queen Beruthiel's cats!"
+ru = "Вы слышите кошек королевы Берутиэль!"
+
+[0394a456fa07]
+en = "You barely hear Queen Beruthiel's cats!"
+ru = "Вы едва слышите кошек королевы Берутиэль!"
+
+[cdfcdab9be03]
+en = "You dream that you hear Queen Beruthiel's cats!"
+ru = "Вам снится, что вы слышите кошек королевы Берутиэль!"
+
+[e0b90181894a]
+en = "You barely hear a door open."
+ru = "Вы едва слышите, как открывается дверь."
+
+[3fbe3ddb5f9c]
+en = "You dream that you hear a door open."
+ru = "Вам снится, что вы слышите, как открывается дверь."
+
+[5db5511c292f]
+en = "You hear a distant explosion."
+ru = "Вы слышите взрыв вдалеке."
+
+[16664e9e361b]
+en = "You barely hear a distant explosion."
+ru = "Вы едва слышите взрыв вдалеке."
+
+[4620a2d30b8a]
+en = "You dream that you hear a distant explosion."
+ru = "Вам снится, что вы слышите взрыв вдалеке."
+
+[d7c70d2ae2db]
+en = "You hear a nearby explosion."
+ru = "Вы слышите взрыв неподалёку."
+
+[08f57b1f16f9]
+en = "You barely hear a nearby explosion."
+ru = "Вы едва слышите взрыв неподалёку."
+
+[3a24ed0aea85]
+en = "You dream that you hear a nearby explosion."
+ru = "Вам снится, что вы слышите взрыв неподалёку."
+
+[427413175593]
+en = "Crash!  You kick open a secret door!"
+ru = "Трах!  Вы выбиваете потайную дверь!"
+
+[fa52e9860619]
+en = "Crash!  Your kick uncovers a secret door!"
+ru = "Трах!  Ваш пинок открывает потайную дверь!"
+
+[597b7aefe77f]
+en = "%s teleports, easily evading your clumsy kick."
+ru = "{1} {1:num|телепортируется|телепортируются}, легко уклоняясь от вашего неуклюжего пинка."
+
+[a0d766481aeb]
+en = "%s teleports, nimbly evading your kick."
+ru = "{1} {1:num|телепортируется|телепортируются}, ловко уклоняясь от вашего пинка."
+
+[7ae03b21573a]
+en = "%s floats, easily evading your clumsy kick."
+ru = "{1} {1:num|отплывает|отплывают} в сторону, легко уклоняясь от вашего неуклюжего пинка."
+
+[3aad39e3fa2c]
+en = "%s floats, nimbly evading your kick."
+ru = "{1} {1:num|отплывает|отплывают} в сторону, ловко уклоняясь от вашего пинка."
+
+[592c8ecd3d7d]
+en = "%s swoops, easily evading your clumsy kick."
+ru = "{1} {1:num|взмывает|взмывают} в воздух, легко уклоняясь от вашего неуклюжего пинка."
+
+[6d3a3e86609d]
+en = "%s swoops, nimbly evading your kick."
+ru = "{1} {1:num|взмывает|взмывают} в воздух, ловко уклоняясь от вашего пинка."
+
+[83a7da9ce29e]
+en = "%s slides, easily evading your clumsy kick."
+ru = "{1} {1:num|отползает|отползают} в сторону, легко уклоняясь от вашего неуклюжего пинка."
+
+[0e2eff589ef3]
+en = "%s slides, nimbly evading your kick."
+ru = "{1} {1:num|отползает|отползают} в сторону, ловко уклоняясь от вашего пинка."
+
+[5202c5c449de]
+en = "%s falls down the stairs."
+ru = "{1} {1:num|падает|падают} вниз по лестнице."
+
+[bed231f73f22]
+en = "%s fall down the stairs."
+ru = "{1:pl} падают вниз по лестнице."
+
+[ec6af04b631e]
+en = "%s falls down the ladder."
+ru = "{1} {1:num|падает|падают} вниз по приставной лестнице."
+
+[81ba922b0efb]
+en = "%s fall down the ladder."
+ru = "{1:pl} падают вниз по приставной лестнице."
+
+[ab29d042bc23]
+en = "%s falls through the hole."
+ru = "{1} {1:num|падает|падают} в дыру."
+
+[6a2d000c8f37]
+en = "%s fall through the hole."
+ru = "{1:pl} падают в дыру."
+
+[fd3651fa4c5c]
+en = "%s falls through the trap door."
+ru = "{1} {1:num|падает|падают} в люк."
+
+[7054dfd7cfe5]
+en = "%s fall through the trap door."
+ru = "{1:pl} падают в люк."
+
+[52a6bfedddb9]
+en = "For some reason, %s presence is known to you."
+ru = "Почему-то вы ощущаете присутствие {1:gen}."
+
+[ea0fa5c07a68]
+en = "You feel aggravated at %s."
+ru = "Вас раздражает {1}."
+
+[0cd09cf085a3]
+en = "You dream that you feel aggravated at %s."
+ru = "Вам снится, что вас раздражает {1}."
+
+[aa86eab3c086]
+en = "%s snatches %s!"
+ru = "{1} {1:num|выхватывает|выхватывают} {2:acc}!"
+
+[5aa69ad584bf]
+en = "%s becomes %s."
+ru = "{1} {1:num|становится|становятся} {2:ins}."
+
+[183365074f53]
+en = "%s changes into %s."
+ru = "{1} {1:num|превращается|превращаются} в {2:acc}."
+
+[90ef660e6127]
+en = "%s is welded to his %s!"
+ru = "{1} {1:gender|приварен|приварена|приварено|приварены} к его {2:dat}!"
+
+[c41d6a4b4d7f]
+en = "%s is welded to its %s!"
+ru = "{1} {1:gender|приварен|приварена|приварено|приварены} к его {2:dat}!"
+
+[2730a692f31b]
+en = "%s is welded to their %s!"
+ru = "{1} {1:gender|приварен|приварена|приварено|приварены} к их {2:dat}!"
+
+[2db781f6814b]
+en = "%s are welded to her %s!"
+ru = "{1:pl} приварены к её {2:dat}!"
+
+[e476e7e3fc03]
+en = "%s are welded to his %s!"
+ru = "{1:pl} приварены к его {2:dat}!"
+
+[a19bc3018054]
+en = "%s are welded to its %s!"
+ru = "{1:pl} приварены к его {2:dat}!"
+
+[4735f1ef6d50]
+en = "%s are welded to their %s!"
+ru = "{1:pl} приварены к их {2:dat}!"
+
+[882d2ea4c8ab]
+en = "The door closes."
+ru = "Дверь закрывается."
+
+[c4a2f317b932]
+en = "You can't force anything without a proper weapon."
+ru = "Без подходящего оружия ничего не взломать."
+
+[c4da99600c20]
+en = "You break through a secret door!"
+ru = "Вы пробиваетесь сквозь потайную дверь!"
+
+[ba2d3775a339]
+en = "You break through the door with your %s."
+ru = "Вы проламываете дверь {1:ins:own}."
+
+[113fd8ca5ae7]
+en = "You cut down the tree."
+ru = "Вы срубаете дерево."
+
+[8b2399e0e0be]
+en = "You have recovered from your illness."
+ru = "Вы оправились от болезни."
+
+[933dea4952be]
+en = "That would be an interesting topological exercise."
+ru = "Это было бы занятное упражнение по топологии."
+
+[17811f0693a4]
+en = " (%ld in total)."
+ru = " (всего {1})."
