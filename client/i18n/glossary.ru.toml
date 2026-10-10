@@ -2854,6 +2854,10 @@
 # gcrownu() (pray.c): the sword a god sends, "A sword" and hcolor() before it
 # ("A black sword appears at your feet!"; any colour to a hallucinating hero)
 "sword" = { ru = "меч", src = "chosen" }
+# mhe() of a monster, as a word of its own: "He's dead, Jim." (apply.c, a
+# stethoscope on a corpse)
+"he" = { ru = "он", src = "chosen", anim = true }
+"she" = { ru = "она", src = "chosen", anim = true }
 
 [name]
 # personal names the engine gives: the default pets (dog.c) and the
