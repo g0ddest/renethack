@@ -13878,6 +13878,10 @@ src = "fixed"
 fixed = "{n} аум"
 src = "fixed"
 
+[status."{n} in total"]
+fixed = "всего {n}"
+src = "fixed"
+
 [status."radiantly lit"]
 fixed = "{сияет|сияет|сияет|сияют}"
 src = "fixed"

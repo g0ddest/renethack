@@ -241,15 +241,18 @@ fn parse_one(lex: &Lexicon, index: &Index, group: &str) -> Option<Status> {
             return pattern(&format!("{what}, {{price}}"), slots);
         }
     }
-    // wizard mode weight: "5 aum"
-    if let Some(n) = group.strip_suffix(" aum")
-        && n.parse::<u64>().is_ok()
-    {
-        let slots = Slots {
-            n: Some(n.to_string()),
-            ..Slots::default()
-        };
-        return pattern("{n} aum", slots);
+    // wizard mode weight: "5 aum"; prinv()'s whole stack after a part of
+    // it: "21 in total"
+    for unit in [" aum", " in total"] {
+        if let Some(n) = group.strip_suffix(unit)
+            && n.parse::<u64>().is_ok()
+        {
+            let slots = Slots {
+                n: Some(n.to_string()),
+                ..Slots::default()
+            };
+            return pattern(&format!("{{n}}{unit}"), slots);
+        }
     }
     // Sting and Orcrist: "glimmering light blue"
     for verb in ["quivering", "flickering", "glimmering", "gleaming"] {
@@ -390,6 +393,11 @@ mod tests {
         assert_eq!(
             render("for sale, 10 zorkmids, 5 aum", Gender::Masc, Number::Sing),
             "на продажу, 10 зоркмидов, 5 аум"
+        );
+        // prinv(): "a - a +2 dart (at the ready) (21 in total)."
+        assert_eq!(
+            render("21 in total", Gender::Masc, Number::Sing),
+            "всего 21"
         );
     }
 

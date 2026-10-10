@@ -587,13 +587,14 @@ impl ObjectName {
 }
 
 /// The classes whose look obj_typename() writes without the class word:
-/// "potion of healing (bubbly)".
-const LOOK_CLASSES: [&str; 8] = [
+/// "potion of healing (bubbly)", "book (paperback)".
+const LOOK_CLASSES: [&str; 9] = [
     "potion",
     "scroll",
     "wand",
     "ring",
     "spellbook",
+    "book",
     "amulet",
     "gem",
     "stone",
@@ -604,24 +605,26 @@ const LOOK_CLASSES: [&str; 8] = [
 /// (blue and green shield)" -> сине-зелёный щит, "scroll of identify
 /// (KIRJE)" -> КИРЬЕ.
 fn look(lex: &Lexicon, base: &Base, group: &str) -> Option<String> {
-    if !matches!(base, Base::Thing { .. }) {
+    let Base::Thing { section, key } = base else {
         return None;
-    }
+    };
     if let Some(label) = lex.get("label", group).and_then(|e| e.fixed()) {
         return Some(label.to_string());
     }
-    for class in LOOK_CLASSES {
+    // the class the name says first: "spellbook of light (gold)" is a gold
+    // spellbook, not a gold ring; a gem's name says none ("ruby (red)")
+    let name = key.to_lowercase();
+    let mut classes = LOOK_CLASSES.to_vec();
+    classes.sort_by_key(|c| (!name.contains(c), !matches!(*c, "gem" | "stone")));
+    let gender = lex.noun(section, key).map(|n| n.gender);
+    for class in classes {
         if let Some(n) = lex.noun("appearance", &format!("{group} {class}")) {
             let whole = n.singular(Case::Nom);
-            let class_ru = lex
-                .noun("class", class)
-                .map_or("", |c| c.singular(Case::Nom));
-            // пузырящееся (зелье), (книга заклинаний) с загнутыми уголками
-            let bare = whole
-                .strip_suffix(class_ru)
-                .map(str::trim_end)
-                .or_else(|| whole.strip_prefix(class_ru).map(str::trim_start))
-                .filter(|b| !b.is_empty() && !class_ru.is_empty());
+            // the look alone where it agrees with the name: зелье лечения
+            // (пузырящееся), but флакон воды (прозрачное зелье)
+            let bare = (Some(n.gender) == gender)
+                .then(|| bare_look(lex, class, whole))
+                .flatten();
             return Some(bare.unwrap_or(whole).to_string());
         }
     }
@@ -634,6 +637,19 @@ fn look(lex: &Lexicon, base: &Base, group: &str) -> Option<String> {
         }
     }
     None
+}
+
+/// An appearance without its class word: пузырящееся (зелье), (книга
+/// заклинаний) с загнутыми уголками, серый (камень).
+fn bare_look<'a>(lex: &Lexicon, class: &str, whole: &'a str) -> Option<&'a str> {
+    let class_ru = lex.noun("class", class)?.singular(Case::Nom);
+    let bare = whole
+        .strip_suffix(class_ru)
+        .map(str::trim_end)
+        .or_else(|| whole.strip_prefix(class_ru).map(str::trim_start))
+        // a stone not seen up close is a камешек, its look a камень
+        .or_else(|| whole.rsplit_once(' ').map(|(adjective, _)| adjective))?;
+    (!bare.is_empty()).then_some(bare)
 }
 
 fn with_tail(mut name: RuName, tail: Tail) -> RuName {
@@ -868,6 +884,24 @@ mod tests {
             ru("scroll of identify (KIRJE)", Case::Nom),
             "свиток опознания (КИРЬЕ)"
         );
+        // the look of the name's own class, agreeing with the name
+        for (english, russian) in [
+            ("spellbook of light (gold)", "книга света (золотая)"),
+            ("spellbook of sleep (bronze)", "книга сна (бронзовая)"),
+            ("ring of adornment (gold)", "кольцо обаяния (золотое)"),
+            ("wand of digging (oak)", "палочка копания (дубовая)"),
+            ("ruby (red)", "рубин (красный)"),
+            ("luckstone (gray)", "камень удачи (серый)"),
+            ("book (paperback)", "книга (в мягкой обложке)"),
+            ("Book of the Dead (papyrus)", "Книга Мёртвых (папирусная)"),
+            // no agreement with a name of another gender: the whole look
+            ("potion of water (clear)", "флакон воды (прозрачное зелье)"),
+            // OBJ_NAME(), with no "pair of": the Samurai's "yugake [leather
+            // gloves]"
+            ("leather gloves", "кожаные перчатки"),
+        ] {
+            assert_eq!(ru(english, Case::Nom), russian, "{english}");
+        }
     }
 
     #[test]

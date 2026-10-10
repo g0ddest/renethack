@@ -106,6 +106,13 @@ impl Index {
                         .entry(many)
                         .or_insert((section, key.to_string(), true));
                 }
+                // OBJ_NAME() has no "pair of": a Samurai's "yugake [leather
+                // gloves]" in the discoveries
+                if let Some(bare) = key.strip_prefix("pair of ") {
+                    objects
+                        .entry(bare.to_string())
+                        .or_insert((section, key.to_string(), false));
+                }
             }
         }
         let mut monsters = HashMap::new();

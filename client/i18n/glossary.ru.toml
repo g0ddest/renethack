@@ -2249,6 +2249,7 @@
 "female" = { ru = "самка", src = "chosen", note = "wizard mode" }
 "unspecified gender" = { ru = "пол не указан", src = "chosen", note = "wizard mode" }
 "{n} aum" = { ru = "{n} аум", src = "chosen", note = "wizard mode weight" }
+"{n} in total" = { ru = "всего {n}", src = "chosen", note = "prinv(): the whole stack after the part picked up, (21 in total)" }
 "radiantly lit" = { ru = "{сияет|сияет|сияет|сияют}", src = "chosen" }
 "brilliantly lit" = { ru = "ярко {светится|светится|светится|светятся}", src = "chosen" }
 "brightly lit" = { ru = "{светится|светится|светится|светятся}", src = "chosen" }
