@@ -776,6 +776,28 @@ fn a_format_of_conversions_alone_by_its_arguments() {
     );
 }
 
+#[test]
+fn a_character_before_a_number_is_none_of_its_digits() {
+    // xprname()'s cost format "%c - %-45.*s%c%6ld %.50s" read "$ - 358
+    // gold pieces" as '3' and a price of 58: «358 золотые монеты»
+    let t = translator();
+    let out = t.message(None, &[], "$ - 358 gold pieces (634 in total).");
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        ("$ - 358 золотых монет (всего 634).", Status::Translated)
+    );
+    let args = ["", "", "$ - 358 gold pieces", " (634 in total)."].map(|s| Arg::Str(s.into()));
+    let out = t.message(
+        Some("%s%s%s%s"),
+        &args,
+        "$ - 358 gold pieces (634 in total).",
+    );
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        ("$ - 358 золотых монет (всего 634).", Status::Translated)
+    );
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {

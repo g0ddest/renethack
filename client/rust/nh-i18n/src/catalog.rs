@@ -476,7 +476,7 @@ fn match_from(t: &Template, seg: usize, text: &str, caps: &mut Vec<String>, conv
         Segment::Conv(c) => {
             let next = match t.segments.get(seg + 1) {
                 Some(Segment::Lit(l)) => Next::Lit(l.as_str()),
-                Some(Segment::Conv(_)) => Next::Conv,
+                Some(Segment::Conv(n)) => Next::Conv(n.kind),
                 None => Next::End,
             };
             for end in candidate_ends(c, text, next) {
@@ -499,8 +499,9 @@ fn match_from(t: &Template, seg: usize, text: &str, caps: &mut Vec<String>, conv
 #[derive(Clone, Copy)]
 enum Next<'t> {
     Lit(&'t str),
-    /// Another conversion: the two part anywhere ("%s%s is empty").
-    Conv,
+    /// Another conversion, of this kind: the two part anywhere ("%s%s is
+    /// empty").
+    Conv(ConvKind),
     End,
 }
 
@@ -530,16 +531,24 @@ fn candidate_ends(conv: &Conv, text: &str, next: Next) -> Vec<usize> {
             }
             if i > start { vec![i] } else { vec![] }
         }
-        ConvKind::Char => text
-            .chars()
-            .next()
-            .map(|c| vec![c.len_utf8()])
-            .unwrap_or_default(),
+        // a character right before a number is none of its digits: in
+        // xprname()'s "%c%6ld" the '3' of "$ - 358 gold pieces" is no
+        // separator before a price of 58
+        ConvKind::Char => match text.chars().next() {
+            Some(c)
+                if c.is_ascii_digit()
+                    && matches!(next, Next::Conv(ConvKind::Int | ConvKind::Float)) =>
+            {
+                vec![]
+            }
+            Some(c) => vec![c.len_utf8()],
+            None => vec![],
+        },
         ConvKind::Str | ConvKind::Other => {
             let mut ends: Vec<usize> = match next {
                 // the next literal must follow: only where it starts
                 Next::Lit(l) => text.match_indices(l).map(|(i, _)| i).collect(),
-                Next::Conv => text
+                Next::Conv(_) => text
                     .char_indices()
                     .map(|(i, _)| i)
                     .chain([text.len()])
