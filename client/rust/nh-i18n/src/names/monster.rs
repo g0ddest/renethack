@@ -12,7 +12,11 @@ use super::english::{strip_word, uncapitalized};
 use super::ru::{Count, RuName, Tail};
 
 /// The adjectives x_monnam() and its callers put before a monster's name.
-const ADJECTIVES: [&str; 17] = [
+const ADJECTIVES: [&str; 19] = [
+    // grow_up(): a gnome lady becoming "a male gnome lord"; the Russian
+    // name says it, and the words have no Russian of their own
+    "male",
+    "female",
     "invisible",
     "saddled",
     "tame",
@@ -355,6 +359,9 @@ mod tests {
         assert_eq!(ru("a saddled pony", Case::Dat), "осёдланному пони");
         assert_eq!(ru("The poor newt", Case::Nom), "бедный тритон");
         assert_eq!(ru("newts", Case::Gen), "тритонов");
+        // grow_up(): the Russian name says the sex
+        assert_eq!(ru("a female housecat", Case::Acc), "домашнюю кошку");
+        assert_eq!(ru("a male gnome lord", Case::Ins), "лордом гномов");
     }
 
     #[test]

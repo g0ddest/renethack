@@ -1798,6 +1798,7 @@
 "headstone" = { ru = "надгробие", src = "chosen" }
 "fountain" = { ru = "фонтан", src = "chosen" }
 "stairs" = { ru = "лестница", src = "chosen" }
+"ladder" = { ru = "приставная лестница", src = "chosen", note = "sit.c: You sit on the ladder." }
 "wall" = { ru = "стена", src = "chosen" }
 "doorway" = { ru = "дверной проём", src = "chosen" }
 "ceiling" = { ru = "потолок", src = "chosen" }
