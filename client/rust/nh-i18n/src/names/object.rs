@@ -135,6 +135,9 @@ pub struct ObjectName {
     pub base: Base,
     pub called: Option<String>,
     pub named: Option<String>,
+    /// The name a Samurai's Japanese one stands for, as the discoveries
+    /// show it: "wakizashi [short sword]".
+    pub actual: Option<String>,
     pub containing: Option<u64>,
     /// The parenthesized groups, in order, without their parentheses.
     pub statuses: Vec<String>,
@@ -183,6 +186,20 @@ pub(super) fn parse_object(lex: &Lexicon, index: &Index, text: &str) -> Option<O
     {
         containing = Some(n);
         s = &s[..at];
+    }
+    // disco_typename(): the name a Japanese one stands for, before what
+    // is called ("wakizashi [short sword]", "potion of sake [booze] called
+    // foo")
+    let mut actual = None;
+    let unbracketed: String;
+    if let Some(open) = s.find(" [")
+        && let Some(close) = s[open..].find(']').map(|c| open + c)
+        && let after = &s[close + 1..]
+        && (after.is_empty() || after.starts_with(" called ") || after.starts_with(" named "))
+    {
+        actual = Some(s[open + 2..close].to_string());
+        unbracketed = format!("{}{after}", &s[..open]);
+        s = &unbracketed;
     }
 
     // who owns it, how many there are
@@ -275,6 +292,7 @@ pub(super) fn parse_object(lex: &Lexicon, index: &Index, text: &str) -> Option<O
         base,
         called,
         named,
+        actual,
         containing,
         statuses,
         quote,
@@ -517,6 +535,10 @@ impl ObjectName {
         if let Some(Owner::Of(m)) = &self.owner {
             name.tails.insert(0, Tail::Genitive(Box::new(m.ru(lex))));
         }
+        if let Some(a) = &self.actual {
+            name.tails
+                .push(Tail::Text(format!("[{}]", actual_ru(lex, &self.base, a))));
+        }
         if let Some(c) = &self.called {
             name.tails
                 .push(Tail::Text(format!("{} «{c}»", link(lex, "called"))));
@@ -637,6 +659,23 @@ fn look(lex: &Lexicon, base: &Base, group: &str) -> Option<String> {
         }
     }
     None
+}
+
+/// The name a Japanese one stands for, in Russian: OBJ_NAME() says it
+/// without "pair of" or its class ("booze" of "potion of sake").
+fn actual_ru(lex: &Lexicon, base: &Base, english: &str) -> String {
+    let class = match base {
+        Base::Thing { key, .. } => key.split_once(" of ").map(|(c, _)| c),
+        _ => None,
+    };
+    let found = lex.parse_object(english).or_else(|| {
+        let class = class.filter(|c| LOOK_CLASSES.contains(c))?;
+        lex.parse_object(&format!("{class} of {english}"))
+    });
+    match found {
+        Some(o) => o.ru(lex).form(Case::Nom),
+        None => english.to_string(),
+    }
 }
 
 /// An appearance without its class word: пузырящееся (зелье), (книга
@@ -896,9 +935,20 @@ mod tests {
             ("Book of the Dead (papyrus)", "Книга Мёртвых (папирусная)"),
             // no agreement with a name of another gender: the whole look
             ("potion of water (clear)", "флакон воды (прозрачное зелье)"),
-            // OBJ_NAME(), with no "pair of": the Samurai's "yugake [leather
-            // gloves]"
-            ("leather gloves", "кожаные перчатки"),
+            // the Samurai's names, with the one each stands for
+            ("wakizashi [short sword]", "вакидзаси [короткий меч]"),
+            (
+                "pair of yugake [leather gloves]",
+                "югакэ [кожаные перчатки]",
+            ),
+            (
+                "potion of sake [booze] (white)",
+                "флакон саке [флакон выпивки] (белое зелье)",
+            ),
+            (
+                "potion of sake [booze] called tea",
+                "флакон саке [флакон выпивки] под названием «tea»",
+            ),
         ] {
             assert_eq!(ru(english, Case::Nom), russian, "{english}");
         }
