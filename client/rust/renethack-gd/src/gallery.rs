@@ -632,6 +632,65 @@ pub fn lay_out_corridors(
     Ok(())
 }
 
+/// Wares to a row of the `shop` self-test's floor, and where its first
+/// cell lies on the map.
+const SHOP_COLUMNS: i32 = 12;
+const SHOP_AT: (i32, i32) = (30, 4);
+
+/// The cells of the wares on the `shop` self-test's floor: one for every
+/// appearance of the weapons' class the catalog has, row by row.
+pub fn shop_cells(cat: &Catalog) -> Vec<(i32, i32)> {
+    let wares = cat.object_tiles.iter().filter(|t| t.class == ")").count() as i32;
+    (0..wares)
+        .map(|i| (SHOP_AT.0 + i % SHOP_COLUMNS, SHOP_AT.1 + i / SHOP_COLUMNS))
+        .collect()
+}
+
+/// Replace the map with a weapon shop's floor: a room with a ware on every
+/// cell (`shop_cells`: the long ones among the short, as the catalog has
+/// them), its west half lit and its east half only remembered, the hero in
+/// a doorway of its south wall. The view centres on the room.
+pub fn lay_out_shop(world: &mut World, cat: &Catalog) -> Result<(), String> {
+    let cells = shop_cells(cat);
+    let rows = (cells.len() as i32 + SHOP_COLUMNS - 1) / SHOP_COLUMNS;
+    let (x0, y0) = SHOP_AT;
+    let (x1, y1) = (x0 + SHOP_COLUMNS - 1, y0 + rows - 1);
+    let door = x0 + SHOP_COLUMNS / 2;
+    let map = &mut world.map;
+    map.clear();
+    let (lit, dark) = (cmap(cat, "S_room")?, cmap(cat, "S_darkroom")?);
+    let floor = |x: i32| if x < door { &lit } else { &dark };
+    for y in y0 - 1..=y1 + 1 {
+        for x in x0 - 1..=x1 + 1 {
+            let (west, east) = (x == x0 - 1, x == x1 + 1);
+            let (north, south) = (y == y0 - 1, y == y1 + 1);
+            let sym = match (north, south, west, east) {
+                (true, _, true, _) => "S_tlcorn",
+                (true, _, _, true) => "S_trcorn",
+                (_, true, true, _) => "S_blcorn",
+                (_, true, _, true) => "S_brcorn",
+                (_, true, _, _) if x == door => "S_ndoor",
+                (true, ..) | (_, true, ..) => "S_hwall",
+                (_, _, true, _) | (_, _, _, true) => "S_vwall",
+                _ => {
+                    map.print(x, y, floor(x), None);
+                    continue;
+                }
+            };
+            map.print(x, y, &cmap(cat, sym)?, None);
+        }
+    }
+    let wares = cat.object_tiles.iter().filter(|t| t.class == ")");
+    for (t, &(x, y)) in wares.zip(&cells) {
+        let g = object(cat, &t.class, &t.appearance, false)?;
+        map.print(x, y, &g, Some(floor(x)));
+    }
+    let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    map.print(door, y1 + 1, &hero, Some(&cmap(cat, "S_ndoor")?));
+    world.view_center = Some(((x0 + x1) / 2, (y0 + y1) / 2));
+    Ok(())
+}
+
 /// Replace the map with page `page`: a lit hall, a brick wall behind it,
 /// the hero at its south edge. Returns the cell to look at.
 pub fn lay_out(world: &mut World, cat: &Catalog, page: usize) -> Result<(i32, i32), String> {

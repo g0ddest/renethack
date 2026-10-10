@@ -36,6 +36,11 @@ pub enum MeshKey {
     /// fine grids (the map's shader breaks them up), without a bottom:
     /// width, height, depth.
     Rock(u16, u16, u16),
+    /// Forged steel lying along +z from z = 0: `len` (the second) of
+    /// straight edges, then a point `tip` (the third) long; `w` (the
+    /// first) across, its cross-section a flattened diamond, a ridge up
+    /// and down its middle (`blade`).
+    Blade(u16, u16, u16),
     /// A smooth shape of a creature's, lofted or merged from many pieces
     /// (`organic.rs`).
     Organic(crate::organic::Organic),
@@ -95,6 +100,23 @@ pub fn rock(x: f32, y: f32, z: f32) -> MeshKey {
     MeshKey::Rock(cm(x), cm(y), cm(z))
 }
 
+/// A blade `w` wide: `len` of edges, then a point `tip` long (no point: a
+/// slab ridged along its length; no length: a point alone).
+pub fn blade(w: f32, len: f32, tip: f32) -> MeshKey {
+    MeshKey::Blade(cm(w).max(1), cm(len), cm(tip))
+}
+
+/// How high a blade's ridge rises over its edges, for its width, and the
+/// least and the most (metres in the mesh's own units).
+const RIDGE: f32 = 0.25;
+const RIDGE_MIN: f32 = 0.002;
+const RIDGE_MAX: f32 = 0.016;
+
+/// How high the ridge of a blade `w` wide rises over its edges.
+pub fn ridge(w: f32) -> f32 {
+    (metres(cm(w).max(1)) * RIDGE).clamp(RIDGE_MIN, RIDGE_MAX)
+}
+
 impl MeshKey {
     /// Half the height of the upright mesh.
     pub fn half_height(self) -> f32 {
@@ -103,6 +125,7 @@ impl MeshKey {
                 metres(y) / 2.0
             }
             MeshKey::Rock(_, y, _) => metres(y),
+            MeshKey::Blade(w, ..) => ridge(metres(w)),
             MeshKey::Plane(..) => 0.0,
             MeshKey::Capsule(_, h) | MeshKey::Cylinder(_, _, h) => metres(h) / 2.0,
             MeshKey::Sphere(r) | MeshKey::Facets(r, _) => metres(r),
@@ -184,6 +207,7 @@ impl MeshKey {
                 bevel_mesh(half, metres(r))
             }
             MeshKey::Rock(x, y, z) => rock_mesh(Vector3::new(metres(x), metres(y), metres(z))),
+            MeshKey::Blade(w, len, tip) => blade_mesh(metres(w), metres(len), metres(tip)),
             MeshKey::Organic(o) => o.build(),
         }
     }
@@ -311,6 +335,46 @@ fn bevel_mesh(h: Vector3, r: f32) -> Gd<Mesh> {
                 t.tri(px(s), py(s), pz(s), s.normalized());
             }
         }
+    }
+    t.done()
+}
+
+/// A blade lying along +z (`MeshKey::Blade`): four long facets meeting in
+/// a ridge above and below its middle, each lit its own way (flat steel
+/// is one shade from edge to edge and reads as a cut-out), four more
+/// narrowing to the point, its butt closed (and its end, with no point).
+fn blade_mesh(w: f32, len: f32, tip: f32) -> Gd<Mesh> {
+    let (hw, h) = (w / 2.0, ridge(w));
+    let v = Vector3::new;
+    // the edge, the ridge above, the other edge, the ridge below
+    let ring = |z: f32| [v(-hw, 0.0, z), v(0.0, h, z), v(hw, 0.0, z), v(0.0, -h, z)];
+    let (butt, end) = (ring(0.0), ring(len));
+    let point = v(0.0, 0.0, len + tip);
+    // a facet's normal, away from the blade's middle
+    let out = |n: Vector3, at: Vector3| {
+        let n = n.normalized();
+        if n.dot(v(at.x, at.y, 0.0)) < 0.0 {
+            -n
+        } else {
+            n
+        }
+    };
+    let mut t = Tris::new();
+    for i in 0..4 {
+        let j = (i + 1) % 4;
+        let mid = (butt[i] + butt[j]) / 2.0;
+        if len > 0.0 {
+            let n = out((butt[j] - butt[i]).cross(end[i] - butt[i]), mid);
+            t.quad([butt[i], butt[j], end[j], end[i]], n);
+        }
+        if tip > 0.0 {
+            let n = out((end[j] - end[i]).cross(point - end[i]), mid);
+            t.tri(end[i], end[j], point, n);
+        }
+    }
+    t.quad([butt[0], butt[1], butt[2], butt[3]], Vector3::FORWARD);
+    if tip <= 0.0 {
+        t.quad([end[0], end[1], end[2], end[3]], Vector3::BACK);
     }
     t.done()
 }

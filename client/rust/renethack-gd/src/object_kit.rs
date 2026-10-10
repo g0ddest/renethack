@@ -2279,8 +2279,9 @@ impl Kit<'_> {
         self.plain(name, fallback)
     }
 
-    /// A flat plate lying in the object's plane: centre (x, z), width and
-    /// length, turned `yaw` degrees about y (0: along z).
+    /// A plate of forged metal lying in the object's plane, ridged down
+    /// its length (`blade`): centre (x, z), width and length, turned `yaw`
+    /// degrees about y (0: along z).
     fn plate(
         &mut self,
         root: &mut Gd<Node3D>,
@@ -2289,18 +2290,20 @@ impl Kit<'_> {
         size: [f32; 2],
         yaw: f32,
     ) {
+        let (s, c) = yaw.to_radians().sin_cos();
+        let butt = [at[0] - s * size[1] / 2.0, at[1] - c * size[1] / 2.0];
         self.part(
             root,
-            cuboid(size[0], 0.012, size[1]),
+            blade(size[0], size[1], 0.0),
             mat,
-            [at[0], 0.03, at[1]],
+            [butt[0], 0.03, butt[1]],
             [0.0, yaw, 0.0],
             ONE,
         );
     }
 
-    /// A flat point: its base centred at (x, z), `len` long towards `yaw`
-    /// (0: +z, 90: +x).
+    /// A point, ridged as a blade's: its base centred at (x, z), `len`
+    /// long towards `yaw` (0: +z, 90: +x).
     fn point(
         &mut self,
         root: &mut Gd<Node3D>,
@@ -2310,14 +2313,12 @@ impl Kit<'_> {
         len: f32,
         yaw: f32,
     ) {
-        let (s, c) = yaw.to_radians().sin_cos();
-        let mid = [at[0] + s * len / 2.0, at[1] + c * len / 2.0];
         self.part(
             root,
-            prism(width, len, 0.012),
+            blade(width, 0.0, len),
             mat,
-            [mid[0], 0.03, mid[1]],
-            [90.0, yaw, 0.0],
+            [at[0], 0.03, at[1]],
+            [0.0, yaw, 0.0],
             ONE,
         );
     }
@@ -2681,12 +2682,12 @@ impl Kit<'_> {
             _ => {
                 self.plate(root, &steel, [0.0, z0 + len / 2.0], [w, len], 0.0);
                 self.point(root, &steel, [0.0, z0 + len], w, tip, 0.0);
-                // the fuller: a dark groove down the middle
+                // the fuller: a dark line down the ridge
                 self.part(
                     root,
-                    cuboid(w * 0.22, 0.004, len * 0.8),
+                    cuboid(w * 0.12, 0.002, len * 0.8),
                     &dark,
-                    [0.0, 0.037, z0 + len * 0.45],
+                    [0.0, 0.03 + ridge(w), z0 + len * 0.45],
                     FLAT,
                     ONE,
                 );

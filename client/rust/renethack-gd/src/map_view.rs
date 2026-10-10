@@ -2089,7 +2089,14 @@ fn entity_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
                 return;
             };
             let r = art.object(tile);
-            let yaw = ctx.noise(5) * 360.0;
+            // a long thing lies along one of the cell's diagonals (the
+            // longest line it has), a little askew; a short one any way
+            let yaw = if crate::art::on_diagonal(&r) {
+                let skew = (ctx.noise(8) - 0.5) * 2.0 * crate::art::WARE_JITTER;
+                45.0 + 90.0 * (ctx.noise(5) * 3.99).floor() + skew
+            } else {
+                ctx.noise(5) * 360.0
+            };
             let mut pos = here;
             if g.flags & mg::OBJPILE != 0
                 && let Some(heap) = art.model_index("heap")
@@ -2119,7 +2126,7 @@ fn entity_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
                 ModelLook {
                     art: r,
                     tint,
-                    pose: Pose::Alive,
+                    pose: Pose::Ware,
                 },
                 pos,
                 yaw,
@@ -4276,6 +4283,21 @@ impl MapView {
             }
         });
         hit == Some((x, y))
+    }
+
+    /// How far the models on a cell reach beyond the cell's own square, in
+    /// metres (0: all within it; self-tests: a thing on the floor lies on
+    /// its own cell, not across its neighbours').
+    pub fn overhang(&self, (x, y): (i32, i32)) -> f32 {
+        let Some(nodes) = self.cells.get(&(x, y)) else {
+            return 0.0;
+        };
+        nodes
+            .models
+            .iter()
+            .flat_map(|m| crate::icon_bake::corners(&m.node))
+            .map(|p| (p.x - x as f32).abs().max((p.z - y as f32).abs()) - 0.5)
+            .fold(0.0, f32::max)
     }
 
     pub fn set_hover(&mut self, cell: Option<(i32, i32)>) {
@@ -7379,6 +7401,37 @@ mod tests {
         // appearance always looks the same
         let ruby = f.look(&on_floor(cat, object(cat, "!", "ruby")));
         assert_eq!(ruby, f.look(&on_floor(cat, object(cat, "!", "ruby"))));
+    }
+
+    #[test]
+    fn long_things_lie_along_a_diagonal_of_their_cell() {
+        let f = Fixture::new();
+        let cat = &f.cat;
+        let ware = |x: i32, appearance: &str| {
+            let look = look_of(
+                &on_floor(cat, object(cat, ")", appearance)),
+                Near::default(),
+                &f.ctx_at(x, 4, None),
+            );
+            *look.models.last().expect("a model")
+        };
+        // a polearm: along one of the four diagonals, a few degrees askew,
+        // and each cell's its own
+        let mut ways = HashSet::new();
+        for x in 1..40 {
+            let p = ware(x, "long poleaxe");
+            assert_eq!(p.look.pose, Pose::Ware);
+            assert!(crate::art::on_diagonal(&p.look.art));
+            let off = (p.yaw - 45.0).rem_euclid(90.0);
+            let off = off.min(90.0 - off);
+            assert!(off <= crate::art::WARE_JITTER + 1e-3, "{}", p.yaw);
+            ways.insert(((p.yaw - 45.0) / 90.0).round() as i32);
+        }
+        assert_eq!(ways.len(), 4, "{ways:?}");
+        // a dagger any way at all
+        let daggers: HashSet<i32> = (1..40).map(|x| ware(x, "dagger").yaw as i32 / 30).collect();
+        assert!(daggers.len() > 6, "{daggers:?}");
+        assert!(!crate::art::on_diagonal(&ware(1, "dagger").look.art));
     }
 
     #[test]

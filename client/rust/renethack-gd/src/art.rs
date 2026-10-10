@@ -36,7 +36,9 @@ mod outfit;
 pub use equip::{HELD_NODE, LAMP_LIGHT, OFF_HAND, THROW_LETS_GO, USE_NODE, Worn};
 pub use outfit::{GLOVES_NODE, NECK_NODE};
 
-use crate::meshes::{MeshKey, capsule, cuboid, cylinder, dome, facets, prism, sphere, torus};
+use crate::meshes::{
+    MeshKey, blade, capsule, cuboid, cylinder, dome, facets, prism, ridge, sphere, torus,
+};
 
 /// The manifest built into the client, used when the project's copy cannot
 /// be read.
@@ -61,6 +63,56 @@ pub enum Pose {
     Statue,
     /// See-through: sensed, or seen invisible.
     Ghost,
+    /// A thing lying on the floor: drawn within its cell, its middle on the
+    /// cell's, and a long one, along the diagonal it lies on (`on_diagonal`),
+    /// no longer than the cell holds.
+    Ware,
+}
+
+/// A thing at least this long (as the manifest has it) lies along its
+/// cell's diagonal, a few degrees either way: the longest line a cell
+/// has, and the way wares lie on a shop's floor. A shorter one lies any
+/// way.
+pub const DIAGONAL_WARE: f32 = 0.8;
+/// How far either way of its diagonal a long thing lies (degrees).
+pub const WARE_JITTER: f32 = 5.0;
+/// How far from its cell's middle a thing on the floor may reach (the
+/// cell's half is 0.5 m): each square's wares are its own.
+const WARE_HALF: f32 = 0.47;
+
+/// A thing on the floor's model, scale and turn (the bits of the floats).
+type WareKey = (usize, u32, [u32; 3]);
+/// Bounds on the ground: the lowest corner (x, z) and the highest.
+type Bounds = ([f32; 2], [f32; 2]);
+
+/// Whether a thing on the floor lies along its cell's diagonal.
+pub fn on_diagonal(r: &Resolved) -> bool {
+    r.height >= DIAGONAL_WARE
+}
+
+/// How a thing on the floor whose bounds there are `lo`..`hi` (x, z, in
+/// its holder's space) is fitted to its cell: the scale it is drawn at
+/// (never over its own) and the shift that puts its middle on the cell's.
+fn ware_fit(lo: [f32; 2], hi: [f32; 2], diagonal: bool) -> (f32, [f32; 2]) {
+    let (w, l) = (hi[0] - lo[0], hi[1] - lo[1]);
+    let (a, b) = (w.max(l) / 2.0, w.min(l) / 2.0);
+    let reach = if diagonal {
+        // turned to the diagonal, give or take the jitter: its reach along
+        // either side of the cell
+        [45.0 - WARE_JITTER, 45.0 + WARE_JITTER]
+            .into_iter()
+            .map(|d: f32| {
+                let (s, c) = d.to_radians().sin_cos();
+                (a * c + b * s).max(a * s + b * c)
+            })
+            .fold(0.0, f32::max)
+    } else {
+        // any way: its long side no longer than the cell
+        a
+    };
+    let k = (WARE_HALF / reach.max(1e-4)).min(1.0);
+    let mid = [(lo[0] + hi[0]) / 2.0, (lo[1] + hi[1]) / 2.0];
+    (k, [-mid[0] * k, -mid[1] * k])
 }
 
 /// A model on a cell, as plain data (see `map_view::Look`).
@@ -252,6 +304,9 @@ pub struct Art {
     stripping: Option<(String, Gd<AnimationLibrary>, Gd<AnimationLibrary>, usize)>,
     /// Looks built at least once (later instances are cheap).
     warmed: HashSet<PoolKey>,
+    /// The bounds on the floor of the things lying there, by model, scale
+    /// and turn (`fit_ware`).
+    ware_bounds: HashMap<WareKey, Option<Bounds>>,
     /// The hero's model given back with their gear on (a level change):
     /// taken again as it is.
     kept: Option<Model>,
@@ -313,6 +368,7 @@ impl Art {
             loaded: HashMap::new(),
             stripping: None,
             warmed: HashSet::new(),
+            ware_bounds: HashMap::new(),
             kept: None,
             spent: None,
             pending: 0,
@@ -807,6 +863,32 @@ impl Art {
         reach
     }
 
+    /// A thing lying on the floor (`Pose::Ware`) drawn within its cell: its
+    /// bounds there measured once for its model, scale and turn, then
+    /// shifted to the cell's middle and, if it is too long, drawn smaller.
+    fn fit_ware(&mut self, m: &mut Model, look: &ModelLook, plain: Transform3D) {
+        if m.inner.is_none() {
+            return;
+        }
+        let r = look.art;
+        let key = (r.model, r.scale.to_bits(), r.rot.map(f32::to_bits));
+        let bounds = *self
+            .ware_bounds
+            .entry(key)
+            .or_insert_with(|| bounds_of(&m.node));
+        let Some((lo, hi)) = bounds else {
+            return;
+        };
+        let (k, shift) = ware_fit(lo, hi, on_diagonal(&r));
+        let fit = Transform3D::new(
+            Basis::from_scale(Vector3::new(k, k, k)),
+            Vector3::new(shift[0], 0.0, shift[1]),
+        );
+        if let Some(inner) = m.inner.as_mut() {
+            inner.set_transform(fit * plain);
+        }
+    }
+
     /// A model instance for this look: one given back before, or a new one
     /// (on the map, past this frame's budget, a stand-in for a look never
     /// built before: see `complete`).
@@ -989,10 +1071,14 @@ impl Art {
     /// shopkeeper's next), then its animation: idle with a random phase; a
     /// corpse lies at the end of its death; a statue stands still.
     fn start(&mut self, m: &mut Model, look: &ModelLook) {
-        let spec = self.manifest.model_at(look.art.model).1;
+        let plain = inner_transform(look, self.manifest.model_at(look.art.model).1);
         if let Some(inner) = m.inner.as_mut() {
-            inner.set_transform(inner_transform(look, spec));
+            inner.set_transform(plain);
         }
+        if look.pose == Pose::Ware {
+            self.fit_ware(m, look, plain);
+        }
+        let spec = self.manifest.model_at(look.art.model).1;
         let Some(player) = m.player.as_mut() else {
             return;
         };
@@ -1862,9 +1948,19 @@ fn within(root: &Gd<Node3D>, node: &Gd<Node>) -> Transform3D {
 }
 
 /// The sides on the ground (x, z) of the bounds of the meshes shown under
-/// `root`, in its space. A skinned mesh is measured as it is posed now:
-/// every few of its vertices, moved by their bones.
+/// `root`, in its space (`bounds_of`).
 fn reach_of(root: &Gd<Node3D>) -> [f32; 2] {
+    match bounds_of(root) {
+        Some((lo, hi)) => [hi[0] - lo[0], hi[1] - lo[1]],
+        None => [0.0; 2],
+    }
+}
+
+/// The bounds on the ground (x, z: the lowest corner and the highest) of
+/// the meshes shown under `root`, in its space; None with no mesh. A
+/// skinned mesh is measured as it is posed now: every few of its
+/// vertices, moved by their bones.
+fn bounds_of(root: &Gd<Node3D>) -> Option<Bounds> {
     use godot::classes::mesh::ArrayType;
     // one vertex in so many is enough for the bounds
     const EVERY: usize = 5;
@@ -1953,10 +2049,7 @@ fn reach_of(root: &Gd<Node3D>) -> [f32; 2] {
             }
         }
     }
-    if lo[0] > hi[0] {
-        return [0.0; 2];
-    }
-    [hi[0] - lo[0], hi[1] - lo[1]]
+    (lo[0] <= hi[0]).then_some((lo, hi))
 }
 
 /// The clips' scale track of the `Head` bone dropped where it only ever
@@ -3556,5 +3649,55 @@ pub fn set_layer_mask(v: &mut Gd<VisualInstance3D>, mask: u32) {
     v.set_layer_mask(mask);
     if paired {
         RenderingServer::singleton().instance_set_visible(rid, true);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// How far a box with these bounds reaches from its cell's middle,
+    /// fitted and turned `yaw` degrees.
+    fn reach(lo: [f32; 2], hi: [f32; 2], diagonal: bool, yaw: f32) -> f32 {
+        let (k, shift) = ware_fit(lo, hi, diagonal);
+        let (s, c) = yaw.to_radians().sin_cos();
+        let mut most: f32 = 0.0;
+        for x in [lo[0], hi[0]] {
+            for z in [lo[1], hi[1]] {
+                let (x, z) = (x * k + shift[0], z * k + shift[1]);
+                let (wx, wz) = (x * c + z * s, -x * s + z * c);
+                most = most.max(wx.abs()).max(wz.abs());
+            }
+        }
+        most
+    }
+
+    #[test]
+    fn a_thing_on_the_floor_lies_within_its_cell() {
+        // a polearm two metres long, its head off its middle: along a
+        // diagonal, give or take the jitter, it keeps within the cell
+        let (lo, hi) = ([-0.12, -0.9], [0.13, 1.15]);
+        for yaw in [
+            45.0 - WARE_JITTER,
+            45.0,
+            45.0 + WARE_JITTER,
+            135.0,
+            315.0 + 3.0,
+        ] {
+            let r = reach(lo, hi, true, yaw);
+            assert!(r <= WARE_HALF + 1e-4, "{yaw}: {r}");
+        }
+        let (k, _) = ware_fit(lo, hi, true);
+        assert!(k < 0.6 && k > 0.45, "{k}");
+        // its middle on the cell's
+        let (k, shift) = ware_fit(lo, hi, true);
+        let mid = ((lo[1] + hi[1]) / 2.0) * k + shift[1];
+        assert!(mid.abs() < 1e-5);
+        // a dagger as it is, whatever way it lies; a long box across a
+        // cell drawn as long as the cell holds
+        let (k, _) = ware_fit([-0.03, -0.2], [0.03, 0.2], false);
+        assert_eq!(k, 1.0);
+        let (k, _) = ware_fit([-0.1, -0.6], [0.1, 0.6], false);
+        assert!((k * 1.2 - 2.0 * WARE_HALF).abs() < 1e-4, "{k}");
     }
 }

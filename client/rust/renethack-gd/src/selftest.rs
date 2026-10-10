@@ -46,6 +46,8 @@ mod layouts_tests;
 mod passing_tests;
 #[path = "selftest_rim.rs"]
 mod rim_tests;
+#[path = "selftest_shop.rs"]
+mod shop;
 #[path = "selftest_footprints.rs"]
 mod sizes;
 #[path = "selftest_world.rs"]
@@ -4679,6 +4681,7 @@ impl SelfTest {
             "title" => world_looks::title(),
             "bestiary" => world_looks::bestiary(),
             "corridors" => corridors::corridors(),
+            "shop" => shop::shop(),
             "pickers" => input_ru::pickers(),
             "help" => help_tests::help(),
             "layouts" => layouts_tests::layouts(),
