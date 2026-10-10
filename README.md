@@ -358,6 +358,7 @@ Script steps are documented on `nh_link::parse_script`.
 
 - `engine/upstream` — NetHack at tag `NetHack-5.0.0_Released` (never edited)
 - `engine/patches` — the only changes to NetHack, applied at build time
+  (what they may change: below)
 - `engine/host` — the protocol host (`nh-engine`)
 - `client/rust` — `nh-protocol`, `nh-link` (engine process, live sessions,
   saves), `nh-world` (world model, prompts, menus, key map), `nh-art` (the
@@ -367,6 +368,16 @@ Script steps are documented on `nh_link::parse_script`.
 - `tools` — the art fetcher and the i18n extractor
 - `client/godot` — the Godot project (a single scene; all logic is in Rust)
   and its art (`client/godot/art`)
+
+The engine patches are thin: hooks through which the host observes the
+game (what it says, what it shows) without changing it. One other kind is
+allowed: a backport of an upstream fix that NetHack's own fixes file lists
+for its next release (`doc/fixes5-0-1.txt`), when it changes no play: no
+RNG, no game state, and the same soak digest with and without it (the
+digest hashes every request of `--selftest=soak` and its answer). Such a
+patch names its upstream commits in its header and is dropped when
+`engine/upstream` moves to that release (`0004`: a vault guard parked off
+the map made 5.0.0 call impossible()).
 
 ## License
 

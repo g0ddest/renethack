@@ -1,0 +1,46 @@
+renethack: an upstream backport, dropped when engine/upstream moves to
+NetHack 5.0.1.
+
+NetHack 5.0.0 calls impossible() ("newsym: attempting screen update for
+<0,0>", then "Program in disorder!") for a vault guard parked off the map
+at <0,0>: postmov() redraws the guard's cell at the end of the move in
+which it disappears, and see_monsters() does the same while it is parked
+(on a redraw or a restore). Upstream fixed both after the release, on
+branch NetHack-5.0, and doc/fixes5-0-1.txt lists the fix ("when a vault
+guard was moved off the map, an impossible about trying to update map
+location <0,0> was issued"):
+
+  c42d35eac0 avoid newsym(0,0) for vault guard
+      the postmov() hunk, as it is upstream;
+  d13eceb28b eliminate one more source of vault guard newsym msgs
+      the see_monsters() hunk: its PARKEDMONSTER() test inlined, without
+      its MON_PARKED bit, its macro and its restore fixup.
+
+No play changes: newsym(0,0) did nothing but call impossible(), which
+uses no RNG and changes no game state.
+
+--- a/src/display.c
++++ b/src/display.c
+@@ -1503,7 +1503,8 @@
+ 
+     /* loop through level.monsters (aka fmon) */
+     for (mon = fmon; mon; mon = mon->nmon) {
+-        if (DEADMONSTER(mon))
++        /* a vault guard parked at <0,0> is not on the map */
++        if (DEADMONSTER(mon) || (mon->isgd && mon->mx == 0))
+             continue;
+         if ((mon->mstate & MON_STILL_ARRIVING) != 0)
+             continue;
+--- a/src/monmove.c
++++ b/src/monmove.c
+@@ -1653,7 +1653,9 @@
+             u_on_newpos(mtmp->mx, mtmp->my);
+             swallowed(0);
+         } else {
+-            newsym(mtmp->mx, mtmp->my);
++            /* only call newsym() when not a vault guard moving to <0,0> */
++            if (mtmp->mx)
++                newsym(mtmp->mx, mtmp->my);
+         }
+     } /* mmoved==MMOVE_MOVED */
+ 

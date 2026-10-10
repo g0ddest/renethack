@@ -1,3 +1,4 @@
 0001-libnh-port-sync-with-5.0-core.patch
 0002-libnh-tiles-in-glyphmap.patch
 0003-nhevents-pline-format.patch
+0004-vault-guard-off-map-no-newsym.patch
