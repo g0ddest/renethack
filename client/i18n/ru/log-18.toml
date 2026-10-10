@@ -1,0 +1,889 @@
+# R6, log messages batch 18: apply.c, the tools, second half. Syntax: nh-i18n's template.rs.
+
+[63a50037a6de]
+en = "You dream that you see %s %s out of %s pack and %s under %s!"
+ru = "Вам снится, что {1} {1:num|появляется|появляются} из рюкзака {3:gen} и {1:num|прячется|прячутся} под {5:ins}!{2:skip}{4:skip}"
+
+[9aeaca351f43]
+en = "You dream that you see %s %s out of %s pack and vanish!"
+ru = "Вам снится, что {1} {1:num|появляется|появляются} из рюкзака {3:gen} и {1:num|исчезает|исчезают}!{2:skip}"
+
+[44861904e3f2]
+en = "You dream that you see %s %s out of %s pack!"
+ru = "Вам снится, что {1} {1:num|появляется|появляются} из рюкзака {3:gen}!{2:skip}"
+
+[561a0571f48f]
+en = "You dream that you see %s %s out of empty water and %s under %s!"
+ru = "Вам снится, что {1} {1:num|появляется|появляются} прямо из воды и {1:num|прячется|прячутся} под {4:ins}!{2:skip}{3:skip}"
+
+[74adcd2dcc40]
+en = "You dream that you see %s %s out of empty water and vanish!"
+ru = "Вам снится, что {1} {1:num|появляется|появляются} прямо из воды и {1:num|исчезает|исчезают}!{2:skip}"
+
+[8cbf1f73e5ea]
+en = "You dream that you see %s %s out of empty water!"
+ru = "Вам снится, что {1} {1:num|появляется|появляются} прямо из воды!{2:skip}"
+
+[2a76c107e51e]
+en = "You dream that you see %s %s out of thin air and %s under %s!"
+ru = "Вам снится, что {1} {1:num|появляется|появляются} прямо из воздуха и {1:num|прячется|прячутся} под {4:ins}!{2:skip}{3:skip}"
+
+[72a17cd90ccd]
+en = "You dream that you see %s %s out of thin air and vanish!"
+ru = "Вам снится, что {1} {1:num|появляется|появляются} прямо из воздуха и {1:num|исчезает|исчезают}!{2:skip}"
+
+[47b491b438c7]
+en = "You dream that you see %s %s out of thin air!"
+ru = "Вам снится, что {1} {1:num|появляется|появляются} прямо из воздуха!{2:skip}"
+
+[803a16196170]
+en = "You see %s %s out of %s pack and %s under %s!"
+ru = "Вы видите, как {1} {1:num|появляется|появляются} из рюкзака {3:gen} и {1:num|прячется|прячутся} под {5:ins}!{2:skip}{4:skip}"
+
+[9938c4e2f4bc]
+en = "You see %s %s out of %s pack and vanish!"
+ru = "Вы видите, как {1} {1:num|появляется|появляются} из рюкзака {3:gen} и {1:num|исчезает|исчезают}!{2:skip}"
+
+[f92b1192b814]
+en = "You see %s %s out of %s pack!"
+ru = "Вы видите, как {1} {1:num|появляется|появляются} из рюкзака {3:gen}!{2:skip}"
+
+[a7b3172ab7ae]
+en = "You see %s %s out of empty water and %s under %s!"
+ru = "Вы видите, как {1} {1:num|появляется|появляются} прямо из воды и {1:num|прячется|прячутся} под {4:ins}!{2:skip}{3:skip}"
+
+[d5191f121a6f]
+en = "You see %s %s out of empty water and vanish!"
+ru = "Вы видите, как {1} {1:num|появляется|появляются} прямо из воды и {1:num|исчезает|исчезают}!{2:skip}"
+
+[9c488d06218c]
+en = "You see %s %s out of empty water!"
+ru = "Вы видите, как {1} {1:num|появляется|появляются} прямо из воды!{2:skip}"
+
+[0dd9d721334a]
+en = "You see %s %s out of thin air and %s under %s!"
+ru = "Вы видите, как {1} {1:num|появляется|появляются} прямо из воздуха и {1:num|прячется|прячутся} под {4:ins}!{2:skip}{3:skip}"
+
+[5953979a7a40]
+en = "You see %s %s out of thin air and vanish!"
+ru = "Вы видите, как {1} {1:num|появляется|появляются} прямо из воздуха и {1:num|исчезает|исчезают}!{2:skip}"
+
+[dd4996ff8178]
+en = "You see %s %s out of thin air!"
+ru = "Вы видите, как {1} {1:num|появляется|появляются} прямо из воздуха!{2:skip}"
+
+[23167dd26bc9]
+en = "You don't have enough room in here."
+ru = "Здесь слишком тесно."
+
+[bab14ba5384f]
+en = "You cannot put the figurine there."
+ru = "Туда статуэтку не поставить."
+
+[cca37779b6cb]
+en = "You cannot place a figurine in a tree!"
+ru = "Нельзя поместить статуэтку в дерево!"
+
+[58fe72e3ab60]
+en = "You cannot place a figurine in solid rock!"
+ru = "Нельзя поместить статуэтку в сплошной камень!"
+
+[dc4ee081a1bc]
+en = "You cannot fit the figurine on the boulder."
+ru = "Статуэтка не помещается на валуне."
+
+[df2a714ca499]
+en = "You release the figurine and it supposedly transforms."
+ru = "Вы выпускаете статуэтку из рук, и она, должно быть, оживает."
+
+[6850769013e4]
+en = "You release the figurine and it transforms."
+ru = "Вы выпускаете статуэтку из рук, и она оживает."
+
+[6baa8fd2b940]
+en = "You set the figurine beside you and it supposedly transforms."
+ru = "Вы ставите статуэтку рядом с собой, и она, должно быть, оживает."
+
+[ec4b149f0b8d]
+en = "You set the figurine beside you and it transforms."
+ru = "Вы ставите статуэтку рядом с собой, и она оживает."
+
+[b0c693aba44e]
+en = "You set the figurine on the ground and it supposedly transforms."
+ru = "Вы ставите статуэтку на землю, и она, должно быть, оживает."
+
+[0c3a108f1502]
+en = "You set the figurine on the ground and it transforms."
+ru = "Вы ставите статуэтку на землю, и она оживает."
+
+[1e13e9249e13]
+en = "You toss the figurine into the air and it supposedly transforms."
+ru = "Вы подбрасываете статуэтку в воздух, и она, должно быть, оживает."
+
+[e21af3f09c88]
+en = "You toss the figurine into the air and it transforms."
+ru = "Вы подбрасываете статуэтку в воздух, и она оживает."
+
+[69cd2600e6a1]
+en = "%s slip from your %s."
+ru = "{1:pl} выскальзывают у вас из {2:gen}."
+
+[e8521e95a9a0]
+en = "%s slips from your %s."
+ru = "{1} {1:num|выскальзывает|выскальзывают} у вас из {2:gen}."
+
+[68f50796daf4]
+en = "You cover %s with a thick layer of grease."
+ru = "Вы покрываете {1:acc:own} толстым слоем смазки."
+
+[839442e89604]
+en = "Some of the grease gets all over your %s."
+ru = "Часть смазки попадает вам на {1:acc}."
+
+[9ef1e0cbf44c]
+en = "You coat your %s with grease."
+ru = "Вы покрываете {1:acc} смазкой."
+
+[4c5ef0266735]
+en = "%s are empty."
+ru = "{1:pl} пусты."
+
+[413059541569]
+en = "%s seem to be empty."
+ru = "{1:pl}, похоже, пусты."
+
+[49483341a4f6]
+en = "%s seems to be empty."
+ru = "{1}, похоже, {1:gender|пуст|пуста|пусто|пусты}."
+
+[5714fb637a63]
+en = "You feel something shatter."
+ru = "Вы чувствуете, как что-то разлетается вдребезги."
+
+[ea1fd9667a26]
+en = "Oh, wow, look at the pretty shards."
+ru = "Ух ты, какие красивые осколки."
+
+[98be14ea5662]
+en = "A sharp crack shatters %s."
+ru = "С резким треском {1} {1:num|разлетается|разлетаются} вдребезги."
+
+[5820e5e839d8]
+en = "A sharp crack shatters one of %s."
+ru = "С резким треском {1:sg|один|одна|одно} из {1:gen} разлетается вдребезги."
+
+[209229205bb8]
+en = "\"scritch, scritch\""
+ru = "«шкряб, шкряб»"
+
+[0e6fd6eafacb]
+en = "Oh wow, man: Fractals!"
+ru = "Ух ты, чувак: фракталы!"
+
+[1473c7f2abd2]
+en = "%s look a little more polished now."
+ru = "{1:pl} теперь блестят чуть ярче."
+
+[1ab925402f27]
+en = "You must think this is a wetstone, do you?"
+ru = "Вы, верно, думаете, что это мочильный камень, да?"
+
+[4bad9551b4ef]
+en = "%s are a little wetter now."
+ru = "{1:pl} теперь чуть мокрее."
+
+[bf2004935e9b]
+en = "%s is a little wetter now."
+ru = "{1} теперь чуть мокрее."
+
+[3a8fb4e362cf]
+en = "You make black scratch marks on the stone."
+ru = "Вы оставляете на камне чёрные царапины."
+
+[d6c97dd41cd9]
+en = "You make black scratch marks on the stones."
+ru = "Вы оставляете на камнях чёрные царапины."
+
+[a90b7022bb1a]
+en = "You make blue scratch marks on the stone."
+ru = "Вы оставляете на камне синие царапины."
+
+[8c2ef55b3216]
+en = "You make blue scratch marks on the stones."
+ru = "Вы оставляете на камнях синие царапины."
+
+[9a2131874325]
+en = "You make bright green scratch marks on the stone."
+ru = "Вы оставляете на камне ярко-зелёные царапины."
+
+[276cb3617839]
+en = "You make bright green scratch marks on the stones."
+ru = "Вы оставляете на камнях ярко-зелёные царапины."
+
+[7c33091f3edc]
+en = "You make brown scratch marks on the stone."
+ru = "Вы оставляете на камне коричневые царапины."
+
+[c32ccbeeb34a]
+en = "You make brown scratch marks on the stones."
+ru = "Вы оставляете на камнях коричневые царапины."
+
+[86b404279bcf]
+en = "You make cyan scratch marks on the stone."
+ru = "Вы оставляете на камне голубые царапины."
+
+[0ceec2fb59b3]
+en = "You make cyan scratch marks on the stones."
+ru = "Вы оставляете на камнях голубые царапины."
+
+[3beb19aeb8d3]
+en = "You make golden scratch marks on the stone."
+ru = "Вы оставляете на камне золотистые царапины."
+
+[54a67e34e20c]
+en = "You make golden scratch marks on the stones."
+ru = "Вы оставляете на камнях золотистые царапины."
+
+[c0a9ffd90dd0]
+en = "You make gray scratch marks on the stone."
+ru = "Вы оставляете на камне серые царапины."
+
+[e0eed46fa2a0]
+en = "You make gray scratch marks on the stones."
+ru = "Вы оставляете на камнях серые царапины."
+
+[c171eec37f33]
+en = "You make green scratch marks on the stone."
+ru = "Вы оставляете на камне зелёные царапины."
+
+[1eca2ba690f4]
+en = "You make green scratch marks on the stones."
+ru = "Вы оставляете на камнях зелёные царапины."
+
+[709dbf539da8]
+en = "You make magenta scratch marks on the stone."
+ru = "Вы оставляете на камне пурпурные царапины."
+
+[aafd0c73893c]
+en = "You make magenta scratch marks on the stones."
+ru = "Вы оставляете на камнях пурпурные царапины."
+
+[8fdf0cd223ec]
+en = "You make orange scratch marks on the stone."
+ru = "Вы оставляете на камне оранжевые царапины."
+not_terms = ["orange"]
+
+[9138a2545e6d]
+en = "You make orange scratch marks on the stones."
+ru = "Вы оставляете на камнях оранжевые царапины."
+not_terms = ["orange"]
+
+[6c849dfc0195]
+en = "You make red scratch marks on the stone."
+ru = "Вы оставляете на камне красные царапины."
+
+[9dd1271a1dd1]
+en = "You make red scratch marks on the stones."
+ru = "Вы оставляете на камнях красные царапины."
+
+[5e26e3068b18]
+en = "You make scratch marks on the stone."
+ru = "Вы оставляете на камне царапины."
+
+[217aa1f741ef]
+en = "You make scratch marks on the stones."
+ru = "Вы оставляете на камнях царапины."
+
+[da539915c11e]
+en = "You make silvery scratch marks on the stone."
+ru = "Вы оставляете на камне серебристые царапины."
+
+[1fb55d35483c]
+en = "You make silvery scratch marks on the stones."
+ru = "Вы оставляете на камнях серебристые царапины."
+
+[ff588456f9ec]
+en = "You make white scratch marks on the stone."
+ru = "Вы оставляете на камне белые царапины."
+
+[76f8ea2c49b4]
+en = "You make white scratch marks on the stones."
+ru = "Вы оставляете на камнях белые царапины."
+
+[0c11c78430ff]
+en = "You make yellow scratch marks on the stone."
+ru = "Вы оставляете на камне жёлтые царапины."
+
+[6ea263198f50]
+en = "You make yellow scratch marks on the stones."
+ru = "Вы оставляете на камнях жёлтые царапины."
+
+[fbe92b28f15f]
+en = "You see black streaks on the stone."
+ru = "Вы видите чёрные полосы на камне."
+
+[b2732ee53187]
+en = "You see black streaks on the stones."
+ru = "Вы видите чёрные полосы на камнях."
+
+[5a1070b5453a]
+en = "You see blue streaks on the stone."
+ru = "Вы видите синие полосы на камне."
+
+[bee38ee96e64]
+en = "You see blue streaks on the stones."
+ru = "Вы видите синие полосы на камнях."
+
+[ad7f7de1da09]
+en = "You see bright blue streaks on the stone."
+ru = "Вы видите ярко-синие полосы на камне."
+
+[59fb79d9bbcb]
+en = "You see bright blue streaks on the stones."
+ru = "Вы видите ярко-синие полосы на камнях."
+
+[19e201728af1]
+en = "You see bright cyan streaks on the stone."
+ru = "Вы видите ярко-голубые полосы на камне."
+
+[8129deb57708]
+en = "You see bright cyan streaks on the stones."
+ru = "Вы видите ярко-голубые полосы на камнях."
+
+[ee1f37e7e52e]
+en = "You see bright green streaks on the stone."
+ru = "Вы видите ярко-зелёные полосы на камне."
+
+[9ee9906d38ed]
+en = "You see bright green streaks on the stones."
+ru = "Вы видите ярко-зелёные полосы на камнях."
+
+[87b63edf57c1]
+en = "You see bright magenta streaks on the stone."
+ru = "Вы видите ярко-пурпурные полосы на камне."
+
+[3a9b465966ac]
+en = "You see bright magenta streaks on the stones."
+ru = "Вы видите ярко-пурпурные полосы на камнях."
+
+[cf548dd12856]
+en = "You see cyan streaks on the stone."
+ru = "Вы видите голубые полосы на камне."
+
+[9a454d3051bc]
+en = "You see cyan streaks on the stones."
+ru = "Вы видите голубые полосы на камнях."
+
+[6e5cc07ace56]
+en = "You see gray streaks on the stone."
+ru = "Вы видите серые полосы на камне."
+
+[394f6beca1f5]
+en = "You see gray streaks on the stones."
+ru = "Вы видите серые полосы на камнях."
+
+[25a4684c64e6]
+en = "You see green streaks on the stone."
+ru = "Вы видите зелёные полосы на камне."
+
+[46f930bd4ad7]
+en = "You see green streaks on the stones."
+ru = "Вы видите зелёные полосы на камнях."
+
+[67485573b3c3]
+en = "You see magenta streaks on the stone."
+ru = "Вы видите пурпурные полосы на камне."
+
+[443a72b9a8b4]
+en = "You see magenta streaks on the stones."
+ru = "Вы видите пурпурные полосы на камнях."
+
+[2dce22bd67d9]
+en = "You see orange streaks on the stone."
+ru = "Вы видите оранжевые полосы на камне."
+not_terms = ["orange"]
+
+[c83ccce8831e]
+en = "You see orange streaks on the stones."
+ru = "Вы видите оранжевые полосы на камнях."
+not_terms = ["orange"]
+
+[6b1f42af8ed5]
+en = "You see red streaks on the stone."
+ru = "Вы видите красные полосы на камне."
+
+[aa8a1950c7e2]
+en = "You see red streaks on the stones."
+ru = "Вы видите красные полосы на камнях."
+
+[332854953c9f]
+en = "You see waxy streaks on the stone."
+ru = "Вы видите восковые полосы на камне."
+
+[1fe4bd770865]
+en = "You see waxy streaks on the stones."
+ru = "Вы видите восковые полосы на камнях."
+
+[49e95b53d07a]
+en = "You see white streaks on the stone."
+ru = "Вы видите белые полосы на камне."
+
+[2cc31248a4f2]
+en = "You see white streaks on the stones."
+ru = "Вы видите белые полосы на камнях."
+
+[ca4a2d3191c1]
+en = "You see wooden streaks on the stone."
+ru = "Вы видите древесные полосы на камне."
+
+[fcf3373570fd]
+en = "You see wooden streaks on the stones."
+ru = "Вы видите древесные полосы на камнях."
+
+[ec9a4f517679]
+en = "You see yellow streaks on the stone."
+ru = "Вы видите жёлтые полосы на камне."
+
+[22ebca2cab23]
+en = "You see yellow streaks on the stones."
+ru = "Вы видите жёлтые полосы на камнях."
+
+[56443485aae1]
+en = "You can't set a trap here!"
+ru = "Здесь нельзя установить ловушку!"
+
+[b4c330b9d418]
+en = "You can't set a trap in a cloud!"
+ru = "В облаке нельзя установить ловушку!"
+
+[a8539b80c63e]
+en = "You can't set a trap in lava!"
+ru = "В лаве нельзя установить ловушку!"
+
+[894d3c95182f]
+en = "You can't set a trap in midair!"
+ru = "В воздухе нельзя установить ловушку!"
+
+[058c32c2daf9]
+en = "You can't set a trap in this place!"
+ru = "В этом месте нельзя установить ловушку!"
+
+[e82e2e6d18a4]
+en = "You can't set a trap in water!"
+ru = "В воде нельзя установить ловушку!"
+
+[e4627e4cdaec]
+en = "You can't set a trap on the ladder!"
+ru = "На приставной лестнице нельзя установить ловушку!"
+
+[c3a3a57be2f8]
+en = "You can't set a trap on the stairs!"
+ru = "На лестнице нельзя установить ловушку!"
+
+[e1db09c8e71e]
+en = "You can't set a trap underwater!"
+ru = "Под водой нельзя установить ловушку!"
+
+[c05860291f29]
+en = "You can't set a trap while engulfed!"
+ru = "Нельзя установить ловушку, пока вы поглощены!"
+
+[9555d74d5820]
+en = "You can't set a trap while levitating!"
+ru = "Нельзя установить ловушку, левитируя!"
+
+[4d423889b709]
+en = "You can't set a trap while stunned!"
+ru = "Нельзя установить ловушку, пока вы оглушены!"
+
+[dd2e34cc52ed]
+en = "You can't set a trap while swallowed!"
+ru = "Нельзя установить ловушку, пока вы проглочены!"
+
+[6a83ef48e6ac]
+en = "You resume setting %s%s."
+ru = "Вы продолжаете устанавливать {2:acc}.{1:skip}"
+
+[8326ede50e71]
+en = "You aren't very skilled at reaching from %s."
+ru = "Вы не очень-то умеете дотягиваться с {1:gen}."
+
+[00c646fdc396]
+en = "You drop %s!"
+ru = "Вы роняете {1:acc}!"
+
+[675f2eb4aa2a]
+en = "You begin setting %s%s."
+ru = "Вы начинаете устанавливать {2:acc}.{1:skip}"
+
+[dfae86548c39]
+en = "You finish arming %s."
+ru = "Вы заканчиваете взводить {1:acc}."
+
+[537ea253a10e]
+en = "Your trap setting attempt fails."
+ru = "Ваша попытка установить ловушку проваливается."
+
+[817aacd870a4]
+en = "You miss."
+ru = "Вы промахиваетесь."
+
+[3600994795c4]
+en = "There is not enough room to flick your bullwhip."
+ru = "Здесь слишком тесно, чтобы щёлкнуть кнутом."
+
+[398058032548]
+en = "There is too much resistance to flick your bullwhip."
+ru = "Сопротивление воды слишком велико, чтобы щёлкнуть кнутом."
+
+[daed4cc79e38]
+en = "You cause a small splash."
+ru = "Вы поднимаете немного брызг."
+
+[32931e6071e5]
+en = "You whip %s!"
+ru = "Вы хлещете {1:acc}!"
+
+[be9843fb4f1a]
+en = "Why beat a dead horse?"
+ru = "Зачем хлестать дохлую лошадь?"
+
+[69bb2ce0a029]
+en = "You wrap your bullwhip around %s on the %s."
+ru = "Вы обвиваете кнутом {1:acc} на {2:loc}."
+
+[5b96a81fce40]
+en = "The bullwhip slips out of your %s."
+ru = "Кнут выскальзывает у вас из {1:gen}."
+
+[f48ea0d92b1f]
+en = "You wrap your bullwhip around a boulder."
+ru = "Вы обвиваете кнутом валун."
+
+[a06cde216ad2]
+en = "You wrap your bullwhip around something."
+ru = "Вы обвиваете кнутом что-то."
+
+[0caedad98b82]
+en = "You yank yourself out of the pit!"
+ru = "Вы рывком вытягиваете себя из ямы!"
+
+[a6b5c84c5463]
+en = "%s is there that you couldn't see."
+ru = "Там {1}, {1:gender|которого|которую|которое|которых} вы не видели."
+
+[40e03785eb52]
+en = "A monster is there that you couldn't see."
+ru = "Там монстр, которого вы не видели."
+
+[337e435df79c]
+en = "A monster is there that you hadn't noticed."
+ru = "Там монстр, которого вы не заметили."
+
+[89e596eda080]
+en = "It is welded to her %s%c"
+ru = "Оно приварено к её {1:dat}{2}"
+
+[51878cf82941]
+en = "It is welded to his %s%c"
+ru = "Оно приварено к его {1:dat}{2}"
+
+[309312c0900f]
+en = "It is welded to its %s%c"
+ru = "Оно приварено к его {1:dat}{2}"
+
+[1bb5c779024e]
+en = "It is welded to their %s%c"
+ru = "Оно приварено к их {1:dat}{2}"
+
+[16927e9b6f03]
+en = "They are welded to her %s%c"
+ru = "Они приварены к её {1:dat}{2}"
+
+[33d854afb94d]
+en = "They are welded to his %s%c"
+ru = "Они приварены к его {1:dat}{2}"
+
+[fcd75594d5e7]
+en = "They are welded to its %s%c"
+ru = "Они приварены к его {1:dat}{2}"
+
+[03b4b462d4cf]
+en = "They are welded to their %s%c"
+ru = "Они приварены к их {1:dat}{2}"
+
+[c617b4586f9c]
+en = "You yank %s to the %s!"
+ru = "Вы сдёргиваете {1:acc} на {2:acc}!"
+
+[a4835929c0a6]
+en = "You snatch %s!"
+ru = "Вы выхватываете {1:acc}!"
+
+[72db721ae2ea]
+en = "Snatching %s is a fatal mistake."
+ru = "Выхватить {1:acc} — роковая ошибка."
+
+[2a9bbcdcbf73]
+en = "You yank %s from %s %s!"
+ru = "Вы вырываете {1:acc} из {3:of2:gen}!"
+
+[7091d23b6ce8]
+en = "You snap your whip through thin air."
+ru = "Вы щёлкаете кнутом в воздухе."
+
+[91b3ee3d6cb9]
+en = "There's not enough room here to use that."
+ru = "Здесь слишком тесно, чтобы этим пользоваться."
+
+[e6f544dc15b8]
+en = "You can't reach that spot from here."
+ru = "Отсюда вам не дотянуться до того места."
+
+[cf0f17a280be]
+en = "The blade doesn't reach there!"
+ru = "Клинок туда не достаёт!"
+
+[c8fe81d4975a]
+en = "Shkinng!"
+ru = "Шшинг!"
+
+[cff58e7672b3]
+en = "Thump!  Your blow bounces harmlessly off the statue."
+ru = "Бум!  Ваш удар безвредно отскакивает от статуи."
+
+[d0343222fd7b]
+en = "Thump!  Your blow bounces harmlessly off the boulder."
+ru = "Бум!  Ваш удар безвредно отскакивает от валуна."
+
+[616e4df38d05]
+en = "You uselessly attack an unknown obstacle."
+ru = "Вы тщетно атакуете неизвестное препятствие."
+
+[a75de803d2ca]
+en = "You uselessly attack stone."
+ru = "Вы тщетно атакуете камень."
+
+[bbc439aab322]
+en = "You miss; there is no one there to hit."
+ru = "Вы промахиваетесь: там некого бить."
+
+[8c7e6c37ab97]
+en = "You give yourself a facial."
+ru = "Вы делаете себе маску для лица."
+
+[9672294172cc]
+en = "There's more sticky goop all over your %s."
+ru = "У вас на {1:loc} ещё больше липкой массы."
+
+[4312af882b80]
+en = "There's sticky goop all over your %s."
+ru = "У вас {1:gender|весь|вся|всё|все} {1} в липкой массе."
+
+[5607073d4e45]
+en = "You smear royal jelly all over %s."
+ru = "Вы обмазываете {1:acc:own} маточным молочком."
+
+[f7c2e9a4a5c8]
+en = "The %s quiver feebly."
+ru = "{1} слабо {1:num|вздрагивает|вздрагивают}."
+
+[81a22bc3e8ec]
+en = "The %s quivers feebly."
+ru = "{1} слабо {1:num|вздрагивает|вздрагивают}."
+
+[2bcd00bf7132]
+en = "The %s quiver briefly."
+ru = "{1} на миг {1:num|вздрагивает|вздрагивают}."
+
+[7e0a9e8d38d9]
+en = "The %s quivers briefly."
+ru = "{1} на миг {1:num|вздрагивает|вздрагивают}."
+
+[c8b611b0ebbf]
+en = "You snag an object from the %s!"
+ru = "Вы подцепляете предмет с {1:gen}!"
+
+[9f7428713986]
+en = "You pull in %s!"
+ru = "Вы подтягиваете {1:acc} к себе!"
+
+[e8c6290ff100]
+en = "The hook slices through the %s."
+ru = "Крюк рассекает {1:acc}."
+
+[b187aeeaf045]
+en = "You are yanked toward the %s!"
+ru = "Вас рывком утягивает к {1:dat}!"
+
+[6ffd58dac747]
+en = "You hook yourself!"
+ru = "Вы зацепляете крюком {hero:gender|самого|саму} себя!"
+
+[52af66ad892a]
+en = "Your %s are occupied!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:gender|занят|занята|занято|заняты}!"
+
+[61b95977f19f]
+en = "But nothing else happens..."
+ru = "Но больше ничего не происходит..."
+
+[e172da69717f]
+en = "A wall of force smashes down around you!"
+ru = "Вокруг вас обрушивается стена силы!"
+
+[15e26cd6e30a]
+en = "You aren't able to use or apply tools in your current form."
+ru = "В нынешнем облике вы не можете пользоваться инструментами."
+
+[4e6396c8647b]
+en = "You are already covered by a towel."
+ru = "У вас на лице и так полотенце."
+
+[b0a5c2a436b6]
+en = "You are already wearing a blindfold."
+ru = "На вас и так надета повязка на глаза."
+
+[55f28d5bd7f1]
+en = "You are already wearing lenses."
+ru = "На вас и так надеты очки."
+
+[43afc45aaded]
+en = "It rings! ... But no-one answers."
+ru = "Идут гудки! ... Но никто не отвечает."
+
+[195a301405c3]
+en = "You don't want to get the pages even more soggy, do you?"
+ru = "Вы же не хотите, чтобы страницы размокли ещё сильнее?"
+
+[12c15223530f]
+en = "You hear the pages make an unpleasant chuckling sound."
+ru = "Вы слышите неприятное хихиканье страниц."
+
+[def10f976735]
+en = "You hear the pages make an unpleasant rustling sound."
+ru = "Вы слышите неприятный шелест страниц."
+
+[e81753ecbb08]
+en = "You see the pages glow faintly %s."
+ru = "Вы видите, как страницы слабо светятся {1:ins} светом."
+
+[1db0917a19b0]
+en = "You feel the pages tremble."
+ru = "Вы чувствуете, как страницы дрожат."
+
+[924fcfcc40aa]
+en = "The pages feel freshly picked."
+ru = "Страницы на ощупь как свежесорванные."
+
+[49b744472b9b]
+en = "The pages feel rough and dry."
+ru = "Страницы на ощупь шершавые и сухие."
+
+[c6055a13ad2d]
+en = "This spellbook doesn't have much of a plot."
+ru = "У этой книги заклинаний слабоватый сюжет."
+
+[d698fa7ac401]
+en = "This spellbook has nothing written in it."
+ru = "В этой книге заклинаний ничего не написано."
+
+[f2a1b2ef1fad]
+en = "You enjoy the animated initials."
+ru = "Вы любуетесь ожившими буквицами."
+
+[b597ed95730f]
+en = "This looks like it might be interesting to read."
+ru = "Похоже, это было бы интересно почитать."
+
+[3a78aaae71c8]
+en = "The ink in this spellbook is barely visible."
+ru = "Чернила в этой книге заклинаний едва видны."
+
+[f2bf8cab130d]
+en = "The ink in this spellbook is extremely faded."
+ru = "Чернила в этой книге заклинаний очень сильно выцвели."
+
+[560f26f6de68]
+en = "The ink in this spellbook is fresh."
+ru = "Чернила в этой книге заклинаний ещё свежие."
+
+[5d0dbed5f127]
+en = "The ink in this spellbook is slightly faded."
+ru = "Чернила в этой книге заклинаний слегка выцвели."
+
+[3b59aa75ee90]
+en = "The ink in this spellbook is very faded."
+ru = "Чернила в этой книге заклинаний сильно выцвели."
+
+[02ace7f084b2]
+en = "The magical ink in this spellbook is barely visible."
+ru = "Волшебные чернила в этой книге заклинаний едва видны."
+
+[d1f1259482e9]
+en = "The magical ink in this spellbook is extremely faded."
+ru = "Волшебные чернила в этой книге заклинаний очень сильно выцвели."
+
+[f23b8d61f3b2]
+en = "The magical ink in this spellbook is very faded."
+ru = "Волшебные чернила в этой книге заклинаний сильно выцвели."
+
+[79fe8f8969d4]
+en = "You flip %s."
+ru = "Вы подбрасываете {1:acc}."
+
+[33d8724d93c5]
+en = "It tumbles away."
+ru = "Монета, кувыркаясь, уплывает прочь."
+
+[563a6b802a70]
+en = "It slips between your %s."
+ru = "Монета проскальзывает у вас между {1:ins}."
+
+[467ed1a57f28]
+en = "The coin miraculously lands on its edge!"
+ru = "Монета чудом встаёт на ребро!"
+
+[5802a715fc8d]
+en = "Wow, a double header!"
+ru = "Ух ты, двуглавый орёл!"
+
+[c635f93673b5]
+en = "It comes up heads."
+ru = "Выпадает орёл."
+
+[9630e702fee3]
+en = "It comes up tails."
+ru = "Выпадает решка."
+
+[24f965c1b446]
+en = "You see some %s %s out of %s pack!"
+ru = "Вы видите, как {1} {1:num|появляется|появляются} из рюкзака {3:gen}!{2:skip}"
+
+[2604bd032e2a]
+en = "You see some %s %s out of empty water!"
+ru = "Вы видите, как {1} {1:num|появляется|появляются} прямо из воды!{2:skip}"
+
+[6ce3c74e53f3]
+en = "You see some %s %s out of thin air!"
+ru = "Вы видите, как {1} {1:num|появляется|появляются} прямо из воздуха!{2:skip}"
+
+[cf5ac0ade591]
+en = "You dream that you see some %s %s out of %s pack!"
+ru = "Вам снится, что {1} {1:num|появляется|появляются} из рюкзака {3:gen}!{2:skip}"
+
+[229f8a781bd2]
+en = "You dream that you see some %s %s out of empty water!"
+ru = "Вам снится, что {1} {1:num|появляется|появляются} прямо из воды!{2:skip}"
+
+[e6875bfd6ac2]
+en = "You dream that you see some %s %s out of thin air!"
+ru = "Вам снится, что {1} {1:num|появляется|появляются} прямо из воздуха!{2:skip}"
+
+[0b0115e17f35]
+en = "You wrap your bullwhip around %s."
+ru = "Вы обвиваете кнутом {1:acc}."
+
+[e827ddeb22d1]
+en = "You uselessly attack %s."
+ru = "Вы тщетно атакуете {1:acc}."
