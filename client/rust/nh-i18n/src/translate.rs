@@ -469,14 +469,21 @@ impl Translator {
     }
 
     /// The whole text as a name the lexicon reads, capitalised as it was,
-    /// between the spaces it had ("  wakizashi [short sword]", a line of
-    /// the discoveries).
+    /// between the spaces it had and after the discoveries' mark: "  book
+    /// (paperback)" (known from the start), "* potion of healing (bubbly)"
+    /// (discovered), whose look agrees with the name only read with it.
+    /// A name in a list keeps its own case ("  Uruk-hai shield" is «щит
+    /// урук-хаев» there).
     fn whole_name(&self, text: &str) -> Option<Output> {
-        let bare = text.trim();
+        let rest = text.trim_start();
+        let start = match rest.strip_prefix("* ") {
+            Some(name) => text.len() - name.trim_start().len(),
+            None => text.len() - rest.len(),
+        };
+        let bare = text[start..].trim_end();
         let p = self.names.parse(NameKind::Any, bare)?;
         let ru = p.form(Case::Nom);
-        let upper = bare.chars().next().is_some_and(char::is_uppercase);
-        let start = text.len() - text.trim_start().len();
+        let upper = start == 0 && bare.chars().next().is_some_and(char::is_uppercase);
         Some(Output {
             text: format!(
                 "{}{}{}",

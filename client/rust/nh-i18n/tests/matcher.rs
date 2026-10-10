@@ -743,6 +743,30 @@ fn a_name_keeps_its_indent() {
 }
 
 #[test]
+fn a_discovery_is_its_mark_and_a_name() {
+    // "%s %s (%s)" read the mark, the name and the look apart, and the
+    // look did not agree: «* зелье лечения (пузырящийся)»
+    let t = translator();
+    for (en, ru) in [
+        (
+            "* potion of healing (bubbly)",
+            "* зелье лечения (пузырящееся)",
+        ),
+        (
+            "* spellbook of protection (dark blue)",
+            "* книга защиты (тёмно-синяя)",
+        ),
+    ] {
+        let out = t.window_line(en);
+        assert_eq!(
+            (out.text.as_str(), out.status),
+            (ru, Status::Translated),
+            "{en}"
+        );
+    }
+}
+
+#[test]
 fn a_format_of_conversions_alone_by_its_arguments() {
     // prinv(): pline("%s%s%s%s", prefix, " ", xprname(), total); the text
     // whole read «Вы ловите orcish dagger! e - орочий кинжал.»
