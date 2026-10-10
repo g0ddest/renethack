@@ -161,9 +161,25 @@ impl Translator {
                 }
             }
             // a format of conversions alone ("%s %s%s%s") says nothing its
-            // derived templates did not: the text decides
+            // derived templates did not: the text decides. One that only
+            // glues texts ("%s%s%s%s", prinv()'s "You catch the orcish
+            // dagger!", " ", "e - an orcish dagger.") may be read text by
+            // text, if that leaves less English
             if self.catalog.templates()[i].letters() == 0 {
-                return self.by_text(text, Channel::Message);
+                let whole = self.by_text(text, Channel::Message);
+                let glued = base.segments.iter().all(|s| matches!(s, Segment::Conv(_)));
+                if !glued || english_words(&whole.text) == 0 {
+                    return whole;
+                }
+                return match self.by_args(base, args) {
+                    Some(parts)
+                        if rank(parts.status) <= rank(whole.status)
+                            && english_words(&parts.text) < english_words(&whole.text) =>
+                    {
+                        parts
+                    }
+                    _ => whole,
+                };
             }
             // the generic template with P7's arguments: a literal argument
             // is a piece, translated on its own
@@ -183,6 +199,40 @@ impl Translator {
             return Output::english(text, Status::Untranslated, Some(shown));
         }
         self.by_text(text, Channel::Message)
+    }
+
+    /// A message of a format of conversions alone as its arguments, each
+    /// translated as a text of its own: None when they do not fit it.
+    fn by_args(&self, t: &Template, args: &[Arg]) -> Option<Output> {
+        let shown = shown_args(t, args)?;
+        let mut shown = shown.iter();
+        let mut text = String::new();
+        let mut parts = Vec::new();
+        for segment in &t.segments {
+            match segment {
+                Segment::Lit(l) => text.push_str(l),
+                Segment::Conv(_) => {
+                    let arg = shown.next()?;
+                    if arg.chars().any(char::is_alphabetic) {
+                        let out = self.by_text(arg, Channel::Message);
+                        text.push_str(&out.text);
+                        parts.push(out);
+                    } else {
+                        text.push_str(arg);
+                    }
+                }
+            }
+        }
+        let status = worst(&parts);
+        let template = parts
+            .iter()
+            .find(|o| o.status == status)
+            .and_then(|o| o.template.clone());
+        Some(Output {
+            text,
+            status,
+            template,
+        })
     }
 
     /// A line of a menu, a question, a heading.
@@ -1016,13 +1066,18 @@ fn worst(parts: &[Output]) -> Status {
     parts
         .iter()
         .map(|o| o.status)
-        .max_by_key(|s| match s {
-            Status::Translated => 0,
-            Status::Partial => 1,
-            Status::Untranslated => 2,
-            Status::Unknown => 3,
-        })
+        .max_by_key(|s| rank(*s))
         .unwrap_or(Status::Translated)
+}
+
+/// How far a status is from translated.
+fn rank(status: Status) -> u8 {
+    match status {
+        Status::Translated => 0,
+        Status::Partial => 1,
+        Status::Untranslated => 2,
+        Status::Unknown => 3,
+    }
 }
 
 /// The arguments P7 sent for template `t`, one printed text per

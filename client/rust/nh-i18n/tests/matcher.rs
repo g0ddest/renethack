@@ -742,6 +742,40 @@ fn a_name_keeps_its_indent() {
     );
 }
 
+#[test]
+fn a_format_of_conversions_alone_by_its_arguments() {
+    // prinv(): pline("%s%s%s%s", prefix, " ", xprname(), total); the text
+    // whole read «Вы ловите orcish dagger! e - орочий кинжал.»
+    let t = translator();
+    let args = |a: [&str; 4]| a.map(|s| Arg::Str(s.into()));
+    let out = t.message(
+        Some("%s%s%s%s"),
+        &args([
+            "You catch the orcish dagger!",
+            " ",
+            "e - an orcish dagger.",
+            "",
+        ]),
+        "You catch the orcish dagger! e - an orcish dagger.",
+    );
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        (
+            "Вы ловите орочий кинжал! e - орочий кинжал.",
+            Status::Translated
+        )
+    );
+    let out = t.message(
+        Some("%s%s%s%s"),
+        &args(["", "", "a - a +2 dart (at the ready)", " (21 in total)."]),
+        "a - a +2 dart (at the ready) (21 in total).",
+    );
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        ("a - +2 дротик (наготове) (всего 21).", Status::Translated)
+    );
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {
