@@ -341,11 +341,17 @@ fn possessive(s: &str) -> Option<(&str, &str)> {
 /// "Medusa's corpse": the owner is the corpse's monster.
 fn is_unique_corpse(index: &Index, who: &str, rest: &str) -> bool {
     let who = strip_word(who, "the").unwrap_or(who);
-    index.monsters.contains_key(who)
-        && (rest.ends_with(" corpse")
-            || rest.ends_with(" corpses")
-            || rest == "corpse"
-            || rest == "corpses")
+    let Some(before) = rest
+        .strip_suffix("corpses")
+        .or_else(|| rest.strip_suffix("corpse"))
+        .map(str::trim_end)
+    else {
+        return false;
+    };
+    // "the gnome's newt corpse" is a newt's corpse the gnome holds
+    let words: Vec<&str> = before.split(' ').filter(|w| !w.is_empty()).collect();
+    let another = (0..words.len()).any(|i| index.monsters.contains_key(&words[i..].join(" ")));
+    index.monsters.contains_key(who) && !another
 }
 
 /// "2nd " -> 2.
@@ -533,7 +539,13 @@ impl ObjectName {
             name.unit = lex.noun("part", unit).cloned();
         }
         if let Some(Owner::Of(m)) = &self.owner {
-            name.tails.insert(0, Tail::Genitive(Box::new(m.ru(lex))));
+            // after the monster a corpse is of: труп василиска лорда гномов
+            let at = name
+                .tails
+                .iter()
+                .take_while(|t| matches!(t, Tail::Genitive(_)))
+                .count();
+            name.tails.insert(at, Tail::Genitive(Box::new(m.ru(lex))));
         }
         if let Some(a) = &self.actual {
             name.tails
@@ -845,6 +857,11 @@ mod tests {
             "надкусанный труп Медузы"
         );
         assert_eq!(ru("the Oracle's corpse", Case::Nom), "труп Оракула");
+        // a corpse a monster holds
+        assert_eq!(
+            ru("the gnome lord's cockatrice corpse", Case::Acc),
+            "труп василиска лорда гномов"
+        );
         assert_eq!(ru("a tin of newt meat", Case::Nom), "банка мяса тритона");
         assert_eq!(
             ru("a tin of pickled newt meat", Case::Nom),
