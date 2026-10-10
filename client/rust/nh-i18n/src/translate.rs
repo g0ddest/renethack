@@ -767,13 +767,23 @@ impl Translator {
             return (Value::Phrase(p), true);
         }
         // a name read whole is the surest reading, even of a slot that
-        // says nothing of its kind: "the goblin" is no "the %s"
+        // says nothing of its kind: "the goblin" is no "the %s". A name the
+        // lexicon kept as it was is only a guess (where a monster is
+        // expected, any text is a name): a template that makes the text
+        // reads it better ("level 3"), and words of English are no name
+        // ("this dungeon level", "j - a newt")
+        let mut kept = None;
         if let Some(p) = self.names.parse(name, shown) {
-            return (Value::Phrase(p), true);
+            if p.form(Case::Nom).chars().any(is_russian) {
+                return (Value::Phrase(p), true);
+            }
+            kept = Some(p);
         }
         // an owner, read without its "'s" ("Shan Lai Ching's altar"): the
         // Russian says whose by a case
-        if let Some(p) = owner(shown).and_then(|o| self.names.parse(name, o)) {
+        if kept.is_none()
+            && let Some(p) = owner(shown).and_then(|o| self.names.parse(name, o))
+        {
             return (Value::Phrase(p), true);
         }
         let found = if depth < MAX_NESTING {
@@ -798,7 +808,9 @@ impl Translator {
             }
             if let Some(out) = self.render_or_base(&m, shown, depth + 1) {
                 let ok = out.status == Status::Translated;
-                return (Value::Text(out.text), ok);
+                if ok || kept.is_none() {
+                    return (Value::Text(out.text), ok);
+                }
             }
         }
         // another template may hold it all, as it may a whole text ("b - a
@@ -811,7 +823,10 @@ impl Translator {
         }
         // what stays English: a name or a code of one word (a pet's name,
         // inventory letters "aefgh") is shown as it is; words are not
-        (Value::Text(shown.to_string()), verbatim(shown))
+        match kept {
+            Some(p) => (Value::Phrase(p), verbatim(shown)),
+            None => (Value::Text(shown.to_string()), verbatim(shown)),
+        }
     }
 }
 
@@ -868,6 +883,11 @@ fn splits<'a>(
         }
     }
     true
+}
+
+/// Is a letter Russian?
+fn is_russian(c: char) -> bool {
+    matches!(c, 'а'..='я' | 'А'..='Я' | 'ё' | 'Ё')
 }
 
 /// The words of a text in Latin letters.
@@ -1066,11 +1086,12 @@ fn fit(run: &[Tok], text: &str) -> Option<Vec<String>> {
 }
 
 /// Is a text fine shown as it is in a Russian sentence: one word at most
-/// (a name, letters, a number), not English words?
+/// (a name, letters, a number), not English words? An article is a word
+/// ("j - a newt").
 fn verbatim(s: &str) -> bool {
     letter_list(s)
         || s.split(|c: char| !c.is_alphabetic())
-            .filter(|w| w.chars().count() >= 2)
+            .filter(|w| w.chars().count() >= 2 || *w == "a" || *w == "A")
             .count()
             <= 1
 }
@@ -1403,7 +1424,7 @@ mod tests {
         for letters in ["bce-hB", "$abd-fhi", "aeg-ir", "a-zA-Z", "x"] {
             assert!(verbatim(letters), "{letters}");
         }
-        for words in ["pick-axe", "long sword", "be-all", "zy-ba"] {
+        for words in ["pick-axe", "long sword", "be-all", "zy-ba", "j - a newt"] {
             assert!(!verbatim(words), "{words}");
         }
     }

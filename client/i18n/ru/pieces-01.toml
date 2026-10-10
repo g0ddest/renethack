@@ -61,3 +61,18 @@ ru = "{1:sg|один|одна|одно} из {1:gen}"
 [2685117d8cb6]
 en = "%s corpse"
 ru = "труп {1:gen}"
+
+# A level the question about its name asks of (dungeon.c query_annotation;
+# another level's is describe_level()'s, "Dlvl:" made "level ")
+
+[ffd2438c8734]
+en = "this dungeon level"
+ru = "этот уровень подземелья"
+forms = ["этот уровень подземелья", "этого уровня подземелья", "этому уровню подземелья", "этот уровень подземелья", "этим уровнем подземелья", "этом уровне подземелья"]
+gender = "m"
+
+[71b635ba5af2]
+en = "level %d"
+ru = "уровень {1}"
+forms = ["уровень {1}", "уровня {1}", "уровню {1}", "уровень {1}", "уровнем {1}", "уровне {1}"]
+gender = "m"

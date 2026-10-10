@@ -663,6 +663,37 @@ fn the_time_a_game_took() {
     }
 }
 
+#[test]
+fn a_text_where_a_monster_is_expected_is_no_name() {
+    // "What do you want to call %s?" asks of a monster or a level: the
+    // lexicon takes any text there for a name, and kept it English
+    let t = translator();
+    for (en, ru) in [
+        (
+            "What do you want to call this dungeon level?",
+            "Как вы хотите назвать этот уровень подземелья?",
+        ),
+        (
+            "What do you want to call level 3?",
+            "Как вы хотите назвать уровень 3?",
+        ),
+        (
+            "What do you want to call Fido?",
+            "Как вы хотите назвать Fido?",
+        ),
+    ] {
+        let out = t.text(en);
+        assert_eq!(
+            (out.text.as_str(), out.status),
+            (ru, Status::Translated),
+            "{en}"
+        );
+    }
+    // words no template makes stay English, and the line says so
+    let out = t.text("What do you want to call some odd place?");
+    assert_eq!(out.status, Status::Partial, "{}", out.text);
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {

@@ -34250,6 +34250,11 @@ let me run my fingers through your %s  [240105a9f15c]
   f   Дай мне запустить пальцы в твою крысу
   n   Дай мне запустить пальцы в твоё копьё
   pl  Дай мне запустить пальцы в твои 3 стрелы
+level %d  [71b635ba5af2]
+  m   Уровень 1
+  f   Уровень 3
+  n   Уровень 5
+  pl  Уровень 21
 level generation can overwrite stairs  [9ae9b833c7d2]
   =   Создание уровня может стереть лестницы
 lhurgoyf  [9dd07deb1432]
@@ -35351,6 +35356,8 @@ then mercilessly snuffs out your life.  [1c3993f7f6ff]
   =   А затем безжалостно гасит вашу жизнь.
 third eye  [01c1d2b94f46]
   =   Третий глаз
+this dungeon level  [ffd2438c8734]
+  =   Этот уровень подземелья
 three-headed monkey  [1c95db689dc2]
   =   Трёхголовая мартышка
 threshold for "there are many objects here"  [1c14fe0fc47d]
