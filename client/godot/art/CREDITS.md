@@ -7,7 +7,7 @@ the recipe in `sources.json` and checks the downloads against `art.lock.json`.
 
 | Where | What | Author | Source |
 |---|---|---|---|
-| `cc0/polyhaven/textures/` | stone tiles, castle brick, dirt floor, rock walls, old planks, rusty metal, marble, stone walls, castle wall, monastery and rock-tile floors, volcanic rock tiles (1K) | Poly Haven artists | https://polyhaven.com/textures |
+| `cc0/polyhaven/textures/` | stone tiles, castle brick, dirt floor, a rock wall, old planks, rusty metal, marble, stone walls, castle wall, monastery and rock-tile floors, volcanic rock tiles (1K) | Poly Haven artists | https://polyhaven.com/textures |
 | `cc0/polyhaven/models/` | street rat, boulder, dead tree trunk, gothic statue; estoc, dagger, mace, war hammer, kite shield, three axes, oil lamp, lantern, pick; barrels, crates, treasure chest, stone fire pit; large castle door, large iron gate, lantern chandelier, wooden candlestick, brass candleholders (1K textures) | Poly Haven artists | https://polyhaven.com/models |
 | `cc0/quaternius/outfits/` | Modular Character Outfits – Fantasy (Standard): peasant, ranger | Quaternius | https://quaternius.itch.io/modular-character-outfits-fantasy |
 | `cc0/quaternius/animations/` | Universal Animation Library (Standard) | Quaternius | https://quaternius.itch.io/universal-animation-library |

@@ -14,8 +14,7 @@
   {"id": "castle_wall_varriation", "use": "dungeon walls, variation"},
   {"id": "monastery_stone_floor", "use": "room floors (dark irregular flags)"},
   {"id": "rock_tile_floor_02", "use": "room floors (dark square flags)"},
-  {"id": "volcanic_rock_tiles", "use": "Gehennom walls and floors"},
-  {"id": "rock_wall_13", "use": "crypt and Gehennom walls (dark rubble); no material reads it now"}
+  {"id": "volcanic_rock_tiles", "use": "Gehennom walls and floors"}
  ],
  "polyhaven_models": [
   {"id": "street_rat", "use": "rats"},
