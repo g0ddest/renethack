@@ -852,9 +852,24 @@ impl Art {
     pub fn footprint(&mut self, look: &ModelLook) -> [f32; 2] {
         let spent = self.spent.take();
         let mut m = self.take(look);
-        // as it stands: its idle's pose on the bones now
+        // as it stands: its idle's pose on the bones now, and what it holds
+        // and wears on them where they are (an attachment follows its bone
+        // only when the skeleton next updates: a club in a hand stood out
+        // where the hand rests, arms spread)
         if let Some(p) = m.player.as_mut() {
             p.advance(0.0);
+        }
+        for node in m
+            .node
+            .find_children_ex("*")
+            .type_("BoneAttachment3D")
+            .owned(false)
+            .done()
+            .iter_shared()
+        {
+            if let Ok(mut bone) = node.try_cast::<BoneAttachment3D>() {
+                bone.on_skeleton_update();
+            }
         }
         // in the model's own turn: the map turns its holder
         let reach = reach_of(&m.node);
@@ -3463,39 +3478,67 @@ fn value_noise(p: Vector3) -> f32 {
 }
 
 /// The triangles of `mesh` whose corners all `keep` (in the mesh's own
-/// rest pose), every vertex array kept as it is.
+/// rest pose), with only the vertices they use (a head cut from a whole
+/// body keeps no buffer of the body, and its bounds are the head's).
 fn cut(mesh: &Gd<ArrayMesh>, keep: impl Fn(Vector3) -> bool) -> CutBody {
+    cut_out(mesh, keep, 0.0)
+}
+
+/// As `cut`, every vertex kept moved `swell` out along its normal (a layer
+/// over the same body: a glove over a hand).
+fn cut_out(mesh: &Gd<ArrayMesh>, keep: impl Fn(Vector3) -> bool, swell: f32) -> CutBody {
     use godot::classes::mesh::{ArrayFormat, ArrayType, PrimitiveType};
+    let slot = |a: ArrayType| a.ord() as usize;
     let mut out = ArrayMesh::new_gd();
     let mut kept_surfaces = Vec::new();
     for i in 0..mesh.get_surface_count() {
         let mut arrays = mesh.surface_get_arrays(i);
-        let verts: PackedVector3Array = arrays.at(ArrayType::VERTEX.ord() as usize).to();
-        let index: PackedInt32Array = arrays.at(ArrayType::INDEX.ord() as usize).to();
-        let above = |k: i32| verts.get(k as usize).is_some_and(&keep);
-        let kept: Vec<i32> = index
-            .as_slice()
-            .chunks(3)
-            .filter(|t| t.len() == 3 && t.iter().all(|&k| above(k)))
-            .flatten()
-            .copied()
-            .collect();
-        if kept.is_empty() {
+        let verts: PackedVector3Array = arrays.at(slot(ArrayType::VERTEX)).to();
+        let index: PackedInt32Array = arrays.at(slot(ArrayType::INDEX)).to();
+        let verts = verts.as_slice();
+        let normals: PackedVector3Array = arrays
+            .at(slot(ArrayType::NORMAL))
+            .try_to()
+            .unwrap_or_default();
+        let normals = normals.as_slice();
+        // the triangles kept, their corners numbered anew in the order met
+        let inside = |k: i32| verts.get(k as usize).is_some_and(|&v| keep(v));
+        let mut renumbered: HashMap<i32, i32> = HashMap::new();
+        let mut used: Vec<usize> = Vec::new();
+        let mut triangles: Vec<i32> = Vec::new();
+        for t in index.as_slice().chunks_exact(3) {
+            if !t.iter().all(|&k| inside(k)) {
+                continue;
+            }
+            for &k in t {
+                let n = *renumbered.entry(k).or_insert_with(|| {
+                    used.push(k as usize);
+                    used.len() as i32 - 1
+                });
+                triangles.push(n);
+            }
+        }
+        if triangles.is_empty() {
             continue;
         }
-        arrays.set(
-            ArrayType::INDEX.ord() as usize,
-            &PackedInt32Array::from(kept.as_slice()).to_variant(),
-        );
-        // extra UV and colour sets come as custom channels whose formats
-        // would have to be passed too; nothing here uses them
-        for custom in [
-            ArrayType::CUSTOM0,
-            ArrayType::CUSTOM1,
-            ArrayType::CUSTOM2,
-            ArrayType::CUSTOM3,
-        ] {
-            arrays.set(custom.ord() as usize, &Variant::nil());
+        for s in 0..arrays.len() {
+            let kept = if s == slot(ArrayType::INDEX) {
+                PackedInt32Array::from(triangles.as_slice()).to_variant()
+            } else if s == slot(ArrayType::VERTEX) {
+                let out_by = |k: usize| match normals.get(k) {
+                    Some(&n) if swell != 0.0 => verts[k] + n * swell,
+                    _ => verts[k],
+                };
+                let moved: Vec<Vector3> = used.iter().map(|&k| out_by(k)).collect();
+                PackedVector3Array::from(moved.as_slice()).to_variant()
+            } else if (slot(ArrayType::CUSTOM0)..=slot(ArrayType::CUSTOM3)).contains(&s) {
+                // extra UV and colour sets come as custom channels whose
+                // formats would have to be passed too; nothing here uses them
+                Variant::nil()
+            } else {
+                per_vertex(&arrays.at(s), &used, verts.len())
+            };
+            arrays.set(s, &kept);
         }
         let eight = mesh.surface_get_format(i).ord() & ArrayFormat::FLAG_USE_8_BONE_WEIGHTS.ord();
         out.add_surface_from_arrays_ex(PrimitiveType::TRIANGLES, &arrays)
@@ -3508,6 +3551,49 @@ fn cut(mesh: &Gd<ArrayMesh>, keep: impl Fn(Vector3) -> bool) -> CutBody {
         kept_surfaces.push(i as usize);
     }
     (out, kept_surfaces)
+}
+
+/// A per-vertex array (normals, tangents, UVs, colours, bones, weights) of
+/// `count` vertices, kept for the vertices `used` only, in their order; nil
+/// for what is not one.
+fn per_vertex(value: &Variant, used: &[usize], count: usize) -> Variant {
+    fn pick<T: Copy>(all: &[T], used: &[usize], count: usize) -> Option<Vec<T>> {
+        let stride = all
+            .len()
+            .checked_div(count)
+            .filter(|&k| k > 0 && all.len() == k * count)?;
+        let block = |k: usize| all[k * stride..(k + 1) * stride].iter().copied();
+        Some(used.iter().flat_map(|&k| block(k)).collect())
+    }
+    match value.get_type() {
+        VariantType::PACKED_VECTOR3_ARRAY => {
+            let a: PackedVector3Array = value.to();
+            pick(a.as_slice(), used, count)
+                .map(|v| PackedVector3Array::from(v.as_slice()).to_variant())
+        }
+        VariantType::PACKED_VECTOR2_ARRAY => {
+            let a: PackedVector2Array = value.to();
+            pick(a.as_slice(), used, count)
+                .map(|v| PackedVector2Array::from(v.as_slice()).to_variant())
+        }
+        VariantType::PACKED_FLOAT32_ARRAY => {
+            let a: PackedFloat32Array = value.to();
+            pick(a.as_slice(), used, count)
+                .map(|v| PackedFloat32Array::from(v.as_slice()).to_variant())
+        }
+        VariantType::PACKED_INT32_ARRAY => {
+            let a: PackedInt32Array = value.to();
+            pick(a.as_slice(), used, count)
+                .map(|v| PackedInt32Array::from(v.as_slice()).to_variant())
+        }
+        VariantType::PACKED_COLOR_ARRAY => {
+            let a: PackedColorArray = value.to();
+            pick(a.as_slice(), used, count)
+                .map(|v| PackedColorArray::from(v.as_slice()).to_variant())
+        }
+        _ => None,
+    }
+    .unwrap_or_default()
 }
 
 /// `mesh` moved rigidly by `by` in its own rest pose (its normals and

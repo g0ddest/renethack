@@ -7,12 +7,11 @@
 
 use std::collections::HashMap;
 
-use godot::classes::mesh::{ArrayFormat, ArrayType, PrimitiveType};
 use godot::classes::{ArrayMesh, Material, Mesh, MeshInstance3D, Node, Skeleton3D, Skin};
 use godot::prelude::*;
 use nh_art::{Gear, Look};
 
-use super::{Art, cut, is_skin, mul, rgb};
+use super::{Art, cut_out, is_skin, mul, rgb};
 
 /// The names of the meshes put on the skeleton, each followed by a number
 /// (self-tests look for them).
@@ -134,42 +133,8 @@ pub(super) fn has_hands(mesh: &Gd<ArrayMesh>, wrist: f32) -> bool {
 /// glove's thickness out along their normals. None when it has no hand.
 fn gloves_over(mesh: &Gd<ArrayMesh>, skin: &Gd<Skin>) -> Option<Gd<ArrayMesh>> {
     let wrist = wrist_of(skin).filter(|w| has_hands(mesh, *w))?;
-    let (hands, _) = cut(mesh, |v| v.x.abs() > wrist - CUFF);
-    let out = swollen(&hands, GLOVE)?;
+    let (out, _) = cut_out(mesh, |v| v.x.abs() > wrist - CUFF, GLOVE);
     (out.get_surface_count() > 0).then_some(out)
-}
-
-/// `mesh` with every vertex moved `by` out along its normal (a layer
-/// over the same body); its surfaces keep their materials.
-pub(super) fn swollen(mesh: &Gd<ArrayMesh>, by: f32) -> Option<Gd<ArrayMesh>> {
-    let hands = mesh;
-    let mut out = ArrayMesh::new_gd();
-    for i in 0..hands.get_surface_count() {
-        let mut arrays = hands.surface_get_arrays(i);
-        let verts: PackedVector3Array = arrays.at(ArrayType::VERTEX.ord() as usize).to();
-        let normals: PackedVector3Array = arrays.at(ArrayType::NORMAL.ord() as usize).to();
-        let out_by: Vec<Vector3> = verts
-            .as_slice()
-            .iter()
-            .zip(normals.as_slice())
-            .map(|(v, n)| *v + *n * by)
-            .collect();
-        if out_by.len() != verts.len() {
-            return None;
-        }
-        arrays.set(
-            ArrayType::VERTEX.ord() as usize,
-            &PackedVector3Array::from(out_by.as_slice()).to_variant(),
-        );
-        let eight = hands.surface_get_format(i).ord() & ArrayFormat::FLAG_USE_8_BONE_WEIGHTS.ord();
-        out.add_surface_from_arrays_ex(PrimitiveType::TRIANGLES, &arrays)
-            .flags(ArrayFormat::from_ord(eight))
-            .done();
-        if let Some(m) = hands.surface_get_material(i) {
-            out.surface_set_material(i, &m);
-        }
-    }
-    Some(out)
 }
 
 impl Art {
