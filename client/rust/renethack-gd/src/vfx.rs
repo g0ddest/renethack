@@ -334,6 +334,8 @@ struct Pending {
 const POOL: usize = 6;
 /// Splats kept on the floor at once; each fades out over its life.
 const SPLATS: usize = 24;
+/// How much darker a splat lies than the creature's own colour.
+const SPLAT_DARK: f32 = 0.5;
 const SPLAT_SECS: f32 = 14.0;
 const BEAM_SECS: f32 = 0.45;
 /// A ray's ribbon is this wide (metres); a bolt of lightning's, wider (its
@@ -370,7 +372,7 @@ pub struct Vfx {
     /// The particle textures of recipes that have their own (RPicster's
     /// starbursts and flares), else the soft disc.
     textures: HashMap<Recipe, Gd<Texture2D>>,
-    splat: Gd<Texture2D>,
+    splats_tex: Vec<Gd<Texture2D>>,
     emitters: HashMap<Recipe, Vec<Emitter>>,
     flashes: Vec<Flash>,
     beams: Vec<Beam>,
@@ -425,26 +427,87 @@ pub fn frame_texture() -> Gd<Texture2D> {
     })
 }
 
-/// An irregular splat: a blob with droplets around it.
-fn splat_texture() -> Gd<Texture2D> {
-    let drops = [
-        (0.78, 0.3, 0.06),
-        (0.2, 0.72, 0.05),
-        (0.7, 0.8, 0.04),
-        (0.25, 0.25, 0.035),
-        (0.88, 0.6, 0.03),
-    ];
+/// How many shapes of splat there are (each splat takes one by where it
+/// falls).
+const SPLAT_SHAPES: u32 = 3;
+
+/// A number in 0..1 for (`seed`, `i`): the same every time.
+fn hash01(seed: u32, i: u32) -> f32 {
+    let mut h = seed.wrapping_mul(0x9e37_79b1) ^ i.wrapping_mul(0x85eb_ca77);
+    h ^= h >> 15;
+    h = h.wrapping_mul(0x2c1b_3c6d);
+    h ^= h >> 12;
+    (h & 0xffff) as f32 / 65535.0
+}
+
+/// A splat of blood, shape `seed`: a pool of a few blobs run together, its
+/// edge wavering in no regular way, thicker (more opaque) in its middle,
+/// and a spatter flung off to one side in drops that thin out with
+/// distance, some of them drawn out along the way they flew. Lopsided,
+/// so no two turns of it look alike.
+fn splat_texture(seed: u32) -> Gd<Texture2D> {
+    let r = |i: u32| hash01(seed, i);
+    // the pool: blobs about the middle, pushed a little off it
+    let blobs: Vec<(f32, f32, f32)> = (0..6)
+        .map(|i| {
+            let (a, d) = (r(i * 3) * std::f32::consts::TAU, r(i * 3 + 1) * 0.09);
+            (
+                0.46 + d * a.cos(),
+                0.5 + d * a.sin(),
+                0.1 + 0.1 * r(i * 3 + 2),
+            )
+        })
+        .collect();
+    // its edge's waver: three waves of no common period
+    let waves: Vec<(f32, f32, f32)> = [2.0f32, 3.0, 7.0]
+        .into_iter()
+        .enumerate()
+        .map(|(i, f)| {
+            (
+                f,
+                0.01 + 0.02 * r(40 + i as u32),
+                r(50 + i as u32) * std::f32::consts::TAU,
+            )
+        })
+        .collect();
+    // the spatter: drops along a way out of the pool, smaller further
+    let way = r(60) * std::f32::consts::TAU;
+    let drops: Vec<(f32, f32, f32, f32)> = (0..9)
+        .map(|i| {
+            let t = i as f32 / 8.0;
+            let dist = 0.27 + 0.18 * t + 0.03 * r(70 + i);
+            let side = (r(80 + i) - 0.5) * (0.12 + 0.2 * t);
+            let (c, s) = (way.cos(), way.sin());
+            let (x, y) = (0.46 + c * dist - s * side, 0.5 + s * dist + c * side);
+            // the nearer drew out along their flight
+            let stretch = 1.0 + 1.6 * (1.0 - t) * r(90 + i);
+            (x, y, 0.012 + 0.03 * (1.0 - t) * r(100 + i), stretch)
+        })
+        .collect();
     texture(128, move |x, y| {
-        let (dx, dy) = (x - 0.5, y - 0.5);
-        let ang = dy.atan2(dx);
-        let r = 0.26 + 0.05 * (ang * 5.0).sin() + 0.03 * (ang * 9.0 + 1.3).sin();
-        let d = (dx * dx + dy * dy).sqrt();
-        let mut a = ((r - d) / 0.03).clamp(0.0, 1.0);
-        for (cx, cy, cr) in drops {
-            let dd = ((x - cx).powi(2) + (y - cy).powi(2)).sqrt();
-            a = a.max(((cr - dd) / 0.012).clamp(0.0, 1.0));
+        let mut a: f32 = 0.0;
+        let mut depth: f32 = 0.0;
+        for &(cx, cy, cr) in &blobs {
+            let (dx, dy) = (x - cx, y - cy);
+            let ang = dy.atan2(dx);
+            let wave: f32 = waves
+                .iter()
+                .map(|&(f, amp, ph)| amp * (ang * f + ph).sin())
+                .sum();
+            let d = (dx * dx + dy * dy).sqrt();
+            a = a.max(((cr + wave - d) / 0.012).clamp(0.0, 1.0));
+            depth = depth.max(((cr - d) / cr).clamp(0.0, 1.0));
         }
-        a * 0.9
+        for &(cx, cy, cr, stretch) in &drops {
+            // along the way out the drop is drawn long
+            let (c, s) = (way.cos(), way.sin());
+            let (dx, dy) = (x - cx, y - cy);
+            let (along, across) = (dx * c + dy * s, -dx * s + dy * c);
+            let d = ((along / stretch).powi(2) + across.powi(2)).sqrt();
+            a = a.max(((cr - d) / 0.008).clamp(0.0, 1.0));
+        }
+        // thin at its edge, thick in its middle
+        a * (0.62 + 0.33 * depth)
     })
 }
 
@@ -528,7 +591,7 @@ impl Vfx {
         let beam_shader = godot::tools::try_load::<Shader>("res://shaders/beam.gdshader").ok();
         Vfx {
             root: node,
-            splat: splat_texture(),
+            splats_tex: (0..SPLAT_SHAPES).map(splat_texture).collect(),
             soft,
             textures: particle_textures(),
             emitters: HashMap::new(),
@@ -590,7 +653,10 @@ impl Vfx {
             self.flash(at + Vector3::new(0.0, 0.3, 0.0), c, energy, secs);
         }
         if let VfxKind::Blood(c) = kind {
-            self.splat(Vector3::new(at.x, 0.0, at.z), c);
+            // blood darkens as it lies: never the bright red of the glyph
+            let k = SPLAT_DARK;
+            let dark = Color::from_rgb(c.r * k, c.g * k, c.b * k);
+            self.splat(Vector3::new(at.x, 0.0, at.z), dark);
         }
         if let VfxKind::Explosion(_) = kind {
             // the scorch of the blast, fading like blood
@@ -821,7 +887,6 @@ impl Vfx {
     fn splat(&mut self, at: Vector3, color: Color) {
         if self.splats.len() < SPLATS {
             let mut decal = Decal::new_alloc();
-            decal.set_texture(godot::classes::decal::DecalTexture::ALBEDO, &self.splat);
             decal.set_cull_mask(self.decal_mask);
             decal.set_albedo_mix(1.0);
             self.root.add_child(&decal);
@@ -830,11 +895,18 @@ impl Vfx {
         let i = self.next_splat % self.splats.len();
         self.next_splat += 1;
         let s = &mut self.splats[i];
-        // turned and sized by where it falls, the same every time
+        // its shape, turn and size by where it falls, the same every time
         let h = ((at.x * 12.9898 + at.z * 78.233).sin() * 43_758.547)
             .fract()
             .abs();
-        let size = 0.4 + 0.3 * h;
+        let shape = ((h * 97.0) as usize) % self.splats_tex.len().max(1);
+        if let Some(t) = self.splats_tex.get(shape) {
+            s.decal
+                .set_texture(godot::classes::decal::DecalTexture::ALBEDO, t);
+        }
+        // (its pool is about two fifths of it, its spatter reaches out to
+        // its edge)
+        let size = 0.85 + 0.4 * h;
         s.decal.set_size(Vector3::new(size, 0.5, size));
         s.decal
             .set_rotation(Vector3::new(0.0, h * std::f32::consts::TAU, 0.0));
