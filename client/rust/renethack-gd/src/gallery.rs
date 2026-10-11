@@ -505,8 +505,9 @@ pub struct CorridorScene {
 /// The hero in each kind of corridor and doorway, small monsters next to
 /// them and off to a side (a fight there must show); and by the torches
 /// on a room's side walls (their pictures: a torch must not draw over
-/// who stands beside it).
-pub const CORRIDOR_SCENES: [CorridorScene; 11] = [
+/// who stands beside it); and with something unseen remembered (`UNSEEN`)
+/// in the room and in the corridor's dark.
+pub const CORRIDOR_SCENES: [CorridorScene; 12] = [
     CorridorScene {
         name: "row",
         hero: (13, 3),
@@ -570,7 +571,42 @@ pub const CORRIDOR_SCENES: [CorridorScene; 11] = [
         hero: (3, 4),
         others: &[("jackal", (3, 3))],
     },
+    CorridorScene {
+        name: "unseen",
+        hero: (8, 3),
+        others: &[(UNSEEN, (6, 3)), (UNSEEN, (13, 3))],
+    },
 ];
+
+/// In a scene's `others`: something unseen remembered there (`I`).
+pub const UNSEEN: &str = "(unseen)";
+
+/// The remembered, unseen monster's glyph.
+fn unseen() -> Glyph {
+    Glyph {
+        glyph: None,
+        ch: 'I' as i32,
+        color: 7,
+        flags: 0,
+        tile: 0,
+        kind: GlyphKind::Invisible,
+        mon: None,
+        cmap: None,
+        level: None,
+    }
+}
+
+/// A map feature (`S_fountain`...) on a cell of `CORRIDORS`.
+pub fn put_feature(
+    world: &mut World,
+    cat: &Catalog,
+    sym: &str,
+    at: (i32, i32),
+) -> Result<(), String> {
+    let (x, y) = corridor_cell(at);
+    world.map.print(x, y, &cmap(cat, sym)?, None);
+    Ok(())
+}
 
 /// A cell of `CORRIDORS` on the map.
 pub fn corridor_cell((col, row): (i32, i32)) -> (i32, i32) {
@@ -622,7 +658,10 @@ pub fn lay_out_corridors(
     }
     for &(name, at) in scene.others {
         let (x, y) = corridor_cell(at);
-        let g = monster(cat, name, 0, GlyphKind::Mon)?;
+        let g = match name {
+            UNSEEN => unseen(),
+            _ => monster(cat, name, 0, GlyphKind::Mon)?,
+        };
         map.print(x, y, &g, Some(&ground(at)?));
     }
     let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;

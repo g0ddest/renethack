@@ -835,6 +835,14 @@ impl Vfx {
         s.age = 0.0;
     }
 
+    /// Splats lying on the floor now (self-tests).
+    pub fn splats_shown(&self) -> usize {
+        self.splats
+            .iter()
+            .filter(|s| s.age < SPLAT_SECS && s.decal.is_visible())
+            .count()
+    }
+
     /// Advance everything by `delta` seconds; the dust follows `focus`.
     pub fn process(&mut self, delta: f32, focus: Vector3) {
         self.clock += delta;

@@ -34,6 +34,8 @@ mod achievements;
 mod corridors;
 #[path = "selftest_doll.rs"]
 mod doll_tests;
+#[path = "selftest_effects.rs"]
+mod effects;
 #[path = "selftest_first.rs"]
 mod first_tests;
 #[path = "selftest_help.rs"]
@@ -4686,6 +4688,7 @@ impl SelfTest {
             "bestiary" => world_looks::bestiary(),
             "corridors" => corridors::corridors(),
             "shop" => shop::shop(),
+            "effects" => effects::effects(),
             "pickers" => input_ru::pickers(),
             "help" => help_tests::help(),
             "layouts" => layouts_tests::layouts(),

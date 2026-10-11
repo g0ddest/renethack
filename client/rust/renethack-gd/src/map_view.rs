@@ -3822,6 +3822,11 @@ impl MapView {
         self.vfx.beam(kind, a, b);
     }
 
+    /// Splats of blood lying on the floor now (self-tests).
+    pub fn splats_shown(&self) -> usize {
+        self.vfx.splats_shown()
+    }
+
     /// The effects, for bursts and beams at world positions.
     #[allow(dead_code)] // for the hero's item use (Phase E)
     pub fn vfx(&mut self) -> &mut Vfx {
