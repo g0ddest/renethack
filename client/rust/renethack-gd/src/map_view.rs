@@ -330,7 +330,8 @@ const DARKNESS: Color = Color::from_rgb(0.008, 0.009, 0.013);
 enum Paint {
     Pbr(usize, u8, Role),
     Flat(Color, Finish),
-    /// A shader of the map's own: water, lava, the air over lava.
+    /// A shader of the map's own: water, lava, the air over lava, the air
+    /// where something unseen is.
     Liquid(Liquid),
 }
 
@@ -341,6 +342,8 @@ enum Liquid {
     Foam,
     Lava,
     Haze,
+    /// The air bent where something unseen is remembered.
+    Unseen,
 }
 
 /// A light of a feature on its cell.
@@ -2068,14 +2071,21 @@ fn entity_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
             }
         }
         GlyphKind::Invisible => {
-            let gray = Color::from_rgb(0.7, 0.72, 0.8);
-            look.solid(
-                sphere(0.3),
-                Paint::Flat(gray, Finish::Ghost),
-                at(0.0, ground + 0.35, 0.0),
+            // the air bent as if a body stood there, a cold shimmer round
+            // it; its letter only under the pointer or in the overview (a
+            // letter floating in the dark read as a text cursor)
+            look.ground_tile(
+                plane(0.9, 1.6),
+                Paint::Liquid(Liquid::Unseen),
+                at(0.0, ground, 0.0),
             );
+            look.reach(ground + 1.2);
             if let Some(ch) = ch {
+                let gray = Color::from_rgb(0.7, 0.72, 0.8);
                 look.letter(ch, gray, ground + 0.8, PX_MONSTER, true);
+                if let Some(l) = look.letters.last_mut() {
+                    l.hint = true;
+                }
             }
         }
         GlyphKind::Warning => {
@@ -4260,6 +4270,7 @@ impl MapView {
             Liquid::Water | Liquid::Foam => "res://shaders/water.gdshader",
             Liquid::Lava => "res://shaders/lava.gdshader",
             Liquid::Haze => "res://shaders/heat_haze.gdshader",
+            Liquid::Unseen => "res://shaders/unseen.gdshader",
         };
         let mat: Gd<Material> = match godot::tools::try_load::<Shader>(path) {
             Ok(shader) => {
@@ -4293,6 +4304,7 @@ impl MapView {
                     Liquid::Foam => Color::from_rgba(0.7, 0.75, 0.75, 0.0),
                     Liquid::Lava => Color::from_rgb(1.0, 0.35, 0.05),
                     Liquid::Haze => Color::from_rgba(1.0, 1.0, 1.0, 0.0),
+                    Liquid::Unseen => Color::from_rgba(0.7, 0.72, 0.8, 0.3),
                 };
                 self.art.flat(
                     c,
@@ -5641,7 +5653,13 @@ impl MapView {
             None => {}
         }
         // the liquids' materials (their shaders and the lava's flow)
-        for l in [Liquid::Water, Liquid::Foam, Liquid::Lava, Liquid::Haze] {
+        for l in [
+            Liquid::Water,
+            Liquid::Foam,
+            Liquid::Lava,
+            Liquid::Haze,
+            Liquid::Unseen,
+        ] {
             if !self.liquids.contains_key(&l) {
                 self.liquid(l);
                 return true;
@@ -7859,6 +7877,32 @@ mod tests {
         // appearance always looks the same
         let ruby = f.look(&on_floor(cat, object(cat, "!", "ruby")));
         assert_eq!(ruby, f.look(&on_floor(cat, object(cat, "!", "ruby"))));
+    }
+
+    #[test]
+    fn something_unseen_is_bent_air_with_its_letter_under_the_pointer() {
+        let f = Fixture::new();
+        let cat = &f.cat;
+        let mut g = glyph(GlyphKind::Invisible, 'I');
+        g.color = 7;
+        let look = f.look(&on_floor(cat, g));
+        // the air bent as if a body stood there, standing on the ground
+        assert!(
+            look.solids
+                .iter()
+                .any(|s| s.paint == Paint::Liquid(Liquid::Unseen) && !s.shadow)
+        );
+        // no ball, and the letter only under the pointer or in the overview
+        assert!(
+            !look
+                .solids
+                .iter()
+                .any(|s| matches!(s.mesh, MeshKey::Sphere(_)))
+        );
+        assert_eq!(look.letters.len(), 1);
+        assert!(look.letters[0].hint);
+        // the pointer finds it as tall as a body
+        assert!(look.top >= 1.0);
     }
 
     #[test]
