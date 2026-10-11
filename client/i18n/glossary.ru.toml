@@ -1023,6 +1023,7 @@
 "long bow" = { ru = "длинный лук", src = "nethack-ru" }
 # armor
 "leather hat" = { ru = "кожаная шляпа", src = "nethack-ru" }
+"cloth hat" = { ru = "матерчатая шляпа", src = "chosen", note = "the soak's Archeologist: Your cloth hat smoulders!" }
 "iron skull cap" = { ru = "железная шапочка", src = "chosen", note = "was железная шапочка-череп" }
 "hard hat" = { ru = "каска", src = "nethack-ru" }
 "conical hat" = { ru = "остроконечная шляпа", src = "chosen", note = "was коническая шляпа" }
@@ -2880,6 +2881,26 @@
 "haltingly" = { ru = "нерешительно", src = "chosen" }
 "nominally" = { ru = "номинально", src = "chosen" }
 "insufficiently" = { ru = "недостаточно", src = "chosen" }
+
+[motif]
+# hawaiian_motif() (read.c): what a seen Hawaiian shirt is printed with,
+# " with a flamingo motif" after its name, as a tail of the Russian name
+"flamingo" = { ru = "с узором из фламинго", src = "chosen" }
+"parrot" = { ru = "с узором из попугаев", src = "chosen" }
+"toucan" = { ru = "с узором из туканов", src = "chosen" }
+"bird of paradise" = { ru = "с узором из райских птиц", src = "chosen" }
+"sea turtle" = { ru = "с узором из морских черепах", src = "chosen" }
+"tropical fish" = { ru = "с узором из тропических рыб", src = "chosen" }
+"jellyfish" = { ru = "с узором из медуз", src = "chosen" }
+"giant eel" = { ru = "с узором из гигантских угрей", src = "chosen" }
+"water nymph" = { ru = "с узором из водяных нимф", src = "chosen" }
+"plumeria" = { ru = "с узором из плюмерий", src = "chosen" }
+"orchid" = { ru = "с узором из орхидей", src = "chosen" }
+"hibiscus flower" = { ru = "с узором из цветов гибискуса", src = "chosen" }
+"palm tree" = { ru = "с узором из пальм", src = "chosen" }
+"hula dancer" = { ru = "с узором из танцовщиц хулы", src = "chosen" }
+"sailboat" = { ru = "с узором из парусников", src = "chosen" }
+"ukulele" = { ru = "с узором из укулеле", src = "chosen" }
 
 [mstate]
 # what the stethoscope and a wand of probing list after a creature's armour

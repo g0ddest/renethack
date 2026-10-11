@@ -52,7 +52,8 @@ LEXICON = os.path.join(ROOT, "client", "i18n", "lexicon.ru.toml")
 ANIMATE = {"monster", "role", "rank", "god", "name", "race", "female"}
 PROPER = {"artifact", "god", "place", "name"}
 ADJECTIVES = {"adjective", "color", "gender"}
-FIXED = {"label", "status", "heading", "condition", "monclass", "greeting", "note", "adverb", "mstate"}
+FIXED = {"label", "status", "heading", "condition", "monclass", "greeting", "note", "adverb", "mstate",
+         "motif"}
 # words that join a name to what follows it, fixed: "по имени", "на уровень"
 LINKS = {"called", "named", "labeled", "to level", "to", "out of the dungeon", "to the Elemental Planes",
          "to the end game", "for"}

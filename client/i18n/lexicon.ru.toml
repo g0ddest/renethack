@@ -6699,6 +6699,13 @@ pl = ["кожаные шляпы", "кожаных шляп", "кожаным ш
 few = "кожаные шляпы"
 src = "pymorphy3"
 
+[appearance."cloth hat"]
+g = "f"
+sg = ["матерчатая шляпа", "матерчатой шляпы", "матерчатой шляпе", "матерчатую шляпу", "матерчатой шляпой", "матерчатой шляпе"]
+pl = ["матерчатые шляпы", "матерчатых шляп", "матерчатым шляпам", "матерчатые шляпы", "матерчатыми шляпами", "матерчатых шляпах"]
+few = "матерчатые шляпы"
+src = "pymorphy3"
+
 [appearance."iron skull cap"]
 g = "f"
 sg = ["железная шапочка", "железной шапочки", "железной шапочке", "железную шапочку", "железной шапочкой", "железной шапочке"]
@@ -17582,6 +17589,70 @@ src = "fixed"
 
 [adverb."insufficiently"]
 fixed = "недостаточно"
+src = "fixed"
+
+[motif."flamingo"]
+fixed = "с узором из фламинго"
+src = "fixed"
+
+[motif."parrot"]
+fixed = "с узором из попугаев"
+src = "fixed"
+
+[motif."toucan"]
+fixed = "с узором из туканов"
+src = "fixed"
+
+[motif."bird of paradise"]
+fixed = "с узором из райских птиц"
+src = "fixed"
+
+[motif."sea turtle"]
+fixed = "с узором из морских черепах"
+src = "fixed"
+
+[motif."tropical fish"]
+fixed = "с узором из тропических рыб"
+src = "fixed"
+
+[motif."jellyfish"]
+fixed = "с узором из медуз"
+src = "fixed"
+
+[motif."giant eel"]
+fixed = "с узором из гигантских угрей"
+src = "fixed"
+
+[motif."water nymph"]
+fixed = "с узором из водяных нимф"
+src = "fixed"
+
+[motif."plumeria"]
+fixed = "с узором из плюмерий"
+src = "fixed"
+
+[motif."orchid"]
+fixed = "с узором из орхидей"
+src = "fixed"
+
+[motif."hibiscus flower"]
+fixed = "с узором из цветов гибискуса"
+src = "fixed"
+
+[motif."palm tree"]
+fixed = "с узором из пальм"
+src = "fixed"
+
+[motif."hula dancer"]
+fixed = "с узором из танцовщиц хулы"
+src = "fixed"
+
+[motif."sailboat"]
+fixed = "с узором из парусников"
+src = "fixed"
+
+[motif."ukulele"]
+fixed = "с узором из укулеле"
 src = "fixed"
 
 [mstate."tame"]

@@ -138,6 +138,9 @@ pub struct ObjectName {
     /// The name a Samurai's Japanese one stands for, as the discoveries
     /// show it: "wakizashi [short sword]".
     pub actual: Option<String>,
+    /// What a seen Hawaiian shirt is printed with: "flamingo" of "with a
+    /// flamingo motif".
+    pub motif: Option<String>,
     pub containing: Option<u64>,
     /// The parenthesized groups, in order, without their parentheses.
     pub statuses: Vec<String>,
@@ -186,6 +189,18 @@ pub(super) fn parse_object(lex: &Lexicon, index: &Index, text: &str) -> Option<O
     {
         containing = Some(n);
         s = &s[..at];
+    }
+    // xname(): a seen Hawaiian shirt's motif, "with a flamingo motif"
+    let mut motif = None;
+    if let Some(rest) = s.strip_suffix(" motif")
+        && let Some(at) = rest.rfind(" with ")
+        && let Some(what) = ["a", "an"]
+            .iter()
+            .find_map(|a| strip_word(&rest[at + 6..], a))
+        && lex.get("motif", what).is_some()
+    {
+        motif = Some(what.to_string());
+        s = &rest[..at];
     }
     // disco_typename(): the name a Japanese one stands for, before what
     // is called ("wakizashi [short sword]", "potion of sake [booze] called
@@ -293,6 +308,7 @@ pub(super) fn parse_object(lex: &Lexicon, index: &Index, text: &str) -> Option<O
         called,
         named,
         actual,
+        motif,
         containing,
         statuses,
         quote,
@@ -546,6 +562,13 @@ impl ObjectName {
                 .take_while(|t| matches!(t, Tail::Genitive(_)))
                 .count();
             name.tails.insert(at, Tail::Genitive(Box::new(m.ru(lex))));
+        }
+        if let Some(text) = self
+            .motif
+            .as_ref()
+            .and_then(|m| lex.get("motif", m)?.fixed())
+        {
+            name.tails.push(Tail::Text(text.to_string()));
         }
         if let Some(a) = &self.actual {
             name.tails
@@ -952,6 +975,12 @@ mod tests {
             ("Book of the Dead (papyrus)", "Книга Мёртвых (папирусная)"),
             // no agreement with a name of another gender: the whole look
             ("potion of water (clear)", "флакон воды (прозрачное зелье)"),
+            // a Hawaiian shirt seen, and a hat that is a fedora unknown
+            (
+                "an uncursed +0 Hawaiian shirt with a giant eel motif (being worn)",
+                "непроклятая +0 гавайская рубашка с узором из гигантских угрей (надета)",
+            ),
+            ("cloth hat", "матерчатая шляпа"),
             // the Samurai's names, with the one each stands for
             ("wakizashi [short sword]", "вакидзаси [короткий меч]"),
             (
