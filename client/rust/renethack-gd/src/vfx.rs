@@ -336,6 +336,10 @@ const POOL: usize = 6;
 const SPLATS: usize = 24;
 const SPLAT_SECS: f32 = 14.0;
 const BEAM_SECS: f32 = 0.45;
+/// A ray's ribbon is this wide (metres); a bolt of lightning's, wider (its
+/// jags swing out of the ray's line).
+const RAY_WIDTH: f32 = 0.42;
+const BOLT_WIDTH: f32 = 1.1;
 
 /// RPicster's particle textures (CC0) by recipe: a starburst for a blow's
 /// flare and a cast's swirl, a star for glints and flares.
@@ -693,9 +697,14 @@ impl Vfx {
         b.to = to;
         b.age = 0.0;
         b.whole = whole;
-        // lightning's light is white-blue and jitters
+        // lightning's light is white-blue and jitters; it is a bolt
         b.flicker = color.b > 0.95 && color.r > 0.85 && color.g > 0.9;
         let len = from.distance_to(to).max(0.05);
+        b.mat.set_shader_parameter("bolt", &b.flicker.to_variant());
+        b.mat.set_shader_parameter("ray_len", &len.to_variant());
+        // a bolt's jags swing wide of the ray: a wider ribbon for them
+        let width = if b.flicker { BOLT_WIDTH } else { RAY_WIDTH };
+        b.mat.set_shader_parameter("width", &width.to_variant());
         let mid = (from + to) / 2.0;
         let dir = (to - from) / len;
         // the ribbon's y is the ray, stretched; the shader turns it to
