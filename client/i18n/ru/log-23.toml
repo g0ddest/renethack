@@ -1,0 +1,45 @@
+# R6, log messages batch 23: the stethoscope's reading of a creature and of oneself. Syntax: nh-i18n's template.rs.
+
+[9007d1aa01fa]
+en = "Status of %s (%s, %s):  Level %d  HP %d(%d)  AC %d%s."
+ru = "Состояние {1:gen} ({2:like1}, {3:like1}):  уровень {4}  здоровье {5}({6})  класс брони {7}{8:like1}."
+
+[238c25a33ce7]
+en = "Status of %s (%s, %s):  Level %d  HP %d(%d)  AC %d."
+ru = "Состояние {1:gen} ({2:like1}, {3:like1}):  уровень {4}  здоровье {5}({6})  класс брони {7}."
+
+[b3bc138b0b9b]
+en = "Status of %s (%s):  Level %d  HP %d(%d)  AC %d%s."
+ru = "Состояние {1:gen} ({2:hero}):  уровень {3}  здоровье {4}({5})  класс брони {6}{7:hero}."
+
+[d7cbae4a43c7]
+en = "Status of %s (%s):  Level %d  HP %d(%d)  AC %d."
+ru = "Состояние {1:gen} ({2:hero}):  уровень {3}  здоровье {4}({5})  класс брони {6}."
+
+[617ca88c6665]
+en = "Status of %s (piously %s):  Level %d  HP %d(%d)  AC %d."
+ru = "Состояние {1:gen} (благочестиво {2:hero}):  уровень {3}  здоровье {4}({5})  класс брони {6}."
+
+[bb90608ab27e]
+en = "Status of %s (devoutly %s):  Level %d  HP %d(%d)  AC %d."
+ru = "Состояние {1:gen} (набожно {2:hero}):  уровень {3}  здоровье {4}({5})  класс брони {6}."
+
+[157558ee1768]
+en = "Status of %s (fervently %s):  Level %d  HP %d(%d)  AC %d."
+ru = "Состояние {1:gen} (ревностно {2:hero}):  уровень {3}  здоровье {4}({5})  класс брони {6}."
+
+[2ee567858e86]
+en = "Status of %s (stridently %s):  Level %d  HP %d(%d)  AC %d."
+ru = "Состояние {1:gen} (истово {2:hero}):  уровень {3}  здоровье {4}({5})  класс брони {6}."
+
+[14d669cd404c]
+en = "Status of %s (haltingly %s):  Level %d  HP %d(%d)  AC %d."
+ru = "Состояние {1:gen} (нерешительно {2:hero}):  уровень {3}  здоровье {4}({5})  класс брони {6}."
+
+[c508cf2870ca]
+en = "Status of %s (nominally %s):  Level %d  HP %d(%d)  AC %d."
+ru = "Состояние {1:gen} (номинально {2:hero}):  уровень {3}  здоровье {4}({5})  класс брони {6}."
+
+[4fb7e4d4073b]
+en = "Status of %s (insufficiently %s):  Level %d  HP %d(%d)  AC %d."
+ru = "Состояние {1:gen} (недостаточно {2:hero}):  уровень {3}  здоровье {4}({5})  класс брони {6}."
