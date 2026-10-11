@@ -37,6 +37,8 @@ static boolean seen_moveloop;
 static d_level told_level = { -1, -1 };
 /* the hash of the progress notice the client last got (0: none) */
 static unsigned long long told_progress;
+/* the trap the client was last told the hero is caught in ("": none) */
+static char told_trap[16];
 /* the message vpline() is about to show, as its format and arguments and
    the text they make: the putstr that shows that text carries them to the
    client's translator.  Any message putstr ends it, so a message that is
@@ -276,6 +278,63 @@ level_flush(void)
     rh_proto_send("win", "level", a);
 }
 
+/* The trap the hero is caught in, as the game tells the player: "You are
+   still in a pit", "A bear trap closes on your foot!", "You are stuck to
+   the web", the status line's Trap and InLava.  The hero's glyph hides the
+   trap under them, so the map would show flat floor.  A spiked pit only
+   when the hero has seen its spikes.  Observation only: no RNG, no state
+   change. */
+static const char *
+hero_trap(void)
+{
+    struct trap *t;
+
+    if (!u.utrap)
+        return "";
+    switch (u.utraptype) {
+    case TT_PIT:
+        t = t_at(u.ux, u.uy);
+        return (t && t->tseen && t->ttyp == SPIKED_PIT) ? "spiked_pit"
+                                                        : "pit";
+    case TT_BEARTRAP:
+        return "bear_trap";
+    case TT_WEB:
+        return "web";
+    case TT_LAVA:
+        return "lava";
+    case TT_INFLOOR:
+        return "floor";
+    case TT_BURIEDBALL:
+        return "buried_ball";
+    default:
+        return "other";
+    }
+}
+
+/* Before the engine waits for input: the hero notice, when the trap the
+   hero is caught in changed since the last one the client got. */
+static void
+hero_flush(void)
+{
+    const char *trap;
+    cJSON *a;
+
+    if (!program_state.in_moveloop) {
+        told_trap[0] = '\0';
+        return;
+    }
+    if (rh_proto_is_lost() || suppress_map_output())
+        return;
+    trap = hero_trap();
+    if (!strcmp(trap, told_trap))
+        return;
+    Strcpy(told_trap, trap);
+    a = args_new();
+    if (*trap)
+        add_str(a, "trap", trap);
+    rh_proto_send("win", "hero", a);
+}
+
 /* The hero's progress, for achievements: the play mode, NetHack's own
    achievements in the order attained, the u.uevent milestones, the
    deepest level reached, the conducts, the role-play options and how the
@@ -379,6 +438,7 @@ request(const char *fn, cJSON *args)
     level_flush();
     inventory_flush();
     progress_flush();
+    hero_flush();
     return rh_proto_request(fn, args);
 }
 

@@ -373,6 +373,21 @@ fn level_decodes_the_branch_the_depth_and_a_plane() {
 }
 
 #[test]
+fn hero_decodes_the_trap_the_hero_is_caught_in() {
+    let line = r#"{"t":"win","fn":"hero","a":{"trap":"bear_trap"}}"#;
+    let EngineMsg::Win(WinCall::Hero(h)) = parse_line(line).unwrap() else {
+        panic!("expected hero")
+    };
+    assert_eq!(h.trap.as_deref(), Some("bear_trap"));
+    // out of it: the notice without a trap
+    let line = r#"{"t":"win","fn":"hero","a":{}}"#;
+    let EngineMsg::Win(WinCall::Hero(h)) = parse_line(line).unwrap() else {
+        panic!("expected hero")
+    };
+    assert_eq!(h, HeroNotice::default());
+}
+
+#[test]
 fn progress_decodes_achievements_events_conducts_and_the_end() {
     let line = r#"{"t":"win","fn":"progress","a":{"mode":"normal","role":"Wiz","achieved":[15,23,21],"events":{"qcalled":true,"uheard_tune":2,"udemigod":false},"deepest":7,"conduct":{"unvegan":0,"wishes":2},"roleplay":{"blind":false,"nudist":true},"gameover":true,"how":"ascended","turn":41250}}"#;
     let EngineMsg::Win(WinCall::Progress(p)) = parse_line(line).unwrap() else {

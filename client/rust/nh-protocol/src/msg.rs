@@ -132,6 +132,9 @@ pub enum WinCall {
     /// The hero's progress, for achievements: sent before an input wait
     /// when it changed.
     Progress(ProgressNotice),
+    /// What the hero's glyph hides of the hero: sent before an input wait
+    /// when it changed.
+    Hero(HeroNotice),
     ExitNhwindows {
         text: Option<String>,
     },
@@ -216,6 +219,15 @@ pub enum FmtArg {
     Num(f64),
     /// %s given a null pointer.
     Null,
+}
+
+/// What the hero's own glyph hides, though the game tells the player.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+pub struct HeroNotice {
+    /// The trap the hero is caught in: "pit", "spiked_pit", "bear_trap",
+    /// "web", "lava", "floor" (stuck in it), "buried_ball", "other".
+    #[serde(default)]
+    pub trap: Option<String>,
 }
 
 /// The hero's progress as the game tells it to the player (#chronicle,
@@ -700,6 +712,7 @@ fn win_call(name: String, a: Value) -> Result<WinCall, ProtocolError> {
         "inventory" => WinCall::Inventory(args(n, a)?),
         "level" => WinCall::Level(args(n, a)?),
         "progress" => WinCall::Progress(args(n, a)?),
+        "hero" => WinCall::Hero(args(n, a)?),
         "exit_nhwindows" => WinCall::ExitNhwindows {
             text: args::<Text>(n, a)?.str,
         },
