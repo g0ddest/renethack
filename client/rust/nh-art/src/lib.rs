@@ -1596,6 +1596,50 @@ mod tests {
         assert_ne!(model("bugbear"), model("hobgoblin"));
     }
 
+    /// The mind flayer was a small red imp, the minotaur, the ettin and
+    /// every giant a big peasant: each has its own look now.
+    #[test]
+    fn the_giants_and_the_heads_are_told_apart() {
+        let (art, cat) = (manifest(), catalog());
+        let model = |n: &str| {
+            let m = cat.monsters.iter().find(|m| m.name == n).unwrap();
+            art.model_at(art.monster(m, 0).model)
+        };
+        let on_head = |spec: &ModelSpec, what: &str| {
+            spec.extras
+                .iter()
+                .filter(|e| e.model == what && e.bone == "Head")
+                .count()
+        };
+        // a mind flayer's mouth is tentacles, a master's more of them
+        let (_, flayer) = model("mind flayer");
+        let (_, master) = model("master mind flayer");
+        assert_eq!(on_head(flayer, "tentacle"), 4);
+        assert!(on_head(master, "tentacle") > 4);
+        // a bull's horns on the minotaur, two heads on the ettin
+        assert_eq!(on_head(model("minotaur").1, "tusk"), 2);
+        assert!(model("ettin").1.second_head.is_some());
+        // every kind of giant its own
+        let giants = [
+            "giant",
+            "stone giant",
+            "hill giant",
+            "fire giant",
+            "frost giant",
+            "storm giant",
+            "titan",
+            "ettin",
+            "minotaur",
+            "Lord Surtur",
+        ];
+        let mut seen = Vec::new();
+        for g in giants {
+            let (name, _) = model(g);
+            assert!(!seen.contains(&name), "{g}: {name} again");
+            seen.push(name);
+        }
+    }
+
     /// A mumak was drawn two cells long and a baluchitherium four: they hid
     /// the hero they fought and went through a corridor's rock.
     #[test]
