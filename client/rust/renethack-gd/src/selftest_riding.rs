@@ -602,25 +602,6 @@ fn slay() -> Vec<Step> {
     ]
 }
 
-/// A picture is the next frame as it is drawn: the steps after one wait
-/// for it, so nothing they change (the camera, a panel) is in it.
-fn pictures_first(steps: Vec<Step>) -> Vec<Step> {
-    let mut out = Vec::with_capacity(steps.len());
-    for step in steps {
-        let picture = matches!(step, Step::Shot(_) | Step::ShotIf(..));
-        out.push(step);
-        if picture {
-            out.push(Step::Wait("the picture taken", |_| {
-                Ok(super::NEXT_FRAME
-                    .lock()
-                    .map_err(|e| e.to_string())?
-                    .is_empty())
-            }));
-        }
-    }
-    out
-}
-
 pub(super) fn riding() -> Vec<Step> {
     let mut steps = vec![Step::Call("debug mode, seed 1", |g| {
         g.debug_mode = true;
@@ -1000,5 +981,5 @@ pub(super) fn riding() -> Vec<Step> {
         }),
     ]);
     steps.extend(quit());
-    pictures_first(steps)
+    steps
 }
