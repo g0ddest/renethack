@@ -1659,6 +1659,16 @@ mod tests {
         }
     }
 
+    /// A mimic found out was the chest it had mimicked: loot still.
+    #[test]
+    fn a_mimic_found_out_is_no_chest() {
+        let (art, cat) = (manifest(), catalog());
+        for m in cat.monsters.iter().filter(|m| m.class == "m") {
+            let r = art.monster(m, 0);
+            assert_eq!(art.model_at(r.model).0, "mimic", "{}", m.name);
+        }
+    }
+
     /// A mumak was drawn two cells long and a baluchitherium four: they hid
     /// the hero they fought and went through a corridor's rock.
     #[test]

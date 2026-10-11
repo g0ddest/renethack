@@ -198,6 +198,7 @@
   {"url": "https://static.poly.pizza/9714f533-5d2d-4cfd-b8f1-c8dfff64a672.glb", "name": "Dragon.glb", "dest": "quaternius/monsters", "use": "dragons and baby dragons (animated, by Quaternius, CC0, on Poly Pizza: https://poly.pizza/m/VBvzjFIYws)"},
   {"url": "https://static.poly.pizza/71cadefd-8e65-423a-9a95-3cdf7e012586.glb", "name": "Wasp.glb", "dest": "quaternius/monsters", "use": "killer bees and queen bees (animated, by Quaternius, CC0, on Poly Pizza: https://poly.pizza/m/3aQgc75sUR)"},
   {"url": "https://static.poly.pizza/b1ea7fcc-7d7f-4e93-aac5-507358399a7b.glb", "name": "Skeleton.glb", "dest": "quaternius/monsters", "use": "skeletons (animated, by Quaternius, CC0, on Poly Pizza: https://poly.pizza/m/wODZYCgX5Z)"},
+  {"url": "https://static.poly.pizza/c01a1efb-972c-44df-9ec4-02bf5beb8099.glb", "name": "Mimic.glb", "dest": "quaternius/monsters", "use": "mimics found out: a chest with an eye, teeth and long black limbs (by Quaternius, CC0, on Poly Pizza: https://poly.pizza/m/B8HrWzkuNp)"},
   {"url": "https://kenney.nl/media/pages/assets/particle-pack/f8fe0f8cb8-1677578741/kenney_particle-pack.zip",
    "root": "PNG (Transparent)/", "files": ["*.png"], "license_files": ["License.txt"], "dest": "kenney/particles",
    "use": "sparks, flares, magic circles, slashes, scorch marks, smoke puffs (grayscale, tinted in the shader)"},
