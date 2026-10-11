@@ -320,6 +320,8 @@ impl World {
     /// The UI's view of a request; records what showing it implies (last_text,
     /// message_menu text into the log).
     pub fn on_request(&mut self, req: &Request) -> Prompt {
+        // whatever the engine asks, it has drawn all it had to
+        self.map.land();
         match req {
             Request::NhPoskey { getpos } => {
                 self.getpos = *getpos;

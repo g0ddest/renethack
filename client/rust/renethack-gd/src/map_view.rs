@@ -12,7 +12,7 @@
 //! draws the fog of war: what the hero sees now, what they remember, and
 //! the rock the level is cut into fading into darkness.
 //!
-//! An entity that steps to a neighbouring cell (`MapState::take_dirty_moves`)
+//! An entity that steps to a neighbouring cell (`MapState::take_batch`)
 //! keeps its model node: the node is carried to the new cell and walks
 //! there (`animator`); a fight the messages tell of turns the attacker to
 //! its target. Every cell's look, picking and hovering stay on the world
@@ -3367,10 +3367,17 @@ impl MapView {
             // a cell's look depends on its neighbours: a wall on the cell
             // north of it (and the rock on the two), unseen ground under
             // something on all four, the rock on all eight
-            let (mut dirty, moves) = world.map.take_dirty_moves();
-            if !dirty.is_empty() {
+            let batch = world.map.take_batch();
+            let (mut dirty, moves) = (batch.dirty, batch.moves);
+            if !moves.is_empty() {
                 // the engine went on: the scene catches up at once
                 self.finish_motions();
+            } else if !batch.changed.is_empty() {
+                // a motion whose cell shows another now catches up; one
+                // that something only passes over (a missile in flight, a
+                // ray) goes on to its end
+                let changed = batch.changed;
+                self.finish_motions_where(|m| changed.contains(&m.cell));
             }
             self.carry(&moves, world);
             self.carry_rider(was_at, world);
@@ -6664,16 +6671,23 @@ impl MapView {
     /// End every motion where the world model has its entity; remember the
     /// steps cut short (the next step there hurries).
     fn finish_motions(&mut self) {
+        self.finish_motions_where(|_| true);
+    }
+
+    /// End the motions `pick` takes, as `finish_motions`; the others go on.
+    fn finish_motions_where(&mut self, pick: impl Fn(&Motion) -> bool) {
         // a batch with nothing under way keeps what the last cut short:
         // the engine may draw the cell a step leaves a frame before the
         // one it reaches, and that step still follows one cut short
-        if self.motions.is_empty() {
+        if !self.motions.iter().any(&pick) {
             return;
         }
         self.interrupted.clear();
         self.cut_at = self.clock;
         let walking = self.order_pace.is_some();
-        for m in self.motions.drain(..) {
+        let (done, going): (Vec<_>, Vec<_>) = self.motions.drain(..).partition(|m| pick(m));
+        self.motions = going;
+        for m in done {
             let (cell, step) = (m.cell, m.is_step());
             let keep = walking && m.hero && step;
             // one a self-test holds midway is cut short too

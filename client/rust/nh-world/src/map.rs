@@ -70,6 +70,25 @@ pub struct MapState {
     hero: Option<(i32, i32)>,
     /// Cmap indices that are brief effects, not terrain.
     effect_cmaps: Vec<bool>,
+    /// Cells where a thing was drawn over a monster (a missile flying
+    /// past it): the monster is taken to be there still, the thing over
+    /// it, until the cell is drawn again or the monster turns up
+    /// elsewhere (see `take_batch`, `settle`).
+    flying: Vec<(i32, i32)>,
+}
+
+/// What a batch of drawing did (`MapState::take_batch`).
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Batch {
+    /// The cells drawn, each once, in drawing order.
+    pub dirty: Vec<(i32, i32)>,
+    /// The entities that stepped to a neighbouring cell among them (see
+    /// `detect_moves`).
+    pub moves: Vec<Move>,
+    /// The cells among them that show another entity than before, or
+    /// none where one was: what only passes over a cell (an effect, a
+    /// missile) changes nothing.
+    pub changed: Vec<(i32, i32)>,
 }
 
 impl Default for MapState {
@@ -93,6 +112,7 @@ impl MapState {
             generation: 0,
             hero: None,
             effect_cmaps: Vec::new(),
+            flying: Vec::new(),
         }
     }
 
@@ -144,6 +164,16 @@ impl MapState {
     /// Cells drawn since the last call (as `take_dirty`), and the entities
     /// that stepped to a neighbouring cell among them (see `detect_moves`).
     pub fn take_dirty_moves(&mut self) -> (Vec<(i32, i32)>, Vec<Move>) {
+        let batch = self.take_batch();
+        (batch.dirty, batch.moves)
+    }
+
+    /// What was drawn since the last call: the cells, the steps among
+    /// them, and the cells whose entity changed. A thing drawn over a
+    /// monster that turned up elsewhere in the batch is what its cell
+    /// shows: the monster stepped off it.
+    pub fn take_batch(&mut self) -> Batch {
+        self.land_left_behind();
         let before = std::mem::take(&mut self.before);
         let dirty = std::mem::take(&mut self.dirty);
         let mut changes = Vec::new();
@@ -162,7 +192,43 @@ impl MapState {
                 });
             }
         }
-        (dirty, detect_moves(&changes))
+        let changed = changes
+            .iter()
+            .filter(|c| c.before != c.after)
+            .map(|c| c.at)
+            .collect();
+        Batch {
+            moves: detect_moves(&changes),
+            dirty,
+            changed,
+        }
+    }
+
+    /// The things drawn over monsters in this batch whose monster appeared
+    /// on another cell drawn in it: they lie where it left them.
+    fn land_left_behind(&mut self) {
+        let appeared = |map: &MapState, ident: Ident, not: (i32, i32)| {
+            map.dirty.iter().zip(&map.before).any(|(&at, was)| {
+                at != not
+                    && was.as_ref().and_then(Ident::of) != Some(ident)
+                    && map
+                        .cell(at.0, at.1)
+                        .and_then(|c| c.glyph.as_ref())
+                        .and_then(Ident::of)
+                        == Some(ident)
+            })
+        };
+        let flying = std::mem::take(&mut self.flying);
+        for at in flying {
+            let under = self
+                .cell(at.0, at.1)
+                .and_then(|c| c.glyph.as_ref())
+                .and_then(Ident::of);
+            match under {
+                Some(ident) if appeared(self, ident, at) => self.uncover(at),
+                _ => self.flying.push(at),
+            }
+        }
     }
 
     /// The last cell drawn with MG_HERO: the hero stays there, whatever is
@@ -214,13 +280,26 @@ impl MapState {
             bk.filter(|b| self.is_terrain(b))
         };
         self.touch(i, (x, y));
+        self.flying.retain(|&at| at != (x, y));
         let hero = g.flags & mg::HERO != 0;
         // an effect passes over what the cell shows, and anything at all
-        // over the hero: they are there until drawn elsewhere
+        // over the hero: they are there until drawn elsewhere. A thing
+        // over another monster may be one in flight (a missile, drawn
+        // there for a moment) or one it left lying as it went: taken for
+        // the first until known (`flying`)
+        let flies = |under: &Glyph| {
+            g.kind == GlyphKind::Obj && under.kind == GlyphKind::Mon && under.flags & mg::HERO == 0
+        };
+        let under = self.cells[i].glyph.as_ref();
+        let flying = !hero && self.hero != Some((x, y)) && under.is_some_and(flies);
         let passes = !hero
-            && self.cells[i].glyph.as_ref().is_some_and(|under| {
+            && under.is_some_and(|under| {
                 self.hero == Some((x, y)) || (self.is_effect(g) && !self.is_effect(under))
-            });
+            })
+            || flying;
+        if flying {
+            self.flying.push((x, y));
+        }
         let cell = &mut self.cells[i];
         if let Some(t) = terrain {
             cell.terrain = Some(t.clone());
@@ -260,13 +339,25 @@ impl MapState {
 
     /// The engine asks for a command: nothing passes over the hero any
     /// more. A cell of theirs that still shows something else shows it for
-    /// good: they are not drawn at all (invisible, hiding).
+    /// good: they are not drawn at all (invisible, hiding). What lies over
+    /// other monsters lies there (`land`).
     pub fn settle(&mut self) {
         if let Some((x, y)) = self.hero
             && self.cell(x, y).is_some_and(|c| c.over.is_some())
         {
             self.uncover((x, y));
             self.hero = None;
+        }
+        self.land();
+    }
+
+    /// The engine waits for the player: nothing is in flight any more. A
+    /// thing drawn over a monster and not drawn away is what that cell
+    /// shows: the monster is gone from it (out of sight, or dead with no
+    /// corpse).
+    pub fn land(&mut self) {
+        for at in std::mem::take(&mut self.flying) {
+            self.uncover(at);
         }
     }
 
@@ -299,6 +390,7 @@ impl MapState {
         self.dirty.clear();
         self.before.clear();
         self.hero = None;
+        self.flying.clear();
         self.generation += 1;
     }
 }
@@ -556,6 +648,76 @@ pub(crate) mod tests {
     }
 
     #[test]
+    fn a_thing_in_flight_passes_over_a_monster() {
+        let mut map = MapState::new();
+        let pet = monster(16, mg::PET);
+        let dagger = glyph(GlyphKind::Obj, ')');
+        for x in 8..14 {
+            map.print(x, 5, &floor(), None);
+        }
+        map.print(10, 5, &pet, None);
+        map.take_batch();
+        // a frame of a dagger flying over the pet (a delay_output ends it)
+        map.print(10, 5, &dagger, None);
+        let cell = map.cell(10, 5).unwrap();
+        assert_eq!(
+            (cell.glyph.as_ref(), cell.over.as_ref()),
+            (Some(&pet), Some(&dagger))
+        );
+        let batch = map.take_batch();
+        assert_eq!(batch.dirty, vec![(10, 5)]);
+        assert!(batch.changed.is_empty() && batch.moves.is_empty());
+        // on its way: the pet drawn again, the dagger on the next cell
+        map.print(10, 5, &pet, None);
+        map.print(11, 5, &dagger, None);
+        let cell = map.cell(10, 5).unwrap();
+        assert_eq!(
+            (cell.glyph.as_ref(), cell.over.as_ref()),
+            (Some(&pet), None)
+        );
+        assert_eq!(map.take_batch().changed, vec![(11, 5)]);
+    }
+
+    #[test]
+    fn a_thing_a_monster_leaves_lying_is_what_its_cell_shows() {
+        let mut map = MapState::new();
+        let pet = monster(16, mg::PET);
+        let ration = glyph(GlyphKind::Obj, '%');
+        for x in 8..14 {
+            map.print(x, 5, &floor(), None);
+        }
+        map.print(10, 5, &pet, None);
+        map.take_batch();
+        // the pet steps off a ration: the cell it left shows the ration,
+        // and the step is a move
+        map.print(11, 5, &pet, None);
+        map.print(10, 5, &ration, None);
+        let batch = map.take_batch();
+        let left = map.cell(10, 5).unwrap();
+        assert_eq!(
+            (left.glyph.as_ref(), left.over.as_ref()),
+            (Some(&ration), None)
+        );
+        let pairs: Vec<_> = batch.moves.iter().map(|m| (m.from, m.to)).collect();
+        assert_eq!(pairs, vec![((10, 5), (11, 5))]);
+        assert_eq!(batch.changed, vec![(11, 5), (10, 5)]);
+        // one gone where nobody saw it go (out of sight): the thing shows
+        // once the engine asks for a command
+        map.print(12, 5, &monster(3, 0), None);
+        map.take_batch();
+        map.print(12, 5, &ration, None);
+        let kind = |map: &MapState| {
+            map.cell(12, 5)
+                .and_then(|c| c.glyph.as_ref())
+                .map(|g| g.kind)
+        };
+        assert_eq!(kind(&map), Some(GlyphKind::Mon));
+        map.settle();
+        assert_eq!(kind(&map), Some(GlyphKind::Obj));
+        assert_eq!(map.take_batch().changed, vec![(12, 5)]);
+    }
+
+    #[test]
     fn a_step_drawn_in_two_batches_is_still_a_step() {
         let mut map = MapState::new();
         let hero = monster(0, mg::HERO);
@@ -620,10 +782,17 @@ pub(crate) mod tests {
         map.print(20, 5, &blast, None);
         let cell = map.cell(20, 5).unwrap();
         assert_eq!((&cell.glyph, &cell.over), (&Some(blast), &None));
-        // a thing over a creature that is not the hero replaces it: it may
-        // have left
+        // a thing over a creature that is not the hero passes over it (a
+        // missile) until known for one it left lying: it shows when the
+        // engine asks for a command and has not drawn the creature again
         map.print(10, 6, &pet, None);
         map.print(10, 6, &sword, None);
+        let cell = map.cell(10, 6).unwrap();
+        assert_eq!(
+            (cell.glyph.as_ref(), cell.over.as_ref()),
+            (Some(&pet), Some(&sword))
+        );
+        map.settle();
         assert_eq!(map.cell(10, 6).unwrap().glyph, Some(sword));
     }
 }

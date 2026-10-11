@@ -1,9 +1,10 @@
 //! `passing`: what the engine draws in passing leaves who stands there.
-//! A monster's missile is drawn on the hero's cell when it reaches them; a
-//! ray, an explosion or a sparkle over whoever is in its way; and the cell
-//! the hero steps off may be drawn a frame before the cell they step to.
-//! None of it takes the hero's or the pet's model away: the model stays (or
-//! walks), its ring under it, the hero's ring, light and doll with the hero.
+//! A monster's missile is drawn on the cells it flies over, and on the
+//! hero's when it reaches them; a ray, an explosion or a sparkle over
+//! whoever is in its way; and the cell the hero steps off may be drawn a
+//! frame before the cell they step to. None of it takes the hero's or the
+//! pet's model away: the model stays (or walks on, its step not cut
+//! short), its ring under it, the hero's ring, light and doll with the hero.
 //! Only a hero the engine asks a command of without drawing them (invisible,
 //! hiding) is gone, and then what they stand on is not taken for them.
 //!
@@ -59,6 +60,29 @@ fn wrong(what: String) {
     if let Ok(mut w) = WRONG.lock() {
         w.push(what);
     }
+}
+
+static TAKEN: AtomicU32 = AtomicU32::new(0);
+
+/// The map has taken in what was just drawn (it does in the next frame's
+/// sync), and no more: a step under way is still under way.
+fn taken_in(what: &'static str) -> Step {
+    Step::Wait(what, |_| {
+        if TAKEN.fetch_add(1, Ordering::Relaxed) + 1 < 2 {
+            return Ok(false);
+        }
+        TAKEN.store(0, Ordering::Relaxed);
+        Ok(true)
+    })
+}
+
+/// The hero's step, held midway, is still under way: nothing drawn since
+/// it began cut it short.
+fn still_walking(g: &RenethackGame, what: &str) -> Result<(), String> {
+    if map_view(g)?.hero_step().is_none() {
+        wrong(format!("{what}: the hero's step was cut short"));
+    }
+    Ok(())
 }
 
 /// A few frames with the map as it was just drawn.
@@ -235,7 +259,13 @@ pub(super) fn passing() -> Vec<Step> {
         }),
         Step::Shot("passing-0-before"),
         // a turn of the engine's: the hero steps, a monster throws a dagger
-        // at them; no command is asked in between
+        // at them; no command is asked in between. The step is held midway:
+        // only what the engine moves again may cut it short, not a dagger
+        // drawn on the cells it flies over
+        Step::Call("the hero's next step held midway", |g| {
+            g.ui.as_mut().ok_or("no UI")?.map.hold_motions(Some(0.5));
+            Ok(())
+        }),
         Step::Call("the hero drawn a step on", |g| {
             let d = drawn()?;
             draw(g, d.hero, &d.floor);
@@ -248,10 +278,30 @@ pub(super) fn passing() -> Vec<Step> {
             let map = map_view(g)?;
             Ok(map.motion_stats().hero_steps == d.hero_steps + 1 && map.hero_step().is_some())
         }),
+        Step::Wait("the step held midway", |g| Ok(map_view(g)?.motions_held())),
+        Step::Call("a dagger drawn on the cell behind them, in flight", |g| {
+            let d = drawn()?;
+            let dagger = dagger(g)?;
+            draw(g, d.hero, &dagger);
+            Ok(())
+        }),
+        taken_in("the dagger behind the hero"),
+        Step::Call("the dagger flies on: that cell drawn again", |g| {
+            still_walking(g, "a dagger flying behind the hero")?;
+            let d = drawn()?;
+            draw(g, d.hero, &d.floor);
+            Ok(())
+        }),
         Step::Call("a dagger drawn on their cell, as it reaches them", |g| {
             let d = drawn()?;
             let dagger = dagger(g)?;
             draw(g, d.next, &dagger);
+            Ok(())
+        }),
+        taken_in("the dagger on the hero's cell"),
+        Step::Call("the step goes on under it", |g| {
+            still_walking(g, "a dagger reaching the hero")?;
+            g.ui.as_mut().ok_or("no UI")?.map.hold_motions(None);
             Ok(())
         }),
         shown("the dagger on the hero's cell"),
@@ -317,6 +367,30 @@ pub(super) fn passing() -> Vec<Step> {
         Step::Call("both are as before", |g| {
             let d = drawn()?;
             stayed(g, "after the effects", d.next)
+        }),
+        // a dagger flying over the pet: a frame of it, then the pet drawn
+        // again; the pet's model never goes
+        Step::Call("a dagger drawn over the pet, in flight", |g| {
+            let d = drawn()?;
+            let dagger = dagger(g)?;
+            draw(g, d.pet, &dagger);
+            Ok(())
+        }),
+        shown("the dagger over the pet"),
+        Step::Shot("passing-3b-missile-over-pet"),
+        Step::Call("the pet is there under it", |g| {
+            let d = drawn()?;
+            stayed(g, "a dagger over the pet", d.next)
+        }),
+        Step::Call("the dagger past: the pet drawn again", |g| {
+            let d = drawn()?;
+            draw(g, d.pet, &d.pet_glyph);
+            Ok(())
+        }),
+        shown("the pet alone on its cell"),
+        Step::Call("the pet is as before", |g| {
+            let d = drawn()?;
+            stayed(g, "after the dagger over the pet", d.next)
         }),
         // a step whose two cells come in two frames: back to where the
         // engine has the hero
