@@ -2673,6 +2673,7 @@ impl Kit<'_> {
             Proc::Fish => self.fish(root),
             Proc::Piercer => self.piercer(root),
             Proc::Beast => self.beast(root),
+            Proc::Prop => self.prop(root),
             _ => self.object(kind, root),
         }
     }
@@ -3262,6 +3263,9 @@ mod object_kit;
 
 #[path = "creature_kit.rs"]
 mod creature_kit;
+
+#[path = "prop_kit.rs"]
+mod prop_kit;
 
 /// A base head's meshes and their skins.
 /// A mesh cut from another, and the source surfaces it keeps.

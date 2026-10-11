@@ -20,6 +20,8 @@ use godot::prelude::*;
 
 #[path = "organic_felines.rs"]
 pub mod felines;
+#[path = "organic_props.rs"]
+pub mod props;
 
 /// The shapes there are, by creature and part.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -104,6 +106,8 @@ pub enum Organic {
     Tentacle {
         right: bool,
     },
+    /// A part of an object of its own shape (`props`).
+    Prop(props::Part),
 }
 
 /// Where a cat's legs join its body (out to the side, up, forward): the
@@ -541,6 +545,7 @@ impl Organic {
             Organic::BigCatLeg { hind } => felines::leg(&mut m, hind),
             Organic::Coat { coat, part } => felines::coat(&mut m, coat, part),
             Organic::Tentacle { right } => felines::tentacle(&mut m, right),
+            Organic::Prop(part) => props::build(&mut m, part),
             Organic::SporeThreads => {
                 for k in 0..4 {
                     let a = (k as f32 / 4.0 * 360.0 + 45.0).to_radians();
@@ -1154,6 +1159,76 @@ impl Merge {
         });
     }
 
+    /// A tube swept along `path` (closed round when `closed`), its section
+    /// at each point a superellipse of exponent `n` and half sizes `half`
+    /// (across, up), carried along without twisting from `up` at the
+    /// start; an open one capped at both ends.
+    fn sweep(
+        &mut self,
+        path: &[Vector3],
+        half: impl Fn(usize) -> (f32, f32),
+        n: f32,
+        closed: bool,
+        up: Vector3,
+    ) {
+        let m = path.len();
+        if m < 2 {
+            return;
+        }
+        let tangent: Vec<Vector3> = (0..m)
+            .map(|i| {
+                let (a, b) = if closed {
+                    (path[(i + m - 1) % m], path[(i + 1) % m])
+                } else {
+                    (path[i.saturating_sub(1)], path[(i + 1).min(m - 1)])
+                };
+                (b - a).normalized()
+            })
+            .collect();
+        let mut ups = Vec::with_capacity(m);
+        let mut u = up;
+        for t in &tangent {
+            let v = u - *t * t.dot(u);
+            if v.length_squared() > 1e-10 {
+                u = v.normalized();
+            }
+            ups.push(u);
+        }
+        let section = |i: usize, a: f32| {
+            let (rx, ry) = half(i);
+            let (x, h) = around(a, rx, ry, n);
+            // the superellipse's own normal there
+            let e = 2.0 * (n - 1.0) / n;
+            let (c, s) = (a.cos(), a.sin());
+            let (nx, ny) = (
+                c.signum() * c.abs().powf(e) / rx.max(1e-4),
+                s.signum() * s.abs().powf(e) / ry.max(1e-4),
+            );
+            let side = tangent[i].cross(ups[i]);
+            (
+                path[i] + side * x + ups[i] * h,
+                (side * nx + ups[i] * ny).normalized(),
+            )
+        };
+        let rows = if closed { m + 1 } else { m };
+        self.rings(rows, AROUND, |i, j| {
+            section(i % m, TAU * j as f32 / AROUND as f32)
+        });
+        if closed {
+            return;
+        }
+        for (i, out) in [(0, -tangent[0]), (m - 1, tangent[m - 1])] {
+            let mid = self.vertex(path[i], out, Vector2::new(0.5, 0.5));
+            for j in 0..AROUND {
+                let (p, _) = section(i, TAU * j as f32 / AROUND as f32);
+                self.vertex(p, out, Vector2::new(0.5, 0.5));
+            }
+            for j in 0..AROUND as i32 {
+                self.tri(mid, mid + 1 + j, mid + 1 + (j + 1) % AROUND as i32);
+            }
+        }
+    }
+
     /// A mark lying on `surf`, lifted off it: `rows` by `cols` points,
     /// `at(row, col)` the place of each (along the surface, round it),
     /// joined in quads, placed by `xf`.
@@ -1338,7 +1413,7 @@ mod tests {
     fn every_shape_faces_out() {
         for &o in ALL {
             let m = o.merged();
-            assert!(!m.idx.is_empty() && m.idx.len() % 3 == 0, "{o:?}");
+            assert!(!m.idx.is_empty() && m.idx.len().is_multiple_of(3), "{o:?}");
             assert!(m.idx.iter().all(|&i| (i as usize) < m.pos.len()), "{o:?}");
             assert!(
                 m.nrm.iter().all(|n| (n.length() - 1.0).abs() < 1e-3),
@@ -1371,6 +1446,83 @@ mod tests {
             let want =
                 (back.inverse() * Vector3::new(q.x / 0.16, q.y / 0.01, q.z / 0.04)).normalized();
             assert!(n.dot(want) > 0.999, "{p:?} {n:?} {want:?}");
+        }
+    }
+
+    #[test]
+    fn every_prop_lies_on_the_floor_about_a_unit_across() {
+        use props::Part::*;
+        for part in [
+            Blindfold,
+            Towel,
+            TowelStripes,
+            Leash,
+            LeashClasp,
+            Hook,
+            HookRope,
+            Mine,
+            MinePlate,
+            Beartrap,
+            Harp,
+            HarpStrings,
+            Drum,
+            DrumHeads,
+            DrumCords,
+            PieDish,
+            PieCrust,
+            PieCream,
+            PieCherry,
+            CandyWrapper,
+            CandyBand,
+            CandyBar,
+            Cookie,
+            CookieSlip,
+            Pancakes,
+            Butter,
+            Syrup,
+            Lembas,
+            LembasLeaf,
+            Jelly,
+            Banana,
+            BananaEnds,
+            Kelp,
+            Leaf,
+            Strange,
+        ] {
+            let m = Organic::Prop(part).merged();
+            assert!(
+                !m.idx.is_empty() && m.idx.len().is_multiple_of(3),
+                "{part:?}"
+            );
+            assert!(m.pos.iter().all(|p| p.is_finite()), "{part:?}");
+            assert!(
+                m.nrm.iter().all(|n| (n.length() - 1.0).abs() < 1e-3),
+                "{part:?}"
+            );
+            let (lo, hi) = m.span();
+            assert!(lo > -0.02 && hi < 1.1, "{part:?} {lo} {hi}");
+            for p in &m.pos {
+                assert!(p.x.abs() < 0.62 && p.z.abs() < 0.62, "{part:?} {p:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn a_sweep_keeps_its_section_round_the_path() {
+        // a ring swept round a circle: every point its section's radius
+        // from the circle
+        let mut m = Merge::default();
+        let path: Vec<Vector3> = (0..24)
+            .map(|k| {
+                let a = k as f32 / 24.0 * TAU;
+                Vector3::new(0.4 * a.cos(), 0.1, 0.4 * a.sin())
+            })
+            .collect();
+        m.sweep(&path, |_| (0.05, 0.05), 2.0, true, Vector3::UP);
+        for p in &m.pos {
+            let flat = Vector2::new(p.x, p.z).length();
+            let off = Vector2::new(flat - 0.4, p.y - 0.1).length();
+            assert!((off - 0.05).abs() < 0.003, "{p:?} {off}");
         }
     }
 

@@ -95,6 +95,9 @@ pub enum Proc {
     /// A wrapped, tied ration.
     Ration,
     Potion,
+    /// An object of its own shape that once borrowed another's model (a
+    /// towel, a beartrap, a harp, a cream pie: renethack-gd's prop_kit).
+    Prop,
 }
 
 /// Animation names of a model (in its own scene or in its rig's library).
