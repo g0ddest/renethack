@@ -1367,9 +1367,11 @@ impl Art {
             }
             let name = mi.get_name().to_string();
             // a base character's head, arms and hands keep their own skin
-            // and hair (only a ghost's fade)
+            // and hair (only a ghost's fade, and the stone or straw of a
+            // statue or a golem: all of it is that)
             let head = name.starts_with(BASE_PART);
-            if head && !ghost {
+            let made_of = matches!(r.skin, Skin::Material(_));
+            if head && !ghost && !made_of {
                 continue;
             }
             let dye = recolor
@@ -1385,7 +1387,7 @@ impl Art {
             let n = mi.get_mesh().map_or(0, |m| m.get_surface_count());
             for i in 0..n {
                 let mat = match r.skin {
-                    Skin::Material(m) if !head => Some(self.surface(m, 100, false, look.tint)),
+                    Skin::Material(m) => Some(self.surface(m, 100, false, look.tint)),
                     _ => mi.get_active_material(i).map(|src| {
                         // an outfit's bare hands are skin: the head's tone,
                         // never the cloth's dye
@@ -1712,7 +1714,13 @@ impl Art {
             return out;
         };
         for e in &spec.extras {
-            if let Some((_, holder)) = self.attach_extra(&mut skeleton, e, look.pose == Pose::Ghost)
+            // a statue's or a golem's hat is of its stone or straw too
+            let made_of = match look.art.skin {
+                Skin::Material(m) => Some((m, look.tint)),
+                _ => None,
+            };
+            if let Some((_, holder)) =
+                self.attach_extra(&mut skeleton, e, look.pose == Pose::Ghost, made_of)
             {
                 out.push((e.slot.clone(), holder));
             }
@@ -1729,7 +1737,7 @@ impl Art {
         };
         extras
             .iter()
-            .filter_map(|e| self.attach_extra(&mut skeleton, e, false))
+            .filter_map(|e| self.attach_extra(&mut skeleton, e, false, None))
             .map(|(bone, _)| bone.upcast())
             .collect()
     }
@@ -1740,10 +1748,17 @@ impl Art {
         skeleton: &mut Gd<Skeleton3D>,
         e: &nh_art::Extra,
         ghost: bool,
+        made_of: Option<(usize, Color)>,
     ) -> Option<(Gd<BoneAttachment3D>, Gd<Node3D>)> {
         let model = self.manifest.model_index(&e.model)?;
-        let tint = e.tint_rgb().map_or(Color::WHITE, rgb);
-        let node = self.prop(model, tint, ghost)?;
+        let node = match made_of {
+            // in the wearer's material and its tint
+            Some((m, tint)) => self.prop_in(model, tint, ghost, Skin::Material(m))?,
+            None => {
+                let tint = e.tint_rgb().map_or(Color::WHITE, rgb);
+                self.prop(model, tint, ghost)?
+            }
+        };
         let mut bone = BoneAttachment3D::new_alloc();
         bone.set_bone_name(&e.bone);
         skeleton.add_child(&bone);
@@ -1758,6 +1773,17 @@ impl Art {
 
     /// A model on its own, dressed in `tint` (a prop worn or carried).
     fn prop(&mut self, model: usize, tint: Color, ghost: bool) -> Option<Gd<Node3D>> {
+        self.prop_in(model, tint, ghost, Skin::Own)
+    }
+
+    /// As `prop`, in `skin` (a statue's stone).
+    fn prop_in(
+        &mut self,
+        model: usize,
+        tint: Color,
+        ghost: bool,
+        skin: Skin,
+    ) -> Option<Gd<Node3D>> {
         let spec = self.manifest.model_at(model).1.clone();
         let look = ModelLook {
             art: Resolved {
@@ -1767,7 +1793,7 @@ impl Art {
                 rot: [0.0; 3],
                 height: 1.0,
                 tint: nh_art::Tint::None,
-                skin: Skin::Own,
+                skin,
                 level: nh_art::Level::Generic,
             },
             tint,
