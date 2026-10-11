@@ -1,0 +1,1197 @@
+# R6, log messages batch 19: shk.c, entering a shop and paying. Syntax: nh-i18n's template.rs.
+
+[5cfa8b8b6f25]
+en = "You have no room for the gold!"
+ru = "У вас нет места для золота!"
+
+[50ff60b1440c]
+en = "But no one seems to respond to it."
+ru = "Но на неё, похоже, никто не откликается."
+
+[7492ef26d852]
+en = "The Keystone Kops appear!"
+ru = "Появляются кистоунские копы!"
+
+[43270f77aa9d]
+en = "\"%s!  Don't you leave without paying!\""
+ru = "«{1}!  Не вздумай уйти, не заплатив!»"
+
+[1e94413ab62a]
+en = "\"%s!  Please pay before leaving.\""
+ru = "«{1}!  Пожалуйста, заплатите перед уходом.»"
+
+[d8a6b7c7af0c]
+en = "%s makes it clear that you need to pay before leaving!"
+ru = "{1} ясно {1:num|даёт|дают} понять, что перед уходом нужно заплатить!"
+
+[ab1e77797a75]
+en = "%s points out that you need to pay before leaving."
+ru = "{1} {1:num|указывает|указывают} вам, что перед уходом нужно заплатить."
+
+[ce132e7b5121]
+en = "Your credit has been reduced by %ld zorkmid."
+ru = "Ваш кредит уменьшился на {1} {1:plural|зоркмид|зоркмида|зоркмидов}."
+
+[cfaa76927720]
+en = "Your credit has been reduced by %ld zorkmids."
+ru = "Ваш кредит уменьшился на {1} {1:plural|зоркмид|зоркмида|зоркмидов}."
+
+[44459a862b75]
+en = "Your debt has increased by %ld zorkmid."
+ru = "Ваш долг увеличился на {1} {1:plural|зоркмид|зоркмида|зоркмидов}."
+
+[2bdf5704aa8f]
+en = "Your debt has increased by %ld zorkmids."
+ru = "Ваш долг увеличился на {1} {1:plural|зоркмид|зоркмида|зоркмидов}."
+
+[f57ee167c064]
+en = "Your credit of %ld zorkmid is used to cover your shopping bill."
+ru = "Ваш кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} идёт на оплату вашего счёта за покупки."
+
+[6561fa77e77e]
+en = "Your credit of %ld zorkmids is used to cover your shopping bill."
+ru = "Ваш кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} идёт на оплату вашего счёта за покупки."
+
+[db59a89ca39e]
+en = "This shop is deserted."
+ru = "В этой лавке ни души."
+
+[6d0e82e45a03]
+en = "This shop is untended."
+ru = "Эта лавка оставлена без присмотра."
+
+[61c79ee73716]
+en = "This shop seems to be untended."
+ru = "Эта лавка, похоже, оставлена без присмотра."
+
+[dcb16eacc98e]
+en = "%s senses your presence."
+ru = "{1} {1:num|чувствует|чувствуют} ваше присутствие."
+
+[b00672e67d6b]
+en = "\"Invisible customers are not welcome!\""
+ru = "«Невидимым покупателям здесь не рады!»"
+
+[29fd53d49c83]
+en = "%s stands firm as if he knows you are there."
+ru = "{1} твёрдо {1:num|стоит|стоят} на месте, словно {1:num|знает|знают}, что вы здесь."
+
+[48f67c967f1b]
+en = "%s stands firm as if it knows you are there."
+ru = "{1} твёрдо {1:num|стоит|стоят} на месте, словно {1:num|знает|знают}, что вы здесь."
+
+[8d8c73040c8a]
+en = "%s stands firm as if she knows you are there."
+ru = "{1} твёрдо {1:num|стоит|стоят} на месте, словно {1:num|знает|знают}, что вы здесь."
+
+[8e7e9551f91f]
+en = "%s stands firm as if they knows you are there."
+ru = "{1} твёрдо {1:num|стоит|стоят} на месте, словно {1:num|знает|знают}, что вы здесь."
+
+[220dbb09ca03]
+en = "\"So, %s, you dare return to %s antique weapons outlet?!\""
+ru = "«Так, {1}, ты ещё смеешь возвращаться в антикварную оружейную лавку {2:gen}?!»"
+
+[8f8153b57088]
+en = "\"So, %s, you dare return to %s delicatessen?!\""
+ru = "«Так, {1}, ты ещё смеешь возвращаться в гастроном {2:gen}?!»"
+
+[60a1f78afed8]
+en = "\"So, %s, you dare return to %s general store?!\""
+ru = "«Так, {1}, ты ещё смеешь возвращаться в универсальный магазин {2:gen}?!»"
+
+[3539c30c9af8]
+en = "\"So, %s, you dare return to %s hardware store?!\""
+ru = "«Так, {1}, ты ещё смеешь возвращаться в скобяную лавку {2:gen}?!»"
+
+[61215f8a70ee]
+en = "\"So, %s, you dare return to %s health food store?!\""
+ru = "«Так, {1}, ты ещё смеешь возвращаться в магазин здорового питания {2:gen}?!»"
+
+[2d99f2e769b6]
+en = "\"So, %s, you dare return to %s jewelers?!\""
+ru = "«Так, {1}, ты ещё смеешь возвращаться в ювелирную лавку {2:gen}?!»"
+
+[a223b08927f6]
+en = "\"So, %s, you dare return to %s lighting store?!\""
+ru = "«Так, {1}, ты ещё смеешь возвращаться в магазин светильников {2:gen}?!»"
+
+[99061dab8393]
+en = "\"So, %s, you dare return to %s liquor emporium?!\""
+ru = "«Так, {1}, ты ещё смеешь возвращаться в винную лавку {2:gen}?!»"
+
+[e69367651f5d]
+en = "\"So, %s, you dare return to %s quality apparel and accessories?!\""
+ru = "«Так, {1}, ты ещё смеешь возвращаться в салон одежды и аксессуаров {2:gen}?!»"
+
+[f9bef2af5adf]
+en = "\"So, %s, you dare return to %s rare books?!\""
+ru = "«Так, {1}, ты ещё смеешь возвращаться в лавку редких книг {2:gen}?!»"
+
+[4e83667d1407]
+en = "\"So, %s, you dare return to %s second-hand bookstore?!\""
+ru = "«Так, {1}, ты ещё смеешь возвращаться в букинистическую лавку {2:gen}?!»"
+
+[b341dabdfaea]
+en = "\"So, %s, you dare return to %s used armor dealership?!\""
+ru = "«Так, {1}, ты ещё смеешь возвращаться в магазин подержанных доспехов {2:gen}?!»"
+
+[7a886d830819]
+en = "%s seems furious over your return to her %s!"
+ru = "{1}, похоже, в ярости из-за вашего возвращения в её {2:acc}!"
+
+[99f79bdc90ca]
+en = "%s seems furious over your return to his %s!"
+ru = "{1}, похоже, в ярости из-за вашего возвращения в его {2:acc}!"
+
+[22aa9b713430]
+en = "%s seems furious over your return to its %s!"
+ru = "{1}, похоже, в ярости из-за вашего возвращения в его {2:acc}!"
+
+[9904c1353786]
+en = "%s seems furious over your return to their %s!"
+ru = "{1}, похоже, в ярости из-за вашего возвращения в их {2:acc}!"
+
+[603cc601923b]
+en = "%s seems quite upset over your return to her %s!"
+ru = "{1}, похоже, очень {1:num|сердится|сердятся} из-за вашего возвращения в её {2:acc}!"
+
+[68e01b8f3de6]
+en = "%s seems quite upset over your return to his %s!"
+ru = "{1}, похоже, очень {1:num|сердится|сердятся} из-за вашего возвращения в его {2:acc}!"
+
+[69d573bb16da]
+en = "%s seems quite upset over your return to its %s!"
+ru = "{1}, похоже, очень {1:num|сердится|сердятся} из-за вашего возвращения в его {2:acc}!"
+
+[91f00de1d346]
+en = "%s seems quite upset over your return to their %s!"
+ru = "{1}, похоже, очень {1:num|сердится|сердятся} из-за вашего возвращения в их {2:acc}!"
+
+[bd84cda32dbc]
+en = "%s seems ticked off over your return to her %s!"
+ru = "{1}, похоже, не на шутку {1:num|злится|злятся} из-за вашего возвращения в её {2:acc}!"
+
+[d1389f115d62]
+en = "%s seems ticked off over your return to his %s!"
+ru = "{1}, похоже, не на шутку {1:num|злится|злятся} из-за вашего возвращения в его {2:acc}!"
+
+[9c125ea1bebd]
+en = "%s seems ticked off over your return to its %s!"
+ru = "{1}, похоже, не на шутку {1:num|злится|злятся} из-за вашего возвращения в его {2:acc}!"
+
+[a4091a0d60e3]
+en = "%s seems ticked off over your return to their %s!"
+ru = "{1}, похоже, не на шутку {1:num|злится|злятся} из-за вашего возвращения в их {2:acc}!"
+
+[242cf83be0c9]
+en = "\"Back again, %s?  I've got my %s on you.\""
+ru = "«Опять ты, {1}?  Я с тебя {2:pl:gen} не спущу.»"
+
+[7ed92e362468]
+en = "The atmosphere at %s antique weapons outlet seems unwelcoming."
+ru = "Атмосфера в антикварной оружейной лавке {1:gen} кажется неприветливой."
+
+[43949ea62a01]
+en = "The atmosphere at %s delicatessen seems unwelcoming."
+ru = "Атмосфера в гастрономе {1:gen} кажется неприветливой."
+
+[6141f64beb38]
+en = "The atmosphere at %s general store seems unwelcoming."
+ru = "Атмосфера в универсальном магазине {1:gen} кажется неприветливой."
+
+[975b97fd8bf0]
+en = "The atmosphere at %s hardware store seems unwelcoming."
+ru = "Атмосфера в скобяной лавке {1:gen} кажется неприветливой."
+
+[63c8fc489e67]
+en = "The atmosphere at %s health food store seems unwelcoming."
+ru = "Атмосфера в магазине здорового питания {1:gen} кажется неприветливой."
+
+[c02d3ea86444]
+en = "The atmosphere at %s jewelers seems unwelcoming."
+ru = "Атмосфера в ювелирной лавке {1:gen} кажется неприветливой."
+
+[f8ab27c0e547]
+en = "The atmosphere at %s lighting store seems unwelcoming."
+ru = "Атмосфера в магазине светильников {1:gen} кажется неприветливой."
+
+[fdcf6f2adf9e]
+en = "The atmosphere at %s liquor emporium seems unwelcoming."
+ru = "Атмосфера в винной лавке {1:gen} кажется неприветливой."
+
+[fc1e86f00517]
+en = "The atmosphere at %s quality apparel and accessories seems unwelcoming."
+ru = "Атмосфера в салоне одежды и аксессуаров {1:gen} кажется неприветливой."
+
+[249b79dd7252]
+en = "The atmosphere at %s rare books seems unwelcoming."
+ru = "Атмосфера в лавке редких книг {1:gen} кажется неприветливой."
+
+[3e47a9b8234f]
+en = "The atmosphere at %s second-hand bookstore seems unwelcoming."
+ru = "Атмосфера в букинистической лавке {1:gen} кажется неприветливой."
+
+[d7b9ede97248]
+en = "The atmosphere at %s used armor dealership seems unwelcoming."
+ru = "Атмосфера в магазине подержанных доспехов {1:gen} кажется неприветливой."
+
+[7e4d948c9728]
+en = "%s mutters imprecations against shoplifters."
+ru = "{1} {1:num|бормочет|бормочут} проклятия в адрес магазинных воров."
+
+[f8357d3a9900]
+en = "%s is combing through her inventory list."
+ru = "{1} тщательно {1:num|просматривает|просматривают} свою опись товаров."
+
+[04f636230007]
+en = "%s is combing through his inventory list."
+ru = "{1} тщательно {1:num|просматривает|просматривают} свою опись товаров."
+
+[f6de65b6034d]
+en = "%s is combing through its inventory list."
+ru = "{1} тщательно {1:num|просматривает|просматривают} свою опись товаров."
+
+[fc5dd17b9935]
+en = "%s is combing through their inventory list."
+ru = "{1} тщательно {1:num|просматривает|просматривают} свою опись товаров."
+
+[df14a8a1c003]
+en = "You enter %s antique weapons outlet again!"
+ru = "Вы снова входите в антикварную оружейную лавку {1:gen}!"
+
+[5f7b767b1de1]
+en = "You enter %s antique weapons outlet!"
+ru = "Вы входите в антикварную оружейную лавку {1:gen}!"
+
+[905a1a5c1be9]
+en = "You enter %s delicatessen again!"
+ru = "Вы снова входите в гастроном {1:gen}!"
+
+[802e405f10cf]
+en = "You enter %s delicatessen!"
+ru = "Вы входите в гастроном {1:gen}!"
+
+[95b8ceb47754]
+en = "You enter %s general store again!"
+ru = "Вы снова входите в универсальный магазин {1:gen}!"
+
+[8b57ccf58b49]
+en = "You enter %s general store!"
+ru = "Вы входите в универсальный магазин {1:gen}!"
+
+[f8586d74ddc1]
+en = "You enter %s hardware store again!"
+ru = "Вы снова входите в скобяную лавку {1:gen}!"
+
+[8ffd61f0442e]
+en = "You enter %s hardware store!"
+ru = "Вы входите в скобяную лавку {1:gen}!"
+
+[e2ef28630fff]
+en = "You enter %s health food store again!"
+ru = "Вы снова входите в магазин здорового питания {1:gen}!"
+
+[729e82e484e5]
+en = "You enter %s health food store!"
+ru = "Вы входите в магазин здорового питания {1:gen}!"
+
+[f8b33ea5df41]
+en = "You enter %s jewelers again!"
+ru = "Вы снова входите в ювелирную лавку {1:gen}!"
+
+[2b8635d9111f]
+en = "You enter %s jewelers!"
+ru = "Вы входите в ювелирную лавку {1:gen}!"
+
+[97f308240ec6]
+en = "You enter %s lighting store again!"
+ru = "Вы снова входите в магазин светильников {1:gen}!"
+
+[f831f365175b]
+en = "You enter %s lighting store!"
+ru = "Вы входите в магазин светильников {1:gen}!"
+
+[77849053d601]
+en = "You enter %s liquor emporium again!"
+ru = "Вы снова входите в винную лавку {1:gen}!"
+
+[a28bc06c042c]
+en = "You enter %s liquor emporium!"
+ru = "Вы входите в винную лавку {1:gen}!"
+
+[12981a813dfe]
+en = "You enter %s quality apparel and accessories again!"
+ru = "Вы снова входите в салон одежды и аксессуаров {1:gen}!"
+
+[529d6594dc51]
+en = "You enter %s quality apparel and accessories!"
+ru = "Вы входите в салон одежды и аксессуаров {1:gen}!"
+
+[5bbe9208cc25]
+en = "You enter %s rare books again!"
+ru = "Вы снова входите в лавку редких книг {1:gen}!"
+
+[67cb9b3778f3]
+en = "You enter %s rare books!"
+ru = "Вы входите в лавку редких книг {1:gen}!"
+
+[ba6cae00c11c]
+en = "You enter %s second-hand bookstore again!"
+ru = "Вы снова входите в букинистическую лавку {1:gen}!"
+
+[c855d7c1c224]
+en = "You enter %s second-hand bookstore!"
+ru = "Вы входите в букинистическую лавку {1:gen}!"
+
+[6b308cf14936]
+en = "You enter %s used armor dealership again!"
+ru = "Вы снова входите в магазин подержанных доспехов {1:gen}!"
+
+[7899824b09bb]
+en = "You enter %s used armor dealership!"
+ru = "Вы входите в магазин подержанных доспехов {1:gen}!"
+
+[00a01a26b2fc]
+en = "\"Leave the digging tools outside.\""
+ru = "«Оставь кирки снаружи.»"
+
+[e97ebfe9cad0]
+en = "\"Leave the mattock outside.\""
+ru = "«Оставь большую кирку снаружи.»"
+
+[2fddcbd568a5]
+en = "\"Leave the mattocks outside.\""
+ru = "«Оставь большие кирки снаружи.»"
+
+[f8521d5994dc]
+en = "\"Leave the pick-axe outside.\""
+ru = "«Оставь кирку снаружи.»"
+
+[7ea77d9c4191]
+en = "\"Leave the pick-axes outside.\""
+ru = "«Оставь кирки снаружи.»"
+
+[a9c322366fae]
+en = "\"Will you please leave your digging tools outside?\""
+ru = "«Не оставите ли вы кирки снаружи?»"
+
+[952930430438]
+en = "\"Will you please leave your mattock outside?\""
+ru = "«Не оставите ли вы большую кирку снаружи?»"
+
+[e53c11300035]
+en = "\"Will you please leave your mattocks outside?\""
+ru = "«Не оставите ли вы большие кирки снаружи?»"
+
+[3b22c90c2933]
+en = "\"Will you please leave your pick-axes outside?\""
+ru = "«Не оставите ли вы кирки снаружи?»"
+
+[62ea3fe86d5e]
+en = "%s is hesitant to let you in with your digging tools."
+ru = "{1} не {1:num|решается|решаются} впустить вас с кирками."
+
+[f7956e170b3e]
+en = "%s is hesitant to let you in with your mattock."
+ru = "{1} не {1:num|решается|решаются} впустить вас с большой киркой."
+
+[b48484362d2b]
+en = "%s is hesitant to let you in with your mattocks."
+ru = "{1} не {1:num|решается|решаются} впустить вас с большими кирками."
+
+[ac1a98bd7f0a]
+en = "%s is hesitant to let you in with your pick-axe."
+ru = "{1} не {1:num|решается|решаются} впустить вас с киркой."
+
+[c2327c63be0d]
+en = "%s is hesitant to let you in with your pick-axes."
+ru = "{1} не {1:num|решается|решаются} впустить вас с кирками."
+
+[0ff3ef41913e]
+en = "%s refuses to let you in with your digging tools."
+ru = "{1} {1:num|отказывается|отказываются} впускать вас с кирками."
+
+[82126d022a9a]
+en = "%s refuses to let you in with your mattock."
+ru = "{1} {1:num|отказывается|отказываются} впускать вас с большой киркой."
+
+[5e91c9854651]
+en = "%s refuses to let you in with your mattocks."
+ru = "{1} {1:num|отказывается|отказываются} впускать вас с большими кирками."
+
+[02e56bab094c]
+en = "%s refuses to let you in with your pick-axe."
+ru = "{1} {1:num|отказывается|отказываются} впускать вас с киркой."
+
+[21e5477717f0]
+en = "%s refuses to let you in with your pick-axes."
+ru = "{1} {1:num|отказывается|отказываются} впускать вас с кирками."
+
+[82423399a5c8]
+en = "\"Leave %s outside.\""
+ru = "«Оставь {1:acc:own} снаружи.»"
+
+[ef516170054c]
+en = "\"Will you please leave %s outside?\""
+ru = "«Не оставите ли вы {1:acc:own} снаружи?»"
+
+[65130d48b8c3]
+en = "%s doesn't want to let you in while you're riding %s."
+ru = "{1} не {1:num|хочет|хотят} впускать вас верхом на {2:prep}."
+
+[1323afec2a40]
+en = "%s refuses to let you in while you're riding %s."
+ru = "{1} {1:num|отказывается|отказываются} впускать вас верхом на {2:prep}."
+
+[55594c55f0bb]
+en = "\"You sneaky %s!  Get out of here with that pick!\""
+ru = "«Ах ты {1:gender|хитрый|хитрая|хитрое|хитрые} {1}!  Убирайся отсюда с этой киркой!»"
+
+[ac0ea177285a]
+en = "%s glares at your pick!"
+ru = "{1} свирепо {1:num|смотрит|смотрят} на вашу кирку!"
+
+[430262ac7e18]
+en = "%s is dismayed because of your pick!"
+ru = "{1} в смятении из-за вашей кирки!"
+
+[cba58dd46eb8]
+en = "You have no credit or debt in here."
+ru = "У вас здесь нет ни кредита, ни долга."
+
+[83ac3b195ed9]
+en = "You have %ld zorkmid credit at %s antique weapons outlet."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в антикварной оружейной лавке {2:gen}."
+
+[4b3e45f1113b]
+en = "You have %ld zorkmid credit at %s delicatessen."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в гастрономе {2:gen}."
+
+[ba92c55dd88d]
+en = "You have %ld zorkmid credit at %s general store."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в универсальном магазине {2:gen}."
+
+[64c93bac6cf6]
+en = "You have %ld zorkmid credit at %s hardware store."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в скобяной лавке {2:gen}."
+
+[1df3ab1fa7bc]
+en = "You have %ld zorkmid credit at %s health food store."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в магазине здорового питания {2:gen}."
+
+[42cdb11b08d4]
+en = "You have %ld zorkmid credit at %s jewelers."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в ювелирной лавке {2:gen}."
+
+[bd284679a6b2]
+en = "You have %ld zorkmid credit at %s lighting store."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в магазине светильников {2:gen}."
+
+[291715cf39f9]
+en = "You have %ld zorkmid credit at %s liquor emporium."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в винной лавке {2:gen}."
+
+[1988e12c7735]
+en = "You have %ld zorkmid credit at %s quality apparel and accessories."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в салоне одежды и аксессуаров {2:gen}."
+
+[2902fb7a370c]
+en = "You have %ld zorkmid credit at %s rare books."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в лавке редких книг {2:gen}."
+
+[56bb4a27c681]
+en = "You have %ld zorkmid credit at %s second-hand bookstore."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в букинистической лавке {2:gen}."
+
+[2e03406601f6]
+en = "You have %ld zorkmid credit at %s used armor dealership."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в магазине подержанных доспехов {2:gen}."
+
+[5379f96f1fa3]
+en = "You have %ld zorkmids credit at %s antique weapons outlet."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в антикварной оружейной лавке {2:gen}."
+
+[8379fe8a75cd]
+en = "You have %ld zorkmids credit at %s delicatessen."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в гастрономе {2:gen}."
+
+[8a3422c30dcd]
+en = "You have %ld zorkmids credit at %s general store."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в универсальном магазине {2:gen}."
+
+[416fd6a532f6]
+en = "You have %ld zorkmids credit at %s hardware store."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в скобяной лавке {2:gen}."
+
+[78d2216a2f06]
+en = "You have %ld zorkmids credit at %s health food store."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в магазине здорового питания {2:gen}."
+
+[e8b793bf3a75]
+en = "You have %ld zorkmids credit at %s jewelers."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в ювелирной лавке {2:gen}."
+
+[830ca8ae12f5]
+en = "You have %ld zorkmids credit at %s lighting store."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в магазине светильников {2:gen}."
+
+[855d149e02db]
+en = "You have %ld zorkmids credit at %s liquor emporium."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в винной лавке {2:gen}."
+
+[03268623a638]
+en = "You have %ld zorkmids credit at %s quality apparel and accessories."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в салоне одежды и аксессуаров {2:gen}."
+
+[cfee39fb38c9]
+en = "You have %ld zorkmids credit at %s rare books."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в лавке редких книг {2:gen}."
+
+[df332521fad6]
+en = "You have %ld zorkmids credit at %s second-hand bookstore."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в букинистической лавке {2:gen}."
+
+[afacc94ba6fd]
+en = "You have %ld zorkmids credit at %s used armor dealership."
+ru = "У вас кредит в {1} {1:plural|зоркмид|зоркмида|зоркмидов} в магазине подержанных доспехов {2:gen}."
+
+[ec846e54234d]
+en = "You have no credit in here."
+ru = "У вас здесь нет кредита."
+
+[dbe0811ab30c]
+en = "You owe %s %ld zorkmid."
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[634cf6646135]
+en = "You owe %s %ld zorkmids."
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[0927eb58debf]
+en = "You don't owe any gold here."
+ru = "Вы здесь ничего не должны."
+
+[bc33c64c427e]
+en = "The price is deducted from your credit."
+ru = "Цена вычитается из вашего кредита."
+
+[facaccd82779]
+en = "The price is partially covered by your credit."
+ru = "Цена частично покрывается вашим кредитом."
+
+[1d3e3c731f3d]
+en = "%s can move again."
+ru = "{1} снова {1:num|может|могут} двигаться."
+
+[080ca3965af2]
+en = "%s returns to her shop."
+ru = "{1} {1:num|возвращается|возвращаются} в свою лавку."
+
+[bee41bf0e3de]
+en = "%s returns to his shop."
+ru = "{1} {1:num|возвращается|возвращаются} в свою лавку."
+
+[abe95b705712]
+en = "%s returns to its shop."
+ru = "{1} {1:num|возвращается|возвращаются} в свою лавку."
+
+[363c3ba5975a]
+en = "%s returns to their shop."
+ru = "{1} {1:num|возвращается|возвращаются} в свою лавку."
+
+[76a0ff28d3b2]
+en = "Satisfied, %s suddenly disappears!"
+ru = "Удовлетворившись, {1} внезапно {1:num|исчезает|исчезают}!"
+
+[74bb71aaedd4]
+en = "%s calms down."
+ru = "{1} {1:num|успокаивается|успокаиваются}."
+
+[1525973fa44f]
+en = "There appears to be no shopkeeper here to receive your payment."
+ru = "Похоже, здесь нет лавочника, который принял бы вашу плату."
+
+[398d3b8a7d86]
+en = "You can't see..."
+ru = "Вы ничего не видите..."
+
+[c58e14961cf3]
+en = "%s is not near enough to receive your payment."
+ru = "{1} недостаточно близко, чтобы принять вашу плату."
+
+[5eb4bcb046e8]
+en = "Pay whom?"
+ru = "Кому заплатить?"
+
+[bbb539074c8c]
+en = "Try again..."
+ru = "Попробуйте ещё раз..."
+
+[51df949b37ac]
+en = "You are generous to yourself."
+ru = "Вы щедры к себе."
+
+[f2b310f0ba39]
+en = "You can't see anyone there."
+ru = "Вы никого там не видите."
+
+[45be028ee4ac]
+en = "You can't sense anyone there."
+ru = "Вы никого там не чувствуете."
+
+[07c534fee00a]
+en = "There is no one there to receive your payment."
+ru = "Там некому принять вашу плату."
+
+[7675f8ad5014]
+en = "%s is not interested in your payment."
+ru = "{1} не {1:num|интересуется|интересуются} вашей платой."
+
+[49f4725db6ed]
+en = "%s is too far to receive your payment."
+ru = "{1} слишком далеко, чтобы принять вашу плату."
+
+[74d5aaba8e6d]
+en = "%s doesn't respond."
+ru = "{1} не {1:num|реагирует|реагируют}."
+
+[978bb2f81451]
+en = "%s seems to be napping."
+ru = "{1}, похоже, {1:num|дремлет|дремлют}."
+
+[3437b5fa8a4f]
+en = "You have no gold."
+ru = "У вас нет золота."
+
+[56566bf1aea4]
+en = "You seem to have no gold."
+ru = "Похоже, у вас нет золота."
+
+[f74f130bdbe3]
+en = "But you have some gold stashed away."
+ru = "Но у вас припрятано немного золота."
+
+[6cb97d4c044c]
+en = "You give %s the %ld gold piece he asked for."
+ru = "Вы отдаёте {1:dat} {2} {2:plural|золотую монету|золотые монеты|золотых монет}, как он и просил."
+
+[c0ac019691e1]
+en = "You give %s the %ld gold piece it asked for."
+ru = "Вы отдаёте {1:dat} {2} {2:plural|золотую монету|золотые монеты|золотых монет}, как оно и просило."
+
+[e1704fd00c1c]
+en = "You give %s the %ld gold piece she asked for."
+ru = "Вы отдаёте {1:dat} {2} {2:plural|золотую монету|золотые монеты|золотых монет}, как она и просила."
+
+[a7b8ec8cdddf]
+en = "You give %s the %ld gold piece they asked for."
+ru = "Вы отдаёте {1:dat} {2} {2:plural|золотую монету|золотые монеты|золотых монет}, как они и просили."
+
+[a777f009f848]
+en = "You give %s the %ld gold pieces it asked for."
+ru = "Вы отдаёте {1:dat} {2} {2:plural|золотую монету|золотые монеты|золотых монет}, как оно и просило."
+
+[2087629e85ed]
+en = "You give %s the %ld gold pieces they asked for."
+ru = "Вы отдаёте {1:dat} {2} {2:plural|золотую монету|золотые монеты|золотых монет}, как они и просили."
+
+[ba541af434f7]
+en = "You give %s all your gold."
+ru = "Вы отдаёте {1:dat} всё своё золото."
+
+[da8d4f3907f0]
+en = "You give %s all your openly kept gold."
+ru = "Вы отдаёте {1:dat} всё золото, что у вас на виду."
+
+[c4bb67b23a45]
+en = "But you have hidden gold!"
+ru = "Но у вас есть спрятанное золото!"
+
+[7b413c8587c2]
+en = "Unfortunately, he doesn't look satisfied."
+ru = "К сожалению, он не выглядит довольным."
+
+[bd4562eceb93]
+en = "Unfortunately, it doesn't look satisfied."
+ru = "К сожалению, оно не выглядит довольным."
+
+[bfe5d663c1c8]
+en = "Unfortunately, she doesn't look satisfied."
+ru = "К сожалению, она не выглядит довольной."
+
+[b8cc0033429e]
+en = "Unfortunately, they doesn't look satisfied."
+ru = "К сожалению, они не выглядят довольными."
+
+[320f63858d47]
+en = "Moreover, you seem to have no gold."
+ru = "К тому же у вас, похоже, нет золота."
+
+[77e032e46492]
+en = "%s is after blood, not gold!"
+ru = "{1} {1:num|жаждет|жаждут} крови, а не золота!"
+
+[085486c387c6]
+en = "Besides, you don't have enough to interest her."
+ru = "Кроме того, у вас слишком мало золота, чтобы её заинтересовать."
+
+[e147531e1ea9]
+en = "Besides, you don't have enough to interest him."
+ru = "Кроме того, у вас слишком мало золота, чтобы его заинтересовать."
+
+[93449bb9660c]
+en = "Besides, you don't have enough to interest it."
+ru = "Кроме того, у вас слишком мало золота, чтобы его заинтересовать."
+
+[bf22b89f6dab]
+en = "Besides, you don't have enough to interest them."
+ru = "Кроме того, у вас слишком мало золота, чтобы их заинтересовать."
+
+[4f48a96e8322]
+en = "But since her shop has been robbed recently,"
+ru = "Но поскольку её лавку недавно ограбили,"
+
+[e791e9c08ad2]
+en = "But since his shop has been robbed recently,"
+ru = "Но поскольку его лавку недавно ограбили,"
+
+[27dffffa994d]
+en = "But since its shop has been robbed recently,"
+ru = "Но поскольку его лавку недавно ограбили,"
+
+[7bd293c0d6f0]
+en = "But since their shop has been robbed recently,"
+ru = "Но поскольку их лавку недавно ограбили,"
+
+[fcb162363a59]
+en = "you compensate %s for her losses."
+ru = "вы возмещаете {1:dat} убытки."
+
+[2d44c163a86f]
+en = "you compensate %s for his losses."
+ru = "вы возмещаете {1:dat} убытки."
+
+[d8685d1db023]
+en = "you compensate %s for its losses."
+ru = "вы возмещаете {1:dat} убытки."
+
+[eeb62a19b405]
+en = "you compensate %s for their losses."
+ru = "вы возмещаете {1:dat} убытки."
+
+[81a1021b6a95]
+en = "you partially compensate %s for her losses."
+ru = "вы частично возмещаете {1:dat} убытки."
+
+[22c22dd46b69]
+en = "you partially compensate %s for his losses."
+ru = "вы частично возмещаете {1:dat} убытки."
+
+[54a81ad87d24]
+en = "you partially compensate %s for its losses."
+ru = "вы частично возмещаете {1:dat} убытки."
+
+[8a4cdac2d674]
+en = "you partially compensate %s for their losses."
+ru = "вы частично возмещаете {1:dat} убытки."
+
+[e735e15ee077]
+en = "%s is after your hide, not your gold!"
+ru = "{1} {1:num|жаждет|жаждут} вашей шкуры, а не вашего золота!"
+
+[66bc97cf82ba]
+en = "You try to appease %s by giving her 1000 gold pieces."
+ru = "Вы пытаетесь задобрить {1:acc}, отдав 1000 золотых монет."
+
+[7134e15a2cfc]
+en = "You try to appease %s by giving him 1000 gold pieces."
+ru = "Вы пытаетесь задобрить {1:acc}, отдав 1000 золотых монет."
+
+[296c646b23f3]
+en = "You try to appease %s by giving it 1000 gold pieces."
+ru = "Вы пытаетесь задобрить {1:acc}, отдав 1000 золотых монет."
+
+[a2379ef5ea80]
+en = "You try to appease %s by giving them 1000 gold pieces."
+ru = "Вы пытаетесь задобрить {1:acc}, отдав 1000 золотых монет."
+
+[5c01a124e199]
+en = "But %s is as angry as ever."
+ru = "Но {1} по-прежнему {1:num|злится|злятся}."
+
+[9f3647261dee]
+en = "You owe %s %ld zorkmid for gold picked up and the use of merchandise."
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за подобранное золото и пользование товаром."
+
+[c47934ad6614]
+en = "You owe %s %ld zorkmid for the use of merchandise."
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за пользование товаром."
+
+[8846096ae9eb]
+en = "You owe %s %ld zorkmid you picked up in the store."
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид, который|зоркмида, которые|зоркмидов, которые} вы подобрали в лавке."
+
+[2b018a1226e4]
+en = "You owe %s %ld zorkmids for gold picked up and the use of merchandise."
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за подобранное золото и пользование товаром."
+
+[f0fae3b63d6a]
+en = "You owe %s %ld zorkmids for the use of merchandise."
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид|зоркмида|зоркмидов} за пользование товаром."
+
+[96e9f7fe5c6b]
+en = "You owe %s %ld zorkmids you picked up in the store."
+ru = "Вы должны {1:dat} {2} {2:plural|зоркмид, который|зоркмида, которые|зоркмидов, которые} вы подобрали в лавке."
+
+[950622f9b877]
+en = "But you don't have enough gold or credit."
+ru = "Но у вас недостаточно золота и кредита."
+
+[80d3ac2c4b89]
+en = "But you don't have enough gold."
+ru = "Но у вас недостаточно золота."
+
+[b1274a39a482]
+en = "But you don't seem to have enough gold or credit."
+ru = "Но у вас, похоже, недостаточно золота и кредита."
+
+[1e8fad59cf98]
+en = "But you don't seem to have enough gold."
+ru = "Но у вас, похоже, недостаточно золота."
+
+[e92d448639d4]
+en = "Your debt is covered by your credit."
+ru = "Ваш долг покрывается вашим кредитом."
+
+[94f85370dcaa]
+en = "You pay that debt."
+ru = "Вы выплачиваете этот долг."
+
+[e957896f7cef]
+en = "That debt is partially offset by your credit."
+ru = "Этот долг частично погашается вашим кредитом."
+
+[90fff5999048]
+en = "You pay the remainder."
+ru = "Вы выплачиваете остаток."
+
+[e4316a737921]
+en = "\"Thank you for shopping in %s antique weapons outlet!\""
+ru = "«Спасибо за покупки в антикварной оружейной лавке {1:gen}!»"
+
+[d2d5ab17c4fb]
+en = "\"Thank you for shopping in %s antique weapons outlet.\""
+ru = "«Спасибо за покупки в антикварной оружейной лавке {1:gen}.»"
+
+[46ec9ca51bea]
+en = "\"Thank you for shopping in %s delicatessen!\""
+ru = "«Спасибо за покупки в гастрономе {1:gen}!»"
+
+[0b506f9a1b01]
+en = "\"Thank you for shopping in %s delicatessen.\""
+ru = "«Спасибо за покупки в гастрономе {1:gen}.»"
+
+[c9cbe386b5ef]
+en = "\"Thank you for shopping in %s general store!\""
+ru = "«Спасибо за покупки в универсальном магазине {1:gen}!»"
+
+[77d455d21644]
+en = "\"Thank you for shopping in %s general store.\""
+ru = "«Спасибо за покупки в универсальном магазине {1:gen}.»"
+
+[ba803ea1b825]
+en = "\"Thank you for shopping in %s hardware store!\""
+ru = "«Спасибо за покупки в скобяной лавке {1:gen}!»"
+
+[8d65bfba6393]
+en = "\"Thank you for shopping in %s hardware store.\""
+ru = "«Спасибо за покупки в скобяной лавке {1:gen}.»"
+
+[7a64aec58cb1]
+en = "\"Thank you for shopping in %s health food store!\""
+ru = "«Спасибо за покупки в магазине здорового питания {1:gen}!»"
+
+[8a4510b49309]
+en = "\"Thank you for shopping in %s health food store.\""
+ru = "«Спасибо за покупки в магазине здорового питания {1:gen}.»"
+
+[93850b7c9465]
+en = "\"Thank you for shopping in %s jewelers!\""
+ru = "«Спасибо за покупки в ювелирной лавке {1:gen}!»"
+
+[f5eb549348d9]
+en = "\"Thank you for shopping in %s jewelers.\""
+ru = "«Спасибо за покупки в ювелирной лавке {1:gen}.»"
+
+[61e1063b8d88]
+en = "\"Thank you for shopping in %s lighting store!\""
+ru = "«Спасибо за покупки в магазине светильников {1:gen}!»"
+
+[9a902c7c478b]
+en = "\"Thank you for shopping in %s lighting store.\""
+ru = "«Спасибо за покупки в магазине светильников {1:gen}.»"
+
+[d7e7e78d42b1]
+en = "\"Thank you for shopping in %s liquor emporium!\""
+ru = "«Спасибо за покупки в винной лавке {1:gen}!»"
+
+[00166dfea97a]
+en = "\"Thank you for shopping in %s liquor emporium.\""
+ru = "«Спасибо за покупки в винной лавке {1:gen}.»"
+
+[5301287171c4]
+en = "\"Thank you for shopping in %s quality apparel and accessories!\""
+ru = "«Спасибо за покупки в салоне одежды и аксессуаров {1:gen}!»"
+
+[14794db38092]
+en = "\"Thank you for shopping in %s quality apparel and accessories.\""
+ru = "«Спасибо за покупки в салоне одежды и аксессуаров {1:gen}.»"
+
+[870595afbf2b]
+en = "\"Thank you for shopping in %s rare books!\""
+ru = "«Спасибо за покупки в лавке редких книг {1:gen}!»"
+
+[c577c5b51ae0]
+en = "\"Thank you for shopping in %s rare books.\""
+ru = "«Спасибо за покупки в лавке редких книг {1:gen}.»"
+
+[af9ecd3c78d7]
+en = "\"Thank you for shopping in %s second-hand bookstore!\""
+ru = "«Спасибо за покупки в букинистической лавке {1:gen}!»"
+
+[de3ded7896a8]
+en = "\"Thank you for shopping in %s second-hand bookstore.\""
+ru = "«Спасибо за покупки в букинистической лавке {1:gen}.»"
+
+[e3415916885a]
+en = "\"Thank you for shopping in %s used armor dealership!\""
+ru = "«Спасибо за покупки в магазине подержанных доспехов {1:gen}!»"
+
+[3c22844788a2]
+en = "\"Thank you for shopping in %s used armor dealership.\""
+ru = "«Спасибо за покупки в магазине подержанных доспехов {1:gen}.»"
+
+[843fe044ebde]
+en = "%s nods appreciatively at you for shopping in her %s!"
+ru = "{1} благодарно {1:num|кивает|кивают} вам за покупки в {2:gender|своём|своей|своём|своих} {2:prep}!"
+
+[0e8b40d5aa0c]
+en = "%s nods appreciatively at you for shopping in his %s!"
+ru = "{1} благодарно {1:num|кивает|кивают} вам за покупки в {2:gender|своём|своей|своём|своих} {2:prep}!"
+
+[ab135aaf27c1]
+en = "%s nods appreciatively at you for shopping in its %s!"
+ru = "{1} благодарно {1:num|кивает|кивают} вам за покупки в {2:gender|своём|своей|своём|своих} {2:prep}!"
+
+[7606786a539f]
+en = "%s nods appreciatively at you for shopping in their %s!"
+ru = "{1} благодарно {1:num|кивает|кивают} вам за покупки в {2:gender|своём|своей|своём|своих} {2:prep}!"
+
+[f8aa96436e7d]
+en = "%s nods at you for shopping in her %s."
+ru = "{1} {1:num|кивает|кивают} вам за покупки в {2:gender|своём|своей|своём|своих} {2:prep}."
+
+[8462f683dc61]
+en = "%s nods at you for shopping in his %s."
+ru = "{1} {1:num|кивает|кивают} вам за покупки в {2:gender|своём|своей|своём|своих} {2:prep}."
+
+[5d62c8bdf45f]
+en = "%s nods at you for shopping in its %s."
+ru = "{1} {1:num|кивает|кивают} вам за покупки в {2:gender|своём|своей|своём|своих} {2:prep}."
+
+[915b55fbfa01]
+en = "%s nods at you for shopping in their %s."
+ru = "{1} {1:num|кивает|кивают} вам за покупки в {2:gender|своём|своей|своём|своих} {2:prep}."
+
+[3c9cf5a67b66]
+en = "You have no gold or credit left."
+ru = "У вас не осталось ни золота, ни кредита."
+
+[6325374a815d]
+en = "You seem to have no gold or credit left."
+ru = "Похоже, у вас не осталось ни золота, ни кредита."
+
+[88f51885cd61]
+en = "You seem to have no gold or credit."
+ru = "Похоже, у вас нет ни золота, ни кредита."
+
+[3211ee36baa0]
+en = "You don't have enough gold to buy any of the items on your bill."
+ru = "У вас недостаточно золота, чтобы купить хоть один предмет из вашего счёта."
+
+[29e1721b21b2]
+en = "You don't have enough gold to buy any of the items you've picked."
+ru = "У вас недостаточно золота, чтобы купить хоть один из взятых вами предметов."
+
+[f3af6571dc0a]
+en = "You don't have enough gold to buy the item on your bill."
+ru = "У вас недостаточно золота, чтобы купить предмет из вашего счёта."
+
+[0ecd28fa612f]
+en = "Maybe you have some gold stashed away?"
+ru = "Может, у вас где-то припрятано золото?"
+
+[cb90631d4c47]
+en = "\"You need to remove any unpaid items from that %s and buy them separately.\""
+ru = "«Вам нужно вынуть все неоплаченные предметы из {1:gender|этого|этой|этого|этих} {1:gen} и купить их отдельно.»"
+
+[443489176b3a]
+en = "\"Pay for the other %s before buying the one in %s.\""
+ru = "«Заплати за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать {1:sg|тот|ту|то}, что в {2:prep}.»"
+
+[223879d69fd6]
+en = "\"Pay for the other %s before buying the ones in %s.\""
+ru = "«Заплати за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать те, что в {2:prep}.»"
+
+[5698531ff154]
+en = "\"Pay for the other %s before buying these.\""
+ru = "«Заплати за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать эти.»"
+
+[fae95cd34733]
+en = "\"Pay for the other %s before buying this one.\""
+ru = "«Заплати за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать {1:sg|этот|эту|это}.»"
+
+[c3b86e94caf7]
+en = "\"Please pay for the other %s before buying the one in %s.\""
+ru = "«Пожалуйста, заплатите за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать {1:sg|тот|ту|то}, что в {2:prep}.»"
+
+[8cebe01edc55]
+en = "\"Please pay for the other %s before buying the ones in %s.\""
+ru = "«Пожалуйста, заплатите за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать те, что в {2:prep}.»"
+
+[d91e68db0cc9]
+en = "\"Please pay for the other %s before buying these.\""
+ru = "«Пожалуйста, заплатите за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать эти.»"
+
+[e393d83e2be0]
+en = "\"Please pay for the other %s before buying this one.\""
+ru = "«Пожалуйста, заплатите за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать {1:sg|этот|эту|это}.»"
+
+[a30518aab64e]
+en = "%s angrily motions to your bill for the other %s first."
+ru = "{1} сердито {1:num|кивает|кивают} на ваш счёт: сначала нужно заплатить за {2:gender|другой|другую|другое|другие} {2:acc}."
+
+[0bdf09780bdb]
+en = "%s angrily points out your bill for the other %s first."
+ru = "{1} сердито {1:num|указывает|указывают} на ваш счёт: сначала нужно заплатить за {2:gender|другой|другую|другое|другие} {2:acc}."
+
+[e3c7849f1a5a]
+en = "%s motions to your bill for the other %s first."
+ru = "{1} {1:num|кивает|кивают} на ваш счёт: сначала нужно заплатить за {2:gender|другой|другую|другое|другие} {2:acc}."
+
+[1e9facb1a233]
+en = "%s points out your bill for the other %s first."
+ru = "{1} {1:num|указывает|указывают} на ваш счёт: сначала нужно заплатить за {2:gender|другой|другую|другое|другие} {2:acc}."
+
+[5ea923b116be]
+en = "You don't have gold enough to pay for %s."
+ru = "У вас недостаточно золота, чтобы заплатить за {1:acc}."
+
+[0af22b1d0b6d]
+en = "You don't have gold or credit enough to pay for %s."
+ru = "У вас недостаточно золота и кредита, чтобы заплатить за {1:acc}."
+
+[923546c4cf38]
+en = "You don't seem to have gold enough to pay for %s."
+ru = "У вас, похоже, недостаточно золота, чтобы заплатить за {1:acc}."
+
+[fb478d861134]
+en = "You don't seem to have gold or credit enough to pay for %s."
+ru = "У вас, похоже, недостаточно золота и кредита, чтобы заплатить за {1:acc}."
+
+[79808c157087]
+en = "%s looks at your corpse and disappears."
+ru = "{1} {1:num|смотрит|смотрят} на ваш труп и {1:num|исчезает|исчезают}."
+
+[25ddf622ad8b]
+en = "%s looks at your corpse and sighs."
+ru = "{1} {1:num|смотрит|смотрят} на ваш труп и {1:num|вздыхает|вздыхают}."
+
+[ba465cd1bbd4]
+en = "%s looks at your corpse, shakes her %s, and disappears."
+ru = "{1} {1:num|смотрит|смотрят} на ваш труп, {1:num|качает|качают} {2:ins} и {1:num|исчезает|исчезают}."
+
+[f1868252454d]
+en = "%s looks at your corpse, shakes her %s, and sighs."
+ru = "{1} {1:num|смотрит|смотрят} на ваш труп, {1:num|качает|качают} {2:ins} и {1:num|вздыхает|вздыхают}."
+
+[fbaf812a7525]
+en = "%s looks at your corpse, shakes his %s, and disappears."
+ru = "{1} {1:num|смотрит|смотрят} на ваш труп, {1:num|качает|качают} {2:ins} и {1:num|исчезает|исчезают}."
+
+[b01923f7c8c4]
+en = "%s looks at your corpse, shakes his %s, and sighs."
+ru = "{1} {1:num|смотрит|смотрят} на ваш труп, {1:num|качает|качают} {2:ins} и {1:num|вздыхает|вздыхают}."
+
+[38dc4454c03f]
+en = "%s looks at your corpse, shakes its %s, and disappears."
+ru = "{1} {1:num|смотрит|смотрят} на ваш труп, {1:num|качает|качают} {2:ins} и {1:num|исчезает|исчезают}."
+
+[ec5b9dcd70d3]
+en = "%s looks at your corpse, shakes its %s, and sighs."
+ru = "{1} {1:num|смотрит|смотрят} на ваш труп, {1:num|качает|качают} {2:ins} и {1:num|вздыхает|вздыхают}."
+
+[e2f93a2d739b]
+en = "%s looks at your corpse, shakes their %s, and disappears."
+ru = "{1} {1:num|смотрит|смотрят} на ваш труп, {1:num|качает|качают} {2:ins} и {1:num|исчезает|исчезают}."
+
+[b1cfe4aa755d]
+en = "%s looks at your corpse, shakes their %s, and sighs."
+ru = "{1} {1:num|смотрит|смотрят} на ваш труп, {1:num|качает|качают} {2:ins} и {1:num|вздыхает|вздыхают}."
+
+[b8c4f2e1ff3f]
+en = "%s wakes up, looks at your corpse and disappears."
+ru = "{1} {1:num|просыпается|просыпаются}, {1:num|смотрит|смотрят} на ваш труп и {1:num|исчезает|исчезают}."
+
+[735c6990f5f2]
+en = "%s wakes up, looks at your corpse and sighs."
+ru = "{1} {1:num|просыпается|просыпаются}, {1:num|смотрит|смотрят} на ваш труп и {1:num|вздыхает|вздыхают}."
+
+[ac8d15da335e]
+en = "%s wakes up, looks at your corpse, shakes her %s, and disappears."
+ru = "{1} {1:num|просыпается|просыпаются}, {1:num|смотрит|смотрят} на ваш труп, {1:num|качает|качают} {2:ins} и {1:num|исчезает|исчезают}."
+
+[d6f7581b7893]
+en = "%s wakes up, looks at your corpse, shakes her %s, and sighs."
+ru = "{1} {1:num|просыпается|просыпаются}, {1:num|смотрит|смотрят} на ваш труп, {1:num|качает|качают} {2:ins} и {1:num|вздыхает|вздыхают}."
+
+[f1a03c4257f3]
+en = "%s wakes up, looks at your corpse, shakes his %s, and disappears."
+ru = "{1} {1:num|просыпается|просыпаются}, {1:num|смотрит|смотрят} на ваш труп, {1:num|качает|качают} {2:ins} и {1:num|исчезает|исчезают}."
+
+[fc5dd8d8398f]
+en = "%s wakes up, looks at your corpse, shakes his %s, and sighs."
+ru = "{1} {1:num|просыпается|просыпаются}, {1:num|смотрит|смотрят} на ваш труп, {1:num|качает|качают} {2:ins} и {1:num|вздыхает|вздыхают}."
+
+[07d554cf0f35]
+en = "%s wakes up, looks at your corpse, shakes its %s, and disappears."
+ru = "{1} {1:num|просыпается|просыпаются}, {1:num|смотрит|смотрят} на ваш труп, {1:num|качает|качают} {2:ins} и {1:num|исчезает|исчезают}."
+
+[ac5989a2d49a]
+en = "%s wakes up, looks at your corpse, shakes its %s, and sighs."
+ru = "{1} {1:num|просыпается|просыпаются}, {1:num|смотрит|смотрят} на ваш труп, {1:num|качает|качают} {2:ins} и {1:num|вздыхает|вздыхают}."
+
+[9de7b9fc0d72]
+en = "%s wakes up, looks at your corpse, shakes their %s, and disappears."
+ru = "{1} {1:num|просыпается|просыпаются}, {1:num|смотрит|смотрят} на ваш труп, {1:num|качает|качают} {2:ins} и {1:num|исчезает|исчезают}."
+
+[56437c8fb785]
+en = "%s wakes up, looks at your corpse, shakes their %s, and sighs."
+ru = "{1} {1:num|просыпается|просыпаются}, {1:num|смотрит|смотрят} на ваш труп, {1:num|качает|качают} {2:ins} и {1:num|вздыхает|вздыхают}."
+
+[3ab73b006bee]
+en = "Your credit of %ld %s is used to cover your shopping bill."
+ru = "Ваш кредит в {1} {2:by1:acc} идёт на оплату вашего счёта за покупки."
+
+[8fa5dc293f0d]
+en = "You stole %ld %s worth of merchandise."
+ru = "Вы украли товара на {1} {2:by1:acc}."
+
+[16bdd01b23aa]
+en = "You have %ld %s credit at %s %s."
+ru = "У вас кредит в {1} {2:by1:acc} в {4:prep} {3:gen}."
+
+[4dd5d66b662b]
+en = "You owe %s %ld %s."
+ru = "Вы должны {1:dat} {2} {3:by2:acc}."

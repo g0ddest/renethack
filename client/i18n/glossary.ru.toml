@@ -2862,6 +2862,13 @@
 # stethoscope on a corpse)
 "he" = { ru = "он", src = "chosen", anim = true }
 "she" = { ru = "она", src = "chosen", anim = true }
+# cad() (shk.c): what an angry shopkeeper calls a male, a female, a neuter
+# and a demon hero ("You sneaky cad!", "Cad!  You did 400 zorkmids worth of
+# damage!", "This is no free library, minx!")
+"cad" = { ru = "подлец", src = "chosen", anim = true }
+"minx" = { ru = "плутовка", src = "chosen", anim = true }
+"beast" = { ru = "чудище", src = "chosen", anim = true }
+"fiend" = { ru = "изверг", src = "chosen", anim = true }
 
 [adverb]
 # piousness(): how well the hero keeps the alignment, before it (the
