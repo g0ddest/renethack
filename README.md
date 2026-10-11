@@ -230,6 +230,66 @@ not, passes only with its PASS line, exit status 0 and no error of Godot's
 that says "BUG": a crash on quit, after the PASS line, fails it.
 `make soak SOAK_WINDOW=1` plays the soak in a window, the renderer at work.
 
+## Production builds
+
+What a player installs, from Steam or a download. Each target builds into
+`dist/build/<platform>` (kept, so the next run is incremental) and leaves
+its package in `dist/`:
+
+| Target | Package | Needs |
+|---|---|---|
+| `make dist-macos` | `renethack-<version>-macos-arm64.dmg` | an Apple silicon Mac, Xcode's command line tools |
+
+They need Python 3 and Godot 4.7 (`GODOT=/Applications/Godot.app`) with
+its export templates installed (Editor → Manage Export Templates, or the
+`Godot_v<version>_export_templates.tpz` of the release unpacked into
+`~/Library/Application Support/Godot/export_templates/<version>.stable/` on
+macOS, `~/.local/share/godot/export_templates/<version>.stable/` on Linux).
+
+Each target builds the engine (`-O2`, NetHack's hints for the platform) and
+the extension (cargo's `dist` profile: release with whole-program LTO, no
+symbols), exports a copy of `client/godot` staged with the version (the
+project itself is never written to: the editor may have it open), and
+packages the game with `engine/` (nh-engine, recover, data) and `legal/`.
+The game finds the engine beside its executable (inside the app on macOS:
+`renethack.app/Contents/Resources/engine`); `RENETHACK_ENGINE_DIR` still
+overrides it. Saves stay in Godot's user data directory, as in development.
+
+- The version is `git describe --tags` (a tag `v1.0.0` gives `1.0.0`),
+  else `0.1.0+<commit>`, with `.dirty` for uncommitted changes. Its
+  `x.y.z` and the commit count become the macOS bundle's version.
+- `STEAM=1` builds with the `steam` feature and puts Valve's steam_api
+  library beside the extension. The App ID comes from Steam when it starts
+  the game.
+- `legal/` holds `NOTICE.txt` (what each part is and its licence), the
+  NetHack General Public License, `engine-source.tar.gz` (the complete
+  source of the engine binaries: NetHack at the commit built, the patches,
+  the host, the build files and Lua, as the licence's paragraph 3(a) asks of
+  a commercial distribution), the art, help and translation credits, the
+  fonts' OFL texts, Godot's licence and notices, and the licences of the
+  Rust crates in the extension.
+- Before packaging, a target runs the packaged game's smoke self-test
+  (`DIST_SMOKE=0` skips it): a new game must start with the engine the
+  package carries.
+- The first build takes a while (the extension's LTO); the next one only
+  redoes what changed, and the export and the packaging take a few
+  minutes.
+
+**macOS.** The dmg holds `renethack.app` and a link to `/Applications`;
+`dist/build/macos/app/renethack.app` is the Steam depot. arm64 only (Apple
+silicon; macOS 11 or newer). Signing is ad-hoc unless:
+
+- `MACOS_SIGN_IDENTITY="Developer ID Application: <name> (<team>)"` signs
+  every binary with that identity, the hardened runtime and a timestamp
+  (with the entitlements Steam's overlay needs,
+  `tools/dist/macos/entitlements.plist`);
+- `MACOS_NOTARY_PROFILE=<profile>` then notarizes and staples the app and
+  the dmg; the profile is made once with
+  `xcrun notarytool store-credentials <profile> --apple-id <id> --team-id <team>`.
+
+An ad-hoc signed app runs from Steam; downloaded, macOS asks the player to
+allow it once in System Settings → Privacy & Security.
+
 ## Languages
 
 The client's own words (buttons, hints, panels, tooltips) are Project

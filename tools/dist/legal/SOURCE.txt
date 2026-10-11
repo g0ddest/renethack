@@ -1,0 +1,28 @@
+renethack's game engine: the complete source
+=============================================
+
+This is the source of the programs in the game's engine/ folder (nh-engine,
+recover) and of the data files beside them, under the NetHack General Public
+License (engine/upstream/dat/license).
+
+engine/upstream/   NetHack 5.0.0 as released (the commit the game was built
+                   from), unchanged.
+engine/patches/    renethack's changes to NetHack, applied at build time in
+                   the order of engine/patches/series; each says what it
+                   changes and why.
+engine/host/       the protocol host the engine is linked with (nh-engine's
+                   main, the window port that speaks to the game).
+engine/runtime/    the sysconf file the game ships.
+engine/Makefile    the build.
+lua-*/             the Lua release NetHack's build links (MIT licence).
+
+To build on macOS or Linux (a C compiler, GNU make, patch, git, curl):
+
+    cd engine/upstream && git init -q && git add -A && git commit -qm src && cd ../..
+    make -C engine
+
+The first line only makes engine/upstream a git checkout, which the build
+exports from. The build downloads the Lua release from lua.org and checks
+its sha256; offline, run `make -C engine build/tree/.patched` first, copy
+lua-*/ into engine/build/tree/lib/, then `make -C engine`. engine/build/
+then holds nh-engine, recover and data/.

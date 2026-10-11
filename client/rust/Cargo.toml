@@ -23,3 +23,12 @@ opt-level = 2
 
 [profile.dev.package.nh-protocol]
 opt-level = 2
+
+# What players run (`make dist-*`): release with whole-program LTO, one
+# codegen unit and no symbols; slow to build, so development keeps the
+# plain release profile
+[profile.dist]
+inherits = "release"
+lto = "fat"
+codegen-units = 1
+strip = "symbols"

@@ -9,8 +9,9 @@
 
 ENGINE_DIR := $(CURDIR)
 UPSTREAM ?= $(ENGINE_DIR)/upstream
-# relative on purpose: `make -C engine build/...` must name these targets
-BUILD := build
+# relative on purpose: `make -C engine build/...` must name these targets;
+# `make dist-*` builds elsewhere (BUILD=<dir>, optimized: CCFLAGS=-O2)
+BUILD ?= build
 TREE := $(BUILD)/tree
 HOST := $(ENGINE_DIR)/host
 

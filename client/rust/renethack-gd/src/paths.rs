@@ -2,7 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
-use godot::classes::ProjectSettings;
+use godot::classes::{Os, ProjectSettings};
 use godot::prelude::*;
 
 /// Project setting with the engine build directory.
@@ -19,7 +19,8 @@ pub struct Paths {
 }
 
 impl Paths {
-    /// RENETHACK_ENGINE_DIR, else the project setting; the playground from
+    /// RENETHACK_ENGINE_DIR, else in an exported game the engine packaged
+    /// with it, else the project setting; the playground from
     /// `--playground=`, else user://playground.
     pub fn resolve(playground: Option<&str>) -> Paths {
         let settings = ProjectSettings::singleton();
@@ -29,6 +30,12 @@ impl Paths {
             .filter(|s| !s.is_empty());
         let env = std::env::var_os("RENETHACK_ENGINE_DIR").map(PathBuf::from);
         let engine_dir = env.unwrap_or_else(|| {
+            let os = Os::singleton();
+            // an export template: res:// is the pack, no source tree around
+            if os.has_feature("template") {
+                let exe = PathBuf::from(os.get_executable_path().to_string());
+                return packaged_engine_dir(exe.parent().unwrap_or(Path::new(".")));
+            }
             let res = setting.unwrap_or_else(|| DEFAULT_ENGINE_DIR.to_string());
             globalize(&res)
         });
@@ -43,7 +50,7 @@ impl Paths {
     }
 
     pub fn engine(&self) -> PathBuf {
-        self.engine_dir.join("nh-engine")
+        self.engine_dir.join(executable("nh-engine"))
     }
 
     pub fn data(&self) -> PathBuf {
@@ -51,7 +58,7 @@ impl Paths {
     }
 
     pub fn recover(&self) -> PathBuf {
-        self.engine_dir.join("recover")
+        self.engine_dir.join(executable("recover"))
     }
 
     /// The local achievements store, beside the playground: in the user
@@ -73,6 +80,22 @@ impl Paths {
             }
         }
         Ok(())
+    }
+}
+
+/// "nh-engine.exe" on Windows.
+fn executable(name: &str) -> String {
+    format!("{name}{}", std::env::consts::EXE_SUFFIX)
+}
+
+/// Where a package puts the engine (`make dist-*`): `engine/` beside the
+/// executable, in the bundle's Resources on macOS (the executable is
+/// `renethack.app/Contents/MacOS/renethack`).
+fn packaged_engine_dir(exe_dir: &Path) -> PathBuf {
+    if cfg!(target_os = "macos") {
+        normalize(&exe_dir.join("../Resources/engine"))
+    } else {
+        exe_dir.join("engine")
     }
 }
 
@@ -112,5 +135,16 @@ mod tests {
             PathBuf::from("/a/engine/build")
         );
         assert_eq!(normalize(Path::new("/a/./b")), PathBuf::from("/a/b"));
+    }
+
+    #[test]
+    fn a_package_keeps_the_engine_beside_the_game() {
+        let dir = packaged_engine_dir(Path::new("/g/renethack.app/Contents/MacOS"));
+        let want = if cfg!(target_os = "macos") {
+            "/g/renethack.app/Contents/Resources/engine"
+        } else {
+            "/g/renethack.app/Contents/MacOS/engine"
+        };
+        assert_eq!(dir, PathBuf::from(want));
     }
 }

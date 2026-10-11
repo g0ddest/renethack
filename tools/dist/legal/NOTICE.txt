@@ -1,0 +1,60 @@
+renethack @VERSION@
+====================
+
+What this package holds, and under which terms. The files named here are in
+this folder.
+
+The game: the renethack client
+------------------------------
+The Godot extension that draws the game and talks to the engine
+(librenethack_gd / renethack_gd.dll), the game's scene and its art pack
+(renethack.pck). Copyright 2026 Vitaliy Velikodniy.
+
+It holds texts of NetHack (the English catalog of what the engine says, the
+Guidebook in the help), translations of them, and the names in
+i18n-CREDITS.md; those parts are under the NetHack General Public License.
+
+NetHack: the game engine
+------------------------
+engine/ (nh-engine, recover, data/) is NetHack 5.0.0 with renethack's
+patches and protocol host:
+  NetHack, Copyright 1985-2026 Stichting Mathematisch Centrum, M. Stephenson,
+  the NetHack DevTeam and contributors.
+It is under the NetHack General Public License,
+NetHack-General-Public-License.txt. As its paragraph 3(a) asks, the complete
+source code of these programs accompanies them: engine-source.tar.gz
+(NetHack at the commit built, the patches, the host, the build files and the
+Lua release it links; README.txt inside says how to build it).
+
+Inside nh-engine:
+  Lua 5.4, Copyright 1994-2025 Lua.org, PUC-Rio: MIT licence, Lua-LICENSE.txt.
+  cJSON, Copyright 2009-2017 Dave Gamble and cJSON contributors: MIT
+  licence, cJSON-LICENSE.txt.
+
+Godot Engine
+------------
+The game's executable is Godot Engine's export template, Copyright Juan
+Linietsky, Ariel Manzur and contributors: MIT licence, Godot-LICENSE.txt.
+The third-party code inside Godot and its licences: Godot-COPYRIGHT.txt.
+
+Rust crates
+-----------
+The extension is written in Rust and links the crates listed, with their
+licences, in THIRD-PARTY-rust.txt. godot-rust (the crates godot, godot-core,
+godot-ffi, godot-cell) is under the Mozilla Public License 2.0; its source is
+at https://github.com/godot-rust/gdext (version as listed).
+
+Art, fonts and texts
+--------------------
+art-CREDITS.md: the models, textures and effects. Most are CC0 (public
+domain); the models under ccby/ are under Creative Commons Attribution 3.0,
+credited there.
+fonts/: Alegreya Sans, Alegreya Sans SC, Cormorant SC and PT Mono, under the
+SIL Open Font License 1.1 (one licence file per family).
+help-CREDITS.md: the Guidebook in English and in Russian.
+i18n-CREDITS.md: the sources of the Russian translation.
+
+Steam
+-----
+A build for Steam also holds Valve's Steamworks API library (steam_api),
+redistributed under the Steamworks SDK Access Agreement.
