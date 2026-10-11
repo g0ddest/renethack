@@ -2017,12 +2017,29 @@ impl Kit<'_> {
         );
     }
 
-    /// A horn: the unicorn's spiral, a curved horn, a bugle, a flute.
+    /// A horn: the unicorn's spiral, a curved horn, a bugle, a flute; and
+    /// what grows on a head: a smooth tusk or bull's horn, a tentacle.
     fn horn(&mut self, root: &mut Gd<Node3D>) {
         let skin = self.skin.clone();
         let dark = self.dark();
         let shape = self.shape.clone().unwrap_or_default();
         match shape.as_str() {
+            // from its root at the origin along +z, curving up to its point
+            "tusk" => self.bend(
+                root,
+                &skin,
+                (0.12, 0.0),
+                &[0.0, 12.0, 24.0, 36.0, 48.0, 60.0],
+            ),
+            // a long tapering tube along +z that waves and curls at its tip
+            "tentacle" => self.bend(
+                root,
+                &skin,
+                (0.06, 0.012),
+                &[
+                    0.0, 12.0, 20.0, 20.0, 12.0, 0.0, -12.0, -18.0, -12.0, 0.0, 22.0, 50.0, 85.0,
+                ],
+            ),
             "curved" => {
                 for i in 0..6 {
                     let t = i as f32 / 5.0;
@@ -2367,6 +2384,31 @@ impl Kit<'_> {
             [0.0, yaw, 0.0],
             ONE,
         );
+    }
+
+    /// A tapering tube a unit long from the origin, its segments heading
+    /// along +z turned toward +y by `turns` (degrees, one a segment), its
+    /// radius from `r.0` at the root to `r.1` at the end (0: a point).
+    fn bend(&mut self, root: &mut Gd<Node3D>, mat: &Gd<Material>, r: (f32, f32), turns: &[f32]) {
+        let n = turns.len();
+        let step = 1.0 / n as f32;
+        let mut at = Vector3::ZERO;
+        for (i, &turn) in turns.iter().enumerate() {
+            let (sin, cos) = turn.to_radians().sin_cos();
+            let along = Vector3::new(0.0, sin, cos) * step;
+            let radius = |k: usize| r.0 + (r.1 - r.0) * k as f32 / n as f32;
+            let mid = at + along * 0.5;
+            // a little longer than its step: no gap opens where it bends
+            self.part(
+                root,
+                cylinder(radius(i + 1), radius(i), step * 1.15),
+                mat,
+                [mid.x, mid.y, mid.z],
+                [90.0 - turn, 0.0, 0.0],
+                ONE,
+            );
+            at += along;
+        }
     }
 
     /// A round rod lying along z from `z0` to `z1` (at x).
