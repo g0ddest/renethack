@@ -18,6 +18,7 @@ mod feature;
 mod monster;
 mod object;
 mod ru;
+mod states;
 mod status;
 
 use std::collections::HashMap;
@@ -189,6 +190,15 @@ impl Lexicon {
             let mut name = self.word(rest)?;
             name.possessive = self.adjective("your").cloned();
             name.own = self.adjective("own").cloned();
+            return Some(name);
+        }
+        // piousness() before the hero's alignment: "piously lawful"
+        if let Some((adverb, rest)) = text.split_once(' ')
+            && let Some(adverb) = self.get("adverb", adverb).and_then(|e| e.fixed())
+            && let Some(mut name) = self.word(rest)
+            && let Some(adjective) = name.as_adjective.take()
+        {
+            name.as_adjective = Some(Arc::new(adjective.with_prefix(adverb)));
             return Some(name);
         }
         let bare = ["the", "an", "a"]
@@ -373,6 +383,11 @@ impl Names for Lexicon {
         let english = english.trim();
         if english.is_empty() {
             return None;
+        }
+        // what a stethoscope lists after the armour class: ", tame, fast"
+        if english.starts_with(", ") {
+            return states::parse(self, self.index(), english)
+                .map(|s| Box::new(s) as Box<dyn Phrase>);
         }
         // a monster read leniently is any name at all: no alternatives
         let found = self.one(kind, english).or_else(|| {

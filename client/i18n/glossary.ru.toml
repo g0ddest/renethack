@@ -2639,6 +2639,9 @@
 "small" = { ru = "маленький", src = "chosen" }
 "medium" = { ru = "средний", src = "chosen" }
 "large" = { ru = "большой", src = "chosen" }
+"tiny" = { ru = "крошечный", src = "chosen", note = "a creature's size: the stethoscope's (neutral, tiny)" }
+"huge" = { ru = "огромный", src = "chosen" }
+"gigantic" = { ru = "гигантский", src = "chosen" }
 "very large" = { ru = "очень большой", src = "chosen" }
 "rotten" = { ru = "тухлый", src = "chosen", note = "tin" }
 "homemade" = { ru = "домашний", src = "chosen", note = "tin" }
@@ -2859,6 +2862,75 @@
 # stethoscope on a corpse)
 "he" = { ru = "он", src = "chosen", anim = true }
 "she" = { ru = "она", src = "chosen", anim = true }
+
+[adverb]
+# piousness(): how well the hero keeps the alignment, before it (the
+# stethoscope on oneself: "Status of Hero (piously lawful)")
+"piously" = { ru = "благочестиво", src = "chosen" }
+"devoutly" = { ru = "набожно", src = "chosen" }
+"fervently" = { ru = "ревностно", src = "chosen" }
+"stridently" = { ru = "истово", src = "chosen" }
+"haltingly" = { ru = "нерешительно", src = "chosen" }
+"nominally" = { ru = "номинально", src = "chosen" }
+"insufficiently" = { ru = "недостаточно", src = "chosen" }
+
+[mstate]
+# what the stethoscope and a wand of probing list after a creature's armour
+# class (insight.c mstatusline(), ustatusline(); pager.c
+# mhidden_description()): {m|f|n|pl} agrees with the creature, {monster}
+# is another creature or a thing, {part} a body part agreeing with itself
+"tame" = { ru = "{ручной|ручная|ручное|ручные}", src = "chosen" }
+"peaceful" = { ru = "{мирный|мирная|мирное|мирные}", src = "chosen" }
+"single segment" = { ru = "один сегмент", src = "chosen", note = "a long worm" }
+"{n} of {m} segments" = { ru = "сегмент {n} из {m}", src = "chosen" }
+"shapechanger" = { ru = "оборотень", src = "chosen" }
+"eating" = { ru = "{ест|ест|ест|едят}", src = "chosen" }
+"cancelled" = { ru = "{лишён магии|лишена магии|лишено магии|лишены магии}", src = "chosen" }
+"confused" = { ru = "{сбит с толку|сбита с толку|сбито с толку|сбиты с толку}", src = "chosen" }
+"blind" = { ru = "{слеп|слепа|слепо|слепы}", src = "chosen" }
+"stunned" = { ru = "{оглушён|оглушена|оглушено|оглушены}", src = "chosen" }
+"asleep" = { ru = "{спит|спит|спит|спят}", src = "chosen" }
+"can't move" = { ru = "{не может двигаться|не может двигаться|не может двигаться|не могут двигаться}", src = "chosen" }
+"meditating" = { ru = "{медитирует|медитирует|медитирует|медитируют}", src = "chosen" }
+"scared" = { ru = "{напуган|напугана|напугано|напуганы}", src = "chosen" }
+"trapped" = { ru = "в ловушке", src = "chosen" }
+"fast" = { ru = "{быстр|быстра|быстро|быстры}", src = "chosen" }
+"very fast" = { ru = "{очень быстр|очень быстра|очень быстро|очень быстры}", src = "chosen" }
+"slow" = { ru = "{медлителен|медлительна|медлительно|медлительны}", src = "chosen" }
+"[? speed]" = { ru = "[? скорость]", src = "chosen" }
+"invisible" = { ru = "{невидим|невидима|невидимо|невидимы}", src = "chosen" }
+"digesting you" = { ru = "{переваривает|переваривает|переваривает|переваривают} вас", src = "chosen" }
+"swallowing you" = { ru = "{глотает|глотает|глотает|глотают} вас", src = "chosen" }
+"engulfing you" = { ru = "{поглощает|поглощает|поглощает|поглощают} вас", src = "chosen" }
+"holding you" = { ru = "{держит|держит|держит|держат} вас", src = "chosen" }
+"held by you" = { ru = "{схвачен вами|схвачена вами|схвачено вами|схвачены вами}", src = "chosen" }
+"carrying you" = { ru = "{несёт|несёт|несёт|несут} вас", src = "chosen" }
+"leashed" = { ru = "на поводке", src = "chosen" }
+"injured {part}" = { ru = "{ранен|ранена|ранено|ранены} {part}", src = "chosen" }
+"slippery {part}" = { ru = "{скользкий|скользкая|скользкое|скользкие} {part}", src = "chosen" }
+"mimicking {monster}" = { ru = "{прикидывается|прикидывается|прикидывается|прикидываются} {monster:ins}", src = "chosen" }
+"masquerading as {monster}" = { ru = "{выдаёт|выдаёт|выдаёт|выдают} себя за {monster:acc}", src = "chosen" }
+"hiding" = { ru = "{прячется|прячется|прячется|прячутся}", src = "chosen" }
+"hiding under {monster}" = { ru = "{прячется|прячется|прячется|прячутся} под {monster:ins}", src = "chosen" }
+"hiding on the {monster}" = { ru = "{прячется|прячется|прячется|прячутся} на {monster:loc}", src = "chosen" }
+"hiding in murky water" = { ru = "{прячется|прячется|прячется|прячутся} в мутной воде", src = "chosen" }
+"in a cloud of poison gas" = { ru = "в облаке ядовитого газа", src = "chosen" }
+"in a cloud of vapor" = { ru = "в облаке пара", src = "chosen" }
+"dying from food poisoning" = { ru = "{умирает|умирает|умирает|умирают} от пищевого отравления", src = "chosen" }
+"dying from illness" = { ru = "{умирает|умирает|умирает|умирают} от болезни", src = "chosen" }
+"dying from food poisoning and illness" = { ru = "{умирает|умирает|умирает|умирают} от пищевого отравления и болезни", src = "chosen" }
+"solidifying" = { ru = "{каменеет|каменеет|каменеет|каменеют}", src = "chosen" }
+"becoming slimy" = { ru = "{превращается|превращается|превращается|превращаются} в слизь", src = "chosen" }
+"being strangled" = { ru = "{задыхается|задыхается|задыхается|задыхаются}", src = "chosen" }
+"nauseated" = { ru = "{чувствует|чувствует|чувствует|чувствуют} тошноту", src = "chosen" }
+"covered by sticky goop" = { ru = "{покрыт|покрыта|покрыто|покрыты} липкой массой", src = "chosen" }
+"blinded by sticky goop" = { ru = "{ослеплён|ослеплена|ослеплено|ослеплены} липкой массой", src = "chosen" }
+"concealed" = { ru = "{спрятан|спрятана|спрятано|спрятаны}", src = "chosen" }
+"disguised" = { ru = "{замаскирован|замаскирована|замаскировано|замаскированы}", src = "chosen" }
+"being digested by {monster}" = { ru = "{переваривается|переваривается|переваривается|перевариваются} {monster:ins}", src = "chosen" }
+"engulfed by {monster}" = { ru = "{поглощён|поглощена|поглощено|поглощены} {monster:ins}", src = "chosen" }
+"held by {monster}" = { ru = "{схвачен|схвачена|схвачено|схвачены} {monster:ins}", src = "chosen" }
+"holding {monster}" = { ru = "{держит|держит|держит|держат} {monster:acc}", src = "chosen" }
 
 [name]
 # personal names the engine gives: the default pets (dog.c) and the

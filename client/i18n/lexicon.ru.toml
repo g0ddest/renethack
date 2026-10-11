@@ -16329,6 +16329,27 @@ f = ["большая", "большой", "большой", "большую", "б
 n = ["большое", "большого", "большому", "большое", "большим", "большом"]
 src = "pymorphy3"
 
+[adjective."tiny"]
+pl = ["крошечные", "крошечных", "крошечным", "крошечные", "крошечными", "крошечных"]
+m = ["крошечный", "крошечного", "крошечному", "крошечный", "крошечным", "крошечном"]
+f = ["крошечная", "крошечной", "крошечной", "крошечную", "крошечной", "крошечной"]
+n = ["крошечное", "крошечного", "крошечному", "крошечное", "крошечным", "крошечном"]
+src = "pymorphy3"
+
+[adjective."huge"]
+pl = ["огромные", "огромных", "огромным", "огромные", "огромными", "огромных"]
+m = ["огромный", "огромного", "огромному", "огромный", "огромным", "огромном"]
+f = ["огромная", "огромной", "огромной", "огромную", "огромной", "огромной"]
+n = ["огромное", "огромного", "огромному", "огромное", "огромным", "огромном"]
+src = "pymorphy3"
+
+[adjective."gigantic"]
+pl = ["гигантские", "гигантских", "гигантским", "гигантские", "гигантскими", "гигантских"]
+m = ["гигантский", "гигантского", "гигантскому", "гигантский", "гигантским", "гигантском"]
+f = ["гигантская", "гигантской", "гигантской", "гигантскую", "гигантской", "гигантской"]
+n = ["гигантское", "гигантского", "гигантскому", "гигантское", "гигантским", "гигантском"]
+src = "pymorphy3"
+
 [adjective."very large"]
 pl = ["очень большие", "очень больших", "очень большим", "очень большие", "очень большими", "очень больших"]
 m = ["очень большой", "очень большого", "очень большому", "очень большой", "очень большим", "очень большом"]
@@ -17502,6 +17523,242 @@ anim = true
 sg = ["она", "её", "ей", "её", "ей", "ней"]
 pl = ["они", "их", "им", "их", "ими", "них"]
 src = "hand"
+
+[adverb."piously"]
+fixed = "благочестиво"
+src = "fixed"
+
+[adverb."devoutly"]
+fixed = "набожно"
+src = "fixed"
+
+[adverb."fervently"]
+fixed = "ревностно"
+src = "fixed"
+
+[adverb."stridently"]
+fixed = "истово"
+src = "fixed"
+
+[adverb."haltingly"]
+fixed = "нерешительно"
+src = "fixed"
+
+[adverb."nominally"]
+fixed = "номинально"
+src = "fixed"
+
+[adverb."insufficiently"]
+fixed = "недостаточно"
+src = "fixed"
+
+[mstate."tame"]
+fixed = "{ручной|ручная|ручное|ручные}"
+src = "fixed"
+
+[mstate."peaceful"]
+fixed = "{мирный|мирная|мирное|мирные}"
+src = "fixed"
+
+[mstate."single segment"]
+fixed = "один сегмент"
+src = "fixed"
+
+[mstate."{n} of {m} segments"]
+fixed = "сегмент {n} из {m}"
+src = "fixed"
+
+[mstate."shapechanger"]
+fixed = "оборотень"
+src = "fixed"
+
+[mstate."eating"]
+fixed = "{ест|ест|ест|едят}"
+src = "fixed"
+
+[mstate."cancelled"]
+fixed = "{лишён магии|лишена магии|лишено магии|лишены магии}"
+src = "fixed"
+
+[mstate."confused"]
+fixed = "{сбит с толку|сбита с толку|сбито с толку|сбиты с толку}"
+src = "fixed"
+
+[mstate."blind"]
+fixed = "{слеп|слепа|слепо|слепы}"
+src = "fixed"
+
+[mstate."stunned"]
+fixed = "{оглушён|оглушена|оглушено|оглушены}"
+src = "fixed"
+
+[mstate."asleep"]
+fixed = "{спит|спит|спит|спят}"
+src = "fixed"
+
+[mstate."can't move"]
+fixed = "{не может двигаться|не может двигаться|не может двигаться|не могут двигаться}"
+src = "fixed"
+
+[mstate."meditating"]
+fixed = "{медитирует|медитирует|медитирует|медитируют}"
+src = "fixed"
+
+[mstate."scared"]
+fixed = "{напуган|напугана|напугано|напуганы}"
+src = "fixed"
+
+[mstate."trapped"]
+fixed = "в ловушке"
+src = "fixed"
+
+[mstate."fast"]
+fixed = "{быстр|быстра|быстро|быстры}"
+src = "fixed"
+
+[mstate."very fast"]
+fixed = "{очень быстр|очень быстра|очень быстро|очень быстры}"
+src = "fixed"
+
+[mstate."slow"]
+fixed = "{медлителен|медлительна|медлительно|медлительны}"
+src = "fixed"
+
+[mstate."[? speed]"]
+fixed = "[? скорость]"
+src = "fixed"
+
+[mstate."invisible"]
+fixed = "{невидим|невидима|невидимо|невидимы}"
+src = "fixed"
+
+[mstate."digesting you"]
+fixed = "{переваривает|переваривает|переваривает|переваривают} вас"
+src = "fixed"
+
+[mstate."swallowing you"]
+fixed = "{глотает|глотает|глотает|глотают} вас"
+src = "fixed"
+
+[mstate."engulfing you"]
+fixed = "{поглощает|поглощает|поглощает|поглощают} вас"
+src = "fixed"
+
+[mstate."holding you"]
+fixed = "{держит|держит|держит|держат} вас"
+src = "fixed"
+
+[mstate."held by you"]
+fixed = "{схвачен вами|схвачена вами|схвачено вами|схвачены вами}"
+src = "fixed"
+
+[mstate."carrying you"]
+fixed = "{несёт|несёт|несёт|несут} вас"
+src = "fixed"
+
+[mstate."leashed"]
+fixed = "на поводке"
+src = "fixed"
+
+[mstate."injured {part}"]
+fixed = "{ранен|ранена|ранено|ранены} {part}"
+src = "fixed"
+
+[mstate."slippery {part}"]
+fixed = "{скользкий|скользкая|скользкое|скользкие} {part}"
+src = "fixed"
+
+[mstate."mimicking {monster}"]
+fixed = "{прикидывается|прикидывается|прикидывается|прикидываются} {monster:ins}"
+src = "fixed"
+
+[mstate."masquerading as {monster}"]
+fixed = "{выдаёт|выдаёт|выдаёт|выдают} себя за {monster:acc}"
+src = "fixed"
+
+[mstate."hiding"]
+fixed = "{прячется|прячется|прячется|прячутся}"
+src = "fixed"
+
+[mstate."hiding under {monster}"]
+fixed = "{прячется|прячется|прячется|прячутся} под {monster:ins}"
+src = "fixed"
+
+[mstate."hiding on the {monster}"]
+fixed = "{прячется|прячется|прячется|прячутся} на {monster:loc}"
+src = "fixed"
+
+[mstate."hiding in murky water"]
+fixed = "{прячется|прячется|прячется|прячутся} в мутной воде"
+src = "fixed"
+
+[mstate."in a cloud of poison gas"]
+fixed = "в облаке ядовитого газа"
+src = "fixed"
+
+[mstate."in a cloud of vapor"]
+fixed = "в облаке пара"
+src = "fixed"
+
+[mstate."dying from food poisoning"]
+fixed = "{умирает|умирает|умирает|умирают} от пищевого отравления"
+src = "fixed"
+
+[mstate."dying from illness"]
+fixed = "{умирает|умирает|умирает|умирают} от болезни"
+src = "fixed"
+
+[mstate."dying from food poisoning and illness"]
+fixed = "{умирает|умирает|умирает|умирают} от пищевого отравления и болезни"
+src = "fixed"
+
+[mstate."solidifying"]
+fixed = "{каменеет|каменеет|каменеет|каменеют}"
+src = "fixed"
+
+[mstate."becoming slimy"]
+fixed = "{превращается|превращается|превращается|превращаются} в слизь"
+src = "fixed"
+
+[mstate."being strangled"]
+fixed = "{задыхается|задыхается|задыхается|задыхаются}"
+src = "fixed"
+
+[mstate."nauseated"]
+fixed = "{чувствует|чувствует|чувствует|чувствуют} тошноту"
+src = "fixed"
+
+[mstate."covered by sticky goop"]
+fixed = "{покрыт|покрыта|покрыто|покрыты} липкой массой"
+src = "fixed"
+
+[mstate."blinded by sticky goop"]
+fixed = "{ослеплён|ослеплена|ослеплено|ослеплены} липкой массой"
+src = "fixed"
+
+[mstate."concealed"]
+fixed = "{спрятан|спрятана|спрятано|спрятаны}"
+src = "fixed"
+
+[mstate."disguised"]
+fixed = "{замаскирован|замаскирована|замаскировано|замаскированы}"
+src = "fixed"
+
+[mstate."being digested by {monster}"]
+fixed = "{переваривается|переваривается|переваривается|перевариваются} {monster:ins}"
+src = "fixed"
+
+[mstate."engulfed by {monster}"]
+fixed = "{поглощён|поглощена|поглощено|поглощены} {monster:ins}"
+src = "fixed"
+
+[mstate."held by {monster}"]
+fixed = "{схвачен|схвачена|схвачено|схвачены} {monster:ins}"
+src = "fixed"
+
+[mstate."holding {monster}"]
+fixed = "{держит|держит|держит|держат} {monster:acc}"
+src = "fixed"
 
 [name."Slasher"]
 g = "m"

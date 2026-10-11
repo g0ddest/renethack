@@ -158,6 +158,17 @@ impl Adjective {
         &row[case.index()]
     }
 
+    /// The adjective after an invariable word: благочестиво законопослушный.
+    pub fn with_prefix(&self, prefix: &str) -> Adjective {
+        let each = |forms: &[String; 6]| forms.clone().map(|f| format!("{prefix} {f}"));
+        Adjective {
+            m: each(&self.m),
+            f: each(&self.f),
+            n: each(&self.n),
+            pl: each(&self.pl),
+        }
+    }
+
     /// The adjective used as a noun of that gender (Тёмный, a colour named
     /// on its own).
     pub fn as_noun(&self, gender: Gender) -> Noun {
