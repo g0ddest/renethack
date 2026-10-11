@@ -139,6 +139,9 @@ const CONTACT_SECS: f32 = 0.16;
 const PICK_STEP: f32 = 0.05;
 /// Nothing drawn reaches higher (a giant on an altar).
 const MAX_TOP: f32 = 2.8;
+/// No creature stands taller (metres): the line from the hero to the eye
+/// is past them all above it.
+const TALLEST: f32 = 7.0;
 
 /// Walls stand taller than the hero; the ones in front of open ground are
 /// cut down (`CUT_HEIGHT`), so the hero is never behind one.
@@ -4166,15 +4169,17 @@ impl MapView {
     }
 
     /// The hero seen through what hides them from the camera: a wall, a
-    /// door or rock between the eye and their chest.
+    /// door or rock between the eye and their chest, or a creature as tall
+    /// as a giant standing there (in the cell south of them).
     fn show_through(&mut self, hero: (i32, i32), at: Vector3) {
         let chest = at + Vector3::new(0.0, 1.0, 0.0);
-        let hidden = hides(chest, self.eye, hero, |x, y| {
+        let walls = hides(chest, self.eye, hero, |x, y| {
             self.cells
                 .get(&(x, y))
                 .filter(|n| n.look.ground >= 1.0)
                 .map(|n| n.look.top)
         });
+        let hidden = walls || self.stands_before(chest, hero);
         if hidden != self.xray_on
             && let Some(n) = self.rim_model.as_ref().filter(|n| n.is_instance_valid())
         {
@@ -4200,6 +4205,48 @@ impl MapView {
             }
             self.xray_steed = steed;
         }
+    }
+
+    /// A model on the cells the line from the hero's `chest` to the eye
+    /// crosses, or beside them (a broad body reaches over), that the line
+    /// goes through: what stands on the hero's own cell is not before them.
+    fn stands_before(&self, chest: Vector3, own: (i32, i32)) -> bool {
+        let span = self.eye - chest;
+        let steps = (span.length() / 0.1).ceil().max(1.0) as i32;
+        let hero = self.rim_model.as_ref().map(|n| n.instance_id());
+        let mut looked: Vec<(i32, i32)> = Vec::new();
+        for i in 1..steps {
+            let p = chest + span * (i as f32 / steps as f32);
+            // higher than any creature: nothing further on reaches the line
+            if p.y > TALLEST {
+                break;
+            }
+            let (x, y) = (p.x.round() as i32, p.z.round() as i32);
+            for cell in (-1..=1).map(|dx| (x + dx, y)) {
+                if cell == own || looked.contains(&cell) {
+                    continue;
+                }
+                looked.push(cell);
+                let Some(n) = self.cells.get(&cell) else {
+                    continue;
+                };
+                let before = n
+                    .models
+                    .iter()
+                    .filter(|m| Some(m.node.instance_id()) != hero)
+                    .filter_map(|m| world_box(&m.node))
+                    .any(|b| b.intersects_segment(chest, self.eye));
+                if before {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    /// The hero is drawn through what hides them now (self-tests).
+    pub fn hero_seen_through(&self) -> bool {
+        self.xray_on
     }
 
     /// The hover frame, a red ring under a hostile monster there, and an
@@ -6949,6 +6996,22 @@ fn engulfer_color(world: &World, (hx, hy): (i32, i32)) -> Option<Color> {
         .filter_map(|(x, y)| world.map.cell(x, y)?.glyph.as_ref())
         .find(|g| g.kind == GlyphKind::Swallow)
         .map(|g| nh_color(g.color))
+}
+
+/// The box `node`'s meshes take in the world at rest (None: none shown).
+fn world_box(node: &Gd<Node3D>) -> Option<Aabb> {
+    if !node.is_instance_valid() || !node.is_visible_in_tree() {
+        return None;
+    }
+    node.find_children_ex("*")
+        .type_("MeshInstance3D")
+        .owned(false)
+        .done()
+        .iter_shared()
+        .filter_map(|n| n.try_cast::<MeshInstance3D>().ok())
+        .filter(|m| m.is_visible_in_tree())
+        .map(|m| m.get_global_transform() * m.get_aabb())
+        .reduce(|a, b| a.merge(b))
 }
 
 /// Something stands between `eye` and `target` (not on the cell `own`):

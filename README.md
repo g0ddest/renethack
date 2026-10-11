@@ -142,7 +142,10 @@ between cells), each ring under its creature in every frame. The `passing`
 scenario draws on the map what the engine draws in passing (a thrown dagger
 on the hero's cell, a ray over the pet, a sparkle over the hero, the cell
 the hero steps off a frame before the next): the hero and the pet stay,
-their rings under them and the hero on the inventory's doll. The `orders`
+their rings under them and the hero on the inventory's doll. The `through`
+scenario puts a giant mummy in the cell south of the hero, between them and
+the camera: the hero's outline shows through it, as through a wall; a newt
+there, or the giant north of them, hides nothing. The `orders`
 scenario walks, holds, counts, stops a walk with a key, takes the stairs,
 and meets a hostile that stops a walk (with `--screenshots`, the way
 previewed and the combat banner). The `inventory`

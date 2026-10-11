@@ -56,6 +56,8 @@ mod rim_tests;
 mod shop;
 #[path = "selftest_footprints.rs"]
 mod sizes;
+#[path = "selftest_through.rs"]
+mod through_tests;
 #[path = "selftest_world.rs"]
 mod world_looks;
 #[path = "selftest_worn.rs"]
@@ -4696,6 +4698,7 @@ impl SelfTest {
             "riding" => riding_tests::riding(),
             "doll" => doll_tests::doll(),
             "first-open" => first_tests::first_open(),
+            "through" => through_tests::through(),
             "passing" => passing_tests::passing(),
             "inventory" => inventory(),
             "map-pause" => map_pause(),
