@@ -1621,10 +1621,24 @@ fn terrain_base(
                     at(0.0, i as f32 * 45.0, 0.0),
                 );
             }
-            let water = Paint::Flat(Color::from_rgb(0.04, 0.09, 0.12), Finish::Glossy);
-            look.solid(cylinder(0.4, 0.4, 0.02), water, at(0.0, 0.2, 0.0));
+            // water, rippling and glinting in the torches' light (it was
+            // a still black disc: a dry well)
+            look.ground_tile(
+                cylinder(0.37, 0.37, 0.01),
+                Paint::Liquid(Liquid::Water),
+                at(0.0, 0.2, 0.0),
+            );
             look.solid(bevel(0.16, 0.36, 0.16), stone, at(0.0, 0.2, 0.0));
             look.solid(cylinder(0.12, 0.05, 0.06), stone, at(0.0, 0.41, 0.0));
+            // and a thin jet rising from the spout, falling back in drops
+            let jet = Paint::Flat(Color::from_rgb(0.7, 0.85, 0.9), Finish::Ghost);
+            look.ground_tile(cylinder(0.008, 0.016, 0.2), jet, at(0.0, 0.54, 0.0));
+            for (i, a) in [20.0f32, 140.0, 260.0].into_iter().enumerate() {
+                let (s, c) = a.to_radians().sin_cos();
+                let r = 0.1 + 0.05 * i as f32;
+                look.ground_tile(sphere(0.012), jet, at(r * s, 0.3 + 0.05 * i as f32, r * c));
+            }
+            look.top = look.top.min(0.5);
             look.ground = 0.26;
         }
         Terrain::Sink => {
