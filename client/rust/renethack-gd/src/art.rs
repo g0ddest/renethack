@@ -32,9 +32,12 @@ use nh_art::{ArtManifest, MaterialSpec, Proc, Resolved, Skin};
 mod equip;
 #[path = "outfit.rs"]
 mod outfit;
+#[path = "riding.rs"]
+mod riding;
 
 pub use equip::{HELD_NODE, LAMP_LIGHT, OFF_HAND, THROW_LETS_GO, USE_NODE, Worn};
 pub use outfit::{GLOVES_NODE, NECK_NODE};
+pub use riding::{Back, SADDLE_NODE, SEATED};
 
 use crate::meshes::{
     MeshKey, blade, capsule, cuboid, cylinder, dome, facets, prism, ridge, sphere, torus,
@@ -162,6 +165,11 @@ pub struct Model {
     extras: Extras,
     /// The look still to build into `node` (see `Art::complete`).
     pending: Option<ModelLook>,
+    /// The seat's solver on its skeleton (the hero's, once they rode).
+    seated: Option<Gd<crate::seated::Seated>>,
+    /// The saddle on its back (a steed's), and the scale of the look it
+    /// was fitted to.
+    saddle: Option<(Gd<Node3D>, Vector3)>,
 }
 
 impl Model {
@@ -310,6 +318,8 @@ pub struct Art {
     /// The hero's model given back with their gear on (a level change):
     /// taken again as it is.
     kept: Option<Model>,
+    /// The backs of the models sat on or saddled so far (`riding.rs`).
+    backs: HashMap<usize, Option<Back>>,
     /// Time the map's new instances took this frame (None: no budget,
     /// everything is built at once).
     spent: Option<std::time::Duration>,
@@ -370,6 +380,7 @@ impl Art {
             warmed: HashSet::new(),
             ware_bounds: HashMap::new(),
             kept: None,
+            backs: HashMap::new(),
             spent: None,
             pending: 0,
         }
@@ -929,6 +940,8 @@ impl Art {
                 worn: None,
                 extras: Vec::new(),
                 pending: Some(*look),
+                seated: None,
+                saddle: None,
             };
         }
         let start = std::time::Instant::now();
@@ -1010,6 +1023,7 @@ impl Art {
         if let Some(p) = m.player.as_mut() {
             p.pause();
         }
+        self.unseat(&mut m);
         if m.worn.as_ref().is_some_and(|w| w.has_gear()) {
             self.put_down(&mut m);
             if let Some(old) = self.kept.replace(m) {
@@ -1023,6 +1037,7 @@ impl Art {
     /// Into the pool, the gear taken off.
     fn give_plain(&mut self, mut m: Model) {
         self.unequip(&mut m);
+        self.unseat(&mut m);
         m.node.set_visible(false);
         if let Some(p) = m.player.as_mut() {
             p.pause();
@@ -1185,6 +1200,8 @@ impl Art {
             worn: None,
             extras,
             pending: None,
+            seated: None,
+            saddle: None,
         }
     }
 

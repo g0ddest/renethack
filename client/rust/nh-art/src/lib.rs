@@ -280,6 +280,32 @@ pub struct ModelSpec {
     /// monster's and names the models that must say theirs.
     #[serde(default)]
     pub footprint: Option<[f32; 2]>,
+    /// Where a rider sits on its back (a steed's): None, on the middle
+    /// of the model as it stands.
+    #[serde(default)]
+    pub seat: Option<Seat>,
+}
+
+/// Where a rider sits on a model's back. The client measures the back
+/// there on the model as it rests (its height and breadth); the numbers
+/// here only say where to look, or stand in where the measure would not do
+/// (a back under folded wings).
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Seat {
+    /// The bone of the back the seat moves with (a gallop lifts it).
+    #[serde(default)]
+    pub bone: Option<String>,
+    /// How far towards the head from that bone (or from the model's
+    /// middle) the rider sits, in the model's own units.
+    #[serde(default)]
+    pub along: f32,
+    /// The seat's height and half the back's breadth there, in the
+    /// model's own units, instead of the measured ones.
+    #[serde(default)]
+    pub height: Option<f32>,
+    #[serde(default)]
+    pub half_width: Option<f32>,
 }
 
 /// A model worn on a bone of a character (a role's hat or cape), hidden
@@ -1221,6 +1247,7 @@ impl ArtManifest {
             girth: 1.0,
             head_scale: 1.0,
             footprint: None,
+            seat: None,
         };
     }
 

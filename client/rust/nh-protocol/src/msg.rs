@@ -92,6 +92,12 @@ pub enum WinCall {
         y: i32,
         g: Glyph,
         bk: Option<Glyph>,
+        /// Under a ridden steed's glyph: the hero's own, which the map
+        /// does not show meanwhile.
+        rider: Option<Glyph>,
+        /// The monster shown wears a saddle (as its name tells when
+        /// looked at; a steed ridden always).
+        saddled: bool,
     },
     RawPrint {
         text: String,
@@ -520,6 +526,10 @@ struct PrintGlyph {
     y: i32,
     g: Glyph,
     bk: Option<Glyph>,
+    #[serde(default)]
+    rider: Option<Glyph>,
+    #[serde(default)]
+    saddled: bool,
 }
 #[derive(Deserialize)]
 struct RawPrint {
@@ -651,6 +661,8 @@ fn win_call(name: String, a: Value) -> Result<WinCall, ProtocolError> {
                 y: p.y,
                 g: p.g,
                 bk: p.bk,
+                rider: p.rider,
+                saddled: p.saddled,
             }
         }
         "raw_print" => {

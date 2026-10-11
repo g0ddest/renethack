@@ -29,7 +29,7 @@ fn choice(role: &str, gender: &str) -> CharacterChoice {
 
 /// What hangs on the hero's bone attachment `Gear_<bone>`: the held
 /// models' names ("spear"), and whether a lamp light burns there.
-fn held_on(g: &RenethackGame, bone: &str) -> Result<(Vec<String>, bool), String> {
+pub(super) fn held_on(g: &RenethackGame, bone: &str) -> Result<(Vec<String>, bool), String> {
     let map = map_view(g)?;
     let Some(m) = map.hero_model() else {
         return Ok((Vec::new(), false));
@@ -210,7 +210,7 @@ pub(super) fn equipment() -> Vec<Step> {
 
 /// The item in one of the hero's hands while it is used: (the hand's
 /// slot, the held model: "potion").
-fn in_use_at(g: &RenethackGame) -> Result<Option<(&'static str, String)>, String> {
+pub(super) fn in_use_at(g: &RenethackGame) -> Result<Option<(&'static str, String)>, String> {
     let map = map_view(g)?;
     let Some(m) = map.hero_model() else {
         return Ok(None);

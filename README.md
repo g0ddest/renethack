@@ -153,7 +153,11 @@ panel's `D` menu; `bar` binds the food ration to a slot, follows it through
 `Alt`+`2` `Alt`+`0` `s` (Classic). The `title` scenario checks the scene
 behind the title menu: drawn before the start-up veil lifts, the hero in
 their gear, both ends of the camera's sway, put away by a game and laid
-again on the title after it. With `--screenshots` the soak saves the screen
+again on the title after it. The `riding` scenario puts a Knight on his
+pony on the first turn (debug mode): seated on its back in his kit, the
+pony walking and galloping under him, a blow and the lance couched from the
+saddle, the pony a pet with its saddle once he is off, then a warhorse
+ridden through a save and a restore. With `--screenshots` the soak saves the screen
 every 60 answers (`soak-<seed>-<answers>.png`) and the first dialogs of each
 kind as the player meets them, each question once
 (`dlg-<kind>-<seed>-<answers>.png`). A picture waits for the screen to hold

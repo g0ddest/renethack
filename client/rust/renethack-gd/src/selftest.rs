@@ -46,6 +46,8 @@ mod input_ru;
 mod layouts_tests;
 #[path = "selftest_passing.rs"]
 mod passing_tests;
+#[path = "selftest_riding.rs"]
+mod riding_tests;
 #[path = "selftest_rim.rs"]
 mod rim_tests;
 #[path = "selftest_shop.rs"]
@@ -4688,6 +4690,7 @@ impl SelfTest {
             "help" => help_tests::help(),
             "layouts" => layouts_tests::layouts(),
             "rim" => rim_tests::rim(),
+            "riding" => riding_tests::riding(),
             "doll" => doll_tests::doll(),
             "first-open" => first_tests::first_open(),
             "passing" => passing_tests::passing(),

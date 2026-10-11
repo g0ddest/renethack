@@ -27,6 +27,14 @@ pub struct Cell {
     /// floor they step off before it draws them on the next cell). The
     /// engine draws the cell again when it has passed.
     pub over: Option<Glyph>,
+    /// Under a ridden steed's `glyph`: the hero's own, which the map does
+    /// not show while they ride.
+    pub rider: Option<Glyph>,
+    /// The monster `glyph` shows wears a saddle; so does the one `over`
+    /// shows (a steed left on the cell the hero dismounts from, drawn
+    /// before the hero is on the next).
+    pub saddled: bool,
+    pub over_saddled: bool,
 }
 
 impl Cell {
@@ -182,6 +190,21 @@ impl MapState {
 
     /// print_glyph on the map window; cells outside the field are ignored.
     pub fn print(&mut self, x: i32, y: i32, g: &Glyph, bk: Option<&Glyph>) {
+        self.print_with(x, y, g, bk, None, false);
+    }
+
+    /// As `print`, with what the engine tells of a monster besides its
+    /// glyph: who rides it (under a steed's glyph, the hero's own) and
+    /// whether it wears a saddle.
+    pub fn print_with(
+        &mut self,
+        x: i32,
+        y: i32,
+        g: &Glyph,
+        bk: Option<&Glyph>,
+        rider: Option<&Glyph>,
+        saddled: bool,
+    ) {
         let Some(i) = index(x, y) else {
             return;
         };
@@ -204,9 +227,13 @@ impl MapState {
         }
         if passes {
             cell.over = Some(g.clone());
+            cell.over_saddled = saddled;
         } else {
             cell.glyph = Some(g.clone());
             cell.over = None;
+            cell.rider = rider.cloned();
+            cell.saddled = saddled;
+            cell.over_saddled = false;
         }
         cell.bk = bk.cloned();
         if hero
@@ -214,6 +241,20 @@ impl MapState {
             && left != (x, y)
         {
             self.uncover(left);
+        }
+    }
+
+    /// The hero's own form: the glyph on their cell, or under a steed's
+    /// the one the engine tells of the rider. None while the hero is not
+    /// drawn, or rides and the engine does not say who (an older one).
+    pub fn hero_form(&self) -> Option<&Glyph> {
+        let (x, y) = self.hero?;
+        let cell = self.cell(x, y)?;
+        let g = cell.glyph.as_ref().filter(|g| g.flags & mg::HERO != 0)?;
+        if g.flags & mg::RIDDEN != 0 {
+            cell.rider.as_ref()
+        } else {
+            Some(g)
         }
     }
 
@@ -247,6 +288,8 @@ impl MapState {
         self.touch(i, (x, y));
         let cell = &mut self.cells[i];
         cell.glyph = cell.over.take();
+        cell.rider = None;
+        cell.saddled = std::mem::take(&mut cell.over_saddled);
     }
 
     /// clear_nhwindow on the map window: nothing is known any more.
@@ -470,6 +513,46 @@ pub(crate) mod tests {
         let cell = map.cell(11, 5).unwrap();
         assert_eq!((&cell.glyph, &cell.over), (&Some(hero), &None));
         assert_eq!(map.hero(), Some((11, 5)));
+    }
+
+    #[test]
+    fn a_steed_tells_who_rides_it_and_keeps_its_saddle_once_they_are_off() {
+        let mut map = MapState::new();
+        let hero = monster(5, mg::HERO | mg::FEMALE);
+        let pony = monster(16, mg::PET | mg::MALE);
+        let ridden = monster(16, mg::HERO | mg::RIDDEN | mg::MALE);
+        for x in 8..14 {
+            map.print(x, 5, &floor(), None);
+        }
+        map.print(10, 5, &hero, None);
+        map.print_with(11, 5, &pony, None, None, true);
+        assert_eq!(map.hero_form(), Some(&hero));
+        assert!(map.cell(11, 5).unwrap().saddled);
+        // mounting: the hero is on the steed's cell, under its glyph
+        map.print(10, 5, &floor(), None);
+        map.print_with(11, 5, &ridden, None, Some(&hero), true);
+        assert_eq!(map.hero(), Some((11, 5)));
+        assert_eq!(map.hero_form(), Some(&hero), "not the steed's glyph");
+        let cell = map.cell(11, 5).unwrap();
+        assert_eq!((cell.rider.as_ref(), cell.saddled), (Some(&hero), true));
+        // an engine that does not say who rides: nobody's form
+        map.print(11, 5, &ridden, None);
+        assert_eq!(map.hero_form(), None);
+        map.print_with(11, 5, &ridden, None, Some(&hero), true);
+        // dismounting: the steed is drawn where the pair stood before the
+        // hero is drawn beside it
+        map.print_with(11, 5, &pony, None, None, true);
+        assert_eq!(map.hero_form(), Some(&hero), "still in the saddle");
+        map.print(12, 5, &hero, None);
+        let cell = map.cell(11, 5).unwrap();
+        assert_eq!(
+            (cell.glyph.as_ref(), cell.rider.as_ref(), cell.saddled),
+            (Some(&pony), None, true)
+        );
+        assert_eq!(map.hero_form(), Some(&hero));
+        // the same pet drawn with no saddle told has none
+        map.print(11, 5, &pony, None);
+        assert!(!map.cell(11, 5).unwrap().saddled);
     }
 
     #[test]

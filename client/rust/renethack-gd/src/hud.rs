@@ -1999,14 +1999,13 @@ impl Hud {
     }
 
     /// The hero's form, from the glyph under the hero: the portrait's
-    /// initial and the subtitle.
+    /// initial and the subtitle. On a steed the map's glyph is the
+    /// steed's: their own is what the engine tells of the rider.
     fn sync_role(&mut self, world: &World, catalog: &Catalog) {
         let name = world
             .map
-            .hero()
-            .and_then(|(x, y)| world.map.cell(x, y))
-            .and_then(|c| c.glyph.as_ref())
-            .filter(|g| g.kind == GlyphKind::Mon && g.flags & mg::HERO != 0)
+            .hero_form()
+            .filter(|g| g.kind == GlyphKind::Mon)
             .and_then(|g| {
                 let m = catalog.monsters.get(usize::try_from(g.mon?).ok()?)?;
                 let gendered = if g.flags & mg::FEMALE != 0 {

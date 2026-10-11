@@ -39,17 +39,18 @@ use godot::prelude::*;
 use nh_art::{ArtManifest, Tint};
 use nh_protocol::{Catalog, Glyph, GlyphKind, MonsterInfo, ObjectTile, mg};
 use nh_world::{
-    Branch, COLNO, Cell, Ident, ItemUse, MapState, Move, ROWNO, Terrain, UseKind, World,
+    Branch, COLNO, Cell, Ident, ItemUse, MapState, Move, ROWNO, Terrain, UseKind, Who, World,
     cell_terrain, in_field, locate_attack, parse_attack, terrain_of,
 };
 
-use crate::animator::{Motion, pace, yaw_toward};
+use crate::animator::{Motion, STEP_SECS, ease, pace, turn, yaw_toward};
 use crate::art::{Art, Finish, Model, ModelLook, Pose, build_flat, no_shadow, set_layer_mask};
 use crate::batch::{Batches, Slot};
 use crate::branch_look::{BranchLook, Prop};
 use crate::meshes::{
     MeshKey, bevel, cuboid, cylinder, dome, facets, plane, prism, rock, sphere, torus,
 };
+use crate::seated::Mount;
 use crate::surface::{Fow, FowCell, Role, Seen, Surfaces, cell_index, sight};
 use crate::theme::{self, nh_color};
 use crate::vfx::{Vfx, VfxKind};
@@ -403,8 +404,13 @@ struct Look {
     /// Which of `models` is the monster or object on the cell (it is
     /// carried along when it steps to another cell).
     entity: Option<usize>,
-    /// The entity is the hero (not what an unseen hero stands on).
+    /// The entity is the hero (not what an unseen hero stands on), or the
+    /// steed under them.
     hero: bool,
+    /// The entity is a steed under the hero: how the hero looks on it.
+    rider: Option<ModelLook>,
+    /// The entity wears a saddle.
+    saddled: bool,
     /// A wall at full height (a torch can hang on it).
     wall: bool,
     /// Something here lies below the ground (the bedrock under the level
@@ -2043,20 +2049,13 @@ fn entity_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
     match g.kind {
         GlyphKind::Mon => {
             let hero = g.flags & mg::HERO != 0;
-            if let Some(info) = monster_info(ctx.catalog, g.mon) {
-                let r = art.monster(info, g.flags);
-                let pose = if g.flags & (mg::DETECT | mg::INVIS) != 0 {
-                    Pose::Ghost
-                } else {
-                    Pose::Alive
-                };
-                let tint = lifted(tint_color(r.tint, g.color));
+            if let Some(model) = monster_look(g, ctx) {
                 let yaw = match (hero, ctx.facing) {
                     (true, _) => ctx.hero_yaw,
                     (false, Some(yaw)) => yaw,
                     (false, None) => ctx.face_hero(),
                 };
-                look.model(ModelLook { art: r, tint, pose }, here, yaw);
+                look.model(model, here, yaw);
                 look.entity = Some(look.models.len() - 1);
                 look.hero = hero;
             }
@@ -2183,6 +2182,20 @@ fn entity_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
         // the engulfer is drawn once, around the hero
         _ => {}
     }
+}
+
+/// How a monster's glyph is drawn: its model at its size, tinted, and
+/// see-through when only sensed or seen invisible.
+fn monster_look(g: &Glyph, ctx: &Ctx) -> Option<ModelLook> {
+    let info = monster_info(ctx.catalog, g.mon)?;
+    let r = ctx.art.monster(info, g.flags);
+    let pose = if g.flags & (mg::DETECT | mg::INVIS) != 0 {
+        Pose::Ghost
+    } else {
+        Pose::Alive
+    };
+    let tint = lifted(tint_color(r.tint, g.color));
+    Some(ModelLook { art: r, tint, pose })
 }
 
 /// A beam, explosion or sparkle for the moment it shows: a ray is a
@@ -2347,6 +2360,16 @@ fn look_of(cell: &Cell, near: Near, ctx: &Ctx) -> Look {
     }
     if let Some(g) = &cell.glyph {
         glyph_look(&mut look, g, ctx);
+        // a steed's glyph is all the map shows of the hero on it: the
+        // engine tells who rides, and of a saddle on any monster
+        if g.kind == GlyphKind::Mon && look.entity.is_some() {
+            look.saddled = cell.saddled;
+            look.rider = cell
+                .rider
+                .as_ref()
+                .filter(|_| g.flags & mg::RIDDEN != 0)
+                .and_then(|r| monster_look(r, ctx));
+        }
     }
     // what passes over the cell: a flash over who stands there, a missile
     // at the feet of the hero it reaches (another creature drawn over the
@@ -2445,6 +2468,31 @@ struct Carried {
     cells: i32,
 }
 
+/// The hero's own model while they ride: their cell shows the steed, and
+/// they sit on its back.
+struct Rider {
+    model: Model,
+    look: ModelLook,
+    /// The steed's node they sit on and its back (None: no steed is drawn
+    /// for them yet).
+    on: Option<(Gd<Node3D>, Mount)>,
+    /// Climbing up: where they stood on foot (the place, the yaw) and the
+    /// seconds since they left it.
+    from: Option<(Vector3, f32, f32)>,
+    /// Put in the saddle once: one not seen climbing up (a game restored
+    /// mounted, a level reached so) is seated from the first frame.
+    seated: bool,
+}
+
+/// Seconds the hero takes from the ground to the steed's back, and how
+/// high they hop on the way.
+const MOUNT_SECS: f32 = 0.3;
+const MOUNT_HOP: f32 = 0.12;
+/// The top of a rider's head over the saddle, and how high a body's hips
+/// are as it stands, in its own heights.
+const RIDER_OVER_SEAT: f32 = 0.5;
+const HIPS_HEIGHT: f32 = 0.57;
+
 /// What the animator did (self-tests).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct MotionStats {
@@ -2531,6 +2579,15 @@ pub struct MapView {
     rim: Gd<OmniLight3D>,
     /// The hero's model, on the rim light's layer too.
     rim_model: Option<Gd<Node3D>>,
+    /// The hero's own model while they ride (their cell shows the steed).
+    rider: Option<Rider>,
+    /// The steed under a hero a wall hides, wearing the x-ray overlay
+    /// with them.
+    xray_steed: Option<Gd<Node3D>>,
+    /// Where a rider would stand if the saddle were the ground, facing
+    /// their way: what looks at the hero alone (the inventory's doll)
+    /// frames them from there as it does on foot.
+    rider_view: Gd<Node3D>,
     /// Fill lights over the parts of the level in view.
     room_lights: Vec<Gd<OmniLight3D>>,
     torches: Vec<Torch>,
@@ -2632,8 +2689,9 @@ pub struct MapView {
     /// Models on their way to the cell an entity stepped to (this batch).
     incoming: HashMap<(i32, i32), Carried>,
     motions: Vec<Motion>,
-    /// Cells whose step was cut short by the next batch.
+    /// Cells whose step was cut short by the next batch, and when.
     interrupted: HashSet<(i32, i32)>,
+    cut_at: f64,
     /// The newest message already looked at for fights.
     log_seq: Option<u64>,
     /// Self-tests stop motions at this share to take a picture.
@@ -2941,6 +2999,12 @@ impl MapView {
         let mut cursor = marker(&mut root, &crate::vfx::frame_texture(), 1.05);
         cursor.set_modulate(CURSOR);
 
+        // the node the doll aims at, and the child it takes the way the
+        // body faces from (as from a model's own node)
+        let mut rider_view = Node3D::new_alloc();
+        rider_view.set_name("RiderView");
+        rider_view.add_child(&Node3D::new_alloc());
+        root.add_child(&rider_view);
         let mut hero_ring = marker(&mut root, &ring_tex, 0.95);
         hero_ring.set_modulate(HERO_RING);
         let mut hostile_ring = marker(&mut root, &ring_tex, 1.05);
@@ -3113,6 +3177,9 @@ impl MapView {
             underglow,
             rim,
             rim_model: None,
+            rider: None,
+            xray_steed: None,
+            rider_view,
             room_lights: Vec::new(),
             torches: Vec::new(),
             torch_scene,
@@ -3193,6 +3260,7 @@ impl MapView {
             incoming: HashMap::new(),
             motions: Vec::new(),
             interrupted: HashSet::new(),
+            cut_at: 0.0,
             log_seq: None,
             hold: None,
             stats: MotionStats::default(),
@@ -3242,7 +3310,7 @@ impl MapView {
         if self.hero_at != hero {
             self.fow_dirty = true;
         }
-        self.hero_at = hero;
+        let was_at = std::mem::replace(&mut self.hero_at, hero);
         // another branch: its own look, and every cell drawn again in it
         let branch = world.branch();
         if branch != self.branch {
@@ -3274,6 +3342,8 @@ impl MapView {
                 self.finish_motions();
             }
             self.carry(&moves, world);
+            self.carry_rider(was_at, world);
+            self.flank_steed(was_at, hero, world);
             let near: Vec<_> = dirty
                 .iter()
                 .flat_map(|&(x, y)| {
@@ -3323,8 +3393,10 @@ impl MapView {
         self.complete_models();
         self.prof
             .push(("build", __t.elapsed().as_secs_f64() * 1000.0));
+        self.seat_rider(hero);
         self.watch_fights(world, catalog);
         self.advance_motions(delta as f32);
+        self.follow_steed(delta as f32);
         self.hero_fx.advance(delta as f32, &mut self.vfx);
         if std::mem::take(&mut self.fow_dirty) {
             let __t = std::time::Instant::now();
@@ -4029,10 +4101,14 @@ impl MapView {
     /// leaves the cell they were last known on to what else is there, a
     /// thing on the floor: its model is not theirs.
     fn rim_hero(&mut self, hero: Option<(i32, i32)>) {
-        let node = hero
-            .and_then(|h| self.cells.get(&h))
-            .and_then(|n| n.look.entity.and_then(|i| n.models.get(i)))
-            .map(|m| m.node.clone());
+        // on a steed their own model is the rider's, not the cell's
+        let node = match &self.rider {
+            Some(r) => Some(r.model.node.clone()),
+            None => hero
+                .and_then(|h| self.cells.get(&h))
+                .and_then(|n| n.look.entity.and_then(|i| n.models.get(i)))
+                .map(|m| m.node.clone()),
+        };
         if node.as_ref().map(|n| n.instance_id())
             == self.rim_model.as_ref().map(|n| n.instance_id())
         {
@@ -4066,6 +4142,25 @@ impl MapView {
         {
             set_overlay(n, if hidden { self.xray.as_ref() } else { None });
             self.xray_on = hidden;
+        }
+        // the steed under them shows through with them
+        let steed = self
+            .rider
+            .as_ref()
+            .filter(|_| hidden)
+            .and_then(|r| r.on.as_ref())
+            .map(|(node, _)| node.clone());
+        if steed.as_ref().map(|n| n.instance_id())
+            != self.xray_steed.as_ref().map(|n| n.instance_id())
+        {
+            let alive = |n: &Gd<Node3D>| n.is_instance_valid() && !n.is_queued_for_deletion();
+            if let Some(old) = self.xray_steed.take().filter(alive) {
+                set_overlay(&old, None);
+            }
+            if let Some(n) = steed.as_ref().filter(|n| alive(n)) {
+                set_overlay(n, self.xray.as_ref());
+            }
+            self.xray_steed = steed;
         }
     }
 
@@ -4418,6 +4513,12 @@ impl MapView {
             set_layers(&old, 1);
             set_overlay(&old, None);
         }
+        if let Some(old) = self.xray_steed.take().filter(|n| n.is_instance_valid()) {
+            set_overlay(&old, None);
+        }
+        if let Some(r) = self.rider.take() {
+            self.art.give(r.model);
+        }
         for l in &mut self.room_lights {
             l.set_visible(false);
         }
@@ -4478,21 +4579,41 @@ impl MapView {
         let yaw_from = placed.yaw;
         let yaw_to = dir.or(spot).map_or(yaw_from, |d| yaw_toward((0, 0), d));
         placed.yaw = yaw_to;
-        let height = placed.look.art.height;
         let pos = Vector3::new(at.0 as f32, 0.0, at.1 as f32) + placed.pos;
-        let m = &mut nodes.models[i];
+        // the body the map turns, and the hero's own, whose hands use the
+        // thing: in the saddle the steed's and the rider's (their hands
+        // as high above where they would be on foot as the seat is above
+        // their hips)
+        let node = nodes.models[i].node.clone();
+        let riding = self.rider.is_some();
+        let (m, height, lift) = match self.rider.as_mut() {
+            Some(r) => {
+                let height = r.look.art.height;
+                let seat = r.on.as_ref().and_then(|(_, mount)| mount.at());
+                let lift = seat.map_or(0.0, |s| s.y - pos.y - height * HIPS_HEIGHT);
+                (&mut r.model, height, lift)
+            }
+            None => (&mut nodes.models[i], placed.look.art.height, 0.0),
+        };
         let mut clips = self.art.clips(m, false);
+        // from the saddle, its own way where it has one (a lance couched)
+        let mounted = applied
+            .as_ref()
+            .filter(|_| riding)
+            .and_then(|a| a.mounted.clone());
         // (its clip, how long it lasts, where the off hand grips)
         let applied = applied.and_then(|a| {
-            let clip = self
-                .art
-                .clip_on(m, a.clip(u.vertical == Some('>')).to_string())?;
+            let name = match &mounted {
+                Some(m) => m.clip.clone(),
+                None => a.clip(u.vertical == Some('>')).to_string(),
+            };
+            let clip = self.art.clip_on(m, name)?;
             let secs = clips
                 .player
                 .as_ref()?
                 .get_animation(clip.as_str())?
                 .get_length();
-            Some((clip, secs, a.two))
+            Some((clip, secs, a.two.filter(|_| mounted.is_none())))
         });
         let (hand_slot, secs, two) = match &applied {
             Some((_, secs, two)) => ("hand_r", Some(*secs), *two),
@@ -4503,7 +4624,8 @@ impl MapView {
             None => self.art.use_clip(m, use_name(u.kind)),
         };
         if let (Some(h), Some(secs)) = (held, secs) {
-            self.art.hold_for(m, h, secs, hand_slot, two);
+            self.art
+                .hold_for(m, h, secs, hand_slot, two, mounted.as_ref());
         } else {
             // a use with nothing in hand (a spell): the last item used is
             // put away, not left in a hand that opens
@@ -4518,7 +4640,6 @@ impl MapView {
             self.art.steady(m, secs);
         }
         let anchor = self.art.slot_anchor(m, hand_slot);
-        let node = m.node.clone();
         self.hero_yaw = yaw_to;
         if let Some(i) = self.motions.iter().position(|m| m.cell == at) {
             self.motions.swap_remove(i).finish(false);
@@ -4533,7 +4654,7 @@ impl MapView {
             clips,
         ));
         let facing = Vector3::new(yaw_to.to_radians().sin(), 0.0, yaw_to.to_radians().cos());
-        let hand = pos + Vector3::new(0.0, height * 0.62, 0.0) + facing * 0.25;
+        let hand = pos + Vector3::new(0.0, lift + height * 0.62, 0.0) + facing * 0.25;
         let ahead = reach.map(|((x, y), (dx, dy))| {
             let end = Vector3::new(
                 x as f32 + dx as f32 * 0.45,
@@ -4590,14 +4711,29 @@ impl MapView {
     fn equip_hero(&mut self, at: (i32, i32), world: &World, catalog: &Catalog, delta: f32) {
         self.hero_gear
             .update(&world.inventory, catalog, self.art.manifest());
-        let Some(m) = self
-            .cells
-            .get_mut(&at)
-            .filter(|n| n.look.hero)
-            .and_then(|n| n.look.entity.and_then(|i| n.models.get_mut(i)))
-        else {
+        // their own model: the rider's on a steed (whose back holds them),
+        // else their cell's, on foot
+        let (m, mount, settle) = match self.rider.as_mut() {
+            Some(r) => {
+                let mount = r.on.as_ref().map(|(_, mount)| mount);
+                // not seen climbing up: in the saddle at once
+                let at_once = mount.is_some() && !std::mem::replace(&mut r.seated, true);
+                let settle = if at_once { f32::MAX } else { delta };
+                (Some(&mut r.model), mount, settle)
+            }
+            None => {
+                let own = self
+                    .cells
+                    .get_mut(&at)
+                    .filter(|n| n.look.hero && n.look.rider.is_none())
+                    .and_then(|n| n.look.entity.and_then(|i| n.models.get_mut(i)));
+                (own, None, delta)
+            }
+        };
+        let Some(m) = m else {
             return;
         };
+        self.art.sit(m, mount, settle);
         let lamp = self.art.equip(m, self.hero_gear.gear(), delta);
         if self.hero_gear.set_lamp(lamp) {
             let (color, energy, range) = if lamp {
@@ -4705,13 +4841,42 @@ impl MapView {
         let nodes = self.hero_cell()?;
         let i = nodes.look.entity?;
         let (model, placed) = (nodes.models.get(i)?, nodes.look.models.get(i)?);
-        (model.node.is_instance_valid() && model.node.is_inside_tree())
-            .then(|| (model.node.get_global_position(), placed.look.art.height))
+        if !model.node.is_instance_valid() || !model.node.is_inside_tree() {
+            return None;
+        }
+        let feet = model.node.get_global_position();
+        // on a steed: up to the rider's head over its saddle
+        let tall = match self.rider.as_ref().and_then(|r| Some((r, r.on.as_ref()?))) {
+            Some((r, (_, mount))) => {
+                let seat = mount.at().map_or(placed.look.art.height, |s| s.y - feet.y);
+                seat + r.look.art.height * RIDER_OVER_SEAT
+            }
+            None => placed.look.art.height,
+        };
+        Some((feet, tall))
     }
 
-    /// The hero's model (the doll shows it; self-tests look at its gear).
+    /// The hero's model (the doll shows it; self-tests look at its gear):
+    /// on a steed, the rider's.
     pub fn hero_model(&self) -> Option<&Model> {
+        if let Some(r) = &self.rider {
+            return Some(&r.model);
+        }
         let nodes = self.hero_cell()?;
+        nodes.look.entity.and_then(|i| nodes.models.get(i))
+    }
+
+    /// The steed the hero rides: its model, and where on its back they
+    /// sit (None on foot, or while the steed is not drawn yet).
+    pub fn steed(&self) -> Option<(&Model, &Mount)> {
+        let (_, mount) = self.rider.as_ref()?.on.as_ref()?;
+        let nodes = self.hero_cell()?;
+        Some((nodes.look.entity.and_then(|i| nodes.models.get(i))?, mount))
+    }
+
+    /// The monster or object on a cell: its model (self-tests).
+    pub fn entity_model(&self, x: i32, y: i32) -> Option<&Model> {
+        let nodes = self.cells.get(&(x, y))?;
         nodes.look.entity.and_then(|i| nodes.models.get(i))
     }
 
@@ -4720,14 +4885,7 @@ impl MapView {
     pub fn entity_rim(&self, x: i32, y: i32) -> Option<(Gd<Node3D>, bool)> {
         let nodes = self.cells.get(&(x, y))?;
         let node = nodes.models.get(nodes.look.entity?)?.node.clone();
-        let rim = node
-            .find_children_ex("*")
-            .type_("GeometryInstance3D")
-            .owned(false)
-            .done()
-            .iter_shared()
-            .filter_map(|n| n.try_cast::<GeometryInstance3D>().ok())
-            .any(|g| g.get_layer_mask() & RIM_LAYER != 0);
+        let rim = Self::on_rim(&node);
         Some((node, rim))
     }
 
@@ -5232,9 +5390,11 @@ impl MapView {
                     facing: None,
                     branch: &self.branch_look,
                 };
-                for p in look_of(cell, Near::of(map, x, y), &ctx).models {
-                    if !looks.contains(&p.look) {
-                        looks.push(p.look);
+                let look = look_of(cell, Near::of(map, x, y), &ctx);
+                let models = look.models.iter().map(|p| p.look);
+                for l in models.chain(look.rider) {
+                    if !looks.contains(&l) {
+                        looks.push(l);
                     }
                 }
             }
@@ -5249,14 +5409,29 @@ impl MapView {
             return;
         }
         let rim = self.rim_model.as_ref().map(|n| n.instance_id());
+        if let Some(r) = self.rider.as_mut().filter(|r| r.model.is_pending()) {
+            if !self.art.complete(&mut r.model) {
+                return;
+            }
+            if Some(r.model.node.instance_id()) == rim {
+                self.rim_model = None;
+            }
+        }
         for nodes in self.cells.values_mut() {
-            for m in nodes.models.iter_mut().filter(|m| m.is_pending()) {
+            for (i, m) in nodes.models.iter_mut().enumerate() {
+                if !m.is_pending() {
+                    continue;
+                }
                 if !self.art.complete(m) {
                     return;
                 }
                 // the hero's rim light takes the meshes now there
                 if Some(m.node.instance_id()) == rim {
                     self.rim_model = None;
+                }
+                // and the back now there, its saddle
+                if nodes.look.entity == Some(i) {
+                    self.art.saddle(m, nodes.look.saddled);
                 }
             }
         }
@@ -5844,13 +6019,47 @@ impl MapView {
                 kept.push(c.model);
                 continue;
             }
+            // the hero's own model: not the steed under them
+            let own = hero_here && look.entity == Some(i) && look.rider.is_none();
+            // off the steed: their model steps down from its back to
+            // this cell (or stands where the steed fell under them)
+            if own && let Some(r) = self.rider.take_if(|r| r.look == p.look) {
+                if let Some(m) = reuse {
+                    self.art.give(m);
+                }
+                let mut node = r.model.node.clone();
+                let (from, to) = (node.get_position(), origin + p.pos);
+                let facing = node.get_transform().basis.col_c();
+                let yaw_from = facing.x.atan2(facing.z).to_degrees();
+                if Vector2::new(from.x - to.x, from.z - to.z).length() > 0.05 {
+                    let clips = self.art.clips(&r.model, false);
+                    self.motions.push(Motion::step(
+                        node,
+                        (x, y),
+                        true,
+                        (from, yaw_from),
+                        (to, p.yaw),
+                        clips,
+                        p.look.art.height,
+                        pace(1, false),
+                    ));
+                } else {
+                    let basis = Basis::from_euler(
+                        EulerOrder::YXZ,
+                        Vector3::new(0.0, p.yaw.to_radians(), 0.0),
+                    );
+                    node.set_transform(Transform3D::new(basis, to));
+                }
+                kept.push(r.model);
+                continue;
+            }
             let mut m = match (before, reuse) {
                 (Some(b), Some(m)) if b.look == p.look => m,
                 (_, other) => {
                     if let Some(m) = other {
                         self.art.give(m);
                     }
-                    if hero_here && look.entity == Some(i) {
+                    if own {
                         self.art.take_hero(&p.look)
                     } else {
                         self.art.take(&p.look)
@@ -5858,10 +6067,28 @@ impl MapView {
                 }
             };
             if before.map(|b| (b.pos, b.yaw, b.look)) != Some((p.pos, p.yaw, p.look)) {
-                let basis =
-                    Basis::from_euler(EulerOrder::YXZ, Vector3::new(0.0, p.yaw.to_radians(), 0.0));
-                m.node
-                    .set_transform(Transform3D::new(basis, origin + p.pos));
+                // a steed the hero gets on, or off, turns round where it
+                // stands: its own steps, not a snap
+                let ridden = look.entity == Some(i) && old.rider.is_some() != look.rider.is_some();
+                let stood = before.filter(|b| ridden && (b.look, b.pos) == (p.look, p.pos));
+                if let Some(b) = stood {
+                    let clips = self.art.clips(&m, false);
+                    self.motions.push(Motion::step(
+                        m.node.clone(),
+                        (x, y),
+                        hero_here,
+                        (origin + p.pos, b.yaw),
+                        (origin + p.pos, p.yaw),
+                        clips,
+                        p.look.art.height,
+                        (MOUNT_SECS, false),
+                    ));
+                } else {
+                    let turn = Vector3::new(0.0, p.yaw.to_radians(), 0.0);
+                    let basis = Basis::from_euler(EulerOrder::YXZ, turn);
+                    m.node
+                        .set_transform(Transform3D::new(basis, origin + p.pos));
+                }
             }
             kept.push(m);
         }
@@ -5872,6 +6099,10 @@ impl MapView {
             self.art.give(c.model);
         }
         nodes.models = kept;
+        // a saddle on the back of what stands here (a steed, a pet)
+        if let Some(m) = look.entity.and_then(|i| nodes.models.get_mut(i)) {
+            self.art.saddle(m, look.saddled);
+        }
         for (i, l) in look.letters.iter().enumerate() {
             let before = old.letters.get(i);
             if i == nodes.letters.len() {
@@ -5949,7 +6180,9 @@ impl MapView {
             nodes.look.entity = None;
             let origin = Vector3::new(mv.from.0 as f32, 0.0, mv.from.1 as f32);
             let from = origin + placed.pos;
-            let hurry = self.interrupted.contains(&mv.from);
+            // its last step cut short a moment ago: it runs
+            let hurry =
+                self.interrupted.contains(&mv.from) && self.clock - self.cut_at <= STEP_SECS as f64;
             if let Some(old) = self.incoming.insert(
                 mv.to,
                 Carried {
@@ -5972,6 +6205,173 @@ impl MapView {
                 .and_then(Ident::of)
                 == Some(*id)
         });
+    }
+
+    /// The hero mounts: their own model leaves the cell they stood on (it
+    /// would go back to the pool with that cell's look) and climbs onto
+    /// the steed the map now draws them on.
+    fn carry_rider(&mut self, from: Option<(i32, i32)>, world: &World) {
+        let rides = world
+            .map
+            .hero()
+            .and_then(|(x, y)| world.map.cell(x, y))
+            .is_some_and(|c| c.rider.is_some());
+        if !rides || self.rider.is_some() {
+            return;
+        }
+        let Some(nodes) = from.and_then(|c| self.cells.get_mut(&c)) else {
+            return;
+        };
+        // their own model: the hero's cell's entity, no steed's
+        let own = nodes.look.hero && nodes.look.rider.is_none();
+        let Some(i) = nodes.look.entity.filter(|&i| own && i < nodes.models.len()) else {
+            return;
+        };
+        let model = nodes.models.remove(i);
+        let placed = nodes.look.models.remove(i);
+        nodes.look.entity = None;
+        nodes.look.hero = false;
+        let at = model.node.get_position();
+        self.rider = Some(Rider {
+            model,
+            look: placed.look,
+            on: None,
+            from: Some((at, placed.yaw, 0.0)),
+            seated: true,
+        });
+    }
+
+    /// The hero gets off: the steed they leave turns a flank to the cell
+    /// they step down to, not its head, which they would climb over.
+    fn flank_steed(&mut self, from: Option<(i32, i32)>, hero: Option<(i32, i32)>, world: &World) {
+        let (Some(from), Some(to)) = (from, hero) else {
+            return;
+        };
+        if self.rider.is_none() || from == to {
+            return;
+        }
+        // on foot now, the steed left behind where the pair stood
+        let glyph = |(x, y): (i32, i32)| world.map.cell(x, y).and_then(|c| c.glyph.as_ref());
+        let on_foot = glyph(to).is_some_and(|g| g.flags & mg::RIDDEN == 0);
+        let (true, Some(id)) = (on_foot, glyph(from).and_then(Ident::of)) else {
+            return;
+        };
+        let faced = self
+            .cells
+            .get(&from)
+            .and_then(|n| n.look.entity.and_then(|i| n.look.models.get(i)))
+            .map_or(self.hero_yaw, |p| p.yaw);
+        // the flank nearer the way it faces now
+        let toward = yaw_toward(from, to);
+        let off = |yaw: f32| (yaw - faced + 540.0).rem_euclid(360.0) - 180.0;
+        let flank = [toward + 90.0, toward - 90.0]
+            .into_iter()
+            .min_by(|a, b| off(*a).abs().total_cmp(&off(*b).abs()))
+            .unwrap_or(toward);
+        self.facing.insert(from, (id, flank));
+    }
+
+    /// The hero in the saddle: their own model for the steed the map
+    /// draws on their cell (made here when they did not climb up from the
+    /// ground: a game restored or a level reached mounted), bound to that
+    /// steed's back; put away once the map draws no steed under them.
+    fn seat_rider(&mut self, hero: Option<(i32, i32)>) {
+        let steed = hero
+            .and_then(|h| self.cells.get(&h))
+            .filter(|n| n.look.hero)
+            .and_then(|n| {
+                let m = n.look.entity.and_then(|i| n.models.get(i))?;
+                Some((n.look.rider?, m))
+            });
+        let Some((look, steed)) = steed else {
+            if let Some(r) = self.rider.take() {
+                self.art.give(r.model);
+            }
+            return;
+        };
+        // another form in the saddle (a polymorph): another model
+        if let Some(r) = self.rider.take_if(|r| r.look != look) {
+            self.art.give(r.model);
+        }
+        let r = self.rider.get_or_insert_with(|| Rider {
+            model: self.art.take_hero(&look),
+            look,
+            on: None,
+            from: None,
+            seated: false,
+        });
+        let bound = r.on.as_ref().map(|(node, _)| node.instance_id());
+        if bound != Some(steed.node.instance_id()) {
+            r.on = self.art.mount(steed).map(|m| (steed.node.clone(), m));
+        }
+        // no steed built yet to sit on: not in the air meanwhile
+        r.model.node.set_visible(r.on.is_some());
+    }
+
+    /// The rider goes where the steed goes: their node on the steed's
+    /// (the seat's solver lifts them onto its back), or on the way there
+    /// from where they stood while they climb up.
+    fn follow_steed(&mut self, delta: f32) {
+        let Some(r) = self.rider.as_mut() else {
+            return;
+        };
+        let Some((steed, _)) = r.on.as_ref().filter(|(n, _)| n.is_instance_valid()) else {
+            return;
+        };
+        let to = steed.get_transform();
+        let at = match r.from.as_mut() {
+            Some((from, yaw, secs)) => {
+                *secs += delta;
+                let t = *secs / MOUNT_SECS;
+                let facing = to.basis.col_c();
+                let yaw = turn(*yaw, facing.x.atan2(facing.z).to_degrees(), t);
+                let hop = Vector3::UP * (MOUNT_HOP * (std::f32::consts::PI * t.min(1.0)).sin());
+                Transform3D::new(
+                    Basis::from_euler(EulerOrder::YXZ, Vector3::new(0.0, yaw.to_radians(), 0.0)),
+                    from.lerp(to.origin, ease(t)) + hop,
+                )
+            }
+            None => to,
+        };
+        if r.from.is_some_and(|(.., secs)| secs >= MOUNT_SECS) {
+            r.from = None;
+        }
+        r.model.node.set_transform(at);
+        // as high over their own node as the saddle lifts them, facing as
+        // their model does
+        let seat = r.on.as_ref().and_then(|(_, mount)| mount.at());
+        let lift = seat.map_or(0.0, |s| s.y - at.origin.y - r.look.art.height * HIPS_HEIGHT);
+        let node = &r.model.node;
+        let facing = node
+            .get_child(0)
+            .and_then(|c| c.try_cast::<Node3D>().ok())
+            .map_or(node.get_global_transform(), |c| c.get_global_transform());
+        self.rider_view.set_global_transform(Transform3D::new(
+            facing.basis,
+            node.get_global_position() + Vector3::UP * lift,
+        ));
+    }
+
+    /// The node that stands for the hero where they alone are looked at
+    /// (the inventory's doll): their model's on foot; in the saddle, one
+    /// as far under them as their feet would be if they stood up there.
+    pub fn hero_view(&self) -> Option<Gd<Node3D>> {
+        match &self.rider {
+            Some(r) if r.on.is_some() => Some(self.rider_view.clone()),
+            _ => self.hero_model().map(|m| m.node.clone()),
+        }
+    }
+
+    /// Whether a model's meshes are on the hero's rim layer (self-tests:
+    /// only the hero's own are).
+    pub fn on_rim(node: &Gd<Node3D>) -> bool {
+        node.find_children_ex("*")
+            .type_("GeometryInstance3D")
+            .owned(false)
+            .done()
+            .iter_shared()
+            .filter_map(|n| n.try_cast::<GeometryInstance3D>().ok())
+            .any(|g| g.get_layer_mask() & RIM_LAYER != 0)
     }
 
     /// Fights the new messages tell of: the attacker turns to its target
@@ -6004,9 +6404,12 @@ impl MapView {
             .since(seen)
             .filter(|m| !m.from_history)
             .filter_map(|m| Some((parse_attack(&m.text)?, !m.text.contains(" miss"))))
-            .filter_map(|(a, hit)| Some((locate_attack(&a, &world.map, names)?, hit)))
+            .filter_map(|(a, hit)| {
+                let cells = locate_attack(&a, &world.map, names)?;
+                Some((cells, hit, a.target == Who::Hero))
+            })
             .collect();
-        for ((from, to), hit) in fights {
+        for ((from, to), hit, at_hero) in fights {
             self.strike(from, to, world);
             if hit {
                 self.impact(from, to, world, catalog);
@@ -6019,6 +6422,12 @@ impl MapView {
                 });
                 if let Some((m, placed)) = struck {
                     let height = placed.look.art.height;
+                    // a blow at the hero in the saddle is the rider's to
+                    // reel from, not the steed's
+                    let m = match self.rider.as_ref().filter(|_| at_hero) {
+                        Some(r) => &r.model,
+                        None => m,
+                    };
                     if self.art.flinch(m) {
                         self.stats.flinches += 1;
                     }
@@ -6107,9 +6516,16 @@ impl MapView {
         placed.yaw = yaw;
         let at = Vector3::new(from.0 as f32, 0.0, from.1 as f32) + placed.pos;
         let toward = Vector3::new((to.0 - from.0) as f32, 0.0, (to.1 - from.1) as f32).normalized();
-        let model = &nodes.models[i];
-        let node = model.node.clone();
-        let clips = self.art.clips(model, false);
+        let node = nodes.models[i].node.clone();
+        // from the saddle the blow is the rider's: the steed under them
+        // turns to it
+        let mut clips = match self.rider.as_ref().filter(|_| hero) {
+            Some(r) => self.art.clips(&r.model, false),
+            None => self.art.clips(&nodes.models[i], false),
+        };
+        if hero && let Some(clip) = self.mounted_blow() {
+            clips.attack = Some(clip);
+        }
         self.motions.push(Motion::strike(
             node,
             from,
@@ -6120,6 +6536,21 @@ impl MapView {
             clips,
         ));
         self.stats.strikes += 1;
+    }
+
+    /// A blow from the saddle with what is wielded, where that has a way
+    /// of its own there (a lance couched): in the rider's hand as its
+    /// clip wants it, for as long as the clip lasts. The clip.
+    fn mounted_blow(&mut self) -> Option<String> {
+        let r = self.rider.as_mut()?;
+        let h = self.hero_gear.gear().hand_r?;
+        let held = &self.art.manifest().held_at(h.held).1;
+        let mounted = held.apply.as_ref()?.mounted.clone()?;
+        let clip = self.art.clip_on(&r.model, mounted.clip.clone())?;
+        let secs = r.model.player()?.get_animation(clip.as_str())?.get_length();
+        self.art
+            .hold_for(&mut r.model, h, secs, "hand_r", None, Some(&mounted));
+        Some(clip)
     }
 
     fn advance_motions(&mut self, delta: f32) {
@@ -6140,14 +6571,23 @@ impl MapView {
     /// End every motion where the world model has its entity; remember the
     /// steps cut short (the next step there hurries).
     fn finish_motions(&mut self) {
+        // a batch with nothing under way keeps what the last cut short:
+        // the engine may draw the cell a step leaves a frame before the
+        // one it reaches, and that step still follows one cut short
+        if self.motions.is_empty() {
+            return;
+        }
         self.interrupted.clear();
+        self.cut_at = self.clock;
         let walking = self.order_pace.is_some();
         for m in self.motions.drain(..) {
             let (cell, step) = (m.cell, m.is_step());
             let keep = walking && m.hero && step;
-            if !m.finish(keep) && step {
+            // one a self-test holds midway is cut short too
+            if !m.arrived(self.hold) && step {
                 self.interrupted.insert(cell);
             }
+            m.finish(keep);
         }
     }
 
@@ -6164,9 +6604,13 @@ impl MapView {
         }
     }
 
-    /// The hero's model plays its idle clip (after an order's last step).
+    /// The hero's model plays its idle clip (after an order's last step):
+    /// the body that walked, the steed's under a rider.
     fn settle_hero(&mut self) {
-        let Some(model) = self.hero_model() else {
+        let walker = self
+            .hero_cell()
+            .and_then(|n| n.look.entity.and_then(|i| n.models.get(i)));
+        let Some(model) = walker else {
             return;
         };
         let mut clips = self.art.clips(model, false);
@@ -6648,6 +7092,7 @@ mod tests {
             bk: None,
             terrain: Some(cmap(cat, "S_room")),
             over: None,
+            ..Cell::default()
         }
     }
 
@@ -6679,6 +7124,7 @@ mod tests {
             bk: None,
             terrain: Some(cmap(cat, sym)),
             over: None,
+            ..Cell::default()
         }
     }
 
@@ -7132,6 +7578,7 @@ mod tests {
                 bk: None,
                 terrain: (t != Terrain::Effect).then(|| cmap(cat, &info.sym)),
                 over: None,
+                ..Cell::default()
             };
             let look = f.look(&cell);
             let drawn = !matches!(t, Terrain::Stone);
@@ -7366,6 +7813,7 @@ mod tests {
             bk: None,
             terrain: None,
             over: None,
+            ..Cell::default()
         };
         let hero = monster(cat, "newt", mg::HERO);
         assert_eq!(top("S_hwall", &unseen(hero)), CUT_HEIGHT);
@@ -7457,6 +7905,7 @@ mod tests {
             bk: None,
             terrain: None,
             over: None,
+            ..Cell::default()
         };
         assert_eq!(
             f.look(&under).solids[0].paint,
@@ -7473,6 +7922,7 @@ mod tests {
             bk: None,
             terrain: None,
             over: None,
+            ..Cell::default()
         };
         let tile = |near: [Option<&Cell>; 4]| look_of(&under, Near::orth(near), &f.ctx()).solids[0];
         let (lit, dark, corr) = (

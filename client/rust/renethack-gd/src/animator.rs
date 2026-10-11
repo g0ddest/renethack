@@ -253,6 +253,12 @@ impl Motion {
         progress(self.elapsed, self.duration, None) >= hold.unwrap_or(1.0)
     }
 
+    /// At its end: not short of it, nor stopped short by a self-test's
+    /// hold.
+    pub fn arrived(&self, hold: Option<f32>) -> bool {
+        progress(self.elapsed, self.duration, hold) >= 1.0
+    }
+
     /// Put the node where the world model has it, facing its way, idle
     /// again after a step (unless `keep_gait`: an order walks on, the
     /// stride goes on into the next step); true when it had arrived by

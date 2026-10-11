@@ -63,12 +63,45 @@ pub struct Worn {
 }
 
 /// An item used: its node, the seconds it stays in the hand, the hand's
-/// slot, and where the off hand grips it meanwhile (a pick-axe digging).
+/// slot, where the off hand grips it meanwhile (a pick-axe digging), and
+/// how it turns in the hand meanwhile (a lance lowered from the saddle).
 struct InUse {
     node: Gd<Node3D>,
     left: f32,
     hand: &'static str,
     two: Option<Vector3>,
+    swing: Option<Swing>,
+}
+
+/// A thing turned in the hand while its clip plays: from the grip it
+/// rests in, about an axis of the held frame, its origin moved as the
+/// hand slides along it; and back as the clip ends.
+struct Swing {
+    /// The node that holds the model in its grip, and the grip at rest.
+    holder: Gd<Node3D>,
+    rest: Transform3D,
+    about: Vector3,
+    /// Radians, turned all the way.
+    turn: f32,
+    /// The thing's origin in the held frame, turned all the way.
+    pos: Vector3,
+    /// The clip it turns with, and the seconds that lasts.
+    clip: String,
+    secs: f32,
+}
+
+impl Swing {
+    /// The grip at `share` of the clip: turned by as much as the couch's
+    /// own keys have the arm lowered.
+    fn at(&self, share: f32) -> Transform3D {
+        let s = turn_at(&keys(COUCH_AT, COUCHED), share);
+        let turn = Basis::from_axis_angle(self.about, self.turn * s);
+        let back = Basis::from_axis_angle(self.about, -self.turn);
+        Transform3D::new(
+            turn * self.rest.basis,
+            turn * self.rest.origin.lerp(back * self.pos, s),
+        )
+    }
 }
 
 impl Worn {
@@ -163,11 +196,22 @@ impl Art {
         }
         if let Some(u) = worn.in_use.as_mut() {
             u.left -= delta;
+            if let Some(s) = u.swing.as_mut().filter(|s| s.holder.is_instance_valid()) {
+                // where its clip is now (paused in it too); at rest once
+                // another plays
+                let share = m
+                    .player
+                    .as_ref()
+                    .filter(|p| p.get_assigned_animation() == s.clip.as_str())
+                    .map_or(1.0, |p| {
+                        p.get_current_animation_position() as f32 / s.secs.max(1e-3)
+                    });
+                let at = s.at(share.clamp(0.0, 1.0));
+                s.holder.set_transform(at);
+            }
             if u.left <= 0.0 {
-                let (mut node, hand) = (u.node.clone(), u.hand);
-                if node.is_instance_valid() {
-                    node.queue_free();
-                }
+                let hand = u.hand;
+                let_go(u.node.clone());
                 worn.in_use = None;
                 show_slot(worn, hand, true);
             }
@@ -200,10 +244,8 @@ impl Art {
                 continue;
             }
             if let Some(i) = worn.held.iter().position(|(s, _)| *s == slot) {
-                let (_, mut node) = worn.held.swap_remove(i);
-                if node.is_instance_valid() {
-                    node.queue_free();
-                }
+                let (_, node) = worn.held.swap_remove(i);
+                let_go(node);
             }
             if let Some(h) = want
                 && let Some(node) = self.hold(&mut worn, slot, h, HELD_NODE)
@@ -381,10 +423,8 @@ impl Art {
         let Some(worn) = m.worn.as_mut() else {
             return;
         };
-        if let Some(InUse { mut node, hand, .. }) = worn.in_use.take() {
-            if node.is_instance_valid() {
-                node.queue_free();
-            }
+        if let Some(InUse { node, hand, .. }) = worn.in_use.take() {
+            let_go(node);
             show_slot(worn, hand, true);
         }
     }
@@ -394,15 +434,11 @@ impl Art {
         let Some(worn) = m.worn.as_mut() else {
             return;
         };
-        for (_, mut node) in worn.held.drain(..) {
-            if node.is_instance_valid() {
-                node.queue_free();
-            }
+        for (_, node) in worn.held.drain(..) {
+            let_go(node);
         }
-        if let Some(InUse { mut node, .. }) = worn.in_use.take()
-            && node.is_instance_valid()
-        {
-            node.queue_free();
+        if let Some(InUse { node, .. }) = worn.in_use.take() {
+            let_go(node);
         }
         // the off hand lets go at once: the next to wear this model may be
         // no hero, with no one to tell it so
@@ -432,7 +468,8 @@ impl Art {
 
     /// Show an item in a hand for `secs` (a potion drunk, a wand zapped),
     /// held in both if `two` says where the off hand grips it (a pick-axe
-    /// digging); what the hand held steps aside meanwhile.
+    /// digging), turned in the hand meanwhile as `mounted` says (a lance
+    /// couched); what the hand held steps aside meanwhile.
     pub fn hold_for(
         &mut self,
         m: &mut Model,
@@ -440,24 +477,36 @@ impl Art {
         secs: f32,
         hand: &'static str,
         two: Option<[f32; 3]>,
+        mounted: Option<&nh_art::Mounted>,
     ) -> bool {
         let Some(mut worn) = m.worn.take() else {
             return false;
         };
-        if let Some(InUse { mut node, hand, .. }) = worn.in_use.take() {
-            if node.is_instance_valid() {
-                node.queue_free();
-            }
+        if let Some(InUse { node, hand, .. }) = worn.in_use.take() {
+            let_go(node);
             show_slot(&mut worn, hand, true);
         }
         let node = self.hold(&mut worn, hand, h, USE_NODE);
         let shown = node.is_some();
         if let Some(node) = node {
+            let v = |a: [f32; 3]| Vector3::new(a[0], a[1], a[2]);
+            // the grip's own node is the held root's first child (`hold`)
+            let holder = node.get_child(0).and_then(|n| n.try_cast::<Node3D>().ok());
+            let swing = mounted.zip(holder).map(|(m, holder)| Swing {
+                rest: holder.get_transform(),
+                holder,
+                about: v(m.about).normalized(),
+                turn: m.turn.to_radians(),
+                pos: v(m.pos),
+                clip: m.clip.clone(),
+                secs,
+            });
             worn.in_use = Some(InUse {
                 node,
                 left: secs,
                 hand,
-                two: two.map(|t| Vector3::new(t[0], t[1], t[2])),
+                two: two.map(v),
+                swing,
             });
             show_slot(&mut worn, hand, false);
         }
@@ -700,8 +749,9 @@ impl Art {
     /// The clips built in code on the shared skeleton (`PROC_POSES`):
     /// `read` (a page held up, the head bowed to it), `throw` (an upright
     /// overhand throw), `chop` (a two-handed blow from the guard), `pole`
-    /// (a blow with a pole held at the side) and `dig` (a pick struck at
-    /// the floor), each the idle with a few bones turned.
+    /// (a blow with a pole held at the side), `dig` (a pick struck at the
+    /// floor) and `couch` (a lance lowered and thrust from the saddle),
+    /// each the idle with a few bones turned.
     fn add_proc_clips(&mut self, player: &mut Gd<AnimationPlayer>) {
         if player.has_animation_library(PROC_CLIPS) {
             return;
@@ -924,13 +974,54 @@ const DIG_POSE: &[PoseTrack] = &[
 ];
 const DIG_SECS: f32 = 1.6;
 
+/// The couch's keys: at rest, the lance lowered under the arm, held
+/// there, thrust, drawn back, at rest.
+const COUCH_AT: [f32; 6] = [0.0, 0.22, 0.4, 0.52, 0.7, 1.0];
+/// How far the lance is lowered at each (it turns in the hand from
+/// upright to along the forearm, the hand sliding down the shaft:
+/// `Swing`).
+const COUCHED: [f32; 6] = [0.0, 1.0, 1.0, 1.0, 1.0, 0.0];
+/// A lance couched in the saddle: the right arm brings the shaft down
+/// under the armpit, the forearm level before the ribs and the point
+/// ahead, the rider leaning in; a thrust from the shoulder with the back
+/// bent further, and up again to rest. The left hand keeps to its own.
+const COUCH_POSE: &[PoseTrack] = &[
+    (
+        "upperarm_r",
+        X,
+        &keys(COUCH_AT, [0.0, 43.0, 43.0, 60.0, 43.0, 0.0]),
+    ),
+    (
+        "upperarm_r",
+        Z,
+        &keys(COUCH_AT, [0.0, 9.0, 9.0, 9.0, 9.0, 0.0]),
+    ),
+    (
+        "lowerarm_r",
+        X,
+        &keys(COUCH_AT, [0.0, 56.0, 56.0, 40.0, 56.0, 0.0]),
+    ),
+    (
+        "lowerarm_r",
+        Y,
+        &keys(COUCH_AT, [0.0, -36.0, -36.0, -36.0, -36.0, 0.0]),
+    ),
+    (
+        "spine_02",
+        X,
+        &keys(COUCH_AT, [0.0, 13.0, 13.0, 22.0, 13.0, 0.0]),
+    ),
+];
+const COUCH_SECS: f32 = 1.0;
+
 /// The clips of the "proc" library: name, seconds, pose.
-const PROC_POSES: [(&str, f32, &[PoseTrack]); 5] = [
+const PROC_POSES: [(&str, f32, &[PoseTrack]); 6] = [
     ("read", READ_SECS, READ_POSE),
     ("throw", THROW_SECS, THROW_POSE),
     ("chop", CHOP_SECS, CHOP_POSE),
     ("pole", POLE_SECS, POLE_POSE),
     ("dig", DIG_SECS, DIG_POSE),
+    ("couch", COUCH_SECS, COUCH_POSE),
 ];
 
 /// A pose's turn at share `f` of the clip.
@@ -1004,6 +1095,20 @@ fn stand_up(root: &mut Gd<Node3D>) {
     }
     let turn = Basis::from_axis_angle(axis / sin, sin.atan2(along.dot(Vector3::UP)));
     root.set_global_transform(Transform3D::new(turn * g.basis, g.origin));
+}
+
+/// A held thing off its bone at once, freed when the frame ends: what
+/// is held next in the same frame (the same lance struck with again)
+/// takes the same name, and Godot would give it another while the old one
+/// is there.
+fn let_go(mut node: Gd<Node3D>) {
+    if !node.is_instance_valid() {
+        return;
+    }
+    if let Some(mut parent) = node.get_parent() {
+        parent.remove_child(&node);
+    }
+    node.queue_free();
 }
 
 fn show_slot(worn: &mut Worn, slot: &str, on: bool) {

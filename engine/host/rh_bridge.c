@@ -817,17 +817,47 @@ h_cliparound(void *ret UNUSED, va_list *ap)
     rh_proto_send("win", "cliparound", a);
 }
 
+/* What a monster's glyph leaves out though the player knows it.  A steed
+   under the hero: the map shows the steed's glyph alone on the hero's
+   spot, so the hero's own is told as "rider".  A saddle on a monster in
+   view: "saddled", as the monster's name tells it when looked at
+   (x_monnam(): not while blind or hallucinating).  Observation only. */
+static void
+riding_json(cJSON *a, int x, int y, const glyph_info *ginfo)
+{
+    struct monst *mtmp;
+    glyph_info rider;
+
+    if (!ginfo || !glyph_is_monster(ginfo->glyph))
+        return;
+    if (glyph_is_ridden_monster(ginfo->glyph)) {
+        map_glyphinfo((coordxy) x, (coordxy) y, hero_glyph, 0, &rider);
+        cJSON_AddItemToObject(a, "rider", glyph_json(&rider));
+        add_bool(a, "saddled", 1);
+    } else if (!Blind && !Hallucination && isok(x, y)
+               && (mtmp = m_at(x, y)) != 0
+               && (mtmp->misc_worn_check & W_SADDLE) != 0) {
+        add_bool(a, "saddled", 1);
+    }
+}
+
 static void
 h_print_glyph(void *ret UNUSED, va_list *ap)
 {
     cJSON *a = args_new();
+    const glyph_info *g;
+    int x, y;
 
     add_int(a, "win", va_arg(*ap, int));
-    add_int(a, "x", va_arg(*ap, int));
-    add_int(a, "y", va_arg(*ap, int));
-    cJSON_AddItemToObject(a, "g", glyph_json(va_arg(*ap, const glyph_info *)));
+    x = va_arg(*ap, int);
+    y = va_arg(*ap, int);
+    add_int(a, "x", x);
+    add_int(a, "y", y);
+    g = va_arg(*ap, const glyph_info *);
+    cJSON_AddItemToObject(a, "g", glyph_json(g));
     cJSON_AddItemToObject(a, "bk",
                           glyph_json(va_arg(*ap, const glyph_info *)));
+    riding_json(a, x, y, g);
     rh_proto_send("win", "print_glyph", a);
 }
 

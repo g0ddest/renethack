@@ -226,7 +226,25 @@ fn describe_entity(g: &Glyph, catalog: &Catalog) -> Option<String> {
 /// object appearance by tile, map symbol explanation. Peacefulness is not in the
 /// glyph flags, so only pets, invisible, ridden and detected monsters are marked.
 pub fn describe_cell(cell: &Cell, catalog: &Catalog) -> Option<String> {
-    let entity = cell.entity().and_then(|g| describe_entity(g, catalog));
+    let entity = match (&cell.rider, cell.entity()) {
+        // a steed under the hero, when the engine tells who rides it: the
+        // hero as on foot, then the steed as the pet it is
+        (Some(rider), Some(steed)) if steed.flags & mg::RIDDEN != 0 => {
+            let pet = Glyph {
+                flags: steed.flags & !(mg::HERO | mg::RIDDEN) | mg::PET,
+                ..steed.clone()
+            };
+            let (rider, pet) = (
+                describe_entity(rider, catalog),
+                describe_entity(&pet, catalog),
+            );
+            match (rider, pet) {
+                (Some(r), Some(p)) => Some(format!("{r}\n{p}")),
+                (r, p) => r.or(p),
+            }
+        }
+        (_, e) => e.and_then(|g| describe_entity(g, catalog)),
+    };
     let terrain = cell
         .terrain
         .as_ref()
@@ -302,6 +320,7 @@ mod tests {
             bk: None,
             terrain: Some(floor()),
             over: None,
+            ..Cell::default()
         };
         let text = describe_cell(&cell(&sack), &cat).unwrap();
         assert_eq!(text, "bag (tools)\nfloor of a room");
@@ -333,6 +352,7 @@ mod tests {
                     bk: None,
                     terrain: None,
                     over: None,
+                    ..Cell::default()
                 },
                 &cat,
             )
@@ -341,6 +361,19 @@ mod tests {
         assert_eq!(at(monster(16, mg::PET)), "tame little dog");
         assert_eq!(at(monster(16, mg::DETECT)), "little dog (detected)");
         assert_eq!(at(monster(342, mg::HERO | mg::FEMALE)), "you (valkyrie)");
+        // on a steed: the hero the engine tells of, then the steed
+        let steed = monster(16, mg::HERO | mg::RIDDEN | mg::MALE);
+        assert_eq!(at(steed.clone()), "you (little dog), ridden");
+        let ridden = Cell {
+            glyph: Some(steed),
+            rider: Some(monster(342, mg::HERO | mg::FEMALE)),
+            saddled: true,
+            ..Cell::default()
+        };
+        assert_eq!(
+            describe_cell(&ridden, &cat).unwrap(),
+            "you (valkyrie)\ntame little dog"
+        );
         let corpse = Glyph {
             mon: Some(322),
             ..glyph(GlyphKind::Body, '%')
@@ -363,6 +396,7 @@ mod tests {
                     bk: None,
                     terrain: None,
                     over: None,
+                    ..Cell::default()
                 },
                 &cat
             ),

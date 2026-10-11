@@ -297,7 +297,7 @@ pub struct RenethackGame {
     pub(crate) achievement_page: Option<crate::achievement_view::Page>,
     /// The hero's gender as the map draws the hero, told to the engine's
     /// translator (the words that agree with the hero).
-    hero_female: Option<bool>,
+    pub(crate) hero_female: Option<bool>,
     /// The session whose hero went to the profile and the title scene.
     last_hero_of: Option<u64>,
     /// A reply could not be written: the engine is gone.
@@ -1869,16 +1869,15 @@ impl RenethackGame {
     }
 
     /// The hero's gender from the hero's glyph (a polymorph changes it),
-    /// told to the engine's translator when it changes.
+    /// told to the engine's translator when it changes. On a steed the
+    /// map's glyph is the steed's, a mare's or a stallion's: the hero's
+    /// own is what the engine tells of the rider.
     fn sync_hero_gender(&mut self) {
         use nh_protocol::mg;
         let female = self
             .world
             .map
-            .hero()
-            .and_then(|(x, y)| self.world.map.cell(x, y))
-            .and_then(|c| c.glyph.as_ref())
-            .filter(|g| g.flags & mg::HERO != 0)
+            .hero_form()
             .map(|g| g.flags & mg::FEMALE != 0);
         if female.is_some() && female != self.hero_female {
             self.hero_female = female;
@@ -2137,7 +2136,7 @@ impl RenethackGame {
             });
             ui.hud.action_bar().set_key_labels(texts.as_deref());
         }
-        let hero = ui.map.hero_model().map(|m| m.node.clone());
+        let hero = ui.map.hero_view();
         ui.inventory.set_hero(hero);
         let rects = ui.hud.action_bar().slot_rects();
         ui.inventory.set_bar_rects(rects);
@@ -2829,13 +2828,7 @@ impl RenethackGame {
         if !self.prepare_playground() {
             return;
         }
-        let options = if self.debug_mode && self.selftest.is_some() {
-            if let Err(e) = std::fs::write(
-                pg.join("sysconf"),
-                "WIZARDS=*\nMAXPLAYERS=10\nPANICTRACE_GDB=0\nPANICTRACE_LIBC=0\n",
-            ) {
-                godot_warn!("renethack: cannot allow debug mode: {e}");
-            }
+        let options = if self.allow_debug() {
             format!("{options},playmode:debug")
         } else {
             options
@@ -2857,6 +2850,8 @@ impl RenethackGame {
         match EngineConfig::restore_options(name) {
             Ok(options) => {
                 if self.prepare_playground() {
+                    // a game saved in debug mode is restored in it
+                    self.allow_debug();
                     // the profile and the bar kept with the save; none (a
                     // game from before them): Modern and the default loadout
                     let kept = read_ui_state(&self.playground(), name)
@@ -2874,6 +2869,22 @@ impl RenethackGame {
             }
             Err(e) => self.show_failure(&tr!("err-cannot-restore"), &e.to_string(), None),
         }
+    }
+
+    /// A self-test's debug mode: the playground's sysconf lets anyone be
+    /// the wizard (after `prepare_playground`, which copies the data's).
+    /// True when it does.
+    fn allow_debug(&self) -> bool {
+        if !self.debug_mode || self.selftest.is_none() {
+            return false;
+        }
+        if let Err(e) = std::fs::write(
+            self.playground().join("sysconf"),
+            "WIZARDS=*\nMAXPLAYERS=10\nPANICTRACE_GDB=0\nPANICTRACE_LIBC=0\n",
+        ) {
+            godot_warn!("renethack: cannot allow debug mode: {e}");
+        }
+        true
     }
 
     fn prepare_playground(&mut self) -> bool {

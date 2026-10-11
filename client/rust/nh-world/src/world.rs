@@ -265,9 +265,18 @@ impl World {
                     w.menu_prompt = prompt.clone();
                 }
             }
-            WinCall::PrintGlyph { win, x, y, g, bk } => {
+            WinCall::PrintGlyph {
+                win,
+                x,
+                y,
+                g,
+                bk,
+                rider,
+                saddled,
+            } => {
                 if Some(*win) == self.map_win {
-                    self.map.print(*x, *y, g, bk.as_ref());
+                    self.map
+                        .print_with(*x, *y, g, bk.as_ref(), rider.as_ref(), *saddled);
                 }
             }
             WinCall::Curs { win, x, y } => {

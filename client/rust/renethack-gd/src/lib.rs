@@ -34,6 +34,7 @@ mod paths;
 mod pickers;
 mod rehearsal;
 mod screens;
+mod seated;
 mod selftest;
 mod steam;
 mod surface;

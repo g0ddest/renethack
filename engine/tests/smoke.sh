@@ -77,6 +77,14 @@ if grep -q '"fmt":' "$tmp/nohook/session.jsonl"; then
 fi
 sed 's/,"fmt":.*}}$/}}/' "$out" | cmp -s - "$tmp/nohook/session.jsonl" \
     || fail "the message hook changes the game"
+# a monster's glyph leaves out what the hero knows of it: a saddle (a
+# Knight's pony wears one from the start), and who rides a steed; nobody
+# rides at the start, and the Valkyrie's kitten wears no saddle
+if grep -q '"saddled":\|"rider":' "$out"; then fail "a saddle or a rider without one"; fi
+run_engine knight NETHACKOPTIONS='time,!legacy,!tutorial,!autopickup,name:Hero,role:knight,race:human,gender:male,align:lawful'
+grep -q '^{"t":"win","fn":"print_glyph","a":{.*"g":{[^}]*"kind":"mon"},.*"saddled":true}}$' "$tmp/knight/session.jsonl" \
+    || fail "the Knight's pony is not saddled"
+if grep -q '"rider":' "$tmp/knight/session.jsonl"; then fail "a rider before anyone rides"; fi
 [ -x "$build/recover" ] || fail "recover is not built"
 ls "$tmp/base/save" | grep -q . || fail "game not saved on EOF"
 

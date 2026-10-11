@@ -123,6 +123,26 @@ pub struct Applied {
     /// one-handed.
     #[serde(default)]
     pub two: Option<[f32; 3]>,
+    /// Applied from the saddle, or struck with from it, where that is not
+    /// as on foot (a lance couched).
+    #[serde(default)]
+    pub mounted: Option<Mounted>,
+}
+
+/// How a held thing is used from the saddle: in the right hand alone, the
+/// thing turned in it from the grip it rests in while the clip plays (a
+/// lance stands upright at rest and is lowered under the arm to strike).
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Mounted {
+    pub clip: String,
+    /// The turn from the resting grip: about this axis of the held frame,
+    /// by so many degrees.
+    pub about: [f32; 3],
+    pub turn: f32,
+    /// Where the thing's own origin is then, in the held frame (the hand
+    /// slid along the shaft).
+    pub pos: [f32; 3],
 }
 
 impl Applied {
@@ -282,10 +302,10 @@ impl HeldRules {
         self.models
             .values()
             .flat_map(|h| {
-                let applied = h
-                    .apply
-                    .iter()
-                    .flat_map(|a| std::iter::once(&a.clip).chain(&a.down));
+                let applied = h.apply.iter().flat_map(|a| {
+                    let mounted = a.mounted.as_ref().map(|m| &m.clip);
+                    std::iter::once(&a.clip).chain(&a.down).chain(mounted)
+                });
                 h.idle.iter().chain(&h.attack).chain(applied)
             })
             .chain(self.idle.values())

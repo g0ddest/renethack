@@ -129,12 +129,16 @@ pub enum Who {
 pub struct AttackMsg {
     pub attacker: Who,
     pub target: Who,
+    /// The blow knocks the target back a cell, straight on ("You joust
+    /// the newt!"): by the time the map shows it, it may stand two cells
+    /// off.
+    pub knocked_back: bool,
 }
 
 /// Verbs of the hero's melee ("You hit the X").
 const HERO_VERBS: &[&str] = &[
     "hit", "miss", "kill", "destroy", "smite", "bite", "kick", "butt", "sting", "touch", "claw",
-    "strike", "thrust", "scratch",
+    "strike", "thrust", "scratch", "joust",
 ];
 /// Verbs of a monster's melee ("The X bites!").
 const MONSTER_VERBS: &[&str] = &[
@@ -175,6 +179,7 @@ pub fn parse_attack(text: &str) -> Option<AttackMsg> {
         return Some(AttackMsg {
             attacker: Who::Hero,
             target: Who::Named(named_target(rest)?),
+            knocked_back: verb == "joust",
         });
     }
     let rest = text.strip_prefix("The ")?;
@@ -192,7 +197,11 @@ pub fn parse_attack(text: &str) -> Option<AttackMsg> {
             (false, t) => Who::Named(named_target(t)?),
             (true, _) => return None,
         };
-        return Some(AttackMsg { attacker, target });
+        return Some(AttackMsg {
+            attacker,
+            target,
+            knocked_back: false,
+        });
     }
     None
 }
@@ -200,7 +209,9 @@ pub fn parse_attack(text: &str) -> Option<AttackMsg> {
 /// Where the fight a message tells of takes place: (attacker, target)
 /// cells, adjacent. A monster is found by name (`names` gives a monster
 /// index's names) among the monsters around; the target may already lie
-/// dead. None when the message is not understood or nobody on the map fits.
+/// dead, or, knocked back, stand a cell further on (the target cell is
+/// then the one the blow met it in). None when the message is not
+/// understood or nobody on the map fits.
 pub fn locate_attack<'a>(
     msg: &AttackMsg,
     map: &MapState,
@@ -241,6 +252,11 @@ pub fn locate_attack<'a>(
         }
         let mut targets: Vec<(i32, i32)> =
             around(from).filter(|&t| is(t, &msg.target, true)).collect();
+        if targets.is_empty() && msg.knocked_back {
+            targets = around(from)
+                .filter(|&(x, y)| is((2 * x - from.0, 2 * y - from.1), &msg.target, true))
+                .collect();
+        }
         targets.sort_by_key(|&(x, y)| (y, x));
         if let Some(&to) = targets.first() {
             return Some((from, to));
@@ -426,7 +442,16 @@ mod tests {
             parse_attack("You hit the jackal."),
             Some(AttackMsg {
                 attacker: Who::Hero,
-                target: named("jackal")
+                target: named("jackal"),
+                knocked_back: false,
+            })
+        );
+        assert_eq!(
+            parse_attack("You joust the jackal!"),
+            Some(AttackMsg {
+                attacker: Who::Hero,
+                target: named("jackal"),
+                knocked_back: true,
             })
         );
         assert_eq!(
@@ -437,7 +462,8 @@ mod tests {
             parse_attack("The jackal bites!"),
             Some(AttackMsg {
                 attacker: named("jackal"),
-                target: Who::Hero
+                target: Who::Hero,
+                knocked_back: false,
             })
         );
         assert_eq!(
@@ -448,7 +474,8 @@ mod tests {
             parse_attack("The little dog bites the newt."),
             Some(AttackMsg {
                 attacker: named("little dog"),
-                target: named("newt")
+                target: named("newt"),
+                knocked_back: false,
             })
         );
         assert_eq!(
@@ -503,5 +530,13 @@ mod tests {
         map.print(11, 5, &corpse, None);
         let kill = parse_attack("You kill the jackal!").unwrap();
         assert_eq!(locate_attack(&kill, &map, names), Some(((10, 5), (11, 5))));
+        // a joust knocks the newt back: the blow met it on the cell between
+        map.print(12, 7, &floor(), None);
+        map.print(10, 7, &monster(20, 0), None);
+        let joust = parse_attack("You joust the newt!").unwrap();
+        assert_eq!(locate_attack(&joust, &map, names), Some(((10, 5), (10, 6))));
+        // a plain hit never reaches that far
+        let far = parse_attack("You hit the newt.").unwrap();
+        assert_eq!(locate_attack(&far, &map, names), None);
     }
 }

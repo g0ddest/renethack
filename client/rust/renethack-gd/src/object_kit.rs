@@ -1244,7 +1244,53 @@ impl Kit<'_> {
                 let glow = self.mat(vivid(self.tint, 1.25), Finish::Ember);
                 self.part(root, sphere(0.5), &glow, [0.0, 0.5, 0.0], FLAT, ONE);
             }
+            Some("saddle") => self.saddle(root),
             _ => {}
+        }
+    }
+
+    /// A saddle, one unit long, as it lies on a back: the underside of
+    /// its seat on y = 0 (the top of the back), its blanket and flaps
+    /// hanging below down the sides of a back 0.9 broad. A blanket, the
+    /// leather seat with its pommel and cantle, a flap on each side (the
+    /// girth is the steed's to fit: `riding.rs`).
+    fn saddle(&mut self, root: &mut Gd<Node3D>) {
+        let cloth = self.mat(Color::from_rgb(0.34, 0.1, 0.09), Finish::Matte);
+        let leather = self.leather();
+        let dark = self.mat(Color::from_rgb(0.2, 0.12, 0.07), Finish::Matte);
+        self.part(
+            root,
+            cuboid(0.34, 0.03, 0.92),
+            &cloth,
+            [0.0, 0.0, 0.0],
+            FLAT,
+            ONE,
+        );
+        for side in [1.0f32, -1.0] {
+            // the blanket down the side: a slope, then nearly straight
+            // down, and the flap of leather over it
+            for (mat, size, at, lean) in [
+                (&cloth, (0.24, 0.92), (0.26, -0.07, 0.0), 38.0),
+                (&cloth, (0.26, 0.86), (0.39, -0.25, 0.0), 68.0),
+                (&dark, (0.3, 0.5), (0.4, -0.2, 0.04), 64.0),
+            ] {
+                self.part(
+                    root,
+                    cuboid(size.0, 0.03, size.1),
+                    mat,
+                    [side * at.0, at.1, at.2],
+                    [0.0, 0.0, -side * lean],
+                    ONE,
+                );
+            }
+        }
+        // the seat, the cantle behind it and the pommel in front
+        for (at, tilt, size) in [
+            ([0.0, 0.05, 0.0], 0.0, [0.56, 0.16, 0.76]),
+            ([0.0, 0.13, -0.33], -18.0, [0.46, 0.2, 0.14]),
+            ([0.0, 0.12, 0.34], 14.0, [0.26, 0.19, 0.13]),
+        ] {
+            self.part(root, sphere(0.5), &leather, at, [tilt, 0.0, 0.0], size);
         }
     }
 
