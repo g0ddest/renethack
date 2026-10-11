@@ -328,6 +328,11 @@ pub struct Extra {
     pub tint: Option<String>,
     #[serde(default)]
     pub slot: Option<String>,
+    /// Held in both hands (an extra on `hand_r`: a dwarf leader's
+    /// mattock): where the off hand grips it, as `HeldSpec::two`, in the
+    /// frame of `pos` and `rot`.
+    #[serde(default)]
+    pub two: Option<[f32; 3]>,
 }
 
 impl Extra {
@@ -1803,6 +1808,10 @@ mod tests {
                 (None, None) => continue,
             };
             for clip in spec.anims.names() {
+                // "proc/" clips are built in code (`PROC_CLIPS`)
+                if clip.starts_with(&format!("{PROC_CLIPS}/")) {
+                    continue;
+                }
                 // "<library>/<clip>" is a clip of another library on the
                 // same skeleton
                 let (file, clip) = match clip.split_once('/') {

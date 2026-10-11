@@ -378,13 +378,24 @@ impl Art {
                     .held_slot(s)
                     .map_or(Transform3D::IDENTITY, |s| transform(s.pos, s.rot, [1.0; 3]))
             };
-            let mut ik = OffHand::new_alloc();
-            ik.set_name(OFF_HAND);
+            // the model's own (a dwarf leader's, for a hero turned into
+            // one), else a new one: never two on one arm
+            let own = skeleton
+                .get_node_or_null(OFF_HAND)
+                .and_then(|n| n.try_cast::<OffHand>().ok());
+            let mut ik = match own {
+                Some(ik) => ik,
+                None => {
+                    let ik = OffHand::new_alloc();
+                    let mut modifier: Gd<SkeletonModifier3D> = ik.clone().upcast();
+                    modifier.set_name(OFF_HAND);
+                    modifier.set_influence(0.0);
+                    modifier.set_active(false);
+                    skeleton.add_child(&modifier);
+                    ik
+                }
+            };
             ik.bind_mut().set_slots(slot("hand_r"), slot("hand_l"));
-            let mut modifier: Gd<SkeletonModifier3D> = ik.clone().upcast();
-            modifier.set_influence(0.0);
-            modifier.set_active(false);
-            skeleton.add_child(&modifier);
             worn.off_hand = Some(ik);
         }
         let Some(ik) = worn.off_hand.as_mut() else {
@@ -429,6 +440,70 @@ impl Art {
         }
     }
 
+    /// A monster's thing held in both hands (an extra on its right hand
+    /// with `two`: a dwarf leader's mattock): the off hand's solver on its
+    /// skeleton holds it all the time, the right arm in the guard of the
+    /// model's blow. Nothing for a model without one, or a rig without a
+    /// left arm.
+    pub(super) fn hold_extra_in_both(
+        &mut self,
+        inner: &Gd<Node3D>,
+        spec: &nh_art::ModelSpec,
+        player: Option<Gd<AnimationPlayer>>,
+    ) {
+        let held = spec
+            .extras
+            .iter()
+            .filter(|e| e.bone == "hand_r")
+            .find_map(|e| Some((e, e.two?)));
+        let Some((extra, two)) = held else {
+            return;
+        };
+        let Some(mut skeleton) = find::<Skeleton3D>(&inner.clone().upcast()) else {
+            return;
+        };
+        if skeleton.find_bone("upperarm_l") < 0 {
+            return;
+        }
+        let own = skeleton
+            .get_node_or_null(OFF_HAND)
+            .and_then(|n| n.try_cast::<OffHand>().ok());
+        let mut ik = match own {
+            Some(ik) => ik,
+            None => {
+                let ik = OffHand::new_alloc();
+                let mut modifier: Gd<SkeletonModifier3D> = ik.clone().upcast();
+                modifier.set_name(OFF_HAND);
+                skeleton.add_child(&modifier);
+                ik
+            }
+        };
+        let left = self
+            .manifest
+            .held_slot("hand_l")
+            .map_or(Transform3D::IDENTITY, |s| transform(s.pos, s.rot, [1.0; 3]));
+        let guard = player.and_then(|p| self.blow_guard(p, spec.anims.attack.as_deref()?));
+        {
+            let mut ik = ik.bind_mut();
+            ik.set_slots(transform(extra.pos, extra.rot, [1.0; 3]), left);
+            ik.set_grip(Some(Vector3::new(two[0], two[1], two[2])));
+            ik.set_guard(guard);
+        }
+        let mut modifier: Gd<SkeletonModifier3D> = ik.upcast();
+        modifier.set_influence(1.0);
+        modifier.set_active(true);
+    }
+
+    /// The guard of a blow alone: the player and the blow's clip (a
+    /// "proc/" one built); none when the player has no such clip.
+    fn blow_guard(&mut self, mut player: Gd<AnimationPlayer>, blow: &str) -> Option<GuardClips> {
+        if blow.starts_with(&format!("{PROC_CLIPS}/")) {
+            self.add_proc_clips(&mut player);
+        }
+        let clip = player.get_animation(blow)?;
+        Some((player, vec![(blow.to_string(), clip)]))
+    }
+
     /// Take the gear off (the model goes back to the pool).
     pub(super) fn unequip(&mut self, m: &mut Model) {
         let Some(worn) = m.worn.as_mut() else {
@@ -463,6 +538,12 @@ impl Art {
             if node.is_instance_valid() {
                 node.set_visible(true);
             }
+        }
+        // a dwarf leader's mattock in both hands again, once no hero is
+        // in its model
+        if let Some(inner) = m.inner.clone() {
+            let spec = self.manifest.model_at(m.key.model).1.clone();
+            self.hold_extra_in_both(&inner, &spec, m.player.clone());
         }
     }
 
@@ -752,7 +833,7 @@ impl Art {
     /// (a blow with a pole held at the side), `dig` (a pick struck at the
     /// floor) and `couch` (a lance lowered and thrust from the saddle),
     /// each the idle with a few bones turned.
-    fn add_proc_clips(&mut self, player: &mut Gd<AnimationPlayer>) {
+    pub(super) fn add_proc_clips(&mut self, player: &mut Gd<AnimationPlayer>) {
         if player.has_animation_library(PROC_CLIPS) {
             return;
         }
@@ -1127,12 +1208,18 @@ mod tests {
     #[test]
     fn every_proc_clip_the_manifest_names_is_built() {
         let art = nh_art::ArtManifest::parse(super::super::BUILT_IN_MANIFEST).unwrap();
+        let built = |clip: &str| PROC_POSES.iter().any(|(name, _, _)| *name == clip);
         for (lib, clip) in art.held_rules().clips() {
             if lib == Some(PROC_CLIPS) {
-                assert!(
-                    PROC_POSES.iter().any(|(name, _, _)| *name == clip),
-                    "no proc/{clip}"
-                );
+                assert!(built(clip), "no proc/{clip}");
+            }
+        }
+        // a model's own blow (a dwarf leader's chop)
+        for (_, name, spec) in art.models() {
+            for clip in spec.anims.names() {
+                if let Some(clip) = clip.strip_prefix(&format!("{PROC_CLIPS}/")) {
+                    assert!(built(clip), "model {name}: no proc/{clip}");
+                }
             }
         }
     }

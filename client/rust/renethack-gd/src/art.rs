@@ -1265,6 +1265,9 @@ impl Art {
         } else {
             Vec::new()
         };
+        if spec.proc.is_none() {
+            self.hold_extra_in_both(&inner, &spec, player.clone());
+        }
         holder.add_child(&inner);
         (inner, player, extras)
     }
@@ -1295,6 +1298,14 @@ impl Art {
                 p
             }
         };
+        // a blow built in code (a dwarf leader's two-handed chop)
+        if spec
+            .anims
+            .names()
+            .any(|n| n.starts_with(&format!("{}/", nh_art::PROC_CLIPS)))
+        {
+            self.add_proc_clips(&mut player);
+        }
         let loops = [&spec.anims.idle, &spec.anims.walk, &spec.anims.run];
         for name in loops.into_iter().flatten() {
             if let Some(mut a) = player.get_animation(name.as_str()) {

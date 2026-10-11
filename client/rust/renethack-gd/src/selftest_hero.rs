@@ -1431,10 +1431,12 @@ fn two_over() -> Vec<Step> {
 /// the scene's bones, after the solver); the spear and the lance in one,
 /// the left arm left to its clip. The lance applied at a spot two cells
 /// off turns the hero to it and strikes in both hands; the mattock
-/// applied downwards digs in both. Last an Archeologist digs down with
+/// applied downwards digs in both. Then an Archeologist digs down with
 /// her own pick-axe, which no hand held: it plays the dig in both hands
-/// too. The solver's cost is logged. Pictures of each at rest and as the
-/// blow lands with `--screenshots`; RENETHACK_KITS_LOOK=1: pictures only.
+/// too. Last a monster: a dwarf leader holds its mattock in both hands
+/// (`leader_two_hands`). The solver's cost is logged. Pictures of each at
+/// rest and as the blow lands with `--screenshots`; RENETHACK_KITS_LOOK=1:
+/// pictures only.
 pub(super) fn two_hands() -> Vec<Step> {
     let getobj = |p: &Prompt| {
         matches!(
@@ -1648,6 +1650,144 @@ pub(super) fn two_hands() -> Vec<Step> {
         "digging, the pick-axe in both hands",
         "two-pick-dig",
     ));
+    steps.extend(two_over());
+    steps.push(Step::Push(UiEvent::BackToTitle));
+    steps.extend(leader_two_hands());
+    steps
+}
+
+/// The dwarf leader of `leader_two_hands`: where it stands, and the frames
+/// its left palm was measured in with the most it came off its grip.
+static LEADER: Mutex<Option<(i32, i32)>> = Mutex::new(None);
+static LEADER_PALM: Mutex<(u32, f32)> = Mutex::new((0, 0.0));
+/// Frames the dwarf leader's palm is measured in (two seconds and more:
+/// its idle, and its walk when it wanders).
+const LEADER_FRAMES: u32 = 150;
+const LEADER_PROBES: [&str; 2] = ["LeaderRight", "LeaderPalm"];
+
+/// A dwarf leader the hero sees within two cells.
+fn leader_near(g: &RenethackGame) -> Option<(i32, i32)> {
+    use nh_protocol::GlyphKind;
+    let cat = g.catalog.as_deref()?;
+    let (hx, hy) = g.world.map.hero()?;
+    (-2..=2)
+        .flat_map(|dy| (-2..=2).map(move |dx| (hx + dx, hy + dy)))
+        .find(|&(x, y)| {
+            let glyph = g.world.map.cell(x, y).and_then(|c| c.glyph.as_ref());
+            glyph.is_some_and(|g| {
+                g.kind == GlyphKind::Mon
+                    && g.mon
+                        .and_then(|m| cat.monsters.get(usize::try_from(m).ok()?))
+                        .is_some_and(|m| m.name == "dwarf leader")
+            })
+        })
+}
+
+/// How far the dwarf leader's left palm is from where it grips its
+/// mattock, in its skeleton's units (both on bone attachments, after the
+/// solver); None while its model or the probes are being made. Its off
+/// hand's solver must be there and hold.
+fn leader_palm(g: &RenethackGame) -> Result<Option<f32>, String> {
+    let Some(at) = leader_near(g) else {
+        return Ok(None);
+    };
+    *LEADER.lock().map_err(|e| e.to_string())? = Some(at);
+    let map = map_view(g)?;
+    let Some(m) = map.entity_model(at.0, at.1).filter(|m| !m.is_pending()) else {
+        return Ok(None);
+    };
+    let node: Gd<Node> = m.node.clone().upcast();
+    let mut skeleton = node
+        .find_children_ex("*")
+        .type_("Skeleton3D")
+        .owned(false)
+        .done()
+        .iter_shared()
+        .next()
+        .ok_or("no skeleton in the dwarf leader's model")?
+        .cast::<godot::classes::Skeleton3D>();
+    let ik = skeleton
+        .get_node_or_null(OFF_HAND)
+        .and_then(|n| n.try_cast::<OffHand>().ok())
+        .ok_or("the dwarf leader has no off hand's solver")?;
+    let hold = ik.clone().upcast::<SkeletonModifier3D>().get_influence();
+    if hold < 1.0 {
+        return Err(format!("the dwarf leader's off hand holds {hold}"));
+    }
+    let mut probes = Vec::new();
+    for (name, bone) in LEADER_PROBES.into_iter().zip(["hand_r", "hand_l"]) {
+        match skeleton.get_node_or_null(name) {
+            Some(p) => probes.push(p.cast::<Node3D>()),
+            None => {
+                let mut probe = BoneAttachment3D::new_alloc();
+                probe.set_name(name);
+                probe.set_bone_name(bone);
+                skeleton.add_child(&probe);
+            }
+        }
+    }
+    let [right, palm] = probes.as_slice() else {
+        return Ok(None);
+    };
+    let art = kit_art()?;
+    let extra = art
+        .model_index("dwarf_leader")
+        .and_then(|i| art.model_at(i).1.extras.iter().find(|e| e.two.is_some()))
+        .ok_or("the dwarf leader holds nothing in both hands")?;
+    let (pos, rot, two) = (extra.pos, extra.rot, extra.two.unwrap_or_default());
+    let deg = Vector3::new(rot[0], rot[1], rot[2]) * (std::f32::consts::PI / 180.0);
+    let held = Transform3D::new(
+        Basis::from_euler(EulerOrder::YXZ, deg),
+        Vector3::new(pos[0], pos[1], pos[2]),
+    );
+    let grip = right.get_transform() * held * Vector3::new(two[0], two[1], two[2]);
+    let at = palm.get_transform() * slot_grip("hand_l")?.origin;
+    Ok(Some((grip - at).length()))
+}
+
+/// A dwarf leader holds its mattock in both hands, as the hero holds one:
+/// made beside a Valkyrie (debug mode, peaceful), its left palm within a
+/// centimetre of its grip in every frame of more than two seconds, standing
+/// and when it wanders. A picture of it with `--screenshots`.
+fn leader_two_hands() -> Vec<Step> {
+    let mut steps = vec![Step::Call("debug mode, seed 3", |g| {
+        g.debug_mode = true;
+        g.seed = Some(3);
+        *LEADER_PALM.lock().map_err(|e| e.to_string())? = (0, 0.0);
+        Ok(())
+    })];
+    steps.extend(two_game(choice("valkyrie", "female")));
+    steps.extend([
+        Step::Key(ctrl_key('g')),
+        Step::Request(
+            "what to create",
+            |p| matches!(p, Prompt::Text { query, .. } if query.contains("Create what")),
+        ),
+        Step::Dialog(DialogEvent::TextSubmitted("peaceful dwarf leader".into())),
+        Step::AnswerUntil('n', "a command after the creation", idle_command),
+        Step::Wait("the dwarf leader's palm on the haft, frame after frame", |g| {
+            let Some(off) = leader_palm(g)? else {
+                return Ok(false);
+            };
+            let mut seen = LEADER_PALM.lock().map_err(|e| e.to_string())?;
+            *seen = (seen.0 + 1, seen.1.max(off));
+            Ok(seen.0 >= LEADER_FRAMES)
+        }),
+        Step::Call("within a centimetre all along", |_| {
+            let (frames, worst) = *LEADER_PALM.lock().map_err(|e| e.to_string())?;
+            godot_print!(
+                "selftest: two-hands: the dwarf leader's palm at most {worst:.4} from its grip in {frames} frames"
+            );
+            if worst >= OFF_GRIP && !only_look() {
+                return Err(format!(
+                    "the dwarf leader's left palm comes {worst:.3} off its mattock"
+                ));
+            }
+            Ok(())
+        }),
+        Step::Wait("the camera on the hero", camera_settled),
+        Step::Shot("two-dwarf-leader"),
+    ]);
     steps.extend(two_over());
     steps
 }
