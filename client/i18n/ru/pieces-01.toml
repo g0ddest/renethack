@@ -58,10 +58,6 @@ ru = "здесь"
 en = "One of %s"
 ru = "{1:sg|один|одна|одно} из {1:gen}"
 
-[2685117d8cb6]
-en = "%s corpse"
-ru = "труп {1:gen}"
-
 # A level the question about its name asks of (dungeon.c query_annotation;
 # another level's is describe_level()'s, "Dlvl:" made "level ")
 
