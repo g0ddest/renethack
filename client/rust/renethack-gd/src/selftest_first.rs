@@ -8,12 +8,12 @@
 
 use std::sync::atomic::{AtomicU32, Ordering};
 
-use godot::classes::{Engine, SceneTree};
 use godot::prelude::*;
 use nh_world::Prompt;
 
-use super::{Step, at_next_frame, camera_settled, command, key, next_frame_failed, quit, start};
-use crate::game::RenethackGame;
+use super::{
+    Step, at_next_frame, camera_settled, command, game_now, key, next_frame_failed, quit, start,
+};
 use crate::inventory_panel::InvInput;
 use crate::ui_events::{DialogEvent, UiEvent};
 
@@ -37,17 +37,6 @@ fn which() -> &'static str {
     } else {
         "a second"
     }
-}
-
-/// The game, between two frames.
-fn game_now() -> Option<Gd<RenethackGame>> {
-    Engine::singleton()
-        .get_main_loop()?
-        .try_cast::<SceneTree>()
-        .ok()?
-        .get_current_scene()?
-        .try_cast::<RenethackGame>()
-        .ok()
 }
 
 /// As the opening frame is drawn: the hero's pack in the grid, nothing

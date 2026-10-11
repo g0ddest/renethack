@@ -3756,6 +3756,11 @@ impl MapView {
         self.show_fade();
     }
 
+    /// The 3D is all but black: a level arriving, or under the cover.
+    pub fn dark(&self) -> bool {
+        self.fade.max(self.cover) > 0.5
+    }
+
     /// The black over the 3D: the new level's fade, or the cover.
     fn show_fade(&mut self) {
         if let Some(m) = self.post_mat.as_mut() {

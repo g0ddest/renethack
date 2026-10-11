@@ -56,6 +56,12 @@ pub fn set_catalog(catalog: &Catalog) {
     ITEMS.with(|i| i.borrow_mut().retain(|(_, c), _| *c == 'E'));
 }
 
+/// The icon of an item is loaded already (`item_icon` reads it from disk
+/// the first time).
+pub fn has_item_icon(tile: i32, class: char) -> bool {
+    ITEMS.with(|i| i.borrow().contains_key(&(tile, class)))
+}
+
 /// The icon of an item with appearance `tile` and class symbol `class`.
 pub fn item_icon(tile: i32, class: char) -> Gd<Texture2D> {
     if let Some(t) = ITEMS.with(|i| i.borrow().get(&(tile, class)).cloned()) {

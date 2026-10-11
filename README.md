@@ -192,8 +192,10 @@ in one. `make test-client` therefore ends with two scenarios in a window
 light's layer stays on the hero's own model, and a model in view changes
 layers without leaving the renderer a pair it cannot undo. In `doll` the
 inventory's doll shows the hero in its own lights (put out, the doll is
-dim and the hero on the map as lit as before), and without the tint their
-model wears on the map while a wall hides them. Every run, headless or
+dim and the hero on the map as lit as before), from the first frame an
+opening draws (the first time in a session, and after the hero walked
+on), and without the tint their model wears on the map while a wall hides
+them. Every run, headless or
 not, passes only with its PASS line, exit status 0 and no error of Godot's
 that says "BUG": a crash on quit, after the PASS line, fails it.
 `make soak SOAK_WINDOW=1` plays the soak in a window, the renderer at work.

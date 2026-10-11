@@ -14,6 +14,7 @@
 //! and what it says (no weight, no true name).
 
 use std::cell::RefCell;
+use std::collections::VecDeque;
 use std::rc::Rc;
 
 use godot::builtin::Side;
@@ -1126,10 +1127,17 @@ struct DollView {
     /// When it last rendered: it renders at `DOLL_FPS`, the game's frames
     /// in between have one 3D view fewer to draw.
     last: f64,
+    /// The model of the hero the doll has rendered (or rendered ahead),
+    /// and since when the one now has been there.
+    rendered: Option<InstanceId>,
+    hero_since: f64,
 }
 
 /// The doll turns slowly and breathes: 30 renders a second are plenty.
 const DOLL_FPS: f64 = 30.0;
+/// A new model of the hero is rendered ahead this long after it came, when
+/// no level's arrival darkened the 3D for it meanwhile.
+const AHEAD_AFTER: f64 = 1.0;
 
 impl DollView {
     fn new(parent: &mut Gd<Control>) -> DollView {
@@ -1176,6 +1184,8 @@ impl DollView {
             lights,
             hero: None,
             last: f64::NEG_INFINITY,
+            rendered: None,
+            hero_since: 0.0,
         }
     }
 
@@ -1186,8 +1196,14 @@ impl DollView {
             .upcast()
     }
 
-    /// Aim at the hero (slowly circling them); false when there is none.
-    fn frame(&mut self, now: f64) -> bool {
+    /// Aim at the hero, in front of them, a little above, turning slowly;
+    /// false when there is none. Also while the panel is closed: a camera
+    /// and the lamps it carries reach the renderer a frame after they
+    /// move, so the doll rendered as the panel opens would look from where
+    /// they stood the time before, at a hero who has walked on since (or,
+    /// the first time, at the title's hero): a blank or an unlit doll for
+    /// a frame.
+    fn aim(&mut self, now: f64) -> bool {
         let at = self
             .hero
             .as_ref()
@@ -1203,14 +1219,6 @@ impl DollView {
         let Some(t) = at else {
             return false;
         };
-        // the last render stays shown; a new one once in a while (once
-        // rendered, the viewport goes back to DISABLED on its own)
-        if now - self.last < 1.0 / DOLL_FPS {
-            return true;
-        }
-        self.last = now;
-        self.viewport.set_update_mode(UpdateMode::ONCE);
-        // in front of the model, a little above, turning slowly
         let face = t.basis.col_c().normalized();
         let yaw = (now * 0.25).sin() as f32 * 0.6;
         let dir = Basis::from_axis_angle(Vector3::UP, yaw) * face;
@@ -1219,6 +1227,39 @@ impl DollView {
         self.camera
             .set_global_transform(Transform3D::new(Basis::IDENTITY, eye).looking_at(target));
         true
+    }
+
+    /// Aim at the hero and render them now and then; false when there is
+    /// none.
+    fn frame(&mut self, now: f64) -> bool {
+        if !self.aim(now) {
+            return false;
+        }
+        // the last render stays shown; a new one once in a while (once
+        // rendered, the viewport goes back to DISABLED on its own)
+        if now - self.last >= 1.0 / DOLL_FPS {
+            self.render(now);
+        }
+        true
+    }
+
+    fn render(&mut self, now: f64) {
+        self.last = now;
+        self.rendered = self.hero.as_ref().map(|h| h.instance_id());
+        self.viewport.set_update_mode(UpdateMode::ONCE);
+    }
+
+    /// The panel closed: a model of the hero the doll has not rendered yet
+    /// is rendered now, while the 3D is dark (`dark`: a level arriving), or
+    /// a moment after it came. Its first render costs a frame the building
+    /// of its pipelines (some 15–30 ms for a role's kit): paid here, unseen,
+    /// and not as the panel opens.
+    fn ahead(&mut self, now: f64, dark: bool) {
+        let hero = self.hero.as_ref().map(|h| h.instance_id());
+        if hero.is_some() && hero != self.rendered && (dark || now - self.hero_since >= AHEAD_AFTER)
+        {
+            self.render(now);
+        }
     }
 }
 
@@ -1241,6 +1282,10 @@ pub struct InventoryPanel {
     menu_for: Option<char>,
     drag_from: Option<InvTarget>,
     pack: Pack,
+    /// The pack's icons not loaded yet: an icon is read from disk the first
+    /// time it shows, and a role's kit of them made the panel's first
+    /// opening a long frame. One a frame is loaded ahead while it is closed.
+    icons_due: VecDeque<(i32, char)>,
     /// What the grid shows, in cell order.
     cells_shown: Vec<InvTarget>,
     /// Something the view shows changed.
@@ -1298,6 +1343,8 @@ pub struct InventoryPanel {
     /// The warm-up behind the title: frames it has been open (and the
     /// doll shown), or done.
     warm: Warm,
+    /// The 3D is dark (a level arriving): see `set_dark`.
+    dark: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -1930,6 +1977,7 @@ impl InventoryPanel {
             menu_for: None,
             drag_from: None,
             pack: Pack::new(),
+            icons_due: VecDeque::new(),
             cells_shown: Vec::new(),
             dirty: true,
             mouse,
@@ -1970,6 +2018,7 @@ impl InventoryPanel {
             hero_rect,
             figure,
             warm: Warm::Not,
+            dark: false,
         }
     }
 
@@ -2179,6 +2228,7 @@ impl InventoryPanel {
     /// A new inventory.
     pub fn set_pack(&mut self, pack: &Pack) {
         self.pack = pack.clone();
+        self.icons_due = pack.items().iter().map(|i| (i.tile, i.class)).collect();
         // its actions depend on the rest of the pack
         self.detail_key = None;
         if self.selected.is_some_and(|l| pack.by_letter(l).is_none()) {
@@ -3083,6 +3133,19 @@ impl InventoryPanel {
             self.root.set_visible(open);
         }
         if !open {
+            // the doll's camera follows the hero all the same (see `aim`),
+            // and a new model of theirs is rendered ahead (see `ahead`)
+            let now = now_secs();
+            if self.doll_view.aim(now) {
+                self.doll_view.ahead(now, self.dark);
+            }
+            // and one of the pack's icons is loaded (see `icons_due`)
+            while let Some((tile, class)) = self.icons_due.pop_front() {
+                if !icons::has_item_icon(tile, class) {
+                    icons::item_icon(tile, class);
+                    break;
+                }
+            }
             return;
         }
         self.layout();
@@ -3099,7 +3162,18 @@ impl InventoryPanel {
 
     /// The hero's model on the map (None: none yet), for the doll.
     pub fn set_hero(&mut self, node: Option<Gd<Node3D>>) {
-        self.doll_view.hero = node.filter(|n| n.is_instance_valid());
+        let node = node.filter(|n| n.is_instance_valid());
+        let id = |n: &Option<Gd<Node3D>>| n.as_ref().map(|n| n.instance_id());
+        if id(&node) != id(&self.doll_view.hero) {
+            self.doll_view.hero_since = now_secs();
+        }
+        self.doll_view.hero = node;
+    }
+
+    /// The 3D is dark now (a level arriving): the doll renders a new model
+    /// of the hero ahead, unseen.
+    pub fn set_dark(&mut self, dark: bool) {
+        self.dark = dark;
     }
 
     /// The panel's frame on screen while it is open (self-tests).

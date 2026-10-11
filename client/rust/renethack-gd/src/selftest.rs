@@ -5294,6 +5294,17 @@ fn run_next_frame_work() {
     }
 }
 
+/// The game, between two frames (for the work done there).
+fn game_now() -> Option<Gd<RenethackGame>> {
+    Engine::singleton()
+        .get_main_loop()?
+        .try_cast::<SceneTree>()
+        .ok()?
+        .get_current_scene()?
+        .try_cast::<RenethackGame>()
+        .ok()
+}
+
 fn next_frame_due() -> bool {
     NEXT_FRAME.lock().is_ok_and(|w| !w.is_empty())
 }

@@ -13,6 +13,12 @@
 //! covers it. The doll's camera looks at the same model from close by, and
 //! there what is nearer is the hero's own shield, weapon and limbs.
 //!
+//! The doll is there from the first frame an opening draws, lit: the first
+//! time in a session (the doll's camera was last at the title's hero) and
+//! after the hero walked on. A camera and its lamps reach the renderer a
+//! frame after they move: aimed only as the panel opened, the doll's
+//! first render looked at where the hero had been, blank or unlit.
+//!
 //! The scenario needs a window: a headless run renders no doll. The
 //! overlay is put on as while a wall hides the hero, in a colour no hero
 //! wears and with nothing kept back for the model's own depth, so that
@@ -27,8 +33,12 @@ use std::time::{Duration, Instant};
 use godot::classes::{DisplayServer, RenderingServer};
 use godot::prelude::*;
 
-use super::{Step, camera_settled, map_view, panel, quit, start};
+use super::{
+    Step, at_next_frame, camera_settled, game_now, map_view, next_frame_failed, panel, quit, start,
+};
 use crate::game::RenethackGame;
+use crate::inventory_panel::InvInput;
+use crate::ui_events::UiEvent;
 
 static FRAMES: AtomicU32 = AtomicU32::new(0);
 static SINCE: Mutex<Option<Instant>> = Mutex::new(None);
@@ -97,6 +107,124 @@ fn probed(g: &mut RenethackGame, on: bool) -> Result<(), String> {
 /// Frames drawn whatever the window: macOS does not draw one it thinks
 /// nobody sees, and the doll renders only when a frame is drawn. A check
 /// made on a doll not rendered since would look at the old picture.
+/// A cell of the map.
+type At = (i32, i32);
+
+/// Where the hero stood before the scenario moved them, and where to.
+static MOVED: Mutex<Option<(At, At)>> = Mutex::new(None);
+
+/// The doll as the first frame of an opening draws it: there, and lit.
+fn doll_as_drawn(when: &'static str) {
+    // a window the system did not draw: its doll renders now, as it would
+    // have in that frame
+    RenderingServer::singleton().force_draw();
+    let Some(game) = game_now() else {
+        return next_frame_failed("no game".into());
+    };
+    let g = game.bind();
+    let Some(p) = g.ui.as_ref().map(|ui| &ui.inventory) else {
+        return next_frame_failed("no UI".into());
+    };
+    let (Some(share), luma) = (p.doll_share(drawn), p.doll_luma()) else {
+        return next_frame_failed("no doll render".into());
+    };
+    let luma = luma.unwrap_or(0.0);
+    godot_print!(
+        "selftest: doll: {when}: the first frame's doll is {share:.3} drawn, {luma:.3} bright"
+    );
+    if share < 0.05 {
+        next_frame_failed(format!(
+            "{when}: the first frame drawn has a blank doll ({share:.3} of it drawn)"
+        ));
+    } else if luma < 0.15 {
+        next_frame_failed(format!(
+            "{when}: the first frame drawn has an unlit doll ({luma:.3} bright)"
+        ));
+    }
+}
+
+/// The inventory toggled as a player would, its first frame checked.
+fn opened() -> [Step; 2] {
+    [
+        Step::Call("the inventory toggled", |g| {
+            g.push_ui(UiEvent::Inventory(InvInput::Toggle));
+            Ok(())
+        }),
+        Step::Wait("the panel open, its doll checked as it is drawn", |g| {
+            let open = g.ui.as_ref().is_some_and(|ui| ui.inventory.is_open());
+            if open {
+                let when = if MOVED.lock().map_err(|e| e.to_string())?.is_some() {
+                    "after the hero walked on"
+                } else {
+                    "the first opening"
+                };
+                at_next_frame(move || doll_as_drawn(when))?;
+            }
+            Ok(open)
+        }),
+    ]
+}
+
+/// The hero drawn some cells away on a floor of the room (the engine is
+/// not asked); `back`: where they were.
+fn move_hero(g: &mut RenethackGame, back: bool) -> Result<(), String> {
+    let mut moved = MOVED.lock().map_err(|e| e.to_string())?;
+    let (from, to) = match (*moved, back) {
+        (Some((from, to)), true) => (to, from),
+        (None, false) => {
+            let hero = g.world.map.hero().ok_or("no hero")?;
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            // a room's floor with nothing on it
+            let bare = |c: &nh_world::Cell| {
+                let g = c
+                    .glyph
+                    .as_ref()
+                    .filter(|g| g.kind == nh_protocol::GlyphKind::Cmap);
+                let sym = g.and_then(|g| cat.cmap.get(usize::try_from(g.cmap?).ok()?));
+                sym.is_some_and(|s| s.sym == "S_room")
+            };
+            let far = (1..nh_world::COLNO)
+                .flat_map(|x| (0..nh_world::ROWNO).map(move |y| (x, y)))
+                .filter(|&(x, y)| {
+                    let d = (x - hero.0).abs().max((y - hero.1).abs());
+                    (4..=8).contains(&d) && g.world.map.cell(x, y).is_some_and(bare)
+                })
+                .max_by_key(|&(x, y)| (x - hero.0).abs().max((y - hero.1).abs()))
+                .ok_or("no bare floor four cells or more from the hero")?;
+            (hero, far)
+        }
+        _ => return Err("the hero is not where the scenario left them".into()),
+    };
+    let cell = |at: (i32, i32)| g.world.map.cell(at.0, at.1).cloned();
+    let (from_cell, to_cell) = (cell(from).ok_or("no cell")?, cell(to).ok_or("no cell")?);
+    let (Some(hero_glyph), Some(floor)) = (from_cell.glyph, to_cell.glyph) else {
+        return Err("a cell with nothing drawn".into());
+    };
+    g.world
+        .map
+        .print(to.0, to.1, &hero_glyph, to_cell.bk.as_ref());
+    g.world
+        .map
+        .print(from.0, from.1, &floor, from_cell.bk.as_ref());
+    *moved = (!back).then_some((from, to));
+    Ok(())
+}
+
+/// The hero's model stands on the cell the scenario drew them on.
+fn hero_there(g: &RenethackGame) -> Result<bool, String> {
+    let to = match *MOVED.lock().map_err(|e| e.to_string())? {
+        Some((_, to)) => to,
+        None => match g.world.map.hero() {
+            Some(at) => at,
+            None => return Ok(false),
+        },
+    };
+    let Some((at, _)) = map_view(g)?.hero_stands() else {
+        return Ok(false);
+    };
+    Ok((at.x - to.0 as f32).abs() < 0.05 && (at.z - to.1 as f32).abs() < 0.05)
+}
+
 fn rendered(what: &'static str) -> Step {
     Step::Wait(what, |_| {
         RenderingServer::singleton().force_draw();
@@ -127,10 +255,9 @@ pub(super) fn doll() -> Vec<Step> {
         Step::Wait("the hero's model", |g| {
             Ok(map_view(g)?.hero_model().is_some())
         }),
-        Step::Call("the inventory open", |g| {
-            g.ui.as_mut().ok_or("no UI")?.inventory.open();
-            Ok(())
-        }),
+    ]);
+    steps.extend(opened());
+    steps.extend([
         Step::Wait("the doll renders the hero", |g| {
             RenderingServer::singleton().force_draw();
             let p = panel(g)?;
@@ -240,6 +367,20 @@ pub(super) fn doll() -> Vec<Step> {
             g.ui.as_mut().ok_or("no UI")?.inventory.close();
             Ok(())
         }),
+        // the hero walks on, the panel closed; it opens again
+        Step::Call("the hero drawn some cells away", |g| move_hero(g, false)),
+        Step::Wait("the hero's model there", hero_there),
+        rendered("the map, the hero there"),
+    ]);
+    steps.extend(opened());
+    steps.extend([
+        rendered("the doll"),
+        Step::Shot("doll-walked-on"),
+        Step::Call("the panel away, the hero where they were", |g| {
+            g.ui.as_mut().ok_or("no UI")?.inventory.close();
+            move_hero(g, true)
+        }),
+        Step::Wait("the hero's model back", hero_there),
     ]);
     steps.extend(quit());
     steps
