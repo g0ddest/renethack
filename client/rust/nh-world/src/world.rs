@@ -5,7 +5,7 @@ use nh_protocol::{
 };
 
 use crate::prompt::{choice, free_key};
-use crate::{ATR_NOHISTORY, MapState, MessageLog, Pack, Prompt, Status, effect_cmaps};
+use crate::{ATR_NOHISTORY, MapState, MessageLog, Pack, Prompt, Status, TrapKind, effect_cmaps};
 
 /// getpos() says this (with `flags.verbose`) right after its goal ("Where
 /// do you want to travel to?"): neither belongs in the history.
@@ -63,6 +63,8 @@ pub struct World {
     pub inventory: Pack,
     /// The last level notice: where the hero is.
     pub level: Option<LevelNotice>,
+    /// The trap the hero is caught in (the last hero notice).
+    pub hero_trap: Option<TrapKind>,
     /// The last progress notice (see `progress`), and how many came.
     progress: Option<ProgressNotice>,
     progress_seq: u64,
@@ -112,6 +114,7 @@ impl World {
             status: Status::new(),
             inventory: Pack::new(),
             level: None,
+            hero_trap: None,
             progress: None,
             progress_seq: 0,
             log: MessageLog::new(),
@@ -309,6 +312,7 @@ impl World {
             WinCall::StatusUpdate(u) => self.status.apply(u),
             WinCall::Inventory(inv) => self.inventory.replace(inv),
             WinCall::Level(l) => self.level = Some(l.clone()),
+            WinCall::Hero(h) => self.hero_trap = h.trap.as_deref().map(TrapKind::of),
             WinCall::Progress(p) => {
                 self.progress = Some(p.clone());
                 self.progress_seq += 1;
@@ -485,6 +489,16 @@ mod tests {
         {"t":"win","fn":"create_nhwindow","a":{"win":3,"type":"menu"}}
         {"t":"win","fn":"status_update","a":{"field":"time","value":"7","chg":0,"percent":0,"color":8}}
     "#;
+
+    #[test]
+    fn the_hero_notice_tells_the_trap_the_hero_is_in() {
+        let mut w = World::new();
+        assert_eq!(w.hero_trap, None);
+        feed(&mut w, r#"{"t":"win","fn":"hero","a":{"trap":"pit"}}"#);
+        assert_eq!(w.hero_trap, Some(TrapKind::Pit));
+        feed(&mut w, r#"{"t":"win","fn":"hero","a":{}}"#);
+        assert_eq!(w.hero_trap, None, "climbed out");
+    }
 
     fn texts(lines: &[TextLine]) -> Vec<&str> {
         lines.iter().map(|l| l.text.as_str()).collect()

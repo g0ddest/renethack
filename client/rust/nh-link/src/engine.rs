@@ -17,10 +17,13 @@ pub const BASE_OPTIONS: &str = "time,!legacy,!tutorial,!autopickup";
 /// Options the interactive client adds to character/restore options: the
 /// status line carries experience points only with "showexp", and with
 /// "pushweapon" wielding a new weapon makes the old one the alternate, so
-/// an equip by drag and drop is predictable. The key profile adds its
-/// number_pad (nh-world's `KeyProfile::engine_option`); NetHack does not
-/// keep either option in the save, so a restore needs them again.
-pub const CLIENT_EXTRA_OPTIONS: &str = "showexp,pushweapon";
+/// an equip by drag and drop is predictable. The status conditions a player
+/// may opt into are on for the states the hero's body shows: caught in a
+/// trap, asleep, paralysed, unconscious, under water. The key profile adds
+/// its number_pad (nh-world's `KeyProfile::engine_option`); NetHack does
+/// not keep these options in the save, so a restore needs them again.
+pub const CLIENT_EXTRA_OPTIONS: &str = "showexp,pushweapon,cond_trap,cond_sleep,\
+cond_paralyzed,cond_unconscious,cond_submerged";
 
 /// How to start one engine process.
 #[derive(Debug, Clone)]
