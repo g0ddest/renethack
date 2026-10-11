@@ -1,0 +1,735 @@
+# R6, log messages batch 21: shk.c, damage, prices, talk and usage fees. Syntax: nh-i18n's template.rs.
+
+[a879bb3a6952]
+en = "%s shouts:"
+ru = "{1} {1:num|кричит|кричат}:"
+
+[d37569850810]
+en = "\"Who dared break my door?\""
+ru = "«Кто посмел сломать мою дверь?»"
+
+[fb6d2605d54b]
+en = "\"Who dared burn away my door?\""
+ru = "«Кто посмел сжечь мою дверь?»"
+
+[7879586663fe]
+en = "\"Who dared damage my shop?\""
+ru = "«Кто посмел повредить мою лавку?»"
+
+[5252d222fd38]
+en = "\"Who dared destroy my door?\""
+ru = "«Кто посмел уничтожить мою дверь?»"
+
+[5d777cf207b5]
+en = "\"Who dared dig into my shop?\""
+ru = "«Кто посмел прорыть ход в мою лавку?»"
+
+[4c243f459e30]
+en = "\"Who dared disintegrate my door?\""
+ru = "«Кто посмел распылить мою дверь на атомы?»"
+
+[68bc1deeeced]
+en = "\"Who dared ruin my door?\""
+ru = "«Кто посмел испортить мою дверь?»"
+
+[50a136454f7b]
+en = "\"Who dared shatter my door?\""
+ru = "«Кто посмел разбить мою дверь вдребезги?»"
+
+[fff6f83d9438]
+en = "%s is furious that someone decided to %s her door!"
+ru = "{1} в ярости из-за того, что кто-то решил испортить{2:skip} её дверь!"
+
+[b7c91f1fcb87]
+en = "%s is furious that someone decided to %s her shop!"
+ru = "{1} в ярости из-за того, что кто-то решил повредить{2:skip} её лавку!"
+
+[6fed2808047c]
+en = "%s is furious that someone decided to %s his door!"
+ru = "{1} в ярости из-за того, что кто-то решил испортить{2:skip} его дверь!"
+
+[1d8f27febb19]
+en = "%s is furious that someone decided to %s his shop!"
+ru = "{1} в ярости из-за того, что кто-то решил повредить{2:skip} его лавку!"
+
+[6bfbbdf85556]
+en = "%s is furious that someone decided to %s its door!"
+ru = "{1} в ярости из-за того, что кто-то решил испортить{2:skip} его дверь!"
+
+[e39e2570cc76]
+en = "%s is furious that someone decided to %s its shop!"
+ru = "{1} в ярости из-за того, что кто-то решил повредить{2:skip} его лавку!"
+
+[c00b25526822]
+en = "%s is furious that someone decided to %s their door!"
+ru = "{1} в ярости из-за того, что кто-то решил испортить{2:skip} их дверь!"
+
+[8b42ae64a2a6]
+en = "%s is furious that someone decided to %s their shop!"
+ru = "{1} в ярости из-за того, что кто-то решил повредить{2:skip} их лавку!"
+
+[1f28903d16d4]
+en = "%s is quite upset that someone decided to %s her door!"
+ru = "{1} очень {1:num|сердится|сердятся} из-за того, что кто-то решил испортить{2:skip} её дверь!"
+
+[ed1218571b27]
+en = "%s is quite upset that someone decided to %s her shop!"
+ru = "{1} очень {1:num|сердится|сердятся} из-за того, что кто-то решил повредить{2:skip} её лавку!"
+
+[a954ac96c0c5]
+en = "%s is quite upset that someone decided to %s his door!"
+ru = "{1} очень {1:num|сердится|сердятся} из-за того, что кто-то решил испортить{2:skip} его дверь!"
+
+[1bf1a76f9b3f]
+en = "%s is quite upset that someone decided to %s his shop!"
+ru = "{1} очень {1:num|сердится|сердятся} из-за того, что кто-то решил повредить{2:skip} его лавку!"
+
+[43865630569b]
+en = "%s is quite upset that someone decided to %s its door!"
+ru = "{1} очень {1:num|сердится|сердятся} из-за того, что кто-то решил испортить{2:skip} его дверь!"
+
+[2e27895ccdb3]
+en = "%s is quite upset that someone decided to %s its shop!"
+ru = "{1} очень {1:num|сердится|сердятся} из-за того, что кто-то решил повредить{2:skip} его лавку!"
+
+[1c6fae20a8d3]
+en = "%s is quite upset that someone decided to %s their door!"
+ru = "{1} очень {1:num|сердится|сердятся} из-за того, что кто-то решил испортить{2:skip} их дверь!"
+
+[d4329e358702]
+en = "%s is quite upset that someone decided to %s their shop!"
+ru = "{1} очень {1:num|сердится|сердятся} из-за того, что кто-то решил повредить{2:skip} их лавку!"
+
+[c6e507985a81]
+en = "%s is ticked off that someone decided to %s her door!"
+ru = "{1} не на шутку {1:num|злится|злятся} из-за того, что кто-то решил испортить{2:skip} её дверь!"
+
+[9076da97a412]
+en = "%s is ticked off that someone decided to %s her shop!"
+ru = "{1} не на шутку {1:num|злится|злятся} из-за того, что кто-то решил повредить{2:skip} её лавку!"
+
+[930b668c19c8]
+en = "%s is ticked off that someone decided to %s his door!"
+ru = "{1} не на шутку {1:num|злится|злятся} из-за того, что кто-то решил испортить{2:skip} его дверь!"
+
+[a334df266465]
+en = "%s is ticked off that someone decided to %s his shop!"
+ru = "{1} не на шутку {1:num|злится|злятся} из-за того, что кто-то решил повредить{2:skip} его лавку!"
+
+[6eecb0479c19]
+en = "%s is ticked off that someone decided to %s its door!"
+ru = "{1} не на шутку {1:num|злится|злятся} из-за того, что кто-то решил испортить{2:skip} его дверь!"
+
+[82ff34a017cd]
+en = "%s is ticked off that someone decided to %s its shop!"
+ru = "{1} не на шутку {1:num|злится|злятся} из-за того, что кто-то решил повредить{2:skip} его лавку!"
+
+[fec81b208b91]
+en = "%s is ticked off that someone decided to %s their door!"
+ru = "{1} не на шутку {1:num|злится|злятся} из-за того, что кто-то решил испортить{2:skip} их дверь!"
+
+[e37aa3db573a]
+en = "%s is ticked off that someone decided to %s their shop!"
+ru = "{1} не на шутку {1:num|злится|злятся} из-за того, что кто-то решил повредить{2:skip} их лавку!"
+
+[e297d0e04626]
+en = "%s leaps towards you!"
+ru = "{1} {1:num|прыгает|прыгают} к вам!"
+
+[1aa52922b575]
+en = "You barely hear an angry voice:"
+ru = "Вы едва слышите сердитый голос:"
+
+[c4367a429ed5]
+en = "You dream that you hear an angry voice:"
+ru = "Вам снится, что вы слышите сердитый голос:"
+
+[1bfe13b0281d]
+en = "You hear an angry voice:"
+ru = "Вы слышите сердитый голос:"
+
+[c990baa4f23a]
+en = "Your invisibility does not fool %s!"
+ru = "Ваша невидимость не обманывает {1:acc}!"
+
+[3f306624518f]
+en = "Mollified, %s accepts your restitution."
+ru = "Смягчившись, {1} {1:num|принимает|принимают} от вас возмещение ущерба."
+
+[63887e345f5a]
+en = "\"Oh, yes!  You'll pay!\""
+ru = "«О да!  Ты заплатишь!»"
+
+[3bc76a015dec]
+en = "%s lunges her %s toward your %s!"
+ru = "{1} {1:num|выбрасывает|выбрасывают} {2:acc} к {3:gender|вашему|вашей|вашему|вашим} {3:dat}!"
+
+[a73e82b3182b]
+en = "%s lunges his %s toward your %s!"
+ru = "{1} {1:num|выбрасывает|выбрасывают} {2:acc} к {3:gender|вашему|вашей|вашему|вашим} {3:dat}!"
+
+[fe3ab9174346]
+en = "%s lunges its %s toward your %s!"
+ru = "{1} {1:num|выбрасывает|выбрасывают} {2:acc} к {3:gender|вашему|вашей|вашему|вашим} {3:dat}!"
+
+[48433436e064]
+en = "%s lunges their %s toward your %s!"
+ru = "{1} {1:num|выбрасывает|выбрасывают} {2:acc} к {3:gender|вашему|вашей|вашему|вашим} {3:dat}!"
+
+[57bcf05c9a09]
+en = "\"%s, price %ld zorkmid each, a real bargain.\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов} за штуку, почти даром.»"
+
+[8e0e708fd267]
+en = "\"%s, price %ld zorkmid each, an excellent choice.\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов} за штуку, отличный выбор.»"
+
+[a66735888460]
+en = "\"%s, price %ld zorkmid each, finest quality.\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов} за штуку, высшее качество.»"
+
+[655508d6527b]
+en = "\"%s, price %ld zorkmid each.\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов} за штуку.»"
+
+[007fd9b5e4a2]
+en = "\"%s, price %ld zorkmid, a real bargain.\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов}, почти даром.»"
+
+[859025b905f6]
+en = "\"%s, price %ld zorkmid, an excellent choice.\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов}, отличный выбор.»"
+
+[e456560d659c]
+en = "\"%s, price %ld zorkmid, finest quality.\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов}, высшее качество.»"
+
+[140f7c1f4f95]
+en = "\"%s, price %ld zorkmid.\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[810ea2a3fbdc]
+en = "\"%s, price %ld zorkmids each, a real bargain.\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов} за штуку, почти даром.»"
+
+[55c1086505fa]
+en = "\"%s, price %ld zorkmids each, an excellent choice.\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов} за штуку, отличный выбор.»"
+
+[f24e890124ef]
+en = "\"%s, price %ld zorkmids each, finest quality.\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов} за штуку, высшее качество.»"
+
+[797114a92f9f]
+en = "\"%s, price %ld zorkmids each, gourmets' delight!\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов} за штуку, мечта гурмана!»"
+
+[261c4a071e93]
+en = "\"%s, price %ld zorkmids each, painstakingly developed!\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов} за штуку, плод кропотливых изысканий!»"
+
+[b6026d802d0f]
+en = "\"%s, price %ld zorkmids each, superb craftsmanship!\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов} за штуку, превосходная работа!»"
+
+[840b9224f31d]
+en = "\"%s, price %ld zorkmids each.\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов} за штуку.»"
+
+[1d10b2df3839]
+en = "\"%s, price %ld zorkmids, a real bargain.\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов}, почти даром.»"
+
+[53960b59554e]
+en = "\"%s, price %ld zorkmids, an excellent choice.\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов}, отличный выбор.»"
+
+[24af1e4a9368]
+en = "\"%s, price %ld zorkmids, finest quality.\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов}, высшее качество.»"
+
+[9b275dfbca0d]
+en = "\"%s, price %ld zorkmids, gourmets' delight!\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов}, мечта гурмана!»"
+
+[f8e4c10e69a9]
+en = "\"%s, price %ld zorkmids, one of a kind!\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов}, {1:gender|единственный|единственная|единственное|единственные} в своём роде!»"
+
+[e474e6a00dcd]
+en = "\"%s, price %ld zorkmids, painstakingly developed!\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов}, плод кропотливых изысканий!»"
+
+[e06999173f5f]
+en = "\"%s, price %ld zorkmids, superb craftsmanship!\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов}, превосходная работа!»"
+
+[0f8561793191]
+en = "\"%s, price %ld zorkmids.\""
+ru = "«{1:cap}, цена — {2} {2:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[de5814b67b21]
+en = "\"%s, price %ld %s%s%s\""
+ru = "«{1:cap}, цена — {2} {3:by2}{4:skip}{5:skip}.»"
+
+[60cba31a31ab]
+en = "%s asks whether you've seen any untended shops recently."
+ru = "{1} {1:num|спрашивает|спрашивают}, не попадались ли вам в последнее время бесхозные лавки."
+
+[eb04767f6a67]
+en = "%s indicates how much he dislikes non-paying customers."
+ru = "{1} {1:num|даёт|дают} понять, как сильно не {1:num|любит|любят} покупателей, которые не платят."
+
+[26974dd8645d]
+en = "%s indicates how much he dislikes rude customers."
+ru = "{1} {1:num|даёт|дают} понять, как сильно не {1:num|любит|любят} грубых покупателей."
+
+[15f51e6e0530]
+en = "%s indicates how much it dislikes non-paying customers."
+ru = "{1} {1:num|даёт|дают} понять, как сильно не {1:num|любит|любят} покупателей, которые не платят."
+
+[d5c02980c0dd]
+en = "%s indicates how much it dislikes rude customers."
+ru = "{1} {1:num|даёт|дают} понять, как сильно не {1:num|любит|любят} грубых покупателей."
+
+[02c8965b5bf5]
+en = "%s indicates how much she dislikes non-paying customers."
+ru = "{1} {1:num|даёт|дают} понять, как сильно не {1:num|любит|любят} покупателей, которые не платят."
+
+[7317f9876566]
+en = "%s indicates how much she dislikes rude customers."
+ru = "{1} {1:num|даёт|дают} понять, как сильно не {1:num|любит|любят} грубых покупателей."
+
+[7c197ed2c334]
+en = "%s indicates how much they dislikes non-paying customers."
+ru = "{1} {1:num|даёт|дают} понять, как сильно не {1:num|любит|любят} покупателей, которые не платят."
+
+[a2a297738b1f]
+en = "%s indicates how much they dislikes rude customers."
+ru = "{1} {1:num|даёт|дают} понять, как сильно не {1:num|любит|любят} грубых покупателей."
+
+[9c95498c794e]
+en = "%s mentions how much he dislikes non-paying customers."
+ru = "{1} {1:num|упоминает|упоминают}, как сильно не {1:num|любит|любят} покупателей, которые не платят."
+
+[d91c3d957992]
+en = "%s mentions how much he dislikes rude customers."
+ru = "{1} {1:num|упоминает|упоминают}, как сильно не {1:num|любит|любят} грубых покупателей."
+
+[b061372f83f1]
+en = "%s mentions how much it dislikes non-paying customers."
+ru = "{1} {1:num|упоминает|упоминают}, как сильно не {1:num|любит|любят} покупателей, которые не платят."
+
+[09100e76a605]
+en = "%s mentions how much it dislikes rude customers."
+ru = "{1} {1:num|упоминает|упоминают}, как сильно не {1:num|любит|любят} грубых покупателей."
+
+[c6df6be61e15]
+en = "%s mentions how much she dislikes non-paying customers."
+ru = "{1} {1:num|упоминает|упоминают}, как сильно не {1:num|любит|любят} покупателей, которые не платят."
+
+[0e3266ca50ca]
+en = "%s mentions how much she dislikes rude customers."
+ru = "{1} {1:num|упоминает|упоминают}, как сильно не {1:num|любит|любят} грубых покупателей."
+
+[4963fdc82904]
+en = "%s mentions how much they dislikes non-paying customers."
+ru = "{1} {1:num|упоминает|упоминают}, как сильно не {1:num|любит|любят} покупателей, которые не платят."
+
+[61be50cb5cfd]
+en = "%s mentions how much they dislikes rude customers."
+ru = "{1} {1:num|упоминает|упоминают}, как сильно не {1:num|любит|любят} грубых покупателей."
+
+[164ab3b2b11a]
+en = "\"%s %s!  I was looking for %s.\""
+ru = "«{1}, {2}!  А я ищу {3:acc}.»"
+
+[d42cf6bed928]
+en = "\"%s %s!  Didn't you forget to pay?\""
+ru = "«{1}, {2}!  Вы не забыли заплатить?»"
+
+[b5e02a9ec2d4]
+en = "%s taps you on the %s."
+ru = "{1} {1:num|похлопывает|похлопывают} вас по {2:dat}."
+
+[7802bec931ec]
+en = "%s indicates that your bill comes to %ld zorkmid."
+ru = "{1} {1:num|даёт|дают} понять, что ваш счёт составляет {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[cdc5d2750bf9]
+en = "%s indicates that your bill comes to %ld zorkmids."
+ru = "{1} {1:num|даёт|дают} понять, что ваш счёт составляет {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[c0b5de3b37db]
+en = "%s says that your bill comes to %ld zorkmid."
+ru = "{1} {1:num|говорит|говорят}, что ваш счёт составляет {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[7d12342724f9]
+en = "%s says that your bill comes to %ld zorkmids."
+ru = "{1} {1:num|говорит|говорят}, что ваш счёт составляет {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[2264c7945f81]
+en = "%s %s that your bill comes to %ld %s."
+ru = "{1} {1:num|даёт|дают} понять{2:skip}, что ваш счёт составляет {3} {4:by3:acc}."
+
+[1a37939fa2b1]
+en = "%s indicates that you owe her %ld zorkmid."
+ru = "{1} {1:num|даёт|дают} понять, что вы должны ей {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[3874f47d14ce]
+en = "%s indicates that you owe her %ld zorkmids."
+ru = "{1} {1:num|даёт|дают} понять, что вы должны ей {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[137eabebb38b]
+en = "%s indicates that you owe him %ld zorkmid."
+ru = "{1} {1:num|даёт|дают} понять, что вы должны ему {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[db1221fdf956]
+en = "%s indicates that you owe him %ld zorkmids."
+ru = "{1} {1:num|даёт|дают} понять, что вы должны ему {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[c51c8c907602]
+en = "%s indicates that you owe it %ld zorkmid."
+ru = "{1} {1:num|даёт|дают} понять, что вы должны ему {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[ee0bf4469939]
+en = "%s indicates that you owe it %ld zorkmids."
+ru = "{1} {1:num|даёт|дают} понять, что вы должны ему {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[d3911b140d67]
+en = "%s indicates that you owe them %ld zorkmid."
+ru = "{1} {1:num|даёт|дают} понять, что вы должны им {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[e3bb10e53c33]
+en = "%s indicates that you owe them %ld zorkmids."
+ru = "{1} {1:num|даёт|дают} понять, что вы должны им {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[5b70369a74e5]
+en = "%s reminds you that you owe her %ld zorkmid."
+ru = "{1} {1:num|напоминает|напоминают}, что вы должны ей {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[e15e9cf574a1]
+en = "%s reminds you that you owe her %ld zorkmids."
+ru = "{1} {1:num|напоминает|напоминают}, что вы должны ей {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[ca85ea27223d]
+en = "%s reminds you that you owe him %ld zorkmid."
+ru = "{1} {1:num|напоминает|напоминают}, что вы должны ему {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[2ac33e50b3a9]
+en = "%s reminds you that you owe him %ld zorkmids."
+ru = "{1} {1:num|напоминает|напоминают}, что вы должны ему {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[0468b688d9c6]
+en = "%s reminds you that you owe it %ld zorkmid."
+ru = "{1} {1:num|напоминает|напоминают}, что вы должны ему {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[a00be3437901]
+en = "%s reminds you that you owe it %ld zorkmids."
+ru = "{1} {1:num|напоминает|напоминают}, что вы должны ему {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[94e6d6f1975c]
+en = "%s reminds you that you owe them %ld zorkmid."
+ru = "{1} {1:num|напоминает|напоминают}, что вы должны им {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[cb801b789758]
+en = "%s reminds you that you owe them %ld zorkmids."
+ru = "{1} {1:num|напоминает|напоминают}, что вы должны им {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[bfc187769cb5]
+en = "%s %s that you owe %s %ld %s."
+ru = "{1} {1:num|даёт|дают} понять{2:skip}{3:skip}, что за вами долг в {4} {5:by4:acc}."
+
+[5f589e3b5ed0]
+en = "%s encourages you to use your %ld zorkmid of credit."
+ru = "{1} {1:num|советует|советуют} воспользоваться вашим кредитом в {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[9241006e86f3]
+en = "%s encourages you to use your %ld zorkmids of credit."
+ru = "{1} {1:num|советует|советуют} воспользоваться вашим кредитом в {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[c7f375f1173b]
+en = "%s encourages you to use your %ld %s of credit."
+ru = "{1} {1:num|советует|советуют} воспользоваться вашим кредитом в {2} {3:by2:acc}."
+
+[59743f509712]
+en = "%s complains about a recent robbery."
+ru = "{1} {1:num|жалуется|жалуются} на недавнее ограбление."
+
+[69a362af15b9]
+en = "%s indicates concern about a recent robbery."
+ru = "{1} {1:num|выказывает|выказывают} беспокойство из-за недавнего ограбления."
+
+[7f661e5b67e9]
+en = "%s indicates that he is watching you carefully."
+ru = "{1} {1:num|даёт|дают} понять, что внимательно {1:num|следит|следят} за вами."
+
+[d10e5bd6e9fc]
+en = "%s indicates that it is watching you carefully."
+ru = "{1} {1:num|даёт|дают} понять, что внимательно {1:num|следит|следят} за вами."
+
+[3cd2a9872135]
+en = "%s indicates that she is watching you carefully."
+ru = "{1} {1:num|даёт|дают} понять, что внимательно {1:num|следит|следят} за вами."
+
+[90049eb31510]
+en = "%s indicates that they is watching you carefully."
+ru = "{1} {1:num|даёт|дают} понять, что внимательно {1:num|следит|следят} за вами."
+
+[779a691b4be8]
+en = "%s warns you that he is watching you carefully."
+ru = "{1} {1:num|предупреждает|предупреждают}, что внимательно {1:num|следит|следят} за вами."
+
+[091323473ab0]
+en = "%s warns you that it is watching you carefully."
+ru = "{1} {1:num|предупреждает|предупреждают}, что внимательно {1:num|следит|следят} за вами."
+
+[3fb5a1ef3d16]
+en = "%s warns you that she is watching you carefully."
+ru = "{1} {1:num|предупреждает|предупреждают}, что внимательно {1:num|следит|следят} за вами."
+
+[fc34e1aa1fec]
+en = "%s warns you that they is watching you carefully."
+ru = "{1} {1:num|предупреждает|предупреждают}, что внимательно {1:num|следит|следят} за вами."
+
+[21420a7985b3]
+en = "%s complains that business is bad."
+ru = "{1} {1:num|жалуется|жалуются}, что дела идут плохо."
+
+[fb6a8a74e015]
+en = "%s indicates that business is bad."
+ru = "{1} {1:num|даёт|дают} понять, что дела идут плохо."
+
+[cecbe20e1821]
+en = "%s indicates that business is good."
+ru = "{1} {1:num|даёт|дают} понять, что дела идут хорошо."
+
+[c12b59514c8f]
+en = "%s says that business is good."
+ru = "{1} {1:num|говорит|говорят}, что дела идут хорошо."
+
+[0aa13984b315]
+en = "%s comments about the Valley of the Dead as being a gateway."
+ru = "{1} {1:num|отзывается|отзываются} о Долине Мёртвых как о вратах."
+
+[076ad9318f13]
+en = "%s says that getting the devteam's agreement on anything is difficult."
+ru = "{1} {1:num|говорит|говорят}, что добиться согласия команды разработчиков хоть в чём-нибудь непросто."
+
+[0cc4f2cd66c7]
+en = "%s says that he has noticed those who serve their deity will prosper."
+ru = "{1} {1:num|говорит|говорят}, что, как он заметил, тех, кто служит своему божеству, ждёт процветание."
+
+[e45469fcf235]
+en = "%s says: 'Don't try to steal from me - I have friends in high places!'"
+ru = "{1} {1:num|говорит|говорят}: «Не пытайтесь меня обокрасть — у меня есть друзья в высших сферах!»"
+
+[5716a9da9c71]
+en = "%s says: 'I don't like poofy coffee... give me Colombian Supremo.'"
+ru = "{1} {1:num|говорит|говорят}: «Не люблю я кофейных изысков... мне бы колумбийский „Супремо“.»"
+
+[5ab40d00b131]
+en = "%s says: 'Slow down.  Think clearly.'"
+ru = "{1} {1:num|говорит|говорят}: «Не спешите.  Думайте ясно.»"
+
+[b2c826bf9f5f]
+en = "%s says: 'These shopping malls give me a headache.'"
+ru = "{1} {1:num|говорит|говорят}: «От этих торговых центров у меня болит голова.»"
+
+[378defeac872]
+en = "%s says: 'You may well need something from this shop in the future.'"
+ru = "{1} {1:num|говорит|говорят}: «В будущем вам вполне может понадобиться что-нибудь из этой лавки.»"
+
+[3bcda806501a]
+en = "%s says: 'You need to take things one at a time.'"
+ru = "{1} {1:num|говорит|говорят}: «Всё нужно делать по порядку.»"
+
+[a7e2763cd4df]
+en = "The Kop (disappointed) vanishes into thin air."
+ru = "Коп (разочарованно) растворяется в воздухе."
+
+[c38fa4e748fd]
+en = "The Kops (disappointed) vanish into thin air."
+ru = "Копы (разочарованно) растворяются в воздухе."
+
+# The reviewer finished the file: the usage fees check_unpaid_usage() can
+# print (a spellbook, a potion of oil, emptying a bag of tricks or a horn of
+# plenty, any other tool), and costly_gold(), block_door(), globby_bill_fixup(),
+# use_unpaid_trapobj(). The other check_unpaid_usage() stubs join words of
+# different branches.
+
+[ad93033b6536]
+en = "\"Usage fee, %ld zorkmid.\""
+ru = "«Плата за пользование: {1} {1:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[8d6807ec4ab1]
+en = "\"Usage fee, %ld zorkmids.\""
+ru = "«Плата за пользование: {1} {1:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[6cc9476f7e66]
+en = "\"Hey!  Usage fee, %ld zorkmid.\""
+ru = "«Эй!  Плата за пользование: {1} {1:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[ba7dc2d4c558]
+en = "\"Hey!  Usage fee, %ld zorkmids.\""
+ru = "«Эй!  Плата за пользование: {1} {1:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[fa00ccff6765]
+en = "\"Ahem.  Usage fee, %ld zorkmid.\""
+ru = "«Кхм.  Плата за пользование: {1} {1:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[b013dbdce0e7]
+en = "\"Ahem.  Usage fee, %ld zorkmids.\""
+ru = "«Кхм.  Плата за пользование: {1} {1:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[c935eff8e6f2]
+en = "\"Hey!  Ahem.  Usage fee, %ld zorkmid.\""
+ru = "«Эй!  Кхм.  Плата за пользование: {1} {1:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[78b9695016da]
+en = "\"Hey!  Ahem.  Usage fee, %ld zorkmids.\""
+ru = "«Эй!  Кхм.  Плата за пользование: {1} {1:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[79091322f658]
+en = "\"Emptying that will cost you %ld zorkmid.\""
+ru = "«Опустошение обойдётся вам в {1} {1:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[25fe4400e77f]
+en = "\"Emptying that will cost you %ld zorkmids.\""
+ru = "«Опустошение обойдётся вам в {1} {1:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[a886fcae3454]
+en = "\"Whoa!  Emptying that will cost you %ld zorkmid.\""
+ru = "«Ого!  Опустошение обойдётся вам в {1} {1:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[8b7eba204bb9]
+en = "\"Whoa!  Emptying that will cost you %ld zorkmids.\""
+ru = "«Ого!  Опустошение обойдётся вам в {1} {1:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[fca8014c3ead]
+en = "\"Watch it!  Emptying that will cost you %ld zorkmid.\""
+ru = "«Осторожнее!  Опустошение обойдётся вам в {1} {1:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[6328cca95268]
+en = "\"Watch it!  Emptying that will cost you %ld zorkmids.\""
+ru = "«Осторожнее!  Опустошение обойдётся вам в {1} {1:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[d72fab01c8a5]
+en = "\"That will cost you %ld zorkmid (Yendorian Fuel Tax).\""
+ru = "«Это обойдётся вам в {1} {1:plural|зоркмид|зоркмида|зоркмидов} (йендорский топливный налог).»"
+
+[6775c5d6b986]
+en = "\"That will cost you %ld zorkmids (Yendorian Fuel Tax).\""
+ru = "«Это обойдётся вам в {1} {1:plural|зоркмид|зоркмида|зоркмидов} (йендорский топливный налог).»"
+
+[9811f863231c]
+en = "\"You owe %ld zorkmid.\""
+ru = "«С вас {1} {1:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[643427eb7ba2]
+en = "\"You owe %ld zorkmids.\""
+ru = "«С вас {1} {1:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[e3eb43d30a71]
+en = "\"You owe an additional %ld zorkmid.\""
+ru = "«С вас ещё {1} {1:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[640f0fd75cac]
+en = "\"You owe an additional %ld zorkmids.\""
+ru = "«С вас ещё {1} {1:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[6d6dd89606c8]
+en = "\"This is no free library, %s!  You owe %ld zorkmid.\""
+ru = "«Здесь тебе не бесплатная библиотека, {1}!  С тебя {2} {2:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[301ec243a85c]
+en = "\"This is no free library, %s!  You owe %ld zorkmids.\""
+ru = "«Здесь тебе не бесплатная библиотека, {1}!  С тебя {2} {2:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[ef64940c863a]
+en = "\"This is no free library, %s!  You owe an additional %ld zorkmid.\""
+ru = "«Здесь тебе не бесплатная библиотека, {1}!  С тебя ещё {2} {2:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[c4d529066a32]
+en = "\"This is no free library, %s!  You owe an additional %ld zorkmids.\""
+ru = "«Здесь тебе не бесплатная библиотека, {1}!  С тебя ещё {2} {2:plural|зоркмид|зоркмида|зоркмидов}.»"
+
+[6d9969fe9efa]
+en = "Your credit is reduced by %ld zorkmid."
+ru = "Ваш кредит уменьшается на {1} {1:plural|зоркмид|зоркмида|зоркмидов}."
+
+[7c41b3c1967d]
+en = "Your credit is reduced by %ld zorkmids."
+ru = "Ваш кредит уменьшается на {1} {1:plural|зоркмид|зоркмида|зоркмидов}."
+
+[370fe1b145be]
+en = "Your credit is erased."
+ru = "Ваш кредит исчерпан."
+
+[fa25f0861c33]
+en = "Your debt increases by %ld zorkmid."
+ru = "Ваш долг увеличивается на {1} {1:plural|зоркмид|зоркмида|зоркмидов}."
+
+[ff456d033a7b]
+en = "Your debt increases by %ld zorkmids."
+ru = "Ваш долг увеличивается на {1} {1:plural|зоркмид|зоркмида|зоркмидов}."
+
+[c0aa874fe8e4]
+en = "%s blocks your way!"
+ru = "{1} {1:num|преграждает|преграждают} вам путь!"
+
+[6a6937522d2c]
+en = "%s senses your motion and blocks your way!"
+ru = "{1} {1:num|чувствует|чувствуют} ваше движение и {1:num|преграждает|преграждают} вам путь!"
+
+[e7da59e4b64d]
+en = "The donated %s partially pays off your debt."
+ru = "{1:gender|Пожертвованный|Пожертвованная|Пожертвованное|Пожертвованные} {1} частично {1:num|погашает|погашают} ваш долг."
+
+[847d598d6374]
+en = "The donated %s pays off your debt."
+ru = "{1:gender|Пожертвованный|Пожертвованная|Пожертвованное|Пожертвованные} {1} {1:num|погашает|погашают} ваш долг."
+
+[6b628a1c8242]
+en = "The %s established %ld zorkmid credit."
+ru = "{1:cap} {1:num|открывает|открывают} вам кредит в {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[296dc796bdd3]
+en = "The %s established %ld zorkmids credit."
+ru = "{1:cap} {1:num|открывает|открывают} вам кредит в {2} {2:plural|зоркмид|зоркмида|зоркмидов}."
+
+[2c46959d715c]
+en = "The %s added %ld zorkmid to your credit; total is now %ld zorkmid."
+ru = "{1:cap} {1:num|добавляет|добавляют} к вашему кредиту {2} {2:plural|зоркмид|зоркмида|зоркмидов}; теперь он составляет {3} {3:plural|зоркмид|зоркмида|зоркмидов}."
+
+[34302ca04392]
+en = "The %s added %ld zorkmid to your credit; total is now %ld zorkmids."
+ru = "{1:cap} {1:num|добавляет|добавляют} к вашему кредиту {2} {2:plural|зоркмид|зоркмида|зоркмидов}; теперь он составляет {3} {3:plural|зоркмид|зоркмида|зоркмидов}."
+
+[be076a29a55b]
+en = "The %s added %ld zorkmids to your credit; total is now %ld zorkmid."
+ru = "{1:cap} {1:num|добавляет|добавляют} к вашему кредиту {2} {2:plural|зоркмид|зоркмида|зоркмидов}; теперь он составляет {3} {3:plural|зоркмид|зоркмида|зоркмидов}."
+
+[a54f6b7b43ac]
+en = "The %s added %ld zorkmids to your credit; total is now %ld zorkmids."
+ru = "{1:cap} {1:num|добавляет|добавляют} к вашему кредиту {2} {2:plural|зоркмид|зоркмида|зоркмидов}; теперь он составляет {3} {3:plural|зоркмид|зоркмида|зоркмидов}."
+
+[5cf106b9bccb]
+en = "\"You owe me %ld zorkmid for my %s that you had the audacity to mix with your stinking batch!\""
+ru = "«Ты {hero:gender|должен|должна} мне {1} {1:plural|зоркмид|зоркмида|зоркмидов} за {2:gender|мой|мою|моё|мои} {2:acc}, {2:gender|который|которую|которое|которые} ты {hero:gender|посмел|посмела} смешать со своей вонючей массой!»"
+
+[17846c9b1524]
+en = "\"You owe me %ld zorkmids for my %s that you had the audacity to mix with your stinking batch!\""
+ru = "«Ты {hero:gender|должен|должна} мне {1} {1:plural|зоркмид|зоркмида|зоркмидов} за {2:gender|мой|мою|моё|мои} {2:acc}, {2:gender|который|которую|которое|которые} ты {hero:gender|посмел|посмела} смешать со своей вонючей массой!»"
+
+[6ceaf63292e4]
+en = "\"You owe me %ld zorkmid for my %s that you just mixed with yours.\""
+ru = "«Вы должны мне {1} {1:plural|зоркмид|зоркмида|зоркмидов} за {2:gender|мой|мою|моё|мои} {2:acc}, {2:gender|который|которую|которое|которые} вы только что смешали со {2:gender|своим|своей|своим|своими}.»"
+
+[758b74637a27]
+en = "\"You owe me %ld zorkmids for my %s that you just mixed with yours.\""
+ru = "«Вы должны мне {1} {1:plural|зоркмид|зоркмида|зоркмидов} за {2:gender|мой|мою|моё|мои} {2:acc}, {2:gender|который|которую|которое|которые} вы только что смешали со {2:gender|своим|своей|своим|своими}.»"
+
+[a1564bbbe618]
+en = "\"You set it, you buy it!\""
+ru = "«Установили — значит, купили!»"
