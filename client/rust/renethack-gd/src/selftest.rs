@@ -4726,6 +4726,9 @@ impl SelfTest {
 
     fn fail(&mut self, game: &mut RenethackGame, why: &str) {
         self.finished = true;
+        // a picture due at the next frame's start shows what led here: the
+        // run ends before that frame, so it is taken now
+        run_next_frame_work();
         let recent: Vec<&str> = game
             .world
             .log
@@ -5001,6 +5004,11 @@ impl SelfTest {
                             return self.fail(game, &why);
                         }
                         godot_print!("selftest: screenshot {}", path.display());
+                        // the picture is taken as the next frame begins: the
+                        // steps after it wait for that, or they would change
+                        // what it shows
+                        self.next();
+                        return;
                     }
                     self.next();
                 }
