@@ -1672,6 +1672,47 @@ mod tests {
         }
     }
 
+    /// The nymphs were peasant women in leather, told apart by a faint
+    /// tint; the golems one mannequin in their materials, the stone one a
+    /// statue walking.
+    #[test]
+    fn nymphs_and_golems_are_told_apart() {
+        let (art, cat) = (manifest(), catalog());
+        let find = |n: &str| cat.monsters.iter().find(|m| m.name == n).unwrap();
+        let mut hair = Vec::new();
+        for kind in ["water", "wood", "mountain"] {
+            let r = art.monster(find(&format!("{kind} nymph")), mg::FEMALE);
+            let (name, spec) = art.model_at(r.model);
+            assert_eq!(name, format!("nymph_{kind}"));
+            let h = art.head(spec.head.as_deref().unwrap()).unwrap();
+            assert!(
+                !hair.contains(&h.hair_color),
+                "{kind}: her hair as another's"
+            );
+            hair.push(h.hair_color.clone());
+        }
+        let golems = [
+            "straw", "paper", "rope", "gold", "leather", "wood", "flesh", "clay", "stone", "glass",
+            "iron",
+        ];
+        let mut seen = Vec::new();
+        for kind in golems {
+            let r = art.monster(find(&format!("{kind} golem")), 0);
+            let name = art.model_at(r.model).0;
+            assert!(!seen.contains(&name), "{kind} golem: {name} again");
+            seen.push(name);
+            let Skin::Material(m) = r.skin else {
+                panic!("{kind} golem: in no material");
+            };
+            // a stone golem is not a statue: not in the statues' stone
+            assert_ne!(
+                Skin::Material(m),
+                art.statue(Some(find("human")), 0).skin,
+                "{kind}"
+            );
+        }
+    }
+
     /// A mumak was drawn two cells long and a baluchitherium four: they hid
     /// the hero they fought and went through a corridor's rock.
     #[test]
