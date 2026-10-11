@@ -822,6 +822,41 @@ fn a_character_before_a_number_is_none_of_its_digits() {
     );
 }
 
+#[test]
+fn a_worn_engraving_is_its_original_worn_as_much() {
+    // wipeout_text() rubbed out four of the engraving's 26 characters
+    // ("P", "s", "n" worn to "r", "i"); its Russian loses as large a share,
+    // the same each time
+    let t = translator();
+    let read = |en: &str| t.message(None, &[], en);
+    let out = read("You read: \"?lea?e don't feed the ar?mals.\"");
+    assert_eq!(out.status, Status::Translated, "{}", out.text);
+    let worn = out
+        .text
+        .strip_prefix("Вы читаете: «")
+        .and_then(|s| s.strip_suffix('»'))
+        .unwrap_or_else(|| panic!("{}", out.text));
+    let whole = "Пожалуйста, не кормите животных.";
+    assert_eq!(worn.chars().count(), whole.chars().count(), "{worn}");
+    let rubbed = worn.chars().zip(whole.chars()).filter(|(w, o)| w != o);
+    assert_eq!(rubbed.count(), 4, "{worn}");
+    assert_eq!(read("You read: \"?lea?e don't feed the ar?mals.\""), out);
+    // a rumor, its "h"s worn to "n"s and the end of its "k" to a '|'
+    let out = read("You read: \"Tne magic mar|er is mightier ?nan  hc sword.\"");
+    assert_eq!(out.status, Status::Translated, "{}", out.text);
+    assert!(
+        !out.text.chars().any(|c| c.is_ascii_alphabetic()),
+        "{}",
+        out.text
+    );
+    // whether a worn Elbereth still reads matters in play: as it is
+    let out = read("You read: \"Elbe?eth\".");
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        ("Вы читаете: «Elbe?eth».", Status::Translated)
+    );
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {

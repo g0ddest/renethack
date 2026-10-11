@@ -24,6 +24,7 @@ use crate::russian::Russian;
 use crate::template::{Part, Placeholder, RuTemplate, Target, Value, capitalize};
 
 mod look;
+mod worn;
 
 /// How deep a text made of texts is followed.
 const MAX_NESTING: usize = 3;
@@ -88,6 +89,9 @@ pub struct Translator {
     russian: Russian,
     names: Box<dyn Names + Send + Sync>,
     hero: Gender,
+    /// The texts a worn engraving may be a copy of, gathered when one is
+    /// first read.
+    worn: std::sync::OnceLock<worn::Worn>,
 }
 
 impl std::fmt::Debug for Translator {
@@ -112,6 +116,7 @@ impl Translator {
             russian,
             names,
             hero: Gender::Masc,
+            worn: std::sync::OnceLock::new(),
         }
     }
 
@@ -920,6 +925,11 @@ impl Translator {
             && let Some(p) = owner(shown).and_then(|o| self.names.parse(name, o))
         {
             return (Value::Phrase(p), true);
+        }
+        // an engraving, a rumor, an epitaph the engine wore, before the
+        // templates that would read bits of it
+        if let Some(text) = self.worn(shown) {
+            return (Value::Text(text), true);
         }
         let found = if depth < MAX_NESTING {
             self.catalog
