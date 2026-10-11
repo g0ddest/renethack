@@ -3,18 +3,24 @@
 //! names is drawn here at their feet, and the hero stands sunk into a pit,
 //! held by a bear trap's shut jaws, wrapped in a web, sinking into lava, or
 //! under water (the status condition Submrg), each with a pose. Out of a
-//! pit the hero climbs. A child of map_view: it moves the hero's model.
+//! pit the hero climbs. A prayer (qa C4) is shown kneeling, with what the
+//! god answered as the messages tell it: a shaft of light on a pleased
+//! god, darkness closing in on an angry one. A child of map_view: it moves
+//! the hero's own model (the rider's while they ride, who keep their seat:
+//! no sinking, kneeling or lying in the saddle).
 
+use godot::classes::base_material_3d::BlendMode;
 use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::light_3d::Param;
-use godot::classes::{MeshInstance3D, OmniLight3D};
+use godot::classes::rendering_server::FogVolumeShape;
+use godot::classes::{FogMaterial, FogVolume, MeshInstance3D, OmniLight3D, StandardMaterial3D};
 use godot::prelude::*;
 use nh_protocol::Catalog;
-use nh_world::{TrapKind, World};
+use nh_world::{PrayerOutcome, TrapKind, World};
 
 use super::{
-    Finish, MapView, MeshKey, Paint, Role, SHADE_LIT, at, bevel, cuboid, cylinder, plane, prism,
-    torus,
+    Finish, MapView, MeshKey, Paint, Role, SHADE_LIT, at, bevel, build_flat, cuboid, cylinder,
+    plane, prism, torus,
 };
 
 /// What the hero is caught in or under, as drawn.
@@ -55,6 +61,14 @@ const SINK_SPEED: f32 = 1.4;
 const CROUCH: &str = "Crouch_Idle";
 const STRUGGLE: &str = "Push";
 const CLIMB: &str = "ual2/ClimbUp_1m";
+const KNEEL: &str = "Fixing_Kneeling";
+/// Seconds a prayer is shown: the three turns it takes, kneeling.
+const PRAYER_SECS: f32 = 3.2;
+/// Seconds the god's answer takes to come and to go.
+const ANSWER_IN: f32 = 0.6;
+const ANSWER_OUT: f32 = 0.9;
+const HOLY: Color = Color::from_rgb(1.0, 0.93, 0.72);
+const DARK: Color = Color::from_rgb(0.05, 0.02, 0.08);
 const SILK: Color = Color::from_rgba(0.88, 0.88, 0.84, 0.55);
 const MOLTEN: Color = Color::from_rgb(1.0, 0.42, 0.08);
 const RIPPLE: Color = Color::from_rgba(0.62, 0.78, 0.86, 0.45);
@@ -77,6 +91,29 @@ pub(super) struct HeroPose {
     clip: Option<&'static str>,
     /// Seconds left of a climb out of a pit.
     climbing: f32,
+    prayer: Option<Prayer>,
+}
+
+/// A prayer being shown.
+struct Prayer {
+    outcome: PrayerOutcome,
+    /// Seconds since it began.
+    t: f32,
+    nodes: Vec<Gd<Node3D>>,
+    /// The shaft's own materials (their alpha fades), with their full
+    /// alpha.
+    veils: Vec<(Gd<StandardMaterial3D>, f32)>,
+    /// Its light (a negative one darkens), with its full energy.
+    light: Option<(Gd<OmniLight3D>, f32)>,
+    /// The darkness's own fog, with its full density.
+    fog: Option<(Gd<FogMaterial>, f32)>,
+}
+
+/// How strongly the god's answer shows `t` seconds into the prayer.
+fn answer_strength(t: f32) -> f32 {
+    let rise = (t / ANSWER_IN).clamp(0.0, 1.0);
+    let fall = ((PRAYER_SECS - t) / ANSWER_OUT).clamp(0.0, 1.0);
+    rise.min(fall)
 }
 
 impl HeroPose {
@@ -92,6 +129,7 @@ impl HeroPose {
             lowered: None,
             clip: None,
             climbing: 0.0,
+            prayer: None,
         }
     }
 
@@ -137,7 +175,13 @@ impl MapView {
                 self.draw_held(h, c);
             }
         }
-        let target = now.map_or(0.0, Held::sink);
+        self.advance_prayer(delta);
+        // in the saddle the hero keeps their seat
+        let target = if self.rider.is_some() {
+            0.0
+        } else {
+            now.map_or(0.0, Held::sink)
+        };
         let pose = &mut self.hero_pose;
         pose.climbing = (pose.climbing - delta).max(0.0);
         let step = SINK_SPEED * delta;
@@ -350,13 +394,11 @@ impl MapView {
     /// Hold `clip` on the hero while no motion of theirs plays; back to
     /// their idle when it ends.
     fn hold_clip(&mut self, clip: Option<&'static str>) {
-        if self.hero_pose.climbing > 0.0 {
+        if self.hero_pose.climbing > 0.0 || self.hero_pose.prayer.is_some() || self.rider.is_some()
+        {
             return;
         }
-        let busy = self
-            .motions
-            .iter()
-            .any(|m| m.hero && Some(m.cell) == self.hero_at);
+        let busy = self.hero_busy();
         let Some(m) = self.hero_model() else {
             return;
         };
@@ -374,7 +416,7 @@ impl MapView {
             None => {
                 self.hero_pose.clip = None;
                 if was.is_some() {
-                    self.settle_hero();
+                    self.idle_hero();
                 }
             }
         }
@@ -396,6 +438,167 @@ impl MapView {
         let secs = player.get_animation(CLIMB).map_or(1.0, |a| a.get_length());
         self.hero_pose.climbing = secs;
         self.hero_pose.clip = None;
+    }
+
+    /// The hero's own model back to its idle (the rider's, not the
+    /// steed's).
+    fn idle_hero(&mut self) {
+        let Some(m) = self.hero_model() else {
+            return;
+        };
+        let mut clips = self.art.clips(m, false);
+        if let (Some(p), Some(idle)) = (clips.player.as_mut(), clips.idle.as_ref())
+            && p.is_instance_valid()
+            && p.get_current_animation() != idle.as_str()
+        {
+            p.play_ex().name(idle.as_str()).custom_blend(0.25).done();
+        }
+    }
+
+    /// A prayer the hero said: kneeling, and the god's answer (`outcome`,
+    /// as the messages tell it) over them.
+    pub(super) fn show_prayer(&mut self, outcome: PrayerOutcome) {
+        self.end_prayer(false);
+        let Some((x, y)) = self.hero_at else {
+            return;
+        };
+        if self.rider.is_none()
+            && let Some(mut p) = self.hero_model().and_then(|m| m.player().cloned())
+            && p.has_animation(KNEEL)
+        {
+            p.play_ex().name(KNEEL).custom_blend(0.3).done();
+        }
+        let origin = Vector3::new(x as f32, self.ground(x, y), y as f32);
+        let mut prayer = Prayer {
+            outcome,
+            t: 0.0,
+            nodes: Vec::new(),
+            veils: Vec::new(),
+            light: None,
+            fog: None,
+        };
+        match outcome {
+            PrayerOutcome::Pleased => {
+                // a shaft of light from above, glowing (its foot a little
+                // above the floor: no flicker there)
+                for (top, bottom, y, alpha) in [(0.3, 0.4, 3.53, 0.16), (0.16, 0.22, 3.54, 0.2)] {
+                    let mesh = cylinder(top, bottom, 7.0);
+                    self.shaft(&mut prayer, mesh, origin + at(0.0, y, 0.0), alpha);
+                }
+                self.prayer_light(&mut prayer, origin + at(0.0, 2.4, 0.0), 3.0, 4.5);
+            }
+            PrayerOutcome::Angered => {
+                // darkness closing in round the hero: a black fog, and a
+                // light that takes light away
+                self.darkness(&mut prayer, origin + at(0.0, 0.9, 0.0));
+                self.prayer_light(&mut prayer, origin + at(0.0, 1.2, 0.0), 4.0, 3.5);
+            }
+            PrayerOutcome::Unanswered => {}
+        }
+        self.hero_pose.prayer = Some(prayer);
+    }
+
+    /// Part of a shaft of light, glowing over what is behind it.
+    fn shaft(&mut self, prayer: &mut Prayer, mesh: MeshKey, pos: Vector3, alpha: f32) {
+        let Ok(mut mat) = build_flat(HOLY, Finish::Flat).try_cast::<StandardMaterial3D>() else {
+            return;
+        };
+        mat.set_albedo(HOLY.with_alpha(0.0));
+        mat.set_blend_mode(BlendMode::ADD);
+        let mut mi = MeshInstance3D::new_alloc();
+        mi.set_mesh(&self.art.mesh(mesh));
+        mi.set_material_override(&mat);
+        mi.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+        mi.set_position(pos);
+        self.hero_pose.root.add_child(&mi);
+        prayer.nodes.push(mi.upcast());
+        prayer.veils.push((mat, alpha));
+    }
+
+    /// A black fog round the hero.
+    fn darkness(&mut self, prayer: &mut Prayer, pos: Vector3) {
+        let mut mat = FogMaterial::new_gd();
+        mat.set_density(0.0);
+        mat.set_albedo(DARK);
+        mat.set_edge_fade(0.8);
+        let mut fog = FogVolume::new_alloc();
+        fog.set_shape(FogVolumeShape::ELLIPSOID);
+        fog.set_size(Vector3::new(2.6, 2.4, 2.6));
+        fog.set_position(pos);
+        fog.set_material(&mat);
+        self.hero_pose.root.add_child(&fog);
+        prayer.nodes.push(fog.upcast());
+        prayer.fog = Some((mat, 2.6));
+    }
+
+    /// The answer's light: holy, or on an angry god's a negative one that
+    /// takes light away.
+    fn prayer_light(&mut self, prayer: &mut Prayer, pos: Vector3, energy: f32, range: f32) {
+        let angry = prayer.outcome == PrayerOutcome::Angered;
+        let mut light = OmniLight3D::new_alloc();
+        light.set_color(if angry { DARK } else { HOLY });
+        light.set_negative(angry);
+        light.set_param(Param::ENERGY, 0.0);
+        light.set_param(Param::RANGE, range);
+        light.set_shadow(false);
+        light.set_position(pos);
+        self.hero_pose.root.add_child(&light);
+        prayer.nodes.push(light.clone().upcast());
+        prayer.light = Some((light, energy));
+    }
+
+    /// A prayer shown goes on, and ends: after its time, or when the hero
+    /// moves on.
+    fn advance_prayer(&mut self, delta: f32) {
+        let busy = self.hero_busy();
+        let Some(prayer) = self.hero_pose.prayer.as_mut() else {
+            return;
+        };
+        prayer.t += delta;
+        if busy || prayer.t >= PRAYER_SECS {
+            self.end_prayer(!busy);
+            return;
+        }
+        let a = answer_strength(prayer.t);
+        for (mat, alpha) in &mut prayer.veils {
+            let c = mat.get_albedo();
+            mat.set_albedo(c.with_alpha(a * *alpha));
+        }
+        if let Some((light, energy)) = prayer.light.as_mut() {
+            light.set_param(Param::ENERGY, a * *energy);
+        }
+        if let Some((fog, density)) = prayer.fog.as_mut() {
+            fog.set_density(a * *density);
+        }
+    }
+
+    /// The prayer shown is over: its light gone, the hero standing up
+    /// (`stand`) or already about something else.
+    fn end_prayer(&mut self, stand: bool) {
+        let Some(prayer) = self.hero_pose.prayer.take() else {
+            return;
+        };
+        for mut n in prayer.nodes {
+            if n.is_instance_valid() {
+                n.queue_free();
+            }
+        }
+        if stand && self.rider.is_none() {
+            self.idle_hero();
+        }
+    }
+
+    /// The hero's model in a motion of their own (a step, a blow).
+    fn hero_busy(&self) -> bool {
+        self.motions
+            .iter()
+            .any(|m| m.hero && Some(m.cell) == self.hero_at)
+    }
+
+    /// The prayer shown now: the god's answer and seconds since it began
+    /// (self-tests).
+    pub fn hero_prayer(&self) -> Option<(PrayerOutcome, f32)> {
+        self.hero_pose.prayer.as_ref().map(|p| (p.outcome, p.t))
     }
 
     /// What holds the hero as drawn, how deep they stand, the pose clip

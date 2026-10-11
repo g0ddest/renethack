@@ -5,18 +5,21 @@
 //! in it until free. Sinking into lava and being under water are told to
 //! the client as the engine would tell them (the hero notice, the status
 //! condition Submrg): the engine's own way there kills a hero without
-//! fire resistance or water breathing. With --screenshots a picture of
+//! fire resistance or water breathing. Then the hero prays (qa C4): too
+//! soon after the start the god is angered, and darkness closes in round
+//! the kneeling hero; debug mode forces the god pleased the second time,
+//! and a shaft of light falls on them. With --screenshots a picture of
 //! each.
 
 use std::sync::Mutex;
 
-use nh_world::{Key, KeyInput, Prompt, Terrain, TrapKind, cell_terrain};
+use nh_world::{Key, KeyInput, PrayerOutcome, Prompt, Terrain, TrapKind, cell_terrain};
 
 use nh_protocol::{HeroNotice, WinCall};
 
 use super::{
     CharacterChoice, DialogEvent, Step, camera_settled, command, ctrl_key, fail_on_error_screen,
-    map_view, quit, set_status, smoke_choice, start_as,
+    key, map_view, quit, set_status, smoke_choice, start_as,
 };
 use crate::game::RenethackGame;
 use crate::map_view::Held;
@@ -203,6 +206,43 @@ fn wish(what: &'static str) -> [Step; 4] {
     ]
 }
 
+/// `#pray`, yes to "Are you sure you want to pray?", and `force` to debug
+/// mode's "Force the gods to be pleased?".
+fn pray(force: char) -> [Step; 8] {
+    [
+        key('#'),
+        Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
+        Step::Dialog(DialogEvent::ExtCmd(Some("pray".into()))),
+        Step::Request(
+            "Are you sure you want to pray?",
+            |p| matches!(p, Prompt::Choice { query, .. } if query.contains("pray")),
+        ),
+        key('y'),
+        Step::Request(
+            "Force the gods to be pleased?",
+            |p| matches!(p, Prompt::Choice { query, .. } if query.contains("Force")),
+        ),
+        key(force),
+        Step::Request("a command after the prayer", command),
+    ]
+}
+
+/// The prayer shown with `outcome`, its answer at full strength (the
+/// darkness's fog takes a while to gather), the hero knelt and the camera
+/// still.
+fn prayer_shown(g: &RenethackGame, outcome: PrayerOutcome) -> Result<bool, String> {
+    let now = map_view(g)?.hero_prayer();
+    Ok(
+        now.is_some_and(|(o, t)| o == outcome && (1.5..2.2).contains(&t))
+            && pose_settled(g)?
+            && camera_settled(g)?,
+    )
+}
+
+fn prayer_over(g: &RenethackGame) -> Result<bool, String> {
+    Ok(map_view(g)?.hero_prayer().is_none())
+}
+
 fn until(what: &'static str, f: Chooser) -> Step {
     Step::KeysUntil(what, f)
 }
@@ -329,6 +369,24 @@ pub(super) fn states() -> Vec<Step> {
             Ok(())
         }),
         Step::Wait("out of the water", |g| Ok(held(g)?.0.is_none())),
+    ]);
+    // a prayer too soon after the start: the god angered
+    steps.extend(pray('n'));
+    steps.extend([
+        Step::Wait("kneeling, darkness round the hero", |g| {
+            prayer_shown(g, PrayerOutcome::Angered)
+        }),
+        Step::Shot("state-pray-angered"),
+        Step::Wait("the prayer over, the hero up", prayer_over),
+    ]);
+    // forced pleased
+    steps.extend(pray('y'));
+    steps.extend([
+        Step::Wait("kneeling in a shaft of light", |g| {
+            prayer_shown(g, PrayerOutcome::Pleased)
+        }),
+        Step::Shot("state-pray-pleased"),
+        Step::Wait("the prayer over, the hero up", prayer_over),
     ]);
     steps.extend(quit());
     steps

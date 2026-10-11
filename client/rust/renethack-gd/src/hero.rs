@@ -309,6 +309,7 @@ pub fn use_name(kind: UseKind) -> &'static str {
         UseKind::Wield => "wield",
         UseKind::PickUp => "pick_up",
         UseKind::Kick => "kick",
+        UseKind::Pray => "pray",
     }
 }
 

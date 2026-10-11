@@ -164,7 +164,9 @@ ridden through a save and a restore. The `states` scenario (debug mode)
 shows what holds the hero, which their own glyph hides from the map: an
 archeologist digs a pit and stands in it to the waist, then climbs out; is
 held crouching by the shut jaws of a bear trap, wrapped struggling in a
-web, sunk in lava and under water. With `--screenshots` the soak saves the screen
+web, sunk in lava and under water; then kneels to pray, too soon, and
+darkness closes in round them, and again with the god forced pleased, in a
+shaft of light. With `--screenshots` the soak saves the screen
 every 60 answers (`soak-<seed>-<answers>.png`) and the first dialogs of each
 kind as the player meets them, each question once
 (`dlg-<kind>-<seed>-<answers>.png`). A picture waits for the screen to hold

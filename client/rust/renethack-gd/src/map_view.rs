@@ -4649,6 +4649,10 @@ impl MapView {
     /// and play the use's clip with the item in hand; its effects follow.
     pub fn show_use(&mut self, u: &ItemUse, catalog: &Catalog, world: &World) {
         use crate::hero::{Fx, THROW_AT, in_hand, use_color, use_effects, use_hand, use_name};
+        if u.kind == UseKind::Pray {
+            self.show_prayer(u.prayer.unwrap_or(nh_world::PrayerOutcome::Unanswered));
+            return;
+        }
         let Some(at) = self.hero_at else {
             return;
         };
