@@ -2681,7 +2681,11 @@ impl Kit<'_> {
             },
             Proc::Spider => self.bug(root, 4, true),
             Proc::Bat => self.bat(root),
-            Proc::Bird => self.bird(root),
+            Proc::Bird => match self.shape.as_deref() {
+                Some("cockatrice") => self.cockatrice(root, false),
+                Some("chickatrice") => self.cockatrice(root, true),
+                _ => self.bird(root),
+            },
             Proc::Blob => self.blob_body(root),
             Proc::Eye => self.eye_body(root),
             Proc::Light => match self.shape.as_deref() {
@@ -2692,6 +2696,8 @@ impl Kit<'_> {
             Proc::Fungus => match self.shape.as_deref() {
                 Some("lichen") => self.lichen(root),
                 Some("mold") => self.mold(root),
+                Some("shrieker") => self.shrieker(root),
+                Some("violet") => self.violet_fungus(root),
                 _ => self.fungus(root),
             },
             Proc::Lizard => self.lizard_body(root),

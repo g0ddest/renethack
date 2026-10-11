@@ -7,6 +7,7 @@
 
 use super::*;
 use crate::organic::felines::{self, Coat, Part};
+use crate::organic::more;
 use crate::organic::{self, Organic};
 
 const ONE: [f32; 3] = [1.0; 3];
@@ -178,6 +179,160 @@ impl Kit<'_> {
         }
     }
 
+    /// A cockatrice: a yellow rooster, red-combed, on scaled legs, with a
+    /// serpent's tail; or its chick, round, with a short one.
+    pub(super) fn cockatrice(&mut self, root: &mut Gd<Node3D>, chick: bool) {
+        use more::Part::*;
+        let red = self
+            .art
+            .flat(Color::from_rgb(0.75, 0.08, 0.06), Finish::Glossy);
+        let horn = self
+            .art
+            .flat(Color::from_rgb(0.95, 0.68, 0.18), Finish::Glossy);
+        let scales = self
+            .art
+            .flat(Color::from_rgb(0.42, 0.45, 0.14), Finish::Glossy);
+        let (body, head, leg, tail) = if chick {
+            (ChickBody, ChickHead, ChickLeg, ChickTail)
+        } else {
+            (CockBody, CockHead, CockLeg, CockTail)
+        };
+        let (head_at, tail_at, hip) = if chick {
+            (more::CHICK_HEAD, more::CHICK_TAIL, more::CHICK_HIP)
+        } else {
+            (more::COCK_HEAD, more::COCK_TAIL, more::COCK_HIP)
+        };
+        self.skin(root, shape(Organic::More(body)), FLAT, FLAT, ONE);
+        let mut pivot = self.pivot(root, "Head", head_at);
+        self.skin(&mut pivot, shape(Organic::More(head)), FLAT, FLAT, ONE);
+        if chick {
+            self.eyes(&mut pivot, [0.0, 0.03, 0.095], 0.055, 0.022, false);
+        } else {
+            self.part(
+                &mut pivot,
+                shape(Organic::More(CockComb)),
+                &red,
+                FLAT,
+                FLAT,
+                ONE,
+            );
+            self.part(
+                &mut pivot,
+                shape(Organic::More(CockBeak)),
+                &horn,
+                FLAT,
+                FLAT,
+                ONE,
+            );
+            self.eyes(&mut pivot, [0.0, 0.02, 0.05], 0.045, 0.016, false);
+        }
+        let mut pivot = self.pivot(root, "Tail", tail_at);
+        self.part(
+            &mut pivot,
+            shape(Organic::More(tail)),
+            &scales,
+            FLAT,
+            FLAT,
+            ONE,
+        );
+        for (name, side) in [("LegL", -1.0), ("LegR", 1.0)] {
+            let mut pivot = self.pivot(root, name, [side * hip[0], hip[1], hip[2]]);
+            self.part(
+                &mut pivot,
+                shape(Organic::More(leg)),
+                &horn,
+                FLAT,
+                FLAT,
+                ONE,
+            );
+        }
+    }
+
+    /// A shrieker: a stalk flaring to a funnel, dark down its throat.
+    pub(super) fn shrieker(&mut self, root: &mut Gd<Node3D>) {
+        let mut body = self.pivot(root, "Body", [0.0; 3]);
+        self.skin(
+            &mut body,
+            shape(Organic::More(more::Part::Shrieker)),
+            FLAT,
+            FLAT,
+            ONE,
+        );
+        self.skin(
+            &mut body,
+            shape(Organic::More(more::Part::ShriekerBell)),
+            FLAT,
+            FLAT,
+            ONE,
+        );
+        let throat = self
+            .art
+            .flat(Color::from_rgb(0.08, 0.02, 0.1), Finish::Matte);
+        self.part(
+            &mut body,
+            shape(Organic::More(more::Part::ShriekerThroat)),
+            &throat,
+            FLAT,
+            FLAT,
+            ONE,
+        );
+    }
+
+    /// A violet fungus: a cluster of caps, tendrils curling out over the
+    /// floor to sticky ends.
+    pub(super) fn violet_fungus(&mut self, root: &mut Gd<Node3D>) {
+        let mut body = self.pivot(root, "Body", [0.0; 3]);
+        self.skin(
+            &mut body,
+            shape(Organic::More(more::Part::Violet)),
+            FLAT,
+            FLAT,
+            ONE,
+        );
+        let tips = self.dark();
+        self.part(
+            &mut body,
+            shape(Organic::More(more::Part::VioletTips)),
+            &tips,
+            FLAT,
+            FLAT,
+            ONE,
+        );
+    }
+
+    /// A gelatinous cube: a quivering cube of clear jelly, the bones and
+    /// the metal of what it has engulfed hanging in it.
+    pub(super) fn cube(&mut self, root: &mut Gd<Node3D>) {
+        let mut body = self.pivot(root, "Body", [0.0; 3]);
+        let bone = self.bone();
+        self.part(
+            &mut body,
+            shape(Organic::More(more::Part::CubeBones)),
+            &bone,
+            FLAT,
+            FLAT,
+            ONE,
+        );
+        let metal = self
+            .art
+            .flat(Color::from_rgb(0.74, 0.66, 0.44), Finish::Glossy);
+        self.part(
+            &mut body,
+            shape(Organic::More(more::Part::CubeLoot)),
+            &metal,
+            FLAT,
+            FLAT,
+            ONE,
+        );
+        self.skin(
+            &mut body,
+            shape(Organic::More(more::Part::Cube)),
+            FLAT,
+            FLAT,
+            ONE,
+        );
+    }
+
     /// The dark marks of a coat on a part of a big cat (none without one).
     fn marks(&mut self, parent: &mut Gd<Node3D>, coat: Option<Coat>, part: Part) {
         let Some(coat) = coat else {
@@ -332,6 +487,10 @@ impl Kit<'_> {
     /// A blob, a jelly, a pudding: a sagging dome of slime, a darker
     /// heart inside, bubbles caught in it.
     pub(super) fn blob_body(&mut self, root: &mut Gd<Node3D>) {
+        if self.shape.as_deref() == Some("cube") {
+            self.cube(root);
+            return;
+        }
         let mut body = self.pivot(root, "Body", [0.0; 3]);
         self.skin(&mut body, shape(Organic::Blob), FLAT, FLAT, ONE);
         let heart = self.dark();
@@ -482,6 +641,13 @@ pub(super) fn walk_waves(kind: Proc, shape: Option<&str>) -> Vec<Wave> {
             Wave::Rock(LEGS[3], y, 28.0, 0.5),
             Wave::Rock("Head", y, 6.0, 0.5),
             Wave::Rock("Tail", y, 16.0, 0.25),
+        ],
+        // a bird's stride, its head bobbing, a cockatrice's tail swaying
+        (Proc::Bird, Some("cockatrice" | "chickatrice")) => vec![
+            Wave::Rock("LegL", x, 30.0, 0.0),
+            Wave::Rock("LegR", x, 30.0, 0.5),
+            Wave::Rock("Head", x, 12.0, 0.25),
+            Wave::Rock("Tail", y, 14.0, 0.25),
         ],
         (Proc::Bug, _) => vec![
             Wave::Rock("LegsL", y, 16.0, 0.0),

@@ -20,6 +20,8 @@ use godot::prelude::*;
 
 #[path = "organic_felines.rs"]
 pub mod felines;
+#[path = "organic_more.rs"]
+pub mod more;
 #[path = "organic_props.rs"]
 pub mod props;
 
@@ -108,6 +110,9 @@ pub enum Organic {
     },
     /// A part of an object of its own shape (`props`).
     Prop(props::Part),
+    /// A part of a cockatrice, a shrieker, a violet fungus or a gelatinous
+    /// cube (`more`).
+    More(more::Part),
 }
 
 /// Where a cat's legs join its body (out to the side, up, forward): the
@@ -546,6 +551,7 @@ impl Organic {
             Organic::Coat { coat, part } => felines::coat(&mut m, coat, part),
             Organic::Tentacle { right } => felines::tentacle(&mut m, right),
             Organic::Prop(part) => props::build(&mut m, part),
+            Organic::More(part) => more::build(&mut m, part),
             Organic::SporeThreads => {
                 for k in 0..4 {
                     let a = (k as f32 / 4.0 * 360.0 + 45.0).to_radians();
@@ -1504,6 +1510,58 @@ mod tests {
             for p in &m.pos {
                 assert!(p.x.abs() < 0.62 && p.z.abs() < 0.62, "{part:?} {p:?}");
             }
+        }
+    }
+
+    #[test]
+    fn the_cockatrice_and_the_others_stand_on_the_floor() {
+        use more::Part::*;
+        for part in [
+            CockBody,
+            CockHead,
+            CockComb,
+            CockBeak,
+            CockLeg,
+            CockTail,
+            ChickBody,
+            ChickHead,
+            ChickLeg,
+            ChickTail,
+            Shrieker,
+            ShriekerBell,
+            ShriekerThroat,
+            Violet,
+            VioletTips,
+            Cube,
+            CubeBones,
+            CubeLoot,
+        ] {
+            let m = Organic::More(part).merged();
+            assert!(
+                !m.idx.is_empty() && m.pos.iter().all(|p| p.is_finite()),
+                "{part:?}"
+            );
+            assert!(
+                m.nrm.iter().all(|n| (n.length() - 1.0).abs() < 1e-3),
+                "{part:?}"
+            );
+        }
+        // the legs and the tails from their pivots down to the floor
+        let lowest = |part, high: f32| high + Organic::More(part).merged().span().0;
+        for (part, high) in [
+            (CockLeg, more::COCK_HIP[1]),
+            (ChickLeg, more::CHICK_HIP[1]),
+            (CockTail, more::COCK_TAIL[1]),
+            (ChickTail, more::CHICK_TAIL[1]),
+        ] {
+            let floor = lowest(part, high);
+            assert!(floor.abs() < 0.02, "{part:?} {floor}");
+        }
+        // what a cube has engulfed lies inside it
+        let (lo, hi) = Organic::More(Cube).merged().span();
+        for part in [CubeBones, CubeLoot] {
+            let (a, b) = Organic::More(part).merged().span();
+            assert!(a > lo && b < hi, "{part:?}");
         }
     }
 
