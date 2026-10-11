@@ -1536,6 +1536,38 @@ impl Kit<'_> {
                     }
                 }
             }
+            "wings" => {
+                // a pair of feathered wings raised from the shoulder blades
+                // (the origin): long flat feathers fanned up and out, a
+                // covert over their roots
+                for side in [-1.0f32, 1.0] {
+                    for i in 0..6 {
+                        let out = 14.0 + i as f32 * 13.0;
+                        let len = 0.62 - i as f32 * 0.05;
+                        let (sn, cs) = out.to_radians().sin_cos();
+                        self.part(
+                            root,
+                            sphere(0.5),
+                            &skin,
+                            [
+                                side * (0.06 + sn * len * 0.5),
+                                cs * len * 0.5,
+                                -0.02 * i as f32,
+                            ],
+                            [0.0, 0.0, -side * out],
+                            [0.075, len, 0.02],
+                        );
+                    }
+                    self.part(
+                        root,
+                        sphere(0.5),
+                        &skin,
+                        [side * 0.14, 0.12, 0.01],
+                        [0.0, 0.0, -side * 40.0],
+                        [0.16, 0.3, 0.05],
+                    );
+                }
+            }
             "wrap" => {
                 // cloth wound round a forearm
                 for i in 0..3 {
