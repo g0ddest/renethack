@@ -1718,6 +1718,71 @@ mod tests {
         }
     }
 
+    /// Shopkeepers, priests, soldiers, Kops, vampires, angels and the
+    /// djinni were plain peasants, and every demon the same red imp: each
+    /// has its own look now.
+    #[test]
+    fn the_people_and_the_demons_are_told_apart() {
+        let (art, cat) = (manifest(), catalog());
+        let resolved = |n: &str| {
+            let m = cat.monsters.iter().find(|m| m.name == n).unwrap();
+            art.monster(m, 0)
+        };
+        let model = |n: &str| art.model_at(resolved(n).model);
+        for who in [
+            "shopkeeper",
+            "aligned cleric",
+            "soldier",
+            "Keystone Kop",
+            "vampire",
+            "Angel",
+            "djinni",
+        ] {
+            let name = model(who).0;
+            assert!(
+                !["human_male", "ranger_male", "imp"].contains(&name),
+                "{who}: {name}"
+            );
+        }
+        // angels and the great demons are winged
+        for who in [
+            "Angel",
+            "Archon",
+            "pit fiend",
+            "balrog",
+            "Asmodeus",
+            "amorous demon",
+        ] {
+            let wings = model(who)
+                .1
+                .extras
+                .iter()
+                .any(|e| e.model == "garment_wings");
+            assert!(wings, "{who} has no wings");
+        }
+        // the great demons apart from the imp and from one another
+        let mut seen = Vec::new();
+        for who in [
+            "imp",
+            "horned devil",
+            "pit fiend",
+            "balrog",
+            "Orcus",
+            "Asmodeus",
+            "Baalzebub",
+            "Demogorgon",
+            "amorous demon",
+        ] {
+            let r = resolved(who);
+            let look = (model(who).0, r.tint);
+            assert!(!seen.contains(&look), "{who} looks as another");
+            seen.push(look);
+        }
+        // the jabberwock and Ixoth are grown dragons, not babies
+        assert_eq!(model("jabberwock").0, "dragon_adult");
+        assert_eq!(model("Ixoth").0, "dragon_adult");
+    }
+
     /// A mumak was drawn two cells long and a baluchitherium four: they hid
     /// the hero they fought and went through a corridor's rock.
     #[test]

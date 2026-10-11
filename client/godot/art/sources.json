@@ -231,7 +231,9 @@
   {"paint": "wraps", "out": "made/skins/wraps.jpg",
    "use": "a kobold mummy: the Puglin wound in linen"},
   {"paint": "pale", "from": "cc0/quaternius/bestiary/Puglin.glb", "image": "T_Puglin_BaseColor", "light": 0.6, "out": "made/skins/puglin_pale.jpg",
-   "use": "the Puglin without its green, for a kind's own colour: a kobold zombie"}
+   "use": "the Puglin without its green, for a kind's own colour: a kobold zombie"},
+  {"paint": "pale", "from": "cc0/quaternius/bestiary/Imp.glb", "image": "T_Imp_BaseColor", "light": 0.55, "out": "made/skins/imp_pale.jpg",
+   "use": "the imp without its red, for a demon's own colour"}
  ],
  "turned_comment": "Rigged models written before in the run (`from`) with bones turned in every clip by tools/gltf_turn.py: `raise` {bone: degrees} about the body's forward axis (from `back` to `front`), the way that lifts the bone's tip.",
  "turned": [
