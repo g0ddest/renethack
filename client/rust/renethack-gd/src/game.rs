@@ -3060,7 +3060,19 @@ impl RenethackGame {
                 .min_by_key(|&(x, y)| (x - h.0).abs().max((y - h.1).abs())),
             _ => None,
         };
-        let threat = threat.and_then(|t| on_screen(t, 0.8));
+        // the top of the hostile's own model: the arrow hangs over its head
+        // (over a fixed height it sat on whoever stood north of a grid bug)
+        let threat = threat.and_then(|(x, y)| {
+            let head = self
+                .ui
+                .as_ref()
+                .and_then(|ui| ui.map.entity_stands(x, y))
+                .map_or(Vector3::new(x as f32, 0.8, y as f32), |(at, tall)| {
+                    at + Vector3::new(0.0, tall, 0.0)
+                });
+            let cam = camera.as_ref()?;
+            (!cam.is_position_behind(head)).then(|| cam.unproject_position(head))
+        });
         // the hero's body on screen: feet to head, a shoulder either side
         let stands = self.ui.as_ref().and_then(|ui| ui.map.hero_stands());
         let hero_box = stands.zip(camera.as_ref()).and_then(|((p, tall), cam)| {

@@ -2400,24 +2400,24 @@ fn threat_arrow() -> Vec<Step> {
         }
         Ok(())
     }));
-    // a hostile in the cell south of the hero stands before them: what is
-    // over its head on screen is the hero
+    // a hostile as tall as the hero in the cell south of them stands
+    // before them: what is over its head on screen is the hero
     steps.extend([
-        Step::Call("the jackal in the cell south of the hero, a fight", |g| {
+        Step::Call("a hill orc in the cell south of the hero, a fight", |g| {
             let cat = g.catalog.clone().ok_or("no catalog")?;
-            let (x, y) = crate::gallery::lay_out_one(&mut g.world, &cat, "jackal")?;
+            let (x, y) = crate::gallery::lay_out_one(&mut g.world, &cat, "hill orc")?;
             let hero = g.world.map.hero().ok_or("no hero laid out")?;
             let glyph = |x: i32, y: i32| g.world.map.cell(x, y).and_then(|c| c.glyph.clone());
-            let jackal = glyph(x, y).ok_or("no jackal laid out")?;
+            let orc = glyph(x, y).ok_or("no hill orc laid out")?;
             let floor = glyph(x - 1, y).ok_or("no floor laid out")?;
             g.world.map.print(x, y, &floor, None);
-            g.world.map.print(hero.0, hero.1 + 1, &jackal, None);
+            g.world.map.print(hero.0, hero.1 + 1, &orc, None);
             g.world.view_center = Some(hero);
             // the tick's moment, as at a command: a hostile beside the
             // hero is a fight
             g.driver.observe(&g.world, &cat);
             if g.driver.mode() != nh_world::Mode::Combat {
-                return Err("a jackal beside the hero is no fight".into());
+                return Err("a hill orc beside the hero is no fight".into());
             }
             Ok(())
         }),
@@ -2433,13 +2433,81 @@ fn threat_arrow() -> Vec<Step> {
         Step::Shot("threat-arrow-hero"),
         Step::Call("the arrow beside the hero, not on them", |g| {
             let ui = g.ui.as_ref().ok_or("no UI")?;
-            let p = ui.hud.threat_arrow().ok_or("no arrow for the jackal")?;
+            let p = ui.hud.threat_arrow().ok_or("no arrow for the hill orc")?;
             let (hero, side) = ui.hud.threat_beside();
             let hero = hero.ok_or("the hero is not on screen")?;
             if hero.grow(8.0).contains_point(p) || side.is_none() {
                 return Err(format!(
                     "the threat arrow at {:.0},{:.0} is on the hero ({:.0},{:.0} {:.0}×{:.0})",
                     p.x, p.y, hero.position.x, hero.position.y, hero.size.x, hero.size.y
+                ));
+            }
+            Ok(())
+        }),
+        // a small hostile with a creature north of it: the arrow over its
+        // own head (over a fixed height it sat on the kitten in between)
+        Step::Call("a kitten south of the hero, a grid bug south of it", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            let (x, y) = crate::gallery::lay_out_one(&mut g.world, &cat, "grid bug")?;
+            let hero = g.world.map.hero().ok_or("no hero laid out")?;
+            let glyph = |x: i32, y: i32| g.world.map.cell(x, y).and_then(|c| c.glyph.clone());
+            let bug = glyph(x, y).ok_or("no grid bug laid out")?;
+            let floor = glyph(x - 1, y).ok_or("no floor laid out")?;
+            let kitten = cat
+                .monsters
+                .iter()
+                .find(|m| m.name == "kitten")
+                .ok_or("no kitten in the catalog")?;
+            let pet = nh_protocol::Glyph {
+                mon: Some(kitten.idx),
+                flags: nh_protocol::mg::PET,
+                color: kitten.color,
+                ..bug.clone()
+            };
+            g.world.map.print(x, y, &floor, None);
+            g.world.map.print(hero.0, hero.1 + 1, &pet, None);
+            g.world.map.print(hero.0, hero.1 + 2, &bug, None);
+            g.world.view_center = Some(hero);
+            g.driver.observe(&g.world, &cat);
+            if g.driver.mode() != nh_world::Mode::Combat {
+                return Err("a grid bug in view is no fight".into());
+            }
+            Ok(())
+        }),
+        Step::Wait("the view drawn", |g| {
+            let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+            Ok(drawn == Some(g.world.map.generation()))
+        }),
+        Step::Wait("the camera there", camera_settled),
+        Step::Wait("the grid bug's model, and the arrow", |g| {
+            let hero = g.world.map.hero().ok_or("no hero")?;
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let bug = ui.map.entity_stands(hero.0, hero.1 + 2);
+            Ok(bug.is_some() && ui.hud.threat_arrow().is_some())
+        }),
+        Step::Shot("threat-arrow-small"),
+        Step::Call("the arrow over the grid bug's own head", |g| {
+            let hero = g.world.map.hero().ok_or("no hero")?;
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let p = ui.hud.threat_arrow().ok_or("no arrow for the grid bug")?;
+            let (at, tall) = ui
+                .map
+                .entity_stands(hero.0, hero.1 + 2)
+                .ok_or("no grid bug's model")?;
+            let head = ui
+                .map
+                .on_screen(at + Vector3::new(0.0, tall, 0.0))
+                .ok_or("the grid bug is behind the camera")?;
+            // the arrow points down, its tip its rim's length below it
+            let tip = p.y + 28.0;
+            godot_print!(
+                "selftest: threat-arrow: the tip at {tip:.0}, the grid bug's head at {:.0}",
+                head.y
+            );
+            if !(head.y - 24.0..=head.y).contains(&tip) {
+                return Err(format!(
+                    "the arrow's tip at {:.0},{tip:.0} is not just over the grid bug's head at {:.0},{:.0}",
+                    p.x, head.x, head.y
                 ));
             }
             Ok(())

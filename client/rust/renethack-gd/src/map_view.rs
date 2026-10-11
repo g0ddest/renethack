@@ -4441,6 +4441,12 @@ impl MapView {
 
     /// The map cell under a screen position: the first wall, door, creature
     /// or letter the camera ray passes through, else where it meets the ground.
+    /// Where a point of the world is on screen (None: behind the camera)
+    /// (self-tests).
+    pub fn on_screen(&self, at: Vector3) -> Option<Vector2> {
+        (!self.camera.is_position_behind(at)).then(|| self.camera.unproject_position(at))
+    }
+
     pub fn cell_at(&self, screen_pos: Vector2) -> Option<(i32, i32)> {
         if !self.camera.is_inside_tree() {
             return None;
@@ -4927,6 +4933,17 @@ impl MapView {
     /// there, a thing on the floor: its model is not theirs.
     fn hero_cell(&self) -> Option<&CellNodes> {
         self.cells.get(&self.hero_at?).filter(|n| n.look.hero)
+    }
+
+    /// Where the creature or thing on a cell stands now (between two cells
+    /// while it walks) and how tall it is: the HUD hangs its arrow over a
+    /// hostile's own head.
+    pub fn entity_stands(&self, x: i32, y: i32) -> Option<(Vector3, f32)> {
+        let nodes = self.cells.get(&(x, y))?;
+        let i = nodes.look.entity?;
+        let (model, placed) = (nodes.models.get(i)?, nodes.look.models.get(i)?);
+        (model.node.is_instance_valid() && model.node.is_inside_tree())
+            .then(|| (model.node.get_global_position(), placed.look.art.height))
     }
 
     /// Where the hero's model stands now (between two cells while it

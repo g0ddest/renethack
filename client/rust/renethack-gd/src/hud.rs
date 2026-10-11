@@ -501,6 +501,11 @@ pub fn edge_arrow(at: Option<Vector2>, view: Vector2) -> Option<(Vector2, f32)> 
 /// The arrow keeps this far from the screen's edges.
 const ARROW_MARGIN: f32 = 48.0;
 
+/// The arrow's tip lies this far from its middle (its dark rim's tip).
+const ARROW_TIP: f32 = 28.0;
+/// And hangs this far over the head of the hostile it points at.
+const ARROW_OVER: f32 = 8.0;
+
 /// And its middle this far from a panel of the HUD: half its length and a
 /// little air.
 const ARROW_PAD: f32 = 28.0;
@@ -1688,7 +1693,7 @@ impl Hud {
         // on the hero it stands in front of: beside them then
         let mut side = self.threat_side.take();
         let over = at.filter(|_| self.combat == Some(true)).map(|p| {
-            let head = Vector2::new(p.x, p.y - 70.0);
+            let head = Vector2::new(p.x, p.y - ARROW_TIP - ARROW_OVER);
             let down = std::f32::consts::FRAC_PI_2;
             let (q, angle) = off_hero(head, down, p, view, hero, &mut side);
             let bob = 6.0 * (now * TAU * 1.2).sin() as f32;
