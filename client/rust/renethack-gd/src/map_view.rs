@@ -1476,7 +1476,11 @@ fn terrain_base(
             for x in [-0.44f32, 0.44] {
                 look.solid(bevel(0.12, 0.7, 0.92), side, at(x, 0.35, 0.0));
             }
-            let arch = trim(SHADE_LIT);
+            // the arch of the walls' own masonry (of black rock it stood in
+            // a room as a dark monolith); it thins out between the eye and
+            // the hero as a wall does
+            let masonry = ctx.mat("masonry");
+            let arch = pbr(masonry, SHADE_LIT, Role::Wall, DEEP);
             for x in [-0.42f32, 0.42] {
                 look.solid(bevel(0.16, 1.9, 0.3), arch, at(x, 0.95, -0.34));
             }
