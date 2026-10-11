@@ -166,6 +166,12 @@ waits for nothing). The soak fails when the engine calls impossible()
     cd client/godot
     godot --path . -- --selftest=smoke --screenshots=/tmp/shots --playground=/tmp/pg
 
+A picture is the frame as it is drawn: it is taken when the next frame
+begins, once Godot has laid out the containers and redrawn the controls of
+the frame (taken in the middle of a frame, it showed a panel opened in that
+frame with what it drew the time before, its list not laid out). The
+`first-open` scenario checks the first frame drawn of the inventory panel
+and of the command palette, the first time in a session and again.
 Screenshots are 1920×1080 unless `--size=1280x800` (or Godot's own
 `--resolution`) asks for another window; a run fails when the window or a
 screenshot is not the size asked for, and at a set size every screen a

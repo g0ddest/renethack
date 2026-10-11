@@ -14,11 +14,11 @@
 
 use std::collections::{HashMap, VecDeque};
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{Mutex, Once};
 use std::time::{Duration, Instant};
 
-use godot::classes::{DisplayServer, Input, InputEventKey};
+use godot::classes::{DisplayServer, Engine, Input, InputEventKey, RenderingServer, SceneTree};
 use godot::global::{Error, Key as GKey};
 use godot::prelude::*;
 use nh_protocol::PickHow;
@@ -34,6 +34,8 @@ mod achievements;
 mod corridors;
 #[path = "selftest_doll.rs"]
 mod doll_tests;
+#[path = "selftest_first.rs"]
+mod first_tests;
 #[path = "selftest_help.rs"]
 mod help_tests;
 #[path = "selftest_hero.rs"]
@@ -4687,6 +4689,7 @@ impl SelfTest {
             "layouts" => layouts_tests::layouts(),
             "rim" => rim_tests::rim(),
             "doll" => doll_tests::doll(),
+            "first-open" => first_tests::first_open(),
             "passing" => passing_tests::passing(),
             "inventory" => inventory(),
             "map-pause" => map_pause(),
@@ -4805,8 +4808,23 @@ impl SelfTest {
             let why = format!("a panic: {p}");
             return self.fail(game, &why);
         }
+        if let Some(why) = next_frame_failure() {
+            return self.fail(game, &why);
+        }
         loop {
             let Some(step) = self.steps.front() else {
+                // a picture or a check still due at the next frame's start
+                // (a few frames at most: else it is done now)
+                if next_frame_due() {
+                    self.frames += 1;
+                    if self.frames < SHOT_FRAMES {
+                        return;
+                    }
+                    run_next_frame_work();
+                }
+                if let Some(why) = next_frame_failure() {
+                    return self.fail(game, &why);
+                }
                 return self.pass(game);
             };
             if let Step::Soak(_) = step {
@@ -5228,32 +5246,107 @@ fn unmarked_word(text: &str) -> Option<String> {
         .map(str::to_string)
 }
 
-fn save_shot(game: &RenethackGame, path: &std::path::Path) -> Result<(), String> {
-    // Forward+ may skip drawing a window it thinks nobody sees (macOS):
-    // draw the state now, a few times for the temporal effects
+/// Work for the start of the next frame (the scene tree's
+/// `process_frame`): the frame being made has then been drawn as it is,
+/// its deferred work done (containers laid out, controls redrawn, the
+/// camera moved). A step runs in the middle of a frame, before all that.
+type FrameWork = Box<dyn FnOnce() + Send>;
+
+static NEXT_FRAME: Mutex<Vec<FrameWork>> = Mutex::new(Vec::new());
+static NEXT_FRAME_HOOK: Once = Once::new();
+static NEXT_FRAME_HOOKED: AtomicBool = AtomicBool::new(false);
+/// What went wrong in the work done there, told at the next step.
+static NEXT_FRAME_FAILS: Mutex<Vec<String>> = Mutex::new(Vec::new());
+
+fn at_next_frame(work: impl FnOnce() + Send + 'static) -> Result<(), String> {
+    NEXT_FRAME_HOOK.call_once(|| {
+        let tree = Engine::singleton()
+            .get_main_loop()
+            .and_then(|l| l.try_cast::<SceneTree>().ok());
+        if let Some(mut tree) = tree {
+            tree.connect(
+                "process_frame",
+                &Callable::from_fn("selftest: the next frame", |_| {
+                    run_next_frame_work();
+                    Variant::nil()
+                }),
+            );
+            NEXT_FRAME_HOOKED.store(true, Ordering::Relaxed);
+        }
+    });
+    if !NEXT_FRAME_HOOKED.load(Ordering::Relaxed) {
+        return Err("no scene tree to wait for the next frame on".into());
+    }
+    NEXT_FRAME
+        .lock()
+        .map_err(|e| e.to_string())?
+        .push(Box::new(work));
+    Ok(())
+}
+
+fn run_next_frame_work() {
+    let work = NEXT_FRAME.lock().map(|mut w| std::mem::take(&mut *w));
+    for w in work.unwrap_or_default() {
+        w();
+    }
+}
+
+fn next_frame_due() -> bool {
+    NEXT_FRAME.lock().is_ok_and(|w| !w.is_empty())
+}
+
+fn next_frame_failed(why: String) {
+    if let Ok(mut f) = NEXT_FRAME_FAILS.lock() {
+        f.push(why);
+    }
+}
+
+fn next_frame_failure() -> Option<String> {
+    NEXT_FRAME_FAILS.lock().ok()?.drain(..).next()
+}
+
+/// The frame as Godot draws it, drawn now whatever the window: Forward+
+/// may skip drawing a window it thinks nobody sees (macOS). A few times,
+/// for the temporal effects.
+fn drawn_image() -> Option<Gd<godot::classes::Image>> {
     for _ in 0..8 {
-        godot::classes::RenderingServer::singleton().force_draw();
+        RenderingServer::singleton().force_draw();
     }
-    let image = game
-        .viewport_image()
-        .ok_or("no viewport image (is there a renderer?)")?;
-    // a window the system did not give the size asked for would review
-    // another screen than the one named
-    if let Some(want) = game.window_size
-        && image.get_size() != want
-    {
-        let got = image.get_size();
-        return Err(format!(
-            "the screenshot is {}×{}, not the {}×{} asked for",
-            got.x, got.y, want.x, want.y
-        ));
-    }
-    let err = image.save_png(&path.to_string_lossy().to_string());
-    if err == Error::OK {
-        Ok(())
-    } else {
-        Err(format!("cannot save {}: {err:?}", path.display()))
-    }
+    let tree = Engine::singleton()
+        .get_main_loop()?
+        .try_cast::<SceneTree>()
+        .ok()?;
+    tree.get_root()?.get_texture()?.get_image()
+}
+
+/// A picture of the frame being made, as the player sees it: taken when
+/// the next frame begins (`at_next_frame`). Taken at once, in the middle
+/// of the frame, it showed a panel opened in that frame with what it drew
+/// the time before, its list not laid out: what no frame on screen shows.
+/// What goes wrong in the taking is told at the next step.
+fn save_shot(game: &RenethackGame, path: &std::path::Path) -> Result<(), String> {
+    let want = game.window_size;
+    let path = path.to_path_buf();
+    at_next_frame(move || {
+        let Some(image) = drawn_image() else {
+            return next_frame_failed("no viewport image (is there a renderer?)".into());
+        };
+        // a window the system did not give the size asked for would review
+        // another screen than the one named
+        if let Some(want) = want
+            && image.get_size() != want
+        {
+            let got = image.get_size();
+            return next_frame_failed(format!(
+                "the screenshot is {}×{}, not the {}×{} asked for",
+                got.x, got.y, want.x, want.y
+            ));
+        }
+        let err = image.save_png(&path.to_string_lossy().to_string());
+        if err != Error::OK {
+            next_frame_failed(format!("cannot save {}: {err:?}", path.display()));
+        }
+    })
 }
 
 #[cfg(test)]

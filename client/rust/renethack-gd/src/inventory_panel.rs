@@ -2120,6 +2120,16 @@ impl InventoryPanel {
             .collect()
     }
 
+    /// The letters the grid's cells show, item by item (self-tests: what
+    /// is drawn, where `shown` is what the panel means to draw).
+    pub fn cell_letters(&self) -> Vec<String> {
+        self.cells
+            .iter()
+            .filter(|s| s.root.is_visible() && s.pill.is_visible())
+            .map(|s| s.letter.get_text().to_string())
+            .collect()
+    }
+
     /// The letters each doll slot shows (self-tests).
     pub fn doll_letters(&self) -> Vec<(DollSlot, Vec<char>)> {
         DollSlot::LEFT

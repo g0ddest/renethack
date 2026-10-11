@@ -3224,6 +3224,18 @@ impl Dialogs {
         }
     }
 
+    /// The open palette's list on screen and the height it is made to
+    /// show (self-tests).
+    pub fn palette_view(&self) -> Option<(Rect2, f32)> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::ExtCmd { palette, .. }) => {
+                let p = palette.borrow();
+                Some((p.list.scroll.get_global_rect(), p.list.view_h))
+            }
+            _ => None,
+        }
+    }
+
     pub fn palette_names(&self) -> Option<Vec<String>> {
         match self.open.as_ref().map(|o| &o.kind) {
             Some(Kind::ExtCmd { palette, .. }) => {
