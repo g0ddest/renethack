@@ -1529,6 +1529,46 @@ mod tests {
         assert_eq!(model("skeleton").0, "skeleton");
     }
 
+    /// Kobolds, goblins, ogres and trolls were one olive brute with a
+    /// club, a size apart at most.
+    #[test]
+    fn the_brutes_are_told_apart() {
+        let (art, cat) = (manifest(), catalog());
+        let look = |n: &str| {
+            let m = cat.monsters.iter().find(|m| m.name == n).unwrap();
+            let r = art.monster(m, 0);
+            (art.model_at(r.model).0, r.tint)
+        };
+        // each kind of a family by its model or its colour
+        let families: [&[&str]; 4] = [
+            &["kobold", "large kobold", "kobold leader", "kobold shaman"],
+            &["goblin", "hobgoblin", "bugbear", "hill orc"],
+            &["ogre", "ogre leader", "ogre tyrant"],
+            &[
+                "troll",
+                "ice troll",
+                "rock troll",
+                "water troll",
+                "Olog-hai",
+            ],
+        ];
+        for family in families {
+            let mut seen = Vec::new();
+            for kind in family {
+                let l = look(kind);
+                assert!(!seen.contains(&l), "{kind} looks as another of its family");
+                seen.push(l);
+            }
+        }
+        // an ogre is no troll, a goblin no kobold, and none is a kobold
+        // grown or shrunk
+        let model = |n: &str| look(n).0;
+        assert_ne!(model("ogre"), model("troll"));
+        assert_ne!(model("goblin"), model("kobold"));
+        assert_ne!(model("troll"), model("kobold"));
+        assert_ne!(model("bugbear"), model("hobgoblin"));
+    }
+
     /// A mumak was drawn two cells long and a baluchitherium four: they hid
     /// the hero they fought and went through a corridor's rock.
     #[test]
