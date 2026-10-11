@@ -1877,7 +1877,10 @@ impl Art {
         if let Some(l) = self.proc_anims.get(&key) {
             return Some(l.clone());
         }
-        let waves = proc_waves(kind);
+        let mut waves = proc_waves(kind);
+        // what a body of creature_kit moves besides (a displacer beast's
+        // tentacles)
+        waves.extend(creature_kit::idle_waves(kind, shape));
         if waves.is_empty() {
             return None;
         }
@@ -3179,6 +3182,10 @@ impl Kit<'_> {
     fn beast(&mut self, root: &mut Gd<Node3D>) {
         if self.shape.as_deref() == Some("cat") {
             self.cat_body(root);
+            return;
+        }
+        if let Some(cat) = self.shape.as_deref().and_then(creature_kit::BigCat::of) {
+            self.big_cat(root, cat);
             return;
         }
         self.skin(

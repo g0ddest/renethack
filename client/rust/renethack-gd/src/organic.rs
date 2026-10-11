@@ -15,8 +15,11 @@
 use std::f32::consts::{FRAC_PI_2, PI, TAU};
 
 use godot::classes::mesh::PrimitiveType;
-use godot::classes::{BoxMesh, Mesh, SurfaceTool};
+use godot::classes::{ArrayMesh, BoxMesh, Mesh, SurfaceTool};
 use godot::prelude::*;
+
+#[path = "organic_felines.rs"]
+pub mod felines;
 
 /// The shapes there are, by creature and part.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -76,6 +79,31 @@ pub enum Organic {
     SporeBall,
     /// The threads trailing under it.
     SporeThreads,
+    /// A big cat's heavy body, from the root of its tail to its neck
+    /// (`felines`).
+    BigCatBody,
+    /// Its broad head and ears: round ones, or a lynx's tall ones and its
+    /// ruff.
+    BigCatHead {
+        lynx: bool,
+    },
+    /// Its long tail, or a lynx's bob.
+    BigCatTail {
+        lynx: bool,
+    },
+    /// Its foreleg or hind leg, thick, on a broad paw.
+    BigCatLeg {
+        hind: bool,
+    },
+    /// The dark marks of its coat on one of its parts.
+    Coat {
+        coat: felines::Coat,
+        part: felines::Part,
+    },
+    /// A displacer beast's tentacle, from its right shoulder or its left.
+    Tentacle {
+        right: bool,
+    },
 }
 
 /// Where a cat's legs join its body (out to the side, up, forward): the
@@ -507,6 +535,12 @@ impl Organic {
                 }
             }
             Organic::SporeBall => spore_ball(&mut m),
+            Organic::BigCatBody => felines::body(&mut m),
+            Organic::BigCatHead { lynx } => felines::head(&mut m, lynx),
+            Organic::BigCatTail { lynx } => felines::tail(&mut m, lynx),
+            Organic::BigCatLeg { hind } => felines::leg(&mut m, hind),
+            Organic::Coat { coat, part } => felines::coat(&mut m, coat, part),
+            Organic::Tentacle { right } => felines::tentacle(&mut m, right),
             Organic::SporeThreads => {
                 for k in 0..4 {
                     let a = (k as f32 / 4.0 * 360.0 + 45.0).to_radians();
@@ -862,6 +896,109 @@ fn around(a: f32, rx: f32, ry: f32, n: f32) -> (f32, f32) {
     )
 }
 
+/// Which way is "up" across a lofted path at its section `i`, in the
+/// path's plane (y, z): its tangent turned a quarter, kept pointing up on
+/// a path that runs forward.
+fn frame_up(rings: &[Section], i: usize) -> Vector2 {
+    let m = rings.len();
+    let (a, b) = (rings[i.saturating_sub(1)], rings[(i + 1).min(m - 1)]);
+    let t = Vector2::new(b.y - a.y, b.z - a.z).normalized();
+    let up = Vector2::new(t.y, -t.x);
+    if up.x < 0.0 && t.y.abs() > 0.5 {
+        -up
+    } else {
+        up
+    }
+}
+
+/// A lofted surface, to lay marks on (stripes, spots): its sections as the
+/// loft smooths them, how far along the path each lies, and each one's up.
+struct Surface {
+    rings: Vec<Section>,
+    dist: Vec<f32>,
+    up: Vec<Vector2>,
+}
+
+impl Surface {
+    fn of(given: &[Section]) -> Surface {
+        let rings = smooth(given);
+        let mut dist = Vec::with_capacity(rings.len());
+        let mut run = 0.0;
+        for i in 0..rings.len() {
+            if i > 0 {
+                let (a, b) = (rings[i - 1], rings[i]);
+                run += Vector2::new(b.y - a.y, b.z - a.z).length();
+            }
+            dist.push(run);
+        }
+        let up = (0..rings.len()).map(|i| frame_up(&rings, i)).collect();
+        Surface { rings, dist, up }
+    }
+
+    /// How long its path is.
+    fn len(&self) -> f32 {
+        self.dist.last().copied().unwrap_or(0.0)
+    }
+
+    /// The section `s` along the path, between the two it falls between,
+    /// and its up.
+    fn ring(&self, s: f32) -> (Section, Vector2) {
+        let s = s.clamp(0.0, self.len());
+        let i = self
+            .dist
+            .partition_point(|&d| d < s)
+            .clamp(1, self.rings.len().max(2) - 1);
+        let (a, b) = (self.rings[i - 1], self.rings[i]);
+        let span = self.dist[i] - self.dist[i - 1];
+        let t = if span > 1e-9 {
+            (s - self.dist[i - 1]) / span
+        } else {
+            0.0
+        };
+        let l = |p: f32, q: f32| p + (q - p) * t;
+        let section = Section {
+            y: l(a.y, b.y),
+            z: l(a.z, b.z),
+            rx: l(a.rx, b.rx),
+            ry: l(a.ry, b.ry),
+            n: l(a.n, b.n),
+        };
+        let up = (self.up[i - 1] * (1.0 - t) + self.up[i] * t).normalized();
+        (section, up)
+    }
+
+    /// The point `s` along the path and `a` round it (as `around` turns: a
+    /// quarter turn is the top of a section).
+    fn point(&self, s: f32, a: f32) -> Vector3 {
+        let (r, up) = self.ring(s);
+        let (x, h) = around(a, r.rx, r.ry, r.n);
+        Vector3::new(x, r.y + up.x * h, r.z + up.y * h)
+    }
+
+    /// The point and the surface's normal there, out from the path.
+    fn at(&self, s: f32, a: f32) -> (Vector3, Vector3) {
+        let p = self.point(s, a);
+        let e = 1e-3;
+        let along = self.point(s + e, a) - self.point(s - e, a);
+        let round = self.point(s, a + e) - self.point(s, a - e);
+        let (r, _) = self.ring(s);
+        let out = p - Vector3::new(0.0, r.y, r.z);
+        let n = along.cross(round);
+        let n = if n.dot(out) < 0.0 { -n } else { n };
+        let n = if n.length_squared() > 1e-12 { n } else { out };
+        (p, n.normalized())
+    }
+
+    /// Its mean radius at `s` along (how far an angle reaches there).
+    fn girth(&self, s: f32) -> f32 {
+        let (r, _) = self.ring(s);
+        (r.rx + r.ry) / 2.0
+    }
+}
+
+/// How far a mark lies off the surface it is laid on, so it shows.
+const LIFT: f32 = 0.004;
+
 /// A mesh being built, its pieces added one by one: the vertices (each
 /// with its normal and texture coordinates) and the triangles.
 #[derive(Default)]
@@ -986,22 +1123,9 @@ impl Merge {
         if m < 2 {
             return;
         }
-        // each section's frame: along the path, the side (x), and up
-        let along = |i: usize| {
-            let (a, b) = (rings[i.saturating_sub(1)], rings[(i + 1).min(m - 1)]);
-            Vector2::new(b.y - a.y, b.z - a.z).normalized()
-        };
         let mut pos = vec![Vector3::ZERO; m * AROUND];
         for (i, r) in rings.iter().enumerate() {
-            let t = along(i);
-            // up across the path, in its plane: the tangent turned a quarter
-            let up = Vector2::new(t.y, -t.x);
-            // keep "up" pointing up on a path that runs forward
-            let up = if up.x < 0.0 && t.y.abs() > 0.5 {
-                -up
-            } else {
-                up
-            };
+            let up = frame_up(&rings, i);
             for j in 0..AROUND {
                 let a = j as f32 / AROUND as f32 * TAU;
                 let (x, h) = around(a, r.rx, r.ry, r.n);
@@ -1030,6 +1154,83 @@ impl Merge {
         });
     }
 
+    /// A mark lying on `surf`, lifted off it: `rows` by `cols` points,
+    /// `at(row, col)` the place of each (along the surface, round it),
+    /// joined in quads, placed by `xf`.
+    fn sheet_on(
+        &mut self,
+        surf: &Surface,
+        rows: usize,
+        cols: usize,
+        xf: Transform3D,
+        at: impl Fn(usize, usize) -> (f32, f32, f32),
+    ) {
+        let base = self.pos.len() as i32;
+        let turn = xf.basis.inverse().transposed();
+        for i in 0..rows {
+            for j in 0..cols {
+                let (s, a, lift) = at(i, j);
+                let (p, n) = surf.at(s, a);
+                let uv = Vector2::new(j as f32 / (cols - 1) as f32, i as f32 / (rows - 1) as f32);
+                self.vertex(xf * (p + n * lift), (turn * n).normalized(), uv);
+            }
+        }
+        let c = cols as i32;
+        for i in 0..rows as i32 - 1 {
+            for j in 0..c - 1 {
+                let a = base + i * c + j;
+                self.tri(a, a + 1, a + c);
+                self.tri(a + 1, a + c + 1, a + c);
+            }
+        }
+    }
+
+    /// A band across `surf`, round it from `a.0` to `a.1`: its middle
+    /// `mid(a)` along the surface, `half(a)` either side of that.
+    fn band(
+        &mut self,
+        surf: &Surface,
+        a: (f32, f32),
+        mid: impl Fn(f32) -> f32,
+        half: impl Fn(f32) -> f32,
+        xf: Transform3D,
+    ) {
+        const STEPS: usize = 14;
+        self.sheet_on(surf, 2, STEPS + 1, xf, |i, j| {
+            let t = a.0 + (a.1 - a.0) * j as f32 / STEPS as f32;
+            let w = if i == 0 { -half(t) } else { half(t) };
+            (mid(t) + w, t, LIFT)
+        });
+    }
+
+    /// A round spot `r` across, lying on `surf` at `s` along it and `a`
+    /// round, a little domed.
+    fn spot(&mut self, surf: &Surface, s: f32, a: f32, r: f32, xf: Transform3D) {
+        const SIDES: usize = 8;
+        let girth = surf.girth(s).max(0.01);
+        let base = self.pos.len() as i32;
+        let turn = xf.basis.inverse().transposed();
+        // its middle, then a ring halfway out and one at its rim
+        for (k, out) in [0.0f32, 0.55, 1.0].into_iter().enumerate() {
+            for j in 0..SIDES {
+                let t = TAU * j as f32 / SIDES as f32;
+                let (p, n) = surf.at(s + out * r * t.cos(), a + out * r * t.sin() / girth);
+                let lift = LIFT + 0.18 * r * (1.0 - out * out);
+                let uv = Vector2::new(j as f32 / SIDES as f32, k as f32 / 2.0);
+                self.vertex(xf * (p + n * lift), (turn * n).normalized(), uv);
+            }
+        }
+        let w = SIDES as i32;
+        for k in 0..2 {
+            for j in 0..w {
+                let a = base + k * w + j;
+                let b = base + k * w + (j + 1) % w;
+                self.tri(a, b, a + w);
+                self.tri(b, b + w, a + w);
+            }
+        }
+    }
+
     /// The lowest and the highest of it (y).
     fn span(&self) -> (f32, f32) {
         self.pos.iter().fold((f32::MAX, f32::MIN), |(lo, hi), p| {
@@ -1038,6 +1239,9 @@ impl Merge {
     }
 
     fn done(self) -> Gd<Mesh> {
+        if self.idx.is_empty() {
+            return ArrayMesh::new_gd().upcast();
+        }
         let mut st = SurfaceTool::new_gd();
         st.begin(PrimitiveType::TRIANGLES);
         for k in 0..self.pos.len() {
@@ -1101,6 +1305,15 @@ mod tests {
         Organic::MoldSpecks,
         Organic::SporeBall,
         Organic::SporeThreads,
+        Organic::BigCatBody,
+        Organic::BigCatHead { lynx: false },
+        Organic::BigCatHead { lynx: true },
+        Organic::BigCatTail { lynx: false },
+        Organic::BigCatTail { lynx: true },
+        Organic::BigCatLeg { hind: false },
+        Organic::BigCatLeg { hind: true },
+        Organic::Tentacle { right: true },
+        Organic::Tentacle { right: false },
     ];
 
     #[test]
@@ -1162,6 +1375,56 @@ mod tests {
     }
 
     #[test]
+    fn every_coat_marks_its_part() {
+        use felines::{Coat, Part};
+        for coat in [Coat::Stripes, Coat::Rosettes, Coat::Lynx] {
+            for part in [Part::Body, Part::Head, Part::Tail] {
+                let marks = Organic::Coat { coat, part }.merged();
+                // a lynx's head marks are its ear tufts, above the ears
+                let under = match part {
+                    Part::Body => Organic::BigCatBody,
+                    Part::Head => Organic::BigCatHead {
+                        lynx: coat == Coat::Lynx,
+                    },
+                    Part::Tail => Organic::BigCatTail {
+                        lynx: coat == Coat::Lynx,
+                    },
+                };
+                assert!(!marks.idx.is_empty(), "{coat:?} {part:?}");
+                assert!(marks.nrm.iter().all(|n| (n.length() - 1.0).abs() < 1e-3));
+                let (lo, hi) = marks.span();
+                let (base_lo, base_hi) = under.merged().span();
+                assert!(
+                    lo >= base_lo - 0.01 && hi <= base_hi + 0.12,
+                    "{coat:?} {part:?}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn a_mark_lies_just_off_its_surface() {
+        // the band's points are the surface's own, lifted along its normal
+        let body = Surface::of(CAT_BODY);
+        let mut m = Merge::default();
+        m.band(
+            &body,
+            (0.3, 1.2),
+            |_| body.len() / 2.0,
+            |_| 0.02,
+            Transform3D::IDENTITY,
+        );
+        let (r, up) = body.ring(body.len() / 2.0);
+        for p in &m.pos {
+            // the section's ellipse through the point, scaled out: just
+            // past 1 (the lift), never inside
+            let h = Vector2::new(p.y - r.y, p.z - r.z).dot(up);
+            let e = (p.x / r.rx).powi(2) + (h / r.ry).powi(2);
+            assert!(e > 1.0 && e < 1.2, "{e}");
+        }
+    }
+
+    #[test]
     fn the_creatures_stand_on_the_floor() {
         // a cat's paws, a lizard's toes, an ant's and a beetle's feet,
         // from where the legs join the body
@@ -1169,6 +1432,8 @@ mod tests {
         for (o, high) in [
             (Organic::CatForeleg, CAT_SHOULDER[1]),
             (Organic::CatHindleg, CAT_HIP[1]),
+            (Organic::BigCatLeg { hind: false }, felines::SHOULDER[1]),
+            (Organic::BigCatLeg { hind: true }, felines::HIP[1]),
             (
                 Organic::LizardLeg {
                     front: true,

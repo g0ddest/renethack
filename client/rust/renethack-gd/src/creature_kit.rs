@@ -6,6 +6,7 @@
 //! names the pivots its animations move (Head, Tail, the legs).
 
 use super::*;
+use crate::organic::felines::{self, Coat, Part};
 use crate::organic::{self, Organic};
 
 const ONE: [f32; 3] = [1.0; 3];
@@ -14,6 +15,43 @@ const FLAT: [f32; 3] = [0.0; 3];
 /// A creature's legs by their pivots: front left, front right, back left,
 /// back right (the walk swings them in pairs).
 pub(super) const LEGS: [&str; 4] = ["LegFL", "LegFR", "LegBL", "LegBR"];
+
+/// A six-legged creature's middle legs, left and right.
+const MIDDLE_LEGS: [&str; 2] = ["LegML", "LegMR"];
+
+/// The big cats, by their model's shape in the manifest.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum BigCat {
+    Jaguar,
+    Lynx,
+    Panther,
+    Tiger,
+    Displacer,
+}
+
+impl BigCat {
+    pub(super) fn of(shape: &str) -> Option<BigCat> {
+        Some(match shape {
+            "jaguar" => BigCat::Jaguar,
+            "lynx" => BigCat::Lynx,
+            "panther" => BigCat::Panther,
+            "tiger" => BigCat::Tiger,
+            "displacer" => BigCat::Displacer,
+            _ => return None,
+        })
+    }
+
+    /// The marks of its coat (a panther's and a displacer beast's are
+    /// plain: their colour is their material).
+    fn coat(self) -> Option<Coat> {
+        match self {
+            BigCat::Jaguar => Some(Coat::Rosettes),
+            BigCat::Tiger => Some(Coat::Stripes),
+            BigCat::Lynx => Some(Coat::Lynx),
+            BigCat::Panther | BigCat::Displacer => None,
+        }
+    }
+}
 
 fn shape(o: Organic) -> MeshKey {
     MeshKey::Organic(o)
@@ -54,6 +92,111 @@ impl Kit<'_> {
             let mut pivot = self.pivot(root, name, [side * at[0], at[1], at[2]]);
             self.skin(&mut pivot, shape(leg), FLAT, FLAT, ONE);
         }
+    }
+
+    /// A big cat: heavier than a housecat, its head broad, its legs thick
+    /// on broad paws, the marks of its coat on it (a tiger's stripes, a
+    /// jaguar's rosettes, a lynx's tufts and ruff); a displacer beast with
+    /// six legs and a tentacle from each shoulder.
+    pub(super) fn big_cat(&mut self, root: &mut Gd<Node3D>, cat: BigCat) {
+        let lynx = cat == BigCat::Lynx;
+        let coat = cat.coat();
+        self.skin(root, shape(Organic::BigCatBody), FLAT, FLAT, ONE);
+        self.marks(root, coat, Part::Body);
+        let mut head = self.pivot(root, "Head", felines::HEAD_AT);
+        self.skin(
+            &mut head,
+            shape(Organic::BigCatHead { lynx }),
+            FLAT,
+            FLAT,
+            ONE,
+        );
+        self.marks(&mut head, coat, Part::Head);
+        self.eyes(&mut head, [0.0, 0.025, 0.12], 0.07, 0.024, true);
+        let nose = self
+            .art
+            .flat(Color::from_rgb(0.2, 0.13, 0.12), Finish::Matte);
+        self.part(
+            &mut head,
+            sphere(0.022),
+            &nose,
+            [0.0, -0.03, 0.225],
+            FLAT,
+            [1.4, 0.8, 1.0],
+        );
+        let mut tail = self.pivot(root, "Tail", felines::TAIL_AT);
+        self.skin(
+            &mut tail,
+            shape(Organic::BigCatTail { lynx }),
+            FLAT,
+            FLAT,
+            ONE,
+        );
+        self.marks(&mut tail, coat, Part::Tail);
+        let mut legs: Vec<(&str, bool, [f32; 3])> = LEGS
+            .iter()
+            .enumerate()
+            .map(|(i, &name)| {
+                if i < 2 {
+                    (name, false, felines::SHOULDER)
+                } else {
+                    (name, true, felines::HIP)
+                }
+            })
+            .collect();
+        if cat == BigCat::Displacer {
+            legs.extend(
+                MIDDLE_LEGS
+                    .iter()
+                    .map(|&name| (name, false, felines::MIDDLE)),
+            );
+        }
+        for (name, hind, at) in legs {
+            let side = if name.ends_with('L') { -1.0 } else { 1.0 };
+            let mut leg = self.pivot(root, name, [side * at[0], at[1], at[2]]);
+            self.skin(
+                &mut leg,
+                shape(Organic::BigCatLeg { hind }),
+                FLAT,
+                FLAT,
+                ONE,
+            );
+        }
+        if cat == BigCat::Displacer {
+            for (right, name) in [(false, "TentL"), (true, "TentR")] {
+                let [x, y, z] = felines::TENTACLE_AT;
+                let x = if right { x } else { -x };
+                let mut tentacle = self.pivot(root, name, [x, y, z]);
+                self.skin(
+                    &mut tentacle,
+                    shape(Organic::Tentacle { right }),
+                    FLAT,
+                    FLAT,
+                    ONE,
+                );
+            }
+        }
+    }
+
+    /// The dark marks of a coat on a part of a big cat (none without one).
+    fn marks(&mut self, parent: &mut Gd<Node3D>, coat: Option<Coat>, part: Part) {
+        let Some(coat) = coat else {
+            return;
+        };
+        let ink = if coat.black_on(part) {
+            self.art
+                .flat(Color::from_rgb(0.05, 0.04, 0.035), Finish::Matte)
+        } else {
+            self.dark()
+        };
+        self.part(
+            parent,
+            shape(Organic::Coat { coat, part }),
+            &ink,
+            FLAT,
+            FLAT,
+            ONE,
+        );
     }
 
     /// A newt, a gecko, a crocodile: a low flat body slung between legs
@@ -285,6 +428,20 @@ impl Kit<'_> {
     }
 }
 
+/// What a body built here moves when idle besides what `proc_waves` moves
+/// for its kind: a displacer beast's tentacles weave.
+pub(super) fn idle_waves(kind: Proc, shape: Option<&str>) -> Vec<Wave> {
+    match (kind, shape.and_then(BigCat::of)) {
+        (Proc::Beast, Some(BigCat::Displacer)) => vec![
+            Wave::Rock("TentL", Vector3::RIGHT, 14.0, 0.0),
+            Wave::Rock("TentR", Vector3::RIGHT, 14.0, 0.5),
+            Wave::Rock("TentL", Vector3::BACK, 8.0, 0.25),
+            Wave::Rock("TentR", Vector3::BACK, 8.0, 0.75),
+        ],
+        _ => Vec::new(),
+    }
+}
+
 /// Seconds a walking body takes for one step of each leg.
 pub(super) const WALK_PERIOD: f32 = 0.6;
 
@@ -293,15 +450,28 @@ pub(super) const WALK_PERIOD: f32 = 0.6;
 pub(super) fn walk_waves(kind: Proc, shape: Option<&str>) -> Vec<Wave> {
     let x = Vector3::RIGHT;
     let y = Vector3::UP;
+    let cat = shape.and_then(BigCat::of);
     match (kind, shape) {
         // a trot: the legs swing fore and aft, a diagonal pair together
-        (Proc::Beast, Some("cat")) => vec![
-            Wave::Rock(LEGS[0], x, 26.0, 0.0),
-            Wave::Rock(LEGS[3], x, 26.0, 0.0),
-            Wave::Rock(LEGS[1], x, 26.0, 0.5),
-            Wave::Rock(LEGS[2], x, 26.0, 0.5),
-            Wave::Rock("Tail", y, 8.0, 0.25),
-        ],
+        // (a displacer beast's middle legs a quarter step behind the
+        // front ones of their side, a wave down each flank)
+        (Proc::Beast, Some(s)) if s == "cat" || cat.is_some() => {
+            let mut waves = vec![
+                Wave::Rock(LEGS[0], x, 26.0, 0.0),
+                Wave::Rock(LEGS[3], x, 26.0, 0.0),
+                Wave::Rock(LEGS[1], x, 26.0, 0.5),
+                Wave::Rock(LEGS[2], x, 26.0, 0.5),
+                Wave::Rock("Tail", y, 8.0, 0.25),
+            ];
+            if cat == Some(BigCat::Displacer) {
+                waves.extend([
+                    Wave::Rock(MIDDLE_LEGS[0], x, 26.0, 0.25),
+                    Wave::Rock(MIDDLE_LEGS[1], x, 26.0, 0.75),
+                ]);
+                waves.extend(idle_waves(kind, shape));
+            }
+            waves
+        }
         // a sprawled leg swings round its hip, its foot along the floor;
         // turned the same way, a left foot goes forward as a right one
         // goes back, so a diagonal pair turns opposite ways
