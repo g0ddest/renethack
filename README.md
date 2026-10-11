@@ -160,7 +160,11 @@ again on the title after it. The `riding` scenario puts a Knight on his
 pony on the first turn (debug mode): seated on its back in his kit, the
 pony walking and galloping under him, a blow and the lance couched from the
 saddle, the pony a pet with its saddle once he is off, then a warhorse
-ridden through a save and a restore. With `--screenshots` the soak saves the screen
+ridden through a save and a restore. The `states` scenario (debug mode)
+shows what holds the hero, which their own glyph hides from the map: an
+archeologist digs a pit and stands in it to the waist, then climbs out; is
+held crouching by the shut jaws of a bear trap, wrapped struggling in a
+web, sunk in lava and under water. With `--screenshots` the soak saves the screen
 every 60 answers (`soak-<seed>-<answers>.png`) and the first dialogs of each
 kind as the player meets them, each question once
 (`dlg-<kind>-<seed>-<answers>.png`). A picture waits for the screen to hold

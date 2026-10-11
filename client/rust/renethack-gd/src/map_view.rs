@@ -55,6 +55,11 @@ use crate::surface::{Fow, FowCell, Role, Seen, Surfaces, cell_index, sight};
 use crate::theme::{self, nh_color};
 use crate::vfx::{Vfx, VfxKind};
 
+#[path = "hero_pose.rs"]
+mod hero_pose;
+
+pub use hero_pose::Held;
+
 /// Low enough to see creatures from the side, high enough to see the floor
 /// between walls: the pitch at the default distance; closer in the camera
 /// looks more from the side, further out more from above.
@@ -2760,6 +2765,8 @@ pub struct MapView {
     cover: f32,
     /// The effects of the items the hero uses.
     hero_fx: crate::hero::HeroFx,
+    /// What the hero's body shows of their state.
+    hero_pose: hero_pose::HeroPose,
 }
 
 /// A marker projected on the level's surfaces (never on models): a ring
@@ -3178,6 +3185,7 @@ impl MapView {
         let art = Art::new(cells_root.clone());
         let center = Vector3::new(COLNO as f32 / 2.0, 0.0, ROWNO as f32 / 2.0);
         let hero_fx = crate::hero::HeroFx::new(root.clone());
+        let hero_pose = hero_pose::HeroPose::new(&mut root);
         let fow = Fow::new();
         let surfaces = Surfaces::new(&fow, art.manifest());
         let batches = Batches::new(cells_root.clone(), 1 | TERRAIN_LAYER);
@@ -3303,6 +3311,7 @@ impl MapView {
             hero_gear: crate::hero::HeroGear::default(),
             aim_lift: 0.0,
             hero_fx,
+            hero_pose,
             title: None,
             titled: false,
             title_hero: ("valkyrie".to_string(), true),
@@ -3512,6 +3521,7 @@ impl MapView {
                     .global_shader_parameter_set("hero_pos", &at(0.0, -100.0, 0.0).to_variant());
             }
         }
+        self.pose_hero(world, catalog, delta as f32);
         self.show_hover();
         if std::mem::take(&mut self.hints_dirty) {
             self.show_hints();

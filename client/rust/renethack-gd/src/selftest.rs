@@ -56,6 +56,8 @@ mod rim_tests;
 mod shop;
 #[path = "selftest_footprints.rs"]
 mod sizes;
+#[path = "selftest_states.rs"]
+mod states_tests;
 #[path = "selftest_through.rs"]
 mod through_tests;
 #[path = "selftest_world.rs"]
@@ -111,6 +113,13 @@ enum Step {
     /// A key for the request now pending, chosen by what the game shows
     /// (a menu entry's letter).
     KeyFrom(&'static str, fn(&RenethackGame) -> Result<KeyInput, String>),
+    /// A key for each new request, chosen by what the game shows, until
+    /// the chooser gives none: the state it plays for is reached (step onto
+    /// a trap until it holds, struggle until free).
+    KeysUntil(
+        &'static str,
+        fn(&RenethackGame) -> Result<Option<KeyInput>, String>,
+    ),
     /// A dialog event for the request now pending.
     Dialog(DialogEvent),
     Call(&'static str, fn(&mut RenethackGame) -> Result<(), String>),
@@ -4764,6 +4773,7 @@ impl SelfTest {
             "layouts" => layouts_tests::layouts(),
             "rim" => rim_tests::rim(),
             "riding" => riding_tests::riding(),
+            "states" => states_tests::states(),
             "doll" => doll_tests::doll(),
             "first-open" => first_tests::first_open(),
             "through" => through_tests::through(),
@@ -4980,6 +4990,25 @@ impl SelfTest {
                     self.next();
                     return;
                 }
+                Step::KeysUntil(what, f) => {
+                    let Some((id, _)) = pending else {
+                        return;
+                    };
+                    match f(game) {
+                        Ok(None) => self.next(),
+                        // a key a request: wait for a newer one
+                        Ok(Some(_)) if !newer(id, self.last_req) => return,
+                        Ok(Some(k)) => {
+                            game.push_ui(UiEvent::Key(k));
+                            self.last_req = (serial, id);
+                            return;
+                        }
+                        Err(why) => {
+                            let why = format!("{what}: {why}");
+                            return self.fail(game, &why);
+                        }
+                    }
+                }
                 Step::Soak(_) => unreachable!("the soak runs before the match"),
                 Step::Dialog(ev) => {
                     let Some((id, _)) = pending else {
@@ -5157,6 +5186,7 @@ fn describe(step: &Step) -> String {
         Step::Push(ev) => format!("{ev:?}"),
         Step::Key(k) => format!("a request for key {k:?}"),
         Step::KeyFrom(what, _) => format!("a request for {what}"),
+        Step::KeysUntil(what, _) => what.to_string(),
         Step::Soak(_) => "the soak".to_string(),
         Step::Dialog(ev) => format!("a request for {ev:?}"),
         Step::Call(what, _) | Step::Inv(what, _) | Step::PadFrom(what, _) => what.to_string(),
