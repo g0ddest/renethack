@@ -8,9 +8,10 @@ The recipe is client/godot/art/sources.json: Poly Haven textures and models
 (through their public API) and the free files of itch.io packs (the site's own
 "no thanks, just take me to the downloads" flow), files and zips at fixed
 URLs (VFX flipbooks, particles, icons), textures painted from those by
-tools/art_paint.py (a corpse's skin, a mummy's linen), models made from
-those in Blender by tools/blender (static models rigged with a Quaternius
-animal's skeleton), and the OFL fonts of the UI
+tools/art_paint.py (a corpse's skin, a mummy's linen), rigged models with
+bones turned in their clips by tools/gltf_turn.py (a dragon's raised
+wings), models made from those in Blender by tools/blender (static models
+rigged with a Quaternius animal's skeleton), and the OFL fonts of the UI
 (the google/fonts repository at a fixed commit, into client/godot/fonts). Textures larger than
 `texture_max` are scaled down and stored as JPEG; glTF files are rewritten to
 point at the converted images. client/godot/art/art.lock.json records the
@@ -460,6 +461,17 @@ def do_painted(w, item):
     w.put(item["out"], out.getvalue())
 
 
+def do_turned(w, item):
+    """A rigged GLB written before in this run (`from`, under ART) with
+    bones turned in every clip by tools/gltf_turn.py (`raise`: {"bone":
+    degrees} about the body's forward axis)."""
+    import gltf_turn
+    with open(os.path.join(ART, item["from"]), "rb") as f:
+        data = f.read()
+    w.put(item["out"], gltf_turn.turned(data, item["raise"], item.get("front", "Head"),
+                                        item.get("back", "Body")))
+
+
 def do_fonts(op, item):
     """OFL fonts go to client/godot/fonts/<dest>/, outside the CC0 tree."""
     for name in item["files"]:
@@ -513,6 +525,9 @@ def main():
     for item in recipe.get("painted", []):
         print("painted", item["out"], flush=True)
         do_painted(w, item)
+    for item in recipe.get("turned", []):
+        print("turned", item["out"], flush=True)
+        do_turned(w, item)
     for item in recipe.get("blender", []):
         print("blender", item["script"], item["out"], flush=True)
         data = do_blender(op, item, blender, max_size)

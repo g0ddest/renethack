@@ -232,6 +232,11 @@
   {"paint": "pale", "from": "cc0/quaternius/bestiary/Puglin.glb", "image": "T_Puglin_BaseColor", "light": 0.6, "out": "made/skins/puglin_pale.jpg",
    "use": "the Puglin without its green, for a kind's own colour: a kobold zombie"}
  ],
+ "turned_comment": "Rigged models written before in the run (`from`) with bones turned in every clip by tools/gltf_turn.py: `raise` {bone: degrees} about the body's forward axis (from `back` to `front`), the way that lifts the bone's tip.",
+ "turned": [
+  {"from": "cc0/quaternius/monsters/Dragon.glb", "raise": {"Wing1.L": 40, "Wing1.R": 40}, "out": "made/DragonRearing.glb",
+   "use": "grown dragons: their wings beat raised over their backs (the babies' spread)"}
+ ],
  "blender_comment": "Models made in Blender by tools/blender/<script>.py: static models rigged with the skeleton and clips of a Quaternius animal (rig_quadruped), centaurs put together from the horse and a base character (centaur), a stethoscope on the floor and round the neck of each outfit body it is fitted to (stethoscope). URLs are downloaded (and locked); other paths are files above. fetch_art.py runs Blender when it finds one ($BLENDER, `blender` on the PATH, /Applications/Blender.app); without it the committed models are kept and only the downloads are checked. CC-BY models go to ccby/, see CREDITS.md.",
  "blender": [
   {"script": "rig_quadruped", "out": "ccby/polypizza/Elephant.glb", "name": "Elephant", "texture_max": 512,

@@ -1640,6 +1640,25 @@ mod tests {
         }
     }
 
+    /// A grown dragon was drawn a fifth bigger than a baby, the size of a
+    /// dog: it stands half again as tall now, its wings raised.
+    #[test]
+    fn a_grown_dragon_is_much_bigger_than_a_baby() {
+        let (art, cat) = (manifest(), catalog());
+        let find = |n: &str| cat.monsters.iter().find(|m| m.name == n).unwrap();
+        for colour in ["red", "blue", "gray", "silver", "black"] {
+            let baby = art.monster(find(&format!("baby {colour} dragon")), 0);
+            let grown = art.monster(find(&format!("{colour} dragon")), 0);
+            assert_eq!(art.model_at(grown.model).0, "dragon_adult", "{colour}");
+            assert!(
+                grown.height > 1.5 * baby.height,
+                "{colour}: {} against {}",
+                grown.height,
+                baby.height
+            );
+        }
+    }
+
     /// A mumak was drawn two cells long and a baluchitherium four: they hid
     /// the hero they fought and went through a corridor's rock.
     #[test]
