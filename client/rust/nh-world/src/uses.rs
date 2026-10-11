@@ -33,6 +33,8 @@ pub enum UseKind {
     PickUp,
     /// `k` with number_pad, `^D` either way (no item).
     Kick,
+    /// `#pray`, `M-p` (no item): shown only when the prayer began.
+    Pray,
 }
 
 impl UseKind {
@@ -41,6 +43,9 @@ impl UseKind {
         use UseKind::*;
         if key == 4 {
             return Some(Kick);
+        }
+        if key == 0x80 | 'p' as i32 {
+            return Some(Pray);
         }
         let c = char::from(u8::try_from(key).ok()?);
         Some(match c {
@@ -82,13 +87,17 @@ impl UseKind {
             "wield" => Wield,
             "pickup" => PickUp,
             "kick" => Kick,
+            "pray" => Pray,
             _ => return None,
         })
     }
 
     /// Needs an item's letter to be a use (the others need none).
     pub fn needs_item(self) -> bool {
-        !matches!(self, UseKind::Cast | UseKind::PickUp | UseKind::Kick)
+        !matches!(
+            self,
+            UseKind::Cast | UseKind::PickUp | UseKind::Kick | UseKind::Pray
+        )
     }
 }
 
@@ -108,6 +117,60 @@ pub struct ItemUse {
     /// The spot picked on the map instead (a polearm applied asks where to
     /// hit).
     pub spot: Option<(i32, i32)>,
+    /// How a prayer went, as the messages after it told.
+    pub prayer: Option<PrayerOutcome>,
+}
+
+/// How a prayer went, by what the game said (pray.c): only what the
+/// player reads.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum PrayerOutcome {
+    /// "You are surrounded by a shimmering light.", "You feel that Tyr is
+    /// well-pleased" (pleased, satisfied), a hopeful feeling.
+    Pleased,
+    /// "You feel that Tyr is displeased.", "Thou hast angered me.", a black
+    /// glow, a bolt of lightning, diabolical laughter.
+    Angered,
+    /// Neither: no god answered (in Gehennom).
+    Unanswered,
+}
+
+/// What the god's answer to a prayer was, from the messages after it; an
+/// angry word outweighs any kind one.
+pub fn prayer_outcome<'a>(texts: impl IntoIterator<Item = &'a str>) -> PrayerOutcome {
+    const PLEASED: [&str; 6] = [
+        " is well-pleased.",
+        " is pleased.",
+        " is satisfied.",
+        // hallucinating
+        " is pleased as punch.",
+        " is ticklish.",
+        " is full.",
+    ];
+    const ANGRY: [&str; 2] = [" is displeased.", " is bummed."];
+    let mut out = PrayerOutcome::Unanswered;
+    for t in texts {
+        let god = t.strip_prefix("You feel that ");
+        let angry = god.is_some_and(|g| ANGRY.iter().any(|a| g.ends_with(a)))
+            || t.contains("Thou hast angered me")
+            || t.contains("Thou must relearn thy lessons")
+            || t.contains("Thou durst ")
+            || t.contains("glow surrounds you.")
+            || t.contains("bolt of lightning")
+            || t.contains("diabolical laughter")
+            || t.contains("like you are falling apart");
+        if angry {
+            return PrayerOutcome::Angered;
+        }
+        let pleased = god.is_some_and(|g| PLEASED.iter().any(|p| g.ends_with(p)))
+            || t.starts_with("You are surrounded by a shimmering light")
+            || t.starts_with("You have a hopeful feeling")
+            || t.starts_with("You realize that the gods are not like you and I");
+        if pleased {
+            out = PrayerOutcome::Pleased;
+        }
+    }
+    out
 }
 
 impl ItemUse {
@@ -120,6 +183,7 @@ impl ItemUse {
             dir: None,
             vertical: None,
             spot: None,
+            prayer: None,
         }
     }
 }
@@ -143,6 +207,9 @@ struct Armed {
     counting: bool,
     /// `Z`: a spell was picked from the menu.
     chosen: bool,
+    /// The log's last message when it started: what the game said since
+    /// is about it.
+    since: u64,
 }
 
 impl Armed {
@@ -150,7 +217,7 @@ impl Armed {
         match self.u.kind {
             UseKind::Cast => self.chosen,
             UseKind::Kick => self.u.dir.is_some(),
-            UseKind::PickUp => true,
+            UseKind::PickUp | UseKind::Pray => true,
             _ => self.u.letter.is_some(),
         }
     }
@@ -282,7 +349,20 @@ impl UseTracker {
             self.armed = Some(a);
             return None;
         }
-        a.ready().then_some(a.u)
+        if !a.ready() {
+            return None;
+        }
+        let mut u = a.u;
+        if u.kind == UseKind::Pray {
+            // the prayer began (not refused at "Are you sure you want to
+            // pray?"), and how it went
+            let said: Vec<&str> = world.log.since(a.since).map(|m| m.text.as_str()).collect();
+            if !said.iter().any(|t| t.starts_with("You begin praying to")) {
+                return None;
+            }
+            u.prayer = Some(prayer_outcome(said));
+        }
+        Some(u)
     }
 }
 
@@ -298,6 +378,7 @@ fn arm(kind: UseKind, world: &World) -> Armed {
         u,
         counting: false,
         chosen: false,
+        since: world.log.last_seq(),
     }
 }
 
@@ -388,6 +469,97 @@ mod tests {
 
     fn ch(c: char) -> Reply {
         Reply::Char(c as i32)
+    }
+
+    #[test]
+    fn a_prayer_is_shown_when_it_began_with_how_it_went() {
+        let mut w = world();
+        let sure = Prompt::Choice {
+            query: "Are you sure you want to pray?".into(),
+            visible: vec!['y', 'n'],
+            allowed: vec!['y', 'n'],
+            default: Some('n'),
+        };
+        let pray = |w: &World| {
+            let mut t = UseTracker::new();
+            t.on_reply(&Prompt::ExtCmd, &Reply::ExtCmd(Some("pray".into())), w);
+            t.on_reply(&sure, &ch('y'), w);
+            t
+        };
+        // said no: no prayer
+        let mut t = pray(&w);
+        assert_eq!(t.on_prompt(&Prompt::Command, &w), None);
+        // too soon: the god is displeased
+        let mut t = pray(&w);
+        for m in [
+            "You begin praying to Tyr.",
+            "You finish your prayer.",
+            "You feel that Tyr is displeased.",
+        ] {
+            w.log.push(m.into(), 0, None, false);
+        }
+        let u = t.on_prompt(&Prompt::Command, &w).unwrap();
+        assert_eq!(
+            (u.kind, u.prayer),
+            (UseKind::Pray, Some(PrayerOutcome::Angered))
+        );
+        assert_eq!(u.letter, None);
+        // M-p (Alt+p without number_pad) prays too
+        assert_eq!(
+            UseKind::of_key(0x80 | 'p' as i32, false),
+            Some(UseKind::Pray)
+        );
+        assert!(!UseKind::Pray.needs_item());
+    }
+
+    #[test]
+    fn a_prayers_outcome_is_what_the_god_said() {
+        use PrayerOutcome::*;
+        assert_eq!(
+            prayer_outcome([
+                "You begin praying to Tyr.",
+                "You are surrounded by a shimmering light.",
+                "You finish your prayer.",
+                "You feel that Tyr is well-pleased."
+            ]),
+            Pleased
+        );
+        assert_eq!(
+            prayer_outcome([
+                "You feel that Anhur is satisfied.",
+                "You have a hopeful feeling."
+            ]),
+            Pleased
+        );
+        assert_eq!(
+            prayer_outcome(["You feel that Mitra is displeased."]),
+            Angered
+        );
+        assert_eq!(
+            prayer_outcome(["\"Thou hast angered me.\"", "A black glow surrounds you."]),
+            Angered
+        );
+        assert_eq!(
+            prayer_outcome(["Suddenly, a bolt of lightning strikes you!"]),
+            Angered
+        );
+        assert_eq!(
+            prayer_outcome(["You hear diabolical laughter all around you..."]),
+            Angered
+        );
+        assert_eq!(
+            prayer_outcome(["Since you are in Gehennom, Tyr can't help you."]),
+            Unanswered
+        );
+        // an angry word outweighs a kind one
+        assert_eq!(
+            prayer_outcome([
+                "You feel that Tyr is pleased.",
+                "A black glow surrounds you."
+            ]),
+            Angered
+        );
+        assert_eq!(prayer_outcome([]), Unanswered);
     }
 
     #[test]
