@@ -1,48 +1,161 @@
 {
-  "comment": "The sounds tools/fetch_audio.py fetches: zips at fixed URLs, the files picked from under `root` by pattern, written to cc0/<dest> with the pack's licence; short sounds as mono WAV, those marked keep_ogg as they are. audio.lock.json records each download's sha256. Kenney's CC0 packs are placeholders until the picks of the audio sources note land; manifest.json says which file plays for which cue.",
-  "out": "cc0",
-  "zips": [
+  "comment": "The sounds tools/fetch_audio.py fetches: files and archives (zip, 7z, rar) at fixed URLs or itch.io uploads; the files picked from under `root` by pattern are prepared by their kind (targets: loudness in LUFS, true-peak ceiling in dBTP, channels, format, Vorbis quality) and written to <dest>, cc0/ or ccby/ by licence. sfx: trimmed mono WAV; loop, music, jingle: stereo Ogg; mono: an Ogg as mono WAV (Kenney's placeholders); keep: as it is. Optional per item: cut [start, end] s, split (takes cut at silences), seam s (a loop's crossfade), gain dB, rename; each a value or a map by file. mixes: ambience beds made of layers (sources by id). credit: what CREDITS.md says. audio.lock.json records each download's sha256.",
+  "roots": ["cc0", "ccby"],
+  "targets": {
+    "sfx": {"lufs": -18, "ceiling": -1, "channels": 1, "format": "wav"},
+    "jingle": {"lufs": -18, "ceiling": -1, "channels": 2, "format": "ogg", "quality": 0.5},
+    "loop": {"lufs": -23, "ceiling": -2, "channels": 2, "format": "ogg", "quality": 0.35},
+    "music": {"lufs": -23, "ceiling": -1, "channels": 2, "format": "ogg", "quality": 0.45}
+  },
+  "sources": [
     {
       "url": "https://kenney.nl/media/pages/assets/impact-sounds/87b4ddecda-1677589768/kenney_impact-sounds.zip",
       "root": "Audio/",
-      "files": ["footstep_*.ogg", "impactBell_heavy_00[0-2].ogg", "impactGeneric_light_*.ogg", "impactGlass_light_*.ogg", "impactMetal_heavy_*.ogg", "impactMining_*.ogg", "impactPlank_medium_*.ogg", "impactPlate_light_*.ogg", "impactPunch_*.ogg", "impactSoft_*.ogg", "impactWood_heavy_*.ogg"],
+      "files": ["impactBell_heavy_00[0-2].ogg", "impactGeneric_light_*.ogg", "impactGlass_light_*.ogg", "impactMetal_heavy_*.ogg", "impactMining_*.ogg", "impactPlank_medium_*.ogg", "impactPlate_light_*.ogg", "impactPunch_*.ogg", "impactSoft_*.ogg", "impactWood_heavy_*.ogg"],
       "license_files": ["License.txt"],
-      "dest": "kenney/impact",
-      "use": "footsteps on stone, wood, grass, snow and carpet; blows, falls, doors kicked, bells"
+      "dest": "cc0/kenney/impact",
+      "kind": "mono",
+      "use": "blows, falls, doors kicked, bells; a hoof's and a skittering step until better",
+      "credit": {
+        "what": "Impact Sounds: footsteps, impacts of flesh, wood, metal, glass and stone, bells",
+        "author": "Kenney",
+        "license": "CC0",
+        "page": "https://kenney.nl/assets/impact-sounds"
+      }
     },
     {
       "url": "https://kenney.nl/media/pages/assets/rpg-audio/8e99002d76-1677590336/kenney_rpg-audio.zip",
       "root": "Audio/",
-      "files": ["beltHandle[12].ogg", "book*.ogg", "chop.ogg", "cloth[1-4].ogg", "clothBelt*.ogg", "creak[1-3].ogg", "doorClose_[1-4].ogg", "doorOpen_[12].ogg", "drawKnife[1-3].ogg", "dropLeather.ogg", "footstep0[0-9].ogg", "handleCoins*.ogg", "handleSmallLeather*.ogg", "knifeSlice*.ogg", "metalClick.ogg", "metalLatch.ogg"],
+      "files": ["beltHandle[12].ogg", "book*.ogg", "chop.ogg", "cloth[1-4].ogg", "clothBelt*.ogg", "creak[1-3].ogg", "doorClose_[1-4].ogg", "doorOpen_[12].ogg", "drawKnife[1-3].ogg", "dropLeather.ogg", "handleCoins*.ogg", "handleSmallLeather*.ogg", "knifeSlice*.ogg", "metalClick.ogg", "metalLatch.ogg"],
       "license_files": ["License.txt"],
-      "dest": "kenney/rpg",
-      "use": "doors, coins, books, cloth and leather, blades drawn and slicing, a creaking board, steps on dirt"
+      "dest": "cc0/kenney/rpg",
+      "kind": "mono",
+      "use": "doors, coins, books, cloth and leather, blades drawn and slicing, a creaking board",
+      "credit": {
+        "what": "RPG Audio: doors, coins, books, cloth and leather, blades, a creaking board, footsteps",
+        "author": "Kenney",
+        "license": "CC0",
+        "page": "https://kenney.nl/assets/rpg-audio"
+      }
     },
     {
       "url": "https://kenney.nl/media/pages/assets/interface-sounds/fa43c1dd4d-1677589452/kenney_interface-sounds.zip",
       "root": "Audio/",
       "files": ["click_*.ogg", "close_*.ogg", "error_00[1-4].ogg", "maximize_00[1-8].ogg", "open_*.ogg", "select_00[1-4].ogg", "tick_*.ogg"],
       "license_files": ["License.txt"],
-      "dest": "kenney/interface",
-      "use": "the interface: clicks, panels opening and closing; zaps and spells until better"
+      "dest": "cc0/kenney/interface",
+      "kind": "mono",
+      "use": "the interface: clicks, panels opening and closing; zaps and spells until better",
+      "credit": {
+        "what": "Interface Sounds: clicks, ticks, panels opening and closing",
+        "author": "Kenney",
+        "license": "CC0",
+        "page": "https://kenney.nl/assets/interface-sounds"
+      }
     },
     {
       "url": "https://kenney.nl/media/pages/assets/music-jingles/f37e530b9e-1677590399/kenney_music-jingles.zip",
       "root": "Audio/Steel jingles/",
       "files": ["jingles_STEEL00.ogg"],
       "license_files": ["License.txt"],
-      "dest": "kenney/jingles",
-      "keep_ogg": true,
-      "use": "level up"
+      "dest": "cc0/kenney/jingles",
+      "kind": "keep",
+      "use": "level up",
+      "credit": {
+        "what": "Music Jingles: a steel and a pizzicato jingle",
+        "author": "Kenney",
+        "license": "CC0",
+        "page": "https://kenney.nl/assets/music-jingles"
+      }
     },
     {
       "url": "https://kenney.nl/media/pages/assets/music-jingles/f37e530b9e-1677590399/kenney_music-jingles.zip",
       "root": "Audio/Pizzicato jingles/",
       "files": ["jingles_PIZZI10.ogg"],
-      "license_files": [],
-      "dest": "kenney/jingles",
-      "keep_ogg": true,
-      "use": "the hero's death"
+      "dest": "cc0/kenney/jingles",
+      "kind": "keep",
+      "use": "the hero's death",
+      "credit": {
+        "what": "Music Jingles: a steel and a pizzicato jingle",
+        "author": "Kenney",
+        "license": "CC0",
+        "page": "https://kenney.nl/assets/music-jingles"
+      }
+    },
+    {
+      "url": "https://kenney.nl/media/pages/assets/rpg-audio/8e99002d76-1677590336/kenney_rpg-audio.zip",
+      "root": "Audio/",
+      "files": ["footstep0[0-9].ogg"],
+      "license_files": ["License.txt"],
+      "dest": "cc0/kenney/steps",
+      "kind": "sfx",
+      "use": "steps on dirt (corridors, the Mines)",
+      "credit": {
+        "what": "RPG Audio: footsteps on dirt",
+        "author": "Kenney",
+        "license": "CC0",
+        "page": "https://kenney.nl/assets/rpg-audio"
+      }
+    },
+    {
+      "url": "https://kenney.nl/media/pages/assets/impact-sounds/87b4ddecda-1677589768/kenney_impact-sounds.zip",
+      "root": "Audio/",
+      "files": ["footstep_snow_00[0-4].ogg"],
+      "dest": "cc0/kenney/steps",
+      "kind": "sfx",
+      "use": "steps on ice (snow, pitched up)",
+      "credit": {
+        "what": "Impact Sounds: footsteps on snow",
+        "author": "Kenney",
+        "license": "CC0",
+        "page": "https://kenney.nl/assets/impact-sounds"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/footsteps_0.zip",
+      "root": "footsteps/",
+      "files": ["boots/[0-8].ogg", "wood/[0-8].ogg", "grass/[0-8].ogg", "dog/[0-7].ogg"],
+      "license_files": ["footsteps/boots/license.txt", "footsteps/wood/license.txt", "footsteps/grass/license.txt", "footsteps/dog/license.txt"],
+      "dest": "ccby/congusbongus/footsteps",
+      "kind": "sfx",
+      "use": "steps: boots on stone (the default), wood, grass; a dog's paws",
+      "credit": {
+        "what": "Footsteps on different surfaces: boots on stone, wood, grass; paws",
+        "author": "congusbongus, from Freesound recordings by swuing (footstep-concrete, footstep-wood, footstep-grass) and sabotovat (Wolf run)",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/footsteps-on-different-surfaces",
+        "notice": "each folder's license.txt names its Freesound original"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/Fantasy%20Sound%20Library.zip",
+      "root": "Fantasy Sound Library/Wav/Footsteps/",
+      "files": ["Footstep_Water_0[0-7].wav"],
+      "dest": "ccby/lrsf/fantasy",
+      "kind": "sfx",
+      "use": "steps in water",
+      "credit": {
+        "what": "Fantasy Sound Effects Library: footsteps in water",
+        "author": "Little Robot Sound Factory",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/fantasy-sound-effects-library",
+        "notice": "www.littlerobotsoundfactory.com"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/25-CC0-mud-sfx.zip",
+      "files": ["mud_06.ogg", "mud_08.ogg", "mud_13.ogg", "mud_15.ogg", "mud_22.ogg", "mud_25.ogg"],
+      "dest": "cc0/rubberduck/mud",
+      "kind": "sfx",
+      "use": "an oozing monster's steps",
+      "credit": {
+        "what": "25 CC0 mud sfx: squelches",
+        "author": "rubberduck",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/25-cc0-mud-sfx"
+      }
     }
-  ]
+  ],
+  "layers": [],
+  "mixes": []
 }
