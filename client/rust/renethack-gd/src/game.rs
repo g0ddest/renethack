@@ -416,6 +416,8 @@ pub struct RenethackGame {
     /// The window's size the self-test asked for (its screenshots must be
     /// that size).
     pub(crate) window_size: Option<Vector2i>,
+    /// A volume was set since the profile last kept them.
+    volumes_set: bool,
 }
 
 /// The warm-up behind the start-up veil, a step a frame, beside the map's
@@ -536,6 +538,7 @@ impl INode for RenethackGame {
             title_clock: None,
             title_render: ([0; 5], 0.0),
             window_size: None,
+            volumes_set: false,
         }
     }
 
@@ -650,12 +653,18 @@ impl INode for RenethackGame {
             paths.playground.display()
         );
         self.paths = Some(paths.clone());
+        let profile = read_profile(&paths.playground)
+            .map(|t| Profile::from_json(&t))
+            .unwrap_or_default();
+        // the sound at the volumes the player left it at
+        crate::audio::ensure_buses();
+        crate::audio::apply_volumes(&profile.volumes);
         // the title scene shows the hero of the last game played
-        if let Some(p) = read_profile(&paths.playground).map(|t| Profile::from_json(&t))
-            && let Some(role) = p.last_role.as_deref()
+        if let Some(role) = profile.last_role.as_deref()
             && let Some(ui) = self.ui.as_mut()
         {
-            ui.map.set_title_hero(role, p.last_female.unwrap_or(false));
+            ui.map
+                .set_title_hero(role, profile.last_female.unwrap_or(false));
         }
         self.seed = args.seed;
         // the soak plays many orders: quickly
@@ -2563,6 +2572,10 @@ impl RenethackGame {
                 }
             }
             UiEvent::SetLanguage(lang) => self.set_language(lang),
+            UiEvent::SetVolume(bus, linear) => {
+                crate::audio::set_volume(bus, linear);
+                self.volumes_set = true;
+            }
             other => godot_warn!("renethack: {other:?} ignored while a game runs"),
         }
     }
@@ -2692,6 +2705,7 @@ impl RenethackGame {
     }
 
     fn close_settings(&mut self) {
+        self.keep_volumes();
         let Some(ui) = self.ui.as_mut() else {
             return;
         };
@@ -2802,6 +2816,13 @@ impl RenethackGame {
             self.save_ui_state();
         }
         self.relang();
+    }
+
+    /// The volumes set since the profile last kept them, kept.
+    fn keep_volumes(&mut self) {
+        if std::mem::take(&mut self.volumes_set) {
+            self.update_profile(|p| p.volumes = crate::audio::volumes());
+        }
     }
 
     /// The profile read, changed by `change`, written back (what else it
@@ -3128,6 +3149,7 @@ impl RenethackGame {
 
     /// Leave the application (after the engine exited, or outside a game).
     pub(crate) fn finish_close(&mut self) {
+        self.keep_volumes();
         if let Some(mut s) = self.session.take() {
             s.kill();
         }

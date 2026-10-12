@@ -3,6 +3,7 @@
 //! `<save>.rhui.json` with the key profile.
 
 use std::cmp::Reverse;
+use std::collections::BTreeMap;
 
 use nh_protocol::InvItem;
 use serde::{Deserialize, Serialize};
@@ -587,8 +588,8 @@ impl UiState {
 
 /// The client's own settings, the same for every character
 /// (`<playground>/profile.json`): the last language chosen, the hero of
-/// the last game played (the title scene shows them), and the settings
-/// page's (`Settings`).
+/// the last game played (the title scene shows them), the settings
+/// page's (`Settings`) and the sound's volumes.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Profile {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -603,6 +604,10 @@ pub struct Profile {
     /// character's keys (beside the rest in the file).
     #[serde(flatten)]
     pub settings: crate::Settings,
+    /// The sound's volumes in percent, by mixer bus ("Music": 70); a bus
+    /// not here plays at its default.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub volumes: BTreeMap<String, u8>,
 }
 
 impl Profile {
@@ -1052,6 +1057,13 @@ mod tests {
             "{text}"
         );
         assert_eq!(Profile::from_json(&text), set);
+        // the volumes: none set, none written
+        assert!(!hero.to_json().contains("volumes"));
+        let loud = Profile {
+            volumes: BTreeMap::from([("Music".into(), 40), ("SFX".into(), 100)]),
+            ..hero.clone()
+        };
+        assert_eq!(Profile::from_json(&loud.to_json()), loud);
     }
 
     #[test]

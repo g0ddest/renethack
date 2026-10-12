@@ -6,6 +6,7 @@ mod achievement_view;
 mod action_bar;
 mod animator;
 mod art;
+mod audio;
 mod batch;
 mod branch_look;
 mod dialogs;

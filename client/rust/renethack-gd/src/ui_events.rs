@@ -66,6 +66,8 @@ pub enum UiEvent {
     AchievementPick(usize),
     /// The interface's language chosen (settings, character creation).
     SetLanguage(crate::i18n::Lang),
+    /// A volume slider moved: the bus, linear 0..=1.
+    SetVolume(crate::audio::Bus, f32),
     /// The help, open or closed (F1, the HUD's button).
     ToggleHelp,
     /// From the help panel.
