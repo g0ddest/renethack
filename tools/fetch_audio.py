@@ -546,35 +546,63 @@ def prepare(recipe, item, rel, data, name):
     return outs
 
 
+def limit(samples, channels, gain, ceiling, name):
+    """`gain` dB applied and the peaks held under `ceiling` by a limiter
+    (a fast attack, a short release); what still passes is turned down."""
+    lin = 10 ** ((ceiling - 0.5) / 20)
+    raw = samples.tobytes() if sys.byteorder == "little" else _swapped(samples)
+    out = ffmpeg(["-f", "f32le", "-ar", str(RATE), "-ac", str(channels), "-i", "-", "-af",
+                  f"volume={gain}dB,alimiter=limit={lin}:attack=2:release=60:level=0",
+                  "-f", "f32le", "-"], raw, name).stdout
+    p = array.array("f")
+    p.frombytes(out)
+    if sys.byteorder != "little":
+        p.byteswap()
+    _, tp = measure(p, channels, name)
+    if tp > ceiling:
+        g = 10 ** ((ceiling - tp) / 20)
+        p = array.array("f", (x * g for x in p))
+    return p
+
+
 def level_group(recipe, item, takes):
     """An item's takes made equally loud: as loud as the kind's target, or
     if the true peak of more than a quarter of them would pass the ceiling
     first, as loud as three quarters of them can be; the peakiest stop at
-    the ceiling. Per-file gain in the recipe is added after."""
+    the ceiling. An item may let a limiter take up to `limit` dB off its
+    peaks (voices, roars; not the attack of a blow). Per-file gain in the
+    recipe is added after."""
     t = recipe["targets"][item["kind"]]
     ch, target, ceiling = t["channels"], t["lufs"], t["ceiling"]
+    room = item.get("limit", 0.0)
     measured = []
     for out, p, rel in takes:
         lufs, tp = measure(p, ch, f"{item['dest']}/{out}")
         if lufs <= -69.9:
             raise SystemExit(f"{item['dest']}/{out}: silent")
         measured.append((lufs, tp))
-    reach = sorted(min(target, lufs + ceiling - tp) for lufs, tp in measured)
+    reach = sorted(min(target, lufs + ceiling + room - tp) for lufs, tp in measured)
     group = reach[len(reach) // 4] if len(reach) >= 4 else reach[0]
     group = min(target, group + item.get("level", 0.0))
     done = []
     for (out, p, rel), (lufs, tp) in zip(takes, measured):
-        gain = min(group + per_file(item.get("gain"), rel, 0.0) - lufs, ceiling - tp)
-        g = 10 ** (gain / 20)
-        p = array.array("f", (x * g for x in p))
-        REPORT[f"{item['dest']}/{out}"] = {
+        gain = min(group + per_file(item.get("gain"), rel, 0.0) - lufs, ceiling + room - tp)
+        name = f"{item['dest']}/{out}"
+        if tp + gain > ceiling:
+            p = limit(p, ch, gain, ceiling, name)
+        else:
+            g = 10 ** (gain / 20)
+            p = array.array("f", (x * g for x in p))
+        lufs_out, tp_out = measure(p, ch, name)
+        REPORT[name] = {
             "lufs_in": round(lufs, 1), "tp_in": round(tp, 1), "gain": round(gain, 1),
-            "lufs": round(lufs + gain, 1), "tp": round(tp + gain, 1),
+            "lufs": round(lufs_out, 1), "tp": round(tp_out, 1),
+            "limited": round(max(0.0, tp + gain - ceiling), 1),
             "seconds": round(len(p) / ch / RATE, 2)}
         if t["format"] == "wav":
             done.append((out, wav_bytes(p)))
         else:
-            done.append((out, ogg_bytes(p, ch, t["quality"], f"{item['dest']}/{out}")))
+            done.append((out, ogg_bytes(p, ch, t["quality"], name)))
     return done
 
 

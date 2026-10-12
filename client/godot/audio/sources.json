@@ -1,5 +1,5 @@
 {
-  "comment": "The sounds tools/fetch_audio.py fetches: files and archives (zip, 7z, rar) at fixed URLs or itch.io uploads; the files picked from under `root` by pattern are prepared by their kind (targets: loudness in LUFS, true-peak ceiling in dBTP, channels, format, Vorbis quality) and written to <dest>, cc0/ or ccby/ by licence. sfx: trimmed mono WAV; loop, music, jingle: stereo Ogg; mono: an Ogg as mono WAV (Kenney's placeholders); keep: as it is. Optional per item: cut [start, end] s, max s (a long ring cut short), split (takes cut at silences), seam s (a loop's crossfade), gain dB, rename; each a value or a map by file. mixes: ambience beds made of layers (sources by id). credit: what CREDITS.md says. audio.lock.json records each download's sha256.",
+  "comment": "The sounds tools/fetch_audio.py fetches: files and archives (zip, 7z, rar) at fixed URLs or itch.io uploads; the files picked from under `root` by pattern are prepared by their kind (targets: loudness in LUFS, true-peak ceiling in dBTP, channels, format, Vorbis quality) and written to <dest>, cc0/ or ccby/ by licence. sfx: trimmed mono WAV; loop, music, jingle: stereo Ogg; mono: an Ogg as mono WAV (Kenney's placeholders); keep: as it is. Optional per item: cut [start, end] s, max s (a long ring cut short), limit dB (a limiter may take that much off the peaks), split (takes cut at silences), seam s (a loop's crossfade), gain dB, rename; each a value or a map by file. mixes: ambience beds made of layers (sources by id). credit: what CREDITS.md says. audio.lock.json records each download's sha256.",
   "roots": ["cc0", "ccby"],
   "targets": {
     "sfx": {"lufs": -18, "ceiling": -1, "channels": 1, "format": "wav"},
@@ -347,6 +347,418 @@
         "author": "artisticdude",
         "license": "CC0",
         "page": "https://opengameart.org/content/rpg-sound-pack"
+      }
+    },
+    {
+      "itch": {"page": "https://dillonbecker.itch.io/sdap", "upload": "Super Dialogue Audio Pack v1.zip"},
+      "root": "Super Dialogue Audio Pack v1/Step 2 - Audio Files/7 - Damage/Male/Alex Brodie/",
+      "files": ["damage_1_alex.wav", "damage_2_alex.wav", "damage_4_alex.wav", "damage_5_alex.wav", "damage_6_alex.wav", "damage_7_alex.wav", "damage_9_alex.wav", "damage_10_alex.wav"],
+      "dest": "ccby/dillonbecker/hero",
+      "kind": "sfx",
+      "use": "the hero hurt (male)",
+      "credit": {
+        "what": "Super Dialogue Audio Pack v1: the hero's cries",
+        "author": "Dillon Becker, with the voices of Alex Brodie, Ian Lampert, Sean Lenhart and Karen Cenon",
+        "license": "CC BY 4.0",
+        "page": "https://dillonbecker.itch.io/sdap",
+        "notice": "Attribution should go to Dillon Becker"
+      },
+      "limit": 6
+    },
+    {
+      "itch": {"page": "https://dillonbecker.itch.io/sdap", "upload": "Super Dialogue Audio Pack v1.zip"},
+      "root": "Super Dialogue Audio Pack v1/Step 2 - Audio Files/8 - Death/Male/Alex Brodie/",
+      "files": ["death_1_alex.wav", "death_4_alex.wav", "death_6_alex.wav", "death_8_alex.wav", "death_9_alex.wav"],
+      "dest": "ccby/dillonbecker/hero",
+      "kind": "sfx",
+      "max": 2.0,
+      "use": "the hero's death (male)",
+      "credit": {
+        "what": "Super Dialogue Audio Pack v1: the hero's cries",
+        "author": "Dillon Becker, with the voices of Alex Brodie, Ian Lampert, Sean Lenhart and Karen Cenon",
+        "license": "CC BY 4.0",
+        "page": "https://dillonbecker.itch.io/sdap",
+        "notice": "Attribution should go to Dillon Becker"
+      },
+      "limit": 6
+    },
+    {
+      "itch": {"page": "https://dillonbecker.itch.io/sdap", "upload": "Super Dialogue Audio Pack v1.zip"},
+      "root": "Super Dialogue Audio Pack v1/Step 2 - Audio Files/7 - Damage/Female/Karen Cenon/",
+      "files": ["damage_2_karen.wav", "damage_3_karen.wav", "damage_4_karen.wav", "damage_5_karen.wav", "damage_6_karen.wav", "damage_7_karen.wav", "damage_8_karen.wav"],
+      "dest": "ccby/dillonbecker/hero",
+      "kind": "sfx",
+      "use": "the hero hurt (female)",
+      "credit": {
+        "what": "Super Dialogue Audio Pack v1: the hero's cries",
+        "author": "Dillon Becker, with the voices of Alex Brodie, Ian Lampert, Sean Lenhart and Karen Cenon",
+        "license": "CC BY 4.0",
+        "page": "https://dillonbecker.itch.io/sdap",
+        "notice": "Attribution should go to Dillon Becker"
+      },
+      "limit": 6
+    },
+    {
+      "itch": {"page": "https://dillonbecker.itch.io/sdap", "upload": "Super Dialogue Audio Pack v1.zip"},
+      "root": "Super Dialogue Audio Pack v1/Step 2 - Audio Files/8 - Death/Female/Karen Cenon/",
+      "files": ["death_1_karen.wav", "death_2_karen.wav", "death_4_karen.wav", "death_6_karen.wav", "death_7_karen.wav"],
+      "dest": "ccby/dillonbecker/hero",
+      "kind": "sfx",
+      "max": 2.0,
+      "use": "the hero's death (female)",
+      "credit": {
+        "what": "Super Dialogue Audio Pack v1: the hero's cries",
+        "author": "Dillon Becker, with the voices of Alex Brodie, Ian Lampert, Sean Lenhart and Karen Cenon",
+        "license": "CC BY 4.0",
+        "page": "https://dillonbecker.itch.io/sdap",
+        "notice": "Attribution should go to Dillon Becker"
+      },
+      "limit": 6
+    },
+    {
+      "itch": {"page": "https://dillonbecker.itch.io/sdap", "upload": "Super Dialogue Audio Pack v1.zip"},
+      "root": "Super Dialogue Audio Pack v1/Step 2 - Audio Files/7 - Damage/Male/Ian Lampert/",
+      "files": ["damage_2_ian.wav", "damage_6_ian.wav", "damage_7_ian.wav", "damage_8_ian.wav", "damage_10_ian.wav"],
+      "dest": "ccby/dillonbecker/monsters",
+      "kind": "sfx",
+      "limit": 6,
+      "use": "a humanoid hurt",
+      "credit": {
+        "what": "Super Dialogue Audio Pack v1: cries of hurt and death",
+        "author": "Dillon Becker, with the voices of Alex Brodie, Ian Lampert, Sean Lenhart and Karen Cenon",
+        "license": "CC BY 4.0",
+        "page": "https://dillonbecker.itch.io/sdap",
+        "notice": "Attribution should go to Dillon Becker"
+      }
+    },
+    {
+      "itch": {"page": "https://dillonbecker.itch.io/sdap", "upload": "Super Dialogue Audio Pack v1.zip"},
+      "root": "Super Dialogue Audio Pack v1/Step 2 - Audio Files/7 - Damage/Male/Sean Lenhart/",
+      "files": ["damage_4_sean.wav", "damage_8_sean.wav"],
+      "dest": "ccby/dillonbecker/monsters",
+      "kind": "sfx",
+      "limit": 6,
+      "use": "a humanoid hurt",
+      "credit": {
+        "what": "Super Dialogue Audio Pack v1: cries of hurt and death",
+        "author": "Dillon Becker, with the voices of Alex Brodie, Ian Lampert, Sean Lenhart and Karen Cenon",
+        "license": "CC BY 4.0",
+        "page": "https://dillonbecker.itch.io/sdap",
+        "notice": "Attribution should go to Dillon Becker"
+      }
+    },
+    {
+      "itch": {"page": "https://dillonbecker.itch.io/sdap", "upload": "Super Dialogue Audio Pack v1.zip"},
+      "root": "Super Dialogue Audio Pack v1/Step 2 - Audio Files/8 - Death/Male/Ian Lampert/",
+      "files": ["death_1_ian.wav", "death_2_ian.wav", "death_5_ian.wav", "death_8_ian.wav"],
+      "dest": "ccby/dillonbecker/monsters",
+      "kind": "sfx",
+      "limit": 6,
+      "max": 1.6,
+      "use": "a humanoid's death",
+      "credit": {
+        "what": "Super Dialogue Audio Pack v1: cries of hurt and death",
+        "author": "Dillon Becker, with the voices of Alex Brodie, Ian Lampert, Sean Lenhart and Karen Cenon",
+        "license": "CC BY 4.0",
+        "page": "https://dillonbecker.itch.io/sdap",
+        "notice": "Attribution should go to Dillon Becker"
+      }
+    },
+    {
+      "itch": {"page": "https://dillonbecker.itch.io/sdap", "upload": "Super Dialogue Audio Pack v1.zip"},
+      "root": "Super Dialogue Audio Pack v1/Step 2 - Audio Files/8 - Death/Male/Sean Lenhart/",
+      "files": ["death_4_sean.wav", "death_8_sean.wav", "death_10_sean.wav"],
+      "dest": "ccby/dillonbecker/monsters",
+      "kind": "sfx",
+      "limit": 6,
+      "max": 1.6,
+      "use": "a humanoid's death",
+      "credit": {
+        "what": "Super Dialogue Audio Pack v1: cries of hurt and death",
+        "author": "Dillon Becker, with the voices of Alex Brodie, Ian Lampert, Sean Lenhart and Karen Cenon",
+        "license": "CC BY 4.0",
+        "page": "https://dillonbecker.itch.io/sdap",
+        "notice": "Attribution should go to Dillon Becker"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/michelbaradari-monsters.7z",
+      "root": "monster/",
+      "files": ["pain[bdeprs].wav"],
+      "dest": "ccby/baradari/monster",
+      "kind": "sfx",
+      "limit": 4,
+      "use": "a creature hurt (and any hurt not placed)",
+      "credit": {
+        "what": "15 monster grunt/pain/death sounds",
+        "author": "Michel Baradari",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/15-monster-gruntpaindeath-sounds"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/michelbaradari-monsters.7z",
+      "root": "monster/",
+      "files": ["death[bders].wav"],
+      "dest": "ccby/baradari/monster",
+      "kind": "sfx",
+      "limit": 4,
+      "use": "a creature's death",
+      "credit": {
+        "what": "15 monster grunt/pain/death sounds",
+        "author": "Michel Baradari",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/15-monster-gruntpaindeath-sounds"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/dog_0.7z",
+      "root": "dog/",
+      "files": ["dog-*.flac"],
+      "dest": "cc0/qubodup/dog",
+      "kind": "sfx",
+      "limit": 4,
+      "use": "a beast hurt",
+      "credit": {
+        "what": "Dog Snarl Grunt Grumble",
+        "author": "Iwan Gabovitch (qubodup)",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/dog-snarl-grunt-grumble"
+      }
+    },
+    {
+      "itch": {
+        "page": "https://makotohiramatsu.itch.io/creature-sound-effect",
+        "upload": "CreatureSoundFree1_1.zip"
+      },
+      "root": "CreatureSoundFree/",
+      "files": ["CREAHmn_Low, Growl, MHCS0[456].wav", "CREAHmn_Short, Hiss, MHCS08.wav", "CREAHmn_Short, Hiss, Angry, MHCS13.wav"],
+      "dest": "ccby/makoto/creatures",
+      "kind": "sfx",
+      "limit": 4,
+      "use": "a beast hurt",
+      "credit": {
+        "what": "Creature Sound Effect: growls, hisses, a zombie's and a beast's roars",
+        "author": "Makoto Hiramatsu",
+        "license": "CC BY 4.0",
+        "page": "https://makotohiramatsu.itch.io/creature-sound-effect"
+      }
+    },
+    {
+      "itch": {
+        "page": "https://makotohiramatsu.itch.io/creature-sound-effect",
+        "upload": "CreatureSoundFree1_1.zip"
+      },
+      "root": "CreatureSoundFree/",
+      "files": ["CREAHmn_Roar, Growl, MHCS0[13].wav"],
+      "dest": "ccby/makoto/creatures",
+      "kind": "sfx",
+      "limit": 4,
+      "max": 1.6,
+      "use": "a beast's death",
+      "credit": {
+        "what": "Creature Sound Effect: growls, hisses, a zombie's and a beast's roars",
+        "author": "Makoto Hiramatsu",
+        "license": "CC BY 4.0",
+        "page": "https://makotohiramatsu.itch.io/creature-sound-effect"
+      }
+    },
+    {
+      "itch": {
+        "page": "https://makotohiramatsu.itch.io/creature-sound-effect",
+        "upload": "CreatureSoundFree1_1.zip"
+      },
+      "root": "CreatureSoundFree/",
+      "files": ["CREAHmn_Short, *Zombie, MHCS*.wav"],
+      "dest": "ccby/makoto/creatures",
+      "kind": "sfx",
+      "limit": 4,
+      "use": "the undead hurt",
+      "credit": {
+        "what": "Creature Sound Effect: growls, hisses, a zombie's and a beast's roars",
+        "author": "Makoto Hiramatsu",
+        "license": "CC BY 4.0",
+        "page": "https://makotohiramatsu.itch.io/creature-sound-effect"
+      }
+    },
+    {
+      "url": "https://www.patreon.com/file?h=102519630&m=297994373",
+      "files": ["Monster Roar/Beast 2 Roar 01.wav", "Monster Roar/Beast 2 Roar 07.wav"],
+      "dest": "ccby/thesoundrack/roars",
+      "kind": "sfx",
+      "limit": 4,
+      "max": 1.8,
+      "use": "a beast's death",
+      "credit": {
+        "what": "Monster Roar Sound Pack: a demon's, a beast's and a dragon's roars",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/monster-roar-sound-pack"
+      }
+    },
+    {
+      "url": "https://www.patreon.com/file?h=102519630&m=297994373",
+      "files": ["Monster Roar/Demon Roar 03.wav", "Monster Roar/Demon Roar 04.wav", "Monster Roar/Demon Roar 08.wav", "Monster Roar/Demon Roar 09.wav", "Monster Roar/Demon Roar 12.wav"],
+      "dest": "ccby/thesoundrack/roars",
+      "kind": "sfx",
+      "limit": 4,
+      "use": "a demon hurt",
+      "credit": {
+        "what": "Monster Roar Sound Pack: a demon's, a beast's and a dragon's roars",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/monster-roar-sound-pack"
+      }
+    },
+    {
+      "url": "https://www.patreon.com/file?h=102519630&m=297994373",
+      "files": ["Monster Roar/Demon Roar 05.wav", "Monster Roar/Demon Roar 07.wav", "Monster Roar/Demon Roar 10.wav"],
+      "dest": "ccby/thesoundrack/roars",
+      "kind": "sfx",
+      "limit": 4,
+      "max": 2.0,
+      "use": "a demon's death",
+      "credit": {
+        "what": "Monster Roar Sound Pack: a demon's, a beast's and a dragon's roars",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/monster-roar-sound-pack"
+      }
+    },
+    {
+      "url": "https://www.patreon.com/file?h=102519630&m=297994373",
+      "files": ["Monster Roar/Beast Roar 01.wav", "Monster Roar/Beast Roar 02.wav", "Monster Roar/Beast Roar 03.wav", "Monster Roar/Beast Roar 08.wav"],
+      "dest": "ccby/thesoundrack/roars",
+      "kind": "sfx",
+      "limit": 4,
+      "use": "a dragon hurt",
+      "credit": {
+        "what": "Monster Roar Sound Pack: a demon's, a beast's and a dragon's roars",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/monster-roar-sound-pack"
+      }
+    },
+    {
+      "url": "https://www.patreon.com/file?h=102519630&m=297994373",
+      "files": ["Monster Roar/Beast Roar 05.wav", "Monster Roar/Beast Roar 06.wav", "Monster Roar/Beast Roar 07.wav"],
+      "dest": "ccby/thesoundrack/roars",
+      "kind": "sfx",
+      "limit": 4,
+      "max": 2.0,
+      "use": "a dragon's death",
+      "credit": {
+        "what": "Monster Roar Sound Pack: a demon's, a beast's and a dragon's roars",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/monster-roar-sound-pack"
+      }
+    },
+    {
+      "itch": {
+        "page": "https://coucassi.itch.io/free-monster-sounds",
+        "upload": "Classic Monster Sounds.zip"
+      },
+      "root": "Monster Sounds/",
+      "files": ["Slime/Slime_Damage.wav", "Bat/Bat_Damage.wav", "Hornet/Hornet_Damage.wav", "Spider/Spider_Damage.wav", "Dragon/Dragon_Damage.wav"],
+      "dest": "ccby/coucassi/monsters",
+      "kind": "sfx",
+      "max": 1.0,
+      "use": "a slime, a bat, an insect, a dragon hurt",
+      "credit": {
+        "what": "Free Monster Sounds: a slime's, a bat's, a hornet's, a spider's and a dragon's hurts and deaths",
+        "author": "Creature Sounds (coucassi)",
+        "license": "CC BY 4.0",
+        "page": "https://coucassi.itch.io/free-monster-sounds"
+      }
+    },
+    {
+      "itch": {
+        "page": "https://coucassi.itch.io/free-monster-sounds",
+        "upload": "Classic Monster Sounds.zip"
+      },
+      "root": "Monster Sounds/",
+      "files": ["Slime/Slime_Death.wav", "Bat/Bat_Death.wav", "Hornet/Hornet_Death.wav", "Spider/Spider_Death.wav", "Dragon/Dragon_Death.wav"],
+      "dest": "ccby/coucassi/monsters",
+      "kind": "sfx",
+      "max": 1.8,
+      "use": "a slime's, a bat's, an insect's, a dragon's death",
+      "credit": {
+        "what": "Free Monster Sounds: a slime's, a bat's, a hornet's, a spider's and a dragon's hurts and deaths",
+        "author": "Creature Sounds (coucassi)",
+        "license": "CC BY 4.0",
+        "page": "https://coucassi.itch.io/free-monster-sounds"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/bat.zip",
+      "root": "flac/",
+      "files": ["bat_0[1-3].flac"],
+      "dest": "cc0/antumdeluge/bat",
+      "kind": "sfx",
+      "max": 1.2,
+      "use": "a bat or a bird hurt",
+      "credit": {
+        "what": "Bat Screeches",
+        "author": "Jordan Irwin (AntumDeluge), from a recording by polymorpheva",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/bat-screeches"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/water-splash-slime-sfx.zip",
+      "files": ["slime_01.ogg", "slime_02.ogg", "slime_04.ogg", "slime_07.ogg", "slime_08.ogg", "slime_10.ogg", "slime_11.ogg", "slime_14.ogg"],
+      "dest": "cc0/rubberduck/slime",
+      "kind": "sfx",
+      "use": "a slime hurt",
+      "credit": {
+        "what": "40 CC0 water / splash / slime SFX: slime",
+        "author": "rubberduck",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/40-cc0-water-splash-slime-sfx"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/water-splash-slime-sfx.zip",
+      "files": ["slime_03.ogg", "slime_09.ogg", "slime_13.ogg"],
+      "dest": "cc0/rubberduck/slime",
+      "kind": "sfx",
+      "use": "a slime's death",
+      "credit": {
+        "what": "40 CC0 water / splash / slime SFX: slime",
+        "author": "rubberduck",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/40-cc0-water-splash-slime-sfx"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/darsycho__zombie-moans_0.ogg",
+      "dest": "cc0/darsycho/undead",
+      "kind": "sfx",
+      "split": {"gap": 0.25, "floor_db": -35, "min": 0.4, "keep": [0, 1, 2]},
+      "limit": 4,
+      "max": 1.6,
+      "use": "the undead's deaths (takes of moans)",
+      "credit": {
+        "what": "Zombie moans",
+        "author": "Darsycho",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/zombie-moans"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/hungry-ghoul_0.ogg",
+      "dest": "cc0/darsycho/undead",
+      "kind": "sfx",
+      "split": {"gap": 0.25, "floor_db": -35, "min": 0.4, "keep": [0, 2, 4, 6]},
+      "limit": 4,
+      "max": 1.6,
+      "use": "the undead hurt and dying (takes of a ghoul)",
+      "credit": {
+        "what": "Hungry ghoul",
+        "author": "Darsycho",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/hungry-ghoul"
       }
     }
   ],

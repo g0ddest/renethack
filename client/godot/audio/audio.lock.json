@@ -1,19 +1,29 @@
 {
  "format": 1,
  "sources": {
+  "https://coucassi.itch.io/free-monster-sounds#Classic Monster Sounds.zip": "547749058654b53e5cd07c032d93ac2ce0b924a1d011b55b32f45a2d985b1ca9",
+  "https://dillonbecker.itch.io/sdap#Super Dialogue Audio Pack v1.zip": "3994d25906f65db25718d9bd2f256eb6af7b1cb4d4ea8c4936d6e57056c639a3",
   "https://kenney.nl/media/pages/assets/impact-sounds/87b4ddecda-1677589768/kenney_impact-sounds.zip": "029d734af1582474edf3a694d1b0cebc97c1c152f2f39fa34d4c2bafc5de77f8",
   "https://kenney.nl/media/pages/assets/interface-sounds/fa43c1dd4d-1677589452/kenney_interface-sounds.zip": "f2193d072726d6758a5f7871b2dcc54dcce0d5c35c6f0a62f92549b327c81232",
   "https://kenney.nl/media/pages/assets/music-jingles/f37e530b9e-1677590399/kenney_music-jingles.zip": "b729ba57959bd58793d2c5cafa348aaf2655d354f3da35ec4729e03ec77197b8",
   "https://kenney.nl/media/pages/assets/rpg-audio/8e99002d76-1677590336/kenney_rpg-audio.zip": "6dbeaf8544da958d8f2adcb4a4a4b76c1ade34a05f8ab9edccd327da7375f38b",
+  "https://makotohiramatsu.itch.io/creature-sound-effect#CreatureSoundFree1_1.zip": "59da4da8f556c331b19db4edc868a01c7083c0b48f32ad258c4bab8a7ee4c330",
   "https://opengameart.org/sites/default/files/25-CC0-mud-sfx.zip": "3f3dccc202c0a010053e1775ec257d0038b69291fc10fc49e8488a9355d4cfdf",
   "https://opengameart.org/sites/default/files/Fantasy%20Sound%20Library.zip": "5649523e6be5180f81141bc00f9a1597a1297f193896b7295e6ffebaeb41bb53",
+  "https://opengameart.org/sites/default/files/bat.zip": "8a41cfeca5a3b184f4cf171d45faf0041715b6f9d402dcfe04c53369c05e0ab3",
+  "https://opengameart.org/sites/default/files/darsycho__zombie-moans_0.ogg": "49b0bd7a7908f2b3ea61ae93ccf584ab650705d62e8ed6d4c8c9f5b98ad37b05",
+  "https://opengameart.org/sites/default/files/dog_0.7z": "fbd39c35b8743651f48e423d61ca3cee4e67f33ae3a28b5ef4eef0dd46bb043e",
   "https://opengameart.org/sites/default/files/fleshy_fight_sounds.zip": "53fbfaafa489ee7991fdf53ffeee1ac796f9ef667a489d5e8de6c6c4ccf748da",
   "https://opengameart.org/sites/default/files/footsteps_0.zip": "542564e7f6b3a0b89a0d08542438e030e77a46303855fe5bf1644a48185861e9",
+  "https://opengameart.org/sites/default/files/hungry-ghoul_0.ogg": "efe8b72a072b38927a4faea0a5f200d1b4534a9430bae9ec4bccf317a7efad6c",
+  "https://opengameart.org/sites/default/files/michelbaradari-monsters.7z": "08a538200e43c2d0e148fc330b4d4325f42aa4359aba3c643b784341facdf8ed",
   "https://opengameart.org/sites/default/files/rpg_sound_pack.zip": "f80754a9c04854e30c9da89d0186540ad097309d98b41387b6e83029e2601421",
   "https://opengameart.org/sites/default/files/swishes.zip": "7980215241b739a787dcf26f660ce510bb237900968789395a86911619795693",
   "https://opengameart.org/sites/default/files/swoshes.7z": "2d55b26f918a4d8042e2c97a4db81392757195f5aaac9039f5ec2c557b6f11f2",
+  "https://opengameart.org/sites/default/files/water-splash-slime-sfx.zip": "7cd39abb49d4362a37ba18dc0e454c7dc1d08029d4e5b683149046bc237b2eba",
   "https://opengameart.org/sites/default/files/wet_towel_on_body.7z": "bbb7041df68d5ae19358457d5ffa7f562ea143c85af40e999d719478f388ae7a",
   "https://thesoundrack.itch.io/archery-sound-pack#Archery SFX Pack.rar": "619f12296b66ba633f6e7b1633ed337363d486baa109f5ae951f56342c4e19ca",
-  "https://thesoundrack.itch.io/swords-blades-sound-pack#Swords & Blades SFX Pack.rar": "43c8d4294ef62dcd385c4a1010a51e69abdc0509504e857087b87e61dc953ecc"
+  "https://thesoundrack.itch.io/swords-blades-sound-pack#Swords & Blades SFX Pack.rar": "43c8d4294ef62dcd385c4a1010a51e69abdc0509504e857087b87e61dc953ecc",
+  "https://www.patreon.com/file?h=102519630&m=297994373": "208cb19fb88c3bd7f409901e43e1ccca9c985e71dee20fe35a63906c122414af"
  }
 }
