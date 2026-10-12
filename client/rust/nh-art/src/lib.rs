@@ -1798,6 +1798,56 @@ mod tests {
         assert_eq!(model("Ixoth").0, "dragon_adult");
     }
 
+    /// The fallback audit: a leprechaun, the quantum mechanic, elves,
+    /// ghosts, wraiths, gargoyles, a vault's guard, a nurse, a zruty and an
+    /// umber hulk drew as a peasant, a hooded ranger or the imp; a quest's
+    /// people as peasants, its nemeses as imps and a baby dragon.
+    #[test]
+    fn the_fallbacks_are_told_apart() {
+        let (art, cat) = (manifest(), catalog());
+        let model = |n: &str| {
+            let m = cat.monsters.iter().find(|m| m.name == n).unwrap();
+            art.model_at(art.monster(m, 0).model).0
+        };
+        let fallbacks = [
+            "human_male",
+            "human_female",
+            "ranger_male",
+            "ranger_female",
+            "imp",
+        ];
+        let mut seen = Vec::new();
+        for who in [
+            "leprechaun",
+            "quantum mechanic",
+            "Woodland-elf",
+            "Green-elf",
+            "Grey-elf",
+            "elf-noble",
+            "ghost",
+            "wraith",
+            "barrow wight",
+            "gargoyle",
+            "guard",
+            "nurse",
+            "zruty",
+            "umber hulk",
+            "Croesus",
+        ] {
+            let name = model(who);
+            assert!(!fallbacks.contains(&name), "{who}: {name}");
+            assert!(!seen.contains(&name), "{who} looks as another");
+            seen.push(name);
+        }
+        // the quests: the guardians as their role, the leaders crowned,
+        // the nemeses greater demons and a grown dragon of many hues
+        assert_eq!(model("student"), "role_archeologist_m");
+        assert_eq!(model("King Arthur"), "leader_knight");
+        assert_eq!(model("Minion of Huhetotl"), "demon_great");
+        assert_eq!(model("Nalzok"), "demon_great");
+        assert_eq!(model("Chromatic Dragon"), "dragon_chromatic");
+    }
+
     /// A mumak was drawn two cells long and a baluchitherium four: they hid
     /// the hero they fought and went through a corridor's rock.
     #[test]
