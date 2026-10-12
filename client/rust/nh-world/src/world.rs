@@ -6,7 +6,7 @@ use nh_protocol::{
 
 use crate::prompt::{choice, free_key};
 use crate::{
-    ATR_NOHISTORY, HelplessSpan, HelplessWatch, MapState, MessageLog, Pack, Prompt, Status,
+    ATR_NOHISTORY, HelplessSpan, HelplessWatch, MapState, MessageLog, Pack, Prompt, Status, Told,
     TrapKind, effect_cmaps,
 };
 
@@ -290,10 +290,15 @@ impl World {
                 bk,
                 rider,
                 saddled,
+                sensed,
             } => {
                 if Some(*win) == self.map_win {
-                    self.map
-                        .print_with(*x, *y, g, bk.as_ref(), rider.as_ref(), *saddled);
+                    let told = Told {
+                        rider: rider.as_ref(),
+                        saddled: *saddled,
+                        sensed: *sensed,
+                    };
+                    self.map.print_with(*x, *y, g, bk.as_ref(), told);
                 }
             }
             WinCall::Curs { win, x, y } => {

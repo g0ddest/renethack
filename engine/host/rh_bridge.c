@@ -901,6 +901,22 @@ riding_json(cJSON *a, int x, int y, const glyph_info *ginfo)
     }
 }
 
+/* A monster the hero senses but does not see: "sensed".  NetHack draws a
+   monster it only senses by telepathy as a seen one (newsym() passes
+   display_monster() no DETECTED for it), so its glyph alone cannot tell;
+   the hero knows whether they see it.  Not on the hero's own spot (a
+   steed under them).  Observation only. */
+static void
+sensed_json(cJSON *a, int x, int y, const glyph_info *ginfo)
+{
+    struct monst *mtmp;
+
+    if (!ginfo || !glyph_is_monster(ginfo->glyph) || !isok(x, y) || u_at(x, y))
+        return;
+    if ((mtmp = m_at(x, y)) != 0 && !canseemon(mtmp))
+        add_bool(a, "sensed", 1);
+}
+
 static void
 h_print_glyph(void *ret UNUSED, va_list *ap)
 {
@@ -918,6 +934,7 @@ h_print_glyph(void *ret UNUSED, va_list *ap)
     cJSON_AddItemToObject(a, "bk",
                           glyph_json(va_arg(*ap, const glyph_info *)));
     riding_json(a, x, y, g);
+    sensed_json(a, x, y, g);
     rh_proto_send("win", "print_glyph", a);
 }
 

@@ -81,6 +81,9 @@ sed 's/,"fmt":.*}}$/}}/' "$out" | cmp -s - "$tmp/nohook/session.jsonl" \
 # Knight's pony wears one from the start), and who rides a steed; nobody
 # rides at the start, and the Valkyrie's kitten wears no saddle
 if grep -q '"saddled":\|"rider":' "$out"; then fail "a saddle or a rider without one"; fi
+# nor a monster the hero only senses: the Valkyrie sees her kitten (a
+# blind hero's telepathy is the live tests')
+if grep -q '"sensed":' "$out"; then fail "a monster sensed by a hero who sees"; fi
 run_engine knight NETHACKOPTIONS='time,!legacy,!tutorial,!autopickup,name:Hero,role:knight,race:human,gender:male,align:lawful'
 grep -q '^{"t":"win","fn":"print_glyph","a":{.*"g":{[^}]*"kind":"mon"},.*"saddled":true}}$' "$tmp/knight/session.jsonl" \
     || fail "the Knight's pony is not saddled"

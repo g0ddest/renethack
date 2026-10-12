@@ -35,6 +35,29 @@ pub struct Cell {
     /// before the hero is on the next).
     pub saddled: bool,
     pub over_saddled: bool,
+    /// The monster `glyph` shows is sensed, not seen (telepathy,
+    /// detection).
+    pub sensed: bool,
+}
+
+/// What the engine tells of a monster besides its glyph.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Told<'a> {
+    /// Under a steed's glyph: the hero's own.
+    pub rider: Option<&'a Glyph>,
+    /// It wears a saddle.
+    pub saddled: bool,
+    /// The hero senses it but does not see it.
+    pub sensed: bool,
+}
+
+impl Told<'_> {
+    pub fn saddled() -> Told<'static> {
+        Told {
+            saddled: true,
+            ..Told::default()
+        }
+    }
 }
 
 impl Cell {
@@ -256,21 +279,17 @@ impl MapState {
 
     /// print_glyph on the map window; cells outside the field are ignored.
     pub fn print(&mut self, x: i32, y: i32, g: &Glyph, bk: Option<&Glyph>) {
-        self.print_with(x, y, g, bk, None, false);
+        self.print_with(x, y, g, bk, Told::default());
     }
 
     /// As `print`, with what the engine tells of a monster besides its
-    /// glyph: who rides it (under a steed's glyph, the hero's own) and
-    /// whether it wears a saddle.
-    pub fn print_with(
-        &mut self,
-        x: i32,
-        y: i32,
-        g: &Glyph,
-        bk: Option<&Glyph>,
-        rider: Option<&Glyph>,
-        saddled: bool,
-    ) {
+    /// glyph (`Told`).
+    pub fn print_with(&mut self, x: i32, y: i32, g: &Glyph, bk: Option<&Glyph>, told: Told) {
+        let Told {
+            rider,
+            saddled,
+            sensed,
+        } = told;
         let Some(i) = index(x, y) else {
             return;
         };
@@ -313,6 +332,7 @@ impl MapState {
             cell.rider = rider.cloned();
             cell.saddled = saddled;
             cell.over_saddled = false;
+            cell.sensed = sensed;
         }
         cell.bk = bk.cloned();
         if hero
@@ -617,12 +637,16 @@ pub(crate) mod tests {
             map.print(x, 5, &floor(), None);
         }
         map.print(10, 5, &hero, None);
-        map.print_with(11, 5, &pony, None, None, true);
+        map.print_with(11, 5, &pony, None, Told::saddled());
         assert_eq!(map.hero_form(), Some(&hero));
         assert!(map.cell(11, 5).unwrap().saddled);
         // mounting: the hero is on the steed's cell, under its glyph
         map.print(10, 5, &floor(), None);
-        map.print_with(11, 5, &ridden, None, Some(&hero), true);
+        let rides = Told {
+            rider: Some(&hero),
+            ..Told::saddled()
+        };
+        map.print_with(11, 5, &ridden, None, rides);
         assert_eq!(map.hero(), Some((11, 5)));
         assert_eq!(map.hero_form(), Some(&hero), "not the steed's glyph");
         let cell = map.cell(11, 5).unwrap();
@@ -630,10 +654,10 @@ pub(crate) mod tests {
         // an engine that does not say who rides: nobody's form
         map.print(11, 5, &ridden, None);
         assert_eq!(map.hero_form(), None);
-        map.print_with(11, 5, &ridden, None, Some(&hero), true);
+        map.print_with(11, 5, &ridden, None, rides);
         // dismounting: the steed is drawn where the pair stood before the
         // hero is drawn beside it
-        map.print_with(11, 5, &pony, None, None, true);
+        map.print_with(11, 5, &pony, None, Told::saddled());
         assert_eq!(map.hero_form(), Some(&hero), "still in the saddle");
         map.print(12, 5, &hero, None);
         let cell = map.cell(11, 5).unwrap();
@@ -645,6 +669,21 @@ pub(crate) mod tests {
         // the same pet drawn with no saddle told has none
         map.print(11, 5, &pony, None);
         assert!(!map.cell(11, 5).unwrap().saddled);
+    }
+
+    #[test]
+    fn a_monster_only_sensed_is_told_so_until_it_is_seen() {
+        let mut map = MapState::new();
+        let jackal = monster(3, 0);
+        map.print(10, 5, &floor(), None);
+        let sensed = Told {
+            sensed: true,
+            ..Told::default()
+        };
+        map.print_with(10, 5, &jackal, None, sensed);
+        assert!(map.cell(10, 5).unwrap().sensed);
+        map.print(10, 5, &jackal, None);
+        assert!(!map.cell(10, 5).unwrap().sensed, "seen now");
     }
 
     #[test]

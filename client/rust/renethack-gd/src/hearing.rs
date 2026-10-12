@@ -134,8 +134,8 @@ pub fn armed(what: &str, held: Option<&str>) -> Vec<String> {
 pub struct Senses {
     /// They float or fly: their feet touch nothing.
     pub afloat: bool,
-    /// They see nothing: a monster on the map is only sensed (telepathy
-    /// shows it as it would be seen), its steps unheard.
+    /// They see nothing: a monster on the map is only sensed, its steps
+    /// unheard (also when the engine does not tell it so).
     pub blind: bool,
     /// They hear nothing well: the world is muffled.
     pub deaf: bool,

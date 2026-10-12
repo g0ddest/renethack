@@ -6731,8 +6731,8 @@ impl MapView {
 
     /// The steps of what moved, each on its floor: the hero's own (none
     /// while they float or fly; the steed's under a rider) and those of
-    /// monsters the hero sees. One only sensed (telepathy, detection)
-    /// walks unheard.
+    /// monsters the hero sees. One only sensed (telepathy, detection: the
+    /// engine tells it, and a blind hero senses all) walks unheard.
     fn hear_steps(&mut self, moves: &[Move], world: &World, catalog: &Catalog) {
         // the foot lands a little into the step
         const LANDS: f32 = 0.08;
@@ -6748,7 +6748,7 @@ impl MapView {
                 continue;
             };
             let hero = g.flags & mg::HERO != 0;
-            let sensed = g.flags & mg::DETECT != 0 || senses.blind;
+            let sensed = cell.sensed || g.flags & mg::DETECT != 0 || senses.blind;
             if (!hero && sensed) || (hero && senses.afloat && cell.rider.is_none()) {
                 continue;
             }

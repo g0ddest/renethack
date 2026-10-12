@@ -98,6 +98,10 @@ pub enum WinCall {
         /// The monster shown wears a saddle (as its name tells when
         /// looked at; a steed ridden always).
         saddled: bool,
+        /// The hero senses the monster shown but does not see it
+        /// (telepathy draws it as a seen one; detection marks it DETECT
+        /// too). Never on the hero's own cell.
+        sensed: bool,
     },
     RawPrint {
         text: String,
@@ -542,6 +546,8 @@ struct PrintGlyph {
     rider: Option<Glyph>,
     #[serde(default)]
     saddled: bool,
+    #[serde(default)]
+    sensed: bool,
 }
 #[derive(Deserialize)]
 struct RawPrint {
@@ -675,6 +681,7 @@ fn win_call(name: String, a: Value) -> Result<WinCall, ProtocolError> {
                 bk: p.bk,
                 rider: p.rider,
                 saddled: p.saddled,
+                sensed: p.sensed,
             }
         }
         "raw_print" => {
