@@ -1225,6 +1225,7 @@ impl Art {
             (Some(kind), _) => self.build_proc(kind, &spec, look),
             (None, Some(scene)) => {
                 let inner = scene.instantiate_as::<Node3D>();
+                bind_skins(&inner);
                 if spec.smooth {
                     self.smooth(&inner);
                 }
@@ -1826,6 +1827,7 @@ impl Art {
             }
             (None, Some(scene)) => {
                 let inner = scene.instantiate_as::<Node3D>();
+                bind_skins(&inner);
                 let shade = rgb(spec.shade_rgb());
                 self.dress(&inner, &look, shade);
                 Some(inner)
@@ -1996,6 +1998,32 @@ impl Art {
                 p
             });
         (root, player)
+    }
+}
+
+/// Each mesh of a scene just made that lies under a skeleton and names
+/// none, skinned to that skeleton. A scene imported while a mesh's
+/// skeleton defaulted to its parent saved no path; a project for Godot
+/// 4.7 defaults to none, and such a mesh is drawn unskinned, its rig's
+/// own scale on it (the Poly Pizza beasts and the centaur a hundred
+/// times too big, out of sight).
+fn bind_skins(inner: &Gd<Node3D>) {
+    for node in inner
+        .find_children_ex("*")
+        .type_("MeshInstance3D")
+        .owned(false)
+        .done()
+        .iter_shared()
+    {
+        let Ok(mut mi) = node.try_cast::<MeshInstance3D>() else {
+            continue;
+        };
+        let under_skeleton = mi
+            .get_parent()
+            .is_some_and(|p| p.try_cast::<Skeleton3D>().is_ok());
+        if under_skeleton && mi.get_skeleton_path().is_empty() {
+            mi.set_skeleton_path(&NodePath::from(".."));
+        }
     }
 }
 
