@@ -8,6 +8,9 @@ Writes
   client/godot/icon.png            the window's icon (project.godot, config/icon)
   client/godot/icon.icns, .ico     the native icons of macOS and Windows; they
                                    are Steamworks' client icons for both too
+  client/godot/icon.icon/          macOS 26's icon, an Icon Composer package:
+                                   the shield, the swords and the "@" as
+                                   layers the system lights as Liquid Glass
   steam/icon/client-linux.zip      Steamworks' client icon for Linux (PNGs)
   steam/icon/community.jpg         and its community icon (184x184)
 
@@ -16,6 +19,7 @@ scaled down. Needs Pillow; `make app-icon` runs it, the same bytes every run.
 """
 
 import io
+import json
 import math
 import sys
 import zipfile
@@ -42,6 +46,8 @@ FIELD_DEEP = (0x18, 0x34, 0x40)
 LEATHER = (0x3C, 0x28, 0x1A)
 DARK = (0x0E, 0x0B, 0x09)
 INK = (0x0B, 0x09, 0x08)
+# the .icon's background, from a warm dark at the top down to the ink
+BACK_TOP = (0x2E, 0x24, 0x1C)
 
 
 def clamp01(v):
@@ -66,6 +72,9 @@ class Canvas:
         # bold: the small sizes' wider edges and plainer shapes (1 at 64
         # pixels and under, 2 at 24 and under)
         self.bold = bold
+        # the shadows the parts throw (the .icon's layers leave them to
+        # the system)
+        self.casts = True
         self.out = Image.new("RGBA", (self.n, self.n), (0, 0, 0, 0))
 
     def px(self, v):
@@ -136,6 +145,8 @@ class Canvas:
 
     def cast(self, m, dx, dy, soft, strength, onto=None):
         """The shadow `m` throws, on what is drawn already (or on `onto`)."""
+        if not self.casts:
+            return
         s = self.blur(self.shifted(m, dx, dy), soft)
         if onto is not None:
             s = ImageChops.multiply(s, onto)
@@ -271,7 +282,9 @@ def sword(c, hilt, tip):
         c.relief(part, 0.0045, 0.008, (0xFF, 0xF4, 0xD0), (0x3C, 0x26, 0x08))
 
 
-def shield(c, device):
+def shield_shape(c):
+    """Where the shield is: its centre, top, width and height, its outline,
+    the field inside the rim, the rim and the rim's width."""
     bold = c.bold
     cx = 0.5
     top, width, height = ((0.195, 0.530, 0.705), (0.175, 0.580, 0.745), (0.165, 0.620, 0.770))[bold]
@@ -279,6 +292,12 @@ def shield(c, device):
     rim_w = (0.040, 0.060, 0.082)[bold]
     inner = c.grown(body, -rim_w)
     rim = ImageChops.subtract(body, inner)
+    return cx, top, width, height, body, inner, rim, rim_w
+
+
+def shield(c, device):
+    bold = c.bold
+    cx, top, width, height, body, inner, rim, rim_w = shield_shape(c)
     edge = (0.0075, 0.013, 0.020)[bold]
 
     c.cast(body, 0.014, 0.020, 0.016, 0.6)
@@ -322,7 +341,13 @@ def shield(c, device):
             c.cast(stud, 0.002, 0.003, 0.002, 0.6, rim)
             c.fill(stud, c.ramp(STEEL_BRIGHT, STEEL_DIM, x - 0.01, y - 0.012, x + 0.01, y + 0.012))
     if device:
-        sign(c, cx, top + height * 0.415, (0.30, 0.36, 0.36)[bold], inner)
+        device_sign(c)
+
+
+def device_sign(c):
+    """The "@" on the shield's field."""
+    cx, top, width, height, body, inner, rim, rim_w = shield_shape(c)
+    sign(c, cx, top + height * 0.415, (0.30, 0.36, 0.36)[c.bold], inner)
 
 
 def sign(c, cx, cy, height, within):
@@ -347,6 +372,16 @@ def sign(c, cx, cy, height, within):
     c.relief(body, 0.0022, 0.0075 if c.bold else 0.0058, (0xFF, 0xF4, 0xCC), (0x4A, 0x30, 0x0E))
 
 
+def swords(c):
+    """The two swords, crossed behind the shield, hilts up."""
+    if c.bold:
+        sword(c, (0.105, 0.100), (0.915, 0.915))
+        sword(c, (0.895, 0.100), (0.085, 0.915))
+    else:
+        sword(c, (0.085, 0.085), (0.925, 0.925))
+        sword(c, (0.915, 0.085), (0.075, 0.925))
+
+
 def icon(side, fill=1.0, bold=None, shadow=False, device=None):
     """The icon at `side` pixels. `fill`: how much of the side the picture
     takes; `shadow`: a soft shadow under it (macOS draws icons standing out)."""
@@ -357,12 +392,7 @@ def icon(side, fill=1.0, bold=None, shadow=False, device=None):
         device = side >= 32
     over = 8 if side <= 128 else 4 if side <= 512 else 2
     c = Canvas(side, over, bold)
-    if bold:
-        sword(c, (0.105, 0.100), (0.915, 0.915))
-        sword(c, (0.895, 0.100), (0.085, 0.915))
-    else:
-        sword(c, (0.085, 0.085), (0.925, 0.925))
-        sword(c, (0.915, 0.085), (0.075, 0.925))
+    swords(c)
     shield(c, device)
     pic = c.result()
     if fill == 1.0 and not shadow:
@@ -394,6 +424,60 @@ def write_icns(path):
     images[-1].save(path, format="ICNS", append_images=images[:-1])
 
 
+def layers(side, fill):
+    """The icon's parts, each alone on a clear square of `side` pixels with
+    the picture taking `fill` of it, front first: the .icon's layers."""
+
+    def drawn(paint):
+        c = Canvas(side, 2, 0)
+        c.casts = False
+        paint(c)
+        inner = int(round(side * fill))
+        out = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+        out.alpha_composite(c.result().resize((inner, inner), Image.LANCZOS), ((side - inner) // 2,) * 2)
+        return out
+
+    return {
+        "sign": drawn(device_sign),
+        "shield": drawn(lambda c: shield(c, device=False)),
+        "swords": drawn(swords),
+    }
+
+
+def colour(c):
+    return "srgb:" + ",".join(f"{v / 255:.5f}" for v in c) + ",1.00000"
+
+
+def write_icon_bundle(path, side=1024, fill=0.80):
+    """macOS 26's icon, as Icon Composer saves it: icon.json over Assets/.
+    The layers stand on the title's dark (macOS frames the icon in its own
+    rounded square, and lights the layers as glass); `fill` keeps the
+    swords' ends off its corners. Godot's export compiles it with Xcode's
+    actool (application/liquid_glass_icon); .gdignore keeps Godot from
+    importing the layers as game resources."""
+    assets = path / "Assets"
+    assets.mkdir(parents=True, exist_ok=True)
+    groups = []
+    for name, im in layers(side, fill).items():
+        im.save(assets / f"{name}.png", format="PNG")
+        groups.append(
+            {
+                "layers": [{"image-name": f"{name}.png", "name": name}],
+                "name": name,
+                "shadow": {"kind": "neutral", "opacity": 0.5},
+                "specular": True,
+                "translucency": {"enabled": False, "value": 0.5},
+            }
+        )
+    doc = {
+        "fill": {"linear-gradient": [colour(BACK_TOP), colour(INK)]},
+        "groups": groups,
+        "supported-platforms": {"squares": "shared"},
+    }
+    (path / "icon.json").write_text(json.dumps(doc, indent=2) + "\n")
+    (path / ".gdignore").write_text("")
+
+
 def write_linux_zip(path, sizes=(16, 24, 32, 48, 64, 96, 128, 256)):
     # the same bytes on every run: fixed dates, stored order
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
@@ -420,9 +504,10 @@ def main():
     icon(512).save(godot / "icon.png", format="PNG")
     write_ico(godot / "icon.ico")
     write_icns(godot / "icon.icns")
+    write_icon_bundle(godot / "icon.icon")
     write_linux_zip(steam / "client-linux.zip")
     write_community(steam / "community.jpg")
-    print("app icon: client/godot/icon.{png,icns,ico}, steam/icon/")
+    print("app icon: client/godot/icon.{png,icns,ico,icon}, steam/icon/")
 
 
 if __name__ == "__main__":

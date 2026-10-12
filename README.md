@@ -331,7 +331,8 @@ silicon; macOS 11 or newer). Its textures are S3TC/BPTC, as in development
 and on the other platforms (Apple silicon reads them): Godot's own arm64
 export would encode them again as ASTC at nearly twice the size, so the
 stage asks for an x86_64 export from a template that holds the arm64
-binary. Signing is ad-hoc unless:
+binary. The Liquid Glass icon needs Xcode (its `actool`); without it the
+app has the classic icon. Signing is ad-hoc unless:
 
 - `MACOS_SIGN_IDENTITY="Developer ID Application: <name> (<team>)"` signs
   every binary with that identity, the hardened runtime and a timestamp
@@ -471,7 +472,11 @@ again:
 `client/godot/icon.png` for the window, and `icon.icns` and `icon.ico` for
 the Dock and the taskbar. Steamworks takes those two as its client icons
 for macOS and Windows; `steam/icon/` has the rest it asks for, the client
-icon for Linux (a zip of PNGs) and the 184×184 community icon.
+icon for Linux (a zip of PNGs) and the 184×184 community icon. For macOS 26
+and later it also writes `icon.icon`, an Icon Composer package: the
+swords, the shield and the `@` as layers over the title's dark, which the
+system lights as Liquid Glass (without it macOS shows an older icon on a
+grey plate). The macOS export compiles it with Xcode's `actool`.
 
 The renderer is Forward+ (Vulkan, Metal or D3D12). `RENETHACK_FRAME_STATS=1`
 logs frame times every two seconds; `RENETHACK_UI_SCALE` (percent, 80–140)

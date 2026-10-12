@@ -223,8 +223,9 @@ audio:
 	python3 tools/fetch_audio.py
 
 # The game's icon (committed): client/godot/icon.png for the window,
-# icon.icns and icon.ico for macOS and Windows, and steam/icon/ with what
-# else Steamworks asks for; the same bytes on every run
+# icon.icns and icon.ico for macOS and Windows, icon.icon (Liquid Glass) for
+# macOS 26, and steam/icon/ with what else Steamworks asks for; the same
+# bytes on every run
 app-icon:
 	python3 tools/app_icon.py
 
