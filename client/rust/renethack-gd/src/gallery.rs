@@ -654,6 +654,38 @@ pub fn put_ray(
     Ok(())
 }
 
+/// An explosion of NetHack's type `expl` (`EXPL_*`) over the 3 x 3 cells
+/// of `CORRIDORS` about `at`, as the engine draws one: nine glyphs, each
+/// its part of it.
+pub fn put_blast(
+    world: &mut World,
+    cat: &Catalog,
+    expl: i32,
+    at: (i32, i32),
+) -> Result<(), String> {
+    // NetHack's explcolors, and the parts' characters (S_expl_tl..br)
+    let color = [0, 2, 3, 4, 5, 9, 15][expl.clamp(0, 6) as usize];
+    let parts = ['/', '-', '\\', '|', ' ', '|', '\\', '-', '/'];
+    let floor = cmap(cat, "S_room")?;
+    for (i, ch) in parts.into_iter().enumerate() {
+        let i = i as i32;
+        let (x, y) = corridor_cell((at.0 + i % 3 - 1, at.1 + i / 3 - 1));
+        let glyph = Glyph {
+            glyph: Some(cat.glyphs.explode + expl * 9 + i),
+            ch: ch as i32,
+            color,
+            flags: 0,
+            tile: 0,
+            kind: GlyphKind::Explosion,
+            mon: None,
+            cmap: None,
+            level: None,
+        };
+        world.map.print(x, y, &glyph, Some(&floor));
+    }
+    Ok(())
+}
+
 /// A cell of `CORRIDORS` on the map.
 pub fn corridor_cell((col, row): (i32, i32)) -> (i32, i32) {
     (CORRIDORS_AT.0 + col, CORRIDORS_AT.1 + row)

@@ -16,7 +16,7 @@ use nh_protocol::{Catalog, Glyph, GlyphKind, LevelNotice, mg};
 use nh_world::{Branch, World};
 
 use crate::map_view::{MapView, ROLES, WARM_MONSTERS, role_monster};
-use crate::vfx::{Ray, VfxKind};
+use crate::vfx::{Blast, Ray, VfxKind};
 
 /// The branches drawn: the main one, and those with models, walls,
 /// liquids or lights of their own.
@@ -31,7 +31,7 @@ const STAGES: &[(&str, Branch)] = &[
 /// The effects the first stage fires (`act`), how many a frame go off
 /// under the start-up veil, and the frames a stage is held after them
 /// (the effects that follow others go off then).
-const ACTS: u32 = 21;
+const ACTS: u32 = 23;
 const VEILED_ACTS: u32 = 4;
 const HOLD_TAIL: u32 = 24;
 /// The frames a later stage is held (nothing in it is drawn for the
@@ -285,8 +285,8 @@ impl Rehearsal {
     }
 
     /// The `n`th effect of a stage: a burst of every kind, beams, a ray
-    /// of every kind, a blow, outlines (a hostile, a pet, an empty cell)
-    /// and a path.
+    /// of every kind, a blow, outlines (a hostile, a pet, an empty cell),
+    /// a path, and a fire's explosion (its heart a tower of flame).
     fn act(&self, map: &mut MapView, n: u32) {
         let red = Color::from_rgb(1.0, 0.3, 0.2);
         let kinds = [
@@ -327,6 +327,14 @@ impl Rehearsal {
             Some(6) => {
                 map.set_hover(Some((X0 + 4, Y0 + 6)));
                 map.set_path(&path, false);
+            }
+            Some(7) => {
+                let ground = Vector3::new((X0 + 6) as f32, 0.0, (Y0 + 4) as f32);
+                map.vfx().blast(Blast::Fiery, true, red, ground);
+            }
+            Some(8) => {
+                let ground = Vector3::new((X0 + 7) as f32, 0.0, (Y0 + 4) as f32);
+                map.vfx().blast(Blast::Fiery, false, red, ground);
             }
             _ => {}
         }

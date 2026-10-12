@@ -235,6 +235,37 @@ struct RayLook {
     trails: &'static [Recipe],
 }
 
+/// What an explosion is of: NetHack's `EXPL_*`, each its own look. A
+/// fire's heart is a tower of flame (a scroll of fire's), the rest of it
+/// rolling fire; frost bursts in shards and a cold mist, gas and darkness
+/// in clouds, water and mud in a spray, magic in a blast of sparks.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Blast {
+    Dark,
+    Noxious,
+    Muddy,
+    Wet,
+    Magical,
+    Fiery,
+    Frosty,
+}
+
+impl Blast {
+    /// The explosion of a type: an explosion glyph's offset from the first
+    /// one over nine (the cells of an explosion's 3 x 3).
+    pub fn of_type(t: i32) -> Blast {
+        match t {
+            0 => Blast::Dark,
+            1 => Blast::Noxious,
+            2 => Blast::Muddy,
+            3 => Blast::Wet,
+            4 => Blast::Magical,
+            6 => Blast::Frosty,
+            _ => Blast::Fiery,
+        }
+    }
+}
+
 /// A particle recipe: what a pooled emitter of a kind is built with.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Recipe {
@@ -254,6 +285,12 @@ enum Recipe {
     Droplets,
     /// A ring spreading out and fading.
     Ring,
+    /// A column of rolling fire rising (a fire's heart).
+    Pillar,
+    /// Rolling fire, rising (a fire's other cells).
+    Blaze,
+    /// Embers flung up and drifting.
+    Embers,
     // shed along a ray once it has run its length (`Vfx::shed`):
     /// Tongues of flame rising.
     Tongues,
@@ -334,9 +371,13 @@ impl Recipe {
     /// over a particle's life.
     fn frames(self) -> Option<(i32, i32)> {
         match self {
-            Recipe::Tongues | Recipe::Haze | Recipe::Smoke | Recipe::Gas | Recipe::Dust => {
-                Some((8, 8))
-            }
+            Recipe::Tongues
+            | Recipe::Pillar
+            | Recipe::Blaze
+            | Recipe::Haze
+            | Recipe::Smoke
+            | Recipe::Gas
+            | Recipe::Dust => Some((8, 8)),
             _ => None,
         }
     }
@@ -500,6 +541,42 @@ impl Recipe {
                 radius: 0.0,
                 damping: 0.0,
                 hdr: 2.4,
+                ..base
+            },
+            Recipe::Pillar => Params {
+                amount: 56,
+                life: 1.0,
+                speed: (1.2, 3.4),
+                spread: 12.0,
+                gravity: Vector3::new(0.0, 0.8, 0.0),
+                size: (0.55, 1.1),
+                radius: 0.35,
+                damping: 1.2,
+                hdr: 0.85,
+                ..base
+            },
+            Recipe::Blaze => Params {
+                amount: 10,
+                life: 0.8,
+                speed: (0.4, 1.4),
+                spread: 35.0,
+                gravity: Vector3::new(0.0, 1.4, 0.0),
+                size: (0.35, 0.7),
+                radius: 0.3,
+                damping: 1.5,
+                hdr: 0.8,
+                ..base
+            },
+            Recipe::Embers => Params {
+                amount: 40,
+                life: 1.4,
+                speed: (0.6, 2.6),
+                spread: 30.0,
+                gravity: Vector3::new(0.0, 0.5, 0.0),
+                size: (0.03, 0.06),
+                radius: 0.45,
+                damping: 0.6,
+                hdr: 3.0,
                 ..base
             },
             // shed along a ray: amounts are for a ray of `TRAIL_FULL`
@@ -723,6 +800,15 @@ struct Splat {
     age: f32,
 }
 
+/// A tower of flame where a fire explodes (a scroll of fire's): flames
+/// of a real flame's flipbook (the torches'), turned to the camera, that
+/// shoot up and die down.
+struct Column {
+    root: Gd<Node3D>,
+    flames: Vec<Gd<ShaderMaterial>>,
+    age: f32,
+}
+
 /// A burst waiting for its moment (a blow lands a little after it starts).
 struct Pending {
     kind: VfxKind,
@@ -733,8 +819,20 @@ struct Pending {
     dir: Option<Vector3>,
 }
 
-/// Emitters kept per recipe.
-const POOL: usize = 6;
+/// Emitters kept per recipe (an explosion's nine cells may each want
+/// one).
+const POOL: usize = 9;
+/// How long a tower of flame burns (seconds), and the flames of one:
+/// (width, height, across the cell, phase).
+const COLUMN_SECS: f32 = 1.4;
+const COLUMN_FLAMES: [(f32, f32, f32, f32); 3] = [
+    (1.5, 3.4, 0.0, 0.0),
+    (1.0, 2.3, -0.38, 0.37),
+    (1.0, 2.1, 0.4, 0.71),
+];
+/// A fire that exploded this lately (seconds) was the scroll of fire the
+/// hero read: the reading's runes do not follow its flames.
+const FIRE_LATELY: f32 = 2.0;
 /// Splats kept on the floor at once; each fades out over its life.
 const SPLATS: usize = 24;
 /// How much darker a splat lies than the creature's own colour.
@@ -776,6 +874,8 @@ fn particle_textures() -> HashMap<Recipe, Gd<Texture2D>> {
         (Recipe::Rime, format!("{kenney}star_04.png")),
         (Recipe::Twinkles, format!("{kenney}star_01.png")),
         (Recipe::Tongues, format!("{books}FireBall04_8x8.png")),
+        (Recipe::Pillar, format!("{books}FireBall01_8x8.png")),
+        (Recipe::Blaze, format!("{books}FireBall02_8x8.png")),
         (Recipe::Haze, smoke.clone()),
         (Recipe::Smoke, smoke.clone()),
         (Recipe::Gas, smoke.clone()),
@@ -811,6 +911,12 @@ pub struct Vfx {
     loose: Option<(Ray, Color, Vector3, f32)>,
     /// A number for the next ray's pattern.
     rays_drawn: u32,
+    columns: Vec<Column>,
+    flame_shader: Option<Gd<Shader>>,
+    flame_book: Option<Gd<Texture2D>>,
+    /// When (`clock`) the last explosion went off, and the last fire.
+    last_blast: f32,
+    last_fire: f32,
     splats: Vec<Splat>,
     next_splat: usize,
     pending: Vec<Pending>,
@@ -1015,7 +1121,7 @@ fn ramp_of(recipe: Recipe, color: Color) -> Gd<GradientTexture1D> {
                 color.with_alpha(0.0),
             ],
         )
-    } else if recipe == Recipe::Tongues {
+    } else if matches!(recipe, Recipe::Tongues | Recipe::Pillar | Recipe::Blaze) {
         let k = p.hdr;
         (
             &[0.0, 0.3, 0.7, 1.0],
@@ -1090,6 +1196,14 @@ impl Vfx {
             last_piece: f32::NEG_INFINITY,
             loose: None,
             rays_drawn: 0,
+            columns: Vec::new(),
+            flame_shader: godot::tools::try_load::<Shader>("res://shaders/flame.gdshader").ok(),
+            flame_book: godot::tools::try_load::<Texture2D>(
+                "res://art/cc0/unity-labs/flipbooks/Flame02_16x4.png",
+            )
+            .ok(),
+            last_blast: f32::NEG_INFINITY,
+            last_fire: f32::NEG_INFINITY,
             splats: Vec::new(),
             next_splat: 0,
             pending: Vec::new(),
@@ -1143,21 +1257,169 @@ impl Vfx {
             self.emit(Recipe::Flash, color, at, None);
         }
         if let Some((c, energy, secs)) = light {
-            self.flash(at + Vector3::new(0.0, 0.3, 0.0), c, energy, secs);
+            self.flash(at + Vector3::new(0.0, 0.3, 0.0), c, energy, secs, 2.5);
         }
         if let VfxKind::Blood(c) = kind {
             // blood darkens as it lies: never the bright red of the glyph
             let k = SPLAT_DARK;
             let dark = Color::from_rgb(c.r * k, c.g * k, c.b * k);
-            self.splat(Vector3::new(at.x, 0.0, at.z), dark);
+            self.splat(Vector3::new(at.x, 0.0, at.z), dark, 1.0);
         }
         if let VfxKind::Explosion(_) = kind {
             // the scorch of the blast, fading like blood
             self.splat(
                 Vector3::new(at.x, 0.0, at.z),
                 Color::from_rgb(0.05, 0.04, 0.035),
+                1.0,
             );
         }
+    }
+
+    /// A cell of an explosion of `kind` (`heart`: its middle one) at
+    /// `at` on the ground, `color` its glyph's: each kind as what it is.
+    pub fn blast(&mut self, kind: Blast, heart: bool, color: Color, at: Vector3) {
+        self.last_blast = self.clock;
+        let mid = at + Vector3::new(0.0, 0.6, 0.0);
+        let rgb = Color::from_rgb;
+        match kind {
+            Blast::Fiery => {
+                self.last_fire = self.clock;
+                let fire = rgb(1.0, 0.5, 0.16);
+                if heart {
+                    // a tower of flame, a column of fire rolling up it,
+                    // embers flung out, the scorch it leaves
+                    self.column(at);
+                    self.emit(Recipe::Pillar, fire, at + Vector3::new(0.0, 0.3, 0.0), None);
+                    self.emit(Recipe::Embers, rgb(1.0, 0.55, 0.2), mid, None);
+                    self.flash(at + Vector3::new(0.0, 1.4, 0.0), fire, 7.0, 1.3, 5.0);
+                    self.splat(at, rgb(0.04, 0.03, 0.025), 2.4);
+                } else {
+                    self.emit(Recipe::Blaze, fire, at + Vector3::new(0.0, 0.25, 0.0), None);
+                }
+            }
+            Blast::Frosty => {
+                let ice = rgb(0.62, 0.86, 1.0);
+                self.emit(Recipe::Shards, ice, mid, None);
+                self.emit_in_cell(Recipe::Rime, ice, mid);
+                self.emit_in_cell(Recipe::Haze, rgb(0.75, 0.86, 0.95), mid);
+                if heart {
+                    self.flash(mid, ice, 3.0, 0.5, 4.0);
+                }
+            }
+            Blast::Noxious => self.emit_in_cell(Recipe::Gas, rgb(0.55, 0.78, 0.2), mid),
+            Blast::Dark => self.emit_in_cell(Recipe::Smoke, color, mid),
+            Blast::Wet | Blast::Muddy => {
+                let (drops, mist) = if kind == Blast::Wet {
+                    (rgb(0.35, 0.55, 0.85), rgb(0.7, 0.8, 0.9))
+                } else {
+                    (rgb(0.3, 0.22, 0.14), rgb(0.36, 0.28, 0.2))
+                };
+                self.emit(Recipe::Droplets, drops, mid, None);
+                self.emit_in_cell(Recipe::Gas, mist, mid);
+                if kind == Blast::Muddy {
+                    self.splat(at, drops, 1.0);
+                }
+            }
+            Blast::Magical => {
+                self.emit(Recipe::Blast, color, mid, None);
+                self.emit(Recipe::Glints, color, mid, None);
+                if heart {
+                    self.flash(mid, color, 4.0, 0.4, 4.0);
+                }
+            }
+        }
+    }
+
+    /// What a ray of its kind sheds, shed over a cell about `at` instead
+    /// (an explosion's cell): the box of a cell, its share of the amount.
+    fn emit_in_cell(&mut self, recipe: Recipe, color: Color, at: Vector3) {
+        let i = self.take_emitter(recipe);
+        let p = recipe.params();
+        let Some(e) = self
+            .emitters
+            .get_mut(&recipe)
+            .and_then(|pool| pool.get_mut(i))
+        else {
+            return;
+        };
+        let color = recipe.own_color().unwrap_or(color);
+        e.process.set_color_ramp(&ramp_of(recipe, color));
+        e.process
+            .set_emission_box_extents(Vector3::new(0.45, 0.35, 0.45));
+        e.node.set_transform(Transform3D::new(Basis::IDENTITY, at));
+        e.node.set_amount_ratio(2.0 / TRAIL_FULL);
+        e.node.set_visibility_aabb(Aabb::new(
+            Vector3::new(-2.0, -2.0, -2.0),
+            Vector3::new(4.0, 5.0, 4.0),
+        ));
+        e.node.set_visible(true);
+        e.node.restart();
+        e.node.set_emitting(true);
+        e.busy = p.life as f32 + 0.1;
+    }
+
+    /// A tower of flame standing at `at` (the ground) for `COLUMN_SECS`.
+    fn column(&mut self, at: Vector3) {
+        let (Some(shader), Some(book)) = (self.flame_shader.clone(), self.flame_book.clone())
+        else {
+            return;
+        };
+        let i = match self.columns.iter().position(|c| c.age >= COLUMN_SECS) {
+            Some(i) => i,
+            None => {
+                let mut root = Node3D::new_alloc();
+                self.root.add_child(&root);
+                let flames = COLUMN_FLAMES
+                    .iter()
+                    .map(|&(w, h, x, phase)| {
+                        let mut quad = QuadMesh::new_gd();
+                        quad.set_size(Vector2::new(w, h));
+                        // it rises from its foot
+                        quad.set_center_offset(Vector3::new(0.0, h / 2.0, 0.0));
+                        let mut mat = ShaderMaterial::new_gd();
+                        mat.set_shader(&shader);
+                        mat.set_shader_parameter("flipbook", &book.to_variant());
+                        mat.set_shader_parameter("has_flipbook", &true.to_variant());
+                        let mut mi = MeshInstance3D::new_alloc();
+                        mi.set_mesh(&quad);
+                        mi.set_material_override(&mat);
+                        mi.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+                        mi.set_instance_shader_parameter("phase", &phase.to_variant());
+                        mi.set_position(Vector3::new(x, 0.0, 0.0));
+                        root.add_child(&mi);
+                        mat
+                    })
+                    .collect();
+                self.columns.push(Column {
+                    root,
+                    flames,
+                    age: COLUMN_SECS,
+                });
+                self.columns.len() - 1
+            }
+        };
+        let c = &mut self.columns[i];
+        c.age = 0.0;
+        c.root.set_position(at);
+        c.root.set_scale(Vector3::ONE * 0.5);
+        c.root.set_visible(true);
+    }
+
+    /// Whether a fire exploded lately (`FIRE_LATELY`).
+    pub fn fire_lately(&self) -> bool {
+        self.clock - self.last_fire < FIRE_LATELY
+    }
+
+    /// Seconds since the last explosion, and how long the newest tower of
+    /// flame has stood (self-tests).
+    pub fn since_blast(&self) -> (f32, Option<f32>) {
+        let column = self
+            .columns
+            .iter()
+            .filter(|c| c.age < COLUMN_SECS)
+            .map(|c| c.age)
+            .reduce(f32::min);
+        (self.clock - self.last_blast, column)
     }
 
     /// An effect a little later (seconds).
@@ -1493,7 +1755,8 @@ impl Vfx {
         e.busy = p.life as f32 + 0.1;
     }
 
-    fn flash(&mut self, at: Vector3, color: Color, energy: f32, secs: f32) {
+    /// A light at `at` dying out over `secs`, reaching `range` metres.
+    fn flash(&mut self, at: Vector3, color: Color, energy: f32, secs: f32, range: f32) {
         let i = match self.flashes.iter().position(|f| f.left <= 0.0) {
             Some(i) => i,
             None => {
@@ -1513,6 +1776,7 @@ impl Vfx {
             }
         };
         let f = &mut self.flashes[i];
+        f.light.set_param(Param::RANGE, range);
         f.light.set_color(color);
         f.light.set_position(at);
         f.light.set_param(Param::ENERGY, energy);
@@ -1522,7 +1786,8 @@ impl Vfx {
         f.total = secs;
     }
 
-    fn splat(&mut self, at: Vector3, color: Color) {
+    /// A splat of `color` on the floor at `at`, `scale` times its size.
+    fn splat(&mut self, at: Vector3, color: Color, scale: f32) {
         if self.splats.len() < SPLATS {
             let mut decal = Decal::new_alloc();
             decal.set_cull_mask(self.decal_mask);
@@ -1544,7 +1809,7 @@ impl Vfx {
         }
         // (its pool is about two fifths of it, its spatter reaches out to
         // its edge)
-        let size = 0.85 + 0.4 * h;
+        let size = (0.85 + 0.4 * h) * scale;
         s.decal.set_size(Vector3::new(size, 0.5, size));
         s.decal
             .set_rotation(Vector3::new(0.0, h * std::f32::consts::TAU, 0.0));
@@ -1566,6 +1831,7 @@ impl Vfx {
     pub fn busy(&self) -> bool {
         self.beams.iter().any(Beam::live)
             || self.emitters.values().flatten().any(|e| e.busy > 0.0)
+            || self.columns.iter().any(|c| c.age < COLUMN_SECS)
             || !self.pending.is_empty()
     }
 
@@ -1640,6 +1906,24 @@ impl Vfx {
         for (kind, color, from, to) in due_shed {
             self.shed(kind, color, from, to);
         }
+        for c in &mut self.columns {
+            if c.age >= COLUMN_SECS {
+                continue;
+            }
+            c.age += delta;
+            // it shoots up, stands and wavers, then dies down
+            let up = smoothstep(0.0, 0.22, c.age);
+            let fade = 1.0 - smoothstep(0.5, COLUMN_SECS, c.age);
+            let waver = 0.9 + 0.1 * (clock * 17.0).sin();
+            c.root
+                .set_scale(Vector3::ONE * (0.45 + 0.55 * up) * (0.85 + 0.15 * fade));
+            for m in &mut c.flames {
+                m.set_shader_parameter("energy", &(2.4 * fade * waver).to_variant());
+            }
+            if c.age >= COLUMN_SECS {
+                c.root.set_visible(false);
+            }
+        }
         for s in &mut self.splats {
             if s.age < SPLAT_SECS {
                 s.age += delta;
@@ -1690,6 +1974,10 @@ impl Vfx {
             b.light.set_visible(false);
         }
         self.loose = None;
+        for c in &mut self.columns {
+            c.age = COLUMN_SECS;
+            c.root.set_visible(false);
+        }
         for s in &mut self.splats {
             s.age = SPLAT_SECS;
             s.decal.set_visible(false);
@@ -1762,6 +2050,11 @@ impl Vfx {
         ));
         p
     }
+}
+
+fn smoothstep(a: f32, b: f32, x: f32) -> f32 {
+    let t = ((x - a) / (b - a)).clamp(0.0, 1.0);
+    t * t * (3.0 - 2.0 * t)
 }
 
 /// Where a ray from `from` to `to` throws its light: as near its end as
@@ -1851,7 +2144,7 @@ fn process_material(recipe: Recipe, p: &Params) -> Gd<ParticleProcessMaterial> {
         m.set_param_texture(Parameter::SCALE, &tex);
     }
     // turned any way: a ring, smoke and flame are no two alike
-    if grows.is_some() || recipe == Recipe::Tongues {
+    if grows.is_some() || recipe.frames().is_some() {
         m.set_param_min(Parameter::ANGLE, 0.0);
         m.set_param_max(Parameter::ANGLE, 360.0);
     }

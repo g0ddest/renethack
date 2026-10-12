@@ -195,6 +195,12 @@ impl HeroFx {
                 anchor,
             } => {
                 self.started.push(name);
+                // a scroll of fire burst into flames as it was read (the
+                // engine showed them before the reading is shown): no
+                // runes rise after its fire
+                if kind == VfxKind::Read && vfx.fire_lately() {
+                    return;
+                }
                 vfx.burst(kind, where_now(anchor.as_ref(), at));
             }
             Fx::Beam {

@@ -4773,6 +4773,7 @@ impl SelfTest {
             "shop" => shop::shop(),
             "effects" => effects::effects(),
             "rays" => effects::rays(),
+            "blasts" => effects::blasts(),
             "pickers" => input_ru::pickers(),
             "help" => help_tests::help(),
             "settings" => settings_tests::settings(),

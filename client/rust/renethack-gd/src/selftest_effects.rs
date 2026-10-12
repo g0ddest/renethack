@@ -4,15 +4,16 @@
 //! remembered in the room and in the corridor's dark, a fountain and an
 //! up stair in the light; then the level unlit, an up stair a few steps
 //! into the dark, remembered. `rays`: a ray of every kind the engine draws
-//! across the lit room, cell by cell. Pictures only (`--screenshots`): not
-//! part of `make test-client`.
+//! across the lit room, cell by cell. `blasts`: an explosion of every kind
+//! in it, a scroll of fire's about the hero. Pictures only
+//! (`--screenshots`): not part of `make test-client`.
 
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::{Step, camera_settled, map_view, quit, start};
 
 use crate::gallery::{
-    CorridorScene, corridor_cell, lay_out_corridors, lay_out_scene, put_feature, put_ray,
+    CorridorScene, corridor_cell, lay_out_corridors, lay_out_scene, put_blast, put_feature, put_ray,
 };
 use crate::game::RenethackGame;
 use crate::vfx::VfxKind;
@@ -303,6 +304,111 @@ pub(super) fn rays() -> Vec<Step> {
         }),
         Step::Shot("rays-force"),
     ]);
+    steps.extend(quit());
+    steps
+}
+
+/// An explosion drawn in `blasts`: its pictures' names (as it bursts, as
+/// it dies down), NetHack's type (`EXPL_*`) and its middle cell.
+struct Blown {
+    shot: &'static str,
+    later: &'static str,
+    expl: i32,
+    at: (i32, i32),
+}
+
+const BLASTS: [Blown; 7] = [
+    // a scroll of fire read: the hero in its middle
+    Blown {
+        shot: "blasts-fire",
+        later: "blasts-fire-later",
+        expl: 5,
+        at: (9, 5),
+    },
+    Blown {
+        shot: "blasts-frost",
+        later: "blasts-frost-later",
+        expl: 6,
+        at: (5, 3),
+    },
+    Blown {
+        shot: "blasts-gas",
+        later: "blasts-gas-later",
+        expl: 1,
+        at: (5, 3),
+    },
+    Blown {
+        shot: "blasts-dark",
+        later: "blasts-dark-later",
+        expl: 0,
+        at: (5, 3),
+    },
+    Blown {
+        shot: "blasts-water",
+        later: "blasts-water-later",
+        expl: 3,
+        at: (5, 3),
+    },
+    Blown {
+        shot: "blasts-mud",
+        later: "blasts-mud-later",
+        expl: 2,
+        at: (5, 3),
+    },
+    Blown {
+        shot: "blasts-magic",
+        later: "blasts-magic-later",
+        expl: 4,
+        at: (5, 3),
+    },
+];
+
+/// The explosion of `BLASTS` under way.
+static BLAST: AtomicUsize = AtomicUsize::new(0);
+
+/// `blasts`: the west room of the corridors, lit, and an explosion of
+/// each kind in it: a fire about the hero (a scroll of fire's: a tower of
+/// flame), frost, gas, darkness, water, mud and magic, each its own; a
+/// picture of each as it bursts and as it dies down.
+pub(super) fn blasts() -> Vec<Step> {
+    let mut steps = start();
+    steps.extend([
+        Step::Wait("the hero on the map", |g| Ok(g.world.map.hero().is_some())),
+        Step::Call("the first explosion", |_| {
+            BLAST.store(0, Ordering::Relaxed);
+            Ok(())
+        }),
+    ]);
+    for blown in &BLASTS {
+        steps.extend([
+            // laid out anew: nothing of the last one left
+            Step::Call("lay out the room", |g| {
+                let cat = g.catalog.clone().ok_or("no catalog")?;
+                lay_out_scene(&mut g.world, &cat, &RAYS_SCENE, false)?;
+                ui_map(g)?.set_showcase(false);
+                Ok(())
+            }),
+            Step::Wait("the room drawn", |g| Ok(drawn_now(g))),
+            Step::Wait("the camera on the hero", camera_settled),
+            Step::Call("an explosion", |g| {
+                let cat = g.catalog.clone().ok_or("no catalog")?;
+                let b = &BLASTS[BLAST.load(Ordering::Relaxed)];
+                put_blast(&mut g.world, &cat, b.expl, b.at)
+            }),
+            Step::Wait("the explosion drawn", |g| {
+                let b = &BLASTS[BLAST.load(Ordering::Relaxed)];
+                Ok(map_view(g)?.blast_drawn_at(corridor_cell(b.at)))
+            }),
+            Step::Wait("it bursts", |g| Ok(map_view(g)?.since_blast().0 > 0.25)),
+            Step::Shot(blown.shot),
+            Step::Wait("it dies down", |g| Ok(map_view(g)?.since_blast().0 > 0.9)),
+            Step::Shot(blown.later),
+            Step::Call("the next explosion", |_| {
+                BLAST.fetch_add(1, Ordering::Relaxed);
+                Ok(())
+            }),
+        ]);
+    }
     steps.extend(quit());
     steps
 }
