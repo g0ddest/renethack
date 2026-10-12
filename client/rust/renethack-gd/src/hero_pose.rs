@@ -12,20 +12,25 @@
 //! map_view: it moves the hero's own model (the rider's while they ride,
 //! who keep their seat: no sinking, kneeling or lying in the saddle).
 
-use godot::classes::base_material_3d::BlendMode;
+use godot::classes::base_material_3d::{
+    BillboardMode, BlendMode, Flags, ShadingMode, Transparency,
+};
 use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::light_3d::Param;
+use godot::classes::particle_process_material::{EmissionShape, Parameter};
 use godot::classes::rendering_server::FogVolumeShape;
 use godot::classes::{
-    FogMaterial, FogVolume, Label3D, MeshInstance3D, OmniLight3D, StandardMaterial3D,
+    Decal, FogMaterial, FogVolume, GpuParticles3D, Gradient, GradientTexture1D, Label3D,
+    MeshInstance3D, OmniLight3D, ParticleProcessMaterial, QuadMesh, Shader, ShaderMaterial,
+    StandardMaterial3D,
 };
 use godot::prelude::*;
 use nh_protocol::Catalog;
 use nh_world::{Helpless, HelplessSpan, PrayerOutcome, TrapKind, World};
 
 use super::{
-    Finish, MapView, MeshKey, Paint, Role, SHADE_LIT, at, bevel, build_flat, cuboid, cylinder,
-    plane, prism, torus,
+    Finish, MapView, MeshKey, Paint, Role, SHADE_LIT, at, bevel, cuboid, cylinder, marker, plane,
+    prism, torus,
 };
 
 /// What the hero is caught in or under, as drawn.
@@ -73,6 +78,12 @@ const PRAYER_SECS: f32 = 3.2;
 const ANSWER_IN: f32 = 0.6;
 const ANSWER_OUT: f32 = 0.9;
 const HOLY: Color = Color::from_rgb(1.0, 0.93, 0.72);
+/// The shaft's height (its middle at the hero's chest height).
+const SHAFT_HEIGHT: f32 = 7.0;
+/// Seconds the motes in the shaft keep rising from the hero's feet, and
+/// each one's life (all gone before the prayer ends).
+const MOTES_SECS: (f32, f32) = (0.3, 1.6);
+const MOTE_LIFE: f32 = 1.5;
 const DARK: Color = Color::from_rgb(0.05, 0.02, 0.08);
 /// The body gives way (a death's fall, quicker).
 const COLLAPSE: &str = "Death01";
@@ -171,9 +182,13 @@ struct Prayer {
     /// Seconds since it began.
     t: f32,
     nodes: Vec<Gd<Node3D>>,
-    /// The shaft's own materials (their alpha fades), with their full
-    /// alpha.
-    veils: Vec<(Gd<StandardMaterial3D>, f32)>,
+    /// The shaft's own materials (their strength grows and fades), with
+    /// their full strength.
+    veils: Vec<(Gd<ShaderMaterial>, f32)>,
+    /// The warm glow on the floor round the hero, its full alpha.
+    glow: Option<(Gd<Decal>, f32)>,
+    /// Motes rising up the shaft.
+    motes: Option<Gd<GpuParticles3D>>,
     /// Its light (a negative one darkens), with its full energy.
     light: Option<(Gd<OmniLight3D>, f32)>,
     /// The darkness's own fog, with its full density.
@@ -583,17 +598,32 @@ impl MapView {
             t: 0.0,
             nodes: Vec::new(),
             veils: Vec::new(),
+            glow: None,
+            motes: None,
             light: None,
             fog: None,
         };
         match outcome {
             PrayerOutcome::Pleased => {
-                // a shaft of light from above, glowing (its foot a little
-                // above the floor: no flicker there)
-                for (top, bottom, y, alpha) in [(0.3, 0.4, 3.53, 0.16), (0.16, 0.22, 3.54, 0.2)] {
-                    let mesh = cylinder(top, bottom, 7.0);
-                    self.shaft(&mut prayer, mesh, origin + at(0.0, y, 0.0), alpha);
+                // a shaft of light from above, soft and glowing, a brighter
+                // core in it; a warm glow on the floor; motes rising
+                let middle = origin + at(0.0, SHAFT_HEIGHT / 2.0, 0.0);
+                for (top, bottom, weight) in [(0.34, 0.46, 0.5), (0.13, 0.18, 0.3)] {
+                    self.shaft(
+                        &mut prayer,
+                        cylinder(top, bottom, SHAFT_HEIGHT),
+                        middle,
+                        weight,
+                    );
                 }
+                let mut glow = marker(&mut self.hero_pose.root, &self.soft_tex, 1.5);
+                glow.set_position(origin);
+                glow.set_modulate(HOLY.with_alpha(0.0));
+                glow.set_emission_energy(1.2);
+                glow.set_visible(true);
+                prayer.nodes.push(glow.clone().upcast());
+                prayer.glow = Some((glow, 0.4));
+                self.shaft_motes(&mut prayer, origin);
                 self.prayer_light(&mut prayer, origin + at(0.0, 2.4, 0.0), 3.0, 4.5);
             }
             PrayerOutcome::Angered => {
@@ -607,13 +637,19 @@ impl MapView {
         self.hero_pose.prayer = Some(prayer);
     }
 
-    /// Part of a shaft of light, glowing over what is behind it.
-    fn shaft(&mut self, prayer: &mut Prayer, mesh: MeshKey, pos: Vector3, alpha: f32) {
-        let Ok(mut mat) = build_flat(HOLY, Finish::Flat).try_cast::<StandardMaterial3D>() else {
+    /// Part of a shaft of light, glowing over what is behind it, soft at
+    /// its sides and fading upwards (shaders/holy_light.gdshader; without
+    /// it, no shaft: the light, the glow and the motes still show).
+    fn shaft(&mut self, prayer: &mut Prayer, mesh: MeshKey, pos: Vector3, weight: f32) {
+        let Ok(shader) = godot::tools::try_load::<Shader>("res://shaders/holy_light.gdshader")
+        else {
             return;
         };
-        mat.set_albedo(HOLY.with_alpha(0.0));
-        mat.set_blend_mode(BlendMode::ADD);
+        let mut mat = ShaderMaterial::new_gd();
+        mat.set_shader(&shader);
+        mat.set_shader_parameter("color", &HOLY.to_variant());
+        mat.set_shader_parameter("height", &SHAFT_HEIGHT.to_variant());
+        mat.set_shader_parameter("strength", &0.0f32.to_variant());
         let mut mi = MeshInstance3D::new_alloc();
         mi.set_mesh(&self.art.mesh(mesh));
         mi.set_material_override(&mat);
@@ -621,7 +657,63 @@ impl MapView {
         mi.set_position(pos);
         self.hero_pose.root.add_child(&mi);
         prayer.nodes.push(mi.upcast());
-        prayer.veils.push((mat, alpha));
+        prayer.veils.push((mat, weight));
+    }
+
+    /// Motes of light rising round the hero's feet up the shaft.
+    fn shaft_motes(&mut self, prayer: &mut Prayer, at_feet: Vector3) {
+        let mut process = ParticleProcessMaterial::new_gd();
+        process.set_emission_shape(EmissionShape::SPHERE);
+        process.set_emission_sphere_radius(0.3);
+        process.set_direction(Vector3::UP);
+        process.set_spread(10.0);
+        process.set_param_min(Parameter::INITIAL_LINEAR_VELOCITY, 0.35);
+        process.set_param_max(Parameter::INITIAL_LINEAR_VELOCITY, 0.8);
+        process.set_gravity(Vector3::new(0.0, 0.1, 0.0));
+        process.set_param_min(Parameter::SCALE, 0.6);
+        process.set_param_max(Parameter::SCALE, 1.4);
+        process.set_turbulence_enabled(true);
+        process.set_turbulence_noise_strength(0.15);
+        process.set_turbulence_noise_scale(2.0);
+        // bright as they rise from the floor, gone at the top
+        let mut ramp = Gradient::new_gd();
+        let bright = Color::from_rgba(HOLY.r * 2.2, HOLY.g * 2.2, HOLY.b * 2.2, 0.0);
+        ramp.set_color(0, bright);
+        ramp.set_color(1, HOLY.with_alpha(0.0));
+        ramp.add_point(0.2, bright.with_alpha(1.0));
+        let mut ramp_tex = GradientTexture1D::new_gd();
+        ramp_tex.set_gradient(&ramp);
+        process.set_color_ramp(&ramp_tex);
+        let mut look = StandardMaterial3D::new_gd();
+        look.set_billboard_mode(BillboardMode::PARTICLES);
+        look.set_flag(Flags::ALBEDO_FROM_VERTEX_COLOR, true);
+        look.set_texture(
+            godot::classes::base_material_3d::TextureParam::ALBEDO,
+            &self.soft_tex,
+        );
+        look.set_transparency(Transparency::ALPHA);
+        look.set_blend_mode(BlendMode::ADD);
+        look.set_shading_mode(ShadingMode::UNSHADED);
+        look.set_flag(Flags::DISABLE_FOG, true);
+        let mut quad = QuadMesh::new_gd();
+        quad.set_size(Vector2::new(0.06, 0.06));
+        let mut motes = GpuParticles3D::new_alloc();
+        motes.set_process_material(&process);
+        motes.set_amount(20);
+        motes.set_lifetime(f64::from(MOTE_LIFE));
+        motes.set_randomness_ratio(0.4);
+        motes.set_draw_pass_mesh(0, &quad);
+        motes.set_material_override(&look);
+        motes.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+        motes.set_visibility_aabb(Aabb::new(
+            Vector3::new(-1.0, -0.2, -1.0),
+            Vector3::new(2.0, 3.0, 2.0),
+        ));
+        motes.set_position(at_feet + at(0.0, 0.1, 0.0));
+        motes.set_emitting(false);
+        self.hero_pose.root.add_child(&motes);
+        prayer.nodes.push(motes.clone().upcast());
+        prayer.motes = Some(motes);
     }
 
     /// A black fog round the hero.
@@ -669,9 +761,17 @@ impl MapView {
             return;
         }
         let a = answer_strength(prayer.t);
-        for (mat, alpha) in &mut prayer.veils {
-            let c = mat.get_albedo();
-            mat.set_albedo(c.with_alpha(a * *alpha));
+        for (mat, weight) in &mut prayer.veils {
+            mat.set_shader_parameter("strength", &(a * *weight).to_variant());
+        }
+        if let Some((glow, alpha)) = prayer.glow.as_mut() {
+            glow.set_modulate(HOLY.with_alpha(a * *alpha));
+        }
+        if let Some(motes) = prayer.motes.as_mut() {
+            let rising = (MOTES_SECS.0..MOTES_SECS.1).contains(&prayer.t);
+            if motes.is_emitting() != rising {
+                motes.set_emitting(rising);
+            }
         }
         if let Some((light, energy)) = prayer.light.as_mut() {
             light.set_param(Param::ENERGY, a * *energy);
