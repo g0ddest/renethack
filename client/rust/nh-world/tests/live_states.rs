@@ -1,6 +1,8 @@
 //! What the hero's body shows of their state, on the real engine in debug
 //! mode: the hero notice tells the trap the hero is caught in (the hero's
-//! glyph hides it), and the status line's opt-in Trap condition is on.
+//! glyph hides it), and the status line's opt-in Trap condition is on; a
+//! spell of helplessness passes between two prompts, and the World has it
+//! from the status line's Zzz, Out and Parlyz.
 //! Build the engine first with `make -C engine` (or set RENETHACK_ENGINE_DIR).
 
 mod common;
@@ -168,4 +170,62 @@ fn a_web_holds_a_hero_too_weak_to_tear_it() {
     assert_eq!(seen, [TrapKind::Web]);
     assert!(conditions.contains(&"Trap".to_string()), "{conditions:?}");
     assert!(freed);
+}
+
+/// Wish for `potion` and drink it: the spell of helplessness the World
+/// saw, as the next command prompt finds it.
+fn helpless_after(potion: &'static str) -> Option<HelplessSpan> {
+    let mut wished = false;
+    let mut drunk = false;
+    let mut span = None;
+    let mut prompts = 0;
+    play(SEED, "archeologist", &mut |w, _, p| {
+        prompts += 1;
+        assert!(prompts < 100, "{potion}: no end");
+        match p {
+            Prompt::Text { query, .. } if query.contains("wish") => {
+                Act::Reply(Reply::Text(potion.into()))
+            }
+            Prompt::FreeKey { query, .. } if query.contains("drink") => {
+                let items = w.inventory.items();
+                let letter = items.iter().find(|i| i.class == '!').expect("the potion");
+                drunk = true;
+                Act::Reply(Reply::Char(letter.letter as i32))
+            }
+            Prompt::Command if !wished => {
+                wished = true;
+                Act::Reply(Reply::Key(23)) // ^W
+            }
+            Prompt::Command if !drunk => Act::Reply(Reply::Key('q' as i32)),
+            Prompt::Command => {
+                span = w.helpless();
+                Act::Quit
+            }
+            other => Act::Reply(other.escape_reply()),
+        }
+    });
+    span
+}
+
+#[test]
+fn a_potion_of_sleeping_is_a_spell_of_sleep_seen_after_it() {
+    let span = helpless_after("blessed potion of sleeping").expect("no spell seen");
+    assert_eq!(span.kind, Helpless::Asleep);
+    // blessed: 13 to 22 turns
+    assert!((10..=25).contains(&span.turns), "{span:?}");
+}
+
+#[test]
+fn cursed_booze_knocks_the_hero_out() {
+    // the status line shows no Out for it: the messages tell it
+    let span = helpless_after("cursed potion of booze").expect("no spell seen");
+    assert_eq!(span.kind, Helpless::Unconscious);
+    assert!((1..=15).contains(&span.turns), "{span:?}");
+}
+
+#[test]
+fn a_potion_of_paralysis_freezes_the_hero() {
+    let span = helpless_after("blessed potion of paralysis").expect("no spell seen");
+    assert_eq!(span.kind, Helpless::Paralyzed);
+    assert!((10..=25).contains(&span.turns), "{span:?}");
 }

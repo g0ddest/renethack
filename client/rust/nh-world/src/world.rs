@@ -5,7 +5,10 @@ use nh_protocol::{
 };
 
 use crate::prompt::{choice, free_key};
-use crate::{ATR_NOHISTORY, MapState, MessageLog, Pack, Prompt, Status, TrapKind, effect_cmaps};
+use crate::{
+    ATR_NOHISTORY, HelplessSpan, HelplessWatch, MapState, MessageLog, Pack, Prompt, Status,
+    TrapKind, effect_cmaps,
+};
 
 /// getpos() says this (with `flags.verbose`) right after its goal ("Where
 /// do you want to travel to?"): neither belongs in the history.
@@ -65,6 +68,8 @@ pub struct World {
     pub level: Option<LevelNotice>,
     /// The trap the hero is caught in (the last hero notice).
     pub hero_trap: Option<TrapKind>,
+    /// The spells of helplessness, from the status line.
+    helpless: HelplessWatch,
     /// The last progress notice (see `progress`), and how many came.
     progress: Option<ProgressNotice>,
     progress_seq: u64,
@@ -115,6 +120,7 @@ impl World {
             inventory: Pack::new(),
             level: None,
             hero_trap: None,
+            helpless: HelplessWatch::default(),
             progress: None,
             progress_seq: 0,
             log: MessageLog::new(),
@@ -142,6 +148,7 @@ impl World {
     /// effects rather than terrain. Call it once the catalog is known.
     pub fn set_catalog(&mut self, catalog: &Catalog) {
         self.map.set_effect_cmaps(effect_cmaps(catalog));
+        self.helpless.set_catalog(catalog);
     }
 
     fn kind(&self, win: i32) -> Option<WindowKind> {
@@ -152,6 +159,12 @@ impl World {
     /// always on).
     pub fn turn(&self) -> Option<i64> {
         self.status.number("time")
+    }
+
+    /// The spell of helplessness the hero went through before this
+    /// command prompt (None once they were asked for a command again).
+    pub fn helpless(&self) -> Option<HelplessSpan> {
+        self.helpless.fresh()
     }
 
     pub fn apply(&mut self, call: &WinCall) {
@@ -230,6 +243,7 @@ impl World {
                         // a new message takes tty's top line
                         self.transient = None;
                         let turn = self.turn();
+                        self.helpless.message(text, turn.unwrap_or(0));
                         self.log
                             .push_format(text.clone(), *attr, turn, fmt.clone(), args.clone());
                     }
@@ -308,8 +322,17 @@ impl World {
                 self.exit_text = text.clone();
             }
             WinCall::DoprevMessage => self.wants_history = true,
-            WinCall::StatusInit => self.status = Status::new(),
-            WinCall::StatusUpdate(u) => self.status.apply(u),
+            WinCall::StatusInit => {
+                self.status = Status::new();
+                self.helpless.reset();
+            }
+            WinCall::StatusUpdate(u) => {
+                self.status.apply(u);
+                if u.field == "condition" {
+                    let turn = self.turn().unwrap_or(0);
+                    self.helpless.conditions(self.status.conditions(), turn);
+                }
+            }
             WinCall::Inventory(inv) => self.inventory.replace(inv),
             WinCall::Level(l) => self.level = Some(l.clone()),
             WinCall::Hero(h) => self.hero_trap = h.trap.as_deref().map(TrapKind::of),
@@ -333,6 +356,7 @@ impl World {
                     self.getpos_goal = None;
                     self.map.settle();
                     self.hero_at_command = self.cursor;
+                    self.helpless.command(self.turn().unwrap_or(0));
                 }
                 Prompt::Command
             }
