@@ -4,22 +4,30 @@
 //! cap is Godot's own, vsync off and on again with Enter); the window's
 //! size and mode are asked of the window only without a display (a run in
 //! a window keeps its own for its screenshots), the size's row dimmed
-//! while the screen is full. Tab turns to the interface, whose language
-//! draws the page again in it where it was; the start-up reads back what
-//! was kept. A gamepad's bumper turns the section, its hints show, the
-//! d-pad and A change a row, B goes back to the title. Over a game the
-//! page opens as the HUD's gear opens it, and Esc goes back to the game.
-//! Every screen fits the canvas, every value its place.
+//! while the screen is full; the start-up reads back what was kept. Tab
+//! turns to the graphics, the device's High: Medium and Low step the
+//! renderer and the map down (their effects, anti-aliasing, resolution,
+//! shadows), a control changed by hand makes them Custom, and → from it
+//! climbs back through the presets. The interface's language draws the
+//! page again in it where it was. A gamepad's bumpers turn the section,
+//! its hints show, the d-pad and A change a row, B goes back to the
+//! title. Over a game the page opens as the HUD's gear opens it, and Esc
+//! goes back to the game. Every screen fits the canvas, every value its
+//! place.
 
 use std::sync::atomic::{AtomicU8, Ordering};
 
 use godot::classes::display_server::VSyncMode;
+use godot::classes::viewport::{Msaa as ViewportMsaa, Scaling3DMode};
 use godot::classes::{DisplayServer, Engine, Input, InputEventKey};
 use godot::global::Key as GKey;
 use godot::prelude::*;
-use nh_world::{Profile, WindowMode, step_window_size};
+use nh_world::{
+    Graphics, KeyProfile, Level, Msaa, Profile, Quality, Upscale, WindowMode, step_window_size,
+};
 
 use super::{PadEv, Step, fail_on_error_screen, quit, screen, start};
+use crate::audio::Bus;
 use crate::game::{GameState, RenethackGame, parse_args, startup_settings};
 use crate::gamepad::PadButton;
 use crate::i18n::{self, Lang};
@@ -98,6 +106,58 @@ fn window(g: &RenethackGame) -> (u32, u32) {
         .map(|w| w.get_size())
         .unwrap_or_default();
     (s.x.max(0) as u32, s.y.max(0) as u32)
+}
+
+/// The renderer and the map draw as `g` asks: the window's anti-aliasing,
+/// resolution, upscaler and shadow atlas, the map's effects and its
+/// torches with shadows.
+fn drawn_as(game: &RenethackGame, g: &Graphics) -> Result<bool, String> {
+    let w = game.base().get_tree().get_root().ok_or("no window")?;
+    let msaa = match g.msaa {
+        Msaa::Off => ViewportMsaa::DISABLED,
+        Msaa::X2 => ViewportMsaa::MSAA_2X,
+        Msaa::X4 => ViewportMsaa::MSAA_4X,
+        Msaa::X8 => ViewportMsaa::MSAA_8X,
+    };
+    let mode = match g.upscale {
+        Upscale::Bilinear => Scaling3DMode::BILINEAR,
+        Upscale::Fsr1 => Scaling3DMode::FSR,
+        Upscale::Fsr2 => Scaling3DMode::FSR2,
+    };
+    let ui = game.ui.as_ref().ok_or("no UI")?;
+    let effects = (
+        g.ssao != Level::Off,
+        g.ssil != Level::Off,
+        g.fog != Level::Off,
+    );
+    Ok(w.get_msaa_3d() == msaa
+        && (w.get_scaling_3d_scale() - g.scale as f32 / 100.0).abs() < 1e-3
+        && w.get_scaling_3d_mode() == mode
+        && w.get_positional_shadow_atlas_size() == g.shadows.atlas() as i32
+        && ui.map.effects() == effects
+        && ui.map.torch_shadows() == g.shadows.torches())
+}
+
+/// The graphics are the preset `q`: drawn so, shown so, kept so.
+fn preset_is(game: &RenethackGame, q: Quality) -> Result<bool, String> {
+    let g = Graphics::preset(q);
+    let name = match q {
+        Quality::Low => tr!("settings-quality-low"),
+        Quality::Medium => tr!("settings-quality-medium"),
+        Quality::High => tr!("settings-quality-high"),
+        Quality::Ultra => tr!("settings-quality-ultra"),
+        Quality::Custom => tr!("settings-quality-custom"),
+    };
+    Ok(game.graphics() == g
+        && drawn_as(game, &g)?
+        && shown(game, Field::Quality)? == name
+        && profile(game)?.settings.graphics == Some(g))
+}
+
+/// The interface's scale now.
+fn content_scale(g: &RenethackGame) -> Result<f32, String> {
+    let w = g.base().get_tree().get_root().ok_or("no window")?;
+    Ok(w.get_content_scale_factor())
 }
 
 /// The value the page shows in the row of `field` (of the section shown).
@@ -276,12 +336,114 @@ pub(super) fn settings() -> Vec<Step> {
             }
             Ok(())
         }),
-        // Tab: the interface, its language; the other language draws the
-        // page again in it, on the same row
+        // Tab: the graphics, the device's preset (High on this machine)
         keys!("Tab", TAB),
-        Step::Wait("the interface's rows", |g| {
-            Ok(page(g)?.section() == Section::Interface
-                && page(g)?.field() == Some(Field::Language))
+        Step::Wait("the graphics' rows: the device's High, drawn so", |g| {
+            let p = page(g)?;
+            let high = Graphics::preset(Quality::High);
+            Ok(p.section() == Section::Graphics
+                && p.field() == Some(Field::Quality)
+                && shown(g, Field::Quality)? == tr!("settings-quality-high")
+                && g.graphics() == high
+                && drawn_as(g, &high)?
+                && profile(g)?.settings.graphics.is_none())
+        }),
+        Step::Shot("settings-graphics"),
+        keys!("←", LEFT),
+        Step::Wait("Medium, drawn and kept", |g| preset_is(g, Quality::Medium)),
+        keys!("←", LEFT),
+        Step::Wait("Low, drawn and kept", |g| preset_is(g, Quality::Low)),
+        // a control by hand: Custom; → from it climbs to the nearest preset
+        keys!("↓ →", DOWN, RIGHT),
+        Step::Wait("ambient occlusion by hand: Custom", |g| {
+            let gr = g.graphics();
+            Ok(page(g)?.field() == Some(Field::Ssao)
+                && gr.ssao == Level::Low
+                && gr.quality() == Quality::Custom
+                && drawn_as(g, &gr)?
+                && shown(g, Field::Quality)? == tr!("settings-quality-custom")
+                && profile(g)?.settings.graphics == Some(gr))
+        }),
+        Step::Shot("settings-graphics-custom"),
+        keys!("↑ →", UP, RIGHT),
+        Step::Wait("from Custom to Medium", |g| preset_is(g, Quality::Medium)),
+        keys!("→", RIGHT),
+        Step::Wait("High again", |g| preset_is(g, Quality::High)),
+        // Tab: the sound; the music a step quieter with ←, then dragged
+        // to 30 % as the mouse would
+        keys!("Tab", TAB),
+        Step::Wait("the sound's rows, the music at its default", |g| {
+            let p = page(g)?;
+            Ok(p.section() == Section::Sound
+                && p.field() == Some(Field::Volume(Bus::Master))
+                && (crate::audio::volume(Bus::Music) - Bus::Music.default_volume()).abs() < 0.01)
+        }),
+        keys!("↓ ←", DOWN, LEFT),
+        Step::Wait("the music at 65 %, heard so and shown so", |g| {
+            Ok(page(g)?.field() == Some(Field::Volume(Bus::Music))
+                && (crate::audio::volume(Bus::Music) - 0.65).abs() < 0.01
+                && shown(g, Field::Volume(Bus::Music))? == tr!("settings-percent", percent = 65))
+        }),
+        Step::Call("the music's slider dragged to 30 %", |g| {
+            let mut s = page(g)?
+                .slider(Bus::Music)
+                .ok_or("the music has no slider")?;
+            s.set_value(0.3);
+            Ok(())
+        }),
+        Step::Wait(
+            "the music at 30 %, the slider and the percent with it",
+            |g| {
+                let s = page(g)?.slider(Bus::Music).ok_or("no slider")?;
+                Ok((crate::audio::volume(Bus::Music) - 0.3).abs() < 0.01
+                    && (s.get_value() - 0.3).abs() < 0.01
+                    && shown(g, Field::Volume(Bus::Music))?
+                        == tr!("settings-percent", percent = 30))
+            },
+        ),
+        Step::Shot("settings-sound"),
+        // Tab: the interface; its scale from Auto up to 140 % (the page
+        // still fits the canvas) and back; Classic keys for a new character
+        keys!("Tab", TAB),
+        Step::Wait("the interface's rows, the scale Auto", |g| {
+            let p = page(g)?;
+            let auto = tr!("settings-ui-scale-auto", percent = p.view().ui_auto);
+            Ok(p.section() == Section::Interface
+                && p.field() == Some(Field::UiScale)
+                && shown(g, Field::UiScale)? == auto)
+        }),
+        keys!(
+            "→ seven times",
+            RIGHT,
+            RIGHT,
+            RIGHT,
+            RIGHT,
+            RIGHT,
+            RIGHT,
+            RIGHT
+        ),
+        Step::Wait("the interface at 140 %, kept", |g| {
+            Ok((content_scale(g)? - 1.4).abs() < 1e-3
+                && profile(g)?.settings.ui_scale == Some(140)
+                && shown(g, Field::UiScale)? == tr!("settings-percent", percent = 140))
+        }),
+        Step::Shot("settings-interface-140"),
+        keys!("← seven times", LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT),
+        Step::Wait("Auto again", |g| {
+            let auto = page(g)?.view().ui_auto as f32 / 100.0;
+            Ok((content_scale(g)? - auto).abs() < 1e-3 && profile(g)?.settings.ui_scale.is_none())
+        }),
+        keys!("↓ →", DOWN, RIGHT),
+        Step::Wait("Classic keys for a new character, kept", |g| {
+            Ok(page(g)?.field() == Some(Field::Keys)
+                && profile(g)?.settings.keys == Some(KeyProfile::Classic)
+                && shown(g, Field::Keys)? == tr!("settings-keys-classic"))
+        }),
+        // ↓ to the language; the other language draws the page again in
+        // it, on the same row
+        keys!("↓", DOWN),
+        Step::Wait("the language has the focus", |g| {
+            Ok(page(g)?.field() == Some(Field::Language))
         }),
         Step::Shot("settings-interface"),
         Step::Call("the other language", |_| {
@@ -305,7 +467,8 @@ pub(super) fn settings() -> Vec<Step> {
             Ok(i18n::lang() == other
                 && p.section() == Section::Interface
                 && p.field() == Some(Field::Language)
-                && p.shown_rows() == [(tr!("settings-language"), other.name().to_string())]
+                && p.shown_rows().last()
+                    == Some(&(tr!("settings-language"), other.name().to_string()))
                 && profile(g)?.lang.as_deref() == Some(other.code()))
         }),
         Step::Shot("settings-interface-other"),
@@ -318,12 +481,20 @@ pub(super) fn settings() -> Vec<Step> {
             let began = lang_of(BEGAN_IN.load(Ordering::Relaxed));
             Ok(i18n::lang() == began && page(g)?.section() == Section::Interface)
         }),
-        // a gamepad: LB turns back to the display, its hints show; ↓↓ to
-        // vsync, A turns it off and on
+        // a gamepad: LB turns back to the sound, its hints show, then to
+        // the graphics and the display; ↓↓ to vsync, A turns it off and on
         pad_tap(PadButton::Lb),
-        Step::Wait("the display again, a gamepad's hints", |g| {
+        Step::Wait("the sound again, a gamepad's hints", |g| {
             let p = page(g)?;
-            Ok(p.section() == Section::Display && p.pad().is_some())
+            Ok(p.section() == Section::Sound && p.pad().is_some())
+        }),
+        pad_tap(PadButton::Lb),
+        Step::Wait("the graphics again", |g| {
+            Ok(page(g)?.section() == Section::Graphics)
+        }),
+        pad_tap(PadButton::Lb),
+        Step::Wait("the display again", |g| {
+            Ok(page(g)?.section() == Section::Display)
         }),
         Step::Shot("settings-pad"),
         pad_tap(PadButton::Down),
@@ -338,9 +509,22 @@ pub(super) fn settings() -> Vec<Step> {
         pad_tap(PadButton::A),
         Step::Wait("and on", |g| Ok(profile(g)?.settings.display.vsync)),
         pad_tap(PadButton::B),
-        Step::Wait("B: the title again", |g| {
-            Ok(screen(g) == Some("title") && g.settings_page.is_none())
+        Step::Wait("B: the title again, the volumes kept", |g| {
+            Ok(screen(g) == Some("title")
+                && g.settings_page.is_none()
+                && profile(g)?.volumes.get("Music") == Some(&30))
         }),
+        // a new character is offered the keys chosen
+        Step::Push(UiEvent::NewGame),
+        Step::Wait("the creation form offers Classic keys", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(screen(g) == Some("creation")
+                && ui
+                    .screens
+                    .creation_choice()
+                    .is_some_and(|c| c.profile == KeyProfile::Classic))
+        }),
+        Step::Push(UiEvent::BackToTitle),
     ];
     // over a game: from the HUD's gear, Esc goes back to it
     steps.extend(start());
@@ -350,7 +534,8 @@ pub(super) fn settings() -> Vec<Step> {
             let ui = g.ui.as_ref().ok_or("no UI")?;
             Ok(screen(g) == Some("settings")
                 && ui.screens.settings_in_game()
-                && g.state == GameState::Playing)
+                && g.state == GameState::Playing
+                && page(g)?.view().playing_keys == Some(KeyProfile::Classic))
         }),
         Step::Shot("settings-in-game"),
         keys!("Esc", ESCAPE),
@@ -358,6 +543,185 @@ pub(super) fn settings() -> Vec<Step> {
             Ok(screen(g).is_none() && g.settings_page.is_none() && g.state == GameState::Playing)
         }),
     ]);
+    steps.extend(quit());
+    steps
+}
+
+/// What `presets` times, in turn: each preset, and Medium drawn at 75 %
+/// through FSR 1 (a Steam Deck's other candidate); or the list in
+/// `RENETHACK_BENCH`: entries split by `;`, each a preset's name and the
+/// controls changed from it (`medium msaa=off ssao=off scale=75
+/// upscale=fsr1`, the profile's words).
+fn bench_graphics() -> Vec<(String, Graphics)> {
+    if let Ok(list) = std::env::var("RENETHACK_BENCH")
+        && !list.trim().is_empty()
+    {
+        return list
+            .split(';')
+            .filter(|e| !e.trim().is_empty())
+            .map(|e| (e.trim().to_string(), bench_entry(e)))
+            .collect();
+    }
+    let medium = Graphics::preset(Quality::Medium);
+    vec![
+        ("Low".into(), Graphics::preset(Quality::Low)),
+        ("Medium".into(), medium),
+        ("High".into(), Graphics::preset(Quality::High)),
+        ("Ultra".into(), Graphics::preset(Quality::Ultra)),
+        (
+            "Medium at 75% through FSR 1".into(),
+            Graphics {
+                scale: 75,
+                upscale: Upscale::Fsr1,
+                ..medium
+            },
+        ),
+    ]
+}
+
+/// An entry of `RENETHACK_BENCH` (a word it does not know is passed by).
+fn bench_entry(entry: &str) -> Graphics {
+    fn word<T: serde::de::DeserializeOwned>(w: &str) -> Option<T> {
+        serde_json::from_str(&format!("\"{w}\"")).ok()
+    }
+    let mut words = entry.split_whitespace();
+    let mut g = Graphics::preset(words.next().and_then(word).unwrap_or(Quality::High));
+    for w in words {
+        let Some((k, v)) = w.split_once('=') else {
+            continue;
+        };
+        match k {
+            "ssao" => g.ssao = word(v).unwrap_or(g.ssao),
+            "ssil" => g.ssil = word(v).unwrap_or(g.ssil),
+            "fog" => g.fog = word(v).unwrap_or(g.fog),
+            "shadows" => g.shadows = word(v).unwrap_or(g.shadows),
+            "msaa" => g.msaa = word(v).unwrap_or(g.msaa),
+            "scale" => g.scale = v.parse().unwrap_or(g.scale),
+            "upscale" => g.upscale = word(v).unwrap_or(g.upscale),
+            _ => {}
+        }
+    }
+    g
+}
+
+/// Frames a preset is drawn before it is timed (its pipelines compiled,
+/// its buffers made), and frames timed.
+const BENCH_WARM: u32 = 120;
+const BENCH_TIMED: usize = 360;
+
+/// Where `presets` is: the graphics timed, the frames drawn in them, the
+/// times of the frames past the warm-up, the last frame's start.
+#[derive(Default)]
+struct Bench {
+    at: usize,
+    frames: u32,
+    times: Vec<f64>,
+    last: Option<std::time::Instant>,
+    /// Godot's count of the frames it drew, when the timing began: a
+    /// window the screen does not show is not drawn, and its frames time
+    /// nothing.
+    drawn_from: Option<i32>,
+}
+
+thread_local! {
+    static BENCH: std::cell::RefCell<Bench> = std::cell::RefCell::new(Bench::default());
+}
+
+/// The next graphics to time, drawn from now.
+fn bench_next(g: &mut RenethackGame) -> Result<(), String> {
+    let at = BENCH.with(|b| b.borrow().at);
+    let (_, graphics) = bench_graphics()
+        .into_iter()
+        .nth(at)
+        .ok_or("no graphics left to time")?;
+    let s = nh_world::Settings {
+        graphics: Some(graphics),
+        ..g.settings
+    };
+    g.set_settings(s);
+    Ok(())
+}
+
+/// A frame of the graphics timed: after the warm-up its time by the wall
+/// clock; once enough are timed, the mean, the median, the 95th
+/// percentile and the worst in the log.
+fn bench_frame(g: &RenethackGame) -> Result<bool, String> {
+    let now = std::time::Instant::now();
+    let done = BENCH.with(|b| {
+        let mut b = b.borrow_mut();
+        if let Some(last) = b.last
+            && b.frames > BENCH_WARM
+        {
+            b.times
+                .push(now.duration_since(last).as_secs_f64() * 1000.0);
+        }
+        if b.frames == BENCH_WARM {
+            b.drawn_from = Some(Engine::singleton().get_frames_drawn());
+        }
+        b.last = Some(now);
+        b.frames += 1;
+        if b.times.len() < BENCH_TIMED {
+            return None;
+        }
+        let mut t = std::mem::take(&mut b.times);
+        t.sort_by(f64::total_cmp);
+        let n = t.len();
+        let mean = t.iter().sum::<f64>() / n as f64;
+        let drawn = Engine::singleton().get_frames_drawn() - b.drawn_from.unwrap_or(0);
+        let at = b.at;
+        *b = Bench {
+            at: at + 1,
+            ..Bench::default()
+        };
+        Some((at, mean, t[n / 2], t[n * 95 / 100], t[n - 1], drawn))
+    });
+    let Some((at, mean, median, p95, worst, drawn)) = done else {
+        return Ok(false);
+    };
+    // the window hidden (another window over it, the screen off): Godot
+    // draws nothing, and the frames time only the waits between them
+    let hidden = (drawn as f64) < BENCH_TIMED as f64 * 0.9;
+    let (w, h) = window(g);
+    let name = bench_graphics()
+        .into_iter()
+        .nth(at)
+        .map(|(n, _)| n)
+        .unwrap_or_default();
+    godot_print!(
+        "selftest: presets: {name} at {w}×{h}: mean {mean:.2} ms ({:.0} fps), median {median:.2}, p95 {p95:.2}, worst {worst:.2}{}",
+        1000.0 / mean,
+        if hidden {
+            format!("; only {drawn} frames drawn: the window was hidden, nothing measured")
+        } else {
+            String::new()
+        }
+    );
+    Ok(true)
+}
+
+/// `presets`: the graphics' frame times on a game's first level, the hero
+/// standing still, vsync off and no cap: each preset in turn, warmed up,
+/// then timed by the wall clock. A measurement, not a test: run it in
+/// release, in a window, at the size it is for (`--size=1280x800` for a
+/// Steam Deck).
+pub(super) fn presets() -> Vec<Step> {
+    let mut steps = start();
+    steps.extend([
+        Step::Wait("the first level drawn, the camera still", |g| {
+            Ok(g.world.map.hero().is_some() && super::camera_settled(g)?)
+        }),
+        Step::Call("vsync off, no cap", |g| {
+            let mut s = g.settings;
+            s.display.vsync = false;
+            s.display.fps_cap = 0;
+            g.set_settings(s);
+            Ok(())
+        }),
+    ]);
+    for _ in bench_graphics() {
+        steps.push(Step::Call("the next graphics", bench_next));
+        steps.push(Step::Wait("its frames timed", bench_frame));
+    }
     steps.extend(quit());
     steps
 }

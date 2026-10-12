@@ -137,11 +137,33 @@ start applies it again (a self-test plays with the defaults).
 Display: the window, a borderless full screen (the display's mode kept)
 or an exclusive one; the window's size, among those that fit the screen
 (until one is chosen the window keeps the size it opens with); vsync; a
-frame-rate cap (none, 30, 60, 120 or 144 frames a second). Interface: the
-language. The `settings` scenario changes them with the keys and the
-gamepad (the window's size and mode headless only: a window keeps the
-size its screenshots are taken at), and checks what Godot was told, what
-the profile keeps and what a start reads back.
+frame-rate cap (none, 30, 60, 120 or 144 frames a second).
+
+Graphics: a preset, Low, Medium, High or Ultra, sets ambient occlusion,
+indirect light, volumetric fog, shadows (their atlas, how soft their
+edges are, how many of the torches nearest the hero cast them), MSAA, the
+3D view's resolution (50–100 % of the window's) and how it is brought up
+to the window's (bilinear, AMD FSR 1.0 or FSR 2.2); a control changed by
+hand makes it Custom. High is the look the game was made with and a
+desktop's default; a Steam Deck (Steam's `SteamDeck=1`, or a 1280×800
+screen) starts on Medium, whose torches but the nearest cast no shadow.
+
+Sound: the volumes of the mixer's buses (`audio.rs`), each a slider the
+mouse drags. Interface: the scale (Auto, or 80–140 %;
+`RENETHACK_UI_SCALE` overrides it for a run), the keys a new character
+starts with, the language.
+
+The `settings` scenario changes them with the keys, the mouse's slider
+and the gamepad (the window's size and mode headless only: a window keeps
+the size its screenshots are taken at), and checks what Godot, the map
+and the mixer were told, what the profile keeps and what a start reads
+back. The `presets` scenario times the graphics on a game's first level,
+each preset in turn with vsync off (`RENETHACK_BENCH` takes other
+variants: `medium msaa=off;high ssil=off`). It is a measurement: run it
+in release, in a window the screen shows (a hidden window draws nothing,
+and the scenario says so), at the size it is for:
+
+    godot --path client/godot -- --selftest=presets --size=1280x800
 
 ## Build and test
 
@@ -429,7 +451,8 @@ icon for Linux (a zip of PNGs) and the 184×184 community icon.
 
 The renderer is Forward+ (Vulkan, Metal or D3D12). `RENETHACK_FRAME_STATS=1`
 logs frame times every two seconds; `RENETHACK_UI_SCALE` (percent, 80–140)
-scales the interface (120 % by default on a 1280×800 screen).
+scales the interface over the settings' choice (Auto is 120 % on a
+1280×800 screen).
 
 `cargo test -p nh-art -- --nocapture coverage_report` prints how many
 monsters and object tiles resolve at each level. The `gallery` self-test lays

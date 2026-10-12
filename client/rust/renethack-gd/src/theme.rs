@@ -652,36 +652,53 @@ fn theme_with(default: Gd<Font>, size: i32) -> Gd<Theme> {
 /// The design resolution of the HUD.
 pub const DESIGN: Vector2 = Vector2::new(1920.0, 1080.0);
 
-/// The player's UI scale: `RENETHACK_UI_SCALE` (a percent, 80-140) or the
-/// project setting `renethack/ui_scale`; 120 % on a Steam Deck or a
-/// 1280×800 screen, else 100 %.
-pub fn user_scale(window: &Gd<Window>) -> f32 {
-    let percent = std::env::var("RENETHACK_UI_SCALE")
+/// A UI scale as a percent, within 80–140.
+fn percent(p: f32) -> u32 {
+    p.clamp(80.0, 140.0).round() as u32
+}
+
+/// `RENETHACK_UI_SCALE` (a percent): it overrides the player's choice.
+pub fn forced_ui_scale() -> Option<u32> {
+    std::env::var("RENETHACK_UI_SCALE")
         .ok()
         .and_then(|v| v.trim().trim_end_matches('%').parse::<f32>().ok())
-        .or_else(|| {
-            let key = "renethack/ui_scale";
-            let ps = ProjectSettings::singleton();
-            ps.has_setting(key)
-                .then(|| ps.get_setting(key).try_to::<f32>().ok())
-                .flatten()
-        });
-    if let Some(p) = percent {
-        return (p / 100.0).clamp(0.8, 1.4);
+        .map(percent)
+}
+
+/// The UI scale until the player chooses one: the project setting
+/// `renethack/ui_scale`, else 120 % on a Steam Deck (or in a window of
+/// its size: the Deck's screenshots at their size), else 100 %.
+pub fn auto_ui_scale(window: &Gd<Window>) -> u32 {
+    let key = "renethack/ui_scale";
+    let ps = ProjectSettings::singleton();
+    if let Some(p) = ps
+        .has_setting(key)
+        .then(|| ps.get_setting(key).try_to::<f32>().ok())
+        .flatten()
+    {
+        return percent(p);
     }
-    // a window of the Deck's size too: the Deck's screenshots at their size
     let (w, h) = crate::video::DECK_SCREEN;
     if crate::video::is_deck() || window.get_size() == Vector2i::new(w as i32, h as i32) {
-        1.2
+        120
     } else {
-        1.0
+        100
     }
 }
 
+/// The player's UI scale, a percent: `RENETHACK_UI_SCALE`, else the
+/// settings page's (`chosen`), else the automatic one.
+pub fn user_scale(window: &Gd<Window>, chosen: Option<u32>) -> u32 {
+    forced_ui_scale()
+        .or(chosen.map(|p| percent(p as f32)))
+        .unwrap_or_else(|| auto_ui_scale(window))
+}
+
 /// Lay the canvas out for 1920×1080 design pixels (canvas_items, expand)
-/// at the player's UI scale; the 3D view keeps the window's resolution.
-pub fn apply_scaling(mut window: Gd<Window>) {
-    let scale = user_scale(&window);
+/// at the player's UI scale (`chosen`: the settings page's); the 3D view
+/// keeps the window's resolution.
+pub fn apply_scaling(mut window: Gd<Window>, chosen: Option<u32>) {
+    let scale = user_scale(&window, chosen) as f32 / 100.0;
     window.set_content_scale_mode(ContentScaleMode::CANVAS_ITEMS);
     window.set_content_scale_aspect(ContentScaleAspect::EXPAND);
     window.set_content_scale_size(Vector2i::new(DESIGN.x as i32, DESIGN.y as i32));

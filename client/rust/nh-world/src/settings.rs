@@ -194,6 +194,17 @@ impl Shadows {
         }
     }
 
+    /// The torches nearest the hero that cast shadows (the hero's own
+    /// light always does).
+    pub fn torches(self) -> usize {
+        match self {
+            Shadows::Low => 1,
+            Shadows::Medium => 2,
+            Shadows::High => 3,
+            Shadows::Ultra => 4,
+        }
+    }
+
     /// Godot's soft shadow filter quality (0 hard ... 5 ultra).
     pub fn filter(self) -> u8 {
         match self {
@@ -267,11 +278,13 @@ impl Graphics {
                 scale: 75,
                 upscale: Upscale::Fsr1,
             },
+            // a Steam Deck's: the torches' shadows, the dearest part of a
+            // frame there, from the nearest one alone
             Quality::Medium => Graphics {
                 ssao: Level::Low,
                 ssil: Level::Off,
                 fog: Level::Low,
-                shadows: Shadows::Medium,
+                shadows: Shadows::Low,
                 msaa: Msaa::X2,
                 scale: 100,
                 upscale: Upscale::Bilinear,
@@ -375,6 +388,8 @@ mod tests {
             (Level::Medium, Level::Medium, Level::Medium)
         );
         assert_eq!((g.shadows.atlas(), g.shadows.filter()), (4096, 3));
+        // and the map's three torches nearest the hero with shadows
+        assert_eq!(g.shadows.torches(), 3);
         assert_eq!((g.msaa, g.scale), (Msaa::X4, 100));
     }
 

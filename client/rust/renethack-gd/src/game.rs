@@ -314,6 +314,8 @@ pub struct RenethackGame {
     pub(crate) settings: Settings,
     /// The settings page while it is open.
     pub(crate) settings_page: Option<SettingsPage>,
+    /// The device's own graphics preset (until the player chooses).
+    device_quality: nh_world::Quality,
     /// The hero's gender as the map draws the hero, told to the engine's
     /// translator (the words that agree with the hero).
     pub(crate) hero_female: Option<bool>,
@@ -494,6 +496,7 @@ impl INode for RenethackGame {
             achievement_page: None,
             settings: Settings::default(),
             settings_page: None,
+            device_quality: nh_world::Quality::High,
             link_error: None,
             close_deadline: None,
             quitting: false,
@@ -581,7 +584,7 @@ impl INode for RenethackGame {
                 self.window_size = Some(size);
             }
             crate::video::apply_display(&mut window, &self.settings.display, false);
-            crate::theme::apply_scaling(window);
+            crate::theme::apply_scaling(window, self.settings.ui_scale);
         }
 
         // layers are the game's own children, added through base_mut():
@@ -655,6 +658,8 @@ impl INode for RenethackGame {
             audio: crate::audio::Audio::new(audio_root),
         });
         self.show_game(false);
+        self.device_quality = crate::video::device_quality();
+        self.apply_graphics();
 
         let paths = Paths::resolve(args.playground.as_deref());
         godot_print!(
@@ -2701,11 +2706,36 @@ impl RenethackGame {
             (0, 0) => window,
             s => s,
         };
+        let root = self.base().get_tree().get_root();
+        let ui_auto = root.as_ref().map_or(100, crate::theme::auto_ui_scale);
         settings_page::View {
             settings: self.settings,
             lang: i18n::lang(),
             window,
             screen,
+            device: self.device_quality,
+            ui_auto,
+            ui_forced: crate::theme::forced_ui_scale(),
+            playing_keys: (self.state == GameState::Playing).then_some(self.ui_state.profile),
+            volumes: crate::audio::Bus::ALL.map(crate::audio::volume),
+        }
+    }
+
+    /// The graphics drawn: the player's, else the device's preset.
+    pub(crate) fn graphics(&self) -> nh_world::Graphics {
+        self.settings
+            .graphics
+            .unwrap_or_else(|| nh_world::Graphics::preset(self.device_quality))
+    }
+
+    /// The graphics to the renderer and to the map.
+    fn apply_graphics(&mut self) {
+        let g = self.graphics();
+        if let Some(mut window) = self.base().get_tree().get_root() {
+            crate::video::apply_graphics(&mut window, &g);
+        }
+        if let Some(ui) = self.ui.as_mut() {
+            ui.map.set_graphics(&g);
         }
     }
 
@@ -2742,6 +2772,11 @@ impl RenethackGame {
         match settings_page::step(field, &view, dir, wrap) {
             Some(Change::Lang(lang)) => self.set_language(lang),
             Some(Change::Settings(s)) => self.set_settings(s),
+            // as a slider's drag sets it
+            Some(Change::Volume(bus, v)) => {
+                crate::audio::set_volume(bus, v);
+                self.volumes_set = true;
+            }
             None => {}
         }
     }
@@ -2749,11 +2784,20 @@ impl RenethackGame {
     /// The client's settings changed: what changed applied at once, all
     /// kept in the profile, the page shown them.
     pub(crate) fn set_settings(&mut self, s: Settings) {
+        let drawn = self.graphics();
         let old = std::mem::replace(&mut self.settings, s);
         if s.display != old.display
             && let Some(mut window) = self.base().get_tree().get_root()
         {
             crate::video::apply_display(&mut window, &s.display, true);
+        }
+        if self.graphics() != drawn {
+            self.apply_graphics();
+        }
+        if s.ui_scale != old.ui_scale
+            && let Some(window) = self.base().get_tree().get_root()
+        {
+            crate::theme::apply_scaling(window, s.ui_scale);
         }
         self.update_profile(|p| p.settings = s);
         let view = self.settings_view();
@@ -3002,7 +3046,8 @@ impl RenethackGame {
         };
         self.state = GameState::Creating;
         self.show_game(false);
-        self.ui_mut().screens.show_creation(catalog);
+        let keys = self.settings.keys.unwrap_or_default();
+        self.ui_mut().screens.show_creation(catalog, keys);
     }
 
     fn check_name(&mut self, name: &str) {

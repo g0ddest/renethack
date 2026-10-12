@@ -4776,6 +4776,7 @@ impl SelfTest {
             "pickers" => input_ru::pickers(),
             "help" => help_tests::help(),
             "settings" => settings_tests::settings(),
+            "presets" => settings_tests::presets(),
             "layouts" => layouts_tests::layouts(),
             "rim" => rim_tests::rim(),
             "riding" => riding_tests::riding(),

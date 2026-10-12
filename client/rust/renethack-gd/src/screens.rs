@@ -508,7 +508,7 @@ impl Screens {
                 };
                 let choice = form.choice();
                 let typed = form.name.get_text().to_string();
-                self.show_creation(form.catalog.clone());
+                self.show_creation(form.catalog.clone(), choice.profile);
                 self.preset_creation(&choice);
                 if let Some(f) = self.form.as_mut() {
                     f.name.set_text(&typed);
@@ -525,7 +525,9 @@ impl Screens {
         }
     }
 
-    pub fn show_creation(&mut self, catalog: Rc<Catalog>) {
+    /// The character creation form; `keys`: the keys it offers first (the
+    /// settings page's for a new character).
+    pub fn show_creation(&mut self, catalog: Rc<Catalog>, keys_first: KeyProfile) {
         let mut panel = PanelContainer::new_alloc();
         let mut col = column();
         col.add_child(&title_label(&tr!("creation-title"), 32));
@@ -554,7 +556,7 @@ impl Screens {
         let mut keys = option(&tr!("creation-keys"), &mut grid);
         keys.add_item(&tr!("creation-keys-modern"));
         keys.add_item(&tr!("creation-keys-classic"));
-        keys.select(0);
+        keys.select(i32::from(keys_first == KeyProfile::Classic));
         keys.set_tooltip_text(&tr!("creation-keys-tip"));
         grid.add_child(&theme::label(&tr!("creation-language")));
         let mut lang = language_option(&self.queue);
@@ -644,6 +646,11 @@ impl Screens {
     }
 
     /// Fill the form (self-tests).
+    /// What the creation form has chosen (self-tests).
+    pub fn creation_choice(&self) -> Option<CharacterChoice> {
+        self.form.as_ref().map(|f| f.choice())
+    }
+
     pub fn preset_creation(&mut self, choice: &CharacterChoice) {
         let Some(form) = self.form.as_mut() else {
             return;

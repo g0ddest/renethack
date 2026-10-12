@@ -2603,6 +2603,9 @@ pub struct MapView {
     cells_root: Gd<Node3D>,
     camera: Gd<Camera3D>,
     env: Gd<Environment>,
+    /// The torches nearest the hero that cast shadows (the graphics'
+    /// shadows: `set_graphics`).
+    torch_shadows: usize,
     cells: HashMap<(i32, i32), CellNodes>,
     generation: Option<u64>,
     art: Art,
@@ -3212,6 +3215,7 @@ impl MapView {
             cells_root,
             camera,
             env,
+            torch_shadows: TORCH_SHADOWS,
             cells: HashMap::new(),
             generation: None,
             art,
@@ -3760,6 +3764,32 @@ impl MapView {
         }
     }
 
+    /// The graphics' side of the map: its environment's effects on or off,
+    /// how many torches cast shadows (the renderer's side:
+    /// `video::apply_graphics`).
+    pub fn set_graphics(&mut self, g: &nh_world::Graphics) {
+        use nh_world::Level;
+        self.env.set_ssao_enabled(g.ssao != Level::Off);
+        self.env.set_ssil_enabled(g.ssil != Level::Off);
+        self.env.set_volumetric_fog_enabled(g.fog != Level::Off);
+        self.torch_shadows = g.shadows.torches();
+    }
+
+    /// The torches nearest the hero that cast shadows (self-tests).
+    pub fn torch_shadows(&self) -> usize {
+        self.torch_shadows
+    }
+
+    /// The effects the environment draws: ambient occlusion, indirect
+    /// light, volumetric fog (self-tests).
+    pub fn effects(&self) -> (bool, bool, bool) {
+        (
+            self.env.is_ssao_enabled(),
+            self.env.is_ssil_enabled(),
+            self.env.is_volumetric_fog_enabled(),
+        )
+    }
+
     /// Light, haze and grade the branch's way (the level's cells are drawn
     /// again by the caller).
     fn set_branch(&mut self, branch: Branch) {
@@ -4163,9 +4193,9 @@ impl MapView {
         near.sort_by(|a, b| a.0.total_cmp(&b.0));
         // on the title only the nearest: it runs as long as the menu is read
         let shadows = if self.titled && !self.shown {
-            TITLE_TORCH_SHADOWS
+            TITLE_TORCH_SHADOWS.min(self.torch_shadows)
         } else {
-            TORCH_SHADOWS
+            self.torch_shadows
         };
         let shadowed: HashSet<usize> = near.iter().take(shadows).map(|&(_, i)| i).collect();
         let clock = self.clock;

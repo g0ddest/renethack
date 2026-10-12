@@ -1,5 +1,6 @@
 //! The settings page, from the title's button and the HUD's gear: the
-//! window and how often it is drawn, the interface, a section at a time.
+//! window and how often it is drawn, what the 3D view draws, the sound's
+//! volumes, the interface, a section at a time.
 //! A row is a setting, its value between arrows: ↑↓ (the d-pad) choose a
 //! row, ←→ change it, Enter (A) steps it on, Tab or PgUp/PgDn (the
 //! bumpers) turn to another section, Esc (B) goes back; the mouse clicks
@@ -14,13 +15,17 @@ use godot::classes::control::{FocusMode, MouseFilter, SizeFlags};
 use godot::classes::image::Format;
 use godot::classes::text_server::AutowrapMode;
 use godot::classes::{
-    Button, ColorRect, Control, HBoxContainer, Image, ImageTexture, Label, PanelContainer,
+    Button, ColorRect, Control, HBoxContainer, HSlider, Image, ImageTexture, Label, PanelContainer,
     StyleBoxFlat, Texture2D, VBoxContainer,
 };
 use godot::global::{HorizontalAlignment, VerticalAlignment};
 use godot::prelude::*;
-use nh_world::{FPS_CAPS, Key, KeyInput, Settings, WindowMode, step_through, step_window_size};
+use nh_world::{
+    FPS_CAPS, Graphics, Key, KeyInput, KeyProfile, Level, Msaa, Quality, RENDER_SCALES, Settings,
+    Shadows, UI_SCALES, Upscale, WindowMode, step_through, step_window_size,
+};
 
+use crate::audio::Bus;
 use crate::gamepad::{PadButton, PadKind};
 use crate::i18n::{self, Lang};
 use crate::pad_view;
@@ -32,15 +37,24 @@ use crate::ui_events::{UiEvent, UiQueue, push};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Section {
     Display,
+    Graphics,
+    Sound,
     Interface,
 }
 
 impl Section {
-    pub const ALL: [Section; 2] = [Section::Display, Section::Interface];
+    pub const ALL: [Section; 4] = [
+        Section::Display,
+        Section::Graphics,
+        Section::Sound,
+        Section::Interface,
+    ];
 
     fn name(self) -> String {
         match self {
             Section::Display => tr!("settings-display"),
+            Section::Graphics => tr!("settings-graphics"),
+            Section::Sound => tr!("settings-sound"),
             Section::Interface => tr!("settings-interface"),
         }
     }
@@ -54,7 +68,24 @@ impl Section {
                 Field::Vsync,
                 Field::FpsCap,
             ],
-            Section::Interface => &[Field::Language],
+            Section::Graphics => &[
+                Field::Quality,
+                Field::Ssao,
+                Field::Ssil,
+                Field::Fog,
+                Field::Shadows,
+                Field::Msaa,
+                Field::Scale,
+                Field::Upscale,
+            ],
+            Section::Sound => &[
+                Field::Volume(Bus::Master),
+                Field::Volume(Bus::Music),
+                Field::Volume(Bus::Ambience),
+                Field::Volume(Bus::Sfx),
+                Field::Volume(Bus::Ui),
+            ],
+            Section::Interface => &[Field::UiScale, Field::Keys, Field::Language],
         }
     }
 }
@@ -66,6 +97,20 @@ pub enum Field {
     WindowSize,
     Vsync,
     FpsCap,
+    /// The graphics' preset, Custom once a control below differs.
+    Quality,
+    Ssao,
+    Ssil,
+    Fog,
+    Shadows,
+    Msaa,
+    Scale,
+    Upscale,
+    /// A bus's volume (`audio`): a slider.
+    Volume(Bus),
+    UiScale,
+    /// A new character's keys.
+    Keys,
     Language,
 }
 
@@ -76,6 +121,21 @@ impl Field {
             Field::WindowSize => tr!("settings-window-size"),
             Field::Vsync => tr!("settings-vsync"),
             Field::FpsCap => tr!("settings-fps-cap"),
+            Field::Quality => tr!("settings-quality"),
+            Field::Ssao => tr!("settings-ssao"),
+            Field::Ssil => tr!("settings-ssil"),
+            Field::Fog => tr!("settings-fog"),
+            Field::Shadows => tr!("settings-shadows"),
+            Field::Msaa => tr!("settings-msaa"),
+            Field::Scale => tr!("settings-scale"),
+            Field::Upscale => tr!("settings-upscale"),
+            Field::Volume(Bus::Master) => tr!("settings-volume-master"),
+            Field::Volume(Bus::Music) => tr!("settings-volume-music"),
+            Field::Volume(Bus::Ambience) => tr!("settings-volume-ambience"),
+            Field::Volume(Bus::Sfx) => tr!("settings-volume-sfx"),
+            Field::Volume(Bus::Ui) => tr!("settings-volume-ui"),
+            Field::UiScale => tr!("settings-ui-scale"),
+            Field::Keys => tr!("settings-keys"),
             Field::Language => tr!("settings-language"),
         }
     }
@@ -88,6 +148,37 @@ impl Field {
             Field::WindowSize => tr!("settings-window-size-about"),
             Field::Vsync => tr!("settings-vsync-about"),
             Field::FpsCap => tr!("settings-fps-cap-about"),
+            Field::Quality => tr!("settings-quality-about"),
+            Field::Ssao => tr!("settings-ssao-about"),
+            Field::Ssil => tr!("settings-ssil-about"),
+            Field::Fog => tr!("settings-fog-about"),
+            Field::Shadows => tr!("settings-shadows-about"),
+            Field::Msaa => tr!("settings-msaa-about"),
+            Field::Scale => tr!("settings-scale-about"),
+            Field::Upscale => tr!("settings-upscale-about"),
+            Field::Volume(Bus::Master) => tr!("settings-volume-master-about"),
+            Field::Volume(Bus::Music) => tr!("settings-volume-music-about"),
+            Field::Volume(Bus::Ambience) => tr!("settings-volume-ambience-about"),
+            Field::Volume(Bus::Sfx) => tr!("settings-volume-sfx-about"),
+            Field::Volume(Bus::Ui) => tr!("settings-volume-ui-about"),
+            Field::UiScale if v.ui_forced.is_some() => tr!("settings-ui-scale-forced"),
+            Field::UiScale => tr!("settings-ui-scale-about"),
+            Field::Keys => {
+                let keys = match v.settings.keys.unwrap_or_default() {
+                    KeyProfile::Modern => tr!("creation-keys-modern"),
+                    KeyProfile::Classic => tr!("creation-keys-classic"),
+                };
+                let about = tr!("settings-keys-about", keys = keys);
+                match v.playing_keys {
+                    Some(KeyProfile::Modern) => {
+                        format!("{about} {}", tr!("settings-keys-playing-modern"))
+                    }
+                    Some(KeyProfile::Classic) => {
+                        format!("{about} {}", tr!("settings-keys-playing-classic"))
+                    }
+                    None => about,
+                }
+            }
             Field::Language => tr!("settings-language-about"),
         }
     }
@@ -103,11 +194,63 @@ pub struct View {
     pub window: (u32, u32),
     /// The screen's: the window sizes offered fit it.
     pub screen: (u32, u32),
+    /// The device's own preset: the graphics until the player chooses.
+    pub device: Quality,
+    /// The UI scale "Auto" means here, a percent.
+    pub ui_auto: u32,
+    /// The UI scale `RENETHACK_UI_SCALE` forces, if it does.
+    pub ui_forced: Option<u32>,
+    /// The keys of the character playing (over a game).
+    pub playing_keys: Option<KeyProfile>,
+    /// The buses' volumes, linear, in `Bus::ALL`'s order.
+    pub volumes: [f32; 5],
+}
+
+impl View {
+    /// The volume of `bus` now, linear.
+    pub fn volume(&self, bus: Bus) -> f32 {
+        let i = Bus::ALL.iter().position(|&b| b == bus).unwrap_or(0);
+        self.volumes[i]
+    }
+
+    /// The graphics drawn now: the player's, else the device's preset.
+    pub fn graphics(&self) -> Graphics {
+        self.settings
+            .graphics
+            .unwrap_or_else(|| Graphics::preset(self.device))
+    }
 }
 
 /// The window size is the player's to choose (in a window only).
 fn resizable(v: &View) -> bool {
     v.settings.display.mode == WindowMode::Windowed
+}
+
+/// The row can change now: the window's size in a window only, the UI
+/// scale unless `RENETHACK_UI_SCALE` sets it.
+fn live(field: Field, v: &View) -> bool {
+    match field {
+        Field::WindowSize => resizable(v),
+        Field::UiScale => v.ui_forced.is_none(),
+        _ => true,
+    }
+}
+
+/// The UI scales offered: Auto (None), then the percents.
+fn ui_scales() -> Vec<Option<u32>> {
+    std::iter::once(None)
+        .chain(UI_SCALES.iter().copied().map(Some))
+        .collect()
+}
+
+/// A level of an effect: off, or its quality.
+fn level_text(l: Level) -> String {
+    match l {
+        Level::Off => tr!("settings-off"),
+        Level::Low => tr!("settings-quality-low"),
+        Level::Medium => tr!("settings-quality-medium"),
+        Level::High => tr!("settings-quality-high"),
+    }
 }
 
 /// A row's value as the page shows it.
@@ -131,8 +274,53 @@ pub fn value_text(field: Field, v: &View) -> String {
         Field::Vsync => tr!("settings-off"),
         Field::FpsCap if d.fps_cap == 0 => tr!("settings-fps-none"),
         Field::FpsCap => tr!("settings-fps", fps = d.fps_cap),
+        Field::Quality => match v.graphics().quality() {
+            Quality::Low => tr!("settings-quality-low"),
+            Quality::Medium => tr!("settings-quality-medium"),
+            Quality::High => tr!("settings-quality-high"),
+            Quality::Ultra => tr!("settings-quality-ultra"),
+            Quality::Custom => tr!("settings-quality-custom"),
+        },
+        Field::Ssao => level_text(v.graphics().ssao),
+        Field::Ssil => level_text(v.graphics().ssil),
+        Field::Fog => level_text(v.graphics().fog),
+        Field::Shadows => match v.graphics().shadows {
+            Shadows::Low => tr!("settings-quality-low"),
+            Shadows::Medium => tr!("settings-quality-medium"),
+            Shadows::High => tr!("settings-quality-high"),
+            Shadows::Ultra => tr!("settings-quality-ultra"),
+        },
+        Field::Msaa => match v.graphics().msaa {
+            Msaa::Off => tr!("settings-off"),
+            Msaa::X2 => tr!("settings-samples", samples = 2),
+            Msaa::X4 => tr!("settings-samples", samples = 4),
+            Msaa::X8 => tr!("settings-samples", samples = 8),
+        },
+        Field::Scale => tr!("settings-percent", percent = v.graphics().scale),
+        Field::Upscale => match v.graphics().upscale {
+            Upscale::Bilinear => tr!("settings-upscale-bilinear"),
+            Upscale::Fsr1 => tr!("settings-upscale-fsr1"),
+            Upscale::Fsr2 => tr!("settings-upscale-fsr2"),
+        },
+        Field::Volume(bus) => tr!(
+            "settings-percent",
+            percent = volume_steps(v.volume(bus)) * 5
+        ),
+        Field::UiScale => match (v.ui_forced, v.settings.ui_scale) {
+            (Some(p), _) | (None, Some(p)) => tr!("settings-percent", percent = p),
+            (None, None) => tr!("settings-ui-scale-auto", percent = v.ui_auto),
+        },
+        Field::Keys => match v.settings.keys.unwrap_or_default() {
+            KeyProfile::Modern => tr!("settings-keys-modern"),
+            KeyProfile::Classic => tr!("settings-keys-classic"),
+        },
         Field::Language => v.lang.name().to_string(),
     }
+}
+
+/// A volume in the sliders' steps of 5 % (0–20).
+fn volume_steps(v: f32) -> u32 {
+    (v.clamp(0.0, 1.0) * 20.0).round() as u32
 }
 
 /// What a step of a row changes.
@@ -140,6 +328,8 @@ pub fn value_text(field: Field, v: &View) -> String {
 pub enum Change {
     Settings(Settings),
     Lang(Lang),
+    /// A bus's volume, linear (`UiEvent::SetVolume`).
+    Volume(Bus, f32),
 }
 
 /// `field` a step on (`dir` 1) or back (-1); `wrap`: past the last value
@@ -159,6 +349,52 @@ pub fn step(field: Field, v: &View, dir: i32, wrap: bool) -> Option<Change> {
         }
         Field::Vsync => d.vsync = step_through(&[false, true], d.vsync, dir, wrap),
         Field::FpsCap => d.fps_cap = step_through(&FPS_CAPS, d.fps_cap, dir, wrap),
+        Field::Quality
+        | Field::Ssao
+        | Field::Ssil
+        | Field::Fog
+        | Field::Shadows
+        | Field::Msaa
+        | Field::Scale
+        | Field::Upscale => {
+            let now = v.graphics();
+            let mut g = now;
+            match field {
+                Field::Quality => g = Graphics::preset(now.step_quality(dir, wrap)),
+                Field::Ssao => g.ssao = step_through(&Level::ALL, g.ssao, dir, wrap),
+                Field::Ssil => g.ssil = step_through(&Level::ALL, g.ssil, dir, wrap),
+                Field::Fog => g.fog = step_through(&Level::ALL, g.fog, dir, wrap),
+                Field::Shadows => g.shadows = step_through(&Shadows::ALL, g.shadows, dir, wrap),
+                Field::Msaa => g.msaa = step_through(&Msaa::ALL, g.msaa, dir, wrap),
+                Field::Scale => g.scale = step_through(&RENDER_SCALES, g.scale, dir, wrap),
+                _ => g.upscale = step_through(&Upscale::ALL, g.upscale, dir, wrap),
+            }
+            // the device's preset stays the device's until one differs
+            if g == now {
+                return None;
+            }
+            s.graphics = Some(g);
+        }
+        Field::Volume(bus) => {
+            let now = volume_steps(v.volume(bus));
+            let steps: Vec<u32> = (0..=20).collect();
+            let next = step_through(&steps, now, dir, wrap);
+            return (next != now).then_some(Change::Volume(bus, next as f32 / 20.0));
+        }
+        Field::UiScale => {
+            if !live(field, v) {
+                return None;
+            }
+            s.ui_scale = step_through(&ui_scales(), s.ui_scale, dir, wrap);
+        }
+        Field::Keys => {
+            let now = s.keys.unwrap_or_default();
+            let keys = step_through(&[KeyProfile::Modern, KeyProfile::Classic], now, dir, wrap);
+            if keys == now {
+                return None;
+            }
+            s.keys = Some(keys);
+        }
         Field::Language => {
             let lang = step_through(&Lang::ALL, v.lang, dir, wrap);
             return (lang != v.lang).then_some(Change::Lang(lang));
@@ -193,6 +429,8 @@ struct Row {
     button: Gd<Button>,
     name: Gd<Label>,
     value: Gd<Label>,
+    /// A volume's slider, beside its value.
+    slider: Option<Gd<HSlider>>,
     left: Gd<Button>,
     right: Gd<Button>,
 }
@@ -202,6 +440,8 @@ const ROW_H: f32 = 44.0;
 const ROW_GAP: i32 = 4;
 /// The value's column between its arrows, and its text's size.
 const VALUE_W: f32 = 340.0;
+/// A volume's percent beside its slider.
+const VOLUME_W: f32 = 64.0;
 const VALUE_SIZE: i32 = 19;
 /// The page's width inside its frame.
 const PAGE_W: f32 = 1000.0;
@@ -330,9 +570,108 @@ fn arrow(right: bool, queue: &UiQueue, ev: UiEvent) -> Gd<Button> {
     b
 }
 
-/// Let the arrows go while Godot still runs (`icons::clear`).
+/// Let the arrows and the knobs go while Godot still runs
+/// (`icons::clear`).
 pub fn clear() {
     ARROWS.with(|a| a.borrow_mut().take());
+    KNOBS.with(|k| k.borrow_mut().take());
+}
+
+thread_local! {
+    /// The volume sliders' knob, and the knob under the mouse.
+    static KNOBS: RefCell<Option<[Gd<Texture2D>; 2]>> = const { RefCell::new(None) };
+}
+
+/// A gold knob with a dark rim, its edges smoothed.
+fn knob(fill: Color) -> Option<Gd<Texture2D>> {
+    const D: usize = 20;
+    const SS: usize = 6;
+    let r = D as f32 / 2.0;
+    let rim = theme::IRON_DARK;
+    let mut px = vec![0u8; D * D * 4];
+    for y in 0..D {
+        for x in 0..D {
+            let (mut inside, mut core) = (0, 0);
+            for sy in 0..SS {
+                for sx in 0..SS {
+                    let fx = x as f32 + (sx as f32 + 0.5) / SS as f32 - r;
+                    let fy = y as f32 + (sy as f32 + 0.5) / SS as f32 - r;
+                    let d = (fx * fx + fy * fy).sqrt();
+                    if d <= r - 0.25 {
+                        inside += 1;
+                        if d <= r - 2.25 {
+                            core += 1;
+                        }
+                    }
+                }
+            }
+            let t = if inside == 0 {
+                0.0
+            } else {
+                core as f32 / inside as f32
+            };
+            let mix = |a: f32, b: f32| ((a + (b - a) * t) * 255.0).round() as u8;
+            let i = (y * D + x) * 4;
+            px[i..i + 4].copy_from_slice(&[
+                mix(rim.r, fill.r),
+                mix(rim.g, fill.g),
+                mix(rim.b, fill.b),
+                (inside * 255 / (SS * SS)) as u8,
+            ]);
+        }
+    }
+    let image = Image::create_from_data(
+        D as i32,
+        D as i32,
+        false,
+        Format::RGBA8,
+        &PackedByteArray::from(px.as_slice()),
+    )?;
+    Some(ImageTexture::create_from_image(&image)?.upcast())
+}
+
+/// A volume's slider: 0 to 1 in steps of 5 %, a gold groove in a dark
+/// one, a gold knob; a drag sets the volume at once.
+fn volume_slider(bus: Bus, queue: &UiQueue) -> Gd<HSlider> {
+    let mut s = HSlider::new_alloc();
+    s.set_min(0.0);
+    s.set_max(1.0);
+    s.set_step(0.05);
+    s.set_focus_mode(FocusMode::NONE);
+    s.set_h_size_flags(SizeFlags::EXPAND_FILL);
+    s.set_v_size_flags(SizeFlags::SHRINK_CENTER);
+    s.set_custom_minimum_size(Vector2::new(0.0, 24.0));
+    let groove = |bg: Color, border: Color| {
+        let mut sb = StyleBoxFlat::new_gd();
+        sb.set_bg_color(bg);
+        sb.set_border_width_all(1);
+        sb.set_border_color(border);
+        sb.set_corner_radius_all(3);
+        sb.set_content_margin(Side::TOP, 3.0);
+        sb.set_content_margin(Side::BOTTOM, 3.0);
+        sb
+    };
+    s.add_theme_stylebox_override("slider", &groove(theme::SOCKET, theme::IRON));
+    s.add_theme_stylebox_override("grabber_area", &groove(theme::GOLD_DIM, theme::GOLD_DIM));
+    s.add_theme_stylebox_override("grabber_area_highlight", &groove(theme::GOLD, theme::GOLD));
+    let knobs = KNOBS.with(|k| {
+        k.borrow_mut()
+            .get_or_insert_with(|| {
+                let blank = || -> Gd<Texture2D> { ImageTexture::new_gd().upcast() };
+                [
+                    knob(theme::GOLD).unwrap_or_else(blank),
+                    knob(theme::GOLD_BRIGHT).unwrap_or_else(blank),
+                ]
+            })
+            .clone()
+    });
+    s.add_theme_icon_override("grabber", &knobs[0]);
+    s.add_theme_icon_override("grabber_highlight", &knobs[1]);
+    let q = queue.clone();
+    s.signals()
+        .value_changed()
+        .connect(move |v: f64| push(&q, UiEvent::SetVolume(bus, v as f32)));
+    s
 }
 
 impl SettingsPage {
@@ -501,7 +840,25 @@ impl SettingsPage {
             // each language in its own name, whatever the language now
             i18n::verbatim(&value);
         }
-        line.add_child(&value);
+        // a volume: a slider the mouse drags, its percent beside it
+        let slider = match field {
+            Field::Volume(bus) => {
+                let mut cell = HBoxContainer::new_alloc();
+                cell.set_mouse_filter(MouseFilter::IGNORE);
+                cell.add_theme_constant_override("separation", 12);
+                cell.set_custom_minimum_size(Vector2::new(VALUE_W, 0.0));
+                let s = volume_slider(bus, queue);
+                cell.add_child(&s);
+                value.set_custom_minimum_size(Vector2::new(VOLUME_W, 0.0));
+                cell.add_child(&value);
+                line.add_child(&cell);
+                Some(s)
+            }
+            _ => {
+                line.add_child(&value);
+                None
+            }
+        };
         let right = arrow(
             true,
             queue,
@@ -514,6 +871,7 @@ impl SettingsPage {
             button,
             name,
             value,
+            slider,
             left,
             right,
         }
@@ -568,7 +926,11 @@ impl SettingsPage {
         self.view = view.clone();
         for r in &mut self.rows {
             r.value.set_text(&value_text(r.field, view));
-            let live = r.field != Field::WindowSize || resizable(view);
+            if let (Field::Volume(bus), Some(s)) = (r.field, r.slider.as_mut()) {
+                // no signal: the slider only tells of the player's drags
+                s.set_value_no_signal(f64::from(view.volume(bus)));
+            }
+            let live = live(r.field, view);
             let (name, value) = if live {
                 (theme::TEXT, theme::GOLD_BRIGHT)
             } else {
@@ -742,6 +1104,14 @@ impl SettingsPage {
             .collect()
     }
 
+    /// The slider of `bus`'s volume (self-tests: a drag of the mouse).
+    pub fn slider(&self, bus: Bus) -> Option<Gd<HSlider>> {
+        self.rows
+            .iter()
+            .find(|r| r.field == Field::Volume(bus))
+            .and_then(|r| r.slider.clone())
+    }
+
     /// The rows of the section shown: each one's name and value as the
     /// player reads them (self-tests).
     pub fn shown_rows(&self) -> Vec<(String, String)> {
@@ -770,6 +1140,11 @@ mod tests {
             lang: Lang::En,
             window: (1600, 900),
             screen: (1920, 1080),
+            device: Quality::High,
+            ui_auto: 100,
+            ui_forced: None,
+            playing_keys: None,
+            volumes: Bus::ALL.map(Bus::default_volume),
         }
     }
 
@@ -816,6 +1191,77 @@ mod tests {
             ..view()
         };
         assert_eq!(step(Field::WindowSize, &full, 1, false), None);
+    }
+
+    #[test]
+    fn the_graphics_follow_the_device_until_one_control_differs() {
+        let v = view();
+        assert_eq!(v.graphics(), Graphics::preset(Quality::High));
+        // the preset a step down: chosen, kept
+        let s = changed(step(Field::Quality, &v, -1, false));
+        assert_eq!(s.graphics, Some(Graphics::preset(Quality::Medium)));
+        // a control by hand: Custom
+        let s = changed(step(Field::Ssil, &v, -1, false));
+        let g = s.graphics.expect("chosen");
+        assert_eq!((g.ssil, g.quality()), (Level::Low, Quality::Custom));
+        // at an end nothing changes, and the device's preset stays its own
+        let top = View {
+            device: Quality::Ultra,
+            ..view()
+        };
+        assert_eq!(step(Field::Msaa, &top, 1, false), None);
+        assert_eq!(step(Field::Quality, &top, 1, false), None);
+        // the upscaler and the scale step through their own
+        let s = changed(step(Field::Scale, &v, -1, false));
+        assert_eq!(s.graphics.map(|g| g.scale), Some(85));
+        let s = changed(step(Field::Upscale, &v, 1, false));
+        assert_eq!(s.graphics.map(|g| g.upscale), Some(Upscale::Fsr1));
+    }
+
+    #[test]
+    fn the_ui_scale_steps_from_auto_unless_forced_and_the_keys_between_two() {
+        let v = view();
+        let s = changed(step(Field::UiScale, &v, 1, false));
+        assert_eq!(s.ui_scale, Some(80));
+        assert_eq!(
+            step(Field::UiScale, &v, -1, false),
+            None,
+            "Auto is the first"
+        );
+        let top = View {
+            settings: Settings {
+                ui_scale: Some(140),
+                ..Settings::default()
+            },
+            ..view()
+        };
+        assert_eq!(changed(step(Field::UiScale, &top, 1, true)).ui_scale, None);
+        let forced = View {
+            ui_forced: Some(120),
+            ..view()
+        };
+        assert_eq!(step(Field::UiScale, &forced, 1, false), None);
+        let s = changed(step(Field::Keys, &v, 1, false));
+        assert_eq!(s.keys, Some(KeyProfile::Classic));
+        assert_eq!(
+            step(Field::Keys, &v, -1, false),
+            None,
+            "Modern is the first"
+        );
+    }
+
+    #[test]
+    fn a_volume_steps_by_five_percent_between_silence_and_full() {
+        let v = view();
+        assert_eq!(
+            step(Field::Volume(Bus::Music), &v, -1, false),
+            Some(Change::Volume(Bus::Music, 0.65))
+        );
+        assert_eq!(step(Field::Volume(Bus::Master), &v, 1, false), None);
+        assert_eq!(
+            step(Field::Volume(Bus::Master), &v, 1, true),
+            Some(Change::Volume(Bus::Master, 0.0))
+        );
     }
 
     #[test]
