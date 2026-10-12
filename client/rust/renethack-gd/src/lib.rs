@@ -9,6 +9,7 @@ mod art;
 mod audio;
 mod batch;
 mod branch_look;
+mod cues;
 mod dialogs;
 mod engine_text;
 mod gallery;

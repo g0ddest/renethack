@@ -9,6 +9,7 @@
 #   make deck         screenshots at the Steam Deck's 1280×800 (needs a display)
 #   make soak         random play through the client UI, seeds 1..8
 #   make art          fetch the CC0 art again (tools/fetch_art.py; needs Pillow)
+#   make audio        fetch the CC0 sounds again (tools/fetch_audio.py)
 #   make app-icon     draw the game's icon again (tools/app_icon.py; needs Pillow)
 #   make i18n-catalog extract the English catalog of every text the engine shows
 #   make i18n-check   the extractor's tests; fail if the catalog is out of date
@@ -54,7 +55,7 @@ SOAK_SEEDS := 1 2 3 4 5 6 7 8
 # `make soak SOAK_WINDOW=1`: the soak with a window, the renderer at work
 SOAK_WINDOW ?=
 
-.PHONY: all engine client steam import run test test-client soak lint need-timeout art app-icon icons achievement-icons achievement-vdf deck \
+.PHONY: all engine client steam import run test test-client soak lint need-timeout art audio app-icon icons achievement-icons achievement-vdf deck \
 	i18n-catalog i18n-check help help-check dist dist-macos dist-linux dist-windows
 all: engine
 
@@ -70,7 +71,7 @@ engine:
 # writing extension_list.cfg, so its status is ignored and the file is
 # checked instead.
 IMPORT_STAMP := $(GODOT_PROJECT)/.godot/renethack-import.stamp
-IMPORT_INPUTS := $(shell find $(GODOT_PROJECT)/art $(GODOT_PROJECT)/fonts $(GODOT_PROJECT)/ui -type f 2>/dev/null) \
+IMPORT_INPUTS := $(shell find $(GODOT_PROJECT)/art $(GODOT_PROJECT)/audio $(GODOT_PROJECT)/fonts $(GODOT_PROJECT)/ui -type f 2>/dev/null) \
 	$(GODOT_PROJECT)/project.godot $(GODOT_PROJECT)/renethack.gdextension \
 	$(GODOT_PROJECT)/main.tscn $(GODOT_PROJECT)/icon.png
 
@@ -215,6 +216,11 @@ achievement-vdf: all client
 # then imports what changed
 art:
 	python3 tools/fetch_art.py
+
+# The sounds are committed too; this re-fetches them (Kenney's CC0 packs)
+# and checks the downloads against client/godot/audio/audio.lock.json
+audio:
+	python3 tools/fetch_audio.py
 
 # The game's icon (committed): client/godot/icon.png for the window,
 # icon.icns and icon.ico for macOS and Windows, and steam/icon/ with what

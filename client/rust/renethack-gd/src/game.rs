@@ -161,6 +161,7 @@ pub struct Ui {
     pub screens: Screens,
     /// An achievement just earned, under the prompt banner.
     pub toast: crate::achievement_view::Toast,
+    pub audio: crate::audio::Audio,
 }
 
 /// What the prompt line says while `prompt` waits.
@@ -418,6 +419,8 @@ pub struct RenethackGame {
     pub(crate) window_size: Option<Vector2i>,
     /// A volume was set since the profile last kept them.
     volumes_set: bool,
+    /// What the interface showed last frame (its sounds are the changes).
+    ui_watch: crate::audio::UiWatch,
 }
 
 /// The warm-up behind the start-up veil, a step a frame, beside the map's
@@ -539,6 +542,7 @@ impl INode for RenethackGame {
             title_render: ([0; 5], 0.0),
             window_size: None,
             volumes_set: false,
+            ui_watch: crate::audio::UiWatch::default(),
         }
     }
 
@@ -631,6 +635,11 @@ impl INode for RenethackGame {
         toast_layer.set_name("ToastLayer");
         toast_layer.set_layer(1);
         self.base_mut().add_child(&toast_layer);
+        // the voices and the ears, in the map's 3D world
+        crate::audio::ensure_buses();
+        let mut audio_root = Node3D::new_alloc();
+        audio_root.set_name("Audio");
+        self.base_mut().add_child(&audio_root);
         let queue = self.queue.clone();
         let mut layers = layers.into_iter();
         let mut next = || layers.next().expect("six layers");
@@ -643,6 +652,7 @@ impl INode for RenethackGame {
             pad: crate::pad_view::PadView::new(next()),
             screens: Screens::new(next(), queue),
             toast: crate::achievement_view::Toast::new(toast_layer),
+            audio: crate::audio::Audio::new(audio_root),
         });
         self.show_game(false);
 
@@ -657,7 +667,6 @@ impl INode for RenethackGame {
             .map(|t| Profile::from_json(&t))
             .unwrap_or_default();
         // the sound at the volumes the player left it at
-        crate::audio::ensure_buses();
         crate::audio::apply_volumes(&profile.volumes);
         // the title scene shows the hero of the last game played
         if let Some(role) = profile.last_role.as_deref()
@@ -746,6 +755,7 @@ impl INode for RenethackGame {
         }
         self.watch_engine();
         self.achieve(delta);
+        self.update_audio(delta);
         if !self.quitting
             && let Some(mut test) = self.selftest.take()
         {
@@ -765,6 +775,7 @@ impl INode for RenethackGame {
     /// the position over the HUD panels too, which `unhandled_input` never
     /// sees.
     fn input(&mut self, event: Gd<InputEvent>) {
+        self.hear_click(&event);
         let event = match event.try_cast::<InputEventMouseMotion>() {
             Ok(motion) => {
                 self.record_mouse(motion.get_position());
@@ -889,6 +900,77 @@ impl INode for RenethackGame {
 }
 
 impl RenethackGame {
+    /// A button pressed, by the mouse or the accept key: its click.
+    fn hear_click(&mut self, event: &Gd<InputEvent>) {
+        if !event.is_pressed() || event.is_echo() {
+            return;
+        }
+        let mouse = event
+            .clone()
+            .try_cast::<InputEventMouseButton>()
+            .is_ok_and(|b| b.get_button_index() == MouseButton::LEFT);
+        if !mouse && !event.is_action_pressed("ui_accept") {
+            return;
+        }
+        let Some(vp) = self.base().get_viewport() else {
+            return;
+        };
+        let control = if mouse {
+            vp.gui_get_hovered_control()
+        } else {
+            vp.gui_get_focus_owner()
+        };
+        let button = control.and_then(|c| c.try_cast::<godot::classes::BaseButton>().ok());
+        if button.is_some_and(|b| !b.is_disabled())
+            && let Some(ui) = self.ui.as_mut()
+        {
+            ui.audio.ui("ui.click");
+        }
+    }
+
+    /// The sound's frame: the interface's changes, the ears at the hero
+    /// (else where the camera is), the sounds waiting for their moment.
+    fn update_audio(&mut self, delta: f64) {
+        let Some(vp) = self.base().get_viewport() else {
+            return;
+        };
+        let camera = vp.get_camera_3d().map(|c| c.get_global_transform());
+        let hovered = vp
+            .gui_get_hovered_control()
+            .and_then(|c| c.try_cast::<godot::classes::BaseButton>().ok())
+            .filter(|b| !b.is_disabled())
+            .map(|b| b.instance_id());
+        let playing = self.state == GameState::Playing;
+        // the warm-up opens panels and dialogs unseen: not heard either
+        let unseen = self.veiled() || (self.state == GameState::Title && !self.warmed_up());
+        let Some(ui) = self.ui.as_mut() else {
+            return;
+        };
+        let shown = crate::audio::Shown {
+            inventory: ui.inventory.is_open(),
+            help: ui.help.is_open(),
+            dialog: ui.dialogs.is_open(),
+            screen: ui.screens.current(),
+            hovered,
+        };
+        if unseen {
+            self.ui_watch = crate::audio::UiWatch::default();
+        } else {
+            for cue in self.ui_watch.cues(shown) {
+                ui.audio.ui(cue);
+            }
+        }
+        let hero = ui.map.hero_stands().filter(|_| playing);
+        let ears = camera.map(|t| match hero {
+            Some((at, _)) => Transform3D::new(
+                t.basis,
+                at + Vector3::new(0.0, crate::audio::EAR_HEIGHT, 0.0),
+            ),
+            None => t,
+        });
+        ui.audio.update(delta, ears);
+    }
+
     /// A motion outside the window (a drag holds the pointer) hovers nothing.
     fn record_mouse(&mut self, pos: Vector2) {
         let inside = self

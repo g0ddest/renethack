@@ -1,0 +1,48 @@
+{
+  "comment": "The sounds tools/fetch_audio.py fetches: zips at fixed URLs, the files picked from under `root` by pattern, written to cc0/<dest> with the pack's licence; short sounds as mono WAV, those marked keep_ogg as they are. audio.lock.json records each download's sha256. Kenney's CC0 packs are placeholders until the picks of the audio sources note land; manifest.json says which file plays for which cue.",
+  "out": "cc0",
+  "zips": [
+    {
+      "url": "https://kenney.nl/media/pages/assets/impact-sounds/87b4ddecda-1677589768/kenney_impact-sounds.zip",
+      "root": "Audio/",
+      "files": ["footstep_*.ogg", "impactBell_heavy_00[0-2].ogg", "impactGeneric_light_*.ogg", "impactGlass_light_*.ogg", "impactMetal_heavy_*.ogg", "impactMining_*.ogg", "impactPlank_medium_*.ogg", "impactPlate_light_*.ogg", "impactPunch_*.ogg", "impactSoft_*.ogg", "impactWood_heavy_*.ogg"],
+      "license_files": ["License.txt"],
+      "dest": "kenney/impact",
+      "use": "footsteps on stone, wood, grass, snow and carpet; blows, falls, doors kicked, bells"
+    },
+    {
+      "url": "https://kenney.nl/media/pages/assets/rpg-audio/8e99002d76-1677590336/kenney_rpg-audio.zip",
+      "root": "Audio/",
+      "files": ["beltHandle[12].ogg", "book*.ogg", "chop.ogg", "cloth[1-4].ogg", "clothBelt*.ogg", "creak[1-3].ogg", "doorClose_[1-4].ogg", "doorOpen_[12].ogg", "drawKnife[1-3].ogg", "dropLeather.ogg", "footstep0[0-9].ogg", "handleCoins*.ogg", "handleSmallLeather*.ogg", "knifeSlice*.ogg", "metalClick.ogg", "metalLatch.ogg"],
+      "license_files": ["License.txt"],
+      "dest": "kenney/rpg",
+      "use": "doors, coins, books, cloth and leather, blades drawn and slicing, a creaking board, steps on dirt"
+    },
+    {
+      "url": "https://kenney.nl/media/pages/assets/interface-sounds/fa43c1dd4d-1677589452/kenney_interface-sounds.zip",
+      "root": "Audio/",
+      "files": ["click_*.ogg", "close_*.ogg", "error_00[1-4].ogg", "maximize_00[1-8].ogg", "open_*.ogg", "select_00[1-4].ogg", "tick_*.ogg"],
+      "license_files": ["License.txt"],
+      "dest": "kenney/interface",
+      "use": "the interface: clicks, panels opening and closing; zaps and spells until better"
+    },
+    {
+      "url": "https://kenney.nl/media/pages/assets/music-jingles/f37e530b9e-1677590399/kenney_music-jingles.zip",
+      "root": "Audio/Steel jingles/",
+      "files": ["jingles_STEEL00.ogg"],
+      "license_files": ["License.txt"],
+      "dest": "kenney/jingles",
+      "keep_ogg": true,
+      "use": "level up"
+    },
+    {
+      "url": "https://kenney.nl/media/pages/assets/music-jingles/f37e530b9e-1677590399/kenney_music-jingles.zip",
+      "root": "Audio/Pizzicato jingles/",
+      "files": ["jingles_PIZZI10.ogg"],
+      "license_files": [],
+      "dest": "kenney/jingles",
+      "keep_ogg": true,
+      "use": "the hero's death"
+    }
+  ]
+}
