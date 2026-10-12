@@ -21,10 +21,10 @@ the recipe in `sources.json` and checks the downloads against `art.lock.json`.
 | `cc0/quaternius/monsters/Mimic.glb` | A mimic: a chest with an eye and teeth on long black limbs | Quaternius | fetched from Poly Pizza: https://poly.pizza/m/B8HrWzkuNp |
 | `cc0/quaternius/monsters/Yeti.glb` | A yeti: a shaggy ape-man on two legs (yetis, sasquatches) | Quaternius | fetched from Poly Pizza: https://poly.pizza/m/ceRHrn8HHE |
 | `cc0/quaternius/animals/Pug.fbx`, `Pig.fbx`, `Sheep.fbx` | Farm Animals Animated: pug, pig, sheep | Quaternius | https://quaternius.itch.io/lowpoly-animated-animals |
-| `cc0/made/Stethoscope.glb`, `StethoscopeMan.glb`, `StethoscopeWoman.glb` | A stethoscope (rubber tube, binaural, chest piece) built from curves: coiled on the floor, and round the neck of the peasant outfits above, fitted to them and skinned to their skeletons | this project | made here by `tools/blender/stethoscope.py` |
+| `cc0/made/Stethoscope.glb`, `StethoscopeMan.glb`, `StethoscopeWoman.glb` | A stethoscope (rubber tube, binaural, chest piece) built from curves: coiled on the floor, and round the neck of the peasant outfits above, fitted to them and skinned to their skeletons | this project | made here (`tools/blender/stethoscope.py`) |
 | `cc0/made/Centaur.glb`, `CentaurFemale.glb` | Centaurs put together in Blender (`tools/blender/centaur.py`): the horse above without its neck and head, a base character's upper body (posed by the Universal Animation Library's idle) in their place, the linen painted on its skin dyed leather, the horse's body unwrapped and painted a coat streaked like hair | Quaternius | made here from the files above |
 | `cc0/made/DragonRearing.glb` | The dragon above with its wings raised in every clip (`tools/gltf_turn.py`) | Quaternius | made here from the file above |
-| `cc0/made/skins/` | Skins painted by `tools/art_paint.py`: a corpse's (`zombie_m`, from the base character's light skin above), linen wound over a body (`mummy_m` by that skin's layout, `wraps`), the Puglin's coat without its green (`puglin_pale`), the imp's without its red (`imp_pale`) | Quaternius, this project | made here from the files above |
+| `cc0/made/skins/` | Skins painted (`tools/art_paint.py`): a corpse's (`zombie_m`, from the base character's light skin above), linen wound over a body (`mummy_m` by that skin's layout, `wraps`), the Puglin's coat without its green (`puglin_pale`), the imp's without its red (`imp_pale`) | Quaternius, this project | made here from the files above |
 | `cc0/sigilsvault/dungeon/` | Modular Dungeon Kit v1.0: pieces and props (GLB) | Kevin Barany (SigilsVault) | https://sigilsvault.itch.io/modular-dungeon-kit-v10 |
 | `cc0/unity-labs/flipbooks/` | VFX flipbooks: Flame02, Flame03, FireBall01–04, WispySmoke01, CandleSmoke01, Explosion02HD | Unity Technologies (Unity Labs Paris) | https://unity.com/blog/engine-platform/free-vfx-image-sequences-flipbooks |
 | `cc0/ambientcg/` | Lava003, Rock035, Rock058, Chainmail004, Metal038 (1K, maps repacked) | ambientCG (Lennart Demes) | https://ambientcg.com |
@@ -55,9 +55,9 @@ model, material and animation draws each monster, object and map feature.
 
 The models under `ccby/` are under the Creative Commons Attribution 3.0
 license (https://creativecommons.org/licenses/by/3.0/), from Poly Pizza.
-They came as static meshes; `tools/blender/rig_quadruped.py` welded and
-scaled them, skinned them to the skeleton of Quaternius's bull or wolf
-(above, CC0) and gave them its clips; the armadillo got antennae, the
+They came as static meshes, and were welded, scaled, skinned to the skeleton
+of Quaternius's bull or wolf (above, CC0) and given its clips
+(`tools/blender/rig_quadruped.py`); the armadillo got antennae, the
 bear an owl's beak, eyes and ear tufts, the dark elephant long hair
 hanging from its flanks, belly, legs and neck, the ground sloth's coat was
 painted again in shades of blue-green, and the gorilla's four painted

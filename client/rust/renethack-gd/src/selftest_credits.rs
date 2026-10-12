@@ -2,7 +2,8 @@
 //! on the game's own credit, then goes down the list with ↓, each document
 //! drawn with what it must show (the art's CC-BY models and their authors,
 //! the sounds', the NGPL as the engine ships it, Godot's licence and the
-//! code it includes, the Rust crates linked, the fonts' licence...); PgDn
+//! code it includes, the Rust crates linked, the fonts' licence...), and
+//! none showing the repository's tools or recipes (`tools/`, `.json`); PgDn
 //! scrolls a long one and Esc goes back to the title. From the settings
 //! their button opens the page and Back returns to the settings, where
 //! they were; the d-pad goes through the list, its hints show, and B goes
@@ -88,6 +89,10 @@ fn checked(g: &RenethackGame) -> Result<bool, String> {
     };
     if let Some(missing) = needles.iter().find(|n| !text.contains(**n)) {
         return Err(format!("{doc:?} shows no \"{missing}\""));
+    }
+    // the repository's workings stay in the files
+    if let Some(inner) = ["tools/", ".json"].iter().find(|w| text.contains(**w)) {
+        return Err(format!("{doc:?} shows \"{inner}\""));
     }
     AT.store(at + 1, Ordering::Relaxed);
     Ok(true)
