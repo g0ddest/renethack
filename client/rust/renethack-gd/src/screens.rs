@@ -223,6 +223,9 @@ pub struct Screens {
 /// The game's name on the title: a name, the same in every language.
 const GAME_NAME: &str = "renethack";
 
+/// How much the settings page's backdrop hides of the scene behind it.
+const SETTINGS_SHADE: f32 = 0.62;
+
 /// The share of the title's width the menu stands in (on the left).
 const TITLE_MENU_WIDTH: f32 = 0.42;
 
@@ -463,32 +466,14 @@ impl Screens {
         self.title_page(&col.upcast());
     }
 
-    /// The client's own settings: the language. `in_game`: opened from a
-    /// game, Back returns to it.
-    pub fn show_settings(&mut self, in_game: bool) {
-        let mut panel = PanelContainer::new_alloc();
-        let mut col = column();
-        col.add_child(&title_label(&tr!("settings-title"), 32));
-        let mut grid = GridContainer::new_alloc();
-        grid.set_columns(2);
-        grid.add_theme_constant_override("h_separation", 16);
-        grid.add_theme_constant_override("v_separation", 10);
-        grid.add_child(&theme::label(&tr!("settings-language")));
-        let mut lang = language_option(&self.queue);
-        lang.set_custom_minimum_size(Vector2::new(320.0, 0.0));
-        grid.add_child(&lang);
-        col.add_child(&grid);
-        let mut buttons = row();
-        buttons.add_child(&theme::button(
-            &tr!("settings-back"),
-            &self.queue,
-            UiEvent::CloseSettings,
-        ));
-        col.add_child(&buttons);
-        panel.add_child(&col);
+    /// The settings page (`settings_page::SettingsPage`); `in_game`:
+    /// opened from a game, Back returns to it. The scene behind shows
+    /// through, dimmed: a change of the graphics shows at once.
+    pub fn show_settings(&mut self, page: &Gd<Control>, in_game: bool) {
         self.form = None;
         self.settings_in_game = in_game;
-        self.page("settings", &panel.upcast());
+        self.page("settings", page);
+        self.bg.set_color(theme::BG.with_alpha(SETTINGS_SHADE));
     }
 
     /// The settings page was opened from a game.
@@ -517,7 +502,6 @@ impl Screens {
                 let (saves, notice) = self.title.clone();
                 self.show_title(&saves, notice.as_deref());
             }
-            Some("settings") => self.show_settings(self.settings_in_game),
             Some("creation") => {
                 let Some(form) = self.form.clone() else {
                     return;

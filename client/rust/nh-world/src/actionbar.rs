@@ -587,7 +587,8 @@ impl UiState {
 
 /// The client's own settings, the same for every character
 /// (`<playground>/profile.json`): the last language chosen, the hero of
-/// the last game played (the title scene shows them).
+/// the last game played (the title scene shows them), and the settings
+/// page's (`Settings`).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Profile {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -598,6 +599,10 @@ pub struct Profile {
     /// The last hero is a woman.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub last_female: Option<bool>,
+    /// The display, the graphics, the interface's scale, a new
+    /// character's keys (beside the rest in the file).
+    #[serde(flatten)]
+    pub settings: crate::Settings,
 }
 
 impl Profile {
@@ -1033,6 +1038,20 @@ mod tests {
         };
         assert_eq!(Profile::from_json(&hero.to_json()), hero);
         assert_eq!(Profile::from_json(r#"{"lang": "ru"}"#), profile);
+        // the settings page's beside them, in the same object
+        let set = Profile {
+            settings: crate::Settings {
+                ui_scale: Some(110),
+                ..crate::Settings::default()
+            },
+            ..hero.clone()
+        };
+        let text = set.to_json();
+        assert!(
+            text.contains("\"ui_scale\": 110") && text.contains("\"lang\": \"ru\""),
+            "{text}"
+        );
+        assert_eq!(Profile::from_json(&text), set);
     }
 
     #[test]

@@ -54,9 +54,11 @@ pub enum UiEvent {
     SlotUndo,
     /// From the inventory panel.
     Inventory(InvInput),
-    /// The client's settings page (the title's button, the HUD's gear).
+    /// The client's settings page (the title's button, the HUD's gear),
+    /// and its widgets.
     OpenSettings,
     CloseSettings,
+    Settings(crate::settings_page::SettingsInput),
     /// The achievements page (the title's button, the HUD's medal), and
     /// a medallion on it clicked or hovered.
     OpenAchievements,

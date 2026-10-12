@@ -7,8 +7,8 @@ use godot::classes::image::Format;
 use godot::classes::text_server::SpacingType;
 use godot::classes::window::{ContentScaleAspect, ContentScaleMode};
 use godot::classes::{
-    Button, Control, DisplayServer, Font, FontFile, FontVariation, Image, ImageTexture, Label, Os,
-    PanelContainer, ProjectSettings, Shader, ShaderMaterial, StyleBox, StyleBoxEmpty, StyleBoxFlat,
+    Button, Control, Font, FontFile, FontVariation, Image, ImageTexture, Label, PanelContainer,
+    ProjectSettings, Shader, ShaderMaterial, StyleBox, StyleBoxEmpty, StyleBoxFlat,
     StyleBoxTexture, SystemFont, TextServerManager, Theme, Window,
 };
 use godot::prelude::*;
@@ -669,17 +669,9 @@ pub fn user_scale(window: &Gd<Window>) -> f32 {
     if let Some(p) = percent {
         return (p / 100.0).clamp(0.8, 1.4);
     }
-    let deck_size = Vector2i::new(1280, 800);
-    let ds = DisplayServer::singleton();
-    let screen = if ds.get_name() == "headless" {
-        Vector2i::ZERO
-    } else {
-        ds.screen_get_size()
-    };
-    if Os::singleton().has_feature("steamdeck")
-        || screen == deck_size
-        || window.get_size() == deck_size
-    {
+    // a window of the Deck's size too: the Deck's screenshots at their size
+    let (w, h) = crate::video::DECK_SCREEN;
+    if crate::video::is_deck() || window.get_size() == Vector2i::new(w as i32, h as i32) {
         1.2
     } else {
         1.0

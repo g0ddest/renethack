@@ -36,6 +36,7 @@ mod rehearsal;
 mod screens;
 mod seated;
 mod selftest;
+mod settings_page;
 mod steam;
 mod surface;
 mod theme;
@@ -43,6 +44,7 @@ mod title_scene;
 mod tombstone;
 mod ui_events;
 mod vfx;
+mod video;
 
 use godot::init::InitStage;
 use godot::prelude::*;
@@ -61,6 +63,7 @@ unsafe impl ExtensionLibrary for RenethackExtension {
         if stage == InitStage::Scene {
             icons::clear();
             i18n::clear();
+            settings_page::clear();
         }
     }
 }

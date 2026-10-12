@@ -23,7 +23,7 @@ use nh_protocol::{Catalog, PickHow, Reply, WinCall};
 use nh_world::achievements::{Achievements, Tracker};
 use nh_world::{
     Action, ActionBar, BAR_SLOTS, Cell, ClickPlan, CommandInput, CountEntry, Key, KeyContext,
-    KeyInput, KeyProfile, MacroRunner, MacroStep, MenuKind, Mode, Order, Profile, Prompt,
+    KeyInput, KeyProfile, MacroRunner, MacroStep, MenuKind, Mode, Order, Profile, Prompt, Settings,
     SlotBinding, SlotState, SlotUse, Stop, TickDriver, Typeahead, UiState, World, click_order,
     describe_cell, find_path, in_field, item_question, menu_kind, nethack_key, repeatable,
     stairs_order,
@@ -40,6 +40,7 @@ use crate::map_view::MapView;
 use crate::paths::Paths;
 use crate::screens::{DEFAULT_NAME, EndSummary, Screens};
 use crate::selftest::SelfTest;
+use crate::settings_page::{self, Change, PageKey, SettingsInput, SettingsPage};
 use crate::tr;
 use crate::ui_events::{CharacterChoice, UiEvent, UiQueue, new_queue, push};
 
@@ -263,6 +264,18 @@ fn startup_lang(args: &Args) -> Lang {
         .unwrap_or_default()
 }
 
+/// The settings page's settings at start: the profile's; a self-test
+/// plays with the defaults (as it plays in English).
+pub(crate) fn startup_settings(args: &Args) -> Settings {
+    if args.selftest.is_some() {
+        return Settings::default();
+    }
+    let paths = Paths::resolve(args.playground.as_deref());
+    read_profile(&paths.playground)
+        .map(|t| Profile::from_json(&t).settings)
+        .unwrap_or_default()
+}
+
 /// Seconds since the engine started (the pad's clock).
 fn now_secs() -> f64 {
     godot::classes::Time::singleton().get_ticks_msec() as f64 / 1000.0
@@ -295,6 +308,11 @@ pub struct RenethackGame {
     pub(crate) achievements: Option<Tracker>,
     /// The achievements page while it is open.
     pub(crate) achievement_page: Option<crate::achievement_view::Page>,
+    /// The client's settings, as the profile keeps them (read at start,
+    /// changed on the settings page).
+    pub(crate) settings: Settings,
+    /// The settings page while it is open.
+    pub(crate) settings_page: Option<SettingsPage>,
     /// The hero's gender as the map draws the hero, told to the engine's
     /// translator (the words that agree with the hero).
     pub(crate) hero_female: Option<bool>,
@@ -469,6 +487,8 @@ impl INode for RenethackGame {
             hero_female: None,
             last_hero_of: None,
             achievement_page: None,
+            settings: Settings::default(),
+            settings_page: None,
             link_error: None,
             close_deadline: None,
             quitting: false,
@@ -533,6 +553,7 @@ impl INode for RenethackGame {
         // the engine's texts in the player's language: nh-i18n's translator
         // (loaded on a thread; the English shows until it is ready)
         i18n::set_engine_text(Some(Box::new(crate::engine_text::EngineTranslator::new())));
+        self.settings = startup_settings(&args);
         if let Some(mut window) = self.base().get_tree().get_root() {
             // the window the self-tests asked for; screenshots are
             // 1920×1080 (the review set, success criterion 1) unless a size
@@ -552,6 +573,7 @@ impl INode for RenethackGame {
                 window.set_size(size);
                 self.window_size = Some(size);
             }
+            crate::video::apply_display(&mut window, &self.settings.display, false);
             crate::theme::apply_scaling(window);
         }
 
@@ -675,6 +697,7 @@ impl INode for RenethackGame {
         let t = Instant::now();
         self.pad_tick();
         self.drain_ui();
+        self.sync_settings_page();
         self.lap("input", t);
         let t = Instant::now();
         self.pump();
@@ -740,8 +763,10 @@ impl INode for RenethackGame {
             }
             Err(event) => event,
         };
-        // the achievements page takes keys and the gamepad on the title too
-        if self.state != GameState::Playing && !self.achievements_open() {
+        // the achievements and settings pages take keys and the gamepad on
+        // the title too
+        let page = self.achievements_open() || self.settings_open();
+        if self.state != GameState::Playing && !page {
             return;
         }
         // a gamepad: what its buttons and sticks mean on this screen
@@ -799,7 +824,9 @@ impl INode for RenethackGame {
         if text && !owned {
             return;
         }
-        push(&self.queue, client_key(&k).unwrap_or(UiEvent::Key(k)));
+        // a page over everything has every key (F1 opens no help under it)
+        let client = if page { None } else { client_key(&k) };
+        push(&self.queue, client.unwrap_or(UiEvent::Key(k)));
         self.handled();
     }
 
@@ -1580,19 +1607,16 @@ impl RenethackGame {
     // ---- input ----
 
     fn on_key(&mut self, k: KeyInput) {
-        // the achievements page has the keys, over the title or the game
+        // a page has the keys, over the title or the game
         if self.achievements_open() {
             self.achievements_key(k);
             return;
         }
-        if self.state != GameState::Playing {
+        if self.settings_open() {
+            self.settings_key(k);
             return;
         }
-        // over the game, the settings page has the keys: Esc closes it
-        if self.settings_open() {
-            if k.key == Key::Escape && !k.echo {
-                self.close_settings();
-            }
+        if self.state != GameState::Playing {
             return;
         }
         // the help has them while it is open (F1 closes it too)
@@ -1761,8 +1785,8 @@ impl RenethackGame {
         let Some(ui) = self.ui.as_ref() else {
             return PadCtx::Other;
         };
-        // a page over everything: the d-pad's arrows, A and B
-        if self.achievements_open() {
+        // a page over everything: the d-pad's arrows, A and B, the bumpers
+        if self.achievements_open() || self.settings_open() {
             return PadCtx::Other;
         }
         if ui.help.is_open() {
@@ -1804,7 +1828,7 @@ impl RenethackGame {
 
     /// Held sticks repeat.
     fn pad_tick(&mut self) {
-        if self.state != GameState::Playing && !self.achievements_open() {
+        if self.state != GameState::Playing && !self.achievements_open() && !self.settings_open() {
             return;
         }
         let ctx = self.pad_ctx();
@@ -2104,7 +2128,9 @@ impl RenethackGame {
         ui.dialogs.set_pad(pad.is_some());
         ui.help.set_pad(pad.is_some());
         ui.inventory.set_pad(pad);
-        ui.pad.show_hints(pad.map(|k| (k, ctx)));
+        // the settings page shows its own
+        let page = ui.screens.current() == Some("settings");
+        ui.pad.show_hints(pad.filter(|_| !page).map(|k| (k, ctx)));
         // the hints go into the panel on top: a dialog's, else the
         // inventory's, which keep room for them
         let panel = ui
@@ -2528,6 +2554,7 @@ impl RenethackGame {
             UiEvent::Inventory(ev) if self.state == GameState::Playing => self.on_inventory(ev),
             UiEvent::OpenSettings => self.open_settings(),
             UiEvent::CloseSettings => self.close_settings(),
+            UiEvent::Settings(input) => self.on_settings(input),
             UiEvent::OpenAchievements => self.open_achievements(),
             UiEvent::CloseAchievements => self.close_achievements(),
             UiEvent::AchievementPick(i) => {
@@ -2544,13 +2571,123 @@ impl RenethackGame {
 
     /// The settings page, over the title or the game (its orders stop).
     fn open_settings(&mut self) {
-        match self.state {
-            GameState::Title => self.ui_mut().screens.show_settings(false),
-            GameState::Playing => {
-                self.driver.interrupt(Stop::Panel);
-                self.ui_mut().screens.show_settings(true);
+        let in_game = match self.state {
+            GameState::Title => false,
+            GameState::Playing => true,
+            _ => return,
+        };
+        if in_game {
+            self.driver.interrupt(Stop::Panel);
+        }
+        self.build_settings(in_game, (settings_page::Section::Display, 0));
+    }
+
+    /// The settings page made anew (on opening, in another language, for
+    /// a gamepad's hints or the keyboard's), where it was.
+    fn build_settings(&mut self, in_game: bool, at: (settings_page::Section, usize)) {
+        let view = self.settings_view();
+        let pad = self.pad.active.then_some(self.pad.kind);
+        let page = SettingsPage::new(view, &self.queue, at.0, at.1, pad);
+        self.ui_mut().screens.show_settings(&page.root(), in_game);
+        self.settings_page = Some(page);
+    }
+
+    /// What the settings page shows now.
+    fn settings_view(&self) -> settings_page::View {
+        let window = self
+            .base()
+            .get_tree()
+            .get_root()
+            .map(|w| w.get_size())
+            .unwrap_or_default();
+        let window = (window.x.max(0) as u32, window.y.max(0) as u32);
+        // without a display, the window's own size stands for the screen
+        let screen = match crate::video::screen_size() {
+            (0, 0) => window,
+            s => s,
+        };
+        settings_page::View {
+            settings: self.settings,
+            lang: i18n::lang(),
+            window,
+            screen,
+        }
+    }
+
+    /// The settings page's widgets: a tab, a row's focus, an arrow.
+    fn on_settings(&mut self, input: SettingsInput) {
+        let Some(page) = self.settings_page.as_mut() else {
+            return;
+        };
+        match input {
+            SettingsInput::Tab(s) => page.tab(s),
+            SettingsInput::Focus(f) => page.focus_field(f),
+            SettingsInput::Step(f, dir) => {
+                page.focus_field(f);
+                self.settings_step(f, dir, false);
             }
-            _ => {}
+        }
+    }
+
+    /// A key on the settings page: the page moves its focus itself.
+    fn settings_key(&mut self, k: KeyInput) {
+        let Some(page) = self.settings_page.as_mut() else {
+            return;
+        };
+        match page.key(&k) {
+            Some(PageKey::Back) => self.close_settings(),
+            Some(PageKey::Step(f, dir, wrap)) => self.settings_step(f, dir, wrap),
+            None => {}
+        }
+    }
+
+    /// A row of the settings page a step on or back.
+    fn settings_step(&mut self, field: settings_page::Field, dir: i32, wrap: bool) {
+        let view = self.settings_view();
+        match settings_page::step(field, &view, dir, wrap) {
+            Some(Change::Lang(lang)) => self.set_language(lang),
+            Some(Change::Settings(s)) => self.set_settings(s),
+            None => {}
+        }
+    }
+
+    /// The client's settings changed: what changed applied at once, all
+    /// kept in the profile, the page shown them.
+    pub(crate) fn set_settings(&mut self, s: Settings) {
+        let old = std::mem::replace(&mut self.settings, s);
+        if s.display != old.display
+            && let Some(mut window) = self.base().get_tree().get_root()
+        {
+            crate::video::apply_display(&mut window, &s.display, true);
+        }
+        self.update_profile(|p| p.settings = s);
+        let view = self.settings_view();
+        if let Some(page) = self.settings_page.as_mut() {
+            page.show(&view);
+        }
+    }
+
+    /// The settings page follows the window (a size dragged, a mode the
+    /// screen took its time to take) and the input: a gamepad's hints.
+    fn sync_settings_page(&mut self) {
+        let Some(page) = self.settings_page.as_ref() else {
+            return;
+        };
+        let pad = self.pad.active.then_some(self.pad.kind);
+        if page.pad() != pad {
+            let at = page.place();
+            let in_game = self
+                .ui
+                .as_ref()
+                .is_some_and(|ui| ui.screens.settings_in_game());
+            self.build_settings(in_game, at);
+            return;
+        }
+        let view = self.settings_view();
+        if let Some(page) = self.settings_page.as_mut()
+            && *page.view() != view
+        {
+            page.show(&view);
         }
     }
 
@@ -2561,6 +2698,7 @@ impl RenethackGame {
         if ui.screens.current() != Some("settings") {
             return;
         }
+        self.settings_page = None;
         if ui.screens.settings_in_game() && self.state == GameState::Playing {
             ui.screens.hide();
         } else {
@@ -2732,6 +2870,15 @@ impl RenethackGame {
         if let Some(selected) = self.achievement_page.as_ref().map(|p| p.selected()) {
             let in_game = ui.screens.achievements_in_game();
             self.build_achievements(in_game, Some(selected));
+            return;
+        }
+        // and the settings page, where it was
+        if let Some(at) = self.settings_page.as_ref().map(|p| p.place()) {
+            let in_game = self
+                .ui
+                .as_ref()
+                .is_some_and(|ui| ui.screens.settings_in_game());
+            self.build_settings(in_game, at);
         }
     }
 

@@ -123,6 +123,26 @@ peaceful monsters, every monster but a pet counts as hostile until the
 game calls it peaceful (`;` on it says so) — shopkeepers, watchmen and
 priests excepted.
 
+## Settings
+
+The settings page (Settings on the title screen, the gear among the HUD's
+buttons) shows a section at a time, each setting a row with its value
+between arrows: ↑↓ (the d-pad) choose a row, ←→ change it, Enter (A)
+steps it on, Tab or PgUp/PgDn (the bumpers) turn to another section, Esc
+(B) goes back; the mouse clicks the arrows and the tabs. A change applies
+at once, the scene behind the page showing it, and is kept in the profile
+(`profile.json` in the playground), the same for every character; the next
+start applies it again (a self-test plays with the defaults).
+
+Display: the window, a borderless full screen (the display's mode kept)
+or an exclusive one; the window's size, among those that fit the screen
+(until one is chosen the window keeps the size it opens with); vsync; a
+frame-rate cap (none, 30, 60, 120 or 144 frames a second). Interface: the
+language. The `settings` scenario changes them with the keys and the
+gamepad (the window's size and mode headless only: a window keeps the
+size its screenshots are taken at), and checks what Godot was told, what
+the profile keeps and what a start reads back.
+
 ## Build and test
 
     git submodule update --init
@@ -190,9 +210,10 @@ Screenshots are 1920×1080 unless `--size=1280x800` (or Godot's own
 screenshot is not the size asked for, and at a set size every screen a
 scenario shoots must fit the canvas (the HUD's blocks inside it and apart,
 the log in whole lines). `make test-client` also runs `smoke`, `inventory`,
-`hud`, `gamepad` and `title` headless at 1280×800, the Steam Deck's screen with its
-120 % UI scale; `make deck` shoots `smoke`, `tour`, `inventory`, `bar`,
-`hud`, `dialogs` and `gamepad` at a real 1280×800.
+`hud`, `gamepad`, `title`, `threat-arrow` and `settings` headless at
+1280×800, the Steam Deck's screen with its 120 % UI scale; `make deck`
+shoots `smoke`, `tour`, `inventory`, `bar`, `hud`, `dialogs`, `gamepad` and
+`settings` at a real 1280×800.
 
 A headless run draws nothing, so what upsets Godot's renderer never shows
 in one. `make test-client` therefore ends with two scenarios in a window

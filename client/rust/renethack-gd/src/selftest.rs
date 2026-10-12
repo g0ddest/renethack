@@ -52,6 +52,8 @@ mod passing_tests;
 mod riding_tests;
 #[path = "selftest_rim.rs"]
 mod rim_tests;
+#[path = "selftest_settings.rs"]
+mod settings_tests;
 #[path = "selftest_shop.rs"]
 mod shop;
 #[path = "selftest_footprints.rs"]
@@ -4770,6 +4772,7 @@ impl SelfTest {
             "effects" => effects::effects(),
             "pickers" => input_ru::pickers(),
             "help" => help_tests::help(),
+            "settings" => settings_tests::settings(),
             "layouts" => layouts_tests::layouts(),
             "rim" => rim_tests::rim(),
             "riding" => riding_tests::riding(),
@@ -5204,11 +5207,29 @@ fn layout_fits(game: &RenethackGame) -> Result<(), String> {
     let Some(ui) = game.ui.as_ref() else {
         return Ok(());
     };
+    let size = game.canvas_size();
+    let canvas = Rect2::new(Vector2::ZERO, size).grow(1.0);
+    // the settings page, over the title or the game: inside the canvas,
+    // every value inside its place
+    if let Some(page) = game.settings_page.as_ref() {
+        let r = page.rect();
+        if !canvas.encloses(r) {
+            return Err(format!(
+                "the settings page at {:.0},{:.0} {:.0}×{:.0} is not inside the {:.0}×{:.0} canvas",
+                r.position.x, r.position.y, r.size.x, r.size.y, size.x, size.y
+            ));
+        }
+        let over = page.overflows();
+        if !over.is_empty() {
+            return Err(format!(
+                "settings wider than their place: {}",
+                over.join("; ")
+            ));
+        }
+    }
     if !matches!(game.state, GameState::Playing) {
         return Ok(());
     }
-    let size = game.canvas_size();
-    let canvas = Rect2::new(Vector2::ZERO, size).grow(1.0);
     let blocks = ui.hud.blocks();
     let mut all = blocks.clone();
     let panel = ui.inventory.frame_rect();

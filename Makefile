@@ -22,17 +22,17 @@ override GODOT := $(if $(filter %.app %.app/,$(GODOT)),$(patsubst %/,%,$(GODOT))
 # GNU coreutils' timeout; Homebrew's coreutils names it gtimeout on macOS
 TIMEOUT ?= $(shell command -v timeout || command -v gtimeout)
 GODOT_PROJECT := client/godot
-SELFTESTS := smoke keys save close crash menus text dialogs palette first-open moves passing through orders inventory map-pause pool-sizes threat-arrow bar gamepad equipment item-use combat roles kits two-hands riding worn footprints branches corridors shop states title soak language pickers achievements help layouts
+SELFTESTS := smoke keys save close crash menus text dialogs palette first-open moves passing through orders inventory map-pause pool-sizes threat-arrow bar gamepad equipment item-use combat roles kits two-hands riding worn footprints branches corridors shop states title soak language pickers achievements help layouts settings
 # again at the Steam Deck's 1280×800 (its 120 % UI scale, the compact
 # layout): every screen a scenario would shoot must fit the canvas
-DECK_SELFTESTS := smoke inventory hud gamepad title threat-arrow
+DECK_SELFTESTS := smoke inventory hud gamepad title threat-arrow settings
 # the same in Russian (a third longer than English), at the Deck's size and
 # at 1920×1080
-RU_DECK_SELFTESTS := smoke inventory hud dialogs gamepad pickers achievements help layouts
-RU_SELFTESTS := smoke inventory dialogs achievements
+RU_DECK_SELFTESTS := smoke inventory hud dialogs gamepad pickers achievements help layouts settings
+RU_SELFTESTS := smoke inventory dialogs achievements settings
 # in the pseudo-language (--lang=qps): every word on the screens a scenario
 # would shoot came through the client's catalogs or the engine's translator
-PSEUDO_SELFTESTS := smoke keys dialogs orders inventory gamepad hud pickers achievements help layouts
+PSEUDO_SELFTESTS := smoke keys dialogs orders inventory gamepad hud pickers achievements help layouts settings
 # with a window: a headless run draws nothing, and what upsets the renderer
 # shows only when it runs, as a "BUG" error of Godot's or a crash on quit;
 # nor does it render the inventory's doll.
@@ -40,7 +40,7 @@ PSEUDO_SELFTESTS := smoke keys dialogs orders inventory gamepad hud pickers achi
 WINDOW_SELFTESTS ?= rim doll
 # `make deck`: the same screens shot at a real 1280×800, into DECK_DIR
 # (`make deck DECK_ARGS=--lang=ru`: in Russian)
-DECK_SHOTS := smoke tour inventory bar hud dialogs gamepad
+DECK_SHOTS := smoke tour inventory bar hud dialogs gamepad settings
 DECK_DIR ?= $(GODOT_PROJECT)/.godot/shots/deck
 DECK_ARGS ?=
 # answered requests of the soak in test-client (about 35 s; from 1000 on the
