@@ -16,6 +16,7 @@ mod engine_text;
 mod gallery;
 mod game;
 mod gamepad;
+mod hearing;
 mod help_panel;
 mod hero;
 mod hud;

@@ -40,6 +40,7 @@
     "step.hoof": {"files": ["cc0/kenney/impact/impactPlank_medium_{000..004}.wav"], "volume": [-22, -19], "pitch": [1.3, 1.5], "voices": 4, "cooldown": 0, "priority": 0, "range": 18, "sized": true},
     "step.slither": {"files": ["cc0/kenney/rpg/cloth{1..4}.wav"], "volume": [-24, -21], "pitch": [0.8, 0.95], "voices": 3, "cooldown": 0, "priority": 0, "range": 12, "sized": true},
     "step.ooze": {"files": ["cc0/kenney/impact/impactSoft_medium_{000..004}.wav"], "volume": [-24, -21], "pitch": [1.1, 1.3], "voices": 3, "cooldown": 0, "priority": 0, "range": 12, "sized": true},
+    "step.wings": {"files": ["cc0/kenney/rpg/cloth{1..4}.wav"], "volume": [-26, -23], "pitch": [1.7, 2.0], "voices": 3, "cooldown": 0, "priority": 0, "range": 12, "sized": true},
     "step.skitter": {"files": ["cc0/kenney/impact/impactGeneric_light_{000..004}.wav"], "volume": [-26, -23], "pitch": [1.6, 1.9], "voices": 3, "cooldown": 0, "priority": 0, "range": 12, "sized": true},
 
     "swing": {"files": ["cc0/kenney/rpg/cloth{1..4}.wav"], "volume": [-15, -12], "pitch": [1.15, 1.35], "voices": 4},
@@ -76,6 +77,7 @@
     "use.read": {"files": ["cc0/kenney/rpg/bookFlip{1..3}.wav"], "volume": -9},
     "use.zap": {"files": ["cc0/kenney/interface/maximize_{001..004}.wav"], "volume": -11, "pitch": [0.7, 0.8]},
     "use.cast": {"files": ["cc0/kenney/interface/maximize_{005..008}.wav"], "volume": -11, "pitch": [0.6, 0.7]},
+    "use.eat": {"files": ["cc0/kenney/impact/impactSoft_medium_{000..004}.wav"], "volume": -14, "pitch": [1.5, 1.7]},
     "use.apply": {"files": ["cc0/kenney/rpg/metalLatch.wav"], "volume": -11},
     "use.wear": {"files": ["cc0/kenney/rpg/clothBelt.wav", "cc0/kenney/rpg/clothBelt2.wav"], "volume": -8},
     "use.takeoff": {"files": ["cc0/kenney/rpg/cloth{1..4}.wav"], "volume": -10},

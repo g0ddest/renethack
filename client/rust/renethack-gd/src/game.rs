@@ -965,6 +965,12 @@ impl RenethackGame {
                 ui.audio.ui(cue);
             }
         }
+        // the map's own sounds (the rehearsal behind the title is unheard)
+        for sound in ui.map.take_sounds() {
+            if playing {
+                ui.audio.play(sound);
+            }
+        }
         let hero = ui.map.hero_stands().filter(|_| playing);
         let ears = camera.map(|t| match hero {
             Some((at, _)) => Transform3D::new(

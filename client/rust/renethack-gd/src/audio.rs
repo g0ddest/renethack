@@ -185,6 +185,10 @@ pub struct Sound {
     pub delay: f32,
     /// The creature it is of (`sized` cues).
     pub size: Option<Size>,
+    /// Only the names given, not the first one's parents.
+    pub exact: bool,
+    /// Its claim on a voice when all are busy; None: its cue's.
+    pub priority: Option<u8>,
 }
 
 impl Sound {
@@ -194,6 +198,17 @@ impl Sound {
             at: None,
             delay: 0.0,
             size: None,
+            exact: false,
+            priority: None,
+        }
+    }
+
+    /// Names to try in order, with no fallback past them.
+    pub fn exactly(names: Vec<String>) -> Sound {
+        Sound {
+            cues: names,
+            exact: true,
+            ..Sound::new("")
         }
     }
 
@@ -215,6 +230,12 @@ impl Sound {
 
     pub fn sized(mut self, size: Size) -> Sound {
         self.size = Some(size);
+        self
+    }
+
+    /// Before others for a voice (the hero's own sounds).
+    pub fn urgent(mut self) -> Sound {
+        self.priority = Some(2);
         self
     }
 }
@@ -402,7 +423,12 @@ impl Audio {
             at: sound.at,
             voiced: false,
         };
-        let Some((name, cue)) = self.manifest.resolve(&sound.cues) else {
+        let found = if sound.exact {
+            self.manifest.resolve_exact(&sound.cues)
+        } else {
+            self.manifest.resolve(&sound.cues)
+        };
+        let Some((name, cue)) = found else {
             return self.record(heard);
         };
         let name = name.to_string();
@@ -418,7 +444,8 @@ impl Audio {
             .map_or((1.0, 0.0), Size::scale);
         let pitch = (cue.pitch.at(self.picker.unit()) * pitch_k).max(0.05);
         let db = cue.volume.at(self.picker.unit()) + db_k;
-        let (bus, voices, priority, range) = (cue.bus.clone(), cue.voices, cue.priority, cue.range);
+        let priority = sound.priority.unwrap_or(cue.priority);
+        let (bus, voices, range) = (cue.bus.clone(), cue.voices, cue.range);
         let Some(file) = cue.files.get(variant).cloned() else {
             return self.record(heard);
         };

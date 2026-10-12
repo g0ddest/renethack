@@ -45,8 +45,11 @@ use nh_world::{
 
 use crate::animator::{Motion, STEP_SECS, ease, pace, turn, yaw_toward};
 use crate::art::{Art, Finish, Model, ModelLook, Pose, build_flat, no_shadow, set_layer_mask};
+use crate::audio::Sound;
 use crate::batch::{Batches, Slot};
 use crate::branch_look::{BranchLook, Prop};
+use crate::cues::Size;
+use crate::hearing;
 use crate::meshes::{
     MeshKey, bevel, cuboid, cylinder, dome, facets, plane, prism, rock, sphere, torus,
 };
@@ -2764,6 +2767,9 @@ pub struct MapView {
     cut_at: f64,
     /// The newest message already looked at for fights.
     log_seq: Option<u64>,
+    /// What the map's changes sound like this frame, for the player
+    /// (`take_sounds`).
+    sounds: Vec<Sound>,
     /// Self-tests stop motions at this share to take a picture.
     hold: Option<f32>,
     stats: MotionStats,
@@ -3336,6 +3342,7 @@ impl MapView {
             interrupted: HashSet::new(),
             cut_at: 0.0,
             log_seq: None,
+            sounds: Vec::new(),
             hold: None,
             stats: MotionStats::default(),
             order_pace: None,
@@ -3424,6 +3431,7 @@ impl MapView {
                 self.finish_motions_where(|m| changed.contains(&m.cell));
             }
             self.carry(&moves, world);
+            self.hear_steps(&moves, world, catalog);
             self.carry_rider(was_at, world);
             self.flank_steed(was_at, hero, world);
             let near: Vec<_> = dirty
@@ -4676,6 +4684,7 @@ impl MapView {
         self.building.clear();
         self.hero_pose.forget();
         self.finish_motions();
+        self.sounds.clear();
         self.facing.clear();
         for (_, c) in std::mem::take(&mut self.incoming) {
             self.art.give(c.model);
@@ -4739,15 +4748,16 @@ impl MapView {
     /// and play the use's clip with the item in hand; its effects follow.
     pub fn show_use(&mut self, u: &ItemUse, catalog: &Catalog, world: &World) {
         use crate::hero::{Fx, THROW_AT, in_hand, use_color, use_effects, use_hand, use_name};
-        if u.kind == UseKind::Pray {
-            self.show_prayer(u.prayer.unwrap_or(nh_world::PrayerOutcome::Unanswered));
-            return;
-        }
         let Some(at) = self.hero_at else {
             return;
         };
         let tile = u.tile.and_then(|t| object_tile(catalog, t));
         let held = tile.and_then(|t| self.art.manifest().held(t));
+        self.hear_use(u, at, held.map(|h| h.held));
+        if u.kind == UseKind::Pray {
+            self.show_prayer(u.prayer.unwrap_or(nh_world::PrayerOutcome::Unanswered));
+            return;
+        }
         let color = use_color(u, tile, self.art.manifest());
         let dir = u.dir.filter(|&d| d != (0, 0));
         // a thing applied as a weapon is wielded (a pick-axe digging, a
@@ -4898,6 +4908,24 @@ impl MapView {
                 },
             );
         }
+    }
+
+    /// A use of the hero's, heard whether or not their model shows it: by
+    /// what the thing looks like (`use.apply.pick`), the kind of use, any
+    /// use; a throw from a launcher as a throw.
+    fn hear_use(&mut self, u: &ItemUse, at: (i32, i32), held: Option<usize>) {
+        let (cue, when) = hearing::use_cue(u.kind);
+        let mut names = Vec::new();
+        if let Some(h) = held {
+            names.push(format!("{cue}.{}", self.art.manifest().held_at(h).0));
+        }
+        names.push(cue.to_string());
+        if u.kind == UseKind::Fire {
+            names.push("use.throw".to_string());
+        }
+        names.push("use".to_string());
+        let sound = Sound::exactly(names).at(self.sound_at(at)).after(when);
+        self.sounds.push(sound.urgent());
     }
 
     /// The effects of the hero's uses (self-tests).
@@ -6624,17 +6652,39 @@ impl MapView {
                 })
                 .unwrap_or_default()
         };
-        let fights: Vec<_> = world
-            .log
-            .since(seen)
-            .filter(|m| !m.from_history)
-            .filter_map(|m| Some((parse_attack(&m.text)?, !m.text.contains(" miss"))))
-            .filter_map(|(a, hit)| {
-                let cells = locate_attack(&a, &world.map, names)?;
-                Some((cells, hit, a.target == Who::Hero))
-            })
-            .collect();
-        for ((from, to), hit, at_hero) in fights {
+        // each blow told and found on the map; a death told after a blow
+        // falls where that blow landed
+        let mut fights = Vec::new();
+        let mut deaths = Vec::new();
+        let mut struck: Option<(String, (i32, i32))> = None;
+        let mut unplaced = Vec::new();
+        for m in world.log.since(seen).filter(|m| !m.from_history) {
+            if let Some(a) = parse_attack(&m.text) {
+                let hit = !m.text.contains(" miss");
+                if let Some(cells) = locate_attack(&a, &world.map, names) {
+                    if let Who::Named(n) = &a.target {
+                        struck = Some((n.clone(), cells.1));
+                    }
+                    fights.push((cells, hit, a));
+                } else if let Some(hero) = self
+                    .hero_at
+                    .filter(|_| a.attacker == Who::Hero || a.target == Who::Hero)
+                {
+                    // the hero's own fight is heard where they stand even
+                    // when the map cannot show it (a newt killed leaves
+                    // nothing behind)
+                    unplaced.push((hero, hit, a));
+                }
+            } else if let Some(name) = hearing::died(&m.text)
+                && let Some((n, at)) = &struck
+                && n == name
+            {
+                deaths.push((name.to_string(), *at));
+            }
+        }
+        for ((from, to), hit, a) in fights {
+            let at_hero = a.target == Who::Hero;
+            self.hear_blow(from, to, &a, hit, world, catalog);
             self.strike(from, to, world);
             if hit {
                 self.impact(from, to, world, catalog);
@@ -6665,6 +6715,151 @@ impl MapView {
                 }
             }
         }
+        for (at, hit, a) in unplaced {
+            self.hear_blow(at, at, &a, hit, world, catalog);
+        }
+        for (name, at) in deaths {
+            self.hear_death(&name, at, catalog);
+        }
+    }
+
+    /// Where a sound of the cell `(x, y)` is placed: a body's height
+    /// over its ground.
+    fn sound_at(&self, (x, y): (i32, i32)) -> Vector3 {
+        Vector3::new(x as f32, self.ground(x, y) + 0.8, y as f32)
+    }
+
+    /// The steps of what moved, each on its floor: the hero's own (none
+    /// while they float or fly; the steed's under a rider) and those of
+    /// monsters the hero sees. One only sensed (telepathy, detection)
+    /// walks unheard.
+    fn hear_steps(&mut self, moves: &[Move], world: &World, catalog: &Catalog) {
+        // the foot lands a little into the step
+        const LANDS: f32 = 0.08;
+        if moves.is_empty() {
+            return;
+        }
+        let senses = hearing::Senses::of(world, catalog);
+        for mv in moves {
+            let Some(cell) = world.map.cell(mv.to.0, mv.to.1) else {
+                continue;
+            };
+            let Some(g) = cell.glyph.as_ref().filter(|g| g.kind == GlyphKind::Mon) else {
+                continue;
+            };
+            let hero = g.flags & mg::HERO != 0;
+            let sensed = g.flags & mg::DETECT != 0 || senses.blind;
+            if (!hero && sensed) || (hero && senses.afloat && cell.rider.is_none()) {
+                continue;
+            }
+            let Some(info) = monster_info(catalog, g.mon) else {
+                continue;
+            };
+            let floor = cell
+                .terrain
+                .as_ref()
+                .and_then(|t| cmap_sym(t, catalog))
+                .and_then(|sym| hearing::floor(terrain_of(sym), self.branch));
+            let (Some(gait), Some(floor)) = (hearing::gait(info), floor) else {
+                continue;
+            };
+            let at = self.sound_at(mv.to);
+            for i in 0..mv.steps().max(1) {
+                let mut step = Sound::exactly(hearing::step(floor, gait))
+                    .at(at)
+                    .sized(Size::of(&info.size))
+                    .after(LANDS + i as f32 * STEP_SECS * 0.5);
+                if hero {
+                    step = step.urgent();
+                }
+                self.sounds.push(step);
+            }
+        }
+    }
+
+    /// A blow told: its swing where it starts, then as it lands its hit
+    /// or its miss and the cry of whoever takes it (the hero's grunt, a
+    /// creature's hurt, or its death when the blow killed).
+    fn hear_blow(
+        &mut self,
+        from: (i32, i32),
+        to: (i32, i32),
+        a: &nh_world::AttackMsg,
+        hit: bool,
+        world: &World,
+        catalog: &Catalog,
+    ) {
+        let by_hero = a.attacker == Who::Hero;
+        let held = by_hero
+            .then(|| self.hero_gear.gear().hand_r.as_ref())
+            .flatten()
+            .map(|h| self.art.manifest().held_at(h.held).0.to_string());
+        let with = |what: &str, last: &str| {
+            let mut names = hearing::armed(what, held.as_deref());
+            names.push(last.to_string());
+            names
+        };
+        let body = hearing::blow(&a.verb);
+        let (swing, landing) = if by_hero {
+            (Some(with("swing", "swing")), with("hit", "hit"))
+        } else if body.is_empty() {
+            (Some(vec!["swing".to_string()]), vec!["hit".to_string()])
+        } else {
+            (None, vec![format!("hit.{body}"), "hit".to_string()])
+        };
+        let (from_at, to_at) = (self.sound_at(from), self.sound_at(to));
+        let urgent = |s: Sound| if by_hero { s.urgent() } else { s };
+        if let Some(names) = swing {
+            self.sounds
+                .push(urgent(Sound::exactly(names).at(from_at).after(0.06)));
+        }
+        if !hit || a.missed() {
+            let miss = Sound::exactly(vec!["miss".to_string()]).at(to_at);
+            self.sounds.push(urgent(miss.after(CONTACT_SECS)));
+            return;
+        }
+        self.sounds.push(urgent(
+            Sound::exactly(landing).at(to_at).after(CONTACT_SECS),
+        ));
+        match &a.target {
+            Who::Hero => {
+                let female = world
+                    .map
+                    .hero_form()
+                    .is_some_and(|g| g.flags & mg::FEMALE != 0);
+                let sex = if female { "female" } else { "male" };
+                let names = vec![format!("hero.hurt.{sex}"), "hero.hurt".to_string()];
+                let cry = Sound::exactly(names).at(to_at).urgent();
+                self.sounds.push(cry.after(CONTACT_SECS + 0.05));
+            }
+            Who::Named(name) if a.killed() => self.hear_death(name, to, catalog),
+            Who::Named(name) => {
+                if let Some(info) = hearing::monster_named(catalog, name) {
+                    let plan = hearing::plan(info);
+                    let names = vec![format!("hurt.{plan}"), "hurt".to_string()];
+                    let cry = Sound::exactly(names).at(to_at).sized(Size::of(&info.size));
+                    self.sounds.push(cry.after(CONTACT_SECS + 0.05));
+                }
+            }
+        }
+    }
+
+    /// A creature dies where the hero sees it: its last cry and its fall.
+    fn hear_death(&mut self, name: &str, at: (i32, i32), catalog: &Catalog) {
+        let Some(info) = hearing::monster_named(catalog, name) else {
+            return;
+        };
+        let plan = hearing::plan(info);
+        let names = vec![format!("die.{plan}"), "die".to_string()];
+        let fall = Sound::exactly(names)
+            .at(self.sound_at(at))
+            .sized(Size::of(&info.size));
+        self.sounds.push(fall.after(CONTACT_SECS + 0.1));
+    }
+
+    /// The sounds the map's changes made since the last call.
+    pub fn take_sounds(&mut self) -> Vec<Sound> {
+        std::mem::take(&mut self.sounds)
     }
 
     /// A blow lands: sparks and a flash where it meets the target, and the

@@ -6,10 +6,16 @@
 //! the bus's at once (0 mutes it) and the profile keeps it when the page
 //! closes. The voices: forty steps at once take no more than a step's
 //! voices, a sound waits for its moment, a cue the manifest lacks plays
-//! nothing. The sound's own time a frame stays small.
+//! nothing. Then a game (debug mode): the hero's step sounds where they
+//! stand and the pet's where it walks; a newt fought to its death sounds
+//! the swing of the Valkyrie's spear, the blows or misses and its fall
+//! (heard where the hero stands: a newt leaves nothing to place it by); a
+//! potion drunk gulps. Blindfolded with an amulet of ESP the hero
+//! senses the pet walking, and hears none of its steps. The sound's own
+//! time a frame stays small.
 
 use std::sync::Mutex;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 
 use godot::classes::{
     AudioServer, BaseButton, Input, InputEventMouseButton, InputEventMouseMotion,
@@ -18,7 +24,12 @@ use godot::global::MouseButton;
 use godot::prelude::*;
 use nh_world::Profile;
 
-use super::{Step, UiEvent, screen};
+use nh_protocol::{GlyphKind, mg};
+use nh_world::{Key, KeyInput, Prompt};
+
+use super::{
+    DialogEvent, Step, UiEvent, command, ctrl_key, key, letter_of, map_view, screen, start,
+};
 use crate::audio::{self, Audio, Bus, DISTANT, Heard, Sound};
 use crate::cues::Size;
 use crate::game::RenethackGame;
@@ -38,12 +49,43 @@ const SENDS: [(&str, &str); 5] = [
 const FRAME_COST_MS: f64 = 1.0;
 const FORTY_STEPS_MS: f64 = 5.0;
 
+/// The game's seed: the hero's first step and the pet in sight.
+const SEED: u64 = 7;
+/// Turns searched at most while waiting for the pet to walk.
+const SEARCHES: u32 = 40;
+/// The pet's steps the blind hero must sense (and not hear).
+const SENSED_STEPS: u32 = 3;
+
+/// The directions and their keys (the scenarios' vi-keys).
+const STEPS: [((i32, i32), char); 8] = [
+    ((-1, 0), 'h'),
+    ((1, 0), 'l'),
+    ((0, -1), 'k'),
+    ((0, 1), 'j'),
+    ((-1, -1), 'y'),
+    ((1, -1), 'u'),
+    ((-1, 1), 'b'),
+    ((1, 1), 'n'),
+];
+
 /// The record's length when a step began: what it checks came after.
 static MARK: AtomicU64 = AtomicU64::new(0);
+/// The map's steps of others when the blind hero began to search, and the
+/// turns searched since.
+static OTHERS: AtomicU32 = AtomicU32::new(0);
+static SEARCHED: AtomicU32 = AtomicU32::new(0);
+/// The fight's F was sent: the next command takes its direction.
+static FIGHTING: AtomicBool = AtomicBool::new(false);
 /// Where the settings button is on the screen.
 static BUTTON: Mutex<Option<Vector2>> = Mutex::new(None);
 
 pub(super) fn audio() -> Vec<Step> {
+    let mut steps = title();
+    steps.extend(game());
+    steps
+}
+
+fn title() -> Vec<Step> {
     vec![
         Step::Wait("the title, every sound loaded", |g| {
             Ok(screen(g) == Some("title") && player(g)?.preloaded())
@@ -187,6 +229,104 @@ pub(super) fn audio() -> Vec<Step> {
             if !door.voiced || door.at.is_none() {
                 return Err(format!("{door:?}"));
             }
+            Ok(())
+        }),
+    ]
+}
+
+fn game() -> Vec<Step> {
+    let mut steps = vec![Step::Call("debug mode for this game", |g| {
+        g.debug_mode = true;
+        g.seed = Some(SEED);
+        Ok(())
+    })];
+    steps.extend(start());
+    steps.extend([
+        Step::Wait("the hero on the map", |g| Ok(g.world.map.hero().is_some())),
+        Step::Call("", mark),
+        Step::KeyFrom("a step onto open floor", |g| open_way(g).map(plain)),
+        Step::Request("a command after the step", command),
+        Step::Wait("the hero's step, where they stand", |g| {
+            let hero = g.world.map.hero().ok_or("no hero")?;
+            Ok(steps_heard(g)?.iter().any(|h| near(h, hero)))
+        }),
+        Step::Call("", mark),
+        Step::KeysUntil("searching until the pet's step is heard", |g| {
+            let hero = g.world.map.hero().ok_or("no hero")?;
+            if steps_heard(g)?
+                .iter()
+                .any(|h| h.at.is_some() && !near(h, hero))
+            {
+                return Ok(None);
+            }
+            search(g)
+        }),
+    ]);
+    steps.extend(create("newt"));
+    steps.extend([
+        Step::Call("", mark),
+        Step::KeysUntil("fighting the newt", fight),
+        Step::Wait("its death heard", |g| Ok(heard_like(g, "die")?.is_some())),
+        Step::Call(
+            "the fight heard: the spear's swing, a blow or a miss",
+            |g| {
+                let swing = heard_like(g, "swing")?.ok_or("no swing")?;
+                if swing.asked != "swing.spear" || !swing.voiced {
+                    return Err(format!("the spear's swing: {swing:?}"));
+                }
+                if heard_like(g, "hit")?.is_none() && heard_like(g, "miss")?.is_none() {
+                    return Err("neither a blow nor a miss".into());
+                }
+                Ok(())
+            },
+        ),
+    ]);
+    steps.extend(wish("uncursed potion of water"));
+    steps.extend([
+        Step::Call("", mark),
+        key('q'),
+        Step::Request("what to drink", |p| !matches!(p, Prompt::Command)),
+        Step::KeyFrom("the potion", |g| {
+            letter_of(g, "potion")
+                .map(plain)
+                .ok_or_else(|| "no potion".into())
+        }),
+        Step::Request("a command after the drink", command),
+        Step::Wait("the drink heard", |g| {
+            Ok(heard_like(g, "use.quaff")?.is_some())
+        }),
+    ]);
+    steps.extend(wish("blessed amulet of ESP"));
+    steps.extend(put_on(|g| letter(g, "amulet")));
+    steps.extend(wish("uncursed blindfold"));
+    steps.extend(put_on(|g| letter(g, "blindfold")));
+    steps.extend([
+        Step::Wait("the hero blind", |g| {
+            let cat = g.catalog.as_deref().ok_or("no catalog")?;
+            let names = g.world.status.condition_names(cat);
+            Ok(names.iter().any(|n| n == "Blind"))
+        }),
+        Step::Call("", |g| {
+            mark(g)?;
+            OTHERS.store(map_view(g)?.motion_stats().other_steps, Ordering::Relaxed);
+            SEARCHED.store(0, Ordering::Relaxed);
+            Ok(())
+        }),
+        Step::KeysUntil("searching while the pet walks, sensed", |g| {
+            let walked = map_view(g)?.motion_stats().other_steps - OTHERS.load(Ordering::Relaxed);
+            if walked >= SENSED_STEPS {
+                return Ok(None);
+            }
+            search(g)
+        }),
+        Step::Call("none of its steps heard", |g| {
+            let heard = steps_heard(g)?;
+            if !heard.is_empty() {
+                return Err(format!("steps heard of what the blind hero senses: {heard:?}"));
+            }
+            Ok(())
+        }),
+        Step::Call("the sound's time a frame", |g| {
             let ms = |d: std::time::Duration| d.as_secs_f64() * 1000.0;
             let (median, p99, most) = player(g)?.frame_costs();
             godot_print!(
@@ -200,7 +340,146 @@ pub(super) fn audio() -> Vec<Step> {
             }
             Ok(())
         }),
+    ]);
+    steps
+}
+
+fn plain(c: char) -> KeyInput {
+    KeyInput::plain(Key::Char(c))
+}
+
+/// A heard sound placed on the hero's cell (or next to it, as a step
+/// lands while the model is still on its way).
+fn near(h: &Heard, (x, y): (i32, i32)) -> bool {
+    h.at.is_some_and(|p| (p.x - x as f32).abs() <= 1.0 && (p.z - y as f32).abs() <= 1.0)
+}
+
+/// The steps heard since the mark.
+fn steps_heard(game: &RenethackGame) -> Result<Vec<Heard>, String> {
+    let mark = MARK.load(Ordering::Relaxed);
+    Ok(player(game)?
+        .heard()
+        .filter(|h| h.seq > mark && (h.asked == "step" || h.asked.starts_with("step.")))
+        .cloned()
+        .collect())
+}
+
+/// The last sound asked for since the mark whose name is `kind` or begins
+/// with it and a dot.
+fn heard_like(game: &RenethackGame, kind: &str) -> Result<Option<Heard>, String> {
+    let mark = MARK.load(Ordering::Relaxed);
+    let dotted = format!("{kind}.");
+    Ok(player(game)?
+        .heard()
+        .rev()
+        .take_while(|h| h.seq > mark)
+        .find(|h| h.asked == kind || h.asked.starts_with(&dotted))
+        .cloned())
+}
+
+/// A turn searched (at a command), or the question before it answered no;
+/// at most `SEARCHES` of them.
+fn search(game: &RenethackGame) -> Result<Option<KeyInput>, String> {
+    if !matches!(pending(game), Some(Prompt::Command)) {
+        return Ok(Some(KeyInput::plain(Key::Escape)));
+    }
+    if SEARCHED.fetch_add(1, Ordering::Relaxed) >= SEARCHES {
+        return Err(format!("{SEARCHES} turns searched and nothing walked"));
+    }
+    Ok(Some(plain('s')))
+}
+
+/// The key of a step onto open floor next to the hero.
+fn open_way(game: &RenethackGame) -> Result<char, String> {
+    let cat = game.catalog.as_deref().ok_or("no catalog")?;
+    let (hx, hy) = game.world.map.hero().ok_or("no hero")?;
+    STEPS
+        .iter()
+        .find_map(|&((dx, dy), key)| {
+            let cell = game.world.map.cell(hx + dx, hy + dy)?;
+            let open = matches!(
+                nh_world::cell_terrain(cell, cat),
+                Some(nh_world::Terrain::Floor | nh_world::Terrain::DarkFloor)
+            ) && cell.entity().is_none();
+            open.then_some(key)
+        })
+        .ok_or_else(|| format!("no open floor next to the hero at {:?}", (hx, hy)))
+}
+
+/// The newt's way from the hero: a monster next to them, not their pet.
+fn foe(game: &RenethackGame) -> Option<char> {
+    let (hx, hy) = game.world.map.hero()?;
+    STEPS.iter().find_map(|&((dx, dy), key)| {
+        let g = game.world.map.cell(hx + dx, hy + dy)?.glyph.as_ref()?;
+        let foe = g.kind == GlyphKind::Mon && g.flags & (mg::HERO | mg::PET) == 0;
+        foe.then_some(key)
+    })
+}
+
+/// F and the newt's direction until no foe is left next to the hero.
+fn fight(game: &RenethackGame) -> Result<Option<KeyInput>, String> {
+    match pending(game) {
+        Some(Prompt::Command) => {
+            let Some(way) = foe(game) else {
+                return Ok(None);
+            };
+            if FIGHTING.swap(false, Ordering::Relaxed) {
+                Ok(Some(plain(way)))
+            } else {
+                FIGHTING.store(true, Ordering::Relaxed);
+                Ok(Some(plain('F')))
+            }
+        }
+        // "Really attack?"
+        Some(Prompt::Choice { .. }) => Ok(Some(plain('y'))),
+        _ => Ok(Some(KeyInput::plain(Key::Escape))),
+    }
+}
+
+fn pending(game: &RenethackGame) -> Option<&Prompt> {
+    game.pending.as_ref().map(|(_, p)| p)
+}
+
+/// A monster made by debug mode's ^G.
+fn create(name: &'static str) -> [Step; 4] {
+    [
+        Step::Key(ctrl_key('g')),
+        Step::Request(
+            "the kind of monster to make",
+            |p| matches!(p, Prompt::Text { query, .. } if query.contains("Create what kind of monster")),
+        ),
+        Step::Dialog(DialogEvent::TextSubmitted(name.into())),
+        Step::Request("a command after the monster", command),
     ]
+}
+
+fn wish(what: &'static str) -> [Step; 4] {
+    [
+        Step::Key(ctrl_key('w')),
+        Step::Request(
+            "the wish",
+            |p| matches!(p, Prompt::Text { query, .. } if query.contains("wish")),
+        ),
+        Step::Dialog(DialogEvent::TextSubmitted(what.into())),
+        Step::Request("a command after the wish", command),
+    ]
+}
+
+/// `P` and the letter `which` picks.
+fn put_on(which: fn(&RenethackGame) -> Result<KeyInput, String>) -> [Step; 4] {
+    [
+        key('P'),
+        Step::Request("what to put on", |p| !matches!(p, Prompt::Command)),
+        Step::KeyFrom("the thing to put on", which),
+        Step::Request("a command after putting it on", command),
+    ]
+}
+
+/// The key of the pack's thing whose name has `what`.
+fn letter(game: &RenethackGame, what: &str) -> Result<KeyInput, String> {
+    letter_of(game, what)
+        .map(plain)
+        .ok_or_else(|| format!("no {what} in the pack"))
 }
 
 fn player(game: &RenethackGame) -> Result<&Audio, String> {

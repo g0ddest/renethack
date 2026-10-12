@@ -20,6 +20,14 @@ const ASKED: &[&str] = &[
     "inv.close",
     "book.open",
     "book.close",
+    "step",
+    "swing",
+    "hit",
+    "miss",
+    "hurt",
+    "die",
+    "hero.hurt",
+    "use",
 ];
 
 /// Where the manifest lies, and the folder its files are under.
@@ -137,15 +145,19 @@ impl Manifest {
     /// first of them the manifest has, else the first one's parents along
     /// its dots.
     pub fn resolve<'a, S: AsRef<str>>(&'a self, names: &[S]) -> Option<(&'a str, &'a Cue)> {
-        let exact = names
-            .iter()
-            .find_map(|n| self.cues.get_key_value(n.as_ref()));
-        let parent = || {
+        self.resolve_exact(names).or_else(|| {
             let first = names.first()?.as_ref();
-            parents(first).find_map(|p| self.cues.get_key_value(p))
-        };
-        exact
-            .or_else(parent)
+            parents(first)
+                .find_map(|p| self.cues.get_key_value(p))
+                .map(|(name, cue)| (name.as_str(), cue))
+        })
+    }
+
+    /// The first of `names` the manifest has, without falling back.
+    pub fn resolve_exact<'a, S: AsRef<str>>(&'a self, names: &[S]) -> Option<(&'a str, &'a Cue)> {
+        names
+            .iter()
+            .find_map(|n| self.cues.get_key_value(n.as_ref()))
             .map(|(name, cue)| (name.as_str(), cue))
     }
 }
@@ -296,6 +308,9 @@ mod tests {
             "nothing for water: a step still"
         );
         assert_eq!(got(&["hit.blade"]), None, "nothing at all: silence");
+        let exact = |names: &[&str]| m.resolve_exact(names).map(|(n, _)| n);
+        assert_eq!(exact(&["step.dirt.slither", "step.slither"]), None);
+        assert_eq!(exact(&["step.ooze", "step"]), Some("step"));
         assert_eq!(got(&[] as &[&str]), None);
         assert_eq!(parents("a.b.c").collect::<Vec<_>>(), ["a.b.c", "a.b", "a"]);
     }

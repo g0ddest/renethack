@@ -129,10 +129,25 @@ pub enum Who {
 pub struct AttackMsg {
     pub attacker: Who,
     pub target: Who,
+    /// The verb as the hero's messages say it: "hit", "miss", "kill",
+    /// "bite" ("The jackal bites!" is "bite").
+    pub verb: String,
     /// The blow knocks the target back a cell, straight on ("You joust
     /// the newt!"): by the time the map shows it, it may stand two cells
     /// off.
     pub knocked_back: bool,
+}
+
+impl AttackMsg {
+    /// The blow missed.
+    pub fn missed(&self) -> bool {
+        self.verb == "miss"
+    }
+
+    /// The blow killed (the hero's "You kill the newt!").
+    pub fn killed(&self) -> bool {
+        matches!(self.verb.as_str(), "kill" | "destroy")
+    }
 }
 
 /// Verbs of the hero's melee ("You hit the X").
@@ -160,6 +175,15 @@ const MONSTER_VERBS: &[&str] = &[
     "tentacles",
 ];
 
+/// A monster's verb as the hero's: "bites" -> "bite", "misses" -> "miss",
+/// "scratches" -> "scratch".
+fn base_form(verb: &str) -> &str {
+    match verb.strip_suffix("es") {
+        Some(stem) if stem.ends_with(['s', 'h']) => stem,
+        _ => verb.strip_suffix('s').unwrap_or(verb),
+    }
+}
+
 /// "the newt." / "the newt!" -> "newt".
 fn named_target(rest: &str) -> Option<String> {
     let name = rest.strip_prefix("the ")?;
@@ -179,6 +203,7 @@ pub fn parse_attack(text: &str) -> Option<AttackMsg> {
         return Some(AttackMsg {
             attacker: Who::Hero,
             target: Who::Named(named_target(rest)?),
+            verb: verb.to_string(),
             knocked_back: verb == "joust",
         });
     }
@@ -200,6 +225,7 @@ pub fn parse_attack(text: &str) -> Option<AttackMsg> {
         return Some(AttackMsg {
             attacker,
             target,
+            verb: base_form(verb).to_string(),
             knocked_back: false,
         });
     }
@@ -443,6 +469,7 @@ mod tests {
             Some(AttackMsg {
                 attacker: Who::Hero,
                 target: named("jackal"),
+                verb: "hit".into(),
                 knocked_back: false,
             })
         );
@@ -451,6 +478,7 @@ mod tests {
             Some(AttackMsg {
                 attacker: Who::Hero,
                 target: named("jackal"),
+                verb: "joust".into(),
                 knocked_back: true,
             })
         );
@@ -463,6 +491,7 @@ mod tests {
             Some(AttackMsg {
                 attacker: named("jackal"),
                 target: Who::Hero,
+                verb: "bite".into(),
                 knocked_back: false,
             })
         );
@@ -475,6 +504,7 @@ mod tests {
             Some(AttackMsg {
                 attacker: named("little dog"),
                 target: named("newt"),
+                verb: "bite".into(),
                 knocked_back: false,
             })
         );
@@ -482,6 +512,21 @@ mod tests {
             parse_attack("The kitten misses the sewer rat.").map(|m| m.target),
             Some(named("sewer rat"))
         );
+        // the verb as the hero's: what was done, missed or killed
+        let verb = |text: &str| parse_attack(text).map(|m| m.verb);
+        assert_eq!(verb("The giant rat misses!").as_deref(), Some("miss"));
+        assert_eq!(verb("The kitten scratches!").as_deref(), Some("scratch"));
+        assert_eq!(verb("The killer bee stings!").as_deref(), Some("sting"));
+        assert_eq!(
+            verb("The mind flayer tentacles you!").as_deref(),
+            Some("tentacle")
+        );
+        assert_eq!(verb("The soldier ant lashes!").as_deref(), Some("lash"));
+        assert_eq!(verb("The newt touches you!").as_deref(), Some("touch"));
+        let kill = parse_attack("You kill the grid bug!").unwrap();
+        assert!(kill.killed() && !kill.missed());
+        assert!(parse_attack("You miss the newt.").unwrap().missed());
+        assert!(parse_attack("You destroy the zombie!").unwrap().killed());
         for other in [
             "You hit it.",
             "You see here a scroll labeled FOO.",
