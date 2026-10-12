@@ -151,6 +151,7 @@ legal_folder() {
     cp "$UPSTREAM/dat/license" "$out/NetHack-General-Public-License.txt"
     cp "$ROOT/engine/host/third_party/cjson/LICENSE" "$out/cJSON-LICENSE.txt"
     cp "$ROOT/client/godot/art/CREDITS.md" "$out/art-CREDITS.md"
+    cp "$ROOT/client/godot/audio/CREDITS.md" "$out/audio-CREDITS.md"
     cp "$ROOT/client/help/CREDITS.md" "$out/help-CREDITS.md"
     cp "$ROOT/client/i18n/CREDITS.md" "$out/i18n-CREDITS.md"
     for d in "$ROOT"/client/godot/fonts/*/; do

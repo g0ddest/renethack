@@ -315,9 +315,9 @@ overrides it. Saves stay in Godot's user data directory, as in development.
   NetHack General Public License, `engine-source.tar.gz` (the complete
   source of the engine binaries: NetHack at the commit built, the patches,
   the host, the build files and Lua, as the licence's paragraph 3(a) asks of
-  a commercial distribution), the art, help and translation credits, the
-  fonts' OFL texts, Godot's licence and notices, and the licences of the
-  Rust crates in the extension.
+  a commercial distribution), the art, sound, help and translation
+  credits, the fonts' OFL texts, Godot's licence and notices, and the
+  licences of the Rust crates in the extension.
 - Before packaging, a target runs the packaged game's smoke self-test
   where the package can run (`DIST_SMOKE=0` skips it): a new game must
   start with the engine the package carries.
