@@ -973,10 +973,21 @@ impl RenethackGame {
             }
         }
         // the map's own sounds (the rehearsal behind the title is unheard)
+        // and the messages', the world muffled for a deaf hero
         for sound in ui.map.take_sounds() {
             if playing {
                 ui.audio.play(sound);
             }
+        }
+        if playing && let Some(cat) = self.catalog.as_deref() {
+            let place = |(x, y): (i32, i32)| Vector3::new(x as f32, 0.8, y as f32);
+            let door = crate::hearing::door_beside(&self.world, cat).map(place);
+            let hero = self.world.hero().map(place);
+            ui.audio.hear_log(&self.world.log, hero, door);
+            let senses = crate::hearing::Senses::of(&self.world, cat);
+            ui.audio.set_muffled(senses.deaf);
+        } else {
+            ui.audio.set_muffled(false);
         }
         let hero = ui.map.hero_stands().filter(|_| playing);
         let ears = camera.map(|t| match hero {

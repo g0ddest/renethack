@@ -137,6 +137,8 @@ pub struct Senses {
     /// They see nothing: a monster on the map is only sensed (telepathy
     /// shows it as it would be seen), its steps unheard.
     pub blind: bool,
+    /// They hear nothing well: the world is muffled.
+    pub deaf: bool,
 }
 
 impl Senses {
@@ -146,8 +148,25 @@ impl Senses {
         Senses {
             afloat: has("Lev") || has("Fly"),
             blind: has("Blind"),
+            deaf: has("Deaf"),
         }
     }
+}
+
+/// A door beside the hero (the one their door messages are about).
+pub fn door_beside(world: &World, catalog: &Catalog) -> Option<(i32, i32)> {
+    let (hx, hy) = world.hero()?;
+    let around = (-1..=1).flat_map(|dy| (-1..=1).map(move |dx| (hx + dx, hy + dy)));
+    around.filter(|&c| c != (hx, hy)).find(|&(x, y)| {
+        let t = world
+            .map
+            .cell(x, y)
+            .and_then(|c| nh_world::cell_terrain(c, catalog));
+        matches!(
+            t,
+            Some(Terrain::ClosedDoor | Terrain::OpenDoor | Terrain::BrokenDoor | Terrain::Doorway)
+        )
+    })
 }
 
 /// The monster a message says died before the hero's eyes ("The newt is

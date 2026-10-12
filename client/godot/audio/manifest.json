@@ -114,6 +114,70 @@
     "distant.coins": {"bus": "Distant", "files": ["cc0/kenney/rpg/handleCoins.wav", "cc0/kenney/rpg/handleCoins2.wav"], "volume": -10},
     "distant.bell": {"bus": "Distant", "files": ["cc0/kenney/impact/impactBell_heavy_{000..002}.wav"], "volume": -12, "pitch": 1.6},
     "distant.boom": {"bus": "Distant", "files": ["cc0/kenney/impact/impactMining_{000..004}.wav"], "volume": -6, "pitch": 0.45},
-    "distant.squeak": {"bus": "Distant", "files": ["cc0/kenney/rpg/creak{1..3}.wav"], "volume": -10}
-  }
+    "distant.squeak": {"bus": "Distant", "files": ["cc0/kenney/rpg/creak{1..3}.wav"], "volume": -10},
+
+    "prayer.good": {"bus": "Music", "files": ["cc0/kenney/impact/impactBell_heavy_{000..002}.wav"], "volume": -10, "pitch": 1.0},
+    "prayer.bad": {"bus": "Music", "files": ["cc0/kenney/impact/impactMining_{000..004}.wav"], "volume": -6, "pitch": 0.4}
+  },
+  "messages": [
+    {"starts": "There is ", "ends": " here.", "cue": []},
+    {"is": "The door opens.", "cue": "door.open", "at": "door"},
+    {"is": "The door closes.", "cue": "door.close", "at": "door"},
+    {"is": "This door is locked.", "cue": "door.locked", "at": "door"},
+    {"starts": "WHAMM", "cue": "door.kick", "at": "door"},
+    {"starts": "As you kick the door, it ", "cue": "door.break", "at": "door"},
+    {"is": "The door crashes open!", "cue": "door.break", "at": "door"},
+    {"has": ["door explode"], "cue": "door.break", "at": "door"},
+    {"is": "The door unlocks!", "cue": "door.unlock", "at": "door"},
+    {"starts": "You succeed in ", "any": ["lock", "door"], "cue": "door.unlock", "at": "door"},
+    {"starts": "You see a door ", "cue": "door.open", "at": "none"},
+    {"ends": " opens a door.", "cue": "door.open", "at": "none"},
+    {"ends": " unlocks and opens a door.", "cue": "door.open", "at": "none"},
+
+    {"inv": true, "has": ["gold piece"], "cue": "pickup.gold"},
+    {"inv": true, "cue": "pickup"},
+    {"starts": "You drop ", "has": ["gold piece"], "cue": "drop.gold"},
+    {"starts": "You drop ", "cue": "drop"},
+
+    {"has": ["squeaks"], "starts": "A board beneath you", "cue": "trap.squeak"},
+    {"any": ["arrow shoots out at you", "dart shoots out at you"], "cue": "trap.dart"},
+    {"any": ["falls on your head", "rolling boulder trap"], "cue": "trap.rock"},
+    {"has": ["bear trap closes"], "cue": "trap.bear"},
+    {"any": ["fall into a pit", "land on a set of sharp iron spikes", "trap door opens up under you", "gaping hole under you"], "cue": "trap.fall"},
+    {"starts": "KAABLAMM", "cue": "trap.boom"},
+    {"any": ["magical explosion"], "starts": "You", "cue": "trap.boom"},
+    {"has": ["cloud of gas"], "cue": "trap.gas"},
+    {"has": ["tower of flame erupts"], "cue": "trap.fire"},
+    {"has": ["gush of water hits"], "cue": "trap.water"},
+    {"any": ["stumble into a spider web", "caught in a web"], "starts": "You", "cue": "trap.web"},
+    {"any": ["wrenching sensation", "momentarily blinded by a flash of light", "feel a change coming over you"], "starts": "You", "cue": "trap.magic"},
+
+    {"any": ["fountain", "cool draught refreshes you", "This water's no good", "water is foul"], "cue": "fountain"},
+    {"any": ["hits the altar", "Your sacrifice is consumed"], "cue": "altar"},
+    {"any": ["surrounded by a shimmering light", "You feel a hopeful feeling", "You feel much better"], "starts": "You", "cue": "prayer.good", "at": "none"},
+    {"ends": "is displeased.", "starts": "You feel that ", "cue": "prayer.bad", "at": "none"},
+    {"starts": "\"", "any": ["Welcome", "Thank you for shopping"], "cue": "shop.bell"},
+    {"starts": "Welcome to experience level", "cue": "jingle.levelup", "at": "none"},
+    {"starts": "You die", "cue": ["hero.die", "jingle.death"]},
+
+    {"is": "You hit it.", "cue": "hit"},
+    {"is": "You miss it.", "cue": "miss"},
+    {"any": ["You kill it!", "You destroy it!"], "cue": ["hit", "die"]},
+    {"is": "It misses.", "cue": "miss"},
+    {"starts": "It ", "ends": "!", "cue": "hero.hurt"}
+  ],
+  "heard": [
+    {"any": ["crash", "smashed"], "cue": "distant.crash"},
+    {"has": ["door"], "cue": "distant.door"},
+    {"any": ["digging", "dig"], "cue": "distant.dig"},
+    {"any": ["counting money", "coins"], "cue": "distant.coins"},
+    {"any": ["cash register", "chime", "bell"], "cue": "distant.bell"},
+    {"any": ["explosion", "blast", "thunder", "ZOT", "KABOOM", "boom"], "cue": "distant.boom"},
+    {"any": ["water", "splash", "bubbl", "drip", "gurgl", "flush"], "cue": "distant.water"},
+    {"any": ["footsteps", "footstep"], "cue": "distant.steps"},
+    {"has": ["squeak"], "cue": "distant.squeak"},
+    {"any": ["scream", "shriek", "wail", "cry", "yell"], "cue": "distant.scream"},
+    {"any": ["howl", "growl", "roar", "bark", "yelp", "whine", "hiss", "snarl", "buzz"], "cue": "distant.beast"},
+    {"any": ["conversation", "cursing", "laugh", "voice", "someone", "chant", "applause", "applaud"], "cue": "distant.voices"}
+  ]
 }

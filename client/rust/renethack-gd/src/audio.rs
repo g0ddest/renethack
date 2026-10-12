@@ -11,12 +11,13 @@ use std::time::{Duration, Instant};
 
 use godot::classes::audio_stream_player_3d::AttenuationModel;
 use godot::classes::{
-    AudioEffectLowPassFilter, AudioEffectReverb, AudioListener3D, AudioServer, AudioStream,
-    AudioStreamPlayer, AudioStreamPlayer3D, FileAccess, ResourceLoader,
+    AudioEffectAmplify, AudioEffectLowPassFilter, AudioEffectReverb, AudioListener3D, AudioServer,
+    AudioStream, AudioStreamPlayer, AudioStreamPlayer3D, FileAccess, ResourceLoader,
 };
 use godot::prelude::*;
+use nh_world::MessageLog;
 
-use crate::cues::{AUDIO_DIR, MANIFEST, Manifest, Picker, Size};
+use crate::cues::{AUDIO_DIR, MANIFEST, Manifest, Picker, Place, Size};
 
 /// A bus whose volume the player sets (the settings' sliders).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -45,6 +46,10 @@ const SILENT: f32 = 0.001;
 
 /// What "You hear ..." loses of its highs.
 const DISTANT_CUTOFF_HZ: f32 = 1600.0;
+/// A deaf hero's world: muffled and far quieter (the SFX bus's first
+/// two effects, off until then).
+const DEAF_CUTOFF_HZ: f32 = 700.0;
+const DEAF_DB: f32 = -14.0;
 /// Voices for sounds placed on the map, and for unplaced ones (the
 /// interface, "You hear ...", jingles).
 const PLACED_VOICES: usize = 16;
@@ -120,6 +125,16 @@ pub fn ensure_buses() {
             room.set_wet(0.25);
             room.set_dry(0.9);
             server.add_bus_effect(i, &room);
+        }
+        if name == "SFX" {
+            let mut low = AudioEffectLowPassFilter::new_gd();
+            low.set_cutoff(DEAF_CUTOFF_HZ);
+            server.add_bus_effect(i, &low);
+            let mut quiet = AudioEffectAmplify::new_gd();
+            quiet.set_volume_db(DEAF_DB);
+            server.add_bus_effect(i, &quiet);
+            server.set_bus_effect_enabled(i, 0, false);
+            server.set_bus_effect_enabled(i, 1, false);
         }
     }
 }
@@ -328,6 +343,10 @@ pub struct Audio {
     clock: f64,
     heard: VecDeque<Heard>,
     asked: u64,
+    /// The newest message already heard.
+    log_seq: Option<u64>,
+    /// The world is heard muffled (a deaf hero).
+    muffled: bool,
     /// The sound's own time this frame (starting sounds, the waiting ones,
     /// the ears), and that of the last frames (files loading ahead aside).
     cost: Duration,
@@ -385,6 +404,8 @@ impl Audio {
             clock: 0.0,
             heard: VecDeque::new(),
             asked: 0,
+            log_seq: None,
+            muffled: false,
             cost: Duration::ZERO,
             costs: VecDeque::new(),
         }
@@ -452,7 +473,9 @@ impl Audio {
         let Some(stream) = self.stream(&file) else {
             return self.record(heard);
         };
-        let placed = sound.at.is_some();
+        // only the map's own sounds are placed: music, the interface and
+        // what is heard far off are not
+        let placed = sound.at.is_some() && bus == "SFX";
         let Some(i) = self.voice_for(placed, &name, voices, priority) else {
             return self.record(heard);
         };
@@ -621,6 +644,56 @@ impl Audio {
     /// The voices each pool has.
     pub fn voices(&self) -> (usize, usize) {
         (self.placed.len(), self.flat.len())
+    }
+
+    /// The messages since the last call that sound, each cue its rule
+    /// names: where the hero stands, at the door beside them, or
+    /// unplaced. The log of a game just started or restored is not news.
+    pub fn hear_log(&mut self, log: &MessageLog, hero: Option<Vector3>, door: Option<Vector3>) {
+        let last = log.last_seq();
+        let seen = match self.log_seq {
+            Some(seen) if seen <= last => seen,
+            _ => {
+                self.log_seq = Some(last);
+                return;
+            }
+        };
+        self.log_seq = Some(last);
+        let mut sounds = Vec::new();
+        for m in log.since(seen).filter(|m| !m.from_history) {
+            let Some((cues, place)) = self.manifest.for_message(&m.text) else {
+                continue;
+            };
+            let at = match place {
+                Place::Hero => hero,
+                Place::Door => door.or(hero),
+                Place::None => None,
+            };
+            for cue in cues {
+                let sound = Sound::new(cue.clone());
+                sounds.push(match at {
+                    Some(at) => sound.at(at),
+                    None => sound,
+                });
+            }
+        }
+        for sound in sounds {
+            self.play(sound);
+        }
+    }
+
+    /// The world muffled or not (a deaf hero hears it dull and faint).
+    pub fn set_muffled(&mut self, on: bool) {
+        if on == self.muffled {
+            return;
+        }
+        self.muffled = on;
+        let mut server = AudioServer::singleton();
+        let i = server.get_bus_index("SFX");
+        if i >= 0 && server.get_bus_effect_count(i) >= 2 {
+            server.set_bus_effect_enabled(i, 0, on);
+            server.set_bus_effect_enabled(i, 1, on);
+        }
     }
 }
 

@@ -2,8 +2,9 @@
 //! (`client/godot/audio/manifest.json`) says how to play it: its files,
 //! its bus, how loud and how high, how many at once. A cue the manifest
 //! lacks falls back along its dots (`die.humanoid` -> `die`), so a new
-//! sound needs only a manifest line. Plain data and the rules for picking
-//! (no Godot).
+//! sound needs only a manifest line. The manifest also says which of the
+//! engine's messages sound, and how ("The door opens." at the door, "You
+//! hear ..." far off). Plain data and the rules for picking (no Godot).
 
 use std::collections::BTreeMap;
 
@@ -118,10 +119,124 @@ fn usual() -> u8 {
     1
 }
 
+/// Where a message's sound plays.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Place {
+    /// Where the hero stands (what they do, what is done to them).
+    #[default]
+    Hero,
+    /// At the door beside the hero (else where the hero stands).
+    Door,
+    /// Unplaced: a jingle, a door seen somewhere.
+    None,
+}
+
+/// One cue or several.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(untagged)]
+pub enum Cues {
+    One(String),
+    Many(Vec<String>),
+}
+
+impl Cues {
+    pub fn names(&self) -> &[String] {
+        match self {
+            Cues::One(c) => std::slice::from_ref(c),
+            Cues::Many(c) => c,
+        }
+    }
+}
+
+/// A message that sounds: how its English text is told apart (every
+/// test given must hold), what plays and where.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Rule {
+    #[serde(default)]
+    pub is: Option<String>,
+    #[serde(default)]
+    pub starts: Option<String>,
+    #[serde(default)]
+    pub ends: Option<String>,
+    /// All of these appear in it.
+    #[serde(default)]
+    pub has: Vec<String>,
+    /// One of these appears in it.
+    #[serde(default)]
+    pub any: Vec<String>,
+    /// A line of the pack ("f - a spear.", "$ - 15 gold pieces.").
+    #[serde(default)]
+    pub inv: bool,
+    pub cue: Cues,
+    #[serde(default)]
+    pub at: Place,
+}
+
+impl Rule {
+    pub fn matches(&self, text: &str) -> bool {
+        self.is.as_ref().is_none_or(|t| text == t)
+            && self
+                .starts
+                .as_ref()
+                .is_none_or(|t| text.starts_with(t.as_str()))
+            && self
+                .ends
+                .as_ref()
+                .is_none_or(|t| text.ends_with(t.as_str()))
+            && self.has.iter().all(|t| text.contains(t.as_str()))
+            && (self.any.is_empty() || self.any.iter().any(|t| text.contains(t.as_str())))
+            && (!self.inv || pack_line(text))
+    }
+
+    fn tests(&self) -> bool {
+        self.is.is_some()
+            || self.starts.is_some()
+            || self.ends.is_some()
+            || !self.has.is_empty()
+            || !self.any.is_empty()
+            || self.inv
+    }
+}
+
+/// "f - a spear.": a thing's letter in the pack, and the thing.
+fn pack_line(text: &str) -> bool {
+    let mut chars = text.chars();
+    let letter = chars.next();
+    letter.is_some_and(|c| c.is_ascii_alphabetic() || c == '$' || c == '#')
+        && chars.as_str().starts_with(" - ")
+        && text.len() > 4
+}
+
+/// What "You hear ..." is followed by, as NetHack says it awake, under
+/// water or asleep.
+pub fn heard(text: &str) -> Option<&str> {
+    ["You hear ", "You barely hear ", "You dream that you hear "]
+        .iter()
+        .find_map(|p| text.strip_prefix(p))
+}
+
+/// The cue of a "You hear ..." no rule names.
+pub const DISTANT_CUE: &str = "distant";
+
 /// The manifest: the cues, and what the code reads alongside them.
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct Manifest {
     pub cues: BTreeMap<String, Cue>,
+    /// Messages that sound, first match first.
+    #[serde(default)]
+    pub messages: Vec<Rule>,
+    /// "You hear ..." by what is heard (the text after it), first match
+    /// first; unplaced, far off.
+    #[serde(default)]
+    pub heard: Vec<Rule>,
+    #[serde(skip, default = "distant")]
+    distant: String,
+}
+
+fn distant() -> String {
+    DISTANT_CUE.to_string()
 }
 
 impl Manifest {
@@ -138,7 +253,28 @@ impl Manifest {
             }
             cue.files = files;
         }
+        if let Some(r) = m.messages.iter().chain(&m.heard).find(|r| !r.tests()) {
+            return Err(format!("a message rule that tests nothing: {:?}", r.cue));
+        }
         Ok(m)
+    }
+
+    /// The cues a message plays and where: a "You hear ..." by the heard
+    /// rules (any other "You hear" far off too), anything else by the
+    /// message rules; None: it makes no sound.
+    pub fn for_message(&self, text: &str) -> Option<(&[String], Place)> {
+        if let Some(rest) = heard(text) {
+            let cues = self
+                .heard
+                .iter()
+                .find(|r| r.matches(rest))
+                .map_or(std::slice::from_ref(&self.distant), |r| r.cue.names());
+            return Some((cues, Place::None));
+        }
+        self.messages
+            .iter()
+            .find(|r| r.matches(text))
+            .map(|r| (r.cue.names(), r.at))
     }
 
     /// The cue for a sound asked for by `names`, most specific first: the
@@ -381,6 +517,116 @@ mod tests {
         }
         for asked in ASKED {
             assert!(m.resolve(&[*asked]).is_some(), "nothing plays for {asked}");
+        }
+    }
+
+    #[test]
+    fn messages_sound_by_their_rules_and_you_hear_far_off() {
+        let m = Manifest::parse(
+            r#"{"cues": {"x": {"files": ["x.wav"]}},
+                "messages": [
+                    {"is": "The door opens.", "cue": "door.open", "at": "door"},
+                    {"inv": true, "has": ["gold piece"], "cue": "pickup.gold"},
+                    {"inv": true, "cue": "pickup"},
+                    {"starts": "You die", "cue": ["hero.die", "jingle.death"]},
+                    {"starts": "It ", "ends": "!", "cue": "hero.hurt"}
+                ],
+                "heard": [
+                    {"any": ["splash", "bubbling"], "cue": "distant.water"},
+                    {"has": ["door"], "cue": "distant.door"}
+                ]}"#,
+        )
+        .unwrap();
+        let got = |t: &str| m.for_message(t).map(|(c, at)| (c.to_vec(), at));
+        let one = |c: &str, at| Some((vec![c.to_string()], at));
+        assert_eq!(got("The door opens."), one("door.open", Place::Door));
+        assert_eq!(got("The door opens. Or not."), None, "is: the whole line");
+        assert_eq!(got("$ - 15 gold pieces."), one("pickup.gold", Place::Hero));
+        assert_eq!(got("f - an uncursed spear."), one("pickup", Place::Hero));
+        assert_eq!(got("You see here a spear."), None);
+        assert_eq!(
+            got("You die..."),
+            Some((vec!["hero.die".into(), "jingle.death".into()], Place::Hero))
+        );
+        assert_eq!(got("It bites!"), one("hero.hurt", Place::Hero));
+        assert_eq!(got("It misses."), None);
+        assert_eq!(
+            got("You hear bubbling water."),
+            one("distant.water", Place::None)
+        );
+        assert_eq!(
+            got("You barely hear a door open."),
+            one("distant.door", Place::None)
+        );
+        assert_eq!(
+            got("You dream that you hear someone counting money."),
+            one("distant", Place::None),
+            "any other You hear: far off"
+        );
+        assert!(
+            Manifest::parse(r#"{"cues": {}, "messages": [{"cue": "x"}]}"#).is_err(),
+            "a rule that tests nothing"
+        );
+    }
+
+    /// The project's message rules on the engine's own lines.
+    #[test]
+    fn the_engines_lines_sound_as_meant() {
+        let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/../../godot/audio");
+        let text = std::fs::read_to_string(format!("{dir}/manifest.json")).unwrap();
+        let m = Manifest::parse(&text).unwrap();
+        let first = |t: &str| {
+            m.for_message(t)
+                .and_then(|(c, _)| c.first().cloned())
+                .unwrap_or_default()
+        };
+        for (line, cue) in [
+            ("The door opens.", "door.open"),
+            ("The door closes.", "door.close"),
+            ("This door is locked.", "door.locked"),
+            ("WHAMM!!", "door.kick"),
+            ("As you kick the door, it crashes open!", "door.break"),
+            ("As you kick the door, it shatters to pieces!", "door.break"),
+            ("You succeed in picking the lock.", "door.unlock"),
+            ("You see a door open.", "door.open"),
+            ("$ - 15 gold pieces.", "pickup.gold"),
+            ("f - an uncursed dagger.", "pickup"),
+            ("You drop 15 gold pieces.", "drop.gold"),
+            ("You drop an uncursed dagger.", "drop"),
+            ("A board beneath you squeaks loudly.", "trap.squeak"),
+            ("An arrow shoots out at you!", "trap.dart"),
+            ("A bear trap closes on your foot!", "trap.bear"),
+            ("You fall into a pit!", "trap.fall"),
+            ("KAABLAMM!!!  You triggered a land mine!", "trap.boom"),
+            ("The fountain dries up!", "fountain"),
+            (
+                "There is a black flash as the dagger hits the altar.",
+                "altar",
+            ),
+            (
+                "\"Hello, wizard!  Welcome to Asidonhopo's general store!\"",
+                "shop.bell",
+            ),
+            ("Welcome to experience level 2.", "jingle.levelup"),
+            ("You die...", "hero.die"),
+            ("You kill it!", "hit"),
+            ("It bites!", "hero.hurt"),
+            ("You hear a door open.", "distant.door"),
+            ("You hear bubbling water.", "distant.water"),
+            (
+                "You hear the footsteps of a guard on patrol.",
+                "distant.steps",
+            ),
+            ("You hear someone counting money.", "distant.coins"),
+            ("You hear the chime of a cash register.", "distant.bell"),
+            ("You barely hear a crunching sound.", "distant"),
+            // what makes no sound
+            ("There is a fountain here.", ""),
+            ("You see here 3 gold pieces.", ""),
+            ("The newt bites!", ""),
+            ("Be careful!  New moon tonight.", ""),
+        ] {
+            assert_eq!(first(line), cue, "{line}");
         }
     }
 

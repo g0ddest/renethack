@@ -10,9 +10,12 @@
 //! stand and the pet's where it walks; a newt fought to its death sounds
 //! the swing of the Valkyrie's spear, the blows or misses and its fall
 //! (heard where the hero stands: a newt leaves nothing to place it by); a
-//! potion drunk gulps. Blindfolded with an amulet of ESP the hero
-//! senses the pet walking, and hears none of its steps. The sound's own
-//! time a frame stays small.
+//! potion of gain level drunk gulps and plays the level's jingle. The
+//! engine's lines sound by the manifest's rules: the dagger dropped and
+//! picked up again, gold wished for and dropped, a door's line at the
+//! hero, a "You hear" far off and unplaced. Blindfolded with an amulet
+//! of ESP the hero senses the pet walking, and hears none of its steps.
+//! The sound's own time a frame stays small.
 
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
@@ -76,6 +79,8 @@ static OTHERS: AtomicU32 = AtomicU32::new(0);
 static SEARCHED: AtomicU32 = AtomicU32::new(0);
 /// The fight's F was sent: the next command takes its direction.
 static FIGHTING: AtomicBool = AtomicBool::new(false);
+/// The search's m was sent: the next command is the search it forces.
+static FORCING: AtomicBool = AtomicBool::new(false);
 /// Where the settings button is on the screen.
 static BUTTON: Mutex<Option<Vector2>> = Mutex::new(None);
 
@@ -281,19 +286,65 @@ fn game() -> Vec<Step> {
             },
         ),
     ]);
-    steps.extend(wish("uncursed potion of water"));
+    steps.extend(wish("uncursed potion of gain level"));
     steps.extend([
         Step::Call("", mark),
         key('q'),
         Step::Request("what to drink", |p| !matches!(p, Prompt::Command)),
-        Step::KeyFrom("the potion", |g| {
-            letter_of(g, "potion")
-                .map(plain)
-                .ok_or_else(|| "no potion".into())
-        }),
+        Step::KeyFrom("the potion", |g| letter(g, "potion")),
         Step::Request("a command after the drink", command),
-        Step::Wait("the drink heard", |g| {
-            Ok(heard_like(g, "use.quaff")?.is_some())
+        Step::Wait("the drink and the level heard", |g| {
+            let level = heard_like(g, "jingle.levelup")?;
+            Ok(heard_like(g, "use.quaff")?.is_some()
+                && level.is_some_and(|h| h.at.is_none() && h.voiced))
+        }),
+        Step::Call("", mark),
+        key('d'),
+        Step::Request("what to drop", |p| !matches!(p, Prompt::Command)),
+        Step::KeyFrom("the dagger", |g| letter(g, "dagger")),
+        Step::Request("a command after the drop", command),
+        Step::Wait("the drop heard where the hero stands", |g| {
+            let hero = g.world.map.hero().ok_or("no hero")?;
+            Ok(heard_like(g, "drop")?.is_some_and(|h| near(&h, hero) && h.voiced))
+        }),
+        Step::Call("", mark),
+        key(','),
+        Step::Request("a command after the pickup", command),
+        Step::Wait("the pickup heard", |g| {
+            Ok(heard_like(g, "pickup")?.is_some_and(|h| h.asked == "pickup" && h.voiced))
+        }),
+        Step::Call("", mark),
+    ]);
+    steps.extend(wish("100 gold pieces"));
+    steps.extend([
+        Step::Wait("the gold heard", |g| {
+            Ok(heard_like(g, "pickup.gold")?.is_some_and(|h| h.voiced))
+        }),
+        Step::Call("", mark),
+        key('d'),
+        Step::Request("what to drop", |p| !matches!(p, Prompt::Command)),
+        key('$'),
+        Step::Request("a command after the gold dropped", command),
+        Step::Wait("the gold dropped heard", |g| {
+            Ok(heard_like(g, "drop.gold")?.is_some_and(|h| h.voiced))
+        }),
+        Step::Call("a door's line and a \"You hear\" in the log", |g| {
+            mark(g)?;
+            let turn = g.world.turn();
+            g.world.log.push("The door opens.".into(), 0, turn, false);
+            g.world
+                .log
+                .push("You hear bubbling water.".into(), 0, turn, false);
+            Ok(())
+        }),
+        Step::Wait("the door at the hero, the water far off", |g| {
+            let hero = g.world.map.hero().ok_or("no hero")?;
+            let door = heard_like(g, "door.open")?;
+            let water = heard_like(g, "distant.water")?;
+            Ok(door.is_some_and(|d| near(&d, hero) && d.voiced)
+                && water.is_some_and(|w| {
+                    w.at.is_none() && w.voiced && w.cue.as_deref() == Some("distant")
+                }))
         }),
     ]);
     steps.extend(wish("blessed amulet of ESP"));
@@ -306,6 +357,11 @@ fn game() -> Vec<Step> {
             let names = g.world.status.condition_names(cat);
             Ok(names.iter().any(|n| n == "Blind"))
         }),
+        // a turn more: what moved while the status caught up is past
+        key('m'),
+        Step::Request("the search to force", command),
+        key('s'),
+        Step::Request("a command after a turn blind", command),
         Step::Call("", |g| {
             mark(g)?;
             OTHERS.store(map_view(g)?.motion_stats().other_steps, Ordering::Relaxed);
@@ -314,10 +370,10 @@ fn game() -> Vec<Step> {
         }),
         Step::KeysUntil("searching while the pet walks, sensed", |g| {
             let walked = map_view(g)?.motion_stats().other_steps - OTHERS.load(Ordering::Relaxed);
-            if walked >= SENSED_STEPS {
+            if walked >= SENSED_STEPS && !FORCING.load(Ordering::Relaxed) {
                 return Ok(None);
             }
-            search(g)
+            forced_search(g)
         }),
         Step::Call("none of its steps heard", |g| {
             let heard = steps_heard(g)?;
@@ -377,8 +433,7 @@ fn heard_like(game: &RenethackGame, kind: &str) -> Result<Option<Heard>, String>
         .cloned())
 }
 
-/// A turn searched (at a command), or the question before it answered no;
-/// at most `SEARCHES` of them.
+/// A turn searched at a command, else Esc; at most `SEARCHES`.
 fn search(game: &RenethackGame) -> Result<Option<KeyInput>, String> {
     if !matches!(pending(game), Some(Prompt::Command)) {
         return Ok(Some(KeyInput::plain(Key::Escape)));
@@ -387,6 +442,16 @@ fn search(game: &RenethackGame) -> Result<Option<KeyInput>, String> {
         return Err(format!("{SEARCHES} turns searched and nothing walked"));
     }
     Ok(Some(plain('s')))
+}
+
+/// As `search`, each search forced by `m` (the engine refuses one while
+/// a hostile it shows stands beside the hero).
+fn forced_search(game: &RenethackGame) -> Result<Option<KeyInput>, String> {
+    if matches!(pending(game), Some(Prompt::Command)) && !FORCING.swap(false, Ordering::Relaxed) {
+        FORCING.store(true, Ordering::Relaxed);
+        return Ok(Some(plain('m')));
+    }
+    search(game)
 }
 
 /// The key of a step onto open floor next to the hero.
