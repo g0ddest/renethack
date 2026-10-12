@@ -83,6 +83,12 @@ fn parts(shape: &str) -> &'static [(Part, Stuff)] {
         "eucalyptus" => &[(Leaf, Stuff::Own)],
         "strange" => &[(Strange, Stuff::Odd)],
         "serpent tail" => &[(SerpentTail, Stuff::Own), (SerpentBelly, Stuff::Belly)],
+        "naga body" => &[
+            (SerpentTail, Stuff::Own),
+            (SerpentBelly, Stuff::Belly),
+            (SerpentNeck, Stuff::Own),
+            (SerpentNeckBelly, Stuff::Belly),
+        ],
         "bladed arm" => &[(Arm, Stuff::Own), (ArmBlade, Stuff::Steel)],
         "bat wings" => &[(BatWings, Stuff::Own), (BatWingBones, Stuff::Dark)],
         "wisp" => &[(Wisp, Stuff::Own)],

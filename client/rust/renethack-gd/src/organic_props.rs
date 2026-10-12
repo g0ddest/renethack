@@ -69,6 +69,10 @@ pub enum Part {
     /// the plates down the front of it.
     SerpentTail,
     SerpentBelly,
+    /// A naga's: the serpent's body rising from the waist (the origin) to
+    /// where a head sits on it; the plates up its front.
+    SerpentNeck,
+    SerpentNeckBelly,
     /// An arm worn on a body's side: out from its shoulder (the origin),
     /// bent at the elbow, the forearm raised to a fist; the curved blade
     /// in the fist.
@@ -513,24 +517,25 @@ pub(super) fn build(m: &mut Merge, part: Part) {
             m.sweep(&path, |i| (r[i] * 1.08, r[i] * 0.92), 2.0, false, AHEAD);
         }
         Part::SerpentBelly => {
-            // a plate across the front every so far down to the floor, each
-            // bowed round the tail, a seam between it and the next
-            let n = 12;
-            for k in 0..n {
-                let t = 0.1 + 0.72 * frac(k, n);
-                let (at, thick) = (tail_drop(t), tail_thick(t));
-                let along = (tail_drop(t + 0.01) - tail_drop(t - 0.01)).normalized();
-                let front = (AHEAD - along * along.dot(AHEAD)).normalized();
-                let side = along.cross(front);
-                let arc: Vec<Vector3> = (0..=8)
-                    .map(|j| {
-                        let phi = (-55.0 + 110.0 * frac(j, 8)).to_radians();
-                        at + side * (thick * 1.08 * 1.03 * phi.sin())
-                            + front * (thick * 0.92 * 1.03 * phi.cos())
-                    })
-                    .collect();
-                m.sweep(&arc, |_| (0.007, 0.031), 4.0, false, along);
-            }
+            // down to the floor
+            plates(m, 12, (0.1, 0.82), |t| (tail_drop(t), tail_thick(t)));
+        }
+        Part::SerpentNeck => {
+            let n = 10;
+            let path: Vec<Vector3> = (0..=n).map(|k| neck_rise(frac(k, n))).collect();
+            m.sweep(
+                &path,
+                |i| {
+                    let r = neck_thick(frac(i, n));
+                    (r * 1.08, r * 0.92)
+                },
+                2.0,
+                false,
+                AHEAD,
+            );
+        }
+        Part::SerpentNeckBelly => {
+            plates(m, 6, (0.08, 0.8), |t| (neck_rise(t), neck_thick(t)));
         }
         Part::Arm => {
             let path = arm_path();
@@ -671,6 +676,41 @@ fn serpent_tail() -> (Vec<Vector3>, Vec<f32>) {
         r.push(thick);
     }
     (path, r)
+}
+
+/// Plates across the front of a serpent's body (`at(t)`: a point of it and
+/// its radius there), `n` of them over `span` of its length, each bowed
+/// round it, a seam between it and the next.
+fn plates(m: &mut Merge, n: usize, span: (f32, f32), at: impl Fn(f32) -> (Vector3, f32)) {
+    for k in 0..n {
+        let t = span.0 + (span.1 - span.0) * frac(k, n);
+        let (mid, thick) = at(t);
+        let along = (at(t + 0.01).0 - at(t - 0.01).0).normalized();
+        let front = (AHEAD - along * along.dot(AHEAD)).normalized();
+        let side = along.cross(front);
+        let arc: Vec<Vector3> = (0..=8)
+            .map(|j| {
+                let phi = (-55.0 + 110.0 * frac(j, 8)).to_radians();
+                mid + side * (thick * 1.08 * 1.03 * phi.sin())
+                    + front * (thick * 0.92 * 1.03 * phi.cos())
+            })
+            .collect();
+        m.sweep(&arc, |_| (0.007, 0.031), 4.0, false, along);
+    }
+}
+
+/// Where a naga's body is `t` of the way up from the waist (0) to its
+/// head (1): rising back, then forward under the head, as a snake rears.
+fn neck_rise(t: f32) -> Vector3 {
+    let t = t.clamp(0.0, 1.0);
+    let u = 1.0 - t;
+    let (b, c, d) = (v(0.0, 0.2, -0.1), v(0.0, 0.42, -0.06), v(0.0, 0.56, 0.06));
+    b * 3.0 * u * u * t + c * 3.0 * u * t * t + d * t * t * t
+}
+
+/// Its radius there: the tail's at the waist, a neck's at the top.
+fn neck_thick(t: f32) -> f32 {
+    TAIL_TOP - (TAIL_TOP - 0.062) * t.clamp(0.0, 1.0).powf(0.9)
 }
 
 /// An arm's path from the shoulder: out and down to the elbow, the forearm
