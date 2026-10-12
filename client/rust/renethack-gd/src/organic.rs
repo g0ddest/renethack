@@ -24,6 +24,8 @@ pub mod felines;
 pub mod more;
 #[path = "organic_props.rs"]
 pub mod props;
+#[path = "organic_weather.rs"]
+pub mod weather;
 
 /// The shapes there are, by creature and part.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -113,6 +115,8 @@ pub enum Organic {
     /// A part of a cockatrice, a shrieker, a violet fungus or a gelatinous
     /// cube (`more`).
     More(more::Part),
+    /// A part of a vortex or an elemental (`weather`).
+    Weather(weather::Part),
 }
 
 /// Where a cat's legs join its body (out to the side, up, forward): the
@@ -552,6 +556,7 @@ impl Organic {
             Organic::Tentacle { right } => felines::tentacle(&mut m, right),
             Organic::Prop(part) => props::build(&mut m, part),
             Organic::More(part) => more::build(&mut m, part),
+            Organic::Weather(part) => weather::build(&mut m, part),
             Organic::SporeThreads => {
                 for k in 0..4 {
                     let a = (k as f32 / 4.0 * 360.0 + 45.0).to_radians();

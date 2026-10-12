@@ -2703,7 +2703,10 @@ impl Kit<'_> {
                 Some("spore") => self.spore_body(root),
                 _ => self.light(root),
             },
-            Proc::Vortex => self.vortex(root),
+            Proc::Vortex => match self.shape.as_deref().and_then(creature_kit::Weather::of) {
+                Some(weather) => self.weather(root, weather),
+                None => self.vortex(root),
+            },
             Proc::Fungus => match self.shape.as_deref() {
                 Some("lichen") => self.lichen(root),
                 Some("mold") => self.mold(root),

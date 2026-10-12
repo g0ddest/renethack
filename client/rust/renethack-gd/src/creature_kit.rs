@@ -8,7 +8,12 @@
 use super::*;
 use crate::organic::felines::{self, Coat, Part};
 use crate::organic::more;
+use crate::organic::weather;
 use crate::organic::{self, Organic};
+use godot::classes::particle_process_material::{EmissionShape, Parameter};
+use godot::classes::{
+    GpuParticles3D, Gradient, GradientTexture1D, ParticleProcessMaterial, QuadMesh,
+};
 
 const ONE: [f32; 3] = [1.0; 3];
 const FLAT: [f32; 3] = [0.0; 3];
@@ -19,6 +24,52 @@ pub(super) const LEGS: [&str; 4] = ["LegFL", "LegFR", "LegBL", "LegBR"];
 
 /// A six-legged creature's middle legs, left and right.
 const MIDDLE_LEGS: [&str; 2] = ["LegML", "LegMR"];
+
+/// What a vortex or an elemental is made of, by its model's shape.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum Weather {
+    Dust,
+    Fog,
+    Ice,
+    Energy,
+    Steam,
+    Fire,
+    /// An air elemental.
+    Air,
+    /// A fire elemental.
+    Flame,
+}
+
+impl Weather {
+    pub(super) fn of(shape: &str) -> Option<Weather> {
+        Some(match shape {
+            "dust" => Weather::Dust,
+            "fog" => Weather::Fog,
+            "ice" => Weather::Ice,
+            "energy" => Weather::Energy,
+            "steam" => Weather::Steam,
+            "fire" => Weather::Fire,
+            "air" => Weather::Air,
+            "flame" => Weather::Flame,
+            _ => return None,
+        })
+    }
+
+    /// Whether it gives light of its own (drawn unshaded, its motes
+    /// added to what is behind them).
+    fn glows(self) -> bool {
+        matches!(self, Weather::Energy | Weather::Fire | Weather::Flame)
+    }
+
+    /// How its motes drift: up for heat and steam, down for ice.
+    fn rise(self) -> f32 {
+        match self {
+            Weather::Fire | Weather::Flame | Weather::Steam | Weather::Energy => 0.35,
+            Weather::Ice => -0.25,
+            Weather::Dust | Weather::Fog | Weather::Air => 0.05,
+        }
+    }
+}
 
 /// The big cats, by their model's shape in the manifest.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -333,6 +384,112 @@ impl Kit<'_> {
         );
     }
 
+    /// A vortex or an elemental: weather turning as one about its middle
+    /// (the Body pivot spins), bands or puffs of its stuff seen through,
+    /// motes of it whirled round in it.
+    pub(super) fn weather(&mut self, root: &mut Gd<Node3D>, w: Weather) {
+        use weather::Part::*;
+        let mut body = self.pivot(root, "Body", [0.0; 3]);
+        let tint = self.tint;
+        let pale = |k: f32| {
+            Color::from_rgb(
+                tint.r + (1.0 - tint.r) * k,
+                tint.g + (1.0 - tint.g) * k,
+                tint.b + (1.0 - tint.b) * k,
+            )
+        };
+        // what glows is drawn unshaded and seen through, its core hotter;
+        // the rest is shaded and seen through like a ghost, its core and
+        // what it carries denser
+        let rgba = |c: Color, a: f32| c.with_alpha(a);
+        let (bands, core): (Gd<Material>, Option<Gd<Material>>) = match w {
+            Weather::Fire | Weather::Flame => (
+                self.art
+                    .flat(rgba(Color::from_rgb(1.0, 0.5, 0.12), 0.5), Finish::Flat),
+                Some(
+                    self.art
+                        .flat(rgba(Color::from_rgb(1.0, 0.86, 0.45), 0.8), Finish::Flat),
+                ),
+            ),
+            Weather::Energy => (
+                self.art.flat(rgba(pale(0.2), 0.45), Finish::Flat),
+                Some(
+                    self.art
+                        .flat(rgba(Color::from_rgb(0.85, 0.94, 1.0), 0.85), Finish::Flat),
+                ),
+            ),
+            Weather::Dust => (self.art.flat(tint, Finish::Ghost), Some(self.dark())),
+            Weather::Ice => (
+                self.art.flat(pale(0.3), Finish::Ghost),
+                Some(self.art.flat(pale(0.75), Finish::Glossy)),
+            ),
+            Weather::Steam => (self.art.flat(pale(0.55), Finish::Ghost), None),
+            Weather::Fog | Weather::Air => (self.art.flat(pale(0.2), Finish::Ghost), None),
+        };
+        let shape_of = |p| MeshKey::Organic(Organic::Weather(p));
+        let main = match w {
+            Weather::Fog => Fog,
+            Weather::Air => Gale,
+            Weather::Flame => Flames,
+            _ => Twister,
+        };
+        self.part(&mut body, shape_of(main), &bands, FLAT, FLAT, ONE);
+        if let Some(core) = core {
+            let inner = match w {
+                Weather::Flame => Heart,
+                // stones in dust, shards in ice
+                Weather::Dust | Weather::Ice => Debris,
+                _ => Core,
+            };
+            self.part(&mut body, shape_of(inner), &core, FLAT, FLAT, ONE);
+        }
+        self.motes(&mut body, w);
+    }
+
+    /// Motes of a weather's stuff, whirled round it: emitted where it
+    /// turns (in its own space, so they turn with it) and drifting up or
+    /// down, as an ember of a torch rises (the torches' particles, so no
+    /// new shader is made for them).
+    fn motes(&mut self, body: &mut Gd<Node3D>, w: Weather) {
+        let mut m = ParticleProcessMaterial::new_gd();
+        m.set_emission_shape(EmissionShape::SPHERE);
+        m.set_emission_sphere_radius(0.32);
+        m.set_direction(Vector3::UP);
+        m.set_spread(30.0);
+        m.set_param_min(Parameter::INITIAL_LINEAR_VELOCITY, 0.15);
+        m.set_param_max(Parameter::INITIAL_LINEAR_VELOCITY, 0.5);
+        m.set_gravity(Vector3::new(0.0, w.rise(), 0.0));
+        m.set_param_min(Parameter::SCALE, 0.6);
+        m.set_param_max(Parameter::SCALE, 1.4);
+        m.set_turbulence_enabled(true);
+        m.set_turbulence_noise_strength(0.6);
+        m.set_turbulence_noise_scale(1.5);
+        m.set_color_ramp(&fading(self.tint, if w.glows() { 3.0 } else { 1.0 }));
+        let mut p = GpuParticles3D::new_alloc();
+        p.set_name("Motes");
+        p.set_process_material(&m);
+        p.set_amount(if w == Weather::Fog { 14 } else { 32 });
+        p.set_lifetime(1.6);
+        p.set_randomness_ratio(0.5);
+        p.set_use_local_coordinates(true);
+        let mut quad = QuadMesh::new_gd();
+        let size = if matches!(w, Weather::Fog | Weather::Steam) {
+            0.18
+        } else {
+            0.08
+        };
+        quad.set_size(Vector2::new(size, size));
+        p.set_draw_pass_mesh(0, &quad);
+        p.set_material_override(&mote_material(w.glows()));
+        p.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+        p.set_visibility_aabb(Aabb::new(
+            Vector3::new(-0.8, -0.2, -0.8),
+            Vector3::new(1.6, 1.8, 1.6),
+        ));
+        p.set_position(Vector3::new(0.0, 0.25, 0.0));
+        body.add_child(&p);
+    }
+
     /// The dark marks of a coat on a part of a big cat (none without one).
     fn marks(&mut self, parent: &mut Gd<Node3D>, coat: Option<Coat>, part: Part) {
         let Some(coat) = coat else {
@@ -599,6 +756,44 @@ pub(super) fn idle_waves(kind: Proc, shape: Option<&str>) -> Vec<Wave> {
         ],
         _ => Vec::new(),
     }
+}
+
+/// A mote's colour over its life: `c`, brighter by `hdr` for what glows,
+/// fading out in its own colour.
+fn fading(c: Color, hdr: f32) -> Gd<GradientTexture1D> {
+    let mut g = Gradient::new_gd();
+    let hot = Color::from_rgba(c.r * hdr, c.g * hdr, c.b * hdr, 0.9);
+    let mid = Color::from_rgba(c.r * hdr * 0.7, c.g * hdr * 0.7, c.b * hdr * 0.7, 0.6);
+    let end = Color::from_rgba(c.r * 0.4, c.g * 0.4, c.b * 0.4, 0.0);
+    g.set_offsets(&PackedFloat32Array::from(&[0.0, 0.5, 1.0][..]));
+    g.set_colors(&PackedColorArray::from(&[hot, mid, end][..]));
+    let mut t = GradientTexture1D::new_gd();
+    t.set_gradient(&g);
+    t.set_use_hdr(true);
+    t
+}
+
+/// The material a mote is drawn with, as the map's own particles are: the
+/// soft disc facing the camera in the mote's colour, added to what is
+/// behind it if it glows, else shaded like the dust in the air.
+fn mote_material(glows: bool) -> Gd<Material> {
+    use godot::classes::base_material_3d::{
+        BillboardMode, BlendMode, Flags, ShadingMode, TextureParam, Transparency,
+    };
+    // (a texture of its own for each model built: few are, being pooled,
+    // and none may outlive the engine in a static)
+    let tex = crate::vfx::soft_texture();
+    let mut m = StandardMaterial3D::new_gd();
+    m.set_billboard_mode(BillboardMode::PARTICLES);
+    m.set_flag(Flags::ALBEDO_FROM_VERTEX_COLOR, true);
+    m.set_texture(TextureParam::ALBEDO, &tex);
+    m.set_transparency(Transparency::ALPHA);
+    if glows {
+        m.set_blend_mode(BlendMode::ADD);
+        m.set_shading_mode(ShadingMode::UNSHADED);
+    }
+    m.set_flag(Flags::DISABLE_FOG, glows);
+    m.upcast()
 }
 
 /// Seconds a walking body takes for one step of each leg.
