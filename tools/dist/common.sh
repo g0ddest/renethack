@@ -54,8 +54,7 @@ need_godot() {
 # the extension's libraries in its bin/, version stamped. APFS clones on
 # macOS (no disk), reflinks or plain copies elsewhere. The stage keeps its
 # import cache between runs (seeded from the project's own), so Godot only
-# imports what changed. STAGE_ASTC=1: textures in ETC2/ASTC as well, which
-# Godot's arm64 macOS export requires (the project imports S3TC/BPTC only).
+# imports what changed.
 stage_project() {
     stage=$1
     shift
@@ -79,14 +78,15 @@ stage_project() {
     # the libraries from bin/, wherever the development build keeps them
     sed -E 's#res://\.\./rust/target/(debug|release)/#res://bin/#' \
         "$src/renethack.gdextension" > "$stage/renethack.gdextension"
-    awk -v v="$VERSION" -v astc="${STAGE_ASTC:-}" '
+    awk -v v="$VERSION" '
         /^config\/version=/ { next }
         { print }
         /^config\/name=/ { print "config/version=\"" v "\"" }
-        /^\[rendering\]$/ && astc { print "textures/vram_compression/import_etc2_astc=true" }
         ' "$src/project.godot" > "$stage/project.godot"
-    # the versions; STAGE_MACOS_TEMPLATE: the template the macOS preset uses
-    awk -v num="$VERSION_NUM" -v build="$BUILD_NUM" -v tmpl="${STAGE_MACOS_TEMPLATE:-}" '
+    # the versions; for the macOS preset STAGE_MACOS_TEMPLATE, the template,
+    # and STAGE_MACOS_ARCH, the architecture asked for (macos.sh says why)
+    awk -v num="$VERSION_NUM" -v build="$BUILD_NUM" -v tmpl="${STAGE_MACOS_TEMPLATE:-}" \
+        -v arch="${STAGE_MACOS_ARCH:-}" '
         /^platform=/ { platform = $0 }
         /^\[preset\.[0-9]+\.options\]$/ { options = platform }
         /^application\/short_version=/ { $0 = "application/short_version=\"" num "\"" }
@@ -94,6 +94,9 @@ stage_project() {
         /^application\/(file|product)_version=/ { sub(/=.*/, "=\"" num "." build "\"") }
         /^custom_template\/(release|debug)=/ && options == "platform=\"macOS\"" && tmpl != "" {
             sub(/=.*/, "=\"" tmpl "\"")
+        }
+        /^binary_format\/architecture=/ && options == "platform=\"macOS\"" && arch != "" {
+            sub(/=.*/, "=\"" arch "\"")
         }
         { print }' "$src/export_presets.cfg" > "$stage/export_presets.cfg"
     say "importing the staged project"

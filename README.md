@@ -327,7 +327,11 @@ overrides it. Saves stay in Godot's user data directory, as in development.
 
 **macOS.** The dmg holds `renethack.app` and a link to `/Applications`;
 `dist/build/macos/app/renethack.app` is the Steam depot. arm64 only (Apple
-silicon; macOS 11 or newer). Signing is ad-hoc unless:
+silicon; macOS 11 or newer). Its textures are S3TC/BPTC, as in development
+and on the other platforms (Apple silicon reads them): Godot's own arm64
+export would encode them again as ASTC at nearly twice the size, so the
+stage asks for an x86_64 export from a template that holds the arm64
+binary. Signing is ad-hoc unless:
 
 - `MACOS_SIGN_IDENTITY="Developer ID Application: <name> (<team>)"` signs
   every binary with that identity, the hardened runtime and a timestamp

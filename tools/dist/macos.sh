@@ -44,12 +44,15 @@ if [ -n "$STEAM" ]; then
     [ -n "$steam_api" ] || die "the steamworks-sys build left no libsteam_api.dylib"
 fi
 
-# Godot's arm64 export wants a thin template binary; its templates are
-# universal: thinned here, once per Godot version
+# The textures: Apple silicon reads S3TC/BPTC, what the project imports and
+# development runs with, but Godot's arm64 export insists on ETC2/ASTC,
+# encoded again and nearly twice the size. So the stage asks for an x86_64
+# export, whose formats are S3TC/BPTC, from a template whose "x86_64"
+# binary is the arm64 slice of Godot's universal one (made once per Godot)
 gv=$("$GODOT" --version | cut -d. -f1-4)
 tzip="$HOME/Library/Application Support/Godot/export_templates/$gv/macos.zip"
 [ -f "$tzip" ] || die "no export templates for Godot $gv (Editor > Manage Export Templates)"
-thin=$B/template-$gv-arm64.zip
+thin=$B/template-$gv-arm64-as-x86_64.zip
 if [ ! -f "$thin" ]; then
     say "thinning Godot's macOS template to arm64"
     rm -rf "$B/template"
@@ -57,18 +60,20 @@ if [ ! -f "$thin" ]; then
     unzip -q "$tzip" -d "$B/template"
     for v in release debug; do
         bin=$B/template/macos_template.app/Contents/MacOS/godot_macos_$v
-        lipo -thin arm64 "$bin.universal" -output "$bin.arm64"
+        lipo -thin arm64 "$bin.universal" -output "$bin.x86_64"
         rm "$bin.universal"
     done
     (cd "$B/template" && zip -q -r -y "$thin" macos_template.app)
     rm -rf "$B/template"
 fi
 
-STAGE_ASTC=1 STAGE_MACOS_TEMPLATE=$thin stage_project "$B/project" "$lib"
+STAGE_MACOS_ARCH=x86_64 STAGE_MACOS_TEMPLATE=$thin stage_project "$B/project" "$lib"
 rm -rf "$B/app"
 mkdir -p "$B/app"
 APP=$B/app/renethack.app
 godot_export "$B/project" macOS "$APP"
+[ "$(lipo -archs "$APP/Contents/MacOS/renethack")" = arm64 ] \
+    || die "the exported app is not arm64: $(lipo -archs "$APP/Contents/MacOS/renethack")"
 
 say "assembling the app"
 res=$APP/Contents/Resources
