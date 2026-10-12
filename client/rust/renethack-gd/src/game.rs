@@ -2687,7 +2687,17 @@ impl RenethackGame {
     fn build_settings(&mut self, in_game: bool, at: (settings_page::Section, usize)) {
         let view = self.settings_view();
         let pad = self.pad.active.then_some(self.pad.kind);
-        let page = SettingsPage::new(view, &self.queue, at.0, at.1, pad);
+        // the controls: the gamepad's while it is in hand, else the keys
+        // of the character playing, else a new character's
+        let controls = if pad.is_some() {
+            crate::bindings::Shown::Pad
+        } else {
+            let keys = view
+                .playing_keys
+                .unwrap_or(self.settings.keys.unwrap_or_default());
+            crate::bindings::Shown::Keys(keys)
+        };
+        let page = SettingsPage::new(view, &self.queue, at.0, at.1, pad, self.pad.kind, controls);
         self.ui_mut().screens.show_settings(&page.root(), in_game);
         self.settings_page = Some(page);
     }
@@ -2747,6 +2757,11 @@ impl RenethackGame {
         match input {
             SettingsInput::Tab(s) => page.tab(s),
             SettingsInput::Focus(f) => page.focus_field(f),
+            // the controls' list is the page's own
+            SettingsInput::Step(settings_page::Field::Controls, dir) => {
+                page.focus_field(settings_page::Field::Controls);
+                page.controls_step(dir, false);
+            }
             SettingsInput::Step(f, dir) => {
                 page.focus_field(f);
                 self.settings_step(f, dir, false);

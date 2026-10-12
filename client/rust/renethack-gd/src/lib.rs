@@ -8,6 +8,7 @@ mod animator;
 mod art;
 mod audio;
 mod batch;
+mod bindings;
 mod branch_look;
 mod cues;
 mod dialogs;

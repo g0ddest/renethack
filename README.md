@@ -151,7 +151,9 @@ screen) starts on Medium, whose torches but the nearest cast no shadow.
 Sound: the volumes of the mixer's buses (`audio.rs`), each a slider the
 mouse drags. Interface: the scale (Auto, or 80–140 %;
 `RENETHACK_UI_SCALE` overrides it for a run), the keys a new character
-starts with, the language.
+starts with, the language. Controls: what the keys do, for either key
+profile, and the gamepad's buttons in the controller's own names
+(`bindings.rs`; read only, as the tables above say).
 
 The `settings` scenario changes them with the keys, the mouse's slider
 and the gamepad (the window's size and mode headless only: a window keeps

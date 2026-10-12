@@ -11,8 +11,9 @@
 //! climbs back through the presets. The interface's language draws the
 //! page again in it where it was. A gamepad's bumpers turn the section,
 //! its hints show, the d-pad and A change a row, B goes back to the
-//! title. Over a game the page opens as the HUD's gear opens it, and Esc
-//! goes back to the game. Every screen fits the canvas, every value its
+//! title. The controls list the Classic keys a new character starts with,
+//! then the gamepad's. Over a game the page opens as the HUD's gear opens
+//! it, and Esc goes back to the game. Every screen fits the canvas, every value its
 //! place.
 
 use std::sync::atomic::{AtomicU8, Ordering};
@@ -28,6 +29,7 @@ use nh_world::{
 
 use super::{PadEv, Step, fail_on_error_screen, quit, screen, start};
 use crate::audio::Bus;
+use crate::bindings::Shown;
 use crate::game::{GameState, RenethackGame, parse_args, startup_settings};
 use crate::gamepad::PadButton;
 use crate::i18n::{self, Lang};
@@ -481,12 +483,63 @@ pub(super) fn settings() -> Vec<Step> {
             let began = lang_of(BEGAN_IN.load(Ordering::Relaxed));
             Ok(i18n::lang() == began && page(g)?.section() == Section::Interface)
         }),
-        // a gamepad: LB turns back to the sound, its hints show, then to
-        // the graphics and the display; ↓↓ to vsync, A turns it off and on
-        pad_tap(PadButton::Lb),
-        Step::Wait("the sound again, a gamepad's hints", |g| {
+        // Tab: the controls, a new character's Classic keys first; → the
+        // gamepad's; ↓ through the list
+        keys!("Tab", TAB),
+        Step::Wait("the controls: the Classic keys", |g| {
             let p = page(g)?;
-            Ok(p.section() == Section::Sound && p.pad().is_some())
+            let list = p.control_texts();
+            Ok(p.section() == Section::Controls
+                && p.controls() == Shown::Keys(KeyProfile::Classic)
+                && shown(g, Field::Controls)? == tr!("controls-shown-classic")
+                && list.first().is_some_and(|e| {
+                    e.starts_with("h j k l y u b n") && e.ends_with(&tr!("controls-move"))
+                })
+                && list.iter().any(|e| e.ends_with(&tr!("controls-bar"))))
+        }),
+        Step::Shot("settings-controls"),
+        keys!("→", RIGHT),
+        Step::Wait("the gamepad's controls", |g| {
+            let p = page(g)?;
+            let list = p.control_texts();
+            Ok(p.controls() == Shown::Pad
+                && list
+                    .first()
+                    .is_some_and(|e| e.ends_with(&tr!("controls-pad-walk")))
+                && list
+                    .iter()
+                    .any(|e| e.ends_with(&tr!("controls-pad-radial"))))
+        }),
+        keys!(
+            "↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓",
+            DOWN,
+            DOWN,
+            DOWN,
+            DOWN,
+            DOWN,
+            DOWN,
+            DOWN,
+            DOWN,
+            DOWN,
+            DOWN,
+            DOWN,
+            DOWN
+        ),
+        Step::Wait("the focus down the list, the row no longer", |g| {
+            Ok(page(g)?.field().is_none())
+        }),
+        Step::Shot("settings-controls-pad"),
+        // a gamepad: LB turns back to the interface, its hints show, then
+        // to the sound, the graphics and the display; ↓↓ to vsync, A
+        // turns it off and on
+        pad_tap(PadButton::Lb),
+        Step::Wait("the interface again, a gamepad's hints", |g| {
+            let p = page(g)?;
+            Ok(p.section() == Section::Interface && p.pad().is_some())
+        }),
+        pad_tap(PadButton::Lb),
+        Step::Wait("the sound again", |g| {
+            Ok(page(g)?.section() == Section::Sound)
         }),
         pad_tap(PadButton::Lb),
         Step::Wait("the graphics again", |g| {
@@ -535,7 +588,15 @@ pub(super) fn settings() -> Vec<Step> {
             Ok(screen(g) == Some("settings")
                 && ui.screens.settings_in_game()
                 && g.state == GameState::Playing
-                && page(g)?.view().playing_keys == Some(KeyProfile::Classic))
+                && page(g)?.view().playing_keys == Some(KeyProfile::Classic)
+                // the controls: the gamepad's while it is in hand, else
+                // the character's own keys
+                && page(g)?.controls()
+                    == if g.pad.active {
+                        Shown::Pad
+                    } else {
+                        Shown::Keys(KeyProfile::Classic)
+                    })
         }),
         Step::Shot("settings-in-game"),
         keys!("Esc", ESCAPE),

@@ -1,6 +1,7 @@
 //! The settings page, from the title's button and the HUD's gear: the
 //! window and how often it is drawn, what the 3D view draws, the sound's
-//! volumes, the interface, a section at a time.
+//! volumes, the interface, and what the keys and the gamepad do (read
+//! only), a section at a time.
 //! A row is a setting, its value between arrows: ↑↓ (the d-pad) choose a
 //! row, ←→ change it, Enter (A) steps it on, Tab or PgUp/PgDn (the
 //! bumpers) turn to another section, Esc (B) goes back; the mouse clicks
@@ -15,8 +16,8 @@ use godot::classes::control::{FocusMode, MouseFilter, SizeFlags};
 use godot::classes::image::Format;
 use godot::classes::text_server::AutowrapMode;
 use godot::classes::{
-    Button, ColorRect, Control, HBoxContainer, HSlider, Image, ImageTexture, Label, PanelContainer,
-    StyleBoxFlat, Texture2D, VBoxContainer,
+    Button, ColorRect, Control, HBoxContainer, HSlider, Image, ImageTexture, Label,
+    MarginContainer, PanelContainer, ScrollContainer, StyleBoxFlat, Texture2D, VBoxContainer,
 };
 use godot::global::{HorizontalAlignment, VerticalAlignment};
 use godot::prelude::*;
@@ -26,6 +27,7 @@ use nh_world::{
 };
 
 use crate::audio::Bus;
+use crate::bindings::{Binding, Part, Shown};
 use crate::gamepad::{PadButton, PadKind};
 use crate::i18n::{self, Lang};
 use crate::pad_view;
@@ -40,14 +42,16 @@ pub enum Section {
     Graphics,
     Sound,
     Interface,
+    Controls,
 }
 
 impl Section {
-    pub const ALL: [Section; 4] = [
+    pub const ALL: [Section; 5] = [
         Section::Display,
         Section::Graphics,
         Section::Sound,
         Section::Interface,
+        Section::Controls,
     ];
 
     fn name(self) -> String {
@@ -56,6 +60,7 @@ impl Section {
             Section::Graphics => tr!("settings-graphics"),
             Section::Sound => tr!("settings-sound"),
             Section::Interface => tr!("settings-interface"),
+            Section::Controls => tr!("settings-controls"),
         }
     }
 
@@ -86,6 +91,8 @@ impl Section {
                 Field::Volume(Bus::Ui),
             ],
             Section::Interface => &[Field::UiScale, Field::Keys, Field::Language],
+            // and under it, the list it chooses
+            Section::Controls => &[Field::Controls],
         }
     }
 }
@@ -112,6 +119,8 @@ pub enum Field {
     /// A new character's keys.
     Keys,
     Language,
+    /// Which controls the list shows: a key profile's, or the gamepad's.
+    Controls,
 }
 
 impl Field {
@@ -137,6 +146,7 @@ impl Field {
             Field::UiScale => tr!("settings-ui-scale"),
             Field::Keys => tr!("settings-keys"),
             Field::Language => tr!("settings-language"),
+            Field::Controls => tr!("controls-show"),
         }
     }
 
@@ -180,6 +190,7 @@ impl Field {
                 }
             }
             Field::Language => tr!("settings-language-about"),
+            Field::Controls => tr!("controls-show-about"),
         }
     }
 }
@@ -315,6 +326,17 @@ pub fn value_text(field: Field, v: &View) -> String {
             KeyProfile::Classic => tr!("settings-keys-classic"),
         },
         Field::Language => v.lang.name().to_string(),
+        // the page's own choice (`SettingsPage::show`)
+        Field::Controls => String::new(),
+    }
+}
+
+/// What the controls' list shows, as its row names it.
+fn shown_text(shown: Shown) -> String {
+    match shown {
+        Shown::Keys(KeyProfile::Modern) => tr!("controls-shown-modern"),
+        Shown::Keys(KeyProfile::Classic) => tr!("controls-shown-classic"),
+        Shown::Pad => tr!("controls-shown-pad"),
     }
 }
 
@@ -399,6 +421,8 @@ pub fn step(field: Field, v: &View, dir: i32, wrap: bool) -> Option<Change> {
             let lang = step_through(&Lang::ALL, v.lang, dir, wrap);
             return (lang != v.lang).then_some(Change::Lang(lang));
         }
+        // the page's own (`SettingsPage::controls_step`)
+        Field::Controls => return None,
     }
     (s != v.settings).then_some(Change::Settings(s))
 }
@@ -462,6 +486,13 @@ pub struct SettingsPage {
     tab_current: Gd<StyleBoxFlat>,
     /// The gamepad whose buttons the hints show (None: the keyboard's).
     pad: Option<PadKind>,
+    /// The gamepad whose buttons the controls show (the last one used).
+    pad_kind: PadKind,
+    /// The controls' list: what it shows, its scroll, its entries.
+    controls: Shown,
+    scroll: Gd<ScrollContainer>,
+    list: Gd<VBoxContainer>,
+    entries: Vec<Gd<PanelContainer>>,
 }
 
 fn flat(bg: Color, border: Option<(Side, i32, Color)>) -> Gd<StyleBoxFlat> {
@@ -674,6 +705,92 @@ fn volume_slider(bus: Bus, queue: &UiQueue) -> Gd<HSlider> {
     s
 }
 
+/// A key's cap: its name as keyboards print it, in a dark frame.
+fn keycap(name: &str) -> Gd<PanelContainer> {
+    let mut cap = PanelContainer::new_alloc();
+    cap.set_mouse_filter(MouseFilter::IGNORE);
+    let mut sb = StyleBoxFlat::new_gd();
+    sb.set_bg_color(Color::from_rgba(0.10, 0.08, 0.06, 1.0));
+    sb.set_border_width_all(1);
+    sb.set_border_color(Color {
+        a: 0.7,
+        ..theme::TEXT_DIM
+    });
+    sb.set_corner_radius_all(4);
+    sb.set_content_margin(Side::LEFT, 7.0);
+    sb.set_content_margin(Side::RIGHT, 7.0);
+    sb.set_content_margin(Side::TOP, 1.0);
+    sb.set_content_margin(Side::BOTTOM, 1.0);
+    cap.add_theme_stylebox_override("panel", &sb);
+    cap.set_custom_minimum_size(Vector2::new(28.0, 28.0));
+    let mut l = theme::styled_label(name, Face::BodyBold, 15, theme::TEXT);
+    l.set_horizontal_alignment(HorizontalAlignment::CENTER);
+    l.set_vertical_alignment(VerticalAlignment::CENTER);
+    // the name printed on the key
+    i18n::verbatim(&l);
+    cap.add_child(&l);
+    cap
+}
+
+/// The controls' input cell's width, and an entry's height at least.
+const INPUT_W: f32 = 440.0;
+const ENTRY_H: f32 = 38.0;
+
+/// An entry of the controls' list: its input drawn on the left (key caps,
+/// the gamepad's buttons, words), what it does on the right.
+fn entry(binding: &Binding, kind: PadKind, normal: &Gd<StyleBoxFlat>) -> Gd<PanelContainer> {
+    let mut e = PanelContainer::new_alloc();
+    // the wheel goes through to the list's scroll
+    e.set_mouse_filter(MouseFilter::PASS);
+    // as tall with words alone as with key caps
+    e.set_custom_minimum_size(Vector2::new(0.0, ENTRY_H));
+    e.add_theme_stylebox_override("panel", normal);
+    let mut line = HBoxContainer::new_alloc();
+    line.set_mouse_filter(MouseFilter::IGNORE);
+    line.add_theme_constant_override("separation", 16);
+    let mut pad = MarginContainer::new_alloc();
+    pad.set_mouse_filter(MouseFilter::IGNORE);
+    for (side, px) in [("left", 18), ("right", 10), ("top", 4), ("bottom", 4)] {
+        pad.add_theme_constant_override(&format!("margin_{side}"), px);
+    }
+    let mut input = HBoxContainer::new_alloc();
+    input.set_mouse_filter(MouseFilter::IGNORE);
+    input.add_theme_constant_override("separation", 4);
+    input.set_custom_minimum_size(Vector2::new(INPUT_W, 0.0));
+    for &part in binding.input {
+        match part {
+            Part::Key(name) => input.add_child(&keycap(name)),
+            Part::Pad(b) => input.add_child(&pad_view::medallion(kind, b)),
+            Part::Words(id) => {
+                let mut l = theme::styled_label(&i18n::tr(id), Face::Body, 16, theme::TEXT_DIM);
+                l.set_vertical_alignment(VerticalAlignment::CENTER);
+                input.add_child(&l);
+            }
+            Part::Plus | Part::Or | Part::Through => {
+                let mark = match part {
+                    Part::Plus => "+",
+                    Part::Or => "/",
+                    _ => "–",
+                };
+                let mut l = theme::styled_label(mark, Face::Body, 16, theme::TEXT_DIM);
+                l.set_vertical_alignment(VerticalAlignment::CENTER);
+                // a mark, the same in every language
+                i18n::verbatim(&l);
+                input.add_child(&l);
+            }
+        }
+    }
+    line.add_child(&input);
+    let mut action = theme::styled_label(&i18n::tr(binding.action), Face::Body, 17, theme::TEXT);
+    action.set_vertical_alignment(VerticalAlignment::CENTER);
+    action.set_autowrap_mode(AutowrapMode::WORD_SMART);
+    action.set_h_size_flags(SizeFlags::EXPAND_FILL);
+    line.add_child(&action);
+    pad.add_child(&line);
+    e.add_child(&pad);
+    e
+}
+
 impl SettingsPage {
     /// The page showing `view`, open on `section` with the focus on its
     /// `focus`-th row; the hints for a gamepad of `pad`'s kind, else for
@@ -684,6 +801,8 @@ impl SettingsPage {
         section: Section,
         focus: usize,
         pad: Option<PadKind>,
+        pad_kind: PadKind,
+        controls: Shown,
     ) -> SettingsPage {
         let mut root = theme::framed(Frame::Panel);
         root.set_mouse_filter(MouseFilter::STOP);
@@ -694,16 +813,21 @@ impl SettingsPage {
         col.add_child(&title);
 
         // the sections' tabs, the current one underlined in gold
-        let tab_normal = flat(Color::from_rgba(0.0, 0.0, 0.0, 0.0), None);
-        let tab_current = flat(
+        let mut tab_normal = flat(Color::from_rgba(0.0, 0.0, 0.0, 0.0), None);
+        let mut tab_current = flat(
             Color {
                 a: 0.12,
                 ..theme::ACCENT
             },
             Some((Side::BOTTOM, 2, theme::GOLD_BRIGHT)),
         );
+        // a long name (Russian's) keeps clear of its neighbours
+        for sb in [&mut tab_normal, &mut tab_current] {
+            sb.set_content_margin(Side::LEFT, 14.0);
+            sb.set_content_margin(Side::RIGHT, 14.0);
+        }
         let mut tab_row = HBoxContainer::new_alloc();
-        tab_row.add_theme_constant_override("separation", 6);
+        tab_row.add_theme_constant_override("separation", 8);
         let mut tabs = Vec::new();
         for s in Section::ALL {
             let mut b = Button::new_alloc();
@@ -748,13 +872,29 @@ impl SettingsPage {
         holder.set_custom_minimum_size(Vector2::new(0.0, most * (ROW_H + ROW_GAP as f32)));
         let mut bodies = Vec::new();
         let mut rows = Vec::new();
+        let mut scroll = ScrollContainer::new_alloc();
+        let list = VBoxContainer::new_alloc();
         for s in Section::ALL {
             let mut body = VBoxContainer::new_alloc();
             body.add_theme_constant_override("separation", ROW_GAP);
+            body.set_v_size_flags(SizeFlags::EXPAND_FILL);
             for &field in s.fields() {
                 let row = Self::row(field, queue, &row_normal);
                 body.add_child(&row.button);
                 rows.push(row);
+            }
+            if s == Section::Controls {
+                // the list under its row, scrolled in the room the
+                // sections share
+                scroll.set_v_size_flags(SizeFlags::EXPAND_FILL);
+                scroll.set_horizontal_scroll_mode(
+                    godot::classes::scroll_container::ScrollMode::DISABLED,
+                );
+                let mut list = list.clone();
+                list.add_theme_constant_override("separation", 2);
+                list.set_h_size_flags(SizeFlags::EXPAND_FILL);
+                scroll.add_child(&list);
+                body.add_child(&scroll);
             }
             holder.add_child(&body);
             bodies.push((s, body));
@@ -794,10 +934,80 @@ impl SettingsPage {
             tab_normal,
             tab_current,
             pad,
+            pad_kind,
+            controls,
+            scroll,
+            list,
+            entries: Vec::new(),
         };
+        page.fill_controls();
         page.show(&view);
         page.turn_to(section, focus);
         page
+    }
+
+    /// The controls' list for what it shows now.
+    fn fill_controls(&mut self) {
+        for mut e in self.entries.drain(..) {
+            e.queue_free();
+        }
+        for binding in self.controls.bindings() {
+            let e = entry(&binding, self.pad_kind, &self.row_normal);
+            self.list.add_child(&e);
+            self.entries.push(e);
+        }
+        let text = shown_text(self.controls);
+        if let Some(r) = self.rows.iter_mut().find(|r| r.field == Field::Controls) {
+            r.value.set_text(&text);
+        }
+    }
+
+    /// The controls' row a step on or back: another list.
+    pub fn controls_step(&mut self, dir: i32, wrap: bool) {
+        let next = step_through(&Shown::ALL, self.controls, dir, wrap);
+        if next != self.controls {
+            self.controls = next;
+            self.fill_controls();
+            self.scroll.set_v_scroll(0);
+            self.style_rows();
+        }
+    }
+
+    /// What the controls' list shows (self-tests).
+    pub fn controls(&self) -> Shown {
+        self.controls
+    }
+
+    /// The controls' list as the player reads it: each entry's input and
+    /// action (self-tests).
+    pub fn control_texts(&self) -> Vec<String> {
+        fn texts(node: &Gd<godot::classes::Node>, out: &mut Vec<String>) {
+            if let Ok(l) = node.clone().try_cast::<Label>() {
+                out.push(l.get_text().to_string());
+            }
+            for c in node.get_children().iter_shared() {
+                texts(&c, out);
+            }
+        }
+        self.entries
+            .iter()
+            .map(|e| {
+                let mut out = Vec::new();
+                texts(&e.clone().upcast(), &mut out);
+                out.join(" ")
+            })
+            .collect()
+    }
+
+    /// The rows the focus moves through: the section's, and the controls'
+    /// entries under their row.
+    fn row_count(&self) -> usize {
+        let n = self.section.fields().len();
+        if self.section == Section::Controls {
+            n + self.entries.len()
+        } else {
+            n
+        }
     }
 
     /// A row of `field`: its name on the left, its value between arrows
@@ -924,8 +1134,13 @@ impl SettingsPage {
     /// dimmed, its arrows gone.
     pub fn show(&mut self, view: &View) {
         self.view = view.clone();
+        let controls = shown_text(self.controls);
         for r in &mut self.rows {
-            r.value.set_text(&value_text(r.field, view));
+            r.value.set_text(&if r.field == Field::Controls {
+                controls.clone()
+            } else {
+                value_text(r.field, view)
+            });
             if let (Field::Volume(bus), Some(s)) = (r.field, r.slider.as_mut()) {
                 // no signal: the slider only tells of the player's drags
                 s.set_value_no_signal(f64::from(view.volume(bus)));
@@ -961,10 +1176,11 @@ impl SettingsPage {
     }
 
     fn show_about(&mut self) {
-        let text = self
+        // in the controls' list, what its row says
+        let field = self
             .field()
-            .map(|f| f.about(&self.view))
-            .unwrap_or_default();
+            .or((self.section == Section::Controls).then_some(Field::Controls));
+        let text = field.map(|f| f.about(&self.view)).unwrap_or_default();
         self.about.set_text(&text);
     }
 
@@ -992,8 +1208,7 @@ impl SettingsPage {
             tab.add_theme_color_override("font_color", color);
             tab.add_theme_color_override("font_pressed_color", color);
         }
-        let n = section.fields().len();
-        self.focus = focus.min(n.saturating_sub(1));
+        self.focus = focus.min(self.row_count().saturating_sub(1));
         self.style_rows();
         self.show_about();
     }
@@ -1007,6 +1222,24 @@ impl SettingsPage {
                 &self.row_normal
             };
             style_all(&mut r.button, sb);
+        }
+        // an entry of the controls' list with the focus: framed, in view
+        let first = self.section.fields().len();
+        let at =
+            (self.section == Section::Controls && self.focus >= first).then(|| self.focus - first);
+        for (i, e) in self.entries.iter_mut().enumerate() {
+            let sb = if Some(i) == at {
+                &self.row_current
+            } else {
+                &self.row_normal
+            };
+            e.add_theme_stylebox_override("panel", sb);
+        }
+        if let Some(e) = at.and_then(|i| self.entries.get(i)) {
+            self.scroll
+                .call_deferred("ensure_control_visible", &[e.to_variant()]);
+        } else if at.is_none() && self.section == Section::Controls {
+            self.scroll.set_v_scroll(0);
         }
     }
 
@@ -1054,7 +1287,20 @@ impl SettingsPage {
     /// A key: ↑↓ choose a row, Tab and PgUp/PgDn a section (here); ←→
     /// and Enter change the row's value and Esc goes back (the game's).
     pub fn key(&mut self, k: &KeyInput) -> Option<PageKey> {
-        let n = self.section.fields().len();
+        let n = self.row_count();
+        // the controls' row changes the list here
+        if self.field() == Some(Field::Controls) {
+            let step = match k.key {
+                Key::Left => Some((-1, false)),
+                Key::Right => Some((1, false)),
+                Key::Enter | Key::KeypadEnter | Key::Char(' ') if !k.echo => Some((1, true)),
+                _ => None,
+            };
+            if let Some((dir, wrap)) = step {
+                self.controls_step(dir, wrap);
+                return None;
+            }
+        }
         match k.key {
             Key::Up if n > 0 => {
                 self.focus = (self.focus + n - 1) % n;
