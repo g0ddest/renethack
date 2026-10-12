@@ -1,5 +1,5 @@
 {
-  "comment": "The sounds tools/fetch_audio.py fetches: files and archives (zip, 7z, rar) at fixed URLs or itch.io uploads; the files picked from under `root` by pattern are prepared by their kind (targets: loudness in LUFS, true-peak ceiling in dBTP, channels, format, Vorbis quality) and written to <dest>, cc0/ or ccby/ by licence. sfx: trimmed mono WAV; loop, music, jingle: stereo Ogg; mono: an Ogg as mono WAV (Kenney's placeholders); keep: as it is. Optional per item: cut [start, end] s, split (takes cut at silences), seam s (a loop's crossfade), gain dB, rename; each a value or a map by file. mixes: ambience beds made of layers (sources by id). credit: what CREDITS.md says. audio.lock.json records each download's sha256.",
+  "comment": "The sounds tools/fetch_audio.py fetches: files and archives (zip, 7z, rar) at fixed URLs or itch.io uploads; the files picked from under `root` by pattern are prepared by their kind (targets: loudness in LUFS, true-peak ceiling in dBTP, channels, format, Vorbis quality) and written to <dest>, cc0/ or ccby/ by licence. sfx: trimmed mono WAV; loop, music, jingle: stereo Ogg; mono: an Ogg as mono WAV (Kenney's placeholders); keep: as it is. Optional per item: cut [start, end] s, max s (a long ring cut short), split (takes cut at silences), seam s (a loop's crossfade), gain dB, rename; each a value or a map by file. mixes: ambience beds made of layers (sources by id). credit: what CREDITS.md says. audio.lock.json records each download's sha256.",
   "roots": ["cc0", "ccby"],
   "targets": {
     "sfx": {"lufs": -18, "ceiling": -1, "channels": 1, "format": "wav"},
@@ -11,13 +11,13 @@
     {
       "url": "https://kenney.nl/media/pages/assets/impact-sounds/87b4ddecda-1677589768/kenney_impact-sounds.zip",
       "root": "Audio/",
-      "files": ["impactBell_heavy_00[0-2].ogg", "impactGeneric_light_*.ogg", "impactGlass_light_*.ogg", "impactMetal_heavy_*.ogg", "impactMining_*.ogg", "impactPlank_medium_*.ogg", "impactPlate_light_*.ogg", "impactPunch_*.ogg", "impactSoft_*.ogg", "impactWood_heavy_*.ogg"],
+      "files": ["impactBell_heavy_00[0-2].ogg", "impactGeneric_light_*.ogg", "impactGlass_light_*.ogg", "impactMetal_heavy_*.ogg", "impactMining_*.ogg", "impactPlank_medium_*.ogg", "impactPunch_heavy_*.ogg", "impactSoft_*.ogg", "impactWood_heavy_*.ogg"],
       "license_files": ["License.txt"],
       "dest": "cc0/kenney/impact",
       "kind": "mono",
       "use": "blows, falls, doors kicked, bells; a hoof's and a skittering step until better",
       "credit": {
-        "what": "Impact Sounds: footsteps, impacts of flesh, wood, metal, glass and stone, bells",
+        "what": "Impact Sounds: impacts of flesh, wood, metal, glass and stone, bells",
         "author": "Kenney",
         "license": "CC0",
         "page": "https://kenney.nl/assets/impact-sounds"
@@ -26,13 +26,13 @@
     {
       "url": "https://kenney.nl/media/pages/assets/rpg-audio/8e99002d76-1677590336/kenney_rpg-audio.zip",
       "root": "Audio/",
-      "files": ["beltHandle[12].ogg", "book*.ogg", "chop.ogg", "cloth[1-4].ogg", "clothBelt*.ogg", "creak[1-3].ogg", "doorClose_[1-4].ogg", "doorOpen_[12].ogg", "drawKnife[1-3].ogg", "dropLeather.ogg", "handleCoins*.ogg", "handleSmallLeather*.ogg", "knifeSlice*.ogg", "metalClick.ogg", "metalLatch.ogg"],
+      "files": ["beltHandle[12].ogg", "book*.ogg", "cloth[1-4].ogg", "clothBelt*.ogg", "creak[1-3].ogg", "doorClose_[1-4].ogg", "doorOpen_[12].ogg", "drawKnife[1-3].ogg", "dropLeather.ogg", "handleCoins*.ogg", "handleSmallLeather*.ogg", "knifeSlice*.ogg", "metalClick.ogg", "metalLatch.ogg"],
       "license_files": ["License.txt"],
       "dest": "cc0/kenney/rpg",
       "kind": "mono",
       "use": "doors, coins, books, cloth and leather, blades drawn and slicing, a creaking board",
       "credit": {
-        "what": "RPG Audio: doors, coins, books, cloth and leather, blades, a creaking board, footsteps",
+        "what": "RPG Audio: doors, coins, books, cloth and leather, blades, a creaking board",
         "author": "Kenney",
         "license": "CC0",
         "page": "https://kenney.nl/assets/rpg-audio"
@@ -153,6 +153,200 @@
         "author": "rubberduck",
         "license": "CC0",
         "page": "https://opengameart.org/content/25-cc0-mud-sfx"
+      }
+    },
+    {
+      "itch": {
+        "page": "https://thesoundrack.itch.io/swords-blades-sound-pack",
+        "upload": "Swords & Blades SFX Pack.rar"
+      },
+      "root": "Swords & Blades/",
+      "files": ["Sword Whoosh/Sword Whoosh 01.wav", "Sword Whoosh/Sword Whoosh 02.wav", "Sword Whoosh/Sword Whoosh 03.wav", "Sword Whoosh/Sword Whoosh 04.wav", "Sword Whoosh/Sword Whoosh 05.wav", "Sword Whoosh/Sword Whoosh 06.wav", "Sword Whoosh/Sword Whoosh 07.wav", "Sword Whoosh/Sword Whoosh 08.wav"],
+      "dest": "ccby/thesoundrack/swords",
+      "kind": "sfx",
+      "use": "a blade swung",
+      "credit": {
+        "what": "Swords & Blades Sound Pack: whooshes, impacts, blades drawn and sliding",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/swords-blades-sound-pack"
+      },
+      "max": 1.0
+    },
+    {
+      "itch": {
+        "page": "https://thesoundrack.itch.io/swords-blades-sound-pack",
+        "upload": "Swords & Blades SFX Pack.rar"
+      },
+      "root": "Swords & Blades/",
+      "files": ["Sword Impact/Sword Impact 0[1-8].wav"],
+      "dest": "ccby/thesoundrack/swords",
+      "kind": "sfx",
+      "use": "an armed monster's blow landing on the hero",
+      "credit": {
+        "what": "Swords & Blades Sound Pack: whooshes, impacts, blades drawn and sliding",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/swords-blades-sound-pack"
+      },
+      "max": 1.6
+    },
+    {
+      "itch": {
+        "page": "https://thesoundrack.itch.io/swords-blades-sound-pack",
+        "upload": "Swords & Blades SFX Pack.rar"
+      },
+      "root": "Swords & Blades/",
+      "files": ["Drawn Sword/Drawn Sword 0[1-4].wav"],
+      "dest": "ccby/thesoundrack/swords",
+      "kind": "sfx",
+      "use": "a weapon wielded",
+      "credit": {
+        "what": "Swords & Blades Sound Pack: whooshes, impacts, blades drawn and sliding",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/swords-blades-sound-pack"
+      },
+      "max": 1.2
+    },
+    {
+      "itch": {
+        "page": "https://thesoundrack.itch.io/swords-blades-sound-pack",
+        "upload": "Swords & Blades SFX Pack.rar"
+      },
+      "root": "Swords & Blades/",
+      "files": ["Sword Slide/Sword Slide 0[1-4].wav"],
+      "dest": "ccby/thesoundrack/swords",
+      "kind": "sfx",
+      "use": "a claw's rake (pitched up)",
+      "credit": {
+        "what": "Swords & Blades Sound Pack: whooshes, impacts, blades drawn and sliding",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/swords-blades-sound-pack"
+      },
+      "max": 1.2
+    },
+    {
+      "itch": {"page": "https://thesoundrack.itch.io/archery-sound-pack", "upload": "Archery SFX Pack.rar"},
+      "root": "Archery/",
+      "files": ["Arrow Whoosh/Arrow Whoosh 0[1-6].wav"],
+      "dest": "ccby/thesoundrack/archery",
+      "kind": "sfx",
+      "use": "an arrow or a dart loosed",
+      "credit": {
+        "what": "Archery Sound Pack: arrows in flight and striking",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/archery-sound-pack"
+      }
+    },
+    {
+      "itch": {"page": "https://thesoundrack.itch.io/archery-sound-pack", "upload": "Archery SFX Pack.rar"},
+      "root": "Archery/",
+      "files": ["Arrow Impact/Arrow Impact 0[1-6].wav"],
+      "dest": "ccby/thesoundrack/archery",
+      "kind": "sfx",
+      "use": "a pierce landing (arrows, spears)",
+      "credit": {
+        "what": "Archery Sound Pack: arrows in flight and striking",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/archery-sound-pack"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/fleshy_fight_sounds.zip",
+      "files": ["sword-*.wav", "piercing-*.wav"],
+      "dest": "ccby/will_leamon/fleshy",
+      "kind": "sfx",
+      "use": "a blade's and a point's blow landing",
+      "credit": {
+        "what": "Fleshy Fight Sounds: sword, hammer, piercing and punch hits",
+        "author": "will_leamon",
+        "license": "OGA-BY 3.0",
+        "page": "https://opengameart.org/content/fleshy-fight-sounds"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/fleshy_fight_sounds.zip",
+      "files": ["hammer-*.wav", "punch*.wav"],
+      "dest": "ccby/will_leamon/fleshy",
+      "kind": "sfx",
+      "use": "a blunt blow and a fist landing",
+      "credit": {
+        "what": "Fleshy Fight Sounds: sword, hammer, piercing and punch hits",
+        "author": "will_leamon",
+        "license": "OGA-BY 3.0",
+        "page": "https://opengameart.org/content/fleshy-fight-sounds"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/swoshes.7z",
+      "files": ["swosh-01.flac", "swosh-05.flac", "swosh-06.flac", "swosh-07.flac", "swosh-08.flac", "swosh-11.flac", "swosh-12.flac", "swosh-14.flac", "swosh-15.flac", "swosh-16.flac", "swosh-17.flac", "swosh-20.flac"],
+      "dest": "cc0/qubodup/swoosh",
+      "kind": "sfx",
+      "use": "swings: fists, clubs, anything not a blade",
+      "credit": {
+        "what": "Swish - bamboo stick weapon swooshes",
+        "author": "Iwan Gabovitch (qubodup)",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/swish-bamboo-stick-weapon-swhoshes"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/swoshes.7z",
+      "files": ["swosh-24.flac", "swosh-29.flac", "swosh-30.flac", "swosh-33.flac", "swosh-34.flac", "swosh-38.flac"],
+      "dest": "cc0/qubodup/swoosh",
+      "kind": "sfx",
+      "use": "heavy swings: axes, two-handed weapons",
+      "credit": {
+        "what": "Swish - bamboo stick weapon swooshes",
+        "author": "Iwan Gabovitch (qubodup)",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/swish-bamboo-stick-weapon-swhoshes"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/swishes.zip",
+      "root": "swishes/",
+      "files": ["swish-*.wav"],
+      "dest": "cc0/artisticdude/swishes",
+      "kind": "sfx",
+      "use": "a blow that misses",
+      "credit": {
+        "what": "Swishes Sound Pack",
+        "author": "artisticdude",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/swishes-sound-pack"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/wet_towel_on_body.7z",
+      "root": "wet_towel_on_body/",
+      "files": ["wet_towel_on_body-01.flac", "wet_towel_on_body-07.flac", "wet_towel_on_body-13.flac", "wet_towel_on_body-19.flac"],
+      "dest": "cc0/qubodup/towel",
+      "kind": "sfx",
+      "use": "a soft touch landing (a ghost's, a lichen's)",
+      "credit": {
+        "what": "40 wet towel club/pound/hit/attack sounds",
+        "author": "Iwan Gabovitch (qubodup)",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/40-wet-towel-clubpoundhitattack-sounds"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/rpg_sound_pack.zip",
+      "root": "RPG Sound Pack/NPC/beetle/",
+      "files": ["bite-small*.wav"],
+      "dest": "cc0/artisticdude/rpg",
+      "kind": "sfx",
+      "use": "a bite",
+      "credit": {
+        "what": "RPG Sound Pack: a beetle's bites",
+        "author": "artisticdude",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/rpg-sound-pack"
       }
     }
   ],

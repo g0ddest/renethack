@@ -43,6 +43,7 @@ import ctypes
 import ctypes.util
 import fnmatch
 import hashlib
+import html
 import http.cookiejar
 import io
 import json
@@ -94,14 +95,14 @@ def fetch(op, url, data=None, timeout=1800):
 
 def itch_upload(op, page, upload):
     """The free file `upload` of an itch.io page whose minimum price is 0."""
-    token = lambda html: re.search(r'name="csrf_token" value="([^"]*)"', html).group(1)
-    html = fetch(op, page).decode()
-    if '"min_price":0' not in html:
+    token = lambda text: re.search(r'name="csrf_token" value="([^"]*)"', text).group(1)
+    text = fetch(op, page).decode()
+    if '"min_price":0' not in text:
         raise SystemExit(f"{page} is not free to download")
-    dl = json.loads(fetch(op, page + "/download_url", {"csrf_token": token(html)}))["url"]
+    dl = json.loads(fetch(op, page + "/download_url", {"csrf_token": token(text)}))["url"]
     dhtml = fetch(op, dl).decode()
     for uid, title in re.findall(r'data-upload_id="(\d+)".*?title="([^"]*)"', dhtml, re.S):
-        if title == upload:
+        if html.unescape(title) == upload:
             r = json.loads(fetch(op, f"{page}/file/{uid}?source=game_download"
                                      "&after_download_lightbox=1&as_props=1",
                                  {"csrf_token": token(dhtml)}))
@@ -530,6 +531,11 @@ def prepare(recipe, item, rel, data, name):
     for i, p in enumerate(parts):
         if item["kind"] in ("sfx", "jingle"):
             p = trim(p, ch)
+        longest = per_file(item.get("max"), rel, None)
+        if longest and len(p) > longest * RATE * ch:
+            # a long ring cut short, faded out
+            p = p[:int(longest * RATE) * ch]
+            fade(p, ch, 0.0, min(0.3, longest / 4))
         seam = per_file(item.get("seam"), rel, 0)
         if seam:
             p = loop_seam(p, ch, seam)
@@ -596,7 +602,10 @@ def do_source(op, w, recipe, item):
         # where it lies under the root (packs keep one per folder), with
         # the line ends git keeps (LF), so that a run changes nothing
         rel = lic[len(root):] if lic.startswith(root) else os.path.basename(lic)
-        w.put(f"{item['dest']}/{rel}", files[lic].replace(b"\r\n", b"\n"))
+        text = files[lic]
+        while b"\r\n" in text:  # "\r\r\n" too
+            text = text.replace(b"\r\n", b"\n")
+        w.put(f"{item['dest']}/{rel}", text)
     return len(picked)
 
 
@@ -699,14 +708,15 @@ def write_credits(recipe):
         free = c["license"] in ("CC0", "public domain")
         if "dest" in s and s["dest"].startswith("cc0/") != free:
             raise SystemExit(f"{what}: {c['license']} goes under " + ("cc0/" if free else "ccby/"))
-        rows["cc0" if free else "ccby"].add(
-            f"| {where} | {c['what']} | {c['author']} | {c['license']} | {c['page']} | "
-            f"{c.get('notice', '')} |")
+        # the credits page shows What, Author and Source: the licence and
+        # what the author asks to be said go with the author
+        by = f"{c['author']}, {c['license']}" + (f"; {c['notice']}" if c.get("notice") else "")
+        rows["cc0" if free else "ccby"].add(f"| {where} | {c['what']} | {by} | {c['page']} |")
     text = CREDITS_HEAD
     for title, key in (("Public domain", "cc0"), ("Creative Commons Attribution", "ccby")):
         if rows[key]:
-            text += (f"\n## {title}\n\n| Where | What | Author | Licence | Source | Notice |\n"
-                     "|---|---|---|---|---|---|\n" + "\n".join(sorted(rows[key])) + "\n")
+            text += (f"\n## {title}\n\n| Where | What | Author | Source |\n"
+                     "|---|---|---|---|\n" + "\n".join(sorted(rows[key])) + "\n")
     if recipe.get("mixes"):
         text += "\n## Mixes\n\n| File | What | Made from |\n|---|---|---|\n"
         text += "".join(f"| `{m['out']}` | {m['what']} | {m['made_from']} |\n"
