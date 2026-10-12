@@ -25,6 +25,41 @@ pub(super) const LEGS: [&str; 4] = ["LegFL", "LegFR", "LegBL", "LegBR"];
 /// A six-legged creature's middle legs, left and right.
 const MIDDLE_LEGS: [&str; 2] = ["LegML", "LegMR"];
 
+/// The shader a weather's funnel, puffs and wind are drawn with, and the
+/// torches' flame shader a fire elemental's flames are.
+const WIND_SHADER: &str = "res://shaders/vortex.gdshader";
+const FLAME_SHADER: &str = "res://shaders/flame.gdshader";
+
+/// A fire elemental's tongues of flame: where each stands (its foot), how
+/// wide and how tall it is; its legs, its body, its arms, its head (a
+/// flame's picture is brightest at its foot: each stands in the one under
+/// it, and where they overlap it burns hotter).
+const TONGUES: [([f32; 3], f32, f32); 6] = [
+    ([-0.11, 0.0, 0.03], 0.36, 0.55),
+    ([0.11, 0.0, -0.03], 0.36, 0.55),
+    ([0.0, 0.16, 0.0], 0.56, 0.85),
+    ([-0.3, 0.36, 0.0], 0.28, 0.44),
+    ([0.3, 0.36, 0.0], 0.28, 0.44),
+    ([0.0, 0.52, 0.02], 0.34, 0.48),
+];
+
+/// How a weather's funnel, puffs or wind are drawn (the weather shader's
+/// parameters): its colour, its own light, the bands round it, the turns
+/// they make from its foot to its top, how fast they flow, how dense it
+/// is, whether it is a cloud, soft at its rims, and the turns a second it
+/// spins.
+#[derive(Clone, Copy)]
+struct Wind {
+    color: Color,
+    glow: f32,
+    bands: f32,
+    twist: f32,
+    speed: f32,
+    density: f32,
+    soft: bool,
+    spin: f32,
+}
+
 /// What a vortex or an elemental is made of, by its model's shape.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum Weather {
@@ -384,12 +419,22 @@ impl Kit<'_> {
         );
     }
 
-    /// A vortex or an elemental: weather turning as one about its middle
-    /// (the Body pivot spins), bands or puffs of its stuff seen through,
-    /// motes of it whirled round in it.
+    /// A vortex or an elemental: weather turning about its middle, its
+    /// funnel, puffs or wind seen through and banded by the weather shader
+    /// (which spins it, the bands flowing round and up it), what it
+    /// carries and motes of its stuff whirled round with it (the Body
+    /// pivot spins); a fire elemental is a figure of the torches' flames
+    /// instead, standing still while its embers whirl.
     pub(super) fn weather(&mut self, root: &mut Gd<Node3D>, w: Weather) {
         use weather::Part::*;
         let mut body = self.pivot(root, "Body", [0.0; 3]);
+        let shape_of = |p| MeshKey::Organic(Organic::Weather(p));
+        if w == Weather::Flame {
+            let mut figure = self.pivot(root, "Figure", [0.0; 3]);
+            self.flames(&mut figure);
+            self.motes(&mut body, w);
+            return;
+        }
         let tint = self.tint;
         let pale = |k: f32| {
             Color::from_rgb(
@@ -398,52 +443,117 @@ impl Kit<'_> {
                 tint.b + (1.0 - tint.b) * k,
             )
         };
-        // what glows is drawn unshaded and seen through, its core hotter;
-        // the rest is shaded and seen through like a ghost, its core and
-        // what it carries denser
-        let rgba = |c: Color, a: f32| c.with_alpha(a);
-        let (bands, core): (Gd<Material>, Option<Gd<Material>>) = match w {
-            Weather::Fire | Weather::Flame => (
-                self.art
-                    .flat(rgba(Color::from_rgb(1.0, 0.5, 0.12), 0.5), Finish::Flat),
-                Some(
-                    self.art
-                        .flat(rgba(Color::from_rgb(1.0, 0.86, 0.45), 0.8), Finish::Flat),
-                ),
-            ),
-            Weather::Energy => (
-                self.art.flat(rgba(pale(0.2), 0.45), Finish::Flat),
-                Some(
-                    self.art
-                        .flat(rgba(Color::from_rgb(0.85, 0.94, 1.0), 0.85), Finish::Flat),
-                ),
-            ),
-            Weather::Dust => (self.art.flat(tint, Finish::Ghost), Some(self.dark())),
-            Weather::Ice => (
-                self.art.flat(pale(0.3), Finish::Ghost),
-                Some(self.art.flat(pale(0.75), Finish::Glossy)),
-            ),
-            Weather::Steam => (self.art.flat(pale(0.55), Finish::Ghost), None),
-            Weather::Fog | Weather::Air => (self.art.flat(pale(0.2), Finish::Ghost), None),
+        let wind = |color, glow, bands, speed| Wind {
+            color,
+            glow,
+            bands,
+            twist: 1.5,
+            speed,
+            density: 0.6,
+            soft: false,
+            spin: 1.0 / WAVE_PERIOD,
         };
-        let shape_of = |p| MeshKey::Organic(Organic::Weather(p));
+        let look = match w {
+            Weather::Fire => wind(Color::from_rgb(1.0, 0.5, 0.12), 2.0, 3.0, 0.7),
+            Weather::Energy => wind(pale(0.2), 2.2, 4.0, 0.8),
+            Weather::Dust => Wind {
+                density: 0.75,
+                ..wind(tint, 0.0, 3.0, 0.5)
+            },
+            Weather::Ice => wind(pale(0.3), 0.25, 3.0, 0.5),
+            Weather::Steam => Wind {
+                density: 0.5,
+                ..wind(pale(0.55), 0.0, 2.0, 0.35)
+            },
+            Weather::Fog => Wind {
+                density: 0.3,
+                soft: true,
+                spin: 0.1,
+                ..wind(pale(0.2), 0.0, 0.0, 0.2)
+            },
+            Weather::Air | Weather::Flame => wind(pale(0.2), 0.0, 3.0, 0.6),
+        };
         let main = match w {
             Weather::Fog => Fog,
             Weather::Air => Gale,
-            Weather::Flame => Flames,
             _ => Twister,
         };
-        self.part(&mut body, shape_of(main), &bands, FLAT, FLAT, ONE);
-        if let Some(core) = core {
-            let inner = match w {
-                Weather::Flame => Heart,
-                // stones in dust, shards in ice
-                Weather::Dust | Weather::Ice => Debris,
-                _ => Core,
-            };
-            self.part(&mut body, shape_of(inner), &core, FLAT, FLAT, ONE);
+        // the wind spins in its shader, as the Body does, its bounds still
+        // (as the footprint self-test measures them, whatever the turn)
+        let mut still = self.pivot(root, "Wind", [0.0; 3]);
+        let mesh = self.art.mesh(shape_of(main));
+        let mut mi = MeshInstance3D::new_alloc();
+        mi.set_mesh(&mesh);
+        mi.set_material_override(&self.wind(look));
+        mi.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+        // (its swaying axis turns out past them)
+        mi.set_extra_cull_margin(0.3);
+        still.add_child(&mi);
+        // stones in dust, shards in ice, a bright rope of energy
+        let carried = match w {
+            Weather::Dust => Some((Debris, self.dark())),
+            Weather::Ice => Some((Debris, self.art.flat(pale(0.75), Finish::Glossy))),
+            Weather::Energy => Some((
+                Core,
+                self.art
+                    .flat(Color::from_rgba(0.85, 0.94, 1.0, 0.85), Finish::Flat),
+            )),
+            _ => None,
+        };
+        if let Some((part, mat)) = carried {
+            self.part(&mut body, shape_of(part), &mat, FLAT, FLAT, ONE);
         }
         self.motes(&mut body, w);
+    }
+
+    /// The material of a weather's funnel, puffs or wind: the weather
+    /// shader's (a ghost's see-through finish without it, still).
+    fn wind(&mut self, look: Wind) -> Gd<Material> {
+        let Ok(shader) = godot::tools::try_load::<Shader>(WIND_SHADER) else {
+            return self.art.flat(look.color, Finish::Ghost);
+        };
+        let mut m = ShaderMaterial::new_gd();
+        m.set_shader(&shader);
+        m.set_shader_parameter("color", &look.color.to_variant());
+        m.set_shader_parameter("glow", &look.glow.to_variant());
+        m.set_shader_parameter("bands", &look.bands.to_variant());
+        m.set_shader_parameter("twist", &look.twist.to_variant());
+        m.set_shader_parameter("speed", &look.speed.to_variant());
+        m.set_shader_parameter("density", &look.density.to_variant());
+        m.set_shader_parameter("soft", &f32::from(u8::from(look.soft)).to_variant());
+        m.set_shader_parameter("spin", &look.spin.to_variant());
+        m.upcast()
+    }
+
+    /// A fire elemental's flames, the torches' own (their shader and the
+    /// pictures of their flame): a tongue for each leg, its body, each arm
+    /// and its head, each flickering in its own time.
+    fn flames(&mut self, figure: &mut Gd<Node3D>) {
+        let Ok(shader) = godot::tools::try_load::<Shader>(FLAME_SHADER) else {
+            return;
+        };
+        let mut m = ShaderMaterial::new_gd();
+        m.set_shader(&shader);
+        if let Ok(book) = godot::tools::try_load::<Texture2D>(crate::map_view::FLAME_BOOK) {
+            m.set_shader_parameter("flipbook", &book.to_variant());
+            m.set_shader_parameter("has_flipbook", &true.to_variant());
+        }
+        m.set_shader_parameter("energy", &0.75f32.to_variant());
+        // (the picture's flame is cut off flat at its foot)
+        m.set_shader_parameter("foot", &0.3f32.to_variant());
+        for (i, &(at, w, h)) in TONGUES.iter().enumerate() {
+            let mut quad = QuadMesh::new_gd();
+            quad.set_size(Vector2::new(w, h));
+            // the picture's flame rises from just above its foot
+            quad.set_center_offset(Vector3::new(0.0, h * 0.42, 0.0));
+            let mut mi = MeshInstance3D::new_alloc();
+            mi.set_mesh(&quad);
+            mi.set_material_override(&m);
+            mi.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+            mi.set_instance_shader_parameter("phase", &(i as f32 * 0.37).to_variant());
+            mi.set_position(Vector3::from_array(at));
+            figure.add_child(&mi);
+        }
     }
 
     /// Motes of a weather's stuff, whirled round it: emitted where it

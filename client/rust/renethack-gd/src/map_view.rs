@@ -325,7 +325,7 @@ const DOORS_AHEAD: usize = 2;
 const CANDLES_AHEAD: usize = 32;
 const CANDELABRAS_AHEAD: usize = 8;
 /// A flame's flipbook: 16 x 4 frames of a real flame (Unity Labs, CC0).
-const FLAME_BOOK: &str = "res://art/cc0/unity-labs/flipbooks/Flame02_16x4.png";
+pub(crate) const FLAME_BOOK: &str = "res://art/cc0/unity-labs/flipbooks/Flame02_16x4.png";
 /// The flame of a torch, bright enough to glow.
 const FLAME: Color = Color::from_rgb(1.0, 0.45, 0.12);
 /// Light spilling down up stairs from the level above, and the cold glow
@@ -635,6 +635,11 @@ pub(crate) const WARM_MONSTERS: &[&str] = &[
     "dwarf",
     "shopkeeper",
 ];
+
+/// The monsters drawn with shaders of their own (a vortex's wind, a fire
+/// elemental's flames): the rehearsal draws one of each, so the first met
+/// in a game compiles nothing.
+pub(crate) const SHADED_MONSTERS: &[&str] = &["dust vortex", "fire elemental"];
 
 /// The monster a role's hero is drawn as.
 pub(crate) fn role_monster(role: &str) -> &str {

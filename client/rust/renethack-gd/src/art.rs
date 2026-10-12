@@ -874,27 +874,44 @@ impl Art {
     pub fn footprint(&mut self, look: &ModelLook) -> [f32; 2] {
         let spent = self.spent.take();
         let mut m = self.take(look);
-        // as it stands: its idle's pose on the bones now, and what it holds
-        // and wears on them where they are (an attachment follows its bone
-        // only when the skeleton next updates: a club in a hand stood out
-        // where the hand rests, arms spread)
-        if let Some(p) = m.player.as_mut() {
-            p.advance(0.0);
-        }
-        for node in m
-            .node
-            .find_children_ex("*")
-            .type_("BoneAttachment3D")
-            .owned(false)
-            .done()
-            .iter_shared()
-        {
-            if let Ok(mut bone) = node.try_cast::<BoneAttachment3D>() {
-                bone.on_skeleton_update();
+        // at fixed phases of its idle, the widest counting: a turning or
+        // swaying body reaches further at some than at others, and it was
+        // taken at any phase (a test passing or failing by chance)
+        let len = m
+            .player
+            .as_ref()
+            .map_or(0.0, |p| p.get_current_animation_length());
+        let phases = if len > 0.0 { FOOTPRINT_PHASES } else { 1 };
+        let mut reach = [0.0f32; 2];
+        for k in 0..phases {
+            // as it stands: its idle's pose on the bones then, and what it
+            // holds and wears on them where they are (an attachment follows
+            // its bone only when the skeleton next updates: a club in a
+            // hand stood out where the hand rests, arms spread)
+            if let Some(p) = m.player.as_mut() {
+                if len > 0.0 {
+                    let at = len * f64::from(k) / f64::from(phases);
+                    p.seek_ex(at).update(true).done();
+                } else {
+                    p.advance(0.0);
+                }
             }
+            for node in m
+                .node
+                .find_children_ex("*")
+                .type_("BoneAttachment3D")
+                .owned(false)
+                .done()
+                .iter_shared()
+            {
+                if let Ok(mut bone) = node.try_cast::<BoneAttachment3D>() {
+                    bone.on_skeleton_update();
+                }
+            }
+            // in the model's own turn: the map turns its holder
+            let r = reach_of(&m.node);
+            reach = [reach[0].max(r[0]), reach[1].max(r[1])];
         }
-        // in the model's own turn: the map turns its holder
-        let reach = reach_of(&m.node);
         self.give(m);
         self.spent = spent;
         reach
@@ -2355,6 +2372,10 @@ enum Wave {
     /// Turn around y once per cycle.
     Spin(&'static str),
 }
+
+/// The phases of its idle a model's footprint is measured at (an eighth
+/// of a turn apart: a turning body's widest among them).
+const FOOTPRINT_PHASES: u32 = 8;
 
 /// Seconds per cycle of every procedural idle.
 const WAVE_PERIOD: f32 = 1.6;

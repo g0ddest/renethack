@@ -9,6 +9,9 @@ uniform sampler2D flipbook : source_color, filter_linear_mipmap, repeat_disable;
 uniform bool has_flipbook = false;
 uniform vec2 frames = vec2(16.0, 4.0);
 uniform float fps = 24.0;
+// how much of the picture's foot fades in (a flame standing in the air,
+// as a fire elemental's do; none on a torch)
+uniform float foot = 0.0;
 // each flame its own
 instance uniform float phase = 0.0;
 
@@ -52,6 +55,9 @@ void fragment() {
 		vec3 c = mix(page(f, UV), page(f + 1.0, UV), fract(t));
 		ALBEDO = c * energy * 1.6;
 		ALPHA = clamp(max(c.r, max(c.g, c.b)) * 1.5, 0.0, 1.0);
+		if (foot > 0.0) {
+			ALPHA *= smoothstep(0.0, foot, 1.0 - UV.y);
+		}
 	} else {
 		float y = 1.0 - UV.y;
 		float t = TIME + phase;

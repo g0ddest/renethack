@@ -15,7 +15,7 @@ use godot::prelude::*;
 use nh_protocol::{Catalog, Glyph, GlyphKind, LevelNotice, mg};
 use nh_world::{Branch, World};
 
-use crate::map_view::{MapView, ROLES, WARM_MONSTERS, role_monster};
+use crate::map_view::{MapView, ROLES, SHADED_MONSTERS, WARM_MONSTERS, role_monster};
 use crate::vfx::{Blast, Ray, VfxKind};
 
 /// The branches drawn: the main one, and those with models, walls,
@@ -470,6 +470,21 @@ impl Rehearsal {
                 },
             );
         }
+        // and those drawn with shaders of their own, by the features
+        for (i, name) in SHADED_MONSTERS.iter().enumerate() {
+            let Some(m) = cat.monsters.iter().find(|m| m.name == *name) else {
+                continue;
+            };
+            put_on_floor(
+                X0 + 2 + 2 * i as i32,
+                Y0 + 4,
+                Glyph {
+                    mon: Some(m.idx),
+                    color: m.color,
+                    ..glyph(GlyphKind::Mon, 'v' as i32)
+                },
+            );
+        }
         let mut classes: Vec<&str> = Vec::new();
         for t in &cat.object_tiles {
             if !classes.contains(&t.class.as_str()) {
@@ -584,6 +599,25 @@ mod tests {
                 .count()
         };
         assert!(kinds(GlyphKind::Mon) > 30);
+        // a vortex and a fire elemental among them
+        let shaded = SHADED_MONSTERS
+            .iter()
+            .filter(|name| {
+                let idx = cat
+                    .monsters
+                    .iter()
+                    .find(|m| m.name == **name)
+                    .map(|m| m.idx);
+                (X0..=X1).any(|x| {
+                    r.world
+                        .map
+                        .cell(x, Y0 + 4)
+                        .and_then(|c| c.glyph.as_ref())
+                        .is_some_and(|g| g.mon.is_some() && g.mon == idx)
+                })
+            })
+            .count();
+        assert_eq!(shaded, SHADED_MONSTERS.len());
         assert!(kinds(GlyphKind::Obj) > 10);
     }
 
