@@ -3,7 +3,8 @@
 //! banana), built in code like the creatures; `prop_kit` gives each part
 //! its material. An object lies or stands about one unit across, on
 //! y = 0. A part is what one material covers. Besides them, the pieces a
-//! demon wears on its bones: a serpent's tail, an arm more, bat's wings.
+//! creature wears on its bones: a serpent's tail, an arm more, bat's
+//! wings, a ghost's trail of mist.
 
 use super::*;
 
@@ -78,6 +79,10 @@ pub enum Part {
     /// its edges.
     BatWings,
     BatWingBones,
+    /// A trail of mist worn under a body that floats: from its waist (the
+    /// origin) down, narrowing, and flicked back behind it short of the
+    /// floor.
+    Wisp,
 }
 
 const UP: Vector3 = Vector3::UP;
@@ -583,6 +588,25 @@ pub(super) fn build(m: &mut Merge, part: Part) {
             for side in [-1.0f32, 1.0] {
                 bat_wing(m, side);
             }
+        }
+        Part::Wisp => {
+            let n = 24;
+            let (a, b, c, d) = (
+                v(0.0, 0.05, 0.0),
+                v(0.0, -0.5, 0.06),
+                v(0.0, -0.78, -0.3),
+                v(0.06, -0.66, -0.62),
+            );
+            let path: Vec<Vector3> = (0..=n)
+                .map(|k| {
+                    let t = frac(k, n);
+                    let u = 1.0 - t;
+                    a * u * u * u + b * 3.0 * u * u * t + c * 3.0 * u * t * t + d * t * t * t
+                })
+                .collect();
+            // a robe's hem at the hips, thinning to nothing
+            let r = |i: usize| 0.004 + 0.17 * (1.0 - frac(i, n)).powf(1.3);
+            m.sweep(&path, |i| (r(i) * 1.1, r(i) * 0.9), 2.0, false, AHEAD);
         }
         Part::BatWingBones => {
             for side in [-1.0f32, 1.0] {

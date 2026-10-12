@@ -2,7 +2,7 @@
 //! once borrowed another's model: a towel, a leash, a beartrap, a harp, a
 //! cream pie, a banana... Each part has its material; the first is the
 //! look's own (tinted with the glyph's colour, which is the object's).
-//! The pieces a demon wears on its bones are drawn the same way.
+//! The pieces a creature wears on its bones are drawn the same way.
 
 use super::*;
 use crate::organic::Organic;
@@ -85,6 +85,7 @@ fn parts(shape: &str) -> &'static [(Part, Stuff)] {
         "serpent tail" => &[(SerpentTail, Stuff::Own), (SerpentBelly, Stuff::Belly)],
         "bladed arm" => &[(Arm, Stuff::Own), (ArmBlade, Stuff::Steel)],
         "bat wings" => &[(BatWings, Stuff::Own), (BatWingBones, Stuff::Dark)],
+        "wisp" => &[(Wisp, Stuff::Own)],
         _ => &[],
     }
 }
