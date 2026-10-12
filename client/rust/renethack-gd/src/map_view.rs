@@ -58,7 +58,7 @@ use crate::vfx::{Ray, Vfx, VfxKind};
 #[path = "hero_pose.rs"]
 mod hero_pose;
 
-pub use hero_pose::Held;
+pub use hero_pose::{Held, HelplessPhase};
 
 /// Low enough to see creatures from the side, high enough to see the floor
 /// between walls: the pitch at the default distance; closer in the camera
@@ -4617,6 +4617,7 @@ impl MapView {
         self.build_budget = BUILD_BUDGET;
         self.set_showcase(false);
         self.building.clear();
+        self.hero_pose.forget();
         self.finish_motions();
         self.facing.clear();
         for (_, c) in std::mem::take(&mut self.incoming) {

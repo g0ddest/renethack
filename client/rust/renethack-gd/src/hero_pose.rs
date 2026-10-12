@@ -5,18 +5,23 @@
 //! under water (the status condition Submrg), each with a pose. Out of a
 //! pit the hero climbs. A prayer (qa C4) is shown kneeling, with what the
 //! god answered as the messages tell it: a shaft of light on a pleased
-//! god, darkness closing in on an angry one. A child of map_view: it moves
-//! the hero's own model (the rider's while they ride, who keep their seat:
-//! no sinking, kneeling or lying in the saddle).
+//! god, darkness closing in on an angry one. A spell of helplessness (qa
+//! C16), seen once it passed, is shown after it: asleep or knocked out the
+//! hero crumples to the floor and lies there (a sleeper's letters rising),
+//! then gets up; paralysed they slump where they stand, still. A child of
+//! map_view: it moves the hero's own model (the rider's while they ride,
+//! who keep their seat: no sinking, kneeling or lying in the saddle).
 
 use godot::classes::base_material_3d::BlendMode;
 use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::light_3d::Param;
 use godot::classes::rendering_server::FogVolumeShape;
-use godot::classes::{FogMaterial, FogVolume, MeshInstance3D, OmniLight3D, StandardMaterial3D};
+use godot::classes::{
+    FogMaterial, FogVolume, Label3D, MeshInstance3D, OmniLight3D, StandardMaterial3D,
+};
 use godot::prelude::*;
 use nh_protocol::Catalog;
-use nh_world::{PrayerOutcome, TrapKind, World};
+use nh_world::{Helpless, HelplessSpan, PrayerOutcome, TrapKind, World};
 
 use super::{
     Finish, MapView, MeshKey, Paint, Role, SHADE_LIT, at, bevel, build_flat, cuboid, cylinder,
@@ -69,6 +74,24 @@ const ANSWER_IN: f32 = 0.6;
 const ANSWER_OUT: f32 = 0.9;
 const HOLY: Color = Color::from_rgb(1.0, 0.93, 0.72);
 const DARK: Color = Color::from_rgb(0.05, 0.02, 0.08);
+/// The body gives way (a death's fall, quicker).
+const COLLAPSE: &str = "Death01";
+const COLLAPSE_SPEED: f32 = 1.4;
+const GET_UP: &str = "ual2/LayToIdle";
+/// Paralysed: slumped where they stand, the stance held still once taken.
+const SLUMP: &str = "ual2/Zombie_Idle";
+const SLUMP_SECS: f32 = 0.5;
+/// A body on the floor slides this much of its height the way it faced:
+/// the fall is backwards, and it would lie half on the next cell.
+const LIE_SHIFT: f32 = 0.3;
+/// Seconds a helpless hero stays down for each turn they were, at least
+/// and at most.
+const DOWN_PER_TURN: f32 = 0.25;
+const DOWN_SECS: (f32, f32) = (0.8, 3.0);
+/// A sleeper's letters: how many rise at a time, the seconds each takes.
+const SNORES: usize = 3;
+const SNORE_SECS: f32 = 1.8;
+const SNORE: Color = Color::from_rgb(0.84, 0.9, 1.0);
 const SILK: Color = Color::from_rgba(0.88, 0.88, 0.84, 0.55);
 const MOLTEN: Color = Color::from_rgb(1.0, 0.42, 0.08);
 const RIPPLE: Color = Color::from_rgba(0.62, 0.78, 0.86, 0.45);
@@ -92,6 +115,54 @@ pub(super) struct HeroPose {
     /// Seconds left of a climb out of a pit.
     climbing: f32,
     prayer: Option<Prayer>,
+    lying: Option<Lying>,
+    /// The last spell of helplessness shown (its serial).
+    shown_spell: u64,
+}
+
+/// A spell of helplessness being shown.
+struct Lying {
+    kind: Helpless,
+    phase: HelplessPhase,
+    /// Seconds into the phase, and how long it lasts.
+    t: f32,
+    len: f32,
+    /// Seconds to stay down.
+    hold: f32,
+    /// A sleeper's letters.
+    snores: Vec<Gd<Label3D>>,
+    shift: Option<Shift>,
+}
+
+/// The hero's model slid along the floor while they lie there.
+struct Shift {
+    /// The model's inner node, its own place, and the way to slide it (in
+    /// the space of the node it sits in).
+    inner: Gd<Node3D>,
+    base: Vector3,
+    by: Vector3,
+}
+
+impl Shift {
+    /// Slid `f` of the way (0 back in place).
+    fn set(&mut self, f: f32) {
+        if !self.inner.is_instance_valid() {
+            return;
+        }
+        // across the floor only: the height is the pit's (`lower_hero`)
+        let mut p = self.inner.get_position();
+        p.x = self.base.x + self.by.x * f;
+        p.z = self.base.z + self.by.z * f;
+        self.inner.set_position(p);
+    }
+}
+
+/// Where a spell of helplessness shown is: going down, down, getting up.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HelplessPhase {
+    Down,
+    Held,
+    Up,
 }
 
 /// A prayer being shown.
@@ -130,7 +201,40 @@ impl HeroPose {
             clip: None,
             climbing: 0.0,
             prayer: None,
+            lying: None,
+            shown_spell: 0,
         }
+    }
+
+    /// A new game: what was shown of the last one's hero goes, and their
+    /// model is put back as it was (the map's cells give their models back
+    /// to be used again).
+    pub(super) fn forget(&mut self) {
+        self.clear_parts();
+        self.drawn = None;
+        self.sink = 0.0;
+        if let Some(mut l) = self.lowered.take()
+            && l.inner.is_instance_valid()
+        {
+            let mut p = l.inner.get_position();
+            p.y = l.base;
+            l.inner.set_position(p);
+        }
+        self.clip = None;
+        self.climbing = 0.0;
+        let mut nodes = self.prayer.take().map(|p| p.nodes).unwrap_or_default();
+        if let Some(mut l) = self.lying.take() {
+            if let Some(shift) = l.shift.as_mut() {
+                shift.set(0.0);
+            }
+            nodes.extend(l.snores.into_iter().map(Gd::upcast));
+        }
+        for mut n in nodes {
+            if n.is_instance_valid() {
+                n.queue_free();
+            }
+        }
+        self.shown_spell = 0;
     }
 
     fn clear_parts(&mut self) {
@@ -176,6 +280,7 @@ impl MapView {
             }
         }
         self.advance_prayer(delta);
+        self.pose_helpless(world.helpless(), delta);
         // in the saddle the hero keeps their seat
         let target = if self.rider.is_some() {
             0.0
@@ -394,7 +499,11 @@ impl MapView {
     /// Hold `clip` on the hero while no motion of theirs plays; back to
     /// their idle when it ends.
     fn hold_clip(&mut self, clip: Option<&'static str>) {
-        if self.hero_pose.climbing > 0.0 || self.hero_pose.prayer.is_some() || self.rider.is_some()
+        let pose = &self.hero_pose;
+        if pose.climbing > 0.0
+            || pose.prayer.is_some()
+            || pose.lying.is_some()
+            || self.rider.is_some()
         {
             return;
         }
@@ -593,6 +702,234 @@ impl MapView {
         self.motions
             .iter()
             .any(|m| m.hero && Some(m.cell) == self.hero_at)
+    }
+
+    /// The spell of helplessness the hero went through before this command
+    /// prompt, shown once they are free to show it (the use that brought
+    /// it shown first): down, held there a while for its turns, up again.
+    /// The hero moving on ends it.
+    fn pose_helpless(&mut self, span: Option<HelplessSpan>, delta: f32) {
+        let busy = self.hero_busy();
+        let inner = self
+            .hero_model()
+            .and_then(|m| m.node.get_child(0))
+            .map(|n| n.instance_id());
+        let Some(lying) = self.hero_pose.lying.as_mut() else {
+            let new = span.filter(|s| s.serial > self.hero_pose.shown_spell);
+            if let Some(s) = new
+                && !busy
+                && self.hero_pose.prayer.is_none()
+            {
+                self.hero_pose.shown_spell = s.serial;
+                if self.rider.is_none() {
+                    self.lie_down(s);
+                }
+            }
+            return;
+        };
+        // the hero about something else, or another model of them (a look
+        // changed): the spell's pose is over
+        let other = lying
+            .shift
+            .as_ref()
+            .is_some_and(|s| Some(s.inner.instance_id()) != inner);
+        if busy || other {
+            self.end_lying(false);
+            return;
+        }
+        lying.t += delta;
+        let slid = match lying.phase {
+            HelplessPhase::Down => (lying.t / lying.len).min(1.0),
+            HelplessPhase::Held => 1.0,
+            HelplessPhase::Up => 1.0 - (lying.t / lying.len).min(1.0),
+        };
+        if let Some(shift) = lying.shift.as_mut() {
+            shift.set(slid);
+        }
+        match lying.phase {
+            HelplessPhase::Down if lying.t >= lying.len => {
+                lying.phase = HelplessPhase::Held;
+                lying.t = 0.0;
+                // the slump held still; the fall ends on the floor
+                if let Some(mut p) = self.hero_model().and_then(|m| m.player().cloned()) {
+                    p.pause();
+                }
+            }
+            HelplessPhase::Held if lying.t >= lying.hold => self.get_up(),
+            HelplessPhase::Up if lying.t >= lying.len => self.end_lying(true),
+            _ => {}
+        }
+        self.snore();
+    }
+
+    /// The hero goes down: crumpled to the floor, or slumped.
+    fn lie_down(&mut self, s: HelplessSpan) {
+        let Some(mut p) = self.hero_model().and_then(|m| m.player().cloned()) else {
+            return;
+        };
+        let (clip, speed) = match s.kind {
+            Helpless::Paralyzed => (SLUMP, 1.0),
+            Helpless::Asleep | Helpless::Unconscious => (COLLAPSE, COLLAPSE_SPEED),
+        };
+        let Some(anim) = p.get_animation(clip) else {
+            return;
+        };
+        p.play_ex()
+            .name(clip)
+            .custom_blend(0.25)
+            .custom_speed(speed)
+            .done();
+        let len = match s.kind {
+            Helpless::Paralyzed => SLUMP_SECS,
+            _ => anim.get_length() / speed,
+        };
+        let snores = if s.kind == Helpless::Asleep {
+            (0..SNORES).map(|_| self.snore_letter()).collect()
+        } else {
+            Vec::new()
+        };
+        let shift = match s.kind {
+            Helpless::Paralyzed => None,
+            Helpless::Asleep | Helpless::Unconscious => self.lying_shift(),
+        };
+        self.hero_pose.lying = Some(Lying {
+            kind: s.kind,
+            phase: HelplessPhase::Down,
+            t: 0.0,
+            len,
+            hold: (s.turns as f32 * DOWN_PER_TURN).clamp(DOWN_SECS.0, DOWN_SECS.1),
+            snores,
+            shift,
+        });
+    }
+
+    /// How the hero's model slides while they lie: the way they face, by
+    /// a share of their height.
+    fn lying_shift(&self) -> Option<Shift> {
+        let (_, tall) = self.hero_stands()?;
+        let m = self.hero_model()?;
+        let inner = m.node.get_child(0)?.try_cast::<Node3D>().ok()?;
+        let basis = m.node.get_global_transform().basis;
+        let facing = basis.col_c();
+        let flat = Vector3::new(facing.x, 0.0, facing.z);
+        if flat.length() < 1e-4 {
+            return None;
+        }
+        let by = basis.inverse() * (flat.normalized() * (tall * LIE_SHIFT));
+        Some(Shift {
+            base: inner.get_position(),
+            inner,
+            by,
+        })
+    }
+
+    fn snore_letter(&mut self) -> Gd<Label3D> {
+        let mut l = self.new_label();
+        l.set_text("Z");
+        l.set_pixel_size(0.0018);
+        l.set_modulate(SNORE.with_alpha(0.0));
+        l.set_outline_modulate(Color::from_rgba(0.0, 0.0, 0.0, 0.0));
+        l.set_visible(false);
+        self.hero_pose.root.add_child(&l);
+        l
+    }
+
+    /// The hero gets up: off the floor, or out of the slump.
+    fn get_up(&mut self) {
+        let Some(lying) = self.hero_pose.lying.as_mut() else {
+            return;
+        };
+        lying.phase = HelplessPhase::Up;
+        lying.t = 0.0;
+        lying.len = 0.4;
+        for mut l in lying.snores.drain(..) {
+            if l.is_instance_valid() {
+                l.queue_free();
+            }
+        }
+        let floor = lying.kind != Helpless::Paralyzed;
+        let player = self.hero_model().and_then(|m| m.player().cloned());
+        match player {
+            Some(mut p) if floor && p.has_animation(GET_UP) => {
+                p.play_ex().name(GET_UP).custom_blend(0.3).done();
+                let len = p.get_animation(GET_UP).map_or(1.5, |a| a.get_length());
+                if let Some(lying) = self.hero_pose.lying.as_mut() {
+                    lying.len = len;
+                }
+            }
+            _ => self.idle_hero(),
+        }
+    }
+
+    /// The spell shown is over: the hero standing (`stand`) or already
+    /// about something else.
+    fn end_lying(&mut self, stand: bool) {
+        let Some(mut lying) = self.hero_pose.lying.take() else {
+            return;
+        };
+        if let Some(shift) = lying.shift.as_mut() {
+            shift.set(0.0);
+        }
+        for mut l in lying.snores {
+            if l.is_instance_valid() {
+                l.queue_free();
+            }
+        }
+        if stand {
+            self.idle_hero();
+        }
+    }
+
+    /// A sleeper's letters rise from their head, growing and fading, one
+    /// after another.
+    fn snore(&mut self) {
+        let held = self
+            .hero_pose
+            .lying
+            .as_ref()
+            .is_some_and(|l| l.phase == HelplessPhase::Held && !l.snores.is_empty());
+        if !held {
+            return;
+        }
+        let head = self.hero_head();
+        let clock = self.clock as f32;
+        let Some(lying) = self.hero_pose.lying.as_mut() else {
+            return;
+        };
+        for (i, l) in lying.snores.iter_mut().enumerate() {
+            let Some(head) = head else {
+                l.set_visible(false);
+                continue;
+            };
+            let k = ((clock + i as f32 * SNORE_SECS / SNORES as f32) % SNORE_SECS) / SNORE_SECS;
+            let alpha = (k * std::f32::consts::PI).sin();
+            l.set_visible(true);
+            l.set_global_position(head + Vector3::new(0.12 + 0.2 * k, 0.12 + 0.55 * k, 0.0));
+            l.set_scale(Vector3::splat(0.6 + 0.7 * k));
+            l.set_modulate(SNORE.with_alpha(alpha));
+            l.set_outline_modulate(Color::from_rgba(0.0, 0.0, 0.0, 0.6 * alpha));
+        }
+    }
+
+    /// Where the hero's head is now (the rider's while they ride).
+    fn hero_head(&mut self) -> Option<Vector3> {
+        let at = self.hero_at?;
+        let m = match self.rider.as_mut() {
+            Some(r) => &mut r.model,
+            None => {
+                let nodes = self.cells.get_mut(&at).filter(|n| n.look.hero)?;
+                let i = nodes.look.entity.filter(|&i| i < nodes.models.len())?;
+                &mut nodes.models[i]
+            }
+        };
+        let head = self.art.slot_anchor(m, "head")?;
+        head.is_inside_tree().then(|| head.get_global_position())
+    }
+
+    /// The spell of helplessness shown now: how, and where it is
+    /// (self-tests).
+    pub fn hero_helpless(&self) -> Option<(Helpless, HelplessPhase)> {
+        self.hero_pose.lying.as_ref().map(|l| (l.kind, l.phase))
     }
 
     /// The prayer shown now: the god's answer and seconds since it began

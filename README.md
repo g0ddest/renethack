@@ -186,7 +186,9 @@ archeologist digs a pit and stands in it to the waist, then climbs out; is
 held crouching by the shut jaws of a bear trap, wrapped struggling in a
 web, sunk in lava and under water; then kneels to pray, too soon, and
 darkness closes in round them, and again with the god forced pleased, in a
-shaft of light. With `--screenshots` the soak saves the screen
+shaft of light; last drinks potions wished for and, after each spell of
+helplessness, is shown in it: asleep on the floor with letters rising,
+passed out drunk, slumped and paralysed. With `--screenshots` the soak saves the screen
 every 60 answers (`soak-<seed>-<answers>.png`) and the first dialogs of each
 kind as the player meets them, each question once
 (`dlg-<kind>-<seed>-<answers>.png`). A picture waits for the screen to hold

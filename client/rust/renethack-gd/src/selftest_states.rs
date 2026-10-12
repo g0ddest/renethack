@@ -8,21 +8,24 @@
 //! fire resistance or water breathing. Then the hero prays (qa C4): too
 //! soon after the start the god is angered, and darkness closes in round
 //! the kneeling hero; debug mode forces the god pleased the second time,
-//! and a shaft of light falls on them. With --screenshots a picture of
-//! each.
+//! and a shaft of light falls on them. Last the hero drinks three potions
+//! wished for (qa C16), each a spell of helplessness seen only once it
+//! passed, and shown after it: sleeping (lying, letters rising), passed out
+//! drunk (lying), paralysed (slumped, still), then up again. With
+//! --screenshots a picture of each.
 
 use std::sync::Mutex;
 
-use nh_world::{Key, KeyInput, PrayerOutcome, Prompt, Terrain, TrapKind, cell_terrain};
+use nh_world::{Helpless, Key, KeyInput, PrayerOutcome, Prompt, Terrain, TrapKind, cell_terrain};
 
 use nh_protocol::{HeroNotice, WinCall};
 
 use super::{
-    CharacterChoice, DialogEvent, Step, camera_settled, command, ctrl_key, fail_on_error_screen,
-    key, map_view, quit, set_status, smoke_choice, start_as,
+    CharacterChoice, Check, DialogEvent, Step, camera_settled, command, ctrl_key,
+    fail_on_error_screen, key, map_view, quit, set_status, smoke_choice, start_as,
 };
 use crate::game::RenethackGame;
-use crate::map_view::Held;
+use crate::map_view::{Held, HelplessPhase};
 
 type Chooser = fn(&RenethackGame) -> Result<Option<KeyInput>, String>;
 
@@ -243,6 +246,39 @@ fn prayer_over(g: &RenethackGame) -> Result<bool, String> {
     Ok(map_view(g)?.hero_prayer().is_none())
 }
 
+/// Drink the one potion in the pack.
+fn quaff(g: &RenethackGame) -> Result<Option<KeyInput>, String> {
+    let items = g.world.inventory.items();
+    let potion = items.iter().find(|i| i.class == '!').map(|i| i.letter);
+    Ok(match (pending(g), potion) {
+        (Some(Prompt::Command), None) => None,
+        (Some(Prompt::Command), Some(_)) => Some(plain('q')),
+        (Some(Prompt::FreeKey { .. }), Some(letter)) => Some(plain(letter)),
+        // "Drink from the fountain?"
+        (Some(Prompt::Choice { .. }), _) => Some(plain('n')),
+        _ => Some(KeyInput::plain(Key::Escape)),
+    })
+}
+
+/// The spell of helplessness shown down as `kind`, the camera still.
+fn down(g: &RenethackGame, kind: Helpless) -> Result<bool, String> {
+    let now = map_view(g)?.hero_helpless();
+    Ok(now == Some((kind, HelplessPhase::Held)) && camera_settled(g)?)
+}
+
+/// Wish for `potion` and drink it: the spell of helplessness it brings
+/// shown after it, down (`shown`), up again.
+fn drink(potion: &'static str, shown: Check, shot: &'static str) -> Vec<Step> {
+    let mut steps = Vec::from(wish(potion));
+    steps.extend([
+        until("the potion drunk", quaff),
+        Step::Wait("the hero down", shown),
+        Step::Shot(shot),
+        Step::Wait("up again", |g| Ok(map_view(g)?.hero_helpless().is_none())),
+    ]);
+    steps
+}
+
 fn until(what: &'static str, f: Chooser) -> Step {
     Step::KeysUntil(what, f)
 }
@@ -388,6 +424,23 @@ pub(super) fn states() -> Vec<Step> {
         Step::Shot("state-pray-pleased"),
         Step::Wait("the prayer over, the hero up", prayer_over),
     ]);
+    // helpless: asleep, passed out drunk (the messages tell that one: the
+    // status line shows no Out for it), paralysed
+    steps.extend(drink(
+        "blessed potion of sleeping",
+        |g| down(g, Helpless::Asleep),
+        "state-asleep",
+    ));
+    steps.extend(drink(
+        "cursed potion of booze",
+        |g| down(g, Helpless::Unconscious),
+        "state-out",
+    ));
+    steps.extend(drink(
+        "blessed potion of paralysis",
+        |g| down(g, Helpless::Paralyzed),
+        "state-paralysed",
+    ));
     steps.extend(quit());
     steps
 }
