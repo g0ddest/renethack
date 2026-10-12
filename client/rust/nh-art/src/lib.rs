@@ -1721,11 +1721,20 @@ mod tests {
                 "{kind}"
             );
         }
+        // a glass golem is clear, what is behind it showing through and its
+        // edges lit, not a pale blue porcelain
+        let r = art.monster(find("glass golem"), 0);
+        let Skin::Material(m) = r.skin else {
+            panic!("glass golem: in no material");
+        };
+        let glass = art.material_at(m).1;
+        assert!(glass.alpha.is_some_and(|a| a <= 0.3), "{glass:?}");
+        assert!(glass.rim.is_some(), "{glass:?}");
     }
 
     /// Shopkeepers, priests, soldiers, Kops, vampires, angels and the
-    /// djinni were plain peasants, and every demon the same red imp: each
-    /// has its own look now.
+    /// djinni were plain peasants, and every demon the same red imp (the
+    /// marilith and Geryon newt-sized snakes): each has its own look now.
     #[test]
     fn the_people_and_the_demons_are_told_apart() {
         let (art, cat) = (manifest(), catalog());
@@ -1749,22 +1758,21 @@ mod tests {
                 "{who}: {name}"
             );
         }
-        // angels and the great demons are winged
-        for who in [
-            "Angel",
-            "Archon",
-            "pit fiend",
-            "balrog",
-            "Asmodeus",
-            "amorous demon",
-        ] {
-            let wings = model(who)
-                .1
-                .extras
-                .iter()
-                .any(|e| e.model == "garment_wings");
-            assert!(wings, "{who} has no wings");
+        let wears = |who: &str, extra: &str| model(who).1.extras.iter().any(|e| e.model == extra);
+        // angels and a vrock on feathered wings, the great demons on a bat's
+        for who in ["Angel", "Archon", "vrock"] {
+            assert!(wears(who, "garment_wings"), "{who} has no feathers");
         }
+        for who in ["pit fiend", "balrog", "Asmodeus", "amorous demon", "Geryon"] {
+            assert!(wears(who, "bat_wings"), "{who} has no bat's wings");
+        }
+        // the marilith and Geryon raised on a serpent's coiled tail, she
+        // with four arms more, a blade in each
+        for who in ["marilith", "Geryon"] {
+            assert!(wears(who, "serpent_tail"), "{who} has no serpent's tail");
+        }
+        let arms = model("marilith").1.extras.iter();
+        assert_eq!(arms.filter(|e| e.model == "bladed_arm").count(), 4);
         // the great demons apart from the imp and from one another
         let mut seen = Vec::new();
         for who in [
@@ -1777,6 +1785,8 @@ mod tests {
             "Baalzebub",
             "Demogorgon",
             "amorous demon",
+            "marilith",
+            "Geryon",
         ] {
             let r = resolved(who);
             let look = (model(who).0, r.tint);
