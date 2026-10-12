@@ -221,7 +221,12 @@ fn inner_transform(look: &ModelLook, spec: &nh_art::ModelSpec) -> Transform3D {
     let r = look.art;
     let lying = look.pose == Pose::Corpse && spec.anims.death.is_none();
     let mut rot = r.rot;
-    let mut lift = r.lift;
+    // a statue stands on its plinth, whatever flies
+    let mut lift = if look.pose == Pose::Statue {
+        0.0
+    } else {
+        r.lift
+    };
     if lying {
         // on its side, in the cell
         rot[2] += 88.0;
@@ -1987,6 +1992,38 @@ impl Art {
         };
         let mut root = Node3D::new_alloc();
         kit.body(kind, &mut root);
+        if let Skin::Material(_) = look.art.skin {
+            // a statue (a golem) is all of its stone, eyes, veins and
+            // glints too: nothing of it in its own colours, nothing glows
+            let stone = kit.skin.clone();
+            for node in root
+                .find_children_ex("*")
+                .type_("MeshInstance3D")
+                .owned(false)
+                .done()
+                .iter_shared()
+            {
+                if let Ok(mut mi) = node.try_cast::<MeshInstance3D>() {
+                    mi.set_material_override(&stone);
+                }
+            }
+        }
+        if look.pose == Pose::Statue {
+            // and gives no light, sheds nothing
+            for class in ["Light3D", "GPUParticles3D"] {
+                for node in root
+                    .find_children_ex("*")
+                    .type_(class)
+                    .owned(false)
+                    .done()
+                    .iter_shared()
+                {
+                    if let Ok(mut n) = node.try_cast::<Node3D>() {
+                        n.set_visible(false);
+                    }
+                }
+            }
+        }
         let player = kit
             .art
             .proc_library(kind, spec.shape.as_deref())
@@ -3849,6 +3886,31 @@ pub fn set_layer_mask(v: &mut Gd<VisualInstance3D>, mask: u32) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_statue_stands_on_its_plinth_whatever_flies() {
+        let art = ArtManifest::parse(include_str!("../../../godot/art/manifest.json")).unwrap();
+        let line = include_str!("../../nh-world/tests/data/catalog.jsonl");
+        let nh_protocol::EngineMsg::Catalog(cat) = nh_protocol::parse_line(line).unwrap() else {
+            panic!("no catalog");
+        };
+        let eye = cat
+            .monsters
+            .iter()
+            .find(|m| m.name == "floating eye")
+            .unwrap();
+        let look = |art: Resolved, pose| ModelLook {
+            art,
+            tint: Color::WHITE,
+            pose,
+        };
+        let living = look(art.monster(eye, 0), Pose::Alive);
+        let statue = look(art.statue(Some(eye), 0), Pose::Statue);
+        let spec = art.model_at(living.art.model).1;
+        // the living eye floats; its statue stands on the ground
+        assert!(inner_transform(&living, spec).origin.y > 0.3);
+        assert_eq!(inner_transform(&statue, spec).origin.y, 0.0);
+    }
 
     /// How far a box with these bounds reaches from its cell's middle,
     /// fitted and turned `yaw` degrees.
