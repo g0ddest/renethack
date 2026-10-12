@@ -1801,7 +1801,8 @@ mod tests {
     /// The fallback audit: a leprechaun, the quantum mechanic, elves,
     /// ghosts, wraiths, gargoyles, a vault's guard, a nurse, a zruty and an
     /// umber hulk drew as a peasant, a hooded ranger or the imp; a quest's
-    /// people as peasants, its nemeses as imps and a baby dragon.
+    /// people as peasants, its nemeses as imps and a baby dragon; the yeti
+    /// on all fours, nagas as snakes, scorpions as ants.
     #[test]
     fn the_fallbacks_are_told_apart() {
         let (art, cat) = (manifest(), catalog());
@@ -1846,6 +1847,43 @@ mod tests {
         assert_eq!(model("Minion of Huhetotl"), "demon_great");
         assert_eq!(model("Nalzok"), "demon_great");
         assert_eq!(model("Chromatic Dragon"), "dragon_chromatic");
+        // the yeti and the sasquatch stand on two legs, not a gorilla's four;
+        // scorpions and centipedes are not an ant and a grub
+        let scene = |n: &str| {
+            let m = cat.monsters.iter().find(|m| m.name == n).unwrap();
+            let spec = art.model_at(art.monster(m, 0).model).1;
+            spec.scene.clone().unwrap_or_default()
+        };
+        for who in ["yeti", "sasquatch"] {
+            assert!(scene(who).ends_with("Yeti.glb"), "{who}: {}", scene(who));
+        }
+        assert!(scene("scorpion").ends_with("Scorpion.glb"));
+        assert!(scene("centipede").ends_with("Centipede.glb"));
+        // a naga a head on a serpent's body, not a snake
+        for kind in ["red", "black", "golden", "guardian"] {
+            let m = cat
+                .monsters
+                .iter()
+                .find(|m| m.name == format!("{kind} naga"))
+                .unwrap();
+            let spec = art.model_at(art.monster(m, 0).model).1;
+            assert!(spec.head.is_some(), "{kind} naga has no head");
+            assert!(
+                spec.extras.iter().any(|e| e.model == "naga_body"),
+                "{kind} naga"
+            );
+        }
+        // a centaur's horse a coat the colour multiplies, not a flat dye;
+        // a mastodon shaggy
+        let centaur = art.model_at(art.model_index("centaur_plains").unwrap()).1;
+        assert!(
+            centaur
+                .recolor
+                .get("@Main")
+                .is_some_and(|c| !c.starts_with('='))
+        );
+        let mastodon = art.model_at(art.model_index("mastodon").unwrap()).1;
+        assert!(mastodon.recolor.contains_key("@Shag"));
     }
 
     /// A mumak was drawn two cells long and a baluchitherium four: they hid
