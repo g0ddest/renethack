@@ -11,11 +11,34 @@ use crate::LinkError;
 const NAMES_FILE: &str = "renethack-names.json";
 /// Suffixes NetHack's COMPRESS may add: gzip on Linux, compress on macOS.
 const COMPRESSED: [&str; 4] = [".gz", ".Z", ".bz2", ".xz"];
+/// NetHack's Windows port names a save `<name>.NetHack-saved-game`.
+const WINDOWS_SAVE_SUFFIX: &str = ".NetHack-saved-game";
+
+/// Where the engine keeps saves: `save/` on unix; on Windows its port puts
+/// them in the playground itself, beside the level files.
+fn save_dir(playground: &Path) -> PathBuf {
+    if cfg!(windows) {
+        playground.to_path_buf()
+    } else {
+        playground.join("save")
+    }
+}
+
+/// The game name in a save file name as this platform's engine writes it.
+fn engine_save_name(file_name: &str) -> Option<String> {
+    if cfg!(windows) {
+        windows_save_name(file_name)
+    } else {
+        save_name(file_name, current_uid())
+    }
+}
 
 /// A game saved in `<playground>/save`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct SavedGame {
-    /// Pass to `EngineConfig::restore_options` (the regularized form).
+    /// Pass to `EngineConfig::restore_options`: the regularized form on
+    /// unix; on Windows the name as the engine wrote it (its port does not
+    /// regularize, so only that form finds the save).
     pub name: String,
     /// As typed (from the name index), else `name`.
     pub display_name: String,
@@ -28,13 +51,12 @@ pub struct SavedGame {
 /// its child and NetHack names saves by getuid(), whoever owns the file),
 /// and "0Hero" and "0Hero.gz" are one game.
 pub fn list_saves(playground: &Path) -> io::Result<Vec<SavedGame>> {
-    let entries = match fs::read_dir(playground.join("save")) {
+    let entries = match fs::read_dir(save_dir(playground)) {
         Ok(entries) => entries,
         Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(Vec::new()),
         Err(e) => return Err(e),
     };
     let names = load_names(playground);
-    let uid = current_uid();
     let mut games: Vec<SavedGame> = Vec::new();
     for entry in entries {
         let entry = entry?;
@@ -43,7 +65,7 @@ pub fn list_saves(playground: &Path) -> io::Result<Vec<SavedGame>> {
         let Some(name) = file_name
             .to_str()
             .filter(|_| meta.is_file())
-            .and_then(|f| save_name(f, uid))
+            .and_then(engine_save_name)
         else {
             continue;
         };
@@ -56,7 +78,10 @@ pub fn list_saves(playground: &Path) -> io::Result<Vec<SavedGame>> {
             continue;
         }
         games.push(SavedGame {
-            display_name: names.get(&name).cloned().unwrap_or_else(|| name.clone()),
+            display_name: names
+                .get(&regularize(&name))
+                .cloned()
+                .unwrap_or_else(|| name.clone()),
             name,
             file: entry.path(),
             modified,
@@ -81,7 +106,7 @@ pub fn remember_name(playground: &Path, name: &str) -> io::Result<()> {
 /// save by the regularized name.
 pub fn save_exists(playground: &Path, name: &str) -> bool {
     let name = regularize(name);
-    list_saves(playground).is_ok_and(|games| games.iter().any(|g| g.name == name))
+    list_saves(playground).is_ok_and(|games| games.iter().any(|g| regularize(&g.name) == name))
 }
 
 /// The client's own state for a character (key profile, action bar:
@@ -179,16 +204,13 @@ pub enum Recovered {
 /// removed, so the slot is free again.
 pub fn recover_game(recover: &Path, playground: &Path, base: &str) -> Result<Recovered, LinkError> {
     let before = save_files(playground);
-    let out = Command::new(recover)
-        .arg("-d")
-        .arg(playground)
-        .arg(base)
-        .stdin(Stdio::null())
-        .output()
-        .map_err(|source| LinkError::Spawn {
-            path: recover.display().to_string(),
-            source,
-        })?;
+    let mut cmd = Command::new(recover);
+    cmd.arg("-d").arg(playground).arg(base).stdin(Stdio::null());
+    crate::engine::no_console_window(&mut cmd);
+    let out = cmd.output().map_err(|source| LinkError::Spawn {
+        path: recover.display().to_string(),
+        source,
+    })?;
     let report = String::from_utf8_lossy(&out.stderr);
     let new_files: Vec<String> = save_files(playground)
         .difference(&before)
@@ -199,19 +221,19 @@ pub fn recover_game(recover: &Path, playground: &Path, base: &str) -> Result<Rec
         Some(path) => Some(playground.join(path)),
         // another recover's wording: trust a lone new file, if it said nothing else
         None if report.trim().is_empty() && new_files.len() == 1 => {
-            Some(playground.join("save").join(&new_files[0]))
+            Some(save_dir(playground).join(&new_files[0]))
         }
         None => None,
     };
     let name = file
         .filter(|f| f.is_file())
-        .and_then(|f| save_name(f.file_name()?.to_str()?, current_uid()));
+        .and_then(|f| engine_save_name(f.file_name()?.to_str()?));
     match name {
         Some(name) if out.status.success() => Ok(Recovered::Saved(name)),
         _ => {
             remove_slot(playground, base)?;
             for f in new_files {
-                fs::remove_file(playground.join("save").join(f))?;
+                fs::remove_file(save_dir(playground).join(f))?;
             }
             Ok(Recovered::Lost)
         }
@@ -243,6 +265,26 @@ fn save_name(file_name: &str, uid: Option<u32>) -> Option<String> {
     (!name.is_empty()).then(|| name.to_string())
 }
 
+/// The game name in a save of NetHack's Windows port: the name with every
+/// byte but a letter, '_', '-' and '.' written `%XX` (fname_encode()),
+/// then `.NetHack-saved-game`.
+fn windows_save_name(file_name: &str) -> Option<String> {
+    let base = file_name.strip_suffix(WINDOWS_SAVE_SUFFIX)?;
+    let mut bytes = Vec::with_capacity(base.len());
+    let mut rest = base.as_bytes();
+    while let Some((&b, tail)) = rest.split_first() {
+        if b == b'%' {
+            let hex = std::str::from_utf8(tail.get(..2)?).ok()?;
+            bytes.push(u8::from_str_radix(hex, 16).ok()?);
+            rest = &tail[2..];
+        } else {
+            bytes.push(b);
+            rest = tail;
+        }
+    }
+    String::from_utf8(bytes).ok().filter(|n| !n.is_empty())
+}
+
 /// "alock" ... "jlock" and beyond: NetHack's slots when MAXPLAYERS is set.
 fn is_lock_slot(base: &str) -> bool {
     base.len() == 5 && base.ends_with("lock") && base.as_bytes()[0].is_ascii_lowercase()
@@ -265,7 +307,7 @@ fn remove_slot(playground: &Path, base: &str) -> io::Result<()> {
 }
 
 fn save_files(playground: &Path) -> BTreeSet<String> {
-    fs::read_dir(playground.join("save"))
+    fs::read_dir(save_dir(playground))
         .map(|entries| {
             entries
                 .filter_map(|e| e.ok()?.file_name().into_string().ok())
@@ -316,7 +358,35 @@ fn process_alive(pid: i32) -> bool {
     io::Error::last_os_error().raw_os_error() == Some(libc::EPERM)
 }
 
-#[cfg(not(unix))]
+#[cfg(windows)]
+fn process_alive(pid: i32) -> bool {
+    use std::ffi::c_void;
+    const SYNCHRONIZE: u32 = 0x0010_0000;
+    const WAIT_TIMEOUT: u32 = 0x102;
+    const ERROR_ACCESS_DENIED: u32 = 5;
+    unsafe extern "system" {
+        fn OpenProcess(access: u32, inherit: i32, pid: u32) -> *mut c_void;
+        fn WaitForSingleObject(handle: *mut c_void, ms: u32) -> u32;
+        fn CloseHandle(handle: *mut c_void) -> i32;
+        fn GetLastError() -> u32;
+    }
+    if pid <= 0 {
+        return false;
+    }
+    // SAFETY: plain kernel32 calls; the handle is closed before returning
+    unsafe {
+        let handle = OpenProcess(SYNCHRONIZE, 0, pid as u32);
+        if handle.is_null() {
+            // it exists, under another user
+            return GetLastError() == ERROR_ACCESS_DENIED;
+        }
+        let running = WaitForSingleObject(handle, 0) == WAIT_TIMEOUT;
+        CloseHandle(handle);
+        running
+    }
+}
+
+#[cfg(not(any(unix, windows)))]
 fn process_alive(_pid: i32) -> bool {
     false
 }
@@ -340,6 +410,27 @@ mod tests {
         assert_eq!(save_name("0Hero", Some(1000)), None);
         assert_eq!(name("0"), None);
         assert_eq!(save_name("1000Hero.xz", None).as_deref(), Some("Hero"));
+    }
+
+    #[test]
+    fn windows_save_names_are_decoded() {
+        let name = windows_save_name;
+        assert_eq!(name("Hero.NetHack-saved-game").as_deref(), Some("Hero"));
+        assert_eq!(
+            name("Olaf%20the%20Bold.NetHack-saved-game").as_deref(),
+            Some("Olaf the Bold")
+        );
+        // digits are encoded too; so is every byte of a Cyrillic name
+        assert_eq!(name("Hero%32.NetHack-saved-game").as_deref(), Some("Hero2"));
+        assert_eq!(
+            name("%D0%A1%D0%B8%D0%B3%D1%83%D1%80%D0%B4.NetHack-saved-game").as_deref(),
+            Some("Сигурд")
+        );
+        assert_eq!(name("Hero"), None);
+        assert_eq!(name("alock.0"), None);
+        assert_eq!(name(".NetHack-saved-game"), None);
+        assert_eq!(name("Hero%2.NetHack-saved-game"), None);
+        assert_eq!(name("%FF.NetHack-saved-game"), None);
     }
 
     #[test]

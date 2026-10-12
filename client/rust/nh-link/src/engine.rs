@@ -80,6 +80,19 @@ impl EngineConfig {
     }
 }
 
+/// The engine and `recover` are console programs: started by the windowed
+/// game on Windows, each would open a console window of its own.
+pub(crate) fn no_console_window(cmd: &mut Command) {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+    #[cfg(not(windows))]
+    let _ = cmd;
+}
+
 /// NetHack keeps a name in PL_NSIZ = 32 bytes, including the terminating NUL.
 const MAX_NAME_BYTES: usize = 31;
 
@@ -141,6 +154,7 @@ impl Engine {
         if let Some(t) = cfg.fixed_time {
             cmd.env("RENETHACK_FIXED_TIME", t.to_string());
         }
+        no_console_window(&mut cmd);
         let mut child = cmd.spawn().map_err(|source| LinkError::Spawn {
             path: cfg.engine.display().to_string(),
             source,
