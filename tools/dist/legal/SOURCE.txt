@@ -25,4 +25,5 @@ The first line only makes engine/upstream a git checkout, which the build
 exports from. The build downloads the Lua release from lua.org and checks
 its sha256; offline, run `make -C engine build/tree/.patched` first, copy
 lua-*/ into engine/build/tree/lib/, then `make -C engine`. engine/build/
-then holds nh-engine, recover and data/.
+then holds nh-engine, recover and data/. `make -C engine windows` (with
+mingw-w64 as well) builds the Windows programs into engine/build/windows.

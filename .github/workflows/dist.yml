@@ -1,0 +1,171 @@
+# Production builds (tools/dist; the README's "Production builds"): run by
+# hand (Actions → dist → Run workflow) or by pushing a tag v*, a release:
+# those build with Steam. Each job leaves its package as an artifact.
+name: dist
+
+on:
+  workflow_dispatch:
+    inputs:
+      steam:
+        description: Build with Steam (the steam feature and Valve's steam_api)
+        type: boolean
+        default: false
+      macos:
+        description: Build the macOS dmg too (tags always do)
+        type: boolean
+        default: false
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+env:
+  GODOT_VERSION: 4.7.2
+  RUST_VERSION: 1.97.1
+  STEAM: ${{ (inputs.steam || startsWith(github.ref, 'refs/tags/v')) && '1' || '' }}
+
+jobs:
+  linux:
+    # the Steam Linux Runtime 3 SDK: the glibc and libraries Steam starts
+    # the game with
+    runs-on: ubuntu-latest
+    container: registry.gitlab.steamos.cloud/steamrt/sniper/sdk:3.0.20260805.254768
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # git describe and the build number need the history
+      - name: NetHack
+        run: |
+          git config --global --add safe.directory '*'
+          git submodule update --init --depth 1 engine/upstream
+      - name: Tools
+        run: |
+          command -v python3 >/dev/null \
+            || { apt-get update -q && apt-get install -y -q python3; }
+      - name: Rust
+        run: |
+          curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal \
+            --default-toolchain "$RUST_VERSION"
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}-sniper-linux
+      - name: Godot
+        run: sh tools/dist/fetch_godot.sh "$GODOT_VERSION" ~/godot linux_release.x86_64
+      - uses: actions/cache@v4
+        with:
+          path: dist/build/linux/project/.godot
+          key: godot-import-linux-${{ hashFiles('client/godot/**') }}
+          restore-keys: godot-import-linux-
+      - name: Build
+        run: make dist-linux GODOT="$HOME/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: renethack-linux
+          path: dist/renethack-*-linux-x86_64.tar.gz
+          if-no-files-found: error
+
+  windows:
+    # mingw-w64 in Docker, as `make dist-windows` builds on any machine;
+    # wine runs the packaged game's smoke self-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: NetHack
+        run: git submodule update --init --depth 1 engine/upstream
+      - name: wine
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends wine wine64 xvfb
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}-ubuntu-windows
+      - name: Godot
+        run: sh tools/dist/fetch_godot.sh "$GODOT_VERSION" ~/godot windows_release_x86_64.exe
+      - uses: actions/cache@v4
+        with:
+          path: dist/build/windows/project/.godot
+          key: godot-import-windows-${{ hashFiles('client/godot/**') }}
+          restore-keys: godot-import-windows-
+      - name: Build
+        run: xvfb-run -a make dist-windows GODOT="$HOME/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: renethack-windows
+          path: |
+            dist/renethack-*-windows-x86_64.zip
+            dist/renethack-*-windows-x86_64-setup.exe
+          if-no-files-found: error
+
+  macos:
+    # the owner builds the dmg locally; tags and an explicit request build
+    # it here as well
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.macos
+    runs-on: macos-14
+    env:
+      # optional: a Developer ID and notarization (unset: ad-hoc signed)
+      MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+      MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+      MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: NetHack
+        run: git submodule update --init --depth 1 engine/upstream
+      - name: Rust
+        run: |
+          rustup toolchain install "$RUST_VERSION" --profile minimal
+          rustup default "$RUST_VERSION"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/Library/Application Support/Godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}-macos
+      - name: Godot
+        run: sh tools/dist/fetch_godot.sh "$GODOT_VERSION" ~/godot macos.zip
+      - name: Signing
+        if: env.MACOS_CERTIFICATE != ''
+        run: |
+          kc=$RUNNER_TEMP/dist.keychain-db
+          security create-keychain -p dist "$kc"
+          security set-keychain-settings -lut 21600 "$kc"
+          security unlock-keychain -p dist "$kc"
+          printf '%s' "$MACOS_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$kc" -P "$MACOS_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -k dist "$kc"
+          # the keychains already searched, one word each
+          # shellcheck disable=SC2046
+          security list-keychains -d user -s "$kc" $(security list-keychains -d user | tr -d '"')
+          rm "$RUNNER_TEMP/cert.p12"
+          if [ -n "$APPLE_ID" ]; then
+            xcrun notarytool store-credentials renethack --apple-id "$APPLE_ID" \
+              --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD" --keychain "$kc"
+            echo "MACOS_NOTARY_PROFILE=renethack" >> "$GITHUB_ENV"
+          fi
+      - uses: actions/cache@v4
+        with:
+          path: dist/build/macos/project/.godot
+          key: godot-import-macos-${{ hashFiles('client/godot/**') }}
+          restore-keys: godot-import-macos-
+      - name: Build
+        run: make dist-macos GODOT="$HOME/godot/Godot.app"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: renethack-macos
+          path: dist/renethack-*-macos-arm64.dmg
+          if-no-files-found: error

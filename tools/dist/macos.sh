@@ -32,7 +32,7 @@ make -C engine BUILD="$B/engine" CCFLAGS=-O2 UPSTREAM="$UPSTREAM" > "$B/engine.l
     || { tail -40 "$B/engine.log" >&2; die "the engine build failed (log: $B/engine.log)"; }
 
 say "building the extension"
-CARGO_TARGET_DIR=$TARGET cargo build --quiet --profile dist -p renethack-gd \
+CARGO_TARGET_DIR=$TARGET cargo build --quiet --locked --profile dist -p renethack-gd \
     ${STEAM:+--features steam} --manifest-path client/rust/Cargo.toml
 # its install name is the build's path otherwise
 lib=$B/librenethack_gd.dylib

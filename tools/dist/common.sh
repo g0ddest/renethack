@@ -126,15 +126,16 @@ clone() {
 }
 
 # godot_export <stage> <preset> <output>: a headless release export; a
-# failed one exits non-zero. Its other errors are shown (the headless
-# renderer's leak report at exit is not one).
+# failed one exits non-zero. Its other errors are shown, but not the
+# headless renderer's leak report at exit, nor this machine's Godot failing
+# to load another platform's extension (the export only copies it).
 godot_export() {
     say "exporting $2"
     log=$1/../export-$(printf '%s' "$2" | tr ' ' '-').log
     "$GODOT" --headless --path "$1" --export-release "$2" "$3" > "$log" 2>&1 \
         || { tail -40 "$log" >&2; die "the export of $2 failed (log: $log)"; }
     [ -e "$3" ] || die "the export of $2 made no $3 (log: $log)"
-    grep -E '^(ERROR|SCRIPT ERROR):' "$log" | grep -v 'leaked at exit' >&2 || true
+    grep -E '^(ERROR|SCRIPT ERROR):' "$log" | grep -vE 'leaked at exit|dynamic library|Error loading extension|Cannot get class .RenethackGame' >&2 || true
 }
 
 # legal_folder <dir> [the extension's target triple]: what must ship with
@@ -159,8 +160,8 @@ legal_folder() {
 }
 
 # The source of the engine binaries (NGPL 3(a): the source accompanies
-# them), Lua's notice and Godot's: once per version, shared by the
-# platforms. $1: the Lua source the engine build fetched (lib/lua-<v>).
+# them) and Lua's notice, once per version; Godot's notices, once per Godot;
+# shared by the platforms. $1: the Lua source the engine build fetched.
 legal_sources() {
     lua=$1
     src=$DIST/build/source
@@ -184,7 +185,8 @@ legal_sources() {
             | sed -e 's/^\* \{0,1\}//' -e '/^\*\*\*/d' > "$src/Lua-LICENSE.txt"
         printf '%s\n' "$VERSION" > "$stamp"
     fi
-    if [ ! -f "$src/Godot-COPYRIGHT.txt" ]; then
+    gv=$("$GODOT" --version 2>/dev/null | head -1)
+    if [ ! -f "$src/Godot-COPYRIGHT.txt" ] || [ "$(cat "$src/godot.version" 2>/dev/null)" != "$gv" ]; then
         probe=$src/godot-licenses
         rm -rf "$probe"
         mkdir -p "$probe"
@@ -193,5 +195,6 @@ legal_sources() {
             > "$probe/log" 2>&1 || true
         [ -s "$src/Godot-COPYRIGHT.txt" ] || { cat "$probe/log" >&2; die "Godot's notices"; }
         rm -rf "$probe"
+        printf '%s\n' "$gv" > "$src/godot.version"
     fi
 }

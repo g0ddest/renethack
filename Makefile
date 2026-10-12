@@ -15,8 +15,10 @@
 #   make help         the help's Guidebooks (client/help): the Russian fetched again
 #   make help-check   the help builder's tests; fail if a Guidebook is out of date
 #   make lint         rustfmt and clippy, warnings are errors
-#   make dist-macos   the macOS dmg for players, in dist/ (tools/dist; the
-#                     README's "Production builds"); STEAM=1 with Steam
+#   make dist-macos   production builds into dist/ (tools/dist; the README's
+#   make dist-linux   "Production builds"): the macOS dmg, the Linux tar.gz
+#   make dist-windows (on Linux), the Windows zip and installer; `make dist`
+#                     this machine's own and Windows'; STEAM=1 with Steam
 
 GODOT ?= godot
 # a macOS app bundle names a directory; the binary is inside it
@@ -53,7 +55,7 @@ SOAK_SEEDS := 1 2 3 4 5 6 7 8
 SOAK_WINDOW ?=
 
 .PHONY: all engine client steam import run test test-client soak lint need-timeout art app-icon icons achievement-icons achievement-vdf deck \
-	i18n-catalog i18n-check help help-check dist-macos
+	i18n-catalog i18n-check help help-check dist dist-macos dist-linux dist-windows
 all: engine
 
 engine:
@@ -246,9 +248,12 @@ help-check:
 	python3 tools/help/test_guidebook.py
 	python3 tools/help/guidebook.py --check
 
-# Production builds: the platform's script builds the engine and the
-# extension in dist/build/<platform>, exports a staged copy of the Godot
-# project and packages it with the engine and the legal folder; STEAM=1 adds
-# the steam feature and Valve's library
-dist-macos:
+# Production builds: each platform's script builds the engine and the
+# extension in dist/build/<platform> (Windows' in Docker), exports a staged
+# copy of the Godot project and packages it with the engine and the legal
+# folder; STEAM=1 adds the steam feature and Valve's library. The CI
+# workflow (.github/workflows/dist.yml) builds all three.
+dist: $(if $(filter Darwin,$(shell uname -s)),dist-macos,dist-linux) dist-windows
+
+dist-macos dist-linux dist-windows:
 	GODOT="$(GODOT)" sh tools/dist/$(@:dist-%=%).sh

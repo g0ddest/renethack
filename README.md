@@ -239,6 +239,11 @@ its package in `dist/`:
 | Target | Package | Needs |
 |---|---|---|
 | `make dist-macos` | `renethack-<version>-macos-arm64.dmg` | an Apple silicon Mac, Xcode's command line tools |
+| `make dist-linux` | `renethack-<version>-linux-x86_64.tar.gz` | Linux, in the Steam Linux Runtime 3 (sniper) SDK |
+| `make dist-windows` | `renethack-<version>-windows-x86_64.zip` and `…-setup.exe` | Docker |
+
+`make dist` builds this machine's own package and the Windows one. The CI
+workflow builds all three (below).
 
 They need Python 3 and Godot 4.7 (`GODOT=/Applications/Godot.app`) with
 its export templates installed (Editor → Manage Export Templates, or the
@@ -257,7 +262,8 @@ overrides it. Saves stay in Godot's user data directory, as in development.
 
 - The version is `git describe --tags` (a tag `v1.0.0` gives `1.0.0`),
   else `0.1.0+<commit>`, with `.dirty` for uncommitted changes. Its
-  `x.y.z` and the commit count become the macOS bundle's version.
+  `x.y.z` and the commit count become the macOS bundle's version and the
+  Windows file version.
 - `STEAM=1` builds with the `steam` feature and puts Valve's steam_api
   library beside the extension. The App ID comes from Steam when it starts
   the game.
@@ -269,8 +275,8 @@ overrides it. Saves stay in Godot's user data directory, as in development.
   fonts' OFL texts, Godot's licence and notices, and the licences of the
   Rust crates in the extension.
 - Before packaging, a target runs the packaged game's smoke self-test
-  (`DIST_SMOKE=0` skips it): a new game must start with the engine the
-  package carries.
+  where the package can run (`DIST_SMOKE=0` skips it): a new game must
+  start with the engine the package carries.
 - The first build takes a while (the extension's LTO); the next one only
   redoes what changed, and the export and the packaging take a few
   minutes.
@@ -289,6 +295,35 @@ silicon; macOS 11 or newer). Signing is ad-hoc unless:
 
 An ad-hoc signed app runs from Steam; downloaded, macOS asks the player to
 allow it once in System Settings → Privacy & Security.
+
+**Linux.** The tar.gz holds a folder laid out as the Steam depot:
+`renethack.x86_64` (the launch option), `renethack.pck`,
+`librenethack_gd.so`, `engine/`, `legal/`. It is built in the Steam Linux
+Runtime 3 (sniper) SDK, `registry.gitlab.steamos.cloud/steamrt/sniper/sdk`,
+so its programs need glibc 2.31 at most, what the runtime Steam starts the
+game in provides; the build prints what each binary needs.
+`DIST_STEPS=native` or `package` runs half of it.
+
+**Windows.** The zip holds the Steam depot (`renethack.exe`,
+`renethack.pck`, `renethack_gd.dll`, `engine/` with `nh-engine.exe`,
+`legal/`); the NSIS installer puts the same folder in Program Files, with a
+Start menu entry and an uninstaller. The engine and the extension are
+cross-built with mingw-w64 in Docker (`tools/dist/windows/Dockerfile`; the
+engine is NetHack's own Windows configuration with the protocol host,
+`make -C engine windows`). The smoke self-test runs under wine on x86_64
+Linux. Nothing is Authenticode-signed yet.
+
+**CI.** `.github/workflows/dist.yml` builds the packages on GitHub's
+runners: Linux in the sniper SDK container, Windows with the same Docker
+image, macOS (optional) on a macOS runner. Run it from the repository's
+Actions tab (dist → Run workflow; tick Steam for a Steam build, macOS for
+the dmg), or push a tag `v*` (a release: all three, with Steam). Each
+job's package is an artifact of the run, on the run's page. Signing the
+dmg takes the secrets `MACOS_CERTIFICATE` (a base64 .p12),
+`MACOS_CERTIFICATE_PASSWORD` and `MACOS_SIGN_IDENTITY`, and notarizing it
+`APPLE_ID`, `APPLE_TEAM_ID` and `APPLE_APP_PASSWORD`; without them it is
+ad-hoc signed. `tools/dist/fetch_godot.sh` fetches Godot and its
+templates (checked against the release's sums) where Godot is missing.
 
 ## Languages
 
