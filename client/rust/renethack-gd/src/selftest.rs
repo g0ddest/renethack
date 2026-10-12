@@ -34,6 +34,8 @@ mod achievements;
 mod audio_tests;
 #[path = "selftest_corridors.rs"]
 mod corridors;
+#[path = "selftest_credits.rs"]
+mod credits_tests;
 #[path = "selftest_doll.rs"]
 mod doll_tests;
 #[path = "selftest_effects.rs"]
@@ -4777,6 +4779,7 @@ impl SelfTest {
             "pickers" => input_ru::pickers(),
             "help" => help_tests::help(),
             "settings" => settings_tests::settings(),
+            "credits" => credits_tests::credits(),
             "presets" => settings_tests::presets(),
             "layouts" => layouts_tests::layouts(),
             "rim" => rim_tests::rim(),
@@ -5230,6 +5233,15 @@ fn layout_fits(game: &RenethackGame) -> Result<(), String> {
             return Err(format!(
                 "settings wider than their place: {}",
                 over.join("; ")
+            ));
+        }
+    }
+    if let Some(page) = game.credits_page.as_ref() {
+        let r = page.rect();
+        if !canvas.encloses(r) {
+            return Err(format!(
+                "the credits page at {:.0},{:.0} {:.0}×{:.0} is not inside the {:.0}×{:.0} canvas",
+                r.position.x, r.position.y, r.size.x, r.size.y, size.x, size.y
             ));
         }
     }

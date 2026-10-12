@@ -218,6 +218,8 @@ pub struct Screens {
     settings_in_game: bool,
     /// The achievements page was opened from a game.
     achievements_in_game: bool,
+    /// The credits page was opened over a game.
+    credits_in_game: bool,
 }
 
 /// The game's name on the title: a name, the same in every language.
@@ -367,6 +369,7 @@ impl Screens {
             title: (Vec::new(), None),
             settings_in_game: false,
             achievements_in_game: false,
+            credits_in_game: false,
         }
     }
 
@@ -450,6 +453,11 @@ impl Screens {
             UiEvent::OpenSettings,
         )));
         col.add_child(&wide(theme::button(
+            &tr!("title-credits"),
+            &self.queue,
+            UiEvent::OpenCredits,
+        )));
+        col.add_child(&wide(theme::button(
             &tr!("title-quit"),
             &self.queue,
             UiEvent::QuitApp,
@@ -479,6 +487,20 @@ impl Screens {
     /// The settings page was opened from a game.
     pub fn settings_in_game(&self) -> bool {
         self.settings_in_game
+    }
+
+    /// The credits and licences page (`credits_page::CreditsPage`), over
+    /// the scene as the settings are; `in_game`: opened over a game.
+    pub fn show_credits(&mut self, page: &Gd<Control>, in_game: bool) {
+        self.form = None;
+        self.credits_in_game = in_game;
+        self.page("credits", page);
+        self.bg.set_color(theme::BG.with_alpha(SETTINGS_SHADE));
+    }
+
+    /// The credits page was opened over a game.
+    pub fn credits_in_game(&self) -> bool {
+        self.credits_in_game
     }
 
     /// The achievements page (`achievement_view::Page`); `in_game`:

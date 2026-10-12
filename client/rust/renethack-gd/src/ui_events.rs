@@ -59,6 +59,11 @@ pub enum UiEvent {
     OpenSettings,
     CloseSettings,
     Settings(crate::settings_page::SettingsInput),
+    /// The credits and licences page (the title's button, the settings'),
+    /// and a document of its list clicked.
+    OpenCredits,
+    CloseCredits,
+    Credits(crate::credits_page::CreditsInput),
     /// The achievements page (the title's button, the HUD's medal), and
     /// a medallion on it clicked or hovered.
     OpenAchievements,

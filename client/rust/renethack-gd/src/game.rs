@@ -314,6 +314,10 @@ pub struct RenethackGame {
     pub(crate) settings: Settings,
     /// The settings page while it is open.
     pub(crate) settings_page: Option<SettingsPage>,
+    /// The credits and licences page while it is open, and the settings
+    /// page's place it was opened from (Back returns there).
+    pub(crate) credits_page: Option<crate::credits_page::CreditsPage>,
+    credits_return: Option<(settings_page::Section, usize)>,
     /// The device's own graphics preset (until the player chooses).
     device_quality: nh_world::Quality,
     /// The hero's gender as the map draws the hero, told to the engine's
@@ -496,6 +500,8 @@ impl INode for RenethackGame {
             achievement_page: None,
             settings: Settings::default(),
             settings_page: None,
+            credits_page: None,
+            credits_return: None,
             device_quality: nh_world::Quality::High,
             link_error: None,
             close_deadline: None,
@@ -721,6 +727,7 @@ impl INode for RenethackGame {
         self.pad_tick();
         self.drain_ui();
         self.sync_settings_page();
+        self.sync_credits_page();
         self.lap("input", t);
         let t = Instant::now();
         self.pump();
@@ -790,7 +797,7 @@ impl INode for RenethackGame {
         };
         // the achievements and settings pages take keys and the gamepad on
         // the title too
-        let page = self.achievements_open() || self.settings_open();
+        let page = self.achievements_open() || self.settings_open() || self.credits_open();
         if self.state != GameState::Playing && !page {
             return;
         }
@@ -1718,6 +1725,10 @@ impl RenethackGame {
             self.settings_key(k);
             return;
         }
+        if self.credits_open() {
+            self.credits_key(k);
+            return;
+        }
         if self.state != GameState::Playing {
             return;
         }
@@ -1888,7 +1899,7 @@ impl RenethackGame {
             return PadCtx::Other;
         };
         // a page over everything: the d-pad's arrows, A and B, the bumpers
-        if self.achievements_open() || self.settings_open() {
+        if self.achievements_open() || self.settings_open() || self.credits_open() {
             return PadCtx::Other;
         }
         if ui.help.is_open() {
@@ -1930,7 +1941,8 @@ impl RenethackGame {
 
     /// Held sticks repeat.
     fn pad_tick(&mut self) {
-        if self.state != GameState::Playing && !self.achievements_open() && !self.settings_open() {
+        let page = self.achievements_open() || self.settings_open() || self.credits_open();
+        if self.state != GameState::Playing && !page {
             return;
         }
         let ctx = self.pad_ctx();
@@ -2230,8 +2242,8 @@ impl RenethackGame {
         ui.dialogs.set_pad(pad.is_some());
         ui.help.set_pad(pad.is_some());
         ui.inventory.set_pad(pad);
-        // the settings page shows its own
-        let page = ui.screens.current() == Some("settings");
+        // the settings and credits pages show their own
+        let page = matches!(ui.screens.current(), Some("settings" | "credits"));
         ui.pad.show_hints(pad.filter(|_| !page).map(|k| (k, ctx)));
         // the hints go into the panel on top: a dialog's, else the
         // inventory's, which keep room for them
@@ -2657,6 +2669,13 @@ impl RenethackGame {
             UiEvent::OpenSettings => self.open_settings(),
             UiEvent::CloseSettings => self.close_settings(),
             UiEvent::Settings(input) => self.on_settings(input),
+            UiEvent::OpenCredits => self.open_credits(),
+            UiEvent::CloseCredits => self.close_credits(),
+            UiEvent::Credits(crate::credits_page::CreditsInput::Pick(i)) => {
+                if let Some(p) = self.credits_page.as_mut() {
+                    p.select(i);
+                }
+            }
             UiEvent::OpenAchievements => self.open_achievements(),
             UiEvent::CloseAchievements => self.close_achievements(),
             UiEvent::AchievementPick(i) => {
@@ -2949,6 +2968,100 @@ impl RenethackGame {
             .is_some_and(|ui| ui.screens.current() == Some("settings"))
     }
 
+    /// The credits and licences page, over the title or the game (its
+    /// orders stop); from the settings page, Back goes back to it.
+    fn open_credits(&mut self) {
+        let in_game = match self.state {
+            GameState::Title => false,
+            GameState::Playing => true,
+            _ => return,
+        };
+        if in_game {
+            self.driver.interrupt(Stop::Panel);
+        }
+        self.credits_return = self.settings_page.as_ref().map(|p| p.place());
+        if self.credits_return.is_some() {
+            // the settings close under it
+            self.keep_volumes();
+            self.settings_page = None;
+        }
+        self.build_credits(in_game, 0);
+    }
+
+    /// The credits page made anew (on opening, in another language, for
+    /// a gamepad's hints), on its `selected`-th document. The NGPL and
+    /// Lua's notice are read as the engine ships them.
+    fn build_credits(&mut self, in_game: bool, selected: usize) {
+        let canvas = self.canvas_size();
+        let data = self.paths.as_ref().map(Paths::data);
+        let read = |name: &str| {
+            data.as_ref()
+                .and_then(|d| std::fs::read_to_string(d.join(name)).ok())
+        };
+        let shipped = crate::credits::Shipped {
+            ngpl: read("license"),
+            lua: read("lua-license"),
+        };
+        let pad = self.pad.active.then_some(self.pad.kind);
+        let page =
+            crate::credits_page::CreditsPage::new(&self.queue, canvas, shipped, selected, pad);
+        self.ui_mut().screens.show_credits(&page.root(), in_game);
+        self.credits_page = Some(page);
+    }
+
+    fn close_credits(&mut self) {
+        if !self.credits_open() {
+            return;
+        }
+        self.credits_page = None;
+        let in_game = self.state == GameState::Playing
+            && self
+                .ui
+                .as_ref()
+                .is_some_and(|ui| ui.screens.credits_in_game());
+        if let Some(at) = self.credits_return.take() {
+            self.build_settings(in_game, at);
+        } else if in_game {
+            self.ui_mut().screens.hide();
+        } else {
+            self.show_title(None);
+        }
+    }
+
+    /// The credits page is up (keys are its own).
+    pub(crate) fn credits_open(&self) -> bool {
+        self.ui
+            .as_ref()
+            .is_some_and(|ui| ui.screens.current() == Some("credits"))
+    }
+
+    /// A key on the credits page: the page moves itself; Esc goes back.
+    fn credits_key(&mut self, k: KeyInput) {
+        let Some(page) = self.credits_page.as_mut() else {
+            return;
+        };
+        if page.key(&k) {
+            self.close_credits();
+        }
+    }
+
+    /// The credits page's hints follow the input: a gamepad's or the
+    /// keyboard's.
+    fn sync_credits_page(&mut self) {
+        let Some(page) = self.credits_page.as_ref() else {
+            return;
+        };
+        let pad = self.pad.active.then_some(self.pad.kind);
+        if page.pad() != pad {
+            let selected = page.selected().0;
+            let in_game = self
+                .ui
+                .as_ref()
+                .is_some_and(|ui| ui.screens.credits_in_game());
+            self.build_credits(in_game, selected);
+        }
+    }
+
     /// Switch the interface's language: kept in the profile and with the
     /// character playing; what is on screen is drawn again in it (the log
     /// from the engine's own English).
@@ -3047,6 +3160,14 @@ impl RenethackGame {
                 .as_ref()
                 .is_some_and(|ui| ui.screens.settings_in_game());
             self.build_settings(in_game, at);
+        }
+        // and the credits, on the same document
+        if let Some(selected) = self.credits_page.as_ref().map(|p| p.selected().0) {
+            let in_game = self
+                .ui
+                .as_ref()
+                .is_some_and(|ui| ui.screens.credits_in_game());
+            self.build_credits(in_game, selected);
         }
     }
 

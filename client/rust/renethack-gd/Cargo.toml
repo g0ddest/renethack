@@ -33,6 +33,10 @@ unic-langid = "0.9"
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
 
+[build-dependencies]
+# the credits' list of the Rust crates (build.rs reads cargo metadata)
+serde_json.workspace = true
+
 [dev-dependencies]
 # the catalogs' keys and arguments, read in the tests
 fluent-syntax = "0.12"

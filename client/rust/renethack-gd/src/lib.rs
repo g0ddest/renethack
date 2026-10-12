@@ -10,6 +10,8 @@ mod audio;
 mod batch;
 mod bindings;
 mod branch_look;
+mod credits;
+mod credits_page;
 mod cues;
 mod dialogs;
 mod engine_text;

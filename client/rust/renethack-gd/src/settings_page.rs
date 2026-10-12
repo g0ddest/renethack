@@ -913,6 +913,11 @@ impl SettingsPage {
         hint.set_h_size_flags(SizeFlags::EXPAND_FILL);
         foot.add_child(&hint);
         foot.add_child(&theme::button(
+            &tr!("settings-credits"),
+            queue,
+            UiEvent::OpenCredits,
+        ));
+        foot.add_child(&theme::button(
             &tr!("settings-back"),
             queue,
             UiEvent::CloseSettings,

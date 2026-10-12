@@ -167,6 +167,24 @@ and the scenario says so), at the size it is for:
 
     godot --path client/godot -- --selftest=presets --size=1280x800
 
+## Credits and licences
+
+Credits on the title screen (and a button on the settings page) opens the
+credits and the licences: the game, NetHack and its DevTeam, the art, the
+sounds, the help's Guidebook and the Russian translation, as their
+`CREDITS.md` files say (embedded when the extension is built, so the
+screen never drifts from them; a CC-BY model is credited there as its
+licence asks); then the package's notice (`tools/dist/legal/NOTICE.txt`),
+the NGPL as the engine ships it (`data/license`), Godot's licence and the
+third-party code in it (as the running Godot tells them), the Rust crates
+linked into the extension (`build.rs` lists them from `cargo metadata`, as
+`tools/dist/rust_licenses.py` does for legal/), Lua and cJSON, and the
+fonts' SIL Open Font License. The page's words are in the player's
+language, the attributions and licences as they are written. ↑↓ (the
+d-pad) choose, PgUp/PgDn (the bumpers) scroll, Esc (B) goes back; a link
+opens in the browser. The `credits` scenario checks that each document
+shows what it must.
+
 ## Build and test
 
     git submodule update --init
