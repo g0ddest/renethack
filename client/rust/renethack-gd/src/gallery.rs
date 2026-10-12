@@ -608,6 +608,52 @@ pub fn put_feature(
     Ok(())
 }
 
+/// A piece of a ray on a cell of `CORRIDORS`, over the lit floor, as the
+/// engine draws one: a zap glyph of NetHack's beam type `beam` (`ZT_*`)
+/// along `step` (the way the ray goes), or a wand of digging's beam
+/// (`beam` None).
+pub fn put_ray(
+    world: &mut World,
+    cat: &Catalog,
+    beam: Option<i32>,
+    step: (i32, i32),
+    at: (i32, i32),
+) -> Result<(), String> {
+    let (x, y) = corridor_cell(at);
+    let glyph = match beam {
+        Some(beam) => {
+            // the four ways of a beam, in display.c's zapdir_to_glyph
+            let (dx, dy) = step;
+            let way = if dx == dy {
+                2
+            } else if dx != 0 && dy != 0 {
+                3
+            } else if dx != 0 {
+                1
+            } else {
+                0
+            };
+            // NetHack's zapcolors: HI_ZAP, orange, white, HI_ZAP, black,
+            // white, yellow, green
+            let color = [12, 9, 15, 12, 0, 15, 11, 2][beam.clamp(0, 7) as usize];
+            Glyph {
+                glyph: Some(cat.glyphs.zap + beam * 4 + way),
+                ch: ['|', '-', '\\', '/'][way as usize] as i32,
+                color,
+                flags: 0,
+                tile: 0,
+                kind: GlyphKind::Zap,
+                mon: None,
+                cmap: None,
+                level: None,
+            }
+        }
+        None => cmap(cat, "S_digbeam")?,
+    };
+    world.map.print(x, y, &glyph, Some(&cmap(cat, "S_room")?));
+    Ok(())
+}
+
 /// A cell of `CORRIDORS` on the map.
 pub fn corridor_cell((col, row): (i32, i32)) -> (i32, i32) {
     (CORRIDORS_AT.0 + col, CORRIDORS_AT.1 + row)
@@ -624,6 +670,16 @@ pub fn lay_out_corridors(
     unlit: bool,
 ) -> Result<(), String> {
     let scene = CORRIDOR_SCENES.get(scene).ok_or("no such scene")?;
+    lay_out_scene(world, cat, scene, unlit)
+}
+
+/// `lay_out_corridors` with a scene of one's own.
+pub fn lay_out_scene(
+    world: &mut World,
+    cat: &Catalog,
+    scene: &CorridorScene,
+    unlit: bool,
+) -> Result<(), String> {
     let map = &mut world.map;
     map.clear();
     let sym = |ch: char| match ch {

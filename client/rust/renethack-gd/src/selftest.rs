@@ -4770,6 +4770,7 @@ impl SelfTest {
             "corridors" => corridors::corridors(),
             "shop" => shop::shop(),
             "effects" => effects::effects(),
+            "rays" => effects::rays(),
             "pickers" => input_ru::pickers(),
             "help" => help_tests::help(),
             "settings" => settings_tests::settings(),

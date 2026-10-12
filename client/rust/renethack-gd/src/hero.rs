@@ -205,6 +205,12 @@ impl HeroFx {
                 impact,
             } => {
                 self.started.push("beam");
+                // a ray the map has just drawn cell by cell (as what it
+                // is, bouncing where it bounced) was this use's beam: it
+                // is not drawn again, nor its end
+                if vfx.ray_lately() {
+                    return;
+                }
                 let from = where_now(anchor.as_ref(), from);
                 vfx.beam(kind, from, to);
                 if let Some(kind) = impact {
@@ -360,14 +366,17 @@ pub fn use_effects(
         UseKind::Quaff => vec![(0.8, burst("quaff", VfxKind::Quaff(color), hand))],
         UseKind::Eat => vec![(0.6, burst("eat", VfxKind::Quaff(color), hand))],
         UseKind::Read => vec![(0.5, burst("read", VfxKind::Read, hand))],
+        // a wand or a spell whose way the engine draws no ray along
+        // (striking, force bolt, the rest that strike what is there) sends
+        // rings of force; a ray's own look is the map's (`Fx::Beam`)
         UseKind::Zap => {
             let mut v = vec![(0.35, burst("zap", VfxKind::Zap(color), hand))];
-            v.extend(beam(VfxKind::Zap(color), VfxKind::Explosion(color)));
+            v.extend(beam(VfxKind::Shock(color), VfxKind::Zap(color)));
             v
         }
         UseKind::Cast => {
             let mut v = vec![(0.3, burst("cast", VfxKind::Cast(color), hand))];
-            v.extend(beam(VfxKind::Cast(color), VfxKind::Explosion(color)));
+            v.extend(beam(VfxKind::Shock(color), VfxKind::Zap(color)));
             v
         }
         UseKind::Apply => vec![(0.4, burst("apply", VfxKind::Sparkle, hand))],

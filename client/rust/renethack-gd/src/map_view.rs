@@ -53,7 +53,7 @@ use crate::meshes::{
 use crate::seated::Mount;
 use crate::surface::{Fow, FowCell, Role, Seen, Surfaces, cell_index, sight};
 use crate::theme::{self, nh_color};
-use crate::vfx::{Vfx, VfxKind};
+use crate::vfx::{Ray, Vfx, VfxKind};
 
 #[path = "hero_pose.rs"]
 mod hero_pose;
@@ -438,8 +438,9 @@ struct Look {
     lamp: Option<Lamp>,
     /// An explosion shows here.
     blast: Option<Color>,
-    /// A ray crosses here: (colour, yaw, height).
-    ray: Option<(Color, f32, f32)>,
+    /// A ray crosses here: (what of, the glyph's colour, its yaw if it
+    /// shows its way, height).
+    ray: Option<(Ray, Color, Option<f32>, f32)>,
     /// Something glints here for a moment: (colour, height).
     glint: Option<(Color, f32)>,
     /// Masonry of a wall (grime gathers at its foot).
@@ -2235,9 +2236,10 @@ fn monster_look(g: &Glyph, ctx: &Ctx) -> Option<ModelLook> {
 }
 
 /// A beam, explosion or sparkle for the moment it shows: a ray is a
-/// piece of a glowing ray along its direction (the glyph says which), the
-/// rest a burst of glints; the effects draw them (`Vfx`), no solid stands
-/// in the cell.
+/// piece of a ray along its direction (the glyph says which, and what it
+/// is of), a wand of digging's beam a piece of a ray of dust whose way
+/// its next piece shows, the rest a burst of glints; the effects draw
+/// them (`Vfx`), no solid stands in the cell.
 fn bright_flash(look: &mut Look, g: &Glyph, ctx: &Ctx) {
     let color = lighter(nh_color(g.color), 0.3);
     let y = look.ground.max(0.0) + 0.6;
@@ -2260,11 +2262,26 @@ fn bright_flash(look: &mut Look, g: &Glyph, ctx: &Ctx) {
         "S_rslant" => Some(-45.0),
         _ => None,
     };
-    match yaw {
-        Some(yaw) => look.ray = Some((color, yaw, y)),
-        None => look.glint = Some((color, y)),
+    let kind = match (g.kind, sym) {
+        (GlyphKind::Zap, _) => zap_ray(g, ctx.catalog),
+        (_, "S_digbeam") => Ray::Dig,
+        _ => Ray::Plain,
+    };
+    match (yaw, sym) {
+        (Some(yaw), _) => look.ray = Some((kind, color, Some(yaw), y)),
+        (None, "S_digbeam" | "S_flashbeam") => look.ray = Some((kind, color, None, y)),
+        _ => look.glint = Some((color, y)),
     }
     look.reach(y + 0.3);
+}
+
+/// What a zap glyph's ray is of: its beam type is in its number (four
+/// glyphs, one per direction, for each).
+fn zap_ray(g: &Glyph, catalog: &Catalog) -> Ray {
+    g.glyph
+        .map(|n| n - catalog.glyphs.zap)
+        .filter(|&n| n >= 0)
+        .map_or(Ray::Plain, |n| Ray::of_zap(n / 4))
 }
 
 /// Can something north of a wall be seen or stood on (so the wall would
@@ -3873,6 +3890,21 @@ impl MapView {
     /// Splats of blood lying on the floor now (self-tests).
     pub fn splats_shown(&self) -> usize {
         self.vfx.splats_shown()
+    }
+
+    /// Whether a piece of a ray is drawn on the cell (self-tests).
+    pub fn ray_drawn_at(&self, cell: (i32, i32)) -> bool {
+        self.cells.get(&cell).is_some_and(|c| c.look.ray.is_some())
+    }
+
+    /// Rays showing now, and how long the newest has (self-tests).
+    pub fn rays_shown(&self) -> (usize, Option<f32>) {
+        self.vfx.rays_shown()
+    }
+
+    /// Whether an effect still shows (self-tests).
+    pub fn effects_busy(&self) -> bool {
+        self.vfx.busy()
     }
 
     /// The effects, for bursts and beams at world positions.
@@ -6091,12 +6123,18 @@ impl MapView {
             self.vfx.set_solid((x, y), solid);
         }
         // a ray lights up as it crosses the cell
-        if let Some((c, yaw, y)) = look.ray
+        if let Some((kind, c, yaw, y)) = look.ray
             && old.ray != look.ray
         {
-            let dir = Vector3::new(yaw.to_radians().sin(), 0.0, yaw.to_radians().cos()) * 0.55;
             let mid = origin + at(0.0, y, 0.0);
-            self.vfx.ray(c, mid - dir, mid + dir);
+            match yaw {
+                Some(yaw) => {
+                    let dir =
+                        Vector3::new(yaw.to_radians().sin(), 0.0, yaw.to_radians().cos()) * 0.55;
+                    self.vfx.ray(kind, c, mid - dir, mid + dir);
+                }
+                None => self.vfx.ray_through(kind, c, mid),
+            }
         }
         if (old.seen, old.masonry) != (look.seen, look.masonry) {
             self.fow_dirty = true;
@@ -8069,12 +8107,26 @@ mod tests {
         let mut cell = on_floor(cat, cmap(cat, "S_vbeam"));
         let beam = f.look(&cell);
         // a piece of a ray along the cell (the effects draw it), no solid
-        let (_, yaw, y) = beam.ray.expect("a ray");
-        assert_eq!(yaw, 0.0);
+        let (_, _, yaw, y) = beam.ray.expect("a ray");
+        assert_eq!(yaw, Some(0.0));
         assert!(y > 0.3);
         assert_eq!(beam.solids.len(), 1, "only the floor");
         let spark = f.look(&on_floor(cat, cmap(cat, "S_ss1")));
         assert!(spark.glint.is_some() && spark.ray.is_none());
+        // a zap glyph's ray is what its number says: four glyphs, one
+        // per way, for each beam type (fire is NetHack's second)
+        let fire = Glyph {
+            glyph: Some(cat.glyphs.zap + 4 + 1),
+            ..glyph(GlyphKind::Zap, '-')
+        };
+        let (kind, _, yaw, _) = f.look(&on_floor(cat, fire)).ray.expect("a ray");
+        assert_eq!((kind, yaw), (Ray::Fire, Some(90.0)));
+        // a wand of digging's beam: dust, its way told by its next piece
+        let (kind, _, yaw, _) = f
+            .look(&on_floor(cat, cmap(cat, "S_digbeam")))
+            .ray
+            .expect("a ray of dust");
+        assert_eq!((kind, yaw), (Ray::Dig, None));
         // the engulfer is drawn around the hero, not per cell
         cell.glyph = Some(glyph(GlyphKind::Swallow, '/'));
         assert_eq!(f.look(&cell).solids.len(), 1, "only the floor");

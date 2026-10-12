@@ -1,13 +1,17 @@
 //! The map's effects: bursts of particles (hit sparks, blood, the magic of
 //! quaffing, reading, zapping and casting, fire, frost, lightning, poison,
-//! explosions, healing, sparkles) with a short flash of light, beams along
-//! a ray with a light travelling on them, blood splats on the floor that
-//! fade, and the dust in the air that shows only where light falls.
-//! Emitters, lights and decals are pooled per kind; nothing here is ever
-//! more than a picture of what the game already said.
+//! explosions, healing, sparkles, a ring of force) with a short flash of
+//! light, rays drawn as what they are of (`Ray`: a stream of flame, an
+//! icy core shedding shards, a drifting haze, darts of light, a black ray,
+//! a spray, rock dust, rings of force) with a light on them and particles
+//! shed along them, blood splats on the floor that fade, and the dust in
+//! the air that shows only where light falls. Emitters, lights and decals
+//! are pooled per kind; nothing here is ever more than a picture of what
+//! the game already said.
 //!
 //! Other parts of the client call `Vfx::burst(kind, at)` and
-//! `Vfx::beam(kind, from, to)` (world positions) or the map's cell helpers
+//! `Vfx::beam(kind, from, to)` (world positions), `Vfx::ray` for the
+//! pieces of a ray the map draws cell by cell, or the map's cell helpers
 //! `MapView::burst_at` and `MapView::beam_between`.
 
 use std::collections::HashMap;
@@ -21,9 +25,9 @@ use godot::classes::image::Format;
 use godot::classes::light_3d::Param;
 use godot::classes::particle_process_material::{EmissionShape, Parameter};
 use godot::classes::{
-    Decal, GpuParticles3D, Gradient, GradientTexture1D, Image, ImageTexture, Material,
-    MeshInstance3D, Node3D, OmniLight3D, ParticleProcessMaterial, QuadMesh, Shader, ShaderMaterial,
-    StandardMaterial3D, Texture2D,
+    Curve, CurveTexture, Decal, GpuParticles3D, Gradient, GradientTexture1D, Image, ImageTexture,
+    Material, MeshInstance3D, Node3D, OmniLight3D, ParticleProcessMaterial, QuadMesh, Shader,
+    ShaderMaterial, StandardMaterial3D, Texture2D,
 };
 use godot::prelude::*;
 
@@ -51,6 +55,184 @@ pub enum VfxKind {
     Sparks,
     /// A creature bleeding, of this colour (droplets and a splat).
     Blood(Color),
+    /// A ring of force spreading where a bolt of force (or magic the
+    /// client cannot tell) strikes, of this colour.
+    Shock(Color),
+}
+
+/// What a ray is of: NetHack's beam types (`ZT_*`), a wand of digging's
+/// beam, and the force of a bolt that is no ray. Each has its own look
+/// (beam.gdshader's `style`) and sheds its own particles along its way.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Ray {
+    /// What the client cannot tell: a glowing tube of its colour.
+    Plain,
+    /// Darts of light.
+    MagicMissile,
+    /// A stream of flame.
+    Fire,
+    /// An icy core in a glittering mist, shedding shards of ice.
+    Cold,
+    /// A soft haze drifting.
+    Sleep,
+    /// Black, eating the light (death, disintegration).
+    Death,
+    /// A jagged bolt with forks.
+    Lightning,
+    /// Billows of noxious gas.
+    Poison,
+    /// A spray of acid.
+    Acid,
+    /// Rock dust (a wand of digging).
+    Dig,
+    /// Rings of force (force bolt, a wand of striking).
+    Force,
+}
+
+impl Ray {
+    /// Every kind (the effects' rehearsal draws each once).
+    pub const ALL: [Ray; 11] = [
+        Ray::Plain,
+        Ray::MagicMissile,
+        Ray::Fire,
+        Ray::Cold,
+        Ray::Sleep,
+        Ray::Death,
+        Ray::Lightning,
+        Ray::Poison,
+        Ray::Acid,
+        Ray::Dig,
+        Ray::Force,
+    ];
+
+    /// The ray of a zap glyph's beam type: NetHack's `ZT_*`, the glyph's
+    /// offset from the first zap glyph over four (its directions).
+    pub fn of_zap(beam: i32) -> Ray {
+        match beam {
+            0 => Ray::MagicMissile,
+            1 => Ray::Fire,
+            2 => Ray::Cold,
+            3 => Ray::Sleep,
+            4 => Ray::Death,
+            5 => Ray::Lightning,
+            6 => Ray::Poison,
+            7 => Ray::Acid,
+            _ => Ray::Plain,
+        }
+    }
+
+    /// The shader's style for it (beam.gdshader's constants).
+    fn style(self) -> i32 {
+        match self {
+            Ray::Plain => 0,
+            Ray::MagicMissile => 1,
+            Ray::Fire => 2,
+            Ray::Cold => 3,
+            Ray::Sleep => 4,
+            Ray::Death => 5,
+            Ray::Lightning => 6,
+            Ray::Acid => 7,
+            Ray::Dig => 8,
+            Ray::Force => 9,
+            Ray::Poison => 10,
+        }
+    }
+
+    fn look(self) -> RayLook {
+        let rgb = |r, g, b| Some(Color::from_rgb(r, g, b));
+        let plain = RayLook {
+            color: None,
+            width: RAY_WIDTH,
+            light: 3.0,
+            secs: BEAM_SECS,
+            trails: &[],
+        };
+        match self {
+            Ray::Plain => plain,
+            Ray::MagicMissile => RayLook {
+                width: 0.55,
+                light: 2.5,
+                secs: 0.5,
+                trails: &[Recipe::Twinkles],
+                ..plain
+            },
+            Ray::Fire => RayLook {
+                color: rgb(1.0, 0.48, 0.13),
+                width: 0.8,
+                light: 4.0,
+                secs: 0.6,
+                trails: &[Recipe::Tongues],
+            },
+            Ray::Cold => RayLook {
+                color: rgb(0.62, 0.86, 1.0),
+                width: 0.6,
+                light: 2.2,
+                secs: 0.6,
+                trails: &[Recipe::Rime],
+            },
+            Ray::Sleep => RayLook {
+                color: rgb(0.6, 0.56, 1.0),
+                width: 1.0,
+                light: 1.0,
+                secs: 1.4,
+                trails: &[Recipe::Haze],
+            },
+            // its light darkens what is round it
+            Ray::Death => RayLook {
+                color: rgb(0.62, 0.34, 0.95),
+                width: 0.6,
+                light: -2.5,
+                secs: 0.6,
+                trails: &[Recipe::Smoke],
+            },
+            Ray::Lightning => RayLook {
+                color: rgb(0.91, 0.94, 1.0),
+                width: BOLT_WIDTH,
+                ..plain
+            },
+            Ray::Poison => RayLook {
+                color: rgb(0.74, 0.93, 0.25),
+                width: 0.9,
+                light: 1.0,
+                secs: 1.4,
+                trails: &[Recipe::Gas],
+            },
+            Ray::Acid => RayLook {
+                color: rgb(0.42, 1.0, 0.3),
+                width: 0.8,
+                light: 1.2,
+                secs: 0.7,
+                trails: &[Recipe::Spray],
+            },
+            Ray::Dig => RayLook {
+                color: rgb(0.42, 0.36, 0.3),
+                width: 0.9,
+                light: 0.0,
+                secs: 1.2,
+                trails: &[Recipe::Dust, Recipe::Grit],
+            },
+            Ray::Force => RayLook {
+                color: rgb(0.78, 0.86, 1.0),
+                width: 0.6,
+                light: 1.5,
+                secs: 0.5,
+                ..plain
+            },
+        }
+    }
+}
+
+/// How a ray of a kind is drawn: its colour (None: the one it is drawn
+/// in), its ribbon's width (metres), its light's energy (below zero it
+/// darkens what is round it; zero, none), how long it shows once it stops
+/// growing (seconds: a haze, gas and dust linger) and what it sheds along
+/// its way.
+struct RayLook {
+    color: Option<Color>,
+    width: f32,
+    light: f32,
+    secs: f32,
+    trails: &'static [Recipe],
 }
 
 /// A particle recipe: what a pooled emitter of a kind is built with.
@@ -70,6 +252,27 @@ enum Recipe {
     /// A flare at the point of contact.
     Flash,
     Droplets,
+    /// A ring spreading out and fading.
+    Ring,
+    // shed along a ray once it has run its length (`Vfx::shed`):
+    /// Tongues of flame rising.
+    Tongues,
+    /// Shards of ice falling, glinting.
+    Rime,
+    /// Soft puffs of haze, lingering.
+    Haze,
+    /// Specks of light twinkling.
+    Twinkles,
+    /// Black smoke fraying.
+    Smoke,
+    /// Puffs of noxious gas, lingering.
+    Gas,
+    /// Drops of acid falling.
+    Spray,
+    /// Rock dust billowing.
+    Dust,
+    /// Chips of rock falling.
+    Grit,
 }
 
 struct Params {
@@ -82,12 +285,62 @@ struct Params {
     size: (f32, f32),
     radius: f32,
     damping: f32,
-    /// The ramp over a particle's life: hot at birth, fading out.
+    /// The ramp over a particle's life: hot at birth, fading out (a
+    /// smoke's: how thick it is at its thickest, its alpha).
     hdr: f32,
     additive: bool,
+    /// Shaded by the lights about it (dust, blood), not glowing.
+    lit: bool,
 }
 
 impl Recipe {
+    /// Shed along a ray (from a box its length), not burst at a point.
+    fn is_trail(self) -> bool {
+        matches!(
+            self,
+            Recipe::Tongues
+                | Recipe::Rime
+                | Recipe::Haze
+                | Recipe::Twinkles
+                | Recipe::Smoke
+                | Recipe::Gas
+                | Recipe::Spray
+                | Recipe::Dust
+                | Recipe::Grit
+        )
+    }
+
+    /// Its own colour, whatever the ray's: smoke is black, dust and grit
+    /// the colours of rock.
+    fn own_color(self) -> Option<Color> {
+        match self {
+            Recipe::Smoke => Some(Color::from_rgb(0.05, 0.03, 0.07)),
+            Recipe::Dust => Some(Color::from_rgb(0.62, 0.55, 0.47)),
+            Recipe::Grit => Some(Color::from_rgb(0.3, 0.26, 0.22)),
+            _ => None,
+        }
+    }
+
+    /// A smoke or a haze: it veils what is behind it (its ramp's alpha is
+    /// low and it lingers), it does not glow.
+    fn is_smoke(self) -> bool {
+        matches!(
+            self,
+            Recipe::Haze | Recipe::Smoke | Recipe::Gas | Recipe::Dust
+        )
+    }
+
+    /// The frames of its texture's flipbook (columns, rows), played once
+    /// over a particle's life.
+    fn frames(self) -> Option<(i32, i32)> {
+        match self {
+            Recipe::Tongues | Recipe::Haze | Recipe::Smoke | Recipe::Gas | Recipe::Dust => {
+                Some((8, 8))
+            }
+            _ => None,
+        }
+    }
+
     fn params(self) -> Params {
         let base = Params {
             amount: 20,
@@ -101,6 +354,7 @@ impl Recipe {
             damping: 0.5,
             hdr: 1.8,
             additive: true,
+            lit: false,
         };
         match self {
             Recipe::Motes => base,
@@ -172,6 +426,7 @@ impl Recipe {
                 damping: 0.3,
                 hdr: 1.0,
                 additive: false,
+                lit: true,
                 dir: Vector3::UP,
             },
             Recipe::Blast => Params {
@@ -232,7 +487,127 @@ impl Recipe {
                 damping: 0.2,
                 hdr: 1.0,
                 additive: false,
+                lit: true,
                 dir: Vector3::UP,
+            },
+            // one ring, spreading from a small one (its scale curve)
+            Recipe::Ring => Params {
+                amount: 1,
+                life: 0.4,
+                speed: (0.0, 0.0),
+                spread: 0.0,
+                size: (1.7, 1.7),
+                radius: 0.0,
+                damping: 0.0,
+                hdr: 2.4,
+                ..base
+            },
+            // shed along a ray: amounts are for a ray of `TRAIL_FULL`
+            // metres, a shorter one sheds fewer; a ray shows for a moment,
+            // so they come thick while it does
+            Recipe::Tongues => Params {
+                amount: 300,
+                life: 0.8,
+                speed: (0.2, 0.7),
+                spread: 30.0,
+                gravity: Vector3::new(0.0, 2.2, 0.0),
+                size: (0.3, 0.6),
+                damping: 1.2,
+                hdr: 1.6,
+                ..base
+            },
+            Recipe::Rime => Params {
+                amount: 180,
+                life: 1.1,
+                speed: (0.05, 0.3),
+                spread: 180.0,
+                gravity: Vector3::new(0.0, -1.2, 0.0),
+                size: (0.12, 0.24),
+                damping: 0.6,
+                hdr: 3.0,
+                ..base
+            },
+            Recipe::Haze => Params {
+                amount: 160,
+                life: 2.2,
+                speed: (0.05, 0.25),
+                spread: 180.0,
+                gravity: Vector3::new(0.0, 0.05, 0.0),
+                size: (0.45, 0.8),
+                damping: 0.5,
+                hdr: 0.34,
+                additive: false,
+                ..base
+            },
+            Recipe::Twinkles => Params {
+                amount: 160,
+                life: 0.7,
+                speed: (0.05, 0.3),
+                spread: 180.0,
+                size: (0.15, 0.3),
+                hdr: 3.0,
+                ..base
+            },
+            Recipe::Smoke => Params {
+                amount: 130,
+                life: 1.3,
+                speed: (0.1, 0.35),
+                spread: 50.0,
+                gravity: Vector3::new(0.0, 0.35, 0.0),
+                size: (0.35, 0.7),
+                damping: 0.6,
+                hdr: 0.7,
+                additive: false,
+                ..base
+            },
+            Recipe::Gas => Params {
+                amount: 160,
+                life: 2.0,
+                speed: (0.05, 0.3),
+                spread: 180.0,
+                gravity: Vector3::new(0.0, 0.08, 0.0),
+                size: (0.5, 0.9),
+                damping: 0.5,
+                hdr: 0.38,
+                additive: false,
+                ..base
+            },
+            Recipe::Spray => Params {
+                amount: 220,
+                life: 0.8,
+                speed: (0.4, 1.2),
+                spread: 55.0,
+                gravity: Vector3::new(0.0, -7.0, 0.0),
+                size: (0.04, 0.08),
+                damping: 0.3,
+                hdr: 1.6,
+                ..base
+            },
+            Recipe::Dust => Params {
+                amount: 180,
+                life: 1.8,
+                speed: (0.1, 0.4),
+                spread: 180.0,
+                gravity: Vector3::new(0.0, -0.05, 0.0),
+                size: (0.5, 0.9),
+                damping: 0.8,
+                hdr: 0.65,
+                additive: false,
+                lit: true,
+                ..base
+            },
+            Recipe::Grit => Params {
+                amount: 150,
+                life: 0.7,
+                speed: (0.3, 1.0),
+                spread: 70.0,
+                gravity: Vector3::new(0.0, -9.8, 0.0),
+                size: (0.025, 0.05),
+                damping: 0.2,
+                hdr: 1.0,
+                additive: false,
+                lit: true,
+                ..base
             },
         }
     }
@@ -273,6 +648,7 @@ fn look_of(kind: VfxKind) -> (Recipe, Color, Option<(Color, f32, f32)>) {
             (Recipe::Sparks, c, Some((c, 5.0, 0.1)))
         }
         VfxKind::Blood(c) => (Recipe::Droplets, c, None),
+        VfxKind::Shock(c) => (Recipe::Ring, c, Some((c, 2.0, 0.2))),
     }
 }
 
@@ -284,8 +660,24 @@ fn beam_color(kind: VfxKind) -> Color {
         VfxKind::Frost => rgb(0.56, 0.88, 1.0),
         VfxKind::Lightning => rgb(0.91, 0.94, 1.0),
         VfxKind::Poison => rgb(0.56, 1.0, 0.25),
-        VfxKind::Zap(c) | VfxKind::Cast(c) | VfxKind::Quaff(c) | VfxKind::Explosion(c) => c,
+        VfxKind::Zap(c)
+        | VfxKind::Cast(c)
+        | VfxKind::Quaff(c)
+        | VfxKind::Explosion(c)
+        | VfxKind::Shock(c) => c,
         _ => rgb(0.38, 0.56, 1.0),
+    }
+}
+
+/// What a beam of this kind is drawn as.
+fn ray_of(kind: VfxKind) -> Ray {
+    match kind {
+        VfxKind::Fire => Ray::Fire,
+        VfxKind::Frost => Ray::Cold,
+        VfxKind::Lightning => Ray::Lightning,
+        VfxKind::Poison => Ray::Poison,
+        VfxKind::Shock(_) => Ray::Force,
+        _ => Ray::Plain,
     }
 }
 
@@ -310,9 +702,20 @@ struct Beam {
     from: Vector3,
     to: Vector3,
     age: f32,
-    flicker: bool,
-    /// A whole ray (the hero's), not a cell's piece of one.
+    /// How long it shows once it stops growing (its kind's).
+    secs: f32,
+    kind: Ray,
+    color: Color,
+    /// A whole ray (the hero's), not one the map draws piece by piece.
     whole: bool,
+    /// Whether it has shed what its kind sheds along its way.
+    shed: bool,
+}
+
+impl Beam {
+    fn live(&self) -> bool {
+        self.age < self.secs
+    }
 }
 
 struct Splat {
@@ -338,24 +741,49 @@ const SPLATS: usize = 24;
 const SPLAT_DARK: f32 = 0.5;
 const SPLAT_SECS: f32 = 14.0;
 const BEAM_SECS: f32 = 0.45;
+/// How long a whole ray's head takes to run its length, and a ray shows
+/// at its brightest once it stops growing, before it fades.
+const RUN_SECS: f32 = BEAM_SECS * 0.4;
+/// A ray the map draws is whole once no piece has come for this long
+/// (seconds): then it sheds what it sheds.
+const SHED_AFTER: f32 = 0.15;
+/// A ray this long (metres) or longer sheds a trail's whole amount.
+const TRAIL_FULL: f32 = 8.0;
+/// Pieces of a ray drawn by the map this lately (seconds) were the ray of
+/// the hero's own zap, shown before the hero's use is (`ray_lately`).
+const RAY_LATELY: f32 = 1.5;
 /// A ray's ribbon is this wide (metres); a bolt of lightning's, wider (its
 /// jags swing out of the ray's line).
 const RAY_WIDTH: f32 = 0.42;
 const BOLT_WIDTH: f32 = 1.1;
 
-/// RPicster's particle textures (CC0) by recipe: a starburst for a blow's
-/// flare and a cast's swirl, a star for glints and flares.
+/// Particle textures (CC0) by recipe: RPicster's starburst for a blow's
+/// flare, his stars for glints, flares and runes; Kenney's ring for a
+/// ring of force and his stars for ice and twinkles; Unity Labs' flipbooks
+/// of rolling fire and of wisps of smoke for flames, smoke, haze, gas and
+/// dust.
 fn particle_textures() -> HashMap<Recipe, Gd<Texture2D>> {
-    let dir = "res://art/cc0/rpicster/256/";
+    let rpicster = "res://art/cc0/rpicster/256/";
+    let kenney = "res://art/cc0/kenney/particles/";
+    let books = "res://art/cc0/unity-labs/flipbooks/";
+    let smoke = format!("{books}WispySmoke01_8x8.png");
     [
-        (Recipe::Flash, "effect_3"),
-        (Recipe::Glints, "spotlight_5"),
-        (Recipe::Flare, "spotlight_5"),
-        (Recipe::Runes, "spotlight_8"),
+        (Recipe::Flash, format!("{rpicster}effect_3.png")),
+        (Recipe::Glints, format!("{rpicster}spotlight_5.png")),
+        (Recipe::Flare, format!("{rpicster}spotlight_5.png")),
+        (Recipe::Runes, format!("{rpicster}spotlight_8.png")),
+        (Recipe::Ring, format!("{kenney}circle_02.png")),
+        (Recipe::Rime, format!("{kenney}star_04.png")),
+        (Recipe::Twinkles, format!("{kenney}star_01.png")),
+        (Recipe::Tongues, format!("{books}FireBall04_8x8.png")),
+        (Recipe::Haze, smoke.clone()),
+        (Recipe::Smoke, smoke.clone()),
+        (Recipe::Gas, smoke.clone()),
+        (Recipe::Dust, smoke),
     ]
     .into_iter()
-    .filter_map(|(r, name)| {
-        godot::tools::try_load::<Texture2D>(&format!("{dir}{name}.png"))
+    .filter_map(|(r, path)| {
+        godot::tools::try_load::<Texture2D>(&path)
             .ok()
             .map(|t| (r, t))
     })
@@ -369,13 +797,20 @@ const DUST_MOST: f32 = 3.0;
 pub struct Vfx {
     root: Gd<Node3D>,
     soft: Gd<Texture2D>,
-    /// The particle textures of recipes that have their own (RPicster's
-    /// starbursts and flares), else the soft disc.
+    /// The particle textures of recipes that have their own (stars,
+    /// flipbooks of fire and smoke), else the soft disc.
     textures: HashMap<Recipe, Gd<Texture2D>>,
     splats_tex: Vec<Gd<Texture2D>>,
     emitters: HashMap<Recipe, Vec<Emitter>>,
     flashes: Vec<Flash>,
     beams: Vec<Beam>,
+    /// When (`clock`) the map last drew a piece of a ray.
+    last_piece: f32,
+    /// A piece of a ray with no way of its own that came alone (a wand of
+    /// digging's first cell): (kind, colour, where, when).
+    loose: Option<(Ray, Color, Vector3, f32)>,
+    /// A number for the next ray's pattern.
+    rays_drawn: u32,
     splats: Vec<Splat>,
     next_splat: usize,
     pending: Vec<Pending>,
@@ -534,7 +969,14 @@ fn texture(n: i32, alpha: impl Fn(f32, f32) -> f32) -> Gd<Texture2D> {
 }
 
 /// A billboard particle material: the soft disc in the particles' colour.
-fn particle_material(tex: &Gd<Texture2D>, additive: bool, shaded: bool) -> Gd<Material> {
+/// `frames`: the texture is a flipbook of these columns and rows, played
+/// once over a particle's life.
+fn particle_material(
+    tex: &Gd<Texture2D>,
+    additive: bool,
+    shaded: bool,
+    frames: Option<(i32, i32)>,
+) -> Gd<Material> {
     let mut m = StandardMaterial3D::new_gd();
     m.set_billboard_mode(BillboardMode::PARTICLES);
     m.set_flag(Flags::ALBEDO_FROM_VERTEX_COLOR, true);
@@ -547,7 +989,55 @@ fn particle_material(tex: &Gd<Texture2D>, additive: bool, shaded: bool) -> Gd<Ma
         m.set_shading_mode(ShadingMode::UNSHADED);
     }
     m.set_flag(Flags::DISABLE_FOG, !shaded);
+    if let Some((h, v)) = frames {
+        m.set_particles_anim_h_frames(h);
+        m.set_particles_anim_v_frames(v);
+        m.set_particles_anim_loop(false);
+    }
     m.upcast()
+}
+
+/// A recipe's colours over a particle's life, in `color`: smoke fades in
+/// and out thin (its `hdr` its thickest), flame burns from white-hot
+/// through its colour to a red that fades, chips of rock stay what they
+/// are until they are gone, the rest cool in their own colour.
+fn ramp_of(recipe: Recipe, color: Color) -> Gd<GradientTexture1D> {
+    let p = recipe.params();
+    let rgba = Color::from_rgba;
+    let (offsets, colors): (&[f32], Vec<Color>) = if recipe.is_smoke() {
+        let a = p.hdr;
+        (
+            &[0.0, 0.2, 0.65, 1.0],
+            vec![
+                color.with_alpha(0.0),
+                color.with_alpha(a),
+                color.with_alpha(a * 0.7),
+                color.with_alpha(0.0),
+            ],
+        )
+    } else if recipe == Recipe::Tongues {
+        let k = p.hdr;
+        (
+            &[0.0, 0.3, 0.7, 1.0],
+            vec![
+                rgba(1.0 * k, 0.9 * k, 0.7 * k, 1.0),
+                rgba(color.r * k, color.g * k, color.b * k, 0.9),
+                rgba(color.r * 0.7, color.g * 0.25, color.b * 0.1, 0.5),
+                rgba(0.3, 0.05, 0.0, 0.0),
+            ],
+        )
+    } else if recipe == Recipe::Grit {
+        (&[0.0, 0.85, 1.0], vec![color, color, color.with_alpha(0.0)])
+    } else {
+        return ramp(color, p.hdr);
+    };
+    let mut g = Gradient::new_gd();
+    g.set_offsets(&PackedFloat32Array::from(offsets));
+    g.set_colors(&PackedColorArray::from(&colors[..]));
+    let mut t = GradientTexture1D::new_gd();
+    t.set_gradient(&g);
+    t.set_use_hdr(true);
+    t
 }
 
 fn ramp(color: Color, hdr: f32) -> Gd<GradientTexture1D> {
@@ -585,9 +1075,9 @@ impl Vfx {
             .unwrap_or_else(|| ramp(Color::from_rgb(0.9, 0.86, 0.78), 0.35).upcast());
         let mote_mat = dust
             .get_material_override()
-            .unwrap_or_else(|| particle_material(&soft, false, true));
+            .unwrap_or_else(|| particle_material(&soft, false, true, None));
         let ember_ramp = ramp(Color::from_rgb(1.0, 0.42, 0.12), 2.5).upcast();
-        let ember_mat = particle_material(&soft, true, false);
+        let ember_mat = particle_material(&soft, true, false, None);
         let beam_shader = godot::tools::try_load::<Shader>("res://shaders/beam.gdshader").ok();
         Vfx {
             root: node,
@@ -597,6 +1087,9 @@ impl Vfx {
             emitters: HashMap::new(),
             flashes: Vec::new(),
             beams: Vec::new(),
+            last_piece: f32::NEG_INFINITY,
+            loose: None,
+            rays_drawn: 0,
             splats: Vec::new(),
             next_splat: 0,
             pending: Vec::new(),
@@ -694,28 +1187,91 @@ impl Vfx {
     fn beam_as(&mut self, kind: VfxKind, from: Vector3, to: Vector3, tint: Option<Color>) {
         // a ray stops at the first wall, door or rock in its way
         let to = self.clip(from, to);
-        self.place_ray(tint.unwrap_or_else(|| beam_color(kind)), from, to, true);
+        let color = tint.unwrap_or_else(|| beam_color(kind));
+        self.place_ray(ray_of(kind), color, from, to, true);
         self.pending.push(Pending {
             kind,
             at: to,
-            left: BEAM_SECS * 0.4,
+            left: RUN_SECS,
             tint,
             dir: None,
         });
     }
 
-    /// A ray of this colour from one point to another, a light travelling
-    /// along it, with no burst (the map's zaps, cell by cell). A piece of
-    /// a ray already drawn whole (the hero's own zap) is not drawn again.
-    pub fn ray(&mut self, color: Color, from: Vector3, to: Vector3) {
+    /// A piece of a ray the map draws cell by cell (no burst), `kind` its
+    /// look, `color` the glyph's. A piece in line with a ray of its kind
+    /// still showing, just past either end of it, lengthens that ray (the
+    /// end it grows at is where it goes), so a ray is one ribbon however
+    /// many cells it crosses; else it starts one. A piece of a ray already
+    /// drawn whole (the hero's own zap) is not drawn again.
+    pub fn ray(&mut self, kind: Ray, color: Color, from: Vector3, to: Vector3) {
+        self.last_piece = self.clock;
         let mid = (from + to) / 2.0;
         let covered = self
             .beams
             .iter()
-            .any(|b| b.whole && b.age < BEAM_SECS && distance_to_segment(mid, b.from, b.to) < 0.6);
-        if !covered {
-            self.place_ray(color, from, to, false);
+            .any(|b| b.whole && b.live() && distance_to_segment(mid, b.from, b.to) < 0.6);
+        if covered {
+            return;
         }
+        let grown = self.beams.iter().enumerate().find_map(|(i, b)| {
+            let same = !b.whole && b.live() && b.kind == kind && b.color == color;
+            same.then(|| joined(b.from, b.to, from, to))
+                .flatten()
+                .map(|(from, to)| (i, from, to))
+        });
+        match grown {
+            Some((i, from, to)) => self.grow(i, from, to),
+            None => self.place_ray(kind, color, from, to, false),
+        }
+    }
+
+    /// A piece of a ray that has no way of its own (a wand of digging's
+    /// beam is the same in every cell), in the middle of its cell: it
+    /// lengthens a ray of its kind that ends a cell away, or starts one
+    /// from a piece that came alone just before.
+    pub fn ray_through(&mut self, kind: Ray, color: Color, at: Vector3) {
+        self.last_piece = self.clock;
+        let grown = self.beams.iter().enumerate().find_map(|(i, b)| {
+            if b.whole || !b.live() || b.kind != kind {
+                return None;
+            }
+            // the last piece's middle, half a cell back from its end
+            let last = b.to - (b.to - b.from).normalized() * 0.5;
+            let d = last.distance_to(at);
+            (d > 0.5 && d < 1.6).then(|| (i, b.from, at + (at - last) / d * 0.5))
+        });
+        if let Some((i, from, to)) = grown {
+            self.grow(i, from, to);
+            return;
+        }
+        let loose = self.loose.take();
+        match loose {
+            Some((k, _, p, when))
+                if k == kind
+                    && self.clock - when < 0.5
+                    && (0.5..1.6).contains(&p.distance_to(at)) =>
+            {
+                let dir = (at - p).normalized();
+                self.place_ray(kind, color, p - dir * 0.5, at + dir * 0.5, false);
+            }
+            _ => {
+                self.loose = Some((kind, color, at, self.clock));
+                // alone, it is a puff of dust (a flash) where it is
+                let (recipe, color) = match kind.look().color {
+                    Some(dust) if kind == Ray::Dig => (Recipe::Cloud, dust),
+                    _ => (Recipe::Flare, color),
+                };
+                self.emit(recipe, color, at, None);
+            }
+        }
+    }
+
+    /// Whether the map drew a piece of a ray lately: the hero's use is
+    /// shown once the turn is over, after the engine drew its ray cell by
+    /// cell, so that was the use's beam, drawn as what it is.
+    pub fn ray_lately(&self) -> bool {
+        self.clock - self.last_piece < RAY_LATELY
     }
 
     /// The solid cells a ray stops at: (cell, how high the solid stands).
@@ -749,8 +1305,8 @@ impl Vfx {
         to
     }
 
-    fn place_ray(&mut self, color: Color, from: Vector3, to: Vector3, whole: bool) {
-        let i = match self.beams.iter().position(|b| b.age >= BEAM_SECS) {
+    fn place_ray(&mut self, kind: Ray, color: Color, from: Vector3, to: Vector3, whole: bool) {
+        let i = match self.beams.iter().position(|b| !b.live()) {
             Some(i) => i,
             None => {
                 let beam = self.new_beam();
@@ -758,19 +1314,45 @@ impl Vfx {
                 self.beams.len() - 1
             }
         };
+        let look = kind.look();
+        let shown = look.color.unwrap_or(color);
+        self.rays_drawn = self.rays_drawn.wrapping_add(1);
+        let seed = hash01(self.rays_drawn, 7) * 10.0;
+        let b = &mut self.beams[i];
+        b.kind = kind;
+        b.color = color;
+        b.whole = whole;
+        b.secs = look.secs;
+        b.shed = false;
+        b.mat
+            .set_shader_parameter("style", &kind.style().to_variant());
+        b.mat
+            .set_shader_parameter("width", &look.width.to_variant());
+        b.mat.set_shader_parameter("seed", &seed.to_variant());
+        b.mat.set_shader_parameter("color", &shown.to_variant());
+        // a whole ray runs out from its start; the map's is drawn as far
+        // as its pieces have come
+        let head: f32 = if whole { 0.0 } else { 1.0 };
+        b.mat.set_shader_parameter("head", &head.to_variant());
+        b.light.set_color(shown);
+        b.light.set_negative(look.light < 0.0);
+        b.light.set_param(Param::ENERGY, look.light.abs());
+        b.light.set_visible(look.light != 0.0);
+        b.node.set_visible(true);
+        b.light.set_position(from);
+        self.grow(i, from, to);
+    }
+
+    /// Ray `i` now runs from `from` to `to`: shown anew (it fades only
+    /// once it stops growing), its light near its far end unless it runs
+    /// out whole.
+    fn grow(&mut self, i: usize, from: Vector3, to: Vector3) {
         let b = &mut self.beams[i];
         b.from = from;
         b.to = to;
         b.age = 0.0;
-        b.whole = whole;
-        // lightning's light is white-blue and jitters; it is a bolt
-        b.flicker = color.b > 0.95 && color.r > 0.85 && color.g > 0.9;
         let len = from.distance_to(to).max(0.05);
-        b.mat.set_shader_parameter("bolt", &b.flicker.to_variant());
         b.mat.set_shader_parameter("ray_len", &len.to_variant());
-        // a bolt's jags swing wide of the ray: a wider ribbon for them
-        let width = if b.flicker { BOLT_WIDTH } else { RAY_WIDTH };
-        b.mat.set_shader_parameter("width", &width.to_variant());
         let mid = (from + to) / 2.0;
         let dir = (to - from) / len;
         // the ribbon's y is the ray, stretched; the shader turns it to
@@ -782,14 +1364,54 @@ impl Vfx {
         };
         let x = up.cross(dir).normalized();
         let z = x.cross(dir);
-        let basis = Basis::from_cols(x, dir * len, z);
-        b.mat.set_shader_parameter("head", &0.0f32.to_variant());
-        b.node.set_transform(Transform3D::new(basis, mid));
-        b.node.set_visible(true);
-        b.mat.set_shader_parameter("color", &color.to_variant());
-        b.light.set_color(color);
-        b.light.set_position(from);
-        b.light.set_visible(true);
+        b.node
+            .set_transform(Transform3D::new(Basis::from_cols(x, dir * len, z), mid));
+        if !b.whole {
+            b.light.set_position(lit_end(from, to, 1.0));
+        }
+    }
+
+    /// What a ray of `kind` sheds along its length, from `from` to `to`
+    /// (the ray is whole: it ran its length, or the map drew its last
+    /// piece): a burst of each of its recipes over a box the ray's length,
+    /// spread over the first part of their lives.
+    fn shed(&mut self, kind: Ray, color: Color, from: Vector3, to: Vector3) {
+        let len = from.distance_to(to).max(0.05);
+        let dir = (to - from) / len;
+        let up = if dir.y.abs() > 0.99 {
+            Vector3::RIGHT
+        } else {
+            Vector3::UP
+        };
+        // the box: along the ray (z), up (y) the world's up
+        let x = up.cross(dir).normalized();
+        let at = Transform3D::new(Basis::from_cols(x, dir.cross(x), dir), (from + to) / 2.0);
+        let color = kind.look().color.unwrap_or(color);
+        for &recipe in kind.look().trails {
+            let i = self.take_emitter(recipe);
+            let p = recipe.params();
+            let Some(e) = self
+                .emitters
+                .get_mut(&recipe)
+                .and_then(|pool| pool.get_mut(i))
+            else {
+                continue;
+            };
+            let color = recipe.own_color().unwrap_or(color);
+            e.process.set_color_ramp(&ramp_of(recipe, color));
+            e.process
+                .set_emission_box_extents(Vector3::new(0.07, 0.07, len / 2.0));
+            e.node.set_transform(at);
+            e.node.set_amount_ratio((len / TRAIL_FULL).clamp(0.15, 1.0));
+            e.node.set_visibility_aabb(Aabb::new(
+                Vector3::new(-2.0, -3.0, -len / 2.0 - 2.0),
+                Vector3::new(4.0, 6.0, len + 4.0),
+            ));
+            e.node.set_visible(true);
+            e.node.restart();
+            e.node.set_emitting(true);
+            e.busy = p.life as f32 + 0.1;
+        }
     }
 
     fn new_beam(&mut self) -> Beam {
@@ -810,9 +1432,10 @@ impl Vfx {
         node.set_material_override(&mat);
         self.root.add_child(&node);
         let mut light = OmniLight3D::new_alloc();
-        light.set_param(Param::RANGE, 4.0);
+        light.set_param(Param::RANGE, 2.8);
         light.set_param(Param::ENERGY, 3.0);
-        light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 1.0);
+        // (no shadow: the fog it lights would glow through walls)
+        light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.35);
         light.set_shadow(false);
         self.root.add_child(&light);
         Beam {
@@ -822,14 +1445,20 @@ impl Vfx {
             from: Vector3::ZERO,
             to: Vector3::ZERO,
             age: BEAM_SECS,
-            flicker: false,
+            secs: BEAM_SECS,
+            kind: Ray::Plain,
+            color: Color::WHITE,
             whole: false,
+            shed: true,
         }
     }
 
-    fn emit(&mut self, recipe: Recipe, color: Color, at: Vector3, dir: Option<Vector3>) {
+    /// An emitter of `recipe` free to start (made if the pool has room;
+    /// all busy, the one nearest to done starts again): its index in the
+    /// recipe's pool.
+    fn take_emitter(&mut self, recipe: Recipe) -> usize {
         let pool = self.emitters.entry(recipe).or_default();
-        let i = match pool.iter().position(|e| e.busy <= 0.0) {
+        match pool.iter().position(|e| e.busy <= 0.0) {
             Some(i) => i,
             None if pool.len() < POOL => {
                 let tex = self.textures.get(&recipe).unwrap_or(&self.soft);
@@ -837,16 +1466,25 @@ impl Vfx {
                 pool.push(e);
                 pool.len() - 1
             }
-            // all busy: the oldest starts again
             None => pool
                 .iter()
                 .enumerate()
                 .min_by(|a, b| a.1.busy.total_cmp(&b.1.busy))
                 .map_or(0, |(i, _)| i),
-        };
+        }
+    }
+
+    fn emit(&mut self, recipe: Recipe, color: Color, at: Vector3, dir: Option<Vector3>) {
+        let i = self.take_emitter(recipe);
         let p = recipe.params();
-        let e = &mut pool[i];
-        e.process.set_color_ramp(&ramp(color, p.hdr));
+        let Some(e) = self
+            .emitters
+            .get_mut(&recipe)
+            .and_then(|pool| pool.get_mut(i))
+        else {
+            return;
+        };
+        e.process.set_color_ramp(&ramp_of(recipe, color));
         e.process.set_direction(dir.unwrap_or(p.dir));
         e.node.set_position(at);
         e.node.set_visible(true);
@@ -916,6 +1554,21 @@ impl Vfx {
         s.age = 0.0;
     }
 
+    /// Rays showing now, and how long the newest has shown (seconds;
+    /// self-tests).
+    pub fn rays_shown(&self) -> (usize, Option<f32>) {
+        let live = self.beams.iter().filter(|b| b.live());
+        let newest = live.clone().map(|b| b.age).reduce(f32::min);
+        (live.count(), newest)
+    }
+
+    /// Whether any burst, ray or what a ray shed still shows (self-tests).
+    pub fn busy(&self) -> bool {
+        self.beams.iter().any(Beam::live)
+            || self.emitters.values().flatten().any(|e| e.busy > 0.0)
+            || !self.pending.is_empty()
+    }
+
     /// Splats lying on the floor now (self-tests).
     pub fn splats_shown(&self) -> usize {
         self.splats
@@ -942,26 +1595,50 @@ impl Vfx {
             }
         }
         let clock = self.clock;
+        let mut due_shed = Vec::new();
         for b in &mut self.beams {
-            if b.age >= BEAM_SECS {
+            if !b.live() {
                 continue;
             }
             b.age += delta;
-            let t = (b.age / BEAM_SECS).clamp(0.0, 1.0);
-            // the head of the ray runs ahead, then the ray fades
-            let head = (t / 0.4).min(1.0);
-            b.light.set_position(b.from.lerp(b.to, head));
-            b.mat.set_shader_parameter("head", &head.to_variant());
-            let mut fade = 1.0 - ((t - 0.4) / 0.6).clamp(0.0, 1.0);
-            if b.flicker {
-                fade *= 0.55 + 0.45 * (clock * 20.0 * std::f32::consts::TAU).sin().abs();
+            // a whole ray's head runs ahead (its light with it), then the
+            // ray fades; the map's shows as far as its pieces came
+            if b.whole {
+                let head = (b.age / RUN_SECS).min(1.0);
+                b.light
+                    .set_position(lit_end(b.from, b.from.lerp(b.to, head), 1.0));
+                b.mat.set_shader_parameter("head", &head.to_variant());
+            }
+            let mut fade = 1.0 - ((b.age - RUN_SECS) / (b.secs - RUN_SECS)).clamp(0.0, 1.0);
+            let mut light = fade;
+            match b.kind {
+                // a bolt strikes and strikes again
+                Ray::Lightning => {
+                    fade *= 0.55 + 0.45 * (clock * 20.0 * std::f32::consts::TAU).sin().abs();
+                    light = fade;
+                }
+                // flame's light wavers
+                Ray::Fire => {
+                    light *= 0.8 + 0.12 * (clock * 23.0).sin() + 0.08 * (clock * 37.0 + 1.3).sin();
+                }
+                _ => {}
             }
             b.mat.set_shader_parameter("fade", &fade.to_variant());
-            b.light.set_param(Param::ENERGY, 3.0 * fade);
-            if b.age >= BEAM_SECS {
+            b.light
+                .set_param(Param::ENERGY, b.kind.look().light.abs() * light);
+            // whole at last (its head ran its length, or no piece came
+            // for a moment): it sheds what it sheds
+            if !b.shed && b.age >= if b.whole { RUN_SECS } else { SHED_AFTER } {
+                b.shed = true;
+                due_shed.push((b.kind, b.color, b.from, b.to));
+            }
+            if !b.live() {
                 b.node.set_visible(false);
                 b.light.set_visible(false);
             }
+        }
+        for (kind, color, from, to) in due_shed {
+            self.shed(kind, color, from, to);
         }
         for s in &mut self.splats {
             if s.age < SPLAT_SECS {
@@ -1007,10 +1684,12 @@ impl Vfx {
             f.light.set_visible(false);
         }
         for b in &mut self.beams {
-            b.age = BEAM_SECS;
+            b.age = b.secs;
+            b.shed = true;
             b.node.set_visible(false);
             b.light.set_visible(false);
         }
+        self.loose = None;
         for s in &mut self.splats {
             s.age = SPLAT_SECS;
             s.decal.set_visible(false);
@@ -1075,13 +1754,51 @@ impl Vfx {
         p.set_lifetime(1.4);
         p.set_randomness_ratio(0.5);
         p.set_draw_pass_mesh(0, &quad(0.035));
-        p.set_material_override(&particle_material(&self.soft, true, false));
+        p.set_material_override(&particle_material(&self.soft, true, false, None));
         p.set_cast_shadows_setting(ShadowCastingSetting::OFF);
         p.set_visibility_aabb(Aabb::new(
             Vector3::new(-0.5, -0.2, -0.5),
             Vector3::new(1.0, 1.6, 1.0),
         ));
         p
+    }
+}
+
+/// Where a ray from `from` to `to` throws its light: as near its end as
+/// `back` metres short of it (it ends at a wall, and its light, with no
+/// shadow, would light what lies behind the wall), never before its start.
+fn lit_end(from: Vector3, to: Vector3, back: f32) -> Vector3 {
+    let len = from.distance_to(to);
+    if len < 1e-3 {
+        return to;
+    }
+    from.lerp(to, ((len - back) / len).max(0.0))
+}
+
+/// Where a ray running from `from` to `to` runs once a piece of one (`a`
+/// to `b`, either way) joins it: a piece in line with it, its middle just
+/// past the ray's end, carries it on; just before its start, the ray goes
+/// the other way (its first piece could not say which). None: the piece
+/// is no part of it (askew, beside it, or too far off).
+fn joined(from: Vector3, to: Vector3, a: Vector3, b: Vector3) -> Option<(Vector3, Vector3)> {
+    let len = from.distance_to(to).max(1e-3);
+    let dir = (to - from) / len;
+    if dir.dot((b - a).normalized()).abs() < 0.98 {
+        return None;
+    }
+    // where the piece's middle is along the ray, and how far off its line
+    let mid = (a + b) / 2.0;
+    let half = a.distance_to(b) / 2.0;
+    let along = (mid - from).dot(dir);
+    if (mid - (from + dir * along)).length() > 0.2 {
+        return None;
+    }
+    if along > len - 0.2 && along < len + 1.6 {
+        Some((from, from + dir * (along + half)))
+    } else if along < 0.2 && along > -1.6 {
+        Some((to, from + dir * (along - half)))
+    } else {
+        None
     }
 }
 
@@ -1097,8 +1814,8 @@ fn quad(size: f32) -> Gd<QuadMesh> {
     q
 }
 
-fn new_emitter(root: &mut Gd<Node3D>, recipe: Recipe, soft: &Gd<Texture2D>) -> Emitter {
-    let p = recipe.params();
+/// How a recipe's particles move, grow and turn.
+fn process_material(recipe: Recipe, p: &Params) -> Gd<ParticleProcessMaterial> {
     let mut m = ParticleProcessMaterial::new_gd();
     m.set_emission_shape(EmissionShape::SPHERE);
     m.set_emission_sphere_radius(p.radius);
@@ -1118,18 +1835,56 @@ fn new_emitter(root: &mut Gd<Node3D>, recipe: Recipe, soft: &Gd<Texture2D>) -> E
         m.set_param_min(Parameter::ORBIT_VELOCITY, 0.4);
         m.set_param_max(Parameter::ORBIT_VELOCITY, 0.8);
     }
+    // a ring spreads from a small one; smoke swells as it drifts
+    let grows: Option<(f32, f32)> = match recipe {
+        Recipe::Ring => Some((0.12, 1.0)),
+        r if r.is_smoke() => Some((0.55, 1.3)),
+        _ => None,
+    };
+    if let Some((from, to)) = grows {
+        let mut curve = Curve::new_gd();
+        curve.set_max_value(to.max(1.0));
+        curve.add_point(Vector2::new(0.0, from));
+        curve.add_point(Vector2::new(1.0, to));
+        let mut tex = CurveTexture::new_gd();
+        tex.set_curve(&curve);
+        m.set_param_texture(Parameter::SCALE, &tex);
+    }
+    // turned any way: a ring, smoke and flame are no two alike
+    if grows.is_some() || recipe == Recipe::Tongues {
+        m.set_param_min(Parameter::ANGLE, 0.0);
+        m.set_param_max(Parameter::ANGLE, 360.0);
+    }
+    if recipe.frames().is_some() {
+        // its flipbook once over its life, from a little way in
+        m.set_param_min(Parameter::ANIM_SPEED, 1.0);
+        m.set_param_max(Parameter::ANIM_SPEED, 1.0);
+        m.set_param_min(Parameter::ANIM_OFFSET, 0.0);
+        m.set_param_max(Parameter::ANIM_OFFSET, 0.12);
+    }
+    m
+}
+
+fn new_emitter(root: &mut Gd<Node3D>, recipe: Recipe, tex: &Gd<Texture2D>) -> Emitter {
+    let p = recipe.params();
+    let mut m = process_material(recipe, &p);
+    let mean = (p.size.0 + p.size.1) / 2.0;
     let mut node = GpuParticles3D::new_alloc();
     node.set_process_material(&m);
     node.set_amount(p.amount);
     node.set_lifetime(p.life);
     node.set_one_shot(true);
     node.set_explosiveness_ratio(
-        if matches!(recipe, Recipe::Motes | Recipe::Runes | Recipe::Cloud) {
+        if matches!(recipe, Recipe::Motes | Recipe::Runes | Recipe::Cloud) || recipe.is_trail() {
             0.6
         } else {
             1.0
         },
     );
+    if recipe.is_trail() {
+        // along a ray: `Vfx::shed` sets the box
+        m.set_emission_shape(EmissionShape::BOX);
+    }
     node.set_emitting(false);
     if recipe == Recipe::Sparks {
         // a streak along its velocity, facing the camera round it
@@ -1137,7 +1892,7 @@ fn new_emitter(root: &mut Gd<Node3D>, recipe: Recipe, soft: &Gd<Texture2D>) -> E
         streak.set_size(Vector2::new(mean * 0.9, mean * 4.0));
         node.set_draw_pass_mesh(0, &streak);
         node.set_transform_align(TransformAlign::Z_BILLBOARD_Y_TO_VELOCITY);
-        let mut m = particle_material(soft, true, false);
+        let mut m = particle_material(tex, true, false, None);
         if let Ok(mut b) = m.clone().try_cast::<StandardMaterial3D>() {
             b.set_billboard_mode(BillboardMode::DISABLED);
             m = b.upcast();
@@ -1145,7 +1900,14 @@ fn new_emitter(root: &mut Gd<Node3D>, recipe: Recipe, soft: &Gd<Texture2D>) -> E
         node.set_material_override(&m);
     } else {
         node.set_draw_pass_mesh(0, &quad(mean));
-        node.set_material_override(&particle_material(soft, p.additive, !p.additive));
+        let mat = particle_material(tex, p.additive, p.lit, recipe.frames());
+        if recipe == Recipe::Ring
+            && let Ok(mut m) = mat.clone().try_cast::<StandardMaterial3D>()
+        {
+            // a ring of force strikes a wall: drawn whole over it
+            m.set_flag(Flags::DISABLE_DEPTH_TEST, true);
+        }
+        node.set_material_override(&mat);
     }
     node.set_cast_shadows_setting(ShadowCastingSetting::OFF);
     node.set_visibility_aabb(Aabb::new(
@@ -1194,7 +1956,7 @@ fn dust(root: &mut Gd<Node3D>, soft: &Gd<Texture2D>) -> Gd<GpuParticles3D> {
     p.set_pre_process_time(8.0);
     p.set_use_local_coordinates(false);
     p.set_draw_pass_mesh(0, &quad(0.02));
-    p.set_material_override(&particle_material(soft, false, true));
+    p.set_material_override(&particle_material(soft, false, true, None));
     p.set_cast_shadows_setting(ShadowCastingSetting::OFF);
     p.set_visibility_aabb(Aabb::new(
         Vector3::new(-9.0, -3.0, -7.0),
@@ -1202,4 +1964,68 @@ fn dust(root: &mut Gd<Node3D>, soft: &Gd<Texture2D>) -> Gd<GpuParticles3D> {
     ));
     root.add_child(&p);
     p
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn v(x: f32, z: f32) -> Vector3 {
+        Vector3::new(x, 0.6, z)
+    }
+
+    /// The pieces of a ray as the map draws them: a cell's middle and
+    /// 0.55 either way along its glyph's way (either sign).
+    fn piece(x: f32, z: f32, way: Vector3) -> (Vector3, Vector3) {
+        (v(x, z) - way * 0.55, v(x, z) + way * 0.55)
+    }
+
+    #[test]
+    fn the_pieces_of_a_ray_join_into_one_that_goes_their_way() {
+        let east = Vector3::new(1.0, 0.0, 0.0);
+        // a ray going west: its first piece cannot say which way, the
+        // second can
+        let (a, b) = piece(8.0, 5.0, east);
+        let (c, d) = piece(7.0, 5.0, east);
+        let (from, to) = joined(a, b, c, d).expect("the next cell west joins");
+        assert!(from.distance_to(v(8.55, 5.0)) < 1e-4, "{from:?}");
+        assert!(to.distance_to(v(6.45, 5.0)) < 1e-4, "{to:?}");
+        // then on west, piece by piece, whichever way its glyph points
+        let (e, f) = piece(6.0, 5.0, -east);
+        let (from, to) = joined(from, to, e, f).expect("on west");
+        assert!(to.distance_to(v(5.45, 5.0)) < 1e-4, "{to:?}");
+        assert!(from.distance_to(v(8.55, 5.0)) < 1e-4);
+        // a ray in the next row, a cell beyond its end, or askew is
+        // another one
+        let (g, h) = piece(5.0, 6.0, east);
+        assert!(joined(from, to, g, h).is_none());
+        let (g, h) = piece(3.0, 5.0, east);
+        assert!(joined(from, to, g, h).is_none());
+        let (g, h) = piece(5.0, 5.0, Vector3::new(0.0, 0.0, 1.0));
+        assert!(joined(from, to, g, h).is_none());
+    }
+
+    #[test]
+    fn the_pieces_of_a_ray_aslant_join_with_no_gap() {
+        let way = Vector3::new(1.0, 0.0, 1.0).normalized();
+        let (a, b) = piece(8.0, 4.0, way);
+        let (c, d) = piece(7.0, 3.0, way);
+        let (from, to) = joined(a, b, c, d).expect("the next cell aslant joins");
+        // one ribbon from the first cell's far side to the second's
+        assert!((from.distance_to(to) - (2.0f32.sqrt() + 1.1)).abs() < 1e-4);
+    }
+
+    #[test]
+    fn every_beam_type_has_its_own_ray() {
+        let rays: Vec<Ray> = (0..8).map(Ray::of_zap).collect();
+        for (i, r) in rays.iter().enumerate() {
+            assert!(!rays[..i].contains(r), "{r:?} twice");
+            assert_ne!(*r, Ray::Plain);
+        }
+        assert_eq!(Ray::of_zap(8), Ray::Plain);
+        // and each its own look in the shader
+        let mut styles: Vec<i32> = Ray::ALL.iter().map(|r| r.style()).collect();
+        styles.sort_unstable();
+        assert_eq!(styles, (0..11).collect::<Vec<_>>());
+    }
 }

@@ -16,7 +16,7 @@ use nh_protocol::{Catalog, Glyph, GlyphKind, LevelNotice, mg};
 use nh_world::{Branch, World};
 
 use crate::map_view::{MapView, ROLES, WARM_MONSTERS, role_monster};
-use crate::vfx::VfxKind;
+use crate::vfx::{Ray, VfxKind};
 
 /// The branches drawn: the main one, and those with models, walls,
 /// liquids or lights of their own.
@@ -31,7 +31,7 @@ const STAGES: &[(&str, Branch)] = &[
 /// The effects the first stage fires (`act`), how many a frame go off
 /// under the start-up veil, and the frames a stage is held after them
 /// (the effects that follow others go off then).
-const ACTS: u32 = 20;
+const ACTS: u32 = 21;
 const VEILED_ACTS: u32 = 4;
 const HOLD_TAIL: u32 = 24;
 /// The frames a later stage is held (nothing in it is drawn for the
@@ -284,8 +284,9 @@ impl Rehearsal {
         debug_assert_eq!(self.world.branch(), STAGES[stage].1);
     }
 
-    /// The `n`th effect of a stage: a burst of every kind, beams, a ray,
-    /// a blow, outlines (a hostile, a pet, an empty cell) and a path.
+    /// The `n`th effect of a stage: a burst of every kind, beams, a ray
+    /// of every kind, a blow, outlines (a hostile, a pet, an empty cell)
+    /// and a path.
     fn act(&self, map: &mut MapView, n: u32) {
         let red = Color::from_rgb(1.0, 0.3, 0.2);
         let kinds = [
@@ -302,6 +303,7 @@ impl Rehearsal {
             VfxKind::Sparkle,
             VfxKind::Sparks,
             VfxKind::Blood(red),
+            VfxKind::Shock(red),
         ];
         let at = |(x, y): (i32, i32)| Vector3::new(x as f32, 0.6, y as f32);
         let path: Vec<_> = (0..5).map(|i| (HERO.0 - i, HERO.1 - 1)).collect();
@@ -310,7 +312,12 @@ impl Rehearsal {
             None => map.burst_at(kinds[n], (X0 + 2 + n as i32, 9)),
             Some(0) => map.beam_between(VfxKind::Lightning, (X0 + 2, 12), (X1 - 2, 12)),
             Some(1) => map.beam_between(VfxKind::Fire, HERO, (HERO.0, Y0 + 2)),
-            Some(2) => map.vfx().ray(red, at(HERO), at((X1 - 3, 6))),
+            Some(2) => {
+                for (i, &kind) in Ray::ALL.iter().enumerate() {
+                    let y = Y0 + 1 + i as i32;
+                    map.vfx().ray(kind, red, at((X1 - 6, y)), at((X1 - 3, y)));
+                }
+            }
             Some(3) => map.vfx().hit(at((HERO.0 + 1, HERO.1)), at(HERO), 0.3),
             Some(4) => map.set_hover(Some((X0 + 9, Y0 + 2))),
             Some(5) => {
