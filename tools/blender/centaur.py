@@ -13,11 +13,15 @@ the horse's space, {"point", "normal"}, beyond which its neck and head go),
 crown), "waist" (the body's waist height, its own space), "bone" (the horse
 bone the body rides on), "skin" (another albedo for the body), "cloth"
 ("#rrggbb": the linen painted on the body's skin dyed so, leather at the
-waist), "actions" ({"new name": "horse clip"}), "name", "out".
+waist), "coat" (a seed: the horse's flat body unwrapped round its length and
+painted a pale coat streaked like hair, for the manifest to tint: it
+stands by the body's textured skin), "actions" ({"new name": "horse clip"}),
+"name", "out".
 """
 import bpy
 import bmesh
 import json
+import math
 import numpy
 import os
 import sys
@@ -57,6 +61,54 @@ if rim:
     bmesh.ops.holes_fill(bm, edges=rim, sides=0)
 bm.to_mesh(horse.data)
 bm.free()
+
+
+def coat(seed, size=512):
+    """A pale coat streaked like hair (each patch of the unwrapped body its
+    own way); no broad mottling, which would jump at the patches' seams."""
+    rng = numpy.random.default_rng(seed)
+
+    def smooth(cx, cy):
+        g = rng.random((cy + 1, cx + 1))
+        ys, xs = numpy.linspace(0, cy, size), numpy.linspace(0, cx, size)
+        y0 = numpy.minimum(ys.astype(int), cy - 1)
+        x0 = numpy.minimum(xs.astype(int), cx - 1)
+        fy, fx = (ys - y0)[:, None], (xs - x0)[None, :]
+        top = g[y0][:, x0] * (1 - fx) + g[y0][:, x0 + 1] * fx
+        low = g[y0 + 1][:, x0] * (1 - fx) + g[y0 + 1][:, x0 + 1] * fx
+        return top * (1 - fy) + low * fy
+
+    light = 0.82 + 0.2 * (smooth(90, 10) - 0.5) + 0.1 * (smooth(200, 24) - 0.5)
+    px = numpy.ones((size, size, 4), dtype=numpy.float32)
+    px[..., :3] = light[..., None]
+    image = bpy.data.images.new("Horse_Coat", size, size)
+    image.pixels.foreach_set(px.ravel())
+    image.pack()
+    return image
+
+
+if "coat" in spec:
+    # unwrapped round the body's length (the hair runs nose to tail, and
+    # nothing breaks it from one face to the next): u round the barrel, v
+    # along it
+    me = horse.data
+    uv = me.uv_layers.active or me.uv_layers.new(name="UVMap")
+    co = [horse.matrix_world @ v.co for v in me.vertices]
+    mid_z = (min(c.z for c in co) + max(c.z for c in co)) / 2
+    back = min(c.y for c in co)
+    length = max(c.y for c in co) - back
+    for loop in me.loops:
+        c = co[loop.vertex_index]
+        # the seam round the barrel under the belly, none along it
+        uv.data[loop.index].uv = (math.atan2(c.x, c.z - mid_z) / (2 * math.pi) + 0.5, (c.y - back) / length)
+    hide = coat(spec["coat"])
+    for slot in horse.material_slots:
+        m = slot.material
+        if m and m.name == "Main" and m.use_nodes:
+            bsdf = m.node_tree.nodes.get("Principled BSDF")
+            tex = m.node_tree.nodes.new("ShaderNodeTexImage")
+            tex.image = hide
+            m.node_tree.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
 
 
 # ---- the body in its pose, cut at the waist -----------------------------------

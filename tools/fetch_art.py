@@ -248,12 +248,15 @@ def do_itch(op, w, item, max_size):
     unpack(w, blob, item["upload"], item, max_size)
 
 
-def do_direct(op, w, item, max_size):
+def do_direct(op, w, item, max_size, put_art):
     """A file at a fixed URL: a zip unpacked like an itch.io pack, or a
-    single file stored under `dest` by its own name (or `name`)."""
+    single file stored under `dest` by its own name (or `name`), or at
+    `out` under the art root (`put_art`): a CC-BY file kept in ccby/."""
     blob = cached(item["url"], lambda: fetch(op, item["url"]))
     if "files" in item:
         unpack(w, blob, item["url"], item, max_size)
+    elif "out" in item:
+        put_art(item["out"], blob)
     else:
         name = item.get("name") or os.path.basename(urllib.parse.urlparse(item["url"]).path)
         w.put(f"{item['dest']}/{name}", blob)
@@ -518,7 +521,7 @@ def main():
         do_itch(op, w, item, max_size)
     for item in recipe.get("direct", []):
         print("file", item["url"], flush=True)
-        do_direct(op, w, item, max_size)
+        do_direct(op, w, item, max_size, real_put)
     for item in recipe.get("pbr_zips", []):
         print("textures", item["id"], flush=True)
         do_pbr_zip(op, w, item, max_size)
