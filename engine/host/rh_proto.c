@@ -14,8 +14,8 @@ static int lost;
 void
 rh_proto_init(int out_fd, int in_fd)
 {
-    proto_out = fdopen(out_fd, "w");
-    proto_in = fdopen(in_fd, "r");
+    proto_out = fdopen(out_fd, "wb");
+    proto_in = fdopen(in_fd, "rb");
     if (!proto_out || !proto_in) {
         perror("renethack: fdopen");
         exit(2);

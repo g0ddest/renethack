@@ -3,6 +3,7 @@
 #
 #   make            build everything (nh-engine, recover, data/)
 #   make test       host unit tests + engine smoke test
+#   make windows    the same for Windows in build/windows (needs mingw-w64)
 #   make clean      remove build/
 #
 # The upstream submodule is never modified: it is exported into build/tree.
@@ -46,7 +47,7 @@ $(shell mkdir -p $(BUILD); \
 	fi)
 HOST_SRC := $(wildcard $(HOST)/*.c $(HOST)/*.h $(HOST)/rh.mk)
 
-.PHONY: all test clean
+.PHONY: all test clean windows
 all: $(BUILD)/nh-engine $(BUILD)/recover $(BUILD)/data/.stamp
 
 $(TREE)/.patched: patches/series $(addprefix patches/,$(PATCHES)) $(UPSTREAM_STAMP)
@@ -84,6 +85,18 @@ $(BUILD)/data/.stamp: $(TREE)/.built runtime/sysconf
 	cp $(TREE)/dat/nhdat $(TREE)/dat/license $(TREE)/dat/symbols $(BUILD)/data/
 	cp runtime/sysconf $(BUILD)/data/sysconf
 	touch $@
+
+# The Windows engine (`make dist-windows` runs this in its Docker image):
+# the native build above makes the data files and the generated sources;
+# mingw-w64 then compiles NetHack's WIN32 configuration with the host and
+# its Windows main (host/win32) into build/windows
+windows: all
+	$(MAKE) -C $(TREE)/src -f $(HOST)/win32/windows.mk RH_HOST=$(HOST) \
+		RH_PATCHSET=$(PATCHSET) OUT=$(abspath $(BUILD))/windows windows
+	rm -rf $(BUILD)/windows/data
+	mkdir -p $(BUILD)/windows/data
+	cp $(BUILD)/data/nhdat $(BUILD)/data/license $(BUILD)/data/symbols \
+		$(BUILD)/data/sysconf $(BUILD)/windows/data/
 
 $(BUILD)/test_proto: $(HOST)/tests/test_proto.c $(HOST)/rh_proto.c \
 		$(HOST)/rh_proto.h $(HOST)/third_party/cjson/cJSON.c

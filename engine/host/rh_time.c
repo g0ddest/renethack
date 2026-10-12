@@ -1,8 +1,9 @@
 /* renethack engine host: test clock.
  * RENETHACK_FIXED_TIME=<unix seconds> pins time() for every caller in the
  * process (moon phase, Friday 13th, night, ubirthday, Lua's os.time), which
- * replays need.  Unset, this is an ordinary wall clock.  POSIX only: the
- * executable's definition takes precedence over the C library's. */
+ * replays need.  Unset, this is an ordinary wall clock.  On unix the
+ * executable's definition takes precedence over the C library's; on Windows
+ * win32/rh_wintime.h renames this one rh_time() and sends every call to it. */
 #define _POSIX_C_SOURCE 200809L
 #include <stdlib.h>
 #include <sys/time.h>

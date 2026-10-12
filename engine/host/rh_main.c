@@ -9,6 +9,12 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#ifdef _WIN32
+#include <io.h>
+#define NULL_DEVICE "NUL"
+#else
+#define NULL_DEVICE "/dev/null"
+#endif
 #include "rh_proto.h"
 #include "rh_bridge.h"
 
@@ -66,14 +72,21 @@ main(int argc, char **argv)
         perror("renethack: dup");
         return 2;
     }
+#ifdef _WIN32
+    /* the protocol's bytes as they are: no CRLF, no ^Z for end of file */
+    (void) _setmode(out_fd, _O_BINARY);
+    (void) _setmode(in_fd, _O_BINARY);
+#endif
     (void) dup2(STDERR_FILENO, STDOUT_FILENO);
-    devnull = open("/dev/null", O_RDONLY);
+    devnull = open(NULL_DEVICE, O_RDONLY);
     if (devnull >= 0) {
         (void) dup2(devnull, STDIN_FILENO);
         (void) close(devnull);
     }
+#ifdef SIGPIPE
     /* a vanished client must surface as EOF/EPIPE, not kill us mid-save */
     (void) signal(SIGPIPE, SIG_IGN);
+#endif
 
     rh_proto_init(out_fd, in_fd);
     rh_bridge_start();
