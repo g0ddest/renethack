@@ -486,6 +486,11 @@ pub struct MaterialSpec {
     /// Below 1: see-through.
     #[serde(default)]
     pub alpha: Option<f32>,
+    /// How bright the rim of it turned from the eye is lit: clear glass
+    /// catching the light along its edges, where a pale see-through colour
+    /// alone reads as porcelain.
+    #[serde(default)]
+    pub rim: Option<f32>,
     /// A shader of the client's own (`shaders/<name>.gdshader`) in place
     /// of the PBR material; it takes the colour and the roughness.
     #[serde(default)]

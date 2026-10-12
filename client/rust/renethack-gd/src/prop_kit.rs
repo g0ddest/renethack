@@ -2,6 +2,7 @@
 //! once borrowed another's model: a towel, a leash, a beartrap, a harp, a
 //! cream pie, a banana... Each part has its material; the first is the
 //! look's own (tinted with the glyph's colour, which is the object's).
+//! The pieces a demon wears on its bones are drawn the same way.
 
 use super::*;
 use crate::organic::Organic;
@@ -20,6 +21,8 @@ enum Stuff {
     /// The look's colour, polished and lit from inside (royal jelly).
     Gem,
     Iron,
+    /// A blade's bright steel.
+    Steel,
     Brass,
     Rope,
     /// A drum's heads, pale stretched hide.
@@ -36,6 +39,8 @@ enum Stuff {
     Pale,
     /// What a mimic shows: an odd sheen.
     Odd,
+    /// A serpent's belly: the look's colour, pale.
+    Belly,
 }
 
 /// The parts of the object of `shape` and what each is made of.
@@ -77,6 +82,9 @@ fn parts(shape: &str) -> &'static [(Part, Stuff)] {
         "kelp" => &[(Kelp, Stuff::Own)],
         "eucalyptus" => &[(Leaf, Stuff::Own)],
         "strange" => &[(Strange, Stuff::Odd)],
+        "serpent tail" => &[(SerpentTail, Stuff::Own), (SerpentBelly, Stuff::Belly)],
+        "bladed arm" => &[(Arm, Stuff::Own), (ArmBlade, Stuff::Steel)],
+        "bat wings" => &[(BatWings, Stuff::Own), (BatWingBones, Stuff::Dark)],
         _ => &[],
     }
 }
@@ -110,6 +118,7 @@ impl Kit<'_> {
                 self.art.flat(tint, Finish::Gem)
             }
             Stuff::Iron => self.named("iron", Color::from_rgb(0.42, 0.4, 0.38)),
+            Stuff::Steel => self.named("bright_steel", Color::from_rgb(0.77, 0.78, 0.82)),
             Stuff::Brass => flat(self, 0.78, 0.6, 0.28, Finish::Glossy),
             Stuff::Rope => flat(self, 0.6, 0.5, 0.34, Finish::Matte),
             Stuff::Hide => flat(self, 0.86, 0.8, 0.66, Finish::Matte),
@@ -123,6 +132,10 @@ impl Kit<'_> {
             Stuff::Leaf => flat(self, 0.36, 0.55, 0.22, Finish::Glossy),
             Stuff::Pale => flat(self, 0.92, 0.9, 0.85, Finish::Matte),
             Stuff::Odd => flat(self, 0.27, 0.22, 0.32, Finish::Glossy),
+            Stuff::Belly => {
+                let pale = self.tint.lerp(Color::from_rgb(0.86, 0.78, 0.6), 0.6);
+                self.art.flat(pale, Finish::Glossy)
+            }
         }
     }
 }

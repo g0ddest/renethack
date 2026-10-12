@@ -792,6 +792,12 @@ impl Art {
             m.set_transparency(Transparency::ALPHA);
         }
         m.set_albedo(albedo);
+        // clear glass: its edges catching the light
+        if let Some(r) = spec.rim {
+            m.set_feature(Feature::RIM, true);
+            m.set_rim(r);
+            m.set_rim_tint(0.25);
+        }
         let textured = maps.is_some();
         if let Some((a, n, orm)) = maps {
             let (a, n, orm) = (self.texture(&a), self.texture(&n), self.texture(&orm));

@@ -2,7 +2,8 @@
 //! for a towel, a chain for a beartrap, a plate for a pie, a carrot for a
 //! banana), built in code like the creatures; `prop_kit` gives each part
 //! its material. An object lies or stands about one unit across, on
-//! y = 0. A part is what one material covers.
+//! y = 0. A part is what one material covers. Besides them, the pieces a
+//! demon wears on its bones: a serpent's tail, an arm more, bat's wings.
 
 use super::*;
 
@@ -62,6 +63,21 @@ pub enum Part {
     Leaf,
     /// What a mimic shows itself as: a strange, bulging, misshapen box.
     Strange,
+    /// A serpent's tail worn under a body: from its waist (the origin, a
+    /// unit above the floor) down and coiled out round it on the floor;
+    /// the plates down the front of it.
+    SerpentTail,
+    SerpentBelly,
+    /// An arm worn on a body's side: out from its shoulder (the origin),
+    /// bent at the elbow, the forearm raised to a fist; the curved blade
+    /// in the fist.
+    Arm,
+    ArmBlade,
+    /// A bat's wings raised from the shoulder blades (the origin): the
+    /// skin stretched between the fingers; the arm and finger bones along
+    /// its edges.
+    BatWings,
+    BatWingBones,
 }
 
 const UP: Vector3 = Vector3::UP;
@@ -485,6 +501,251 @@ pub(super) fn build(m: &mut Merge, part: Part) {
             ] {
                 m.ball(v(x, y, z), Vector3::splat(r), [0.0; 3], false, 14);
             }
+        }
+        Part::SerpentTail => {
+            let (path, r) = serpent_tail();
+            // a little wide and low where it lies
+            m.sweep(&path, |i| (r[i] * 1.08, r[i] * 0.92), 2.0, false, AHEAD);
+        }
+        Part::SerpentBelly => {
+            // a plate across the front every so far down to the floor, each
+            // bowed round the tail, a seam between it and the next
+            let n = 12;
+            for k in 0..n {
+                let t = 0.1 + 0.72 * frac(k, n);
+                let (at, thick) = (tail_drop(t), tail_thick(t));
+                let along = (tail_drop(t + 0.01) - tail_drop(t - 0.01)).normalized();
+                let front = (AHEAD - along * along.dot(AHEAD)).normalized();
+                let side = along.cross(front);
+                let arc: Vec<Vector3> = (0..=8)
+                    .map(|j| {
+                        let phi = (-55.0 + 110.0 * frac(j, 8)).to_radians();
+                        at + side * (thick * 1.08 * 1.03 * phi.sin())
+                            + front * (thick * 0.92 * 1.03 * phi.cos())
+                    })
+                    .collect();
+                m.sweep(&arc, |_| (0.007, 0.031), 4.0, false, along);
+            }
+        }
+        Part::Arm => {
+            let path = arm_path();
+            let n = path.len() - 1;
+            // thick at the shoulder, thinner to the elbow, the forearm's
+            // swell, the wrist
+            let r = |i: usize| {
+                let t = frac(i, n);
+                0.062 - 0.026 * t + 0.008 * bulge(((t - 0.45) * 2.5).clamp(0.0, 1.0), 1.0)
+            };
+            m.sweep(&path, |i| (r(i), r(i) * 0.9), 2.0, false, ACROSS);
+            let wrist = path[n];
+            let ahead = (wrist - path[n - 1]).normalized();
+            m.ball(
+                wrist + ahead * 0.03,
+                v(0.042, 0.048, 0.052),
+                [0.0; 3],
+                false,
+                12,
+            );
+        }
+        Part::ArmBlade => {
+            let path = arm_path();
+            let fist = path[path.len() - 1] + v(0.0, 0.0, 0.03);
+            // the grip through the fist, the guard over it, the blade up
+            // and curving forward, edge on
+            m.rod(
+                fist - v(0.0, 0.06, 0.0),
+                fist + v(0.0, 0.05, 0.0),
+                (0.014, 0.014),
+                8,
+            );
+            m.ball(
+                fist + v(0.0, 0.06, 0.0),
+                v(0.024, 0.012, 0.05),
+                [0.0; 3],
+                false,
+                10,
+            );
+            let blade = curve(
+                fist + v(0.0, 0.065, 0.0),
+                fist + v(0.0, 0.32, 0.03),
+                fist + v(0.0, 0.46, 0.2),
+                12,
+            );
+            m.sweep(
+                &blade,
+                |i| (0.028 - 0.025 * frac(i, 12).powf(1.6), 0.004),
+                2.0,
+                false,
+                ACROSS,
+            );
+        }
+        Part::BatWings => {
+            for side in [-1.0f32, 1.0] {
+                bat_wing(m, side);
+            }
+        }
+        Part::BatWingBones => {
+            for side in [-1.0f32, 1.0] {
+                let w = BatWing::of(side);
+                m.rod(w.root, w.elbow, (0.03, 0.024), 8);
+                m.rod(w.elbow, w.wrist, (0.024, 0.017), 8);
+                m.ball(w.elbow, Vector3::splat(0.026), [0.0; 3], false, 8);
+                m.ball(w.wrist, Vector3::splat(0.021), [0.0; 3], false, 8);
+                for tip in w.fingers {
+                    m.rod(w.wrist, tip, (0.013, 0.004), 6);
+                }
+                // the claw of its thumb
+                let thumb = w.wrist + v(-side * 0.02, 0.08, 0.02);
+                m.rod(w.wrist, thumb, (0.013, 0.002), 6);
+            }
+        }
+    }
+}
+
+/// The way a body faces.
+const AHEAD: Vector3 = Vector3::BACK;
+
+/// How thick a serpent's tail is at the waist, and where it reaches the
+/// floor.
+const TAIL_TOP: f32 = 0.15;
+const TAIL_LOW: f32 = 0.13;
+
+/// Where a serpent's tail is `t` of the way down from the waist (0) to the
+/// floor (1): down, bending back and round to run sideways along the floor
+/// where its coil begins (behind).
+fn tail_drop(t: f32) -> Vector3 {
+    let t = t.clamp(0.0, 1.0);
+    let start = v(0.0, -1.0 + TAIL_LOW * 0.92, -0.17);
+    let (a, b, c) = (
+        v(0.0, 0.06, 0.0),
+        v(0.0, -0.5, -0.03),
+        start + v(0.14, 0.0, 0.0),
+    );
+    let u = 1.0 - t;
+    a * u * u * u + b * 3.0 * u * u * t + c * 3.0 * u * t * t + start * t * t * t
+}
+
+/// Its radius there.
+fn tail_thick(t: f32) -> f32 {
+    TAIL_TOP - (TAIL_TOP - TAIL_LOW) * t.clamp(0.0, 1.0)
+}
+
+/// A serpent's tail and its radius at each point: down from the waist,
+/// then a loop and a half spiralling out round where it came down, lying
+/// on the floor (its centre as high as it is thick) and narrowing to a
+/// point.
+fn serpent_tail() -> (Vec<Vector3>, Vec<f32>) {
+    let mut path: Vec<Vector3> = (0..=10).map(|k| tail_drop(frac(k, 10))).collect();
+    let mut r: Vec<f32> = (0..=10).map(|k| tail_thick(frac(k, 10))).collect();
+    let n = 40;
+    for k in 1..=n {
+        let t = frac(k, n);
+        let turn = PI + t * 1.45 * TAU;
+        let thick = TAIL_LOW - (TAIL_LOW - 0.016) * t.powf(1.2);
+        let out = 0.17 + 0.28 * t;
+        path.push(v(out * turn.sin(), -1.0 + thick * 0.92, out * turn.cos()));
+        r.push(thick);
+    }
+    (path, r)
+}
+
+/// An arm's path from the shoulder: out and down to the elbow, the forearm
+/// forward and up to the wrist.
+fn arm_path() -> Vec<Vector3> {
+    let elbow = v(0.0, -0.2, 0.17);
+    let mut path = curve(v(0.0, 0.0, 0.0), v(0.0, -0.12, 0.06), elbow, 6);
+    let forearm = curve(elbow, v(0.0, -0.21, 0.3), v(0.0, -0.1, 0.42), 6);
+    path.extend(forearm.into_iter().skip(1));
+    path
+}
+
+/// One of a bat's wings (`side` 1 the right, out along +x): its arm from
+/// the root by the elbow to the wrist, the fingers spread from there, and
+/// where its skin joins the back low down. Raised high rather than spread
+/// wide: a body keeps within its cell.
+struct BatWing {
+    root: Vector3,
+    elbow: Vector3,
+    wrist: Vector3,
+    fingers: [Vector3; 4],
+    low: Vector3,
+}
+
+impl BatWing {
+    fn of(side: f32) -> Self {
+        let p = |x: f32, y: f32, z: f32| v(side * x, y, z);
+        BatWing {
+            root: p(0.05, 0.03, 0.0),
+            elbow: p(0.16, 0.22, -0.07),
+            wrist: p(0.21, 0.56, -0.12),
+            fingers: [
+                p(0.22, 1.0, -0.17),
+                p(0.36, 0.88, -0.22),
+                p(0.44, 0.62, -0.24),
+                p(0.4, 0.28, -0.2),
+            ],
+            low: p(0.07, -0.26, -0.01),
+        }
+    }
+}
+
+/// A bat's wing's skin: a panel fanned from the wrist between each finger
+/// and the next, its edge cut in a scallop between their tips and bellied
+/// back a little; then from the wrist and the elbow to the back. Both
+/// faces, so it shows from behind.
+fn bat_wing(m: &mut Merge, side: f32) {
+    let w = BatWing::of(side);
+    let [f1, f2, f3, f4] = w.fingers;
+    let fans = [
+        (w.wrist, f1, f2, 0.22),
+        (w.wrist, f2, f3, 0.22),
+        (w.wrist, f3, f4, 0.2),
+        (w.wrist, f4, w.low, 0.14),
+        (w.wrist, w.low, w.elbow, 0.0),
+        (w.elbow, w.low, w.root, 0.0),
+    ];
+    for (apex, a, b, cut) in fans {
+        let mid = (a + b) * 0.5;
+        let at = |s: f32, t: f32| {
+            let edge = a.lerp(b, t) - (mid - apex) * (cut * (PI * t).sin());
+            let p = apex + (edge - apex) * s;
+            p - AHEAD * (0.05 * (PI * s).sin() * (PI * t).sin())
+        };
+        for face in [1.0f32, -1.0] {
+            fan_sheet(m, 6, 8, &at, face);
+        }
+    }
+}
+
+/// A sheet of `rows` by `cols` quads, `at(s, t)` its points (each of `s`
+/// and `t` in 0..1, the row `s = 0` maybe a single point), its normals
+/// turned the way `face` says.
+fn fan_sheet(
+    m: &mut Merge,
+    rows: usize,
+    cols: usize,
+    at: &impl Fn(f32, f32) -> Vector3,
+    face: f32,
+) {
+    let base = m.pos.len() as i32;
+    let e = 1e-3;
+    for i in 0..=rows {
+        for j in 0..=cols {
+            let (s, t) = (frac(i, rows), frac(j, cols));
+            // measured a little way out from a point of a row
+            let s1 = s.max(0.05);
+            let ds = at((s1 + e).min(1.0), t) - at(s1 - e, t);
+            let dt = at(s1, (t + e).min(1.0)) - at(s1, (t - e).max(0.0));
+            let n = ds.cross(dt).normalized() * face;
+            m.vertex(at(s, t), n, Vector2::new(t, s));
+        }
+    }
+    let c = cols as i32 + 1;
+    for i in 0..rows as i32 {
+        for j in 0..cols as i32 {
+            let a = base + i * c + j;
+            m.tri(a, a + 1, a + c);
+            m.tri(a + 1, a + c + 1, a + c);
         }
     }
 }
