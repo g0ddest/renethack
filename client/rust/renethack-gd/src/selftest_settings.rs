@@ -9,12 +9,12 @@
 //! renderer and the map down (their effects, anti-aliasing, resolution,
 //! shadows), a control changed by hand makes them Custom, and → from it
 //! climbs back through the presets. The interface's language draws the
-//! page again in it where it was. A gamepad's bumpers turn the section,
-//! its hints show, the d-pad and A change a row, B goes back to the
-//! title. The controls list the Classic keys a new character starts with,
-//! then the gamepad's. Over a game the page opens as the HUD's gear opens
-//! it, and Esc goes back to the game. Every screen fits the canvas, every value its
-//! place.
+//! page again in it where it was; fewer screen effects are kept. A
+//! gamepad's bumpers turn the section, its hints show, the d-pad and A
+//! change a row, B goes back to the title. The controls list the Classic
+//! keys a new character starts with, then the gamepad's. Over a game the
+//! page opens as the HUD's gear opens it, and Esc goes back to the game.
+//! Every screen fits the canvas, every value its place.
 
 use std::sync::atomic::{AtomicU8, Ordering};
 
@@ -467,11 +467,11 @@ pub(super) fn settings() -> Vec<Step> {
                 Lang::Ru
             };
             let p = page(g)?;
+            let row = (tr!("settings-language"), other.name().to_string());
             Ok(i18n::lang() == other
                 && p.section() == Section::Interface
                 && p.field() == Some(Field::Language)
-                && p.shown_rows().last()
-                    == Some(&(tr!("settings-language"), other.name().to_string()))
+                && p.shown_rows().contains(&row)
                 && profile(g)?.lang.as_deref() == Some(other.code()))
         }),
         Step::Shot("settings-interface-other"),
@@ -483,6 +483,20 @@ pub(super) fn settings() -> Vec<Step> {
         Step::Wait("the page in it again", |g| {
             let began = lang_of(BEGAN_IN.load(Ordering::Relaxed));
             Ok(i18n::lang() == began && page(g)?.section() == Section::Interface)
+        }),
+        // ↓ to fewer screen effects: → on, kept; ← off again
+        keys!("↓ →", DOWN, RIGHT),
+        Step::Wait("fewer screen effects, kept", |g| {
+            Ok(page(g)?.field() == Some(Field::ReduceEffects)
+                && profile(g)?.settings.reduce_effects
+                && g.settings.reduce_effects
+                && shown(g, Field::ReduceEffects)? == tr!("settings-on"))
+        }),
+        Step::Shot("settings-interface-effects"),
+        keys!("←", LEFT),
+        Step::Wait("the screen's effects again, kept", |g| {
+            Ok(!profile(g)?.settings.reduce_effects
+                && shown(g, Field::ReduceEffects)? == tr!("settings-off"))
         }),
         // Tab: the controls, a new character's Classic keys first; → the
         // gamepad's; ↓ through the list

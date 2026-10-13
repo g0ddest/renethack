@@ -152,9 +152,11 @@ screen) starts on Medium, whose torches but the nearest cast no shadow.
 Sound: the volumes of the mixer's buses (`audio.rs`), each a slider the
 mouse drags. Interface: the scale (Auto, or 80–140 %;
 `RENETHACK_UI_SCALE` overrides it for a run), the keys a new character
-starts with, the language. Controls: the keyboard's commands of either
-key profile, each on its key, and the gamepad's buttons in the
-controller's own names (read only: Steam Input remaps a controller).
+starts with, the language, fewer screen effects (no sway of the hero, no
+drift of the camera, no hues of a hallucination; blindness still dims the
+view). Controls: the keyboard's commands of either key profile, each on
+its key, and the gamepad's buttons in the controller's own names (read
+only: Steam Input remaps a controller).
 
 A keyboard's command takes another key there: Enter or a click on it,
 then the key. A key another command has is offered as a swap (Enter swaps

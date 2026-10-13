@@ -93,7 +93,12 @@ impl Section {
                 Field::Volume(Bus::Sfx),
                 Field::Volume(Bus::Ui),
             ],
-            Section::Interface => &[Field::UiScale, Field::Keys, Field::Language],
+            Section::Interface => &[
+                Field::UiScale,
+                Field::Keys,
+                Field::Language,
+                Field::ReduceEffects,
+            ],
             // and under it, the list it chooses
             Section::Controls => &[Field::Controls],
         }
@@ -122,6 +127,9 @@ pub enum Field {
     /// A new character's keys.
     Keys,
     Language,
+    /// Fewer screen effects (the hero's sway, the camera's drift, a
+    /// hallucination's hue).
+    ReduceEffects,
     /// Which controls the list shows: a key profile's, or the gamepad's.
     Controls,
 }
@@ -149,6 +157,7 @@ impl Field {
             Field::UiScale => tr!("settings-ui-scale"),
             Field::Keys => tr!("settings-keys"),
             Field::Language => tr!("settings-language"),
+            Field::ReduceEffects => tr!("settings-reduce-effects"),
             Field::Controls => tr!("controls-show"),
         }
     }
@@ -193,6 +202,7 @@ impl Field {
                 }
             }
             Field::Language => tr!("settings-language-about"),
+            Field::ReduceEffects => tr!("settings-reduce-effects-about"),
             Field::Controls => tr!("controls-show-about"),
         }
     }
@@ -329,6 +339,8 @@ pub fn value_text(field: Field, v: &View) -> String {
             KeyProfile::Classic => tr!("settings-keys-classic"),
         },
         Field::Language => v.lang.name().to_string(),
+        Field::ReduceEffects if v.settings.reduce_effects => tr!("settings-on"),
+        Field::ReduceEffects => tr!("settings-off"),
         // the page's own choice (`SettingsPage::show`)
         Field::Controls => String::new(),
     }
@@ -423,6 +435,9 @@ pub fn step(field: Field, v: &View, dir: i32, wrap: bool) -> Option<Change> {
         Field::Language => {
             let lang = step_through(&Lang::ALL, v.lang, dir, wrap);
             return (lang != v.lang).then_some(Change::Lang(lang));
+        }
+        Field::ReduceEffects => {
+            s.reduce_effects = step_through(&[false, true], s.reduce_effects, dir, wrap);
         }
         // the page's own (`SettingsPage::controls_step`)
         Field::Controls => return None,
@@ -1884,6 +1899,10 @@ mod tests {
             step(Field::Language, &v, 1, false),
             Some(Change::Lang(Lang::Ru))
         );
+        // fewer screen effects: off, then on (→, or Enter's wrap)
+        assert_eq!(step(Field::ReduceEffects, &v, -1, false), None);
+        assert!(changed(step(Field::ReduceEffects, &v, 1, false)).reduce_effects);
+        assert!(changed(step(Field::ReduceEffects, &v, 1, true)).reduce_effects);
     }
 
     #[test]

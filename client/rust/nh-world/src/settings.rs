@@ -1,9 +1,9 @@
 //! The client's own settings, the same for every character and kept in the
 //! profile (`Profile`): how the window covers the screen, how much the 3D
-//! view draws, the interface's scale, a new character's keys. Plain data
-//! and the rules between its parts (a graphics preset and the controls it
-//! sets, a step through a setting's values); the client applies them to
-//! Godot.
+//! view draws, the interface's scale, the screen's effects, a new
+//! character's keys, the commands' keys moved. Plain data and the rules
+//! between its parts (a graphics preset and the controls it sets, a step
+//! through a setting's values); the client applies them to Godot.
 
 use serde::{Deserialize, Serialize};
 
@@ -20,6 +20,10 @@ pub struct Settings {
     /// The interface's scale, percent (`UI_SCALES`); None: by the screen.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ui_scale: Option<u32>,
+    /// Fewer screen effects: the hero's sway, the camera's drift and a
+    /// hallucination's hue off (blindness still dims the view).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub reduce_effects: bool,
     /// The keys a new character starts with; None: Modern.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub keys: Option<KeyProfile>,
@@ -489,6 +493,7 @@ mod tests {
         let s = Settings {
             graphics: Some(Graphics::preset(Quality::Low)),
             ui_scale: Some(120),
+            reduce_effects: true,
             keys: Some(KeyProfile::Classic),
             ..Settings::default()
         };
@@ -496,7 +501,9 @@ mod tests {
         assert_eq!(serde_json::from_str::<Settings>(&text).unwrap(), s);
         let plain = serde_json::to_string(&Settings::default()).unwrap();
         assert!(
-            !plain.contains("graphics") && !plain.contains("ui_scale"),
+            !plain.contains("graphics")
+                && !plain.contains("ui_scale")
+                && !plain.contains("reduce_effects"),
             "{plain}"
         );
     }
