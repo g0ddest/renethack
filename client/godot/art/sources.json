@@ -223,10 +223,12 @@
   {"id": "Chainmail004", "url": "https://ambientcg.com/get?file=Chainmail004_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "roughness": "*_Roughness.jpg", "metal": "*_Metalness.jpg"}, "gain": {"albedo": 1.75, "roughness": 1.9}, "dest": "ambientcg", "use": "chain and ring mail on the hero"},
   {"id": "Metal038", "url": "https://ambientcg.com/get?file=Metal038_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "roughness": "*_Roughness.jpg", "metal": "*_Metalness.jpg"}, "gain": {"albedo": 2.2, "roughness": 1.3}, "dest": "ambientcg", "use": "plate, splint, scale and dragon scale mail on the hero"}
  ],
- "painted_comment": "Textures painted by tools/art_paint.py, from one written before in the run when `from` names it (`image`: one inside a GLB): `rot` turns a base character's skin into a corpse's (`eyes`: where they lie in the image, to sink them), `wraps` winds linen over the image (open at the `eyes`), `pale` takes a coat's colour away so that a tint shows as itself.",
+ "painted_comment": "Textures painted by tools/art_paint.py, from one written before in the run when `from` names it (`image`: one inside a GLB): `rot` turns a base character's skin into a corpse's (`eyes`: where they lie in the image, to sink them), `bone` into a lich's (`nose`: where it lies, a hole), `wraps` winds linen over the image (open at the `eyes`), `pale` takes a coat's colour away so that a tint shows as itself, `lift` lights a dark coat up (to about `light` on the whole) so that it takes a tint and stays seen on a dark floor.",
  "painted": [
   {"paint": "rot", "from": "cc0/quaternius/base/T_Superhero_Male_Ligh.png", "eyes": [[0.137, 0.178], [0.235, 0.178]], "out": "made/skins/zombie_m.jpg",
    "use": "zombies: the base character's skin, dead"},
+  {"paint": "bone", "from": "cc0/quaternius/base/T_Superhero_Male_Ligh.png", "eyes": [[0.137, 0.178], [0.235, 0.178]], "nose": [0.1875, 0.226], "out": "made/skins/lich_m.jpg",
+   "use": "liches: the base character's skin dried tight over the skull"},
   {"paint": "wraps", "eyes": [[0.137, 0.178], [0.235, 0.178]], "out": "made/skins/mummy_m.jpg",
    "use": "mummies: the base character wound in linen, by its skin's layout"},
   {"paint": "wraps", "out": "made/skins/wraps.jpg",
@@ -234,7 +236,9 @@
   {"paint": "pale", "from": "cc0/quaternius/bestiary/Puglin.glb", "image": "T_Puglin_BaseColor", "light": 0.6, "out": "made/skins/puglin_pale.jpg",
    "use": "the Puglin without its green, for a kind's own colour: a kobold zombie"},
   {"paint": "pale", "from": "cc0/quaternius/bestiary/Imp.glb", "image": "T_Imp_BaseColor", "light": 0.55, "out": "made/skins/imp_pale.jpg",
-   "use": "the imp without its red, for a demon's own colour"}
+   "use": "the imp without its red, for a demon's own colour"},
+  {"paint": "lift", "from": "cc0/polyhaven/models/street_rat/textures/street_rat_diff_1k.jpg", "light": 0.55, "out": "made/skins/rat_light.jpg",
+   "use": "the rats' coats lit up: a rat stays seen on a brown floor, each kind in its tint"}
  ],
  "turned_comment": "Rigged models written before in the run (`from`) with bones turned in every clip by tools/gltf_turn.py: `raise` {bone: degrees} about the body's forward axis (from `back` to `front`), the way that lifts the bone's tip; `stretch` {bone: factor} sets a bone that much further from its parent, the skin between drawn out.",
  "turned": [

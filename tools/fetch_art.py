@@ -8,7 +8,7 @@ The recipe is client/godot/art/sources.json: Poly Haven textures and models
 (through their public API) and the free files of itch.io packs (the site's own
 "no thanks, just take me to the downloads" flow), files and zips at fixed
 URLs (VFX flipbooks, particles, icons), textures painted from those by
-tools/art_paint.py (a corpse's skin, a mummy's linen), rigged models with
+tools/art_paint.py (a corpse's skin, a lich's, a mummy's linen), rigged models with
 bones turned in their clips by tools/gltf_turn.py (a dragon's raised
 wings) or their low-poly meshes rounded by tools/gltf_smooth.py (a
 dragon's origami facets), models made from those in Blender by tools/blender (static models
@@ -454,10 +454,14 @@ def do_painted(w, item):
     eyes = [tuple(e) for e in item.get("eyes", [])]
     if item["paint"] == "rot":
         image = art_paint.rot(source().resize(size, Image.LANCZOS), eyes)
+    elif item["paint"] == "bone":
+        image = art_paint.bone(source().resize(size, Image.LANCZOS), eyes, tuple(item["nose"]))
     elif item["paint"] == "wraps":
         image = art_paint.wraps(size, eyes)
     elif item["paint"] == "pale":
         image = art_paint.pale(source(), item["light"])
+    elif item["paint"] == "lift":
+        image = art_paint.lift(source(), item["light"])
     else:
         raise SystemExit(f"{item['out']}: no paint {item['paint']}")
     out = io.BytesIO()

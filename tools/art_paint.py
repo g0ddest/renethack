@@ -1,10 +1,12 @@
 """Textures painted from those fetched (tools/fetch_art.py runs it: the
 "painted" recipe in client/godot/art/sources.json): a corpse's skin from a
-living one, linen wound round a body, a coat left pale to take a tint.
+living one, a lich's dried over its skull, linen wound round a body, a coat
+left pale to take a tint, a dark coat lit up.
 
 Everything is drawn from a seed: a run paints what the last one did. Only
 Pillow is needed.
 """
+import math
 import random
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageOps
@@ -65,6 +67,31 @@ def rot(skin, eyes):
     return Image.composite(Image.new("RGB", size, "#2c2a20"), out, cloth)
 
 
+def bone(skin, eyes, nose):
+    """A lich's skin from a living one: dried tight over the skull, the
+    colour of old bone, the eyes black hollows, the cheeks sunken under
+    their bones and the nose a hole (`nose`: where it lies in the image)."""
+    skin = skin.convert("RGB")
+    size = skin.size
+    w, h = size
+    cloth = linen(skin)
+    out = ImageOps.colorize(ImageOps.autocontrast(ImageOps.grayscale(skin), cutoff=1),
+                            black="#2e281c", mid="#a49a7e", white="#ece4cc")
+    hollows = Image.new("L", size, 0)
+    d = ImageDraw.Draw(hollows)
+    (ax, ay), (bx, by) = min(eyes), max(eyes)
+    for x, y in ((ax - 0.006, ay + 0.052), (bx + 0.006, by + 0.052)):
+        d.ellipse([(x - 0.026) * w, (y - 0.018) * h, (x + 0.026) * w, (y + 0.018) * h], fill=210)
+    out = Image.composite(Image.new("RGB", size, "#3e3628"), out, hollows.filter(ImageFilter.GaussianBlur(0.008 * w)))
+    out = Image.composite(Image.new("RGB", size, "#050403"), out, sockets(size, eyes, 0.036, 0.005))
+    nx, ny = nose
+    hole = Image.new("L", size, 0)
+    ImageDraw.Draw(hole).polygon([((nx - 0.013) * w, (ny + 0.012) * h), ((nx + 0.013) * w, (ny + 0.012) * h),
+                                  (nx * w, (ny - 0.02) * h)], fill=255)
+    out = Image.composite(Image.new("RGB", size, "#0a0806"), out, hole.filter(ImageFilter.GaussianBlur(0.002 * w)))
+    return Image.composite(Image.new("RGB", size, "#2c2a20"), out, cloth)
+
+
 def wraps(size, eyes=()):
     """Linen wound round a body: strips across the image, each lapping the
     one before, dark where they part; stained, and open over the `eyes`."""
@@ -119,3 +146,15 @@ def pale(coat, light):
     mean = sum(i * n for i, n in enumerate(grey.histogram())) / (grey.width * grey.height)
     gain = light * 255 / mean
     return Image.merge("RGB", [grey.point(lambda v: min(255, round(v * gain)))] * 3)
+
+
+def lift(coat, light):
+    """A dark coat lit up: every colour raised by one curve, so that it is
+    about `light` (0..1) on the whole. The dark gains the most: the coat
+    greys a little and takes a tint, and what was light in it (a pink nose,
+    a tail) stays its colour."""
+    coat = coat.convert("RGB")
+    grey = ImageOps.grayscale(coat)
+    mean = sum(i * n for i, n in enumerate(grey.histogram())) / (grey.width * grey.height)
+    power = math.log(light) / math.log(mean / 255)
+    return coat.point([round(255 * (v / 255) ** power) for v in range(256)] * 3)
