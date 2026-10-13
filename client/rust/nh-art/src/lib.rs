@@ -1676,12 +1676,53 @@ mod tests {
         for colour in ["red", "blue", "gray", "silver", "black"] {
             let baby = art.monster(find(&format!("baby {colour} dragon")), 0);
             let grown = art.monster(find(&format!("{colour} dragon")), 0);
-            assert_eq!(art.model_at(grown.model).0, "dragon_adult", "{colour}");
+            let name = art.model_at(grown.model).0;
+            assert!(name.starts_with("dragon_adult"), "{colour}: {name}");
             assert!(
                 grown.height > 1.5 * baby.height,
                 "{colour}: {} against {}",
                 grown.height,
                 baby.height
+            );
+        }
+    }
+
+    /// A black dragon drew pale grey (black is lifted to grey on the map)
+    /// like a gray one, and a gold one the same yellow as a yellow one:
+    /// each colour of dragon its own look, the black one dark and lit at
+    /// its rim.
+    #[test]
+    fn every_dragon_colour_is_its_own() {
+        let (art, cat) = (manifest(), catalog());
+        let find = |n: &str| cat.monsters.iter().find(|m| m.name == n).unwrap();
+        for prefix in ["", "baby "] {
+            let mut seen = Vec::new();
+            for colour in [
+                "gray", "silver", "red", "white", "orange", "black", "blue", "green", "gold",
+                "yellow",
+            ] {
+                let m = find(&format!("{prefix}{colour} dragon"));
+                let r = art.monster(m, 0);
+                // a glyph tint goes by the glyph's own colour
+                let look = (r.model, format!("{:?}", r.tint), m.color);
+                let same = seen.iter().find(|(l, _)| *l == look);
+                assert!(
+                    same.is_none(),
+                    "{prefix}{colour} dragon looks as {:?}",
+                    same.map(|s| s.1)
+                );
+                seen.push((look, colour));
+            }
+            let black = art.monster(find(&format!("{prefix}black dragon")), 0);
+            let spec = art.model_at(black.model).1;
+            assert!(spec.rim.is_some(), "{prefix}black dragon has no rim");
+            let main = spec
+                .recolor
+                .get("@Main")
+                .and_then(|c| hex(c.trim_start_matches('=')));
+            assert!(
+                main.is_some_and(|c| c.iter().all(|&v| v < 0.25)),
+                "{prefix}black dragon: {main:?}"
             );
         }
     }
@@ -1807,9 +1848,19 @@ mod tests {
             assert!(!seen.contains(&look), "{who} looks as another");
             seen.push(look);
         }
-        // the jabberwock and Ixoth are grown dragons, not babies
-        assert_eq!(model("jabberwock").0, "dragon_adult");
+        // Ixoth is a grown dragon, not a baby; the jabberwock Tenniel's,
+        // on a long neck and whiskered, not an orange dragon
         assert_eq!(model("Ixoth").0, "dragon_adult");
+        let jabberwock = model("jabberwock");
+        assert_eq!(jabberwock.0, "jabberwock");
+        assert!(
+            jabberwock
+                .1
+                .scene
+                .as_deref()
+                .is_some_and(|s| s.contains("Jabberwock"))
+        );
+        assert!(jabberwock.1.extras.iter().any(|e| e.model == "tentacle"));
     }
 
     /// The fallback audit: a leprechaun, the quantum mechanic, elves,

@@ -236,10 +236,21 @@
   {"paint": "pale", "from": "cc0/quaternius/bestiary/Imp.glb", "image": "T_Imp_BaseColor", "light": 0.55, "out": "made/skins/imp_pale.jpg",
    "use": "the imp without its red, for a demon's own colour"}
  ],
- "turned_comment": "Rigged models written before in the run (`from`) with bones turned in every clip by tools/gltf_turn.py: `raise` {bone: degrees} about the body's forward axis (from `back` to `front`), the way that lifts the bone's tip.",
+ "turned_comment": "Rigged models written before in the run (`from`) with bones turned in every clip by tools/gltf_turn.py: `raise` {bone: degrees} about the body's forward axis (from `back` to `front`), the way that lifts the bone's tip; `stretch` {bone: factor} sets a bone that much further from its parent, the skin between drawn out.",
  "turned": [
   {"from": "cc0/quaternius/monsters/Dragon.glb", "raise": {"Wing1.L": 40, "Wing1.R": 40}, "out": "made/DragonRearing.glb",
-   "use": "grown dragons: their wings beat raised over their backs (the babies' spread)"}
+   "use": "grown dragons: their wings beat raised over their backs (the babies' spread)"},
+  {"from": "cc0/quaternius/monsters/Dragon.glb", "raise": {"Wing1.L": 40, "Wing1.R": 40}, "stretch": {"Head": 4.0}, "out": "made/Jabberwock.glb",
+   "use": "the jabberwock: a grown dragon's body on a long neck"}
+ ],
+ "smoothed_comment": "Rigged models written before in the run (`from`) whose low-poly mesh (`mesh`) tools/gltf_smooth.py rounds: each triangle cut in four, `steps` times, the new corners curved out the way the surface bends (nothing shrinks), the skeleton and clips kept byte for byte.",
+ "smoothed": [
+  {"from": "cc0/quaternius/monsters/Dragon.glb", "mesh": "Dragon", "steps": 2, "out": "made/DragonSmooth.glb",
+   "use": "baby dragons: round, not folded into flat facets"},
+  {"from": "cc0/made/DragonRearing.glb", "mesh": "Dragon", "steps": 2, "out": "made/DragonRearingSmooth.glb",
+   "use": "grown dragons: round, not folded into flat facets"},
+  {"from": "cc0/made/Jabberwock.glb", "mesh": "Dragon", "steps": 2, "out": "made/JabberwockSmooth.glb",
+   "use": "the jabberwock, round"}
  ],
  "blender_comment": "Models made in Blender by tools/blender/<script>.py: static models rigged with the skeleton and clips of a Quaternius animal (rig_quadruped), centaurs put together from the horse and a base character (centaur), a stethoscope on the floor and round the neck of each outfit body it is fitted to (stethoscope). URLs are downloaded (and locked); other paths are files above. fetch_art.py runs Blender when it finds one ($BLENDER, `blender` on the PATH, /Applications/Blender.app); without it the committed models are kept and only the downloads are checked. CC-BY models go to ccby/, see CREDITS.md.",
  "blender": [
