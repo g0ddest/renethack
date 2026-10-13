@@ -25,7 +25,12 @@ the colour nearest its own),
 "parts" (tubes added along given bones, one on each side unless "mirror" is
 false: antennae, a beak; "taper" is how much thinner a tube ends than it
 starts, 0.8 unless said, "tip" how far its point stands out for its
-radius: a flat one is an eye).
+radius: a flat one is an eye; "glow" [r, g, b] lights it from within: a
+glinting eye), "shag" (long hair: thin cards hanging from the body, cut
+out of a picture of strands; "on" the body's materials they grow from,
+"count", "length" and "width" ranges, "color", "above" the height they
+grow above, "skip" boxes [x0, y0, z0, x1, y1, z1] they keep out of (a
+face, a trunk), "seed"; each card moves with the body where it grows).
 """
 import bpy
 import bmesh
@@ -33,6 +38,7 @@ import json
 import math
 import numpy
 import os
+import random
 import sys
 from mathutils import Matrix, Vector
 
@@ -302,7 +308,11 @@ for part in spec.get("parts", []):
     mat = bpy.data.materials.new(part["material"])
     mat.diffuse_color = (*part["color"], 1.0)
     mat.use_nodes = True
-    mat.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (*part["color"], 1.0)
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs["Base Color"].default_value = (*part["color"], 1.0)
+    if "glow" in part:
+        bsdf.inputs["Emission Color"].default_value = (*part["glow"], 1.0)
+        bsdf.inputs["Emission Strength"].default_value = 1.0
     target.data.materials.append(mat)
     slot = len(target.data.materials) - 1
     for side in (1, -1) if part.get("mirror", True) else (1,):
@@ -395,6 +405,131 @@ for part in spec.get("parts", []):
             p = target.matrix_world @ target.data.vertices[i].co
             n = min(names, key=lambda n: (p - segs[n][0]).length if n in segs else 1e9)
             group(n).add([i], 1.0, "REPLACE")
+
+
+# ---- shag: long hair in cards, each moving as the body does where it grows ------
+def strands(seed, colour, size=(256, 512)):
+    """A picture of hair: strands down from its top edge, each its own
+    width, length and light, gaps between them (cut at half alpha)."""
+    rng = numpy.random.default_rng(seed)
+    w, h = size
+    px = numpy.zeros((h, w, 4), dtype=numpy.float32)
+    x = 0
+    while x < w:
+        width = int(rng.integers(1, 4))
+        rows = int(h * rng.uniform(0.45, 1.0))
+        light = rng.uniform(0.7, 1.0)
+        # Blender's rows run up from the bottom: the strand hangs from the top
+        px[h - rows:, x:x + width, :3] = numpy.array(colour, dtype=numpy.float32) * light
+        px[h - rows:, x:x + width, 3] = 1.0
+        # thinning to a thread over its last third
+        tip = max(1, rows // 3)
+        px[h - rows:h - rows + tip, x + 1:x + width, 3] = 0.0
+        x += width + int(rng.integers(1, 5))
+    image = bpy.data.images.new(f"{spec['name']}_Strands", w, h, alpha=True)
+    image.pixels.foreach_set(px.ravel())
+    image.pack()
+    return image
+
+
+def shag_material(shag):
+    mat = bpy.data.materials.new(shag.get("material", "Shag"))
+    mat.use_nodes = True
+    nt = mat.node_tree
+    bsdf = nt.nodes["Principled BSDF"]
+    tex = nt.nodes.new("ShaderNodeTexImage")
+    tex.image = strands(shag.get("seed", 1), shag["color"])
+    nt.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+    # cut out, not blended: the exporter writes it as a mask
+    cut = nt.nodes.new("ShaderNodeMath")
+    cut.operation = "GREATER_THAN"
+    cut.inputs[1].default_value = 0.5
+    nt.links.new(tex.outputs["Alpha"], cut.inputs[0])
+    nt.links.new(cut.outputs[0], bsdf.inputs["Alpha"])
+    bsdf.inputs["Roughness"].default_value = 0.9
+    mat.use_backface_culling = False
+    return mat
+
+
+shag = spec.get("shag")
+if shag:
+    rng = random.Random(shag.get("seed", 1))
+    me = target.data
+    mw_t = target.matrix_world
+    inv_t = mw_t.inverted()
+    on = {i for i, m in enumerate(me.materials) if m and m.name in shag["on"]}
+    skips = [(Vector(b[:3]), Vector(b[3:])) for b in shag.get("skip", [])]
+
+    def kept(p):
+        return p.z >= shag.get("above", lo.z) and not any(
+            a.x <= p.x <= b.x and a.y <= p.y <= b.y and a.z <= p.z <= b.z for a, b in skips)
+
+    faces = []
+    for poly in me.polygons:
+        c = mw_t @ poly.center
+        if poly.material_index in on and kept(c):
+            faces.append((poly, c))
+    total = sum(poly.area for poly, _ in faces)
+    me.materials.append(shag_material(shag))
+    slot = len(me.materials) - 1
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bm.verts.ensure_lookup_table()
+    uv_layer = bm.loops.layers.uv.active or bm.loops.layers.uv.new()
+    down = Vector((0, 0, -1))
+    roots = []
+    for _ in range(shag["count"]):
+        # a face by its area, a point on it
+        pick = rng.uniform(0, total)
+        for poly, c in faces:
+            pick -= poly.area
+            if pick <= 0:
+                break
+        corner = me.vertices[poly.vertices[rng.randrange(len(poly.vertices))]]
+        p = c.lerp(mw_t @ corner.co, rng.uniform(0.0, 0.7))
+        n = (mw_t.to_3x3() @ poly.normal).normalized()
+        side = 1.0 if p.x > 0.02 else (-1.0 if p.x < -0.02 else rng.choice((-1.0, 1.0)))
+        # out from the body and over its sides, then hanging
+        out = (Vector((side, 0, 0)) * 0.7 + n * 0.3).normalized()
+        # never down through the floor
+        length = min(rng.uniform(*shag["length"]), (p.z - lo.z) * 1.05)
+        width = rng.uniform(*shag["width"])
+        spine = [p - n * 0.02 * length]
+        for k, (o, d) in enumerate(((0.55, 0.5), (0.2, 1.0), (0.05, 1.0))):
+            spine.append(spine[-1] + (out * o + down * d).normalized() * length / 3)
+        across = out.cross(down)
+        if across.length < 1e-4:
+            across = Vector((0, 1, 0))
+        across = across.normalized()
+        # a little turned, each its own way
+        across = (across + n * rng.uniform(-0.4, 0.4)).normalized()
+        u0 = rng.uniform(0.0, 0.7)
+        ring = []
+        for k, q in enumerate(spine):
+            half = width * (1.0 - 0.35 * k / 3) / 2
+            ring.append((bm.verts.new(inv_t @ (q - across * half)), bm.verts.new(inv_t @ (q + across * half))))
+        for k in range(3):
+            (a, b), (c2, d2) = ring[k], ring[k + 1]
+            f = bm.faces.new((a, b, d2, c2))
+            f.material_index = slot
+            f.smooth = True
+            v_top, v_low = 1.0 - k / 3, 1.0 - (k + 1) / 3
+            for loop, uv in zip(f.loops, ((u0, v_top), (u0 + 0.3, v_top), (u0 + 0.3, v_low), (u0, v_low))):
+                loop[uv_layer].uv = uv
+        # the body's corner nearest its root, whose weights it takes
+        near = min(poly.vertices, key=lambda i: (mw_t @ me.vertices[i].co - p).length)
+        roots.append((near, len(ring) * 2))
+    bm.to_mesh(me)
+    bm.free()
+    # the cards' corners were added last, in order
+    first = len(me.vertices) - sum(count for _, count in roots)
+    for near, count in roots:
+        weights = [(target.vertex_groups[g.group].name, g.weight) for g in me.vertices[near].groups]
+        idx = list(range(first, first + count))
+        for name, wgt in weights:
+            group(name).add(idx, wgt, "REPLACE")
+        first += count
+    print(f"{spec['name']}: {shag['count']} cards of hair")
 
 
 def seg_dist(p, a, b):
