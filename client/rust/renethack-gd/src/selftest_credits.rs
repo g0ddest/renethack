@@ -1,13 +1,13 @@
 //! The credits and licences: `credits` opens them from the title's button
 //! on the game's own credit, then goes down the list with ↓, each document
 //! drawn with what it must show (the art's CC-BY models and their authors,
-//! the sounds', the NGPL as the engine ships it, Godot's licence and the
-//! code it includes, the Rust crates linked, the fonts' licence...), and
-//! none showing the repository's tools or recipes (`tools/`, `.json`); PgDn
-//! scrolls a long one and Esc goes back to the title. From the settings
-//! their button opens the page and Back returns to the settings, where
-//! they were; the d-pad goes through the list, its hints show, and B goes
-//! back. Every screen fits the canvas.
+//! the sounds', the NGPL and Lua's notice as the engine ships them,
+//! Godot's licence and the code it includes, the Rust crates linked, the
+//! fonts' licence...), and none showing the repository's tools or recipes
+//! (`tools/`, `.json`); PgDn scrolls a long one and Esc goes back to the
+//! title. From the settings their button opens the page and Back returns
+//! to the settings, where they were; the d-pad goes through the list, its
+//! hints show, and B goes back. Every screen fits the canvas.
 
 use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -93,6 +93,14 @@ fn checked(g: &RenethackGame) -> Result<bool, String> {
     // the repository's workings stay in the files
     if let Some(inner) = ["tools/", ".json"].iter().find(|w| text.contains(**w)) {
         return Err(format!("{doc:?} shows \"{inner}\""));
+    }
+    // Lua's notice as the engine ships it, once it does
+    let lua = g.paths.as_ref().map(|p| p.data().join("lua-license"));
+    if doc == Doc::EngineParts
+        && lua.is_some_and(|f| f.is_file())
+        && !text.contains("Permission is hereby granted")
+    {
+        return Err("the engine ships Lua's notice, the page shows another".into());
     }
     AT.store(at + 1, Ordering::Relaxed);
     Ok(true)
