@@ -1,11 +1,11 @@
 {
-  "comment": "The sounds tools/fetch_audio.py fetches: files and archives (zip, 7z, rar) at fixed URLs or itch.io uploads; the files picked from under `root` by pattern are prepared by their kind (targets: loudness in LUFS, true-peak ceiling in dBTP, channels, format, Vorbis quality) and written to <dest>, cc0/ or ccby/ by licence. sfx: trimmed mono WAV; loop, music, jingle: stereo Ogg; mono: an Ogg as mono WAV (Kenney's placeholders); keep: as it is. Optional per item: cut [start, end] s, max s (a long ring cut short), limit dB (a limiter may take that much off the peaks), split (takes cut at silences), seam s (a loop's crossfade), gain dB, rename; each a value or a map by file. mixes: ambience beds made of layers (sources by id). credit: what CREDITS.md says. audio.lock.json records each download's sha256.",
+  "comment": "The sounds tools/fetch_audio.py fetches: files and archives (zip, 7z, rar) at fixed URLs or itch.io uploads; the files picked from under `root` by pattern are prepared by their kind (targets: loudness in LUFS, true-peak ceiling in dBTP, channels, format, Vorbis quality) and written to <dest>, cc0/ or ccby/ by licence. sfx: trimmed mono WAV; loop, music, jingle: stereo Ogg; mono: an Ogg as mono WAV (Kenney's placeholders); keep: as it is. Optional per item: cut [start, end] s, max s (a long ring cut short), limit dB (a limiter may take that much off the peaks), split (takes cut at silences), seam s (a loop's crossfade), declick ms (a loop's ends faded, its length kept), gain dB, rename; each a value or a map by file. mixes: ambience beds made of layers (sources by id). credit: what CREDITS.md says. audio.lock.json records each download's sha256.",
   "roots": ["cc0", "ccby"],
   "targets": {
     "sfx": {"lufs": -18, "ceiling": -1, "channels": 1, "format": "wav"},
     "jingle": {"lufs": -18, "ceiling": -1, "channels": 2, "format": "ogg", "quality": 0.5},
     "loop": {"lufs": -23, "ceiling": -2, "channels": 2, "format": "ogg", "quality": 0.35},
-    "music": {"lufs": -23, "ceiling": -1, "channels": 2, "format": "ogg", "quality": 0.45}
+    "music": {"lufs": -23, "ceiling": -1, "channels": 2, "format": "ogg", "quality": 0.4}
   },
   "sources": [
     {
@@ -21,7 +21,8 @@
         "author": "Kenney",
         "license": "CC0",
         "page": "https://kenney.nl/assets/impact-sounds"
-      }
+      },
+      "id": "kenney-impact"
     },
     {
       "url": "https://kenney.nl/media/pages/assets/rpg-audio/8e99002d76-1677590336/kenney_rpg-audio.zip",
@@ -565,7 +566,8 @@
         "author": "Leonardo Calvo (thesoundrack)",
         "license": "CC BY 4.0",
         "page": "https://thesoundrack.itch.io/monster-roar-sound-pack"
-      }
+      },
+      "id": "calvo-roars"
     },
     {
       "url": "https://www.patreon.com/file?h=102519630&m=297994373",
@@ -938,7 +940,8 @@
         "author": "Nenad Simic",
         "license": "CC0",
         "page": "https://opengameart.org/content/muffled-distant-explosion"
-      }
+      },
+      "id": "nenad"
     },
     {
       "url": "https://opengameart.org/sites/default/files/explosions.7z",
@@ -966,7 +969,8 @@
         "author": "rubberduck",
         "license": "CC0",
         "page": "https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx"
-      }
+      },
+      "id": "rocks"
     },
     {
       "url": "https://opengameart.org/sites/default/files/water-splash-slime-sfx.zip",
@@ -1095,8 +1099,619 @@
         "license": "CC0",
         "page": "https://opengameart.org/content/game-over-theme-ii"
       }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/Prologue%20Theme.zip",
+      "files": ["Prologue Theme.wav"],
+      "dest": "cc0/kauffman",
+      "kind": "music",
+      "declick": 10,
+      "rename": "prologue_theme.ogg",
+      "use": "the title",
+      "credit": {
+        "what": "Prologue Theme",
+        "author": "Cleyton Kauffman",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/prologue-theme"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/kokopellis_graveyard_theme.zip",
+      "files": ["Kokopelli's Graveyard.wav"],
+      "dest": "cc0/kauffman",
+      "kind": "music",
+      "declick": 10,
+      "rename": "kokopellis_graveyard.ogg",
+      "use": "exploring Gehennom",
+      "credit": {
+        "what": "Kokopelli's Graveyard Theme",
+        "author": "Cleyton Kauffman",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/kokopellis-graveyard-theme"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/Juhani%20Junkala%20-%20Epic%20Boss%20Battle%20%5BSeamlessly%20Looping%5D.wav",
+      "dest": "cc0/junkala",
+      "kind": "music",
+      "rename": "epic_boss_battle.ogg",
+      "use": "a fight",
+      "credit": {
+        "what": "Epic Boss Battle [Seamlessly Looping]",
+        "author": "Juhani Junkala (SubspaceAudio)",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/boss-battle-music"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/of_far_different_nature_-_loop_box_3_cc-by_-_wav_files.7z",
+      "files": ["*In Darkness [[]v2]*.wav"],
+      "dest": "ccby/ofdn",
+      "kind": "music",
+      "rename": "in_darkness.ogg",
+      "use": "exploring",
+      "credit": {
+        "what": "LOOP BOX #3: In Darkness, Obscurium",
+        "author": "Of Far Different Nature",
+        "license": "CC BY 4.0",
+        "page": "https://opengameart.org/content/essentials-pack-for-fantasy-games-loop-box-3-orchestral-soundtracks-for-rpgs-and-adventures",
+        "notice": "https://fardifferent.carrd.co"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/of_far_different_nature_-_loop_box_3_cc-by_-_wav_files.7z",
+      "files": ["*Obscurium*.wav"],
+      "dest": "ccby/ofdn",
+      "kind": "music",
+      "rename": "obscurium.ogg",
+      "use": "exploring Gehennom",
+      "credit": {
+        "what": "LOOP BOX #3: In Darkness, Obscurium",
+        "author": "Of Far Different Nature",
+        "license": "CC BY 4.0",
+        "page": "https://opengameart.org/content/essentials-pack-for-fantasy-games-loop-box-3-orchestral-soundtracks-for-rpgs-and-adventures",
+        "notice": "https://fardifferent.carrd.co"
+      }
+    },
+    {
+      "itch": {
+        "page": "https://davidkbd.itch.io/path-of-legends-rpg-orchestral-music-pack",
+        "upload": "DavidKBD - Path of Legends - Crypt of Shadows.ogg"
+      },
+      "dest": "ccby/davidkbd",
+      "kind": "music",
+      "rename": "crypt_of_shadows.ogg",
+      "use": "exploring",
+      "credit": {
+        "what": "Path of Legends: Crypt of Shadows",
+        "author": "David KBD",
+        "license": "CC BY 4.0",
+        "page": "https://davidkbd.itch.io/path-of-legends-rpg-orchestral-music-pack"
+      }
+    },
+    {
+      "itch": {
+        "page": "https://davidkbd.itch.io/path-of-legends-rpg-orchestral-music-pack",
+        "upload": "DavidKBD - Path of Legends - Well of Despair.ogg"
+      },
+      "dest": "ccby/davidkbd",
+      "kind": "music",
+      "rename": "well_of_despair.ogg",
+      "use": "exploring",
+      "credit": {
+        "what": "Path of Legends: Well of Despair",
+        "author": "David KBD",
+        "license": "CC BY 4.0",
+        "page": "https://davidkbd.itch.io/path-of-legends-rpg-orchestral-music-pack"
+      }
+    },
+    {
+      "itch": {
+        "page": "https://davidkbd.itch.io/path-of-legends-rpg-orchestral-music-pack",
+        "upload": "DavidKBD - Path of Legends - Shadowed Threat.ogg"
+      },
+      "dest": "ccby/davidkbd",
+      "kind": "music",
+      "rename": "shadowed_threat.ogg",
+      "use": "a fight",
+      "credit": {
+        "what": "Path of Legends: Shadowed Threat",
+        "author": "David KBD",
+        "license": "CC BY 4.0",
+        "page": "https://davidkbd.itch.io/path-of-legends-rpg-orchestral-music-pack"
+      }
     }
   ],
-  "layers": [],
-  "mixes": []
+  "layers": [
+    {
+      "id": "jagged-dungeon",
+      "url": "https://opengameart.org/sites/default/files/dungeon_ambient_1_0.ogg",
+      "credit": {
+        "what": "Loopable Dungeon Ambience",
+        "author": "JaggedStone",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/loopable-dungeon-ambience"
+      }
+    },
+    {
+      "id": "wortmann-cavern",
+      "url": "https://opengameart.org/sites/default/files/dark_cavern_ambient_002.ogg",
+      "credit": {
+        "what": "Dark Cavern Ambient",
+        "author": "Paul Wortmann",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/dark-cavern-ambient"
+      }
+    },
+    {
+      "id": "lrsf-fantasy",
+      "url": "https://opengameart.org/sites/default/files/Fantasy%20Sound%20Library.zip",
+      "credit": {
+        "what": "Fantasy Sound Effects Library: a cave's ambience",
+        "author": "Little Robot Sound Factory",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/fantasy-sound-effects-library",
+        "notice": "www.littlerobotsoundfactory.com"
+      }
+    },
+    {
+      "id": "cries-from-hell",
+      "url": "https://opengameart.org/sites/default/files/Jes%C3%BAs%20Lastra%20-%20Cries%20From%20Hell.zip",
+      "credit": {
+        "what": "Dark Ambiance: Cries From Hell",
+        "author": "Jesús Lastra (jalastram)",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/dark-ambiance-cries-from-hell"
+      }
+    },
+    {
+      "id": "lava-loop",
+      "url": "https://opengameart.org/sites/default/files/lavaloop.zip",
+      "credit": {
+        "what": "Lava loop (from Yo Frankie!)",
+        "author": "Lamoot, for the Blender Foundation",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/lava-loop"
+      }
+    },
+    {
+      "id": "wind-loop",
+      "url": "https://opengameart.org/sites/default/files/wind-01_0.flac",
+      "credit": {
+        "what": "Wind Loop",
+        "author": "Jordan Irwin (AntumDeluge), from a recording by InspectorJ",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/wind-loop"
+      }
+    },
+    {
+      "id": "wind-whoosh",
+      "url": "https://opengameart.org/sites/default/files/wind%20woosh%20loop.ogg",
+      "credit": {
+        "what": "wind whoosh loop",
+        "author": "SketchMan3",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/wind-whoosh-loop"
+      }
+    },
+    {
+      "id": "fireplace",
+      "url": "https://opengameart.org/sites/default/files/fire.wav",
+      "credit": {
+        "what": "Fireplace Sound loop",
+        "author": "PagDev",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/fireplace-sound-loop"
+      }
+    },
+    {
+      "id": "fire-loop",
+      "url": "https://opengameart.org/sites/default/files/qubodupFireLoop.flac",
+      "credit": {
+        "what": "Fire Loop",
+        "author": "Iwan Gabovitch (qubodup)",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/fire-loop"
+      }
+    },
+    {
+      "id": "dark-shrine",
+      "url": "https://opengameart.org/sites/default/files/qubodup-yd-DarkShrineLoop-OpenGameArt.flac",
+      "credit": {
+        "what": "Dark Shrine Loop (a remix of yd's Shrine)",
+        "author": "Iwan Gabovitch (qubodup)",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/dark-shrine-loop"
+      }
+    },
+    {
+      "id": "dripping",
+      "url": "https://opengameart.org/sites/default/files/Dripping%20Water.wav",
+      "credit": {
+        "what": "Dripping Water",
+        "author": "spookymodem",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/dripping-water"
+      }
+    },
+    {
+      "id": "drone-hollow-tension",
+      "itch": {
+        "page": "https://thesoundrack.itch.io/designed-drone-sound-pack",
+        "upload": "Hollow Tension - Designed Drone SFX Pack.rar"
+      },
+      "credit": {
+        "what": "Designed Drone SFX Pack: Hollow Tension",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/designed-drone-sound-pack"
+      }
+    },
+    {
+      "id": "drone-closed-air",
+      "itch": {
+        "page": "https://thesoundrack.itch.io/designed-drone-sound-pack",
+        "upload": "Closed Air - Designed Drone SFX Pack.rar"
+      },
+      "credit": {
+        "what": "Designed Drone SFX Pack: Closed Air",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/designed-drone-sound-pack"
+      }
+    },
+    {
+      "id": "drone-abyss",
+      "itch": {
+        "page": "https://thesoundrack.itch.io/designed-drone-sound-pack",
+        "upload": "Abyss - Designed Drone SFX Pack.rar"
+      },
+      "credit": {
+        "what": "Designed Drone SFX Pack: Abyss",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/designed-drone-sound-pack"
+      }
+    },
+    {
+      "id": "drone-ghosts",
+      "itch": {
+        "page": "https://thesoundrack.itch.io/designed-drone-sound-pack",
+        "upload": "Ghosts - Designed Drone SFX Pack.rar"
+      },
+      "credit": {
+        "what": "Designed Drone SFX Pack: Ghosts",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/designed-drone-sound-pack"
+      }
+    },
+    {
+      "id": "drone-distant-bells",
+      "itch": {
+        "page": "https://thesoundrack.itch.io/designed-drone-sound-pack",
+        "upload": "Distant Bells - Designed Drone SFX Pack.rar"
+      },
+      "credit": {
+        "what": "Designed Drone SFX Pack: Distant Bells",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/designed-drone-sound-pack"
+      }
+    },
+    {
+      "id": "drone-deep-whispers",
+      "itch": {
+        "page": "https://thesoundrack.itch.io/designed-drone-sound-pack",
+        "upload": "Deep Whispers - Designed Drone SFX Pack.rar"
+      },
+      "credit": {
+        "what": "Designed Drone SFX Pack: Deep Whispers",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/designed-drone-sound-pack"
+      }
+    },
+    {
+      "id": "drone-aqua",
+      "itch": {
+        "page": "https://thesoundrack.itch.io/designed-drone-sound-pack",
+        "upload": "Aqua - Designed Drone SFX Pack.rar"
+      },
+      "credit": {
+        "what": "Designed Drone SFX Pack: Aqua",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/designed-drone-sound-pack"
+      }
+    },
+    {
+      "id": "drone-crystal",
+      "itch": {
+        "page": "https://thesoundrack.itch.io/designed-drone-sound-pack",
+        "upload": "Crystal - Designed Drone SFX Pack.rar"
+      },
+      "credit": {
+        "what": "Designed Drone SFX Pack: Crystal",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/designed-drone-sound-pack"
+      }
+    },
+    {
+      "id": "drone-cloudy-sings",
+      "itch": {
+        "page": "https://thesoundrack.itch.io/designed-drone-sound-pack",
+        "upload": "Cloudy Sings - Designed Drone SFX Pack.rar"
+      },
+      "credit": {
+        "what": "Designed Drone SFX Pack: Cloudy Sings",
+        "author": "Leonardo Calvo (thesoundrack)",
+        "license": "CC BY 4.0",
+        "page": "https://thesoundrack.itch.io/designed-drone-sound-pack"
+      }
+    },
+    {
+      "id": "erxer-water",
+      "url": "https://opengameart.org/sites/default/files/water_0.ogg",
+      "credit": {
+        "what": "Water flowing sound",
+        "author": "erxer1",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/water-flowing-sound"
+      }
+    }
+  ],
+  "mixes": [
+    {
+      "out": "ccby/mix/amb_main.ogg",
+      "what": "The Dungeons of Doom: stone, wind and drips over a low drone",
+      "seconds": 90,
+      "layers": [
+        {"source": "jagged-dungeon", "file": "dungeon_ambient_1_0.ogg"},
+        {
+          "source": "drone-hollow-tension",
+          "file": "Hollow Tension - Designed Drone SFX Pack/Designed Drone - Hollow Tension - 48kHz.wav",
+          "gain": -15
+        },
+        {
+          "source": "dripping",
+          "file": "Dripping Water.wav",
+          "every": [7, 16],
+          "gain": -14,
+          "spread": [-8, 0],
+          "pan": 0.8
+        },
+        {
+          "source": "nenad",
+          "file": "NenadSimic - Muffled Distant Explosion.wav",
+          "every": [35, 60],
+          "gain": -26,
+          "spread": [-4, 0]
+        }
+      ],
+      "made_from": "Loopable Dungeon Ambience (JaggedStone, CC0); Designed Drone SFX Pack: Hollow Tension (Leonardo Calvo (thesoundrack), CC BY 4.0); Dripping Water (spookymodem, CC BY 3.0); Muffled Distant Explosion (Nenad Simic, CC0)"
+    },
+    {
+      "out": "ccby/mix/amb_mines.ogg",
+      "what": "The Gnomish Mines: a cavern, far-off picks and drips",
+      "seconds": 90,
+      "layers": [
+        {"source": "wortmann-cavern", "file": "dark_cavern_ambient_002.ogg"},
+        {
+          "source": "lrsf-fantasy",
+          "file": "Fantasy Sound Library/Wav/Ambience_Cave_00.wav",
+          "gain": -5,
+          "seam": 2
+        },
+        {
+          "source": "kenney-impact",
+          "file": ["Audio/impactMining_000.ogg", "Audio/impactMining_001.ogg", "Audio/impactMining_002.ogg", "Audio/impactMining_003.ogg", "Audio/impactMining_004.ogg"],
+          "every": [5, 13],
+          "gain": -24,
+          "spread": [-8, 0],
+          "pan": 0.9
+        },
+        {
+          "source": "dripping",
+          "file": "Dripping Water.wav",
+          "every": [9, 18],
+          "gain": -16,
+          "spread": [-6, 0],
+          "pan": 0.8
+        }
+      ],
+      "made_from": "Dark Cavern Ambient (Paul Wortmann, CC0); Fantasy Sound Effects Library: a cave's ambience (Little Robot Sound Factory, CC BY 3.0); Impact Sounds: impacts of flesh, wood and stone, a bell (Kenney, CC0); Dripping Water (spookymodem, CC BY 3.0)"
+    },
+    {
+      "out": "ccby/mix/amb_sokoban.ogg",
+      "what": "Sokoban: still air in closed stone, a boulder rolling far off",
+      "seconds": 75,
+      "layers": [
+        {
+          "source": "drone-closed-air",
+          "file": "Closed Air - Designed Drone SFX Pack/Designed Drone - Closed Air - 48kHz.wav"
+        },
+        {"source": "jagged-dungeon", "file": "dungeon_ambient_1_0.ogg", "gain": -10},
+        {
+          "source": "rocks",
+          "file": ["bfh1_rock_falling_01.ogg", "bfh1_rock_falling_02.ogg", "bfh1_rock_falling_03.ogg", "bfh1_rock_falling_04.ogg", "bfh1_rock_falling_05.ogg", "bfh1_rock_falling_06.ogg"],
+          "every": [25, 45],
+          "gain": -26,
+          "spread": [-4, 0],
+          "pan": 0.7
+        }
+      ],
+      "made_from": "Designed Drone SFX Pack: Closed Air (Leonardo Calvo (thesoundrack), CC BY 4.0); Loopable Dungeon Ambience (JaggedStone, CC0); 75 CC0 breaking / falling / hit sfx: falling rocks (rubberduck, CC0)"
+    },
+    {
+      "out": "ccby/mix/amb_gehennom.ogg",
+      "what": "Gehennom: cries from below, lava, far-off roars",
+      "seconds": 90,
+      "layers": [
+        {"source": "cries-from-hell", "file": "Jesús Lastra - Cries From Hell.mp3"},
+        {
+          "source": "drone-abyss",
+          "file": "Abyss - Designed Drone SFX Pack/Designed Drone - Abyss - 48kHz.wav",
+          "gain": -6
+        },
+        {"source": "lava-loop", "file": "LavaLoop.wav", "gain": -9, "seam": 1},
+        {
+          "source": "calvo-roars",
+          "file": ["Monster Roar/Demon Roar 01.wav", "Monster Roar/Demon Roar 02.wav", "Monster Roar/Demon Roar 06.wav", "Monster Roar/Demon Roar 13.wav", "Monster Roar/Demon Roar 16.wav"],
+          "every": [25, 45],
+          "gain": -28,
+          "spread": [-6, 0],
+          "pan": 0.9
+        }
+      ],
+      "made_from": "Dark Ambiance: Cries From Hell (Jesús Lastra (jalastram), CC BY 3.0); Designed Drone SFX Pack: Abyss (Leonardo Calvo (thesoundrack), CC BY 4.0); Lava loop (from Yo Frankie!) (Lamoot, for the Blender Foundation, CC BY 3.0); Monster Roar Sound Pack: a demon's, a beast's and a dragon's roars (Leonardo Calvo (thesoundrack), CC BY 4.0)"
+    },
+    {
+      "out": "ccby/mix/amb_vlad.ogg",
+      "what": "Vlad's Tower: a ghostly drone and wind",
+      "seconds": 75,
+      "layers": [
+        {
+          "source": "drone-ghosts",
+          "file": "Ghosts - Designed Drone SFX Pack/Designed Drone - Ghosts - 48kHz.wav"
+        },
+        {"source": "wind-loop", "file": "wind-01_0.flac", "gain": -11},
+        {
+          "source": "dripping",
+          "file": "Dripping Water.wav",
+          "every": [12, 22],
+          "gain": -20,
+          "pan": 0.8
+        }
+      ],
+      "made_from": "Designed Drone SFX Pack: Ghosts (Leonardo Calvo (thesoundrack), CC BY 4.0); Wind Loop (Jordan Irwin (AntumDeluge), from a recording by InspectorJ, CC BY 3.0); Dripping Water (spookymodem, CC BY 3.0)"
+    },
+    {
+      "out": "ccby/mix/amb_quest.ogg",
+      "what": "The Quest: distant bells in a wide hall",
+      "seconds": 75,
+      "layers": [
+        {
+          "source": "drone-distant-bells",
+          "file": "Distant Bells - Designed Drone SFX Pack/Designed Drone - Distant Bells - 48kHz.wav"
+        },
+        {"source": "wind-loop", "file": "wind-01_0.flac", "gain": -14}
+      ],
+      "made_from": "Designed Drone SFX Pack: Distant Bells (Leonardo Calvo (thesoundrack), CC BY 4.0); Wind Loop (Jordan Irwin (AntumDeluge), from a recording by InspectorJ, CC BY 3.0)"
+    },
+    {
+      "out": "ccby/mix/amb_ludios.ogg",
+      "what": "Fort Ludios: cold stone and a glassy drone",
+      "seconds": 75,
+      "layers": [
+        {"source": "jagged-dungeon", "file": "dungeon_ambient_1_0.ogg"},
+        {
+          "source": "drone-crystal",
+          "file": "Crystal - Designed Drone SFX Pack/Designed Drone - Crystal - 48kHz.wav",
+          "gain": -10
+        }
+      ],
+      "made_from": "Loopable Dungeon Ambience (JaggedStone, CC0); Designed Drone SFX Pack: Crystal (Leonardo Calvo (thesoundrack), CC BY 4.0)"
+    },
+    {
+      "out": "ccby/mix/amb_earth.ogg",
+      "what": "The Plane of Earth: deep whispers, falling stone",
+      "seconds": 75,
+      "layers": [
+        {
+          "source": "drone-deep-whispers",
+          "file": "Deep Whispers - Designed Drone SFX Pack/Designed Drone - Deep Whispers - 48kHz.wav"
+        },
+        {"source": "jagged-dungeon", "file": "dungeon_ambient_1_0.ogg", "gain": -9},
+        {
+          "source": "rocks",
+          "file": ["bfh1_rock_falling_01.ogg", "bfh1_rock_falling_02.ogg", "bfh1_rock_falling_03.ogg", "bfh1_rock_falling_04.ogg", "bfh1_rock_falling_05.ogg", "bfh1_rock_falling_06.ogg"],
+          "every": [10, 22],
+          "gain": -18,
+          "spread": [-6, 0],
+          "pan": 0.8
+        }
+      ],
+      "made_from": "Designed Drone SFX Pack: Deep Whispers (Leonardo Calvo (thesoundrack), CC BY 4.0); Loopable Dungeon Ambience (JaggedStone, CC0); 75 CC0 breaking / falling / hit sfx: falling rocks (rubberduck, CC0)"
+    },
+    {
+      "out": "ccby/mix/amb_air.ogg",
+      "what": "The Plane of Air: winds",
+      "seconds": 75,
+      "layers": [
+        {"source": "wind-loop", "file": "wind-01_0.flac"},
+        {"source": "wind-whoosh", "file": "wind woosh loop.ogg", "gain": -7},
+        {
+          "source": "drone-crystal",
+          "file": "Crystal - Designed Drone SFX Pack/Designed Drone - Crystal - 48kHz.wav",
+          "gain": -14
+        }
+      ],
+      "made_from": "Wind Loop (Jordan Irwin (AntumDeluge), from a recording by InspectorJ, CC BY 3.0); wind whoosh loop (SketchMan3, CC0); Designed Drone SFX Pack: Crystal (Leonardo Calvo (thesoundrack), CC BY 4.0)"
+    },
+    {
+      "out": "ccby/mix/amb_fire.ogg",
+      "what": "The Plane of Fire: flames and lava",
+      "seconds": 75,
+      "layers": [
+        {"source": "fireplace", "file": "fire.wav", "seam": 1.5},
+        {"source": "fire-loop", "file": "qubodupFireLoop.flac", "gain": -4},
+        {"source": "lava-loop", "file": "LavaLoop.wav", "gain": -3, "seam": 1},
+        {
+          "source": "drone-abyss",
+          "file": "Abyss - Designed Drone SFX Pack/Designed Drone - Abyss - 48kHz.wav",
+          "gain": -12
+        }
+      ],
+      "made_from": "Fireplace Sound loop (PagDev, CC0); Fire Loop (Iwan Gabovitch (qubodup), CC BY 3.0); Lava loop (from Yo Frankie!) (Lamoot, for the Blender Foundation, CC BY 3.0); Designed Drone SFX Pack: Abyss (Leonardo Calvo (thesoundrack), CC BY 4.0)"
+    },
+    {
+      "out": "ccby/mix/amb_water.ogg",
+      "what": "The Plane of Water: flowing water, a watery drone",
+      "seconds": 75,
+      "layers": [
+        {"source": "erxer-water", "file": "water_0.ogg", "cut": [3, 59], "seam": 2},
+        {
+          "source": "drone-aqua",
+          "file": "Aqua - Designed Drone SFX Pack/Designed Drone - Aqua - 48kHz.wav",
+          "gain": -6
+        }
+      ],
+      "made_from": "Water flowing sound (erxer1, CC BY 3.0); Designed Drone SFX Pack: Aqua (Leonardo Calvo (thesoundrack), CC BY 4.0)"
+    },
+    {
+      "out": "ccby/mix/amb_astral.ogg",
+      "what": "The Astral Plane: singing clouds, far bells, a shrine",
+      "seconds": 75,
+      "layers": [
+        {
+          "source": "drone-cloudy-sings",
+          "file": "Cloudy Sings - Designed Drone SFX Pack/Designed Drone - Cloudy Sings - 48kHz.wav"
+        },
+        {
+          "source": "drone-distant-bells",
+          "file": "Distant Bells - Designed Drone SFX Pack/Designed Drone - Distant Bells - 48kHz.wav",
+          "gain": -8
+        },
+        {
+          "source": "dark-shrine",
+          "file": "qubodup-yd-DarkShrineLoop-OpenGameArt.flac",
+          "gain": -14
+        }
+      ],
+      "made_from": "Designed Drone SFX Pack: Cloudy Sings (Leonardo Calvo (thesoundrack), CC BY 4.0); Designed Drone SFX Pack: Distant Bells (Leonardo Calvo (thesoundrack), CC BY 4.0); Dark Shrine Loop (a remix of yd's Shrine) (Iwan Gabovitch (qubodup), CC0)"
+    },
+    {
+      "out": "ccby/mix/amb_title.ogg",
+      "what": "The title: fires crackling in a dark hall",
+      "seconds": 75,
+      "layers": [
+        {"source": "fireplace", "file": "fire.wav", "seam": 1.5},
+        {"source": "fire-loop", "file": "qubodupFireLoop.flac", "gain": -6},
+        {"source": "jagged-dungeon", "file": "dungeon_ambient_1_0.ogg", "gain": -16}
+      ],
+      "made_from": "Fireplace Sound loop (PagDev, CC0); Fire Loop (Iwan Gabovitch (qubodup), CC BY 3.0); Loopable Dungeon Ambience (JaggedStone, CC0)"
+    }
+  ]
 }

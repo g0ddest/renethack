@@ -403,7 +403,14 @@ def ogg_bytes(samples, channels, quality, name):
         q = ctypes.c_double(quality)
         lib.sf_command(h, 0x1300, ctypes.byref(q), ctypes.sizeof(q))  # VBR quality
         buf = (ctypes.c_float * len(samples)).from_buffer(samples)
-        lib.sf_writef_float(h, buf, len(samples) // channels)
+        # in blocks: libvorbis is handed one buffer per call, and a minute
+        # or more of samples in one call crashes it
+        frames, step = len(samples) // channels, 1 << 16
+        for at in range(0, frames, step):
+            n = min(step, frames - at)
+            ptr = ctypes.cast(ctypes.addressof(buf) + 4 * at * channels,
+                              ctypes.POINTER(ctypes.c_float))
+            lib.sf_writef_float(h, ptr, n)
         lib.sf_close(h)
         with open(path, "rb") as f:
             data = bytearray(f.read())
@@ -541,6 +548,11 @@ def prepare(recipe, item, rel, data, name):
             p = loop_seam(p, ch, seam)
         if item["kind"] == "music" and item.get("fade"):
             fade(p, ch, 0.0, item["fade"])
+        declick = per_file(item.get("declick"), rel, 0)
+        if declick:
+            # a loop whose last sample is far from its first: a few
+            # milliseconds faded at both ends, the length kept
+            fade(p, ch, declick / 1000, declick / 1000)
         out = base if len(parts) == 1 else f"{os.path.splitext(base)[0]}_{i + 1:02d}{ext}"
         outs.append((out, p, rel))
     return outs
@@ -607,13 +619,15 @@ def level_group(recipe, item, takes):
 
 
 # the prepared files of an item are kept by the hash of what made them
-# (the item, its download, the kind's target and this script), so that a
-# run redoes only what changed
-TOOL = sha256(open(os.path.abspath(__file__), "rb").read())
+# (the item, its download, the kind's target and the preparation), so that
+# a run redoes only what changed. PREPARATION names how files are made:
+# give it a new value whenever a change here alters what an item prepares
+# (an option no item uses yet, or a message, need not).
+PREPARATION = "2026-10-13: Vorbis written in blocks"
 
 
 def prepared(recipe, item, key):
-    made = json.dumps([item, SOURCES[key], recipe["targets"].get(item["kind"]), TOOL],
+    made = json.dumps([item, SOURCES[key], recipe["targets"].get(item["kind"]), PREPARATION],
                       sort_keys=True)
     return os.path.join(CACHE, "prepared", sha256(made.encode()))
 
@@ -678,19 +692,18 @@ def license_files(item, files):
     return out
 
 
-def layer_samples(op, recipe, layer):
-    """A mix's layer: a file of a source the recipe lists (by its id), as
-    stereo samples, cut as the layer asks."""
+def layer_samples(op, recipe, layer, name):
+    """A file of a mix's layer, from a source the recipe lists (by its id),
+    as stereo samples, cut and looped as the layer asks."""
     src = next((s for s in recipe["sources"] + recipe.get("layers", [])
                 if s.get("id") == layer["source"]), None)
     if src is None:
         raise SystemExit(f"no source with id {layer['source']!r}")
     blob, key = download(op, src)
     files = members(blob, key)
-    name = f"{key}:{layer['file']}"
-    if layer["file"] not in files:
-        raise SystemExit(f"{name}: not there")
-    s = decode(files[layer["file"]], 2, name)
+    if name not in files:
+        raise SystemExit(f"{key}:{name}: not there")
+    s = decode(files[name], 2, f"{key}:{name}")
     if "cut" in layer:
         s = cut(s, 2, *layer["cut"])
     if layer.get("seam"):
@@ -706,28 +719,45 @@ def add_at(out, s, at, lg, rg):
 
 
 def do_mix(op, w, recipe, mix):
-    """An ambience bed: layers summed, the seam crossfaded, levelled."""
+    """An ambience bed: layers summed, the seam crossfaded, levelled. A bed
+    layer goes round from a point drawn from the seed; an event layer
+    ("every": [min, max] seconds apart) plays one of its files at a time,
+    louder or softer and panned at random (the seed again)."""
     t = recipe["targets"][mix.get("kind", "loop")]
+    srcs = [next((s for s in recipe["sources"] + recipe.get("layers", [])
+                  if s.get("id") == l["source"]), {}) for l in mix["layers"]]
+    keys = [download(op, s)[1] for s in srcs]
+    done = os.path.join(CACHE, "prepared", sha256(json.dumps(
+        [mix, [SOURCES[k] for k in keys], t, PREPARATION], sort_keys=True).encode()))
+    if os.path.isfile(done + ".ogg"):
+        with open(done + ".ogg", "rb") as f:
+            w.put(mix["out"], f.read())
+        REPORT[mix["out"]] = json.load(open(done + ".json"))
+        return
     seam = mix.get("seam", 4.0)
     frames = int((mix["seconds"] + seam) * RATE)
     out = array.array("f", bytes(4 * 2 * frames))
     rng = random.Random(mix["out"])
     for layer in mix["layers"]:
-        s = layer_samples(op, recipe, layer)
+        names = layer["file"] if isinstance(layer["file"], list) else [layer["file"]]
+        takes = [layer_samples(op, recipe, layer, n) for n in names]
         g = 10 ** (layer.get("gain", 0.0) / 20)
-        n = len(s) // 2
         if "every" in layer:
-            # events, one at a time, at gaps drawn from the range
             lo, hi = layer["every"]
             spread, width = layer.get("spread", [-6.0, 0.0]), layer.get("pan", 0.6)
             at = int(rng.uniform(0, hi) * RATE)
-            while at + n < frames:
+            while True:
+                s = rng.choice(takes)
+                n = len(s) // 2
+                if at + n >= frames:
+                    break
                 gg = g * 10 ** (rng.uniform(*spread) / 20) * math.sqrt(2)
                 pan = (rng.uniform(-width, width) + 1) * math.pi / 4
                 add_at(out, s, at, gg * math.cos(pan), gg * math.sin(pan))
                 at += n + int(rng.uniform(lo, hi) * RATE)
         else:
-            # a bed, looped from a point drawn from the seed
+            s = takes[0]
+            n = len(s) // 2
             pos = rng.randrange(n)
             looped = (s[2 * pos:] + s * (frames // n + 1))[:2 * frames]
             add_at(out, looped, 0, g, g)
@@ -735,7 +765,13 @@ def do_mix(op, w, recipe, mix):
     out, stats = level(out, 2, t["lufs"], t["ceiling"], mix["out"], mix.get("gain", 0.0))
     stats["seconds"] = round(len(out) / 2 / RATE, 2)
     REPORT[mix["out"]] = {"from": "mix", **stats}
-    w.put(mix["out"], ogg_bytes(out, 2, t["quality"], mix["out"]))
+    data = ogg_bytes(out, 2, t["quality"], mix["out"])
+    os.makedirs(os.path.dirname(done), exist_ok=True)
+    with open(done + ".ogg", "wb") as f:
+        f.write(data)
+    with open(done + ".json", "w") as f:
+        json.dump(REPORT[mix["out"]], f)
+    w.put(mix["out"], data)
 
 
 # ---- credits ----------------------------------------------------------------

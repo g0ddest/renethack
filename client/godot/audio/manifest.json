@@ -142,7 +142,25 @@
     "distant.beast": {"files": ["cc0/qubodup/dog/dog-growl.wav", "cc0/qubodup/dog/dog-snarl.wav", "ccby/makoto/creatures/CREAHmn_Low_Growl_MHCS04.wav", "ccby/makoto/creatures/CREAHmn_Low_Growl_MHCS05.wav"], "bus": "Distant", "volume": -10},
 
     "prayer.good": {"files": ["ccby/qubodup/wisdom/qubodup-WisdomMagic1.ogg", "ccby/qubodup/wisdom/qubodup-WisdomMagic4.ogg", "ccby/qubodup/wisdom/qubodup-WisdomMagic6.ogg"], "bus": "Music", "volume": -8},
-    "prayer.bad": {"files": ["cc0/nenadsimic/NenadSimic_-_Muffled_Distant_Explosion.wav"], "bus": "Music", "volume": -4, "pitch": [0.8, 0.9]}
+    "prayer.bad": {"files": ["cc0/nenadsimic/NenadSimic_-_Muffled_Distant_Explosion.wav"], "bus": "Music", "volume": -4, "pitch": [0.8, 0.9]},
+    "amb": {"files": ["ccby/mix/amb_main.ogg"], "bus": "Ambience", "volume": -2, "loop": true},
+    "amb.title": {"files": ["ccby/mix/amb_title.ogg"], "bus": "Ambience", "volume": -2, "loop": true},
+    "amb.main": {"files": ["ccby/mix/amb_main.ogg"], "bus": "Ambience", "volume": -2, "loop": true},
+    "amb.mines": {"files": ["ccby/mix/amb_mines.ogg"], "bus": "Ambience", "volume": -2, "loop": true},
+    "amb.sokoban": {"files": ["ccby/mix/amb_sokoban.ogg"], "bus": "Ambience", "volume": -2, "loop": true},
+    "amb.quest": {"files": ["ccby/mix/amb_quest.ogg"], "bus": "Ambience", "volume": -2, "loop": true},
+    "amb.ludios": {"files": ["ccby/mix/amb_ludios.ogg"], "bus": "Ambience", "volume": -2, "loop": true},
+    "amb.gehennom": {"files": ["ccby/mix/amb_gehennom.ogg"], "bus": "Ambience", "volume": -2, "loop": true},
+    "amb.vlad": {"files": ["ccby/mix/amb_vlad.ogg"], "bus": "Ambience", "volume": -2, "loop": true},
+    "amb.earth": {"files": ["ccby/mix/amb_earth.ogg"], "bus": "Ambience", "volume": -2, "loop": true},
+    "amb.air": {"files": ["ccby/mix/amb_air.ogg"], "bus": "Ambience", "volume": -2, "loop": true},
+    "amb.fire": {"files": ["ccby/mix/amb_fire.ogg"], "bus": "Ambience", "volume": -2, "loop": true},
+    "amb.water": {"files": ["ccby/mix/amb_water.ogg"], "bus": "Ambience", "volume": -2, "loop": true},
+    "amb.astral": {"files": ["ccby/mix/amb_astral.ogg"], "bus": "Ambience", "volume": -2, "loop": true},
+    "music.title": {"files": ["cc0/kauffman/prologue_theme.ogg"], "bus": "Music", "volume": -2, "loop": true},
+    "music.explore": {"files": ["ccby/ofdn/in_darkness.ogg", "ccby/davidkbd/crypt_of_shadows.ogg", "ccby/davidkbd/well_of_despair.ogg"], "bus": "Music", "volume": -2, "loop": true},
+    "music.explore.gehennom": {"files": ["cc0/kauffman/kokopellis_graveyard.ogg", "ccby/ofdn/obscurium.ogg"], "bus": "Music", "volume": -2, "loop": true},
+    "music.combat": {"files": ["cc0/junkala/epic_boss_battle.ogg", "ccby/davidkbd/shadowed_threat.ogg"], "bus": "Music", "volume": -2, "loop": true}
   },
   "messages": [
     {"starts": "There is ", "ends": " here.", "cue": []},
