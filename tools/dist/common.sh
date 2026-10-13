@@ -157,15 +157,17 @@ legal_folder() {
     for d in "$ROOT"/client/godot/fonts/*/; do
         cp "$d/OFL.txt" "$out/fonts/$(basename "$d")-OFL.txt"
     done
-    cp "$DIST/build/source/Lua-LICENSE.txt" "$DIST/build/source/engine-source.tar.gz" "$out/"
+    # Lua's notice as the engine build installs it beside the package's engine
+    cp "$out/../engine/data/lua-license" "$out/Lua-LICENSE.txt"
+    cp "$DIST/build/source/engine-source.tar.gz" "$out/"
     cp "$DIST/build/source/Godot-LICENSE.txt" "$DIST/build/source/Godot-COPYRIGHT.txt" "$out/"
     python3 "$TOOLS/rust_licenses.py" --manifest-path "$ROOT/client/rust/Cargo.toml" \
         ${2:+--target "$2"} ${STEAM:+--features steam} > "$out/THIRD-PARTY-rust.txt"
 }
 
 # The source of the engine binaries (NGPL 3(a): the source accompanies
-# them) and Lua's notice, once per version; Godot's notices, once per Godot;
-# shared by the platforms. $1: the Lua source the engine build fetched.
+# them), once per version; Godot's notices, once per Godot; shared by the
+# platforms. $1: the Lua source the engine build fetched.
 legal_sources() {
     lua=$1
     src=$DIST/build/source
@@ -185,8 +187,6 @@ legal_sources() {
         cp "$TOOLS/legal/SOURCE.txt" "$src/$name/README.txt"
         pack_tgz "$src" "$name" "$src/engine-source.tar.gz"
         rm -rf "${src:?}/$name"
-        sed -n '/^\* Copyright (C) 1994/,/^\*\*\*\*/p' "$lua/src/lua.h" \
-            | sed -e 's/^\* \{0,1\}//' -e '/^\*\*\*/d' > "$src/Lua-LICENSE.txt"
         printf '%s\n' "$VERSION" > "$stamp"
     fi
     gv=$("$GODOT" --version 2>/dev/null | head -1)

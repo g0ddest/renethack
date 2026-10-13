@@ -79,11 +79,16 @@ $(BUILD)/nh-engine: $(TREE)/.built $(HOST_SRC)
 $(BUILD)/recover: $(TREE)/.built
 	cp $(TREE)/util/recover $@
 
-$(BUILD)/data/.stamp: $(TREE)/.built runtime/sysconf
+# data/lua-license: Lua's notice, cut from lua.h (nh-engine links Lua); the
+# game's credits and the packages' legal/ show it
+$(BUILD)/data/.stamp: $(TREE)/.built runtime/sysconf Makefile
 	rm -rf $(BUILD)/data
 	mkdir -p $(BUILD)/data
 	cp $(TREE)/dat/nhdat $(TREE)/dat/license $(TREE)/dat/symbols $(BUILD)/data/
 	cp runtime/sysconf $(BUILD)/data/sysconf
+	sed -n '/^\* Copyright (C) 1994/,/^\*\*\*\*/p' $(wildcard $(TREE)/lib/lua-*/src/lua.h) \
+		| sed -e 's/^\* \{0,1\}//' -e '/^\*\*\*/d' > $(BUILD)/data/lua-license
+	test -s $(BUILD)/data/lua-license
 	touch $@
 
 # The Windows engine (`make dist-windows` runs this in its Docker image):
@@ -96,7 +101,7 @@ windows: all
 	rm -rf $(BUILD)/windows/data
 	mkdir -p $(BUILD)/windows/data
 	cp $(BUILD)/data/nhdat $(BUILD)/data/license $(BUILD)/data/symbols \
-		$(BUILD)/data/sysconf $(BUILD)/windows/data/
+		$(BUILD)/data/sysconf $(BUILD)/data/lua-license $(BUILD)/windows/data/
 
 $(BUILD)/test_proto: $(HOST)/tests/test_proto.c $(HOST)/rh_proto.c \
 		$(HOST)/rh_proto.h $(HOST)/third_party/cjson/cJSON.c
