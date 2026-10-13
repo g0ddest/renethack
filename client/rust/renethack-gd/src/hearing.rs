@@ -173,6 +173,58 @@ pub fn ambience(scene: Scene, branch: Branch) -> Vec<String> {
     }
 }
 
+/// A fight starts the combat music once the orders' Combat mode has held
+/// this long, and the music stays this long after the mode ends (real
+/// seconds: a player thinking between turns keeps what plays).
+pub const FIGHT_HOLDS: f64 = 4.0;
+pub const CALM_HOLDS: f64 = 20.0;
+
+/// The music by the scene: the title's, the branch's to explore by, a
+/// fight's once it lasts (the Combat mode comes only from what the hero
+/// perceives: a hostile seen or sensed, a fight told, a wound).
+#[derive(Debug, Clone, Default)]
+pub struct Score {
+    fighting: bool,
+    /// Since when the mode has differed from `fighting`.
+    since: Option<f64>,
+}
+
+impl Score {
+    /// The music's names now, most specific first (none: silence).
+    pub fn music(&mut self, now: f64, scene: Scene, branch: Branch, combat: bool) -> Vec<String> {
+        if scene != Scene::Playing {
+            self.fighting = false;
+            self.since = None;
+        } else if combat == self.fighting {
+            self.since = None;
+        } else {
+            let since = *self.since.get_or_insert(now);
+            let hold = if combat { FIGHT_HOLDS } else { CALM_HOLDS };
+            if now - since >= hold {
+                self.fighting = combat;
+                self.since = None;
+            }
+        }
+        let b = branch.name();
+        let explore = [format!("music.explore.{b}"), "music.explore".to_string()];
+        match scene {
+            Scene::Title => vec!["music.title".to_string()],
+            // no music of its own for a fight: the exploring goes on
+            Scene::Playing if self.fighting => {
+                let mut names = vec![format!("music.combat.{b}"), "music.combat".to_string()];
+                names.extend(explore);
+                names
+            }
+            Scene::Playing => explore.to_vec(),
+            Scene::Over => Vec::new(),
+        }
+    }
+
+    pub fn fighting(&self) -> bool {
+        self.fighting
+    }
+}
+
 /// A door beside the hero (the one their door messages are about).
 pub fn door_beside(world: &World, catalog: &Catalog) -> Option<(i32, i32)> {
     let (hx, hy) = world.hero()?;
@@ -336,6 +388,53 @@ mod tests {
             ["amb.fire"]
         );
         assert!(ambience(Scene::Over, Branch::Gehennom).is_empty());
+    }
+
+    #[test]
+    fn a_fight_plays_its_music_only_once_it_lasts_and_for_a_while_after() {
+        let mut score = Score::default();
+        let at = |s: &mut Score, now: f64, combat: bool| {
+            s.music(now, Scene::Playing, Branch::Mines, combat)
+        };
+        let explore = ["music.explore.mines", "music.explore"];
+        assert_eq!(at(&mut score, 0.0, false), explore);
+        // a hostile glimpsed for a moment: no fight's music
+        assert_eq!(at(&mut score, 1.0, true), explore);
+        assert_eq!(at(&mut score, 2.0, false), explore);
+        // a fight that lasts
+        assert_eq!(at(&mut score, 10.0, true), explore);
+        assert_eq!(at(&mut score, 13.9, true), explore);
+        let fight = at(&mut score, 14.0, true);
+        assert_eq!(
+            fight,
+            [
+                "music.combat.mines",
+                "music.combat",
+                "music.explore.mines",
+                "music.explore"
+            ]
+        );
+        // calm for a while: the fight's music goes on, then the exploring
+        assert_eq!(at(&mut score, 20.0, false), fight);
+        assert_eq!(
+            at(&mut score, 30.0, true),
+            fight,
+            "a blow again: the calm starts over"
+        );
+        assert_eq!(at(&mut score, 31.0, false), fight);
+        assert_eq!(at(&mut score, 50.9, false), fight);
+        assert_eq!(at(&mut score, 51.0, false), explore);
+        // the title's music, the end's silence; a fight does not outlive its game
+        assert_eq!(
+            score.music(60.0, Scene::Title, Branch::Main, false),
+            ["music.title"]
+        );
+        assert!(
+            score
+                .music(61.0, Scene::Over, Branch::Main, true)
+                .is_empty()
+        );
+        assert!(!score.fighting());
     }
 
     #[test]

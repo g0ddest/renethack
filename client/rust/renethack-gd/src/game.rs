@@ -427,6 +427,8 @@ pub struct RenethackGame {
     volumes_set: bool,
     /// What the interface showed last frame (its sounds are the changes).
     ui_watch: crate::audio::UiWatch,
+    /// The music by the scene and the fights that last.
+    pub(crate) score: crate::hearing::Score,
 }
 
 /// The warm-up behind the start-up veil, a step a frame, beside the map's
@@ -552,6 +554,7 @@ impl INode for RenethackGame {
             window_size: None,
             volumes_set: false,
             ui_watch: crate::audio::UiWatch::default(),
+            score: crate::hearing::Score::default(),
         }
     }
 
@@ -1004,6 +1007,10 @@ impl RenethackGame {
         let branch = self.world.branch();
         ui.audio
             .set_ambience(&crate::hearing::ambience(scene, branch));
+        let combat = self.driver.mode() == Mode::Combat;
+        let now = Time::singleton().get_ticks_msec() as f64 / 1000.0;
+        let music = self.score.music(now, scene, branch, combat);
+        ui.audio.set_music(&music);
         let hero = ui.map.hero_stands().filter(|_| playing);
         let ears = camera.map(|t| match hero {
             Some((at, _)) => Transform3D::new(

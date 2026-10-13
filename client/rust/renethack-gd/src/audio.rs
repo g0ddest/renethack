@@ -66,8 +66,9 @@ const UNIT_SIZE: f32 = 4.0;
 /// The ears are this high over where the hero stands.
 pub const EAR_HEIGHT: f32 = 1.2;
 
-/// Seconds the ambience takes to fade in or out.
+/// Seconds a loop takes to fade in or out: the ambience, the music.
 const AMBIENCE_FADE: f32 = 1.5;
+const MUSIC_FADE: f32 = 2.5;
 /// A playlist's tracks (a loop cue that does not go round) follow each
 /// other after this silence.
 const TRACK_GAP: f64 = 4.0;
@@ -523,6 +524,13 @@ impl Loop {
     }
 }
 
+/// The two loops.
+#[derive(Debug, Clone, Copy)]
+enum Which {
+    Ambience,
+    Music,
+}
+
 /// The player of cues.
 pub struct Audio {
     manifest: Manifest,
@@ -546,6 +554,7 @@ pub struct Audio {
     /// The world is heard muffled (a deaf hero).
     muffled: bool,
     ambience: Loop,
+    music: Loop,
     /// The sound's own time this frame (starting sounds, the waiting ones,
     /// the ears), and that of the last frames (files loading ahead aside).
     cost: Duration,
@@ -584,6 +593,7 @@ impl Audio {
             })
             .collect();
         let ambience = Loop::new(&mut root, "Ambience", AMBIENCE_FADE);
+        let music = Loop::new(&mut root, "Music", MUSIC_FADE);
         // the loops are music and ambience, loaded when they play
         let to_load: BTreeSet<String> = manifest
             .cues
@@ -607,6 +617,7 @@ impl Audio {
             log_seq: None,
             muffled: false,
             ambience,
+            music,
             cost: Duration::ZERO,
             costs: VecDeque::new(),
         }
@@ -774,18 +785,24 @@ impl Audio {
         if let Some(ears) = ears {
             self.ears.set_global_transform(ears);
         }
-        let lp = &mut self.ambience;
-        if lp.update(delta as f32, self.clock, &mut self.picker) {
-            let (asked, cue) = (lp.asked.first().cloned(), lp.cue.clone());
-            self.asked += 1;
-            let heard = Heard {
-                seq: self.asked,
-                asked: asked.unwrap_or_default(),
-                cue,
-                at: None,
-                voiced: true,
+        let now = self.clock;
+        for which in [Which::Ambience, Which::Music] {
+            let lp = match which {
+                Which::Ambience => &mut self.ambience,
+                Which::Music => &mut self.music,
             };
-            self.record(heard);
+            if lp.update(delta as f32, now, &mut self.picker) {
+                let (asked, cue) = (lp.asked.first().cloned(), lp.cue.clone());
+                self.asked += 1;
+                let heard = Heard {
+                    seq: self.asked,
+                    asked: asked.unwrap_or_default(),
+                    cue,
+                    at: None,
+                    voiced: true,
+                };
+                self.record(heard);
+            }
         }
         if self.costs.len() == COSTS_KEPT {
             self.costs.pop_front();
@@ -908,14 +925,30 @@ impl Audio {
         }
     }
 
+    fn loop_of(&mut self, which: Which) -> &mut Loop {
+        match which {
+            Which::Ambience => &mut self.ambience,
+            Which::Music => &mut self.music,
+        }
+    }
+
     /// The ambience asked for by `names` (most specific first, then the
     /// first one's parents); none: silence. The same names again change
     /// nothing; other names that come to the cue playing keep it going.
     pub fn set_ambience(&mut self, names: &[String]) {
-        if self.ambience.asked == names {
+        self.set_loop(Which::Ambience, names);
+    }
+
+    /// The music, as `set_ambience`.
+    pub fn set_music(&mut self, names: &[String]) {
+        self.set_loop(Which::Music, names);
+    }
+
+    fn set_loop(&mut self, which: Which, names: &[String]) {
+        if self.loop_of(which).asked == names {
             return;
         }
-        self.ambience.asked = names.to_vec();
+        self.loop_of(which).asked = names.to_vec();
         let found = self
             .manifest
             .resolve(names)
@@ -932,7 +965,10 @@ impl Audio {
             };
             self.record(heard);
         }
-        let lp = &mut self.ambience;
+        let lp = match which {
+            Which::Ambience => &mut self.ambience,
+            Which::Music => &mut self.music,
+        };
         if found.as_ref().map(|(n, _)| n) == lp.cue.as_ref() && found.is_some() {
             return;
         }
@@ -947,11 +983,16 @@ impl Audio {
         self.ambience.now()
     }
 
+    pub fn music_now(&self) -> (Option<&str>, f32) {
+        self.music.now()
+    }
+
     /// A cue of the self-tests' own (a loop made of a jingle): the loops
     /// ask for what they asked for again.
     pub(crate) fn add_cue(&mut self, name: &str, cue: crate::cues::Cue) {
         self.manifest.cues.insert(name.to_string(), cue);
         self.ambience.asked.clear();
+        self.music.asked.clear();
     }
 
     /// The world muffled or not (a deaf hero hears it dull and faint).

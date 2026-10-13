@@ -6,9 +6,11 @@
 //! the bus's at once (0 mutes it) and the profile keeps it when the page
 //! closes. The voices: forty steps at once take no more than a step's
 //! voices, a sound waits for its moment, a cue the manifest lacks plays
-//! nothing. Two loops of the test's own (jingles that go round): the
-//! title's ambience fades in, and the dungeon's takes over when the game
-//! begins. Then a game (debug mode): the hero's step sounds where they
+//! nothing. Loops of the test's own (jingles that go round): the title's
+//! ambience and music fade in, and the dungeon's and the exploring take
+//! over when the game begins; a newt made beside the hero brings the
+//! fight's music once the fight has lasted. Then a game (debug mode): the
+//! hero's step sounds where they
 //! stand and the pet's where it walks; a newt fought to its death sounds
 //! the swing of the Valkyrie's spear, the blows or misses and its fall
 //! (heard where the hero stands: a newt leaves nothing to place it by); a
@@ -108,14 +110,16 @@ fn title() -> Vec<Step> {
                 }
                 let heard: Vec<String> = player(g)?
                     .heard()
-                    .filter(|h| !h.asked.starts_with("amb."))
+                    .filter(|h| !h.asked.starts_with("amb.") && !h.asked.starts_with("music."))
                     .map(|h| h.asked.clone())
                     .collect();
                 if !heard.is_empty() {
                     return Err(format!("heard at start-up: {heard:?}"));
                 }
-                if !player(g)?.heard().any(|h| h.asked == "amb.title") {
-                    return Err("the title's ambience was not asked for".into());
+                for loop_ in ["amb.title", "music.title"] {
+                    if !player(g)?.heard().any(|h| h.asked == loop_) {
+                        return Err(format!("{loop_} was not asked for"));
+                    }
                 }
                 Ok(())
             },
@@ -126,12 +130,17 @@ fn title() -> Vec<Step> {
             let (Some(title), Some(main)) = (file("jingle.levelup"), file("jingle.death")) else {
                 return Err("no jingles to make loops of".into());
             };
-            a.add_cue("amb.title", test_loop(&title)?);
-            a.add_cue("amb.main", test_loop(&main)?);
+            a.add_cue("amb.title", test_loop(&title, "Ambience")?);
+            a.add_cue("amb.main", test_loop(&main, "Ambience")?);
+            a.add_cue("music.title", test_loop(&main, "Music")?);
+            a.add_cue("music.explore", test_loop(&title, "Music")?);
+            a.add_cue("music.combat", test_loop(&main, "Music")?);
             Ok(())
         }),
-        Step::Wait("the title's ambience faded in", |g| {
-            Ok(player(g)?.ambience_now() == (Some("amb.title"), 1.0))
+        Step::Wait("the title's ambience and music faded in", |g| {
+            let a = player(g)?;
+            Ok(a.ambience_now() == (Some("amb.title"), 1.0)
+                && a.music_now() == (Some("music.title"), 1.0))
         }),
         Step::Call("the mouse over the settings button", |g| {
             mark(g)?;
@@ -270,10 +279,12 @@ fn game() -> Vec<Step> {
     steps.extend(start());
     steps.extend([
         Step::Wait("the hero on the map", |g| Ok(g.world.map.hero().is_some())),
-        Step::Wait("the dungeon's ambience faded in, the title's out", |g| {
+        Step::Wait("the dungeon's ambience and the exploring faded in", |g| {
             let a = player(g)?;
             let main = a.heard().any(|h| h.asked == "amb.main" && h.voiced);
-            Ok(main && a.ambience_now() == (Some("amb.main"), 1.0))
+            Ok(main
+                && a.ambience_now() == (Some("amb.main"), 1.0)
+                && a.music_now() == (Some("music.explore"), 1.0))
         }),
         Step::Call("", mark),
         Step::KeyFrom("a step onto open floor", |g| open_way(g).map(plain)),
@@ -296,6 +307,10 @@ fn game() -> Vec<Step> {
     ]);
     steps.extend(create("newt"));
     steps.extend([
+        Step::Wait("the fight's music, once the fight has lasted", |g| {
+            let fight = player(g)?.music_now().0 == Some("music.combat");
+            Ok(g.score.fighting() && fight)
+        }),
         Step::Call("", mark),
         Step::KeysUntil("fighting the newt", fight),
         Step::Wait("its death heard", |g| Ok(heard_like(g, "die")?.is_some())),
@@ -370,7 +385,7 @@ fn game() -> Vec<Step> {
             let water = heard_like(g, "distant.water")?;
             Ok(door.is_some_and(|d| near(&d, hero) && d.voiced)
                 && water.is_some_and(|w| {
-                    w.at.is_none() && w.voiced && w.cue.as_deref() == Some("distant")
+                    w.at.is_none() && w.voiced && w.cue.is_some_and(|c| c.starts_with("distant"))
                 }))
         }),
     ]);
@@ -427,9 +442,9 @@ fn game() -> Vec<Step> {
     steps
 }
 
-/// A loop of the test's own: `file` going round on the Ambience bus.
-fn test_loop(file: &str) -> Result<crate::cues::Cue, String> {
-    let cue = serde_json::json!({"files": [file], "bus": "Ambience", "loop": true});
+/// A loop of the test's own: `file` going round on `bus`.
+fn test_loop(file: &str, bus: &str) -> Result<crate::cues::Cue, String> {
+    let cue = serde_json::json!({"files": [file], "bus": bus, "loop": true});
     serde_json::from_value(cue).map_err(|e| e.to_string())
 }
 
