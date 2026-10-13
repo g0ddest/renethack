@@ -611,6 +611,8 @@ mod tests {
             ("You die...", "hero.die"),
             ("You kill it!", "hit"),
             ("It bites!", "hero.hurt"),
+            ("You are hit by an arrow.", "hit.missile"),
+            ("You are almost hit by a dagger.", "miss"),
             ("You hear a door open.", "distant.door"),
             ("You hear bubbling water.", "distant.water"),
             (

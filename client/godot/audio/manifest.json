@@ -189,6 +189,8 @@
     {"is": "You miss it.", "cue": "miss"},
     {"any": ["You kill it!", "You destroy it!"], "cue": ["hit", "die"]},
     {"is": "It misses.", "cue": "miss"},
+    {"starts": "You are hit by ", "cue": ["hit.missile", "hero.hurt"]},
+    {"starts": "You are almost hit by ", "cue": "miss"},
     {"starts": "It ", "ends": "!", "cue": "hero.hurt"}
   ],
   "heard": [
