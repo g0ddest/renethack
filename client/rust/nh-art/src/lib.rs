@@ -1847,19 +1847,24 @@ mod tests {
         assert_eq!(model("Minion of Huhetotl"), "demon_great");
         assert_eq!(model("Nalzok"), "demon_great");
         assert_eq!(model("Chromatic Dragon"), "dragon_chromatic");
-        // the yeti and the sasquatch stand on two legs, not a gorilla's four;
-        // scorpions and centipedes are not an ant and a grub
+        // the yeti and the sasquatch hulking under a long shag, not the apes'
+        // smooth gorilla; scorpions and centipedes are not an ant and a grub
         let scene = |n: &str| {
             let m = cat.monsters.iter().find(|m| m.name == n).unwrap();
             let spec = art.model_at(art.monster(m, 0).model).1;
             spec.scene.clone().unwrap_or_default()
         };
         for who in ["yeti", "sasquatch"] {
-            assert!(scene(who).ends_with("Yeti.glb"), "{who}: {}", scene(who));
+            assert!(
+                scene(who).ends_with("GorillaShaggy.glb"),
+                "{who}: {}",
+                scene(who)
+            );
         }
+        assert!(scene("ape").ends_with("Gorilla.glb"));
         assert!(scene("scorpion").ends_with("Scorpion.glb"));
         assert!(scene("centipede").ends_with("Centipede.glb"));
-        // a naga a head on a serpent's body, not a snake
+        // a naga a head on a serpent's body rising from its coil, not a snake
         for kind in ["red", "black", "golden", "guardian"] {
             let m = cat
                 .monsters
@@ -1868,13 +1873,15 @@ mod tests {
                 .unwrap();
             let spec = art.model_at(art.monster(m, 0).model).1;
             assert!(spec.head.is_some(), "{kind} naga has no head");
-            assert!(
-                spec.extras.iter().any(|e| e.model == "naga_body"),
-                "{kind} naga"
-            );
+            for part in ["naga_tail", "naga_rise"] {
+                assert!(
+                    spec.extras.iter().any(|e| e.model == part),
+                    "{kind} naga: {part}"
+                );
+            }
         }
         // a centaur's horse a coat the colour multiplies, not a flat dye;
-        // a mastodon shaggy
+        // a mastodon's hair cut-out strands, which a flat dye would lose
         let centaur = art.model_at(art.model_index("centaur_plains").unwrap()).1;
         assert!(
             centaur
@@ -1883,7 +1890,12 @@ mod tests {
                 .is_some_and(|c| !c.starts_with('='))
         );
         let mastodon = art.model_at(art.model_index("mastodon").unwrap()).1;
-        assert!(mastodon.recolor.contains_key("@Shag"));
+        assert!(
+            mastodon
+                .recolor
+                .get("@Shag")
+                .is_some_and(|c| !c.starts_with('='))
+        );
     }
 
     /// A mumak was drawn two cells long and a baluchitherium four: they hid

@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://cyvoaslxnvrvk"
-path="res://.godot/imported/Yeti.glb-89b21ed171db22a283fd9c5d602a3a71.scn"
+uid="uid://dyyvqtdqj1nvp"
+path="res://.godot/imported/GorillaShaggy.glb-46e3c048f4af690e502db3c607d7c176.scn"
 
 [deps]
 
-source_file="res://art/cc0/quaternius/monsters/Yeti.glb"
-dest_files=["res://.godot/imported/Yeti.glb-89b21ed171db22a283fd9c5d602a3a71.scn"]
+source_file="res://art/ccby/polypizza/GorillaShaggy.glb"
+dest_files=["res://.godot/imported/GorillaShaggy.glb-46e3c048f4af690e502db3c607d7c176.scn"]
 
 [params]
 
