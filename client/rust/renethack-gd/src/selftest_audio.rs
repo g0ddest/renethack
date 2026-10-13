@@ -327,11 +327,17 @@ fn game() -> Vec<Step> {
         Step::KeysUntil("fighting the newt", fight),
         Step::Wait("its death heard", |g| Ok(heard_like(g, "die")?.is_some())),
         Step::Call(
-            "the fight heard: the spear's swing, a blow or a miss",
+            "the fight heard: each of the spear's swings, a blow or a miss",
             |g| {
-                let swing = heard_like(g, "swing")?.ok_or("no swing")?;
-                if swing.asked != "swing.spear" || !swing.voiced {
-                    return Err(format!("the spear's swing: {swing:?}"));
+                let mark = MARK.load(Ordering::Relaxed);
+                let swings: Vec<Heard> = player(g)?
+                    .heard()
+                    .filter(|h| h.seq > mark && h.asked.starts_with("swing"))
+                    .cloned()
+                    .collect();
+                let each = swings.iter().all(|h| h.asked == "swing.spear" && h.voiced);
+                if swings.is_empty() || !each {
+                    return Err(format!("the spear's swings: {swings:?}"));
                 }
                 if heard_like(g, "hit")?.is_none() && heard_like(g, "miss")?.is_none() {
                     return Err("neither a blow nor a miss".into());

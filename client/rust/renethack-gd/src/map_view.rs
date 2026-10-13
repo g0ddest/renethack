@@ -6741,9 +6741,18 @@ impl MapView {
                 deaths.push((name.to_string(), *at));
             }
         }
+        // blows told together (a fast hero's two, a monster's claws and
+        // bite) sound one after another, as they were struck
+        const NEXT_BLOW: f32 = 0.25;
+        let mut blows = 0;
         for ((from, to), hit, a) in fights {
             let at_hero = a.target == Who::Hero;
+            let start = self.sounds.len();
             self.hear_blow(from, to, &a, hit, world, catalog);
+            for s in &mut self.sounds[start..] {
+                s.delay += blows as f32 * NEXT_BLOW;
+            }
+            blows += 1;
             self.strike(from, to, world);
             if hit {
                 self.impact(from, to, world, catalog);
@@ -6775,10 +6784,21 @@ impl MapView {
             }
         }
         for (at, hit, a) in unplaced {
+            let start = self.sounds.len();
             self.hear_blow(at, at, &a, hit, world, catalog);
+            for s in &mut self.sounds[start..] {
+                s.delay += blows as f32 * NEXT_BLOW;
+            }
+            blows += 1;
         }
+        // a death told after its blows falls after them
+        let start = self.sounds.len();
         for (name, at) in deaths {
             self.hear_death(&name, at, catalog);
+        }
+        let last = blows.max(1) - 1;
+        for s in &mut self.sounds[start..] {
+            s.delay += last as f32 * NEXT_BLOW;
         }
     }
 
