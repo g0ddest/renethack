@@ -12,7 +12,8 @@ use std::time::{Duration, Instant};
 use godot::classes::audio_stream_player_3d::AttenuationModel;
 use godot::classes::{
     AudioEffectAmplify, AudioEffectLowPassFilter, AudioEffectReverb, AudioListener3D, AudioServer,
-    AudioStream, AudioStreamPlayer, AudioStreamPlayer3D, FileAccess, ResourceLoader,
+    AudioStream, AudioStreamOggVorbis, AudioStreamPlayer, AudioStreamPlayer3D, FileAccess,
+    ResourceLoader,
 };
 use godot::prelude::*;
 use nh_world::MessageLog;
@@ -64,6 +65,14 @@ const COSTS_KEPT: usize = 1024;
 const UNIT_SIZE: f32 = 4.0;
 /// The ears are this high over where the hero stands.
 pub const EAR_HEIGHT: f32 = 1.2;
+
+/// Seconds the ambience takes to fade in or out.
+const AMBIENCE_FADE: f32 = 1.5;
+/// A playlist's tracks (a loop cue that does not go round) follow each
+/// other after this silence.
+const TRACK_GAP: f64 = 4.0;
+/// Quieter than this a fading loop is silent.
+const SILENT_DB: f32 = -60.0;
 
 /// The manifest built into the client, used when the project's copy
 /// cannot be read.
@@ -325,6 +334,195 @@ impl Player {
     }
 }
 
+/// A loop on its own bus, crossfaded from one cue to the next (the
+/// ambience, the music): two players, the live one fading in, the other
+/// out. Its files load on a thread; a cue that does not go round plays
+/// its variants one after another.
+struct Loop {
+    players: [Gd<AudioStreamPlayer>; 2],
+    live: usize,
+    gain: [f32; 2],
+    fade: f32,
+    /// The names last asked for, and the cue they came to (None: silence).
+    asked: Vec<String>,
+    cue: Option<String>,
+    /// The cue's own level, whether it goes round, its variants.
+    db: f32,
+    looped: bool,
+    files: Vec<String>,
+    variant: Option<usize>,
+    /// A file loading on the loader's threads.
+    loading: Option<String>,
+    /// A playlist's next track starts then.
+    next_at: Option<f64>,
+}
+
+impl Loop {
+    fn new(root: &mut Gd<Node3D>, name: &str, fade: f32) -> Loop {
+        let players = [0, 1].map(|i| {
+            let mut p = AudioStreamPlayer::new_alloc();
+            p.set_name(&format!("{name}{i}"));
+            root.add_child(&p);
+            p
+        });
+        Loop {
+            players,
+            live: 0,
+            gain: [0.0; 2],
+            fade,
+            asked: Vec::new(),
+            cue: None,
+            db: 0.0,
+            looped: true,
+            files: Vec::new(),
+            variant: None,
+            loading: None,
+            next_at: None,
+        }
+    }
+
+    /// Fade to `cue` (None: to silence); a variant starts loading.
+    fn want(&mut self, cue: Option<(String, &crate::cues::Cue)>, picker: &mut Picker) {
+        self.next_at = None;
+        self.loading = None;
+        match cue {
+            None => {
+                self.cue = None;
+                self.files.clear();
+            }
+            Some((name, c)) => {
+                self.cue = Some(name);
+                self.db = c.volume.at(picker.unit());
+                self.looped = c.looped;
+                self.files = c.files.clone();
+                self.variant = None;
+                for p in &mut self.players {
+                    p.set_bus(&c.bus);
+                }
+                self.load_next(picker);
+            }
+        }
+    }
+
+    fn load_next(&mut self, picker: &mut Picker) {
+        if self.files.is_empty() {
+            return;
+        }
+        let v = picker.variant(self.files.len(), self.variant);
+        self.variant = Some(v);
+        let path = format!("{AUDIO_DIR}/{}", self.files[v]);
+        let mut loader = ResourceLoader::singleton();
+        // (the threaded calls are not in the bindings: called by name)
+        let asked = loader.exists(&path)
+            && loader
+                .call("load_threaded_request", &[path.to_variant()])
+                .try_to::<i64>()
+                .ok()
+                == Some(0);
+        if asked {
+            self.loading = Some(path);
+        } else {
+            godot_warn!("renethack: the loop {path} is missing (not imported?)");
+        }
+    }
+
+    /// A frame: a loaded file starts (a new cue on the other player, to
+    /// crossfade), the gains move toward the live player, a playlist's
+    /// next track comes after its gap. True when a file started.
+    fn update(&mut self, delta: f32, now: f64, picker: &mut Picker) -> bool {
+        let started = self.start_loaded();
+        let step = delta / self.fade.max(0.01);
+        for i in 0..2 {
+            let up = i == self.live && self.cue.is_some();
+            let was = self.gain[i];
+            let g = if up {
+                (was + step).min(1.0)
+            } else {
+                (was - step).max(0.0)
+            };
+            self.gain[i] = g;
+            let p = &mut self.players[i];
+            if g <= 0.0 {
+                if p.is_playing() && !up {
+                    p.stop();
+                }
+            } else if g != was || started {
+                p.set_volume_db((self.db + 20.0 * g.log10()).max(SILENT_DB));
+            }
+        }
+        // a playlist: the track over, the next after a silence
+        let over = self.cue.is_some()
+            && !self.looped
+            && self.loading.is_none()
+            && self.gain[self.live] >= 1.0
+            && !self.players[self.live].is_playing();
+        if over && self.next_at.is_none() {
+            self.next_at = Some(now + TRACK_GAP);
+        }
+        if self.next_at.is_some_and(|at| now >= at) && self.loading.is_none() {
+            self.load_next(picker);
+        }
+        started
+    }
+
+    /// The file the loader's threads have read, playing.
+    fn start_loaded(&mut self) -> bool {
+        // ResourceLoader.ThreadLoadStatus
+        const IN_PROGRESS: i64 = 1;
+        const LOADED: i64 = 3;
+        let Some(path) = self.loading.clone() else {
+            return false;
+        };
+        let mut loader = ResourceLoader::singleton();
+        let arg = [path.to_variant()];
+        match loader
+            .call("load_threaded_get_status", &arg)
+            .try_to::<i64>()
+        {
+            Ok(IN_PROGRESS) => return false,
+            Ok(LOADED) => {}
+            _ => {
+                self.loading = None;
+                godot_warn!("renethack: the loop {path} would not load");
+                return false;
+            }
+        }
+        self.loading = None;
+        let Ok(stream) = loader
+            .call("load_threaded_get", &arg)
+            .try_to::<Gd<AudioStream>>()
+        else {
+            return false;
+        };
+        // its own copy goes round or not (the file's stream is shared:
+        // a jingle may be a cue of another's)
+        let stream = match stream.try_cast::<AudioStreamOggVorbis>() {
+            Ok(ogg) => {
+                let mut own = ogg.duplicate_resource();
+                own.set_loop(self.looped);
+                own.upcast()
+            }
+            Err(other) => other,
+        };
+        // a playlist's next track follows on the same player; a new cue
+        // crossfades from the other
+        if self.next_at.take().is_none() {
+            self.live = 1 - self.live;
+            self.gain[self.live] = 0.0;
+        }
+        let p = &mut self.players[self.live];
+        p.set_stream(&stream);
+        p.set_volume_db(SILENT_DB);
+        p.play();
+        true
+    }
+
+    /// The cue playing now, and the live player's gain.
+    fn now(&self) -> (Option<&str>, f32) {
+        (self.cue.as_deref(), self.gain[self.live])
+    }
+}
+
 /// The player of cues.
 pub struct Audio {
     manifest: Manifest,
@@ -347,6 +545,7 @@ pub struct Audio {
     log_seq: Option<u64>,
     /// The world is heard muffled (a deaf hero).
     muffled: bool,
+    ambience: Loop,
     /// The sound's own time this frame (starting sounds, the waiting ones,
     /// the ears), and that of the last frames (files loading ahead aside).
     cost: Duration,
@@ -384,6 +583,7 @@ impl Audio {
                 Voice::new(Player::Flat(p))
             })
             .collect();
+        let ambience = Loop::new(&mut root, "Ambience", AMBIENCE_FADE);
         // the loops are music and ambience, loaded when they play
         let to_load: BTreeSet<String> = manifest
             .cues
@@ -406,6 +606,7 @@ impl Audio {
             asked: 0,
             log_seq: None,
             muffled: false,
+            ambience,
             cost: Duration::ZERO,
             costs: VecDeque::new(),
         }
@@ -573,6 +774,19 @@ impl Audio {
         if let Some(ears) = ears {
             self.ears.set_global_transform(ears);
         }
+        let lp = &mut self.ambience;
+        if lp.update(delta as f32, self.clock, &mut self.picker) {
+            let (asked, cue) = (lp.asked.first().cloned(), lp.cue.clone());
+            self.asked += 1;
+            let heard = Heard {
+                seq: self.asked,
+                asked: asked.unwrap_or_default(),
+                cue,
+                at: None,
+                voiced: true,
+            };
+            self.record(heard);
+        }
         if self.costs.len() == COSTS_KEPT {
             self.costs.pop_front();
         }
@@ -649,7 +863,13 @@ impl Audio {
     /// The messages since the last call that sound, each cue its rule
     /// names: where the hero stands, at the door beside them, or
     /// unplaced. The log of a game just started or restored is not news.
-    pub fn hear_log(&mut self, log: &MessageLog, hero: Option<Vector3>, door: Option<Vector3>) {
+    pub fn hear_log(
+        &mut self,
+        log: &MessageLog,
+        hero: Option<Vector3>,
+        door: Option<Vector3>,
+        female: bool,
+    ) {
         let last = log.last_seq();
         let seen = match self.log_seq {
             Some(seen) if seen <= last => seen,
@@ -670,7 +890,13 @@ impl Audio {
                 Place::None => None,
             };
             for cue in cues {
-                let sound = Sound::new(cue.clone());
+                // the hero's own cries by their gender first
+                let sound = if cue.starts_with("hero.") {
+                    let sex = if female { "female" } else { "male" };
+                    Sound::new(format!("{cue}.{sex}"))
+                } else {
+                    Sound::new(cue.clone())
+                };
                 sounds.push(match at {
                     Some(at) => sound.at(at),
                     None => sound,
@@ -680,6 +906,52 @@ impl Audio {
         for sound in sounds {
             self.play(sound);
         }
+    }
+
+    /// The ambience asked for by `names` (most specific first, then the
+    /// first one's parents); none: silence. The same names again change
+    /// nothing; other names that come to the cue playing keep it going.
+    pub fn set_ambience(&mut self, names: &[String]) {
+        if self.ambience.asked == names {
+            return;
+        }
+        self.ambience.asked = names.to_vec();
+        let found = self
+            .manifest
+            .resolve(names)
+            .map(|(n, c)| (n.to_string(), c.clone()));
+        if found.is_none() && !names.is_empty() {
+            // asked and not there: on the record, and silence
+            self.asked += 1;
+            let heard = Heard {
+                seq: self.asked,
+                asked: names[0].clone(),
+                cue: None,
+                at: None,
+                voiced: false,
+            };
+            self.record(heard);
+        }
+        let lp = &mut self.ambience;
+        if found.as_ref().map(|(n, _)| n) == lp.cue.as_ref() && found.is_some() {
+            return;
+        }
+        lp.want(
+            found.as_ref().map(|(n, c)| (n.clone(), c)),
+            &mut self.picker,
+        );
+    }
+
+    /// The ambience playing and its gain (0..=1, while it fades in).
+    pub fn ambience_now(&self) -> (Option<&str>, f32) {
+        self.ambience.now()
+    }
+
+    /// A cue of the self-tests' own (a loop made of a jingle): the loops
+    /// ask for what they asked for again.
+    pub(crate) fn add_cue(&mut self, name: &str, cue: crate::cues::Cue) {
+        self.manifest.cues.insert(name.to_string(), cue);
+        self.ambience.asked.clear();
     }
 
     /// The world muffled or not (a deaf hero hears it dull and faint).

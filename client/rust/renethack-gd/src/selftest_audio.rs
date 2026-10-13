@@ -6,7 +6,9 @@
 //! the bus's at once (0 mutes it) and the profile keeps it when the page
 //! closes. The voices: forty steps at once take no more than a step's
 //! voices, a sound waits for its moment, a cue the manifest lacks plays
-//! nothing. Then a game (debug mode): the hero's step sounds where they
+//! nothing. Two loops of the test's own (jingles that go round): the
+//! title's ambience fades in, and the dungeon's takes over when the game
+//! begins. Then a game (debug mode): the hero's step sounds where they
 //! stand and the pet's where it walks; a newt fought to its death sounds
 //! the swing of the Valkyrie's spear, the blows or misses and its fall
 //! (heard where the hero stands: a newt leaves nothing to place it by); a
@@ -104,13 +106,33 @@ fn title() -> Vec<Step> {
                 if !missing.is_empty() {
                     return Err(format!("sounds that would not load: {missing:?}"));
                 }
-                let heard: Vec<String> = player(g)?.heard().map(|h| h.asked.clone()).collect();
+                let heard: Vec<String> = player(g)?
+                    .heard()
+                    .filter(|h| !h.asked.starts_with("amb."))
+                    .map(|h| h.asked.clone())
+                    .collect();
                 if !heard.is_empty() {
                     return Err(format!("heard at start-up: {heard:?}"));
+                }
+                if !player(g)?.heard().any(|h| h.asked == "amb.title") {
+                    return Err("the title's ambience was not asked for".into());
                 }
                 Ok(())
             },
         ),
+        Step::Call("loops of the test's own: jingles that go round", |g| {
+            let a = &mut g.ui.as_mut().ok_or("no UI")?.audio;
+            let file = |cue: &str| a.manifest().cues.get(cue).map(|c| c.files[0].clone());
+            let (Some(title), Some(main)) = (file("jingle.levelup"), file("jingle.death")) else {
+                return Err("no jingles to make loops of".into());
+            };
+            a.add_cue("amb.title", test_loop(&title)?);
+            a.add_cue("amb.main", test_loop(&main)?);
+            Ok(())
+        }),
+        Step::Wait("the title's ambience faded in", |g| {
+            Ok(player(g)?.ambience_now() == (Some("amb.title"), 1.0))
+        }),
         Step::Call("the mouse over the settings button", |g| {
             mark(g)?;
             let at = button_at(g, &tr!("title-settings"))?;
@@ -248,6 +270,11 @@ fn game() -> Vec<Step> {
     steps.extend(start());
     steps.extend([
         Step::Wait("the hero on the map", |g| Ok(g.world.map.hero().is_some())),
+        Step::Wait("the dungeon's ambience faded in, the title's out", |g| {
+            let a = player(g)?;
+            let main = a.heard().any(|h| h.asked == "amb.main" && h.voiced);
+            Ok(main && a.ambience_now() == (Some("amb.main"), 1.0))
+        }),
         Step::Call("", mark),
         Step::KeyFrom("a step onto open floor", |g| open_way(g).map(plain)),
         Step::Request("a command after the step", command),
@@ -398,6 +425,12 @@ fn game() -> Vec<Step> {
         }),
     ]);
     steps
+}
+
+/// A loop of the test's own: `file` going round on the Ambience bus.
+fn test_loop(file: &str) -> Result<crate::cues::Cue, String> {
+    let cue = serde_json::json!({"files": [file], "bus": "Ambience", "loop": true});
+    serde_json::from_value(cue).map_err(|e| e.to_string())
 }
 
 fn plain(c: char) -> KeyInput {

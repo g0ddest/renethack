@@ -983,12 +983,27 @@ impl RenethackGame {
             let place = |(x, y): (i32, i32)| Vector3::new(x as f32, 0.8, y as f32);
             let door = crate::hearing::door_beside(&self.world, cat).map(place);
             let hero = self.world.hero().map(place);
-            ui.audio.hear_log(&self.world.log, hero, door);
+            let female = self
+                .world
+                .map
+                .hero_form()
+                .is_some_and(|g| g.flags & nh_protocol::mg::FEMALE != 0);
+            ui.audio.hear_log(&self.world.log, hero, door, female);
             let senses = crate::hearing::Senses::of(&self.world, cat);
             ui.audio.set_muffled(senses.deaf);
         } else {
             ui.audio.set_muffled(false);
         }
+        // the loops: the title's or the branch's ambience
+        use crate::hearing::Scene;
+        let scene = match self.state {
+            GameState::Title | GameState::Creating => Scene::Title,
+            GameState::Playing | GameState::Closing => Scene::Playing,
+            GameState::Ended | GameState::Failed => Scene::Over,
+        };
+        let branch = self.world.branch();
+        ui.audio
+            .set_ambience(&crate::hearing::ambience(scene, branch));
         let hero = ui.map.hero_stands().filter(|_| playing);
         let ears = camera.map(|t| match hero {
             Some((at, _)) => Transform3D::new(

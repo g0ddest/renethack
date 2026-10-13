@@ -153,6 +153,26 @@ impl Senses {
     }
 }
 
+/// The game's scene, for its loops.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Scene {
+    /// The title and the character's making, the title's scene behind.
+    Title,
+    Playing,
+    /// The end: the tombstone, an error.
+    Over,
+}
+
+/// The ambience of a scene, most specific first: the title's fires, the
+/// branch's own (any ambience after it).
+pub fn ambience(scene: Scene, branch: Branch) -> Vec<String> {
+    match scene {
+        Scene::Title => vec!["amb.title".to_string()],
+        Scene::Playing => vec![format!("amb.{}", branch.name())],
+        Scene::Over => Vec::new(),
+    }
+}
+
 /// A door beside the hero (the one their door messages are about).
 pub fn door_beside(world: &World, catalog: &Catalog) -> Option<(i32, i32)> {
     let (hx, hy) = world.hero()?;
@@ -305,6 +325,17 @@ mod tests {
         assert_eq!(plan(&monster("P", "medium", &["amorphous"])), "slime");
         assert_eq!(plan(&monster("o", "medium", &["humanoid"])), "humanoid");
         assert_eq!(plan(&monster("d", "small", &["animal"])), "beast");
+    }
+
+    #[test]
+    fn each_branch_has_its_own_ambience_and_the_end_none() {
+        assert_eq!(ambience(Scene::Title, Branch::Main), ["amb.title"]);
+        assert_eq!(ambience(Scene::Playing, Branch::Mines), ["amb.mines"]);
+        assert_eq!(
+            ambience(Scene::Playing, Branch::Planes(Plane::Fire)),
+            ["amb.fire"]
+        );
+        assert!(ambience(Scene::Over, Branch::Gehennom).is_empty());
     }
 
     #[test]
