@@ -132,6 +132,9 @@ pub(super) struct HeroPose {
     /// How far above the floor the hero floats (hero_look's: levitating,
     /// flying), lifted as a pit lowers them.
     pub(super) lift: f32,
+    /// The shaft of light's shader, loaded once and kept (a resource
+    /// nothing holds is loaded from disk again).
+    holy_light: Option<Gd<Shader>>,
 }
 
 /// A spell of helplessness being shown.
@@ -222,6 +225,7 @@ impl HeroPose {
             lying: None,
             shown_spell: 0,
             lift: 0.0,
+            holy_light: godot::tools::try_load::<Shader>("res://shaders/holy_light.gdshader").ok(),
         }
     }
 
@@ -647,8 +651,7 @@ impl MapView {
     /// its sides and fading upwards (shaders/holy_light.gdshader; without
     /// it, no shaft: the light, the glow and the motes still show).
     fn shaft(&mut self, prayer: &mut Prayer, mesh: MeshKey, pos: Vector3, weight: f32) {
-        let Ok(shader) = godot::tools::try_load::<Shader>("res://shaders/holy_light.gdshader")
-        else {
+        let Some(shader) = self.hero_pose.holy_light.clone() else {
             return;
         };
         let mut mat = ShaderMaterial::new_gd();
@@ -1042,6 +1045,44 @@ impl MapView {
     /// (self-tests).
     pub fn hero_prayer(&self) -> Option<(PrayerOutcome, f32)> {
         self.hero_pose.prayer.as_ref().map(|p| (p.outcome, p.t))
+    }
+
+    /// The rehearsal behind the start-up veil draws all of this once, a
+    /// step at a frame (`frame` counts its frames): the prayer's answers,
+    /// what holds a hero, a sleeper's letter. Godot compiles a shader or a
+    /// pipeline the first time it draws it, and a game's first prayer or
+    /// trap then waits for none.
+    pub fn warm_hero_states(&mut self, frame: u32) {
+        let Some(at) = self.hero_at else {
+            return;
+        };
+        let held = [
+            Held::Trap(TrapKind::Pit),
+            Held::Trap(TrapKind::BearTrap),
+            Held::Trap(TrapKind::Web),
+            Held::Trap(TrapKind::Lava),
+            Held::Water,
+        ];
+        match frame {
+            0 => self.show_prayer(PrayerOutcome::Pleased),
+            3 => self.show_prayer(PrayerOutcome::Angered),
+            6..=14 if frame.is_multiple_of(2) => {
+                self.hero_pose.clear_parts();
+                self.draw_held(held[(frame as usize - 6) / 2], at);
+                if frame == 6 {
+                    let mut l = self.snore_letter();
+                    l.set_modulate(SNORE);
+                    l.set_visible(true);
+                    l.set_position(Vector3::new(at.0 as f32, 1.0, at.1 as f32));
+                    self.hero_pose.parts.push(l.upcast());
+                }
+            }
+            16 => {
+                self.hero_pose.clear_parts();
+                self.end_prayer(true);
+            }
+            _ => {}
+        }
     }
 
     /// What holds the hero as drawn, how deep they stand, the pose clip

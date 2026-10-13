@@ -9,6 +9,11 @@
 //! the background, what the map keeps in its pools (torches, lanterns,
 //! the branches' props) is made ahead one piece a frame, each level is
 //! drawn over frames as in the game, and its effects go off one a frame.
+//! Its hero then wears the starting kit of every role in turn, a body and
+//! its gear a frame, and the kits of the other races (an elf's runed bow, an
+//! orc's crude dagger): a game's hero is not drawn in them for the first
+//! time either (an elven ranger's first frame compiled ten pipelines,
+//! 100 ms).
 
 use godot::classes::{ResourceLoader, Texture2D};
 use godot::prelude::*;
@@ -37,6 +42,99 @@ const HOLD_TAIL: u32 = 24;
 /// The frames a later stage is held (nothing in it is drawn for the
 /// first time).
 const LATER_HOLD: u32 = 6;
+/// The frames each role's hero is shown in their kit (each gender once).
+const KIT_FRAMES: u32 = 1;
+/// Creatures the rehearsal draws besides the map's warm ones: of a body
+/// drawn in no other (a ghost's translucent one).
+const REHEARSED_ONLY: &[&str] = &["ghost"];
+/// The other looks of a helmet, gloves and a cloak (the kits name the
+/// first): a game's may be any.
+const LOOKS: [Looks; 3] = [
+    &[
+        ("plumed helmet", "etched helmet"),
+        ("old gloves", "padded gloves"),
+        ("tattered cape", "opera cloak"),
+    ],
+    &[
+        ("plumed helmet", "crested helmet"),
+        ("old gloves", "riding gloves"),
+        ("tattered cape", "ornamental cope"),
+    ],
+    &[
+        ("plumed helmet", "visored helmet"),
+        ("old gloves", "fencing gloves"),
+        ("tattered cape", "piece of cloth"),
+    ],
+];
+/// A kit's things in another look: (as the kit names it, the other).
+type Looks = &'static [(&'static str, &'static str)];
+
+/// A hero to dress: their role, whether female, their things' other looks.
+type Dress = (&'static str, bool, Looks);
+
+/// The races' starting substitutions (u_init.c `inv_subs`) as the things
+/// look unidentified, and the roles each race may take.
+const RACES: &[(&[&str], Looks)] = &[
+    // elves
+    (
+        &["priest", "ranger", "wizard"],
+        &[
+            ("dagger", "runed dagger"),
+            ("spear", "runed spear"),
+            ("short sword", "runed short sword"),
+            ("bow", "runed bow"),
+            ("arrow", "runed arrow"),
+            ("plumed helmet", "leather hat"),
+            ("tattered cape", "faded pall"),
+        ],
+    ),
+    // orcs
+    (
+        &["barbarian", "ranger", "rogue", "wizard"],
+        &[
+            ("dagger", "crude dagger"),
+            ("spear", "crude spear"),
+            ("short sword", "crude short sword"),
+            ("bow", "crude bow"),
+            ("arrow", "crude arrow"),
+            ("plumed helmet", "iron skull cap"),
+            ("small shield", "red-eyed shield"),
+            ("ring mail", "crude ring mail"),
+            ("chain mail", "crude chain mail"),
+        ],
+    ),
+    // dwarves
+    (
+        &["archeologist", "caveman", "valkyrie"],
+        &[
+            ("spear", "stout spear"),
+            ("short sword", "broad short sword"),
+            ("plumed helmet", "hard hat"),
+        ],
+    ),
+    // gnomes
+    (
+        &["archeologist", "caveman", "healer", "ranger", "wizard"],
+        &[("bow", "crossbow"), ("arrow", "crossbow bolt")],
+    ),
+];
+
+/// The kits to dress the hero in: every role's, a gender each, then the
+/// roles of each other race in its things (the first gender).
+fn kit_dresses() -> Vec<Dress> {
+    let mut out: Vec<_> = ROLES
+        .iter()
+        .flat_map(|r| [(*r, false, &[][..]), (*r, true, &[][..])])
+        .collect();
+    for (roles, subs) in RACES {
+        out.extend(roles.iter().map(|r| (*r, true, *subs)));
+    }
+    // a knight's helmet and gloves, a wizard's cloak, in their other looks
+    for subs in LOOKS {
+        out.extend([("knight", false, subs), ("wizard", true, subs)]);
+    }
+    out
+}
 /// Under the start-up veil: a frame's work, and the textures drawn in one.
 const VEILED_FRAME: std::time::Duration = std::time::Duration::from_millis(20);
 const VEILED_TEXTURES: usize = 8;
@@ -244,8 +342,10 @@ impl Rehearsal {
             Phase::Hold => {
                 // the first stage: every effect, a few a frame under the
                 // veil; the others only show their level a while
+                let tail = ACTS.div_ceil(VEILED_ACTS) + HOLD_TAIL;
+                let kits = KIT_FRAMES * (kit_dresses().len() as u32 + 1);
                 let (acts, hold) = if self.stage == 0 {
-                    (ACTS, ACTS.div_ceil(VEILED_ACTS) + HOLD_TAIL)
+                    (ACTS, tail + kits)
                 } else {
                     (0, LATER_HOLD)
                 };
@@ -254,6 +354,12 @@ impl Rehearsal {
                     let n = self.acted + k;
                     if n < acts {
                         self.act(map, n);
+                    }
+                }
+                if self.stage == 0 {
+                    map.warm_hero_states(self.frame);
+                    if let Some(k) = self.frame.checked_sub(tail) {
+                        self.dress((k / KIT_FRAMES) as usize);
                     }
                 }
                 self.acted += per;
@@ -272,6 +378,65 @@ impl Rehearsal {
             }
         }
         true
+    }
+
+    /// The hero as the `k`th of `kit_dresses`, in the role's first starting
+    /// kit (another race's things in its place); past the last, as at first
+    /// and in nothing.
+    fn dress(&mut self, k: usize) {
+        let dresses = kit_dresses();
+        let (role, female, subs) = match dresses.get(k) {
+            Some(&d) => d,
+            None => (ROLES[0], false, &[][..]),
+        };
+        let Some(m) = self
+            .catalog
+            .monsters
+            .iter()
+            .find(|m| m.name == role_monster(role))
+        else {
+            return;
+        };
+        let floor = self
+            .catalog
+            .cmap
+            .iter()
+            .find(|c| c.sym == "S_room")
+            .map(|c| Glyph {
+                cmap: Some(c.idx),
+                color: c.color,
+                ..glyph(GlyphKind::Cmap, c.ch)
+            });
+        let hero = Glyph {
+            mon: Some(m.idx),
+            color: m.color,
+            flags: mg::HERO | if female { mg::FEMALE } else { mg::MALE },
+            ..glyph(GlyphKind::Mon, '@' as i32)
+        };
+        self.world.map.print(HERO.0, HERO.1, &hero, floor.as_ref());
+        let mut pack = match crate::kits::kits(role).first() {
+            Some(kit) if k < dresses.len() => crate::kits::inventory(&self.catalog, kit),
+            _ => nh_protocol::Inventory::default(),
+        };
+        // another race's things: each by its look, with its tile
+        for item in &mut pack.items {
+            let Some(&(_, look)) = subs
+                .iter()
+                .find(|(human, _)| item.text == format!("a {human}"))
+            else {
+                continue;
+            };
+            if let Some(t) = self
+                .catalog
+                .object_tiles
+                .iter()
+                .find(|t| t.appearance == look)
+            {
+                item.tile = t.tile;
+                item.text = format!("a {look}");
+            }
+        }
+        self.world.inventory.replace(&pack);
     }
 
     fn enter(&mut self, stage: usize) {
@@ -445,19 +610,23 @@ impl Rehearsal {
         let mut put_on_floor = |x: i32, y: i32, g: Glyph| {
             map.print(x, y, &g, floor.as_ref());
         };
+        // two rows of them, then by the south wall (east of the statues,
+        // round the hero)
+        let row = (X1 - X0 - 1) as usize;
+        let by_wall = (X0 + 8..X1).filter(|&x| x != HERO.0);
+        let places: Vec<(i32, i32)> = (0..2 * row)
+            .map(|i| (X0 + 1 + (i % row) as i32, Y0 + 1 + (i / row) as i32))
+            .chain(by_wall.map(|x| (x, Y1 - 1)))
+            .collect();
         let monsters = ROLES
             .iter()
             .map(|r| role_monster(r))
             .chain(WARM_MONSTERS.iter().copied())
-            .take(2 * (X1 - X0 - 1) as usize);
-        for (i, name) in monsters.enumerate() {
+            .chain(REHEARSED_ONLY.iter().copied());
+        for (i, (name, &(x, y))) in monsters.zip(&places).enumerate() {
             let Some(m) = cat.monsters.iter().find(|m| m.name == name) else {
                 continue;
             };
-            let (x, y) = (
-                X0 + 1 + (i as i32 % (X1 - X0 - 1)),
-                Y0 + 1 + i as i32 / (X1 - X0 - 1),
-            );
             let pet = if i == 0 { mg::PET } else { 0 };
             put_on_floor(
                 x,
@@ -512,6 +681,21 @@ impl Rehearsal {
         {
             if let Some(g) = cmap(sym) {
                 put_on_floor(X0 + 3 + 2 * i as i32, Y1 - 2, g);
+            }
+        }
+        // statues of an animal, a man and a small beast: stone over each kind
+        // of body (a statue is its monster's model in the statues' stone)
+        for (i, name) in ["jackal", "gnome", "newt"].iter().enumerate() {
+            if let Some(m) = cat.monsters.iter().find(|m| m.name == *name) {
+                put_on_floor(
+                    X0 + 2 + 2 * i as i32,
+                    Y1 - 1,
+                    Glyph {
+                        mon: Some(m.idx),
+                        color: 7,
+                        ..glyph(GlyphKind::Statue, '\'' as i32)
+                    },
+                );
             }
         }
         // the hero by the south wall: seen through it
