@@ -379,6 +379,25 @@ spells-hint-reorder = Pick the spell to move, then the one to swap it with · Ta
 spells-hint-cast = A letter, Enter or a click: cast · Esc, { $key }: close
 spells-hint-swap = Pick the spell to swap with · Esc: leave them as they are
 
+## The RPG panels: the skills (#enhance)
+
+skills-title = Skills
+skills-title-slots = Skills · { $slots } free
+skills-fighting = Fighting
+skills-weapons = Weapons
+skills-spellcasting = Spellcasting
+skills-restricted = Restricted
+skills-unskilled = Unskilled
+skills-basic = Basic
+skills-skilled = Skilled
+skills-expert = Expert
+skills-master = Master
+skills-grand-master = Grand Master
+skills-can-advance = advance
+skills-later = later
+skills-peaked = at its most
+skills-hint-advance = A letter, Enter or a click: advance it · Esc, { $key }: close
+
 ## The message log
 
 log-title = Messages

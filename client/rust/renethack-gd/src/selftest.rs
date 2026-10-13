@@ -70,6 +70,8 @@ mod sheet_tests;
 mod shop;
 #[path = "selftest_footprints.rs"]
 mod sizes;
+#[path = "selftest_skills.rs"]
+mod skills_tests;
 #[path = "selftest_spells.rs"]
 mod spells_tests;
 #[path = "selftest_states.rs"]
@@ -4794,6 +4796,7 @@ impl SelfTest {
             "rebind" => rebind_tests::rebind(),
             "sheet" => sheet_tests::sheet(),
             "spells" => spells_tests::spells(),
+            "skills" => skills_tests::skills(),
             "presets" => settings_tests::presets(),
             "layouts" => layouts_tests::layouts(),
             "rim" => rim_tests::rim(),

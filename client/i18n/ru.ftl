@@ -380,6 +380,25 @@ spells-hint-reorder = Выберите заклинание, которое пе
 spells-hint-cast = Буква, Enter или щелчок: сотворить · Esc, { $key }: закрыть
 spells-hint-swap = Выберите заклинание, с которым поменять · Esc: оставить как есть
 
+## RPG-панели: навыки (#enhance)
+
+skills-title = Навыки
+skills-title-slots = Навыки · свободно: { $slots }
+skills-fighting = Бой
+skills-weapons = Оружие
+skills-spellcasting = Магия
+skills-restricted = Недоступен
+skills-unskilled = Не обучен
+skills-basic = Базовый
+skills-skilled = Опытный
+skills-expert = Эксперт
+skills-master = Мастер
+skills-grand-master = Великий мастер
+skills-can-advance = улучшить
+skills-later = позже
+skills-peaked = предел
+skills-hint-advance = Буква, Enter или щелчок: улучшить · Esc, { $key }: закрыть
+
 ## Журнал сообщений
 
 log-title = Сообщения

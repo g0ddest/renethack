@@ -481,11 +481,18 @@ school and level, the chance of failure and how well the spell is
 remembered. A pick casts it (from `+`'s list, the list is closed and `Z`
 picks the spell by its name); Tab or the Reorder button makes a pick the
 engine's own swap of two spells' letters, and `[sort spells]` is a row.
+The skills (#enhance; `skills.rs`, `skills_view.rs`) are listed by group,
+each with its level in words and pips and what the window marks it with:
+"advance" when it can advance now (a pick that advances it), "later" for
+the window's `*`, "at its most" for its `#`; the window tells no other
+maximum, and the panel shows none.
 A panel's header and hint name its key as the player presses it now,
 and that key closes it again, as Esc and a gamepad's B do. The `sheet`
 scenario opens it in a game, from the key, the HUD's button and a moved
 key, and checks that each line of the window is on it; `spells` casts
-from both lists, by key, click and gamepad, and swaps two spells.
+from both lists, by key, click and gamepad, and swaps two spells;
+`skills` shows a debug-mode hero's skills, then advances two (by a letter
+and by a gamepad).
 `--lang=qps` is a pseudo-language for the self-tests: words through the
 catalogs show ⟦so⟧ and the engine's ⟪so⟫, and a screen a scenario shoots
 fails on any word outside the marks. `make test-client` also runs

@@ -32,6 +32,8 @@ use crate::layouts::{self, Genocided, GoneRow, KillRow, OverviewRow, Vanquished}
 use crate::pickers::{self, Ask, ObjClass, Pick, Wish};
 use crate::sheet;
 use crate::sheet_view::{self, SheetView};
+use crate::skills;
+use crate::skills_view;
 use crate::spells::{self, Purpose, Spellbook};
 use crate::spells_view;
 use crate::theme::{self, Face, Frame, bbcode_escape, hex, nh_color, place};
@@ -2802,7 +2804,7 @@ impl Dialogs {
         opened
     }
 
-    /// A panel's list (the spells'): a row of `heights[i]` per
+    /// A panel's list (the spells', the skills'): a row of `heights[i]` per
     /// menu entry, a pick's made of its letter's badge and the cells `row`
     /// gives, another's of the control it gives; it scrolls in `col` as a
     /// menu's does.
@@ -3026,6 +3028,78 @@ impl Dialogs {
         });
         let kind = self.panel_menu(state, rows, items, foot, spells_hint(purpose, false, &key));
         (kind, shade, panel)
+    }
+
+    /// #enhance's window: the skills' panel, a skill a row by group, with
+    /// its level and its mark; a skill that can advance is a pick that
+    /// advances it. `own`: #enhance's key, if it has one.
+    fn open_skills(
+        &mut self,
+        req: u64,
+        how: PickHow,
+        items: &[nh_protocol::MenuItem],
+        skills: &crate::skills::Skills,
+        own: Option<KeyInput>,
+    ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        use crate::skills::{self as sk, Group};
+        let state = MenuState::new(how, None, items);
+        let width = SPELLS_W.min(self.panel_width());
+        let title = match skills.slots {
+            Some(n) => tr!("skills-title-slots", slots = n),
+            None => tr!("skills-title"),
+        };
+        let close = if how == PickHow::None {
+            DialogEvent::MenuConfirm
+        } else {
+            DialogEvent::MenuCancel
+        };
+        let (shade, panel, mut col, key) = self.panel_frame(req, &title, own, close, width);
+        let heading = |e: &MenuEntry| !e.selectable && e.attr & 0x0f != 0;
+        let heights: Vec<f32> = state
+            .entries
+            .iter()
+            .map(|e| match () {
+                _ if e.text.trim().is_empty() => 8.0,
+                _ if heading(e) => skills_view::HEADING_H,
+                _ if sk::skill(&e.text, None).is_some() => skills_view::ROW_H,
+                _ => skills_view::NOTE_H,
+            })
+            .collect();
+        let mut in_group = false;
+        let rows = self.panel_rows(req, &state, heights, width, &mut col, &mut |_, e| {
+            if e.text.trim().is_empty() {
+                return PanelRow::Fixed(Control::new_alloc());
+            }
+            if heading(e) {
+                in_group = true;
+                let name = skills_view::group_name(Group::of(&e.text), e.text.trim());
+                return PanelRow::Fixed(skills_view::heading(&name));
+            }
+            let pick = e.selectable.then_some(e.idx);
+            match sk::skill(&e.text, pick) {
+                Some(s) if in_group => {
+                    let (cells, text) = skills_view::cells(&s);
+                    PanelRow::Pick(cells, text)
+                }
+                _ => PanelRow::Fixed(skills_view::note(e.text.trim())),
+            }
+        });
+        let foot = self.panel_foot(&mut col, &[]);
+        let hint = if skills.advance {
+            tr!("skills-hint-advance", key = key.as_str())
+        } else {
+            tr!("panel-hint", key = key.as_str())
+        };
+        let kind = self.panel_menu(state, rows, items, foot, hint);
+        (kind, shade, panel)
+    }
+
+    /// The letter of the open menu's entry `idx` (self-tests).
+    pub fn menu_letter(&self, idx: i32) -> Option<char> {
+        match &self.open.as_ref()?.kind {
+            Kind::Menu(view) => view.state.entries.iter().find(|e| e.idx == idx)?.letter,
+            _ => None,
+        }
     }
 
     /// What the open spells' panel's picks do, and whether they reorder
@@ -3281,8 +3355,26 @@ impl Dialogs {
                     Prompt::Menu { title, .. } => title.as_deref(),
                     _ => None,
                 };
-                if let Some(book) = spells::spellbook(english_title, english) {
-                    let (kind, shade, panel) = self.open_spells(req, *how, english, book);
+                // #enhance's pick of a skill to advance
+                let skill_lines: Vec<(String, bool, Option<i32>)> = english
+                    .iter()
+                    .map(|i| {
+                        let heading = !i.selectable && i.attr & 0x0f != 0;
+                        let text = i.str.clone().unwrap_or_default();
+                        (text, heading, i.selectable.then_some(i.idx))
+                    })
+                    .collect();
+                let skilled = skills::skills(english_title, &skill_lines);
+                let opened = match (spells::spellbook(english_title, english), skilled) {
+                    (Some(book), _) => Some(self.open_spells(req, *how, english, book)),
+                    (None, Some(sk)) => {
+                        let own = ext_key(catalog, "enhance");
+                        Some(self.open_skills(req, *how, english, &sk, own))
+                    }
+                    _ => None,
+                };
+                if let Some(opened) = opened {
+                    let (kind, shade, panel) = opened;
                     let pad_room = add_pad_room(&panel);
                     let own = self.opening_own.take();
                     self.open = Some(Open {
@@ -3389,8 +3481,37 @@ impl Dialogs {
                 let texts: Vec<&str> = english.iter().map(|l| l.text.as_str()).collect();
                 let plurals = layouts::kinds_by_plural(catalog);
                 let singular = |p: &str| plurals.get(p).cloned();
+                let english_title = match original {
+                    Prompt::Show { title, .. } => title.as_deref(),
+                    _ => None,
+                };
+                let skill_lines: Vec<(String, bool, Option<i32>)> = english
+                    .iter()
+                    .map(|l| (l.text.clone(), l.attr & 0x0f != 0, None))
+                    .collect();
                 if let Some(s) = sheet::sheet(&texts) {
                     self.open_sheet(req, &s, english, lines)
+                } else if let Some(sk) = skills::skills(english_title, &skill_lines) {
+                    // #enhance with nothing to advance: its lines as a menu's
+                    let items: Vec<nh_protocol::MenuItem> = english
+                        .iter()
+                        .enumerate()
+                        .map(|(i, l)| nh_protocol::MenuItem {
+                            win: 0,
+                            idx: i as i32,
+                            glyph: None,
+                            selectable: false,
+                            ch: 0,
+                            gch: 0,
+                            attr: l.attr,
+                            clr: NO_COLOR,
+                            str: Some(l.text.clone()),
+                            preselected: false,
+                            skipinvert: false,
+                        })
+                        .collect();
+                    let own = ext_key(catalog, "enhance");
+                    self.open_skills(req, PickHow::None, &items, &sk, own)
                 } else if let Some(v) = layouts::vanquished(&texts, &singular) {
                     self.open_vanquished(req, &v, catalog)
                 } else if let Some(g) = layouts::genocided(&texts) {
@@ -4416,6 +4537,15 @@ fn show_text(lines: &[TextLine]) -> String {
         })
         .collect::<Vec<_>>()
         .join("\n")
+}
+
+/// The key of the catalog's extended command `name` (#enhance's M-e), if
+/// it has one.
+fn ext_key(catalog: Option<&Catalog>, name: &str) -> Option<KeyInput> {
+    let cmd = catalog?.extcmds.iter().find(|e| e.name == name)?;
+    (cmd.key != 0)
+        .then(|| nh_world::key_of_code(cmd.key))
+        .flatten()
 }
 
 /// What the spells' panel's keys do: a pick casts, or (`reorder`) begins

@@ -47,6 +47,8 @@ mod selftest;
 mod settings_page;
 mod sheet;
 mod sheet_view;
+mod skills;
+mod skills_view;
 mod spells;
 mod spells_view;
 mod steam;
