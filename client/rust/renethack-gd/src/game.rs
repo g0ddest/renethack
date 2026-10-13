@@ -429,7 +429,16 @@ pub struct RenethackGame {
     ui_watch: crate::audio::UiWatch,
     /// The music by the scene and the fights that last.
     pub(crate) score: crate::hearing::Score,
+    /// What the features' loops were last chosen for (None: no game); and
+    /// when (a feature that appears where the hero stands is found within
+    /// a second).
+    emit_key: Option<EmitKey>,
+    emit_at: f64,
 }
+
+/// What the features' loops are chosen by: the hero's cell, the level
+/// drawn, the hero deaf.
+type EmitKey = (Option<(i32, i32)>, u64, bool);
 
 /// The warm-up behind the start-up veil, a step a frame, beside the map's
 /// rehearsal: what a game draws for the first time is drawn there, unseen.
@@ -555,6 +564,8 @@ impl INode for RenethackGame {
             volumes_set: false,
             ui_watch: crate::audio::UiWatch::default(),
             score: crate::hearing::Score::default(),
+            emit_key: None,
+            emit_at: f64::NEG_INFINITY,
         }
     }
 
@@ -1003,8 +1014,26 @@ impl RenethackGame {
             ui.audio.hear_log(&world.log, &place, female);
             let senses = crate::hearing::Senses::of(&self.world, cat);
             ui.audio.set_muffled(senses.deaf);
+            // the features near the hero, chosen again when they move (or
+            // the level or their hearing changes), else once a second
+            let key = Some((world.hero(), world.map.generation(), senses.deaf));
+            let now = Time::singleton().get_ticks_msec() as f64 / 1000.0;
+            if self.emit_key != key || now - self.emit_at >= 1.0 {
+                self.emit_key = key;
+                self.emit_at = now;
+                let found = if senses.deaf {
+                    Vec::new()
+                } else {
+                    crate::hearing::emitters(world, cat)
+                };
+                let wanted: Vec<_> = found.iter().map(|&(cue, c)| (cue, c, at(c))).collect();
+                ui.audio.set_emitters(&wanted);
+            }
         } else {
             ui.audio.set_muffled(false);
+            if self.emit_key.take().is_some() {
+                ui.audio.set_emitters(&[]);
+            }
         }
         // the loops: the title's or the branch's ambience
         use crate::hearing::Scene;

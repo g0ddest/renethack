@@ -74,6 +74,10 @@ const MUSIC_FADE: f32 = 2.5;
 const TRACK_GAP: f64 = 4.0;
 /// Quieter than this a fading loop is silent.
 const SILENT_DB: f32 = -60.0;
+/// A feature's loop fades in and out over this, and is as loud as at
+/// its side within this many metres.
+const EMIT_FADE: f32 = 0.8;
+const EMIT_UNIT: f32 = 2.0;
 
 /// The manifest built into the client, used when the project's copy
 /// cannot be read.
@@ -497,14 +501,7 @@ impl Loop {
         };
         // its own copy goes round or not (the file's stream is shared:
         // a jingle may be a cue of another's)
-        let stream = match stream.try_cast::<AudioStreamOggVorbis>() {
-            Ok(ogg) => {
-                let mut own = ogg.duplicate_resource();
-                own.set_loop(self.looped);
-                own.upcast()
-            }
-            Err(other) => other,
-        };
+        let stream = if self.looped { looping(stream) } else { stream };
         // a playlist's next track follows on the same player; a new cue
         // crossfades from the other
         if self.next_at.take().is_none() {
@@ -521,6 +518,100 @@ impl Loop {
     /// The cue playing now, and the live player's gain.
     fn now(&self) -> (Option<&str>, f32) {
         (self.cue.as_deref(), self.gain[self.live])
+    }
+}
+
+/// A feature's loop, placed on it (lava, water, a fountain): one of a few
+/// players of its own, fading in and out as the hero comes and goes.
+struct Emitter {
+    player: Gd<AudioStreamPlayer3D>,
+    /// The cue it plays and the cell it plays on; None: free.
+    cue: Option<String>,
+    cell: (i32, i32),
+    /// It should sound (else it fades out).
+    wanted: bool,
+    gain: f32,
+    db: f32,
+    loading: Option<String>,
+}
+
+impl Emitter {
+    fn new(root: &mut Gd<Node3D>, i: usize) -> Emitter {
+        let mut player = AudioStreamPlayer3D::new_alloc();
+        player.set_name(&format!("Emitter{i}"));
+        player.set_unit_size(EMIT_UNIT);
+        player.set_attenuation_model(AttenuationModel::INVERSE_DISTANCE);
+        root.add_child(&player);
+        Emitter {
+            player,
+            cue: None,
+            cell: (0, 0),
+            wanted: false,
+            gain: 0.0,
+            db: 0.0,
+            loading: None,
+        }
+    }
+
+    /// A frame: its file loaded starts it, its gain moves toward wanted.
+    fn update(&mut self, delta: f32, picker: &mut Picker) {
+        if let Some(path) = self.loading.clone() {
+            const IN_PROGRESS: i64 = 1;
+            const LOADED: i64 = 3;
+            let mut loader = ResourceLoader::singleton();
+            let arg = [path.to_variant()];
+            match loader
+                .call("load_threaded_get_status", &arg)
+                .try_to::<i64>()
+            {
+                Ok(IN_PROGRESS) => {}
+                Ok(LOADED) => {
+                    self.loading = None;
+                    if let Ok(stream) = loader
+                        .call("load_threaded_get", &arg)
+                        .try_to::<Gd<AudioStream>>()
+                    {
+                        let stream = looping(stream);
+                        self.player.set_stream(&stream);
+                        self.player.set_volume_db(SILENT_DB);
+                        // two of a kind never sound in step
+                        let at = stream.get_length() as f32 * picker.unit();
+                        self.player.play_ex().from_position(at).done();
+                    }
+                }
+                _ => self.loading = None,
+            }
+        }
+        if self.cue.is_none() {
+            return;
+        }
+        let step = delta / EMIT_FADE;
+        let was = self.gain;
+        self.gain = if self.wanted {
+            (was + step).min(1.0)
+        } else {
+            (was - step).max(0.0)
+        };
+        if self.gain <= 0.0 && !self.wanted {
+            self.player.stop();
+            self.cue = None;
+            self.loading = None;
+        } else if self.gain != was {
+            let db = self.db + 20.0 * self.gain.max(0.001).log10();
+            self.player.set_volume_db(db.max(SILENT_DB));
+        }
+    }
+}
+
+/// `stream`'s own copy going round (an Ogg; others as they are).
+fn looping(stream: Gd<AudioStream>) -> Gd<AudioStream> {
+    match stream.try_cast::<AudioStreamOggVorbis>() {
+        Ok(ogg) => {
+            let mut own = ogg.duplicate_resource();
+            own.set_loop(true);
+            own.upcast()
+        }
+        Err(other) => other,
     }
 }
 
@@ -555,6 +646,7 @@ pub struct Audio {
     muffled: bool,
     ambience: Loop,
     music: Loop,
+    emitters: Vec<Emitter>,
     /// The sound's own time this frame (starting sounds, the waiting ones,
     /// the ears), and that of the last frames (files loading ahead aside).
     cost: Duration,
@@ -594,6 +686,9 @@ impl Audio {
             .collect();
         let ambience = Loop::new(&mut root, "Ambience", AMBIENCE_FADE);
         let music = Loop::new(&mut root, "Music", MUSIC_FADE);
+        let emitters = (0..crate::hearing::EMIT_MAX)
+            .map(|i| Emitter::new(&mut root, i))
+            .collect();
         // the loops are music and ambience, loaded when they play
         let to_load: BTreeSet<String> = manifest
             .cues
@@ -618,6 +713,7 @@ impl Audio {
             muffled: false,
             ambience,
             music,
+            emitters,
             cost: Duration::ZERO,
             costs: VecDeque::new(),
         }
@@ -784,6 +880,9 @@ impl Audio {
         }
         if let Some(ears) = ears {
             self.ears.set_global_transform(ears);
+        }
+        for e in &mut self.emitters {
+            e.update(delta as f32, &mut self.picker);
         }
         let now = self.clock;
         for which in [Which::Ambience, Which::Music] {
@@ -971,6 +1070,88 @@ impl Audio {
             found.as_ref().map(|(n, c)| (n.clone(), c)),
             &mut self.picker,
         );
+    }
+
+    /// The features' loops that should sound now: each a cue, its cell and
+    /// where that is. One already playing its cue near a wanted cell moves
+    /// there; the rest fade out, and free players take the new ones.
+    pub fn set_emitters(&mut self, wanted: &[(&str, (i32, i32), Vector3)]) {
+        let near = |a: (i32, i32), b: (i32, i32)| {
+            (a.0 - b.0).abs().max((a.1 - b.1).abs()) < crate::hearing::EMIT_APART
+        };
+        let mut left: Vec<&(&str, (i32, i32), Vector3)> = wanted.iter().collect();
+        for e in &mut self.emitters {
+            let Some(cue) = e.cue.clone() else {
+                continue;
+            };
+            let keep = left
+                .iter()
+                .position(|(c, cell, _)| *c == cue && near(*cell, e.cell));
+            match keep {
+                Some(i) => {
+                    let (_, cell, at) = left.swap_remove(i);
+                    e.cell = *cell;
+                    e.player.set_global_position(*at);
+                    e.wanted = true;
+                }
+                None => e.wanted = false,
+            }
+        }
+        for (cue, cell, at) in left {
+            let Some(e) = self.emitters.iter_mut().find(|e| e.cue.is_none()) else {
+                break;
+            };
+            self.asked += 1;
+            let found = self
+                .manifest
+                .resolve(&[*cue])
+                .map(|(n, c)| (n.to_string(), c.clone()));
+            let heard = Heard {
+                seq: self.asked,
+                asked: cue.to_string(),
+                cue: found.as_ref().map(|(n, _)| n.clone()),
+                at: Some(*at),
+                voiced: found.is_some(),
+            };
+            if self.heard.len() == HEARD_KEPT {
+                self.heard.pop_front();
+            }
+            self.heard.push_back(heard);
+            let Some((_, c)) = found else {
+                continue;
+            };
+            let v = self.picker.variant(c.files.len(), None);
+            let path = format!("{AUDIO_DIR}/{}", c.files[v]);
+            let mut loader = ResourceLoader::singleton();
+            let asked = loader.exists(&path)
+                && loader
+                    .call("load_threaded_request", &[path.to_variant()])
+                    .try_to::<i64>()
+                    .ok()
+                    == Some(0);
+            if !asked {
+                godot_warn!("renethack: the loop {path} is missing (not imported?)");
+                continue;
+            }
+            e.cue = Some(cue.to_string());
+            e.cell = *cell;
+            e.player.set_bus(&c.bus);
+            e.player.set_max_distance(c.range);
+            e.player.set_global_position(*at);
+            e.db = c.volume.at(self.picker.unit());
+            e.gain = 0.0;
+            e.wanted = true;
+            e.loading = Some(path);
+        }
+    }
+
+    /// The features' loops sounding or fading in: cue and cell.
+    pub fn emitters_now(&self) -> Vec<(&str, (i32, i32))> {
+        self.emitters
+            .iter()
+            .filter(|e| e.wanted)
+            .filter_map(|e| Some((e.cue.as_deref()?, e.cell)))
+            .collect()
     }
 
     /// The ambience playing and its gain (0..=1, while it fades in).

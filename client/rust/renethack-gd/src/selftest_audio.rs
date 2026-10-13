@@ -21,8 +21,10 @@
 //! of ESP the hero senses the pet walking, and hears none of its steps.
 //! The blindfold off, a wand of cold zapped at the nearest wall sounds
 //! its bolt where it is first seen and its bounce where it last lit a
-//! cell; a scroll of fire's explosion sounds once. The sound's own time a
-//! frame stays small.
+//! cell; a scroll of fire's explosion sounds once. A fountain wished up
+//! under the hero sounds its loop there once the hero steps off it and
+//! sees it (a loop of the test's own). The sound's own time a frame stays
+//! small.
 
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
@@ -90,6 +92,8 @@ static FIGHTING: AtomicBool = AtomicBool::new(false);
 static FORCING: AtomicBool = AtomicBool::new(false);
 /// Where the settings button is on the screen.
 static BUTTON: Mutex<Option<Vector2>> = Mutex::new(None);
+/// The cell of the fountain wished up.
+static FOUNTAIN: Mutex<Option<(i32, i32)>> = Mutex::new(None);
 
 pub(super) fn audio() -> Vec<Step> {
     let mut steps = title();
@@ -478,11 +482,47 @@ fn game() -> Vec<Step> {
                 .cloned()
                 .collect();
             if blasts.len() > 1 {
-                return Err(format!("one explosion heard {} times: {blasts:?}", blasts.len()));
+                return Err(format!(
+                    "one explosion heard {} times: {blasts:?}",
+                    blasts.len()
+                ));
             }
             Ok(blasts
                 .first()
                 .is_some_and(|h| h.asked == "blast.fiery" && placed(h)))
+        }),
+        Step::Call("a fountain's loop of the test's own", |g| {
+            let a = &mut g.ui.as_mut().ok_or("no UI")?.audio;
+            let file = a
+                .manifest()
+                .cues
+                .get("jingle.levelup")
+                .map(|c| c.files[0].clone());
+            a.add_cue(
+                "emit.fountain",
+                test_loop(&file.ok_or("no jingle")?, "Ambience")?,
+            );
+            mark(g)
+        }),
+    ]);
+    // onto bare floor first: what lies on a cell hides its floor from
+    // the map (the gold dropped here)
+    steps.extend([
+        Step::KeyFrom("a step onto bare floor", |g| open_way(g).map(plain)),
+        Step::Request("a command on bare floor", command),
+    ]);
+    steps.extend(wish("fountain"));
+    steps.extend([
+        Step::Call("where the fountain is", |g| {
+            *FOUNTAIN.lock().unwrap() = g.world.map.hero();
+            Ok(())
+        }),
+        Step::KeyFrom("a step off it", |g| open_way(g).map(plain)),
+        Step::Request("a command beside the fountain", command),
+        Step::Wait("the fountain sounding where it stands", |g| {
+            let fountain = FOUNTAIN.lock().unwrap().ok_or("no fountain")?;
+            let asked = heard_like(g, "emit.fountain")?.is_some_and(|h| near(&h, fountain));
+            Ok(asked && player(g)?.emitters_now() == [("emit.fountain", fountain)])
         }),
         Step::Call("the sound's time a frame", |g| {
             let ms = |d: std::time::Duration| d.as_secs_f64() * 1000.0;

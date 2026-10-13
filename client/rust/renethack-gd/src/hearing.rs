@@ -266,6 +266,64 @@ pub fn named(world: &World, catalog: &Catalog, text: &str) -> Option<(i32, i32)>
     best.map(|(c, _)| c)
 }
 
+/// Features near the hero whose loops play (lava, water, fountains):
+/// within this many cells, at most this many, and a pool of many cells
+/// heard once (another of a cue's loops stands this far from the first).
+pub const EMIT_RADIUS: i32 = 10;
+pub const EMIT_MAX: usize = 4;
+pub const EMIT_APART: i32 = 4;
+
+/// The loop a feature sounds with.
+pub fn emitter_cue(t: Terrain) -> Option<&'static str> {
+    match t {
+        Terrain::Lava | Terrain::LavaWall => Some("emit.lava"),
+        Terrain::Pool | Terrain::Water => Some("emit.water"),
+        Terrain::Fountain => Some("emit.fountain"),
+        _ => None,
+    }
+}
+
+/// The features near the hero that sound: those the hero has seen (the
+/// map remembers them), nearest first, at most `EMIT_MAX`; a pool or a
+/// moat of many cells is heard once.
+pub fn emitters(world: &World, catalog: &Catalog) -> Vec<(&'static str, (i32, i32))> {
+    let Some((hx, hy)) = world.hero() else {
+        return Vec::new();
+    };
+    let r = EMIT_RADIUS;
+    let mut found: Vec<(i32, &'static str, (i32, i32))> = Vec::new();
+    for y in hy - r..=hy + r {
+        for x in hx - r..=hx + r {
+            let cue = world
+                .map
+                .cell(x, y)
+                .and_then(|c| nh_world::cell_terrain(c, catalog))
+                .and_then(emitter_cue);
+            if let Some(cue) = cue {
+                found.push(((x - hx).abs().max((y - hy).abs()), cue, (x, y)));
+            }
+        }
+    }
+    found.sort_by_key(|&(d, _, (x, y))| (d, y, x));
+    chosen(found)
+}
+
+/// Of the features found (with their distances, nearest first), those
+/// that sound: none closer than `EMIT_APART` to another of its cue.
+fn chosen(found: Vec<(i32, &'static str, (i32, i32))>) -> Vec<(&'static str, (i32, i32))> {
+    let mut out: Vec<(&'static str, (i32, i32))> = Vec::new();
+    for (_, cue, c) in found {
+        if out.len() == EMIT_MAX {
+            break;
+        }
+        let apart = |o: (i32, i32)| (o.0 - c.0).abs().max((o.1 - c.1).abs()) >= EMIT_APART;
+        if out.iter().all(|&(k, o)| k != cue || apart(o)) {
+            out.push((cue, c));
+        }
+    }
+    out
+}
+
 /// A door beside the hero (the one their door messages are about).
 pub fn door_beside(world: &World, catalog: &Catalog) -> Option<(i32, i32)> {
     let (hx, hy) = world.hero()?;
@@ -547,6 +605,29 @@ mod tests {
             Some("healing")
         );
         assert_eq!(school("Name  Level Category Fail Retention"), None);
+    }
+
+    #[test]
+    fn features_sound_nearest_first_and_a_pool_once() {
+        let pool: Vec<_> = (0..6).map(|x| (x, "emit.water", (10 + x, 5))).collect();
+        let mut found = vec![(1, "emit.fountain", (9, 4))];
+        found.extend(pool);
+        found.push((7, "emit.lava", (20, 5)));
+        found.sort_by_key(|&(d, _, _)| d);
+        let got = chosen(found);
+        assert_eq!(
+            got,
+            [
+                ("emit.water", (10, 5)),
+                ("emit.fountain", (9, 4)),
+                ("emit.water", (14, 5)),
+                ("emit.lava", (20, 5)),
+            ]
+        );
+        let many: Vec<_> = (0..9).map(|i| (i, "emit.fountain", (i * 5, 0))).collect();
+        assert_eq!(chosen(many).len(), EMIT_MAX, "four at most");
+        assert_eq!(emitter_cue(Terrain::Water), Some("emit.water"));
+        assert_eq!(emitter_cue(Terrain::Floor), None);
     }
 
     #[test]
