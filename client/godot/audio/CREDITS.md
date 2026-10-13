@@ -13,9 +13,10 @@ clause on technical measures).
 Changes made: the files picked from each source were cut (silence trimmed,
 takes split apart, a stretch taken out of a long recording), turned into
 mono 44.1 kHz WAV (short sounds) or re-encoded as Ogg Vorbis (ambience,
-music, jingles), and made louder or quieter to one loudness per kind; a
-loop's end was crossfaded into its start. The ambience beds listed under
-Mixes are made of the sources they name.
+music, jingles; in mono, the loops placed on lava, water and fountains),
+and made louder or quieter to one loudness per kind; a loop's end was
+crossfaded into its start. The ambience beds listed under Mixes are made
+of the sources they name.
 
 `tools/fetch_audio.py` fetches these files again from the recipe in
 `sources.json`, checks the downloads against `audio.lock.json` and writes
@@ -82,6 +83,9 @@ for which cue.
 | `ccby/davidkbd/` | Path of Legends: Well of Despair | David KBD, CC BY 4.0 | https://davidkbd.itch.io/path-of-legends-rpg-orchestral-music-pack |
 | `ccby/dillonbecker/hero/` | Super Dialogue Audio Pack v1: the hero's cries | Dillon Becker, with the voices of Alex Brodie, Ian Lampert, Sean Lenhart and Karen Cenon, CC BY 4.0; Attribution should go to Dillon Becker | https://dillonbecker.itch.io/sdap |
 | `ccby/dillonbecker/monsters/` | Super Dialogue Audio Pack v1: cries of hurt and death | Dillon Becker, with the voices of Alex Brodie, Ian Lampert, Sean Lenhart and Karen Cenon, CC BY 4.0; Attribution should go to Dillon Becker | https://dillonbecker.itch.io/sdap |
+| `ccby/erxer1/water/` | Water flowing sound | erxer1, CC BY 3.0 | https://opengameart.org/content/water-flowing-sound |
+| `ccby/kurt/stream/` | Stream Sounds | kurt, CC BY 3.0 | https://opengameart.org/content/stream-sounds |
+| `ccby/lamoot/lava/` | Lava loop (from Yo Frankie!) | Lamoot, for the Blender Foundation, CC BY 3.0 | https://opengameart.org/content/lava-loop |
 | `ccby/leohpaz/magic/` | 8 Heals and Buffs SFX: sleep | leohpaz, CC BY 4.0 | https://opengameart.org/content/8-heals-and-buffs-sfx |
 | `ccby/leohpaz/magic/` | 8 Magic Attacks: fire, ice and water bursts, thunder, a charge, poison | leohpaz, CC BY 4.0 | https://opengameart.org/content/8-magic-attacks |
 | `ccby/lrsf/coins/` | Coins Sound Effects Library | Little Robot Sound Factory, CC BY 3.0; www.littlerobotsoundfactory.com | https://opengameart.org/content/coins-sound-effects-library |
@@ -112,8 +116,6 @@ for which cue.
 | mixes | Dripping Water | spookymodem, CC BY 3.0 | https://opengameart.org/content/dripping-water |
 | mixes | Fantasy Sound Effects Library: a cave's ambience | Little Robot Sound Factory, CC BY 3.0; www.littlerobotsoundfactory.com | https://opengameart.org/content/fantasy-sound-effects-library |
 | mixes | Fire Loop | Iwan Gabovitch (qubodup), CC BY 3.0 | https://opengameart.org/content/fire-loop |
-| mixes | Lava loop (from Yo Frankie!) | Lamoot, for the Blender Foundation, CC BY 3.0 | https://opengameart.org/content/lava-loop |
-| mixes | Water flowing sound | erxer1, CC BY 3.0 | https://opengameart.org/content/water-flowing-sound |
 | mixes | Wind Loop | Jordan Irwin (AntumDeluge), from a recording by InspectorJ, CC BY 3.0 | https://opengameart.org/content/wind-loop |
 
 ## Mixes

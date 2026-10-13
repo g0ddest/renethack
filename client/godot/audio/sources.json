@@ -1,10 +1,11 @@
 {
-  "comment": "The sounds tools/fetch_audio.py fetches: files and archives (zip, 7z, rar) at fixed URLs or itch.io uploads; the files picked from under `root` by pattern are prepared by their kind (targets: loudness in LUFS, true-peak ceiling in dBTP, channels, format, Vorbis quality) and written to <dest>, cc0/ or ccby/ by licence. sfx: trimmed mono WAV; loop, music, jingle: stereo Ogg; mono: an Ogg as mono WAV (Kenney's placeholders); keep: as it is. Optional per item: cut [start, end] s, max s (a long ring cut short), limit dB (a limiter may take that much off the peaks), split (takes cut at silences), seam s (a loop's crossfade), declick ms (a loop's ends faded, its length kept), gain dB, rename; each a value or a map by file. mixes: ambience beds made of layers (sources by id). credit: what CREDITS.md says. audio.lock.json records each download's sha256.",
+  "comment": "The sounds tools/fetch_audio.py fetches: files and archives (zip, 7z, rar) at fixed URLs or itch.io uploads; the files picked from under `root` by pattern are prepared by their kind (targets: loudness in LUFS, true-peak ceiling in dBTP, channels, format, Vorbis quality) and written to <dest>, cc0/ or ccby/ by licence. sfx: trimmed mono WAV; loop, music, jingle: stereo Ogg; emitter: a loop as mono Ogg (placed on lava, water, a fountain); mono: an Ogg as mono WAV (Kenney's placeholders); keep: as it is. Optional per item: cut [start, end] s, max s (a long ring cut short), limit dB (a limiter may take that much off the peaks), split (takes cut at silences), seam s (a loop's crossfade), declick ms (a loop's ends faded, its length kept), gain dB, rename; each a value or a map by file. mixes: ambience beds made of layers (sources by id). credit: what CREDITS.md says. audio.lock.json records each download's sha256.",
   "roots": ["cc0", "ccby"],
   "targets": {
     "sfx": {"lufs": -18, "ceiling": -1, "channels": 1, "format": "wav"},
     "jingle": {"lufs": -18, "ceiling": -1, "channels": 2, "format": "ogg", "quality": 0.5},
     "loop": {"lufs": -23, "ceiling": -2, "channels": 2, "format": "ogg", "quality": 0.35},
+    "emitter": {"lufs": -23, "ceiling": -2, "channels": 1, "format": "ogg", "quality": 0.35},
     "music": {"lufs": -23, "ceiling": -1, "channels": 2, "format": "ogg", "quality": 0.4}
   },
   "sources": [
@@ -1416,6 +1417,53 @@
         "license": "CC0",
         "page": "https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx"
       }
+    },
+    {
+      "id": "lava-loop",
+      "url": "https://opengameart.org/sites/default/files/lavaloop.zip",
+      "files": ["LavaLoop.wav"],
+      "dest": "ccby/lamoot/lava",
+      "kind": "emitter",
+      "seam": 1,
+      "use": "lava where it lies; the beds of Gehennom and the Plane of Fire",
+      "credit": {
+        "what": "Lava loop (from Yo Frankie!)",
+        "author": "Lamoot, for the Blender Foundation",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/lava-loop"
+      }
+    },
+    {
+      "id": "erxer-water",
+      "url": "https://opengameart.org/sites/default/files/water_0.ogg",
+      "files": ["water_0.ogg"],
+      "dest": "ccby/erxer1/water",
+      "kind": "emitter",
+      "cut": [3, 33],
+      "seam": 2,
+      "limit": 4,
+      "use": "a fountain where it stands; the bed of the Plane of Water",
+      "credit": {
+        "what": "Water flowing sound",
+        "author": "erxer1",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/water-flowing-sound"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/stream-waterfall.zip",
+      "root": "stream-waterfall/",
+      "files": ["stream1.ogg", "stream4.ogg"],
+      "dest": "ccby/kurt/stream",
+      "kind": "emitter",
+      "seam": 1,
+      "use": "pools, moats and the Plane of Water where they lie",
+      "credit": {
+        "what": "Stream Sounds",
+        "author": "kurt",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/stream-sounds"
+      }
     }
   ],
   "layers": [
@@ -1458,16 +1506,6 @@
         "author": "Jesús Lastra (jalastram)",
         "license": "CC BY 3.0",
         "page": "https://opengameart.org/content/dark-ambiance-cries-from-hell"
-      }
-    },
-    {
-      "id": "lava-loop",
-      "url": "https://opengameart.org/sites/default/files/lavaloop.zip",
-      "credit": {
-        "what": "Lava loop (from Yo Frankie!)",
-        "author": "Lamoot, for the Blender Foundation",
-        "license": "CC BY 3.0",
-        "page": "https://opengameart.org/content/lava-loop"
       }
     },
     {
@@ -1645,16 +1683,6 @@
         "author": "Leonardo Calvo (thesoundrack)",
         "license": "CC BY 4.0",
         "page": "https://thesoundrack.itch.io/designed-drone-sound-pack"
-      }
-    },
-    {
-      "id": "erxer-water",
-      "url": "https://opengameart.org/sites/default/files/water_0.ogg",
-      "credit": {
-        "what": "Water flowing sound",
-        "author": "erxer1",
-        "license": "CC BY 3.0",
-        "page": "https://opengameart.org/content/water-flowing-sound"
       }
     }
   ],

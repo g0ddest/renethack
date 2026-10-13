@@ -16,6 +16,8 @@ client/godot/audio/<dest>:
   a play, where a WAV's takes microseconds), silence trimmed off both ends;
 - loop, music, jingle: stereo Ogg Vorbis; a loop's end can be crossfaded
   into its start so that it goes round without a seam;
+- emitter: a loop as mono Ogg Vorbis, for a sound placed in the world (a
+  lava pool's, a fountain's), which the engine pans itself;
 - mono: an Ogg as mono WAV, otherwise untouched (the placeholders);
 - keep: the file as it is.
 
@@ -791,9 +793,10 @@ clause on technical measures).
 Changes made: the files picked from each source were cut (silence trimmed,
 takes split apart, a stretch taken out of a long recording), turned into
 mono 44.1 kHz WAV (short sounds) or re-encoded as Ogg Vorbis (ambience,
-music, jingles), and made louder or quieter to one loudness per kind; a
-loop's end was crossfaded into its start. The ambience beds listed under
-Mixes are made of the sources they name.
+music, jingles; in mono, the loops placed on lava, water and fountains),
+and made louder or quieter to one loudness per kind; a loop's end was
+crossfaded into its start. The ambience beds listed under Mixes are made
+of the sources they name.
 
 `tools/fetch_audio.py` fetches these files again from the recipe in
 `sources.json`, checks the downloads against `audio.lock.json` and writes
