@@ -38,6 +38,8 @@ mod conditions_tests;
 mod corridors;
 #[path = "selftest_credits.rs"]
 mod credits_tests;
+#[path = "selftest_crowd.rs"]
+mod crowd_tests;
 #[path = "selftest_doll.rs"]
 mod doll_tests;
 #[path = "selftest_effects.rs"]
@@ -4784,6 +4786,7 @@ impl SelfTest {
             "effects" => effects::effects(),
             "rays" => effects::rays(),
             "blasts" => effects::blasts(),
+            "crowd" => crowd_tests::crowd(),
             "pickers" => input_ru::pickers(),
             "help" => help_tests::help(),
             "settings" => settings_tests::settings(),
@@ -4868,6 +4871,11 @@ impl SelfTest {
     }
 
     /// One frame of the scenario (called at the end of `process()`).
+    /// The step under way (the frame log).
+    pub fn step(&self) -> String {
+        self.steps.front().map(describe).unwrap_or_default()
+    }
+
     pub fn tick(&mut self, game: &mut RenethackGame) {
         if self.finished {
             return;

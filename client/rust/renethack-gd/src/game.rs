@@ -30,6 +30,7 @@ use nh_world::{
 };
 
 use crate::dialogs::Dialogs;
+use crate::frame_log::{self, FrameLog};
 use crate::gamepad::{OskOp, Pad, PadButton, PadCtx, PadKind, PadOut, RADIAL, RadialEntry};
 use crate::hud::Hud;
 use crate::i18n::{self, EngineKind, Lang};
@@ -336,6 +337,8 @@ pub struct RenethackGame {
     close_deadline: Option<Instant>,
     quitting: bool,
     selftest: Option<SelfTest>,
+    /// RENETHACK_FRAME_LOG: a line a frame (`frame_log.rs`).
+    frame_log: Option<FrameLog>,
     /// The next engine's seed; else RENETHACK_SEED (else the self-test's).
     pub(crate) seed: Option<u64>,
     /// Self-tests only: the next game in debug (wizard) mode, its
@@ -409,6 +412,10 @@ pub struct RenethackGame {
     /// Frames processed, and whether none is drawn (headless): frames are
     /// counted by those processed then.
     frames: u64,
+    /// Requests the engine made, every game of the session (the frame log).
+    requests: u64,
+    /// The map's last sync, milliseconds (the frame log).
+    map_ms: f64,
     pub(crate) headless: bool,
     /// The start-up veil (the boot splash's colour), the cue pulsing on
     /// it, and when it began to lift (None: still down).
@@ -527,6 +534,7 @@ impl INode for RenethackGame {
             close_deadline: None,
             quitting: false,
             selftest: None,
+            frame_log: FrameLog::from_env(),
             mouse_pos: None,
             hover: Hover::default(),
             seed: None,
@@ -561,6 +569,8 @@ impl INode for RenethackGame {
             warm_heavy: false,
             title_frames: 0,
             frames: 0,
+            requests: 0,
+            map_ms: 0.0,
             headless: false,
             veil: None,
             veil_cue: None,
@@ -737,12 +747,24 @@ impl INode for RenethackGame {
         if self.ui.is_none() || self.quitting {
             return;
         }
+        if self.frame_log.is_some() {
+            let viewport = self.base().get_viewport().map(|v| v.get_viewport_rid());
+            if let Some(log) = self.frame_log.as_mut() {
+                if let Some(rid) = viewport {
+                    log.set_viewport(rid);
+                }
+                log.begin();
+            }
+        }
+        let mut parts = frame_log::Parts::default();
+        let ms = |t: Instant| t.elapsed().as_secs_f64() * 1000.0;
         // input first: Godot delivered this frame's keys before process(), so
         // they belong to the prompt the player saw, or to the typeahead while
         // the engine works; a request read afterwards never gets them (the
         // typeahead policy drops them when it opens a modal question)
         self.frames += 1;
         let stats = std::env::var_os("RENETHACK_FRAME_STATS").is_some();
+        let t = Instant::now();
         self.time_title_frame(stats);
         self.lift_veil(stats);
         // the map keeps no frame's budget while nothing of it shows
@@ -751,20 +773,28 @@ impl INode for RenethackGame {
             ui.map.set_veiled(veiled);
         }
         self.warm_up();
+        parts.warm = ms(t);
         self.prof = stats.then(Vec::new);
         let t = Instant::now();
         self.pad_tick();
         self.drain_ui();
         self.sync_settings_page();
         self.sync_credits_page();
+        parts.input = ms(t);
         self.lap("input", t);
         let t = Instant::now();
         self.pump();
+        parts.pump = ms(t);
         self.lap("pump", t);
         self.drive();
+        let built = self.ui.as_ref().map_or(0, |ui| ui.map.models_built());
         let t = Instant::now();
+        self.map_ms = 0.0;
         self.sync_views(delta);
+        parts.views = ms(t);
+        parts.map = self.map_ms;
         self.lap("views", t);
+        let built = self.ui.as_ref().map_or(0, |ui| ui.map.models_built()) - built;
         if let Some(p) = self.prof.take() {
             let total: f64 = p
                 .iter()
@@ -787,6 +817,7 @@ impl INode for RenethackGame {
         let map_turn = veiled
             || !matches!(self.title_warm, TitleWarm::Dialogs | TitleWarm::Glyphs)
             || self.state != GameState::Title;
+        let t = Instant::now();
         if let Some(ui) = self.ui.as_mut() {
             if map_turn && (veiled || !self.warm_heavy) {
                 ui.map.preload_step();
@@ -794,9 +825,11 @@ impl INode for RenethackGame {
                 ui.map.title_tick();
             }
         }
+        parts.preload = ms(t);
         self.watch_engine();
         self.achieve(delta);
         self.update_audio(delta);
+        let t = Instant::now();
         if !self.quitting
             && let Some(mut test) = self.selftest.take()
         {
@@ -807,6 +840,36 @@ impl INode for RenethackGame {
                 godot_error!("renethack: the self-test panicked");
             }
             self.selftest = Some(test);
+        }
+        parts.test = ms(t);
+        if self.frame_log.is_some() {
+            let firsts = self
+                .ui
+                .as_mut()
+                .map(|ui| ui.map.take_firsts())
+                .unwrap_or_default();
+            let context = frame_log::Context {
+                state: format!("{:?}", self.state),
+                veil: match (&self.veil, self.veil_lift) {
+                    (None, _) => 0,
+                    (Some(_), Some(_)) => 1,
+                    (Some(_), None) => 2,
+                },
+                level: self.world.map.generation(),
+                depth: self.world.depth().map_or(0, i64::from),
+                branch: format!("{:?}", self.world.branch()),
+                built,
+                requests: self.requests,
+                firsts: firsts.join(" "),
+                step: self
+                    .selftest
+                    .as_ref()
+                    .map(SelfTest::step)
+                    .unwrap_or_default(),
+            };
+            if let Some(log) = self.frame_log.as_mut() {
+                log.end(parts, context);
+            }
         }
     }
 
@@ -1382,6 +1445,7 @@ impl RenethackGame {
             }
             SessionEvent::Win(w) => self.world.apply(&w),
             SessionEvent::Request { id, req } => {
+                self.requests += 1;
                 let prompt = self.world.on_request(&req);
                 // the turn resolved: the hero's use is shown
                 if let Some(u) = self.uses.on_prompt(&prompt, &self.world)
@@ -3701,7 +3765,9 @@ impl RenethackGame {
         };
         if let Some(cat) = catalog.as_deref() {
             ui.map.set_reduce_effects(self.settings.reduce_effects);
+            let t = Instant::now();
             ui.map.sync(&mut self.world, cat, delta);
+            self.map_ms = t.elapsed().as_secs_f64() * 1000.0;
         }
         // ^P: tty shows the previous messages; here the whole log
         if std::mem::take(&mut self.world.wants_history) {

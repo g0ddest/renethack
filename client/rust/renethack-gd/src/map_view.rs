@@ -4747,6 +4747,17 @@ impl MapView {
             .map_or(16.0 / 9.0, |s| s.x / s.y)
     }
 
+    /// Models built since the game started (the frame log).
+    pub fn models_built(&self) -> usize {
+        self.art.counts().1
+    }
+
+    /// The models drawn for the first time since the last call (the frame
+    /// log).
+    pub fn take_firsts(&mut self) -> Vec<String> {
+        self.art.take_firsts()
+    }
+
     /// Forget every cell (a new game).
     pub fn clear(&mut self) {
         // a game starts: the rehearsal is over, the title scene gone, the

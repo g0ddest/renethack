@@ -331,6 +331,11 @@ pub struct Art {
     live: usize,
     /// Instances ever built (self-tests watch the pool work).
     built: usize,
+    /// The models (and skins) ever handed out, and the names of those
+    /// handed out for the first time since `take_firsts` (the frame log:
+    /// what a frame drew that nothing had before).
+    taken: HashSet<(usize, Skin)>,
+    firsts: Vec<String>,
     phase: u32,
     /// What is still to load ahead of need, last first.
     preload: Vec<Preload>,
@@ -407,6 +412,8 @@ impl Art {
             warned: HashSet::new(),
             live: 0,
             built: 0,
+            taken: HashSet::new(),
+            firsts: Vec::new(),
             phase: 0,
             preload: Vec::new(),
             requested: false,
@@ -748,6 +755,11 @@ impl Art {
         (self.live, self.built)
     }
 
+    /// The models handed out for the first time since the last call.
+    pub fn take_firsts(&mut self) -> Vec<String> {
+        std::mem::take(&mut self.firsts)
+    }
+
     pub fn mesh(&mut self, key: MeshKey) -> Gd<Mesh> {
         self.meshes
             .entry(key)
@@ -980,6 +992,10 @@ impl Art {
     pub fn take(&mut self, look: &ModelLook) -> Model {
         let key = PoolKey::of(look);
         self.live += 1;
+        if self.taken.insert((key.model, key.skin)) {
+            let name = self.manifest.model_at(key.model).0;
+            self.firsts.push(format!("{name}/{:?}", key.skin));
+        }
         if let Some(mut m) = self.pool.get_mut(&key).and_then(Vec::pop) {
             m.node.set_visible(true);
             self.start(&mut m, look);
