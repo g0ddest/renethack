@@ -42,11 +42,11 @@
     {
       "url": "https://kenney.nl/media/pages/assets/interface-sounds/fa43c1dd4d-1677589452/kenney_interface-sounds.zip",
       "root": "Audio/",
-      "files": ["click_*.ogg", "close_*.ogg", "error_00[1-4].ogg", "maximize_00[1-8].ogg", "open_*.ogg", "select_00[1-4].ogg", "tick_*.ogg"],
+      "files": ["click_*.ogg", "close_*.ogg", "error_00[1-4].ogg", "open_*.ogg", "select_00[1-4].ogg", "tick_*.ogg"],
       "license_files": ["License.txt"],
       "dest": "cc0/kenney/interface",
       "kind": "mono",
-      "use": "the interface: clicks, panels opening and closing; zaps and spells until better",
+      "use": "the interface: clicks, panels opening and closing",
       "credit": {
         "what": "Interface Sounds: clicks, ticks, panels opening and closing",
         "author": "Kenney",
@@ -1219,6 +1219,202 @@
         "author": "David KBD",
         "license": "CC BY 4.0",
         "page": "https://davidkbd.itch.io/path-of-legends-rpg-orchestral-music-pack"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/8_rpg_battle_magic_sfx_free_samples.zip",
+      "files": ["04_Fire_explosion_04_medium.wav", "13_Ice_explosion_01.wav", "22_Water_02.wav", "46_Poison_01.wav"],
+      "dest": "ccby/leohpaz/magic",
+      "kind": "sfx",
+      "limit": 3,
+      "max": 1.8,
+      "use": "a fiery, frosty, wet or noxious blast; poison",
+      "credit": {
+        "what": "8 Magic Attacks: fire, ice and water bursts, thunder, a charge, poison",
+        "author": "leohpaz",
+        "license": "CC BY 4.0",
+        "page": "https://opengameart.org/content/8-magic-attacks"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/8_rpg_battle_magic_sfx_free_samples.zip",
+      "files": ["18_Thunder_02.wav"],
+      "dest": "ccby/leohpaz/magic",
+      "kind": "sfx",
+      "limit": 3,
+      "max": 2.0,
+      "use": "a bolt of lightning",
+      "credit": {
+        "what": "8 Magic Attacks: fire, ice and water bursts, thunder, a charge, poison",
+        "author": "leohpaz",
+        "license": "CC BY 4.0",
+        "page": "https://opengameart.org/content/8-magic-attacks"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/8_rpg_battle_magic_sfx_free_samples.zip",
+      "files": ["45_Charge_05.wav"],
+      "dest": "ccby/leohpaz/magic",
+      "kind": "sfx",
+      "limit": 3,
+      "max": 1.4,
+      "use": "a wand zapped; a force bolt; a plain ray",
+      "credit": {
+        "what": "8 Magic Attacks: fire, ice and water bursts, thunder, a charge, poison",
+        "author": "leohpaz",
+        "license": "CC BY 4.0",
+        "page": "https://opengameart.org/content/8-magic-attacks"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/8_rpg_heals_buffs_sfx_samples.zip",
+      "files": ["44_Sleep_01.wav"],
+      "dest": "ccby/leohpaz/magic",
+      "kind": "sfx",
+      "limit": 3,
+      "max": 2.0,
+      "use": "a sleep ray",
+      "credit": {
+        "what": "8 Heals and Buffs SFX: sleep",
+        "author": "leohpaz",
+        "license": "CC BY 4.0",
+        "page": "https://opengameart.org/content/8-heals-and-buffs-sfx"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/qubodupIceAndElectricitySpells.7z",
+      "root": "qubodupIceAndElectricitySpells/",
+      "files": ["qubodupIceDamage0[123].flac", "qubodupIceDamage03[bdef].flac"],
+      "dest": "ccby/qubodup/ice",
+      "kind": "sfx",
+      "use": "cold striking",
+      "credit": {
+        "what": "Ice & Electricity Magic",
+        "author": "Iwan Gabovitch (qubodup)",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/ice-electricity-magic",
+        "notice": "Ice and Electricity Magic by Iwan 'qubodup' Gabovitch http://opengameart.org/users/qubodup"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/qubodupIceAndElectricitySpells.7z",
+      "root": "qubodupIceAndElectricitySpells/",
+      "files": ["qubodupElectricityDamage0[12].flac"],
+      "dest": "ccby/qubodup/ice",
+      "kind": "sfx",
+      "use": "lightning striking",
+      "credit": {
+        "what": "Ice & Electricity Magic",
+        "author": "Iwan Gabovitch (qubodup)",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/ice-electricity-magic",
+        "notice": "Ice and Electricity Magic by Iwan 'qubodup' Gabovitch http://opengameart.org/users/qubodup"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/freeze.wav",
+      "dest": "cc0/artisticdude/freeze",
+      "kind": "sfx",
+      "max": 1.6,
+      "use": "a bolt of cold",
+      "credit": {
+        "what": "Freeze Spell",
+        "author": "artisticdude",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/freeze-spell-0"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/icespells.zip",
+      "files": ["coldsnap.wav", "ice.wav"],
+      "dest": "cc0/bart/ice",
+      "kind": "sfx",
+      "use": "a bolt of cold",
+      "credit": {
+        "what": "Ice spells",
+        "author": "bart",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/ice-spells"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/Magic%20Missiles.wav",
+      "dest": "ccby/spookymodem",
+      "kind": "sfx",
+      "max": 1.6,
+      "use": "magic missiles",
+      "credit": {
+        "what": "Magic Missiles",
+        "author": "spookymodem",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/magic-missiles"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/spells.7z",
+      "root": "spells/",
+      "files": ["Fire.aif", "Spell1.aif"],
+      "dest": "ccby/qubodup/spells",
+      "kind": "sfx",
+      "use": "a bolt of fire; a death ray",
+      "credit": {
+        "what": "Fire & Evil Spell",
+        "author": "Iwan Gabovitch (qubodup)",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/fire-evil-spell"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/foom_0.wav",
+      "dest": "ccby/bart/fire",
+      "kind": "sfx",
+      "use": "a bolt of fire",
+      "credit": {
+        "what": "Spell 4 (fire)",
+        "author": "bart",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/spell-4-fire"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/qubodup-PowerDrain.7z",
+      "root": "qubodup-PowerDrain/flac/",
+      "files": ["qubodup-PowerDrain.flac"],
+      "dest": "cc0/qubodup/drain",
+      "kind": "sfx",
+      "max": 1.8,
+      "use": "a death ray, a drain",
+      "credit": {
+        "what": "Energy Drain",
+        "author": "Iwan Gabovitch (qubodup)",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/energy-drain"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/lava.flac",
+      "dest": "ccby/qubodup/lava",
+      "kind": "sfx",
+      "use": "acid",
+      "credit": {
+        "what": "Lava splash",
+        "author": "Iwan Gabovitch (qubodup)",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/lava-splash"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/sfx_breaking_and_falling.zip",
+      "files": ["bfh1_rock_breaking_0[123].ogg"],
+      "dest": "cc0/rubberduck/rocks",
+      "kind": "sfx",
+      "max": 1.2,
+      "use": "a ray of digging",
+      "credit": {
+        "what": "75 CC0 breaking / falling / hit sfx: breaking rock",
+        "author": "rubberduck",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx"
       }
     }
   ],
