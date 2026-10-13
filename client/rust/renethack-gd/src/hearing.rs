@@ -7,6 +7,8 @@
 use nh_protocol::{Catalog, MonsterInfo};
 use nh_world::{Branch, Plane, Terrain, UseKind, World};
 
+use crate::vfx::{Blast, Ray};
+
 /// The floor a step on `t` sounds on, in `branch`; None: there is none
 /// (air, cloud).
 pub fn floor(t: Terrain, branch: Branch) -> Option<&'static str> {
@@ -225,6 +227,45 @@ impl Score {
     }
 }
 
+/// Where the monster a line begins with stands ("The red dragon breathes
+/// fire!"): of the monsters on the map one whose name follows "The ", the
+/// nearest the hero.
+pub fn named(world: &World, catalog: &Catalog, text: &str) -> Option<(i32, i32)> {
+    let rest = text.strip_prefix("The ")?;
+    let hero = world.hero().unwrap_or_default();
+    let mut best: Option<((i32, i32), i32)> = None;
+    for y in 0..nh_world::ROWNO {
+        for x in 0..nh_world::COLNO {
+            let Some(g) = world.map.cell(x, y).and_then(|c| c.glyph.as_ref()) else {
+                continue;
+            };
+            if g.kind != nh_protocol::GlyphKind::Mon || g.flags & nh_protocol::mg::HERO != 0 {
+                continue;
+            }
+            let Some(m) = g
+                .mon
+                .and_then(|i| catalog.monsters.iter().find(|m| m.idx == i))
+            else {
+                continue;
+            };
+            let names = [
+                Some(m.name.as_str()),
+                m.male.as_deref(),
+                m.female.as_deref(),
+            ];
+            let says = names
+                .into_iter()
+                .flatten()
+                .any(|n| rest.strip_prefix(n).is_some_and(|t| t.starts_with(' ')));
+            let d = (x - hero.0).abs().max((y - hero.1).abs());
+            if says && best.is_none_or(|(_, b)| d < b) {
+                best = Some(((x, y), d));
+            }
+        }
+    }
+    best.map(|(c, _)| c)
+}
+
 /// A door beside the hero (the one their door messages are about).
 pub fn door_beside(world: &World, catalog: &Catalog) -> Option<(i32, i32)> {
     let (hx, hy) = world.hero()?;
@@ -257,6 +298,61 @@ pub fn monster_named<'a>(catalog: &'a Catalog, name: &str) -> Option<&'a Monster
     catalog.monsters.iter().find(|m| {
         m.name == name || m.male.as_deref() == Some(name) || m.female.as_deref() == Some(name)
     })
+}
+
+/// A ray's kind in its cues (`ray.fire`, `ray.bounce.fire`): the visuals'
+/// own kinds; "" for one the client cannot tell.
+pub fn ray_name(r: Ray) -> &'static str {
+    match r {
+        Ray::Plain => "",
+        Ray::MagicMissile => "magic_missile",
+        Ray::Fire => "fire",
+        Ray::Cold => "cold",
+        Ray::Sleep => "sleep",
+        Ray::Death => "death",
+        Ray::Lightning => "lightning",
+        Ray::Poison => "poison",
+        Ray::Acid => "acid",
+        Ray::Dig => "dig",
+        Ray::Force => "force",
+    }
+}
+
+/// An explosion's kind in its cues (`blast.fiery`).
+pub fn blast_name(b: Blast) -> &'static str {
+    match b {
+        Blast::Dark => "dark",
+        Blast::Noxious => "noxious",
+        Blast::Muddy => "muddy",
+        Blast::Wet => "wet",
+        Blast::Magical => "magical",
+        Blast::Fiery => "fiery",
+        Blast::Frosty => "frosty",
+    }
+}
+
+/// `what.kind`, or `what` for no kind.
+pub fn kinded(what: &str, kind: &str) -> String {
+    if kind.is_empty() {
+        what.to_string()
+    } else {
+        format!("{what}.{kind}")
+    }
+}
+
+/// The school of a spell, from its line in the spell menu.
+pub fn school(line: &str) -> Option<&'static str> {
+    const SCHOOLS: [&str; 7] = [
+        "attack",
+        "healing",
+        "divination",
+        "enchantment",
+        "clerical",
+        "escape",
+        "matter",
+    ];
+    line.split_whitespace()
+        .find_map(|w| SCHOOLS.iter().find(|s| **s == w).copied())
 }
 
 /// The cue of a use, and when in its clip it sounds (seconds): the bottle
@@ -435,6 +531,22 @@ mod tests {
                 .is_empty()
         );
         assert!(!score.fighting());
+    }
+
+    #[test]
+    fn rays_blasts_and_spells_sound_by_their_kind() {
+        assert_eq!(kinded("ray", ray_name(Ray::Fire)), "ray.fire");
+        assert_eq!(kinded("ray", ray_name(Ray::Plain)), "ray");
+        assert_eq!(kinded("blast", blast_name(Blast::Frosty)), "blast.frosty");
+        assert_eq!(
+            school("force bolt             1   attack       0%     100%"),
+            Some("attack")
+        );
+        assert_eq!(
+            school("cure blindness  2  healing  12%  98%"),
+            Some("healing")
+        );
+        assert_eq!(school("Name  Level Category Fail Retention"), None);
     }
 
     #[test]

@@ -128,6 +128,11 @@ pub enum Place {
     Hero,
     /// At the door beside the hero (else where the hero stands).
     Door,
+    /// Where a ray last lit a cell (a bounce, a hit): else unplaced.
+    Ray,
+    /// Where the monster the line begins with stands ("The red dragon
+    /// breathes fire!"), the one nearest the hero: else unplaced.
+    Named,
     /// Unplaced: a jingle, a door seen somewhere.
     None,
 }
@@ -612,6 +617,17 @@ mod tests {
             ("You kill it!", "hit"),
             ("It bites!", "hero.hurt"),
             ("You are hit by an arrow.", "hit.missile"),
+            ("The bolt of fire bounces!", "ray.bounce.fire"),
+            ("The sleep ray hits you!", "ray.hit.sleep"),
+            ("The blast of frost hits the soldier ant.", "ray.hit.cold"),
+            ("The death ray whizzes by you!", "ray.miss"),
+            ("The red dragon breathes fire!", "breath.fire"),
+            (
+                "The black dragon breathes a disintegration blast!",
+                "breath.death",
+            ),
+            ("The hill orc shoots 2 arrows!", "missile.shoot"),
+            ("The kobold throws a crude dagger!", "missile.throw"),
             ("You are almost hit by a dagger.", "miss"),
             ("You hear a door open.", "distant.door"),
             ("You hear bubbling water.", "distant.water"),

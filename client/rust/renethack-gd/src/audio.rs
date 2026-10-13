@@ -878,13 +878,12 @@ impl Audio {
     }
 
     /// The messages since the last call that sound, each cue its rule
-    /// names: where the hero stands, at the door beside them, or
-    /// unplaced. The log of a game just started or restored is not news.
+    /// names, where `place` puts it for the line (None: unplaced). The log
+    /// of a game just started or restored is not news.
     pub fn hear_log(
         &mut self,
         log: &MessageLog,
-        hero: Option<Vector3>,
-        door: Option<Vector3>,
+        place: &dyn Fn(Place, &str) -> Option<Vector3>,
         female: bool,
     ) {
         let last = log.last_seq();
@@ -898,14 +897,10 @@ impl Audio {
         self.log_seq = Some(last);
         let mut sounds = Vec::new();
         for m in log.since(seen).filter(|m| !m.from_history) {
-            let Some((cues, place)) = self.manifest.for_message(&m.text) else {
+            let Some((cues, spot)) = self.manifest.for_message(&m.text) else {
                 continue;
             };
-            let at = match place {
-                Place::Hero => hero,
-                Place::Door => door.or(hero),
-                Place::None => None,
-            };
+            let at = place(spot, &m.text);
             for cue in cues {
                 // the hero's own cries by their gender first
                 let sound = if cue.starts_with("hero.") {

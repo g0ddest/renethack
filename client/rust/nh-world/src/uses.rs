@@ -119,6 +119,9 @@ pub struct ItemUse {
     pub spot: Option<(i32, i32)>,
     /// How a prayer went, as the messages after it told.
     pub prayer: Option<PrayerOutcome>,
+    /// `Z`: the spell menu's line of the spell picked ("force bolt  1
+    /// attack  0%  100%": its school is in it).
+    pub spell: Option<String>,
 }
 
 /// How a prayer went, by what the game said (pray.c): only what the
@@ -184,6 +187,7 @@ impl ItemUse {
             vertical: None,
             spot: None,
             prayer: None,
+            spell: None,
         }
     }
 }
@@ -301,9 +305,19 @@ impl UseTracker {
                     }
                 }
             }
-            (Prompt::Menu { .. }, Reply::Menu(items)) => {
+            (Prompt::Menu { items: lines, .. }, Reply::Menu(items)) => {
                 if let Some(a) = self.armed.as_mut() {
                     a.chosen |= !items.is_empty();
+                    let picked = items.first().and_then(|&(idx, _)| {
+                        lines
+                            .iter()
+                            .find(|l| u32::try_from(l.idx).ok() == Some(idx))
+                    });
+                    if a.u.kind == UseKind::Cast
+                        && let Some(line) = picked.and_then(|l| l.str.clone())
+                    {
+                        a.u.spell = Some(line);
+                    }
                 }
             }
             _ => {}
@@ -754,11 +768,24 @@ mod tests {
     #[test]
     fn casting_needs_a_spell_picked() {
         let w = world();
+        let line = nh_protocol::MenuItem {
+            win: 5,
+            idx: 1,
+            glyph: None,
+            selectable: true,
+            ch: 'a' as i32,
+            gch: 0,
+            attr: 0,
+            clr: 0,
+            str: Some("force bolt             1   attack       0%     100%".into()),
+            preselected: false,
+            skipinvert: false,
+        };
         let menu = Prompt::Menu {
             win: 5,
             how: nh_protocol::PickHow::One,
             title: None,
-            items: Vec::new(),
+            items: vec![line],
         };
         let u = run(
             &w,
@@ -770,6 +797,10 @@ mod tests {
         )
         .unwrap();
         assert_eq!((u.kind, u.dir), (UseKind::Cast, Some((1, 0))));
+        assert!(
+            u.spell.is_some_and(|s| s.starts_with("force bolt")),
+            "the spell's line"
+        );
         assert_eq!(
             run(&w, &[(Prompt::Command, key('Z')), (menu, Reply::Cancel)]),
             None

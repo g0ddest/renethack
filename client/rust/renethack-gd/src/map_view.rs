@@ -2775,6 +2775,11 @@ pub struct MapView {
     /// What the map's changes sound like this frame, for the player
     /// (`take_sounds`).
     sounds: Vec<Sound>,
+    /// The ray last seen lighting a cell: where, of what, when (a bolt's
+    /// pieces light one cell after another: one travel heard).
+    last_ray: Option<((i32, i32), Ray, f64)>,
+    /// When the last explosion was heard.
+    last_blast: f64,
     /// Self-tests stop motions at this share to take a picture.
     hold: Option<f32>,
     stats: MotionStats,
@@ -3348,6 +3353,8 @@ impl MapView {
             cut_at: 0.0,
             log_seq: None,
             sounds: Vec::new(),
+            last_ray: None,
+            last_blast: f64::NEG_INFINITY,
             hold: None,
             stats: MotionStats::default(),
             order_pace: None,
@@ -4903,6 +4910,9 @@ impl MapView {
                     anchor: None,
                 },
             );
+            // where it comes down (a hit is the message's)
+            let lands = Sound::new("missile.land").at(to).after(THROW_AT + 0.25);
+            self.sounds.push(lands);
             self.hero_fx.after(
                 THROW_AT,
                 Fx::Throw {
@@ -4923,6 +4933,10 @@ impl MapView {
         let mut names = Vec::new();
         if let Some(h) = held {
             names.push(format!("{cue}.{}", self.art.manifest().held_at(h).0));
+        }
+        // a spell by its school
+        if let Some(school) = u.spell.as_deref().and_then(hearing::school) {
+            names.push(format!("{cue}.{school}"));
         }
         names.push(cue.to_string());
         if u.kind == UseKind::Fire {
@@ -6199,6 +6213,7 @@ impl MapView {
         {
             self.vfx
                 .blast(kind, heart, c, origin + at(0.0, look.ground.max(0.0), 0.0));
+            self.hear_blast(kind, (x, y));
         }
         if let Some((c, y)) = look.glint
             && old.glint != look.glint
@@ -6212,9 +6227,11 @@ impl MapView {
             self.vfx.set_solid((x, y), solid);
         }
         // a ray lights up as it crosses the cell
+        let here = (x, y);
         if let Some((kind, c, yaw, y)) = look.ray
             && old.ray != look.ray
         {
+            self.hear_ray(kind, here);
             let mid = origin + at(0.0, y, 0.0);
             match yaw {
                 Some(yaw) => {
@@ -6860,6 +6877,42 @@ impl MapView {
             .at(self.sound_at(at))
             .sized(Size::of(&info.size));
         self.sounds.push(fall.after(CONTACT_SECS + 0.1));
+    }
+
+    /// A ray seen lighting a cell: its travel is heard where it is first
+    /// seen; the cells it lights next are the same bolt going on.
+    fn hear_ray(&mut self, kind: Ray, cell: (i32, i32)) {
+        /// A piece within this of the last of its kind is the same bolt.
+        const GOES_ON: f64 = 0.4;
+        let now = self.clock;
+        let same = self
+            .last_ray
+            .is_some_and(|(_, k, t)| k == kind && now - t <= GOES_ON);
+        self.last_ray = Some((cell, kind, now));
+        if !same {
+            let name = hearing::kinded("ray", hearing::ray_name(kind));
+            self.sounds.push(Sound::new(name).at(self.sound_at(cell)));
+        }
+    }
+
+    /// An explosion seen: heard once, where its first cell is drawn (its
+    /// heart, or a cell beside it).
+    fn hear_blast(&mut self, kind: Blast, cell: (i32, i32)) {
+        /// Cells drawn within this of the first are the same explosion.
+        const ONE_BLAST: f64 = 0.3;
+        let now = self.clock;
+        if now - self.last_blast <= ONE_BLAST {
+            return;
+        }
+        self.last_blast = now;
+        let name = hearing::kinded("blast", hearing::blast_name(kind));
+        self.sounds.push(Sound::new(name).at(self.sound_at(cell)));
+    }
+
+    /// Where the last ray seen lit a cell (a bounce's or a hit's line
+    /// sounds there).
+    pub fn last_ray_cell(&self) -> Option<(i32, i32)> {
+        self.last_ray.map(|(c, _, _)| c)
     }
 
     /// The sounds the map's changes made since the last call.

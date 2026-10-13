@@ -983,15 +983,24 @@ impl RenethackGame {
             }
         }
         if playing && let Some(cat) = self.catalog.as_deref() {
-            let place = |(x, y): (i32, i32)| Vector3::new(x as f32, 0.8, y as f32);
-            let door = crate::hearing::door_beside(&self.world, cat).map(place);
-            let hero = self.world.hero().map(place);
-            let female = self
-                .world
+            use crate::cues::Place;
+            let at = |(x, y): (i32, i32)| Vector3::new(x as f32, 0.8, y as f32);
+            let world = &self.world;
+            let ray = ui.map.last_ray_cell();
+            let place = |p: Place, text: &str| match p {
+                Place::Hero => world.hero().map(at),
+                Place::Door => crate::hearing::door_beside(world, cat)
+                    .or(world.hero())
+                    .map(at),
+                Place::Ray => ray.map(at),
+                Place::Named => crate::hearing::named(world, cat, text).map(at),
+                Place::None => None,
+            };
+            let female = world
                 .map
                 .hero_form()
                 .is_some_and(|g| g.flags & nh_protocol::mg::FEMALE != 0);
-            ui.audio.hear_log(&self.world.log, hero, door, female);
+            ui.audio.hear_log(&world.log, &place, female);
             let senses = crate::hearing::Senses::of(&self.world, cat);
             ui.audio.set_muffled(senses.deaf);
         } else {

@@ -19,7 +19,10 @@
 //! picked up again, gold wished for and dropped, a door's line at the
 //! hero, a "You hear" far off and unplaced. Blindfolded with an amulet
 //! of ESP the hero senses the pet walking, and hears none of its steps.
-//! The sound's own time a frame stays small.
+//! The blindfold off, a wand of cold zapped at the nearest wall sounds
+//! its bolt where it is first seen and its bounce where it last lit a
+//! cell; a scroll of fire's explosion sounds once. The sound's own time a
+//! frame stays small.
 
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
@@ -420,9 +423,66 @@ fn game() -> Vec<Step> {
         Step::Call("none of its steps heard", |g| {
             let heard = steps_heard(g)?;
             if !heard.is_empty() {
-                return Err(format!("steps heard of what the blind hero senses: {heard:?}"));
+                return Err(format!(
+                    "steps heard of what the blind hero senses: {heard:?}"
+                ));
             }
             Ok(())
+        }),
+        key('R'),
+        Step::Request("what to take off", |p| !matches!(p, Prompt::Command)),
+        Step::KeyFrom("the blindfold", |g| letter(g, "blindfold")),
+        Step::Request("a command, seeing again", command),
+    ]);
+    // a Valkyrie stands her own bolt of cold
+    steps.extend(wish("wand of cold"));
+    steps.extend([
+        Step::Call("", mark),
+        key('z'),
+        Step::Request("what to zap", |p| !matches!(p, Prompt::Command)),
+        Step::KeyFrom("the wand", |g| letter(g, "wand")),
+        Step::Request("the zap's direction", |p| {
+            matches!(
+                p,
+                Prompt::FreeKey {
+                    directions: true,
+                    ..
+                }
+            )
+        }),
+        Step::KeyFrom("toward the nearest wall", |g| wall_way(g).map(plain)),
+        Step::AnswerUntil('n', "a command after the zap", |g| {
+            Ok(matches!(pending(g), Some(Prompt::Command)))
+        }),
+        Step::Wait("the bolt and its bounce heard", |g| {
+            let bolt = heard_like(g, "ray.cold")?;
+            let bounce = heard_like(g, "ray.bounce")?;
+            Ok(bolt.is_some_and(|h| placed(&h))
+                && bounce.is_some_and(|h| h.asked == "ray.bounce.cold" && placed(&h)))
+        }),
+    ]);
+    steps.extend(wish("uncursed scroll of fire"));
+    steps.extend([
+        Step::Call("", mark),
+        key('r'),
+        Step::Request("what to read", |p| !matches!(p, Prompt::Command)),
+        Step::KeyFrom("the scroll", |g| letter(g, "scroll")),
+        Step::AnswerUntil('n', "a command after the fire", |g| {
+            Ok(matches!(pending(g), Some(Prompt::Command)))
+        }),
+        Step::Wait("the explosion heard, once", |g| {
+            let mark = MARK.load(Ordering::Relaxed);
+            let blasts: Vec<Heard> = player(g)?
+                .heard()
+                .filter(|h| h.seq > mark && h.asked.starts_with("blast"))
+                .cloned()
+                .collect();
+            if blasts.len() > 1 {
+                return Err(format!("one explosion heard {} times: {blasts:?}", blasts.len()));
+            }
+            Ok(blasts
+                .first()
+                .is_some_and(|h| h.asked == "blast.fiery" && placed(h)))
         }),
         Step::Call("the sound's time a frame", |g| {
             let ms = |d: std::time::Duration| d.as_secs_f64() * 1000.0;
@@ -456,6 +516,12 @@ fn plain(c: char) -> KeyInput {
 /// lands while the model is still on its way).
 fn near(h: &Heard, (x, y): (i32, i32)) -> bool {
     h.at.is_some_and(|p| (p.x - x as f32).abs() <= 1.0 && (p.z - y as f32).abs() <= 1.0)
+}
+
+/// Asked for at a place, and playing if the manifest has a sound for it
+/// (rays and blasts may have none yet).
+fn placed(h: &Heard) -> bool {
+    h.at.is_some() && (h.cue.is_none() || h.voiced)
 }
 
 /// The steps heard since the mark.
@@ -517,6 +583,28 @@ fn open_way(game: &RenethackGame) -> Result<char, String> {
             open.then_some(key)
         })
         .ok_or_else(|| format!("no open floor next to the hero at {:?}", (hx, hy)))
+}
+
+/// The key of the straight way to the wall nearest the hero (a bolt
+/// bounces there).
+fn wall_way(game: &RenethackGame) -> Result<char, String> {
+    let cat = game.catalog.as_deref().ok_or("no catalog")?;
+    let (hx, hy) = game.world.map.hero().ok_or("no hero")?;
+    let cardinal = STEPS.iter().filter(|((dx, dy), _)| dx * dy == 0);
+    cardinal
+        .filter_map(|&((dx, dy), key)| {
+            (1..30).find_map(|n| {
+                let cell = game.world.map.cell(hx + dx * n, hy + dy * n)?;
+                let wall = matches!(
+                    nh_world::cell_terrain(cell, cat),
+                    Some(nh_world::Terrain::Wall | nh_world::Terrain::Stone)
+                );
+                wall.then_some((n, key))
+            })
+        })
+        .min()
+        .map(|(_, key)| key)
+        .ok_or_else(|| "no wall in a straight line from the hero".into())
 }
 
 /// The newt's way from the hero: a monster next to them, not their pet.
