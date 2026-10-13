@@ -10,7 +10,8 @@
 //! edges. Fewer screen effects (the settings) leaves out the sway, the
 //! drift and the hue; the dimming stays. Burdened, up to Overloaded, they
 //! lean into the load and walk slower, never running; weak from hunger or
-//! fainting, they slump where they stand. A child of map_view: it lays its
+//! fainting, they slump where they stand; strangled, they clutch their
+//! throat with both hands. A child of map_view: it lays its
 //! skin over the hero's own model (the rider's while they ride), under the
 //! see-through look that shows them behind a wall.
 
@@ -21,7 +22,7 @@ use godot::prelude::*;
 use nh_protocol::Catalog;
 use nh_world::World;
 
-use crate::bearing::Bearing;
+use crate::bearing::{Bearing, Throat};
 
 use super::{MapView, set_overlay};
 
@@ -81,6 +82,20 @@ const BREATH: f32 = 0.15;
 /// the hero's skeleton.
 const BEARING_RATE: f32 = 24.0;
 const BEARING: &str = "Bearing";
+/// Seconds the hands take to go to the throat and to come away; the name
+/// of their modifier; the bones whose attachments (a weapon in the hand,
+/// a shield on the arm) are put by while they clutch it, or they would
+/// wave about the head.
+const CLUTCH_SECS: f32 = 0.35;
+const THROAT: &str = "Throat";
+const ARM_BONES: [&str; 6] = [
+    "hand_l",
+    "hand_r",
+    "lowerarm_l",
+    "lowerarm_r",
+    "upperarm_l",
+    "upperarm_r",
+];
 
 /// The quad over the view: a hue tinting it, its edges darkened. It
 /// multiplies what is drawn, so the dark stays dark and nothing is read
@@ -197,6 +212,15 @@ pub(super) struct HeroLook {
     conf: u64,
     hallu: u64,
     blind: u64,
+    /// Strngl's mask; how far the hands are at the throat (0..=1, easing),
+    /// and their modifier on the hero's skeleton with the model's inner
+    /// node.
+    strangled: u64,
+    clutch: f32,
+    throat: Option<(InstanceId, Gd<Throat>)>,
+    /// What the hands held and the arms wore, hidden while they clutch the
+    /// throat.
+    put_by: Vec<Gd<Node3D>>,
     /// The effects' strengths (0..=1, easing), whether each is where it
     /// eases to, and the seconds they ran.
     sway: f32,
@@ -250,6 +274,10 @@ pub struct Posture {
     pub head: (f32, f32),
     /// The last step's seconds, and whether it was a run.
     pub step: Option<(f32, bool)>,
+    /// How far the hands are at the throat (0..=1), and how far a palm
+    /// stopped short of the neck last frame (metres).
+    pub clutch: f32,
+    pub miss: f32,
 }
 
 /// Its share of the way, `elapsed` turns into a countdown of `turns`.
@@ -329,6 +357,10 @@ impl HeroLook {
             breath: 0.0,
             bearing: None,
             last_step: None,
+            strangled: 0,
+            clutch: 0.0,
+            throat: None,
+            put_by: Vec::new(),
         }
     }
 
@@ -349,6 +381,24 @@ impl HeroLook {
             q.set_visible(false);
         }
         self.screened = false;
+        // the back straight and the hands down
+        (self.lean, self.bow, self.nod, self.clutch) = (0.0, 0.0, 0.0, 0.0);
+        if let Some((_, b)) = self.bearing.as_mut()
+            && b.is_instance_valid()
+        {
+            b.bind_mut().set_angles(0.0, 0.0, 0.0);
+            b.clone()
+                .upcast::<godot::classes::SkeletonModifier3D>()
+                .set_active(false);
+        }
+        if let Some((_, t)) = self.throat.as_ref()
+            && t.is_instance_valid()
+        {
+            let mut m: Gd<godot::classes::SkeletonModifier3D> = t.clone().upcast();
+            m.set_influence(0.0);
+            m.set_active(false);
+        }
+        self.take_out();
     }
 
     /// The swayed model back in its own stance.
@@ -407,6 +457,21 @@ impl HeroLook {
             on,
             head,
             step: self.last_step,
+            clutch: self.clutch,
+            miss: self
+                .throat
+                .as_ref()
+                .filter(|(_, t)| t.is_instance_valid())
+                .map_or(0.0, |(_, t)| t.bind().miss()),
+        }
+    }
+
+    /// What was put by while the hands clutched the throat, shown again.
+    fn take_out(&mut self) {
+        for mut n in self.put_by.drain(..) {
+            if n.is_instance_valid() {
+                n.set_visible(true);
+            }
         }
     }
 
@@ -472,6 +537,7 @@ impl MapView {
             };
             (look.stun, look.conf) = (mask("Stun"), mask("Conf"));
             (look.hallu, look.blind) = (mask("Hallu"), mask("Blind"));
+            look.strangled = mask("Strngl");
         }
         let conds = world.status.conditions();
         // floating, up off the floor and bobbing (a rider keeps their seat)
@@ -506,6 +572,7 @@ impl MapView {
         }
         self.screen_effects(world.status.conditions(), delta);
         self.bear(world, delta);
+        self.clutch(world.status.conditions(), delta);
         let ring = self.hero_ring.get_position();
         let look = &mut self.hero_look;
         if let Some(u) = look.under.as_mut() {
@@ -830,6 +897,124 @@ impl MapView {
             if m.is_active() != on {
                 m.set_active(on);
             }
+        }
+    }
+}
+
+impl MapView {
+    /// Strangled, both hands at the throat. None, and none left to take
+    /// away: nothing is done.
+    fn clutch(&mut self, conds: u64, delta: f32) {
+        let look = &self.hero_look;
+        let on = conds & look.strangled != 0 && look.strangled != 0;
+        if !on && look.clutch == 0.0 {
+            return;
+        }
+        // a spell of helplessness or a trap's hold takes the body as it is
+        let posed = self.hero_helpless().is_some() || self.hero_held().2.is_some();
+        let to = if on && !posed { 1.0 } else { 0.0 };
+        let look = &mut self.hero_look;
+        let was = look.clutch;
+        look.clutch = ease_to(look.clutch, to, delta / CLUTCH_SECS);
+        let k = look.clutch;
+        let Some((body, inner)) = self
+            .hero_model()
+            .and_then(|m| Some((m.node.clone(), m.node.get_child(0)?)))
+        else {
+            return;
+        };
+        let id = inner.instance_id();
+        if self.hero_look.throat.as_ref().map(|(i, _)| *i) != Some(id) {
+            // off a model the hero no longer is
+            self.hero_look.take_out();
+            if let Some((_, old)) = self.hero_look.throat.take()
+                && old.is_instance_valid()
+            {
+                let mut m: Gd<godot::classes::SkeletonModifier3D> = old.upcast();
+                m.set_influence(0.0);
+                m.set_active(false);
+            }
+            let skeleton = inner
+                .find_children_ex("*")
+                .type_("Skeleton3D")
+                .owned(false)
+                .done()
+                .iter_shared()
+                .next()
+                .and_then(|n| n.try_cast::<godot::classes::Skeleton3D>().ok());
+            let Some(mut sk) = skeleton.filter(|s| s.find_bone("upperarm_l") >= 0) else {
+                return;
+            };
+            let own = sk
+                .get_node_or_null(THROAT)
+                .and_then(|n| n.try_cast::<Throat>().ok());
+            let throat = match own {
+                Some(t) => t,
+                None => {
+                    let t = Throat::new_alloc();
+                    let mut m: Gd<godot::classes::SkeletonModifier3D> = t.clone().upcast();
+                    m.set_name(THROAT);
+                    m.set_influence(0.0);
+                    m.set_active(false);
+                    sk.add_child(&m);
+                    t
+                }
+            };
+            self.hero_look.throat = Some((id, throat));
+        }
+        // the palms as the manifest holds things in the hands
+        let slot = |name: &str| {
+            self.art
+                .manifest()
+                .held_slot(name)
+                .map_or(Transform3D::IDENTITY, |s| {
+                    let rot =
+                        Vector3::new(s.rot[0], s.rot[1], s.rot[2]) * (std::f32::consts::PI / 180.0);
+                    Transform3D::new(
+                        Basis::from_euler(EulerOrder::YXZ, rot),
+                        Vector3::new(s.pos[0], s.pos[1], s.pos[2]),
+                    )
+                })
+        };
+        let palms = [slot("hand_l"), slot("hand_r")];
+        let Some((_, t)) = self.hero_look.throat.as_mut() else {
+            return;
+        };
+        t.bind_mut().set_body(body, palms);
+        let mut m: Gd<godot::classes::SkeletonModifier3D> = t.clone().upcast();
+        if was == 0.0 && k > 0.0 {
+            // after every other modifier (the off hand's too, made since)
+            if let Some(mut sk) = m.get_parent() {
+                let last = sk.get_child_count() - 1;
+                sk.move_child(&m, last);
+            }
+        }
+        m.set_influence(k * k * (3.0 - 2.0 * k));
+        if m.is_active() != (k > 0.0) {
+            m.set_active(k > 0.0);
+        }
+        // the hands empty while at the throat
+        let clutching = k > 0.5;
+        if clutching && self.hero_look.put_by.is_empty() {
+            let sk = m.get_parent();
+            self.hero_look.put_by = sk
+                .map(|sk| {
+                    sk.get_children()
+                        .iter_shared()
+                        .filter_map(|n| n.try_cast::<godot::classes::BoneAttachment3D>().ok())
+                        .filter(|b| {
+                            b.is_visible()
+                                && ARM_BONES.contains(&b.get_bone_name().to_string().as_str())
+                        })
+                        .map(|mut b| {
+                            b.set_visible(false);
+                            b.upcast()
+                        })
+                        .collect()
+                })
+                .unwrap_or_default();
+        } else if !clutching {
+            self.hero_look.take_out();
         }
     }
 }

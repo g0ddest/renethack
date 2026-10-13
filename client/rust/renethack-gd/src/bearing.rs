@@ -1,15 +1,19 @@
-//! The hero's bearing under a load and from hunger: a skeleton modifier
-//! that bends the back after the animation, each frame, whatever clip plays
-//! (the idle, a walk, a blow). A burdened hero leans into the load from the
-//! small of the back, the head raised to see ahead; a hero weak from
-//! hunger slumps, the upper back and the neck bowed and the head hanging.
-//! `hero_look.rs` makes the modifier on the hero's skeleton the first time
-//! it is wanted (before the off hand's, which then holds the haft where
-//! the bent arms are), eases its angles in and out, and puts it to sleep
-//! at none.
+//! The hero's bearing under a load and from hunger, and their hands at
+//! their throat when strangled: skeleton modifiers after the animation,
+//! each frame, whatever clip plays (the idle, a walk, a blow). A burdened
+//! hero leans into the load from the small of the back, the head raised
+//! to see ahead; a hero weak from hunger slumps, the upper back and the
+//! neck bowed and the head hanging (`Bearing`, before the off hand's,
+//! which then holds the haft where the bent arms are). A strangled hero
+//! clutches their throat with both hands (`Throat`, after every other
+//! modifier: the hands leave what they held). `hero_look.rs` makes them on
+//! the hero's skeleton the first time they are wanted, eases them in and
+//! out, and puts them to sleep at none.
 
 use godot::classes::{ISkeletonModifier3D, Node3D, Skeleton3D, SkeletonModifier3D};
 use godot::prelude::*;
+
+use crate::off_hand::reach;
 
 /// The bones bent, from the hips up: the pelvis, the three of the spine,
 /// the neck, the head.
@@ -120,6 +124,109 @@ impl ISkeletonModifier3D for Bearing {
             moved.dot(axes.col_c().normalized()),
             moved.dot(axes.col_b().normalized()),
         );
+    }
+}
+
+/// The bones of a throat clutched: the neck and the head, and each arm's
+/// clavicle, upper arm, lower arm and hand, the left's then the right's.
+const NECK_BONES: [&str; 2] = ["neck_01", "Head"];
+const ARM_BONES: [[&str; 4]; 2] = [
+    ["clavicle_l", "upperarm_l", "lowerarm_l", "hand_l"],
+    ["clavicle_r", "upperarm_r", "lowerarm_r", "hand_r"],
+];
+/// Where the palms grip the neck, in metres: out to either side of its
+/// middle, and forward of it.
+const THROAT_SIDE: f32 = 0.055;
+const THROAT_FORWARD: f32 = 0.035;
+
+#[derive(Clone, Copy)]
+struct ThroatBones {
+    neck: [i32; 2],
+    arms: [[i32; 4]; 2],
+}
+
+#[derive(GodotClass)]
+#[class(base = SkeletonModifier3D, init)]
+pub struct Throat {
+    base: Base<SkeletonModifier3D>,
+    /// The body the skeleton is of: its frame says which way is forward
+    /// and how many of the skeleton's units a metre is.
+    body: Option<Gd<Node3D>>,
+    /// From each hand's bone to its palm (the manifest's held slots), the
+    /// left's then the right's.
+    palms: [Transform3D; 2],
+    bones: Option<ThroatBones>,
+    /// How far a palm stopped short of the neck last frame, in metres.
+    miss: f32,
+}
+
+impl Throat {
+    pub fn set_body(&mut self, body: Gd<Node3D>, palms: [Transform3D; 2]) {
+        self.body = Some(body);
+        self.palms = palms;
+    }
+
+    /// How far a palm stopped short of the neck last frame, in metres.
+    pub fn miss(&self) -> f32 {
+        self.miss
+    }
+
+    fn bones(&mut self, sk: &Gd<Skeleton3D>) -> Option<ThroatBones> {
+        if self.bones.is_none() {
+            let neck = NECK_BONES.map(|n| sk.find_bone(n));
+            let arms = ARM_BONES.map(|arm| arm.map(|n| sk.find_bone(n)));
+            let all = neck.iter().chain(arms.iter().flatten()).all(|&i| i >= 0);
+            self.bones = all.then_some(ThroatBones { neck, arms });
+        }
+        self.bones
+    }
+}
+
+#[godot_api]
+impl ISkeletonModifier3D for Throat {
+    fn process_modification_with_delta(&mut self, _delta: f64) {
+        let Some(body) = self.body.clone().filter(|b| b.is_instance_valid()) else {
+            return;
+        };
+        let Some(mut sk) = self.base().get_skeleton() else {
+            return;
+        };
+        let Some(b) = self.bones(&sk) else {
+            return;
+        };
+        if !body.is_inside_tree() {
+            return;
+        }
+        // the body's frame in the skeleton's space, and its units a metre
+        let axes =
+            sk.get_global_transform().affine_inverse().basis * body.get_global_transform().basis;
+        let per_metre = axes.col_b().length().max(1e-6);
+        let frame = axes.orthonormalized();
+        let (left, forward) = (frame.col_a(), frame.col_c());
+        let neck = sk.get_bone_global_pose(b.neck[0]).origin;
+        let head = sk.get_bone_global_pose(b.neck[1]).origin;
+        // the palms close round the neck, its line the haft they hold
+        let middle = neck.lerp(head, 0.5) + forward * (THROAT_FORWARD * per_metre);
+        let along = (head - neck).normalized();
+        let mut miss: f32 = 0.0;
+        for (i, side) in [1.0f32, -1.0].into_iter().enumerate() {
+            let [clavicle, upper, lower, hand] = b.arms[i];
+            let grip = middle + left * (side * THROAT_SIDE * per_metre);
+            let (u, l, h, short) = reach(
+                sk.get_bone_global_pose(upper),
+                sk.get_bone_global_pose(lower),
+                sk.get_bone_global_pose(hand),
+                self.palms[i],
+                grip,
+                along,
+            );
+            let parent = sk.get_bone_global_pose(clavicle).basis.orthonormalized();
+            sk.set_bone_pose_rotation(upper, (parent.inverse() * u).get_quaternion());
+            sk.set_bone_pose_rotation(lower, (u.inverse() * l).get_quaternion());
+            sk.set_bone_pose_rotation(hand, (l.inverse() * h).get_quaternion());
+            miss = miss.max(short / per_metre);
+        }
+        self.miss = miss;
     }
 }
 

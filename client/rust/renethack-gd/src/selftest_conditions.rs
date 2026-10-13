@@ -11,7 +11,8 @@
 //! effects (the settings) a stun shows no sway and no drift, while
 //! blindness still dims. Burdened by gold they lean into the load and walk
 //! slower, more of it further; weak from hunger they slump, and stand up
-//! straight when fed. Pictures of each with `--screenshots`.
+//! straight when fed. Strangled they clutch their throat with both hands
+//! till a prayer lets them breathe. Pictures of each with `--screenshots`.
 
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering};
@@ -73,8 +74,61 @@ pub(super) fn conditions() -> Vec<Step> {
     steps.extend(reduced());
     steps.extend(loaded());
     steps.extend(starving());
+    steps.extend(strangled());
     steps
 }
+
+/// Strangled: both hands go to the throat and clutch it, the palms on the
+/// neck; a prayer lets the hero breathe again, and the hands come away.
+fn strangled() -> Vec<Step> {
+    let mut steps = vec![
+        key('#'),
+        Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
+        Step::Dialog(DialogEvent::ExtCmd(Some("wizintrinsic".into()))),
+        Step::Request("the intrinsics", |p| matches!(p, Prompt::Menu { .. })),
+        // nine turns: time enough for a prayer before it kills
+        key('9'),
+        Step::KeyFrom("strangling", |g| entry_key(g, "strangling")),
+        Step::Dialog(DialogEvent::MenuConfirm),
+        Step::Request("a command, choking", command),
+        Step::Wait("both hands at the throat", |g| {
+            let p = map_view(g)?.hero_posture();
+            Ok(p.clutch == 1.0 && p.miss < THROAT_MISS)
+        }),
+    ];
+    steps.extend(into_view());
+    steps.extend([
+        // the camera close and aimed higher: the deadly banner over the
+        // head, not over the hands
+        Step::Call("closer", |g| {
+            g.ui.as_mut().ok_or("no UI")?.map.set_distance(2.8, 1.2);
+            Ok(())
+        }),
+        Step::Wait("the camera on the hero", super::camera_settled),
+        Step::Wait("clutching it still", |g| {
+            let p = map_view(g)?.hero_posture();
+            Ok(p.clutch == 1.0 && p.miss < THROAT_MISS)
+        }),
+        Step::Shot("conditions-strangled"),
+    ]);
+    steps.extend(close_up(false));
+    steps.extend(pray());
+    steps.extend([
+        Step::Wait("breathing again, the hands away", |g| {
+            let cat = g.catalog.as_deref().ok_or("no catalog")?;
+            let names = g.world.status.condition_names(cat);
+            let p = map_view(g)?.hero_posture();
+            Ok(!names.iter().any(|n| n == "Strngl") && p.clutch == 0.0)
+        }),
+        Step::Wait("the prayer over", |g| {
+            Ok(map_view(g)?.hero_prayer().is_none())
+        }),
+    ]);
+    steps
+}
+
+/// How far a palm may stop short of the neck (metres).
+const THROAT_MISS: f32 = 0.02;
 
 /// The burden and the hunger the status line names ("" for none).
 fn burden(g: &RenethackGame) -> &str {
