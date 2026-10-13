@@ -36,11 +36,18 @@ pub fn screen_size() -> (u32, u32) {
 
 /// The preset a device starts with: High, the look the game was made
 /// with; on a Steam Deck, the one that holds its frame rate.
+/// RENETHACK_QUALITY (low, medium, high, ultra) chooses another, for timing
+/// the presets (`tools/perf.py --quality`).
 pub fn device_quality() -> Quality {
-    if is_deck() {
-        DECK_QUALITY
-    } else {
-        Quality::High
+    let asked = std::env::var("RENETHACK_QUALITY").ok().and_then(|v| {
+        Quality::PRESETS
+            .into_iter()
+            .find(|q| format!("{q:?}").eq_ignore_ascii_case(v.trim()))
+    });
+    match asked {
+        Some(q) => q,
+        None if is_deck() => DECK_QUALITY,
+        None => Quality::High,
     }
 }
 

@@ -215,6 +215,7 @@ shows what it must.
     make test-client  # self-tests of the Godot client: headless, two in a window (needs Godot)
     make soak         # random play through the client, seeds 1..8 (long)
     make deck         # screenshots at the Steam Deck's 1280×800 (needs a display)
+    make perf         # frame times on a release build (needs a display, a quiet machine)
 
 `make test-client` runs each scenario of `client/rust/renethack-gd/src/selftest.rs`
 in its own headless Godot process with a fixed seed: every scenario except
@@ -294,6 +295,34 @@ them. Every run, headless or
 not, passes only with its PASS line, exit status 0 and no error of Godot's
 that says "BUG": a crash on quit, after the PASS line, fails it.
 `make soak SOAK_WINDOW=1` plays the soak in a window, the renderer at work.
+
+### Frame times
+
+`make perf` times the game end to end on a release build, with
+`tools/perf.py`. It builds the extension in release and stages a copy of
+the project that loads it (`build/perf/project`). The copy runs under its
+own name, so Godot's shader cache starts empty, as on a player's first
+launch. Then it plays these in a window at 1920×1080 with vsync off: `tour`;
+`branches`; `rays`; `effects`; `item-use`; `states`; `crowd` (about thirty
+peaceful creatures of many kinds made round the hero in debug mode, then
+forty turns among them); two soaks into the Gnomish Mines; one to Dlvl 7;
+and a soak of 2000 requests. Every run logs each frame
+(`RENETHACK_FRAME_LOG=<file>`, `frame_log.rs`): its wall time, the game's
+own work in it by part, the pipelines Godot compiled, the models the map
+built, the level and the self-test's step. It also samples the process's
+resident memory. `build/perf/report.txt` gives the frame times after the
+start-up veil (p50, p95, p99, max), every frame over 33 ms with what it was
+doing, and the memory each run took and how it grew over the long soak.
+
+The target fails on any frame over 33 ms after the veil. Frame times on a
+busy machine mean nothing, so it declines to judge when the load average is
+over 5. `make perf PERF_ARGS="--wait 30"` waits up to half an hour before
+each scene for a quiet machine; `--scenes tour,crowd` runs only those;
+`--report` judges the last run's logs again; `--warm` keeps Godot's shader
+cache from one run to the next; `--quality low` (medium, high, ultra) plays
+a graphics preset instead of the device's (`RENETHACK_QUALITY`), and
+`--size 1280x800` at the Steam Deck's size. Apple's own Metal shader cache
+is the machine's and stays warm.
 
 ## Production builds
 

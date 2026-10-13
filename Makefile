@@ -8,6 +8,9 @@
 #   make test-client  headless self-tests of the Godot client, one process each
 #   make deck         screenshots at the Steam Deck's 1280×800 (needs a display)
 #   make soak         random play through the client UI, seeds 1..8
+#   make perf         the game timed on a release build (tools/perf.py): fails
+#                     on a frame over 33 ms after the start-up veil; needs a
+#                     display and a quiet machine
 #   make art          fetch the CC0 art again (tools/fetch_art.py; needs Pillow)
 #   make audio        fetch the CC0 sounds again (tools/fetch_audio.py)
 #   make app-icon     draw the game's icon again (tools/app_icon.py; needs Pillow)
@@ -54,8 +57,10 @@ SOAK_CI := 2000
 SOAK_SEEDS := 1 2 3 4 5 6 7 8
 # `make soak SOAK_WINDOW=1`: the soak with a window, the renderer at work
 SOAK_WINDOW ?=
+# more for tools/perf.py, e.g. PERF_ARGS="--scenes tour,crowd --wait 30"
+PERF_ARGS ?=
 
-.PHONY: all engine client steam import run test test-client soak lint need-timeout art audio app-icon icons achievement-icons achievement-vdf deck \
+.PHONY: all engine client steam import run test test-client soak perf lint need-timeout art audio app-icon icons achievement-icons achievement-vdf deck \
 	i18n-catalog i18n-check help help-check dist dist-macos dist-linux dist-windows
 all: engine
 
@@ -174,6 +179,14 @@ deck: need-timeout all client
 		dir=$(abspath $(DECK_DIR))/$$s; rm -rf $$dir; mkdir -p $$dir; \
 		$(call run_selftest,$$s,--size=1280x800 $(DECK_ARGS) --screenshots=$$dir,300,$$s at 1280x800,window); \
 	done; echo "Deck screenshots in $(abspath $(DECK_DIR)): $(DECK_SHOTS)"
+
+# The game timed end to end on a release build (the README's "Frame times"):
+# the extension built in release, a copy of the project staged to load it,
+# scenes run in a window at 1920x1080 with vsync off, every frame logged.
+# Fails on a frame over 33 ms after the start-up veil; declines to judge
+# when the load is over 5. The logs and the report are in build/perf.
+perf: all
+	python3 tools/perf.py --godot "$(GODOT)" $(PERF_ARGS)
 
 # random play through the UI with each of $(SOAK_SEEDS) and the default budget
 soak: need-timeout all client
