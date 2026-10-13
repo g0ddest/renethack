@@ -7,6 +7,7 @@
 
 use super::*;
 use crate::organic::felines::{self, Coat, Part};
+use crate::organic::lurkers;
 use crate::organic::more;
 use crate::organic::weather;
 use crate::organic::{self, Organic};
@@ -556,6 +557,132 @@ impl Kit<'_> {
         }
     }
 
+    /// A raven on the wing: its sleek body, head and wedge of a tail (the
+    /// Body pivot bobs as it flies), its wings beating on WingL and WingR
+    /// (they bob with it), its heavy beak and its tucked feet dark.
+    pub(super) fn raven(&mut self, root: &mut Gd<Node3D>) {
+        use more::Part::*;
+        let mut body = self.pivot(root, "Body", [0.0; 3]);
+        self.skin(&mut body, shape(Organic::More(RavenBody)), FLAT, FLAT, ONE);
+        let horn = self
+            .art
+            .flat(Color::from_rgb(0.06, 0.06, 0.07), Finish::Glossy);
+        self.part(
+            &mut body,
+            shape(Organic::More(RavenBeak)),
+            &horn,
+            FLAT,
+            FLAT,
+            ONE,
+        );
+        self.part(
+            &mut body,
+            shape(Organic::More(RavenFeet)),
+            &horn,
+            FLAT,
+            FLAT,
+            ONE,
+        );
+        let ([x, y, z], r) = more::RAVEN_EYE;
+        self.eyes(&mut body, [0.0, y, z], x, r, true);
+        for (right, name) in [(false, "WingL"), (true, "WingR")] {
+            let mut wing = self.pivot(root, name, raven_wing(right));
+            self.skin(
+                &mut wing,
+                shape(Organic::More(RavenWing { right })),
+                FLAT,
+                FLAT,
+                ONE,
+            );
+        }
+    }
+
+    /// A piercer: a cone of its stuff (stone, iron or glass: its model's
+    /// material) grown in rings like a stalactite, on a fleshy foot with a
+    /// wide mouth in its front. It has no eyes.
+    pub(super) fn piercer_body(&mut self, root: &mut Gd<Node3D>) {
+        use lurkers::Part::*;
+        let mut body = self.pivot(root, "Body", [0.0; 3]);
+        self.skin(&mut body, shape(Organic::Lurker(Piercer)), FLAT, FLAT, ONE);
+        let flesh = self
+            .art
+            .flat(Color::from_rgb(0.42, 0.3, 0.28), Finish::Matte);
+        self.part(
+            &mut body,
+            shape(Organic::Lurker(PiercerFoot)),
+            &flesh,
+            FLAT,
+            FLAT,
+            ONE,
+        );
+        let maw = self
+            .art
+            .flat(Color::from_rgb(0.1, 0.03, 0.03), Finish::Glossy);
+        self.part(
+            &mut body,
+            shape(Organic::Lurker(PiercerMouth)),
+            &maw,
+            FLAT,
+            FLAT,
+            ONE,
+        );
+    }
+
+    /// A trapper or a lurker above: a broad flat cloak of a body, humped
+    /// in its middle, ragged at its rim (the Body pivot breathes and rolls
+    /// as if gliding). It has no eyes and no head.
+    pub(super) fn cloak(&mut self, root: &mut Gd<Node3D>) {
+        let mut body = self.pivot(root, "Body", [0.0; 3]);
+        self.skin(
+            &mut body,
+            shape(Organic::Lurker(lurkers::Part::Cloak)),
+            FLAT,
+            FLAT,
+            ONE,
+        );
+    }
+
+    /// A light (or a sphere): a bright core in its colour (the Body pivot
+    /// bobs), a halo of light round it shimmering (the weather shader's
+    /// soft cloud, glowing), sparks rising off it; a black light's core
+    /// dark, its halo and its sparks the dim violet of a lamp of that name.
+    pub(super) fn light_body(&mut self, root: &mut Gd<Node3D>) {
+        let mut body = self.pivot(root, "Body", [0.0; 3]);
+        let black = self.shape.as_deref() == Some("black");
+        let glow = if black {
+            Color::from_rgb(0.45, 0.2, 0.85)
+        } else {
+            self.tint
+        };
+        let core = if black {
+            self.art
+                .flat(Color::from_rgb(0.05, 0.02, 0.08), Finish::Glossy)
+        } else {
+            self.art.flat(glow, Finish::Ember)
+        };
+        self.part(&mut body, sphere(0.16), &core, [0.0, 0.5, 0.0], FLAT, ONE);
+        let halo = self.wind(Wind {
+            color: glow,
+            glow: if black { 1.4 } else { 2.4 },
+            bands: 0.0,
+            twist: 0.0,
+            speed: 0.6,
+            density: 0.55,
+            soft: true,
+            spin: 0.2,
+        });
+        let mut mi = MeshInstance3D::new_alloc();
+        mi.set_mesh(&self.art.mesh(sphere(0.42)));
+        mi.set_material_override(&halo);
+        mi.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+        mi.set_position(Vector3::new(0.0, 0.5, 0.0));
+        body.add_child(&mi);
+        // its sparks in its glow's colour
+        let tint = std::mem::replace(&mut self.tint, glow);
+        self.motes(&mut body, Weather::Energy);
+        self.tint = tint;
+    }
+
     /// Motes of a weather's stuff, whirled round it: emitted where it
     /// turns (in its own space, so they turn with it) and drifting up or
     /// down, as an ember of a torch rises (the torches' particles, so no
@@ -857,7 +984,7 @@ impl Kit<'_> {
 /// What a body built here moves when idle besides what `proc_waves` moves
 /// for its kind: a displacer beast's tentacles weave.
 pub(super) fn idle_waves(kind: Proc, shape: Option<&str>) -> Vec<Wave> {
-    match (kind, shape.and_then(BigCat::of)) {
+    let mut waves = match (kind, shape.and_then(BigCat::of)) {
         (Proc::Beast, Some(BigCat::Displacer)) => vec![
             Wave::Rock("TentL", Vector3::RIGHT, 14.0, 0.0),
             Wave::Rock("TentR", Vector3::RIGHT, 14.0, 0.5),
@@ -865,7 +992,31 @@ pub(super) fn idle_waves(kind: Proc, shape: Option<&str>) -> Vec<Wave> {
             Wave::Rock("TentR", Vector3::BACK, 8.0, 0.75),
         ],
         _ => Vec::new(),
+    };
+    waves.extend(super::sea_kit::idle_waves(kind, shape));
+    match (kind, shape) {
+        // a raven's wings rise and fall with its body as they beat
+        (Proc::Bat, Some("raven")) => waves.extend([
+            Wave::Bob("WingL", Vector3::from_array(raven_wing(false)), 0.08, 0.25),
+            Wave::Bob("WingR", Vector3::from_array(raven_wing(true)), 0.08, 0.25),
+        ]),
+        (Proc::Blob, Some("cloak")) => waves.extend(roll(4.0)),
+        _ => {}
     }
+    waves
+}
+
+/// Where a raven's wing joins it, its right or its left.
+fn raven_wing(right: bool) -> [f32; 3] {
+    let [x, y, z] = more::RAVEN_WING;
+    [if right { x } else { -x }, y, z]
+}
+
+/// A cloak rolling as it glides, `deg` about a slant from side to side
+/// (one turn a node: a second would override the first).
+fn roll(deg: f32) -> [Wave; 1] {
+    let slant = (Vector3::BACK + Vector3::RIGHT * 0.7).normalized();
+    [Wave::Rock("Body", slant, deg, 0.0)]
 }
 
 /// A mote's colour over its life: `c`, brighter by `hdr` for what glows,
@@ -959,7 +1110,35 @@ pub(super) fn walk_waves(kind: Proc, shape: Option<&str>) -> Vec<Wave> {
             Wave::Rock("LegsR", y, 16.0, 0.5),
             Wave::Bob("Body", Vector3::ZERO, 0.012, 0.0),
         ],
+        // a fish swims on, its tail beating harder (it glides: a body with
+        // no walk hops), a raven flies on
+        (Proc::Fish, _) => vec![
+            Wave::Rock("Tail", y, 28.0, 0.0),
+            Wave::Rock("Body", y, 5.0, 0.5),
+        ],
+        (Proc::Bat, Some("raven")) => {
+            let z = Vector3::BACK;
+            vec![
+                Wave::Rock("WingL", z, 38.0, 0.0),
+                Wave::Rock("WingR", z, -38.0, 0.0),
+                Wave::Bob("Body", Vector3::ZERO, 0.06, 0.25),
+                Wave::Bob("WingL", Vector3::from_array(raven_wing(false)), 0.06, 0.25),
+                Wave::Bob("WingR", Vector3::from_array(raven_wing(true)), 0.06, 0.25),
+            ]
+        }
+        // an eel swims on, faster
+        (Proc::Worm, Some("eel" | "electric")) => {
+            let mut waves = super::sea_kit::swim();
+            waves.push(Wave::Rock("Body", y, 5.0, 0.0));
+            waves
+        }
         (Proc::Worm, _) => vec![Wave::Pulse("Body", 0.05, 0.0)],
+        // a cloak rippling as it creeps
+        (Proc::Blob, Some("cloak")) => {
+            let mut waves = vec![Wave::Pulse("Body", 0.05, 0.0)];
+            waves.extend(roll(6.0));
+            waves
+        }
         (Proc::Blob, _) => vec![Wave::Pulse("Body", 0.09, 0.0)],
         _ => Vec::new(),
     }

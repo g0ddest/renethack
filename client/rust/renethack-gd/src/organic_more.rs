@@ -1,7 +1,8 @@
 //! More creatures' shapes (`creature_kit`): the cockatrice, a rooster
-//! with a serpent's tail, and its chick; the shrieker, a fungus with a
-//! funnel for a cap, and the violet fungus with its grasping tendrils;
-//! the gelatinous cube with what it has swallowed hanging in it.
+//! with a serpent's tail, and its chick; a raven on the wing; the
+//! shrieker, a fungus with a funnel for a cap, and the violet fungus with
+//! its grasping tendrils; the gelatinous cube with what it has swallowed
+//! hanging in it.
 
 use super::*;
 
@@ -39,7 +40,34 @@ pub enum Part {
     Cube,
     CubeBones,
     CubeLoot,
+    /// A raven in flight: its sleek body, head and wedge of a tail; its
+    /// heavy beak; a wing (on WingL or WingR, at `RAVEN_WING`), the long
+    /// feathers at its tip spread like fingers; its feet tucked under it.
+    RavenBody,
+    RavenBeak,
+    RavenWing {
+        right: bool,
+    },
+    RavenFeet,
 }
+
+/// Where a raven's right wing joins it (the left mirrors it), and where
+/// its eyes are (the right one) and how big.
+pub const RAVEN_WING: [f32; 3] = [0.07, 0.36, 0.06];
+pub const RAVEN_EYE: ([f32; 3], f32) = ([0.038, 0.39, 0.285], 0.012);
+
+/// a raven's body, level in flight: the root of its tail, the deep
+/// chest, the neck into the head
+const RAVEN_BODY: &[Section] = &[
+    s(0.33, -0.2, 0.02, 0.015),
+    s(0.33, -0.16, 0.055, 0.045),
+    s(0.32, -0.06, 0.09, 0.08),
+    s(0.32, 0.04, 0.1, 0.09),
+    s(0.33, 0.12, 0.085, 0.08),
+    s(0.35, 0.18, 0.06, 0.06),
+    s(0.36, 0.21, 0.045, 0.045),
+    s(0.36, 0.22, 0.01, 0.01),
+];
 
 /// Where a cockatrice's head, tail and legs join it (the legs' x is
 /// either side), and how high its hips are; a chickatrice's.
@@ -238,6 +266,96 @@ pub(super) fn build(m: &mut Merge, part: Part) {
                     })
                     .collect();
                 m.sweep(&rib, |_| (0.012, 0.012), 2.0, false, UP);
+            }
+        }
+        Part::RavenBody => {
+            m.loft(RAVEN_BODY, Transform3D::IDENTITY);
+            m.ball(
+                v(0.0, 0.37, 0.25),
+                v(0.052, 0.05, 0.065),
+                [-6.0, 0.0, 0.0],
+                false,
+                16,
+            );
+            // its tail fanned in a wedge
+            m.plate(
+                v(0.0, 0.33, 0.0),
+                (Vector3::RIGHT, Vector3::BACK),
+                &[
+                    (-0.03, -0.17),
+                    (0.03, -0.17),
+                    (0.085, -0.37),
+                    (0.0, -0.4),
+                    (-0.085, -0.37),
+                ],
+                0.012,
+            );
+        }
+        Part::RavenBeak => {
+            m.rod(v(0.0, 0.365, 0.29), v(0.0, 0.35, 0.4), (0.026, 0.004), 10);
+            // the hook at its tip
+            m.rod(
+                v(0.0, 0.357, 0.385),
+                v(0.0, 0.335, 0.405),
+                (0.008, 0.002),
+                6,
+            );
+        }
+        Part::RavenWing { right } => {
+            let side = if right { 1.0 } else { -1.0 };
+            let x = Vector3::RIGHT * side;
+            // the arm's broad feathers, the trailing edge scalloped
+            let arm = [
+                (0.0, 0.07),
+                (0.18, 0.09),
+                (0.34, 0.07),
+                (0.38, 0.02),
+                (0.36, -0.06),
+                (0.28, -0.12),
+                (0.2, -0.13),
+                (0.1, -0.14),
+                (0.0, -0.11),
+            ];
+            m.plate(Vector3::ZERO, (x, Vector3::BACK), &arm, 0.012);
+            // the long feathers of its tip, overlapping, splayed apart
+            // only at their ends (each a little over the one behind it)
+            for (k, len) in [0.17f32, 0.18, 0.17, 0.15, 0.13].into_iter().enumerate() {
+                let a = (8.0 - 12.0 * k as f32).to_radians();
+                let along = x * a.cos() + Vector3::BACK * a.sin();
+                let across = Vector3::UP.cross(along).normalized();
+                let root = x * 0.3
+                    + Vector3::BACK * (0.03 - 0.025 * k as f32)
+                    + Vector3::UP * (0.003 * (5 - k) as f32);
+                m.plate(
+                    root,
+                    (along, across),
+                    &[
+                        (0.0, -0.03),
+                        (len * 0.7, -0.026),
+                        (len, -0.012),
+                        (len + 0.018, 0.0),
+                        (len, 0.012),
+                        (len * 0.7, 0.026),
+                        (0.0, 0.03),
+                    ],
+                    0.008,
+                );
+            }
+        }
+        Part::RavenFeet => {
+            for side in [-1.0f32, 1.0] {
+                let x = side * 0.035;
+                m.rod(v(x, 0.27, 0.0), v(x, 0.245, -0.09), (0.01, 0.008), 6);
+                for k in 0..3 {
+                    let a = (k as f32 - 1.0) * 0.4;
+                    let at = v(x, 0.245, -0.09);
+                    m.rod(
+                        at,
+                        at + v(0.02 * a.sin(), -0.012, -0.03 * a.cos()),
+                        (0.005, 0.002),
+                        5,
+                    );
+                }
             }
         }
         Part::CubeLoot => {

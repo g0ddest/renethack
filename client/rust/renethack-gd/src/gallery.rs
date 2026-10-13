@@ -330,21 +330,33 @@ fn object(cat: &Catalog, class: &str, appearance: &str, pile: bool) -> Result<Gl
     })
 }
 
-/// One monster alone on a small lit floor, the hero two cells to its side
-/// for scale (the `bestiary` self-test's close-ups); the view centres on
-/// the monster.
+/// Whether a monster lives in the water (it is shown swimming in it).
+fn swims(cat: &Catalog, name: &str) -> bool {
+    let (name, _) = named(name);
+    cat.monsters
+        .iter()
+        .any(|m| m.name == name && m.class == ";")
+}
+
+/// One monster alone on a small lit floor (in a pool on it, one of the
+/// sea), the hero two cells to its side for scale (the `bestiary`
+/// self-test's close-ups); the view centres on the monster.
 pub fn lay_out_one(world: &mut World, cat: &Catalog, name: &str) -> Result<(i32, i32), String> {
     let map = &mut world.map;
     map.clear();
     let floor = cmap(cat, "S_room")?;
-    let (cx, cy) = (40, 10);
+    let water = cmap(cat, "S_water")?;
+    let wet = swims(cat, name);
+    let (cx, cy): (i32, i32) = (40, 10);
     for y in cy - 4..=cy + 4 {
         for x in cx - 6..=cx + 6 {
-            map.print(x, y, &floor, None);
+            let pool = wet && (x - cx).abs() <= 2 && x < cx + 2 && (y - cy).abs() <= 2;
+            map.print(x, y, if pool { &water } else { &floor }, None);
         }
     }
+    let under = if wet { &water } else { &floor };
     let g = monster(cat, name, 0, GlyphKind::Mon)?;
-    map.print(cx, cy, &g, Some(&floor));
+    map.print(cx, cy, &g, Some(under));
     let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
     map.print(cx + 2, cy, &hero, Some(&floor));
     world.view_center = Some((cx, cy));
@@ -354,11 +366,14 @@ pub fn lay_out_one(world: &mut World, cat: &Catalog, name: &str) -> Result<(i32,
 /// The monster of `lay_out_one` a cell west of where it stood: it walks
 /// there (a step stopped midway shows its legs under it).
 pub fn step_one(world: &mut World, cat: &Catalog, name: &str) -> Result<(), String> {
-    let floor = cmap(cat, "S_room")?;
+    let under = match swims(cat, name) {
+        true => cmap(cat, "S_water")?,
+        false => cmap(cat, "S_room")?,
+    };
     let (cx, cy) = (40, 10);
     let g = monster(cat, name, 0, GlyphKind::Mon)?;
-    world.map.print(cx, cy, &floor, None);
-    world.map.print(cx - 1, cy, &g, Some(&floor));
+    world.map.print(cx, cy, &under, None);
+    world.map.print(cx - 1, cy, &g, Some(&under));
     Ok(())
 }
 
@@ -373,12 +388,17 @@ pub fn lay_out_corridor(
     let map = &mut world.map;
     map.clear();
     let corr = cmap(cat, "S_corr")?;
+    // one of the sea in a channel of water up to the hero
+    let channel = match swims(cat, name) {
+        true => cmap(cat, "S_water")?,
+        false => corr.clone(),
+    };
     let (cx, cy) = (40, 10);
     for x in cx - 5..=cx + 5 {
-        map.print(x, cy, &corr, None);
+        map.print(x, cy, if x <= cx { &channel } else { &corr }, None);
     }
     let g = monster(cat, name, 0, GlyphKind::Mon)?;
-    map.print(cx, cy, &g, Some(&corr));
+    map.print(cx, cy, &g, Some(&channel));
     let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
     map.print(cx + 1, cy, &hero, Some(&corr));
     world.view_center = Some((cx, cy));

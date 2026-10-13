@@ -179,6 +179,11 @@ pub struct ModelSpec {
     /// ground (feet at 0).
     #[serde(default)]
     pub lift: f32,
+    /// A swimmer's depth in water, in its own units: how far it floats
+    /// down from the surface to its waterline (a shark's back and fin above
+    /// it). On land it stands as it is.
+    #[serde(default)]
+    pub swim: f32,
     /// Euler angles in degrees applied to the model before the cell's own
     /// turn (a sword lies down, a fallen trunk stands up).
     #[serde(default)]
@@ -1232,6 +1237,7 @@ impl ArtManifest {
             proc: Some(proc),
             size: 1.0,
             lift: 0.0,
+            swim: 0.0,
             rot: [0.0; 3],
             rig: None,
             extra_rigs: Vec::new(),

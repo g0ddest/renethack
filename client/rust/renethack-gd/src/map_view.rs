@@ -2094,7 +2094,12 @@ fn entity_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
                     (false, Some(yaw)) => yaw,
                     (false, None) => ctx.face_hero(),
                 };
-                look.model(model, here, yaw);
+                // a swimmer in a liquid floats down to its waterline
+                let swim = match ground < 0.0 {
+                    true => art.model_at(model.art.model).1.swim * model.art.scale,
+                    false => 0.0,
+                };
+                look.model(model, at(0.0, ground - swim, 0.0), yaw);
                 look.entity = Some(look.models.len() - 1);
                 look.hero = hero;
             }
@@ -7635,6 +7640,33 @@ mod tests {
         let pitch = PITCH_DEG.to_radians();
         let back = Vector3::new(0.0, pitch.sin(), pitch.cos());
         (Vector3::new(10.0, 0.0, 9.0) + back * DISTANCE, -back)
+    }
+
+    #[test]
+    fn a_swimmer_floats_down_to_its_waterline_in_water_only() {
+        let f = Fixture::new();
+        let cat = &f.cat;
+        let shark = monster(cat, "shark", 0);
+        let in_water = Cell {
+            glyph: Some(shark.clone()),
+            bk: None,
+            terrain: Some(cmap(cat, "S_water")),
+            over: None,
+            ..Cell::default()
+        };
+        let y = |l: &Look| l.models[l.entity.unwrap()].pos.y;
+        let (wet, dry) = (f.look(&in_water), f.look(&on_floor(cat, shark)));
+        let info = cat.monsters.iter().find(|m| m.name == "shark").unwrap();
+        let r = f.art.monster(info, 0);
+        let swim = f.art.model_at(r.model).1.swim * r.scale;
+        assert!(swim > 0.1, "{swim}");
+        assert_eq!(y(&dry), 0.0);
+        assert!(
+            (y(&wet) - (wet.ground - swim)).abs() < 1e-5,
+            "{} {}",
+            y(&wet),
+            wet.ground
+        );
     }
 
     #[test]

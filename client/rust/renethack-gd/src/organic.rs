@@ -20,10 +20,14 @@ use godot::prelude::*;
 
 #[path = "organic_felines.rs"]
 pub mod felines;
+#[path = "organic_lurkers.rs"]
+pub mod lurkers;
 #[path = "organic_more.rs"]
 pub mod more;
 #[path = "organic_props.rs"]
 pub mod props;
+#[path = "organic_sea.rs"]
+pub mod sea;
 #[path = "organic_weather.rs"]
 pub mod weather;
 
@@ -117,6 +121,10 @@ pub enum Organic {
     More(more::Part),
     /// A part of a vortex or an elemental (`weather`).
     Weather(weather::Part),
+    /// A part of a fish, an eel, a jellyfish or a kraken (`sea`).
+    Sea(sea::Part),
+    /// A part of a piercer, a trapper or a lurker above (`lurkers`).
+    Lurker(lurkers::Part),
 }
 
 /// Where a cat's legs join its body (out to the side, up, forward): the
@@ -557,6 +565,8 @@ impl Organic {
             Organic::Prop(part) => props::build(&mut m, part),
             Organic::More(part) => more::build(&mut m, part),
             Organic::Weather(part) => weather::build(&mut m, part),
+            Organic::Sea(part) => sea::build(&mut m, part),
+            Organic::Lurker(part) => lurkers::build(&mut m, part),
             Organic::SporeThreads => {
                 for k in 0..4 {
                     let a = (k as f32 / 4.0 * 360.0 + 45.0).to_radians();
@@ -1314,6 +1324,55 @@ impl Merge {
                 self.tri(a, b, a + w);
                 self.tri(b, b + w, a + w);
             }
+        }
+    }
+
+    /// A thin plate (a fin, a feather, a wing's web): `outline` the points
+    /// round it, (u, v) in the plane through `at` that `u` and `v` span,
+    /// each face a fan from their middle (from where the outline goes round
+    /// once), `thick` through, its rim closed.
+    fn plate(
+        &mut self,
+        at: Vector3,
+        (u, v): (Vector3, Vector3),
+        outline: &[(f32, f32)],
+        thick: f32,
+    ) {
+        let k = outline.len();
+        if k < 3 {
+            return;
+        }
+        let n = u.cross(v).normalized();
+        let point = |(a, b): (f32, f32)| at + u * a + v * b;
+        let (sa, sb) = outline
+            .iter()
+            .fold((0.0, 0.0), |(x, y), &(a, b)| (x + a, y + b));
+        let mid = (sa / k as f32, sb / k as f32);
+        let uv = |(a, b): (f32, f32)| Vector2::new(a, b);
+        for side in [1.0f32, -1.0] {
+            let off = n * (side * thick / 2.0);
+            let c = self.vertex(point(mid) + off, n * side, uv(mid));
+            for &p in outline {
+                self.vertex(point(p) + off, n * side, uv(p));
+            }
+            for j in 0..k as i32 {
+                self.tri(c, c + 1 + j, c + 1 + (j + 1) % k as i32);
+            }
+        }
+        let centre = point(mid);
+        for j in 0..k {
+            let (a, b) = (point(outline[j]), point(outline[(j + 1) % k]));
+            let mut out = (b - a).cross(n).normalized();
+            if out.dot((a + b) * 0.5 - centre) < 0.0 {
+                out = -out;
+            }
+            let half = n * (thick / 2.0);
+            let first = self.vertex(a + half, out, uv(outline[j]));
+            self.vertex(b + half, out, uv(outline[(j + 1) % k]));
+            self.vertex(b - half, out, uv(outline[(j + 1) % k]));
+            self.vertex(a - half, out, uv(outline[j]));
+            self.tri(first, first + 1, first + 2);
+            self.tri(first, first + 2, first + 3);
         }
     }
 

@@ -2776,24 +2776,36 @@ impl Kit<'_> {
     fn body(&mut self, kind: Proc, root: &mut Gd<Node3D>) {
         match kind {
             Proc::Serpent => self.serpent(root),
-            Proc::Worm => self.worm_body(root),
+            Proc::Worm => match sea_kit::Sea::of(kind, self.shape.as_deref()) {
+                Some(sea) => self.sea(root, sea),
+                None => self.worm_body(root),
+            },
             Proc::Bug => match self.shape.as_deref() {
                 Some("beetle") => self.beetle_body(root),
                 Some("grid") => self.ant_body(root, true),
                 _ => self.ant_body(root, false),
             },
             Proc::Spider => self.bug(root, 4, true),
-            Proc::Bat => self.bat(root),
+            Proc::Bat => match self.shape.as_deref() {
+                Some("raven") => self.raven(root),
+                _ => self.bat(root),
+            },
             Proc::Bird => match self.shape.as_deref() {
                 Some("cockatrice") => self.cockatrice(root, false),
                 Some("chickatrice") => self.cockatrice(root, true),
                 _ => self.bird(root),
             },
-            Proc::Blob => self.blob_body(root),
+            Proc::Blob => match self.shape.as_deref() {
+                Some("cloak") => self.cloak(root),
+                shape => match sea_kit::Sea::of(kind, shape) {
+                    Some(sea) => self.sea(root, sea),
+                    None => self.blob_body(root),
+                },
+            },
             Proc::Eye => self.eye_body(root),
             Proc::Light => match self.shape.as_deref() {
                 Some("spore") => self.spore_body(root),
-                _ => self.light(root),
+                _ => self.light_body(root),
             },
             Proc::Vortex => match self.shape.as_deref().and_then(creature_kit::Weather::of) {
                 Some(weather) => self.weather(root, weather),
@@ -2808,8 +2820,14 @@ impl Kit<'_> {
             },
             Proc::Lizard => self.lizard_body(root),
             Proc::Dragon => self.lizard(root, true),
-            Proc::Fish => self.fish(root),
-            Proc::Piercer => self.piercer(root),
+            Proc::Fish => {
+                let sea = sea_kit::Sea::of(kind, self.shape.as_deref());
+                self.sea(
+                    root,
+                    sea.unwrap_or(sea_kit::Sea::Fish(crate::organic::sea::Fish::Plain)),
+                )
+            }
+            Proc::Piercer => self.piercer_body(root),
             Proc::Beast => self.beast(root),
             Proc::Prop => self.prop(root),
             _ => self.object(kind, root),
@@ -3068,34 +3086,6 @@ impl Kit<'_> {
         );
     }
 
-    fn light(&mut self, root: &mut Gd<Node3D>) {
-        let mut body = self.pivot(root, "Body", [0.0, 0.0, 0.0]);
-        let core = self.art.flat(
-            Color::from_rgba(self.tint.r, self.tint.g, self.tint.b, 1.0),
-            Finish::Ember,
-        );
-        self.part(
-            &mut body,
-            sphere(0.28),
-            &core,
-            [0.0, 0.5, 0.0],
-            [0.0; 3],
-            [1.0; 3],
-        );
-        let halo = self.art.flat(
-            Color::from_rgba(self.tint.r, self.tint.g, self.tint.b, 0.25),
-            Finish::Ghost,
-        );
-        self.part(
-            &mut body,
-            sphere(0.5),
-            &halo,
-            [0.0, 0.5, 0.0],
-            [0.0; 3],
-            [1.0; 3],
-        );
-    }
-
     fn vortex(&mut self, root: &mut Gd<Node3D>) {
         let mut body = self.pivot(root, "Body", [0.0, 0.0, 0.0]);
         let mist = self.art.flat(
@@ -3278,63 +3268,6 @@ impl Kit<'_> {
         }
     }
 
-    fn fish(&mut self, root: &mut Gd<Node3D>) {
-        let mut body = self.pivot(root, "Body", [0.0, 0.0, 0.0]);
-        self.skin(
-            &mut body,
-            sphere(0.5),
-            [0.0, 0.5, 0.0],
-            [0.0; 3],
-            [0.5, 0.9, 1.4],
-        );
-        let mut tail = self.pivot(&mut body, "Tail", [0.0, 0.5, -0.65]);
-        let fin = self.dark();
-        self.part(
-            &mut tail,
-            prism(0.04, 0.7, 0.4),
-            &fin,
-            [0.0, 0.0, -0.15],
-            [90.0, 0.0, 0.0],
-            [1.0; 3],
-        );
-        self.part(
-            &mut body,
-            prism(0.04, 0.35, 0.5),
-            &fin,
-            [0.0, 0.95, -0.05],
-            [0.0; 3],
-            [1.0; 3],
-        );
-        self.eyes(&mut body, [0.0, 0.62, 0.48], 0.2, 0.05, false);
-        let teeth = self.bone();
-        self.part(
-            &mut body,
-            cuboid(0.3, 0.03, 0.05),
-            &teeth,
-            [0.0, 0.42, 0.66],
-            [0.0; 3],
-            [1.0; 3],
-        );
-    }
-
-    fn piercer(&mut self, root: &mut Gd<Node3D>) {
-        self.skin(
-            root,
-            cylinder(0.0, 0.32, 1.0),
-            [0.0, 0.5, 0.0],
-            [0.0; 3],
-            [1.0; 3],
-        );
-        self.skin(
-            root,
-            facets(0.3, 6),
-            [0.1, 0.12, 0.05],
-            [0.0, 20.0, 0.0],
-            [1.2, 0.5, 1.1],
-        );
-        self.eyes(root, [0.0, 0.45, 0.17], 0.06, 0.025, true);
-    }
-
     fn beast(&mut self, root: &mut Gd<Node3D>) {
         if self.shape.as_deref() == Some("cat") {
             self.cat_body(root);
@@ -3401,6 +3334,9 @@ mod object_kit;
 
 #[path = "creature_kit.rs"]
 mod creature_kit;
+
+#[path = "sea_kit.rs"]
+mod sea_kit;
 
 #[path = "prop_kit.rs"]
 mod prop_kit;

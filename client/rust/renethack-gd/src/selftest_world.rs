@@ -222,6 +222,20 @@ const BESTIARY: &[&str] = &[
     "red dragon",
     "long worm",
     "purple worm",
+    "piranha",
+    "shark",
+    "giant eel",
+    "electric eel",
+    "jellyfish",
+    "kraken",
+    "raven",
+    "rock piercer",
+    "iron piercer",
+    "glass piercer",
+    "trapper",
+    "lurker above",
+    "yellow light",
+    "black light",
 ];
 
 /// RENETHACK_BESTIARY=gnome,gnome (F);dwarf,dwarf leader: these creatures
@@ -282,6 +296,34 @@ const COLOUR_ROWS: &[(i32, &[&str])] = &[
         ],
     ),
     (3, &["long worm", "purple worm", "acid blob"]),
+];
+
+/// The creatures of the water and of the deep, shot in their own rows (on
+/// the floor, where a swimmer stands out of the water: its whole body's
+/// colour shows).
+const DEEP_ROWS: &[(i32, &[&str])] = &[
+    (
+        2,
+        &[
+            "piranha",
+            "shark",
+            "giant eel",
+            "electric eel",
+            "jellyfish",
+            "kraken",
+        ],
+    ),
+    (
+        2,
+        &[
+            "rock piercer",
+            "iron piercer",
+            "glass piercer",
+            "trapper",
+            "lurker above",
+        ],
+    ),
+    (2, &["raven", "yellow light", "black light"]),
 ];
 
 pub(super) fn bestiary() -> Vec<Step> {
@@ -389,6 +431,17 @@ pub(super) fn bestiary() -> Vec<Step> {
         }),
         Step::Wait("the camera on them", camera_settled),
         Step::Shot("colours"),
+        Step::Call("lay out the deep's rows", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            crate::gallery::lay_out_rows(&mut g.world, &cat, DEEP_ROWS)?;
+            Ok(())
+        }),
+        Step::Wait("the deep's rows drawn", |g| {
+            let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+            Ok(drawn == Some(g.world.map.generation()))
+        }),
+        Step::Wait("the camera on the deep's rows", camera_settled),
+        Step::Shot("colours-deep"),
     ]);
     steps.extend(quit());
     // and in a game: a wizard's kitten at the start, as far as a game
