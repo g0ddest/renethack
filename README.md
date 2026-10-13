@@ -486,13 +486,18 @@ each with its level in words and pips and what the window marks it with:
 "advance" when it can advance now (a pick that advances it), "later" for
 the window's `*`, "at its most" for its `#`; the window tells no other
 maximum, and the panel shows none.
+The journal (#chronicle, `v`; `journal.rs`, `journal_view.rs`) lists the
+events the engine logged, each by its turn, beside the message history
+as the log keeps it (one rich text for its thousand lines); the keys
+scroll the messages.
 A panel's header and hint name its key as the player presses it now,
 and that key closes it again, as Esc and a gamepad's B do. The `sheet`
 scenario opens it in a game, from the key, the HUD's button and a moved
 key, and checks that each line of the window is on it; `spells` casts
 from both lists, by key, click and gamepad, and swaps two spells;
 `skills` shows a debug-mode hero's skills, then advances two (by a letter
-and by a gamepad).
+and by a gamepad); `journal` opens #chronicle and checks its events and
+the newest message.
 `--lang=qps` is a pseudo-language for the self-tests: words through the
 catalogs show ⟦so⟧ and the engine's ⟪so⟫, and a screen a scenario shoots
 fails on any word outside the marks. `make test-client` also runs

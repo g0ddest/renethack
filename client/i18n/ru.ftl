@@ -399,6 +399,17 @@ skills-later = позже
 skills-peaked = предел
 skills-hint-advance = Буква, Enter или щелчок: улучшить · Esc, { $key }: закрыть
 
+## RPG-панели: журнал (#chronicle)
+
+journal-title = Журнал
+journal-events = События
+journal-major-events = Главные события
+journal-messages = Сообщения
+journal-no-events = Событий пока нет.
+journal-no-messages = Сообщений пока нет.
+journal-hint = ↑↓ PgUp PgDn: сообщения · Esc, { $key }: закрыть
+journal-hint-esc = ↑↓ PgUp PgDn: сообщения · Esc: закрыть
+
 ## Журнал сообщений
 
 log-title = Сообщения

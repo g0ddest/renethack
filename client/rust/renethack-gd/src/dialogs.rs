@@ -28,6 +28,8 @@ use nh_world::{Key, KeyInput, MenuEntry, MenuOutcome, MenuState, Prompt, TextLin
 use nh_i18n::lexicon::Lexicon;
 
 use crate::i18n::{self, EngineKind, Lang};
+use crate::journal;
+use crate::journal_view::{self, JournalView};
 use crate::layouts::{self, Genocided, GoneRow, KillRow, OverviewRow, Vanquished};
 use crate::pickers::{self, Ask, ObjClass, Pick, Wish};
 use crate::sheet;
@@ -70,6 +72,9 @@ const PANEL_CHROME: f32 = 230.0;
 /// spells' panel's.
 const PANEL_W: f32 = 1120.0;
 const SPELLS_W: f32 = 760.0;
+/// The journal's widest and tallest.
+const JOURNAL_W: f32 = 1040.0;
+const JOURNAL_H: f32 = 640.0;
 const SCROLL_ROOM: f32 = 18.0;
 /// The same for a text window (no footer).
 const TEXT_CHROME: f32 = 220.0;
@@ -1358,6 +1363,8 @@ pub struct Dialogs {
     /// The spell a pick in `+`'s panel casts, once its menu is answered
     /// (`take_cast`).
     cast: Option<String>,
+    /// The open journal's view (the game puts the messages in).
+    journal: Option<JournalView>,
 }
 
 struct SpellsOpen {
@@ -1419,6 +1426,7 @@ impl Dialogs {
             opening_own: None,
             spells: None,
             cast: None,
+            journal: None,
         }
     }
 
@@ -3174,6 +3182,67 @@ impl Dialogs {
             .map_or_else(|| "—".to_string(), |k| crate::rebind::short_name(&k))
     }
 
+    /// #chronicle: the journal (`journal_view`), the events logged beside
+    /// the message history; the keys scroll the messages. The game puts
+    /// the messages in (`fill_journal`).
+    fn open_journal(
+        &mut self,
+        req: u64,
+        j: &journal::Journal,
+        catalog: Option<&Catalog>,
+    ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        let width = self.panel_width().min(JOURNAL_W);
+        let height = (self.screen().y - PANEL_CHROME).clamp(ROW_H * 6.0, JOURNAL_H);
+        let (_, messages_w) = journal_view::widths(width);
+        let text = Scroller::new(messages_w, height - 40.0, false);
+        let view = journal_view::view(j, width, height, text.scroll.clone());
+        let own = ext_key(catalog, "chronicle");
+        let (shade, panel, mut col, key) =
+            self.panel_frame(req, &tr!("journal-title"), own, DialogEvent::Close, width);
+        col.add_child(&view.root);
+        let hint = match own {
+            Some(_) => tr!("journal-hint", key = key.as_str()),
+            None => tr!("journal-hint-esc"),
+        };
+        self.hint(&mut col, &hint, width);
+        self.journal = Some(view);
+        (
+            Kind::Show {
+                text,
+                layout: Some("journal"),
+            },
+            shade,
+            panel,
+        )
+    }
+
+    /// The open journal still wants the messages.
+    pub fn journal_wants_messages(&self) -> bool {
+        self.journal
+            .as_ref()
+            .is_some_and(JournalView::wants_messages)
+    }
+
+    /// The open journal's messages as they show (self-tests).
+    pub fn journal_messages(&self) -> Option<String> {
+        self.journal.as_ref().map(JournalView::messages_text)
+    }
+
+    /// The open journal's messages: the log's, the newest in view.
+    pub fn fill_journal<'a>(&mut self, log: impl Iterator<Item = &'a nh_world::Message>) {
+        let Some(view) = self.journal.as_mut() else {
+            return;
+        };
+        view.fill(log);
+        if let Some(Open {
+            kind: Kind::Show { text, .. },
+            ..
+        }) = self.open.as_mut()
+        {
+            text.scroll_to(1.0e9);
+        }
+    }
+
     fn open_overview(
         &mut self,
         req: u64,
@@ -3491,6 +3560,8 @@ impl Dialogs {
                     .collect();
                 if let Some(s) = sheet::sheet(&texts) {
                     self.open_sheet(req, &s, english, lines)
+                } else if let Some(j) = journal::journal(&texts) {
+                    self.open_journal(req, &j, catalog)
                 } else if let Some(sk) = skills::skills(english_title, &skill_lines) {
                     // #enhance with nothing to advance: its lines as a menu's
                     let items: Vec<nh_protocol::MenuItem> = english
@@ -3666,6 +3737,7 @@ impl Dialogs {
         let mut open = self.open.take()?;
         self.sheet = None;
         self.spells = None;
+        self.journal = None;
         // built hidden, drawn from the next frame: its making and its
         // first draw (layout, text, pipelines) fall on two frames
         open.panel.set_visible(false);
@@ -4298,6 +4370,7 @@ impl Dialogs {
         // dialog of the warm-up's put away)
         self.sheet = None;
         self.spells = None;
+        self.journal = None;
         if let Some(open) = self.open.take() {
             self.retire(open);
         }

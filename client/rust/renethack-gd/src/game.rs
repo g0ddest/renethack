@@ -2439,6 +2439,10 @@ impl RenethackGame {
         ui.dialogs.set_keymap(map);
         ui.inventory.set_keymap(map);
         ui.help.set_keymap(map);
+        // the journal's messages: the log's, beside #chronicle's events
+        if ui.dialogs.journal_wants_messages() {
+            ui.dialogs.fill_journal(self.world.log.iter());
+        }
         // a gamepad: its hints, the bar's chords, dialogs with a focus
         let pad = self.pad.active.then_some(self.pad.kind);
         ui.dialogs.set_pad(pad.is_some());

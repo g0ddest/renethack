@@ -52,6 +52,8 @@ mod help_tests;
 mod hero;
 #[path = "selftest_input.rs"]
 mod input_ru;
+#[path = "selftest_journal.rs"]
+mod journal_tests;
 #[path = "selftest_layouts.rs"]
 mod layouts_tests;
 #[path = "selftest_passing.rs"]
@@ -4797,6 +4799,7 @@ impl SelfTest {
             "sheet" => sheet_tests::sheet(),
             "spells" => spells_tests::spells(),
             "skills" => skills_tests::skills(),
+            "journal" => journal_tests::journal(),
             "presets" => settings_tests::presets(),
             "layouts" => layouts_tests::layouts(),
             "rim" => rim_tests::rim(),

@@ -398,6 +398,17 @@ skills-later = later
 skills-peaked = at its most
 skills-hint-advance = A letter, Enter or a click: advance it · Esc, { $key }: close
 
+## The RPG panels: the journal (#chronicle)
+
+journal-title = Journal
+journal-events = Events
+journal-major-events = Major events
+journal-messages = Messages
+journal-no-events = No events yet.
+journal-no-messages = No messages yet.
+journal-hint = ↑↓ PgUp PgDn: the messages · Esc, { $key }: close
+journal-hint-esc = ↑↓ PgUp PgDn: the messages · Esc: close
+
 ## The message log
 
 log-title = Messages
