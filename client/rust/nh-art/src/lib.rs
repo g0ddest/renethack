@@ -1727,6 +1727,63 @@ mod tests {
         }
     }
 
+    /// The rats were dark smudges on a brown floor, the little dog a dark
+    /// grey one that left its ring looking empty in a corridor, and the
+    /// four liches one dark hooded figure.
+    #[test]
+    fn the_rats_the_dogs_and_the_liches_are_seen() {
+        let (art, cat) = (manifest(), catalog());
+        let find = |n: &str| cat.monsters.iter().find(|m| m.name == n).unwrap();
+        // a rat's coat lit up to take a tint, each kind its own
+        let rat = art.model_at(art.model_index("rat").unwrap()).1;
+        assert!(rat.albedo.is_some(), "the rats' coat is the dark one");
+        let mut tints = Vec::new();
+        for who in [
+            "sewer rat",
+            "giant rat",
+            "rabid rat",
+            "rock mole",
+            "woodchuck",
+        ] {
+            let r = art.monster(find(who), 0);
+            assert_eq!(art.model_at(r.model).0, "rat", "{who}");
+            assert!(!tints.contains(&r.tint), "{who} is tinted as another");
+            tints.push(r.tint);
+        }
+        // the domestic dogs pale, as their glyph is white
+        for who in ["little dog", "dog", "large dog"] {
+            let spec = art.model_at(art.monster(find(who), 0).model).1;
+            let coat = spec
+                .recolor
+                .get("@Material")
+                .and_then(|c| hex(c.trim_start_matches('=')));
+            assert!(
+                coat.is_some_and(|c| c.iter().all(|&v| v > 0.6)),
+                "{who}: {coat:?}"
+            );
+        }
+        // each lich its own, robed in its glyph's colour: brown, red and
+        // magenta (the master and the arch-lich both lords')
+        let brown = |[r, g, b]: [f32; 3]| r > g && g > b;
+        let red = |[r, g, b]: [f32; 3]| r > 2.0 * g && r > 2.0 * b;
+        let magenta = |[r, g, b]: [f32; 3]| r > 2.0 * g && b > 2.0 * g;
+        let mut seen = Vec::new();
+        for (who, robed) in [
+            ("lich", &brown as &dyn Fn([f32; 3]) -> bool),
+            ("demilich", &red),
+            ("master lich", &magenta),
+            ("arch-lich", &magenta),
+        ] {
+            let (name, spec) = art.model_at(art.monster(find(who), 0).model);
+            assert_eq!(spec.head.as_deref(), Some("lich"), "{who}");
+            assert!(spec.rim.is_some(), "{who} has no rim");
+            let robe = spec.recolor.get("_Body").and_then(|c| hex(c));
+            assert!(robe.is_some_and(robed), "{who}: {robe:?}");
+            assert!(!seen.contains(&name), "{who} looks as another");
+            seen.push(name);
+        }
+    }
+
     /// A mimic found out was the chest it had mimicked: loot still.
     #[test]
     fn a_mimic_found_out_is_no_chest() {
