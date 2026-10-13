@@ -70,7 +70,7 @@ const SEARCHES: u32 = 40;
 const SENSED_STEPS: u32 = 3;
 
 /// The directions and their keys (the scenarios' vi-keys).
-const STEPS: [((i32, i32), char); 8] = [
+pub(super) const STEPS: [((i32, i32), char); 8] = [
     ((-1, 0), 'h'),
     ((1, 0), 'l'),
     ((0, -1), 'k'),

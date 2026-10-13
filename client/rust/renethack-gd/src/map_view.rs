@@ -63,7 +63,7 @@ mod hero_look;
 #[path = "hero_pose.rs"]
 mod hero_pose;
 
-pub use hero_look::Shown;
+pub use hero_look::{Effects, Shown};
 pub use hero_pose::{Held, HelplessPhase};
 
 /// Low enough to see creatures from the side, high enough to see the floor
@@ -3973,6 +3973,32 @@ impl MapView {
         self.hero_pose.lift
     }
 
+    /// The settings' fewer screen effects: no sway, drift or hue.
+    pub fn set_reduce_effects(&mut self, on: bool) {
+        self.hero_look.reduced = on;
+    }
+
+    /// The hero's model wears the statues' own stone (self-tests).
+    pub fn hero_in_stone(&self) -> bool {
+        let Some(statue) = self.hero_look.statue() else {
+            return false;
+        };
+        self.rim_model.as_ref().is_some_and(|n| {
+            n.find_children_ex("*")
+                .type_("GeometryInstance3D")
+                .owned(false)
+                .done()
+                .iter_shared()
+                .filter_map(|c| c.try_cast::<GeometryInstance3D>().ok())
+                .any(|g| g.get_material_overlay().is_some_and(|m| m == statue))
+        })
+    }
+
+    /// The conditions' effects on the screen now (self-tests).
+    pub fn hero_effects(&self) -> Effects {
+        self.hero_look.effects(self.env.get_adjustment_brightness())
+    }
+
     /// The conditions the hero's body shows, each with its share of the
     /// way, and whether their model wears the tint now (self-tests).
     pub fn hero_shown(&self, world: &World) -> (Vec<(Shown, f32)>, bool) {
@@ -5793,7 +5819,8 @@ impl MapView {
         // aim a little south of the hero, so the hero stands above the
         // log; close in, the same offset would push the hero off the top
         let south = AIM_SOUTH * distance / DISTANCE;
-        let aim = self.focus + Vector3::new(0.0, self.aim_lift, south);
+        // a stunned or confused hero's view drifts a little
+        let aim = self.focus + Vector3::new(0.0, self.aim_lift, south) + self.hero_look.drift;
         self.camera.look_at_from_position(aim + offset, aim);
         self.eye = aim + offset;
         RenderingServer::singleton().global_shader_parameter_set("eye_pos", &self.eye.to_variant());

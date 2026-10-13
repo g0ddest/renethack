@@ -3691,6 +3691,7 @@ impl RenethackGame {
             return;
         };
         if let Some(cat) = catalog.as_deref() {
+            ui.map.set_reduce_effects(self.settings.reduce_effects);
             ui.map.sync(&mut self.world, cat, delta);
         }
         // ^P: tty shows the previous messages; here the whole log

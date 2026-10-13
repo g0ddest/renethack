@@ -4,7 +4,11 @@
 //! slime does, wet and faintly glowing, more of them each turn of the
 //! countdown (five for stone, ten for slime), all of the body at its end.
 //! Levitating or flying they float above the floor, bobbing slowly, and
-//! glide from cell to cell, their legs still. A child of map_view: it lays its skin over the hero's own model (the
+//! glide from cell to cell, their legs still. Stunned or confused they
+//! sway where they stand and the camera drifts a little; hallucinating, a
+//! slow hue drifts over the view; blind, the view dims and darkens at its
+//! edges. Fewer screen effects (the settings) leaves out the sway, the
+//! drift and the hue; the dimming stays. A child of map_view: it lays its skin over the hero's own model (the
 //! rider's while they ride), under the see-through look that shows them
 //! behind a wall.
 
@@ -31,6 +35,65 @@ pub enum Shown {
 const FLOAT_HEIGHT: f32 = 0.32;
 const UNDER_SIZE: f32 = 0.85;
 const UNDER_DARK: f32 = 0.6;
+
+/// A stunned hero's sway (a confused one's is gentler): degrees at its
+/// widest, the seconds of its two waves, the metres the camera's aim
+/// wanders, and the seconds it takes to come and go.
+const SWAY_DEG: f32 = 7.0;
+const CONFUSED_SWAY: f32 = 0.55;
+const SWAY_SECS: (f32, f32) = (1.9, 3.1);
+const DRIFT: f32 = 0.22;
+const EFFECT_EASE: f32 = 0.8;
+/// A hallucination's tint over the view, the most it lifts a channel,
+/// the hue it starts at (a sea green: none of the dungeon's warm light)
+/// and the seconds of a turn round the hues; blindness's darkened edges,
+/// and how far the view dims.
+const HUE_ALPHA: f32 = 0.25;
+const HUE_MOST: f32 = 2.0;
+const HUE_START: f32 = 0.45;
+const HUE_SECS: f32 = 9.0;
+const BLIND_EDGE: f32 = 0.85;
+const BLIND_DIM: (f32, f32) = (0.62, 0.45);
+/// The screen's quad sits this far before the eye.
+const SCREEN_AT: f32 = 0.3;
+
+/// The quad over the view: a hue tinting it, its edges darkened. It
+/// multiplies what is drawn, so the dark stays dark and nothing is read
+/// back from the screen.
+const SCREEN_SHADER: &str = r#"shader_type spatial;
+render_mode unshaded, blend_mul, depth_test_disabled, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled;
+uniform vec3 tint = vec3(1.0);
+uniform float edge = 0.0;
+void fragment() {
+	vec2 c = (SCREEN_UV - 0.5) * vec2(1.5, 1.0);
+	float dark = edge * smoothstep(0.22, 0.78, length(c));
+	ALBEDO = tint * (1.0 - dark);
+}
+"#;
+
+/// A hallucination's tint at `hue` (a turn round the wheel from 0 to 1),
+/// `k` of the way from none: in linear light and of even brightness, so
+/// that no hue darkens the view or lights it up.
+fn hue_tint(hue: f32, k: f32) -> Vector3 {
+    // the hue at 0.65 saturation and full value, from sRGB to linear
+    let channel = |n: f32| {
+        let at = (n + hue * 6.0) % 6.0;
+        let v = 1.0 - 0.65 * at.min(4.0 - at).clamp(0.0, 1.0);
+        if v <= 0.04045 {
+            v / 12.92
+        } else {
+            ((v + 0.055) / 1.055).powf(2.4)
+        }
+    };
+    let rgb = Vector3::new(channel(5.0), channel(3.0), channel(1.0));
+    let even = rgb / rgb.dot(Vector3::new(0.2126, 0.7152, 0.0722)).max(0.05);
+    let even = Vector3::new(
+        even.x.min(HUE_MOST),
+        even.y.min(HUE_MOST),
+        even.z.min(HUE_MOST),
+    );
+    Vector3::ONE + (even - Vector3::ONE) * k
+}
 const BOB: f32 = 0.05;
 const BOB_SECS: f32 = 2.6;
 const FLOAT_EASE: f32 = 0.6;
@@ -57,9 +120,31 @@ impl Shown {
 
 /// How far along a countdown is shown at its first turn.
 const FIRST_STEP: f32 = 0.2;
-const STONE: Color = Color::from_rgb(0.4, 0.4, 0.39);
+/// Stone's creep is of the statues' own grey (the art's `statue`
+/// material, which a stoned hero wears whole at the end), as dark as the
+/// light on the hero is bright: under it they read as the statues round
+/// them, not as white marble.
+const STONE: Color = Color::from_rgb(0.21, 0.225, 0.245);
+const STONE_SHADE: u8 = 50;
 const SLIME: Color = Color::from_rgb(0.3, 0.75, 0.2);
 const SLIME_GLOW: Color = Color::from_rgb(0.06, 0.22, 0.03);
+
+/// The screen's effects now (self-tests).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Effects {
+    /// The hero's sway (1 stunned, gentler confused), the camera's drift.
+    pub sway: f32,
+    pub drift: Vector3,
+    /// The hue's strength and the dimming's (0..=1).
+    pub hue: f32,
+    pub dim: f32,
+    /// The environment's brightness.
+    pub bright: f32,
+    /// The quad over the view shows.
+    pub screen: bool,
+    /// Every effect at the strength it eases to.
+    pub settled: bool,
+}
 
 /// The state shown now.
 pub(super) struct HeroLook {
@@ -69,8 +154,12 @@ pub(super) struct HeroLook {
     since: Vec<(Shown, i64)>,
     stone: Gd<StandardMaterial3D>,
     slime: Gd<StandardMaterial3D>,
-    /// The tint on the hero's model now: which model, which tint.
-    tinted: Option<(InstanceId, Option<Shown>)>,
+    /// The tint on the hero's model now: which model, which tint, and
+    /// whether it is at its end.
+    tinted: Option<(InstanceId, Option<(Shown, bool)>)>,
+    /// The statues' own stone (fetched the first time a hero is stoned
+    /// through).
+    statue: Option<Gd<godot::classes::Material>>,
     /// The masks of Lev and Fly; how far up a float is (0..=1, easing),
     /// and the seconds the bob has run.
     float_masks: u64,
@@ -78,6 +167,32 @@ pub(super) struct HeroLook {
     bob: f32,
     /// The shadow under a floating hero (made the first time they float).
     under: Option<Gd<godot::classes::Decal>>,
+    /// Stun's and Conf's, Hallu's, Blind's masks.
+    stun: u64,
+    conf: u64,
+    hallu: u64,
+    blind: u64,
+    /// The effects' strengths (0..=1, easing), whether each is where it
+    /// eases to, and the seconds they ran.
+    sway: f32,
+    hue: f32,
+    dim: f32,
+    settled: bool,
+    clock: f32,
+    /// The hero's model swayed: its inner node and its own basis.
+    swayed: Option<(Gd<Node3D>, Basis)>,
+    /// Where the camera's aim wanders to now (map_view's `place_camera`).
+    pub(super) drift: Vector3,
+    /// The quad over the view, its material, and whether it shows.
+    screen: Option<(
+        Gd<godot::classes::MeshInstance3D>,
+        Gd<godot::classes::ShaderMaterial>,
+    )>,
+    screened: bool,
+    /// The settings' fewer screen effects.
+    pub(super) reduced: bool,
+    /// The environment dimmed now (its grade is given back after).
+    dimmed: bool,
 }
 
 /// Its share of the way, `elapsed` turns into a countdown of `turns`.
@@ -117,7 +232,7 @@ fn creeping(color: Color, seed: i32, noise_type: NoiseType) -> Gd<StandardMateri
 impl HeroLook {
     pub(super) fn new() -> HeroLook {
         let mut stone = creeping(STONE, 7, NoiseType::CELLULAR);
-        stone.set_roughness(1.0);
+        stone.set_roughness(0.95);
         let mut slime = creeping(SLIME, 11, NoiseType::SIMPLEX_SMOOTH);
         slime.set_roughness(0.15);
         slime.set_feature(Feature::EMISSION, true);
@@ -128,10 +243,26 @@ impl HeroLook {
             stone,
             slime,
             tinted: None,
+            statue: None,
             float_masks: 0,
             float: 0.0,
             bob: 0.0,
             under: None,
+            stun: 0,
+            conf: 0,
+            hallu: 0,
+            blind: 0,
+            sway: 0.0,
+            hue: 0.0,
+            dim: 0.0,
+            clock: 0.0,
+            swayed: None,
+            drift: Vector3::ZERO,
+            screen: None,
+            reduced: false,
+            dimmed: false,
+            settled: true,
+            screened: false,
         }
     }
 
@@ -143,6 +274,42 @@ impl HeroLook {
         if let Some(u) = self.under.as_mut() {
             u.set_visible(false);
         }
+        self.sway = 0.0;
+        self.hue = 0.0;
+        self.dim = 0.0;
+        self.drift = Vector3::ZERO;
+        self.unsway();
+        if let Some((q, _)) = self.screen.as_mut() {
+            q.set_visible(false);
+        }
+        self.screened = false;
+    }
+
+    /// The swayed model back in its own stance.
+    fn unsway(&mut self) {
+        if let Some((mut inner, basis)) = self.swayed.take()
+            && inner.is_instance_valid()
+        {
+            inner.set_basis(basis);
+        }
+    }
+
+    /// The effects now (self-tests), with the environment's brightness.
+    pub(super) fn effects(&self, bright: f32) -> Effects {
+        Effects {
+            sway: self.sway,
+            drift: self.drift,
+            hue: self.hue,
+            dim: self.dim,
+            bright,
+            screen: self.screened,
+            settled: self.settled,
+        }
+    }
+
+    /// The statues' own stone, once fetched.
+    pub(super) fn statue(&self) -> Option<Gd<godot::classes::Material>> {
+        self.statue.clone()
     }
 
     /// The hero floats (or is rising or coming down).
@@ -154,8 +321,14 @@ impl HeroLook {
     /// before slime), None: none.
     pub(super) fn overlay(&self) -> Option<Gd<godot::classes::Material>> {
         self.tinted.and_then(|(_, s)| s).map(|s| match s {
-            Shown::Stone => self.stone.clone().upcast(),
-            Shown::Slime => self.slime.clone().upcast(),
+            // stoned through: the statues' own cold stone, whatever
+            // lights it
+            (Shown::Stone, true) => match &self.statue {
+                Some(m) => m.clone(),
+                None => self.stone.clone().upcast(),
+            },
+            (Shown::Stone, false) => self.stone.clone().upcast(),
+            (Shown::Slime, _) => self.slime.clone().upcast(),
         })
     }
 
@@ -187,6 +360,15 @@ impl MapView {
                 .iter()
                 .filter(|c| c.name == "Lev" || c.name == "Fly")
                 .fold(0, |m, c| m | c.mask);
+            let mask = |name: &str| {
+                catalog
+                    .conditions
+                    .iter()
+                    .find(|c| c.name == name)
+                    .map_or(0, |c| c.mask)
+            };
+            (look.stun, look.conf) = (mask("Stun"), mask("Conf"));
+            (look.hallu, look.blind) = (mask("Hallu"), mask("Blind"));
         }
         let conds = world.status.conditions();
         // floating, up off the floor and bobbing (a rider keeps their seat)
@@ -219,6 +401,7 @@ impl MapView {
             self.root.add_child(&d);
             self.hero_look.under = Some(d);
         }
+        self.screen_effects(world.status.conditions(), delta);
         let ring = self.hero_ring.get_position();
         let look = &mut self.hero_look;
         if let Some(u) = look.under.as_mut() {
@@ -269,7 +452,13 @@ impl MapView {
                 m.set_alpha_scissor_threshold(threshold);
             }
         }
-        let want = shown.map(|(s, _)| s);
+        let whole = shown.is_some_and(|(s, p)| s == Shown::Stone && p >= 1.0);
+        if whole && self.hero_look.statue.is_none() {
+            let statue = self.art.manifest().material("statue");
+            self.hero_look.statue =
+                statue.map(|i| self.art.surface(i, STONE_SHADE, false, Color::WHITE));
+        }
+        let want = shown.map(|(s, _)| (s, whole));
         let model = self.rim_model.clone().filter(|n| n.is_instance_valid());
         let now = model.as_ref().map(|n| (n.instance_id(), want));
         if now == self.hero_look.tinted {
@@ -280,6 +469,142 @@ impl MapView {
         // it back)
         if let Some(n) = model.filter(|_| !self.xray_on) {
             set_overlay(&n, self.hero_look.overlay().as_ref());
+        }
+    }
+}
+
+/// `now` a step toward `to` at `rate` a second.
+fn ease_to(now: f32, to: f32, rate: f32) -> f32 {
+    if now < to {
+        (now + rate).min(to)
+    } else {
+        (now - rate).max(to)
+    }
+}
+
+impl MapView {
+    /// Stun's and Conf's sway and drift, Hallu's hue, Blind's dimming.
+    fn screen_effects(&mut self, conds: u64, delta: f32) {
+        let look = &mut self.hero_look;
+        let gentle = !look.reduced;
+        let sway_to = if conds & look.stun != 0 && gentle {
+            1.0
+        } else if conds & look.conf != 0 && gentle {
+            CONFUSED_SWAY
+        } else {
+            0.0
+        };
+        let hue_to = if conds & look.hallu != 0 && gentle {
+            1.0
+        } else {
+            0.0
+        };
+        let dim_to = if conds & look.blind != 0 { 1.0 } else { 0.0 };
+        let rate = delta / EFFECT_EASE;
+        look.sway = ease_to(look.sway, sway_to, rate);
+        look.hue = ease_to(look.hue, hue_to, rate);
+        look.dim = ease_to(look.dim, dim_to, rate);
+        look.settled = look.sway == sway_to && look.hue == hue_to && look.dim == dim_to;
+        let busy = look.sway > 0.0 || look.hue > 0.0 || look.dim > 0.0;
+        look.clock = if busy { look.clock + delta } else { 0.0 };
+        // none on and none left to undo: nothing to do
+        if !busy && look.swayed.is_none() && !look.screened && !look.dimmed {
+            look.drift = Vector3::ZERO;
+            return;
+        }
+        let t = look.clock;
+        let wave = |secs: f32, at: f32| (t / secs * std::f32::consts::TAU + at).sin();
+        // the sway: two waves out of step, about the feet
+        let (roll, pitch) = (
+            wave(SWAY_SECS.0, 0.0) + 0.4 * wave(SWAY_SECS.1, 1.3),
+            0.6 * wave(SWAY_SECS.1, 0.0) + 0.3 * wave(SWAY_SECS.0, 2.1),
+        );
+        look.drift = Vector3::new(
+            wave(SWAY_SECS.1 * 1.7, 0.4),
+            0.0,
+            wave(SWAY_SECS.0 * 2.3, 1.9),
+        ) * (DRIFT * look.sway);
+        let sway = look.sway;
+        let inner = self
+            .hero_model()
+            .and_then(|m| m.node.get_child(0))
+            .and_then(|n| n.try_cast::<Node3D>().ok());
+        let look = &mut self.hero_look;
+        if look
+            .swayed
+            .as_ref()
+            .is_some_and(|(n, _)| inner.as_ref().map(|i| i.instance_id()) != Some(n.instance_id()))
+        {
+            look.unsway();
+        }
+        match inner {
+            Some(mut n) if sway > 0.0 => {
+                let base = match &look.swayed {
+                    Some((_, b)) => *b,
+                    None => {
+                        let b = n.get_basis();
+                        look.swayed = Some((n.clone(), b));
+                        b
+                    }
+                };
+                let deg = SWAY_DEG * sway;
+                let lean = Basis::from_euler(
+                    EulerOrder::XYZ,
+                    Vector3::new((deg * pitch).to_radians(), 0.0, (deg * roll).to_radians()),
+                );
+                n.set_basis(lean * base);
+            }
+            _ => look.unsway(),
+        }
+        // the hue and the edges: a quad before the eye
+        let look = &mut self.hero_look;
+        let shows = look.hue > 0.0 || look.dim > 0.0;
+        if shows && look.screen.is_none() {
+            let mut shader = godot::classes::Shader::new_gd();
+            shader.set_code(SCREEN_SHADER);
+            let mut mat = godot::classes::ShaderMaterial::new_gd();
+            mat.set_shader(&shader);
+            let mut quad = godot::classes::QuadMesh::new_gd();
+            // wider than any screen at that distance
+            let h = 2.0 * SCREEN_AT * (super::FOV_DEG.to_radians() / 2.0).tan() * 1.2;
+            quad.set_size(Vector2::new(h * 4.0, h));
+            let mut mi = godot::classes::MeshInstance3D::new_alloc();
+            mi.set_name("ScreenEffects");
+            mi.set_mesh(&quad);
+            mi.set_material_override(&mat);
+            mi.set_cast_shadows_setting(
+                godot::classes::geometry_instance_3d::ShadowCastingSetting::OFF,
+            );
+            mi.set_position(Vector3::new(0.0, 0.0, -SCREEN_AT));
+            self.camera.add_child(&mi);
+            self.hero_look.screen = Some((mi, mat));
+        }
+        let look = &mut self.hero_look;
+        if let Some((q, mat)) = look.screen.as_mut() {
+            if look.screened != shows {
+                q.set_visible(shows);
+                look.screened = shows;
+            }
+            if shows {
+                let tint = hue_tint((HUE_START + t / HUE_SECS).fract(), HUE_ALPHA * look.hue);
+                mat.set_shader_parameter("tint", &tint.to_variant());
+                mat.set_shader_parameter("edge", &(BLIND_EDGE * look.dim).to_variant());
+            }
+        }
+        // blind: the view dims and greys, the branch's grade given back
+        // after (set when it changes, or when a new level's grade came)
+        let dim = look.dim;
+        if dim > 0.0 || look.dimmed {
+            let g = self.branch_look.grade;
+            let bright = g.brightness * (1.0 - (1.0 - BLIND_DIM.0) * dim);
+            let saturation = g.saturation * (1.0 - (1.0 - BLIND_DIM.1) * dim);
+            if self.env.get_adjustment_brightness() != bright
+                || self.env.get_adjustment_saturation() != saturation
+            {
+                self.env.set_adjustment_brightness(bright);
+                self.env.set_adjustment_saturation(saturation);
+            }
+            self.hero_look.dimmed = dim > 0.0;
         }
     }
 }
@@ -300,5 +625,17 @@ mod tests {
         );
         assert!(progress(5, 10.0) < 1.0, "slime takes longer");
         assert_eq!(progress(-3, 5.0), 0.2);
+    }
+
+    #[test]
+    fn a_hallucinations_tint_turns_the_hue_not_the_brightness() {
+        let lum = |v: Vector3| v.dot(Vector3::new(0.2126, 0.7152, 0.0722));
+        for i in 0..36 {
+            let tint = hue_tint(i as f32 / 36.0, HUE_ALPHA);
+            assert!((lum(tint) - 1.0).abs() < 0.12, "{i}: {tint:?}");
+            let spread = tint.x.max(tint.y).max(tint.z) - tint.x.min(tint.y).min(tint.z);
+            assert!(spread > 0.15, "{i}: {tint:?}");
+        }
+        assert_eq!(hue_tint(0.3, 0.0), Vector3::ONE);
     }
 }

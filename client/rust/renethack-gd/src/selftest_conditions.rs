@@ -1,15 +1,22 @@
 //! `conditions`: the hero's conditions shown on their body, in a
 //! debug-mode game where #wizintrinsic sets them. Turning to stone the
-//! hero greys, a step further each turn; a prayer cures it and the tint
-//! goes. Turning to slime they go green the same way, and a prayer cures
+//! hero greys, a step further each turn, and at the end is of the
+//! statues' own stone; a prayer cures it and the tint goes. Turning to slime they go green the same way, and a prayer cures
 //! that too. Levitating for three turns they rise off the floor and bob,
-//! glide a step, and come down when it ends. Pictures of each with
-//! `--screenshots`.
+//! glide a step, and come down when it ends. Then, stepped where nothing
+//! stands between the eye and them: stunned they sway and the camera
+//! drifts, confused more gently; hallucinating a hue tints the view;
+//! blind the view dims and its edges darken; each at its full strength
+//! for its picture, and gone when its three turns end. With fewer screen
+//! effects (the settings) a stun shows no sway and no drift, while
+//! blindness still dims. Pictures of each with `--screenshots`.
 
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering};
 
 use nh_world::{Key, KeyInput, Prompt};
+
+use godot::prelude::Vector3;
 
 use super::{DialogEvent, Step, command, entry_key, key, map_view, start};
 use crate::game::RenethackGame;
@@ -56,6 +63,156 @@ pub(super) fn conditions() -> Vec<Step> {
         steps.extend(countdown(shot, end));
     }
     steps.extend(levitating());
+    steps.extend([
+        Step::Call("", |_| {
+            WALKED.store(0, Ordering::Relaxed);
+            Ok(())
+        }),
+        Step::KeysUntil("a step into the eye's sight", into_sight),
+    ]);
+    for (_, _, shot) in EFFECTS {
+        steps.extend(effect(shot));
+    }
+    steps.extend(reduced());
+    steps
+}
+
+/// Steps taken into the eye's sight, and the most taken.
+static WALKED: AtomicU32 = AtomicU32::new(0);
+const INTO_SIGHT: u32 = 4;
+
+/// A step to open floor with open floor south of it, towards the eye,
+/// till the hero stands so: then nothing tall (an up stair's arch) stands
+/// between the eye and them in the pictures.
+fn into_sight(g: &RenethackGame) -> Result<Option<KeyInput>, String> {
+    if !matches!(g.pending, Some((_, Prompt::Command))) {
+        return Ok(Some(KeyInput::plain(Key::Escape)));
+    }
+    let cat = g.catalog.as_deref().ok_or("no catalog")?;
+    let (hx, hy) = g.world.map.hero().ok_or("no hero")?;
+    let open = |x: i32, y: i32| {
+        g.world.map.cell(x, y).is_some_and(|c| {
+            c.entity().is_none()
+                && matches!(
+                    nh_world::cell_terrain(c, cat),
+                    Some(nh_world::Terrain::Floor | nh_world::Terrain::DarkFloor)
+                )
+        })
+    };
+    if open(hx, hy + 1) || WALKED.fetch_add(1, Ordering::Relaxed) >= INTO_SIGHT {
+        return Ok(None);
+    }
+    let ways = super::audio_tests::STEPS;
+    let way = ways
+        .iter()
+        .find(|((dx, dy), _)| open(hx + dx, hy + dy) && open(hx + dx, hy + dy + 1))
+        .or_else(|| ways.iter().find(|((dx, dy), _)| open(hx + dx, hy + dy)));
+    Ok(way.map(|&(_, k)| KeyInput::plain(Key::Char(k))))
+}
+
+/// The screen's effects, in the order the scenario sets them: the
+/// #wizintrinsic entry, the status line's condition, the picture.
+const EFFECTS: [(&str, &str, &str); 4] = [
+    ("stunned", "Stun", "conditions-stunned"),
+    ("confused", "Conf", "conditions-confused"),
+    ("hallucinating", "Hallu", "conditions-hallucinating"),
+    ("blinded", "Blind", "conditions-blind"),
+];
+/// The effect under test (an index into `EFFECTS`, from 1), and the
+/// view's brightness before it.
+static EFFECT: AtomicUsize = AtomicUsize::new(0);
+static BRIGHT: Mutex<f32> = Mutex::new(0.0);
+
+fn effect_now() -> (&'static str, &'static str) {
+    let (entry, cond, _) = EFFECTS[EFFECT.load(Ordering::Relaxed).saturating_sub(1)];
+    (entry, cond)
+}
+
+/// The steps that set #wizintrinsic's `pick` for three turns.
+fn three_turns_of(pick: fn(&RenethackGame) -> Result<KeyInput, String>) -> Vec<Step> {
+    vec![
+        key('#'),
+        Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
+        Step::Dialog(DialogEvent::ExtCmd(Some("wizintrinsic".into()))),
+        Step::Request("the intrinsics", |p| matches!(p, Prompt::Menu { .. })),
+        key('3'),
+        Step::KeyFrom("the intrinsic", pick),
+        Step::Dialog(DialogEvent::MenuConfirm),
+        Step::Request("a command, the condition on", command),
+    ]
+}
+
+/// The effect shows at its full strength (`on`), or not at all.
+fn effect_shows(g: &RenethackGame, on: bool) -> Result<bool, String> {
+    let e = map_view(g)?.hero_effects();
+    if !on {
+        let none = e.sway == 0.0 && e.drift == Vector3::ZERO && e.hue == 0.0 && e.dim == 0.0;
+        return Ok(none && !e.screen && e.bright == *BRIGHT.lock().unwrap());
+    }
+    Ok(e.settled
+        && match effect_now().1 {
+            "Stun" => e.sway == 1.0 && e.drift.length() > 0.0 && !e.screen,
+            "Conf" => e.sway > 0.4 && e.sway < 0.7 && e.drift.length() > 0.0 && !e.screen,
+            "Hallu" => e.hue == 1.0 && e.sway == 0.0 && e.screen,
+            _ => e.dim == 1.0 && e.bright < 0.8 && e.screen,
+        })
+}
+
+/// The next screen effect: on for three turns, pictured, then gone.
+fn effect(shot: &'static str) -> Vec<Step> {
+    let mut steps = vec![Step::Call("the next effect", |g| {
+        EFFECT.fetch_add(1, Ordering::Relaxed);
+        *BRIGHT.lock().unwrap() = map_view(g)?.hero_effects().bright;
+        Ok(())
+    })];
+    steps.extend(three_turns_of(|g| entry_key(g, effect_now().0)));
+    steps.extend([
+        Step::Wait("the effect shown", |g| effect_shows(g, true)),
+        Step::Shot(shot),
+        Step::Call("", |_| {
+            SEARCHED.store(0, Ordering::Relaxed);
+            Ok(())
+        }),
+        Step::KeysUntil("searching until it ends", |g| {
+            let cat = g.catalog.as_deref().ok_or("no catalog")?;
+            let names = g.world.status.condition_names(cat);
+            if !names.iter().any(|n| n == effect_now().1) && !FORCING.load(Ordering::Relaxed) {
+                return Ok(None);
+            }
+            forced_search(g)
+        }),
+        Step::Wait("the effect gone", |g| effect_shows(g, false)),
+    ]);
+    steps
+}
+
+/// Fewer screen effects: a stun without sway or drift, blindness still
+/// dimming the view.
+fn reduced() -> Vec<Step> {
+    let mut steps = vec![Step::Call("fewer screen effects", |g| {
+        let mut s = g.settings.clone();
+        s.reduce_effects = true;
+        g.set_settings(s);
+        Ok(())
+    })];
+    steps.extend(three_turns_of(|g| entry_key(g, "stunned")));
+    steps.extend(three_turns_of(|g| entry_key(g, "blinded")));
+    steps.extend([
+        Step::Wait("blind and dimmed, stunned and still", |g| {
+            let cat = g.catalog.as_deref().ok_or("no catalog")?;
+            let names = g.world.status.condition_names(cat);
+            let e = map_view(g)?.hero_effects();
+            let both = names.iter().any(|n| n == "Stun") && names.iter().any(|n| n == "Blind");
+            let still = e.sway == 0.0 && e.drift == Vector3::ZERO && e.hue == 0.0;
+            Ok(both && e.settled && e.dim == 1.0 && e.bright < 0.8 && still)
+        }),
+        Step::Call("all the screen's effects again", |g| {
+            let mut s = g.settings.clone();
+            s.reduce_effects = false;
+            g.set_settings(s);
+            Ok(())
+        }),
+    ]);
     steps
 }
 
@@ -158,6 +315,10 @@ fn countdown(shot: &'static str, end: &'static str) -> Vec<Step> {
                 return Ok(None);
             }
             forced_search(g)
+        }),
+        // stoned through, the hero is of the statues' own stone
+        Step::Wait("the end's look", |g| {
+            Ok(current().0 != Shown::Stone || map_view(g)?.hero_in_stone())
         }),
         Step::Shot(end),
     ]);
