@@ -58,9 +58,12 @@ use crate::surface::{Fow, FowCell, Role, Seen, Surfaces, cell_index, sight};
 use crate::theme::{self, nh_color};
 use crate::vfx::{Blast, Ray, Vfx, VfxKind};
 
+#[path = "hero_look.rs"]
+mod hero_look;
 #[path = "hero_pose.rs"]
 mod hero_pose;
 
+pub use hero_look::Shown;
 pub use hero_pose::{Held, HelplessPhase};
 
 /// Low enough to see creatures from the side, high enough to see the floor
@@ -2822,6 +2825,7 @@ pub struct MapView {
     hero_fx: crate::hero::HeroFx,
     /// What the hero's body shows of their state.
     hero_pose: hero_pose::HeroPose,
+    hero_look: hero_look::HeroLook,
 }
 
 /// A marker projected on the level's surfaces (never on models): a ring
@@ -3241,6 +3245,7 @@ impl MapView {
         let center = Vector3::new(COLNO as f32 / 2.0, 0.0, ROWNO as f32 / 2.0);
         let hero_fx = crate::hero::HeroFx::new(root.clone());
         let hero_pose = hero_pose::HeroPose::new(&mut root);
+        let hero_look = hero_look::HeroLook::new();
         let fow = Fow::new();
         let surfaces = Surfaces::new(&fow, art.manifest());
         let batches = Batches::new(cells_root.clone(), 1 | TERRAIN_LAYER);
@@ -3371,6 +3376,7 @@ impl MapView {
             aim_lift: 0.0,
             hero_fx,
             hero_pose,
+            hero_look,
             title: None,
             titled: false,
             title_hero: ("valkyrie".to_string(), true),
@@ -3582,6 +3588,7 @@ impl MapView {
             }
         }
         self.pose_hero(world, catalog, delta as f32);
+        self.look_hero(world, catalog);
         self.show_hover();
         if std::mem::take(&mut self.hints_dirty) {
             self.show_hints();
@@ -3961,6 +3968,21 @@ impl MapView {
         self.vfx.splats_shown()
     }
 
+    /// The conditions the hero's body shows, each with its share of the
+    /// way, and whether their model wears the tint now (self-tests).
+    pub fn hero_shown(&self, world: &World) -> (Vec<(Shown, f32)>, bool) {
+        let tinted = self.rim_model.as_ref().is_some_and(|n| {
+            n.find_children_ex("*")
+                .type_("GeometryInstance3D")
+                .owned(false)
+                .done()
+                .iter_shared()
+                .filter_map(|c| c.try_cast::<GeometryInstance3D>().ok())
+                .any(|g| g.get_material_overlay().is_some())
+        });
+        (self.hero_look.shown(world), tinted)
+    }
+
     /// Whether a piece of a ray is drawn on the cell (self-tests).
     pub fn ray_drawn_at(&self, cell: (i32, i32)) -> bool {
         self.cells.get(&cell).is_some_and(|c| c.look.ray.is_some())
@@ -4314,7 +4336,16 @@ impl MapView {
         if hidden != self.xray_on
             && let Some(n) = self.rim_model.as_ref().filter(|n| n.is_instance_valid())
         {
-            set_overlay(n, if hidden { self.xray.as_ref() } else { None });
+            // seen again: the tint their conditions show comes back
+            let tint = self.hero_look.overlay();
+            set_overlay(
+                n,
+                if hidden {
+                    self.xray.as_ref()
+                } else {
+                    tint.as_ref()
+                },
+            );
             self.xray_on = hidden;
         }
         // the steed under them shows through with them
@@ -4700,6 +4731,7 @@ impl MapView {
         self.set_showcase(false);
         self.building.clear();
         self.hero_pose.forget();
+        self.hero_look.forget();
         self.finish_motions();
         self.sounds.clear();
         self.facing.clear();

@@ -32,6 +32,8 @@ use nh_link::save_exists;
 mod achievements;
 #[path = "selftest_audio.rs"]
 mod audio_tests;
+#[path = "selftest_conditions.rs"]
+mod conditions_tests;
 #[path = "selftest_corridors.rs"]
 mod corridors;
 #[path = "selftest_credits.rs"]
@@ -4788,6 +4790,7 @@ impl SelfTest {
             "rim" => rim_tests::rim(),
             "riding" => riding_tests::riding(),
             "audio" => audio_tests::audio(),
+            "conditions" => conditions_tests::conditions(),
             "states" => states_tests::states(),
             "doll" => doll_tests::doll(),
             "first-open" => first_tests::first_open(),
