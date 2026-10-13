@@ -46,6 +46,8 @@ mod crowd_tests;
 mod doll_tests;
 #[path = "selftest_effects.rs"]
 mod effects;
+#[path = "selftest_falls.rs"]
+mod falls_tests;
 #[path = "selftest_first.rs"]
 mod first_tests;
 #[path = "selftest_help.rs"]
@@ -4822,6 +4824,7 @@ impl SelfTest {
             "riding" => riding_tests::riding(),
             "audio" => audio_tests::audio(),
             "conditions" => conditions_tests::conditions(),
+            "falls" => falls_tests::falls(),
             "states" => states_tests::states(),
             "doll" => doll_tests::doll(),
             "first-open" => first_tests::first_open(),

@@ -261,6 +261,10 @@ fn inner_transform(look: &ModelLook, spec: &nh_art::ModelSpec) -> Transform3D {
     transform([0.0, lift, 0.0], rot, [girth * across, s, girth * along])
 }
 
+/// The share of its idle a corpse or a statue without a death clip of its
+/// own is held at.
+const CORPSE_IDLE: f32 = 0.2;
+
 fn transform(pos: [f32; 3], rot: [f32; 3], scale: [f32; 3]) -> Transform3D {
     let basis = Basis::from_euler(EulerOrder::YXZ, deg(rot))
         * Basis::from_scale(Vector3::new(scale[0], scale[1], scale[2]));
@@ -1155,6 +1159,34 @@ impl Art {
         }
     }
 
+    /// The death clip a model falls with and its seconds; None: a body
+    /// built in code, or a model without one.
+    pub fn death(&self, m: &Model) -> Option<(String, f32)> {
+        let spec = self.manifest.model_at(m.key.model).1;
+        if spec.proc.is_some() {
+            return None;
+        }
+        let name = spec.anims.death.clone()?;
+        let len = m
+            .player
+            .as_ref()?
+            .get_animation(name.as_str())?
+            .get_length();
+        Some((name, len))
+    }
+
+    /// How a look's model lies as its corpse: its inner node's transform,
+    /// and the share of its idle it is held at (a body without a death
+    /// clip lies on its side, its idle stopped).
+    pub fn lying(&self, look: &ModelLook) -> (Transform3D, f32) {
+        let dead = ModelLook {
+            pose: Pose::Corpse,
+            ..*look
+        };
+        let spec = self.manifest.model_at(look.art.model).1;
+        (inner_transform(&dead, spec), CORPSE_IDLE)
+    }
+
     /// A model struck reels: its hit clip, then back to its idle (the
     /// gear's for the hero). False when it has no hit clip.
     pub fn flinch(&self, m: &Model) -> bool {
@@ -1214,7 +1246,10 @@ impl Art {
                 player.pause();
             }
             Pose::Corpse | Pose::Statue => {
-                player.seek_ex(len * 0.2).update(true).done();
+                player
+                    .seek_ex(len * f64::from(CORPSE_IDLE))
+                    .update(true)
+                    .done();
                 player.pause();
             }
             _ => {

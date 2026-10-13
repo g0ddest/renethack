@@ -30,7 +30,7 @@ override GODOT := $(if $(filter %.app %.app/,$(GODOT)),$(patsubst %/,%,$(GODOT))
 # GNU coreutils' timeout; Homebrew's coreutils names it gtimeout on macOS
 TIMEOUT ?= $(shell command -v timeout || command -v gtimeout)
 GODOT_PROJECT := client/godot
-SELFTESTS := smoke keys save close crash menus text dialogs palette first-open moves passing through orders inventory map-pause pool-sizes threat-arrow bar gamepad equipment item-use combat roles kits two-hands riding audio conditions worn footprints branches corridors shop states title soak language pickers achievements help layouts settings credits rebind sheet spells skills journal codex
+SELFTESTS := smoke keys save close crash menus text dialogs palette first-open moves passing through orders inventory map-pause pool-sizes threat-arrow bar gamepad equipment item-use combat roles kits two-hands riding audio conditions falls worn footprints branches corridors shop states title soak language pickers achievements help layouts settings credits rebind sheet spells skills journal codex
 # again at the Steam Deck's 1280×800 (its 120 % UI scale, the compact
 # layout): every screen a scenario would shoot must fit the canvas
 DECK_SELFTESTS := smoke inventory hud gamepad title threat-arrow settings credits rebind sheet spells skills journal codex

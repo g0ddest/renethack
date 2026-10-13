@@ -58,11 +58,14 @@ use crate::surface::{Fow, FowCell, Role, Seen, Surfaces, cell_index, sight};
 use crate::theme::{self, nh_color};
 use crate::vfx::{Blast, Ray, Vfx, VfxKind};
 
+#[path = "fall.rs"]
+mod fall;
 #[path = "hero_look.rs"]
 mod hero_look;
 #[path = "hero_pose.rs"]
 mod hero_pose;
 
+pub use fall::{FallKind, Fell};
 pub use hero_look::{Effects, Posture, Shown};
 pub use hero_pose::{Held, HelplessPhase};
 
@@ -428,6 +431,10 @@ struct Look {
     rider: Option<ModelLook>,
     /// The entity wears a saddle.
     saddled: bool,
+    /// The monster the entity is (the catalog's), and whether it is only
+    /// sensed, not seen (telepathy).
+    mon: Option<i32>,
+    sensed: bool,
     /// A wall at full height (a torch can hang on it).
     wall: bool,
     /// Something here lies below the ground (the bedrock under the level
@@ -2441,6 +2448,8 @@ fn look_of(cell: &Cell, near: Near, ctx: &Ctx) -> Look {
         // a steed's glyph is all the map shows of the hero on it: the
         // engine tells who rides, and of a saddle on any monster
         if g.kind == GlyphKind::Mon && look.entity.is_some() {
+            look.mon = g.mon;
+            look.sensed = cell.sensed;
             look.saddled = cell.saddled;
             look.rider = cell
                 .rider
@@ -2587,6 +2596,8 @@ pub struct MotionStats {
     pub strikes: u32,
     /// Blows that made their target reel.
     pub flinches: u32,
+    /// Deaths seen that fell.
+    pub falls: u32,
 }
 
 /// Frame times summed for `MapView::frame_stats`.
@@ -2829,6 +2840,13 @@ pub struct MapView {
     /// What the hero's body shows of their state.
     hero_pose: hero_pose::HeroPose,
     hero_look: hero_look::HeroLook,
+    /// Creatures gone from their cells this frame, the deaths the frame's
+    /// messages tell (by name, and the cell a blow found them on), the
+    /// bodies falling, and the last fall to end (self-tests).
+    gone: Vec<fall::Gone>,
+    deaths: Vec<fall::Told>,
+    falls: Vec<fall::Fall>,
+    fell: Option<Fell>,
 }
 
 /// A marker projected on the level's surfaces (never on models): a ring
@@ -3380,6 +3398,10 @@ impl MapView {
             hero_fx,
             hero_pose,
             hero_look,
+            gone: Vec::new(),
+            deaths: Vec::new(),
+            falls: Vec::new(),
+            fell: None,
             title: None,
             titled: false,
             title_hero: ("valkyrie".to_string(), true),
@@ -3431,6 +3453,7 @@ impl MapView {
         if new_level {
             // a new level (or a redraw from scratch) never animates
             self.finish_motions();
+            self.finish_falls_where(|_| true);
             self.vfx.clear();
             self.facing.clear();
             self.generation = Some(generation);
@@ -3445,15 +3468,18 @@ impl MapView {
             // north of it (and the rock on the two), unseen ground under
             // something on all four, the rock on all eight
             let batch = world.map.take_batch();
-            let (mut dirty, moves) = (batch.dirty, batch.moves);
+            let (mut dirty, moves, changed) = (batch.dirty, batch.moves, batch.changed);
+            // a fall whose cell shows something else again ends at once
+            if !self.falls.is_empty() && !changed.is_empty() {
+                self.finish_falls_where(|c| changed.contains(&c));
+            }
             if !moves.is_empty() {
                 // the engine went on: the scene catches up at once
                 self.finish_motions();
-            } else if !batch.changed.is_empty() {
+            } else if !changed.is_empty() {
                 // a motion whose cell shows another now catches up; one
                 // that something only passes over (a missile in flight, a
                 // ray) goes on to its end
-                let changed = batch.changed;
                 self.finish_motions_where(|m| changed.contains(&m.cell));
             }
             self.carry(&moves, world);
@@ -3511,7 +3537,10 @@ impl MapView {
             .push(("build", __t.elapsed().as_secs_f64() * 1000.0));
         self.seat_rider(hero);
         self.watch_fights(world, catalog);
+        // the deaths told fall; what no death claims goes
+        self.claim_falls(catalog);
         self.advance_motions(delta as f32);
+        self.advance_falls(delta as f32);
         self.follow_steed(delta as f32);
         self.hero_fx.advance(delta as f32, &mut self.vfx);
         if std::mem::take(&mut self.fow_dirty) {
@@ -4784,6 +4813,11 @@ impl MapView {
         self.hero_pose.forget();
         self.hero_look.forget();
         self.finish_motions();
+        self.finish_falls_where(|_| true);
+        for g in std::mem::take(&mut self.gone) {
+            self.art.give(g.model);
+        }
+        self.deaths.clear();
         self.sounds.clear();
         self.facing.clear();
         for (_, c) in std::mem::take(&mut self.incoming) {
@@ -6337,6 +6371,19 @@ impl MapView {
         // models: kept when the look is the same (only moved), else given
         // back to the pool and taken anew
         let mut kept: Vec<Model> = Vec::with_capacity(look.models.len());
+        // a creature seen here and gone, not stepped off (it died, or went
+        // out of sight): its model waits for the frame's messages (`fall`)
+        let gone = old
+            .entity
+            .filter(|_| !old.hero && !old.sensed)
+            .and_then(|i| old.models.get(i).zip(nodes.models.get(i)))
+            .filter(|(b, _)| b.look.pose == Pose::Alive)
+            .filter(|(b, _)| {
+                let now = look.entity.and_then(|j| look.models.get(j));
+                now.is_none_or(|p| p.look != b.look)
+            })
+            .zip(old.mon)
+            .map(|((b, m), mon)| (m.node.instance_id(), *b, mon));
         let mut old_models = std::mem::take(&mut nodes.models).into_iter();
         let mut carried = self.incoming.remove(&(x, y));
         let hero_here = world
@@ -6352,7 +6399,7 @@ impl MapView {
                 && let Some(c) = carried.take_if(|c| c.placed.look == p.look)
             {
                 if let Some(m) = reuse {
-                    self.art.give(m);
+                    self.give_old(m, gone, (x, y));
                 }
                 let hero = world
                     .map
@@ -6398,7 +6445,7 @@ impl MapView {
             // this cell (or stands where the steed fell under them)
             if own && let Some(r) = self.rider.take_if(|r| r.look == p.look) {
                 if let Some(m) = reuse {
-                    self.art.give(m);
+                    self.give_old(m, gone, (x, y));
                 }
                 let mut node = r.model.node.clone();
                 let (from, to) = (node.get_position(), origin + p.pos);
@@ -6433,7 +6480,7 @@ impl MapView {
                 (Some(b), Some(m)) if b.look == p.look => m,
                 (_, other) => {
                     if let Some(m) = other {
-                        self.art.give(m);
+                        self.give_old(m, gone, (x, y));
                     }
                     if own {
                         self.art.take_hero(&p.look)
@@ -6471,7 +6518,7 @@ impl MapView {
             kept.push(m);
         }
         for m in old_models {
-            self.art.give(m);
+            self.give_old(m, gone, (x, y));
         }
         if let Some(c) = carried {
             self.art.give(c.model);
@@ -6537,6 +6584,20 @@ impl MapView {
         }
         nodes.look = look;
         self.cells.insert((x, y), nodes);
+    }
+
+    /// A cell's old model given back to the pool; the creature gone from
+    /// it (`gone`: its node, how it stood, what it is) kept for its fall.
+    fn give_old(&mut self, m: Model, gone: Option<(InstanceId, Placed, i32)>, cell: (i32, i32)) {
+        match gone {
+            Some((id, placed, mon)) if m.node.instance_id() == id => self.keep_gone(fall::Gone {
+                cell,
+                model: m,
+                placed,
+                mon,
+            }),
+            _ => self.art.give(m),
+        }
     }
 
     /// Take the models of the entities that stepped off their cells, for
@@ -6786,7 +6847,16 @@ impl MapView {
         for m in world.log.since(seen).filter(|m| !m.from_history) {
             if let Some(a) = parse_attack(&m.text) {
                 let hit = !m.text.contains(" miss");
-                if let Some(cells) = locate_attack(&a, &world.map, names) {
+                let cells = locate_attack(&a, &world.map, names);
+                // a kill falls: where the blow found it, else where it
+                // stood (a ray's, a missile's, a newt's that leaves nothing)
+                if let Who::Named(n) = &a.target
+                    && a.killed()
+                {
+                    self.deaths
+                        .push(fall::Told::new(n, cells.map(|c| c.1), self.clock));
+                }
+                if let Some(cells) = cells {
                     if let Who::Named(n) = &a.target {
                         struck = Some((n.clone(), cells.1));
                     }
@@ -6800,11 +6870,18 @@ impl MapView {
                     // nothing behind)
                     unplaced.push((hero, hit, a));
                 }
-            } else if let Some(name) = hearing::died(&m.text)
-                && let Some((n, at)) = &struck
-                && n == name
-            {
-                deaths.push((name.to_string(), *at));
+            } else if let Some(name) = hearing::died(&m.text) {
+                let at = struck
+                    .as_ref()
+                    .filter(|(n, _)| n == name)
+                    .map(|(_, at)| *at);
+                self.deaths.push(fall::Told::new(name, at, self.clock));
+                if let Some(at) = at {
+                    deaths.push((name.to_string(), at));
+                }
+            } else if let Some(name) = fall::slain(&m.text) {
+                // a ghost by its name, a pet: no fight the map can place
+                self.deaths.push(fall::Told::new(name, None, self.clock));
             }
         }
         // blows told together (a fast hero's two, a monster's claws and
