@@ -1324,6 +1324,8 @@ pub struct InventoryPanel {
     /// A gamepad plays: the focus is always somewhere.
     pad: bool,
     pad_kind: Option<PadKind>,
+    /// The keys the player moved (the tips' keys).
+    keymap: nh_world::Keymap,
     /// The keyboard (a gamepad) is on a doll socket: its index in `doll`.
     doll_focus: Option<usize>,
     /// A gamepad's "drag": the item picked up, put down with Y again.
@@ -2008,6 +2010,7 @@ impl InventoryPanel {
             status: (None, None, None),
             pad: false,
             pad_kind: None,
+            keymap: nh_world::Keymap::default(),
             doll_focus: None,
             carrying: None,
             ctx_buttons: Vec::new(),
@@ -3064,6 +3067,15 @@ impl InventoryPanel {
         }
     }
 
+    /// The keys the player moved: the tips show an action's key as it is
+    /// pressed now.
+    pub fn set_keymap(&mut self, keymap: &nh_world::Keymap) {
+        if self.keymap != *keymap {
+            self.keymap = keymap.clone();
+            self.dirty = true;
+        }
+    }
+
     /// The context menu's row the d-pad is on.
     fn show_ctx_focus(&mut self) {
         let focus = self.ctx_focus;
@@ -3435,7 +3447,7 @@ impl InventoryPanel {
                         tip.push_str(&tr!(
                             "inv-cell-tip",
                             action = label(a.label_key()),
-                            keys = a.keys()
+                            keys = crate::rebind::bound_hint(&self.keymap, a.keys())
                         ));
                     }
                     if let Some(d) = &drag_item
@@ -3496,7 +3508,7 @@ impl InventoryPanel {
                         tip.push_str(&tr!(
                             "inv-doll-out-tip",
                             action = label(k.label_key()),
-                            keys = k.keys()
+                            keys = crate::rebind::bound_hint(&self.keymap, k.keys())
                         ));
                     }
                     tip

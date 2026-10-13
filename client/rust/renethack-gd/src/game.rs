@@ -314,6 +314,12 @@ pub struct RenethackGame {
     pub(crate) settings: Settings,
     /// The settings page while it is open.
     pub(crate) settings_page: Option<SettingsPage>,
+    /// The key being handled is the game's own (a gamepad's, a macro's):
+    /// the player's moved keys do not apply to it.
+    raw_keys: bool,
+    /// The engine's last answers and the requests they answered
+    /// (self-tests).
+    pub(crate) sent: std::collections::VecDeque<(Prompt, Reply)>,
     /// The credits and licences page while it is open, and the settings
     /// page's place it was opened from (Back returns there).
     pub(crate) credits_page: Option<crate::credits_page::CreditsPage>,
@@ -418,8 +424,9 @@ pub struct RenethackGame {
     /// video memory used then (RENETHACK_FRAME_STATS).
     title_clock: Option<Instant>,
     title_render: ([i64; 5], f64),
-    /// The bar's labels were drawn for this (pad kind and page, if a pad).
-    pad_labels: Option<Option<(PadKind, usize)>>,
+    /// The bar's key labels as drawn: a gamepad's chords, the keys the
+    /// player moved onto the slots, or None for the digits.
+    bar_labels: Option<Option<Vec<String>>>,
     /// The window's size the self-test asked for (its screenshots must be
     /// that size).
     pub(crate) window_size: Option<Vector2i>,
@@ -511,6 +518,8 @@ impl INode for RenethackGame {
             achievement_page: None,
             settings: Settings::default(),
             settings_page: None,
+            raw_keys: false,
+            sent: std::collections::VecDeque::new(),
             credits_page: None,
             credits_return: None,
             device_quality: nh_world::Quality::High,
@@ -545,7 +554,7 @@ impl INode for RenethackGame {
             bar_key: None,
             pad: Pad::new(),
             pad_cursor: None,
-            pad_labels: None,
+            bar_labels: None,
             prof: None,
             title_warm: TitleWarm::Dialogs,
             warm_did: "-",
@@ -863,16 +872,18 @@ impl INode for RenethackGame {
         let Some(k) = key_input(&key, text) else {
             return;
         };
+        // the help's search lets the F-keys by: its own key closes it
+        let help_search = self.ui.as_ref().is_some_and(|ui| ui.help.wants_text());
         let owned = matches!(
             k.key,
             Key::Escape | Key::Tab | Key::Up | Key::Down | Key::PageUp | Key::PageDown
-        );
+        ) || (help_search && matches!(k.key, Key::F(_)));
         if text && !owned {
             return;
         }
-        // a page over everything has every key (F1 opens no help under it)
-        let client = if page { None } else { client_key(&k) };
-        push(&self.queue, client.unwrap_or(UiEvent::Key(k)));
+        // on_key knows where the player's own keys apply (and a page over
+        // everything has every key: F1 opens no help under it)
+        push(&self.queue, UiEvent::Key(k));
         self.handled();
     }
 
@@ -1553,6 +1564,11 @@ impl RenethackGame {
         };
         match session.answer(id, &reply) {
             Ok(()) => {
+                // what the engine was answered, the last few (self-tests)
+                if self.sent.len() >= 32 {
+                    self.sent.pop_front();
+                }
+                self.sent.push_back((prompt.clone(), reply.clone()));
                 self.uses.on_reply(prompt, &reply, &self.world);
                 if matches!(
                     prompt,
@@ -1803,9 +1819,23 @@ impl RenethackGame {
         if self.state != GameState::Playing {
             return;
         }
+        // the client's own keys as the player moved them, where commands
+        // are awaited (the engine at work or at its prompt, nothing open
+        // that takes letters), and a key that is never data (F-keys, Ctrl)
+        // anywhere; elsewhere a key is what it is
+        let dialog = self.ui.as_ref().is_some_and(|ui| ui.dialogs.is_open());
+        let world = !dialog
+            && !self.world.getpos
+            && matches!(self.pending, None | Some((_, Prompt::Command)));
+        let never_data = matches!(k.key, Key::F(_)) || k.mods.ctrl;
+        let client = if world || never_data {
+            self.player_key(k).and_then(|m| client_key(&m))
+        } else {
+            client_key(&k)
+        };
         // the help has them while it is open (F1 closes it too)
         if self.ui.as_ref().is_some_and(|ui| ui.help.is_open()) {
-            if client_key(&k) == Some(UiEvent::ToggleHelp) {
+            if client == Some(UiEvent::ToggleHelp) {
                 self.on_ui_event(UiEvent::ToggleHelp);
             } else {
                 self.ui_mut().help.key(&k);
@@ -1813,7 +1843,7 @@ impl RenethackGame {
             return;
         }
         // typed ahead or pushed by a self-test as a plain key
-        if let Some(ev) = client_key(&k) {
+        if let Some(ev) = client {
             self.on_ui_event(ev);
             return;
         }
@@ -1837,7 +1867,18 @@ impl RenethackGame {
             }
         }
         let Some((id, prompt)) = &self.pending else {
-            self.typeahead.push(k);
+            // a gamepad's key waits as the key the player presses for it:
+            // it gives the game its command again when it is read
+            let queued = if self.raw_keys {
+                self.keymap()
+                    .key_for(k)
+                    .map(|p| KeyInput { echo: k.echo, ..p })
+            } else {
+                Some(k)
+            };
+            if let Some(q) = queued {
+                self.typeahead.push(q);
+            }
             return;
         };
         let id = *id;
@@ -1894,9 +1935,14 @@ impl RenethackGame {
 
     /// A key at a command prompt (not getpos): a count, an order, or the
     /// engine's command.
-    fn command_key(&mut self, k: KeyInput) {
+    fn command_key(&mut self, pressed: KeyInput) {
         let (np, dirs) = (self.world.number_pad, self.world.dirchars.clone());
         let profile = self.ui_state.profile;
+        // the command the key the player pressed stands for (the keys
+        // they moved); the key itself is what is held down and let go
+        let Some(k) = self.player_key(pressed) else {
+            return;
+        };
         // the top-row digits are the bar's (Alt+digits Classic's count)
         let digit = matches!(k.key, Key::Char('0'..='9')) && !k.mods.ctrl;
         let Some(code) = nethack_key(&k, KeyContext::Command, np, &dirs) else {
@@ -1913,7 +1959,7 @@ impl RenethackGame {
                 && self.count.shown().is_none()
                 && let Some(c) = c.filter(|c| repeatable(*c, &dirs))
             {
-                self.held = Some(held_key(k.key));
+                self.held = Some(held_key(pressed.key));
                 self.start_order(Order::Hold { key: c });
             }
             return;
@@ -2030,7 +2076,7 @@ impl RenethackGame {
     fn pad_out(&mut self, outs: Vec<PadOut>) {
         for o in outs {
             match o {
-                PadOut::Key(k) => self.push_ui(UiEvent::Key(k)),
+                PadOut::Key(k) => self.push_ui(UiEvent::GameKey(k)),
                 PadOut::KeyUp(k) => self.push_ui(UiEvent::KeyUp(k)),
                 PadOut::Activate => {
                     if let Some((x, y)) = self.pad_cell() {
@@ -2216,7 +2262,7 @@ impl RenethackGame {
             Intent::Bind { slot, binding } => {
                 self.ui_state.bar.set(slot, Some(binding));
                 self.save_ui_state();
-                let key = crate::action_bar::key_label(slot);
+                let key = self.slot_key(slot);
                 self.ui_mut().hud.toast(&tr!("bar-bound", key = key), false);
             }
         }
@@ -2230,7 +2276,7 @@ impl RenethackGame {
         self.ui_state.bar.set(slot, None);
         self.cleared = Some((slot, b));
         self.save_ui_state();
-        let key = crate::action_bar::key_label(slot);
+        let key = self.slot_key(slot);
         self.ui_mut()
             .hud
             .toast(&tr!("bar-cleared", key = key), true);
@@ -2240,7 +2286,7 @@ impl RenethackGame {
         if let Some((slot, b)) = self.cleared.take() {
             self.ui_state.bar.set(slot, Some(b));
             self.save_ui_state();
-            let key = crate::action_bar::key_label(slot);
+            let key = self.slot_key(slot);
             self.ui_mut()
                 .hud
                 .toast(&tr!("bar-restored", key = key), false);
@@ -2308,6 +2354,12 @@ impl RenethackGame {
         let open = ui.inventory.is_open();
         let asks = ui.inventory.request().is_some();
         ui.hud.set_panel_open(open, asks);
+        // the keys the player moved, wherever a key is named
+        let map = self.settings.keymaps.get(self.ui_state.profile);
+        ui.hud.set_keymap(map);
+        ui.dialogs.set_keymap(map);
+        ui.inventory.set_keymap(map);
+        ui.help.set_keymap(map);
         // a gamepad: its hints, the bar's chords, dialogs with a focus
         let pad = self.pad.active.then_some(self.pad.kind);
         ui.dialogs.set_pad(pad.is_some());
@@ -2330,10 +2382,11 @@ impl RenethackGame {
             0.0
         };
         ui.dialogs.set_pad_room(room);
-        let labels = pad.map(|k| (k, self.pad.page()));
-        if self.pad_labels != Some(labels) {
-            self.pad_labels = Some(labels);
-            let texts: Option<Vec<String>> = labels.map(|(kind, page)| {
+        // the slots' keys: a gamepad's chords, else the keys the player
+        // presses for them when moved (the digits as drawn, else)
+        let page = self.pad.page();
+        let texts: Option<Vec<String>> = match pad {
+            Some(kind) => Some(
                 (0..BAR_SLOTS)
                     .map(|i| {
                         let (p, rb, face) = Pad::chord_of(i);
@@ -2343,9 +2396,23 @@ impl RenethackGame {
                         let bumper = if rb { PadButton::Rb } else { PadButton::Lb };
                         format!("{} {}", kind.label(bumper), kind.label(face))
                     })
-                    .collect()
-            });
+                    .collect(),
+            ),
+            None => {
+                let map = self.settings.keymaps.get(self.ui_state.profile);
+                let keys: Vec<String> = (0..BAR_SLOTS)
+                    .map(|i| crate::rebind::bound_hint(map, crate::action_bar::key_label(i)))
+                    .collect();
+                let moved = keys
+                    .iter()
+                    .enumerate()
+                    .any(|(i, k)| k != crate::action_bar::key_label(i));
+                moved.then_some(keys)
+            }
+        };
+        if self.bar_labels.as_ref() != Some(&texts) {
             ui.hud.action_bar().set_key_labels(texts.as_deref());
+            self.bar_labels = Some(texts);
         }
         // a model still loading has nothing to show, nor to render ahead
         let loading = ui.map.hero_model().is_some_and(|m| m.is_pending());
@@ -2386,7 +2453,9 @@ impl RenethackGame {
                 .or_else(|| v.count.map(|c| c.to_string()));
             bar.set_count(i, count.as_deref());
             bar.set_enabled(i, v.state != SlotState::Gone);
-            let key = crate::action_bar::key_label(i);
+            // the keys as the player presses them now
+            let map = self.settings.keymaps.get(self.ui_state.profile);
+            let key = crate::rebind::bound_hint(map, crate::action_bar::key_label(i));
             let what = v
                 .label_key
                 .as_deref()
@@ -2397,12 +2466,12 @@ impl RenethackGame {
                 .as_deref()
                 .map(|t| i18n::engine(EngineKind::Name, t).into_owned());
             let tip = match (v.state, text) {
-                (SlotState::Empty, _) => tr!("bar-slot-empty-tip", key = key),
+                (SlotState::Empty, _) => tr!("bar-slot-empty-tip", key = &key),
                 (SlotState::Gone, Some(t)) => tr!("bar-slot-gone-tip", what = what, item = t),
                 (_, Some(t)) => tr!("bar-slot-tip", what = what, item = t),
                 (_, None) => what,
             };
-            let hint = v.hint.as_deref().unwrap_or("");
+            let hint = crate::rebind::bound_hint(map, v.hint.as_deref().unwrap_or(""));
             bar.set_tooltip(
                 i,
                 &tr!("bar-slot-keys-tip", tip = tip, key = key, hint = hint),
@@ -2674,6 +2743,13 @@ impl RenethackGame {
         let idle = self.session.is_none();
         match ev {
             UiEvent::Key(k) => self.on_key(k),
+            // a gamepad's and a button's keys are the game's own: no moved
+            // key applies
+            UiEvent::GameKey(k) => {
+                self.raw_keys = true;
+                self.on_key(k);
+                self.raw_keys = false;
+            }
             UiEvent::MapClick { x, y, button } => {
                 if self.state == GameState::Playing && in_field(x, y) {
                     self.on_click(x, y, button);
@@ -2793,7 +2869,20 @@ impl RenethackGame {
                 .unwrap_or(self.settings.keys.unwrap_or_default());
             crate::bindings::Shown::Keys(keys)
         };
-        let page = SettingsPage::new(view, &self.queue, at.0, at.1, pad, self.pad.kind, controls);
+        // the keyboard's commands of each profile, by the catalog's names
+        let catalog = self.catalog.clone();
+        let commands = [KeyProfile::Modern, KeyProfile::Classic]
+            .map(|p| crate::rebind::commands(p, catalog.as_deref()));
+        let page = SettingsPage::new(
+            view,
+            &self.queue,
+            at.0,
+            at.1,
+            pad,
+            self.pad.kind,
+            controls,
+            commands,
+        );
         self.ui_mut().screens.show_settings(&page.root(), in_game);
         self.settings_page = Some(page);
     }
@@ -2815,7 +2904,7 @@ impl RenethackGame {
         let root = self.base().get_tree().get_root();
         let ui_auto = root.as_ref().map_or(100, crate::theme::auto_ui_scale);
         settings_page::View {
-            settings: self.settings,
+            settings: self.settings.clone(),
             lang: i18n::lang(),
             window,
             screen,
@@ -2862,6 +2951,7 @@ impl RenethackGame {
                 page.focus_field(f);
                 self.settings_step(f, dir, false);
             }
+            SettingsInput::Entry(i) => page.click_entry(i),
         }
     }
 
@@ -2870,11 +2960,53 @@ impl RenethackGame {
         let Some(page) = self.settings_page.as_mut() else {
             return;
         };
-        match page.key(&k) {
+        match page.key(&k, self.raw_keys) {
             Some(PageKey::Back) => self.close_settings(),
             Some(PageKey::Step(f, dir, wrap)) => self.settings_step(f, dir, wrap),
+            Some(PageKey::Rebind {
+                profile,
+                command,
+                key,
+                swap,
+            }) => {
+                let mut s = self.settings.clone();
+                s.keymaps.get_mut(profile).rebind(command, key, swap);
+                self.set_settings(s);
+            }
+            Some(PageKey::Reset { profile, command }) => {
+                let mut s = self.settings.clone();
+                s.keymaps.get_mut(profile).reset(command);
+                self.set_settings(s);
+            }
+            Some(PageKey::ResetAll(profile)) => {
+                let mut s = self.settings.clone();
+                *s.keymaps.get_mut(profile) = nh_world::Keymap::default();
+                self.set_settings(s);
+            }
             None => {}
         }
+    }
+
+    /// A slot's key as the player presses it now.
+    fn slot_key(&self, slot: usize) -> String {
+        crate::rebind::bound_hint(self.keymap(), crate::action_bar::key_label(slot))
+    }
+
+    /// The keys the player moved, for the character playing's profile.
+    pub(crate) fn keymap(&self) -> &nh_world::Keymap {
+        self.settings.keymaps.get(self.ui_state.profile)
+    }
+
+    /// The command `k` gives the game where commands are awaited (the
+    /// player's own keys, the settings' controls); None: a key whose
+    /// command moved away. A gamepad's keys are the game's own.
+    fn player_key(&self, k: KeyInput) -> Option<KeyInput> {
+        if self.raw_keys {
+            return Some(k);
+        }
+        self.keymap()
+            .translate(k)
+            .map(|t| KeyInput { echo: k.echo, ..t })
     }
 
     /// A row of the settings page a step on or back.
@@ -2896,7 +3028,7 @@ impl RenethackGame {
     /// kept in the profile, the page shown them.
     pub(crate) fn set_settings(&mut self, s: Settings) {
         let drawn = self.graphics();
-        let old = std::mem::replace(&mut self.settings, s);
+        let old = std::mem::replace(&mut self.settings, s.clone());
         if s.display != old.display
             && let Some(mut window) = self.base().get_tree().get_root()
         {
@@ -2910,6 +3042,11 @@ impl RenethackGame {
         {
             crate::theme::apply_scaling(window, s.ui_scale);
         }
+        // the slots' keys and tips drawn again
+        if s.keymaps != old.keymaps {
+            self.bar_key = None;
+            self.bar_labels = None;
+        }
         self.update_profile(|p| p.settings = s);
         let view = self.settings_view();
         if let Some(page) = self.settings_page.as_mut() {
@@ -2920,6 +3057,9 @@ impl RenethackGame {
     /// The settings page follows the window (a size dragged, a mode the
     /// screen took its time to take) and the input: a gamepad's hints.
     fn sync_settings_page(&mut self) {
+        if let Some(page) = self.settings_page.as_mut() {
+            page.reveal_focus();
+        }
         let Some(page) = self.settings_page.as_ref() else {
             return;
         };
@@ -3199,7 +3339,7 @@ impl RenethackGame {
     /// Everything on screen in the language now.
     fn relang(&mut self) {
         self.bar_key = None;
-        self.pad_labels = None;
+        self.bar_labels = None;
         let line = self.pending.as_ref().and_then(|(_, p)| match p {
             Prompt::Command => getpos_line(&self.world),
             p => prompt_line(p),

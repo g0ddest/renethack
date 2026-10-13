@@ -1,7 +1,8 @@
 //! What the keys and the gamepad do, as the settings page's controls show
-//! them (read only): the keyboard's for either key profile, the gamepad's
-//! in the controller's own button names. Each binding is an input drawn
-//! as key caps, buttons and words, and what it does.
+//! them, read only: the gamepad's in the controller's own button names,
+//! and what stays as it is on the keyboard (the commands a player moves
+//! are `rebind.rs`'s). Each binding is an input drawn as key caps, buttons
+//! and words, and what it does.
 
 use nh_world::KeyProfile;
 
@@ -21,8 +22,6 @@ pub enum Part {
     Plus,
     /// Either: "/".
     Or,
-    /// From one to the other: "–".
-    Through,
 }
 
 /// An input and what it does (a key of the catalogs).
@@ -32,120 +31,45 @@ pub struct Binding {
     pub action: &'static str,
 }
 
-use Part::{Key, Or, Pad, Plus, Through, Words};
+use Part::{Key, Or, Pad, Plus, Words};
 
 const fn b(input: &'static [Part], action: &'static str) -> Binding {
     Binding { input, action }
 }
 
-/// The keyboard's bindings that both profiles share, after the ones they
-/// differ in.
-const KEYS_COMMON: [Binding; 15] = [
-    b(&[Key("1"), Through, Key("0")], "controls-bar"),
-    b(&[Key("i")], "controls-inventory"),
-    b(&[Key("#")], "controls-palette"),
+/// What stays as it is on the keyboard, under the commands a player moves
+/// (`rebind.rs`).
+const KEYS_FIXED: [Binding; 6] = [
+    b(
+        &[Key("Shift"), Plus, Words("controls-direction")],
+        "controls-run",
+    ),
+    b(&[Words("controls-keypad")], "controls-keypad-moves"),
     b(&[Words("controls-left-click")], "controls-click"),
     b(
         &[Words("controls-right-click")],
         "controls-right-click-does",
     ),
-    b(&[Key("<"), Or, Key(">")], "controls-stairs"),
-    b(&[Key("F5")], "controls-rest"),
+    b(&[Words("controls-wheel")], "controls-zoom"),
     b(
         &[Words("controls-any-key"), Or, Key("Esc")],
         "controls-stop",
     ),
-    b(
-        &[Key("F8"), Or, Key("Ctrl"), Plus, Key("0")],
-        "controls-overview",
-    ),
-    b(
-        &[
-            Words("controls-wheel"),
-            Or,
-            Key("Ctrl"),
-            Plus,
-            Key("-"),
-            Or,
-            Key("Ctrl"),
-            Plus,
-            Key("="),
-        ],
-        "controls-zoom",
-    ),
-    b(&[Key("F9")], "controls-log"),
-    b(&[Key("F1")], "controls-help"),
-    b(
-        &[Key("Alt"), Plus, Words("controls-letter")],
-        "controls-meta",
-    ),
-    b(
-        &[Key("Ctrl"), Plus, Words("controls-letter")],
-        "controls-ctrl",
-    ),
-    b(&[Words("controls-usual-key")], "controls-nethack"),
 ];
 
-/// Modern keys (number_pad on).
-const KEYS_MODERN: [Binding; 4] = [
-    b(
-        &[
-            Words("controls-arrows"),
-            Or,
-            Key("Home"),
-            Key("PgUp"),
-            Key("End"),
-            Key("PgDn"),
-            Or,
-            Words("controls-keypad"),
-        ],
-        "controls-move",
-    ),
-    b(
-        &[Key("Shift"), Plus, Words("controls-direction")],
-        "controls-run",
-    ),
-    b(&[Key("n"), Key("2"), Key("0"), Key("s")], "controls-count"),
-    b(
-        &[Key("k"), Key("j"), Key("l"), Key("u")],
-        "controls-number-pad-letters",
-    ),
-];
-
-/// Classic keys (number_pad off: NetHack's vi-keys).
-const KEYS_CLASSIC: [Binding; 3] = [
-    b(
-        &[
-            Key("h"),
-            Key("j"),
-            Key("k"),
-            Key("l"),
-            Key("y"),
-            Key("u"),
-            Key("b"),
-            Key("n"),
-            Or,
-            Words("controls-arrows"),
-        ],
-        "controls-move",
-    ),
-    b(
-        &[Key("Shift"), Plus, Words("controls-direction")],
-        "controls-run",
-    ),
-    b(
-        &[
-            Key("Alt"),
-            Plus,
-            Key("2"),
-            Key("Alt"),
-            Plus,
-            Key("0"),
-            Key("s"),
-        ],
-        "controls-count",
-    ),
-];
+/// Classic's count: Alt and the top-row digits (Modern's `n` moves).
+const KEYS_CLASSIC_FIXED: [Binding; 1] = [b(
+    &[
+        Key("Alt"),
+        Plus,
+        Key("2"),
+        Key("Alt"),
+        Plus,
+        Key("0"),
+        Key("s"),
+    ],
+    "controls-count",
+)];
 
 /// The gamepad's bindings.
 const PAD: [Binding; 15] = [
@@ -219,15 +143,17 @@ impl Shown {
         Shown::Pad,
     ];
 
-    /// Its bindings, in the order the page lists them.
+    /// Its bindings that stay as they are, in the order the page lists
+    /// them: the gamepad's all, the keyboard's under the commands a player
+    /// moves.
     pub fn bindings(self) -> Vec<Binding> {
         match self {
-            Shown::Keys(KeyProfile::Modern) => {
-                KEYS_MODERN.iter().chain(&KEYS_COMMON).copied().collect()
-            }
-            Shown::Keys(KeyProfile::Classic) => {
-                KEYS_CLASSIC.iter().chain(&KEYS_COMMON).copied().collect()
-            }
+            Shown::Keys(KeyProfile::Modern) => KEYS_FIXED.to_vec(),
+            Shown::Keys(KeyProfile::Classic) => KEYS_FIXED
+                .iter()
+                .chain(&KEYS_CLASSIC_FIXED)
+                .copied()
+                .collect(),
             Shown::Pad => PAD.to_vec(),
         }
     }
@@ -238,10 +164,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn each_list_says_each_thing_once_and_moving_comes_first() {
+    fn each_list_says_each_thing_once() {
         for shown in Shown::ALL {
             let list = shown.bindings();
-            assert!(list.len() >= 12, "{shown:?}");
+            assert!(!list.is_empty(), "{shown:?}");
             for (i, b) in list.iter().enumerate() {
                 assert!(
                     !list[i + 1..].iter().any(|o| o.action == b.action),
@@ -251,21 +177,13 @@ mod tests {
                 assert!(!b.input.is_empty(), "{}", b.action);
             }
         }
-        for profile in [KeyProfile::Modern, KeyProfile::Classic] {
-            assert_eq!(Shown::Keys(profile).bindings()[0].action, "controls-move");
-        }
-        // the profiles differ where they should
-        let modern = Shown::Keys(KeyProfile::Modern).bindings();
-        let classic = Shown::Keys(KeyProfile::Classic).bindings();
+        assert!(Shown::Pad.bindings().len() >= 12);
+        // Classic counts with Alt; Modern's n is a command the player moves
         assert!(
-            modern
+            Shown::Keys(KeyProfile::Classic)
+                .bindings()
                 .iter()
-                .any(|b| b.action == "controls-number-pad-letters")
-        );
-        assert!(
-            !classic
-                .iter()
-                .any(|b| b.action == "controls-number-pad-letters")
+                .any(|b| b.action == "controls-count")
         );
     }
 }

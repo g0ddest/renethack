@@ -38,6 +38,7 @@ mod organic;
 mod pad_view;
 mod paths;
 mod pickers;
+mod rebind;
 mod rehearsal;
 mod screens;
 mod seated;

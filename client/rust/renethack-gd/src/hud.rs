@@ -914,10 +914,20 @@ fn ctrl(c: char) -> KeyInput {
 }
 
 /// An icon-only button (36×28) with a tooltip naming it and its key.
-fn micro_button(glyph: i32, tip: &'static str, queue: &UiQueue, ev: UiEvent) -> Gd<Button> {
+/// A small round button with its glyph; `bind`: its tip kept in the
+/// language (a tip that names a key is the HUD's to write: `Keyed`).
+fn micro_button(
+    glyph: i32,
+    tip: &'static str,
+    queue: &UiQueue,
+    ev: UiEvent,
+    bind: bool,
+) -> Gd<Button> {
     let mut b = theme::button("", queue, ev);
     b.set_custom_minimum_size(Vector2::new(MICRO_W, 28.0));
-    i18n::tip(&b, tip);
+    if bind {
+        i18n::tip(&b, tip);
+    }
     b.set_mouse_filter(MouseFilter::STOP);
     for state in ["normal", "hover", "pressed", "hover_pressed", "disabled"] {
         if let Some(mut sb) = b.get_theme_stylebox(state) {
@@ -942,8 +952,55 @@ pub fn banner_room(width: f32) -> f32 {
 }
 
 /// Queue a key from a signal: the same as pressing it.
+/// Words that name a key: a tooltip or a button's text, the catalogs'
+/// string of `id` with the key the player presses now for `key`.
+struct Keyed {
+    node: Gd<Control>,
+    id: &'static str,
+    key: KeyInput,
+    text: bool,
+}
+
+impl Keyed {
+    fn tip<T: Inherits<Control>>(node: &Gd<T>, id: &'static str, key: KeyInput) -> Keyed {
+        Keyed {
+            node: node.clone().upcast(),
+            id,
+            key,
+            text: false,
+        }
+    }
+
+    fn text<T: Inherits<Control>>(node: &Gd<T>, id: &'static str, key: KeyInput) -> Keyed {
+        Keyed {
+            node: node.clone().upcast(),
+            id,
+            key,
+            text: true,
+        }
+    }
+
+    /// Its words for the key as pressed now.
+    fn write(&mut self, keymap: &nh_world::Keymap) {
+        let shown = keymap
+            .key_for(self.key)
+            .map_or_else(|| "—".to_string(), |k| crate::rebind::short_name(&k));
+        let mut args = i18n::FluentArgs::new();
+        args.set("key", i18n::Arg::fluent(shown));
+        let words = i18n::tr_with(self.id, Some(&args));
+        if self.text {
+            if let Ok(mut b) = self.node.clone().try_cast::<Button>() {
+                b.set_text(&words);
+            }
+        } else {
+            self.node.set_tooltip_text(&words);
+        }
+    }
+}
+
+/// A button's key: the game's own (the keys a player moved leave it alone).
 fn key_event(k: KeyInput) -> UiEvent {
-    UiEvent::Key(k)
+    UiEvent::GameKey(k)
 }
 
 /// (HP, Pw) on the orbs, and each slot's (filled, enabled).
@@ -953,6 +1010,10 @@ pub struct Hud {
     root: Gd<Control>,
     /// The blocks that take the mouse (then the map is not hovered).
     solid: Vec<Gd<Control>>,
+    /// The words that name a key (a tooltip, a button's text): written
+    /// again when the player moves keys or the language changes.
+    keyed: Vec<Keyed>,
+    keymap: nh_world::Keymap,
 
     // portrait block, top left
     portrait_panel: Gd<PanelContainer>,
@@ -1070,6 +1131,7 @@ impl Hud {
         root.set_theme(&theme::dark_theme());
         layer.add_child(&root);
         let mut solid: Vec<Gd<Control>> = Vec::new();
+        let mut keyed: Vec<Keyed> = Vec::new();
 
         // ---- portrait block, top left ----
         let mut portrait_panel = theme::framed(Frame::Hud);
@@ -1144,7 +1206,7 @@ impl Hud {
         attrs.set_autowrap_mode(AutowrapMode::OFF);
         attrs.add_theme_font_override("normal_font", &theme::font(Face::Body));
         attrs.add_theme_font_size_override("normal_font_size", 16);
-        i18n::tip(&attrs, "hud-attrs-tip");
+        keyed.push(Keyed::tip(&attrs, "hud-attrs-tip", ctrl('x')));
         place(&attrs, [0.0, 1.0, 1.0, 1.0], [140.0, -24.0, 0.0, 0.0]);
         let q = queue.clone();
         attrs
@@ -1246,18 +1308,38 @@ impl Hud {
             [bar_x, micro_y, bar_x + BAR_W, micro_y + 28.0],
         );
         let plain = |c| key_event(KeyInput::plain(Key::Char(c)));
-        let buttons: [(i32, &'static str, UiEvent); MICRO_BUTTONS] = [
-            (0, "hud-inventory-tip", plain('i')),
-            (1, "hud-spells-tip", plain('+')),
-            (2, "hud-character-tip", key_event(ctrl('x'))),
-            (3, "hud-overview-tip", key_event(ctrl('o'))),
-            (4, "hud-history-tip", UiEvent::ToggleFullLog),
-            (8, "hud-achievements-tip", UiEvent::OpenAchievements),
-            (9, "hud-help-tip", UiEvent::ToggleHelp),
-            (7, "hud-settings-tip", UiEvent::OpenSettings),
+        let f = |n| KeyInput::plain(Key::F(n));
+        // the buttons' tips name their keys, as the player moved them
+        let buttons: [(i32, &'static str, UiEvent, Option<KeyInput>); MICRO_BUTTONS] = [
+            (
+                0,
+                "hud-inventory-tip",
+                plain('i'),
+                Some(KeyInput::plain(Key::Char('i'))),
+            ),
+            (
+                1,
+                "hud-spells-tip",
+                plain('+'),
+                Some(KeyInput::plain(Key::Char('+'))),
+            ),
+            (
+                2,
+                "hud-character-tip",
+                key_event(ctrl('x')),
+                Some(ctrl('x')),
+            ),
+            (3, "hud-overview-tip", key_event(ctrl('o')), Some(ctrl('o'))),
+            (4, "hud-history-tip", UiEvent::ToggleFullLog, Some(f(9))),
+            (8, "hud-achievements-tip", UiEvent::OpenAchievements, None),
+            (9, "hud-help-tip", UiEvent::ToggleHelp, Some(f(1))),
+            (7, "hud-settings-tip", UiEvent::OpenSettings, None),
         ];
-        for (glyph, tip, ev) in buttons {
-            let b = micro_button(glyph, tip, &queue, ev);
+        for (glyph, tip, ev, key) in buttons {
+            let b = micro_button(glyph, tip, &queue, ev, key.is_none());
+            if let Some(key) = key {
+                keyed.push(Keyed::tip(&b, tip, key));
+            }
             micro.add_child(&b);
             solid.push(b.upcast());
         }
@@ -1293,7 +1375,12 @@ impl Hud {
         log_title.set_h_size_flags(SizeFlags::EXPAND_FILL);
         log_title.set_vertical_alignment(VerticalAlignment::CENTER);
         log_head.add_child(&log_title);
-        let history = micro_button(4, "hud-history-tip", &queue, UiEvent::ToggleFullLog);
+        let history = micro_button(4, "hud-history-tip", &queue, UiEvent::ToggleFullLog, false);
+        keyed.push(Keyed::tip(
+            &history,
+            "hud-history-tip",
+            KeyInput::plain(Key::F(9)),
+        ));
         log_head.add_child(&history);
         log_col.add_child(&log_head.clone());
         let mut log_area = vbox(0);
@@ -1496,7 +1583,11 @@ impl Hud {
         full_log_count.set_vertical_alignment(VerticalAlignment::CENTER);
         full_head.add_child(&full_log_count);
         let close = theme::button("", &queue, UiEvent::ToggleFullLog);
-        i18n::text(&close, "log-history-close");
+        keyed.push(Keyed::text(
+            &close,
+            "log-history-close",
+            KeyInput::plain(Key::F(9)),
+        ));
         full_head.add_child(&close);
         full_col.add_child(&full_head);
         let mut rule = ColorRect::new_alloc();
@@ -1557,6 +1648,8 @@ impl Hud {
         let mut hud = Hud {
             root,
             solid,
+            keyed,
+            keymap: nh_world::Keymap::default(),
             portrait_panel,
             initial,
             plaque,
@@ -1630,6 +1723,7 @@ impl Hud {
             laid_out: None,
         };
         hud.reset();
+        hud.write_keys();
         hud
     }
 
@@ -1797,7 +1891,23 @@ impl Hud {
     /// What the HUD draws itself, again in the language now (bound labels
     /// change by themselves): the status, its chips, the log from the
     /// engine's English, the mode, the orbs' tooltips.
+    /// The keys the player moved: the words that name a key say them.
+    pub fn set_keymap(&mut self, keymap: &nh_world::Keymap) {
+        if self.keymap != *keymap {
+            self.keymap = keymap.clone();
+            self.write_keys();
+        }
+    }
+
+    fn write_keys(&mut self) {
+        let keymap = self.keymap.clone();
+        for k in &mut self.keyed {
+            k.write(&keymap);
+        }
+    }
+
     pub fn relang(&mut self) {
+        self.write_keys();
         self.status_text.clear();
         for mut c in self.needs.drain(..).chain(self.conditions.drain(..)) {
             c.node.queue_free();

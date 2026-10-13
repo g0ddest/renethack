@@ -78,6 +78,7 @@ The client adds:
 | in questions | the answer's letter; `Enter`/`Space` — the default; `Esc` — cancel |
 
 Commands work in any keyboard layout (letters are taken by key position).
+Any command's key can be moved in the settings (Controls).
 
 ### Gamepad and Steam Deck
 
@@ -151,9 +152,27 @@ screen) starts on Medium, whose torches but the nearest cast no shadow.
 Sound: the volumes of the mixer's buses (`audio.rs`), each a slider the
 mouse drags. Interface: the scale (Auto, or 80–140 %;
 `RENETHACK_UI_SCALE` overrides it for a run), the keys a new character
-starts with, the language. Controls: what the keys do, for either key
-profile, and the gamepad's buttons in the controller's own names
-(`bindings.rs`; read only, as the tables above say).
+starts with, the language. Controls: the keyboard's commands of either
+key profile, each on its key, and the gamepad's buttons in the
+controller's own names (read only: Steam Input remaps a controller).
+
+A keyboard's command takes another key there: Enter or a click on it,
+then the key. A key another command has is offered as a swap (Enter swaps
+the two, Esc keeps them); a key that stays as it is (Esc, the keypad, Shift
+and a step for running, Classic's Alt and digits, NetHack's second keys)
+is refused. Delete puts a command's own key back; a row at the top puts
+every key of the profile back. Each profile's moved keys are kept in the
+profile beside the other settings (`nh-world/src/keymap.rs`). They apply
+where the engine waits for a command and to the client's own actions (the
+inventory, the palette, the camera, the log, the help, the 1–0 bar), never
+in a text, a menu, a getobj's letters, a yes/no or getpos, where keys are
+data; a gamepad's and the HUD's buttons give the game's own keys. The bar,
+the HUD's tips, the inventory's tips and the palette show the keys as
+moved. The `rebind` scenario moves the search onto `a` (a swap with the
+apply) and the help onto F6, puts a moved key back with Delete and every
+Modern key with the top row, and checks what the profile keeps, what a
+start reads back, that the engine is sent `s` for `a`, that F6 opens the
+help and F1 no longer does, and that a getobj's `a` is the item `a`.
 
 The `settings` scenario changes them with the keys, the mouse's slider
 and the gamepad (the window's size and mode headless only: a window keeps

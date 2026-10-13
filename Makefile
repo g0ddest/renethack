@@ -27,14 +27,14 @@ override GODOT := $(if $(filter %.app %.app/,$(GODOT)),$(patsubst %/,%,$(GODOT))
 # GNU coreutils' timeout; Homebrew's coreutils names it gtimeout on macOS
 TIMEOUT ?= $(shell command -v timeout || command -v gtimeout)
 GODOT_PROJECT := client/godot
-SELFTESTS := smoke keys save close crash menus text dialogs palette first-open moves passing through orders inventory map-pause pool-sizes threat-arrow bar gamepad equipment item-use combat roles kits two-hands riding audio worn footprints branches corridors shop states title soak language pickers achievements help layouts settings credits
+SELFTESTS := smoke keys save close crash menus text dialogs palette first-open moves passing through orders inventory map-pause pool-sizes threat-arrow bar gamepad equipment item-use combat roles kits two-hands riding audio worn footprints branches corridors shop states title soak language pickers achievements help layouts settings credits rebind
 # again at the Steam Deck's 1280×800 (its 120 % UI scale, the compact
 # layout): every screen a scenario would shoot must fit the canvas
-DECK_SELFTESTS := smoke inventory hud gamepad title threat-arrow settings credits
+DECK_SELFTESTS := smoke inventory hud gamepad title threat-arrow settings credits rebind
 # the same in Russian (a third longer than English), at the Deck's size and
 # at 1920×1080
-RU_DECK_SELFTESTS := smoke inventory hud dialogs gamepad pickers achievements help layouts settings credits
-RU_SELFTESTS := smoke inventory dialogs achievements settings credits
+RU_DECK_SELFTESTS := smoke inventory hud dialogs gamepad pickers achievements help layouts settings credits rebind
+RU_SELFTESTS := smoke inventory dialogs achievements settings credits rebind
 # in the pseudo-language (--lang=qps): every word on the screens a scenario
 # would shoot came through the client's catalogs or the engine's translator
 PSEUDO_SELFTESTS := smoke keys dialogs orders inventory gamepad hud pickers achievements help layouts settings credits

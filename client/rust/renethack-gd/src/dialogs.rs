@@ -79,7 +79,8 @@ const INFO_TEXT: Color = Color::from_rgb(0.74, 0.69, 0.61);
 pub struct PaletteCmd {
     pub name: String,
     pub desc: String,
-    pub key: i32,
+    /// Its key as the player presses it now ("" for none).
+    pub key: String,
 }
 
 /// Does the palette list this command? Not "#" itself: choosing it would
@@ -88,8 +89,9 @@ fn palette_lists(name: &str) -> bool {
     !name.is_empty() && name != "#"
 }
 
-/// The catalog's extended commands the palette offers.
-pub fn palette_cmds(catalog: Option<&Catalog>) -> Vec<PaletteCmd> {
+/// The catalog's extended commands the palette offers, each with its key
+/// as the player presses it now (the keys moved in `keymap`).
+pub fn palette_cmds(catalog: Option<&Catalog>, keymap: &nh_world::Keymap) -> Vec<PaletteCmd> {
     let Some(catalog) = catalog else {
         return Vec::new();
     };
@@ -101,7 +103,7 @@ pub fn palette_cmds(catalog: Option<&Catalog>) -> Vec<PaletteCmd> {
             name: e.name.clone(),
             // the engine's words: its translator gives them
             desc: i18n::engine(EngineKind::Menu, &e.desc).into_owned(),
-            key: e.key,
+            key: crate::rebind::bound_code(keymap, e.key),
         })
         .collect()
 }
@@ -168,16 +170,6 @@ fn truncate_bytes(s: &str, max: usize) -> String {
         end -= 1;
     }
     s[..end].to_string()
-}
-
-/// How a key code reads: "^X", "M-x", "x".
-fn key_name(key: i32) -> String {
-    match key {
-        0 => String::new(),
-        1..=31 => format!("^{}", char::from(b'@' + key as u8)),
-        128..=255 => format!("M-{}", char::from((key & 0x7f) as u8)),
-        _ => char::from_u32(key as u32).map_or(String::new(), |c| c.to_string()),
-    }
 }
 
 /// A Choice button's label: the usual answers spelled out, others as typed.
@@ -1003,7 +995,7 @@ fn fill_palette(palette: &Rc<RefCell<Palette>>) {
             .iter()
             .map(|&i| {
                 let c = &p.cmds[i];
-                (c.name.clone(), key_name(c.key), c.desc.clone())
+                (c.name.clone(), c.key.clone(), c.desc.clone())
             })
             .collect();
         (
@@ -1318,6 +1310,9 @@ pub struct Dialogs {
     /// The command palette, built once (about a hundred rows: tens of
     /// milliseconds) and hidden between uses.
     palette_pool: Option<PalettePool>,
+    /// The keys the player moved: the palette shows its commands' keys as
+    /// they are pressed now.
+    keymap: nh_world::Keymap,
 }
 
 struct PalettePool {
@@ -1349,6 +1344,7 @@ impl Dialogs {
             warm_next: 0,
             warming: false,
             palette_pool: None,
+            keymap: nh_world::Keymap::default(),
         }
     }
 
@@ -1800,7 +1796,7 @@ impl Dialogs {
         req: u64,
         catalog: Option<&Catalog>,
     ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
-        let cmds = palette_cmds(catalog);
+        let cmds = palette_cmds(catalog, &self.keymap);
         // the palette put away serves again only if it reads the same: the
         // engine's translator may have loaded since it was made, or the
         // language be another
@@ -3093,6 +3089,13 @@ impl Dialogs {
     }
 
     /// Whether a gamepad gives the input now.
+    /// The keys the player moved, for the palette's keys.
+    pub fn set_keymap(&mut self, keymap: &nh_world::Keymap) {
+        if self.keymap != *keymap {
+            self.keymap = keymap.clone();
+        }
+    }
+
     pub fn set_pad(&mut self, on: bool) {
         self.pad = on;
     }
@@ -4013,7 +4016,7 @@ mod tests {
             .map(|n| PaletteCmd {
                 name: n.to_string(),
                 desc: String::new(),
-                key: 0,
+                key: String::new(),
             })
             .collect()
     }
@@ -4059,7 +4062,7 @@ mod tests {
         assert!(!palette_lists(""));
         assert!(palette_lists("?"));
         assert!(palette_lists("pray"));
-        assert!(palette_cmds(None).is_empty());
+        assert!(palette_cmds(None, &nh_world::Keymap::default()).is_empty());
     }
 
     #[test]
@@ -4084,10 +4087,11 @@ mod tests {
 
     #[test]
     fn key_names_read_like_nethack() {
-        assert_eq!(key_name(0), "");
-        assert_eq!(key_name(4), "^D");
-        assert_eq!(key_name(0x80 | 'p' as i32), "M-p");
-        assert_eq!(key_name('#' as i32), "#");
+        let none = nh_world::Keymap::default();
+        assert_eq!(crate::rebind::bound_code(&none, 0), "");
+        assert_eq!(crate::rebind::bound_code(&none, 4), "^D");
+        assert_eq!(crate::rebind::bound_code(&none, 0x80 | 'p' as i32), "M-p");
+        assert_eq!(crate::rebind::bound_code(&none, '#' as i32), "#");
     }
 
     #[test]

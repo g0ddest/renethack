@@ -16,14 +16,16 @@ use godot::classes::control::{FocusMode, MouseFilter, SizeFlags};
 use godot::classes::image::Format;
 use godot::classes::text_server::AutowrapMode;
 use godot::classes::{
-    Button, ColorRect, Control, HBoxContainer, HSlider, Image, ImageTexture, Label,
-    MarginContainer, PanelContainer, ScrollContainer, StyleBoxFlat, Texture2D, VBoxContainer,
+    Button, ColorRect, Control, HBoxContainer, HSlider, Image, ImageTexture, InputEvent,
+    InputEventMouseButton, Label, MarginContainer, PanelContainer, ScrollContainer, StyleBoxFlat,
+    Texture2D, VBoxContainer,
 };
+use godot::global::MouseButton;
 use godot::global::{HorizontalAlignment, VerticalAlignment};
 use godot::prelude::*;
 use nh_world::{
-    FPS_CAPS, Graphics, Key, KeyInput, KeyProfile, Level, Msaa, Quality, RENDER_SCALES, Settings,
-    Shadows, UI_SCALES, Upscale, WindowMode, step_through, step_window_size,
+    FPS_CAPS, Graphics, Key, KeyInput, KeyProfile, Keymap, Level, Msaa, Quality, RENDER_SCALES,
+    Settings, Shadows, UI_SCALES, Upscale, WindowMode, key_name, step_through, step_window_size,
 };
 
 use crate::audio::Bus;
@@ -31,6 +33,7 @@ use crate::bindings::{Binding, Part, Shown};
 use crate::gamepad::{PadButton, PadKind};
 use crate::i18n::{self, Lang};
 use crate::pad_view;
+use crate::rebind::{Command, Group, Taken, taken};
 use crate::theme::{self, Face, Frame};
 use crate::tr;
 use crate::ui_events::{UiEvent, UiQueue, push};
@@ -358,7 +361,7 @@ pub enum Change {
 /// to the first (Enter, A). None: nothing changes (a row that cannot
 /// change now, or at its end).
 pub fn step(field: Field, v: &View, dir: i32, wrap: bool) -> Option<Change> {
-    let mut s = v.settings;
+    let mut s = v.settings.clone();
     let d = &mut s.display;
     match field {
         Field::WindowMode => d.mode = step_through(&WindowMode::ALL, d.mode, dir, wrap),
@@ -436,6 +439,8 @@ pub enum SettingsInput {
     Focus(Field),
     /// A row's arrow clicked: its value a step back (-1) or on (1).
     Step(Field, i32),
+    /// An entry of the controls' list clicked: a command's new key asked.
+    Entry(usize),
 }
 
 /// What a key on the page asks of the game.
@@ -443,7 +448,48 @@ pub enum SettingsInput {
 pub enum PageKey {
     /// A step of the row with the focus (see `step`).
     Step(Field, i32, bool),
+    /// The player presses `key` for `command` in `profile`; `swap`: the
+    /// command that had `key` takes `command`'s.
+    Rebind {
+        profile: KeyProfile,
+        command: KeyInput,
+        key: KeyInput,
+        swap: bool,
+    },
+    /// `command` back on its own key.
+    Reset {
+        profile: KeyProfile,
+        command: KeyInput,
+    },
+    /// Every command of `profile` back on its own key.
+    ResetAll(KeyProfile),
     Back,
+}
+
+/// What an entry of the controls' list is.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EntryKind {
+    /// Every key back on its command.
+    ResetAll,
+    /// The `n`-th command of the profile's list (`rebind::commands`).
+    Command(usize),
+    /// What stays as it is.
+    Fixed,
+}
+
+/// A command's key being changed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Edit {
+    None,
+    /// The entry waits for its new key.
+    Press(usize),
+    /// The key pressed is another command's: Enter swaps them.
+    Swap {
+        entry: usize,
+        key: KeyInput,
+    },
+    /// Enter puts every key back.
+    ResetAll,
 }
 
 /// A row: its button (the focus's frame, the mouse's target), its name,
@@ -488,11 +534,27 @@ pub struct SettingsPage {
     pad: Option<PadKind>,
     /// The gamepad whose buttons the controls show (the last one used).
     pad_kind: PadKind,
-    /// The controls' list: what it shows, its scroll, its entries.
+    /// The controls' list: what it shows, its scroll, its entries (and
+    /// what each is), the commands of each key profile.
     controls: Shown,
     scroll: Gd<ScrollContainer>,
     list: Gd<VBoxContainer>,
     entries: Vec<Gd<PanelContainer>>,
+    kinds: Vec<EntryKind>,
+    commands: [Vec<Command>; 2],
+    edit: Edit,
+    queue: UiQueue,
+    /// The entry to scroll into view once the list is laid out, and for
+    /// how many frames more.
+    reveal: Option<(usize, u8)>,
+}
+
+/// The profile a keyboard's list shows, and its commands' index.
+fn profile_index(p: KeyProfile) -> usize {
+    match p {
+        KeyProfile::Modern => 0,
+        KeyProfile::Classic => 1,
+    }
 }
 
 fn flat(bg: Color, border: Option<(Side, i32, Color)>) -> Gd<StyleBoxFlat> {
@@ -732,6 +794,9 @@ fn keycap(name: &str) -> Gd<PanelContainer> {
     cap
 }
 
+/// Frames a list's entry is kept in view after the list changed.
+const REVEAL_FRAMES: u8 = 4;
+
 /// The controls' input cell's width, and an entry's height at least.
 const INPUT_W: f32 = 440.0;
 const ENTRY_H: f32 = 38.0;
@@ -766,12 +831,8 @@ fn entry(binding: &Binding, kind: PadKind, normal: &Gd<StyleBoxFlat>) -> Gd<Pane
                 l.set_vertical_alignment(VerticalAlignment::CENTER);
                 input.add_child(&l);
             }
-            Part::Plus | Part::Or | Part::Through => {
-                let mark = match part {
-                    Part::Plus => "+",
-                    Part::Or => "/",
-                    _ => "–",
-                };
+            Part::Plus | Part::Or => {
+                let mark = if part == Part::Plus { "+" } else { "/" };
                 let mut l = theme::styled_label(mark, Face::Body, 16, theme::TEXT_DIM);
                 l.set_vertical_alignment(VerticalAlignment::CENTER);
                 // a mark, the same in every language
@@ -791,10 +852,125 @@ fn entry(binding: &Binding, kind: PadKind, normal: &Gd<StyleBoxFlat>) -> Gd<Pane
     e
 }
 
+/// A group's name over its commands in the controls' list.
+fn group_label(name: &str) -> Gd<Label> {
+    let mut l = theme::styled_label(name, Face::Title, 20, theme::GOLD);
+    l.set_custom_minimum_size(Vector2::new(0.0, 34.0));
+    l.set_vertical_alignment(VerticalAlignment::BOTTOM);
+    l
+}
+
+/// An entry's frame and its line inside it.
+fn entry_frame(normal: &Gd<StyleBoxFlat>) -> (Gd<PanelContainer>, Gd<HBoxContainer>) {
+    let mut e = PanelContainer::new_alloc();
+    e.set_mouse_filter(MouseFilter::PASS);
+    e.set_custom_minimum_size(Vector2::new(0.0, ENTRY_H));
+    e.add_theme_stylebox_override("panel", normal);
+    let mut pad = MarginContainer::new_alloc();
+    pad.set_mouse_filter(MouseFilter::IGNORE);
+    for (side, px) in [("left", 18), ("right", 10), ("top", 4), ("bottom", 4)] {
+        pad.add_theme_constant_override(&format!("margin_{side}"), px);
+    }
+    let mut line = HBoxContainer::new_alloc();
+    line.set_mouse_filter(MouseFilter::IGNORE);
+    line.add_theme_constant_override("separation", 16);
+    pad.add_child(&line);
+    e.add_child(&pad);
+    (e, line)
+}
+
+/// The entry that puts every key back (dim while none moved).
+fn reset_entry(nothing_moved: bool, normal: &Gd<StyleBoxFlat>) -> Gd<PanelContainer> {
+    let (e, mut line) = entry_frame(normal);
+    let color = if nothing_moved {
+        theme::TEXT_OFF
+    } else {
+        theme::GOLD_BRIGHT
+    };
+    let mut l = theme::styled_label(&tr!("controls-reset-all"), Face::BodyBold, 17, color);
+    l.set_vertical_alignment(VerticalAlignment::CENTER);
+    line.add_child(&l);
+    e
+}
+
+/// A command's entry: its key (gold when moved, "…" while one is awaited),
+/// its name, its own key when it is not on it.
+fn command_entry(
+    c: &Command,
+    map: &Keymap,
+    normal: &Gd<StyleBoxFlat>,
+    edit: Option<Edit>,
+) -> Gd<PanelContainer> {
+    let (e, mut line) = entry_frame(normal);
+    let mut input = HBoxContainer::new_alloc();
+    input.set_mouse_filter(MouseFilter::IGNORE);
+    input.add_theme_constant_override("separation", 4);
+    input.set_custom_minimum_size(Vector2::new(INPUT_W, 0.0));
+    let now = map.key_for(c.key);
+    match (edit, now) {
+        (Some(Edit::Press(_)), _) => input.add_child(&waiting_cap()),
+        (Some(Edit::Swap { key, .. }), _) => input.add_child(&gold_cap(&key_name(&key))),
+        (_, Some(k)) if k != c.key => input.add_child(&gold_cap(&key_name(&k))),
+        (_, Some(k)) => input.add_child(&keycap(&key_name(&k))),
+        (_, None) => {
+            let mut l = theme::styled_label("—", Face::Body, 16, theme::TEXT_DIM);
+            i18n::verbatim(&l);
+            l.set_vertical_alignment(VerticalAlignment::CENTER);
+            input.add_child(&l);
+        }
+    }
+    line.add_child(&input);
+    let mut name = theme::styled_label(&c.name, Face::Body, 17, theme::TEXT);
+    name.set_vertical_alignment(VerticalAlignment::CENTER);
+    name.set_autowrap_mode(AutowrapMode::WORD_SMART);
+    name.set_h_size_flags(SizeFlags::EXPAND_FILL);
+    // the engine's words (translated by it) and the client's
+    i18n::verbatim(&name);
+    line.add_child(&name);
+    if now != Some(c.key) {
+        let mut own = theme::styled_label(
+            &tr!("controls-own-key", key = key_name(&c.key)),
+            Face::Body,
+            14,
+            theme::TEXT_DIM,
+        );
+        own.set_vertical_alignment(VerticalAlignment::CENTER);
+        line.add_child(&own);
+    }
+    e
+}
+
+/// A key cap in gold: a key the player moved.
+fn gold_cap(name: &str) -> Gd<PanelContainer> {
+    let mut cap = keycap(name);
+    if let Some(mut l) = cap.get_child(0).and_then(|c| c.try_cast::<Label>().ok()) {
+        l.add_theme_color_override("font_color", theme::GOLD_BRIGHT);
+    }
+    let mut sb = StyleBoxFlat::new_gd();
+    sb.set_bg_color(Color::from_rgba(0.16, 0.12, 0.06, 1.0));
+    sb.set_border_width_all(1);
+    sb.set_border_color(theme::GOLD);
+    sb.set_corner_radius_all(4);
+    sb.set_content_margin(Side::LEFT, 7.0);
+    sb.set_content_margin(Side::RIGHT, 7.0);
+    sb.set_content_margin(Side::TOP, 1.0);
+    sb.set_content_margin(Side::BOTTOM, 1.0);
+    cap.add_theme_stylebox_override("panel", &sb);
+    cap
+}
+
+/// A key cap waiting for its key.
+fn waiting_cap() -> Gd<PanelContainer> {
+    let mut cap = gold_cap("…");
+    cap.set_custom_minimum_size(Vector2::new(56.0, 28.0));
+    cap
+}
+
 impl SettingsPage {
     /// The page showing `view`, open on `section` with the focus on its
     /// `focus`-th row; the hints for a gamepad of `pad`'s kind, else for
     /// the keyboard.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         view: View,
         queue: &UiQueue,
@@ -803,6 +979,7 @@ impl SettingsPage {
         pad: Option<PadKind>,
         pad_kind: PadKind,
         controls: Shown,
+        commands: [Vec<Command>; 2],
     ) -> SettingsPage {
         let mut root = theme::framed(Frame::Panel);
         root.set_mouse_filter(MouseFilter::STOP);
@@ -944,6 +1121,11 @@ impl SettingsPage {
             scroll,
             list,
             entries: Vec::new(),
+            kinds: Vec::new(),
+            commands,
+            edit: Edit::None,
+            queue: queue.clone(),
+            reveal: None,
         };
         page.fill_controls();
         page.show(&view);
@@ -951,19 +1133,74 @@ impl SettingsPage {
         page
     }
 
-    /// The controls' list for what it shows now.
+    /// The controls' list for what it shows now: a keyboard's commands,
+    /// each on its key (a click or Enter asks another), by group, then what
+    /// stays as it is; the gamepad's, read only.
     fn fill_controls(&mut self) {
-        for mut e in self.entries.drain(..) {
-            e.queue_free();
+        // out of the list at once (freed at the frame's end): the list's
+        // size and its scroll are the new entries' only
+        for mut c in self.list.get_children().iter_shared() {
+            self.list.remove_child(&c);
+            c.queue_free();
+        }
+        self.entries.clear();
+        self.kinds.clear();
+        if let Shown::Keys(profile) = self.controls {
+            let map = self.view.settings.keymaps.get(profile).clone();
+            self.add_entry(
+                reset_entry(map.is_empty(), &self.row_normal),
+                EntryKind::ResetAll,
+            );
+            let list = self.commands[profile_index(profile)].clone();
+            for group in Group::ALL {
+                let mut first = true;
+                for (i, c) in list.iter().enumerate().filter(|(_, c)| c.group == group) {
+                    if first {
+                        self.list.add_child(&group_label(&group.name()));
+                        first = false;
+                    }
+                    let edit = self.edit_at(self.entries.len());
+                    let e = command_entry(c, &map, &self.row_normal, edit);
+                    self.add_entry(e, EntryKind::Command(i));
+                }
+            }
+            self.list
+                .add_child(&group_label(&tr!("controls-group-fixed")));
         }
         for binding in self.controls.bindings() {
             let e = entry(&binding, self.pad_kind, &self.row_normal);
-            self.list.add_child(&e);
-            self.entries.push(e);
+            self.add_entry(e, EntryKind::Fixed);
         }
         let text = shown_text(self.controls);
         if let Some(r) = self.rows.iter_mut().find(|r| r.field == Field::Controls) {
             r.value.set_text(&text);
+        }
+    }
+
+    /// An entry under the list's, a click on it asking for a new key.
+    fn add_entry(&mut self, e: Gd<PanelContainer>, kind: EntryKind) {
+        let i = self.entries.len();
+        if kind != EntryKind::Fixed {
+            let q = self.queue.clone();
+            e.signals().gui_input().connect(move |ev: Gd<InputEvent>| {
+                if let Ok(b) = ev.try_cast::<InputEventMouseButton>()
+                    && b.is_pressed()
+                    && b.get_button_index() == MouseButton::LEFT
+                {
+                    push(&q, UiEvent::Settings(SettingsInput::Entry(i)));
+                }
+            });
+        }
+        self.list.add_child(&e);
+        self.entries.push(e);
+        self.kinds.push(kind);
+    }
+
+    /// The edit the `entry`-th entry shows, if it is its.
+    fn edit_at(&self, entry: usize) -> Option<Edit> {
+        match self.edit {
+            Edit::Press(e) | Edit::Swap { entry: e, .. } if e == entry => Some(self.edit),
+            _ => None,
         }
     }
 
@@ -972,9 +1209,147 @@ impl SettingsPage {
         let next = step_through(&Shown::ALL, self.controls, dir, wrap);
         if next != self.controls {
             self.controls = next;
+            self.edit = Edit::None;
             self.fill_controls();
             self.scroll.set_v_scroll(0);
             self.style_rows();
+        }
+    }
+
+    /// The entry with the focus, and what it is.
+    fn focused_entry(&self) -> Option<(usize, EntryKind)> {
+        if self.section != Section::Controls {
+            return None;
+        }
+        let i = self.focus.checked_sub(self.section.fields().len())?;
+        self.kinds.get(i).map(|k| (i, *k))
+    }
+
+    /// The profile the list shows (a keyboard's).
+    fn shown_profile(&self) -> Option<KeyProfile> {
+        match self.controls {
+            Shown::Keys(p) => Some(p),
+            Shown::Pad => None,
+        }
+    }
+
+    /// A click on the `i`-th entry: its focus, and what Enter would do.
+    pub fn click_entry(&mut self, i: usize) {
+        let first = self.section.fields().len();
+        self.focus = first + i;
+        self.edit = Edit::None;
+        if let Some(k) = self.start_edit() {
+            self.edit = k;
+        }
+        self.refresh_edit();
+    }
+
+    /// Enter (or a click) on the entry with the focus: what it starts
+    /// (nothing to put back while no key moved).
+    fn start_edit(&self) -> Option<Edit> {
+        match self.focused_entry()? {
+            (i, EntryKind::Command(_)) => Some(Edit::Press(i)),
+            (_, EntryKind::ResetAll) => {
+                let p = self.shown_profile()?;
+                let moved = !self.view.settings.keymaps.get(p).is_empty();
+                moved.then_some(Edit::ResetAll)
+            }
+            (_, EntryKind::Fixed) => None,
+        }
+    }
+
+    /// The list and the words under it after an edit began or ended.
+    fn refresh_edit(&mut self) {
+        let focus = self.focus;
+        let scroll = self.scroll.get_v_scroll();
+        self.fill_controls();
+        self.focus = focus;
+        self.style_rows();
+        self.scroll.set_v_scroll(scroll);
+        self.show_about();
+    }
+
+    /// The command of the `i`-th entry: its profile and its own key.
+    fn entry_command(&self, i: usize) -> Option<(KeyProfile, KeyInput)> {
+        let profile = self.shown_profile()?;
+        match self.kinds.get(i)? {
+            EntryKind::Command(c) => self.commands[profile_index(profile)]
+                .get(*c)
+                .map(|cmd| (profile, cmd.key)),
+            _ => None,
+        }
+    }
+
+    /// A key pressed while an entry waits for one: taken, the command's;
+    /// taken by another, Enter swaps them; a key that stays, another.
+    fn key_for_entry(&mut self, entry: usize, key: KeyInput) -> Option<PageKey> {
+        let (profile, command) = self.entry_command(entry)?;
+        let list = &self.commands[profile_index(profile)];
+        let map = self.view.settings.keymaps.get(profile);
+        match taken(list, map, profile, key, command) {
+            Taken::Free => {
+                self.edit = Edit::None;
+                self.refresh_edit();
+                Some(PageKey::Rebind {
+                    profile,
+                    command,
+                    key,
+                    swap: false,
+                })
+            }
+            Taken::Fixed(what) => {
+                self.about
+                    .set_text(&tr!("controls-fixed", key = key_name(&key), what = what));
+                None
+            }
+            Taken::Command(_) => {
+                self.edit = Edit::Swap { entry, key };
+                self.refresh_edit();
+                None
+            }
+        }
+    }
+
+    /// The edit under way (self-tests).
+    pub fn edit(&self) -> Edit {
+        self.edit
+    }
+
+    /// The entry of the shown list's command whose own key is `command`
+    /// (self-tests).
+    pub fn entry_of(&self, command: KeyInput) -> Option<usize> {
+        let profile = self.shown_profile()?;
+        let list = &self.commands[profile_index(profile)];
+        let c = list.iter().position(|cmd| cmd.key == command)?;
+        self.kinds.iter().position(|k| *k == EntryKind::Command(c))
+    }
+
+    /// Give the `i`-th entry the focus (self-tests).
+    pub fn focus_entry(&mut self, i: usize) {
+        self.focus = self.section.fields().len() + i;
+        self.style_rows();
+        self.show_about();
+    }
+
+    /// The entry with the focus scrolled into view, the list laid out
+    /// since it changed (the game calls it every frame: a new list takes
+    /// a few frames to lay its entries out, the words that wrap last).
+    pub fn reveal_focus(&mut self) {
+        let Some((i, frames)) = self.reveal else {
+            return;
+        };
+        self.reveal = frames.checked_sub(1).map(|f| (i, f));
+        let Some(e) = self.entries.get(i) else {
+            self.reveal = None;
+            return;
+        };
+        let (top, h) = (e.get_position().y, e.get_size().y);
+        let view = self.scroll.get_size().y;
+        let at = self.scroll.get_v_scroll() as f32;
+        if top < at {
+            self.scroll.set_v_scroll(top as i32);
+        } else if top + h > at + view {
+            self.scroll.set_v_scroll((top + h - view).ceil() as i32);
         }
     }
 
@@ -1138,7 +1513,11 @@ impl SettingsPage {
     /// The values of `view` in the rows; a row that cannot change now
     /// dimmed, its arrows gone.
     pub fn show(&mut self, view: &View) {
+        let keys_moved = self.view.settings.keymaps != view.settings.keymaps;
         self.view = view.clone();
+        if keys_moved {
+            self.refresh_edit();
+        }
         let controls = shown_text(self.controls);
         for r in &mut self.rows {
             r.value.set_text(&if r.field == Field::Controls {
@@ -1181,6 +1560,38 @@ impl SettingsPage {
     }
 
     fn show_about(&mut self) {
+        // an entry of the controls' list: what it does, and an edit's state
+        if let Some((i, kind)) = self.focused_entry() {
+            let name = |c: usize| {
+                self.shown_profile()
+                    .and_then(|p| self.commands[profile_index(p)].get(c))
+                    .map(|cmd| cmd.name.clone())
+                    .unwrap_or_default()
+            };
+            let text = match (kind, self.edit) {
+                (EntryKind::Command(c), Edit::Press(e)) if e == i => {
+                    tr!("controls-press", name = name(c))
+                }
+                (EntryKind::Command(_), Edit::Swap { entry, key }) if entry == i => {
+                    let holder = self
+                        .shown_profile()
+                        .and_then(|p| self.view.settings.keymaps.get(p).translate(key))
+                        .and_then(|h| {
+                            let p = self.shown_profile()?;
+                            self.commands[profile_index(p)].iter().find(|c| c.key == h)
+                        })
+                        .map(|c| c.name.clone())
+                        .unwrap_or_default();
+                    tr!("controls-taken", key = key_name(&key), name = holder)
+                }
+                (EntryKind::Command(_), _) => tr!("controls-edit-about"),
+                (EntryKind::ResetAll, Edit::ResetAll) => tr!("controls-reset-all-confirm"),
+                (EntryKind::ResetAll, _) => tr!("controls-reset-all-about"),
+                (EntryKind::Fixed, _) => tr!("controls-show-about"),
+            };
+            self.about.set_text(&text);
+            return;
+        }
         // in the controls' list, what its row says
         let field = self
             .field()
@@ -1240,10 +1651,10 @@ impl SettingsPage {
             };
             e.add_theme_stylebox_override("panel", sb);
         }
-        if let Some(e) = at.and_then(|i| self.entries.get(i)) {
-            self.scroll
-                .call_deferred("ensure_control_visible", &[e.to_variant()]);
-        } else if at.is_none() && self.section == Section::Controls {
+        // into view once the list is laid out (the next frame's sync)
+        if let Some(i) = at {
+            self.reveal = Some((i, REVEAL_FRAMES));
+        } else if self.section == Section::Controls {
             self.scroll.set_v_scroll(0);
         }
     }
@@ -1291,7 +1702,58 @@ impl SettingsPage {
 
     /// A key: ↑↓ choose a row, Tab and PgUp/PgDn a section (here); ←→
     /// and Enter change the row's value and Esc goes back (the game's).
-    pub fn key(&mut self, k: &KeyInput) -> Option<PageKey> {
+    pub fn key(&mut self, k: &KeyInput, from_pad: bool) -> Option<PageKey> {
+        // an edit has the keys first: the key a command waits for, the
+        // swap's Enter, Esc to give up (a gamepad's buttons are no keys)
+        match self.edit {
+            Edit::None => {}
+            _ if k.echo => return None,
+            _ if k.key == Key::Escape => {
+                self.edit = Edit::None;
+                self.refresh_edit();
+                return None;
+            }
+            Edit::ResetAll if matches!(k.key, Key::Enter | Key::KeypadEnter) => {
+                self.edit = Edit::None;
+                let profile = self.shown_profile()?;
+                self.refresh_edit();
+                return Some(PageKey::ResetAll(profile));
+            }
+            Edit::Swap { entry, key } if matches!(k.key, Key::Enter | Key::KeypadEnter) => {
+                self.edit = Edit::None;
+                let (profile, command) = self.entry_command(entry)?;
+                self.refresh_edit();
+                return Some(PageKey::Rebind {
+                    profile,
+                    command,
+                    key,
+                    swap: true,
+                });
+            }
+            Edit::Press(entry) | Edit::Swap { entry, .. } if !from_pad => {
+                return self.key_for_entry(entry, *k);
+            }
+            _ => return None,
+        }
+        // an entry: Enter asks its new key, Delete puts its own back
+        if let Some((i, kind)) = self.focused_entry() {
+            match k.key {
+                Key::Enter | Key::KeypadEnter | Key::Char(' ') if !k.echo => {
+                    if let Some(edit) = self.start_edit() {
+                        self.edit = edit;
+                        self.refresh_edit();
+                    }
+                    return None;
+                }
+                Key::Delete | Key::Backspace
+                    if !k.echo && matches!(kind, EntryKind::Command(_)) =>
+                {
+                    let (profile, command) = self.entry_command(i)?;
+                    return Some(PageKey::Reset { profile, command });
+                }
+                _ => {}
+            }
+        }
         let n = self.row_count();
         // the controls' row changes the list here
         if self.field() == Some(Field::Controls) {

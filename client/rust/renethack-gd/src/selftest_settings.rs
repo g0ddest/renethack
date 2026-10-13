@@ -24,7 +24,8 @@ use godot::classes::{DisplayServer, Engine, Input, InputEventKey};
 use godot::global::Key as GKey;
 use godot::prelude::*;
 use nh_world::{
-    Graphics, KeyProfile, Level, Msaa, Profile, Quality, Upscale, WindowMode, step_window_size,
+    Graphics, Key, KeyInput, KeyProfile, Level, Msaa, Profile, Quality, Upscale, WindowMode,
+    step_window_size,
 };
 
 use super::{PadEv, Step, fail_on_error_screen, quit, screen, start};
@@ -284,13 +285,13 @@ pub(super) fn settings() -> Vec<Step> {
             if !headless() {
                 return Ok(());
             }
-            let before = g.settings;
+            let before = g.settings.clone();
             g.settings_page
                 .as_mut()
                 .ok_or("no page")?
                 .focus_field(Field::WindowSize);
             let k = nh_world::KeyInput::plain(nh_world::Key::Left);
-            let asked = g.settings_page.as_mut().ok_or("no page")?.key(&k);
+            let asked = g.settings_page.as_mut().ok_or("no page")?.key(&k, false);
             if asked
                 != Some(crate::settings_page::PageKey::Step(
                     Field::WindowSize,
@@ -489,13 +490,15 @@ pub(super) fn settings() -> Vec<Step> {
         Step::Wait("the controls: the Classic keys", |g| {
             let p = page(g)?;
             let list = p.control_texts();
+            let west = KeyInput::plain(Key::Char('h'));
+            let slot = KeyInput::plain(Key::Char('1'));
+            let entry = |k| p.entry_of(k).and_then(|i| list.get(i));
             Ok(p.section() == Section::Controls
                 && p.controls() == Shown::Keys(KeyProfile::Classic)
                 && shown(g, Field::Controls)? == tr!("controls-shown-classic")
-                && list.first().is_some_and(|e| {
-                    e.starts_with("h j k l y u b n") && e.ends_with(&tr!("controls-move"))
-                })
-                && list.iter().any(|e| e.ends_with(&tr!("controls-bar"))))
+                && list.first() == Some(&tr!("controls-reset-all"))
+                && entry(west).is_some_and(|e| e.starts_with("h "))
+                && entry(slot).is_some_and(|e| e.ends_with(&tr!("controls-slot", n = 1))))
         }),
         Step::Shot("settings-controls"),
         keys!("→", RIGHT),
@@ -697,7 +700,7 @@ fn bench_next(g: &mut RenethackGame) -> Result<(), String> {
         .ok_or("no graphics left to time")?;
     let s = nh_world::Settings {
         graphics: Some(graphics),
-        ..g.settings
+        ..g.settings.clone()
     };
     g.set_settings(s);
     Ok(())
@@ -772,7 +775,7 @@ pub(super) fn presets() -> Vec<Step> {
             Ok(g.world.map.hero().is_some() && super::camera_settled(g)?)
         }),
         Step::Call("vsync off, no cap", |g| {
-            let mut s = g.settings;
+            let mut s = g.settings.clone();
             s.display.vsync = false;
             s.display.fps_cap = 0;
             g.set_settings(s);

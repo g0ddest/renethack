@@ -13,6 +13,9 @@ use crate::inventory_panel::InvInput;
 pub enum UiEvent {
     /// Translated keyboard (non-text contexts).
     Key(KeyInput),
+    /// A key the game itself gives (a gamepad's button, a HUD's button):
+    /// the keys a player moved leave it alone.
+    GameKey(KeyInput),
     /// A key let go (ends holding it down).
     KeyUp(KeyInput),
     /// The window lost the keyboard: held keys are let go.

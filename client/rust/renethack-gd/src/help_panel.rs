@@ -192,6 +192,10 @@ pub struct HelpPanel {
     row_normal: Gd<StyleBoxFlat>,
     row_current: Gd<StyleBoxFlat>,
     pad: bool,
+    /// The close button, whose tip names the help's key as the player
+    /// presses it now.
+    close: Gd<Button>,
+    keymap: nh_world::Keymap,
 }
 
 impl HelpPanel {
@@ -224,7 +228,6 @@ impl HelpPanel {
         head.add_child(&heading);
         let mut close = theme::button("×", &queue, UiEvent::Help(HelpInput::Close));
         close.set_custom_minimum_size(Vector2::new(40.0, 36.0));
-        i18n::tip(&close, "help-close-tip");
         head.add_child(&close);
         col.add_child(&head);
 
@@ -363,6 +366,32 @@ impl HelpPanel {
             row_normal,
             row_current,
             pad: false,
+            close,
+            keymap: nh_world::Keymap::default(),
+        }
+        .with_close_tip()
+    }
+
+    fn with_close_tip(mut self) -> HelpPanel {
+        self.write_close_tip();
+        self
+    }
+
+    /// The close button's tip: Esc, and the help's key as pressed now.
+    fn write_close_tip(&mut self) {
+        let key = self
+            .keymap
+            .key_for(KeyInput::plain(Key::F(1)))
+            .map_or_else(|| "—".to_string(), |k| crate::rebind::short_name(&k));
+        self.close
+            .set_tooltip_text(&tr!("help-close-tip", key = key));
+    }
+
+    /// The keys the player moved.
+    pub fn set_keymap(&mut self, keymap: &nh_world::Keymap) {
+        if self.keymap != *keymap {
+            self.keymap = keymap.clone();
+            self.write_close_tip();
         }
     }
 
@@ -437,6 +466,7 @@ impl HelpPanel {
 
     /// The language changed: the book of the new one.
     pub fn relang(&mut self) {
+        self.write_close_tip();
         if self.is_open() {
             self.open();
         }

@@ -52,6 +52,8 @@ mod input_ru;
 mod layouts_tests;
 #[path = "selftest_passing.rs"]
 mod passing_tests;
+#[path = "selftest_rebind.rs"]
+mod rebind_tests;
 #[path = "selftest_riding.rs"]
 mod riding_tests;
 #[path = "selftest_rim.rs"]
@@ -2286,7 +2288,7 @@ fn palette() -> Vec<Step> {
         }),
         Step::Wait("the engine's words in that language", |g| {
             // its translator loads on a thread
-            let cmds = crate::dialogs::palette_cmds(g.catalog.as_deref());
+            let cmds = crate::dialogs::palette_cmds(g.catalog.as_deref(), g.keymap());
             let russian =
                 |c: &crate::dialogs::PaletteCmd| c.desc.chars().any(|c| ('а'..='я').contains(&c));
             Ok(i18n::lang() != Lang::Ru || cmds.iter().any(russian))
@@ -2315,7 +2317,7 @@ static PALETTE_LANG: Mutex<Option<Lang>> = Mutex::new(None);
 fn palette_in_language(g: &mut RenethackGame) -> Result<(), String> {
     let ui = g.ui.as_ref().ok_or("no UI")?;
     let rows = ui.dialogs.palette_rows().ok_or("no palette open")?;
-    let cmds = crate::dialogs::palette_cmds(g.catalog.as_deref());
+    let cmds = crate::dialogs::palette_cmds(g.catalog.as_deref(), g.keymap());
     if rows.len() != cmds.len() {
         return Err(format!(
             "the palette lists {} commands of {}",
@@ -4780,6 +4782,7 @@ impl SelfTest {
             "help" => help_tests::help(),
             "settings" => settings_tests::settings(),
             "credits" => credits_tests::credits(),
+            "rebind" => rebind_tests::rebind(),
             "presets" => settings_tests::presets(),
             "layouts" => layouts_tests::layouts(),
             "rim" => rim_tests::rim(),

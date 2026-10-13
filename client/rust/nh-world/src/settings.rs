@@ -7,10 +7,10 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::KeyProfile;
+use crate::{KeyProfile, Keymaps};
 
 /// The client's settings as the profile keeps them.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Settings {
     #[serde(default)]
     pub display: Display,
@@ -23,6 +23,9 @@ pub struct Settings {
     /// The keys a new character starts with; None: Modern.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub keys: Option<KeyProfile>,
+    /// The commands' keys the player moved, each profile its own.
+    #[serde(default, skip_serializing_if = "Keymaps::is_empty")]
+    pub keymaps: Keymaps,
 }
 
 /// One step from `now` through `all` (`dir` -1 back, +1 on); `wrap`: past
