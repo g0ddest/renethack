@@ -3668,7 +3668,20 @@ fn check_dialog(g: &RenethackGame, id: u64, prompt: &Prompt) -> Result<(), Strin
         Some(r) if ui.inventory.mode_name() == Some("menu") => (Some("menu"), Some(r)),
         _ => (ui.dialogs.kind_name(), ui.dialogs.open_req()),
     };
+    // #enhance's text window (no skill to advance) is the skills' panel,
+    // a menu of no picks
+    let skills_panel = match prompt {
+        Prompt::Show { title, lines } => {
+            let lines: Vec<(String, bool, Option<i32>)> = lines
+                .iter()
+                .map(|l| (l.text.clone(), l.attr & 0x0f != 0, None))
+                .collect();
+            crate::skills::skills(title.as_deref(), &lines).is_some()
+        }
+        _ => false,
+    };
     let ok = match want {
+        Some("show") if skills_panel => open == (Some("menu"), Some(id)),
         Some(kind) => open == (Some(kind), Some(id)),
         None => open == (None, None),
     };
