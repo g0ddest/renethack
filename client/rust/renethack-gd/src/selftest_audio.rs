@@ -9,7 +9,8 @@
 //! nothing. Loops of the test's own (jingles that go round): the title's
 //! ambience and music fade in, and the dungeon's and the exploring take
 //! over when the game begins; a newt made beside the hero brings the
-//! fight's music once the fight has lasted. Then a game (debug mode): the
+//! fight's music once the fight has lasted, the ambience lowered under
+//! it; the level's jingle holds the music down while it plays. Then a game (debug mode): the
 //! hero's step sounds where they
 //! stand and the pet's where it walks; a newt fought to its death sounds
 //! the swing of the Valkyrie's spear, the blows or misses and its fall
@@ -318,6 +319,10 @@ fn game() -> Vec<Step> {
             let fight = player(g)?.music_now().0 == Some("music.combat");
             Ok(g.score.fighting() && fight)
         }),
+        Step::Wait("the ambience lowered under the fight's music", |g| {
+            let (music, ambience) = player(g)?.ducks();
+            Ok(music == 1.0 && ambience <= 0.5)
+        }),
         Step::Call("", mark),
         Step::KeysUntil("fighting the newt", fight),
         Step::Wait("its death heard", |g| Ok(heard_like(g, "die")?.is_some())),
@@ -346,6 +351,9 @@ fn game() -> Vec<Step> {
             let level = heard_like(g, "jingle.levelup")?;
             Ok(heard_like(g, "use.quaff")?.is_some()
                 && level.is_some_and(|h| h.at.is_none() && h.voiced))
+        }),
+        Step::Wait("the music held down under the jingle", |g| {
+            Ok(player(g)?.ducks().0 <= 0.25)
         }),
         Step::Call("", mark),
         key('d'),

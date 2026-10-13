@@ -74,6 +74,15 @@ const MUSIC_FADE: f32 = 2.5;
 const TRACK_GAP: f64 = 4.0;
 /// Quieter than this a fading loop is silent.
 const SILENT_DB: f32 = -60.0;
+/// The mixer: the music under a jingle, the ambience under a fight's
+/// music (gains), how fast a loop goes down to its duck and comes back
+/// (seconds for the whole way), and how long after a jingle it stays down.
+const JINGLE_DUCK: f32 = 0.25;
+const FIGHT_DUCK: f32 = 0.5;
+const DUCK_DOWN: f32 = 0.15;
+const DUCK_UP: f32 = 1.2;
+const DUCK_HOLD: f64 = 0.3;
+
 /// A feature's loop fades in and out over this, and is as loud as at
 /// its side within this many metres.
 const EMIT_FADE: f32 = 0.8;
@@ -360,6 +369,9 @@ struct Loop {
     loading: Option<String>,
     /// A playlist's next track starts then.
     next_at: Option<f64>,
+    /// The mixer's hold on it (1: none), and where that goes now.
+    duck: f32,
+    duck_to: f32,
 }
 
 impl Loop {
@@ -383,6 +395,8 @@ impl Loop {
             variant: None,
             loading: None,
             next_at: None,
+            duck: 1.0,
+            duck_to: 1.0,
         }
     }
 
@@ -437,6 +451,14 @@ impl Loop {
     fn update(&mut self, delta: f32, now: f64, picker: &mut Picker) -> bool {
         let started = self.start_loaded();
         let step = delta / self.fade.max(0.01);
+        // the mixer's hold: down quickly, back slowly
+        let ducked = self.duck;
+        self.duck = if self.duck > self.duck_to {
+            (self.duck - delta / DUCK_DOWN).max(self.duck_to)
+        } else {
+            (self.duck + delta / DUCK_UP).min(self.duck_to)
+        };
+        let duck_moved = self.duck != ducked;
         for i in 0..2 {
             let up = i == self.live && self.cue.is_some();
             let was = self.gain[i];
@@ -451,8 +473,9 @@ impl Loop {
                 if p.is_playing() && !up {
                     p.stop();
                 }
-            } else if g != was || started {
-                p.set_volume_db((self.db + 20.0 * g.log10()).max(SILENT_DB));
+            } else if g != was || started || duck_moved {
+                let level = (g * self.duck).max(0.001);
+                p.set_volume_db((self.db + 20.0 * level.log10()).max(SILENT_DB));
             }
         }
         // a playlist: the track over, the next after a silence
@@ -647,6 +670,8 @@ pub struct Audio {
     ambience: Loop,
     music: Loop,
     emitters: Vec<Emitter>,
+    /// The music is held down under a jingle until then.
+    jingle_until: f64,
     /// The sound's own time this frame (starting sounds, the waiting ones,
     /// the ears), and that of the last frames (files loading ahead aside).
     cost: Duration,
@@ -714,6 +739,7 @@ impl Audio {
             ambience,
             music,
             emitters,
+            jingle_until: f64::NEG_INFINITY,
             cost: Duration::ZERO,
             costs: VecDeque::new(),
         }
@@ -805,6 +831,9 @@ impl Audio {
         voice.priority = priority;
         voice.started = now;
         voice.ends = now + stream.get_length() / f64::from(pitch) + 0.05;
+        if name.starts_with("jingle.") {
+            self.jingle_until = self.jingle_until.max(voice.ends + DUCK_HOLD);
+        }
         self.last.insert(name, (now, variant));
         heard.voiced = true;
         self.record(heard);
@@ -885,6 +914,18 @@ impl Audio {
             e.update(delta as f32, &mut self.picker);
         }
         let now = self.clock;
+        // the mixer: the music under a jingle, the ambience under a fight's
+        self.music.duck_to = if now < self.jingle_until {
+            JINGLE_DUCK
+        } else {
+            1.0
+        };
+        let fighting = self
+            .music
+            .cue
+            .as_deref()
+            .is_some_and(|c| c.starts_with("music.combat"));
+        self.ambience.duck_to = if fighting { FIGHT_DUCK } else { 1.0 };
         for which in [Which::Ambience, Which::Music] {
             let lp = match which {
                 Which::Ambience => &mut self.ambience,
@@ -1161,6 +1202,11 @@ impl Audio {
 
     pub fn music_now(&self) -> (Option<&str>, f32) {
         self.music.now()
+    }
+
+    /// The mixer's hold on the music and the ambience now (1: none).
+    pub fn ducks(&self) -> (f32, f32) {
+        (self.music.duck, self.ambience.duck)
     }
 
     /// A cue of the self-tests' own (a loop made of a jingle): the loops
