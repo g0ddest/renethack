@@ -5319,6 +5319,17 @@ fn layout_fits(game: &RenethackGame) -> Result<(), String> {
             return Err(format!("the inventory panel covers the {a}"));
         }
     }
+    // an RPG panel (the sheet, the spells...) keeps above the orbs and the
+    // bar, which stay in sight under it
+    if ui.dialogs.rpg_open()
+        && let Some(d) = ui.dialogs.panel_rect()
+    {
+        for (part, r) in ui.hud.cluster_rects() {
+            if d.intersects_exclude_borders(r) {
+                return Err(format!("the RPG panel covers the {part}"));
+            }
+        }
+    }
     match ui.pad.strip_rect() {
         Some((r, Some(p))) if !p.grow(1.0).encloses(r) => {
             return Err("the gamepad's hints are not inside their panel".to_string());

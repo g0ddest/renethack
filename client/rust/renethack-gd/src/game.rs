@@ -2452,6 +2452,9 @@ impl RenethackGame {
         ui.dialogs.set_keymap(map);
         ui.inventory.set_keymap(map);
         ui.help.set_keymap(map);
+        // the RPG panels keep above the HUD's orbs and bar
+        let room = ui.hud.cluster_room();
+        ui.dialogs.set_bottom_room(room);
         // the journal's messages: the log's, beside #chronicle's events
         if ui.dialogs.journal_wants_messages() {
             ui.dialogs.fill_journal(self.world.log.iter());

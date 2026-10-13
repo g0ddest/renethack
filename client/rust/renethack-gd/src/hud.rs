@@ -2606,6 +2606,34 @@ impl Hud {
         self.status_text.clear();
     }
 
+    /// How much of the screen's foot the bottom cluster (the orbs, the
+    /// bar) takes, from its highest part down: the RPG panels keep above
+    /// it, as they stay in sight under a panel.
+    pub fn cluster_room(&self) -> f32 {
+        let view = self.root.get_viewport_rect();
+        let top = self
+            .cluster_parts
+            .iter()
+            .filter(|(_, c)| c.is_visible_in_tree())
+            .map(|(_, c)| c.get_global_rect().position.y)
+            .fold(f32::INFINITY, f32::min);
+        if top.is_finite() {
+            (view.position.y + view.size.y - top).max(0.0)
+        } else {
+            0.0
+        }
+    }
+
+    /// The cluster's parts on screen (self-tests: an RPG panel keeps off
+    /// them).
+    pub fn cluster_rects(&self) -> Vec<(&'static str, Rect2)> {
+        self.cluster_parts
+            .iter()
+            .filter(|(_, c)| c.is_visible_in_tree())
+            .map(|(n, c)| (*n, c.get_global_rect()))
+            .collect()
+    }
+
     /// The portrait block's title as it shows now (self-tests).
     pub fn title_shown(&self) -> String {
         self.title.get_text().to_string()

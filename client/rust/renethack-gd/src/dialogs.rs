@@ -67,9 +67,11 @@ const SPACER_H: f32 = 10.0;
 /// Height a list dialog keeps for everything but the list: the title, the
 /// footer, the buttons, the panel's margins and the screen's.
 const LIST_CHROME: f32 = 320.0;
-/// The same for an RPG panel (the character sheet): its header, its hint,
-/// its frame's margins and the screen's.
-const PANEL_CHROME: f32 = 230.0;
+/// An RPG panel's own chrome: its header, its rule, its hint, its frame's
+/// margins (the room above and below it is `panel_room`'s); and the air
+/// between it and the screen's top or the HUD's foot.
+const PANEL_OWN_CHROME: f32 = 150.0;
+const PANEL_EDGE: f32 = 12.0;
 /// An RPG panel's widest content, and the room its scroll bar takes; the
 /// spells' panel's.
 const PANEL_W: f32 = 1120.0;
@@ -1325,6 +1327,8 @@ struct Open {
     /// The command key of the RPG panel it is (`^X`'s sheet): pressed
     /// again, it closes the panel.
     own: Option<KeyInput>,
+    /// It is one of the RPG panels (`panel_frame`'s).
+    rpg: bool,
     shade: Gd<ColorRect>,
     panel: Gd<PanelContainer>,
     /// Room at the bottom of the panel for a gamepad's hints.
@@ -1357,8 +1361,10 @@ pub struct Dialogs {
     portrait: Option<Gd<Texture2D>>,
     /// The open character sheet's view (its portrait shows the render).
     sheet: Option<SheetView>,
-    /// The own key of the RPG panel being opened (`Open::own`).
+    /// The own key of the RPG panel being opened (`Open::own`), and that
+    /// it is one.
     opening_own: Option<KeyInput>,
+    opening_rpg: bool,
     /// The open spells' panel: its spells, whether a pick reorders them
     /// (else it casts), the reorder's button.
     spells: Option<SpellsOpen>,
@@ -1372,6 +1378,9 @@ pub struct Dialogs {
     codex: Option<CodexTab>,
     /// The discoveries' cards with an icon, of all (self-tests).
     codex_icons: (usize, usize),
+    /// The screen's foot the HUD's orbs and bar take: the RPG panels keep
+    /// above it.
+    bottom_room: f32,
 }
 
 /// What follows a panel's answer, at the command prompt it goes back to.
@@ -1449,11 +1458,13 @@ impl Dialogs {
             portrait: None,
             sheet: None,
             opening_own: None,
+            opening_rpg: false,
             spells: None,
             follow: None,
             journal: None,
             codex: None,
             codex_icons: (0, 0),
+            bottom_room: 0.0,
         }
     }
 
@@ -1463,7 +1474,9 @@ impl Dialogs {
     fn screen(&self) -> Vector2 {
         let s = self.root.get_viewport_rect().size;
         let headless = DisplayServer::singleton().get_name() == "headless";
-        if headless || s.x < 320.0 || s.y < 240.0 {
+        // a run at a set size (`--size`) has that canvas, headless or not
+        let square = (s.x - s.y).abs() < 1.0;
+        if (headless && square) || s.x < 320.0 || s.y < 240.0 {
             REFERENCE_SCREEN
         } else {
             s
@@ -2712,6 +2725,19 @@ impl Dialogs {
     /// #overview: a dungeon a heading with the levels reached, a level a
     /// row (its number on a badge, the player's note, where the hero is),
     /// what is on the level under it.
+    /// The screen's foot the HUD's orbs and bar take (the game tells it
+    /// every frame): the RPG panels keep above it.
+    pub fn set_bottom_room(&mut self, room: f32) {
+        self.bottom_room = room;
+    }
+
+    /// The most an RPG panel's scrolling content may be tall here: the
+    /// panel, `chrome` more, between the screen's top and the HUD's foot.
+    fn panel_room(&self, chrome: f32) -> f32 {
+        let h = self.screen().y - self.bottom_room - 2.0 * PANEL_EDGE;
+        (h - chrome).max(ROW_H * 4.0)
+    }
+
     /// The width of an RPG panel's content here.
     fn panel_width(&self) -> f32 {
         let room = self.screen().x - SIDE_MARGIN - 40.0 - SCROLL_ROOM;
@@ -2735,7 +2761,16 @@ impl Dialogs {
         close: DialogEvent,
         outer: f32,
     ) -> (Gd<ColorRect>, Gd<PanelContainer>, Gd<VBoxContainer>, String) {
-        let (shade, panel, mut col) = self.frame(outer, None);
+        let (shade, mut panel, mut col) = self.frame(outer, None);
+        // centred in the room above the HUD's orbs and bar, which stay in
+        // sight under it
+        let lift = self.bottom_room / 2.0;
+        place(
+            &panel,
+            [0.5, 0.5, 0.5, 0.5],
+            [-outer / 2.0, -40.0 - lift, outer / 2.0, 40.0 - lift],
+        );
+        panel.set_v_grow_direction(GrowDirection::BOTH);
         let key = own
             .and_then(|k| self.keymap.key_for(k))
             .map_or_else(|| "—".to_string(), |k| crate::rebind::short_name(&k));
@@ -2764,6 +2799,7 @@ impl Dialogs {
         col.add_child(&head);
         col.add_child(&rule());
         self.opening_own = own;
+        self.opening_rpg = true;
         (shade, panel, col, key)
     }
 
@@ -2777,7 +2813,7 @@ impl Dialogs {
         width: f32,
     ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
         let outer = width + SCROLL_ROOM;
-        let max_h = (self.screen().y - PANEL_CHROME).max(ROW_H * 6.0);
+        let max_h = self.panel_room(PANEL_OWN_CHROME);
         let text = Scroller::new(outer, max_h, false);
         let (shade, panel, mut col, key) =
             self.panel_frame(req, title, Some(own), DialogEvent::Close, outer);
@@ -2787,15 +2823,17 @@ impl Dialogs {
         self.hint(&mut col, &tr!("panel-hint", key = key.as_str()), outer);
         // the frame as tall as the content once it is laid out, up to the
         // screen's room (then it scrolls)
+        let lift = self.bottom_room / 2.0;
         let (mut sc, c, mut p) = (scroll.clone(), content.clone(), panel.clone());
         content.signals().resized().connect(move || {
             let h = (c.get_size().y + 4.0).clamp(ROW_H, max_h);
             let now = sc.get_custom_minimum_size();
             if (now.y - h).abs() > 1.0 {
                 sc.set_custom_minimum_size(Vector2::new(now.x, h));
-                // the centred panel shrinks and grows back both ways
-                p.set_offset(godot::builtin::Side::TOP, -40.0);
-                p.set_offset(godot::builtin::Side::BOTTOM, 40.0);
+                // the panel shrinks and grows back both ways, above the
+                // HUD's foot
+                p.set_offset(godot::builtin::Side::TOP, -40.0 - lift);
+                p.set_offset(godot::builtin::Side::BOTTOM, 40.0 - lift);
             }
         });
         (
@@ -2859,7 +2897,7 @@ impl Dialogs {
             tops.push(y);
             y += h;
         }
-        let max_h = (self.screen().y - LIST_CHROME).max(ROW_H * 4.0);
+        let max_h = self.panel_room(PANEL_OWN_CHROME + 40.0);
         let view_h = y.min(max_h).max(ROW_H);
         let list = Scroller::new(width, view_h, false);
         let max_top = if y > view_h {
@@ -3220,7 +3258,7 @@ impl Dialogs {
         catalog: Option<&Catalog>,
     ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
         let width = self.panel_width().min(JOURNAL_W);
-        let height = (self.screen().y - PANEL_CHROME).clamp(ROW_H * 6.0, JOURNAL_H);
+        let height = self.panel_room(PANEL_OWN_CHROME).min(JOURNAL_H);
         let (_, messages_w) = journal_view::widths(width);
         let text = Scroller::new(messages_w, height - 40.0, false);
         let view = journal_view::view(j, width, height, text.scroll.clone());
@@ -3366,7 +3404,7 @@ impl Dialogs {
             tabs.add_child(&b);
         }
         col.add_child(&tabs);
-        let max_h = (self.screen().y - PANEL_CHROME - 44.0).max(ROW_H * 6.0);
+        let max_h = self.panel_room(PANEL_OWN_CHROME + 44.0);
         let text = Scroller::new(outer, max_h, false);
         let mut scroll = text.scroll.clone();
         scroll.add_child(&content);
@@ -3377,14 +3415,15 @@ impl Dialogs {
         };
         self.hint(&mut col, &hint, outer);
         // as tall as the content once it is laid out, up to the room
+        let lift = self.bottom_room / 2.0;
         let (mut sc, c, mut p) = (scroll.clone(), content.clone(), panel.clone());
         content.signals().resized().connect(move || {
             let h = (c.get_size().y + 4.0).clamp(ROW_H, max_h);
             let now = sc.get_custom_minimum_size();
             if (now.y - h).abs() > 1.0 {
                 sc.set_custom_minimum_size(Vector2::new(now.x, h));
-                p.set_offset(godot::builtin::Side::TOP, -40.0);
-                p.set_offset(godot::builtin::Side::BOTTOM, 40.0);
+                p.set_offset(godot::builtin::Side::TOP, -40.0 - lift);
+                p.set_offset(godot::builtin::Side::BOTTOM, 40.0 - lift);
             }
         });
         self.codex = Some(tab);
@@ -3622,11 +3661,13 @@ impl Dialogs {
                     let (kind, shade, panel) = opened;
                     let pad_room = add_pad_room(&panel);
                     let own = self.opening_own.take();
+                    let rpg = std::mem::take(&mut self.opening_rpg);
                     self.open = Some(Open {
                         req,
                         prompt: original.clone(),
                         kind,
                         own,
+                        rpg,
                         shade,
                         panel,
                         pad_room,
@@ -3822,11 +3863,13 @@ impl Dialogs {
         };
         let pad_room = add_pad_room(&panel);
         let own = self.opening_own.take();
+        let rpg = std::mem::take(&mut self.opening_rpg);
         self.open = Some(Open {
             req,
             prompt: original.clone(),
             kind,
             own,
+            rpg,
             shade,
             panel,
             pad_room,
@@ -3845,6 +3888,11 @@ impl Dialogs {
 
     pub fn is_open(&self) -> bool {
         self.open.is_some()
+    }
+
+    /// The open dialog is one of the RPG panels (self-tests).
+    pub fn rpg_open(&self) -> bool {
+        self.open.as_ref().is_some_and(|o| o.rpg)
     }
 
     /// True when a LineEdit owns the keyboard (Text, ExtCmd).
@@ -4462,6 +4510,7 @@ impl Dialogs {
                 prompt,
                 kind,
                 own: None,
+                rpg: false,
                 shade,
                 panel,
                 pad_room,
