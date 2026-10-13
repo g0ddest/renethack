@@ -8,6 +8,7 @@ mod animator;
 mod art;
 mod audio;
 mod batch;
+mod bearing;
 mod bindings;
 mod branch_look;
 mod credits;

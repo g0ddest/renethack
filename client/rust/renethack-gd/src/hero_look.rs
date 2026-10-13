@@ -8,9 +8,11 @@
 //! sway where they stand and the camera drifts a little; hallucinating, a
 //! slow hue drifts over the view; blind, the view dims and darkens at its
 //! edges. Fewer screen effects (the settings) leaves out the sway, the
-//! drift and the hue; the dimming stays. A child of map_view: it lays its skin over the hero's own model (the
-//! rider's while they ride), under the see-through look that shows them
-//! behind a wall.
+//! drift and the hue; the dimming stays. Burdened, up to Overloaded, they
+//! lean into the load and walk slower, never running; weak from hunger or
+//! fainting, they slump where they stand. A child of map_view: it lays its
+//! skin over the hero's own model (the rider's while they ride), under the
+//! see-through look that shows them behind a wall.
 
 use godot::classes::base_material_3d::{Feature, Flags, TextureParam, Transparency};
 use godot::classes::fast_noise_lite::NoiseType;
@@ -18,6 +20,8 @@ use godot::classes::{FastNoiseLite, Gradient, NoiseTexture2D, StandardMaterial3D
 use godot::prelude::*;
 use nh_protocol::Catalog;
 use nh_world::World;
+
+use crate::bearing::Bearing;
 
 use super::{MapView, set_overlay};
 
@@ -56,6 +60,27 @@ const BLIND_EDGE: f32 = 0.85;
 const BLIND_DIM: (f32, f32) = (0.62, 0.45);
 /// The screen's quad sits this far before the eye.
 const SCREEN_AT: f32 = 0.3;
+
+/// A burdened hero's lean (degrees) at each burden the status line names,
+/// Burdened to Overloaded, while walking (standing, a share of it), the
+/// share of it their head lifts by to see ahead, and how much longer a
+/// step takes at each.
+const LOAD_LEAN: [f32; 5] = [10.0, 15.0, 20.0, 25.0, 30.0];
+const LOAD_STANDING: f32 = 0.7;
+const LOAD_HEAD_UP: f32 = 0.6;
+const LOAD_SLOWER: f32 = 0.15;
+/// A hungry hero's slump, Weak and Fainting: the bow of their shoulders
+/// and neck and the hang of their head (degrees) standing (walking, a
+/// share of it), and their heavy breath: its seconds and its depth.
+const SLUMP_BOW: [f32; 2] = [14.0, 22.0];
+const SLUMP_NOD: [f32; 2] = [12.0, 18.0];
+const SLUMP_WALKING: f32 = 0.5;
+const BREATH_SECS: f32 = 3.4;
+const BREATH: f32 = 0.15;
+/// Degrees a second the bearing changes by; the name of its modifier on
+/// the hero's skeleton.
+const BEARING_RATE: f32 = 24.0;
+const BEARING: &str = "Bearing";
 
 /// The quad over the view: a hue tinting it, its edges darkened. It
 /// multiplies what is drawn, so the dark stays dark and nothing is read
@@ -193,6 +218,38 @@ pub(super) struct HeroLook {
     pub(super) reduced: bool,
     /// The environment dimmed now (its grade is given back after).
     dimmed: bool,
+    /// The status line's burden (0: none, 1 Burdened to 5 Overloaded) and
+    /// hunger (0: none, 1 Weak, 2 Fainting or Fainted).
+    load: usize,
+    hunger: usize,
+    /// The bearing's lean, bow and nod now (degrees, easing), whether they
+    /// are where they ease to, the seconds a slump has breathed, and its
+    /// modifier on the hero's skeleton with the model's inner node.
+    lean: f32,
+    bow: f32,
+    nod: f32,
+    bent: bool,
+    breath: f32,
+    bearing: Option<(InstanceId, Gd<Bearing>)>,
+    /// The hero's last step: its seconds, and whether it was a run.
+    last_step: Option<(f32, bool)>,
+}
+
+/// The hero's bearing now (self-tests).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Posture {
+    /// Degrees: the back's lean, the shoulders' bow, the head's nod.
+    pub lean: f32,
+    pub bow: f32,
+    pub nod: f32,
+    /// Each where it eases to.
+    pub settled: bool,
+    /// The modifier bends the skeleton, and how far it took the head last
+    /// frame: forward, and up (the skeleton's units).
+    pub on: bool,
+    pub head: (f32, f32),
+    /// The last step's seconds, and whether it was a run.
+    pub step: Option<(f32, bool)>,
 }
 
 /// Its share of the way, `elapsed` turns into a countdown of `turns`.
@@ -263,6 +320,15 @@ impl HeroLook {
             dimmed: false,
             settled: true,
             screened: false,
+            load: 0,
+            hunger: 0,
+            lean: 0.0,
+            bow: 0.0,
+            nod: 0.0,
+            bent: true,
+            breath: 0.0,
+            bearing: None,
+            last_step: None,
         }
     }
 
@@ -304,6 +370,43 @@ impl HeroLook {
             bright,
             screen: self.screened,
             settled: self.settled,
+        }
+    }
+
+    /// A step's seconds and whether it runs, as the hero's load lets them:
+    /// slower the heavier it is, and never a run (kept as the last step).
+    pub(super) fn pace(&mut self, secs: f32, run: bool) -> (f32, bool) {
+        let paced = match self.load {
+            0 => (secs, run),
+            // hurried, a quick walk
+            _ if run => (secs, false),
+            load => (secs * (1.0 + LOAD_SLOWER * load as f32), false),
+        };
+        self.last_step = Some(paced);
+        paced
+    }
+
+    /// The bearing now (self-tests), `on`: its modifier bends the skeleton.
+    pub(super) fn posture(&self) -> Posture {
+        let bearing = self
+            .bearing
+            .as_ref()
+            .map(|(_, b)| b)
+            .filter(|b| b.is_instance_valid());
+        let on = bearing.is_some_and(|b| {
+            b.clone()
+                .upcast::<godot::classes::SkeletonModifier3D>()
+                .is_active()
+        });
+        let head = bearing.map_or((0.0, 0.0), |b| b.bind().shift());
+        Posture {
+            lean: self.lean,
+            bow: self.bow,
+            nod: self.nod,
+            settled: self.bent,
+            on,
+            head,
+            step: self.last_step,
         }
     }
 
@@ -402,6 +505,7 @@ impl MapView {
             self.hero_look.under = Some(d);
         }
         self.screen_effects(world.status.conditions(), delta);
+        self.bear(world, delta);
         let ring = self.hero_ring.get_position();
         let look = &mut self.hero_look;
         if let Some(u) = look.under.as_mut() {
@@ -605,6 +709,127 @@ impl MapView {
                 self.env.set_adjustment_saturation(saturation);
             }
             self.hero_look.dimmed = dim > 0.0;
+        }
+    }
+}
+
+impl MapView {
+    /// A load's lean and hunger's slump on the hero's back, by the status
+    /// line. None wanted and none left: nothing is done.
+    fn bear(&mut self, world: &World, delta: f32) {
+        let load = match world.status.get("cap").unwrap_or("") {
+            "Burdened" => 1,
+            "Stressed" => 2,
+            "Strained" => 3,
+            "Overtaxed" => 4,
+            "Overloaded" => 5,
+            _ => 0,
+        };
+        let hunger = match world.status.get("hunger").unwrap_or("") {
+            "Weak" => 1,
+            "Fainting" | "Fainted" => 2,
+            _ => 0,
+        };
+        let look = &mut self.hero_look;
+        (look.load, look.hunger) = (load, hunger);
+        if load == 0 && hunger == 0 && look.lean == 0.0 && look.bow == 0.0 && look.nod == 0.0 {
+            look.bent = true;
+            if let Some((_, b)) = look.bearing.as_ref() {
+                let mut m: Gd<godot::classes::SkeletonModifier3D> = b.clone().upcast();
+                if m.is_instance_valid() && m.is_active() {
+                    m.set_active(false);
+                }
+            }
+            return;
+        }
+        // a pose of its own (a prayer, a spell of helplessness, a trap's
+        // hold) and the saddle take the body as it is
+        let posed = self.hero_helpless().is_some()
+            || self.hero_prayer().is_some()
+            || self.hero_held().2.is_some()
+            || self.rider.is_some();
+        let walking = self.motions.iter().any(|m| m.hero);
+        let (lean_to, bow_to, nod_to) = if posed {
+            (0.0, 0.0, 0.0)
+        } else {
+            let lean = match load {
+                0 => 0.0,
+                l => LOAD_LEAN[l - 1] * if walking { 1.0 } else { LOAD_STANDING },
+            };
+            let k = if walking { SLUMP_WALKING } else { 1.0 };
+            let (bow, nod) = match hunger {
+                0 => (0.0, 0.0),
+                h => (SLUMP_BOW[h - 1] * k, SLUMP_NOD[h - 1] * k),
+            };
+            (lean, bow, nod - LOAD_HEAD_UP * lean)
+        };
+        let look = &mut self.hero_look;
+        let rate = BEARING_RATE * delta;
+        look.lean = ease_to(look.lean, lean_to, rate);
+        look.bow = ease_to(look.bow, bow_to, rate);
+        look.nod = ease_to(look.nod, nod_to, rate);
+        look.bent = look.lean == lean_to && look.bow == bow_to && look.nod == nod_to;
+        look.breath = if look.bow > 0.0 {
+            (look.breath + delta) % BREATH_SECS
+        } else {
+            0.0
+        };
+        let breathe = 1.0 + BREATH * (look.breath / BREATH_SECS * std::f32::consts::TAU).sin();
+        let angles = (look.lean, look.bow * breathe, look.nod);
+        // the modifier on the skeleton of the model the hero is now
+        let Some((body, inner)) = self
+            .hero_model()
+            .and_then(|m| Some((m.node.clone(), m.node.get_child(0)?)))
+        else {
+            return;
+        };
+        let id = inner.instance_id();
+        if self.hero_look.bearing.as_ref().map(|(i, _)| *i) != Some(id) {
+            // off a model the hero no longer is
+            if let Some((_, mut old)) = self.hero_look.bearing.take()
+                && old.is_instance_valid()
+            {
+                old.bind_mut().set_angles(0.0, 0.0, 0.0);
+                old.upcast::<godot::classes::SkeletonModifier3D>()
+                    .set_active(false);
+            }
+            let skeleton = inner
+                .find_children_ex("*")
+                .type_("Skeleton3D")
+                .owned(false)
+                .done()
+                .iter_shared()
+                .next()
+                .and_then(|n| n.try_cast::<godot::classes::Skeleton3D>().ok());
+            let Some(mut sk) = skeleton.filter(|s| s.find_bone("spine_01") >= 0) else {
+                return;
+            };
+            let own = sk
+                .get_node_or_null(BEARING)
+                .and_then(|n| n.try_cast::<Bearing>().ok());
+            let bearing = match own {
+                Some(b) => b,
+                None => {
+                    let b = Bearing::new_alloc();
+                    let mut m: Gd<godot::classes::SkeletonModifier3D> = b.clone().upcast();
+                    m.set_name(BEARING);
+                    sk.add_child(&m);
+                    // before the off hand's, which holds the haft where
+                    // the bent arms have it
+                    sk.move_child(&m, 0);
+                    b
+                }
+            };
+            self.hero_look.bearing = Some((id, bearing));
+        }
+        if let Some((_, b)) = self.hero_look.bearing.as_mut() {
+            b.bind_mut().set_body(body);
+            b.bind_mut().set_angles(angles.0, angles.1, angles.2);
+            let on = angles != (0.0, 0.0, 0.0);
+            let mut m: Gd<godot::classes::SkeletonModifier3D> = b.clone().upcast();
+            if m.is_active() != on {
+                m.set_active(on);
+            }
         }
     }
 }

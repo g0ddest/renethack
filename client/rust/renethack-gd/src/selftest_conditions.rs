@@ -9,7 +9,9 @@
 //! blind the view dims and its edges darken; each at its full strength
 //! for its picture, and gone when its three turns end. With fewer screen
 //! effects (the settings) a stun shows no sway and no drift, while
-//! blindness still dims. Pictures of each with `--screenshots`.
+//! blindness still dims. Burdened by gold they lean into the load and walk
+//! slower, more of it further; weak from hunger they slump, and stand up
+//! straight when fed. Pictures of each with `--screenshots`.
 
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering};
@@ -18,7 +20,8 @@ use nh_world::{Key, KeyInput, Prompt};
 
 use godot::prelude::Vector3;
 
-use super::{DialogEvent, Step, command, entry_key, key, map_view, start};
+use super::{DialogEvent, Step, command, ctrl_key, entry_key, key, map_view, start};
+use crate::animator::STEP_SECS;
 use crate::game::RenethackGame;
 use crate::map_view::Shown;
 
@@ -63,18 +66,166 @@ pub(super) fn conditions() -> Vec<Step> {
         steps.extend(countdown(shot, end));
     }
     steps.extend(levitating());
+    steps.extend(into_view());
+    for (_, _, shot) in EFFECTS {
+        steps.extend(effect(shot));
+    }
+    steps.extend(reduced());
+    steps.extend(loaded());
+    steps.extend(starving());
+    steps
+}
+
+/// The burden and the hunger the status line names ("" for none).
+fn burden(g: &RenethackGame) -> &str {
+    g.world.status.get("cap").unwrap_or("")
+}
+
+fn hunger(g: &RenethackGame) -> &str {
+    g.world.status.get("hunger").unwrap_or("")
+}
+
+/// A load: the hero leans into it and walks slower, a walk and never a
+/// run; more of it (picked up off the floor, where the wish leaves what
+/// is too heavy to take), as much as they can lift, they lean further;
+/// put down, they stand up straight and the bearing sleeps.
+fn loaded() -> Vec<Step> {
+    let mut steps = into_view();
+    steps.extend(close_up(true));
+    steps.push(Step::Shot("conditions-upright"));
+    steps.extend(super::audio_tests::wish("100000 gold pieces"));
     steps.extend([
+        Step::Wait("burdened, leaning into the load", |g| {
+            let p = map_view(g)?.hero_posture();
+            let ahead = p.head.0 > 0.0;
+            Ok(
+                burden(g) == "Burdened"
+                    && p.settled
+                    && p.lean > 0.0
+                    && p.nod < 0.0
+                    && p.on
+                    && ahead,
+            )
+        }),
+        Step::Call("", |g| {
+            *AT.lock().unwrap() = map_view(g)?.hero_posture().lean;
+            Ok(())
+        }),
+        Step::Shot("conditions-burdened"),
+    ]);
+    steps.extend(close_up(false));
+    steps.extend([
+        Step::KeyFrom("a step under the load", |g| {
+            super::audio_tests::open_way(g).map(|c| KeyInput::plain(Key::Char(c)))
+        }),
+        Step::Wait("slower, and a walk", |g| {
+            let p = map_view(g)?.hero_posture();
+            Ok(p.step
+                .is_some_and(|(secs, run)| !run && secs > STEP_SECS * 1.1))
+        }),
+        Step::Request("a command after the step", command),
+    ]);
+    steps.extend(super::audio_tests::wish("200000 gold pieces"));
+    steps.extend([
+        key(','),
+        Step::AnswerUntil('y', "as much as they can lift", |g| {
+            let commanded = matches!(g.pending, Some((_, Prompt::Command)));
+            Ok(commanded && burden(g) == "Overtaxed")
+        }),
+    ]);
+    steps.extend(into_view());
+    steps.extend(close_up(true));
+    steps.extend([
+        Step::Wait("leaning further", |g| {
+            let p = map_view(g)?.hero_posture();
+            Ok(p.settled && p.lean > *AT.lock().unwrap() && p.head.0 > 0.0)
+        }),
+        Step::Shot("conditions-overtaxed"),
+    ]);
+    steps.extend(close_up(false));
+    steps.extend([
+        key('d'),
+        Step::Request("what to drop", |p| !matches!(p, Prompt::Command)),
+        key('$'),
+        Step::Request("a command, the gold put down", command),
+        Step::Wait("upright again, the bearing asleep", |g| {
+            let p = map_view(g)?.hero_posture();
+            Ok(burden(g).is_empty() && p.lean == 0.0 && p.nod == 0.0 && !p.on)
+        }),
+    ]);
+    steps
+}
+
+/// Hunger: teleported where they stand again and again (debug mode's ^T
+/// costs a hundred of nutrition) till weak or fainting, the hero slumps;
+/// a prayer fills them, and they stand up straight.
+fn starving() -> Vec<Step> {
+    let mut steps = vec![
+        Step::Call("", |_| {
+            SEARCHED.store(0, Ordering::Relaxed);
+            Ok(())
+        }),
+        Step::KeysUntil("teleported in place till weak", |g| {
+            let commanded = matches!(g.pending, Some((_, Prompt::Command)));
+            if commanded && g.world.getpos {
+                // where they stand
+                return Ok(Some(KeyInput::plain(Key::Char('.'))));
+            }
+            if !commanded {
+                return Ok(Some(KeyInput::plain(Key::Escape)));
+            }
+            if matches!(hunger(g), "Weak" | "Fainting" | "Fainted") {
+                return Ok(None);
+            }
+            if SEARCHED.fetch_add(1, Ordering::Relaxed) >= TO_WEAK {
+                return Err(format!("still {:?}", hunger(g)));
+            }
+            Ok(Some(ctrl_key('t')))
+        }),
+        Step::Wait("slumped where they stand", |g| {
+            let view = map_view(g)?;
+            let p = view.hero_posture();
+            let free = view.hero_helpless().is_none();
+            // the head hung forward and low
+            let hung = p.head.0 > 0.0 && p.head.1 < 0.0;
+            Ok(free && p.settled && p.bow > 0.0 && p.nod > 0.0 && p.lean == 0.0 && p.on && hung)
+        }),
+    ];
+    steps.extend(into_view());
+    steps.extend(close_up(true));
+    steps.extend([
+        Step::Wait("slumped, the camera close", |g| {
+            let p = map_view(g)?.hero_posture();
+            Ok(p.settled && p.bow > 0.0)
+        }),
+        Step::Shot("conditions-weak"),
+    ]);
+    steps.extend(close_up(false));
+    steps.extend(pray());
+    steps.push(Step::Wait("fed: upright again, the bearing asleep", |g| {
+        let p = map_view(g)?.hero_posture();
+        let fed = !matches!(hunger(g), "Weak" | "Fainting" | "Fainted");
+        Ok(fed && p.bow == 0.0 && p.nod == 0.0 && !p.on)
+    }));
+    steps.push(Step::Wait("the prayer over", |g| {
+        Ok(map_view(g)?.hero_prayer().is_none())
+    }));
+    steps
+}
+
+/// Teleports at most, a hundred of nutrition each, for the hero to grow
+/// weak.
+const TO_WEAK: u32 = 14;
+
+/// Steps into the eye's sight, if the hero is not in it.
+fn into_view() -> Vec<Step> {
+    vec![
         Step::Call("", |_| {
             WALKED.store(0, Ordering::Relaxed);
             Ok(())
         }),
         Step::KeysUntil("a step into the eye's sight", into_sight),
-    ]);
-    for (_, _, shot) in EFFECTS {
-        steps.extend(effect(shot));
-    }
-    steps.extend(reduced());
-    steps
+    ]
 }
 
 /// Steps taken into the eye's sight, and the most taken.
@@ -210,10 +361,43 @@ fn reduced() -> Vec<Step> {
             let mut s = g.settings.clone();
             s.reduce_effects = false;
             g.set_settings(s);
+            SEARCHED.store(0, Ordering::Relaxed);
             Ok(())
+        }),
+        Step::KeysUntil("searching till the stun and the blindness end", |g| {
+            let cat = g.catalog.as_deref().ok_or("no catalog")?;
+            let names = g.world.status.condition_names(cat);
+            let on = names.iter().any(|n| n == "Stun" || n == "Blind");
+            if !on && !FORCING.load(Ordering::Relaxed) {
+                return Ok(None);
+            }
+            forced_search(g)
+        }),
+        Step::Wait("the effects gone", |g| {
+            let e = map_view(g)?.hero_effects();
+            Ok(e.sway == 0.0 && e.dim == 0.0 && !e.screen)
         }),
     ]);
     steps
+}
+
+/// The camera close to the hero for a picture of their bearing (`near`),
+/// or back where it was.
+fn close_up(near: bool) -> [Step; 2] {
+    [
+        if near {
+            Step::Call("closer", |g| {
+                g.ui.as_mut().ok_or("no UI")?.map.set_distance(2.8, 0.6);
+                Ok(())
+            })
+        } else {
+            Step::Call("back", |g| {
+                g.ui.as_mut().ok_or("no UI")?.map.set_distance(11.0, 0.0);
+                Ok(())
+            })
+        },
+        Step::Wait("the camera on the hero", super::camera_settled),
+    ]
 }
 
 /// A float the hero rises into and bobs in, three turns long.

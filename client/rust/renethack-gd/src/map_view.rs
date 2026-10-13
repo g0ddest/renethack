@@ -63,7 +63,7 @@ mod hero_look;
 #[path = "hero_pose.rs"]
 mod hero_pose;
 
-pub use hero_look::{Effects, Shown};
+pub use hero_look::{Effects, Posture, Shown};
 pub use hero_pose::{Held, HelplessPhase};
 
 /// Low enough to see creatures from the side, high enough to see the floor
@@ -3997,6 +3997,12 @@ impl MapView {
         })
     }
 
+    /// The hero's bearing under a load or from hunger, and their last
+    /// step's pace (self-tests).
+    pub fn hero_posture(&self) -> Posture {
+        self.hero_look.posture()
+    }
+
     /// The conditions' effects on the screen now (self-tests).
     pub fn hero_effects(&self) -> Effects {
         self.hero_look.effects(self.env.get_adjustment_brightness())
@@ -6356,6 +6362,11 @@ impl MapView {
                 let (secs, run) = match self.order_pace {
                     // an order's step lasts its tick, never a hurried run
                     Some(p) if hero && c.cells == 1 => (p, false),
+                    // a burdened hero walks, slower the heavier the load
+                    _ if hero => {
+                        let (secs, run) = pace(c.cells, c.hurry);
+                        self.hero_look.pace(secs, run)
+                    }
                     _ => pace(c.cells, c.hurry),
                 };
                 let mut clips = self.art.clips(&c.model, run);

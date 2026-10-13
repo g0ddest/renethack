@@ -708,7 +708,7 @@ fn create(name: &'static str) -> [Step; 4] {
     ]
 }
 
-fn wish(what: &'static str) -> [Step; 4] {
+pub(super) fn wish(what: &'static str) -> [Step; 4] {
     [
         Step::Key(ctrl_key('w')),
         Step::Request(
