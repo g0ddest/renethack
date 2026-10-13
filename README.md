@@ -449,8 +449,9 @@ other than English opens a picker instead: the lexicon's names
 (`client/i18n/lexicon.ru.toml`) searched by any of their forms, and for a
 wish a builder of count, blessing and enchantment that also reads them from
 what is typed ("благословенный +2 длинный меч"); the engine is sent the
-English ("blessed +2 long sword"), and "Ввести по-английски" gives the
-plain question back. An engraving goes in Latin letters (the engine wears
+English ("blessed +2 long sword"), "Ввести по-английски" gives the
+plain question back, and a wish typed in English into the picker goes to
+the engine as typed (as a veteran's "blessed fixed +2 speed boots"). An engraving goes in Latin letters (the engine wears
 an engraving away a byte at a time): Cyrillic is transliterated, and
 "Элберет" is written "Elbereth". The `pickers` scenario plays them in a
 debug-mode game.

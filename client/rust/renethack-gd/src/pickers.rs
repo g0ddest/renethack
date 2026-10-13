@@ -54,6 +54,14 @@ pub fn ask_of(query: &str) -> Option<Ask> {
     }
 }
 
+/// What a picker's field holds is English (Latin letters, no Cyrillic):
+/// a wish or a name as a veteran types it, for the engine to read as
+/// typed (it knows "blessed fixed +2 speed boots" better than any list).
+pub fn typed_in_english(text: &str) -> bool {
+    let cyrillic = |c: char| matches!(c, 'а'..='я' | 'А'..='Я' | 'ё' | 'Ё');
+    text.chars().any(|c| c.is_ascii_alphabetic()) && !text.chars().any(cyrillic)
+}
+
 /// The engine asks what to engrave ("What do you want to write in the
 /// dust here?", "... engrave on the floor here?").
 pub fn is_engraving(query: &str) -> bool {
@@ -780,5 +788,15 @@ mod tests {
         assert_eq!(latin("Elbereth"), "Elbereth");
         assert_eq!(latin("x ✓ y"), "x ? y");
         assert_eq!(latin("съешь"), "sesh");
+    }
+
+    #[test]
+    fn a_wish_typed_in_english_is_english() {
+        assert!(typed_in_english("2 blessed fixed +2 speed boots"));
+        assert!(typed_in_english("bear trap"));
+        assert!(!typed_in_english("свиток геноцида"));
+        assert!(!typed_in_english("2 blessed свитка"));
+        assert!(!typed_in_english("+2"));
+        assert!(!typed_in_english(""));
     }
 }

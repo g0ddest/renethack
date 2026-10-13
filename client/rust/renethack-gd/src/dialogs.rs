@@ -4552,6 +4552,12 @@ impl Dialogs {
                 };
                 Some(Reply::Text(truncate_bytes(&s, MAX_TEXT_BYTES)))
             }
+            // typed in English (a veteran's wish): to the engine as typed
+            (Kind::Picker { .. }, DialogEvent::TextSubmitted(text))
+                if pickers::typed_in_english(text) =>
+            {
+                Some(Reply::Text(truncate_bytes(text.trim(), MAX_TEXT_BYTES)))
+            }
             (
                 Kind::Picker { picker, .. },
                 DialogEvent::TextSubmitted(_) | DialogEvent::PickConfirm,

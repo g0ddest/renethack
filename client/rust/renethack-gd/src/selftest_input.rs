@@ -5,7 +5,8 @@
 //! геноцида" an uncursed scroll of genocide, and read, "кобольды" wipes
 //! out the kobolds; a blessed one read, "гномы" picks the class of gnomes;
 //! a gamepad builds a wish (X blessed, Y +2, RB weapons, ↓, A); a wish
-//! typed in English instead still works; an engraving typed in Cyrillic is
+//! typed in English instead still works, and one typed in English into the
+//! picker goes to the engine as typed; an engraving typed in Cyrillic is
 //! written in Latin letters, "Элберет" as "Elbereth".
 
 use nh_world::{Key, KeyInput, Prompt};
@@ -209,6 +210,20 @@ pub(super) fn pickers() -> Vec<Step> {
         Step::Wait("two uncursed food rations more", |g| {
             Ok(logged(g, "2 uncursed food rations"))
         }),
+        // a wish in English typed into the picker, as a veteran types it:
+        // to the engine as typed, though no name of the list is it
+        Step::Key(ctrl_key('w')),
+        Step::Request("the wish", wishing),
+        Step::Wait("the picker of objects", picker_open),
+        Step::Call("an English wish typed", |g| {
+            type_into_picker(g, "2 cursed fixed +1 apples")
+        }),
+        Step::Dialog(DialogEvent::TextSubmitted(
+            "2 cursed fixed +1 apples".into(),
+        )),
+        Step::Request("a command after the English wish", command),
+        // (their curse unknown to the hero)
+        Step::Wait("two apples", |g| Ok(logged(g, "2 apples"))),
         // an engraving in Cyrillic goes in Latin letters
         key('E'),
         Step::Request(
