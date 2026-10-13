@@ -5,7 +5,8 @@
 //! when the extension is built; the NGPL as the engine ships it
 //! (`data/license`) and Godot's notices as the Godot running tells them;
 //! the Rust crates as `build.rs` found them linked. Each is drawn as BBCode
-//! for a RichTextLabel; their words stay as written.
+//! for a RichTextLabel; their words stay as written, but for the credits
+//! files' own headings and statements, which the language says (`PROSE`).
 
 use godot::classes::Engine;
 use godot::prelude::*;
@@ -348,6 +349,81 @@ fn link(url: &str) -> String {
 
 // ---- Markdown ----
 
+/// The credits files' own words: their headings (whole) and the
+/// statements around the attributions (by how their English begins), each
+/// the key of its words in the language now; in English the file's own.
+/// The attributions themselves (the tables, the list items) stay as
+/// written. A heading or statement new in a file wants a line here (the
+/// test `every_heading_and_statement_is_said`).
+const PROSE: &[(&str, &str)] = &[
+    ("Art credits", "credits-md-art"),
+    (
+        "Everything listed under “Art credits” is dedicated",
+        "credits-md-art-cc0",
+    ),
+    ("Textures larger than", "credits-md-art-changes"),
+    ("CC-BY", "credits-md-ccby"),
+    ("The models listed under “CC-BY”", "credits-md-ccby-models"),
+    ("Fonts", "credits-md-fonts"),
+    ("The UI's fonts are under", "credits-md-fonts-ofl"),
+    ("Sound credits", "credits-md-sound"),
+    (
+        "The sounds listed under “Public domain”",
+        "credits-md-sound-licences",
+    ),
+    ("Changes made:", "credits-md-sound-changes"),
+    ("Public domain", "credits-md-public-domain"),
+    ("Creative Commons Attribution", "credits-md-cc-by"),
+    ("Mixes", "credits-md-mixes"),
+    ("The help's sources", "credits-md-help"),
+    ("The in-game help", "credits-md-help-about"),
+    ("English", "credits-md-english"),
+    (
+        "\"A Guide to the Mazes of Menace",
+        "credits-md-help-english",
+    ),
+    ("Russian", "credits-md-russian"),
+    (
+        "«Руководство по Грозным Лабиринтам»",
+        "credits-md-help-russian",
+    ),
+    (
+        "The repository has no licence file",
+        "credits-md-help-licence",
+    ),
+    ("Credits: the Russian translation", "credits-md-translation"),
+    ("Translation memory", "credits-md-memory"),
+    ("Russian forms", "credits-md-forms"),
+    ("Names in established Russian", "credits-md-established"),
+    (
+        "Where a creature or a thing already has a Russian name",
+        "credits-md-established-about",
+    ),
+];
+
+/// A heading's or a statement's key in `PROSE`.
+fn prose_key(text: &str, heading: bool) -> Option<&'static str> {
+    PROSE
+        .iter()
+        .find(|(start, _)| {
+            if heading {
+                text == *start
+            } else {
+                text.starts_with(start)
+            }
+        })
+        .map(|(_, key)| *key)
+}
+
+/// A credits file's heading or statement as the language says it (in
+/// English, the file's own).
+fn said(text: &str, heading: bool) -> String {
+    match prose_key(text, heading) {
+        Some(key) if crate::i18n::lang() != crate::i18n::Lang::En => crate::i18n::tr(key),
+        _ => text.to_string(),
+    }
+}
+
 /// The Markdown of a credits file as BBCode, as a player reads it:
 /// headings, paragraphs, bullet lists, and the tables' rows each a block
 /// (the work, its author, its link); `code`, **bold**, *italics* and links
@@ -363,7 +439,7 @@ pub fn markdown(md: &str) -> String {
         if !para.is_empty() {
             let text = for_players(&para.join(" "), &folders);
             if !text.is_empty() {
-                *out += &inline(&text);
+                *out += &inline(&said(&text, false));
                 *out += "\n\n";
             }
             para.clear();
@@ -386,7 +462,7 @@ pub fn markdown(md: &str) -> String {
             out += &format!(
                 "[font_size={size}][color={}][b]{}[/b][/color][/font_size]\n",
                 hex(theme::GOLD_BRIGHT),
-                inline(text)
+                inline(&said(text, true))
             );
             i += 1;
         } else if trimmed.starts_with('|') {
@@ -982,5 +1058,70 @@ mod tests {
         }
         assert!(NOTICE.contains("@VERSION@"));
         assert!(CJSON.contains("Dave Gamble"));
+    }
+
+    #[test]
+    fn every_heading_and_statement_is_said() {
+        // each file's headings and statements, as players read them, have
+        // their words in every language (`PROSE`)
+        let mut unsaid = Vec::new();
+        for md in [ART, SOUND, HELP, TRANSLATION] {
+            let lines: Vec<&str> = md.lines().collect();
+            let folders = folders(&lines);
+            let mut para: Vec<&str> = Vec::new();
+            let check = |para: &mut Vec<&str>, unsaid: &mut Vec<String>| {
+                if !para.is_empty() {
+                    let t = for_players(&para.join(" "), &folders);
+                    if !t.is_empty() && prose_key(&t, false).is_none() {
+                        unsaid.push(t);
+                    }
+                    para.clear();
+                }
+            };
+            let mut i = 0;
+            while i < lines.len() {
+                let t = lines[i].trim();
+                if t.is_empty() {
+                    check(&mut para, &mut unsaid);
+                    i += 1;
+                } else if let Some((_, h)) = heading_of(t) {
+                    check(&mut para, &mut unsaid);
+                    if prose_key(h, true).is_none() {
+                        unsaid.push(h.to_string());
+                    }
+                    i += 1;
+                } else if t.starts_with('|') {
+                    check(&mut para, &mut unsaid);
+                    while i < lines.len() && lines[i].trim_start().starts_with('|') {
+                        i += 1;
+                    }
+                } else if t.starts_with("- ") || t.starts_with("* ") {
+                    // an attribution: as written
+                    check(&mut para, &mut unsaid);
+                    i += 1;
+                    while i < lines.len()
+                        && lines[i].starts_with("  ")
+                        && !lines[i].trim().is_empty()
+                    {
+                        i += 1;
+                    }
+                } else {
+                    para.push(t);
+                    i += 1;
+                }
+            }
+            check(&mut para, &mut unsaid);
+        }
+        assert!(
+            unsaid.is_empty(),
+            "a credits file's heading or statement with no words of the page's (add it to PROSE and to en.ftl and ru.ftl): {unsaid:?}"
+        );
+        // and every key is in the catalogs
+        for (_, key) in PROSE {
+            assert!(
+                crate::i18n::tr_in(crate::i18n::Lang::Ru, key).is_some(),
+                "{key} not in ru.ftl"
+            );
+        }
     }
 }

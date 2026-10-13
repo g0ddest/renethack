@@ -417,6 +417,35 @@ codex-conduct = Conduct
 codex-hint = ↑↓ PgUp PgDn: scroll · Tab: the other tab · Esc, { $key }: close
 codex-hint-esc = ↑↓ PgUp PgDn: scroll · Tab: the other tab · Esc: close
 
+## The credits files' own headings and statements (in English the files'
+## own words show; these keep the catalogs alike)
+
+credits-md-art = Art credits
+credits-md-art-cc0 = Everything listed under “Art credits” is dedicated to the public domain (CC0 1.0, https://creativecommons.org/publicdomain/zero/1.0/). Credit is not required; it is given here gladly.
+credits-md-art-changes = Large textures were scaled down and re-encoded, flipbooks converted to PNG, some maps repacked and the armours' metals made brighter; nothing else was changed.
+credits-md-ccby = CC-BY
+credits-md-ccby-models = The models listed under “CC-BY” are under the Creative Commons Attribution 3.0 license (https://creativecommons.org/licenses/by/3.0/), from Poly Pizza, changed as the English page tells.
+credits-md-fonts = Fonts
+credits-md-fonts-ofl = The UI's fonts are under the SIL Open Font License 1.1 (not CC0).
+credits-md-sound = Sound credits
+credits-md-sound-licences = The sounds listed under “Public domain” are in the public domain; those under “Creative Commons Attribution” are licensed as each line says.
+credits-md-sound-changes = Changes made: the files were cut, converted, re-encoded and levelled; the loops were crossfaded; the beds listed under Mixes are made of the sources they name.
+credits-md-public-domain = Public domain
+credits-md-cc-by = Creative Commons Attribution
+credits-md-mixes = Mixes
+credits-md-help = The help's sources
+credits-md-help-about = The in-game help (F1, the HUD's `?` button) shows NetHack's Guidebook in the interface's language, by chapters, with a search.
+credits-md-english = English
+credits-md-help-english = "A Guide to the Mazes of Menace (Guidebook for NetHack)", original version by Eric S. Raymond, edited and expanded for NetHack 5.0 by Mike Stephenson and others. Part of NetHack, under the NetHack General Public License.
+credits-md-russian = Russian
+credits-md-help-russian = «Руководство по Грозным Лабиринтам», the Russian translation of the Guidebook (of NetHack 3.4) from <https://github.com/velikodniy/nethack-guide> at commit 576aa83 (2014-09-24). Translated on notabenoid.com (as of 2014-02-01; translator witmolif@gmail.com); edited and typeset by Vadim Velikodniy.
+credits-md-help-licence = The repository has no licence file. A translation of NetHack's documentation, it is distributed here under the NetHack General Public License, as the Guidebook is.
+credits-md-translation = Credits: the Russian translation
+credits-md-memory = Translation memory
+credits-md-forms = Russian forms
+credits-md-established = Names in established Russian
+credits-md-established-about = Where a creature or a thing already has a Russian name, the glossary uses it rather than inventing one; its note names the source.
+
 ## The message log
 
 log-title = Messages
