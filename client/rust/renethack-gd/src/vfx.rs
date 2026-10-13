@@ -358,6 +358,23 @@ impl Recipe {
         }
     }
 
+    /// How much of a burst comes at once (Godot's explosiveness): the rest
+    /// comes over that share of its life.
+    fn explosiveness(self) -> f32 {
+        if matches!(self, Recipe::Motes | Recipe::Runes | Recipe::Cloud) || self.is_trail() {
+            0.6
+        } else {
+            1.0
+        }
+    }
+
+    /// How long a burst of it shows, from its start to its last
+    /// particle's end (seconds): what comes late lives its whole life too.
+    fn shows(self) -> f32 {
+        let p = self.params();
+        p.life as f32 * (2.0 - self.explosiveness()) + 0.1
+    }
+
     /// A smoke or a haze: it veils what is behind it (its ramp's alpha is
     /// low and it lingers), it does not glow.
     fn is_smoke(self) -> bool {
@@ -1344,7 +1361,6 @@ impl Vfx {
     /// (an explosion's cell): the box of a cell, its share of the amount.
     fn emit_in_cell(&mut self, recipe: Recipe, color: Color, at: Vector3) {
         let i = self.take_emitter(recipe);
-        let p = recipe.params();
         let Some(e) = self
             .emitters
             .get_mut(&recipe)
@@ -1365,7 +1381,7 @@ impl Vfx {
         e.node.set_visible(true);
         e.node.restart();
         e.node.set_emitting(true);
-        e.busy = p.life as f32 + 0.1;
+        e.busy = recipe.shows();
     }
 
     /// A tower of flame standing at `at` (the ground) for `COLUMN_SECS`.
@@ -1661,7 +1677,6 @@ impl Vfx {
         let color = kind.look().color.unwrap_or(color);
         for &recipe in kind.look().trails {
             let i = self.take_emitter(recipe);
-            let p = recipe.params();
             let Some(e) = self
                 .emitters
                 .get_mut(&recipe)
@@ -1682,7 +1697,7 @@ impl Vfx {
             e.node.set_visible(true);
             e.node.restart();
             e.node.set_emitting(true);
-            e.busy = p.life as f32 + 0.1;
+            e.busy = recipe.shows();
         }
     }
 
@@ -1762,7 +1777,7 @@ impl Vfx {
         e.node.set_visible(true);
         e.node.restart();
         e.node.set_emitting(true);
-        e.busy = p.life as f32 + 0.1;
+        e.busy = recipe.shows();
     }
 
     /// A light at `at` dying out over `secs`, reaching `range` metres.
@@ -2177,13 +2192,7 @@ fn new_emitter(root: &mut Gd<Node3D>, recipe: Recipe, tex: &Gd<Texture2D>) -> Em
     node.set_amount(p.amount);
     node.set_lifetime(p.life);
     node.set_one_shot(true);
-    node.set_explosiveness_ratio(
-        if matches!(recipe, Recipe::Motes | Recipe::Runes | Recipe::Cloud) || recipe.is_trail() {
-            0.6
-        } else {
-            1.0
-        },
-    );
+    node.set_explosiveness_ratio(recipe.explosiveness());
     if recipe.is_trail() {
         // along a ray: `Vfx::shed` sets the box
         m.set_emission_shape(EmissionShape::BOX);

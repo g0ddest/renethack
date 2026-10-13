@@ -290,6 +290,12 @@ pub(super) fn rays() -> Vec<Step> {
             }),
             Step::Wait("the room drawn again", ray_cleared),
             Step::Wait("all it shed gone", |g| Ok(!map_view(g)?.effects_busy())),
+            // (and nothing of it left in the next ray's pictures, whatever
+            // a slow frame kept)
+            Step::Call("the effects cleared", |g| {
+                ui_map(g)?.vfx().clear();
+                Ok(())
+            }),
         ]);
     }
     steps.extend([
