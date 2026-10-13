@@ -45,7 +45,8 @@ fn ch(c: char) -> KeyInput {
     plain(Key::Char(c))
 }
 
-fn ctrl(c: char) -> KeyInput {
+/// Ctrl and a letter: a command's key ("^X").
+pub(crate) fn ctrl(c: char) -> KeyInput {
     KeyInput {
         mods: Mods {
             ctrl: true,

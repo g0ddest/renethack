@@ -439,6 +439,17 @@ lists as rows with each creature's map symbol, the overview as the
 dungeons' levels with their features and where the hero is; the client's
 words come from Fluent, the engine's names through the lexicon. The
 `layouts` scenario plays them in a debug-mode game, to its death.
+The RPG panels lay out the windows of the commands that spend no turn,
+parsed from their English too. The character sheet (`^X`, or the HUD's
+button; `sheet.rs`, `sheet_view.rs`) shows the hero's portrait (the
+inventory's doll, rendered while the sheet is open), who they are, the hit
+points, energy, armour class, experience and gold, the six
+characteristics, and every other line of the window by section, in the
+engine's words as its translator says them; nothing the window does not
+say. A panel's header and hint name its key as the player presses it now,
+and that key closes it again, as Esc and a gamepad's B do. The `sheet`
+scenario opens it in a game, from the key, the HUD's button and a moved
+key, and checks that each line of the window is on it.
 `--lang=qps` is a pseudo-language for the self-tests: words through the
 catalogs show ⟦so⟧ and the engine's ⟪so⟫, and a screen a scenario shoots
 fails on any word outside the marks. `make test-client` also runs

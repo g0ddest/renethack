@@ -327,6 +327,34 @@ mode-combat = COMBAT
 mode-explore-badge = EXPLORING
 mode-explore = EXPLORATION
 
+## The RPG panels: the character sheet (^X)
+
+panel-hint = ↑↓ PgUp PgDn: scroll · Esc, { $key }: close
+panel-close-tip = Close (Esc, { $key })
+sheet-title = Character
+sheet-hit-points = Hit points
+sheet-energy = Energy
+sheet-armor-class = Armour class
+sheet-experience = Experience
+sheet-to-level = { $points } to level { $level }
+sheet-gold = Gold
+sheet-strength = Strength
+sheet-dexterity = Dexterity
+sheet-constitution = Constitution
+sheet-intelligence = Intelligence
+sheet-wisdom = Wisdom
+sheet-charisma = Charisma
+sheet-base = base { $value }
+sheet-peak = peak { $value }
+sheet-limit = limit { $value }
+sheet-innate-limit = innate limit { $value }
+sheet-background = Background
+sheet-basics = Basics
+sheet-characteristics = Characteristics
+sheet-status = Status
+sheet-attributes = Attributes
+sheet-miscellaneous = Miscellaneous
+
 ## The message log
 
 log-title = Messages

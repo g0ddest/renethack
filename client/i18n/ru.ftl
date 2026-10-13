@@ -328,6 +328,34 @@ mode-combat = БОЙ
 mode-explore-badge = ИССЛЕДОВАНИЕ
 mode-explore = РАЗВЕДКА
 
+## RPG-панели: лист персонажа (^X)
+
+panel-hint = ↑↓ PgUp PgDn: прокрутка · Esc, { $key }: закрыть
+panel-close-tip = Закрыть (Esc, { $key })
+sheet-title = Персонаж
+sheet-hit-points = Здоровье
+sheet-energy = Энергия
+sheet-armor-class = Класс брони
+sheet-experience = Опыт
+sheet-to-level = { $points } до { $level }-го уровня
+sheet-gold = Золото
+sheet-strength = Сила
+sheet-dexterity = Ловкость
+sheet-constitution = Телосложение
+sheet-intelligence = Интеллект
+sheet-wisdom = Мудрость
+sheet-charisma = Харизма
+sheet-base = основа { $value }
+sheet-peak = пик { $value }
+sheet-limit = предел { $value }
+sheet-innate-limit = врождённый предел { $value }
+sheet-background = Происхождение
+sheet-basics = Основное
+sheet-characteristics = Характеристики
+sheet-status = Состояние
+sheet-attributes = Свойства
+sheet-miscellaneous = Разное
+
 ## Журнал сообщений
 
 log-title = Сообщения

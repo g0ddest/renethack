@@ -18,7 +18,7 @@ use godot::classes::texture_rect::{ExpandMode, StretchMode};
 use godot::classes::{
     Button, CanvasLayer, ColorRect, Control, DisplayServer, Font, HBoxContainer, Label, LineEdit,
     OptionButton, PanelContainer, RichTextLabel, ScrollContainer, StyleBox, StyleBoxEmpty,
-    StyleBoxFlat, TextureRect, VBoxContainer,
+    StyleBoxFlat, Texture2D, TextureRect, VBoxContainer,
 };
 use godot::global::{HorizontalAlignment, VerticalAlignment};
 use godot::prelude::*;
@@ -30,6 +30,8 @@ use nh_i18n::lexicon::Lexicon;
 use crate::i18n::{self, EngineKind, Lang};
 use crate::layouts::{self, Genocided, GoneRow, KillRow, OverviewRow, Vanquished};
 use crate::pickers::{self, Ask, ObjClass, Pick, Wish};
+use crate::sheet;
+use crate::sheet_view::{self, SheetView};
 use crate::theme::{self, Face, Frame, bbcode_escape, hex, nh_color, place};
 use crate::tr;
 use crate::ui_events::{DialogEvent, UiEvent, UiQueue, push};
@@ -57,6 +59,12 @@ const SPACER_H: f32 = 10.0;
 /// Height a list dialog keeps for everything but the list: the title, the
 /// footer, the buttons, the panel's margins and the screen's.
 const LIST_CHROME: f32 = 320.0;
+/// The same for an RPG panel (the character sheet): its header, its hint,
+/// its frame's margins and the screen's.
+const PANEL_CHROME: f32 = 230.0;
+/// An RPG panel's widest content, and the room its scroll bar takes.
+const PANEL_W: f32 = 1120.0;
+const SCROLL_ROOM: f32 = 18.0;
 /// The same for a text window (no footer).
 const TEXT_CHROME: f32 = 220.0;
 /// The canvas the HUD is designed for (theme::apply_scaling).
@@ -1273,8 +1281,12 @@ enum Kind {
     Show {
         text: Scroller,
         /// The engine's window laid out from its English ("vanquished",
-        /// "genocided", "overview"), or None for its lines as written.
+        /// "genocided", "overview", "sheet"), or None for its lines as
+        /// written.
         layout: Option<&'static str>,
+        /// The command key of the panel it is (`^X`'s sheet): pressed
+        /// again, it closes the panel.
+        own: Option<KeyInput>,
     },
     MessageMenu {
         letter: char,
@@ -1313,6 +1325,11 @@ pub struct Dialogs {
     /// The keys the player moved: the palette shows its commands' keys as
     /// they are pressed now.
     keymap: nh_world::Keymap,
+    /// The hero rendered in their gear (the inventory's doll): the
+    /// character sheet's portrait.
+    portrait: Option<Gd<Texture2D>>,
+    /// The open character sheet's view (its portrait shows the render).
+    sheet: Option<SheetView>,
 }
 
 struct PalettePool {
@@ -1345,6 +1362,8 @@ impl Dialogs {
             warming: false,
             palette_pool: None,
             keymap: nh_world::Keymap::default(),
+            portrait: None,
+            sheet: None,
         }
     }
 
@@ -2379,7 +2398,15 @@ impl Dialogs {
             &mut col,
             &[(tr!("dlg-ok"), dialog_ui(req, DialogEvent::Close))],
         );
-        (Kind::Show { text, layout: None }, shade, panel)
+        (
+            Kind::Show {
+                text,
+                layout: None,
+                own: None,
+            },
+            shade,
+            panel,
+        )
     }
 
     /// #vanquished: a kind of creature a row (its symbol in its colour, its
@@ -2569,6 +2596,7 @@ impl Dialogs {
             Kind::Show {
                 text,
                 layout: Some(layout),
+                own: None,
             },
             shade,
             panel,
@@ -2594,6 +2622,109 @@ impl Dialogs {
     /// #overview: a dungeon a heading with the levels reached, a level a
     /// row (its number on a badge, the player's note, where the hero is),
     /// what is on the level under it.
+    /// The width of an RPG panel's content here.
+    fn panel_width(&self) -> f32 {
+        let room = self.screen().x - SIDE_MARGIN - 40.0 - SCROLL_ROOM;
+        room.clamp(640.0, PANEL_W)
+    }
+
+    /// An RPG panel (the character sheet): a wide frame over the dimmed
+    /// game, its name, the key that opens it and a close button at the
+    /// top, `content` scrolling under them, and how to scroll and close it
+    /// at the foot. `own` is the panel's command as the game knows it: its
+    /// key as the player presses it now shows, and closes the panel.
+    fn open_panel(
+        &mut self,
+        req: u64,
+        layout: &'static str,
+        title: &str,
+        own: KeyInput,
+        content: Gd<Control>,
+        width: f32,
+    ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        let outer = width + SCROLL_ROOM;
+        let max_h = (self.screen().y - PANEL_CHROME).max(ROW_H * 6.0);
+        let text = Scroller::new(outer, max_h, false);
+        let (shade, panel, mut col) = self.frame(outer, None);
+        let key = self
+            .keymap
+            .key_for(own)
+            .map_or_else(|| "—".to_string(), |k| crate::rebind::short_name(&k));
+        let mut head = HBoxContainer::new_alloc();
+        head.add_theme_constant_override("separation", 14);
+        let mut name = theme::styled_label(title, Face::Title, 28, theme::GOLD_BRIGHT);
+        name.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        name.set_vertical_alignment(VerticalAlignment::CENTER);
+        head.add_child(&name);
+        let mut k = theme::styled_label(&key, Face::Caps, 16, theme::TEXT_DIM);
+        k.set_vertical_alignment(VerticalAlignment::CENTER);
+        i18n::verbatim(&k);
+        head.add_child(&k);
+        let mut close = theme::button("✕", &self.queue, dialog_ui(req, DialogEvent::Close));
+        close.set_custom_minimum_size(Vector2::new(36.0, 32.0));
+        close.set_tooltip_text(&tr!("panel-close-tip", key = key.as_str()));
+        head.add_child(&close);
+        col.add_child(&head);
+        col.add_child(&rule());
+        let mut scroll = text.scroll.clone();
+        scroll.add_child(&content);
+        col.add_child(&scroll);
+        self.hint(&mut col, &tr!("panel-hint", key = key.as_str()), outer);
+        // the frame as tall as the content once it is laid out, up to the
+        // screen's room (then it scrolls)
+        let (mut sc, c, mut p) = (scroll.clone(), content.clone(), panel.clone());
+        content.signals().resized().connect(move || {
+            let h = (c.get_size().y + 4.0).clamp(ROW_H, max_h);
+            let now = sc.get_custom_minimum_size();
+            if (now.y - h).abs() > 1.0 {
+                sc.set_custom_minimum_size(Vector2::new(now.x, h));
+                // the centred panel shrinks and grows back both ways
+                p.set_offset(godot::builtin::Side::TOP, -40.0);
+                p.set_offset(godot::builtin::Side::BOTTOM, 40.0);
+            }
+        });
+        (
+            Kind::Show {
+                text,
+                layout: Some(layout),
+                own: Some(own),
+            },
+            shade,
+            panel,
+        )
+    }
+
+    /// `^X`: the character sheet (`sheet_view`), each line said as the
+    /// window's translation says it.
+    fn open_sheet(
+        &mut self,
+        req: u64,
+        s: &sheet::Sheet,
+        english: &[TextLine],
+        shown: &[TextLine],
+    ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        let said: HashMap<&str, &str> = if english.len() == shown.len() {
+            english
+                .iter()
+                .zip(shown)
+                .map(|(e, s)| (e.text.trim(), s.text.trim()))
+                .collect()
+        } else {
+            HashMap::new()
+        };
+        let say = |line: &str| match said.get(line.trim()) {
+            Some(t) => t.to_string(),
+            None => i18n::engine(EngineKind::Window, line).into_owned(),
+        };
+        let width = self.panel_width();
+        let view = sheet_view::view(s, &say, width, self.portrait.as_ref());
+        let content = view.root.clone();
+        let own = crate::rebind::ctrl('x');
+        let opened = self.open_panel(req, "sheet", &tr!("sheet-title"), own, content, width);
+        self.sheet = Some(view);
+        opened
+    }
+
     fn open_overview(
         &mut self,
         req: u64,
@@ -2744,6 +2875,7 @@ impl Dialogs {
             Kind::Show {
                 text,
                 layout: Some("overview"),
+                own: None,
             },
             shade,
             panel,
@@ -2864,7 +2996,9 @@ impl Dialogs {
                 let texts: Vec<&str> = english.iter().map(|l| l.text.as_str()).collect();
                 let plurals = layouts::kinds_by_plural(catalog);
                 let singular = |p: &str| plurals.get(p).cloned();
-                if let Some(v) = layouts::vanquished(&texts, &singular) {
+                if let Some(s) = sheet::sheet(&texts) {
+                    self.open_sheet(req, &s, english, lines)
+                } else if let Some(v) = layouts::vanquished(&texts, &singular) {
                     self.open_vanquished(req, &v, catalog)
                 } else if let Some(g) = layouts::genocided(&texts) {
                     self.open_genocided(req, &g, &plurals, catalog)
@@ -3088,16 +3222,35 @@ impl Dialogs {
         self.warm.is_empty() && self.warm_next >= warm_samples().len()
     }
 
-    /// Whether a gamepad gives the input now.
-    /// The keys the player moved, for the palette's keys.
+    /// The keys the player moved, for the palette's keys and a panel's
+    /// own.
     pub fn set_keymap(&mut self, keymap: &nh_world::Keymap) {
         if self.keymap != *keymap {
             self.keymap = keymap.clone();
         }
     }
 
+    /// Whether a gamepad gives the input now.
     pub fn set_pad(&mut self, on: bool) {
         self.pad = on;
+    }
+
+    /// The hero rendered in their gear, for the character sheet's
+    /// portrait.
+    pub fn set_portrait(&mut self, render: Gd<Texture2D>) {
+        self.portrait = Some(render);
+    }
+
+    /// Whether the open sheet's portrait shows the hero (self-tests).
+    pub fn portrait_shown(&self) -> bool {
+        self.sheet.as_ref().is_some_and(SheetView::rendered)
+    }
+
+    /// The portrait's render shows the hero now (or not yet).
+    pub fn set_portrait_rendered(&mut self, rendered: bool) {
+        if let Some(v) = self.sheet.as_mut() {
+            v.set_rendered(rendered);
+        }
     }
 
     /// The open menu picks several entries.
@@ -3444,10 +3597,14 @@ impl Dialogs {
                 fill_palette(palette);
                 None
             }
-            Kind::Show { text, .. } => {
+            Kind::Show { text, own, .. } => {
                 if let Some(k) = nav(input) {
                     text.key(k, self.look.line_h);
                     return None;
+                }
+                // the panel's own command, as the player presses it now
+                if own.is_some() && !input.echo && self.keymap.translate(*input) == *own {
+                    return Some(Reply::Ack);
                 }
                 match typed(input)? {
                     '<' => text.page(-1.0),
@@ -3596,6 +3753,7 @@ impl Dialogs {
 
     /// A dialog closed: freed, the palette hidden for the next time.
     fn retire(&mut self, mut open: Open) {
+        self.sheet = None;
         // the palette is hidden for the next time
         if let Kind::ExtCmd { edit, palette, req } = open.kind {
             // without the room its opening gave a gamepad's hints: the next
@@ -3685,6 +3843,11 @@ fn warm_samples() -> Vec<Prompt> {
             letter: 'a',
             mesg: "a - a long sword.".into(),
             pick: true,
+        },
+        // the character sheet, its faces and sizes
+        Prompt::Show {
+            title: None,
+            lines: sheet::WIZARD.iter().map(|l| line(0, l)).collect(),
         },
     ]
 }

@@ -1347,6 +1347,11 @@ pub struct InventoryPanel {
     warm: Warm,
     /// The 3D is dark (a level arriving): see `set_dark`.
     dark: bool,
+    /// Another view shows the doll's render (the character sheet's
+    /// portrait): it renders while the panel is closed too, and whether it
+    /// showed the hero last frame.
+    doll_lent: bool,
+    doll_shown: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -2022,6 +2027,8 @@ impl InventoryPanel {
             figure,
             warm: Warm::Not,
             dark: false,
+            doll_lent: false,
+            doll_shown: false,
         }
     }
 
@@ -3146,10 +3153,16 @@ impl InventoryPanel {
         }
         if !open {
             // the doll's camera follows the hero all the same (see `aim`),
-            // and a new model of theirs is rendered ahead (see `ahead`)
+            // and a new model of theirs is rendered ahead (see `ahead`), or
+            // the doll renders for the view it is lent to
             let now = now_secs();
-            if self.doll_view.aim(now) {
-                self.doll_view.ahead(now, self.dark);
+            if self.doll_lent {
+                self.doll_shown = self.doll_view.frame(now);
+            } else {
+                self.doll_shown = false;
+                if self.doll_view.aim(now) {
+                    self.doll_view.ahead(now, self.dark);
+                }
             }
             // and one of the pack's icons is loaded (see `icons_due`)
             while let Some((tile, class)) = self.icons_due.pop_front() {
@@ -3180,6 +3193,19 @@ impl InventoryPanel {
             self.doll_view.hero_since = now_secs();
         }
         self.doll_view.hero = node;
+    }
+
+    /// The doll's render, the hero in their gear (the character sheet's
+    /// portrait shows it).
+    pub fn doll_texture(&self) -> Gd<Texture2D> {
+        self.doll_view.texture()
+    }
+
+    /// Another view shows the doll's render now (`on`): it renders while
+    /// the panel is closed. True: it showed the hero last frame.
+    pub fn lend_doll(&mut self, on: bool) -> bool {
+        self.doll_lent = on;
+        on && self.doll_shown
     }
 
     /// The 3D is dark now (a level arriving): the doll renders a new model

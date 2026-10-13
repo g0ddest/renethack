@@ -62,6 +62,8 @@ mod riding_tests;
 mod rim_tests;
 #[path = "selftest_settings.rs"]
 mod settings_tests;
+#[path = "selftest_sheet.rs"]
+mod sheet_tests;
 #[path = "selftest_shop.rs"]
 mod shop;
 #[path = "selftest_footprints.rs"]
@@ -4785,6 +4787,7 @@ impl SelfTest {
             "settings" => settings_tests::settings(),
             "credits" => credits_tests::credits(),
             "rebind" => rebind_tests::rebind(),
+            "sheet" => sheet_tests::sheet(),
             "presets" => settings_tests::presets(),
             "layouts" => layouts_tests::layouts(),
             "rim" => rim_tests::rim(),

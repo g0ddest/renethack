@@ -409,7 +409,7 @@ pub struct RenethackGame {
     /// Frames processed, and whether none is drawn (headless): frames are
     /// counted by those processed then.
     frames: u64,
-    headless: bool,
+    pub(crate) headless: bool,
     /// The start-up veil (the boot splash's colour), the cue pulsing on
     /// it, and when it began to lift (None: still down).
     veil: Option<Gd<godot::classes::ColorRect>>,
@@ -686,6 +686,12 @@ impl INode for RenethackGame {
             toast: crate::achievement_view::Toast::new(toast_layer),
             audio: crate::audio::Audio::new(audio_root),
         });
+        // the character sheet's portrait: the hero the inventory's doll
+        // renders
+        if let Some(ui) = self.ui.as_mut() {
+            let render = ui.inventory.doll_texture();
+            ui.dialogs.set_portrait(render);
+        }
         self.show_game(false);
         self.device_quality = crate::video::device_quality();
         self.apply_graphics();
@@ -2421,6 +2427,10 @@ impl RenethackGame {
         ui.inventory.set_dark(ui.map.dark());
         let rects = ui.hud.action_bar().slot_rects();
         ui.inventory.set_bar_rects(rects);
+        // the character sheet's portrait is the doll's render
+        let sheet = ui.dialogs.layout_name() == Some("sheet");
+        let rendered = ui.inventory.lend_doll(sheet);
+        ui.dialogs.set_portrait_rendered(rendered);
         ui.inventory.sync();
         let bar = ui.hud.action_bar();
         bar.set_active(active);

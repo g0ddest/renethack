@@ -44,6 +44,8 @@ mod screens;
 mod seated;
 mod selftest;
 mod settings_page;
+mod sheet;
+mod sheet_view;
 mod steam;
 mod surface;
 mod theme;
