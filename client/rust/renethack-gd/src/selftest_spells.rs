@@ -8,8 +8,8 @@
 //! begins the engine's swap, the swap's panel picks the other spell, and
 //! `+`'s comes back with the two exchanged. `+` closes its own panel; a
 //! gamepad's A casts the first spell and B closes. Every spell's row shows
-//! what the engine's menu says of it. In Russian the HUD's title has the
-//! Wizard's rank in the heroine's gender.
+//! what the engine's menu says of it. In Russian the HUD's title and
+//! subtitle have the Wizard's rank and role in the heroine's gender.
 
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicI64, Ordering};
@@ -200,20 +200,17 @@ pub(super) fn spells() -> Vec<Step> {
                 .iter()
                 .any(|t| t.contains("+:") || t.contains(", +")))
         }),
-        Step::Wait(
-            "the HUD's title with the rank in the heroine's gender",
-            |g| {
-                // in Russian a female Wizard is Призывательница
-                let ui = g.ui.as_ref().ok_or("no UI")?;
-                let title = ui.hud.title_shown();
-                if crate::i18n::lang() == crate::i18n::Lang::Ru
-                    && !title.contains("Призывательница")
-                {
-                    return Err(format!("the HUD's title is {title:?}"));
-                }
-                Ok(true)
-            },
-        ),
+        Step::Wait("the HUD's title and role in the heroine's gender", |g| {
+            // in Russian a female Wizard is Призывательница, Волшебница
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let (title, role) = (ui.hud.title_shown(), ui.hud.subtitle_shown());
+            if crate::i18n::lang() == crate::i18n::Lang::Ru
+                && (!title.contains("Призывательница") || !role.starts_with("Волшебница"))
+            {
+                return Err(format!("the HUD says {title:?}, {role:?}"));
+            }
+            Ok(true)
+        }),
         Step::Shot("spells"),
         // + again closes it; no turn passed
         key('+'),

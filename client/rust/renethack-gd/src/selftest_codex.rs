@@ -4,7 +4,8 @@
 //! language the test runs in; no turn passes. Tab asks the engine for
 //! #conduct, its tab's lines as the engine says them; Tab again, the
 //! discoveries. `\` closes its own tab; a gamepad's bumper turns the tab
-//! and B closes the codex.
+//! and B closes the codex. The hero is a man: in Russian the HUD's rank
+//! and role are a man's.
 
 use std::sync::atomic::{AtomicI64, Ordering};
 
@@ -20,12 +21,14 @@ use crate::i18n::{self, EngineKind};
 /// The turn the codex first opened on.
 static TURN: AtomicI64 = AtomicI64::new(-1);
 
+/// A man: the HUD's rank and role are a man's (the spells' scenario has a
+/// woman's).
 fn wizard() -> CharacterChoice {
     CharacterChoice {
         name: "Hero".into(),
         role: "wizard".into(),
         race: "human".into(),
-        gender: "female".into(),
+        gender: "male".into(),
         align: "neutral".into(),
         profile: KeyProfile::Classic,
     }
@@ -134,6 +137,17 @@ pub(super) fn codex() -> Vec<Step> {
         Step::Call("the turn", |g| {
             TURN.store(g.world.turn().unwrap_or(-1), Ordering::Relaxed);
             Ok(())
+        }),
+        Step::Wait("the HUD's title and role in the hero's gender", |g| {
+            // in Russian a male Wizard is Призыватель, Волшебник
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let (title, role) = (ui.hud.title_shown(), ui.hud.subtitle_shown());
+            if i18n::lang() == i18n::Lang::Ru
+                && (!title.starts_with("Призыватель ") || !role.starts_with("Волшебник "))
+            {
+                return Err(format!("the HUD says {title:?}, {role:?}"));
+            }
+            Ok(true)
         }),
         key('\\'),
         Step::Wait("the codex's discoveries, as \\'s window says", discoveries),

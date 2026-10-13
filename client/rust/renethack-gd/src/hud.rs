@@ -2140,10 +2140,11 @@ impl Hud {
     }
 
     fn show_subtitle(&mut self) {
+        // the role, as the alignment, agrees with the hero (Волшебница)
         let role = self
             .role
             .as_deref()
-            .map(|r| i18n::engine(EngineKind::Name, r).into_owned());
+            .map(|r| i18n::engine_hero_role(r).into_owned());
         // the alignment describes the hero: it agrees with the hero
         let align = self
             .align_text
@@ -2632,6 +2633,12 @@ impl Hud {
             .filter(|(_, c)| c.is_visible_in_tree())
             .map(|(n, c)| (*n, c.get_global_rect()))
             .collect()
+    }
+
+    /// The portrait block's subtitle (the role, the alignment) as it shows
+    /// now (self-tests).
+    pub fn subtitle_shown(&self) -> String {
+        self.subtitle.get_text().to_string()
     }
 
     /// The portrait block's title as it shows now (self-tests).

@@ -236,6 +236,19 @@ impl EngineText for EngineTranslator {
         Some(said.replacen(his, hers, 1))
     }
 
+    fn hero_role(&self, lang: Lang, english: &str) -> Option<String> {
+        // a woman's name for the role where the lexicon has one (a female
+        // Wizard is Волшебница); a role with a woman's name of its own in
+        // English (Priestess) is said by it
+        if lang == Lang::Ru
+            && self.hero.get() == Gender::Fem
+            && let Some(hers) = Lexicon::ru().noun("female", english.trim())
+        {
+            return Some(hers.singular(Case::Nom).to_string());
+        }
+        self.translate(lang, EngineKind::Name, english)
+    }
+
     fn hero_word(&self, lang: Lang, english: &str) -> Option<String> {
         if lang != Lang::Ru {
             return None;
@@ -284,7 +297,12 @@ mod tests {
             t.hero_word(Lang::Ru, "Neutral").as_deref(),
             Some("Нейтральная")
         );
-        // the title's rank in the hero's gender, another role's too
+        // the role and the title's rank in the hero's gender, another
+        // role's too
+        assert_eq!(
+            t.hero_role(Lang::Ru, "Wizard").as_deref(),
+            Some("Волшебница")
+        );
         assert_eq!(
             t.hero_title(Lang::Ru, "Hero the Stripling").as_deref(),
             Some("Юница Hero")
@@ -297,6 +315,10 @@ mod tests {
         assert_eq!(
             t.hero_title(Lang::Ru, "Hero the Evoker").as_deref(),
             Some("Призыватель Hero")
+        );
+        assert_eq!(
+            t.hero_role(Lang::Ru, "Wizard").as_deref(),
+            Some("Волшебник")
         );
         assert_eq!(
             t.hero_title(Lang::Ru, "Hero the Troglodyte").as_deref(),

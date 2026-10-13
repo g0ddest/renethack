@@ -389,6 +389,12 @@ pub trait EngineText {
     fn hero_title(&self, lang: Lang, english: &str) -> Option<String> {
         self.translate(lang, EngineKind::Status, english)
     }
+
+    /// The hero's role ("Wizard"), in the hero's gender; by default as a
+    /// name.
+    fn hero_role(&self, lang: Lang, english: &str) -> Option<String> {
+        self.translate(lang, EngineKind::Name, english)
+    }
 }
 
 /// Plug the engine's translator in (None: the English shows).
@@ -435,6 +441,23 @@ pub fn engine_title(english: &str) -> Cow<'_, str> {
         e.borrow()
             .as_ref()
             .and_then(|t| t.hero_title(lang, english))
+            .map_or(Cow::Borrowed(english), Cow::Owned)
+    })
+}
+
+/// The hero's role as the player reads it ("Wizard": Волшебница for a
+/// heroine), in the hero's gender.
+pub fn engine_hero_role(english: &str) -> Cow<'_, str> {
+    let lang = lang();
+    match lang {
+        Lang::En => return Cow::Borrowed(english),
+        Lang::Pseudo => return Cow::Owned(mark_columns(english)),
+        Lang::Ru => {}
+    }
+    ENGINE.with(|e| {
+        e.borrow()
+            .as_ref()
+            .and_then(|t| t.hero_role(lang, english))
             .map_or(Cow::Borrowed(english), Cow::Owned)
     })
 }

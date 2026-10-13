@@ -8,6 +8,9 @@ use godot::classes::{Control, Label, StyleBoxFlat, VBoxContainer};
 use godot::global::{HorizontalAlignment, VerticalAlignment};
 use godot::prelude::*;
 
+use nh_i18n::Case;
+use nh_i18n::lexicon::Lexicon;
+
 use crate::i18n::{self, EngineKind};
 use crate::skills::{Group, Level, Mark, Skill};
 use crate::theme::{self, Face};
@@ -45,9 +48,15 @@ pub fn group_name(g: Group, english: &str) -> String {
     }
 }
 
-/// A skill's name as the player reads it, with a capital.
+/// A skill's name as the player reads it, with a capital: the lexicon's
+/// skill first (polearms is one weapon's kind there, древковое оружие, not
+/// the plural of a polearm), else the engine's name.
 pub fn skill_name(english: &str) -> String {
-    let said = i18n::engine(EngineKind::Name, english);
+    let skill = (i18n::lang() == i18n::Lang::Ru)
+        .then(|| Lexicon::ru().noun("skill", english))
+        .flatten()
+        .map(|n| n.singular(Case::Nom).to_string());
+    let said = skill.unwrap_or_else(|| i18n::engine(EngineKind::Name, english).into_owned());
     let mut chars = said.chars();
     match chars.next() {
         Some(c) => c.to_uppercase().chain(chars).collect(),

@@ -89,6 +89,13 @@ fn shown(g: &RenethackGame, advance: bool) -> Result<bool, String> {
             return Err(format!("no group {name:?}: {texts:?}"));
         }
     }
+    // the Valkyrie's polearms in Russian: a mass noun, as one weapon
+    if crate::i18n::lang() == crate::i18n::Lang::Ru
+        && all(&s).iter().any(|k| k.name == "polearms")
+        && !texts.iter().any(|t| t == "Древковое оружие")
+    {
+        return Err(format!("no Древковое оружие: {texts:?}"));
+    }
     Ok(true)
 }
 
