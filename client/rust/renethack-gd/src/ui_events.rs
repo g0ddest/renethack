@@ -101,6 +101,8 @@ pub enum DialogEvent {
     /// The spells' panel: a pick reorders the spells (the engine's swap)
     /// instead of casting, or casts again.
     Reorder,
+    /// The codex: its other tab.
+    SwitchTab,
 }
 
 /// Role, race, gender and alignment codes ("random" allowed).

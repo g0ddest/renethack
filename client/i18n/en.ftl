@@ -409,6 +409,14 @@ journal-no-messages = No messages yet.
 journal-hint = ↑↓ PgUp PgDn: the messages · Esc, { $key }: close
 journal-hint-esc = ↑↓ PgUp PgDn: the messages · Esc: close
 
+## The RPG panels: the codex (\, #conduct)
+
+codex-title = Codex
+codex-discoveries = Discoveries
+codex-conduct = Conduct
+codex-hint = ↑↓ PgUp PgDn: scroll · Tab: the other tab · Esc, { $key }: close
+codex-hint-esc = ↑↓ PgUp PgDn: scroll · Tab: the other tab · Esc: close
+
 ## The message log
 
 log-title = Messages

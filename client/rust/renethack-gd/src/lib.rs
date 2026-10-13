@@ -11,6 +11,8 @@ mod batch;
 mod bearing;
 mod bindings;
 mod branch_look;
+mod codex;
+mod codex_view;
 mod credits;
 mod credits_page;
 mod cues;

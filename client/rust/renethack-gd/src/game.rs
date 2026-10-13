@@ -2003,11 +2003,20 @@ impl RenethackGame {
         }
     }
 
-    /// A dialog's answer to the engine; a spell the spells' panel picked to
-    /// cast follows with `Z` at the command prompt it goes back to.
+    /// A dialog's answer to the engine; what a panel asked to follow it (a
+    /// spell to cast, the codex's other tab) at the command prompt it goes
+    /// back to.
     fn dialog_reply(&mut self, r: Reply) {
-        if let Some(name) = self.ui_mut().dialogs.take_cast() {
-            self.deferred = Some(SlotUse::Macro(nh_world::Macro::cast(&name)));
+        use crate::dialogs::Follow;
+        use nh_world::Macro;
+        let follow = match self.ui_mut().dialogs.take_follow() {
+            Some(Follow::Cast(name)) => Some(Macro::cast(&name)),
+            Some(Follow::Key(k)) => Some(Macro::key(k, None, self.world.number_pad)),
+            Some(Follow::Ext(name)) => Some(Macro::ext(name)),
+            None => None,
+        };
+        if let Some(m) = follow {
+            self.deferred = Some(SlotUse::Macro(m));
         }
         self.reply(r);
     }
@@ -2100,6 +2109,10 @@ impl RenethackGame {
         }
         if ui.help.is_open() {
             return PadCtx::Help;
+        }
+        // the codex: its tabs on the bumpers, as the inventory's filters
+        if ui.dialogs.layout_name() == Some("codex") {
+            return PadCtx::PanelBrowse;
         }
         if ui.dialogs.is_open() {
             return match ui.dialogs.kind_name() {

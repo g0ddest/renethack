@@ -410,6 +410,14 @@ journal-no-messages = Сообщений пока нет.
 journal-hint = ↑↓ PgUp PgDn: сообщения · Esc, { $key }: закрыть
 journal-hint-esc = ↑↓ PgUp PgDn: сообщения · Esc: закрыть
 
+## RPG-панели: кодекс (\, #conduct)
+
+codex-title = Кодекс
+codex-discoveries = Открытия
+codex-conduct = Испытания
+codex-hint = ↑↓ PgUp PgDn: прокрутка · Tab: другая вкладка · Esc, { $key }: закрыть
+codex-hint-esc = ↑↓ PgUp PgDn: прокрутка · Tab: другая вкладка · Esc: закрыть
+
 ## Журнал сообщений
 
 log-title = Сообщения

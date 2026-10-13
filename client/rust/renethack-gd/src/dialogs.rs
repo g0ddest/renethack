@@ -27,6 +27,8 @@ use nh_world::{Key, KeyInput, MenuEntry, MenuOutcome, MenuState, Prompt, TextLin
 
 use nh_i18n::lexicon::Lexicon;
 
+use crate::codex;
+use crate::codex_view;
 use crate::i18n::{self, EngineKind, Lang};
 use crate::journal;
 use crate::journal_view::{self, JournalView};
@@ -1360,11 +1362,34 @@ pub struct Dialogs {
     /// The open spells' panel: its spells, whether a pick reorders them
     /// (else it casts), the reorder's button.
     spells: Option<SpellsOpen>,
-    /// The spell a pick in `+`'s panel casts, once its menu is answered
-    /// (`take_cast`).
-    cast: Option<String>,
+    /// What the game is to do once the open panel's window is answered
+    /// (`take_follow`): cast the spell `+`'s panel picked, open the
+    /// codex's other tab.
+    follow: Option<Follow>,
     /// The open journal's view (the game puts the messages in).
     journal: Option<JournalView>,
+    /// The codex's tab open.
+    codex: Option<CodexTab>,
+    /// The discoveries' cards with an icon, of all (self-tests).
+    codex_icons: (usize, usize),
+}
+
+/// What follows a panel's answer, at the command prompt it goes back to.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Follow {
+    /// `Z`, then the spell by its name.
+    Cast(String),
+    /// A command's key (`\`).
+    Key(i32),
+    /// An extended command (#conduct).
+    Ext(&'static str),
+}
+
+/// The codex's tabs: `\`'s discoveries, #conduct's challenges.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CodexTab {
+    Discoveries,
+    Conduct,
 }
 
 struct SpellsOpen {
@@ -1425,8 +1450,10 @@ impl Dialogs {
             sheet: None,
             opening_own: None,
             spells: None,
-            cast: None,
+            follow: None,
             journal: None,
+            codex: None,
+            codex_icons: (0, 0),
         }
     }
 
@@ -3116,10 +3143,11 @@ impl Dialogs {
         self.spells.as_ref().map(|sp| (sp.book.purpose, sp.reorder))
     }
 
-    /// The spell a pick in `+`'s panel is to cast, once: the game casts it
-    /// with `Z` when the engine is back at its command prompt.
-    pub fn take_cast(&mut self) -> Option<String> {
-        self.cast.take()
+    /// What the game is to do once the engine is back at its command
+    /// prompt, once: cast the spell `+`'s panel picked, open the codex's
+    /// other tab.
+    pub fn take_follow(&mut self) -> Option<Follow> {
+        self.follow.take()
     }
 
     /// A reply of the spells' panel as the engine is to have it: a pick in
@@ -3138,7 +3166,7 @@ impl Dialogs {
         let spell = picked.and_then(|idx| sp.book.spell(i32::try_from(idx).ok()?));
         match spell {
             Some(s) => {
-                self.cast = Some(s.name.clone());
+                self.follow = Some(Follow::Cast(s.name.clone()));
                 Reply::Cancel
             }
             None => reply,
@@ -3241,6 +3269,154 @@ impl Dialogs {
         {
             text.scroll_to(1.0e9);
         }
+    }
+
+    /// The discoveries' cards: each object's name and looks as the
+    /// window's translation says them, its appearance's icon. Also how
+    /// many cards have an icon, of all.
+    fn discoveries_view(
+        &self,
+        d: &codex::Discoveries,
+        english: &[TextLine],
+        shown: &[TextLine],
+        catalog: Option<&Catalog>,
+    ) -> (Gd<Control>, (usize, usize)) {
+        let said: HashMap<&str, &str> = if english.len() == shown.len() {
+            english
+                .iter()
+                .zip(shown)
+                .map(|(e, s)| (e.text.as_str(), s.text.as_str()))
+                .collect()
+        } else {
+            HashMap::new()
+        };
+        let say = |line: &str| -> String {
+            said.get(line).map_or_else(
+                || i18n::engine(EngineKind::Window, line).into_owned(),
+                |t| t.to_string(),
+            )
+        };
+        let heading = |h: &str| say(h).trim().to_string();
+        // a card's words: its line as said, its looks split off the end
+        let card = |e: &codex::Discovery| -> (String, Option<String>) {
+            let mark = if e.unseen { "* " } else { "  " };
+            let line = english
+                .iter()
+                .map(|l| l.text.as_str())
+                .find(|l| l.strip_prefix(mark).is_some_and(|r| r.starts_with(&e.text)))
+                .map_or_else(|| format!("{mark}{}", e.text), str::to_string);
+            codex::card_words(&say(&line), e)
+        };
+        // an object's icon: its appearance's, as the inventory shows it
+        let counts = std::cell::Cell::new((0, 0));
+        let icon = |heading: &str, e: &codex::Discovery| -> Option<Gd<Texture2D>> {
+            let looks = e.appearance.as_deref().unwrap_or(&e.name);
+            let class = codex::class_of(heading);
+            let found = catalog.zip(class).and_then(|(c, class)| {
+                c.object_tiles
+                    .iter()
+                    .find(|t| t.class.starts_with(class) && t.appearance == looks)
+            });
+            // the relics and the artifacts have no class's icon
+            if class.is_some() {
+                let (with, all) = counts.get();
+                counts.set((with + usize::from(found.is_some()), all + 1));
+            }
+            let t = found?;
+            Some(crate::icons::item_icon(t.tile, class?))
+        };
+        let view =
+            codex_view::discoveries(d, self.panel_width().min(JOURNAL_W), &heading, &card, &icon);
+        (view, counts.get())
+    }
+
+    /// `\` and #conduct: the codex, a tab each; the one shown is the
+    /// engine's window, Tab or the other tab asks for the other.
+    fn open_codex(
+        &mut self,
+        req: u64,
+        tab: CodexTab,
+        content: Gd<Control>,
+        catalog: Option<&Catalog>,
+    ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        let width = self.panel_width().min(JOURNAL_W);
+        let outer = width + SCROLL_ROOM;
+        let own = match tab {
+            CodexTab::Discoveries => ext_key(catalog, "known"),
+            CodexTab::Conduct => ext_key(catalog, "conduct"),
+        };
+        let (shade, panel, mut col, key) =
+            self.panel_frame(req, &tr!("codex-title"), own, DialogEvent::Close, outer);
+        // the tabs
+        let mut tabs = HBoxContainer::new_alloc();
+        tabs.add_theme_constant_override("separation", 8);
+        for (t, name) in [
+            (CodexTab::Discoveries, tr!("codex-discoveries")),
+            (CodexTab::Conduct, tr!("codex-conduct")),
+        ] {
+            let mut b = theme::button(&name, &self.queue, dialog_ui(req, DialogEvent::SwitchTab));
+            b.set_custom_minimum_size(Vector2::new(160.0, 34.0));
+            if t == tab {
+                b.add_theme_stylebox_override("normal", &self.look.focus_button);
+                b.add_theme_color_override("font_color", theme::GOLD_BRIGHT);
+                b.set_disabled(true);
+                b.add_theme_stylebox_override("disabled", &self.look.focus_button);
+                b.add_theme_color_override("font_disabled_color", theme::GOLD_BRIGHT);
+            }
+            tabs.add_child(&b);
+        }
+        col.add_child(&tabs);
+        let max_h = (self.screen().y - PANEL_CHROME - 44.0).max(ROW_H * 6.0);
+        let text = Scroller::new(outer, max_h, false);
+        let mut scroll = text.scroll.clone();
+        scroll.add_child(&content);
+        col.add_child(&scroll);
+        let hint = match own {
+            Some(_) => tr!("codex-hint", key = key.as_str()),
+            None => tr!("codex-hint-esc"),
+        };
+        self.hint(&mut col, &hint, outer);
+        // as tall as the content once it is laid out, up to the room
+        let (mut sc, c, mut p) = (scroll.clone(), content.clone(), panel.clone());
+        content.signals().resized().connect(move || {
+            let h = (c.get_size().y + 4.0).clamp(ROW_H, max_h);
+            let now = sc.get_custom_minimum_size();
+            if (now.y - h).abs() > 1.0 {
+                sc.set_custom_minimum_size(Vector2::new(now.x, h));
+                p.set_offset(godot::builtin::Side::TOP, -40.0);
+                p.set_offset(godot::builtin::Side::BOTTOM, 40.0);
+            }
+        });
+        self.codex = Some(tab);
+        (
+            Kind::Show {
+                text,
+                layout: Some("codex"),
+            },
+            shade,
+            panel,
+        )
+    }
+
+    /// The codex's other tab: this window answered, the other's command
+    /// to follow (`take_follow`).
+    fn switch_codex(&mut self) -> Option<Reply> {
+        let tab = self.codex?;
+        self.follow = Some(match tab {
+            CodexTab::Discoveries => Follow::Ext("conduct"),
+            CodexTab::Conduct => Follow::Key('\\' as i32),
+        });
+        Some(Reply::Ack)
+    }
+
+    /// The codex's tab open (self-tests).
+    pub fn codex_tab(&self) -> Option<CodexTab> {
+        self.codex
+    }
+
+    /// The discoveries' cards with an icon, of all (self-tests).
+    pub fn codex_icons(&self) -> (usize, usize) {
+        self.codex_icons
     }
 
     fn open_overview(
@@ -3562,6 +3738,18 @@ impl Dialogs {
                     self.open_sheet(req, &s, english, lines)
                 } else if let Some(j) = journal::journal(&texts) {
                     self.open_journal(req, &j, catalog)
+                } else if let Some(c) = codex::conduct(&texts) {
+                    let content = codex_view::conduct(&c, self.panel_width().min(JOURNAL_W));
+                    self.open_codex(req, CodexTab::Conduct, content, catalog)
+                } else if let Some(d) = codex::discoveries(
+                    &english
+                        .iter()
+                        .map(|l| (l.text.clone(), l.attr & 0x0f != 0))
+                        .collect::<Vec<_>>(),
+                ) {
+                    let (content, icons) = self.discoveries_view(&d, english, lines, catalog);
+                    self.codex_icons = icons;
+                    self.open_codex(req, CodexTab::Discoveries, content, catalog)
                 } else if let Some(sk) = skills::skills(english_title, &skill_lines) {
                     // #enhance with nothing to advance: its lines as a menu's
                     let items: Vec<nh_protocol::MenuItem> = english
@@ -3738,6 +3926,7 @@ impl Dialogs {
         self.sheet = None;
         self.spells = None;
         self.journal = None;
+        self.codex = None;
         // built hidden, drawn from the next frame: its making and its
         // first draw (layout, text, pipelines) fall on two frames
         open.panel.set_visible(false);
@@ -4095,6 +4284,10 @@ impl Dialogs {
             self.toggle_reorder();
             return None;
         }
+        // the codex: Tab (a gamepad's bumper) to the other tab
+        if self.codex.is_some() && input.key == Key::Tab && !input.echo {
+            return self.switch_codex();
+        }
         let reply = self.key_reply(input)?;
         Some(self.spells_reply(reply))
     }
@@ -4240,6 +4433,12 @@ impl Dialogs {
             }
             return None;
         }
+        if matches!(ev, DialogEvent::SwitchTab) {
+            if self.open_req() != Some(req) {
+                return None;
+            }
+            return self.switch_codex();
+        }
         let reply = self.event_reply(req, ev)?;
         Some(self.spells_reply(reply))
     }
@@ -4371,6 +4570,7 @@ impl Dialogs {
         self.sheet = None;
         self.spells = None;
         self.journal = None;
+        self.codex = None;
         if let Some(open) = self.open.take() {
             self.retire(open);
         }
