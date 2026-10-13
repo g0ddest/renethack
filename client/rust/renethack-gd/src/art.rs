@@ -2102,6 +2102,11 @@ impl Art {
                     if let Some(v) = spec.roughness {
                         m.set_roughness(v);
                     }
+                    if let Some(v) = spec.rim {
+                        m.set_feature(Feature::RIM, true);
+                        m.set_rim(v);
+                        m.set_rim_tint(0.3);
+                    }
                     if let Some(g) = spec.glow_rgb() {
                         // brightest where the albedo is: the blade, not the grip
                         m.set_feature(Feature::EMISSION, true);

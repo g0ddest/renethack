@@ -234,6 +234,10 @@ pub struct ModelSpec {
     pub metallic: Option<f32>,
     #[serde(default)]
     pub roughness: Option<f32>,
+    /// How bright the rim of it turned from the eye is lit: a black hide
+    /// that stays seen on a dark floor.
+    #[serde(default)]
+    pub rim: Option<f32>,
     /// A faint glow ("#rrggbb") over the scene's own colours (runes).
     #[serde(default)]
     pub glow: Option<String>,
@@ -376,7 +380,10 @@ impl PortraitSpec {
 impl ModelSpec {
     /// Whether the scene's own materials are changed beyond a tint.
     pub fn refinishes(&self) -> bool {
-        self.metallic.is_some() || self.roughness.is_some() || self.glow.is_some()
+        self.metallic.is_some()
+            || self.roughness.is_some()
+            || self.rim.is_some()
+            || self.glow.is_some()
     }
 
     pub fn glow_rgb(&self) -> Option<[f32; 3]> {
@@ -1253,6 +1260,7 @@ impl ArtManifest {
             hide: Vec::new(),
             metallic: None,
             roughness: None,
+            rim: None,
             glow: None,
             glow_energy: 0.0,
             smooth: false,
