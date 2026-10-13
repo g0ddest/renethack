@@ -10,7 +10,8 @@ The recipe is client/godot/art/sources.json: Poly Haven textures and models
 URLs (VFX flipbooks, particles, icons), textures painted from those by
 tools/art_paint.py (a corpse's skin, a mummy's linen), rigged models with
 bones turned in their clips by tools/gltf_turn.py (a dragon's raised
-wings), models made from those in Blender by tools/blender (static models
+wings) or their low-poly meshes rounded by tools/gltf_smooth.py (a
+dragon's origami facets), models made from those in Blender by tools/blender (static models
 rigged with a Quaternius animal's skeleton), and the OFL fonts of the UI
 (the google/fonts repository at a fixed commit, into client/godot/fonts). Textures larger than
 `texture_max` are scaled down and stored as JPEG; glTF files are rewritten to
@@ -467,12 +468,22 @@ def do_painted(w, item):
 def do_turned(w, item):
     """A rigged GLB written before in this run (`from`, under ART) with
     bones turned in every clip by tools/gltf_turn.py (`raise`: {"bone":
-    degrees} about the body's forward axis)."""
+    degrees} about the body's forward axis) and set further from their
+    parents (`stretch`: {"bone": factor})."""
     import gltf_turn
     with open(os.path.join(ART, item["from"]), "rb") as f:
         data = f.read()
-    w.put(item["out"], gltf_turn.turned(data, item["raise"], item.get("front", "Head"),
-                                        item.get("back", "Body")))
+    w.put(item["out"], gltf_turn.turned(data, item.get("raise", {}), item.get("front", "Head"),
+                                        item.get("back", "Body"), item.get("stretch")))
+
+
+def do_smoothed(w, item):
+    """A rigged GLB written before in this run (`from`, under ART) whose
+    low-poly mesh (`mesh`) tools/gltf_smooth.py rounds, `steps` times."""
+    import gltf_smooth
+    with open(os.path.join(ART, item["from"]), "rb") as f:
+        data = f.read()
+    w.put(item["out"], gltf_smooth.smoothed(data, item["mesh"], item.get("steps", 2)))
 
 
 def do_fonts(op, item):
@@ -531,6 +542,9 @@ def main():
     for item in recipe.get("turned", []):
         print("turned", item["out"], flush=True)
         do_turned(w, item)
+    for item in recipe.get("smoothed", []):
+        print("smoothed", item["out"], flush=True)
+        do_smoothed(w, item)
     for item in recipe.get("blender", []):
         print("blender", item["script"], item["out"], flush=True)
         data = do_blender(op, item, blender, max_size)

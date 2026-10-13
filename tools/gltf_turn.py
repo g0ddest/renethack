@@ -3,7 +3,10 @@ animated (tools/fetch_art.py runs it: the "turned" recipe in
 client/godot/art/sources.json): a dragon's wings beating raised over its
 back. Only the clips' rotation keys of those bones change (and the bones'
 own rest rotation, for a clip that does not key them): the file is
-otherwise byte for byte the one it came from.
+otherwise byte for byte the one it came from. A bone may also be set
+further from its parent (`stretch`: its rest offset and its clips'
+translation keys scaled), the skin between them drawn out: a neck made
+long.
 
 Only the Python standard library is needed.
 """
@@ -38,10 +41,11 @@ def _unit(v):
     return [x / n for x in v]
 
 
-def turned(glb, raise_bones, front="Head", back="Body"):
+def turned(glb, raise_bones, front="Head", back="Body", stretch=None):
     """`glb` (bytes) with each bone of `raise_bones` ({"name": degrees})
     turned that far about the body's forward axis (from `back` to
-    `front`, level), the way that lifts the bone's tip."""
+    `front`, level), the way that lifts the bone's tip; each of `stretch`
+    ({"name": factor}) that much further from its parent."""
     magic, version, _ = struct.unpack_from("<III", glb, 0)
     if magic != 0x46546C67 or version != 2:
         raise ValueError("not a GLB")
@@ -104,6 +108,22 @@ def turned(glb, raise_bones, front="Head", back="Body"):
                 for k in range(count):
                     q = list(struct.unpack_from("<4f", data, at + 16 * k))
                     struct.pack_into("<4f", data, at + 16 * k, *_mul(local, q))
+    for name, factor in sorted((stretch or {}).items()):
+        bone = by_name[name]
+        t = nodes[bone].get("translation", [0.0, 0.0, 0.0])
+        nodes[bone]["translation"] = [x * factor for x in t]
+        for anim in doc.get("animations", []):
+            for ch in anim["channels"]:
+                if ch["target"].get("node") != bone or ch["target"]["path"] != "translation":
+                    continue
+                acc = doc["accessors"][anim["samplers"][ch["sampler"]]["output"]]
+                view = doc["bufferViews"][acc["bufferView"]]
+                if acc["componentType"] != 5126 or acc["type"] != "VEC3" or view.get("byteStride", 12) != 12:
+                    raise ValueError(f"{name}: not packed float translations")
+                at = view.get("byteOffset", 0) + acc.get("byteOffset", 0)
+                for k in range(acc["count"]):
+                    v = struct.unpack_from("<3f", data, at + 12 * k)
+                    struct.pack_into("<3f", data, at + 12 * k, *(x * factor for x in v))
     js = json.dumps(doc, separators=(",", ":")).encode()
     js += b" " * (-len(js) % 4)
     total = 12 + 8 + len(js) + 8 + len(data)
