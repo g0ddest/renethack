@@ -32,8 +32,9 @@ use crate::tr;
 use crate::ui_events::{UiEvent, UiQueue, push};
 
 /// Messages kept in the log panel; the wheel scrolls through them (the
-/// full log has the rest).
-const LOG_LINES: usize = 200;
+/// full log has the rest). Every message, fade or input lays them all out
+/// again: at 200 that was 5 ms of a frame.
+const LOG_LINES: usize = 60;
 /// The screen edge the blocks keep, in design pixels.
 const EDGE: f32 = 24.0;
 const PORTRAIT_W: f32 = 520.0;
@@ -2412,11 +2413,23 @@ impl Hud {
         let shown = if h <= room {
             h
         } else {
+            // the first line from which the rest fits (the rest shrinks
+            // line by line: halving finds it in a few looks)
             let n = self.log.get_line_count();
-            (0..n)
-                .map(|i| h - self.log.get_line_offset(i))
-                .find(|&rest| rest <= room)
-                .unwrap_or(room)
+            let (mut lo, mut hi) = (0, n);
+            while lo < hi {
+                let mid = (lo + hi) / 2;
+                if h - self.log.get_line_offset(mid) <= room {
+                    hi = mid;
+                } else {
+                    lo = mid + 1;
+                }
+            }
+            if lo < n {
+                h - self.log.get_line_offset(lo)
+            } else {
+                room
+            }
         };
         self.log
             .set_custom_minimum_size(Vector2::new(0.0, shown.max(1.0)));
