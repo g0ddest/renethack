@@ -623,7 +623,7 @@ fn forced_search(game: &RenethackGame) -> Result<Option<KeyInput>, String> {
 }
 
 /// The key of a step onto open floor next to the hero.
-fn open_way(game: &RenethackGame) -> Result<char, String> {
+pub(super) fn open_way(game: &RenethackGame) -> Result<char, String> {
     let cat = game.catalog.as_deref().ok_or("no catalog")?;
     let (hx, hy) = game.world.map.hero().ok_or("no hero")?;
     STEPS

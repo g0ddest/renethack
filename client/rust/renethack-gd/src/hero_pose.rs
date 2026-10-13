@@ -129,6 +129,9 @@ pub(super) struct HeroPose {
     lying: Option<Lying>,
     /// The last spell of helplessness shown (its serial).
     shown_spell: u64,
+    /// How far above the floor the hero floats (hero_look's: levitating,
+    /// flying), lifted as a pit lowers them.
+    pub(super) lift: f32,
 }
 
 /// A spell of helplessness being shown.
@@ -218,6 +221,7 @@ impl HeroPose {
             prayer: None,
             lying: None,
             shown_spell: 0,
+            lift: 0.0,
         }
     }
 
@@ -250,6 +254,7 @@ impl HeroPose {
             }
         }
         self.shown_spell = 0;
+        self.lift = 0.0;
     }
 
     fn clear_parts(&mut self) {
@@ -474,7 +479,8 @@ impl MapView {
             .hero_model()
             .and_then(|m| m.node.get_child(0))
             .and_then(|n| n.try_cast::<Node3D>().ok());
-        let sink = self.hero_pose.sink;
+        // a floating hero is lifted as a sunk one is lowered
+        let shift = self.hero_pose.lift - self.hero_pose.sink;
         let pose = &mut self.hero_pose;
         // another model (a new level, a look changed): the old one is put
         // back at its height
@@ -492,7 +498,7 @@ impl MapView {
             return;
         };
         if pose.lowered.is_none() {
-            if sink <= 0.0 {
+            if shift == 0.0 {
                 return;
             }
             pose.lowered = Some(Lowered {
@@ -504,9 +510,9 @@ impl MapView {
             return;
         };
         let mut p = inner.get_position();
-        p.y = l.base - sink;
+        p.y = l.base + shift;
         inner.set_position(p);
-        if sink <= 0.0 {
+        if shift == 0.0 {
             pose.lowered = None;
         }
     }

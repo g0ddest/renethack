@@ -3588,7 +3588,7 @@ impl MapView {
             }
         }
         self.pose_hero(world, catalog, delta as f32);
-        self.look_hero(world, catalog);
+        self.look_hero(world, catalog, delta as f32);
         self.show_hover();
         if std::mem::take(&mut self.hints_dirty) {
             self.show_hints();
@@ -3966,6 +3966,11 @@ impl MapView {
     /// Splats of blood lying on the floor now (self-tests).
     pub fn splats_shown(&self) -> usize {
         self.vfx.splats_shown()
+    }
+
+    /// How far above the floor the hero floats now (self-tests).
+    pub fn hero_lift(&self) -> f32 {
+        self.hero_pose.lift
     }
 
     /// The conditions the hero's body shows, each with its share of the
@@ -6312,7 +6317,11 @@ impl MapView {
                     Some(p) if hero && c.cells == 1 => (p, false),
                     _ => pace(c.cells, c.hurry),
                 };
-                let clips = self.art.clips(&c.model, run);
+                let mut clips = self.art.clips(&c.model, run);
+                // a floating hero glides, their legs still
+                if hero && self.rider.is_none() && self.hero_look.floating() {
+                    clips.gait = clips.idle.clone();
+                }
                 self.motions.push(Motion::step(
                     c.model.node.clone(),
                     (x, y),

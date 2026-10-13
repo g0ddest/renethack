@@ -2,7 +2,9 @@
 //! debug-mode game where #wizintrinsic sets them. Turning to stone the
 //! hero greys, a step further each turn; a prayer cures it and the tint
 //! goes. Turning to slime they go green the same way, and a prayer cures
-//! that too. Pictures of each with `--screenshots`.
+//! that too. Levitating for three turns they rise off the floor and bob,
+//! glide a step, and come down when it ends. Pictures of each with
+//! `--screenshots`.
 
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering};
@@ -53,6 +55,62 @@ pub(super) fn conditions() -> Vec<Step> {
     for (_, _, shot, end) in COUNTDOWNS {
         steps.extend(countdown(shot, end));
     }
+    steps.extend(levitating());
+    steps
+}
+
+/// A float the hero rises into and bobs in, three turns long.
+fn levitating() -> Vec<Step> {
+    let mut steps = vec![
+        key('#'),
+        Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
+        Step::Dialog(DialogEvent::ExtCmd(Some("wizintrinsic".into()))),
+        Step::Request("the intrinsics", |p| matches!(p, Prompt::Menu { .. })),
+        // three turns of it, not the thirty a pick alone gives
+        key('3'),
+        Step::KeyFrom("levitating", |g| entry_key(g, "levitating")),
+        Step::Dialog(DialogEvent::MenuConfirm),
+        Step::Request("a command, afloat", command),
+        Step::Wait("the hero risen off the floor", |g| {
+            Ok(map_view(g)?.hero_lift() > 0.25)
+        }),
+        Step::Call("", |g| {
+            *AT.lock().unwrap() = map_view(g)?.hero_lift();
+            Ok(())
+        }),
+        Step::Wait("bobbing", |g| {
+            let before = *AT.lock().unwrap();
+            Ok((map_view(g)?.hero_lift() - before).abs() > 0.02)
+        }),
+        Step::Shot("conditions-levitating"),
+        // a step afloat: a glide, the legs still (the idle, not a walk)
+        Step::KeyFrom("a step", |g| {
+            super::audio_tests::open_way(g).map(|c| KeyInput::plain(Key::Char(c)))
+        }),
+        Step::Wait("gliding", |g| {
+            let (gait, _) = map_view(g)?.hero_clips();
+            Ok(gait.is_some_and(|c| {
+                let c = c.to_lowercase();
+                !c.contains("walk") && !c.contains("run") && !c.contains("jog")
+            }))
+        }),
+        Step::Request("a command after the glide", command),
+        Step::Call("", |_| {
+            SEARCHED.store(0, Ordering::Relaxed);
+            Ok(())
+        }),
+        Step::KeysUntil("searching until the float ends", |g| {
+            let cat = g.catalog.as_deref().ok_or("no catalog")?;
+            let names = g.world.status.condition_names(cat);
+            if !names.iter().any(|n| n == "Lev") && !FORCING.load(Ordering::Relaxed) {
+                return Ok(None);
+            }
+            forced_search(g)
+        }),
+    ];
+    steps.push(Step::Wait("down on the floor again", |g| {
+        Ok(map_view(g)?.hero_lift() == 0.0)
+    }));
     steps
 }
 
@@ -107,6 +165,10 @@ fn countdown(shot: &'static str, end: &'static str) -> Vec<Step> {
     steps.push(Step::Wait("cured: the tint gone", |g| {
         let (shown, tinted) = map_view(g)?.hero_shown(&g.world);
         Ok(shown.is_empty() && !tinted)
+    }));
+    // the god's light gone before the next picture
+    steps.push(Step::Wait("the prayer over", |g| {
+        Ok(map_view(g)?.hero_prayer().is_none())
     }));
     steps
 }

@@ -3,7 +3,8 @@
 //! grey stone creeps over the hero in patches, turning to slime green
 //! slime does, wet and faintly glowing, more of them each turn of the
 //! countdown (five for stone, ten for slime), all of the body at its end.
-//! A child of map_view: it lays its skin over the hero's own model (the
+//! Levitating or flying they float above the floor, bobbing slowly, and
+//! glide from cell to cell, their legs still. A child of map_view: it lays its skin over the hero's own model (the
 //! rider's while they ride), under the see-through look that shows them
 //! behind a wall.
 
@@ -22,6 +23,17 @@ pub enum Shown {
     Stone,
     Slime,
 }
+
+/// A floating hero's height over the floor, the bob's height and its
+/// seconds, and the seconds they take to rise or come down; the shadow
+/// on the floor under them (from the camera above a lift reads by it),
+/// its size and darkness.
+const FLOAT_HEIGHT: f32 = 0.32;
+const UNDER_SIZE: f32 = 0.85;
+const UNDER_DARK: f32 = 0.6;
+const BOB: f32 = 0.05;
+const BOB_SECS: f32 = 2.6;
+const FLOAT_EASE: f32 = 0.6;
 
 impl Shown {
     const ALL: [Shown; 2] = [Shown::Stone, Shown::Slime];
@@ -59,6 +71,13 @@ pub(super) struct HeroLook {
     slime: Gd<StandardMaterial3D>,
     /// The tint on the hero's model now: which model, which tint.
     tinted: Option<(InstanceId, Option<Shown>)>,
+    /// The masks of Lev and Fly; how far up a float is (0..=1, easing),
+    /// and the seconds the bob has run.
+    float_masks: u64,
+    float: f32,
+    bob: f32,
+    /// The shadow under a floating hero (made the first time they float).
+    under: Option<Gd<godot::classes::Decal>>,
 }
 
 /// Its share of the way, `elapsed` turns into a countdown of `turns`.
@@ -109,6 +128,10 @@ impl HeroLook {
             stone,
             slime,
             tinted: None,
+            float_masks: 0,
+            float: 0.0,
+            bob: 0.0,
+            under: None,
         }
     }
 
@@ -116,6 +139,15 @@ impl HeroLook {
     pub(super) fn forget(&mut self) {
         self.since.clear();
         self.tinted = None;
+        self.float = 0.0;
+        if let Some(u) = self.under.as_mut() {
+            u.set_visible(false);
+        }
+    }
+
+    /// The hero floats (or is rising or coming down).
+    pub(super) fn floating(&self) -> bool {
+        self.float > 0.0
     }
 
     /// The tint to lay over the hero now (the stronger countdown's, stone
@@ -140,7 +172,7 @@ impl HeroLook {
 impl MapView {
     /// Every frame with the hero on the map: their body as their
     /// conditions show.
-    pub(super) fn look_hero(&mut self, world: &World, catalog: &Catalog) {
+    pub(super) fn look_hero(&mut self, world: &World, catalog: &Catalog, delta: f32) {
         let look = &mut self.hero_look;
         if look.masks.is_empty() {
             look.masks = Shown::ALL
@@ -150,8 +182,55 @@ impl MapView {
                     Some((c.mask, s))
                 })
                 .collect();
+            look.float_masks = catalog
+                .conditions
+                .iter()
+                .filter(|c| c.name == "Lev" || c.name == "Fly")
+                .fold(0, |m, c| m | c.mask);
         }
         let conds = world.status.conditions();
+        // floating, up off the floor and bobbing (a rider keeps their seat)
+        let floats = conds & look.float_masks != 0 && self.rider.is_none();
+        let to = if floats { 1.0 } else { 0.0 };
+        let step = delta / FLOAT_EASE;
+        look.float = if look.float < to {
+            (look.float + step).min(to)
+        } else {
+            (look.float - step).max(to)
+        };
+        look.bob = if look.float > 0.0 {
+            (look.bob + delta) % BOB_SECS
+        } else {
+            0.0
+        };
+        let bob = (look.bob / BOB_SECS * std::f32::consts::TAU).sin();
+        let ease = look.float * look.float * (3.0 - 2.0 * look.float);
+        self.hero_pose.lift = ease * (FLOAT_HEIGHT + BOB * bob);
+        // their shadow stays on the floor, under the ring
+        if ease > 0.0 && look.under.is_none() {
+            use godot::classes::decal::DecalTexture;
+            let mut d = godot::classes::Decal::new_alloc();
+            d.set_name("FloatShadow");
+            d.set_size(Vector3::new(UNDER_SIZE, 0.6, UNDER_SIZE));
+            d.set_texture(DecalTexture::ALBEDO, &self.soft_tex);
+            d.set_albedo_mix(1.0);
+            d.set_cull_mask(super::TERRAIN_LAYER);
+            d.set_normal_fade(0.6);
+            self.root.add_child(&d);
+            self.hero_look.under = Some(d);
+        }
+        let ring = self.hero_ring.get_position();
+        let look = &mut self.hero_look;
+        if let Some(u) = look.under.as_mut() {
+            u.set_visible(ease > 0.0);
+            if ease > 0.0 {
+                // darker as they rise, a little smaller at the bob's top
+                u.set_position(ring);
+                u.set_modulate(Color::from_rgba(0.0, 0.0, 0.0, UNDER_DARK * ease));
+                let k = 1.0 - 0.1 * bob;
+                u.set_size(Vector3::new(UNDER_SIZE * k, 0.6, UNDER_SIZE * k));
+            }
+        }
         let turn = world.turn().unwrap_or(0);
         for &(mask, s) in &look.masks {
             let on = conds & mask != 0;
