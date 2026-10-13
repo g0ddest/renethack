@@ -69,8 +69,13 @@ pub enum Part {
     /// the plates down the front of it.
     SerpentTail,
     SerpentBelly,
-    /// A naga's: the serpent's body rising from the waist (the origin) to
-    /// where a head sits on it; the plates up its front.
+    /// A naga's: the serpent's tail under it, from the waist (the
+    /// origin) down in a curve forward to the coil, so that with its rise
+    /// it stands in an S; the plates down its front.
+    NagaTail,
+    NagaBelly,
+    /// The serpent's body rising from the waist (the origin) to where a
+    /// head sits on it; the plates up its front.
     SerpentNeck,
     SerpentNeckBelly,
     /// An arm worn on a body's side: out from its shoulder (the origin),
@@ -511,14 +516,22 @@ pub(super) fn build(m: &mut Merge, part: Part) {
                 m.ball(v(x, y, z), Vector3::splat(r), [0.0; 3], false, 14);
             }
         }
-        Part::SerpentTail => {
-            let (path, r) = serpent_tail();
+        Part::SerpentTail | Part::NagaTail => {
+            let drop: fn(f32) -> Vector3 = if part == Part::NagaTail {
+                naga_drop
+            } else {
+                tail_drop
+            };
+            let (path, r) = serpent_tail(drop);
             // a little wide and low where it lies
             m.sweep(&path, |i| (r[i] * 1.08, r[i] * 0.92), 2.0, false, AHEAD);
         }
         Part::SerpentBelly => {
             // down to the floor
             plates(m, 12, (0.1, 0.82), |t| (tail_drop(t), tail_thick(t)));
+        }
+        Part::NagaBelly => {
+            plates(m, 12, (0.1, 0.82), |t| (naga_drop(t), tail_thick(t)));
         }
         Part::SerpentNeck => {
             let n = 10;
@@ -654,17 +667,31 @@ fn tail_drop(t: f32) -> Vector3 {
     a * u * u * u + b * 3.0 * u * u * t + c * 3.0 * u * t * t + start * t * t * t
 }
 
+/// A naga's tail as `tail_drop`, bowed forward on its way down: below its
+/// rise (back, then forward under the head) it makes an S.
+fn naga_drop(t: f32) -> Vector3 {
+    let t = t.clamp(0.0, 1.0);
+    let start = v(0.0, -1.0 + TAIL_LOW * 0.92, -0.17);
+    let (a, b, c) = (
+        v(0.0, 0.06, 0.0),
+        v(0.0, -0.32, 0.34),
+        start + v(0.14, 0.0, 0.0),
+    );
+    let u = 1.0 - t;
+    a * u * u * u + b * 3.0 * u * u * t + c * 3.0 * u * t * t + start * t * t * t
+}
+
 /// Its radius there.
 fn tail_thick(t: f32) -> f32 {
     TAIL_TOP - (TAIL_TOP - TAIL_LOW) * t.clamp(0.0, 1.0)
 }
 
-/// A serpent's tail and its radius at each point: down from the waist,
-/// then a loop and a half spiralling out round where it came down, lying
-/// on the floor (its centre as high as it is thick) and narrowing to a
-/// point.
-fn serpent_tail() -> (Vec<Vector3>, Vec<f32>) {
-    let mut path: Vec<Vector3> = (0..=10).map(|k| tail_drop(frac(k, 10))).collect();
+/// A serpent's tail and its radius at each point: down from the waist (as
+/// `drop` goes), then a loop and a half spiralling out round where it came
+/// down, lying on the floor (its centre as high as it is thick) and
+/// narrowing to a point.
+fn serpent_tail(drop: fn(f32) -> Vector3) -> (Vec<Vector3>, Vec<f32>) {
+    let mut path: Vec<Vector3> = (0..=10).map(|k| drop(frac(k, 10))).collect();
     let mut r: Vec<f32> = (0..=10).map(|k| tail_thick(frac(k, 10))).collect();
     let n = 40;
     for k in 1..=n {
