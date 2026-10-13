@@ -235,6 +235,18 @@ const HOSTILE_RING: Color = Color::from_rgba(0.88, 0.29, 0.23, 0.6);
 const HOVER_OUTLINE: Color = Color::from_rgba(0.95, 0.86, 0.62, 0.9);
 /// The hero seen through what hides them.
 const XRAY: Color = Color::from_rgba(0.55, 0.68, 1.0, 0.45);
+/// A creature the hero's body hides, seen through it: a hostile's, a
+/// pet's (fainter: one often follows behind them).
+const XRAY_FOE: Color = Color::from_rgba(1.0, 0.3, 0.22, 0.85);
+const XRAY_PET: Color = Color::from_rgba(0.37, 0.84, 0.75, 0.6);
+/// The hero's body for what it hides behind it: half its width and its
+/// depth, metres (a box round the model would take in a spear held up).
+const BODY_HALF_WIDTH: f32 = 0.35;
+const BODY_HALF_DEPTH: f32 = 0.15;
+/// A creature behind the hero is seen through them when it is no taller
+/// than this share of them (a rat, not a giant whose head shows over
+/// theirs, nor a man).
+const SMALL: f32 = 0.6;
 /// The hero's own dim pool of light, over their head (no lamp: the client
 /// does not know of one yet), and a cold rim light from behind that only
 /// the hero's model takes (`RIM_LAYER`).
@@ -2684,6 +2696,11 @@ pub struct MapView {
     /// The steed under a hero a wall hides, wearing the x-ray overlay
     /// with them.
     xray_steed: Option<Gd<Node3D>>,
+    /// Small creatures the hero's body hides (in the cells north of them),
+    /// seen through it, and whether each is hostile; the x-ray they wear,
+    /// a hostile's and a pet's.
+    xray_behind: Vec<(Gd<Node3D>, bool)>,
+    xray_creature: Option<(Gd<Material>, Gd<Material>)>,
     /// Where a rider would stand if the saddle were the ground, facing
     /// their way: what looks at the hero alone (the inventory's doll)
     /// frames them from there as it does on foot.
@@ -2892,6 +2909,21 @@ fn ground_mist(root: &mut Gd<Node3D>) -> Gd<FogVolume> {
     fog.set_material(&mat);
     root.add_child(&fog);
     fog
+}
+
+/// A geometry under `node` is drawn once more with one of the overlays
+/// `ids`.
+fn wears(node: &Gd<Node3D>, ids: &[InstanceId]) -> bool {
+    node.find_children_ex("*")
+        .type_("GeometryInstance3D")
+        .owned(false)
+        .done()
+        .iter_shared()
+        .filter_map(|n| n.try_cast::<GeometryInstance3D>().ok())
+        .any(|g| {
+            g.get_material_overlay()
+                .is_some_and(|m| ids.contains(&m.instance_id()))
+        })
 }
 
 /// Every geometry under `node` drawn once more with `overlay` (None: not).
@@ -3142,14 +3174,17 @@ impl MapView {
             outline(HOSTILE_RING.with_alpha(0.9)),
             outline(HOVER_OUTLINE),
         );
-        let xray = godot::tools::try_load::<Shader>("res://shaders/xray.gdshader")
-            .ok()
-            .map(|shader| {
+        let xray_shader = godot::tools::try_load::<Shader>("res://shaders/xray.gdshader").ok();
+        let xray_of = |color: Color| {
+            xray_shader.as_ref().map(|shader| {
                 let mut m = ShaderMaterial::new_gd();
-                m.set_shader(&shader);
-                m.set_shader_parameter("color", &XRAY.to_variant());
+                m.set_shader(shader);
+                m.set_shader_parameter("color", &color.to_variant());
                 m.upcast::<Material>()
-            });
+            })
+        };
+        let xray = xray_of(XRAY);
+        let xray_creature = xray_of(XRAY_FOE).zip(xray_of(XRAY_PET));
 
         // over the hero's head: short shadows at their feet, not long ones
         // across the floor
@@ -3300,6 +3335,8 @@ impl MapView {
             rim_model: None,
             rider: None,
             xray_steed: None,
+            xray_behind: Vec::new(),
+            xray_creature,
             rider_view,
             room_lights: Vec::new(),
             torches: Vec::new(),
@@ -3615,6 +3652,7 @@ impl MapView {
                 self.hero_light.set_visible(false);
                 self.underglow.set_visible(false);
                 self.rim.set_visible(false);
+                self.unshow_behind(&[]);
                 RenderingServer::singleton()
                     .global_shader_parameter_set("hero_pos", &at(0.0, -100.0, 0.0).to_variant());
             }
@@ -4436,6 +4474,102 @@ impl MapView {
             }
             self.xray_steed = steed;
         }
+        // and the other way: a rat behind them is not lost behind their
+        // back (a foe there had the threat arrow over the hero's own head)
+        let behind = self.hidden_behind(hero);
+        let key = |v: &[(Gd<Node3D>, bool)]| -> Vec<(InstanceId, bool)> {
+            v.iter().map(|(n, h)| (n.instance_id(), *h)).collect()
+        };
+        if key(&behind) != key(&self.xray_behind) {
+            self.unshow_behind(&behind);
+            if let Some((foe, pet)) = self.xray_creature.as_ref() {
+                for (n, hostile) in &behind {
+                    // under the pointer too: its outline would not show
+                    // through the hero, the x-ray does
+                    if self
+                        .outlined
+                        .as_ref()
+                        .is_some_and(|o| o.instance_id() == n.instance_id())
+                    {
+                        self.outlined = None;
+                    }
+                    set_overlay(n, Some(if *hostile { foe } else { pet }));
+                }
+            }
+            self.xray_behind = behind;
+        }
+    }
+
+    /// The creatures seen through the hero no longer (not in `keep`) are
+    /// drawn as ever: those still in the x-ray (one that died there wears
+    /// its fall's shade now).
+    fn unshow_behind(&mut self, keep: &[(Gd<Node3D>, bool)]) {
+        let ours: Vec<InstanceId> = self
+            .xray_creature
+            .iter()
+            .flat_map(|(foe, pet)| [foe.instance_id(), pet.instance_id()])
+            .collect();
+        let alive = |n: &Gd<Node3D>| n.is_instance_valid() && !n.is_queued_for_deletion();
+        for (old, _) in std::mem::take(&mut self.xray_behind) {
+            let kept = keep
+                .iter()
+                .any(|(n, _)| n.instance_id() == old.instance_id());
+            if !kept && alive(&old) && wears(&old, &ours) {
+                set_overlay(&old, None);
+            }
+        }
+    }
+
+    /// The small creatures in the cells north of the hero (on `own`) that
+    /// their body hides from the camera, the whole or a part (the x-ray
+    /// draws only what is hidden), and whether each is hostile.
+    fn hidden_behind(&self, own: (i32, i32)) -> Vec<(Gd<Node3D>, bool)> {
+        let Some((feet, tall)) = self.hero_stands() else {
+            return Vec::new();
+        };
+        let body = Aabb::new(
+            feet - Vector3::new(BODY_HALF_WIDTH, 0.0, BODY_HALF_DEPTH),
+            Vector3::new(2.0 * BODY_HALF_WIDTH, tall, 2.0 * BODY_HALF_DEPTH),
+        );
+        let mut hidden = Vec::new();
+        for dy in [-1, -2] {
+            for dx in -1..=1 {
+                let Some(n) = self.cells.get(&(own.0 + dx, own.1 + dy)) else {
+                    continue;
+                };
+                let Some(i) = n.look.entity.filter(|_| !n.look.hero) else {
+                    continue;
+                };
+                let living = n
+                    .look
+                    .models
+                    .get(i)
+                    .is_some_and(|p| matches!(p.look.pose, Pose::Alive | Pose::Ghost));
+                let Some(b) = n
+                    .models
+                    .get(i)
+                    .filter(|_| living)
+                    .and_then(|m| Some((m, world_box(&m.node)?)))
+                else {
+                    continue;
+                };
+                let (m, b) = b;
+                if b.size.y > SMALL * tall {
+                    continue;
+                }
+                // its middle, and its end nearest the hero (a rat's back
+                // may show over their head while its snout is behind them)
+                let c = b.center();
+                let near = Vector3::new(c.x, c.y, b.end().z);
+                if [c, near]
+                    .iter()
+                    .any(|p| body.intersects_segment(*p, self.eye))
+                {
+                    hidden.push((m.node.clone(), n.look.hostile));
+                }
+            }
+        }
+        hidden
     }
 
     /// A model on the cells the line from the hero's `chest` to the eye
@@ -4480,6 +4614,17 @@ impl MapView {
         self.xray_on
     }
 
+    /// The creature on the cell is drawn through the hero who hides it,
+    /// and in a hostile's colour (self-tests).
+    pub fn seen_through_hero(&self, x: i32, y: i32) -> Option<bool> {
+        let n = self.cells.get(&(x, y))?;
+        let m = n.models.get(n.look.entity?)?;
+        self.xray_behind
+            .iter()
+            .find(|(b, _)| b.instance_id() == m.node.instance_id())
+            .map(|(_, hostile)| *hostile)
+    }
+
     /// The hover frame, a red ring under a hostile monster there, and an
     /// outline round the monster or object (not the hero).
     fn show_hover(&mut self) {
@@ -4489,6 +4634,13 @@ impl MapView {
             .and_then(|(_, n)| {
                 let m = n.models.get(n.look.entity?)?;
                 Some((m.node.clone(), n.look.hostile))
+            })
+            // one the hero hides wears its x-ray instead
+            .filter(|(node, _)| {
+                !self
+                    .xray_behind
+                    .iter()
+                    .any(|(n, _)| n.instance_id() == node.instance_id())
             });
         let same = |a: Option<&Gd<Node3D>>, b: Option<&Gd<Node3D>>| {
             a.map(|n| n.instance_id()) == b.map(|n| n.instance_id())
@@ -4859,6 +5011,7 @@ impl MapView {
         if let Some(old) = self.xray_steed.take().filter(|n| n.is_instance_valid()) {
             set_overlay(&old, None);
         }
+        self.unshow_behind(&[]);
         if let Some(r) = self.rider.take() {
             self.art.give(r.model);
         }

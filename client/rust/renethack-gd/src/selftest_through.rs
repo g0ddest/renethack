@@ -3,6 +3,9 @@
 //! giant mummy in the cell south of the hero hid them whole. Now their
 //! outline shows through it (the x-ray overlay walls already gave them);
 //! a newt there, or the giant north of them, hides nothing and gets none.
+//! And the other way: a newt north of the hero, behind their back, shows
+//! through them in a hostile's red; the giant there, whose head shows over
+//! theirs, does not.
 //!
 //! The creature is laid out on the client's map (the engine is not asked),
 //! on the gallery's lit floor. Headless, the overlay's state is checked;
@@ -51,6 +54,20 @@ fn drawn() -> Step {
     })
 }
 
+/// The creature north of the hero is drawn through them (`want`, a
+/// hostile's colour), or not (None).
+fn behind_hero(g: &RenethackGame, want: Option<bool>, what: &str) -> Result<(), String> {
+    let hero = g.world.map.hero().ok_or("no hero")?;
+    let now = map_view(g)?.seen_through_hero(hero.0, hero.1 - 1);
+    godot_print!("selftest: through: {what}: drawn through the hero (hostile): {now:?}");
+    if now != want {
+        return Err(format!(
+            "{what}: drawn through the hero {now:?}, not {want:?} (Some: in a hostile's colour)"
+        ));
+    }
+    Ok(())
+}
+
 fn seen_through(g: &RenethackGame, want: bool, what: &str) -> Result<(), String> {
     let now = map_view(g)?.hero_seen_through();
     godot_print!("selftest: through: {what}: the hero drawn through it: {now}");
@@ -95,6 +112,15 @@ pub(super) fn through() -> Vec<Step> {
         Step::Shot("through-behind"),
         Step::Call("the giant behind the hero hides nothing", |g| {
             seen_through(g, false, "a giant mummy north of the hero")
+        }),
+        Step::Call("its head shows over theirs: not drawn through them", |g| {
+            behind_hero(g, None, "a giant mummy north of the hero")
+        }),
+        Step::Call("a newt behind the hero", |g| beside_hero(g, "newt", -1)),
+        drawn(),
+        Step::Shot("through-newt-behind"),
+        Step::Call("the newt shows through the hero, a hostile", |g| {
+            behind_hero(g, Some(true), "a newt north of the hero")
         }),
     ]);
     steps.extend(quit());

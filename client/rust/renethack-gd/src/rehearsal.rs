@@ -715,6 +715,18 @@ impl Rehearsal {
                 },
             );
         }
+        // and a newt behind them: seen through them
+        if let Some(m) = cat.monsters.iter().find(|m| m.name == "newt") {
+            put_on_floor(
+                HERO.0,
+                HERO.1 - 1,
+                Glyph {
+                    mon: Some(m.idx),
+                    color: m.color,
+                    ..glyph(GlyphKind::Mon, ':' as i32)
+                },
+            );
+        }
     }
 }
 

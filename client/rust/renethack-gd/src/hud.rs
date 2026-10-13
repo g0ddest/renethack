@@ -567,11 +567,13 @@ pub fn off_panels(
 
 /// The arrow over a hostile's head at `p` off the hero's own body (`hero`,
 /// on screen): a hostile in the cell south of the hero stands before them,
-/// and what is over its head is the hero's waist. The arrow then goes
-/// beside the hero, level with where it was, and points at `target` from
-/// there. `side` is the side it went to last (true: the right), kept
-/// while it stays beside them, so that it does not jump over as the
-/// hostile sways; None again once it is clear.
+/// and what is over its head is the hero's waist; a small one north of
+/// them is behind them, its head (`target`) on their body, and the arrow
+/// over it would sit on the hero's own head. The arrow then goes beside
+/// the hero, level with where it was, and points at `target` from there.
+/// `side` is the side it went to last (true: the right), kept while it
+/// stays beside them, so that it does not jump over as the hostile sways;
+/// None again once it is clear.
 pub fn off_hero(
     p: Vector2,
     angle: f32,
@@ -582,7 +584,7 @@ pub fn off_hero(
 ) -> (Vector2, f32) {
     let Some(body) = hero
         .map(|r| r.grow(ARROW_PAD))
-        .filter(|r| r.contains_point(p))
+        .filter(|r| r.contains_point(p) || r.contains_point(target))
     else {
         *side = None;
         return (p, angle);
@@ -3085,6 +3087,21 @@ mod tests {
         let head = Vector2::new(target.x, target.y - 70.0);
         let clear = off_hero(head, down, target, view, Some(hero), &mut side);
         assert_eq!((clear, side), ((head, down), None));
+        // a small one behind them, its head on their shoulders: over it is
+        // over the hero's own head, so beside them too
+        let (mut side, target) = (None, Vector2::new(958.0, 400.0));
+        let head = Vector2::new(target.x, target.y - 70.0);
+        assert!(!on_hero(head) && on_hero(target));
+        let (q, a) = off_hero(head, down, target, view, Some(hero), &mut side);
+        assert!(
+            !on_hero(q) && q.y == head.y && q.x < hero.position.x,
+            "{q:?}"
+        );
+        let d = target - q;
+        assert!(
+            (d.y.atan2(d.x) - a).abs() < 1e-3,
+            "it points at the hostile"
+        );
         // a hero not on screen
         let off = off_hero(head, down, target, view, None, &mut side);
         assert_eq!(off, (head, down));
