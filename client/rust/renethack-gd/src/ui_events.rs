@@ -98,6 +98,9 @@ pub enum DialogEvent {
     PickConfirm,
     /// A picker of names: type the answer in English instead.
     PickManual,
+    /// The spells' panel: a pick reorders the spells (the engine's swap)
+    /// instead of casting, or casts again.
+    Reorder,
 }
 
 /// Role, race, gender and alignment codes ("random" allowed).

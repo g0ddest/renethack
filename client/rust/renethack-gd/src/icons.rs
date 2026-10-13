@@ -317,6 +317,8 @@ pub enum Glyph {
     Moon,
     /// Pray, offer, turn undead.
     Ankh,
+    /// Healing: a heart.
+    Heart,
     /// Up, down, travel.
     Stairs,
     // the achievements' emblems (`achievement_bake`)
@@ -349,15 +351,16 @@ impl Glyph {
         let all = [
             Sword, Cuirass, Ring, Amulet, Sack, Drumstick, Flask, Scroll, Book, Wand, Gem, Boulder,
             Ball, Chain, Drop, Coins, Helmet, Blindfold, Cloak, Shirt, Gloves, Boots, Lamp, Leash,
-            Shield, Swap, Quiver, Hand, Grid, Check, Star, Eye, Lens, Moon, Ankh, Stairs, Flames,
-            Pentagram, Elements, Sunburst, Ascension, Hall, Crown, Ripples, Drawbridge, Notes,
+            Shield, Swap, Quiver, Hand, Grid, Check, Star, Eye, Lens, Moon, Ankh, Heart, Stairs,
+            Flames, Pentagram, Elements, Sunburst, Ascension, Hall, Crown, Ripples, Drawbridge,
+            Notes,
         ];
         all.into_iter().find(|g| format!("{g:?}") == name)
     }
 }
 
 /// Every glyph (the warm-up paints them all).
-pub const ALL_GLYPHS: [Glyph; 37] = [
+pub const ALL_GLYPHS: [Glyph; 38] = [
     Glyph::Sword,
     Glyph::Cuirass,
     Glyph::Ring,
@@ -393,6 +396,7 @@ pub const ALL_GLYPHS: [Glyph; 37] = [
     Glyph::Lens,
     Glyph::Moon,
     Glyph::Ankh,
+    Glyph::Heart,
     Glyph::Stairs,
     Glyph::Unknown,
 ];
@@ -1136,6 +1140,21 @@ fn layers(g: Glyph, main: Mat) -> Vec<Layer> {
             layer(|p| rect(p, (0.0, 0.26), (0.07, 0.46), 0.02), GOLD),
             layer(|p| rect(p, (0.0, -0.08), (0.46, 0.07), 0.02), GOLD),
         ],
+        // two lobes over a point
+        Glyph::Heart => vec![layer(
+            |p| {
+                let lobes = union(
+                    circle(p, (-0.27, -0.2), 0.33),
+                    circle(p, (0.27, -0.2), 0.33),
+                );
+                smooth(
+                    lobes,
+                    poly(p, &[(-0.58, -0.08), (0.58, -0.08), (0.0, 0.64)]),
+                    0.08,
+                )
+            },
+            mat(0xe86a5a, 0x8a1a14),
+        )],
         Glyph::Stairs => vec![layer(
             |p| {
                 poly(

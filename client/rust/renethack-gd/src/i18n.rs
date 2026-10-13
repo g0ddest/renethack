@@ -383,6 +383,12 @@ pub trait EngineText {
     fn hero_word(&self, lang: Lang, english: &str) -> Option<String> {
         self.translate(lang, EngineKind::Status, english)
     }
+
+    /// The status line's title ("Hero the Stripling"), its rank in the
+    /// hero's gender; by default as a status word.
+    fn hero_title(&self, lang: Lang, english: &str) -> Option<String> {
+        self.translate(lang, EngineKind::Status, english)
+    }
 }
 
 /// Plug the engine's translator in (None: the English shows).
@@ -412,6 +418,23 @@ pub fn engine_hero_word(english: &str) -> Cow<'_, str> {
         e.borrow()
             .as_ref()
             .and_then(|t| t.hero_word(lang, english))
+            .map_or(Cow::Borrowed(english), Cow::Owned)
+    })
+}
+
+/// The status line's title as the player reads it ("Hero the Stripling":
+/// Юница Hero for a Valkyrie), its rank in the hero's gender.
+pub fn engine_title(english: &str) -> Cow<'_, str> {
+    let lang = lang();
+    match lang {
+        Lang::En => return Cow::Borrowed(english),
+        Lang::Pseudo => return Cow::Owned(mark_columns(english)),
+        Lang::Ru => {}
+    }
+    ENGINE.with(|e| {
+        e.borrow()
+            .as_ref()
+            .and_then(|t| t.hero_title(lang, english))
             .map_or(Cow::Borrowed(english), Cow::Owned)
     })
 }

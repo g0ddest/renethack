@@ -17,8 +17,8 @@ use godot::classes::text_server::{AutowrapMode, OverrunBehavior};
 use godot::classes::texture_rect::{ExpandMode, StretchMode};
 use godot::classes::{
     Button, CanvasLayer, ColorRect, Control, DisplayServer, Font, HBoxContainer, Label, LineEdit,
-    OptionButton, PanelContainer, RichTextLabel, ScrollContainer, StyleBox, StyleBoxEmpty,
-    StyleBoxFlat, Texture2D, TextureRect, VBoxContainer,
+    MarginContainer, OptionButton, PanelContainer, RichTextLabel, ScrollContainer, StyleBox,
+    StyleBoxEmpty, StyleBoxFlat, Texture2D, TextureRect, VBoxContainer,
 };
 use godot::global::{HorizontalAlignment, VerticalAlignment};
 use godot::prelude::*;
@@ -32,6 +32,8 @@ use crate::layouts::{self, Genocided, GoneRow, KillRow, OverviewRow, Vanquished}
 use crate::pickers::{self, Ask, ObjClass, Pick, Wish};
 use crate::sheet;
 use crate::sheet_view::{self, SheetView};
+use crate::spells::{self, Purpose, Spellbook};
+use crate::spells_view;
 use crate::theme::{self, Face, Frame, bbcode_escape, hex, nh_color, place};
 use crate::tr;
 use crate::ui_events::{DialogEvent, UiEvent, UiQueue, push};
@@ -62,8 +64,10 @@ const LIST_CHROME: f32 = 320.0;
 /// The same for an RPG panel (the character sheet): its header, its hint,
 /// its frame's margins and the screen's.
 const PANEL_CHROME: f32 = 230.0;
-/// An RPG panel's widest content, and the room its scroll bar takes.
+/// An RPG panel's widest content, and the room its scroll bar takes; the
+/// spells' panel's.
 const PANEL_W: f32 = 1120.0;
+const SPELLS_W: f32 = 760.0;
 const SCROLL_ROOM: f32 = 18.0;
 /// The same for a text window (no footer).
 const TEXT_CHROME: f32 = 220.0;
@@ -730,8 +734,10 @@ enum MenuRow {
 struct MenuView {
     state: MenuState,
     rows: Vec<MenuRow>,
-    /// Top of each row in the list.
+    /// Top of each row in the list, and its height (a spell's row is
+    /// taller than an item's).
     tops: Vec<f32>,
+    heights: Vec<f32>,
     /// The furthest the list scrolls: a row top, thanks to a filler below
     /// the last row, so every page shows whole rows.
     max_top: f32,
@@ -746,6 +752,9 @@ struct MenuView {
     armed: bool,
     status: Gd<Label>,
     hint: Gd<Label>,
+    /// The hint of a panel that says its own (the spells'), else the
+    /// menu's by what it picks.
+    own_hint: Option<String>,
 }
 
 impl MenuView {
@@ -784,7 +793,9 @@ impl MenuView {
         self.status.set_text(&status.join("   ·   "));
         self.status.set_visible(!status.is_empty());
         let pickable = self.state.entries.iter().any(|e| e.selectable);
-        let hint = if !pickable {
+        let hint = if let Some(own) = &self.own_hint {
+            own.clone()
+        } else if !pickable {
             tr!("dlg-hint-read")
         } else if any {
             // Space confirms, as in NetHack, until the arrows mark a row
@@ -813,12 +824,18 @@ impl MenuView {
         self.list.scroll_to(snapped);
     }
 
+    /// Row `i`'s height.
+    fn height(&self, i: usize) -> f32 {
+        self.heights.get(i).copied().unwrap_or(ROW_H)
+    }
+
     /// Is row `i` wholly in view?
     fn in_view(&self, i: usize) -> bool {
         let (v, h) = (self.list.top(), self.list.view_h);
+        let rh = self.height(i);
         self.tops
             .get(i)
-            .is_some_and(|&t| t >= v - 0.5 && t + ROW_H <= v + h + 0.5)
+            .is_some_and(|&t| t >= v - 0.5 && t + rh <= v + h + 0.5)
     }
 
     /// Scrolling away from the keyboard row lets it go: the next arrow
@@ -837,10 +854,11 @@ impl MenuView {
             return;
         };
         let (v, h) = (self.list.top(), self.list.view_h);
+        let rh = self.height(i);
         if top < v {
             self.list.scroll_to(top);
-        } else if top + ROW_H > v + h {
-            let least = top + ROW_H - h;
+        } else if top + rh > v + h {
+            let least = top + rh - h;
             let t = self.tops.iter().copied().find(|&t| t >= least - 0.5);
             self.list.scroll_to(t.unwrap_or(top).min(self.max_top));
         }
@@ -1284,9 +1302,6 @@ enum Kind {
         /// "genocided", "overview", "sheet"), or None for its lines as
         /// written.
         layout: Option<&'static str>,
-        /// The command key of the panel it is (`^X`'s sheet): pressed
-        /// again, it closes the panel.
-        own: Option<KeyInput>,
     },
     MessageMenu {
         letter: char,
@@ -1298,6 +1313,9 @@ struct Open {
     req: u64,
     prompt: Prompt,
     kind: Kind,
+    /// The command key of the RPG panel it is (`^X`'s sheet): pressed
+    /// again, it closes the panel.
+    own: Option<KeyInput>,
     shade: Gd<ColorRect>,
     panel: Gd<PanelContainer>,
     /// Room at the bottom of the panel for a gamepad's hints.
@@ -1330,6 +1348,38 @@ pub struct Dialogs {
     portrait: Option<Gd<Texture2D>>,
     /// The open character sheet's view (its portrait shows the render).
     sheet: Option<SheetView>,
+    /// The own key of the RPG panel being opened (`Open::own`).
+    opening_own: Option<KeyInput>,
+    /// The open spells' panel: its spells, whether a pick reorders them
+    /// (else it casts), the reorder's button.
+    spells: Option<SpellsOpen>,
+    /// The spell a pick in `+`'s panel casts, once its menu is answered
+    /// (`take_cast`).
+    cast: Option<String>,
+}
+
+struct SpellsOpen {
+    book: Spellbook,
+    reorder: bool,
+    button: Option<Gd<Button>>,
+}
+
+/// A row of a panel's list (`Dialogs::panel_rows`).
+enum PanelRow {
+    /// A menu entry's cells after its letter, and the label the menu
+    /// colours (an entry no pick shows them as a line).
+    Pick(Vec<Gd<Control>>, Gd<Label>),
+    /// A heading, a note, a gap.
+    Fixed(Gd<Control>),
+}
+
+/// A panel's list as `Dialogs::panel_rows` made it.
+struct PanelRows {
+    list: Scroller,
+    rows: Vec<MenuRow>,
+    tops: Vec<f32>,
+    heights: Vec<f32>,
+    max_top: f32,
 }
 
 struct PalettePool {
@@ -1364,6 +1414,9 @@ impl Dialogs {
             keymap: nh_world::Keymap::default(),
             portrait: None,
             sheet: None,
+            opening_own: None,
+            spells: None,
+            cast: None,
         }
     }
 
@@ -1607,15 +1660,22 @@ impl Dialogs {
         let chrome = mark_w + letter_w + glyph_w + 16.0 + 32.0 + 20.0;
         let max_w = (self.screen().x - 2.0 * SIDE_MARGIN).max(420.0);
         let width = (text_w + chrome).max(title_w).clamp(420.0, max_w);
+        let heights: Vec<f32> = state
+            .entries
+            .iter()
+            .map(|e| {
+                if row_kind(e) == RowKind::Spacer {
+                    SPACER_H
+                } else {
+                    ROW_H
+                }
+            })
+            .collect();
         let mut tops = Vec::with_capacity(state.entries.len());
         let mut y = 0.0;
-        for e in &state.entries {
+        for h in &heights {
             tops.push(y);
-            y += if row_kind(e) == RowKind::Spacer {
-                SPACER_H
-            } else {
-                ROW_H
-            };
+            y += h;
         }
         // a long list scrolls in a panel of 18 rows rather than filling the screen
         let max_h = (self.screen().y - LIST_CHROME).clamp(ROW_H * 4.0, MENU_ROWS * ROW_H);
@@ -1784,6 +1844,7 @@ impl Dialogs {
             state,
             rows,
             tops,
+            heights,
             max_top,
             colors,
             list,
@@ -1791,6 +1852,7 @@ impl Dialogs {
             armed: false,
             status,
             hint,
+            own_hint: None,
         };
         // a preselected item: show it
         if let Some(i) = view.state.entries.iter().position(|e| e.selected) {
@@ -2398,15 +2460,7 @@ impl Dialogs {
             &mut col,
             &[(tr!("dlg-ok"), dialog_ui(req, DialogEvent::Close))],
         );
-        (
-            Kind::Show {
-                text,
-                layout: None,
-                own: None,
-            },
-            shade,
-            panel,
-        )
+        (Kind::Show { text, layout: None }, shade, panel)
     }
 
     /// #vanquished: a kind of creature a row (its symbol in its colour, its
@@ -2596,7 +2650,6 @@ impl Dialogs {
             Kind::Show {
                 text,
                 layout: Some(layout),
-                own: None,
             },
             shade,
             panel,
@@ -2633,6 +2686,50 @@ impl Dialogs {
     /// top, `content` scrolling under them, and how to scroll and close it
     /// at the foot. `own` is the panel's command as the game knows it: its
     /// key as the player presses it now shows, and closes the panel.
+    /// An RPG panel's frame `outer` wide over the dimmed game: its name,
+    /// the key that opens it (`own`, as the player presses it now; none
+    /// for a panel no key opens) and a close button that sends `close`.
+    /// Returns the shade, the frame, its column and the key's name.
+    fn panel_frame(
+        &mut self,
+        req: u64,
+        title: &str,
+        own: Option<KeyInput>,
+        close: DialogEvent,
+        outer: f32,
+    ) -> (Gd<ColorRect>, Gd<PanelContainer>, Gd<VBoxContainer>, String) {
+        let (shade, panel, mut col) = self.frame(outer, None);
+        let key = own
+            .and_then(|k| self.keymap.key_for(k))
+            .map_or_else(|| "—".to_string(), |k| crate::rebind::short_name(&k));
+        let mut head = HBoxContainer::new_alloc();
+        head.add_theme_constant_override("separation", 14);
+        let mut name = theme::styled_label(title, Face::Title, 28, theme::GOLD_BRIGHT);
+        name.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        name.set_vertical_alignment(VerticalAlignment::CENTER);
+        name.set_clip_text(true);
+        head.add_child(&name);
+        if own.is_some() {
+            let mut k = theme::styled_label(&key, Face::Caps, 16, theme::TEXT_DIM);
+            k.set_vertical_alignment(VerticalAlignment::CENTER);
+            i18n::verbatim(&k);
+            head.add_child(&k);
+        }
+        let mut button = theme::button("✕", &self.queue, dialog_ui(req, close));
+        button.set_custom_minimum_size(Vector2::new(36.0, 32.0));
+        let tip = if own.is_some() {
+            tr!("panel-close-tip", key = key.as_str())
+        } else {
+            tr!("panel-cancel-tip")
+        };
+        button.set_tooltip_text(&tip);
+        head.add_child(&button);
+        col.add_child(&head);
+        col.add_child(&rule());
+        self.opening_own = own;
+        (shade, panel, col, key)
+    }
+
     fn open_panel(
         &mut self,
         req: u64,
@@ -2645,27 +2742,8 @@ impl Dialogs {
         let outer = width + SCROLL_ROOM;
         let max_h = (self.screen().y - PANEL_CHROME).max(ROW_H * 6.0);
         let text = Scroller::new(outer, max_h, false);
-        let (shade, panel, mut col) = self.frame(outer, None);
-        let key = self
-            .keymap
-            .key_for(own)
-            .map_or_else(|| "—".to_string(), |k| crate::rebind::short_name(&k));
-        let mut head = HBoxContainer::new_alloc();
-        head.add_theme_constant_override("separation", 14);
-        let mut name = theme::styled_label(title, Face::Title, 28, theme::GOLD_BRIGHT);
-        name.set_h_size_flags(SizeFlags::EXPAND_FILL);
-        name.set_vertical_alignment(VerticalAlignment::CENTER);
-        head.add_child(&name);
-        let mut k = theme::styled_label(&key, Face::Caps, 16, theme::TEXT_DIM);
-        k.set_vertical_alignment(VerticalAlignment::CENTER);
-        i18n::verbatim(&k);
-        head.add_child(&k);
-        let mut close = theme::button("✕", &self.queue, dialog_ui(req, DialogEvent::Close));
-        close.set_custom_minimum_size(Vector2::new(36.0, 32.0));
-        close.set_tooltip_text(&tr!("panel-close-tip", key = key.as_str()));
-        head.add_child(&close);
-        col.add_child(&head);
-        col.add_child(&rule());
+        let (shade, panel, mut col, key) =
+            self.panel_frame(req, title, Some(own), DialogEvent::Close, outer);
         let mut scroll = text.scroll.clone();
         scroll.add_child(&content);
         col.add_child(&scroll);
@@ -2687,7 +2765,6 @@ impl Dialogs {
             Kind::Show {
                 text,
                 layout: Some(layout),
-                own: Some(own),
             },
             shade,
             panel,
@@ -2723,6 +2800,304 @@ impl Dialogs {
         let opened = self.open_panel(req, "sheet", &tr!("sheet-title"), own, content, width);
         self.sheet = Some(view);
         opened
+    }
+
+    /// A panel's list (the spells'): a row of `heights[i]` per
+    /// menu entry, a pick's made of its letter's badge and the cells `row`
+    /// gives, another's of the control it gives; it scrolls in `col` as a
+    /// menu's does.
+    fn panel_rows(
+        &mut self,
+        req: u64,
+        state: &MenuState,
+        heights: Vec<f32>,
+        width: f32,
+        col: &mut Gd<VBoxContainer>,
+        row: &mut dyn FnMut(usize, &MenuEntry) -> PanelRow,
+    ) -> PanelRows {
+        let look = self.look.clone();
+        let mut tops = Vec::with_capacity(heights.len());
+        let mut y = 0.0;
+        for h in &heights {
+            tops.push(y);
+            y += h;
+        }
+        let max_h = (self.screen().y - LIST_CHROME).max(ROW_H * 4.0);
+        let view_h = y.min(max_h).max(ROW_H);
+        let list = Scroller::new(width, view_h, false);
+        let max_top = if y > view_h {
+            tops.iter()
+                .copied()
+                .find(|&t| t >= y - view_h)
+                .unwrap_or(y - view_h)
+        } else {
+            0.0
+        };
+        let mut rows_box = VBoxContainer::new_alloc();
+        rows_box.add_theme_constant_override("separation", 0);
+        rows_box.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        let mut rows = Vec::with_capacity(state.entries.len());
+        for (i, e) in state.entries.iter().enumerate() {
+            match row(i, e) {
+                PanelRow::Pick(mut cells, text) if e.selectable => {
+                    let mut letter = cell(
+                        &e.letter.map_or(String::new(), |l| l.to_string()),
+                        theme::GOLD_BRIGHT,
+                        Some(&look.body_bold),
+                        Some(24.0),
+                    );
+                    letter.add_theme_font_size_override("font_size", 15);
+                    letter.set_horizontal_alignment(HorizontalAlignment::CENTER);
+                    letter.set_v_size_flags(SizeFlags::SHRINK_CENTER);
+                    letter.set_custom_minimum_size(Vector2::new(24.0, 22.0));
+                    letter.add_theme_stylebox_override("normal", &look.badge);
+                    i18n::verbatim(&letter);
+                    cells.insert(0, letter.upcast());
+                    let mut button = self.row_button(req, i, &cells);
+                    button.set_custom_minimum_size(Vector2::new(0.0, heights[i]));
+                    rows_box.add_child(&button);
+                    rows.push(MenuRow::Item {
+                        button,
+                        mark: None,
+                        text,
+                    });
+                }
+                PanelRow::Pick(cells, _) => {
+                    // an entry no pick: its cells as a line
+                    let mut line = HBoxContainer::new_alloc();
+                    line.set_mouse_filter(MouseFilter::IGNORE);
+                    line.add_theme_constant_override("separation", 10);
+                    line.set_custom_minimum_size(Vector2::new(0.0, heights[i]));
+                    let mut pad = Control::new_alloc();
+                    pad.set_custom_minimum_size(Vector2::new(24.0, 0.0));
+                    line.add_child(&pad);
+                    for c in cells {
+                        line.add_child(&c);
+                    }
+                    let mut margin = MarginContainer::new_alloc();
+                    margin.add_theme_constant_override("margin_left", 8);
+                    margin.add_theme_constant_override("margin_right", 8);
+                    margin.set_mouse_filter(MouseFilter::IGNORE);
+                    margin.add_child(&line);
+                    rows_box.add_child(&margin);
+                    rows.push(MenuRow::Fixed);
+                }
+                PanelRow::Fixed(mut c) => {
+                    c.set_custom_minimum_size(Vector2::new(0.0, heights[i]));
+                    c.set_mouse_filter(MouseFilter::IGNORE);
+                    rows_box.add_child(&c);
+                    rows.push(MenuRow::Fixed);
+                }
+            }
+        }
+        let filler_h = (max_top + view_h - y).max(0.0);
+        if filler_h > 0.0 {
+            let mut filler = Control::new_alloc();
+            filler.set_custom_minimum_size(Vector2::new(0.0, filler_h));
+            filler.set_mouse_filter(MouseFilter::IGNORE);
+            rows_box.add_child(&filler);
+        }
+        let mut scroll = list.scroll.clone();
+        scroll.add_child(&rows_box);
+        col.add_child(&scroll);
+        col.add_child(&rule());
+        PanelRows {
+            list,
+            rows,
+            tops,
+            heights,
+            max_top,
+        }
+    }
+
+    /// A panel's foot: how its keys work, and its buttons. Returns the
+    /// status label (hidden) and the hint's.
+    fn panel_foot(
+        &mut self,
+        col: &mut Gd<VBoxContainer>,
+        buttons: &[Gd<Button>],
+    ) -> (Gd<Label>, Gd<Label>) {
+        let mut status = theme::label("");
+        status.set_visible(false);
+        col.add_child(&status);
+        let mut foot = HBoxContainer::new_alloc();
+        foot.add_theme_constant_override("separation", 12);
+        let mut hint = theme::styled_label("", Face::Body, 15, theme::TEXT_DIM);
+        hint.set_autowrap_mode(AutowrapMode::WORD_SMART);
+        hint.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        hint.set_vertical_alignment(VerticalAlignment::CENTER);
+        foot.add_child(&hint);
+        for b in buttons {
+            foot.add_child(b);
+        }
+        col.add_child(&foot);
+        (status, hint)
+    }
+
+    /// The panel's list as a menu the keys, the clicks and a gamepad
+    /// drive, its hint `own_hint`.
+    fn panel_menu(
+        &self,
+        state: MenuState,
+        rows: PanelRows,
+        items: &[nh_protocol::MenuItem],
+        (status, hint): (Gd<Label>, Gd<Label>),
+        own_hint: String,
+    ) -> Kind {
+        let colors = items.iter().map(|i| i.clr).collect();
+        let mut view = MenuView {
+            state,
+            rows: rows.rows,
+            tops: rows.tops,
+            heights: rows.heights,
+            max_top: rows.max_top,
+            colors,
+            list: rows.list,
+            cursor: None,
+            armed: false,
+            status,
+            hint,
+            own_hint: Some(own_hint),
+        };
+        // a gamepad starts on the first pick, ready for A
+        if self.pad
+            && let Some(i) = view.state.entries.iter().position(|e| e.selectable)
+        {
+            view.cursor = Some(i);
+            view.armed = true;
+        }
+        view.refresh(&self.look);
+        Kind::Menu(Box::new(view))
+    }
+
+    /// spell.c's menus (`+`, `Z`, the swap's): the spells' panel, a row a
+    /// spell. A pick casts it (from `+`'s, through `Z` once the menu is
+    /// answered: `take_cast`), unless the player reorders the spells, when
+    /// it is the engine's swap; `[sort spells]` is a row of its own.
+    fn open_spells(
+        &mut self,
+        req: u64,
+        how: PickHow,
+        items: &[nh_protocol::MenuItem],
+        book: Spellbook,
+    ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        let state = MenuState::new(how, None, items);
+        let width = SPELLS_W.min(self.panel_width());
+        let plain = |c| KeyInput::plain(Key::Char(c));
+        let (title, own) = match book.purpose {
+            Purpose::Cast => (tr!("spells-cast-title"), Some(plain('Z'))),
+            Purpose::View => (tr!("spells-title"), Some(plain('+'))),
+            Purpose::Swap(letter) => (tr!("spells-swap-title", letter = letter.to_string()), None),
+        };
+        let (shade, panel, mut col, key) =
+            self.panel_frame(req, &title, own, DialogEvent::MenuCancel, width);
+        let heights: Vec<f32> = state
+            .entries
+            .iter()
+            .map(|e| match () {
+                _ if !e.selectable => 0.0,
+                _ if book.sort.is_some_and(|(idx, _)| idx == e.idx) => spells_view::SORT_H,
+                _ => spells_view::ROW_H,
+            })
+            .collect();
+        let rows = self.panel_rows(req, &state, heights, width, &mut col, &mut |_, e| {
+            if !e.selectable {
+                return PanelRow::Fixed(Control::new_alloc());
+            }
+            let (cells, text) = match book.spell(e.idx) {
+                Some(s) => spells_view::cells(s),
+                None => spells_view::sort_cells(),
+            };
+            PanelRow::Pick(cells, text)
+        });
+        // `+`'s: the reorder, a pick then the engine's swap
+        let button = (book.purpose == Purpose::View && book.spells.len() > 1).then(|| {
+            let ev = dialog_ui(req, DialogEvent::Reorder);
+            let mut b = theme::button(&tr!("spells-reorder"), &self.queue, ev);
+            b.set_custom_minimum_size(Vector2::new(132.0, 34.0));
+            b
+        });
+        let foot = self.panel_foot(&mut col, button.as_slice());
+        let purpose = book.purpose;
+        self.spells = Some(SpellsOpen {
+            book,
+            reorder: false,
+            button,
+        });
+        let kind = self.panel_menu(state, rows, items, foot, spells_hint(purpose, false, &key));
+        (kind, shade, panel)
+    }
+
+    /// What the open spells' panel's picks do, and whether they reorder
+    /// (self-tests).
+    pub fn spells_open(&self) -> Option<(Purpose, bool)> {
+        self.spells.as_ref().map(|sp| (sp.book.purpose, sp.reorder))
+    }
+
+    /// The spell a pick in `+`'s panel is to cast, once: the game casts it
+    /// with `Z` when the engine is back at its command prompt.
+    pub fn take_cast(&mut self) -> Option<String> {
+        self.cast.take()
+    }
+
+    /// A reply of the spells' panel as the engine is to have it: a pick in
+    /// `+`'s that casts closes its menu instead (the cast follows).
+    fn spells_reply(&mut self, reply: Reply) -> Reply {
+        let Some(sp) = self.spells.as_ref() else {
+            return reply;
+        };
+        if sp.book.purpose != Purpose::View || sp.reorder {
+            return reply;
+        }
+        let picked = match &reply {
+            Reply::Menu(picked) => picked.first().map(|(idx, _)| *idx),
+            _ => None,
+        };
+        let spell = picked.and_then(|idx| sp.book.spell(i32::try_from(idx).ok()?));
+        match spell {
+            Some(s) => {
+                self.cast = Some(s.name.clone());
+                Reply::Cancel
+            }
+            None => reply,
+        }
+    }
+
+    /// The spells' panel: a pick reorders now, or casts again.
+    fn toggle_reorder(&mut self) {
+        let key = self.open_own_key();
+        let Some(sp) = self.spells.as_mut() else {
+            return;
+        };
+        if sp.book.purpose != Purpose::View {
+            return;
+        }
+        sp.reorder = !sp.reorder;
+        let hint = spells_hint(Purpose::View, sp.reorder, &key);
+        if let Some(b) = sp.button.as_mut() {
+            b.set_text(&if sp.reorder {
+                tr!("spells-cast-instead")
+            } else {
+                tr!("spells-reorder")
+            });
+        }
+        if let Some(Open {
+            kind: Kind::Menu(view),
+            ..
+        }) = self.open.as_mut()
+        {
+            view.own_hint = Some(hint);
+            view.refresh(&self.look);
+        }
+    }
+
+    /// The open panel's own key's name as the player presses it now.
+    fn open_own_key(&self) -> String {
+        self.open
+            .as_ref()
+            .and_then(|o| o.own)
+            .and_then(|k| self.keymap.key_for(k))
+            .map_or_else(|| "—".to_string(), |k| crate::rebind::short_name(&k))
     }
 
     fn open_overview(
@@ -2875,7 +3250,6 @@ impl Dialogs {
             Kind::Show {
                 text,
                 layout: Some("overview"),
-                own: None,
             },
             shade,
             panel,
@@ -2903,6 +3277,25 @@ impl Dialogs {
                     .iter()
                     .map(|i| i.str.as_deref().unwrap_or(""))
                     .collect();
+                let english_title = match original {
+                    Prompt::Menu { title, .. } => title.as_deref(),
+                    _ => None,
+                };
+                if let Some(book) = spells::spellbook(english_title, english) {
+                    let (kind, shade, panel) = self.open_spells(req, *how, english, book);
+                    let pad_room = add_pad_room(&panel);
+                    let own = self.opening_own.take();
+                    self.open = Some(Open {
+                        req,
+                        prompt: original.clone(),
+                        kind,
+                        own,
+                        shade,
+                        panel,
+                        pad_room,
+                    });
+                    return;
+                }
                 match layouts::overview(&texts) {
                     Some(rows) if *how == PickHow::None => self.open_overview(req, &rows),
                     // `m` #overview picks a level to annotate: the menu, in
@@ -3048,10 +3441,12 @@ impl Dialogs {
             }
         };
         let pad_room = add_pad_room(&panel);
+        let own = self.opening_own.take();
         self.open = Some(Open {
             req,
             prompt: original.clone(),
             kind,
+            own,
             shade,
             panel,
             pad_room,
@@ -3148,6 +3543,8 @@ impl Dialogs {
         self.open(0, sample, catalog);
         self.warming = false;
         let mut open = self.open.take()?;
+        self.sheet = None;
+        self.spells = None;
         // built hidden, drawn from the next frame: its making and its
         // first draw (layout, text, pipelines) fall on two frames
         open.panel.set_visible(false);
@@ -3493,9 +3890,29 @@ impl Dialogs {
         None
     }
 
+    /// A key for the open dialog: the reply it gives the engine, if any.
     pub fn key(&mut self, input: &KeyInput) -> Option<Reply> {
+        // the spells' panel: Tab reorders, or casts again
+        if self.spells.is_some()
+            && input.key == Key::Tab
+            && !input.echo
+            && !input.mods.ctrl
+            && !input.mods.alt
+        {
+            self.toggle_reorder();
+            return None;
+        }
+        let reply = self.key_reply(input)?;
+        Some(self.spells_reply(reply))
+    }
+
+    fn key_reply(&mut self, input: &KeyInput) -> Option<Reply> {
         let open = self.open.as_mut()?;
         let escape = open.prompt.escape_reply();
+        // an RPG panel's own command, as the player presses it now
+        if open.own.is_some() && !input.echo && self.keymap.translate(*input) == open.own {
+            return Some(escape);
+        }
         match &mut open.kind {
             Kind::Menu(view) => view.key(input, &self.look),
             Kind::Choice {
@@ -3597,14 +4014,10 @@ impl Dialogs {
                 fill_palette(palette);
                 None
             }
-            Kind::Show { text, own, .. } => {
+            Kind::Show { text, .. } => {
                 if let Some(k) = nav(input) {
                     text.key(k, self.look.line_h);
                     return None;
-                }
-                // the panel's own command, as the player presses it now
-                if own.is_some() && !input.echo && self.keymap.translate(*input) == *own {
-                    return Some(Reply::Ack);
                 }
                 match typed(input)? {
                     '<' => text.page(-1.0),
@@ -3625,7 +4038,20 @@ impl Dialogs {
         }
     }
 
+    /// A widget's event for the open dialog: the reply it gives the
+    /// engine, if any.
     pub fn dialog_event(&mut self, req: u64, ev: &DialogEvent) -> Option<Reply> {
+        if matches!(ev, DialogEvent::Reorder) {
+            if self.open_req() == Some(req) {
+                self.toggle_reorder();
+            }
+            return None;
+        }
+        let reply = self.event_reply(req, ev)?;
+        Some(self.spells_reply(reply))
+    }
+
+    fn event_reply(&mut self, req: u64, ev: &DialogEvent) -> Option<Reply> {
         // a picker given up for the English the engine reads: the plain
         // question in its place
         if matches!(ev, DialogEvent::PickManual) {
@@ -3643,6 +4069,7 @@ impl Dialogs {
                 req,
                 prompt,
                 kind,
+                own: None,
                 shade,
                 panel,
                 pad_room,
@@ -3746,6 +4173,10 @@ impl Dialogs {
     }
 
     pub fn close(&mut self) {
+        // what the open panel kept of itself goes with it (not with a
+        // dialog of the warm-up's put away)
+        self.sheet = None;
+        self.spells = None;
         if let Some(open) = self.open.take() {
             self.retire(open);
         }
@@ -3753,7 +4184,6 @@ impl Dialogs {
 
     /// A dialog closed: freed, the palette hidden for the next time.
     fn retire(&mut self, mut open: Open) {
-        self.sheet = None;
         // the palette is hidden for the next time
         if let Kind::ExtCmd { edit, palette, req } = open.kind {
             // without the room its opening gave a gamepad's hints: the next
@@ -3848,6 +4278,36 @@ fn warm_samples() -> Vec<Prompt> {
         Prompt::Show {
             title: None,
             lines: sheet::WIZARD.iter().map(|l| line(0, l)).collect(),
+        },
+        // the spells' panel, its medallions
+        Prompt::Menu {
+            win: 0,
+            how: PickHow::One,
+            title: Some("Currently known spells".into()),
+            items: vec![
+                item(
+                    0,
+                    '\0',
+                    "    Name                 Level Category     Fail Retention",
+                    7,
+                    false,
+                ),
+                item(
+                    1,
+                    'a',
+                    "force bolt             1   attack         0%      100%",
+                    0,
+                    true,
+                ),
+                item(
+                    2,
+                    'b',
+                    "healing                1   healing       12%  76%-100%",
+                    0,
+                    true,
+                ),
+                item(3, '+', "[sort spells]", 0, true),
+            ],
         },
     ]
 }
@@ -3956,6 +4416,17 @@ fn show_text(lines: &[TextLine]) -> String {
         })
         .collect::<Vec<_>>()
         .join("\n")
+}
+
+/// What the spells' panel's keys do: a pick casts, or (`reorder`) begins
+/// a swap; `key` closes it.
+fn spells_hint(purpose: Purpose, reorder: bool, key: &str) -> String {
+    match (purpose, reorder) {
+        (Purpose::Swap(_), _) => tr!("spells-hint-swap"),
+        (Purpose::View, true) => tr!("spells-hint-reorder", key = key),
+        (Purpose::View, false) => tr!("spells-hint-view", key = key),
+        (Purpose::Cast, _) => tr!("spells-hint-cast", key = key),
+    }
 }
 
 /// A text window of prose: as `show_text`, and the lines that head a

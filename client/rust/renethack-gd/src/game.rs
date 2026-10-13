@@ -1935,8 +1935,17 @@ impl RenethackGame {
             _ => self.ui_mut().dialogs.key(&k),
         };
         if let Some(r) = reply {
-            self.reply(r);
+            self.dialog_reply(r);
         }
+    }
+
+    /// A dialog's answer to the engine; a spell the spells' panel picked to
+    /// cast follows with `Z` at the command prompt it goes back to.
+    fn dialog_reply(&mut self, r: Reply) {
+        if let Some(name) = self.ui_mut().dialogs.take_cast() {
+            self.deferred = Some(SlotUse::Macro(nh_world::Macro::cast(&name)));
+        }
+        self.reply(r);
     }
 
     /// A key at a command prompt (not getpos): a count, an order, or the
@@ -2778,7 +2787,7 @@ impl RenethackGame {
                     ui.dialogs.dialog_event(req, &ev)
                 };
                 if let Some(r) = r {
-                    self.reply(r);
+                    self.dialog_reply(r);
                 }
             }
             UiEvent::NewGame if idle => self.show_creation(),

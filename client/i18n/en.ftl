@@ -355,6 +355,30 @@ sheet-status = Status
 sheet-attributes = Attributes
 sheet-miscellaneous = Miscellaneous
 
+## The RPG panels: the spells (+, Z)
+
+panel-cancel-tip = Cancel (Esc)
+spells-title = Spells
+spells-cast-title = Cast a spell
+spells-swap-title = Swap { $letter } with which spell?
+spells-attack = Attack
+spells-healing = Healing
+spells-divination = Divination
+spells-enchantment = Enchantment
+spells-clerical = Clerical
+spells-escape = Escape
+spells-matter = Matter
+spells-school-level = { $school } · level { $level }
+spells-fail = failure
+spells-gone = forgotten
+spells-sort = Sort the spells
+spells-reorder = Reorder
+spells-cast-instead = Cast instead
+spells-hint-view = A letter, Enter or a click: cast · Tab: reorder · Esc, { $key }: close
+spells-hint-reorder = Pick the spell to move, then the one to swap it with · Tab: cast instead · Esc, { $key }: close
+spells-hint-cast = A letter, Enter or a click: cast · Esc, { $key }: close
+spells-hint-swap = Pick the spell to swap with · Esc: leave them as they are
+
 ## The message log
 
 log-title = Messages

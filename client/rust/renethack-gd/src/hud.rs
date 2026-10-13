@@ -197,7 +197,7 @@ fn place_text(view: &StatusView) -> Option<String> {
 /// alignment; place, gold, armour, level, experience, turn, score; hit
 /// points and power; the attributes; hunger, encumbrance, conditions.
 fn status_tip(view: &StatusView) -> String {
-    let mut head = i18n::engine(EngineKind::Status, &view.title).into_owned();
+    let mut head = i18n::engine_title(&view.title).into_owned();
     if let Some(a) = &view.align {
         head.push_str("  ·  ");
         head.push_str(&i18n::engine_hero_word(a));
@@ -2163,8 +2163,8 @@ impl Hud {
         let view = StatusView::new(status, &conditions);
         self.status_text = view.lines().join("\n");
         self.portrait_panel.set_tooltip_text(&status_tip(&view));
-        self.title
-            .set_text(&*i18n::engine(EngineKind::Status, &view.title));
+        // the rank in the hero's gender (Юница, not Новобранец)
+        self.title.set_text(&*i18n::engine_title(&view.title));
         if self.align_text != view.align {
             self.align_text = view.align.clone();
             self.show_subtitle();
@@ -2591,6 +2591,11 @@ impl Hud {
     pub fn hero_changed(&mut self) {
         self.show_subtitle();
         self.status_text.clear();
+    }
+
+    /// The portrait block's title as it shows now (self-tests).
+    pub fn title_shown(&self) -> String {
+        self.title.get_text().to_string()
     }
 
     /// The log as it shows now (self-tests).

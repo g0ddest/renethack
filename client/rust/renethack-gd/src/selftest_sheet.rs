@@ -5,7 +5,8 @@
 //! the window, said as its translation says it; no turn passes. `^X`
 //! again closes it; the HUD's button opens it and its ✕ closes it; a
 //! gamepad's B closes it. The sheet's command moved onto F7 opens on F7,
-//! names F7 in its hint and closes on F7.
+//! names F7 in its hint and closes on F7. In Russian the HUD's title has
+//! the rank in the heroine's gender, as the sheet has it.
 
 use std::sync::atomic::{AtomicI64, Ordering};
 
@@ -109,6 +110,19 @@ pub(super) fn sheet() -> Vec<Step> {
             // a renderer draws the doll; headless draws nothing
             Ok(g.headless || g.ui.as_ref().is_some_and(|ui| ui.dialogs.portrait_shown()))
         }),
+        Step::Wait(
+            "the HUD's title with the rank in the heroine's gender",
+            |g| {
+                // in Russian a Valkyrie is Юница, not Новобранец, as the sheet
+                // says it
+                let ui = g.ui.as_ref().ok_or("no UI")?;
+                let title = ui.hud.title_shown();
+                if i18n::lang() == i18n::Lang::Ru && !title.contains("Юница") {
+                    return Err(format!("the HUD's title is {title:?}"));
+                }
+                Ok(true)
+            },
+        ),
         Step::Shot("sheet"),
         // ^X again closes it; no turn passed
         Step::Key(ctrl_key('x')),

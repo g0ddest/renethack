@@ -356,6 +356,30 @@ sheet-status = Состояние
 sheet-attributes = Свойства
 sheet-miscellaneous = Разное
 
+## RPG-панели: заклинания (+, Z)
+
+panel-cancel-tip = Отмена (Esc)
+spells-title = Заклинания
+spells-cast-title = Сотворить заклинание
+spells-swap-title = С каким заклинанием поменять { $letter }?
+spells-attack = Атака
+spells-healing = Исцеление
+spells-divination = Прорицание
+spells-enchantment = Зачарование
+spells-clerical = Жречество
+spells-escape = Бегство
+spells-matter = Материя
+spells-school-level = { $school } · { $level }-й уровень
+spells-fail = провал
+spells-gone = забыто
+spells-sort = Упорядочить заклинания
+spells-reorder = Переставить
+spells-cast-instead = Колдовать
+spells-hint-view = Буква, Enter или щелчок: сотворить · Tab: переставить · Esc, { $key }: закрыть
+spells-hint-reorder = Выберите заклинание, которое переставить, затем то, с которым поменять · Tab: колдовать · Esc, { $key }: закрыть
+spells-hint-cast = Буква, Enter или щелчок: сотворить · Esc, { $key }: закрыть
+spells-hint-swap = Выберите заклинание, с которым поменять · Esc: оставить как есть
+
 ## Журнал сообщений
 
 log-title = Сообщения

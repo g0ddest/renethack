@@ -218,6 +218,24 @@ impl EngineText for EngineTranslator {
         EngineTranslator::set_hero_female(self, female);
     }
 
+    fn hero_title(&self, lang: Lang, english: &str) -> Option<String> {
+        let said = self.translate(lang, EngineKind::Status, english)?;
+        if lang != Lang::Ru || self.hero.get() != Gender::Fem {
+            return Some(said);
+        }
+        // the rank as a woman's (the lexicon's female ranks): Новобранец
+        // for a Valkyrie is Юница, as the window of ^X says
+        let Some((_, rank)) = english.rsplit_once(" the ") else {
+            return Some(said);
+        };
+        let lex = Lexicon::ru();
+        let (Some(his), Some(hers)) = (lex.noun("rank", rank), lex.noun("female", rank)) else {
+            return Some(said);
+        };
+        let (his, hers) = (his.singular(Case::Nom), hers.singular(Case::Nom));
+        Some(said.replacen(his, hers, 1))
+    }
+
     fn hero_word(&self, lang: Lang, english: &str) -> Option<String> {
         if lang != Lang::Ru {
             return None;
@@ -259,14 +277,31 @@ mod tests {
     }
 
     #[test]
-    fn an_alignment_agrees_with_the_hero() {
+    fn an_alignment_and_a_rank_agree_with_the_hero() {
         let t = loaded();
         t.set_hero_female(true);
         assert_eq!(
             t.hero_word(Lang::Ru, "Neutral").as_deref(),
             Some("Нейтральная")
         );
+        // the title's rank in the hero's gender, another role's too
+        assert_eq!(
+            t.hero_title(Lang::Ru, "Hero the Stripling").as_deref(),
+            Some("Юница Hero")
+        );
+        assert_eq!(
+            t.hero_title(Lang::Ru, "Hero the Evoker").as_deref(),
+            Some("Призывательница Hero")
+        );
         t.set_hero_female(false);
+        assert_eq!(
+            t.hero_title(Lang::Ru, "Hero the Evoker").as_deref(),
+            Some("Призыватель Hero")
+        );
+        assert_eq!(
+            t.hero_title(Lang::Ru, "Hero the Troglodyte").as_deref(),
+            Some("Троглодит Hero")
+        );
         assert_eq!(
             t.hero_word(Lang::Ru, "Lawful").as_deref(),
             Some("Законопослушный")

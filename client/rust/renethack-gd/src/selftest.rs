@@ -68,6 +68,8 @@ mod sheet_tests;
 mod shop;
 #[path = "selftest_footprints.rs"]
 mod sizes;
+#[path = "selftest_spells.rs"]
+mod spells_tests;
 #[path = "selftest_states.rs"]
 mod states_tests;
 #[path = "selftest_through.rs"]
@@ -4788,6 +4790,7 @@ impl SelfTest {
             "credits" => credits_tests::credits(),
             "rebind" => rebind_tests::rebind(),
             "sheet" => sheet_tests::sheet(),
+            "spells" => spells_tests::spells(),
             "presets" => settings_tests::presets(),
             "layouts" => layouts_tests::layouts(),
             "rim" => rim_tests::rim(),

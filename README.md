@@ -446,10 +446,17 @@ inventory's doll, rendered while the sheet is open), who they are, the hit
 points, energy, armour class, experience and gold, the six
 characteristics, and every other line of the window by section, in the
 engine's words as its translator says them; nothing the window does not
-say. A panel's header and hint name its key as the player presses it now,
+say. The spells (`+`, `Z`, or the HUD's button; `spells.rs`,
+`spells_view.rs`) are a row each: the school's medallion, the name, the
+school and level, the chance of failure and how well the spell is
+remembered. A pick casts it (from `+`'s list, the list is closed and `Z`
+picks the spell by its name); Tab or the Reorder button makes a pick the
+engine's own swap of two spells' letters, and `[sort spells]` is a row.
+A panel's header and hint name its key as the player presses it now,
 and that key closes it again, as Esc and a gamepad's B do. The `sheet`
 scenario opens it in a game, from the key, the HUD's button and a moved
-key, and checks that each line of the window is on it.
+key, and checks that each line of the window is on it; `spells` casts
+from both lists, by key, click and gamepad, and swaps two spells.
 `--lang=qps` is a pseudo-language for the self-tests: words through the
 catalogs show ⟦so⟧ and the engine's ⟪so⟫, and a screen a scenario shoots
 fails on any word outside the marks. `make test-client` also runs
