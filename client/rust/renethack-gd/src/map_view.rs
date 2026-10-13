@@ -6374,6 +6374,9 @@ impl MapView {
                 kept.push(r.model);
                 continue;
             }
+            // a creature on the cell (not the hero: their light rims them)
+            let creature =
+                look.entity == Some(i) && matches!(p.look.pose, Pose::Alive | Pose::Ghost);
             let mut m = match (before, reuse) {
                 (Some(b), Some(m)) if b.look == p.look => m,
                 (_, other) => {
@@ -6382,6 +6385,8 @@ impl MapView {
                     }
                     if own {
                         self.art.take_hero(&p.look)
+                    } else if creature {
+                        self.art.take_creature(&p.look)
                     } else {
                         self.art.take(&p.look)
                     }

@@ -21,7 +21,7 @@ use godot::classes::base_material_3d::{
 use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::{
     Animation, AnimationLibrary, AnimationPlayer, ArrayMesh, BaseMaterial3D, BoneAttachment3D,
-    FileAccess, Material, Mesh, MeshInstance3D, Node, Node3D, OrmMaterial3D, PackedScene,
+    Decal, FileAccess, Material, Mesh, MeshInstance3D, Node, Node3D, OrmMaterial3D, PackedScene,
     RenderingServer, ResourceLoader, Shader, ShaderMaterial, Skeleton3D, Skin as GdSkin,
     StandardMaterial3D, Texture2D, VisualInstance3D,
 };
@@ -71,6 +71,26 @@ pub enum Pose {
     /// no longer than the cell holds.
     Ware,
 }
+
+/// A living creature's rim (`Art::rim`): its strength, how much of the
+/// creature's own colour it takes (the rest is the light's), and the
+/// roughness its materials keep at most for the rim to stay round its
+/// edges (Godot narrows a rim on a smoother surface).
+const RIM: f32 = 0.6;
+const RIM_TINT: f32 = 0.5;
+const RIM_ROUGHNESS: f32 = 0.95;
+/// The specular a rimmed material keeps at most: smoother for its rim, it
+/// is not to shine more for it.
+const RIM_SPECULAR: f32 = 0.5;
+/// A living creature's contact shadow (`Art::ground`): how dark it is at
+/// its middle, and how much wider and longer than the body's own bounds
+/// on the floor (metres more, and the most it is across).
+const CONTACT_DARK: f32 = 0.8;
+const CONTACT_MORE: f32 = 1.0;
+const CONTACT_MOST: f32 = 2.6;
+/// The layers a contact shadow falls on: the level's surfaces, never a
+/// model (map_view's `TERRAIN_LAYER`).
+const CONTACT_LAYERS: u32 = 1 << 3;
 
 /// A thing at least this long (as the manifest has it) lies along its
 /// cell's diagonal, a few degrees either way: the longest line a cell
@@ -165,6 +185,8 @@ pub struct Model {
     extras: Extras,
     /// The look still to build into `node` (see `Art::complete`).
     pending: Option<ModelLook>,
+    /// A living creature's: its materials take a rim (`Art::take_creature`).
+    creature: bool,
     /// The seat's solver on its skeleton (the hero's, once they rode).
     seated: Option<Gd<crate::seated::Seated>>,
     /// The saddle on its back (a steed's), and the scale of the look it
@@ -280,6 +302,12 @@ pub struct Art {
     scenes: HashMap<usize, Option<Gd<PackedScene>>>,
     libraries: HashMap<(String, bool), Option<Gd<AnimationLibrary>>>,
     derived: HashMap<(i64, u32, bool, Option<usize>), Gd<Material>>,
+    /// A creature's materials with their rim (`rimmed`), by the material
+    /// each was made from, and the ids of those made (they take none more).
+    rims: HashMap<i64, Gd<Material>>,
+    rimmed: HashSet<i64>,
+    /// The soft disc a contact shadow is (`ground`).
+    contact: Option<Gd<Texture2D>>,
     proc_anims: HashMap<(Proc, Option<String>), Gd<AnimationLibrary>>,
     /// The clips built in code on the characters' skeleton (`proc/read`).
     proc_clips: Option<Gd<AnimationLibrary>>,
@@ -364,6 +392,9 @@ impl Art {
             scenes: HashMap::new(),
             libraries: HashMap::new(),
             derived: HashMap::new(),
+            rims: HashMap::new(),
+            rimmed: HashSet::new(),
+            contact: None,
             proc_anims: HashMap::new(),
             proc_clips: None,
             smoothed: HashMap::new(),
@@ -968,6 +999,7 @@ impl Art {
                 worn: None,
                 extras: Vec::new(),
                 pending: Some(*look),
+                creature: false,
                 seated: None,
                 saddle: None,
             };
@@ -1020,6 +1052,7 @@ impl Art {
         m.worn = None;
         m.pending = None;
         self.pending = self.pending.saturating_sub(1);
+        self.as_creature(m, &look);
         self.start(m, &look);
         self.warmed.insert(m.key);
         if let Some(t) = self.spent.as_mut() {
@@ -1228,9 +1261,129 @@ impl Art {
             worn: None,
             extras,
             pending: None,
+            creature: false,
             seated: None,
             saddle: None,
         }
+    }
+
+    /// As `take`, for a living creature (not the hero: their own light
+    /// rims them, their ring grounds them): its materials take a soft rim
+    /// from the lights about it (`rim`) and a soft shadow lies under it
+    /// (`ground`), now or once a stand-in is built.
+    pub fn take_creature(&mut self, look: &ModelLook) -> Model {
+        let mut m = self.take(look);
+        m.creature = true;
+        self.as_creature(&m, look);
+        m
+    }
+
+    fn as_creature(&mut self, m: &Model, look: &ModelLook) {
+        if !m.creature || m.inner.is_none() {
+            return;
+        }
+        if RIM > 0.0 {
+            self.rim(m);
+        }
+        // what is seen through or only sensed throws no shadow
+        if look.pose != Pose::Ghost {
+            self.ground(m);
+        }
+    }
+
+    /// A creature's contact shadow: a soft dark pool on the floor under
+    /// it, darkest under its middle, a little wider than its body and
+    /// turning with it. On a floor of its own colour (a jackal on brown
+    /// flagstones) it stands on the floor, never drawn round with a line.
+    /// Once per instance: it stays with it in the pool.
+    fn ground(&mut self, m: &Model) {
+        let Some(inner) = m.inner.as_ref() else {
+            return;
+        };
+        if m.node.has_node("Contact") {
+            return;
+        }
+        let [w, l] = aabb_reach(&m.node, inner);
+        let mut d = Decal::new_alloc();
+        d.set_name("Contact");
+        d.set_size(Vector3::new(
+            (w + CONTACT_MORE).clamp(0.4, CONTACT_MOST),
+            0.6,
+            (l + CONTACT_MORE).clamp(0.4, CONTACT_MOST),
+        ));
+        let tex = self
+            .contact
+            .get_or_insert_with(crate::vfx::contact_texture)
+            .clone();
+        d.set_texture(godot::classes::decal::DecalTexture::ALBEDO, &tex);
+        d.set_albedo_mix(1.0);
+        d.set_modulate(Color::from_rgba(0.0, 0.0, 0.0, CONTACT_DARK));
+        d.set_cull_mask(CONTACT_LAYERS);
+        d.set_upper_fade(0.3);
+        d.set_lower_fade(0.3);
+        // on the floor only: never up a wall beside it
+        d.set_normal_fade(0.5);
+        d.set_position(Vector3::new(0.0, 0.1, 0.0));
+        m.node.clone().add_child(&d);
+    }
+
+    /// A creature's materials with a rim: Godot's own, lit by each light
+    /// that lights the surface, so its silhouette reads against a floor of
+    /// its own colour (a jackal on brown flagstones) with no outline drawn
+    /// and no pass more. Each material is copied once; a stand-in is rimmed
+    /// once it is built.
+    fn rim(&mut self, m: &Model) {
+        let Some(inner) = m.inner.as_ref() else {
+            return;
+        };
+        for node in inner
+            .find_children_ex("*")
+            .type_("MeshInstance3D")
+            .owned(false)
+            .done()
+            .iter_shared()
+        {
+            let Ok(mut mi) = node.try_cast::<MeshInstance3D>() else {
+                continue;
+            };
+            let n = mi.get_mesh().map_or(0, |m| m.get_surface_count());
+            for i in 0..n {
+                let Some(src) = mi.get_active_material(i) else {
+                    continue;
+                };
+                if self.rimmed.contains(&src.instance_id().to_i64()) {
+                    continue;
+                }
+                let rimmed = self.rimmed_material(&src);
+                mi.set_surface_override_material(i, &rimmed);
+            }
+        }
+    }
+
+    fn rimmed_material(&mut self, src: &Gd<Material>) -> Gd<Material> {
+        let key = src.instance_id().to_i64();
+        if let Some(m) = self.rims.get(&key) {
+            return m.clone();
+        }
+        let out = match src.duplicate_resource().try_cast::<BaseMaterial3D>() {
+            Ok(mut m) if m.get_shading_mode() != ShadingMode::UNSHADED => {
+                m.set_feature(Feature::RIM, true);
+                m.set_rim(RIM);
+                m.set_rim_tint(RIM_TINT);
+                // (the rim's width follows the roughness: a fully rough
+                // material would be lit all over, not round its edge)
+                let rough = m.get_roughness().min(RIM_ROUGHNESS);
+                m.set_roughness(rough);
+                let specular = m.get_specular().min(RIM_SPECULAR);
+                m.set_specular(specular);
+                m.upcast::<Material>()
+            }
+            // a shader of its own, or a glow: as it is
+            _ => src.clone(),
+        };
+        self.rims.insert(key, out.clone());
+        self.rimmed.insert(out.instance_id().to_i64());
+        out
     }
 
     /// The look's model under `holder`: its own node, its animation player
@@ -2105,6 +2258,44 @@ fn within(root: &Gd<Node3D>, node: &Gd<Node>) -> Transform3D {
         at = parent;
     }
     to_root
+}
+
+/// How wide (x) and how long (z) the meshes under `inner` are in the
+/// space of `holder`, by their own bounds (a skinned one's at rest): a
+/// cheap measure, for a shadow under them.
+fn aabb_reach(holder: &Gd<Node3D>, inner: &Gd<Node3D>) -> [f32; 2] {
+    let (mut lo, mut hi) = ([f32::MAX; 2], [f32::MIN; 2]);
+    for node in inner
+        .find_children_ex("*")
+        .type_("MeshInstance3D")
+        .owned(false)
+        .done()
+        .iter_shared()
+    {
+        let Ok(mi) = node.clone().try_cast::<MeshInstance3D>() else {
+            continue;
+        };
+        if !mi.is_visible() {
+            continue;
+        }
+        let to = within(holder, &node);
+        let b = mi.get_aabb();
+        for i in 0..8 {
+            let corner = b.position
+                + Vector3::new(
+                    if i & 1 != 0 { b.size.x } else { 0.0 },
+                    if i & 2 != 0 { b.size.y } else { 0.0 },
+                    if i & 4 != 0 { b.size.z } else { 0.0 },
+                );
+            let p = to * corner;
+            lo = [lo[0].min(p.x), lo[1].min(p.z)];
+            hi = [hi[0].max(p.x), hi[1].max(p.z)];
+        }
+    }
+    if lo[0] > hi[0] {
+        return [0.5; 2];
+    }
+    [hi[0] - lo[0], hi[1] - lo[1]]
 }
 
 /// The sides on the ground (x, z) of the bounds of the meshes shown under

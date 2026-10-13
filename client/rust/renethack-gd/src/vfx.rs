@@ -945,6 +945,16 @@ pub fn soft_texture() -> Gd<Texture2D> {
     })
 }
 
+/// A creature's shadow on the floor under it: dark across its middle,
+/// fading softly out to its edge.
+pub fn contact_texture() -> Gd<Texture2D> {
+    texture(64, |x, y| {
+        let d = ((x - 0.5).powi(2) + (y - 0.5).powi(2)).sqrt() * 2.0;
+        let t = ((d - 0.2) / 0.8).clamp(0.0, 1.0);
+        1.0 - t * t * (3.0 - 2.0 * t)
+    })
+}
+
 /// A soft ring with a faint inner glow, for markers on the ground.
 pub fn ring_texture() -> Gd<Texture2D> {
     texture(128, |x, y| {
