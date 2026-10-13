@@ -11,13 +11,13 @@
     {
       "url": "https://kenney.nl/media/pages/assets/impact-sounds/87b4ddecda-1677589768/kenney_impact-sounds.zip",
       "root": "Audio/",
-      "files": ["impactBell_heavy_00[0-2].ogg", "impactGeneric_light_*.ogg", "impactGlass_light_*.ogg", "impactMetal_heavy_*.ogg", "impactMining_*.ogg", "impactPlank_medium_*.ogg", "impactPunch_heavy_*.ogg", "impactSoft_*.ogg", "impactWood_heavy_*.ogg"],
+      "files": ["impactBell_heavy_000.ogg", "impactGeneric_light_*.ogg", "impactMining_*.ogg", "impactPlank_medium_*.ogg", "impactPunch_heavy_*.ogg", "impactSoft_*.ogg"],
       "license_files": ["License.txt"],
       "dest": "cc0/kenney/impact",
       "kind": "mono",
-      "use": "blows, falls, doors kicked, bells; a hoof's and a skittering step until better",
+      "use": "placeholders until better: a soft fall, a pick in rock, a bell for prayer, a hoof's and a skittering step",
       "credit": {
-        "what": "Impact Sounds: impacts of flesh, wood, metal, glass and stone, bells",
+        "what": "Impact Sounds: impacts of flesh, wood and stone, a bell",
         "author": "Kenney",
         "license": "CC0",
         "page": "https://kenney.nl/assets/impact-sounds"
@@ -26,13 +26,13 @@
     {
       "url": "https://kenney.nl/media/pages/assets/rpg-audio/8e99002d76-1677590336/kenney_rpg-audio.zip",
       "root": "Audio/",
-      "files": ["beltHandle[12].ogg", "book*.ogg", "cloth[1-4].ogg", "clothBelt*.ogg", "creak[1-3].ogg", "doorClose_[1-4].ogg", "doorOpen_[12].ogg", "drawKnife[1-3].ogg", "dropLeather.ogg", "handleCoins*.ogg", "handleSmallLeather*.ogg", "knifeSlice*.ogg", "metalClick.ogg", "metalLatch.ogg"],
+      "files": ["beltHandle[12].ogg", "book*.ogg", "cloth[1-4].ogg", "clothBelt*.ogg", "creak[1-3].ogg", "drawKnife[1-3].ogg", "dropLeather.ogg", "handleSmallLeather*.ogg", "knifeSlice*.ogg", "metalClick.ogg", "metalLatch.ogg"],
       "license_files": ["License.txt"],
       "dest": "cc0/kenney/rpg",
       "kind": "mono",
-      "use": "doors, coins, books, cloth and leather, blades drawn and slicing, a creaking board",
+      "use": "books, cloth and leather, blades drawn and slicing, a latch and a click, a creaking board",
       "credit": {
-        "what": "RPG Audio: doors, coins, books, cloth and leather, blades, a creaking board",
+        "what": "RPG Audio: books, cloth and leather, blades, a latch, a creaking board",
         "author": "Kenney",
         "license": "CC0",
         "page": "https://kenney.nl/assets/rpg-audio"
@@ -51,35 +51,6 @@
         "author": "Kenney",
         "license": "CC0",
         "page": "https://kenney.nl/assets/interface-sounds"
-      }
-    },
-    {
-      "url": "https://kenney.nl/media/pages/assets/music-jingles/f37e530b9e-1677590399/kenney_music-jingles.zip",
-      "root": "Audio/Steel jingles/",
-      "files": ["jingles_STEEL00.ogg"],
-      "license_files": ["License.txt"],
-      "dest": "cc0/kenney/jingles",
-      "kind": "keep",
-      "use": "level up",
-      "credit": {
-        "what": "Music Jingles: a steel and a pizzicato jingle",
-        "author": "Kenney",
-        "license": "CC0",
-        "page": "https://kenney.nl/assets/music-jingles"
-      }
-    },
-    {
-      "url": "https://kenney.nl/media/pages/assets/music-jingles/f37e530b9e-1677590399/kenney_music-jingles.zip",
-      "root": "Audio/Pizzicato jingles/",
-      "files": ["jingles_PIZZI10.ogg"],
-      "dest": "cc0/kenney/jingles",
-      "kind": "keep",
-      "use": "the hero's death",
-      "credit": {
-        "what": "Music Jingles: a steel and a pizzicato jingle",
-        "author": "Kenney",
-        "license": "CC0",
-        "page": "https://kenney.nl/assets/music-jingles"
       }
     },
     {
@@ -759,6 +730,370 @@
         "author": "Darsycho",
         "license": "CC0",
         "page": "https://opengameart.org/content/hungry-ghoul"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/qubodup-DoorSet.7z",
+      "root": "qubodup-DoorSet/flac/",
+      "files": ["qubodup-DoorOpen01.flac", "qubodup-DoorOpen02.flac", "qubodup-DoorOpen03.flac", "qubodup-DoorOpen04.flac", "qubodup-DoorOpen05.flac", "qubodup-DoorOpen06.flac"],
+      "dest": "cc0/qubodup/doors",
+      "kind": "sfx",
+      "use": "a door opening",
+      "credit": {
+        "what": "Door Open, Door Close Set",
+        "author": "Iwan Gabovitch (qubodup)",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/door-open-door-close-set"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/qubodup-DoorSet.7z",
+      "root": "qubodup-DoorSet/flac/",
+      "files": ["qubodup-DoorClose02.flac", "qubodup-DoorClose03.flac", "qubodup-DoorClose04.flac", "qubodup-DoorClose05.flac", "qubodup-DoorClose06.flac", "qubodup-DoorClose07.flac"],
+      "dest": "cc0/qubodup/doors",
+      "kind": "sfx",
+      "use": "a door closing",
+      "credit": {
+        "what": "Door Open, Door Close Set",
+        "author": "Iwan Gabovitch (qubodup)",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/door-open-door-close-set"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/sounds_8.zip",
+      "files": ["cant_open.wav", "lock.wav"],
+      "dest": "cc0/laleksic",
+      "kind": "sfx",
+      "use": "a locked door tried; a lock turned",
+      "credit": {
+        "what": "Various Sound Effects: a locked door, a lock, a creaking floor",
+        "author": "laleksic",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/various-sound-effects"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/sounds_8.zip",
+      "files": ["floor_creak1.wav", "floor_creak3.wav"],
+      "dest": "cc0/laleksic",
+      "kind": "sfx",
+      "use": "a squeaky board",
+      "credit": {
+        "what": "Various Sound Effects: a locked door, a lock, a creaking floor",
+        "author": "laleksic",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/various-sound-effects"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/100-CC0-wood-metal-SFX.zip",
+      "files": ["wood_slam_0[1-4].ogg"],
+      "dest": "cc0/rubberduck/wood",
+      "kind": "sfx",
+      "use": "a door kicked (WHAMM!)",
+      "credit": {
+        "what": "100 CC0 metal and wood SFX: kicks, breaking wood, a lock, springs",
+        "author": "rubberduck",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/100-cc0-metal-and-wood-sfx"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/100-CC0-wood-metal-SFX.zip",
+      "files": ["wood_breaking_0[12].ogg", "wood_cracking_0[24].ogg"],
+      "dest": "cc0/rubberduck/wood",
+      "kind": "sfx",
+      "use": "a door broken; a crash far off",
+      "credit": {
+        "what": "100 CC0 metal and wood SFX: kicks, breaking wood, a lock, springs",
+        "author": "rubberduck",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/100-cc0-metal-and-wood-sfx"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/100-CC0-wood-metal-SFX.zip",
+      "files": ["lock_open_01.ogg", "metal_spring_0[12].ogg", "metal_slam_01.ogg"],
+      "dest": "cc0/rubberduck/metal",
+      "kind": "sfx",
+      "use": "a lock opened; a bear trap's springs and jaws",
+      "credit": {
+        "what": "100 CC0 metal and wood SFX: kicks, breaking wood, a lock, springs",
+        "author": "rubberduck",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/100-cc0-metal-and-wood-sfx"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/Coins%20Sound%20Library.zip",
+      "root": "Wav/",
+      "files": ["Coins_Few/Coins_Few_06.wav", "Coins_Few/Coins_Few_07.wav", "Coins_Few/Coins_Few_08.wav", "Coins_Few/Coins_Few_09.wav", "Coins_Few/Coins_Few_16.wav", "Coins_Few/Coins_Few_17.wav"],
+      "dest": "ccby/lrsf/coins",
+      "kind": "sfx",
+      "use": "gold picked up; coins far off",
+      "credit": {
+        "what": "Coins Sound Effects Library",
+        "author": "Little Robot Sound Factory",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/coins-sound-effects-library",
+        "notice": "www.littlerobotsoundfactory.com"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/Coins%20Sound%20Library.zip",
+      "root": "Wav/",
+      "files": ["Coins_Several/Coins_Several_01.wav", "Coins_Several/Coins_Several_02.wav", "Coins_Several/Coins_Several_03.wav", "Coins_Several/Coins_Several_04.wav", "Coins_Several/Coins_Several_05.wav"],
+      "dest": "ccby/lrsf/coins",
+      "kind": "sfx",
+      "use": "gold dropped",
+      "credit": {
+        "what": "Coins Sound Effects Library",
+        "author": "Little Robot Sound Factory",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/coins-sound-effects-library",
+        "notice": "www.littlerobotsoundfactory.com"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/MoreSounds.zip",
+      "root": "Drink/",
+      "files": ["Drink_0[2346].wav"],
+      "dest": "cc0/owlishmedia/drink",
+      "kind": "sfx",
+      "use": "a potion quaffed",
+      "credit": {
+        "what": "202 More Sound Effects: drinking",
+        "author": "OwlishMedia",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/202-more-sound-effects"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/BookFlip_SFX.zip",
+      "files": ["BookFlip2.wav", "BookFlip4.wav", "BookFlip9.wav", "BookFlip10.wav", "BookFlip11.wav", "BookFlip12.wav"],
+      "dest": "cc0/voltiment/book",
+      "kind": "sfx",
+      "max": 1.0,
+      "use": "a scroll or a spellbook read",
+      "credit": {
+        "what": "Book Flip Sounds",
+        "author": "Voltiment555",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/book-flip-sounds"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/crunch_-_tito.zip",
+      "files": ["crunch.2.ogg", "crunch.3.ogg", "crunch.4.ogg", "crunch.6.ogg", "crunch.7.ogg"],
+      "dest": "cc0/starninjas/crunch",
+      "kind": "sfx",
+      "max": 0.9,
+      "use": "eating",
+      "credit": {
+        "what": "7 Eating Crunches",
+        "author": "StarNinjas",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/7-eating-crunches"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/qubodup-WisdomMagic_0.7z",
+      "root": "qubodup-WisdomMagic/",
+      "files": ["qubodup-WisdomMagic1.flac", "qubodup-WisdomMagic4.flac", "qubodup-WisdomMagic6.flac"],
+      "dest": "ccby/qubodup/wisdom",
+      "kind": "jingle",
+      "use": "a prayer answered",
+      "credit": {
+        "what": "Wisdom Magic",
+        "author": "Iwan Gabovitch (qubodup)",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/wisdom-magic",
+        "notice": "Wisdom Magic Sounds by Iwan Gabovitch http://opengameart.org/users/qubodup"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/qubodup-WisdomMagic_0.7z",
+      "root": "qubodup-WisdomMagic/",
+      "files": ["qubodup-WisdomMagic2.flac", "qubodup-WisdomMagic5.flac", "qubodup-WisdomMagic7.flac"],
+      "dest": "ccby/qubodup/wisdom",
+      "kind": "sfx",
+      "use": "an altar: an offering, an alignment learned",
+      "credit": {
+        "what": "Wisdom Magic",
+        "author": "Iwan Gabovitch (qubodup)",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/wisdom-magic",
+        "notice": "Wisdom Magic Sounds by Iwan Gabovitch http://opengameart.org/users/qubodup"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/NenadSimic%20-%20Muffled%20Distant%20Explosion.wav",
+      "dest": "cc0/nenadsimic",
+      "kind": "sfx",
+      "max": 3.0,
+      "use": "an angry god; a blast far off",
+      "credit": {
+        "what": "Muffled Distant Explosion",
+        "author": "Nenad Simic",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/muffled-distant-explosion"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/explosions.7z",
+      "root": "explosions/",
+      "files": ["explode.wav", "explodemini.wav"],
+      "dest": "ccby/qubodup/explosions",
+      "kind": "sfx",
+      "use": "a land mine, an explosion",
+      "credit": {
+        "what": "2 High Quality Explosions",
+        "author": "Iwan Gabovitch (qubodup)",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/2-high-quality-explosions"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/sfx_breaking_and_falling.zip",
+      "files": ["bfh1_rock_falling_01.ogg", "bfh1_rock_falling_02.ogg", "bfh1_rock_falling_03.ogg", "bfh1_rock_falling_04.ogg", "bfh1_rock_falling_05.ogg", "bfh1_rock_falling_06.ogg"],
+      "dest": "cc0/rubberduck/rocks",
+      "kind": "sfx",
+      "max": 1.5,
+      "use": "a falling rock, a rolling boulder",
+      "credit": {
+        "what": "75 CC0 breaking / falling / hit sfx: falling rocks",
+        "author": "rubberduck",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/water-splash-slime-sfx.zip",
+      "files": ["splash_01.ogg", "splash_02.ogg", "splash_03.ogg", "splash_04.ogg", "splash_05.ogg", "splash_06.ogg"],
+      "dest": "cc0/rubberduck/water",
+      "kind": "sfx",
+      "max": 1.5,
+      "use": "a fountain, a rust trap's gush, a splash",
+      "credit": {
+        "what": "40 CC0 water / splash / slime SFX: splashes and bubbles",
+        "author": "rubberduck",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/40-cc0-water-splash-slime-sfx"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/water-splash-slime-sfx.zip",
+      "files": ["bubble_0[1-3].ogg"],
+      "dest": "cc0/rubberduck/water",
+      "kind": "sfx",
+      "use": "bubbling water (a fountain, far off)",
+      "credit": {
+        "what": "40 CC0 water / splash / slime SFX: splashes and bubbles",
+        "author": "rubberduck",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/40-cc0-water-splash-slime-sfx"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/flame_0.ogg",
+      "dest": "cc0/themightyglider",
+      "kind": "sfx",
+      "use": "a fire trap",
+      "credit": {
+        "what": "Catching fire",
+        "author": "themightyglider",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/catching-fire"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/magical_1_0.ogg",
+      "dest": "cc0/jaggedstone/magic",
+      "kind": "sfx",
+      "use": "a magic trap",
+      "credit": {
+        "what": "Magic Spell SFX",
+        "author": "JaggedStone",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/magic-spell-sfx"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/magical_2.ogg",
+      "dest": "cc0/jaggedstone/magic",
+      "kind": "sfx",
+      "use": "a magic trap",
+      "credit": {
+        "what": "Magic Spell SFX",
+        "author": "JaggedStone",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/magic-spell-sfx"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/magical_5.ogg",
+      "dest": "cc0/jaggedstone/magic",
+      "kind": "sfx",
+      "use": "a magic trap",
+      "credit": {
+        "what": "Magic Spell SFX",
+        "author": "JaggedStone",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/magic-spell-sfx"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/pleasing-bell.wav",
+      "dest": "cc0/springspring",
+      "kind": "sfx",
+      "use": "a shop's bell; a bell far off",
+      "credit": {
+        "what": "Pleasing Bell Sound Effect",
+        "author": "Spring Spring",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/pleasing-bell-sound-effect"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/Level%20Up%21.zip",
+      "root": "Level Up!/",
+      "files": ["orchestra.wav"],
+      "dest": "ccby/bart/levelup",
+      "kind": "jingle",
+      "use": "level up",
+      "credit": {
+        "what": "Level up sound effects: an orchestra hit",
+        "author": "bart",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/level-up-sound-effects"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/Won%21.wav",
+      "dest": "ccby/spuispuin",
+      "kind": "jingle",
+      "use": "level up",
+      "credit": {
+        "what": "Won! (Orchestral winning jingle)",
+        "author": "spuispuin",
+        "license": "CC BY 4.0",
+        "page": "https://opengameart.org/content/won-orchestral-winning-jingle"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/Game%20Over%20Theme%20II.zip",
+      "root": "Game Over Theme II/",
+      "files": ["Game Over II ~ v1.wav"],
+      "dest": "cc0/kauffman",
+      "kind": "jingle",
+      "rename": "game_over_ii.ogg",
+      "use": "the hero's death",
+      "credit": {
+        "what": "Game Over Theme II",
+        "author": "Cleyton Kauffman",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/game-over-theme-ii"
       }
     }
   ],

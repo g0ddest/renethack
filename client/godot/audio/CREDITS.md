@@ -31,29 +31,47 @@ for which cue.
 | `cc0/artisticdude/swishes/` | Swishes Sound Pack | artisticdude, CC0 | https://opengameart.org/content/swishes-sound-pack |
 | `cc0/darsycho/undead/` | Hungry ghoul | Darsycho, CC0 | https://opengameart.org/content/hungry-ghoul |
 | `cc0/darsycho/undead/` | Zombie moans | Darsycho, CC0 | https://opengameart.org/content/zombie-moans |
-| `cc0/kenney/impact/` | Impact Sounds: impacts of flesh, wood, metal, glass and stone, bells | Kenney, CC0 | https://kenney.nl/assets/impact-sounds |
+| `cc0/jaggedstone/magic/` | Magic Spell SFX | JaggedStone, CC0 | https://opengameart.org/content/magic-spell-sfx |
+| `cc0/kauffman/` | Game Over Theme II | Cleyton Kauffman, CC0 | https://opengameart.org/content/game-over-theme-ii |
+| `cc0/kenney/impact/` | Impact Sounds: impacts of flesh, wood and stone, a bell | Kenney, CC0 | https://kenney.nl/assets/impact-sounds |
 | `cc0/kenney/interface/` | Interface Sounds: clicks, ticks, panels opening and closing | Kenney, CC0 | https://kenney.nl/assets/interface-sounds |
-| `cc0/kenney/jingles/` | Music Jingles: a steel and a pizzicato jingle | Kenney, CC0 | https://kenney.nl/assets/music-jingles |
-| `cc0/kenney/rpg/` | RPG Audio: doors, coins, books, cloth and leather, blades, a creaking board | Kenney, CC0 | https://kenney.nl/assets/rpg-audio |
+| `cc0/kenney/rpg/` | RPG Audio: books, cloth and leather, blades, a latch, a creaking board | Kenney, CC0 | https://kenney.nl/assets/rpg-audio |
 | `cc0/kenney/steps/` | Impact Sounds: footsteps on snow | Kenney, CC0 | https://kenney.nl/assets/impact-sounds |
 | `cc0/kenney/steps/` | RPG Audio: footsteps on dirt | Kenney, CC0 | https://kenney.nl/assets/rpg-audio |
+| `cc0/laleksic/` | Various Sound Effects: a locked door, a lock, a creaking floor | laleksic, CC0 | https://opengameart.org/content/various-sound-effects |
+| `cc0/nenadsimic/` | Muffled Distant Explosion | Nenad Simic, CC0 | https://opengameart.org/content/muffled-distant-explosion |
+| `cc0/owlishmedia/drink/` | 202 More Sound Effects: drinking | OwlishMedia, CC0 | https://opengameart.org/content/202-more-sound-effects |
 | `cc0/qubodup/dog/` | Dog Snarl Grunt Grumble | Iwan Gabovitch (qubodup), CC0 | https://opengameart.org/content/dog-snarl-grunt-grumble |
+| `cc0/qubodup/doors/` | Door Open, Door Close Set | Iwan Gabovitch (qubodup), CC0 | https://opengameart.org/content/door-open-door-close-set |
 | `cc0/qubodup/swoosh/` | Swish - bamboo stick weapon swooshes | Iwan Gabovitch (qubodup), CC0 | https://opengameart.org/content/swish-bamboo-stick-weapon-swhoshes |
 | `cc0/qubodup/towel/` | 40 wet towel club/pound/hit/attack sounds | Iwan Gabovitch (qubodup), CC0 | https://opengameart.org/content/40-wet-towel-clubpoundhitattack-sounds |
+| `cc0/rubberduck/metal/` | 100 CC0 metal and wood SFX: kicks, breaking wood, a lock, springs | rubberduck, CC0 | https://opengameart.org/content/100-cc0-metal-and-wood-sfx |
 | `cc0/rubberduck/mud/` | 25 CC0 mud sfx: squelches | rubberduck, CC0 | https://opengameart.org/content/25-cc0-mud-sfx |
+| `cc0/rubberduck/rocks/` | 75 CC0 breaking / falling / hit sfx: falling rocks | rubberduck, CC0 | https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx |
 | `cc0/rubberduck/slime/` | 40 CC0 water / splash / slime SFX: slime | rubberduck, CC0 | https://opengameart.org/content/40-cc0-water-splash-slime-sfx |
+| `cc0/rubberduck/water/` | 40 CC0 water / splash / slime SFX: splashes and bubbles | rubberduck, CC0 | https://opengameart.org/content/40-cc0-water-splash-slime-sfx |
+| `cc0/rubberduck/wood/` | 100 CC0 metal and wood SFX: kicks, breaking wood, a lock, springs | rubberduck, CC0 | https://opengameart.org/content/100-cc0-metal-and-wood-sfx |
+| `cc0/springspring/` | Pleasing Bell Sound Effect | Spring Spring, CC0 | https://opengameart.org/content/pleasing-bell-sound-effect |
+| `cc0/starninjas/crunch/` | 7 Eating Crunches | StarNinjas, CC0 | https://opengameart.org/content/7-eating-crunches |
+| `cc0/themightyglider/` | Catching fire | themightyglider, CC0 | https://opengameart.org/content/catching-fire |
+| `cc0/voltiment/book/` | Book Flip Sounds | Voltiment555, CC0 | https://opengameart.org/content/book-flip-sounds |
 
 ## Creative Commons Attribution
 
 | Where | What | Author | Source |
 |---|---|---|---|
 | `ccby/baradari/monster/` | 15 monster grunt/pain/death sounds | Michel Baradari, CC BY 3.0 | https://opengameart.org/content/15-monster-gruntpaindeath-sounds |
+| `ccby/bart/levelup/` | Level up sound effects: an orchestra hit | bart, CC BY 3.0 | https://opengameart.org/content/level-up-sound-effects |
 | `ccby/congusbongus/footsteps/` | Footsteps on different surfaces: boots on stone, wood, grass; paws | congusbongus, from Freesound recordings by swuing (footstep-concrete, footstep-wood, footstep-grass) and sabotovat (Wolf run), CC BY 3.0; each folder's license.txt names its Freesound original | https://opengameart.org/content/footsteps-on-different-surfaces |
 | `ccby/coucassi/monsters/` | Free Monster Sounds: a slime's, a bat's, a hornet's, a spider's and a dragon's hurts and deaths | Creature Sounds (coucassi), CC BY 4.0 | https://coucassi.itch.io/free-monster-sounds |
 | `ccby/dillonbecker/hero/` | Super Dialogue Audio Pack v1: the hero's cries | Dillon Becker, with the voices of Alex Brodie, Ian Lampert, Sean Lenhart and Karen Cenon, CC BY 4.0; Attribution should go to Dillon Becker | https://dillonbecker.itch.io/sdap |
 | `ccby/dillonbecker/monsters/` | Super Dialogue Audio Pack v1: cries of hurt and death | Dillon Becker, with the voices of Alex Brodie, Ian Lampert, Sean Lenhart and Karen Cenon, CC BY 4.0; Attribution should go to Dillon Becker | https://dillonbecker.itch.io/sdap |
+| `ccby/lrsf/coins/` | Coins Sound Effects Library | Little Robot Sound Factory, CC BY 3.0; www.littlerobotsoundfactory.com | https://opengameart.org/content/coins-sound-effects-library |
 | `ccby/lrsf/fantasy/` | Fantasy Sound Effects Library: footsteps in water | Little Robot Sound Factory, CC BY 3.0; www.littlerobotsoundfactory.com | https://opengameart.org/content/fantasy-sound-effects-library |
 | `ccby/makoto/creatures/` | Creature Sound Effect: growls, hisses, a zombie's and a beast's roars | Makoto Hiramatsu, CC BY 4.0 | https://makotohiramatsu.itch.io/creature-sound-effect |
+| `ccby/qubodup/explosions/` | 2 High Quality Explosions | Iwan Gabovitch (qubodup), CC BY 3.0 | https://opengameart.org/content/2-high-quality-explosions |
+| `ccby/qubodup/wisdom/` | Wisdom Magic | Iwan Gabovitch (qubodup), CC BY 3.0; Wisdom Magic Sounds by Iwan Gabovitch http://opengameart.org/users/qubodup | https://opengameart.org/content/wisdom-magic |
+| `ccby/spuispuin/` | Won! (Orchestral winning jingle) | spuispuin, CC BY 4.0 | https://opengameart.org/content/won-orchestral-winning-jingle |
 | `ccby/thesoundrack/archery/` | Archery Sound Pack: arrows in flight and striking | Leonardo Calvo (thesoundrack), CC BY 4.0 | https://thesoundrack.itch.io/archery-sound-pack |
 | `ccby/thesoundrack/roars/` | Monster Roar Sound Pack: a demon's, a beast's and a dragon's roars | Leonardo Calvo (thesoundrack), CC BY 4.0 | https://thesoundrack.itch.io/monster-roar-sound-pack |
 | `ccby/thesoundrack/swords/` | Swords & Blades Sound Pack: whooshes, impacts, blades drawn and sliding | Leonardo Calvo (thesoundrack), CC BY 4.0 | https://thesoundrack.itch.io/swords-blades-sound-pack |

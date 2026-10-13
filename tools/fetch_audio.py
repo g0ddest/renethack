@@ -606,8 +606,32 @@ def level_group(recipe, item, takes):
     return done
 
 
+# the prepared files of an item are kept by the hash of what made them
+# (the item, its download, the kind's target and this script), so that a
+# run redoes only what changed
+TOOL = sha256(open(os.path.abspath(__file__), "rb").read())
+
+
+def prepared(recipe, item, key):
+    made = json.dumps([item, SOURCES[key], recipe["targets"].get(item["kind"]), TOOL],
+                      sort_keys=True)
+    return os.path.join(CACHE, "prepared", sha256(made.encode()))
+
+
 def do_source(op, w, recipe, item):
     blob, key = download(op, item)
+    if item["kind"] not in ("keep", "mono"):
+        done = prepared(recipe, item, key)
+        if os.path.isfile(os.path.join(done, "index.json")):
+            index = json.load(open(os.path.join(done, "index.json")))
+            for out, report in index["files"]:
+                with open(os.path.join(done, out.replace("/", "__")), "rb") as f:
+                    w.put(f"{item['dest']}/{out}", f.read())
+                REPORT[f"{item['dest']}/{out}"] = report
+            if item.get("license_files"):
+                for rel, data in license_files(item, members(blob, key)):
+                    w.put(f"{item['dest']}/{rel}", data)
+            return len(index["files"])
     files = members(blob, key)
     picked = pick(files, item, key) if "files" in item else sorted(files)
     root = item.get("root", "")
@@ -624,17 +648,34 @@ def do_source(op, w, recipe, item):
         else:
             takes += prepare(recipe, item, rel, files[n], f"{key}:{n}")
     if takes:
+        done = prepared(recipe, item, key)
+        os.makedirs(done, exist_ok=True)
+        index = []
         for out, data in level_group(recipe, item, takes):
             w.put(f"{item['dest']}/{out}", data)
+            with open(os.path.join(done, out.replace("/", "__")), "wb") as f:
+                f.write(data)
+            index.append([out, REPORT[f"{item['dest']}/{out}"]])
+        with open(os.path.join(done, "index.json"), "w") as f:
+            json.dump({"files": index}, f)
+    for rel, data in license_files(item, files):
+        w.put(f"{item['dest']}/{rel}", data)
+    return len(picked)
+
+
+def license_files(item, files):
+    """The licence files an item keeps, where they lie under its root (packs
+    keep one per folder), with the line ends git keeps (LF), so that a run
+    changes nothing."""
+    root = item.get("root", "")
+    out = []
     for lic in item.get("license_files", []):
-        # where it lies under the root (packs keep one per folder), with
-        # the line ends git keeps (LF), so that a run changes nothing
         rel = lic[len(root):] if lic.startswith(root) else os.path.basename(lic)
         text = files[lic]
         while b"\r\n" in text:  # "\r\r\n" too
             text = text.replace(b"\r\n", b"\n")
-        w.put(f"{item['dest']}/{rel}", text)
-    return len(picked)
+        out.append((rel, text))
+    return out
 
 
 def layer_samples(op, recipe, layer):
