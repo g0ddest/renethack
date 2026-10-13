@@ -30,6 +30,7 @@ for which cue.
 | `cc0/antumdeluge/bat/` | Bat Screeches | Jordan Irwin (AntumDeluge), from a recording by polymorpheva, CC0 | https://opengameart.org/content/bat-screeches |
 | `cc0/artisticdude/freeze/` | Freeze Spell | artisticdude, CC0 | https://opengameart.org/content/freeze-spell-0 |
 | `cc0/artisticdude/rpg/` | RPG Sound Pack: a beetle's bites | artisticdude, CC0 | https://opengameart.org/content/rpg-sound-pack |
+| `cc0/artisticdude/rpg/` | RPG Sound Pack: a spell's burst | artisticdude, CC0 | https://opengameart.org/content/rpg-sound-pack |
 | `cc0/artisticdude/swishes/` | Swishes Sound Pack | artisticdude, CC0 | https://opengameart.org/content/swishes-sound-pack |
 | `cc0/bart/ice/` | Ice spells | bart, CC0 | https://opengameart.org/content/ice-spells |
 | `cc0/darsycho/undead/` | Hungry ghoul | Darsycho, CC0 | https://opengameart.org/content/hungry-ghoul |
@@ -86,9 +87,10 @@ for which cue.
 | `ccby/erxer1/water/` | Water flowing sound | erxer1, CC BY 3.0 | https://opengameart.org/content/water-flowing-sound |
 | `ccby/kurt/stream/` | Stream Sounds | kurt, CC BY 3.0 | https://opengameart.org/content/stream-sounds |
 | `ccby/lamoot/lava/` | Lava loop (from Yo Frankie!) | Lamoot, for the Blender Foundation, CC BY 3.0 | https://opengameart.org/content/lava-loop |
-| `ccby/leohpaz/magic/` | 8 Heals and Buffs SFX: sleep | leohpaz, CC BY 4.0 | https://opengameart.org/content/8-heals-and-buffs-sfx |
-| `ccby/leohpaz/magic/` | 8 Magic Attacks: fire, ice and water bursts, thunder, a charge, poison | leohpaz, CC BY 4.0 | https://opengameart.org/content/8-magic-attacks |
+| `ccby/leohpaz/magic/` | 8 Heals and Buffs SFX: sleep, a heal, a debuff | leohpaz, CC BY 4.0 | https://opengameart.org/content/8-heals-and-buffs-sfx |
+| `ccby/leohpaz/magic/` | 8 Magic Attacks: fire, ice and water bursts, thunder, wind, earth, a charge, poison | leohpaz, CC BY 4.0 | https://opengameart.org/content/8-magic-attacks |
 | `ccby/lrsf/coins/` | Coins Sound Effects Library | Little Robot Sound Factory, CC BY 3.0; www.littlerobotsoundfactory.com | https://opengameart.org/content/coins-sound-effects-library |
+| `ccby/lrsf/fantasy/` | Fantasy Sound Effects Library: a spell | Little Robot Sound Factory, CC BY 3.0; www.littlerobotsoundfactory.com | https://opengameart.org/content/fantasy-sound-effects-library |
 | `ccby/lrsf/fantasy/` | Fantasy Sound Effects Library: footsteps in water | Little Robot Sound Factory, CC BY 3.0; www.littlerobotsoundfactory.com | https://opengameart.org/content/fantasy-sound-effects-library |
 | `ccby/makoto/creatures/` | Creature Sound Effect: growls, hisses, a zombie's and a beast's roars | Makoto Hiramatsu, CC BY 4.0 | https://makotohiramatsu.itch.io/creature-sound-effect |
 | `ccby/ofdn/` | LOOP BOX #3: In Darkness, Obscurium | Of Far Different Nature, CC BY 4.0; https://fardifferent.carrd.co | https://opengameart.org/content/essentials-pack-for-fantasy-games-loop-box-3-orchestral-soundtracks-for-rpgs-and-adventures |

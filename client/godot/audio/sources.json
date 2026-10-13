@@ -1231,7 +1231,7 @@
       "max": 1.8,
       "use": "a fiery, frosty, wet or noxious blast; poison",
       "credit": {
-        "what": "8 Magic Attacks: fire, ice and water bursts, thunder, a charge, poison",
+        "what": "8 Magic Attacks: fire, ice and water bursts, thunder, wind, earth, a charge, poison",
         "author": "leohpaz",
         "license": "CC BY 4.0",
         "page": "https://opengameart.org/content/8-magic-attacks"
@@ -1246,7 +1246,7 @@
       "max": 2.0,
       "use": "a bolt of lightning",
       "credit": {
-        "what": "8 Magic Attacks: fire, ice and water bursts, thunder, a charge, poison",
+        "what": "8 Magic Attacks: fire, ice and water bursts, thunder, wind, earth, a charge, poison",
         "author": "leohpaz",
         "license": "CC BY 4.0",
         "page": "https://opengameart.org/content/8-magic-attacks"
@@ -1261,7 +1261,7 @@
       "max": 1.4,
       "use": "a wand zapped; a force bolt; a plain ray",
       "credit": {
-        "what": "8 Magic Attacks: fire, ice and water bursts, thunder, a charge, poison",
+        "what": "8 Magic Attacks: fire, ice and water bursts, thunder, wind, earth, a charge, poison",
         "author": "leohpaz",
         "license": "CC BY 4.0",
         "page": "https://opengameart.org/content/8-magic-attacks"
@@ -1276,7 +1276,7 @@
       "max": 2.0,
       "use": "a sleep ray",
       "credit": {
-        "what": "8 Heals and Buffs SFX: sleep",
+        "what": "8 Heals and Buffs SFX: sleep, a heal, a debuff",
         "author": "leohpaz",
         "license": "CC BY 4.0",
         "page": "https://opengameart.org/content/8-heals-and-buffs-sfx"
@@ -1416,6 +1416,80 @@
         "author": "rubberduck",
         "license": "CC0",
         "page": "https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/rpg_sound_pack.zip",
+      "root": "RPG Sound Pack/battle/",
+      "files": ["magic1.wav"],
+      "dest": "cc0/artisticdude/rpg",
+      "kind": "sfx",
+      "use": "a ray bouncing off a wall",
+      "credit": {
+        "what": "RPG Sound Pack: a spell's burst",
+        "author": "artisticdude",
+        "license": "CC0",
+        "page": "https://opengameart.org/content/rpg-sound-pack"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/Fantasy%20Sound%20Library.zip",
+      "root": "Fantasy Sound Library/Wav/",
+      "files": ["Spell_01.wav"],
+      "dest": "ccby/lrsf/fantasy",
+      "kind": "sfx",
+      "use": "a ray bouncing off a wall",
+      "credit": {
+        "what": "Fantasy Sound Effects Library: a spell",
+        "author": "Little Robot Sound Factory",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/fantasy-sound-effects-library",
+        "notice": "www.littlerobotsoundfactory.com"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/8_rpg_heals_buffs_sfx_samples.zip",
+      "files": ["02_Heal_02.wav", "21_Debuff_01.wav"],
+      "dest": "ccby/leohpaz/magic",
+      "kind": "sfx",
+      "limit": 3,
+      "max": 2.0,
+      "use": "spells of healing and of enchantment cast",
+      "credit": {
+        "what": "8 Heals and Buffs SFX: sleep, a heal, a debuff",
+        "author": "leohpaz",
+        "license": "CC BY 4.0",
+        "page": "https://opengameart.org/content/8-heals-and-buffs-sfx"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/8_rpg_battle_magic_sfx_free_samples.zip",
+      "files": ["25_Wind_01.wav", "30_Earth_02.wav"],
+      "dest": "ccby/leohpaz/magic",
+      "kind": "sfx",
+      "limit": 3,
+      "max": 2.0,
+      "use": "spells of escape and of matter cast",
+      "credit": {
+        "what": "8 Magic Attacks: fire, ice and water bursts, thunder, wind, earth, a charge, poison",
+        "author": "leohpaz",
+        "license": "CC BY 4.0",
+        "page": "https://opengameart.org/content/8-magic-attacks"
+      }
+    },
+    {
+      "url": "https://opengameart.org/sites/default/files/qubodup-WisdomMagic_0.7z",
+      "root": "qubodup-WisdomMagic/",
+      "files": ["qubodup-WisdomMagic3.flac", "qubodup-WisdomMagic9.flac", "qubodup-WisdomMagic10.flac"],
+      "dest": "ccby/qubodup/wisdom",
+      "kind": "sfx",
+      "use": "clerical spells cast",
+      "credit": {
+        "what": "Wisdom Magic",
+        "author": "Iwan Gabovitch (qubodup)",
+        "license": "CC BY 3.0",
+        "page": "https://opengameart.org/content/wisdom-magic",
+        "notice": "Wisdom Magic Sounds by Iwan Gabovitch http://opengameart.org/users/qubodup"
       }
     },
     {
