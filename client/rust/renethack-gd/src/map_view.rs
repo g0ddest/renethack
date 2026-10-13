@@ -1506,10 +1506,13 @@ fn terrain_base(
                 look.solid(bevel(0.16, 1.9, 0.3), arch, at(x, 0.95, -0.34));
             }
             look.solid(bevel(1.0, 0.26, 0.34), arch, at(0.0, 2.0, -0.34));
-            // the dark beyond the top step
+            // the dark beyond the top step: the masonry all but black, so
+            // that it thins out between the eye and whoever stands north
+            // of the stair as the arch does (flat black, it hid all of a
+            // hero there but the helmet)
             look.solid(
                 cuboid(0.7, 1.2, 0.04),
-                Paint::Flat(DEEP, Finish::Matte),
+                pbr(masonry, 4, Role::Wall, DEEP),
                 at(0.0, 1.2, -0.47),
             );
             // whoever stands here stands on the middle step
@@ -8692,6 +8695,17 @@ mod tests {
         // the stairs' letters only name them under the pointer
         let up = f.look(&feature(cat, "S_upstair"));
         assert!(!up.letters.is_empty() && up.letters.iter().all(|l| l.hint));
+        // what of an up stair stands as tall as a body thins out between
+        // the eye and whoever stands north of it, as a wall does: none of
+        // it is flat paint (the dark beyond its top step was)
+        for s in up.solids.iter().filter(|s| s.pos.y > 0.5) {
+            assert!(
+                matches!(s.paint, Paint::Pbr(_, _, r) if !matches!(r, Role::Floor | Role::Void)),
+                "{:?} at {:?}",
+                s.paint,
+                s.pos
+            );
+        }
         // a full wall carries a torch, a wall cut down does not
         assert!(f.look(&feature(cat, "S_hwall")).wall);
     }
