@@ -4811,6 +4811,7 @@ impl SelfTest {
             "effects" => effects::effects(),
             "rays" => effects::rays(),
             "blasts" => effects::blasts(),
+            "engulfed" => effects::engulfed(),
             "crowd" => crowd_tests::crowd(),
             "pickers" => input_ru::pickers(),
             "help" => help_tests::help(),

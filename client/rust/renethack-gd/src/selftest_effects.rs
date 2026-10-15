@@ -5,15 +5,18 @@
 //! up stair in the light; then the level unlit, an up stair a few steps
 //! into the dark, remembered. `rays`: a ray of every kind the engine draws
 //! across the lit room, cell by cell. `blasts`: an explosion of every kind
-//! in it, a scroll of fire's about the hero. Pictures only
-//! (`--screenshots`): not part of `make test-client`.
+//! in it, a scroll of fire's about the hero. `engulfed`: the hero inside
+//! each of NetHack's engulfers. Pictures only (`--screenshots`): not part
+//! of `make test-client`.
 
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
 
 use super::{Step, camera_settled, map_view, quit, start};
 
+use crate::engulf::{Flesh, Inside, Stuff};
 use crate::gallery::{
-    CorridorScene, corridor_cell, lay_out_corridors, lay_out_scene, put_blast, put_feature, put_ray,
+    CorridorScene, corridor_cell, lay_out_corridors, lay_out_scene, put_blast, put_engulfed,
+    put_feature, put_ray,
 };
 use crate::game::RenethackGame;
 use crate::vfx::VfxKind;
@@ -415,6 +418,117 @@ pub(super) fn blasts() -> Vec<Step> {
             }),
         ]);
     }
+    steps.extend(quit());
+    steps
+}
+
+/// NetHack's engulfers, what each one's inside is drawn as, and its
+/// picture.
+const ENGULFERS: [(&str, Inside, &str); 12] = [
+    (
+        "fire vortex",
+        Inside::Funnel(Stuff::Fire),
+        "engulfed-fire-vortex",
+    ),
+    (
+        "energy vortex",
+        Inside::Funnel(Stuff::Energy),
+        "engulfed-energy-vortex",
+    ),
+    (
+        "ice vortex",
+        Inside::Funnel(Stuff::Ice),
+        "engulfed-ice-vortex",
+    ),
+    (
+        "dust vortex",
+        Inside::Funnel(Stuff::Dust),
+        "engulfed-dust-vortex",
+    ),
+    (
+        "steam vortex",
+        Inside::Funnel(Stuff::Steam),
+        "engulfed-steam-vortex",
+    ),
+    (
+        "fog cloud",
+        Inside::Funnel(Stuff::Fog),
+        "engulfed-fog-cloud",
+    ),
+    ("air elemental", Inside::Gale, "engulfed-air-elemental"),
+    (
+        "purple worm",
+        Inside::Maw(Flesh::Gullet),
+        "engulfed-purple-worm",
+    ),
+    ("trapper", Inside::Maw(Flesh::Hide), "engulfed-trapper"),
+    (
+        "lurker above",
+        Inside::Maw(Flesh::Hide),
+        "engulfed-lurker-above",
+    ),
+    (
+        "ochre jelly",
+        Inside::Maw(Flesh::Jelly),
+        "engulfed-ochre-jelly",
+    ),
+    ("Juiblex", Inside::Maw(Flesh::Slime), "engulfed-juiblex"),
+];
+
+/// The engulfer of `ENGULFERS` under way, and the frames its inside has
+/// been drawn.
+static ENGULFER: AtomicUsize = AtomicUsize::new(0);
+static ENGULFED_FRAMES: AtomicU32 = AtomicU32::new(0);
+
+/// `engulfed`: the hero swallowed by each of NetHack's engulfers in turn,
+/// as the engine shows it (the level gone, the swallow glyphs round them):
+/// its inside drawn round them by its kind, a vortex's funnel of its
+/// stuff, the gale, a gullet, a fold of hide, goo; and once out, none.
+pub(super) fn engulfed() -> Vec<Step> {
+    let mut steps = start();
+    steps.extend([
+        Step::Wait("the hero on the map", |g| Ok(g.world.map.hero().is_some())),
+        Step::Call("the first engulfer", |_| {
+            ENGULFER.store(0, Ordering::Relaxed);
+            Ok(())
+        }),
+    ]);
+    for (_, _, shot) in &ENGULFERS {
+        steps.extend([
+            Step::Call("swallowed", |g| {
+                let cat = g.catalog.clone().ok_or("no catalog")?;
+                let (name, _, _) = ENGULFERS[ENGULFER.load(Ordering::Relaxed)];
+                put_engulfed(&mut g.world, &cat, name)?;
+                ENGULFED_FRAMES.store(0, Ordering::Relaxed);
+                Ok(())
+            }),
+            Step::Wait("its inside drawn round the hero, a moment of it", |g| {
+                let (name, inside, _) = ENGULFERS[ENGULFER.load(Ordering::Relaxed)];
+                let now = map_view(g)?.engulfed_inside();
+                if !drawn_now(g) || !camera_settled(g)? {
+                    return Ok(false);
+                }
+                if now != Some(inside) {
+                    return Err(format!("inside the {name}: {now:?}, not {inside:?}"));
+                }
+                Ok(ENGULFED_FRAMES.fetch_add(1, Ordering::Relaxed) + 1 >= 20)
+            }),
+            Step::Shot(shot),
+            Step::Call("the next engulfer", |_| {
+                ENGULFER.fetch_add(1, Ordering::Relaxed);
+                Ok(())
+            }),
+        ]);
+    }
+    steps.extend([
+        Step::Call("out again", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            lay_out_corridors(&mut g.world, &cat, SCENE, false)
+        }),
+        Step::Wait("nothing of it left", |g| {
+            Ok(drawn_now(g) && map_view(g)?.engulfed_inside().is_none())
+        }),
+    ]);
     steps.extend(quit());
     steps
 }

@@ -18,6 +18,7 @@ mod credits_page;
 mod cues;
 mod dialogs;
 mod engine_text;
+mod engulf;
 mod frame_log;
 mod gallery;
 mod game;

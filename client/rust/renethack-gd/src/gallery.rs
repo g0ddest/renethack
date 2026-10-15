@@ -706,6 +706,51 @@ pub fn put_blast(
     Ok(())
 }
 
+/// The hero engulfed by the monster `name`, as the engine shows them: the
+/// level cleared, the hero on their cell, the monster's eight swallow
+/// glyphs round them (display.c's `swallowed`). Where the hero is.
+pub fn put_engulfed(world: &mut World, cat: &Catalog, name: &str) -> Result<(i32, i32), String> {
+    let m = cat
+        .monsters
+        .iter()
+        .find(|m| m.name == name)
+        .ok_or_else(|| format!("no monster {name}"))?;
+    let floor = cmap(cat, "S_room")?;
+    let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    let map = &mut world.map;
+    map.clear();
+    let (cx, cy) = (40, 10);
+    // S_sw_tl .. S_sw_br, round the hero's cell
+    let parts = ['/', '-', '\\', '|', '|', '\\', '-', '/'];
+    let around = [
+        (-1, -1),
+        (0, -1),
+        (1, -1),
+        (-1, 0),
+        (1, 0),
+        (-1, 1),
+        (0, 1),
+        (1, 1),
+    ];
+    for (i, (ch, (dx, dy))) in parts.into_iter().zip(around).enumerate() {
+        let glyph = Glyph {
+            glyph: Some(cat.glyphs.swallow + m.idx * 8 + i as i32),
+            ch: ch as i32,
+            color: m.color,
+            flags: 0,
+            tile: 0,
+            kind: GlyphKind::Swallow,
+            mon: None,
+            cmap: None,
+            level: None,
+        };
+        map.print(cx + dx, cy + dy, &glyph, Some(&floor));
+    }
+    map.print(cx, cy, &hero, Some(&floor));
+    world.view_center = Some((cx, cy));
+    Ok((cx, cy))
+}
+
 /// A cell of `CORRIDORS` on the map.
 pub fn corridor_cell((col, row): (i32, i32)) -> (i32, i32) {
     (CORRIDORS_AT.0 + col, CORRIDORS_AT.1 + row)

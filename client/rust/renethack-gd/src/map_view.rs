@@ -49,6 +49,7 @@ use crate::audio::Sound;
 use crate::batch::{Batches, Slot};
 use crate::branch_look::{BranchLook, Prop};
 use crate::cues::Size;
+use crate::engulf::{Engulfed, Flesh, Inside};
 use crate::hearing;
 use crate::meshes::{
     MeshKey, bevel, cuboid, cylinder, dome, facets, plane, prism, rock, sphere, torus,
@@ -2425,6 +2426,15 @@ impl<'a> Near<'a> {
 fn look_of(cell: &Cell, near: Near, ctx: &Ctx) -> Look {
     let catalog = ctx.catalog;
     let mut look = Look::default();
+    // engulfed: the engulfer is drawn round the hero, nothing per cell
+    // (no floor the hero is not on)
+    if cell
+        .glyph
+        .as_ref()
+        .is_some_and(|g| g.kind == GlyphKind::Swallow)
+    {
+        return look;
+    }
     match &cell.terrain {
         Some(t) => {
             let sym = cmap_sym(t, catalog).unwrap_or("");
@@ -2800,8 +2810,8 @@ pub struct MapView {
     bedrock_dirty: bool,
     /// The vignette and grain over the map, under the HUD.
     post: Gd<CanvasLayer>,
-    engulf: Gd<MeshInstance3D>,
-    engulf_mat: Gd<godot::classes::StandardMaterial3D>,
+    /// The inside of what engulfed the hero, round them.
+    engulfed: Engulfed,
     target: Vector3,
     focus: Vector3,
     distance: f32,
@@ -3317,15 +3327,7 @@ impl MapView {
         )
         .ok();
 
-        let engulf_mat = godot::classes::StandardMaterial3D::new_gd();
-        let mut engulf = MeshInstance3D::new_alloc();
-        engulf.set_mesh(&sphere(1.3).build());
-        engulf.set_visible(false);
-        root.add_child(&engulf);
-        let mut engulf_mat = engulf_mat;
-        engulf_mat.set_transparency(godot::classes::base_material_3d::Transparency::ALPHA);
-        engulf_mat.set_roughness(0.4);
-        engulf.set_material_override(&engulf_mat);
+        let engulfed = Engulfed::new(&mut root);
 
         let art = Art::new(cells_root.clone());
         let center = Vector3::new(COLNO as f32 / 2.0, 0.0, ROWNO as f32 / 2.0);
@@ -3434,8 +3436,7 @@ impl MapView {
             holes: HashSet::new(),
             bedrock_dirty: true,
             post,
-            engulf,
-            engulf_mat,
+            engulfed,
             target: center,
             focus: center,
             distance: DISTANCE,
@@ -3717,16 +3718,10 @@ impl MapView {
             self.prof
                 .push(("bedrock", __t.elapsed().as_secs_f64() * 1000.0));
         }
-        match hero.and_then(|h| engulfer_color(world, h)) {
-            Some(color) => {
-                let (x, y) = hero.unwrap_or_default();
-                self.engulf_mat.set_albedo(color.with_alpha(0.35));
-                self.engulf
-                    .set_position(Vector3::new(x as f32, 0.6, y as f32));
-                self.engulf.set_visible(true);
-            }
-            None => self.engulf.set_visible(false),
-        }
+        let (x, y) = hero.unwrap_or_default();
+        let floor = Vector3::new(x as f32, self.ground(x, y), y as f32);
+        let inside = hero.and_then(|h| engulfer(world, catalog, h));
+        self.engulfed.show(inside, floor, delta);
         // the core's cursor is on the hero at every command: shown only
         // when elsewhere, or while getpos moves it
         let shown = |c: &(i32, i32)| world.getpos || (hero.is_some() && Some(*c) != hero);
@@ -4660,6 +4655,11 @@ impl MapView {
         self.xray_on
     }
 
+    /// The inside of what engulfs the hero, drawn round them (self-tests).
+    pub fn engulfed_inside(&self) -> Option<Inside> {
+        self.engulfed.shown()
+    }
+
     /// The creature on the cell is drawn through the hero who hides it,
     /// and in a hostile's colour (self-tests).
     pub fn seen_through_hero(&self, x: i32, y: i32) -> Option<bool> {
@@ -5073,7 +5073,7 @@ impl MapView {
         self.place_torches(&[]);
         self.holes.clear();
         self.bedrock_dirty = true;
-        self.engulf.set_visible(false);
+        self.engulfed.show(None, Vector3::ZERO, 0.0);
         self.snap = true;
         self.hero_at = None;
         // a new hero faces the camera, not the way the last one turned
@@ -7847,16 +7847,26 @@ fn solid_transform(origin: Vector3, s: &Solid) -> Transform3D {
     Transform3D::new(basis, origin + s.pos)
 }
 
-/// The engulfer's colour while the hero is swallowed.
-fn engulfer_color(world: &World, (hx, hy): (i32, i32)) -> Option<Color> {
+/// The inside of what engulfs the hero, while they are swallowed: the
+/// swallow glyphs round them name it (eight a monster), one that is not
+/// NetHack's own engulfer a fold of hide.
+fn engulfer(world: &World, catalog: &Catalog, (hx, hy): (i32, i32)) -> Option<Inside> {
     if !world.map.is_swallowed() {
         return None;
     }
-    (-1..=1)
+    let g = (-1..=1)
         .flat_map(|dy| (-1..=1).map(move |dx| (hx + dx, hy + dy)))
         .filter_map(|(x, y)| world.map.cell(x, y)?.glyph.as_ref())
-        .find(|g| g.kind == GlyphKind::Swallow)
-        .map(|g| nh_color(g.color))
+        .find(|g| g.kind == GlyphKind::Swallow)?;
+    let mon = g
+        .glyph
+        .and_then(|n| n.checked_sub(catalog.glyphs.swallow))
+        .map(|n| n / 8);
+    Some(
+        monster_info(catalog, mon)
+            .and_then(|m| Inside::of(&m.name))
+            .unwrap_or(Inside::Maw(Flesh::Hide)),
+    )
 }
 
 /// The box `node`'s meshes take in the world at rest (None: none shown).
@@ -8932,9 +8942,10 @@ mod tests {
             .ray
             .expect("a ray of dust");
         assert_eq!((kind, yaw), (Ray::Dig, None));
-        // the engulfer is drawn around the hero, not per cell
+        // the engulfer is drawn around the hero, not per cell: not even a
+        // floor round them
         cell.glyph = Some(glyph(GlyphKind::Swallow, '/'));
-        assert_eq!(f.look(&cell).solids.len(), 1, "only the floor");
+        assert!(f.look(&cell).is_empty());
         // unexplored cells draw nothing; an unseen floor under a monster does
         assert!(f.look(&Cell::default()).is_empty());
         let under = Cell {
