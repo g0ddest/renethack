@@ -388,6 +388,19 @@ fn hero_decodes_the_trap_the_hero_is_caught_in() {
 }
 
 #[test]
+fn options_decode_as_the_game_has_them() {
+    let line = r#"{"t":"win","fn":"options","a":{"autopickup":true,"pickup_types":"$?!","pickup_burden":"strained","autoopen":true,"autoquiver":false,"safe_pet":true,"confirm":false,"verbose":true,"paranoid_quit":true,"paranoid_attack":false,"paranoid_pray":true,"paranoid_remove":false}}"#;
+    let EngineMsg::Win(WinCall::Options(o)) = parse_line(line).unwrap() else {
+        panic!("expected options")
+    };
+    assert!(o.autopickup && !o.confirm && o.paranoid_quit && !o.paranoid_remove);
+    assert_eq!(
+        (o.pickup_types.as_str(), o.pickup_burden.as_str()),
+        ("$?!", "strained")
+    );
+}
+
+#[test]
 fn progress_decodes_achievements_events_conducts_and_the_end() {
     let line = r#"{"t":"win","fn":"progress","a":{"mode":"normal","role":"Wiz","achieved":[15,23,21],"events":{"qcalled":true,"uheard_tune":2,"udemigod":false},"deepest":7,"conduct":{"unvegan":0,"wishes":2},"roleplay":{"blind":false,"nudist":true},"gameover":true,"how":"ascended","turn":41250}}"#;
     let EngineMsg::Win(WinCall::Progress(p)) = parse_line(line).unwrap() else {

@@ -144,6 +144,9 @@ pub enum WinCall {
     /// What the hero's glyph hides of the hero: sent before an input wait
     /// when it changed.
     Hero(HeroNotice),
+    /// The options the client's settings show, as the game has them: sent
+    /// before an input wait when they changed.
+    Options(OptionsNotice),
     ExitNhwindows {
         text: Option<String>,
     },
@@ -237,6 +240,30 @@ pub struct HeroNotice {
     /// "web", "lava", "floor" (stuck in it), "buried_ball", "other".
     #[serde(default)]
     pub trap: Option<String>,
+}
+
+/// NetHack's options the client's settings show (their Gameplay section),
+/// as the game has them now and as its options menu words them. The save
+/// keeps them: only the game knows a restored game's.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct OptionsNotice {
+    pub autopickup: bool,
+    /// The classes autopickup takes, their symbols ("$?!"); empty: all.
+    pub pickup_types: String,
+    /// The most a pickup lifts without asking: "unencumbered",
+    /// "burdened", "stressed", "strained", "overtaxed" or "overloaded".
+    pub pickup_burden: String,
+    pub autoopen: bool,
+    pub autoquiver: bool,
+    pub safe_pet: bool,
+    pub confirm: bool,
+    pub verbose: bool,
+    /// paranoid_confirmation's switches: "yes" to quit, "yes" to attack a
+    /// peaceful, a question before praying, R and T always asking which.
+    pub paranoid_quit: bool,
+    pub paranoid_attack: bool,
+    pub paranoid_pray: bool,
+    pub paranoid_remove: bool,
 }
 
 /// The hero's progress as the game tells it to the player (#chronicle,
@@ -728,6 +755,7 @@ fn win_call(name: String, a: Value) -> Result<WinCall, ProtocolError> {
         "level" => WinCall::Level(args(n, a)?),
         "progress" => WinCall::Progress(args(n, a)?),
         "hero" => WinCall::Hero(args(n, a)?),
+        "options" => WinCall::Options(args(n, a)?),
         "exit_nhwindows" => WinCall::ExitNhwindows {
             text: args::<Text>(n, a)?.str,
         },

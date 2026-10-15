@@ -40,6 +40,8 @@ static d_level told_level = { -1, -1 };
 static unsigned long long told_progress;
 /* the trap the client was last told the hero is caught in ("": none) */
 static char told_trap[16];
+/* the hash of the options notice the client last got (0: none) */
+static unsigned long long told_options;
 /* the message vpline() is about to show, as its format and arguments and
    the text they make: the putstr that shows that text carries them to the
    client's translator.  Any message putstr ends it, so a message that is
@@ -432,6 +434,70 @@ progress_flush(void)
     rh_proto_send("win", "progress", a);
 }
 
+/* The options the client's settings show (their Gameplay section), as
+   the game has them now and as its full options menu words them:
+   autopickup, pickup_types (the classes' symbols, "" for all),
+   pickup_burden, autoopen, autoquiver, safe_pet, confirm, verbose and four
+   switches of paranoid_confirmation.  The save keeps them, so only the
+   game knows a restored game's.  Observation only: reads of `flags`. */
+static cJSON *
+options_json(void)
+{
+    static const char *const burdens[] = {
+        "unencumbered", "burdened", "stressed",
+        "strained", "overtaxed", "overloaded",
+    };
+    char types[MAXOCLASSES + 1];
+    cJSON *a = args_new();
+    int burden = flags.pickup_burden;
+
+    add_bool(a, "autopickup", flags.pickup);
+    oc_to_str(flags.pickup_types, types);
+    add_str(a, "pickup_types", types);
+    add_str(a, "pickup_burden",
+            (burden >= 0 && burden < (int) SIZE(burdens)) ? burdens[burden]
+                                                          : "stressed");
+    add_bool(a, "autoopen", flags.autoopen);
+    add_bool(a, "autoquiver", flags.autoquiver);
+    add_bool(a, "safe_pet", flags.safe_dog);
+    add_bool(a, "confirm", flags.confirm);
+    add_bool(a, "verbose", flags.verbose);
+    add_bool(a, "paranoid_quit", ParanoidQuit);
+    add_bool(a, "paranoid_attack", ParanoidHit);
+    add_bool(a, "paranoid_pray", ParanoidPray);
+    add_bool(a, "paranoid_remove", ParanoidRemove);
+    return a;
+}
+
+/* Before the engine waits for input: the options notice, when they
+   changed since the last one the client got (a game began or was
+   restored, or the player set one).  The client reads them here, not from
+   the options menu, which would become the command ^A repeats. */
+static void
+options_flush(void)
+{
+    cJSON *a;
+    char *line;
+    unsigned long long h;
+
+    if (!program_state.in_moveloop) {
+        told_options = 0;
+        return;
+    }
+    if (rh_proto_is_lost() || suppress_map_output())
+        return;
+    a = options_json();
+    line = cJSON_PrintUnformatted(a);
+    h = line ? rh_fnv1a64(line, strlen(line)) : 1;
+    cJSON_free(line);
+    if (h == told_options) {
+        cJSON_Delete(a);
+        return;
+    }
+    told_options = h;
+    rh_proto_send("win", "options", a);
+}
+
 static void wielders_flush(void);
 
 /* every request of this file goes through here */
@@ -442,6 +508,7 @@ request(const char *fn, cJSON *args)
     inventory_flush();
     progress_flush();
     hero_flush();
+    options_flush();
     wielders_flush();
     return rh_proto_request(fn, args);
 }
