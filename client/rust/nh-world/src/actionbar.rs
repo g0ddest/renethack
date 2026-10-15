@@ -586,10 +586,11 @@ impl UiState {
     }
 }
 
-/// The client's own settings, the same for every character
-/// (`<playground>/profile.json`): the last language chosen, the hero of
-/// the last game played (the title scene shows them), the settings
-/// page's (`Settings`) and the sound's volumes.
+/// The client's own settings, the same for every character: the last
+/// language chosen, the hero of the last game played (the title scene
+/// shows them), the settings page's (`Settings`) and the sound's volumes.
+/// Two files keep them (`split`): the player's, which Steam Cloud takes to
+/// every machine, and the device's, one machine's own (`DEVICE_KEYS`).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Profile {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -610,6 +611,11 @@ pub struct Profile {
     pub volumes: BTreeMap<String, u8>,
 }
 
+/// The profile's parts that are one machine's: how its window covers its
+/// screen, what its graphics card draws, the interface's scale for its
+/// screen. A desktop's Ultra and 80 % have no business on a Steam Deck.
+pub const DEVICE_KEYS: [&str; 3] = ["display", "graphics", "ui_scale"];
+
 impl Profile {
     pub fn to_json(&self) -> String {
         serde_json::to_string_pretty(self).unwrap_or_default()
@@ -618,6 +624,50 @@ impl Profile {
     /// A broken or missing file is an empty profile.
     pub fn from_json(text: &str) -> Profile {
         serde_json::from_str(text).unwrap_or_default()
+    }
+
+    /// The two files' texts: the player's, the device's.
+    pub fn split(&self) -> (String, String) {
+        let mut player = match serde_json::to_value(self) {
+            Ok(serde_json::Value::Object(o)) => o,
+            _ => serde_json::Map::new(),
+        };
+        let device: serde_json::Map<String, serde_json::Value> = DEVICE_KEYS
+            .iter()
+            .filter_map(|k| player.remove_entry(*k))
+            .collect();
+        let text =
+            |o| serde_json::to_string_pretty(&serde_json::Value::Object(o)).unwrap_or_default();
+        (text(player), text(device))
+    }
+
+    /// The profile from the player's file and the device's, each taken
+    /// for its own part only; one missing or broken leaves its part at the
+    /// defaults.
+    pub fn from_parts(player: Option<&str>, device: Option<&str>) -> Profile {
+        let object = |text: Option<&str>| {
+            text.and_then(|t| {
+                serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(t).ok()
+            })
+            .unwrap_or_default()
+        };
+        let device_key = |k: &String| DEVICE_KEYS.contains(&k.as_str());
+        let mut all = object(player);
+        all.retain(|k, _| !device_key(k));
+        all.extend(object(device).into_iter().filter(|(k, _)| device_key(k)));
+        serde_json::from_value(serde_json::Value::Object(all)).unwrap_or_default()
+    }
+
+    /// An older version's profile, one file with both parts, split. It
+    /// kept a window it was never asked to change as "windowed": that is
+    /// the device's choice now (a Steam Deck's whole screen).
+    pub fn split_old(text: &str) -> (String, String) {
+        let mut p = Profile::from_json(text);
+        let display = &mut p.settings.display;
+        if display.mode == Some(crate::WindowMode::Windowed) {
+            display.mode = None;
+        }
+        p.split()
     }
 }
 
@@ -1064,6 +1114,122 @@ mod tests {
             ..hero.clone()
         };
         assert_eq!(Profile::from_json(&loud.to_json()), loud);
+    }
+
+    /// A profile with every part set, none at its default.
+    fn full_profile() -> Profile {
+        let mut keymaps = crate::Keymaps::default();
+        keymaps.get_mut(KeyProfile::Classic).rebind(
+            crate::KeyInput::plain(crate::Key::Char('s')),
+            crate::KeyInput::plain(crate::Key::Char('g')),
+            false,
+        );
+        Profile {
+            lang: Some("ru".into()),
+            last_role: Some("Wiz".into()),
+            last_female: Some(true),
+            settings: crate::Settings {
+                display: crate::Display {
+                    mode: Some(crate::WindowMode::Exclusive),
+                    size: Some((1600, 900)),
+                    vsync: false,
+                    fps_cap: 60,
+                },
+                graphics: Some(crate::Graphics::preset(crate::Quality::Low)),
+                ui_scale: Some(130),
+                reduce_effects: true,
+                keys: Some(KeyProfile::Classic),
+                keymaps,
+                gameplay: crate::Gameplay {
+                    autopickup: true,
+                    pickup_types: "$".into(),
+                    ..crate::Gameplay::default()
+                },
+            },
+            volumes: BTreeMap::from([("Music".into(), 40), ("SFX".into(), 100)]),
+        }
+    }
+
+    #[test]
+    fn the_player_s_part_and_the_device_s_go_to_their_own_files() {
+        let p = full_profile();
+        assert!(!p.settings.keymaps.is_empty(), "a key moved");
+        let (player, device) = p.split();
+        for k in DEVICE_KEYS {
+            assert!(device.contains(&format!("\"{k}\"")), "{k} not in {device}");
+            assert!(!player.contains(&format!("\"{k}\"")), "{k} in {player}");
+        }
+        for k in [
+            "lang",
+            "last_role",
+            "last_female",
+            "reduce_effects",
+            "keys",
+            "keymaps",
+            "gameplay",
+            "volumes",
+        ] {
+            assert!(player.contains(&format!("\"{k}\"")), "{k} not in {player}");
+            assert!(!device.contains(&format!("\"{k}\"")), "{k} in {device}");
+        }
+        assert_eq!(Profile::from_parts(Some(&player), Some(&device)), p);
+        // each file gives its own part only
+        assert_eq!(
+            Profile::from_parts(Some(&device), Some(&player)),
+            Profile::default()
+        );
+        // one file missing or broken: the other's part stays
+        let alone = Profile::from_parts(Some(&player), None);
+        assert_eq!(
+            (
+                alone.lang.as_deref(),
+                alone.settings.ui_scale,
+                alone.settings.display.mode
+            ),
+            (Some("ru"), None, None)
+        );
+        let deck = Profile::from_parts(Some("broken"), Some(&device));
+        assert_eq!((deck.lang, deck.settings.ui_scale), (None, Some(130)));
+        // nothing set: nothing of the player's, the window as it opens
+        let (player, device) = Profile::default().split();
+        assert_eq!(player, "{}");
+        assert_eq!(Profile::from_parts(None, Some(&device)), Profile::default());
+    }
+
+    #[test]
+    fn an_older_profile_splits_with_every_value_kept() {
+        let p = full_profile();
+        let (player, device) = Profile::split_old(&p.to_json());
+        assert_eq!(Profile::from_parts(Some(&player), Some(&device)), p);
+        // a window never changed was kept as "windowed": now the device's
+        let windowed = Profile {
+            settings: crate::Settings {
+                display: crate::Display {
+                    mode: Some(crate::WindowMode::Windowed),
+                    ..p.settings.display
+                },
+                ..p.settings.clone()
+            },
+            ..p.clone()
+        };
+        let (player, device) = Profile::split_old(&windowed.to_json());
+        let read = Profile::from_parts(Some(&player), Some(&device));
+        assert_eq!(read.settings.display.mode, None);
+        assert_eq!(read.settings.display.size, Some((1600, 900)));
+        // as an older version wrote it
+        let (player, device) = Profile::split_old(
+            r#"{"lang":"ru","display":{"mode":"windowed","vsync":true,"fps_cap":0},"ui_scale":120,"volumes":{"Music":30}}"#,
+        );
+        let read = Profile::from_parts(Some(&player), Some(&device));
+        assert_eq!(
+            (
+                read.lang.as_deref(),
+                read.settings.ui_scale,
+                read.volumes.get("Music")
+            ),
+            (Some("ru"), Some(120), Some(&30))
+        );
+        assert!(read.settings.display.mode.is_none() && !device.contains("mode"));
     }
 
     #[test]

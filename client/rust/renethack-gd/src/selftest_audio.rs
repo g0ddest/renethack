@@ -35,7 +35,6 @@ use godot::classes::{
 };
 use godot::global::MouseButton;
 use godot::prelude::*;
-use nh_world::Profile;
 
 use nh_protocol::{GlyphKind, mg};
 use nh_world::{Key, KeyInput, Prompt};
@@ -800,8 +799,7 @@ fn buses() -> Result<(), String> {
 }
 
 fn kept(game: &mut RenethackGame) -> Result<(), String> {
-    let text = nh_link::read_profile(&game.playground()).ok_or("no profile")?;
-    let volumes = Profile::from_json(&text).volumes;
+    let volumes = crate::game::load_profile(&game.playground()).volumes;
     match (volumes.get("Music"), volumes.get("UI"), volumes.get("SFX")) {
         (Some(25), Some(0), Some(100)) => Ok(()),
         _ => Err(format!("the profile keeps {volumes:?}")),

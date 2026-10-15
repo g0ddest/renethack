@@ -16,8 +16,8 @@ use godot::prelude::*;
 use nh_link::{
     AnswerError, CLIENT_EXTRA_OPTIONS, Ending, EngineConfig, LiveSession, PlaygroundLock,
     Recovered, SessionEvent, create_playground, fetch_catalog, interrupted_games, list_saves,
-    lock_playground, read_profile, read_ui_state, recover_game, remember_name, remove_ui_state,
-    save_exists, write_profile, write_ui_state,
+    lock_playground, migrate_profile, read_profile, read_ui_state, recover_game, remember_name,
+    remove_ui_state, save_exists, write_profile, write_ui_state,
 };
 use nh_protocol::{Catalog, PickHow, Reply, WinCall};
 use nh_world::achievements::{Achievements, Tracker};
@@ -245,7 +245,7 @@ fn stop_text(stop: &Stop) -> String {
 /// The interface's language at start: `--lang`, `RENETHACK_LANG`, else
 /// (no self-test: those play in English unless asked) the profile's, else
 /// the system's, else English.
-fn startup_lang(args: &Args) -> Lang {
+pub(crate) fn startup_lang(args: &Args) -> Lang {
     if let Some(lang) = args.lang {
         return lang;
     }
@@ -259,11 +259,22 @@ fn startup_lang(args: &Args) -> Lang {
         return Lang::En;
     }
     let paths = Paths::resolve(args.playground.as_deref());
-    read_profile(&paths.playground)
-        .map(|t| Profile::from_json(&t))
-        .and_then(|p| p.lang.as_deref().and_then(Lang::from_code))
+    load_profile(&paths.playground)
+        .lang
+        .as_deref()
+        .and_then(Lang::from_code)
         .or_else(|| Lang::from_code(&Os::singleton().get_locale_language().to_string()))
         .unwrap_or_default()
+}
+
+/// The profile: the player's file and this machine's (`Profile::split`).
+/// An older version's single file is split into them first, once.
+pub(crate) fn load_profile(playground: &std::path::Path) -> Profile {
+    if let Err(e) = migrate_profile(playground, Profile::split_old) {
+        godot_warn!("renethack: cannot split the old profile: {e}");
+    }
+    let (player, device) = read_profile(playground);
+    Profile::from_parts(player.as_deref(), device.as_deref())
 }
 
 /// The settings page's settings at start: the profile's; a self-test
@@ -273,9 +284,7 @@ pub(crate) fn startup_settings(args: &Args) -> Settings {
         return Settings::default();
     }
     let paths = Paths::resolve(args.playground.as_deref());
-    read_profile(&paths.playground)
-        .map(|t| Profile::from_json(&t).settings)
-        .unwrap_or_default()
+    load_profile(&paths.playground).settings
 }
 
 /// Seconds since the engine started (the pad's clock).
@@ -719,9 +728,7 @@ impl INode for RenethackGame {
             paths.playground.display()
         );
         self.paths = Some(paths.clone());
-        let profile = read_profile(&paths.playground)
-            .map(|t| Profile::from_json(&t))
-            .unwrap_or_default();
+        let profile = load_profile(&paths.playground);
         // the sound at the volumes the player left it at
         crate::audio::apply_volumes(&profile.volumes);
         // the title scene shows the hero of the last game played
@@ -3499,11 +3506,10 @@ impl RenethackGame {
     /// keeps stays).
     fn update_profile(&self, change: impl FnOnce(&mut Profile)) {
         let playground = self.playground();
-        let mut profile = read_profile(&playground)
-            .map(|t| Profile::from_json(&t))
-            .unwrap_or_default();
+        let mut profile = load_profile(&playground);
         change(&mut profile);
-        if let Err(e) = write_profile(&playground, &profile.to_json()) {
+        let (player, device) = profile.split();
+        if let Err(e) = write_profile(&playground, &player, &device) {
             godot_warn!("renethack: cannot keep the profile: {e}");
         }
     }

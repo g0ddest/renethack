@@ -443,7 +443,8 @@ fn language() -> Vec<Step> {
             |g| {
                 let pg = g.playground();
                 let state = nh_link::read_ui_state(&pg, "Hero").unwrap_or_default();
-                let profile = nh_link::read_profile(&pg).unwrap_or_default();
+                // the player's own file keeps the language
+                let profile = nh_link::read_profile(&pg).0.unwrap_or_default();
                 if !state.contains("\"lang\": \"ru\"") || !profile.contains("\"lang\": \"ru\"") {
                     return Err(format!("not kept: state {state:?}, profile {profile:?}"));
                 }
@@ -515,9 +516,7 @@ fn save() -> Vec<Step> {
                 return Err(format!("the title's hero is {:?}", ui.map.title_hero()));
             }
             let pg = g.paths.as_ref().ok_or("no paths")?.playground.clone();
-            let profile = nh_link::read_profile(&pg)
-                .map(|t| nh_world::Profile::from_json(&t))
-                .unwrap_or_default();
+            let profile = crate::game::load_profile(&pg);
             if profile.last_role.as_deref() != Some("Wiz") || profile.last_female != Some(false) {
                 return Err(format!("the profile keeps {profile:?}"));
             }
@@ -4817,6 +4816,7 @@ impl SelfTest {
             "help" => help_tests::help(),
             "settings" => settings_tests::settings(),
             "deck" => settings_tests::deck(),
+            "profile-files" => settings_tests::profile_files(),
             "gameplay" => gameplay_tests::gameplay(),
             "credits" => credits_tests::credits(),
             "rebind" => rebind_tests::rebind(),

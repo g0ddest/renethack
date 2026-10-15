@@ -32,7 +32,9 @@ use nh_world::{
 use super::{PadEv, Step, fail_on_error_screen, quit, screen, start};
 use crate::audio::Bus;
 use crate::bindings::Shown;
-use crate::game::{GameState, RenethackGame, parse_args, startup_settings};
+use crate::game::{
+    GameState, RenethackGame, load_profile, parse_args, startup_lang, startup_settings,
+};
 use crate::gamepad::PadButton;
 use crate::i18n::{self, Lang};
 use crate::settings_page::{Field, Section, SettingsPage};
@@ -67,9 +69,7 @@ pub(super) fn page(g: &RenethackGame) -> Result<&SettingsPage, String> {
 /// The profile as it was written.
 pub(super) fn profile(g: &RenethackGame) -> Result<Profile, String> {
     let pg = g.paths.as_ref().ok_or("no paths")?.playground.clone();
-    Ok(nh_link::read_profile(&pg)
-        .map(|t| Profile::from_json(&t))
-        .unwrap_or_default())
+    Ok(crate::game::load_profile(&pg))
 }
 
 fn headless() -> bool {
@@ -699,6 +699,102 @@ pub(super) fn deck() -> Vec<Step> {
         Step::Wait("the title again", |g| {
             Ok(screen(g) == Some("title") && g.settings_page.is_none())
         }),
+    ]
+}
+
+/// A profile with every value set, none at its default, as an older
+/// version kept it in one file.
+fn old_profile() -> Profile {
+    let mut keymaps = nh_world::Keymaps::default();
+    keymaps.get_mut(KeyProfile::Classic).rebind(
+        KeyInput::plain(Key::Char('s')),
+        KeyInput::plain(Key::Char('g')),
+        false,
+    );
+    Profile {
+        lang: Some("ru".into()),
+        last_role: Some("Wiz".into()),
+        last_female: Some(true),
+        settings: nh_world::Settings {
+            display: nh_world::Display {
+                mode: Some(WindowMode::Exclusive),
+                size: Some((1600, 900)),
+                vsync: false,
+                fps_cap: 60,
+            },
+            graphics: Some(Graphics::preset(Quality::Low)),
+            ui_scale: Some(130),
+            reduce_effects: true,
+            keys: Some(KeyProfile::Classic),
+            keymaps,
+            gameplay: nh_world::Gameplay {
+                autopickup: true,
+                pickup_types: "$".into(),
+                paranoid_pray: false,
+                ..nh_world::Gameplay::default()
+            },
+        },
+        volumes: [("Music".to_string(), 40), ("SFX".to_string(), 100)].into(),
+    }
+}
+
+/// `profile-files`: an older version's profile, every value set, is split
+/// as a start splits it into the player's file (Steam Cloud syncs it) and
+/// the device's (one machine's window, graphics and interface scale): every
+/// value kept, each in its own file, the old file gone; a start reads them
+/// all back, and the game writing its settings keeps them.
+pub(super) fn profile_files() -> Vec<Step> {
+    vec![
+        Step::Wait("the title screen", |g| {
+            fail_on_error_screen(g)?;
+            Ok(screen(g) == Some("title"))
+        }),
+        Step::Call("an older version's profile split, every value kept", |g| {
+            let pg = g.paths.as_ref().ok_or("no paths")?.playground.clone();
+            let old = old_profile();
+            std::fs::write(pg.join("profile.json"), old.to_json()).map_err(|e| e.to_string())?;
+            let read = load_profile(&pg);
+            if read != old {
+                return Err(format!("read {read:?}, kept {old:?}"));
+            }
+            if pg.join("profile.json").exists() {
+                return Err("the old file is still there".into());
+            }
+            // each part in its own file
+            let (player, device) = nh_link::read_profile(&pg);
+            let (player, device) = (player.unwrap_or_default(), device.unwrap_or_default());
+            for k in nh_world::DEVICE_KEYS {
+                let key = format!("\"{k}\"");
+                if !device.contains(&key) || player.contains(&key) {
+                    return Err(format!("{k}: player {player}, device {device}"));
+                }
+            }
+            for k in ["lang", "keymaps", "gameplay", "volumes", "last_role"] {
+                let key = format!("\"{k}\"");
+                if !player.contains(&key) || device.contains(&key) {
+                    return Err(format!("{k}: player {player}, device {device}"));
+                }
+            }
+            // a start reads them
+            let args = parse_args(&[format!("--playground={}", pg.display())]);
+            if startup_settings(&args) != old.settings || startup_lang(&args) != Lang::Ru {
+                return Err("a start reads other settings".into());
+            }
+            Ok(())
+        }),
+        Step::Call(
+            "the game writes its settings: both files keep theirs",
+            |g| {
+                let pg = g.paths.as_ref().ok_or("no paths")?.playground.clone();
+                let old = old_profile();
+                g.set_settings(old.settings.clone());
+                let read = load_profile(&pg);
+                if read != old {
+                    return Err(format!("read {read:?}, kept {old:?}"));
+                }
+                Ok(())
+            },
+        ),
     ]
 }
 

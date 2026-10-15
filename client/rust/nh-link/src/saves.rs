@@ -132,20 +132,59 @@ pub fn read_ui_state(playground: &Path, name: &str) -> Option<String> {
 }
 
 /// The client's own settings, the same for every character (nh-world's
-/// `Profile`): `<playground>/profile.json`.
-const PROFILE_FILE: &str = "profile.json";
+/// `Profile`), in two files beside the saves: the player's own, which Steam
+/// Cloud takes to every machine (the language, the keys, the game's
+/// options, the volumes, the last hero)...
+pub const PLAYER_FILE: &str = "player.json";
+/// ...and the device's, one machine's own, never synced (its window, its
+/// graphics, the interface's scale).
+pub const DEVICE_FILE: &str = "device.json";
+/// Both parts in one file, as older versions kept them: split once
+/// (`migrate_profile`), then gone.
+const OLD_PROFILE_FILE: &str = "profile.json";
 
-/// None when there is none yet.
-pub fn read_profile(playground: &Path) -> Option<String> {
-    fs::read_to_string(playground.join(PROFILE_FILE)).ok()
+/// The player's file and the device's; None for one there is not yet.
+pub fn read_profile(playground: &Path) -> (Option<String>, Option<String>) {
+    let read = |file| fs::read_to_string(playground.join(file)).ok();
+    (read(PLAYER_FILE), read(DEVICE_FILE))
 }
 
-/// Write it whole or not at all.
-pub fn write_profile(playground: &Path, json: &str) -> io::Result<()> {
-    let path = playground.join(PROFILE_FILE);
+/// Write both, each whole or not at all.
+pub fn write_profile(playground: &Path, player: &str, device: &str) -> io::Result<()> {
+    write_whole(&playground.join(PLAYER_FILE), player)?;
+    write_whole(&playground.join(DEVICE_FILE), device)
+}
+
+fn write_whole(path: &Path, json: &str) -> io::Result<()> {
     let tmp = path.with_extension("json.tmp");
     fs::write(&tmp, json)?;
     fs::rename(tmp, path)
+}
+
+/// An older version's profile split into the player's file and the
+/// device's (`split` gives their texts), then removed: once. A file of the
+/// two already there stays: the player's may have come from another
+/// machine through Steam Cloud, newer than this one's old file. True when
+/// there was one to split.
+pub fn migrate_profile(
+    playground: &Path,
+    split: impl FnOnce(&str) -> (String, String),
+) -> io::Result<bool> {
+    let old = playground.join(OLD_PROFILE_FILE);
+    let text = match fs::read_to_string(&old) {
+        Ok(t) => t,
+        Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(false),
+        Err(e) => return Err(e),
+    };
+    let (player, device) = split(&text);
+    for (file, json) in [(PLAYER_FILE, player), (DEVICE_FILE, device)] {
+        let path = playground.join(file);
+        if !path.exists() {
+            write_whole(&path, &json)?;
+        }
+    }
+    fs::remove_file(old)?;
+    Ok(true)
 }
 
 /// With the save, when the character dies; no file is no error.
@@ -462,21 +501,59 @@ mod tests {
     }
 
     #[test]
-    fn the_profile_is_one_file_beside_the_saves() {
+    fn the_profile_is_two_files_beside_the_saves() {
         let pg = tempfile::tempdir().unwrap();
-        assert_eq!(read_profile(pg.path()), None);
-        write_profile(pg.path(), "{\"lang\":\"ru\"}").unwrap();
+        assert_eq!(read_profile(pg.path()), (None, None));
+        write_profile(pg.path(), "{\"lang\":\"ru\"}", "{\"ui_scale\":120}").unwrap();
         assert_eq!(
-            read_profile(pg.path()).as_deref(),
-            Some("{\"lang\":\"ru\"}")
+            read_profile(pg.path()),
+            (
+                Some("{\"lang\":\"ru\"}".to_string()),
+                Some("{\"ui_scale\":120}".to_string())
+            )
         );
         // not a save
         assert!(list_saves(pg.path()).unwrap().is_empty());
         assert_eq!(
             fs::read_dir(pg.path()).unwrap().count(),
-            1,
+            2,
             "no temporary left"
         );
+    }
+
+    #[test]
+    fn an_older_profile_is_split_once_and_a_synced_player_s_file_stays() {
+        let pg = tempfile::tempdir().unwrap();
+        let split = |t: &str| (format!("player of {t}"), format!("device of {t}"));
+        assert!(
+            !migrate_profile(pg.path(), split).unwrap(),
+            "nothing to split"
+        );
+        fs::write(pg.path().join(OLD_PROFILE_FILE), "old").unwrap();
+        assert!(migrate_profile(pg.path(), split).unwrap());
+        assert_eq!(
+            read_profile(pg.path()),
+            (
+                Some("player of old".to_string()),
+                Some("device of old".to_string())
+            )
+        );
+        assert!(!pg.path().join(OLD_PROFILE_FILE).exists(), "split once");
+        assert!(!migrate_profile(pg.path(), split).unwrap());
+        // Steam Cloud brought the player's file before this machine split
+        // its own: the player's file stays, the device's comes from the old
+        let pg = tempfile::tempdir().unwrap();
+        fs::write(pg.path().join(PLAYER_FILE), "synced").unwrap();
+        fs::write(pg.path().join(OLD_PROFILE_FILE), "old").unwrap();
+        assert!(migrate_profile(pg.path(), split).unwrap());
+        assert_eq!(
+            read_profile(pg.path()),
+            (
+                Some("synced".to_string()),
+                Some("device of old".to_string())
+            )
+        );
+        assert_eq!(fs::read_dir(pg.path()).unwrap().count(), 2);
     }
 
     #[test]

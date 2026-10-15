@@ -62,9 +62,7 @@ macro_rules! keys {
 /// The profile as it was written.
 fn profile(g: &RenethackGame) -> Result<Profile, String> {
     let pg = g.paths.as_ref().ok_or("no paths")?.playground.clone();
-    Ok(nh_link::read_profile(&pg)
-        .map(|t| Profile::from_json(&t))
-        .unwrap_or_default())
+    Ok(crate::game::load_profile(&pg))
 }
 
 /// Give the entry of the command whose own key is `command` the focus.
