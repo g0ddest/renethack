@@ -24,6 +24,9 @@
 #   make dist-linux   "Production builds"): the macOS dmg, the Linux tar.gz
 #   make dist-windows (on Linux), the Windows zip and installer; `make dist`
 #                     this machine's own and Windows'; STEAM=1 with Steam
+#   make steampipe    SteamPipe's build scripts for an upload to Steam, after a
+#                     dry run over the depots (STEAM_APP_ID, STEAM_DEPOT_<OS>;
+#                     docs/steam.md); it uploads nothing
 
 GODOT ?= godot
 # a macOS app bundle names a directory; the binary is inside it
@@ -62,7 +65,7 @@ SOAK_WINDOW ?=
 PERF_ARGS ?=
 
 .PHONY: all engine client steam import run test test-client soak perf lint need-timeout art audio app-icon icons achievement-icons achievement-vdf steam-art deck \
-	i18n-catalog i18n-check help help-check dist dist-macos dist-linux dist-windows
+	i18n-catalog i18n-check help help-check dist dist-macos dist-linux dist-windows steampipe
 all: engine
 
 engine:
@@ -291,3 +294,10 @@ dist: $(if $(filter Darwin,$(shell uname -s)),dist-macos,dist-linux) dist-window
 
 dist-macos dist-linux dist-windows:
 	GODOT="$(GODOT)" sh tools/dist/$(@:dist-%=%).sh
+
+# SteamPipe's app and depot build scripts in dist/steam/, from
+# steam/build/*.vdf.in and the IDs in STEAM_APP_ID and STEAM_DEPOT_<OS>,
+# once a dry run over each depot's content passes (tools/dist/steampipe.sh).
+# steamcmd uploads them, by hand; this uploads nothing.
+steampipe:
+	sh tools/dist/steampipe.sh

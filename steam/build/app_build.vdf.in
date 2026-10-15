@@ -1,0 +1,17 @@
+// SteamPipe's app build for renethack (docs/steam.md, "Uploading"):
+// `make steampipe` fills it into dist/steam/app_build_<app>.vdf, one depot
+// for each platform given. Preview is 1 unless STEAM_PREVIEW=0: steamcmd
+// then writes its logs and the manifest into BuildOutput, uploading nothing.
+"AppBuild"
+{
+	"AppID" "${STEAM_APP_ID}"
+	"Desc" "${STEAM_DESC}"
+	"Preview" "${STEAM_PREVIEW}"
+	"SetLive" "${STEAM_SET_LIVE}"
+	"ContentRoot" "${STEAM_CONTENT}"
+	"BuildOutput" "${STEAM_OUTPUT}"
+	"Depots"
+	{
+${STEAM_DEPOTS}
+	}
+}

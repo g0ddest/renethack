@@ -1,0 +1,18 @@
+// One platform's depot (docs/steam.md, "Uploading"): `make steampipe` fills
+// it into dist/steam/depot_build_<depot>.vdf. Its content is the package's
+// folder as it installs: renethack.exe or renethack.x86_64 with the engine
+// beside it, or on macOS the folder that holds renethack.app.
+"DepotBuild"
+{
+	"DepotID" "${DEPOT_ID}"
+	"ContentRoot" "${DEPOT_CONTENT}"
+	"FileMapping"
+	{
+		"LocalPath" "*"
+		"DepotPath" "."
+		"Recursive" "1"
+	}
+	// for development only: a game Steam launched knows its App ID
+	"FileExclusion" "steam_appid.txt"
+	"FileExclusion" "*.DS_Store"
+}

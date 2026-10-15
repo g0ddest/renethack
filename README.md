@@ -426,6 +426,11 @@ dmg takes the secrets `MACOS_CERTIFICATE` (a base64 .p12),
 ad-hoc signed. `tools/dist/fetch_godot.sh` fetches Godot and its
 templates (checked against the release's sums) where Godot is missing.
 
+**Steam.** `make steampipe` (with the App ID and the depots' IDs) writes
+SteamPipe's build scripts for the three depots into `dist/steam/`, once a
+dry run over their content passes; steamcmd uploads them, by hand
+(`docs/steam.md`, "Uploading").
+
 ## Languages
 
 The client's own words (buttons, hints, panels, tooltips) are Project

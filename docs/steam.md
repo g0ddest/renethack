@@ -19,15 +19,15 @@ checked against the game as it is. **Pass**: met, and how that is known.
 | A default configuration with a playable frame rate (30 fps at 800p) | Unknown | A Deck starts on the Medium preset (`video::DECK_QUALITY`; only the nearest torch casts shadows). The `presets` self-test times the presets at 1280×800 (`--selftest=presets --size=1280x800`, a release build), but only a Deck gives the numbers. **Routed**: run it on a Deck. |
 | No warnings that the device is unsupported | Pass | The game checks no device and shows no such message. |
 | No launcher (or a launcher controller-navigable) | Pass | None: Steam starts the game, which opens on its title. |
-| Proton or the native Linux build | Pass by design | The Linux depot is a native build made in the Steam Linux Runtime 3 (sniper) SDK, glibc 2.31 at most (`make dist-linux` checks it). In Steamworks, the Linux launch option should run under "Steam Linux Runtime 3.0 (sniper)". Not yet run on a Deck. |
+| Proton or the native Linux build | Pass by design | The Linux depot is a native build made in the Steam Linux Runtime 3 (sniper) SDK, glibc 2.31 at most (`make dist-linux` checks it). In Steamworks, Installation → Linux Runtime picks "Steam Linux Runtime 3.0 (sniper)" ("Uploading", below). Not yet run on a Deck. |
 | Sleep and resume (not in Valve's list; a crash after it would block) | Unknown | By design, nothing measures wall-clock time across a suspend: the engine's hang watch (20 s) and every other wait use monotonic clocks (`Instant`), which stop while a Linux machine sleeps; the engine is a child process, suspended with the game. The sounds' device after a resume is untried. **Routed**: suspend and resume a Deck mid-game, and with a dialog open. |
 
 Steamworks settings for the Deck:
 - Steam Input: the Deck's default configuration "Gamepad with Mouse
   Trackpad" (the game reads a gamepad, and the right trackpad as the
   mouse helps on the map).
-- Linux launch option: the native build, `renethack.x86_64`, with the
-  compatibility tool "Steam Linux Runtime 3.0 (sniper)".
+- Linux: the launch option `renethack.x86_64`, the native build, and
+  Installation → Linux Runtime: "Steam Linux Runtime 3.0 (sniper)".
 
 Not a criterion: a PlayStation pad that Steam Input presents as its
 virtual Xbox-style pad gets Xbox letters; Steam Input's glyph API
@@ -110,6 +110,10 @@ OS's files apart (no root overrides), on purpose:
 - The names differ: `save/<uid><name>.gz` on Linux, `.Z` on macOS, and
   `<name>.NetHack-saved-game` on Windows.
 
+`player.json` holds nothing of one OS's and could travel between them, but
+Auto-Cloud's root overrides move every rule of a root together, the saves
+with it: it stays with its OS, as they do.
+
 A unix save also carries the user id in its name: the game lists the
 saves of its own uid. The Deck's user (`deck`) is uid 1000, as most
 desktop Linux users are; a desktop user with another uid would not see a
@@ -152,3 +156,71 @@ moves, the flames, the torches' flicker and the hero's breath, so a run
 changes about one pixel in a hundred of the last one's: commit a new run
 only when the art itself changed. `make steam-art` writes over every file
 here: once a file holds the owner's art, take its shot out of `SHOTS`.
+
+## Uploading (SteamPipe)
+
+`make steampipe` writes SteamPipe's build scripts into `dist/steam/`, an
+app build and a depot build for each platform, once a dry run over the
+depots' content has passed. It uploads nothing: steamcmd runs the scripts,
+by hand. The templates are `steam/build/app_build.vdf.in` and
+`depot_build.vdf.in`.
+
+The depots are the packages as they install, built with Steam (`STEAM=1`):
+
+| Depot | Content | From |
+|---|---|---|
+| Windows | `renethack.exe`, the pack, the extension, `engine/`, `legal/`, `steam_api64.dll` | the CI workflow's `renethack-<version>-windows-x86_64.zip` (Steam ticked), unpacked |
+| macOS | the folder holding `renethack.app`: the app, not the dmg | `STEAM=1 make dist-macos`: `dist/build/macos/app` |
+| Linux | `renethack.x86_64`, the pack, the extension, `engine/`, `legal/`, `libsteam_api.so` | the CI workflow's `renethack-<version>-linux-x86_64.tar.gz`, unpacked |
+
+The workflow's packages go into `dist/` or a folder in it (`gh run
+download <run> -D dist` makes one for each). A build tree of this machine's
+(`dist/build/<platform>`) comes first; `STEAM_CONTENT_<OS>` names another
+folder or package.
+
+    STEAM_APP_ID=… STEAM_DEPOT_WINDOWS=… STEAM_DEPOT_MACOS=… \
+        STEAM_DEPOT_LINUX=… make steampipe
+
+| Variable | |
+|---|---|
+| `STEAM_APP_ID` | the game's App ID (required) |
+| `STEAM_DEPOT_WINDOWS`, `STEAM_DEPOT_MACOS`, `STEAM_DEPOT_LINUX` | the depots' IDs (Steamworks → SteamPipe → Depots); a platform without one is left out of the build |
+| `STEAM_CONTENT_<OS>` | a depot's content other than the default: a folder, a .zip or a .tar.gz |
+| `STEAM_DESC` | the build's description (`renethack <version>`) |
+| `STEAM_SET_LIVE` | a beta branch to set the build live on (none; the default branch is set live in Steamworks, by hand) |
+| `STEAM_PREVIEW=0` | a real upload; without it the app build is a preview |
+
+The dry run fails, and writes no script, when a depot
+- is missing, or lacks what the game needs: the pack, the extension, the
+  engine and its data, the legal notices;
+- holds another platform's binaries (Windows' PE32+ x86-64, Linux' ELF
+  x86-64, macOS' Mach-O arm64) or ones not executable;
+- has no Steam library: a build without `STEAM=1`;
+- on Linux, needs a newer glibc than the Steam Linux Runtime 3's (2.31);
+- on macOS, holds more than the app, or an app whose signature does not
+  hold (`codesign --verify --deep --strict`);
+- links to an absolute path;
+- is of another version than the others (the first line of
+  `legal/NOTICE.txt`).
+
+It warns of an app signed ad hoc (a release wants a Developer ID and
+notarization: `MACOS_SIGN_IDENTITY` and `MACOS_NOTARY_PROFILE` for
+`make dist-macos`), of a version built from changes not committed, and of a
+`steam_appid.txt` or `.DS_Store`, which the depots' rules leave out.
+
+Then, by hand:
+
+    steamcmd +login <account> +run_app_build <the repository>/dist/steam/app_build_<app>.vdf +quit
+
+Unless it was written with `STEAM_PREVIEW=0`, the app build is a preview
+(`"Preview" "1"`): steamcmd writes its logs and the depots' manifests into
+`dist/steam/output/`, and uploads nothing.
+
+Steamworks, to match:
+- SteamPipe → Depots: a depot for each platform, its operating system set:
+  Windows (64-bit), macOS, Linux + SteamOS.
+- Installation → General, the launch options: `renethack.exe` on Windows,
+  `renethack.app` on macOS (the bundle: Apple silicon then runs its own
+  architecture), `renethack.x86_64` on Linux.
+- Installation → Linux Runtime: "Steam Linux Runtime 3.0 (sniper)", on each
+  branch: the Linux build is made in its SDK.
