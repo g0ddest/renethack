@@ -19,6 +19,7 @@
 #   make help         the help's Guidebooks (client/help): the Russian fetched again
 #   make help-check   the help builder's tests; fail if a Guidebook is out of date
 #   make lint         rustfmt and clippy, warnings are errors
+#   make steam-art    draft store art for Steam in steam/store/ (needs a display)
 #   make dist-macos   production builds into dist/ (tools/dist; the README's
 #   make dist-linux   "Production builds"): the macOS dmg, the Linux tar.gz
 #   make dist-windows (on Linux), the Windows zip and installer; `make dist`
@@ -60,7 +61,7 @@ SOAK_WINDOW ?=
 # more for tools/perf.py, e.g. PERF_ARGS="--scenes tour,crowd --wait 30"
 PERF_ARGS ?=
 
-.PHONY: all engine client steam import run test test-client soak perf lint need-timeout art audio app-icon icons achievement-icons achievement-vdf deck \
+.PHONY: all engine client steam import run test test-client soak perf lint need-timeout art audio app-icon icons achievement-icons achievement-vdf steam-art deck \
 	i18n-catalog i18n-check help help-check dist dist-macos dist-linux dist-windows
 all: engine
 
@@ -213,6 +214,18 @@ achievement-icons: all client
 	grep '^selftest: achievement-icons' $$pg/achievement-icons.log; \
 	grep -q 'SELFTEST PASS achievement-icons' $$pg/achievement-icons.log \
 		|| { tail -40 $$pg/achievement-icons.log; exit 1; }; \
+	rm -rf $$pg
+
+# Draft store art for Steam (steam/store/; docs/steam.md): the capsules,
+# the page background and the library's images at Valve's sizes, drawn from
+# the title's chamber on the Ultra preset; needs a display, so not headless
+steam-art: all client
+	@pg=$$(mktemp -d); RENETHACK_QUALITY=ultra $(if $(TIMEOUT),$(TIMEOUT) 900) $(GODOT) \
+		--path $(GODOT_PROJECT) -- --selftest=steam-art --playground=$$pg/playground \
+		> $$pg/steam-art.log 2>&1; \
+	grep '^selftest: steam-art' $$pg/steam-art.log; \
+	grep -q 'SELFTEST PASS steam-art' $$pg/steam-art.log \
+		|| { tail -40 $$pg/steam-art.log; exit 1; }; \
 	rm -rf $$pg
 
 # steam/achievements.vdf alone (the names and descriptions changed in the

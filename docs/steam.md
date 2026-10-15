@@ -110,3 +110,41 @@ A unix save also carries the user id in its name: the game lists the
 saves of its own uid. The Deck's user (`deck`) is uid 1000, as most
 desktop Linux users are; a desktop user with another uid would not see a
 Deck's saves.
+
+## Store art (drafts)
+
+`steam/store/` holds draft art for the store page and the library, at the
+sizes Steamworks asks for. They are drafts: the owner may replace any of
+them with art of their own, under the same name and size.
+
+`make steam-art` renders them in the game (it needs a display; half a
+minute): the title's torchlit chamber on the Ultra preset, each from its
+own camera, with a hero in the kit NetHack starts their role with, and the
+game's name in the title's face (Cormorant SC, its gold) where Valve
+allows text.
+
+| File | Size | Steamworks | What |
+|---|---|---|---|
+| `header_capsule.png` | 920×430 | Store: header capsule | a Valkyrie, the name on the left |
+| `small_capsule.png` | 462×174 | Store: small capsule | the name over the dimmed chamber |
+| `main_capsule.png` | 1232×706 | Store: main capsule | a Knight, the name on the left |
+| `vertical_capsule.png` | 748×896 | Store: vertical capsule | a Wizard, the name above |
+| `page_background.png` | 1438×810 | Store: page background | the chamber from above, dimmed, no text |
+| `library_capsule.png` | 600×900 | Library: capsule | a Samurai, the name below |
+| `library_header.png` | 920×430 | Library: header | the store's header capsule |
+| `library_hero.png` | 3840×1240 | Library: hero | the whole chamber, the hero in the middle, no text |
+| `library_logo.png` | 1280×157, clear | Library: logo | the name alone; Steam lays it over the hero |
+
+They keep to Valve's rules for these images: no text but the game's name
+(no slogans, awards or review quotes), none at all on the library's hero
+and the page's background, the name filling most of the small capsule,
+and on the library's hero the hero's face and the altar inside the middle
+860×380 pixels, which Steam never crops. Steamworks asks for PNGs for the
+library's images; these are all PNGs.
+
+Each run takes the same shots: the cameras, the heroes, the sizes and the
+name's place are fixed in `store_art.rs`. What moves in the scene still
+moves, the flames, the torches' flicker and the hero's breath, so a run
+changes about one pixel in a hundred of the last one's: commit a new run
+only when the art itself changed. `make steam-art` writes over every file
+here: once a file holds the owner's art, take its shot out of `SHOTS`.

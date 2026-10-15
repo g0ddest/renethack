@@ -568,6 +568,10 @@ swords, the shield and the `@` as layers over the title's dark, which the
 system lights as Liquid Glass (without it macOS shows an older icon on a
 grey plate). The macOS export compiles it with Xcode's `actool`.
 
+`make steam-art` (needs a display, half a minute) renders draft art for
+the Steam store and library into `steam/store/`: the capsules, the page's
+background, the library's hero and logo (`docs/steam.md`).
+
 The renderer is Forward+ (Vulkan, Metal or D3D12). `RENETHACK_FRAME_STATS=1`
 logs frame times every two seconds; `RENETHACK_UI_SCALE` (percent, 80–140)
 scales the interface over the settings' choice (Auto is 120 % on a

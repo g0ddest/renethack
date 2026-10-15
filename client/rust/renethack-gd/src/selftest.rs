@@ -3101,10 +3101,63 @@ fn achievement_icons() -> Vec<Step> {
 /// More than the achievements (69).
 const ACHIEVEMENT_ICONS_MAX: usize = 120;
 
+/// The store's draft art (`store_art`): the capsules, the page's
+/// background and the library's images, from the title's chamber, into
+/// `steam/store/`. Writes files: `make steam-art` runs it, at the title.
+fn steam_art() -> Vec<Step> {
+    let mut steps = vec![
+        Step::Wait("the title over its scene, the art loaded", |g| {
+            fail_on_error_screen(g)?;
+            let loaded = g.ui.as_ref().is_some_and(|ui| ui.map.preloaded());
+            Ok(screen(g) == Some("title") && loaded && g.warmed_up() && map_view(g)?.title_drawn())
+        }),
+        Step::Wait("the store art's stage", |g| {
+            let mut root = g.base().get_tree().get_root().ok_or("no root")?.upcast();
+            let world = g
+                .base()
+                .get_viewport()
+                .and_then(|v| v.get_world_3d())
+                .ok_or("no world")?;
+            let bake = crate::store_art::Bake::new(&mut root, world)?;
+            STORE_ART.with(|b| *b.borrow_mut() = Some(bake));
+            Ok(true)
+        }),
+    ];
+    for _ in 0..crate::store_art::ROUNDS {
+        steps.extend([
+            Step::Call("the next shot's hero in the chamber", |g| {
+                let hero = STORE_ART.with(|b| b.borrow().as_ref().and_then(|bake| bake.hero()));
+                if let (Some((role, female)), Some(ui)) = (hero, g.ui.as_mut()) {
+                    ui.map.set_title_hero(role, female);
+                }
+                Ok(())
+            }),
+            Step::Wait("the shot taken", |g| {
+                let map = map_view(g)?;
+                STORE_ART.with(|b| match b.borrow_mut().as_mut() {
+                    Some(bake) if !bake.done() => bake.tick(map),
+                    _ => Ok(true),
+                })
+            }),
+        ]);
+    }
+    steps.push(Step::Wait("every picture written", |_| {
+        let bake = STORE_ART.with(|b| b.borrow_mut().take()).ok_or("no bake")?;
+        if !bake.done() {
+            return Err("pictures left to take".into());
+        }
+        godot_print!("selftest: steam-art: {}", bake.written.join(", "));
+        Ok(true)
+    }));
+    steps
+}
+
 thread_local! {
     static BAKE: std::cell::RefCell<Option<crate::icon_bake::Bake>> =
         const { std::cell::RefCell::new(None) };
     static ACHIEVEMENT_BAKE: std::cell::RefCell<Option<crate::achievement_bake::Bake>> =
+        const { std::cell::RefCell::new(None) };
+    static STORE_ART: std::cell::RefCell<Option<crate::store_art::Bake>> =
         const { std::cell::RefCell::new(None) };
 }
 
@@ -4783,6 +4836,7 @@ impl SelfTest {
             "gallery" => gallery(),
             "icons" => icons(),
             "achievement-icons" => achievement_icons(),
+            "steam-art" => steam_art(),
             "achievements" => achievements::achievements(),
             "smoke" => smoke(),
             "keys" => keys(),

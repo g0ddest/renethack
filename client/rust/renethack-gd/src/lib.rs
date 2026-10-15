@@ -58,6 +58,7 @@ mod skills_view;
 mod spells;
 mod spells_view;
 mod steam;
+mod store_art;
 mod surface;
 mod theme;
 mod title_scene;
