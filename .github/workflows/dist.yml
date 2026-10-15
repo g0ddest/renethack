@@ -63,6 +63,8 @@ jobs:
           restore-keys: godot-import-linux-
       - name: Build
         run: make dist-linux GODOT="$HOME/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64"
+      - name: The source in the package builds
+        run: make source-check
       - uses: actions/upload-artifact@v4
         with:
           name: renethack-linux

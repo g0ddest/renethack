@@ -24,6 +24,7 @@
 #   make dist-linux   "Production builds"): the macOS dmg, the Linux tar.gz
 #   make dist-windows (on Linux), the Windows zip and installer; `make dist`
 #                     this machine's own and Windows'; STEAM=1 with Steam
+#   make source-check the source archive the packages carry builds by itself
 #   make steampipe    SteamPipe's build scripts for an upload to Steam, after a
 #                     dry run over the depots (STEAM_APP_ID, STEAM_DEPOT_<OS>;
 #                     docs/steam.md); it uploads nothing
@@ -65,7 +66,7 @@ SOAK_WINDOW ?=
 PERF_ARGS ?=
 
 .PHONY: all engine client steam import run test test-client soak perf lint need-timeout art audio app-icon icons achievement-icons achievement-vdf steam-art deck \
-	i18n-catalog i18n-check help help-check dist dist-macos dist-linux dist-windows steampipe
+	i18n-catalog i18n-check help help-check dist dist-macos dist-linux dist-windows source-check steampipe
 all: engine
 
 engine:
@@ -294,6 +295,13 @@ dist: $(if $(filter Darwin,$(shell uname -s)),dist-macos,dist-linux) dist-window
 
 dist-macos dist-linux dist-windows:
 	GODOT="$(GODOT)" sh tools/dist/$(@:dist-%=%).sh
+
+# The complete source a package carries in legal/ (the NGPL's 3(a)), as the
+# last `make dist-*` packed it, builds by itself: the engine with neither
+# git nor the network, and its tests; the extension compiles
+# (tools/dist/source_check.sh)
+source-check:
+	sh tools/dist/source_check.sh
 
 # SteamPipe's app and depot build scripts in dist/steam/, from
 # steam/build/*.vdf.in and the IDs in STEAM_APP_ID and STEAM_DEPOT_<OS>,

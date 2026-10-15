@@ -7,6 +7,9 @@
 #   make clean      remove build/
 #
 # The upstream submodule is never modified: it is exported into build/tree.
+# The source archive a package carries has it as a plain folder (its commit
+# in upstream.rev) and the Lua release beside it (lua-<version>/): built from
+# there, the engine needs neither git nor the network.
 
 ENGINE_DIR := $(CURDIR)
 UPSTREAM ?= $(ENGINE_DIR)/upstream
@@ -36,7 +39,11 @@ endif
 # (and the tree re-exported) when it changes. A tree exported before the
 # stamp existed is taken as current. Empty while the submodule is not
 # checked out.
-UPSTREAM_REV := $(if $(wildcard $(UPSTREAM)/include/hack.h),$(shell git -C $(UPSTREAM) rev-parse HEAD))
+UPSTREAM_GIT := $(wildcard $(UPSTREAM)/.git)
+UPSTREAM_REV := $(strip $(if $(wildcard $(UPSTREAM)/include/hack.h),$(if $(UPSTREAM_GIT),\
+	$(shell git -C $(UPSTREAM) rev-parse HEAD),$(shell cat $(ENGINE_DIR)/upstream.rev 2>/dev/null))))
+# a Lua release beside the engine, copied in rather than fetched
+LUA_COPY := $(patsubst %/src/lua.h,%,$(firstword $(wildcard $(ENGINE_DIR)/lua-*/src/lua.h)))
 UPSTREAM_STAMP := $(BUILD)/upstream.rev
 $(shell mkdir -p $(BUILD); \
 	if [ ! -f $(UPSTREAM_STAMP) ] && [ -f $(TREE)/.patched ]; then \
@@ -56,7 +63,8 @@ $(TREE)/.patched: patches/series $(addprefix patches/,$(PATCHES)) $(UPSTREAM_STA
 		exit 1; }
 	rm -rf $(TREE)
 	mkdir -p $(TREE)
-	git -C $(UPSTREAM) archive --format=tar HEAD | tar -x -C $(TREE)
+	$(if $(UPSTREAM_GIT),git -C $(UPSTREAM) archive --format=tar HEAD | tar -x -C $(TREE),\
+		cp -R $(UPSTREAM)/. $(TREE)/)
 	for p in $(PATCHES); do \
 		patch -d $(TREE) -p1 --forward --quiet < patches/$$p || exit 1; \
 	done
@@ -71,7 +79,7 @@ $(TREE)/.patched: patches/series $(addprefix patches/,$(PATCHES)) $(UPSTREAM_STA
 	touch $@
 
 $(TREE)/.built: $(TREE)/.patched
-	$(MAKE) -C $(TREE) fetch-lua
+	$(if $(LUA_COPY),mkdir -p $(TREE)/lib && cp -R $(LUA_COPY) $(TREE)/lib/,$(MAKE) -C $(TREE) fetch-lua)
 	$(MAKE) -C $(TREE) $(NHVARS) lua_support
 	$(MAKE) -C $(TREE) $(NHVARS) all
 	touch $@

@@ -4,8 +4,8 @@
 # the scripts, by hand (docs/steam.md, "Uploading").
 #
 # First it checks each depot's content: there, whole, the platform's own
-# binaries, Steam's library beside them (a STEAM=1 build), nothing that
-# must not ship, one version in every depot. Then it fills
+# binaries, Steam's library beside them (a STEAM=1 build), the complete
+# source in legal/, nothing that must not ship, one version in every depot. Then it fills
 # steam/build/*.vdf.in into dist/steam/: app_build_<app>.vdf, and
 # depot_build_<depot>.vdf for each platform given.
 #
@@ -146,6 +146,12 @@ kind() {
 steam_lib() {
     [ -f "$1/$2" ] || fail "$os: no $(basename "$2"): a build without Steam (STEAM=1)"
 }
+# the complete source in the legal folder: the NGPL's 3(a) asks it of every
+# copy sold in executable form (make dist-* packs it)
+source_in() {
+    set -- "$1/$2"/renethack-*-source.tar.gz
+    [ -f "$1" ] || fail "$os: no renethack-<version>-source.tar.gz in legal/: the NGPL asks for it"
+}
 
 check_windows() {
     r=$1
@@ -153,6 +159,7 @@ check_windows() {
     need "$r" renethack.exe renethack_gd.dll engine/nh-engine.exe engine/recover.exe
     kind "$r" "PE32+ x86-64" renethack.exe renethack_gd.dll engine/nh-engine.exe engine/recover.exe
     steam_lib "$r" steam_api64.dll
+    source_in "$r" legal
 }
 
 check_linux() {
@@ -161,6 +168,7 @@ check_linux() {
     runs "$r" renethack.x86_64 engine/nh-engine engine/recover
     kind "$r" "ELF x86-64" renethack.x86_64 librenethack_gd.so engine/nh-engine engine/recover
     steam_lib "$r" libsteam_api.so
+    source_in "$r" legal
     # what each binary needs of glibc: the runtime Steam starts it in has
     # no newer one
     max=${DIST_MAX_GLIBC:-2.31}
@@ -188,6 +196,7 @@ check_macos() {
     kind "$r" "Mach-O arm64" $a/MacOS/renethack $a/Frameworks/librenethack_gd.dylib \
         $a/Resources/engine/nh-engine $a/Resources/engine/recover
     steam_lib "$r" $a/Frameworks/libsteam_api.dylib
+    source_in "$r" $a/Resources/legal
     if command -v codesign > /dev/null 2>&1; then
         codesign --verify --deep --strict "$r/renethack.app" 2> /dev/null \
             || fail "macos: renethack.app's signature does not hold (codesign --verify --deep --strict)"

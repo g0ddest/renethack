@@ -159,35 +159,31 @@ legal_folder() {
     done
     # Lua's notice as the engine build installs it beside the package's engine
     cp "$out/../engine/data/lua-license" "$out/Lua-LICENSE.txt"
-    cp "$DIST/build/source/engine-source.tar.gz" "$out/"
+    cp "$DIST/build/source/renethack-$VERSION-source.tar.gz" "$out/"
     cp "$DIST/build/source/Godot-LICENSE.txt" "$DIST/build/source/Godot-COPYRIGHT.txt" "$out/"
     python3 "$TOOLS/rust_licenses.py" --manifest-path "$ROOT/client/rust/Cargo.toml" \
         ${2:+--target "$2"} ${STEAM:+--features steam} > "$out/THIRD-PARTY-rust.txt"
 }
 
-# The source of the engine binaries (NGPL 3(a): the source accompanies
-# them), once per version; Godot's notices, once per Godot; shared by the
-# platforms. $1: the Lua source the engine build fetched.
+# The complete source of the game (NGPL 3(a): a copy sold in executable
+# form comes with it): the repository as built, NetHack at the commit
+# built, the Lua release and SOURCE.txt, the art and the sounds left out
+# (tools/dist/source_archive.py); made again for a tree with changes not
+# committed, else once per version. Godot's notices, once per Godot. Shared
+# by the platforms. $1: the Lua source the engine build fetched.
 legal_sources() {
     lua=$1
     src=$DIST/build/source
     mkdir -p "$src"
-    stamp=$src/engine-source.version
-    if [ ! -f "$stamp" ] || [ "$(cat "$stamp")" != "$VERSION" ]; then
-        say "packing the engine's source"
+    archive=$src/renethack-$VERSION-source.tar.gz
+    case $VERSION in *dirty*) rm -f "$archive" ;; esac
+    if [ ! -f "$archive" ]; then
+        say "packing the source"
         [ -f "$lua/src/lua.h" ] || die "no Lua source in $lua"
-        name=renethack-engine-$VERSION
-        rm -rf "${src:?}/$name" "$src/engine-source.tar.gz"
-        mkdir -p "$src/$name/engine/upstream"
-        git -C "$UPSTREAM" archive --format=tar HEAD | tar -x -C "$src/$name/engine/upstream"
-        for f in Makefile patches host runtime tests; do
-            cp -R "$ROOT/engine/$f" "$src/$name/engine/"
-        done
-        cp -R "$lua" "$src/$name/"
-        cp "$TOOLS/legal/SOURCE.txt" "$src/$name/README.txt"
-        pack_tgz "$src" "$name" "$src/engine-source.tar.gz"
-        rm -rf "${src:?}/$name"
-        printf '%s\n' "$VERSION" > "$stamp"
+        rm -f "$src"/renethack-*-source.tar.gz "$src/engine-source.tar.gz" "$src/engine-source.version"
+        python3 "$TOOLS/source_archive.py" "$archive.tmp" "renethack-$VERSION" "$ROOT" \
+            "$UPSTREAM" "$lua" "$TOOLS/legal/SOURCE.txt" "$VERSION"
+        mv "$archive.tmp" "$archive"
     fi
     gv=$("$GODOT" --version 2>/dev/null | head -1)
     if [ ! -f "$src/Godot-COPYRIGHT.txt" ] || [ "$(cat "$src/godot.version" 2>/dev/null)" != "$gv" ]; then

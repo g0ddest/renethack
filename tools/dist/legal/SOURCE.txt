@@ -1,29 +1,62 @@
-renethack's game engine: the complete source
-=============================================
+renethack @VERSION@: the complete source
+========================================
 
-This is the source of the programs in the game's engine/ folder (nh-engine,
-recover) and of the data files beside them, under the NetHack General Public
-License (engine/upstream/dat/license).
+The source of the game this archive came with, as the NetHack General
+Public License asks of a copy distributed in executable form (its 3(a)):
+renethack's client, its engine host and its patches to NetHack, NetHack
+itself, the Lua release it links, and their build. All of it is under the
+NetHack General Public License (LICENSE), but for the parts NOTICE lists.
 
-engine/upstream/   NetHack 5.0.0 as released (the commit the game was built
-                   from), unchanged.
-engine/patches/    renethack's changes to NetHack, applied at build time in
-                   the order of engine/patches/series; each says what it
-                   changes and why.
-engine/host/       the protocol host the engine is linked with (nh-engine's
-                   main, the window port that speaks to the game).
-engine/runtime/    the sysconf file the game ships.
-engine/Makefile    the build.
-lua-*/             the Lua release NetHack's build links (MIT licence).
+What is where
+-------------
+client/rust/          the Godot extension and the crates it is made of (Rust)
+client/godot/         the Godot project: its scene, settings, shaders, fonts
+                      and interface; the art's and the sounds' manifests,
+                      sources and credits
+client/i18n/          the catalogs of the game's texts and their translations
+client/help/          the in-game help: NetHack's Guidebook
+client/achievements/  the achievements
+engine/upstream/      NetHack 5.0.0 as released, unchanged; its commit is in
+                      engine/upstream.rev
+engine/patches/       renethack's changes to NetHack, which the build applies
+                      in the order of engine/patches/series; every file they
+                      change says so, with the date
+engine/host/          the protocol host the engine is built with
+engine/lua-*/         the Lua release NetHack links (MIT licence)
+tools/, Makefile      the tools and the build; tools/dist/ makes the packages
+steam/                what Steamworks takes: the achievements, the upload
+                      scripts
 
-To build on macOS or Linux (a C compiler, GNU make, patch, git, curl):
+Not here
+--------
+The art and the sounds (client/godot/art/, client/godot/audio/) and the
+pictures for Steam (steam/store/, steam/achievements/, steam/icon/). They
+are not the program but works under their own licences, CC0 and CC-BY,
+listed in client/godot/art/CREDITS.md and client/godot/audio/CREDITS.md.
+The game holds them; `make art` and `make audio` fetch them again from the
+sources in client/godot/art/sources.json and client/godot/audio/sources.json
+and check them against the locks beside those.
 
-    cd engine/upstream && git init -q && git add -A && git commit -qm src && cd ../..
+Godot Engine, which runs the game (4.7.2, MIT licence, godotengine.org;
+tools/dist/fetch_godot.sh fetches it), and the Rust crates the extension
+links, which cargo fetches as client/rust/Cargo.lock lists them.
+
+Building
+--------
+On macOS or Linux, with a C compiler, GNU make and patch:
+
     make -C engine
 
-The first line only makes engine/upstream a git checkout, which the build
-exports from. The build downloads the Lua release from lua.org and checks
-its sha256; offline, run `make -C engine build/tree/.patched` first, copy
-lua-*/ into engine/build/tree/lib/, then `make -C engine`. engine/build/
-then holds nh-engine, recover and data/. `make -C engine windows` (with
-mingw-w64 as well) builds the Windows programs into engine/build/windows.
+builds NetHack with the patches and the host into engine/build/ (nh-engine,
+recover and data/) from these files alone, with neither git nor the
+network. With Rust (stable, 1.94 or newer):
+
+    cd client/rust && cargo build --release --locked -p renethack-gd
+
+builds the extension (cargo fetches the crates); `cargo test` runs the
+client's tests, of which those that check the art and the sounds against
+their manifests need them. With Godot 4.7, `make run GODOT=<its binary>`
+plays the game: without the art and the sounds it runs with stand-ins and
+in silence; `make art` and `make audio` bring them. `make dist-macos` (on a
+Mac) and `make dist-linux` (on Linux, in the Steam Linux Runtime 3 SDK)
+package it as the game you have. README.md says the rest.

@@ -196,6 +196,9 @@ The dry run fails, and writes no script, when a depot
 - holds another platform's binaries (Windows' PE32+ x86-64, Linux' ELF
   x86-64, macOS' Mach-O arm64) or ones not executable;
 - has no Steam library: a build without `STEAM=1`;
+- has no `renethack-<version>-source.tar.gz` in its `legal/`: the complete
+  source, which the NetHack General Public License asks to go with every
+  copy sold (README, "Licence");
 - on Linux, needs a newer glibc than the Steam Linux Runtime 3's (2.31);
 - on macOS, holds more than the app, or an app whose signature does not
   hold (`codesign --verify --deep --strict`);

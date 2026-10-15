@@ -364,12 +364,25 @@ overrides it. Saves stay in Godot's user data directory, as in development.
   library beside the extension. The App ID comes from Steam when it starts
   the game.
 - `legal/` holds `NOTICE.txt` (what each part is and its licence), the
-  NetHack General Public License, `engine-source.tar.gz` (the complete
-  source of the engine binaries: NetHack at the commit built, the patches,
-  the host, the build files and Lua, as the licence's paragraph 3(a) asks of
-  a commercial distribution), the art, sound, help and translation
-  credits, the fonts' OFL texts, Godot's licence and notices, and the
-  licences of the Rust crates in the extension.
+  NetHack General Public License, `renethack-<version>-source.tar.gz` (the
+  complete source of the game, as the licence's 3(a) asks of a copy sold in
+  executable form: below), the art, sound, help and translation credits,
+  the fonts' OFL texts, Godot's licence and notices, and the licences of
+  the Rust crates in the extension.
+- The source archive (`tools/dist/source_archive.py`) holds the
+  repository's files as they were built, NetHack at the commit built (a
+  plain folder, its commit in `engine/upstream.rev`), the Lua release the
+  engine links, and `SOURCE.txt`, which says what is where and how to build
+  it. The art and the sounds stay out (not the program; their own
+  licences), but for their manifests, sources, locks and credits, from
+  which `make art` and `make audio` fetch them again. It is the same, byte
+  for byte, for the same files (names sorted, dated at the commit, gzip
+  without a time). `make source-check` unpacks the last one away from the
+  repository and builds it as someone with only that would: the engine
+  with neither git nor the network (the engine's Makefile takes a plain
+  NetHack folder and the Lua copy beside it), its tests, the extension; the
+  CI's Linux job runs it. From it the game also runs without the art and
+  the sounds, with stand-ins and in silence.
 - Before packaging, a target runs the packaged game's smoke self-test
   where the package can run (`DIST_SMOKE=0` skips it): a new game must
   start with the engine the package carries.
@@ -685,3 +698,12 @@ fonts (SIL Open Font License 1.1), cJSON and Lua (MIT), Godot and the Rust
 crates. Their credits: `client/godot/art/CREDITS.md`,
 `client/godot/audio/CREDITS.md`, `client/help/CREDITS.md` (the Guidebooks)
 and `client/i18n/CREDITS.md` (the sources of the Russian names).
+
+What the licence asks of the game, and where it is done:
+- every file of NetHack a patch changes says so, with the date (its 2(a)):
+  the patches put the notice in, and the engine's build checks it (Layout,
+  above);
+- a copy sold or given in executable form comes with the complete source
+  (its 3(a); a pointer to it would do only for a copy given away): every
+  package carries it in `legal/` (Production builds, above), and the
+  SteamPipe dry run lets no depot go without it.
