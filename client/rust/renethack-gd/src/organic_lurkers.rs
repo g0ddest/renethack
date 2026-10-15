@@ -1,9 +1,9 @@
 //! The creatures that lie in wait (`creature_kit`): a piercer, a cone of
 //! stone (or iron, or glass) grown in rings like a stalactite, on a
 //! fleshy foot with a mouth in it; a trapper or a lurker above, a broad
-//! flat cloak of a body, humped in its middle, thin and ragged at its
-//! rim, its edge rippling. They have no eyes. Each stands on y = 0 and
-//! faces +z.
+//! flat cloak of a body, humped in its middle and lumpy, thin and ragged
+//! at its rim, its edge rippling, its maw in the front of its rim. They
+//! have no eyes. Each stands on y = 0 and faces +z.
 
 use super::*;
 
@@ -16,9 +16,21 @@ pub enum Part {
     /// front.
     PiercerFoot,
     PiercerMouth,
-    /// A cloak: its back and its belly, meeting at its ragged rim.
+    /// A cloak: its back and its belly, meeting at its ragged rim (the
+    /// belly's u moved on by `BELLY_U`).
     Cloak,
+    /// Its maw, a dark wet slit in the front of its rim, and the teeth
+    /// along its lip.
+    CloakMaw,
+    CloakTeeth,
 }
+
+/// What a cloak's belly adds to its texture's u (its shader tells its
+/// underside from its back by it).
+pub const BELLY_U: f32 = 2.0;
+
+/// How far its rim is drawn in at its front, round its maw, of the way.
+const MAW_NOTCH: f32 = 0.1;
 
 fn v(x: f32, y: f32, z: f32) -> Vector3 {
     Vector3::new(x, y, z)
@@ -54,23 +66,24 @@ fn piercer_rings() -> Vec<Section> {
 }
 
 /// How far a cloak's rim reaches at `a` round it (from its front, +z):
-/// an oval wider than it is long, in lobes.
+/// an oval wider than it is long, in lobes, drawn in round its maw.
 fn cloak_rim(a: f32) -> f32 {
     let (across, along) = (0.6, 0.48);
     let oval = across * along / ((along * a.sin()).powi(2) + (across * a.cos()).powi(2)).sqrt();
-    oval * (1.0 + 0.07 * (5.0 * a).sin() + 0.04 * (11.0 * a + 1.0).sin())
+    let maw = 1.0 - MAW_NOTCH * a.cos().max(0.0).powi(16);
+    oval * maw * (1.0 + 0.07 * (5.0 * a).sin() + 0.04 * (11.0 * a + 1.0).sin())
 }
 
 /// Its back (`top`) or its belly `r` of the way out to its rim at `a`
 /// round it: humped in the middle, thin at the rim, the edge rippling,
-/// low ridges running out across its back.
+/// lumps of muscle across its back (not a leaf's ribs).
 fn cloak_at(r: f32, a: f32, top: bool) -> Vector3 {
     let out = cloak_rim(a) * r;
     let hump = (1.0 - r * r).max(0.0).powf(0.7);
     let ripple = 0.018 * r * r * (6.0 * a).sin();
     let y = if top {
-        let ridge = 0.008 * (7.0 * a).cos().max(0.0).powi(4) * (r * PI).sin();
-        0.06 + 0.05 * hump + ridge
+        let lump = ((3.0 * a + 5.0 * r).sin() * (7.0 * a - 3.0 * r + 1.3).sin()).max(-0.4);
+        0.06 + 0.075 * hump + 0.01 * lump * (r * PI).sin()
     } else {
         0.06 - 0.025 * hump
     };
@@ -109,6 +122,7 @@ pub(super) fn build(m: &mut Merge, part: Part) {
             const ROWS: usize = 12;
             const SIDES: usize = 48;
             for top in [true, false] {
+                let first = m.uv.len();
                 m.rings(ROWS, SIDES, |i, j| {
                     let r = frac(i, ROWS - 1);
                     let a = frac(j, SIDES) * TAU;
@@ -131,6 +145,28 @@ pub(super) fn build(m: &mut Merge, part: Part) {
                     };
                     (p, n)
                 });
+                if !top {
+                    for uv in &mut m.uv[first..] {
+                        uv.x += BELLY_U;
+                    }
+                }
+            }
+        }
+        Part::CloakMaw => {
+            // in the notch of the rim, its lips a little over its back
+            let z = cloak_rim(0.0) - 0.04;
+            m.ball(v(0.0, 0.072, z), v(0.17, 0.028, 0.06), [0.0; 3], false, 18);
+        }
+        Part::CloakTeeth => {
+            let z = cloak_rim(0.0) - 0.006;
+            for k in 0..9 {
+                let x = -0.14 + 0.28 * frac(k, 8);
+                let side = x / 0.14;
+                // shorter towards the corners of its mouth, which curve
+                // back with the lip
+                let long = 0.034 * (1.0 - 0.45 * side.abs());
+                let at = v(x, 0.092 - long * 0.4, z - 0.05 * side * side);
+                m.ball(at, v(0.014, long, 0.012), [0.0; 3], false, 6);
             }
         }
     }
@@ -153,6 +189,8 @@ mod tests {
             Part::PiercerFoot,
             Part::PiercerMouth,
             Part::Cloak,
+            Part::CloakMaw,
+            Part::CloakTeeth,
         ] {
             let m = merged(part);
             assert!(
@@ -197,10 +235,32 @@ mod tests {
     fn a_cloak_lies_flat_within_its_cell() {
         let m = merged(Part::Cloak);
         let (low, high) = m.span();
-        assert!(low > 0.0 && high < 0.16, "{low} {high}");
+        assert!(low > 0.0 && high < 0.18, "{low} {high}");
         let across = m.pos.iter().map(|p| p.x.abs()).fold(0.0, f32::max);
         let along = m.pos.iter().map(|p| p.z.abs()).fold(0.0, f32::max);
         assert!(across < 0.68 && along < 0.6, "{across} {along}");
         assert!(across > along, "wider than long");
+        // its belly told apart by its u, its back's within one turn
+        let (belly, back): (Vec<&Vector2>, Vec<&Vector2>) =
+            m.uv.iter().partition(|uv| uv.x > BELLY_U - 0.5);
+        assert_eq!(belly.len(), back.len());
+        assert!(back.iter().all(|uv| (0.0..=1.0).contains(&uv.x)));
+    }
+
+    #[test]
+    fn a_cloaks_maw_is_in_the_front_of_its_rim() {
+        let rim = cloak_rim(0.0);
+        for part in [Part::CloakMaw, Part::CloakTeeth] {
+            let m = merged(part);
+            let front = m.pos.iter().map(|p| p.z).fold(f32::MIN, f32::max);
+            assert!(
+                front > rim - 0.08 && front < rim + 0.06,
+                "{part:?} {front} {rim}"
+            );
+            assert!(
+                m.pos.iter().all(|p| p.x.abs() < 0.2 && p.y > 0.0),
+                "{part:?}"
+            );
+        }
     }
 }

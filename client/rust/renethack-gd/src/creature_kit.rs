@@ -30,6 +30,8 @@ const MIDDLE_LEGS: [&str; 2] = ["LegML", "LegMR"];
 /// torches' flame shader a fire elemental's flames are.
 const WIND_SHADER: &str = "res://shaders/vortex.gdshader";
 const FLAME_SHADER: &str = "res://shaders/flame.gdshader";
+/// The shader of a trapper's or a lurker's hide.
+const LURKER_SHADER: &str = "res://shaders/lurker.gdshader";
 
 /// A fire elemental's tongues of flame: where each stands (its foot), how
 /// wide and how tall it is; its legs, its body, its arms, its head (a
@@ -630,16 +632,60 @@ impl Kit<'_> {
 
     /// A trapper or a lurker above: a broad flat cloak of a body, humped
     /// in its middle, ragged at its rim (the Body pivot breathes and rolls
-    /// as if gliding). It has no eyes and no head.
+    /// as if gliding); its hide mottled, its hump breathing and a ripple
+    /// running round its rim (the lurkers' shader), its underside dark and
+    /// wet; its maw in the front of its rim, teeth along its lip. It has no
+    /// eyes and no head.
     pub(super) fn cloak(&mut self, root: &mut Gd<Node3D>) {
+        use lurkers::Part::*;
         let mut body = self.pivot(root, "Body", [0.0; 3]);
-        self.skin(
+        let hide = self.hide();
+        self.part(
             &mut body,
-            shape(Organic::Lurker(lurkers::Part::Cloak)),
+            shape(Organic::Lurker(Cloak)),
+            &hide,
             FLAT,
             FLAT,
             ONE,
         );
+        let maw = self
+            .art
+            .flat(Color::from_rgb(0.16, 0.03, 0.03), Finish::Glossy);
+        self.part(
+            &mut body,
+            shape(Organic::Lurker(CloakMaw)),
+            &maw,
+            FLAT,
+            FLAT,
+            ONE,
+        );
+        let bone = self.bone();
+        self.part(
+            &mut body,
+            shape(Organic::Lurker(CloakTeeth)),
+            &bone,
+            FLAT,
+            FLAT,
+            ONE,
+        );
+    }
+
+    /// A cloak's hide: the lurkers' shader in its colour, still on a
+    /// corpse; the plain skin for one seen through (the shader draws it
+    /// whole).
+    fn hide(&mut self) -> Gd<Material> {
+        if self.tint.a < 0.99 {
+            return self.skin.clone();
+        }
+        let Ok(shader) = godot::tools::try_load::<Shader>(LURKER_SHADER) else {
+            return self.skin.clone();
+        };
+        let mut m = ShaderMaterial::new_gd();
+        m.set_shader(&shader);
+        m.set_shader_parameter("color", &self.tint.to_variant());
+        let still = f32::from(u8::from(self.pose == Pose::Corpse));
+        m.set_shader_parameter("still", &still.to_variant());
+        m.upcast()
     }
 
     /// A light (or a sphere): a bright core in its colour (the Body pivot

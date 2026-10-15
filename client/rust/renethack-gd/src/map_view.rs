@@ -665,9 +665,9 @@ pub(crate) const WARM_MONSTERS: &[&str] = &[
 ];
 
 /// The monsters drawn with shaders of their own (a vortex's wind, a fire
-/// elemental's flames): the rehearsal draws one of each, so the first met
-/// in a game compiles nothing.
-pub(crate) const SHADED_MONSTERS: &[&str] = &["dust vortex", "fire elemental"];
+/// elemental's flames, a trapper's hide): the rehearsal draws one of each,
+/// so the first met in a game compiles nothing.
+pub(crate) const SHADED_MONSTERS: &[&str] = &["dust vortex", "fire elemental", "trapper"];
 
 /// The monster a role's hero is drawn as.
 pub(crate) fn role_monster(role: &str) -> &str {

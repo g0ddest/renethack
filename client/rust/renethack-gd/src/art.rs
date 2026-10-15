@@ -2089,6 +2089,7 @@ impl Art {
             skin,
             tint: Color::WHITE,
             shape: None,
+            pose: Pose::Alive,
         };
         kit.head(kind, &mut head);
     }
@@ -2224,6 +2225,7 @@ impl Art {
             skin,
             tint,
             shape: spec.shape.clone(),
+            pose: look.pose,
         };
         let mut root = Node3D::new_alloc();
         kit.body(kind, &mut root);
@@ -2732,6 +2734,8 @@ struct Kit<'a> {
     tint: Color,
     /// The model's variant (`ModelSpec::shape`).
     shape: Option<String>,
+    /// How it is drawn: a corpse's shaders hold still.
+    pose: Pose,
 }
 
 impl Kit<'_> {
