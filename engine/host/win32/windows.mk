@@ -30,7 +30,7 @@ WLIBS = -static -Wl,--wrap=sys_random_seed -luserenv -lole32 -lwinmm -luuid -lco
 
 # HACKCSRC lacks cfgfiles.c, which the unix Makefile links all the same
 W_CORE = $(HACKCSRC) cfgfiles.c date.c tile.c windsys.c random.c winshim.c
-W_HOST = rh_main.c rh_bridge.c rh_catalog.c rh_fmt.c rh_proto.c \
+W_HOST = rh_main.c rh_bridge.c rh_catalog.c rh_fmt.c rh_held.c rh_proto.c \
 	rh_progress.c rh_time.c rh_winmain.c rh_wincompat.c
 W_LUA = $(filter-out lua.c luac.c,$(notdir $(wildcard $(LUASRC)/*.c)))
 W_OBJS = $(addprefix $(O)/,$(W_CORE:.c=.o) $(W_HOST:.c=.o) cppregex.o \

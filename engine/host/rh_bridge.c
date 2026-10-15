@@ -9,6 +9,7 @@
 #include "rh_proto.h"
 #include "rh_bridge.h"
 #include "rh_fmt.h"
+#include "rh_held.h"
 #include "rh_progress.h"
 
 /* rh_progress.h names NetHack's two spoiler achievements by number */
@@ -920,44 +921,6 @@ sensed_json(cJSON *a, int x, int y, const glyph_info *ginfo)
         add_bool(a, "sensed", 1);
 }
 
-/* The weapon last told held by each monster (by id), or NO_GLYPH: a
-   monster taking up a weapon changes no glyph, so nothing draws its cell
-   again (wielders_flush()). */
-#define RH_MAX_WIELDERS 256
-static struct {
-    unsigned id;
-    int glyph;
-} told_held[RH_MAX_WIELDERS];
-static int n_told_held;
-
-static int
-told_held_glyph(unsigned id)
-{
-    int i;
-
-    for (i = 0; i < n_told_held; i++)
-        if (told_held[i].id == id)
-            return told_held[i].glyph;
-    return NO_GLYPH;
-}
-
-static void
-set_told_held(unsigned id, int glyph)
-{
-    int i;
-
-    for (i = 0; i < n_told_held; i++)
-        if (told_held[i].id == id) {
-            told_held[i].glyph = glyph;
-            return;
-        }
-    if (glyph != NO_GLYPH && n_told_held < RH_MAX_WIELDERS) {
-        told_held[n_told_held].id = id;
-        told_held[n_told_held].glyph = glyph;
-        n_told_held++;
-    }
-}
-
 /* The glyph of what a monster the hero sees holds in its hand, as the map
    would show it lying; NO_GLYPH when nothing, or not seen, or the hero
    hallucinates (the map shows another monster then). */
@@ -987,7 +950,7 @@ wielding_json(cJSON *a, int x, int y, const glyph_info *ginfo)
         || (mtmp = m_at(x, y)) == 0)
         return;
     glyph = held_glyph(mtmp);
-    set_told_held(mtmp->m_id, glyph);
+    rh_held_set(mtmp->m_id, glyph == NO_GLYPH ? RH_HELD_NONE : glyph);
     if (glyph == NO_GLYPH)
         return;
     map_glyphinfo((coordxy) x, (coordxy) y, glyph, 0, &wg);
@@ -999,27 +962,33 @@ static void print_glyph_json(int win, int x, int y, const glyph_info *g,
 
 /* Before each request: a monster the hero sees that took up a weapon, put
    one away or changed it since its cell was last drawn has its cell drawn
-   again as it shows (its glyph unchanged), with what it holds now.
+   again as it shows (its glyph unchanged), with what it holds now.  Only
+   the monsters still on the level are remembered (rh_held.h).
    Observation only. */
 static void
 wielders_flush(void)
 {
     struct monst *mtmp;
     glyph_info shown;
+    int now;
 
     if (!program_state.in_moveloop || rh_proto_is_lost()
         || suppress_map_output() || WIN_MAP == WIN_ERR) {
-        n_told_held = 0;
+        rh_held_clear();
         return;
     }
+    rh_held_unmark();
     for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
-        if (DEADMONSTER(mtmp) || !isok(mtmp->mx, mtmp->my)
-            || u_at(mtmp->mx, mtmp->my))
+        if (DEADMONSTER(mtmp))
             continue;
-        if (held_glyph(mtmp) == told_held_glyph(mtmp->m_id))
+        rh_held_mark(mtmp->m_id);
+        if (!isok(mtmp->mx, mtmp->my) || u_at(mtmp->mx, mtmp->my))
+            continue;
+        now = held_glyph(mtmp);
+        if ((now == NO_GLYPH ? RH_HELD_NONE : now) == rh_held_get(mtmp->m_id))
             continue;
         if (!glyph_is_monster(glyph_at(mtmp->mx, mtmp->my))) {
-            set_told_held(mtmp->m_id, NO_GLYPH);
+            rh_held_set(mtmp->m_id, RH_HELD_NONE);
             continue;
         }
         map_glyphinfo(mtmp->mx, mtmp->my, glyph_at(mtmp->mx, mtmp->my), 0,
@@ -1027,6 +996,8 @@ wielders_flush(void)
         print_glyph_json(WIN_MAP, mtmp->mx, mtmp->my, &shown,
                          (glyph_info *) 0);
     }
+    /* the dead and those left behind on another level are forgotten */
+    rh_held_sweep();
 }
 
 static void
