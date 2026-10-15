@@ -187,8 +187,10 @@ const GAZES: [(&str, &str, ActKind, bool, &str); 3] = [
         "acts-breath",
     ),
 ];
-/// The gaze, spit or breath under test (an index into `GAZES`, from 1).
+/// The gaze, spit or breath under test (an index into `GAZES`, from 1),
+/// and the frames held for a breath before its line.
 static GAZE: AtomicUsize = AtomicUsize::new(0);
+static BREATHS: AtomicU32 = AtomicU32::new(0);
 
 fn gaze_now() -> (&'static str, &'static str, ActKind, bool, &'static str) {
     GAZES[GAZE.load(Ordering::Relaxed).saturating_sub(1)]
@@ -221,8 +223,12 @@ fn gazes() -> Vec<Step> {
                 Ok(())
             }),
             Step::Wait("the camera on the hero", super::camera_settled),
+            Step::Wait("grown in whole", |g| {
+                Ok(map_view(g)?.arrivals_pending() == 0)
+            }),
             mark(),
             Step::Call("its line told", |g| {
+                BREATHS.store(map_view(g)?.motion_stats().breaths_held, Ordering::Relaxed);
                 tell(g, gaze_now().1);
                 Ok(())
             }),
@@ -233,7 +239,17 @@ fn gazes() -> Vec<Step> {
                 }))
             }),
             Step::Wait("its flare, venom or breath drawn", |g| {
-                Ok(map_view(g)?.acts_pending() == 0)
+                let view = map_view(g)?;
+                let drawn = match gaze_now().2 {
+                    // the gaze's flash from the eyes to the hero
+                    ActKind::Gaze => view.rays_shown().0 > 0,
+                    // the frame's rays held for the mouth to open
+                    ActKind::Breath => {
+                        view.motion_stats().breaths_held > BREATHS.load(Ordering::Relaxed)
+                    }
+                    _ => true,
+                };
+                Ok(drawn && view.acts_pending() == 0)
             }),
             Step::Shot(shot),
         ]);

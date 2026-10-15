@@ -2613,6 +2613,8 @@ pub struct MotionStats {
     pub flinches: u32,
     /// Deaths seen that fell.
     pub falls: u32,
+    /// Frames whose rays waited for a breather's mouth to open.
+    pub breaths_held: u32,
 }
 
 /// Frame times summed for `MapView::frame_stats`.
@@ -2877,6 +2879,10 @@ pub struct MapView {
     appeared: Vec<(i32, i32)>,
     /// Summoners told lately: where, when.
     summons: Vec<((i32, i32), f64)>,
+    /// Seconds the rays drawn this frame wait (a breather's mouth opening
+    /// first), and the rays waiting.
+    ray_wait: f32,
+    rays_waiting: Vec<acts::WaitingRay>,
 }
 
 /// A marker projected on the level's surfaces (never on models): a ring
@@ -3457,6 +3463,8 @@ impl MapView {
             arrivals: Vec::new(),
             appeared: Vec::new(),
             summons: Vec::new(),
+            ray_wait: 0.0,
+            rays_waiting: Vec::new(),
             title: None,
             titled: false,
             title_hero: ("valkyrie".to_string(), true),
@@ -3524,6 +3532,8 @@ impl MapView {
             // something on all four, the rock on all eight
             let batch = world.map.take_batch();
             let (mut dirty, moves, changed) = (batch.dirty, batch.moves, batch.changed);
+            // a breath told: its rays wait for the mouth to open
+            self.breath_coming(world, catalog);
             // a fall whose cell shows something else again ends at once
             if !self.falls.is_empty() && !changed.is_empty() {
                 self.finish_falls_where(|c| changed.contains(&c));
@@ -3600,6 +3610,7 @@ impl MapView {
         self.advance_falls(delta as f32);
         self.advance_acts(delta as f32);
         self.advance_arrivals(delta as f32);
+        self.advance_rays(delta as f32);
         self.follow_steed(delta as f32);
         self.hero_fx.advance(delta as f32, &mut self.vfx);
         if std::mem::take(&mut self.fow_dirty) {
@@ -4996,6 +5007,7 @@ impl MapView {
         self.arrivals.clear();
         self.appeared.clear();
         self.summons.clear();
+        self.rays_waiting.clear();
         self.sounds.clear();
         self.facing.clear();
         for (_, c) in std::mem::take(&mut self.incoming) {
@@ -6535,14 +6547,11 @@ impl MapView {
         {
             self.hear_ray(kind, here);
             let mid = origin + at(0.0, y, 0.0);
-            match yaw {
-                Some(yaw) => {
-                    let dir =
-                        Vector3::new(yaw.to_radians().sin(), 0.0, yaw.to_radians().cos()) * 0.55;
-                    self.vfx.ray(kind, c, mid - dir, mid + dir);
-                }
-                None => self.vfx.ray_through(kind, c, mid),
-            }
+            let along = yaw.map(|yaw| {
+                let dir = Vector3::new(yaw.to_radians().sin(), 0.0, yaw.to_radians().cos()) * 0.55;
+                (mid - dir, mid + dir)
+            });
+            self.draw_ray(kind, c, along, mid);
         }
         if (old.seen, old.masonry) != (look.seen, look.masonry) {
             self.fow_dirty = true;
@@ -7282,7 +7291,9 @@ impl MapView {
         self.last_ray = Some((cell, kind, now));
         if !same {
             let name = hearing::kinded("ray", hearing::ray_name(kind));
-            self.sounds.push(Sound::new(name).at(self.sound_at(cell)));
+            let sound = Sound::new(name).at(self.sound_at(cell));
+            // a breath's ray goes once the mouth is open
+            self.sounds.push(sound.after(self.ray_wait));
         }
     }
 

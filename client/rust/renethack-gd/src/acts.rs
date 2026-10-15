@@ -25,7 +25,7 @@ use nh_protocol::{Catalog, GlyphKind, mg};
 use nh_world::World;
 
 use super::MapView;
-use crate::vfx::VfxKind;
+use crate::vfx::{Ray, VfxKind};
 
 /// The clips monsters do things with (the hero's own, `held.uses`): a
 /// spell cast, a wand zapped, a potion drunk, a scroll read, a weapon
@@ -289,7 +289,22 @@ pub(super) struct ActFx {
     wait: f32,
     kind: VfxKind,
     at: FxAt,
+    /// A thin ray of `kind`'s colour from where it is to here (a gaze).
+    to: Option<Vector3>,
 }
+
+/// A ray the map draws, waiting a breather's mouth to open: its look, its
+/// glyph's colour, and its piece (along the cell, or through its middle).
+pub(super) struct WaitingRay {
+    wait: f32,
+    kind: Ray,
+    color: Color,
+    along: Option<(Vector3, Vector3)>,
+    at: Vector3,
+}
+
+/// Seconds a breath's rays wait for the mouth to open.
+const BREATH_WINDUP: f32 = 0.25;
 
 enum FxAt {
     /// A bone of a model's skeleton; where its body's middle is, if it has
@@ -297,6 +312,9 @@ enum FxAt {
     Hand(Gd<Node3D>, &'static str, Vector3),
     /// Its head: the head's bone, else the top of its body to the front.
     Head(Gd<Node3D>, f32),
+    /// Its eyes: before its head's bone, else the front of its body (an
+    /// eye's pupil).
+    Eyes(Gd<Node3D>, f32),
     Point(Vector3),
 }
 
@@ -406,6 +424,7 @@ impl MapView {
             return;
         };
         let height = self.height_of(cell);
+        let eyes_node = node.clone();
         let head = FxAt::Head(node.clone(), height);
         let hand = FxAt::Hand(node.clone(), OFF_HAND, middle);
         let main = FxAt::Hand(node, MAIN_HAND, middle);
@@ -415,6 +434,7 @@ impl MapView {
                     wait: GLOW_AT,
                     kind: VfxKind::Cast(MAGIC),
                     at: hand,
+                    to: None,
                 });
                 if let Some(h) = aim_at {
                     let at = self.sound_at(h);
@@ -422,6 +442,7 @@ impl MapView {
                         wait: STRIKES_AT,
                         kind: VfxKind::Shock(MAGIC),
                         at: FxAt::Point(at),
+                        to: None,
                     });
                 }
             }
@@ -430,16 +451,19 @@ impl MapView {
                 wait: GLOW_AT,
                 kind: VfxKind::Sparkle,
                 at: hand,
+                to: None,
             }),
             ActKind::Crackle => self.act_fx.push(ActFx {
                 wait: 0.0,
                 kind: VfxKind::Lightning,
                 at: FxAt::Point(middle),
+                to: None,
             }),
             ActKind::Zap { .. } => self.act_fx.push(ActFx {
                 wait: FLARE_AT,
                 kind: VfxKind::Zap(WAND),
                 at: main,
+                to: None,
             }),
             ActKind::Drink => {
                 let color = self.potion_color(what);
@@ -447,32 +471,49 @@ impl MapView {
                     wait: MOTES_AT,
                     kind: VfxKind::Quaff(color),
                     at: hand,
+                    to: None,
                 });
             }
             ActKind::Read => self.act_fx.push(ActFx {
                 wait: RUNES_AT,
                 kind: VfxKind::Read,
                 at: main,
+                to: None,
             }),
             ActKind::Wield => self.act_fx.push(ActFx {
                 wait: GLINT_AT,
                 kind: VfxKind::Sparkle,
                 at: main,
+                to: None,
             }),
-            ActKind::Gaze => self.act_fx.push(ActFx {
-                wait: 0.05,
-                kind: VfxKind::Zap(gaze_color(what)),
-                at: head,
-            }),
+            ActKind::Gaze => {
+                // a bright pulse from the pupil, and a thin flash of the
+                // gaze's colour from the eyes to the hero
+                let color = gaze_color(what);
+                let at_hero = hero.map(|h| self.sound_at(h));
+                for (kind, to) in [
+                    (VfxKind::Shock(color), None),
+                    (VfxKind::Zap(color), at_hero),
+                ] {
+                    self.act_fx.push(ActFx {
+                        wait: 0.05,
+                        kind,
+                        at: FxAt::Eyes(eyes_node.clone(), height),
+                        to,
+                    });
+                }
+            }
             ActKind::Spit => self.act_fx.push(ActFx {
                 wait: MOUTH_AT,
                 kind: VfxKind::Poison,
                 at: head,
+                to: None,
             }),
             ActKind::Breath => self.act_fx.push(ActFx {
                 wait: MOUTH_AT,
                 kind: breath_kind(what),
                 at: head,
+                to: None,
             }),
             ActKind::Vanish | ActKind::Appear { .. } | ActKind::Change | ActKind::Summon => {}
         }
@@ -668,6 +709,70 @@ impl MapView {
         Some((m.node.clone(), middle))
     }
 
+    /// Before the frame's cells are drawn: a breath its new lines tell, of a
+    /// monster the map shows seen, holds the rays this frame draws till
+    /// its mouth is open (`draw_ray`). Nothing waits for it.
+    pub(super) fn breath_coming(&mut self, world: &World, catalog: &Catalog) {
+        self.ray_wait = 0.0;
+        let Some(seen) = self.log_seq.filter(|&s| s <= world.log.last_seq()) else {
+            return;
+        };
+        let breath = world.log.since(seen).filter(|m| !m.from_history).any(|m| {
+            act_of(&m.text).is_some_and(|(name, kind, _)| {
+                kind == ActKind::Breath && seen_named(world, catalog, name).is_some()
+            })
+        });
+        if breath {
+            self.ray_wait = BREATH_WINDUP;
+            self.stats.breaths_held += 1;
+        }
+    }
+
+    /// A piece of a ray the map draws (`along` the cell, else through its
+    /// middle `at`): now, or once a breather's mouth is open.
+    pub(super) fn draw_ray(
+        &mut self,
+        kind: Ray,
+        color: Color,
+        along: Option<(Vector3, Vector3)>,
+        at: Vector3,
+    ) {
+        if self.ray_wait > 0.0 {
+            self.rays_waiting.push(WaitingRay {
+                wait: self.ray_wait,
+                kind,
+                color,
+                along,
+                at,
+            });
+            return;
+        }
+        match along {
+            Some((from, to)) => self.vfx.ray(kind, color, from, to),
+            None => self.vfx.ray_through(kind, color, at),
+        }
+    }
+
+    /// Every frame: the rays whose breather's mouth is open now.
+    pub(super) fn advance_rays(&mut self, delta: f32) {
+        if self.rays_waiting.is_empty() {
+            return;
+        }
+        for r in &mut self.rays_waiting {
+            r.wait -= delta;
+        }
+        let due: Vec<WaitingRay> = self
+            .rays_waiting
+            .extract_if(.., |r| r.wait <= 0.0)
+            .collect();
+        for r in due {
+            match r.along {
+                Some((from, to)) => self.vfx.ray(r.kind, r.color, from, to),
+                None => self.vfx.ray_through(r.kind, r.color, r.at),
+            }
+        }
+    }
+
     /// Every frame: the acts' effects whose moment came.
     pub(super) fn advance_acts(&mut self, delta: f32) {
         if self.act_fx.is_empty() {
@@ -686,8 +791,12 @@ impl MapView {
                 FxAt::Point(p) => *p,
                 FxAt::Hand(node, bone, middle) => bone_at(node, bone).unwrap_or(*middle),
                 FxAt::Head(node, height) => head_at(node, *height),
+                FxAt::Eyes(node, height) => eyes_at(node, *height),
             };
-            self.vfx.burst(fx.kind, at);
+            match (fx.to, fx.kind) {
+                (Some(to), VfxKind::Zap(c)) => self.vfx.beam_tinted(fx.kind, at, to, c),
+                _ => self.vfx.burst(fx.kind, at),
+            }
         }
     }
 
@@ -696,9 +805,14 @@ impl MapView {
         &self.acts_shown
     }
 
-    /// The acts' effects still waiting their moment (self-tests).
+    /// The acts' effects still waiting their moment, and the bodies still
+    /// growing in (self-tests).
     pub fn acts_pending(&self) -> usize {
         self.act_fx.len()
+    }
+
+    pub fn arrivals_pending(&self) -> usize {
+        self.arrivals.len()
     }
 }
 
@@ -715,6 +829,20 @@ fn head_at(node: &Gd<Node3D>, height: f32) -> Vector3 {
     t.origin
         + Vector3::new(0.0, height * 0.85, 0.0)
         + t.basis.col_c().normalized() * (height * 0.25)
+}
+
+/// Where a model's eyes are now: a little before its head's bone, else
+/// the front of its body at its middle (an eye's pupil).
+fn eyes_at(node: &Gd<Node3D>, height: f32) -> Vector3 {
+    if !node.is_instance_valid() {
+        return Vector3::ZERO;
+    }
+    let t = node.get_global_transform();
+    let ahead = t.basis.col_c().normalized();
+    match bone_at(node, "Head") {
+        Some(head) => head + ahead * (height * 0.06),
+        None => t.origin + Vector3::new(0.0, height * 0.55, 0.0) + ahead * (height * 0.45),
+    }
 }
 
 /// Where a bone of a model's skeleton is now, in the world.
