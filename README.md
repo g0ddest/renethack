@@ -669,6 +669,12 @@ patch names its upstream commits in its header and is dropped when
 `engine/upstream` moves to that release (`0004`: a vault guard parked off
 the map made 5.0.0 call impossible()).
 
+Every file a patch changes carries a notice of it after NetHack's own
+notices, as the NetHack General Public License asks (its 2(a)): "renethack:
+changed on <date> by renethack's patch <name>: <what>", or "added" for a
+file the patch adds; a later change adds its date. The build fails on a
+patched file without one.
+
 ## Licence
 
 renethack is free software under the NetHack General Public License

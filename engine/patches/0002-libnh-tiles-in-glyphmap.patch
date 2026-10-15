@@ -1,6 +1,15 @@
 --- a/include/global.h
 +++ b/include/global.h
-@@ -266,6 +266,13 @@
+@@ -2,6 +2,8 @@
+ /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
+ /*-Copyright (c) Michael Allison, 2006. */
+ /* NetHack may be freely redistributed.  See license for details. */
++/* renethack: changed on 2026-09-26 by renethack's patch
++ * 0002-libnh-tiles-in-glyphmap.patch: TILES_IN_GLYPHMAP for the libnh port. */
+ 
+ #ifndef GLOBAL_H
+ #define GLOBAL_H
+@@ -266,6 +268,13 @@
  #endif
  #endif
  #endif

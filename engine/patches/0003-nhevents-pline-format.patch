@@ -1,8 +1,9 @@
 --- /dev/null
 +++ b/include/nhevents.h
-@@ -0,0 +1,24 @@
+@@ -0,0 +1,25 @@
 +/* NetHack 5.0	nhevents.h */
-+/* renethack: observation hooks for a front end */
++/* renethack: added on 2026-10-03 by renethack's patch
++ * 0003-nhevents-pline-format.patch: observation hooks for a front end */
 +/* NetHack may be freely redistributed.  See license for details. */
 +
 +#ifndef NHEVENTS_H
@@ -27,9 +28,11 @@
 +#endif /* NHEVENTS_H */
 --- /dev/null
 +++ b/src/nhevents.c
-@@ -0,0 +1,22 @@
+@@ -0,0 +1,24 @@
 +/* NetHack 5.0	nhevents.c */
-+/* renethack: observation hooks for a front end (see nhevents.h) */
++/* renethack: added on 2026-10-03 by renethack's patch
++ * 0003-nhevents-pline-format.patch: observation hooks for a front end (see
++ * nhevents.h) */
 +/* NetHack may be freely redistributed.  See license for details. */
 +
 +#include "hack.h"
@@ -52,15 +55,20 @@
 +}
 --- a/src/pline.c
 +++ b/src/pline.c
-@@ -4,6 +4,7 @@
+@@ -2,8 +2,12 @@
+ /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
+ /*-Copyright (c) Robert Patrick Rankin, 2018. */
  /* NetHack may be freely redistributed.  See license for details. */
++/* renethack: changed on 2026-10-03 by renethack's patch
++ * 0003-nhevents-pline-format.patch: vpline() shows its format and arguments to
++ * an observation hook (nhevents.h). */
  
  #include "hack.h"
 +#include "nhevents.h"
  
  #define BIGBUFSZ (5 * BUFSZ) /* big enough to format a 4*BUFSZ string (from
                                * config file parsing) with modest decoration;
-@@ -189,6 +190,10 @@
+@@ -189,6 +193,10 @@
          return;
      }
  
@@ -73,7 +81,16 @@
          ln = (int) strlen(line);
 --- a/sys/unix/Makefile.src
 +++ b/sys/unix/Makefile.src
-@@ -523,7 +523,7 @@
+@@ -2,6 +2,8 @@
+ # NetHack 5.0  Makefile.src    $NHDT-Date: 1697316523 2023/10/14 20:48:43 $  $NHDT-Branch: NetHack-5.0 $:$NHDT-Revision: 1.164 $
+ # Copyright (c) 2018 by Pasi Kallinen
+ # NetHack may be freely redistributed.  See license for details.
++# renethack: changed on 2026-10-03 by renethack's patch
++# 0003-nhevents-pline-format.patch: builds nhevents.c.
+ 
+ # Root of source tree:
+ NHSROOT=..
+@@ -523,7 +525,7 @@
  	   lock.c mail.c makemon.c mcastu.c mdlib.c mhitm.c \
  	   mhitu.c minion.c mklev.c mkmap.c mkmaze.c mkobj.c mkroom.c mon.c \
  	   mondata.c monmove.c monst.c mplayer.c mthrowu.c muse.c music.c \
@@ -82,7 +99,7 @@
  	   options.c pager.c pickup.c pline.c polyself.c potion.c pray.c \
  	   priest.c quest.c questpgr.c read.c rect.c region.c report.c restore.c \
  	   rip.c rnd.c role.c rumors.c save.c selvar.c sfbase.c sfstruct.c \
-@@ -611,6 +611,7 @@
+@@ -611,6 +613,7 @@
  	$(TARGETPFX)mkroom.o $(TARGETPFX)mon.o $(TARGETPFX)mondata.o \
  	$(TARGETPFX)monmove.o $(TARGETPFX)monst.o $(TARGETPFX)mplayer.o \
  	$(TARGETPFX)mthrowu.o $(TARGETPFX)muse.o $(TARGETPFX)music.o \
@@ -90,7 +107,7 @@
  	$(TARGETPFX)nhlua.o $(TARGETPFX)nhlsel.o $(TARGETPFX)nhlobj.o \
  	$(TARGETPFX)nhmd4.o $(TARGETPFX)objects.o $(TARGETPFX)o_init.o \
  	$(TARGETPFX)objnam.o $(TARGETPFX)options.o $(TARGETPFX)pager.o \
-@@ -1220,6 +1221,7 @@
+@@ -1220,6 +1223,7 @@
  $(TARGETPFX)mthrowu.o: mthrowu.c $(HACK_H)
  $(TARGETPFX)muse.o: muse.c $(HACK_H)
  $(TARGETPFX)music.o: music.c $(HACK_H)
@@ -98,7 +115,7 @@
  $(TARGETPFX)nhlobj.o: nhlobj.c $(HACK_H) ../include/sp_lev.h
  $(TARGETPFX)nhlsel.o: nhlsel.c $(HACK_H) ../include/sp_lev.h
  $(TARGETPFX)nhlua.o: nhlua.c $(HACK_H) ../include/dlb.h
-@@ -1234,7 +1236,7 @@
+@@ -1234,7 +1238,7 @@
  		../include/optlist.h ../include/tcap.h
  $(TARGETPFX)pager.o: pager.c $(HACK_H) ../include/dlb.h
  $(TARGETPFX)pickup.o: pickup.c $(HACK_H)

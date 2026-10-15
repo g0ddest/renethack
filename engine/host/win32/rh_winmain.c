@@ -1,3 +1,11 @@
+/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
+/*-Copyright (c) Robert Patrick Rankin, 2011. */
+/* Copyright (c) Derek S. Ray, 2015. */
+/* NetHack may be freely redistributed.  See license for details. */
+/* renethack: changed on 2026-10-12 by renethack, from NetHack 5.0's
+ * sys/libnh/libnhmain.c and sys/windows/windmain.c: their start-up
+ * sequence as the engine host's main on Windows. */
+
 /* renethack engine host: nhmain() for Windows.
  * The unix build links NetHack's sys/libnh/libnhmain.c; on Windows NetHack
  * builds its WIN32 configuration (windconf.h, sys/windows/windsys.c), whose

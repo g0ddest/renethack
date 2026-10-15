@@ -21,7 +21,17 @@ uses no RNG and changes no game state.
 
 --- a/src/display.c
 +++ b/src/display.c
-@@ -1503,7 +1503,8 @@
+@@ -2,6 +2,9 @@
+ /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
+ /* and Dave Cohrs, 1990.                                          */
+ /* NetHack may be freely redistributed.  See license for details. */
++/* renethack: changed on 2026-10-10 by renethack's patch
++ * 0004-vault-guard-off-map-no-newsym.patch: upstream's fix for a vault guard
++ * parked off the map, backported from NetHack 5.0.1. */
+ 
+ /*
+  *                      THE NEW DISPLAY CODE
+@@ -1503,7 +1506,8 @@
  
      /* loop through level.monsters (aka fmon) */
      for (mon = fmon; mon; mon = mon->nmon) {
@@ -33,7 +43,17 @@ uses no RNG and changes no game state.
              continue;
 --- a/src/monmove.c
 +++ b/src/monmove.c
-@@ -1653,7 +1653,9 @@
+@@ -2,6 +2,9 @@
+ /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
+ /*-Copyright (c) Michael Allison, 2006. */
+ /* NetHack may be freely redistributed.  See license for details. */
++/* renethack: changed on 2026-10-10 by renethack's patch
++ * 0004-vault-guard-off-map-no-newsym.patch: upstream's fix for a vault guard
++ * parked off the map, backported from NetHack 5.0.1. */
+ 
+ #include "hack.h"
+ #include "mfndpos.h"
+@@ -1653,7 +1656,9 @@
              u_on_newpos(mtmp->mx, mtmp->my);
              swallowed(0);
          } else {

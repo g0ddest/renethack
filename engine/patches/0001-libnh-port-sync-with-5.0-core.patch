@@ -1,6 +1,17 @@
 --- a/sys/libnh/libnhmain.c
 +++ b/sys/libnh/libnhmain.c
-@@ -35,9 +35,9 @@
+@@ -2,6 +2,10 @@
+ /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
+ /*-Copyright (c) Robert Patrick Rankin, 2011. */
+ /* NetHack may be freely redistributed.  See license for details. */
++/* renethack: changed on 2026-09-26 by renethack's patch
++ * 0001-libnh-port-sync-with-5.0-core.patch: chdirx() and whoami() no longer
++ * static, empty get_nhuuid() and free_nhuuid() in place of opt_terminate() and
++ * after_opt_showpaths(), and RENETHACK_SEED for a fixed seed in tests. */
+ 
+ /* main.c - Unix NetHack */
+ 
+@@ -35,9 +39,9 @@
  #endif
  extern struct passwd *getpwnam(const char *);
  #ifdef CHDIR
@@ -12,7 +23,7 @@
  static void process_options(int, char **);
  
  #ifdef _M_UNIX
-@@ -51,7 +51,6 @@
+@@ -51,7 +55,6 @@
  
  static void wd_message(void);
  static struct passwd *get_unix_pw(void);
@@ -20,7 +31,7 @@
  
  #ifdef __EMSCRIPTEN__
  /* if WebAssembly, export this API and don't optimize it out */
-@@ -458,7 +457,7 @@
+@@ -458,7 +461,7 @@
  }
  
  #ifdef CHDIR
@@ -29,7 +40,7 @@
  chdirx(const char *dir, boolean wr)
  {
      if (dir /* User specified directory? */
-@@ -516,7 +515,7 @@
+@@ -516,7 +519,7 @@
  #endif /* CHDIR */
  
  /* returns True iff we set plname[] to username which contains a hyphen */
@@ -38,7 +49,7 @@
  whoami(void)
  {
      /*
-@@ -743,8 +742,17 @@
+@@ -743,8 +746,17 @@
      unsigned long seed = 0L;
      unsigned long pid = (unsigned long) getpid();
      boolean no_seed = TRUE;
@@ -56,7 +67,7 @@
  
      fptr = fopen(DEV_RANDOM, "r");
      if (fptr) {
-@@ -769,30 +777,16 @@
+@@ -769,30 +781,16 @@
      return seed;
  }
  

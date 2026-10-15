@@ -60,6 +60,13 @@ $(TREE)/.patched: patches/series $(addprefix patches/,$(PATCHES)) $(UPSTREAM_STA
 	for p in $(PATCHES); do \
 		patch -d $(TREE) -p1 --forward --quiet < patches/$$p || exit 1; \
 	done
+	@# the NGPL's 2(a): a file the patches change says so, with the date,
+	@# after NetHack's own notices ("renethack: changed on <date> by ...")
+	@for f in $$(sed -n 's,^+++ b/\([^	]*\).*,\1,p' $(addprefix patches/,$(PATCHES)) | sort -u); do \
+		head -12 $(TREE)/$$f | grep -Eq 'renethack: (changed|added) on [0-9]{4}-[0-9]{2}-[0-9]{2}' || { \
+			echo "engine/patches: $$f carries no notice of the change and its date" \
+				"(NGPL 2(a)): add one after its licence line" >&2; exit 1; }; \
+	done
 	cd $(TREE)/sys/unix && sh setup.sh hints/$(HINTS) > /dev/null
 	touch $@
 
