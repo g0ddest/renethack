@@ -824,3 +824,14 @@ ru = "взламывать замок"
 [74314b82bff3]
 en = "studying"
 ru = "изучать книгу"
+
+# do.c cmd_safety_prevention(): searching or waiting while stoned, slimed,
+# strangled or sick
+
+[5e60c1763e17]
+en = "Searching doesn't feel like a good idea right now."
+ru = "Искать сейчас — не лучшая идея."
+
+[4642a994c786]
+en = "Waiting doesn't feel like a good idea right now."
+ru = "Ждать сейчас — не лучшая идея."

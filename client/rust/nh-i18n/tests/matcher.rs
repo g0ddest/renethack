@@ -919,6 +919,22 @@ fn the_chronicle_s_events() {
     }
 }
 
+#[test]
+fn searching_while_stoned() {
+    // do.c cmd_safety_prevention(): "%s doesn't feel like a good idea
+    // right now." with "Searching" or "Waiting"
+    let t = translator();
+    let out = t.message(
+        Some("%s doesn't feel like a good idea right now."),
+        &[Arg::Str("Searching".into())],
+        "Searching doesn't feel like a good idea right now.",
+    );
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        ("Искать сейчас — не лучшая идея.", Status::Translated)
+    );
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {

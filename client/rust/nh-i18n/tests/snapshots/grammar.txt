@@ -22594,6 +22594,8 @@ Search for secret doors  [a834c8892bb5]
   =   Искать потайные двери
 Search the door for a trap  [c4e63dc345a6]
   =   Проверить дверь на ловушки
+Searching doesn't feel like a good idea right now.  [5e60c1763e17]
+  =   Искать сейчас — не лучшая идея.
 See NetHack's "Guidebook" for details.  [6e8fd28de7ca]
   =   Подробности — в «Руководстве» NetHack.
 See you next Wednesday  [352bb84b951d]
@@ -27107,6 +27109,8 @@ Wait, %s!  There's a hidden %s named %s there!  [4a52cd4253af]
   f   Стой, крыса!  Там прячется крыса по имени крыса!
   n   Стой, копьё!  Там прячется копьё по имени копьё!
   pl  Стой, 3 стрелы!  Там прячутся 3 стрелы по имени 3 стрелы!
+Waiting doesn't feel like a good idea right now.  [4642a994c786]
+  =   Ждать сейчас — не лучшая идея.
 Walk no more, perversion of nature!  [17e5924f0377]
   =   Не ходить тебе более по земле, извращение природы!
 Waltz, dumb nymph, for quick jigs vex.  [88c022dbe34a]
