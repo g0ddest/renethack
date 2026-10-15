@@ -58,6 +58,8 @@ use crate::surface::{Fow, FowCell, Role, Seen, Surfaces, cell_index, sight};
 use crate::theme::{self, nh_color};
 use crate::vfx::{Blast, Ray, Vfx, VfxKind};
 
+#[path = "acts.rs"]
+mod acts;
 #[path = "fall.rs"]
 mod fall;
 #[path = "hero_look.rs"]
@@ -65,6 +67,7 @@ mod hero_look;
 #[path = "hero_pose.rs"]
 mod hero_pose;
 
+pub use acts::{ActKind, Acted, Aim};
 pub use fall::{FallKind, Fell};
 pub use hero_look::{Effects, Posture, Shown};
 pub use hero_pose::{Held, HelplessPhase};
@@ -2864,6 +2867,10 @@ pub struct MapView {
     deaths: Vec<fall::Told>,
     falls: Vec<fall::Fall>,
     fell: Option<Fell>,
+    /// What monsters were seen doing: the effects waiting their moment,
+    /// and the acts shown lately (self-tests).
+    act_fx: Vec<acts::ActFx>,
+    acts_shown: Vec<Acted>,
 }
 
 /// A marker projected on the level's surfaces (never on models): a ring
@@ -3439,6 +3446,8 @@ impl MapView {
             deaths: Vec::new(),
             falls: Vec::new(),
             fell: None,
+            act_fx: Vec::new(),
+            acts_shown: Vec::new(),
             title: None,
             titled: false,
             title_hero: ("valkyrie".to_string(), true),
@@ -3578,6 +3587,7 @@ impl MapView {
         self.claim_falls(catalog);
         self.advance_motions(delta as f32);
         self.advance_falls(delta as f32);
+        self.advance_acts(delta as f32);
         self.follow_steed(delta as f32);
         self.hero_fx.advance(delta as f32, &mut self.vfx);
         if std::mem::take(&mut self.fow_dirty) {
@@ -4970,6 +4980,7 @@ impl MapView {
             self.art.give(g.model);
         }
         self.deaths.clear();
+        self.act_fx.clear();
         self.sounds.clear();
         self.facing.clear();
         for (_, c) in std::mem::take(&mut self.incoming) {
@@ -6998,6 +7009,8 @@ impl MapView {
         let mut struck: Option<(String, (i32, i32))> = None;
         let mut unplaced = Vec::new();
         for m in world.log.since(seen).filter(|m| !m.from_history) {
+            // what a monster does that the hero sees: a spell cast
+            self.watch_act(&m.text, world, catalog);
             if let Some(a) = parse_attack(&m.text) {
                 let hit = !m.text.contains(" miss");
                 let cells = locate_attack(&a, &world.map, names);
@@ -7304,6 +7317,17 @@ impl MapView {
 
     /// The entity at `from` turns to `to` and attacks.
     fn strike(&mut self, from: (i32, i32), to: (i32, i32), world: &World) {
+        self.strike_with(from, to, world, None);
+    }
+
+    /// As `strike`, with `clip` in place of the attack clip (a spell cast).
+    fn strike_with(
+        &mut self,
+        from: (i32, i32),
+        to: (i32, i32),
+        world: &World,
+        clip: Option<String>,
+    ) {
         let yaw = yaw_toward(from, to);
         let ident = world
             .map
@@ -7356,6 +7380,9 @@ impl MapView {
         };
         if hero && let Some(clip) = self.mounted_blow() {
             clips.attack = Some(clip);
+        }
+        if let Some(c) = clip {
+            clips.attack = Some(c);
         }
         self.motions.push(Motion::strike(
             node,

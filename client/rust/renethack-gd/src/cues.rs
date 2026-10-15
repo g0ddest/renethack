@@ -622,6 +622,8 @@ mod tests {
             ("The blast of frost hits the soldier ant.", "ray.hit.cold"),
             ("The death ray whizzes by you!", "ray.miss"),
             ("The red dragon breathes fire!", "breath.fire"),
+            ("The kobold shaman casts a spell at you!", "use.cast"),
+            ("The gnomish wizard casts a spell!", "use.cast"),
             (
                 "The black dragon breathes a disintegration blast!",
                 "breath.death",

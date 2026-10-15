@@ -30,6 +30,8 @@ use nh_link::save_exists;
 
 #[path = "selftest_achievements.rs"]
 mod achievements;
+#[path = "selftest_acts.rs"]
+mod acts_tests;
 #[path = "selftest_audio.rs"]
 mod audio_tests;
 #[path = "selftest_codex.rs"]
@@ -4825,6 +4827,7 @@ impl SelfTest {
             "audio" => audio_tests::audio(),
             "conditions" => conditions_tests::conditions(),
             "falls" => falls_tests::falls(),
+            "acts" => acts_tests::acts(),
             "states" => states_tests::states(),
             "doll" => doll_tests::doll(),
             "first-open" => first_tests::first_open(),

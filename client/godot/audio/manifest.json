@@ -282,6 +282,7 @@
     {"any": ["The blast of poison gas hits "], "cue": "ray.hit.poison", "at": "ray"},
     {"any": ["The blast of acid hits "], "cue": "ray.hit.acid", "at": "ray"},
     {"starts": "The ", "ends": " whizzes by you!", "cue": "ray.miss", "at": "hero"},
+    {"starts": "The ", "has": [" casts a spell"], "cue": "use.cast", "at": "named"},
     {"starts": "The ", "ends": " breathes fragments!", "cue": "breath.magic_missile", "at": "named"},
     {"starts": "The ", "ends": " breathes fire!", "cue": "breath.fire", "at": "named"},
     {"starts": "The ", "ends": " breathes frost!", "cue": "breath.cold", "at": "named"},
