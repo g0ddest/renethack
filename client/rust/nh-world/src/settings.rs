@@ -1,13 +1,14 @@
 //! The client's own settings, the same for every character and kept in the
 //! profile (`Profile`): how the window covers the screen, how much the 3D
 //! view draws, the interface's scale, the screen's effects, a new
-//! character's keys, the commands' keys moved. Plain data and the rules
-//! between its parts (a graphics preset and the controls it sets, a step
-//! through a setting's values); the client applies them to Godot.
+//! character's keys, the commands' keys moved, the NetHack options a new
+//! game starts with. Plain data and the rules between its parts (a graphics
+//! preset and the controls it sets, a step through a setting's values);
+//! the client applies them to Godot and to the engine.
 
 use serde::{Deserialize, Serialize};
 
-use crate::{KeyProfile, Keymaps};
+use crate::{Gameplay, KeyProfile, Keymaps};
 
 /// The client's settings as the profile keeps them.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -30,6 +31,10 @@ pub struct Settings {
     /// The commands' keys the player moved, each profile its own.
     #[serde(default, skip_serializing_if = "Keymaps::is_empty")]
     pub keymaps: Keymaps,
+    /// The Gameplay section's NetHack options, for a new game (a saved
+    /// one keeps its own).
+    #[serde(default, skip_serializing_if = "Gameplay::is_default")]
+    pub gameplay: Gameplay,
 }
 
 /// One step from `now` through `all` (`dir` -1 back, +1 on); `wrap`: past
@@ -503,7 +508,8 @@ mod tests {
         assert!(
             !plain.contains("graphics")
                 && !plain.contains("ui_scale")
-                && !plain.contains("reduce_effects"),
+                && !plain.contains("reduce_effects")
+                && !plain.contains("gameplay"),
             "{plain}"
         );
     }
