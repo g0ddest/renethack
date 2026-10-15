@@ -12,7 +12,8 @@
 //! page again in it where it was; fewer screen effects are kept. A
 //! gamepad's bumpers turn the section, its hints show, the d-pad and A
 //! change a row, B goes back to the title. The controls list the Classic
-//! keys a new character starts with, then the gamepad's. Over a game the
+//! keys a new character starts with, then the gamepad's (the Gameplay
+//! section between them has a scenario of its own, `gameplay`). Over a game the
 //! page opens as the HUD's gear opens it, and Esc goes back to the game.
 //! Every screen fits the canvas, every value its place.
 
@@ -57,14 +58,14 @@ fn lang_of(code: u8) -> Lang {
     }
 }
 
-fn page(g: &RenethackGame) -> Result<&SettingsPage, String> {
+pub(super) fn page(g: &RenethackGame) -> Result<&SettingsPage, String> {
     g.settings_page
         .as_ref()
         .ok_or_else(|| "the settings page is not open".to_string())
 }
 
 /// The profile as it was written.
-fn profile(g: &RenethackGame) -> Result<Profile, String> {
+pub(super) fn profile(g: &RenethackGame) -> Result<Profile, String> {
     let pg = g.paths.as_ref().ok_or("no paths")?.playground.clone();
     Ok(nh_link::read_profile(&pg)
         .map(|t| Profile::from_json(&t))
@@ -77,7 +78,7 @@ fn headless() -> bool {
 
 /// A key pressed and let go through Godot's input (`input()` has it next
 /// frame).
-fn tap_key(k: GKey) {
+pub(super) fn tap_key(k: GKey) {
     for pressed in [true, false] {
         let mut ev = InputEventKey::new_gd();
         ev.set_keycode(k);
@@ -96,7 +97,7 @@ macro_rules! keys {
     };
 }
 
-fn pad_tap(b: PadButton) -> Step {
+pub(super) fn pad_tap(b: PadButton) -> Step {
     Step::Pad(vec![PadEv::Button(b, true), PadEv::Button(b, false)])
 }
 
@@ -164,7 +165,7 @@ fn content_scale(g: &RenethackGame) -> Result<f32, String> {
 }
 
 /// The value the page shows in the row of `field` (of the section shown).
-fn shown(g: &RenethackGame, field: Field) -> Result<String, String> {
+pub(super) fn shown(g: &RenethackGame, field: Field) -> Result<String, String> {
     let p = page(g)?;
     let i = p
         .section()
@@ -498,8 +499,12 @@ pub(super) fn settings() -> Vec<Step> {
             Ok(!profile(g)?.settings.reduce_effects
                 && shown(g, Field::ReduceEffects)? == tr!("settings-off"))
         }),
-        // Tab: the controls, a new character's Classic keys first; → the
-        // gamepad's; ↓ through the list
+        // Tab: the gameplay (its own scenario), Tab: the controls, a new
+        // character's Classic keys first; → the gamepad's; ↓ through the list
+        keys!("Tab", TAB),
+        Step::Wait("the gameplay", |g| {
+            Ok(page(g)?.section() == Section::Gameplay)
+        }),
         keys!("Tab", TAB),
         Step::Wait("the controls: the Classic keys", |g| {
             let p = page(g)?;
@@ -546,13 +551,17 @@ pub(super) fn settings() -> Vec<Step> {
             Ok(page(g)?.field().is_none())
         }),
         Step::Shot("settings-controls-pad"),
-        // a gamepad: LB turns back to the interface, its hints show, then
-        // to the sound, the graphics and the display; ↓↓ to vsync, A
-        // turns it off and on
+        // a gamepad: LB turns back to the gameplay, its hints show, then
+        // to the interface, the sound, the graphics and the display; ↓↓ to
+        // vsync, A turns it off and on
         pad_tap(PadButton::Lb),
-        Step::Wait("the interface again, a gamepad's hints", |g| {
+        Step::Wait("the gameplay again, a gamepad's hints", |g| {
             let p = page(g)?;
-            Ok(p.section() == Section::Interface && p.pad().is_some())
+            Ok(p.section() == Section::Gameplay && p.pad().is_some())
+        }),
+        pad_tap(PadButton::Lb),
+        Step::Wait("the interface again", |g| {
+            Ok(page(g)?.section() == Section::Interface)
         }),
         pad_tap(PadButton::Lb),
         Step::Wait("the sound again", |g| {

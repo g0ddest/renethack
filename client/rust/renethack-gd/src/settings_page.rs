@@ -1,13 +1,15 @@
 //! The settings page, from the title's button and the HUD's gear: the
 //! window and how often it is drawn, what the 3D view draws, the sound's
-//! volumes, the interface, and what the keys and the gamepad do (read
-//! only), a section at a time.
+//! volumes, the interface, the NetHack options a new player trips on, and
+//! what the keys and the gamepad do, a section at a time.
 //! A row is a setting, its value between arrows: ↑↓ (the d-pad) choose a
 //! row, ←→ change it, Enter (A) steps it on, Tab or PgUp/PgDn (the
 //! bumpers) turn to another section, Esc (B) goes back; the mouse clicks
 //! the arrows and the tabs. A change applies at once and is kept in the
 //! profile: the game does both (`RenethackGame::settings_step`), then
-//! shows the page what is now (`SettingsPage::show`).
+//! shows the page what is now (`SettingsPage::show`). The Gameplay
+//! section shows a new game's options at the title and the game's own
+//! over it, as the game reports them (`RenethackGame::drive_options`).
 
 use std::cell::RefCell;
 
@@ -24,8 +26,9 @@ use godot::global::MouseButton;
 use godot::global::{HorizontalAlignment, VerticalAlignment};
 use godot::prelude::*;
 use nh_world::{
-    FPS_CAPS, Graphics, Key, KeyInput, KeyProfile, Keymap, Level, Msaa, Quality, RENDER_SCALES,
-    Settings, Shadows, UI_SCALES, Upscale, WindowMode, key_name, step_through, step_window_size,
+    Burden, FPS_CAPS, GameOption, Gameplay, Graphics, Key, KeyInput, KeyProfile, Keymap, Level,
+    Msaa, Paranoid, Quality, RENDER_SCALES, Settings, Shadows, UI_SCALES, Upscale, WindowMode,
+    key_name, step_through, step_window_size,
 };
 
 use crate::audio::Bus;
@@ -45,15 +48,17 @@ pub enum Section {
     Graphics,
     Sound,
     Interface,
+    Gameplay,
     Controls,
 }
 
 impl Section {
-    pub const ALL: [Section; 5] = [
+    pub const ALL: [Section; 6] = [
         Section::Display,
         Section::Graphics,
         Section::Sound,
         Section::Interface,
+        Section::Gameplay,
         Section::Controls,
     ];
 
@@ -63,6 +68,7 @@ impl Section {
             Section::Graphics => tr!("settings-graphics"),
             Section::Sound => tr!("settings-sound"),
             Section::Interface => tr!("settings-interface"),
+            Section::Gameplay => tr!("settings-gameplay"),
             Section::Controls => tr!("settings-controls"),
         }
     }
@@ -99,11 +105,28 @@ impl Section {
                 Field::Language,
                 Field::ReduceEffects,
             ],
+            Section::Gameplay => &GAMEPLAY,
             // and under it, the list it chooses
             Section::Controls => &[Field::Controls],
         }
     }
 }
+
+/// The Gameplay section's rows (`GameOption::ALL`).
+const GAMEPLAY: [Field; 12] = [
+    Field::Game(GameOption::Autopickup),
+    Field::Game(GameOption::PickupTypes),
+    Field::Game(GameOption::PickupBurden),
+    Field::Game(GameOption::Autoopen),
+    Field::Game(GameOption::Autoquiver),
+    Field::Game(GameOption::SafePet),
+    Field::Game(GameOption::Confirm),
+    Field::Game(GameOption::Paranoid(Paranoid::Attack)),
+    Field::Game(GameOption::Paranoid(Paranoid::Pray)),
+    Field::Game(GameOption::Paranoid(Paranoid::Quit)),
+    Field::Game(GameOption::Paranoid(Paranoid::Remove)),
+    Field::Game(GameOption::Verbose),
+];
 
 /// A row's setting.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -130,6 +153,8 @@ pub enum Field {
     /// Fewer screen effects (the hero's sway, the camera's drift, a
     /// hallucination's hue).
     ReduceEffects,
+    /// A NetHack option: a new game's at the title, the game's over it.
+    Game(GameOption),
     /// Which controls the list shows: a key profile's, or the gamepad's.
     Controls,
 }
@@ -158,6 +183,20 @@ impl Field {
             Field::Keys => tr!("settings-keys"),
             Field::Language => tr!("settings-language"),
             Field::ReduceEffects => tr!("settings-reduce-effects"),
+            Field::Game(o) => match o {
+                GameOption::Autopickup => tr!("settings-autopickup"),
+                GameOption::PickupTypes => tr!("settings-pickup-types"),
+                GameOption::PickupBurden => tr!("settings-pickup-burden"),
+                GameOption::Autoopen => tr!("settings-autoopen"),
+                GameOption::Autoquiver => tr!("settings-autoquiver"),
+                GameOption::SafePet => tr!("settings-safe-pet"),
+                GameOption::Confirm => tr!("settings-confirm"),
+                GameOption::Paranoid(Paranoid::Attack) => tr!("settings-paranoid-attack"),
+                GameOption::Paranoid(Paranoid::Pray) => tr!("settings-paranoid-pray"),
+                GameOption::Paranoid(Paranoid::Quit) => tr!("settings-paranoid-quit"),
+                GameOption::Paranoid(Paranoid::Remove) => tr!("settings-paranoid-remove"),
+                GameOption::Verbose => tr!("settings-verbose"),
+            },
             Field::Controls => tr!("controls-show"),
         }
     }
@@ -203,6 +242,33 @@ impl Field {
             }
             Field::Language => tr!("settings-language-about"),
             Field::ReduceEffects => tr!("settings-reduce-effects-about"),
+            Field::Game(o) => {
+                let what = match o {
+                    GameOption::Autopickup => tr!("settings-autopickup-about"),
+                    GameOption::PickupTypes => tr!("settings-pickup-types-about"),
+                    GameOption::PickupBurden => tr!("settings-pickup-burden-about"),
+                    GameOption::Autoopen => tr!("settings-autoopen-about"),
+                    GameOption::Autoquiver => tr!("settings-autoquiver-about"),
+                    GameOption::SafePet => tr!("settings-safe-pet-about"),
+                    GameOption::Confirm => tr!("settings-confirm-about"),
+                    GameOption::Paranoid(Paranoid::Attack) => {
+                        tr!("settings-paranoid-attack-about")
+                    }
+                    GameOption::Paranoid(Paranoid::Pray) => tr!("settings-paranoid-pray-about"),
+                    GameOption::Paranoid(Paranoid::Quit) => tr!("settings-paranoid-quit-about"),
+                    GameOption::Paranoid(Paranoid::Remove) => {
+                        tr!("settings-paranoid-remove-about")
+                    }
+                    GameOption::Verbose => tr!("settings-verbose-about"),
+                };
+                // whose values they are: a new game's, or the game's
+                let whose = match (v.playing_keys, &v.game_options) {
+                    (None, _) => tr!("settings-gameplay-new"),
+                    (Some(_), Some(_)) => tr!("settings-gameplay-game"),
+                    (Some(_), None) => tr!("settings-gameplay-waiting"),
+                };
+                format!("{what} {whose}")
+            }
             Field::Controls => tr!("controls-show-about"),
         }
     }
@@ -228,6 +294,9 @@ pub struct View {
     pub playing_keys: Option<KeyProfile>,
     /// The buses' volumes, linear, in `Bus::ALL`'s order.
     pub volumes: [f32; 5],
+    /// Over a game, its own Gameplay options as it reported them (or as
+    /// the player set them, until it has them); None until it tells.
+    pub game_options: Option<Gameplay>,
 }
 
 impl View {
@@ -245,17 +314,31 @@ impl View {
     }
 }
 
+/// The Gameplay options the page shows: the game's over a game (None
+/// until it has told them), else the profile's, for a new game.
+fn gameplay(v: &View) -> Option<&Gameplay> {
+    if v.playing_keys.is_some() {
+        v.game_options.as_ref()
+    } else {
+        Some(&v.settings.gameplay)
+    }
+}
+
 /// The window size is the player's to choose (in a window only).
 fn resizable(v: &View) -> bool {
     v.settings.display.mode == WindowMode::Windowed
 }
 
 /// The row can change now: the window's size in a window only, the UI
-/// scale unless `RENETHACK_UI_SCALE` sets it.
+/// scale unless `RENETHACK_UI_SCALE` sets it, a NetHack option once the
+/// game has told it and while the switch it needs is on.
 fn live(field: Field, v: &View) -> bool {
     match field {
         Field::WindowSize => resizable(v),
         Field::UiScale => v.ui_forced.is_none(),
+        Field::Game(o) => {
+            gameplay(v).is_some_and(|g| o.needs().is_none_or(|n| g.is_on(n) == Some(true)))
+        }
         _ => true,
     }
 }
@@ -341,8 +424,33 @@ pub fn value_text(field: Field, v: &View) -> String {
         Field::Language => v.lang.name().to_string(),
         Field::ReduceEffects if v.settings.reduce_effects => tr!("settings-on"),
         Field::ReduceEffects => tr!("settings-off"),
+        // the game has not told them yet
+        Field::Game(_) if gameplay(v).is_none() => "…".to_string(),
+        Field::Game(o) => gameplay(v).map(|g| game_value(o, g)).unwrap_or_default(),
         // the page's own choice (`SettingsPage::show`)
         Field::Controls => String::new(),
+    }
+}
+
+/// A NetHack option's value as the page shows it.
+fn game_value(o: GameOption, g: &Gameplay) -> String {
+    match o {
+        GameOption::PickupTypes => match g.pickup_preset() {
+            Some(0) => tr!("settings-pickup-all"),
+            Some(1) => tr!("settings-pickup-coins"),
+            Some(_) => tr!("settings-pickup-valuables"),
+            None => tr!("settings-pickup-custom", symbols = g.pickup_types.clone()),
+        },
+        GameOption::PickupBurden => match g.pickup_burden {
+            Burden::Unencumbered => tr!("settings-burden-unencumbered"),
+            Burden::Burdened => tr!("settings-burden-burdened"),
+            Burden::Stressed => tr!("settings-burden-stressed"),
+            Burden::Strained => tr!("settings-burden-strained"),
+            Burden::Overtaxed => tr!("settings-burden-overtaxed"),
+            Burden::Overloaded => tr!("settings-burden-overloaded"),
+        },
+        _ if g.is_on(o) == Some(true) => tr!("settings-on"),
+        _ => tr!("settings-off"),
     }
 }
 
@@ -367,6 +475,8 @@ pub enum Change {
     Lang(Lang),
     /// A bus's volume, linear (`UiEvent::SetVolume`).
     Volume(Bus, f32),
+    /// A NetHack option: the values shown with it changed.
+    Gameplay(GameOption, Gameplay),
 }
 
 /// `field` a step on (`dir` 1) or back (-1); `wrap`: past the last value
@@ -438,6 +548,14 @@ pub fn step(field: Field, v: &View, dir: i32, wrap: bool) -> Option<Change> {
         }
         Field::ReduceEffects => {
             s.reduce_effects = step_through(&[false, true], s.reduce_effects, dir, wrap);
+        }
+        Field::Game(o) => {
+            if !live(field, v) {
+                return None;
+            }
+            let now = gameplay(v)?;
+            let next = now.step(o, dir, wrap);
+            return (next != *now).then_some(Change::Gameplay(o, next));
         }
         // the page's own (`SettingsPage::controls_step`)
         Field::Controls => return None,
@@ -534,7 +652,9 @@ const PAGE_W: f32 = 1000.0;
 pub struct SettingsPage {
     root: Gd<PanelContainer>,
     tabs: Vec<(Section, Gd<Button>)>,
-    bodies: Vec<(Section, Gd<VBoxContainer>)>,
+    /// What each section shows under the tabs: its rows (the Gameplay
+    /// section's in a scroll).
+    bodies: Vec<(Section, Gd<Control>)>,
     rows: Vec<Row>,
     about: Gd<Label>,
     section: Section,
@@ -562,6 +682,10 @@ pub struct SettingsPage {
     /// The entry to scroll into view once the list is laid out, and for
     /// how many frames more.
     reveal: Option<(usize, u8)>,
+    /// The Gameplay section's rows, more than the room the sections share:
+    /// their scroll, and the frames left to keep the focus's row in view.
+    game_scroll: Gd<ScrollContainer>,
+    game_reveal: u8,
 }
 
 /// The profile a keyboard's list shows, and its commands' index.
@@ -1055,8 +1179,11 @@ impl SettingsPage {
             },
             Some((Side::LEFT, 3, theme::GOLD_BRIGHT)),
         );
+        // the room of the longest section but Gameplay's, which scrolls in
+        // it (its rows would not fit a small screen at a large scale)
         let most = Section::ALL
             .iter()
+            .filter(|&&s| s != Section::Gameplay)
             .map(|s| s.fields().len())
             .max()
             .unwrap_or(1) as f32;
@@ -1066,6 +1193,7 @@ impl SettingsPage {
         let mut rows = Vec::new();
         let mut scroll = ScrollContainer::new_alloc();
         let list = VBoxContainer::new_alloc();
+        let mut game_scroll = ScrollContainer::new_alloc();
         for s in Section::ALL {
             let mut body = VBoxContainer::new_alloc();
             body.add_theme_constant_override("separation", ROW_GAP);
@@ -1088,8 +1216,19 @@ impl SettingsPage {
                 scroll.add_child(&list);
                 body.add_child(&scroll);
             }
-            holder.add_child(&body);
-            bodies.push((s, body));
+            let shown: Gd<Control> = if s == Section::Gameplay {
+                game_scroll.set_v_size_flags(SizeFlags::EXPAND_FILL);
+                game_scroll.set_horizontal_scroll_mode(
+                    godot::classes::scroll_container::ScrollMode::DISABLED,
+                );
+                body.set_h_size_flags(SizeFlags::EXPAND_FILL);
+                game_scroll.add_child(&body);
+                game_scroll.clone().upcast()
+            } else {
+                body.upcast()
+            };
+            holder.add_child(&shown);
+            bodies.push((s, shown));
         }
         col.add_child(&holder);
 
@@ -1141,6 +1280,8 @@ impl SettingsPage {
             edit: Edit::None,
             queue: queue.clone(),
             reveal: None,
+            game_scroll,
+            game_reveal: 0,
         };
         page.fill_controls();
         page.show(&view);
@@ -1350,6 +1491,7 @@ impl SettingsPage {
     /// since it changed (the game calls it every frame: a new list takes
     /// a few frames to lay its entries out, the words that wrap last).
     pub fn reveal_focus(&mut self) {
+        self.reveal_game_row();
         let Some((i, frames)) = self.reveal else {
             return;
         };
@@ -1365,6 +1507,29 @@ impl SettingsPage {
             self.scroll.set_v_scroll(top as i32);
         } else if top + h > at + view {
             self.scroll.set_v_scroll((top + h - view).ceil() as i32);
+        }
+    }
+
+    /// The Gameplay row with the focus scrolled into view.
+    fn reveal_game_row(&mut self) {
+        if self.game_reveal == 0 {
+            return;
+        }
+        self.game_reveal -= 1;
+        let Some(field) = self.field() else {
+            return;
+        };
+        let Some(r) = self.rows.iter().find(|r| r.field == field) else {
+            return;
+        };
+        let (top, h) = (r.button.get_position().y, r.button.get_size().y);
+        let view = self.game_scroll.get_size().y;
+        let at = self.game_scroll.get_v_scroll() as f32;
+        if top < at {
+            self.game_scroll.set_v_scroll(top as i32);
+        } else if top + h > at + view {
+            self.game_scroll
+                .set_v_scroll((top + h - view).ceil() as i32);
         }
     }
 
@@ -1672,6 +1837,9 @@ impl SettingsPage {
         } else if self.section == Section::Controls {
             self.scroll.set_v_scroll(0);
         }
+        if self.section == Section::Gameplay {
+            self.game_reveal = REVEAL_FRAMES;
+        }
     }
 
     /// The section shown.
@@ -1840,6 +2008,19 @@ impl SettingsPage {
             .and_then(|r| r.slider.clone())
     }
 
+    /// What the line under the rows says (self-tests).
+    pub fn about(&self) -> String {
+        self.about.get_text().to_string()
+    }
+
+    /// The row of `field` can change now: not dimmed, its arrows there
+    /// (self-tests).
+    pub fn row_live(&self, field: Field) -> bool {
+        self.rows
+            .iter()
+            .any(|r| r.field == field && !r.left.is_disabled())
+    }
+
     /// The rows of the section shown: each one's name and value as the
     /// player reads them (self-tests).
     pub fn shown_rows(&self) -> Vec<(String, String)> {
@@ -1873,6 +2054,7 @@ mod tests {
             ui_forced: None,
             playing_keys: None,
             volumes: Bus::ALL.map(Bus::default_volume),
+            game_options: None,
         }
     }
 
@@ -2008,5 +2190,45 @@ mod tests {
         for (i, f) in all.iter().enumerate() {
             assert!(!all[i + 1..].contains(f), "{f:?} twice");
         }
+        // the Gameplay rows are the options, in their order
+        assert_eq!(
+            GAMEPLAY.map(|f| match f {
+                Field::Game(o) => o,
+                other => panic!("{other:?}"),
+            }),
+            GameOption::ALL
+        );
+    }
+
+    #[test]
+    fn a_new_game_s_options_at_the_title_the_game_s_over_it() {
+        let mut v = view();
+        v.settings.gameplay.autopickup = true;
+        let auto = Field::Game(GameOption::Autopickup);
+        let types = Field::Game(GameOption::PickupTypes);
+        let Some(Change::Gameplay(o, g)) = step(auto, &v, -1, false) else {
+            panic!("autopickup does not step");
+        };
+        assert_eq!((o, g.autopickup), (GameOption::Autopickup, false));
+        assert!(live(types, &v));
+        // over a game: nothing until the game tells, then the game's own
+        v.playing_keys = Some(KeyProfile::Modern);
+        assert!(!live(auto, &v) && step(auto, &v, 1, true).is_none());
+        v.game_options = Some(Gameplay::default());
+        assert!(live(auto, &v));
+        // the kinds picked up need autopickup on, a yes to attack the
+        // question before it
+        assert!(!live(types, &v) && step(types, &v, 1, false).is_none());
+        let attack = Field::Game(GameOption::Paranoid(Paranoid::Attack));
+        assert!(live(attack, &v));
+        v.game_options = Some(Gameplay {
+            confirm: false,
+            ..Gameplay::default()
+        });
+        assert!(!live(attack, &v));
+        let Some(Change::Gameplay(_, g)) = step(auto, &v, 1, false) else {
+            panic!("the game's autopickup does not step");
+        };
+        assert!(g.autopickup && !g.confirm, "{g:?}");
     }
 }

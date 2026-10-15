@@ -52,6 +52,8 @@ mod effects;
 mod falls_tests;
 #[path = "selftest_first.rs"]
 mod first_tests;
+#[path = "selftest_gameplay.rs"]
+mod gameplay_tests;
 #[path = "selftest_help.rs"]
 mod help_tests;
 #[path = "selftest_hero.rs"]
@@ -4813,6 +4815,7 @@ impl SelfTest {
             "pickers" => input_ru::pickers(),
             "help" => help_tests::help(),
             "settings" => settings_tests::settings(),
+            "gameplay" => gameplay_tests::gameplay(),
             "credits" => credits_tests::credits(),
             "rebind" => rebind_tests::rebind(),
             "sheet" => sheet_tests::sheet(),
