@@ -627,7 +627,10 @@ mod tests {
             ("The gnome lord zaps a wand of striking!", "use.zap"),
             ("The dwarf zaps itself with a wand of digging!", "use.zap"),
             ("The hill orc drinks a bubbly blue potion!", "use.quaff"),
-            ("The gnome reads a scroll labeled FOOBIE BLETCH!", "use.read"),
+            (
+                "The gnome reads a scroll labeled FOOBIE BLETCH!",
+                "use.read",
+            ),
             ("The hill orc wields a crossbow!", "use.wield"),
             (
                 "The black dragon breathes a disintegration blast!",
