@@ -450,6 +450,8 @@ struct Look {
     /// sensed, not seen (telepathy).
     mon: Option<i32>,
     sensed: bool,
+    /// What the monster seen holds in its hand, as the hero's held art.
+    wields: Option<nh_art::HeldArt>,
     /// A wall at full height (a torch can hang on it).
     wall: bool,
     /// Something here lies below the ground (the bedrock under the level
@@ -2465,6 +2467,12 @@ fn look_of(cell: &Cell, near: Near, ctx: &Ctx) -> Look {
         if g.kind == GlyphKind::Mon && look.entity.is_some() {
             look.mon = g.mon;
             look.sensed = cell.sensed;
+            look.wields = cell
+                .wields
+                .as_ref()
+                .filter(|_| g.flags & mg::HERO == 0)
+                .and_then(|w| object_tile(ctx.catalog, w.tile))
+                .and_then(|t| ctx.art.held(t));
             look.saddled = cell.saddled;
             look.rider = cell
                 .rider
@@ -2883,6 +2891,9 @@ pub struct MapView {
     /// first), and the rays waiting.
     ray_wait: f32,
     rays_waiting: Vec<acts::WaitingRay>,
+    /// Cells whose monster takes what it holds in hand (or puts it down)
+    /// once its body is built.
+    to_arm: Vec<(i32, i32)>,
 }
 
 /// A marker projected on the level's surfaces (never on models): a ring
@@ -3465,6 +3476,7 @@ impl MapView {
             summons: Vec::new(),
             ray_wait: 0.0,
             rays_waiting: Vec::new(),
+            to_arm: Vec::new(),
             title: None,
             titled: false,
             title_hero: ("valkyrie".to_string(), true),
@@ -3598,6 +3610,7 @@ impl MapView {
         let __t = std::time::Instant::now();
         self.build_some(world, catalog, hero);
         self.complete_models();
+        self.arm_monsters();
         self.prof
             .push(("build", __t.elapsed().as_secs_f64() * 1000.0));
         self.seat_rider(hero);
@@ -5008,6 +5021,7 @@ impl MapView {
         self.appeared.clear();
         self.summons.clear();
         self.rays_waiting.clear();
+        self.to_arm.clear();
         self.sounds.clear();
         self.facing.clear();
         for (_, c) in std::mem::take(&mut self.incoming) {
@@ -6722,6 +6736,10 @@ impl MapView {
             self.art.give(c.model);
         }
         nodes.models = kept;
+        // what a monster holds, taken in hand once its body is built
+        if (look.wields.is_some() || old.wields.is_some()) && !self.to_arm.contains(&(x, y)) {
+            self.to_arm.push((x, y));
+        }
         // a saddle on the back of what stands here (a steed, a pet)
         if let Some(m) = look.entity.and_then(|i| nodes.models.get_mut(i)) {
             self.art.saddle(m, look.saddled);
@@ -6782,6 +6800,41 @@ impl MapView {
         }
         nodes.look = look;
         self.cells.insert((x, y), nodes);
+    }
+
+    /// Whether the monster on `cell` holds something in its hand
+    /// (self-tests).
+    pub fn holds(&self, cell: (i32, i32)) -> bool {
+        self.cells
+            .get(&cell)
+            .and_then(|n| n.look.entity.and_then(|i| n.models.get(i)))
+            .is_some_and(|m| self.art.holding(m))
+    }
+
+    /// The monsters of `to_arm` built by now take in hand what they hold
+    /// (or put it down); those still stand-ins wait.
+    fn arm_monsters(&mut self) {
+        if self.to_arm.is_empty() {
+            return;
+        }
+        let cells = std::mem::take(&mut self.to_arm);
+        for cell in cells {
+            let Some(nodes) = self.cells.get_mut(&cell) else {
+                continue;
+            };
+            let Some(i) = nodes.look.entity.filter(|_| !nodes.look.hero) else {
+                continue;
+            };
+            let held = nodes.look.wields;
+            let Some(m) = nodes.models.get_mut(i) else {
+                continue;
+            };
+            if m.is_pending() {
+                self.to_arm.push(cell);
+                continue;
+            }
+            self.art.arm(m, held);
+        }
     }
 
     /// A cell's old model given back to the pool; the creature gone from

@@ -1038,7 +1038,7 @@ impl Art {
     /// The hero's model: the one given back with their gear on, if it is
     /// of this look, else as `take`.
     pub fn take_hero(&mut self, look: &ModelLook) -> Model {
-        match self.kept.take() {
+        let mut m = match self.kept.take() {
             Some(mut m) if m.key == PoolKey::of(look) => {
                 self.live += 1;
                 m.node.set_visible(true);
@@ -1051,7 +1051,11 @@ impl Art {
                 }
                 self.take(look)
             }
+        };
+        if let Some(w) = m.worn.as_mut() {
+            w.set_hero();
         }
+        m
     }
 
     /// Build a stand-in's look into it if this frame's budget allows;
@@ -1105,7 +1109,12 @@ impl Art {
             p.pause();
         }
         self.unseat(&mut m);
-        if m.worn.as_ref().is_some_and(|w| w.has_gear()) {
+        // the hero's dressed model is kept aside for them; a monster's
+        // goes back plain, its weapon put down
+        if m.worn
+            .as_ref()
+            .is_some_and(|w| w.has_gear() && !w.is_monster())
+        {
             self.put_down(&mut m);
             if let Some(old) = self.kept.replace(m) {
                 self.give_plain(old);

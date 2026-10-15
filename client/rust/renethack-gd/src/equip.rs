@@ -37,6 +37,10 @@ pub const OFF_HAND: &str = "OffHand";
 pub const LAMP_LIGHT: &str = "LampLight";
 /// Visual layers of held things: the map's and the hero's rim light's.
 const HELD_LAYERS: u32 = 1 | 1 << 1;
+/// Seconds handed to `equip` arming a monster: long enough for a
+/// two-hander's off hand to be on its haft at once.
+const ARM_AT_ONCE: f32 = 10.0;
+
 /// Seconds of one cycle of a lamp's flicker.
 const FLICKER_SECS: f32 = 2.4;
 const FLICKER_KEYS: i32 = 48;
@@ -60,6 +64,8 @@ pub struct Worn {
     upright: f32,
     /// The left arm's IK onto a two-handed weapon's haft (`off_hand.rs`).
     off_hand: Option<Gd<OffHand>>,
+    /// A monster's, not the hero's: given back, it is not kept aside.
+    monster: bool,
 }
 
 /// An item used: its node, the seconds it stays in the hand, the hand's
@@ -112,6 +118,16 @@ impl Worn {
     /// Anything shown on the model.
     pub(super) fn has_gear(&self) -> bool {
         !self.held.is_empty() || self.gear != Gear::default()
+    }
+
+    /// A monster's gear, not the hero's.
+    pub(super) fn is_monster(&self) -> bool {
+        self.monster
+    }
+
+    /// The model is the hero's now (a pooled one a monster had).
+    pub(super) fn set_hero(&mut self) {
+        self.monster = false;
     }
 }
 
@@ -169,6 +185,34 @@ fn flicker_animation(energy: f32, amount: f32, at: Vector3) -> Gd<Animation> {
 }
 
 impl Art {
+    /// Whether the model holds anything in its hands now (self-tests).
+    pub fn holding(&self, m: &Model) -> bool {
+        m.worn.as_ref().is_some_and(|w| !w.held.is_empty())
+    }
+
+    /// What a monster holds in its hand (None: nothing), held as the hero
+    /// holds it, a two-hander in both hands at once; a body without hands
+    /// holds nothing. Cheap when nothing changed.
+    pub fn arm(&mut self, m: &mut Model, held: Option<HeldArt>) {
+        if held.is_none() && m.worn.as_ref().is_none_or(|w| !w.has_gear()) {
+            return;
+        }
+        if m.worn.is_none() {
+            let skeleton = find::<Skeleton3D>(&m.node.clone().upcast());
+            m.worn = Some(Box::new(Worn {
+                skeleton,
+                monster: true,
+                ..Worn::default()
+            }));
+        }
+        let gear = Gear {
+            hand_r: held,
+            ..Gear::default()
+        };
+        // the off hand on a haft at once: nothing is seen taken up
+        self.equip(m, &gear, ARM_AT_ONCE);
+    }
+
     /// Show `gear` on the model (a character's bones; other bodies show
     /// nothing); an item in use leaves the hand after its time. Cheap when
     /// nothing changed. True when a lit light is in hand.

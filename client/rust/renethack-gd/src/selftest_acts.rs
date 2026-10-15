@@ -5,7 +5,8 @@
 //! Blind, the hero sees none of it, and nothing is shown. A gnome lord
 //! zaps a wand, drinks a potion, reads a scroll and wields a weapon; a
 //! floating eye's gaze flares, a cobra spits and a red dragon breathes,
-//! each shown on it. Pictures with `--screenshots`.
+//! each shown on it. A soldier made beside the hero holds her weapon in
+//! her hand once she takes it up. Pictures with `--screenshots`.
 
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering};
@@ -38,8 +39,38 @@ pub(super) fn acts() -> Vec<Step> {
     steps.extend(no_pet());
     steps.extend(casting());
     steps.extend(items());
+    steps.extend(armed());
     steps.extend(gazes());
     steps.extend(comings());
+    steps
+}
+
+/// A soldier made beside the hero takes up her weapon, and while the hero
+/// sees her it is in her hand.
+fn armed() -> Vec<Step> {
+    let mut steps = Vec::from(make("soldier"));
+    steps.extend([
+        Step::Wait("the soldier beside the hero", |g| aim(g, "soldier")),
+        mark(),
+        Step::KeysUntil("turns till she holds her weapon", |g| {
+            let at = find(g, "soldier").ok_or("the soldier is gone")?;
+            *AT.lock().unwrap() = at;
+            if map_view(g)?.holds(at) && !FORCING.load(Ordering::Relaxed) {
+                return Ok(None);
+            }
+            wait_a_turn(g)
+        }),
+        Step::Call("closer", |g| {
+            g.ui.as_mut().ok_or("no UI")?.map.set_distance(6.5, 0.0);
+            Ok(())
+        }),
+        Step::Wait("the camera on the hero", super::camera_settled),
+        Step::Shot("acts-armed"),
+        Step::Call("back", |g| {
+            g.ui.as_mut().ok_or("no UI")?.map.set_distance(11.0, 0.0);
+            Ok(())
+        }),
+    ]);
     steps
 }
 
