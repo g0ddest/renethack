@@ -160,6 +160,12 @@ const MAX_TOP: f32 = 2.8;
 /// No creature stands taller (metres): the line from the hero to the eye
 /// is past them all above it.
 const TALLEST: f32 = 7.0;
+/// Whether the hero is hidden is told by the line from their chest to the
+/// eye: this high on a body of a human's height (`HUMAN_TALL`: their
+/// role's own), as far up a shorter body (a newt was lost behind a man,
+/// the line passing over his head).
+const CHEST: f32 = 1.0;
+const HUMAN_TALL: f32 = 1.1;
 
 /// Walls stand taller than the hero; the ones in front of open ground are
 /// cut down (`CUT_HEIGHT`), so the hero is never behind one.
@@ -224,6 +230,16 @@ const DEEP: Color = Color::from_rgb(0.02, 0.02, 0.03);
 /// Scratches of an engraving on the floor.
 const ENGRAVING: Color = Color::from_rgb(0.05, 0.04, 0.035);
 const HERO_RING: Color = Color::from_rgba(1.0, 0.83, 0.54, 0.2);
+/// The hero's ring across, and the share of it its circle is. Round a
+/// polymorphed hero whose body meets the floor wider than a human's (by
+/// its lowest `FORM_FOOTING` of its height) it grows to ring the narrower
+/// side `FORM_RING_OUT` out, up to `FORM_RING_MOST` across: a xorn's
+/// dome hid it whole.
+const HERO_RING_SIZE: f32 = 0.95;
+const RING_CIRCLE: f32 = 0.84;
+const FORM_FOOTING: f32 = 0.3;
+const FORM_RING_OUT: f32 = 0.12;
+const FORM_RING_MOST: f32 = 2.2;
 /// The core's cursor (getpos, travel): the theme's gold.
 const CURSOR: Color = Color::from_rgba(1.0, 0.82, 0.42, 0.85);
 /// The way an order would walk: pale gold dots exploring, red in a fight.
@@ -261,6 +277,13 @@ const FLIGHT_MIN: f32 = 0.09;
 const HERO_LIGHT: Color = Color::from_rgb(0.9, 0.84, 0.76);
 const HERO_LIGHT_ENERGY: f32 = 2.4;
 const HERO_LIGHT_RANGE: f32 = 5.5;
+/// How high the hero's light and their rim light hang; over a polymorphed
+/// hero's form, this far over its head when that is higher (a flying
+/// dragon's face lit from a hand away came out pink).
+const HERO_LIGHT_HEIGHT: f32 = 2.4;
+const FORM_LIGHT_OVER: f32 = 0.7;
+const RIM_HEIGHT: f32 = 2.0;
+const FORM_RIM_OVER: f32 = 0.3;
 /// A lamp in hand lights the scene; the light over the hero only fills
 /// the shadow the body throws.
 const LAMP_POOL: Color = Color::from_rgb(1.0, 0.72, 0.46);
@@ -273,7 +296,10 @@ const RIM_LAYER: u32 = 1 << 1;
 /// alone (`RIM_LAYER`), whatever the dungeon's light: an outfit reads by
 /// them. They were made for the inventory's doll, whose camera never saw
 /// them (a camera takes only the lights on a layer it sees): they lit the
-/// hero here instead, from wherever that camera last stood.
+/// hero here instead, from wherever that camera last stood. A polymorphed
+/// hero is out of their outfit and goes without them: a monster's model
+/// is lit as the monsters about it are (under them a red dragon came out
+/// pale pink).
 const HERO_STUDIO: [(Vector3, Color, f32); 5] = [
     // the key, from the upper left, not too steep: the legs get it too
     (
@@ -2707,11 +2733,17 @@ pub struct MapView {
     hints_dirty: bool,
     cursor: Gd<Decal>,
     hero_ring: Gd<Decal>,
+    /// The model the ring was sized for: a polymorphed hero's (None: the
+    /// hero's own size).
+    ring_sized: Option<Option<InstanceId>>,
     ring_tex: Gd<godot::classes::Texture2D>,
     hero_light: Gd<OmniLight3D>,
     /// The glow from below round the hero where the floors burn.
     underglow: Gd<OmniLight3D>,
     rim: Gd<OmniLight3D>,
+    /// The hero's key and fills (`HERO_STUDIO`), off while they are
+    /// polymorphed.
+    hero_studio: Gd<Node3D>,
     /// The hero's model, on the rim light's layer too.
     rim_model: Option<Gd<Node3D>>,
     /// The hero's own model while they ride (their cell shows the steed).
@@ -3198,7 +3230,7 @@ impl MapView {
         rider_view.set_name("RiderView");
         rider_view.add_child(&Node3D::new_alloc());
         root.add_child(&rider_view);
-        let mut hero_ring = marker(&mut root, &ring_tex, 0.95);
+        let mut hero_ring = marker(&mut root, &ring_tex, HERO_RING_SIZE);
         hero_ring.set_modulate(HERO_RING);
         let mut hostile_ring = marker(&mut root, &ring_tex, 1.05);
         hostile_ring.set_modulate(HOSTILE_RING);
@@ -3363,10 +3395,12 @@ impl MapView {
             hints_dirty: false,
             cursor,
             hero_ring,
+            ring_sized: None,
             ring_tex,
             hero_light,
             underglow,
             rim,
+            hero_studio: studio_frame,
             rim_model: None,
             rider: None,
             xray_steed: None,
@@ -3673,7 +3707,14 @@ impl MapView {
                 // the walls and rock between the eye and the hero thin out
                 RenderingServer::singleton()
                     .global_shader_parameter_set("hero_pos", &(p + at(0.0, 0.9, 0.0)).to_variant());
-                self.hero_light.set_position(p + at(0.0, 2.4, 0.6));
+                let form = world.status.polymorphed();
+                let head = self
+                    .hero_stands()
+                    .filter(|_| form)
+                    .map(|(_, tall)| self.hero_pose.lift + tall);
+                let over = |least: f32, by: f32| head.map_or(least, |h| (h + by).max(least));
+                self.hero_light
+                    .set_position(p + at(0.0, over(HERO_LIGHT_HEIGHT, FORM_LIGHT_OVER), 0.6));
                 self.hero_light.set_visible(true);
                 match self.branch_look.underglow {
                     Some(c) => {
@@ -3684,8 +3725,13 @@ impl MapView {
                     None => self.underglow.set_visible(false),
                 }
                 // behind the hero, on the far side from the camera
-                self.rim.set_position(p + at(0.0, 2.0, -0.9));
+                self.rim
+                    .set_position(p + at(0.0, over(RIM_HEIGHT, FORM_RIM_OVER), -0.9));
                 self.rim.set_visible(true);
+                if self.hero_studio.is_visible() == form {
+                    self.hero_studio.set_visible(!form);
+                }
+                self.size_hero_ring(form);
                 // while a level is drawn the hero's cell may still hold the
                 // last level's model
                 if self.building.is_empty() {
@@ -4479,11 +4525,39 @@ impl MapView {
         self.xray_on = false;
     }
 
+    /// The hero's ring round their form: a polymorphed hero's model is
+    /// measured where it meets the floor, once a model.
+    fn size_hero_ring(&mut self, form: bool) {
+        let node = self
+            .hero_model()
+            .filter(|m| form && self.rider.is_none() && !m.is_pending())
+            .map(|m| m.node.clone());
+        let id = node.as_ref().map(|n| n.instance_id());
+        if self.ring_sized == Some(id) {
+            return;
+        }
+        self.ring_sized = Some(id);
+        let inner = node.and_then(|n| n.get_child(0)?.try_cast::<Node3D>().ok());
+        let size = match inner.and_then(|n| Some((crate::art::footing(&n, FORM_FOOTING)?, n))) {
+            Some((foot, n)) => {
+                let s = n.get_scale();
+                let narrower = (foot.size.x * s.x).min(foot.size.z * s.z);
+                let across = (narrower / 2.0 + FORM_RING_OUT) * 2.0 / RING_CIRCLE;
+                across.clamp(HERO_RING_SIZE, FORM_RING_MOST)
+            }
+            None => HERO_RING_SIZE,
+        };
+        self.hero_ring.set_size(Vector3::new(size, 0.24, size));
+    }
+
     /// The hero seen through what hides them from the camera: a wall, a
     /// door or rock between the eye and their chest, or a creature as tall
     /// as a giant standing there (in the cell south of them).
     fn show_through(&mut self, hero: (i32, i32), at: Vector3) {
-        let chest = at + Vector3::new(0.0, 1.0, 0.0);
+        let up = self
+            .hero_stands()
+            .map_or(CHEST, |(_, tall)| (CHEST * tall / HUMAN_TALL).min(CHEST));
+        let chest = at + Vector3::new(0.0, up, 0.0);
         let walls = hides(chest, self.eye, hero, |x, y| {
             self.cells
                 .get(&(x, y))
@@ -5104,6 +5178,7 @@ impl MapView {
         self.hero_light.set_visible(false);
         self.underglow.set_visible(false);
         self.rim.set_visible(false);
+        self.hero_studio.set_visible(true);
         if let Some(old) = self.rim_model.take().filter(|n| n.is_instance_valid()) {
             set_layers(&old, 1);
             set_overlay(&old, None);
@@ -5501,6 +5576,55 @@ impl MapView {
         }
         let nodes = self.hero_cell()?;
         nodes.look.entity.and_then(|i| nodes.models.get(i))
+    }
+
+    /// The hero's model's name in the art manifest, and the name the
+    /// hero's form calls for (self-tests: a polymorphed hero is drawn as
+    /// what they are).
+    pub fn hero_model_names(
+        &self,
+        world: &World,
+        catalog: &Catalog,
+    ) -> (Option<String>, Option<String>) {
+        let manifest = self.art.manifest();
+        let shown = self
+            .hero_model()
+            .filter(|m| !m.is_pending())
+            .map(|m| manifest.model_at(m.model_index()).0.to_string());
+        let wanted = world.map.hero_form().and_then(|g| {
+            let info = monster_info(catalog, g.mon)?;
+            let art = manifest.monster(info, g.flags);
+            Some(manifest.model_at(art.model).0.to_string())
+        });
+        (shown, wanted)
+    }
+
+    /// The hero's ring shows, and the rim light is on their model now
+    /// (self-tests).
+    pub fn hero_marked(&self) -> (bool, bool) {
+        let ring = self.hero_ring.is_visible();
+        let rim = match (self.rim_model.as_ref(), self.hero_model()) {
+            (Some(r), Some(m)) => *r == m.node,
+            _ => false,
+        };
+        (ring, rim)
+    }
+
+    /// The places on the hero's model something is held in (self-tests).
+    pub fn hero_held_slots(&self) -> Vec<&'static str> {
+        self.hero_model()
+            .map_or(Vec::new(), |m| self.art.held_slots(m))
+    }
+
+    /// The hero's own key and fills light them: not while polymorphed
+    /// (self-tests).
+    pub fn hero_studio_on(&self) -> bool {
+        self.hero_studio.is_visible()
+    }
+
+    /// How wide across the hero's ring is (self-tests).
+    pub fn hero_ring_across(&self) -> f32 {
+        self.hero_ring.get_size().x
     }
 
     /// The steed the hero rides: its model, and where on its back they

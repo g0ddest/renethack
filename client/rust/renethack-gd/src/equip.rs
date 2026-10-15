@@ -190,6 +190,14 @@ impl Art {
         m.worn.as_ref().is_some_and(|w| !w.held.is_empty())
     }
 
+    /// The places on the model something is held in now: "hand_r",
+    /// "arm_l", "back"… (self-tests).
+    pub fn held_slots(&self, m: &Model) -> Vec<&'static str> {
+        m.worn
+            .as_ref()
+            .map_or(Vec::new(), |w| w.held.iter().map(|(s, _)| *s).collect())
+    }
+
     /// What a monster holds in its hand (None: nothing), held as the hero
     /// holds it, a two-hander in both hands at once; a body without hands
     /// holds nothing. Cheap when nothing changed.

@@ -2375,19 +2375,47 @@ fn reach_of(root: &Gd<Node3D>) -> [f32; 2] {
 }
 
 /// The bounds on the ground (x, z: the lowest corner and the highest) of
-/// the meshes shown under `root`, in its space; None with no mesh. A
-/// skinned mesh is measured as it is posed now: every few of its
-/// vertices, moved by their bones.
+/// the meshes shown under `root`, in its space (`posed_bounds`).
 fn bounds_of(root: &Gd<Node3D>) -> Option<Bounds> {
+    let b = posed_bounds(root)?;
+    let end = b.end();
+    Some(([b.position.x, b.position.z], [end.x, end.z]))
+}
+
+/// The bounds of the meshes shown under `root`, in its space; None with
+/// no mesh (`posed_points`).
+pub fn posed_bounds(root: &Gd<Node3D>) -> Option<Aabb> {
+    bounds_round(&posed_points(root))
+}
+
+/// The bounds of where the meshes shown under `root` meet the floor: of
+/// their lowest `share` of their height, in its space (a dragon's legs
+/// and tail, not its wings; a xorn's dome at its widest).
+pub fn footing(root: &Gd<Node3D>, share: f32) -> Option<Aabb> {
+    let points = posed_points(root);
+    let all = bounds_round(&points)?;
+    let top = all.position.y + all.size.y * share;
+    let low: Vec<Vector3> = points.into_iter().filter(|p| p.y <= top).collect();
+    bounds_round(&low)
+}
+
+fn bounds_round(points: &[Vector3]) -> Option<Aabb> {
+    let (&first, rest) = points.split_first()?;
+    let (lo, hi) = rest.iter().fold((first, first), |(lo, hi), &p| {
+        (lo.coord_min(p), hi.coord_max(p))
+    });
+    Some(Aabb::new(lo, hi - lo))
+}
+
+/// Points of the meshes shown under `root`, in its space, as they are
+/// posed now: a mesh's own bounds' corners, a skinned one's every few
+/// vertices moved by their bones (its own bounds are its rest's).
+fn posed_points(root: &Gd<Node3D>) -> Vec<Vector3> {
     use godot::classes::mesh::ArrayType;
     // one vertex in so many is enough for the bounds
     const EVERY: usize = 5;
-    // (x, z) of the bounds' lowest and highest corners
-    let (mut lo, mut hi) = ([f32::MAX; 2], [f32::MIN; 2]);
-    let mut reach = |p: Vector3| {
-        lo = [lo[0].min(p.x), lo[1].min(p.z)];
-        hi = [hi[0].max(p.x), hi[1].max(p.z)];
-    };
+    let mut points = Vec::new();
+    let mut reach = |p: Vector3| points.push(p);
     for node in root
         .find_children_ex("*")
         .type_("MeshInstance3D")
@@ -2467,7 +2495,7 @@ fn bounds_of(root: &Gd<Node3D>) -> Option<Bounds> {
             }
         }
     }
-    (lo[0] <= hi[0]).then_some((lo, hi))
+    points
 }
 
 /// The clips' scale track of the `Head` bone dropped where it only ever

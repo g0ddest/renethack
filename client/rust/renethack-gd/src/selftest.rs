@@ -68,6 +68,8 @@ mod journal_tests;
 mod layouts_tests;
 #[path = "selftest_passing.rs"]
 mod passing_tests;
+#[path = "selftest_polyself.rs"]
+mod polyself_tests;
 #[path = "selftest_rebind.rs"]
 mod rebind_tests;
 #[path = "selftest_riding.rs"]
@@ -4894,6 +4896,7 @@ impl SelfTest {
             "conditions" => conditions_tests::conditions(),
             "falls" => falls_tests::falls(),
             "acts" => acts_tests::acts(),
+            "polyself" => polyself_tests::polyself(),
             "states" => states_tests::states(),
             "doll" => doll_tests::doll(),
             "first-open" => first_tests::first_open(),

@@ -107,6 +107,11 @@ impl Status {
             .ok()
     }
 
+    /// The hero is polymorphed: hit dice stand for their experience level.
+    pub fn polymorphed(&self) -> bool {
+        self.fields.contains_key("hitdice")
+    }
+
     /// BL_CONDITION bits.
     pub fn conditions(&self) -> u64 {
         self.conditions
@@ -240,14 +245,17 @@ mod tests {
         s.apply(&end("reset"));
         assert_eq!(s.number("hp"), Some(12));
         // polymorph: a full snapshot with hit dice instead of level and experience
+        assert!(!s.polymorphed());
         full_round(&mut s, &[("hitdice", "3")]);
         assert_eq!(s.get("hitdice"), Some("3"));
+        assert!(s.polymorphed());
         assert_eq!(s.get("xlevel"), None);
         assert_eq!(s.get("exp"), None);
         assert_eq!(s.number("hp"), Some(16));
         // and back
         full_round(&mut s, &[("xlevel", "1"), ("exp", "0")]);
         assert_eq!(s.get("hitdice"), None);
+        assert!(!s.polymorphed());
         assert_eq!(s.get("xlevel"), Some("1"));
         // a flush never drops anything
         s.apply(&upd("hp", "11"));

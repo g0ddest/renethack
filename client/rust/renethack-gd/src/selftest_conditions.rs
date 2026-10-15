@@ -614,7 +614,7 @@ fn search() -> [Step; 4] {
 
 /// `#pray`, yes to "Are you sure you want to pray?", and yes to debug
 /// mode's "Force the gods to be pleased?": the trouble fixed.
-fn pray() -> [Step; 8] {
+pub(super) fn pray() -> [Step; 8] {
     [
         key('#'),
         Step::Request("the command palette", |p| *p == Prompt::ExtCmd),

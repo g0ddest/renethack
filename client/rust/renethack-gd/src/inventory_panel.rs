@@ -1115,6 +1115,18 @@ const DOLL_RIM: f32 = 4.5;
 /// What the doll's lights do not reach is not black: dark clothes keep
 /// their folds in the shade.
 const DOLL_AMBIENT: f32 = 0.4;
+/// The camera's angle of view, and how far it stands from the figure.
+const DOLL_FOV: f32 = 24.0;
+const DOLL_DISTANCE: f32 = 4.12;
+/// A polymorphed hero is framed by their form's bounds and this much
+/// round them (a newt was a speck in a frame made for a human, a xorn's
+/// dome cut off at its top), seen from this many degrees above (a low
+/// body shows its back), and lit this much of the hero's own: a monster's
+/// colours are brighter than an outfit's, and a red dragon came out pale
+/// pink.
+const FORM_MARGIN: f32 = 1.15;
+const FORM_PITCH: f32 = 16.0;
+const FORM_LIGHT: f32 = 0.5;
 
 /// A camera in the map's own world that sees only the hero and its own
 /// lights, on a clear background: the doll shows the hero in their gear
@@ -1131,6 +1143,10 @@ struct DollView {
     /// and since when the one now has been there.
     rendered: Option<InstanceId>,
     hero_since: f64,
+    /// The hero is polymorphed; their form's model, its bounds in its
+    /// own frame (measured once a model).
+    form: bool,
+    form_bounds: Option<(InstanceId, Aabb)>,
 }
 
 /// The doll turns slowly and breathes: 30 renders a second are plenty.
@@ -1150,7 +1166,7 @@ impl DollView {
         // the hero, and the lights made for this camera: a camera takes
         // only the lights on a layer it sees, the dungeon's are on another
         camera.set_cull_mask(HERO_LAYER | DOLL_LAYER);
-        camera.set_fov(24.0);
+        camera.set_fov(DOLL_FOV);
         let mut env = Environment::new_gd();
         env.set_background(godot::classes::environment::BgMode::CLEAR_COLOR);
         env.set_ambient_source(godot::classes::environment::AmbientSource::COLOR);
@@ -1186,6 +1202,25 @@ impl DollView {
             last: f64::NEG_INFINITY,
             rendered: None,
             hero_since: 0.0,
+            form: false,
+            form_bounds: None,
+        }
+    }
+
+    /// The hero polymorphed or back in their own form: the frame and the
+    /// lamps for it.
+    fn set_form(&mut self, form: bool) {
+        if form == self.form {
+            return;
+        }
+        self.form = form;
+        self.form_bounds = None;
+        let k = if form { FORM_LIGHT } else { 1.0 };
+        for (light, (_, _, energy)) in self.lights.iter_mut().zip(DOLL_LIGHTS) {
+            light.set_param(Param::ENERGY, energy * k);
+        }
+        if !form {
+            self.camera.set_fov(DOLL_FOV);
         }
     }
 
@@ -1222,11 +1257,60 @@ impl DollView {
         let face = t.basis.col_c().normalized();
         let yaw = (now * 0.25).sin() as f32 * 0.6;
         let dir = Basis::from_axis_angle(Vector3::UP, yaw) * face;
-        let target = t.origin + Vector3::new(0.0, 0.82, 0.0);
-        let eye = target + dir * 4.1 + Vector3::new(0.0, 0.4, 0.0);
+        let (target, eye) = match self.form_frame(&t) {
+            Some(target) => {
+                let pitch = FORM_PITCH.to_radians();
+                let back = dir * pitch.cos() + Vector3::UP * pitch.sin();
+                (target, target + back * DOLL_DISTANCE)
+            }
+            None => {
+                let target = t.origin + Vector3::new(0.0, 0.82, 0.0);
+                (target, target + dir * 4.1 + Vector3::new(0.0, 0.4, 0.0))
+            }
+        };
         self.camera
             .set_global_transform(Transform3D::new(Basis::IDENTITY, eye).looking_at(target));
         true
+    }
+
+    /// A form's middle to aim at, its angle of view set to frame it whole
+    /// as the doll turns; None for the hero's own form. `t`: the form's
+    /// frame (its place, the way it faces).
+    fn form_frame(&mut self, t: &Transform3D) -> Option<Vector3> {
+        if !self.form {
+            return None;
+        }
+        // the model's own node, under the one the map places: measured in
+        // it once, as it stands, it rises and bobs with it
+        let inner = self
+            .hero
+            .as_ref()?
+            .get_child(0)?
+            .try_cast::<Node3D>()
+            .ok()?;
+        let id = inner.instance_id();
+        let bounds = match self.form_bounds {
+            Some((was, b)) if was == id => b,
+            _ => {
+                let b = crate::art::posed_bounds(&inner)?;
+                self.form_bounds = Some((id, b));
+                b
+            }
+        };
+        let to = inner.get_global_transform();
+        let frame = Transform3D::new(t.basis.orthonormalized(), t.origin);
+        let size = (frame.affine_inverse() * to * bounds).size;
+        // across: its width, or some of its length as the doll turns; up:
+        // its height, and some of its length seen from above
+        let across = size.x.max(size.z * 0.57 + size.x * 0.5);
+        let up = size.y + size.z * FORM_PITCH.to_radians().sin();
+        let aspect = DOLL_PX.x as f32 / DOLL_PX.y as f32;
+        let span = up.max(across / aspect) * FORM_MARGIN;
+        let fov = 2.0 * (span / 2.0 / DOLL_DISTANCE).atan().to_degrees();
+        if (self.camera.get_fov() - fov).abs() > 0.01 {
+            self.camera.set_fov(fov);
+        }
+        Some(to * (bounds.position + bounds.size / 2.0))
     }
 
     /// Aim at the hero and render them now and then; false when there is
@@ -3195,6 +3279,12 @@ impl InventoryPanel {
         }
     }
 
+    /// Whether the hero is polymorphed: the doll frames and lights their
+    /// form for it.
+    pub fn set_form(&mut self, form: bool) {
+        self.doll_view.set_form(form);
+    }
+
     /// The hero's model on the map (None: none yet), for the doll.
     pub fn set_hero(&mut self, node: Option<Gd<Node3D>>) {
         let node = node.filter(|n| n.is_instance_valid());
@@ -3246,6 +3336,30 @@ impl InventoryPanel {
         let pixels = self.doll_pixels()?;
         let picked = pixels.iter().filter(|c| pick(**c)).count();
         Some(picked as f32 / pixels.len() as f32)
+    }
+
+    /// The box round what the doll's render draws, in shares of its width
+    /// and its height from its top left corner. None without a renderer,
+    /// or with nothing drawn (self-tests).
+    pub fn doll_drawn_box(&self) -> Option<Rect2> {
+        let image = self.doll_view.viewport.get_texture()?.get_image()?;
+        let (w, h) = (image.get_width(), image.get_height());
+        let (mut lo, mut hi) = (Vector2i::new(w, h), Vector2i::new(-1, -1));
+        for y in (0..h).step_by(2) {
+            for x in (0..w).step_by(2) {
+                if image.get_pixel(x, y).a > 0.5 {
+                    lo = Vector2i::new(lo.x.min(x), lo.y.min(y));
+                    hi = Vector2i::new(hi.x.max(x), hi.y.max(y));
+                }
+            }
+        }
+        (hi.x >= lo.x).then(|| {
+            let (w, h) = (w as f32, h as f32);
+            Rect2::new(
+                Vector2::new(lo.x as f32 / w, lo.y as f32 / h),
+                Vector2::new((hi.x - lo.x) as f32 / w, (hi.y - lo.y) as f32 / h),
+            )
+        })
     }
 
     /// How bright the doll's render is where it is drawn on, 0 to 1. None
