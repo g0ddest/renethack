@@ -1,0 +1,33 @@
+renethack
+=========
+
+Copyright 2026 Vitaliy Velikodniy.
+NetHack, Copyright 1985-2026 Stichting Mathematisch Centrum, M. Stephenson,
+the NetHack DevTeam and contributors.
+
+renethack is free software under the NetHack General Public License
+(LICENSE), and that is the licence of all of it but the parts listed below:
+the client (client/), the engine's protocol host and its patches to
+NetHack (engine/), the tools and the build (tools/, the Makefiles), the
+catalogs and translations (client/i18n/), the help (client/help/) and the
+documentation. NetHack itself, the engine/upstream submodule, is under the
+same licence; engine/patches/ holds every change made to it.
+
+Under their own licences:
+- the art in client/godot/art/: CC0, but for the models under ccby/
+  (Creative Commons Attribution 3.0); client/godot/art/CREDITS.md credits
+  each;
+- the sounds in client/godot/audio/: CC0, but for those under ccby/
+  (Creative Commons Attribution 3.0 or 4.0); client/godot/audio/CREDITS.md;
+- the fonts in client/godot/fonts/: the SIL Open Font License 1.1, each
+  family's OFL.txt beside it;
+- cJSON, in engine/host/third_party/cjson/: MIT, its LICENSE;
+- Lua, which NetHack's build fetches and links into the engine: MIT;
+- Godot Engine, which runs the game, and the Rust crates the client links
+  (client/rust/Cargo.lock): their own licences, whose texts a package's
+  legal/ folder holds;
+- in a build for Steam, Valve's Steamworks API library: the Steamworks SDK
+  Access Agreement.
+
+Every package of the game carries a legal/ folder: what it ships and under
+which terms (tools/dist/legal/NOTICE.txt) and the licences' texts.

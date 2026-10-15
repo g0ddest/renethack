@@ -669,11 +669,13 @@ patch names its upstream commits in its header and is dropped when
 `engine/upstream` moves to that release (`0004`: a vault guard parked off
 the map made 5.0.0 call impossible()).
 
-## License
+## Licence
 
-NetHack General Public License (see `engine/upstream/dat/license`).
-cJSON: MIT (`engine/host/third_party/cjson/LICENSE`).
-Art: CC0; fonts: SIL OFL 1.1 (`client/godot/art/CREDITS.md`).
-The Russian names: sources and credits in `client/i18n/CREDITS.md`.
-The help's Guidebooks: `client/help/CREDITS.md` (NetHack General Public
-License).
+renethack is free software under the NetHack General Public License
+(`LICENSE`), as NetHack is: the client, the engine's host and its patches,
+the tools, the catalogs, the help and the documentation. What keeps its own
+terms is listed in `NOTICE`: the art and the sounds (CC0, some CC-BY), the
+fonts (SIL Open Font License 1.1), cJSON and Lua (MIT), Godot and the Rust
+crates. Their credits: `client/godot/art/CREDITS.md`,
+`client/godot/audio/CREDITS.md`, `client/help/CREDITS.md` (the Guidebooks)
+and `client/i18n/CREDITS.md` (the sources of the Russian names).
