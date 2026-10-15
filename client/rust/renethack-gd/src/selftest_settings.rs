@@ -637,12 +637,15 @@ pub(super) fn settings() -> Vec<Step> {
 }
 
 /// `deck`, run as a Steam Deck (`SteamDeck=1`): while the player has not
-/// chosen a window, the game covers the Deck's screen at its own size (a
-/// window would be scaled down to it, its words a fifth smaller): the
-/// window was asked for so, the page's window row says so and has no size
-/// to choose, the interface at the Deck's 120 % and the graphics at its
-/// preset. A window chosen on the page is asked for and kept, and the next
-/// start keeps the player's choice.
+/// chosen a window, the game covers the Deck's screen at its own size, no
+/// window size set (gamescope would show the project's 1600×900 window
+/// letterboxed at 1280×720, resampled, the Deck drawing 40 % more pixels
+/// than its screen has): the window is the screen's size (without a
+/// display the run's 1280×800 stands for it), the canvas has its shape
+/// (no bars), the page's window row says so and has no size to choose,
+/// the interface at the Deck's 120 % and the graphics at its preset. A
+/// window chosen on the page is asked for and kept, and the next start
+/// keeps the player's choice.
 pub(super) fn deck() -> Vec<Step> {
     vec![
         Step::Wait("the title screen", |g| {
@@ -658,12 +661,27 @@ pub(super) fn deck() -> Vec<Step> {
                 if g.settings.display.mode.is_some() {
                     return Err(format!("a window chosen: {:?}", g.settings.display.mode));
                 }
-                match crate::video::asked_mode() {
-                    Some(WindowMode::Borderless) => Ok(()),
+                match (crate::video::asked_mode(), crate::video::asked_size()) {
+                    (Some(WindowMode::Borderless), None) => Ok(()),
                     other => Err(format!("the window was asked for {other:?}")),
                 }
             },
         ),
+        Step::Wait("the screen's own size, nothing letterboxed", |g| {
+            // without a display, the run's window stands for the Deck's
+            // screen (--size=1280x800)
+            let native = if headless() {
+                crate::video::DECK_SCREEN
+            } else {
+                crate::video::screen_size()
+            };
+            let (w, h) = window(g);
+            let root = g.base().get_tree().get_root().ok_or("no window")?;
+            // the canvas has the window's shape: no bars above or beside it
+            let seen = root.get_visible_rect().size;
+            let shaped = (seen.x / seen.y - w as f32 / h as f32).abs() < 0.01;
+            Ok((w, h) == native && shaped)
+        }),
         Step::Wait("the Deck's interface scale and graphics", |g| {
             Ok((content_scale(g)? - 1.2).abs() < 1e-3
                 && g.graphics() == Graphics::preset(crate::video::DECK_QUALITY))

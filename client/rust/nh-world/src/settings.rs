@@ -155,8 +155,9 @@ impl Default for Display {
 
 impl Display {
     /// The window's mode: the player's, else the device's. A Steam Deck's
-    /// (`deck`) is the whole screen at its own size: a window there is
-    /// scaled down to it, its words a fifth smaller.
+    /// (`deck`) is the whole screen at its own size: gamescope shows the
+    /// project's 1600×900 window letterboxed at 1280×720, resampled, and
+    /// the Deck draws 40 % more pixels than its screen has.
     pub fn window_mode(&self, deck: bool) -> WindowMode {
         self.mode.unwrap_or(if deck {
             WindowMode::Borderless

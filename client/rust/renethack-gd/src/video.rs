@@ -54,15 +54,26 @@ pub fn device_quality() -> Quality {
 /// The Steam Deck's preset.
 pub const DECK_QUALITY: Quality = Quality::Medium;
 
+/// What `apply_display` asked of the window last: its mode, and the size
+/// it set (None: the window kept its own, as a full screen has the
+/// screen's).
+type Asked = (WindowMode, Option<(u32, u32)>);
+
 thread_local! {
-    /// The window's mode `apply_display` asked for last (self-tests: a
-    /// run without a display has no window to ask).
-    static ASKED: std::cell::Cell<Option<WindowMode>> = const { std::cell::Cell::new(None) };
+    /// What the window was asked for last (self-tests: a run without a
+    /// display has no window to ask).
+    static ASKED: std::cell::Cell<Option<Asked>> = const { std::cell::Cell::new(None) };
 }
 
 /// The window's mode the game asked for last.
 pub fn asked_mode() -> Option<WindowMode> {
-    ASKED.with(|a| a.get())
+    ASKED.with(|a| a.get()).map(|(mode, _)| mode)
+}
+
+/// The window's size the game set last (None: none set since the mode
+/// was asked).
+pub fn asked_size() -> Option<(u32, u32)> {
+    ASKED.with(|a| a.get()).and_then(|(_, size)| size)
 }
 
 /// The window as `d` asks, its mode the player's or the device's (a Steam
@@ -71,7 +82,6 @@ pub fn asked_mode() -> Option<WindowMode> {
 /// command line (`--disable-vsync`, `--max-fps`), stay as they are.
 pub fn apply_display(window: &mut Gd<Window>, d: &Display, all: bool) {
     let wanted = d.window_mode(is_deck());
-    ASKED.with(|a| a.set(Some(wanted)));
     let mode = match wanted {
         WindowMode::Windowed => Mode::WINDOWED,
         WindowMode::Borderless => Mode::FULLSCREEN,
@@ -81,19 +91,23 @@ pub fn apply_display(window: &mut Gd<Window>, d: &Display, all: bool) {
     if !headless && (all || wanted != WindowMode::Windowed) && window.get_mode() != mode {
         window.set_mode(mode);
     }
-    if !headless
-        && wanted == WindowMode::Windowed
-        && let Some(size) = d.size
-    {
-        // a screen smaller than the size chosen (another monitor): the
-        // largest that fits it
-        let screen = screen_size();
-        let fits = window_sizes(screen);
-        let (w, h) = if fits.contains(&size) || screen == (0, 0) {
-            size
-        } else {
-            fits[fits.len() - 1]
-        };
+    // the size chosen, in a window only (a full screen has the screen's
+    // own); a screen smaller than it (another monitor): the largest that
+    // fits it
+    let size = d
+        .size
+        .filter(|_| wanted == WindowMode::Windowed)
+        .map(|size| {
+            let screen = screen_size();
+            let fits = window_sizes(screen);
+            if fits.contains(&size) || screen == (0, 0) {
+                size
+            } else {
+                fits[fits.len() - 1]
+            }
+        });
+    ASKED.with(|a| a.set(Some((wanted, size))));
+    if !headless && let Some((w, h)) = size {
         let want = Vector2i::new(w as i32, h as i32);
         if window.get_size() != want {
             window.set_size(want);
