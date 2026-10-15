@@ -14,7 +14,7 @@ checked against the game as it is. **Pass**: met, and how that is known.
 | Physical controls: the default configuration reaches all content, with no setting to change | Pass | The whole game plays with a controller (README, "Gamepad and Steam Deck"): walking, the radial menu, menus, questions, the inventory and doll, the palette, the settings, the help, text. A pad becomes the active input by itself. The `gamepad` self-test plays them, also at 1280×800 and in Russian. |
 | On-screen glyphs match the input in use; no keyboard or mouse glyphs while a pad is used | Pass | Glyphs in the controller's family (Xbox, PlayStation, Steam Deck, by the device's name; `gamepad.rs`). With a pad the action bar shows its chords instead of the digits, the dialogs and the inventory their pad hints, and a strip says what the buttons do. A pad Steam Input presents under another name gets the Xbox family: A, B, X and Y where the Deck has them. |
 | Text input: a Steamworks keyboard, or one of the game's own that types the player's language with a controller | Pass | A text question with a pad opens the game's keyboard (Latin and Cyrillic: English and Russian) and, on a Deck or in Big Picture, asks Steam for its own (`steam://open/keyboard`, `dialogs.rs`). The engraving and wish pickers work from the pad too (`pickers` self-test). |
-| Default resolution 1280×800 (or 1280×720) | Pass, one risk | Every screen is laid out for 1280×800 and checked there: `make test-client` runs 15 scenarios at 1280×800 and 18 in Russian, and fails a screen that does not fit; `make deck` shoots them. The risk: the window opens windowed at 1600×900 (project.godot) and only a player's choice makes it Borderless. If Godot keeps that size on the Deck, gamescope shows it letterboxed at 1280×720, resampled, and the Deck draws 40 % more pixels than its screen has. **Routed**: start Borderless on a Deck (`video::is_deck`). |
+| Default resolution 1280×800 (or 1280×720) | Pass | Every screen is laid out for 1280×800 and checked there: `make test-client` runs 15 scenarios at 1280×800 and 18 in Russian, and fails a screen that does not fit; `make deck` shoots them. A Deck starts Borderless at its screen's own size until the player chooses a window (`video::is_deck`); elsewhere the game opens a 1600×900 window, which on a Deck gamescope would letterbox at 1280×720. The `deck` scenario, run as a Deck (`SteamDeck=1`), checks that the window is the screen's size with nothing letterboxed. |
 | Text legible at 30 cm; no character under 9 px at 1280×800 (12 px recommended) | Pass | The canvas is 1920×1080 design pixels scaled to the window (0.667 at 1280×800) times the interface scale, 120 % on a Deck: 0.8 of the design size. The smallest text in the code is 13 design px, 10.4 px on the Deck (three labels and the menu marks); the key pills are 14 (11.2 px); the body is 17 (13.6 px). Under the 12 px Valve recommends: the 13 and 14 px labels. |
 | A default configuration with a playable frame rate (30 fps at 800p) | Unknown | A Deck starts on the Medium preset (`video::DECK_QUALITY`; only the nearest torch casts shadows). The `presets` self-test times the presets at 1280×800 (`--selftest=presets --size=1280x800`, a release build), but only a Deck gives the numbers. **Routed**: run it on a Deck. |
 | No warnings that the device is unsupported | Pass | The game checks no device and shows no such message. |
@@ -57,7 +57,8 @@ What is there, and what syncs:
 | `playground/*.rhui.json` | each character's own state: the key profile, the action bar | yes |
 | `playground/renethack-names.json` | the names as typed, for the save list | yes |
 | `achievements.json` | the achievements earned, with their dates (Steam keeps its own) | yes |
-| `playground/profile.json` | the settings and the last hero | no (below) |
+| `playground/player.json` | the player's settings: the language, the keys, the game's options, the volumes, the last hero | yes |
+| `playground/device.json` | this machine's: its window, its graphics preset, the interface's scale | never |
 | `playground/bon*` | bones: a dead hero's level, met once by a later game, then deleted | never |
 | `playground/<slot>.<n>` (`alock.0`…) | a running or crashed game's level files; the next start recovers them | never |
 | `playground/record`, `logfile`, `xlogfile`, `livelog` | the scores and the game logs, appended | no |
@@ -71,11 +72,11 @@ Why not the rest:
   Each one is also only valid for the engine version that wrote it.
 - **Scores**: Steam Cloud replaces whole files, so two machines that each
   appended a game would lose one in a conflict. They stay per machine.
-- **`profile.json`** holds the language, the keys and the volumes, which
-  would travel well. It also holds the window, the graphics preset and the
-  interface scale of one machine: a desktop's Ultra and 80 % would follow
-  a player to their Deck. **Routed**: split the device's settings from the
-  player's, then sync the player's.
+- **`device.json`** is one machine's: synced, a desktop's Ultra and 80 %
+  would follow a player to their Deck. The player's own settings are in
+  `player.json`, which syncs. (Older versions kept both in one
+  `profile.json`; the first start of a newer one splits it, once, and
+  keeps a `player.json` that Steam Cloud brought first.)
 
 The rules (Steamworks → Application → Steam Cloud → Auto-Cloud), with no
 root overrides:
@@ -85,14 +86,17 @@ root overrides:
 | WinAppDataRoaming | `Godot/app_userdata/renethack/playground` | `*.NetHack-saved-game` | Windows | no |
 | WinAppDataRoaming | `Godot/app_userdata/renethack/playground` | `*.rhui.json` | Windows | no |
 | WinAppDataRoaming | `Godot/app_userdata/renethack/playground` | `renethack-names.json` | Windows | no |
+| WinAppDataRoaming | `Godot/app_userdata/renethack/playground` | `player.json` | Windows | no |
 | WinAppDataRoaming | `Godot/app_userdata/renethack` | `achievements.json` | Windows | no |
 | MacAppSupport | `Godot/app_userdata/renethack/playground/save` | `*` | macOS | no |
 | MacAppSupport | `Godot/app_userdata/renethack/playground` | `*.rhui.json` | macOS | no |
 | MacAppSupport | `Godot/app_userdata/renethack/playground` | `renethack-names.json` | macOS | no |
+| MacAppSupport | `Godot/app_userdata/renethack/playground` | `player.json` | macOS | no |
 | MacAppSupport | `Godot/app_userdata/renethack` | `achievements.json` | macOS | no |
 | LinuxXdgDataHome | `godot/app_userdata/renethack/playground/save` | `*` | Linux | no |
 | LinuxXdgDataHome | `godot/app_userdata/renethack/playground` | `*.rhui.json` | Linux | no |
 | LinuxXdgDataHome | `godot/app_userdata/renethack/playground` | `renethack-names.json` | Linux | no |
+| LinuxXdgDataHome | `godot/app_userdata/renethack/playground` | `player.json` | Linux | no |
 | LinuxXdgDataHome | `godot/app_userdata/renethack` | `achievements.json` | Linux | no |
 
 Quota: 200 files and 100 MB a user (a save is 50–300 KB compressed, up to
