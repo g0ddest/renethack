@@ -158,6 +158,24 @@ pub(super) fn title() -> Vec<Step> {
             Ok(!hand.is_empty() && !arm.is_empty())
         }),
         Step::Shot("title"),
+        Step::Call("every pipeline variant made", |g| {
+            // the rehearsal makes one of each variant a game draws: a
+            // line of the list it cannot make is a pipeline a game builds
+            // as it first draws it
+            let (made, unmade) = map_view(g)?.variants_made();
+            if made == 0 || unmade > 0 {
+                return Err(format!(
+                    "{made} pipeline variants made, {unmade} could not be"
+                ));
+            }
+            // and each standard material for the shader the census saw
+            let wrong = crate::variants::mismatches();
+            if !wrong.is_empty() {
+                return Err(format!("variants made for another shader: {wrong:?}"));
+            }
+            godot_print!("selftest: title: {made} pipeline variants made");
+            Ok(())
+        }),
         Step::Call("the camera at one end of its sway", |g| {
             let ui = g.ui.as_mut().ok_or("no UI")?;
             ui.map.set_title_clock(f64::from(SWAY_SECS) * 0.25);

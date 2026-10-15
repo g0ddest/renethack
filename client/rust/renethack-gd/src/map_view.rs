@@ -2776,6 +2776,9 @@ pub struct MapView {
     /// compiled ahead), until it is over; and whether the map is shown.
     rehearsal: Option<crate::rehearsal::Rehearsal>,
     rehearsed: bool,
+    /// One of each pipeline variant a game draws, made by the rehearsal;
+    /// their materials kept for the session.
+    variants: crate::variants::Variants,
     /// The shadow atlas has been made (the rehearsal casts a shadow).
     shadow_made: bool,
     /// A frame's time for drawing a new level's cells (`BUILD_BUDGET`, or
@@ -3416,6 +3419,7 @@ impl MapView {
             preload_told: false,
             first_draws_told: false,
             rehearsal: None,
+            variants: Default::default(),
             rehearsed: false,
             shadow_made: false,
             build_budget: BUILD_BUDGET,
@@ -3930,6 +3934,12 @@ impl MapView {
         self.env.set_ssil_enabled(g.ssil != Level::Off);
         self.env.set_volumetric_fog_enabled(g.fog != Level::Off);
         self.torch_shadows = g.shadows.torches();
+        // the pipelines the new settings draw with (another MSAA's, a pass
+        // ambient occlusion adds), for every variant, not only those in
+        // the scene now: built in the background, hidden
+        if self.rehearsed && self.rehearsal.is_none() {
+            self.variants.start(&mut self.root, false);
+        }
     }
 
     /// The torches nearest the hero that cast shadows (self-tests).
@@ -4992,10 +5002,42 @@ impl MapView {
     }
 
     /// Forget every cell (a new game).
+    /// The next few of one of each pipeline variant a game draws, under the
+    /// map (hidden; the canvas items under the veil): their pipelines are
+    /// built from the next frame on (`variants.rs`).
+    fn make_variants(&mut self) {
+        if self.variants.step() || self.variants.made().0 == 0 {
+            return;
+        }
+        let (made, unmade) = self.variants.made();
+        if self.stats_window.is_some() {
+            godot_print!(
+                "map: {made} pipeline variants made {:.1} s after start",
+                godot::classes::Time::singleton().get_ticks_msec() as f64 / 1000.0
+            );
+        }
+        for line in unmade {
+            godot_warn!("renethack: a pipeline variant not made: {line}");
+        }
+    }
+
+    /// The pipeline variants made, and those that could not be (self-tests).
+    pub fn variants_made(&self) -> (usize, usize) {
+        let (made, unmade) = self.variants.made();
+        (made, unmade.len())
+    }
+
     pub fn clear(&mut self) {
         // a game starts: the rehearsal is over, the title scene gone, the
         // gallery's light off
         self.rehearsal = None;
+        // those of the variants still to make are made in the game's first
+        // frames (`tick`), then let go: a game started before the rehearsal
+        // was over (the veil lifts at its cap) meets them made
+        self.variants.release_canvas();
+        if self.variants.done() {
+            self.variants.release();
+        }
         self.title = None;
         if std::mem::take(&mut self.titled) {
             self.env.set_bg_color(self.branch_look.darkness);
@@ -5511,6 +5553,23 @@ impl MapView {
         true
     }
 
+    /// Every model on the map drawn once more with the hover's outline
+    /// (`Some(false)`) or the x-ray (`Some(true)`), or neither (`None`):
+    /// the pipelines a game may need over any model (the `variants`
+    /// self-test's census).
+    pub fn overlay_models(&mut self, xray: Option<bool>) {
+        let overlay = match xray {
+            Some(true) => self.xray.clone(),
+            Some(false) => Some(self.outline.0.clone()),
+            None => None,
+        };
+        for cell in self.cells.values() {
+            for m in &cell.models {
+                set_overlay(&m.node, overlay.as_ref());
+            }
+        }
+    }
+
     /// The clips the hero's model rests and fights with now, the gear's:
     /// (idle, attack) (self-tests).
     pub fn hero_fight_clips(&self) -> (Option<String>, Option<String>) {
@@ -5587,6 +5646,14 @@ impl MapView {
                 godot::classes::Time::singleton().get_ticks_msec() as f64 / 1000.0,
                 self.art.counts().1
             );
+        }
+        if self.rehearsal.is_some() {
+            if !self.variants.done() {
+                self.make_variants();
+            }
+        } else {
+            // made again after the graphics changed
+            self.variants.tick();
         }
         if let Some(mut r) = self.rehearsal.take() {
             // what it draws loads in the background meanwhile; it plays
@@ -5701,6 +5768,7 @@ impl MapView {
     pub fn rehearsal_first_draws_done(&self) -> bool {
         self.rehearsed
             && self.rehearsal.is_none()
+            && self.variants.done()
             && (self.shown || self.title.is_none() || self.title_drawn())
     }
 
@@ -5924,6 +5992,7 @@ impl MapView {
             }
             let fetch = self.prefetch_paths();
             self.rehearsal = Some(crate::rehearsal::Rehearsal::new(catalog, fetch));
+            self.variants.start(&mut self.root, true);
             // the title scene after it is laid from the same catalog
             self.title_catalog = Some(catalog.clone());
             self.set_visible(self.shown);

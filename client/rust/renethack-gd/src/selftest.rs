@@ -90,6 +90,8 @@ mod spells_tests;
 mod states_tests;
 #[path = "selftest_through.rs"]
 mod through_tests;
+#[path = "selftest_variants.rs"]
+mod variants_tests;
 #[path = "selftest_world.rs"]
 mod world_looks;
 #[path = "selftest_worn.rs"]
@@ -4868,6 +4870,8 @@ impl SelfTest {
             "blasts" => effects::blasts(),
             "engulfed" => effects::engulfed(),
             "crowd" => crowd_tests::crowd(),
+            "deep" => crowd_tests::deep(),
+            "variants" => variants_tests::variants(),
             "pickers" => input_ru::pickers(),
             "help" => help_tests::help(),
             "settings" => settings_tests::settings(),

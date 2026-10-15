@@ -11,6 +11,7 @@ mod batch;
 mod bearing;
 mod bindings;
 mod branch_look;
+mod census;
 mod codex;
 mod codex_view;
 mod credits;
@@ -64,6 +65,7 @@ mod theme;
 mod title_scene;
 mod tombstone;
 mod ui_events;
+mod variants;
 mod vfx;
 mod video;
 

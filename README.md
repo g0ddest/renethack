@@ -216,6 +216,7 @@ shows what it must.
     make soak         # random play through the client, seeds 1..8 (long)
     make deck         # screenshots at the Steam Deck's 1280×800 (needs a display)
     make perf         # frame times on a release build (needs a display, a quiet machine)
+    make variants     # the census of the pipeline variants the rehearsal makes (after new art)
 
 `make test-client` runs each scenario of `client/rust/renethack-gd/src/selftest.rs`
 in its own headless Godot process with a fixed seed: every scenario except
@@ -306,7 +307,9 @@ launch. Then it plays these in a window at 1920×1080 with vsync off: `tour`;
 `branches`; `rays`; `effects`; `item-use`; `states`; `crowd` (about thirty
 peaceful creatures of many kinds made round the hero in debug mode, then
 forty turns among them); two soaks into the Gnomish Mines; one to Dlvl 7;
-and a soak of 2000 requests. Every run logs each frame
+a soak of 2000 requests; and `deep`, the deep dungeon in debug mode (the
+hero teleported to Medusa's island, the castle, the levels of Gehennom and
+Vlad's Tower, the creatures of each made round them). Every run logs each frame
 (`RENETHACK_FRAME_LOG=<file>`, `frame_log.rs`): its wall time, the game's
 own work in it by part, the pipelines Godot compiled, the models the map
 built, the level and the self-test's step. It also samples the process's
@@ -314,15 +317,37 @@ resident memory. `build/perf/report.txt` gives the frame times after the
 start-up veil (p50, p95, p99, max), every frame over 33 ms with what it was
 doing, and the memory each run took and how it grew over the long soak.
 
-The target fails on any frame over 33 ms after the veil. Frame times on a
+The target fails on any frame over 33 ms after the veil, and on any
+pipeline Godot compiled after it (the report names what each such frame
+drew for the first time; `--allow-compiles` passes them). Frame times on a
 busy machine mean nothing, so it declines to judge when the load average is
 over 5. `make perf PERF_ARGS="--wait 30"` waits up to half an hour before
 each scene for a quiet machine; `--scenes tour,crowd` runs only those;
 `--report` judges the last run's logs again; `--warm` keeps Godot's shader
 cache from one run to the next; `--quality low` (medium, high, ultra) plays
 a graphics preset instead of the device's (`RENETHACK_QUALITY`), and
-`--size 1280x800` at the Steam Deck's size. Apple's own Metal shader cache
-is the machine's and stays warm.
+`--size 1280x800` at the Steam Deck's size; `--driver vulkan` runs Godot's
+Vulkan renderer (MoltenVK on a Mac). Apple's own Metal shader cache is the
+machine's and stays warm.
+
+Godot compiles a render pipeline for each shader over each vertex layout it
+draws it with, in each pass, and the first frame that draws a new one waits
+for it (in a game, the first sight of a creature or a look the first levels
+never show: 80–200 ms, more with Godot's shader cache empty). So the
+start-up rehearsal behind the veil makes one of each variant the game
+draws (`variants.rs`): a material for each shader, kept for the session
+(Godot frees a standard material's shader, and its pipelines, with the
+last material of its settings), on a hidden triangle of each layout, and
+the canvas items' shaders drawn under the veil. The list,
+`client/godot/art/variants.txt`, is a census of what the game draws:
+`perf.py --census` makes each run write what it drew for the first time
+and when (`RENETHACK_VARIANTS=<file>`, `census.rs`), and
+`tools/variants.py merge` adds it to the list. `make variants` takes the
+census of the scenes that draw the most, among them `variants`, every
+creature and thing a batch at a time (each sex, sensed, as a corpse and a
+statue, with the hover's outline and the x-ray over them) and the hero in
+every look, slot by slot. Run it after new art; `make perf` names what is
+still missing.
 
 ## Production builds
 

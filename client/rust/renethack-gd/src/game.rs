@@ -29,6 +29,7 @@ use nh_world::{
     menu_kind, nethack_key, repeatable, stairs_order,
 };
 
+use crate::census::Census;
 use crate::dialogs::Dialogs;
 use crate::frame_log::{self, FrameLog};
 use crate::gamepad::{OskOp, Pad, PadButton, PadCtx, PadKind, PadOut, RADIAL, RadialEntry};
@@ -352,6 +353,10 @@ pub struct RenethackGame {
     selftest: Option<SelfTest>,
     /// RENETHACK_FRAME_LOG: a line a frame (`frame_log.rs`).
     frame_log: Option<FrameLog>,
+    /// RENETHACK_VARIANTS: what is drawn for the first time (`census.rs`),
+    /// and the frames walked so far.
+    census: Option<Census>,
+    census_frames: u64,
     /// The next engine's seed; else RENETHACK_SEED (else the self-test's).
     pub(crate) seed: Option<u64>,
     /// Self-tests only: the next game in debug (wizard) mode, its
@@ -496,6 +501,18 @@ const VEIL_CUE_SECS: f64 = 1.0;
 /// Seconds the cue takes to fade out, before the veil lifts.
 const CUE_OUT: f32 = 0.2;
 
+/// The veil's cap: RENETHACK_VEIL_CAP's seconds instead (a census of what
+/// the rehearsal draws slows it past the cap).
+fn veil_cap() -> f64 {
+    static CAP: std::sync::OnceLock<f64> = std::sync::OnceLock::new();
+    *CAP.get_or_init(|| {
+        std::env::var("RENETHACK_VEIL_CAP")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(VEIL_CAP_SECS)
+    })
+}
+
 /// The way preview is drawn again only when one of these changes.
 #[derive(Debug, Clone, PartialEq)]
 struct PreviewKey {
@@ -552,6 +569,8 @@ impl INode for RenethackGame {
             quitting: false,
             selftest: None,
             frame_log: FrameLog::from_env(),
+            census: Census::from_env(),
+            census_frames: 0,
             mouse_pos: None,
             hover: Hover::default(),
             seed: None,
@@ -772,6 +791,16 @@ impl INode for RenethackGame {
                 log.begin();
             }
         }
+        if self.census.is_some() {
+            // what the frame before added: numbered as the frame log's line
+            let veil = self.veil_state();
+            let root = self.base().get_tree().get_root();
+            let frame = self.census_frames;
+            self.census_frames += 1;
+            if let (Some(c), Some(root)) = (self.census.as_mut(), root) {
+                c.scan(root.upcast(), frame, veil);
+            }
+        }
         let mut parts = frame_log::Parts::default();
         let ms = |t: Instant| t.elapsed().as_secs_f64() * 1000.0;
         // input first: Godot delivered this frame's keys before process(), so
@@ -870,11 +899,7 @@ impl INode for RenethackGame {
                 .unwrap_or_default();
             let context = frame_log::Context {
                 state: format!("{:?}", self.state),
-                veil: match (&self.veil, self.veil_lift) {
-                    (None, _) => 0,
-                    (Some(_), Some(_)) => 1,
-                    (Some(_), None) => 2,
-                },
+                veil: self.veil_state(),
                 level: self.world.map.generation(),
                 depth: self.world.depth().map_or(0, i64::from),
                 branch: format!("{:?}", self.world.branch()),
@@ -1249,6 +1274,16 @@ impl RenethackGame {
         }
     }
 
+    /// The start-up veil, as the frame log writes it: 2 down, 1 lifting,
+    /// 0 gone.
+    fn veil_state(&self) -> u8 {
+        match (&self.veil, self.veil_lift) {
+            (None, _) => 0,
+            (Some(_), Some(_)) => 1,
+            (Some(_), None) => 2,
+        }
+    }
+
     /// The start-up veil lifts once the map's rehearsal has drawn
     /// everything for the first time behind it and the dialogs and glyphs
     /// are warm, after its first frames and at the latest at its cap; at
@@ -1275,7 +1310,7 @@ impl RenethackGame {
                     .as_ref()
                     .is_some_and(|ui| ui.map.rehearsal_first_draws_done())
                     && matches!(self.title_warm, TitleWarm::Panel | TitleWarm::Done);
-                let capped = secs >= VEIL_CAP_SECS;
+                let capped = secs >= veil_cap();
                 if self.frames_shown() < VEIL_FRAMES || (title && !drawn && !capped) {
                     return;
                 }

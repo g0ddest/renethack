@@ -927,3 +927,74 @@ pub fn lay_out(world: &mut World, cat: &Catalog, page: usize) -> Result<(i32, i3
     world.view_center = Some(centre);
     Ok(centre)
 }
+
+/// Glyphs side by side on a lit floor, sixteen to a row two cells apart,
+/// the hero below them (the `variants` self-test's batches). Returns the
+/// cell to look at.
+pub fn lay_out_batch(
+    world: &mut World,
+    cat: &Catalog,
+    glyphs: &[Glyph],
+) -> Result<(i32, i32), String> {
+    const PER_ROW: i32 = 16;
+    let map = &mut world.map;
+    map.clear();
+    let floor = cmap(cat, "S_room")?;
+    let rows = (glyphs.len() as i32 + PER_ROW - 1) / PER_ROW;
+    let (x0, y0) = (8, 2);
+    for y in y0 - 1..=y0 + 2 * rows + 1 {
+        for x in x0 - 1..=x0 + 2 * PER_ROW {
+            map.print(x, y, &floor, None);
+        }
+    }
+    for (i, g) in glyphs.iter().enumerate() {
+        let i = i as i32;
+        let (x, y) = (x0 + 2 * (i % PER_ROW), y0 + 2 * (i / PER_ROW));
+        let bk = (g.kind != GlyphKind::Cmap).then(|| floor.clone());
+        map.print(x, y, g, bk.as_ref());
+    }
+    let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    map.print(x0 + PER_ROW, y0 + 2 * rows, &hero, Some(&floor));
+    let centre = (x0 + PER_ROW, y0 + rows);
+    world.view_center = Some(centre);
+    Ok(centre)
+}
+
+/// What the game can draw of creatures and things, as glyphs: every
+/// creature as either sex, sensed (seen through), as a corpse and as a
+/// statue; every object's look, and one in a pile.
+pub fn every_glyph(cat: &Catalog) -> Vec<Glyph> {
+    let mon = |m: &nh_protocol::MonsterInfo, flags: u32, kind: GlyphKind| Glyph {
+        glyph: None,
+        ch: m.class.chars().next().map_or(' ' as i32, |c| c as i32),
+        color: m.color,
+        flags,
+        tile: m.tile_male,
+        kind,
+        mon: Some(m.idx),
+        cmap: None,
+        level: None,
+    };
+    let mut out = Vec::new();
+    for m in &cat.monsters {
+        out.push(mon(m, mg::MALE, GlyphKind::Mon));
+        out.push(mon(m, mg::FEMALE, GlyphKind::Mon));
+        out.push(mon(m, mg::DETECT, GlyphKind::Mon));
+        out.push(mon(m, 0, GlyphKind::Body));
+        out.push(mon(m, 0, GlyphKind::Statue));
+    }
+    for (i, t) in cat.object_tiles.iter().enumerate() {
+        out.push(Glyph {
+            glyph: None,
+            ch: t.class.chars().next().map_or(' ' as i32, |c| c as i32),
+            color: t.color.unwrap_or(7),
+            flags: if i == 0 { mg::OBJPILE } else { 0 },
+            tile: t.tile,
+            kind: GlyphKind::Obj,
+            mon: None,
+            cmap: None,
+            level: None,
+        });
+    }
+    out
+}

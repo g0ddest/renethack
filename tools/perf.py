@@ -61,8 +61,14 @@ SCENES = {
     "soak-deep": ("soak", ["--soak=1200", "--seed=5"], 900),
     # the long soak, for the memory
     "soak-long": ("soak", ["--soak=2000", "--seed=1"], 1500),
+    # the deep dungeon in debug mode: Medusa, the castle, Gehennom, Vlad's
+    # Tower, and the creatures of each
+    "deep": ("deep", [], 1200),
+    # every creature and thing a batch at a time: with --census, what the
+    # game can draw (not a timing)
+    "variants": ("variants", [], 1800),
 }
-DEFAULT_SCENES = [s for s in SCENES if s != "smoke"]
+DEFAULT_SCENES = [s for s in SCENES if s not in ("smoke", "variants")]
 
 
 def say(*a):
@@ -208,7 +214,7 @@ class Sampler(threading.Thread):
             self.stop.wait(0.5)
 
 
-def run_scene(name, stage_dir, godot, out, warm, size, stats=False, quality=None):
+def run_scene(name, stage_dir, godot, out, warm, size, stats=False, quality=None, census=False, driver=None, veil_cap=None):
     test, extra, timeout = SCENES[name]
     run_dir = out / "runs" / name
     if run_dir.exists():
@@ -225,11 +231,21 @@ def run_scene(name, stage_dir, godot, out, warm, size, stats=False, quality=None
         env["RENETHACK_FRAME_STATS"] = "1"
     else:
         env.pop("RENETHACK_FRAME_STATS", None)
+    env.pop("RENETHACK_VEIL_CAP", None)
+    if veil_cap:
+        env["RENETHACK_VEIL_CAP"] = str(veil_cap)
+    if census:
+        # the census slows the frames: the veil waits for the rehearsal
+        env["RENETHACK_VARIANTS"] = str(run_dir / "variants.tsv")
+        env["RENETHACK_VEIL_CAP"] = "120"
+    else:
+        env.pop("RENETHACK_VARIANTS", None)
     cmd = [
         godot,
         "--path",
         str(stage_dir),
         "--disable-vsync",
+        *(["--rendering-driver", driver] if driver else []),
         "--",
         f"--selftest={test}",
         f"--size={size}",
@@ -323,10 +339,30 @@ def cause(row):
     return "; ".join(why) or "nothing logged"
 
 
-def report(out, scenes, budget):
+# the pipelines a frame waits for: all but the specialised ones, which
+# Godot builds in the background while the ubershader draws
+BLOCKING = ("canvas", "mesh", "surface", "draw")
+
+
+def census(run_dir):
+    """What a run drew for the first time, by frame (with --census)."""
+    path = run_dir / "variants.tsv"
+    firsts = {}
+    if path.exists():
+        with open(path) as f:
+            next(f, None)
+            for line in f:
+                parts = line.rstrip("\n").split("\t")
+                if len(parts) >= 3:
+                    firsts.setdefault(int(parts[0]), []).append(parts[2])
+    return firsts
+
+
+def report(out, scenes, budget, allow_compiles=False):
     lines = []
     all_after = []
     over = []
+    compiled = []
     verdict = True
     summary = {}
     for name in scenes:
@@ -346,6 +382,9 @@ def report(out, scenes, budget):
             verdict = False
         long = [r for r in after if float(r["wall"]) > budget]
         over += [(name, r) for r in long]
+        kinds = {k: sum(int(r.get(k) or 0) for r in after) for k in BLOCKING + ("specialization",)}
+        late = [r for r in after if any(int(r.get(k) or 0) for k in BLOCKING)]
+        compiled += [(name, r) for r in late]
         stats = {
             "frames": len(walls),
             "p50": percentile(walls, 50),
@@ -355,6 +394,7 @@ def report(out, scenes, budget):
             "over": len(long),
             "veiled_frames": len(rows) - len(after),
             "status": status,
+            "pipelines_after_veil": kinds,
         }
         mem = memory(run_dir)
         if mem:
@@ -375,6 +415,33 @@ def report(out, scenes, budget):
             f"  p95 {percentile(all_after, 95):5.1f}  p99 {percentile(all_after, 99):5.1f}"
             f"  max {max(all_after):6.1f} ms  over {budget:g} ms: {len(over)}"
         )
+    lines.append("")
+    lines.append("pipelines compiled after the veil (a frame waits for these; the specialised build in the background):")
+    for name in scenes:
+        kinds = summary.get(name, {}).get("pipelines_after_veil")
+        if kinds:
+            lines.append(
+                f"  {name:14} " + ", ".join(f"{k} {kinds[k]}" for k in BLOCKING)
+                + f"   (specialised {kinds['specialization']})"
+            )
+    if compiled:
+        lines.append("")
+        lines.append("frames that compiled pipelines after the veil, and what they drew first (with --census):")
+        firsts = {}
+        for name, r in compiled:
+            if name not in firsts:
+                firsts[name] = census(out / "runs" / name)
+            frame = int(r["frame"])
+            counts = ", ".join(f"{k} {r[k]}" for k in BLOCKING if int(r.get(k) or 0))
+            lines.append(
+                f"  {name} #{frame} at {float(r['t']):.1f} s: {float(r['wall']):.1f} ms, {counts}"
+                f" (Dlvl {r['depth']} {r['branch']}, {r['state']}, step \"{r['step']}\")"
+            )
+            for f in (frame - 1, frame):
+                for v in firsts[name].get(f, []):
+                    lines.append(f"      {v}")
+        if not allow_compiles:
+            verdict = False
     if over:
         lines.append("")
         lines.append(f"frames over {budget:g} ms after the veil:")
@@ -474,6 +541,10 @@ def main():
     ap.add_argument("--report", action="store_true", help="only judge the logs already in --out")
     ap.add_argument("--size", default="1920x1080")
     ap.add_argument("--stats", action="store_true", help="the game's own frame statistics in the logs too")
+    ap.add_argument("--census", action="store_true", help="write what each frame drew for the first time (slows the frames: not judged)")
+    ap.add_argument("--allow-compiles", action="store_true", help="pass with pipelines compiled after the veil")
+    ap.add_argument("--driver", help="Godot's rendering driver (metal, vulkan...), else its default")
+    ap.add_argument("--veil-cap", type=float, help="seconds the start-up veil waits for the rehearsal at most (the game's: 6)")
     ap.add_argument("--quality", choices=["low", "medium", "high", "ultra"], help="the graphics preset (else the device's: High)")
     ap.add_argument("--keep-stage", action="store_true", help="run the project already staged in --out (its library as it is)")
     ap.add_argument("--lib", help="stage this extension library instead of building one")
@@ -503,9 +574,16 @@ def main():
             load, others = wait_quiet(args.max_load, args.wait * 60)
             loads.append(load)
             say(f"{name}: load {load:.1f}" + (f", {others} other Godot running" if others else ""))
-            run_scene(name, stage_dir, godot, out, args.warm, args.size, args.stats, args.quality)
+            run_scene(
+                name, stage_dir, godot, out, args.warm, args.size, args.stats, args.quality,
+                args.census, args.driver, args.veil_cap,
+            )
         (out / "load.txt").write_text(" ".join(f"{l:.1f}" for l in loads) + "\n")
-    ok = report(out, scenes, args.budget)
+    ok = report(out, scenes, args.budget, args.allow_compiles)
+    if args.census:
+        # the census walks the tree every frame: its frames time nothing
+        print("\nperf: a census run (variants.tsv in each run), not judged: `tools/variants.py merge` lists what it drew")
+        return
     means = [run_loads(out / "runs" / s) for s in scenes]
     means = [m[0] for m in means if m]
     worst = max(means, default=0.0)

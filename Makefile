@@ -65,7 +65,7 @@ SOAK_WINDOW ?=
 # more for tools/perf.py, e.g. PERF_ARGS="--scenes tour,crowd --wait 30"
 PERF_ARGS ?=
 
-.PHONY: all engine client steam import run test test-client soak perf lint need-timeout art audio app-icon icons achievement-icons achievement-vdf steam-art deck \
+.PHONY: all engine client steam import run test test-client soak perf variants lint need-timeout art audio app-icon icons achievement-icons achievement-vdf steam-art deck \
 	i18n-catalog i18n-check help help-check dist dist-macos dist-linux dist-windows source-check steampipe
 all: engine
 
@@ -189,10 +189,19 @@ deck: need-timeout all client
 # The game timed end to end on a release build (the README's "Frame times"):
 # the extension built in release, a copy of the project staged to load it,
 # scenes run in a window at 1920x1080 with vsync off, every frame logged.
-# Fails on a frame over 33 ms after the start-up veil; declines to judge
-# when the load is over 5. The logs and the report are in build/perf.
+# Fails on a frame over 33 ms after the start-up veil, or on a pipeline
+# compiled after it; declines to judge when the load is over 5. The logs
+# and the report are in build/perf.
 perf: all
 	python3 tools/perf.py --godot "$(GODOT)" $(PERF_ARGS)
+
+# The pipeline variants the rehearsal makes under the veil
+# (client/godot/art/variants.txt): a census of what $(VARIANT_SCENES) draw,
+# added to the list. Run it after new art; `make perf` names what is missing.
+VARIANT_SCENES ?= variants,deep,soak-mines,soak-deep,crowd,states,effects,rays,item-use,branches,tour
+variants: all
+	python3 tools/perf.py --godot "$(GODOT)" --census --scenes $(VARIANT_SCENES) --out build/variants
+	python3 tools/variants.py merge build/variants
 
 # random play through the UI with each of $(SOAK_SEEDS) and the default budget
 soak: need-timeout all client

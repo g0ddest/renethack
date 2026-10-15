@@ -1,16 +1,21 @@
-//! `crowd`: a crowded room, for timing frames (`tools/perf.py`). In debug
-//! mode about thirty peaceful creatures of many kinds are made round the
-//! hero: animals, humanoids in their kit, procedural bodies, a vortex, a
-//! cloud and an elemental. The hero then waits forty turns among them as
-//! they move.
+//! Scenes for timing frames (`tools/perf.py`), in debug mode. `crowd`: a
+//! crowded room. About thirty peaceful creatures of many kinds are made
+//! round the hero: animals, humanoids in their kit, procedural bodies, a
+//! vortex, a cloud and an elemental. The hero then waits forty turns among
+//! them as they move. `deep`: the deep dungeon. The hero is teleported to
+//! Medusa's island, the castle, the levels of Gehennom and Vlad's Tower, and
+//! at each the creatures of the classes found there are made and the hero
+//! waits among them a while: what the first levels never show (demons,
+//! liches, dragons, the Valley's dead, a ghost) is drawn there for the
+//! first time.
 
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
 
 use nh_world::{Key, KeyInput, Prompt};
 
 use super::{
-    CharacterChoice, DialogEvent, Step, camera_settled, ctrl_key, fail_on_error_screen, quit,
-    smoke_choice, start_as,
+    CharacterChoice, DialogEvent, Step, camera_settled, ctrl_key, entry_key, fail_on_error_screen,
+    is_menu, map_view, quit, smoke_choice, start_as,
 };
 use crate::game::RenethackGame;
 
@@ -98,6 +103,169 @@ pub(super) fn crowd() -> Vec<Step> {
         Step::Shot("crowd"),
         Step::KeysUntil("forty turns among them", wait),
     ]);
+    steps.extend(quit());
+    steps
+}
+
+/// The levels `deep` visits (the debug level teleport's names) and the
+/// creatures made at each (`^G`'s names: a class's letter makes one of the
+/// class at random).
+const DEEP: [(&str, &[&str]); 9] = [
+    (
+        "medusa",
+        &[
+            "2 peaceful ;",
+            "2 peaceful S",
+            "1 peaceful N",
+            "1 peaceful c",
+        ],
+    ),
+    (
+        "castle",
+        &[
+            "2 peaceful D",
+            "2 peaceful T",
+            "2 peaceful '",
+            "2 peaceful @",
+        ],
+    ),
+    (
+        "valley",
+        &[
+            "2 peaceful Z",
+            "2 peaceful M",
+            "2 peaceful W",
+            "1 peaceful L",
+            "1 peaceful ghost",
+        ],
+    ),
+    (
+        "juiblex",
+        &[
+            "2 peaceful P",
+            "2 peaceful b",
+            "2 peaceful j",
+            "2 peaceful F",
+            "1 peaceful m",
+        ],
+    ),
+    (
+        "orcus",
+        &[
+            "2 peaceful &",
+            "2 peaceful i",
+            "2 peaceful X",
+            "2 peaceful z",
+        ],
+    ),
+    (
+        "asmodeus",
+        &[
+            "2 peaceful H",
+            "2 peaceful U",
+            "2 peaceful O",
+            "2 peaceful K",
+        ],
+    ),
+    (
+        "baalz",
+        &[
+            "2 peaceful R",
+            "2 peaceful s",
+            "2 peaceful x",
+            "2 peaceful a",
+            "2 peaceful J",
+        ],
+    ),
+    (
+        "wizard1",
+        &[
+            "2 peaceful L",
+            "2 peaceful e",
+            "2 peaceful v",
+            "2 peaceful E",
+            "2 peaceful y",
+        ],
+    ),
+    (
+        "tower1",
+        &[
+            "2 peaceful V",
+            "2 peaceful B",
+            "2 peaceful Y",
+            "2 peaceful q",
+            "2 peaceful u",
+        ],
+    ),
+];
+
+/// Turns the hero waits on each deep level.
+const DEEP_TURNS: u32 = 25;
+
+/// The deep level now (one past it: `next_level` counts first).
+static LEVEL: AtomicUsize = AtomicUsize::new(0);
+static DEEP_WAITED: AtomicU32 = AtomicU32::new(0);
+
+/// The debug level teleport's menu entry of the level now.
+fn level_entry(g: &RenethackGame) -> Result<KeyInput, String> {
+    let i = LEVEL.load(Ordering::Relaxed);
+    let (name, _) = DEEP.get(i.wrapping_sub(1)).ok_or("no level now")?;
+    entry_key(g, name)
+}
+
+/// Search a turn at a time, `DEEP_TURNS` times.
+fn wait_deep(g: &RenethackGame) -> Result<Option<KeyInput>, String> {
+    Ok(match g.pending.as_ref().map(|(_, p)| p) {
+        Some(Prompt::Command) => {
+            if DEEP_WAITED.fetch_add(1, Ordering::Relaxed) >= DEEP_TURNS {
+                return Ok(None);
+            }
+            Some(plain('s'))
+        }
+        Some(Prompt::Choice { .. }) => Some(plain('n')),
+        _ => Some(KeyInput::plain(Key::Escape)),
+    })
+}
+
+pub(super) fn deep() -> Vec<Step> {
+    let mut steps = vec![Step::Call("debug mode for this game", |g| {
+        g.debug_mode = true;
+        Ok(())
+    })];
+    steps.extend(start_as(CharacterChoice {
+        role: "priest".into(),
+        ..smoke_choice()
+    }));
+    steps.push(Step::Wait("the hero on the map", |g| {
+        fail_on_error_screen(g)?;
+        Ok(g.world.map.hero().is_some())
+    }));
+    for (_, creatures) in DEEP {
+        steps.extend([
+            Step::Call("the next level", |_| {
+                LEVEL.fetch_add(1, Ordering::Relaxed);
+                DEEP_WAITED.store(0, Ordering::Relaxed);
+                Ok(())
+            }),
+            Step::Key(ctrl_key('v')),
+            Step::Request(
+                "to what level",
+                |p| matches!(p, Prompt::Text { query, .. } if query.contains("level")),
+            ),
+            Step::Dialog(DialogEvent::TextSubmitted("?".into())),
+            Step::Request("the levels to teleport to", is_menu),
+            Step::KeyFrom("the level", level_entry),
+            Step::AnswerUntil('n', "a command on the level", at_command),
+            Step::Wait("the level drawn", |g| {
+                let drawn = map_view(g)?.drawn_generation();
+                Ok(drawn == Some(g.world.map.generation()) && camera_settled(g)?)
+            }),
+        ]);
+        for what in creatures.iter() {
+            steps.extend(genesis(what));
+        }
+        steps.push(Step::KeysUntil("turns among them", wait_deep));
+    }
     steps.extend(quit());
     steps
 }
