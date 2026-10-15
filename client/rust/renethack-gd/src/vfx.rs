@@ -864,6 +864,9 @@ const RUN_SECS: f32 = BEAM_SECS * 0.4;
 const SHED_AFTER: f32 = 0.15;
 /// A ray this long (metres) or longer sheds a trail's whole amount.
 const TRAIL_FULL: f32 = 8.0;
+/// An explosion's cell sheds this share of what its kind's ray would along
+/// a whole trail: a cloud of it.
+const BLAST_SHARE: f32 = 0.5;
 /// Pieces of a ray drawn by the map this lately (seconds) were the ray of
 /// the hero's own zap, shown before the hero's use is (`ray_lately`).
 const RAY_LATELY: f32 = 1.5;
@@ -1327,25 +1330,48 @@ impl Vfx {
             Blast::Frosty => {
                 let ice = rgb(0.62, 0.86, 1.0);
                 self.emit(Recipe::Shards, ice, mid, None);
-                self.emit_in_cell(Recipe::Rime, ice, mid);
-                self.emit_in_cell(Recipe::Haze, rgb(0.75, 0.86, 0.95), mid);
+                self.emit_in_cell(Recipe::Rime, ice, mid, BLAST_SHARE);
+                self.emit_in_cell(Recipe::Haze, rgb(0.75, 0.86, 0.95), mid, BLAST_SHARE);
                 if heart {
                     self.flash(mid, ice, 3.0, 0.5, 4.0);
                 }
             }
-            Blast::Noxious => self.emit_in_cell(Recipe::Gas, rgb(0.55, 0.78, 0.2), mid),
-            Blast::Dark => self.emit_in_cell(Recipe::Smoke, color, mid),
+            // a cloud of its gas over the cell, lit green from within
+            Blast::Noxious => {
+                let gas = rgb(0.55, 0.78, 0.2);
+                self.emit_in_cell(Recipe::Gas, gas, mid, BLAST_SHARE);
+                if heart {
+                    self.flash(mid, gas, 2.5, 0.9, 4.0);
+                }
+            }
+            // black smoke, the light round it put out a moment
+            Blast::Dark => {
+                self.emit_in_cell(Recipe::Smoke, color, mid, BLAST_SHARE);
+                if heart {
+                    self.shade(mid, 3.0, 1.2, 4.5);
+                }
+            }
+            // a splash flung up and a mist; mud's clods, its brown haze and
+            // the mud it leaves
             Blast::Wet | Blast::Muddy => {
                 let (drops, mist) = if kind == Blast::Wet {
                     (rgb(0.35, 0.55, 0.85), rgb(0.7, 0.8, 0.9))
                 } else {
                     (rgb(0.3, 0.22, 0.14), rgb(0.36, 0.28, 0.2))
                 };
-                self.emit(Recipe::Droplets, drops, mid, None);
-                self.emit_in_cell(Recipe::Gas, mist, mid);
-                if kind == Blast::Muddy {
+                let up = Some(Vector3::UP);
+                if kind == Blast::Wet {
+                    self.emit(Recipe::Spray, drops, mid, up);
+                    self.emit_in_cell(Recipe::Gas, mist, mid, BLAST_SHARE);
+                    if heart {
+                        self.flash(mid, drops, 1.6, 0.6, 3.5);
+                    }
+                } else {
+                    self.emit(Recipe::Grit, drops, mid, up);
+                    self.emit_in_cell(Recipe::Gas, mist, mid, BLAST_SHARE);
                     self.splat(at, drops, 1.0);
                 }
+                self.emit(Recipe::Droplets, drops, mid, None);
             }
             Blast::Magical => {
                 self.emit(Recipe::Blast, color, mid, None);
@@ -1358,8 +1384,8 @@ impl Vfx {
     }
 
     /// What a ray of its kind sheds, shed over a cell about `at` instead
-    /// (an explosion's cell): the box of a cell, its share of the amount.
-    fn emit_in_cell(&mut self, recipe: Recipe, color: Color, at: Vector3) {
+    /// (an explosion's cell): the box of a cell, `share` of the amount.
+    fn emit_in_cell(&mut self, recipe: Recipe, color: Color, at: Vector3, share: f32) {
         let i = self.take_emitter(recipe);
         let Some(e) = self
             .emitters
@@ -1373,7 +1399,7 @@ impl Vfx {
         e.process
             .set_emission_box_extents(Vector3::new(0.45, 0.35, 0.45));
         e.node.set_transform(Transform3D::new(Basis::IDENTITY, at));
-        e.node.set_amount_ratio(2.0 / TRAIL_FULL);
+        e.node.set_amount_ratio(share);
         e.node.set_visibility_aabb(Aabb::new(
             Vector3::new(-2.0, -2.0, -2.0),
             Vector3::new(4.0, 5.0, 4.0),
@@ -1782,6 +1808,24 @@ impl Vfx {
 
     /// A light at `at` dying out over `secs`, reaching `range` metres.
     fn flash(&mut self, at: Vector3, color: Color, energy: f32, secs: f32, range: f32) {
+        self.light_up(at, color, energy, secs, range, false);
+    }
+
+    /// The light round `at` put out a moment (a darkness's): a light that
+    /// takes away, dying out over `secs`.
+    fn shade(&mut self, at: Vector3, energy: f32, secs: f32, range: f32) {
+        self.light_up(at, Color::WHITE, energy, secs, range, true);
+    }
+
+    fn light_up(
+        &mut self,
+        at: Vector3,
+        color: Color,
+        energy: f32,
+        secs: f32,
+        range: f32,
+        negative: bool,
+    ) {
         let i = match self.flashes.iter().position(|f| f.left <= 0.0) {
             Some(i) => i,
             None => {
@@ -1801,6 +1845,7 @@ impl Vfx {
             }
         };
         let f = &mut self.flashes[i];
+        f.light.set_negative(negative);
         f.light.set_param(Param::RANGE, range);
         f.light.set_color(color);
         f.light.set_position(at);
