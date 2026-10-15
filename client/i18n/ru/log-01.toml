@@ -835,3 +835,79 @@ ru = "Искать сейчас — не лучшая идея."
 [4642a994c786]
 en = "Waiting doesn't feel like a good idea right now."
 ru = "Ждать сейчас — не лучшая идея."
+
+# What the looking-around soak of 2026-10-15 (seeds 139-168, current main)
+# still showed in English: explode.c's blasts, the Oracle's sounds, a
+# kick beside a boulder, a seat, a dipped potion's coating
+
+[aebdbfef1bc1]
+en = "%s is caught in the %s!"
+ru = "{1} {1:num|попадает|попадают} под {2:acc}!"
+
+[1177accc827b]
+en = "%s is caught in the %s explosion!"
+ru = "{1} {1:num|попадает|попадают} под взрыв {2:gen}!"
+
+[5bb1a361311d]
+en = "%s is caught in the explosion!"
+ru = "{1} {1:num|попадает|попадают} под взрыв!"
+
+[68eecd111bf4]
+en = "%s is caught in the magical blast!"
+ru = "{1} {1:num|попадает|попадают} под магический взрыв!"
+
+[2a32014532f0]
+en = "%s is caught in the fireball!"
+ru = "{1} {1:num|попадает|попадают} под огненный шар!"
+
+[2806607d8040]
+en = "%s is caught in the ball of cold!"
+ru = "{1} {1:num|попадает|попадают} под ледяной шар!"
+
+[2df5dd6b97ae]
+en = "%s is caught in the ball of lightning!"
+ru = "{1} {1:num|попадает|попадают} под шаровую молнию!"
+
+[c9baa9bc8d83]
+en = "%s is caught in the death field!"
+ru = "{1} {1:num|попадает|попадают} в поле смерти!"
+
+[dd34a78fefd3]
+en = "%s is caught in the disintegration field!"
+ru = "{1} {1:num|попадает|попадают} в поле распада!"
+
+[65933205188a]
+en = "%s is caught in the poison gas cloud!"
+ru = "{1} {1:num|попадает|попадают} в облако ядовитого газа!"
+
+[c5dba4e879c1]
+en = "%s is caught in the splash of acid!"
+ru = "{1} {1:num|попадает|попадают} под брызги кислоты!"
+
+[2a9967ea00cf]
+en = "%s is caught in the burning oil!"
+ru = "{1} {1:num|попадает|попадают} под горящее масло!"
+
+[750e0bf49f03]
+en = "%s is caught in the tower of flame!"
+ru = "{1} {1:num|попадает|попадают} в огненный столп!"
+
+[a33b6c7ea36e]
+en = "You hear a strange wind."
+ru = "Вы слышите странный ветер."
+
+[796193dbf0a0]
+en = "You hear snoring snakes."
+ru = "Вы слышите храп змей."
+
+[a7955bff4414]
+en = "There's not enough room to kick in here."
+ru = "Здесь слишком тесно, чтобы пинаться."
+
+[979fd696a1ad]
+en = "It's not very comfortable..."
+ru = "Не очень-то удобно..."
+
+[1bad646aacdc]
+en = "%s forms a coating on %s."
+ru = "{1} {1:num|покрывает|покрывают} {2:acc} тонким слоем."
