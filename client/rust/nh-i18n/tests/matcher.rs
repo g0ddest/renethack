@@ -703,6 +703,9 @@ fn a_line_of_the_encyclopedia_stays_english() {
                  while the female is called a bitch.  Because of its known";
     let out = translator().window(entry);
     assert_eq!(out.text, entry);
+    // a riddle "%s or %s or %s" reads with its "or"s alone: «near или far»
+    let line = "        Up, down, near or far, here, there or yonder?";
+    assert_eq!(translator().window_line(line).text, line);
 }
 
 #[test]

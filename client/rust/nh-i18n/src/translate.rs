@@ -319,9 +319,11 @@ impl Translator {
 
     /// One line of a window: an empty or blank line is translated as it
     /// is. A line that only a piece of the catalog reads, or a template of
-    /// almost no words, and not all of it, is no line of the game's: a line
-    /// of the encyclopedia ("The male is called a dog,", "[ Hippocrates'
-    /// Oath, translated by Francis Adams ]") stays English whole.
+    /// almost no words, and not all of it, is no line of the game's; nor is
+    /// one whose reading leaves half its words English: a line of the
+    /// encyclopedia ("The male is called a dog,", "[ Hippocrates' Oath,
+    /// translated by Francis Adams ]", "Up, down, near or far, here, there
+    /// or yonder?" by "%s or %s or %s") stays English whole.
     pub fn window_line(&self, line: &str) -> Output {
         if line.trim().is_empty() {
             return Output::english(line, Status::Translated, None);
@@ -334,7 +336,8 @@ impl Translator {
             .is_some_and(|t| {
                 t.uses.iter().all(|u| *u == Use::Piece) || t.letters() < STRONG_LETTERS
             });
-        if out.status == Status::Partial && piece {
+        let mostly_english = 2 * english_words(&out.text) >= english_words(line);
+        if out.status == Status::Partial && (piece || mostly_english) {
             return Output::english(line, Status::Unknown, None);
         }
         out
