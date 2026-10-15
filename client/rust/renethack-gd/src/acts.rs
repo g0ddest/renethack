@@ -9,6 +9,10 @@
 //! tip (the map draws the ray); one drinking a potion drinks, motes of
 //! the potion's colour rising; one reading a scroll reads, runes rising
 //! from the page; one wielding a weapon takes it in hand, a glint on it.
+//! A monster's gaze flares in its eyes, turned on the hero; one spitting
+//! venom lunges at them, the venom at its mouth (the map draws it
+//! flying); one breathing opens its mouth on the hero (its attack clip),
+//! its breath coming out of it as the ray goes.
 //! Nothing waits for it: the next turn plays alongside.
 
 use godot::classes::Skeleton3D;
@@ -41,6 +45,8 @@ const FLARE_AT: f32 = 0.35;
 const MOTES_AT: f32 = 0.8;
 const RUNES_AT: f32 = 0.5;
 const GLINT_AT: f32 = 0.4;
+/// Seconds into a lunge or a breath what leaves the mouth comes.
+const MOUTH_AT: f32 = 0.15;
 /// Seconds into a cast its glow comes, and its spell strikes.
 const GLOW_AT: f32 = 0.25;
 const STRIKES_AT: f32 = 0.55;
@@ -75,12 +81,27 @@ pub enum ActKind {
     Read,
     /// A weapon taken in hand.
     Wield,
+    /// A gaze turned on the hero.
+    Gaze,
+    /// Venom spat at the hero.
+    Spit,
+    /// A breath at the hero.
+    Breath,
 }
 
 /// What a message says a monster did: the monster by the name the line
 /// uses, what, and the thing it did it with as the line names it.
 pub fn act_of(text: &str) -> Option<(&str, ActKind, &str)> {
+    if let Some(gaze) = gaze_of(text) {
+        return Some(gaze);
+    }
     let rest = text.strip_prefix("The ");
+    if let Some((name, what)) = rest.and_then(|r| r.split_once(" breathes ")) {
+        return Some((name, ActKind::Breath, what.trim_end_matches('!')));
+    }
+    if let Some((name, _)) = rest.and_then(|r| r.split_once(" spits venom")) {
+        return Some((name, ActKind::Spit, "venom"));
+    }
     for (verb, kind) in [
         (" zaps itself with ", ActKind::Zap { at_self: true }),
         (" drinks ", ActKind::Drink),
@@ -103,6 +124,72 @@ pub fn act_of(text: &str) -> Option<(&str, ActKind, &str)> {
         ));
     }
     spell_of(text).map(|(name, kind)| (name, kind, ""))
+}
+
+/// A gaze's line: the gazer by the name the line uses, and what the gaze
+/// does ("confuses", "frozen"...): "You are frozen by the floating eye's
+/// gaze!", "The umber hulk's gaze confuses you!", "You meet Medusa's
+/// gaze.", "The X stares piercingly at you!".
+fn gaze_of(text: &str) -> Option<(&str, ActKind, &str)> {
+    if let Some(rest) = text.strip_prefix("The ") {
+        for (tail, what) in [
+            (" stares piercingly at you!", "stuns"),
+            (" attacks you with a fiery gaze!", "burns"),
+        ] {
+            if let Some(name) = rest.strip_suffix(tail) {
+                return Some((name, ActKind::Gaze, what));
+            }
+        }
+    }
+    let (before, after) = text
+        .split_once("'s gaze")
+        .or_else(|| text.split_once("' gaze"))?;
+    let what = match after.trim_start() {
+        a if a.starts_with("confuses") => "confuses",
+        a if a.starts_with("makes you very sleepy") => "sleeps",
+        a if a.starts_with("is reflected") => "reflected",
+        _ if before.starts_with("You meet ") => "stones",
+        _ => "freezes",
+    };
+    let name = [
+        "You are frozen by ",
+        "You momentarily stiffen under ",
+        "You meet ",
+    ]
+    .iter()
+    .find_map(|p| before.strip_prefix(p))
+    .unwrap_or(before);
+    let name = name
+        .strip_prefix("the ")
+        .or_else(|| name.strip_prefix("The "))
+        .unwrap_or(name);
+    (!name.is_empty() && !name.contains(['!', '.'])).then_some((name, ActKind::Gaze, what))
+}
+
+/// The colour a gaze flares, by what it does.
+fn gaze_color(what: &str) -> Color {
+    match what {
+        "confuses" => Color::from_rgb(0.75, 0.45, 1.0),
+        "sleeps" => Color::from_rgb(0.5, 0.6, 1.0),
+        "burns" => Color::from_rgb(1.0, 0.55, 0.2),
+        "stones" => Color::from_rgb(0.45, 1.0, 0.55),
+        "freezes" => Color::from_rgb(0.5, 0.95, 1.0),
+        _ => Color::from_rgb(1.0, 1.0, 1.0),
+    }
+}
+
+/// What comes out of a breather's mouth as its breath leaves it, by what
+/// the line says it breathes.
+fn breath_kind(what: &str) -> VfxKind {
+    match what {
+        "fire" => VfxKind::Fire,
+        "frost" => VfxKind::Frost,
+        "lightning" => VfxKind::Lightning,
+        "poison gas" | "acid" => VfxKind::Poison,
+        "sleep gas" => VfxKind::Shock(Color::from_rgb(0.7, 0.6, 1.0)),
+        "a disintegration blast" => VfxKind::Explosion(Color::from_rgb(0.15, 0.1, 0.2)),
+        _ => VfxKind::Shock(MAGIC),
+    }
 }
 
 /// A spell's line: the caster by the name the line uses, and what.
@@ -150,6 +237,8 @@ enum FxAt {
     /// A bone of a model's skeleton; where its body's middle is, if it has
     /// none.
     Hand(Gd<Node3D>, &'static str, Vector3),
+    /// Its head: the head's bone, else the top of its body to the front.
+    Head(Gd<Node3D>, f32),
     Point(Vector3),
 }
 
@@ -190,10 +279,25 @@ impl MapView {
             ActKind::Zap { at_self: true } => self.act_here(cell, ZAP_CLIP),
             ActKind::Drink => self.act_here(cell, DRINK_CLIP),
             ActKind::Read | ActKind::Wield => self.act_here(cell, HANDLE_CLIP),
+            // the eyes turn on the hero
+            ActKind::Gaze => {
+                if let Some(to) = toward {
+                    self.turn_to(cell, to, world);
+                }
+                false
+            }
+            // the mouth opens on the hero: its blow's clip, else a lunge
+            ActKind::Spit | ActKind::Breath => toward.is_some_and(|to| {
+                let has = self.act_clips(cell).is_some_and(|c| c.attack.is_some());
+                self.strike(cell, to, world);
+                has
+            }),
         };
         let Some((node, middle)) = self.body_of(cell) else {
             return;
         };
+        let height = self.height_of(cell);
+        let head = FxAt::Head(node.clone(), height);
         let hand = FxAt::Hand(node.clone(), OFF_HAND, middle);
         let main = FxAt::Hand(node, MAIN_HAND, middle);
         match kind {
@@ -246,6 +350,21 @@ impl MapView {
                 kind: VfxKind::Sparkle,
                 at: main,
             }),
+            ActKind::Gaze => self.act_fx.push(ActFx {
+                wait: 0.05,
+                kind: VfxKind::Zap(gaze_color(what)),
+                at: head,
+            }),
+            ActKind::Spit => self.act_fx.push(ActFx {
+                wait: MOUTH_AT,
+                kind: VfxKind::Poison,
+                at: head,
+            }),
+            ActKind::Breath => self.act_fx.push(ActFx {
+                wait: MOUTH_AT,
+                kind: breath_kind(what),
+                at: head,
+            }),
         }
         self.acts_shown.push(Acted { kind, cell, clip });
         if self.acts_shown.len() > 32 {
@@ -266,6 +385,27 @@ impl MapView {
             self.strike_with(cell, to, world, Some(clip.to_string()));
             return true;
         }
+        self.turn_to(cell, to, world);
+        false
+    }
+
+    /// `cell`'s monster's clips.
+    fn act_clips(&self, cell: (i32, i32)) -> Option<crate::art::Clips> {
+        let n = self.cells.get(&cell)?;
+        let m = n.look.entity.and_then(|i| n.models.get(i))?;
+        Some(self.art.clips(m, false))
+    }
+
+    /// The height of `cell`'s monster (metres).
+    fn height_of(&self, cell: (i32, i32)) -> f32 {
+        self.cells
+            .get(&cell)
+            .and_then(|n| n.look.entity.and_then(|i| n.look.models.get(i)))
+            .map_or(1.0, |p| p.look.art.height)
+    }
+
+    /// `cell`'s monster turns to face `to`, nothing else.
+    fn turn_to(&mut self, cell: (i32, i32), to: (i32, i32), world: &World) {
         let yaw = crate::animator::yaw_toward(cell, to);
         let ident = world
             .map
@@ -284,7 +424,6 @@ impl MapView {
             t.basis = Basis::from_euler(EulerOrder::YXZ, Vector3::new(0.0, yaw.to_radians(), 0.0));
             m.node.set_transform(t);
         }
-        false
     }
 
     /// `cell`'s monster plays `clip` where it stands, then its idle again.
@@ -350,6 +489,7 @@ impl MapView {
             let at = match &fx.at {
                 FxAt::Point(p) => *p,
                 FxAt::Hand(node, bone, middle) => bone_at(node, bone).unwrap_or(*middle),
+                FxAt::Head(node, height) => head_at(node, *height),
             };
             self.vfx.burst(fx.kind, at);
         }
@@ -364,6 +504,21 @@ impl MapView {
     pub fn acts_pending(&self) -> usize {
         self.act_fx.len()
     }
+}
+
+/// Where a model's head is now: its head's bone, else the top of its body
+/// a little to the front.
+fn head_at(node: &Gd<Node3D>, height: f32) -> Vector3 {
+    if let Some(at) = bone_at(node, "Head") {
+        return at;
+    }
+    if !node.is_instance_valid() {
+        return Vector3::ZERO;
+    }
+    let t = node.get_global_transform();
+    t.origin
+        + Vector3::new(0.0, height * 0.85, 0.0)
+        + t.basis.col_c().normalized() * (height * 0.25)
 }
 
 /// Where a bone of a model's skeleton is now, in the world.
@@ -489,6 +644,42 @@ mod tests {
         assert_eq!(
             act_of("The hill orc wields a crossbow."),
             Some(("hill orc", ActKind::Wield, "a crossbow"))
+        );
+        assert_eq!(
+            act_of("You are frozen by the floating eye's gaze!"),
+            Some(("floating eye", ActKind::Gaze, "freezes"))
+        );
+        assert_eq!(
+            act_of("You momentarily stiffen under the floating eye's gaze!"),
+            Some(("floating eye", ActKind::Gaze, "freezes"))
+        );
+        assert_eq!(
+            act_of("The umber hulk's gaze confuses you!"),
+            Some(("umber hulk", ActKind::Gaze, "confuses"))
+        );
+        assert_eq!(
+            act_of("You meet Medusa's gaze."),
+            Some(("Medusa", ActKind::Gaze, "stones"))
+        );
+        assert_eq!(
+            act_of("The archon stares piercingly at you!"),
+            Some(("archon", ActKind::Gaze, "stuns"))
+        );
+        assert_eq!(
+            act_of("The red dragon breathes fire!"),
+            Some(("red dragon", ActKind::Breath, "fire"))
+        );
+        assert_eq!(
+            act_of("The black dragon breathes a disintegration blast!"),
+            Some(("black dragon", ActKind::Breath, "a disintegration blast"))
+        );
+        assert_eq!(
+            act_of("The cobra spits venom!"),
+            Some(("cobra", ActKind::Spit, "venom"))
+        );
+        assert_eq!(
+            act_of("The little dog spits the tripe out in disgust!"),
+            None
         );
         assert_eq!(act_of("Something casts a spell at you!"), None);
         assert_eq!(act_of("You hear a mumbled curse."), None);

@@ -2,8 +2,10 @@
 //! where ^G makes them beside the hero. A gnomish wizard's spell shows on
 //! the caster where the map shows it (its cast clip, turned to the hero),
 //! the glow in its hand and, aimed at the hero, the spell striking them.
-//! Blind, the hero sees none of it, and nothing is shown. Pictures with
-//! `--screenshots`.
+//! Blind, the hero sees none of it, and nothing is shown. A gnome lord
+//! zaps a wand, drinks a potion, reads a scroll and wields a weapon; a
+//! floating eye's gaze flares, a cobra spits and a red dragon breathes,
+//! each shown on it. Pictures with `--screenshots`.
 
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering};
@@ -36,6 +38,91 @@ pub(super) fn acts() -> Vec<Step> {
     steps.extend(no_pet());
     steps.extend(casting());
     steps.extend(items());
+    steps.extend(gazes());
+    steps
+}
+
+/// A gaze, a spit and a breath, each of a monster made beside the hero,
+/// its line told as the engine tells it: the monster, the line, what is
+/// shown, whether it plays a clip, the picture.
+const GAZES: [(&str, &str, ActKind, bool, &str); 3] = [
+    (
+        "floating eye",
+        "You are frozen by the floating eye's gaze!",
+        ActKind::Gaze,
+        false,
+        "acts-gaze",
+    ),
+    (
+        "cobra",
+        "The cobra spits venom!",
+        ActKind::Spit,
+        true,
+        "acts-spit",
+    ),
+    (
+        "red dragon",
+        "The red dragon breathes fire!",
+        ActKind::Breath,
+        true,
+        "acts-breath",
+    ),
+];
+/// The gaze, spit or breath under test (an index into `GAZES`, from 1).
+static GAZE: AtomicUsize = AtomicUsize::new(0);
+
+fn gaze_now() -> (&'static str, &'static str, ActKind, bool, &'static str) {
+    GAZES[GAZE.load(Ordering::Relaxed).saturating_sub(1)]
+}
+
+/// Each of `GAZES`: its monster made, its line told, shown on it (turned
+/// to the hero; with its blow's clip, the mouth open, for a spit or a
+/// breath) and its flare, venom or breath drawn.
+fn gazes() -> Vec<Step> {
+    let mut steps = vec![Step::Call("", |_| {
+        GAZE.store(0, Ordering::Relaxed);
+        Ok(())
+    })];
+    for (name, _, _, _, shot) in GAZES {
+        steps.push(Step::Call("the next one", |_| {
+            GAZE.fetch_add(1, Ordering::Relaxed);
+            Ok(())
+        }));
+        steps.extend(make(name));
+        steps.extend([
+            Step::Wait("it beside the hero", |g| {
+                let at = find(g, gaze_now().0);
+                if let Some(at) = at {
+                    *AT.lock().unwrap() = at;
+                }
+                Ok(at.is_some())
+            }),
+            Step::Call("closer", |g| {
+                g.ui.as_mut().ok_or("no UI")?.map.set_distance(6.5, 0.0);
+                Ok(())
+            }),
+            Step::Wait("the camera on the hero", super::camera_settled),
+            mark(),
+            Step::Call("its line told", |g| {
+                tell(g, gaze_now().1);
+                Ok(())
+            }),
+            Step::Wait("shown on it", |g| {
+                Ok(shown_on(g, |a| {
+                    let (_, _, kind, clip, _) = gaze_now();
+                    a.kind == kind && a.clip == clip
+                }))
+            }),
+            Step::Wait("its flare, venom or breath drawn", |g| {
+                Ok(map_view(g)?.acts_pending() == 0)
+            }),
+            Step::Shot(shot),
+        ]);
+    }
+    steps.push(Step::Call("back", |g| {
+        g.ui.as_mut().ok_or("no UI")?.map.set_distance(11.0, 0.0);
+        Ok(())
+    }));
     steps
 }
 
