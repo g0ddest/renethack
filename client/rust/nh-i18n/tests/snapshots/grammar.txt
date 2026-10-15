@@ -11261,11 +11261,21 @@
   f   Крыса булькает.
   n   Копьё булькает.
   pl  3 стрелы булькают.
+%s has expelled you from the quest  [3442b2acaccb]
+  m   Тритон изгнал вас из задания
+  f   Крыса изгнала вас из задания
+  n   Копьё изгнало вас из задания
+  pl  3 стрелы изгнали вас из задания
 %s has gone out.  [71d6d7dd4daa]
   m   Тритон погас.
   f   Крыса погасла.
   n   Копьё погасло.
   pl  3 стрелы погасли.
+%s has granted access to proceed deeper into the quest  [d6e57c9f1418]
+  m   Тритон позволил вам продолжить задание
+  f   Крыса позволила вам продолжить задание
+  n   Копьё позволило вам продолжить задание
+  pl  3 стрелы позволили вам продолжить задание
 %s has made a hole in the %s.  [919598e6847f]
   m   Тритон проделал дыру в тритоне.
   f   Крыса проделала дыру в крысе.
@@ -16136,11 +16146,41 @@
   f   Текст крыса
   n   Текст копьё
   pl  Текст 3 стрелы
+%s the %s %s %s entered the dungeon  [c8e678c9e876]
+  m   Тритон, тритон тритон тритон, вошёл в подземелье
+  f   Крыса, крыса крыса крыса, вошёл в подземелье
+  n   Копьё, копьё копьё копьё, вошёл в подземелье
+  pl  3 стрелы, 3 стрелы 3 стрелы 3 стрелы, вошёл в подземелье
+%s the %s %s entered the dungeon  [c318f8dc4e99]
+  m   Тритон, тритон тритон, вошёл в подземелье
+  f   Крыса, крыса крыса, вошёл в подземелье
+  n   Копьё, копьё копьё, вошёл в подземелье
+  pl  3 стрелы, 3 стрелы 3 стрелы, вошёл в подземелье
+%s the %s female %s %s entered the dungeon  [748c9d706328]
+  m   Тритон, тритон тритон тритон, вошла в подземелье
+  f   Крыса, крыса крыса крыса, вошла в подземелье
+  n   Копьё, копьё копьё копьё, вошла в подземелье
+  pl  3 стрелы, 3 стрелы 3 стрелы 3 стрелы, вошла в подземелье
+%s the %s male %s %s entered the dungeon  [0219c378e4fe]
+  m   Тритон, тритон тритон тритон, вошёл в подземелье
+  f   Крыса, крыса крыса крыса, вошёл в подземелье
+  n   Копьё, копьё копьё копьё, вошёл в подземелье
+  pl  3 стрелы, 3 стрелы 3 стрелы 3 стрелы, вошёл в подземелье
 %s the %s's attributes:  [f1eb3d2fddd2]
   m   Свойства героя по имени тритон (тритон):
   f   Свойства героя по имени крыса (крыса):
   n   Свойства героя по имени копьё (копьё):
   pl  Свойства героя по имени 3 стрелы (3 стрелы):
+%s the female %s %s entered the dungeon  [687da5946158]
+  m   Тритон, тритон тритон, вошла в подземелье
+  f   Крыса, крыса крыса, вошла в подземелье
+  n   Копьё, копьё копьё, вошла в подземелье
+  pl  3 стрелы, 3 стрелы 3 стрелы, вошла в подземелье
+%s the male %s %s entered the dungeon  [4d4840a41463]
+  m   Тритон, тритон тритон, вошёл в подземелье
+  f   Крыса, крыса крыса, вошёл в подземелье
+  n   Копьё, копьё копьё, вошёл в подземелье
+  pl  3 стрелы, 3 стрелы 3 стрелы, вошёл в подземелье
 %s thinks it was nice of you to try.  [cc7879d9b2cc]
   m   Тритон считает, что с вашей стороны было мило попытаться.
   f   Крыса считает, что с вашей стороны было мило попытаться.
@@ -17291,6 +17331,56 @@
   f   Крысакрыса за 3 зоркмида.  Заплатить?
   n   Копьёкопьё за 5 зоркмидов.  Заплатить?
   pl  3 стрелы3 стрелы за 21 зоркмид.  Заплатить?
+%s%s has been destroyed  [10a3f57c133c]
+  m   Тритонтритон уничтожен
+  f   Крысакрыса уничтожена
+  n   Копьёкопьё уничтожено
+  pl  3 стрелы3 стрелы уничтожены
+%s%s has been destroyed (%dnd time)  [ab550a3eec0e]
+  m   Тритонтритон уничтожен (в 1-й раз)
+  f   Крысакрыса уничтожена (в 3-й раз)
+  n   Копьёкопьё уничтожено (в 5-й раз)
+  pl  3 стрелы3 стрелы уничтожены (в 21-й раз)
+%s%s has been destroyed (%drd time)  [effd9ebc26c2]
+  m   Тритонтритон уничтожен (в 1-й раз)
+  f   Крысакрыса уничтожена (в 3-й раз)
+  n   Копьёкопьё уничтожено (в 5-й раз)
+  pl  3 стрелы3 стрелы уничтожены (в 21-й раз)
+%s%s has been destroyed (%dst time)  [20e61cee33a4]
+  m   Тритонтритон уничтожен (в 1-й раз)
+  f   Крысакрыса уничтожена (в 3-й раз)
+  n   Копьёкопьё уничтожено (в 5-й раз)
+  pl  3 стрелы3 стрелы уничтожены (в 21-й раз)
+%s%s has been destroyed (%dth time)  [f1e18408e446]
+  m   Тритонтритон уничтожен (в 1-й раз)
+  f   Крысакрыса уничтожена (в 3-й раз)
+  n   Копьёкопьё уничтожено (в 5-й раз)
+  pl  3 стрелы3 стрелы уничтожены (в 21-й раз)
+%s%s has been killed  [44a52b9a0988]
+  m   Тритонтритон убит
+  f   Крысакрыса убита
+  n   Копьёкопьё убито
+  pl  3 стрелы3 стрелы убиты
+%s%s has been killed (%dnd time)  [e341d4a173ae]
+  m   Тритонтритон убит (в 1-й раз)
+  f   Крысакрыса убита (в 3-й раз)
+  n   Копьёкопьё убито (в 5-й раз)
+  pl  3 стрелы3 стрелы убиты (в 21-й раз)
+%s%s has been killed (%drd time)  [1e1c8ccea5d2]
+  m   Тритонтритон убит (в 1-й раз)
+  f   Крысакрыса убита (в 3-й раз)
+  n   Копьёкопьё убито (в 5-й раз)
+  pl  3 стрелы3 стрелы убиты (в 21-й раз)
+%s%s has been killed (%dst time)  [9d70de620251]
+  m   Тритонтритон убит (в 1-й раз)
+  f   Крысакрыса убита (в 3-й раз)
+  n   Копьёкопьё убито (в 5-й раз)
+  pl  3 стрелы3 стрелы убиты (в 21-й раз)
+%s%s has been killed (%dth time)  [f506ed000ec7]
+  m   Тритонтритон убит (в 1-й раз)
+  f   Крысакрыса убита (в 3-й раз)
+  n   Копьёкопьё убито (в 5-й раз)
+  pl  3 стрелы3 стрелы убиты (в 21-й раз)
 %s%s is empty.  Do what with it?  [aa5f58e73f10]
   m   Тритонтритон пуст.  Что с ним сделать?
   f   Крысакрыса пуста.  Что с ней сделать?
@@ -38735,6 +38825,24 @@ acidic glob  [7d377c94fabd]
   =   Кислотный сгусток
 acorn  [f5d193d9beee]
   =   Жёлудь
+acquired The Amulet of Yendor  [d3bcd42d9e36]
+  =   Добыл Амулет Йендора
+acquired the Bell of Opening  [66dfb6c7ad58]
+  =   Добыл Колокол Открытия
+acquired the Book of the Dead  [570f3ff16153]
+  =   Добыл Книгу Мёртвых
+acquired the Candelabrum of Invocation  [79d79320dd33]
+  =   Добыл Канделябр Призыва
+acquired the Mines' End %s  [4e724558d5ca]
+  m   Добыл тритона на Дне копей
+  f   Добыл крысу на Дне копей
+  n   Добыл копьё на Дне копей
+  pl  Добыл 3 стрелы на Дне копей
+acquired the Sokoban %s  [1b06defacb15]
+  m   Добыл тритона в Сокобане
+  f   Добыл крысу в Сокобане
+  n   Добыл копьё в Сокобане
+  pl  Добыл 3 стрелы в Сокобане
 action to take when encountering locked door or chest  [c7ea07715c8e]
   =   Что делать с запертой дверью или сундуком
 acute blob  [b3562951eb7e]
@@ -38854,6 +38962,38 @@ ask if you want the tutorial  [eacd37b44869]
   =   Спрашивать, нужно ли обучение
 astral vision  [b59b5c5c16fe]
   =   Астральное зрение
+ate for the first time (%s)  [dfa500d033fd]
+  m   Впервые поел (тритон)
+  f   Впервые поел (крыса)
+  n   Впервые поел (копьё)
+  pl  Впервые поел (3 стрелы)
+ate for the first time (spinach)  [d0ede3499503]
+  =   Впервые поел (шпинат)
+ate for the first time - %s  [47fdd2b9d401]
+  m   Впервые поел: тритон
+  f   Впервые поел: крыса
+  n   Впервые поел: копьё
+  pl  Впервые поел: 3 стрелы
+ate for the first time, by chewing through %s  [ed328a774565]
+  m   Впервые поел, прогрызя тритона
+  f   Впервые поел, прогрызя крысу
+  n   Впервые поел, прогрызя копьё
+  pl  Впервые поел, прогрызя 3 стрелы
+ate for the first time, by chewing through a boulder  [fdeaaef4d33d]
+  =   Впервые поел, прогрызя валун
+ate for the first time, by chewing through a door  [1b445329931d]
+  =   Впервые поел, прогрызя дверь
+ate for the first time, by chewing through a tree  [84150c223c0e]
+  =   Впервые поел, прогрызя дерево
+ate for the first time, by chewing through iron bars  [97e67a040c34]
+  =   Впервые поел, прогрызя железную решётку
+ate for the first time, by chewing through rock  [69415756799b]
+  =   Впервые поел, прогрызя камень
+attained the rank of %s (level %d)  [a7e06e33ec4d]
+  m   Получил звание «тритон» (уровень 1)
+  f   Получил звание «крыса» (уровень 3)
+  n   Получил звание «копьё» (уровень 5)
+  pl  Получил звание «3 стрелы» (уровень 21)
 attempting to cheat Death  [2e1a01e0c433]
   =   Попытка обмануть Смерть
 attorney  [027fb6799b65]
@@ -38870,6 +39010,11 @@ autopickup stolen items  [ec8b69322dc1]
   =   Автоподбор украденных предметов
 autopickup thrown items  [4f83d974a05f]
   =   Автоподбор брошенных предметов
+averted death (%s)  [ae13df26f38a]
+  m   Избежал смерти (тритон)
+  f   Избежал смерти (крыса)
+  n   Избежал смерти (копьё)
+  pl  Избежал смерти (3 стрелы)
 baby balky dragon  [1842ead7faff]
   =   Детёныш чёрствого дракона
 baby blues dragon  [3285f657bfee]
@@ -38905,6 +39050,154 @@ basilisk  [4bde28c14f8a]
   =   Базилиск
 battlemech  [c6950ca7791e]
   =   Боевой мех
+became %s Envoy of Balance  [e7930c0503c4]
+  m   Стал Посланником Равновесия тритона
+  f   Стал Посланником Равновесия крысы
+  n   Стал Посланником Равновесия копья
+  pl  Стал Посланником Равновесия 3 стрел
+became experience level %d as a new %s  [69e9f10f7113]
+  m   Стал тритоном 1-го уровня опыта
+  f   Стал крысой 3-го уровня опыта
+  n   Стал копьём 5-го уровня опыта
+  pl  Стал 3 стрелами 21-го уровня опыта
+became literate by deciphering a scroll label  [fc9159d988f9]
+  =   Стал грамотным, разобрав надпись на свитке
+became literate by engraving "%s"  [c0ccf4652929]
+  m   Стал грамотным, выгравировав «тритон»
+  f   Стал грамотным, выгравировав «крыса»
+  n   Стал грамотным, выгравировав «копьё»
+  pl  Стал грамотным, выгравировав «3 стрелы»
+became literate by naming %s  [4fbd8cc52fb2]
+  m   Стал грамотным, дав имя тритону
+  f   Стал грамотным, дав имя крысе
+  n   Стал грамотным, дав имя копью
+  pl  Стал грамотным, дав имя 3 стрелам
+became literate by reading %s  [b7c3de78ac4f]
+  m   Стал грамотным, прочитав тритона
+  f   Стал грамотным, прочитав крысу
+  n   Стал грамотным, прочитав копьё
+  pl  Стал грамотным, прочитав 3 стрелы
+became literate by reading A Hat Full of Sky  [58fcb51207fd]
+  =   Стал грамотным, прочитав «Шляпа, полная неба»
+became literate by reading Carpe Jugulum  [11d5fba641bb]
+  =   Стал грамотным, прочитав «Carpe Jugulum. Хватай за горло!»
+became literate by reading Equal Rites  [875512c55f2a]
+  =   Стал грамотным, прочитав «Творцы заклинаний»
+became literate by reading Eric  [96410f7b0052]
+  =   Стал грамотным, прочитав «Эрик»
+became literate by reading Feet of Clay  [7db806526e31]
+  =   Стал грамотным, прочитав «Ноги из глины»
+became literate by reading Going Postal  [f7c64a8392af]
+  =   Стал грамотным, прочитав «Держи марку!»
+became literate by reading Guards! Guards!  [2639b094b08a]
+  =   Стал грамотным, прочитав «Стража! Стража!»
+became literate by reading Hogfather  [cec654599358]
+  =   Стал грамотным, прочитав «Санта-Хрякус»
+became literate by reading I Shall Wear Midnight  [3df2f61dfb7a]
+  =   Стал грамотным, прочитав «Я надену чёрное»
+became literate by reading Interesting Times  [a2969e55dcbd]
+  =   Стал грамотным, прочитав «Интересные времена»
+became literate by reading Jingo  [a2414e91e243]
+  =   Стал грамотным, прочитав «Патриот»
+became literate by reading Lords and Ladies  [4497fd517a4d]
+  =   Стал грамотным, прочитав «Дамы и господа»
+became literate by reading Making Money  [7de0f3d8bc8c]
+  =   Стал грамотным, прочитав «Делай деньги»
+became literate by reading Maskerade  [90589b232dba]
+  =   Стал грамотным, прочитав «Маскарад»
+became literate by reading Men at Arms  [ecd7b36d92da]
+  =   Стал грамотным, прочитав «К оружию! К оружию!»
+became literate by reading Monstrous Regiment  [9025fecf0e57]
+  =   Стал грамотным, прочитав «Пехотная баллада»
+became literate by reading Mort  [0de5335bf272]
+  =   Стал грамотным, прочитав «Мор, ученик Смерти»
+became literate by reading Moving Pictures  [e9d8d1b701b8]
+  =   Стал грамотным, прочитав «Движущиеся картинки»
+became literate by reading Night Watch  [74755f08fe16]
+  =   Стал грамотным, прочитав «Ночная стража»
+became literate by reading Pyramids  [8aaa73b63bd0]
+  =   Стал грамотным, прочитав «Пирамиды»
+became literate by reading Raising Steam  [f4b8a3d04b4d]
+  =   Стал грамотным, прочитав «Поддай пару!»
+became literate by reading Reaper Man  [efb92e00889b]
+  =   Стал грамотным, прочитав «Мрачный Жнец»
+became literate by reading Small Gods  [f4ec72d80462]
+  =   Стал грамотным, прочитав «Мелкие боги»
+became literate by reading Snuff  [c938ebb02e0c]
+  =   Стал грамотным, прочитав «Дело табак»
+became literate by reading Soul Music  [048a7bb6f7b3]
+  =   Стал грамотным, прочитав «Роковая музыка»
+became literate by reading Sourcery  [b7337cd6affa]
+  =   Стал грамотным, прочитав «Посох и шляпа»
+became literate by reading The Amazing Maurice and His Educated Rodents  [2907b34d0263]
+  =   Стал грамотным, прочитав «Изумительный Морис и его учёные грызуны»
+became literate by reading The Colour of Magic  [052bbdeea122]
+  =   Стал грамотным, прочитав «Цвет волшебства»
+became literate by reading The Fifth Elephant  [02ded145eba6]
+  =   Стал грамотным, прочитав «Пятый элефант»
+became literate by reading The Last Continent  [06d7feb89d05]
+  =   Стал грамотным, прочитав «Последний континент»
+became literate by reading The Last Hero  [1c5d0d562fcf]
+  =   Стал грамотным, прочитав «Последний герой»
+became literate by reading The Light Fantastic  [96b1483b4300]
+  =   Стал грамотным, прочитав «Безумная звезда»
+became literate by reading The Shepherd's Crown  [45570da9bd3a]
+  =   Стал грамотным, прочитав «Пастушья корона»
+became literate by reading The Truth  [a6ba5d7b775b]
+  =   Стал грамотным, прочитав «Правда»
+became literate by reading The Wee Free Men  [2cf489f5353a]
+  =   Стал грамотным, прочитав «Маленький свободный народец»
+became literate by reading Thief of Time  [89cb2e9da33e]
+  =   Стал грамотным, прочитав «Вор времени»
+became literate by reading Thud!  [50c0d1c2aa91]
+  =   Стал грамотным, прочитав «Шмяк!»
+became literate by reading Unseen Academicals  [18440b737bea]
+  =   Стал грамотным, прочитав «Незримые академики»
+became literate by reading Wintersmith  [6bc744d8523d]
+  =   Стал грамотным, прочитав «Зимних дел мастер»
+became literate by reading Witches Abroad  [06e96bbdbfb2]
+  =   Стал грамотным, прочитав «Ведьмы за границей»
+became literate by reading Wyrd Sisters  [6c5dce7d7e00]
+  =   Стал грамотным, прочитав «Вещие сестрички»
+became literate by reading a T-shirt  [48135fc0ee2b]
+  =   Стал грамотным, прочитав футболку
+became literate by reading a book  [11012dbc5323]
+  =   Стал грамотным, прочитав книгу
+became literate by reading a candy bar wrapper  [3e444544c9e7]
+  =   Стал грамотным, прочитав обёртку шоколадного батончика
+became literate by reading a coin's engravings  [0162973a62ed]
+  =   Стал грамотным, прочитав надпись на монете
+became literate by reading a cornuthaum  [18745adf88fa]
+  =   Стал грамотным, прочитав корнутаум
+became literate by reading a credit card  [4c7adcde4d76]
+  =   Стал грамотным, прочитав кредитную карту
+became literate by reading a dunce cap  [87044d175bc6]
+  =   Стал грамотным, прочитав дурацкий колпак
+became literate by reading a fortune cookie  [e41ad8480c3a]
+  =   Стал грамотным, прочитав печенье с предсказанием
+became literate by reading a magic marker  [797af327eacc]
+  =   Стал грамотным, прочитав волшебный маркер
+became literate by reading a scroll  [4390273cfa5d]
+  =   Стал грамотным, прочитав свиток
+became literate by reading an apron  [d97acd025060]
+  =   Стал грамотным, прочитав фартук
+became literate by reading something  [9767a8c9e98b]
+  =   Стал грамотным, прочитав что-то
+became literate by reading the divine signature of Odin  [f6524859e33c]
+  =   Стал грамотным, прочитав божественную подпись Одина
+became literate by reading the fortune inside a cookie  [16ef5d7189bf]
+  =   Стал грамотным, прочитав предсказание в печенье
+became literate by writing %s  [f7ac9e501c41]
+  m   Стал грамотным, написав тритона
+  f   Стал грамотным, написав крысу
+  n   Стал грамотным, написав копьё
+  pl  Стал грамотным, написав 3 стрелы
+became literate by writing a book  [13f65687fe0f]
+  =   Стал грамотным, написав книгу
+became literate by writing a scroll  [dc7ead1b6a96]
+  =   Стал грамотным, написав свиток
+became literate by writing a spellbook  [c3640a754933]
+  =   Стал грамотным, написав книгу заклинаний
 beer wight  [c029d498780c]
   =   Пивное умертвие
 beholder  [afb0bddfc59e]
@@ -39008,6 +39301,16 @@ brainlessness  [8e7e4f6723c8]
   =   Безмозглость
 brawny mold  [81bfb7ecf2af]
   =   Бравая плесень
+bribed %s with %ld zorkmid for safe passage  [078fe4dded39]
+  m   Подкупил тритона 1 зоркмидом за свободный проход
+  f   Подкупил крысу 3 зоркмидом за свободный проход
+  n   Подкупил копьё 5 зоркмидом за свободный проход
+  pl  Подкупил 3 стрелы 21 зоркмидом за свободный проход
+bribed %s with %ld zorkmids for safe passage  [5065260f1c5f]
+  m   Подкупил тритона 1 зоркмидом за свободный проход
+  f   Подкупил крысу 3 зоркмидами за свободный проход
+  n   Подкупил копьё 5 зоркмидами за свободный проход
+  pl  Подкупил 3 стрелы 21 зоркмидом за свободный проход
 brogmoid  [bb488eda6f71]
   =   Брогмоид
 buffer overflow  [43186ef06c52]
@@ -39146,6 +39449,20 @@ change status condition highlighting  [41cbe1f30eee]
   =   Изменить подсветку состояний
 change status line highlighting  [d25abb368a58]
   =   Изменить подсветку строки состояния
+changed form for the first time by mimicking %s  [4e4b3813ab2b]
+  m   Впервые сменил облик, притворившись тритоном
+  f   Впервые сменил облик, притворившись крысой
+  n   Впервые сменил облик, притворившись копьём
+  pl  Впервые сменил облик, притворившись 3 стрелами
+changed form for the first time by mimicking a pile of gold  [1610b1338e3a]
+  =   Впервые сменил облик, притворившись грудой золота
+changed form for the first time by mimicking an orange  [f0949dd7405a]
+  =   Впервые сменил облик, притворившись апельсином
+changed form for the first time, becoming %s  [721672b54a0a]
+  m   Впервые сменил облик, став тритоном
+  f   Впервые сменил облик, став крысой
+  n   Впервые сменил облик, став копьём
+  pl  Впервые сменил облик, став 3 стрелами
 chess pawn  [a0d124cc70c8]
   =   Шахматная пешка
 chiasmus  [0e6935165a85]
@@ -39192,6 +39509,11 @@ chopping off your own %s  [7e7570cc83b5]
   f   Отрубание собственной крысы
   n   Отрубание собственного копья
   pl  Отрубание собственных 3 стрел
+chose %s to be named "%s"  [b2b8cf2dcb1d]
+  m   Решил назвать тритона «тритон»
+  f   Решил назвать крысу «крыса»
+  n   Решил назвать копьё «копьё»
+  pl  Решил назвать 3 стрелы «3 стрелы»
 classify gold as unknown or uncursed  [cffde6c3074a]
   =   Считать золото неизвестным или непроклятым
 close a door  [f4dcb2f9dc5f]
@@ -39220,8 +39542,40 @@ committed suicide  [d54acec040e3]
   =   Покончил с собой
 compass ('east' or '3s' or '2n,4w')  [f8e88a461f89]
   =   Компас («east», «3s» или «2n,4w»)
+completed %dnd Sokoban level  [b053d8fea8d5]
+  m   Прошёл 1-й уровень Сокобана
+  f   Прошёл 3-й уровень Сокобана
+  n   Прошёл 5-й уровень Сокобана
+  pl  Прошёл 21-й уровень Сокобана
+completed %drd Sokoban level  [a54ec13728b7]
+  m   Прошёл 1-й уровень Сокобана
+  f   Прошёл 3-й уровень Сокобана
+  n   Прошёл 5-й уровень Сокобана
+  pl  Прошёл 21-й уровень Сокобана
+completed %dst Sokoban level  [72bbe843ca54]
+  m   Прошёл 1-й уровень Сокобана
+  f   Прошёл 3-й уровень Сокобана
+  n   Прошёл 5-й уровень Сокобана
+  pl  Прошёл 21-й уровень Сокобана
+completed %dth Sokoban level  [7bdcdd8bff73]
+  m   Прошёл 1-й уровень Сокобана
+  f   Прошёл 3-й уровень Сокобана
+  n   Прошёл 5-й уровень Сокобана
+  pl  Прошёл 21-й уровень Сокобана
 cone of cold  [3d66a278c3cc]
   =   Конус холода
+consulted the Oracle  [4272c339b412]
+  =   Посоветовался с Оракулом
+consumed animal products (%s) for the first time  [a8a555e4b3cd]
+  m   Впервые съел продукт животного происхождения (тритон)
+  f   Впервые съел продукт животного происхождения (крыса)
+  n   Впервые съел продукт животного происхождения (копьё)
+  pl  Впервые съел продукт животного происхождения (3 стрелы)
+consumed animal products for the first time, by eating %s  [d19cb35977f6]
+  m   Впервые съел продукт животного происхождения: тритона
+  f   Впервые съел продукт животного происхождения: крысу
+  n   Впервые съел продукт животного происхождения: копьё
+  pl  Впервые съел продукт животного происхождения: 3 стрелы
 containers  [642b5cd982d4]
   =   Контейнеры
 contaminated potion  [29ea208a4b05]
@@ -39281,6 +39635,12 @@ death field  [576f940ef775]
   =   Поле смерти
 death ray  [a9099e304a3d]
   =   Луч смерти
+declined to make a wish  [3cffeb4e1fb7]
+  =   Отказался от желания
+declined to perform class genocide  [5a537279d14d]
+  =   Отказался от геноцида класса
+declined to perform genocide  [9af4928a83bd]
+  =   Отказался от геноцида
 deep water  [a153dba5e67a]
   =   Глубокая вода
 deliberately meeting Medusa's gaze  [758173ab972b]
@@ -39305,6 +39665,31 @@ deselect all items in a menu  [b2dc1fda627f]
   =   Снять выбор со всех пунктов меню
 deselect all items on this page of a menu  [a5391e563ce9]
   =   Снять выбор с пунктов на этой странице меню
+destroyed %s%s  [5cd8488d0ec8]
+  m   Уничтожил тритонатритон
+  f   Уничтожил крысукрыса
+  n   Уничтожил копьёкопьё
+  pl  Уничтожил 3 стрелы3 стрелы
+destroyed %s%s (%dnd time)  [7fa7fda2582b]
+  m   Уничтожил тритонатритон (в 1-й раз)
+  f   Уничтожил крысукрыса (в 3-й раз)
+  n   Уничтожил копьёкопьё (в 5-й раз)
+  pl  Уничтожил 3 стрелы3 стрелы (в 21-й раз)
+destroyed %s%s (%drd time)  [980d58843f46]
+  m   Уничтожил тритонатритон (в 1-й раз)
+  f   Уничтожил крысукрыса (в 3-й раз)
+  n   Уничтожил копьёкопьё (в 5-й раз)
+  pl  Уничтожил 3 стрелы3 стрелы (в 21-й раз)
+destroyed %s%s (%dst time)  [aeba08bc2659]
+  m   Уничтожил тритонатритон (в 1-й раз)
+  f   Уничтожил крысукрыса (в 3-й раз)
+  n   Уничтожил копьёкопьё (в 5-й раз)
+  pl  Уничтожил 3 стрелы3 стрелы (в 21-й раз)
+destroyed %s%s (%dth time)  [13cc9194c48f]
+  m   Уничтожил тритонатритон (в 1-й раз)
+  f   Уничтожил крысукрыса (в 3-й раз)
+  n   Уничтожил копьёкопьё (в 5-й раз)
+  pl  Уничтожил 3 стрелы3 стрелы (в 21-й раз)
 dhole  [6067e3d2545f]
   =   Красный волк
 diagonally moving grid bug  [561c018a84af]
@@ -39477,6 +39862,22 @@ enter and perform an extended command  [33481946d900]
   =   Ввести и выполнить расширенную команду
 enter explore (discovery) mode  [d914dedd9b07]
   =   Перейти в режим исследования
+entered Gehennom  [ba7f9bf14a25]
+  =   Вошёл в Геенну
+entered Sokoban  [6aea63665583]
+  =   Вошёл в Сокобан
+entered a shop  [3970bb6caf55]
+  =   Вошёл в лавку
+entered a temple  [e3a02a004c56]
+  =   Вошёл в храм
+entered the Astral Plane  [155132d5d177]
+  =   Попал на Астральный план
+entered the Bigroom  [192ee8d04e58]
+  =   Вошёл в Большой зал
+entered the Elemental Planes  [3fb09fe7343b]
+  =   Попал на Стихийные планы
+entered the Gnomish Mines  [fdb3a8f1ca6d]
+  =   Вошёл в Гномьи копи
 errata elemental  [e2881abc2ee7]
   =   Опечаточный элементаль
 escaped  [28fa0807bebb]
@@ -39491,6 +39892,11 @@ escaped from the dungeon with %ld points,  [f86b21ba623c]
   f   Сбежали из подземелья, набрав 3 очка,
   n   Сбежали из подземелья, набрав 5 очков,
   pl  Сбежали из подземелья, набрав 21 очко,
+eschewed atheism, by dropping %s on an altar  [84c451739e5f]
+  m   Отказался от атеизма, положив тритона на алтарь
+  f   Отказался от атеизма, положив крысу на алтарь
+  n   Отказался от атеизма, положив копьё на алтарь
+  pl  Отказался от атеизма, положив 3 стрелы на алтарь
 esteemed creature  [86052a973c20]
   =   Уважаемое создание
 esteemed dark lady  [717246cadc41]
@@ -39624,6 +40030,31 @@ forcing the lock  [0c60fd41cd80]
   =   Взламывать замок
 forest centerfold  [93984b92bb3e]
   =   Лесная красотка с разворота
+found %s  [e74828c27f30]
+  m   Нашёл тритона
+  f   Нашёл крысу
+  n   Нашёл копьё
+  pl  Нашёл 3 стрелы
+found %s carried by a monster  [5d2530e83d0f]
+  m   Нашёл тритона у монстра
+  f   Нашёл крысу у монстра
+  n   Нашёл копьё у монстра
+  pl  Нашёл 3 стрелы у монстра
+found %s in a container  [1178794fb95b]
+  m   Нашёл тритона в контейнере
+  f   Нашёл крысу в контейнере
+  n   Нашёл копьё в контейнере
+  pl  Нашёл 3 стрелы в контейнере
+found %s in a shop  [9277c579e8fb]
+  m   Нашёл тритона в лавке
+  f   Нашёл крысу в лавке
+  n   Нашёл копьё в лавке
+  pl  Нашёл 3 стрелы в лавке
+found %s on the floor  [94b959c667d8]
+  m   Нашёл тритона на полу
+  f   Нашёл крысу на полу
+  n   Нашёл копьё на полу
+  pl  Нашёл 3 стрелы на полу
 fraggle  [75cc7b301070]
   =   Фрэггл
 frizzed centaur  [ed606e118b20]
@@ -39646,6 +40077,11 @@ full map without monsters, objects, and traps  [603daf804e63]
   =   Вся карта без монстров, предметов и ловушек
 fumbling  [15facb484868]
   =   Спотыкаясь
+gained experience level %d  [5e5a8481a444]
+  m   Достиг 1-го уровня опыта
+  f   Достиг 3-го уровня опыта
+  n   Достиг 5-го уровня опыта
+  pl  Достиг 21-го уровня опыта
 game name  [81e1e111c0b4]
   =   Название игры
 game receives click info from mouse  [6034a2039329]
@@ -39664,6 +40100,16 @@ genocidal confusion  [6680fe109e8e]
   =   Геноцидная путаница
 genocided  [03bc7c5d91d4]
   =   Истреблён
+genocided %s  [bd5ad3cc3472]
+  m   Истребил тритона
+  f   Истребил крысу
+  n   Истребил копьё
+  pl  Истребил 3 стрелы
+genocided class %c  [c3bf62ecc197]
+  m   Истребил класс x
+  f   Истребил класс x
+  n   Истребил класс x
+  pl  Истребил класс x
 geriatric snake  [86d85ca8a88e]
   =   Подагрическая змея
 getting stoned  [0a01d46f90ca]
@@ -39757,6 +40203,16 @@ guardian nacho  [c5eb03d0352d]
   =   Начо-хранитель
 guillemet  [f610a7189d8a]
   =   Кавычка-ёлочка
+had her wielded %s transformed into %s  [9ac7a4a2d836]
+  m   Увидела, как её тритон превратился в тритона
+  f   Увидела, как её крыса превратилась в крысу
+  n   Увидела, как её копьё превратилось в копьё
+  pl  Увидела, как её 3 стрелы превратились в 3 стрелы
+had his wielded %s transformed into %s  [d22b1da3dc14]
+  m   Увидел, как его тритон превратился в тритона
+  f   Увидел, как его крыса превратилась в крысу
+  n   Увидел, как его копьё превратилось в копьё
+  pl  Увидел, как его 3 стрелы превратились в 3 стрелы
 hag of bolding  [764cf5227fb5]
   =   Карга облысения
 haggler  [42ce4ad4c04a]
@@ -39782,6 +40238,10 @@ her own player  [4a19a8f80741]
   =   Собственный игрок
 here  [0154c0dabe71]
   =   Здесь
+hero never wore armor  [14df5aa214df]
+  =   Герой ни разу не надел доспехов
+hero was always blond, no, blind  [1f7680c7d64a]
+  =   Герой всегда был белокур, то есть слеп
 hide help  [4b3b8e96e83d]
   =   Скрыть справку
 hiding from thunderstorm  [eb3a181fb360]
@@ -39803,6 +40263,13 @@ his own %s  [123a05807b4e]
   pl  Собственные 3 стрелы
 his own player  [70efe8121507]
   =   Собственный игрок
+hit with a wielded weapon (%s) for the first time  [2e8d4ecc3f14]
+  m   Впервые ударил оружием в руках (тритон)
+  f   Впервые ударил оружием в руках (крыса)
+  n   Впервые ударил оружием в руках (копьё)
+  pl  Впервые ударил оружием в руках (3 стрелы)
+hit with a wielded weapon () for the first time  [908f125aae6e]
+  =   Впервые ударил оружием в руках
 holloway  [897bf5680593]
   =   Холлоуэй
 hologram  [ba1a91b4a623]
@@ -39882,6 +40349,14 @@ jump to the last page in a menu  [6444d76581a2]
   =   К последней странице меню
 jumping around  [680e3714136d]
   =   Прыгая
+just blew up her bag of holding  [0bc3928f9c1f]
+  =   Взорвала свою сумку хранения
+just blew up her bag of holding via tipping  [de1aba19fdd3]
+  =   Взорвала свою сумку хранения, вытряхивая её
+just blew up his bag of holding  [8b736e4a6a42]
+  =   Взорвал свою сумку хранения
+just blew up his bag of holding via tipping  [52029ac7a668]
+  =   Взорвал свою сумку хранения, вытряхивая её
 kelpie  [8d972c4aa8d8]
   =   Келпи
 kestrel  [9d65c9c5a1ed]
@@ -39893,6 +40368,33 @@ kicking %s  [2e1474182d23]
   f   Удар ногой по крысе
   n   Удар ногой по копью
   pl  Удар ногой по 3 стрелам
+killed %s%s  [760f4aa3305f]
+  m   Убил тритонатритон
+  f   Убил крысукрыса
+  n   Убил копьёкопьё
+  pl  Убил 3 стрелы3 стрелы
+killed %s%s (%dnd time)  [f7e6e909f356]
+  m   Убил тритонатритон (в 1-й раз)
+  f   Убил крысукрыса (в 3-й раз)
+  n   Убил копьёкопьё (в 5-й раз)
+  pl  Убил 3 стрелы3 стрелы (в 21-й раз)
+killed %s%s (%drd time)  [b14fdb611483]
+  m   Убил тритонатритон (в 1-й раз)
+  f   Убил крысукрыса (в 3-й раз)
+  n   Убил копьёкопьё (в 5-й раз)
+  pl  Убил 3 стрелы3 стрелы (в 21-й раз)
+killed %s%s (%dst time)  [39a0447104fa]
+  m   Убил тритонатритон (в 1-й раз)
+  f   Убил крысукрыса (в 3-й раз)
+  n   Убил копьёкопьё (в 5-й раз)
+  pl  Убил 3 стрелы3 стрелы (в 21-й раз)
+killed %s%s (%dth time)  [49749ccef265]
+  m   Убил тритонатритон (в 1-й раз)
+  f   Убил крысукрыса (в 3-й раз)
+  n   Убил копьёкопьё (в 5-й раз)
+  pl  Убил 3 стрелы3 стрелы (в 21-й раз)
+killed Medusa  [b5cb2f03cb7d]
+  =   Убил Медузу
 killed by %s  [48ef1c5f5997]
   m   Убит тритоном
   f   Убит крысой
@@ -39910,6 +40412,8 @@ killed by %s, while helpless  [515ad804b9bf]
   pl  Убит 3 стрелами, в беспомощном состоянии
 killed by petrification  [8b1c24fe51ee]
   =   Убит окаменением
+killed for the first time  [e8071033db0d]
+  =   Впервые убил
 killed herself by breaking a wand  [19d5ffb7b22e]
   =   Убил себя, сломав палочку
 killed herself with her bullwhip  [a499ba572c94]
@@ -39952,6 +40456,8 @@ land octopus  [a4fa77c498a4]
   =   Сухопутный осьминог
 large microbat  [5d604e1cb70d]
   =   Крупный микрокрылан
+learned castle drawbridge's tune  [8e869b17df03]
+  =   Узнал мелодию подъёмного моста замка
 leathery-winged avian  [fa116dbdbbec]
   =   Кожистокрылая птица
 leave game to enter a sub-shell ('exit' to come back)  [9079f5b60f88]
@@ -40050,12 +40556,39 @@ loot a box on the floor  [c442c2499bb0]
   =   Обыскать ящик на полу
 loot next container  [e502b0c12788]
   =   Обыскать следующий контейнер
+lost all experience  [294889a2d098]
+  =   Потерял весь опыт
+lost experience level %d  [cb04c44000cf]
+  m   Потерял 1-й уровень опыта
+  f   Потерял 3-й уровень опыта
+  n   Потерял 5-й уровень опыта
+  pl  Потерял 21-й уровень опыта
 lounge worm  [20d16c5fa5a1]
   =   Диванный червь
 luck sucker  [ce5ea40617e7]
   =   Удачесос
 lungfish  [9cf60fe2411a]
   =   Двоякодышащая рыба
+made her first artifact wish - "%s", got "%s"  [52cc189bc8e8]
+  m   Впервые загадала артефакт «тритон» и получила «тритон»
+  f   Впервые загадала артефакт «крыса» и получила «крыса»
+  n   Впервые загадала артефакт «копьё» и получила «копьё»
+  pl  Впервые загадала артефакт «3 стрелы» и получила «3 стрелы»
+made her first wish - "%s", got "%s"  [aa5669d27e2a]
+  m   Впервые загадала желание «тритон» и получила «тритон»
+  f   Впервые загадала желание «крыса» и получила «крыса»
+  n   Впервые загадала желание «копьё» и получила «копьё»
+  pl  Впервые загадала желание «3 стрелы» и получила «3 стрелы»
+made his first artifact wish - "%s", got "%s"  [54675c02dd2c]
+  m   Впервые загадал артефакт «тритон» и получил «тритон»
+  f   Впервые загадал артефакт «крыса» и получил «крыса»
+  n   Впервые загадал артефакт «копьё» и получил «копьё»
+  pl  Впервые загадал артефакт «3 стрелы» и получил «3 стрелы»
+made his first wish - "%s", got "%s"  [160246cf792c]
+  m   Впервые загадал желание «тритон» и получил «тритон»
+  f   Впервые загадал желание «крыса» и получил «крыса»
+  n   Впервые загадал желание «копьё» и получил «копьё»
+  pl  Впервые загадал желание «3 стрелы» и получил «3 стрелы»
 maggot  [a32f14c1aab3]
   =   Опарыш
 magic missile  [d6b9218f1343]
@@ -40186,6 +40719,36 @@ move west (screen left)  [893d6eef1024]
   =   Шагнуть на запад (влево на экране)
 moving through the air  [53c9c098ad98]
   =   В полёте по воздуху
+murdered %s, her faithful %s  [52d1115bb2de]
+  m   Убила тритон, своего верного тритона
+  f   Убила крыса, свою верную крысу
+  n   Убила копьё, своё верное копьё
+  pl  Убила 3 стрелы, своих верных 3 стрелы
+murdered %s, his faithful %s  [b3250ae2e20a]
+  m   Убил тритон, своего верного тритона
+  f   Убил крыса, свою верную крысу
+  n   Убил копьё, своё верное копьё
+  pl  Убил 3 стрелы, своих верных 3 стрелы
+murdered %sher faithful %s  [93faa95859d1]
+  m   Убила тритонсвоего верного тритона
+  f   Убила крысасвою верную крысу
+  n   Убила копьёсвоё верное копьё
+  pl  Убила 3 стрелысвоих верных 3 стрелы
+murdered %shis faithful %s  [7526908d29d3]
+  m   Убил тритонсвоего верного тритона
+  f   Убил крысасвою верную крысу
+  n   Убил копьёсвоё верное копьё
+  pl  Убил 3 стрелысвоих верных 3 стрелы
+murdered her faithful %s  [ba4bd155304f]
+  m   Убила своего верного тритона
+  f   Убила свою верную крысу
+  n   Убила своё верное копьё
+  pl  Убила своих верных 3 стрелы
+murdered his faithful %s  [cb4271518103]
+  m   Убил своего верного тритона
+  f   Убил свою верную крысу
+  n   Убил своё верное копьё
+  pl  Убил своих верных 3 стрелы
 name a monster, specific object, or type of object  [a8dddb3d955b]
   =   Дать имя монстру, предмету или виду предметов
 name current level  [9213a2ffc40c]
@@ -40256,6 +40819,16 @@ nyan cat  [d49f82290c79]
   =   Нян-кот
 obelus  [4fd2ae97ed69]
   =   Обелюс
+obtained her first pet (%s)  [be6fd307e3e0]
+  m   Завела первого питомца (тритон)
+  f   Завела первого питомца (крыса)
+  n   Завела первого питомца (копьё)
+  pl  Завела первого питомца (3 стрелы)
+obtained his first pet (%s)  [23e5bd885c1f]
+  m   Завёл первого питомца (тритон)
+  f   Завёл первого питомца (крыса)
+  n   Завёл первого питомца (копьё)
+  pl  Завёл первого питомца (3 стрелы)
 octahedron  [49fd82347ad1]
   =   Октаэдр
 octarine dragon  [095b29fe34c8]
@@ -40364,6 +40937,36 @@ peer  [2b974ba4b46a]
   =   Пэр
 perform data sanity checks  [4166b56a514a]
   =   Проверять целостность данных
+performed her first genocide (%s)  [6bd1e1e46411]
+  m   Впервые совершила геноцид (тритон)
+  f   Впервые совершила геноцид (крыса)
+  n   Впервые совершила геноцид (копьё)
+  pl  Впервые совершила геноцид (3 стрелы)
+performed her first genocide (class %c)  [a1bbf33f1ff7]
+  m   Впервые совершила геноцид (класс x)
+  f   Впервые совершила геноцид (класс x)
+  n   Впервые совершила геноцид (класс x)
+  pl  Впервые совершила геноцид (класс x)
+performed his first genocide (%s)  [d39a32975ee4]
+  m   Впервые совершил геноцид (тритон)
+  f   Впервые совершил геноцид (крыса)
+  n   Впервые совершил геноцид (копьё)
+  pl  Впервые совершил геноцид (3 стрелы)
+performed his first genocide (class %c)  [d878aabdd443]
+  m   Впервые совершил геноцид (класс x)
+  f   Впервые совершил геноцид (класс x)
+  n   Впервые совершил геноцид (класс x)
+  pl  Впервые совершил геноцид (класс x)
+performed the invocation  [df8925af7dfd]
+  =   Совершил обряд призыва
+permanently converted to chaotic  [de3f6f572612]
+  =   Навсегда стал хаотичным
+permanently converted to lawful  [d9d432025615]
+  =   Навсегда стал законопослушным
+permanently converted to neutral  [777646060e61]
+  =   Навсегда стал нейтральным
+permanently converted to unaligned  [5393429cddbd]
+  =   Навсегда стал безверным
 petrified by %s  [9a93bb6239ed]
   m   Окаменел от тритона
   f   Окаменел от крысы
@@ -40426,6 +41029,19 @@ poisonous glob  [55a40eaa8b05]
   =   Ядовитый сгусток
 polymorph self  [1615233f8886]
   =   Превратиться
+polymorphed her first item  [37d5a8b45027]
+  =   Впервые превратила предмет
+polymorphed her first object  [0c5e8624292d]
+  =   Впервые превратила предмет
+polymorphed his first item  [1b83b8544d8f]
+  =   Впервые превратил предмет
+polymorphed his first object  [41fb15a1125d]
+  =   Впервые превратил предмет
+polymorphed into %s  [b2a5df6b13cd]
+  m   Превратился в тритона
+  f   Превратился в крысу
+  n   Превратился в копьё
+  pl  Превратился в 3 стрелы
 pommelbug  [3c193ea9b9d8]
   =   Жук-навершие
 possessed waffle iron  [40b14c4fac4b]
@@ -40520,6 +41136,10 @@ rattlesnake  [46c5908d8cbf]
   =   Гремучая змея
 rave spider  [d8510a7a7c78]
   =   Печёный паук
+reached Mine Town  [f5185a37371f]
+  =   Добрался до Шахтёрского городка
+read a Discworld novel  [e8fedeecaeca]
+  =   Прочёл роман о Плоском мире
 read a scroll or spellbook  [5355da6de3f1]
   =   Прочесть свиток или книгу заклинаний
 reading a book  [68e71f57512c]
@@ -40536,8 +41156,27 @@ red dot  [6a589754e75e]
   =   Красная точка
 redraw screen  [13e82ab2090e]
   =   Перерисовать экран
+regained experience level %d  [e5178c117479]
+  m   Вернул 1-й уровень опыта
+  f   Вернул 3-й уровень опыта
+  n   Вернул 5-й уровень опыта
+  pl  Вернул 21-й уровень опыта
 regex engine  [8f72e74c39f5]
   =   Движок регулярок
+rejected atheism by consulting with %s  [bf07446088ef]
+  m   Отрёкся от атеизма, побеседовав с тритоном
+  f   Отрёкся от атеизма, побеседовав с крысой
+  n   Отрёкся от атеизма, побеседовав с копьём
+  pl  Отрёкся от атеизма, побеседовав с 3 стрелами
+rejected atheism by offering %s on an altar of %s  [f7afa699f16c]
+  m   Отрёкся от атеизма, принеся тритона в жертву на алтаре тритона
+  f   Отрёкся от атеизма, принеся крысу в жертву на алтаре крысы
+  n   Отрёкся от атеизма, принеся копьё в жертву на алтаре копья
+  pl  Отрёкся от атеизма, принеся 3 стрелы в жертву на алтаре 3 стрел
+rejected atheism by turning undead  [43d992dcc8df]
+  =   Отрёкся от атеизма, изгоняя нежить
+rejected atheism with a prayer  [dfa09e025135]
+  =   Отрёкся от атеизма, помолившись
 remembered, unseen, creature  [d4cbb2d5acce]
   =   Запомненное невидимое существо
 remove all armor  [bae69ff7179a]
@@ -40925,6 +41564,126 @@ steam dragon  [5ff126eaa07a]
   =   Паровой дракон
 stepped into a pit of iron spikes  [32b2b1bfb633]
   =   Ступил в яму с железными шипами
+stole %ld zorkmid worth of merchandise from %s antique weapons outlet  [9e2d29765762]
+  m   Украл товаров на 1 зоркмид из антикварной оружейной лавки тритона
+  f   Украл товаров на 3 зоркмид из антикварной оружейной лавки крысы
+  n   Украл товаров на 5 зоркмид из антикварной оружейной лавки копья
+  pl  Украл товаров на 21 зоркмид из антикварной оружейной лавки 3 стрел
+stole %ld zorkmid worth of merchandise from %s delicatessen  [16e6af90d432]
+  m   Украл товаров на 1 зоркмид из гастронома тритона
+  f   Украл товаров на 3 зоркмид из гастронома крысы
+  n   Украл товаров на 5 зоркмид из гастронома копья
+  pl  Украл товаров на 21 зоркмид из гастронома 3 стрел
+stole %ld zorkmid worth of merchandise from %s general store  [1dcb35c34b57]
+  m   Украл товаров на 1 зоркмид из универсального магазина тритона
+  f   Украл товаров на 3 зоркмид из универсального магазина крысы
+  n   Украл товаров на 5 зоркмид из универсального магазина копья
+  pl  Украл товаров на 21 зоркмид из универсального магазина 3 стрел
+stole %ld zorkmid worth of merchandise from %s hardware store  [2c2546e461bc]
+  m   Украл товаров на 1 зоркмид из скобяной лавки тритона
+  f   Украл товаров на 3 зоркмид из скобяной лавки крысы
+  n   Украл товаров на 5 зоркмид из скобяной лавки копья
+  pl  Украл товаров на 21 зоркмид из скобяной лавки 3 стрел
+stole %ld zorkmid worth of merchandise from %s health food store  [d894496b8b83]
+  m   Украл товаров на 1 зоркмид из магазина здорового питания тритона
+  f   Украл товаров на 3 зоркмид из магазина здорового питания крысы
+  n   Украл товаров на 5 зоркмид из магазина здорового питания копья
+  pl  Украл товаров на 21 зоркмид из магазина здорового питания 3 стрел
+stole %ld zorkmid worth of merchandise from %s jewelers  [b0512343e6ed]
+  m   Украл товаров на 1 зоркмид из ювелирной лавки тритона
+  f   Украл товаров на 3 зоркмид из ювелирной лавки крысы
+  n   Украл товаров на 5 зоркмид из ювелирной лавки копья
+  pl  Украл товаров на 21 зоркмид из ювелирной лавки 3 стрел
+stole %ld zorkmid worth of merchandise from %s lighting store  [f2b15bde54be]
+  m   Украл товаров на 1 зоркмид из магазина светильников тритона
+  f   Украл товаров на 3 зоркмид из магазина светильников крысы
+  n   Украл товаров на 5 зоркмид из магазина светильников копья
+  pl  Украл товаров на 21 зоркмид из магазина светильников 3 стрел
+stole %ld zorkmid worth of merchandise from %s liquor emporium  [fcc97aa87f47]
+  m   Украл товаров на 1 зоркмид из винной лавки тритона
+  f   Украл товаров на 3 зоркмид из винной лавки крысы
+  n   Украл товаров на 5 зоркмид из винной лавки копья
+  pl  Украл товаров на 21 зоркмид из винной лавки 3 стрел
+stole %ld zorkmid worth of merchandise from %s quality apparel and accessories  [e73ba253a846]
+  m   Украл товаров на 1 зоркмид из салона одежды и аксессуаров тритона
+  f   Украл товаров на 3 зоркмид из салона одежды и аксессуаров крысы
+  n   Украл товаров на 5 зоркмид из салона одежды и аксессуаров копья
+  pl  Украл товаров на 21 зоркмид из салона одежды и аксессуаров 3 стрел
+stole %ld zorkmid worth of merchandise from %s rare books  [17ea32582f92]
+  m   Украл товаров на 1 зоркмид из лавки редких книг тритона
+  f   Украл товаров на 3 зоркмид из лавки редких книг крысы
+  n   Украл товаров на 5 зоркмид из лавки редких книг копья
+  pl  Украл товаров на 21 зоркмид из лавки редких книг 3 стрел
+stole %ld zorkmid worth of merchandise from %s second-hand bookstore  [3c67eaad6a0f]
+  m   Украл товаров на 1 зоркмид из букинистической лавки тритона
+  f   Украл товаров на 3 зоркмид из букинистической лавки крысы
+  n   Украл товаров на 5 зоркмид из букинистической лавки копья
+  pl  Украл товаров на 21 зоркмид из букинистической лавки 3 стрел
+stole %ld zorkmid worth of merchandise from %s used armor dealership  [6cb3d09b4a84]
+  m   Украл товаров на 1 зоркмид из магазина подержанных доспехов тритона
+  f   Украл товаров на 3 зоркмид из магазина подержанных доспехов крысы
+  n   Украл товаров на 5 зоркмид из магазина подержанных доспехов копья
+  pl  Украл товаров на 21 зоркмид из магазина подержанных доспехов 3 стрел
+stole %ld zorkmids worth of merchandise from %s antique weapons outlet  [1b237dca10ed]
+  m   Украл товаров на 1 зоркмид из антикварной оружейной лавки тритона
+  f   Украл товаров на 3 зоркмида из антикварной оружейной лавки крысы
+  n   Украл товаров на 5 зоркмидов из антикварной оружейной лавки копья
+  pl  Украл товаров на 21 зоркмид из антикварной оружейной лавки 3 стрел
+stole %ld zorkmids worth of merchandise from %s delicatessen  [cf6cb731b08c]
+  m   Украл товаров на 1 зоркмид из гастронома тритона
+  f   Украл товаров на 3 зоркмида из гастронома крысы
+  n   Украл товаров на 5 зоркмидов из гастронома копья
+  pl  Украл товаров на 21 зоркмид из гастронома 3 стрел
+stole %ld zorkmids worth of merchandise from %s general store  [f8e6c4c381a6]
+  m   Украл товаров на 1 зоркмид из универсального магазина тритона
+  f   Украл товаров на 3 зоркмида из универсального магазина крысы
+  n   Украл товаров на 5 зоркмидов из универсального магазина копья
+  pl  Украл товаров на 21 зоркмид из универсального магазина 3 стрел
+stole %ld zorkmids worth of merchandise from %s hardware store  [4eab71f118a4]
+  m   Украл товаров на 1 зоркмид из скобяной лавки тритона
+  f   Украл товаров на 3 зоркмида из скобяной лавки крысы
+  n   Украл товаров на 5 зоркмидов из скобяной лавки копья
+  pl  Украл товаров на 21 зоркмид из скобяной лавки 3 стрел
+stole %ld zorkmids worth of merchandise from %s health food store  [28499f8ea78e]
+  m   Украл товаров на 1 зоркмид из магазина здорового питания тритона
+  f   Украл товаров на 3 зоркмида из магазина здорового питания крысы
+  n   Украл товаров на 5 зоркмидов из магазина здорового питания копья
+  pl  Украл товаров на 21 зоркмид из магазина здорового питания 3 стрел
+stole %ld zorkmids worth of merchandise from %s jewelers  [d9b40f92b36c]
+  m   Украл товаров на 1 зоркмид из ювелирной лавки тритона
+  f   Украл товаров на 3 зоркмида из ювелирной лавки крысы
+  n   Украл товаров на 5 зоркмидов из ювелирной лавки копья
+  pl  Украл товаров на 21 зоркмид из ювелирной лавки 3 стрел
+stole %ld zorkmids worth of merchandise from %s lighting store  [49d88a989925]
+  m   Украл товаров на 1 зоркмид из магазина светильников тритона
+  f   Украл товаров на 3 зоркмида из магазина светильников крысы
+  n   Украл товаров на 5 зоркмидов из магазина светильников копья
+  pl  Украл товаров на 21 зоркмид из магазина светильников 3 стрел
+stole %ld zorkmids worth of merchandise from %s liquor emporium  [070ce33443fa]
+  m   Украл товаров на 1 зоркмид из винной лавки тритона
+  f   Украл товаров на 3 зоркмида из винной лавки крысы
+  n   Украл товаров на 5 зоркмидов из винной лавки копья
+  pl  Украл товаров на 21 зоркмид из винной лавки 3 стрел
+stole %ld zorkmids worth of merchandise from %s quality apparel and accessories  [32c6a2a6a984]
+  m   Украл товаров на 1 зоркмид из салона одежды и аксессуаров тритона
+  f   Украл товаров на 3 зоркмида из салона одежды и аксессуаров крысы
+  n   Украл товаров на 5 зоркмидов из салона одежды и аксессуаров копья
+  pl  Украл товаров на 21 зоркмид из салона одежды и аксессуаров 3 стрел
+stole %ld zorkmids worth of merchandise from %s rare books  [1fa83c7b71e0]
+  m   Украл товаров на 1 зоркмид из лавки редких книг тритона
+  f   Украл товаров на 3 зоркмида из лавки редких книг крысы
+  n   Украл товаров на 5 зоркмидов из лавки редких книг копья
+  pl  Украл товаров на 21 зоркмид из лавки редких книг 3 стрел
+stole %ld zorkmids worth of merchandise from %s second-hand bookstore  [c45fb55c7f75]
+  m   Украл товаров на 1 зоркмид из букинистической лавки тритона
+  f   Украл товаров на 3 зоркмида из букинистической лавки крысы
+  n   Украл товаров на 5 зоркмидов из букинистической лавки копья
+  pl  Украл товаров на 21 зоркмид из букинистической лавки 3 стрел
+stole %ld zorkmids worth of merchandise from %s used armor dealership  [577f9342d1e8]
+  m   Украл товаров на 1 зоркмид из магазина подержанных доспехов тритона
+  f   Украл товаров на 3 зоркмида из магазина подержанных доспехов крысы
+  n   Украл товаров на 5 зоркмидов из магазина подержанных доспехов копья
+  pl  Украл товаров на 21 зоркмид из магазина подержанных доспехов 3 стрел
 strangulation  [c0083daff756]
   =   Удушение
 stray tab  [ddfd06769a0b]
@@ -40991,6 +41750,21 @@ tangle tree  [1acdd66ede6f]
   =   Цепкое дерево
 tapeworm  [5a3da57c0cd5]
   =   Солитёр
+tasted meat (%s) for the first time  [5f35a61f8372]
+  m   Впервые попробовал мясо (тритон)
+  f   Впервые попробовал мясо (крыса)
+  n   Впервые попробовал мясо (копьё)
+  pl  Впервые попробовал мясо (3 стрелы)
+tasted meat by-products for the first time, by eating %s  [f51e80672801]
+  m   Впервые попробовал мясные субпродукты, съев тритона
+  f   Впервые попробовал мясные субпродукты, съев крысу
+  n   Впервые попробовал мясные субпродукты, съев копьё
+  pl  Впервые попробовал мясные субпродукты, съев 3 стрелы
+tasted meat for the first time, by eating %s  [d091dbd16c83]
+  m   Впервые попробовал мясо, съев тритона
+  f   Впервые попробовал мясо, съев крысу
+  n   Впервые попробовал мясо, съев копьё
+  pl  Впервые попробовал мясо, съев 3 стрелы
 tasting %s meat  [16355e4821a8]
   m   Проба мяса тритона
   f   Проба мяса крысы
@@ -41125,6 +41899,11 @@ tower of flame  [7d350fd19b08]
   =   Столб пламени
 traditional: by monster level, by internal monster index  [faaae6cf861b]
   =   Традиционный: по уровню монстра, затем по внутреннему номеру
+transformed into %s  [a421e1690b4f]
+  m   Превратился в тритона
+  f   Превратился в крысу
+  n   Превратился в копьё
+  pl  Превратился в 3 стрелы
 travel to a specific location on the map  [0943806f3359]
   =   Отправиться в выбранное место на карте
 travel to previously selected travel location  [38ce603ad418]
@@ -41256,6 +42035,14 @@ use standout for --more--  [abb5c935c909]
   =   Выделять --more--
 use the number pad for movement  [f462046b35ef]
   =   Ходить цифровой клавиатурой
+used a helm to turn chaotic  [24471ee46ed8]
+  =   Стал хаотичным благодаря шлему
+used a helm to turn lawful  [47e90350a9f1]
+  =   Стал законопослушным благодаря шлему
+used a helm to turn neutral  [fe90e32eff43]
+  =   Стал нейтральным благодаря шлему
+used a helm to turn unaligned  [d871f642ec35]
+  =   Стал безверным благодаря шлему
 user interface for object selection  [91bac77a80a2]
   =   Способ выбора предметов
 using a magical horn on herself  [be43aa4af250]
@@ -41319,6 +42106,46 @@ warned of %s  [e8733efade98]
   f   Чутьё на крысу
   n   Чутьё на копьё
   pl  Чутьё на 3 стрелы
+was bestowed with %s  [81b27fcc0b5c]
+  m   Получил в дар тритона
+  f   Получил в дар крысу
+  n   Получил в дар копьё
+  pl  Получил в дар 3 стрелы
+was bestowed with %s by %s  [c1e130cbdfb4]
+  m   Получил тритона в дар от тритона
+  f   Получил крысу в дар от крысы
+  n   Получил копьё в дар от копья
+  pl  Получил 3 стрелы в дар от 3 стрел
+was chosen to steal souls for the Glory of %s  [7e71dc395a1d]
+  m   Был избран красть души во славу тритона
+  f   Был избран красть души во славу крысы
+  n   Был избран красть души во славу копья
+  pl  Был избран красть души во славу 3 стрел
+was chosen to take lives for the Glory of %s  [3b664c60a13b]
+  m   Был избран отнимать жизни во славу тритона
+  f   Был избран отнимать жизни во славу крысы
+  n   Был избран отнимать жизни во славу копья
+  pl  Был избран отнимать жизни во славу 3 стрел
+was crowned "The Hand of Elbereth" by %s  [bdb598c3f291]
+  m   Тритон нарёк его Дланью Elbereth
+  f   Крыса нарекла его Дланью Elbereth
+  n   Копьё нарекло его Дланью Elbereth
+  pl  3 стрелы нарекли его Дланью Elbereth
+was denied %s!  The Lady of the Lake has deemed her unworthy  [5bb73db3693a]
+  m   Не получила тритона!  Леди Озера сочла её недостойной
+  f   Не получила крысы!  Леди Озера сочла её недостойной
+  n   Не получила копья!  Леди Озера сочла её недостойной
+  pl  Не получила 3 стрел!  Леди Озера сочла её недостойной
+was denied %s!  The Lady of the Lake has deemed him unworthy  [a959835eb85d]
+  m   Не получил тритона!  Леди Озера сочла его недостойным
+  f   Не получил крысы!  Леди Озера сочла его недостойным
+  n   Не получил копья!  Леди Озера сочла его недостойным
+  pl  Не получил 3 стрел!  Леди Озера сочла его недостойным
+was given %s by the Lady of the Lake  [e5cf76442841]
+  m   Получил тритона от Леди Озера
+  f   Получил крысу от Леди Озера
+  n   Получил копьё от Леди Озера
+  pl  Получил 3 стрелы от Леди Озера
 water lemon  [4dd4a0f8d1da]
   =   Водяной лимон
 water melon  [ad34dd249922]
@@ -41391,6 +42218,16 @@ wire shark  [a4bd78e21e19]
   =   Проводная акула
 wish for something  [c7d17cb37e0e]
   =   Загадать желание
+wished for "%s", got "%s"  [d12915dece88]
+  m   Загадал «тритон» и получил «тритон»
+  f   Загадал «крыса» и получил «крыса»
+  n   Загадал «копьё» и получил «копьё»
+  pl  Загадал «3 стрелы» и получил «3 стрелы»
+wished for %s  [3e214cf2c2c0]
+  m   Загадал тритона
+  f   Загадал крысу
+  n   Загадал копьё
+  pl  Загадал 3 стрелы
 witch doctor  [674b4906f9c2]
   =   Знахарь
 wolpertinger  [729185f001b7]

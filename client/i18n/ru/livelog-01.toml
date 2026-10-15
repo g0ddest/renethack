@@ -1,0 +1,940 @@
+# The chronicle's events (livelog_printf: #chronicle, the end's "Major
+# events"), the hero their subject, in the past tense of the hero's
+# gender. Variants the engine never logs (neuter, group, adrift heroes,
+# an achievement with an object it has not) are left out.
+
+[c8e678c9e876]
+en = "%s the %s %s %s entered the dungeon"
+ru = "{1}, {2:hero} {3:hero} {4:hero}, {hero:gender|вошёл|вошла} в подземелье"
+
+[748c9d706328]
+en = "%s the %s female %s %s entered the dungeon"
+ru = "{1}, {2:f} {3:f} {4:f}, вошла в подземелье"
+
+[0219c378e4fe]
+en = "%s the %s male %s %s entered the dungeon"
+ru = "{1}, {2:m} {3:m} {4:m}, вошёл в подземелье"
+
+[c318f8dc4e99]
+en = "%s the %s %s entered the dungeon"
+ru = "{1}, {2:hero} {3:hero}, {hero:gender|вошёл|вошла} в подземелье"
+
+[687da5946158]
+en = "%s the female %s %s entered the dungeon"
+ru = "{1}, {2:f} {3:f}, вошла в подземелье"
+
+[4d4840a41463]
+en = "%s the male %s %s entered the dungeon"
+ru = "{1}, {2:m} {3:m}, вошёл в подземелье"
+
+[a7e06e33ec4d]
+en = "attained the rank of %s (level %d)"
+ru = "{hero:gender|получил|получила} звание «{1}» (уровень {2})"
+
+[d3bcd42d9e36]
+en = "acquired The Amulet of Yendor"
+ru = "{hero:gender|добыл|добыла} Амулет Йендора"
+
+[66dfb6c7ad58]
+en = "acquired the Bell of Opening"
+ru = "{hero:gender|добыл|добыла} Колокол Открытия"
+
+[570f3ff16153]
+en = "acquired the Book of the Dead"
+ru = "{hero:gender|добыл|добыла} Книгу Мёртвых"
+
+[79d79320dd33]
+en = "acquired the Candelabrum of Invocation"
+ru = "{hero:gender|добыл|добыла} Канделябр Призыва"
+
+[4e724558d5ca]
+en = "acquired the Mines' End %s"
+ru = "{hero:gender|добыл|добыла} {1:acc} на Дне копей"
+
+[1b06defacb15]
+en = "acquired the Sokoban %s"
+ru = "{hero:gender|добыл|добыла} {1:acc} в Сокобане"
+
+[4272c339b412]
+en = "consulted the Oracle"
+ru = "{hero:gender|посоветовался|посоветовалась} с Оракулом"
+
+[ba7f9bf14a25]
+en = "entered Gehennom"
+ru = "{hero:gender|вошёл|вошла} в Геенну"
+
+[6aea63665583]
+en = "entered Sokoban"
+ru = "{hero:gender|вошёл|вошла} в Сокобан"
+
+[3970bb6caf55]
+en = "entered a shop"
+ru = "{hero:gender|вошёл|вошла} в лавку"
+
+[e3a02a004c56]
+en = "entered a temple"
+ru = "{hero:gender|вошёл|вошла} в храм"
+
+[155132d5d177]
+en = "entered the Astral Plane"
+ru = "{hero:gender|попал|попала} на Астральный план"
+
+[192ee8d04e58]
+en = "entered the Bigroom"
+ru = "{hero:gender|вошёл|вошла} в Большой зал"
+
+[3fb09fe7343b]
+en = "entered the Elemental Planes"
+ru = "{hero:gender|попал|попала} на Стихийные планы"
+
+[fdb3a8f1ca6d]
+en = "entered the Gnomish Mines"
+ru = "{hero:gender|вошёл|вошла} в Гномьи копи"
+
+[14df5aa214df]
+en = "hero never wore armor"
+ru = "{hero:gender|герой ни разу не надел доспехов|героиня ни разу не надела доспехов}"
+
+[1f7680c7d64a]
+en = "hero was always blond, no, blind"
+ru = "{hero:gender|герой всегда был белокур, то есть слеп|героиня всегда была белокура, то есть слепа}"
+
+[b5cb2f03cb7d]
+en = "killed Medusa"
+ru = "{hero:gender|убил|убила} Медузу"
+
+[8e869b17df03]
+en = "learned castle drawbridge's tune"
+ru = "{hero:gender|узнал|узнала} мелодию подъёмного моста замка"
+
+[df8925af7dfd]
+en = "performed the invocation"
+ru = "{hero:gender|совершил|совершила} обряд призыва"
+
+[f5185a37371f]
+en = "reached Mine Town"
+ru = "{hero:gender|добрался|добралась} до Шахтёрского городка"
+
+[e8fedeecaeca]
+en = "read a Discworld novel"
+ru = "{hero:gender|прочёл|прочла} роман о Плоском мире"
+
+[e8071033db0d]
+en = "killed for the first time"
+ru = "{hero:gender|впервые убил|впервые убила}"
+
+[47fdd2b9d401]
+en = "ate for the first time - %s"
+ru = "{hero:gender|впервые поел|впервые поела}: {1}"
+
+[dfa500d033fd]
+en = "ate for the first time (%s)"
+ru = "{hero:gender|впервые поел|впервые поела} ({1})"
+
+[d0ede3499503]
+en = "ate for the first time (spinach)"
+ru = "{hero:gender|впервые поел|впервые поела} (шпинат)"
+
+[ed328a774565]
+en = "ate for the first time, by chewing through %s"
+ru = "{hero:gender|впервые поел|впервые поела}, прогрызя {1:acc}"
+
+[fdeaaef4d33d]
+en = "ate for the first time, by chewing through a boulder"
+ru = "{hero:gender|впервые поел|впервые поела}, прогрызя валун"
+
+[1b445329931d]
+en = "ate for the first time, by chewing through a door"
+ru = "{hero:gender|впервые поел|впервые поела}, прогрызя дверь"
+
+[84150c223c0e]
+en = "ate for the first time, by chewing through a tree"
+ru = "{hero:gender|впервые поел|впервые поела}, прогрызя дерево"
+
+[97e67a040c34]
+en = "ate for the first time, by chewing through iron bars"
+ru = "{hero:gender|впервые поел|впервые поела}, прогрызя железную решётку"
+
+[69415756799b]
+en = "ate for the first time, by chewing through rock"
+ru = "{hero:gender|впервые поел|впервые поела}, прогрызя камень"
+
+[a8a555e4b3cd]
+en = "consumed animal products (%s) for the first time"
+ru = "{hero:gender|впервые съел|впервые съела} продукт животного происхождения ({1})"
+
+[d19cb35977f6]
+en = "consumed animal products for the first time, by eating %s"
+ru = "{hero:gender|впервые съел|впервые съела} продукт животного происхождения: {1:acc}"
+
+[5f35a61f8372]
+en = "tasted meat (%s) for the first time"
+ru = "{hero:gender|впервые попробовал|впервые попробовала} мясо ({1})"
+
+[d091dbd16c83]
+en = "tasted meat for the first time, by eating %s"
+ru = "{hero:gender|впервые попробовал|впервые попробовала} мясо, съев {1:acc}"
+
+[f51e80672801]
+en = "tasted meat by-products for the first time, by eating %s"
+ru = "{hero:gender|впервые попробовал|впервые попробовала} мясные субпродукты, съев {1:acc}"
+
+[4e4b3813ab2b]
+en = "changed form for the first time by mimicking %s"
+ru = "{hero:gender|впервые сменил|впервые сменила} облик, притворившись {1:ins}"
+
+[1610b1338e3a]
+en = "changed form for the first time by mimicking a pile of gold"
+ru = "{hero:gender|впервые сменил|впервые сменила} облик, притворившись грудой золота"
+
+[f0949dd7405a]
+en = "changed form for the first time by mimicking an orange"
+ru = "{hero:gender|впервые сменил|впервые сменила} облик, притворившись апельсином"
+
+[721672b54a0a]
+en = "changed form for the first time, becoming %s"
+ru = "{hero:gender|впервые сменил|впервые сменила} облик, став {1:ins}"
+
+[23e5bd885c1f]
+en = "obtained his first pet (%s)"
+ru = "завёл первого питомца ({1})"
+
+[be6fd307e3e0]
+en = "obtained her first pet (%s)"
+ru = "завела первого питомца ({1})"
+
+[2e8d4ecc3f14]
+en = "hit with a wielded weapon (%s) for the first time"
+ru = "{hero:gender|впервые ударил|впервые ударила} оружием в руках ({1})"
+
+[908f125aae6e]
+en = "hit with a wielded weapon () for the first time"
+ru = "{hero:gender|впервые ударил|впервые ударила} оружием в руках"
+
+[1b83b8544d8f]
+en = "polymorphed his first item"
+ru = "впервые превратил предмет"
+
+[37d5a8b45027]
+en = "polymorphed her first item"
+ru = "впервые превратила предмет"
+
+[41fb15a1125d]
+en = "polymorphed his first object"
+ru = "впервые превратил предмет"
+
+[0c5e8624292d]
+en = "polymorphed her first object"
+ru = "впервые превратила предмет"
+
+[dfa09e025135]
+en = "rejected atheism with a prayer"
+ru = "{hero:gender|отрёкся|отреклась} от атеизма, помолившись"
+
+[43d992dcc8df]
+en = "rejected atheism by turning undead"
+ru = "{hero:gender|отрёкся|отреклась} от атеизма, изгоняя нежить"
+
+[f7afa699f16c]
+en = "rejected atheism by offering %s on an altar of %s"
+ru = "{hero:gender|отрёкся|отреклась} от атеизма, принеся {1:acc} в жертву на алтаре {2:gen}"
+
+[bf07446088ef]
+en = "rejected atheism by consulting with %s"
+ru = "{hero:gender|отрёкся|отреклась} от атеизма, побеседовав с {1:ins}"
+
+[84c451739e5f]
+en = "eschewed atheism, by dropping %s on an altar"
+ru = "{hero:gender|отказался|отказалась} от атеизма, положив {1:acc} на алтарь"
+
+[b7c3de78ac4f]
+en = "became literate by reading %s"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав {1:acc}"
+
+[e41ad8480c3a]
+en = "became literate by reading a fortune cookie"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав печенье с предсказанием"
+
+[48135fc0ee2b]
+en = "became literate by reading a T-shirt"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав футболку"
+
+[d97acd025060]
+en = "became literate by reading an apron"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав фартук"
+
+[18745adf88fa]
+en = "became literate by reading a cornuthaum"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав корнутаум"
+
+[87044d175bc6]
+en = "became literate by reading a dunce cap"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав дурацкий колпак"
+
+[4c7adcde4d76]
+en = "became literate by reading a credit card"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав кредитную карту"
+
+[797af327eacc]
+en = "became literate by reading a magic marker"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав волшебный маркер"
+
+[0162973a62ed]
+en = "became literate by reading a coin's engravings"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав надпись на монете"
+
+[f6524859e33c]
+en = "became literate by reading the divine signature of Odin"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав божественную подпись Одина"
+
+[3e444544c9e7]
+en = "became literate by reading a candy bar wrapper"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав обёртку шоколадного батончика"
+
+[11012dbc5323]
+en = "became literate by reading a book"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав книгу"
+
+[4390273cfa5d]
+en = "became literate by reading a scroll"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав свиток"
+
+[9767a8c9e98b]
+en = "became literate by reading something"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав что-то"
+
+[16ef5d7189bf]
+en = "became literate by reading the fortune inside a cookie"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав предсказание в печенье"
+
+[fc9159d988f9]
+en = "became literate by deciphering a scroll label"
+ru = "{hero:gender|стал грамотным|стала грамотной}, разобрав надпись на свитке"
+
+[f7ac9e501c41]
+en = "became literate by writing %s"
+ru = "{hero:gender|стал грамотным|стала грамотной}, написав {1:acc}"
+
+[13f65687fe0f]
+en = "became literate by writing a book"
+ru = "{hero:gender|стал грамотным|стала грамотной}, написав книгу"
+
+[dc7ead1b6a96]
+en = "became literate by writing a scroll"
+ru = "{hero:gender|стал грамотным|стала грамотной}, написав свиток"
+
+[c3640a754933]
+en = "became literate by writing a spellbook"
+ru = "{hero:gender|стал грамотным|стала грамотной}, написав книгу заклинаний"
+
+[c0ccf4652929]
+en = "became literate by engraving \"%s\""
+ru = "{hero:gender|стал грамотным|стала грамотной}, выгравировав «{1}»"
+
+[4fbd8cc52fb2]
+en = "became literate by naming %s"
+ru = "{hero:gender|стал грамотным|стала грамотной}, дав имя {1:dat}"
+
+[b2b8cf2dcb1d]
+en = "chose %s to be named \"%s\""
+ru = "{hero:gender|решил|решила} назвать {1:acc} «{2}»"
+
+[58fcb51207fd]
+en = "became literate by reading A Hat Full of Sky"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Шляпа, полная неба»"
+
+[11d5fba641bb]
+en = "became literate by reading Carpe Jugulum"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Carpe Jugulum. Хватай за горло!»"
+
+[875512c55f2a]
+en = "became literate by reading Equal Rites"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Творцы заклинаний»"
+
+[96410f7b0052]
+en = "became literate by reading Eric"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Эрик»"
+
+[7db806526e31]
+en = "became literate by reading Feet of Clay"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Ноги из глины»"
+
+[f7c64a8392af]
+en = "became literate by reading Going Postal"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Держи марку!»"
+
+[2639b094b08a]
+en = "became literate by reading Guards! Guards!"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Стража! Стража!»"
+
+[cec654599358]
+en = "became literate by reading Hogfather"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Санта-Хрякус»"
+
+[3df2f61dfb7a]
+en = "became literate by reading I Shall Wear Midnight"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Я надену чёрное»"
+
+[a2969e55dcbd]
+en = "became literate by reading Interesting Times"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Интересные времена»"
+
+[a2414e91e243]
+en = "became literate by reading Jingo"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Патриот»"
+
+[4497fd517a4d]
+en = "became literate by reading Lords and Ladies"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Дамы и господа»"
+
+[7de0f3d8bc8c]
+en = "became literate by reading Making Money"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Делай деньги»"
+
+[90589b232dba]
+en = "became literate by reading Maskerade"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Маскарад»"
+
+[ecd7b36d92da]
+en = "became literate by reading Men at Arms"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «К оружию! К оружию!»"
+
+[9025fecf0e57]
+en = "became literate by reading Monstrous Regiment"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Пехотная баллада»"
+
+[0de5335bf272]
+en = "became literate by reading Mort"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Мор, ученик Смерти»"
+
+[e9d8d1b701b8]
+en = "became literate by reading Moving Pictures"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Движущиеся картинки»"
+
+[74755f08fe16]
+en = "became literate by reading Night Watch"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Ночная стража»"
+
+[8aaa73b63bd0]
+en = "became literate by reading Pyramids"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Пирамиды»"
+
+[f4b8a3d04b4d]
+en = "became literate by reading Raising Steam"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Поддай пару!»"
+
+[efb92e00889b]
+en = "became literate by reading Reaper Man"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Мрачный Жнец»"
+
+[f4ec72d80462]
+en = "became literate by reading Small Gods"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Мелкие боги»"
+
+[c938ebb02e0c]
+en = "became literate by reading Snuff"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Дело табак»"
+
+[048a7bb6f7b3]
+en = "became literate by reading Soul Music"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Роковая музыка»"
+
+[b7337cd6affa]
+en = "became literate by reading Sourcery"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Посох и шляпа»"
+
+[2907b34d0263]
+en = "became literate by reading The Amazing Maurice and His Educated Rodents"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Изумительный Морис и его учёные грызуны»"
+
+[052bbdeea122]
+en = "became literate by reading The Colour of Magic"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Цвет волшебства»"
+
+[02ded145eba6]
+en = "became literate by reading The Fifth Elephant"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Пятый элефант»"
+
+[06d7feb89d05]
+en = "became literate by reading The Last Continent"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Последний континент»"
+
+[1c5d0d562fcf]
+en = "became literate by reading The Last Hero"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Последний герой»"
+
+[96b1483b4300]
+en = "became literate by reading The Light Fantastic"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Безумная звезда»"
+
+[45570da9bd3a]
+en = "became literate by reading The Shepherd's Crown"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Пастушья корона»"
+
+[a6ba5d7b775b]
+en = "became literate by reading The Truth"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Правда»"
+
+[2cf489f5353a]
+en = "became literate by reading The Wee Free Men"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Маленький свободный народец»"
+
+[89cb2e9da33e]
+en = "became literate by reading Thief of Time"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Вор времени»"
+
+[50c0d1c2aa91]
+en = "became literate by reading Thud!"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Шмяк!»"
+
+[18440b737bea]
+en = "became literate by reading Unseen Academicals"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Незримые академики»"
+
+[6bc744d8523d]
+en = "became literate by reading Wintersmith"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Зимних дел мастер»"
+
+[06e96bbdbfb2]
+en = "became literate by reading Witches Abroad"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Ведьмы за границей»"
+
+[6c5dce7d7e00]
+en = "became literate by reading Wyrd Sisters"
+ru = "{hero:gender|стал грамотным|стала грамотной}, прочитав «Вещие сестрички»"
+
+[5e5a8481a444]
+en = "gained experience level %d"
+ru = "{hero:gender|достиг|достигла} {1}-го уровня опыта"
+
+[e5178c117479]
+en = "regained experience level %d"
+ru = "{hero:gender|вернул|вернула} {1}-й уровень опыта"
+
+[cb04c44000cf]
+en = "lost experience level %d"
+ru = "{hero:gender|потерял|потеряла} {1}-й уровень опыта"
+
+[294889a2d098]
+en = "lost all experience"
+ru = "{hero:gender|потерял|потеряла} весь опыт"
+
+[69e9f10f7113]
+en = "became experience level %d as a new %s"
+ru = "{hero:gender|стал|стала} {2:ins} {1}-го уровня опыта"
+
+[a421e1690b4f]
+en = "transformed into %s"
+ru = "{hero:gender|превратился|превратилась} в {1:acc}"
+
+[b2a5df6b13cd]
+en = "polymorphed into %s"
+ru = "{hero:gender|превратился|превратилась} в {1:acc}"
+
+[760f4aa3305f]
+en = "killed %s%s"
+ru = "{hero:gender|убил|убила} {1:acc}{2}"
+
+[5cd8488d0ec8]
+en = "destroyed %s%s"
+ru = "{hero:gender|уничтожил|уничтожила} {1:acc}{2}"
+
+[39a0447104fa]
+en = "killed %s%s (%dst time)"
+ru = "{hero:gender|убил|убила} {1:acc}{2} (в {3}-й раз)"
+
+[aeba08bc2659]
+en = "destroyed %s%s (%dst time)"
+ru = "{hero:gender|уничтожил|уничтожила} {1:acc}{2} (в {3}-й раз)"
+
+[9d70de620251]
+en = "%s%s has been killed (%dst time)"
+ru = "{1}{2} {1:gender|убит|убита|убито|убиты} (в {3}-й раз)"
+
+[20e61cee33a4]
+en = "%s%s has been destroyed (%dst time)"
+ru = "{1}{2} {1:gender|уничтожен|уничтожена|уничтожено|уничтожены} (в {3}-й раз)"
+
+[f7e6e909f356]
+en = "killed %s%s (%dnd time)"
+ru = "{hero:gender|убил|убила} {1:acc}{2} (в {3}-й раз)"
+
+[7fa7fda2582b]
+en = "destroyed %s%s (%dnd time)"
+ru = "{hero:gender|уничтожил|уничтожила} {1:acc}{2} (в {3}-й раз)"
+
+[e341d4a173ae]
+en = "%s%s has been killed (%dnd time)"
+ru = "{1}{2} {1:gender|убит|убита|убито|убиты} (в {3}-й раз)"
+
+[ab550a3eec0e]
+en = "%s%s has been destroyed (%dnd time)"
+ru = "{1}{2} {1:gender|уничтожен|уничтожена|уничтожено|уничтожены} (в {3}-й раз)"
+
+[b14fdb611483]
+en = "killed %s%s (%drd time)"
+ru = "{hero:gender|убил|убила} {1:acc}{2} (в {3}-й раз)"
+
+[980d58843f46]
+en = "destroyed %s%s (%drd time)"
+ru = "{hero:gender|уничтожил|уничтожила} {1:acc}{2} (в {3}-й раз)"
+
+[1e1c8ccea5d2]
+en = "%s%s has been killed (%drd time)"
+ru = "{1}{2} {1:gender|убит|убита|убито|убиты} (в {3}-й раз)"
+
+[effd9ebc26c2]
+en = "%s%s has been destroyed (%drd time)"
+ru = "{1}{2} {1:gender|уничтожен|уничтожена|уничтожено|уничтожены} (в {3}-й раз)"
+
+[49749ccef265]
+en = "killed %s%s (%dth time)"
+ru = "{hero:gender|убил|убила} {1:acc}{2} (в {3}-й раз)"
+
+[13cc9194c48f]
+en = "destroyed %s%s (%dth time)"
+ru = "{hero:gender|уничтожил|уничтожила} {1:acc}{2} (в {3}-й раз)"
+
+[f506ed000ec7]
+en = "%s%s has been killed (%dth time)"
+ru = "{1}{2} {1:gender|убит|убита|убито|убиты} (в {3}-й раз)"
+
+[f1e18408e446]
+en = "%s%s has been destroyed (%dth time)"
+ru = "{1}{2} {1:gender|уничтожен|уничтожена|уничтожено|уничтожены} (в {3}-й раз)"
+
+[44a52b9a0988]
+en = "%s%s has been killed"
+ru = "{1}{2} {1:gender|убит|убита|убито|убиты}"
+
+[10a3f57c133c]
+en = "%s%s has been destroyed"
+ru = "{1}{2} {1:gender|уничтожен|уничтожена|уничтожено|уничтожены}"
+
+[cb4271518103]
+en = "murdered his faithful %s"
+ru = "убил {1:gender|своего верного|свою верную|своё верное|своих верных} {1:acc}"
+
+[ba4bd155304f]
+en = "murdered her faithful %s"
+ru = "убила {1:gender|своего верного|свою верную|своё верное|своих верных} {1:acc}"
+
+[b3250ae2e20a]
+en = "murdered %s, his faithful %s"
+ru = "убил {1}, {2:gender|своего верного|свою верную|своё верное|своих верных} {2:acc}"
+
+[52d1115bb2de]
+en = "murdered %s, her faithful %s"
+ru = "убила {1}, {2:gender|своего верного|свою верную|своё верное|своих верных} {2:acc}"
+
+[7526908d29d3]
+en = "murdered %shis faithful %s"
+ru = "убил {1}{2:gender|своего верного|свою верную|своё верное|своих верных} {2:acc}"
+
+[93faa95859d1]
+en = "murdered %sher faithful %s"
+ru = "убила {1}{2:gender|своего верного|свою верную|своё верное|своих верных} {2:acc}"
+
+[8b736e4a6a42]
+en = "just blew up his bag of holding"
+ru = "взорвал свою сумку хранения"
+
+[0bc3928f9c1f]
+en = "just blew up her bag of holding"
+ru = "взорвала свою сумку хранения"
+
+[52029ac7a668]
+en = "just blew up his bag of holding via tipping"
+ru = "взорвал свою сумку хранения, вытряхивая её"
+
+[de1aba19fdd3]
+en = "just blew up her bag of holding via tipping"
+ru = "взорвала свою сумку хранения, вытряхивая её"
+
+[9af4928a83bd]
+en = "declined to perform genocide"
+ru = "{hero:gender|отказался|отказалась} от геноцида"
+
+[5a537279d14d]
+en = "declined to perform class genocide"
+ru = "{hero:gender|отказался|отказалась} от геноцида класса"
+
+[d39a32975ee4]
+en = "performed his first genocide (%s)"
+ru = "впервые совершил геноцид ({1})"
+
+[6bd1e1e46411]
+en = "performed her first genocide (%s)"
+ru = "впервые совершила геноцид ({1})"
+
+[d878aabdd443]
+en = "performed his first genocide (class %c)"
+ru = "впервые совершил геноцид (класс {1})"
+
+[a1bbf33f1ff7]
+en = "performed her first genocide (class %c)"
+ru = "впервые совершила геноцид (класс {1})"
+
+[bd5ad3cc3472]
+en = "genocided %s"
+ru = "{hero:gender|истребил|истребила} {1:acc}"
+
+[c3bf62ecc197]
+en = "genocided class %c"
+ru = "{hero:gender|истребил|истребила} класс {1}"
+
+[3cffeb4e1fb7]
+en = "declined to make a wish"
+ru = "{hero:gender|отказался|отказалась} от желания"
+
+[160246cf792c]
+en = "made his first wish - \"%s\", got \"%s\""
+ru = "впервые загадал желание «{1}» и получил «{2}»"
+
+[aa5669d27e2a]
+en = "made her first wish - \"%s\", got \"%s\""
+ru = "впервые загадала желание «{1}» и получила «{2}»"
+
+[54675c02dd2c]
+en = "made his first artifact wish - \"%s\", got \"%s\""
+ru = "впервые загадал артефакт «{1}» и получил «{2}»"
+
+[52cc189bc8e8]
+en = "made her first artifact wish - \"%s\", got \"%s\""
+ru = "впервые загадала артефакт «{1}» и получила «{2}»"
+
+[d12915dece88]
+en = "wished for \"%s\", got \"%s\""
+ru = "{hero:gender|загадал|загадала} «{1}» и {hero:gender|получил|получила} «{2}»"
+
+[3e214cf2c2c0]
+en = "wished for %s"
+ru = "{hero:gender|загадал|загадала} {1:acc}"
+
+[e5cf76442841]
+en = "was given %s by the Lady of the Lake"
+ru = "{hero:gender|получил|получила} {1:acc} от Леди Озера"
+
+[a959835eb85d]
+en = "was denied %s!  The Lady of the Lake has deemed him unworthy"
+ru = "не получил {1:gen}!  Леди Озера сочла его недостойным"
+
+[5bb73db3693a]
+en = "was denied %s!  The Lady of the Lake has deemed her unworthy"
+ru = "не получила {1:gen}!  Леди Озера сочла её недостойной"
+
+[e74828c27f30]
+en = "found %s"
+ru = "{hero:gender|нашёл|нашла} {1:acc}"
+
+[5d2530e83d0f]
+en = "found %s carried by a monster"
+ru = "{hero:gender|нашёл|нашла} {1:acc} у монстра"
+
+[1178794fb95b]
+en = "found %s in a container"
+ru = "{hero:gender|нашёл|нашла} {1:acc} в контейнере"
+
+[9277c579e8fb]
+en = "found %s in a shop"
+ru = "{hero:gender|нашёл|нашла} {1:acc} в лавке"
+
+[94b959c667d8]
+en = "found %s on the floor"
+ru = "{hero:gender|нашёл|нашла} {1:acc} на полу"
+
+[81b27fcc0b5c]
+en = "was bestowed with %s"
+ru = "{hero:gender|получил|получила} в дар {1:acc}"
+
+[c1e130cbdfb4]
+en = "was bestowed with %s by %s"
+ru = "{hero:gender|получил|получила} {1:acc} в дар от {2:gen}"
+
+[bdb598c3f291]
+en = "was crowned \"The Hand of Elbereth\" by %s"
+ru = "{1} {1:gender|нарёк|нарекла|нарекло|нарекли} {hero:gender|его|её} Дланью Elbereth"
+
+[e7930c0503c4]
+en = "became %s Envoy of Balance"
+ru = "{hero:gender|стал Посланником Равновесия|стала Посланницей Равновесия} {1:gen}"
+
+[7e71dc395a1d]
+en = "was chosen to steal souls for the Glory of %s"
+ru = "{hero:gender|был избран|была избрана} красть души во славу {1:gen}"
+
+[3b664c60a13b]
+en = "was chosen to take lives for the Glory of %s"
+ru = "{hero:gender|был избран|была избрана} отнимать жизни во славу {1:gen}"
+
+[d22b1da3dc14]
+en = "had his wielded %s transformed into %s"
+ru = "увидел, как его {1} {1:gender|превратился|превратилась|превратилось|превратились} в {2:acc}"
+
+[9ac7a4a2d836]
+en = "had her wielded %s transformed into %s"
+ru = "увидела, как её {1} {1:gender|превратился|превратилась|превратилось|превратились} в {2:acc}"
+
+[de3f6f572612]
+en = "permanently converted to chaotic"
+ru = "навсегда {hero:gender|стал хаотичным|стала хаотичной}"
+
+[24471ee46ed8]
+en = "used a helm to turn chaotic"
+ru = "{hero:gender|стал хаотичным|стала хаотичной} благодаря шлему"
+
+[d9d432025615]
+en = "permanently converted to lawful"
+ru = "навсегда {hero:gender|стал законопослушным|стала законопослушной}"
+
+[47e90350a9f1]
+en = "used a helm to turn lawful"
+ru = "{hero:gender|стал законопослушным|стала законопослушной} благодаря шлему"
+
+[777646060e61]
+en = "permanently converted to neutral"
+ru = "навсегда {hero:gender|стал нейтральным|стала нейтральной}"
+
+[fe90e32eff43]
+en = "used a helm to turn neutral"
+ru = "{hero:gender|стал нейтральным|стала нейтральной} благодаря шлему"
+
+[5393429cddbd]
+en = "permanently converted to unaligned"
+ru = "навсегда {hero:gender|стал безверным|стала безверной}"
+
+[d871f642ec35]
+en = "used a helm to turn unaligned"
+ru = "{hero:gender|стал безверным|стала безверной} благодаря шлему"
+
+[3442b2acaccb]
+en = "%s has expelled you from the quest"
+ru = "{1} {1:gender|изгнал|изгнала|изгнало|изгнали} вас из задания"
+
+[d6e57c9f1418]
+en = "%s has granted access to proceed deeper into the quest"
+ru = "{1} {1:gender|позволил|позволила|позволило|позволили} вам продолжить задание"
+
+[078fe4dded39]
+en = "bribed %s with %ld zorkmid for safe passage"
+ru = "{hero:gender|подкупил|подкупила} {1:acc} {2} зоркмидом за свободный проход"
+
+[5065260f1c5f]
+en = "bribed %s with %ld zorkmids for safe passage"
+ru = "{hero:gender|подкупил|подкупила} {1:acc} {2} {2:plural|зоркмидом|зоркмидами|зоркмидами} за свободный проход"
+
+[ae13df26f38a]
+en = "averted death (%s)"
+ru = "{hero:gender|избежал|избежала} смерти ({1})"
+
+[72bbe843ca54]
+en = "completed %dst Sokoban level"
+ru = "{hero:gender|прошёл|прошла} {1}-й уровень Сокобана"
+
+[b053d8fea8d5]
+en = "completed %dnd Sokoban level"
+ru = "{hero:gender|прошёл|прошла} {1}-й уровень Сокобана"
+
+[a54ec13728b7]
+en = "completed %drd Sokoban level"
+ru = "{hero:gender|прошёл|прошла} {1}-й уровень Сокобана"
+
+[7bdcdd8bff73]
+en = "completed %dth Sokoban level"
+ru = "{hero:gender|прошёл|прошла} {1}-й уровень Сокобана"
+
+[1dcb35c34b57]
+en = "stole %ld zorkmid worth of merchandise from %s general store"
+ru = "{hero:gender|украл|украла} товаров на {1} зоркмид из универсального магазина {2:gen}"
+
+[f8e6c4c381a6]
+en = "stole %ld zorkmids worth of merchandise from %s general store"
+ru = "{hero:gender|украл|украла} товаров на {1} {1:plural|зоркмид|зоркмида|зоркмидов} из универсального магазина {2:gen}"
+
+[6cb3d09b4a84]
+en = "stole %ld zorkmid worth of merchandise from %s used armor dealership"
+ru = "{hero:gender|украл|украла} товаров на {1} зоркмид из магазина подержанных доспехов {2:gen}"
+
+[577f9342d1e8]
+en = "stole %ld zorkmids worth of merchandise from %s used armor dealership"
+ru = "{hero:gender|украл|украла} товаров на {1} {1:plural|зоркмид|зоркмида|зоркмидов} из магазина подержанных доспехов {2:gen}"
+
+[3c67eaad6a0f]
+en = "stole %ld zorkmid worth of merchandise from %s second-hand bookstore"
+ru = "{hero:gender|украл|украла} товаров на {1} зоркмид из букинистической лавки {2:gen}"
+
+[c45fb55c7f75]
+en = "stole %ld zorkmids worth of merchandise from %s second-hand bookstore"
+ru = "{hero:gender|украл|украла} товаров на {1} {1:plural|зоркмид|зоркмида|зоркмидов} из букинистической лавки {2:gen}"
+
+[fcc97aa87f47]
+en = "stole %ld zorkmid worth of merchandise from %s liquor emporium"
+ru = "{hero:gender|украл|украла} товаров на {1} зоркмид из винной лавки {2:gen}"
+
+[070ce33443fa]
+en = "stole %ld zorkmids worth of merchandise from %s liquor emporium"
+ru = "{hero:gender|украл|украла} товаров на {1} {1:plural|зоркмид|зоркмида|зоркмидов} из винной лавки {2:gen}"
+
+[9e2d29765762]
+en = "stole %ld zorkmid worth of merchandise from %s antique weapons outlet"
+ru = "{hero:gender|украл|украла} товаров на {1} зоркмид из антикварной оружейной лавки {2:gen}"
+
+[1b237dca10ed]
+en = "stole %ld zorkmids worth of merchandise from %s antique weapons outlet"
+ru = "{hero:gender|украл|украла} товаров на {1} {1:plural|зоркмид|зоркмида|зоркмидов} из антикварной оружейной лавки {2:gen}"
+
+[16e6af90d432]
+en = "stole %ld zorkmid worth of merchandise from %s delicatessen"
+ru = "{hero:gender|украл|украла} товаров на {1} зоркмид из гастронома {2:gen}"
+
+[cf6cb731b08c]
+en = "stole %ld zorkmids worth of merchandise from %s delicatessen"
+ru = "{hero:gender|украл|украла} товаров на {1} {1:plural|зоркмид|зоркмида|зоркмидов} из гастронома {2:gen}"
+
+[b0512343e6ed]
+en = "stole %ld zorkmid worth of merchandise from %s jewelers"
+ru = "{hero:gender|украл|украла} товаров на {1} зоркмид из ювелирной лавки {2:gen}"
+
+[d9b40f92b36c]
+en = "stole %ld zorkmids worth of merchandise from %s jewelers"
+ru = "{hero:gender|украл|украла} товаров на {1} {1:plural|зоркмид|зоркмида|зоркмидов} из ювелирной лавки {2:gen}"
+
+[e73ba253a846]
+en = "stole %ld zorkmid worth of merchandise from %s quality apparel and accessories"
+ru = "{hero:gender|украл|украла} товаров на {1} зоркмид из салона одежды и аксессуаров {2:gen}"
+
+[32c6a2a6a984]
+en = "stole %ld zorkmids worth of merchandise from %s quality apparel and accessories"
+ru = "{hero:gender|украл|украла} товаров на {1} {1:plural|зоркмид|зоркмида|зоркмидов} из салона одежды и аксессуаров {2:gen}"
+
+[2c2546e461bc]
+en = "stole %ld zorkmid worth of merchandise from %s hardware store"
+ru = "{hero:gender|украл|украла} товаров на {1} зоркмид из скобяной лавки {2:gen}"
+
+[4eab71f118a4]
+en = "stole %ld zorkmids worth of merchandise from %s hardware store"
+ru = "{hero:gender|украл|украла} товаров на {1} {1:plural|зоркмид|зоркмида|зоркмидов} из скобяной лавки {2:gen}"
+
+[17ea32582f92]
+en = "stole %ld zorkmid worth of merchandise from %s rare books"
+ru = "{hero:gender|украл|украла} товаров на {1} зоркмид из лавки редких книг {2:gen}"
+
+[1fa83c7b71e0]
+en = "stole %ld zorkmids worth of merchandise from %s rare books"
+ru = "{hero:gender|украл|украла} товаров на {1} {1:plural|зоркмид|зоркмида|зоркмидов} из лавки редких книг {2:gen}"
+
+[d894496b8b83]
+en = "stole %ld zorkmid worth of merchandise from %s health food store"
+ru = "{hero:gender|украл|украла} товаров на {1} зоркмид из магазина здорового питания {2:gen}"
+
+[28499f8ea78e]
+en = "stole %ld zorkmids worth of merchandise from %s health food store"
+ru = "{hero:gender|украл|украла} товаров на {1} {1:plural|зоркмид|зоркмида|зоркмидов} из магазина здорового питания {2:gen}"
+
+[f2b15bde54be]
+en = "stole %ld zorkmid worth of merchandise from %s lighting store"
+ru = "{hero:gender|украл|украла} товаров на {1} зоркмид из магазина светильников {2:gen}"
+
+[49d88a989925]
+en = "stole %ld zorkmids worth of merchandise from %s lighting store"
+ru = "{hero:gender|украл|украла} товаров на {1} {1:plural|зоркмид|зоркмида|зоркмидов} из магазина светильников {2:gen}"

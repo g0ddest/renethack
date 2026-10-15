@@ -857,6 +857,68 @@ fn a_worn_engraving_is_its_original_worn_as_much() {
     );
 }
 
+#[test]
+fn the_chronicle_s_events() {
+    // #chronicle and the end's "Major events": livelog_printf()'s lines,
+    // the hero their subject, in the past tense of the hero's gender
+    let heroine: &[(&str, &str)] = &[
+        (
+            "Hero the neutral human Valkyrie entered the dungeon",
+            "Hero, нейтральная человеческая валькирия, вошла в подземелье",
+        ),
+        ("entered the Gnomish Mines", "вошла в Гномьи копи"),
+        ("killed Medusa", "убила Медузу"),
+        (
+            "obtained her first pet (kitten)",
+            "завела первого питомца (котёнок)",
+        ),
+        ("killed by a jackal", "убита шакалом"),
+    ];
+    let hero: &[(&str, &str)] = &[
+        (
+            "Hero the chaotic male orcish Wizard entered the dungeon",
+            "Hero, хаотичный орочий волшебник, вошёл в подземелье",
+        ),
+        (
+            "attained the rank of Stripling (level 3)",
+            "получил звание «Новобранец» (уровень 3)",
+        ),
+        ("the Oracle has been killed", "Оракул убит"),
+        (
+            "Croesus has been killed (2nd time)",
+            "Крёз убит (в 2-й раз)",
+        ),
+        (
+            "stole 120 zorkmids worth of merchandise from Asidonhopo's general store",
+            "украл товаров на 120 зоркмидов из универсального магазина Асидонхопо",
+        ),
+        (
+            "murdered his faithful little dog",
+            "убил свою верную собачку",
+        ),
+        (
+            "became literate by reading Mort",
+            "стал грамотным, прочитав «Мор, ученик Смерти»",
+        ),
+        (
+            "was crowned \"The Hand of Elbereth\" by Tyr",
+            "Тюр нарёк его Дланью Elbereth",
+        ),
+    ];
+    for (gender, lines) in [(Gender::Fem, heroine), (Gender::Masc, hero)] {
+        let mut t = Translator::built_in().expect("the built-in translator");
+        t.set_hero(gender);
+        for (en, ru) in lines {
+            let out = t.message(None, &[], en);
+            assert_eq!(
+                (out.text.as_str(), out.status),
+                (*ru, Status::Translated),
+                "{en}"
+            );
+        }
+    }
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {
