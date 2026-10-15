@@ -315,12 +315,6 @@ pub struct RenethackGame {
     pub(crate) settings: Settings,
     /// The settings page while it is open.
     pub(crate) settings_page: Option<SettingsPage>,
-    /// The game's own Gameplay options, as its options menu showed them
-    /// last (None: not read since the settings page opened).
-    pub(crate) game_options: Option<Gameplay>,
-    /// The last read found none of them: not asked again while the page
-    /// is open.
-    options_unread: bool,
     /// What the player set over this game, until the game has it.
     gameplay_goal: Option<Gameplay>,
     /// The game's options menu driven for the page (`drive_options`).
@@ -535,8 +529,6 @@ impl INode for RenethackGame {
             achievement_page: None,
             settings: Settings::default(),
             settings_page: None,
-            game_options: None,
-            options_unread: false,
             gameplay_goal: None,
             options_run: None,
             raw_keys: false,
@@ -1501,10 +1493,10 @@ impl RenethackGame {
                     self.reply(r);
                     return;
                 }
-                RunStep::Done(read) => {
-                    let asked = run.asked().cloned();
+                RunStep::Done => {
+                    let gave = run.goal().clone();
                     self.options_run = None;
-                    self.options_read(asked, read);
+                    self.options_given(&gave);
                 }
             }
         }
@@ -3051,9 +3043,10 @@ impl RenethackGame {
             ui_forced: crate::theme::forced_ui_scale(),
             playing_keys: (self.state == GameState::Playing).then_some(self.ui_state.profile),
             volumes: crate::audio::Bus::ALL.map(crate::audio::volume),
-            // over a game, its own: what the player set until it has it
+            // over a game, its own as its notice tells them: what the player
+            // set until it has it
             game_options: (self.state == GameState::Playing)
-                .then(|| self.gameplay_goal.clone().or(self.game_options.clone()))
+                .then(|| self.gameplay_goal.clone().or(self.world.options.clone()))
                 .flatten(),
         }
     }
@@ -3208,18 +3201,32 @@ impl RenethackGame {
         self.set_settings(s);
     }
 
-    /// The page's Gameplay options are being given to the game or read
-    /// from it (self-tests).
+    /// What the player set on the page is still being given to the game
+    /// (self-tests).
     pub(crate) fn options_busy(&self) -> bool {
         self.options_run.is_some() || self.gameplay_goal.is_some()
     }
 
-    /// The game's own options for the settings page, through its full
-    /// options menu as a player would use it, at a command prompt with
-    /// nothing else under way: what the player set given to the game; else,
-    /// while the page shows the Gameplay section, the values read.
+    /// What the player set over the game, given to it through its own
+    /// full options menu as a player would use it, at a command prompt
+    /// with nothing else under way. Reading needs no menu: the host tells
+    /// the game's options before each request (`World::options`), so a
+    /// look at the page leaves the command ^A repeats as it was.
     fn drive_options(&mut self) {
+        let Some(goal) = self.gameplay_goal.clone() else {
+            return;
+        };
         if self.options_run.is_some() || self.state != GameState::Playing {
+            return;
+        }
+        // the game has it already
+        if self
+            .world
+            .options
+            .as_ref()
+            .is_some_and(|o| o.same_as(&goal))
+        {
+            self.gameplay_goal = None;
             return;
         }
         let idle = matches!(self.pending, Some((_, Prompt::Command)))
@@ -3231,42 +3238,17 @@ impl RenethackGame {
         if !idle {
             return;
         }
-        let has = |goal: &Gameplay| self.game_options.as_ref().is_some_and(|g| g.same_as(goal));
-        let (run, reply) = match &self.gameplay_goal {
-            Some(goal) if !has(goal) => OptionsRun::change(goal.clone()),
-            _ if self.game_options.is_none()
-                && !self.options_unread
-                && self
-                    .settings_page
-                    .as_ref()
-                    .is_some_and(|p| p.section() == settings_page::Section::Gameplay) =>
-            {
-                OptionsRun::read()
-            }
-            _ => return,
-        };
+        let (run, reply) = OptionsRun::change(goal);
         self.options_run = Some(run);
         self.reply(reply);
     }
 
-    /// The options menu read (None: without the section's options) at the
-    /// end of a run started to give `asked` (None: to read): the page shows
-    /// what the game has (kept while it is open: the player may use O
-    /// after). The goal is done once the game has it, or would not take
-    /// it; a goal set since goes next.
-    fn options_read(&mut self, asked: Option<Gameplay>, read: Option<Gameplay>) {
-        let same = |a: &Option<Gameplay>, b: &Gameplay| a.as_ref().is_some_and(|a| a.same_as(b));
-        if let Some(goal) = &self.gameplay_goal
-            && (same(&read, goal) || same(&asked, goal))
-        {
+    /// A run that gave the game `gave` ended: the goal is done (the game
+    /// has it, or would not take it: the page shows what its notice tells)
+    /// unless the player set another since, which goes next.
+    fn options_given(&mut self, gave: &Gameplay) {
+        if self.gameplay_goal.as_ref().is_some_and(|g| g.same_as(gave)) {
             self.gameplay_goal = None;
-        }
-        let open = self.settings_page.is_some();
-        self.options_unread = open && read.is_none();
-        self.game_options = read.filter(|_| open);
-        let view = self.settings_view();
-        if let Some(page) = self.settings_page.as_mut() {
-            page.show(&view);
         }
     }
 
@@ -3306,9 +3288,6 @@ impl RenethackGame {
             return;
         }
         self.settings_page = None;
-        // read again next time: the player may change them with O
-        self.game_options = None;
-        self.options_unread = false;
         if ui.screens.settings_in_game() && self.state == GameState::Playing {
             ui.screens.hide();
         } else {
@@ -3811,8 +3790,6 @@ impl RenethackGame {
                 self.typeahead.clear();
                 self.reset_orders();
                 self.options_run = None;
-                self.game_options = None;
-                self.options_unread = false;
                 self.gameplay_goal = None;
                 self.link_error = None;
                 self.name = Some(name.to_string());

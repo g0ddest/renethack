@@ -9,7 +9,8 @@
 //! profile: the game does both (`RenethackGame::settings_step`), then
 //! shows the page what is now (`SettingsPage::show`). The Gameplay
 //! section shows a new game's options at the title and the game's own
-//! over it, as the game reports them (`RenethackGame::drive_options`).
+//! over it, as the game tells them; a change there goes to the game
+//! through its options menu (`RenethackGame::drive_options`).
 
 use std::cell::RefCell;
 
@@ -294,8 +295,8 @@ pub struct View {
     pub playing_keys: Option<KeyProfile>,
     /// The buses' volumes, linear, in `Bus::ALL`'s order.
     pub volumes: [f32; 5],
-    /// Over a game, its own Gameplay options as it reported them (or as
-    /// the player set them, until it has them); None until it tells.
+    /// Over a game, its own Gameplay options as its notice told them (or
+    /// as the player set them, until it has them); None until it tells.
     pub game_options: Option<Gameplay>,
 }
 

@@ -2,13 +2,14 @@
 //! on (the rest stay on the engine's own menu). NetHack keeps them in the
 //! save, so the profile's reach a new game only, in the options it starts
 //! with (`Gameplay::engine_options`); a game in play has its own, which the
-//! page reads from the engine's full options menu (`#optionsfull`) and
-//! changes through it as a player would (`OptionsRun`): the entries
-//! picked, their questions answered, the menu read again.
+//! host tells in its options notice (`Gameplay::from_notice`) and which
+//! change through the engine's full options menu (`#optionsfull`) as a
+//! player would (`OptionsRun`): the entries that differ picked, their
+//! questions answered.
 
 use std::collections::{BTreeMap, VecDeque};
 
-use nh_protocol::{MenuItem, Reply};
+use nh_protocol::{MenuItem, OptionsNotice, Reply};
 use serde::{Deserialize, Serialize};
 
 use crate::{Prompt, step_through};
@@ -374,6 +375,25 @@ impl Gameplay {
         .join(",")
     }
 
+    /// The values an options notice tells (a burden it does not know: the
+    /// default's).
+    pub fn from_notice(n: &OptionsNotice) -> Gameplay {
+        Gameplay {
+            autopickup: n.autopickup,
+            pickup_types: n.pickup_types.clone(),
+            pickup_burden: Burden::of_word(&n.pickup_burden).unwrap_or_default(),
+            autoopen: n.autoopen,
+            autoquiver: n.autoquiver,
+            safe_pet: n.safe_pet,
+            confirm: n.confirm,
+            verbose: n.verbose,
+            paranoid_quit: n.paranoid_quit,
+            paranoid_attack: n.paranoid_attack,
+            paranoid_pray: n.paranoid_pray,
+            paranoid_remove: n.paranoid_remove,
+        }
+    }
+
     /// The values the full options menu shows (None when one is missing).
     pub fn from_menu(items: &[MenuItem]) -> Option<Gameplay> {
         let shown = shown_options(items);
@@ -467,7 +487,8 @@ enum Stage {
     Menu,
     /// Entries picked: the questions of the compound ones still to come.
     Questions(VecDeque<&'static str>),
-    /// The menu closed with nothing picked: the command prompt ends it.
+    /// The menu closed with nothing picked, or a request given up: the
+    /// command prompt ends it.
     Closing,
 }
 
@@ -476,48 +497,35 @@ enum Stage {
 pub enum RunStep {
     /// Answer it so; the run goes on.
     Reply(Reply),
-    /// The run is over at this command prompt, the player's again: what
-    /// the menu showed last (None: it never did).
-    Done(Option<Gameplay>),
+    /// The run is over at this command prompt, the player's again (the
+    /// options notice before it tells what the game took).
+    Done,
 }
 
-/// The game's options read, or changed then read, through the engine's
-/// full options menu, a request at a time. It begins at a command prompt
-/// and ends at the next one after the menu closed with nothing picked.
+/// The game's options changed through the engine's full options menu, a
+/// request at a time, as a player would: it begins at a command prompt and
+/// ends at the next one. The menu then is the command ^A repeats, as after
+/// a player's own change.
 #[derive(Debug, Clone)]
 pub struct OptionsRun {
-    /// The values asked for; None once given (or when only reading).
-    goal: Option<Gameplay>,
-    /// What the run was started for (the game compares it at the end).
-    asked: Option<Gameplay>,
+    /// The values asked for.
+    goal: Gameplay,
     stage: Stage,
-    read: Option<Gameplay>,
 }
 
 impl OptionsRun {
-    /// Read the options; the reply to the command prompt waiting.
-    pub fn read() -> (OptionsRun, Reply) {
-        OptionsRun::start(None)
-    }
-
-    /// Give the game `goal`, then read its options again.
+    /// Give the game `goal`; the reply to the command prompt waiting.
     pub fn change(goal: Gameplay) -> (OptionsRun, Reply) {
-        OptionsRun::start(Some(goal))
-    }
-
-    fn start(goal: Option<Gameplay>) -> (OptionsRun, Reply) {
         let run = OptionsRun {
-            asked: goal.clone(),
             goal,
             stage: Stage::Hash,
-            read: None,
         };
         (run, Reply::Key('#' as i32))
     }
 
-    /// The values the run was started to give, if any.
-    pub fn asked(&self) -> Option<&Gameplay> {
-        self.asked.as_ref()
+    /// The values the run gives.
+    pub fn goal(&self) -> &Gameplay {
+        &self.goal
     }
 
     /// The next request, as the world sees it.
@@ -532,19 +540,11 @@ impl OptionsRun {
             {
                 Some(self.on_menu(items))
             }
-            Prompt::Command => match self.stage {
-                // given: the menu once more, to read what the game took
-                Stage::Questions(_) => {
-                    self.goal = None;
-                    self.stage = Stage::Hash;
-                    Some(Reply::Key('#' as i32))
-                }
-                _ => return RunStep::Done(self.read.clone()),
-            },
+            Prompt::Command => return RunStep::Done,
             // a look at the map or a text window on the way: seen
             Prompt::MapPause | Prompt::AutoAck | Prompt::Show { .. } => Some(Reply::Ack),
-            _ => match (&mut self.stage, self.goal.as_ref()) {
-                (Stage::Questions(asked), Some(goal)) => question(asked, goal, prompt),
+            _ => match &mut self.stage {
+                Stage::Questions(asked) => question(asked, &self.goal, prompt),
                 _ => None,
             },
         };
@@ -556,15 +556,14 @@ impl OptionsRun {
         RunStep::Reply(step.unwrap_or_else(|| prompt.escape_reply()))
     }
 
-    /// The full options menu: its values read, the entries that differ
-    /// from the goal picked (as the menu lists them), or nothing.
+    /// The full options menu: the entries whose values differ from the
+    /// goal picked (as the menu lists them), or nothing.
     fn on_menu(&mut self, items: &[MenuItem]) -> Reply {
-        self.read = Gameplay::from_menu(items);
-        let (Some(goal), Some(now)) = (self.goal.as_ref(), self.read.as_ref()) else {
+        let Some(now) = Gameplay::from_menu(items) else {
             self.stage = Stage::Closing;
             return Reply::Cancel;
         };
-        let names = goal.differing(now);
+        let names = self.goal.differing(&now);
         let shown = shown_options(items);
         let mut picks: Vec<(u32, &'static str)> = names
             .iter()
@@ -937,23 +936,47 @@ mod tests {
     }
 
     #[test]
-    fn a_read_goes_through_the_menu_and_closes_it() {
-        let g = Gameplay::default();
-        let (mut run, first) = OptionsRun::read();
-        assert_eq!(first, Reply::Key('#' as i32));
+    fn the_notice_tells_the_game_s_values() {
+        let n = OptionsNotice {
+            autopickup: true,
+            pickup_types: "$?".into(),
+            pickup_burden: "overtaxed".into(),
+            autoopen: false,
+            autoquiver: true,
+            safe_pet: true,
+            confirm: false,
+            verbose: true,
+            paranoid_quit: true,
+            paranoid_attack: false,
+            paranoid_pray: false,
+            paranoid_remove: true,
+        };
+        let g = Gameplay::from_notice(&n);
         assert_eq!(
-            run.on_prompt(&Prompt::ExtCmd),
-            RunStep::Reply(Reply::ExtCmd(Some("optionsfull".into())))
+            g,
+            Gameplay {
+                autopickup: true,
+                pickup_types: "$?".into(),
+                pickup_burden: Burden::Overtaxed,
+                autoopen: false,
+                autoquiver: true,
+                confirm: false,
+                paranoid_quit: true,
+                paranoid_pray: false,
+                paranoid_remove: true,
+                ..Gameplay::default()
+            }
         );
-        assert_eq!(
-            run.on_prompt(&options_menu(&g)),
-            RunStep::Reply(Reply::Cancel)
-        );
-        assert_eq!(run.on_prompt(&Prompt::Command), RunStep::Done(Some(g)));
+        // a burden it does not know: the default's
+        let odd = OptionsNotice {
+            pickup_burden: "heavy".into(),
+            ..n
+        };
+        assert_eq!(Gameplay::from_notice(&odd).pickup_burden, Burden::Stressed);
     }
 
     #[test]
-    fn a_change_picks_what_differs_answers_its_questions_and_reads_again() {
+    fn a_change_picks_what_differs_and_answers_its_questions() {
         let now = Gameplay::default();
         let goal = Gameplay {
             autopickup: true,
@@ -963,9 +986,12 @@ mod tests {
             paranoid_pray: false,
             ..Gameplay::default()
         };
-        let (mut run, _) = OptionsRun::change(goal.clone());
-        assert_eq!(run.asked(), Some(&goal));
-        run.on_prompt(&Prompt::ExtCmd);
+        let (mut run, first) = OptionsRun::change(goal.clone());
+        assert_eq!((first, run.goal()), (Reply::Key('#' as i32), &goal));
+        assert_eq!(
+            run.on_prompt(&Prompt::ExtCmd),
+            RunStep::Reply(Reply::ExtCmd(Some("optionsfull".into())))
+        );
         // the entries in the menu's order: the switch, then the compounds
         assert_eq!(
             run.on_prompt(&options_menu(&now)),
@@ -987,21 +1013,8 @@ mod tests {
         // the toggle's note is the page's, not the log's
         assert!(is_toggle_note("'autopickup' option toggled on."));
         assert!(!is_toggle_note("You see here a scroll."));
-        // the menu again: read, nothing picked
-        assert_eq!(
-            run.on_prompt(&Prompt::Command),
-            RunStep::Reply(Reply::Key('#' as i32))
-        );
-        run.on_prompt(&Prompt::ExtCmd);
-        let took = Gameplay {
-            pickup_types: "$?!".into(),
-            ..goal.clone()
-        };
-        assert_eq!(
-            run.on_prompt(&options_menu(&took)),
-            RunStep::Reply(Reply::Cancel)
-        );
-        assert_eq!(run.on_prompt(&Prompt::Command), RunStep::Done(Some(took)));
+        // the command prompt: the player's again
+        assert_eq!(run.on_prompt(&Prompt::Command), RunStep::Done);
     }
 
     #[test]
@@ -1052,12 +1065,9 @@ mod tests {
             run.on_prompt(&options_menu(&g)),
             RunStep::Reply(Reply::Cancel)
         );
-        assert_eq!(
-            run.on_prompt(&Prompt::Command),
-            RunStep::Done(Some(g.clone()))
-        );
+        assert_eq!(run.on_prompt(&Prompt::Command), RunStep::Done);
         // the extended command refused: an Esc, then the command prompt
-        let (mut run, _) = OptionsRun::read();
+        let (mut run, _) = OptionsRun::change(g.clone());
         let odd = Prompt::Choice {
             query: "Really?".into(),
             visible: vec!['y', 'n'],
@@ -1065,7 +1075,7 @@ mod tests {
             default: None,
         };
         assert_eq!(run.on_prompt(&odd), RunStep::Reply(Reply::Char(27)));
-        assert_eq!(run.on_prompt(&Prompt::Command), RunStep::Done(None));
+        assert_eq!(run.on_prompt(&Prompt::Command), RunStep::Done);
     }
 
     #[test]

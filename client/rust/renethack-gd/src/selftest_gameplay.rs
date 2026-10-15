@@ -4,10 +4,13 @@
 //! load lifted without asking, the gamepad turns the prayer's question off,
 //! each kept. A new game starts with them: the engine's own `O` shows
 //! autopickup on and coins, and the page over the game shows the game's
-//! own, as the engine reports them. Over the game the keys turn autopickup
+//! own, as the host's notice tells them, the engine's request answered by
+//! nothing (^A repeats what it did). Over the game the keys turn autopickup
 //! off and the gamepad on again, each time through the engine's options
 //! menu as a player would use it, its note kept out of the log, the
 //! engine's `O` showing the change. Every screen fits the canvas.
+
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use godot::global::Key as GKey;
 use nh_world::{Burden, GameOption, Paranoid, Prompt, is_toggle_note};
@@ -51,19 +54,39 @@ fn engine_line(g: &RenethackGame, name: &str) -> Result<String, String> {
         .ok_or_else(|| format!("the engine's O has no {name}"))
 }
 
-/// The page over the game shows the Gameplay section, read from the game.
+/// The page over the game shows the Gameplay section, the game's own.
 fn read_over_game(g: &RenethackGame) -> Result<bool, String> {
     let p = page(g)?;
     Ok(g.state == GameState::Playing
         && p.section() == Section::Gameplay
         && !g.options_busy()
-        && g.game_options.is_some()
+        && g.world.options.is_some()
         && p.about().contains(&tr!("settings-gameplay-game")))
+}
+
+/// The request the game waited on when the page opened over it.
+static LOOKED_FROM: AtomicU64 = AtomicU64::new(0);
+
+/// A look at the page answers nothing: the game still waits on the request
+/// it waited on when the page opened.
+fn only_looked(g: &RenethackGame) -> Result<bool, String> {
+    match &g.pending {
+        Some((id, Prompt::Command)) if *id == LOOKED_FROM.load(Ordering::Relaxed) => Ok(true),
+        other => Err(format!(
+            "the page answered the game: {:?} waits now",
+            other.as_ref().map(|(id, _)| id)
+        )),
+    }
 }
 
 /// The settings page over the game, on its Gameplay section.
 fn open_over_game() -> Vec<Step> {
     vec![
+        Step::Call("the request the game waits on", |g| {
+            let (id, _) = g.pending.as_ref().ok_or("no request waits")?;
+            LOOKED_FROM.store(*id, Ordering::Relaxed);
+            Ok(())
+        }),
         Step::Push(UiEvent::OpenSettings),
         Step::Wait("the settings page over the game", |g| {
             Ok(screen(g) == Some("settings") && g.state == GameState::Playing)
@@ -169,10 +192,11 @@ pub(super) fn gameplay() -> Vec<Step> {
     steps.extend(engine_shows(true));
     steps.extend(open_over_game());
     steps.extend([
-        Step::Wait("the game's own options, as it reports them", |g| {
+        Step::Wait("the game's own options, as it tells them", |g| {
             let wanted = profile(g)?.settings.gameplay;
             Ok(read_over_game(g)?
-                && g.game_options.as_ref().is_some_and(|o| o.same_as(&wanted))
+                && only_looked(g)?
+                && g.world.options.as_ref().is_some_and(|o| o.same_as(&wanted))
                 && shown(g, AUTO)? == tr!("settings-on")
                 && shown(g, TYPES)? == tr!("settings-pickup-coins")
                 && shown(g, BURDEN)? == tr!("settings-burden-burdened")
@@ -185,7 +209,7 @@ pub(super) fn gameplay() -> Vec<Step> {
             "the game's autopickup off, as it reports; kept for new games",
             |g| {
                 Ok(read_over_game(g)?
-                    && g.game_options.as_ref().is_some_and(|o| !o.autopickup)
+                    && g.world.options.as_ref().is_some_and(|o| !o.autopickup)
                     && shown(g, AUTO)? == tr!("settings-off")
                     && !page(g)?.row_live(TYPES)
                     && !profile(g)?.settings.gameplay.autopickup)
@@ -206,13 +230,15 @@ pub(super) fn gameplay() -> Vec<Step> {
     // the gamepad: A turns it on again
     steps.extend(open_over_game());
     steps.extend([
-        Step::Wait("read again from the game: autopickup off", |g| {
-            Ok(read_over_game(g)? && g.game_options.as_ref().is_some_and(|o| !o.autopickup))
+        Step::Wait("the game's own again: autopickup off", |g| {
+            Ok(read_over_game(g)?
+                && only_looked(g)?
+                && g.world.options.as_ref().is_some_and(|o| !o.autopickup))
         }),
         pad_tap(PadButton::A),
         Step::Wait("the game's autopickup on again, as it reports", |g| {
             Ok(read_over_game(g)?
-                && g.game_options.as_ref().is_some_and(|o| o.autopickup)
+                && g.world.options.as_ref().is_some_and(|o| o.autopickup)
                 && shown(g, AUTO)? == tr!("settings-on")
                 && profile(g)?.settings.gameplay.autopickup)
         }),

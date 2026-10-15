@@ -6,8 +6,8 @@ use nh_protocol::{
 
 use crate::prompt::{choice, free_key};
 use crate::{
-    ATR_NOHISTORY, HelplessSpan, HelplessWatch, MapState, MessageLog, Pack, Prompt, Status, Told,
-    TrapKind, effect_cmaps,
+    ATR_NOHISTORY, Gameplay, HelplessSpan, HelplessWatch, MapState, MessageLog, Pack, Prompt,
+    Status, Told, TrapKind, effect_cmaps,
 };
 
 /// getpos() says this (with `flags.verbose`) right after its goal ("Where
@@ -68,6 +68,9 @@ pub struct World {
     pub level: Option<LevelNotice>,
     /// The trap the hero is caught in (the last hero notice).
     pub hero_trap: Option<TrapKind>,
+    /// The options the settings' Gameplay section shows, as the game has
+    /// them (the last options notice).
+    pub options: Option<Gameplay>,
     /// The spells of helplessness, from the status line.
     helpless: HelplessWatch,
     /// The last progress notice (see `progress`), and how many came.
@@ -120,6 +123,7 @@ impl World {
             inventory: Pack::new(),
             level: None,
             hero_trap: None,
+            options: None,
             helpless: HelplessWatch::default(),
             progress: None,
             progress_seq: 0,
@@ -343,6 +347,7 @@ impl World {
             WinCall::Inventory(inv) => self.inventory.replace(inv),
             WinCall::Level(l) => self.level = Some(l.clone()),
             WinCall::Hero(h) => self.hero_trap = h.trap.as_deref().map(TrapKind::of),
+            WinCall::Options(o) => self.options = Some(Gameplay::from_notice(o)),
             WinCall::Progress(p) => {
                 self.progress = Some(p.clone());
                 self.progress_seq += 1;

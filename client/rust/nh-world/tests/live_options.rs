@@ -94,17 +94,13 @@ fn session(pg: &Path, options: &str, decide: &mut dyn FnMut(&World, &Prompt) -> 
     world
 }
 
-/// A run's answer, or None when it is over (`read` has what it read).
-fn run_on(
-    run: &mut Option<OptionsRun>,
-    read: &mut Vec<Option<Gameplay>>,
-    p: &Prompt,
-) -> Option<Act> {
+/// A run's answer, or None when it is over (the command prompt it ends
+/// on is the player's again).
+fn run_on(run: &mut Option<OptionsRun>, p: &Prompt) -> Option<Act> {
     let r = run.as_mut()?;
     match r.on_prompt(p) {
         RunStep::Reply(reply) => Some(Act::Reply(reply)),
-        RunStep::Done(g) => {
-            read.push(g);
+        RunStep::Done => {
             *run = None;
             None
         }
@@ -137,11 +133,11 @@ fn the_options_start_a_game_change_through_its_menu_and_stay_in_its_save() {
     // the section's options lead: the engine reads the list right to left
     let options = format!("{},{hero},{CLIENT_EXTRA_OPTIONS}", start.engine_options());
     let mut run: Option<OptionsRun> = None;
-    let mut read = Vec::new();
+    // what the options notices told at each command the test gives
+    let mut told = Vec::new();
     let mut simple: Option<String> = None;
-    let mut asked_o = false;
-    let world = session(pg.path(), &options, &mut |_, p| {
-        if let Some(act) = run_on(&mut run, &mut read, p) {
+    let world = session(pg.path(), &options, &mut |w, p| {
+        if let Some(act) = run_on(&mut run, p) {
             return act;
         }
         // the engine's own O: its line for autopickup
@@ -155,19 +151,19 @@ fn the_options_start_a_game_change_through_its_menu_and_stay_in_its_save() {
             return Act::Reply(Reply::Cancel);
         }
         assert_eq!(*p, Prompt::Command, "an unexpected request");
-        let (next, reply) = match read.len() {
-            0 => OptionsRun::read(),
-            1 => OptionsRun::change(goal.clone()),
-            _ if !asked_o => {
-                asked_o = true;
-                return Act::Reply(Reply::Key('O' as i32));
+        told.push(w.options.clone());
+        match told.len() {
+            // the game as it began: changed through its menu
+            1 => {
+                let (next, reply) = OptionsRun::change(goal.clone());
+                run = Some(next);
+                Act::Reply(reply)
             }
-            _ => return Act::Save,
-        };
-        run = Some(next);
-        Act::Reply(reply)
+            2 => Act::Reply(Reply::Key('O' as i32)),
+            _ => Act::Save,
+        }
     });
-    assert_eq!(read, vec![Some(start), Some(goal.clone())]);
+    assert_eq!(told[..2], [Some(start), Some(goal.clone())]);
     let simple = simple.expect("the engine's O shows autopickup");
     assert!(simple.ends_with("[X]"), "{simple:?}");
     // the engine said what it toggled (the client keeps it from its log)
@@ -183,20 +179,12 @@ fn the_options_start_a_game_change_through_its_menu_and_stay_in_its_save() {
         Gameplay::default().engine_options(),
         EngineConfig::restore_options("Hero").unwrap()
     );
-    let mut run: Option<OptionsRun> = None;
-    let mut read = Vec::new();
-    session(pg.path(), &options, &mut |_, p| {
-        if let Some(act) = run_on(&mut run, &mut read, p) {
-            return act;
-        }
+    let mut told = None;
+    session(pg.path(), &options, &mut |w, p| {
         assert_eq!(*p, Prompt::Command, "an unexpected request");
-        if read.is_empty() {
-            let (next, reply) = OptionsRun::read();
-            run = Some(next);
-            return Act::Reply(reply);
-        }
+        told = Some(w.options.clone());
         // paranoid_confirmation:quit: the word yes
         Act::Quit
     });
-    assert_eq!(read, vec![Some(goal)]);
+    assert_eq!(told, Some(Some(goal)));
 }
