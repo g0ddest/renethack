@@ -227,3 +227,23 @@ Steamworks, to match:
   architecture), `renethack.x86_64` on Linux.
 - Installation → Linux Runtime: "Steam Linux Runtime 3.0 (sniper)", on each
   branch: the Linux build is made in its SDK.
+
+## The licence on Steam
+
+renethack is under the NetHack General Public License (README, "Licence"),
+and a copy sold on Steam is a copy distributed in executable form. What
+that asks of the Steamworks setup:
+- The complete source goes with every copy: each depot carries
+  `legal/renethack-<version>-source.tar.gz`, and the dry run above checks
+  it. A link to the source would not do: the licence allows that only for
+  a copy given away (its 3(b)).
+- No terms beyond the licence's: no custom EULA, which would take away
+  what the licence gives a buyer (to copy the game, change it and pass it
+  on). The licence lets a seller charge for a copy (its 2(c)), not for
+  those rights.
+- The executables stay as the source builds them: no DRM wrapper on them,
+  which would make them programs the source does not build.
+- The store page's legal line: "© 2026 Vitaliy Velikodniy. NetHack ©
+  1985–2026 Stichting Mathematisch Centrum, M. Stephenson, the NetHack
+  DevTeam and contributors. renethack is free software under the NetHack
+  General Public License; its complete source comes with the game."

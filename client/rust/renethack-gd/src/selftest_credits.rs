@@ -140,9 +140,11 @@ pub(super) fn credits() -> Vec<Step> {
             "the next document, with what it must show",
             checked,
         ));
-        // the art's attributions, and a long licence, for the review
+        // the art's attributions, the package's notice and a long licence,
+        // for the review
         match doc {
             Doc::Art => steps.push(Step::Shot("credits-art")),
+            Doc::Notice => steps.push(Step::Shot("credits-notice")),
             Doc::Rust => steps.push(Step::Shot("credits-rust")),
             _ => {}
         }

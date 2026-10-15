@@ -4,6 +4,20 @@ renethack @VERSION@
 What this package holds, and under which terms. The files named here are in
 this folder.
 
+renethack is free software
+--------------------------
+The game, its client and its engine alike, is under the NetHack General
+Public License, NetHack-General-Public-License.txt, as NetHack is: you may
+copy it, change it and pass it on, on the licence's terms: the same rights
+for whoever gets it, and the source with every copy in executable form.
+
+renethack-@VERSION@-source.tar.gz is the complete source of this game, as
+the licence asks (its 3(a)): renethack's client, its engine host and its
+patches to NetHack, NetHack at the commit built, the Lua release the engine
+links, and the build; SOURCE.txt inside says what is where and how to
+build it. The art and the sounds are not in it: they are not the program,
+and keep their own licences (below). The game's pack holds them.
+
 The game: the renethack client
 ------------------------------
 The Godot extension that draws the game and talks to the engine
@@ -12,7 +26,7 @@ The Godot extension that draws the game and talks to the engine
 
 It holds texts of NetHack (the English catalog of what the engine says, the
 Guidebook in the help), translations of them, and the names in
-i18n-CREDITS.md; those parts are under the NetHack General Public License.
+i18n-CREDITS.md, under the same licence.
 
 NetHack: the game engine
 ------------------------
@@ -20,11 +34,8 @@ engine/ (nh-engine, recover, data/) is NetHack 5.0.0 with renethack's
 patches and protocol host:
   NetHack, Copyright 1985-2026 Stichting Mathematisch Centrum, M. Stephenson,
   the NetHack DevTeam and contributors.
-It is under the NetHack General Public License,
-NetHack-General-Public-License.txt. As its paragraph 3(a) asks, the complete
-source code of these programs accompanies them: engine-source.tar.gz
-(NetHack at the commit built, the patches, the host, the build files and the
-Lua release it links; README.txt inside says how to build it).
+Each of NetHack's files that renethack's patches change says so, with the
+date of the change, as the licence asks (its 2(a)).
 
 Inside nh-engine:
   Lua 5.4, Copyright 1994-2025 Lua.org, PUC-Rio: MIT licence, Lua-LICENSE.txt.
@@ -49,7 +60,8 @@ Art, sounds, fonts and texts
 art-CREDITS.md: the models, textures and effects. Most are CC0 (public
 domain); the models under ccby/ are under Creative Commons Attribution 3.0,
 credited there.
-audio-CREDITS.md: the sounds (CC0).
+audio-CREDITS.md: the sounds. Most are CC0; those under ccby/ are under
+Creative Commons Attribution 3.0 or 4.0, credited there.
 fonts/: Alegreya Sans, Alegreya Sans SC, Cormorant SC and PT Mono, under the
 SIL Open Font License 1.1 (one licence file per family).
 help-CREDITS.md: the Guidebook in English and in Russian.

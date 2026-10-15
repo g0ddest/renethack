@@ -131,7 +131,7 @@ pub fn bbcode(doc: Doc, shipped: &Shipped) -> String {
         Doc::Sound => markdown(SOUND),
         Doc::Help => markdown(HELP),
         Doc::Translation => markdown(TRANSLATION),
-        Doc::Notice => plain(&NOTICE.replace("@VERSION@", env!("CARGO_PKG_VERSION"))),
+        Doc::Notice => plain(&NOTICE.replace("@VERSION@", &version())),
         Doc::Ngpl => match &shipped.ngpl {
             Some(text) => plain(text),
             None => note(&tr!("credits-ngpl-missing")),
@@ -142,6 +142,20 @@ pub fn bbcode(doc: Doc, shipped: &Shipped) -> String {
         Doc::EngineParts => engine_parts(shipped),
         Doc::Fonts => fonts(),
         Doc::Steam => note(&tr!("credits-steam-text")),
+    }
+}
+
+/// The game's version as its package names it (tools/dist stamps it into
+/// the project's settings, and names the source archive after it); a
+/// development build's is the extension's own.
+fn version() -> String {
+    let stamped = godot::classes::ProjectSettings::singleton()
+        .get_setting("application/config/version")
+        .to_string();
+    if stamped.is_empty() {
+        env!("CARGO_PKG_VERSION").to_string()
+    } else {
+        stamped
     }
 }
 
