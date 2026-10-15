@@ -326,7 +326,9 @@ is the machine's and stays warm.
 
 ## Production builds
 
-What a player installs, from Steam or a download. Each target builds into
+What a player installs, from Steam or a download (what Steamworks needs
+besides, the Steam Deck's checklist and Steam Cloud's paths:
+`docs/steam.md`). Each target builds into
 `dist/build/<platform>` (kept, so the next run is incremental) and leaves
 its package in `dist/`:
 
