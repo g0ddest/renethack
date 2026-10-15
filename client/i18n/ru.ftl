@@ -172,6 +172,8 @@ controls-keypad-moves = Цифровой блок: шаги, а на 5 — от�
 controls-fixed-escape = Esc отменяет и возвращает назад, везде
 controls-fixed-keypad = шаги цифрового блока
 controls-fixed-run = бег: Shift и шаг
+controls-chord = Шаг по диагонали; с Shift — бег
+controls-chord-note = Нет цифровой клавиатуры? Нажмите две стрелки вместе, чтобы шагнуть по диагонали.
 controls-fixed-arrows = шаги стрелками, рядом с буквами
 controls-fixed-count = счётчик: Alt и цифры верхнего ряда
 controls-fixed-alternate = вторая клавиша команды в самом NetHack
@@ -1007,6 +1009,7 @@ help-close-tip = Закрыть (Esc, { $key })
 help-search-placeholder = Поиск по руководству
 help-nothing = Ничего не найдено
 help-hint = ↑↓: глава · PgUp PgDn: прокрутка · Esc: закрыть
+help-chord = [b]Нет цифровой клавиатуры?[/b] Нажмите две стрелки вместе, чтобы шагнуть по диагонали: ↑ и ← — на северо-запад, ↑ и → — на северо-восток, ↓ и ← — на юго-запад, ↓ и → — на юго-восток. Если держать их, герой идёт дальше; с Shift — бежит. Так же стрелки отвечают на вопрос о направлении и двигают курсор по карте.
 hint-chapter = Глава
 hint-scroll = Прокрутка
 

@@ -377,6 +377,8 @@ pub struct RenethackGame {
     count: CountEntry,
     /// The key held down for a `Hold` order.
     held: Option<Key>,
+    /// Two arrows pressed together: a diagonal step (`nh_world::Chords`).
+    chords: nh_world::Chords,
     /// Why the last order stopped, shown until then.
     stop_note: Option<(String, Instant)>,
     /// What the way preview was drawn for.
@@ -561,6 +563,7 @@ impl INode for RenethackGame {
             last_action: None,
             count: CountEntry::default(),
             held: None,
+            chords: nh_world::Chords::new(),
             stop_note: None,
             preview_key: None,
             order_log: std::collections::VecDeque::new(),
@@ -790,6 +793,9 @@ impl INode for RenethackGame {
         self.prof = stats.then(Vec::new);
         let t = Instant::now();
         self.pad_tick();
+        // an arrow that waited its moment for another steps alone
+        let outs = self.chords.tick(Time::singleton().get_ticks_msec());
+        self.chord_out(outs);
         self.drain_ui();
         self.sync_settings_page();
         self.drive_options();
@@ -948,7 +954,8 @@ impl INode for RenethackGame {
         if !key.is_pressed() {
             // letting go ends holding it down (text fields keep theirs)
             if !text && let Some(k) = key_release(&key) {
-                push(&self.queue, UiEvent::KeyUp(k));
+                let outs = self.chords.release(k);
+                self.chord_out(outs);
             }
             return;
         }
@@ -965,8 +972,13 @@ impl INode for RenethackGame {
             return;
         }
         // on_key knows where the player's own keys apply (and a page over
-        // everything has every key: F1 opens no help under it)
-        push(&self.queue, UiEvent::Key(k));
+        // everything has every key: F1 opens no help under it); two arrows
+        // together where a direction is awaited are a diagonal step
+        let steps = self.arrows_step();
+        let outs = self
+            .chords
+            .press(k, Time::singleton().get_ticks_msec(), steps);
+        self.chord_out(outs);
         self.handled();
     }
 
@@ -2015,6 +2027,27 @@ impl RenethackGame {
             self.command_key(k);
             return;
         }
+        // where a direction is asked (getdir, getpos's cursor), a step's
+        // key the player moved gives that step
+        let direction = matches!(
+            prompt,
+            Prompt::Command
+                | Prompt::FreeKey {
+                    directions: true,
+                    ..
+                }
+        );
+        let k = if direction {
+            match self.direction_key(k) {
+                Some(k) => k,
+                None => return,
+            }
+        } else {
+            k
+        };
+        let Some((_, prompt)) = &self.pending else {
+            return;
+        };
         let (np, dirs) = (self.world.number_pad, self.world.dirchars.clone());
         let code = |ctx| nethack_key(&k, ctx, np, &dirs);
         let reply = match prompt {
@@ -2034,6 +2067,69 @@ impl RenethackGame {
         };
         if let Some(r) = reply {
             self.dialog_reply(r);
+        }
+    }
+
+    /// A direction is awaited, or keys wait for the prompt that awaits one
+    /// (the engine at work): the command prompt with nothing over the map
+    /// that takes arrows (getpos's cursor too), or a direction's question.
+    /// Two arrows pressed together there are a diagonal step; elsewhere
+    /// (menus, texts, panels, pages) arrows are arrows.
+    fn arrows_step(&self) -> bool {
+        if self.state != GameState::Playing
+            || self.achievements_open()
+            || self.settings_open()
+            || self.credits_open()
+        {
+            return false;
+        }
+        let Some(ui) = self.ui.as_ref() else {
+            return false;
+        };
+        if ui.help.is_open() || ui.inventory.is_open() {
+            return false;
+        }
+        match &self.pending {
+            Some((
+                _,
+                Prompt::FreeKey {
+                    directions: true, ..
+                },
+            )) => true,
+            None | Some((_, Prompt::Command)) => !ui.dialogs.is_open(),
+            _ => false,
+        }
+    }
+
+    /// The arrows' keys as they come to the game: pressed, let go, or two
+    /// arrows' diagonal (the step's own key, as the game's: no key the
+    /// player moved stands for it).
+    fn chord_out(&self, outs: Vec<nh_world::ChordOut>) {
+        use nh_world::ChordOut;
+        for o in outs {
+            let ev = match o {
+                ChordOut::Press(k) => UiEvent::Key(k),
+                ChordOut::Release(k) => UiEvent::KeyUp(k),
+                ChordOut::Diagonal(k) => UiEvent::GameKey(k),
+            };
+            push(&self.queue, ev);
+        }
+    }
+
+    /// A key where a direction is asked outside the command prompt (getdir,
+    /// getpos's cursor): a step's key the player moved gives the step, the
+    /// step's own key moved away nothing; any other key is what it is.
+    fn direction_key(&self, k: KeyInput) -> Option<KeyInput> {
+        if self.raw_keys {
+            return Some(k);
+        }
+        let steps = crate::rebind::steps(self.ui_state.profile);
+        let is_step = |k: KeyInput| steps.contains(&nh_world::norm(k));
+        match self.keymap().translate(k) {
+            Some(t) if is_step(t) => Some(KeyInput { echo: k.echo, ..t }),
+            Some(_) => Some(k),
+            None if is_step(k) => None,
+            None => Some(k),
         }
     }
 

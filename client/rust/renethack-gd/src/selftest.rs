@@ -34,6 +34,8 @@ mod achievements;
 mod acts_tests;
 #[path = "selftest_audio.rs"]
 mod audio_tests;
+#[path = "selftest_chords.rs"]
+mod chords_tests;
 #[path = "selftest_codex.rs"]
 mod codex_tests;
 #[path = "selftest_conditions.rs"]
@@ -4872,6 +4874,7 @@ impl SelfTest {
             "deck" => settings_tests::deck(),
             "profile-files" => settings_tests::profile_files(),
             "gameplay" => gameplay_tests::gameplay(),
+            "chords" => chords_tests::chords(),
             "credits" => credits_tests::credits(),
             "rebind" => rebind_tests::rebind(),
             "sheet" => sheet_tests::sheet(),

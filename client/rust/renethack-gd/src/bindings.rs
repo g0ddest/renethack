@@ -39,10 +39,15 @@ const fn b(input: &'static [Part], action: &'static str) -> Binding {
 
 /// What stays as it is on the keyboard, under the commands a player moves
 /// (`rebind.rs`).
-const KEYS_FIXED: [Binding; 6] = [
+const KEYS_FIXED: [Binding; 7] = [
     b(
         &[Key("Shift"), Plus, Words("controls-direction")],
         "controls-run",
+    ),
+    // two arrows together: a diagonal step (`nh_world::Chords`)
+    b(
+        &[Key("↑"), Plus, Key("←"), Or, Key("↓"), Plus, Key("→")],
+        "controls-chord",
     ),
     b(&[Words("controls-keypad")], "controls-keypad-moves"),
     b(&[Words("controls-left-click")], "controls-click"),

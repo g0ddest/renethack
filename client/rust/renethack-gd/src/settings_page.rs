@@ -1016,6 +1016,13 @@ fn group_label(name: &str) -> Gd<Label> {
     l
 }
 
+/// A line under a group's name: what a player looks there for.
+fn group_note(text: &str) -> Gd<Label> {
+    let mut l = theme::styled_label(text, Face::Body, 16, theme::TEXT_DIM);
+    l.set_autowrap_mode(AutowrapMode::WORD_SMART);
+    l
+}
+
 /// An entry's frame and its line inside it.
 fn entry_frame(normal: &Gd<StyleBoxFlat>) -> (Gd<PanelContainer>, Gd<HBoxContainer>) {
     let mut e = PanelContainer::new_alloc();
@@ -1330,6 +1337,11 @@ impl SettingsPage {
                 for (i, c) in list.iter().enumerate().filter(|(_, c)| c.group == group) {
                     if first {
                         self.list.add_child(&group_label(&group.name()));
+                        // a laptop has no keypad for the diagonals
+                        if group == Group::Movement {
+                            self.list
+                                .add_child(&group_note(&tr!("controls-chord-note")));
+                        }
                         first = false;
                     }
                     let edit = self.edit_at(self.entries.len());

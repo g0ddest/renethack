@@ -49,13 +49,46 @@ pub struct Chapter {
 }
 
 impl Book {
-    /// The book in `lang` (English for a language without one).
+    /// The book in `lang` (English for a language without one), with the
+    /// client's own lines.
     pub fn of(lang: Lang) -> Book {
         let source = match lang {
             Lang::Ru => RU,
             Lang::En | Lang::Pseudo => EN,
         };
-        serde_json::from_str(source).expect("client/help/guidebook.*.json is a book")
+        let mut book: Book =
+            serde_json::from_str(source).expect("client/help/guidebook.*.json is a book");
+        book.add_chords(lang);
+        book
+    }
+
+    /// The client's line on the diagonals without a keypad (two arrows
+    /// together), in the Guidebook's commands: after the steps' keys
+    /// (English), before the commands' table (Russian), else first in the
+    /// chapter.
+    fn add_chords(&mut self, lang: Lang) {
+        let Some(text) = i18n::tr_in(lang, "help-chord") else {
+            return;
+        };
+        let line = match lang {
+            Lang::Pseudo => format!("⟦{text}⟧"),
+            _ => text,
+        };
+        let Some(chapter) = self
+            .chapters
+            .iter_mut()
+            .find(|c| c.title == "Commands" || c.title == "Команды")
+        else {
+            return;
+        };
+        let p = &chapter.paragraphs;
+        let at = p
+            .iter()
+            .position(|t| t.contains("[lb]yuhjklbn][/b] — Go one step"))
+            .map(|i| i + 1)
+            .or_else(|| p.iter().position(|t| t.starts_with("[table=2]")))
+            .unwrap_or(0);
+        chapter.paragraphs.insert(at, line);
     }
 }
 
@@ -714,6 +747,33 @@ mod tests {
         }
         assert_eq!(Book::of(Lang::Ru).lang, "ru");
         assert_eq!(Book::of(Lang::En).lang, "en");
+    }
+
+    #[test]
+    fn the_commands_say_how_to_step_diagonally_without_a_keypad() {
+        for (lang, words, beside) in [
+            (Lang::En, "no numpad", "go one step"),
+            (Lang::Ru, "нет цифровой клавиатуры", "[table=2]"),
+        ] {
+            let book = Book::of(lang);
+            let chapter = book
+                .chapters
+                .iter()
+                .find(|c| c.title == "Commands" || c.title == "Команды")
+                .expect("the commands' chapter");
+            let at = chapter
+                .paragraphs
+                .iter()
+                .position(|p| fold(&plain(p)).contains(words))
+                .unwrap_or_else(|| panic!("{lang:?}: no line on the diagonals"));
+            // beside the steps' keys (English), before the table (Russian)
+            let near = if lang == Lang::En { at - 1 } else { at + 1 };
+            assert!(
+                chapter.paragraphs[near].to_lowercase().contains(beside),
+                "{lang:?}: {:?}",
+                chapter.paragraphs[near]
+            );
+        }
     }
 
     #[test]

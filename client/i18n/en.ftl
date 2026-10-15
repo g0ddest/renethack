@@ -172,6 +172,8 @@ controls-keypad-moves = The keypad: steps, and rest on its 5
 controls-fixed-escape = Esc cancels and goes back, everywhere
 controls-fixed-keypad = the keypad's steps
 controls-fixed-run = running: Shift and a step
+controls-chord = A diagonal step; with Shift, a run
+controls-chord-note = No numpad? Press two arrows together to step diagonally.
 controls-fixed-arrows = the arrows' steps, beside the letters
 controls-fixed-count = a count: Alt and the top-row digits
 controls-fixed-alternate = NetHack's own second key for a command
@@ -994,6 +996,7 @@ help-close-tip = Close (Esc, { $key })
 help-search-placeholder = Search the Guidebook
 help-nothing = Nothing found
 help-hint = ↑↓: chapter · PgUp PgDn: scroll · Esc: close
+help-chord = [b]No numpad?[/b] Press two arrows together to step diagonally: ↑ and ← north-west, ↑ and → north-east, ↓ and ← south-west, ↓ and → south-east. Held, the hero keeps going; with Shift, runs. A direction asked, and the cursor on the map, take them too.
 hint-chapter = Chapter
 hint-scroll = Scroll
 
