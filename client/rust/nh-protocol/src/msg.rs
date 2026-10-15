@@ -102,6 +102,11 @@ pub enum WinCall {
         /// (telepathy draws it as a seen one; detection marks it DETECT
         /// too). Never on the hero's own cell.
         sensed: bool,
+        /// What the monster shown holds in its hand, as an object's glyph
+        /// (its appearance tile, as the map shows things lying): only for
+        /// a monster the hero sees, never on the hero's own cell, never
+        /// while hallucinating.
+        wields: Option<Glyph>,
     },
     RawPrint {
         text: String,
@@ -548,6 +553,8 @@ struct PrintGlyph {
     saddled: bool,
     #[serde(default)]
     sensed: bool,
+    #[serde(default)]
+    wields: Option<Glyph>,
 }
 #[derive(Deserialize)]
 struct RawPrint {
@@ -682,6 +689,7 @@ fn win_call(name: String, a: Value) -> Result<WinCall, ProtocolError> {
                 rider: p.rider,
                 saddled: p.saddled,
                 sensed: p.sensed,
+                wields: p.wields,
             }
         }
         "raw_print" => {

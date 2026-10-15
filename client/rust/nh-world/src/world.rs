@@ -291,12 +291,14 @@ impl World {
                 rider,
                 saddled,
                 sensed,
+                wields,
             } => {
                 if Some(*win) == self.map_win {
                     let told = Told {
                         rider: rider.as_ref(),
                         saddled: *saddled,
                         sensed: *sensed,
+                        wields: wields.as_ref(),
                     };
                     self.map.print_with(*x, *y, g, bk.as_ref(), told);
                 }

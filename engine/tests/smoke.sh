@@ -84,6 +84,10 @@ if grep -q '"saddled":\|"rider":' "$out"; then fail "a saddle or a rider without
 # nor a monster the hero only senses: the Valkyrie sees her kitten (a
 # blind hero's telepathy is the live tests')
 if grep -q '"sensed":' "$out"; then fail "a monster sensed by a hero who sees"; fi
+# nor what a monster holds, but of one the hero sees wielding something:
+# the kitten holds nothing, and the hero's own spear is never told (a
+# monster's weapon in hand is the live tests')
+if grep -q '"wields":' "$out"; then fail "a weapon told in a paw, or the hero's own"; fi
 run_engine knight NETHACKOPTIONS='time,!legacy,!tutorial,!autopickup,name:Hero,role:knight,race:human,gender:male,align:lawful'
 grep -q '^{"t":"win","fn":"print_glyph","a":{.*"g":{[^}]*"kind":"mon"},.*"saddled":true}}$' "$tmp/knight/session.jsonl" \
     || fail "the Knight's pony is not saddled"

@@ -431,6 +431,8 @@ progress_flush(void)
     rh_proto_send("win", "progress", a);
 }
 
+static void wielders_flush(void);
+
 /* every request of this file goes through here */
 static cJSON *
 request(const char *fn, cJSON *args)
@@ -439,6 +441,7 @@ request(const char *fn, cJSON *args)
     inventory_flush();
     progress_flush();
     hero_flush();
+    wielders_flush();
     return rh_proto_request(fn, args);
 }
 
@@ -917,25 +920,143 @@ sensed_json(cJSON *a, int x, int y, const glyph_info *ginfo)
         add_bool(a, "sensed", 1);
 }
 
+/* The weapon last told held by each monster (by id), or NO_GLYPH: a
+   monster taking up a weapon changes no glyph, so nothing draws its cell
+   again (wielders_flush()). */
+#define RH_MAX_WIELDERS 256
+static struct {
+    unsigned id;
+    int glyph;
+} told_held[RH_MAX_WIELDERS];
+static int n_told_held;
+
+static int
+told_held_glyph(unsigned id)
+{
+    int i;
+
+    for (i = 0; i < n_told_held; i++)
+        if (told_held[i].id == id)
+            return told_held[i].glyph;
+    return NO_GLYPH;
+}
+
+static void
+set_told_held(unsigned id, int glyph)
+{
+    int i;
+
+    for (i = 0; i < n_told_held; i++)
+        if (told_held[i].id == id) {
+            told_held[i].glyph = glyph;
+            return;
+        }
+    if (glyph != NO_GLYPH && n_told_held < RH_MAX_WIELDERS) {
+        told_held[n_told_held].id = id;
+        told_held[n_told_held].glyph = glyph;
+        n_told_held++;
+    }
+}
+
+/* The glyph of what a monster the hero sees holds in its hand, as the map
+   would show it lying; NO_GLYPH when nothing, or not seen, or the hero
+   hallucinates (the map shows another monster then). */
+static int
+held_glyph(struct monst *mtmp)
+{
+    struct obj *otmp;
+
+    if (Hallucination || !canseemon(mtmp) || (otmp = MON_WEP(mtmp)) == 0)
+        return NO_GLYPH;
+    return obj_to_glyph(otmp, rn2_on_display_rng);
+}
+
+/* What a monster the hero sees holds in its hand: "wields", its wielded
+   object as the map would show it lying (glyph_json(): the appearance
+   tile, never the object's type).  Only while the hero sees it, never on
+   the hero's own spot (nor a steed under them), and not while the hero
+   hallucinates.  Observation only. */
+static void
+wielding_json(cJSON *a, int x, int y, const glyph_info *ginfo)
+{
+    struct monst *mtmp;
+    glyph_info wg;
+    int glyph;
+
+    if (!ginfo || !glyph_is_monster(ginfo->glyph) || !isok(x, y) || u_at(x, y)
+        || (mtmp = m_at(x, y)) == 0)
+        return;
+    glyph = held_glyph(mtmp);
+    set_told_held(mtmp->m_id, glyph);
+    if (glyph == NO_GLYPH)
+        return;
+    map_glyphinfo((coordxy) x, (coordxy) y, glyph, 0, &wg);
+    cJSON_AddItemToObject(a, "wields", glyph_json(&wg));
+}
+
+static void print_glyph_json(int win, int x, int y, const glyph_info *g,
+                             const glyph_info *bk);
+
+/* Before each request: a monster the hero sees that took up a weapon, put
+   one away or changed it since its cell was last drawn has its cell drawn
+   again as it shows (its glyph unchanged), with what it holds now.
+   Observation only. */
+static void
+wielders_flush(void)
+{
+    struct monst *mtmp;
+    glyph_info shown;
+
+    if (!program_state.in_moveloop || rh_proto_is_lost()
+        || suppress_map_output() || WIN_MAP == WIN_ERR) {
+        n_told_held = 0;
+        return;
+    }
+    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+        if (DEADMONSTER(mtmp) || !isok(mtmp->mx, mtmp->my)
+            || u_at(mtmp->mx, mtmp->my))
+            continue;
+        if (held_glyph(mtmp) == told_held_glyph(mtmp->m_id))
+            continue;
+        if (!glyph_is_monster(glyph_at(mtmp->mx, mtmp->my))) {
+            set_told_held(mtmp->m_id, NO_GLYPH);
+            continue;
+        }
+        map_glyphinfo(mtmp->mx, mtmp->my, glyph_at(mtmp->mx, mtmp->my), 0,
+                      &shown);
+        print_glyph_json(WIN_MAP, mtmp->mx, mtmp->my, &shown,
+                         (glyph_info *) 0);
+    }
+}
+
+static void
+print_glyph_json(int win, int x, int y, const glyph_info *g,
+                 const glyph_info *bk)
+{
+    cJSON *a = args_new();
+
+    add_int(a, "win", win);
+    add_int(a, "x", x);
+    add_int(a, "y", y);
+    cJSON_AddItemToObject(a, "g", glyph_json(g));
+    cJSON_AddItemToObject(a, "bk", glyph_json(bk));
+    riding_json(a, x, y, g);
+    sensed_json(a, x, y, g);
+    wielding_json(a, x, y, g);
+    rh_proto_send("win", "print_glyph", a);
+}
+
 static void
 h_print_glyph(void *ret UNUSED, va_list *ap)
 {
-    cJSON *a = args_new();
+    int win, x, y;
     const glyph_info *g;
-    int x, y;
 
-    add_int(a, "win", va_arg(*ap, int));
+    win = va_arg(*ap, int);
     x = va_arg(*ap, int);
     y = va_arg(*ap, int);
-    add_int(a, "x", x);
-    add_int(a, "y", y);
     g = va_arg(*ap, const glyph_info *);
-    cJSON_AddItemToObject(a, "g", glyph_json(g));
-    cJSON_AddItemToObject(a, "bk",
-                          glyph_json(va_arg(*ap, const glyph_info *)));
-    riding_json(a, x, y, g);
-    sensed_json(a, x, y, g);
-    rh_proto_send("win", "print_glyph", a);
+    print_glyph_json(win, x, y, g, va_arg(*ap, const glyph_info *));
 }
 
 static void

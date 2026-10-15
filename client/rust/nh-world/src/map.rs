@@ -38,6 +38,9 @@ pub struct Cell {
     /// The monster `glyph` shows is sensed, not seen (telepathy,
     /// detection).
     pub sensed: bool,
+    /// What the monster `glyph` shows holds in its hand (an object's
+    /// glyph), told only while the hero sees it.
+    pub wields: Option<Glyph>,
 }
 
 /// What the engine tells of a monster besides its glyph.
@@ -49,6 +52,8 @@ pub struct Told<'a> {
     pub saddled: bool,
     /// The hero senses it but does not see it.
     pub sensed: bool,
+    /// What it holds in its hand (an object's glyph), seen.
+    pub wields: Option<&'a Glyph>,
 }
 
 impl Told<'_> {
@@ -289,6 +294,7 @@ impl MapState {
             rider,
             saddled,
             sensed,
+            wields,
         } = told;
         let Some(i) = index(x, y) else {
             return;
@@ -333,6 +339,7 @@ impl MapState {
             cell.saddled = saddled;
             cell.over_saddled = false;
             cell.sensed = sensed;
+            cell.wields = wields.cloned();
         }
         cell.bk = bk.cloned();
         if hero
