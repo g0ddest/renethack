@@ -1246,6 +1246,16 @@ impl DollView {
     fn render(&mut self, now: f64) {
         self.last = now;
         self.rendered = self.hero.as_ref().map(|h| h.instance_id());
+        // in the 3D view's anti-aliasing: Godot builds the pipelines for
+        // one, and the map's hero has built the doll's (`apply_graphics`)
+        if self.viewport.is_inside_tree()
+            && let Some(window) = self.viewport.get_tree().get_root()
+        {
+            let msaa = window.get_msaa_3d();
+            if self.viewport.get_msaa_3d() != msaa {
+                self.viewport.set_msaa_3d(msaa);
+            }
+        }
         self.viewport.set_update_mode(UpdateMode::ONCE);
     }
 

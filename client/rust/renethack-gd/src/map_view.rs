@@ -5021,6 +5021,12 @@ impl MapView {
         }
     }
 
+    /// The variants are being made (again): Godot builds their pipelines
+    /// as they come.
+    pub fn variants_busy(&self) -> bool {
+        !self.variants.done()
+    }
+
     /// The pipeline variants made, and those that could not be (self-tests).
     pub fn variants_made(&self) -> (usize, usize) {
         let (made, unmade) = self.variants.made();

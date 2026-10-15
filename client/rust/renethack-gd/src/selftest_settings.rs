@@ -134,7 +134,15 @@ fn drawn_as(game: &RenethackGame, g: &Graphics) -> Result<bool, String> {
         g.ssil != Level::Off,
         g.fog != Level::Off,
     );
+    // Godot builds the pipelines of what comes into view ahead for the
+    // project's MSAA: the window's
+    let project = godot::classes::ProjectSettings::singleton()
+        .get_setting("rendering/anti_aliasing/quality/msaa_3d")
+        .try_to::<i64>()
+        .ok();
     Ok(w.get_msaa_3d() == msaa
+        && project == Some(i64::from(msaa.ord()))
+        && !game.rewarming()
         && (w.get_scaling_3d_scale() - g.scale as f32 / 100.0).abs() < 1e-3
         && w.get_scaling_3d_mode() == mode
         && w.get_positional_shadow_atlas_size() == g.shadows.atlas() as i32

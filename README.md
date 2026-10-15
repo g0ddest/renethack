@@ -347,7 +347,13 @@ census of the scenes that draw the most, among them `variants`, every
 creature and thing a batch at a time (each sex, sensed, as a corpse and a
 statue, with the hover's outline and the x-ray over them) and the hero in
 every look, slot by slot. Run it after new art; `make perf` names what is
-still missing.
+still missing. Godot also compiles ahead only for the project's MSAA
+(`rendering/anti_aliasing/quality/msaa_3d`), so the graphics settings keep
+that setting (at run time: `project.godot` is not written), the window's
+and the inventory doll's in step, from before the rehearsal on. A change in
+the settings of what Godot builds pipelines for (the MSAA, ambient
+occlusion or indirect light turned on or off, FSR 2) makes the variants
+again behind a short veil.
 
 ## Production builds
 

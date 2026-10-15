@@ -188,18 +188,33 @@ pub fn apply_graphics(window: &mut Gd<Window>, g: &Graphics) {
     rs.positional_soft_shadow_filter_set_quality(filter);
     rs.directional_soft_shadow_filter_set_quality(filter);
     window.set_positional_shadow_atlas_size(g.shadows.atlas() as i32);
-    window.set_msaa_3d(match g.msaa {
-        Msaa::Off => ViewportMsaa::DISABLED,
-        Msaa::X2 => ViewportMsaa::MSAA_2X,
-        Msaa::X4 => ViewportMsaa::MSAA_4X,
-        Msaa::X8 => ViewportMsaa::MSAA_8X,
-    });
+    let msaa = msaa_of(g.msaa);
+    window.set_msaa_3d(msaa);
+    // Godot compiles the pipelines of what comes into view ahead, in the
+    // background, for the project's MSAA (it reads the setting every
+    // frame), not the window's: under any other each thing's first frame
+    // waits for its own
+    let key = "rendering/anti_aliasing/quality/msaa_3d";
+    let mut project = ProjectSettings::singleton();
+    if project.get_setting(key).try_to::<i64>().ok() != Some(i64::from(msaa.ord())) {
+        project.set_setting(key, &msaa.ord().to_variant());
+    }
     window.set_scaling_3d_mode(match g.upscale {
         Upscale::Bilinear => Scaling3DMode::BILINEAR,
         Upscale::Fsr1 => Scaling3DMode::FSR,
         Upscale::Fsr2 => Scaling3DMode::FSR2,
     });
     window.set_scaling_3d_scale(g.scale as f32 / 100.0);
+}
+
+/// A setting's MSAA as Godot's viewports take it.
+pub fn msaa_of(m: Msaa) -> ViewportMsaa {
+    match m {
+        Msaa::Off => ViewportMsaa::DISABLED,
+        Msaa::X2 => ViewportMsaa::MSAA_2X,
+        Msaa::X4 => ViewportMsaa::MSAA_4X,
+        Msaa::X8 => ViewportMsaa::MSAA_8X,
+    }
 }
 
 /// The volumetric fog's froxels a side (and as deep), and whether they

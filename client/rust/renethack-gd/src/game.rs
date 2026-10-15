@@ -445,6 +445,9 @@ pub struct RenethackGame {
     /// The cue fading out before the veil lifts: since when, from what
     /// strength.
     cue_out: Option<(Instant, f32)>,
+    /// The short veil over graphics that change what Godot builds
+    /// pipelines for (`start_rewarm`).
+    rewarm: Option<Rewarm>,
     /// The map's warm-up (its rehearsal, under the veil) has begun.
     map_warm: bool,
     /// When the last title frame began, and the pipelines compiled and
@@ -511,6 +514,35 @@ fn veil_cap() -> f64 {
             .and_then(|v| v.parse().ok())
             .unwrap_or(VEIL_CAP_SECS)
     })
+}
+
+/// The short veil over a change of the graphics that changes what Godot
+/// builds pipelines for: what is on screen waits for its own a frame or
+/// two, and the map makes its variants again behind it (`variants.rs`). It
+/// stays this many frames at least and at most this long, then fades.
+struct Rewarm {
+    layer: Gd<CanvasLayer>,
+    veil: Gd<godot::classes::ColorRect>,
+    since: Instant,
+    frames: u32,
+    lift: Option<Instant>,
+}
+const REWARM_FRAMES: u32 = 4;
+const REWARM_CAP_SECS: f64 = 2.0;
+/// A frame slower than this still waits for pipelines.
+const REWARM_SETTLED: f64 = 0.05;
+
+/// What of the graphics Godot builds pipelines for: the MSAA (their
+/// framebuffers), the passes ambient occlusion and indirect light add (the
+/// depth pass's normals), the upscaler that wants motion vectors.
+fn pipeline_settings(g: &nh_world::Graphics) -> (nh_world::Msaa, bool, bool, bool) {
+    use nh_world::{Level, Upscale};
+    (
+        g.msaa,
+        g.ssao != Level::Off,
+        g.ssil != Level::Off,
+        g.upscale == Upscale::Fsr2,
+    )
 }
 
 /// The way preview is drawn again only when one of these changes.
@@ -613,6 +645,7 @@ impl INode for RenethackGame {
             veil_cue: None,
             veil_lift: None,
             cue_out: None,
+            rewarm: None,
             map_warm: false,
             title_clock: None,
             title_render: ([0; 5], 0.0),
@@ -812,6 +845,7 @@ impl INode for RenethackGame {
         let t = Instant::now();
         self.time_title_frame(stats);
         self.lift_veil(stats);
+        self.tick_rewarm(delta);
         // the map keeps no frame's budget while nothing of it shows
         let veiled = self.veil.is_some() && self.veil_lift.is_none();
         if let Some(ui) = self.ui.as_mut() {
@@ -1350,6 +1384,66 @@ impl RenethackGame {
                 }
             }
         }
+    }
+
+    /// The short veil down (again) over graphics that change what Godot
+    /// builds pipelines for: the start-up veil is enough while it is up.
+    fn start_rewarm(&mut self) {
+        if self.veil.is_some() || self.headless {
+            return;
+        }
+        if let Some(r) = self.rewarm.as_mut() {
+            r.since = Instant::now();
+            r.frames = 0;
+            r.lift = None;
+            r.veil.set_modulate(Color::WHITE);
+            return;
+        }
+        let mut layer = CanvasLayer::new_alloc();
+        layer.set_layer(100);
+        let mut veil = godot::classes::ColorRect::new_alloc();
+        veil.set_color(crate::theme::BG);
+        crate::theme::place(&veil, [0.0, 0.0, 1.0, 1.0], [0.0; 4]);
+        layer.add_child(&veil);
+        self.base_mut().add_child(&layer);
+        self.rewarm = Some(Rewarm {
+            layer,
+            veil,
+            since: Instant::now(),
+            frames: 0,
+            lift: None,
+        });
+    }
+
+    /// The short veil lifts once the map has made its variants again and a
+    /// frame is drawn in time (at its cap at the latest), then fades.
+    fn tick_rewarm(&mut self, delta: f64) {
+        let busy = self.ui.as_ref().is_some_and(|ui| ui.map.variants_busy());
+        let Some(r) = self.rewarm.as_mut() else {
+            return;
+        };
+        r.frames += 1;
+        match r.lift {
+            None => {
+                let settled = r.frames >= REWARM_FRAMES && !busy && delta < REWARM_SETTLED;
+                if settled || r.since.elapsed().as_secs_f64() >= REWARM_CAP_SECS {
+                    r.lift = Some(Instant::now());
+                }
+            }
+            Some(t) => {
+                let a = 1.0 - t.elapsed().as_secs_f32() / VEIL_FADE;
+                if a > 0.0 {
+                    r.veil.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, a));
+                } else if let Some(mut r) = self.rewarm.take() {
+                    r.layer.queue_free();
+                }
+            }
+        }
+    }
+
+    /// The short veil over new graphics is down (self-tests).
+    pub(crate) fn rewarming(&self) -> bool {
+        self.rewarm.is_some()
     }
 
     /// The start-up veil begins to fade.
@@ -3310,7 +3404,11 @@ impl RenethackGame {
             crate::video::apply_display(&mut window, &s.display, true);
         }
         if self.graphics() != drawn {
+            let rewarm = pipeline_settings(&self.graphics()) != pipeline_settings(&drawn);
             self.apply_graphics();
+            if rewarm {
+                self.start_rewarm();
+            }
         }
         if s.ui_scale != old.ui_scale
             && let Some(window) = self.base().get_tree().get_root()
