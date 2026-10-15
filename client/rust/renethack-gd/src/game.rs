@@ -3041,6 +3041,7 @@ impl RenethackGame {
             device: self.device_quality,
             ui_auto,
             ui_forced: crate::theme::forced_ui_scale(),
+            deck: crate::video::is_deck(),
             playing_keys: (self.state == GameState::Playing).then_some(self.ui_state.profile),
             volumes: crate::audio::Bus::ALL.map(crate::audio::volume),
             // over a game, its own as its notice tells them: what the player

@@ -4816,6 +4816,7 @@ impl SelfTest {
             "pickers" => input_ru::pickers(),
             "help" => help_tests::help(),
             "settings" => settings_tests::settings(),
+            "deck" => settings_tests::deck(),
             "gameplay" => gameplay_tests::gameplay(),
             "credits" => credits_tests::credits(),
             "rebind" => rebind_tests::rebind(),

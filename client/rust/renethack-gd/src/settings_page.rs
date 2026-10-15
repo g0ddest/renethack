@@ -291,6 +291,9 @@ pub struct View {
     pub ui_auto: u32,
     /// The UI scale `RENETHACK_UI_SCALE` forces, if it does.
     pub ui_forced: Option<u32>,
+    /// A Steam Deck: the window covers its screen until the player
+    /// chooses (`Display::window_mode`).
+    pub deck: bool,
     /// The keys of the character playing (over a game).
     pub playing_keys: Option<KeyProfile>,
     /// The buses' volumes, linear, in `Bus::ALL`'s order.
@@ -325,9 +328,14 @@ fn gameplay(v: &View) -> Option<&Gameplay> {
     }
 }
 
+/// The window's mode now: the player's, else the device's.
+fn window_mode(v: &View) -> WindowMode {
+    v.settings.display.window_mode(v.deck)
+}
+
 /// The window size is the player's to choose (in a window only).
 fn resizable(v: &View) -> bool {
-    v.settings.display.mode == WindowMode::Windowed
+    window_mode(v) == WindowMode::Windowed
 }
 
 /// The row can change now: the window's size in a window only, the UI
@@ -365,7 +373,7 @@ fn level_text(l: Level) -> String {
 pub fn value_text(field: Field, v: &View) -> String {
     let d = &v.settings.display;
     match field {
-        Field::WindowMode => match d.mode {
+        Field::WindowMode => match window_mode(v) {
             WindowMode::Windowed => tr!("settings-window-windowed"),
             WindowMode::Borderless => tr!("settings-window-borderless"),
             WindowMode::Exclusive => tr!("settings-window-exclusive"),
@@ -487,7 +495,15 @@ pub fn step(field: Field, v: &View, dir: i32, wrap: bool) -> Option<Change> {
     let mut s = v.settings.clone();
     let d = &mut s.display;
     match field {
-        Field::WindowMode => d.mode = step_through(&WindowMode::ALL, d.mode, dir, wrap),
+        Field::WindowMode => {
+            // a step that leaves the mode as it is chooses nothing
+            let now = window_mode(v);
+            let next = step_through(&WindowMode::ALL, now, dir, wrap);
+            if next == now {
+                return None;
+            }
+            d.mode = Some(next);
+        }
         Field::WindowSize => {
             if !resizable(v) {
                 return None;
@@ -2056,6 +2072,7 @@ mod tests {
             playing_keys: None,
             volumes: Bus::ALL.map(Bus::default_volume),
             game_options: None,
+            deck: false,
         }
     }
 
@@ -2070,7 +2087,7 @@ mod tests {
     fn a_step_changes_its_row_s_setting() {
         let v = view();
         let s = changed(step(Field::WindowMode, &v, 1, false));
-        assert_eq!(s.display.mode, WindowMode::Borderless);
+        assert_eq!(s.display.mode, Some(WindowMode::Borderless));
         let s = changed(step(Field::FpsCap, &v, 1, false));
         assert_eq!(s.display.fps_cap, 30);
         let s = changed(step(Field::Vsync, &v, -1, false));
@@ -2089,6 +2106,25 @@ mod tests {
     }
 
     #[test]
+    fn a_deck_covers_its_screen_until_the_player_chooses() {
+        let mut v = view();
+        // a step that leaves the mode as it is chooses nothing
+        assert_eq!(step(Field::WindowMode, &v, -1, false), None);
+        v.deck = true;
+        assert_eq!(window_mode(&v), WindowMode::Borderless);
+        assert!(
+            !live(Field::WindowSize, &v),
+            "no size to choose on the whole screen"
+        );
+        let s = changed(step(Field::WindowMode, &v, -1, false));
+        assert_eq!(s.display.mode, Some(WindowMode::Windowed));
+        // chosen, kept on the Deck too
+        v.settings = s;
+        assert_eq!(window_mode(&v), WindowMode::Windowed);
+        assert!(live(Field::WindowSize, &v));
+    }
+
+    #[test]
     fn the_window_size_steps_from_the_window_s_own_in_a_window_only() {
         let v = view();
         let s = changed(step(Field::WindowSize, &v, 1, false));
@@ -2098,7 +2134,7 @@ mod tests {
         let full = View {
             settings: Settings {
                 display: Display {
-                    mode: WindowMode::Borderless,
+                    mode: Some(WindowMode::Borderless),
                     ..Display::default()
                 },
                 ..Settings::default()

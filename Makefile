@@ -155,6 +155,7 @@ test-client: need-timeout all client
 	for s in $(DECK_SELFTESTS); do \
 		$(call run_selftest,$$s,--size=1280x800,180,$$s at 1280x800); \
 	done; \
+	(export SteamDeck=1; $(call run_selftest,deck,--size=1280x800,180,deck as a Steam Deck)); \
 	for s in $(RU_DECK_SELFTESTS); do \
 		$(call run_selftest,$$s,--size=1280x800 --lang=ru,180,$$s in Russian at 1280x800); \
 	done; \
@@ -166,7 +167,7 @@ test-client: need-timeout all client
 	done; \
 	for s in $(WINDOW_SELFTESTS); do \
 		$(call run_selftest,$$s,,180,$$s in a window,window); \
-	done; echo "selftests passed: $(SELFTESTS); at 1280x800: $(DECK_SELFTESTS);" \
+	done; echo "selftests passed: $(SELFTESTS); at 1280x800: $(DECK_SELFTESTS), deck as a Steam Deck;" \
 		"in Russian: $(RU_DECK_SELFTESTS) at 1280x800, $(RU_SELFTESTS) at 1920x1080;" \
 		"in the pseudo-language: $(PSEUDO_SELFTESTS); in a window: $(WINDOW_SELFTESTS)"
 

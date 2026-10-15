@@ -279,8 +279,10 @@ pub(super) fn settings() -> Vec<Step> {
             if !headless() {
                 return Ok(true);
             }
-            Ok(profile(g)?.settings.display.mode == WindowMode::Borderless
-                && shown(g, Field::WindowMode)? == tr!("settings-window-borderless"))
+            Ok(
+                profile(g)?.settings.display.mode == Some(WindowMode::Borderless)
+                    && shown(g, Field::WindowMode)? == tr!("settings-window-borderless"),
+            )
         }),
         Step::Call("no size to choose in a full screen", |g| {
             if !headless() {
@@ -325,7 +327,7 @@ pub(super) fn settings() -> Vec<Step> {
             if !headless() {
                 return Ok(true);
             }
-            Ok(profile(g)?.settings.display.mode == WindowMode::Windowed)
+            Ok(profile(g)?.settings.display.mode == Some(WindowMode::Windowed))
         }),
         // what was kept is what a start reads
         Step::Call("the start-up reads the settings kept", |g| {
@@ -632,6 +634,72 @@ pub(super) fn settings() -> Vec<Step> {
     ]);
     steps.extend(quit());
     steps
+}
+
+/// `deck`, run as a Steam Deck (`SteamDeck=1`): while the player has not
+/// chosen a window, the game covers the Deck's screen at its own size (a
+/// window would be scaled down to it, its words a fifth smaller): the
+/// window was asked for so, the page's window row says so and has no size
+/// to choose, the interface at the Deck's 120 % and the graphics at its
+/// preset. A window chosen on the page is asked for and kept, and the next
+/// start keeps the player's choice.
+pub(super) fn deck() -> Vec<Step> {
+    vec![
+        Step::Wait("the title screen", |g| {
+            fail_on_error_screen(g)?;
+            Ok(screen(g) == Some("title"))
+        }),
+        Step::Call(
+            "a Deck, its window not chosen: asked to cover the screen",
+            |g| {
+                if !crate::video::is_deck() {
+                    return Err("not a Steam Deck: run with SteamDeck=1".into());
+                }
+                if g.settings.display.mode.is_some() {
+                    return Err(format!("a window chosen: {:?}", g.settings.display.mode));
+                }
+                match crate::video::asked_mode() {
+                    Some(WindowMode::Borderless) => Ok(()),
+                    other => Err(format!("the window was asked for {other:?}")),
+                }
+            },
+        ),
+        Step::Wait("the Deck's interface scale and graphics", |g| {
+            Ok((content_scale(g)? - 1.2).abs() < 1e-3
+                && g.graphics() == Graphics::preset(crate::video::DECK_QUALITY))
+        }),
+        Step::Push(UiEvent::OpenSettings),
+        Step::Wait("the page: the whole screen, no size to choose", |g| {
+            let p = page(g)?;
+            Ok(p.field() == Some(Field::WindowMode)
+                && shown(g, Field::WindowMode)? == tr!("settings-window-borderless")
+                && !p.row_live(Field::WindowSize)
+                && profile(g)?.settings.display.mode.is_none())
+        }),
+        Step::Shot("deck-settings"),
+        keys!("← a window", LEFT),
+        Step::Wait("a window chosen: asked for and kept", |g| {
+            Ok(
+                profile(g)?.settings.display.mode == Some(WindowMode::Windowed)
+                    && crate::video::asked_mode() == Some(WindowMode::Windowed)
+                    && shown(g, Field::WindowMode)? == tr!("settings-window-windowed")
+                    && page(g)?.row_live(Field::WindowSize),
+            )
+        }),
+        Step::Call("the next start keeps the player's window", |g| {
+            let pg = g.paths.as_ref().ok_or("no paths")?.playground.clone();
+            let args = parse_args(&[format!("--playground={}", pg.display())]);
+            let mode = startup_settings(&args).display.window_mode(true);
+            if mode != WindowMode::Windowed {
+                return Err(format!("the next start asks for {mode:?}"));
+            }
+            Ok(())
+        }),
+        keys!("Esc", ESCAPE),
+        Step::Wait("the title again", |g| {
+            Ok(screen(g) == Some("title") && g.settings_page.is_none())
+        }),
+    ]
 }
 
 /// What `presets` times, in turn: each preset, and Medium drawn at 75 %

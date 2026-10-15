@@ -54,21 +54,35 @@ pub fn device_quality() -> Quality {
 /// The Steam Deck's preset.
 pub const DECK_QUALITY: Quality = Quality::Medium;
 
-/// The window as `d` asks. At start (`all` false) only what differs from
+thread_local! {
+    /// The window's mode `apply_display` asked for last (self-tests: a
+    /// run without a display has no window to ask).
+    static ASKED: std::cell::Cell<Option<WindowMode>> = const { std::cell::Cell::new(None) };
+}
+
+/// The window's mode the game asked for last.
+pub fn asked_mode() -> Option<WindowMode> {
+    ASKED.with(|a| a.get())
+}
+
+/// The window as `d` asks, its mode the player's or the device's (a Steam
+/// Deck's whole screen). At start (`all` false) only what differs from
 /// how the window opens: a self-test's size, and Godot's own flags on the
 /// command line (`--disable-vsync`, `--max-fps`), stay as they are.
 pub fn apply_display(window: &mut Gd<Window>, d: &Display, all: bool) {
-    let mode = match d.mode {
+    let wanted = d.window_mode(is_deck());
+    ASKED.with(|a| a.set(Some(wanted)));
+    let mode = match wanted {
         WindowMode::Windowed => Mode::WINDOWED,
         WindowMode::Borderless => Mode::FULLSCREEN,
         WindowMode::Exclusive => Mode::EXCLUSIVE_FULLSCREEN,
     };
     let headless = DisplayServer::singleton().get_name() == "headless";
-    if !headless && (all || d.mode != WindowMode::Windowed) && window.get_mode() != mode {
+    if !headless && (all || wanted != WindowMode::Windowed) && window.get_mode() != mode {
         window.set_mode(mode);
     }
     if !headless
-        && d.mode == WindowMode::Windowed
+        && wanted == WindowMode::Windowed
         && let Some(size) = d.size
     {
         // a screen smaller than the size chosen (another monitor): the

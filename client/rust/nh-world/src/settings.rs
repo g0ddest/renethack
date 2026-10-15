@@ -125,8 +125,9 @@ pub fn step_window_size(now: (u32, u32), screen: (u32, u32), dir: i32, wrap: boo
 /// The window and how often it is drawn.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Display {
-    #[serde(default)]
-    pub mode: WindowMode,
+    /// None: the device's own (`Display::window_mode`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mode: Option<WindowMode>,
     /// The window's size when windowed; None: as the game opens it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub size: Option<(u32, u32)>,
@@ -144,11 +145,24 @@ fn yes() -> bool {
 impl Default for Display {
     fn default() -> Display {
         Display {
-            mode: WindowMode::Windowed,
+            mode: None,
             size: None,
             vsync: true,
             fps_cap: 0,
         }
+    }
+}
+
+impl Display {
+    /// The window's mode: the player's, else the device's. A Steam Deck's
+    /// (`deck`) is the whole screen at its own size: a window there is
+    /// scaled down to it, its words a fifth smaller.
+    pub fn window_mode(&self, deck: bool) -> WindowMode {
+        self.mode.unwrap_or(if deck {
+            WindowMode::Borderless
+        } else {
+            WindowMode::Windowed
+        })
     }
 }
 
@@ -517,11 +531,29 @@ mod tests {
     #[test]
     fn the_display_s_defaults_leave_the_window_as_it_opens() {
         let d = Display::default();
-        assert_eq!(
-            (d.mode, d.size, d.vsync, d.fps_cap),
-            (WindowMode::Windowed, None, true, 0)
-        );
+        assert_eq!((d.mode, d.size, d.vsync, d.fps_cap), (None, None, true, 0));
         let read: Display = serde_json::from_str("{}").unwrap();
         assert_eq!(read, d, "an older profile has none of it");
+    }
+
+    #[test]
+    fn a_deck_covers_its_screen_until_the_player_chooses() {
+        let d = Display::default();
+        assert_eq!(d.window_mode(false), WindowMode::Windowed);
+        assert_eq!(d.window_mode(true), WindowMode::Borderless);
+        let chosen = Display {
+            mode: Some(WindowMode::Windowed),
+            ..d
+        };
+        assert_eq!(chosen.window_mode(true), WindowMode::Windowed);
+        // a mode not chosen is not kept
+        let text = serde_json::to_string(&d).unwrap();
+        assert!(!text.contains("mode"), "{text}");
+        assert_eq!(
+            serde_json::from_str::<Display>(r#"{"mode":"exclusive"}"#)
+                .unwrap()
+                .mode,
+            Some(WindowMode::Exclusive)
+        );
     }
 }
