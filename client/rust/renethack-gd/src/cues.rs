@@ -624,6 +624,11 @@ mod tests {
             ("The red dragon breathes fire!", "breath.fire"),
             ("The kobold shaman casts a spell at you!", "use.cast"),
             ("The gnomish wizard casts a spell!", "use.cast"),
+            ("The gnome lord zaps a wand of striking!", "use.zap"),
+            ("The dwarf zaps itself with a wand of digging!", "use.zap"),
+            ("The hill orc drinks a bubbly blue potion!", "use.quaff"),
+            ("The gnome reads a scroll labeled FOOBIE BLETCH!", "use.read"),
+            ("The hill orc wields a crossbow!", "use.wield"),
             (
                 "The black dragon breathes a disintegration blast!",
                 "breath.death",

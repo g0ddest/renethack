@@ -4,7 +4,11 @@
 //! target and casts (its clip, else a turn), a glow comes into its hand
 //! as the spell leaves it, and the spell strikes where the line says it
 //! went, the hero; one that cannot cast points and curses, its glow
-//! fizzling; a fumbled spell crackles in the air around its caster.
+//! fizzling; a fumbled spell crackles in the air around its caster. A
+//! monster zapping a wand at the hero turns and zaps it, a flare at its
+//! tip (the map draws the ray); one drinking a potion drinks, motes of
+//! the potion's colour rising; one reading a scroll reads, runes rising
+//! from the page; one wielding a weapon takes it in hand, a glint on it.
 //! Nothing waits for it: the next turn plays alongside.
 
 use godot::classes::Skeleton3D;
@@ -15,11 +19,28 @@ use nh_world::World;
 use super::MapView;
 use crate::vfx::VfxKind;
 
-/// The clip a caster casts with (the hero's own, `held.uses.cast`), the
-/// hand its spell leaves, and the colour of a monster's magic.
+/// The clips monsters do things with (the hero's own, `held.uses`): a
+/// spell cast, a wand zapped, a potion drunk, a scroll read, a weapon
+/// taken in hand.
 const CAST_CLIP: &str = "Spell_Simple_Shoot";
-const CAST_HAND: &str = "hand_l";
+const ZAP_CLIP: &str = "Pistol_Shoot";
+const DRINK_CLIP: &str = "ual2/Consume";
+const HANDLE_CLIP: &str = "Interact";
+/// The hands: a spell leaves the left, a potion is drunk from it; a wand,
+/// a page, a weapon are in the right.
+const OFF_HAND: &str = "hand_l";
+const MAIN_HAND: &str = "hand_r";
+/// The colour of a monster's magic, of a wand's flare, of a potion whose
+/// colour the line does not tell.
 const MAGIC: Color = Color::from_rgb(0.66, 0.5, 1.0);
+const WAND: Color = Color::from_rgb(0.8, 0.85, 1.0);
+const POTION: Color = Color::from_rgb(0.6, 0.75, 1.0);
+/// Seconds into a zap its flare comes, into a drink its motes rise, into
+/// a reading its runes, into taking a weapon its glint.
+const FLARE_AT: f32 = 0.35;
+const MOTES_AT: f32 = 0.8;
+const RUNES_AT: f32 = 0.5;
+const GLINT_AT: f32 = 0.4;
 /// Seconds into a cast its glow comes, and its spell strikes.
 const GLOW_AT: f32 = 0.25;
 const STRIKES_AT: f32 = 0.55;
@@ -45,11 +66,47 @@ pub enum ActKind {
     Curse(Aim),
     /// A spell fumbled: the air crackles around it.
     Crackle,
+    /// A wand zapped: at the hero (or whoever the hero is not), or at
+    /// itself.
+    Zap { at_self: bool },
+    /// A potion drunk.
+    Drink,
+    /// A scroll read.
+    Read,
+    /// A weapon taken in hand.
+    Wield,
 }
 
 /// What a message says a monster did: the monster by the name the line
-/// uses, and what.
-pub fn act_of(text: &str) -> Option<(&str, ActKind)> {
+/// uses, what, and the thing it did it with as the line names it.
+pub fn act_of(text: &str) -> Option<(&str, ActKind, &str)> {
+    let rest = text.strip_prefix("The ");
+    for (verb, kind) in [
+        (" zaps itself with ", ActKind::Zap { at_self: true }),
+        (" drinks ", ActKind::Drink),
+        (" reads ", ActKind::Read),
+        (" wields ", ActKind::Wield),
+    ] {
+        if let Some((name, what)) = rest.and_then(|r| r.split_once(verb)) {
+            return Some((name, kind, what.trim_end_matches(['!', '.'])));
+        }
+    }
+    // a wand at the hero (not the spell's ray "zaps you with")
+    if let Some((name, what)) = rest.and_then(|r| r.split_once(" zaps "))
+        && (what.starts_with("a ") || what.starts_with("an "))
+    {
+        let what = what.split(", which").next().unwrap_or(what);
+        return Some((
+            name,
+            ActKind::Zap { at_self: false },
+            what.trim_end_matches('!'),
+        ));
+    }
+    spell_of(text).map(|(name, kind)| (name, kind, ""))
+}
+
+/// A spell's line: the caster by the name the line uses, and what.
+fn spell_of(text: &str) -> Option<(&str, ActKind)> {
     if let Some(name) = text
         .strip_prefix("The air crackles around the ")
         .and_then(|r| r.strip_suffix('.'))
@@ -108,7 +165,7 @@ impl MapView {
     /// An act a message tells, of the monster it names where the map shows
     /// it seen; none for one only sensed, unseen or not on the map.
     pub(super) fn watch_act(&mut self, text: &str, world: &World, catalog: &Catalog) {
-        let Some((name, kind)) = act_of(text) else {
+        let Some((name, kind, what)) = act_of(text) else {
             return;
         };
         let Some(cell) = seen_named(world, catalog, name) else {
@@ -119,22 +176,26 @@ impl MapView {
             ActKind::Cast(Aim::Hero) | ActKind::Curse(Aim::Hero) => hero,
             _ => None,
         };
-        let (clip, body) = match kind {
-            ActKind::Crackle => (false, self.body_of(cell)),
-            _ => {
-                // it turns to the hero it casts at (or points at)
-                let toward = aim_at.or(hero).filter(|&h| h != cell);
-                let clip = match toward {
-                    Some(to) => self.act_toward(cell, to, world, CAST_CLIP),
-                    None => false,
-                };
-                (clip, self.body_of(cell))
+        // it turns to the hero it casts at, points or zaps at; a potion, a
+        // scroll, a weapon it handles where it stands
+        let toward = aim_at.or(hero).filter(|&h| h != cell);
+        let clip = match kind {
+            ActKind::Crackle => false,
+            ActKind::Cast(_) | ActKind::Curse(_) => {
+                toward.is_some_and(|to| self.act_toward(cell, to, world, CAST_CLIP))
             }
+            ActKind::Zap { at_self: false } => {
+                toward.is_some_and(|to| self.act_toward(cell, to, world, ZAP_CLIP))
+            }
+            ActKind::Zap { at_self: true } => self.act_here(cell, ZAP_CLIP),
+            ActKind::Drink => self.act_here(cell, DRINK_CLIP),
+            ActKind::Read | ActKind::Wield => self.act_here(cell, HANDLE_CLIP),
         };
-        let Some((node, middle)) = body else {
+        let Some((node, middle)) = self.body_of(cell) else {
             return;
         };
-        let hand = FxAt::Hand(node, CAST_HAND, middle);
+        let hand = FxAt::Hand(node.clone(), OFF_HAND, middle);
+        let main = FxAt::Hand(node, MAIN_HAND, middle);
         match kind {
             ActKind::Cast(_) => {
                 self.act_fx.push(ActFx {
@@ -161,6 +222,29 @@ impl MapView {
                 wait: 0.0,
                 kind: VfxKind::Lightning,
                 at: FxAt::Point(middle),
+            }),
+            ActKind::Zap { .. } => self.act_fx.push(ActFx {
+                wait: FLARE_AT,
+                kind: VfxKind::Zap(WAND),
+                at: main,
+            }),
+            ActKind::Drink => {
+                let color = self.potion_color(what);
+                self.act_fx.push(ActFx {
+                    wait: MOTES_AT,
+                    kind: VfxKind::Quaff(color),
+                    at: hand,
+                });
+            }
+            ActKind::Read => self.act_fx.push(ActFx {
+                wait: RUNES_AT,
+                kind: VfxKind::Read,
+                at: main,
+            }),
+            ActKind::Wield => self.act_fx.push(ActFx {
+                wait: GLINT_AT,
+                kind: VfxKind::Sparkle,
+                at: main,
             }),
         }
         self.acts_shown.push(Acted { kind, cell, clip });
@@ -201,6 +285,43 @@ impl MapView {
             m.node.set_transform(t);
         }
         false
+    }
+
+    /// `cell`'s monster plays `clip` where it stands, then its idle again.
+    /// Whether it has that clip.
+    fn act_here(&mut self, cell: (i32, i32), clip: &str) -> bool {
+        let Some(m) = self
+            .cells
+            .get(&cell)
+            .and_then(|n| n.look.entity.and_then(|i| n.models.get(i)))
+        else {
+            return false;
+        };
+        let idle = self.art.clips(m, false).idle;
+        let Some(mut p) = m.player().cloned().filter(|p| p.has_animation(clip)) else {
+            return false;
+        };
+        p.play_ex().name(clip).custom_blend(0.15).done();
+        if let Some(idle) = idle {
+            p.queue(idle.as_str());
+        }
+        true
+    }
+
+    /// The colour of a potion as a line names it ("a bubbly blue potion"),
+    /// else a potion's.
+    fn potion_color(&self, what: &str) -> Color {
+        let tile = nh_protocol::ObjectTile {
+            tile: 0,
+            class: "!".into(),
+            class_name: String::new(),
+            appearance: what.to_string(),
+            color: None,
+        };
+        self.art
+            .manifest()
+            .appearance_color(&tile)
+            .map_or(POTION, |c| Color::from_rgb(c[0], c[1], c[2]))
     }
 
     /// The model standing on `cell` and its body's middle.
@@ -307,41 +428,68 @@ mod tests {
     fn a_line_tells_who_did_what() {
         assert_eq!(
             act_of("The kobold shaman casts a spell!"),
-            Some(("kobold shaman", ActKind::Cast(Aim::Around)))
+            Some(("kobold shaman", ActKind::Cast(Aim::Around), ""))
         );
         assert_eq!(
             act_of("The gnomish wizard casts a spell at you!"),
-            Some(("gnomish wizard", ActKind::Cast(Aim::Hero)))
+            Some(("gnomish wizard", ActKind::Cast(Aim::Hero), ""))
         );
         assert_eq!(
             act_of("The orc shaman casts a spell at thin air!"),
-            Some(("orc shaman", ActKind::Cast(Aim::Astray)))
+            Some(("orc shaman", ActKind::Cast(Aim::Astray), ""))
         );
         assert_eq!(
             act_of("The kobold shaman casts a spell at your displaced image!"),
-            Some(("kobold shaman", ActKind::Cast(Aim::Astray)))
+            Some(("kobold shaman", ActKind::Cast(Aim::Astray), ""))
         );
         assert_eq!(
             act_of("The orc shaman points at you, then curses."),
-            Some(("orc shaman", ActKind::Curse(Aim::Hero)))
+            Some(("orc shaman", ActKind::Curse(Aim::Hero), ""))
         );
         assert_eq!(
             act_of("The orc shaman points all around, then curses."),
-            Some(("orc shaman", ActKind::Curse(Aim::Around)))
+            Some(("orc shaman", ActKind::Curse(Aim::Around), ""))
         );
         assert_eq!(
             act_of("The orc shaman points and curses in your general direction."),
-            Some(("orc shaman", ActKind::Curse(Aim::Astray)))
+            Some(("orc shaman", ActKind::Curse(Aim::Astray), ""))
         );
         assert_eq!(
             act_of("The air crackles around the kobold shaman."),
-            Some(("kobold shaman", ActKind::Crackle))
+            Some(("kobold shaman", ActKind::Crackle, ""))
         );
         assert_eq!(
             act_of("The Grey-elf zaps you with a blast of fire!"),
-            Some(("Grey-elf", ActKind::Cast(Aim::Hero)))
+            Some(("Grey-elf", ActKind::Cast(Aim::Hero), ""))
         );
-        assert_eq!(act_of("The gnome lord zaps a wand of striking!"), None);
+        assert_eq!(
+            act_of("The gnome lord zaps a wand of striking!"),
+            Some((
+                "gnome lord",
+                ActKind::Zap { at_self: false },
+                "a wand of striking"
+            ))
+        );
+        assert_eq!(
+            act_of("The gnome lord zaps an oak wand, which suddenly explodes!"),
+            Some(("gnome lord", ActKind::Zap { at_self: false }, "an oak wand"))
+        );
+        assert_eq!(
+            act_of("The dwarf zaps itself with a wand of digging!"),
+            Some(("dwarf", ActKind::Zap { at_self: true }, "a wand of digging"))
+        );
+        assert_eq!(
+            act_of("The hill orc drinks a bubbly blue potion!"),
+            Some(("hill orc", ActKind::Drink, "a bubbly blue potion"))
+        );
+        assert_eq!(
+            act_of("The gnome reads a scroll labeled FOOBIE BLETCH!"),
+            Some(("gnome", ActKind::Read, "a scroll labeled FOOBIE BLETCH"))
+        );
+        assert_eq!(
+            act_of("The hill orc wields a crossbow."),
+            Some(("hill orc", ActKind::Wield, "a crossbow"))
+        );
         assert_eq!(act_of("Something casts a spell at you!"), None);
         assert_eq!(act_of("You hear a mumbled curse."), None);
         assert_eq!(act_of("The newt bites!"), None);

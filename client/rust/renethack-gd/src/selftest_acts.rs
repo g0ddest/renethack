@@ -35,6 +35,95 @@ pub(super) fn acts() -> Vec<Step> {
     }));
     steps.extend(no_pet());
     steps.extend(casting());
+    steps.extend(items());
+    steps
+}
+
+/// A thing a monster does with an item, as the engine tells it: the line,
+/// what is shown, the picture.
+const ITEMS: [(&str, ActKind, &str); 4] = [
+    (
+        "The gnome lord zaps a wand of striking!",
+        ActKind::Zap { at_self: false },
+        "acts-zap",
+    ),
+    (
+        "The gnome lord drinks a bubbly blue potion!",
+        ActKind::Drink,
+        "acts-drink",
+    ),
+    (
+        "The gnome lord reads a scroll labeled FOOBIE BLETCH!",
+        ActKind::Read,
+        "acts-read",
+    ),
+    (
+        "The gnome lord wields a crossbow!",
+        ActKind::Wield,
+        "acts-wield",
+    ),
+];
+/// The item act under test (an index into `ITEMS`, from 1).
+static ITEM: AtomicUsize = AtomicUsize::new(0);
+
+/// A gnome lord (seen, the hero no longer blind) zapping a wand at the
+/// hero, drinking a potion, reading a scroll and wielding a weapon, each
+/// line told as the engine tells it: each shows its clip and its effect
+/// on it.
+fn items() -> Vec<Step> {
+    let mut steps = vec![
+        Step::Call("", |_| {
+            ITEM.store(0, Ordering::Relaxed);
+            Ok(())
+        }),
+        mark(),
+        Step::KeysUntil("turns till the hero sees again", |g| {
+            let cat = g.catalog.as_deref().ok_or("no catalog")?;
+            let blind = g
+                .world
+                .status
+                .condition_names(cat)
+                .iter()
+                .any(|n| n == "Blind");
+            if !blind && !FORCING.load(Ordering::Relaxed) {
+                return Ok(None);
+            }
+            wait_a_turn(g)
+        }),
+    ];
+    steps.extend(make("gnome lord"));
+    steps.push(Step::Call("closer", |g| {
+        g.ui.as_mut().ok_or("no UI")?.map.set_distance(6.5, 0.0);
+        Ok(())
+    }));
+    for (_, _, shot) in ITEMS {
+        steps.extend([
+            Step::Wait("the gnome lord seen", |g| {
+                let at = find(g, "gnome lord");
+                if let Some(at) = at {
+                    *AT.lock().unwrap() = at;
+                }
+                Ok(at.is_some())
+            }),
+            mark(),
+            Step::Call("the next item's line", |g| {
+                let i = ITEM.fetch_add(1, Ordering::Relaxed);
+                tell(g, ITEMS[i].0);
+                Ok(())
+            }),
+            Step::Wait("shown on it, with its clip", |g| {
+                Ok(shown_on(g, |a| {
+                    a.kind == ITEMS[ITEM.load(Ordering::Relaxed) - 1].1 && a.clip
+                }))
+            }),
+            Step::Wait("its effect drawn", |g| Ok(map_view(g)?.acts_pending() == 0)),
+            Step::Shot(shot),
+        ]);
+    }
+    steps.push(Step::Call("back", |g| {
+        g.ui.as_mut().ok_or("no UI")?.map.set_distance(11.0, 0.0);
+        Ok(())
+    }));
     steps
 }
 
@@ -142,7 +231,7 @@ fn casting() -> Vec<Step> {
             Ok(shown_on(g, |a| match a.kind {
                 ActKind::Curse(_) => a.clip,
                 ActKind::Crackle => true,
-                ActKind::Cast(_) => false,
+                _ => false,
             }))
         }),
         mark(),
@@ -286,7 +375,11 @@ fn find(g: &RenethackGame, name: &str) -> Option<(i32, i32)> {
                     .mon
                     .and_then(|m| usize::try_from(m).ok())
                     .and_then(|m| cat.monsters.get(m))
-                    .is_some_and(|m| m.name == name);
+                    .is_some_and(|m| {
+                        m.name == name
+                            || m.male.as_deref() == Some(name)
+                            || m.female.as_deref() == Some(name)
+                    });
             let d = (x - hx).abs().max((y - hy).abs());
             if named && best.is_none_or(|(_, b)| d < b) {
                 best = Some(((x, y), d));
