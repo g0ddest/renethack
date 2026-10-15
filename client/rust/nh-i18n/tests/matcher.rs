@@ -935,6 +935,14 @@ fn searching_while_stoned() {
     );
 }
 
+#[test]
+fn the_hero_s_mission_goes_on_in_the_next_line() {
+    // ^X: " who is opposed by…" («чьи противники…») always follows
+    let out = translator().text(" You are neutral, on a mission for Thoth");
+    assert_eq!(out.status, Status::Translated, "{}", out.text);
+    assert!(out.text.ends_with("волю Тота,"), "{}", out.text);
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {
