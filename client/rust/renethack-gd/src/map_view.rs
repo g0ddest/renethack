@@ -2871,6 +2871,12 @@ pub struct MapView {
     /// and the acts shown lately (self-tests).
     act_fx: Vec<acts::ActFx>,
     acts_shown: Vec<Acted>,
+    /// Bodies growing in where they came, and the cells a monster came in
+    /// sight on this frame (where help summoned comes).
+    arrivals: Vec<acts::Arrival>,
+    appeared: Vec<(i32, i32)>,
+    /// Summoners told lately: where, when.
+    summons: Vec<((i32, i32), f64)>,
 }
 
 /// A marker projected on the level's surfaces (never on models): a ring
@@ -3448,6 +3454,9 @@ impl MapView {
             fell: None,
             act_fx: Vec::new(),
             acts_shown: Vec::new(),
+            arrivals: Vec::new(),
+            appeared: Vec::new(),
+            summons: Vec::new(),
             title: None,
             titled: false,
             title_hero: ("valkyrie".to_string(), true),
@@ -3585,9 +3594,12 @@ impl MapView {
         self.watch_fights(world, catalog);
         // the deaths told fall; what no death claims goes
         self.claim_falls(catalog);
+        self.greet_summoned();
+        self.appeared.clear();
         self.advance_motions(delta as f32);
         self.advance_falls(delta as f32);
         self.advance_acts(delta as f32);
+        self.advance_arrivals(delta as f32);
         self.follow_steed(delta as f32);
         self.hero_fx.advance(delta as f32, &mut self.vfx);
         if std::mem::take(&mut self.fow_dirty) {
@@ -4981,6 +4993,9 @@ impl MapView {
         }
         self.deaths.clear();
         self.act_fx.clear();
+        self.arrivals.clear();
+        self.appeared.clear();
+        self.summons.clear();
         self.sounds.clear();
         self.facing.clear();
         for (_, c) in std::mem::take(&mut self.incoming) {
@@ -6548,6 +6563,16 @@ impl MapView {
             })
             .zip(old.mon)
             .map(|((b, m), mon)| (m.node.instance_id(), *b, mon));
+        // a monster seen come where none was (help summoned comes so)
+        let came = look
+            .entity
+            .and_then(|j| look.models.get(j))
+            .is_some_and(|p| p.look.pose == Pose::Alive && !look.hero && !look.sensed)
+            && look.mon.is_some()
+            && old.mon != look.mon;
+        if came {
+            self.appeared.push((x, y));
+        }
         let mut old_models = std::mem::take(&mut nodes.models).into_iter();
         let mut carried = self.incoming.remove(&(x, y));
         let hero_here = world

@@ -28,6 +28,8 @@ const SLUMP_SECS: f32 = 0.5;
 const DISSOLVE_SECS: f32 = 0.7;
 const CLIP_MOST: f32 = 1.1;
 const SINK_SECS: f32 = 0.5;
+/// Seconds a body takes to blink out.
+const BLINK_SECS: f32 = 0.25;
 const SINK_DEPTH: f32 = 0.3;
 /// A slumped body's height and breadth, of its own, and the share of its
 /// fall it sags in when it rolls on into its corpse's way of lying.
@@ -49,6 +51,9 @@ pub enum FallKind {
     Dissolve,
     /// Gone at once (its blast is drawn).
     Burst,
+    /// Gone in a blink, not dead: teleported away, turned invisible, turned
+    /// into something else.
+    Blink,
 }
 
 impl FallKind {
@@ -74,6 +79,8 @@ pub(super) struct Told {
     name: String,
     at: Option<(i32, i32)>,
     when: f64,
+    /// It is gone, not dead: it blinks out.
+    blink: bool,
 }
 
 impl Told {
@@ -82,6 +89,16 @@ impl Told {
             name: plain_name(name).to_string(),
             at,
             when,
+            blink: false,
+        }
+    }
+
+    /// A monster the messages tell gone (teleported away, invisible, turned
+    /// into another): it blinks out.
+    pub fn gone(name: &str, when: f64) -> Told {
+        Told {
+            blink: true,
+            ..Told::new(name, None, when)
         }
     }
 }
@@ -182,11 +199,12 @@ impl MapView {
             }
         }
         for (d, gone) in claimed.into_iter().rev() {
-            self.deaths.remove(d);
+            let told = self.deaths.remove(d);
             let info = usize::try_from(gone.mon)
                 .ok()
                 .and_then(|i| catalog.monsters.get(i));
             match info {
+                Some(_) if told.blink => self.fall_as(gone, FallKind::Blink),
                 Some(info) => self.fall(gone, info),
                 None => self.art.give(gone.model),
             }
@@ -198,6 +216,12 @@ impl MapView {
 
     /// A body begins to fall where it stood (after the blow lands).
     fn fall(&mut self, gone: Gone, info: &MonsterInfo) {
+        let clip = self.art.death(&gone.model).is_some();
+        self.fall_as(gone, FallKind::of(info, clip));
+    }
+
+    /// A body begins to go `kind`'s way where it stood.
+    fn fall_as(&mut self, gone: Gone, kind: FallKind) {
         let Gone {
             cell,
             model,
@@ -205,28 +229,34 @@ impl MapView {
             ..
         } = gone;
         let clip = self.art.death(&model);
-        let kind = FallKind::of(info, clip.is_some());
         // what moved the body ends now: it falls where it stands
         self.finish_motions_where(|m| m.cell == cell);
         let inner = model
             .node
             .get_child(0)
             .and_then(|n| n.try_cast::<Node3D>().ok());
+        if let Some(n) = inner.as_ref() {
+            self.arrived(n);
+        }
         let from = inner
             .as_ref()
             .map_or(Transform3D::IDENTITY, |n| n.get_transform());
         let (to, idle_at) = self.art.lying(&placed.look);
         // its corpse here, hidden till it takes over, where the body falls
-        let corpse = self.cells.get(&cell).and_then(|n| {
-            n.look
-                .models
-                .iter()
-                .zip(&n.models)
-                .find(|(p, _)| {
-                    p.look.pose == Pose::Corpse && p.look.art.model == placed.look.art.model
-                })
-                .map(|(_, m)| m.node.clone())
-        });
+        let corpse = self
+            .cells
+            .get(&cell)
+            .filter(|_| kind != FallKind::Blink)
+            .and_then(|n| {
+                n.look
+                    .models
+                    .iter()
+                    .zip(&n.models)
+                    .find(|(p, _)| {
+                        p.look.pose == Pose::Corpse && p.look.art.model == placed.look.art.model
+                    })
+                    .map(|(_, m)| m.node.clone())
+            });
         let at = model.node.get_position();
         if let Some(mut c) = corpse.clone() {
             c.set_visible(false);
@@ -237,8 +267,14 @@ impl MapView {
             (_, FallKind::Slump) => SLUMP_SECS,
             (_, FallKind::Dissolve) => DISSOLVE_SECS,
             (_, FallKind::Burst) => 0.0,
+            (_, FallKind::Blink) => BLINK_SECS,
             _ => TOPPLE_SECS,
         };
+        if kind == FallKind::Blink {
+            let middle = model.node.get_global_position()
+                + Vector3::new(0.0, placed.look.art.height * 0.5, 0.0);
+            self.vfx.burst(crate::vfx::VfxKind::Sparkle, middle);
+        }
         let mut shade = StandardMaterial3D::new_gd();
         shade.set_shading_mode(ShadingMode::UNSHADED);
         shade.set_transparency(Transparency::ALPHA);
@@ -248,7 +284,7 @@ impl MapView {
             cell,
             model,
             kind,
-            wait: if kind == FallKind::Burst {
+            wait: if matches!(kind, FallKind::Burst | FallKind::Blink) {
                 0.0
             } else {
                 CONTACT_SECS
@@ -449,7 +485,10 @@ fn begin(f: &mut Fall) {
             }
         }
     }
-    if f.kind != FallKind::Burst && f.kind != FallKind::Dissolve {
+    if !matches!(
+        f.kind,
+        FallKind::Burst | FallKind::Dissolve | FallKind::Blink
+    ) {
         set_overlay(&f.model.node, Some(&f.shade.clone().upcast::<Material>()));
     }
 }
@@ -502,6 +541,15 @@ fn fall_to(f: &mut Fall, k: f32) {
         FallKind::Burst => {
             let mut node = f.model.node.clone();
             node.set_visible(false);
+        }
+        FallKind::Blink => {
+            if let Some(mut n) = inner {
+                // squeezed thin and gone
+                let mut t = f.from;
+                let w = (1.0 - k * k).max(0.01);
+                t.basis = t.basis * Basis::from_scale(Vector3::new(w, 1.0 + 0.4 * k, w));
+                n.set_transform(t);
+            }
         }
     }
 }

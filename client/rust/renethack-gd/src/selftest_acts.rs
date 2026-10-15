@@ -39,7 +39,126 @@ pub(super) fn acts() -> Vec<Step> {
     steps.extend(casting());
     steps.extend(items());
     steps.extend(gazes());
+    steps.extend(comings());
     steps
+}
+
+/// Where the one zapped stood, and its name.
+static FROM: Mutex<(i32, i32)> = Mutex::new((0, 0));
+
+/// A wand of teleportation zapped at the gnome lord: it blinks out where
+/// it stood (and grows in where it comes, if the hero sees it there). A
+/// wand of polymorph zapped at the cobra: it shrinks away in smoke as
+/// what it turned into grows in. A summoning told of the dragon, and a
+/// jackal made a moment on: the help grows in where it comes.
+fn comings() -> Vec<Step> {
+    let mut steps = Vec::new();
+    for (wand, target, shot) in [
+        ("wand of teleportation", "gnome lord", "acts-teleport"),
+        ("wand of polymorph", "cobra", "acts-change"),
+    ] {
+        steps.extend(super::audio_tests::wish(wand));
+        steps.extend([
+            Step::Wait(
+                "the one to zap beside the hero",
+                match target {
+                    "gnome lord" => |g: &RenethackGame| aim(g, "gnome lord"),
+                    _ => |g: &RenethackGame| aim(g, "cobra"),
+                },
+            ),
+            mark(),
+            key('z'),
+            Step::Request("what to zap", |p| !matches!(p, Prompt::Command)),
+            Step::KeyFrom("the wand just wished for", wand_key),
+            Step::Request("the zap's direction", |p| {
+                matches!(
+                    p,
+                    Prompt::FreeKey {
+                        directions: true,
+                        ..
+                    }
+                )
+            }),
+            Step::KeyFrom("toward it", |g| {
+                let (hx, hy) = g.world.map.hero().ok_or("no hero")?;
+                let to = *FROM.lock().unwrap();
+                let d = ((to.0 - hx).signum(), (to.1 - hy).signum());
+                let way = super::audio_tests::STEPS
+                    .iter()
+                    .find(|(s, _)| *s == d)
+                    .ok_or("no way to it")?;
+                Ok(KeyInput::plain(Key::Char(way.1)))
+            }),
+            Step::AnswerUntil('n', "a command after the zap", |g| {
+                Ok(matches!(g.pending, Some((_, Prompt::Command))))
+            }),
+            Step::Wait("it blinked out where it stood, or turned there", |g| {
+                let view = map_view(g)?;
+                let from = *FROM.lock().unwrap();
+                let blinked = view
+                    .fell()
+                    .is_some_and(|f| f.cell == from && f.kind == crate::map_view::FallKind::Blink);
+                let all = view.acts_shown();
+                let new = &all[SHOWN.load(Ordering::Relaxed).min(all.len())..];
+                let changed = new
+                    .iter()
+                    .any(|a| a.kind == ActKind::Change && a.cell == from);
+                Ok(blinked || changed)
+            }),
+            Step::Shot(shot),
+        ]);
+    }
+    steps.extend(make("red dragon"));
+    steps.extend([
+        Step::Wait("a summoner seen", |g| aim(g, "red dragon")),
+        mark(),
+        Step::Call("it told summoning help", |g| {
+            tell(g, "The red dragon summons help!");
+            Ok(())
+        }),
+    ]);
+    steps.extend(make("jackal"));
+    steps.extend([
+        Step::Wait("the jackal greeted as help summoned", |g| {
+            let at = find(g, "jackal").ok_or("no jackal")?;
+            let view = map_view(g)?;
+            let all = view.acts_shown();
+            let new = &all[SHOWN.load(Ordering::Relaxed).min(all.len())..];
+            Ok(new
+                .iter()
+                .any(|a| a.kind == ActKind::Summon && a.cell == at))
+        }),
+        Step::Shot("acts-summon"),
+    ]);
+    steps
+}
+
+/// The cell of the monster named `name` beside the hero, kept as the one
+/// to zap (`FROM`).
+fn aim(g: &RenethackGame, name: &str) -> Result<bool, String> {
+    let (hx, hy) = g.world.map.hero().ok_or("no hero")?;
+    let at = find(g, name).filter(|&(x, y)| (x - hx).abs().max((y - hy).abs()) == 1);
+    if let Some(at) = at {
+        *FROM.lock().unwrap() = at;
+        *AT.lock().unwrap() = at;
+    }
+    Ok(at.is_some())
+}
+
+/// The key of the wand last wished for, as its line names it ("e - a
+/// steel wand.": unknown yet, it goes by its look).
+fn wand_key(g: &RenethackGame) -> Result<KeyInput, String> {
+    g.world
+        .log
+        .iter()
+        .rev()
+        .find_map(|m| {
+            let (letter, rest) = m.text.split_once(" - ")?;
+            let c = letter.chars().next().filter(|_| letter.len() == 1)?;
+            rest.contains("wand").then_some(c)
+        })
+        .map(|c| KeyInput::plain(Key::Char(c)))
+        .ok_or_else(|| "no wand wished for".into())
 }
 
 /// A gaze, a spit and a breath, each of a monster made beside the hero,

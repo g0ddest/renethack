@@ -12,7 +12,11 @@
 //! A monster's gaze flares in its eyes, turned on the hero; one spitting
 //! venom lunges at them, the venom at its mouth (the map draws it
 //! flying); one breathing opens its mouth on the hero (its attack clip),
-//! its breath coming out of it as the ray goes.
+//! its breath coming out of it as the ray goes. A monster seen to vanish
+//! (teleported, turned invisible) blinks out where it stood, and one that
+//! appears grows in where it came, in a sparkle; one that turns into
+//! another bursts in smoke as the one shrinks away and the other grows;
+//! one that summons help bursts where the new ones come.
 //! Nothing waits for it: the next turn plays alongside.
 
 use godot::classes::Skeleton3D;
@@ -87,6 +91,14 @@ pub enum ActKind {
     Spit,
     /// A breath at the hero.
     Breath,
+    /// Gone from sight (teleported away, invisible, left).
+    Vanish,
+    /// Come in sight (or back in it, `again`: teleported closer).
+    Appear { again: bool },
+    /// Turned into another monster (the line's `what`).
+    Change,
+    /// Help summoned: the new ones come round it.
+    Summon,
 }
 
 /// What a message says a monster did: the monster by the name the line
@@ -94,6 +106,9 @@ pub enum ActKind {
 pub fn act_of(text: &str) -> Option<(&str, ActKind, &str)> {
     if let Some(gaze) = gaze_of(text) {
         return Some(gaze);
+    }
+    if let Some(come) = comings_of(text) {
+        return Some(come);
     }
     let rest = text.strip_prefix("The ");
     if let Some((name, what)) = rest.and_then(|r| r.split_once(" breathes ")) {
@@ -124,6 +139,49 @@ pub fn act_of(text: &str) -> Option<(&str, ActKind, &str)> {
         ));
     }
     spell_of(text).map(|(name, kind)| (name, kind, ""))
+}
+
+/// A line of a monster coming, going or changing: "The X vanishes!", "The
+/// X vanishes and reappears next to you.", "The X suddenly disappears!",
+/// "A X appears next to you.", "The X turns into a Y!", "The X summons
+/// help!".
+fn comings_of(text: &str) -> Option<(&str, ActKind, &str)> {
+    let rest = text.strip_prefix("The ");
+    if let Some(rest) = rest {
+        if let Some((name, _)) = rest.split_once(" vanishes and reappears") {
+            return Some((name, ActKind::Appear { again: true }, ""));
+        }
+        for tail in [
+            " vanishes",
+            " suddenly disappears!",
+            " disappears!",
+            " scowls at you menacingly, then vanishes.",
+        ] {
+            if let Some((name, _)) = rest.split_once(tail) {
+                return Some((name, ActKind::Vanish, ""));
+            }
+        }
+        if let Some((name, what)) = rest.split_once(" turns into ") {
+            let what = what.trim_end_matches(['!', '.']);
+            let what = what
+                .strip_prefix("a ")
+                .or_else(|| what.strip_prefix("an "))
+                .unwrap_or(what);
+            return Some((name, ActKind::Change, what));
+        }
+        if let Some((name, _)) = rest.split_once(" summons ") {
+            return Some((name, ActKind::Summon, ""));
+        }
+    }
+    // "The X appears!", "A X appears next to you." (made, or come back)
+    let rest = rest
+        .or_else(|| text.strip_prefix("A "))
+        .or_else(|| text.strip_prefix("An "))?;
+    let name = rest
+        .split_once(" suddenly appears")
+        .or_else(|| rest.split_once(" appears"))
+        .map(|(n, _)| n)?;
+    Some((name, ActKind::Appear { again: false }, ""))
 }
 
 /// A gaze's line: the gazer by the name the line uses, and what the gaze
@@ -242,6 +300,22 @@ enum FxAt {
     Point(Vector3),
 }
 
+/// A body growing in where it came: its inner node, its own transform,
+/// the transform last set (another's: the node was taken for something
+/// else, and is let be), and how far it has grown (0..=1).
+pub(super) struct Arrival {
+    inner: Gd<Node3D>,
+    base: Transform3D,
+    last: Transform3D,
+    t: f32,
+}
+
+/// Seconds a body takes to grow in; how far from a summoner the help it
+/// summons comes, and how long after its line.
+const ARRIVE_SECS: f32 = 0.3;
+const SUMMONED_NEAR: i32 = 6;
+const SUMMON_SECS: f64 = 1.5;
+
 /// An act shown (self-tests): what, by whom, and whether its clip played.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Acted {
@@ -257,9 +331,40 @@ impl MapView {
         let Some((name, kind, what)) = act_of(text) else {
             return;
         };
-        let Some(cell) = seen_named(world, catalog, name) else {
+        // one gone from its cell blinks out there, if the map showed it
+        // (`fall`); the one it turned into, or it again, comes in
+        let comes = match kind {
+            ActKind::Vanish => {
+                self.deaths.push(super::fall::Told::gone(name, self.clock));
+                return;
+            }
+            ActKind::Appear { again: true } => {
+                self.deaths.push(super::fall::Told::gone(name, self.clock));
+                name
+            }
+            ActKind::Change => {
+                self.deaths.push(super::fall::Told::gone(name, self.clock));
+                what
+            }
+            _ => name,
+        };
+        let Some(cell) = seen_named(world, catalog, comes) else {
             return;
         };
+        if kind == ActKind::Summon {
+            // the help comes where the map draws it, now or a moment on
+            self.summons.push((cell, self.clock));
+            return;
+        }
+        if matches!(kind, ActKind::Appear { .. } | ActKind::Change) {
+            self.arrive(cell, kind);
+            self.acts_shown.push(Acted {
+                kind,
+                cell,
+                clip: false,
+            });
+            return;
+        }
         let hero = world.hero();
         let aim_at = match kind {
             ActKind::Cast(Aim::Hero) | ActKind::Curse(Aim::Hero) => hero,
@@ -292,6 +397,10 @@ impl MapView {
                 self.strike(cell, to, world);
                 has
             }),
+            // shown above, as they come and go
+            ActKind::Vanish | ActKind::Appear { .. } | ActKind::Change | ActKind::Summon => {
+                return;
+            }
         };
         let Some((node, middle)) = self.body_of(cell) else {
             return;
@@ -365,6 +474,7 @@ impl MapView {
                 kind: breath_kind(what),
                 at: head,
             }),
+            ActKind::Vanish | ActKind::Appear { .. } | ActKind::Change | ActKind::Summon => {}
         }
         self.acts_shown.push(Acted { kind, cell, clip });
         if self.acts_shown.len() > 32 {
@@ -387,6 +497,92 @@ impl MapView {
         }
         self.turn_to(cell, to, world);
         false
+    }
+
+    /// Monsters come in sight this frame near a summoner told lately: the
+    /// help it summoned, each growing in where it came.
+    pub(super) fn greet_summoned(&mut self) {
+        let now = self.clock;
+        self.summons.retain(|&(_, when)| now - when <= SUMMON_SECS);
+        if self.summons.is_empty() || self.appeared.is_empty() {
+            return;
+        }
+        let near = |c: (i32, i32), s: (i32, i32)| {
+            (c.0 - s.0).abs().max((c.1 - s.1).abs()) <= SUMMONED_NEAR
+        };
+        let came: Vec<(i32, i32)> = self
+            .appeared
+            .iter()
+            .copied()
+            .filter(|&c| self.summons.iter().any(|&(s, _)| near(c, s)))
+            .collect();
+        for c in came {
+            self.arrive(c, ActKind::Summon);
+            self.acts_shown.push(Acted {
+                kind: ActKind::Summon,
+                cell: c,
+                clip: false,
+            });
+        }
+    }
+
+    /// Something come in sight on `cell` grows in, in a sparkle (in smoke,
+    /// turned into it; in a flash, summoned).
+    fn arrive(&mut self, cell: (i32, i32), kind: ActKind) {
+        let puff = match kind {
+            ActKind::Change => VfxKind::Explosion(Color::from_rgb(0.55, 0.55, 0.6)),
+            ActKind::Summon => VfxKind::Shock(MAGIC),
+            _ => VfxKind::Sparkle,
+        };
+        let Some((node, middle)) = self.body_of(cell) else {
+            return;
+        };
+        self.vfx.burst(puff, middle);
+        let Some(mut inner) = node.get_child(0).and_then(|n| n.try_cast::<Node3D>().ok()) else {
+            return;
+        };
+        // a body already growing in goes on from where it is
+        if self.arrivals.iter().any(|a| a.inner == inner) {
+            return;
+        }
+        let base = inner.get_transform();
+        let mut last = base;
+        last.basis = last.basis * Basis::from_scale(Vector3::splat(0.01));
+        inner.set_transform(last);
+        self.arrivals.push(Arrival {
+            inner,
+            base,
+            last,
+            t: 0.0,
+        });
+    }
+
+    /// Every frame: what came grows in.
+    pub(super) fn advance_arrivals(&mut self, delta: f32) {
+        if self.arrivals.is_empty() {
+            return;
+        }
+        self.arrivals.retain_mut(|a| {
+            if !a.inner.is_instance_valid() || a.inner.get_transform() != a.last {
+                return false;
+            }
+            a.t = (a.t + delta / ARRIVE_SECS).min(1.0);
+            let k = a.t * a.t * (3.0 - 2.0 * a.t);
+            a.last = a.base;
+            a.last.basis = a.last.basis * Basis::from_scale(Vector3::splat(k.max(0.01)));
+            a.inner.set_transform(a.last);
+            a.t < 1.0
+        });
+    }
+
+    /// A body growing in is whole at once (it falls, it blinks out).
+    pub(super) fn arrived(&mut self, inner: &Gd<Node3D>) {
+        if let Some(i) = self.arrivals.iter().position(|a| a.inner == *inner) {
+            let mut a = self.arrivals.swap_remove(i);
+            if a.inner.is_instance_valid() && a.inner.get_transform() == a.last {
+                a.inner.set_transform(a.base);
+            }
+        }
     }
 
     /// `cell`'s monster's clips.
@@ -680,6 +876,34 @@ mod tests {
         assert_eq!(
             act_of("The little dog spits the tripe out in disgust!"),
             None
+        );
+        assert_eq!(
+            act_of("The gnome lord vanishes!"),
+            Some(("gnome lord", ActKind::Vanish, ""))
+        );
+        assert_eq!(
+            act_of("The gnome lord suddenly disappears!"),
+            Some(("gnome lord", ActKind::Vanish, ""))
+        );
+        assert_eq!(
+            act_of("The gnome lord vanishes and reappears next to you."),
+            Some(("gnome lord", ActKind::Appear { again: true }, ""))
+        );
+        assert_eq!(
+            act_of("A gnome lord appears next to you."),
+            Some(("gnome lord", ActKind::Appear { again: false }, ""))
+        );
+        assert_eq!(
+            act_of("The gnome lord suddenly appears!"),
+            Some(("gnome lord", ActKind::Appear { again: false }, ""))
+        );
+        assert_eq!(
+            act_of("The chameleon turns into a jackal!"),
+            Some(("chameleon", ActKind::Change, "jackal"))
+        );
+        assert_eq!(
+            act_of("The werejackal summons help!"),
+            Some(("werejackal", ActKind::Summon, ""))
         );
         assert_eq!(act_of("Something casts a spell at you!"), None);
         assert_eq!(act_of("You hear a mumbled curse."), None);
