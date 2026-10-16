@@ -39,6 +39,29 @@ to continue it. One window at a time uses a playground: a second one says so
 and starts nothing. If the engine crashes, the client rebuilds the game with
 NetHack's `recover` (progress since the last level change is lost).
 
+### The prologue
+
+Before the first new game a profile starts (Settings → Interface can make
+it every new game, or none), NetHack's own prologue is told: its legacy
+text, word for word as the engine writes it for this hero (their god,
+their rank) and in the language played, in six beats over scenes of their
+own (`prologue.rs`, `prologue_view.rs`, `prologue_stage.rs`): the Book of
+the hero's god on an altar by candlelight; Moloch's rebellion against
+Marduk, a column of light against a black whirl in a temple; the Amulet
+sinking into Gehennom's lava; the god's altar in its light; the hero in
+their kit; and the hero going down the stairs into the dungeon. The words
+come in the title's typeface, the Book's letter by letter as if written,
+the rest line by line; the title's music plays on under it. About a
+minute; any key, a gamepad's A or a click shows a beat's words at once or
+goes on to the next, Esc or B skips the rest. The client asks the engine
+for the text (NetHack's `legacy` option, off otherwise) and answers it at
+once: the game starts behind the prologue and is never held. The title
+offers it again (Prologue) once one was told; the profile keeps its text
+and hero. The `prologue` scenario plays a new game's prologue through,
+each beat's scene and words (in Russian and at the Deck's size too), the
+hero walking down to the stairs, then the game; `prologue-skip` skips it
+from the second beat; `prologue-replay` tells it again from the title.
+
 ## Controls
 
 Every NetHack command works with its usual key. The key profile is chosen
@@ -154,7 +177,8 @@ mouse drags. Interface: the scale (Auto, or 80–140 %;
 `RENETHACK_UI_SCALE` overrides it for a run), the keys a new character
 starts with, the language, fewer screen effects (no sway of the hero, no
 drift of the camera, no hues of a hallucination; blindness still dims the
-view). Controls: the keyboard's commands of either key profile, each on
+view), and when the prologue plays (before the first game, every new
+game, or never). Controls: the keyboard's commands of either key profile, each on
 its key, and the gamepad's buttons in the controller's own names (read
 only: Steam Input remaps a controller).
 

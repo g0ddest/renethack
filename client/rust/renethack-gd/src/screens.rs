@@ -220,6 +220,8 @@ pub struct Screens {
     achievements_in_game: bool,
     /// The credits page was opened over a game.
     credits_in_game: bool,
+    /// The title offers the prologue again (the profile keeps one).
+    prologue: bool,
 }
 
 /// The game's name on the title: a name, the same in every language.
@@ -370,6 +372,7 @@ impl Screens {
             settings_in_game: false,
             achievements_in_game: false,
             credits_in_game: false,
+            prologue: false,
         }
     }
 
@@ -447,6 +450,13 @@ impl Screens {
             &self.queue,
             UiEvent::OpenAchievements,
         )));
+        if self.prologue {
+            col.add_child(&wide(theme::button(
+                &tr!("title-prologue"),
+                &self.queue,
+                UiEvent::ReplayPrologue,
+            )));
+        }
         col.add_child(&wide(theme::button(
             &tr!("title-settings"),
             &self.queue,
@@ -514,6 +524,12 @@ impl Screens {
     /// The achievements page was opened from a game.
     pub fn achievements_in_game(&self) -> bool {
         self.achievements_in_game
+    }
+
+    /// Whether the title offers the prologue again (from the next time it
+    /// is drawn).
+    pub fn set_prologue(&mut self, on: bool) {
+        self.prologue = on;
     }
 
     /// The page again in the language now (the creation form keeps what

@@ -38,6 +38,44 @@ pub struct Settings {
     /// one keeps its own).
     #[serde(default, skip_serializing_if = "Gameplay::is_default")]
     pub gameplay: Gameplay,
+    /// When the prologue (NetHack's legacy, staged) plays before a new
+    /// game.
+    #[serde(default, skip_serializing_if = "PrologueWhen::is_default")]
+    pub prologue: PrologueWhen,
+}
+
+/// When the prologue plays before a new game.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PrologueWhen {
+    /// Before the first new game the profile starts, once.
+    #[default]
+    FirstGame,
+    /// Before every new game.
+    EveryGame,
+    Never,
+}
+
+impl PrologueWhen {
+    pub const ALL: [PrologueWhen; 3] = [
+        PrologueWhen::FirstGame,
+        PrologueWhen::EveryGame,
+        PrologueWhen::Never,
+    ];
+
+    pub fn is_default(&self) -> bool {
+        *self == PrologueWhen::default()
+    }
+
+    /// Whether a new game starts with it, the prologue having played
+    /// before (`seen`) or not.
+    pub fn plays(self, seen: bool) -> bool {
+        match self {
+            PrologueWhen::FirstGame => !seen,
+            PrologueWhen::EveryGame => true,
+            PrologueWhen::Never => false,
+        }
+    }
 }
 
 /// One step from `now` through `all` (`dir` -1 back, +1 on); `wrap`: past
@@ -421,6 +459,27 @@ mod tests {
         // and the map's three torches nearest the hero with shadows
         assert_eq!(g.shadows.torches(), 3);
         assert_eq!((g.msaa, g.scale), (Msaa::X4, 100));
+    }
+
+    #[test]
+    fn the_prologue_plays_before_the_first_game_unless_told_otherwise() {
+        let s = Settings::default();
+        assert_eq!(s.prologue, PrologueWhen::FirstGame);
+        assert!(s.prologue.plays(false) && !s.prologue.plays(true));
+        assert!(PrologueWhen::EveryGame.plays(true));
+        assert!(!PrologueWhen::Never.plays(false));
+        // kept in the profile by name, left out at its default
+        let s = Settings {
+            prologue: PrologueWhen::Never,
+            ..Settings::default()
+        };
+        let json = serde_json::to_string(&s).unwrap();
+        assert!(json.contains("\"prologue\":\"never\""), "{json}");
+        assert!(
+            !serde_json::to_string(&Settings::default())
+                .unwrap()
+                .contains("prologue")
+        );
     }
 
     #[test]

@@ -71,6 +71,8 @@ pub enum UiEvent {
     /// a medallion on it clicked or hovered.
     OpenAchievements,
     CloseAchievements,
+    /// The prologue told again (the title's button).
+    ReplayPrologue,
     AchievementPick(usize),
     /// The interface's language chosen (settings, character creation).
     SetLanguage(crate::i18n::Lang),

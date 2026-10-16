@@ -16,7 +16,7 @@ use godot::classes::{
 use godot::prelude::*;
 use std::f32::consts::TAU;
 
-const WIND_SHADER: &str = "res://shaders/engulf_wind.gdshader";
+pub(crate) const WIND_SHADER: &str = "res://shaders/engulf_wind.gdshader";
 const MAW_SHADER: &str = "res://shaders/engulf_maw.gdshader";
 
 /// What the inside of an engulfer looks like.
@@ -307,7 +307,7 @@ impl Grids {
 /// the disc's u past 2 and its v from its middle out (the wind shader
 /// tells them apart by it, and the near wall, seen from outside, from the
 /// far one seen from inside by the way it faces).
-fn funnel_mesh((low, high, tall): (f32, f32, f32)) -> Gd<Mesh> {
+pub(crate) fn funnel_mesh((low, high, tall): (f32, f32, f32)) -> Gd<Mesh> {
     let mut g = Grids::default();
     g.grid(16, 48, |t, u| {
         let a = u * TAU;

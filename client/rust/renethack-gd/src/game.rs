@@ -77,6 +77,19 @@ pub enum GameState {
     Failed,
 }
 
+/// The prologue playing: its run, the character it is told for as the
+/// creation form chose it (the engine tells the rest as the game starts),
+/// and whether it was replayed from the title.
+pub(crate) struct PrologueShown {
+    pub(crate) run: crate::prologue::Run,
+    /// The engine's text, said again in the language played at each beat
+    /// (the hero's gender known by then).
+    english: Vec<String>,
+    role: String,
+    female: bool,
+    replay: bool,
+}
+
 /// Arguments after `--` on the Godot command line.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Args {
@@ -170,6 +183,25 @@ pub struct Ui {
     pub hint: crate::guide_view::HintCard,
     pub quest: crate::guide_view::QuestPage,
     pub audio: crate::audio::Audio,
+    /// The prologue's words and black, over everything.
+    pub prologue: crate::prologue_view::PrologueView,
+}
+
+/// The legacy text (`english`, the engine's lines) in the language played,
+/// in the prologue's beats.
+fn legacy_beats(english: &[String]) -> Option<[String; 6]> {
+    let refs: Vec<&str> = english.iter().map(String::as_str).collect();
+    let shown = i18n::engine_window(&refs).unwrap_or_else(|| english.to_vec());
+    crate::prologue::beats(&shown).or_else(|| crate::prologue::beats(english))
+}
+
+/// The engine's legacy text, when `prompt` shows it: its lines.
+fn legacy_of(prompt: &Prompt) -> Option<Vec<String>> {
+    let Prompt::Show { lines, .. } = prompt else {
+        return None;
+    };
+    let texts: Vec<&str> = lines.iter().map(|l| l.text.as_str()).collect();
+    crate::prologue::is_legacy(&texts).then(|| texts.iter().map(|t| t.to_string()).collect())
 }
 
 /// What the prompt line says while `prompt` waits.
@@ -350,6 +382,20 @@ pub struct RenethackGame {
     /// The hero's gender as the map draws the hero, told to the engine's
     /// translator (the words that agree with the hero).
     pub(crate) hero_female: Option<bool>,
+    /// The prologue playing (over a new game, or replayed over the title),
+    /// whether this game asked the engine for it, and after it the black
+    /// lifting off the game (seconds into that).
+    pub(crate) prologue: Option<PrologueShown>,
+    prologue_due: bool,
+    prologue_fade: Option<f64>,
+    /// The creation form's role and gender for the prologue (the engine
+    /// tells them, random ones too, as the game starts).
+    prologue_choice: Option<(String, bool)>,
+    /// A self-test's game plays the prologue (self-tests have none else).
+    pub(crate) prologue_forced: bool,
+    /// A new game not yet handed on to what follows the prologue
+    /// (`prologue_done`): its start, prologue or none.
+    new_game: bool,
     /// The session whose hero went to the profile and the title scene.
     last_hero_of: Option<u64>,
     /// A reply could not be written: the engine is gone.
@@ -399,8 +445,6 @@ pub struct RenethackGame {
     hint_gone_at: Option<Instant>,
     pub(crate) guide_seen: std::collections::BTreeSet<nh_world::Guide>,
     pub(crate) guide_in_test: bool,
-    /// A new game's first command is yet to come ("Your quest").
-    fresh_game: bool,
     /// The cards shown, in turn (self-tests: each once).
     pub(crate) hint_log: Vec<nh_world::Guide>,
     /// The one card a self-test stages: other occasions are passed by.
@@ -606,6 +650,12 @@ impl INode for RenethackGame {
             name: None,
             achievements: None,
             hero_female: None,
+            prologue: None,
+            prologue_due: false,
+            prologue_fade: None,
+            prologue_choice: None,
+            prologue_forced: false,
+            new_game: false,
             last_hero_of: None,
             achievement_page: None,
             settings: Settings::default(),
@@ -641,7 +691,6 @@ impl INode for RenethackGame {
             hint_gone_at: None,
             guide_seen: std::collections::BTreeSet::new(),
             guide_in_test: false,
-            fresh_game: false,
             hint_log: Vec::new(),
             hint_only: None,
             stop_note: None,
@@ -738,6 +787,8 @@ impl INode for RenethackGame {
             ("HelpLayer", 3),
             ("PadLayer", 4),
             ("ScreenLayer", 5),
+            // the prologue over all of it
+            ("PrologueLayer", 6),
         ] {
             let mut layer = CanvasLayer::new_alloc();
             layer.set_name(name);
@@ -793,7 +844,7 @@ impl INode for RenethackGame {
         self.base_mut().add_child(&audio_root);
         let queue = self.queue.clone();
         let mut layers = layers.into_iter();
-        let mut next = || layers.next().expect("six layers");
+        let mut next = || layers.next().expect("seven layers");
         self.ui = Some(Ui {
             map: MapView::new(map_root),
             hud: Hud::new(next(), queue.clone()),
@@ -806,6 +857,7 @@ impl INode for RenethackGame {
             hint: crate::guide_view::HintCard::new(hint_layer, self.queue.clone()),
             quest: crate::guide_view::QuestPage::new(quest_layer, self.queue.clone()),
             audio: crate::audio::Audio::new(audio_root),
+            prologue: crate::prologue_view::PrologueView::new(next()),
         });
         // the character sheet's portrait: the hero the inventory's doll
         // renders
@@ -912,6 +964,7 @@ impl INode for RenethackGame {
         parts.pump = ms(t);
         self.lap("pump", t);
         self.drive();
+        self.play_prologue(delta);
         let built = self.ui.as_ref().map_or(0, |ui| ui.map.models_built());
         let t = Instant::now();
         self.map_ms = 0.0;
@@ -1010,6 +1063,11 @@ impl INode for RenethackGame {
             }
             Err(event) => event,
         };
+        if self.prologue.is_some() {
+            self.prologue_input(&event);
+            self.handled();
+            return;
+        }
         // the achievements and settings pages take keys and the gamepad on
         // the title too
         let page = self.achievements_open() || self.settings_open() || self.credits_open();
@@ -1087,7 +1145,7 @@ impl INode for RenethackGame {
 
     /// The mouse over the map: whatever no panel or dialog took.
     fn unhandled_input(&mut self, event: Gd<InputEvent>) {
-        if self.state != GameState::Playing {
+        if self.state != GameState::Playing || self.prologue.is_some() {
             return;
         }
         let Some(ui) = self.ui.as_mut() else {
@@ -1247,6 +1305,7 @@ impl RenethackGame {
         // the loops: the title's or the branch's ambience
         use crate::hearing::Scene;
         let scene = match self.state {
+            _ if self.prologue.is_some() => Scene::Title,
             GameState::Title | GameState::Creating => Scene::Title,
             GameState::Playing | GameState::Closing => Scene::Playing,
             GameState::Ended | GameState::Failed => Scene::Over,
@@ -1658,8 +1717,23 @@ impl RenethackGame {
                 }
                 if prompt == Prompt::AutoAck {
                     self.send(id, &prompt, Reply::Ack);
+                } else if let Some(legacy) = legacy_of(&prompt) {
+                    // NetHack's legacy, asked for the prologue: the engine
+                    // goes on at once, the prologue tells it meanwhile
+                    self.send(id, &prompt, Reply::Ack);
+                    if std::mem::take(&mut self.prologue_due) {
+                        self.start_prologue(legacy, false);
+                    }
                 } else {
+                    let first_command = prompt == Prompt::Command;
                     self.open_prompt(id, prompt);
+                    // a new game up with no prologue (none due, or the
+                    // engine told none): handed on as it appears
+                    if first_command && self.new_game && self.prologue.is_none() {
+                        self.prologue_due = false;
+                        self.new_game = false;
+                        self.prologue_done();
+                    }
                 }
             }
             SessionEvent::EngineError(e) => {
@@ -1739,11 +1813,6 @@ impl RenethackGame {
                     self.ui_mut().hud.set_mode(mode == Mode::Combat, true);
                 }
                 self.check_hints();
-                // a new game's start: the guide's first page (the prologue,
-                // once it plays first, calls it as it ends instead)
-                if std::mem::take(&mut self.fresh_game) {
-                    self.prologue_done();
-                }
             } else if self.driver.is_active() {
                 // a question the order did not expect: the player answers
                 self.driver.on_question(query, &cat);
@@ -3543,6 +3612,15 @@ impl RenethackGame {
                 }
             }
             UiEvent::OpenAchievements => self.open_achievements(),
+            UiEvent::ReplayPrologue
+                if self.state == GameState::Title && self.prologue.is_none() =>
+            {
+                let legacy = load_profile(&self.playground()).legacy;
+                if !legacy.is_empty() {
+                    self.start_prologue(legacy, true);
+                }
+            }
+            UiEvent::ReplayPrologue => {}
             UiEvent::CloseAchievements => self.close_achievements(),
             UiEvent::AchievementPick(i) => {
                 if let Some(p) = self.achievement_page.as_mut() {
@@ -4090,7 +4168,207 @@ impl RenethackGame {
 
     /// The profile read, changed by `change`, written back (what else it
     /// keeps stays).
-    fn update_profile(&self, change: impl FnOnce(&mut Profile)) {
+    /// Whether a new game starts with the prologue: as the settings say
+    /// (the first game: once a profile), never in a self-test unless it
+    /// asks.
+    fn prologue_plays(&self) -> bool {
+        if self.selftest.is_some() {
+            return self.prologue_forced;
+        }
+        let seen = load_profile(&self.playground()).prologue_seen;
+        self.settings.prologue.plays(seen)
+    }
+
+    /// Tell the legacy text (`english`: the engine's lines) over the
+    /// prologue's scenes; `replay`: from the title. False when it is not
+    /// laid out as NetHack's.
+    pub(crate) fn start_prologue(&mut self, english: Vec<String>, replay: bool) -> bool {
+        let (role, female) = if replay {
+            let p = load_profile(&self.playground());
+            (
+                p.last_role.unwrap_or_else(|| "valkyrie".to_string()),
+                p.last_female.unwrap_or(true),
+            )
+        } else {
+            self.prologue_choice
+                .clone()
+                .unwrap_or_else(|| ("valkyrie".to_string(), true))
+        };
+        // the words that agree with the hero agree with this one
+        i18n::set_hero_female(if replay {
+            female
+        } else {
+            self.hero_female.unwrap_or(female)
+        });
+        let Some(texts) = legacy_beats(&english) else {
+            godot_warn!("renethack: the legacy text is not laid out as NetHack's");
+            return false;
+        };
+        if !replay {
+            let kept = english.clone();
+            self.update_profile(|p| {
+                p.prologue_seen = true;
+                p.legacy = kept;
+            });
+        }
+        self.prologue = Some(PrologueShown {
+            run: crate::prologue::Run::new(texts),
+            english,
+            role,
+            female,
+            replay,
+        });
+        self.prologue_fade = None;
+        if replay {
+            self.ui_mut().screens.hide();
+        } else {
+            self.show_game(false);
+        }
+        let ui = self.ui_mut();
+        ui.prologue.set_visible(true);
+        true
+    }
+
+    /// Whom the prologue is told for now: the engine's word on the hero
+    /// once it has told it (a random role, the alignment, the pack), else
+    /// the creation form's.
+    fn prologue_hero(&self) -> crate::map_view::PrologueHero {
+        let shown = self.prologue.as_ref();
+        let replay = shown.is_some_and(|p| p.replay);
+        let told = (!replay)
+            .then(|| self.world.progress().map(|p| p.role.clone()))
+            .flatten()
+            .filter(|r| !r.is_empty());
+        let role = told
+            .or_else(|| shown.map(|p| p.role.clone()))
+            .filter(|r| r != "random")
+            .unwrap_or_else(|| "valkyrie".to_string());
+        let female = if replay {
+            shown.is_some_and(|p| p.female)
+        } else {
+            self.hero_female.unwrap_or(shown.is_some_and(|p| p.female))
+        };
+        let align = match self.world.status.get("align") {
+            Some(a) if !replay && a.eq_ignore_ascii_case("lawful") => 1,
+            Some(a) if !replay && a.eq_ignore_ascii_case("chaotic") => -1,
+            _ => 0,
+        };
+        crate::map_view::PrologueHero {
+            role,
+            female,
+            align,
+            inventory: if replay {
+                nh_world::Pack::default()
+            } else {
+                self.world.inventory.clone()
+            },
+        }
+    }
+
+    /// The prologue's frame: its run on, a beat's scene laid as it begins,
+    /// its words; over, the game (or the title) up out of its black.
+    fn play_prologue(&mut self, delta: f64) {
+        let catalog = self.catalog.clone();
+        if self.prologue.is_none() {
+            // after it, the black lifts off what it hid
+            if let Some(t) = self.prologue_fade.as_mut() {
+                *t += delta;
+                let left = 1.0 - (*t / crate::prologue::GAME_FADE) as f32;
+                let done = left <= 0.0;
+                if let Some(ui) = self.ui.as_mut() {
+                    if done {
+                        ui.prologue.set_visible(false);
+                    } else {
+                        ui.prologue.set_black(left);
+                    }
+                }
+                if done {
+                    self.prologue_fade = None;
+                }
+            }
+            return;
+        }
+        let event = self.prologue.as_mut().and_then(|p| p.run.tick(delta));
+        match event {
+            Some(crate::prologue::Event::Beat(beat)) => {
+                let hero = self.prologue_hero();
+                // said again, agreeing with the hero as now known
+                if let Some(p) = self.prologue.as_mut()
+                    && !p.replay
+                    && let Some(female) = self.hero_female
+                {
+                    i18n::set_hero_female(female);
+                    if let Some(texts) = legacy_beats(&p.english) {
+                        p.run.set_texts(texts);
+                    }
+                }
+                if let (Some(ui), Some(cat)) = (self.ui.as_mut(), catalog.as_deref()) {
+                    ui.map.show_prologue(Some(beat), &hero, cat);
+                }
+            }
+            Some(crate::prologue::Event::Done) => {
+                self.end_prologue();
+                return;
+            }
+            None => {}
+        }
+        let Some(p) = self.prologue.as_ref() else {
+            return;
+        };
+        let (secs, descent) = (p.run.secs(), p.run.descent());
+        let run = p.run.clone();
+        if let Some(ui) = self.ui.as_mut() {
+            ui.map.prologue_frame(secs, descent);
+            ui.prologue.update(&run);
+        }
+    }
+
+    /// The prologue over (played out or skipped): the game it hid (or the
+    /// title it was replayed over) comes up out of its black.
+    fn end_prologue(&mut self) {
+        let Some(p) = self.prologue.take() else {
+            return;
+        };
+        let hero = crate::map_view::PrologueHero::default();
+        let catalog = self.catalog.clone();
+        if let (Some(ui), Some(cat)) = (self.ui.as_mut(), catalog.as_deref()) {
+            ui.map.show_prologue(None, &hero, cat);
+            ui.prologue.set_black(1.0);
+        }
+        self.prologue_fade = Some(0.0);
+        if p.replay {
+            self.show_title(None);
+        } else {
+            self.show_game(true);
+            if std::mem::take(&mut self.new_game) {
+                self.prologue_done();
+            }
+        }
+    }
+
+    /// A key, a button or a click while the prologue plays: Esc or B
+    /// skips the rest, anything else goes on.
+    fn prologue_input(&mut self, event: &Gd<InputEvent>) {
+        if !event.is_pressed() || event.is_echo() {
+            return;
+        }
+        let skip = if let Ok(k) = event.clone().try_cast::<InputEventKey>() {
+            k.get_keycode() == godot::global::Key::ESCAPE
+        } else if let Ok(b) = event.clone().try_cast::<InputEventJoypadButton>() {
+            b.get_button_index() == godot::global::JoyButton::B
+        } else {
+            false
+        };
+        if let Some(p) = self.prologue.as_mut() {
+            if skip {
+                p.run.skip();
+            } else {
+                p.run.advance();
+            }
+        }
+    }
+
+    pub(crate) fn update_profile(&self, change: impl FnOnce(&mut Profile)) {
         let playground = self.playground();
         let mut profile = load_profile(&playground);
         change(&mut profile);
@@ -4142,6 +4420,7 @@ impl RenethackGame {
         ui.hud.relang();
         ui.inventory.relang();
         ui.help.relang();
+        ui.prologue.relang();
         ui.dialogs.relang(catalog.as_deref());
         ui.pad.relang();
         ui.screens.relang();
@@ -4191,7 +4470,11 @@ impl RenethackGame {
             godot_warn!("renethack: cannot list saves: {e}");
             Vec::new()
         });
-        self.ui_mut().screens.show_title(&saves, notice.as_deref());
+        // the prologue again, once one was told
+        let replay = !load_profile(&self.playground()).legacy.is_empty();
+        let screens = &mut self.ui_mut().screens;
+        screens.set_prologue(replay);
+        screens.show_title(&saves, notice.as_deref());
     }
 
     fn show_creation(&mut self) {
@@ -4290,6 +4573,14 @@ impl RenethackGame {
         // list right to left, the first value wins (a saved game keeps its
         // own, from the save)
         let options = format!("{},{options}", self.settings.gameplay.engine_options());
+        // the prologue tells NetHack's legacy: asked for when it plays (the
+        // engine reads the list right to left: this wins over BASE_OPTIONS)
+        let prologue = self.prologue_plays();
+        let options = if prologue {
+            format!("legacy,{options}")
+        } else {
+            options
+        };
         if let Err(e) = remember_name(&pg, &choice.name) {
             godot_warn!("renethack: cannot remember the name: {e}");
         }
@@ -4299,12 +4590,17 @@ impl RenethackGame {
         state.lang = Some(i18n::lang().code().to_string());
         if self.start_session(options, &choice.name, state) {
             self.loadout_for = Some(choice.role.clone());
-            self.fresh_game = true;
             self.save_ui_state();
+            self.prologue_due = prologue;
+            self.prologue_choice = Some((choice.role.clone(), choice.gender == "female"));
+            self.new_game = true;
         }
     }
 
     fn continue_game(&mut self, name: &str) {
+        // a restored game: no prologue, nothing handed on
+        self.new_game = false;
+        self.prologue_due = false;
         match EngineConfig::restore_options(name) {
             Ok(options) => {
                 if self.prepare_playground() {
@@ -4489,6 +4785,10 @@ impl RenethackGame {
 
     pub(crate) fn sync_views(&mut self, delta: f64) {
         if !matches!(self.state, GameState::Playing | GameState::Closing) {
+            return;
+        }
+        // the map draws the prologue's scenes meanwhile, the game behind
+        if self.prologue.is_some() {
             return;
         }
         let catalog = self.catalog.clone();

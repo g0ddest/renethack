@@ -132,6 +132,14 @@ impl TitleScene {
         }
     }
 
+    /// A scene of another level, drawn as the chamber is (the prologue's).
+    pub fn of_world(world: World, catalog: &Catalog) -> TitleScene {
+        TitleScene {
+            world,
+            catalog: catalog.clone(),
+        }
+    }
+
     /// The world and catalog the map draws it from.
     pub fn parts(&mut self) -> (&mut World, &Catalog) {
         (&mut self.world, &self.catalog)

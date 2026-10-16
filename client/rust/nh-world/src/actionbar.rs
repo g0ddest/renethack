@@ -613,6 +613,14 @@ pub struct Profile {
     /// the help's Guide lists them).
     #[serde(default, skip_serializing_if = "std::collections::BTreeSet::is_empty")]
     pub guide_seen: std::collections::BTreeSet<crate::Guide>,
+    /// The prologue has played (or been skipped) once: the first game has
+    /// had it.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub prologue_seen: bool,
+    /// The last prologue's text as the engine wrote it (its English
+    /// lines), told for the last hero: what the title replays.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub legacy: Vec<String>,
 }
 
 /// The profile's parts that are one machine's: how its window covers its
@@ -1150,9 +1158,12 @@ mod tests {
                     pickup_types: "$".into(),
                     ..crate::Gameplay::default()
                 },
+                prologue: crate::PrologueWhen::EveryGame,
             },
             volumes: BTreeMap::from([("Music".into(), 40), ("SFX".into(), 100)]),
             guide_seen: [crate::Guide::Quest, crate::Guide::Pet].into(),
+            prologue_seen: true,
+            legacy: vec!["It is written in the Book of Thoth:".into()],
         }
     }
 

@@ -28,8 +28,8 @@ use godot::global::{HorizontalAlignment, VerticalAlignment};
 use godot::prelude::*;
 use nh_world::{
     Burden, FPS_CAPS, GameOption, Gameplay, Graphics, Key, KeyInput, KeyProfile, Keymap, Level,
-    Msaa, Paranoid, Quality, RENDER_SCALES, Settings, Shadows, UI_SCALES, Upscale, WindowMode,
-    key_name, step_through, step_window_size,
+    Msaa, Paranoid, PrologueWhen, Quality, RENDER_SCALES, Settings, Shadows, UI_SCALES, Upscale,
+    WindowMode, key_name, step_through, step_window_size,
 };
 
 use crate::audio::Bus;
@@ -105,6 +105,7 @@ impl Section {
                 Field::Keys,
                 Field::Language,
                 Field::ReduceEffects,
+                Field::Prologue,
                 Field::Hints,
             ],
             Section::Gameplay => &GAMEPLAY,
@@ -155,6 +156,8 @@ pub enum Field {
     /// Fewer screen effects (the hero's sway, the camera's drift, a
     /// hallucination's hue).
     ReduceEffects,
+    /// When the prologue plays before a new game.
+    Prologue,
     /// The first-steps guide's hint cards and quest page.
     Hints,
     /// A NetHack option: a new game's at the title, the game's over it.
@@ -187,6 +190,7 @@ impl Field {
             Field::Keys => tr!("settings-keys"),
             Field::Language => tr!("settings-language"),
             Field::ReduceEffects => tr!("settings-reduce-effects"),
+            Field::Prologue => tr!("settings-prologue"),
             Field::Hints => tr!("settings-hints"),
             Field::Game(o) => match o {
                 GameOption::Autopickup => tr!("settings-autopickup"),
@@ -247,6 +251,7 @@ impl Field {
             }
             Field::Language => tr!("settings-language-about"),
             Field::ReduceEffects => tr!("settings-reduce-effects-about"),
+            Field::Prologue => tr!("settings-prologue-about"),
             Field::Hints => tr!("settings-hints-about"),
             Field::Game(o) => {
                 let what = match o {
@@ -438,6 +443,11 @@ pub fn value_text(field: Field, v: &View) -> String {
         Field::Language => v.lang.name().to_string(),
         Field::ReduceEffects if v.settings.reduce_effects => tr!("settings-on"),
         Field::ReduceEffects => tr!("settings-off"),
+        Field::Prologue => match v.settings.prologue {
+            PrologueWhen::FirstGame => tr!("settings-prologue-first"),
+            PrologueWhen::EveryGame => tr!("settings-prologue-every"),
+            PrologueWhen::Never => tr!("settings-prologue-never"),
+        },
         Field::Hints if v.settings.hints_off => tr!("settings-off"),
         Field::Hints => tr!("settings-on"),
         // the game has not told them yet
@@ -572,6 +582,9 @@ pub fn step(field: Field, v: &View, dir: i32, wrap: bool) -> Option<Change> {
         }
         Field::ReduceEffects => {
             s.reduce_effects = step_through(&[false, true], s.reduce_effects, dir, wrap);
+        }
+        Field::Prologue => {
+            s.prologue = step_through(&PrologueWhen::ALL, s.prologue, dir, wrap);
         }
         // On first, then Off: → turns the hints off
         Field::Hints => {
@@ -2126,6 +2139,12 @@ mod tests {
         assert_eq!(step(Field::ReduceEffects, &v, -1, false), None);
         assert!(changed(step(Field::ReduceEffects, &v, 1, false)).reduce_effects);
         assert!(changed(step(Field::ReduceEffects, &v, 1, true)).reduce_effects);
+        // the prologue: before the first game, then every one, then never
+        assert_eq!(step(Field::Prologue, &v, -1, false), None);
+        assert_eq!(
+            changed(step(Field::Prologue, &v, 1, false)).prologue,
+            PrologueWhen::EveryGame
+        );
     }
 
     #[test]

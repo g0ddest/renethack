@@ -36,7 +36,7 @@ const STAGES: &[(&str, Branch)] = &[
 /// The effects the first stage fires (`act`), how many a frame go off
 /// under the start-up veil, and the frames a stage is held after them
 /// (the effects that follow others go off then).
-const ACTS: u32 = 23;
+const ACTS: u32 = 24;
 const VEILED_ACTS: u32 = 4;
 const HOLD_TAIL: u32 = 24;
 /// The frames a later stage is held (nothing in it is drawn for the
@@ -451,7 +451,8 @@ impl Rehearsal {
 
     /// The `n`th effect of a stage: a burst of every kind, beams, a ray
     /// of every kind, a blow, outlines (a hostile, a pet, an empty cell),
-    /// a path, and a fire's explosion (its heart a tower of flame).
+    /// a path, a fire's explosion (its heart a tower of flame), and what
+    /// the prologue's scenes hold.
     fn act(&self, map: &mut MapView, n: u32) {
         let red = Color::from_rgb(1.0, 0.3, 0.2);
         let kinds = [
@@ -501,6 +502,8 @@ impl Rehearsal {
                 let ground = Vector3::new((X0 + 7) as f32, 0.0, (Y0 + 4) as f32);
                 map.vfx().blast(Blast::Fiery, false, red, ground);
             }
+            // what the prologue's scenes stand beside their levels
+            Some(9) => map.warm_prologue(),
             _ => {}
         }
     }

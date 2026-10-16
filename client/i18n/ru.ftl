@@ -1204,3 +1204,12 @@ overview-resting = Здесь покоятся
 overview-resting-you = Здесь покоитесь вы
 overview-dead-you = { $how }
 overview-dead = { $who }, { $how }
+
+# the prologue: NetHack's legacy told over scenes before a game
+prologue-hint = Любая клавиша или A — дальше  ·  Esc или B — пропустить
+title-prologue = Пролог
+settings-prologue = Пролог
+settings-prologue-about = История Амулета, как её рассказывает NetHack, — в сценах перед игрой.
+settings-prologue-first = Перед первой игрой
+settings-prologue-every = Перед каждой новой игрой
+settings-prologue-never = Никогда

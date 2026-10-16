@@ -67,11 +67,14 @@ mod fall;
 mod hero_look;
 #[path = "hero_pose.rs"]
 mod hero_pose;
+#[path = "prologue_stage.rs"]
+mod prologue_stage;
 
 pub use acts::{ActKind, Acted, Aim};
 pub use fall::{FallKind, Fell};
 pub use hero_look::{Effects, Posture, Shown};
 pub use hero_pose::{Held, HelplessPhase};
+pub use prologue_stage::{PrologueHero, STAIRS as PROLOGUE_STAIRS};
 
 /// Low enough to see creatures from the side, high enough to see the floor
 /// between walls: the pitch at the default distance; closer in the camera
@@ -2847,6 +2850,10 @@ pub struct MapView {
     post: Gd<CanvasLayer>,
     /// The inside of what engulfed the hero, round them.
     engulfed: Engulfed,
+    /// A beat of the prologue drawn instead of the title (its level is
+    /// `title`), and its camera: where it is, what it looks at.
+    stage: Option<prologue_stage::Stage>,
+    stage_camera: Option<(Vector3, Vector3)>,
     target: Vector3,
     focus: Vector3,
     distance: f32,
@@ -3475,6 +3482,8 @@ impl MapView {
             bedrock_dirty: true,
             post,
             engulfed,
+            stage: None,
+            stage_camera: None,
             target: center,
             focus: center,
             distance: DISTANCE,
@@ -5109,7 +5118,7 @@ impl MapView {
 
     pub fn clear(&mut self) {
         // a game starts: the rehearsal is over, the title scene gone, the
-        // gallery's light off
+        // gallery's light off, nothing of a prologue's scene left
         self.rehearsal = None;
         // those of the variants still to make are made in the game's first
         // frames (`tick`), then let go: a game started before the rehearsal
@@ -5118,6 +5127,7 @@ impl MapView {
         if self.variants.done() {
             self.variants.release();
         }
+        self.end_stage();
         self.title = None;
         if std::mem::take(&mut self.titled) {
             self.env.set_bg_color(self.branch_look.darkness);
@@ -6247,6 +6257,19 @@ impl MapView {
     }
 
     fn place_camera(&mut self) {
+        if self.titled
+            && !self.shown
+            && let Some((eye, aim)) = self.stage_camera
+        {
+            // a beat of the prologue: its own camera
+            let d = (eye - aim).length();
+            self.env.set_fog_depth_begin(d + 4.0);
+            self.env.set_fog_depth_end(d + 16.0);
+            self.camera.look_at_from_position(eye, aim);
+            self.eye = eye;
+            RenderingServer::singleton().global_shader_parameter_set("eye_pos", &eye.to_variant());
+            return;
+        }
         if self.titled && !self.shown {
             use crate::title_scene::{AIM, DISTANCE, PITCH_DEG, SWAY_DEG, SWAY_SECS};
             let phase = (self.clock as f32 / SWAY_SECS * std::f32::consts::TAU).sin();

@@ -72,6 +72,8 @@ mod layouts_tests;
 mod passing_tests;
 #[path = "selftest_polyself.rs"]
 mod polyself_tests;
+#[path = "selftest_prologue.rs"]
+mod prologue_tests;
 #[path = "selftest_rebind.rs"]
 mod rebind_tests;
 #[path = "selftest_riding.rs"]
@@ -4870,6 +4872,9 @@ impl SelfTest {
             "corridors" => corridors::corridors(),
             "shop" => shop::shop(),
             "effects" => effects::effects(),
+            "prologue" => prologue_tests::prologue(),
+            "prologue-skip" => prologue_tests::prologue_skip(),
+            "prologue-replay" => prologue_tests::prologue_replay(),
             "rays" => effects::rays(),
             "blasts" => effects::blasts(),
             "engulfed" => effects::engulfed(),
@@ -5364,6 +5369,22 @@ fn layout_fits(game: &RenethackGame) -> Result<(), String> {
                 r.position.x, r.position.y, r.size.x, r.size.y, size.x, size.y
             ));
         }
+    }
+    // the prologue over everything: its words inside the canvas (the HUD
+    // is hidden under it)
+    if game.prologue.is_some() {
+        if let Some(r) = ui
+            .prologue
+            .line_rects()
+            .into_iter()
+            .find(|r| !canvas.encloses(*r))
+        {
+            return Err(format!(
+                "a line of the prologue at {:.0},{:.0} {:.0}×{:.0} is not inside the {:.0}×{:.0} canvas",
+                r.position.x, r.position.y, r.size.x, r.size.y, size.x, size.y
+            ));
+        }
+        return Ok(());
     }
     if !matches!(game.state, GameState::Playing) {
         return Ok(());

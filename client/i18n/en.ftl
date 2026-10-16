@@ -1190,3 +1190,12 @@ overview-resting = Final resting place for
 overview-resting-you = Final resting place for
 overview-dead-you = you, { $how }
 overview-dead = { $who }, { $how }
+
+# the prologue: NetHack's legacy told over scenes before a game
+prologue-hint = Any key or A: next  ·  Esc or B: skip
+title-prologue = Prologue
+settings-prologue = Prologue
+settings-prologue-about = NetHack's own story of the Amulet, told over scenes before a game.
+settings-prologue-first = Before the first game
+settings-prologue-every = Before every new game
+settings-prologue-never = Never
