@@ -7,8 +7,9 @@
 //! an item here; a wished scroll an unknown item; a potion of gain level a
 //! new level; a fountain, a trap and an altar drawn beside the hero (the
 //! map's own cells; the hero's hides what is under them), a shopkeeper's
-//! welcome and a skill's message,
-//! hunger, wounds and few hit points (the status) theirs. A card waits
+//! welcome and a skill's line (as weapon.c says it: the log shows it in
+//! the language now, the card goes by the engine's English), hunger,
+//! wounds and few hit points (the status) theirs. A card waits
 //! while a question is up (the engine's O); the guide turned off shows
 //! none, turned on again the one waiting. Each card once: staged again,
 //! none. The help's Guide lists every card met.
@@ -18,7 +19,7 @@ use std::sync::atomic::{AtomicI64, AtomicUsize, Ordering};
 use godot::classes::{Engine, Input, InputEventMouseButton};
 use godot::global::MouseButton;
 use godot::prelude::*;
-use nh_protocol::WinCall;
+use nh_protocol::{FmtArg, WinCall};
 use nh_world::{Guide, Key, KeyInput, Prompt};
 
 use super::audio_tests::wish;
@@ -26,6 +27,7 @@ use super::{PadEv, Step, command, ctrl_key, key, letter_of, quit, set_status, st
 use crate::game::RenethackGame;
 use crate::gamepad::PadButton;
 use crate::guide_view::QuestStep;
+use crate::i18n::Lang;
 use crate::tr;
 use crate::ui_events::{DialogEvent, UiEvent};
 
@@ -114,13 +116,19 @@ fn none_for_a_while(g: &RenethackGame) -> Result<bool, String> {
 
 /// A message as the engine says it.
 fn say(g: &mut RenethackGame, text: &str) {
+    say_from(g, text, None, Vec::new());
+}
+
+/// A message as the engine's host sends one: its words, and the format
+/// and arguments it was made of (the key of its translation).
+fn say_from(g: &mut RenethackGame, text: &str, fmt: Option<&str>, args: Vec<FmtArg>) {
     let win = g.world.message_win.unwrap_or(1);
     g.world.apply(&WinCall::Putstr {
         win,
         attr: 0,
         text: text.to_string(),
-        fmt: None,
-        args: Vec::new(),
+        fmt: fmt.map(str::to_string),
+        args,
     });
 }
 
@@ -390,13 +398,31 @@ pub(super) fn guide() -> Vec<Step> {
         key('O'),
         Step::Request("the engine's options", |p| matches!(p, Prompt::Menu { .. })),
         Step::Call("a skill can improve, the options up", |g| {
-            say(g, "You feel more confident in your weapon skills.");
+            // as weapon.c's give_may_advance_msg() says it
+            say_from(
+                g,
+                "You feel more confident in your weapon skills.",
+                Some("You feel more confident in your %sskills."),
+                vec![FmtArg::Str("weapon ".into())],
+            );
             g.check_hints();
             mark_frame(g)
         }),
         Step::Wait("no card while the question is up", none_for_a_while),
         Step::Dialog(DialogEvent::MenuCancel),
         Step::Request("a command", command),
+        // the log shows the line in the language now; the card goes by
+        // the engine's English all the same
+        Step::Wait("the skill's line in the language shown", |g| {
+            let shown = g.ui.as_ref().ok_or("no UI")?.hud.log_shown();
+            Ok(match crate::i18n::lang() {
+                Lang::Ru => {
+                    shown.contains("Вы чувствуете себя увереннее в обращении с оружием.")
+                        && !shown.contains("more confident")
+                }
+                Lang::En | Lang::Pseudo => shown.contains("more confident in your weapon skills."),
+            })
+        }),
     ]);
     steps.extend(shown_then_esc("the skill's card, after the question"));
     // the guide off: no card; on again: the one waiting

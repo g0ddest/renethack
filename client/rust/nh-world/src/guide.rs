@@ -133,7 +133,11 @@ impl HintWatch {
             if t.starts_with("Welcome to experience level ") {
                 add(Guide::LevelUp);
             }
-            if t.starts_with("You feel more confident in your ") {
+            // the engine's English (the log shows it translated), asleep
+            // too ("You dream that you feel…")
+            if t.starts_with("You feel more confident in your ")
+                || t.starts_with("You dream that you feel more confident in your ")
+            {
                 add(Guide::Enhance);
             }
         }
@@ -315,6 +319,19 @@ mod tests {
                 .to_string()],
         );
         assert!(HintWatch::new().occasions(&w, &cat).is_empty());
+        // a skill felt in a dream; no slot left is no skill to advance
+        for (text, card) in [
+            (
+                "You dream that you feel more confident in your fighting skills.",
+                true,
+            ),
+            ("You feel you could be more dangerous!", false),
+        ] {
+            let mut w = World::new();
+            apply(&mut w, &said(&[text]));
+            let found = HintWatch::new().occasions(&w, &cat);
+            assert_eq!(found == vec![Guide::Enhance], card, "{text}: {found:?}");
+        }
     }
 
     #[test]
