@@ -294,6 +294,10 @@ const LAMP_POOL_ENERGY: f32 = 0.8;
 const LAMP_POOL_RANGE: f32 = 4.5;
 const RIM_LIGHT: Color = Color::from_rgb(0.62, 0.70, 1.0);
 const RIM_LAYER: u32 = 1 << 1;
+/// The steed the hero rides: two of the hero's own fills light it with
+/// them (`STEED_STUDIO`; a dark pony under a knight showed only its legs
+/// in a dim room), their rim light and the doll's camera do not.
+const STEED_LAYER: u32 = 1 << 5;
 /// The hero's own key and fills on the map: which way each shines in the
 /// studio's frame, its colour and its energy. They light the hero's model
 /// alone (`RIM_LAYER`), whatever the dungeon's light: an outfit reads by
@@ -334,6 +338,9 @@ const HERO_STUDIO: [(Vector3, Color, f32); 5] = [
         1.6,
     ),
 ];
+/// Which of `HERO_STUDIO`'s lights reach a ridden steed: the fills (all
+/// of them made its brown coat a pale tan).
+const STEED_STUDIO: [bool; 5] = [false, true, false, true, false];
 /// Where the studio is seen from, for its lights' ways: south of the
 /// hero and a little to the east and above, looking at them, as the
 /// doll's camera stood when a game began.
@@ -2751,6 +2758,8 @@ pub struct MapView {
     rim_model: Option<Gd<Node3D>>,
     /// The hero's own model while they ride (their cell shows the steed).
     rider: Option<Rider>,
+    /// The steed under them, on the layer their key and fills light.
+    lit_steed: Option<Gd<Node3D>>,
     /// The steed under a hero a wall hides, wearing the x-ray overlay
     /// with them.
     xray_steed: Option<Gd<Node3D>>,
@@ -3306,12 +3315,16 @@ impl MapView {
         studio_frame.set_transform(
             Transform3D::new(Basis::IDENTITY, HERO_STUDIO_FROM).looking_at(Vector3::ZERO),
         );
-        for (way, color, energy) in HERO_STUDIO {
+        for ((way, color, energy), steed) in HERO_STUDIO.into_iter().zip(STEED_STUDIO) {
             let mut light = DirectionalLight3D::new_alloc();
             light.set_rotation(way);
             light.set_color(color);
             light.set_param(Param::ENERGY, energy);
-            light.set_cull_mask(RIM_LAYER);
+            light.set_cull_mask(if steed {
+                RIM_LAYER | STEED_LAYER
+            } else {
+                RIM_LAYER
+            });
             // (the mask keeps it off the level's surfaces, not out of the
             // level's haze: it would light the air of the whole map)
             light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
@@ -3410,6 +3423,7 @@ impl MapView {
             hero_studio: studio_frame,
             rim_model: None,
             rider: None,
+            lit_steed: None,
             xray_steed: None,
             xray_behind: Vec::new(),
             xray_creature,
@@ -3662,6 +3676,7 @@ impl MapView {
         self.prof
             .push(("build", __t.elapsed().as_secs_f64() * 1000.0));
         self.seat_rider(hero);
+        self.light_steed();
         self.watch_fights(world, catalog);
         // the deaths told fall; what no death claims goes
         self.claim_falls(catalog);
@@ -5195,6 +5210,9 @@ impl MapView {
         }
         if let Some(old) = self.xray_steed.take().filter(|n| n.is_instance_valid()) {
             set_overlay(&old, None);
+        }
+        if let Some(old) = self.lit_steed.take().filter(|n| n.is_instance_valid()) {
+            set_layers(&old, 1);
         }
         self.unshow_behind(&[]);
         if let Some(r) = self.rider.take() {
@@ -7220,6 +7238,30 @@ impl MapView {
         r.model.node.set_visible(r.on.is_some());
     }
 
+    /// The steed under the hero on the layer their key and fills light,
+    /// and a steed no longer ridden off it.
+    fn light_steed(&mut self) {
+        let steed = self
+            .rider
+            .as_ref()
+            .and_then(|r| r.on.as_ref())
+            .map(|(node, _)| node.clone());
+        if steed.as_ref().map(|n| n.instance_id())
+            == self.lit_steed.as_ref().map(|n| n.instance_id())
+        {
+            return;
+        }
+        // a model given back to the pool may be on its way out: leave it be
+        let alive = |n: &Gd<Node3D>| n.is_instance_valid() && !n.is_queued_for_deletion();
+        if let Some(old) = self.lit_steed.take().filter(alive) {
+            set_layers(&old, 1);
+        }
+        if let Some(n) = steed.as_ref().filter(|n| alive(n)) {
+            set_layers(n, 1 | STEED_LAYER);
+        }
+        self.lit_steed = steed;
+    }
+
     /// The rider goes where the steed goes: their node on the steed's
     /// (the seat's solver lifts them onto its back), or on the way there
     /// from where they stood while they climb up.
@@ -7272,6 +7314,18 @@ impl MapView {
             Some(r) if r.on.is_some() => Some(self.rider_view.clone()),
             _ => self.hero_model().map(|m| m.node.clone()),
         }
+    }
+
+    /// Whether a model's meshes are on the layer the hero's key and fills
+    /// light besides their own: a ridden steed's (self-tests).
+    pub fn on_steed_layer(node: &Gd<Node3D>) -> bool {
+        node.find_children_ex("*")
+            .type_("GeometryInstance3D")
+            .owned(false)
+            .done()
+            .iter_shared()
+            .filter_map(|n| n.try_cast::<GeometryInstance3D>().ok())
+            .any(|g| g.get_layer_mask() & STEED_LAYER != 0)
     }
 
     /// Whether a model's meshes are on the hero's rim layer (self-tests:

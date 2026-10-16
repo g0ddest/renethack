@@ -2,7 +2,8 @@
 //! beside him wears its saddle. `#ride` puts him on its back within the
 //! turn: his own model, with the kit it wore, seated (the hips on the
 //! saddle, the knees clear of the pony's sides), the rim light and the
-//! ring his, the pony under him no pet's any more. The pair walks (the
+//! ring his, his key and fills lighting the pony too, the pony under him
+//! no pet's any more. The pair walks (the
 //! pony's own walk, the rider sitting it out), then gallops; he strikes a
 //! lizard from the saddle with his own blow, the pony under him turning
 //! to it; he couches the lance, applied at a spot (which wields it) and
@@ -395,9 +396,13 @@ fn rides(g: &RenethackGame) -> Result<bool, String> {
             s.kit
         ));
     }
-    // the rim light and the ring are the hero's, not the steed's
+    // the rim light and the ring are the hero's, not the steed's; their
+    // key and fills light both
     if !MapView::on_rim(&node) || MapView::on_rim(&steed.node) {
         return Err("the rim light is not on the rider alone".into());
+    }
+    if !MapView::on_steed_layer(&steed.node) {
+        return Err("the hero's key and fills do not light the steed".into());
     }
     let (hx, hy) = g.world.map.hero().ok_or("no hero")?;
     for (whose, cell, gap) in map.ring_gaps() {
@@ -888,6 +893,9 @@ pub(super) fn riding() -> Vec<Step> {
             };
             if rim || !node.is_visible() {
                 return Err("the pony keeps the hero's rim light".into());
+            }
+            if MapView::on_steed_layer(&node) {
+                return Err("the pony keeps the hero's key and fills".into());
             }
             saddle_on(g, cell)
         }),
