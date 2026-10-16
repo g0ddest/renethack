@@ -26,7 +26,7 @@ use godot::classes::light_3d::Param;
 use godot::classes::particle_process_material::{EmissionShape, Parameter};
 use godot::classes::{
     Curve, CurveTexture, Decal, GpuParticles3D, Gradient, GradientTexture1D, Image, ImageTexture,
-    Material, MeshInstance3D, Node3D, OmniLight3D, ParticleProcessMaterial, QuadMesh, Shader,
+    Material, Mesh, MeshInstance3D, Node3D, OmniLight3D, ParticleProcessMaterial, QuadMesh, Shader,
     ShaderMaterial, StandardMaterial3D, Texture2D,
 };
 use godot::prelude::*;
@@ -780,6 +780,10 @@ struct Emitter {
     process: Gd<ParticleProcessMaterial>,
     /// Seconds until it may be used again.
     busy: f32,
+    /// Its particles' quad, and how many times its size it is drawn now
+    /// (`Vfx::burst_large`).
+    quad: Gd<Mesh>,
+    sized: f32,
 }
 
 struct Flash {
@@ -855,6 +859,15 @@ const SPLATS: usize = 24;
 /// How much darker a splat lies than the creature's own colour.
 const SPLAT_DARK: f32 = 0.5;
 const SPLAT_SECS: f32 = 14.0;
+/// A burst seen at the game's distance (`Vfx::burst_large`): its
+/// particles this many times their size (their textures' bright hearts
+/// are small) and this much brighter (more, and they bleach to white),
+/// its light this many times brighter and longer, and for a kind with no
+/// light of its own (a glint) one: its energy and seconds.
+const LARGE: f32 = 4.0;
+const LARGE_GLOW: f32 = 1.25;
+const LARGE_LIGHT_UP: (f32, f32) = (2.5, 1.5);
+const LARGE_LIGHT: (f32, f32) = (0.6, 0.45);
 const BEAM_SECS: f32 = 0.45;
 /// How long a whole ray's head takes to run its length, and a ray shows
 /// at its brightest once it stops growing, before it fades.
@@ -1266,6 +1279,13 @@ impl Vfx {
         self.burst_dir(kind, at, tint, None);
     }
 
+    /// An effect drawn larger and brighter (`LARGE`): a monster's drink,
+    /// read or wield seen at the game's distance, where its motes, runes
+    /// and glints were specks.
+    pub fn burst_large(&mut self, kind: VfxKind, at: Vector3) {
+        self.burst_by(kind, at, None, None, LARGE);
+    }
+
     /// A blow landing at `at`, its sparks thrown out towards `toward` (the
     /// striker's side) after `secs`.
     pub fn hit(&mut self, at: Vector3, toward: Vector3, secs: f32) {
@@ -1279,15 +1299,39 @@ impl Vfx {
     }
 
     fn burst_dir(&mut self, kind: VfxKind, at: Vector3, tint: Option<Color>, dir: Option<Vector3>) {
+        self.burst_by(kind, at, tint, dir, 1.0);
+    }
+
+    /// As `burst_dir`, `k` times as large (and brighter, its light too:
+    /// `LARGE_GLOW`, `LARGE_LIGHT_UP`), a light of its own for a kind with
+    /// none.
+    fn burst_by(
+        &mut self,
+        kind: VfxKind,
+        at: Vector3,
+        tint: Option<Color>,
+        dir: Option<Vector3>,
+        k: f32,
+    ) {
         let (recipe, color, light) = look_of(kind);
         let color = tint.unwrap_or(color);
-        let light = light.map(|(c, e, s)| (tint.unwrap_or(c), e, s));
-        self.emit(recipe, color, at, dir);
+        let large = k > 1.0;
+        let light = light
+            .map(|(c, e, s)| (tint.unwrap_or(c), e, s))
+            .or_else(|| large.then_some((color, LARGE_LIGHT.0, LARGE_LIGHT.1)));
+        let (glow, (up, longer)) = match large {
+            true => (LARGE_GLOW, LARGE_LIGHT_UP),
+            false => (1.0, (1.0, 1.0)),
+        };
+        let bright = Color::from_rgba(color.r * glow, color.g * glow, color.b * glow, color.a);
+        self.emit_by(recipe, bright, at, dir, k);
         if recipe == Recipe::Sparks {
-            self.emit(Recipe::Flash, color, at, None);
+            self.emit_by(Recipe::Flash, bright, at, None, k);
         }
         if let Some((c, energy, secs)) = light {
-            self.flash(at + Vector3::new(0.0, 0.3, 0.0), c, energy, secs, 2.5);
+            let range = 2.5 * k.sqrt();
+            let at = at + Vector3::new(0.0, 0.3, 0.0);
+            self.flash(at, c, energy * up, secs * longer, range);
         }
         if let VfxKind::Blood(c) = kind {
             // blood darkens as it lies: never the bright red of the glyph
@@ -1788,6 +1832,12 @@ impl Vfx {
     }
 
     fn emit(&mut self, recipe: Recipe, color: Color, at: Vector3, dir: Option<Vector3>) {
+        self.emit_by(recipe, color, at, dir, 1.0);
+    }
+
+    /// As `emit`, its particles `k` times their size and spread over a
+    /// sphere as many times wider as `k`'s root.
+    fn emit_by(&mut self, recipe: Recipe, color: Color, at: Vector3, dir: Option<Vector3>, k: f32) {
         let i = self.take_emitter(recipe);
         let p = recipe.params();
         let Some(e) = self
@@ -1797,9 +1847,33 @@ impl Vfx {
         else {
             return;
         };
+        // as large as this burst asks (the pool's emitters are shared): a
+        // particle is drawn its quad's size (a billboard keeps nothing of
+        // the scale its process gives it), the quad made larger
+        if e.sized != k {
+            e.sized = k;
+            let quad = match e.quad.clone().try_cast::<QuadMesh>() {
+                Ok(q) if k != 1.0 => {
+                    let mut large = QuadMesh::new_gd();
+                    large.set_size(q.get_size() * k);
+                    large.upcast()
+                }
+                _ => e.quad.clone(),
+            };
+            e.node.set_draw_pass_mesh(0, &quad);
+        }
+        // and as its recipe makes it: a ray's trail (`shed`) or a blast's
+        // cell (`emit_in_cell`) left it turned along the ray, emitting from
+        // a box, a share of its amount
+        if !recipe.is_trail() {
+            e.process.set_emission_shape(EmissionShape::SPHERE);
+        }
+        e.process.set_emission_sphere_radius(p.radius * k.sqrt());
+        e.node.set_amount_ratio(1.0);
+        e.node.set_visibility_aabb(EMITTER_SEEN);
         e.process.set_color_ramp(&ramp_of(recipe, color));
         e.process.set_direction(dir.unwrap_or(p.dir));
-        e.node.set_position(at);
+        e.node.set_transform(Transform3D::new(Basis::IDENTITY, at));
         e.node.set_visible(true);
         e.node.restart();
         e.node.set_emitting(true);
@@ -2228,6 +2302,13 @@ fn process_material(recipe: Recipe, p: &Params) -> Gd<ParticleProcessMaterial> {
     m
 }
 
+/// Where a pooled emitter's burst may reach round it (it is drawn while
+/// that box is in view).
+const EMITTER_SEEN: Aabb = Aabb {
+    position: Vector3::new(-3.0, -2.0, -3.0),
+    size: Vector3::new(6.0, 5.0, 6.0),
+};
+
 fn new_emitter(root: &mut Gd<Node3D>, recipe: Recipe, tex: &Gd<Texture2D>) -> Emitter {
     let p = recipe.params();
     let mut m = process_material(recipe, &p);
@@ -2267,15 +2348,15 @@ fn new_emitter(root: &mut Gd<Node3D>, recipe: Recipe, tex: &Gd<Texture2D>) -> Em
         node.set_material_override(&mat);
     }
     node.set_cast_shadows_setting(ShadowCastingSetting::OFF);
-    node.set_visibility_aabb(Aabb::new(
-        Vector3::new(-3.0, -2.0, -3.0),
-        Vector3::new(6.0, 5.0, 6.0),
-    ));
+    node.set_visibility_aabb(EMITTER_SEEN);
     root.add_child(&node);
+    let quad = node.get_draw_pass_mesh(0).expect("a draw pass was set");
     Emitter {
         node,
         process: m,
         busy: 0.0,
+        quad,
+        sized: 1.0,
     }
 }
 

@@ -318,6 +318,10 @@ const ITEMS: [(&str, ActKind, &str); 4] = [
 ];
 /// The item act under test (an index into `ITEMS`, from 1).
 static ITEM: AtomicUsize = AtomicUsize::new(0);
+/// When an item's effect was drawn; its picture is taken this long after,
+/// once its motes, runes or glints have spread.
+static SINCE: Mutex<Option<std::time::Instant>> = Mutex::new(None);
+const SPREAD_SECS: f32 = 0.25;
 
 /// A gnome lord (seen, the hero no longer blind) zapping a wand at the
 /// hero, drinking a potion, reading a scroll and wielding a weapon, each
@@ -370,6 +374,14 @@ fn items() -> Vec<Step> {
                 }))
             }),
             Step::Wait("its effect drawn", |g| Ok(map_view(g)?.acts_pending() == 0)),
+            Step::Call("", |_| {
+                *SINCE.lock().unwrap() = Some(std::time::Instant::now());
+                Ok(())
+            }),
+            Step::Wait("the effect spread", |_| {
+                let since = *SINCE.lock().unwrap();
+                Ok(since.is_some_and(|t| t.elapsed().as_secs_f32() >= SPREAD_SECS))
+            }),
             Step::Shot(shot),
         ]);
     }

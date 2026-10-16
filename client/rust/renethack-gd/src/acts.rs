@@ -291,6 +291,9 @@ pub(super) struct ActFx {
     at: FxAt,
     /// A thin ray of `kind`'s colour from where it is to here (a gaze).
     to: Option<Vector3>,
+    /// Drawn larger and brighter (`Vfx::burst_large`): a drink's motes, a
+    /// scroll's runes, a blade's glint, specks at the game's distance.
+    large: bool,
 }
 
 /// A ray the map draws, waiting a breather's mouth to open: its look, its
@@ -435,6 +438,7 @@ impl MapView {
                     kind: VfxKind::Cast(MAGIC),
                     at: hand,
                     to: None,
+                    large: false,
                 });
                 if let Some(h) = aim_at {
                     let at = self.sound_at(h);
@@ -443,6 +447,7 @@ impl MapView {
                         kind: VfxKind::Shock(MAGIC),
                         at: FxAt::Point(at),
                         to: None,
+                        large: false,
                     });
                 }
             }
@@ -452,18 +457,21 @@ impl MapView {
                 kind: VfxKind::Sparkle,
                 at: hand,
                 to: None,
+                large: false,
             }),
             ActKind::Crackle => self.act_fx.push(ActFx {
                 wait: 0.0,
                 kind: VfxKind::Lightning,
                 at: FxAt::Point(middle),
                 to: None,
+                large: false,
             }),
             ActKind::Zap { .. } => self.act_fx.push(ActFx {
                 wait: FLARE_AT,
                 kind: VfxKind::Zap(WAND),
                 at: main,
                 to: None,
+                large: false,
             }),
             ActKind::Drink => {
                 let color = self.potion_color(what);
@@ -472,6 +480,7 @@ impl MapView {
                     kind: VfxKind::Quaff(color),
                     at: hand,
                     to: None,
+                    large: true,
                 });
             }
             ActKind::Read => self.act_fx.push(ActFx {
@@ -479,12 +488,14 @@ impl MapView {
                 kind: VfxKind::Read,
                 at: main,
                 to: None,
+                large: true,
             }),
             ActKind::Wield => self.act_fx.push(ActFx {
                 wait: GLINT_AT,
                 kind: VfxKind::Sparkle,
                 at: main,
                 to: None,
+                large: true,
             }),
             ActKind::Gaze => {
                 // a bright pulse from the pupil, and a thin flash of the
@@ -500,6 +511,7 @@ impl MapView {
                         kind,
                         at: FxAt::Eyes(eyes_node.clone(), height),
                         to,
+                        large: false,
                     });
                 }
             }
@@ -508,12 +520,14 @@ impl MapView {
                 kind: VfxKind::Poison,
                 at: head,
                 to: None,
+                large: false,
             }),
             ActKind::Breath => self.act_fx.push(ActFx {
                 wait: MOUTH_AT,
                 kind: breath_kind(what),
                 at: head,
                 to: None,
+                large: false,
             }),
             ActKind::Vanish | ActKind::Appear { .. } | ActKind::Change | ActKind::Summon => {}
         }
@@ -795,6 +809,7 @@ impl MapView {
             };
             match (fx.to, fx.kind) {
                 (Some(to), VfxKind::Zap(c)) => self.vfx.beam_tinted(fx.kind, at, to, c),
+                _ if fx.large => self.vfx.burst_large(fx.kind, at),
                 _ => self.vfx.burst(fx.kind, at),
             }
         }
