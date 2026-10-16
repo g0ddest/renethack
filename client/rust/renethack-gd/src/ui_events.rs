@@ -78,6 +78,10 @@ pub enum UiEvent {
     SetVolume(crate::audio::Bus, f32),
     /// The help, open or closed (F1, the HUD's button).
     ToggleHelp,
+    /// The guide's hint card clicked: put away.
+    HintClose,
+    /// "Your quest": a step on or back, or the rest skipped.
+    Quest(crate::guide_view::QuestInput),
     /// From the help panel.
     Help(crate::help_panel::HelpInput),
 }

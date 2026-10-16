@@ -105,6 +105,7 @@ impl Section {
                 Field::Keys,
                 Field::Language,
                 Field::ReduceEffects,
+                Field::Hints,
             ],
             Section::Gameplay => &GAMEPLAY,
             // and under it, the list it chooses
@@ -154,6 +155,8 @@ pub enum Field {
     /// Fewer screen effects (the hero's sway, the camera's drift, a
     /// hallucination's hue).
     ReduceEffects,
+    /// The first-steps guide's hint cards and quest page.
+    Hints,
     /// A NetHack option: a new game's at the title, the game's over it.
     Game(GameOption),
     /// Which controls the list shows: a key profile's, or the gamepad's.
@@ -184,6 +187,7 @@ impl Field {
             Field::Keys => tr!("settings-keys"),
             Field::Language => tr!("settings-language"),
             Field::ReduceEffects => tr!("settings-reduce-effects"),
+            Field::Hints => tr!("settings-hints"),
             Field::Game(o) => match o {
                 GameOption::Autopickup => tr!("settings-autopickup"),
                 GameOption::PickupTypes => tr!("settings-pickup-types"),
@@ -243,6 +247,7 @@ impl Field {
             }
             Field::Language => tr!("settings-language-about"),
             Field::ReduceEffects => tr!("settings-reduce-effects-about"),
+            Field::Hints => tr!("settings-hints-about"),
             Field::Game(o) => {
                 let what = match o {
                     GameOption::Autopickup => tr!("settings-autopickup-about"),
@@ -433,6 +438,8 @@ pub fn value_text(field: Field, v: &View) -> String {
         Field::Language => v.lang.name().to_string(),
         Field::ReduceEffects if v.settings.reduce_effects => tr!("settings-on"),
         Field::ReduceEffects => tr!("settings-off"),
+        Field::Hints if v.settings.hints_off => tr!("settings-off"),
+        Field::Hints => tr!("settings-on"),
         // the game has not told them yet
         Field::Game(_) if gameplay(v).is_none() => "…".to_string(),
         Field::Game(o) => gameplay(v).map(|g| game_value(o, g)).unwrap_or_default(),
@@ -565,6 +572,10 @@ pub fn step(field: Field, v: &View, dir: i32, wrap: bool) -> Option<Change> {
         }
         Field::ReduceEffects => {
             s.reduce_effects = step_through(&[false, true], s.reduce_effects, dir, wrap);
+        }
+        // On first, then Off: → turns the hints off
+        Field::Hints => {
+            s.hints_off = step_through(&[false, true], s.hints_off, dir, wrap);
         }
         Field::Game(o) => {
             if !live(field, v) {

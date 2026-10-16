@@ -56,6 +56,8 @@ mod falls_tests;
 mod first_tests;
 #[path = "selftest_gameplay.rs"]
 mod gameplay_tests;
+#[path = "selftest_guide.rs"]
+mod guide_tests;
 #[path = "selftest_help.rs"]
 mod help_tests;
 #[path = "selftest_hero.rs"]
@@ -4881,6 +4883,7 @@ impl SelfTest {
             "profile-files" => settings_tests::profile_files(),
             "gameplay" => gameplay_tests::gameplay(),
             "chords" => chords_tests::chords(),
+            "guide" => guide_tests::guide(),
             "credits" => credits_tests::credits(),
             "rebind" => rebind_tests::rebind(),
             "sheet" => sheet_tests::sheet(),
@@ -5415,6 +5418,63 @@ fn layout_fits(game: &RenethackGame) -> Result<(), String> {
             }
         }
         _ => {}
+    }
+    // "Your quest": its page and its names of the HUD's blocks inside the
+    // canvas; a name off the blocks named and off the other names
+    if let Some(r) = ui.quest.rect() {
+        let tags = ui.quest.tags();
+        let all = std::iter::once(("the quest page".to_string(), r))
+            .chain(tags.iter().map(|(t, r)| (format!("the tag {t:?}"), *r)));
+        for (name, r) in all {
+            if !canvas.encloses(r) {
+                return Err(format!(
+                    "{name} at {:.0},{:.0} {:.0}×{:.0} is not inside the canvas",
+                    r.position.x, r.position.y, r.size.x, r.size.y
+                ));
+            }
+        }
+        let named = [
+            "portrait",
+            "HP orb",
+            "Pw orb",
+            "minimap",
+            "action bar",
+            "log",
+        ];
+        for (i, (t, r)) in tags.iter().enumerate() {
+            if let Some((name, _)) = blocks
+                .iter()
+                .find(|(name, b)| named.contains(name) && b.intersects_exclude_borders(*r))
+            {
+                return Err(format!("the tag {t:?} and the {name} overlap"));
+            }
+            if let Some((other, _)) = tags[i + 1..]
+                .iter()
+                .find(|(_, o)| o.intersects_exclude_borders(*r))
+            {
+                return Err(format!("the tags {t:?} and {other:?} overlap"));
+            }
+        }
+    }
+    // the guide's card: inside the canvas, off the HUD's blocks and off
+    // the map's middle, where the hero stands
+    if let Some(r) = ui.hint.rect() {
+        if !canvas.encloses(r) {
+            return Err(format!(
+                "the hint card at {:.0},{:.0} {:.0}×{:.0} is not inside the canvas",
+                r.position.x, r.position.y, r.size.x, r.size.y
+            ));
+        }
+        if let Some((name, _)) = blocks.iter().find(|(_, b)| b.intersects_exclude_borders(r)) {
+            return Err(format!("the hint card and the {name} overlap"));
+        }
+        let middle = Rect2::new(
+            size * 0.5 - Vector2::new(80.0, 80.0),
+            Vector2::new(160.0, 160.0),
+        );
+        if middle.intersects(r) {
+            return Err("the hint card covers the map's middle, where the hero is".to_string());
+        }
     }
     if !ui.hud.log_lines_whole() {
         return Err("the log's top line is cut".to_string());

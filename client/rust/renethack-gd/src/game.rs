@@ -50,6 +50,8 @@ use crate::ui_events::{CharacterChoice, UiEvent, UiQueue, new_queue, push};
 const POLL_BUDGET: Duration = Duration::from_millis(8);
 /// The engine owes output and has said nothing this long: it hangs.
 const HANG_TIMEOUT: Duration = Duration::from_secs(20);
+/// The guide's next card waits this long after the last went.
+const HINT_GAP: Duration = Duration::from_millis(800);
 /// How long a closing window waits for the engine to save.
 const CLOSE_TIMEOUT: Duration = Duration::from_secs(10);
 /// Messages the end screen repeats.
@@ -163,6 +165,10 @@ pub struct Ui {
     pub screens: Screens,
     /// An achievement just earned, under the prompt banner.
     pub toast: crate::achievement_view::Toast,
+    /// The first-steps guide's hint card, beside the HUD, and "Your
+    /// quest" over the game at a new player's first game.
+    pub hint: crate::guide_view::HintCard,
+    pub quest: crate::guide_view::QuestPage,
     pub audio: crate::audio::Audio,
 }
 
@@ -384,6 +390,21 @@ pub struct RenethackGame {
     held: Option<Key>,
     /// Two arrows pressed together: a diagonal step (`nh_world::Chords`).
     chords: nh_world::Chords,
+    /// The first-steps guide: its cards' occasions, those waiting their
+    /// turn, when the last one went (the next waits a moment), the pages
+    /// the player has met (the profile's), and whether a self-test asked
+    /// for it (the others play without it).
+    hint_watch: nh_world::HintWatch,
+    hints_waiting: Vec<nh_world::Guide>,
+    hint_gone_at: Option<Instant>,
+    pub(crate) guide_seen: std::collections::BTreeSet<nh_world::Guide>,
+    pub(crate) guide_in_test: bool,
+    /// A new game's first command is yet to come ("Your quest").
+    fresh_game: bool,
+    /// The cards shown, in turn (self-tests: each once).
+    pub(crate) hint_log: Vec<nh_world::Guide>,
+    /// The one card a self-test stages: other occasions are passed by.
+    pub(crate) hint_only: Option<nh_world::Guide>,
     /// Why the last order stopped, shown until then.
     stop_note: Option<(String, Instant)>,
     /// What the way preview was drawn for.
@@ -615,6 +636,14 @@ impl INode for RenethackGame {
             count: CountEntry::default(),
             held: None,
             chords: nh_world::Chords::new(),
+            hint_watch: nh_world::HintWatch::new(),
+            hints_waiting: Vec::new(),
+            hint_gone_at: None,
+            guide_seen: std::collections::BTreeSet::new(),
+            guide_in_test: false,
+            fresh_game: false,
+            hint_log: Vec::new(),
+            hint_only: None,
             stop_note: None,
             preview_key: None,
             order_log: std::collections::VecDeque::new(),
@@ -747,6 +776,16 @@ impl INode for RenethackGame {
         toast_layer.set_name("ToastLayer");
         toast_layer.set_layer(1);
         self.base_mut().add_child(&toast_layer);
+        // the guide's hint card, beside the HUD; "Your quest" over the
+        // game, under the pages
+        let mut hint_layer = CanvasLayer::new_alloc();
+        hint_layer.set_name("HintLayer");
+        hint_layer.set_layer(1);
+        self.base_mut().add_child(&hint_layer);
+        let mut quest_layer = CanvasLayer::new_alloc();
+        quest_layer.set_name("QuestLayer");
+        quest_layer.set_layer(4);
+        self.base_mut().add_child(&quest_layer);
         // the voices and the ears, in the map's 3D world
         crate::audio::ensure_buses();
         let mut audio_root = Node3D::new_alloc();
@@ -764,6 +803,8 @@ impl INode for RenethackGame {
             pad: crate::pad_view::PadView::new(next()),
             screens: Screens::new(next(), queue),
             toast: crate::achievement_view::Toast::new(toast_layer),
+            hint: crate::guide_view::HintCard::new(hint_layer, self.queue.clone()),
+            quest: crate::guide_view::QuestPage::new(quest_layer, self.queue.clone()),
             audio: crate::audio::Audio::new(audio_root),
         });
         // the character sheet's portrait: the hero the inventory's doll
@@ -784,6 +825,7 @@ impl INode for RenethackGame {
         );
         self.paths = Some(paths.clone());
         let profile = load_profile(&paths.playground);
+        self.guide_seen = profile.guide_seen.clone();
         // the sound at the volumes the player left it at
         crate::audio::apply_volumes(&profile.volumes);
         // the title scene shows the hero of the last game played
@@ -911,6 +953,8 @@ impl INode for RenethackGame {
         parts.preload = ms(t);
         self.watch_engine();
         self.achieve(delta);
+        self.tick_hints(delta);
+        self.tick_quest();
         self.update_audio(delta);
         let t = Instant::now();
         if !self.quitting
@@ -1694,6 +1738,12 @@ impl RenethackGame {
                 if let Some(mode) = self.driver.observe(&self.world, &cat) {
                     self.ui_mut().hud.set_mode(mode == Mode::Combat, true);
                 }
+                self.check_hints();
+                // a new game's start: the guide's first page (the prologue,
+                // once it plays first, calls it as it ends instead)
+                if std::mem::take(&mut self.fresh_game) {
+                    self.prologue_done();
+                }
             } else if self.driver.is_active() {
                 // a question the order did not expect: the player answers
                 self.driver.on_question(query, &cat);
@@ -2064,6 +2114,11 @@ impl RenethackGame {
         if self.state != GameState::Playing {
             return;
         }
+        // "Your quest" has the keys while it is up: the game waits
+        if self.ui.as_ref().is_some_and(|ui| ui.quest.is_open()) {
+            self.quest_key(k);
+            return;
+        }
         // the client's own keys as the player moved them, where commands
         // are awaited (the engine at work or at its prompt, nothing open
         // that takes letters), and a key that is never data (F-keys, Ctrl)
@@ -2152,6 +2207,16 @@ impl RenethackGame {
         let Some((_, prompt)) = &self.pending else {
             return;
         };
+        // Esc (a gamepad's B) puts the guide's card away first
+        if command
+            && k.key == Key::Escape
+            && !k.echo
+            && self.count.shown().is_none()
+            && self.ui.as_ref().is_some_and(|ui| ui.hint.shown().is_some())
+        {
+            self.ui_mut().hint.dismiss();
+            return;
+        }
         if command {
             self.command_key(k);
             return;
@@ -2215,7 +2280,7 @@ impl RenethackGame {
         let Some(ui) = self.ui.as_ref() else {
             return false;
         };
-        if ui.help.is_open() || ui.inventory.is_open() {
+        if ui.help.is_open() || ui.inventory.is_open() || ui.quest.is_open() {
             return false;
         }
         match &self.pending {
@@ -2243,6 +2308,284 @@ impl RenethackGame {
             };
             push(&self.queue, ev);
         }
+    }
+
+    /// A new game has begun (after the prologue, or at its first command
+    /// when none plays): the guide's "Your quest", once per player, while
+    /// the guide is on. Never for a restored game.
+    pub(crate) fn prologue_done(&mut self) {
+        if !self.hints_on() || self.guide_seen.contains(&nh_world::Guide::Quest) {
+            return;
+        }
+        self.driver.interrupt(Stop::Panel);
+        self.ui_mut().quest.open();
+        self.show_quest();
+        self.guide_seen.insert(nh_world::Guide::Quest);
+        self.update_profile(|p| {
+            p.guide_seen.insert(nh_world::Guide::Quest);
+        });
+    }
+
+    /// "Your quest"'s step shown again, its keys as bound now.
+    fn show_quest(&mut self) {
+        let Some(step) = self.ui.as_ref().and_then(|ui| ui.quest.step()) else {
+            return;
+        };
+        let words = self.quest_words(step);
+        let ui = self.ui_mut();
+        let blocks = ui.hud.blocks();
+        ui.quest.show(&words, &blocks);
+    }
+
+    /// "Your quest": a step on or back, or the rest skipped.
+    fn quest_input(&mut self, input: crate::guide_view::QuestInput) {
+        if self.ui_mut().quest.go(input) {
+            self.show_quest();
+        }
+    }
+
+    /// A key on "Your quest": Esc skips the rest, ← or Backspace goes
+    /// back, any other key on (a gamepad's B, the d-pad, A).
+    fn quest_key(&mut self, k: KeyInput) {
+        use crate::guide_view::QuestInput;
+        if k.echo {
+            return;
+        }
+        let input = match k.key {
+            Key::Escape => QuestInput::Skip,
+            Key::Left | Key::Backspace => QuestInput::Back,
+            _ => QuestInput::Next,
+        };
+        self.quest_input(input);
+    }
+
+    /// "Your quest"'s words for `step`, the keys as the player presses them.
+    pub(crate) fn quest_words(
+        &self,
+        step: crate::guide_view::QuestStep,
+    ) -> crate::guide_view::QuestWords {
+        use crate::guide_view::{QuestStep, QuestWords};
+        let map = self.keymap();
+        let bound = |hint: &str| crate::rebind::bound_hint(map, hint);
+        match step {
+            QuestStep::Goal => QuestWords {
+                title: tr!("guide-quest-title"),
+                lines: vec![tr!("guide-quest"), tr!("quest-goal-more")],
+                tags: Vec::new(),
+            },
+            QuestStep::Screen => QuestWords {
+                title: tr!("quest-screen-title"),
+                lines: vec![tr!("quest-screen")],
+                tags: vec![
+                    ("portrait", tr!("quest-tour-portrait")),
+                    ("HP orb", tr!("quest-tour-hp")),
+                    ("Pw orb", tr!("quest-tour-pw")),
+                    ("minimap", tr!("quest-tour-minimap")),
+                    (
+                        "action bar",
+                        tr!("quest-tour-bar", first = bound("1"), last = bound("0")),
+                    ),
+                    ("log", tr!("quest-tour-log")),
+                ],
+            },
+            QuestStep::Moves => QuestWords {
+                title: tr!("quest-moves-title"),
+                lines: vec![
+                    tr!("quest-moves-keys", steps = self.steps_words()),
+                    tr!("quest-moves-fight", fight = bound("F")),
+                    tr!("quest-moves-click"),
+                    tr!("quest-moves-pad"),
+                    tr!(
+                        "quest-moves-more",
+                        inventory = bound("i"),
+                        palette = bound("#"),
+                        help = bound("F1")
+                    ),
+                ],
+                tags: Vec::new(),
+            },
+        }
+    }
+
+    /// The eight steps' keys as the player presses them: the profile's own
+    /// words while none has moved, else the keys, west first round by north.
+    fn steps_words(&self) -> String {
+        let profile = self.ui_state.profile;
+        let steps = crate::rebind::steps(profile);
+        let map = self.keymap();
+        if steps.iter().all(|&s| map.key_for(s) == Some(s)) {
+            return match profile {
+                KeyProfile::Modern => tr!("quest-steps-modern"),
+                KeyProfile::Classic => tr!("quest-steps-classic"),
+            };
+        }
+        steps
+            .iter()
+            .map(|&s| {
+                map.key_for(s)
+                    .map_or_else(|| "—".to_string(), |k| crate::rebind::short_name(&k))
+            })
+            .collect::<Vec<_>>()
+            .join(" ")
+    }
+
+    /// The first-steps guide runs: the player's setting, and in a self-test
+    /// only when the test asks for it.
+    pub(crate) fn hints_on(&self) -> bool {
+        !self.settings.hints_off && (self.selftest.is_none() || self.guide_in_test)
+    }
+
+    /// At a command prompt (and when a self-test has staged one): the
+    /// guide's cards whose occasion has come wait their turn, each card
+    /// once (what was said while the guide was off is passed by).
+    pub(crate) fn check_hints(&mut self) {
+        if !self.hints_on() {
+            self.hint_watch.skip_log(&self.world);
+            return;
+        }
+        let Some(cat) = self.catalog.clone() else {
+            return;
+        };
+        for g in self.hint_watch.occasions(&self.world, &cat) {
+            if self.hint_only.is_some_and(|only| only != g) {
+                continue;
+            }
+            if !self.guide_seen.contains(&g) && !self.hints_waiting.contains(&g) {
+                self.hints_waiting.push(g);
+            }
+        }
+        self.hints_waiting
+            .sort_by_key(|g| nh_world::Guide::CARDS.iter().position(|c| c == g));
+    }
+
+    /// The guide's card on screen while the map is clear (the engine at a
+    /// command or at work, nothing over the map); the next one waiting a
+    /// moment after the last went.
+    fn tick_hints(&mut self, dt: f64) {
+        let on = self.hints_on();
+        let clear = self.state == GameState::Playing
+            && matches!(self.pending, None | Some((_, Prompt::Command)))
+            && !self.world.getpos
+            && self.ui.as_ref().is_some_and(|ui| {
+                !ui.dialogs.is_open()
+                    && !ui.inventory.is_open()
+                    && !ui.help.is_open()
+                    && !ui.hud.full_log_open()
+                    && !ui.quest.is_open()
+                    && ui.screens.current().is_none()
+            });
+        let Some(ui) = self.ui.as_mut() else {
+            return;
+        };
+        if !on {
+            ui.hint.clear();
+            self.hints_waiting.clear();
+            return;
+        }
+        if ui.hint.tick(dt, !clear) {
+            self.hint_gone_at = Some(Instant::now());
+        }
+        let rested = self.hint_gone_at.is_none_or(|t| t.elapsed() >= HINT_GAP);
+        if clear && ui.hint.idle() && rested && !self.hints_waiting.is_empty() {
+            let g = self.hints_waiting.remove(0);
+            self.show_hint(g);
+        }
+    }
+
+    /// "Your quest" follows the screen: a window resized, its names go
+    /// beside their blocks again.
+    fn tick_quest(&mut self) {
+        if self
+            .ui
+            .as_ref()
+            .is_some_and(|ui| ui.quest.moved(&ui.hud.blocks()))
+        {
+            self.show_quest();
+        }
+    }
+
+    /// A card shown, under the portrait block; met from now on.
+    fn show_hint(&mut self, g: nh_world::Guide) {
+        let (title, body) = self.guide_words(g);
+        let Some(ui) = self.ui.as_mut() else {
+            return;
+        };
+        let at = ui
+            .hud
+            .blocks()
+            .into_iter()
+            .find(|(name, _)| *name == "portrait")
+            .map_or(Vector2::new(24.0, 220.0), |(_, r)| {
+                Vector2::new(r.position.x, r.end().y + 16.0)
+            });
+        ui.hint.show(g, &title, &body, at);
+        self.hint_log.push(g);
+        self.guide_seen.insert(g);
+        self.update_profile(|p| {
+            p.guide_seen.insert(g);
+        });
+    }
+
+    /// The guide's page `g` in the language now: its title, and its words
+    /// with the keys as the player presses them.
+    pub(crate) fn guide_words(&self, g: nh_world::Guide) -> (String, String) {
+        let map = self.keymap();
+        let bound = |hint: &str| crate::rebind::bound_hint(map, hint);
+        let kick = match self.ui_state.profile {
+            KeyProfile::Modern => "k",
+            KeyProfile::Classic => "^D",
+        };
+        let mut args = i18n::FluentArgs::new();
+        for (name, hint) in [
+            ("pickup", ","),
+            ("fight", "F"),
+            ("rest", "F5"),
+            ("search", "s"),
+            ("eat", "e"),
+            ("pay", "p"),
+            ("down", ">"),
+            ("kick", kick),
+            ("quaff", "q"),
+        ] {
+            args.set(name, i18n::Arg::fluent(bound(hint)));
+        }
+        let key = g.key();
+        (
+            i18n::tr(&format!("{key}-title")),
+            i18n::tr_with(key, Some(&args)),
+        )
+    }
+
+    /// The guide's page `g` in the help: its title and paragraphs (BBCode);
+    /// "Your quest" whole, each of its steps under its title.
+    fn guide_page(&self, g: nh_world::Guide) -> (String, Vec<String>) {
+        use crate::guide_view::QuestStep;
+        let esc = crate::theme::bbcode_escape;
+        if g != nh_world::Guide::Quest {
+            let (title, words) = self.guide_words(g);
+            return (title, vec![esc(&words)]);
+        }
+        let mut title = String::new();
+        let mut paragraphs = Vec::new();
+        for step in QuestStep::ALL {
+            let words = self.quest_words(step);
+            if step == QuestStep::Goal {
+                title = words.title;
+            } else {
+                paragraphs.push(format!("[b]{}[/b]", esc(&words.title)));
+            }
+            paragraphs.extend(words.lines.iter().map(|l| esc(l)));
+            // the screen's names, a list
+            if !words.tags.is_empty() {
+                let list: Vec<String> = words
+                    .tags
+                    .iter()
+                    .map(|(_, t)| format!("• {}", esc(t)))
+                    .collect();
+                paragraphs.push(list.join("\n"));
+            }
+        }
+        (title, paragraphs)
     }
 
     /// A key where a direction is asked outside the command prompt (getdir,
@@ -2363,7 +2706,11 @@ impl RenethackGame {
             return PadCtx::Other;
         };
         // a page over everything: the d-pad's arrows, A and B, the bumpers
-        if self.achievements_open() || self.settings_open() || self.credits_open() {
+        if self.achievements_open()
+            || self.settings_open()
+            || self.credits_open()
+            || ui.quest.is_open()
+        {
             return PadCtx::Other;
         }
         if ui.help.is_open() {
@@ -3148,13 +3495,22 @@ impl RenethackGame {
             }
             UiEvent::ToggleHelp if self.state == GameState::Playing => {
                 self.driver.interrupt(Stop::Panel);
+                // the guide's pages met so far, first in its list
+                let pages: Vec<(String, Vec<String>)> = self
+                    .guide_seen
+                    .iter()
+                    .map(|&g| self.guide_page(g))
+                    .collect();
                 let help = &mut self.ui_mut().help;
                 if help.is_open() {
                     help.close();
                 } else {
+                    help.set_guide(pages);
                     help.open();
                 }
             }
+            UiEvent::HintClose => self.ui_mut().hint.dismiss(),
+            UiEvent::Quest(input) => self.quest_input(input),
             UiEvent::Help(input) => self.ui_mut().help.input(input),
             UiEvent::KeyUp(k) => self.on_key_up(k),
             UiEvent::FocusLost => {
@@ -3790,6 +4146,17 @@ impl RenethackGame {
         ui.pad.relang();
         ui.screens.relang();
         ui.toast.relang();
+        // the guide's card and page in the language
+        if let Some(card) = ui.hint.shown() {
+            let (title, body) = self.guide_words(card);
+            if let Some(ui) = self.ui.as_mut() {
+                ui.hint.rewrite(&title, &body);
+            }
+        }
+        self.show_quest();
+        let Some(ui) = self.ui.as_mut() else {
+            return;
+        };
         if line.is_some() {
             ui.hud.set_prompt_line(line.as_deref());
         }
@@ -3932,6 +4299,7 @@ impl RenethackGame {
         state.lang = Some(i18n::lang().code().to_string());
         if self.start_session(options, &choice.name, state) {
             self.loadout_for = Some(choice.role.clone());
+            self.fresh_game = true;
             self.save_ui_state();
         }
     }
@@ -4028,6 +4396,12 @@ impl RenethackGame {
                 self.reset_orders();
                 self.options_run = None;
                 self.gameplay_goal = None;
+                self.hint_watch = nh_world::HintWatch::new();
+                self.hints_waiting.clear();
+                self.hint_gone_at = None;
+                if let Some(ui) = self.ui.as_mut() {
+                    ui.hint.clear();
+                }
                 self.link_error = None;
                 self.name = Some(name.to_string());
                 self.state = GameState::Playing;

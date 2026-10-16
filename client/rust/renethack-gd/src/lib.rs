@@ -24,6 +24,7 @@ mod frame_log;
 mod gallery;
 mod game;
 mod gamepad;
+mod guide_view;
 mod hearing;
 mod help_panel;
 mod hero;

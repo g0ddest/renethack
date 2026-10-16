@@ -229,6 +229,10 @@ pub struct HelpPanel {
     /// presses it now.
     close: Gd<Button>,
     keymap: nh_world::Keymap,
+    /// The first-steps guide's pages the player has met, first in the
+    /// list under the Guide's heading: each one's title and paragraphs
+    /// (BBCode).
+    guide: Vec<(String, Vec<String>)>,
 }
 
 impl HelpPanel {
@@ -401,6 +405,7 @@ impl HelpPanel {
             pad: false,
             close,
             keymap: nh_world::Keymap::default(),
+            guide: Vec::new(),
         }
         .with_close_tip()
     }
@@ -468,13 +473,40 @@ impl HelpPanel {
         self.root.set_visible(false);
     }
 
-    /// The book of the language now (kept while it stays).
+    /// The guide's pages the player has met (the list's first), each one's
+    /// title and paragraphs (BBCode).
+    pub fn set_guide(&mut self, pages: Vec<(String, Vec<String>)>) {
+        if pages != self.guide {
+            self.guide = pages;
+            // the book again, with them
+            self.open = None;
+        }
+    }
+
+    /// The book of the language now (kept while it stays), the guide's
+    /// pages first.
     fn load(&mut self) {
         let lang = i18n::lang();
         if self.open.as_ref().is_some_and(|o| o.lang == lang) {
             return;
         }
-        let book = Book::of(lang);
+        let mut book = Book::of(lang);
+        if !self.guide.is_empty() {
+            let heading = Chapter {
+                number: String::new(),
+                title: tr!("help-guide"),
+                level: 1,
+                paragraphs: vec![tr!("help-guide-about")],
+            };
+            let pages = self.guide.iter().map(|(title, paragraphs)| Chapter {
+                number: String::new(),
+                title: title.clone(),
+                level: 2,
+                paragraphs: paragraphs.clone(),
+            });
+            book.chapters
+                .splice(0..0, std::iter::once(heading).chain(pages));
+        }
         let index = book
             .chapters
             .iter()

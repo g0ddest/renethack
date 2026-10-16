@@ -785,6 +785,13 @@ mod tests {
                 .iter()
                 .map(|c| ("BarCommand".to_string(), fluent_id(&c.label_key()))),
         );
+        // the guide's pages: a title and the words (`guide_words`)
+        named.extend(
+            nh_world::Guide::CARDS
+                .iter()
+                .flat_map(|g| [g.key().to_string(), format!("{}-title", g.key())])
+                .map(|k| ("Guide".to_string(), k)),
+        );
         let missing: Vec<String> = named
             .iter()
             .filter(|(_, k)| !keys.contains(k))
