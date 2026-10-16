@@ -911,3 +911,126 @@ ru = "Не очень-то удобно..."
 [1bad646aacdc]
 en = "%s forms a coating on %s."
 ru = "{1} {1:num|покрывает|покрывают} {2:acc} тонким слоем."
+
+# Breath weapons and spitting (mthrowu.c breamm(), spitmm(); qa-2's pass 4),
+# and the hero's own as a monster (polyself.c)
+
+[166be10c8d51]
+en = "%s breathes fire!"
+ru = "{1} {1:num|изрыгает|изрыгают} пламя!"
+
+[7c6c17a5c234]
+en = "%s breathes frost!"
+ru = "{1} {1:num|изрыгает|изрыгают} стужу!"
+
+[dc838f431d40]
+en = "%s breathes lightning!"
+ru = "{1} {1:num|изрыгает|изрыгают} молнию!"
+
+[953c8a5af887]
+en = "%s breathes acid!"
+ru = "{1} {1:num|изрыгает|изрыгают} кислоту!"
+
+[99dd2447eed4]
+en = "%s breathes a disintegration blast!"
+ru = "{1} {1:num|изрыгает|изрыгают} луч распада!"
+
+[d3e7c4e52f93]
+en = "%s breathes fragments!"
+ru = "{1} {1:num|изрыгает|изрыгают} осколки!"
+
+[10e6bdaa8068]
+en = "%s breathes sleep gas!"
+ru = "{1} {1:num|выдыхает|выдыхают} усыпляющий газ!"
+
+[b9a751961b04]
+en = "%s breathes poison gas!"
+ru = "{1} {1:num|выдыхает|выдыхают} ядовитый газ!"
+
+[16803016afee]
+en = "%s breathes strange breath #8!"
+ru = "{1} {1:num|изрыгает|изрыгают} странное дыхание №8!"
+
+[8058912cfff7]
+en = "%s breathes strange breath #9!"
+ru = "{1} {1:num|изрыгает|изрыгают} странное дыхание №9!"
+
+[fbdbe911515e]
+en = "%s breathes %s!"
+ru = "{1} {1:num|изрыгает|изрыгают} {2:acc}!"
+
+[840a67ffba67]
+en = "%s spits venom!"
+ru = "{1} {1:num|плюётся|плюются} ядом!"
+
+[874dda836b6f]
+en = "%s spits %s out in disgust!"
+ru = "{1} с отвращением {1:num|выплёвывает|выплёвывают} {2:acc}!"
+
+[c9651452f4ca]
+en = "You can't breathe.  Sorry."
+ru = "Вы не можете выдохнуть.  Увы."
+
+[0c65c6fccef3]
+en = "You don't have enough energy to breathe!"
+ru = "Вам не хватает энергии на выдох!"
+
+[6a1172554132]
+en = "Use the command #monster to use your breath weapon."
+ru = "Чтобы воспользоваться дыханием, введите команду #monster."
+
+[2eec036c1d69]
+en = "Use the command #monster to spit venom."
+ru = "Чтобы плюнуть ядом, введите команду #monster."
+
+[5a4c9277414e]
+en = "Use the command #monster to remove an iron ball."
+ru = "Чтобы снять железное ядро, введите команду #monster."
+
+[2aa2a839c19a]
+en = "Use the command #monster to gaze at monsters."
+ru = "Чтобы взглянуть на монстров, введите команду #monster."
+
+[e31126d591cb]
+en = "Use the command #monster to hide or to spin a web."
+ru = "Чтобы спрятаться или сплести паутину, введите команду #monster."
+
+[c0efe0572f2d]
+en = "Use the command #monster to hide."
+ru = "Чтобы спрятаться, введите команду #monster."
+
+[dea2d993e774]
+en = "Use the command #monster to spin a web."
+ru = "Чтобы сплести паутину, введите команду #monster."
+
+[0e4b1cb3986b]
+en = "Use the command #monster to summon help."
+ru = "Чтобы призвать помощь, введите команду #monster."
+
+[b5e09af0b699]
+en = "Use the command #monster to multiply in a fountain."
+ru = "Чтобы размножиться в фонтане, введите команду #monster."
+
+[d0509df8b874]
+en = "Use the command #monster to use your horn."
+ru = "Чтобы воспользоваться рогом, введите команду #monster."
+
+[c28b26b053f5]
+en = "Use the command #monster to emit a mental blast."
+ru = "Чтобы испустить ментальный удар, введите команду #monster."
+
+[63eca4a8f464]
+en = "Use the command #monster to shriek."
+ru = "Чтобы завизжать, введите команду #monster."
+
+[59aa14ae28f8]
+en = "Use the command #monster to change shape."
+ru = "Чтобы сменить облик, введите команду #monster."
+
+[38eacb0f9c0b]
+en = "Use the command #sit to lay an egg."
+ru = "Чтобы отложить яйцо, введите команду #sit."
+
+[7ff85e427a31]
+en = "Use the command #sit to spawn in the water."
+ru = "Чтобы отметать икру в воде, введите команду #sit."

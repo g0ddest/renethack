@@ -257,6 +257,21 @@ class Formats(unittest.TestCase):
         self.assertIn("Playing time: %ld hour%s, %ld minute%s and %ld second%s.", took)
         self.assertIn("Playing time: %ld hour%s and %ld second%s.", took)
 
+    def test_a_table_s_returns_and_not_another_helper_s(self):
+        e = catalog_of('static const char *breathwep[] = { "fire", "frost" };\n'
+                       'static const char *hallublasts[] = { "beads", "bubbles" };\n'
+                       'static const char *rnd_hallublast(void) {\n'
+                       '    return hallublasts[rn2(SIZE(hallublasts))];\n}\n'
+                       'static const char *breathwep_name(int typ) {\n'
+                       '    if (Hallucination)\n        return rnd_hallublast();\n'
+                       '    return breathwep[typ];\n}\n'
+                       'void f(struct monst *m, int typ) {\n'
+                       '    pline("%s breathes %s!", Monnam(m), breathwep_name(typ));\n}\n')
+        self.assertIn("%s breathes fire!", e)
+        self.assertIn("%s breathes frost!", e)
+        self.assertNotIn("%s breathes beads!", e)
+        self.assertIn("%s breathes %s!", e)
+
     def test_buffers_are_inlined(self):
         e = catalog_of('void f(struct monst *m) {\n'
                        '    char buf[BUFSZ];\n'

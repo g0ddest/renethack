@@ -946,6 +946,46 @@ fn the_hero_s_mission_goes_on_in_the_next_line() {
     assert!(out.text.ends_with("волю Тота,"), "{}", out.text);
 }
 
+#[test]
+fn a_breath_weapon_and_a_spit() {
+    // mthrowu.c: "%s breathes %s!" with breathwep_name()'s word, "%s spits
+    // venom!", by any monster
+    let t = translator();
+    let args = |a: &[&str]| {
+        a.iter()
+            .map(|s| Arg::Str(s.to_string()))
+            .collect::<Vec<_>>()
+    };
+    for (fmt, a, en, ru) in [
+        (
+            "%s breathes %s!",
+            &["The red dragon", "fire"][..],
+            "The red dragon breathes fire!",
+            "Красный дракон изрыгает пламя!",
+        ),
+        (
+            "%s breathes %s!",
+            &["The winter wolf", "frost"][..],
+            "The winter wolf breathes frost!",
+            "Зимний волк изрыгает стужу!",
+        ),
+        (
+            "%s spits venom!",
+            &["The cobra"][..],
+            "The cobra spits venom!",
+            "Кобра плюётся ядом!",
+        ),
+    ] {
+        for out in [t.message(Some(fmt), &args(a), en), t.message(None, &[], en)] {
+            assert_eq!(
+                (out.text.as_str(), out.status),
+                (ru, Status::Translated),
+                "{en}"
+            );
+        }
+    }
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {

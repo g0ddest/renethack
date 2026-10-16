@@ -48,7 +48,9 @@ import datfiles  # noqa: E402
 from clex import match_close, source_text, split_args  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-UPSTREAM = os.path.join(ROOT, "engine", "upstream")
+# a worktree has no checkout of the submodule: UPSTREAM names one (as the
+# engine's Makefile takes it)
+UPSTREAM = os.environ.get("UPSTREAM") or os.path.join(ROOT, "engine", "upstream")
 OUT = os.path.join(ROOT, "client", "i18n", "catalog.en.json")
 CATALOG_FORMAT = 1
 ENGINE = "NetHack-5.0.0_Released"
@@ -242,6 +244,10 @@ COPIED_INTO = {"disrobing"}
 COUNTED_LISTS = {"fmt_elapsed_time"}
 # Helpers that return a static buffer: what that buffer holds
 RETURNED_BUFFER = {"piousness"}
+# Helpers that return a literal of their own table, or what another helper
+# returns in a case apart: only the table's (breathwep_name: a breath
+# weapon; the hallucinated blasts, a hundred, are rnd_hallublast()'s)
+TABLE_RETURNS = {"breathwep_name"}
 # x(obj, "verb") is "<the object's name> verb[s]"
 OBJVERB = {"aobjnam", "yobjnam", "Yobjnam2", "Tobjnam"}
 # calls and names whose value is one of a few literals
@@ -737,6 +743,8 @@ class Globals:
                     return None
                 for expr in d.returns:
                     if source_text(strip_expr(expr)) in NULL_POINTERS:
+                        continue
+                    if name in TABLE_RETURNS and call_parts(strip_expr(expr)):
                         continue
                     v = d.values(expr)
                     if v is None:

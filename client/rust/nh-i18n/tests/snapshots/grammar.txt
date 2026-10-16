@@ -9871,6 +9871,61 @@
   f   Крыса обдаёт себя огнём.
   n   Копьё обдаёт себя огнём.
   pl  3 стрелы обдают себя огнём.
+%s breathes %s!  [fbdbe911515e]
+  m   Тритон изрыгает тритона!
+  f   Крыса изрыгает крысу!
+  n   Копьё изрыгает копьё!
+  pl  3 стрелы изрыгают 3 стрелы!
+%s breathes a disintegration blast!  [99dd2447eed4]
+  m   Тритон изрыгает луч распада!
+  f   Крыса изрыгает луч распада!
+  n   Копьё изрыгает луч распада!
+  pl  3 стрелы изрыгают луч распада!
+%s breathes acid!  [953c8a5af887]
+  m   Тритон изрыгает кислоту!
+  f   Крыса изрыгает кислоту!
+  n   Копьё изрыгает кислоту!
+  pl  3 стрелы изрыгают кислоту!
+%s breathes fire!  [166be10c8d51]
+  m   Тритон изрыгает пламя!
+  f   Крыса изрыгает пламя!
+  n   Копьё изрыгает пламя!
+  pl  3 стрелы изрыгают пламя!
+%s breathes fragments!  [d3e7c4e52f93]
+  m   Тритон изрыгает осколки!
+  f   Крыса изрыгает осколки!
+  n   Копьё изрыгает осколки!
+  pl  3 стрелы изрыгают осколки!
+%s breathes frost!  [7c6c17a5c234]
+  m   Тритон изрыгает стужу!
+  f   Крыса изрыгает стужу!
+  n   Копьё изрыгает стужу!
+  pl  3 стрелы изрыгают стужу!
+%s breathes lightning!  [dc838f431d40]
+  m   Тритон изрыгает молнию!
+  f   Крыса изрыгает молнию!
+  n   Копьё изрыгает молнию!
+  pl  3 стрелы изрыгают молнию!
+%s breathes poison gas!  [b9a751961b04]
+  m   Тритон выдыхает ядовитый газ!
+  f   Крыса выдыхает ядовитый газ!
+  n   Копьё выдыхает ядовитый газ!
+  pl  3 стрелы выдыхают ядовитый газ!
+%s breathes sleep gas!  [10e6bdaa8068]
+  m   Тритон выдыхает усыпляющий газ!
+  f   Крыса выдыхает усыпляющий газ!
+  n   Копьё выдыхает усыпляющий газ!
+  pl  3 стрелы выдыхают усыпляющий газ!
+%s breathes strange breath #8!  [16803016afee]
+  m   Тритон изрыгает странное дыхание №8!
+  f   Крыса изрыгает странное дыхание №8!
+  n   Копьё изрыгает странное дыхание №8!
+  pl  3 стрелы изрыгают странное дыхание №8!
+%s breathes strange breath #9!  [8058912cfff7]
+  m   Тритон изрыгает странное дыхание №9!
+  f   Крыса изрыгает странное дыхание №9!
+  n   Копьё изрыгает странное дыхание №9!
+  pl  3 стрелы изрыгают странное дыхание №9!
 %s breaths fire on herself.  [48724f89f2cd]
   m   Тритон обдаёт себя огнём.
   f   Крыса обдаёт себя огнём.
@@ -15581,6 +15636,16 @@
   f   Крыса на миг проворачивается против часовой стрелки.
   n   Копьё на миг проворачивается против часовой стрелки.
   pl  3 стрелы на миг проворачиваются против часовой стрелки.
+%s spits %s out in disgust!  [874dda836b6f]
+  m   Тритон с отвращением выплёвывает тритона!
+  f   Крыса с отвращением выплёвывает крысу!
+  n   Копьё с отвращением выплёвывает копьё!
+  pl  3 стрелы с отвращением выплёвывают 3 стрелы!
+%s spits venom!  [840a67ffba67]
+  m   Тритон плюётся ядом!
+  f   Крыса плюётся ядом!
+  n   Копьё плюётся ядом!
+  pl  3 стрелы плюются ядом!
 %s splashes over %s!  [12843e682105]
   m   Тритон размазывается по тритону!
   f   Крыса размазывается по крысе!
@@ -27080,6 +27145,36 @@ Use my gift wisely!  [2821c9e7289e]
   =   Распорядись моим даром мудро!
 Use the can to grease an item  [e5cf1a81f101]
   =   Смазать предмет из этой банки
+Use the command #monster to change shape.  [59aa14ae28f8]
+  =   Чтобы сменить облик, введите команду #monster.
+Use the command #monster to emit a mental blast.  [c28b26b053f5]
+  =   Чтобы испустить ментальный удар, введите команду #monster.
+Use the command #monster to gaze at monsters.  [2aa2a839c19a]
+  =   Чтобы взглянуть на монстров, введите команду #monster.
+Use the command #monster to hide or to spin a web.  [e31126d591cb]
+  =   Чтобы спрятаться или сплести паутину, введите команду #monster.
+Use the command #monster to hide.  [c0efe0572f2d]
+  =   Чтобы спрятаться, введите команду #monster.
+Use the command #monster to multiply in a fountain.  [b5e09af0b699]
+  =   Чтобы размножиться в фонтане, введите команду #monster.
+Use the command #monster to remove an iron ball.  [5a4c9277414e]
+  =   Чтобы снять железное ядро, введите команду #monster.
+Use the command #monster to shriek.  [63eca4a8f464]
+  =   Чтобы завизжать, введите команду #monster.
+Use the command #monster to spin a web.  [dea2d993e774]
+  =   Чтобы сплести паутину, введите команду #monster.
+Use the command #monster to spit venom.  [2eec036c1d69]
+  =   Чтобы плюнуть ядом, введите команду #monster.
+Use the command #monster to summon help.  [0e4b1cb3986b]
+  =   Чтобы призвать помощь, введите команду #monster.
+Use the command #monster to use your breath weapon.  [6a1172554132]
+  =   Чтобы воспользоваться дыханием, введите команду #monster.
+Use the command #monster to use your horn.  [d0509df8b874]
+  =   Чтобы воспользоваться рогом, введите команду #monster.
+Use the command #sit to lay an egg.  [38eacb0f9c0b]
+  =   Чтобы отложить яйцо, введите команду #sit.
+Use the command #sit to spawn in the water.  [7ff85e427a31]
+  =   Чтобы отметать икру в воде, введите команду #sit.
 Use this kit to tin a corpse  [8c28d4ee56e8]
   =   Закатать труп в банку этим набором
 Use this leaf as a whistle  [a6ab32abf0aa]
@@ -29547,6 +29642,8 @@ You can wait a turn with '%s'  [ec959bcc4fe8]
   f   Пропустить ход можно клавишей 'крыса'
   n   Пропустить ход можно клавишей 'копьё'
   pl  Пропустить ход можно клавишей '3 стрелы'
+You can't breathe.  Sorry.  [c9651452f4ca]
+  =   Вы не можете выдохнуть.  Увы.
 You can't bribe soldier ants.  [bb34df60978e]
   =   Муравьёв-солдат не подкупишь.
 You can't control your movements very well.  [9a1bdd3def49]
@@ -30716,6 +30813,8 @@ You don't have anything to zap.  [05ba94c010c2]
   =   Вам нечем взмахнуть.
 You don't have enough elbow-room to maneuver.  [a9346f1e37a9]
   =   Вам не хватает места, чтобы развернуться.
+You don't have enough energy to breathe!  [0c65c6fccef3]
+  =   Вам не хватает энергии на выдох!
 You don't have enough energy to cast that spell yet.  [866411efaa12]
   =   Вам пока не хватает энергии на это заклинание.
 You don't have enough gold to buy any of the items on your bill.  [3211ee36baa0]
