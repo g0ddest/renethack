@@ -751,6 +751,7 @@ fn old_profile() -> Profile {
             graphics: Some(Graphics::preset(Quality::Low)),
             ui_scale: Some(130),
             reduce_effects: true,
+            hints_off: true,
             keys: Some(KeyProfile::Classic),
             keymaps,
             gameplay: nh_world::Gameplay {
@@ -761,6 +762,7 @@ fn old_profile() -> Profile {
             },
         },
         volumes: [("Music".to_string(), 40), ("SFX".to_string(), 100)].into(),
+        guide_seen: [nh_world::Guide::Quest, nh_world::Guide::Pet].into(),
     }
 }
 

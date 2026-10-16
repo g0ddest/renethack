@@ -609,6 +609,10 @@ pub struct Profile {
     /// not here plays at its default.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub volumes: BTreeMap<String, u8>,
+    /// The first-steps guide's pages the player has met (each shows once;
+    /// the help's Guide lists them).
+    #[serde(default, skip_serializing_if = "std::collections::BTreeSet::is_empty")]
+    pub guide_seen: std::collections::BTreeSet<crate::Guide>,
 }
 
 /// The profile's parts that are one machine's: how its window covers its
@@ -1138,6 +1142,7 @@ mod tests {
                 graphics: Some(crate::Graphics::preset(crate::Quality::Low)),
                 ui_scale: Some(130),
                 reduce_effects: true,
+                hints_off: true,
                 keys: Some(KeyProfile::Classic),
                 keymaps,
                 gameplay: crate::Gameplay {
@@ -1147,6 +1152,7 @@ mod tests {
                 },
             },
             volumes: BTreeMap::from([("Music".into(), 40), ("SFX".into(), 100)]),
+            guide_seen: [crate::Guide::Quest, crate::Guide::Pet].into(),
         }
     }
 
@@ -1168,6 +1174,8 @@ mod tests {
             "keymaps",
             "gameplay",
             "volumes",
+            "hints_off",
+            "guide_seen",
         ] {
             assert!(player.contains(&format!("\"{k}\"")), "{k} not in {player}");
             assert!(!device.contains(&format!("\"{k}\"")), "{k} in {device}");

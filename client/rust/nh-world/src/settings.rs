@@ -25,6 +25,9 @@ pub struct Settings {
     /// hallucination's hue off (blindness still dims the view).
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub reduce_effects: bool,
+    /// The first-steps guide's quest page and hint cards off (`Guide`).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub hints_off: bool,
     /// The keys a new character starts with; None: Modern.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub keys: Option<KeyProfile>,
