@@ -321,6 +321,8 @@ pub enum Glyph {
     Heart,
     /// Up, down, travel.
     Stairs,
+    /// The attack spells: a blow's burst, not an element's.
+    Burst,
     // the achievements' emblems (`achievement_bake`)
     /// Gehennom: three tongues of fire.
     Flames,
@@ -352,15 +354,15 @@ impl Glyph {
             Sword, Cuirass, Ring, Amulet, Sack, Drumstick, Flask, Scroll, Book, Wand, Gem, Boulder,
             Ball, Chain, Drop, Coins, Helmet, Blindfold, Cloak, Shirt, Gloves, Boots, Lamp, Leash,
             Shield, Swap, Quiver, Hand, Grid, Check, Star, Eye, Lens, Moon, Ankh, Heart, Stairs,
-            Flames, Pentagram, Elements, Sunburst, Ascension, Hall, Crown, Ripples, Drawbridge,
-            Notes,
+            Burst, Flames, Pentagram, Elements, Sunburst, Ascension, Hall, Crown, Ripples,
+            Drawbridge, Notes,
         ];
         all.into_iter().find(|g| format!("{g:?}") == name)
     }
 }
 
 /// Every glyph (the warm-up paints them all).
-pub const ALL_GLYPHS: [Glyph; 38] = [
+pub const ALL_GLYPHS: [Glyph; 39] = [
     Glyph::Sword,
     Glyph::Cuirass,
     Glyph::Ring,
@@ -398,6 +400,7 @@ pub const ALL_GLYPHS: [Glyph; 38] = [
     Glyph::Ankh,
     Glyph::Heart,
     Glyph::Stairs,
+    Glyph::Burst,
     Glyph::Unknown,
 ];
 
@@ -1173,6 +1176,22 @@ fn layers(g: Glyph, main: Mat) -> Vec<Layer> {
             },
             STONE,
         )],
+        Glyph::Burst => {
+            // a blow's burst: uneven rays round a white core, in the
+            // emblem's own metal (no element's colour)
+            const REACH: [f32; 10] = [0.95, 0.66, 0.86, 0.6, 0.92, 0.7, 0.84, 0.58, 0.9, 0.64];
+            let rays: Vec<V> = (0..20)
+                .map(|k| {
+                    let a = (k as f32 * 18.0 - 90.0f32).to_radians();
+                    let r = if k % 2 == 0 { REACH[k / 2] } else { 0.42 };
+                    (r * a.cos(), r * a.sin())
+                })
+                .collect();
+            vec![
+                layer(move |p| poly(p, &rays), main),
+                layer(|p| circle(p, (0.0, 0.0), 0.24), PEARL),
+            ]
+        }
         Glyph::Flames => {
             // a flame: a drop whose tip rises to a point
             let tongue = |cx: f32, h: f32, w: f32| {
@@ -1721,6 +1740,21 @@ mod tests {
             assert_eq!(alpha(0, 0), 0, "{g:?}");
             let covered = (0..n * n).filter(|i| px[i * 4 + 3] > 128).count();
             assert!(covered > n * n / 8, "{g:?}: {covered} pixels");
+        }
+    }
+
+    #[test]
+    fn the_attack_burst_is_metal_not_fire() {
+        let n = 48;
+        let px = paint(Glyph::Burst, Style::Filled(STEEL), n);
+        let at = |i: usize| (px[i * 4], px[i * 4 + 1], px[i * 4 + 2], px[i * 4 + 3]);
+        assert_eq!(at(0).3, 0);
+        let covered: Vec<usize> = (0..n * n).filter(|&i| at(i).3 > 128).collect();
+        assert!(covered.len() > n * n / 8, "{} pixels", covered.len());
+        // no pixel warmer than steel's grey: fire is red over green
+        for i in covered {
+            let (r, g, _, _) = at(i);
+            assert!(i32::from(r) - i32::from(g) < 24, "{:?} at {i}", at(i));
         }
     }
 

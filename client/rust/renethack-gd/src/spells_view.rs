@@ -25,7 +25,7 @@ const BAR_H: f32 = 6.0;
 
 pub fn school_glyph(s: School) -> Glyph {
     match s {
-        School::Attack => Glyph::Flames,
+        School::Attack => Glyph::Burst,
         School::Healing => Glyph::Heart,
         School::Divination => Glyph::Eye,
         School::Enchantment => Glyph::Star,
