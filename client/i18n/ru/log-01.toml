@@ -1034,3 +1034,54 @@ ru = "Чтобы отложить яйцо, введите команду #sit."
 [7ff85e427a31]
 en = "Use the command #sit to spawn in the water."
 ru = "Чтобы отметать икру в воде, введите команду #sit."
+
+# weapon.c: a skill that can be advanced (#enhance), and a hero who has
+# no slots left to advance it
+
+[6b3831e0ed35]
+en = "You feel more confident in your weapon skills."
+ru = "Вы чувствуете себя увереннее в обращении с оружием."
+
+[e06fadf31619]
+en = "You dream that you feel more confident in your weapon skills."
+ru = "Вам снится, что вы чувствуете себя увереннее в обращении с оружием."
+
+[68bfe077c222]
+en = "You feel more confident in your fighting skills."
+ru = "Вы чувствуете себя увереннее в бою."
+
+[e87d12932084]
+en = "You dream that you feel more confident in your fighting skills."
+ru = "Вам снится, что вы чувствуете себя увереннее в бою."
+
+[97ddbb1e73d5]
+en = "You feel more confident in your spell casting skills."
+ru = "Вы чувствуете себя увереннее в чародействе."
+
+[9a5842289d29]
+en = "You dream that you feel more confident in your spell casting skills."
+ru = "Вам снится, что вы чувствуете себя увереннее в чародействе."
+
+[731922d6f0fd]
+en = "You feel more confident in your skills."
+ru = "Вы чувствуете себя увереннее в своих навыках."
+
+[29d1a3efb628]
+en = "You dream that you feel more confident in your skills."
+ru = "Вам снится, что вы чувствуете себя увереннее в своих навыках."
+
+[cfc91129131c]
+en = "You feel more confident in your %sskills."
+ru = "Вы чувствуете себя увереннее в своих навыках.{1:skip}"
+
+[2432a5f3cfc6]
+en = "You dream that you feel more confident in your %sskills."
+ru = "Вам снится, что вы чувствуете себя увереннее в своих навыках.{1:skip}"
+
+[85af3f013b03]
+en = "You feel you could be more dangerous!"
+ru = "Вы чувствуете, что могли бы стать опаснее!"
+
+[24e543e41901]
+en = "You dream that you feel you could be more dangerous!"
+ru = "Вам снится, что вы могли бы стать опаснее!"

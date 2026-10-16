@@ -986,6 +986,29 @@ fn a_breath_weapon_and_a_spit() {
     }
 }
 
+#[test]
+fn a_skill_that_can_be_advanced() {
+    // weapon.c give_may_advance_msg(): "You feel more confident in your
+    // %sskills." ("weapon ", "fighting ", "spell casting " or none)
+    let t = translator();
+    let out = t.message(
+        Some("You feel more confident in your %sskills."),
+        &[Arg::Str("weapon ".into())],
+        "You feel more confident in your weapon skills.",
+    );
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        (
+            "Вы чувствуете себя увереннее в обращении с оружием.",
+            Status::Translated
+        )
+    );
+    check(
+        "You feel you could be more dangerous!",
+        "могли бы стать опаснее",
+    );
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {

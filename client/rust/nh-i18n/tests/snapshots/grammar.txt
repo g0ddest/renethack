@@ -31072,6 +31072,19 @@ You dream that you feel momentarily lethargic%c  [d29bbf754c8e]
   pl  Вам снится, что на миг вас одолевает вялостьx
 You dream that you feel more claustrophobic than before.  [c8ff4a6c9b8c]
   =   Вам снится, что вы чувствуете клаустрофобию сильнее, чем прежде.
+You dream that you feel more confident in your %sskills.  [2432a5f3cfc6]
+  m   Вам снится, что вы чувствуете себя увереннее в своих навыках.
+  f   Вам снится, что вы чувствуете себя увереннее в своих навыках.
+  n   Вам снится, что вы чувствуете себя увереннее в своих навыках.
+  pl  Вам снится, что вы чувствуете себя увереннее в своих навыках.
+You dream that you feel more confident in your fighting skills.  [e87d12932084]
+  =   Вам снится, что вы чувствуете себя увереннее в бою.
+You dream that you feel more confident in your skills.  [29d1a3efb628]
+  =   Вам снится, что вы чувствуете себя увереннее в своих навыках.
+You dream that you feel more confident in your spell casting skills.  [9a5842289d29]
+  =   Вам снится, что вы чувствуете себя увереннее в чародействе.
+You dream that you feel more confident in your weapon skills.  [e06fadf31619]
+  =   Вам снится, что вы чувствуете себя увереннее в обращении с оружием.
 You dream that you feel much better.  [99ec697d6d24]
   =   Вам снится, что вам гораздо лучше.
 You dream that you feel much less nauseated now.  [d0fc5a2515f2]
@@ -31258,6 +31271,8 @@ You dream that you feel wide awake.  [bc4cd1f223cc]
   =   Вам снится, что у вас сна ни в одном глазу.
 You dream that you feel you are thoroughly on the right path.  [36382e196a42]
   =   Вам снится, что вы твёрдо стоите на верном пути.
+You dream that you feel you could be more dangerous!  [24e543e41901]
+  =   Вам снится, что вы могли бы стать опаснее!
 You dream that you feel your life force draining away...  [e13bfb7f8e9d]
   =   Вам снится, что вы чувствуете, как жизненная сила покидает вас...
 You dream that you feel your magical energy drain away%c  [9eea5ff67717]
@@ -32306,6 +32321,19 @@ You feel momentarily lethargic%c  [96f3fb9ee257]
   pl  На миг вас одолевает вялостьx
 You feel more claustrophobic than before.  [7fb2bdf467e6]
   =   Вы чувствуете клаустрофобию сильнее, чем прежде.
+You feel more confident in your %sskills.  [cfc91129131c]
+  m   Вы чувствуете себя увереннее в своих навыках.
+  f   Вы чувствуете себя увереннее в своих навыках.
+  n   Вы чувствуете себя увереннее в своих навыках.
+  pl  Вы чувствуете себя увереннее в своих навыках.
+You feel more confident in your fighting skills.  [68bfe077c222]
+  =   Вы чувствуете себя увереннее в бою.
+You feel more confident in your skills.  [731922d6f0fd]
+  =   Вы чувствуете себя увереннее в своих навыках.
+You feel more confident in your spell casting skills.  [97ddbb1e73d5]
+  =   Вы чувствуете себя увереннее в чародействе.
+You feel more confident in your weapon skills.  [6b3831e0ed35]
+  =   Вы чувствуете себя увереннее в обращении с оружием.
 You feel more experienced.  [95e98a6c26d9]
   =   Вы чувствуете себя опытнее.
 You feel more limber.  [aacfc469aab6]
@@ -32558,6 +32586,8 @@ You feel worried about your future financial situation.  [5fa2b959fae6]
   =   Вас беспокоит ваше будущее финансовое положение.
 You feel you are thoroughly on the right path.  [e0e48b6f7c9e]
   =   Вы чувствуете, что твёрдо стоите на верном пути.
+You feel you could be more dangerous!  [85af3f013b03]
+  =   Вы чувствуете, что могли бы стать опаснее!
 You feel your life force draining away...  [78eab2ca4ef6]
   =   Вы чувствуете, как жизненная сила покидает вас...
 You feel your magical energy drain away%c  [be3553989457]
