@@ -88,6 +88,13 @@ static OTHERS: AtomicU32 = AtomicU32::new(0);
 static SEARCHED: AtomicU32 = AtomicU32::new(0);
 /// The fight's F was sent: the next command takes its direction.
 static FIGHTING: AtomicBool = AtomicBool::new(false);
+/// The blows struck at the newt, and whether this round's is. Each comes
+/// once the last one's swing is heard: two struck within the swing's
+/// cooldown (a headless run answers at once) were heard as one.
+static STRUCK: AtomicU64 = AtomicU64::new(0);
+static STRUCK_NOW: AtomicBool = AtomicBool::new(false);
+/// Rounds of the newt's fight at most, a blow each.
+const FIGHT_ROUNDS: usize = 12;
 /// The search's m was sent: the next command is the search it forces.
 static FORCING: AtomicBool = AtomicBool::new(false);
 /// Where the settings button is on the screen.
@@ -322,8 +329,29 @@ fn game() -> Vec<Step> {
             let (music, ambience) = player(g)?.ducks();
             Ok(music == 1.0 && ambience <= 0.5)
         }),
-        Step::Call("", mark),
-        Step::KeysUntil("fighting the newt", fight),
+        Step::Call("", |g| {
+            STRUCK.store(0, Ordering::Relaxed);
+            mark(g)
+        }),
+    ]);
+    for _ in 0..FIGHT_ROUNDS {
+        steps.extend([
+            Step::Call("", |_| {
+                STRUCK_NOW.store(false, Ordering::Relaxed);
+                Ok(())
+            }),
+            Step::KeysUntil("a blow at the newt", blow),
+            Step::Wait("the blow's swing heard, before the next", |g| {
+                let mark = MARK.load(Ordering::Relaxed);
+                let swings = player(g)?
+                    .heard()
+                    .filter(|h| h.seq > mark && h.asked.starts_with("swing"))
+                    .count() as u64;
+                Ok(foe(g).is_none() || swings >= STRUCK.load(Ordering::Relaxed))
+            }),
+        ]);
+    }
+    steps.extend([
         Step::Wait("its death heard", |g| Ok(heard_like(g, "die")?.is_some())),
         Step::Call(
             "the fight heard: each of the spear's swings, a blow or a miss",
@@ -670,14 +698,20 @@ fn foe(game: &RenethackGame) -> Option<char> {
     })
 }
 
-/// F and the newt's direction until no foe is left next to the hero.
-fn fight(game: &RenethackGame) -> Result<Option<KeyInput>, String> {
+/// A blow at the newt: F and its direction (nothing once no foe is left
+/// next to the hero).
+fn blow(game: &RenethackGame) -> Result<Option<KeyInput>, String> {
+    if STRUCK_NOW.load(Ordering::Relaxed) {
+        return Ok(None);
+    }
     match pending(game) {
         Some(Prompt::Command) => {
             let Some(way) = foe(game) else {
                 return Ok(None);
             };
             if FIGHTING.swap(false, Ordering::Relaxed) {
+                STRUCK.fetch_add(1, Ordering::Relaxed);
+                STRUCK_NOW.store(true, Ordering::Relaxed);
                 Ok(Some(plain(way)))
             } else {
                 FIGHTING.store(true, Ordering::Relaxed);

@@ -5,8 +5,10 @@
 //! clip and its corpse takes over from the clip's last frame; an acid blob
 //! slumps; a ghost dissolves and leaves nothing; a gas spore, slain from
 //! two cells off, is gone in its blast. A monster gone from sight (the
-//! hero blinded) falls not at all. Pictures mid-fall and after with
-//! `--screenshots`.
+//! hero blinded) falls not at all. The hero first walks to the middle of
+//! the room's north wall: each victim is then made beside or before them,
+//! its fall in view (an ogre behind their back fell out of sight).
+//! Pictures mid-fall and after with `--screenshots`.
 
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
@@ -35,6 +37,13 @@ struct Victim {
 /// The monsters slain, in order.
 const VICTIMS: [Victim; 5] = [
     Victim {
+        name: "ghost",
+        kind: FallKind::Dissolve,
+        corpse: Some(false),
+        shot: "falls-ghost",
+        after: "falls-ghost-after",
+    },
+    Victim {
         name: "lizard",
         kind: FallKind::Topple,
         corpse: Some(true),
@@ -54,13 +63,6 @@ const VICTIMS: [Victim; 5] = [
         corpse: None,
         shot: "falls-blob",
         after: "falls-blob-after",
-    },
-    Victim {
-        name: "ghost",
-        kind: FallKind::Dissolve,
-        corpse: Some(false),
-        shot: "falls-ghost",
-        after: "falls-ghost-after",
     },
     Victim {
         name: "gas spore",
@@ -91,7 +93,12 @@ pub(super) fn falls() -> Vec<Step> {
     steps.push(Step::Wait("the hero on the map", |g| {
         Ok(g.world.map.hero().is_some())
     }));
-    for v in VICTIMS {
+    for (i, v) in VICTIMS.into_iter().enumerate() {
+        // the ghost where the game began (passing walls, it may be made
+        // in one), the others by the north wall
+        if i == 1 {
+            steps.extend(to_the_north_wall());
+        }
         steps.extend(slay(v));
     }
     steps.extend(unseen());
@@ -112,6 +119,14 @@ fn slay(v: Victim) -> Vec<Step> {
             *AT.lock().unwrap() = at;
         }
         Ok(at.is_some())
+    }));
+    steps.push(Step::Call("in view: beside the hero or before them", |g| {
+        let (_, hy) = g.world.map.hero().ok_or("no hero")?;
+        let at = *AT.lock().unwrap();
+        match at.1 < hy {
+            true => Err(format!("{} made behind the hero, at {at:?}", victim().name)),
+            false => Ok(()),
+        }
     }));
     if v.kind == FallKind::Burst {
         // two cells off its blast
@@ -186,6 +201,57 @@ fn slay(v: Victim) -> Vec<Step> {
     steps.extend(closer(false));
     steps
 }
+
+/// North till a wall stops the hero, then along it to the middle of the
+/// room's north row: ^G makes a monster on a free cell about them, then
+/// never behind them (the camera looks from the south), nor by the stairs
+/// in the room's corner (their well hid it).
+fn to_the_north_wall() -> Vec<Step> {
+    vec![
+        Step::Call("", |_| {
+            STEPPED.store(0, Ordering::Relaxed);
+            Ok(())
+        }),
+        Step::KeysUntil("to the middle of the north wall", |g| {
+            if !matches!(g.pending, Some((_, Prompt::Command))) {
+                return Ok(Some(KeyInput::plain(Key::Escape)));
+            }
+            let (hx, hy) = g.world.map.hero().ok_or("no hero")?;
+            let way = if floor(g, (hx, hy - 1)) {
+                'k'
+            } else {
+                // the floor of the row, west and east of the hero
+                let run =
+                    |dx: i32| (1..).take_while(|i| floor(g, (hx + dx * i, hy))).count() as i32;
+                let (west, east) = (run(-1), run(1));
+                if (east - west).abs() <= 1 {
+                    return Ok(None);
+                }
+                if east > west { 'l' } else { 'h' }
+            };
+            if STEPPED.fetch_add(1, Ordering::Relaxed) >= NORTH_MOST {
+                return Err("no middle of a north wall for the hero".into());
+            }
+            Ok(Some(KeyInput::plain(Key::Char(way))))
+        }),
+    ]
+}
+
+/// A room's floor (whoever stands on it).
+fn floor(g: &RenethackGame, (x, y): (i32, i32)) -> bool {
+    let Some(cat) = g.catalog.as_deref() else {
+        return false;
+    };
+    g.world.map.cell(x, y).is_some_and(|c| {
+        matches!(
+            nh_world::cell_terrain(c, cat),
+            Some(nh_world::Terrain::Floor | nh_world::Terrain::DarkFloor)
+        )
+    })
+}
+
+/// Steps taken north at most.
+const NORTH_MOST: usize = 15;
 
 /// The camera close to the victim's fall (`near`), or back.
 fn closer(near: bool) -> [Step; 2] {

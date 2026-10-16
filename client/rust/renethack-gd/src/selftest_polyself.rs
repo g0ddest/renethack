@@ -86,7 +86,7 @@ pub(super) fn polyself() -> Vec<Step> {
             }),
             Step::Wait("the portrait naming the form", |g| {
                 let ui = g.ui.as_ref().ok_or("no UI")?;
-                Ok(ui.hud.portrait_role().as_deref() == Some(form().1))
+                Ok(ui.hud.role() == Some(form().1))
             }),
         ]);
         steps.extend(match name {

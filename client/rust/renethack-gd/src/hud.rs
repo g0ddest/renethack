@@ -2141,11 +2141,6 @@ impl Hud {
         }
     }
 
-    /// The form the portrait names (self-tests).
-    pub fn portrait_role(&self) -> Option<String> {
-        self.role.clone()
-    }
-
     fn show_subtitle(&mut self) {
         // the role, as the alignment, agrees with the hero (Волшебница)
         let role = self
