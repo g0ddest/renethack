@@ -131,7 +131,7 @@ pub fn bbcode(doc: Doc, shipped: &Shipped) -> String {
         Doc::Sound => markdown(SOUND),
         Doc::Help => markdown(HELP),
         Doc::Translation => markdown(TRANSLATION),
-        Doc::Notice => plain(&NOTICE.replace("@VERSION@", &version())),
+        Doc::Notice => notice(&NOTICE.replace("@VERSION@", &version())),
         Doc::Ngpl => match &shipped.ngpl {
             Some(text) => plain(text),
             None => note(&tr!("credits-ngpl-missing")),
@@ -182,6 +182,32 @@ fn note(text: &str) -> String {
 /// A licence's text as it is written, its lines kept.
 fn plain(text: &str) -> String {
     theme::bbcode_escape(text.trim())
+}
+
+/// The package's notice as written, but for its headings: a line
+/// underlined with `===` or `---` in the text file is drawn as a heading.
+fn notice(text: &str) -> String {
+    let lines: Vec<&str> = text.trim().lines().collect();
+    let underline = |l: &str, c: char| {
+        let l = l.trim_end();
+        l.len() >= 3 && l.chars().all(|x| x == c)
+    };
+    let mut out = String::new();
+    let mut i = 0;
+    while i < lines.len() {
+        let line = lines[i];
+        let next = lines.get(i + 1).copied().unwrap_or("");
+        if !line.trim().is_empty() && (underline(next, '=') || underline(next, '-')) {
+            let size = if underline(next, '=') { 28 } else { 22 };
+            out += &heading(line.trim(), size);
+            i += 2;
+        } else {
+            out += &theme::bbcode_escape(line);
+            out += "\n";
+            i += 1;
+        }
+    }
+    out.trim_end().to_string()
 }
 
 fn game() -> String {
@@ -1072,6 +1098,29 @@ mod tests {
         }
         assert!(NOTICE.contains("@VERSION@"));
         assert!(CJSON.contains("Dave Gamble"));
+    }
+
+    #[test]
+    fn the_notice_draws_its_underlined_headings_as_headings() {
+        let bb = notice(&NOTICE.replace("@VERSION@", "0.1.0"));
+        for title in [
+            "renethack 0.1.0",
+            "renethack is free software",
+            "Godot Engine",
+            "Steam",
+        ] {
+            assert!(bb.contains(&format!("[b]{title}[/b]")), "{title}: {bb}");
+        }
+        let underline = |l: &str| {
+            let t = l.trim();
+            t.len() >= 3 && (t.chars().all(|c| c == '=') || t.chars().all(|c| c == '-'))
+        };
+        assert!(!bb.lines().any(underline), "{bb}");
+        // the words between as written, line by line
+        assert!(bb.contains(
+            "Public License, NetHack-General-Public-License.txt, as NetHack is: you may\n"
+        ));
+        assert!(bb.contains("\n  NetHack, Copyright 1985-2026"));
     }
 
     #[test]
