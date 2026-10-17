@@ -2528,11 +2528,13 @@ impl RenethackGame {
     }
 
     /// The guide's card on screen while the map is clear (the engine at a
-    /// command or at work, nothing over the map); the next one waiting a
-    /// moment after the last went.
+    /// command or at work, nothing over the map, the prologue over); the
+    /// next one waiting a moment after the last went.
     fn tick_hints(&mut self, dt: f64) {
         let on = self.hints_on();
+        // the prologue plays while the engine's first command waits
         let clear = self.state == GameState::Playing
+            && self.prologue.is_none()
             && matches!(self.pending, None | Some((_, Prompt::Command)))
             && !self.world.getpos
             && self.ui.as_ref().is_some_and(|ui| {

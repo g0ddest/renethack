@@ -4875,6 +4875,7 @@ impl SelfTest {
             "prologue" => prologue_tests::prologue(),
             "prologue-skip" => prologue_tests::prologue_skip(),
             "prologue-replay" => prologue_tests::prologue_replay(),
+            "prologue-guide" => prologue_tests::prologue_guide(),
             "rays" => effects::rays(),
             "blasts" => effects::blasts(),
             "engulfed" => effects::engulfed(),

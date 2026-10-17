@@ -242,3 +242,62 @@ pub(super) fn prologue_skip() -> Vec<Step> {
     steps.extend(quit());
     steps
 }
+
+/// The frame a wait began at (`prologue-guide`).
+static FROM_FRAME: std::sync::atomic::AtomicI64 = std::sync::atomic::AtomicI64::new(0);
+
+fn frames_since_mark() -> i64 {
+    <godot::classes::Engine as godot::obj::Singleton>::singleton().get_process_frames() as i64
+        - FROM_FRAME.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+/// `prologue-guide`: the first-steps guide on, a new game with the
+/// prologue. The engine's first command waits while the prologue plays,
+/// and no hint card shows over it; skipped, the game opens on Your quest,
+/// the pet's card after it.
+pub(super) fn prologue_guide() -> Vec<Step> {
+    let mut steps = vec![Step::Call("the guide on, the pet's card staged", |g| {
+        g.guide_in_test = true;
+        g.hint_only = Some(nh_world::Guide::Pet);
+        Ok(())
+    })];
+    steps.extend(begin());
+    steps.extend([
+        Step::Wait("the Book, the engine's first command waiting", |g| {
+            Ok(shown(g, Beat::Book)? && g.pending.as_ref().is_some_and(|(_, p)| command(p)))
+        }),
+        Step::Call("", |_| {
+            FROM_FRAME.store(
+                <godot::classes::Engine as godot::obj::Singleton>::singleton().get_process_frames()
+                    as i64,
+                std::sync::atomic::Ordering::Relaxed,
+            );
+            Ok(())
+        }),
+        Step::Wait("no card over the prologue", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            if ui.hint.shown().is_some() || !g.hint_log.is_empty() {
+                return Err(format!("a card over the prologue: {:?}", g.hint_log));
+            }
+            if g.prologue.is_none() {
+                return Err("the prologue ended by itself".into());
+            }
+            Ok(frames_since_mark() > 30)
+        }),
+        Step::Press(GKey::ESCAPE, '\u{1b}', false),
+        Step::Wait("the game, Your quest first, no card under it", |g| {
+            let quest = g.ui.as_ref().is_some_and(|ui| ui.quest.is_open());
+            if !g.hint_log.is_empty() {
+                return Err(format!("a card before Your quest: {:?}", g.hint_log));
+            }
+            Ok(in_game(g)? && quest)
+        }),
+        Step::Press(GKey::ESCAPE, '\u{1b}', false),
+        Step::Wait("the pet's card after the page", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(!ui.quest.is_open() && ui.hint.shown() == Some(nh_world::Guide::Pet))
+        }),
+    ]);
+    steps.extend(quit());
+    steps
+}
