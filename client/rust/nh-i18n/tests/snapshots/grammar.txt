@@ -10056,6 +10056,11 @@
   f   Крыса снова может двигаться.
   n   Копьё снова может двигаться.
   pl  3 стрелы снова могут двигаться.
+%s can no longer contain you.  [6cdaae38f853]
+  m   Тритон больше не может вас удерживать.
+  f   Крыса больше не может вас удерживать.
+  n   Копьё больше не может вас удерживать.
+  pl  3 стрелы больше не могут вас удерживать.
 %s can't see anything right now.  [368d1afd01bc]
   m   Тритон сейчас ничего не видит.
   f   Крыса сейчас ничего не видит.
@@ -12256,6 +12261,11 @@
   f   Крыса в ярости!
   n   Копьё в ярости!
   pl  3 стрелы в ярости!
+%s is getting more and more confused.  [1addf8507cd7]
+  m   Тритон всё больше теряется.
+  f   Крыса всё больше теряется.
+  n   Копьё всё больше теряется.
+  pl  3 стрелы всё больше теряются.
 %s is gnarly%c  [0ac6e2046697]
   m   Тритон отпадныйx
   f   Крыса отпаднаяx
@@ -12431,6 +12441,11 @@
   f   Крысе слегка тепло.
   n   Копью слегка тепло.
   pl  3 стрелам слегка тепло.
+%s is no longer in your clutches.  [6acf587a7618]
+  m   Тритон больше не в ваших когтях.
+  f   Крыса больше не в ваших когтях.
+  n   Копьё больше не в ваших когтях.
+  pl  3 стрелы больше не в ваших когтях.
 %s is not affected.  [2ecb3660f390]
   m   На тритона это не действует.
   f   На крысу это не действует.
@@ -13471,6 +13486,11 @@
   f   Крыса слегка ослабляет хватку.
   n   Копьё слегка ослабляет хватку.
   pl  3 стрелы слегка ослабляют хватку.
+%s loses its grip on you.  [9f4efe55414a]
+  m   Тритон выпускает вас.
+  f   Крыса выпускает вас.
+  n   Копьё выпускает вас.
+  pl  3 стрелы выпускают вас.
 %s lows!  [ad6334b7ea0f]
   m   Тритон мычит!
   f   Крыса мычит!
@@ -14651,6 +14671,11 @@
   f   Крыса выглядит опытнее.
   n   Копьё выглядит опытнее.
   pl  3 стрелы выглядят опытнее.
+%s seems not to notice your gaze.  [f052aaa072fd]
+  m   Тритон, похоже, не замечает вашего взгляда.
+  f   Крыса, похоже, не замечает вашего взгляда.
+  n   Копьё, похоже, не замечает вашего взгляда.
+  pl  3 стрелы, похоже, не замечают вашего взгляда.
 %s seems quite upset over your return to her %s!  [603cc601923b]
   m   Тритон, похоже, очень сердится из-за вашего возвращения в её тритона!
   f   Крыса, похоже, очень сердится из-за вашего возвращения в её крысу!
@@ -18318,6 +18343,8 @@ A wand of deaf is a more dangerous weapon than a wand of sheep.  [01e14ec8f251]
   =   Палочка смерди — оружие опаснее, чем палочка сена.
 A wand of vibration might bring the whole cave crashing about your ears.  [c9213c868530]
   =   Палочка вибрации может обрушить вам на голову всю пещеру.
+A wave of psychic energy pours out.  [f74754e675d8]
+  =   Изливается волна психической энергии.
 A web bursts into flames!  [cc3e6dff9cc7]
   =   Паутина вспыхивает пламенем!
 A wide-angle disintegration beam aimed at you hits %s!  [f206b1c518b2]
@@ -19118,6 +19145,8 @@ But luckily the poisoned needle misses!  [ef6d6290e09b]
   =   Но, к счастью, отравленная игла пролетает мимо!
 But no one seems to respond to it.  [50ff60b1440c]
   =   Но на неё, похоже, никто не откликается.
+But none arrive.  [98f0f1c39b3c]
+  =   Но никто не приходит.
 But none comes.  [396a129a8137]
   =   Но никто не приходит.
 But nothing else happens.  [4373df6997c4]
@@ -20463,6 +20492,11 @@ Game over:  [253ba4d66b23]
   =   Игра окончена:
 Gawd, it's depressing in here, isn't it?  [9d5181cf48c7]
   =   Господи, ну и тоска же здесь, а?
+Gazing at the awake %s is not a very good idea.  [970b319f0dff]
+  m   Смотреть на бодрствующего тритона — не лучшая идея.
+  f   Смотреть на бодрствующую крысу — не лучшая идея.
+  n   Смотреть на бодрствующее копьё — не лучшая идея.
+  pl  Смотреть на бодрствующих 3 стрелы — не лучшая идея.
 Gee!  All of a sudden, you can see right through yourself.  [4cb41c9bd137]
   =   Ого!  Внезапно вы видите себя насквозь.
 Gee!  All of a sudden, you can't see yourself.  [750fa152699e]
@@ -20711,6 +20745,16 @@ Hide  [34d8b60fe253]
   =   Спрятаться
 Hide [h] or spin a web [s]?  [a186ead714b7]
   =   Спрятаться [h] или сплести паутину [s]?
+Hiding under %s is a fatal mistake...  [6d60cbcf55a0]
+  m   Прятаться под тритоном — роковая ошибка...
+  f   Прятаться под крысой — роковая ошибка...
+  n   Прятаться под копьём — роковая ошибка...
+  pl  Прятаться под 3 стрелами — роковая ошибка...
+Hiding under %ss is a fatal mistake...  [a42d066bf8ad]
+  m   Прятаться под тритоном — роковая ошибка...
+  f   Прятаться под крысой — роковая ошибка...
+  n   Прятаться под копьём — роковая ошибка...
+  pl  Прятаться под 3 стрелами — роковая ошибка...
 Highlight critically low %s  [9bbc4c338374]
   m   Подсвечивать опасно низкое тритон
   f   Подсвечивать опасно низкое крыса
@@ -21763,6 +21807,11 @@ No longer petrify-resistant, %s touches %s.  [a1bb0da266fc]
   f   Лишившись защиты от окаменения, крыса касается крысы.
   n   Лишившись защиты от окаменения, копьё касается копья.
   pl  Лишившись защиты от окаменения, 3 стрелы касаются 3 стрел.
+No longer petrify-resistant, you touch %s.  [694039df35c8]
+  m   Утратив защиту от окаменения, вы касаетесь тритона.
+  f   Утратив защиту от окаменения, вы касаетесь крысы.
+  n   Утратив защиту от окаменения, вы касаетесь копья.
+  pl  Утратив защиту от окаменения, вы касаетесь 3 стрел.
 No longer petrify-resistant, you touch the %s corpse.  [256f4bd80801]
   m   Утратив устойчивость к окаменению, вы касаетесь трупа тритона.
   f   Утратив устойчивость к окаменению, вы касаетесь трупа крысы.
@@ -23559,6 +23608,8 @@ Sting cuts through the web!  [de8c4070b7c1]
   =   Жало рассекает паутину!
 Stormbringer doesn't steal souls.  People steal souls.  [d6caea1effdf]
   =   Буревестник не крадёт души.  Души крадут люди.
+Strangely, you feel better than before.  [9860d89c576a]
+  =   Как ни странно, вы чувствуете себя лучше прежнего.
 Strong Bad  [9165cb48f5a2]
   =   Стронг Бэд
 Study this %s  [95a69bb3dd7e]
@@ -24349,6 +24400,11 @@ The %s mixes with one of %s...  [35cdda5dc434]
   f   Крыса смешивается с одним из крысы...
   n   Копьё смешивается с одним из копья...
   pl  3 стрелы смешиваются с одним из 3 стрел...
+The %s now feels soothing.  [c9728bcd213a]
+  m   Тритон теперь кажется приятным.
+  f   Крыса теперь кажется приятной.
+  n   Копьё теперь кажется приятным.
+  pl  3 стрелы теперь кажутся приятными.
 The %s opens up under you!  [abcbbb0dd28a]
   m   Тритон под вами разверзается!
   f   Крыса под вами разверзается!
@@ -24742,6 +24798,11 @@ The aura of %s tingles at the edge of your perception.  [44c63051e79c]
   f   Аура крысы покалывает на самом краю вашего восприятия.
   n   Аура копья покалывает на самом краю вашего восприятия.
   pl  Аура 3 стрел покалывает на самом краю вашего восприятия.
+The ball and chain are buried firmly in the %s.  [ab4d10649dbd]
+  m   Ядро с цепью прочно засели в тритоне.
+  f   Ядро с цепью прочно засели в крысе.
+  n   Ядро с цепью прочно засели в копье.
+  pl  Ядро с цепью прочно засели в 3 стрелах.
 The barbs stick to you!  [2cb08e100bd9]
   =   Шипы впиваются в вас!
 The battered body of %s slumps to the ground and gasps\nout one last curse:\n\n    "You have defeated me, %s, but I shall have my revenge.\n    How, I shall not say, but this curse shall be like a cancer\n    on you."\n\nWith that %s dies.  [5ddde4969500]
@@ -24792,6 +24853,8 @@ The bullwhip wraps around %s you're wielding!  [91f31e069a17]
   f   Кнут обвивает крысу, которую вы держите!
   n   Кнут обвивает копьё, которое вы держите!
   pl  Кнут обвивает 3 стрелы, которые вы держите!
+The buried ball is no longer bound to you.  [6e8ad1d30078]
+  =   Закопанное ядро больше к вам не приковано.
 The cake is a lie  [a6e49758f934]
   =   Торт — это ложь
 The candle flickers for a moment, then dies.  [9593c5ddc37b]
@@ -24804,11 +24867,26 @@ The candles flicker for a moment, then die.  [5669a7ca4c0a]
   =   Свечи на миг мерцают, а затем гаснут.
 The candy bar's wrapper is blank.  [48307d231ab3]
   =   На обёртке шоколадного батончика ничего не написано.
+The clasp on your %s breaks open!  [853d69cb2a90]
+  m   Застёжка на вашем тритоне расстёгивается!
+  f   Застёжка на вашей крысе расстёгивается!
+  n   Застёжка на вашем копье расстёгивается!
+  pl  Застёжка на ваших 3 стрелах расстёгивается!
 The clasp on your %s vanishes.  [9915615ec765]
   m   Оковы у вас на тритоне исчезают.
   f   Оковы у вас на крысе исчезают.
   n   Оковы у вас на копье исчезают.
   pl  Оковы у вас на 3 стрелах исчезают.
+The clasp on your apron breaks open!  [8b1654f5fbc1]
+  =   Застёжка на вашем фартуке расстёгивается!
+The clasp on your cloak breaks open!  [cabeeab68ed8]
+  =   Застёжка на вашем плаще расстёгивается!
+The clasp on your robe breaks open!  [49ce94a4d058]
+  =   Застёжка на вашей мантии расстёгивается!
+The clasp on your smock breaks open!  [1e7f8f97170d]
+  =   Застёжка на вашем фартуке расстёгивается!
+The clasp on your wrapping breaks open!  [885794b32f20]
+  =   Застёжка на вашей обмотке расстёгивается!
 The cliche of the kitchen sink swallowing any unfortunate rings that contact\nits pernicious surface reflecteth greater truth than many homilies, yet\neven so, few have developed the skill to identify enchanted rings by the\ntransfigurations effected upon the voracious device's frame.  [632c382d6538]
   =   Избитая присказка о кухонной раковине, что глотает всякое несчастное\nкольцо, коснувшееся её пагубной поверхности, правдивее многих поучений; и\nвсё же немногие овладели искусством распознавать зачарованные кольца по\nпеременам, что они творят с обликом прожорливого устройства.
 The cloak will not fit on your body.  [23767c58c73f]
@@ -24901,6 +24979,11 @@ The figurine animates!  [0c0d8c7de202]
   =   Статуэтка оживает!
 The figurine turns to flesh and animates!  [97a3760775c6]
   =   Статуэтка обращается в плоть и оживает!
+The fire doesn't burn %s!  [c9f7f997a03f]
+  m   Огонь не обжигает тритона!
+  f   Огонь не обжигает крысу!
+  n   Огонь не обжигает копьё!
+  pl  Огонь не обжигает 3 стрелы!
 The fire doesn't feel hot!  [35509e791e57]
   =   Огонь не кажется горячим!
 The fire doesn't heat %s!  [404f42dd6c18]
@@ -24925,6 +25008,8 @@ The flash of light shines on %s.  [59b5c481a3e4]
   pl  Вспышка света озаряет 3 стрелы.
 The floor runs like butter!  [63c8e5a36fc6]
   =   Пол растекается, как масло!
+The fountain is not deep enough to hide in.  [7003ae62d6d0]
+  =   Фонтан недостаточно глубок, чтобы в нём спрятаться.
 The frog's dead.  He Kermitted suicide.  [6045d3e332f2]
   =   Лягушонок мёртв.  Самоквакийство.
 The frost doesn't chill %s!  [f53312cdb502]
@@ -25019,6 +25104,21 @@ The invisible monster must have moved.  [f049278798df]
   =   Невидимый монстр, должно быть, переместился.
 The iron ball smacks into you!  [2a9529faa90c]
   =   Железное ядро врезается в вас!
+The knot on your %s is pulled apart!  [de81040a2a00]
+  m   Узел на вашем тритоне развязывается!
+  f   Узел на вашей крысе развязывается!
+  n   Узел на вашем копье развязывается!
+  pl  Узел на ваших 3 стрелах развязывается!
+The knot on your apron is pulled apart!  [c0b1698e8da2]
+  =   Узел на вашем фартуке развязывается!
+The knot on your cloak is pulled apart!  [1f06949054f1]
+  =   Узел на вашем плаще развязывается!
+The knot on your robe is pulled apart!  [959940e9b001]
+  =   Узел на вашей мантии развязывается!
+The knot on your smock is pulled apart!  [f0b61c2969d2]
+  =   Узел на вашем фартуке развязывается!
+The knot on your wrapping is pulled apart!  [ed629ad05ac2]
+  =   Узел на вашей обмотке развязывается!
 The lamp spills and covers your %s with oil.  [c9537eed5b52]
   m   Масло из лампы проливается и покрывает ваш тритона.
   f   Масло из лампы проливается и покрывает вашу крысу.
@@ -25233,6 +25333,8 @@ The reports of my demise are completely accurate  [7f9944f33f72]
   =   Слухи о моей смерти совершенно точны
 The ring is stuck.  [7e3180b9e11d]
   =   Кольцо застряло.
+The rock seems to no longer trap you.  [8d6bb777eb1d]
+  =   Похоже, камень вас больше не держит.
 The scent of water comes to you in the desert breeze.  You know that\nyou have located %s.  [1a8b6f9e3c14]
   m   Ветерок пустыни доносит запах воды.  Вы знаете,\nчто нашли тритона.
   f   Ветерок пустыни доносит запах воды.  Вы знаете,\nчто нашли крысу.
@@ -25271,6 +25373,8 @@ The spellbook crumbles to dust!  [6063bce173a9]
   =   Книга заклинаний рассыпается в прах!
 The spikes were poisoned!  [0a4ac3e72889]
   =   Шипы были отравлены!
+The squeaky board is muffled.  [45cff1385362]
+  =   Скрипучая доска заглушена.
 The stairs are solidly affixed.  [536ab005bb03]
   =   Лестница прочно закреплена.
 The stairs are too hard to dig in.  [ecf2aa0e6c48]
@@ -25367,6 +25471,19 @@ The wand shoots an apparently harmless beam at you.  [9ce778a4996a]
   =   Палочка выпускает в вас на вид безвредный луч.
 The water evaporates.  [ba489bd21c61]
   =   Вода испаряется.
+The web dissolves into %s.  [44048e6c95c7]
+  m   Паутина растворяется в тритоне.
+  f   Паутина растворяется в крысе.
+  n   Паутина растворяется в копье.
+  pl  Паутина растворяется в 3 стрелах.
+The web freezes, shatters and is swept away!  [1eaa4dd13b53]
+  =   Паутина замерзает, рассыпается, и её уносит прочь!
+The web fries and is swept away!  [24543bbee5d4]
+  =   Паутина сгорает, и её уносит прочь!
+The web ignites and is swept away!  [923770ca087e]
+  =   Паутина вспыхивает, и её уносит прочь!
+The web is swept away!  [b7babca669b6]
+  =   Паутину уносит прочь!
 The web sticks to you.  You're caught too!  [48851585e28b]
   =   Паутина прилипает к вам.  Вы тоже попались!
 The world spins and goes dark.  [d98d9ab86122]
@@ -25675,6 +25792,11 @@ There is an obstacle there.  [05a335bbae7c]
   =   Там какое-то препятствие.
 There is more magic in this cave than meets the eye.  [ddb31e99eb68]
   =   В этой пещере больше магии, чем кажется на первый взгляд.
+There is no %s to hide in here.  [56c5e2f69fce]
+  m   Здесь нет тритона, чтобы спрятаться.
+  f   Здесь нет крысы, чтобы спрятаться.
+  n   Здесь нет копья, чтобы спрятаться.
+  pl  Здесь нет 3 стрел, чтобы спрятаться.
 There is no creature there.  [e4b3997bd651]
   =   Там никого нет.
 There is no harm in praising a large dog.  [193505c8dc70]
@@ -25691,6 +25813,12 @@ There is nothing here to pick up.  [3b08451a6158]
   =   Здесь нечего подобрать.
 There is nothing like eating a mimic.  [95f4c281a9fe]
   =   Ничто не сравнится с поеданием мимика.
+There is nothing to hide under here.  [ba01f2cfb745]
+  =   Здесь не подо что спрятаться.
+There is nowhere to hide above you.  [090d031f3cec]
+  =   Над вами негде спрятаться.
+There is nowhere to hide beneath you.  [9ce5935cbda5]
+  =   Под вами негде спрятаться.
 There is only %d candle in %s.  [08cced9b35d1]
   m   В тритоне всего 1 свеча.
   f   В крысе всего 3 свечи.
@@ -28460,6 +28588,11 @@ You and %s fall into your pit!  [e86e6d4ea524]
   f   Вы вместе с крысой падаете в собственную яму!
   n   Вы вместе с копьём падаете в собственную яму!
   pl  Вы вместе с 3 стрелами падаете в собственную яму!
+You and %s return gently to the %s.  [bfa3513efb2e]
+  m   Вы и тритон мягко опускаетесь на тритона.
+  f   Вы и крыса мягко опускаетесь на крысу.
+  n   Вы и копьё мягко опускаетесь на копьё.
+  pl  Вы и 3 стрелы мягко опускаетесь на 3 стрелы.
 You and %s teleport together.  [8225054e55d2]
   m   Вы и тритон телепортируетесь вместе.
   f   Вы и крыса телепортируетесь вместе.
@@ -28805,8 +28938,19 @@ You are motionlessly suspended.  [0b34dbce339f]
   =   Вы неподвижно зависаете в воздухе.
 You are no longer able to control your flight.  [3a325d45db20]
   =   Вы больше не можете управлять своим полётом.
+You are no longer being strangled.  [41201bf8487e]
+  =   Вас больше не душит.
 You are no longer bothered by the poison gas.  [00b9e0d5fa72]
   =   Ядовитый газ вас больше не беспокоит.
+You are no longer stuck in the %s.  [17ca588afb8a]
+  m   Вы больше не застряли в тритоне.
+  f   Вы больше не застряли в крысе.
+  n   Вы больше не застряли в копье.
+  pl  Вы больше не застряли в 3 стрелах.
+You are no longer stuck in the bear trap.  [a3a9bc00bc7c]
+  =   Вы больше не застряли в медвежьем капкане.
+You are no longer stuck in the web.  [b68c44ce71e5]
+  =   Вы больше не застряли в паутине.
 You are no longer trying to float up from the chain.  [d5d24871fe7f]
   =   Вас больше не тянет вверх на цепи.
 You are no longer trying to float up from the ground.  [0bbae623a382]
@@ -28828,6 +28972,8 @@ You are not able to call upon %s to turn aside evilness.  [fc3dc56c97f7]
   pl  Вы не можете воззвать к 3 стрелам, чтобы отвратить зло.
 You are not affected.  [711b40e31692]
   =   На вас это не действует.
+You are not chained to anything!  [37d21438a4aa]
+  =   Вы ни к чему не прикованы!
 You are not disintegrated.  [7c9b46ca86e1]
   =   Вы не распадаетесь на атомы.
 You are not on an altar.  [29285f345b9d]
@@ -29184,6 +29330,11 @@ You attach %ld more candles to %s.  [30480527297e]
   f   Вы вставляете ещё 3 свечи в крысу.
   n   Вы вставляете ещё 5 свечей в копьё.
   pl  Вы вставляете ещё 21 свечу в 3 стрелы.
+You attack %s with a fiery gaze!  [03bf4d5c0ead]
+  m   Вы атакуете тритона огненным взглядом!
+  f   Вы атакуете крысу огненным взглядом!
+  n   Вы атакуете копьё огненным взглядом!
+  pl  Вы атакуете 3 стрелы огненным взглядом!
 You attack an air bubble.  [42fa5a712780]
   =   Вы атакуете воздушный пузырь.
 You attack nothing.  [230a6854e447]
@@ -29197,6 +29348,11 @@ You avoid %s into the %s.  [25f34f83bf33]
   f   Вы решаете не лезть в крысу.
   n   Вы решаете не лезть в копьё.
   pl  Вы решаете не лезть в 3 стрелы.
+You avoid gazing at %s.  [b10e3c4237d3]
+  m   Вы избегаете смотреть на тритона.
+  f   Вы избегаете смотреть на крысу.
+  n   Вы избегаете смотреть на копьё.
+  pl  Вы избегаете смотреть на 3 стрелы.
 You avoid harm.  [7c9efba31a58]
   =   Вы не пострадали.
 You awake with a headache.  [f1ef8a392d50]
@@ -29409,6 +29565,8 @@ You bask in its %s glow for a minute...  [925c6e049bb3]
   pl  Вы с минуту нежитесь в 3 стрелах сиянии луча...
 You be chillin'.  [3dc1da074397]
   =   Вы чилите.
+You become much too small for your shirt!  [efa0a0f208df]
+  =   Вы становитесь слишком маленьким для своей рубашки!
 You begin bashing monsters with %s.  [a0051d0a4f52]
   m   Вы начинаете колотить монстров тритоном.
   f   Вы начинаете колотить монстров крысой.
@@ -29495,6 +29653,8 @@ You break out in hives!  [4c97a8c1a15e]
   =   Вы покрываетесь крапивницей!
 You break out in hives.  [830f35f08afe]
   =   Вы покрываетесь крапивницей.
+You break out of your armor!  [649a830d2aff]
+  =   Вы вырываетесь из своих доспехов!
 You break through a secret door!  [c4da99600c20]
   =   Вы пробиваетесь сквозь потайную дверь!
 You break through the door with your %s.  [ba2d3775a339]
@@ -29594,6 +29754,10 @@ You burned in The Astral Plane with %ld points,  [40afa16a586c]
   pl  Вы сгорели на Астральном плане, набрав 21 очко,
 You caitiff!  [643e3a771753]
   =   Подлец!
+You call upon your brethren for help!  [9c15c98460b4]
+  =   Вы зовёте сородичей на помощь!
+You can barely move a handspan with this load!  [70c6295f9dcb]
+  =   С такой ношей вы едва можете сдвинуться на пядь!
 You can breathe again.  [4af6e2496ce1]
   =   Вы снова можете дышать.
 You can breathe more easily!  [08aeea81bfa1]
@@ -29614,6 +29778,8 @@ You can move again.  [614e16bd9ab7]
   =   Вы снова можете двигаться.
 You can no longer breathe.  [4de07c95eb25]
   =   Вы больше не можете дышать.
+You can no longer hold your shield!  [8703f4ae9a9b]
+  =   Вы больше не можете держать щит!
 You can no longer see through yourself!  [b19f5840c423]
   =   Вы больше не видите себя насквозь!
 You can no longer see yourself.  [3f9f643cb11b]
@@ -29672,6 +29838,8 @@ You can't do that while carrying so much stuff.  [5aa5c94add74]
   =   С такой ношей вам этого не сделать.
 You can't eat something you're wearing.  [2412fe212a04]
   =   Нельзя съесть то, что на вас надето.
+You can't even move a handspan with this load!  [c565ee12c57e]
+  =   С такой ношей вы не можете сдвинуться ни на пядь!
 You can't even see the bottom, let alone pick up something.  [83fd9e0c08ed]
   =   Вы даже дна не видите, где уж тут что-то подбирать.
 You can't feel any Braille writing.  [74a382d66951]
@@ -29696,12 +29864,26 @@ You can't force anything with those weapons.  [de55948b6c2e]
   =   Этим оружием ничего не взломать.
 You can't force anything without a proper weapon.  [c4a2f317b932]
   =   Без подходящего оружия ничего не взломать.
+You can't gaze at anything you can see.  [eec5b3b217d6]
+  =   Вы не можете взглянуть ни на что из того, что видите.
 You can't get by the snake.  [a98436835287]
   =   Мимо змеи не пройти.
 You can't go down here.  [b2336d9d07bf]
   =   Здесь нельзя спуститься.
 You can't hear anything!  [6dab966a9d2f]
   =   Вы ничего не слышите!
+You can't hide while you're being held.  [cf33159d0bdb]
+  =   Нельзя спрятаться, пока вас держат.
+You can't hide while you're engulfed.  [639f52f57d61]
+  =   Нельзя спрятаться, пока вас поглотили.
+You can't hide while you're holding someone.  [ebd9663767bd]
+  =   Нельзя спрятаться, пока вы кого-то держите.
+You can't hide while you're holding that creature.  [0b4588202e72]
+  =   Нельзя спрятаться, пока вы держите это существо.
+You can't hide while you're swallowed.  [de2e6ea48455]
+  =   Нельзя спрятаться, пока вас проглотили.
+You can't hide while you're trapped.  [3d036ea77495]
+  =   Нельзя спрятаться, пока вы в ловушке.
 You can't jump diagonally out of a doorway.  [5ebb4aa18361]
   =   Вы не можете прыгнуть по диагонали из дверного проёма.
 You can't jump very far.  [0b15146032d1]
@@ -29726,6 +29908,13 @@ You can't move diagonally into an intact doorway.  [323cf01395d9]
   =   Вам не войти по диагонали в неповреждённый дверной проём.
 You can't move diagonally out of an intact doorway.  [15abcf32ecf5]
   =   Вам не выйти по диагонали из неповреждённого дверного проёма.
+You can't polymorph into %s.  [0a04d99c1222]
+  m   Вы не можете превратиться в тритона.
+  f   Вы не можете превратиться в крысу.
+  n   Вы не можете превратиться в копьё.
+  pl  Вы не можете превратиться в 3 стрелы.
+You can't polymorph into any of those.  [65343332efe6]
+  =   Вы не можете превратиться ни в одного из них.
 You can't reach over the edge of the pit.  [072072593060]
   =   Вам не дотянуться через край ямы.
 You can't reach that spot from here.  [e6f544dc15b8]
@@ -29758,6 +29947,8 @@ You can't see anyone there.  [f2b310f0ba39]
   =   Вы никого там не видите.
 You can't see anything now!  [5c20109e5049]
   =   Теперь вы ничего не видите!
+You can't see anything to gaze at.  [67381a04b80a]
+  =   Вы не видите ничего, на что можно взглянуть.
 You can't see in here!  [e0e2aeb50932]
   =   Вы ничего не видите здесь, внутри!
 You can't see through all the sticky goop on your %s.  [0b2a48024760]
@@ -29767,6 +29958,11 @@ You can't see through all the sticky goop on your %s.  [0b2a48024760]
   pl  Вы ничего не видите сквозь липкую массу на 3 стрелах.
 You can't see through yourself anymore.  [c4ad95fdd3b6]
   =   Вы больше не видите себя насквозь.
+You can't see where to gaze at %s.  [09b9fddc671e]
+  m   Вы не видите, куда смотреть, чтобы взглянуть на тритона.
+  f   Вы не видите, куда смотреть, чтобы взглянуть на крысу.
+  n   Вы не видите, куда смотреть, чтобы взглянуть на копьё.
+  pl  Вы не видите, куда смотреть, чтобы взглянуть на 3 стрелы.
 You can't see your %s %s.  [67043f7640a6]
   m   Вы не видите своего тритона тритона.
   f   Вы не видите своей крысы крысы.
@@ -30056,6 +30252,8 @@ You cannot remove your wrapping to take off %s.  [614530acecca]
   pl  Вы не можете снять обмотку, а без этого не снять 3 стрелы.
 You cannot see where to land!  [176c1518488a]
   =   Вы не видите, куда приземляться!
+You cannot spin webs while stuck in a trap.  [23ffd7f53a9d]
+  =   Нельзя плести паутину, застряв в ловушке.
 You cannot stash something you are wearing.  [9f9ccbbde6ac]
   =   Нельзя спрятать то, что на вас надето.
 You cannot stay on %s.  [d047f6af59ca]
@@ -30273,6 +30471,10 @@ You coil yourself around %s!  [85273d130fa1]
   pl  Вы обвиваетесь кольцами вокруг 3 стрел!
 You collapse under your load.  [0b6feda2bc9c]
   =   Вы падаете под тяжестью своей ноши.
+You concentrate but lack the energy to maintain doing so.  [901b998fb5b5]
+  =   Вы сосредотачиваетесь, но не хватает энергии удержать сосредоточение.
+You concentrate.  [b4f77da76b0b]
+  =   Вы сосредотачиваетесь.
 You consume %s %s.  [f5807fbfb44e]
   m   Вы подкрепляетесь тритоном тритоном.
   f   Вы подкрепляетесь крысой крысой.
@@ -31107,6 +31309,11 @@ You dream that you feel raised to your full potential.  [3bff1d9e7a4f]
   =   Вам снится, что вы достигли пика своих возможностей.
 You dream that you feel rankled.  [57e8b74c5c2f]
   =   Вам снится, что вы чувствуете глухое раздражение.
+You dream that you feel rather %s-ish.  [a1395adb1a99]
+  m   Вам снится, что вы похожи на тритона.
+  f   Вам снится, что вы похожи на крысу.
+  n   Вам снится, что вы похожи на копьё.
+  pl  Вам снится, что вы похожи на 3 стрелы.
 You dream that you feel rather %s.  [86f454575e77]
   m   Вам снится, что вы чувствуете тритона.
   f   Вам снится, что вы чувствуете крысу.
@@ -31630,6 +31837,10 @@ You drop %s.  [97008cab6899]
   f   Вы кладёте крысу.
   n   Вы кладёте копьё.
   pl  Вы кладёте 3 стрелы.
+You drop your gloves and weapon!  [76a3172b870e]
+  =   Вы роняете перчатки и оружие!
+You drop your gloves!  [a1f1a321fe05]
+  =   Вы роняете перчатки!
 You drown %s...  [ba93d3cab7f7]
   m   Вы топите тритона...
   f   Вы топите крысу...
@@ -31983,6 +32194,8 @@ You extract a strange sound from %s!  [60ea4e7e7f93]
   pl  Вы извлекаете из 3 стрел странный звук!
 You fail to leash something.  [a3b31ebd1ac8]
   =   Вам не удаётся взять кого-то на поводок.
+You fail to transform!  [5350a6251e15]
+  =   Вам не удаётся превратиться!
 You fail to unleash something.  [c8a34204026a]
   =   Вам не удаётся снять с кого-то поводок.
 You faint from lack of food.  [8d7c93579184]
@@ -32272,6 +32485,11 @@ You feel lighter, but your %s is still chained to the ground.  [17d2180c1a9c]
   f   Вы чувствуете себя легче, но ваша крыса всё ещё прикована к земле.
   n   Вы чувствуете себя легче, но ваше копьё всё ещё приковано к земле.
   pl  Вы чувствуете себя легче, но ваши 3 стрелы всё ещё прикованы к земле.
+You feel like %s!  [1bd0d368a4dc]
+  m   Вы чувствуете себя обновлённым!
+  f   Вы чувствуете себя обновлённым!
+  n   Вы чувствуете себя обновлённым!
+  pl  Вы чувствуете себя обновлённым!
 You feel like a common thief.  [e8e849de2fe5]
   =   Вы чувствуете себя обыкновенным вором.
 You feel like a despicable grave-robber!  [1889e34378f3]
@@ -32282,6 +32500,11 @@ You feel like a million zorkmid!  [ec36ed68fe65]
   =   Вы чувствуете себя на миллион зоркмидов!
 You feel like a million zorkmids!  [ceb3659861b1]
   =   Вы чувствуете себя на миллион зоркмидов!
+You feel like a new %s!  [8b27bf264b7f]
+  m   Вы чувствуете себя новым тритоном!
+  f   Вы чувствуете себя новой крысой!
+  n   Вы чувствуете себя новым копьём!
+  pl  Вы чувствуете себя новыми 3 стрелами!
 You feel like a scarecrow.  [f0164ad9e139]
   =   Вы чувствуете себя Страшилой.
 You feel like an evil coward for using a poisoned weapon.  [222e798455ce]
@@ -32364,6 +32587,11 @@ You feel raised to your full potential.  [acdd7c277157]
   =   Вы чувствуете, что достигли пика своих возможностей.
 You feel rankled.  [196f2899fc29]
   =   Вы чувствуете глухое раздражение.
+You feel rather %s-ish.  [5c4f9299bfa5]
+  m   Вы чувствуете себя похожим на тритона.
+  f   Вы чувствуете себя похожим на крысу.
+  n   Вы чувствуете себя похожим на копьё.
+  pl  Вы чувствуете себя похожим на 3 стрелы.
 You feel rather %s.  [2f338b7de275]
   m   Вы чувствуете тритона.
   f   Вы чувствуете крысу.
@@ -32673,6 +32901,36 @@ You find something posing as a statue.  [b02c934a11d9]
   =   Вы обнаруживаете, что кто-то притворялся статуей.
 You find the idea very satisfying.  [79e5848474a4]
   =   Эта мысль вам очень по душе.
+You find you must drop %s %s!  [de5e7fe145fe]
+  m   Вам приходится выронить тритона!
+  f   Вам приходится выронить крысу!
+  n   Вам приходится выронить копьё!
+  pl  Вам приходится выронить 3 стрелы!
+You find you must drop %s sword!  [97b64aa30aee]
+  m   Вам приходится выронить меч!
+  f   Вам приходится выронить меч!
+  n   Вам приходится выронить меч!
+  pl  Вам приходится выронить меч!
+You find you must drop %s weapon!  [cabd2fe2a4b4]
+  m   Вам приходится выронить оружие!
+  f   Вам приходится выронить оружие!
+  n   Вам приходится выронить оружие!
+  pl  Вам приходится выронить оружие!
+You find you must release %s %s!  [2ccef7b06e4f]
+  m   Вам приходится выпустить тритона!
+  f   Вам приходится выпустить крысу!
+  n   Вам приходится выпустить копьё!
+  pl  Вам приходится выпустить 3 стрелы!
+You find you must release %s sword!  [29645fad6322]
+  m   Вам приходится выпустить меч!
+  f   Вам приходится выпустить меч!
+  n   Вам приходится выпустить меч!
+  pl  Вам приходится выпустить меч!
+You find you must release %s weapon!  [d64713a24a4d]
+  m   Вам приходится выпустить оружие!
+  f   Вам приходится выпустить оружие!
+  n   Вам приходится выпустить оружие!
+  pl  Вам приходится выпустить оружие!
 You find yourself in %s.  [d10d76c50bbc]
   m   Вы оказываетесь в тритоне.
   f   Вы оказываетесь в крысе.
@@ -32923,6 +33181,8 @@ You gain control of your flight.  [5576cfaf449f]
   =   Вы обретаете контроль над своим полётом.
 You gain control over your movements.  [2fec60805b86]
   =   Вы обретаете контроль над своими движениями.
+You gaze at no place in particular.  [83748c944279]
+  =   Вы смотрите в никуда.
 You get expelled from %s in a blast of frost!  [dbc132059f24]
   m   Тритон исторгает вас в клубах инея!
   f   Крыса исторгает вас в клубах инея!
@@ -33499,6 +33759,8 @@ You have to outwit the Sphynx or pay her.  [22f9c8c87600]
   =   Сфинкса нужно перехитрить или заплатить ей.
 You have too many hooves to wear boots.  [86052eb1aba5]
   =   У вас слишком много копыт, чтобы носить сапоги.
+You have triggered a trap!  [9cb489ea055d]
+  =   Вы приводите в действие ловушку!
 You have trouble lifting %s  [aafa6ffcabba]
   m   Поднято с трудом: тритон
   f   Поднято с трудом: крыса
@@ -33971,6 +34233,10 @@ You know that this time you must find and destroy %s.  [0f784f5253af]
   f   Вы знаете: на этот раз вы должны найти и уничтожить крысу.
   n   Вы знаете: на этот раз вы должны найти и уничтожить копьё.
   pl  Вы знаете: на этот раз вы должны найти и уничтожить 3 стрелы.
+You lack the energy to send forth a call for help!  [f0acd4b902e8]
+  =   У вас не хватает энергии позвать на помощь!
+You lack the energy to use your special gaze!  [1eea69740d15]
+  =   У вас не хватает энергии на особый взгляд!
 You lack the strength to jump!  [a97931b9a2d6]
   =   У вас не хватает сил для прыжка!
 You land on a set of sharp iron spikes!  [f338815d988d]
@@ -34036,6 +34302,21 @@ You light %spotion.  It gives off a dim light.  [296f23fc51b3]
   f   Вы поджигаете зелье.  Оно испускает тусклый свет.
   n   Вы поджигаете зелье.  Оно испускает тусклый свет.
   pl  Вы поджигаете зелье.  Оно испускает тусклый свет.
+You lock in on %s latent telepathy.  [702c2f3e5e28]
+  m   Вы настраиваетесь на скрытую телепатию тритона.
+  f   Вы настраиваетесь на скрытую телепатию крысы.
+  n   Вы настраиваетесь на скрытую телепатию копья.
+  pl  Вы настраиваетесь на скрытую телепатию 3 стрел.
+You lock in on %s mind.  [5c18c998c803]
+  m   Вы настраиваетесь на разум тритона.
+  f   Вы настраиваетесь на разум крысы.
+  n   Вы настраиваетесь на разум копья.
+  pl  Вы настраиваетесь на разум 3 стрел.
+You lock in on %s telepathy.  [27cbf3f21fb8]
+  m   Вы настраиваетесь на телепатию тритона.
+  f   Вы настраиваетесь на телепатию крысы.
+  n   Вы настраиваетесь на телепатию копья.
+  pl  Вы настраиваетесь на телепатию 3 стрел.
 You look %s.  [1ee5f17da833]
   m   Вы выглядите тритоном.
   f   Вы выглядите крысой.
@@ -34116,6 +34397,8 @@ You make silvery scratch marks on the stone.  [da539915c11e]
   =   Вы оставляете на камне серебристые царапины.
 You make silvery scratch marks on the stones.  [1fb55d35483c]
   =   Вы оставляете на камнях серебристые царапины.
+You make the web thicker.  [b5ead4b21921]
+  =   Вы делаете паутину гуще.
 You make white scratch marks on the stone.  [ff588456f9ec]
   =   Вы оставляете на камне белые царапины.
 You make white scratch marks on the stones.  [76f8ea2c49b4]
@@ -34164,6 +34447,8 @@ You melt into the %s with your %s.  [7a15cac1ec7a]
   f   Вы выплавляете крысой надпись на крысе.
   n   Вы выплавляете копьём надпись на копье.
   pl  Вы выплавляете 3 стрелами надпись на 3 стрелах.
+You merge with your scaly armor.  [31ba37f67b3f]
+  =   Вы сливаетесь со своим чешуйчатым доспехом.
 You might be able to bribe a demon lord.  [a16e86e5da6d]
   =   Демона-лорда можно и подкупить.
 You might trick a shopkeeper if you're invisible.  [8eea77fbd1cd]
@@ -34211,6 +34496,10 @@ You multiply from %s heat!  [d6805363bc47]
   pl  Вы размножаетесь от жара 3 стрел!
 You multiply!  [202b78ee021a]
   =   Вы размножаетесь!
+You must be on solid ground to spin a web.  [9032d095a3f2]
+  =   Чтобы сплести паутину, нужно стоять на твёрдой земле.
+You must be on the ground to spin a web.  [1eae95303adf]
+  =   Чтобы сплести паутину, нужно стоять на земле.
 You must have been exercising diligently.  [affda8d7eaea]
   =   Должно быть, вы усердно упражнялись.
 You must have been leading a healthy life-style.  [c7a5699a3a2c]
@@ -34245,6 +34534,8 @@ You need to take off %s to grease %s.  [bee901eab3e5]
   f   Вам нужно снять крысу, чтобы смазать крысу.
   n   Вам нужно снять копьё, чтобы смазать копьё.
   pl  Вам нужно снять 3 стрелы, чтобы смазать 3 стрелы.
+You no longer feel sick.  [385ff2853b70]
+  =   Вы больше не чувствуете себя больным.
 You no longer have a second weapon readied.  [6b9a7aa9e3d4]
   =   У вас больше нет второго оружия наготове.
 You no longer have ammunition readied.  [90bf72594cd7]
@@ -34291,6 +34582,8 @@ You only manage to free yourself from the bear trap.  [85ddd4644109]
   =   Вам удаётся лишь высвободиться из медвежьего капкана.
 You ooze under the door.  [2dc07f4d5c9a]
   =   Вы просачиваетесь под дверью.
+You orient yourself on the web.  [502fed79c53d]
+  =   Вы осваиваетесь на паутине.
 You owe %ld %s for objects destroyed.  [de690ab26b21]
   m   Вы должны 1 тритона за уничтоженные предметы.
   f   Вы должны 3 крыс за уничтоженные предметы.
@@ -34767,6 +35060,11 @@ You release the figurine and it supposedly transforms.  [df2a714ca499]
   =   Вы выпускаете статуэтку из рук, и она, должно быть, оживает.
 You release the figurine and it transforms.  [6850769013e4]
   =   Вы выпускаете статуэтку из рук, и она оживает.
+You release web fluid inside %s.  [147355b2120e]
+  m   Вы выпускаете паутину внутри тритона.
+  f   Вы выпускаете паутину внутри крысы.
+  n   Вы выпускаете паутину внутри копья.
+  pl  Вы выпускаете паутину внутри 3 стрел.
 You relinquish %s and acquire %ld zorkmid in additional credit.  [d58475933907]
   m   Вы отдаёте тритона и получаете дополнительный кредит в 1 зоркмид.
   f   Вы отдаёте крысу и получаете дополнительный кредит в 3 зоркмида.
@@ -34840,6 +35138,11 @@ You resume your attempt at unlocking the door.  [7a88abf3f7fd]
   =   Вы снова пытаетесь отпереть дверь.
 You resume your meal.  [0e6a4be39e7c]
   =   Вы возвращаетесь к еде.
+You return to %s form!  [eee78b3b3c26]
+  m   Вы возвращаетесь в тритон облик!
+  f   Вы возвращаетесь в крыса облик!
+  n   Вы возвращаетесь в копьё облик!
+  pl  Вы возвращаетесь в 3 стрелы облик!
 You revive.  [28728488967f]
   =   Вы приходите в чувство.
 You ride to the edge of the %s.  [cfe224291178]
@@ -35247,6 +35550,8 @@ You seem unaffected.  [6b6ff5beb4f9]
   =   Похоже, на вас это не действует.
 You seem unhurt.  [e3cb1d44f99d]
   =   Вы, похоже, целы.
+You seep right through your shirt!  [8a6d240c7827]
+  =   Вы просачиваетесь прямо сквозь рубашку!
 You sense %s %s out of your pack and %s under %s!  [940f13fa497e]
   m   Вы ощущаете, как тритон выбирается из вашего рюкзака и прячется под тритоном!
   f   Вы ощущаете, как крыса выбирается из вашего рюкзака и прячется под крысой!
@@ -35333,6 +35638,23 @@ You should certainly learn about quantum mechanics.  [736296ea74d7]
   =   Вам определённо стоит изучить квантовую механику.
 You should see the other guy  [612734424cff]
   =   Видели бы вы того, другого!
+You shrink out of your %s!  [6b38be0960cc]
+  m   Вы выскальзываете из своего тритона!
+  f   Вы выскальзываете из своей крысы!
+  n   Вы выскальзываете из своего копья!
+  pl  Вы выскальзываете из своих 3 стрел!
+You shrink out of your apron!  [7034fd11efd4]
+  =   Вы выскальзываете из своего фартука!
+You shrink out of your cloak!  [5a0f3924ae25]
+  =   Вы выскальзываете из своего плаща!
+You shrink out of your robe!  [abb4fcf7223f]
+  =   Вы выскальзываете из своей мантии!
+You shrink out of your smock!  [b929516ce438]
+  =   Вы выскальзываете из своего фартука!
+You shrink out of your wrapping!  [7e347039649b]
+  =   Вы выскальзываете из своей обмотки!
+You shudder for a moment.  [af806f82a547]
+  =   Вас на миг передёргивает.
 You shudder in dread.  [10175e076c11]
   =   Вы содрогаетесь от ужаса.
 You sink below the surface and die.  [455a2bea310c]
@@ -35366,6 +35688,8 @@ You slide off the ice.  [5f8328222598]
   =   Вы съезжаете со льда.
 You slide on the ice.  [cd83f1703c49]
   =   Вы скользите по льду.
+You slip free of the buried ball and chain.  [feb93e2d8ec0]
+  =   Вы освобождаетесь от закопанного ядра с цепью.
 You slip off of %s greased %s!  [e7d3d8f22756]
   m   Вы соскальзываете со смазанного тритона тритона!
   f   Вы соскальзываете со смазанной крысы крысы!
@@ -35395,6 +35719,8 @@ You slip off the ice.  [a8a7c4d79d93]
   =   Вы поскальзываетесь, сходя со льда.
 You slip on the ice.  [fb617c84701d]
   =   Вы поскальзываетесь на льду.
+You slip out of the iron chain.  [8bde02ac584d]
+  =   Вы выскальзываете из железной цепи.
 You slip the leash around %s.  [db93ea05792e]
   m   Вы надеваете поводок на тритона.
   f   Вы надеваете поводок на крысу.
@@ -35505,6 +35831,12 @@ You speed up a bit more.  [31dcf76748ac]
   =   Вы становитесь ещё немного быстрее.
 You speed up.  [a6d5511e92ba]
   =   Вы ускоряетесь.
+You spin a web, covering up the pit.  [0de9bd5a4e78]
+  =   Вы плетёте паутину, затягивая яму.
+You spin a web, jamming the trigger.  [683424be9e8a]
+  =   Вы плетёте паутину, заклинивая спуск.
+You spin a web.  [15efeb92ddcc]
+  =   Вы плетёте паутину.
 You spiral up into %s.  [b5bda8b56dee]
   m   Вы по спирали взмываете вглубь тритона.
   f   Вы по спирали взмываете вглубь крысы.
@@ -35615,6 +35947,11 @@ You starved in The Astral Plane with %ld points,  [b52283ca278a]
   pl  Вы умерли от голода на Астральном плане, набрав 21 очко,
 You step on a set of sharp iron spikes!  [aab71d26a9b5]
   =   Вы наступаете на острые железные шипы!
+You stiffen momentarily under %s gaze.  [704ea61318ba]
+  m   Вы на миг застываете под взглядом тритона.
+  f   Вы на миг застываете под взглядом крысы.
+  n   Вы на миг застываете под взглядом копья.
+  pl  Вы на миг застываете под взглядом 3 стрел.
 You stiffen momentarily under your gaze.  [5d997f03be05]
   =   Вы на миг цепенеете под собственным взглядом.
 You stiffen momentarily.  [82664d298910]
@@ -36019,6 +36356,11 @@ You traded %s for %ld zorkmids in credit.  [1b7d568f26b7]
   f   Вы обменяли крысу на кредит в 3 зоркмида.
   n   Вы обменяли копьё на кредит в 5 зоркмидов.
   pl  Вы обменяли 3 стрелы на кредит в 21 зоркмид.
+You transform into %s.  [3d40069ec694]
+  m   Вы превращаетесь в тритона.
+  f   Вы превращаетесь в крысу.
+  n   Вы превращаетесь в копьё.
+  pl  Вы превращаетесь в 3 стрелы.
 You tremble and get dizzy...  [63957929f0da]
   =   Вас шатает, кружится голова...
 You tremble and your vision blurs...  [a3e0aea07187]
@@ -36088,6 +36430,11 @@ You turn in the direction of %s.  As his earthly body begins\nto vanish before y
   f   Вы оборачиваетесь к крысе.  Его земное тело начинает таять у вас на\nглазах, и вы слышите проклятие:\n\n    «Тебе никогда от меня не избавиться, крыса!  Я найду тебя, куда бы ты\n    ни ушёл, и верну то, что принадлежит мне по праву.»
   n   Вы оборачиваетесь к копью.  Его земное тело начинает таять у вас на\nглазах, и вы слышите проклятие:\n\n    «Тебе никогда от меня не избавиться, копьё!  Я найду тебя, куда бы ты\n    ни ушёл, и верну то, что принадлежит мне по праву.»
   pl  Вы оборачиваетесь к 3 стрелам.  Его земное тело начинает таять у вас на\nглазах, и вы слышите проклятие:\n\n    «Тебе никогда от меня не избавиться, 3 стрелы!  Я найду тебя, куда бы ты\n    ни ушёл, и верну то, что принадлежит мне по праву.»
+You turn into %s!  [f805e96c0da8]
+  m   Вы превращаетесь в тритона!
+  f   Вы превращаетесь в крысу!
+  n   Вы превращаетесь в копьё!
+  pl  Вы превращаетесь в 3 стрелы!
 You turn to stone!  [6b8ad57e0351]
   =   Вы превращаетесь в камень!
 You turn to stone.  [c1499efeef71]
@@ -36193,6 +36540,15 @@ You walk very quietly.  [0ed4615ad724]
   =   Вы ступаете очень тихо.
 You want to regain strength?  Two levels ahead is a guesthouse!  [e017fb43828b]
   =   Хотите восстановить силы?  Через два уровня будет гостиница!
+You web over the %s.  [ea7d46a4b915]
+  m   Вы затягиваете паутиной тритона.
+  f   Вы затягиваете паутиной крысу.
+  n   Вы затягиваете паутиной копьё.
+  pl  Вы затягиваете паутиной 3 стрелы.
+You web over the hole.  [f4829a3fc619]
+  =   Вы затягиваете паутиной дыру.
+You web over the trap door.  [1369ee0cff86]
+  =   Вы затягиваете паутиной люк.
 You were crushed beyond the confines of the dungeon with %ld point,  [c15cf5032c18]
   m   Вы были раздавлены за пределами подземелья, набрав 1 очко,
   f   Вы были раздавлены за пределами подземелья, набрав 3 очка,
@@ -36850,6 +37206,11 @@ Your %s begin to tingle.  [dd04e1b8006d]
   f   У вас начинает покалывать крысу.
   n   У вас начинает покалывать копьё.
   pl  У вас начинает покалывать 3 стрелы.
+Your %s begins constricting your %s!  [90dab98746fe]
+  m   Ваш тритон начинает сдавливать вам тритона!
+  f   Ваша крыса начинает сдавливать вам крысу!
+  n   Ваше копьё начинает сдавливать вам копьё!
+  pl  Ваши 3 стрелы начинают сдавливать вам 3 стрелы!
 Your %s corrode away!  [6e8422f80525]
   m   Ваш тритон разъедается без остатка!
   f   Ваша крыса разъедается без остатка!
@@ -36950,6 +37311,36 @@ Your %s fades.  [fa4efdfd81f5]
   f   Ваша крыса выцветает.
   n   Ваше копьё выцветает.
   pl  Ваши 3 стрелы выцветают.
+Your %s fail!  [733418c49dbc]
+  m   Ваш тритон не срабатывает!
+  f   Ваша крыса не срабатывает!
+  n   Ваше копьё не срабатывает!
+  pl  Ваши 3 стрелы не срабатывают!
+Your %s fails!  [2f77b42a8d80]
+  m   Ваш тритон не срабатывает!
+  f   Ваша крыса не срабатывает!
+  n   Ваше копьё не срабатывает!
+  pl  Ваши 3 стрелы не срабатывают!
+Your %s fall off!  [bc273e61302c]
+  m   Ваш тритон спадает!
+  f   Ваша крыса спадает!
+  n   Ваше копьё спадает!
+  pl  Ваши 3 стрелы спадают!
+Your %s falls off!  [cf06a3f0fa0e]
+  m   Ваш тритон спадает!
+  f   Ваша крыса спадает!
+  n   Ваше копьё спадает!
+  pl  Ваши 3 стрелы спадают!
+Your %s falls to the %s!  [b3a96035aeab]
+  m   Ваш тритон падает на тритона!
+  f   Ваша крыса падает на крысу!
+  n   Ваше копьё падает на копьё!
+  pl  Ваши 3 стрелы падают на 3 стрелы!
+Your %s falls, unsupported!  [fa0dee60291f]
+  m   Ваш тритон падает, лишившись опоры!
+  f   Ваша крыса падает, лишившись опоры!
+  n   Ваше копьё падает, лишившись опоры!
+  pl  Ваши 3 стрелы падают, лишившись опоры!
 Your %s feel better and you can hear again.  [f2f22d430116]
   m   Вашему тритону лучше, и вы снова слышите.
   f   Вашей крысе лучше, и вы снова слышите.
@@ -37230,6 +37621,11 @@ Your %s pass harmlessly through %s.  [eeade6780f48]
   f   Ваша крыса безвредно проходит сквозь крысу.
   n   Ваше копьё безвредно проходит сквозь копьё.
   pl  Ваши 3 стрелы безвредно проходят сквозь 3 стрелы.
+Your %s reverts to scales as you merge with them.  [d62cdc26d3c8]
+  m   Ваш тритон снова становится чешуёй, и вы сливаетесь с ней.
+  f   Ваша крыса снова становится чешуёй, и вы сливаетесь с ней.
+  n   Ваше копьё снова становится чешуёй, и вы сливаетесь с ней.
+  pl  Ваши 3 стрелы снова становятся чешуёй, и вы сливаетесь с ней.
 Your %s rot away!  [c7c29a5a375c]
   m   Ваш тритон сгнивает без остатка!
   f   Ваша крыса сгнивает без остатка!
@@ -37405,6 +37801,11 @@ Your %s spins in bewilderment.  [7055904707e5]
   f   У вас от растерянности кружится крыса.
   n   У вас от растерянности кружится копьё.
   pl  У вас от растерянности кружатся 3 стрелы.
+Your %s still constricts your %s!  [b9605647c8cf]
+  m   Ваш тритон по-прежнему сдавливает вам тритона!
+  f   Ваша крыса по-прежнему сдавливает вам крысу!
+  n   Ваше копьё по-прежнему сдавливает вам копьё!
+  pl  Ваши 3 стрелы по-прежнему сдавливают вам 3 стрелы!
 Your %s sting!  [698bfcfc21bd]
   m   У вас щиплет тритона!
   f   У вас щиплет крысу!
@@ -37440,6 +37841,11 @@ Your %s sword hums ominously!  [92b54a5895c5]
   f   Ваш крыса меч зловеще гудит!
   n   Ваш копьё меч зловеще гудит!
   pl  Ваш 3 стрелы меч зловеще гудит!
+Your %s tears apart!  [6f996537e8c8]
+  m   Ваш тритон разрывается!
+  f   Ваша крыса разрывается!
+  n   Ваше копьё разрывается!
+  pl  Ваши 3 стрелы разрываются!
 Your %s tingle even more sharply.  [30eab81d25a1]
   m   У вас ещё острее покалывает тритона.
   f   У вас ещё острее покалывает крысу.
@@ -37501,6 +37907,12 @@ Your amulet vanishes!  [c5742c6bc87c]
   =   Ваш амулет исчезает!
 Your apron crumbles and turns to dust!  [21592e621a36]
   =   Ваш фартук истлевает и рассыпается в прах!
+Your apron falls, unsupported!  [dfc288848503]
+  =   Ваш фартук падает, лишившись опоры!
+Your apron tears apart!  [46c217f66ab2]
+  =   Ваш фартук разрывается!
+Your armor falls around you!  [a7baeb35b33a]
+  =   Ваши доспехи спадают с вас!
 Your armor is rather cumbersome...  [ae24a0f0bc74]
   =   Ваши доспехи изрядно стесняют движения...
 Your attack passes harmlessly through %s.  [6b1d464a32fd]
@@ -37572,12 +37984,20 @@ Your body takes on a normal transparency...  [d0349f2e3571]
   =   Ваше тело обретает обычную прозрачность...
 Your body takes on a strange transparency...  [58173b194698]
   =   Ваше тело обретает странную прозрачность...
+Your body transforms, but there is still slime on you.  [2cbe578844d6]
+  =   Ваше тело меняется, но слизь на вас осталась.
 Your bolt reveals a secret door.  [362eb42cb4eb]
   =   Ваш луч обнаруживает потайную дверь.
 Your bones itch.  [3f271c747c6c]
   =   У вас чешутся кости.
+Your boots are pushed off your feet!  [8c99adb595a2]
+  =   Ваши сапоги стаскивает с ног!
 Your boots disintegrate!  [945dbd89ad1a]
   =   Ваши сапоги рассыпаются!
+Your boots fall away!  [9a0c65bb2a39]
+  =   Ваши сапоги спадают!
+Your boots slide off your feet!  [1c27e6898be9]
+  =   Ваши сапоги соскальзывают с ног!
 Your brain is eaten!  [51b5fe733087]
   =   Ваш мозг съеден!
 Your brain is on fire!  [9cde468851f8]
@@ -37590,6 +38010,10 @@ Your chain disappears.  [e66f45d32f75]
   =   Ваша цепь исчезает.
 Your cloak crumbles and turns to dust!  [cc2efe40f42d]
   =   Ваш плащ истлевает и рассыпается в прах!
+Your cloak falls, unsupported!  [02925bb915d1]
+  =   Ваш плащ падает, лишившись опоры!
+Your cloak tears apart!  [096e736d13a0]
+  =   Ваш плащ разрывается!
 Your concentration falters from carrying so much.  [f72c6080174f]
   =   Вам не удаётся сосредоточиться под такой тяжестью.
 Your concentration falters while carrying so much stuff.  [9dc235457f08]
@@ -37692,6 +38116,11 @@ Your gauntlets are too slippery to take off.  [e27e212db15e]
   =   Ваши рукавицы слишком скользкие, чтобы их снять.
 Your gauntlets vanish!  [62249f3c284b]
   =   Ваши рукавицы исчезают!
+Your gaze confuses %s!  [3cbbd9813f82]
+  m   Ваш взгляд сбивает с толку тритона!
+  f   Ваш взгляд сбивает с толку крысу!
+  n   Ваш взгляд сбивает с толку копьё!
+  pl  Ваш взгляд сбивает с толку 3 стрелы!
 Your gloves are no longer slippery.  [66d7e197269b]
   =   Ваши перчатки больше не скользкие.
 Your gloves are not affected by corrosion.  [bf723bd0a833]
@@ -37715,6 +38144,11 @@ Your hat blocks the attack to your head.  [fea86ae45c4c]
   =   Ваша шляпа защищает голову от атаки.
 Your hat does not protect you.  [80f686a3b0b8]
   =   Ваша шляпа вас не защищает.
+Your hat falls to the %s!  [4182da02f085]
+  m   Ваша шляпа падает на тритона!
+  f   Ваша шляпа падает на крысу!
+  n   Ваша шляпа падает на копьё!
+  pl  Ваша шляпа падает на 3 стрелы!
 Your hat turns to dust and is blown away!  [bea1e28773e8]
   =   Ваша шляпа обращается в прах и развеивается по ветру!
 Your head butt passes harmlessly through %s.  [504474dbde26]
@@ -37731,6 +38165,11 @@ Your health currently feels amplified!  [56f22817f5e5]
   =   Ваше здоровье будто подзарядилось!
 Your helm blocks the attack to your head.  [25f7bb61519a]
   =   Ваш шлем защищает голову от атаки.
+Your helm falls to the %s!  [90fa7c8299ba]
+  m   Ваш шлем падает на тритона!
+  f   Ваш шлем падает на крысу!
+  n   Ваш шлем падает на копьё!
+  pl  Ваш шлем падает на 3 стрелы!
 Your helm turns to dust and is blown away!  [bf8c808b5124]
   =   Ваш шлем обращается в прах и развеивается по ветру!
 Your help is urgently needed at %s!  [758e7a572f8a]
@@ -37738,6 +38177,26 @@ Your help is urgently needed at %s!  [758e7a572f8a]
   f   Ваша помощь срочно нужна в крысе!
   n   Ваша помощь срочно нужна в копье!
   pl  Ваша помощь срочно нужна в 3 стрелах!
+Your horn pierce through %s.  [ff513c897bc2]
+  m   Ваш рог пронзает тритона.
+  f   Ваш рог пронзает крысу.
+  n   Ваш рог пронзает копьё.
+  pl  Ваш рог пронзает 3 стрелы.
+Your horn pierces through %s.  [880b21bbb673]
+  m   Ваш рог пронзает тритона.
+  f   Ваш рог пронзает крысу.
+  n   Ваш рог пронзает копьё.
+  pl  Ваш рог пронзает 3 стрелы.
+Your horns pierce through %s.  [af80434bd6c6]
+  m   Ваши рога пронзают тритона.
+  f   Ваши рога пронзают крысу.
+  n   Ваши рога пронзают копьё.
+  pl  Ваши рога пронзают 3 стрелы.
+Your horns pierces through %s.  [2c6ef42c7681]
+  m   Ваши рога пронзают тритона.
+  f   Ваши рога пронзают крысу.
+  n   Ваши рога пронзают копьё.
+  pl  Ваши рога пронзают 3 стрелы.
 Your hug passes harmlessly through %s.  [6d92eeddf8a0]
   m   Ваши объятия безвредно проходят сквозь тритона.
   f   Ваши объятия безвредно проходят сквозь крысу.
@@ -37852,6 +38311,10 @@ Your muscles won't obey you!  [41e4d8246184]
   =   Мышцы вас не слушаются!
 Your muscles won't obey you.  [7fc553e1e99f]
   =   Мышцы вас не слушаются.
+Your new form doesn't seem healthy enough to survive.  [4d12d75d736d]
+  =   Ваш новый облик, похоже, недостаточно крепок, чтобы выжить.
+Your old form was not healthy enough to survive.  [b2fc99709a3e]
+  =   Ваш прежний облик был недостаточно крепок, чтобы выжить.
 Your other %s also slip from your left %s.  [bae015991a00]
   m   Второй тритон тоже выскальзывает у вас из левого тритона.
   f   Вторая крыса тоже выскальзывает у вас из левой крысы.
@@ -37954,6 +38417,10 @@ Your rings slip off your %s.  [5d301f8d39ab]
   pl  Ваши кольца соскальзывают с 3 стрел.
 Your robe crumbles and turns to dust!  [8cb822ba5f42]
   =   Ваша мантия истлевает и рассыпается в прах!
+Your robe falls, unsupported!  [deba1ea4c1fe]
+  =   Ваша мантия падает, лишившись опоры!
+Your robe tears apart!  [fdb8e9c275ef]
+  =   Ваша мантия разрывается!
 Your sacrifice collapses into a cloud of dancing particles and fades away!  [6601c2d92f18]
   =   Ваша жертва рассыпается облаком пляшущих частиц и тает в воздухе!
 Your sacrifice disappears!  [574b0c2c67e7]
@@ -38001,6 +38468,8 @@ Your shirt is obscured by %ssuit.  [9a63621ca22e]
   f   Вашу рубашку скрывает доспех.
   n   Вашу рубашку скрывает доспех.
   pl  Вашу рубашку скрывает доспех.
+Your shirt rips to shreds!  [3b60902c70f2]
+  =   Ваша рубашка рвётся в клочья!
 Your shoes disintegrate!  [a46f200ef392]
   =   Ваши башмаки рассыпаются!
 Your sickness feels worse.  [87b008a67ba7]
@@ -38017,8 +38486,14 @@ Your skin glows then fades.  [2403341d0022]
   =   Ваша кожа вспыхивает светом и гаснет.
 Your skin itches.  [f83816089afd]
   =   У вас чешется кожа.
+Your skin returns to its original form.  [99f371942ffc]
+  =   Ваша кожа возвращается к прежнему виду.
 Your smock crumbles and turns to dust!  [2b681a22e418]
   =   Ваш фартук истлевает и рассыпается в прах!
+Your smock falls, unsupported!  [ee91281ccdb5]
+  =   Ваш фартук падает, лишившись опоры!
+Your smock tears apart!  [1e4d99b40c9c]
+  =   Ваш фартук разрывается!
 Your smooth shield crumbles away!  [459881c57f7e]
   =   Ваш гладкий щит крошится и рассыпается!
 Your spell reveals a secret door.  [bca73f3482b8]
@@ -38112,8 +38587,23 @@ Your vision seems to flatten for a moment but is normal now.  [4678f3db3242]
   =   Ваше зрение на миг будто становится плоским, но теперь оно в норме.
 Your weapon feels warm for a moment.  [74198aa786c8]
   =   Ваше оружие на миг теплеет.
+Your web fails to impede access to the %s.  [756775f3441e]
+  m   Ваша паутина не преграждает путь к тритону.
+  f   Ваша паутина не преграждает путь к крысе.
+  n   Ваша паутина не преграждает путь к копью.
+  pl  Ваша паутина не преграждает путь к 3 стрелам.
+Your web fails to impede access to the ladder.  [f69f00c9986a]
+  =   Ваша паутина не преграждает путь к приставной лестнице.
+Your web fails to impede access to the stairs.  [f6597bc268ee]
+  =   Ваша паутина не преграждает путь к лестнице.
+Your webbing vanishes!  [018c22a0d9e6]
+  =   Ваша паутина исчезает!
 Your wrapping crumbles and turns to dust!  [13bd6e06e380]
   =   Ваша обмотка истлевает и рассыпается в прах!
+Your wrapping falls, unsupported!  [4d867a08e66c]
+  =   Ваша обмотка падает, лишившись опоры!
+Your wrapping tears apart!  [42db3c178722]
+  =   Ваша обмотка разрывается!
 Yow!  The %s stares back!  [88be9ad5cce7]
   m   Ого!  Тритон смотрит на вас в ответ!
   f   Ого!  Крыса смотрит на вас в ответ!

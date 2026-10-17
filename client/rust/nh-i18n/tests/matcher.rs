@@ -1009,6 +1009,36 @@ fn a_skill_that_can_be_advanced() {
     );
 }
 
+#[test]
+fn the_hero_changes_form() {
+    // polyself.c: the new form in its case, the race's form agreeing
+    let t = translator();
+    for (en, ru) in [
+        ("You turn into a xorn!", "Вы превращаетесь в ксорна!"),
+        ("You turn into a newt!", "Вы превращаетесь в тритона!"),
+        (
+            "You return to human form!",
+            "Вы возвращаетесь в человеческий облик!",
+        ),
+        (
+            "You return to elven form!",
+            "Вы возвращаетесь в эльфийский облик!",
+        ),
+        ("Your cloak tears apart!", "Ваш плащ разрывается!"),
+        (
+            "You can't even move a handspan with this load!",
+            "С такой ношей вы не можете сдвинуться ни на пядь!",
+        ),
+    ] {
+        let out = t.message(None, &[], en);
+        assert_eq!(
+            (out.text.as_str(), out.status),
+            (ru, Status::Translated),
+            "{en}"
+        );
+    }
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {

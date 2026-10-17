@@ -1085,3 +1085,626 @@ ru = "Вы чувствуете, что могли бы стать опасне�
 [24e543e41901]
 en = "You dream that you feel you could be more dangerous!"
 ru = "Вам снится, что вы могли бы стать опаснее!"
+
+# polyself.c (qa-2's pass 5): the hero changing form, what the new form
+# outgrows, and the #monster abilities; pickup.c's load too heavy to move
+
+[f805e96c0da8]
+en = "You turn into %s!"
+ru = "Вы превращаетесь в {1:acc}!"
+
+[3d40069ec694]
+en = "You transform into %s."
+ru = "Вы превращаетесь в {1:acc}."
+
+[1bd0d368a4dc]
+en = "You feel like %s!"
+ru = "Вы чувствуете себя {hero:gender|обновлённым|обновлённой}!{1:skip}"
+
+[8b27bf264b7f]
+en = "You feel like a new %s!"
+ru = "Вы чувствуете себя {1:gender|новым|новой|новым|новыми} {1:ins}!"
+
+[eee78b3b3c26]
+en = "You return to %s form!"
+ru = "Вы возвращаетесь в {1:m} облик!"
+
+[5c4f9299bfa5]
+en = "You feel rather %s-ish."
+ru = "Вы чувствуете себя {hero:gender|похожим|похожей} на {1:acc}."
+
+[a1395adb1a99]
+en = "You dream that you feel rather %s-ish."
+ru = "Вам снится, что вы {hero:gender|похожи|похожи} на {1:acc}."
+
+[4d12d75d736d]
+en = "Your new form doesn't seem healthy enough to survive."
+ru = "Ваш новый облик, похоже, недостаточно крепок, чтобы выжить."
+
+[b2fc99709a3e]
+en = "Your old form was not healthy enough to survive."
+ru = "Ваш прежний облик был недостаточно крепок, чтобы выжить."
+
+[2cbe578844d6]
+en = "Your body transforms, but there is still slime on you."
+ru = "Ваше тело меняется, но слизь на вас осталась."
+
+[5350a6251e15]
+en = "You fail to transform!"
+ru = "Вам не удаётся превратиться!"
+
+[af806f82a547]
+en = "You shudder for a moment."
+ru = "Вас на миг передёргивает."
+
+[65343332efe6]
+en = "You can't polymorph into any of those."
+ru = "Вы не можете превратиться ни в одного из них."
+
+[0a04d99c1222]
+en = "You can't polymorph into %s."
+ru = "Вы не можете превратиться в {1:acc}."
+
+[31ba37f67b3f]
+en = "You merge with your scaly armor."
+ru = "Вы сливаетесь со своим чешуйчатым доспехом."
+
+[d62cdc26d3c8]
+en = "Your %s reverts to scales as you merge with them."
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} снова {1:num|становится|становятся} чешуёй, и вы сливаетесь с ней."
+
+[385ff2853b70]
+en = "You no longer feel sick."
+ru = "Вы больше не чувствуете себя {hero:gender|больным|больной}."
+
+[6cdaae38f853]
+en = "%s can no longer contain you."
+ru = "{1} больше не {1:num|может|могут} вас удерживать."
+
+[9f4efe55414a]
+en = "%s loses its grip on you."
+ru = "{1} {1:num|выпускает|выпускают} вас."
+
+[694039df35c8]
+en = "No longer petrify-resistant, you touch %s."
+ru = "Утратив защиту от окаменения, вы касаетесь {1:gen}."
+
+[8d6bb777eb1d]
+en = "The rock seems to no longer trap you."
+ru = "Похоже, камень вас больше не держит."
+
+[6e8ad1d30078]
+en = "The buried ball is no longer bound to you."
+ru = "Закопанное ядро больше к вам не приковано."
+
+[c9728bcd213a]
+en = "The %s now feels soothing."
+ru = "{1} теперь {1:num|кажется|кажутся} {1:gender|приятным|приятной|приятным|приятными}."
+
+[8bde02ac584d]
+en = "You slip out of the iron chain."
+ru = "Вы выскальзываете из железной цепи."
+
+[feb93e2d8ec0]
+en = "You slip free of the buried ball and chain."
+ru = "Вы освобождаетесь от закопанного ядра с цепью."
+
+[17ca588afb8a]
+en = "You are no longer stuck in the %s."
+ru = "Вы больше не застряли в {1:prep}."
+
+[a3a9bc00bc7c]
+en = "You are no longer stuck in the bear trap."
+ru = "Вы больше не застряли в медвежьем капкане."
+
+[b68c44ce71e5]
+en = "You are no longer stuck in the web."
+ru = "Вы больше не застряли в паутине."
+
+[502fed79c53d]
+en = "You orient yourself on the web."
+ru = "Вы осваиваетесь на паутине."
+
+[90dab98746fe]
+en = "Your %s begins constricting your %s!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|начинает|начинают} сдавливать вам {2:acc}!"
+
+[b9605647c8cf]
+en = "Your %s still constricts your %s!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} по-прежнему {1:num|сдавливает|сдавливают} вам {2:acc}!"
+
+[41201bf8487e]
+en = "You are no longer being strangled."
+ru = "Вас больше не душит."
+
+[46c217f66ab2]
+en = "Your apron tears apart!"
+ru = "Ваш фартук разрывается!"
+
+[c0b1698e8da2]
+en = "The knot on your apron is pulled apart!"
+ru = "Узел на вашем фартуке развязывается!"
+
+[8b1654f5fbc1]
+en = "The clasp on your apron breaks open!"
+ru = "Застёжка на вашем фартуке расстёгивается!"
+
+[dfc288848503]
+en = "Your apron falls, unsupported!"
+ru = "Ваш фартук падает, лишившись опоры!"
+
+[7034fd11efd4]
+en = "You shrink out of your apron!"
+ru = "Вы выскальзываете из своего фартука!"
+
+[096e736d13a0]
+en = "Your cloak tears apart!"
+ru = "Ваш плащ разрывается!"
+
+[1f06949054f1]
+en = "The knot on your cloak is pulled apart!"
+ru = "Узел на вашем плаще развязывается!"
+
+[cabeeab68ed8]
+en = "The clasp on your cloak breaks open!"
+ru = "Застёжка на вашем плаще расстёгивается!"
+
+[02925bb915d1]
+en = "Your cloak falls, unsupported!"
+ru = "Ваш плащ падает, лишившись опоры!"
+
+[5a0f3924ae25]
+en = "You shrink out of your cloak!"
+ru = "Вы выскальзываете из своего плаща!"
+
+[fdb8e9c275ef]
+en = "Your robe tears apart!"
+ru = "Ваша мантия разрывается!"
+
+[959940e9b001]
+en = "The knot on your robe is pulled apart!"
+ru = "Узел на вашей мантии развязывается!"
+
+[49ce94a4d058]
+en = "The clasp on your robe breaks open!"
+ru = "Застёжка на вашей мантии расстёгивается!"
+
+[deba1ea4c1fe]
+en = "Your robe falls, unsupported!"
+ru = "Ваша мантия падает, лишившись опоры!"
+
+[abb4fcf7223f]
+en = "You shrink out of your robe!"
+ru = "Вы выскальзываете из своей мантии!"
+
+[1e4d99b40c9c]
+en = "Your smock tears apart!"
+ru = "Ваш фартук разрывается!"
+
+[f0b61c2969d2]
+en = "The knot on your smock is pulled apart!"
+ru = "Узел на вашем фартуке развязывается!"
+
+[1e7f8f97170d]
+en = "The clasp on your smock breaks open!"
+ru = "Застёжка на вашем фартуке расстёгивается!"
+
+[ee91281ccdb5]
+en = "Your smock falls, unsupported!"
+ru = "Ваш фартук падает, лишившись опоры!"
+
+[b929516ce438]
+en = "You shrink out of your smock!"
+ru = "Вы выскальзываете из своего фартука!"
+
+[42db3c178722]
+en = "Your wrapping tears apart!"
+ru = "Ваша обмотка разрывается!"
+
+[ed629ad05ac2]
+en = "The knot on your wrapping is pulled apart!"
+ru = "Узел на вашей обмотке развязывается!"
+
+[885794b32f20]
+en = "The clasp on your wrapping breaks open!"
+ru = "Застёжка на вашей обмотке расстёгивается!"
+
+[4d867a08e66c]
+en = "Your wrapping falls, unsupported!"
+ru = "Ваша обмотка падает, лишившись опоры!"
+
+[7e347039649b]
+en = "You shrink out of your wrapping!"
+ru = "Вы выскальзываете из своей обмотки!"
+
+[6f996537e8c8]
+en = "Your %s tears apart!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|разрывается|разрываются}!"
+
+[de81040a2a00]
+en = "The knot on your %s is pulled apart!"
+ru = "Узел на {1:gender|вашем|вашей|вашем|ваших} {1:prep} развязывается!"
+
+[853d69cb2a90]
+en = "The clasp on your %s breaks open!"
+ru = "Застёжка на {1:gender|вашем|вашей|вашем|ваших} {1:prep} расстёгивается!"
+
+[fa0dee60291f]
+en = "Your %s falls, unsupported!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|падает|падают}, лишившись опоры!"
+
+[6b38be0960cc]
+en = "You shrink out of your %s!"
+ru = "Вы выскальзываете из {1:gender|своего|своей|своего|своих} {1:gen}!"
+
+[649a830d2aff]
+en = "You break out of your armor!"
+ru = "Вы вырываетесь из своих доспехов!"
+
+[3b60902c70f2]
+en = "Your shirt rips to shreds!"
+ru = "Ваша рубашка рвётся в клочья!"
+
+[a7baeb35b33a]
+en = "Your armor falls around you!"
+ru = "Ваши доспехи спадают с вас!"
+
+[8a6d240c7827]
+en = "You seep right through your shirt!"
+ru = "Вы просачиваетесь прямо сквозь рубашку!"
+
+[efa0a0f208df]
+en = "You become much too small for your shirt!"
+ru = "Вы становитесь слишком {hero:gender|маленьким|маленькой} для своей рубашки!"
+
+[880b21bbb673]
+en = "Your horn pierces through %s."
+ru = "Ваш рог пронзает {1:acc}."
+
+[ff513c897bc2]
+en = "Your horn pierce through %s."
+ru = "Ваш рог пронзает {1:acc}."
+
+[af80434bd6c6]
+en = "Your horns pierce through %s."
+ru = "Ваши рога пронзают {1:acc}."
+
+[2c6ef42c7681]
+en = "Your horns pierces through %s."
+ru = "Ваши рога пронзают {1:acc}."
+
+[4182da02f085]
+en = "Your hat falls to the %s!"
+ru = "Ваша шляпа падает на {1:acc}!"
+
+[90fa7c8299ba]
+en = "Your helm falls to the %s!"
+ru = "Ваш шлем падает на {1:acc}!"
+
+[b3a96035aeab]
+en = "Your %s falls to the %s!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|падает|падают} на {2:acc}!"
+
+[76a3172b870e]
+en = "You drop your gloves and weapon!"
+ru = "Вы роняете перчатки и оружие!"
+
+[a1f1a321fe05]
+en = "You drop your gloves!"
+ru = "Вы роняете перчатки!"
+
+[8703f4ae9a9b]
+en = "You can no longer hold your shield!"
+ru = "Вы больше не можете держать щит!"
+
+[9a0c65bb2a39]
+en = "Your boots fall away!"
+ru = "Ваши сапоги спадают!"
+
+[8c99adb595a2]
+en = "Your boots are pushed off your feet!"
+ru = "Ваши сапоги стаскивает с ног!"
+
+[1c27e6898be9]
+en = "Your boots slide off your feet!"
+ru = "Ваши сапоги соскальзывают с ног!"
+
+[cf06a3f0fa0e]
+en = "Your %s falls off!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|спадает|спадают}!"
+
+[bc273e61302c]
+en = "Your %s fall off!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:num|спадает|спадают}!"
+
+[97b64aa30aee]
+en = "You find you must drop %s sword!"
+ru = "Вам приходится выронить меч!{1:skip}"
+
+[cabd2fe2a4b4]
+en = "You find you must drop %s weapon!"
+ru = "Вам приходится выронить оружие!{1:skip}"
+
+[29645fad6322]
+en = "You find you must release %s sword!"
+ru = "Вам приходится выпустить меч!{1:skip}"
+
+[d64713a24a4d]
+en = "You find you must release %s weapon!"
+ru = "Вам приходится выпустить оружие!{1:skip}"
+
+[de5e7fe145fe]
+en = "You find you must drop %s %s!"
+ru = "Вам приходится выронить {2:acc}!{1:skip}"
+
+[2ccef7b06e4f]
+en = "You find you must release %s %s!"
+ru = "Вам приходится выпустить {2:acc}!{1:skip}"
+
+[2f77b42a8d80]
+en = "Your %s fails!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} не {1:num|срабатывает|срабатывают}!"
+
+[733418c49dbc]
+en = "Your %s fail!"
+ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} не {1:num|срабатывает|срабатывают}!"
+
+[bfa3513efb2e]
+en = "You and %s return gently to the %s."
+ru = "Вы и {1} мягко опускаетесь на {2:acc}."
+
+[ab4d10649dbd]
+en = "The ball and chain are buried firmly in the %s."
+ru = "Ядро с цепью прочно засели в {1:prep}."
+
+[37d21438a4aa]
+en = "You are not chained to anything!"
+ru = "Вы ни к чему не прикованы!"
+
+[9032d095a3f2]
+en = "You must be on solid ground to spin a web."
+ru = "Чтобы сплести паутину, нужно стоять на твёрдой земле."
+
+[1eae95303adf]
+en = "You must be on the ground to spin a web."
+ru = "Чтобы сплести паутину, нужно стоять на земле."
+
+[147355b2120e]
+en = "You release web fluid inside %s."
+ru = "Вы выпускаете паутину внутри {1:gen}."
+
+[1eaa4dd13b53]
+en = "The web freezes, shatters and is swept away!"
+ru = "Паутина замерзает, рассыпается, и её уносит прочь!"
+
+[24543bbee5d4]
+en = "The web fries and is swept away!"
+ru = "Паутина сгорает, и её уносит прочь!"
+
+[923770ca087e]
+en = "The web ignites and is swept away!"
+ru = "Паутина вспыхивает, и её уносит прочь!"
+
+[b7babca669b6]
+en = "The web is swept away!"
+ru = "Паутину уносит прочь!"
+
+[44048e6c95c7]
+en = "The web dissolves into %s."
+ru = "Паутина растворяется в {1:prep}."
+
+[23ffd7f53a9d]
+en = "You cannot spin webs while stuck in a trap."
+ru = "Нельзя плести паутину, застряв в ловушке."
+
+[0de9bd5a4e78]
+en = "You spin a web, covering up the pit."
+ru = "Вы плетёте паутину, затягивая яму."
+
+[45cff1385362]
+en = "The squeaky board is muffled."
+ru = "Скрипучая доска заглушена."
+
+[018c22a0d9e6]
+en = "Your webbing vanishes!"
+ru = "Ваша паутина исчезает!"
+
+[b5ead4b21921]
+en = "You make the web thicker."
+ru = "Вы делаете паутину гуще."
+
+[ea7d46a4b915]
+en = "You web over the %s."
+ru = "Вы затягиваете паутиной {1:acc}."
+
+[f4829a3fc619]
+en = "You web over the hole."
+ru = "Вы затягиваете паутиной дыру."
+
+[1369ee0cff86]
+en = "You web over the trap door."
+ru = "Вы затягиваете паутиной люк."
+
+[683424be9e8a]
+en = "You spin a web, jamming the trigger."
+ru = "Вы плетёте паутину, заклинивая спуск."
+
+[9cb489ea055d]
+en = "You have triggered a trap!"
+ru = "Вы приводите в действие ловушку!"
+
+[756775f3441e]
+en = "Your web fails to impede access to the %s."
+ru = "Ваша паутина не преграждает путь к {1:dat}."
+
+[f69f00c9986a]
+en = "Your web fails to impede access to the ladder."
+ru = "Ваша паутина не преграждает путь к приставной лестнице."
+
+[f6597bc268ee]
+en = "Your web fails to impede access to the stairs."
+ru = "Ваша паутина не преграждает путь к лестнице."
+
+[15efeb92ddcc]
+en = "You spin a web."
+ru = "Вы плетёте паутину."
+
+[f0acd4b902e8]
+en = "You lack the energy to send forth a call for help!"
+ru = "У вас не хватает энергии позвать на помощь!"
+
+[9c15c98460b4]
+en = "You call upon your brethren for help!"
+ru = "Вы зовёте сородичей на помощь!"
+
+[98f0f1c39b3c]
+en = "But none arrive."
+ru = "Но никто не приходит."
+
+[67381a04b80a]
+en = "You can't see anything to gaze at."
+ru = "Вы не видите ничего, на что можно взглянуть."
+
+[eec5b3b217d6]
+en = "You can't gaze at anything you can see."
+ru = "Вы не можете взглянуть ни на что из того, что видите."
+
+[1eea69740d15]
+en = "You lack the energy to use your special gaze!"
+ru = "У вас не хватает энергии на особый взгляд!"
+
+[f052aaa072fd]
+en = "%s seems not to notice your gaze."
+ru = "{1}, похоже, не {1:num|замечает|замечают} вашего взгляда."
+
+[09b9fddc671e]
+en = "You can't see where to gaze at %s."
+ru = "Вы не видите, куда смотреть, чтобы взглянуть на {1:acc}."
+
+[b10e3c4237d3]
+en = "You avoid gazing at %s."
+ru = "Вы избегаете смотреть на {1:acc}."
+
+[3cbbd9813f82]
+en = "Your gaze confuses %s!"
+ru = "Ваш взгляд сбивает с толку {1:acc}!"
+
+[1addf8507cd7]
+en = "%s is getting more and more confused."
+ru = "{1} всё больше {1:num|теряется|теряются}."
+
+[03bf4d5c0ead]
+en = "You attack %s with a fiery gaze!"
+ru = "Вы атакуете {1:acc} огненным взглядом!"
+
+[c9f7f997a03f]
+en = "The fire doesn't burn %s!"
+ru = "Огонь не обжигает {1:acc}!"
+
+[704ea61318ba]
+en = "You stiffen momentarily under %s gaze."
+ru = "Вы на миг застываете под взглядом {1:gen}."
+
+[970b319f0dff]
+en = "Gazing at the awake %s is not a very good idea."
+ru = "Смотреть на {1:gender|бодрствующего|бодрствующую|бодрствующее|бодрствующих} {1:acc} — не лучшая идея."
+
+[83748c944279]
+en = "You gaze at no place in particular."
+ru = "Вы смотрите в никуда."
+
+[cf33159d0bdb]
+en = "You can't hide while you're being held."
+ru = "Нельзя спрятаться, пока вас держат."
+
+[639f52f57d61]
+en = "You can't hide while you're engulfed."
+ru = "Нельзя спрятаться, пока вас поглотили."
+
+[ebd9663767bd]
+en = "You can't hide while you're holding someone."
+ru = "Нельзя спрятаться, пока вы кого-то держите."
+
+[0b4588202e72]
+en = "You can't hide while you're holding that creature."
+ru = "Нельзя спрятаться, пока вы держите это существо."
+
+[de2e6ea48455]
+en = "You can't hide while you're swallowed."
+ru = "Нельзя спрятаться, пока вас проглотили."
+
+[3d036ea77495]
+en = "You can't hide while you're trapped."
+ru = "Нельзя спрятаться, пока вы в ловушке."
+
+[7003ae62d6d0]
+en = "The fountain is not deep enough to hide in."
+ru = "Фонтан недостаточно глубок, чтобы в нём спрятаться."
+
+[56c5e2f69fce]
+en = "There is no %s to hide in here."
+ru = "Здесь нет {1:gen}, чтобы спрятаться."
+
+[ba01f2cfb745]
+en = "There is nothing to hide under here."
+ru = "Здесь не подо что спрятаться."
+
+[6d60cbcf55a0]
+en = "Hiding under %s is a fatal mistake..."
+ru = "Прятаться под {1:ins} — роковая ошибка..."
+
+[a42d066bf8ad]
+en = "Hiding under %ss is a fatal mistake..."
+ru = "Прятаться под {1:ins} — роковая ошибка..."
+
+[090d031f3cec]
+en = "There is nowhere to hide above you."
+ru = "Над вами негде спрятаться."
+
+[9ce5935cbda5]
+en = "There is nowhere to hide beneath you."
+ru = "Под вами негде спрятаться."
+
+[901b998fb5b5]
+en = "You concentrate but lack the energy to maintain doing so."
+ru = "Вы сосредотачиваетесь, но не хватает энергии удержать сосредоточение."
+
+[b4f77da76b0b]
+en = "You concentrate."
+ru = "Вы сосредотачиваетесь."
+
+[f74754e675d8]
+en = "A wave of psychic energy pours out."
+ru = "Изливается волна психической энергии."
+
+[5c18c998c803]
+en = "You lock in on %s mind."
+ru = "Вы настраиваетесь на разум {1:gen}."
+
+[702c2f3e5e28]
+en = "You lock in on %s latent telepathy."
+ru = "Вы настраиваетесь на скрытую телепатию {1:gen}."
+
+[27cbf3f21fb8]
+en = "You lock in on %s telepathy."
+ru = "Вы настраиваетесь на телепатию {1:gen}."
+
+[6acf587a7618]
+en = "%s is no longer in your clutches."
+ru = "{1} больше не в ваших когтях."
+
+[99f371942ffc]
+en = "Your skin returns to its original form."
+ru = "Ваша кожа возвращается к прежнему виду."
+
+[9860d89c576a]
+en = "Strangely, you feel better than before."
+ru = "Как ни странно, вы чувствуете себя лучше прежнего."
+
+[c565ee12c57e]
+en = "You can't even move a handspan with this load!"
+ru = "С такой ношей вы не можете сдвинуться ни на пядь!"
+
+[70c6295f9dcb]
+en = "You can barely move a handspan with this load!"
+ru = "С такой ношей вы едва можете сдвинуться на пядь!"
