@@ -257,6 +257,8 @@ pub struct QuestPage {
     /// many times a step was laid out (self-tests: not every frame).
     laid_for: (Vector2, Vec<(&'static str, Rect2)>),
     layouts: usize,
+    /// The leaders drawn from names to their blocks (self-tests).
+    leaders: Vec<Rect2>,
 }
 
 impl QuestPage {
@@ -315,6 +317,7 @@ impl QuestPage {
             step: None,
             laid_for: (Vector2::ZERO, Vec::new()),
             layouts: 0,
+            leaders: Vec::new(),
         }
     }
 
@@ -388,28 +391,6 @@ impl QuestPage {
             0.0,
             if step == QuestStep::Screen { 0.3 } else { 0.62 },
         ));
-        for mut c in self.tags.get_children().iter_shared() {
-            self.tags.remove_child(&c);
-            c.queue_free();
-        }
-        if step == QuestStep::Screen {
-            let view = self.root.get_viewport_rect().size;
-            // the names keep off the blocks they name and off each other
-            let named: Vec<Rect2> = blocks
-                .iter()
-                .filter(|(name, _)| words.tags.iter().any(|(b, _)| b == name))
-                .map(|(_, r)| *r)
-                .collect();
-            let mut keep_off = named;
-            for (block, words) in &words.tags {
-                if let Some((_, r)) = blocks.iter().find(|(name, _)| name == block) {
-                    self.tags.add_child(&ring(*r));
-                    let t = tag(words, *r, view, &keep_off);
-                    keep_off.push(t.get_rect());
-                    self.tags.add_child(&t);
-                }
-            }
-        }
         // as large as its words, in the middle; the screen's step higher,
         // clear of the bar and the orbs
         let y = if step == QuestStep::Screen {
@@ -421,6 +402,42 @@ impl QuestPage {
         let (w, h) = (size.x / 2.0, size.y / 2.0);
         place(&self.panel, [0.5, 0.5 + y, 0.5, 0.5 + y], [-w, -h, w, h]);
         self.panel.reset_size();
+        let view = self.root.get_viewport_rect().size;
+        let page = Rect2::new(Vector2::new(view.x * 0.5 - w, view.y * (0.5 + y) - h), size);
+        for mut c in self.tags.get_children().iter_shared() {
+            self.tags.remove_child(&c);
+            c.queue_free();
+        }
+        self.leaders.clear();
+        if step == QuestStep::Screen {
+            let mut made = Vec::new();
+            for (block, words) in &words.tags {
+                let Some((_, r)) = blocks.iter().find(|(name, _)| name == block) else {
+                    continue;
+                };
+                self.tags.add_child(&ring(*r));
+                let t = tag(words);
+                // measured in the tree, in its own font
+                self.tags.add_child(&t);
+                let size = t.get_combined_minimum_size();
+                made.push((t, *block, size));
+            }
+            let names: Vec<(&'static str, Vector2)> =
+                made.iter().map(|(_, b, size)| (*b, *size)).collect();
+            let spots = name_spots(&names, blocks, view, page);
+            for ((mut t, _, _), (at, leader)) in made.into_iter().zip(spots) {
+                place(
+                    &t,
+                    [0.0; 4],
+                    [at.position.x, at.position.y, at.end().x, at.end().y],
+                );
+                t.reset_size();
+                if let Some(l) = leader {
+                    self.tags.add_child(&leader_line(l));
+                    self.leaders.push(l);
+                }
+            }
+        }
         let named = blocks
             .iter()
             .filter(|(name, _)| words.tags.iter().any(|(b, _)| b == name))
@@ -472,6 +489,11 @@ impl QuestPage {
             .collect()
     }
 
+    /// The leaders from names to their blocks on screen (self-tests).
+    pub fn leaders(&self) -> Vec<Rect2> {
+        self.leaders.clone()
+    }
+
     /// The words of the step shown (self-tests): its title and lines.
     pub fn words(&self) -> (String, Vec<String>) {
         let lines = self
@@ -513,83 +535,234 @@ fn fit_lines(label: &mut Gd<Label>, width: f32) {
     label.set_custom_minimum_size(Vector2::new(width, h.ceil()));
 }
 
-/// A HUD block's name beside it, where there is room: above a block at
-/// the foot, under one at the top or toward the middle, else on its outer
-/// side; clear of `keep_off` (the blocks named, the names placed).
-fn tag(words: &str, block: Rect2, view: Vector2, keep_off: &[Rect2]) -> Gd<PanelContainer> {
+/// A HUD block's name, in a banner.
+fn tag(words: &str) -> Gd<PanelContainer> {
     let mut p = theme::framed(Frame::Banner);
     p.set_mouse_filter(MouseFilter::IGNORE);
     let mut l = theme::styled_label(words, Face::Body, TAG_SIZE, theme::GOLD_BRIGHT);
     l.set_mouse_filter(MouseFilter::IGNORE);
     p.add_child(&l);
-    let w = theme::font(Face::Body)
-        .get_string_size_ex(words)
-        .font_size(TAG_SIZE)
-        .done()
-        .x
-        + 28.0;
-    let size = Vector2::new(w, 34.0);
-    let gap = 6.0;
-    let centre = block.position + block.size * 0.5;
-    let (x_mid, x_left, x_right) = (
-        centre.x - w / 2.0,
-        block.position.x - w - gap,
-        block.end().x + gap,
-    );
-    // flush with the block's left or right edge
-    let (x_flush_l, x_flush_r) = (block.position.x, block.end().x - w);
-    let (y_mid, y_above, y_below) = (
-        centre.y - size.y / 2.0,
-        block.position.y - size.y - gap,
-        block.end().y + gap,
-    );
-    let on_left = centre.x < view.x / 2.0;
-    let tries: Vec<(f32, f32)> = if centre.y > view.y * 0.6 {
-        let (inner, outer) = if on_left {
-            (x_flush_l, x_flush_r)
+    p
+}
+
+/// A name's gap to its block, the steps it moves away by when there is no
+/// room right beside it, and how far it may go.
+const TAG_GAP: f32 = 6.0;
+const TAG_STEP: f32 = 8.0;
+const TAG_STEPS: usize = 24;
+/// The only block a leader may cross: the XP bar hugs the action bar.
+const LEADER_CROSSES: &str = "XP bar";
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum Side {
+    Above,
+    Below,
+    Left,
+    Right,
+}
+
+/// Where each block's name goes (`tag_spot`), clear of the page `page` and
+/// of each other: the foot's middle first (the action bar, the most
+/// crowded), then the foot's from the middle out, then the rest in turn.
+fn name_spots(
+    names: &[(&'static str, Vector2)],
+    blocks: &[(&'static str, Rect2)],
+    view: Vector2,
+    page: Rect2,
+) -> Vec<(Rect2, Option<Rect2>)> {
+    let rect_of = |b: &str| {
+        blocks
+            .iter()
+            .find(|(n, _)| *n == b)
+            .map_or(Rect2::new(Vector2::ZERO, Vector2::ZERO), |(_, r)| *r)
+    };
+    let crowd = |b: &str| {
+        let r = rect_of(b);
+        let c = r.position + r.size * 0.5;
+        if c.y > view.y * 0.6 {
+            (c.x - view.x * 0.5).abs()
         } else {
-            (x_flush_r, x_flush_l)
-        };
-        let side = if on_left { x_left } else { x_right };
-        vec![
-            (x_mid, y_above),
-            (outer, y_above),
-            (inner, y_above),
-            (side, y_mid),
-        ]
+            f32::MAX
+        }
+    };
+    let mut order: Vec<usize> = (0..names.len()).collect();
+    order.sort_by(|&a, &b| crowd(names[a].0).total_cmp(&crowd(names[b].0)));
+    let mut taken = vec![page];
+    let mut out = vec![(Rect2::new(Vector2::ZERO, Vector2::ZERO), None); names.len()];
+    for i in order {
+        let (block, size) = names[i];
+        let r = rect_of(block);
+        let (at, leader) =
+            tag_spot(size, r, view, blocks, &taken).unwrap_or((Rect2::new(r.position, size), None));
+        taken.push(at);
+        taken.extend(leader);
+        out[i] = (at, leader);
+    }
+    out
+}
+
+/// Where a block's name of `size` goes: the nearest spot beside the block
+/// (above one at the foot, under one at the top or toward the middle, else
+/// on its outer side) clear of every HUD block and of `taken` (the page,
+/// the names and leaders placed), inside the screen; and, when it is not
+/// right beside the block, a leader to it crossing nothing but the XP bar.
+fn tag_spot(
+    size: Vector2,
+    block: Rect2,
+    view: Vector2,
+    blocks: &[(&'static str, Rect2)],
+    taken: &[Rect2],
+) -> Option<(Rect2, Option<Rect2>)> {
+    let centre = block.position + block.size * 0.5;
+    let on_left = centre.x < view.x / 2.0;
+    let sides: &[Side] = if centre.y > view.y * 0.6 {
+        if on_left {
+            &[Side::Above, Side::Left]
+        } else {
+            &[Side::Above, Side::Right]
+        }
     } else if centre.y < view.y * 0.4 {
         if on_left {
-            vec![(x_flush_l, y_below), (x_mid, y_below), (x_right, y_mid)]
+            &[Side::Below, Side::Right]
         } else {
-            vec![(x_left, y_mid), (x_flush_r, y_below), (x_mid, y_below)]
+            &[Side::Left, Side::Below]
         }
     } else if on_left {
-        vec![(x_right, y_mid), (x_mid, y_above), (x_mid, y_below)]
+        &[Side::Right, Side::Above, Side::Below]
     } else {
-        vec![(x_left, y_mid), (x_mid, y_above), (x_mid, y_below)]
+        &[Side::Left, Side::Above, Side::Below]
     };
-    let room = |at: Vector2| {
-        let r = Rect2::new(at, size);
+    let clear = |r: Rect2| {
         r.position.x >= 4.0
             && r.position.y >= 4.0
             && r.end().x <= view.x - 4.0
             && r.end().y <= view.y - 4.0
-            && !keep_off.iter().any(|k| k.intersects_exclude_borders(r))
+            && !blocks.iter().any(|(_, b)| b.intersects_exclude_borders(r))
+            && !taken.iter().any(|t| t.intersects_exclude_borders(r))
     };
-    let at = tries
-        .iter()
-        .map(|&(x, y)| Vector2::new(x, y))
-        .find(|&at| room(at))
-        .unwrap_or_else(|| {
-            // no room anywhere: the first place, inside the screen
-            let (x, y) = tries[0];
-            Vector2::new(
-                x.clamp(4.0, (view.x - w - 4.0).max(4.0)),
-                y.clamp(4.0, (view.y - size.y - 4.0).max(4.0)),
-            )
-        });
-    place(&p, [0.0; 4], [at.x, at.y, at.x + w, at.y + size.y]);
-    p
+    for k in 0..=TAG_STEPS {
+        let d = TAG_GAP + k as f32 * TAG_STEP;
+        for &side in sides {
+            // along the side, from the middle out, overlapping the block
+            // enough for a leader
+            let (lo, hi, mid) = match side {
+                Side::Above | Side::Below => (
+                    block.position.x - size.x + 16.0,
+                    block.end().x - 16.0,
+                    centre.x - size.x / 2.0,
+                ),
+                Side::Left | Side::Right => (
+                    block.position.y - size.y + 16.0,
+                    block.end().y - 16.0,
+                    centre.y - size.y / 2.0,
+                ),
+            };
+            let mut along: Vec<f32> = (0..)
+                .map(|i| lo + i as f32 * TAG_STEP)
+                .take_while(|a| *a <= hi)
+                .chain(std::iter::once(mid.clamp(lo, hi.max(lo))))
+                .collect();
+            along.sort_by(|a, b| (a - mid).abs().total_cmp(&(b - mid).abs()));
+            for a in along {
+                let at = match side {
+                    Side::Above => Vector2::new(a, block.position.y - d - size.y),
+                    Side::Below => Vector2::new(a, block.end().y + d),
+                    Side::Left => Vector2::new(block.position.x - d - size.x, a),
+                    Side::Right => Vector2::new(block.end().x + d, a),
+                };
+                let r = Rect2::new(at, size);
+                if !clear(r) {
+                    continue;
+                }
+                if k == 0 {
+                    return Some((r, None));
+                }
+                if let Some(l) = leader(r, block, side, blocks, taken) {
+                    return Some((r, Some(l)));
+                }
+            }
+        }
+    }
+    None
+}
+
+/// A leader from the name at `r` to its block on `side`: a thin straight
+/// line in the middle of a free lane, a few pixels off every other block
+/// (and the rings round them), crossing none but the XP bar, nor anything
+/// taken.
+fn leader(
+    r: Rect2,
+    block: Rect2,
+    side: Side,
+    blocks: &[(&'static str, Rect2)],
+    taken: &[Rect2],
+) -> Option<Rect2> {
+    // the ring's line is 3 px out from the block
+    let ring = 3.0;
+    let (lo, hi) = match side {
+        Side::Above | Side::Below => (
+            r.position.x.max(block.position.x) + 6.0,
+            r.end().x.min(block.end().x) - 6.0,
+        ),
+        Side::Left | Side::Right => (
+            r.position.y.max(block.position.y) + 6.0,
+            r.end().y.min(block.end().y) - 6.0,
+        ),
+    };
+    let line = |a: f32| match side {
+        Side::Above => Rect2::new(
+            Vector2::new(a - 1.0, r.end().y),
+            Vector2::new(2.0, block.position.y - ring - r.end().y),
+        ),
+        Side::Below => Rect2::new(
+            Vector2::new(a - 1.0, block.end().y + ring),
+            Vector2::new(2.0, r.position.y - block.end().y - ring),
+        ),
+        Side::Left => Rect2::new(
+            Vector2::new(r.end().x, a - 1.0),
+            Vector2::new(block.position.x - ring - r.end().x, 2.0),
+        ),
+        Side::Right => Rect2::new(
+            Vector2::new(block.end().x + ring, a - 1.0),
+            Vector2::new(r.position.x - block.end().x - ring, 2.0),
+        ),
+    };
+    let free = |l: Rect2| {
+        !blocks.iter().any(|(name, b)| {
+            *name != LEADER_CROSSES && *b != block && b.grow(4.0).intersects_exclude_borders(l)
+        }) && !taken.iter().any(|t| t.intersects_exclude_borders(l))
+    };
+    // the free lanes across, the one nearest the middle, its middle
+    let mut lanes: Vec<(f32, f32)> = Vec::new();
+    let mut a = lo;
+    while a <= hi {
+        if free(line(a)) {
+            match lanes.last_mut() {
+                Some((_, end)) if a - *end <= 1.5 => *end = a,
+                _ => lanes.push((a, a)),
+            }
+        }
+        a += 1.0;
+    }
+    let mid = (lo + hi) / 2.0;
+    let gap = |(s, e): (f32, f32)| (mid - mid.clamp(s, e)).abs();
+    lanes
+        .into_iter()
+        .min_by(|x, y| gap(*x).total_cmp(&gap(*y)))
+        .map(|(s, e)| line((s + e) / 2.0))
+}
+
+/// A leader drawn: a thin gold line.
+fn leader_line(r: Rect2) -> Gd<ColorRect> {
+    let mut l = ColorRect::new_alloc();
+    l.set_color(theme::GOLD);
+    l.set_mouse_filter(MouseFilter::IGNORE);
+    place(
+        &l,
+        [0.0; 4],
+        [r.position.x, r.position.y, r.end().x, r.end().y],
+    );
+    l
 }
 
 /// A block named on the screen's step: a thin gold line around it.
@@ -609,4 +782,104 @@ fn ring(block: Rect2) -> Gd<Panel> {
         [r.position.x, r.position.y, r.end().x, r.end().y],
     );
     p
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn rect(x: f32, y: f32, w: f32, h: f32) -> Rect2 {
+        Rect2::new(Vector2::new(x, y), Vector2::new(w, h))
+    }
+
+    /// A canvas, the HUD's blocks on it and the screen's step's page.
+    type Screen = (Vector2, Vec<(&'static str, Rect2)>, Rect2);
+
+    /// The HUD's blocks and the screen's step's page as a game shows them
+    /// at 1280×800 (a 1600×1000 canvas, the compact layout) and at
+    /// 1920×1080, and the Russian names' sizes.
+    fn screens() -> [Screen; 2] {
+        [
+            (
+                Vector2::new(1600.0, 1000.0),
+                vec![
+                    ("portrait", rect(24.0, 24.0, 520.0, 162.0)),
+                    ("minimap", rect(1394.0, 24.0, 182.0, 152.0)),
+                    ("mode badge", rect(1336.0, 182.0, 240.0, 32.0)),
+                    ("log", rect(432.0, 752.0, 436.0, 114.0)),
+                    ("action bar", rect(432.0, 900.0, 736.0, 88.0)),
+                    ("XP bar", rect(432.0, 872.0, 736.0, 22.0)),
+                    ("micro-buttons", rect(884.0, 838.0, 284.0, 28.0)),
+                    ("HP orb", rect(280.0, 840.0, 148.0, 148.0)),
+                    ("Pw orb", rect(1172.0, 840.0, 148.0, 148.0)),
+                    ("XP words", rect(760.0, 868.0, 80.0, 30.0)),
+                ],
+                rect(400.0, 297.5, 800.0, 165.0),
+            ),
+            (
+                Vector2::new(1920.0, 1080.0),
+                vec![
+                    ("portrait", rect(24.0, 24.0, 520.0, 176.0)),
+                    ("minimap", rect(1714.0, 24.0, 182.0, 152.0)),
+                    ("mode badge", rect(1656.0, 182.0, 240.0, 32.0)),
+                    ("log", rect(24.0, 796.0, 404.0, 260.0)),
+                    ("action bar", rect(592.0, 980.0, 736.0, 88.0)),
+                    ("XP bar", rect(592.0, 952.0, 736.0, 22.0)),
+                    ("micro-buttons", rect(1044.0, 918.0, 284.0, 28.0)),
+                    ("HP orb", rect(440.0, 920.0, 148.0, 148.0)),
+                    ("Pw orb", rect(1332.0, 920.0, 148.0, 148.0)),
+                    ("XP words", rect(920.0, 948.0, 80.0, 30.0)),
+                ],
+                rect(560.0, 328.0, 800.0, 165.0),
+            ),
+        ]
+    }
+
+    #[test]
+    fn the_tours_names_cover_no_block_and_lead_across_only_the_xp_bar() {
+        let names = [
+            ("portrait", Vector2::new(310.0, 40.0)),
+            ("HP orb", Vector2::new(242.0, 40.0)),
+            ("Pw orb", Vector2::new(191.0, 40.0)),
+            ("minimap", Vector2::new(219.0, 40.0)),
+            ("action bar", Vector2::new(202.0, 40.0)),
+            ("log", Vector2::new(192.0, 40.0)),
+        ];
+        for (view, blocks, page) in screens() {
+            let spots = name_spots(&names, &blocks, view, page);
+            for (i, ((name, _), (at, leader))) in names.iter().zip(&spots).enumerate() {
+                let inside = Rect2::new(Vector2::ZERO, view).encloses(*at);
+                assert!(inside, "{view:?} {name}: {at:?} off the screen");
+                for (b, r) in &blocks {
+                    assert!(
+                        !r.intersects_exclude_borders(*at),
+                        "{view:?} {name} covers the {b}"
+                    );
+                }
+                assert!(
+                    !page.intersects_exclude_borders(*at),
+                    "{view:?} {name} on the page"
+                );
+                for (other, (o, _)) in names.iter().zip(&spots).skip(i + 1) {
+                    assert!(
+                        !o.intersects_exclude_borders(*at),
+                        "{view:?} {name} and {}",
+                        other.0
+                    );
+                }
+                if let Some(l) = leader {
+                    for (b, r) in &blocks {
+                        let crossed = r.intersects_exclude_borders(*l);
+                        assert!(
+                            !crossed || *b == "XP bar",
+                            "{view:?} {name}'s leader crosses the {b}"
+                        );
+                    }
+                }
+            }
+            // the bar's name has no room beside it: it leads to the bar
+            let bar = names.iter().position(|(n, _)| *n == "action bar").unwrap();
+            assert!(spots[bar].1.is_some(), "{view:?}: {:?}", spots[bar]);
+        }
+    }
 }

@@ -2565,6 +2565,28 @@ impl Hud {
         self.step_back();
     }
 
+    /// Where the XP bar's words are on screen, as wide as they are (the
+    /// guide's leaders keep off them); None while it has none.
+    pub fn xp_words(&self) -> Option<Rect2> {
+        let text = self.xp_label.get_text().to_string();
+        if text.is_empty() || !self.xp_label.is_visible_in_tree() {
+            return None;
+        }
+        let r = self.xp_label.get_global_rect();
+        let size = self.xp_label.get_theme_font_size("font_size");
+        // and their outline
+        let w = theme::font(Face::BodyBold)
+            .get_string_size_ex(&text)
+            .font_size(size)
+            .done()
+            .x
+            + 12.0;
+        Some(Rect2::new(
+            Vector2::new(r.position.x + (r.size.x - w) / 2.0, r.position.y),
+            Vector2::new(w, r.size.y),
+        ))
+    }
+
     /// The HUD's blocks on screen, by name, where they are (self-tests:
     /// they must fit the canvas and not overlap). Blocks stepped back
     /// under a panel are not on screen.

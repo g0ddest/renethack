@@ -5441,43 +5441,7 @@ fn layout_fits(game: &RenethackGame) -> Result<(), String> {
         }
         _ => {}
     }
-    // "Your quest": its page and its names of the HUD's blocks inside the
-    // canvas; a name off the blocks named and off the other names
-    if let Some(r) = ui.quest.rect() {
-        let tags = ui.quest.tags();
-        let all = std::iter::once(("the quest page".to_string(), r))
-            .chain(tags.iter().map(|(t, r)| (format!("the tag {t:?}"), *r)));
-        for (name, r) in all {
-            if !canvas.encloses(r) {
-                return Err(format!(
-                    "{name} at {:.0},{:.0} {:.0}×{:.0} is not inside the canvas",
-                    r.position.x, r.position.y, r.size.x, r.size.y
-                ));
-            }
-        }
-        let named = [
-            "portrait",
-            "HP orb",
-            "Pw orb",
-            "minimap",
-            "action bar",
-            "log",
-        ];
-        for (i, (t, r)) in tags.iter().enumerate() {
-            if let Some((name, _)) = blocks
-                .iter()
-                .find(|(name, b)| named.contains(name) && b.intersects_exclude_borders(*r))
-            {
-                return Err(format!("the tag {t:?} and the {name} overlap"));
-            }
-            if let Some((other, _)) = tags[i + 1..]
-                .iter()
-                .find(|(_, o)| o.intersects_exclude_borders(*r))
-            {
-                return Err(format!("the tags {t:?} and {other:?} overlap"));
-            }
-        }
-    }
+    quest_names_clear(ui, canvas)?;
     // the guide's card: inside the canvas, off the HUD's blocks and off
     // the map's middle, where the hero stands
     if let Some(r) = ui.hint.rect() {
@@ -5500,6 +5464,57 @@ fn layout_fits(game: &RenethackGame) -> Result<(), String> {
     }
     if !ui.hud.log_lines_whole() {
         return Err("the log's top line is cut".to_string());
+    }
+    Ok(())
+}
+
+/// "Your quest": its page and its names of the HUD's blocks inside the
+/// canvas; a name covers no block, nor the page, nor another name; a leader
+/// from a name to its block crosses no block but the XP bar.
+pub(super) fn quest_names_clear(ui: &crate::game::Ui, canvas: Rect2) -> Result<(), String> {
+    let Some(page) = ui.quest.rect() else {
+        return Ok(());
+    };
+    let tags = ui.quest.tags();
+    let all = std::iter::once(("the quest page".to_string(), page))
+        .chain(tags.iter().map(|(t, r)| (format!("the tag {t:?}"), *r)));
+    for (name, r) in all {
+        if !canvas.encloses(r) {
+            return Err(format!(
+                "{name} at {:.0},{:.0} {:.0}×{:.0} is not inside the canvas",
+                r.position.x, r.position.y, r.size.x, r.size.y
+            ));
+        }
+    }
+    let mut blocks = ui.hud.blocks();
+    blocks.extend(ui.hud.xp_words().map(|r| ("XP bar's words", r)));
+    for (i, (t, r)) in tags.iter().enumerate() {
+        if let Some((name, _)) = blocks
+            .iter()
+            .find(|(_, b)| b.intersects_exclude_borders(*r))
+        {
+            return Err(format!("the tag {t:?} covers the {name}"));
+        }
+        if page.intersects_exclude_borders(*r) {
+            return Err(format!("the tag {t:?} covers the quest page"));
+        }
+        if let Some((other, _)) = tags[i + 1..]
+            .iter()
+            .find(|(_, o)| o.intersects_exclude_borders(*r))
+        {
+            return Err(format!("the tags {t:?} and {other:?} overlap"));
+        }
+    }
+    for l in ui.quest.leaders() {
+        if let Some((name, _)) = blocks
+            .iter()
+            .find(|(name, b)| *name != "XP bar" && b.intersects_exclude_borders(l))
+        {
+            return Err(format!(
+                "a leader at {:.0},{:.0} crosses the {name}",
+                l.position.x, l.position.y
+            ));
+        }
     }
     Ok(())
 }

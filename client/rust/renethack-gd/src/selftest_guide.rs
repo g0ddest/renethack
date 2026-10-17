@@ -208,6 +208,13 @@ pub(super) fn guide() -> Vec<Step> {
                     return Err(format!("no {name} on the HUD"));
                 }
             }
+            // each name clear of every block, at every size and language
+            // (once laid out for the blocks where they are now)
+            if ui.quest.moved(&blocks) {
+                return Ok(false);
+            }
+            let canvas = Rect2::new(Vector2::ZERO, g.canvas_size()).grow(1.0);
+            super::quest_names_clear(ui, canvas)?;
             Ok(tags.len() == 6 && tags.iter().any(|(t, _)| *t == tr!("quest-tour-log")))
         }),
         Step::Call("", |g| {

@@ -2410,7 +2410,9 @@ impl RenethackGame {
         };
         let words = self.quest_words(step);
         let ui = self.ui_mut();
-        let blocks = ui.hud.blocks();
+        let mut blocks = ui.hud.blocks();
+        // the XP bar's words: a leader across the bar keeps off them
+        blocks.extend(ui.hud.xp_words().map(|r| ("XP words", r)));
         ui.quest.show(&words, &blocks);
     }
 
