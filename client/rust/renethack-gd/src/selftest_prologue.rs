@@ -58,21 +58,31 @@ fn shown(g: &RenethackGame, beat: Beat) -> Result<bool, String> {
         && ui.map.title_drawn())
 }
 
-/// The words on screen are the beat's, whole and in order.
+/// The words on screen are the beat's, whole and in order, in even
+/// lines: the last not a lone word, none begun with a dash.
 fn words(g: &mut RenethackGame) -> Result<(), String> {
     let p = g.prologue.as_ref().ok_or("no prologue")?;
     let ui = g.ui.as_ref().ok_or("no UI")?;
     let lines = ui.prologue.lines();
     let joined = lines.join(" ");
-    godot_print!(
-        "selftest: prologue: the {} beat: {lines:?}",
-        p.run.beat().name()
-    );
+    let beat = p.run.beat().name();
+    godot_print!("selftest: prologue: the {beat} beat: {lines:?}");
     if joined != p.run.text() {
         return Err(format!(
-            "the {} beat shows {joined:?}, not its text {:?}",
-            p.run.beat().name(),
+            "the {beat} beat shows {joined:?}, not its text {:?}",
             p.run.text()
+        ));
+    }
+    if lines.len() > 1
+        && lines
+            .last()
+            .is_some_and(|l| l.split_whitespace().count() < 2)
+    {
+        return Err(format!("the {beat} beat ends on a lone word: {lines:?}"));
+    }
+    if lines.iter().any(|l| l.starts_with(['—', '–'])) {
+        return Err(format!(
+            "a line of the {beat} beat begins with a dash: {lines:?}"
         ));
     }
     // the engine's text, in the language played

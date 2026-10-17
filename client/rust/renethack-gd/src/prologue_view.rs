@@ -4,8 +4,8 @@
 //! dark over all the lines and fading out past them (the words read on
 //! Gehennom's lava as on the Book's dark), coming as the run shows its
 //! characters (the Book's as if written, letter by letter; the rest line
-//! by line); the black between the beats; a quiet note of the keys in a
-//! corner.
+//! by line), its lines as even as they can be (none ends on a lone word);
+//! the black between the beats; a quiet note of the keys in a corner.
 
 use godot::builtin::Side;
 use godot::classes::control::MouseFilter;
@@ -190,7 +190,8 @@ impl PrologueView {
         self.plate.set_visible(true);
     }
 
-    /// The beat's text laid out in lines of at most `width` pixels.
+    /// The beat's text laid out in lines of at most `width` pixels, as
+    /// even as they can be.
     fn lay(&mut self, text: &str, width: i32) {
         for (mut label, _, _) in self.lines.drain(..) {
             label.queue_free();
@@ -198,7 +199,7 @@ impl PrologueView {
         let font = theme::font(Face::Title);
         let measure = |s: &str| font.get_string_size_ex(s).font_size(SIZE).done().x;
         let mut start = 0;
-        let lines = wrap(text, |s| measure(s) <= width as f32);
+        let lines = balanced(text, measure, width as f32);
         self.widest = lines.iter().map(|l| measure(l)).fold(0.0, f32::max);
         for line in lines {
             let len = line.chars().count();
@@ -266,27 +267,78 @@ fn plate() -> Gd<NinePatchRect> {
     plate
 }
 
+/// `text` in as many lines as `wrap` makes of it at `width` (as `measure`
+/// measures them), but even: wrapped at the narrowest width that takes no
+/// more lines, so the last is no word left over. Should it still be one
+/// word, the word before it comes down to it if the two fit.
+fn balanced(text: &str, measure: impl Fn(&str) -> f32, width: f32) -> Vec<String> {
+    let at = |w: f32| wrap(text, |s| measure(s) <= w);
+    let fewest = at(width).len();
+    // as few lines down to `hi`, more at `lo`
+    let (mut lo, mut hi) = (0.0, width);
+    while fewest > 1 && hi - lo > 1.0 {
+        let mid = (lo + hi) / 2.0;
+        if at(mid).len() > fewest {
+            lo = mid;
+        } else {
+            hi = mid;
+        }
+    }
+    let mut lines = at(hi);
+    if let [.., before, last] = lines.as_mut_slice()
+        && words(last).len() == 1
+    {
+        let mut left = words(before);
+        if left.len() > 1
+            && let Some(word) = left.pop()
+        {
+            let down = format!("{word} {last}");
+            if measure(&down) <= width {
+                *before = left.join(" ");
+                *last = down;
+            }
+        }
+    }
+    lines
+}
+
 /// `text` in lines of whole words, each as long as `fits` lets it be (a
 /// word longer than that alone on its line).
 fn wrap(text: &str, fits: impl Fn(&str) -> bool) -> Vec<String> {
     let mut lines = Vec::new();
     let mut now = String::new();
-    for word in text.split_whitespace() {
+    for word in words(text) {
         if now.is_empty() {
-            now.push_str(word);
+            now = word;
             continue;
         }
         let longer = format!("{now} {word}");
         if fits(&longer) {
             now = longer;
         } else {
-            lines.push(std::mem::replace(&mut now, word.to_string()));
+            lines.push(std::mem::replace(&mut now, word));
         }
     }
     if !now.is_empty() {
         lines.push(now);
     }
     lines
+}
+
+/// The words a line may break between: a dash keeps to the word before it
+/// (no line begins with one).
+fn words(text: &str) -> Vec<String> {
+    let mut words: Vec<String> = Vec::new();
+    for word in text.split_whitespace() {
+        match words.last_mut() {
+            Some(before) if matches!(word, "—" | "–") => {
+                before.push(' ');
+                before.push_str(word);
+            }
+            _ => words.push(word.to_string()),
+        }
+    }
+    words
 }
 
 #[cfg(test)]
@@ -303,6 +355,51 @@ mod tests {
         assert_eq!(
             wrap("a Brobdingnagian b", |s| s.len() <= 4),
             vec!["a", "Brobdingnagian", "b"]
+        );
+        // a dash keeps to the word before it
+        assert_eq!(
+            wrap("aaa — bbb ccc", |s| s.chars().count() <= 5),
+            vec!["aaa —", "bbb", "ccc"]
+        );
+    }
+
+    #[test]
+    fn lines_come_out_even_and_the_last_is_not_a_lone_word() {
+        let chars = |s: &str| s.chars().count() as f32;
+        // as many lines as at the full width, but even
+        let text = "aaa bbb ccc ddd eee";
+        assert_eq!(
+            wrap(text, |s| chars(s) <= 15.0),
+            vec!["aaa bbb ccc ddd", "eee"]
+        );
+        assert_eq!(balanced(text, chars, 15.0), vec!["aaa bbb ccc", "ddd eee"]);
+        // the Russian Amulet's last word was left alone on the Deck
+        let text = "Молох похитил у Мардука могущественнейший из артефактов богов — \
+                    Амулет Йендора — и спрятал его в тёмных пустотах Геенны, \
+                    Подземного мира, где ныне таится, выжидая своего часа.";
+        for width in [40.0, 50.0, 57.0, 60.0, 70.0, 90.0] {
+            let lines = balanced(text, chars, width);
+            assert_eq!(lines.join(" "), text, "{width}");
+            assert!(
+                lines.iter().all(|l| chars(l) <= width),
+                "{width}: {lines:?}"
+            );
+            assert!(
+                lines.len() == 1 || words(lines.last().unwrap()).len() > 1,
+                "{width}: {lines:?}"
+            );
+            assert!(!lines.iter().any(|l| l.starts_with('—')), "{lines:?}");
+            assert_eq!(lines.len(), wrap(text, |s| chars(s) <= width).len());
+        }
+        // a lone word balancing cannot help takes the one before it
+        assert_eq!(
+            balanced("a b c verylongword", chars, 14.0),
+            vec!["a b", "c verylongword"]
+        );
+        // one line stays one
+        assert_eq!(
+            balanced("It is written", chars, 40.0),
+            vec!["It is written"]
         );
     }
 }
