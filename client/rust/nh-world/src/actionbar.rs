@@ -618,9 +618,23 @@ pub struct Profile {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub prologue_seen: bool,
     /// The last prologue's text as the engine wrote it (its English
-    /// lines), told for the last hero: what the title replays.
+    /// lines): what the title replays, with `legacy_hero`.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub legacy: Vec<String>,
+    /// Whom that text was told for (it names their rank and god): the
+    /// title replays it with this hero, not with a later game's.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_hero: Option<LegacyHero>,
+}
+
+/// The hero a prologue was told for: the role (as the engine's code,
+/// "Val"), a woman or not, the alignment (1 lawful, 0 neutral, -1
+/// chaotic).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LegacyHero {
+    pub role: String,
+    pub female: bool,
+    pub align: i32,
 }
 
 /// The profile's parts that are one machine's: how its window covers its
@@ -1164,6 +1178,11 @@ mod tests {
             guide_seen: [crate::Guide::Quest, crate::Guide::Pet].into(),
             prologue_seen: true,
             legacy: vec!["It is written in the Book of Thoth:".into()],
+            legacy_hero: Some(LegacyHero {
+                role: "Wiz".into(),
+                female: true,
+                align: 0,
+            }),
         }
     }
 
@@ -1187,6 +1206,8 @@ mod tests {
             "volumes",
             "hints_off",
             "guide_seen",
+            "legacy",
+            "legacy_hero",
         ] {
             assert!(player.contains(&format!("\"{k}\"")), "{k} not in {player}");
             assert!(!device.contains(&format!("\"{k}\"")), "{k} in {device}");

@@ -766,6 +766,7 @@ fn old_profile() -> Profile {
         guide_seen: [nh_world::Guide::Quest, nh_world::Guide::Pet].into(),
         prologue_seen: false,
         legacy: Vec::new(),
+        legacy_hero: None,
     }
 }
 

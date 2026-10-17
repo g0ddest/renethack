@@ -5,7 +5,8 @@
 //! the last the game itself, up out of black, its first command awaited.
 //! The engine is not held: its first command is already waiting while the
 //! prologue begins. `prologue-skip`: Esc in the second beat lands in the
-//! game at once.
+//! game at once. `prologue-replay`: the title tells it again for the hero
+//! the profile kept with its text, not a later game's.
 
 use godot::global::Key as GKey;
 use godot::prelude::godot_print;
@@ -150,17 +151,32 @@ pub(super) fn prologue() -> Vec<Step> {
         Step::ShotIf("prologue-deeper", |g| Ok(g.prologue.is_some())),
         Step::Wait("down the stairs, the game up out of black", in_game),
         Step::Shot("prologue-game"),
-        Step::Call("the profile has seen it, and keeps it to replay", |g| {
-            let p = crate::game::load_profile(&g.playground());
-            if !p.prologue_seen
-                || !crate::prologue::is_legacy(
-                    &p.legacy.iter().map(String::as_str).collect::<Vec<_>>(),
-                )
-            {
-                return Err("the profile does not keep the prologue".into());
-            }
-            Ok(())
-        }),
+        Step::Wait(
+            "the profile has seen it, and keeps it to replay with its hero",
+            |g| {
+                let p = crate::game::load_profile(&g.playground());
+                if !p.prologue_seen
+                    || !crate::prologue::is_legacy(
+                        &p.legacy.iter().map(String::as_str).collect::<Vec<_>>(),
+                    )
+                {
+                    return Err("the profile does not keep the prologue".into());
+                }
+                // the hero beside it once the engine has told who they are
+                let Some(kept) = p.legacy_hero else {
+                    return Ok(false);
+                };
+                let role = g.world.progress().map(|p| p.role.clone());
+                if Some(&kept.role) != role.as_ref() || Some(kept.female) != g.hero_female {
+                    return Err(format!(
+                        "the profile keeps {kept:?} with the prologue, the game's hero is \
+                         {role:?} (a woman: {:?})",
+                        g.hero_female
+                    ));
+                }
+                Ok(true)
+            },
+        ),
     ]);
     steps.extend(quit());
     steps
@@ -192,26 +208,60 @@ fn kept_legacy() -> Vec<String> {
     .collect()
 }
 
+/// The hero `kept_legacy` was told for.
+fn kept_hero() -> nh_world::LegacyHero {
+    nh_world::LegacyHero {
+        role: "Val".into(),
+        female: true,
+        align: 1,
+    }
+}
+
 /// `prologue-replay`: a profile that kept a prologue offers it again on
-/// the title; told over the title's scene, Esc ends it and the title is
-/// back.
+/// the title, told for the hero it kept with it (a Samurai played since);
+/// told over the title's scene, Esc ends it and the title is back. A text
+/// kept without its hero (an older profile) is not told.
 pub(super) fn prologue_replay() -> Vec<Step> {
     vec![
-        Step::Call("a prologue told before, kept in the profile", |g| {
-            g.update_profile(|p| {
-                p.legacy = kept_legacy();
-                p.last_role = Some("Val".into());
-                p.last_female = Some(true);
-            });
-            Ok(())
-        }),
+        Step::Call(
+            "a prologue told before, kept in the profile with its hero",
+            |g| {
+                g.update_profile(|p| {
+                    p.legacy = kept_legacy();
+                    p.legacy_hero = Some(kept_hero());
+                    p.last_role = Some("Sam".into());
+                    p.last_female = Some(false);
+                });
+                Ok(())
+            },
+        ),
         Step::Wait("the title screen, the art loaded ahead", |g| {
             fail_on_error_screen(g)?;
             let loaded = g.ui.as_ref().is_some_and(|ui| ui.map.preloaded());
             Ok(screen(g) == Some("title") && loaded && g.warmed_up())
         }),
+        Step::Call("a text kept without its hero is not told", |g| {
+            g.update_profile(|p| p.legacy_hero = None);
+            let told = g.start_prologue(kept_legacy(), true);
+            g.update_profile(|p| p.legacy_hero = Some(kept_hero()));
+            if told || g.prologue.is_some() {
+                return Err("a prologue was replayed for a hero not kept".into());
+            }
+            Ok(())
+        }),
         Step::Push(UiEvent::ReplayPrologue),
         Step::Wait("the Book, over the title", |g| shown(g, Beat::Book)),
+        Step::Call("told for the hero kept with it, not the last game's", |g| {
+            let h = g.prologue_hero();
+            if !(h.role == "Val" && h.female && h.align == 1) {
+                return Err(format!(
+                    "the replay is told for {} (a woman: {}, alignment {}), not the \
+                     Valkyrie of Tyr",
+                    h.role, h.female, h.align
+                ));
+            }
+            Ok(())
+        }),
         Step::Shot("prologue-replay"),
         Step::Call("its words, word for word", words),
         // (no request waits on the title: the key goes in as it is)

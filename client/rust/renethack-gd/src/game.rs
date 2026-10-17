@@ -78,15 +78,19 @@ pub enum GameState {
 }
 
 /// The prologue playing: its run, the character it is told for as the
-/// creation form chose it (the engine tells the rest as the game starts),
-/// and whether it was replayed from the title.
+/// creation form chose it (the engine tells the rest as the game starts;
+/// replayed from the title, the one the profile kept with its text), and
+/// whether it was replayed.
 pub(crate) struct PrologueShown {
     pub(crate) run: crate::prologue::Run,
     /// The engine's text, said again in the language played at each beat
     /// (the hero's gender known by then).
     english: Vec<String>,
-    role: String,
-    female: bool,
+    pub(crate) role: String,
+    pub(crate) female: bool,
+    /// The alignment (1 lawful, 0 neutral, -1 chaotic): a replay's, kept
+    /// with its text (a new game's is the status's).
+    pub(crate) align: i32,
     replay: bool,
 }
 
@@ -398,6 +402,9 @@ pub struct RenethackGame {
     new_game: bool,
     /// The session whose hero went to the profile and the title scene.
     last_hero_of: Option<u64>,
+    /// The session whose prologue's hero is still to go to the profile
+    /// beside its text, once the engine has told who they are.
+    legacy_hero_of: Option<u64>,
     /// A reply could not be written: the engine is gone.
     link_error: Option<String>,
     close_deadline: Option<Instant>,
@@ -657,6 +664,7 @@ impl INode for RenethackGame {
             prologue_forced: false,
             new_game: false,
             last_hero_of: None,
+            legacy_hero_of: None,
             achievement_page: None,
             settings: Settings::default(),
             settings_page: None,
@@ -4185,16 +4193,19 @@ impl RenethackGame {
     /// prologue's scenes; `replay`: from the title. False when it is not
     /// laid out as NetHack's.
     pub(crate) fn start_prologue(&mut self, english: Vec<String>, replay: bool) -> bool {
-        let (role, female) = if replay {
-            let p = load_profile(&self.playground());
-            (
-                p.last_role.unwrap_or_else(|| "valkyrie".to_string()),
-                p.last_female.unwrap_or(true),
-            )
+        let (role, female, align) = if replay {
+            // the hero the text was told for (its rank, its god), not a
+            // later game's: none kept, none told
+            let Some(h) = load_profile(&self.playground()).legacy_hero else {
+                return false;
+            };
+            (h.role, h.female, h.align)
         } else {
-            self.prologue_choice
+            let (role, female) = self
+                .prologue_choice
                 .clone()
-                .unwrap_or_else(|| ("valkyrie".to_string(), true))
+                .unwrap_or_else(|| ("valkyrie".to_string(), true));
+            (role, female, 0)
         };
         // the words that agree with the hero agree with this one
         i18n::set_hero_female(if replay {
@@ -4207,17 +4218,21 @@ impl RenethackGame {
             return false;
         };
         if !replay {
+            // the text kept to replay, its hero beside it once told
             let kept = english.clone();
             self.update_profile(|p| {
                 p.prologue_seen = true;
                 p.legacy = kept;
+                p.legacy_hero = None;
             });
+            self.legacy_hero_of = Some(self.session_serial);
         }
         self.prologue = Some(PrologueShown {
             run: crate::prologue::Run::new(texts),
             english,
             role,
             female,
+            align,
             replay,
         });
         self.prologue_fade = None;
@@ -4234,7 +4249,7 @@ impl RenethackGame {
     /// Whom the prologue is told for now: the engine's word on the hero
     /// once it has told it (a random role, the alignment, the pack), else
     /// the creation form's.
-    fn prologue_hero(&self) -> crate::map_view::PrologueHero {
+    pub(crate) fn prologue_hero(&self) -> crate::map_view::PrologueHero {
         let shown = self.prologue.as_ref();
         let replay = shown.is_some_and(|p| p.replay);
         let told = (!replay)
@@ -4250,10 +4265,10 @@ impl RenethackGame {
         } else {
             self.hero_female.unwrap_or(shown.is_some_and(|p| p.female))
         };
-        let align = match self.world.status.get("align") {
-            Some(a) if !replay && a.eq_ignore_ascii_case("lawful") => 1,
-            Some(a) if !replay && a.eq_ignore_ascii_case("chaotic") => -1,
-            _ => 0,
+        let align = if replay {
+            shown.map_or(0, |p| p.align)
+        } else {
+            self.hero_align().unwrap_or(0)
         };
         crate::map_view::PrologueHero {
             role,
@@ -4407,6 +4422,45 @@ impl RenethackGame {
         }
     }
 
+    /// The hero's alignment as the status tells it (1 lawful, 0 neutral,
+    /// -1 chaotic); none till it has.
+    fn hero_align(&self) -> Option<i32> {
+        let a = self.world.status.get("align").filter(|a| !a.is_empty())?;
+        Some(if a.eq_ignore_ascii_case("lawful") {
+            1
+        } else if a.eq_ignore_ascii_case("chaotic") {
+            -1
+        } else {
+            0
+        })
+    }
+
+    /// The hero this game's prologue was told for, to the profile beside
+    /// its text once the engine has told the role, the gender and the
+    /// alignment (the title replays the two together).
+    fn sync_legacy_hero(&mut self) {
+        if self.legacy_hero_of != Some(self.session_serial) {
+            return;
+        }
+        let role = self
+            .world
+            .progress()
+            .map(|p| p.role.clone())
+            .filter(|r| !r.is_empty());
+        let (Some(role), Some(female), Some(align)) = (role, self.hero_female, self.hero_align())
+        else {
+            return;
+        };
+        self.legacy_hero_of = None;
+        self.update_profile(|p| {
+            p.legacy_hero = Some(nh_world::LegacyHero {
+                role,
+                female,
+                align,
+            });
+        });
+    }
+
     /// Everything on screen in the language now.
     fn relang(&mut self) {
         self.bar_key = None;
@@ -4472,8 +4526,9 @@ impl RenethackGame {
             godot_warn!("renethack: cannot list saves: {e}");
             Vec::new()
         });
-        // the prologue again, once one was told
-        let replay = !load_profile(&self.playground()).legacy.is_empty();
+        // the prologue again, once one was told (and its hero known)
+        let profile = load_profile(&self.playground());
+        let replay = !profile.legacy.is_empty() && profile.legacy_hero.is_some();
         let screens = &mut self.ui_mut().screens;
         screens.set_prologue(replay);
         screens.show_title(&saves, notice.as_deref());
@@ -4870,6 +4925,7 @@ impl RenethackGame {
         self.lap("hud", t);
         self.sync_hero_gender();
         self.sync_last_hero();
+        self.sync_legacy_hero();
         let t = Instant::now();
         self.sync_inventory();
         self.lap("inventory", t);
