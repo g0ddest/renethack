@@ -4,7 +4,8 @@
 //! slime does, wet and faintly glowing, more of them each turn of the
 //! countdown (five for stone, ten for slime), all of the body at its end.
 //! Levitating or flying they float above the floor, bobbing slowly, and
-//! glide from cell to cell, their legs still. Stunned or confused they
+//! glide from cell to cell, their legs still (a form that flies stands as
+//! its monster does, its flight in its own clips). Stunned or confused they
 //! sway where they stand and the camera drifts a little; hallucinating, a
 //! slow hue drifts over the view; blind, the view dims and darkens at its
 //! edges. Fewer screen effects (the settings) leaves out the sway, the
@@ -203,6 +204,10 @@ pub(super) struct HeroLook {
     /// The masks of Lev and Fly; how far up a float is (0..=1, easing),
     /// and the seconds the bob has run.
     float_masks: u64,
+    /// Levitation's alone: a form that flies is drawn as its monster
+    /// flies, on the floor (lifted, a dragon's claws were seen from the
+    /// camera at its ring's far edge, the ring empty under it).
+    lev: u64,
     float: f32,
     bob: f32,
     /// The shadow under a floating hero (made the first time they float).
@@ -330,6 +335,7 @@ impl HeroLook {
             tinted: None,
             statue: None,
             float_masks: 0,
+            lev: 0,
             float: 0.0,
             bob: 0.0,
             under: None,
@@ -535,13 +541,18 @@ impl MapView {
                     .find(|c| c.name == name)
                     .map_or(0, |c| c.mask)
             };
+            look.lev = mask("Lev");
             (look.stun, look.conf) = (mask("Stun"), mask("Conf"));
             (look.hallu, look.blind) = (mask("Hallu"), mask("Blind"));
             look.strangled = mask("Strngl");
         }
         let conds = world.status.conditions();
         // floating, up off the floor and bobbing (a rider keeps their seat)
-        let floats = conds & look.float_masks != 0 && self.rider.is_none();
+        let lifting = match world.status.polymorphed() {
+            true => look.lev,
+            false => look.float_masks,
+        };
+        let floats = conds & lifting != 0 && self.rider.is_none();
         let to = if floats { 1.0 } else { 0.0 };
         let step = delta / FLOAT_EASE;
         look.float = if look.float < to {

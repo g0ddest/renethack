@@ -1,11 +1,13 @@
 //! `polyself`: the hero polymorphed, in a debug-mode game where #polyself
-//! changes them at will. Into a xorn, a red dragon and a newt, each: the map
-//! draws the hero as that monster's model, their ring and the rim light on
-//! it, lit as the monsters about them are (their own key and fills are for
-//! their outfit), the portrait names the form, and the doll shows it framed
-//! whole, whatever its size. The xorn's ring is wide enough to show round
-//! its dome; the dragon turning to stone greys, and a prayer cures it; the
-//! newt behind a man is drawn through him. Back to their own form
+//! changes them at will. Into a xorn, a red dragon, a newt, a marilith and
+//! a titan, each: the map draws the hero as that monster's model, centred
+//! on their cell (a flier standing as its monster does, not lifted off
+//! the floor), their ring and the rim light on it, lit as the monsters
+//! about them are (their own key and fills are for their outfit), the
+//! portrait names the form, and the doll shows it framed whole, whatever
+//! its size. The xorn's ring is wide enough to show round its dome; the
+//! dragon turning to stone greys, and a prayer cures it; the newt behind a
+//! man is drawn through him. Back to their own form
 //! (#polyself into their role: "You return to human form!") the hero is
 //! drawn as the Valkyrie again, by their own lights, their ring a human's:
 //! from the xorn with the spear and the shield it kept in hand, from the
@@ -30,7 +32,7 @@ const SEED: u64 = 17;
 
 /// The forms, in order: the name #polyself is told, the portrait's word,
 /// the pictures of the map and the doll.
-const FORMS: [(&str, &str, &str, &str); 3] = [
+const FORMS: [(&str, &str, &str, &str); 5] = [
     ("xorn", "Xorn", "polyself-xorn", "polyself-xorn-doll"),
     (
         "red dragon",
@@ -39,9 +41,19 @@ const FORMS: [(&str, &str, &str, &str); 3] = [
         "polyself-dragon-doll",
     ),
     ("newt", "Newt", "polyself-newt", "polyself-newt-doll"),
+    (
+        "marilith",
+        "Marilith",
+        "polyself-marilith",
+        "polyself-marilith-doll",
+    ),
+    ("titan", "Titan", "polyself-titan", "polyself-titan-doll"),
 ];
 /// The hero's ring across in their own form (`map_view`'s).
 const RING: f32 = 0.95;
+/// Metres off its cell's middle a form may stand, where it meets the
+/// floor.
+const CENTRED: f32 = 0.12;
 /// The form under test (an index into `FORMS`, from 1).
 static NOW: AtomicUsize = AtomicUsize::new(0);
 /// The log's last message before the hero last turned back.
@@ -94,9 +106,26 @@ pub(super) fn polyself() -> Vec<Step> {
                 Ok(map_view(g)?.hero_ring_across() > RING + 0.2)
             })],
             "red dragon" => turning_to_stone(),
-            _ => behind_a_man(),
+            "newt" => behind_a_man(),
+            _ => vec![],
         });
         steps.extend(close_up());
+        // (where its idle has it now and then: a dragon's wings sweep
+        // down past its feet)
+        steps.push(Step::Wait("centred on the cell", |g| {
+            let off = map_view(g)?.hero_off_centre();
+            Ok(off.is_some_and(|off| off <= CENTRED))
+        }));
+        steps.push(Step::Call(
+            "on the floor, a flier as its monster flies",
+            |g| {
+                let lift = map_view(g)?.hero_lift();
+                match lift == 0.0 {
+                    true => Ok(()),
+                    false => Err(format!("the {} hovers {lift:.2} m up", form().0)),
+                }
+            },
+        ));
         steps.push(Step::Shot(shot));
         steps.extend(doll_shot(doll, true));
         if name == "xorn" {

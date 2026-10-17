@@ -5655,6 +5655,22 @@ impl MapView {
         self.hero_ring.get_size().x
     }
 
+    /// How far across the floor the middle of where the hero's model meets
+    /// it (`FORM_FOOTING`) is from their ring's (self-tests: a form stands
+    /// centred on its cell).
+    pub fn hero_off_centre(&self) -> Option<f32> {
+        let inner = self
+            .hero_model()?
+            .node
+            .get_child(0)?
+            .try_cast::<Node3D>()
+            .ok()?;
+        let foot = crate::art::footing(&inner, FORM_FOOTING)?;
+        let at = inner.get_global_transform() * foot.center();
+        let ring = self.hero_ring.get_global_position();
+        Some(Vector2::new(at.x - ring.x, at.z - ring.z).length())
+    }
+
     /// The steed the hero rides: its model, and where on its back they
     /// sit (None on foot, or while the steed is not drawn yet).
     pub fn steed(&self) -> Option<(&Model, &Mount)> {
