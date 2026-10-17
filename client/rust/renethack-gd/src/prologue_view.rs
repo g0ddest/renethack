@@ -1,12 +1,18 @@
 //! The prologue's words over its scenes (`prologue::Run` plays it): each
 //! beat's text in the title's typeface, in lines centred low on the
-//! screen over a soft dark band, coming as the run shows its characters
-//! (the Book's as if written, letter by letter; the rest line by line); the
-//! black between the beats; a quiet note of the keys in a corner.
+//! screen over a soft dark band, and a darker spot right behind them, as
+//! dark over all the lines and fading out past them (the words read on
+//! Gehennom's lava as on the Book's dark), coming as the run shows its
+//! characters (the Book's as if written, letter by letter; the rest line
+//! by line); the black between the beats; a quiet note of the keys in a
+//! corner.
 
+use godot::builtin::Side;
 use godot::classes::control::MouseFilter;
+use godot::classes::gradient_texture_2d::Fill;
 use godot::classes::{
-    CanvasLayer, ColorRect, Control, Gradient, GradientTexture2D, Label, TextureRect, VBoxContainer,
+    CanvasLayer, ColorRect, Control, Gradient, GradientTexture2D, Label, NinePatchRect,
+    TextureRect, VBoxContainer,
 };
 use godot::global::HorizontalAlignment;
 use godot::prelude::*;
@@ -22,6 +28,12 @@ const WIDTH: f32 = 0.66;
 const BOTTOM: f32 = 0.1;
 /// The parchment the words are written in.
 const INK: Color = Color::from_rgb(0.95, 0.89, 0.76);
+/// The dark behind the words: how dark it is over them, how far past
+/// them it stays that dark (design pixels, across and up and down), and
+/// how far beyond that it fades out.
+const PLATE_DARK: f32 = 0.6;
+const PLATE_PAD: (f32, f32) = (24.0, 8.0);
+const PLATE_FADE: i32 = 120;
 
 pub struct PrologueView {
     root: Gd<Control>,
@@ -31,6 +43,9 @@ pub struct PrologueView {
     /// characters it holds.
     lines: Vec<(Gd<Label>, usize, usize)>,
     hint: Gd<Label>,
+    /// The dark right behind the words, and their widest line's width.
+    plate: Gd<NinePatchRect>,
+    widest: f32,
     /// What the lines are laid out for: the beat, its text, the width.
     laid: Option<(Beat, String, i32)>,
 }
@@ -56,6 +71,11 @@ impl PrologueView {
         band.set_mouse_filter(MouseFilter::IGNORE);
         theme::place(&band, [0.0, 0.5, 1.0, 1.0], [0.0; 4]);
         root.add_child(&band);
+        // and right behind the words, as dark over all of them and fading
+        // out past them: strong enough over the brightest scene, lost in
+        // the dark ones
+        let plate = plate();
+        root.add_child(&plate);
         let mut words = VBoxContainer::new_alloc();
         words.set_mouse_filter(MouseFilter::IGNORE);
         words.set_alignment(godot::classes::box_container::AlignmentMode::END);
@@ -80,6 +100,8 @@ impl PrologueView {
             words,
             lines: Vec::new(),
             hint,
+            plate,
+            widest: 0.0,
             laid: None,
         }
     }
@@ -101,6 +123,7 @@ impl PrologueView {
         self.shade.set_color(Color::from_rgba(0.0, 0.0, 0.0, alpha));
         self.words.set_visible(false);
         self.hint.set_visible(false);
+        self.plate.set_visible(false);
     }
 
     /// The text in the language now (after a switch).
@@ -139,6 +162,32 @@ impl PrologueView {
         }
         self.words
             .set_modulate(Color::from_rgba(1.0, 1.0, 1.0, run.words_alpha()));
+        self.place_plate(run.words_alpha());
+    }
+
+    /// The dark behind the words where they are now: as dark from their
+    /// widest line's ends and their top and bottom out to `PLATE_PAD`,
+    /// fading out `PLATE_FADE` beyond; it fades with them.
+    fn place_plate(&mut self, alpha: f32) {
+        let (Some(first), Some(last)) = (self.lines.first(), self.lines.last()) else {
+            self.plate.set_visible(false);
+            return;
+        };
+        let (top, bottom) = (
+            first.0.get_global_rect().position.y,
+            last.0.get_global_rect().end().y,
+        );
+        let view = self.root.get_viewport_rect().size;
+        let fade = PLATE_FADE as f32;
+        let half = self.widest / 2.0 + PLATE_PAD.0 + fade;
+        let over = PLATE_PAD.1 + fade;
+        self.plate
+            .set_global_position(Vector2::new(view.x / 2.0 - half, top - over));
+        self.plate
+            .set_size(Vector2::new(2.0 * half, bottom - top + 2.0 * over));
+        self.plate
+            .set_modulate(Color::from_rgba(1.0, 1.0, 1.0, alpha));
+        self.plate.set_visible(true);
     }
 
     /// The beat's text laid out in lines of at most `width` pixels.
@@ -149,7 +198,9 @@ impl PrologueView {
         let font = theme::font(Face::Title);
         let measure = |s: &str| font.get_string_size_ex(s).font_size(SIZE).done().x;
         let mut start = 0;
-        for line in wrap(text, |s| measure(s) <= width as f32) {
+        let lines = wrap(text, |s| measure(s) <= width as f32);
+        self.widest = lines.iter().map(|l| measure(l)).fold(0.0, f32::max);
+        for line in lines {
             let len = line.chars().count();
             let mut label = theme::styled_label(&line, Face::Title, SIZE, INK);
             label.set_horizontal_alignment(HorizontalAlignment::CENTER);
@@ -177,6 +228,42 @@ impl PrologueView {
             .map(|(l, _, _)| l.get_text().to_string())
             .collect()
     }
+}
+
+/// The dark behind the words: a round soft spot, its middle stretched
+/// over the lines and its rim `PLATE_FADE` wide, falling off as a
+/// smoothstep (no edge where the fade starts).
+fn plate() -> Gd<NinePatchRect> {
+    let stops = [
+        (0.0, 1.0),
+        (0.25, 0.84),
+        (0.5, 0.5),
+        (0.75, 0.16),
+        (1.0, 0.0),
+    ];
+    let offsets: Vec<f32> = stops.iter().map(|s| s.0).collect();
+    let colors: Vec<Color> = stops
+        .iter()
+        .map(|s| Color::from_rgba(0.0, 0.0, 0.0, PLATE_DARK * s.1))
+        .collect();
+    let mut g = Gradient::new_gd();
+    g.set_offsets(&PackedFloat32Array::from(&offsets[..]));
+    g.set_colors(&PackedColorArray::from(&colors[..]));
+    let mut t = GradientTexture2D::new_gd();
+    t.set_gradient(&g);
+    // the rims and one texel of middle between them, to stretch
+    t.set_width(2 * PLATE_FADE + 1);
+    t.set_height(2 * PLATE_FADE + 1);
+    t.set_fill(Fill::RADIAL);
+    t.set_fill_from(Vector2::new(0.5, 0.5));
+    t.set_fill_to(Vector2::new(1.0, 0.5));
+    let mut plate = NinePatchRect::new_alloc();
+    plate.set_texture(&t);
+    for side in [Side::LEFT, Side::TOP, Side::RIGHT, Side::BOTTOM] {
+        plate.set_patch_margin(side, PLATE_FADE);
+    }
+    plate.set_mouse_filter(MouseFilter::IGNORE);
+    plate
 }
 
 /// `text` in lines of whole words, each as long as `fits` lets it be (a
