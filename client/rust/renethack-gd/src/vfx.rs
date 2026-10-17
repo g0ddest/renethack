@@ -1128,6 +1128,9 @@ fn particle_material(
 ) -> Gd<Material> {
     let mut m = StandardMaterial3D::new_gd();
     m.set_billboard_mode(BillboardMode::PARTICLES);
+    // a billboard drops the particle's own scale unless told to keep it:
+    // the sizes a recipe ranges over, a ring's spread, smoke's swell
+    m.set_flag(Flags::BILLBOARD_KEEP_SCALE, true);
     m.set_flag(Flags::ALBEDO_FROM_VERTEX_COLOR, true);
     m.set_texture(godot::classes::base_material_3d::TextureParam::ALBEDO, tex);
     m.set_transparency(Transparency::ALPHA);
