@@ -73,7 +73,7 @@ mod prologue_stage;
 pub use acts::{ActKind, Acted, Aim};
 pub use fall::{FallKind, Fell};
 pub use hero_look::{Effects, Posture, Shown};
-pub use hero_pose::{Held, HelplessPhase};
+pub use hero_pose::{Held, HelplessPhase, STATE_CLIPS};
 pub use prologue_stage::{PrologueHero, STAIRS as PROLOGUE_STAIRS};
 
 /// Low enough to see creatures from the side, high enough to see the floor

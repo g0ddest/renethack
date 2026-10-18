@@ -21,7 +21,7 @@ use godot::classes::{
 use godot::prelude::*;
 use nh_art::{Gear, HeldArt, LightSpec, PROC_CLIPS, Resolved, Tint};
 
-use super::{Art, Finish, Model, ModelLook, Pose, find, set_layer_mask, transform};
+use super::{Art, Finish, Model, ModelLook, NECK_SLOT, Pose, find, set_layer_mask, transform};
 use crate::meshes::sphere;
 use crate::off_hand::{GuardClips, OffHand};
 
@@ -231,6 +231,13 @@ impl Art {
                 skeleton,
                 ..Worn::default()
             }));
+            // the hero's neck shows what they carry, never their look's own
+            // (with nothing at all, no gear changes to say so)
+            for (slot, node) in &m.extras {
+                if slot.as_deref() == Some(NECK_SLOT) && node.is_instance_valid() {
+                    node.clone().set_visible(false);
+                }
+            }
         }
         let Some(worn) = m.worn.as_mut() else {
             return false;
@@ -313,11 +320,13 @@ impl Art {
             let shade = super::rgb(self.manifest.model_at(m.key.model).1.shade_rgb());
             self.wear(&mut worn.dressed, &skeleton, gear, shade);
         }
-        // a role's hat, cape or shield steps aside for what is worn there
+        // a role's hat, cape or shield steps aside for what is worn there,
+        // and its own thing round the neck for whatever the hero carries
         for (slot, node) in &m.extras {
             let Some(slot) = slot else { continue };
-            let covered =
-                gear.worn.contains(&slot.as_str()) || (slot == "shield" && gear.arm_l.is_some());
+            let covered = (slot == NECK_SLOT && !worn.monster)
+                || gear.worn.contains(&slot.as_str())
+                || (slot == "shield" && gear.arm_l.is_some());
             let mut node = node.clone();
             if node.is_instance_valid() {
                 node.set_visible(!covered);

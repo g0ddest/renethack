@@ -36,7 +36,7 @@ mod outfit;
 mod riding;
 
 pub use equip::{HELD_NODE, LAMP_LIGHT, OFF_HAND, THROW_LETS_GO, USE_NODE, Worn};
-pub use outfit::{GLOVES_NODE, NECK_NODE};
+pub use outfit::{GLOVES_NODE, NECK_NODE, NECK_SLOT, OWN_NECK_NODE};
 pub use riding::{Back, SADDLE_NODE, SEATED};
 
 use crate::meshes::{
@@ -511,6 +511,12 @@ impl Art {
                         .filter_map(|e| self.manifest.model_index(&e.model))
                         .map(Preload::Prop),
                 );
+                q.extend(
+                    spec.neck
+                        .iter()
+                        .filter_map(|n| self.manifest.model_index(n))
+                        .map(Preload::Scene),
+                );
             }
             q.push(Preload::Warm(*look));
         }
@@ -658,6 +664,12 @@ impl Art {
                     spec.extras
                         .iter()
                         .filter_map(|e| self.manifest.model_index(&e.model))
+                        .flat_map(scene),
+                );
+                out.extend(
+                    spec.neck
+                        .iter()
+                        .filter_map(|n| self.manifest.model_index(n))
                         .flat_map(scene),
                 );
                 out
@@ -1502,11 +1514,23 @@ impl Art {
             (None, None) => self.build_proc(Proc::Blob, &spec, look),
         };
         inner.set_transform(inner_transform(look, &spec));
-        let extras = if spec.proc.is_none() {
+        let mut extras = if spec.proc.is_none() {
             self.attach_extras(&inner, &spec, look)
         } else {
             Vec::new()
         };
+        // its own thing round the neck, skinned to it (a tourist's camera:
+        // the hero's pack overrules it)
+        if spec.proc.is_none()
+            && !spec.neck.is_empty()
+            && let Some(skeleton) = find::<Skeleton3D>(&inner.clone().upcast())
+        {
+            let hung = self.own_neck(&skeleton, &spec, look);
+            extras.extend(
+                hung.into_iter()
+                    .map(|mi| (Some(NECK_SLOT.to_string()), mi.upcast())),
+            );
+        }
         if spec.proc.is_none() {
             self.hold_extra_in_both(&inner, &spec, player.clone());
         }

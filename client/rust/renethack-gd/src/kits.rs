@@ -1,7 +1,7 @@
 //! The starting kits NetHack gives each role (u_init.c), as far as they
 //! show on the hero: what is wielded, the alternate weapon and the quiver,
 //! the shield, the armour worn, and what shows though only carried (a
-//! Healer's stethoscope, round the neck). The title scene dresses its hero
+//! Healer's stethoscope and a Tourist's camera, round the neck). The title scene dresses its hero
 //! in them, and the `kits` self-test holds the game's hero to them, so the
 //! two cannot drift apart.
 
@@ -126,7 +126,11 @@ const SAMURAI: &[KitItem] = &[
     (Quiver, &["bamboo arrow"]),
     (Body, &["splint mail"]),
 ];
-const TOURIST: &[KitItem] = &[(Quiver, &["dart"]), (Shirt, &["Hawaiian shirt"])];
+const TOURIST: &[KitItem] = &[
+    (Quiver, &["dart"]),
+    (Shirt, &["Hawaiian shirt"]),
+    (Carried, &["expensive camera"]),
+];
 const VALKYRIE: &[KitItem] = &[
     (Wielded, &["spear"]),
     (Alternate, &["dagger"]),
@@ -230,16 +234,18 @@ mod tests {
     }
 
     #[test]
-    fn the_healer_has_the_stethoscope_round_the_neck() {
+    fn the_healer_and_the_tourist_have_their_things_round_the_neck() {
         let cat = catalog();
         let art = nh_art::ArtManifest::parse(include_str!("../../../godot/art/manifest.json"));
         let art = art.unwrap();
         let neck = |role: &str| {
             let mut pack = nh_world::Pack::new();
             pack.replace(&inventory(&cat, kits(role)[0]));
-            art.gear(&pack, &cat).neck
+            let rule = art.gear(&pack, &cat).neck?;
+            Some(art.worn_rules().neck[rule].models[0].clone())
         };
-        assert!(neck("healer").is_some());
+        assert_eq!(neck("healer").as_deref(), Some("stethoscope_man"));
+        assert_eq!(neck("tourist").as_deref(), Some("camera_man"));
         assert_eq!(neck("priest"), None);
     }
 

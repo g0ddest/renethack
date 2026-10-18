@@ -1,9 +1,11 @@
 //! What the things worn do to the hero's outfit (art direction §4; the
 //! manifest's `worn` section, `nh_art::WornRules`): metal body armour puts
 //! its material on the outfit's torso, gloves cover the hands in leather,
-//! and a thing carried round the neck (a stethoscope) hangs there, skinned
-//! to the skeleton as the outfit is. All of it comes off again when the
-//! gear changes or the model goes back to the pool.
+//! and a thing carried round the neck (a stethoscope, a camera on its
+//! strap) hangs there, skinned to the skeleton as the outfit is. All of it
+//! comes off again when the gear changes or the model goes back to the
+//! pool. A model can wear such a thing of its own (a tourist's camera:
+//! `ModelSpec::neck`), which the hero's pack overrules.
 
 use std::collections::HashMap;
 
@@ -17,6 +19,11 @@ use super::{Art, cut_out, is_skin, mul, rgb};
 /// (self-tests look for them).
 pub const NECK_NODE: &str = "WornNeck";
 pub const GLOVES_NODE: &str = "WornGloves";
+/// A model's own thing round the neck, by the same rule.
+pub const OWN_NECK_NODE: &str = "OwnNeck";
+/// The slot of a model's own thing round the neck among its extras: the
+/// hero's pack decides what hangs there.
+pub const NECK_SLOT: &str = "neck";
 
 /// How far up the forearm a glove's cuff reaches from the wrist, metres
 /// (and where a sleeve ends that leaves the hand bare).
@@ -274,8 +281,57 @@ impl Art {
             .iter()
             .filter_map(|m| self.manifest.model_index(m))
             .collect();
+        on.hung = self.put_on_neck(skeleton, &models, NECK_NODE);
+    }
+
+    /// A model's own thing round the neck (`ModelSpec::neck`) on its
+    /// skeleton, as `look` shows it (a statue's of its stone, a ghost's
+    /// faded): the meshes put on.
+    pub(super) fn own_neck(
+        &mut self,
+        skeleton: &Gd<Skeleton3D>,
+        spec: &nh_art::ModelSpec,
+        look: &super::ModelLook,
+    ) -> Vec<Gd<MeshInstance3D>> {
+        let models: Vec<usize> = spec
+            .neck
+            .iter()
+            .filter_map(|m| self.manifest.model_index(m))
+            .collect();
+        let mut hung = self.put_on_neck(skeleton, &models, OWN_NECK_NODE);
+        let ghost = look.pose == super::Pose::Ghost || look.art.skin == nh_art::Skin::Translucent;
+        for mi in &mut hung {
+            match look.art.skin {
+                nh_art::Skin::Material(m) => {
+                    let stone = self.surface(m, 100, false, look.tint);
+                    mi.set_material_override(&stone);
+                }
+                _ if ghost => {
+                    let mesh = mi.get_mesh();
+                    for s in 0..mesh.as_ref().map_or(0, |m| m.get_surface_count()) {
+                        let Some(src) = mi.get_active_material(s) else {
+                            continue;
+                        };
+                        let faded = self.derive(&src, Color::WHITE, true, None);
+                        mi.set_surface_override_material(s, &faded);
+                    }
+                }
+                _ => {}
+            }
+        }
+        hung
+    }
+
+    /// Of `models`, the one fitted to the skeleton nearest this one, put on
+    /// it: its meshes, named `name` and a number.
+    fn put_on_neck(
+        &mut self,
+        skeleton: &Gd<Skeleton3D>,
+        models: &[usize],
+        name: &str,
+    ) -> Vec<Gd<MeshInstance3D>> {
         let mut best: Option<(f32, Fitted)> = None;
-        for model in models {
+        for &model in models {
             let Some(fitted) = self.fitted(model) else {
                 continue;
             };
@@ -297,20 +353,22 @@ impl Art {
             }
         }
         let Some((_, fitted)) = best else {
-            return;
+            return Vec::new();
         };
         let mut skeleton = skeleton.clone();
         let like = meshes(&skeleton).into_iter().find(|m| m.is_visible());
+        let mut out = Vec::new();
         for (mesh, skin, materials) in &fitted.parts {
-            let name = format!("{NECK_NODE}{}", on.hung.len());
+            let name = format!("{name}{}", out.len());
             let mut mi = put_on(&mut skeleton, name, mesh, skin, like.as_ref());
             for (s, m) in materials.iter().enumerate() {
                 if let Some(m) = m {
                     mi.set_surface_override_material(s as i32, m);
                 }
             }
-            on.hung.push(mi);
+            out.push(mi);
         }
+        out
     }
 
     /// A fitted model's parts, read from its scene once.

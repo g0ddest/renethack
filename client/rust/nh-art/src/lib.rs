@@ -261,6 +261,12 @@ pub struct ModelSpec {
     /// Things worn on the rig's bones: a hat, a winged helm, a cape.
     #[serde(default)]
     pub extras: Vec<Extra>,
+    /// A thing worn round the neck as a carried stethoscope is on the
+    /// hero (a tourist's camera on its strap): of these models, each fitted
+    /// to an outfit's body, the one fitted to the skeleton nearest this
+    /// model's, skinned to it. The hero shows what their pack has instead.
+    #[serde(default)]
+    pub neck: Vec<String>,
     /// Bare arms: those of this head's base character (its skin), worn
     /// instead of the outfit's sleeves (hide those).
     #[serde(default)]
@@ -876,6 +882,11 @@ impl ArtManifest {
                     "model {name}: a second head {h} of no kind, or alone"
                 ));
             }
+            for n in &m.neck {
+                if model(n).is_none() {
+                    errors.push(format!("model {name}: no neck model {n}"));
+                }
+            }
             for e in &m.extras {
                 if model(&e.model).is_none() {
                     errors.push(format!("model {name}: no extra model {}", e.model));
@@ -1267,6 +1278,7 @@ impl ArtManifest {
             recolor: BTreeMap::new(),
             albedo: None,
             extras: Vec::new(),
+            neck: Vec::new(),
             bare_arms: None,
             bare_chest: false,
             bare_legs: false,
@@ -2569,6 +2581,32 @@ mod tests {
         // on the floor it lies coiled, a model of its own
         let floor = art.object(tile(&cat, "(", "stethoscope"));
         assert_eq!(art.model_at(floor.model).0, "stethoscope");
+    }
+
+    /// A Tourist's camera hung in front of the face, a box on the tourist
+    /// models' chests that their pack did not decide: carried, it hangs
+    /// on its strap round the neck as the stethoscope does, and the
+    /// tourists the hero meets (a guide, Twoflower) wear the same.
+    #[test]
+    fn a_camera_carried_hangs_round_the_neck_on_its_strap() {
+        let (art, cat) = (manifest(), catalog());
+        let items = vec![inv(&cat, 'a', "(", "expensive camera", vec![], false)];
+        let g = art.gear(&pack(items, false), &cat);
+        let rule = &art.worn_rules().neck[g.neck.unwrap()];
+        assert_eq!(rule.models, ["camera_man", "camera_woman"]);
+        for who in ["tourist", "guide", "Twoflower"] {
+            let m = cat.monsters.iter().find(|m| m.name == who).unwrap();
+            for flags in [0, mg::FEMALE] {
+                let spec = art.model_at(art.monster(m, flags).model).1;
+                assert_eq!(spec.neck, rule.models, "{who}");
+                // no camera on the chest's bone besides
+                assert!(spec.extras.iter().all(|e| e.model != "camera"), "{who}");
+            }
+        }
+        assert!(
+            art.portrait("tourist")
+                .is_some_and(|p| p.extras.iter().all(|e| e.model != "camera"))
+        );
     }
 
     #[test]

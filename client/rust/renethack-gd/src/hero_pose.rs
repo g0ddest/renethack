@@ -91,6 +91,9 @@ const COLLAPSE_SPEED: f32 = 1.4;
 const GET_UP: &str = "ual2/LayToIdle";
 /// Paralysed: slumped where they stand, the stance held still once taken.
 const SLUMP: &str = "ual2/Zombie_Idle";
+/// The clips of the hero's states: caught, climbing out, kneeling, fallen,
+/// getting up, slumped (self-tests pose the hero in each).
+pub const STATE_CLIPS: [&str; 7] = [CROUCH, STRUGGLE, CLIMB, KNEEL, COLLAPSE, GET_UP, SLUMP];
 const SLUMP_SECS: f32 = 0.5;
 /// A body on the floor slides this much of its height the way it faced:
 /// the fall is backwards, and it would lie half on the next cell.

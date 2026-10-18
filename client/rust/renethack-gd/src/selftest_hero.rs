@@ -649,7 +649,7 @@ fn kit_worn(neck: bool, gloves: bool) -> String {
 }
 
 /// The art's manifest, read once.
-fn kit_art() -> Result<&'static nh_art::ArtManifest, String> {
+pub(super) fn kit_art() -> Result<&'static nh_art::ArtManifest, String> {
     static ART: std::sync::OnceLock<Result<nh_art::ArtManifest, String>> =
         std::sync::OnceLock::new();
     ART.get_or_init(|| {
@@ -730,7 +730,7 @@ fn hero_look(g: &RenethackGame) -> Result<KitLook, String> {
 
 /// The hero turned to `yaw` degrees on the screen (0: facing the camera),
 /// whichever way the game has them face.
-fn kit_turn(g: &RenethackGame, yaw: f32) -> Result<(), String> {
+pub(super) fn kit_turn(g: &RenethackGame, yaw: f32) -> Result<(), String> {
     let map = map_view(g)?;
     let m = map.hero_model().ok_or("no hero model")?;
     let mut inner = m.node.get_child(0).ok_or("no model node")?.cast::<Node3D>();
