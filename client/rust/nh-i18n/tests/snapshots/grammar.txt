@@ -14376,6 +14376,11 @@
   f   Крыса меняет крысу на крысу.
   n   Копьё меняет копьё на копьё.
   pl  3 стрелы меняют 3 стрелы на 3 стрелы.
+%s resists.  [9da5d5febcdd]
+  m   Тритон сопротивляется.
+  f   Крыса сопротивляется.
+  n   Копьё сопротивляется.
+  pl  3 стрелы сопротивляются.
 %s resurrects!  [a11970b663de]
   m   Тритон воскресает!
   f   Крыса воскресает!
@@ -14956,6 +14961,16 @@
   f   Крыса прыгает по воде.
   n   Копьё прыгает по воде.
   pl  3 стрелы прыгают по воде.
+%s slam shut!  [756801a69ff2]
+  m   Тритон с грохотом захлопывается!
+  f   Крыса с грохотом захлопывается!
+  n   Копьё с грохотом захлопывается!
+  pl  3 стрелы с грохотом захлопываются!
+%s slams shut!  [1a543f22804e]
+  m   Тритон с грохотом захлопывается!
+  f   Крыса с грохотом захлопывается!
+  n   Копьё с грохотом захлопывается!
+  pl  3 стрелы с грохотом захлопываются!
 %s slides off the ice.  [cf4821e0bdf2]
   m   Тритон съезжает со льда.
   f   Крыса съезжает со льда.
@@ -18042,6 +18057,11 @@ A cascade of steamy bubbles erupts from %s!  [c283b25f01cf]
   pl  Из 3 стрел вырывается каскад пузырей пара!
 A chameleon imitating a mail daemon often delivers scrolls of fire.  [205ee04aa6d8]
   =   Хамелеон, изображающий почтового демона, часто приносит свитки огня.
+A chill runs down your %s.  [7351451a2c18]
+  m   У вас по тритону пробегает холодок.
+  f   У вас по крысе пробегает холодок.
+  n   У вас по копью пробегает холодок.
+  pl  У вас по 3 стрелам пробегает холодок.
 A cloud of %s gas billows from %s.  [f0eb4f435859]
   m   Из тритона вырывается облако тритона газа.
   f   Из крысы вырывается облако крысы газа.
@@ -18805,6 +18825,11 @@ As you pick up %s, your mind is suddenly filled with images,\nand you perceive a
   pl  Едва вы берёте 3 стрелы, как ваш разум наполняется образами, и вы видите\nвсе следствия каждого выбора, какой могли бы сделать.  Совладав с\nмыслями и направив их, вы понимаете, что должны немедля вернуть 3 стрелы\n3 стрелам.
 As you pronounce the formula on it, the scroll disappears.  [8e62d508ca7f]
   =   Вы произносите начертанную на свитке формулу, и он исчезает.
+As you read the book, it radiates explosive energy in your %s!  [2fc999b494b7]
+  m   Когда вы читаете книгу, она обдаёт вам тритона взрывной энергией!
+  f   Когда вы читаете книгу, она обдаёт вам крысу взрывной энергией!
+  n   Когда вы читаете книгу, она обдаёт вам копьё взрывной энергией!
+  pl  Когда вы читаете книгу, она обдаёт вам 3 стрелы взрывной энергией!
 As you read the scroll, it disappears.  [40113e6469d1]
   =   Пока вы читаете свиток, он исчезает.
 As you touch %s, its comforting power infuses you\nwith new energy.  You feel as if you can detect others' thoughts flowing\nthrough it.  Although you yearn to wear %s and\nattack the Wizard of Yendor, you know you must return it to its rightful\nowner, %s.  [e8e49cbf7b00]
@@ -18820,6 +18845,8 @@ At last... a nice long sleep.  [08466e2630b8]
   =   Наконец-то... долгий сладкий сон.
 At least I'm good at something  [256f3169217d]
   =   Хоть в чём-то я хорош
+At least one of your relics is cursed...  [14327f689ca4]
+  =   По меньшей мере одна из ваших реликвий проклята...
 At times, the gods may favor worthy supplicants with named blades whose\npowers echo throughout legend.  Learned wayfarers can reproduce blades of\nelven lineage, hated of the orcs, without the need for such intervention.  [6b4be1c8c413]
   =   Порой боги жалуют достойных просителей именными клинками, чья сила гремит\nв легендах. Сведущие же странники умеют воссоздавать клинки эльфийского\nрода, ненавистные оркам, и без подобного заступничества.
 At whom? (in what direction)  [39015019ee75]
@@ -18974,6 +19001,8 @@ Being blind, you cannot read the mystic runes.  [38038a672397]
   =   Вы слепы и не можете прочесть мистические руны.
 Being blind, you cannot read the words.  [2210d6578904]
   =   Вы слепы и не можете прочесть слова.
+Being confused you have difficulties in controlling your actions.  [4b56f57aeb01]
+  =   В замешательстве вы с трудом управляете своими действиями.
 Being confused, you mispronounce the magic words...  [12b0ed4245de]
   =   В замешательстве вы неверно произносите магические слова...
 Being confused, you misunderstand the magic words...  [4fc448a53e28]
@@ -21121,6 +21150,8 @@ It goes out.  [395f2b5d8d19]
   =   Она гаснет.
 It happens sometimes.  People just explode.  [4e3ab9e41f9f]
   =   Иногда так бывает.  Люди просто взрываются.
+It invokes nightmarish images in your mind...  [762652601791]
+  =   Оно вызывает в вашем сознании кошмарные образы...
 It is bad manners to use a wand in a shop.  [9470995665ca]
   =   Пользоваться палочкой в лавке — дурной тон.
 It is customarily known among travelers that extra-healing draughts may clear\nthy senses when thou art addled by delusory visions.  But never forget, the\nlowly potion which makes one sick may be used for the same purpose.  [d3641cc79f65]
@@ -21926,6 +21957,8 @@ Offering a unicorn a worthless piece of glass might prove to be fatal!  [85e8493
   =   Предложить единорогу бесполезную стекляшку может оказаться роковой ошибкой!
 Og friend. Og good dude. Og died. Og now food.  [20f48a9b48e9]
   =   Ог друг. Ог хороший парень. Ог умер. Ог теперь еда.
+Oh my!  Your name appears in the book!  [49f11980a71b]
+  =   Ой-ой!  В книге появляется ваше имя!
 Oh wow!  Everything feels so cosmic!  [14204d1db20d]
   =   Ух ты!  Всё на ощупь такое космическое!
 Oh wow!  Everything looks so cosmic!  [07351bd2fa70]
@@ -23470,6 +23503,8 @@ Spellcasting  [7a00a5ebff6a]
   =   Заклинания
 Spellcasting Skills  [3ffd7256f68d]
   =   Навыки заклинаний
+Spells:  [6f81a970ac6b]
+  =   Заклинания:
 Spin a web  [7f8f8573f85e]
   =   Сплести паутину
 Spinach, carrot, and jelly -- a meal fit for a nurse!  [a3c20d660d20]
@@ -24115,6 +24150,11 @@ The %s also slips from your %s.  [cb1aa847240b]
   f   Крыса тоже выскальзывает у вас из крысы.
   n   Копьё тоже выскальзывает у вас из копья.
   pl  3 стрелы тоже выскальзывают у вас из 3 стрел.
+The %s around you begins to shimmer with %s haze.  [5537d6a9993f]
+  m   Тритон вокруг вас начинает мерцать тритоном дымкой.
+  f   Крыса вокруг вас начинает мерцать крысой дымкой.
+  n   Копьё вокруг вас начинает мерцать копьём дымкой.
+  pl  3 стрелы вокруг вас начинают мерцать 3 стрелами дымкой.
 The %s around you vaporizes violently!  [ddf086db4609]
   m   Тритон вокруг вас бурно испаряется!
   f   Крыса вокруг вас бурно испаряется!
@@ -24280,6 +24320,11 @@ The %s glow of your %s intensifies.  [de0c8b84a159]
   f   Крыса сияние вашей крысы усиливается.
   n   Копьё сияние вашего копья усиливается.
   pl  3 стрелы сияние ваших 3 стрел усиливается.
+The %s haze around you becomes more dense.  [fd30493ede22]
+  m   Тритон дымка вокруг вас становится гуще.
+  f   Крыса дымка вокруг вас становится гуще.
+  n   Копьё дымка вокруг вас становится гуще.
+  pl  3 стрелы дымка вокруг вас становится гуще.
 The %s here burns you!  [292ccd79a54e]
   m   Тритон здесь обжигает вас!
   f   Крыса здесь обжигает вас!
@@ -24672,6 +24717,8 @@ The '%s' prefix should be followed by a movement command.  [37b621a30e7f]
   pl  После префикса '3 стрелы' нужна команда движения.
 The Amulet doesn't like being called names.  [cd586b40c19d]
   =   Амулет не любит, когда его обзывают.
+The Book seems to be ignoring you!  [98232865cc2e]
+  =   Книга, похоже, не обращает на вас внимания!
 The Gods DO have a sense of humor: I'm living proof!  [99f2d3a2e38e]
   =   У богов ЕСТЬ чувство юмора: я — живое доказательство!
 The Grave of the Unknown Hacker  [dea64a380f4d]
@@ -24709,6 +24756,11 @@ The air around %s crackles with electricity.  [c09d808606ee]
   f   Воздух вокруг крысы трещит от электричества.
   n   Воздух вокруг копья трещит от электричества.
   pl  Воздух вокруг 3 стрел трещит от электричества.
+The air around you begins to shimmer with %s haze.  [8394550c1403]
+  m   Воздух вокруг вас начинает мерцать тритоном дымкой.
+  f   Воздух вокруг вас начинает мерцать крысой дымкой.
+  n   Воздух вокруг вас начинает мерцать копьём дымкой.
+  pl  Воздух вокруг вас начинает мерцать 3 стрелами дымкой.
 The air around you crackles with electricity.  [799863f9b928]
   =   Воздух вокруг вас трещит от электричества.
 The air crackles around %s.  [f653cffe3626]
@@ -24842,6 +24894,10 @@ The body of %s dissipates in a cloud of noxious fumes.  [634fd4aae855]
   pl  Тело 3 стрел рассеивается облаком ядовитых испарений.
 The bolt reveals a secret door.  [64d8e1d4c8e5]
   =   Луч обнаруживает потайную дверь.
+The book radiates explosive energy, but you are unharmed!  [5172f36f7c8c]
+  =   Книга излучает взрывную энергию, но вы невредимы!
+The book was coated with contact poison!  [bc3ca5812321]
+  =   Книга была покрыта контактным ядом!
 The boulder crashes through a door.  [237bcf7055fd]
   =   Валун проламывает дверь.
 The boulder falls apart.  [22731bc1a18d]
@@ -24896,6 +24952,11 @@ The cliche of the kitchen sink swallowing any unfortunate rings that contact\nit
   =   Избитая присказка о кухонной раковине, что глотает всякое несчастное\nкольцо, коснувшееся её пагубной поверхности, правдивее многих поучений; и\nвсё же немногие овладели искусством распознавать зачарованные кольца по\nпеременам, что они творят с обликом прожорливого устройства.
 The cloak will not fit on your body.  [23767c58c73f]
   =   Плащ на вас не налезет.
+The cloud around you begins to shimmer with %s haze.  [a31a654e0c9b]
+  m   Облако вокруг вас начинает мерцать тритоном дымкой.
+  f   Облако вокруг вас начинает мерцать крысой дымкой.
+  n   Облако вокруг вас начинает мерцать копьём дымкой.
+  pl  Облако вокруг вас начинает мерцать 3 стрелами дымкой.
 The cloud dissipates.  [046457177259]
   =   Облако рассеивается.
 The coin miraculously lands on its edge!  [467ed1a57f28]
@@ -25013,6 +25074,11 @@ The flash of light shines on %s.  [59b5c481a3e4]
   pl  Вспышка света озаряет 3 стрелы.
 The floor runs like butter!  [63c8e5a36fc6]
   =   Пол растекается, как масло!
+The folds around you begins to shimmer with %s haze.  [01cbae7e393d]
+  m   Складки вокруг вас начинают мерцать тритоном дымкой.
+  f   Складки вокруг вас начинают мерцать крысой дымкой.
+  n   Складки вокруг вас начинают мерцать копьём дымкой.
+  pl  Складки вокруг вас начинают мерцать 3 стрелами дымкой.
 The fountain is not deep enough to hide in.  [7003ae62d6d0]
   =   Фонтан недостаточно глубок, чтобы в нём спрятаться.
 The frog's dead.  He Kermitted suicide.  [6045d3e332f2]
@@ -25070,6 +25136,8 @@ The hat won't fit over your horn.  [8ebce432aca6]
   =   Шляпа не налезет на ваш рог.
 The hat won't fit over your horns.  [b44b56971ce7]
   =   Шляпа не налезет на ваши рога.
+The headstones in the cemetery begin to move!  [b2d04da27c1b]
+  =   Надгробия на кладбище приходят в движение!
 The helm won't fit over your horn.  [3b8fbd4fa145]
   =   Шлем не налезет на ваш рог.
 The helm won't fit over your horns.  [522e0c2f1ef4]
@@ -25107,6 +25175,8 @@ The ink in this spellbook is very faded.  [3b59aa75ee90]
   =   Чернила в этой книге заклинаний сильно выцвели.
 The invisible monster must have moved.  [f049278798df]
   =   Невидимый монстр, должно быть, переместился.
+The invocation fails!  [928ac7c1777a]
+  =   Призыв не удаётся!
 The iron ball smacks into you!  [2a9529faa90c]
   =   Железное ядро врезается в вас!
 The knot on your %s is pulled apart!  [de81040a2a00]
@@ -25207,10 +25277,17 @@ The list price of the contents of %s is %ld zorkmids.  [50d50f08fd79]
   pl  Содержимое 3 стрел по прейскуранту стоит 21 зоркмид.
 The longer the wand the better.  [0f6e7678ff4d]
   =   Чем длиннее палочка, тем лучше.
+The maelstrom around you begins to shimmer with %s haze.  [e37a4bccf3a1]
+  m   Водоворот вокруг вас начинает мерцать тритоном дымкой.
+  f   Водоворот вокруг вас начинает мерцать крысой дымкой.
+  n   Водоворот вокруг вас начинает мерцать копьём дымкой.
+  pl  Водоворот вокруг вас начинает мерцать 3 стрелами дымкой.
 The magic marker is mightier than the sword.  [42cc2860235d]
   =   Что написано волшебным маркером, того не вырубишь и мечом.
 The magic word is "XYZZY".  [bb0b36468946]
   =   Волшебное слово — "XYZZY".
+The magical energy is released!  [717692bb90e0]
+  =   Магическая энергия высвобождается!
 The magical ink in this spellbook is barely visible.  [02ace7f084b2]
   =   Волшебные чернила в этой книге заклинаний едва видны.
 The magical ink in this spellbook is extremely faded.  [d1f1259482e9]
@@ -25221,6 +25298,11 @@ The magical ink in this spellbook is slightly faded.  [261a2ccaadde]
   =   Волшебные чернила в этой книге заклинаний слегка выцвели.
 The magical ink in this spellbook is very faded.  [f23b8d61f3b2]
   =   Волшебные чернила в этой книге заклинаний сильно выцвели.
+The maw around you begins to shimmer with %s haze.  [16b0feaf8fce]
+  m   Пасть вокруг вас начинает мерцать тритоном дымкой.
+  f   Пасть вокруг вас начинает мерцать крысой дымкой.
+  n   Пасть вокруг вас начинает мерцать копьём дымкой.
+  pl  Пасть вокруг вас начинает мерцать 3 стрелами дымкой.
 The meat of enchanted creatures ofttimes conveyeth magical properties\nunto the consumer.  A fresh corpse of floating eye doth fetch a high\nprice among wizards for its utility in conferring Telepathy, by which\nthe sightless may locate surrounding minds.  [4bb4e2079f01]
   =   Мясо волшебных созданий нередко передаёт едоку их магические свойства.\nСвежий труп парящего ока высоко ценится у волшебников, ибо дарует\nТелепатию, коей незрячий может находить окружающие его умы.
 The meek shall inherit your bones files.  [15f3a77ff2d9]
@@ -25233,6 +25315,11 @@ The missiles bounce off!  [1de0974e1707]
   =   Волшебные стрелы отскакивают от вас!
 The missiles bounce!  [866af8fcd16f]
   =   Волшебные стрелы отскакивают!
+The mist around you begins to shimmer with %s haze.  [ecee72191338]
+  m   Туман вокруг вас начинает мерцать тритоном дымкой.
+  f   Туман вокруг вас начинает мерцать крысой дымкой.
+  n   Туман вокруг вас начинает мерцать копьём дымкой.
+  pl  Туман вокруг вас начинает мерцать 3 стрелами дымкой.
 The mixture bubbles, then clears.  [f624f44b8a24]
   =   Смесь пузырится, а затем светлеет.
 The mixture bubbles.  [3f35558d08ea]
@@ -25268,6 +25355,11 @@ The new candle magically ignites!  [37288bda65a3]
   =   Новая свеча волшебным образом загорается!
 The new candles magically ignite!  [a1a064ecfb9b]
   =   Новые свечи волшебным образом загораются!
+The ooze around you begins to shimmer with %s haze.  [9c1201d39793]
+  m   Слизь вокруг вас начинает мерцать тритоном дымкой.
+  f   Слизь вокруг вас начинает мерцать крысой дымкой.
+  n   Слизь вокруг вас начинает мерцать копьём дымкой.
+  pl  Слизь вокруг вас начинает мерцать 3 стрелами дымкой.
 The opening under you closes up.  [3dc1982dd8b1]
   =   Провал под вами смыкается.
 The orc swings his orcish broadsword named Elfrist at you.  You die...  [1976d47b9502]
@@ -25340,6 +25432,8 @@ The ring is stuck.  [7e3180b9e11d]
   =   Кольцо застряло.
 The rock seems to no longer trap you.  [8d6bb777eb1d]
   =   Похоже, камень вас больше не держит.
+The runes appear scrambled.  You can't read them!  [eb91608b05fb]
+  =   Руны перепутаны.  Вы не можете их прочесть!
 The scent of water comes to you in the desert breeze.  You know that\nyou have located %s.  [1a8b6f9e3c14]
   m   Ветерок пустыни доносит запах воды.  Вы знаете,\nчто нашли тритона.
   f   Ветерок пустыни доносит запах воды.  Вы знаете,\nчто нашли крысу.
@@ -25372,6 +25466,10 @@ The slime disappears.  [94d354a9728e]
   =   Слизь исчезает.
 The slime that covers you is burned away!  [e841cf01e260]
   =   Покрывающая вас слизь выгорает!
+The spell dissipates over the distance!  [28b2ce7feba4]
+  =   Заклинание рассеивается, не долетев!
+The spell is cut short!  [3813ab0d3c0e]
+  =   Заклинание обрывается!
 The spell reveals a secret door.  [2c8b4682c602]
   =   Заклинание обнаруживает потайную дверь.
 The spellbook crumbles to dust!  [6063bce173a9]
@@ -25392,6 +25490,11 @@ The stench of brimstone is all about you, and the elementals close in\nfrom all 
   =   Вокруг стоит смрад серы, и элементали надвигаются\nсо всех сторон!\n\nВпереди среди булькающих лавовых ям виднеется небольшая поляна...
 The stench of brimstone is all about you, and the shrieks and moans\nof tortured souls assault your psyche.\n\nAhead, there is a small clearing amidst the bubbling pits of lava...  [d855fad82920]
   =   Вокруг стоит смрад серы, а вопли и стоны\nизмученных душ терзают ваш рассудок.\n\nВпереди среди булькающих лавовых ям виднеется небольшая поляна...
+The stone around you begins to shimmer with %s haze.  [5653b877f3a3]
+  m   Камень вокруг вас начинает мерцать тритоном дымкой.
+  f   Камень вокруг вас начинает мерцать крысой дымкой.
+  n   Камень вокруг вас начинает мерцать копьём дымкой.
+  pl  Камень вокруг вас начинает мерцать 3 стрелами дымкой.
 The suit will not fit on your body.  [b25ac8fbb24e]
   =   Доспех на вас не налезет.
 The tin opens like magic!  [0b956fdefc3e]
@@ -25414,6 +25517,11 @@ The trapdoor beneath you shatters.  [14eaf588580b]
   =   Люк под вами разлетается вдребезги.
 The use of dynamite is dangerous.  [378daeadac2f]
   =   Применение динамита опасно.
+The vegetation around you begins to shimmer with %s haze.  [8d704674d15b]
+  m   Растительность вокруг вас начинает мерцать тритоном дымкой.
+  f   Растительность вокруг вас начинает мерцать крысой дымкой.
+  n   Растительность вокруг вас начинает мерцать копьём дымкой.
+  pl  Растительность вокруг вас начинает мерцать 3 стрелами дымкой.
 The venom blinds %s further!  [aea79dda8297]
   m   Яд ослепляет тритона ещё сильнее!
   f   Яд ослепляет крысу ещё сильнее!
@@ -25886,6 +25994,8 @@ There's sticky goop all over your %s.  [4312af882b80]
   f   У вас вся крыса в липкой массе.
   n   У вас всё копьё в липкой массе.
   pl  У вас все 3 стрелы в липкой массе.
+These runes were just too much to comprehend.  [47ead2e05b7f]
+  =   Эти руны оказались слишком сложны для понимания.
 They are lit.  %s shines dimly.  [189dff933c4b]
   m   Они зажжены.  Тритон светит тускло.
   f   Они зажжены.  Крыса светит тускло.
@@ -26751,6 +26861,11 @@ This %s tastes terrible%c  [85b4234bc25f]
   f   Эта крыса на вкус ужаснаx
   n   Это копьё на вкус ужасноx
   pl  Эти 3 стрелы на вкус ужасныx
+This book is so dull that you can't keep your %s open.  [d076790d334a]
+  m   Эта книга так скучна, что у вас слипаются тритон.
+  f   Эта книга так скучна, что у вас слипаются крыса.
+  n   Эта книга так скучна, что у вас слипаются копьё.
+  pl  Эта книга так скучна, что у вас слипаются 3 стрелы.
 This bottle turns out to be empty.  [1ae66043602c]
   =   Бутылка оказывается пустой.
 This burns a little!  [ca777dea5b67]
@@ -26898,8 +27013,14 @@ This spellbook doesn't have much of a plot.  [c6055a13ad2d]
   =   У этой книги заклинаний слабоватый сюжет.
 This spellbook has nothing written in it.  [d698fa7ac401]
   =   В этой книге заклинаний ничего не написано.
+This spellbook is all blank.  [3120ed8758fb]
+  =   Эта книга заклинаний совершенно чиста.
 This spellbook is difficult to comprehend.  Continue?  [7b82c1fcf0a9]
   =   Эта книга заклинаний трудна для понимания.  Продолжить?
+This spellbook is too faint to be read any more.  [a55365dacd04]
+  =   Эта книга заклинаний слишком выцвела, чтобы читать её дальше.
+This spellbook is too faint to read even once.  [5ca6ec3a6908]
+  =   Эта книга заклинаний слишком выцвела, чтобы прочесть её хоть раз.
 This spellbook is very difficult to comprehend.  Continue?  [cef7a3d48c1f]
   =   Эта книга заклинаний очень трудна для понимания.  Продолжить?
 This square deliberately left blank.  [8895d3130600]
@@ -27363,6 +27484,8 @@ Visitors are requested not to apply genocide to shopkeepers.  [0a2e8cec180d]
   =   Посетителей просят не применять геноцид к лавочникам.
 Vlad was here  [67fdd5db8578]
   =   Здесь был Влад
+Vlad's doppelganger is amused.  [9b91ddfb08eb]
+  =   Доппельгангера Влада это забавляет.
 Voluntary challenges:  [9f3bbf1f4b54]
   =   Добровольные испытания:
 Vorlon  [428810f01932]
@@ -28043,6 +28166,8 @@ When the gods want to punish you, they answer your prayers.  [d50bdd30453d]
   =   Когда боги хотят вас наказать, они исполняют ваши молитвы.
 When you have a key, you don't have to wait for the guard.  [8430e6ab1f14]
   =   Если у вас есть ключ, стража можно не ждать.
+Where do you want to cast the spell?  [73634723671b]
+  =   Куда вы хотите направить заклинание?
 Where do you want to center the cloud?  [c5f977594bcc]
   =   Где вы хотите поместить облако?
 Where do you want to center the explosion?  [0ff06b762b18]
@@ -28418,6 +28543,23 @@ You %s...  [490c4969ac30]
   f   Вас шатает...
   n   Вас шатает...
   pl  Вас шатает...
+You accidentally tear the spellbook to pieces.  [de7a08150e9f]
+  =   Вы нечаянно разрываете книгу заклинаний в клочья.
+You add "%s" to your repertoire, as '%c'.  [773804bea131]
+  m   Вы добавляете «тритон» в свой арсенал под буквой 'x'.
+  f   Вы добавляете «крыса» в свой арсенал под буквой 'x'.
+  n   Вы добавляете «копьё» в свой арсенал под буквой 'x'.
+  pl  Вы добавляете «3 стрелы» в свой арсенал под буквой 'x'.
+You add %s to your repertoire, as '%c'.  [3d1521bfebda]
+  m   Вы добавляете тритон в свой арсенал под буквой 'x'.
+  f   Вы добавляете крыса в свой арсенал под буквой 'x'.
+  n   Вы добавляете копьё в свой арсенал под буквой 'x'.
+  pl  Вы добавляете 3 стрелы в свой арсенал под буквой 'x'.
+You add the "%s" spell to your repertoire, as '%c'.  [559e3981095a]
+  m   Вы добавляете заклинание «тритон» в свой арсенал под буквой 'x'.
+  f   Вы добавляете заклинание «крыса» в свой арсенал под буквой 'x'.
+  n   Вы добавляете заклинание «копьё» в свой арсенал под буквой 'x'.
+  pl  Вы добавляете заклинание «3 стрелы» в свой арсенал под буквой 'x'.
 You add to the engraving in the %s with %s.  [ab5fa100de52]
   m   Вы дополняете тритоном гравировку на тритоне.
   f   Вы дополняете крысой гравировку на крысе.
@@ -28947,6 +29089,8 @@ You are no longer being strangled.  [41201bf8487e]
   =   Вас больше не душит.
 You are no longer bothered by the poison gas.  [00b9e0d5fa72]
   =   Ядовитый газ вас больше не беспокоит.
+You are no longer ill.  [0d2e1f778b59]
+  =   Вы больше не больны.
 You are no longer stuck in the %s.  [17ca588afb8a]
   m   Вы больше не застряли в тритоне.
   f   Вы больше не застряли в крысе.
@@ -28981,6 +29125,8 @@ You are not chained to anything!  [37d21438a4aa]
   =   Вы ни к чему не прикованы!
 You are not disintegrated.  [7c9b46ca86e1]
   =   Вы не распадаетесь на атомы.
+You are not ill.  [a93366c1d7a3]
+  =   Вы не больны.
 You are not on an altar.  [29285f345b9d]
   =   Вы стоите не на алтаре.
 You are not over an altar.  [d10003b20f46]
@@ -29147,6 +29293,10 @@ You are thrown off of %s!  [d8adbe80cbf4]
   pl  Вас сбрасывает с 3 стрел!
 You are too full to eat the bars.  [001190800f92]
   =   Вы слишком сыты, чтобы съесть решётку.
+You are too hungry to cast that spell.  [356109703e58]
+  =   Вы слишком голодны, чтобы творить это заклинание.
+You are too impaired to cast a spell.  [8eee03595762]
+  =   Вы слишком ослаблены, чтобы колдовать.
 You are too impaired to perform the rite.  [26388d81ad2c]
   =   Вы не в том состоянии, чтобы совершить обряд.
 You are turning a little %s.  [75d1656f8857]
@@ -29163,6 +29313,8 @@ You are turning into slime.  [7ea709495d81]
   =   Вы превращаетесь в слизь.
 You are turning into stone.  [36052cdeb757]
   =   Вы превращаетесь в камень.
+You are unable to chant the incantation.  [7e5de5623205]
+  =   Вы не в силах произнести заклинание.
 You are unable to hear anything.  [bfc275e9a181]
   =   Вы ничего не слышите.
 You are unable to reach the %s!  [ca83aeb502d1]
@@ -29407,6 +29559,8 @@ You barely hear a divine music...  [2c946096c9b5]
   =   Вы едва слышите божественную музыку...
 You barely hear a door open.  [e0b90181894a]
   =   Вы едва слышите, как открывается дверь.
+You barely hear a faint chime...  [20afd35e7bb7]
+  =   Вы едва слышите слабый звон...
 You barely hear a faint typing noise.  [e86a78914610]
   =   Вы едва слышите тихий стук клавиш.
 You barely hear a gurgling noise.  [af3cc926b99c]
@@ -29614,6 +29768,8 @@ You begin striking monsters with your gloved %s.  [53ffb9be609d]
   pl  Вы начинаете бить монстров 3 стрелами в перчатках.
 You begin to memorize the runes.  [20042ac7ce40]
   =   Вы начинаете запоминать руны.
+You begin to recite the runes.  [7b64513fe8f6]
+  =   Вы начинаете произносить руны.
 You begin to tumble in place.  [0eaeccac3d3a]
   =   Вы начинаете кувыркаться на месте.
 You begin two-weapon combat.  [8764d6ddafe7]
@@ -30607,6 +30763,8 @@ You didn't beat your previous score of %ld points.  [448724a88ed4]
   f   Вам не удалось побить свой прежний рекорд: 3 очка.
   n   Вам не удалось побить свой прежний рекорд: 5 очков.
   pl  Вам не удалось побить свой прежний рекорд: 21 очко.
+You didn't know any spells.  [a59f8711ed26]
+  =   Вы не знали ни одного заклинания.
 You die from hunger and exhaustion.  [9357e441cc2d]
   =   Вы умираете от голода и истощения.
 You die from starvation.  [8109de2f779d]
@@ -31022,8 +31180,12 @@ You don't have enough elbow-room to maneuver.  [a9346f1e37a9]
   =   Вам не хватает места, чтобы развернуться.
 You don't have enough energy to breathe!  [0c65c6fccef3]
   =   Вам не хватает энергии на выдох!
+You don't have enough energy to cast that spell anymore.  [b74f383d654e]
+  =   У вас больше не хватает энергии на это заклинание.
 You don't have enough energy to cast that spell yet.  [866411efaa12]
   =   Вам пока не хватает энергии на это заклинание.
+You don't have enough energy to cast that spell.  [b76838cd790a]
+  =   У вас не хватает энергии на это заклинание.
 You don't have enough gold to buy any of the items on your bill.  [3211ee36baa0]
   =   У вас недостаточно золота, чтобы купить хоть один предмет из вашего счёта.
 You don't have enough gold to buy any of the items you've picked.  [29e1721b21b2]
@@ -31062,6 +31224,8 @@ You don't know any spells right now.  [cc01f1a6aa02]
   =   Сейчас вы не знаете ни одного заклинания.
 You don't know how to turn undead!  [9e4b6496f8ec]
   =   Вы не умеете изгонять нежить!
+You don't know that spell.  [3456e6c0b2c7]
+  =   Вы не знаете этого заклинания.
 You don't need a gravestone.  Yet.  [1f08fc8a3050]
   =   Надгробие вам не нужно.  Пока.
 You don't owe any gold here.  [0927eb58debf]
@@ -31424,6 +31588,8 @@ You dream that you feel that you did the right thing.  [2c5e7bbebabb]
   =   Вам снится, что вы поступили правильно.
 You dream that you feel the air around you grow charged...  [95dae90312f3]
   =   Вам снится, как воздух вокруг вас наполняется электричеством...
+You dream that you feel the amulet draining your energy away.  [c9aae8f67d32]
+  =   Вам снится, что амулет вытягивает вашу энергию.
 You dream that you feel the blessing of %s over %s.  [1c9536db7457]
   m   Вам снится, как тритон благословляет тритона.
   f   Вам снится, как крыса благословляет крысу.
@@ -31545,6 +31711,8 @@ You dream that you hear a divine music...  [3650fffd6345]
   =   Вам снится, что вы слышите божественную музыку...
 You dream that you hear a door open.  [3fbe3ddb5f9c]
   =   Вам снится, что вы слышите, как открывается дверь.
+You dream that you hear a faint chime...  [0f84e4ae0dd6]
+  =   Вам снится слабый звон...
 You dream that you hear a faint typing noise.  [89d680c52113]
   =   Вам снится, что вы слышите тихий стук клавиш.
 You dream that you hear a gurgling noise.  [6f5aeb39490b]
@@ -32197,6 +32365,8 @@ You extract a strange sound from %s!  [60ea4e7e7f93]
   f   Вы извлекаете из крысы странный звук!
   n   Вы извлекаете из копья странный звук!
   pl  Вы извлекаете из 3 стрел странный звук!
+You fail to cast the spell correctly.  [1943a611ba2d]
+  =   Вам не удаётся правильно сотворить заклинание.
 You fail to leash something.  [a3b31ebd1ac8]
   =   Вам не удаётся взять кого-то на поводок.
 You fail to transform!  [5350a6251e15]
@@ -32714,6 +32884,8 @@ You feel that you did the right thing.  [e98d3000c427]
   =   Вы чувствуете, что поступили правильно.
 You feel the air around you grow charged...  [50737c15800d]
   =   Вы чувствуете, как воздух вокруг вас наполняется электричеством...
+You feel the amulet draining your energy away.  [c7aaaca3d1ef]
+  =   Вы чувствуете, как амулет вытягивает вашу энергию.
 You feel the blessing of %s over %s.  [2dc18797e2e5]
   m   Вы чувствуете, как тритон благословляет тритона.
   f   Вы чувствуете, как крыса благословляет крысу.
@@ -32974,6 +33146,10 @@ You find yourself over %s.  [23dc2e45e66f]
   pl  Вы оказываетесь над 3 стрелами.
 You find yourself over solid ground.  [258f05a2de3a]
   =   Вы оказываетесь над твёрдой землёй.
+You find yourself reading the first line over and over again.  [c3659456c39d]
+  =   Вы раз за разом перечитываете первую строку.
+You find yourself reading the next line over and over again.  [37cdb13dc536]
+  =   Вы раз за разом перечитываете следующую строку.
 You find yourself standing in sight of %s.\nSomething is obviously wrong here.  Strange shapes lumber around\noutside %s!\n\nYou realize that %s needs your assistance!  [86f6c58bb986]
   m   Вы оказываетесь неподалёку от тритона.\nЗдесь явно что-то не так.  Снаружи у стен тритона неуклюже\nбродят какие-то странные фигуры!\n\nВы понимаете, что тритон нуждается в вашей помощи!
   f   Вы оказываетесь неподалёку от крысы.\nЗдесь явно что-то не так.  Снаружи у стен крысы неуклюже\nбродят какие-то странные фигуры!\n\nВы понимаете, что крыса нуждается в вашей помощи!
@@ -33351,6 +33527,8 @@ You grasp %s.  [7667e321b5ca]
   pl  Вы стискиваете 3 стрелы.
 You hack ineffectually at some of the strands.  [73122f4294fc]
   =   Вы тщетно рубите нити паутины.
+You had better wait for the sun to come out.  [b153bf8e05ca]
+  =   Лучше дождаться, когда выйдет солнце.
 You harmlessly attack %s.  [8bfb3b9a937d]
   m   Вы безрезультатно атакуете тритона.
   f   Вы безрезультатно атакуете крысу.
@@ -33510,6 +33688,8 @@ You have a feeling of loss.  [5735f4f83bb4]
   =   Вас охватывает чувство утраты.
 You have a feeling of reconciliation.  [d469aaf0e60d]
   =   Вас наполняет чувство примирения.
+You have a feeling that something is amiss...  [dbe9bd9efc3e]
+  =   У вас ощущение, что что-то не так...
 You have a hopeful feeling.  [ac7a6300fec6]
   =   В вас пробуждается надежда.
 You have a little trouble lifting %s  [2095c0fb077f]
@@ -33598,6 +33778,8 @@ You have become %s.  [4489b6cd4d48]
   f   Вы стали крысой.
   n   Вы стали копьём.
   pl  Вы стали 3 стрелами.
+You have difficulty remembering the spell.  [aa73201b0c7d]
+  =   Вам трудно вспомнить заклинание.
 You have established %ld zorkmid credit.  [410ed227e384]
   m   Вы открываете кредит в 1 зоркмид.
   f   Вы открываете кредит в 3 зоркмида.
@@ -33862,6 +34044,8 @@ You hear a divine music...  [6310267bbb44]
   =   Вы слышите божественную музыку...
 You hear a door open.  [26bec49adb02]
   =   Вы слышите, как открывается дверь.
+You hear a faint chime...  [75bcf101b996]
+  =   Вы слышите слабый звон...
 You hear a faint typing noise.  [06d4649a12da]
   =   Вы слышите тихий стук клавиш.
 You hear a gurgling noise.  [8b0e55491266]
@@ -34242,6 +34426,8 @@ You lack the energy to send forth a call for help!  [f0acd4b902e8]
   =   У вас не хватает энергии позвать на помощь!
 You lack the energy to use your special gaze!  [1eea69740d15]
   =   У вас не хватает энергии на особый взгляд!
+You lack the strength to cast spells.  [d113a1200c52]
+  =   У вас не хватает сил колдовать.
 You lack the strength to jump!  [a97931b9a2d6]
   =   У вас не хватает сил для прыжка!
 You land on a set of sharp iron spikes!  [f338815d988d]
@@ -34290,8 +34476,23 @@ You lead %s to the edge of the %s.  [420e0080cb05]
   pl  Вы выводите 3 стрелы к краю 3 стрел.
 You leap from the pit!  [4b5604b96724]
   =   Вы выпрыгиваете из ямы!
+You learn "%s".  [dcc67474067b]
+  m   Вы изучаете «тритон».
+  f   Вы изучаете «крыса».
+  n   Вы изучаете «копьё».
+  pl  Вы изучаете «3 стрелы».
+You learn %s.  [baf7ee5bedfb]
+  m   Вы изучаете тритона.
+  f   Вы изучаете крысу.
+  n   Вы изучаете копьё.
+  pl  Вы изучаете 3 стрелы.
 You learn more about your items by comparing them.  [c58829573df1]
   =   Сравнивая свои вещи, вы узнаёте о них больше.
+You learn the "%s" spell.  [fff3abf581c2]
+  m   Вы изучаете заклинание «тритон».
+  f   Вы изучаете заклинание «крыса».
+  n   Вы изучаете заклинание «копьё».
+  pl  Вы изучаете заклинание «3 стрелы».
 You leave the %s...  [c1e9f289d40e]
   m   Вы выбираетесь из тритона...
   f   Вы выбираетесь из крысы...
@@ -34963,6 +35164,8 @@ You quit in The Astral Plane with %ld points,  [d05dc4627df9]
   f   Вы сдались на Астральном плане, набрав 3 очка,
   n   Вы сдались на Астральном плане, набрав 5 очков,
   pl  Вы сдались на Астральном плане, набрав 21 очко,
+You raised the dead!  [6bc04b57594e]
+  =   Вы подняли мёртвых!
 You reach out your %s and grab %s.  [e6fe1f0b730e]
   m   Вы протягиваете тритона и хватаете тритона.
   f   Вы протягиваете крысу и хватаете крысу.
@@ -35596,6 +35799,11 @@ You sense a gas cloud dissipate.  [055b72e6568f]
   =   Вы ощущаете, как рассеивается облако газа.
 You sense a pit below you.  [d20e88fbb585]
   =   Вы ощущаете под собой яму.
+You sense a pointy hat on top of your %s.  [218c8bd1539c]
+  m   Вы ощущаете на тритоне остроконечную шляпу.
+  f   Вы ощущаете на крысе остроконечную шляпу.
+  n   Вы ощущаете на копье остроконечную шляпу.
+  pl  Вы ощущаете на 3 стрелах остроконечную шляпу.
 You sense a spiked pit below you.  [0cefbaad096c]
   =   Вы ощущаете под собой яму с кольями.
 You sense alarm, hostility, and excitement in the air!  [12f1df209a23]
@@ -35632,6 +35840,21 @@ You set the figurine on the ground and it transforms.  [0c3a108f1502]
   =   Вы ставите статуэтку на землю, и она оживает.
 You settle more firmly in the saddle.  [471b3670c22b]
   =   Вы плотнее усаживаетесь в седле.
+You shock %s!  [603f124ad5a8]
+  m   Вы бьёте током тритона!
+  f   Вы бьёте током крысу!
+  n   Вы бьёте током копьё!
+  pl  Вы бьёте током 3 стрелы!
+You shock %s.  [2db5663395bc]
+  m   Вы бьёте током тритона.
+  f   Вы бьёте током крысу.
+  n   Вы бьёте током копьё.
+  pl  Вы бьёте током 3 стрелы.
+You shock %s?  [a9181babe171]
+  m   Вы бьёте током тритона?
+  f   Вы бьёте током крысу?
+  n   Вы бьёте током копьё?
+  pl  Вы бьёте током 3 стрелы?
 You shock yourself!  [2057d1a2acb8]
   =   Вы бьёте себя током!
 You shoot %d %s.  [64973080ddcd]
@@ -36135,6 +36358,8 @@ You stop.  %s won't fit through.  [b9a4d16d2661]
   f   Вы останавливаетесь.  Крыса не протиснется.
   n   Вы останавливаетесь.  Копьё не протиснется.
   pl  Вы останавливаетесь.  3 стрелы не протиснутся.
+You strain to recall the spell.  [533f6e20d0ea]
+  =   Вы силитесь вспомнить заклинание.
 You strain your %s, but you're still attached to the buried ball.  [6fcffa84d07c]
   m   Вы напрягаете тритона, но по-прежнему прикованы к зарытому ядру.
   f   Вы напрягаете крысу, но по-прежнему прикованы к зарытому ядру.
@@ -36440,6 +36665,8 @@ You turn into %s!  [f805e96c0da8]
   f   Вы превращаетесь в крысу!
   n   Вы превращаетесь в копьё!
   pl  Вы превращаетесь в 3 стрелы!
+You turn the pages of the Book of the Dead...  [933ede482f56]
+  =   Вы листаете Книгу Мёртвых...
 You turn to stone!  [6b8ad57e0351]
   =   Вы превращаетесь в камень!
 You turn to stone.  [c1499efeef71]
@@ -37030,6 +37257,8 @@ You're having a hard time getting all of it down.  [49f7c6c628a6]
   =   Вам с трудом удаётся всё это проглотить.
 You're heating up!  [a986c4f7e38e]
   =   Вы нагреваетесь!
+You're joking!  In this weather?  [d55c1861a244]
+  =   Вы шутите!  В такую погоду?
 You're melting!  [6091141e7efb]
   =   Вы плавитесь!
 You're not carrying anything else to be identified.  [3dddb7e31ee4]
@@ -37910,6 +38139,8 @@ Your amulet grows hot for a moment, then cools.  [086a2ac76690]
   =   Ваш амулет на миг раскаляется, а затем остывает.
 Your amulet vanishes!  [c5742c6bc87c]
   =   Ваш амулет исчезает!
+Your ancestors are annoyed with you!  [8b4d6f856b64]
+  =   Ваши предки вами недовольны!
 Your apron crumbles and turns to dust!  [21592e621a36]
   =   Ваш фартук истлевает и рассыпается в прах!
 Your apron falls, unsupported!  [dfc288848503]
@@ -37920,6 +38151,8 @@ Your armor falls around you!  [a7baeb35b33a]
   =   Ваши доспехи спадают с вас!
 Your armor is rather cumbersome...  [ae24a0f0bc74]
   =   Ваши доспехи изрядно стесняют движения...
+Your arms are not free to cast!  [f1a0427f559c]
+  =   Ваши руки заняты, колдовать нельзя!
 Your attack passes harmlessly through %s.  [6b1d464a32fd]
   m   Ваша атака безвредно проходит сквозь тритона.
   f   Ваша атака безвредно проходит сквозь крысу.
@@ -38243,6 +38476,11 @@ Your knowledge of "%s" is keener.  [65052901b88c]
   f   Вы лучше знаете «крыса».
   n   Вы лучше знаете «копьё».
   pl  Вы лучше знаете «3 стрелы».
+Your knowledge of "%s" is restored.  [c35683f15906]
+  m   Ваше знание «тритон» восстановлено.
+  f   Ваше знание «крыса» восстановлено.
+  n   Ваше знание «копьё» восстановлено.
+  pl  Ваше знание «3 стрелы» восстановлено.
 Your knowledge of spell '%c' - %s is refreshed.  [afd60aa1c209]
   m   Ваше знание заклинания «тритон» ('x') освежено.
   f   Ваше знание заклинания «крыса» ('x') освежено.
@@ -38253,6 +38491,20 @@ Your knowledge of spell '%c' - %s is restored.  [8c1e2c41d6e5]
   f   Ваше знание заклинания «крыса» ('x') восстановлено.
   n   Ваше знание заклинания «копьё» ('x') восстановлено.
   pl  Ваше знание заклинания «3 стрелы» ('x') восстановлено.
+Your knowledge of the "%s" spell is keener.  [8e85ec71a8a7]
+  m   Ваше знание заклинания «тритон» углубляется.
+  f   Ваше знание заклинания «крыса» углубляется.
+  n   Ваше знание заклинания «копьё» углубляется.
+  pl  Ваше знание заклинания «3 стрелы» углубляется.
+Your knowledge of the "%s" spell is restored.  [aef1bcce3b9b]
+  m   Ваше знание заклинания «тритон» восстановлено.
+  f   Ваше знание заклинания «крыса» восстановлено.
+  n   Ваше знание заклинания «копьё» восстановлено.
+  pl  Ваше знание заклинания «3 стрелы» восстановлено.
+Your knowledge of this spell is growing faint.  [b06e67386577]
+  =   Ваше знание этого заклинания угасает.
+Your knowledge of this spell is twisted.  [4484002cf09a]
+  =   Ваше знание этого заклинания искажено.
 Your lantern is out of power.  [6e81bde27bea]
   =   В вашем фонаре кончился заряд.
 Your last thought fades away.  [f59f68158b80]
@@ -38304,6 +38556,8 @@ Your mail turns to dust and falls to the %s!  [4448d0e32609]
   pl  Ваш доспех обращается в прах и осыпается на 3 стрелы!
 Your marker seems permanently dried out.  [13888283c103]
   =   Ваш маркер, похоже, окончательно высох.
+Your mind fails to lock onto that location!  [e798ca850528]
+  =   Вашему разуму не удаётся нацелиться на это место!
 Your mind is filled with crazy lines!  [83903bfd98d8]
   =   Ваш разум заполняют безумные линии!
 Your mind releases itself from mundane concerns.  [7c397bf666d3]
@@ -38370,6 +38624,8 @@ Your quickness feels less natural.  [c7370146daf1]
   =   Ваша быстрота кажется уже не такой естественной.
 Your quickness feels very natural.  [2ee888fc7ecd]
   =   Ваша быстрота кажется вполне естественной.
+Your recall of this spell is gradually fading.  [f0cd61150973]
+  =   Память об этом заклинании постепенно тускнеет.
 Your right %s is empty.  [a83316fd0f87]
   m   Ваш правый тритон пуст.
   f   Ваша правая крыса пуста.

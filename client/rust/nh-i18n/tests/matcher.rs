@@ -1135,6 +1135,38 @@ fn a_rank_in_the_hero_s_gender() {
     );
 }
 
+#[test]
+fn a_spell_learned() {
+    // spell.c learn(): the spell's name as the engine quotes it ("the
+    // \"%s\" spell" while its book is unknown), the letter kept
+    let t = translator();
+    for (en, ru) in [
+        (
+            "You add the \"force bolt\" spell to your repertoire, as 'b'.",
+            "Вы добавляете заклинание «силовой удар» в свой арсенал под буквой 'b'.",
+        ),
+        (
+            "You add \"magic missile\" to your repertoire, as 'c'.",
+            "Вы добавляете «волшебная стрела» в свой арсенал под буквой 'c'.",
+        ),
+        (
+            "You learn the \"healing\" spell.",
+            "Вы изучаете заклинание «лечение».",
+        ),
+        (
+            "Your knowledge of the \"sleep\" spell is keener.",
+            "Ваше знание заклинания «сон» углубляется.",
+        ),
+    ] {
+        let out = t.message(None, &[], en);
+        assert_eq!(
+            (out.text.as_str(), out.status),
+            (ru, Status::Translated),
+            "{en}"
+        );
+    }
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {
