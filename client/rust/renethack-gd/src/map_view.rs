@@ -2783,6 +2783,11 @@ pub struct MapView {
     /// held; the level (its generation) a drop was looked for.
     hero_drop: Option<drop::Dropping>,
     dropped: Option<u64>,
+    /// A fall through the floor the lines told, its level still to come;
+    /// a level come with none told while they stood on a hole, whether
+    /// they went down it not known yet.
+    fall_told: Option<Opening>,
+    undecided: Option<drop::Undecided>,
     /// Monsters seen falling through the floor, dropping.
     drops: Vec<drop::Dropping>,
     /// The steed under a hero a wall hides, wearing the x-ray overlay
@@ -3454,6 +3459,8 @@ impl MapView {
             hero_trap_drawn: None,
             hero_drop: None,
             dropped: None,
+            fall_told: None,
+            undecided: None,
             drops: Vec::new(),
             xray_steed: None,
             xray_behind: Vec::new(),
@@ -3646,6 +3653,7 @@ impl MapView {
             // something on all four, the rock on all eight
             let batch = world.map.take_batch();
             let (mut dirty, moves, changed) = (batch.dirty, batch.moves, batch.changed);
+            self.note_fall(world, hero != was_at);
             // a breath told: its rays wait for the mouth to open
             self.breath_coming(world, catalog);
             // a fall whose cell shows something else again ends at once
@@ -5208,6 +5216,7 @@ impl MapView {
         self.hero_look.forget();
         self.finish_motions();
         self.finish_falls_where(|_| true);
+        self.forget_drops();
         for g in std::mem::take(&mut self.gone) {
             self.art.give(g.model);
         }

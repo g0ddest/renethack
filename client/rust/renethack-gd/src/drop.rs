@@ -78,10 +78,31 @@ impl Dropping {
     }
 }
 
-/// What the new lines of the log tell of the hero falling through the
-/// floor: the opening they fell through (None: they did not fall).
-pub(super) fn fell_through(lines: &[&str]) -> Option<Opening> {
-    let mut fell = None;
+/// A level come while the hero stood on a hole they know, nothing said of
+/// a fall ('>' where they had escaped it): whether they went down it is
+/// known once they are drawn (a redraw draws them where they stood, the
+/// level below elsewhere), and the engine's drawing of it may take some
+/// frames to read. The level they leave is held meanwhile, this long at
+/// most.
+pub(super) struct Undecided {
+    from: (i32, i32),
+    at: (i32, i32),
+    opening: Opening,
+    waited: f32,
+}
+const UNDECIDED_SECS: f32 = 1.5;
+
+/// What lines of the log tell of the hero and the floor: a fall through
+/// it, or one they escaped.
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum Fall {
+    Told(Opening),
+    Refused,
+}
+
+/// What the lines tell, the last word kept.
+fn fall_of(lines: &[&str]) -> Option<Fall> {
+    let mut fall = None;
     for line in lines {
         // down on purpose ('>'): "You jump through the trap door.", "You
         // fly down the hole."
@@ -90,25 +111,47 @@ pub(super) fn fell_through(lines: &[&str]) -> Option<Opening> {
             || line.contains("down through the trap door")
             || went(" through the trap door.")
         {
-            fell = Some(Opening::TrapDoor);
+            fall = Some(Fall::Told(Opening::TrapDoor));
         } else if line.contains("gaping hole under you")
             || line.contains("into the gaping hole")
             || line.starts_with("You fall through")
             || line.ends_with("opens up under you!")
             || went(" down the hole.")
         {
-            fell = fell.or(Some(Opening::Hole));
+            if fall != Some(Fall::Told(Opening::TrapDoor)) {
+                fall = Some(Fall::Told(Opening::Hole));
+            }
         } else if line.contains("don't fall in")
             || line.contains("don't fit through")
             || line.contains("are jerked back by your pet")
         {
-            return None;
+            fall = Some(Fall::Refused);
         }
     }
-    fell
+    fall
 }
 
 impl MapView {
+    /// The new lines of the log, not yet watched.
+    fn new_lines<'w>(&self, world: &'w World) -> Vec<&'w str> {
+        let last = world.log.last_seq();
+        let since = self.log_seq.filter(|&s| s <= last).unwrap_or(last);
+        world.log.since(since).map(|m| m.text.as_str()).collect()
+    }
+
+    /// A fall through the floor the new lines tell, kept till the level it
+    /// takes the hero to comes (the engine's drawing of it is read a frame
+    /// or more after the lines); one escaped, or the hero gone on where
+    /// they stand (`moved`), forgets it.
+    pub(super) fn note_fall(&mut self, world: &World, moved: bool) {
+        match fall_of(&self.new_lines(world)) {
+            Some(Fall::Told(o)) => self.fall_told = Some(o),
+            Some(Fall::Refused) => self.fall_told = None,
+            None if moved => self.fall_told = None,
+            None => {}
+        }
+    }
+
     /// The hero falling through the floor as a new level arrives: the
     /// old one held while they drop, black at the end. False once there
     /// is no fall to show (the new level is drawn).
@@ -120,24 +163,46 @@ impl MapView {
         was_at: Option<(i32, i32)>,
         delta: f32,
     ) -> bool {
-        if self.hero_drop.is_none() && self.dropped != Some(generation) {
+        let deciding = self.hero_drop.is_some() || self.undecided.is_some();
+        if !deciding && self.dropped != Some(generation) {
             self.dropped = Some(generation);
-            let last = world.log.last_seq();
-            let since = self.log_seq.filter(|&s| s <= last).unwrap_or(last);
-            let lines: Vec<&str> = world.log.since(since).map(|m| m.text.as_str()).collect();
+            let told = match fall_of(&self.new_lines(world)) {
+                Some(Fall::Told(o)) => Some(o),
+                Some(Fall::Refused) => None,
+                None => self.fall_told,
+            };
+            self.fall_told = None;
             let at = world.map.left_after(self.generation).or(was_at);
-            // down a hole they stood on with nothing said ('>' where they
-            // had escaped it): the opening drawn under them, and they are
-            // elsewhere now (not the level drawn again where they stand)
-            let moved = world.map.hero().is_some_and(|h| Some(h) != at);
-            let under = at
-                .filter(|_| moved)
-                .and_then(|c| self.cells.get(&c))
-                .and_then(|n| n.look.opening)
-                .filter(|o| !matches!(o, Opening::Pit { .. }));
-            let fell = fell_through(&lines).or(under);
-            if let (Some(o), Some(at), Some(from), None) = (fell, at, was_at, self.rider.as_ref()) {
-                self.hero_drop = self.hero_drops(from, at, o);
+            match (told, at, was_at) {
+                _ if self.rider.is_some() => {}
+                (Some(o), Some(at), Some(from)) => self.hero_drop = self.hero_drops(from, at, o),
+                // nothing said: down a hole they stood on, if the opening
+                // is drawn under them and they are drawn elsewhere now
+                (None, Some(at), Some(from)) => {
+                    let under = self.cells.get(&at).and_then(|n| n.look.opening);
+                    if let Some(o) = under.filter(|o| !matches!(o, Opening::Pit { .. })) {
+                        self.undecided = Some(Undecided {
+                            from,
+                            at,
+                            opening: o,
+                            waited: 0.0,
+                        });
+                    }
+                }
+                _ => {}
+            }
+        }
+        if let Some(mut u) = self.undecided.take() {
+            match world.map.hero() {
+                Some(h) if h != u.at => self.hero_drop = self.hero_drops(u.from, u.at, u.opening),
+                // drawn where they stood: the level drawn again
+                Some(_) => {}
+                None if u.waited < UNDECIDED_SECS => {
+                    u.waited += delta;
+                    self.undecided = Some(u);
+                    return true;
+                }
+                None => {}
             }
         }
         let Some(mut d) = self.hero_drop.take() else {
@@ -355,6 +420,22 @@ impl MapView {
         }
     }
 
+    /// Every drop and fall told forgotten (the map cleared for another
+    /// game): the hero's as well, its level never to come.
+    pub(super) fn forget_drops(&mut self) {
+        self.end_drops();
+        if let Some(mut d) = self.hero_drop.take() {
+            free_lid(d.lid.take());
+            if let Some((mut inner, from)) = d.inner.take().filter(|(n, _)| n.is_instance_valid()) {
+                inner.set_position(from);
+            }
+        }
+        self.undecided = None;
+        self.fall_told = None;
+        self.dropped = None;
+        self.hero_trap_drawn = None;
+    }
+
     fn end_drop(&mut self, mut d: Dropping) {
         if let Some(walk) = d.walk.take() {
             walk.finish(false);
@@ -477,35 +558,44 @@ mod tests {
 
     #[test]
     fn a_fall_through_the_floor_is_told() {
+        let told = |o| Some(Fall::Told(o));
         assert_eq!(
-            fell_through(&["A trap door opens up under you!"]),
-            Some(Opening::TrapDoor)
+            fall_of(&["A trap door opens up under you!"]),
+            told(Opening::TrapDoor)
         );
         assert_eq!(
-            fell_through(&[
+            fall_of(&[
                 "There's a gaping hole under you!",
                 "You fall down a deep shaft!"
             ]),
-            Some(Opening::Hole)
+            told(Opening::Hole)
         );
         assert_eq!(
-            fell_through(&["You dig a hole through the floor.", "You fall through..."]),
-            Some(Opening::Hole)
+            fall_of(&["You dig a hole through the floor.", "You fall through..."]),
+            told(Opening::Hole)
         );
         // flying, they dig it and stay
-        assert_eq!(fell_through(&["You dig a hole through the floor."]), None);
+        assert_eq!(fall_of(&["You dig a hole through the floor."]), None);
         assert_eq!(
-            fell_through(&["A trap door opens up under you!", "You don't fall in."]),
-            None
+            fall_of(&["A trap door opens up under you!", "You don't fall in."]),
+            Some(Fall::Refused)
+        );
+        // the last word kept: escaped one, then down another
+        assert_eq!(
+            fall_of(&[
+                "You are jerked back by your pet!",
+                "There's a gaping hole under you!"
+            ]),
+            told(Opening::Hole)
         );
         assert_eq!(
-            fell_through(&["You jump through the trap door."]),
-            Some(Opening::TrapDoor)
+            fall_of(&["You jump through the trap door."]),
+            told(Opening::TrapDoor)
         );
         assert_eq!(
-            fell_through(&["You slither down the hole."]),
-            Some(Opening::Hole)
+            fall_of(&["You slither down the hole."]),
+            told(Opening::Hole)
         );
-        assert_eq!(fell_through(&["You climb up the stairs."]), None);
+        assert_eq!(fall_of(&["You climb up the stairs."]), None);
     }
 }
