@@ -20833,6 +20833,8 @@ However, you maneuver over it and could pick it up.  [e3c84049bdae]
   =   Впрочем, вы перебираетесь через него и могли бы его подобрать.
 However, you maneuver over it.  [bfaaf340ae9a]
   =   Впрочем, вы перебираетесь через него.
+Hp [max]  [5a74858cdce3]
+  =   ОЗ [макс]
 Huh, What?  Where am I?  [ea24f8e6e00a]
   =   А?  Что?  Где я?
 Huh?  That doesn't look like you!  [3fc6fbc5a736]

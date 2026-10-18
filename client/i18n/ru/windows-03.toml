@@ -935,3 +935,10 @@ ru = " У вас неподъёмный груз; двигаться невоз�
 [70b3c68d0aac]
 en = " You were overloaded; movement %s %s%s."
 ru = " У вас был неподъёмный груз; двигаться было невозможно.{1:skip}{2:skip}{3:skip}"
+
+# topten.c outheader(): the hit points column (the client says Здоровье; a
+# column has room for ОЗ, очки здоровья)
+
+[5a74858cdce3]
+en = "Hp [max]"
+ru = "ОЗ [макс]"

@@ -258,8 +258,13 @@ impl Translator {
     pub fn window(&self, text: &str) -> Output {
         // the blank lines around a text are not part of it
         let text = text.trim_matches(|c: char| c == '\n' || c == '\r');
+        // a window of one line is read as a line of one (the top ten's
+        // header, sent line by line)
+        if !text.contains('\n') {
+            return self.window_line(text);
+        }
         let whole = self.by_text(text, Channel::Window);
-        if whole.status != Status::Unknown || !text.contains('\n') {
+        if whole.status != Status::Unknown {
             return whole;
         }
         // a window of paragraphs, one a text of the catalog (the Oracle's
@@ -329,6 +334,11 @@ impl Translator {
             return Output::english(line, Status::Translated, None);
         }
         let out = self.by_text(line, Channel::Window);
+        if out.status != Status::Translated
+            && let Some(cells) = self.two_cells(line)
+        {
+            return cells;
+        }
         let piece = out
             .template
             .as_deref()
@@ -341,6 +351,42 @@ impl Translator {
             return Output::english(line, Status::Unknown, None);
         }
         out
+    }
+
+    /// A line of a table that no template makes whole, its last cell
+    /// padded to its column (three spaces or more before it), each part a
+    /// text of its own: topten.c's header, " No  Points     Name" then
+    /// "Hp [max]" at the hit points' column. The right part keeps its
+    /// column; None unless both parts are translated.
+    fn two_cells(&self, line: &str) -> Option<Output> {
+        let trimmed = line.trim_end();
+        let gap = trimmed.rfind("   ")?;
+        let left = trimmed[..gap].trim_end();
+        let right = trimmed[gap..].trim_start();
+        if left.trim().is_empty() || right.is_empty() {
+            return None;
+        }
+        let (l, r) = (
+            self.by_text(left, Channel::Window),
+            self.by_text(right, Channel::Window),
+        );
+        if l.status != Status::Translated || r.status != Status::Translated {
+            return None;
+        }
+        // the right cell where the English has it, two spaces at least
+        let column = trimmed[..trimmed.len() - right.len()].chars().count();
+        let pad = column.saturating_sub(l.text.chars().count()).max(2);
+        Some(Output {
+            text: format!(
+                "{}{}{}{}",
+                l.text,
+                " ".repeat(pad),
+                r.text,
+                &line[trimmed.len()..]
+            ),
+            status: Status::Translated,
+            template: None,
+        })
     }
 
     fn by_text(&self, text: &str, channel: Channel) -> Output {

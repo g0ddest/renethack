@@ -1167,6 +1167,27 @@ fn a_spell_learned() {
     }
 }
 
+#[test]
+fn the_top_ten_s_header() {
+    // topten.c outheader(): " No  Points     Name", spaces to column 71,
+    // "Hp [max]": the number's column is №, not «Нет», and the hit points
+    // keep their column
+    let t = translator();
+    let header = format!("{:<71}Hp [max]", " No  Points     Name");
+    // the end screen sends each of the list's lines as a window
+    let out = t.window(&header);
+    assert_eq!(out.status, Status::Translated, "{}", out.text);
+    assert!(out.text.starts_with(" №   Очки       Имя"), "{}", out.text);
+    assert_eq!(
+        out.text
+            .find("ОЗ [макс]")
+            .map(|i| out.text[..i].chars().count()),
+        Some(71)
+    );
+    // a real "no" elsewhere is still one
+    assert_eq!(t.text("No").text, "Нет");
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {
