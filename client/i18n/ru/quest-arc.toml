@@ -50,7 +50,7 @@ ru = "«Ты слишком уж {1:hero} — это тебя ослабляет
 
 [fd370c11bccd]
 en = "\"%s has forsaken you!  You are lost now!\""
-ru = "«{1:cap} {1:gender|покинул|покинула|покинуло|покинули} тебя!  Теперь ты пропал{hero:gender||а}!»"
+ru = "«{1:cap} {1:gender|покинул|покинула|покинуло|покинули} тебя!  Теперь ты {hero:gender|пропал|пропала}!»"
 
 [7898d8d2d358]
 en = "\"A mere %s cannot hope to defeat me!\""

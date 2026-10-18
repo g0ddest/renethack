@@ -18,11 +18,11 @@ ru = "«Может, приковать тебя тут на время к мое
 
 [cdf75ecce8f9]
 en = "[%s is not adequately trained to handle this job.]"
-ru = "[{1:hero:cap} недостаточно обучен{hero:gender||а} для такой работы.]"
+ru = "[{1:hero:cap} недостаточно {hero:gender|обучен|обучена} для такой работы.]"
 
 [d7311936eff2]
 en = "\"In the time that you've been gone you've only been able to master the\narts of %s?  I've trained ten times again as many %s\nin that time.  Maybe I should send one of them, no?  Where would that\nleave you, %s?  Oh yeah, I remember, I was going to kill you!\""
-ru = "«За всё время, что тебя не было, ты освоил{hero:gender||а} лишь ремесло\n{1:gen}?  Я за это время натаскал вдесятеро больше {2:gen}.  Может,\nпослать одного из них, а?  И где тогда окажешься ты, {3}?  Ах да,\nвспомнил: я собирался тебя убить!»"
+ru = "«За всё время, что тебя не было, ты {hero:gender|освоил|освоила} лишь ремесло\n{1:gen}?  Я за это время натаскал вдесятеро больше {2:gen}.  Может,\nпослать одного из них, а?  И где тогда окажешься ты, {3}?  Ах да,\nвспомнил: я собирался тебя убить!»"
 
 [d62f2befbaef]
 en = "\"May I suggest a compromise.  Are you interested in gold or gems?\""
@@ -126,11 +126,11 @@ ru = "Волоски у вас на затылке шепчут: это стра
 
 [9e21aa87e4bc]
 en = "[You pick up %s and know that %s should not have it.]"
-ru = "[Вы берёте {1:acc} и понимаете: {2} не долж{2:gender|ен|на|но|ны} {1:gender|им|ею|им|ими} владеть.]"
+ru = "[Вы берёте {1:acc} и понимаете: {2} не {2:gender|должен|должна|должно|должны} {1:gender|им|ею|им|ими} владеть.]"
 
 [0f3ed81bff34]
 en = "As you pick up %s, the hairs on the back of your\nneck fall out.  At once you realize why %s was\nwilling to die to keep it out of %s hands.  Somehow\nyou know that you must do likewise."
-ru = "Едва вы берёте {1:acc}, как волоски у вас на затылке выпадают.  Вы сразу\nпонимаете, почему {2} готов был умереть, лишь бы\n{1:gender|он|она|оно|они} не попал{1:gender||а|о|и} в руки {3:gen}.\nПочему-то вы знаете, что должны поступить так же."
+ru = "Едва вы берёте {1:acc}, как волоски у вас на затылке выпадают.  Вы сразу\nпонимаете, почему {2} готов был умереть, лишь бы\n{1:gender|он|она|оно|они} не {1:gender|попал|попала|попало|попали} в руки {3:gen}.\nПочему-то вы знаете, что должны поступить так же."
 
 [31cd7284184f]
 en = "\"I was sure wrong about Lady Tyvefelle's house; I barely got away with my life and lost my lock pick in the process.\""
@@ -138,7 +138,7 @@ ru = "«Ну и ошибся же я насчёт дома леди Тивфел
 
 [a357ef9ae3cc]
 en = "\"You're back?  Even the Twain don't come back anymore.\""
-ru = "«Вернул{hero:gender|ся|ась}?  Даже Фафхрд с Мышеловом больше не возвращаются.»"
+ru = "«{hero:gender|Вернулся|Вернулась}?  Даже Фафхрд с Мышеловом больше не возвращаются.»"
 
 [4e65002a40e3]
 en = "\"Can you spare an old cutpurse a zorkmid for some grog?\""
@@ -162,7 +162,7 @@ ru = "[Отнеси Амулет на Астральный план и найд�
 
 [82210a32f7d3]
 en = "\"I see that with your abilities, and my brains, we could rule this world.\n\n\"All that we would need to be all-powerful is for you to take that little\ntrinket you've got there up to the Astral Plane.  From there, %s will\nshow you what to do with it.  Once that's done, we will be invincible!\""
-ru = "«Вижу, с твоими талантами и моими мозгами мы могли бы править этим\nмиром.\n\nЧтобы стать всемогущими, нам нужно лишь, чтобы ты отнёс{hero:gender||ла}\nэту безделушку на Астральный план.  Там {1} покажет тебе, что с ней\nделать.  А когда дело будет сделано, нас никто не одолеет!»"
+ru = "«Вижу, с твоими талантами и моими мозгами мы могли бы править этим\nмиром.\n\nЧтобы стать всемогущими, нам нужно лишь, чтобы ты {hero:gender|отнёс|отнесла}\nэту безделушку на Астральный план.  Там {1} покажет тебе, что с ней\nделать.  А когда дело будет сделано, нас никто не одолеет!»"
 
 [46ae482c16cb]
 en = "[Before dying, %s tells you to use the %s wisely.]"
@@ -178,7 +178,7 @@ ru = "[За тобой должок перед гильдией.  Отработ
 
 [6839e1aaf664]
 en = "\"Well, look who it is boys -- %s has come home.  You seem to have\nfallen behind in your dues.  I should kill you as an example to these\nother worthless cutpurses, but I have a better plan.  If you are ready\nmaybe you could work off your back dues by performing a little job for\nme.  Let us just see if you are ready...\""
-ru = "«Гляньте-ка, ребята, кто пожаловал: {1} вернул{hero:gender|ся|ась}\nдомой.  Ты, похоже, задолжал{hero:gender||а} взносы.  Следовало бы\nприкончить тебя в назидание остальным никчёмным карманникам, но у меня\nесть план получше.  Если ты готов{hero:gender||а}, можешь отработать\nдолг, провернув для меня одно дельце.  Посмотрим, готов{hero:gender||а}\nли ты...»"
+ru = "«Гляньте-ка, ребята, кто пожаловал: {1} {hero:gender|вернулся|вернулась}\nдомой.  Ты, похоже, {hero:gender|задолжал|задолжала} взносы.  Следовало бы\nприкончить тебя в назидание остальным никчёмным карманникам, но у меня\nесть план получше.  Если ты {hero:gender|готов|готова}, можешь отработать\nдолг, провернув для меня одно дельце.  Посмотрим, {hero:gender|готов|готова}\nли ты...»"
 
 [dfb92d24248f]
 en = "[You must go.]"
@@ -190,15 +190,15 @@ ru = "«Что ж, {1}, похоже, наш друг забыл, кто тут 
 
 [69ea4036e2ab]
 en = "[Are you stupid or are you ready?]"
-ru = "[Ты глуп{hero:gender||а} или готов{hero:gender||а}?]"
+ru = "[Ты {hero:gender|глуп|глупа} или {hero:gender|готов|готова}?]"
 
 [4ace762755c5]
 en = "\"Well, I didn't expect to see you back.  It shows that you are either stupid,\nor you are finally ready to accept my offer.  Let us hope for your sake it\nisn't stupidity that brings you back.\""
-ru = "«Надо же, не ждал тебя снова увидеть.  Значит, либо ты\nглуп{hero:gender||а}, либо наконец готов{hero:gender||а} принять моё\nпредложение.  Будем надеяться — ради тебя же, — что вернула тебя не\nглупость.»"
+ru = "«Надо же, не ждал тебя снова увидеть.  Значит, либо ты\n{hero:gender|глуп|глупа}, либо наконец {hero:gender|готов|готова} принять моё\nпредложение.  Будем надеяться — ради тебя же, — что вернула тебя не\nглупость.»"
 
 [3126e0c6a787]
 en = "\"Did you perhaps mistake me for some other %s?  You must\nthink me as stupid as your behavior.  I warn you not to try my patience.\""
-ru = "«Ты, часом, не спутал{hero:gender||а} меня с каким-то другим {1:ins}?\nВидно, считаешь меня таким же тупым, как твои выходки.  Не испытывай моё\nтерпение, предупреждаю.»"
+ru = "«Ты, часом, не {hero:gender|спутал|спутала} меня с каким-то другим {1:ins}?\nВидно, считаешь меня таким же тупым, как твои выходки.  Не испытывай моё\nтерпение, предупреждаю.»"
 
 [6e7e3c1afe3a]
 en = "Those damn little hairs tell you that you are nearer to %s."
@@ -226,11 +226,11 @@ ru = "«Вы ведь уже поняли, {1}, что ни одной сдел�
 
 [bc70a21fcb59]
 en = "[%s should not have %s.]"
-ru = "[{1:cap} не долж{1:gender|ен|на|но|ны} получить {2:acc}.]"
+ru = "[{1:cap} не {1:gender|должен|должна|должно|должны} получить {2:acc}.]"
 
 [12d2c8ca33c2]
 en = "\"Please, think for a moment about what you are doing.  Do you truly\nbelieve that %s would want %s to have\n%s?\""
-ru = "«Прошу, задумайтесь на миг, что вы делаете.  Неужели вы верите, что {1}\n{1:gender|хотел|хотела|хотело|хотели} бы, чтобы {3}\nдостал{3:gender|ся|ась|ось|ись} {2:dat}?»"
+ru = "«Прошу, задумайтесь на миг, что вы делаете.  Неужели вы верите, что {1}\n{1:gender|хотел|хотела|хотело|хотели} бы, чтобы {3}\n{3:gender|достался|досталась|досталось|достались} {2:dat}?»"
 
 [ee96d7a69883]
 en = "Once again, you find yourself back in Ransmannsby.  Fond memories are\nreplaced by fear, knowing that %s is waiting for you."
@@ -242,7 +242,7 @@ ru = "[Бери {1:acc} с собой и ступай.]"
 
 [e7d183f6ed98]
 en = "\"Well, I'll be damned.  You got it.  I am proud of you, a fine %s\nyou've turned out to be.\n\n\"While you were gone I got to thinking, you and %s\ntogether could bring me more treasure than either of you apart, so why don't\nyou take it with you.  All I ask is a cut of whatever loot you come by.\nThat is a better deal than I offered %s.\n\n\"But, you see what happened to %s when he refused.\nDon't make me find another to send after you this time.\""
-ru = "«Будь я проклят!  Добыл{hero:gender||а}-таки.  Горжусь тобой:\nславн{hero:gender|ый|ая} из тебя вышел{hero:gender||а} {1:hero}.\n\nПока тебя не было, я тут подумал: вы с {2:ins} вместе принесёте мне\nбольше добра, чем порознь, так что забирай {2:gender|его|её|его|их} с\nсобой.  Мне нужна лишь доля со всего, что добудешь.  Это сделка получше\nтой, что я предлагал {3:dat}.\n\nНо ты видел{hero:gender||а}, что стало с {4:ins}, когда он отказался.\nНе заставляй меня на этот раз искать, кого послать за тобой.»"
+ru = "«Будь я проклят!  {hero:gender|Добыл|Добыла}-таки.  Горжусь тобой:\n{hero:gender|славный|славная} из тебя {hero:gender|вышел|вышла} {1:hero}.\n\nПока тебя не было, я тут подумал: вы с {2:ins} вместе принесёте мне\nбольше добра, чем порознь, так что забирай {2:gender|его|её|его|их} с\nсобой.  Мне нужна лишь доля со всего, что добудешь.  Это сделка получше\nтой, что я предлагал {3:dat}.\n\nНо ты {hero:gender|видел|видела}, что стало с {4:ins}, когда он отказался.\nНе заставляй меня на этот раз искать, кого послать за тобой.»"
 
 [e255879f82c3]
 en = "[Take %s and acquire the Amulet.]"

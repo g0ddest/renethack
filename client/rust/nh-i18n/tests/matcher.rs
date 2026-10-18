@@ -1273,6 +1273,31 @@ fn the_top_ten_list() {
     assert_eq!(t.topten(&["You die..."]), None);
 }
 
+#[test]
+fn a_heroine_s_words_are_whole() {
+    // a feminine ending glued to a masculine word made «нашёлла»,
+    // «должена», «Жалкийя»; each choice is whole words now (the linter
+    // sees to it, and tools/i18n/test_ru_words.py checks every word)
+    let t = translator();
+    for (id, hers, never) in [
+        ("41c6a4d41b99", "нашла", "нашёлла"),
+        ("d218bced0865", "моя", "мойя"),
+        ("002c5fff4c79", "неопытна", "неопытена"),
+        ("8d95afba370e", "должна", "должена"),
+        ("33ebf1c2b7ae", "должна", "должена"),
+        ("ad446562f4db", "Жалкая", "Жалкийя"),
+        ("3c43d922bc08", "жалкая", "жалкийя"),
+        ("9ebbfb53236a", "одна", "одина"),
+        ("e7d183f6ed98", "вышла", "вышела"),
+        ("82210a32f7d3", "отнесла", "отнёсла"),
+        ("1f3c00f45ed8", "принесла", "принёсла"),
+    ] {
+        let tr = t.russian().get(id).unwrap_or_else(|| panic!("{id}"));
+        let text = tr.template.render(&[], Gender::Fem);
+        assert!(text.contains(hers) && !text.contains(never), "{id}: {text}");
+    }
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {

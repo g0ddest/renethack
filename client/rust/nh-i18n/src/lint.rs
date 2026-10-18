@@ -8,7 +8,7 @@ use crate::catalog::Catalog;
 use crate::format::{ConvKind, convs};
 use crate::lexicon::Lexicon;
 use crate::russian::{Russian, Translation};
-use crate::template::{Agree, Select, Target};
+use crate::template::{Agree, Part, RuTemplate, Select, Target};
 
 /// A term of the glossary: its English name and the Russian forms a
 /// translation may use (any case or number; a stem matches the words it
@@ -114,6 +114,42 @@ pub fn lint(catalog: &Catalog, russian: &Russian, glossary: &Glossary) -> Vec<Pr
     out
 }
 
+/// A choice by gender or number is whole words in each branch: a suffix
+/// glued to a word («нашёл{hero:gender||ла}») makes «нашёлла» of a
+/// heroine's «нашла».
+fn glued(template: &RuTemplate) -> Vec<String> {
+    let parts = &template.parts;
+    let letter = |part: Option<&Part>, last: bool| match part {
+        Some(Part::Text(t)) => {
+            let c = if last {
+                t.chars().last()
+            } else {
+                t.chars().next()
+            };
+            c.is_some_and(char::is_alphabetic)
+        }
+        _ => false,
+    };
+    parts
+        .iter()
+        .enumerate()
+        .filter_map(|(k, part)| match part {
+            Part::Place(p) if p.select.is_some() => Some((k, p)),
+            _ => None,
+        })
+        .filter(|(k, _)| {
+            letter(k.checked_sub(1).and_then(|k| parts.get(k)), true)
+                || letter(parts.get(k + 1), false)
+        })
+        .map(|(_, p)| {
+            format!(
+                "{{{}}} is glued to a word: write the whole word in each branch",
+                p.source
+            )
+        })
+        .collect()
+}
+
 fn check(catalog: &Catalog, tr: &Translation, glossary: &Glossary) -> Vec<String> {
     let mut out = Vec::new();
     let Some(t) = catalog.by_id(&tr.id) else {
@@ -195,6 +231,9 @@ fn check(catalog: &Catalog, tr: &Translation, glossary: &Glossary) -> Vec<String
         if !u {
             out.push(format!("argument {} ({}) is not used", i + 1, t.kinds[i]));
         }
+    }
+    for template in std::iter::once(&tr.template).chain(tr.form_templates.iter().flatten()) {
+        out.extend(glued(template));
     }
     let ru_text = tr.template.render(&[], crate::grammar::Gender::Masc);
     let en_lower = tr.en.to_lowercase();
@@ -311,6 +350,28 @@ ru = "Вы находите {1} {2:by1:acc}."
 [a3]
 en = "You write Elbereth in the dust."
 ru = "Вы пишете Elbereth в пыли."
+"#,
+        );
+        assert!(p.is_empty(), "{p:?}");
+    }
+
+    #[test]
+    fn a_choice_glued_to_a_word_is_a_mistake() {
+        // «нашёл» and a feminine suffix: «нашёлла»
+        let p = problems(
+            r#"
+[a1]
+en = "You hit %s."
+ru = "Вы бьёте {1:acc}, и вы наш{hero:gender|ёл|ла} {1:gender|его|её|его|их}."
+"#,
+        );
+        assert_eq!(p.len(), 1, "{p:?}");
+        assert!(p[0].contains("glued to a word"), "{p:?}");
+        let p = problems(
+            r#"
+[a1]
+en = "You hit %s."
+ru = "Вы бьёте {1:acc}, и вы {hero:gender|нашёл|нашла} {1:gender|его|её|его|их}."
 "#,
         );
         assert!(p.is_empty(), "{p:?}");

@@ -6,7 +6,7 @@ ru = "[Отправляйтесь в {1:acc}; одолейте {2:acc}; верн
 
 [16323ba008c9]
 en = "\"Yes, %s, you truly are ready for this dire task.  Listen,\ncarefully, for what I tell you now will be of vital importance.\n\n\"Since you left us to hone your skills in the world, we unexpectedly came\nunder attack by the forces of %s.  As you know, we thought\n%s had perished at the end of the last age, but, alas, this was\nnot the case.\n\n\"%s sent an army of abominations against us.  Among them was a\nminion, mindless and ensorcelled, and thus, in the confusion, it was\nable to penetrate our defenses.  Alas, this creature has stolen\n%s and I fear has delivered %s to %s.\n\n\"Over the years, I had woven most of my power into this amulet, and thus,\nwithout it, I have but a shadow of my former power, and I fear that I\nshall soon perish.\n\n\"You must travel to %s, and within its dungeons,\nfind and overcome %s, and return %s to me.\n\n\"Go now, with %s, and complete this quest before it is too late.\""
-ru = "«Да, {1}, вы и впрямь готовы к этому грозному делу.  Слушайте\nвнимательно, ибо то, что я скажу, крайне важно.\n\nС тех пор как вы ушли от нас оттачивать своё мастерство в мире, на нас\nнеожиданно напали силы {2:gen}.  Как вы знаете, мы думали, что {3}\nпогиб{3:gender||ла|ло|ли} на исходе прошлой эпохи, но, увы, это\nоказалось не так.\n\n{4:cap} {4:gender|наслал|наслала|наслало|наслали} на нас войско\nмерзостей.  Среди них был прислужник, безмозглый и околдованный, и\nпотому в суматохе он сумел проникнуть сквозь нашу защиту.  Увы, эта\nтварь похитила {5:acc} и, боюсь, уже доставила\n{5:gender|его|её|его|их}{6:skip} {7:dat}.\n\nМногие годы я вплетала в этот амулет большую часть своей силы, и теперь\nбез него у меня осталась лишь тень прежнего могущества; боюсь, что скоро\nя погибну.\n\nВы должны отправиться в {8:acc}, найти в {8:gender|его|её|его|их}\nподземельях {9:acc}, одолеть {9:gender|его|её|его|их} и вернуть мне\n{10:acc}.\n\nСтупайте же с {11:ins} и исполните это задание, пока не поздно.»"
+ru = "«Да, {1}, вы и впрямь готовы к этому грозному делу.  Слушайте\nвнимательно, ибо то, что я скажу, крайне важно.\n\nС тех пор как вы ушли от нас оттачивать своё мастерство в мире, на нас\nнеожиданно напали силы {2:gen}.  Как вы знаете, мы думали, что {3}\n{3:gender|погиб|погибла|погибло|погибли} на исходе прошлой эпохи, но, увы, это\nоказалось не так.\n\n{4:cap} {4:gender|наслал|наслала|наслало|наслали} на нас войско\nмерзостей.  Среди них был прислужник, безмозглый и околдованный, и\nпотому в суматохе он сумел проникнуть сквозь нашу защиту.  Увы, эта\nтварь похитила {5:acc} и, боюсь, уже доставила\n{5:gender|его|её|его|их}{6:skip} {7:dat}.\n\nМногие годы я вплетала в этот амулет большую часть своей силы, и теперь\nбез него у меня осталась лишь тень прежнего могущества; боюсь, что скоро\nя погибну.\n\nВы должны отправиться в {8:acc}, найти в {8:gender|его|её|его|их}\nподземельях {9:acc}, одолеть {9:gender|его|её|его|их} и вернуть мне\n{10:acc}.\n\nСтупайте же с {11:ins} и исполните это задание, пока не поздно.»"
 
 [7350e5d971e4]
 en = "[Go; come back when you are worthy of %s.]"
@@ -39,7 +39,7 @@ ru = "«Покончив с тобой, {1}, я съем {2:acc} на десер
 
 [7275bee12c3c]
 en = "\"Are you ready yet to beg for mercy?  I could be lenient...\""
-ru = "«Ну что, готов{hero:gender||а} молить о пощаде?  Я мог бы и смилостивиться...»"
+ru = "«Ну что, {hero:gender|готов|готова} молить о пощаде?  Я мог бы и смилостивиться...»"
 
 [7d52207fd636]
 en = "\"Your soul shall join the enslaved multitude I command!\""
@@ -67,11 +67,11 @@ ru = "«Почувствуй мою силу, {1:hero}!  Моя победа б�
 
 [dae011b5726f]
 en = "\"Beware, for %s is immune to most magical attacks.\""
-ru = "«Берегитесь: {1} неуязвим{1:gender||а|о|ы} для большинства волшебных атак.»"
+ru = "«Берегитесь: {1} {1:gender|неуязвим|неуязвима|неуязвимо|неуязвимы} для большинства волшебных атак.»"
 
 [9647ed618f27]
 en = "\"%s may be vulnerable to physical attacks.\""
-ru = "«{1:cap}, возможно, уязвим{1:gender||а|о|ы} для обычного оружия.»"
+ru = "«{1:cap}, возможно, {1:gender|уязвим|уязвима|уязвимо|уязвимы} для обычного оружия.»"
 
 [80c3b5a1f2b0]
 en = "\"%s will come to your aid when you call.\""
@@ -207,7 +207,7 @@ ru = "[«Уничтожить тебя будет славной забавой.
 
 [c32962aa8ebe]
 en = "\"Ah, I recognize you, %s.  So, %s has sent you to steal\n%s from me, hmmm?  Well, %s is a fool to send such\na mental weakling against me.\n\n\"Your destruction, however, should make for good sport.  In the end, you\nshall beg me to kill you!\""
-ru = "«А, я узнаю тебя, {1}.  Значит, {2}\n{2:gender|послал|послала|послало|послали} тебя украсть у меня {3:acc},\nхм?  Что ж, лишь {2:gender|глупец|глупая|глупое|глупцы}{4:skip}\nмог{2:gender||ла|ло|ли} отправить против меня\n{hero:gender|такого скудоумного слабака|такую скудоумную слабачку}.\n\nВпрочем, уничтожить тебя будет славной забавой.  В конце концов ты\nбудешь умолять меня убить тебя!»"
+ru = "«А, я узнаю тебя, {1}.  Значит, {2}\n{2:gender|послал|послала|послало|послали} тебя украсть у меня {3:acc},\nхм?  Что ж, лишь {2:gender|глупец|глупая|глупое|глупцы}{4:skip}\n{2:gender|мог|могла|могло|могли} отправить против меня\n{hero:gender|такого скудоумного слабака|такую скудоумную слабачку}.\n\nВпрочем, уничтожить тебя будет славной забавой.  В конце концов ты\nбудешь умолять меня убить тебя!»"
 
 [98734d05ad5c]
 en = "[\"Your soul shall soon be mine to command.\"]"
@@ -215,7 +215,7 @@ ru = "[«Скоро твоя душа будет в моей власти.»]"
 
 [a95942502002]
 en = "\"How nice of you to return, %s!  I enjoyed our last meeting.  Are you\nstill hungry for more pain?\n\n\"Come!  Your soul, like %s, shall soon be mine to command.\""
-ru = "«Как мило, что ты вернул{hero:gender|ся|ась}, {1}!  Мне понравилась наша\nпрошлая встреча.  Всё ещё жаждешь боли?\n\nИди же!  Скоро твоя душа, как и {2}, будет в моей власти.»"
+ru = "«Как мило, что ты {hero:gender|вернулся|вернулась}, {1}!  Мне понравилась наша\nпрошлая встреча.  Всё ещё жаждешь боли?\n\nИди же!  Скоро твоя душа, как и {2}, будет в моей власти.»"
 
 [4a44b87bcf56]
 en = "\"I'm sure that your perseverance shall be the subject of innumerable\nballads, but you shall not be around to hear them, I fear!\""

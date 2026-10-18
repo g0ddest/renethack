@@ -6,7 +6,7 @@ ru = "[Пройдите через {1:acc}, чтобы добраться до {
 
 [8d95afba370e]
 en = "\"Ah, %s.  Thou art truly ready, as no %s before thee hath\nbeen.  Hear now Our words:\n\n\"As thou noticed as thou approached %s, a great battle hath\nbeen fought recently in these fields.  Know thou that Merlin himself\ncame to aid Us here as We battled the foul %s.  In the midst of that\nbattle, %s struck Merlin a great blow, felling him.  Then, as Our\nforces were pressed back, %s stole %s.\n\n\"We eventually turned the tide, but lost many %s in doing so.\nMerlin was taken off by his apprentice, but hath not recovered.  We have\nbeen told that so long as %s possesseth %s,\nMerlin will not regain his health.\n\n\"We hereby charge thee with this most important of duties:\n\n\"Go forth from this place, to the fens, and there thou wilt find\n%s.  From there, thou must track down %s.  Destroy the\nbeast, and return to Us %s.  Only then can\nWe restore Merlin to health.\""
-ru = "«А, {1}.  Ты воистину готов{hero:gender||а}, как не был готов ни один {2} до тебя.\nВнемли же Нашим словам:\n\nКак ты заметил{hero:gender||а}, приближаясь к {3:dat}, недавно на этих полях\nотгремела великая битва.  Знай же, что сам Мерлин\nпришёл Нам на помощь, когда Мы бились с мерзким {4:ins}.  В разгар\nтой битвы {5} нанёс Мерлину страшный удар и поверг его.  А когда Наше\nвойско было оттеснено, {6} похитил {7:acc}.\n\nВ конце концов Мы переломили ход битвы, но потеряли многих {8:gen}.\nПодмастерье унёс Мерлина прочь, но тот так и не оправился.  Нам\nсказали, что, пока {9} владеет {10:ins},\nМерлину не вернуть здоровья.\n\nСим Мы возлагаем на тебя важнейший из долгов:\n\nСтупай отсюда к топям, и там ты найдёшь\n{11:acc}.  Оттуда ты должен{hero:gender||а} выследить {12:acc}.  Уничтожь\nчудовище и верни Нам {13:acc}.  Лишь тогда\nМы сможем вернуть Мерлину здоровье.»"
+ru = "«А, {1}.  Ты воистину {hero:gender|готов|готова}, как не был готов ни один {2} до тебя.\nВнемли же Нашим словам:\n\nКак ты {hero:gender|заметил|заметила}, приближаясь к {3:dat}, недавно на этих полях\nотгремела великая битва.  Знай же, что сам Мерлин\nпришёл Нам на помощь, когда Мы бились с мерзким {4:ins}.  В разгар\nтой битвы {5} нанёс Мерлину страшный удар и поверг его.  А когда Наше\nвойско было оттеснено, {6} похитил {7:acc}.\n\nВ конце концов Мы переломили ход битвы, но потеряли многих {8:gen}.\nПодмастерье унёс Мерлина прочь, но тот так и не оправился.  Нам\nсказали, что, пока {9} владеет {10:ins},\nМерлину не вернуть здоровья.\n\nСим Мы возлагаем на тебя важнейший из долгов:\n\nСтупай отсюда к топям, и там ты найдёшь\n{11:acc}.  Оттуда ты {hero:gender|должен|должна} выследить {12:acc}.  Уничтожь\nчудовище и верни Нам {13:acc}.  Лишь тогда\nМы сможем вернуть Мерлину здоровье.»"
 
 [36cb2db6881b]
 en = "[Go and do penance.  Return when you are truly %s.]"
@@ -14,7 +14,7 @@ ru = "[Ступайте и покайтесь.  Возвращайтесь, ко
 
 [bb3568d21bde]
 en = "\"Thou dishonourest Us, %s!  Thou hast strayed from the path of\nchivalry! Go from Our presence and do penance.  Only when thou art again\npure mayst thou return hence.\""
-ru = "«Ты бесчестишь Нас, {1}!  Ты сош{hero:gender|ёл|ла} с пути\nрыцарства!  Покинь Наше общество и покайся.  Лишь когда ты снова\nстанешь чист{hero:gender||а}, сможешь сюда вернуться.»"
+ru = "«Ты бесчестишь Нас, {1}!  Ты {hero:gender|сошёл|сошла} с пути\nрыцарства!  Покинь Наше общество и покайся.  Лишь когда ты снова\nстанешь {hero:gender|чист|чиста}, сможешь сюда вернуться.»"
 
 [e5057a7f189c]
 en = "[You are not prepared to face %s.  Return when you are %s.]"
@@ -22,7 +22,7 @@ ru = "[Вы не готовы сразиться с {1:ins}.  Возвращай
 
 [8e2ea6facbe5]
 en = "\"Verily, %s, thou hast done well.  That thou hast survived thus\nfar is a credit to thy valor, but thou art yet unprepared for\nthe demands required as Our Champion.  %s, no matter how\npure, could never hope to defeat the foul %s.\n\n\"Journey forth from this place, and hone thy skills.  Return to\nOur presence when thou hast attained the noble title of %s.\""
-ru = "«Воистину, {1}, ты хорошо потрудил{hero:gender|ся|ась}.  То, что ты дожил{hero:gender||а} до сего\nдня, — заслуга твоей доблести, но ты ещё не готов{hero:gender||а} к тому,\nчего требует звание Нашего Поборника.  {2:hero:cap}, как бы ни\nбыл{hero:gender||а} чист{hero:gender||а}, никогда не одолеет мерзкого {3:gen}.\n\nСтупай отсюда и оттачивай своё мастерство.  Возвращайся\nк Нам, когда обретёшь благородное звание {4:hero:gen}.»"
+ru = "«Воистину, {1}, ты хорошо {hero:gender|потрудился|потрудилась}.  То, что ты {hero:gender|дожил|дожила} до сего\nдня, — заслуга твоей доблести, но ты ещё не {hero:gender|готов|готова} к тому,\nчего требует звание Нашего Поборника.  {2:hero:cap}, как бы ни\n{hero:gender|был|была} {hero:gender|чист|чиста}, никогда не одолеет мерзкого {3:gen}.\n\nСтупай отсюда и оттачивай своё мастерство.  Возвращайся\nк Нам, когда обретёшь благородное звание {4:hero:gen}.»"
 not_terms = ["Champion"]
 
 [42f2e57cb7df]
@@ -35,7 +35,7 @@ ru = "«Сейчас я убью тебя и попирую!»"
 
 [ad446562f4db]
 en = "\"Puny %s.  What manner of death dost thou wish?\""
-ru = "«Жалкий{hero:gender||я} {1:hero}.  Какую смерть ты себе желаешь?»"
+ru = "«{hero:gender|Жалкий|Жалкая} {1:hero}.  Какую смерть ты себе желаешь?»"
 
 [76f740b4056d]
 en = "\"First thee, %s, then I shall feast upon %s.\""
@@ -43,7 +43,7 @@ ru = "«Сначала ты, {1}, а потом я попирую {2:ins}.»"
 
 [1d217a408a82]
 en = "\"Hah!  Thou hast failed, %s.  Now thou shalt die.\""
-ru = "«Ха!  Ты проиграл{hero:gender||а}, {1:hero}.  Теперь ты умрёшь.»"
+ru = "«Ха!  Ты {hero:gender|проиграл|проиграла}, {1:hero}.  Теперь ты умрёшь.»"
 
 [a707cb04976a]
 en = "\"Die, %s.  Thou art as nothing against my might.\""
@@ -140,19 +140,19 @@ ru = "«Здравствуй, {1}!  Воистину, ты хорошо выгл
 
 [a53edac45bed]
 en = "\"So, %s, didst thou find %s in the fens near %s?\""
-ru = "«Ну, {1}, наш{hero:gender|ёл|ла} ли ты {2:acc} в топях у {3:gen}?»"
+ru = "«Ну, {1}, {hero:gender|нашёл|нашла} ли ты {2:acc} в топях у {3:gen}?»"
 
 [d4bb89c403c9]
 en = "\"Worthy %s, hast thou proven thy right purpose on the body of %s?\""
-ru = "«Достойн{hero:gender|ый|ая} {1}, доказал{hero:gender||а} ли ты правоту своего дела на теле {2:gen}?»"
+ru = "«{hero:gender|Достойный|Достойная} {1}, {hero:gender|доказал|доказала} ли ты правоту своего дела на теле {2:gen}?»"
 
 [7710cd7e7951]
 en = "\"Verily, %s could have no better champion, %s.\""
-ru = "«Воистину, у {1:gen} не могло быть лучше{hero:gender|го поборника|й поборницы}, {2}.»"
+ru = "«Воистину, у {1:gen} не могло быть {hero:gender|лучшего поборника|лучшей поборницы}, {2}.»"
 
 [d271e6591e3a]
 en = "\"Hast thou indeed recovered %s?\""
-ru = "«Неужто ты и впрямь вернул{hero:gender||а} {1:acc}?»"
+ru = "«Неужто ты и впрямь {hero:gender|вернул|вернула} {1:acc}?»"
 
 [96083456fcf9]
 en = "\"There is word, %s, that %s hath been sighted in the fens near %s.\""
@@ -172,11 +172,11 @@ ru = "[Отнесите Амулет на Астральный план и вр�
 
 [33ebf1c2b7ae]
 en = "\"Thou hast succeeded, We see, %s!  Now thou art commanded to take\nthe Amulet to be sacrificed to %s in the Plane of the Astral.\n\n\"Merlin hath counseled Us that thou must travel always upwards through\nthe Planes of the Elements, to achieve this goal.\n\n\"Go with %s, %s.\""
-ru = "«Мы видим, ты преуспел{hero:gender||а}, {1}!  Теперь тебе велено отнести\nАмулет, дабы принести его в жертву {2:dat} на Астральном плане.\n\nМерлин посоветовал Нам: чтобы достичь этой цели, ты должен{hero:gender||а}\nвсё время подниматься вверх через Стихийные планы.\n\nДа пребудет с тобой {3}, {4}.»"
+ru = "«Мы видим, ты {hero:gender|преуспел|преуспела}, {1}!  Теперь тебе велено отнести\nАмулет, дабы принести его в жертву {2:dat} на Астральном плане.\n\nМерлин посоветовал Нам: чтобы достичь этой цели, ты {hero:gender|должен|должна}\nвсё время подниматься вверх через Стихийные планы.\n\nДа пребудет с тобой {3}, {4}.»"
 
 [be80e6a8c87c]
 en = "As %s sinks to the ground, blood gushing from %s open mouth, %s\ndefiantly curses you and %s:\n\n    \"Thou hast not won yet, %s.  By the gods, I shall return\n    and dog thy steps to the grave!\"\n\n%s tail flailing madly, %s tries to crawl towards you, but slumps\nto the ground and dies in a pool of %s own blood."
-ru = "Оседая на землю, с кровью, хлещущей из пасти{2:skip}, {1}\nдерзко проклинает{3:skip} вас и {4:acc}:\n\n    «Ты ещё не победил{hero:gender||а}, {5:hero}.  Богами клянусь, я вернусь\n    и буду преследовать тебя до самой могилы!»\n\nБешено колотя хвостом{6:skip}, {7} пытается подползти к вам, но рушится\nназемь и умирает в луже собственной{8:skip} крови."
+ru = "Оседая на землю, с кровью, хлещущей из пасти{2:skip}, {1}\nдерзко проклинает{3:skip} вас и {4:acc}:\n\n    «Ты ещё не {hero:gender|победил|победила}, {5:hero}.  Богами клянусь, я вернусь\n    и буду преследовать тебя до самой могилы!»\n\nБешено колотя хвостом{6:skip}, {7} пытается подползти к вам, но рушится\nназемь и умирает в луже собственной{8:skip} крови."
 not_terms = ["dog"]
 
 [f3d13c7ed8d4]
@@ -185,7 +185,7 @@ ru = "[{1:cap} проверяет, готовы ли вы к великому д
 
 [1c8fc8953f22]
 en = "\"Ah, %s.  We see thou hast received Our summons.\nWe are in dire need of thy prowess.  But first, We must needs\ndecide if thou art ready for this great undertaking.\""
-ru = "«А, {1}.  Мы видим, ты получил{hero:gender||а} Наш призыв.\nНам крайне нужна твоя доблесть.  Но сперва Мы должны\nрешить, готов{hero:gender||а} ли ты к этому великому делу.»"
+ru = "«А, {1}.  Мы видим, ты {hero:gender|получил|получила} Наш призыв.\nНам крайне нужна твоя доблесть.  Но сперва Мы должны\nрешить, {hero:gender|готов|готова} ли ты к этому великому делу.»"
 
 [36299bf2b8c3]
 en = "[You are a disgrace as %s.]"
@@ -197,11 +197,11 @@ ru = "«Ты позоришь этот благородный двор свои�
 
 [7fded642ec66]
 en = "\"Welcome again, %s.  We hope thou art ready now.\""
-ru = "«Снова добро пожаловать, {1}.  Надеемся, теперь ты готов{hero:gender||а}.»"
+ru = "«Снова добро пожаловать, {1}.  Надеемся, теперь ты {hero:gender|готов|готова}.»"
 
 [9a543507a69d]
 en = "\"Once again, thou standest before Us, %s.  Art thou ready now?\""
-ru = "«Ты снова стоишь пред Нами, {1}.  Готов{hero:gender||а} ли ты теперь?»"
+ru = "«Ты снова стоишь пред Нами, {1}.  {hero:gender|Готов|Готова} ли ты теперь?»"
 
 [13c512363e82]
 en = "[You have reached %s and can %s a shrine.]"
@@ -229,11 +229,11 @@ ru = "«Ты снова бросаешь мне вызов, {1:hero}?  Да бу
 
 [4f101b0ba539]
 en = "\"Thou art truly foolish, %s.  I shall dispatch thee anon.\""
-ru = "«Ты воистину глуп{hero:gender|ец|ая}, {1:hero}.  Я сейчас же с тобой покончу.»"
+ru = "«Ты воистину {hero:gender|глупец|глупая}, {1:hero}.  Я сейчас же с тобой покончу.»"
 
 [3c43d922bc08]
 en = "\"So, thou darest touch MY property!  I shall have that bauble back,\npuny %s.  Thou wilt die in agony!\""
-ru = "«Так ты смеешь трогать МОЁ добро!  Я верну себе эту безделушку,\nжалкий{hero:gender||я} {1:hero}.  Ты умрёшь в муках!»"
+ru = "«Так ты смеешь трогать МОЁ добро!  Я верну себе эту безделушку,\n{hero:gender|жалкий|жалкая} {1:hero}.  Ты умрёшь в муках!»"
 
 [4ad5c8910d45]
 en = "Once again you stand in the shadows of %s."
@@ -241,11 +241,11 @@ ru = "Вы снова стоите в тени {1:gen}."
 
 [1d9531013b6e]
 en = "[%s is yours now.  It will aid in your search for the Amulet.]"
-ru = "[Теперь {1} ваш{1:gender||а|е|и}.  {1:gender|Он поможет|Она поможет|Оно поможет|Они помогут} вам в поисках Амулета.]"
+ru = "[Теперь {1} {1:gender|ваш|ваша|ваше|ваши}.  {1:gender|Он поможет|Она поможет|Оно поможет|Они помогут} вам в поисках Амулета.]"
 
 [c583be92c3af]
 en = "As you approach %s, %s beams at you and says:\n\n    \"Well done!  Thou art truly the Champion of %s.  We\n    have received word that Merlin is recovering, and shall soon\n    rejoin Us.\n\n    \"He hath instructed Us that thou art now to be the guardian of\n    %s.  He feeleth that thou mayst have need of\n    its powers in thine adventures.  It is Our wish that thou keepest\n    %s with thee as thou searchest for the fabled\n    Amulet of Yendor.\""
-ru = "Когда вы приближаетесь к {1:dat}, он{2:skip} сияет улыбкой и говорит:\n\n    «Отлично!  Ты воистину Поборни{hero:gender|к|ца} {3:gen}.  Нам\n    сообщили, что Мерлин поправляется и скоро\n    вновь присоединится к Нам.\n\n    Он поручил Нам передать, что отныне ты страж\n    {4:gen}.  Он полагает, что тебе могут понадобиться\n    {4:gender|его|её|его|их} силы в твоих странствиях.  Мы желаем, чтобы ты хранил{hero:gender||а}\n    {5:acc} при себе, разыскивая легендарный\n    Амулет Йендора.»"
+ru = "Когда вы приближаетесь к {1:dat}, он{2:skip} сияет улыбкой и говорит:\n\n    «Отлично!  Ты воистину {hero:gender|Поборник|Поборница} {3:gen}.  Нам\n    сообщили, что Мерлин поправляется и скоро\n    вновь присоединится к Нам.\n\n    Он поручил Нам передать, что отныне ты страж\n    {4:gen}.  Он полагает, что тебе могут понадобиться\n    {4:gender|его|её|его|их} силы в твоих странствиях.  Мы желаем, чтобы ты {hero:gender|хранил|хранила}\n    {5:acc} при себе, разыскивая легендарный\n    Амулет Йендора.»"
 not_terms = ["guardian", "Champion"]
 
 [ff474b12bc40]

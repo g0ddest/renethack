@@ -63,7 +63,7 @@ ru = "[Подняв {2:acc}, вы чувствуете присутствие {1
 
 [1f4ecae8d8b5]
 en = "As you pick up %s, you feel the essence of\n%s fill your soul.  You know now why %s stole it from\n%s, for with it, %s of %s could\neasily defeat his plans.\n\nYou sense a message from %s.  Though not verbal, you\nget the impression that you must return to %s as soon\nas possible."
-ru = "Едва вы поднимаете {1:acc}, как чувствуете, что сущность\n{2:gen} наполняет вашу душу.  Теперь вы знаете, зачем {3} похитил её из\n{4:gen}: с ней {5:hero} {6:gen} мог{hero:gender||ла} бы\nбез труда расстроить его замыслы.\n\nВы чувствуете послание от {7:gen}.  Пусть и без слов, но вы\nпонимаете, что должны как можно скорее вернуться к\n{8:dat}."
+ru = "Едва вы поднимаете {1:acc}, как чувствуете, что сущность\n{2:gen} наполняет вашу душу.  Теперь вы знаете, зачем {3} похитил её из\n{4:gen}: с ней {5:hero} {6:gen} {hero:gender|мог|могла} бы\nбез труда расстроить его замыслы.\n\nВы чувствуете послание от {7:gen}.  Пусть и без слов, но вы\nпонимаете, что должны как можно скорее вернуться к\n{8:dat}."
 
 [01b0b830d55f]
 en = "\"Greetings, %s.  It is good to see you again.\""
@@ -95,7 +95,7 @@ ru = "[{1:cap} умирает.  Молох знает о вас и гневае�
 
 [06a83cd0cc87]
 en = "You feel a wrenching shift in the ether as %s body dissolves\ninto a cloud of noxious gas.\n\nSuddenly, a voice booms out:\n\n    \"Thou hast defeated the least of my minions, %s.\n    Know now that Moloch is aware of thy presence.\n    As for thee, %s, I shall deal with thy failure\n    at my leisure.\"\n\nYou then hear the voice of %s, screaming in terror..."
-ru = "Вы чувствуете, как эфир мучительно содрогается, а тело {1:gen}\nрастворяется облаком ядовитого газа.\n\nВнезапно гремит голос:\n\n    «Ты одолел{hero:gender||а} ничтожнейшего из моих прислужников, {2:hero}.\n    Знай же: Молох ведает о твоём присутствии.\n    А с тобой, {3}, я разберусь за твою неудачу\n    на досуге.»\n\nЗатем вы слышите голос {4:gen}, вопящего от ужаса..."
+ru = "Вы чувствуете, как эфир мучительно содрогается, а тело {1:gen}\nрастворяется облаком ядовитого газа.\n\nВнезапно гремит голос:\n\n    «Ты {hero:gender|одолел|одолела} ничтожнейшего из моих прислужников, {2:hero}.\n    Знай же: Молох ведает о твоём присутствии.\n    А с тобой, {3}, я разберусь за твою неудачу\n    на досуге.»\n\nЗатем вы слышите голос {4:gen}, вопящего от ужаса..."
 
 [4fb1e209352f]
 en = "[You have returned and we need your help.  Are you ready?]"

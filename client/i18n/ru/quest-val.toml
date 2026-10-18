@@ -98,7 +98,7 @@ ru = "«С каждым мгновением Рагнарёк всё ближе.
 
 [c82d2cccaa51]
 en = "\"If %s can master %s, he will be powerful enough to face %s far earlier than is fated.  This must not be!\""
-ru = "«Если {1} овладеет {2:ins}, {1:gender|он|она|оно|они} станет достаточно могуч{1:gender||а|е|и}, чтобы выйти против {3:gen} куда раньше, чем суждено.  Этого нельзя допустить!»"
+ru = "«Если {1} овладеет {2:ins}, {1:gender|он|она|оно|они} станет достаточно {1:gender|могуч|могуча|могуче|могучи}, чтобы выйти против {3:gen} куда раньше, чем суждено.  Этого нельзя допустить!»"
 
 [72d64cdaf136]
 en = "\"Remember your training, %s.  You can succeed.\""
@@ -118,7 +118,7 @@ ru = "[Это логово {1:gen}.]"
 
 [c9c8b3c0a343]
 en = "Through clouds of sulphurous gasses, you %s a rock palisade\nsurrounded with a moat of bubbling lava.  You remember the description\nfrom something that %s said.  This is the lair of %s."
-ru = "Сквозь клубы серных испарений вы различаете{1:skip} частокол из камня,\nокружённый рвом кипящей лавы.  Вы вспоминаете, что что-то такое\nописывал{2:gender||а|о|и} {2}.  Это логово {3:gen}."
+ru = "Сквозь клубы серных испарений вы различаете{1:skip} частокол из камня,\nокружённый рвом кипящей лавы.  Вы вспоминаете, что что-то такое\n{2:gender|описывал|описывала|описывало|описывали} {2}.  Это логово {3:gen}."
 
 [1998920f1e82]
 en = "Once again, you stand in sight of %s lair."
@@ -179,7 +179,7 @@ ru = "[{1:cap} умирает.]"
 
 [c7cc2cf7aaa5]
 en = "A look of surprise and horror appears on %s face.\n\n    \"No!!!  %s has lied to me!  I have been misled!\"\n\nSuddenly, %s grasps his head and screams in agony, then dies."
-ru = "На лице {1:gen} проступают изумление и ужас.\n\n    «Нет!!!  {2:cap} солгал{2:gender||а|о|и} мне!  Меня обманули!»\n\nВнезапно {3} хватается за голову, кричит в агонии и умирает."
+ru = "На лице {1:gen} проступают изумление и ужас.\n\n    «Нет!!!  {2:cap} {2:gender|солгал|солгала|солгало|солгали} мне!  Меня обманули!»\n\nВнезапно {3} хватается за голову, кричит в агонии и умирает."
 
 [67f5b5c57566]
 en = "[We need your aid.  Are you ready?]"
@@ -223,7 +223,7 @@ ru = "[«{1:cap} {1:gender|показал|показала|показало|по
 
 [89b920627a27]
 en = "\"So!  %s has finally sent %s to challenge me!\n\n\"I thought that mastering %s would enable me to challenge\n%s, but it has shown me that first I must kill you!  So come, little\n%s.  Once I defeat you, I can at last begin the final battle with %s.\""
-ru = "«Так!  {1:cap} наконец {1:gender|прислал|прислала|прислало|прислали}\n{2:hero:acc} бросить мне вызов!\n\nЯ думал, что, овладев {3:ins}, смогу бросить вызов {4:dat}, но\n{3:gender|он|она|оно|они} показал{3:gender||а|о|и} мне, что сперва я\nдолжен убить тебя!  Так подходи,\n{hero:gender|братишка|сестрёнка}{5:skip}.  Одолев тебя, я наконец начну\nпоследнюю битву с {6:ins}.»"
+ru = "«Так!  {1:cap} наконец {1:gender|прислал|прислала|прислало|прислали}\n{2:hero:acc} бросить мне вызов!\n\nЯ думал, что, овладев {3:ins}, смогу бросить вызов {4:dat}, но\n{3:gender|он|она|оно|они} {3:gender|показал|показала|показало|показали} мне, что сперва я\nдолжен убить тебя!  Так подходи,\n{hero:gender|братишка|сестрёнка}{5:skip}.  Одолев тебя, я наконец начну\nпоследнюю битву с {6:ins}.»"
 
 [b4023238f2b1]
 en = "\"Again you challenge me, %s.  Good.  I will kill you now.\""
@@ -231,7 +231,7 @@ ru = "«Снова ты бросаешь мне вызов, {1:hero}.  Хоро�
 
 [6e2333331317]
 en = "\"Have you not learned yet?  You cannot defeat %s!\""
-ru = "«Ты так ничему и не научил{hero:gender|ся|ась}?  Тебе не победить {1:acc}!»"
+ru = "«Ты так ничему и не {hero:gender|научился|научилась}?  Тебе не победить {1:acc}!»"
 
 [f1ad98f60c32]
 en = "\"I will kill you, %s, and wrest %s from your mangled hands.\""

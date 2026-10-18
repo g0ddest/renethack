@@ -30,7 +30,7 @@ ru = "«С тем же успехом скальпели можно давать
 
 [9ebbfb53236a]
 en = "\"If I could strike %s, surrounded by %s %s, imagine what I can do to you here by yourself.\""
-ru = "«Если уж я сумел поразить {1:acc} в окружении его{2:skip} {3:gen}, представь, что я сделаю с тобой здесь, когда ты один{hero:gender||а}.»"
+ru = "«Если уж я сумел поразить {1:acc} в окружении его{2:skip} {3:gen}, представь, что я сделаю с тобой здесь, когда ты {hero:gender|один|одна}.»"
 
 [f42120ff571a]
 en = "\"I will put my %s to work making a physic out of your ashes.\""
@@ -178,7 +178,7 @@ ru = "[Умирая, {1} проклинает вас.{2:skip}]"
 
 [5ddde4969500]
 en = "The battered body of %s slumps to the ground and gasps\nout one last curse:\n\n    \"You have defeated me, %s, but I shall have my revenge.\n    How, I shall not say, but this curse shall be like a cancer\n    on you.\"\n\nWith that %s dies."
-ru = "Изувеченное тело {1:gen} оседает на землю, и он хрипит\nпоследнее проклятие:\n\n    «Ты победил{hero:gender||а} меня, {2}, но я отомщу.\n    Как — не скажу, но это проклятие будет точить\n    тебя, как рак.»\n\nС этими словами {3} умирает."
+ru = "Изувеченное тело {1:gen} оседает на землю, и он хрипит\nпоследнее проклятие:\n\n    «Ты {hero:gender|победил|победила} меня, {2}, но я отомщу.\n    Как — не скажу, но это проклятие будет точить\n    тебя, как рак.»\n\nС этими словами {3} умирает."
 
 [11803b6bfe07]
 en = "[%s is weak from the struggle with %s.  %s wants to examine you.]"
@@ -194,7 +194,7 @@ ru = "[Целитель из вас никудышный.]"
 
 [752569f41048]
 en = "\"You have failed us, %s.  You are a quack!  A charlatan!\n\n\"Hades will be happy to hear that you are once again practicing your\narts on the unsuspecting.\""
-ru = "«Вы нас подвели, {1}.  Вы шарлатан!  Знахар{hero:gender|ь|ка}!\n\nАид будет рад услышать, что вы снова\nпрактикуете своё искусство на ничего не подозревающих.»"
+ru = "«Вы нас подвели, {1}.  Вы шарлатан!  {hero:gender|Знахарь|Знахарка}!\n\nАид будет рад услышать, что вы снова\nпрактикуете своё искусство на ничего не подозревающих.»"
 
 [7fdf9d6a4f69]
 en = "\"Again you return to me, %s.  I sense that each trip back\nthe pleurisy and maladies of our land begin to infect you.  Let us\nhope and pray to %s that you become ready for your task before\nyou fall victim to the bad humors.\""
@@ -202,7 +202,7 @@ ru = "«Вы снова вернулись ко мне, {1}.  Я чувству�
 
 [cb2fa8e13fd7]
 en = "\"Chiron has fallen, Hermes has fallen, what else must I tell you to\nimpress upon you the importance of your mission!  I hope that you\nhave come prepared this time.\""
-ru = "«Пал Хирон, пал Гермес — что ещё мне сказать, чтобы вы\nпоняли, как важна ваша миссия?  Надеюсь, на этот раз\nвы пришли подготовленн{hero:gender|ым|ой}.»"
+ru = "«Пал Хирон, пал Гермес — что ещё мне сказать, чтобы вы\nпоняли, как важна ваша миссия?  Надеюсь, на этот раз\nвы пришли {hero:gender|подготовленным|подготовленной}.»"
 
 [b3b03c57770c]
 en = "[You have reached %s but all is not well.]"
@@ -234,7 +234,7 @@ ru = "«Что тебе больше по душе, {1}?  Нарывы, плев
 
 [dcd4d8bd8468]
 en = "\"I'll have %s back from you, %s.  You are\nnot going to live to escape this place.\""
-ru = "«Я верну себе {1:acc}, {2:hero}.  Жив{hero:gender|ым|ой} тебе\nотсюда не уйти.»"
+ru = "«Я верну себе {1:acc}, {2:hero}.  {hero:gender|Живым|Живой} тебе\nотсюда не уйти.»"
 
 [bd1274866276]
 en = "After your last experience you expected to be here, but you certainly\ndid not expect to see things so much worse.  This time you must succeed."

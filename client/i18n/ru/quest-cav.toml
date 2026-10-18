@@ -18,7 +18,7 @@ ru = "«{1}!  Вы отступили от моих учений.  Вы боль
 
 [002c5fff4c79]
 en = "[\"%s is too inexperienced.  Come back when you have progressed.\"]"
-ru = "[«{1:hero:cap} слишком неопытен{hero:gender||а}.  Возвращайтесь, когда наберётесь опыта.»]"
+ru = "[«{1:hero:cap} слишком {hero:gender|неопытен|неопытна}.  Возвращайтесь, когда наберётесь опыта.»]"
 
 [6875026d8940]
 en = "\"Alas, %s, you are as yet too inexperienced to embark upon such\na difficult quest as that I propose to give you.\n\n\"%s could not possibly survive the rigors demanded to find\n%s, never mind to confront %s herself.\n\n\"Adventure some more, and you will learn the skills you will require.\n%s decrees it.\""
@@ -26,7 +26,7 @@ ru = "«Увы, {1}, вы ещё слишком неопытны, чтобы в�
 
 [fa1c8d739b01]
 en = "\"You are weak, %s.  No challenge for the Mother of all Dragons.\""
-ru = "«Ты слаб{hero:gender||а}, {1:hero}.  Для Матери всех драконов это не противник.»"
+ru = "«Ты {hero:gender|слаб|слаба}, {1:hero}.  Для Матери всех драконов это не противник.»"
 
 [1e88cfd407a7]
 en = "\"I grow hungry, %s.  You look like a nice appetizer!\""
@@ -66,7 +66,7 @@ ru = "«{1:cap} {1:gender|покинул|покинула|покинуло|по�
 
 [41c8baa68183]
 en = "\"%s is immune to her own breath weapons. You should use magic upon her that she does not use herself.\""
-ru = "«{1:cap} неуязвим{1:gender||а|о|ы} для своего же дыхания.  Действуйте против {1:gender|него|неё|него|них} той магией, которой {1:gender|он|она|оно|они} сам{1:gender||а|о|и} не пользуется.»"
+ru = "«{1:cap} {1:gender|неуязвим|неуязвима|неуязвимо|неуязвимы} для своего же дыхания.  Действуйте против {1:gender|него|неё|него|них} той магией, которой {1:gender|он|она|оно|они} {1:gender|сам|сама|само|сами} не пользуется.»"
 
 [f604dee22011]
 en = "\"When you encounter %s, call upon %s for assistance.\""
@@ -90,7 +90,7 @@ ru = "«{1:cap} — единственное, чего {2} по-настояще
 
 [0cbe85e85fa2]
 en = "\"Do not be fooled by %s size.  She is fast, and it is rumored that she uses magic.\""
-ru = "«Пусть вас не обманет размер {1:gen}.  {1:gender|Он|Она|Оно|Они} быстр{1:gender||а|о|ы}, и, говорят, {1:gender|владеет|владеет|владеет|владеют} магией.»"
+ru = "«Пусть вас не обманет размер {1:gen}.  {1:gender|Он|Она|Оно|Они} {1:gender|быстр|быстра|быстро|быстры}, и, говорят, {1:gender|владеет|владеет|владеет|владеют} магией.»"
 
 [de71e986dbee]
 en = "\"I would send a party of %s with you, but we will need all of our strength to defend ourselves.\""
@@ -118,7 +118,7 @@ ru = "[Вы входите в большую пещеру.  Здесь {1}.]"
 
 [77fa25f4e0de]
 en = "You find yourself in a large cavern, with neatly polished walls, that\nnevertheless show signs of being scorched by fire.\n\nBones litter the floor, and there are objects scattered everywhere.\nThe air is close with the stench of sulphurous fumes.\n\n%s is clearly visible, but %s seems to be asleep."
-ru = "Вы оказываетесь в большой пещере с гладко отполированными стенами,\nна которых, однако, видны следы огня.\n\nПол усеян костями, всюду разбросаны вещи.\nВоздух тяжёл от смрада серных испарений.\n\n{1:cap} хорошо виден{1:gender||а|о|ы}, но, кажется, {1:gender|он|она|оно|они}{2:skip} спит."
+ru = "Вы оказываетесь в большой пещере с гладко отполированными стенами,\nна которых, однако, видны следы огня.\n\nПол усеян костями, всюду разбросаны вещи.\nВоздух тяжёл от смрада серных испарений.\n\n{1:cap} хорошо {1:gender|виден|видена|видено|видены}, но, кажется, {1:gender|он|она|оно|они}{2:skip} спит."
 
 [d05dfdaf8f54]
 en = "Once again, you find yourself in the lair of %s."
@@ -130,7 +130,7 @@ ru = "[{1:cap} наполняет вас ощущением силы.]"
 
 [25a64640b609]
 en = "As you pick up %s it seems heavy at first, but as you\nhold it strength flows into your arms.\n\nYou suddenly feel full of power, as if nothing could possibly stand\nin your path."
-ru = "Когда вы поднимаете {1:acc}, {1:gender|он кажется|она кажется|оно кажется|они кажутся} поначалу тяжёл{1:gender|ым|ой|ым|ыми}, но\nстоит подержать {1:gender|его|её|его|их}, как в руки вливается сила.\n\nВас внезапно переполняет мощь, будто ничто на свете не устоит\nу вас на пути."
+ru = "Когда вы поднимаете {1:acc}, {1:gender|он кажется|она кажется|оно кажется|они кажутся} поначалу {1:gender|тяжёлым|тяжёлой|тяжёлым|тяжёлыми}, но\nстоит подержать {1:gender|его|её|его|их}, как в руки вливается сила.\n\nВас внезапно переполняет мощь, будто ничто на свете не устоит\nу вас на пути."
 
 [d8d92dadee4e]
 en = "\"The rains have returned and the land grows lush again.\""
@@ -142,11 +142,11 @@ ru = "«Вернулся мир — возблагодарим {1:acc}!»"
 
 [d4abcb577415]
 en = "\"Welcome back!  Did you find %s?\""
-ru = "«С возвращением!  Ты наш{hero:gender|ёл|ла} {1:acc}?»"
+ru = "«С возвращением!  Ты {hero:gender|нашёл|нашла} {1:acc}?»"
 
 [bb4c42f6dd38]
 en = "\"So, %s, tell us the story of your fight with %s.\""
-ru = "«Ну, {1}, расскажи нам, как ты бил{hero:gender|ся|ась} с {2:ins}.»"
+ru = "«Ну, {1}, расскажи нам, как ты {hero:gender|бился|билась} с {2:ins}.»"
 
 [32ffcad1f144]
 en = "\"%s grows old.  Perhaps you will guide us after he ascends.\""
@@ -163,7 +163,7 @@ ru = "«С тех пор как {1} {1:gender|наслал|наслала|нас
 
 [41c6a4d41b99]
 en = "\"I have heard your vision quest was successful.  Is this so?\""
-ru = "«Я слышал, ты нашёл{hero:gender||ла} своё видение.  Это так?»"
+ru = "«Я слышал, ты {hero:gender|нашёл|нашла} своё видение.  Это так?»"
 
 [5242f8ebf039]
 en = "\"So, tell me, %s, how have you fared?\""
@@ -188,7 +188,7 @@ ru = "[«Вы вернулись.  Нам отчаянно нужна ваша �
 
 [d218bced0865]
 en = "\"You have returned from your vision quest, %s.  Thank %s.\n\n\"We are in dire need of your help, my %s.\n\n\"But first, I must see if you are yet capable of the quest I would\nask you to undertake.\""
-ru = "«Вы вернулись со своим видением, {1}.  Хвала {2:dat}.\n\nНам отчаянно нужна ваша помощь, {hero:gender|сын|дочь} мой{hero:gender||я}{3:skip}.\n\nНо сначала я должен проверить, по силам ли вам задание, о котором\nя хочу вас попросить.»"
+ru = "«Вы вернулись со своим видением, {1}.  Хвала {2:dat}.\n\nНам отчаянно нужна ваша помощь, {hero:gender|сын|дочь} {hero:gender|мой|моя}{3:skip}.\n\nНо сначала я должен проверить, по силам ли вам задание, о котором\nя хочу вас попросить.»"
 
 [46f51e7150df]
 en = "[\"You have betrayed the %s.  Begone!\"]"
@@ -224,7 +224,7 @@ ru = "[{1:cap} грозится вас съесть.]"
 
 [88a195ee7f31]
 en = "\"So, follower of %s, you seek to invade the lair of\n%s.  Only my meals are allowed down here.  Prepare\nto be eaten!\""
-ru = "«Итак, последовател{hero:gender|ь|ьница} {1:gen}, ты хочешь вторгнуться в логово\n{2:gen}.  Сюда дозволено спускаться лишь моей еде.  Готовься\nбыть съеденн{hero:gender|ым|ой}!»"
+ru = "«Итак, {hero:gender|последователь|последовательница} {1:gen}, ты хочешь вторгнуться в логово\n{2:gen}.  Сюда дозволено спускаться лишь моей еде.  Готовься\nбыть {hero:gender|съеденным|съеденной}!»"
 
 [610f95c97ab4]
 en = "\"So, again you face me, %s.  No one has ever before escaped me.\nNow I shall kill you.\""

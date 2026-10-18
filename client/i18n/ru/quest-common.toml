@@ -182,7 +182,7 @@ ru = "Написано в Книге {1:gen}:\n\n    После Сотворен
 
 [ddfce0f91a54]
 en = "\"The silver bell which was hoarded by %s will be\nessential in locating the Amulet of Yendor.\""
-ru = "«Серебряный колокол, что хранил{1:gender||а|о|и} {1}, понадобится,\nчтобы отыскать Амулет Йендора.»"
+ru = "«Серебряный колокол, что {1:gender|хранил|хранила|хранило|хранили} {1}, понадобится,\nчтобы отыскать Амулет Йендора.»"
 not_terms = ["bell"]
 
 [030a8216c1d6]

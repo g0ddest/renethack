@@ -38,7 +38,7 @@ ru = "«Ты ведь знаешь: я не могу вложить мечи в 
 
 [fdb83990f697]
 en = "\"Your presence only compounds the dishonor of %s in not coming %sself.\""
-ru = "«Твоё появление лишь умножает бесчестье {1:gen}, что не явил{1:gender|ся|ась|ось|ись} сам{1:gender||а|о|и}{2:skip}.»"
+ru = "«Твоё появление лишь умножает бесчестье {1:gen}, что не {1:gender|явился|явилась|явилось|явились} {1:gender|сам|сама|само|сами}{2:skip}.»"
 
 [1c50cd17a8b8]
 en = "\"I will make tea with your hair and serve it to %s.\""
@@ -46,7 +46,7 @@ ru = "«Я заварю чай из твоих волос и подам его {
 
 [aa3897bdddc0]
 en = "\"Your fear shows in your eyes, coward!\""
-ru = "«Страх так и написан у тебя в глазах, трус{hero:gender||иха}!»"
+ru = "«Страх так и написан у тебя в глазах, {hero:gender|трус|трусиха}!»"
 
 [1d3902fe0ed4]
 en = "\"I have not heard of you, %s-san; has your life been that unworthy?\""
@@ -154,7 +154,7 @@ ru = "«Прошу, {1:hero}, присядьте и расскажите, как
 
 [40e218b7f734]
 en = "\"%s still lives!  You have saved us from becoming ronin.\""
-ru = "«{1:cap} жив{1:gender||а|о|ы}!  Вы спасли нас от участи ронинов.»"
+ru = "«{1:cap} {1:gender|жив|жива|живо|живы}!  Вы спасли нас от участи ронинов.»"
 
 [39ce5dd7871a]
 en = "\"To succeed, you must walk like a butterfly on the wind.\""
@@ -166,7 +166,7 @@ ru = "«Я боюсь за Страну Богов.»"
 
 [735c2d8f8ab2]
 en = "\"%s has hired the Ninja -- be careful.\""
-ru = "«{1:cap} нанял{1:gender||а|о|и} ниндзя — будьте осторожны.»"
+ru = "«{1:cap} {1:gender|нанял|наняла|наняло|наняли} ниндзя — будьте осторожны.»"
 
 [759a2ace7c87]
 en = "\"If %s is not returned, we will all be ronin.\""
@@ -238,7 +238,7 @@ ru = "«Покончив с тобой, я прокляну твой ками.»
 
 [ad2805c4d7c9]
 en = "\"You have fought my samurai; surely you must know that you\nwill not be able to take %s back to\n%s.\""
-ru = "«Ты сражал{hero:gender|ся|ась} с моими самураями; ты же понимаешь, что\nтебе не унести {1:acc} обратно в {2:acc}.»"
+ru = "«Ты {hero:gender|сражался|сражалась} с моими самураями; ты же понимаешь, что\nтебе не унести {1:acc} обратно в {2:acc}.»"
 
 [70acec67eb71]
 en = "[The emperor wants you to take %s and recover the Amulet.]"

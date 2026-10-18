@@ -39,7 +39,7 @@ ru = "«Моли о пощаде — может, я и смилуюсь.»"
 
 [6d5c4393fa66]
 en = "\"If you were not so %s, you might have stood a chance.\""
-ru = "«Не будь ты так{hero:gender|им|ой} {1:hero:ins}, у тебя был бы шанс.»"
+ru = "«Не будь ты {hero:gender|таким|такой} {1:hero:ins}, у тебя был бы шанс.»"
 
 [78eb012c0c17]
 en = "\"Vengeance is mine at last, %s.\""
@@ -55,7 +55,7 @@ ru = "«Пока {1} у меня, тебе меня не победить.»"
 
 [5a18eeeb61ec]
 en = "\"%s has never been defeated, NEVER!\""
-ru = "«{1:cap} не знал{1:gender||а|о|и} поражений — НИКОГДА!»"
+ru = "«{1:cap} не {1:gender|знал|знала|знало|знали} поражений — НИКОГДА!»"
 
 [eb29dbef9639]
 en = "\"Are you truly the best %s has to send against me?  I pity %s.\""
@@ -171,7 +171,7 @@ ru = "[Умирая, {1} осыпает вас проклятиями.{2:skip}]"
 
 [feac6b43a837]
 en = "You turn in the direction of %s.  As his earthly body begins\nto vanish before your eyes, you hear him curse:\n\n    \"You shall never be rid of me, %s!\n    I will find you where ever you go and regain what is rightly mine.\""
-ru = "Вы оборачиваетесь к {1:dat}.  Его земное тело начинает таять у вас на\nглазах, и вы слышите проклятие:\n\n    «Тебе никогда от меня не избавиться, {2}!  Я найду тебя, куда бы ты\n    ни уш{hero:gender|ёл|ла}, и верну то, что принадлежит мне по праву.»"
+ru = "Вы оборачиваетесь к {1:dat}.  Его земное тело начинает таять у вас на\nглазах, и вы слышите проклятие:\n\n    «Тебе никогда от меня не избавиться, {2}!  Я найду тебя, куда бы ты\n    ни {hero:gender|ушёл|ушла}, и верну то, что принадлежит мне по праву.»"
 
 [7a33b4c10183]
 en = "[Someone must defeat %s.  Are your ready?]"
@@ -215,7 +215,7 @@ ru = "[{1:hero:cap} меня не победит.]"
 
 [aef34f64fecc]
 en = "\"So, %s, %s thinks that you can wrest\n%s from me!\n\n\"It only proves how desperate he has become that he sends %s to\ntry to defeat me.  When this day is over, I will have you enslaved\nin the mines where you will rue the day that you ever entered\n%s.\""
-ru = "«Итак, {1}, {2} думает, что ты сможешь вырвать у меня {3:acc}!\n\nЭто лишь доказывает, в каком он отчаянии, раз посылает\n{hero:gender|какого-то|какую-то} {4:hero:acc} одолеть меня.  Когда этот\nдень закончится, я сошлю тебя в рудники, и ты проклянёшь тот день, когда\nвош{hero:gender|ёл|ла} в {5:acc}.»"
+ru = "«Итак, {1}, {2} думает, что ты сможешь вырвать у меня {3:acc}!\n\nЭто лишь доказывает, в каком он отчаянии, раз посылает\n{hero:gender|какого-то|какую-то} {4:hero:acc} одолеть меня.  Когда этот\nдень закончится, я сошлю тебя в рудники, и ты проклянёшь тот день, когда\n{hero:gender|вошёл|вошла} в {5:acc}.»"
 
 [77aa1b6f39d9]
 en = "\"I let you live the last time because it gave me pleasure.\nThis time I will destroy you, %s.\""
@@ -227,7 +227,7 @@ ru = "[Беги, или будешь жестоко страдать.]"
 
 [05f2c0fbf198]
 en = "\"These meetings come to bore me.  You disturb my workings with\n%s.\n\n\"If you do not run away now, I will inflict so much suffering on you that\n%s will feel guilty for ever having sent his %s to me!\""
-ru = "«Эти встречи мне надоели.  Ты мешаешь мне заниматься {1:ins}.\n\nЕсли ты сейчас же не сбежишь, я причиню тебе столько страданий, что {2}\nбудет казнить себя за то, что вообще послал{2:gender||а|о|и} ко мне\n{hero:gender|своего сына|свою дочь}{3:skip}!»"
+ru = "«Эти встречи мне надоели.  Ты мешаешь мне заниматься {1:ins}.\n\nЕсли ты сейчас же не сбежишь, я причиню тебе столько страданий, что {2}\nбудет казнить себя за то, что вообще {2:gender|послал|послала|послало|послали} ко мне\n{hero:gender|своего сына|свою дочь}{3:skip}!»"
 
 [d857901c898c]
 en = "[\"Return %s to me and we will rule %s.\"]"
@@ -252,7 +252,7 @@ ru = "[Оставьте {1:acc} себе и возвращайтесь чере�
 
 [35ef44c4da08]
 en = "\"%s is yours now.  %s\nawait your return through the magic portal that brought you here.\""
-ru = "«Теперь {1} — ваш{1:gender||а|е|и}.  {2:cap} {2:num|ждёт|ждут} вашего\nвозвращения через волшебный портал, что привёл вас сюда.»"
+ru = "«Теперь {1} — {1:gender|ваш|ваша|ваше|ваши}.  {2:cap} {2:num|ждёт|ждут} вашего\nвозвращения через волшебный портал, что привёл вас сюда.»"
 
 [7ff4ef207e3d]
 en = "You are back at %s.\nThings appear to have become so bad that you fear that soon\n%s will not be here to return to."

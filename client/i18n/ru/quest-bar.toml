@@ -46,7 +46,7 @@ ru = "«{1:cap} тебя теперь не защитит.  Здесь ты и �
 
 [8a3b823e39de]
 en = "\"Your %s nature makes you weak.  You cannot defeat me.\""
-ru = "«Твоя {1:f} натура делает тебя слаб{hero:gender|ым|ой}.  Тебе меня не победить.»"
+ru = "«Твоя {1:f} натура делает тебя {hero:gender|слабым|слабой}.  Тебе меня не победить.»"
 
 [643c3cd3392e]
 en = "\"Come, %s.  I shall kill you, then unleash the horde on your tribe.\""
@@ -62,7 +62,7 @@ ru = "«Сражайся, {1:hero}, или ты боишься могучего 
 
 [1adabcdda600]
 en = "\"You have failed, %s.  Now, my victory is complete.\""
-ru = "«Ты проиграл{hero:gender||а}, {1:hero}.  Теперь моя победа полна.»"
+ru = "«Ты {hero:gender|проиграл|проиграла}, {1:hero}.  Теперь моя победа полна.»"
 
 [6260e5eefdc0]
 en = "\"%s is strong in the dark arts, but not immune to cold steel.\""
@@ -78,7 +78,7 @@ ru = "«Если вы потерпите неудачу, {1}, я недолго 
 
 [c79a46f8b959]
 en = "\"To enter %s, you must be very stealthy.  The horde will be on guard.\""
-ru = "«Чтобы проникнуть в {1:acc}, вам придётся быть очень скрытн{hero:gender|ым|ой}.  Орда будет начеку.»"
+ru = "«Чтобы проникнуть в {1:acc}, вам придётся быть очень {hero:gender|скрытным|скрытной}.  Орда будет начеку.»"
 not_terms = ["guard"]
 
 [f7d492a08527]
@@ -148,7 +148,7 @@ ru = "«Теперь, когда орда разбита, снова наста�
 
 [1f3c00f45ed8]
 en = "\"You have brought our clan much honor in defeating %s.\""
-ru = "«Победив {1:acc}, ты принёс{hero:gender||ла} нашему клану великую честь.»"
+ru = "«Победив {1:acc}, ты {hero:gender|принёс|принесла} нашему клану великую честь.»"
 
 [cedfc18b5a1a]
 en = "\"You will be a worthy successor to %s.\""
@@ -232,7 +232,7 @@ ru = "«Я и так потратил на тебя слишком много в
 
 [06473dc2b906]
 en = "\"You return yet again, %s!  Are you prepared for death now?\""
-ru = "«Ты снова вернул{hero:gender|ся|ась}, {1:hero}!  Теперь ты готов{hero:gender||а} к смерти?»"
+ru = "«Ты снова {hero:gender|вернулся|вернулась}, {1:hero}!  Теперь ты {hero:gender|готов|готова} к смерти?»"
 
 [33b6c78355b8]
 en = "\"I shall have %s back, you pitiful excuse for %s.\nAnd your life as well.\""

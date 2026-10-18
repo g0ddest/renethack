@@ -130,7 +130,7 @@ ru = "[Вы чувствуете сущность {1:gen} и понимаете,
 
 [3e88d9dc8b25]
 en = "As you pick up %s, you feel the essence of\n%s fill your soul.  You know now why %s stole %s from\n%s, for with %s, %s of %s could\neasily defeat his plans.\n\nYou sense a message from %s.  Though not verbal, you\nget the impression that you must return to %s as soon\nas possible."
-ru = "Едва вы поднимаете {1:acc}, как чувствуете, что сущность\n{2:gen} наполняет вашу душу.  Теперь вы знаете, зачем {3} похитил их{4:skip} из\n{5:gen}: с ними{6:skip} {7:hero} {8:gen} мог{hero:gender||ла} бы\nбез труда расстроить его замыслы.\n\nВы чувствуете послание от {9:gen}.  Пусть и без слов, но вы\nпонимаете, что должны как можно скорее вернуться к\n{10:dat}."
+ru = "Едва вы поднимаете {1:acc}, как чувствуете, что сущность\n{2:gen} наполняет вашу душу.  Теперь вы знаете, зачем {3} похитил их{4:skip} из\n{5:gen}: с ними{6:skip} {7:hero} {8:gen} {hero:gender|мог|могла} бы\nбез труда расстроить его замыслы.\n\nВы чувствуете послание от {9:gen}.  Пусть и без слов, но вы\nпонимаете, что должны как можно скорее вернуться к\n{10:dat}."
 
 [901453488833]
 en = "\"Greetings, honorable %s.  It is good to see you again.\""
@@ -178,7 +178,7 @@ ru = "[Умирая, {1} грозит{2:skip} вернуться.]"
 
 [eca0be98185c]
 en = "%s gasps:\n\n    \"You have only defeated this mortal body.  Know this: my spirit\n    is strong.  I shall return and reclaim what is mine!\"\n\nWith that, %s expires."
-ru = "{1:cap} хрипит:\n\n    «Ты одолел{hero:gender||а} лишь это смертное тело.  Знай же: мой дух\n    силён.  Я вернусь и заберу то, что принадлежит мне!»\n\nС этими словами {2} испускает дух."
+ru = "{1:cap} хрипит:\n\n    «Ты {hero:gender|одолел|одолела} лишь это смертное тело.  Знай же: мой дух\n    силён.  Я вернусь и заберу то, что принадлежит мне!»\n\nС этими словами {2} испускает дух."
 
 [030a66225c80]
 en = "[%s checks whether you are ready for the great challenge.]"

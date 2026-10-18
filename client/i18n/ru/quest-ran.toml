@@ -26,15 +26,15 @@ ru = "[Вы слишком неопытны.  Возвращайтесь, ког
 
 [45a4e65b4bab]
 en = "\"%s, you are yet too inexperienced to withstand the demands of that\nwhich we need you to do.  %s might just be able to do this thing.\n\n\"Return to us when you have learned more, my %s.\""
-ru = "«{1}, вы ещё слишком неопытны, чтобы выдержать то, чего мы от вас ждём.\nРазве что {2:hero} сумел{hero:gender||а} бы с этим справиться.\n\nВозвращайтесь к нам, когда научитесь большему,\n{hero:gender|сын мой|дочь моя}{3:skip}.»"
+ru = "«{1}, вы ещё слишком неопытны, чтобы выдержать то, чего мы от вас ждём.\nРазве что {2:hero} {hero:gender|сумел|сумела} бы с этим справиться.\n\nВозвращайтесь к нам, когда научитесь большему,\n{hero:gender|сын мой|дочь моя}{3:skip}.»"
 
 [3e54ae170f45]
 en = "\"Your %s is nothing, %s.  You are mine now!\""
-ru = "«{1:gender|Твой|Твоя|Твоё|Твои} {1} — ничто, {2:hero}.  Теперь ты мо{hero:gender|й|я}!»"
+ru = "«{1:gender|Твой|Твоя|Твоё|Твои} {1} — ничто, {2:hero}.  Теперь ты {hero:gender|мой|моя}!»"
 
 [879dbd7ee83b]
 en = "\"Run away little %s!  You can never hope to defeat %s!\""
-ru = "«Беги-беги, маленьк{hero:gender|ий|ая} {1:hero}!  Тебе ни за что не победить {2:acc}!»"
+ru = "«Беги-беги, {hero:gender|маленький|маленькая} {1:hero}!  Тебе ни за что не победить {2:acc}!»"
 
 [4df52aee3771]
 en = "\"My servants will rip you to shreds!\""
@@ -50,7 +50,7 @@ ru = "«Я разорю рощу твоего {1:gen} и перебью всех
 
 [441d353a6465]
 en = "\"%s has abandoned you, %s.  You are doomed.\""
-ru = "«{1:cap} {1:gender|оставил|оставила|оставило|оставили} тебя, {2:hero}.  Ты обречен{hero:gender||а}.»"
+ru = "«{1:cap} {1:gender|оставил|оставила|оставило|оставили} тебя, {2:hero}.  Ты {hero:gender|обречен|обречена}.»"
 
 [9a91c64e5113]
 en = "\"%s?  %s sends a mere %s against me?  Hah!\""
@@ -146,7 +146,7 @@ ru = "«В рощу вернулось пение птиц — верно, эт�
 
 [10d7aef62d32]
 en = "\"%s seems to have regained some of his strength.\""
-ru = "«{1:cap}, похоже, отчасти вернул{1:gender||а|о|и} себе силы.»"
+ru = "«{1:cap}, похоже, отчасти {1:gender|вернул|вернула|вернуло|вернули} себе силы.»"
 
 [d162a474ed71]
 en = "\"So, tell us how you entered %s, in case some new evil arises there.\""
@@ -182,7 +182,7 @@ ru = "«Он у вас!  Вы вернули Амулет Йендора!\nТе�
 
 [afe6837051d5]
 en = "%s collapses to the ground, cursing you and %s, then says:\n\n    \"You have defeated me, %s!  But I curse you one final time, with\n    my dying breath!  You shall die before you leave my castle!\""
-ru = "{1:cap} валится наземь, проклиная вас и {2:acc}, а затем говорит:\n\n    «Ты победил{hero:gender||а} меня, {3:hero}!  Но с последним вздохом\n    я проклинаю тебя в последний раз!  Ты умрёшь, не успев покинуть мой\n    замок!»"
+ru = "{1:cap} валится наземь, проклиная вас и {2:acc}, а затем говорит:\n\n    «Ты {hero:gender|победил|победила} меня, {3:hero}!  Но с последним вздохом\n    я проклинаю тебя в последний раз!  Ты умрёшь, не успев покинуть мой\n    замок!»"
 
 [c924faed7278]
 en = "[You have returned, %s.  We need your help.  Are you ready?]"
@@ -198,7 +198,7 @@ ru = "[Вы недостаточно верны пути {1:pl:gen}.  Отнын
 
 [c10815acc0f4]
 en = "\"%s!  You have doomed us all.  You fairly radiate %s influences\nand weaken the power we have raised in this grove as a result!\n\n\"Begone!  We renounce your %shood with us!  You are an outcast now!\""
-ru = "«{1}!  Вы погубили нас всех.  От вас так и веет\nзаконопослушностью{2:skip}, и оттого слабеет сила, которую мы взрастили\nв этой роще!\n\nПрочь!  Отныне вы нам не {hero:gender|брат|сестра}{3:skip}!  Теперь вы\nизгнанни{hero:gender|к|ца}!»"
+ru = "«{1}!  Вы погубили нас всех.  От вас так и веет\nзаконопослушностью{2:skip}, и оттого слабеет сила, которую мы взрастили\nв этой роще!\n\nПрочь!  Отныне вы нам не {hero:gender|брат|сестра}{3:skip}!  Теперь вы\n{hero:gender|изгнанник|изгнанница}!»"
 
 [8f3623edaa1e]
 en = "\"Once again, %s, you stand in our midst.  Are you ready now?\""
@@ -226,11 +226,11 @@ ru = "Вы снова спускаетесь в {1:acc}.\n\n*вжух* (Тяне
 
 [04814199aea0]
 en = "[You have come to recover %s, but I shall keep %s and you shall die.]"
-ru = "[Ты приш{hero:gender|ёл|ла} за {1:ins}, но я оставлю {1:gender|его|её|его|их}{2:skip} себе, а ты умрёшь.]"
+ru = "[Ты {hero:gender|пришёл|пришла} за {1:ins}, но я оставлю {1:gender|его|её|его|их}{2:skip} себе, а ты умрёшь.]"
 
 [7d33035c29cd]
 en = "\"So, %s.  %s has sent you to recover %s.\n\n\"Well, I shall keep that bauble.  It pleases me.  You, %s, shall die.\""
-ru = "«Итак, {1:hero}.  {2:cap} послал{2:gender||а|о|и} тебя вернуть {3:acc}.\n\nЧто ж, эту безделушку я оставлю себе.  Она мне нравится.  А ты,\n{4:hero}, умрёшь.»"
+ru = "«Итак, {1:hero}.  {2:cap} {2:gender|послал|послала|послало|послали} тебя вернуть {3:acc}.\n\nЧто ж, эту безделушку я оставлю себе.  Она мне нравится.  А ты,\n{4:hero}, умрёшь.»"
 
 [3daa772c3f08]
 en = "\"Back again, eh?  Well, a mere %s is no threat to me!  Die, %s!\""
@@ -238,7 +238,7 @@ ru = "«Снова ты, а?  Что ж, {hero:gender|какой-то|какая
 
 [542dd8d3f7e4]
 en = "\"You haven't learned your lesson, %s.  You can't kill me!  You shall die now.\""
-ru = "«Ты так ничему и не научил{hero:gender|ся|ась}, {1:hero}.  Тебе меня не убить!  Сейчас ты умрёшь.»"
+ru = "«Ты так ничему и не {hero:gender|научился|научилась}, {1:hero}.  Тебе меня не убить!  Сейчас ты умрёшь.»"
 
 [1e57d6d96f97]
 en = "\"I shall have %s from you, %s.  Then I shall\nkill you.\""
