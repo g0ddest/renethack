@@ -46,6 +46,10 @@ DECK_SELFTESTS := smoke inventory hud gamepad title threat-arrow settings gamepl
 # at 1920×1080
 RU_DECK_SELFTESTS := smoke inventory hud dialogs gamepad pickers achievements help layouts settings gameplay credits rebind sheet spells spells-one spells-many give-up skills journal codex guide prologue
 RU_SELFTESTS := smoke inventory dialogs achievements settings gameplay credits rebind sheet spells spells-one give-up skills journal codex guide prologue
+# again with the engine's output read an event a frame, as a loaded machine
+# may read it in pieces: what the map shows of a line, and what a line
+# tells of the map, must not hang on their coming in the same frame
+PIECES_SELFTESTS := falls acts trapdoor
 # in the pseudo-language (--lang=qps): every word on the screens a scenario
 # would shoot came through the client's catalogs or the engine's translator
 PSEUDO_SELFTESTS := smoke keys dialogs orders inventory gamepad hud pickers achievements help layouts settings gameplay credits sheet spells spells-one give-up skills journal codex guide
@@ -173,11 +177,15 @@ test-client: need-timeout all client
 	for s in $(PSEUDO_SELFTESTS); do \
 		$(call run_selftest,$$s,--lang=qps,180,$$s in the pseudo-language); \
 	done; \
+	for s in $(PIECES_SELFTESTS); do \
+		$(call run_selftest,$$s,--engine-pieces=1,300,$$s read in pieces); \
+	done; \
 	for s in $(WINDOW_SELFTESTS); do \
 		$(call run_selftest,$$s,,180,$$s in a window,window); \
 	done; echo "selftests passed: $(SELFTESTS); at 1280x800: $(DECK_SELFTESTS), deck as a Steam Deck;" \
 		"in Russian: $(RU_DECK_SELFTESTS) at 1280x800, $(RU_SELFTESTS) at 1920x1080;" \
-		"in the pseudo-language: $(PSEUDO_SELFTESTS); in a window: $(WINDOW_SELFTESTS)"
+		"in the pseudo-language: $(PSEUDO_SELFTESTS); read in pieces: $(PIECES_SELFTESTS);" \
+		"in a window: $(WINDOW_SELFTESTS)"
 
 # The Steam Deck's screen for review: $(DECK_SHOTS) shot at a real
 # 1280×800 into $(DECK_DIR)/<scenario>. A run fails when the window is not

@@ -84,6 +84,9 @@ pub struct LiveSession {
     said_bye: bool,
     engine_error: Option<String>,
     failed: Option<String>,
+    /// At most this many events a poll (self-tests: the engine's output
+    /// read in pieces, as a loaded machine may read it).
+    pieces: Option<usize>,
 }
 
 impl LiveSession {
@@ -104,7 +107,14 @@ impl LiveSession {
             said_bye: false,
             engine_error: None,
             failed: None,
+            pieces: None,
         })
+    }
+
+    /// Hand out at most `most` events a poll (self-tests: what is drawn
+    /// from the engine's lines read in pieces must not tell on it).
+    pub fn read_in_pieces(&mut self, most: Option<usize>) {
+        self.pieces = most;
     }
 
     /// Decoded events until `deadline` or until nothing is ready; never
@@ -133,7 +143,8 @@ impl LiveSession {
                     true
                 }
             };
-            if stop || Instant::now() >= deadline {
+            let piece = self.pieces.is_some_and(|n| events.len() >= n);
+            if stop || piece || Instant::now() >= deadline {
                 break;
             }
         }

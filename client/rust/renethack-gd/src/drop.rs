@@ -80,17 +80,17 @@ impl Dropping {
 
 /// A level come while the hero stood on a hole they know, nothing said of
 /// a fall ('>' where they had escaped it): whether they went down it is
-/// known once they are drawn (a redraw draws them where they stood, the
-/// level below elsewhere), and the engine's drawing of it may take some
-/// frames to read. The level they leave is held meanwhile, this long at
-/// most.
+/// known once they are drawn, or a command is asked where they stand (a
+/// redraw puts them where they stood, the level below elsewhere), and
+/// the engine's drawing of it may take some frames to read. The level
+/// they leave is held meanwhile, this long at most.
 pub(super) struct Undecided {
     from: (i32, i32),
     at: (i32, i32),
     opening: Opening,
     waited: f32,
 }
-const UNDECIDED_SECS: f32 = 1.5;
+const UNDECIDED_SECS: f32 = 10.0;
 
 /// What lines of the log tell of the hero and the floor: a fall through
 /// it, or one they escaped.
@@ -193,7 +193,7 @@ impl MapView {
             }
         }
         if let Some(mut u) = self.undecided.take() {
-            match world.map.hero() {
+            match world.hero() {
                 Some(h) if h != u.at => self.hero_drop = self.hero_drops(u.from, u.at, u.opening),
                 // drawn where they stood: the level drawn again
                 Some(_) => {}

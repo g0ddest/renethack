@@ -261,7 +261,7 @@ fn falls_through(o: Opening, confirm: bool, shots: (&'static str, &'static str))
             Step::Wait("the hero on it", |g| {
                 Ok(map_view(g)?.hero_dropping().is_some() || escaped(g)?)
             }),
-            Step::KeysUntil("down it if they escaped it", |g| {
+            Step::KeyIf("down it if they escaped it", |g| {
                 if map_view(g)?.hero_dropping().is_none() && escaped(g)? {
                     godot::prelude::godot_print!("selftest: escaped it, '>' down it");
                     return Ok(Some(KeyInput::plain(Key::Char('>'))));

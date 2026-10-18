@@ -2975,9 +2975,9 @@ pub struct MapView {
     act_fx: Vec<acts::ActFx>,
     acts_shown: Vec<Acted>,
     /// Bodies growing in where they came, and the cells a monster came in
-    /// sight on this frame (where help summoned comes).
+    /// sight on lately, and when (where help summoned comes).
     arrivals: Vec<acts::Arrival>,
-    appeared: Vec<(i32, i32)>,
+    appeared: Vec<((i32, i32), f64)>,
     /// Summoners told lately: where, when.
     summons: Vec<((i32, i32), f64)>,
     /// Seconds the rays drawn this frame wait (a breather's mouth opening
@@ -3638,6 +3638,7 @@ impl MapView {
             self.finish_motions();
             self.finish_falls_where(|_| true);
             self.end_drops();
+            self.forget_gone();
             self.vfx.clear();
             self.facing.clear();
             self.generation = Some(generation);
@@ -3737,7 +3738,6 @@ impl MapView {
         // the deaths told fall; what no death claims goes
         self.claim_falls(catalog);
         self.greet_summoned();
-        self.appeared.clear();
         self.advance_motions(delta as f32);
         self.advance_falls(delta as f32);
         self.advance_drops(delta as f32, catalog);
@@ -5217,9 +5217,7 @@ impl MapView {
         self.finish_motions();
         self.finish_falls_where(|_| true);
         self.forget_drops();
-        for g in std::mem::take(&mut self.gone) {
-            self.art.give(g.model);
-        }
+        self.forget_gone();
         self.deaths.clear();
         self.act_fx.clear();
         self.arrivals.clear();
@@ -6979,7 +6977,7 @@ impl MapView {
             && look.mon.is_some()
             && old.mon != look.mon;
         if came {
-            self.appeared.push((x, y));
+            self.appeared.push(((x, y), self.clock));
         }
         let mut old_models = std::mem::take(&mut nodes.models).into_iter();
         let mut carried = self.incoming.remove(&(x, y));
@@ -7231,6 +7229,7 @@ impl MapView {
                 model: m,
                 placed,
                 mon,
+                when: self.clock,
             }),
             _ => self.art.give(m),
         }

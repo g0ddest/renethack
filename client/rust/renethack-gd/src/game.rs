@@ -113,6 +113,9 @@ pub struct Args {
     /// The interface's language, `--lang=ru` (self-tests; else the
     /// profile's, the system's or English).
     pub lang: Option<Lang>,
+    /// The engine's output read a few events a frame, `--engine-pieces=1`
+    /// (self-tests: as a loaded machine may read it).
+    pub engine_pieces: Option<usize>,
 }
 
 /// The window's size the project opens with (its override, else its
@@ -157,6 +160,11 @@ pub fn parse_args<S: AsRef<str>>(args: &[S]) -> Args {
             && let Some(lang) = Lang::from_code(v)
         {
             out.lang = Some(lang);
+        } else if let Some(v) = a.strip_prefix("--engine-pieces=")
+            && let Ok(n) = v.trim().parse::<usize>()
+            && n > 0
+        {
+            out.engine_pieces = Some(n);
         } else if let Some(v) = a.strip_prefix("--size=")
             && let Some((w, h)) = v.split_once('x')
             && let (Ok(w), Ok(h)) = (w.trim().parse(), h.trim().parse())
@@ -420,6 +428,9 @@ pub struct RenethackGame {
     census_frames: u64,
     /// The next engine's seed; else RENETHACK_SEED (else the self-test's).
     pub(crate) seed: Option<u64>,
+    /// The engine's output read this many events a frame at most
+    /// (`--engine-pieces`, self-tests).
+    engine_pieces: Option<usize>,
     /// Self-tests only: the next game in debug (wizard) mode, its
     /// playground allowing it (level teleport to a branch).
     pub(crate) debug_mode: bool,
@@ -687,6 +698,7 @@ impl INode for RenethackGame {
             mouse_pos: None,
             hover: Hover::default(),
             seed: None,
+            engine_pieces: None,
             debug_mode: false,
             faults: Vec::new(),
             failure: None,
@@ -904,6 +916,7 @@ impl INode for RenethackGame {
                 .set_title_hero(role, profile.last_female.unwrap_or(false));
         }
         self.seed = args.seed;
+        self.engine_pieces = args.engine_pieces;
         // the soak plays many orders: quickly
         let soak = args.selftest.as_deref() == Some("soak");
         self.set_tick(args.tick.or(soak.then_some(SOAK_TICK_MS)));
@@ -1704,7 +1717,7 @@ impl RenethackGame {
                 self.on_session_event(ev);
             }
             // a delay_output is a frame boundary: let the effect be drawn
-            if frame || Instant::now() >= deadline {
+            if frame || self.engine_pieces.is_some() || Instant::now() >= deadline {
                 break;
             }
         }
@@ -4822,7 +4835,8 @@ impl RenethackGame {
             fixed_time: env_number("RENETHACK_FIXED_TIME").or(test.then_some(SELFTEST_TIME)),
         };
         match LiveSession::start(&cfg) {
-            Ok(session) => {
+            Ok(mut session) => {
+                session.read_in_pieces(self.engine_pieces);
                 self.session = Some(session);
                 self.session_serial += 1;
                 self.world = World::new();

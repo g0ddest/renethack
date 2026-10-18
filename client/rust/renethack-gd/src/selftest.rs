@@ -164,6 +164,13 @@ enum Step {
         &'static str,
         fn(&RenethackGame) -> Result<Option<KeyInput>, String>,
     ),
+    /// A key for the request now pending if the chooser gives one, else
+    /// none, never waiting for another request ('>' down a hole only if
+    /// the hero escaped it: a fall goes on without one).
+    KeyIf(
+        &'static str,
+        fn(&RenethackGame) -> Result<Option<KeyInput>, String>,
+    ),
     /// A dialog event for the request now pending.
     Dialog(DialogEvent),
     Call(&'static str, fn(&mut RenethackGame) -> Result<(), String>),
@@ -5139,6 +5146,22 @@ impl SelfTest {
                     self.next();
                     return;
                 }
+                Step::KeyIf(what, f) => match f(game) {
+                    Ok(None) => self.next(),
+                    Ok(Some(k)) => {
+                        let Some((id, _)) = pending else {
+                            return;
+                        };
+                        game.push_ui(UiEvent::Key(k));
+                        self.last_req = (serial, id);
+                        self.next();
+                        return;
+                    }
+                    Err(why) => {
+                        let why = format!("{what}: {why}");
+                        return self.fail(game, &why);
+                    }
+                },
                 Step::KeysUntil(what, f) => {
                     let Some((id, _)) = pending else {
                         return;
@@ -5335,7 +5358,7 @@ fn describe(step: &Step) -> String {
         Step::Push(ev) => format!("{ev:?}"),
         Step::Key(k) => format!("a request for key {k:?}"),
         Step::KeyFrom(what, _) => format!("a request for {what}"),
-        Step::KeysUntil(what, _) => what.to_string(),
+        Step::KeysUntil(what, _) | Step::KeyIf(what, _) => what.to_string(),
         Step::Soak(_) => "the soak".to_string(),
         Step::Dialog(ev) => format!("a request for {ev:?}"),
         Step::Call(what, _) | Step::Inv(what, _) | Step::PadFrom(what, _) => what.to_string(),

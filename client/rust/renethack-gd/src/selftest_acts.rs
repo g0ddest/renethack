@@ -76,6 +76,9 @@ fn armed() -> Vec<Step> {
 
 /// Where the one zapped stood, and its name.
 static FROM: Mutex<(i32, i32)> = Mutex::new((0, 0));
+/// What the cell a monster was drawn on showed before; frames waited.
+static FLOOR: Mutex<Option<nh_protocol::Glyph>> = Mutex::new(None);
+static FRAMES: AtomicU32 = AtomicU32::new(0);
 
 /// A wand of teleportation zapped at the gnome lord: it blinks out where
 /// it stood (and grows in where it comes, if the hero sees it there). A
@@ -123,25 +126,102 @@ fn comings() -> Vec<Step> {
             Step::AnswerUntil('n', "a command after the zap", |g| {
                 Ok(matches!(g.pending, Some((_, Prompt::Command))))
             }),
-            Step::Wait("it blinked out where it stood, or turned there", |g| {
-                let view = map_view(g)?;
-                let from = *FROM.lock().unwrap();
-                let blinked = view
-                    .fell()
-                    .is_some_and(|f| f.cell == from && f.kind == crate::map_view::FallKind::Blink);
-                let all = view.acts_shown();
-                let new = &all[SHOWN.load(Ordering::Relaxed).min(all.len())..];
-                let changed = new
-                    .iter()
-                    .any(|a| a.kind == ActKind::Change && a.cell == from);
-                Ok(blinked || changed)
-            }),
+            match target {
+                // teleported: it blinks out where it stood, or (seen where
+                // it comes) grows in there
+                "gnome lord" => Step::Wait("it blinked out where it stood, or came", |g| {
+                    let (blinked, changed) = went(g)?;
+                    Ok(blinked || changed)
+                }),
+                // turned into another: the cobra blinks out as the other
+                // grows in, though the engine draws it before it tells it
+                _ => Step::Wait("it blinked out where it stood as it turned", |g| {
+                    let (blinked, changed) = went(g)?;
+                    Ok(blinked && changed)
+                }),
+            },
             Step::Shot(shot),
         ]);
     }
+    // one drawn gone before it is told gone (the engine draws one turned
+    // invisible, or teleported by a trap, before it tells it), the line
+    // read a frame or more on: it blinks out still
+    steps.extend([
+        Step::Call("a gnome drawn beside the hero", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            let hero = g.world.map.hero().ok_or("no hero")?;
+            let at = free_beside(g, hero).ok_or("no floor beside the hero")?;
+            *AT.lock().unwrap() = at;
+            let was = g.world.map.cell(at.0, at.1).and_then(|c| c.glyph.clone());
+            *FLOOR.lock().unwrap() = Some(was.ok_or("nothing drawn there")?);
+            let gnome = super::polyself_tests::monster(&cat, "gnome")?;
+            g.world.map.print(at.0, at.1, &gnome, None);
+            Ok(())
+        }),
+        Step::Wait("the gnome drawn", |g| {
+            let (x, y) = *AT.lock().unwrap();
+            Ok(map_view(g)?
+                .entity_model(x, y)
+                .is_some_and(|m| !m.is_pending()))
+        }),
+        Step::Call("the gnome gone from the map", |g| {
+            let (x, y) = *AT.lock().unwrap();
+            let was = FLOOR.lock().unwrap().take().ok_or("no floor kept")?;
+            g.world.map.print(x, y, &was, None);
+            FRAMES.store(0, Ordering::Relaxed);
+            Ok(())
+        }),
+        Step::Wait("a frame or two on", |_| {
+            Ok(FRAMES.fetch_add(1, Ordering::Relaxed) >= 2)
+        }),
+        Step::Call("its going told after it", |g| {
+            tell(g, "The gnome suddenly disappears!");
+            Ok(())
+        }),
+        Step::Wait("the gnome blinked out where it stood", |g| {
+            let at = *AT.lock().unwrap();
+            let view = map_view(g)?;
+            Ok(view
+                .fell()
+                .is_some_and(|f| f.cell == at && f.kind == crate::map_view::FallKind::Blink))
+        }),
+    ]);
     steps.extend(make("red dragon"));
     steps.extend([
         Step::Wait("a summoner seen", |g| aim(g, "red dragon")),
+        // help drawn before its summoning is told (the engine makes
+        // insects so), the line read a frame or more on
+        mark(),
+        Step::Call("a jackal drawn beside the dragon", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            let dragon = find(g, "red dragon").ok_or("no dragon")?;
+            let at = free_beside(g, dragon).ok_or("no floor beside the dragon")?;
+            *AT.lock().unwrap() = at;
+            let was = g.world.map.cell(at.0, at.1).and_then(|c| c.glyph.clone());
+            *FLOOR.lock().unwrap() = Some(was.ok_or("nothing drawn there")?);
+            let jackal = super::polyself_tests::monster(&cat, "jackal")?;
+            g.world.map.print(at.0, at.1, &jackal, None);
+            Ok(())
+        }),
+        Step::Wait("the jackal drawn", |g| {
+            let (x, y) = *AT.lock().unwrap();
+            Ok(map_view(g)?
+                .entity_model(x, y)
+                .is_some_and(|m| !m.is_pending()))
+        }),
+        Step::Call("its summoning told after it", |g| {
+            tell(g, "The red dragon summons help!");
+            Ok(())
+        }),
+        Step::Wait("the jackal drawn first greeted as help summoned", |g| {
+            Ok(shown_on(g, |a| a.kind == ActKind::Summon))
+        }),
+        Step::Call("the jackal gone again", |g| {
+            let (x, y) = *AT.lock().unwrap();
+            let was = FLOOR.lock().unwrap().take().ok_or("no floor kept")?;
+            g.world.map.print(x, y, &was, None);
+            Ok(())
+        }),
         mark(),
         Step::Call("it told summoning help", |g| {
             tell(g, "The red dragon summons help!");
@@ -162,6 +242,24 @@ fn comings() -> Vec<Step> {
         Step::Shot("acts-summon"),
     ]);
     steps
+}
+
+/// Open floor next to `at` with nothing on it, not the hero's.
+fn free_beside(g: &RenethackGame, (x, y): (i32, i32)) -> Option<(i32, i32)> {
+    let cat = g.catalog.as_deref()?;
+    let hero = g.world.map.hero();
+    super::audio_tests::STEPS
+        .iter()
+        .map(|((dx, dy), _)| (x + dx, y + dy))
+        .find(|&c| {
+            Some(c) != hero
+                && g.world.map.cell(c.0, c.1).is_some_and(|cell| {
+                    matches!(
+                        nh_world::cell_terrain(cell, cat),
+                        Some(nh_world::Terrain::Floor | nh_world::Terrain::DarkFloor)
+                    ) && cell.entity().is_none()
+                })
+        })
 }
 
 /// The cell of the monster named `name` beside the hero, kept as the one
@@ -549,6 +647,22 @@ fn casting() -> Vec<Step> {
         }),
     ]);
     steps
+}
+
+/// Since the mark, on the cell the one zapped stood on: whether a body
+/// blinked out there, and whether another turned there.
+fn went(g: &RenethackGame) -> Result<(bool, bool), String> {
+    let view = map_view(g)?;
+    let from = *FROM.lock().unwrap();
+    let blinked = view
+        .fell()
+        .is_some_and(|f| f.cell == from && f.kind == crate::map_view::FallKind::Blink);
+    let all = view.acts_shown();
+    let new = &all[SHOWN.load(Ordering::Relaxed).min(all.len())..];
+    let changed = new
+        .iter()
+        .any(|a| a.kind == ActKind::Change && a.cell == from);
+    Ok((blinked, changed))
 }
 
 /// A line put in the log as the engine tells it.

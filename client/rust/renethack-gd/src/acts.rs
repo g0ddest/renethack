@@ -348,6 +348,8 @@ pub(super) struct Arrival {
 const ARRIVE_SECS: f32 = 0.3;
 const SUMMONED_NEAR: i32 = 6;
 const SUMMON_SECS: f64 = 1.5;
+/// Seconds a monster come in sight waits for a summoning told after it.
+const CAME_SECS: f64 = 0.5;
 
 /// An act shown (self-tests): what, by whom, and whether its clip played.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -584,24 +586,28 @@ impl MapView {
         false
     }
 
-    /// Monsters come in sight this frame near a summoner told lately: the
-    /// help it summoned, each growing in where it came.
+    /// Monsters come in sight lately near a summoner told lately: the help
+    /// it summoned, each growing in where it came. The engine draws some
+    /// help before it tells the summoning (insects), and a loaded machine
+    /// may read the line a frame or more after the drawing: one come in
+    /// sight waits a moment for it.
     pub(super) fn greet_summoned(&mut self) {
         let now = self.clock;
         self.summons.retain(|&(_, when)| now - when <= SUMMON_SECS);
+        self.appeared.retain(|&(_, when)| now - when <= CAME_SECS);
         if self.summons.is_empty() || self.appeared.is_empty() {
             return;
         }
         let near = |c: (i32, i32), s: (i32, i32)| {
             (c.0 - s.0).abs().max((c.1 - s.1).abs()) <= SUMMONED_NEAR
         };
-        let came: Vec<(i32, i32)> = self
+        let summons = &self.summons;
+        let (came, waiting): (Vec<_>, Vec<_>) = self
             .appeared
             .iter()
-            .copied()
-            .filter(|&c| self.summons.iter().any(|&(s, _)| near(c, s)))
-            .collect();
-        for c in came {
+            .partition(|&&(c, _)| summons.iter().any(|&(s, _)| near(c, s)));
+        self.appeared = waiting;
+        for (c, _) in came {
             self.arrive(c, ActKind::Summon);
             self.acts_shown.push(Acted {
                 kind: ActKind::Summon,

@@ -1,7 +1,8 @@
 //! A monster the hero sees die falls where it stood, instead of vanishing
 //! as its glyph turns at once to its corpse or to nothing. Its model is
-//! kept at its cell (`Gone`) till the frame's messages are read: only a
-//! death they tell falls. One with a death clip plays it, and its corpse
+//! kept at its cell (`Gone`) till the frame's messages are read, and a
+//! moment longer, hidden, for a line read a frame after the drawing: only
+//! a death they tell falls. One with a death clip plays it, and its corpse
 //! (that clip's last frame, `Pose::Corpse`) takes over in place; a body
 //! built in code topples onto its side as its corpse lies; a blob, a
 //! jelly, a pudding or a fungus slumps; a ghost, a light, a vortex or an
@@ -72,6 +73,11 @@ impl FallKind {
 /// Seconds a death told waits for its creature to leave its cell (the
 /// engine may draw its corpse after the message, past a --More--).
 const TOLD_SECS: f64 = 1.5;
+/// Seconds a creature gone from its cell waits, hidden, for a line to tell
+/// what became of it: the engine draws one turned into another, or
+/// teleported, before it tells it, and a loaded machine may read the
+/// line a frame or more after the drawing.
+const GONE_SECS: f64 = 0.5;
 
 /// A death the messages tell: by the name they use, the cell a blow found
 /// the creature on, and when.
@@ -115,13 +121,14 @@ impl Told {
     }
 }
 
-/// A monster's model gone from its cell this frame (not stepped off it):
-/// kept till the frame's messages are read, in case one tells its death.
+/// A monster's model gone from its cell (not stepped off it): kept till
+/// the messages are read, in case one tells its death; when it went.
 pub(super) struct Gone {
     pub cell: (i32, i32),
     pub model: Model,
     pub placed: Placed,
     pub mon: i32,
+    pub when: f64,
 }
 
 /// A body falling.
@@ -176,8 +183,8 @@ impl MapView {
 
     /// The deaths told lately (`deaths`): the creature of that name gone
     /// from its cell (the one a blow found, else the nearest the hero)
-    /// falls; the bodies no death claims go back to the pool, and a death
-    /// that found none in time is forgotten.
+    /// falls; a body no death claims waits a moment, hidden, then goes back
+    /// to the pool, and a death that found none in time is forgotten.
     pub(super) fn claim_falls(&mut self, catalog: &Catalog) {
         let now = self.clock;
         self.deaths.retain(|d| now - d.when <= TOLD_SECS);
@@ -210,8 +217,10 @@ impl MapView {
                 claimed.push((d, self.gone.swap_remove(i)));
             }
         }
-        for (d, gone) in claimed.into_iter().rev() {
+        for (d, mut gone) in claimed.into_iter().rev() {
             let told = self.deaths.remove(d);
+            // one kept hidden for its line is seen again as it goes
+            gone.model.node.set_visible(true);
             let info = usize::try_from(gone.mon)
                 .ok()
                 .and_then(|i| catalog.monsters.get(i));
@@ -222,6 +231,22 @@ impl MapView {
                 (None, _) => self.art.give(gone.model),
             }
         }
+        // not while a level is drawn anew: its line came before it
+        let wait = self.building.is_empty();
+        let mut waiting = Vec::new();
+        for mut gone in std::mem::take(&mut self.gone) {
+            if wait && now - gone.when < GONE_SECS {
+                gone.model.node.set_visible(false);
+                waiting.push(gone);
+            } else {
+                self.art.give(gone.model);
+            }
+        }
+        self.gone = waiting;
+    }
+
+    /// Every body waiting for its line given back (a level drawn anew).
+    pub(super) fn forget_gone(&mut self) {
         for gone in std::mem::take(&mut self.gone) {
             self.art.give(gone.model);
         }
