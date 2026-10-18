@@ -256,7 +256,7 @@
   {"from": "cc0/made/Jabberwock.glb", "mesh": "Dragon", "steps": 2, "out": "made/JabberwockSmooth.glb",
    "use": "the jabberwock, round"}
  ],
- "blender_comment": "Models made in Blender by tools/blender/<script>.py: static models rigged with the skeleton and clips of a Quaternius animal (rig_quadruped), centaurs put together from the horse and a base character (centaur), a stethoscope on the floor and round the neck of each outfit body it is fitted to (stethoscope). URLs are downloaded (and locked); other paths are files above. fetch_art.py runs Blender when it finds one ($BLENDER, `blender` on the PATH, /Applications/Blender.app); without it the committed models are kept and only the downloads are checked. CC-BY models go to ccby/, see CREDITS.md.",
+ "blender_comment": "Models made in Blender by tools/blender/<script>.py: static models rigged with the skeleton and clips of a Quaternius animal (rig_quadruped), centaurs put together from the horse and a base character (centaur), things worn round the neck of each outfit body they are fitted to, a stethoscope (also on the floor) and a tourist's camera on its strap (neck). URLs are downloaded (and locked); other paths are files above. fetch_art.py runs Blender when it finds one ($BLENDER, `blender` on the PATH, /Applications/Blender.app); without it the committed models are kept and only the downloads are checked. CC-BY models go to ccby/, see CREDITS.md.",
  "blender": [
   {"script": "rig_quadruped", "out": "ccby/polypizza/Elephant.glb", "name": "Elephant", "texture_max": 512,
    "target": "https://static.poly.pizza/2bc73032-37c9-4276-a620-437df45db428.glb",
@@ -332,13 +332,19 @@
    "cut": {"point": [0, -1.55, 2.85], "normal": [0, -0.8, 0.6]}, "seat": [0, -1.7, 2.75], "height": 1.75, "waist": 0.97, "bone": "Torso3",
    "actions": {"Idle": "Idle", "Walk": "Walk", "Gallop": "Gallop", "Attack": "Attack_Kick", "Hit": "Idle_HitReact_Left", "Death": "Death"},
    "texture_max": 512, "use": "female centaurs"},
-  {"script": "stethoscope", "out": "cc0/made/Stethoscope.glb", "name": "Stethoscope", "use": "a stethoscope on the floor"},
-  {"script": "stethoscope", "out": "cc0/made/StethoscopeMan.glb", "name": "StethoscopeMan",
+  {"script": "neck", "out": "cc0/made/Stethoscope.glb", "name": "Stethoscope", "use": "a stethoscope on the floor"},
+  {"script": "neck", "out": "cc0/made/StethoscopeMan.glb", "name": "StethoscopeMan",
    "rig": "cc0/quaternius/outfits/Outfits/Male_Peasant.gltf", "head": "cc0/quaternius/base/Superhero_Male_FullBody.gltf", "cut": 1.55,
    "use": "a stethoscope round a man's neck, fitted to the peasant outfit and skinned to its skeleton"},
-  {"script": "stethoscope", "out": "cc0/made/StethoscopeWoman.glb", "name": "StethoscopeWoman",
+  {"script": "neck", "out": "cc0/made/StethoscopeWoman.glb", "name": "StethoscopeWoman",
    "rig": "cc0/quaternius/outfits/Outfits/Female_Peasant.gltf", "head": "cc0/quaternius/base/Superhero_Female_FullBody.gltf", "cut": 1.51,
-   "use": "a stethoscope round a woman's neck"}
+   "use": "a stethoscope round a woman's neck"},
+  {"script": "neck", "out": "cc0/made/CameraMan.glb", "name": "CameraMan", "thing": "camera",
+   "rig": "cc0/quaternius/outfits/Outfits/Male_Peasant.gltf", "head": "cc0/quaternius/base/Superhero_Male_FullBody.gltf", "cut": 1.55,
+   "use": "a tourist's camera on its strap round a man's neck, fitted to the peasant outfit and skinned to its skeleton"},
+  {"script": "neck", "out": "cc0/made/CameraWoman.glb", "name": "CameraWoman", "thing": "camera",
+   "rig": "cc0/quaternius/outfits/Outfits/Female_Peasant.gltf", "head": "cc0/quaternius/base/Superhero_Female_FullBody.gltf", "cut": 1.51,
+   "use": "a tourist's camera on its strap round a woman's neck"}
  ],
  "fonts_comment": "SIL OFL 1.1 fonts of the UI (not CC0): fetched from the google/fonts repository at a fixed commit into client/godot/fonts/<dest>/ with their OFL.txt.",
  "fonts": [

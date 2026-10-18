@@ -1,21 +1,29 @@
-"""A stethoscope (tools/fetch_art.py runs it; see the "blender" recipe in
-client/godot/art/sources.json):
+"""Things worn round a hero's neck (tools/fetch_art.py runs it; see the
+"blender" recipe in client/godot/art/sources.json):
 
-    blender -b --factory-startup --python stethoscope.py -- spec.json
+    blender -b --factory-startup --python neck.py -- spec.json
 
-Built from curves: the rubber tube, the binaural (a steel stem forking
-into two ear tubes with their ear tips) at one end, the chest piece (a
-bell and a diaphragm) at the other. Metres. Spec: "out", optional "name";
-without "rig" it lies coiled on the floor (the map's and the icons').
+Spec: "out", optional "name", "thing": "stethoscope" (the default) or
+"camera". Metres.
+
+A stethoscope is built from curves: the rubber tube, the binaural (a steel
+stem forking into two ear tubes with their ear tips) at one end, the chest
+piece (a bell and a diaphragm) at the other; without "rig" it lies coiled
+on the floor (the map's and the icons'). A camera hangs on its strap, a
+cord from its sides round the back of the neck; it rests on the
+breastbone, tilted as the chest under it pushes it out (worn only: the
+floor's camera is made in code).
 
 Worn round a hero's neck, with "rig" (an outfit glTF), "head" (its base
 character) and "cut" (the height the head is cut from it at, as the
-manifest's `heads` say): the tube rests on that outfit's collar and
-shoulders and hangs in front of its chest, placed by casting rays at the
-outfit and the head; the model is skinned to the outfit's skeleton (the
-chest parts to spine_03, those over the shoulders partly to the
-clavicles, those behind the neck partly to neck_01), so it moves with the
-body. The client wears the one fitted to the skeleton nearest the hero's.
+manifest's `heads` say): the tube or the strap rests on that outfit's
+collar and shoulders and hangs in front of its chest, placed by casting
+rays at the outfit and the head; the model is skinned to the outfit's
+skeleton as the outfit under it is (the tube or the strap vertex by vertex
+as the outfit's nearest vertices, a rigid part whole as those nearest its
+middle), so it moves with the body and never further into the head than
+the collar it lies on. The client wears the one fitted to the skeleton
+nearest the hero's.
 """
 import bmesh
 import bpy
@@ -25,6 +33,7 @@ import os
 import sys
 from mathutils import Matrix, Quaternion, Vector
 from mathutils.bvhtree import BVHTree
+from mathutils.kdtree import KDTree
 
 spec = json.load(open(sys.argv[sys.argv.index("--") + 1]))
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -38,8 +47,8 @@ TO_BLENDER = Matrix(((1, 0, 0, 0), (0, 0, -1, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
 # the loop round the neck on the man it was drawn for: (degrees from his
 # left round the back, distance from the neck's axis); another body's is
 # scaled by the width of its shoulders against his
-LOOP = [(-25, 0.086), (-10, 0.090), (5, 0.088), (20, 0.080), (35, 0.072), (50, 0.066),
-        (65, 0.062), (78, 0.060), (90, 0.060)]
+LOOP = [(-25, 0.086), (-10, 0.090), (5, 0.088), (20, 0.082), (35, 0.078), (50, 0.076),
+        (65, 0.076), (78, 0.077), (90, 0.078)]
 HIS_SHOULDER = 0.192
 
 
@@ -139,6 +148,47 @@ def chest_piece(end, centre, face):
     ]
 
 
+# a camera: (metres) its body's width, height and depth; how far its middle
+# hangs below the neck on the man it was drawn for (another body's by the
+# width of its shoulders, as the loop); its strap's cord
+CAMERA = (0.115, 0.066, 0.04)
+HANG = 0.17
+STRAP = 0.0045
+CAMERA_BODY = material("CameraBody", (0.006, 0.006, 0.007), 0.0, 0.35)
+CHROME = material("CameraChrome", (0.58, 0.6, 0.64), 0.8, 0.25)
+LENS = material("CameraLens", (0.05, 0.12, 0.25), 0.0, 0.05)
+CORD = material("CameraStrap", (0.03, 0.02, 0.012), 0.0, 0.7)
+
+
+def box(name, at, size, mat):
+    """A box centred at `at`, its faces listed here (as the ball's)."""
+    (x, y, z), (w, d, h) = at, (size[0] / 2, size[1] / 2, size[2] / 2)
+    verts = [(x + sx * w, y + sy * d, z + sz * h) for sz in (-1, 1) for sy in (-1, 1) for sx in (-1, 1)]
+    faces = [(0, 2, 3, 1), (4, 5, 7, 6), (0, 1, 5, 4), (2, 6, 7, 3), (0, 4, 6, 2), (1, 3, 7, 5)]
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata(verts, [], faces)
+    obj = bpy.data.objects.new(name, mesh)
+    scene.collection.objects.link(obj)
+    obj.data.materials.append(mat)
+    return obj
+
+
+def camera_parts():
+    """The camera in its own space (x its left, -y the way the lens looks,
+    z up; its middle at 0): the body, the chrome plate over it, the
+    viewfinder's hump on the plate, the lens and its glass."""
+    w, h, d = CAMERA
+    lens = Vector((-0.006, -d / 2 - 0.017, -0.002))
+    return [
+        box("CameraBody", (0.0, 0.0, 0.0), (w, d, h), CAMERA_BODY),
+        box("CameraPlate", (0.0, 0.0, h / 2 + 0.005), (w + 0.002, d + 0.002, 0.01), CHROME),
+        box("Viewfinder", (0.036, 0.0, h / 2 + 0.017), (0.028, 0.02, 0.016), CHROME),
+        disc("LensBarrel", lens, 0.025, 0.034, CAMERA_BODY, (0, -1, 0)),
+        disc("LensRing", lens + Vector((0, -0.016, 0)), 0.0265, 0.005, CHROME, (0, -1, 0)),
+        disc("LensGlass", lens + Vector((0, -0.0185, 0)), 0.02, 0.002, LENS, (0, -1, 0)),
+    ]
+
+
 def joint_world(gltf, name):
     """A joint's rest transform in the glTF's model space."""
     nodes = gltf["nodes"]
@@ -185,18 +235,41 @@ class Body:
         self.neck = at("neck_01").z
         self.shoulder = abs(at("upperarm_l").x)
         faces = []
+        # the outfit's vertices and how its skin weights each
+        self.weighted = []
         # the head as the client cuts it from its base character
         for path, keep in ((rig, lambda f: True), (head, lambda f: min(v.z for v in f) >= cut)):
             objs, found = import_meshes(path)
             faces += [[to_spine @ v for v in f] for f in found if keep(f)]
             for o in objs:
+                if path == rig and o.type == "MESH":
+                    names = [g.name for g in o.vertex_groups]
+                    for v in o.data.vertices:
+                        w = {names[g.group]: g.weight for g in v.groups if g.weight > 0.0}
+                        if w:
+                            self.weighted.append((to_spine @ (o.matrix_world @ v.co), w))
                 bpy.data.objects.remove(o, do_unlink=True)
+        self.near = KDTree(len(self.weighted))
+        for i, (p, _) in enumerate(self.weighted):
+            self.near.insert(p, i)
+        self.near.balance()
         verts = [v for f in faces for v in f]
         polys, k = [], 0
         for f in faces:
             polys.append(list(range(k, k + len(f))))
             k += len(f)
         self.bvh = BVHTree.FromPolygons(verts, polys)
+
+    def weights(self, p):
+        """How the outfit's skin weights the bones at `p`: its four nearest
+        vertices' weights, the nearer the more, the four heaviest bones."""
+        out = {}
+        for _, i, d in self.near.find_n(Vector(p), 4):
+            for bone, w in self.weighted[i][1].items():
+                out[bone] = out.get(bone, 0.0) + w / max(d, 1e-4)
+        heaviest = sorted(out.items(), key=lambda b: (-b[1], b[0]))[:4]
+        total = sum(w for _, w in heaviest)
+        return {bone: w / total for bone, w in heaviest}
 
     def hit(self, origin, direction, reach):
         return self.bvh.ray_cast(Vector(origin), Vector(direction), reach)[0]
@@ -272,6 +345,70 @@ def worn(body):
     return parts
 
 
+def rested(body, middle):
+    """Where the camera hangs with its middle at the height `middle`: its
+    back on the chest (tilted out at the foot where the chest under it
+    pushes further out than under its top), as (where its middle is, its
+    tilt about x in radians)."""
+    w, h, d = CAMERA
+    rows = [middle + h / 2 - 0.004, middle, middle - h / 2 + 0.004]
+    front = {}
+    for z in rows:
+        hits = [body.hit((x, -1.0, z), (0, 1, 0), 2.0) for x in (-w / 2 + 0.008, 0.0, w / 2 - 0.008)]
+        front[z] = min(p.y for p in hits if p is not None)
+    top, foot = rows[0], rows[-1]
+    tilt = math.atan2(front[top] - front[foot], top - foot)
+    # the back's plane through the top's contact, its normal to the front
+    up = Vector((0.0, math.sin(tilt), math.cos(tilt)))
+    out = Vector((0.0, -math.cos(tilt), math.sin(tilt)))
+    base = Vector((0.0, front[top], top))
+    # clear of every row by the gap
+    clear = max(GAP + (Vector((0.0, front[z], z)) - base).dot(out) for z in rows)
+    back = base + out * clear
+    centre = back + out * (d / 2) + up * (middle - top)
+    return centre, tilt
+
+
+def worn_camera(body):
+    """The camera hanging from its strap in front of the breastbone, the
+    strap from its sides up the chest, over the shoulders and round the
+    back of the neck."""
+    k = body.shoulder / HIS_SHOULDER
+    n = body.neck
+    w, h, d = CAMERA
+    centre, tilt = rested(body, n - HANG * (1 + k) / 2)
+    # (a turn about x by -tilt leans its top back by tilt)
+    place = Matrix.Translation(centre) @ Matrix.Rotation(-tilt, 4, "X")
+    parts = camera_parts()
+    bpy.context.view_layer.update()
+    for o in parts:
+        o.matrix_world = place @ o.matrix_world
+    x = 0.082 * k
+
+    def front(side, z, dx=0.0):
+        xx = side * (x + dx)
+        return Vector((xx, body.in_front(xx, z, STRAP), z))
+
+    def loop(side):
+        pts = [body.resting(math.radians(90 - (90 - deg) * side), r * (1 + k) / 2)
+               for deg, r in LOOP]
+        for i in range(1, len(pts) - 1):
+            pts[i].z = max(pts[i].z, min(pts[i - 1].z, pts[i + 1].z))
+        return pts if side > 0 else pts[::-1]
+
+    def lug(side):
+        return place @ Vector((side * (w / 2 + STRAP), 0.0, h / 2 - 0.012))
+
+    def up_chest(side):
+        return [lug(side), front(side, n - 0.11, -0.012), front(side, n - 0.06), front(side, n - 0.03),
+                front(side, n - 0.003)]
+
+    left = up_chest(1) + loop(1)
+    right = loop(-1)[1:] + up_chest(-1)[::-1]
+    parts.append(tube("Strap", left + right, STRAP, CORD))
+    return parts
+
+
 def lying():
     """Coiled on the floor (z up, resting on z = 0): the binaural at one end
     of a loose loop of tube, the chest piece flat at the other."""
@@ -291,27 +428,43 @@ def lying():
     return parts
 
 
-def smooth(a, b, x):
-    t = min(1.0, max(0.0, (x - a) / (b - a)))
-    return t * t * (3 - 2 * t)
+# what moves as one, by how its parts' names start (the tube and the strap
+# bend, vertex by vertex)
+RIGID = (("Camera", "Viewfinder", "Lens"), ("Stem", "Binaural", "EarTip"),
+         ("ChestStem", "Bell", "Diaphragm"))
+
+
+def weigh(parts, body):
+    """Weight the parts (made in spine_03's space, meshes) as the outfit
+    under them is: a tube or a strap vertex by vertex as the outfit's
+    nearest vertices, a rigid thing (a camera, the binaural, the chest
+    piece) whole as those nearest its middle."""
+    def put(o, index, weights):
+        for bone, w in weights.items():
+            group = o.vertex_groups.get(bone) or o.vertex_groups.new(name=bone)
+            group.add([index], w, "REPLACE")
+
+    rigid = set()
+    for starts in RIGID:
+        together = [o for o in parts if o.name.startswith(starts)]
+        if not together:
+            continue
+        rigid.update(together)
+        at = [o.matrix_world @ v.co for o in together for v in o.data.vertices]
+        weights = body.weights(sum(at, Vector()) / len(at))
+        for o in together:
+            for v in o.data.vertices:
+                put(o, v.index, weights)
+    for o in parts:
+        if o in rigid:
+            continue
+        for v in o.data.vertices:
+            put(o, v.index, body.weights(o.matrix_world @ v.co))
 
 
 def skin(obj, rig, body):
-    """Weight `obj` (made in spine_03's space) by where each vertex lies,
-    place it on the rig's rest skeleton and parent it to the armature."""
-    k = body.shoulder / HIS_SHOULDER
-    groups = {n: obj.vertex_groups.new(name=n)
-              for n in ("spine_03", "neck_01", "clavicle_l", "clavicle_r")}
-    for v in obj.data.vertices:
-        x, y, z = v.co
-        up = smooth(body.neck - 0.06, body.neck - 0.01, z)
-        behind = smooth(0.0, 0.045, y)
-        side = smooth(0.03 * k, 0.065 * k, abs(x))
-        clav = 0.6 * up * side * (1.0 - behind)
-        neck = 0.5 * up * behind
-        groups["clavicle_l" if x > 0 else "clavicle_r"].add([v.index], clav, "REPLACE")
-        groups["neck_01"].add([v.index], neck, "REPLACE")
-        groups["spine_03"].add([v.index], max(0.0, 1.0 - clav - neck), "REPLACE")
+    """Place `obj` (made in spine_03's space, weighted) on the rig's rest
+    skeleton and parent it to the armature."""
     obj.data.transform(body.place)
     objs, _ = import_meshes(rig)
     arm = next(o for o in objs if o.type == "ARMATURE")
@@ -324,15 +477,22 @@ def skin(obj, rig, body):
 
 
 body = Body(spec["rig"], spec["head"], spec["cut"]) if "rig" in spec else None
-parts = worn(body) if body else lying()
+thing = spec.get("thing", "stethoscope")
+if thing == "camera":
+    parts = worn_camera(body)
+else:
+    parts = worn(body) if body else lying()
 bpy.ops.object.select_all(action="DESELECT")
 for o in parts:
     o.select_set(True)
 bpy.context.view_layer.objects.active = parts[0]
+names = [o.name for o in parts]
 bpy.ops.object.convert(target="MESH")
+if body:
+    weigh([bpy.data.objects[n] for n in names], body)
 bpy.ops.object.join()
 obj = bpy.context.view_layer.objects.active
-obj.name = obj.data.name = spec.get("name", "Stethoscope")
+obj.name = obj.data.name = spec.get("name", thing.capitalize())
 bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 # quads cut the same way every time
 bm = bmesh.new()
