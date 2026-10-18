@@ -1041,43 +1041,68 @@ fn the_hero_changes_form() {
 
 #[test]
 fn a_rank_in_the_hero_s_gender() {
-    // the Tourist's first rank, Rambler, is no Гуляка (a carouser): a
-    // Странник, a Странница; ^X and the chronicle say the rank as the
-    // hero's, and ^X's heading the name as typed
+    // the Tourist's first rank, Rambler, is no Гуляка (a carouser): an
+    // Отпускник, an Отпускница; ^X and the chronicle say the rank as the
+    // hero's, and ^X's heading the name as typed. The ranks of 2026-10-18:
+    // none is a word another rank has
     for (gender, lines) in [
         (
             Gender::Fem,
-            [
+            &[
                 (
                     "attained the rank of Rambler (level 1)",
-                    "получила звание «Странница» (уровень 1)",
+                    "получила звание «Отпускница» (уровень 1)",
                 ),
                 (
                     " You attained the rank of Rambler.",
-                    " Вы достигли звания Странницы.",
+                    " Вы достигли звания Отпускницы.",
                 ),
                 (
                     "Wolf the Rambler's attributes:",
-                    "Свойства героини по имени Wolf (странница):",
+                    "Свойства героини по имени Wolf (отпускница):",
                 ),
-            ],
+                (
+                    "attained the rank of Champion (level 26)",
+                    "получила звание «Ратоборица» (уровень 26)",
+                ),
+                (
+                    "attained the rank of Curator (level 30)",
+                    "получила звание «Хранительница» (уровень 30)",
+                ),
+                (
+                    "attained the rank of Aspirant (level 1)",
+                    "получила звание «Ищущая» (уровень 1)",
+                ),
+            ][..],
         ),
         (
             Gender::Masc,
-            [
+            &[
                 (
                     "attained the rank of Scout (level 10)",
                     "получил звание «Лазутчик» (уровень 10)",
                 ),
                 (
                     " You attained the rank of Rambler.",
-                    " Вы достигли звания Странника.",
+                    " Вы достигли звания Отпускника.",
                 ),
                 (
                     "Wolf the Rambler's attributes:",
-                    "Свойства героя по имени Wolf (странник):",
+                    "Свойства героя по имени Wolf (отпускник):",
                 ),
-            ],
+                (
+                    " You attained the rank of Bachelor.",
+                    " Вы достигли звания Башелье.",
+                ),
+                (
+                    " You attained the rank of Aspirant.",
+                    " Вы достигли звания Ищущего.",
+                ),
+                (
+                    "attained the rank of Sharpshooter (level 22)",
+                    "получил звание «Меткий стрелок» (уровень 22)",
+                ),
+            ][..],
         ),
     ] {
         let mut t = Translator::built_in().expect("the built-in translator");
@@ -1086,7 +1111,7 @@ fn a_rank_in_the_hero_s_gender() {
             let out = t.text(en);
             assert_eq!(
                 (out.text.as_str(), out.status),
-                (ru, Status::Translated),
+                (*ru, Status::Translated),
                 "{en}"
             );
         }
@@ -1104,7 +1129,7 @@ fn a_rank_in_the_hero_s_gender() {
     t.set_hero(Gender::Fem);
     let out = t.window(&text);
     assert!(
-        out.text.contains("только что обученная странница"),
+        out.text.contains("только что обученная отпускница"),
         "{}",
         out.text
     );

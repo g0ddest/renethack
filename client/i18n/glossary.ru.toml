@@ -1437,7 +1437,7 @@
 "Spelunker" = { ru = "Спелеолог-любитель", src = "nethack-ru" }
 "Speleologist" = { ru = "Спелеолог", src = "nethack-ru" }
 "Collector" = { ru = "Коллекционер", src = "nethack-ru" }
-"Curator" = { ru = "Куратор", src = "chosen", note = "was Хранитель" }
+"Curator" = { ru = "Хранитель", src = "chosen", note = "a museum's keeper; was Куратор, a supervisor; before that Хранитель" }
 # Barbarian
 "Plunderer" = { ru = "Мародёр", src = "chosen", note = "was Грабитель" }
 "Plunderess" = { ru = "Мародёрка", src = "chosen" }
@@ -1476,7 +1476,7 @@
 # Knight
 "Gallant" = { ru = "Удалец", src = "chosen", note = "was Галант" }
 "Esquire" = { ru = "Оруженосец", src = "nethack-ru" }
-"Bachelor" = { ru = "Бакалавр", src = "nethack-ru" }
+"Bachelor" = { ru = "Башелье", src = "chosen", indecl = true, g = "m", note = "the knight bachelor, as Баннерет and Шевалье; was Бакалавр, a university degree" }
 "Sergeant" = { ru = "Сержант", src = "nethack-ru" }
 "Knight" = { ru = "Рыцарь", src = "nethack-ru" }
 "Banneret" = { ru = "Баннерет", src = "nethack-ru" }
@@ -1496,7 +1496,7 @@
 "Student of Fire" = { ru = "Ученик Огня", src = "chosen", note = "was Ученик огня" }
 "Master" = { ru = "Мастер", src = "nethack-ru" }
 # Priest
-"Aspirant" = { ru = "Соискатель", src = "chosen", note = "was Искатель" }
+"Aspirant" = { ru = "Ищущий", src = "chosen", adjnoun = true, note = "was Соискатель, an applicant; before that Искатель" }
 "Acolyte" = { ru = "Аколит", src = "nethack-ru" }
 "Adept" = { ru = "Адепт", src = "nethack-ru" }
 "Priest" = { ru = "Жрец", src = "nethack-ru" }
@@ -1529,7 +1529,7 @@
 "Scout" = { ru = "Лазутчик", src = "chosen", note = "was Скаут, a boy scout in Russian" }
 "Arbalester" = { ru = "Арбалетчик", src = "nethack-ru" }
 "Archer" = { ru = "Лучник", src = "nethack-ru" }
-"Sharpshooter" = { ru = "Снайпер", src = "nethack-ru" }
+"Sharpshooter" = { ru = "Меткий стрелок", src = "chosen", note = "was Снайпер, of rifles" }
 "Marksman" = { ru = "Мастер-стрелок", src = "chosen", note = "was Стрелок" }
 "Markswoman" = { ru = "Мастер-стрелок", src = "chosen", note = "was Стрелок-ж" }
 # Samurai
@@ -1544,7 +1544,7 @@
 "Kuge" = { ru = "Кугэ", src = "nethack-ru" }
 "Shogun" = { ru = "Сёгун", src = "chosen", note = "was игун" }
 # Tourist
-"Rambler" = { ru = "Странник", src = "chosen", note = "was Гуляка, a carouser in Russian (the owner, 2026-10-18); was Бродяга" }
+"Rambler" = { ru = "Отпускник", src = "chosen", note = "team-lead 2026-10-18: a newly trained vacationer; was Странник (the Caveman's Wanderer), Гуляка (a carouser), Бродяга" }
 "Sightseer" = { ru = "Зевака", src = "chosen", note = "was Турист; Турист is the role" }
 "Excursionist" = { ru = "Экскурсант", src = "nethack-ru" }
 "Peregrinator" = { ru = "Пилигрим", src = "chosen", note = "was Странник" }
@@ -1564,7 +1564,7 @@
 "Swashbuckler" = { ru = "Рубака", src = "chosen", note = "was Забияка" }
 "Hero" = { ru = "Герой", src = "nethack-ru" }
 "Heroine" = { ru = "Героиня", src = "nethack-ru" }
-"Champion" = { ru = "Чемпион", src = "nethack-ru" }
+"Champion" = { ru = "Ратоборец", src = "chosen", note = "was Чемпион, a sports champion" }
 "Lord" = { ru = "Лорд", src = "nethack-ru" }
 "Lady" = { ru = "Леди", src = "nethack-ru" }
 # Wizard
@@ -2768,6 +2768,7 @@
 "Excavator" = { ru = "Раскопщица", src = "chosen" }
 "Spelunker" = { ru = "Спелеолог-любительница", src = "chosen", g = "f" }
 "Collector" = { ru = "Коллекционерка", src = "chosen" }
+"Curator" = { ru = "Хранительница", src = "chosen" }
 # Barbarian
 "Pillager" = { ru = "Разорительница", src = "chosen" }
 "Bandit" = { ru = "Бандитка", src = "chosen" }
@@ -2800,7 +2801,7 @@
 "Student of Winds" = { ru = "Ученица Ветра", src = "chosen" }
 "Student of Fire" = { ru = "Ученица Огня", src = "chosen" }
 # Priestess
-"Aspirant" = { ru = "Соискательница", src = "chosen" }
+"Aspirant" = { ru = "Ищущая", src = "chosen", adjnoun = true, g = "f" }
 "Adept" = { ru = "Адептка", src = "chosen" }
 # Rogue
 "Footpad" = { ru = "Уличная воровка", src = "chosen" }
@@ -2816,7 +2817,7 @@
 "Arbalester" = { ru = "Арбалетчица", src = "chosen" }
 "Archer" = { ru = "Лучница", src = "chosen" }
 # Tourist
-"Rambler" = { ru = "Странница", src = "chosen" }
+"Rambler" = { ru = "Отпускница", src = "chosen" }
 "Excursionist" = { ru = "Экскурсантка", src = "chosen" }
 "Traveler" = { ru = "Путешественница", src = "chosen" }
 "Journeyer" = { ru = "Странствовательница", src = "chosen" }
@@ -2828,7 +2829,7 @@
 "Skirmisher" = { ru = "Застрельщица", src = "chosen" }
 "Fighter" = { ru = "Ратница", src = "chosen", note = "Боец has no feminine" }
 "Warrior" = { ru = "Воительница", src = "chosen" }
-"Champion" = { ru = "Чемпионка", src = "chosen" }
+"Champion" = { ru = "Ратоборица", src = "chosen" }
 # Wizard
 "Evoker" = { ru = "Призывательница", src = "chosen" }
 "Conjurer" = { ru = "Кудесница", src = "chosen" }
