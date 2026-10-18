@@ -222,6 +222,32 @@ pub struct Screens {
     credits_in_game: bool,
     /// The title offers the prologue again (the profile keeps one).
     prologue: bool,
+    /// The page's controls the keys and a gamepad move among.
+    nav: Nav,
+}
+
+/// What the keys and a gamepad do on the title, the creation form, the
+/// end and an error: the focus up and down (a list's choice left and
+/// right), the control it is on taken, the page left, its main deed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NavInput {
+    Up,
+    Down,
+    Left,
+    Right,
+    Accept,
+    Back,
+    Start,
+}
+
+/// A page's controls in their order, the one the focus is on, what going
+/// back sends, and which control Start takes.
+#[derive(Default)]
+struct Nav {
+    items: Vec<Gd<Control>>,
+    at: usize,
+    back: Option<UiEvent>,
+    start: Option<usize>,
 }
 
 /// The game's name on the title: a name, the same in every language.
@@ -264,6 +290,24 @@ fn title_shade(across: bool) -> Gd<GradientTexture2D> {
 
 /// A picker of the interface's language, each in its own name; a choice
 /// switches at once.
+/// A list's choice `by` along, round, past what cannot be chosen, as a
+/// pick would (its signal).
+fn cycle(ob: &mut Gd<OptionButton>, by: i32) {
+    let n = ob.get_item_count();
+    if n == 0 {
+        return;
+    }
+    let mut i = ob.get_selected().max(0);
+    for _ in 0..n {
+        i = (i + by).rem_euclid(n);
+        if !ob.is_item_disabled(i) && !ob.is_item_separator(i) {
+            break;
+        }
+    }
+    ob.select(i);
+    ob.emit_signal("item_selected", &[i64::from(i).to_variant()]);
+}
+
 fn language_option(queue: &UiQueue) -> Gd<OptionButton> {
     let mut ob = OptionButton::new_alloc();
     ob.set_focus_mode(FocusMode::NONE);
@@ -373,6 +417,7 @@ impl Screens {
             achievements_in_game: false,
             credits_in_game: false,
             prologue: false,
+            nav: Nav::default(),
         }
     }
 
@@ -431,47 +476,32 @@ impl Screens {
         let mut gap = Control::new_alloc();
         gap.set_custom_minimum_size(Vector2::new(0.0, 24.0));
         col.add_child(&gap);
-        col.add_child(&wide(theme::button(
-            &tr!("title-new-game"),
-            &self.queue,
-            UiEvent::NewGame,
-        )));
+        let mut items: Vec<Gd<Control>> = Vec::new();
+        let mut add = |col: &mut Gd<VBoxContainer>, text: &str, ev: UiEvent| {
+            let b = wide(theme::button(text, &self.queue, ev));
+            col.add_child(&b);
+            items.push(b.upcast());
+        };
+        add(&mut col, &tr!("title-new-game"), UiEvent::NewGame);
         for s in saves {
             let text = tr!(
                 "title-continue",
                 name = &s.display_name,
                 time = format_time(s.modified)
             );
-            let ev = UiEvent::ContinueGame(s.name.clone());
-            col.add_child(&wide(theme::button(&text, &self.queue, ev)));
+            add(&mut col, &text, UiEvent::ContinueGame(s.name.clone()));
         }
-        col.add_child(&wide(theme::button(
+        add(
+            &mut col,
             &tr!("title-achievements"),
-            &self.queue,
             UiEvent::OpenAchievements,
-        )));
+        );
         if self.prologue {
-            col.add_child(&wide(theme::button(
-                &tr!("title-prologue"),
-                &self.queue,
-                UiEvent::ReplayPrologue,
-            )));
+            add(&mut col, &tr!("title-prologue"), UiEvent::ReplayPrologue);
         }
-        col.add_child(&wide(theme::button(
-            &tr!("title-settings"),
-            &self.queue,
-            UiEvent::OpenSettings,
-        )));
-        col.add_child(&wide(theme::button(
-            &tr!("title-credits"),
-            &self.queue,
-            UiEvent::OpenCredits,
-        )));
-        col.add_child(&wide(theme::button(
-            &tr!("title-quit"),
-            &self.queue,
-            UiEvent::QuitApp,
-        )));
+        add(&mut col, &tr!("title-settings"), UiEvent::OpenSettings);
+        add(&mut col, &tr!("title-credits"), UiEvent::OpenCredits);
+        add(&mut col, &tr!("title-quit"), UiEvent::QuitApp);
         if let Some(n) = notice {
             let mut l = theme::label(n);
             l.set_horizontal_alignment(HorizontalAlignment::CENTER);
@@ -482,6 +512,9 @@ impl Screens {
         }
         self.form = None;
         self.title_page(&col.upcast());
+        // the focus on the newest game to continue, else on a new one
+        let at = usize::from(!saves.is_empty());
+        self.set_nav(items, at, None, None);
     }
 
     /// The settings page (`settings_page::SettingsPage`); `in_game`:
@@ -535,6 +568,15 @@ impl Screens {
     /// The page again in the language now (the creation form keeps what
     /// was chosen and typed).
     pub fn relang(&mut self) {
+        let at = self.nav.at;
+        self.relang_page();
+        if at < self.nav.items.len() {
+            self.nav.at = at;
+            self.show_nav();
+        }
+    }
+
+    fn relang_page(&mut self) {
         match self.current {
             Some("title") => {
                 let (saves, notice) = self.title.clone();
@@ -575,6 +617,8 @@ impl Screens {
         grid.add_theme_constant_override("v_separation", 10);
         let mut name = LineEdit::new_alloc();
         name.set_placeholder(DEFAULT_NAME);
+        // a name: the same in every language (the default one too)
+        i18n::verbatim(&name);
         name.set_max_length(31);
         name.set_custom_minimum_size(Vector2::new(360.0, 0.0));
         let option = |label: &str, grid: &mut Gd<GridContainer>| {
@@ -621,13 +665,22 @@ impl Screens {
         continue_instead.set_visible(false);
         buttons.add_child(&start);
         buttons.add_child(&continue_instead);
-        buttons.add_child(&theme::button(
-            &tr!("creation-back"),
-            &self.queue,
-            UiEvent::BackToTitle,
-        ));
+        let back = theme::button(&tr!("creation-back"), &self.queue, UiEvent::BackToTitle);
+        buttons.add_child(&back);
         col.add_child(&buttons);
         panel.add_child(&col);
+        let items: Vec<Gd<Control>> = vec![
+            name.clone().upcast(),
+            role.clone().upcast(),
+            race.clone().upcast(),
+            gender.clone().upcast(),
+            align.clone().upcast(),
+            keys.clone().upcast(),
+            lang.clone().upcast(),
+            start.clone().upcast(),
+            continue_instead.clone().upcast(),
+            back.upcast(),
+        ];
 
         let mut form = Form {
             catalog,
@@ -681,6 +734,8 @@ impl Screens {
         self.page("creation", &panel.upcast());
         self.form = Some(form);
         name.call_deferred("grab_focus", &[]);
+        // Start begins the game; Esc or B goes back to the title
+        self.set_nav(items, 0, Some(UiEvent::BackToTitle), Some(7));
     }
 
     /// Fill the form (self-tests).
@@ -821,21 +876,18 @@ impl Screens {
             None => col.add_child(&text),
         }
         let mut buttons = row();
-        buttons.add_child(&theme::button(
-            &tr!("end-new-game"),
-            &self.queue,
-            UiEvent::NewGame,
-        ));
-        buttons.add_child(&theme::button(
-            &tr!("end-to-title"),
-            &self.queue,
-            UiEvent::BackToTitle,
-        ));
+        let new_game = theme::button(&tr!("end-new-game"), &self.queue, UiEvent::NewGame);
+        buttons.add_child(&new_game);
+        let to_title = theme::button(&tr!("end-to-title"), &self.queue, UiEvent::BackToTitle);
+        buttons.add_child(&to_title);
         col.add_child(&buttons);
         panel.add_child(&col);
         self.end = Some(summary.clone());
         self.form = None;
         self.page("end", &panel.upcast());
+        // Start: a new game; Esc or B: the title
+        let items = vec![new_game.upcast(), to_title.upcast()];
+        self.set_nav(items, 0, Some(UiEvent::BackToTitle), Some(0));
     }
 
     /// `can_continue`: the name of a save to offer.
@@ -856,31 +908,177 @@ impl Screens {
             col.add_child(&text);
         }
         let mut buttons = row();
+        let mut items: Vec<Gd<Control>> = Vec::new();
         if let Some(name) = can_continue {
             let ev = UiEvent::ContinueGame(name.to_string());
             let text = tr!("error-continue", name = name);
-            buttons.add_child(&theme::button(&text, &self.queue, ev));
+            let b = theme::button(&text, &self.queue, ev);
+            buttons.add_child(&b);
+            items.push(b.upcast());
         }
-        buttons.add_child(&theme::button(
-            &tr!("error-to-title"),
-            &self.queue,
-            UiEvent::BackToTitle,
-        ));
-        buttons.add_child(&theme::button(
-            &tr!("error-quit"),
-            &self.queue,
-            UiEvent::QuitApp,
-        ));
+        for (text, ev) in [
+            (tr!("error-to-title"), UiEvent::BackToTitle),
+            (tr!("error-quit"), UiEvent::QuitApp),
+        ] {
+            let b = theme::button(&text, &self.queue, ev);
+            buttons.add_child(&b);
+            items.push(b.upcast());
+        }
         col.add_child(&buttons);
         panel.add_child(&col);
         self.form = None;
         self.page("error", &panel.upcast());
+        self.set_nav(items, 0, Some(UiEvent::BackToTitle), None);
+    }
+
+    /// The page's controls the keys and a gamepad move among, the focus on
+    /// `at`; `back`: what Esc (B) sends; `start`: the control Start takes.
+    fn set_nav(
+        &mut self,
+        items: Vec<Gd<Control>>,
+        at: usize,
+        back: Option<UiEvent>,
+        start: Option<usize>,
+    ) {
+        self.nav = Nav {
+            items,
+            at,
+            back,
+            start,
+        };
+        self.show_nav();
+    }
+
+    /// The focus drawn on its control, gold-edged.
+    fn show_nav(&mut self) {
+        let look = theme::focus_style();
+        let at = self.nav.at;
+        for (i, c) in self.nav.items.iter_mut().enumerate() {
+            if i == at {
+                c.add_theme_stylebox_override("normal", &look);
+            } else {
+                c.remove_theme_stylebox_override("normal");
+            }
+        }
+    }
+
+    /// A key or a gamepad's button on the page; false: not the page's.
+    pub fn nav_input(&mut self, input: NavInput) -> bool {
+        let Some(focused) = self.nav.items.get(self.nav.at).cloned() else {
+            return false;
+        };
+        match input {
+            NavInput::Up => self.nav_step(-1),
+            NavInput::Down => self.nav_step(1),
+            NavInput::Left | NavInput::Right => {
+                let by = if input == NavInput::Left { -1 } else { 1 };
+                match focused.try_cast::<OptionButton>() {
+                    // a list's choice, one along
+                    Ok(mut ob) => cycle(&mut ob, by),
+                    Err(_) => self.nav_step(by),
+                }
+            }
+            NavInput::Accept => self.nav_take(self.nav.at),
+            NavInput::Back => match self.nav.back.clone() {
+                Some(ev) => push(&self.queue, ev),
+                None => return false,
+            },
+            NavInput::Start => self.nav_take(self.nav.start.unwrap_or(self.nav.at)),
+        }
+        true
+    }
+
+    /// The focus `by` along, round, past what is hidden or disabled; a
+    /// field it leaves gives up the keys.
+    fn nav_step(&mut self, by: i32) {
+        let n = self.nav.items.len() as i32;
+        let usable = |c: &Gd<Control>| {
+            c.is_visible_in_tree()
+                && !c
+                    .clone()
+                    .try_cast::<godot::classes::BaseButton>()
+                    .is_ok_and(|b| b.is_disabled())
+        };
+        let mut i = self.nav.at as i32;
+        for _ in 0..n {
+            i = (i + by).rem_euclid(n);
+            if usable(&self.nav.items[i as usize]) {
+                break;
+            }
+        }
+        if let Ok(mut field) = self.nav.items[self.nav.at].clone().try_cast::<LineEdit>() {
+            field.release_focus();
+        }
+        self.nav.at = i as usize;
+        self.show_nav();
+    }
+
+    /// The control `i` taken: a button pressed, a list opened, a field
+    /// given the keys.
+    fn nav_take(&mut self, i: usize) {
+        let Some(c) = self.nav.items.get(i).cloned() else {
+            return;
+        };
+        if let Ok(mut ob) = c.clone().try_cast::<OptionButton>() {
+            ob.call_deferred("show_popup", &[]);
+        } else if let Ok(mut b) = c.clone().try_cast::<Button>() {
+            if !b.is_disabled() {
+                b.emit_signal("pressed", &[]);
+            }
+        } else if let Ok(mut field) = c.try_cast::<LineEdit>() {
+            field.grab_focus();
+        }
+    }
+
+    /// The keys are a field's now (a name being typed).
+    pub fn typing(&self) -> bool {
+        self.nav
+            .items
+            .get(self.nav.at)
+            .and_then(|c| c.clone().try_cast::<LineEdit>().ok())
+            .is_some_and(|f| f.has_focus())
+    }
+
+    /// The field the focus is on gives up the keys (the focus stays).
+    pub fn stop_typing(&mut self) {
+        if let Some(mut field) = self
+            .nav
+            .items
+            .get(self.nav.at)
+            .and_then(|c| c.clone().try_cast::<LineEdit>().ok())
+        {
+            field.release_focus();
+        }
+    }
+
+    /// A list of the page is open (its own keys).
+    pub fn list_open(&self) -> bool {
+        self.nav.items.iter().any(|c| {
+            c.clone()
+                .try_cast::<OptionButton>()
+                .ok()
+                .and_then(|ob| ob.get_popup())
+                .is_some_and(|p| p.is_visible())
+        })
+    }
+
+    /// The words of the control the focus is on (self-tests).
+    pub fn nav_focused(&self) -> Option<String> {
+        let c = self.nav.items.get(self.nav.at)?.clone();
+        Some(match c.clone().try_cast::<Button>() {
+            Ok(b) => b.get_text().to_string(),
+            Err(_) => c
+                .try_cast::<LineEdit>()
+                .map(|f| f.get_placeholder().to_string())
+                .unwrap_or_default(),
+        })
     }
 
     pub fn hide(&mut self) {
         if let Some(mut c) = self.content.take() {
             c.queue_free();
         }
+        self.nav = Nav::default();
         self.current = None;
         self.form = None;
         self.root.set_visible(false);

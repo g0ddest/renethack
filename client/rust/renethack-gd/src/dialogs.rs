@@ -540,17 +540,7 @@ impl Look {
             rows,
             no_focus: StyleBoxEmpty::new_gd(),
             default_button: theme::default_button_style(),
-            focus_button: {
-                let mut sb = StyleBoxFlat::new_gd();
-                sb.set_bg_color(Color::from_rgba(0.3, 0.22, 0.09, 1.0));
-                sb.set_border_width_all(2);
-                sb.set_border_color(theme::GOLD_BRIGHT);
-                sb.set_corner_radius_all(3);
-                sb.set_shadow_size(6);
-                sb.set_shadow_color(Color::from_rgba(0.906, 0.761, 0.478, 0.35));
-                sb.set_content_margin_all(6.0);
-                sb
-            },
+            focus_button: theme::focus_style(),
             body: theme::font(Face::Body),
             body_bold: theme::font(Face::BodyBold),
             title: theme::font(Face::Title),

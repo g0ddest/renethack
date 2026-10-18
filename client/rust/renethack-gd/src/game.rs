@@ -11,7 +11,7 @@ use godot::classes::{
     CanvasLayer, INode, Input, InputEvent, InputEventJoypadButton, InputEventJoypadMotion,
     InputEventKey, InputEventMouseButton, InputEventMouseMotion, Node3D, Os, ProjectSettings, Time,
 };
-use godot::global::MouseButton;
+use godot::global::{JoyAxis, Key as GKey, MouseButton};
 use godot::prelude::*;
 use nh_link::{
     AnswerError, CLIENT_EXTRA_OPTIONS, Ending, EngineConfig, LiveSession, PlaygroundLock,
@@ -458,6 +458,9 @@ pub struct RenethackGame {
     held: Option<Key>,
     /// Two arrows pressed together: a diagonal step (`nh_world::Chords`).
     chords: nh_world::Chords,
+    /// The left stick on the title's pages: the way it leans (a step each
+    /// time it leans anew).
+    screen_stick: (i32, i32),
     /// The first-steps guide: its cards' occasions, those waiting their
     /// turn, when the last one went (the next waits a moment), the pages
     /// the player has met (the profile's), and whether a self-test asked
@@ -822,6 +825,7 @@ impl INode for RenethackGame {
             count: CountEntry::default(),
             held: None,
             chords: nh_world::Chords::new(),
+            screen_stick: (0, 0),
             hint_watch: nh_world::HintWatch::new(),
             hints_waiting: Vec::new(),
             hint_gone_at: None,
@@ -1246,6 +1250,11 @@ impl INode for RenethackGame {
         // the title too
         let page = self.achievements_open() || self.settings_open() || self.credits_open();
         if self.state != GameState::Playing && !page {
+            // the title, the creation form, the end, an error: a focus the
+            // keys and the gamepad move
+            if self.screen_input(&event) {
+                self.handled();
+            }
             return;
         }
         // a gamepad: what its buttons and sticks mean on this screen
@@ -4279,6 +4288,108 @@ impl RenethackGame {
         } else {
             self.show_title(None);
         }
+    }
+
+    /// A key or a gamepad's input on the title, the creation form, the end
+    /// or an error page: ↑↓ (the d-pad, the left stick) move the focus,
+    /// ←→ change a list's choice, Enter, Space or A take the control,
+    /// Esc or B go back, Start does the page's deed. A name being typed
+    /// keeps its keys; an open list has its own. True: taken.
+    fn screen_input(&mut self, event: &Gd<InputEvent>) -> bool {
+        use crate::screens::NavInput;
+        let Some(ui) = self.ui.as_ref() else {
+            return false;
+        };
+        if !matches!(
+            ui.screens.current(),
+            Some("title" | "creation" | "end" | "error")
+        ) || ui.screens.list_open()
+        {
+            return false;
+        }
+        let typing = ui.screens.typing();
+        let input = if let Ok(b) = event.clone().try_cast::<InputEventJoypadButton>() {
+            self.pad.active = true;
+            if !b.is_pressed() {
+                return true;
+            }
+            match PadButton::from_joy(b.get_button_index()) {
+                Some(PadButton::Up) => NavInput::Up,
+                Some(PadButton::Down) => NavInput::Down,
+                Some(PadButton::Left) => NavInput::Left,
+                Some(PadButton::Right) => NavInput::Right,
+                Some(PadButton::A) => NavInput::Accept,
+                Some(PadButton::B) => NavInput::Back,
+                Some(PadButton::Start) => NavInput::Start,
+                _ => return true,
+            }
+        } else if let Ok(m) = event.clone().try_cast::<InputEventJoypadMotion>() {
+            self.pad.active = true;
+            // the left stick: a step each time it leans anew
+            let lean = |v: f32| match v {
+                v if v > 0.6 => 1,
+                v if v < -0.6 => -1,
+                v if v.abs() < 0.3 => 0,
+                _ => 2,
+            };
+            let (x, y) = self.screen_stick;
+            match m.get_axis() {
+                JoyAxis::LEFT_Y => match lean(m.get_axis_value()) {
+                    2 => return true,
+                    l if l == y => return true,
+                    l => {
+                        self.screen_stick.1 = l;
+                        match l {
+                            -1 => NavInput::Up,
+                            1 => NavInput::Down,
+                            _ => return true,
+                        }
+                    }
+                },
+                JoyAxis::LEFT_X => match lean(m.get_axis_value()) {
+                    2 => return true,
+                    l if l == x => return true,
+                    l => {
+                        self.screen_stick.0 = l;
+                        match l {
+                            -1 => NavInput::Left,
+                            1 => NavInput::Right,
+                            _ => return true,
+                        }
+                    }
+                },
+                _ => return true,
+            }
+        } else if let Ok(key) = event.clone().try_cast::<InputEventKey>() {
+            if !key.is_pressed() {
+                return false;
+            }
+            self.pad.active = false;
+            let shift = key.is_shift_pressed();
+            match key.get_keycode() {
+                GKey::UP => NavInput::Up,
+                GKey::DOWN => NavInput::Down,
+                GKey::TAB if shift => NavInput::Up,
+                GKey::TAB => NavInput::Down,
+                // a name being typed keeps the rest
+                _ if typing && key.get_keycode() != GKey::ESCAPE => return false,
+                GKey::LEFT => NavInput::Left,
+                GKey::RIGHT => NavInput::Right,
+                GKey::ENTER | GKey::KP_ENTER | GKey::SPACE if !key.is_echo() => NavInput::Accept,
+                GKey::ESCAPE if !key.is_echo() => {
+                    if typing {
+                        // the field gives up the keys first
+                        self.ui_mut().screens.stop_typing();
+                        return true;
+                    }
+                    NavInput::Back
+                }
+                _ => return false,
+            }
+        } else {
+            return false;
+        };
+        self.ui_mut().screens.nav_input(input)
     }
 
     /// The achievements page is up (keys and the gamepad are its own).

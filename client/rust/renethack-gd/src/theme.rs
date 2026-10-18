@@ -530,6 +530,19 @@ fn button_styles(default: bool) -> [Gd<StyleBox>; 4] {
     ]
 }
 
+/// The control the keys and a gamepad are on: gold-edged and lit.
+pub fn focus_style() -> Gd<StyleBoxFlat> {
+    let mut sb = StyleBoxFlat::new_gd();
+    sb.set_bg_color(Color::from_rgba(0.3, 0.22, 0.09, 1.0));
+    sb.set_border_width_all(2);
+    sb.set_border_color(GOLD_BRIGHT);
+    sb.set_corner_radius_all(3);
+    sb.set_shadow_size(6);
+    sb.set_shadow_color(Color::from_rgba(0.906, 0.761, 0.478, 0.35));
+    sb.set_content_margin_all(6.0);
+    sb
+}
+
 /// A button that stands out: the answer Enter gives.
 pub fn default_button_style() -> Gd<StyleBox> {
     let [normal, ..] = button_styles(true);
