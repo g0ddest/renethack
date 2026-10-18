@@ -2104,7 +2104,7 @@ ru = " Вы достигли Астрального плана."
 
 [d95ef90c5d12]
 en = " You attained the rank of %s."
-ru = " Вы достигли звания {1:gen}."
+ru = " Вы достигли звания {1:hero:gen}."
 
 [3a3506467816]
 en = "Logged events:"
@@ -3385,3 +3385,9 @@ ru = " Вы выжили, хотя вас убивали {1}."
 [9daf3b9a3171]
 en = " You survived%s."
 ru = " Вы выжили{1}."
+
+# ^X: the rank reached, in the hero's gender
+
+[2b41a3e2abee]
+en = " You have attained the rank of %s."
+ru = " Вы достигли звания {1:hero:gen}."

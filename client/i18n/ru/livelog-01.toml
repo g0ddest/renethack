@@ -29,7 +29,7 @@ ru = "{1}, {2:m} {3:m}, вошёл в подземелье"
 
 [a7e06e33ec4d]
 en = "attained the rank of %s (level %d)"
-ru = "{hero:gender|получил|получила} звание «{1}» (уровень {2})"
+ru = "{hero:gender|получил|получила} звание «{1:hero}» (уровень {2})"
 
 [d3bcd42d9e36]
 en = "acquired The Amulet of Yendor"

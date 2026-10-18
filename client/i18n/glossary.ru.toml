@@ -1526,7 +1526,7 @@
 "Trailblazer" = { ru = "Первопроходец", src = "chosen", note = "was Пролагатель троп" }
 "Reconnoiterer" = { ru = "Разведчик", src = "nethack-ru" }
 "Reconnoiteress" = { ru = "Разведчица", src = "nethack-ru" }
-"Scout" = { ru = "Скаут", src = "nethack-ru" }
+"Scout" = { ru = "Лазутчик", src = "chosen", note = "was Скаут, a boy scout in Russian" }
 "Arbalester" = { ru = "Арбалетчик", src = "nethack-ru" }
 "Archer" = { ru = "Лучник", src = "nethack-ru" }
 "Sharpshooter" = { ru = "Снайпер", src = "nethack-ru" }
@@ -1544,7 +1544,7 @@
 "Kuge" = { ru = "Кугэ", src = "nethack-ru" }
 "Shogun" = { ru = "Сёгун", src = "chosen", note = "was игун" }
 # Tourist
-"Rambler" = { ru = "Гуляка", src = "chosen", note = "was Бродяга" }
+"Rambler" = { ru = "Странник", src = "chosen", note = "was Гуляка, a carouser in Russian (the owner, 2026-10-18); was Бродяга" }
 "Sightseer" = { ru = "Зевака", src = "chosen", note = "was Турист; Турист is the role" }
 "Excursionist" = { ru = "Экскурсант", src = "nethack-ru" }
 "Peregrinator" = { ru = "Пилигрим", src = "chosen", note = "was Странник" }
@@ -2812,9 +2812,11 @@
 # Ranger
 "Lookout" = { ru = "Дозорная", src = "chosen", adjnoun = true, g = "f" }
 "Trailblazer" = { ru = "Первопроходица", src = "chosen" }
+"Scout" = { ru = "Лазутчица", src = "chosen" }
 "Arbalester" = { ru = "Арбалетчица", src = "chosen" }
 "Archer" = { ru = "Лучница", src = "chosen" }
 # Tourist
+"Rambler" = { ru = "Странница", src = "chosen" }
 "Excursionist" = { ru = "Экскурсантка", src = "chosen" }
 "Traveler" = { ru = "Путешественница", src = "chosen" }
 "Journeyer" = { ru = "Странствовательница", src = "chosen" }

@@ -1039,6 +1039,77 @@ fn the_hero_changes_form() {
     }
 }
 
+#[test]
+fn a_rank_in_the_hero_s_gender() {
+    // the Tourist's first rank, Rambler, is no Гуляка (a carouser): a
+    // Странник, a Странница; ^X and the chronicle say the rank as the
+    // hero's, and ^X's heading the name as typed
+    for (gender, lines) in [
+        (
+            Gender::Fem,
+            [
+                (
+                    "attained the rank of Rambler (level 1)",
+                    "получила звание «Странница» (уровень 1)",
+                ),
+                (
+                    " You attained the rank of Rambler.",
+                    " Вы достигли звания Странницы.",
+                ),
+                (
+                    "Wolf the Rambler's attributes:",
+                    "Свойства героини по имени Wolf (странница):",
+                ),
+            ],
+        ),
+        (
+            Gender::Masc,
+            [
+                (
+                    "attained the rank of Scout (level 10)",
+                    "получил звание «Лазутчик» (уровень 10)",
+                ),
+                (
+                    " You attained the rank of Rambler.",
+                    " Вы достигли звания Странника.",
+                ),
+                (
+                    "Wolf the Rambler's attributes:",
+                    "Свойства героя по имени Wolf (странник):",
+                ),
+            ],
+        ),
+    ] {
+        let mut t = Translator::built_in().expect("the built-in translator");
+        t.set_hero(gender);
+        for (en, ru) in lines {
+            let out = t.text(en);
+            assert_eq!(
+                (out.text.as_str(), out.status),
+                (ru, Status::Translated),
+                "{en}"
+            );
+        }
+    }
+    // the prologue: "You, a newly trained %s, have been heralded"
+    let fmt = "It is written in the Book of %s:\n\n    After the Creation, the cruel god Moloch rebelled\n    against the authority of Marduk the Creator.\n    Moloch stole from Marduk the most powerful of all\n    the artifacts of the gods, the Amulet of Yendor,\n    and he hid it in the dark cavities of Gehennom, the\n    Under World, where he now lurks, and bides his time.\n\nYour %s %s seeks to possess the Amulet, and with it\nto gain deserved ascendance over the other gods.\n\nYou, a newly trained %s, have been heralded\nfrom birth as the instrument of %s.  You are destined\nto recover the Amulet for your deity, or die in the\nattempt.  Your hour of destiny has come.  For the sake\nof us all:  Go bravely with %s!";
+    let args = [
+        "The Lady", "goddess", "The Lady", "Rambler", "The Lady", "The Lady",
+    ];
+    let mut text = fmt.to_string();
+    for a in args {
+        text = text.replacen("%s", a, 1);
+    }
+    let mut t = Translator::built_in().expect("the built-in translator");
+    t.set_hero(Gender::Fem);
+    let out = t.window(&text);
+    assert!(
+        out.text.contains("только что обученная странница"),
+        "{}",
+        out.text
+    );
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {

@@ -129,9 +129,11 @@ impl Template {
     /// Is conversion `i` a name the player typed (kind "player": the
     /// hero's name, a fruit's; a quest text's %p), shown as typed?
     pub fn is_typed(&self, i: usize) -> bool {
+        // "player|text": the name, which a buffer carried to a sink that
+        // prints other texts too ("%s the %s's attributes:")
+        let typed = |p: &str| p == "player" || p.starts_with("quest:p");
         self.kinds.get(i).is_some_and(|k| {
-            k.split('|')
-                .all(|p| p == "player" || p.starts_with("quest:p"))
+            k.split('|').any(typed) && k.split('|').all(|p| typed(p) || p == "text")
         })
     }
 
