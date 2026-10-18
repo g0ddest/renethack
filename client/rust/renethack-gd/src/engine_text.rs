@@ -232,7 +232,7 @@ impl EngineText for EngineTranslator {
             return Some(said);
         }
         // the rank as a woman's (the lexicon's female ranks): Новобранец
-        // for a Valkyrie is Юница, as the window of ^X says
+        // for a Valkyrie is Новобранка, as the window of ^X says
         let Some((_, rank)) = english.rsplit_once(" the ") else {
             return Some(said);
         };
@@ -313,7 +313,7 @@ mod tests {
         );
         assert_eq!(
             t.hero_title(Lang::Ru, "Hero the Stripling").as_deref(),
-            Some("Юница Hero")
+            Some("Новобранка Hero")
         );
         assert_eq!(
             t.hero_title(Lang::Ru, "Hero the Evoker").as_deref(),

@@ -2166,7 +2166,7 @@ impl Hud {
         let view = StatusView::new(status, &conditions);
         self.status_text = view.lines().join("\n");
         crate::tips::set(&self.portrait_panel, &status_tip(&view));
-        // the rank in the hero's gender (Юница, not Новобранец)
+        // the rank in the hero's gender (Новобранка, not Новобранец)
         self.title.set_text(&*i18n::engine_title(&view.title));
         if self.align_text != view.align {
             self.align_text = view.align.clone();

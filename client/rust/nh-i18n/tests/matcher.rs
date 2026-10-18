@@ -1073,6 +1073,20 @@ fn a_rank_in_the_hero_s_gender() {
                     "attained the rank of Aspirant (level 1)",
                     "получила звание «Ищущая» (уровень 1)",
                 ),
+                // the Valkyrie's first rank: no Юница, a young heifer today
+                (
+                    "attained the rank of Stripling (level 1)",
+                    "получила звание «Новобранка» (уровень 1)",
+                ),
+                (
+                    " You are a Stripling, a level 1 female human Valkyrie.",
+                    " Вы — Новобранка, человеческая валькирия 1-го уровня.",
+                ),
+                // the Wizard's third: no Чудотворица, a saint's epithet
+                (
+                    "attained the rank of Thaumaturge (level 6)",
+                    "получила звание «Чудодейка» (уровень 6)",
+                ),
             ][..],
         ),
         (
@@ -1130,6 +1144,13 @@ fn a_rank_in_the_hero_s_gender() {
     let out = t.window(&text);
     assert!(
         out.text.contains("только что обученная отпускница"),
+        "{}",
+        out.text
+    );
+    let valkyrie = text.replacen("newly trained Rambler", "newly trained Stripling", 1);
+    let out = t.window(&valkyrie);
+    assert!(
+        out.text.contains("только что обученная новобранка"),
         "{}",
         out.text
     );

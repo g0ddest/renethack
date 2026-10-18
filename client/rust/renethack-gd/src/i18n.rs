@@ -424,7 +424,7 @@ pub fn engine_hero_word(english: &str) -> Cow<'_, str> {
 }
 
 /// The status line's title as the player reads it ("Hero the Stripling":
-/// Юница Hero for a Valkyrie), its rank in the hero's gender.
+/// Новобранка Hero for a Valkyrie), its rank in the hero's gender.
 pub fn engine_title(english: &str) -> Cow<'_, str> {
     let lang = lang();
     match lang {

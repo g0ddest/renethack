@@ -113,11 +113,11 @@ pub(super) fn sheet() -> Vec<Step> {
         Step::Wait(
             "the HUD's title with the rank in the heroine's gender",
             |g| {
-                // in Russian a Valkyrie is Юница, not Новобранец, as the sheet
+                // in Russian a Valkyrie is Новобранка, not Новобранец, as the sheet
                 // says it
                 let ui = g.ui.as_ref().ok_or("no UI")?;
                 let title = ui.hud.title_shown();
-                if i18n::lang() == i18n::Lang::Ru && !title.contains("Юница") {
+                if i18n::lang() == i18n::Lang::Ru && !title.contains("Новобранка") {
                     return Err(format!("the HUD's title is {title:?}"));
                 }
                 Ok(true)

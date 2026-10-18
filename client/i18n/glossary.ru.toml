@@ -1570,7 +1570,7 @@
 # Wizard
 "Evoker" = { ru = "Призыватель", src = "nethack-ru" }
 "Conjurer" = { ru = "Кудесник", src = "chosen", note = "was Чародей" }
-"Thaumaturge" = { ru = "Чудотворец", src = "nethack-ru" }
+"Thaumaturge" = { ru = "Чудодей", src = "chosen", note = "was Чудотворец, a saint's epithet (Николай Чудотворец)" }
 "Magician" = { ru = "Маг", src = "nethack-ru" }
 "Enchanter" = { ru = "Чародей", src = "chosen", note = "was Заклинатель" }
 "Enchantress" = { ru = "Чародейка", src = "chosen", note = "was Заклинательница" }
@@ -2825,7 +2825,7 @@
 "Explorer" = { ru = "Исследовательница", src = "chosen" }
 "Adventurer" = { ru = "Искательница приключений", src = "chosen" }
 # Valkyrie: every one is a woman, so these are the titles a player reads
-"Stripling" = { ru = "Юница", src = "chosen", note = "Новобранец has no feminine" }
+"Stripling" = { ru = "Новобранка", src = "chosen", note = "was Юница: a young heifer to readers today (the owner, 2026-10-18)" }
 "Skirmisher" = { ru = "Застрельщица", src = "chosen" }
 "Fighter" = { ru = "Ратница", src = "chosen", note = "Боец has no feminine" }
 "Warrior" = { ru = "Воительница", src = "chosen" }
@@ -2833,7 +2833,7 @@
 # Wizard
 "Evoker" = { ru = "Призывательница", src = "chosen" }
 "Conjurer" = { ru = "Кудесница", src = "chosen" }
-"Thaumaturge" = { ru = "Чудотворица", src = "chosen" }
+"Thaumaturge" = { ru = "Чудодейка", src = "chosen" }
 "Necromancer" = { ru = "Некромантка", src = "chosen" }
 
 [word]
