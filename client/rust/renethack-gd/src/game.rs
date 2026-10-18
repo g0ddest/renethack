@@ -1120,7 +1120,9 @@ impl INode for RenethackGame {
         self.pump();
         parts.pump = ms(t);
         self.lap("pump", t);
+        let t = Instant::now();
         self.drive();
+        parts.rest = ms(t);
         let built = self.ui.as_ref().map_or(0, |ui| ui.map.models_built());
         let t = Instant::now();
         self.map_ms = 0.0;
@@ -1164,6 +1166,7 @@ impl INode for RenethackGame {
             }
         }
         parts.preload = ms(t);
+        let t = Instant::now();
         self.watch_engine();
         self.achieve(delta);
         self.tick_hints(delta);
@@ -1176,7 +1179,10 @@ impl INode for RenethackGame {
         if let Some(ui) = self.ui.as_mut() {
             ui.tips.tick(hovered, now_secs());
         }
+        parts.rest += ms(t);
+        let t = Instant::now();
         self.update_audio(delta);
+        parts.audio = ms(t);
         let t = Instant::now();
         if !self.quitting
             && let Some(mut test) = self.selftest.take()

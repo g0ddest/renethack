@@ -23,7 +23,7 @@ use godot::obj::Singleton;
 use godot::prelude::Rid;
 
 /// The columns, in order.
-const HEADER: &str = "frame,t,wall,work,input,pump,views,map,warm,preload,test,render,draws,nodes,pipelines,canvas,mesh,surface,draw,specialization,vmem,static,built,level,depth,branch,requests,state,veil,firsts,step";
+const HEADER: &str = "frame,t,wall,work,input,pump,views,map,warm,preload,test,audio,rest,render,draws,nodes,pipelines,canvas,mesh,surface,draw,specialization,vmem,static,built,level,depth,branch,requests,state,veil,firsts,step";
 
 /// The game's own work in a frame, by part (milliseconds).
 #[derive(Debug, Default, Clone, Copy)]
@@ -40,6 +40,11 @@ pub struct Parts {
     pub preload: f64,
     /// The self-test's step.
     pub test: f64,
+    /// The sounds' update.
+    pub audio: f64,
+    /// The rest of the game's own frame: the engine's driving and watch,
+    /// the achievements, the guide's hints, the quest's.
+    pub rest: f64,
 }
 
 /// What a frame was about, besides its timings.
@@ -73,7 +78,11 @@ struct Frame {
 }
 
 pub struct FrameLog {
-    out: BufWriter<File>,
+    /// The lines go to a thread of their own, which writes them: a frame
+    /// never waits on the disk (a busy one held a frame half a second as
+    /// the file was flushed).
+    out: Option<std::sync::mpsc::Sender<String>>,
+    writer: Option<std::thread::JoinHandle<()>>,
     start: Instant,
     frame: u64,
     now: Option<Frame>,
@@ -117,10 +126,23 @@ impl FrameLog {
                 return None;
             }
         };
-        let mut out = BufWriter::new(file);
-        let _ = writeln!(out, "{HEADER}");
+        let (tx, rx) = std::sync::mpsc::channel::<String>();
+        let writer = std::thread::spawn(move || {
+            let mut out = BufWriter::new(file);
+            let _ = writeln!(out, "{HEADER}");
+            for (i, line) in rx.iter().enumerate() {
+                let _ = writeln!(out, "{line}");
+                // on disk now and then: a run killed at its timeout keeps
+                // its frames
+                if i % 64 == 63 {
+                    let _ = out.flush();
+                }
+            }
+            let _ = out.flush();
+        });
         Some(FrameLog {
-            out,
+            out: Some(tx),
+            writer: Some(writer),
             start: Instant::now(),
             frame: 0,
             now: None,
@@ -158,9 +180,8 @@ impl FrameLog {
                     .map_or(0.0, |rid| rs.viewport_get_measured_render_time_cpu(rid));
             let draws = rs.get_rendering_info(RenderingInfo::TOTAL_DRAW_CALLS_IN_FRAME);
             let new: [i64; 5] = std::array::from_fn(|i| pipelines[i] - self.pipelines[i]);
-            let _ = writeln!(
-                self.out,
-                "{},{t:.3},{wall:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{render:.2},{draws},{nodes},{},{},{:.1},{memory:.1},{},{},{},{},{},{},{},\"{}\",\"{}\"",
+            let line = format!(
+                "{},{t:.3},{wall:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{render:.2},{draws},{nodes},{},{},{:.1},{memory:.1},{},{},{},{},{},{},{},\"{}\",\"{}\"",
                 self.frame,
                 f.work,
                 p.input,
@@ -170,6 +191,8 @@ impl FrameLog {
                 p.warm,
                 p.preload,
                 p.test,
+                p.audio,
+                p.rest,
                 new.iter().sum::<i64>(),
                 new.map(|n| n.to_string()).join(","),
                 vmem - self.vmem,
@@ -183,12 +206,11 @@ impl FrameLog {
                 c.firsts,
                 c.step.replace('"', "'"),
             );
+            if let Some(out) = &self.out {
+                let _ = out.send(line);
+            }
         }
         self.frame += 1;
-        // on disk now and then: a run killed at its timeout keeps its frames
-        if self.frame.is_multiple_of(64) {
-            let _ = self.out.flush();
-        }
         self.pipelines = pipelines;
         self.vmem = vmem;
         self.now = Some(Frame {
@@ -211,6 +233,10 @@ impl FrameLog {
 
 impl Drop for FrameLog {
     fn drop(&mut self) {
-        let _ = self.out.flush();
+        // the sender gone, the writer writes what is left and ends
+        self.out = None;
+        if let Some(w) = self.writer.take() {
+            let _ = w.join();
+        }
     }
 }

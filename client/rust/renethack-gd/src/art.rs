@@ -272,7 +272,7 @@ fn transform(pos: [f32; 3], rot: [f32; 3], scale: [f32; 3]) -> Transform3D {
 }
 
 /// Something to load before it is first needed.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 enum Preload {
     Texture(String),
     Library(String, bool),
@@ -286,6 +286,12 @@ enum Preload {
     /// An instance built once and pooled: its meshes, materials and
     /// shaders are ready before the look is first seen.
     Warm(ModelLook),
+}
+
+/// RENETHACK_FRAME_STATS is set: the long steps are logged.
+fn stats() -> bool {
+    static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *ON.get_or_init(|| std::env::var_os("RENETHACK_FRAME_STATS").is_some())
 }
 
 /// Time per frame the preloading may take.
@@ -601,8 +607,15 @@ impl Art {
                 return true;
             }
             let began = std::time::Instant::now();
+            let what = stats().then(|| format!("{next:?}"));
             self.preload_item(next);
             last = began.elapsed();
+            if let Some(what) = what.filter(|_| last.as_millis() >= 20) {
+                godot_print!(
+                    "art: a preload item of {:.1} ms: {what}",
+                    last.as_secs_f64() * 1000.0
+                );
+            }
         }
         true
     }

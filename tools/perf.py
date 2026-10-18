@@ -331,6 +331,8 @@ def cause(row):
         ("warm", "the title's warm-up"),
         ("preload", "the map's loading ahead"),
         ("test", "the self-test step"),
+        ("audio", "the sounds' update"),
+        ("rest", "the engine's driving, the achievements, the hints"),
     ):
         if ms(part) >= 8:
             why.append(f"{label} {ms(part):.0f} ms")
