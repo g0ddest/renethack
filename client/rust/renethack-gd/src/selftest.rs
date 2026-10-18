@@ -100,6 +100,8 @@ mod spells_tests;
 mod states_tests;
 #[path = "selftest_through.rs"]
 mod through_tests;
+#[path = "selftest_tips.rs"]
+mod tips_tests;
 #[path = "selftest_trapdoor.rs"]
 mod trapdoor_tests;
 #[path = "selftest_variants.rs"]
@@ -4911,6 +4913,7 @@ impl SelfTest {
             "spells-many" => spells_tests::spells_many(),
             "spells-one" => spells_tests::spells_one(),
             "give-up" => give_up_tests::give_up(),
+            "hud-tips" => tips_tests::hud_tips(),
             "skills" => skills_tests::skills(),
             "journal" => journal_tests::journal(),
             "codex" => codex_tests::codex(),

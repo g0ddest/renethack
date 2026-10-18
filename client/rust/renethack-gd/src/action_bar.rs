@@ -98,7 +98,7 @@ impl ActionBar {
             ] {
                 button.add_theme_stylebox_override(name, sb);
             }
-            button.set_tooltip_text(&crate::tr!("bar-slot-empty", key = key_label(i)));
+            crate::hud_tip::set(&button, &crate::tr!("bar-slot-empty", key = key_label(i)));
 
             // the inner shadow of the socket
             let mut well = godot::classes::ColorRect::new_alloc();
@@ -273,7 +273,7 @@ impl ActionBar {
     /// What hovering slot `slot` tells.
     pub fn set_tooltip(&mut self, slot: usize, text: &str) {
         if let Some(s) = self.slots.get_mut(slot) {
-            s.button.set_tooltip_text(text);
+            crate::hud_tip::set(&s.button, text);
         }
     }
 

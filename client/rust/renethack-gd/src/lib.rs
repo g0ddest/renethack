@@ -30,6 +30,7 @@ mod hearing;
 mod help_panel;
 mod hero;
 mod hud;
+mod hud_tip;
 mod i18n;
 mod icon_bake;
 mod icons;

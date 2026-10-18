@@ -38,14 +38,14 @@ override GODOT := $(if $(filter %.app %.app/,$(GODOT)),$(patsubst %/,%,$(GODOT))
 # GNU coreutils' timeout; Homebrew's coreutils names it gtimeout on macOS
 TIMEOUT ?= $(shell command -v timeout || command -v gtimeout)
 GODOT_PROJECT := client/godot
-SELFTESTS := smoke keys save close crash menus text dialogs palette first-open moves passing through orders inventory map-pause pool-sizes threat-arrow bar gamepad equipment item-use combat roles kits two-hands riding audio conditions falls acts polyself trapdoor worn footprints branches corridors doorways shop states title soak language pickers achievements help layouts settings gameplay profile-files chords credits rebind sheet spells spells-one spells-many give-up skills journal codex guide prologue prologue-skip prologue-replay prologue-guide
+SELFTESTS := smoke keys save close crash menus text dialogs palette first-open moves passing through orders inventory map-pause pool-sizes threat-arrow bar gamepad equipment item-use combat roles kits two-hands riding audio conditions falls acts polyself trapdoor worn footprints branches corridors doorways shop states title soak language pickers achievements help layouts settings gameplay profile-files chords credits rebind sheet spells spells-one spells-many give-up skills journal codex guide prologue prologue-skip prologue-replay prologue-guide hud-tips
 # again at the Steam Deck's 1280×800 (its 120 % UI scale, the compact
 # layout): every screen a scenario would shoot must fit the canvas
-DECK_SELFTESTS := smoke inventory hud gamepad title threat-arrow settings gameplay credits rebind sheet spells spells-one give-up skills journal codex guide prologue prologue-replay
+DECK_SELFTESTS := smoke inventory hud gamepad title threat-arrow settings gameplay credits rebind sheet spells spells-one give-up skills journal codex guide prologue prologue-replay hud-tips
 # the same in Russian (a third longer than English), at the Deck's size and
 # at 1920×1080
-RU_DECK_SELFTESTS := smoke inventory hud dialogs gamepad pickers achievements help layouts settings gameplay credits rebind sheet spells spells-one spells-many give-up skills journal codex guide prologue
-RU_SELFTESTS := smoke inventory dialogs achievements settings gameplay credits rebind sheet spells spells-one give-up skills journal codex guide prologue
+RU_DECK_SELFTESTS := smoke inventory hud dialogs gamepad pickers achievements help layouts settings gameplay credits rebind sheet spells spells-one spells-many give-up skills journal codex guide prologue hud-tips
+RU_SELFTESTS := smoke inventory dialogs achievements settings gameplay credits rebind sheet spells spells-one give-up skills journal codex guide prologue hud-tips
 # again with the engine's output read an event a frame, as a loaded machine
 # may read it in pieces: what the map shows of a line, what a line tells of
 # the map, and the cells of one drawing of it (a step, a mount) must not
@@ -53,7 +53,7 @@ RU_SELFTESTS := smoke inventory dialogs achievements settings gameplay credits r
 PIECES_SELFTESTS := falls acts trapdoor riding
 # in the pseudo-language (--lang=qps): every word on the screens a scenario
 # would shoot came through the client's catalogs or the engine's translator
-PSEUDO_SELFTESTS := smoke keys dialogs orders inventory gamepad hud pickers achievements help layouts settings gameplay credits sheet spells spells-one give-up skills journal codex guide
+PSEUDO_SELFTESTS := smoke keys dialogs orders inventory gamepad hud pickers achievements help layouts settings gameplay credits sheet spells spells-one give-up skills journal codex guide hud-tips
 # with a window: a headless run draws nothing, and what upsets the renderer
 # shows only when it runs, as a "BUG" error of Godot's or a crash on quit;
 # nor does it render the inventory's doll.

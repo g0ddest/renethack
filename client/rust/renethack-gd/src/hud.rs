@@ -787,7 +787,7 @@ impl ValueChip {
     fn set(&mut self, value: Option<&str>, tip: &str) {
         self.text.set_text(value.unwrap_or(""));
         self.panel.set_visible(value.is_some());
-        self.panel.set_tooltip_text(tip);
+        crate::hud_tip::set(&self.panel, tip);
     }
 }
 
@@ -832,7 +832,7 @@ fn condition_chip(c: &Chip) -> ShownChip {
     p.add_theme_stylebox_override("panel", &style);
     p.set_custom_minimum_size(Vector2::new(0.0, 26.0));
     let word = i18n::engine(EngineKind::Status, &c.text);
-    p.set_tooltip_text(&*word);
+    crate::hud_tip::set(&p, &word);
     let mut row = hbox(5);
     let (gem, material) = ring(20.0, 0.62, rim);
     if let Some(m) = &material {
@@ -929,7 +929,7 @@ fn micro_button(
     let mut b = theme::button("", queue, ev);
     b.set_custom_minimum_size(Vector2::new(MICRO_W, 28.0));
     if bind {
-        i18n::tip(&b, tip);
+        crate::hud_tip::bind(&b, tip);
     }
     b.set_mouse_filter(MouseFilter::STOP);
     for state in ["normal", "hover", "pressed", "hover_pressed", "disabled"] {
@@ -996,7 +996,7 @@ impl Keyed {
                 b.set_text(&words);
             }
         } else {
-            self.node.set_tooltip_text(&words);
+            crate::hud_tip::set(&self.node, &words);
         }
     }
 }
@@ -1105,6 +1105,13 @@ pub struct Hud {
     tooltip_panel: Gd<PanelContainer>,
     tooltip: Gd<Label>,
     tooltip_text: Option<String>,
+    /// A block's tip (`hud_tip`): the block under the mouse and since when,
+    /// and the tip shown for it.
+    tip_panel: Gd<PanelContainer>,
+    tip_label: Gd<Label>,
+    tip_owner: Option<InstanceId>,
+    tip_since: f64,
+    tip_shown: Option<(InstanceId, String)>,
     toast_panel: Gd<PanelContainer>,
     /// The row the toast is centred in: over the cluster, or over the
     /// docked log.
@@ -1297,7 +1304,7 @@ impl Hud {
         {
             sb.set_content_margin_all(0.0);
         }
-        i18n::tip(&xp_frame, "hud-xp-tip");
+        crate::hud_tip::bind(&xp_frame, "hud-xp-tip");
         cluster.add_child(&xp_frame);
         cluster_parts.push(("XP bar", xp_frame.clone().upcast()));
         solid.push(xp_frame.clone().upcast());
@@ -1440,7 +1447,7 @@ impl Hud {
         arrow.set_color(theme::DANGER);
         threat.add_child(&arrow);
         threat.set_visible(false);
-        i18n::tip(&threat, "hud-threat-tip");
+        crate::hud_tip::bind(&threat, "hud-threat-tip");
         root.add_child(&threat);
 
         // ---- minimap, top right; the mode and the order under it ----
@@ -1641,12 +1648,11 @@ impl Hud {
         solid.push(toast_panel.clone().upcast());
 
         // ---- tooltip, follows the mouse; on top of everything ----
-        let mut tooltip_panel = theme::framed(Frame::Tooltip);
-        tooltip_panel.set_mouse_filter(MouseFilter::IGNORE);
-        let tooltip = theme::styled_label("", Face::Body, 16, theme::TEXT);
-        tooltip_panel.add_child(&tooltip);
-        tooltip_panel.set_visible(false);
+        let (tooltip_panel, tooltip) = crate::hud_tip::view();
         root.add_child(&tooltip_panel);
+        // ---- a block's tip, above it; the same look ----
+        let (tip_panel, tip_label) = crate::hud_tip::view();
+        root.add_child(&tip_panel);
 
         let mut hud = Hud {
             root,
@@ -1710,6 +1716,11 @@ impl Hud {
             tooltip_panel,
             tooltip,
             tooltip_text: None,
+            tip_panel,
+            tip_label,
+            tip_owner: None,
+            tip_since: 0.0,
+            tip_shown: None,
             toast_panel,
             toast_lane,
             toast,
@@ -2166,7 +2177,7 @@ impl Hud {
         let conditions = catalog.map_or_else(Vec::new, |c| status.condition_names(c));
         let view = StatusView::new(status, &conditions);
         self.status_text = view.lines().join("\n");
-        self.portrait_panel.set_tooltip_text(&status_tip(&view));
+        crate::hud_tip::set(&self.portrait_panel, &status_tip(&view));
         // the rank in the hero's gender (Юница, not Новобранец)
         self.title.set_text(&*i18n::engine_title(&view.title));
         if self.align_text != view.align {
@@ -2520,8 +2531,7 @@ impl Hud {
         };
         if self.tooltip_text.as_deref() != Some(t) {
             self.tooltip_text = Some(t.to_string());
-            self.tooltip.set_text(t);
-            self.tooltip_panel.reset_size();
+            crate::hud_tip::fill(&mut self.tooltip_panel, &mut self.tooltip, t);
             self.tooltip_panel.set_visible(true);
         }
         let size = self.tooltip_panel.get_size();
@@ -2543,8 +2553,54 @@ impl Hud {
         self.root.set_visible(on);
         if !on {
             self.set_tooltip(None, Vector2::ZERO);
+            self.hover_tip(None, 0.0);
             self.set_full_log(false);
         }
+    }
+
+    /// The tip of the block under the mouse (`hovered`, as Godot has it),
+    /// a moment after the mouse rests there; gone when it leaves. Every
+    /// frame.
+    pub fn hover_tip(&mut self, hovered: Option<Gd<Control>>, now: f64) {
+        let owner = hovered
+            .filter(|_| self.root.is_visible_in_tree())
+            .and_then(|c| crate::hud_tip::owner(c, &self.root));
+        let Some((block, text)) = owner else {
+            self.tip_owner = None;
+            if self.tip_shown.take().is_some() {
+                self.tip_panel.set_visible(false);
+            }
+            return;
+        };
+        let id = block.instance_id();
+        if self.tip_owner != Some(id) {
+            // another block: its tip waits a moment
+            self.tip_owner = Some(id);
+            self.tip_since = now;
+            if self.tip_shown.take().is_some() {
+                self.tip_panel.set_visible(false);
+            }
+            return;
+        }
+        if now - self.tip_since < crate::hud_tip::DELAY
+            || self.tip_shown.as_ref() == Some(&(id, text.clone()))
+        {
+            return;
+        }
+        let size = crate::hud_tip::fill(&mut self.tip_panel, &mut self.tip_label, &text);
+        let view = self.root.get_viewport_rect().size;
+        let at = crate::hud_tip::place_for(size, block.get_global_rect(), view);
+        self.tip_panel.set_position(at);
+        self.tip_panel.set_visible(true);
+        self.tip_shown = Some((id, text));
+    }
+
+    /// The block's tip on screen: its words and where it is (self-tests).
+    pub fn tip_shown(&self) -> Option<(String, Rect2)> {
+        self.tip_shown
+            .as_ref()
+            .filter(|_| self.tip_panel.is_visible())
+            .map(|(_, t)| (t.clone(), self.tip_panel.get_global_rect()))
     }
 
     pub fn toggle_full_log(&mut self) {
@@ -2563,6 +2619,26 @@ impl Hud {
         self.full_log_dirty = true;
         self.full_log_follow = true;
         self.step_back();
+    }
+
+    /// The HUD's controls with a tip, shown, where they are (self-tests).
+    pub fn tipped(&self) -> Vec<(String, Rect2)> {
+        fn walk(node: &Gd<Node>, out: &mut Vec<(String, Rect2)>) {
+            if let Ok(c) = node.clone().try_cast::<Control>() {
+                if !c.is_visible_in_tree() {
+                    return;
+                }
+                if let Some(tip) = crate::hud_tip::tip_of(&c) {
+                    out.push((tip, c.get_global_rect()));
+                }
+            }
+            for child in node.get_children().iter_shared() {
+                walk(&child, out);
+            }
+        }
+        let mut out = Vec::new();
+        walk(&self.root.clone().upcast(), &mut out);
+        out
     }
 
     /// Where the XP bar's words are on screen, as wide as they are (the

@@ -3349,10 +3349,13 @@ impl RenethackGame {
                 (_, None) => what,
             };
             let hint = crate::rebind::bound_hint(map, v.hint.as_deref().unwrap_or(""));
-            bar.set_tooltip(
-                i,
-                &tr!("bar-slot-keys-tip", tip = tip, key = key, hint = hint),
-            );
+            // an empty slot has no command to name, nothing to clear
+            let full = if v.state == SlotState::Empty {
+                tip
+            } else {
+                tr!("bar-slot-keys-tip", tip = tip, key = key, hint = hint)
+            };
+            bar.set_tooltip(i, &full);
         }
         self.bar_key = Some(views);
     }
@@ -5039,6 +5042,12 @@ impl RenethackGame {
         self.sync_inventory();
         self.lap("inventory", t);
         self.update_hover();
+        // a HUD block's tip, the mouse resting on it
+        let hovered = self
+            .base()
+            .get_viewport()
+            .and_then(|v| v.gui_get_hovered_control());
+        self.ui_mut().hud.hover_tip(hovered, now_secs());
         self.sync_orders();
         self.update_preview();
     }
