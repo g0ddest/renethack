@@ -290,6 +290,21 @@ enum Preload {
 
 /// Time per frame the preloading may take.
 const PRELOAD_BUDGET: std::time::Duration = std::time::Duration::from_millis(6);
+/// Files the loader's threads read at once, at most: half of Godot's
+/// worker pool (a thread a processor), the rest waiting their turn. The
+/// pool also compiles the shaders the main thread asks for, the main
+/// thread waiting for them while it holds the renderer; behind all the
+/// files asked for at once, its tasks never ran, and the files read,
+/// waiting on the renderer for their textures, never let it go (a first
+/// start, its shader cache empty, hung under the veil).
+pub(crate) fn loads_at_once() -> usize {
+    static AT_ONCE: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
+    *AT_ONCE.get_or_init(|| {
+        let processors = godot::classes::Os::singleton().get_processor_count();
+        (usize::try_from(processors).unwrap_or(2) / 2).max(1)
+    })
+}
+
 /// Animations stripped of their root motion in one step.
 const STRIP_STEP: usize = 4;
 
@@ -678,12 +693,12 @@ impl Art {
     }
 
     /// Ask the loader's threads for a file not read yet; true while it is
-    /// being read.
+    /// being read, or waits its turn (`loads_at_once`).
     fn request(&mut self, path: String) -> bool {
         if self.loaded.contains_key(&path) {
             return false;
         }
-        if self.loading.contains(&path) {
+        if self.loading.contains(&path) || self.loading.len() >= loads_at_once() {
             return true;
         }
         let mut loader = ResourceLoader::singleton();
