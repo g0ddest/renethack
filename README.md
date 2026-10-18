@@ -240,6 +240,7 @@ shows what it must.
     make soak         # random play through the client, seeds 1..8 (long)
     make deck         # screenshots at the Steam Deck's 1280×800 (needs a display)
     make perf         # frame times on a release build (needs a display, a quiet machine)
+    make cold-start   # a first launch five times: release, windowed, empty shader cache (before a release)
     make variants     # the census of the pipeline variants the rehearsal makes (after new art)
 
 `make test-client` runs each scenario of `client/rust/renethack-gd/src/selftest.rs`
@@ -387,6 +388,29 @@ and the inventory doll's in step, from before the rehearsal on. A change in
 the settings of what Godot builds pipelines for (the MSAA, ambient
 occlusion or indirect light turned on or off, FSR 2) makes the variants
 again behind a short veil.
+
+### A first launch
+
+`make cold-start` starts the release build five times over
+(`COLD_STARTS=10` more) as a player's first launch meets it: staged as for
+`make perf`, in a window, each start with Godot's shader cache and the
+whole user folder empty (HOME is a fresh scratch folder for it, so nobody
+else's is touched; Apple's own Metal shader cache stays the machine's).
+Each must reach the title within four minutes (`tools/cold_start.py
+--timeout`). A start that hangs fails the check with where each of its
+threads waits (macOS `sample`, gdb elsewhere), the whole sample beside its
+log in `build/cold-start`. The self-tests run headless and compile no
+shaders, so none of them meets what a first start meets: with the shader
+cache empty, the start once hung under its veil (the art preloader's files
+and the rehearsal's compiles waiting on each other). Run it before a
+release.
+
+An exported game keeps its user data, Godot's shader cache among it, in
+the same folder as development runs (`app_userdata/renethack`: the
+project names no folder of its own). Started with that folder, full of
+development runs' data, the packaged macOS app reached its rehearsal only
+12 s in and timed out before its title was up; from an empty folder it
+started in 1.5 s. Not looked into yet.
 
 ## Production builds
 

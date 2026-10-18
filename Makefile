@@ -11,6 +11,9 @@
 #   make perf         the game timed on a release build (tools/perf.py): fails
 #                     on a frame over 33 ms after the start-up veil; needs a
 #                     display and a quiet machine
+#   make cold-start   a first launch, five times over: the release build in a
+#                     window, its shader cache empty, to the title (a check
+#                     before a release; needs a display)
 #   make art          fetch the CC0 art again (tools/fetch_art.py; needs Pillow)
 #   make audio        fetch the CC0 sounds again (tools/fetch_audio.py)
 #   make app-icon     draw the game's icon again (tools/app_icon.py; needs Pillow)
@@ -65,7 +68,7 @@ SOAK_WINDOW ?=
 # more for tools/perf.py, e.g. PERF_ARGS="--scenes tour,crowd --wait 30"
 PERF_ARGS ?=
 
-.PHONY: all engine client steam import run test test-client soak perf variants lint need-timeout art audio app-icon icons achievement-icons achievement-vdf steam-art deck \
+.PHONY: all engine client steam import run test test-client soak perf cold-start variants lint need-timeout art audio app-icon icons achievement-icons achievement-vdf steam-art deck \
 	i18n-catalog i18n-check help help-check dist dist-macos dist-linux dist-windows source-check steampipe
 all: engine
 
@@ -194,6 +197,16 @@ deck: need-timeout all client
 # and the report are in build/perf.
 perf: all
 	python3 tools/perf.py --godot "$(GODOT)" $(PERF_ARGS)
+
+# A player's first launch, $(COLD_STARTS) times over (tools/cold_start.py,
+# the README's "A first launch"): the release build staged as for perf,
+# started in a window with Godot's shader cache and the user folder empty
+# (HOME a scratch folder), each to reach the title in time. A start that
+# hangs fails it, with where every thread waits. Headless runs compile no
+# shaders and never meet this: run it before a release.
+COLD_STARTS ?= 5
+cold-start: all
+	python3 tools/cold_start.py --godot "$(GODOT)" --runs $(COLD_STARTS)
 
 # The pipeline variants the rehearsal makes under the veil
 # (client/godot/art/variants.txt): a census of what $(VARIANT_SCENES) draw,
