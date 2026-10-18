@@ -296,7 +296,8 @@ const PRELOAD_BUDGET: std::time::Duration = std::time::Duration::from_millis(6);
 /// thread waiting for them while it holds the renderer; behind all the
 /// files asked for at once, its tasks never ran, and the files read,
 /// waiting on the renderer for their textures, never let it go (a first
-/// start, its shader cache empty, hung under the veil).
+/// start, its shader cache empty, hung under the veil). The rehearsal's
+/// files count too (`set_others_loading`).
 pub(crate) fn loads_at_once() -> usize {
     static AT_ONCE: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
     *AT_ONCE.get_or_init(|| {
@@ -363,6 +364,9 @@ pub struct Art {
     /// Files being read on worker threads (`res://` paths), and the ones
     /// read, held so that a load of them is the cached resource.
     loading: Vec<String>,
+    /// Files others read on the loader's threads now (the rehearsal's):
+    /// they count against `loads_at_once` too.
+    others_loading: usize,
     loaded: HashMap<String, Gd<godot::classes::Resource>>,
     /// A library being stripped of its root motion over several steps:
     /// its name, the source, what is stripped so far, the next animation.
@@ -437,6 +441,7 @@ impl Art {
             preload: Vec::new(),
             requested: false,
             loading: Vec::new(),
+            others_loading: 0,
             loaded: HashMap::new(),
             stripping: None,
             warmed: HashSet::new(),
@@ -692,13 +697,26 @@ impl Art {
         }
     }
 
+    /// Files the loading ahead has the loader's threads reading now.
+    pub fn loads_in_flight(&self) -> usize {
+        self.loading.len()
+    }
+
+    /// Files others have the loader's threads reading now (the
+    /// rehearsal's): the loading ahead keeps both under `loads_at_once`.
+    pub fn set_others_loading(&mut self, n: usize) {
+        self.others_loading = n;
+    }
+
     /// Ask the loader's threads for a file not read yet; true while it is
     /// being read, or waits its turn (`loads_at_once`).
     fn request(&mut self, path: String) -> bool {
         if self.loaded.contains_key(&path) {
             return false;
         }
-        if self.loading.contains(&path) || self.loading.len() >= loads_at_once() {
+        if self.loading.contains(&path)
+            || self.loading.len() + self.others_loading >= loads_at_once()
+        {
             return true;
         }
         let mut loader = ResourceLoader::singleton();

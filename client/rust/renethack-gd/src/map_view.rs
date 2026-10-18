@@ -5857,6 +5857,9 @@ impl MapView {
             self.showing += 1;
             self.show_parts();
         }
+        // the loader's threads shared with the rehearsal's own files
+        let others = self.rehearsal.as_ref().map_or(0, |r| r.loading());
+        self.art.set_others_loading(others);
         let mut more = self.art.preload_step();
         let art = now.elapsed();
         if !more
@@ -5882,7 +5885,8 @@ impl MapView {
             // what it draws loads in the background meanwhile; it plays
             // once the art is loaded (a game started ends it)
             if more {
-                r.fetch();
+                let room = crate::art::loads_at_once().saturating_sub(self.art.loads_in_flight());
+                r.fetch(room);
                 self.rehearsal = Some(r);
             } else if r.step(self, self.root.get_process_delta_time()) {
                 self.rehearsal = Some(r);

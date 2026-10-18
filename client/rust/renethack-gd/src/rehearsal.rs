@@ -208,12 +208,13 @@ impl Rehearsal {
     pub fn new(catalog: &Catalog, fetch: Vec<String>) -> Rehearsal {
         let mut world = World::new();
         world.set_catalog(catalog);
-        // the textures all at once; the scenes one after another (a
-        // scene's meshes compile their pipelines on the frame it arrives)
-        let (mut scenes, textures): (Vec<String>, Vec<String>) =
+        // the textures first, a few at a time; then the scenes one after
+        // another (a scene's meshes compile their pipelines on the frame
+        // it arrives)
+        let (scenes, textures): (Vec<String>, Vec<String>) =
             fetch.into_iter().partition(|p| is_scene(p));
-        scenes.reverse();
-        let fetching = textures.into_iter().filter(|p| request(p)).collect();
+        let mut queued: Vec<String> = textures.into_iter().chain(scenes).collect();
+        queued.reverse();
         let mut r = Rehearsal {
             world,
             catalog: catalog.clone(),
@@ -221,24 +222,33 @@ impl Rehearsal {
             stage: 0,
             frame: 0,
             acted: 0,
-            fetching,
-            queued: scenes,
+            fetching: Vec::new(),
+            queued,
             fetched: Vec::new(),
         };
         r.lay_level();
         r
     }
 
-    /// Take what has loaded, and send for the next scene; true when
-    /// nothing is loading any more (every frame, also while the art
-    /// loads ahead).
-    pub fn fetch(&mut self) -> bool {
-        if !self.fetching.iter().any(|p| is_scene(p)) {
-            while let Some(p) = self.queued.pop() {
-                if request(&p) {
-                    self.fetching.push(p);
-                    break;
-                }
+    /// Take what has loaded, and send for more: no more than `room` files
+    /// at once (what the art's loading ahead leaves of the loader's
+    /// threads, `art::loads_at_once`: asked for all at once, the files
+    /// filled its pool, and a first start, its shaders compiling on the
+    /// same threads, could hang), a scene only once the one before has
+    /// arrived. True when nothing is loading any more (every frame, also
+    /// while the art loads ahead).
+    pub fn fetch(&mut self, room: usize) -> bool {
+        while self.fetching.len() < room {
+            let scene_loading = self.fetching.iter().any(|p| is_scene(p));
+            match self.queued.last() {
+                None => break,
+                Some(p) if is_scene(p) && scene_loading => break,
+                Some(_) => {}
+            }
+            if let Some(p) = self.queued.pop()
+                && request(&p)
+            {
+                self.fetching.push(p);
             }
         }
         if self.fetching.is_empty() {
@@ -265,6 +275,11 @@ impl Rehearsal {
             }
         }
         self.fetching.is_empty() && self.queued.is_empty()
+    }
+
+    /// Files it has the loader's threads reading now.
+    pub fn loading(&self) -> usize {
+        self.fetching.len()
     }
 
     /// The map it plays (its monsters and objects are built ahead).
@@ -296,7 +311,8 @@ impl Rehearsal {
         let in_time = |t: std::time::Instant| !veiled || t.elapsed() < VEILED_FRAME;
         match self.phase {
             Phase::Fetch => {
-                if self.fetch() {
+                // the art's loading ahead is over: all the room is its
+                if self.fetch(crate::art::loads_at_once()) {
                     self.phase = Phase::Upload;
                 }
             }
