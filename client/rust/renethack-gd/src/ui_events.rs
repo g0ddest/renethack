@@ -84,6 +84,8 @@ pub enum UiEvent {
     HintClose,
     /// "Your quest": a step on or back, or the rest skipped.
     Quest(crate::guide_view::QuestInput),
+    /// The game's menu: an entry taken.
+    GameMenu(crate::game_menu::GameMenuPick),
     /// From the help panel.
     Help(crate::help_panel::HelpInput),
 }

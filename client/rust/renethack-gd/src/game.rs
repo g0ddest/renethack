@@ -186,6 +186,8 @@ pub struct Ui {
     /// quest" over the game at a new player's first game.
     pub hint: crate::guide_view::HintCard,
     pub quest: crate::guide_view::QuestPage,
+    /// The game's menu (Esc at the command prompt).
+    pub game_menu: crate::game_menu::GameMenu,
     pub audio: crate::audio::Audio,
     /// The prologue's words and black, over everything.
     pub prologue: crate::prologue_view::PrologueView,
@@ -845,6 +847,11 @@ impl INode for RenethackGame {
         quest_layer.set_name("QuestLayer");
         quest_layer.set_layer(4);
         self.base_mut().add_child(&quest_layer);
+        // the game's menu, over the game like the guide's page
+        let mut game_menu_layer = CanvasLayer::new_alloc();
+        game_menu_layer.set_name("GameMenuLayer");
+        game_menu_layer.set_layer(4);
+        self.base_mut().add_child(&game_menu_layer);
         // the voices and the ears, in the map's 3D world
         crate::audio::ensure_buses();
         let mut audio_root = Node3D::new_alloc();
@@ -864,6 +871,7 @@ impl INode for RenethackGame {
             toast: crate::achievement_view::Toast::new(toast_layer),
             hint: crate::guide_view::HintCard::new(hint_layer, self.queue.clone()),
             quest: crate::guide_view::QuestPage::new(quest_layer, self.queue.clone()),
+            game_menu: crate::game_menu::GameMenu::new(game_menu_layer, self.queue.clone()),
             audio: crate::audio::Audio::new(audio_root),
             prologue: crate::prologue_view::PrologueView::new(next()),
         });
@@ -2196,6 +2204,11 @@ impl RenethackGame {
             self.quest_key(k);
             return;
         }
+        // so has the game's menu
+        if self.ui.as_ref().is_some_and(|ui| ui.game_menu.is_open()) {
+            self.game_menu_key(k);
+            return;
+        }
         // the client's own keys as the player moved them, where commands
         // are awaited (the engine at work or at its prompt, nothing open
         // that takes letters), and a key that is never data (F-keys, Ctrl)
@@ -2294,6 +2307,11 @@ impl RenethackGame {
             self.ui_mut().hint.dismiss();
             return;
         }
+        // Esc (B) at the command prompt, nothing else up: the game's menu
+        if command && k.key == Key::Escape && !k.echo && self.count.shown().is_none() {
+            self.open_game_menu();
+            return;
+        }
         if command {
             self.command_key(k);
             return;
@@ -2357,7 +2375,11 @@ impl RenethackGame {
         let Some(ui) = self.ui.as_ref() else {
             return false;
         };
-        if ui.help.is_open() || ui.inventory.is_open() || ui.quest.is_open() {
+        if ui.help.is_open()
+            || ui.inventory.is_open()
+            || ui.quest.is_open()
+            || ui.game_menu.is_open()
+        {
             return false;
         }
         match &self.pending {
@@ -2436,6 +2458,52 @@ impl RenethackGame {
             _ => QuestInput::Next,
         };
         self.quest_input(input);
+    }
+
+    /// The game's menu, over the game at its command prompt (orders stop).
+    fn open_game_menu(&mut self) {
+        self.driver.interrupt(Stop::Panel);
+        self.ui_mut().game_menu.open();
+    }
+
+    /// A key on the game's menu: ↑↓ (Tab) choose, Enter or Space takes
+    /// the entry, Esc goes back to the game; no other key does anything.
+    fn game_menu_key(&mut self, k: KeyInput) {
+        use crate::game_menu::GameMenuPick;
+        if k.echo && !matches!(k.key, Key::Up | Key::Down) {
+            return;
+        }
+        match k.key {
+            Key::Up => self.ui_mut().game_menu.step(-1),
+            Key::Down | Key::Tab => self.ui_mut().game_menu.step(1),
+            Key::Enter | Key::KeypadEnter | Key::Char(' ') => {
+                let pick = self.ui_mut().game_menu.focused();
+                self.game_menu_pick(pick);
+            }
+            Key::Escape => self.game_menu_pick(GameMenuPick::Resume),
+            _ => {}
+        }
+    }
+
+    /// An entry of the game's menu taken: the menu goes, and its deed is
+    /// done (saving and giving up are the engine's commands, at the
+    /// command prompt, under the engine's own questions).
+    fn game_menu_pick(&mut self, pick: crate::game_menu::GameMenuPick) {
+        use crate::game_menu::GameMenuPick;
+        if !self.ui.as_ref().is_some_and(|ui| ui.game_menu.is_open()) {
+            return;
+        }
+        self.ui_mut().game_menu.close();
+        match pick {
+            GameMenuPick::Resume => {}
+            GameMenuPick::Settings => self.open_settings(),
+            GameMenuPick::SaveLeave => {
+                self.use_slot(SlotUse::Macro(nh_world::Macro::ext("save")));
+            }
+            GameMenuPick::GiveUp => {
+                self.use_slot(SlotUse::Macro(nh_world::Macro::ext("quit")));
+            }
+        }
     }
 
     /// "Your quest"'s words for `step`, the keys as the player presses them.
@@ -2553,6 +2621,7 @@ impl RenethackGame {
                     && !ui.help.is_open()
                     && !ui.hud.full_log_open()
                     && !ui.quest.is_open()
+                    && !ui.game_menu.is_open()
                     && ui.screens.current().is_none()
             });
         let Some(ui) = self.ui.as_mut() else {
@@ -2791,6 +2860,7 @@ impl RenethackGame {
             || self.settings_open()
             || self.credits_open()
             || ui.quest.is_open()
+            || ui.game_menu.is_open()
         {
             return PadCtx::Other;
         }
@@ -3592,6 +3662,7 @@ impl RenethackGame {
             }
             UiEvent::HintClose => self.ui_mut().hint.dismiss(),
             UiEvent::Quest(input) => self.quest_input(input),
+            UiEvent::GameMenu(pick) => self.game_menu_pick(pick),
             UiEvent::Help(input) => self.ui_mut().help.input(input),
             UiEvent::KeyUp(k) => self.on_key_up(k),
             UiEvent::FocusLost => {
@@ -4524,6 +4595,7 @@ impl RenethackGame {
     fn show_title(&mut self, notice: Option<String>) {
         self.state = GameState::Title;
         self.show_game(false);
+        self.ui_mut().game_menu.close();
         let saves = list_saves(&self.playground()).unwrap_or_else(|e| {
             godot_warn!("renethack: cannot list saves: {e}");
             Vec::new()
@@ -4756,6 +4828,7 @@ impl RenethackGame {
                 self.hint_gone_at = None;
                 if let Some(ui) = self.ui.as_mut() {
                     ui.hint.clear();
+                    ui.game_menu.close();
                 }
                 self.link_error = None;
                 self.name = Some(name.to_string());

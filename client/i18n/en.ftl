@@ -1057,6 +1057,18 @@ quest-back = Back
 quest-skip = Skip
 quest-play = Play
 quest-hint = Any key or a click: next · ←: back · Esc: skip
+
+## The game's menu (Esc at the command prompt)
+
+game-menu-title = Game
+game-menu-resume = Back to the game
+game-menu-settings = Settings
+game-menu-save = Save and leave
+game-menu-give-up = Give up
+game-menu-give-up-about = Giving up ends this game for good: the hero dies, and nothing is saved.
+game-menu-hint = ↑↓: choose · Enter: take · Esc: back to the game
+quit-warning = The hero dies here and the game ends for good: it is not saved and cannot be continued.
+palette-give-up = Give up: end this game for good, without saving
 hint-chapter = Chapter
 hint-scroll = Scroll
 

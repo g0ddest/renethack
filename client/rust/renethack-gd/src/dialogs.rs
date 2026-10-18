@@ -104,6 +104,8 @@ pub struct PaletteCmd {
     pub desc: String,
     /// Its key as the player presses it now ("" for none).
     pub key: String,
+    /// Other words that find it ("give up" finds #quit), lower case.
+    pub also: Vec<String>,
 }
 
 /// Does the palette list this command? Not "#" itself: choosing it would
@@ -122,11 +124,29 @@ pub fn palette_cmds(catalog: Option<&Catalog>, keymap: &nh_world::Keymap) -> Vec
         .extcmds
         .iter()
         .filter(|e| palette_lists(&e.name))
-        .map(|e| PaletteCmd {
-            name: e.name.clone(),
-            // the engine's words: its translator gives them
-            desc: i18n::engine(EngineKind::Menu, &e.desc).into_owned(),
-            key: crate::rebind::bound_code(keymap, e.key),
+        .map(|e| {
+            // #quit is giving up: said so, and found by those words too
+            let quit = e.name == "quit";
+            PaletteCmd {
+                name: e.name.clone(),
+                // the engine's words: its translator gives them
+                desc: if quit {
+                    tr!("palette-give-up")
+                } else {
+                    i18n::engine(EngineKind::Menu, &e.desc).into_owned()
+                },
+                key: crate::rebind::bound_code(keymap, e.key),
+                also: if quit {
+                    let own = tr!("game-menu-give-up").to_lowercase();
+                    let mut also = vec!["give up".to_string()];
+                    if own != "give up" {
+                        also.push(own);
+                    }
+                    also
+                } else {
+                    Vec::new()
+                },
+            }
         })
         .collect()
 }
@@ -148,7 +168,7 @@ pub fn palette_filter(cmds: &[PaletteCmd], text: &str) -> Vec<usize> {
                 0
             } else if name.starts_with(&text) {
                 1
-            } else if name.contains(&text) {
+            } else if name.contains(&text) || c.also.iter().any(|a| a.contains(&text)) {
                 2
             } else {
                 return None;
@@ -350,6 +370,24 @@ fn tables_kept(english: &[&str], shown: Vec<String>) -> Vec<String> {
         i = j;
     }
     out
+}
+
+/// The engine's question before a game is given up (#quit), plain or
+/// paranoid ("Really quit without saving? [yes|n] (n)", and its "Yes" or
+/// "No" again).
+fn quits(english: &str) -> bool {
+    english
+        .trim_start_matches("\"Yes\" or \"No\": ")
+        .starts_with("Really quit without saving?")
+}
+
+/// What giving up means, under the engine's question: in the danger's
+/// colour, as wide as the question.
+fn quit_warning(width: f32) -> Gd<Label> {
+    let mut l = theme::styled_label(&tr!("quit-warning"), Face::Body, 16, theme::DANGER);
+    l.set_autowrap_mode(AutowrapMode::WORD_SMART);
+    l.set_custom_minimum_size(Vector2::new(width, 0.0));
+    l
 }
 
 /// The item's map symbol, when it has a printable one.
@@ -3798,6 +3836,11 @@ impl Dialogs {
             } => {
                 let width = self.fit_width(query.chars().count().min(80), 0.0, 420.0);
                 let (shade, panel, mut col) = self.frame_at(width, Some(query), Place::Top);
+                if let Prompt::Choice { query: english, .. } = original
+                    && quits(english)
+                {
+                    col.add_child(&quit_warning(width));
+                }
                 let items: Vec<(String, UiEvent)> = visible
                     .iter()
                     .map(|&c| (choice_label(c), dialog_ui(req, DialogEvent::Choice(c))))
@@ -3846,7 +3889,22 @@ impl Dialogs {
                     .flatten();
                 match ask.and_then(|a| self.open_picker(req, query, a, catalog)) {
                     Some(opened) => opened,
-                    None => self.open_text(req, query, *name, pickers::is_engraving(english)),
+                    None => {
+                        let opened =
+                            self.open_text(req, query, *name, pickers::is_engraving(english));
+                        // paranoid_confirmation:quit asks for the word
+                        if quits(english) {
+                            let width = self.fit_width(query.chars().count().min(70), 0.0, 560.0);
+                            let mut warning = quit_warning(width);
+                            if let Some(mut col) = opened.2.get_child(0) {
+                                col.add_child(&warning);
+                                col.move_child(&warning, 1);
+                            } else {
+                                warning.queue_free();
+                            }
+                        }
+                        opened
+                    }
                 }
             }
             Prompt::ExtCmd => self.open_palette(req, catalog),
@@ -5214,8 +5272,24 @@ mod tests {
                 name: n.to_string(),
                 desc: String::new(),
                 key: String::new(),
+                also: Vec::new(),
             })
             .collect()
+    }
+
+    #[test]
+    fn giving_up_finds_quit() {
+        let mut c = cmds(&["pray", "quit", "quiver"]);
+        c[1].also = vec!["give up".to_string(), "сдаться".to_string()];
+        assert_eq!(names(&c, &palette_filter(&c, "give")), ["quit"]);
+        assert_eq!(names(&c, &palette_filter(&c, "Сдат")), ["quit"]);
+        assert_eq!(names(&c, &palette_filter(&c, "qu")), ["quit", "quiver"]);
+        assert!(quits("Really quit without saving?"));
+        assert!(quits("Really quit without saving? [yes|n] (n)"));
+        assert!(quits(
+            "\"Yes\" or \"No\": Really quit without saving? [yes|n] (n)"
+        ));
+        assert!(!quits("Really save?"));
     }
 
     fn names(c: &[PaletteCmd], idx: &[usize]) -> Vec<String> {

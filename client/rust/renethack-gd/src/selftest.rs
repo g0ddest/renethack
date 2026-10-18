@@ -58,6 +58,8 @@ mod falls_tests;
 mod first_tests;
 #[path = "selftest_gameplay.rs"]
 mod gameplay_tests;
+#[path = "selftest_give_up.rs"]
+mod give_up_tests;
 #[path = "selftest_guide.rs"]
 mod guide_tests;
 #[path = "selftest_help.rs"]
@@ -4899,6 +4901,7 @@ impl SelfTest {
             "spells" => spells_tests::spells(),
             "spells-many" => spells_tests::spells_many(),
             "spells-one" => spells_tests::spells_one(),
+            "give-up" => give_up_tests::give_up(),
             "skills" => skills_tests::skills(),
             "journal" => journal_tests::journal(),
             "codex" => codex_tests::codex(),
@@ -5447,6 +5450,14 @@ fn layout_fits(game: &RenethackGame) -> Result<(), String> {
         _ => {}
     }
     quest_names_clear(ui, canvas)?;
+    if let Some(r) = ui.game_menu.rect()
+        && !canvas.encloses(r)
+    {
+        return Err(format!(
+            "the game's menu at {:.0},{:.0} {:.0}×{:.0} is not inside the canvas",
+            r.position.x, r.position.y, r.size.x, r.size.y
+        ));
+    }
     // the guide's card: inside the canvas, off the HUD's blocks and off
     // the map's middle, where the hero stands
     if let Some(r) = ui.hint.rect() {

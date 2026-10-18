@@ -23,6 +23,7 @@ mod engulf;
 mod frame_log;
 mod gallery;
 mod game;
+mod game_menu;
 mod gamepad;
 mod guide_view;
 mod hearing;
