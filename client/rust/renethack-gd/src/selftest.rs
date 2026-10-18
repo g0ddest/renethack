@@ -48,6 +48,8 @@ mod credits_tests;
 mod crowd_tests;
 #[path = "selftest_doll.rs"]
 mod doll_tests;
+#[path = "selftest_doorways.rs"]
+mod doorways;
 #[path = "selftest_effects.rs"]
 mod effects;
 #[path = "selftest_falls.rs"]
@@ -4870,6 +4872,7 @@ impl SelfTest {
             "title" => world_looks::title(),
             "bestiary" => world_looks::bestiary(),
             "corridors" => corridors::corridors(),
+            "doorways" => doorways::doorways(),
             "shop" => shop::shop(),
             "effects" => effects::effects(),
             "prologue" => prologue_tests::prologue(),

@@ -824,6 +824,138 @@ pub fn lay_out_scene(
     Ok(())
 }
 
+/// A room for the `doorways` self-test: three doors in its north wall
+/// (the camera looks through them), three in its east wall and the
+/// hero's in its west wall, corridors beyond. `.` a lit floor, `#` a
+/// corridor, `|` and `-` walls, `r 7 L J` their corners, `D` a door
+/// someone stands in (`DOORWAY_DOORS`), `H` the hero's.
+const DOORWAYS: [&str; 9] = [
+    "   # # #   ",
+    " r-D-D-D-7 ",
+    " |.......| ",
+    " |.......D#",
+    "#H.......| ",
+    " |.......D#",
+    " |.......| ",
+    " |.......D#",
+    " L-------J ",
+];
+/// Where the room lies on the map.
+const DOORWAYS_AT: (i32, i32) = (32, 5);
+
+/// A door of the `doorways` self-test as the map last saw it, before
+/// someone stood in it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DoorSeen {
+    /// Shut: whoever stands in it opened it, broke it down or slipped
+    /// under it. The engine draws them with no ground under them, so the
+    /// map still remembers it shut.
+    Shut,
+    Open,
+    /// No door, or a broken one (NetHack draws the two alike).
+    Doorway,
+}
+
+impl DoorSeen {
+    pub const ALL: [DoorSeen; 3] = [DoorSeen::Shut, DoorSeen::Open, DoorSeen::Doorway];
+
+    /// Its map symbol in a wall along a row (`across`) or a column.
+    fn sym(self, across: bool) -> &'static str {
+        match (self, across) {
+            (DoorSeen::Shut, true) => "S_hcdoor",
+            (DoorSeen::Shut, false) => "S_vcdoor",
+            (DoorSeen::Open, true) => "S_hodoor",
+            (DoorSeen::Open, false) => "S_vodoor",
+            (DoorSeen::Doorway, _) => "S_ndoor",
+        }
+    }
+}
+
+/// The doors someone stands in, by column and row of `DOORWAYS`: the
+/// north wall's, then the east wall's, each wall's `DoorSeen::ALL` in
+/// turn. Inside the room, one foe of each door's, each a kind of its own
+/// (a blow told by name finds its one).
+pub const DOORWAY_DOORS: [(i32, i32); 6] = [(3, 1), (5, 1), (7, 1), (9, 3), (9, 5), (9, 7)];
+pub const DOORWAY_FOES: [(&str, (i32, i32)); 6] = [
+    ("kobold", (3, 2)),
+    ("hill orc", (5, 2)),
+    ("dwarf", (7, 2)),
+    ("hobbit", (8, 3)),
+    ("homunculus", (8, 5)),
+    ("giant rat", (8, 7)),
+];
+/// The hero's door and the hero's foe inside; where the body the doors
+/// hold stands on the room's floor; the room's middle.
+pub const DOORWAY_HERO: (i32, i32) = (1, 4);
+pub const DOORWAY_HERO_FOE: (&str, (i32, i32)) = ("sewer rat", (2, 4));
+pub const DOORWAY_FLOOR: (i32, i32) = (5, 5);
+const DOORWAY_MIDDLE: (i32, i32) = (5, 4);
+
+/// The door of `DOORWAY_DOORS` it is, as seen before.
+pub fn door_seen(door: usize) -> DoorSeen {
+    DoorSeen::ALL[door % DoorSeen::ALL.len()]
+}
+
+/// A cell of `DOORWAYS` on the map.
+pub fn doorway_cell((col, row): (i32, i32)) -> (i32, i32) {
+    (DOORWAYS_AT.0 + col, DOORWAYS_AT.1 + row)
+}
+
+/// Replace the map with the room of `DOORWAYS`: `body` in each of its
+/// doors and on its floor, their foes inside, the hero in the west door
+/// (seen as `hero_door`), the camera over the room's middle. Everyone is
+/// drawn as the engine draws them: with no ground under them, the map's
+/// memory of each cell holding.
+pub fn lay_out_doorways(
+    world: &mut World,
+    cat: &Catalog,
+    body: &str,
+    hero_door: DoorSeen,
+) -> Result<(), String> {
+    let map = &mut world.map;
+    map.clear();
+    for (row, line) in DOORWAYS.iter().enumerate() {
+        for (col, ch) in line.chars().enumerate() {
+            let at = (col as i32, row as i32);
+            let sym = match ch {
+                '.' => "S_room",
+                '#' => "S_corr",
+                '|' => "S_vwall",
+                '-' => "S_hwall",
+                'r' => "S_tlcorn",
+                '7' => "S_trcorn",
+                'L' => "S_blcorn",
+                'J' => "S_brcorn",
+                'D' => {
+                    let door = DOORWAY_DOORS
+                        .iter()
+                        .position(|&d| d == at)
+                        .ok_or_else(|| format!("no door at {at:?}"))?;
+                    door_seen(door).sym(at.1 == 1)
+                }
+                'H' => hero_door.sym(false),
+                _ => continue,
+            };
+            let (x, y) = doorway_cell(at);
+            map.print(x, y, &cmap(cat, sym)?, None);
+        }
+    }
+    let mut put = |name: &str, flags: u32, at: (i32, i32)| -> Result<(), String> {
+        let (x, y) = doorway_cell(at);
+        map.print(x, y, &monster(cat, name, flags, GlyphKind::Mon)?, None);
+        Ok(())
+    };
+    for at in DOORWAY_DOORS.iter().copied().chain([DOORWAY_FLOOR]) {
+        put(body, 0, at)?;
+    }
+    for (name, at) in DOORWAY_FOES.iter().copied().chain([DOORWAY_HERO_FOE]) {
+        put(name, 0, at)?;
+    }
+    put("valkyrie", mg::HERO | mg::FEMALE, DOORWAY_HERO)?;
+    world.view_center = Some(doorway_cell(DOORWAY_MIDDLE));
+    Ok(())
+}
+
 /// Wares to a row of the `shop` self-test's floor, and where its first
 /// cell lies on the map.
 const SHOP_COLUMNS: i32 = 12;

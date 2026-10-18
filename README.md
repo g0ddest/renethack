@@ -254,7 +254,14 @@ the hero steps off a frame before the next): the hero and the pet stay,
 their rings under them and the hero on the inventory's doll. The `through`
 scenario puts a giant mummy in the cell south of the hero, between them and
 the camera: the hero's outline shows through it, as through a wall; a newt
-there, or the giant north of them, hides nothing. The `orders`
+there, or the giant north of them, hides nothing. The `doorways`
+scenario lays out a room with doors in a wall along a row and in one along
+a column, each seen shut, open and doorless, the same body in each (a
+gnome leader, an ogre, a jackal, a lizard, a newt) and the hero in one:
+every one's feet are on the room's floor within a centimetre, standing,
+mid-blow and reeling. A creature in a door last seen shut opened it (the
+engine draws no ground under it), so the door is drawn open, the creature
+on its floor. The `orders`
 scenario walks, holds, counts, stops a walk with a key, takes the stairs,
 and meets a hostile that stops a walk (with `--screenshots`, the way
 previewed and the combat banner). The `inventory`

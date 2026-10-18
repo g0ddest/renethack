@@ -2474,7 +2474,15 @@ fn look_of(cell: &Cell, near: Near, ctx: &Ctx) -> Look {
     match &cell.terrain {
         Some(t) => {
             let sym = cmap_sym(t, catalog).unwrap_or("");
-            let terrain = terrain_of(sym);
+            let mut terrain = terrain_of(sym);
+            // nobody stands in a shut door: the engine draws whoever is in
+            // a doorway with no ground under them (a door is the room's
+            // floor to it), so a door last seen shut is the one they opened,
+            // broke or slipped under. They stand on its floor, its leaf
+            // swung aside, not on its top
+            if terrain == Terrain::ClosedDoor && occupied(cell) {
+                terrain = Terrain::OpenDoor;
+            }
             terrain_look(&mut look, terrain, sym, t, &near, ctx);
             if terrain == Terrain::Stone && cell.entity().is_none() {
                 rock_look(&mut look, &near, ctx);
@@ -2537,6 +2545,21 @@ fn look_of(cell: &Cell, near: Near, ctx: &Ctx) -> Look {
         look.entity = entity;
     }
     look
+}
+
+/// Someone or something is on the cell, not an effect passing over it.
+fn occupied(cell: &Cell) -> bool {
+    cell.glyph.as_ref().is_some_and(|g| {
+        matches!(
+            g.kind,
+            GlyphKind::Mon
+                | GlyphKind::Obj
+                | GlyphKind::Body
+                | GlyphKind::Statue
+                | GlyphKind::Invisible
+                | GlyphKind::Warning
+        )
+    })
 }
 
 /// What a glyph adds to its cell's look: an effect flashes, a creature or
@@ -8433,6 +8456,48 @@ mod tests {
             y(&wet),
             wet.ground
         );
+    }
+
+    #[test]
+    fn whoever_is_in_a_door_last_seen_shut_stands_on_its_floor() {
+        let f = Fixture::new();
+        let cat = &f.cat;
+        let y = |l: &Look| l.models[l.entity.unwrap()].pos.y;
+        for sym in ["S_hcdoor", "S_vcdoor"] {
+            let shut = feature(cat, sym);
+            assert!(
+                f.look(&shut).ground >= CUT_HEIGHT,
+                "{sym}: a shut door's top"
+            );
+            // in it as the engine draws them: no ground under them, the door
+            // remembered shut
+            for (who, g) in [
+                ("an orc", monster(cat, "hill orc", 0)),
+                ("the hero", monster(cat, "valkyrie", mg::HERO | mg::FEMALE)),
+            ] {
+                let cell = Cell {
+                    glyph: Some(g),
+                    ..shut.clone()
+                };
+                let look = f.look(&cell);
+                assert_eq!(look.ground, 0.0, "{sym}: {who} stands on its floor");
+                assert_eq!(y(&look), 0.0, "{sym}: {who}");
+                // the leaf swung aside, as an open door's
+                let open = sym.replace('c', "o");
+                let drawn = f.look(&Cell {
+                    glyph: cell.glyph.clone(),
+                    ..feature(cat, &open)
+                });
+                assert_eq!(look.solids, drawn.solids, "{sym}: {who}");
+            }
+        }
+        // a bolt passing over a shut door leaves it shut
+        let mut bolt = feature(cat, "S_hcdoor");
+        bolt.glyph = Some(Glyph {
+            kind: GlyphKind::Zap,
+            ..cmap(cat, "S_hcdoor")
+        });
+        assert!(f.look(&bolt).ground >= CUT_HEIGHT);
     }
 
     #[test]
