@@ -1143,14 +1143,16 @@ fn a_rank_in_the_hero_s_gender() {
     t.set_hero(Gender::Fem);
     let out = t.window(&text);
     assert!(
-        out.text.contains("только что обученная отпускница"),
+        out.text
+            .contains("Вы — отпускница, и обучение ваше только что завершилось"),
         "{}",
         out.text
     );
     let valkyrie = text.replacen("newly trained Rambler", "newly trained Stripling", 1);
     let out = t.window(&valkyrie);
     assert!(
-        out.text.contains("только что обученная новобранка"),
+        out.text
+            .contains("Вы — новобранка, и обучение ваше только что завершилось"),
         "{}",
         out.text
     );
@@ -1285,8 +1287,8 @@ fn a_heroine_s_words_are_whole() {
         ("002c5fff4c79", "неопытна", "неопытена"),
         ("8d95afba370e", "должна", "должена"),
         ("33ebf1c2b7ae", "должна", "должена"),
-        ("ad446562f4db", "Жалкая", "Жалкийя"),
-        ("3c43d922bc08", "жалкая", "жалкийя"),
+        ("ad446562f4db", "Ты жалка", "Жалкийя"),
+        ("3c43d922bc08", "Ты жалка", "жалкийя"),
         ("9ebbfb53236a", "одна", "одина"),
         ("e7d183f6ed98", "вышла", "вышела"),
         ("82210a32f7d3", "отнесла", "отнёсла"),
@@ -1296,6 +1298,51 @@ fn a_heroine_s_words_are_whole() {
         let text = tr.template.render(&[], Gender::Fem);
         assert!(text.contains(hers) && !text.contains(never), "{id}: {text}");
     }
+}
+
+#[test]
+fn a_heroine_is_spoken_to_as_one() {
+    // ru-editor: an adjective by the hero's gender before a rank that has
+    // no feminine («какую-то Меткого стрелка»), lines said to every hero
+    // in the masculine, the Chromatic Dragon speaking as a he
+    let mut t = Translator::built_in().expect("the built-in translator");
+    t.set_hero(Gender::Fem);
+    let ru = |id: &str| {
+        t.russian()
+            .get(id)
+            .unwrap_or_else(|| panic!("{id}"))
+            .template
+            .render(&[], Gender::Fem)
+    };
+    for (id, hers, never) in [
+        ("9a91c64e5113", "шлёт против меня", "какую-то"),
+        (
+            "a2ae94185b1e",
+            "не сравниться с моим искусством",
+            "Какая-то",
+        ),
+        ("42f2e57cb7df", "меня не одолеть", "Простому"),
+        (
+            "e056ded7e6c9",
+            "Ты пьяна или всегда такая неуклюжая?",
+            "пьян ",
+        ),
+        ("51131edb47e4", "Ты недостойна искать Амулет.", "недостоин "),
+        ("192077760360", "Ты не думала", "думал "),
+        ("211059dc6fed", "Так вы — лучшая ученица", "лучший ученик"),
+        ("1e88cfd407a7", "Я проголодалась", "проголодался"),
+        ("d91d11dbd4cb", "я непобедима", "непобедим!"),
+    ] {
+        let text = ru(id);
+        assert!(text.contains(hers) && !text.contains(never), "{id}: {text}");
+    }
+    // the Mother of all Dragons is a she in every line about her
+    let out = t.message(
+        None,
+        &[],
+        "\"Do not be fooled by the Chromatic Dragon's size.  She is fast, and it is rumored that she uses magic.\"",
+    );
+    assert!(out.text.contains("Она быстра"), "{}", out.text);
 }
 
 /// The built-in catalog and lexicon with these translations only: (the

@@ -34,7 +34,7 @@ ru = "«{1:gender|Твой|Твоя|Твоё|Твои} {1} — ничто, {2:he
 
 [879dbd7ee83b]
 en = "\"Run away little %s!  You can never hope to defeat %s!\""
-ru = "«Беги-беги, {hero:gender|маленький|маленькая} {1:hero}!  Тебе ни за что не победить {2:acc}!»"
+ru = "«Беги-беги, {1:hero}!  Тебе ни за что не победить {2:acc}!»"
 
 [4df52aee3771]
 en = "\"My servants will rip you to shreds!\""
@@ -54,7 +54,7 @@ ru = "«{1:cap} {1:gender|оставил|оставила|оставило|ос�
 
 [9a91c64e5113]
 en = "\"%s?  %s sends a mere %s against me?  Hah!\""
-ru = "«{1:hero:cap}?  {2:cap} шлёт против меня {hero:gender|какого-то|какую-то} {3:hero:acc}?  Ха!»"
+ru = "«{1:hero:cap}?  {2:cap} шлёт против меня {3:hero:acc}?  Ха!»"
 
 [5332e4df7b94]
 en = "\"%s has failed, %s.  %s will never leave here.\""
@@ -234,7 +234,7 @@ ru = "«Итак, {1:hero}.  {2:cap} {2:gender|послал|послала|по�
 
 [3daa772c3f08]
 en = "\"Back again, eh?  Well, a mere %s is no threat to me!  Die, %s!\""
-ru = "«Снова ты, а?  Что ж, {hero:gender|какой-то|какая-то} {1:hero} мне не угроза!  Умри, {2:hero}!»"
+ru = "«Снова ты, а?  Что ж, тебе, {1:hero}, со мной не тягаться!  Умри, {2:hero}!»"
 
 [542dd8d3f7e4]
 en = "\"You haven't learned your lesson, %s.  You can't kill me!  You shall die now.\""

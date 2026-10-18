@@ -166,7 +166,7 @@ ru = "«А от какого вида, по-*вашему*, мы произош�
 
 [211059dc6fed]
 en = "\"So you're %s prize pupil!  I don't know what he sees in you.\""
-ru = "«Так вы — лучший ученик {1:gen}!  Не понимаю, что он в вас нашёл.»"
+ru = "«Так вы — {hero:gender|лучший ученик|лучшая ученица} {1:gen}!  Не понимаю, что он в вас нашёл.»"
 
 [425be27bcf2d]
 en = "[Take the Amulet to the Astral Plane and sacrifice it at the altar of %s.]"

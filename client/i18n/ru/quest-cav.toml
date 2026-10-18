@@ -30,7 +30,7 @@ ru = "«Ты {hero:gender|слаб|слаба}, {1:hero}.  Для Матери �
 
 [1e88cfd407a7]
 en = "\"I grow hungry, %s.  You look like a nice appetizer!\""
-ru = "«Я проголодался, {1:hero}.  Ты выглядишь отличной закуской!»"
+ru = "«Я проголодалась, {1:hero}.  Ты выглядишь отличной закуской!»"
 
 [3ddc18a40132]
 en = "\"Join me for lunch?  You're the main course, %s.\""
@@ -38,7 +38,7 @@ ru = "«Отобедаешь со мной?  Ты — главное блюдо,
 
 [d91d11dbd4cb]
 en = "\"With %s, I am invincible!  You cannot succeed.\""
-ru = "«С {1:ins} я непобедим!  У тебя ничего не выйдет.»"
+ru = "«С {1:ins} я непобедима!  У тебя ничего не выйдет.»"
 
 [fff958dff301]
 en = "\"Your mentor, %s has failed.  You are nothing to fear.\""
@@ -118,7 +118,7 @@ ru = "[Вы входите в большую пещеру.  Здесь {1}.]"
 
 [77fa25f4e0de]
 en = "You find yourself in a large cavern, with neatly polished walls, that\nnevertheless show signs of being scorched by fire.\n\nBones litter the floor, and there are objects scattered everywhere.\nThe air is close with the stench of sulphurous fumes.\n\n%s is clearly visible, but %s seems to be asleep."
-ru = "Вы оказываетесь в большой пещере с гладко отполированными стенами,\nна которых, однако, видны следы огня.\n\nПол усеян костями, всюду разбросаны вещи.\nВоздух тяжёл от смрада серных испарений.\n\n{1:cap} хорошо {1:gender|виден|видена|видено|видены}, но, кажется, {1:gender|он|она|оно|они}{2:skip} спит."
+ru = "Вы оказываетесь в большой пещере с гладко отполированными стенами,\nна которых, однако, видны следы огня.\n\nПол усеян костями, всюду разбросаны вещи.\nВоздух тяжёл от смрада серных испарений.\n\n{1:cap} хорошо {1:gender|виден|видна|видно|видны}, но, кажется, {1:gender|он|она|оно|они}{2:skip} спит."
 
 [d05dfdaf8f54]
 en = "Once again, you find yourself in the lair of %s."

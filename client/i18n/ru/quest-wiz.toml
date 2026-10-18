@@ -55,7 +55,7 @@ ru = "«Твоя вера в {1:acc} напрасна!  Ну же, покори�
 
 [a2ae94185b1e]
 en = "\"A mere %s is nothing compared to my skill!\""
-ru = "«{hero:gender|Какой-то|Какая-то} {1:hero} — ничто перед моим искусством!»"
+ru = "«Тебе, {1:hero}, не сравниться с моим искусством!»"
 
 [dfb53280d426]
 en = "\"So, you are the best hope of %s?  How droll.\""

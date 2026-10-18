@@ -460,7 +460,7 @@
 # human or elf
 "Thoth Amon" = { ru = "Тот-Амон", src = "chosen", note = "was Тот Амон; the Russian Conan spelling", hyphen = "last" }
 # dragon
-"Chromatic Dragon" = { ru = "Хроматический дракон", src = "nethack-ru" }
+"Chromatic Dragon" = { ru = "Хроматическая драконица", src = "chosen", g = "f", note = "M2_FEMALE: the Mother of all Dragons; was Хроматический дракон" }
 # giant humanoid
 "Cyclops" = { ru = "Циклоп", src = "chosen", note = "was циклоп; unique: capitalised" }
 # dragon
@@ -490,7 +490,7 @@
 "ninja" = { ru = "ниндзя", src = "nethack-ru" }
 "roshi" = { ru = "роси", src = "nethack-ru" }
 "guide" = { ru = "проводник", src = "nethack-ru" }
-"warrior" = { ru = "воин", src = "nethack-ru" }
+"warrior" = { ru = "воительница", src = "chosen", g = "f", note = "the Valkyrie quest's guardians, M2_FEMALE; was воин" }
 "apprentice" = { ru = "подмастерье", src = "nethack-ru" }
 "poohbah" = { ru = "шишка", src = "chosen", note = "hallucination: the grand poohbah of a god is the big шишка" }
 "guardian Angel" = { ru = "ангел-хранитель", src = "chosen", note = "a tame Angel" }

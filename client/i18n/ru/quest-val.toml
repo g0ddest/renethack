@@ -163,7 +163,7 @@ ru = "«Вам нужно спешить, {1}, иначе того и гляди
 
 [f28b95e22db3]
 en = "\"I would deal with this foul %s myself, but %s forbids it.\""
-ru = "«Я бы сам разделался с этим мерзким {1:ins}, но {2} запрещает.»"
+ru = "«Я бы сама разделалась с этим мерзким {1:ins}, но {2} запрещает.»"
 
 [ef61ea1016fa]
 en = "[Take the Amulet to %s temple on the Astral Plane and offer it.]"

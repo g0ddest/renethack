@@ -34,7 +34,7 @@ ru = "«Ты всего лишь безбожная пустота.»"
 
 [51131edb47e4]
 en = "\"Thou art not worthy to seek the Amulet.\""
-ru = "«Ты недостоин искать Амулет.»"
+ru = "«Ты {hero:gender|недостоин|недостойна} искать Амулет.»"
 
 [f50a7270c2dc]
 en = "\"No one expects the Spanish Inquisition!\""
@@ -94,7 +94,7 @@ ru = "«Ступай поиграй в чехарду со стадом един
 
 [e056ded7e6c9]
 en = "\"Hast thou been drinking, or art thou always so clumsy?\""
-ru = "«Ты пьян или всегда такой неуклюжий?»"
+ru = "«Ты {hero:gender|пьян|пьяна} или всегда {hero:gender|такой неуклюжий|такая неуклюжая}?»"
 
 [8b6bf356c796]
 en = "\"This time I shall let thee off with a spanking, but let it not happen again.\""
@@ -126,7 +126,7 @@ ru = "«Из вас с кузиной Медуза — та, что красив
 
 [d7081fc3c2bb]
 en = "\"Methinks thou wert unnaturally stirred by yon corpse back there, eh, varlet?\""
-ru = "«Сдаётся мне, тот труп позади взволновал тебя как-то противоестественно, а, негодяй?»"
+ru = "«Сдаётся мне, тот труп позади взволновал тебя как-то противоестественно, а, {hero:gender|негодяй|негодяйка}?»"
 
 [ce5bea4550e8]
 en = "\"Up thy nose with a rubber hose!\""
@@ -142,7 +142,7 @@ ru = "«Постой!  Я превращусь в ситового жучка, �
 
 [a7bf70a9c0c9]
 en = "\"Why search for the Amulet?  Thou wouldst but lose it, cretin.\""
-ru = "«Зачем тебе Амулет?  Всё равно потеряешь, болван.»"
+ru = "«Зачем тебе Амулет?  Всё равно потеряешь, {hero:gender|болван|дурёха}.»"
 
 [c9e59aaa6210]
 en = "\"Thy gaze is so vacant, I thought thee a floating eye!\""
@@ -158,7 +158,7 @@ ru = "«Тебя может полюбить разве что твоё отра
 
 [192077760360]
 en = "\"Hast thou considered masking thine odour?\""
-ru = "«Ты не думал как-нибудь скрыть свою вонь?»"
+ru = "«Ты не {hero:gender|думал|думала} как-нибудь скрыть свою вонь?»"
 
 [4de873609a03]
 en = "\"Hold! Thy face is a most exquisite torture!\""
@@ -174,11 +174,11 @@ ru = "[{1} {1:gender|избрал|избрала|избрало|избрали} 
 
 [670f2a410935]
 en = "It is written in the Book of %s:\n\n    After the Creation, the cruel god Moloch rebelled\n    against the authority of Marduk the Creator.\n    Moloch stole from Marduk the most powerful of all\n    the artifacts of the gods, the Amulet of Yendor,\n    and he hid it in the dark cavities of Gehennom, the\n    Under World, where he now lurks, and bides his time.\n\nYour %s %s seeks to possess the Amulet, and with it\nto gain deserved ascendance over the other gods.\n\nYou, a newly trained %s, have been heralded\nfrom birth as the instrument of %s.  You are destined\nto recover the Amulet for your deity, or die in the\nattempt.  Your hour of destiny has come.  For the sake\nof us all:  Go bravely with %s!"
-ru = "Написано в Книге {1:gen}:\n\n    После Сотворения жестокий бог Молох восстал\n    против власти Мардука-Творца.\n    Молох похитил у Мардука могущественнейший\n    из артефактов богов — Амулет Йендора —\n    и спрятал его в тёмных пустотах Геенны,\n    Подземного мира, где ныне таится, выжидая своего часа.\n\n{3:gender|Ваш бог|Ваша богиня|Ваше божество|Ваши боги}{2:skip} {3} {3:gender|стремится|стремится|стремится|стремятся} завладеть Амулетом, а с ним\nобрести заслуженное превосходство над прочими богами.\n\nВы, {hero:gender|только что обученный|только что обученная} {4:hero}, с самого рождения\nбыли предназначены стать орудием {5:gen}.  Вам суждено\nвернуть Амулет своему божеству или погибнуть, пытаясь.\nПробил час вашей судьбы.  Ради всех нас: ступайте смело, и да пребудет с вами {6}!"
+ru = "Написано в Книге {1:gen}:\n\n    После Сотворения жестокий бог Молох восстал\n    против власти Мардука-Творца.\n    Молох похитил у Мардука могущественнейший\n    из артефактов богов — Амулет Йендора —\n    и спрятал его в тёмных недрах Геенны,\n    Подземного мира, где ныне таится, выжидая своего часа.\n\n{3:gender|Ваш бог|Ваша богиня|Ваше божество|Ваши боги}{2:skip} {3} {3:gender|стремится|стремится|стремится|стремятся} завладеть Амулетом, а с ним\nобрести заслуженное превосходство над прочими богами.\n\nВы — {4:hero}, и обучение ваше только что завершилось.  С самого рождения\nвам было предначертано стать орудием {5:gen}.  Вам суждено\nвернуть Амулет своему божеству — или погибнуть в этом походе.\nПробил час вашей судьбы.  Ради всех нас: ступайте смело, и да пребудет с вами {6}!"
 
 [56a8ff47019a]
 en = "It is written in the Book of %s:\n\n    After the Creation, the cruel god Moloch rebelled\n    against the authority of Marduk the Creator.\n    Moloch stole from Marduk the most powerful of all\n    the artifacts of the gods, the Amulet of Yendor,\n    and he hid it in the dark cavities of Gehennom, the\n    Under World, where he now lurks, and bides his time.\n\nYour %s %s seeks to possess the Amulet, and with it\nto gain deserved ascendance over the other gods.\n\nYou, an untrained %s, have been unable to adequately\nprepare to be the instrument of %s.  Nevertheless, you\nare destined to recover the Amulet for your deity, or die\nin the attempt.  Your hour of destiny has come.  For the\nsake of us all:  Go bravely with %s!"
-ru = "Написано в Книге {1:gen}:\n\n    После Сотворения жестокий бог Молох восстал\n    против власти Мардука-Творца.\n    Молох похитил у Мардука могущественнейший\n    из артефактов богов — Амулет Йендора —\n    и спрятал его в тёмных пустотах Геенны,\n    Подземного мира, где ныне таится, выжидая своего часа.\n\n{3:gender|Ваш бог|Ваша богиня|Ваше божество|Ваши боги}{2:skip} {3} {3:gender|стремится|стремится|стремится|стремятся} завладеть Амулетом, а с ним\nобрести заслуженное превосходство над прочими богами.\n\nВы, {hero:gender|необученный|необученная} {4:hero}, так и не смогли как следует\nподготовиться к тому, чтобы стать орудием {5:gen}.  И всё же вам суждено\nвернуть Амулет своему божеству или погибнуть, пытаясь.\nПробил час вашей судьбы.  Ради всех нас: ступайте смело, и да пребудет с вами {6}!"
+ru = "Написано в Книге {1:gen}:\n\n    После Сотворения жестокий бог Молох восстал\n    против власти Мардука-Творца.\n    Молох похитил у Мардука могущественнейший\n    из артефактов богов — Амулет Йендора —\n    и спрятал его в тёмных недрах Геенны,\n    Подземного мира, где ныне таится, выжидая своего часа.\n\n{3:gender|Ваш бог|Ваша богиня|Ваше божество|Ваши боги}{2:skip} {3} {3:gender|стремится|стремится|стремится|стремятся} завладеть Амулетом, а с ним\nобрести заслуженное превосходство над прочими богами.\n\nВы — {4:hero}, и вам так и не удалось как следует\nподготовиться к тому, чтобы стать орудием {5:gen}.  И всё же вам суждено\nвернуть Амулет своему божеству — или погибнуть в этом походе.\nПробил час вашей судьбы.  Ради всех нас: ступайте смело, и да пребудет с вами {6}!"
 
 [ddfce0f91a54]
 en = "\"The silver bell which was hoarded by %s will be\nessential in locating the Amulet of Yendor.\""

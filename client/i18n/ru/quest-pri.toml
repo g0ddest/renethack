@@ -18,7 +18,7 @@ ru = "[{1:hero:dat:cap} не выстоять против {2:gen}.  Возвр�
 
 [ed1f526c7d6d]
 en = "\"Alas, %s, it is not yet to be.  A mere %s could never\nwithstand the might of %s.  Go forth, again into the world, and return\nwhen you have attained the post of %s.\""
-ru = "«Увы, {1}, этому ещё не время.  {hero:gender|Простому|Простой} {2:hero:dat} никогда не выстоять\nпротив мощи {3:gen}.  Ступайте снова в мир и возвращайтесь,\nкогда достигнете звания {4:hero:gen}.»"
+ru = "«Увы, {1}, этому ещё не время.  {2:hero:dat:cap} никогда не выстоять\nпротив мощи {3:gen}.  Ступайте снова в мир и возвращайтесь,\nкогда достигнете звания {4:hero:gen}.»"
 
 [3daf69ce896d]
 en = "\"Beware, %s is surrounded by a great graveyard.\""

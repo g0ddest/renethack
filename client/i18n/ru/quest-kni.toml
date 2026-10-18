@@ -27,7 +27,7 @@ not_terms = ["Champion"]
 
 [42f2e57cb7df]
 en = "\"A mere %s can never withstand me!\""
-ru = "«Простому {1:hero:dat} меня не одолеть!»"
+ru = "«Тебе, {1:hero}, меня не одолеть!»"
 
 [adae7a7fbb03]
 en = "\"I shall kill thee now, and feast!\""
@@ -35,7 +35,7 @@ ru = "«Сейчас я убью тебя и попирую!»"
 
 [ad446562f4db]
 en = "\"Puny %s.  What manner of death dost thou wish?\""
-ru = "«{hero:gender|Жалкий|Жалкая} {1:hero}.  Какую смерть ты себе желаешь?»"
+ru = "«Ты {hero:gender|жалок|жалка}, {1:hero}.  Какую смерть ты себе желаешь?»"
 
 [76f740b4056d]
 en = "\"First thee, %s, then I shall feast upon %s.\""
@@ -233,7 +233,7 @@ ru = "«Ты воистину {hero:gender|глупец|глупая}, {1:hero}.
 
 [3c43d922bc08]
 en = "\"So, thou darest touch MY property!  I shall have that bauble back,\npuny %s.  Thou wilt die in agony!\""
-ru = "«Так ты смеешь трогать МОЁ добро!  Я верну себе эту безделушку,\n{hero:gender|жалкий|жалкая} {1:hero}.  Ты умрёшь в муках!»"
+ru = "«Так ты смеешь трогать МОЁ добро!  Я верну себе эту безделушку,\n{1:hero}.  Ты {hero:gender|жалок|жалка} и умрёшь в муках!»"
 
 [4ad5c8910d45]
 en = "Once again you stand in the shadows of %s."
