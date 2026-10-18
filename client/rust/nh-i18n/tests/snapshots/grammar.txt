@@ -3514,6 +3514,11 @@
   f    [Неожиданное достижение №3.]
   n    [Неожиданное достижение №5.]
   pl   [Неожиданное достижение №21.]
+ [max %d]  [7dab15a2d083]
+  m    [макс. 1]
+  f    [макс. 3]
+  n    [макс. 5]
+  pl   [макс. 21]
  [seen: %s]  [33f176dc80b6]
   m    [видно: тритон]
   f    [видно: крыса]
@@ -3699,6 +3704,11 @@
   f    history        крыса крыса
   n    history        копьё копьё
   pl   history        3 стрелы 3 стрелы
+ in %s  [63a0966af8ed]
+  m    в тритоне
+  f    в крысе
+  n    в копье
+  pl   в 3 стрелах
  in molten lava  [b13ed70d57c3]
   =    (в расплавленной лаве)
  in murky water  [07d0d1a2eb54]
@@ -3822,11 +3832,28 @@
   f    offer          крыса крыса
   n    offer          копьё копьё
   pl   offer          3 стрелы 3 стрелы
+ on level %d  [ddef30ebe89b]
+  m    на уровне 1
+  f    на уровне 3
+  n    на уровне 5
+  pl   на уровне 21
  on the %s  [2a3d6728437a]
   m    на тритоне
   f    на крысе
   n    на копье
   pl   на 3 стрелах
+ on the Astral Plane  [7d60685aad2b]
+  =    на Астральном плане
+ on the Plane of Air  [0ec85e66434a]
+  =    на Плане Воздуха
+ on the Plane of Earth  [d6f774cbea55]
+  =    на Плане Земли
+ on the Plane of Fire  [e9ee4d041e84]
+  =    на Плане Огня
+ on the Plane of Void  [646da77d64a7]
+  =    на Плане Пустоты
+ on the Plane of Water  [5570b799076f]
+  =    на Плане Воды
  on the ceiling  [09d8da28221a]
   =    на потолке
  open           %4s %s  [743e2348390a]
@@ -39920,6 +39947,10 @@ artifacts  [3dc52886d656]
   =   Артефакты
 ascended  [b3a0b6607def]
   =   Вознёсся
+ascended to demigod-hood  [ba65fca5f579]
+  =   Вознёсся, став полубогом
+ascended to demigoddess-hood  [9733452d9c00]
+  =   Вознеслась, став полубогиней
 ask before hitting tame or peaceful monsters  [33e8388d7a16]
   =   Спрашивать, прежде чем бить ручных или мирных монстров
 ask if you want the tutorial  [eacd37b44869]
@@ -40452,6 +40483,10 @@ choked on %s, while helpless  [f43e2699649f]
   f   Подавился крысой, в беспомощном состоянии
   n   Подавился копьём, в беспомощном состоянии
   pl  Подавился 3 стрелами, в беспомощном состоянии
+choked on her food  [6af1c6e76749]
+  =   Подавилась едой
+choked on his food  [bf4d7674baed]
+  =   Подавился едой
 choose character via dialog or prompts  [df934f3488b6]
   =   Выбор персонажа в окне или вопросами
 choplet  [e6f661e59142]
@@ -40856,6 +40891,11 @@ escaped from the dungeon with %ld points,  [f86b21ba623c]
   f   Сбежали из подземелья, набрав 3 очка,
   n   Сбежали из подземелья, набрав 5 очков,
   pl  Сбежали из подземелья, набрав 21 очко,
+escaped the dungeon [max level %d]  [90562de0711a]
+  m   Сбежал из подземелья [макс. уровень 1]
+  f   Сбежал из подземелья [макс. уровень 3]
+  n   Сбежал из подземелья [макс. уровень 5]
+  pl  Сбежал из подземелья [макс. уровень 21]
 eschewed atheism, by dropping %s on an altar  [84c451739e5f]
   m   Отказался от атеизма, положив тритона на алтарь
   f   Отказался от атеизма, положив крысу на алтарь
@@ -42513,6 +42553,8 @@ start your character without armor  [fcbb549666ea]
   =   Начать без доспехов
 starvation  [b8a321a7aaf8]
   =   Голод
+starved to death  [ed5a7bc3a50c]
+  =   Умер от голода
 stash one item into %s  [a3753fa72fb5]
   m   Положить один предмет в тритона
   f   Положить один предмет в крысу
@@ -43095,6 +43137,8 @@ was crowned "The Hand of Elbereth" by %s  [bdb598c3f291]
   f   Крыса нарекла его Дланью Elbereth
   n   Копьё нарекло его Дланью Elbereth
   pl  3 стрелы нарекли его Дланью Elbereth
+was crushed to death  [78b8f0ce1f0b]
+  =   Был раздавлен насмерть
 was denied %s!  The Lady of the Lake has deemed her unworthy  [5bb73db3693a]
   m   Не получила тритона!  Леди Озера сочла её недостойной
   f   Не получила крысы!  Леди Озера сочла её недостойной
@@ -43110,6 +43154,8 @@ was given %s by the Lady of the Lake  [e5cf76442841]
   f   Получил крысу от Леди Озера
   n   Получил копьё от Леди Озера
   pl  Получил 3 стрелы от Леди Озера
+was poisoned  [ae6dfe7a84bf]
+  =   Был отравлен
 water lemon  [4dd4a0f8d1da]
   =   Водяной лимон
 water melon  [ad34dd249922]

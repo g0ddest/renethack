@@ -188,6 +188,14 @@ impl EngineText for EngineTranslator {
             .take_while(|l| l.trim().is_empty())
             .count();
         self.cached(EngineKind::Window, &whole, None, |t| {
+            // the top ten list: each entry read whole and wrapped again
+            if let Some(list) = t.topten(&lines[lead..lines.len() - trail]) {
+                return Output {
+                    text: list.join("\n"),
+                    status: Status::Translated,
+                    template: None,
+                };
+            }
             if t.is_layout(&whole) {
                 // the tombstone, #overview, the vanquished: the client lays
                 // them out from their English
@@ -344,6 +352,26 @@ mod tests {
             "                      /          \\",
         ];
         assert_eq!(t.window(Lang::Ru, &rip), None);
+    }
+
+    #[test]
+    fn the_top_ten_list_is_read_entry_by_entry() {
+        let t = loaded();
+        // the end screen's list: an entry the engine wrapped mid-sentence
+        let lines = [
+            " No  Points     Name                                                   Hp [max]",
+            "  2        512  Wolf-Wiz-Elf-Mal-Cha died in The Gnomish Mines on",
+            "                level 3.  Killed by a jackal.                           -  [12]",
+        ];
+        let out = t.window(Lang::Ru, &lines).expect("the Russian list");
+        assert_eq!(
+            out,
+            [
+                " №   Очки       Имя                                                    ОЗ [макс]",
+                "  2        512  Wolf-Wiz-Elf-Mal-Cha умер в Гномьих копях на уровне",
+                "                3.  Убит шакалом.                                       -  [12]",
+            ]
+        );
     }
 
     #[test]

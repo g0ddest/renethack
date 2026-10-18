@@ -1188,6 +1188,70 @@ fn the_top_ten_s_header() {
     assert_eq!(t.text("No").text, "Нет");
 }
 
+#[test]
+fn the_top_ten_list() {
+    // topten.c: the header, then entries wrapped mid-sentence over lines
+    // (a death with its killer, a quit, an escape, a starving), as
+    // outentry() prints them; each read whole in its own hero's gender
+    // and wrapped again with the hit points in their columns
+    let english = [
+        " No  Points     Name                                                   Hp [max]",
+        "  1       2341  Hero-Val-Hum-Fem-Neu died in The Dungeons of Doom on",
+        "                level 5 [max 6].  Killed by a soldier ant, while",
+        "                helpless.                                               -  [52]",
+        "  2        512  Wolf-Wiz-Elf-Mal-Cha died in The Gnomish Mines on",
+        "                level 3.  Killed by a jackal.                           -  [12]",
+        "  3        120  Hero-Tou-Hum-Mal-Neu quit in The Dungeons of Doom on",
+        "                level 1.                                               10  [10]",
+        "  4         98  Kai-Sam-Hum-Fem-Law escaped the dungeon [max level",
+        "                4].                                                    13  [15]",
+        "  5         77  Ann-Arc-Dwa-Fem-Law starved to death in Sokoban on",
+        "                level 2 [max 7].                                        -  [30]",
+    ];
+    let russian = [
+        " №   Очки       Имя                                                    ОЗ [макс]",
+        "  1       2341  Hero-Val-Hum-Fem-Neu умерла в Подземельях Рока на",
+        "                уровне 5 [макс. 6].  Убита муравьём-солдатом, в",
+        "                беспомощном состоянии.                                  -  [52]",
+        "  2        512  Wolf-Wiz-Elf-Mal-Cha умер в Гномьих копях на уровне",
+        "                3.  Убит шакалом.                                       -  [12]",
+        "  3        120  Hero-Tou-Hum-Mal-Neu сдался в Подземельях Рока на",
+        "                уровне 1.                                              10  [10]",
+        "  4         98  Kai-Sam-Hum-Fem-Law сбежала из подземелья [макс.",
+        "                уровень 4].                                            13  [15]",
+        "  5         77  Ann-Arc-Dwa-Fem-Law умерла от голода в Сокобане на",
+        "                уровне 2 [макс. 7].                                     -  [30]",
+    ];
+    let mut t = Translator::built_in().expect("the built-in translator");
+    // the player's own gender is not the entries'
+    t.set_hero(Gender::Masc);
+    let out = t.topten(&english).expect("the top ten list");
+    assert_eq!(out, russian);
+    // the engine's own (nh-world's live game, a quit after an escape):
+    // the player's entry unranked and padded to the screen's width
+    let real = [
+        "",
+        " No  Points     Name                                                   Hp [max]",
+        "  1          7  Wolf-Wiz-Elf-Mal-Cha escaped the dungeon [max level",
+        "                1].                                                    11  [11]",
+        "             0  Kai-Sam-Hum-Mal-Law quit in The Dungeons of Doom on            ",
+        "                level 1.                                               15  [15]",
+    ];
+    assert_eq!(
+        t.topten(&real).expect("the top ten list"),
+        [
+            "",
+            " №   Очки       Имя                                                    ОЗ [макс]",
+            "  1          7  Wolf-Wiz-Elf-Mal-Cha сбежал из подземелья [макс.",
+            "                уровень 1].                                            11  [11]",
+            "             0  Kai-Sam-Hum-Mal-Law сдался в Подземельях Рока на",
+            "                уровне 1.                                              15  [15]",
+        ]
+    );
+    // a hero's death line is no list
+    assert_eq!(t.topten(&["You die..."]), None);
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {

@@ -96,7 +96,7 @@ impl Translator {
     fn said(&self, english: &str) -> Option<String> {
         let t = &self.catalog.templates()[self.catalog.by_fmt(english)?];
         let ru = self.russian.get(&t.id)?;
-        Some(ru.template.render(&[], self.hero))
+        Some(ru.template.render(&[], self.hero()))
     }
 
     /// What the symbol can be: the alternatives " or " joins, split so
@@ -295,7 +295,7 @@ impl Translator {
             })
             .collect();
         Read {
-            text: ru.render(&[Value::Text(ways.join(", "))], self.hero),
+            text: ru.render(&[Value::Text(ways.join(", "))], self.hero()),
             unread,
         }
     }

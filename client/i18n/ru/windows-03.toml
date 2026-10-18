@@ -942,3 +942,75 @@ ru = " У вас был неподъёмный груз; двигаться бы
 [5a74858cdce3]
 en = "Hp [max]"
 ru = "ОЗ [макс]"
+
+# topten.c outentry(): what became of a hero in the top ten list, where,
+# and how deep (the entry is read whole by translate/topten.rs, in the
+# gender of its own hero)
+
+[ed5a7bc3a50c]
+en = "starved to death"
+ru = "{hero:gender|умер|умерла} от голода"
+
+[bf4d7674baed]
+en = "choked on his food"
+ru = "подавился едой"
+
+[6af1c6e76749]
+en = "choked on her food"
+ru = "подавилась едой"
+
+[ae6dfe7a84bf]
+en = "was poisoned"
+ru = "{hero:gender|был отравлен|была отравлена}"
+
+[78b8f0ce1f0b]
+en = "was crushed to death"
+ru = "{hero:gender|был раздавлен насмерть|была раздавлена насмерть}"
+
+[90562de0711a]
+en = "escaped the dungeon [max level %d]"
+ru = "{hero:gender|сбежал|сбежала} из подземелья [макс. уровень {1}]"
+
+[ba65fca5f579]
+en = "ascended to demigod-hood"
+ru = "вознёсся, став полубогом"
+
+[9733452d9c00]
+en = "ascended to demigoddess-hood"
+ru = "вознеслась, став полубогиней"
+
+[63a0966af8ed]
+en = " in %s"
+ru = " в {1:prep}"
+
+[ddef30ebe89b]
+en = " on level %d"
+ru = " на уровне {1}"
+
+[7dab15a2d083]
+en = " [max %d]"
+ru = " [макс. {1}]"
+
+[7d60685aad2b]
+en = " on the Astral Plane"
+ru = " на Астральном плане"
+
+[d6f774cbea55]
+en = " on the Plane of Earth"
+ru = " на Плане Земли"
+
+[0ec85e66434a]
+en = " on the Plane of Air"
+ru = " на Плане Воздуха"
+
+[e9ee4d041e84]
+en = " on the Plane of Fire"
+ru = " на Плане Огня"
+
+[5570b799076f]
+en = " on the Plane of Water"
+ru = " на Плане Воды"
+
+[646da77d64a7]
+en = " on the Plane of Void"
+ru = " на Плане Пустоты"

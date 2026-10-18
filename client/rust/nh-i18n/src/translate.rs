@@ -24,7 +24,14 @@ use crate::russian::Russian;
 use crate::template::{Part, Placeholder, RuTemplate, Target, Value, capitalize};
 
 mod look;
+mod topten;
 mod worn;
+
+thread_local! {
+    /// The gender of a hero not the player's whose text is being read (a
+    /// top ten's entry), while `as_hero` reads it.
+    static AS_HERO: std::cell::Cell<Option<Gender>> = const { std::cell::Cell::new(None) };
+}
 
 /// How deep a text made of texts is followed.
 const MAX_NESTING: usize = 3;
@@ -123,6 +130,20 @@ impl Translator {
     /// The hero's gender, for `{hero:gender|...}`.
     pub fn set_hero(&mut self, gender: Gender) {
         self.hero = gender;
+    }
+
+    /// The gender the texts read now are a hero's of: the player's, or
+    /// another's while `as_hero` reads one.
+    fn hero(&self) -> Gender {
+        AS_HERO.with(|h| h.get()).unwrap_or(self.hero)
+    }
+
+    /// `read` with the texts a hero of `gender`'s, not the player's.
+    fn as_hero<T>(&self, gender: Gender, read: impl FnOnce() -> T) -> T {
+        let before = AS_HERO.with(|h| h.replace(Some(gender)));
+        let out = read();
+        AS_HERO.with(|h| h.set(before));
+        out
     }
 
     pub fn catalog(&self) -> &Catalog {
@@ -742,7 +763,7 @@ impl Translator {
             }
             self.russian.get(&t.id)
         };
-        let find = |s: &str| translation(s).map(|t| t.phrase(self.hero));
+        let find = |s: &str| translation(s).map(|t| t.phrase(self.hero()));
         let bare = ["the ", "The ", "a ", "A ", "an ", "An "]
             .iter()
             .find_map(|a| text.strip_prefix(a));
@@ -781,7 +802,10 @@ impl Translator {
                 v
             })
             .collect();
-        let forms: Vec<String> = forms.iter().map(|f| f.render(&values, self.hero)).collect();
+        let forms: Vec<String> = forms
+            .iter()
+            .map(|f| f.render(&values, self.hero()))
+            .collect();
         let (gender, number) = tr
             .gender
             .unwrap_or((Gender::Masc, crate::grammar::Number::Sing));
@@ -837,7 +861,7 @@ impl Translator {
         whole: bool,
         upper: bool,
     ) -> Output {
-        let text = euphony(&ru.render(values, self.hero)).into_owned();
+        let text = euphony(&ru.render(values, self.hero())).into_owned();
         Output {
             text: if upper { capitalize(&text) } else { text },
             status: if whole {
