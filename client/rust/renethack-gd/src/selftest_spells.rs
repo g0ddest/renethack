@@ -329,3 +329,241 @@ pub(super) fn spells() -> Vec<Step> {
     steps.extend(quit());
     steps
 }
+
+/// The books a Wizard learns for a long list: long names, every school.
+const BOOKS: [&str; 10] = [
+    "blessed spellbook of remove curse",
+    "blessed spellbook of create familiar",
+    "blessed spellbook of cure blindness",
+    "blessed spellbook of detect unseen",
+    "blessed spellbook of magic missile",
+    "blessed spellbook of cone of cold",
+    "blessed spellbook of stone to flesh",
+    "blessed spellbook of restore ability",
+    "blessed spellbook of confuse monster",
+    "blessed spellbook of teleport away",
+];
+
+/// The pack's letters before the wishes, then the books' letters.
+static WISHED: Mutex<Vec<char>> = Mutex::new(Vec::new());
+/// The book being read (its place in `BOOKS`).
+static READING: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
+/// What is on screen for the spells' menu the engine waits on: the panel,
+/// or the menu as it came when it is not one.
+fn spells_or_why(g: &RenethackGame, purpose: Purpose) -> Result<bool, String> {
+    fail_on_error_screen(g)?;
+    let ui = g.ui.as_ref().ok_or("no UI")?;
+    if ui.dialogs.spells_open() == Some((purpose, false)) {
+        return Ok(true);
+    }
+    match g.pending.as_ref() {
+        Some((_, Prompt::Menu { title, items, .. })) if ui.dialogs.is_open() => {
+            let lines: Vec<String> = items
+                .iter()
+                .map(|i| format!("{} {:?}", i.selectable, i.str))
+                .collect();
+            Err(format!("{title:?} came as a plain menu: {lines:#?}"))
+        }
+        _ => Ok(false),
+    }
+}
+
+/// `spells-many`: a Wizard who has read ten more books (debug mode's
+/// wishes), long names among them: `+`, `Z` and the swap each come as the
+/// spells' panel, every spell a row.
+pub(super) fn spells_many() -> Vec<Step> {
+    let mut steps = vec![Step::Call("debug mode", |g| {
+        g.debug_mode = true;
+        Ok(())
+    })];
+    steps.extend(start_as(wizard()));
+    steps.push(Step::Call("the pack before the wishes", |g| {
+        let had: Vec<char> = g.world.inventory.items().iter().map(|i| i.letter).collect();
+        *WISHED.lock().map_err(|e| e.to_string())? = had;
+        Ok(())
+    }));
+    for wish in BOOKS {
+        steps.extend(super::audio_tests::wish(wish));
+    }
+    steps.push(Step::Call("the books wished for", |g| {
+        let mut w = WISHED.lock().map_err(|e| e.to_string())?;
+        let books: Vec<char> = g
+            .world
+            .inventory
+            .items()
+            .iter()
+            .map(|i| i.letter)
+            .filter(|c| !w.contains(c))
+            .collect();
+        if books.len() != BOOKS.len() {
+            return Err(format!("{} books wished for: {books:?}", books.len()));
+        }
+        *w = books;
+        Ok(())
+    }));
+    steps.push(Step::Call("the first book", |_| {
+        READING.store(0, Ordering::Relaxed);
+        Ok(())
+    }));
+    for _ in BOOKS {
+        steps.extend([
+            key('r'),
+            Step::Request("what to read", |p| !matches!(p, Prompt::Command)),
+            Step::KeyFrom("the book", |_| {
+                let books = WISHED.lock().map_err(|e| e.to_string())?;
+                books
+                    .get(READING.load(Ordering::Relaxed))
+                    .map(|c| KeyInput::plain(Key::Char(*c)))
+                    .ok_or_else(|| "no book left".to_string())
+            }),
+            Step::KeysUntil("read through", |g| {
+                fail_on_error_screen(g)?;
+                if command(g)? {
+                    return Ok(None);
+                }
+                Ok(Some(KeyInput::plain(Key::Enter)))
+            }),
+            Step::Call("the next book", |_| {
+                READING.fetch_add(1, Ordering::Relaxed);
+                Ok(())
+            }),
+        ]);
+    }
+    steps.extend([
+        key('+'),
+        Step::Wait("+'s panel for many spells", |g| {
+            spells_or_why(g, Purpose::View)
+        }),
+        Step::Call("every spell learnt is a row", |g| {
+            let b = book(g).ok_or("no spells")?;
+            godot::prelude::godot_print!(
+                "selftest: spells-many: {:?}",
+                b.spells.iter().map(|s| s.name.as_str()).collect::<Vec<_>>()
+            );
+            if b.spells.len() < 8 {
+                return Err(format!("{} spells known", b.spells.len()));
+            }
+            Ok(())
+        }),
+        Step::Shot("spells-many"),
+        esc(),
+        Step::Wait("closed", command),
+        key('Z'),
+        Step::Wait("Z's panel for many spells", |g| {
+            spells_or_why(g, Purpose::Cast)
+        }),
+        Step::Shot("spells-many-cast"),
+        esc(),
+        Step::Wait("closed", command),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
+fn monk() -> CharacterChoice {
+    CharacterChoice {
+        role: "monk".into(),
+        ..wizard()
+    }
+}
+
+/// The single spell `+` listed (a Monk's).
+static ONE: Mutex<String> = Mutex::new(String::new());
+
+/// `spells-one`: a Monk knows one spell, so spell.c's `+` is a menu of no
+/// choice, which comes as a text window: the spells' panel all the same,
+/// its spell a row (no table of the engine's columns); a pick casts it
+/// through `Z`, whose panel lists it too.
+pub(super) fn spells_one() -> Vec<Step> {
+    let mut steps = start_as(monk());
+    steps.extend([
+        key('+'),
+        Step::Wait("+'s panel for the one spell", |g| {
+            fail_on_error_screen(g)?;
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            if let Some((_, Prompt::Show { title, lines })) = g.pending.as_ref()
+                && ui.dialogs.is_open()
+                && ui.dialogs.spells_open().is_none()
+            {
+                return Err(format!("{title:?} came as a text window: {lines:?}"));
+            }
+            Ok(ui.dialogs.spells_open() == Some((Purpose::View, false)))
+        }),
+        Step::Call("its spell, its row", |g| {
+            let Some((_, Prompt::Show { title, lines })) = g.pending.as_ref() else {
+                return Err("+'s list is not the text window of one spell".into());
+            };
+            let headed: Vec<(String, bool)> = lines
+                .iter()
+                .map(|l| (l.text.clone(), l.attr & 0x0f != 0))
+                .collect();
+            let (_, b) = spells::shown(title.as_deref(), &headed).ok_or("no spellbook")?;
+            let [s] = b.spells.as_slice() else {
+                return Err(format!("{} spells", b.spells.len()));
+            };
+            let texts = g.ui.as_ref().ok_or("no UI")?.dialogs.panel_texts();
+            for want in [s.letter.to_string(), spells_view::spell_name(&s.name)] {
+                if !texts.contains(&want) {
+                    return Err(format!("{}'s row shows no {want:?}: {texts:?}", s.name));
+                }
+            }
+            *ONE.lock().map_err(|e| e.to_string())? = s.name.clone();
+            g.sent.clear();
+            Ok(())
+        }),
+        Step::Shot("spells-one"),
+        key('a'),
+        Step::Wait(
+            "cast through Z: its list let go, Z, the spell picked",
+            |g| {
+                fail_on_error_screen(g)?;
+                let name = ONE.lock().map_err(|e| e.to_string())?.clone();
+                let sent: Vec<&(Prompt, Reply)> = g.sent.iter().collect();
+                let closed = sent.iter().position(|(p, r)| {
+                matches!(p, Prompt::Show { title: Some(t), .. } if t == "Currently known spells")
+                    && *r == Reply::Cancel
+            });
+                let Some(at) = closed else {
+                    return Ok(false);
+                };
+                let picked = sent[at..].iter().find_map(|(p, r)| match (p, r) {
+                    (
+                        Prompt::Menu {
+                            title: Some(t),
+                            items,
+                            ..
+                        },
+                        Reply::Menu(picks),
+                    ) if t == "Choose which spell to cast" => {
+                        let b = spells::spellbook(Some(t), items)?;
+                        let idx = picks.first().map(|(i, _)| *i as i32)?;
+                        b.spell(idx).map(|s| s.name.clone())
+                    }
+                    _ => None,
+                });
+                match picked {
+                    Some(n) if n == name => Ok(true),
+                    Some(n) => Err(format!("Z's menu picked {n}, not {name}")),
+                    None => Ok(false),
+                }
+            },
+        ),
+        Step::KeysUntil("the cast's questions let go", |g| {
+            fail_on_error_screen(g)?;
+            if command(g)? {
+                return Ok(None);
+            }
+            Ok(Some(KeyInput::plain(Key::Escape)))
+        }),
+        key('Z'),
+        Step::Wait("Z's panel for the one spell", |g| {
+            shown(g, Purpose::Cast, false)
+        }),
+        Step::Shot("spells-one-cast"),
+        esc(),
+        Step::Wait("closed", command),
+    ]);
+    steps.extend(quit());
+    steps
+}

@@ -266,6 +266,92 @@ fn fields(text: &str) -> Vec<String> {
     out
 }
 
+/// A row's cells as a table has them: parted by a run of three spaces or
+/// more, a tab, or two spaces not after a sentence's end (prose has those).
+fn table_cells(text: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut cur = String::new();
+    let mut spaces = 0;
+    for c in text.trim().chars() {
+        match c {
+            ' ' => spaces += 1,
+            '\t' => spaces = 3,
+            _ => {
+                let sentence = cur.ends_with(['.', '!', '?', ':']);
+                if !cur.is_empty() && (spaces >= 3 || (spaces == 2 && !sentence)) {
+                    out.push(std::mem::take(&mut cur));
+                } else if spaces > 0 && !cur.is_empty() {
+                    cur.push_str(&" ".repeat(spaces));
+                }
+                spaces = 0;
+                cur.push(c);
+            }
+        }
+    }
+    if !cur.is_empty() {
+        out.push(cur);
+    }
+    out
+}
+
+/// A table's row in the language now, only while its translation keeps
+/// its cells apart: one that runs them together keeps the engine's
+/// English, in its columns.
+fn row_kept(english: &str, shown: String) -> String {
+    let cells = table_cells(english).len();
+    if cells >= 2 && table_cells(&shown).len() < cells {
+        english.to_string()
+    } else {
+        shown
+    }
+}
+
+/// A text window's lines in the language now, its tables keeping their
+/// columns in the monospace face: a block of rows of as many cells is
+/// laid out again when the translation changed it, each cell padded to
+/// its column; a row whose translation ran its cells together makes the
+/// block keep the engine's English.
+fn tables_kept(english: &[&str], shown: Vec<String>) -> Vec<String> {
+    if english.len() != shown.len() {
+        return shown;
+    }
+    let cells: Vec<Vec<String>> = english.iter().map(|t| table_cells(t)).collect();
+    let mut out = shown;
+    let mut i = 0;
+    while i < english.len() {
+        let n = cells[i].len();
+        let mut j = i + 1;
+        while j < english.len() && cells[j].len() == n {
+            j += 1;
+        }
+        if n >= 2 && (i..j).any(|k| out[k] != english[k]) {
+            let rows: Vec<Vec<String>> = out[i..j].iter().map(|t| table_cells(t)).collect();
+            if rows.iter().all(|r| r.len() == n) {
+                let width: Vec<usize> = (0..n)
+                    .map(|c| rows.iter().map(|r| r[c].chars().count()).max().unwrap_or(0))
+                    .collect();
+                for (k, row) in (i..j).zip(&rows) {
+                    let mut line: String = english[k].chars().take_while(|c| *c == ' ').collect();
+                    for (c, cell) in row.iter().enumerate() {
+                        line.push_str(cell);
+                        if c + 1 < n {
+                            let pad = width[c] - cell.chars().count() + 2;
+                            line.push_str(&" ".repeat(pad));
+                        }
+                    }
+                    out[k] = line;
+                }
+            } else {
+                for k in i..j {
+                    out[k] = english[k].to_string();
+                }
+            }
+        }
+        i = j;
+    }
+    out
+}
+
 /// The item's map symbol, when it has a printable one.
 fn glyph_char(e: &MenuEntry) -> Option<char> {
     e.glyph
@@ -3086,7 +3172,8 @@ impl Dialogs {
             PanelRow::Pick(cells, text)
         });
         // `+`'s: the reorder, a pick then the engine's swap
-        let button = (book.purpose == Purpose::View && book.spells.len() > 1).then(|| {
+        let reorders = book.spells.len() > 1;
+        let button = (book.purpose == Purpose::View && reorders).then(|| {
             let ev = dialog_ui(req, DialogEvent::Reorder);
             let mut b = theme::button(&tr!("spells-reorder"), &self.queue, ev);
             b.set_custom_minimum_size(Vector2::new(132.0, 34.0));
@@ -3099,7 +3186,13 @@ impl Dialogs {
             reorder: false,
             button,
         });
-        let kind = self.panel_menu(state, rows, items, foot, spells_hint(purpose, false, &key));
+        // a single spell: nothing to reorder
+        let hint = if purpose == Purpose::View && !reorders {
+            spells_hint(Purpose::Cast, false, &key)
+        } else {
+            spells_hint(purpose, false, &key)
+        };
+        let kind = self.panel_menu(state, rows, items, foot, hint);
         (kind, shade, panel)
     }
 
@@ -3217,7 +3310,7 @@ impl Dialogs {
         let Some(sp) = self.spells.as_mut() else {
             return;
         };
-        if sp.book.purpose != Purpose::View {
+        if sp.book.purpose != Purpose::View || sp.book.spells.len() < 2 {
             return;
         }
         sp.reorder = !sp.reorder;
@@ -3775,7 +3868,15 @@ impl Dialogs {
                     .iter()
                     .map(|l| (l.text.clone(), l.attr & 0x0f != 0, None))
                     .collect();
-                if let Some(s) = sheet::sheet(&texts) {
+                let headed: Vec<(String, bool)> = english
+                    .iter()
+                    .map(|l| (l.text.clone(), l.attr & 0x0f != 0))
+                    .collect();
+                if let Some((items, book)) = spells::shown(english_title, &headed) {
+                    // `+` with a single spell known: a menu of no choice,
+                    // the spells' panel all the same (a pick casts it)
+                    self.open_spells(req, PickHow::One, &items, book)
+                } else if let Some(s) = sheet::sheet(&texts) {
                     self.open_sheet(req, &s, english, lines)
                 } else if let Some(j) = journal::journal(&texts) {
                     self.open_journal(req, &j, catalog)
@@ -4782,6 +4883,7 @@ fn shown_window(lines: &[TextLine]) -> Vec<TextLine> {
     let Some(shown) = i18n::engine_window(&english) else {
         return lines.to_vec();
     };
+    let shown = tables_kept(&english, shown);
     let first = lines.first().map_or(0, |l| l.attr);
     shown
         .into_iter()
@@ -4813,7 +4915,10 @@ fn shown_prompt(p: &Prompt) -> Prompt {
             items: items
                 .iter()
                 .map(|i| nh_protocol::MenuItem {
-                    str: i.str.as_deref().map(|t| e(EngineKind::Menu, t)),
+                    str: i
+                        .str
+                        .as_deref()
+                        .map(|t| row_kept(t, e(EngineKind::Menu, t))),
                     ..i.clone()
                 })
                 .collect(),
@@ -5230,6 +5335,68 @@ mod tests {
         assert_eq!(mark_text(&e), "✔");
         e.count = Some(12);
         assert_eq!(mark_text(&e), "12");
+    }
+
+    #[test]
+    fn a_table_keeps_its_columns_in_another_language() {
+        // cells parted by runs of spaces; prose's two spaces after a
+        // sentence part nothing
+        assert_eq!(
+            table_cells("protection             1   clerical       0%      100%"),
+            ["protection", "1", "clerical", "0%", "100%"]
+        );
+        assert_eq!(
+            table_cells("Be careful!  New moon tonight."),
+            ["Be careful!  New moon tonight."]
+        );
+        // a translation that runs a row's cells together: the English row
+        let row = "protection             1   clerical       0%      100%";
+        assert_eq!(row_kept(row, "защита 1 жречество 0% 100%".into()), row);
+        assert_eq!(
+            row_kept("Осторожно!  Сегодня новолуние.", "x".into()),
+            "x",
+            "prose is no table"
+        );
+        assert_eq!(
+            row_kept("fruit   slime mold", "fruit   слизевой гриб".into()),
+            "fruit   слизевой гриб"
+        );
+        // a window's block of rows laid out again in its columns
+        let english = [
+            "Name          Points",
+            "force bolt    10",
+            "sleep         200",
+            "",
+            "Prose stays.",
+        ];
+        let shown = vec![
+            "Имя   Очки".to_string(),
+            "силовой удар   10".to_string(),
+            "сон   200".to_string(),
+            String::new(),
+            "Проза остаётся.".to_string(),
+        ];
+        assert_eq!(
+            tables_kept(&english, shown),
+            [
+                "Имя           Очки",
+                "силовой удар  10",
+                "сон           200",
+                "",
+                "Проза остаётся."
+            ]
+        );
+        // one row run together: the block keeps the English
+        let shown = vec![
+            "Имя   Очки".to_string(),
+            "силовой удар 10".to_string(),
+            "сон   200".to_string(),
+            String::new(),
+            "Проза остаётся.".to_string(),
+        ];
+        let kept = tables_kept(&english, shown);
+        assert_eq!(&kept[..3], &english[..3]);
+        assert_eq!(kept[4], "Проза остаётся.");
     }
 
     #[test]

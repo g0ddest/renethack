@@ -4897,6 +4897,8 @@ impl SelfTest {
             "rebind" => rebind_tests::rebind(),
             "sheet" => sheet_tests::sheet(),
             "spells" => spells_tests::spells(),
+            "spells-many" => spells_tests::spells_many(),
+            "spells-one" => spells_tests::spells_one(),
             "skills" => skills_tests::skills(),
             "journal" => journal_tests::journal(),
             "codex" => codex_tests::codex(),

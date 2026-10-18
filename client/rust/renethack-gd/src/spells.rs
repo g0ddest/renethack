@@ -179,6 +179,43 @@ pub fn spellbook(title: Option<&str>, items: &[MenuItem]) -> Option<Spellbook> {
     (!book.spells.is_empty()).then_some(book)
 }
 
+/// `+` when the hero knows a single spell: spell.c's list is then a menu
+/// of no choice, which comes as a text window, its letters gone. Its lines
+/// (each with whether it is a heading) made the menu's items again, the
+/// spell's letter `a` (the only spell's), and the spellbook in them.
+pub fn shown(title: Option<&str>, lines: &[(String, bool)]) -> Option<(Vec<MenuItem>, Spellbook)> {
+    let mut letter = b'a';
+    let items: Vec<MenuItem> = lines
+        .iter()
+        .enumerate()
+        .filter(|(_, (text, _))| !text.trim().is_empty())
+        .map(|(i, (text, heading))| {
+            let pick = !*heading;
+            let ch = if pick {
+                letter += 1;
+                i32::from(letter - 1)
+            } else {
+                0
+            };
+            MenuItem {
+                win: 0,
+                idx: i32::try_from(i).unwrap_or(0) + 1,
+                glyph: None,
+                selectable: pick,
+                ch,
+                gch: 0,
+                attr: if pick { 0 } else { 1 },
+                clr: 8,
+                str: Some(text.clone()),
+                preselected: false,
+                skipinvert: false,
+            }
+        })
+        .collect();
+    let book = spellbook(title, &items)?;
+    (book.purpose == Purpose::View).then_some((items, book))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -249,6 +286,35 @@ mod tests {
         assert_eq!(cast.purpose, Purpose::Cast);
         let swap = spellbook(Some("Reordering spells; swap 'a' with"), &healer()).unwrap();
         assert_eq!(swap.purpose, Purpose::Swap('a'));
+    }
+
+    #[test]
+    fn a_monk_s_one_spell_from_its_text_window() {
+        // `+` with one spell: a menu of no choice, as a text window
+        let lines = [
+            (
+                "    Name                 Level Category     Fail Retention".to_string(),
+                true,
+            ),
+            (
+                "protection             1   clerical       0%      100%".to_string(),
+                false,
+            ),
+            (String::new(), false),
+        ];
+        let (items, b) = shown(Some("Currently known spells"), &lines).expect("a spellbook");
+        assert_eq!(b.purpose, Purpose::View);
+        assert_eq!(b.sort, None);
+        let s = &b.spells[0];
+        assert_eq!(
+            (s.letter, s.name.as_str(), s.school, s.fail, s.retention),
+            ('a', "protection", School::Clerical, 0, Retention::Full)
+        );
+        assert_eq!(b.spell(s.idx).map(|s| s.letter), Some('a'));
+        assert_eq!(items.iter().filter(|i| i.selectable).count(), 1);
+        // any other text window is not one
+        assert!(shown(Some("Currently known spells"), &lines[1..]).is_none());
+        assert!(shown(Some("Things that are here:"), &lines).is_none());
     }
 
     #[test]
