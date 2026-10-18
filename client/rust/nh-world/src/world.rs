@@ -107,6 +107,8 @@ pub struct World {
     /// the hero (flush_screen(1)), who may not be drawn (invisible, hiding).
     hero_at_command: Option<(i32, i32)>,
     input_seq: u64,
+    /// The engine's last drawing of the map was read whole (`map_drawn`).
+    map_drawn: bool,
 }
 
 impl Default for World {
@@ -145,6 +147,7 @@ impl World {
             wants_history: false,
             hero_at_command: None,
             input_seq: 0,
+            map_drawn: true,
         }
     }
 
@@ -262,6 +265,10 @@ impl World {
                 _ => {}
             },
             WinCall::DisplayNhwindow { win } => {
+                // the core ends each drawing of the map so (flush_screen)
+                if Some(*win) == self.map_win {
+                    self.map_drawn = true;
+                }
                 if let Some(w) = self.windows.get(win)
                     && w.kind == WindowKind::Text
                     && !w.lines.is_empty()
@@ -305,6 +312,7 @@ impl World {
                         wields: wields.as_ref(),
                     };
                     self.map.print_with(*x, *y, g, bk.as_ref(), told);
+                    self.map_drawn = false;
                 }
             }
             WinCall::Curs { win, x, y } => {
@@ -361,6 +369,7 @@ impl World {
     pub fn on_request(&mut self, req: &Request) -> Prompt {
         // whatever the engine asks, it has drawn all it had to
         self.map.land();
+        self.map_drawn = true;
         match req {
             Request::NhPoskey { getpos } => {
                 self.getpos = *getpos;
@@ -473,6 +482,14 @@ impl World {
         self.map.hero().or(self.hero_at_command)
     }
 
+    /// The engine's last drawing of the map was read whole: it ends each
+    /// with a display of the map window (or asks for something, all
+    /// drawn). Read in pieces (8 ms a frame, a loaded machine), a drawing
+    /// may be read half: a step's two cells, a mount's, frames apart.
+    pub fn map_drawn(&self) -> bool {
+        self.map_drawn
+    }
+
     /// What the prompt line says while getpos waits.
     pub fn getpos_line(&self) -> Option<String> {
         self.getpos.then(|| {
@@ -558,6 +575,40 @@ mod tests {
         assert!(p.achieved(15));
         assert!(p.event("qcalled"));
         assert_eq!(p.deepest, 3);
+    }
+
+    #[test]
+    fn a_drawing_of_the_map_is_whole_once_the_map_is_displayed() {
+        let mut w = World::new();
+        feed(&mut w, START);
+        assert!(w.map_drawn());
+        // a flush read in part: its first cell, not its display yet
+        feed(
+            &mut w,
+            r#"{"t":"win","fn":"print_glyph","a":{"win":2,"x":5,"y":4,"g":{"glyph":341,"ch":64,"color":15,"flags":1,"tile":0,"kind":"mon","mon":341}}}"#,
+        );
+        assert!(!w.map_drawn());
+        // a line between flushes tells nothing of the map
+        feed(
+            &mut w,
+            r#"{"t":"win","fn":"putstr","a":{"win":1,"attr":0,"str":"Hello."}}"#,
+        );
+        assert!(!w.map_drawn());
+        // the core ends each flush with a display of the map
+        feed(
+            &mut w,
+            r#"{"t":"win","fn":"display_nhwindow","a":{"win":2}}"#,
+        );
+        assert!(w.map_drawn());
+        // or asks for something with all drawn
+        feed(
+            &mut w,
+            r#"
+            {"t":"win","fn":"print_glyph","a":{"win":2,"x":6,"y":4,"g":{"glyph":341,"ch":64,"color":15,"flags":1,"tile":0,"kind":"mon","mon":341}}}
+            {"t":"req","id":2,"fn":"nh_poskey","a":{}}
+            "#,
+        );
+        assert!(w.map_drawn());
     }
 
     #[test]

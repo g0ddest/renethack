@@ -760,10 +760,10 @@ impl MapView {
     }
 
     /// Before the frame's cells are drawn: a breath its new lines tell, of a
-    /// monster the map shows seen, holds the rays this frame draws till
-    /// its mouth is open (`draw_ray`). Nothing waits for it.
+    /// monster the map shows seen, holds the rays drawn next till its mouth
+    /// is open (`draw_ray`; the drawing of the map may be read whole only a
+    /// frame on). Nothing waits for it.
     pub(super) fn breath_coming(&mut self, world: &World, catalog: &Catalog) {
-        self.ray_wait = 0.0;
         let Some(seen) = self.log_seq.filter(|&s| s <= world.log.last_seq()) else {
             return;
         };

@@ -47,9 +47,10 @@ DECK_SELFTESTS := smoke inventory hud gamepad title threat-arrow settings gamepl
 RU_DECK_SELFTESTS := smoke inventory hud dialogs gamepad pickers achievements help layouts settings gameplay credits rebind sheet spells spells-one spells-many give-up skills journal codex guide prologue
 RU_SELFTESTS := smoke inventory dialogs achievements settings gameplay credits rebind sheet spells spells-one give-up skills journal codex guide prologue
 # again with the engine's output read an event a frame, as a loaded machine
-# may read it in pieces: what the map shows of a line, and what a line
-# tells of the map, must not hang on their coming in the same frame
-PIECES_SELFTESTS := falls acts trapdoor
+# may read it in pieces: what the map shows of a line, what a line tells of
+# the map, and the cells of one drawing of it (a step, a mount) must not
+# hang on their coming in the same frame
+PIECES_SELFTESTS := falls acts trapdoor riding
 # in the pseudo-language (--lang=qps): every word on the screens a scenario
 # would shoot came through the client's catalogs or the engine's translator
 PSEUDO_SELFTESTS := smoke keys dialogs orders inventory gamepad hud pickers achievements help layouts settings gameplay credits sheet spells spells-one give-up skills journal codex guide

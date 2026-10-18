@@ -312,12 +312,14 @@ the log in whole lines). `make test-client` also runs `smoke`, `inventory`,
 `hud`, `gamepad`, `title`, `threat-arrow` and `settings` headless at
 1280×800, the Steam Deck's screen with its 120 % UI scale; `make deck`
 shoots `smoke`, `tour`, `inventory`, `bar`, `hud`, `dialogs`, `gamepad` and
-`settings` at a real 1280×800. `make test-client` runs `falls`, `acts` and
-`trapdoor` again with `--engine-pieces=1`, the engine's output read an
-event a frame: the client reads it 8 ms a frame, so on a loaded machine a
-line and what it tells of the map (a death, a monster gone or come, a
-fall through the floor) may come frames apart, and what is shown of them
-must not hang on their coming together.
+`settings` at a real 1280×800. `make test-client` runs `falls`, `acts`,
+`trapdoor` and `riding` again with `--engine-pieces=1`, the engine's output
+read an event a frame: the client reads it 8 ms a frame, so on a loaded
+machine a line and what it tells of the map (a death, a monster gone or
+come, a fall through the floor), or the cells of one drawing of the map (a
+step, a mount), may come frames apart, and what is shown of them must not
+hang on their coming together: the scene takes a drawing of the map once
+it is whole (the engine ends each with a display of the map window).
 
 A headless run draws nothing, so what upsets Godot's renderer never shows
 in one. `make test-client` therefore ends with two scenarios in a window

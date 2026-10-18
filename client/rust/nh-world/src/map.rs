@@ -362,7 +362,7 @@ impl MapState {
             && let Some(left) = self.hero.replace((x, y))
             && left != (x, y)
         {
-            self.uncover(left);
+            self.leave(left);
         }
     }
 
@@ -411,6 +411,32 @@ impl MapState {
             self.dirty.push(at);
             self.before.push(self.cells[i].glyph.clone());
         }
+    }
+
+    /// The hero is drawn elsewhere: the cell they left shows what was
+    /// drawn over them, else the ground they stood on. The engine draws
+    /// the cell next, but on a loaded machine that may be read a frame on:
+    /// meanwhile the hero is not on two cells, and the batch that draws
+    /// them on the next one tells their step.
+    fn leave(&mut self, (x, y): (i32, i32)) {
+        let Some(i) = index(x, y) else {
+            return;
+        };
+        if self.cells[i].over.is_some() {
+            return self.uncover((x, y));
+        }
+        let hero_here = self.cells[i]
+            .glyph
+            .as_ref()
+            .is_some_and(|g| g.flags & mg::HERO != 0);
+        if !hero_here {
+            return;
+        }
+        self.touch(i, (x, y));
+        let cell = &mut self.cells[i];
+        cell.glyph = cell.terrain.clone();
+        cell.rider = None;
+        cell.saddled = false;
     }
 
     /// The hero is not on the cell any more: it shows what was drawn over
@@ -818,6 +844,27 @@ pub(crate) mod tests {
         assert_eq!(dirty, vec![(11, 5), (10, 5)]);
         let pairs: Vec<_> = moves.iter().map(|m| (m.from, m.to)).collect();
         assert_eq!(pairs, vec![((10, 5), (11, 5))]);
+    }
+
+    #[test]
+    fn a_step_drawn_onto_its_cell_first_is_a_step_in_that_batch() {
+        let mut map = MapState::new();
+        let hero = monster(0, mg::HERO);
+        for x in 8..14 {
+            map.print(x, 5, &floor(), None);
+        }
+        map.print(10, 5, &hero, None);
+        map.take_dirty();
+        // drawn on the cell west first (the engine draws the cell they
+        // left next, read a frame on): they are off it at once
+        map.print(9, 5, &hero, None);
+        assert_eq!(map.cell(10, 5).unwrap().glyph, Some(floor()));
+        let (_, moves) = map.take_dirty_moves();
+        let pairs: Vec<_> = moves.iter().map(|m| (m.from, m.to)).collect();
+        assert_eq!(pairs, vec![((10, 5), (9, 5))]);
+        // its floor drawn after tells nothing more
+        map.print(10, 5, &floor(), None);
+        assert!(map.take_dirty_moves().1.is_empty());
     }
 
     #[test]

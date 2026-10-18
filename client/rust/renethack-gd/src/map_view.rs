@@ -118,6 +118,10 @@ fn grade_curve(shadows: Color, highlights: Color) -> Gd<godot::classes::Gradient
 /// `NEAR_CELLS`) are drawn now, the rest over the next frames.
 const MANY_CELLS: usize = 150;
 const NEAR_CELLS: i32 = 8;
+/// Seconds the scene waits for the end of the engine's drawing of the map
+/// read in part, at most (the core ends each with a display of the map:
+/// one missing, the scene takes what it has).
+const UNDRAWN_MOST: f32 = 0.25;
 /// Where a feature's lamp burns on its cell.
 fn lamp_offset(kind: Lamp) -> Vector3 {
     match kind {
@@ -2788,6 +2792,9 @@ pub struct MapView {
     /// they went down it not known yet.
     fall_told: Option<Opening>,
     undecided: Option<drop::Undecided>,
+    /// Seconds the engine's last drawing of the map has been read only in
+    /// part (`World::map_drawn`).
+    undrawn: f32,
     /// Monsters seen falling through the floor, dropping.
     drops: Vec<drop::Dropping>,
     /// The steed under a hero a wall hides, wearing the x-ray overlay
@@ -3461,6 +3468,7 @@ impl MapView {
             dropped: None,
             fall_told: None,
             undecided: None,
+            undrawn: 0.0,
             drops: Vec::new(),
             xray_steed: None,
             xray_behind: Vec::new(),
@@ -3604,7 +3612,21 @@ impl MapView {
         self.art.begin_frame();
         self.clock += delta;
         self.prof.clear();
-        let hero = world.hero();
+        // the engine's drawing of the map read half (8 ms a frame: a loaded
+        // machine may read a step's two cells, a mount's, frames apart):
+        // the scene waits for the rest, the hero where it last drew them
+        let drawn = if world.map_drawn() {
+            self.undrawn = 0.0;
+            true
+        } else {
+            self.undrawn += delta as f32;
+            self.undrawn >= UNDRAWN_MOST
+        };
+        let hero = if drawn || self.generation != Some(world.map.generation()) {
+            world.hero()
+        } else {
+            self.hero_at.or_else(|| world.hero())
+        };
         // the hero faces the way they last stepped
         if let (Some((x, y)), Some((px, py))) = (hero, self.hero_at)
             && (x, y) != (px, py)
@@ -3649,14 +3671,18 @@ impl MapView {
             self.snap = true;
             self.lights_dirty = true;
         } else {
+            // the lines are read every frame (watched below), the drawing
+            // of the map once it is whole
+            self.note_fall(world, hero != was_at);
+            // a breath told: its rays wait for the mouth to open
+            self.breath_coming(world, catalog);
+        }
+        if !new_level && drawn {
             // a cell's look depends on its neighbours: a wall on the cell
             // north of it (and the rock on the two), unseen ground under
             // something on all four, the rock on all eight
             let batch = world.map.take_batch();
             let (mut dirty, moves, changed) = (batch.dirty, batch.moves, batch.changed);
-            self.note_fall(world, hero != was_at);
-            // a breath told: its rays wait for the mouth to open
-            self.breath_coming(world, catalog);
             // a fall whose cell shows something else again ends at once
             if !self.falls.is_empty() && !changed.is_empty() {
                 self.finish_falls_where(|c| changed.contains(&c));
@@ -3716,6 +3742,8 @@ impl MapView {
                 self.hero_trap_drawn = world.hero_trap;
                 self.update_cell(x, y, world, catalog, hero);
             }
+            // the rays drawn now held for a breather's mouth, no later ones
+            self.ray_wait = 0.0;
         }
         if let Some(st) = self.stats_window.as_mut().filter(|_| new_level) {
             st.since_level = 0.0;
@@ -3814,8 +3842,9 @@ impl MapView {
                 }
                 self.size_hero_ring(form);
                 // while a level is drawn the hero's cell may still hold the
-                // last level's model
-                if self.building.is_empty() {
+                // last level's model; while the engine's drawing is read in
+                // part, the cell the world has them on is not drawn yet
+                if self.building.is_empty() && drawn {
                     self.rim_hero(world.map.hero());
                 }
                 let __t = std::time::Instant::now();
@@ -8013,6 +8042,12 @@ impl MapView {
     /// The hero's step is being played.
     pub fn hero_walking(&self) -> bool {
         self.steps_under_way().0
+    }
+
+    /// The hero's blow is being played: their model (on a steed, the
+    /// pair) lunges at what it strikes, off their cell (self-tests).
+    pub fn hero_striking(&self) -> bool {
+        self.motions.iter().any(|m| m.hero && !m.is_step())
     }
 
     /// Marks on the cells of a way (the goal larger); red in a fight.

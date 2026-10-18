@@ -323,8 +323,13 @@ fn rides(g: &RenethackGame) -> Result<bool, String> {
     let (Some(seated), Some(hips), [Some(left), Some(right)]) = (seated, hips, knees) else {
         return not_yet("the seat's solver or the probes just made");
     };
-    if steady_seat(hold)? < 1.0 || map.hero_walking() {
-        return not_yet(&format!("hold {hold}, walking {}", map.hero_walking()));
+    // a blow lunges the pair off its cell: measured once it is back
+    if steady_seat(hold)? < 1.0 || map.hero_walking() || map.hero_striking() {
+        return not_yet(&format!(
+            "hold {hold}, walking {}, striking {}",
+            map.hero_walking(),
+            map.hero_striking()
+        ));
     }
     // the hips where the solver put them when the skeleton was last
     // solved: the probe shows that pose
