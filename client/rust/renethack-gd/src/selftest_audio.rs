@@ -764,7 +764,7 @@ fn put_on(which: fn(&RenethackGame) -> Result<KeyInput, String>) -> [Step; 4] {
 }
 
 /// The key of the pack's thing whose name has `what`.
-fn letter(game: &RenethackGame, what: &str) -> Result<KeyInput, String> {
+pub(super) fn letter(game: &RenethackGame, what: &str) -> Result<KeyInput, String> {
     letter_of(game, what)
         .map(plain)
         .ok_or_else(|| format!("no {what} in the pack"))

@@ -277,7 +277,7 @@ fn behind_a_man() -> Vec<Step> {
 }
 
 /// A monster's glyph by its name.
-fn monster(c: &nh_protocol::Catalog, name: &str) -> Result<Glyph, String> {
+pub(super) fn monster(c: &nh_protocol::Catalog, name: &str) -> Result<Glyph, String> {
     let m = c
         .monsters
         .iter()

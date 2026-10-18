@@ -61,12 +61,16 @@ use crate::vfx::{Blast, Ray, Vfx, VfxKind};
 
 #[path = "acts.rs"]
 mod acts;
+#[path = "drop.rs"]
+mod drop;
 #[path = "fall.rs"]
 mod fall;
 #[path = "hero_look.rs"]
 mod hero_look;
 #[path = "hero_pose.rs"]
 mod hero_pose;
+#[path = "opening.rs"]
+mod opening;
 #[path = "prologue_stage.rs"]
 mod prologue_stage;
 
@@ -74,6 +78,7 @@ pub use acts::{ActKind, Acted, Aim};
 pub use fall::{FallKind, Fell};
 pub use hero_look::{Effects, Posture, Shown};
 pub use hero_pose::{Held, HelplessPhase, STATE_CLIPS};
+pub use opening::Opening;
 pub use prologue_stage::{PrologueHero, STAIRS as PROLOGUE_STAIRS};
 
 /// Low enough to see creatures from the side, high enough to see the floor
@@ -494,6 +499,9 @@ struct Look {
     /// Something here lies below the ground (the bedrock under the level
     /// leaves it a hole).
     sunk: bool,
+    /// The trap here opens in the floor (`opening`): cut away to a shaft
+    /// with nothing standing on it.
+    opening: Option<Opening>,
     /// A monster that is not the hero's nor a pet (red ring under the pointer).
     hostile: bool,
     /// The rock the level is cut into.
@@ -748,6 +756,8 @@ struct Ctx<'a> {
     hero_yaw: f32,
     /// Which way the monster here faces since it last stepped or fought.
     facing: Option<f32>,
+    /// The hero stands down in a pit (spiked: whether they saw its spikes).
+    hero_pit: Option<bool>,
     /// How the branch the level is in looks.
     branch: &'a BranchLook,
 }
@@ -1876,6 +1886,7 @@ fn terrain_base(
         }
         Terrain::Trap => {
             floor(look);
+            look.opening = Opening::of(sym);
             trap_look(look, sym, nh_color(c), ctx);
             // its letter names it under the pointer and in the overview
             label(look, 0.45);
@@ -1903,16 +1914,6 @@ fn trap_look(look: &mut Look, sym: &str, color: Color, ctx: &Ctx) {
             s.shadow = false;
         }
     };
-    let rim = |look: &mut Look, paint: Paint| {
-        for (x, z, w, d) in [
-            (0.0, -0.4, 0.9, 0.1),
-            (0.0, 0.4, 0.9, 0.1),
-            (-0.4, 0.0, 0.1, 0.7),
-            (0.4, 0.0, 0.1, 0.7),
-        ] {
-            look.solid(bevel(w, 0.05, d), paint, at(x, 0.025, z));
-        }
-    };
     match sym {
         "S_bear_trap" => {
             // two iron jaws open on the floor, teeth up, a chain to a peg
@@ -1932,31 +1933,9 @@ fn trap_look(look: &mut Look, sym: &str, color: Color, ctx: &Ctx) {
                 35.0,
             );
         }
-        "S_pit" | "S_spiked_pit" | "S_hole" => {
-            flat(look, plane(0.78, 0.78), hole, at(0.0, 0.004, 0.0), 0.0);
-            rim(look, stone);
-            if sym == "S_spiked_pit" {
-                for (x, z) in [
-                    (-0.2, -0.15),
-                    (0.15, -0.2),
-                    (0.0, 0.1),
-                    (-0.15, 0.22),
-                    (0.22, 0.15),
-                ] {
-                    look.solid(prism(0.06, 0.2, 0.06), iron, at(x, 0.03, z));
-                }
-            }
-        }
-        "S_trap_door" => {
-            flat(look, plane(0.8, 0.8), hole, at(0.0, 0.003, 0.0), 0.0);
-            for i in 0..4 {
-                let x = -0.29 + 0.195 * i as f32;
-                flat(look, bevel(0.18, 0.04, 0.74), wood, at(x, 0.02, 0.0), 0.0);
-            }
-            for z in [-0.25f32, 0.25] {
-                flat(look, cuboid(0.8, 0.02, 0.06), iron, at(0.0, 0.045, z), 0.0);
-            }
-        }
+        // its rim, its spikes, its lid and its shaft are the opening's
+        // (`opening`)
+        "S_pit" | "S_spiked_pit" | "S_hole" | "S_trap_door" => {}
         "S_arrow_trap" | "S_dart_trap" => {
             flat(
                 look,
@@ -2514,6 +2493,21 @@ fn look_of(cell: &Cell, near: Near, ctx: &Ctx) -> Look {
         },
         None => rock_look(&mut look, &near, ctx),
     }
+    // an opening in the floor: cut away with nobody on it, or the hero
+    // down in the pit (a pit not seen till they fell in is their notice's)
+    let hero_pit = ctx
+        .hero_pit
+        .filter(|_| ctx.hero == Some((ctx.x, ctx.y)))
+        .map(|spiked| Opening::Pit { spiked });
+    let unseen_floor = Paint::Flat(FLOOR_UNSEEN, Finish::Matte);
+    match (hero_pit.or(look.opening), cell.entity().is_none()) {
+        (Some(o), empty) if empty || hero_pit.is_some() => {
+            look.opening = Some(o);
+            opening::open_floor(&mut look, o, unseen_floor, ctx);
+        }
+        (Some(o), _) => opening::closed_floor(&mut look, o, unseen_floor, ctx),
+        (None, _) => {}
+    }
     if let Some(g) = &cell.glyph {
         glyph_look(&mut look, g, ctx);
         // a steed's glyph is all the map shows of the hero on it: the
@@ -2783,6 +2777,14 @@ pub struct MapView {
     rider: Option<Rider>,
     /// The steed under them, on the layer their key and fills light.
     lit_steed: Option<Gd<Node3D>>,
+    /// The trap the hero's cell was last drawn for (a pit opens it).
+    hero_trap_drawn: Option<nh_world::TrapKind>,
+    /// The hero dropping through the floor while the level they leave is
+    /// held; the level (its generation) a drop was looked for.
+    hero_drop: Option<drop::Dropping>,
+    dropped: Option<u64>,
+    /// Monsters seen falling through the floor, dropping.
+    drops: Vec<drop::Dropping>,
     /// The steed under a hero a wall hides, wearing the x-ray overlay
     /// with them.
     xray_steed: Option<Gd<Node3D>>,
@@ -3447,6 +3449,10 @@ impl MapView {
             rim_model: None,
             rider: None,
             lit_steed: None,
+            hero_trap_drawn: None,
+            hero_drop: None,
+            dropped: None,
+            drops: Vec::new(),
             xray_steed: None,
             xray_behind: Vec::new(),
             xray_creature,
@@ -3609,11 +3615,19 @@ impl MapView {
         }
         let generation = world.map.generation();
         let new_level = self.generation != Some(generation);
+        // fallen through the floor: the level they leave held while they
+        // drop into it, then black
+        if new_level && self.hold_for_drop(world, catalog, generation, was_at, delta as f32) {
+            // the floor opened under them shows now
+            self.batches.flush();
+            return;
+        }
         let started = std::time::Instant::now();
         if new_level {
             // a new level (or a redraw from scratch) never animates
             self.finish_motions();
             self.finish_falls_where(|_| true);
+            self.end_drops();
             self.vfx.clear();
             self.facing.clear();
             self.generation = Some(generation);
@@ -3682,6 +3696,14 @@ impl MapView {
             for (_, c) in std::mem::take(&mut self.incoming) {
                 self.art.give(c.model);
             }
+            // down in a pit or out of it where they stand: their floor opens
+            // or closes
+            if world.hero_trap != self.hero_trap_drawn
+                && let Some((x, y)) = hero
+            {
+                self.hero_trap_drawn = world.hero_trap;
+                self.update_cell(x, y, world, catalog, hero);
+            }
         }
         if let Some(st) = self.stats_window.as_mut().filter(|_| new_level) {
             st.since_level = 0.0;
@@ -3707,6 +3729,7 @@ impl MapView {
         self.appeared.clear();
         self.advance_motions(delta as f32);
         self.advance_falls(delta as f32);
+        self.advance_drops(delta as f32, catalog);
         self.advance_acts(delta as f32);
         self.advance_arrivals(delta as f32);
         self.advance_rays(delta as f32);
@@ -6243,6 +6266,7 @@ impl MapView {
                     hero: None,
                     hero_yaw: 0.0,
                     facing: None,
+                    hero_pit: None,
                     branch: &self.branch_look,
                 };
                 let look = look_of(cell, Near::of(map, x, y), &ctx);
@@ -6739,6 +6763,91 @@ impl MapView {
         nodes.lamp = Some(CellLamp { kind, light, mist });
     }
 
+    /// The context a cell's look is made in, of the map as it is drawn
+    /// (no world's: a level held while it is left).
+    fn cell_ctx<'a>(&'a self, (x, y): (i32, i32), catalog: &'a Catalog) -> Ctx<'a> {
+        Ctx {
+            catalog,
+            art: self.art.manifest(),
+            x,
+            y,
+            hero: None,
+            hero_yaw: self.hero_yaw,
+            facing: None,
+            hero_pit: None,
+            branch: &self.branch_look,
+        }
+    }
+
+    /// A cell's floor drawn anew (opened as something drops through it, a
+    /// trap door's lid taken off; shut again), all else as it was: its
+    /// solids, the `opening` in it, the rock under the level cut where it
+    /// is `sunk`.
+    fn reshape(
+        &mut self,
+        (x, y): (i32, i32),
+        solids: Vec<Solid>,
+        opening: Option<Opening>,
+        sunk: bool,
+    ) {
+        let Some(mut nodes) = self.cells.remove(&(x, y)) else {
+            return;
+        };
+        let origin = Vector3::new(x as f32, 0.0, y as f32);
+        let old = std::mem::take(&mut nodes.look.solids);
+        let slots = std::mem::take(&mut nodes.solids);
+        nodes.solids = self.place_solids((x, y), origin, slots, &old, &solids);
+        nodes.look.solids = solids;
+        nodes.look.opening = opening;
+        if nodes.look.sunk != sunk {
+            nodes.look.sunk = sunk;
+            if sunk {
+                self.holes.insert((x, y));
+            } else {
+                self.holes.remove(&(x, y));
+            }
+            self.bedrock_dirty = true;
+        }
+        self.cells.insert((x, y), nodes);
+    }
+
+    /// The batches' slots of a cell's solids, `old` drawn in `slots`, now
+    /// `new`: a solid the same in the same place keeps its slot.
+    fn place_solids(
+        &mut self,
+        (x, y): (i32, i32),
+        origin: Vector3,
+        slots: Vec<Slot>,
+        old: &[Solid],
+        new: &[Solid],
+    ) -> Vec<Slot> {
+        let mut slots = slots.into_iter();
+        let mut kept_slots = Vec::with_capacity(new.len());
+        for (i, s) in new.iter().enumerate() {
+            let slot = slots.next();
+            if let Some(slot) = slot
+                && old.get(i) == Some(s)
+            {
+                kept_slots.push(slot);
+                continue;
+            }
+            if let Some(slot) = slot {
+                self.batches.remove(slot);
+            }
+            let mesh = self.art.mesh(s.mesh);
+            let mat = self.material(s.paint);
+            let xform = solid_transform(origin, s);
+            kept_slots.push(
+                self.batches
+                    .add((x, y), (s.mesh, &mesh), &mat, s.shadow, xform),
+            );
+        }
+        for slot in slots {
+            self.batches.remove(slot);
+        }
+        kept_slots
+    }
+
     fn update_cell(
         &mut self,
         x: i32,
@@ -6765,6 +6874,10 @@ impl MapView {
             hero,
             hero_yaw: self.hero_yaw,
             facing,
+            hero_pit: world
+                .hero_trap
+                .filter(|t| t.is_pit())
+                .map(|t| t == nh_world::TrapKind::SpikedPit),
             branch: &self.branch_look,
         };
         let look = world
@@ -6785,31 +6898,8 @@ impl MapView {
         let origin = Vector3::new(x as f32, 0.0, y as f32);
         // only what changed crosses into the engine: a step redraws two
         // cells, a level arrives as a thousand of them
-        let mut slots = std::mem::take(&mut nodes.solids).into_iter();
-        let mut kept_slots = Vec::with_capacity(look.solids.len());
-        for (i, s) in look.solids.iter().enumerate() {
-            let slot = slots.next();
-            if let Some(slot) = slot
-                && old.solids.get(i) == Some(s)
-            {
-                kept_slots.push(slot);
-                continue;
-            }
-            if let Some(slot) = slot {
-                self.batches.remove(slot);
-            }
-            let mesh = self.art.mesh(s.mesh);
-            let mat = self.material(s.paint);
-            let xform = solid_transform(origin, s);
-            kept_slots.push(
-                self.batches
-                    .add((x, y), (s.mesh, &mesh), &mat, s.shadow, xform),
-            );
-        }
-        for slot in slots {
-            self.batches.remove(slot);
-        }
-        nodes.solids = kept_slots;
+        let slots = std::mem::take(&mut nodes.solids);
+        nodes.solids = self.place_solids((x, y), origin, slots, &old.solids, &look.solids);
         self.place_ring(&mut nodes, &look, origin);
         self.place_lamp(&mut nodes, &look, origin);
         if old.props != look.props {
@@ -8296,6 +8386,7 @@ mod tests {
                 hero,
                 hero_yaw: 0.0,
                 facing: None,
+                hero_pit: None,
                 branch: &self.branch,
             }
         }
@@ -8978,6 +9069,62 @@ mod tests {
                     .all(|s| s.paint == Paint::Flat(ENGRAVING, Finish::Matte))
             );
         }
+    }
+
+    #[test]
+    fn an_opening_in_the_floor_is_cut_away_with_nobody_on_it() {
+        let f = Fixture::new();
+        let cat = &f.cat;
+        let tile = |l: &Look| {
+            l.solids
+                .iter()
+                .any(|s| s.mesh == plane(1.0, 1.0) && s.pos == Vector3::ZERO)
+        };
+        for (sym, o) in [
+            ("S_hole", Opening::Hole),
+            ("S_trap_door", Opening::TrapDoor),
+            ("S_pit", Opening::Pit { spiked: false }),
+            ("S_spiked_pit", Opening::Pit { spiked: true }),
+        ] {
+            // nothing on it: its floor cut away round it to the shaft and
+            // its bottom, the rock under the level cut too
+            let open = f.look(&feature(cat, sym));
+            assert_eq!(open.opening, Some(o), "{sym}");
+            assert!(open.sunk && !tile(&open), "{sym}: open");
+            let bottom = open.solids.iter().map(|s| s.pos.y).fold(0.0, f32::min);
+            assert!((bottom + o.depth()).abs() < 0.01, "{sym}: down to {bottom}");
+            // a trap door's lid shut over it
+            let mut lid = open.clone();
+            assert_eq!(
+                opening::unlid(&mut lid).is_some(),
+                o == Opening::TrapDoor,
+                "{sym}"
+            );
+            // a newt on it (caught or not, the map cannot tell): whole
+            let newt = Cell {
+                glyph: Some(monster(cat, "newt", 0)),
+                terrain: Some(cmap(cat, sym)),
+                ..Cell::default()
+            };
+            let shut = f.look(&newt);
+            assert!(!shut.sunk && tile(&shut), "{sym}: shut under a newt");
+        }
+        // the hero down in a pit they did not see (its notice tells it):
+        // their floor open round them; the pit beside them is another's
+        let hero = on_floor(cat, monster(cat, "valkyrie", mg::HERO | mg::FEMALE));
+        let in_pit = |at: (i32, i32)| {
+            let ctx = Ctx {
+                hero_pit: Some(false),
+                ..f.ctx_at(10, 10, Some(at))
+            };
+            look_of(&hero, Near::default(), &ctx)
+        };
+        let down = in_pit((10, 10));
+        assert_eq!(down.opening, Some(Opening::Pit { spiked: false }));
+        assert!(down.sunk && !tile(&down));
+        let beside = in_pit((11, 10));
+        assert_eq!(beside.opening, None);
+        assert!(!beside.sunk && tile(&beside));
     }
 
     #[test]

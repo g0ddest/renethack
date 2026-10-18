@@ -81,6 +81,8 @@ pub(super) struct Told {
     when: f64,
     /// It is gone, not dead: it blinks out.
     blink: bool,
+    /// It fell through the floor: it drops into the opening.
+    drop: Option<super::Opening>,
 }
 
 impl Told {
@@ -90,6 +92,7 @@ impl Told {
             at,
             when,
             blink: false,
+            drop: None,
         }
     }
 
@@ -98,6 +101,15 @@ impl Told {
     pub fn gone(name: &str, when: f64) -> Told {
         Told {
             blink: true,
+            ..Told::new(name, None, when)
+        }
+    }
+
+    /// A monster the messages tell fallen through a trap door or into a
+    /// hole: it drops into it.
+    pub fn dropped(name: &str, when: f64, o: super::Opening) -> Told {
+        Told {
+            drop: Some(o),
             ..Told::new(name, None, when)
         }
     }
@@ -203,10 +215,11 @@ impl MapView {
             let info = usize::try_from(gone.mon)
                 .ok()
                 .and_then(|i| catalog.monsters.get(i));
-            match info {
-                Some(_) if told.blink => self.fall_as(gone, FallKind::Blink),
-                Some(info) => self.fall(gone, info),
-                None => self.art.give(gone.model),
+            match (info, told.drop) {
+                (Some(_), Some(o)) => self.drop_gone(gone, o),
+                (Some(_), None) if told.blink => self.fall_as(gone, FallKind::Blink),
+                (Some(info), None) => self.fall(gone, info),
+                (None, _) => self.art.give(gone.model),
             }
         }
         for gone in std::mem::take(&mut self.gone) {

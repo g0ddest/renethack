@@ -96,6 +96,10 @@ pub struct MapState {
     is_dirty: Vec<bool>,
     generation: u64,
     hero: Option<(i32, i32)>,
+    /// Where the hero was when the map was cleared, by the generation the
+    /// clear began (the last few): the cell they left a level from (a trap
+    /// door they fell through), a redraw after it not taken for it.
+    left: Vec<(u64, (i32, i32))>,
     /// Cmap indices that are brief effects, not terrain.
     effect_cmaps: Vec<bool>,
     /// Cells where a thing was drawn over a monster (a missile flying
@@ -139,6 +143,7 @@ impl MapState {
             is_dirty: vec![false; n],
             generation: 0,
             hero: None,
+            left: Vec::new(),
             effect_cmaps: Vec::new(),
             flying: Vec::new(),
         }
@@ -182,6 +187,17 @@ impl MapState {
     /// Bumped by every clear: the view rebuilds everything.
     pub fn generation(&self) -> u64 {
         self.generation
+    }
+
+    /// Where the hero was when the map was first cleared (`clear`) after
+    /// `generation` (None: the earliest known): the cell they left that
+    /// level from, if they were drawn. A level may be cleared again as it
+    /// comes (a redraw as the hero dies of the fall): that one is not it.
+    pub fn left_after(&self, generation: Option<u64>) -> Option<(i32, i32)> {
+        self.left
+            .iter()
+            .find(|(g, _)| generation.is_none_or(|d| *g > d))
+            .map(|&(_, at)| at)
     }
 
     /// Cells drawn since the last call, each once, in drawing order.
@@ -416,7 +432,12 @@ impl MapState {
         self.is_dirty.fill(false);
         self.dirty.clear();
         self.before.clear();
-        self.hero = None;
+        if let Some(hero) = self.hero.take() {
+            if self.left.len() >= 8 {
+                self.left.remove(0);
+            }
+            self.left.push((self.generation + 1, hero));
+        }
         self.flying.clear();
         self.generation += 1;
     }
@@ -530,7 +551,18 @@ pub(crate) mod tests {
         assert_eq!(map.generation(), before + 1);
         assert_eq!(map.cell(10, 5), Some(&Cell::default()));
         assert_eq!(map.hero(), None);
+        assert_eq!(
+            map.left_after(Some(before)),
+            Some((10, 6)),
+            "where the hero left from"
+        );
         assert!(map.take_dirty().is_empty());
+        // drawn on the next level and cleared again (a redraw): where they
+        // left the last one from is still known
+        map.print(3, 4, &monster(0, mg::HERO), None);
+        map.clear();
+        assert_eq!(map.left_after(Some(before)), Some((10, 6)));
+        assert_eq!(map.left_after(Some(before + 1)), Some((3, 4)));
         // outside the field
         map.print(0, 5, &floor(), None);
         map.print(COLNO, 5, &floor(), None);

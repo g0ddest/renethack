@@ -100,6 +100,8 @@ mod spells_tests;
 mod states_tests;
 #[path = "selftest_through.rs"]
 mod through_tests;
+#[path = "selftest_trapdoor.rs"]
+mod trapdoor_tests;
 #[path = "selftest_variants.rs"]
 mod variants_tests;
 #[path = "selftest_world.rs"]
@@ -4914,6 +4916,7 @@ impl SelfTest {
             "falls" => falls_tests::falls(),
             "acts" => acts_tests::acts(),
             "polyself" => polyself_tests::polyself(),
+            "trapdoor" => trapdoor_tests::trapdoor(),
             "states" => states_tests::states(),
             "doll" => doll_tests::doll(),
             "first-open" => first_tests::first_open(),

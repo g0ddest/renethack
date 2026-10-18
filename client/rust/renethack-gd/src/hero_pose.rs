@@ -29,8 +29,7 @@ use nh_protocol::Catalog;
 use nh_world::{Helpless, HelplessSpan, PrayerOutcome, TrapKind, World};
 
 use super::{
-    Finish, MapView, MeshKey, Paint, Role, SHADE_LIT, at, bevel, cuboid, cylinder, marker, plane,
-    prism, torus,
+    Finish, MapView, MeshKey, Paint, Role, SHADE_LIT, at, cuboid, cylinder, marker, prism, torus,
 };
 
 /// What the hero is caught in or under, as drawn.
@@ -331,19 +330,9 @@ impl MapView {
         let ground = self.ground(x, y);
         let origin = Vector3::new(x as f32, ground, y as f32);
         match held {
-            Held::Trap(t) if t.is_pit() => {
-                let hole = Paint::Flat(Color::from_rgb(0.006, 0.006, 0.008), Finish::Matte);
-                self.part(plane(0.78, 0.78), hole, origin + at(0.0, 0.004, 0.0), 0.0);
-                let stone = self.named("bedrock", 100, Color::from_rgb(0.3, 0.29, 0.27));
-                for (px, pz, w, d) in [
-                    (0.0, -0.4, 0.9, 0.1),
-                    (0.0, 0.4, 0.9, 0.1),
-                    (-0.4, 0.0, 0.1, 0.7),
-                    (0.4, 0.0, 0.1, 0.7),
-                ] {
-                    self.part(bevel(w, 0.05, d), stone, origin + at(px, 0.025, pz), 0.0);
-                }
-            }
+            // the map opens their cell's floor to the pit (`opening`): a
+            // plane over it hid the body sunk in it
+            Held::Trap(t) if t.is_pit() => {}
             Held::Trap(TrapKind::BearTrap) => {
                 // the jaws shut round the ankles, teeth in, a chain to a peg
                 let iron = self.named("iron", SHADE_LIT, Color::from_rgb(0.35, 0.35, 0.37));

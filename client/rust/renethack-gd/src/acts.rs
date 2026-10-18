@@ -24,7 +24,7 @@ use godot::prelude::*;
 use nh_protocol::{Catalog, GlyphKind, mg};
 use nh_world::World;
 
-use super::MapView;
+use super::{MapView, Opening};
 use crate::vfx::{Ray, VfxKind};
 
 /// The clips monsters do things with (the hero's own, `held.uses`): a
@@ -93,6 +93,8 @@ pub enum ActKind {
     Breath,
     /// Gone from sight (teleported away, invisible, left).
     Vanish,
+    /// Fallen through a trap door (`door`) or into a hole: it drops.
+    Drop { door: bool },
     /// Come in sight (or back in it, `again`: teleported closer).
     Appear { again: bool },
     /// Turned into another monster (the line's `what`).
@@ -146,6 +148,16 @@ pub fn act_of(text: &str) -> Option<(&str, ActKind, &str)> {
 /// "A X appears next to you.", "The X turns into a Y!", "The X summons
 /// help!".
 fn comings_of(text: &str) -> Option<(&str, ActKind, &str)> {
+    if let Some(rest) = text.strip_prefix("Suddenly, ") {
+        for (tail, door) in [
+            (" falls through a trap door.", true),
+            (" falls into a hole.", false),
+        ] {
+            if let Some(name) = rest.strip_suffix(tail) {
+                return Some((name, ActKind::Drop { door }, ""));
+            }
+        }
+    }
     let rest = text.strip_prefix("The ");
     if let Some(rest) = rest {
         if let Some((name, _)) = rest.split_once(" vanishes and reappears") {
@@ -359,6 +371,16 @@ impl MapView {
                 self.deaths.push(super::fall::Told::gone(name, self.clock));
                 return;
             }
+            ActKind::Drop { door } => {
+                let o = if door {
+                    Opening::TrapDoor
+                } else {
+                    Opening::Hole
+                };
+                self.deaths
+                    .push(super::fall::Told::dropped(name, self.clock, o));
+                return;
+            }
             ActKind::Appear { again: true } => {
                 self.deaths.push(super::fall::Told::gone(name, self.clock));
                 name
@@ -419,7 +441,11 @@ impl MapView {
                 has
             }),
             // shown above, as they come and go
-            ActKind::Vanish | ActKind::Appear { .. } | ActKind::Change | ActKind::Summon => {
+            ActKind::Vanish
+            | ActKind::Drop { .. }
+            | ActKind::Appear { .. }
+            | ActKind::Change
+            | ActKind::Summon => {
                 return;
             }
         };
@@ -529,7 +555,11 @@ impl MapView {
                 to: None,
                 large: false,
             }),
-            ActKind::Vanish | ActKind::Appear { .. } | ActKind::Change | ActKind::Summon => {}
+            ActKind::Vanish
+            | ActKind::Drop { .. }
+            | ActKind::Appear { .. }
+            | ActKind::Change
+            | ActKind::Summon => {}
         }
         self.acts_shown.push(Acted { kind, cell, clip });
         if self.acts_shown.len() > 32 {
@@ -1027,6 +1057,14 @@ mod tests {
         assert_eq!(
             act_of("The gnome lord suddenly disappears!"),
             Some(("gnome lord", ActKind::Vanish, ""))
+        );
+        assert_eq!(
+            act_of("Suddenly, the newt falls through a trap door."),
+            Some(("the newt", ActKind::Drop { door: true }, ""))
+        );
+        assert_eq!(
+            act_of("Suddenly, your kitten falls into a hole."),
+            Some(("your kitten", ActKind::Drop { door: false }, ""))
         );
         assert_eq!(
             act_of("The gnome lord vanishes and reappears next to you."),
