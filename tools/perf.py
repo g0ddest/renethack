@@ -46,6 +46,8 @@ PERF_NAME = "renethack-perf"
 
 # name: (self-test, more arguments, timeout in seconds)
 SCENES = {
+    # the title over its scene, a game started and quit, the title again
+    "title": ("title", [], 300),
     "tour": ("tour", [], 300),
     "smoke": ("smoke", [], 300),
     "branches": ("branches", [], 600),

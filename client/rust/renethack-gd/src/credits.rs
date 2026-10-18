@@ -148,7 +148,7 @@ pub fn bbcode(doc: Doc, shipped: &Shipped) -> String {
 /// The game's version as its package names it (tools/dist stamps it into
 /// the project's settings, and names the source archive after it); a
 /// development build's is the extension's own.
-fn version() -> String {
+pub(crate) fn version() -> String {
     let stamped = godot::classes::ProjectSettings::singleton()
         .get_setting("application/config/version")
         .to_string();

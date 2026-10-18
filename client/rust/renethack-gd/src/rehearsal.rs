@@ -277,6 +277,18 @@ impl Rehearsal {
         self.fetching.is_empty() && self.queued.is_empty()
     }
 
+    /// How far it has come, 0 to 1: its stages, and the stage's phase.
+    pub fn progress(&self) -> f32 {
+        let phase = match self.phase {
+            Phase::Fetch => 0.0,
+            Phase::Upload => 0.2,
+            Phase::Pools => 0.4,
+            Phase::Build => 0.6,
+            Phase::Hold => 0.8,
+        };
+        ((self.stage as f32 + phase) / STAGES.len() as f32).min(1.0)
+    }
+
     /// Files it has the loader's threads reading now.
     pub fn loading(&self) -> usize {
         self.fetching.len()

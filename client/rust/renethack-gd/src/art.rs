@@ -359,6 +359,8 @@ pub struct Art {
     phase: u32,
     /// What is still to load ahead of need, last first.
     preload: Vec<Preload>,
+    /// The most items the queue has held (its progress, `preload_progress`).
+    preload_most: usize,
     /// The files the preloading needs were asked of the loader's threads.
     requested: bool,
     /// Files being read on worker threads (`res://` paths), and the ones
@@ -439,6 +441,7 @@ impl Art {
             firsts: Vec::new(),
             phase: 0,
             preload: Vec::new(),
+            preload_most: 0,
             requested: false,
             loading: Vec::new(),
             others_loading: 0,
@@ -501,6 +504,7 @@ impl Art {
                 .map(|(i, _, _)| Preload::Smooth(i)),
         );
         q.reverse();
+        self.preload_most = q.len();
         self.preload = q;
         self
     }
@@ -546,6 +550,15 @@ impl Art {
             let rest = std::mem::take(&mut self.preload);
             self.preload = q.into_iter().rev().chain(rest).collect();
         }
+        self.preload_most = self.preload_most.max(self.preload.len());
+    }
+
+    /// How much of what was queued to load ahead is done, 0 to 1.
+    pub fn preload_progress(&self) -> f32 {
+        if self.preload_most == 0 {
+            return 1.0;
+        }
+        1.0 - self.preload.len() as f32 / self.preload_most as f32
     }
 
     /// Nothing is left to load ahead.

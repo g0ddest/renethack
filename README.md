@@ -342,7 +342,8 @@ that says "BUG": a crash on quit, after the PASS line, fails it.
 `tools/perf.py`. It builds the extension in release and stages a copy of
 the project that loads it (`build/perf/project`). The copy runs under its
 own name, so Godot's shader cache starts empty, as on a player's first
-launch. Then it plays these in a window at 1920×1080 with vsync off: `tour`;
+launch. Then it plays these in a window at 1920×1080 with vsync off: `title`
+(the title over its scene, a game started and quit); `tour`;
 `branches`; `rays`; `effects`; `item-use`; `states`; `crowd` (about thirty
 peaceful creatures of many kinds made round the hero in debug mode, then
 forty turns among them); two soaks into the Gnomish Mines; one to Dlvl 7;
@@ -394,7 +395,10 @@ that setting (at run time: `project.godot` is not written), the window's
 and the inventory doll's in step, from before the rehearsal on. A change in
 the settings of what Godot builds pipelines for (the MSAA, ambient
 occlusion or indirect light turned on or off, FSR 2) makes the variants
-again behind a short veil.
+again behind a short veil. On a first launch (Godot's shader cache holds
+nothing of this build) the start-up veil waits for the whole warm-up, a
+line and a bar under the ankh saying so; a later launch lifts it at 6 s at
+the latest.
 
 ### A first launch
 

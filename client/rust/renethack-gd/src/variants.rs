@@ -38,6 +38,14 @@ use godot::prelude::*;
 
 /// The census of what the game draws.
 const LIST: &str = include_str!("../../../godot/art/variants.txt");
+/// The list as a number: a first launch's marker changes with it
+/// (`game::shader_cache_warm`).
+pub fn list_hash() -> u64 {
+    LIST.bytes().fold(0xcbf2_9ce4_8422_2325, |h, b| {
+        (h ^ u64::from(b)).wrapping_mul(0x0100_0000_01b3)
+    })
+}
+
 /// The name of the nodes the variants are made under (the census skips
 /// them).
 pub const HOLDER: &str = "Variants";
@@ -546,6 +554,15 @@ impl Variants {
     /// All made (or none started).
     pub fn done(&self) -> bool {
         self.todo.is_empty()
+    }
+
+    /// How many of the list are made, 0 to 1.
+    pub fn progress(&self) -> f32 {
+        let all = self.made + self.unmade.len() + self.todo.len();
+        if all == 0 {
+            return 1.0;
+        }
+        (self.made + self.unmade.len()) as f32 / all as f32
     }
 
     fn make(&mut self, line: &str) -> Result<(), String> {

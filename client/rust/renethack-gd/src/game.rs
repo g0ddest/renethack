@@ -529,6 +529,10 @@ pub struct RenethackGame {
     veil: Option<Gd<godot::classes::ColorRect>>,
     veil_cue: Option<Gd<godot::classes::TextureRect>>,
     veil_lift: Option<Instant>,
+    /// Godot's shader cache holds nothing of this build (a first launch):
+    /// the veil waits for the whole warm-up, its note and bar saying so.
+    first_launch: bool,
+    veil_note: Option<VeilNote>,
     /// The cue fading out before the veil lifts: since when, from what
     /// strength.
     cue_out: Option<(Instant, f32)>,
@@ -590,6 +594,114 @@ const VEIL_FADE: f32 = 0.25;
 const VEIL_CUE_SECS: f64 = 1.0;
 /// Seconds the cue takes to fade out, before the veil lifts.
 const CUE_OUT: f32 = 0.2;
+
+/// On a first launch the veil waits for the warm-up to end, at most this
+/// long (should a load never finish, the title still comes).
+const FIRST_LAUNCH_CAP_SECS: f64 = 120.0;
+
+/// A file in Godot's shader cache saying a warm-up of this build has run
+/// to its end: the shaders and the variants' pipelines the start compiles
+/// are cached from then on. Emptied with the cache (a perf run's first
+/// launch), and changed with the game's version (each package's own),
+/// the engine or the variants list.
+const WARM_MARKER: &str = "user://shader_cache/renethack-warm";
+
+/// What the marker says: this version, this Godot and this variants list.
+fn warm_fingerprint() -> String {
+    let godot = godot::classes::Engine::singleton()
+        .get_version_info()
+        .get("string")
+        .map(|v| v.to_string())
+        .unwrap_or_default();
+    format!(
+        "{} {godot} {:016x}",
+        crate::credits::version(),
+        crate::variants::list_hash()
+    )
+}
+
+/// Godot's shader cache has this build's warm-up in it.
+fn shader_cache_warm() -> bool {
+    use godot::classes::FileAccess;
+    FileAccess::file_exists(WARM_MARKER)
+        && FileAccess::get_file_as_string(WARM_MARKER).to_string() == warm_fingerprint()
+}
+
+/// The warm-up ran to its end: the next start may lift the veil at its
+/// cap.
+fn mark_shader_cache_warm() {
+    use godot::classes::file_access::ModeFlags;
+    use godot::classes::{DirAccess, FileAccess};
+    let _ = DirAccess::make_dir_recursive_absolute("user://shader_cache");
+    if let Some(mut f) = FileAccess::open(WARM_MARKER, ModeFlags::WRITE) {
+        f.store_string(&warm_fingerprint());
+    }
+}
+
+/// The note on the veil of a first launch: a line and a thin bar under the
+/// ankh, the bar filling as the warm-up goes.
+struct VeilNote {
+    note: Gd<godot::classes::Control>,
+    fill: Gd<godot::classes::ColorRect>,
+    /// The most the bar has shown (it never goes back).
+    shown: f32,
+}
+
+/// The bar's width, and its thickness.
+const NOTE_BAR: (f32, f32) = (240.0, 3.0);
+
+impl VeilNote {
+    fn new(veil: &mut Gd<godot::classes::ColorRect>) -> VeilNote {
+        use godot::classes::{ColorRect, Control, control::MouseFilter};
+        let mut note = Control::new_alloc();
+        note.set_mouse_filter(MouseFilter::IGNORE);
+        crate::theme::place(&note, [0.5, 0.5, 0.5, 0.5], [-200.0, 52.0, 200.0, 100.0]);
+        let mut line = crate::theme::styled_label(
+            &crate::tr!("veil-first-launch"),
+            crate::theme::Face::Body,
+            18,
+            crate::theme::GOLD,
+        );
+        line.set_horizontal_alignment(godot::global::HorizontalAlignment::CENTER);
+        crate::theme::place(&line, [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 28.0]);
+        note.add_child(&line);
+        let (w, h) = NOTE_BAR;
+        let mut track = ColorRect::new_alloc();
+        track.set_color(Color::from_rgba(1.0, 1.0, 1.0, 0.12));
+        crate::theme::place(
+            &track,
+            [0.5, 0.0, 0.5, 0.0],
+            [-w / 2.0, 38.0, w / 2.0, 38.0 + h],
+        );
+        let mut fill = ColorRect::new_alloc();
+        fill.set_color(crate::theme::GOLD);
+        crate::theme::place(&fill, [0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0]);
+        track.add_child(&fill);
+        note.add_child(&track);
+        note.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, 0.0));
+        veil.add_child(&note);
+        VeilNote {
+            note,
+            fill,
+            shown: 0.0,
+        }
+    }
+
+    /// A frame of it: in after the cue's second, the bar at `progress`.
+    fn show(&mut self, secs: f64, progress: f32) {
+        let a = ((secs - VEIL_CUE_SECS) / 0.6).clamp(0.0, 1.0) as f32;
+        self.note.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, a));
+        self.shown = self.shown.max(progress.clamp(0.0, 1.0));
+        self.fill
+            .set_size(Vector2::new(NOTE_BAR.0 * self.shown, NOTE_BAR.1));
+    }
+
+    /// Fading out with the cue (`k` 1 to 0).
+    fn fade(&mut self, k: f32) {
+        self.note
+            .set_modulate(Color::from_rgba(1.0, 1.0, 1.0, k.clamp(0.0, 1.0)));
+    }
+}
 
 /// The veil's cap: RENETHACK_VEIL_CAP's seconds instead (a census of what
 /// the rehearsal draws slows it past the cap).
@@ -745,6 +857,8 @@ impl INode for RenethackGame {
             headless: false,
             veil: None,
             veil_cue: None,
+            first_launch: false,
+            veil_note: None,
             veil_lift: None,
             cue_out: None,
             rewarm: None,
@@ -841,11 +955,17 @@ impl INode for RenethackGame {
         cue.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, 0.0));
         cue.set_self_modulate(crate::theme::GOLD);
         veil.add_child(&cue);
+        self.headless = godot::classes::DisplayServer::singleton().get_name() == "headless";
+        // a first launch: Godot compiles the shaders behind the veil for
+        // a while, and a line and a bar under the ankh say so
+        self.first_launch = !self.headless && !shader_cache_warm();
+        if self.first_launch {
+            self.veil_note = Some(VeilNote::new(&mut veil));
+        }
         veil_layer.add_child(&veil);
         self.base_mut().add_child(&veil_layer);
         self.veil = Some(veil);
         self.veil_cue = Some(cue);
-        self.headless = godot::classes::DisplayServer::singleton().get_name() == "headless";
         // the toast over the HUD, under the panels and dialogs
         let mut toast_layer = CanvasLayer::new_alloc();
         toast_layer.set_name("ToastLayer");
@@ -1490,14 +1610,31 @@ impl RenethackGame {
                     cue.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, shown));
                 }
                 let title = self.state == GameState::Title;
-                let drawn = self
-                    .ui
-                    .as_ref()
-                    .is_some_and(|ui| ui.map.rehearsal_first_draws_done())
-                    && matches!(self.title_warm, TitleWarm::Panel | TitleWarm::Done);
-                let capped = secs >= veil_cap();
+                let map = self.ui.as_ref().map(|ui| &ui.map);
+                // a first launch shows the title only once nothing is left
+                // to load or draw for the first time behind it
+                let drawn = if self.first_launch {
+                    map.is_some_and(|m| m.rehearsal_first_draws_done() && m.preloaded())
+                        && self.title_warm == TitleWarm::Done
+                } else {
+                    map.is_some_and(|m| m.rehearsal_first_draws_done())
+                        && matches!(self.title_warm, TitleWarm::Panel | TitleWarm::Done)
+                };
+                let progress = map.map_or(0.0, |m| m.warm_progress());
+                if let Some(note) = self.veil_note.as_mut() {
+                    note.show(secs, progress);
+                }
+                let cap = if self.first_launch {
+                    FIRST_LAUNCH_CAP_SECS
+                } else {
+                    veil_cap()
+                };
+                let capped = secs >= cap;
                 if self.frames_shown() < VEIL_FRAMES || (title && !drawn && !capped) {
                     return;
+                }
+                if title && drawn && self.first_launch {
+                    mark_shader_cache_warm();
                 }
                 if title && !drawn {
                     godot_warn!(
@@ -1517,6 +1654,9 @@ impl RenethackGame {
                 let a = from * (1.0 - t.elapsed().as_secs_f32() / CUE_OUT);
                 if let Some(cue) = self.veil_cue.as_mut() {
                     cue.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, a.max(0.0)));
+                }
+                if let Some(note) = self.veil_note.as_mut() {
+                    note.fade(a.max(0.0) / from.max(0.01));
                 }
                 if a <= 0.0 {
                     self.start_lift(stats, secs);

@@ -6237,6 +6237,17 @@ impl MapView {
         (node, light, lit, phase)
     }
 
+    /// How far the warm-up behind the start-up veil has come, 0 to 1: the
+    /// art loaded ahead, the variants made, the rehearsal's stages.
+    pub fn warm_progress(&self) -> f32 {
+        let rehearsal = match &self.rehearsal {
+            Some(r) => r.progress(),
+            None if self.rehearsed => 1.0,
+            None => 0.0,
+        };
+        (self.art.preload_progress() + self.variants.progress() + rehearsal) / 3.0
+    }
+
     /// Nothing is left to load ahead (self-tests start a game then).
     pub fn preloaded(&self) -> bool {
         self.rehearsed && self.art.preloaded() && self.rehearsal.is_none()
