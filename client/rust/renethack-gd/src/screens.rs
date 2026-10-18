@@ -796,10 +796,12 @@ impl Screens {
             parts.push(lines.join("\n"));
         }
         if !summary.scores.is_empty() {
-            let lines: Vec<String> = summary
-                .scores
+            // the list whole: an entry runs over lines mid-sentence
+            let english: Vec<&str> = summary.scores.iter().map(String::as_str).collect();
+            let lines: Vec<String> = i18n::engine_window(&english)
+                .unwrap_or_else(|| summary.scores.clone())
                 .iter()
-                .map(|l| bbcode_escape(&i18n::engine(EngineKind::Window, l)))
+                .map(|l| bbcode_escape(l))
                 .collect();
             parts.push(format!(
                 "[code][color={}]{}[/color][/code]",
