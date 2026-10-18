@@ -1,22 +1,23 @@
 use std::collections::VecDeque;
 
+use nh_protocol::Reply;
 use serde::{Deserialize, Serialize};
 
 use crate::DEFAULT_DIRCHARS;
 
 /// How keys work at the command prompt, chosen at character creation and
-/// kept with the character (NetHack does not save number_pad). Both keep
-/// the top-row digits for the action bar.
+/// kept with the character (NetHack does not save number_pad).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum KeyProfile {
     /// number_pad on: arrows, Home/PgUp/End/PgDn and the keypad move, `n`
-    /// starts a count (`n20s`); number_pad's letters (`k` kick, `j` jump,
-    /// `l` loot, `u` untrap).
+    /// starts a count (`n20s`), the top-row digits are the action bar;
+    /// number_pad's letters (`k` kick, `j` jump, `l` loot, `u` untrap).
     #[default]
     Modern,
-    /// number_pad off: vi-keys `hjklyubn` move (so `n` is a step), and a
-    /// count is typed with Alt and the top-row digits (`Alt+2 Alt+0 s`).
+    /// number_pad off: vi-keys `hjklyubn` move (so `n` is a step), the
+    /// top-row digits are a count as in NetHack (`20s`), and the action
+    /// bar is Alt and the digits.
     Classic,
 }
 
@@ -51,6 +52,43 @@ pub fn count_keys(count: u32, number_pad: bool) -> Vec<i32> {
         .into_iter()
         .chain(count.to_string().bytes().map(i32::from))
         .collect()
+}
+
+/// NetHack's extended commands of the eight steps, in dirchars' order (W
+/// NW N NE E SE S SW).
+pub const MOVE_COMMANDS: [&str; 8] = [
+    "movewest",
+    "movenorthwest",
+    "movenorth",
+    "movenortheast",
+    "moveeast",
+    "movesoutheast",
+    "movesouth",
+    "movesouthwest",
+];
+
+/// What the engine is given for the command `key` with a count: the count
+/// as tty reads it, then the command, which NetHack repeats and stops by
+/// its own rules. With number_pad a step's key is a digit, which the count
+/// would take: the step goes as its extended command (`n5#movewest`).
+pub fn counted(key: i32, count: u32, number_pad: bool, dirchars: &str) -> Vec<Reply> {
+    let mut out: Vec<Reply> = count_keys(count, number_pad)
+        .into_iter()
+        .map(Reply::Key)
+        .collect();
+    let step = u32::try_from(key)
+        .ok()
+        .and_then(char::from_u32)
+        .filter(|c| number_pad && c.is_ascii_digit())
+        .and_then(|c| dirchars.chars().take(8).position(|d| d == c));
+    match step {
+        Some(i) => {
+            out.push(Reply::Key('#' as i32));
+            out.push(Reply::ExtCmd(Some(MOVE_COMMANDS[i].to_string())));
+        }
+        None => out.push(Reply::Key(key)),
+    }
+    out
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -463,6 +501,38 @@ mod tests {
                 .chain([None])
                 .collect::<Vec<_>>()
         );
+    }
+
+    #[test]
+    fn a_count_goes_to_the_engine_as_tty_types_it() {
+        let keys = |r: &[Reply]| -> String {
+            r.iter()
+                .map(|r| match r {
+                    Reply::Key(k) => (*k as u8 as char).to_string(),
+                    Reply::ExtCmd(Some(name)) => format!("[{name}]"),
+                    other => format!("{other:?}"),
+                })
+                .collect()
+        };
+        assert_eq!(
+            keys(&counted('s' as i32, 20, false, DEFAULT_DIRCHARS)),
+            "20s"
+        );
+        assert_eq!(keys(&counted('s' as i32, 20, true, NUMPAD)), "n20s");
+        assert_eq!(keys(&counted(',' as i32, 5, true, NUMPAD)), "n5,");
+        // a step: Classic's letter; number_pad's digit would join the count
+        assert_eq!(keys(&counted('h' as i32, 5, false, DEFAULT_DIRCHARS)), "5h");
+        assert_eq!(keys(&counted('4' as i32, 5, true, NUMPAD)), "n5#[movewest]");
+        assert_eq!(
+            keys(&counted('3' as i32, 2, true, NUMPAD)),
+            "n2#[movesoutheast]"
+        );
+        assert_eq!(
+            keys(&counted('9' as i32, 3, true, PHONE)),
+            "n3#[movesoutheast]"
+        );
+        // a run (M-4) is no digit: it ends the count by itself
+        assert_eq!(counted(0x80 | '4' as i32, 3, true, NUMPAD).len(), 3);
     }
 
     #[test]

@@ -1,14 +1,15 @@
 //! Time in the style of BG3 (spec 4): the player gives orders — walk to a
-//! cell, hold a key, search or rest for a while, go to the stairs — and the
-//! client carries them out one engine action per tick while nothing hostile
-//! is in view; in a fight every action waits for the player. An order stops
-//! on anything that deserves the player's eye, and on any key or click,
+//! cell, hold a key, rest until healed, go to the stairs — and the client
+//! carries them out one engine action per tick while nothing hostile is in
+//! view; in a fight every action waits for the player. An order stops on
+//! anything that deserves the player's eye, and on any key or click,
 //! before its next step.
 //!
 //! Everything here is plain data: the game asks for the next action when a
 //! command prompt waits and the tick has passed, and answers that very
-//! prompt with it. The engine's multi-turn commands (`G`, `_`, counts) are
-//! never used: an order is a run of single steps, so it can always stop.
+//! prompt with it. An order is a run of single steps, so it can always
+//! stop. A count (`20s`, `n5,`) is no order: it goes to the engine with
+//! its command, which NetHack repeats and stops by its own rules.
 
 use std::collections::VecDeque;
 use std::time::Duration;
@@ -85,8 +86,6 @@ impl Arrival {
 pub enum Order {
     /// Walk to `goal` by the known map (the way found again every step).
     Walk { goal: (i32, i32), arrival: Arrival },
-    /// A key `left` more times (a count: `20s`, `5l`).
-    Repeat { key: char, left: u32 },
     /// A key again every tick while the player holds it down.
     Hold { key: char },
     /// Search until HP and Pw are full.
@@ -98,7 +97,7 @@ pub enum Order {
 pub enum Stop {
     /// The walk got there (and did what it came for).
     Arrived,
-    /// The count ran out.
+    /// It ran its course (a rest as long as it goes).
     Done,
     /// HP and Pw are full.
     Healed,
@@ -340,13 +339,17 @@ pub fn stairs_order(world: &World, catalog: &Catalog, key: char) -> Option<Order
     })
 }
 
-/// Keys an order may repeat: a step, a search, a rest.
+/// Keys a held key repeats as an order: a step, a search, a rest.
 pub fn repeatable(key: char, dirchars: &str) -> bool {
     key == 's' || key == '.' || key_dir(dirchars, key).is_some()
 }
 
 /// A count typed before a command (digits; with number_pad, `n` and
-/// digits). The client keeps it: the engine never sees a count.
+/// digits). The client reads it to show it as it is typed and to give a
+/// bar slot its count; the command then goes to the engine with it
+/// ([`counted`]).
+///
+/// [`counted`]: crate::counted
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct CountEntry {
     n: Option<u32>,
@@ -746,16 +749,6 @@ impl TickDriver {
                     };
                     (Action::key(k), Some(next), false)
                 }
-            }
-            Order::Repeat { key, left } => {
-                if left == 0 {
-                    return self.end(Stop::Done);
-                }
-                active.order = Order::Repeat {
-                    key,
-                    left: left - 1,
-                };
-                (Action::key(key), step_target(hero, &dirchars, key), false)
             }
             Order::Hold { key } => (Action::key(key), step_target(hero, &dirchars, key), false),
             Order::Rest => {
@@ -1242,26 +1235,11 @@ mod tests {
     }
 
     #[test]
-    fn repeat_sends_the_key_n_times() {
+    fn a_held_step_stops_at_a_wall() {
         let (mut w, cat) = world_of(&ROOM);
         let mut d = TickDriver::new();
         d.observe(&w, &cat);
-        let a = d
-            .start(Order::Repeat { key: 's', left: 3 }, &w, &cat)
-            .unwrap();
-        assert_eq!(keys(&a), "s");
-        for t in 2..4 {
-            turn(&mut w, t);
-            d.observe(&w, &cat);
-            assert_eq!(keys(&d.next(&w, &cat).unwrap()), "s");
-        }
-        d.observe(&w, &cat);
-        assert_eq!(d.next(&w, &cat), None);
-        assert_eq!(d.take_stop(), Some(Stop::Done));
-        // steps: five cells east, a wall stops it early
-        let a = d
-            .start(Order::Repeat { key: 'l', left: 20 }, &w, &cat)
-            .unwrap();
+        let a = d.start(Order::Hold { key: 'l' }, &w, &cat).unwrap();
         assert_eq!(keys(&a), "l");
         let mut at = (2, 1);
         while at.0 < 9 {
@@ -1341,11 +1319,13 @@ mod tests {
         d.observe(&w, &cat);
         assert_eq!(d.next(&w, &cat), None);
         assert_eq!(d.take_stop(), Some(Stop::OneAction));
-        // a search count: one search
-        d.start(Order::Repeat { key: 's', left: 5 }, &w, &cat)
-            .unwrap();
+        // a rest: one search
+        stat(&mut w, "hp", "10");
+        d.observe(&w, &cat);
+        d.start(Order::Rest, &w, &cat).unwrap();
         d.observe(&w, &cat);
         assert_eq!(d.next(&w, &cat), None);
+        assert_eq!(d.take_stop(), Some(Stop::OneAction));
         // holding a key goes on
         d.start(Order::Hold { key: 's' }, &w, &cat).unwrap();
         d.observe(&w, &cat);
@@ -1490,8 +1470,7 @@ mod tests {
             let (mut w, cat) = world_of(&ROOM);
             let mut d = TickDriver::new();
             d.observe(&w, &cat);
-            d.start(Order::Repeat { key: 's', left: 9 }, &w, &cat)
-                .unwrap();
+            d.start(Order::Hold { key: 's' }, &w, &cat).unwrap();
             change(&mut w);
             d.observe(&w, &cat);
             assert!(!d.is_active());
@@ -1512,8 +1491,7 @@ mod tests {
         stat(&mut w, "hp", "10");
         let mut d = TickDriver::new();
         d.observe(&w, &cat);
-        d.start(Order::Repeat { key: 's', left: 9 }, &w, &cat)
-            .unwrap();
+        d.start(Order::Hold { key: 's' }, &w, &cat).unwrap();
         stat(&mut w, "hp", "11");
         conds(&mut w, 0);
         d.observe(&w, &cat);
@@ -1526,8 +1504,7 @@ mod tests {
         let mut d = TickDriver::new();
         say(&mut w, "an old message");
         d.observe(&w, &cat);
-        d.start(Order::Repeat { key: 's', left: 9 }, &w, &cat)
-            .unwrap();
+        d.start(Order::Hold { key: 's' }, &w, &cat).unwrap();
         say(&mut w, "You swap places with your kitten.");
         say(&mut w, "You hear some noises in the distance.");
         d.observe(&w, &cat);
@@ -1574,8 +1551,7 @@ mod tests {
         let (mut w, cat) = world_of(&["|@.f....|"]);
         let mut d = TickDriver::new();
         d.observe(&w, &cat);
-        d.start(Order::Repeat { key: 's', left: 9 }, &w, &cat)
-            .unwrap();
+        d.start(Order::Hold { key: 's' }, &w, &cat).unwrap();
         say(&mut w, "The kitten picks up a bag.");
         say(&mut w, "Your kitten eats a newt corpse.");
         say(&mut w, "The door opens.");
@@ -1630,14 +1606,12 @@ mod tests {
     fn an_order_stops_on_an_unexpected_question() {
         let (w, cat) = world_of(&ROOM);
         let mut d = TickDriver::new();
-        d.start(Order::Repeat { key: 's', left: 9 }, &w, &cat)
-            .unwrap();
+        d.start(Order::Hold { key: 's' }, &w, &cat).unwrap();
         d.on_question();
         assert_eq!(d.take_stop(), Some(Stop::Question));
         // a key, a click, a panel
         for why in [Stop::Key, Stop::Click, Stop::Panel, Stop::Focus] {
-            d.start(Order::Repeat { key: 's', left: 9 }, &w, &cat)
-                .unwrap();
+            d.start(Order::Hold { key: 's' }, &w, &cat).unwrap();
             d.interrupt(why.clone());
             assert_eq!(d.next(&w, &cat), None);
             assert_eq!(d.take_stop(), Some(why));

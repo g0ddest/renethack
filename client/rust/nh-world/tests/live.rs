@@ -306,8 +306,9 @@ fn keys_and_menus_answer_the_engine() {
 
 /// Orders on a real game (seed 42), as the client runs them: a click walks
 /// to the far corner of the start room one step per command request, a
-/// click on the west doorway walks there, `20j` walks down the corridor
-/// until it ends, and `>` walks to the stairs it found and goes down.
+/// click on the west doorway walks there, `20j` goes to the engine and
+/// walks down the corridor until it ends, and `>` walks to the stairs it
+/// found and goes down.
 #[test]
 fn orders_walk_the_real_map_and_take_the_stairs() {
     use std::collections::VecDeque;
@@ -331,6 +332,8 @@ fn orders_walk_the_real_map_and_take_the_stairs() {
     let mut done: Vec<Done> = Vec::new();
     let mut current: Option<(&str, u32)> = None;
     let mut quitting = false;
+    // the rest of a count and its command, one a request
+    let mut typing: VecDeque<Reply> = VecDeque::new();
     while let Some(inc) = engine.recv(Duration::from_secs(10)).unwrap() {
         let (id, req) = match inc.msg {
             EngineMsg::Catalog(c) => {
@@ -353,6 +356,13 @@ fn orders_walk_the_real_map_and_take_the_stairs() {
                 Prompt::Command => Reply::Key(c as i32),
                 _ => Reply::Char(c as i32),
             };
+            engine.reply(id, &reply(r)).unwrap();
+            continue;
+        }
+        if matches!(prompt, Prompt::Command | Prompt::ExtCmd)
+            && !world.getpos
+            && let Some(r) = typing.pop_front()
+        {
             engine.reply(id, &reply(r)).unwrap();
             continue;
         }
@@ -388,16 +398,18 @@ fn orders_walk_the_real_map_and_take_the_stairs() {
                             other => panic!("{step}: {other:?}"),
                         }
                     }
-                    ["count", n, k] => Some(Order::Repeat {
-                        key: k.chars().next().unwrap(),
-                        left: n.parse().unwrap(),
-                    }),
                     ["key", ">"] => {
                         Some(stairs_order(&world, cat, '>').expect("the stairs are known"))
                     }
                     _ => None,
                 };
                 match (order, &words[..]) {
+                    (None, &["count", n, k]) => {
+                        let key = k.chars().next().unwrap() as i32;
+                        typing = counted(key, n.parse().unwrap(), false, &world.dirchars).into();
+                        current = Some((step, 1));
+                        typing.pop_front().unwrap()
+                    }
                     (Some(o), _) => {
                         let a = driver
                             .start(o, &world, cat)
@@ -435,12 +447,9 @@ fn orders_walk_the_real_map_and_take_the_stairs() {
     );
     assert!(walk.1 <= 5, "{done:?}");
     assert_eq!(find("click 13 3").3, Some((13, 3)), "{done:?}");
-    // the corridor ends where it turns: the step goes nowhere
+    // the engine walks the corridor to where it turns
     let corridor = find("count 20 j");
-    assert!(
-        corridor.1 >= 10 && corridor.3.is_some_and(|h| h.1 >= 15),
-        "{done:?}"
-    );
+    assert!(corridor.3.is_some_and(|h| h.1 >= 15), "{done:?}");
     let stairs = find("key >");
     assert_eq!(stairs.2, Some(Stop::Arrived), "{done:?}");
     assert!(stairs.1 >= 2, "walked, then '>': {done:?}");

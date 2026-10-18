@@ -376,8 +376,8 @@ impl ActionBar {
         v
     }
 
-    /// What pressing a slot does, with a count typed before it
-    /// (`n20` then slot 3 = Search: a Repeat order of 20).
+    /// What pressing a slot does, with a count typed before it (`n20`
+    /// then slot 3 = Search: `n20s` to the engine).
     pub fn activate(
         &self,
         slot: usize,
@@ -400,9 +400,6 @@ impl ActionBar {
             Some(SlotBinding::Spell { name }) => SlotUse::Macro(Macro::cast(name)),
             Some(SlotBinding::Command { cmd }) => match (cmd.keys(), count) {
                 (CommandKeys::Rest, _) => SlotUse::Order(Order::Rest),
-                (CommandKeys::Key(key @ ('s' | '.')), Some(left)) => {
-                    SlotUse::Order(Order::Repeat { key, left })
-                }
                 (CommandKeys::Key(key), count) => {
                     SlotUse::Macro(Macro::key(key as i32, count, profile.number_pad()))
                 }
@@ -899,11 +896,31 @@ mod tests {
         let pack = pack_of(valkyrie());
         let bar = ActionBar::default_for("Valkyrie", &pack);
         let w = World::new();
-        // slot 3: search; with a count, a Repeat order
-        assert_eq!(
-            bar.activate(2, &pack, Some(20), KeyProfile::Modern),
-            SlotUse::Order(Order::Repeat { key: 's', left: 20 })
-        );
+        // slot 3: search; with a count, the count and the key to the
+        // engine (`n20s`, Classic's `20s`)
+        let command = Prompt::Command;
+        for (profile, keys) in [(KeyProfile::Modern, "n20s"), (KeyProfile::Classic, "20s")] {
+            let SlotUse::Macro(m) = bar.activate(2, &pack, Some(20), profile) else {
+                panic!()
+            };
+            let mut r = MacroRunner::new();
+            let mut sent = Vec::new();
+            sent.push(r.start(m));
+            while r.is_active() {
+                match r.on_prompt(&command, &w) {
+                    MacroStep::Reply(reply) => sent.push(Some(reply)),
+                    _ => break,
+                }
+            }
+            let typed: String = sent
+                .into_iter()
+                .map(|r| match r {
+                    Some(Reply::Key(k)) => k as u8 as char,
+                    other => panic!("{other:?}"),
+                })
+                .collect();
+            assert_eq!(typed, keys);
+        }
         let SlotUse::Macro(m) = bar.activate(2, &pack, None, KeyProfile::Modern) else {
             panic!()
         };

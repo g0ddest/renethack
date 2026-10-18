@@ -264,13 +264,6 @@ order-stairs-up = Going to the stairs up
 order-stairs-down = Going to the stairs down
 order-open-door = Going to open the door
 order-attack = Going to attack
-order-search = Searching, { $left } more
-order-wait = Waiting, { $left } more
-order-walk-steps =
-    Walking, { $left } more { $left ->
-        [one] step
-       *[other] steps
-    }
 order-hold = Holding the key
 order-rest = Resting until HP and Pw are full
 order-line = { $what }  -  any key stops

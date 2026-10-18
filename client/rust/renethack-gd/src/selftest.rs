@@ -1558,7 +1558,7 @@ fn descend(g: &RenethackGame) -> Result<bool, String> {
 }
 
 /// Orders (spec 4): a click walks one step per tick and arrives, a held
-/// key steps until let go, `5s` searches five turns, Esc stops a walk
+/// key steps until let go, `5s` goes to the engine, Esc stops a walk
 /// before its next step, `>` walks to the stairs and goes down; in a
 /// second game (seed 11) a click on a closed door walks up and opens it,
 /// a hostile coming into view stops a walk and starts a fight, and in the
@@ -1648,27 +1648,20 @@ fn orders() -> Vec<Step> {
                 Err(format!("the hero at {hero:?} after holding north"))
             }
         }),
-        // a count: 5s searches five turns, one action a tick
+        // a count: 5s goes to the engine, which searches five turns
         Step::Wait("the player's turn", idle_command),
-        Step::Call("mark", mark),
+        Step::Call("mark", |g| {
+            g.sent.clear();
+            mark(g)
+        }),
         Step::Key(alt('5')),
         Step::Wait("the count on the prompt line", |g| {
             let line = g.ui.as_ref().and_then(|ui| ui.hud.prompt_line());
             Ok(line.as_deref() == Some("Count: 5"))
         }),
         Step::Key(plain_key('s')),
-        Step::Wait("five searches", |g| {
-            Ok(idle_command(g)? && actions_since(g) >= 5)
-        }),
-        Step::Call("five turns", |g| {
-            let turns = g.world.status.number("time").unwrap_or(0) - marked().turn;
-            let n = actions_since(g);
-            let searched = g.order_log.iter().rev().take(5).all(|(_, c)| *c == 's');
-            if n == 5 && turns == 5 && searched && g.last_stop == Some(Stop::Done) {
-                Ok(())
-            } else {
-                Err(format!("{n} actions, {turns} turns, {:?}", g.last_stop))
-            }
+        Step::Wait("five searches by the engine", |g| {
+            searched_by_the_engine(g, "5s", 5)
         }),
         // a key stops a walk before its next step
         Step::Wait("the player's turn", idle_command),
@@ -2960,56 +2953,54 @@ fn inventory() -> Vec<Step> {
     steps
 }
 
-/// How many actions the bar test's searches start from.
-static SEARCH_FROM: AtomicU32 = AtomicU32::new(0);
-
-fn mark_searches(g: &mut RenethackGame) -> Result<(), String> {
-    SEARCH_FROM.store(g.order_actions as u32, Ordering::Relaxed);
-    g.last_stop = None;
-    Ok(())
+/// The keys the engine was answered at its command prompt since the
+/// mark, as text (a count's digits, `n`, the command).
+fn command_keys(g: &RenethackGame) -> String {
+    g.sent
+        .iter()
+        .filter(|(p, _)| *p == Prompt::Command)
+        .filter_map(|(_, r)| match r {
+            nh_protocol::Reply::Key(k) => u8::try_from(*k).ok().map(char::from),
+            _ => None,
+        })
+        .collect()
 }
 
-/// The count went to a search order of twenty.
-fn searching_twenty(g: &RenethackGame) -> Result<bool, String> {
-    match g.driver.order() {
-        Some(nh_world::Order::Repeat { key: 's', left }) if *left >= 18 => Ok(true),
-        Some(other) => Err(format!("the order is {other:?}")),
-        None => Ok(false),
-    }
-}
-
-/// The search order ran to its end as searches: twenty, unless something
-/// worth a look stopped it (the pet picking something up), as orders do.
-fn searched_twenty(g: &RenethackGame) -> Result<bool, String> {
-    let n = g.order_actions - u64::from(SEARCH_FROM.load(Ordering::Relaxed));
-    if !idle_command(g)? || n == 0 {
+/// A count of searches went to the engine (`keys` at its prompt), which
+/// searched on its own, turn after turn, the hero where they stood: no
+/// order of the client's, and not one action a tick.
+fn searched_by_the_engine(g: &RenethackGame, keys: &str, n: i64) -> Result<bool, String> {
+    let turns = g.world.status.number("time").unwrap_or(0) - marked().turn;
+    if !idle_command(g)? || turns == 0 {
         return Ok(false);
     }
-    let all_s = g
-        .order_log
-        .iter()
-        .rev()
-        .take(n as usize)
-        .all(|(_, c)| *c == 's');
-    let done = n == 20 && g.last_stop == Some(Stop::Done);
-    let stopped = n < 20 && g.last_stop.as_ref().is_some_and(|s| !s.is_completion());
-    if all_s && (done || stopped) {
-        godot_print!("selftest: bar: {n} searches, {:?}", g.last_stop);
-        Ok(true)
-    } else {
-        Err(format!(
-            "{n} actions ({:?}), the last ones {:?}",
-            g.last_stop,
-            g.order_log.iter().rev().take(3).collect::<Vec<_>>()
-        ))
+    let sent = command_keys(g);
+    if !sent.ends_with(keys) || actions_since(g) != 0 || g.world.hero() != marked().hero {
+        return Err(format!(
+            "sent {sent:?}, {} order actions, the hero at {:?}",
+            actions_since(g),
+            g.world.hero()
+        ));
     }
+    // NetHack's own count: as many turns, unless it stopped it
+    if turns != n {
+        godot_print!(
+            "selftest: the count ran {turns} of {n} turns: {:?}",
+            g.world.log.iter().next_back().map(|m| &m.text)
+        );
+    }
+    if turns < 2 || turns > n {
+        return Err(format!("{turns} turns for a count of {n}"));
+    }
+    godot_print!("selftest: {keys:?} searched {turns} turns in the engine");
+    Ok(true)
 }
 
 /// The action bar (ui-design §4): a new Valkyrie's default loadout, the
 /// food ration bound to slot 2 by a drag from the panel, `#adjust` gives
 /// it another letter and the slot follows it, `2` eats it (then the slot
-/// shows it gone), `n20s` searches 20 turns (Modern); a Classic
-/// character's `Alt+2 Alt+0 s` does too.
+/// shows it gone), `n20s` goes to the engine, which searches 20 turns
+/// (Modern); a Classic character's `Alt+2 Alt+0 s` does too.
 fn bar() -> Vec<Step> {
     use crate::inventory_panel::{InvInput, InvTarget};
     use nh_world::{BarCommand, ItemActionKind, SlotBinding};
@@ -3075,7 +3066,11 @@ fn bar() -> Vec<Step> {
         }),
         Step::Shot("bar-gone"),
         // n20s: twenty searches (Modern)
-        Step::Call("mark", mark_searches),
+        Step::Wait("the player's turn", idle_command),
+        Step::Call("mark", |g| {
+            g.sent.clear();
+            mark(g)
+        }),
         key('n'),
         key('2'),
         key('0'),
@@ -3084,8 +3079,9 @@ fn bar() -> Vec<Step> {
             Ok(line.as_deref() == Some("Count: 20"))
         }),
         key('s'),
-        Step::Wait("a search order of twenty", searching_twenty),
-        Step::Wait("twenty searches", searched_twenty),
+        Step::Wait("twenty searches by the engine", |g| {
+            searched_by_the_engine(g, "n20s", 20)
+        }),
     ]);
     steps.extend(quit());
     steps.extend([
@@ -3099,7 +3095,11 @@ fn bar() -> Vec<Step> {
         Step::Wait("vi-keys: number_pad off", |g| {
             Ok(!g.world.number_pad && g.ui_state.profile == KeyProfile::Classic)
         }),
-        Step::Call("mark", mark_searches),
+        Step::Wait("the player's turn", idle_command),
+        Step::Call("mark", |g| {
+            g.sent.clear();
+            mark(g)
+        }),
         Step::Key(alt('2')),
         Step::Key(alt('0')),
         Step::Wait("the count on the prompt line", |g| {
@@ -3107,8 +3107,9 @@ fn bar() -> Vec<Step> {
             Ok(line.as_deref() == Some("Count: 20"))
         }),
         key('s'),
-        Step::Wait("a search order of twenty", searching_twenty),
-        Step::Wait("twenty searches", searched_twenty),
+        Step::Wait("twenty searches by the engine", |g| {
+            searched_by_the_engine(g, "20s", 20)
+        }),
     ]);
     steps.extend(quit());
     steps

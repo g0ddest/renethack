@@ -84,7 +84,7 @@ The client adds:
 | a menu of your own items (`D`, `A`, identify...) | the panel with check marks: the letter or a click toggles, digits a count, `Enter` confirms |
 | `1`–`9`, `0` | action bar slots: an item with its action, a spell or a command; a new character gets its role's loadout. After a count (`n20`, `Alt`+digits) a slot takes it by a click. Right-click clears a slot (Undo in the notice); an item's slot follows it through new letters and names, and shows it greyed while it is not in the pack. The bar is kept with the character (`<name>.rhui.json` in the game directory) |
 | holding a direction key (or `s`, `.`) | step (search, wait) again every tick until the key is let go |
-| a count, then a direction, `s` or `.` | that many steps, searches or waits, one per tick |
+| a count before a command | the engine has both, as NetHack reads them (`n20s` searches 20 turns, `n5,` picks up five of a stack, `n2f` fires two at most), and repeats the command until NetHack itself stops it: an attack, full health, something it tells |
 | left click on the map | walk there by the known map, one step per tick; on an object — pick it up, on stairs — take them, on a closed door — open it, on a monster — attack it; on yourself — the engine's menu of actions here |
 | right click on the map | the engine's menu of actions for that cell (open, kick, talk, look at...) |
 | `<` / `>` away from the stairs | walk to the known stairs and take them |
@@ -132,7 +132,7 @@ screen (Latin and Cyrillic, Y switches; on a Steam Deck the client also
 asks Steam for its own keyboard).
 
 Time runs like in BG3. While no hostile is in view (**exploring**, the
-badge top right), an order — a click, a held key, a count, `F5`, `<`/`>` —
+badge top right), an order — a click, a held key, `F5`, `<`/`>` —
 is carried out one engine action per tick (300 ms; `tick_ms` in the
 `[renethack]` section of `client/godot/project.godot`, 150–500, or
 `RENETHACK_TICK_MS`). The hover shows the way a click would take. An order
@@ -263,14 +263,15 @@ every one's feet are on the room's floor within a centimetre, standing,
 mid-blow and reeling. A creature in a door last seen shut opened it (the
 engine draws no ground under it), so the door is drawn open, the creature
 on its floor. The `orders`
-scenario walks, holds, counts, stops a walk with a key, takes the stairs,
+scenario walks, holds, gives the engine a count, stops a walk with a key,
+takes the stairs,
 and meets a hostile that stops a walk (with `--screenshots`, the way
 previewed and the combat banner). The `inventory`
 scenario opens the panel, filters it, wields by a drag and by the context
 menu, answers a getobj question in selection mode and drops through the
 panel's `D` menu; `bar` binds the food ration to a slot, follows it through
-`#adjust`, eats it with `2`, and counts 20 searches with `n20s` (Modern) and
-`Alt`+`2` `Alt`+`0` `s` (Classic). The `title` scenario checks the scene
+`#adjust`, eats it with `2`, and gives the engine 20 searches with `n20s`
+(Modern) and `Alt`+`2` `Alt`+`0` `s` (Classic). The `title` scenario checks the scene
 behind the title menu: drawn before the start-up veil lifts, the hero in
 their gear, both ends of the camera's sway, put away by a game and laid
 again on the title after it. The `riding` scenario puts a Knight on his

@@ -287,8 +287,7 @@ impl Macro {
     }
 
     /// A command key; with a count it goes first, as tty reads one (`n20`
-    /// with number_pad). Repeated keys (search, rest, steps) had better
-    /// be the client's Repeat order, which stops for a hostile.
+    /// with number_pad), and NetHack repeats the command by its rules.
     pub fn key(key: i32, count: Option<u32>, number_pad: bool) -> Macro {
         let mut steps: Vec<Step> = count
             .map(|n| count_keys(n, number_pad))

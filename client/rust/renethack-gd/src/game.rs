@@ -262,9 +262,6 @@ fn order_text(order: &Order) -> String {
             Arrival::Open => tr!("order-open-door"),
             Arrival::Attack => tr!("order-attack"),
         },
-        Order::Repeat { key: 's', left } => tr!("order-search", left = *left),
-        Order::Repeat { key: '.', left } => tr!("order-wait", left = *left),
-        Order::Repeat { left, .. } => tr!("order-walk-steps", left = *left),
         Order::Hold { .. } => tr!("order-hold"),
         Order::Rest => tr!("order-rest"),
     };
@@ -495,9 +492,11 @@ pub struct RenethackGame {
     loadout_for: Option<String>,
     /// The item actions behind clicks, drags and bar slots.
     pub(crate) macros: MacroRunner,
-    /// Keys the engine reads after a getobj answer (get_count: the rest
-    /// of a count, then the letter), one per command prompt.
-    typing: std::collections::VecDeque<i32>,
+    /// What the engine reads after a key that began it, one a request: a
+    /// count and its command (`n20s`), the rest of a getobj count and the
+    /// letter. Keys answer command prompts, an extended command its
+    /// prompt.
+    typing: std::collections::VecDeque<Reply>,
     /// A slot or panel action waiting for the command prompt (the engine
     /// was busy with an order's step).
     deferred: Option<SlotUse>,
@@ -1983,13 +1982,16 @@ impl RenethackGame {
             self.reply(reply);
             return;
         }
-        // the rest of a count and the letter, read by get_count
-        if !self.typing.is_empty() {
-            if matches!(prompt, Prompt::Command | Prompt::Key)
-                && let Some(k) = self.typing.pop_front()
-            {
+        // a count and its command, the rest of a getobj count and the
+        // letter: read one key at a time by get_count
+        if let Some(next) = self.typing.front() {
+            let fits = match next {
+                Reply::ExtCmd(_) => prompt == Prompt::ExtCmd,
+                _ => matches!(prompt, Prompt::Command | Prompt::Key),
+            };
+            if fits && let Some(r) = self.typing.pop_front() {
                 self.pending = Some((id, prompt));
-                self.reply(Reply::Key(k));
+                self.reply(r);
                 return;
             }
             self.typing.clear();
@@ -3010,10 +3012,15 @@ impl RenethackGame {
                     self.on_inventory(InvInput::Toggle);
                     return;
                 }
-                if let (Some(n), Some(c)) = (n, c)
-                    && repeatable(c, &dirs)
-                {
-                    self.start_order(Order::Repeat { key: c, left: n });
+                // a count goes to the engine with its command, as tty
+                // types them: NetHack repeats it, and stops it by its rules
+                if let Some(n) = n {
+                    let mut keys: std::collections::VecDeque<Reply> =
+                        nh_world::counted(code, n, np, &dirs).into();
+                    if let Some(first) = keys.pop_front() {
+                        self.typing = keys;
+                        self.reply(first);
+                    }
                     return;
                 }
                 // '<' or '>' away from the stairs: walk there and use them
@@ -3282,7 +3289,7 @@ impl RenethackGame {
                         let first = keys.pop_front().unwrap_or('1' as i32);
                         keys.push_back(letter as i32);
                         self.reply(Reply::Char(first));
-                        self.typing = keys;
+                        self.typing = keys.into_iter().map(Reply::Key).collect();
                     }
                     None => self.reply(Reply::Char(letter as i32)),
                 }
@@ -5406,8 +5413,7 @@ mod tests {
             arrival: nh_world::Arrival::Stairs('>'),
         };
         assert!(order_text(&walk).starts_with("Going to the stairs down"));
-        let search = Order::Repeat { key: 's', left: 4 };
-        assert!(order_text(&search).starts_with("Searching, 4 more"));
+        assert!(order_text(&Order::Hold { key: 's' }).starts_with("Holding the key"));
         assert!(order_text(&Order::Rest).contains("any key stops"));
         assert_eq!(held_key(Key::Char('L')), Key::Char('l'));
         assert_eq!(held_key(Key::Left), Key::Left);

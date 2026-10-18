@@ -264,14 +264,6 @@ order-stairs-up = Иду к лестнице вверх
 order-stairs-down = Иду к лестнице вниз
 order-open-door = Иду открыть дверь
 order-attack = Иду в атаку
-order-search = Поиск, ещё { $left }
-order-wait = Ожидание, ещё { $left }
-order-walk-steps =
-    Иду, ещё { $left } { $left ->
-        [one] шаг
-        [few] шага
-       *[many] шагов
-    }
 order-hold = Клавиша зажата
 order-rest = Отдых, пока здоровье и энергия не восстановятся
 order-line = { $what }  —  любая клавиша остановит
