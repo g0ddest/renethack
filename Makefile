@@ -198,7 +198,7 @@ perf: all
 # The pipeline variants the rehearsal makes under the veil
 # (client/godot/art/variants.txt): a census of what $(VARIANT_SCENES) draw,
 # added to the list. Run it after new art; `make perf` names what is missing.
-VARIANT_SCENES ?= variants,deep,soak-mines,soak-deep,crowd,states,effects,rays,item-use,branches,tour
+VARIANT_SCENES ?= variants,deep,prologue,soak-mines,soak-deep,crowd,states,effects,rays,item-use,branches,tour
 variants: all
 	python3 tools/perf.py --godot "$(GODOT)" --census --scenes $(VARIANT_SCENES) --out build/variants
 	python3 tools/variants.py merge build/variants

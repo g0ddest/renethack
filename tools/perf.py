@@ -64,6 +64,8 @@ SCENES = {
     # the deep dungeon in debug mode: Medusa, the castle, Gehennom, Vlad's
     # Tower, and the creatures of each
     "deep": ("deep", [], 1200),
+    # a new game told with the prologue, beat by beat, into the game
+    "prologue": ("prologue", [], 600),
     # every creature and thing a batch at a time: with --census, what the
     # game can draw (not a timing)
     "variants": ("variants", [], 1800),
@@ -554,7 +556,9 @@ def main():
     unknown = [s for s in scenes if s not in SCENES]
     if unknown:
         sys.exit(f"perf: no scene {', '.join(unknown)}")
-    out = Path(args.out)
+    # absolute: Godot runs in the staged project, where the logs' relative
+    # paths would point
+    out = Path(args.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
     godot = godot_binary(args.godot)
     if not args.report:
