@@ -1474,7 +1474,7 @@ fn tab_button(glyph: Glyph, tip: &str, looks: &Looks) -> Gd<Button> {
     let mut b = Button::new_alloc();
     b.set_focus_mode(FocusMode::NONE);
     b.set_custom_minimum_size(Vector2::new(42.0, 36.0));
-    b.set_tooltip_text(tip);
+    crate::tips::set(&b, tip);
     for s in [
         "normal",
         "hover",
@@ -1705,7 +1705,7 @@ impl InventoryPanel {
         );
         let mut letters = theme::styled_label("", Face::Body, 16, theme::TEXT_DIM);
         letters.set_vertical_alignment(VerticalAlignment::CENTER);
-        i18n::tip(&letters, "inv-letters-tip");
+        crate::tips::bind(&letters, "inv-letters-tip");
         letters.set_mouse_filter(MouseFilter::PASS);
         head_right.add_child(&letters);
         let ac_chip = chip("");
@@ -1722,7 +1722,7 @@ impl InventoryPanel {
         cancel.set_visible(false);
         head_right.add_child(&cancel);
         let mut close = theme::button("✕", &queue, UiEvent::Inventory(InvInput::Close));
-        i18n::tip(&close, "inv-close-tip");
+        crate::tips::bind(&close, "inv-close-tip");
         close.set_custom_minimum_size(Vector2::new(36.0, 32.0));
         head_right.add_child(&close);
         body.add_child(&head_right);
@@ -1806,7 +1806,7 @@ impl InventoryPanel {
                 inner.move_child(&g, 1);
             }
             s.ghost = Some(g);
-            s.root.set_tooltip_text(&slot.name());
+            crate::tips::set(&s.root, &slot.name());
             slot_area.add_child(&s.root);
             let t = slot;
             wire_socket(&s.root, Rc::new(move || InvTarget::Doll(t)), &queue, &mouse);
@@ -1864,7 +1864,7 @@ impl InventoryPanel {
             [gx, top, gx + GRID_COL_W, top + 32.0],
         );
         let mut suggested_tab = tab_button(Glyph::Star, "", &looks);
-        i18n::tip(&suggested_tab, "inv-suggested-tip");
+        crate::tips::bind(&suggested_tab, "inv-suggested-tip");
         let q = queue.clone();
         suggested_tab.signals().pressed().connect(move || {
             push(
@@ -2194,7 +2194,7 @@ impl InventoryPanel {
     /// it draws again (bound labels change by themselves).
     pub fn relang(&mut self) {
         for (f, b) in self.tabs.iter_mut() {
-            b.set_tooltip_text(&filter_tip(*f));
+            crate::tips::set(b, &filter_tip(*f));
         }
         self.pack_key.clear();
         self.detail_key = None;
@@ -2847,7 +2847,7 @@ impl InventoryPanel {
         // an extended command does not fit beside a narrow button's label:
         // the tooltip has it
         let short = primary || w > 200.0 || a.keys.len() <= 3;
-        b.set_tooltip_text(&format!("{}  ({})", label(a.label_key), a.keys));
+        crate::tips::set(&b, &format!("{}  ({})", label(a.label_key), a.keys));
         let hint = if short { a.keys } else { "" };
         let mut keys = theme::styled_label(hint, Face::Mono, 14, theme::TEXT_DIM);
         keys.set_horizontal_alignment(HorizontalAlignment::RIGHT);
@@ -3538,8 +3538,7 @@ impl InventoryPanel {
                     sock.letter.set_text("-");
                     sock.pill.set_visible(true);
                     let verb = question.as_ref().map_or("", |q| q.verb.as_str());
-                    sock.root
-                        .set_tooltip_text(&format!("{}  (-)", hands_label(verb)));
+                    crate::tips::set(&sock.root, &format!("{}  (-)", hands_label(verb)));
                     set_style(&mut sock.root, "panel", &self.looks.normal);
                     if question.as_ref().is_some_and(|q| q.hands) {
                         sock.rim.set_visible(true);
@@ -3606,13 +3605,13 @@ impl InventoryPanel {
                         sock.root.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, 0.4));
                     }
                     set_style(&mut sock.root, "panel", style);
-                    sock.root.set_tooltip_text(&tip);
+                    crate::tips::set(&sock.root, &tip);
                 }
                 _ => {
                     sock.icon.set_modulate(Color::WHITE);
                     sock.show(None);
                     set_style(&mut sock.root, "panel", &self.looks.empty);
-                    sock.root.set_tooltip_text("");
+                    crate::tips::set(&sock.root, "");
                 }
             }
         }
@@ -3665,7 +3664,7 @@ impl InventoryPanel {
                 }
                 None => tr!("inv-doll-empty-tip", slot = slot.name()),
             };
-            sock.root.set_tooltip_text(&tip);
+            crate::tips::set(&sock.root, &tip);
         }
         let mut summary = Vec::new();
         if let Some(ac) = &self.status.0 {
@@ -3902,10 +3901,10 @@ impl InventoryPanel {
             hover.set_border_color(theme::GOLD);
             b.add_theme_stylebox_override("hover", &hover);
             b.add_theme_stylebox_override("pressed", &self.looks.tab_on);
-            b.set_tooltip_text(&tr!(
-                "inv-show-only",
-                what = label(f.label_key()).to_lowercase()
-            ));
+            crate::tips::set(
+                &b,
+                &tr!("inv-show-only", what = label(f.label_key()).to_lowercase()),
+            );
             let mut row = HBoxContainer::new_alloc();
             row.set_mouse_filter(MouseFilter::IGNORE);
             row.add_theme_constant_override("separation", 8);

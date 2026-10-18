@@ -128,7 +128,7 @@ impl Orb {
         let tip = self.value.map_or(String::new(), |(v, m)| {
             crate::i18n::tr_with(self.name, Some(&orb_args(v, m)))
         });
-        crate::hud_tip::set(&self.root, &tip);
+        crate::tips::set(&self.root, &tip);
     }
 
     /// Throb (HP critically low by the engine's own rule).

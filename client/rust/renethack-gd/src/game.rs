@@ -196,6 +196,8 @@ pub struct Ui {
     pub quest: crate::guide_view::QuestPage,
     /// The game's menu (Esc at the command prompt).
     pub game_menu: crate::game_menu::GameMenu,
+    /// The one tip on screen, over everything but the veil.
+    pub tips: crate::tips::TipHost,
     pub audio: crate::audio::Audio,
     /// The prologue's words and black, over everything.
     pub prologue: crate::prologue_view::PrologueView,
@@ -864,6 +866,11 @@ impl INode for RenethackGame {
         game_menu_layer.set_name("GameMenuLayer");
         game_menu_layer.set_layer(4);
         self.base_mut().add_child(&game_menu_layer);
+        // the tips, over the pages and the prologue, under the veil
+        let mut tip_layer = CanvasLayer::new_alloc();
+        tip_layer.set_name("TipLayer");
+        tip_layer.set_layer(7);
+        self.base_mut().add_child(&tip_layer);
         // the voices and the ears, in the map's 3D world
         crate::audio::ensure_buses();
         let mut audio_root = Node3D::new_alloc();
@@ -884,6 +891,7 @@ impl INode for RenethackGame {
             hint: crate::guide_view::HintCard::new(hint_layer, self.queue.clone()),
             quest: crate::guide_view::QuestPage::new(quest_layer, self.queue.clone()),
             game_menu: crate::game_menu::GameMenu::new(game_menu_layer, self.queue.clone()),
+            tips: crate::tips::TipHost::new(tip_layer),
             audio: crate::audio::Audio::new(audio_root),
             prologue: crate::prologue_view::PrologueView::new(next()),
         });
@@ -1040,6 +1048,14 @@ impl INode for RenethackGame {
         self.achieve(delta);
         self.tick_hints(delta);
         self.tick_quest();
+        // a block's tip, the mouse resting on it (the title's, the game's)
+        let hovered = self
+            .base()
+            .get_viewport()
+            .and_then(|v| v.gui_get_hovered_control());
+        if let Some(ui) = self.ui.as_mut() {
+            ui.tips.tick(hovered, now_secs());
+        }
         self.update_audio(delta);
         let t = Instant::now();
         if !self.quitting
@@ -5042,12 +5058,6 @@ impl RenethackGame {
         self.sync_inventory();
         self.lap("inventory", t);
         self.update_hover();
-        // a HUD block's tip, the mouse resting on it
-        let hovered = self
-            .base()
-            .get_viewport()
-            .and_then(|v| v.gui_get_hovered_control());
-        self.ui_mut().hud.hover_tip(hovered, now_secs());
         self.sync_orders();
         self.update_preview();
     }

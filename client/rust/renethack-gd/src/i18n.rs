@@ -264,7 +264,7 @@ struct Bound {
     key: &'static str,
 }
 
-/// Set `property` ("text", "tooltip_text", "placeholder_text") of `node`
+/// Set `property` ("text", "placeholder_text", "metadata/hud_tip") of `node`
 /// to the string of `key`, now and after every switch of the language.
 pub fn bind<T: Inherits<Object>>(node: &Gd<T>, property: &'static str, key: &'static str) {
     let mut object = node.clone().upcast::<Object>();
@@ -280,11 +280,6 @@ pub fn bind<T: Inherits<Object>>(node: &Gd<T>, property: &'static str, key: &'st
 /// `bind` of the widget's text.
 pub fn text<T: Inherits<Object>>(node: &Gd<T>, key: &'static str) {
     bind(node, "text", key);
-}
-
-/// `bind` of the widget's tooltip.
-pub fn tip<T: Inherits<Object>>(node: &Gd<T>, key: &'static str) {
-    bind(node, "tooltip_text", key);
 }
 
 /// The meta of a widget whose text is the same in every language.

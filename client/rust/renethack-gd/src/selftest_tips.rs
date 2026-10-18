@@ -3,7 +3,7 @@
 //! each block that has a tip (the action bar's slots, filled and empty,
 //! the small round buttons, the orbs, the XP bar, the log's button, the
 //! strip's chips, the portrait, the minimap): its tip comes, one style, at
-//! most `hud_tip::MAX_W` wide and a third of the screen tall, above its
+//! most `tips::MAX_W` wide and a third of the screen tall, above its
 //! block (under it when there is no room above), on the screen and off
 //! the map's middle, where the hero is; Godot's own tooltip never shows.
 
@@ -14,7 +14,7 @@ use godot::classes::{Engine, Input, InputEventMouseMotion};
 use godot::prelude::*;
 use nh_world::KeyProfile;
 
-use super::{CharacterChoice, Step, fail_on_error_screen, set_status, start_as};
+use super::{CharacterChoice, Step, fail_on_error_screen, key, set_status, start_as};
 use crate::game::RenethackGame;
 
 /// The blocks to rest on, the one the mouse is on, and the two shot (a
@@ -23,9 +23,13 @@ static BLOCKS: Mutex<Vec<(String, Rect2)>> = Mutex::new(Vec::new());
 static AT: AtomicUsize = AtomicUsize::new(0);
 static SHOT: Mutex<[usize; 2]> = Mutex::new([0, 0]);
 static FRAME: AtomicI64 = AtomicI64::new(0);
+/// The blocks are a panel's (it covers the map's middle) rather than the
+/// HUD's; the tips on screen before the panel opened.
+static PANEL: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+static BEFORE: Mutex<Vec<(String, Rect2)>> = Mutex::new(Vec::new());
 
 /// As many rests as a HUD can have blocks with tips.
-const RESTS: usize = 40;
+const RESTS: usize = 64;
 
 fn wizard() -> CharacterChoice {
     CharacterChoice {
@@ -100,7 +104,7 @@ fn tip_fits(g: &RenethackGame) -> Result<bool, String> {
         ));
     }
     let ui = g.ui.as_ref().ok_or("no UI")?;
-    let shown = ui.hud.tip_shown().filter(|(t, _)| *t == want);
+    let shown = ui.tips.shown().filter(|(t, _)| *t == want);
     let Some((_, r)) = shown else {
         // a moment's rest first; then it must come
         let waited =
@@ -115,14 +119,21 @@ fn tip_fits(g: &RenethackGame) -> Result<bool, String> {
     };
     let view = g.canvas_size();
     let what = format!("{want:?}'s tip at {r:?} for {block:?}");
-    if r.size.x > crate::hud_tip::MAX_W + 40.0 || r.size.y > view.y / 3.0 {
+    if r.size.x > crate::tips::MAX_W + 40.0 || r.size.y > view.y / 3.0 {
         return Err(format!("{what} is too large"));
     }
     if !Rect2::new(Vector2::ZERO, view).grow(1.0).encloses(r) {
         return Err(format!("{what} is off the screen"));
     }
-    // above the block, under it only when there is no room above
-    let room = block.position.y - 8.0 >= r.size.y;
+    // above the block, under it only when there is no room above (for a
+    // HUD block, room off the map's middle)
+    let above = Rect2::new(
+        Vector2::new(r.position.x, block.position.y - 8.0 - r.size.y),
+        r.size,
+    );
+    let middle = Rect2::new(view / 2.0 - Vector2::splat(110.0), Vector2::splat(220.0));
+    let room = block.position.y - 8.0 >= r.size.y
+        && (PANEL.load(Ordering::Relaxed) || !middle.intersects(above));
     let beside = if room {
         r.end().y <= block.position.y
     } else {
@@ -135,7 +146,7 @@ fn tip_fits(g: &RenethackGame) -> Result<bool, String> {
         ));
     }
     let middle = Rect2::new(view / 2.0 - Vector2::splat(80.0), Vector2::splat(160.0));
-    if middle.intersects(r) {
+    if !PANEL.load(Ordering::Relaxed) && middle.intersects(r) {
         return Err(format!("{what} covers the map's middle, where the hero is"));
     }
     Ok(true)
@@ -157,10 +168,71 @@ fn drawn(g: &RenethackGame) -> Result<bool, String> {
     if let Some((_, r)) = BLOCKS.lock().map_err(|e| e.to_string())?.get(i) {
         hover(g, r.position + r.size / 2.0)?;
     }
-    if g.ui.as_ref().and_then(|ui| ui.hud.tip_shown()).is_none() {
+    if g.ui.as_ref().and_then(|ui| ui.tips.shown()).is_none() {
         return Err("the tip went before its picture".into());
     }
     Ok(Engine::singleton().get_process_frames() as i64 > FRAME.load(Ordering::Relaxed) + 4)
+}
+
+/// The mouse on each block in turn, its tip checked.
+fn rests() -> Vec<Step> {
+    let mut steps = Vec::new();
+    for _ in 0..RESTS {
+        steps.extend([
+            Step::Call("the mouse on the next block", |g| {
+                let next = AT.load(Ordering::Relaxed).wrapping_add(1);
+                let n = BLOCKS.lock().map_err(|e| e.to_string())?.len();
+                if next < n {
+                    rest_on(g, next)
+                } else {
+                    AT.store(n, Ordering::Relaxed);
+                    Ok(())
+                }
+            }),
+            Step::Wait("its tip, one style, its size and place", tip_fits),
+        ]);
+    }
+    steps
+}
+
+/// Every tip on screen now (the HUD's and any panel's).
+fn all_tipped(g: &RenethackGame) -> Vec<(String, Rect2)> {
+    crate::tips::tipped(&g.base().clone().upcast())
+}
+
+/// The blocks a panel brought: the tips on screen now that were not
+/// before it opened, `least` of them at least.
+fn panel_blocks(g: &mut RenethackGame, least: usize) -> Result<(), String> {
+    let before = BEFORE.lock().map_err(|e| e.to_string())?.clone();
+    let mut blocks: Vec<(String, Rect2)> = Vec::new();
+    for b in all_tipped(g) {
+        if b.1.size.x > 4.0
+            && b.1.size.y > 4.0
+            && !before.contains(&b)
+            && !blocks.iter().any(|(_, r)| *r == b.1)
+        {
+            blocks.push(b);
+        }
+    }
+    if blocks.len() < least || blocks.len() > RESTS {
+        return Err(format!("{} blocks in the panel: {blocks:?}", blocks.len()));
+    }
+    *BLOCKS.lock().map_err(|e| e.to_string())? = blocks;
+    PANEL.store(true, Ordering::Relaxed);
+    AT.store(usize::MAX, Ordering::Relaxed);
+    Ok(())
+}
+
+/// The tips on screen before a panel opens.
+fn before_panel(g: &mut RenethackGame) -> Result<(), String> {
+    *BEFORE.lock().map_err(|e| e.to_string())? = all_tipped(g);
+    // and the mouse off whatever it rested on
+    hover(g, Vector2::new(4.0, 4.0))
+}
+
+/// Ten frames after the mark: what opened is laid out.
+fn settled(_: &RenethackGame) -> Result<bool, String> {
+    Ok(Engine::singleton().get_process_frames() as i64 > FRAME.load(Ordering::Relaxed) + 10)
 }
 
 pub(super) fn hud_tips() -> Vec<Step> {
@@ -238,21 +310,7 @@ pub(super) fn hud_tips() -> Vec<Step> {
             Ok(())
         }),
     ]);
-    for _ in 0..RESTS {
-        steps.extend([
-            Step::Call("the mouse on the next block", |g| {
-                let next = AT.load(Ordering::Relaxed).wrapping_add(1);
-                let n = BLOCKS.lock().map_err(|e| e.to_string())?.len();
-                if next < n {
-                    rest_on(g, next)
-                } else {
-                    AT.store(n, Ordering::Relaxed);
-                    Ok(())
-                }
-            }),
-            Step::Wait("its tip, one style, its size and place", tip_fits),
-        ]);
-    }
+    steps.extend(rests());
     // the pictures: a slot's tip, an orb's
     steps.extend([
         Step::Call("the mouse on a slot", |g| {
@@ -271,6 +329,39 @@ pub(super) fn hud_tips() -> Vec<Step> {
         Step::Call("", mark),
         Step::Wait("drawn", drawn),
         Step::Shot("hud-tips-orb"),
+        // the inventory panel's tips: its tabs, the doll's slots, its
+        // buttons
+        Step::Call("the tips before the inventory", before_panel),
+        key('i'),
+        Step::Wait("the inventory", |g| {
+            Ok(g.ui.as_ref().is_some_and(|ui| ui.inventory.is_open()))
+        }),
+        Step::Call("", mark),
+        Step::Wait("laid out", settled),
+        Step::Call("the inventory's blocks", |g| panel_blocks(g, 8)),
+    ]);
+    steps.extend(rests());
+    steps.extend([
+        Step::Key(nh_world::KeyInput::plain(nh_world::Key::Escape)),
+        Step::Wait("the inventory closed", |g| {
+            Ok(g.ui.as_ref().is_some_and(|ui| !ui.inventory.is_open()))
+        }),
+        // the help's
+        Step::Call("the tips before the help", before_panel),
+        Step::Push(crate::ui_events::UiEvent::ToggleHelp),
+        Step::Wait("the help", |g| {
+            Ok(g.ui.as_ref().is_some_and(|ui| ui.help.is_open()))
+        }),
+        Step::Call("", mark),
+        Step::Wait("laid out", settled),
+        Step::Call("the help's blocks", |g| panel_blocks(g, 1)),
+    ]);
+    steps.extend(rests());
+    steps.extend([
+        Step::Push(crate::ui_events::UiEvent::ToggleHelp),
+        Step::Wait("the help closed", |g| {
+            Ok(g.ui.as_ref().is_some_and(|ui| !ui.help.is_open()))
+        }),
     ]);
     steps.extend(super::quit());
     steps

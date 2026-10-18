@@ -595,7 +595,7 @@ impl Screens {
         keys.add_item(&tr!("creation-keys-modern"));
         keys.add_item(&tr!("creation-keys-classic"));
         keys.select(i32::from(keys_first == KeyProfile::Classic));
-        keys.set_tooltip_text(&tr!("creation-keys-tip"));
+        crate::tips::set(&keys, &tr!("creation-keys-tip"));
         grid.add_child(&theme::label(&tr!("creation-language")));
         let mut lang = language_option(&self.queue);
         lang.set_h_size_flags(SizeFlags::EXPAND_FILL);

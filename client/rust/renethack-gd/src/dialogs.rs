@@ -2918,7 +2918,7 @@ impl Dialogs {
         } else {
             tr!("panel-cancel-tip")
         };
-        button.set_tooltip_text(&tip);
+        crate::tips::set(&button, &tip);
         head.add_child(&button);
         col.add_child(&head);
         col.add_child(&rule());

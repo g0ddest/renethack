@@ -421,8 +421,7 @@ impl HelpPanel {
             .keymap
             .key_for(KeyInput::plain(Key::F(1)))
             .map_or_else(|| "—".to_string(), |k| crate::rebind::short_name(&k));
-        self.close
-            .set_tooltip_text(&tr!("help-close-tip", key = key));
+        crate::tips::set(&self.close, &tr!("help-close-tip", key = key));
     }
 
     /// The keys the player moved.
