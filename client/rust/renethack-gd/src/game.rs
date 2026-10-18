@@ -980,11 +980,14 @@ impl INode for RenethackGame {
         parts.pump = ms(t);
         self.lap("pump", t);
         self.drive();
-        self.play_prologue(delta);
         let built = self.ui.as_ref().map_or(0, |ui| ui.map.models_built());
         let t = Instant::now();
         self.map_ms = 0.0;
-        self.sync_views(delta);
+        // (the prologue's scenes and words are the views' work too; the
+        // frame it ends in clears its scene, the game's come up in the next)
+        if !self.play_prologue(delta) {
+            self.sync_views(delta);
+        }
         parts.views = ms(t);
         parts.map = self.map_ms;
         self.lap("views", t);
@@ -4355,9 +4358,11 @@ impl RenethackGame {
         }
     }
 
-    /// The prologue's frame: its run on, a beat's scene laid as it begins,
-    /// its words; over, the game (or the title) up out of its black.
-    fn play_prologue(&mut self, delta: f64) {
+    /// The prologue's frame: its run on, a beat's scene laid as it begins
+    /// (the next one's built ahead while it is read), its words; over, the
+    /// game (or the title) up out of its black. True in the frame it ends:
+    /// the game's views come up in the next one.
+    fn play_prologue(&mut self, delta: f64) -> bool {
         let catalog = self.catalog.clone();
         if self.prologue.is_none() {
             // after it, the black lifts off what it hid
@@ -4376,7 +4381,7 @@ impl RenethackGame {
                     self.prologue_fade = None;
                 }
             }
-            return;
+            return false;
         }
         let event = self.prologue.as_mut().and_then(|p| p.run.tick(delta));
         match event {
@@ -4398,19 +4403,25 @@ impl RenethackGame {
             }
             Some(crate::prologue::Event::Done) => {
                 self.end_prologue();
-                return;
+                return true;
             }
             None => {}
         }
         let Some(p) = self.prologue.as_ref() else {
-            return;
+            return false;
         };
         let (secs, descent) = (p.run.secs(), p.run.descent());
         let run = p.run.clone();
         if let Some(ui) = self.ui.as_mut() {
             ui.map.prologue_frame(secs, descent);
             ui.prologue.update(&run);
+            if let (Some(next), Some(cat)) = (run.beat().next(), catalog.as_deref())
+                && secs > crate::prologue::BUILD_NEXT_AT
+            {
+                ui.map.prepare_prologue(next, cat);
+            }
         }
+        false
     }
 
     /// The prologue over (played out or skipped): the game it hid (or the
@@ -4919,8 +4930,17 @@ impl RenethackGame {
         if !matches!(self.state, GameState::Playing | GameState::Closing) {
             return;
         }
-        // the map draws the prologue's scenes meanwhile, the game behind
-        if self.prologue.is_some() {
+        // the map draws the prologue's scenes meanwhile, the game behind;
+        // its HUD and pack, hidden, keep up with it from the second beat
+        // (the game comes up out of the black with them already drawn)
+        if let Some(p) = self.prologue.as_ref() {
+            if p.run.beat() != crate::prologue::Beat::Book {
+                let catalog = self.catalog.clone();
+                if let Some(ui) = self.ui.as_mut() {
+                    ui.hud.sync(&mut self.world, catalog.as_deref());
+                }
+                self.sync_inventory();
+            }
             return;
         }
         let catalog = self.catalog.clone();

@@ -143,6 +143,9 @@ pub const DESCENT_SECS: f64 = 3.0;
 pub const GAME_FADE: f64 = 1.0;
 /// A skip goes to black this quickly.
 const SKIP_FADE: f64 = 0.5;
+/// Seconds into a beat when the next one's stage is built ahead: its
+/// fade-in over, its words coming.
+pub const BUILD_NEXT_AT: f64 = 1.2;
 
 /// What happened in a frame of the prologue.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

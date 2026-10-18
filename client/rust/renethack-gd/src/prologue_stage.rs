@@ -42,10 +42,11 @@ pub struct PrologueHero {
 /// Where a scene stands on the map: the cell everything is laid round.
 const MID: (i32, i32) = (40, 9);
 /// The light pouring down and the black fog: their colours, how tall the
-/// light's column is.
+/// light's column is, how thick the fog grows.
 const HOLY: Color = Color::from_rgb(1.0, 0.93, 0.72);
 const DARK: Color = Color::from_rgb(0.05, 0.02, 0.08);
 const SHAFT_TALL: f32 = 7.0;
+const FOG_DENSITY: f32 = 2.4;
 /// The candles' light over the Book.
 const CANDLE: Color = Color::from_rgb(1.0, 0.68, 0.36);
 /// The Amulet's own glow, where it starts above the lava and where it is
@@ -84,16 +85,23 @@ pub(super) struct Stage {
 
 impl MapView {
     /// Draw `beat`'s scene for `hero` (None: none, and whatever the map
-    /// draws without it after).
+    /// draws without it after): its level, and its stage (built ahead by
+    /// `prepare_prologue` while the beat before was read, else now).
     pub fn show_prologue(&mut self, beat: Option<Beat>, hero: &PrologueHero, catalog: &Catalog) {
+        let began = std::time::Instant::now();
+        let ready = self.next_stage.take();
         self.end_stage();
         let Some(beat) = beat else {
+            if let Some(stage) = ready {
+                self.free_stage(stage);
+            }
             self.clear();
             self.stage_camera = None;
             self.show_parts();
             return;
         };
         self.clear();
+        let cleared = began.elapsed();
         let scene = match beat {
             Beat::Hero => {
                 let mut t = TitleScene::new(catalog, &hero.role, hero.female);
@@ -108,6 +116,7 @@ impl MapView {
         };
         self.title = Some(scene);
         self.titled = true;
+        let levelled = began.elapsed();
         if beat == Beat::Hero {
             self.light_title_fires();
         }
@@ -115,6 +124,63 @@ impl MapView {
         // black past what is lit
         self.env.set_bg_color(Color::BLACK);
         self.env.set_fog_light_color(Color::BLACK);
+        let built_ahead = ready.as_ref().is_some_and(|s| s.beat == beat);
+        let mut stage = match ready {
+            Some(stage) if stage.beat == beat => stage,
+            other => {
+                if let Some(stage) = other {
+                    self.free_stage(stage);
+                }
+                self.build_stage(beat, catalog)
+            }
+        };
+        stage.root.set_visible(true);
+        if let Some((m, _)) = stage.amulet.as_mut() {
+            m.node.set_visible(true);
+        }
+        self.stage = Some(stage);
+        self.stage_camera = None;
+        if self.stats_window.is_some() {
+            let ms = |d: std::time::Duration| d.as_secs_f64() * 1000.0;
+            godot_print!(
+                "map: the prologue's {beat:?} laid in {:.1} ms (the last one cleared {:.1}, the level {:.1}, the stage {:.1}{})",
+                ms(began.elapsed()),
+                ms(cleared),
+                ms(levelled - cleared),
+                ms(began.elapsed() - levelled),
+                if built_ahead { ", built ahead" } else { "" }
+            );
+        }
+    }
+
+    /// Build `beat`'s stage ahead, hidden till its beat: the frames of the
+    /// beat before have room for it, and the change under the black has
+    /// the less to do.
+    pub fn prepare_prologue(&mut self, beat: Beat, catalog: &Catalog) {
+        if self.next_stage.as_ref().is_some_and(|s| s.beat == beat) {
+            return;
+        }
+        let began = std::time::Instant::now();
+        if let Some(stage) = self.next_stage.take() {
+            self.free_stage(stage);
+        }
+        let mut stage = self.build_stage(beat, catalog);
+        stage.root.set_visible(false);
+        if let Some((m, _)) = stage.amulet.as_mut() {
+            m.node.set_visible(false);
+        }
+        self.next_stage = Some(stage);
+        if self.stats_window.is_some() {
+            godot_print!(
+                "map: the prologue's {beat:?} built ahead in {:.1} ms",
+                began.elapsed().as_secs_f64() * 1000.0
+            );
+        }
+    }
+
+    /// What `beat`'s scene holds beside its level: its lights, the temple's
+    /// pillars, the light pouring down, the black fog, the Amulet.
+    fn build_stage(&mut self, beat: Beat, catalog: &Catalog) -> Stage {
         let mut root = Node3D::new_alloc();
         root.set_name("PrologueStage");
         self.root.add_child(&root);
@@ -193,8 +259,7 @@ impl MapView {
             }
             Beat::Hero | Beat::Descent => {}
         }
-        self.stage = Some(stage);
-        self.stage_camera = None;
+        stage
     }
 
     /// The scene `secs` into its beat (`descent`: seconds into the last
@@ -241,7 +306,7 @@ impl MapView {
             mat.set_shader_parameter("strength", &(rise * *most).to_variant());
         }
         if let Some(fog) = stage.fog.as_mut() {
-            fog.set_density(2.4 * rise);
+            fog.set_density(FOG_DENSITY * rise);
         }
         if let Some(shade) = stage.shade.as_mut() {
             shade.set_param(Param::ENERGY, 3.0 * rise);
@@ -315,10 +380,26 @@ impl MapView {
         for (mat, most) in &mut stage.veils {
             mat.set_shader_parameter("strength", &most.to_variant());
         }
-        stage.fog = Some(black_fog(
+        // the fog as thick as it grows, the beats' lights lit (a fog at
+        // nothing, a light at nothing, would not draw what they draw)
+        let mut fog = black_fog(&mut stage.root, mid + Vector3::new(1.5, 1.2, 0.0));
+        fog.set_density(FOG_DENSITY);
+        stage.fog = Some(fog);
+        let mut holy = light(
             &mut stage.root,
+            HOLY,
+            mid + Vector3::new(-1.5, 2.6, 0.0),
+            6.0,
+        );
+        holy.set_param(Param::ENERGY, 2.6);
+        let mut shade = light(
+            &mut stage.root,
+            DARK,
             mid + Vector3::new(1.5, 1.2, 0.0),
-        ));
+            4.5,
+        );
+        shade.set_negative(true);
+        shade.set_param(Param::ENERGY, 3.0);
         if let Some(whirl) = dark_whirl(mid + Vector3::new(1.5, 0.0, 0.0)) {
             stage.root.add_child(&whirl);
         }
@@ -333,16 +414,24 @@ impl MapView {
         self.stage.as_ref().map(|s| s.beat)
     }
 
-    /// Let the beat's scene go: what stood beside its level, the Amulet.
+    /// Let the beat's scene go: what stood beside its level, the Amulet;
+    /// and the next beat's, if it was built ahead.
     pub(super) fn end_stage(&mut self) {
-        if let Some(stage) = self.stage.take() {
-            if let Some((m, _)) = stage.amulet {
-                self.art.give(m);
-            }
-            let mut root = stage.root;
-            if root.is_instance_valid() {
-                root.queue_free();
-            }
+        for stage in [self.stage.take(), self.next_stage.take()]
+            .into_iter()
+            .flatten()
+        {
+            self.free_stage(stage);
+        }
+    }
+
+    fn free_stage(&mut self, stage: Stage) {
+        if let Some((m, _)) = stage.amulet {
+            self.art.give(m);
+        }
+        let mut root = stage.root;
+        if root.is_instance_valid() {
+            root.queue_free();
         }
     }
 

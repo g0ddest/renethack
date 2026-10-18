@@ -2887,6 +2887,8 @@ pub struct MapView {
     /// A beat of the prologue drawn instead of the title (its level is
     /// `title`), and its camera: where it is, what it looks at.
     stage: Option<prologue_stage::Stage>,
+    /// The next beat's stage, built ahead and hidden.
+    next_stage: Option<prologue_stage::Stage>,
     stage_camera: Option<(Vector3, Vector3)>,
     target: Vector3,
     focus: Vector3,
@@ -3526,6 +3528,7 @@ impl MapView {
             post,
             engulfed,
             stage: None,
+            next_stage: None,
             stage_camera: None,
             target: center,
             focus: center,
