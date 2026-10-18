@@ -340,8 +340,9 @@ peaceful creatures of many kinds made round the hero in debug mode, then
 forty turns among them); two soaks into the Gnomish Mines; one to Dlvl 7;
 a soak of 2000 requests; `deep`, the deep dungeon in debug mode (the
 hero teleported to Medusa's island, the castle, the levels of Gehennom and
-Vlad's Tower, the creatures of each made round them); and `prologue`, a new
-game told with the prologue, beat by beat. Every run logs each frame
+Vlad's Tower, the creatures of each made round them); `prologue`, a new
+game told with the prologue, beat by beat; and `trapdoor`, falling through
+a trap door, a pit and holes. Every run logs each frame
 (`RENETHACK_FRAME_LOG=<file>`, `frame_log.rs`): its wall time, the game's
 own work in it by part, the pipelines Godot compiled, the models the map
 built, the level and the self-test's step. It also samples the process's

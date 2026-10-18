@@ -66,6 +66,9 @@ SCENES = {
     "deep": ("deep", [], 1200),
     # a new game told with the prologue, beat by beat, into the game
     "prologue": ("prologue", [], 600),
+    # falling through: a trap door (a dwarf's, then the hero's), a pit, a
+    # hole, one dug with a wand
+    "trapdoor": ("trapdoor", [], 600),
     # every creature and thing a batch at a time: with --census, what the
     # game can draw (not a timing)
     "variants": ("variants", [], 1800),
