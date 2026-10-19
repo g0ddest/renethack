@@ -205,7 +205,7 @@ ru = "Там нечего обыскивать."
 
 [caad9ae74520]
 en = "You know of no traps there."
-ru = "Вы не знаете там ни одной ловушки."
+ru = "Там нет известных вам ловушек."
 
 [e42401a01e6c]
 en = "You are now wearing %s."
@@ -333,7 +333,7 @@ ru = "Вы начинаете молиться {1:dat}."
 
 [8bfb3b9a937d]
 en = "You harmlessly attack %s."
-ru = "Вы безрезультатно атакуете {1:acc}."
+ru = "Вы безрезультатно атакуете {1:acc:word}."
 
 [8f5e9c4e9579]
 en = "A little goes a long way."
@@ -731,7 +731,7 @@ ru = "Палочка пролетает мимо вас."
 
 [c5486789482f]
 en = "You know \"%s\" quite well already."
-ru = "Вы и так хорошо знаете «{1}»."
+ru = "Вы и так хорошо знаете заклинание «{1}»."
 
 [c8b9ffa3e073]
 en = "You see brown streaks on the stones."
@@ -1215,7 +1215,7 @@ ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} по-прежнему {1:
 
 [41201bf8487e]
 en = "You are no longer being strangled."
-ru = "Вас больше не душит."
+ru = "Вас больше ничто не душит."
 
 [46c217f66ab2]
 en = "Your apron tears apart!"
@@ -2043,3 +2043,22 @@ ru = "Камень вокруг вас начинает мерцать {1:f:ins}
 [8d704674d15b]
 en = "The vegetation around you begins to shimmer with %s haze."
 ru = "Растительность вокруг вас начинает мерцать {1:f:ins} дымкой."
+
+# hack.c domove_fight_empty(): fighting what is no monster; terrain is read as
+# terrain ({1:word}: the stone is the rock)
+
+[10d405485e9a]
+en = "You attack %s."
+ru = "Вы атакуете {1:acc}."
+
+[8c334544b857]
+en = "You explode at %s."
+ru = "Вы взрываетесь у {1:gen:word}."
+
+[98e6b993c88c]
+en = "You futilely attack %s."
+ru = "Вы впустую атакуете {1:acc:word}."
+
+[4e4b71a030c7]
+en = "You harmlessly explode at %s."
+ru = "Вы безрезультатно взрываетесь у {1:gen:word}."

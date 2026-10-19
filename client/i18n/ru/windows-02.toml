@@ -780,7 +780,7 @@ ru = " Вы неудержимо засыпаете{1}."
 
 [82ff995db0e7]
 en = " You hunger rapidly%s."
-ru = " Вы быстро голодаете{1}."
+ru = " Вы быстро проголадываетесь{1}."
 
 [cc29410ac447]
 en = " You hungered rapidly%s."
@@ -1568,7 +1568,7 @@ ru = " У вас было отражение{1}."
 
 [d4d38f0e2f25]
 en = " You have reflection%s."
-ru = " У вас отражение{1}."
+ru = " Вы защищены отражением{1}."
 
 [a9ee78521c28]
 en = " You had free action%s."
@@ -2560,7 +2560,7 @@ ru = " У вас не было энергии."
 
 [3982b084a7bd]
 en = " You have both energy points (spell power)."
-ru = " Энергия полная: 2."
+ru = " Энергия: 2 из 2."
 
 [847b9886eb0c]
 en = " You had all %d energy points (spell power)."

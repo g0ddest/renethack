@@ -22,6 +22,7 @@
 //! | `{3:hero}`, `{3:f}`, `{3:pl:gen}` | argument 3 agreeing with the hero, or with a masculine (`m`), feminine (`f`), neuter (`n`) or plural (`pl`) noun: a word that is an adjective takes that gender ("lawful": законопослушная), a role its feminine (Целительница); a noun asked for the plural (`pl`) is put in it ("shuriken" before "slip": сюрикены), any other name stays as it is |
 //! | `{2:like1}` | argument 2 agreeing with argument 1's gender and number: "Бригита ({2:like1})" → (нейтральная) |
 //! | `{2:of1}`, `{2:of1:acc}`, `{2:of1:cap}` | argument 2 as argument 1's: the owner after it in the genitive ("шляпа тритона"), or before it as a pronoun that agrees, when the owner is one with no name to decline (an unseen "Its": "чья-то шляпа") |
+//! | `{1:acc:word}` | argument 1 read as a word of the closed sets first (terrain, a body part), as a thing only when it is none: "You harmlessly attack the stone" is the rock (камень), not a stone (камешек) |
 //! | `{4:hero:race}` | the hero's race as `{4:hero}` gives it, but nothing for a human, and a space next to it goes too: "законопослушный археолог", "законопослушный дварфийский археолог" |
 //! | `{hero:gender\|сам\|сама}` | as the hero's gender: masculine, feminine |
 //! | `{1:skip}` | nothing: the Russian says otherwise what argument 1 says (a heading's fixed word, the "weapons" of a menu about the item itself) |
@@ -106,6 +107,8 @@ pub struct Placeholder {
     pub owner: Option<usize>,
     /// `{4:race}`: the hero's race, unsaid for a human.
     pub race: bool,
+    /// `{1:word}`: the argument read as a closed set's word first.
+    pub word: bool,
     /// As written, without the braces.
     pub source: String,
 }
@@ -396,6 +399,7 @@ fn placeholder(src: &str) -> Result<Placeholder, TemplateError> {
     let mut own = false;
     let mut owner = None;
     let mut race = false;
+    let mut word = false;
     for w in words {
         match w.trim() {
             "cap" => cap = true,
@@ -403,6 +407,7 @@ fn placeholder(src: &str) -> Result<Placeholder, TemplateError> {
             "skip" => skip = true,
             "own" => own = true,
             "race" => race = true,
+            "word" => word = true,
             "hero" => agree = Some(Agree::Hero),
             "m" => agree = Some(Agree::Gender(Gender::Masc, Number::Sing)),
             "f" => agree = Some(Agree::Gender(Gender::Fem, Number::Sing)),
@@ -480,7 +485,7 @@ fn placeholder(src: &str) -> Result<Placeholder, TemplateError> {
     if select.is_some() && (case.is_some() || cap || low || shaped) {
         return Err(TemplateError::SelectorWithCase(src.into()));
     }
-    if skip && (select.is_some() || case.is_some() || cap || low || shaped) {
+    if skip && (select.is_some() || case.is_some() || cap || low || shaped || word) {
         return Err(TemplateError::Skip(src.into()));
     }
     Ok(Placeholder {
@@ -496,6 +501,7 @@ fn placeholder(src: &str) -> Result<Placeholder, TemplateError> {
         source: src.into(),
         owner,
         race,
+        word,
     })
 }
 

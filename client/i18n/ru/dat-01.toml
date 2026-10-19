@@ -84,7 +84,7 @@ ru = "Берите оружие в руки клавишей '{1}'"
 
 [3825ae4c9324]
 en = "Hit monsters by walking into them."
-ru = "Чтобы ударить монстра, шагните в него."
+ru = "Чтобы ударить монстра, идите на него."
 
 [ffcc8da102b4]
 en = "Now you know the very basics. You can leave the tutorial via the magic portal."
@@ -96,7 +96,7 @@ ru = "Шагните в этот портал, чтобы покинуть об�
 
 [6a071fd0fd41]
 en = "Push boulders by moving into them"
-ru = "Чтобы толкнуть валун, шагните в него"
+ru = "Чтобы толкнуть валун, идите на него"
 
 [04de9f63f538]
 en = "Take off armor with '%s'"
@@ -248,7 +248,7 @@ ru = "Некоторые действия удаются не с первой п
 
 [e3ed22670b19]
 en = "Open the door by moving into it"
-ru = "Чтобы открыть дверь, шагните в неё"
+ru = "Чтобы открыть дверь, идите на неё"
 
 [f511e7f153b8]
 en = "Close the door with '%s'"
@@ -268,16 +268,16 @@ ru = "Вы оказываетесь в воздушном пузыре поср�
 
 [294caf41828d]
 en = "Dig"
-ru = "Копай"
+ru = "Копать"
 
 [b8e7b05d5f92]
 en = "Dig here"
-ru = "Копай здесь"
+ru = "Копать здесь"
 
 [a61b80ad1bb8]
 en = "Dig %d %s"
-ru = "Копай: {1} {1:plural|шаг|шага|шагов} на {2:acc}"
+ru = "Копать: {1} {1:plural|шаг|шага|шагов} на {2:acc}"
 
 [f9dcecd57713]
 en = "Dig %d %s %d %s"
-ru = "Копай: {1} {1:plural|шаг|шага|шагов} на {2:acc}, {3} {3:plural|шаг|шага|шагов} на {4:acc}"
+ru = "Копать: {1} {1:plural|шаг|шага|шагов} на {2:acc}, {3} {3:plural|шаг|шага|шагов} на {4:acc}"

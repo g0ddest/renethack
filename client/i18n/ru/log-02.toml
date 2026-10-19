@@ -394,7 +394,7 @@ ru = "Внезапно {1:num|появляется|появляются} {1}!"
 
 [16550c51a412]
 en = "You feel clumsy!"
-ru = "Вы чувствуете себя неуклюже!"
+ru = "Вы стали неуклюжее!"
 
 [18155c68e023]
 en = "%s almost hits the %s, then falls back on top of your %s."
@@ -506,7 +506,7 @@ ru = "Вы чувствуете, как вас окружает зловещая
 
 [65052901b88c]
 en = "Your knowledge of \"%s\" is keener."
-ru = "Вы лучше знаете «{1}»."
+ru = "Вы освежили в памяти заклинание «{1}»."
 
 [66f13cb61bd0]
 en = "You stuff yourself and then vomit voluminously."

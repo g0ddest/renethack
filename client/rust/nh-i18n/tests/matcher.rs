@@ -236,10 +236,10 @@ fn an_engraving_of_a_lua_local() {
     // themerms.lua: "Dig" .. dig, dig a string.format() of steps
     check(
         "You read: \"Dig 3 east 2 south\".",
-        "«Копай: 3 шага на восток, 2 шага на юг»",
+        "«Копать: 3 шага на восток, 2 шага на юг»",
     );
-    check("You read: \"Dig 1 west\".", "«Копай: 1 шаг на запад»");
-    check("You read: \"Dig here\".", "«Копай здесь»");
+    check("You read: \"Dig 1 west\".", "«Копать: 1 шаг на запад»");
+    check("You read: \"Dig here\".", "«Копать здесь»");
 }
 
 #[test]
@@ -1059,7 +1059,7 @@ fn a_rank_in_the_hero_s_gender() {
                 ),
                 (
                     "Wolf the Rambler's attributes:",
-                    "Свойства героини по имени Wolf (отпускница):",
+                    "Свойства: Wolf, отпускница",
                 ),
                 (
                     "attained the rank of Champion (level 26)",
@@ -1102,7 +1102,7 @@ fn a_rank_in_the_hero_s_gender() {
                 ),
                 (
                     "Wolf the Rambler's attributes:",
-                    "Свойства героя по имени Wolf (отпускник):",
+                    "Свойства: Wolf, отпускник",
                 ),
                 (
                     " You attained the rank of Bachelor.",
@@ -1587,6 +1587,64 @@ fn the_last_english_of_the_first_hour() {
     }
     // libnh's main, read by the extractor now
     check("Restoring save file...", "Загрузка сохранённой игры...");
+}
+
+#[test]
+fn the_review_s_grammar() {
+    // ru-editor's batch of template grammar: a stop needs the infinitive
+    // where a death keeps the gerund, a missile does not "miss at" anyone,
+    // the rock is no stone, #enhance's skills are no plural of a thing
+    check("You stop disrobing.", "Вы перестаёте раздеваться.");
+    check("killed by a jackal, while disrobing", "шакалом, раздеваясь");
+    check(
+        "The arrow misses the jackal.",
+        "Стрела не попадает в шакала.",
+    );
+    check("The jackal just misses!", "Шакал едва не попадает!");
+    check(
+        "You harmlessly attack the stone.",
+        "Вы безрезультатно атакуете камень.",
+    );
+    check(
+        "You futilely attack the stone.",
+        "Вы впустую атакуете камень.",
+    );
+    check(
+        "You harmlessly attack a boulder.",
+        "Вы безрезультатно атакуете валун.",
+    );
+    check(
+        "You cannot escape from the lichen!",
+        "Вам не вырваться из хватки лишайника!",
+    );
+    check("You feel clumsy!", "Вы стали неуклюжее!");
+    check(
+        "You know \"protection\" quite well already.",
+        "Вы и так хорошо знаете заклинание «защита».",
+    );
+    check(
+        "You are no longer being strangled.",
+        "Вас больше ничто не душит.",
+    );
+    check(
+        "Which ring-finger, Right or Left?",
+        "На какую руку надеть кольцо: правую или левую?",
+    );
+    check("\"Then die, creature!\"", "«Так умри же, создание!»");
+    check(
+        "You see here 13 uncursed carrots.",
+        "13 непроклятых морковок",
+    );
+    check("You see here 3 tripe rations.", "3 порции требухи");
+    check("You see here a dented pot.", "помятая кастрюля");
+    let out = translator().window("   polearms           [Unskilled]");
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        (
+            "   древковое оружие           [Без навыка]",
+            Status::Translated
+        )
+    );
 }
 
 /// The built-in catalog and lexicon with these translations only: (the

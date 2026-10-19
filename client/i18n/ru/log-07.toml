@@ -782,11 +782,11 @@ ru = "Вы чувствуете, что {1} {1:gender|обломался|обл�
 
 [1e03690c02d4]
 en = "\"Thou art arrogant, creature.\""
-ru = "«{hero:gender|Ты высокомерен|Ты высокомерна}, тварь.»"
+ru = "«{hero:gender|Ты высокомерен|Ты высокомерна}, создание.»"
 
 [cd76ddb4e162]
 en = "\"Thou hast strayed from the path, creature.\""
-ru = "«{hero:gender|Ты сбился|Ты сбилась} с пути, тварь.»"
+ru = "«{hero:gender|Ты сбился|Ты сбилась} с пути, создание.»"
 
 [0442eeaa9410]
 en = "\"Thou hast strayed from the path, mortal.\""
@@ -802,7 +802,7 @@ ru = "«Ты смеешь пренебрегать мною?»"
 
 [b64a4c33a78c]
 en = "\"Then die, creature!\""
-ru = "«Так умри же, тварь!»"
+ru = "«Так умри же, создание!»"
 
 [e640611fe195]
 en = "\"Then die, mortal!\""

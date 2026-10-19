@@ -122,7 +122,7 @@ ru = "«Дерись хоть лучше, чем одеваешься!»"
 
 [bc74cd85a025]
 en = "\"Twixt thy cousin and thee, Medusa is the prettier.\""
-ru = "«Из вас с кузиной Медуза — та, что красивее.»"
+ru = "«Из вас с кузиной Медузой красивее она.»"
 
 [d7081fc3c2bb]
 en = "\"Methinks thou wert unnaturally stirred by yon corpse back there, eh, varlet?\""
@@ -187,7 +187,7 @@ not_terms = ["bell"]
 
 [030a8216c1d6]
 en = "Look for a ...ic transporter."
-ru = "Ищите ...ический переносчик."
+ru = "Ищите ...шебный портал."
 
 [5d55c11ab04c]
 en = "You couldn't quite make out that last message."
@@ -199,7 +199,7 @@ ru = "Ваша помощь срочно нужна в {1:loc}!"
 
 [949fd7401f66]
 en = "You receive a faint telepathic message from %s:\nYour help is urgently needed at %s!\nLook for a ...ic transporter.\nYou couldn't quite make out that last message."
-ru = "Вы получаете слабое телепатическое послание от {1:gen}:\nВаша помощь срочно нужна в {2:loc}!\nИщите ...ический переносчик.\nПоследнее послание вы толком не разобрали."
+ru = "Вы получаете слабое телепатическое послание от {1:gen}:\nВаша помощь срочно нужна в {2:loc}!\nИщите ...шебный портал.\nПоследнее послание вы толком не разобрали."
 
 [e005dc7323a5]
 en = "You receive a faint telepathic message from %s:"

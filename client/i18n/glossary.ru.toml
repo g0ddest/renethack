@@ -586,7 +586,7 @@
 "fedora" = { ru = "федора", src = "nethack-ru" }
 "cornuthaum" = { ru = "корнутаум", src = "chosen", note = "was корнуфаум", like = "слон" }
 "dunce cap" = { ru = "дурацкий колпак", src = "chosen", note = "was колпак дурака; the Russian idiom" }
-"dented pot" = { ru = "помятый горшок", src = "nethack-ru" }
+"dented pot" = { ru = "помятая кастрюля", src = "chosen", note = "was помятый горшок: a clay pot cannot dent, and горшок is a chamber pot too (ru-editor 2026-10-18)" }
 "helm of brilliance" = { ru = "шлем озарения", src = "chosen", note = "was шлем блеска; brilliance of mind: it raises Int and Wis" }
 "helmet" = { ru = "шлем", src = "nethack-ru" }
 "helm of caution" = { ru = "шлем бдительности", src = "chosen", note = "was шлем осторожности; it warns" }
@@ -710,7 +710,7 @@
 # tool
 "large box" = { ru = "большой ящик", src = "nethack-ru" }
 "chest" = { ru = "сундук", src = "nethack-ru" }
-"ice box" = { ru = "ледник", src = "nethack-ru" }
+"ice box" = { ru = "ящик со льдом", src = "chosen", note = "was ледник, a glacier first (ru-editor 2026-10-18)" }
 "sack" = { ru = "мешок", src = "nethack-ru" }
 "oilskin sack" = { ru = "непромокаемый мешок", src = "chosen", note = "was прорезиненный мешок" }
 "bag of holding" = { ru = "сумка хранения", src = "chosen", note = "was мешок вместительности; the D&D name; its look is a сумка" }
@@ -759,7 +759,7 @@
 "Candelabrum of Invocation" = { ru = "Канделябр Призыва", src = "nethack-ru" }
 "Bell of Opening" = { ru = "Колокол Открытия", src = "nethack-ru" }
 # food
-"tripe ration" = { ru = "рубец", src = "nethack-ru" }
+"tripe ration" = { ru = "порция требухи", src = "chosen", note = "was рубец, a scar to most readers (ru-editor 2026-10-18); требуха has no plural, the ration does" }
 "corpse" = { ru = "труп", src = "nethack-ru" }
 "egg" = { ru = "яйцо", src = "nethack-ru" }
 "meatball" = { ru = "фрикаделька", src = "nethack-ru" }
@@ -767,22 +767,22 @@
 "enormous meatball" = { ru = "огромная фрикаделька", src = "nethack-ru" }
 "meat ring" = { ru = "мясное кольцо", src = "nethack-ru" }
 "glob of gray ooze" = { ru = "комок серой слизи", src = "nethack-ru" }
-"glob of brown pudding" = { ru = "комок коричневого пудинга", src = "nethack-ru" }
+"glob of brown pudding" = { ru = "комок бурого пудинга", src = "chosen", note = "the monster is бурый пудинг" }
 "glob of green slime" = { ru = "комок зелёной слизи", src = "nethack-ru" }
 "glob of black pudding" = { ru = "комок чёрного пудинга", src = "nethack-ru" }
-"kelp frond" = { ru = "лопасть ламинарии", src = "nethack-ru" }
+"kelp frond" = { ru = "лист ламинарии", src = "chosen", note = "was лопасть ламинарии, a propeller blade" }
 "eucalyptus leaf" = { ru = "лист эвкалипта", src = "nethack-ru" }
 "apple" = { ru = "яблоко", src = "nethack-ru" }
 "orange" = { ru = "апельсин", src = "nethack-ru" }
 "pear" = { ru = "груша", src = "nethack-ru" }
 "melon" = { ru = "дыня", src = "nethack-ru" }
 "banana" = { ru = "банан", src = "nethack-ru" }
-"carrot" = { ru = "морковь", src = "nethack-ru" }
+"carrot" = { ru = "морковь", src = "nethack-ru", note = "counted as морковки: 13 морковок, not морковей" }
 "sprig of wolfsbane" = { ru = "веточка аконита", src = "nethack-ru" }
 "clove of garlic" = { ru = "зубчик чеснока", src = "nethack-ru" }
 "slime mold" = { ru = "слизевой гриб", src = "chosen", note = "owner 2026-10-04 (n31); was слизевик; the default fruit" }
 "lump of royal jelly" = { ru = "комок маточного молочка", src = "nethack-ru" }
-"cream pie" = { ru = "кремовый пирог", src = "nethack-ru" }
+"cream pie" = { ru = "торт с кремом", src = "chosen", note = "the slapstick pie is a торт (ru-editor 2026-10-18); was кремовый пирог" }
 "candy bar" = { ru = "шоколадный батончик", src = "nethack-ru" }
 "fortune cookie" = { ru = "печенье с предсказанием", src = "nethack-ru" }
 "pancake" = { ru = "блин", src = "nethack-ru" }
@@ -828,7 +828,7 @@
 "scroll of scare monster" = { ru = "свиток отпугивания монстров", src = "chosen", note = "was свиток отпугивания монстра" }
 "scroll of remove curse" = { ru = "свиток снятия проклятия", src = "nethack-ru" }
 "scroll of enchant weapon" = { ru = "свиток зачарования оружия", src = "chosen", note = "was свиток зачароватя оружие" }
-"scroll of create monster" = { ru = "свиток создания монстра", src = "nethack-ru" }
+"scroll of create monster" = { ru = "свиток создания монстров", src = "chosen", note = "one form with the wand (ru-editor 2026-10-18)" }
 "scroll of taming" = { ru = "свиток приручения", src = "nethack-ru" }
 "scroll of genocide" = { ru = "свиток геноцида", src = "nethack-ru" }
 "scroll of light" = { ru = "свиток света", src = "nethack-ru" }
@@ -862,7 +862,7 @@
 "spellbook of drain life" = { ru = "книга истощения жизни", src = "nethack-ru" }
 "spellbook of slow monster" = { ru = "книга замедления монстра", src = "nethack-ru" }
 "spellbook of wizard lock" = { ru = "книга волшебного замка", src = "nethack-ru" }
-"spellbook of create monster" = { ru = "книга создания монстра", src = "nethack-ru" }
+"spellbook of create monster" = { ru = "книга создания монстров", src = "chosen", note = "one form with the wand" }
 "spellbook of detect food" = { ru = "книга обнаружения еды", src = "nethack-ru" }
 "spellbook of cause fear" = { ru = "книга наведения страха", src = "chosen", note = "was книга вызова страха" }
 "spellbook of clairvoyance" = { ru = "книга ясновидения", src = "nethack-ru" }
@@ -2142,7 +2142,7 @@
 "drain life" = { ru = "истощение жизни", src = "nethack-ru" }
 "slow monster" = { ru = "замедление монстра", src = "nethack-ru" }
 "wizard lock" = { ru = "волшебный замок", src = "nethack-ru" }
-"create monster" = { ru = "создание монстра", src = "nethack-ru" }
+"create monster" = { ru = "создание монстров", src = "chosen", note = "one form with the wand" }
 "detect food" = { ru = "обнаружение еды", src = "nethack-ru" }
 "cause fear" = { ru = "наведение страха", src = "chosen", note = "was вызов страха" }
 "clairvoyance" = { ru = "ясновидение", src = "nethack-ru" }

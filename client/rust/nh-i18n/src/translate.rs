@@ -797,7 +797,7 @@ impl Translator {
             .zip(&captures)
             .enumerate()
             .map(|(i, (c, cap))| {
-                let (v, ok) = self.arg_value(t, i, c.kind, cap, depth);
+                let (v, ok) = self.arg_value(t, i, c.kind, cap, false, depth);
                 whole &= ok;
                 v
             })
@@ -828,12 +828,17 @@ impl Translator {
             ru.placeholders()
                 .any(|p| !p.skip && (p.target == Target::Arg(i) || p.owner == Some(i)))
         };
+        // (a word of the closed sets first where the Russian asks for one)
+        let word = |i: usize| {
+            ru.placeholders()
+                .any(|p| p.word && p.target == Target::Arg(i))
+        };
         let mut whole = true;
         let mut values: Vec<Value> = convs(&t.segments)
             .zip(captures)
             .enumerate()
             .map(|(i, (c, cap))| {
-                let (v, ok) = self.arg_value(t, i, c.kind, cap, depth);
+                let (v, ok) = self.arg_value(t, i, c.kind, cap, word(i), depth);
                 whole &= ok || !shown(i);
                 v
             })
@@ -896,19 +901,22 @@ impl Translator {
     }
 
     /// Conversion `i` of template `t` printed as `shown`: its value, and
-    /// whether it is Russian. A name the player typed is shown as typed.
+    /// whether it is Russian. A name the player typed is shown as typed;
+    /// a `word` is read as a closed set's word first (the rock, not a stone).
     fn arg_value(
         &self,
         t: &Template,
         i: usize,
         kind: ConvKind,
         shown: &str,
+        word: bool,
         depth: usize,
     ) -> (Value, bool) {
         if t.is_typed(i) {
             return (Value::Text(shown.to_string()), true);
         }
-        self.value(kind, shown, t.name_kind(i), depth)
+        let name = if word { NameKind::Word } else { t.name_kind(i) };
+        self.value(kind, shown, name, depth)
     }
 
     /// An argument's value, and whether it is Russian.
@@ -1557,6 +1565,7 @@ fn identity(t: &Template) -> RuTemplate {
                     own: false,
                     owner: None,
                     race: false,
+                    word: false,
                     source: (i + 1).to_string(),
                 }));
                 i += 1;

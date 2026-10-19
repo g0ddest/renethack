@@ -518,7 +518,7 @@ ru = "Дать имя именно этому {1:dat}"
 
 [b323068c2222]
 en = "Name this stack of %s"
-ru = "Дать имя этой кучке {1:gen}"
+ru = "Дать имя этим {1:dat}"
 
 [1b9dac310f79]
 en = "Rename or un-name this specific %s"
@@ -1014,3 +1014,14 @@ ru = " на Плане Воды"
 [646da77d64a7]
 en = " on the Plane of Void"
 ru = " на Плане Пустоты"
+
+# weapon.c add_skills_to_menu(): #enhance's lines; a skill is read as the
+# skill's name first ({N:word}: polearms is древковое оружие, no plural of a thing)
+
+[54dbbd8dbb1c]
+en = "  %-*s [%s]"
+ru = "  {1:word} [{2}]"
+
+[808e68fb8f2d]
+en = " %s %-*s [%s]"
+ru = " {1} {2:word} [{3}]"

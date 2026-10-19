@@ -190,7 +190,15 @@ fn check(catalog: &Catalog, tr: &Translation, glossary: &Glossary) -> Vec<String
             }
             _ => {}
         }
-        if number && (p.case.is_some() || p.cap || p.low || p.agree.is_some() || p.own || p.race) {
+        if number
+            && (p.case.is_some()
+                || p.cap
+                || p.low
+                || p.agree.is_some()
+                || p.own
+                || p.race
+                || p.word)
+        {
             out.push(format!(
                 "{{{}}}: argument {n} is a number: it has no case",
                 p.source

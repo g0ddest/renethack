@@ -373,7 +373,7 @@ ru = "Которое {1}, правое или левое?"
 
 [b3f2a30b3a5d]
 en = "Which ring-%s, Right or Left?"
-ru = "На какой {1} кольцо, правый или левый?"
+ru = "На какую руку надеть кольцо: правую или левую?{1:skip}"
 
 [42903701a821]
 en = "Kick your steed?"
@@ -853,11 +853,11 @@ ru = "«Можно снять с тебя перчатки, {hero:gender|мил�
 
 [097786ed0226]
 en = "\"Shall I remove your smock, lover?\""
-ru = "«Можно снять с тебя халат, {hero:gender|милый|милая}?»"
+ru = "«Можно снять с тебя фартук, {hero:gender|милый|милая}?»"
 
 [0d403a31de97]
 en = "\"Shall I remove your smock, sweetheart?\""
-ru = "«Можно снять с тебя халат, {hero:gender|сладкий|сладкая}?»"
+ru = "«Можно снять с тебя фартук, {hero:gender|сладкий|сладкая}?»"
 
 [104b1eba31f3]
 en = "\"Shall I remove your apron, sweetheart?\""
@@ -869,7 +869,7 @@ ru = "«Можно снять с тебя щит, {hero:gender|сладкий|с
 
 [1e94fc258801]
 en = "\"Shall I remove your suit, sweetheart?\""
-ru = "«Можно снять с тебя костюм, {hero:gender|сладкий|сладкая}?»"
+ru = "«Можно снять с тебя доспех, {hero:gender|сладкий|сладкая}?»"
 
 [203a8be63a66]
 en = "\"Shall I remove your mail, dear?\""
@@ -881,11 +881,11 @@ ru = "«Можно снять с тебя обмотки, {hero:gender|милы�
 
 [2a8b743d457a]
 en = "\"Shall I remove your suit, dear?\""
-ru = "«Можно снять с тебя костюм, {hero:gender|дорогой|дорогая}?»"
+ru = "«Можно снять с тебя доспех, {hero:gender|дорогой|дорогая}?»"
 
 [2d3a18ff85e4]
 en = "\"Shall I remove your smock, dear?\""
-ru = "«Можно снять с тебя халат, {hero:gender|дорогой|дорогая}?»"
+ru = "«Можно снять с тебя фартук, {hero:gender|дорогой|дорогая}?»"
 
 [3785e83fc378]
 en = "\"Shall I remove your boots, sweetheart?\""
@@ -917,7 +917,7 @@ ru = "«Можно снять с тебя драконью броню, {hero:gen
 
 [589a9a1d1f28]
 en = "\"Shall I remove your suit, lover?\""
-ru = "«Можно снять с тебя костюм, {hero:gender|милый|милая}?»"
+ru = "«Можно снять с тебя доспех, {hero:gender|милый|милая}?»"
 
 [595ee13a75a6]
 en = "\"Shall I remove your dragon scales, dear?\""

@@ -837,7 +837,7 @@ ru = "Открыть этот контейнер"
 
 [d29c051a771a]
 en = "Hit yourself with this cream pie"
-ru = "Ударить себя этим кремовым пирогом"
+ru = "Ударить себя этим тортом с кремом"
 
 [d33cba690245]
 en = "Quiver '%c' to un-ready this %s"
@@ -1421,7 +1421,7 @@ ru = "Предметы, известные как проклятые"
 
 [d4dee3aa0f5d]
 en = "Items of unknown Bless/Curse status"
-ru = "Предметы, чья святость неизвестна"
+ru = "Предметы, о которых не известно, прокляты ли они"
 
 [bf8231949896]
 en = "Just picked up: %s"

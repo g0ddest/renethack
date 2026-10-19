@@ -36,7 +36,7 @@ ru = "{1}        неизвестное существо, которое вну�
 
 [9a623e54c8af]
 en = "%s        unknown creature causing you concern"
-ru = "{1}        неизвестное существо, которое внушает вам озабоченность"
+ru = "{1}        неизвестное существо, которое вызывает у вас тревогу"
 
 [2d23f8614fad]
 en = "%s        unknown creature causing you anxiety"
@@ -143,7 +143,7 @@ ru = ", в вашей хватке"
 
 [6809575950c1]
 en = ", can't move (paralyzed or sleeping or busy)"
-ru = ", не двигается (паралич, сон или занятость)"
+ru = ", не двигается (паралич, сон или какое-то занятие)"
 
 [b6656f18e2cf]
 en = ", leashed to you"

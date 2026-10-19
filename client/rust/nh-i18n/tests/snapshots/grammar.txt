@@ -13,6 +13,11 @@
   f       Название  Уровень  Школа  Провал  Памятьx  ходы
   n       Название  Уровень  Школа  Провал  Памятьx  ходы
   pl      Название  Уровень  Школа  Провал  Памятьx  ходы
+  %-*s [%s]  [54dbbd8dbb1c]
+  m     тритон [тритон]
+  f     крыса [крыса]
+  n     копьё [копьё]
+  pl    3 стрелы [3 стрелы]
   Eat it anyway?  [ae8486876fff]
   =     Всё равно съесть?
  #              %4s enter and perform an extended command  [1a28f8ac5106]
@@ -20,6 +25,11 @@
   f    #              крыса ввести и выполнить расширенную команду
   n    #              копьё ввести и выполнить расширенную команду
   pl   #              3 стрелы ввести и выполнить расширенную команду
+ %s %-*s [%s]  [808e68fb8f2d]
+  m    тритон тритон [тритон]
+  f    крыса крыса [крыса]
+  n    копьё копьё [копьё]
+  pl   3 стрелы 3 стрелы [3 стрелы]
  %s in %s and two weapons  [3c0c94dae443]
   m    ваш уровень владения тритоном и боя с двух рук: тритон
   f    ваш уровень владения крысой и боя с двух рук: крыса
@@ -1901,10 +1911,10 @@
   n    У вас ранено правое копьё.
   pl   У вас ранены правые 3 стрелы.
  You have all %d energy points (spell power).  [4b2386440376]
-  m    Энергия полная: 1.
-  f    Энергия полная: 3.
-  n    Энергия полная: 5.
-  pl   Энергия полная: 21.
+  m    Энергия: 1 из 1.
+  f    Энергия: 3 из 3.
+  n    Энергия: 5 из 5.
+  pl   Энергия: 21 из 21.
  You have all %d hit points.  [3d70415e6717]
   m    Здоровье полное: 1.
   f    Здоровье полное: 3.
@@ -1940,7 +1950,7 @@
  You have been vegetarian.  [50d2779c0e4e]
   =    Вы были вегетарианцем.
  You have both energy points (spell power).  [3982b084a7bd]
-  =    Энергия полная: 2.
+  =    Энергия: 2 из 2.
  You have extra luck.  [a03aa5454363]
   =    У вас дополнительная удача.
  You have fixed abilities%s.  [69a8978a35c2]
@@ -1984,10 +1994,10 @@
  You have reduced luck.  [dc69ddbcafe9]
   =    У вас пониженная удача.
  You have reflection%s.  [d4d38f0e2f25]
-  m    У вас отражениетритон.
-  f    У вас отражениекрыса.
-  n    У вас отражениекопьё.
-  pl   У вас отражение3 стрелы.
+  m    Вы защищены отражениемтритон.
+  f    Вы защищены отражениемкрыса.
+  n    Вы защищены отражениемкопьё.
+  pl   Вы защищены отражением3 стрелы.
  You have sinned.  [226dee662295]
   =    Вы согрешили.
  You have slippery %s (%ld).  [4d6a526c9cd7]
@@ -2040,10 +2050,10 @@
   n    Вы 5 раз ударили оружием.
   pl   Вы 21 раз ударили оружием.
  You hunger rapidly%s.  [82ff995db0e7]
-  m    Вы быстро голодаететритон.
-  f    Вы быстро голодаетекрыса.
-  n    Вы быстро голодаетекопьё.
-  pl   Вы быстро голодаете3 стрелы.
+  m    Вы быстро проголадываетесьтритон.
+  f    Вы быстро проголадываетеськрыса.
+  n    Вы быстро проголадываетеськопьё.
+  pl   Вы быстро проголадываетесь3 стрелы.
  You hungered rapidly%s.  [cc29410ac447]
   m    Вы быстро голодалитритон.
   f    Вы быстро голодаликрыса.
@@ -6632,17 +6642,17 @@
 "Shall I remove your shirt, sweetheart?"  [d48978d8911c]
   =   «Можно снять с тебя рубашку, сладкий?»
 "Shall I remove your smock, dear?"  [2d3a18ff85e4]
-  =   «Можно снять с тебя халат, дорогой?»
+  =   «Можно снять с тебя фартук, дорогой?»
 "Shall I remove your smock, lover?"  [097786ed0226]
-  =   «Можно снять с тебя халат, милый?»
+  =   «Можно снять с тебя фартук, милый?»
 "Shall I remove your smock, sweetheart?"  [0d403a31de97]
-  =   «Можно снять с тебя халат, сладкий?»
+  =   «Можно снять с тебя фартук, сладкий?»
 "Shall I remove your suit, dear?"  [2a8b743d457a]
-  =   «Можно снять с тебя костюм, дорогой?»
+  =   «Можно снять с тебя доспех, дорогой?»
 "Shall I remove your suit, lover?"  [589a9a1d1f28]
-  =   «Можно снять с тебя костюм, милый?»
+  =   «Можно снять с тебя доспех, милый?»
 "Shall I remove your suit, sweetheart?"  [1e94fc258801]
-  =   «Можно снять с тебя костюм, сладкий?»
+  =   «Можно снять с тебя доспех, сладкий?»
 "Shall I remove your wrapping, dear?"  [6c0b766f5f7c]
   =   «Можно снять с тебя обмотки, дорогой?»
 "Shall I remove your wrapping, lover?"  [279146ab2a8c]
@@ -7090,7 +7100,7 @@
   n   «Гнев копья обрушился на тебя!»
   pl  «Гнев 3 стрел обрушился на тебя!»
 "Then die, creature!"  [b64a4c33a78c]
-  =   «Так умри же, тварь!»
+  =   «Так умри же, создание!»
 "Then die, mortal!"  [e640611fe195]
   =   «Так умри же, смертный!»
 "Then dost thou desire a major one?" (%d zorkmid)  [233e89d9f629]
@@ -7195,7 +7205,7 @@
 "This time I shall let thee off with a spanking, but let it not happen again."  [8b6bf356c796]
   =   «На сей раз отделаешься поркой, но чтоб больше такого не было.»
 "Thou art arrogant, creature."  [1e03690c02d4]
-  =   «Ты высокомерен, тварь.»
+  =   «Ты высокомерен, создание.»
 "Thou art arrogant, mortal."  [d62b279c747e]
   =   «Ты высокомерен, смертный.»
 "Thou art but a godless void."  [da3392da55d1]
@@ -7235,7 +7245,7 @@
 "Thou hadst best fight better than thou canst dress!"  [057c29230b65]
   =   «Дерись хоть лучше, чем одеваешься!»
 "Thou hast strayed from the path, creature."  [cd76ddb4e162]
-  =   «Ты сбился с пути, тварь.»
+  =   «Ты сбился с пути, создание.»
 "Thou hast strayed from the path, mortal."  [0442eeaa9410]
   =   «Ты сбился с пути, смертный.»
 "Thou hast succeeded, We see, %s!  Now thou art commanded to take\nthe Amulet to be sacrificed to %s in the Plane of the Astral.\n\n"Merlin hath counseled Us that thou must travel always upwards through\nthe Planes of the Elements, to achieve this goal.\n\n"Go with %s, %s."  [33ebf1c2b7ae]
@@ -7339,7 +7349,7 @@
   n   «Старайся, копьё.  Тебе меня не победить.»
   pl  «Старайся, 3 стрелы.  Тебе меня не победить.»
 "Twixt thy cousin and thee, Medusa is the prettier."  [bc74cd85a025]
-  =   «Из вас с кузиной Медуза — та, что красивее.»
+  =   «Из вас с кузиной Медузой красивее она.»
 "Unlike your patients, you seem to keep coming back, %s!"  [ca44951bb85a]
   m   «В отличие от твоих пациентов, ты всё время возвращаешься, тритон!»
   f   «В отличие от твоих пациентов, ты всё время возвращаешься, крыса!»
@@ -8679,10 +8689,10 @@
   n   Копьё        неизвестное существо, которое внушает вам тревогу
   pl  3 стрелы        неизвестное существо, которое внушает вам тревогу
 %s        unknown creature causing you concern  [9a623e54c8af]
-  m   Тритон        неизвестное существо, которое внушает вам озабоченность
-  f   Крыса        неизвестное существо, которое внушает вам озабоченность
-  n   Копьё        неизвестное существо, которое внушает вам озабоченность
-  pl  3 стрелы        неизвестное существо, которое внушает вам озабоченность
+  m   Тритон        неизвестное существо, которое вызывает у вас тревогу
+  f   Крыса        неизвестное существо, которое вызывает у вас тревогу
+  n   Копьё        неизвестное существо, которое вызывает у вас тревогу
+  pl  3 стрелы        неизвестное существо, которое вызывает у вас тревогу
 %s        unknown creature causing you disquiet  [c71775fef101]
   m   Тритон        неизвестное существо, которое внушает вам смятение
   f   Крыса        неизвестное существо, которое внушает вам смятение
@@ -12954,10 +12964,10 @@
   n   Копьё подпрыгивает, ловко уклоняясь от вашего пинка.
   pl  3 стрелы подпрыгивают, ловко уклоняясь от вашего пинка.
 %s just misses!  [827b1b7208fd]
-  m   Тритон едва промахивается!
-  f   Крыса едва промахивается!
-  n   Копьё едва промахивается!
-  pl  3 стрелы едва промахиваются!
+  m   Тритон едва не попадает!
+  f   Крыса едва не попадает!
+  n   Копьё едва не попадает!
+  pl  3 стрелы едва не попадают!
 %s kicks again!  [2d0c6f0104a9]
   m   Тритон снова бьёт ногой!
   f   Крыса снова бьёт ногой!
@@ -13664,10 +13674,10 @@
   n   Копьё не попадают в кого-то.
   pl  3 стрелы не попадают в кого-то.
 %s misses %s.  [d1844b98ec47]
-  m   Тритон промахивается по тритону.
-  f   Крыса промахивается по крысе.
-  n   Копьё промахивается по копью.
-  pl  3 стрелы промахиваются по 3 стрелам.
+  m   Тритон не попадает в тритона.
+  f   Крыса не попадает в крысу.
+  n   Копьё не попадает в копьё.
+  pl  3 стрелы не попадают в 3 стрелы.
 %s misses it.  [3762ef97f4e3]
   m   Тритон не попадает в кого-то.
   f   Крыса не попадает в кого-то.
@@ -16389,10 +16399,10 @@
   n   Копьё, копьё копьё копьё, вошёл в подземелье
   pl  3 стрелы, 3 стрелы 3 стрелы 3 стрелы, вошёл в подземелье
 %s the %s's attributes:  [f1eb3d2fddd2]
-  m   Свойства героя по имени тритон (тритон):
-  f   Свойства героя по имени крыса (крыса):
-  n   Свойства героя по имени копьё (копьё):
-  pl  Свойства героя по имени 3 стрелы (3 стрелы):
+  m   Свойства: тритон, тритон
+  f   Свойства: крыса, крыса
+  n   Свойства: копьё, копьё
+  pl  Свойства: 3 стрелы, 3 стрелы
 %s the female %s %s entered the dungeon  [687da5946158]
   m   Тритон, тритон тритон, вошла в подземелье
   f   Крыса, крыса крыса, вошла в подземелье
@@ -17996,7 +18006,7 @@
 , being held  [e2c3a10922da]
   =   , в вашей хватке
 , can't move (paralyzed or sleeping or busy)  [6809575950c1]
-  =   , не двигается (паралич, сон или занятость)
+  =   , не двигается (паралич, сон или какое-то занятие)
 , chained to %s  [90725f517f5c]
   m   , на цепи с тритоном
   f   , на цепи с крысой
@@ -18180,7 +18190,7 @@ A cockatrice corpse is guaranteed to be untainted!  [1213474502ee]
 A corpse is resuscitated.  [88a47a03ce53]
   =   Какой-то труп оживает.
 A cream pie has two uses: food... and entertainment.  [244d91c6df9c]
-  =   У кремового пирога два применения: еда... и развлечение.
+  =   У торта с кремом два применения: еда... и развлечение.
 A crystal plate mail will not rust.  [884e2c160696]
   =   Хрустальный латный доспех не ржавеет.
 A dead body may protect your live body.  But only an item can protect an item.  [9f182d6caffc]
@@ -18696,7 +18706,7 @@ Another magic portal, a way to leave this tutorial  [225f35484a78]
 Any day above ground is a good day!  [5f7cc6386461]
   =   Любой день над землёй — хороший день!
 Any more of this and I'll die of a stroke before I'm 30.  [4691b537b72f]
-  =   Ещё немного — и меня хватит удар, не дожив до 30.
+  =   Ещё немного — и я умру от удара, не дожив до тридцати.
 Any small object that is accidentally dropped will hide under a larger object.  [c4ff43dd08c0]
   =   Любой мелкий предмет, случайно оброненный, спрячется под предметом покрупнее.
 Anybody seen my head?  [e4f52f2ecf76]
@@ -19847,21 +19857,21 @@ Didn't your mother tell you not to eat food off the floor?  [23103ef89b85]
 Die?  [f8ad41e7fcf0]
   =   Умереть?
 Dig  [294caf41828d]
-  =   Копай
+  =   Копать
 Dig %d %s  [a61b80ad1bb8]
-  m   Копай: 1 шаг на тритона
-  f   Копай: 3 шага на крысу
-  n   Копай: 5 шагов на копьё
-  pl  Копай: 21 шаг на 3 стрелы
+  m   Копать: 1 шаг на тритона
+  f   Копать: 3 шага на крысу
+  n   Копать: 5 шагов на копьё
+  pl  Копать: 21 шаг на 3 стрелы
 Dig %d %s %d %s  [f9dcecd57713]
-  m   Копай: 1 шаг на тритона, 1 шаг на тритона
-  f   Копай: 3 шага на крысу, 3 шага на крысу
-  n   Копай: 5 шагов на копьё, 5 шагов на копьё
-  pl  Копай: 21 шаг на 3 стрелы, 21 шаг на 3 стрелы
+  m   Копать: 1 шаг на тритона, 1 шаг на тритона
+  f   Копать: 3 шага на крысу, 3 шага на крысу
+  n   Копать: 5 шагов на копьё, 5 шагов на копьё
+  pl  Копать: 21 шаг на 3 стрелы, 21 шаг на 3 стрелы
 Dig for Victory here  [4fd0b38184c8]
   =   Копай здесь ради Победы
 Dig here  [b8e7b05d5f92]
-  =   Копай здесь
+  =   Копать здесь
 Dig with this digging tool  [dae46cd84e76]
   =   Копать этим инструментом
 Digging up a grave could be a bad idea...  [2411c77b2db5]
@@ -20027,7 +20037,7 @@ Do you want your possessions identified?  [5f87a3012c1e]
 Does your boss know what you're doing right now?  [ba673eb3268c]
   =   А ваш начальник знает, чем вы сейчас занимаетесь?
 Dogs are attracted by the smell of tripe.  [fbbdf5b20c06]
-  =   Собак манит запах рубца.
+  =   Собак манит запах требухи.
 Dogs are superstitious; they never step on cursed items.  [d94b8b019e45]
   =   Собаки суеверны: на проклятые вещи они не наступают.
 Dogs of ghosts aren't angry, just hungry.  [326b7b09784d]
@@ -20035,7 +20045,7 @@ Dogs of ghosts aren't angry, just hungry.  [326b7b09784d]
 Domo-kun  [a03e34f09c75]
   =   Домо-кун
 Don't be daft, they couldn't hit an elephant at this dist-  [e2a77300a663]
-  =   Не глупите, отсюда они и в слона не попадут с такого рассто-
+  =   Не глупите, они и в слона не попадут с такого рассто-
 Don't bother wishing for things.  You'll probably find one on the next level.  [1d122dcb0490]
   =   Не тратьте желания.  Скорее всего, то же самое найдётся на следующем уровне.
 Don't eat too much:  you might start hiccoughing!  [a37f29d91892]
@@ -20856,9 +20866,9 @@ Highlight critically low %s  [9bbc4c338374]
   n   Подсвечивать опасно низкое копьё
   pl  Подсвечивать опасно низкое 3 стрелы
 Hit monsters by walking into them.  [3825ae4c9324]
-  =   Чтобы ударить монстра, шагните в него.
+  =   Чтобы ударить монстра, идите на него.
 Hit yourself with this cream pie  [d29c051a771a]
-  =   Ударить себя этим кремовым пирогом
+  =   Ударить себя этим тортом с кремом
 Hodie mihi, cras tibi  [2de871c70103]
   =   Сегодня мне, завтра тебе
 Hold my calls  [e71eedaab0a7]
@@ -21028,7 +21038,7 @@ I'm weeth stupeed --->  [0f840ba1aa6b]
 I've never heard of such monsters.  [9a8245e90bcd]
   =   Я никогда не слышал о таких монстрах.
 Ice boxes keep your food fresh.  [436168ba56c1]
-  =   В леднике еда остаётся свежей.
+  =   В ящике со льдом еда остаётся свежей.
 Idiot!  You've shot yourself!  [31f1dd8bf48a]
   =   Идиот!  Вы подстрелили себя!
 If a man's deeds do not outlive him, of what value is a mark in stone?  [b0cd5a7a310f]
@@ -21402,7 +21412,7 @@ Items known to be Cursed  [8f986e879d20]
 Items known to be Uncursed  [4d1bb3191d8a]
   =   Предметы, известные как непроклятые
 Items of unknown Bless/Curse status  [d4dee3aa0f5d]
-  =   Предметы, чья святость неизвестна
+  =   Предметы, о которых не известно, прокляты ли они
 Items you just picked up  [5ca19d76aeef]
   =   Только что подобранные предметы
 Its blow glances off your hat.  [9ccb2b1a925f]
@@ -21617,7 +21627,7 @@ Look at the pattern on the shirt  [4ae99bda3d19]
 Look at what is here  [07b4290baea9]
   =   Осмотреть, что здесь лежит
 Look for a ...ic transporter.  [030a8216c1d6]
-  =   Ищите ...ический переносчик.
+  =   Ищите ...шебный портал.
 Look inside %s  [c89a4bdde11e]
   m   Заглянуть в тритона
   f   Заглянуть в крысу
@@ -21706,7 +21716,7 @@ Miscellaneous:  [69aa5db4d883]
 Missiles, such as rocks, work better when fired from appropriate launcher  [eeaaf052be93]
   =   Снаряды вроде камней лучше пускать из подходящего метательного оружия
 Mmm, tripe... not bad!  [b284365f4849]
-  =   Ммм, рубец... неплохо!
+  =   Ммм, требуха... неплохо!
 Mollified, %s accepts your restitution.  [3f306624518f]
   m   Смягчившись, тритон принимает от вас возмещение ущерба.
   f   Смягчившись, крыса принимает от вас возмещение ущерба.
@@ -21842,10 +21852,10 @@ Name this specific %s  [9ad4f831bcd0]
   n   Дать имя именно этому копью
   pl  Дать имя именно этому 3 стрелам
 Name this stack of %s  [b323068c2222]
-  m   Дать имя этой кучке тритона
-  f   Дать имя этой кучке крысы
-  n   Дать имя этой кучке копья
-  pl  Дать имя этой кучке 3 стрел
+  m   Дать имя этим тритону
+  f   Дать имя этим крысе
+  n   Дать имя этим копью
+  pl  Дать имя этим 3 стрелам
 Need a light?  Come visit the Minetown branch of Izchak's Lighting Store!  [530bb78e37ab]
   =   Нужен свет?  Заглядывайте в филиал магазина светильников Ицхака в Шахтёрском городке!
 Needs salt...  [156f4b08103c]
@@ -22230,7 +22240,7 @@ Open one of these tins with your tin opener and eat the contents  [b4ad193fa0f5]
 Open the door  [366f8571aa10]
   =   Открыть дверь
 Open the door by moving into it  [e3ed22670b19]
-  =   Чтобы открыть дверь, шагните в неё
+  =   Чтобы открыть дверь, идите на неё
 Open this container  [d299de10b6ac]
   =   Открыть этот контейнер
 Open this tin and eat the contents  [0351bf2f280d]
@@ -22493,12 +22503,12 @@ Please don't dig me up.  I'm perfectly happy down here. -- Resident  [154b5189ca
 Please don't feed the animals.  [c33b67e79731]
   =   Пожалуйста, не кормите животных.
 Please report these messages to %s.  [3c8009a2f505]
-  m   Пожалуйста, сообщите об этих сообщениях по адресу тритон.
-  f   Пожалуйста, сообщите об этих сообщениях по адресу крыса.
-  n   Пожалуйста, сообщите об этих сообщениях по адресу копьё.
-  pl  Пожалуйста, сообщите об этих сообщениях по адресу 3 стрелы.
+  m   Пожалуйста, перешлите эти сообщения по адресу тритон.
+  f   Пожалуйста, перешлите эти сообщения по адресу крыса.
+  n   Пожалуйста, перешлите эти сообщения по адресу копьё.
+  pl  Пожалуйста, перешлите эти сообщения по адресу 3 стрелы.
 Please report these messages to devteam@nethack.org.  [ca8e44bcf9d3]
-  =   Пожалуйста, сообщите об этих сообщениях по адресу devteam@nethack.org.
+  =   Пожалуйста, перешлите эти сообщения по адресу devteam@nethack.org.
 Please, not in front of those orcs!  [f81cea67146d]
   =   Пожалуйста, только не при этих орках!
 Polymorph into an ettin; meet your opponents face to face to face.  [f081152b869b]
@@ -22534,7 +22544,7 @@ Prove thyself worthy or perish!  [63896aea153d]
 Psst!  It's done with mirrors!  [7f5472148f57]
   =   Тсс!  Весь фокус в зеркалах!
 Push boulders by moving into them  [6a071fd0fd41]
-  =   Чтобы толкнуть валун, шагните в него
+  =   Чтобы толкнуть валун, идите на него
 Push the boulder  [433c2dd44d43]
   =   Толкнуть валун
 Put in what type of objects?  [bf9f5fad5f1b]
@@ -26335,7 +26345,7 @@ They say that counting your eggs before they hatch shows that you care.  [164bd7
 They say that demigods must leave behind their prized earthly possessions.  [a304ada4b1fc]
   =   Говорят, полубогам приходится оставлять свои драгоценные земные пожитки.
 They say that dipping a bag of tricks in a fountain won't make it an icebox.  [df00c00341e4]
-  =   Говорят, если окунуть сумку фокусов в фонтан, ледника из неё не выйдет.
+  =   Говорят, если окунуть сумку фокусов в фонтан, ящика со льдом из неё не выйдет.
 They say that dipping an eel and brown mold in hot water makes bouillabaisse.  [122e9db65d6a]
   =   Говорят, если окунуть угря и бурую плесень в горячую воду, выйдет буйабес.
 They say that disturbing a djinni can be a costly mistake.  [ed74a37c38bd]
@@ -27131,7 +27141,7 @@ This tastes sour.  [936987857b53]
 This tastes tangy.  [a835acdbc1bf]
   =   На вкус терпко.
 This tripe ration is surprisingly good!  [1aa3c54b5a85]
-  =   Этот рубец на удивление хорош!
+  =   Эта порция требухи на удивление хороша!
 This wall seems too hard to chop through.  [0bc89239c022]
   =   Похоже, эта стена слишком прочна, чтобы её прорубить.
 This wall seems too hard to dig into.  [49e534c056cf]
@@ -28279,10 +28289,10 @@ Which %s, Right or Left?  [7efc981dc350]
 Which commands autocomplete?  [2c3b3348a955]
   =   Какие команды дополняются автоматически?
 Which ring-%s, Right or Left?  [b3f2a30b3a5d]
-  m   На какой тритон кольцо, правый или левый?
-  f   На какой крыса кольцо, правый или левый?
-  n   На какой копьё кольцо, правый или левый?
-  pl  На какой 3 стрелы кольцо, правый или левый?
+  m   На какую руку надеть кольцо: правую или левую?
+  f   На какую руку надеть кольцо: правую или левую?
+  n   На какую руку надеть кольцо: правую или левую?
+  pl  На какую руку надеть кольцо: правую или левую?
 Which way do you want to teleport?  [a09f582df694]
   =   Куда телепортироваться?
 While some wayfarers rely on scrounging finished armour in the dungeon, the\nresourceful know the mystical means by which mail may be fashioned out of\nscales from a dragon's hide.  [8ecf7cfadd32]
@@ -29170,7 +29180,7 @@ You are motionlessly suspended.  [0b34dbce339f]
 You are no longer able to control your flight.  [3a325d45db20]
   =   Вы больше не можете управлять своим полётом.
 You are no longer being strangled.  [41201bf8487e]
-  =   Вас больше не душит.
+  =   Вас больше ничто не душит.
 You are no longer bothered by the poison gas.  [00b9e0d5fa72]
   =   Ядовитый газ вас больше не беспокоит.
 You are no longer ill.  [0d2e1f778b59]
@@ -29576,6 +29586,11 @@ You attack %s with a fiery gaze!  [03bf4d5c0ead]
   f   Вы атакуете крысу огненным взглядом!
   n   Вы атакуете копьё огненным взглядом!
   pl  Вы атакуете 3 стрелы огненным взглядом!
+You attack %s.  [10d405485e9a]
+  m   Вы атакуете тритона.
+  f   Вы атакуете крысу.
+  n   Вы атакуете копьё.
+  pl  Вы атакуете 3 стрелы.
 You attack an air bubble.  [42fa5a712780]
   =   Вы атакуете воздушный пузырь.
 You attack nothing.  [230a6854e447]
@@ -30393,10 +30408,10 @@ You cannot drop something you are wearing.  [169f7d147cf4]
 You cannot eat that!  [06314ea5dc82]
   =   Это нельзя съесть!
 You cannot escape from %s!  [752eb0e1b6b6]
-  m   Вам не вырваться от тритона!
-  f   Вам не вырваться от крысы!
-  n   Вам не вырваться от копья!
-  pl  Вам не вырваться от 3 стрел!
+  m   Вам не вырваться из хватки тритона!
+  f   Вам не вырваться из хватки крысы!
+  n   Вам не вырваться из хватки копья!
+  pl  Вам не вырваться из хватки 3 стрел!
 You cannot fight while so heavily loaded.  [e7611245e056]
   =   С такой тяжёлой ношей вы не можете драться.
 You cannot fire that!  [aa3bf04c41c8]
@@ -32423,6 +32438,11 @@ You expel %s!  [4a3dbaf6dedb]
   pl  Вы исторгаете 3 стрелы!
 You explode a fireball on top of yourself!  [dec359e53ece]
   =   Вы взрываете огненный шар прямо над собой!
+You explode at %s.  [8c334544b857]
+  m   Вы взрываетесь у тритона.
+  f   Вы взрываетесь у крысы.
+  n   Вы взрываетесь у копья.
+  pl  Вы взрываетесь у 3 стрел.
 You explode at an air bubble.  [57f94d3d7fc5]
   =   Вы взрываетесь у воздушного пузыря.
 You explode at nothing.  [73110f1d8873]
@@ -32613,7 +32633,7 @@ You feel charged up!  [3c7fb4780582]
 You feel charismatic!  [dbbb35abf70d]
   =   Вы чувствуете себя обаятельнее!
 You feel clumsy!  [16550c51a412]
-  =   Вы чувствуете себя неуклюже!
+  =   Вы стали неуклюжее!
 You feel completely healed.  [dca8adc095ee]
   =   Вы полностью исцелились.
 You feel condemned inside.  [433c5b76fcb3]
@@ -32872,7 +32892,7 @@ You feel rather warm.  [61ff95efca78]
 You feel regret that the historic statue is now gone.  [d7f3e82dbde1]
   =   Вы сожалеете о том, что исторической статуи больше нет.
 You feel repulsive!  [46ef662b5834]
-  =   Вы чувствуете себя отталкивающе!
+  =   Вы стали неприятнее на вид!
 You feel restored to health!  [5227783323c7]
   =   Вы чувствуете, как к вам возвращается здоровье!
 You feel rushing air tickle your %s.  [9a053eeedc3d]
@@ -33030,7 +33050,7 @@ You feel very attracted to %s.  [721a3ed1951f]
 You feel very charismatic!  [9825adfc7918]
   =   Вы чувствуете себя гораздо обаятельнее!
 You feel very clumsy!  [b040d657ded8]
-  =   Вы чувствуете себя очень неуклюже!
+  =   Вы стали гораздо неуклюжее!
 You feel very firm.  [af26aee78b42]
   =   Вы чувствуете в себе небывалую прочность.
 You feel very foolish!  [e317fad612ce]
@@ -33042,7 +33062,7 @@ You feel very jumpy.  [9c7be0325dff]
 You feel very lethargic.  [8a72a2e1c0e2]
   =   Вас одолевает сильная вялость.
 You feel very repulsive!  [7af7db6fffc1]
-  =   Вы чувствуете себя крайне отталкивающе!
+  =   Вы стали гораздо неприятнее на вид!
 You feel very sick!  [752c13f324df]
   =   Вам очень плохо!
 You feel very sick.  [ab4732d767e4]
@@ -33428,6 +33448,11 @@ You frighten %s.  [d041476c1a4f]
   pl  Вы пугаете 3 стрелы.
 You fry to a crisp!  [57dc5433f6ce]
   =   Вы сгораете дотла!
+You futilely attack %s.  [98e6b993c88c]
+  m   Вы впустую атакуете тритона.
+  f   Вы впустую атакуете крысу.
+  n   Вы впустую атакуете копьё.
+  pl  Вы впустую атакуете 3 стрелы.
 You futilely explode at %s.  [71035a75f77c]
   m   Вы впустую взрываетесь у тритона.
   f   Вы впустую взрываетесь у крысы.
@@ -33624,6 +33649,11 @@ You harmlessly attack an unknown obstacle.  [af91f8025385]
   =   Вы безрезультатно атакуете неизвестное препятствие.
 You harmlessly attack nothing.  [826c2a737348]
   =   Вы безрезультатно атакуете пустое место.
+You harmlessly explode at %s.  [4e4b71a030c7]
+  m   Вы безрезультатно взрываетесь у тритона.
+  f   Вы безрезультатно взрываетесь у крысы.
+  n   Вы безрезультатно взрываетесь у копья.
+  pl  Вы безрезультатно взрываетесь у 3 стрел.
 You have %ld %s credit at %s %s.  [16bdd01b23aa]
   m   У вас кредит в 1 тритона в тритоне тритона.
   f   У вас кредит в 3 крыс в крысе крысы.
@@ -34497,12 +34527,12 @@ You knock %s backward with a powerful strike!  [dca647c43ac1]
   n   Вы отбрасываете копьё мощным ударом!
   pl  Вы отбрасываете 3 стрелы мощным ударом!
 You know "%s" quite well already.  [c5486789482f]
-  m   Вы и так хорошо знаете «тритон».
-  f   Вы и так хорошо знаете «крыса».
-  n   Вы и так хорошо знаете «копьё».
-  pl  Вы и так хорошо знаете «3 стрелы».
+  m   Вы и так хорошо знаете заклинание «тритон».
+  f   Вы и так хорошо знаете заклинание «крыса».
+  n   Вы и так хорошо знаете заклинание «копьё».
+  pl  Вы и так хорошо знаете заклинание «3 стрелы».
 You know of no traps there.  [caad9ae74520]
-  =   Вы не знаете там ни одной ловушки.
+  =   Там нет известных вам ловушек.
 You know that this time you must find and destroy %s.  [0f784f5253af]
   m   Вы знаете: на этот раз вы должны найти и уничтожить тритона.
   f   Вы знаете: на этот раз вы должны найти и уничтожить крысу.
@@ -35315,10 +35345,10 @@ You receive a faint telepathic message from %s:  [e005dc7323a5]
   n   Вы получаете слабое телепатическое послание от копья:
   pl  Вы получаете слабое телепатическое послание от 3 стрел:
 You receive a faint telepathic message from %s:\nYour help is urgently needed at %s!\nLook for a ...ic transporter.\nYou couldn't quite make out that last message.  [949fd7401f66]
-  m   Вы получаете слабое телепатическое послание от тритона:\nВаша помощь срочно нужна в тритоне!\nИщите ...ический переносчик.\nПоследнее послание вы толком не разобрали.
-  f   Вы получаете слабое телепатическое послание от крысы:\nВаша помощь срочно нужна в крысе!\nИщите ...ический переносчик.\nПоследнее послание вы толком не разобрали.
-  n   Вы получаете слабое телепатическое послание от копья:\nВаша помощь срочно нужна в копье!\nИщите ...ический переносчик.\nПоследнее послание вы толком не разобрали.
-  pl  Вы получаете слабое телепатическое послание от 3 стрел:\nВаша помощь срочно нужна в 3 стрелах!\nИщите ...ический переносчик.\nПоследнее послание вы толком не разобрали.
+  m   Вы получаете слабое телепатическое послание от тритона:\nВаша помощь срочно нужна в тритоне!\nИщите ...шебный портал.\nПоследнее послание вы толком не разобрали.
+  f   Вы получаете слабое телепатическое послание от крысы:\nВаша помощь срочно нужна в крысе!\nИщите ...шебный портал.\nПоследнее послание вы толком не разобрали.
+  n   Вы получаете слабое телепатическое послание от копья:\nВаша помощь срочно нужна в копье!\nИщите ...шебный портал.\nПоследнее послание вы толком не разобрали.
+  pl  Вы получаете слабое телепатическое послание от 3 стрел:\nВаша помощь срочно нужна в 3 стрелах!\nИщите ...шебный портал.\nПоследнее послание вы толком не разобрали.
 You reflect %s %s.  [72aa6ffc6d79]
   m   Вы отражаете тритона тритона.
   f   Вы отражаете крысу крысы.
@@ -36365,8 +36395,8 @@ You stole %ld zorkmids worth of merchandise.  [81304331e402]
   n   Вы украли товара на 5 зоркмидов.
   pl  Вы украли товара на 21 зоркмид.
 You stop %s.  [c3da5e802a80]
-  m   Вы перестаёте тритон.
-  f   Вы перестаёте крыса.
+  m   Вы перестаёте тритона.
+  f   Вы перестаёте крысу.
   n   Вы перестаёте копьё.
   pl  Вы перестаёте 3 стрелы.
 You stop at the edge of the %s.  [b32fdb4bbcae]
@@ -38425,11 +38455,11 @@ Your dragon scales turn to dust and fall to the %s!  [d6458fa76f85]
   n   Ваша драконья чешуя обращается в прах и осыпается на копьё!
   pl  Ваша драконья чешуя обращается в прах и осыпается на 3 стрелы!
 Your extremities are getting oozy.  [85175eaf97cc]
-  =   Ваши оконечности становятся склизкими.
+  =   Ваши конечности становятся склизкими.
 Your extremities are stiffening.  [c60facf50367]
-  =   Ваши оконечности деревенеют.
+  =   Ваши конечности деревенеют.
 Your extremities have turned to stone.  [31d6f59e19fa]
-  =   Ваши оконечности обратились в камень.
+  =   Ваши конечности обратились в камень.
 Your game may go down the drain if you have extra potions or rings.  [6c864ac3afd4]
   =   Ваша игра может утечь в слив, если у вас лишние зелья или кольца.
 Your gauntlets are no longer slippery.  [0348c0d9db00]
@@ -38558,10 +38588,10 @@ Your kick passes harmlessly through %s.  [59563e2943a6]
 Your knees seem more flexible now.  [2c4e7f61e18a]
   =   Ваши колени теперь гнутся лучше.
 Your knowledge of "%s" is keener.  [65052901b88c]
-  m   Вы лучше знаете «тритон».
-  f   Вы лучше знаете «крыса».
-  n   Вы лучше знаете «копьё».
-  pl  Вы лучше знаете «3 стрелы».
+  m   Вы освежили в памяти заклинание «тритон».
+  f   Вы освежили в памяти заклинание «крыса».
+  n   Вы освежили в памяти заклинание «копьё».
+  pl  Вы освежили в памяти заклинание «3 стрелы».
 Your knowledge of "%s" is restored.  [c35683f15906]
   m   Ваше знание «тритон» восстановлено.
   f   Ваше знание «крыса» восстановлено.
@@ -40653,7 +40683,7 @@ conventioneer  [51e1f17b46e8]
 corpulent porpoise  [1d052b3ad046]
   =   Тучная морская свинья
 crashing into iron bars  [56de6559e4b7]
-  =   Удар о железные прутья
+  =   Удар о железную решётку
 create a monster  [be308637e6a4]
   =   Создать монстра
 creeping coins  [6aba8421848e]
@@ -41018,7 +41048,7 @@ falling drawbridge  [c6ddcb985531]
 falling object  [e1e8c5dc64a0]
   =   Падающий предмет
 falling off a ladder  [72e01bb3b923]
-  =   Падение со стремянки
+  =   Падение с приставной лестницы
 falling rock  [09d15c6cbf12]
   =   Падающий камень
 feather golem  [20bdb0b0812f]
@@ -41302,7 +41332,7 @@ here  [0154c0dabe71]
 hero never wore armor  [14df5aa214df]
   =   Герой ни разу не надел доспехов
 hero was always blond, no, blind  [1f7680c7d64a]
-  =   Герой всегда был белокур, то есть слеп
+  =   Герой всегда был сед… то есть слеп
 hide help  [4b3b8e96e83d]
   =   Скрыть справку
 hiding from thunderstorm  [eb3a181fb360]

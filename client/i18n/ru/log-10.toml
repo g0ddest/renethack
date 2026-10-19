@@ -931,7 +931,7 @@ ru = "Вы чувствуете себя гораздо ловчее!"
 
 [b040d657ded8]
 en = "You feel very clumsy!"
-ru = "Вы чувствуете себя очень неуклюже!"
+ru = "Вы стали гораздо неуклюжее!"
 
 [99b536e97c05]
 en = "You feel very tough!"
@@ -955,11 +955,11 @@ ru = "Вы чувствуете себя гораздо обаятельнее!"
 
 [46ef662b5834]
 en = "You feel repulsive!"
-ru = "Вы чувствуете себя отталкивающе!"
+ru = "Вы стали неприятнее на вид!"
 
 [7af7db6fffc1]
 en = "You feel very repulsive!"
-ru = "Вы чувствуете себя крайне отталкивающе!"
+ru = "Вы стали гораздо неприятнее на вид!"
 
 [90eaf3d15943]
 en = "%s vanishes and reappears."
@@ -1359,11 +1359,11 @@ ru = "Сбой в программе!  (Возможно, поможет сох�
 
 [3c8009a2f505]
 en = "Please report these messages to %s."
-ru = "Пожалуйста, сообщите об этих сообщениях по адресу {1}."
+ru = "Пожалуйста, перешлите эти сообщения по адресу {1}."
 
 [ca8e44bcf9d3]
 en = "Please report these messages to devteam@nethack.org."
-ru = "Пожалуйста, сообщите об этих сообщениях по адресу devteam@nethack.org."
+ru = "Пожалуйста, перешлите эти сообщения по адресу devteam@nethack.org."
 
 [c310a0b133f2]
 en = "You remember this level as %s."

@@ -120,7 +120,7 @@ fn what_pager_adds_after_a_name() {
              (paralyzed or sleeping or busy), leashed to you) [seen: normal vision, telepathy]"
         ),
         format!(
-            "f        {cat} ({}, не двигается (паралич, сон или занятость), на вашем поводке) \
+            "f        {cat} ({}, не двигается (паралич, сон или какое-то занятие), на вашем поводке) \
              [видно: обычное зрение, телепатия]",
             thing("tame kitten called Tom")
         )

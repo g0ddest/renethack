@@ -187,7 +187,7 @@ ru = " Здоровье полное: {1}."
 
 [4b2386440376]
 en = " You have all %d energy points (spell power)."
-ru = " Энергия полная: {1}."
+ru = " Энергия: {1} из {1}."
 
 [79f7ed1ef3b3]
 en = " You have never hit with a wielded weapon."

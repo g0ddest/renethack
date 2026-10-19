@@ -486,7 +486,7 @@ ru = "Вы взрываетесь в пустоту."
 
 [71035a75f77c]
 en = "You futilely explode at %s."
-ru = "Вы впустую взрываетесь у {1:gen}."
+ru = "Вы впустую взрываетесь у {1:gen:word}."
 
 [2089314acd81]
 en = "You futilely explode at an unknown obstacle."
