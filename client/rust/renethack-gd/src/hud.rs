@@ -1795,6 +1795,12 @@ impl Hud {
         &mut self.bar
     }
 
+    /// The bar's labels shown, each with where it is and where its slot's
+    /// icon is (self-tests).
+    pub fn bar_labels(&self) -> Vec<(String, Rect2, Rect2)> {
+        self.bar.label_rects()
+    }
+
     /// Exploring or fighting; `announce` shows the big banner too.
     pub fn set_mode(&mut self, combat: bool, announce: bool) {
         if self.combat == Some(combat) && !announce {

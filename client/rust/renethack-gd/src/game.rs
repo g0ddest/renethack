@@ -3288,7 +3288,6 @@ impl RenethackGame {
                 }
                 PadOut::CursorHome => self.pad_cursor = None,
                 PadOut::Slot(slot) => self.push_ui(UiEvent::ActionSlot { slot, button: 1 }),
-                PadOut::Page(_) => {}
                 // Start: the game's menu, at the command prompt
                 PadOut::Menu => {
                     let open = self.ui.as_ref().is_some_and(|ui| ui.game_menu.is_open());
@@ -3598,19 +3597,23 @@ impl RenethackGame {
             0.0
         };
         ui.dialogs.set_pad_room(room);
-        // the slots' keys: a gamepad's chords, else the keys the player
-        // presses for them when moved (the digits as drawn, else)
-        let page = self.pad.page();
+        // the slots' keys: a gamepad's chords, every slot's, else the keys
+        // the player presses for them when moved (the digits as drawn, else)
         let texts: Option<Vec<String>> = match pad {
             Some(kind) => Some(
                 (0..BAR_SLOTS)
                     .map(|i| {
-                        let (p, rb, face) = Pad::chord_of(i);
-                        if p != page {
-                            return String::new();
+                        let (lb, rb, face) = Pad::chord_of(i);
+                        let mut words = Vec::new();
+                        if lb {
+                            words.push(kind.label(PadButton::Lb));
                         }
-                        let bumper = if rb { PadButton::Rb } else { PadButton::Lb };
-                        format!("{} {}", kind.label(bumper), kind.label(face))
+                        if rb {
+                            words.push(kind.label(PadButton::Rb));
+                        }
+                        words.push(kind.label(face));
+                        // held together: "LB+A", "LB+RB+A"
+                        words.join("+")
                     })
                     .collect(),
             ),

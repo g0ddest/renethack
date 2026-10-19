@@ -5,7 +5,8 @@
 //! held by LT closes when the window loses the focus, and the next pull
 //! opens it at once. A on the hero's own cell (on the stairs up, at the
 //! start) starts the engine's "What do you want to do?" on looking, never
-//! on the stairs.
+//! on the stairs. The bar names all ten slots (LB, RB, both), each label
+//! under its slot's icon, not on it.
 
 use godot::global::{JoyAxis, Key as GKey};
 use nh_world::Prompt;
@@ -39,7 +40,34 @@ pub(super) fn pad_play() -> Vec<Step> {
     steps.extend(the_history());
     steps.extend(the_ring());
     steps.extend(here());
+    steps.push(Step::Wait("the bar's ten chords, under the icons", bar));
+    steps.push(Step::Shot("pad-play-bar"));
     steps
+}
+
+/// The bar under a pad: every slot's chord, under its icon.
+fn bar(g: &RenethackGame) -> Result<bool, String> {
+    let ui = g.ui.as_ref().ok_or("no UI")?;
+    let labels = ui.hud.bar_labels();
+    if labels.len() != 10 || !g.pad.active {
+        return Ok(false);
+    }
+    let kind = g.pad.kind;
+    let (lb, rb) = (kind.label(PadButton::Lb), kind.label(PadButton::Rb));
+    for (i, (text, label, icon)) in labels.iter().enumerate() {
+        let want = match i {
+            0..=3 => lb.to_string(),
+            4..=7 => rb.to_string(),
+            _ => format!("{lb}+{rb}"),
+        };
+        if !text.starts_with(&want) {
+            return Err(format!("slot {} says {text:?}", i + 1));
+        }
+        if label.position.y < icon.end().y - 1.0 {
+            return Err(format!("slot {}'s {text:?} on its icon: {label:?} {icon:?}", i + 1));
+        }
+    }
+    Ok(true)
 }
 
 /// A on the hero: what can be done here, the focus on looking.

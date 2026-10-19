@@ -23,6 +23,8 @@ pub const SLOT: f32 = 64.0;
 pub const GAP: f32 = 8.0;
 /// The bar's width: ten slots and nine gaps.
 pub const WIDTH: f32 = SLOTS as f32 * SLOT + (SLOTS - 1) as f32 * GAP;
+/// A chord's pill under a slot's icon: its height.
+const CHORD_H: f32 = 18.0;
 
 /// The key of slot `i` (0-based): "1".."9", then "0".
 pub fn key_label(i: usize) -> &'static str {
@@ -286,12 +288,12 @@ impl ActionBar {
         }
     }
 
-    /// The slots' key labels: a gamepad's chords ("LB A"), or None for the
-    /// keys 1–0.
+    /// The slots' key labels: a gamepad's chords ("LB A") or keys the
+    /// player moved ("Alt+1"), each slot's; None for the keys 1–0.
     pub fn set_key_labels(&mut self, labels: Option<&[String]>) {
-        use godot::builtin::Side;
-        // a chord: a small dark pill in the corner, over the icon, as on
-        // consoles; a digit: as before
+        // a chord: a small dark pill across the slot's foot, under its icon
+        // (the icon smaller, the count up in its corner); a digit: in the
+        // corner, as before
         let mut pill = StyleBoxFlat::new_gd();
         pill.set_bg_color(Color::from_rgba(0.035, 0.027, 0.02, 0.88));
         pill.set_border_width_all(1);
@@ -304,30 +306,50 @@ impl ActionBar {
             match chord {
                 Some(text) => {
                     s.key.set_text(text);
-                    s.key.add_theme_font_size_override("font_size", 14);
+                    // the body's face: its spaces part "LB RB A" as the
+                    // small capitals' do not
+                    s.key.add_theme_font_override("font", &theme::font(Face::BodyBold));
+                    s.key.add_theme_font_size_override("font_size", 13);
                     s.key.add_theme_stylebox_override("normal", &pill);
                     s.key.add_theme_constant_override("outline_size", 0);
-                    let w = 10.0 + 8.0 * text.chars().count() as f32;
-                    s.key.set_offset(Side::LEFT, 2.0);
-                    s.key.set_offset(Side::TOP, 2.0);
-                    s.key.set_offset(Side::RIGHT, 2.0 + w);
-                    s.key.set_offset(Side::BOTTOM, 21.0);
+                    s.key.set_horizontal_alignment(HorizontalAlignment::CENTER);
+                    s.key.set_vertical_alignment(VerticalAlignment::CENTER);
+                    place(&s.key, [0.0, 1.0, 1.0, 1.0], [3.0, -CHORD_H - 3.0, -3.0, -3.0]);
+                    place(&s.icon, [0.0, 0.0, 1.0, 1.0], [8.0, 3.0, -8.0, -CHORD_H - 5.0]);
+                    s.count.set_vertical_alignment(VerticalAlignment::TOP);
                     s.key.set_visible(true);
                 }
                 None => {
                     s.key.set_text(key_label(i));
+                    s.key.add_theme_font_override("font", &theme::font(Face::Caps));
                     s.key.add_theme_font_size_override("font_size", 15);
                     s.key.remove_theme_stylebox_override("normal");
                     s.key.add_theme_constant_override("outline_size", 4);
-                    s.key.set_offset(Side::LEFT, 7.0);
-                    s.key.set_offset(Side::TOP, 3.0);
-                    s.key.set_offset(Side::RIGHT, 27.0);
-                    s.key.set_offset(Side::BOTTOM, 23.0);
-                    // a slot off the pad's page shows no chord
+                    s.key.set_horizontal_alignment(HorizontalAlignment::LEFT);
+                    s.key.set_vertical_alignment(VerticalAlignment::TOP);
+                    place(&s.key, [0.0, 0.0, 0.0, 0.0], [7.0, 3.0, 27.0, 23.0]);
+                    place(&s.icon, [0.0, 0.0, 1.0, 1.0], [4.0, 4.0, -4.0, -4.0]);
+                    s.count.set_vertical_alignment(VerticalAlignment::BOTTOM);
                     s.key.set_visible(labels.is_none());
                 }
             }
         }
+    }
+
+    /// Each slot's label and its icon, where they are on screen (self-
+    /// tests: a chord sits under the icon, not on it).
+    pub fn label_rects(&self) -> Vec<(String, Rect2, Rect2)> {
+        self.slots
+            .iter()
+            .filter(|s| s.key.is_visible())
+            .map(|s| {
+                (
+                    s.key.get_text().to_string(),
+                    s.key.get_global_rect(),
+                    s.icon.get_global_rect(),
+                )
+            })
+            .collect()
     }
 
     /// Where the slots are on the canvas (drop targets of the inventory).

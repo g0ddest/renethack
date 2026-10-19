@@ -341,8 +341,6 @@ pub enum PadOut {
     CursorHome,
     /// Action bar slot (0-based).
     Slot(usize),
-    /// The bar's other page.
-    Page(usize),
     /// The inventory: pick up or put down the focused item.
     Carry,
     /// The message history.
@@ -440,10 +438,9 @@ pub struct Pad {
     dpad: [bool; 4],
     lb: bool,
     rb: bool,
-    /// A bumper was used with a face button or the d-pad: letting it go
-    /// alone is not a filter change.
+    /// A bumper was used with a face button: letting it go alone is not a
+    /// filter change.
     bumper_used: bool,
-    page: usize,
     lt: bool,
     rt: bool,
     radial: Option<Option<usize>>,
@@ -457,13 +454,9 @@ impl Pad {
         Pad::default()
     }
 
-    /// The bar page (0: slots 1–8, 1: 9 and 0).
-    pub fn page(&self) -> usize {
-        self.page
-    }
-
-    /// The slot a bumper and a face button use on `page`.
-    pub fn slot_for(page: usize, rb: bool, face: PadButton) -> Option<usize> {
+    /// The slot the bumpers held (LB: 1–4, RB: 5–8, both: 9 and 0) and a
+    /// face button use.
+    pub fn slot_for(lb: bool, rb: bool, face: PadButton) -> Option<usize> {
         let i = match face {
             PadButton::A => 0,
             PadButton::B => 1,
@@ -471,16 +464,23 @@ impl Pad {
             PadButton::Y => 3,
             _ => return None,
         };
-        let slot = page * 8 + usize::from(rb) * 4 + i;
+        let slot = match (lb, rb) {
+            (true, false) => i,
+            (false, true) => 4 + i,
+            (true, true) => 8 + i,
+            (false, false) => return None,
+        };
         (slot < crate::action_bar::SLOTS).then_some(slot)
     }
 
-    /// The bumper and face button of `slot` (for its label).
-    pub fn chord_of(slot: usize) -> (usize, bool, PadButton) {
-        let page = slot / 8;
-        let rb = slot % 8 >= 4;
+    /// The bumpers (LB, RB) and the face button of `slot` (its label).
+    pub fn chord_of(slot: usize) -> (bool, bool, PadButton) {
         let face = [PadButton::A, PadButton::B, PadButton::X, PadButton::Y][slot % 4];
-        (page, rb, face)
+        match slot / 4 {
+            0 => (true, false, face),
+            1 => (false, true, face),
+            _ => (true, true, face),
+        }
     }
 
     /// A button pressed or let go.
@@ -494,13 +494,6 @@ impl Pad {
                     .iter()
                     .position(|d| *d == b)
                     .unwrap_or(0);
-                // a bumper and ← → turn the bar's page
-                if pressed && (self.lb || self.rb) && matches!(b, Left | Right) {
-                    self.bumper_used = true;
-                    self.page = 1 - self.page;
-                    out.push(PadOut::Page(self.page));
-                    return out;
-                }
                 self.dpad[i] = pressed;
                 let x = f32::from(u8::from(self.dpad[3])) - f32::from(u8::from(self.dpad[2]));
                 let y = f32::from(u8::from(self.dpad[1])) - f32::from(u8::from(self.dpad[0]));
@@ -561,10 +554,10 @@ impl Pad {
         if !pressed {
             return out;
         }
-        // a bumper held: the face buttons are the action bar
+        // a bumper held (or both): the face buttons are the action bar
         if (self.lb || self.rb) && ctx == PadCtx::World && matches!(b, A | B | X | Y) {
             self.bumper_used = true;
-            if let Some(slot) = Pad::slot_for(self.page, self.rb, b) {
+            if let Some(slot) = Pad::slot_for(self.lb, self.rb, b) {
                 out.push(PadOut::Slot(slot));
             }
             return out;
@@ -891,11 +884,7 @@ mod tests {
         p.button(PadButton::Lb, false, w, 0.1);
         p.button(PadButton::Rb, true, w, 0.2);
         assert_eq!(p.button(PadButton::Y, true, w, 0.2), vec![PadOut::Slot(7)]);
-        assert_eq!(
-            p.button(PadButton::Right, true, w, 0.3),
-            vec![PadOut::Page(1)]
-        );
-        p.button(PadButton::Rb, false, w, 0.4);
+        // both bumpers: 9 and 0
         p.button(PadButton::Lb, true, w, 0.5);
         assert_eq!(p.button(PadButton::A, true, w, 0.5), vec![PadOut::Slot(8)]);
         assert_eq!(p.button(PadButton::B, true, w, 0.5), vec![PadOut::Slot(9)]);
@@ -903,9 +892,15 @@ mod tests {
             p.button(PadButton::X, true, w, 0.5).is_empty(),
             "no slot 11"
         );
-        assert_eq!(Pad::chord_of(9), (1, false, PadButton::B));
-        assert_eq!(Pad::chord_of(5), (0, true, PadButton::B));
+        assert_eq!(Pad::chord_of(9), (true, true, PadButton::B));
+        assert_eq!(Pad::chord_of(5), (false, true, PadButton::B));
+        assert_eq!(Pad::chord_of(0), (true, false, PadButton::A));
+        for slot in 0..crate::action_bar::SLOTS {
+            let (lb, rb, face) = Pad::chord_of(slot);
+            assert_eq!(Pad::slot_for(lb, rb, face), Some(slot));
+        }
         // alone, the face buttons are A, B, X, Y
+        p.button(PadButton::Rb, false, w, 0.6);
         p.button(PadButton::Lb, false, w, 0.6);
         assert_eq!(
             p.button(PadButton::X, true, w, 0.7),
