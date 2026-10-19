@@ -46,10 +46,17 @@ it every new game, or none), NetHack's own prologue is told: its legacy
 text, word for word as the engine writes it for this hero (their god,
 their rank) and in the language played, in six beats over scenes of their
 own (`prologue.rs`, `prologue_view.rs`, `prologue_stage.rs`): the Book of
-the hero's god on an altar by candlelight; Moloch's rebellion against
-Marduk, a column of light against a black whirl in a temple; the Amulet
-sinking into Gehennom's lava; the god's altar in its light; the hero in
-their kit; and the hero going down the stairs into the dungeon. The words
+the hero's god open on its altar in a candlelit sanctum; Moloch's
+rebellion against Marduk, the two gods face to face in a vaulted hall,
+Marduk in light pouring down, Moloch in a black fog; the Amulet sinking
+into a lake of lava under Gehennom's smouldering sky; the god's altar in
+its light in a vaulted shrine; the hero in their kit; and the hero going
+down a vaulted way to the stairs into the dungeon. Each scene is a small
+level with a set built round it (the Sigil's Vault kit's walls, pillars
+and vaults, props, the gods as the bestiary draws them, haze for the
+light to pour through) and a camera moving slowly through it; the next
+beat's set is built a few pieces a frame while one is read, and the
+start-up veil draws one of each piece first. The words
 come in the title's typeface, the Book's letter by letter as if written,
 the rest line by line; the title's music plays on under it. About a
 minute; any key, a gamepad's A or a click shows a beat's words at once or

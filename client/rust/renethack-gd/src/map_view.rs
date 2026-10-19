@@ -2905,6 +2905,9 @@ pub struct MapView {
     stage: Option<prologue_stage::Stage>,
     /// The next beat's stage, built ahead and hidden.
     next_stage: Option<prologue_stage::Stage>,
+    /// What the prologue's sets are built of, their scenes, materials and
+    /// textures: made once (under the start-up veil) and kept.
+    stage_kit: HashMap<&'static str, Gd<godot::classes::Resource>>,
     stage_camera: Option<(Vector3, Vector3)>,
     target: Vector3,
     focus: Vector3,
@@ -3548,6 +3551,7 @@ impl MapView {
             engulfed,
             stage: None,
             next_stage: None,
+            stage_kit: HashMap::new(),
             stage_camera: None,
             target: center,
             focus: center,
@@ -4148,6 +4152,8 @@ impl MapView {
         self.vfx.set_dust(l.dust, l.embers);
         self.lights_dirty = true;
         self.bedrock_dirty = true;
+        // (a prologue's scene keeps its own air)
+        self.keep_prologue_air();
     }
 
     /// The branch the level drawn is in (self-tests).
@@ -5237,6 +5243,7 @@ impl MapView {
         if std::mem::take(&mut self.titled) {
             self.env.set_bg_color(self.branch_look.darkness);
             self.env.set_fog_light_color(self.branch_look.darkness);
+            self.keep_prologue_air();
         }
         for (node, light, _, _) in &mut self.title_fires {
             node.set_visible(false);
@@ -6754,6 +6761,8 @@ impl MapView {
             ["albedo", "emission"]
                 .map(|m| format!("res://art/cc0/texturecan/lava_flow/lava_flow_{m}.jpg")),
         );
+        // the prologue's sets (its warm-up draws one of each)
+        paths.extend(prologue_stage::KIT.map(String::from));
         paths
     }
 
