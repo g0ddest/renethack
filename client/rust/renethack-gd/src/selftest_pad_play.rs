@@ -64,7 +64,10 @@ fn bar(g: &RenethackGame) -> Result<bool, String> {
             return Err(format!("slot {} says {text:?}", i + 1));
         }
         if label.position.y < icon.end().y - 1.0 {
-            return Err(format!("slot {}'s {text:?} on its icon: {label:?} {icon:?}", i + 1));
+            return Err(format!(
+                "slot {}'s {text:?} on its icon: {label:?} {icon:?}",
+                i + 1
+            ));
         }
     }
     Ok(true)
@@ -74,9 +77,10 @@ fn bar(g: &RenethackGame) -> Result<bool, String> {
 fn here() -> Vec<Step> {
     vec![
         tap(PadButton::A),
-        Step::Request("What do you want to do?", |p| {
-            matches!(p, Prompt::Menu { title: Some(t), .. } if t == "What do you want to do?")
-        }),
+        Step::Request(
+            "What do you want to do?",
+            |p| matches!(p, Prompt::Menu { title: Some(t), .. } if t == "What do you want to do?"),
+        ),
         Step::Wait("the focus on looking, not on the stairs", |g| {
             let ui = g.ui.as_ref().ok_or("no UI")?;
             let Some(i) = ui.dialogs.menu_cursor() else {

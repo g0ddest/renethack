@@ -8,8 +8,8 @@ use godot::classes::control::MouseFilter;
 use godot::classes::control::SizeFlags;
 use godot::classes::texture_rect::{ExpandMode, StretchMode};
 use godot::classes::{
-    Button, CanvasLayer, ColorRect, Control, HBoxContainer, HFlowContainer, Label,
-    PanelContainer, RichTextLabel, ShaderMaterial, StyleBoxFlat, TextureRect, VBoxContainer,
+    Button, CanvasLayer, ColorRect, Control, HBoxContainer, HFlowContainer, Label, PanelContainer,
+    RichTextLabel, ShaderMaterial, StyleBoxFlat, TextureRect, VBoxContainer,
 };
 use godot::global::{HorizontalAlignment, VerticalAlignment};
 use godot::prelude::*;
@@ -70,7 +70,11 @@ pub fn medallion(kind: PadKind, b: PadButton) -> Gd<PanelContainer> {
 
 /// Buttons and what they do, in a row: the medallions, then the words,
 /// for each (a page's or a panel's own foot).
-pub fn buttons_row(kind: PadKind, parts: &[(&[PadButton], String)], size: i32) -> Gd<HBoxContainer> {
+pub fn buttons_row(
+    kind: PadKind,
+    parts: &[(&[PadButton], String)],
+    size: i32,
+) -> Gd<HBoxContainer> {
     let mut row = HBoxContainer::new_alloc();
     row.set_mouse_filter(MouseFilter::IGNORE);
     row.add_theme_constant_override("separation", 16);

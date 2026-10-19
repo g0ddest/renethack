@@ -2809,7 +2809,10 @@ impl RenethackGame {
     }
 
     /// "Your quest"'s words for `step`, the keys as the player presses them.
-    fn quest_words_keys(&self, step: crate::guide_view::QuestStep) -> crate::guide_view::QuestWords {
+    fn quest_words_keys(
+        &self,
+        step: crate::guide_view::QuestStep,
+    ) -> crate::guide_view::QuestWords {
         use crate::guide_view::{QuestStep, QuestWords};
         let map = self.keymap();
         let bound = |hint: &str| crate::rebind::bound_hint(map, hint);
@@ -5692,13 +5695,23 @@ mod tests {
     #[test]
     fn the_prompt_line_says_what_waits() {
         assert_eq!(prompt_line(&Prompt::Command, None), None);
-        assert_eq!(prompt_line(&Prompt::Key, None).as_deref(), Some("Press a key"));
+        assert_eq!(
+            prompt_line(&Prompt::Key, None).as_deref(),
+            Some("Press a key")
+        );
         let free = Prompt::FreeKey {
             query: "In what direction?".into(),
             directions: true,
         };
-        assert_eq!(prompt_line(&free, None).as_deref(), Some("In what direction?"));
-        assert!(prompt_line(&Prompt::MapPause, None).unwrap().contains("More"));
+        assert_eq!(
+            prompt_line(&free, None).as_deref(),
+            Some("In what direction?")
+        );
+        assert!(
+            prompt_line(&Prompt::MapPause, None)
+                .unwrap()
+                .contains("More")
+        );
         // a gamepad's button, never a key
         let pad = Some(PadKind::PlayStation);
         assert_eq!(prompt_line(&Prompt::Key, pad).as_deref(), Some("Press ✕"));

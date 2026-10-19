@@ -9,8 +9,8 @@ use nh_world::Prompt;
 
 use super::{Step, command, fail_on_error_screen, screen, start_as, tap};
 use crate::game::RenethackGame;
-use crate::gamepad::PadButton;
 use crate::game_menu::GameMenuPick;
+use crate::gamepad::PadButton;
 use crate::tr;
 use crate::ui_events::CharacterChoice;
 
@@ -44,7 +44,12 @@ fn menu_on(g: &RenethackGame, pick: GameMenuPick) -> Result<bool, String> {
 fn panel(g: &RenethackGame, title: &str) -> Result<bool, String> {
     fail_on_error_screen(g)?;
     let ui = g.ui.as_ref().ok_or("no UI")?;
-    Ok(ui.dialogs.is_open() && ui.dialogs.panel_texts().iter().any(|t| t.starts_with(title)))
+    Ok(ui.dialogs.is_open()
+        && ui
+            .dialogs
+            .panel_texts()
+            .iter()
+            .any(|t| t.starts_with(title)))
 }
 
 /// Back in the game: nothing over it, the command prompt.
@@ -61,7 +66,9 @@ fn back(g: &RenethackGame) -> Result<bool, String> {
 /// Start, →, ↓ `down` times: the focus on `pick`; A takes it.
 fn open(pick: GameMenuPick, down: usize, steps: &mut Vec<Step>) {
     steps.push(tap(PadButton::Start));
-    steps.push(Step::Wait("the game's menu", |g| menu_on(g, GameMenuPick::Resume)));
+    steps.push(Step::Wait("the game's menu", |g| {
+        menu_on(g, GameMenuPick::Resume)
+    }));
     steps.push(tap(PadButton::Right));
     for _ in 0..down {
         steps.push(tap(PadButton::Down));
@@ -79,9 +86,9 @@ fn open(pick: GameMenuPick, down: usize, steps: &mut Vec<Step>) {
             Step::Wait("on the journal", |g| menu_on(g, GameMenuPick::Journal))
         }
         GameMenuPick::Codex => Step::Wait("on the codex", |g| menu_on(g, GameMenuPick::Codex)),
-        GameMenuPick::Achievements => {
-            Step::Wait("on the achievements", |g| menu_on(g, GameMenuPick::Achievements))
-        }
+        GameMenuPick::Achievements => Step::Wait("on the achievements", |g| {
+            menu_on(g, GameMenuPick::Achievements)
+        }),
         GameMenuPick::Help => Step::Wait("on the help", |g| menu_on(g, GameMenuPick::Help)),
         _ => Step::Wait("on every command", |g| menu_on(g, GameMenuPick::Commands)),
     });
@@ -103,7 +110,9 @@ pub(super) fn pad_panels() -> Vec<Step> {
     steps.push(tap(PadButton::B));
     steps.push(Step::Wait("the spells closed", back));
     open(GameMenuPick::Character, 1, &mut steps);
-    steps.push(Step::Wait("the character", |g| panel(g, &tr!("sheet-title"))));
+    steps.push(Step::Wait("the character", |g| {
+        panel(g, &tr!("sheet-title"))
+    }));
     steps.push(tap(PadButton::B));
     steps.push(Step::Wait("the character closed", back));
     open(GameMenuPick::Skills, 2, &mut steps);
@@ -129,7 +138,9 @@ pub(super) fn pad_panels() -> Vec<Step> {
     steps.push(tap(PadButton::B));
     steps.push(Step::Wait("the codex closed", back));
     open(GameMenuPick::Achievements, 6, &mut steps);
-    steps.push(Step::Wait("the achievements", |g| Ok(screen(g) == Some("achievements"))));
+    steps.push(Step::Wait("the achievements", |g| {
+        Ok(screen(g) == Some("achievements"))
+    }));
     steps.push(tap(PadButton::B));
     steps.push(Step::Wait("the achievements closed", back));
     open(GameMenuPick::Help, 7, &mut steps);

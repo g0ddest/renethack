@@ -9,9 +9,7 @@
 use godot::global::{JoyAxis, Key as GKey};
 use nh_world::{Guide, Key, KeyInput, Prompt};
 
-use super::{
-    PadEv, Step, command, ctrl_key, fail_on_error_screen, screen, smoke_choice, tap,
-};
+use super::{PadEv, Step, command, ctrl_key, fail_on_error_screen, screen, smoke_choice, tap};
 use crate::game::RenethackGame;
 use crate::gamepad::{PadButton, PadCtx};
 use crate::guide_view::QuestStep;
@@ -20,9 +18,32 @@ use crate::ui_events::UiEvent;
 
 /// What only the keyboard or the mouse has: keys, clicks, letters to type.
 const KEY_WORDS: [&str; 26] = [
-    "Esc", "ESC", "Enter", "PgUp", "PgDn", "Tab", "Space", "Пробел", "Home", "Backspace",
-    "Shift", "click", "Click", "щелч", "щёлк", "Щелч", "клавиш", "Клавиш", "any key", "буква",
-    "letter", "(y)", "(n)", "(q)", "(a)", "(k)",
+    "Esc",
+    "ESC",
+    "Enter",
+    "PgUp",
+    "PgDn",
+    "Tab",
+    "Space",
+    "Пробел",
+    "Home",
+    "Backspace",
+    "Shift",
+    "click",
+    "Click",
+    "щелч",
+    "щёлк",
+    "Щелч",
+    "клавиш",
+    "Клавиш",
+    "any key",
+    "буква",
+    "letter",
+    "(y)",
+    "(n)",
+    "(q)",
+    "(a)",
+    "(k)",
 ];
 
 /// None of `words` names a key or a click.
@@ -37,8 +58,7 @@ fn no_keys(what: &str, words: &[String]) -> Result<(), String> {
 
 /// The strip shows this screen's buttons.
 fn strip_on(g: &RenethackGame, ctx: PadCtx) -> bool {
-    g.ui
-        .as_ref()
+    g.ui.as_ref()
         .is_some_and(|ui| ui.pad.shown().is_some_and(|(_, c)| c == ctx))
 }
 
@@ -50,12 +70,15 @@ fn the_a() -> String {
 
 pub(super) fn pad_words() -> Vec<Step> {
     vec![
-        Step::Call("the guide on, no card but the one staged, debug mode", |g| {
-            g.guide_in_test = true;
-            g.debug_mode = true;
-            g.hint_only = Some(Guide::Altar);
-            Ok(())
-        }),
+        Step::Call(
+            "the guide on, no card but the one staged, debug mode",
+            |g| {
+                g.guide_in_test = true;
+                g.debug_mode = true;
+                g.hint_only = Some(Guide::Altar);
+                Ok(())
+            },
+        ),
         Step::Wait("the title, the art loaded ahead", |g| {
             fail_on_error_screen(g)?;
             let loaded = g.ui.as_ref().is_some_and(|ui| ui.map.preloaded());
@@ -201,11 +224,10 @@ pub(super) fn pad_words() -> Vec<Step> {
             if !g.world.getpos || !matches!(g.pending, Some((_, Prompt::Command))) {
                 return Ok(false);
             }
-            let line = g
-                .ui
-                .as_ref()
-                .and_then(|ui| ui.hud.prompt_line())
-                .ok_or("no prompt line")?;
+            let line =
+                g.ui.as_ref()
+                    .and_then(|ui| ui.hud.prompt_line())
+                    .ok_or("no prompt line")?;
             no_keys("travel's line", std::slice::from_ref(&line))?;
             Ok(line.contains(&the_a()) && strip_on(g, PadCtx::Getpos))
         }),

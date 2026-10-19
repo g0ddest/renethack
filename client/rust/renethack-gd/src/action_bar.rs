@@ -308,20 +308,30 @@ impl ActionBar {
                     s.key.set_text(text);
                     // the body's face: its spaces part "LB RB A" as the
                     // small capitals' do not
-                    s.key.add_theme_font_override("font", &theme::font(Face::BodyBold));
+                    s.key
+                        .add_theme_font_override("font", &theme::font(Face::BodyBold));
                     s.key.add_theme_font_size_override("font_size", 13);
                     s.key.add_theme_stylebox_override("normal", &pill);
                     s.key.add_theme_constant_override("outline_size", 0);
                     s.key.set_horizontal_alignment(HorizontalAlignment::CENTER);
                     s.key.set_vertical_alignment(VerticalAlignment::CENTER);
-                    place(&s.key, [0.0, 1.0, 1.0, 1.0], [3.0, -CHORD_H - 3.0, -3.0, -3.0]);
-                    place(&s.icon, [0.0, 0.0, 1.0, 1.0], [8.0, 3.0, -8.0, -CHORD_H - 5.0]);
+                    place(
+                        &s.key,
+                        [0.0, 1.0, 1.0, 1.0],
+                        [3.0, -CHORD_H - 3.0, -3.0, -3.0],
+                    );
+                    place(
+                        &s.icon,
+                        [0.0, 0.0, 1.0, 1.0],
+                        [8.0, 3.0, -8.0, -CHORD_H - 5.0],
+                    );
                     s.count.set_vertical_alignment(VerticalAlignment::TOP);
                     s.key.set_visible(true);
                 }
                 None => {
                     s.key.set_text(key_label(i));
-                    s.key.add_theme_font_override("font", &theme::font(Face::Caps));
+                    s.key
+                        .add_theme_font_override("font", &theme::font(Face::Caps));
                     s.key.add_theme_font_size_override("font_size", 15);
                     s.key.remove_theme_stylebox_override("normal");
                     s.key.add_theme_constant_override("outline_size", 4);

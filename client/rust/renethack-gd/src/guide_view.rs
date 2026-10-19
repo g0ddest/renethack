@@ -204,9 +204,7 @@ impl HintCard {
 
     /// The card up now, shown or held back hidden (not one going).
     pub fn current(&self) -> Option<Guide> {
-        self.shown
-            .filter(|_| self.going.is_none())
-            .map(|(g, _)| g)
+        self.shown.filter(|_| self.going.is_none()).map(|(g, _)| g)
     }
 
     /// No card, not even one going.
