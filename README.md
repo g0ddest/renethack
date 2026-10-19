@@ -333,7 +333,7 @@ Screenshots are 1920×1080 unless `--size=1280x800` (or Godot's own
 screenshot is not the size asked for, and at a set size every screen a
 scenario shoots must fit the canvas (the HUD's blocks inside it and apart,
 the log in whole lines). `make test-client` also runs `smoke`, `inventory`,
-`hud`, `gamepad`, `title`, `threat-arrow` and `settings` headless at
+`hud`, `gamepad`, `title`, `threat-arrow`, `threats` and `settings` headless at
 1280×800, the Steam Deck's screen with its 120 % UI scale; `make deck`
 shoots `smoke`, `tour`, `inventory`, `bar`, `hud`, `dialogs`, `gamepad` and
 `settings` at a real 1280×800. `make test-client` runs `falls`, `acts`,

@@ -104,6 +104,8 @@ mod skills_tests;
 mod spells_tests;
 #[path = "selftest_states.rs"]
 mod states_tests;
+#[path = "selftest_threats.rs"]
+mod threats_tests;
 #[path = "selftest_through.rs"]
 mod through_tests;
 #[path = "selftest_tips.rs"]
@@ -5044,6 +5046,7 @@ impl SelfTest {
             "pool-sizes" => pool_sizes(),
             "palette" => palette(),
             "threat-arrow" => threat_arrow(),
+            "threats" => threats_tests::threats(),
             "gamepad" => gamepad(),
             "bar" => bar(),
             _ => Vec::new(),

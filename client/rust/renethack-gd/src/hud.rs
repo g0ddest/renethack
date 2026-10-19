@@ -511,6 +511,39 @@ const ARROW_OVER: f32 = 8.0;
 /// little air.
 const ARROW_PAD: f32 = 28.0;
 
+/// Arrows over the other hostiles at most, and their size against the
+/// nearest's (they say "here too", it says "this one first").
+const MARKS_MOST: usize = 12;
+const MARK_SCALE: f32 = 0.7;
+/// The count beside the arrow at the edge lies this far behind its middle.
+const COUNT_AWAY: f32 = 44.0;
+
+/// A threat arrow (pointing right before it is turned) with a dark rim,
+/// at `scale` of the nearest hostile's.
+fn threat_arrow(scale: f32) -> Gd<Control> {
+    let mut threat = Control::new_alloc();
+    threat.set_mouse_filter(MouseFilter::IGNORE);
+    let tip = PackedVector2Array::from(&[
+        Vector2::new(22.0, 0.0),
+        Vector2::new(-14.0, -16.0),
+        Vector2::new(-6.0, 0.0),
+        Vector2::new(-14.0, 16.0),
+    ]);
+    let mut rim = Polygon2D::new_alloc();
+    rim.set_polygon(&tip);
+    rim.set_color(Color::from_rgba(0.02, 0.01, 0.01, 0.85));
+    rim.set_scale(Vector2::splat(1.25 * scale));
+    threat.add_child(&rim);
+    let mut arrow = Polygon2D::new_alloc();
+    arrow.set_polygon(&tip);
+    arrow.set_color(theme::DANGER);
+    arrow.set_scale(Vector2::splat(scale));
+    threat.add_child(&arrow);
+    threat.set_visible(false);
+    crate::tips::bind(&threat, "hud-threat-tip");
+    threat
+}
+
 /// The arrow at `p` off the HUD's own blocks (the portrait, the minimap
 /// and its badge, the log): a point one of `panels` covers leaves it by
 /// its nearest side that keeps the arrow in the frame, and points at
@@ -1068,11 +1101,19 @@ pub struct Hud {
     /// The transient line shown (the engine's words) and whether next to
     /// the cursor (None: to show again).
     transient_shown: Option<(String, bool)>,
-    /// The arrow at the screen's edge toward a hostile out of the frame.
+    /// The arrow for the nearest hostile: over its head in a fight, at the
+    /// screen's edge toward it while it is out of the frame.
     threat: Gd<Control>,
     /// The side of the hero the arrow went to, while their body is where
     /// it would be (true: the right).
     threat_side: Option<bool>,
+    /// A smaller arrow over the head of each other hostile in the frame in
+    /// a fight (six soldier ants are six), and the sides they went to.
+    marks: Vec<Gd<Control>>,
+    mark_sides: Vec<Option<bool>>,
+    /// How many hostiles out of the frame the arrow at the edge stands
+    /// for, beside it, when more than one.
+    threat_count: Gd<Label>,
     /// The hero's body on screen, as the arrow was last placed by.
     hero_box: Option<Rect2>,
 
@@ -1422,27 +1463,23 @@ impl Hud {
         cursor_note_panel.set_visible(false);
         root.add_child(&cursor_note_panel);
 
-        // an arrow (pointing right before it is turned) with a dark rim
-        let mut threat = Control::new_alloc();
-        threat.set_mouse_filter(MouseFilter::IGNORE);
-        let tip = PackedVector2Array::from(&[
-            Vector2::new(22.0, 0.0),
-            Vector2::new(-14.0, -16.0),
-            Vector2::new(-6.0, 0.0),
-            Vector2::new(-14.0, 16.0),
-        ]);
-        let mut rim = Polygon2D::new_alloc();
-        rim.set_polygon(&tip);
-        rim.set_color(Color::from_rgba(0.02, 0.01, 0.01, 0.85));
-        rim.set_scale(Vector2::new(1.25, 1.25));
-        threat.add_child(&rim);
-        let mut arrow = Polygon2D::new_alloc();
-        arrow.set_polygon(&tip);
-        arrow.set_color(theme::DANGER);
-        threat.add_child(&arrow);
-        threat.set_visible(false);
-        crate::tips::bind(&threat, "hud-threat-tip");
+        // the arrow for the nearest hostile, a smaller one for each other
+        // in the frame in a fight, and how many the arrow at the edge
+        // stands for
+        let threat = threat_arrow(1.0);
         root.add_child(&threat);
+        let marks: Vec<Gd<Control>> = (0..MARKS_MOST)
+            .map(|_| {
+                let m = threat_arrow(MARK_SCALE);
+                root.add_child(&m);
+                m
+            })
+            .collect();
+        let mut threat_count = theme::styled_label("", Face::BodyBold, 22, theme::DANGER);
+        theme::outline(&threat_count, 6);
+        threat_count.set_mouse_filter(MouseFilter::IGNORE);
+        threat_count.set_visible(false);
+        root.add_child(&threat_count);
 
         // ---- minimap, top right; the mode and the order under it ----
         let mut minimap_panel = theme::framed(Frame::Hud);
@@ -1689,6 +1726,9 @@ impl Hud {
             hero_box: None,
             transient_shown: None,
             threat,
+            mark_sides: vec![None; marks.len()],
+            marks,
+            threat_count,
             minimap_panel: minimap_frame,
             minimap_well,
             panel_open: false,
@@ -1779,51 +1819,109 @@ impl Hud {
         self.cursor_at = at;
     }
 
-    /// A hostile the hero sees at `at` on screen: when it is out of the
-    /// frame, an arrow at the edge points to it.
-    pub fn set_threat(&mut self, at: Option<Vector2>, hero: Option<Rect2>, now: f64) {
+    /// The hostiles the hero sees, at `heads` on screen (each one's head,
+    /// the nearest first). In a fight each in the frame gets an arrow over
+    /// its head, pointing down and bobbing (a doorway's wall may hide it),
+    /// the nearest the larger: not on the hero it stands in front of
+    /// (beside them then), nor on the HUD's blocks. The nearest out of the
+    /// frame gets the arrow at the edge, pointing to it, with how many are
+    /// out there beside it when more than one.
+    pub fn set_threats(&mut self, heads: &[Vector2], hero: Option<Rect2>, now: f64) {
         let view = self.root.get_viewport_rect().size;
         self.hero_box = hero;
-        // in a fight a hostile in the frame gets the arrow over its head
-        // (a doorway's wall may hide it), pointing down and bobbing; not
-        // on the hero it stands in front of: beside them then
+        let fight = self.combat == Some(true);
+        let panels: Vec<Rect2> = self.blocks().into_iter().map(|(_, r)| r).collect();
+        let bob = 6.0 * (now * TAU * 1.2).sin() as f32;
+        let shade = Color::from_rgba(1.0, 1.0, 1.0, 0.65 + 0.35 * pulse_now(now));
+        let down = std::f32::consts::FRAC_PI_2;
+        // over a head in the frame, off the hero and the HUD's blocks
+        let over = |p: Vector2, tip: f32, side: &mut Option<bool>| {
+            let head = Vector2::new(p.x, p.y - tip - ARROW_OVER);
+            let (q, angle) = off_hero(head, down, p, view, hero, side);
+            let q = Vector2::new(q.x, (q.y - bob).max(ARROW_MARGIN));
+            off_panels(q, angle, p, view, &panels)
+        };
+        let nearest = heads.first().copied();
+        let edge = edge_arrow(nearest, view);
         let mut side = self.threat_side.take();
-        let over = at.filter(|_| self.combat == Some(true)).map(|p| {
-            let head = Vector2::new(p.x, p.y - ARROW_TIP - ARROW_OVER);
-            let down = std::f32::consts::FRAC_PI_2;
-            let (q, angle) = off_hero(head, down, p, view, hero, &mut side);
-            let bob = 6.0 * (now * TAU * 1.2).sin() as f32;
-            (Vector2::new(q.x, (q.y - bob).max(ARROW_MARGIN)), angle)
-        });
-        let edge = edge_arrow(at, view);
+        let placed = match (nearest, edge) {
+            (Some(p), None) if fight => Some(over(p, ARROW_TIP, &mut side)),
+            (Some(p), Some((q, angle))) => Some(off_panels(q, angle, p, view, &panels)),
+            _ => None,
+        };
         // kept only while the arrow is beside the hero
-        self.threat_side = side.filter(|_| over.is_some() && edge.is_none());
-        let edge = edge.or(over);
-        match edge {
+        self.threat_side = side.filter(|_| fight && nearest.is_some() && edge.is_none());
+        match placed {
             Some((p, angle)) => {
-                // never on the HUD's own blocks: the hostile may stand
-                // under one, or the edge's corner lie on it
-                let (p, angle) = match at {
-                    Some(target) => {
-                        let panels: Vec<Rect2> =
-                            self.blocks().into_iter().map(|(_, r)| r).collect();
-                        off_panels(p, angle, target, view, &panels)
-                    }
-                    None => (p, angle),
-                };
                 self.threat.set_position(p);
                 self.threat.set_rotation(angle);
-                let a = 0.65 + 0.35 * pulse_now(now);
-                self.threat.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, a));
+                self.threat.set_modulate(shade);
                 self.threat.set_visible(true);
             }
             None => self.threat.set_visible(false),
+        }
+        // the others in the frame, in a fight
+        let others: Vec<Vector2> = heads
+            .iter()
+            .skip(1)
+            .copied()
+            .filter(|&p| edge_arrow(Some(p), view).is_none())
+            .filter(|_| fight)
+            .collect();
+        for (i, mark) in self.marks.iter_mut().enumerate() {
+            match others.get(i) {
+                Some(&p) => {
+                    let (q, angle) = over(p, ARROW_TIP * MARK_SCALE, &mut self.mark_sides[i]);
+                    mark.set_position(q);
+                    mark.set_rotation(angle);
+                    mark.set_modulate(shade);
+                    mark.set_visible(true);
+                }
+                None => {
+                    self.mark_sides[i] = None;
+                    mark.set_visible(false);
+                }
+            }
+        }
+        // how many are out of the frame, beside the arrow at the edge
+        let out = heads
+            .iter()
+            .filter(|&&p| edge_arrow(Some(p), view).is_some())
+            .count();
+        match placed.filter(|_| edge.is_some() && out > 1) {
+            Some((p, angle)) => {
+                // on the inner side of the arrow, toward the middle
+                let back = Vector2::new(angle.cos(), angle.sin()) * -COUNT_AWAY;
+                let text = format!("×{out}");
+                self.threat_count.set_text(&text);
+                let size = self.threat_count.get_combined_minimum_size();
+                self.threat_count.set_position(p + back - size * 0.5);
+                self.threat_count.set_modulate(shade);
+                self.threat_count.set_visible(true);
+            }
+            None => self.threat_count.set_visible(false),
         }
     }
 
     /// Where the threat arrow is, while it shows (self-tests).
     pub fn threat_arrow(&self) -> Option<Vector2> {
         self.threat.is_visible().then(|| self.threat.get_position())
+    }
+
+    /// Where the smaller arrows over the other hostiles are (self-tests).
+    pub fn threat_marks(&self) -> Vec<Vector2> {
+        self.marks
+            .iter()
+            .filter(|m| m.is_visible())
+            .map(|m| m.get_position())
+            .collect()
+    }
+
+    /// The count beside the arrow at the edge, while it shows (self-tests).
+    pub fn threat_count(&self) -> Option<String> {
+        self.threat_count
+            .is_visible()
+            .then(|| self.threat_count.get_text().to_string())
     }
 
     /// The hero's body on screen and the side of it the threat arrow
@@ -2735,7 +2833,11 @@ impl Hud {
             self.order_label.clone().upcast(),
             self.transient_panel.clone().upcast(),
             self.threat.clone().upcast(),
-        ] {
+            self.threat_count.clone().upcast(),
+        ]
+        .into_iter()
+        .chain(self.marks.iter().cloned())
+        {
             c.set_modulate(m);
         }
     }
@@ -2777,6 +2879,10 @@ impl Hud {
         self.cursor_note_panel.set_visible(false);
         self.cursor_at = None;
         self.threat.set_visible(false);
+        self.threat_count.set_visible(false);
+        for m in &mut self.marks {
+            m.set_visible(false);
+        }
         self.set_prompt_line(None);
         self.set_tooltip(None, Vector2::ZERO);
         self.set_full_log(false);

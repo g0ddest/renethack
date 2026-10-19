@@ -5455,26 +5455,31 @@ impl RenethackGame {
             .cursor
             .filter(|_| self.world.getpos)
             .and_then(|c| on_screen(c, 0.3));
+        // every hostile the hero sees, nearest first: the top of its own
+        // model, where its arrow hangs (over a fixed height it sat on
+        // whoever stood north of a grid bug)
         let hero = self.world.hero();
-        let threat = match (catalog.as_deref(), hero) {
-            (Some(cat), Some(h)) => nh_world::threats(&self.world, cat)
-                .into_iter()
-                .min_by_key(|&(x, y)| (x - h.0).abs().max((y - h.1).abs())),
-            _ => None,
+        let mut hostiles = match (catalog.as_deref(), hero) {
+            (Some(cat), Some(_)) => nh_world::threats(&self.world, cat),
+            _ => Vec::new(),
         };
-        // the top of the hostile's own model: the arrow hangs over its head
-        // (over a fixed height it sat on whoever stood north of a grid bug)
-        let threat = threat.and_then(|(x, y)| {
-            let head = self
-                .ui
-                .as_ref()
-                .and_then(|ui| ui.map.entity_stands(x, y))
-                .map_or(Vector3::new(x as f32, 0.8, y as f32), |(at, tall)| {
-                    at + Vector3::new(0.0, tall, 0.0)
-                });
-            let cam = camera.as_ref()?;
-            (!cam.is_position_behind(head)).then(|| cam.unproject_position(head))
-        });
+        if let Some(h) = hero {
+            hostiles.sort_by_key(|&(x, y)| ((x - h.0).abs().max((y - h.1).abs()), y, x));
+        }
+        let heads: Vec<Vector2> = hostiles
+            .into_iter()
+            .filter_map(|(x, y)| {
+                let head = self
+                    .ui
+                    .as_ref()
+                    .and_then(|ui| ui.map.entity_stands(x, y))
+                    .map_or(Vector3::new(x as f32, 0.8, y as f32), |(at, tall)| {
+                        at + Vector3::new(0.0, tall, 0.0)
+                    });
+                let cam = camera.as_ref()?;
+                (!cam.is_position_behind(head)).then(|| cam.unproject_position(head))
+            })
+            .collect();
         // the hero's body on screen: feet to head, a shoulder either side
         let stands = self.ui.as_ref().and_then(|ui| ui.map.hero_stands());
         let hero_box = stands.zip(camera.as_ref()).and_then(|((p, tall), cam)| {
@@ -5493,8 +5498,8 @@ impl RenethackGame {
             return;
         };
         ui.hud.set_cursor_at(cursor);
-        ui.hud.set_threat(
-            threat,
+        ui.hud.set_threats(
+            &heads,
             hero_box,
             Time::singleton().get_ticks_msec() as f64 / 1000.0,
         );
