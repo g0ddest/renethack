@@ -217,6 +217,11 @@ fn truncate_bytes(s: &str, max: usize) -> String {
 }
 
 /// A Choice button's label: the usual answers spelled out, others as typed.
+/// #therecmdmenu's question (a click or A on a cell), and its entry
+/// that only looks (`:`) when the cell is the hero's.
+const THERE_MENU: &str = "What do you want to do?";
+const LOOK_HERE: &str = "Look at what is here";
+
 /// An answer's button: its word and its key, or with a gamepad its word
 /// alone.
 fn choice_label(c: char, pad: bool) -> String {
@@ -1487,6 +1492,9 @@ pub struct Dialogs {
     /// it is one.
     opening_own: Option<KeyInput>,
     opening_rpg: bool,
+    /// The entry a gamepad's focus starts on in the menu being opened
+    /// (else its first pick).
+    opening_cursor: Option<usize>,
     /// The open spells' panel: its spells, whether a pick reorders them
     /// (else it casts), the reorder's button.
     spells: Option<SpellsOpen>,
@@ -1581,6 +1589,7 @@ impl Dialogs {
             sheet: None,
             opening_own: None,
             opening_rpg: false,
+            opening_cursor: None,
             spells: None,
             follow: None,
             journal: None,
@@ -2034,10 +2043,15 @@ impl Dialogs {
             view.cursor = Some(i);
             view.reveal(i);
         }
-        // a gamepad starts on the first entry, ready for A
+        // a gamepad starts on the first entry (or the one asked for),
+        // ready for A
+        let asked = self
+            .opening_cursor
+            .take()
+            .filter(|&i| view.state.entries.get(i).is_some_and(|e| e.selectable));
         if self.pad
             && view.cursor.is_none()
-            && let Some(i) = view.state.entries.iter().position(|e| e.selectable)
+            && let Some(i) = asked.or_else(|| view.state.entries.iter().position(|e| e.selectable))
         {
             view.cursor = Some(i);
             view.armed = true;
@@ -3751,6 +3765,7 @@ impl Dialogs {
     /// prompts: no-op).
     pub fn open(&mut self, req: u64, original: &Prompt, catalog: Option<&Catalog>) {
         self.close();
+        self.opening_cursor = None;
         // the engine's words as the player reads them; the original is kept
         // (a switch of the language opens it again)
         let shown = shown_prompt(original);
@@ -3782,6 +3797,12 @@ impl Dialogs {
                     })
                     .collect();
                 let skilled = skills::skills(english_title, &skill_lines);
+                // what can be done here, on the hero: a gamepad starts on
+                // looking, the one that does nothing (never on the stairs:
+                // two stray A's would leave the level, or the dungeon)
+                self.opening_cursor = (english_title == Some(THERE_MENU))
+                    .then(|| texts.iter().position(|t| *t == LOOK_HERE))
+                    .flatten();
                 let opened = match (spells::spellbook(english_title, english), skilled) {
                     (Some(book), _) => Some(self.open_spells(req, *how, english, book)),
                     (None, Some(sk)) => {

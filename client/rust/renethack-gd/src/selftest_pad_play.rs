@@ -3,12 +3,14 @@
 //! hero stays put, B closes it (the game's menu stays shut), A too, and
 //! its close names B; F9 and Esc do the same with the keys. The ring
 //! held by LT closes when the window loses the focus, and the next pull
-//! opens it at once.
+//! opens it at once. A on the hero's own cell (on the stairs up, at the
+//! start) starts the engine's "What do you want to do?" on looking, never
+//! on the stairs.
 
 use godot::global::{JoyAxis, Key as GKey};
 use nh_world::Prompt;
 
-use super::{PadEv, Step, fail_on_error_screen, start, tap};
+use super::{PadEv, Step, command, fail_on_error_screen, start, tap};
 use crate::game::RenethackGame;
 use crate::gamepad::{PadButton, PadCtx};
 use crate::ui_events::UiEvent;
@@ -36,7 +38,43 @@ pub(super) fn pad_play() -> Vec<Step> {
     let mut steps = start();
     steps.extend(the_history());
     steps.extend(the_ring());
+    steps.extend(here());
     steps
+}
+
+/// A on the hero: what can be done here, the focus on looking.
+fn here() -> Vec<Step> {
+    vec![
+        tap(PadButton::A),
+        Step::Request("What do you want to do?", |p| {
+            matches!(p, Prompt::Menu { title: Some(t), .. } if t == "What do you want to do?")
+        }),
+        Step::Wait("the focus on looking, not on the stairs", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let Some(i) = ui.dialogs.menu_cursor() else {
+                return Ok(false);
+            };
+            // the engine's own words for the rows
+            let Some((_, Prompt::Menu { items, .. })) = g.pending.as_ref() else {
+                return Ok(false);
+            };
+            let rows: Vec<&str> = items.iter().filter_map(|it| it.str.as_deref()).collect();
+            if !rows.iter().any(|r| r.starts_with("Go up")) {
+                return Err(format!("not on the stairs up: {rows:?}"));
+            }
+            let row = items.get(i).and_then(|it| it.str.as_deref()).unwrap_or("");
+            if row != "Look at what is here" {
+                return Err(format!("the focus is on {row:?}"));
+            }
+            Ok(true)
+        }),
+        Step::Shot("pad-play-here"),
+        tap(PadButton::A),
+        Step::Request("a command after looking", command),
+        Step::Wait("still on the first level", |g| {
+            Ok(g.world.status.get("dlvl").is_none_or(|d| d.trim() == "1") && plain(g)?)
+        }),
+    ]
 }
 
 /// The ring held open by LT, the window's focus lost.
