@@ -47,6 +47,9 @@ pub enum Role {
     Rock,
     /// Ice on the ground: its edge wanders into the ground beside it.
     Ice,
+    /// A cave's rock (its walls and the rock beyond them): natural, in
+    /// lumps, smooth, never cut in blocks or facets; dithers.
+    Cave,
     /// The ground under the level: rock fading into darkness.
     Void,
 }
@@ -168,7 +171,10 @@ impl Surfaces {
             let c = spec.albedo();
             let color = Color::from_rgb(c[0] * k, c[1] * k, c[2] * k);
             mat.set_shader_parameter(&format!("{prefix}_color"), &color.to_variant());
-            mat.set_shader_parameter(&format!("{prefix}_scale"), &spec.uv_scale.to_variant());
+            // (a cave's texture finer: stretched over its lumps it reads as
+            // slabs)
+            let scale = spec.uv_scale * if role == Role::Cave { 2.4 } else { 1.0 };
+            mat.set_shader_parameter(&format!("{prefix}_scale"), &scale.to_variant());
             let maps = [
                 ("albedo", spec.albedo_path()),
                 ("normal", spec.normal_path()),
@@ -205,8 +211,11 @@ impl Surfaces {
             _ => Ground::None,
         };
         if kind != Ground::None {
-            mat.set_shader_parameter("ground_tex", &self.ground.to_variant());
             set(&mut mat, "edge_kind", kind.code());
+        }
+        // (a cave's rock rounds off by the open ground it reads there)
+        if kind != Ground::None || role == Role::Cave {
+            mat.set_shader_parameter("ground_tex", &self.ground.to_variant());
         }
         // the rock the level is cut from is rock, never blocks
         if Some(m) == self.top {
@@ -221,7 +230,7 @@ impl Surfaces {
         // nothing on the level is pure black: a faint cold light of its own
         let lift = match role {
             Role::Void => Color::from_rgb(0.0, 0.0, 0.0),
-            Role::Rock => Color::from_rgb(0.007, 0.007, 0.0085),
+            Role::Rock | Role::Cave => Color::from_rgb(0.007, 0.007, 0.0085),
             _ => Color::from_rgb(0.004, 0.004, 0.005),
         };
         mat.set_shader_parameter("lift", &lift.to_variant());
@@ -266,6 +275,23 @@ impl Surfaces {
                 set(&mut mat, "specular", 0.12);
                 set(&mut mat, "detail_strength", 0.4);
                 set(&mut mat, "detail_scale", 3.0);
+                set(&mut mat, "glow", 0.05);
+                set(&mut mat, "memory_glow", 0.6);
+            }
+            Role::Cave => {
+                // in lumps a metre across, smooth; mottled rock in the relief
+                // of its own noise, its hollows darker; its tops dim over its
+                // faces (a ledge at the hero's feet less so); no sheen
+                set(&mut mat, "boulder", 0.2);
+                set(&mut mat, "round_off", 0.4);
+                set(&mut mat, "natural", 0.6);
+                set(&mut mat, "natural_relief", 0.35);
+                set(&mut mat, "natural_top", 1.0);
+                set(&mut mat, "top_shade", 0.28);
+                set(&mut mat, "ledge_shade", 0.68);
+                set(&mut mat, "specular", 0.12);
+                set(&mut mat, "detail_strength", 0.9);
+                set(&mut mat, "detail_scale", 3.4);
                 set(&mut mat, "glow", 0.05);
                 set(&mut mat, "memory_glow", 0.6);
             }

@@ -1353,8 +1353,8 @@ fn terrain_base(
                 (1.0, wall_h)
             };
             if ctx.branch.cave {
-                // a cave's wall is the rock itself, broken and uneven
-                let rock_paint = pbr(art.material, SHADE_LIT, Role::Rock, FLOOR_UNSEEN);
+                // a cave's wall is the rock itself, in lumps and uneven
+                let rock_paint = pbr(art.material, SHADE_LIT, Role::Cave, FLOOR_UNSEEN);
                 let h = if cut { ROCK_CUT } else { wall_h };
                 look.solid(rock(1.0, h, 1.0), rock_paint, Vector3::ZERO);
                 if let Some(s) = look.solids.last_mut() {
@@ -2174,9 +2174,15 @@ fn rock_look(look: &mut Look, near: &Near, ctx: &Ctx) {
     } else {
         ROCK_HEIGHT
     };
+    // (a cave's in lumps like its walls)
+    let role = if ctx.branch.cave {
+        Role::Cave
+    } else {
+        Role::Rock
+    };
     look.solid(
         rock(1.0, h, 1.0),
-        Paint::Pbr(m, SHADE_ROCK, Role::Rock),
+        Paint::Pbr(m, SHADE_ROCK, role),
         Vector3::ZERO,
     );
     // broken up by the shader, it would shadow itself in speckles; the

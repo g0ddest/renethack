@@ -62,6 +62,12 @@ uniform float displace = 0.0;
 uniform float chunks = 0.0;
 // lit as it is cut: each face of the mesh by its own slope, flat
 uniform float facets = 0.0;
+// natural rock (a cave's): pushed in and out by lumps of a metre and of a
+// hand, by up to this (metres), smooth, never cut in facets; and rounded
+// down by up to `round_off` where open ground lies beside it (the land of
+// `ground_tex`), so it slopes to the passage instead of standing in a cut
+uniform float boulder = 0.0;
+uniform float round_off = 0.0;
 // how dark the tops of rock lie over its lit faces (1: as the faces):
 // what stands tall, and what is cut down to a ledge at the hero's feet
 // (that one shows as rock in their light, not as a hole in the floor)
@@ -98,6 +104,8 @@ const vec3 MEMORY_TINT = vec3(0.54, 0.59, 0.72);
 
 varying vec3 wpos;
 varying vec3 wnrm;
+// natural rock: how far in the face lies here (its hollows darker)
+varying float hollow;
 
 float hash3(vec3 p) {
 	p = fract(p * 0.3183099 + 0.1);
@@ -188,6 +196,29 @@ vec3 displacement(vec3 w) {
 	return dw;
 }
 
+// how far natural rock at a world point is pushed: a field of the point
+// alone (the faces of the blocks share their corners, and move together),
+// lumps of a metre and smaller ones on them; nothing leans out at the
+// foot, where somebody may stand, and a top only ever lies lower than
+// the block is cut
+vec3 rock_field(vec3 w) {
+	vec2 q = w.xz * 0.7 + w.y * vec2(0.37, 0.71);
+	vec3 big = vec3(tl2(q), tl2(q + 17.3), tl2(q.yx + 31.1)) - 0.5;
+	vec2 r = w.xz * 2.1 + w.y * vec2(0.71, -0.37) + 5.1;
+	vec3 lump = vec3(tl2(r), tl2(r + 11.9), tl2(r.yx + 23.7)) - 0.5;
+	vec3 d = (big * 2.2 + lump * 1.0) * boulder;
+	d.xz *= smoothstep(0.0, 0.35, w.y);
+	// (its tops rounded down at their lumps, up a little between)
+	d.y = (d.y < 0.0 ? d.y * 1.8 : d.y * 0.35) * smoothstep(0.15, 0.6, w.y);
+	if (round_off > 0.0) {
+		// open ground beside it: the edge over it slopes down, unevenly
+		float open = textureLod(ground_tex, (w.xz + 0.5) / FIELD, 0.0).a;
+		float k = open * mix(0.6, 1.4, tl2(w.xz * 1.3 + 7.1));
+		d.y -= k * round_off * smoothstep(0.1, 0.5, w.y);
+	}
+	return d;
+}
+
 vec3 hash32(vec2 p) {
 	vec3 q = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
 	q += dot(q, q.yxz + 33.33);
@@ -245,7 +276,22 @@ vec3 chunk_push(vec3 w) {
 void vertex() {
 	vec3 w = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	vec3 n = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
-	if (chunks > 0.0) {
+	hollow = 0.0;
+	if (boulder > 0.0) {
+		// the normal of the pushed surface, from two neighbours pushed too
+		vec3 dw = rock_field(w);
+		vec3 t = normalize(abs(n.y) > 0.9 ? cross(n, vec3(1.0, 0.0, 0.0)) : cross(n, vec3(0.0, 1.0, 0.0)));
+		vec3 b = cross(n, t);
+		const float DS = 0.06;
+		vec3 p0 = w + dw;
+		vec3 p1 = w + t * DS + rock_field(w + t * DS);
+		vec3 p2 = w + b * DS + rock_field(w + b * DS);
+		vec3 pn = normalize(cross(p1 - p0, p2 - p0));
+		hollow = clamp(-dot(dw, n) / (boulder * 1.6), 0.0, 1.0);
+		n = dot(pn, n) < 0.0 ? -pn : pn;
+		w = p0;
+		VERTEX += transpose(mat3(MODEL_MATRIX)) * dw;
+	} else if (chunks > 0.0) {
 		// its faces are lit as they are cut (the fragments' facets)
 		vec3 dw = chunk_push(w);
 		w += dw;
@@ -370,8 +416,9 @@ void fragment() {
 		float cn = tn3(wpos * 2.2 + 3.1);
 		float crack = smoothstep(0.46, 0.5, cn) - smoothstep(0.5, 0.54, cn);
 		vec3 rock = base * mix(0.6, 1.3, grain) * mix(1.0, mix(0.9, 1.05, strata), 1.0 - bw.y);
-		// (fainter on rock's lit faces: dark veins there are marble's)
-		rock *= 1.0 - (chunks > 0.0 ? 0.3 : 0.45) * crack;
+		// (fainter on rock's lit faces: dark veins there are marble's; on
+		// a cave's lumps all but none)
+		rock *= 1.0 - (boulder > 0.0 ? 0.1 : chunks > 0.0 ? 0.3 : 0.45) * crack;
 		albedo = mix(albedo, rock, nat);
 		// its relief from the noise's slope, not from the mesh's grid
 		const float STEP = 0.04;
@@ -385,6 +432,9 @@ void fragment() {
 		orm = mix(orm, vec3(mix(0.55, 1.0, smoothstep(0.25, 0.6, h0)), mix(0.55, 0.9, grain), 0.0), nat * natural_relief);
 	}
 	albedo *= mix(1.0, mix(ledge_shade, top_shade, smoothstep(0.5, 1.2, wpos.y)), up);
+	// natural rock's hollows lie in their own shadow
+	albedo *= mix(1.0, 0.45, hollow);
+	orm.r *= mix(1.0, 0.55, hollow);
 
 	// slow variation over the level, a little warmer or cooler by place
 	float m = tn2(wpos.xz * 0.12 + wpos.y * 0.05);

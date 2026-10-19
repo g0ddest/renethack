@@ -173,12 +173,14 @@ pub fn look_of(branch: Branch) -> BranchLook {
             torch: rgb(1.0, 0.6, 0.3),
             torch_energy: 2.6,
             fill: rgb(0.9, 0.74, 0.56),
-            ambient: rgb(0.36, 0.3, 0.26),
+            // (the dark below Minetown: the rock a few cells off still
+            // shows its shape, not brown murk)
+            ambient: rgb(0.42, 0.36, 0.31),
             fog: rgb(0.7, 0.6, 0.5),
-            fog_density: 0.006,
+            fog_density: 0.0045,
             // thick air round the torches; in the dark it must not lie
             // over everything as brown murk
-            haze: 0.4,
+            haze: 0.3,
             darkness: rgb(0.012, 0.009, 0.007),
             dust: 2.5,
             grade: Grade {
