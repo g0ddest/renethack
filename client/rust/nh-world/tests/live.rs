@@ -414,7 +414,7 @@ fn orders_walk_the_real_map_and_take_the_stairs() {
                 }
             }
             other => {
-                driver.on_question(None, cat);
+                driver.on_question();
                 other.escape_reply()
             }
         };

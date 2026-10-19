@@ -2514,6 +2514,10 @@ fn look_of(cell: &Cell, near: Near, ctx: &Ctx) -> Look {
     }
     if let Some(g) = &cell.glyph {
         glyph_look(&mut look, g, ctx);
+        // a peaceful one, as the engine tells it: no hostile's red ring
+        if cell.peaceful {
+            look.hostile = false;
+        }
         // a steed's glyph is all the map shows of the hero on it: the
         // engine tells who rides, and of a saddle on any monster
         if g.kind == GlyphKind::Mon && look.entity.is_some() {
@@ -9255,9 +9259,15 @@ mod tests {
         assert_eq!(pet.ring, Some(PET_RING));
         let seen = look(monster(cat, "little dog", mg::DETECT));
         assert_eq!(seen.models[0].look.pose, Pose::Ghost);
-        // a red ring under the pointer for all but the hero and pets
+        // a red ring under the pointer for all but the hero, pets and the
+        // peaceful
         assert!(newt.hostile && !pet.hostile);
         assert!(!look(monster(cat, "human", mg::HERO)).hostile);
+        let peaceful = Cell {
+            peaceful: true,
+            ..on_floor(cat, monster(cat, "newt", 0))
+        };
+        assert!(!f.look(&peaceful).hostile);
         // a monster on an altar stands on it
         let mut on_altar = on_floor(cat, monster(cat, "newt", 0));
         on_altar.terrain = Some(cmap(cat, "S_altar"));

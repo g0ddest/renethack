@@ -1776,11 +1776,7 @@ fn orders() -> Vec<Step> {
                     .unwrap_or_default();
             godot_print!(
                 "selftest: orders: a hostile at {:?}, the hero at {:?}",
-                nh_world::threats(
-                    &g.world,
-                    g.catalog.as_deref().ok_or("no catalog")?,
-                    g.driver.peaceful()
-                ),
+                nh_world::threats(&g.world, g.catalog.as_deref().ok_or("no catalog")?),
                 g.world.hero()
             );
             if g.driver.mode() != nh_world::Mode::Combat || g.world.hero() == Some(TOP_DOORWAY) {
@@ -2576,8 +2572,98 @@ fn threat_arrow() -> Vec<Step> {
             Ok(())
         }),
     ]);
+    steps.extend(peaceful_one());
     steps.extend(quit());
     steps
+}
+
+/// A gnome the engine tells peaceful beside the hero, a hostile one
+/// further off: peacefulness is each monster's own (the species says
+/// nothing), so only the far one is a threat, and the arrow points at it.
+/// Alone, the peaceful one is no fight.
+fn peaceful_one() -> [Step; 7] {
+    [
+        Step::Call("a peaceful gnome beside the hero, a hostile one off", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            let (x, y) = crate::gallery::lay_out_one(&mut g.world, &cat, "gnome")?;
+            let hero = g.world.map.hero().ok_or("no hero laid out")?;
+            let gnome = g.world.map.cell(x, y).and_then(|c| c.glyph.clone());
+            let gnome = gnome.ok_or("no gnome laid out")?;
+            let told = nh_world::Told {
+                peaceful: true,
+                ..nh_world::Told::default()
+            };
+            g.world
+                .map
+                .print_with(hero.0 - 1, hero.1, &gnome, None, told);
+            g.world.view_center = Some(hero);
+            g.driver.observe(&g.world, &cat);
+            let threats = nh_world::threats(&g.world, &cat);
+            if threats != [(x, y)] || g.driver.mode() != nh_world::Mode::Combat {
+                return Err(format!(
+                    "threats {threats:?}, mode {:?}: the hostile gnome at {:?} alone",
+                    g.driver.mode(),
+                    (x, y)
+                ));
+            }
+            Ok(())
+        }),
+        Step::Wait("the view drawn", |g| {
+            let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+            Ok(drawn == Some(g.world.map.generation()))
+        }),
+        Step::Wait("the camera there", camera_settled),
+        Step::Wait("the gnomes' models, and the arrow", |g| {
+            let hero = g.world.map.hero().ok_or("no hero")?;
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let both = ui.map.entity_stands(40, 10).is_some()
+                && ui.map.entity_stands(hero.0 - 1, hero.1).is_some();
+            Ok(both && ui.hud.threat_arrow().is_some())
+        }),
+        Step::Shot("threat-arrow-peaceful"),
+        Step::Call(
+            "the arrow over the hostile gnome, not the peaceful one",
+            |g| {
+                let ui = g.ui.as_ref().ok_or("no UI")?;
+                let p = ui.hud.threat_arrow().ok_or("no arrow")?;
+                let (at, tall) = ui.map.entity_stands(40, 10).ok_or("no hostile gnome")?;
+                let head = ui
+                    .map
+                    .on_screen(at + Vector3::new(0.0, tall, 0.0))
+                    .ok_or("the hostile gnome is behind the camera")?;
+                if (p.x - head.x).abs() > 40.0 {
+                    return Err(format!(
+                        "the arrow at {:.0},{:.0}, the hostile gnome's head at {:.0},{:.0}",
+                        p.x, p.y, head.x, head.y
+                    ));
+                }
+                Ok(())
+            },
+        ),
+        Step::Call("alone, the peaceful one is no fight", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            let floor = g.world.map.cell(39, 10).and_then(|c| c.glyph.clone());
+            g.world
+                .map
+                .print(40, 10, &floor.ok_or("no floor laid out")?, None);
+            if !nh_world::threats(&g.world, &cat).is_empty() {
+                return Err("the peaceful gnome is a threat".into());
+            }
+            let peaceful = g
+                .world
+                .map
+                .hero()
+                .and_then(|h| g.world.map.cell(h.0 - 1, h.1));
+            let said = peaceful.and_then(|c| nh_world::describe_cell(c, &cat));
+            if !said
+                .as_deref()
+                .is_some_and(|s| s.starts_with("peaceful gnome"))
+            {
+                return Err(format!("the peaceful gnome's hover says {said:?}"));
+            }
+            Ok(())
+        }),
+    ]
 }
 
 /// Lay out `name` alone where the gallery puts a creature, the camera

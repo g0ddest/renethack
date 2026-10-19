@@ -1024,14 +1024,42 @@ wielding_json(cJSON *a, int x, int y, const glyph_info *ginfo)
     cJSON_AddItemToObject(a, "wields", glyph_json(&wg));
 }
 
+/* Whether a monster the hero can spot is peaceful, as farlook (`;`) tells
+   it for free (look_at_monster(): "peaceful", not "tame"; nothing while
+   hallucinating). */
+static int
+told_peaceful(struct monst *mtmp)
+{
+    return !Hallucination && canspotmon(mtmp) && mtmp->mpeaceful
+           && !mtmp->mtame;
+}
+
+/* A monster the hero can spot that is peaceful: "peaceful" (told_peaceful()).
+   Never on the hero's own spot (a steed under them).  Observation only. */
+static void
+peaceful_json(cJSON *a, int x, int y, const glyph_info *ginfo)
+{
+    struct monst *mtmp;
+    int peaceful;
+
+    if (!ginfo || !glyph_is_monster(ginfo->glyph) || !isok(x, y) || u_at(x, y)
+        || (mtmp = m_at(x, y)) == 0)
+        return;
+    peaceful = told_peaceful(mtmp);
+    rh_held_set_peaceful(mtmp->m_id, peaceful);
+    if (peaceful)
+        add_bool(a, "peaceful", 1);
+}
+
 static void print_glyph_json(int win, int x, int y, const glyph_info *g,
                              const glyph_info *bk);
 
 /* Before each request: a monster the hero sees that took up a weapon, put
-   one away or changed it since its cell was last drawn has its cell drawn
-   again as it shows (its glyph unchanged), with what it holds now.  Only
-   the monsters still on the level are remembered (rh_held.h).
-   Observation only. */
+   one away or changed it, or one the hero can spot that was angered or
+   calmed, since its cell was last drawn has its cell drawn again as it
+   shows (its glyph unchanged), with what it holds now and whether it is
+   peaceful.  Only the monsters still on the level are remembered
+   (rh_held.h).  Observation only. */
 static void
 wielders_flush(void)
 {
@@ -1052,10 +1080,12 @@ wielders_flush(void)
         if (!isok(mtmp->mx, mtmp->my) || u_at(mtmp->mx, mtmp->my))
             continue;
         now = held_glyph(mtmp);
-        if ((now == NO_GLYPH ? RH_HELD_NONE : now) == rh_held_get(mtmp->m_id))
+        if ((now == NO_GLYPH ? RH_HELD_NONE : now) == rh_held_get(mtmp->m_id)
+            && told_peaceful(mtmp) == rh_held_peaceful(mtmp->m_id))
             continue;
         if (!glyph_is_monster(glyph_at(mtmp->mx, mtmp->my))) {
             rh_held_set(mtmp->m_id, RH_HELD_NONE);
+            rh_held_set_peaceful(mtmp->m_id, 0);
             continue;
         }
         map_glyphinfo(mtmp->mx, mtmp->my, glyph_at(mtmp->mx, mtmp->my), 0,
@@ -1081,6 +1111,7 @@ print_glyph_json(int win, int x, int y, const glyph_info *g,
     riding_json(a, x, y, g);
     sensed_json(a, x, y, g);
     wielding_json(a, x, y, g);
+    peaceful_json(a, x, y, g);
     rh_proto_send("win", "print_glyph", a);
 }
 

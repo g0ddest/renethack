@@ -76,12 +76,43 @@ test_full_then_swept(void)
     CHECK(rh_held_count() == 11);
 }
 
+/* told peaceful, then holding something, then not peaceful, then
+   holding nothing: remembered while either is told, then forgotten */
+static void
+test_peaceful_beside_what_is_held(void)
+{
+    rh_held_clear();
+    CHECK(!rh_held_peaceful(9));
+    rh_held_set_peaceful(9, 1);
+    CHECK(rh_held_peaceful(9));
+    CHECK(rh_held_get(9) == RH_HELD_NONE);
+    CHECK(rh_held_count() == 1);
+    rh_held_set(9, 1500);
+    CHECK(rh_held_get(9) == 1500 && rh_held_peaceful(9));
+    rh_held_set_peaceful(9, 0);
+    CHECK(!rh_held_peaceful(9));
+    CHECK(rh_held_get(9) == 1500);
+    CHECK(rh_held_count() == 1);
+    rh_held_set(9, RH_HELD_NONE);
+    CHECK(rh_held_count() == 0);
+    /* not peaceful and holding nothing: nothing to remember */
+    rh_held_set_peaceful(10, 0);
+    rh_held_set(10, RH_HELD_NONE);
+    CHECK(rh_held_count() == 0);
+    /* a peaceful one gone from the level is swept with the rest */
+    rh_held_set_peaceful(11, 1);
+    rh_held_unmark();
+    rh_held_sweep();
+    CHECK(!rh_held_peaceful(11));
+}
+
 int
 main(void)
 {
     test_told_and_forgotten();
     test_the_dead_are_swept();
     test_full_then_swept();
+    test_peaceful_beside_what_is_held();
     if (failures) {
         fprintf(stderr, "test_held: %d failure(s)\n", failures);
         return 1;

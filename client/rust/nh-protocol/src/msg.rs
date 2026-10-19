@@ -107,6 +107,12 @@ pub enum WinCall {
         /// a monster the hero sees, never on the hero's own cell, never
         /// while hallucinating.
         wields: Option<Glyph>,
+        /// The monster shown is peaceful, as farlook (`;`) tells it for
+        /// free: only for a monster the hero can spot (seen or sensed),
+        /// never a tame one, never on the hero's own cell, never while
+        /// hallucinating. The engine draws its cell again when that
+        /// changes (one angered), its glyph the same.
+        peaceful: bool,
     },
     RawPrint {
         text: String,
@@ -582,6 +588,8 @@ struct PrintGlyph {
     sensed: bool,
     #[serde(default)]
     wields: Option<Glyph>,
+    #[serde(default)]
+    peaceful: bool,
 }
 #[derive(Deserialize)]
 struct RawPrint {
@@ -717,6 +725,7 @@ fn win_call(name: String, a: Value) -> Result<WinCall, ProtocolError> {
                 saddled: p.saddled,
                 sensed: p.sensed,
                 wields: p.wields,
+                peaceful: p.peaceful,
             }
         }
         "raw_print" => {

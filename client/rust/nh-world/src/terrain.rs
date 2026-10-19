@@ -169,7 +169,7 @@ fn monster_name(catalog: &Catalog, mon: Option<i32>, flags: u32) -> Option<Strin
     Some(gendered.unwrap_or(&m.name).clone())
 }
 
-fn describe_entity(g: &Glyph, catalog: &Catalog) -> Option<String> {
+fn describe_entity(g: &Glyph, peaceful: bool, catalog: &Catalog) -> Option<String> {
     match g.kind {
         GlyphKind::Mon => {
             let name = monster_name(catalog, g.mon, g.flags)?;
@@ -177,6 +177,8 @@ fn describe_entity(g: &Glyph, catalog: &Catalog) -> Option<String> {
                 format!("you ({name})")
             } else if g.flags & mg::PET != 0 {
                 format!("tame {name}")
+            } else if peaceful {
+                format!("peaceful {name}")
             } else {
                 name
             };
@@ -222,9 +224,9 @@ fn describe_entity(g: &Glyph, catalog: &Catalog) -> Option<String> {
     }
 }
 
-/// Hover text from the catalog only: monster name (pet/peaceful markers from flags),
-/// object appearance by tile, map symbol explanation. Peacefulness is not in the
-/// glyph flags, so only pets, invisible, ridden and detected monsters are marked.
+/// Hover text from the catalog only: monster name (pets, invisible, ridden and
+/// detected monsters marked by the glyph's flags, a peaceful one as the engine
+/// tells it of the cell), object appearance by tile, map symbol explanation.
 pub fn describe_cell(cell: &Cell, catalog: &Catalog) -> Option<String> {
     let entity = match (&cell.rider, cell.entity()) {
         // a steed under the hero, when the engine tells who rides it: the
@@ -235,15 +237,15 @@ pub fn describe_cell(cell: &Cell, catalog: &Catalog) -> Option<String> {
                 ..steed.clone()
             };
             let (rider, pet) = (
-                describe_entity(rider, catalog),
-                describe_entity(&pet, catalog),
+                describe_entity(rider, false, catalog),
+                describe_entity(&pet, false, catalog),
             );
             match (rider, pet) {
                 (Some(r), Some(p)) => Some(format!("{r}\n{p}")),
                 (r, p) => r.or(p),
             }
         }
-        (_, e) => e.and_then(|g| describe_entity(g, catalog)),
+        (_, e) => e.and_then(|g| describe_entity(g, cell.peaceful, catalog)),
     };
     let terrain = cell
         .terrain
@@ -360,6 +362,17 @@ mod tests {
         };
         assert_eq!(at(monster(16, mg::PET)), "tame little dog");
         assert_eq!(at(monster(16, mg::DETECT)), "little dog (detected)");
+        // a peaceful one as the engine tells it of the cell, as `;` says it
+        let peaceful = Cell {
+            glyph: Some(monster(16, 0)),
+            peaceful: true,
+            ..Cell::default()
+        };
+        assert_eq!(
+            describe_cell(&peaceful, &cat).unwrap(),
+            "peaceful little dog"
+        );
+        assert_eq!(at(monster(16, 0)), "little dog");
         assert_eq!(at(monster(342, mg::HERO | mg::FEMALE)), "you (valkyrie)");
         // on a steed: the hero the engine tells of, then the steed
         let steed = monster(16, mg::HERO | mg::RIDDEN | mg::MALE);

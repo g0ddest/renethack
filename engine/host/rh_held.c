@@ -1,9 +1,10 @@
-/* what each monster in view was last told holding: see rh_held.h */
+/* what each monster in view was last told: see rh_held.h */
 #include "rh_held.h"
 
 static struct {
     unsigned id;
     int glyph;
+    int peaceful;
     int marked;
 } held[RH_HELD_MAX];
 static int n_held;
@@ -27,24 +28,60 @@ rh_held_get(unsigned id)
     return i < 0 ? RH_HELD_NONE : held[i].glyph;
 }
 
-void
-rh_held_set(unsigned id, int glyph)
+/* the entry of monster `id`, made if need be (-1: the table is full) */
+static int
+entry(unsigned id)
 {
     int i = find(id);
 
-    if (glyph == RH_HELD_NONE) {
-        if (i >= 0)
-            held[i] = held[--n_held];
-        return;
-    }
     if (i < 0) {
         if (n_held >= RH_HELD_MAX)
-            return;
+            return -1;
         i = n_held++;
         held[i].id = id;
+        held[i].glyph = RH_HELD_NONE;
+        held[i].peaceful = 0;
     }
-    held[i].glyph = glyph;
     held[i].marked = 1;
+    return i;
+}
+
+/* an entry told nothing any more goes */
+static void
+forget_if_empty(int i)
+{
+    if (held[i].glyph == RH_HELD_NONE && !held[i].peaceful)
+        held[i] = held[--n_held];
+}
+
+void
+rh_held_set(unsigned id, int glyph)
+{
+    int i = glyph == RH_HELD_NONE ? find(id) : entry(id);
+
+    if (i < 0)
+        return;
+    held[i].glyph = glyph;
+    forget_if_empty(i);
+}
+
+int
+rh_held_peaceful(unsigned id)
+{
+    int i = find(id);
+
+    return i >= 0 && held[i].peaceful;
+}
+
+void
+rh_held_set_peaceful(unsigned id, int peaceful)
+{
+    int i = peaceful ? entry(id) : find(id);
+
+    if (i < 0)
+        return;
+    held[i].peaceful = peaceful != 0;
+    forget_if_empty(i);
 }
 
 void

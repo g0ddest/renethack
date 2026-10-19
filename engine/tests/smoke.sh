@@ -97,10 +97,15 @@ if grep -q '"sensed":' "$out"; then fail "a monster sensed by a hero who sees"; 
 # the kitten holds nothing, and the hero's own spear is never told (a
 # monster's weapon in hand is the live tests')
 if grep -q '"wields":' "$out"; then fail "a weapon told in a paw, or the hero's own"; fi
+# nor whether a monster is peaceful, but of one the hero can spot, as
+# farlook tells it: the kitten is tame, not peaceful (a peaceful one, and
+# one angered, are the live tests')
+if grep -q '"peaceful":' "$out"; then fail "a tame kitten told peaceful"; fi
 run_engine knight NETHACKOPTIONS='time,!legacy,!tutorial,!autopickup,name:Hero,role:knight,race:human,gender:male,align:lawful'
 grep -q '^{"t":"win","fn":"print_glyph","a":{.*"g":{[^}]*"kind":"mon"},.*"saddled":true}}$' "$tmp/knight/session.jsonl" \
     || fail "the Knight's pony is not saddled"
 if grep -q '"rider":' "$tmp/knight/session.jsonl"; then fail "a rider before anyone rides"; fi
+if grep -q '"peaceful":' "$tmp/knight/session.jsonl"; then fail "a tame pony told peaceful"; fi
 [ -x "$build/recover" ] || fail "recover is not built"
 ls "$tmp/base/save" | grep -q . || fail "game not saved on EOF"
 

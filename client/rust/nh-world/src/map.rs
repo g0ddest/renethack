@@ -41,6 +41,9 @@ pub struct Cell {
     /// What the monster `glyph` shows holds in its hand (an object's
     /// glyph), told only while the hero sees it.
     pub wields: Option<Glyph>,
+    /// The monster `glyph` shows is peaceful, as farlook tells it (told
+    /// only while the hero can spot it, not hallucinating).
+    pub peaceful: bool,
 }
 
 /// What the engine tells of a monster besides its glyph.
@@ -54,6 +57,8 @@ pub struct Told<'a> {
     pub sensed: bool,
     /// What it holds in its hand (an object's glyph), seen.
     pub wields: Option<&'a Glyph>,
+    /// It is peaceful (as farlook tells it).
+    pub peaceful: bool,
 }
 
 impl Told<'_> {
@@ -311,6 +316,7 @@ impl MapState {
             saddled,
             sensed,
             wields,
+            peaceful,
         } = told;
         let Some(i) = index(x, y) else {
             return;
@@ -356,6 +362,7 @@ impl MapState {
             cell.over_saddled = false;
             cell.sensed = sensed;
             cell.wields = wields.cloned();
+            cell.peaceful = peaceful;
         }
         cell.bk = bk.cloned();
         if hero
@@ -749,6 +756,21 @@ pub(crate) mod tests {
         assert!(map.cell(10, 5).unwrap().sensed);
         map.print(10, 5, &jackal, None);
         assert!(!map.cell(10, 5).unwrap().sensed, "seen now");
+    }
+
+    #[test]
+    fn a_peaceful_monster_is_told_so_until_it_is_not() {
+        let mut map = MapState::new();
+        let gnome = monster(5, 0);
+        let peaceful = Told {
+            peaceful: true,
+            ..Told::default()
+        };
+        map.print_with(10, 5, &gnome, None, peaceful);
+        assert!(map.cell(10, 5).unwrap().peaceful);
+        // angered: drawn again, the same glyph, not peaceful
+        map.print(10, 5, &gnome, None);
+        assert!(!map.cell(10, 5).unwrap().peaceful);
     }
 
     #[test]

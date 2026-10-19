@@ -2004,12 +2004,6 @@ impl RenethackGame {
             return;
         }
         if let Some(cat) = self.catalog.clone() {
-            let query = match &prompt {
-                Prompt::Choice { query, .. } | Prompt::FreeKey { query, .. } => {
-                    Some(query.as_str())
-                }
-                _ => None,
-            };
             if prompt == Prompt::Command && !self.world.getpos {
                 // the tick's moment: the mode, and whether the order goes on
                 if let Some(mode) = self.driver.observe(&self.world, &cat) {
@@ -2018,9 +2012,7 @@ impl RenethackGame {
                 self.check_hints();
             } else if self.driver.is_active() {
                 // a question the order did not expect: the player answers
-                self.driver.on_question(query, &cat);
-            } else if let Some(q) = query {
-                self.driver.note_query(q, &cat);
+                self.driver.on_question();
             }
         }
         let keeps = prompt.keeps_typeahead();
@@ -5264,7 +5256,7 @@ impl RenethackGame {
             .and_then(|c| on_screen(c, 0.3));
         let hero = self.world.hero();
         let threat = match (catalog.as_deref(), hero) {
-            (Some(cat), Some(h)) => nh_world::threats(&self.world, cat, self.driver.peaceful())
+            (Some(cat), Some(h)) => nh_world::threats(&self.world, cat)
                 .into_iter()
                 .min_by_key(|&(x, y)| (x - h.0).abs().max((y - h.1).abs())),
             _ => None,

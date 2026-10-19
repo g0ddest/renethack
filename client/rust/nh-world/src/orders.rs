@@ -10,15 +10,15 @@
 //! prompt with it. The engine's multi-turn commands (`G`, `_`, counts) are
 //! never used: an order is a run of single steps, so it can always stop.
 
-use std::collections::{BTreeSet, VecDeque};
+use std::collections::VecDeque;
 use std::time::Duration;
 
 use nh_protocol::{Catalog, Glyph, GlyphKind, mg};
 
 use crate::path::{Passage, Reach, chebyshev, dir_key, find_path, key_dir, passage};
 use crate::{
-    Key, KeyContext, KeyInput, KeyProfile, Prompt, Terrain, Who, World, bar_slot, cell_terrain,
-    in_field, nethack_key, parse_attack,
+    Cell, Key, KeyContext, KeyInput, KeyProfile, Prompt, Terrain, Who, World, bar_slot,
+    cell_terrain, in_field, nethack_key, parse_attack,
 };
 
 /// The tick: one engine action per tick while an order runs.
@@ -31,18 +31,6 @@ pub const CALM_TURNS: i64 = 3;
 const REST_LIMIT: u32 = 1000;
 /// The highest count a prefix takes (NetHack's LARGEST_INT).
 const MAX_COUNT: u32 = 32767;
-
-/// Species that are peaceful unless they show otherwise.
-const PEACEFUL_BY_DEFAULT: [&str; 8] = [
-    "shopkeeper",
-    "watchman",
-    "watch captain",
-    "aligned priest",
-    "high priest",
-    "Oracle",
-    "guard",
-    "prisoner",
-];
 
 /// Messages that never stop an order: a pet swapped, sounds from afar, a
 /// door the walk opened.
@@ -193,23 +181,6 @@ impl Action {
     }
 }
 
-/// Species known to be peaceful: the usual ones, and those the messages
-/// call peaceful. Without the engine's MG_PEACEFUL (patch P1) this is the
-/// best there is: an unknown peaceful counts as hostile until the player
-/// looks at it (`;` says "peaceful").
-#[derive(Debug, Clone)]
-pub struct Peaceful {
-    names: BTreeSet<String>,
-}
-
-impl Default for Peaceful {
-    fn default() -> Self {
-        Peaceful {
-            names: PEACEFUL_BY_DEFAULT.iter().map(|s| s.to_string()).collect(),
-        }
-    }
-}
-
 /// Every name a monster goes by: its species, male and female forms.
 fn names_of(catalog: &Catalog, mon: i32) -> Vec<&str> {
     usize::try_from(mon)
@@ -224,59 +195,19 @@ fn names_of(catalog: &Catalog, mon: i32) -> Vec<&str> {
         .unwrap_or_default()
 }
 
-impl Peaceful {
-    pub fn is_peaceful(&self, catalog: &Catalog, mon: i32) -> bool {
-        names_of(catalog, mon)
-            .iter()
-            .any(|n| self.names.contains(*n))
-    }
-
-    pub fn contains(&self, name: &str) -> bool {
-        self.names.contains(name)
-    }
-
-    /// "peaceful <name>" anywhere in `text` (a farlook, "Really attack the
-    /// peaceful gnome lord?"): that species is peaceful.
-    pub fn learn(&mut self, text: &str, catalog: &Catalog) {
-        for (at, _) in text.match_indices("peaceful ") {
-            let rest = &text[at + "peaceful ".len()..];
-            let best = catalog
-                .monsters
-                .iter()
-                .flat_map(|m| {
-                    std::iter::once(m.name.as_str())
-                        .chain(m.male.as_deref())
-                        .chain(m.female.as_deref())
-                })
-                .filter(|n| {
-                    rest.starts_with(n)
-                        && !rest[n.len()..].starts_with(|c: char| c.is_alphanumeric())
-                })
-                .max_by_key(|n| n.len());
-            if let Some(n) = best {
-                self.names.insert(n.to_string());
-            }
-        }
-    }
-
-    /// It attacked the hero: not peaceful any more.
-    pub fn forget(&mut self, name: &str) {
-        self.names.remove(name);
-    }
-}
-
-/// Is this glyph at `at` something to fight? A monster that is not the
-/// hero, not a pet, not sensed without being seen, not a known peaceful;
-/// while hallucinating every monster; a remembered unseen one next to the
-/// hero.
+/// Is what this cell at `at` shows something to fight? A monster that is
+/// not the hero, not a pet, not sensed without being seen, not peaceful
+/// (as the engine tells it of each monster, as farlook would); while
+/// hallucinating every monster; a remembered unseen one next to the hero.
 pub fn is_threat(
-    g: &Glyph,
+    cell: &Cell,
     at: (i32, i32),
     hero: Option<(i32, i32)>,
     hallucinating: bool,
-    peaceful: &Peaceful,
-    catalog: &Catalog,
 ) -> bool {
+    let Some(g) = cell.entity() else {
+        return false;
+    };
     match g.kind {
         GlyphKind::Mon => {
             if g.flags & (mg::HERO | mg::DETECT) != 0 {
@@ -286,7 +217,7 @@ pub fn is_threat(
             } else if g.flags & mg::PET != 0 {
                 false
             } else {
-                !g.mon.is_some_and(|m| peaceful.is_peaceful(catalog, m))
+                !cell.peaceful
             }
         }
         GlyphKind::Invisible => hero.is_some_and(|h| chebyshev(h, at) == 1),
@@ -303,16 +234,16 @@ pub fn hallucinating(world: &World, catalog: &Catalog) -> bool {
 }
 
 /// Cells with a threat on them.
-pub fn threats(world: &World, catalog: &Catalog, peaceful: &Peaceful) -> Vec<(i32, i32)> {
+pub fn threats(world: &World, catalog: &Catalog) -> Vec<(i32, i32)> {
     let hero = world.hero();
     let hallu = hallucinating(world, catalog);
     let mut out = Vec::new();
     for y in 0..crate::ROWNO {
         for x in 1..crate::COLNO {
-            let Some(g) = world.map.cell(x, y).and_then(|c| c.entity()) else {
+            let Some(cell) = world.map.cell(x, y) else {
                 continue;
             };
-            if is_threat(g, (x, y), hero, hallu, peaceful, catalog) {
+            if is_threat(cell, (x, y), hero, hallu) {
                 out.push((x, y));
             }
         }
@@ -596,7 +527,6 @@ pub struct TickDriver {
     active: Option<Active>,
     follow: VecDeque<char>,
     stop: Option<Stop>,
-    peaceful: Peaceful,
     /// Messages already looked at.
     seen_seq: u64,
     last_hp: Option<i64>,
@@ -620,7 +550,6 @@ impl TickDriver {
             active: None,
             follow: VecDeque::new(),
             stop: None,
-            peaceful: Peaceful::default(),
             seen_seq: 0,
             last_hp: None,
             last_threat: None,
@@ -644,10 +573,6 @@ impl TickDriver {
 
     pub fn mode(&self) -> Mode {
         self.mode
-    }
-
-    pub fn peaceful(&self) -> &Peaceful {
-        &self.peaceful
     }
 
     pub fn order(&self) -> Option<&Order> {
@@ -745,10 +670,7 @@ impl TickDriver {
     }
 
     /// The engine asked something the order did not expect.
-    pub fn on_question(&mut self, query: Option<&str>, catalog: &Catalog) {
-        if let Some(q) = query {
-            self.peaceful.learn(q, catalog);
-        }
+    pub fn on_question(&mut self) {
         if self.follow.is_empty() {
             self.interrupt(Stop::Question);
         }
@@ -868,15 +790,10 @@ impl TickDriver {
         let mut news = Vec::new();
         let pets = pet_names(world, catalog);
         for m in world.log.since(self.seen_seq).filter(|m| !m.from_history) {
-            self.peaceful.learn(&m.text, catalog);
             let mut hero_fights = false;
             if let Some(a) = parse_attack(&m.text) {
                 match (&a.attacker, &a.target) {
-                    (Who::Named(n), Who::Hero) => {
-                        self.peaceful.forget(n);
-                        hero_fights = true;
-                    }
-                    (Who::Hero, _) => hero_fights = true,
+                    (Who::Named(_), Who::Hero) | (Who::Hero, _) => hero_fights = true,
                     _ => {}
                 }
             }
@@ -894,7 +811,7 @@ impl TickDriver {
         let hp = world.status.number("hp");
         let hurt = matches!((self.last_hp, hp), (Some(a), Some(b)) if b < a);
         self.last_hp = hp;
-        let seen = !threats(world, catalog, &self.peaceful).is_empty();
+        let seen = !threats(world, catalog).is_empty();
         if seen || hurt || fought {
             self.last_threat = Some(turn);
         }
@@ -968,12 +885,6 @@ impl TickDriver {
             return Some(Stop::Blocked);
         }
         None
-    }
-
-    /// Learn from a question the engine asks ("Really attack the peaceful
-    /// watchman?").
-    pub fn note_query(&mut self, query: &str, catalog: &Catalog) {
-        self.peaceful.learn(query, catalog);
     }
 
     /// The way an active walk still has to go, from the hero.
@@ -1085,6 +996,16 @@ mod tests {
 
     fn say(world: &mut World, text: &str) {
         world.log.push(text.to_string(), 0, None, false);
+    }
+
+    /// The monster on `at` drawn again as the engine tells a peaceful one.
+    fn peaceful(world: &mut World, (x, y): (i32, i32)) {
+        let g = world.map.cell(x, y).and_then(|c| c.glyph.clone()).unwrap();
+        let told = crate::Told {
+            peaceful: true,
+            ..crate::Told::default()
+        };
+        world.map.print_with(x, y, &g, None, told);
     }
 
     /// A world with a map, the hero on it, full HP, turn 1.
@@ -1283,8 +1204,8 @@ mod tests {
         let (mut w, cat) = world_of(&rows);
         draw(&mut w.map, &cat, 0, &["      J"]);
         let mut d = TickDriver::new();
-        // a jackal known to be peaceful: no fight, the walk goes on
-        d.note_query("Really attack the peaceful jackal?", &cat);
+        // a jackal told peaceful: no fight, the walk goes on
+        peaceful(&mut w, (7, 0));
         assert_eq!(d.observe(&w, &cat), None);
         let order = Order::Walk {
             goal: (7, 0),
@@ -1294,6 +1215,7 @@ mod tests {
         step(&mut w, &cat, (2, 0), (3, 0));
         // it comes a cell closer: the walk follows it
         draw(&mut w.map, &cat, 0, &["     J."]);
+        peaceful(&mut w, (6, 0));
         d.observe(&w, &cat);
         assert_eq!(keys(&d.next(&w, &cat).unwrap()), "l");
         step(&mut w, &cat, (3, 0), (4, 0));
@@ -1444,7 +1366,7 @@ mod tests {
         draw(&mut w.map, &cat, 2, &["       J"]);
         turn(&mut w, 5);
         assert_eq!(d.observe(&w, &cat), Some(Mode::Combat));
-        assert_eq!(threats(&w, &cat, d.peaceful()), vec![(8, 2)]);
+        assert_eq!(threats(&w, &cat), vec![(8, 2)]);
         // it dies
         draw(&mut w.map, &cat, 2, &["       ."]);
         turn(&mut w, 6);
@@ -1500,51 +1422,34 @@ mod tests {
     }
 
     #[test]
-    fn peaceful_species_learned_from_messages_and_queries() {
+    fn peacefulness_is_each_monster_s_own() {
         let (mut w, cat) = world_of(&ROOM);
         let mut d = TickDriver::new();
-        // a jackal is hostile until the game says otherwise
-        draw(&mut w.map, &cat, 2, &["       J"]);
+        // two jackals, one told peaceful: only the other is a threat (the
+        // species says nothing)
+        draw(&mut w.map, &cat, 2, &["     J J"]);
+        peaceful(&mut w, (6, 2));
+        assert_eq!(threats(&w, &cat), vec![(8, 2)]);
         assert_eq!(d.observe(&w, &cat), Some(Mode::Combat));
-        say(&mut w, "d  a dog or other canine (peaceful jackal)");
+        // the hostile one gone, the peaceful one stays: calm after a while
+        draw(&mut w.map, &cat, 2, &["       ."]);
         for t in 2..=4 {
             turn(&mut w, t);
             d.observe(&w, &cat);
         }
         assert_eq!(d.mode(), Mode::Exploration);
-        assert!(d.peaceful().contains("jackal"));
-        // the longest name wins: "gnome lord", not "gnome"
-        let mut p = Peaceful::default();
-        p.learn("Really attack the peaceful gnome lord?", &cat);
-        assert!(p.contains("gnome lord") && !p.contains("gnome"));
-        // a name must end where the word ends
-        let mut p = Peaceful::default();
-        p.learn("the peaceful newtish thing", &cat);
-        assert!(!p.contains("newt"));
-        // the usual ones
-        assert!(Peaceful::default().is_peaceful(&cat, 271), "shopkeeper");
-        d.note_query("Really attack the peaceful newt?", &cat);
-        assert!(d.peaceful().contains("newt"));
-    }
-
-    #[test]
-    fn a_peaceful_that_attacks_is_hostile_again() {
-        let (mut w, cat) = world_of(&ROOM);
-        let mut d = TickDriver::new();
-        d.note_query("Really attack the peaceful jackal?", &cat);
-        draw(&mut w.map, &cat, 2, &["       J"]);
-        assert_eq!(d.observe(&w, &cat), None);
-        say(&mut w, "The jackal bites!");
+        // the peaceful one angered: drawn again, no longer told peaceful
+        draw(&mut w.map, &cat, 2, &["     J"]);
+        assert_eq!(threats(&w, &cat), vec![(6, 2)]);
         assert_eq!(d.observe(&w, &cat), Some(Mode::Combat));
-        assert!(!d.peaceful().contains("jackal"));
     }
 
     #[test]
     fn hallucination_makes_every_monster_a_threat() {
         let (mut w, cat) = world_of(&ROOM);
         let mut d = TickDriver::new();
-        d.note_query("peaceful jackal", &cat);
         draw(&mut w.map, &cat, 2, &["       J"]);
+        peaceful(&mut w, (8, 2));
         assert_eq!(d.observe(&w, &cat), None);
         let hallu = cat
             .conditions
@@ -1727,9 +1632,8 @@ mod tests {
         let mut d = TickDriver::new();
         d.start(Order::Repeat { key: 's', left: 9 }, &w, &cat)
             .unwrap();
-        d.on_question(Some("Really attack the peaceful newt?"), &cat);
+        d.on_question();
         assert_eq!(d.take_stop(), Some(Stop::Question));
-        assert!(d.peaceful().contains("newt"));
         // a key, a click, a panel
         for why in [Stop::Key, Stop::Click, Stop::Panel, Stop::Focus] {
             d.start(Order::Repeat { key: 's', left: 9 }, &w, &cat)
