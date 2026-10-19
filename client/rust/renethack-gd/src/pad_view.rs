@@ -162,7 +162,7 @@ pub fn hints(ctx: PadCtx) -> Vec<(Vec<PadButton>, &'static str)> {
             (vec![Lt], "hint-actions"),
             (vec![Rt], "hint-fire"),
             (vec![Lb, Rb], "hint-bar"),
-            (vec![Start], "hint-commands"),
+            (vec![Start], "hint-menu"),
         ],
         PadCtx::Getpos => vec![(vec![A], "hint-pick"), (vec![B], "hint-cancel")],
         PadCtx::Direction => vec![(vec![A], "hint-here"), (vec![B], "hint-cancel")],

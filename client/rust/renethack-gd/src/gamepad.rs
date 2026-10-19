@@ -347,6 +347,8 @@ pub enum PadOut {
     Carry,
     /// The message history.
     History,
+    /// The game's menu (its panels, the settings, saving).
+    Menu,
     /// The radial menu: open, its highlighted entry, run one (None: none).
     RadialOpen,
     RadialHover(Option<usize>),
@@ -586,7 +588,7 @@ impl Pad {
             (Y, PadCtx::Text) => PadOut::Osk(OskOp::Layout),
             (Y, PadCtx::Picker { wish: true }) => PadOut::Pick(PickOp::Ench),
             (Y, _) => return out,
-            (Start, PadCtx::World) => PadOut::Key(ch('#')),
+            (Start, PadCtx::World) => PadOut::Menu,
             (Start, PadCtx::Text) => PadOut::Osk(OskOp::Submit),
             (Start, PadCtx::Picker { .. }) => PadOut::Pick(PickOp::Manual),
             (Start, PadCtx::PanelMenu | PadCtx::Menu { .. }) => PadOut::Key(key(Key::Enter)),

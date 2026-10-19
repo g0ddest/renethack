@@ -74,6 +74,8 @@ mod input_ru;
 mod journal_tests;
 #[path = "selftest_layouts.rs"]
 mod layouts_tests;
+#[path = "selftest_pad_panels.rs"]
+mod pad_panels_tests;
 #[path = "selftest_pad_screens.rs"]
 mod pad_screens_tests;
 #[path = "selftest_pad_words.rs"]
@@ -5021,6 +5023,7 @@ impl SelfTest {
             "spells-one" => spells_tests::spells_one(),
             "give-up" => give_up_tests::give_up(),
             "hud-tips" => tips_tests::hud_tips(),
+            "pad-panels" => pad_panels_tests::pad_panels(),
             "pad-screens" => pad_screens_tests::pad_screens(),
             "pad-words" => pad_words_tests::pad_words(),
             "skills" => skills_tests::skills(),

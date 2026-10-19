@@ -2684,7 +2684,7 @@ impl RenethackGame {
         self.ui_mut().game_menu.open();
     }
 
-    /// A key on the game's menu: ↑↓ (Tab) choose, Enter or Space takes
+    /// A key on the game's menu: ↑↓ ←→ (Tab) choose, Enter or Space takes
     /// the entry, Esc goes back to the game; no other key does anything.
     fn game_menu_key(&mut self, k: KeyInput) {
         use crate::game_menu::GameMenuPick;
@@ -2693,7 +2693,10 @@ impl RenethackGame {
         }
         match k.key {
             Key::Up => self.ui_mut().game_menu.step(-1),
-            Key::Down | Key::Tab => self.ui_mut().game_menu.step(1),
+            Key::Down => self.ui_mut().game_menu.step(1),
+            Key::Left => self.ui_mut().game_menu.side(-1),
+            Key::Right => self.ui_mut().game_menu.side(1),
+            Key::Tab => self.ui_mut().game_menu.next(),
             Key::Enter | Key::KeypadEnter | Key::Char(' ') => {
                 let pick = self.ui_mut().game_menu.focused();
                 self.game_menu_pick(pick);
@@ -2705,7 +2708,8 @@ impl RenethackGame {
 
     /// An entry of the game's menu taken: the menu goes, and its deed is
     /// done (saving and giving up are the engine's commands, at the
-    /// command prompt, under the engine's own questions).
+    /// command prompt, under the engine's own questions; a panel opens as
+    /// its command does, whatever keys the player moved).
     fn game_menu_pick(&mut self, pick: crate::game_menu::GameMenuPick) {
         use crate::game_menu::GameMenuPick;
         if !self.ui.as_ref().is_some_and(|ui| ui.game_menu.is_open()) {
@@ -2721,7 +2725,23 @@ impl RenethackGame {
             GameMenuPick::GiveUp => {
                 self.use_slot(SlotUse::Macro(nh_world::Macro::ext("quit")));
             }
+            GameMenuPick::Spells => self.use_ext("showspells"),
+            GameMenuPick::Character => self.use_ext("attributes"),
+            GameMenuPick::Skills => self.use_ext("enhance"),
+            GameMenuPick::Overview => self.use_ext("overview"),
+            GameMenuPick::Journal => self.use_ext("chronicle"),
+            GameMenuPick::Codex => self.use_ext("known"),
+            GameMenuPick::Achievements => self.open_achievements(),
+            GameMenuPick::Help => self.push_ui(UiEvent::ToggleHelp),
+            GameMenuPick::Commands => {
+                self.push_ui(UiEvent::GameKey(KeyInput::plain(Key::Char('#'))));
+            }
         }
+    }
+
+    /// An extended command, at the command prompt.
+    fn use_ext(&mut self, name: &'static str) {
+        self.use_slot(SlotUse::Macro(nh_world::Macro::ext(name)));
     }
 
     /// "Your quest"'s words for `step`, the keys as the player presses them,
@@ -3237,6 +3257,13 @@ impl RenethackGame {
                 PadOut::CursorHome => self.pad_cursor = None,
                 PadOut::Slot(slot) => self.push_ui(UiEvent::ActionSlot { slot, button: 1 }),
                 PadOut::Page(_) => {}
+                // Start: the game's menu, at the command prompt
+                PadOut::Menu => {
+                    let open = self.ui.as_ref().is_some_and(|ui| ui.game_menu.is_open());
+                    if self.at_command() && !open {
+                        self.open_game_menu();
+                    }
+                }
                 PadOut::Carry => self.push_ui(UiEvent::Inventory(InvInput::Carry)),
                 PadOut::History => self.push_ui(UiEvent::ToggleFullLog),
                 PadOut::RadialOpen => self.ui_mut().pad.radial_open(true),

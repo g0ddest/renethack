@@ -35,13 +35,15 @@ fn menu_at(g: &RenethackGame, at: usize) -> Result<bool, String> {
         return Ok(false);
     }
     let (words, focus) = ui.game_menu.entries();
+    // the game's own column first, the panels after it
     let want = [
         tr!("game-menu-resume"),
         tr!("game-menu-settings"),
         tr!("game-menu-save"),
         tr!("game-menu-give-up"),
+        tr!("spells-title"),
     ];
-    if words != want {
+    if words.get(..want.len()) != Some(&want[..]) {
         return Err(format!("the menu says {words:?}"));
     }
     Ok(focus == at)
