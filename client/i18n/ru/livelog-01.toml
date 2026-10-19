@@ -5,27 +5,27 @@
 
 [c8e678c9e876]
 en = "%s the %s %s %s entered the dungeon"
-ru = "{1}, {2:hero} {3:hero} {4:hero}, {hero:gender|вошёл|вошла} в подземелье"
+ru = "{1}, {2:hero} {3:hero:race} {4:hero}, {hero:gender|вошёл|вошла} в подземелье"
 
 [748c9d706328]
 en = "%s the %s female %s %s entered the dungeon"
-ru = "{1}, {2:f} {3:f} {4:f}, вошла в подземелье"
+ru = "{1}, {2:f} {3:f:race} {4:f}, вошла в подземелье"
 
 [0219c378e4fe]
 en = "%s the %s male %s %s entered the dungeon"
-ru = "{1}, {2:m} {3:m} {4:m}, вошёл в подземелье"
+ru = "{1}, {2:m} {3:m:race} {4:m}, вошёл в подземелье"
 
 [c318f8dc4e99]
 en = "%s the %s %s entered the dungeon"
-ru = "{1}, {2:hero} {3:hero}, {hero:gender|вошёл|вошла} в подземелье"
+ru = "{1}, {2:hero:race} {3:hero}, {hero:gender|вошёл|вошла} в подземелье"
 
 [687da5946158]
 en = "%s the female %s %s entered the dungeon"
-ru = "{1}, {2:f} {3:f}, вошла в подземелье"
+ru = "{1}, {2:f:race} {3:f}, вошла в подземелье"
 
 [4d4840a41463]
 en = "%s the male %s %s entered the dungeon"
-ru = "{1}, {2:m} {3:m}, вошёл в подземелье"
+ru = "{1}, {2:m:race} {3:m}, вошёл в подземелье"
 
 [a7e06e33ec4d]
 en = "attained the rank of %s (level %d)"

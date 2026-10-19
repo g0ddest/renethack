@@ -447,7 +447,7 @@ fn language() -> Vec<Step> {
         Step::Push(UiEvent::CloseSettings),
         Step::Wait("back in the game", |g| Ok(screen(g).is_none())),
         Step::Wait("the HUD in Russian", |g| {
-            Ok(badge(g).is_some_and(|b| b.starts_with("ИССЛЕДОВАНИЕ")))
+            Ok(badge(g).is_some_and(|b| b.starts_with("РАЗВЕДКА")))
         }),
         Step::Call("the log keeps the engine's English", |g| {
             if !g

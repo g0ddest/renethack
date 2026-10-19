@@ -19729,9 +19729,9 @@ Crash course in brain surgery  [908e9ed1a17e]
 Crash!  [a722e727991a]
   =   Дзынь!
 Crash!  You kick open a secret door!  [427413175593]
-  =   Трах!  Вы выбиваете потайную дверь!
+  =   Хрясь!  Вы выбиваете потайную дверь!
 Crash!  Your kick uncovers a secret door!  [fa52e9860619]
-  =   Трах!  Ваш пинок открывает потайную дверь!
+  =   Хрясь!  Ваш пинок открывает потайную дверь!
 Create SnapShot?  [dca069048d7a]
   =   Сделать снимок?
 Create what kind of monster?  [f8d51c365377]

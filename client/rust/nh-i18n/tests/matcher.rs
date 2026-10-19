@@ -867,7 +867,7 @@ fn the_chronicle_s_events() {
     let heroine: &[(&str, &str)] = &[
         (
             "Hero the neutral human Valkyrie entered the dungeon",
-            "Hero, нейтральная человеческая валькирия, вошла в подземелье",
+            "Hero, нейтральная валькирия, вошла в подземелье",
         ),
         ("entered the Gnomish Mines", "вошла в Гномьи копи"),
         ("killed Medusa", "убила Медузу"),
@@ -1080,7 +1080,7 @@ fn a_rank_in_the_hero_s_gender() {
                 ),
                 (
                     " You are a Stripling, a level 1 female human Valkyrie.",
-                    " Вы — Новобранка, человеческая валькирия 1-го уровня.",
+                    " Вы — новобранка, валькирия 1-го уровня.",
                 ),
                 // the Wizard's third: no Чудотворица, a saint's epithet
                 (
@@ -1343,6 +1343,153 @@ fn a_heroine_is_spoken_to_as_one() {
         "\"Do not be fooled by the Chromatic Dragon's size.  She is fast, and it is rumored that she uses magic.\"",
     );
     assert!(out.text.contains("Она быстра"), "{}", out.text);
+}
+
+#[test]
+fn a_human_s_race_goes_unsaid() {
+    // ru-editor: «Вы — законопослушный человеческий археолог» in the first
+    // line of every game; the other races keep their word, and a title
+    // mid-sentence is no name («Вы — мародёр, варвар 1-го уровня»)
+    for (gender, lines) in [
+        (
+            Gender::Fem,
+            &[
+                (
+                    "Hello Hero, welcome to NetHack!  You are a lawful female human Archeologist.",
+                    "Здравствуйте, Hero, добро пожаловать в NetHack!  Вы — законопослушная женщина-археолог.",
+                ),
+                (
+                    "Hello Hero, welcome to NetHack!  You are a chaotic human Valkyrie.",
+                    "Здравствуйте, Hero, добро пожаловать в NetHack!  Вы — хаотичная валькирия.",
+                ),
+                (
+                    "Hello Hero, welcome to NetHack!  You are a neutral female dwarven Valkyrie.",
+                    "Здравствуйте, Hero, добро пожаловать в NetHack!  Вы — нейтральная дварфийская валькирия.",
+                ),
+                (
+                    "Hello Hero, the human Archeologist, welcome back to NetHack!",
+                    "Здравствуйте, Hero, женщина-археолог, с возвращением в NetHack!",
+                ),
+                (
+                    "Hero the lawful female human Archeologist entered the dungeon",
+                    "Hero, законопослушная женщина-археолог, вошла в подземелье",
+                ),
+                (
+                    " You are a Plunderess, a level 1 female human Barbarian.",
+                    " Вы — мародёрка, варварка 1-го уровня.",
+                ),
+                (
+                    " You are a Knight, level 14 female human.",
+                    " Вы — женщина-рыцарь, человек 14-го уровня.",
+                ),
+                (
+                    "@        a human or elf (human tourist called Hero)",
+                    "@        человек или эльф (туристка по имени Hero)",
+                ),
+                (
+                    "@        a human or elf (invisible human valkyrie called Hero)",
+                    "@        человек или эльф (невидимая валькирия по имени Hero)",
+                ),
+            ][..],
+        ),
+        (
+            Gender::Masc,
+            &[
+                (
+                    "Hello Hero, welcome to NetHack!  You are a lawful male human Archeologist.",
+                    "Здравствуйте, Hero, добро пожаловать в NetHack!  Вы — законопослушный археолог.",
+                ),
+                (
+                    "Hello Hero, the lawful human Archeologist, welcome back to NetHack!",
+                    "Здравствуйте, Hero, законопослушный археолог, с возвращением в NetHack!",
+                ),
+                (
+                    "Hero the neutral gnomish Wizard entered the dungeon",
+                    "Hero, нейтральный гномий волшебник, вошёл в подземелье",
+                ),
+                (
+                    " You are a Plunderer, a level 1 male human Barbarian.",
+                    " Вы — мародёр, варвар 1-го уровня.",
+                ),
+                (
+                    " You were actually a Slayer, a level 20 male orcish Barbarian.",
+                    " На самом деле вы были сокрушителем, орочьим варваром 20-го уровня.",
+                ),
+                (
+                    " You are a Knight, level 10 human.",
+                    " Вы — рыцарь, человек 10-го уровня.",
+                ),
+                (
+                    "@        a human or elf (human tourist called Hero)",
+                    "@        человек или эльф (турист по имени Hero)",
+                ),
+            ][..],
+        ),
+    ] {
+        let mut t = Translator::built_in().expect("the built-in translator");
+        t.set_hero(gender);
+        for (en, ru) in lines {
+            let out = match en.starts_with(' ') {
+                true => t.window(en),
+                false => t.text(en),
+            };
+            assert_eq!(
+                (out.text.as_str(), out.status),
+                (*ru, Status::Translated),
+                "{en}"
+            );
+        }
+    }
+}
+
+#[test]
+fn words_that_meant_something_else() {
+    // ru-editor: «Трах!» (slang today), the Samurai's «сито» (a sieve), ranks
+    // read as a farm hand, a fighter plane, a nickname and an election, and
+    // «с вашей собачкой» where Russian says свой
+    check(
+        "Crash!  You kick open a secret door!",
+        "Хрясь!  Вы выбиваете",
+    );
+    check("You see here a shito.", "танто");
+    check("You swap places with your little dog.", "со своей собачкой");
+    check("You swap places with your kitten.", "со своим котёнком");
+    check(
+        "You begin bashing monsters with your pick-axe.",
+        "колотить монстров своей киркой",
+    );
+    check(
+        "Are you really sure you want to break your wand of digging?",
+        "сломать свою палочку копания",
+    );
+    let mut t = Translator::built_in().expect("the built-in translator");
+    t.set_hero(Gender::Fem);
+    for (en, ru) in [
+        (
+            "attained the rank of Field Worker (level 3)",
+            "получила звание «Практикантка» (уровень 3)",
+        ),
+        (
+            "attained the rank of Slayer (level 18)",
+            "получила звание «Сокрушительница» (уровень 18)",
+        ),
+        // no feminine of their own: a heroine is Удалец, Неофит too
+        (
+            "attained the rank of Gallant (level 1)",
+            "получила звание «Удалец» (уровень 1)",
+        ),
+        (
+            "attained the rank of Candidate (level 1)",
+            "получила звание «Неофит» (уровень 1)",
+        ),
+    ] {
+        let out = t.text(en);
+        assert_eq!(
+            (out.text.as_str(), out.status),
+            (ru, Status::Translated),
+            "{en}"
+        );
+    }
 }
 
 /// The built-in catalog and lexicon with these translations only: (the

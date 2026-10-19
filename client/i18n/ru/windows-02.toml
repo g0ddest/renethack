@@ -2152,83 +2152,83 @@ ru = " Вы встретили {1} {1:plural|уровень|уровня|уро�
 
 [064de9529c96]
 en = " You are %s, level %d female %s."
-ru = " Вы — {1:f}, {3:f} {2}-го уровня."
+ru = " Вы — {1:f:low}, {3} {2}-го уровня."
 
 [13154798eb70]
 en = " You were %s, level %d female %s."
-ru = " Вы были {1:f:ins}, {3:f:ins} {2}-го уровня."
+ru = " Вы были {1:f:ins:low}, {3:ins} {2}-го уровня."
 
 [24b59f512a31]
 en = " You are actually %s, a level %d %s %s."
-ru = " На самом деле вы — {1:hero}, {3:hero} {4:hero} {2}-го уровня."
+ru = " На самом деле вы — {1:hero:low}, {3:hero:race} {4:hero} {2}-го уровня."
 
 [27cbc1d68e4e]
 en = " You were actually %s, a level %d male %s %s."
-ru = " На самом деле вы были {1:m:ins}, {3:m:ins} {4:m:ins} {2}-го уровня."
+ru = " На самом деле вы были {1:m:ins:low}, {3:m:ins:race} {4:m:ins} {2}-го уровня."
 
 [3fbc8769cb74]
 en = " You are %s, level %d %s."
-ru = " Вы — {1:hero}, {3:hero} {2}-го уровня."
+ru = " Вы — {1:hero:low}, {3} {2}-го уровня."
 
 [51058ad14098]
 en = " You were actually %s, a level %d %s %s."
-ru = " На самом деле вы были {1:hero:ins}, {3:hero:ins} {4:hero:ins} {2}-го уровня."
+ru = " На самом деле вы были {1:hero:ins:low}, {3:hero:ins:race} {4:hero:ins} {2}-го уровня."
 
 [522901b29dad]
 en = " You were %s, level %d male %s."
-ru = " Вы были {1:m:ins}, {3:m:ins} {2}-го уровня."
+ru = " Вы были {1:m:ins:low}, {3:ins} {2}-го уровня."
 
 [558ffd8cf47b]
 en = " You are actually %s, level %d %s."
-ru = " На самом деле вы — {1:hero}, {3:hero} {2}-го уровня."
+ru = " На самом деле вы — {1:hero:low}, {3} {2}-го уровня."
 
 [61d90338c67c]
 en = " You were %s, a level %d %s %s."
-ru = " Вы были {1:hero:ins}, {3:hero:ins} {4:hero:ins} {2}-го уровня."
+ru = " Вы были {1:hero:ins:low}, {3:hero:ins:race} {4:hero:ins} {2}-го уровня."
 
 [67bb28d378d2]
 en = " You were actually %s, a level %d female %s %s."
-ru = " На самом деле вы были {1:f:ins}, {3:f:ins} {4:f:ins} {2}-го уровня."
+ru = " На самом деле вы были {1:f:ins:low}, {3:f:ins:race} {4:f:ins} {2}-го уровня."
 
 [6e60a71f3526]
 en = " You were actually %s, level %d male %s."
-ru = " На самом деле вы были {1:m:ins}, {3:m:ins} {2}-го уровня."
+ru = " На самом деле вы были {1:m:ins:low}, {3:ins} {2}-го уровня."
 
 [79e767993a4d]
 en = " You were %s, level %d %s."
-ru = " Вы были {1:hero:ins}, {3:hero:ins} {2}-го уровня."
+ru = " Вы были {1:hero:ins:low}, {3:ins} {2}-го уровня."
 
 [7dd7175f7dc0]
 en = " You are actually %s, a level %d male %s %s."
-ru = " На самом деле вы — {1:m}, {3:m} {4:m} {2}-го уровня."
+ru = " На самом деле вы — {1:m:low}, {3:m:race} {4:m} {2}-го уровня."
 
 [8e3418ee0387]
 en = " You were %s, a level %d female %s %s."
-ru = " Вы были {1:f:ins}, {3:f:ins} {4:f:ins} {2}-го уровня."
+ru = " Вы были {1:f:ins:low}, {3:f:ins:race} {4:f:ins} {2}-го уровня."
 
 [916d18a8361a]
 en = " You are %s, level %d male %s."
-ru = " Вы — {1:m}, {3:m} {2}-го уровня."
+ru = " Вы — {1:m:low}, {3} {2}-го уровня."
 
 [a80f0c6d98f4]
 en = " You were actually %s, level %d %s."
-ru = " На самом деле вы были {1:hero:ins}, {3:hero:ins} {2}-го уровня."
+ru = " На самом деле вы были {1:hero:ins:low}, {3:ins} {2}-го уровня."
 
 [b83ca9947031]
 en = " You are actually %s, level %d female %s."
-ru = " На самом деле вы — {1:f}, {3:f} {2}-го уровня."
+ru = " На самом деле вы — {1:f:low}, {3} {2}-го уровня."
 
 [c07d97a35c5e]
 en = " You are actually %s, a level %d female %s %s."
-ru = " На самом деле вы — {1:f}, {3:f} {4:f} {2}-го уровня."
+ru = " На самом деле вы — {1:f:low}, {3:f:race} {4:f} {2}-го уровня."
 
 [d5bfbe4e8200]
 en = " You are actually %s, level %d male %s."
-ru = " На самом деле вы — {1:m}, {3:m} {2}-го уровня."
+ru = " На самом деле вы — {1:m:low}, {3} {2}-го уровня."
 
 [edd003a48a5a]
 en = " You were actually %s, level %d female %s."
-ru = " На самом деле вы были {1:f:ins}, {3:f:ins} {2}-го уровня."
+ru = " На самом деле вы были {1:f:ins:low}, {3:ins} {2}-го уровня."
 
 [3d07751de455]
 en = " You are left-handed."

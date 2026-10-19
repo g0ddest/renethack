@@ -103,11 +103,11 @@ ru = "хвост мирного {1:gen}"
 
 [ab89a4b4954d]
 en = "%s %s called %s"
-ru = "{1:hero} {2:hero} по имени {3}"
+ru = "{1:hero:race} {2:hero} по имени {3}"
 
 [c282e8f96a50]
 en = "invisible %s %s called %s"
-ru = "{hero:gender|невидимый|невидимая} {1:hero} {2:hero} по имени {3}"
+ru = "{hero:gender|невидимый|невидимая} {1:hero:race} {2:hero} по имени {3}"
 
 [2fd728f452cc]
 en = "%s called %s"

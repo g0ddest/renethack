@@ -1068,7 +1068,7 @@
 		"name"
 		{
 			"english"	"Illiterate Ascension"
-			"russian"	"Неграмотное вознесение"
+			"russian"	"Вознесение без чтения"
 		}
 		"desc"
 		{
@@ -1136,7 +1136,7 @@
 		"name"
 		{
 			"english"	"Artifact Wishless Ascension"
-			"russian"	"Вознесение без желанных артефактов"
+			"russian"	"Вознесение без загаданных артефактов"
 		}
 		"desc"
 		{

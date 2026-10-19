@@ -796,7 +796,7 @@ ru = "Сколько отделить?"
 
 [6f27c7f995ce]
 en = "Are you really sure you want to break %s?"
-ru = "Вы действительно хотите сломать {1:acc}?"
+ru = "Вы действительно хотите сломать {1:acc:own}?"
 
 [640ee7b52f1d]
 en = "Really wield %s?"

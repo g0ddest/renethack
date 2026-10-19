@@ -966,7 +966,7 @@
 "splash of blinding venom" = { ru = "брызги ослепляющего яда", src = "nethack-ru" }
 "splash of acid venom" = { ru = "брызги кислотного яда", src = "nethack-ru" }
 # Samurai names (objnam.c Japanese_items)
-"shito" = { ru = "сито", src = "chosen", note = "Samurai: knife (Polivanov)", indecl = true, g = "m" }
+"shito" = { ru = "танто", src = "chosen", note = "Samurai: knife; was сито, a sieve (ru-editor 2026-10-18)", indecl = true, g = "m" }
 "wakizashi" = { ru = "вакидзаси", src = "chosen", note = "Samurai: short sword", indecl = true, g = "m" }
 "ninja-to" = { ru = "ниндзято", src = "chosen", note = "Samurai: broadsword" }
 "naginata" = { ru = "нагината", src = "chosen", note = "Samurai: glaive", g = "f" }
@@ -1430,7 +1430,7 @@
 # rank titles by role
 # Archeologist
 "Digger" = { ru = "Землекоп", src = "nethack-ru" }
-"Field Worker" = { ru = "Полевой работник", src = "chosen", note = "was Полевой рабочий" }
+"Field Worker" = { ru = "Практикант", src = "chosen", note = "the student on a dig; was Полевой работник, a collective-farm hand (ru-editor 2026-10-18)" }
 "Investigator" = { ru = "Изыскатель", src = "chosen", note = "was Следователь; Исследователь is the Tourist's Explorer" }
 "Exhumer" = { ru = "Эксгуматор", src = "nethack-ru" }
 "Excavator" = { ru = "Раскопщик", src = "chosen", note = "was Землерой" }
@@ -1446,7 +1446,7 @@
 "Brigand" = { ru = "Разбойник", src = "nethack-ru" }
 "Raider" = { ru = "Налётчик", src = "nethack-ru" }
 "Reaver" = { ru = "Опустошитель", src = "nethack-ru" }
-"Slayer" = { ru = "Истребитель", src = "chosen", note = "was Убийца" }
+"Slayer" = { ru = "Сокрушитель", src = "chosen", note = "was Истребитель, first of all a fighter plane (ru-editor 2026-10-18); before it Убийца" }
 "Chieftain" = { ru = "Вождь", src = "nethack-ru" }
 "Chieftainess" = { ru = "Предводительница", src = "nethack-ru" }
 "Conqueror" = { ru = "Завоеватель", src = "nethack-ru" }
@@ -1486,7 +1486,7 @@
 "Dame" = { ru = "Дама", src = "nethack-ru" }
 "Paladin" = { ru = "Паладин", src = "nethack-ru" }
 # Monk
-"Candidate" = { ru = "Кандидат", src = "nethack-ru" }
+"Candidate" = { ru = "Неофит", src = "chosen", note = "for a heroine too; was Кандидат / Кандидатка, a degree or an election (ru-editor 2026-10-18)" }
 "Novice" = { ru = "Послушник", src = "nethack-ru" }
 "Initiate" = { ru = "Посвящённый", src = "nethack-ru", adjnoun = true }
 "Student of Stones" = { ru = "Ученик Камня", src = "chosen", note = "was Ученик камня" }
@@ -2763,7 +2763,7 @@
 # Куратор, Хирург, Маг, Сёгун...), and so do the nouns of common gender
 # (Бродяга, Рубака, Зевака) and the ones that never change (Хатамото, Даймё).
 # Archeologist
-"Field Worker" = { ru = "Полевая работница", src = "chosen" }
+"Field Worker" = { ru = "Практикантка", src = "chosen" }
 "Investigator" = { ru = "Изыскательница", src = "chosen" }
 "Excavator" = { ru = "Раскопщица", src = "chosen" }
 "Spelunker" = { ru = "Спелеолог-любительница", src = "chosen", g = "f" }
@@ -2775,7 +2775,7 @@
 "Brigand" = { ru = "Разбойница", src = "chosen" }
 "Raider" = { ru = "Налётчица", src = "chosen" }
 "Reaver" = { ru = "Опустошительница", src = "chosen" }
-"Slayer" = { ru = "Истребительница", src = "chosen" }
+"Slayer" = { ru = "Сокрушительница", src = "chosen" }
 # Cavewoman
 "Troglodyte" = { ru = "Троглодитка", src = "chosen" }
 "Aborigine" = { ru = "Аборигенка", src = "chosen" }
@@ -2790,9 +2790,7 @@
 "Herbalist" = { ru = "Травница", src = "chosen" }
 "Physician" = { ru = "Лекарка", src = "chosen" }
 # Knight
-"Gallant" = { ru = "Отважная", src = "chosen", adjnoun = true, g = "f", note = "Удалец has no feminine" }
 # Monk
-"Candidate" = { ru = "Кандидатка", src = "chosen" }
 "Novice" = { ru = "Послушница", src = "chosen" }
 "Initiate" = { ru = "Посвящённая", src = "chosen", adjnoun = true, g = "f" }
 "Student of Stones" = { ru = "Ученица Камня", src = "chosen" }

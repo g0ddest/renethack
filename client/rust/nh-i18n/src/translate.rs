@@ -829,7 +829,7 @@ impl Translator {
                 .any(|p| !p.skip && (p.target == Target::Arg(i) || p.owner == Some(i)))
         };
         let mut whole = true;
-        let values: Vec<Value> = convs(&t.segments)
+        let mut values: Vec<Value> = convs(&t.segments)
             .zip(captures)
             .enumerate()
             .map(|(i, (c, cap))| {
@@ -838,6 +838,14 @@ impl Translator {
                 v
             })
             .collect();
+        // a human hero's race goes unsaid: «законопослушный археолог»
+        for p in ru.placeholders().filter(|p| p.race) {
+            if let Target::Arg(i) = p.target
+                && captures.get(i).is_some_and(|c| c.trim() == "human")
+            {
+                values[i] = Value::Text(String::new());
+            }
+        }
         let upper = depth == 0 && starts_upper(t, captures);
         Some(self.output(t, &ru, &values, whole, upper))
     }
@@ -1541,12 +1549,14 @@ fn identity(t: &Template) -> RuTemplate {
                     target: Target::Arg(i),
                     case: None,
                     cap: false,
+                    low: false,
                     select: None,
                     count_by: None,
                     skip: false,
                     agree: None,
                     own: false,
                     owner: None,
+                    race: false,
                     source: (i + 1).to_string(),
                 }));
                 i += 1;

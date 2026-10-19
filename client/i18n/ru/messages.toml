@@ -9,7 +9,7 @@ ru = "{1} {1:num|кусает|кусают}!"
 
 [8e3761e5ea42]
 en = "You swap places with %s."
-ru = "Вы меняетесь местами с {1:ins}."
+ru = "Вы меняетесь местами с {1:ins:own}."
 
 [9a306b489be9]
 en = "You are already here."
@@ -229,7 +229,7 @@ ru = "У вас нет приготовленных снарядов."
 
 [a0051d0a4f52]
 en = "You begin bashing monsters with %s."
-ru = "Вы начинаете колотить монстров {1:ins}."
+ru = "Вы начинаете колотить монстров {1:ins:own}."
 
 [c81cb6e78cef]
 en = "You don't have anything to eat."

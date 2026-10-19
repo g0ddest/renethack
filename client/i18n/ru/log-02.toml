@@ -17,11 +17,11 @@ ru = "Вы не падаете вниз."
 
 [15bf60644f32]
 en = "%s %s, welcome to NetHack!  You are a %s female %s %s."
-ru = "{1}, {2}, добро пожаловать в NetHack!  Вы — {3:f} {4:f} {5:f}."
+ru = "{1}, {2}, добро пожаловать в NetHack!  Вы — {3:f} {4:f:race} {5:f}."
 
 [062e77ea0344]
 en = "%s %s, welcome to NetHack!  You are a %s male %s %s."
-ru = "{1}, {2}, добро пожаловать в NetHack!  Вы — {3:m} {4:m} {5:m}."
+ru = "{1}, {2}, добро пожаловать в NetHack!  Вы — {3:m} {4:m:race} {5:m}."
 
 [008b86dc124c]
 en = "%s strikes at your displaced image and misses you!"
@@ -29,7 +29,7 @@ ru = "{1} {1:num|бьёт|бьют} по вашему смещённому об�
 
 [7f437a804495]
 en = "%s %s, welcome to NetHack!  You are a %s %s %s."
-ru = "{1}, {2}, добро пожаловать в NetHack!  Вы — {3:hero} {4:hero} {5:hero}."
+ru = "{1}, {2}, добро пожаловать в NetHack!  Вы — {3:hero} {4:hero:race} {5:hero}."
 
 [0ffa3ea2c4b2]
 en = "This door is broken."
@@ -1164,36 +1164,36 @@ ru = "Вы чувствуете себя довольно {hero:gender|уста�
 
 [364099d41355]
 en = "%s %s, welcome to NetHack!  You are a %s %s."
-ru = "{1}, {2}, добро пожаловать в NetHack!  Вы — {3:hero} {4:hero}."
+ru = "{1}, {2}, добро пожаловать в NetHack!  Вы — {3:hero:race} {4:hero}."
 
 [62602ffb2f1d]
 en = "%s %s, welcome to NetHack!  You are a female %s %s."
-ru = "{1}, {2}, добро пожаловать в NetHack!  Вы — {3:f} {4:f}."
+ru = "{1}, {2}, добро пожаловать в NetHack!  Вы — {3:f:race} {4:f}."
 
 [eeb0f4c0375f]
 en = "%s %s, welcome to NetHack!  You are a male %s %s."
-ru = "{1}, {2}, добро пожаловать в NetHack!  Вы — {3:m} {4:m}."
+ru = "{1}, {2}, добро пожаловать в NetHack!  Вы — {3:m:race} {4:m}."
 
 [e96a45c2b554]
 en = "%s %s, the %s %s %s, welcome back to NetHack!"
-ru = "{1}, {2}, {3:hero} {4:hero} {5:hero}, с возвращением в NetHack!"
+ru = "{1}, {2}, {3:hero} {4:hero:race} {5:hero}, с возвращением в NetHack!"
 
 [2e957f259f9e]
 en = "%s %s, the %s %s, welcome back to NetHack!"
-ru = "{1}, {2}, {3:hero} {4:hero}, с возвращением в NetHack!"
+ru = "{1}, {2}, {3:hero:race} {4:hero}, с возвращением в NetHack!"
 
 [3ac40f826149]
 en = "%s %s, the %s female %s %s, welcome back to NetHack!"
-ru = "{1}, {2}, {3:f} {4:f} {5:f}, с возвращением в NetHack!"
+ru = "{1}, {2}, {3:f} {4:f:race} {5:f}, с возвращением в NetHack!"
 
 [bafb4a310e91]
 en = "%s %s, the %s male %s %s, welcome back to NetHack!"
-ru = "{1}, {2}, {3:m} {4:m} {5:m}, с возвращением в NetHack!"
+ru = "{1}, {2}, {3:m} {4:m:race} {5:m}, с возвращением в NetHack!"
 
 [e91b37053667]
 en = "%s %s, the female %s %s, welcome back to NetHack!"
-ru = "{1}, {2}, {3:f} {4:f}, с возвращением в NetHack!"
+ru = "{1}, {2}, {3:f:race} {4:f}, с возвращением в NetHack!"
 
 [a2220107839d]
 en = "%s %s, the male %s %s, welcome back to NetHack!"
-ru = "{1}, {2}, {3:m} {4:m}, с возвращением в NetHack!"
+ru = "{1}, {2}, {3:m:race} {4:m}, с возвращением в NetHack!"

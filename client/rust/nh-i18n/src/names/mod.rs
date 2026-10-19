@@ -720,10 +720,12 @@ mod tests {
         assert_eq!(her("Student of Stones", Case::Nom), "Ученица Камня");
         assert_eq!(her("Student of Stones", Case::Dat), "Ученице Камня");
         assert_eq!(her("Initiate", Case::Acc), "Посвящённую");
-        assert_eq!(her("Field Worker", Case::Ins), "Полевой работницей");
+        assert_eq!(her("Field Worker", Case::Ins), "Практиканткой");
         assert_eq!(her("Stripling", Case::Nom), "Новобранка");
         // a title with no feminine noun of its own keeps its word
         assert_eq!(her("Sergeant", Case::Nom), "Сержант");
+        assert_eq!(her("Gallant", Case::Nom), "Удалец");
+        assert_eq!(her("Candidate", Case::Gen), "Неофита");
         assert_eq!(her("Hatamoto", Case::Gen), "Хатамото");
         // and a man keeps his
         let him = lex.word("Student of Stones").unwrap();

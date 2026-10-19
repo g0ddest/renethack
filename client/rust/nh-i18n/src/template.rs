@@ -12,6 +12,7 @@
 //! | `{1}` | argument 1 in the nominative (a number as its digits, text as it is) |
 //! | `{1:acc}` | in a case: `nom`, `gen`, `dat`, `acc`, `ins`, `prep`; `loc` after в/на of a place (на полу, the prepositional where a noun has no locative) |
 //! | `{1:cap}`, `{1:ins:cap}` | with its first letter upper-cased |
+//! | `{1:low}`, `{1:hero:low}` | with its first letter lower-cased: a title the lexicon writes as one (Мародёр) in the middle of a sentence |
 //! | `{1:gender\|ударил\|ударила\|ударило\|ударили}` | the form that agrees with argument 1: masculine, feminine, neuter, plural |
 //! | `{1:num\|кусает\|кусают}` | singular or plural, as argument 1 |
 //! | `{1:sg\|один\|одну\|одно}` | the gender of argument 1's noun even when it is plural ("взять одну" of 3 стрелы) |
@@ -21,6 +22,7 @@
 //! | `{3:hero}`, `{3:f}`, `{3:pl:gen}` | argument 3 agreeing with the hero, or with a masculine (`m`), feminine (`f`), neuter (`n`) or plural (`pl`) noun: a word that is an adjective takes that gender ("lawful": законопослушная), a role its feminine (Целительница); a noun asked for the plural (`pl`) is put in it ("shuriken" before "slip": сюрикены), any other name stays as it is |
 //! | `{2:like1}` | argument 2 agreeing with argument 1's gender and number: "Бригита ({2:like1})" → (нейтральная) |
 //! | `{2:of1}`, `{2:of1:acc}`, `{2:of1:cap}` | argument 2 as argument 1's: the owner after it in the genitive ("шляпа тритона"), or before it as a pronoun that agrees, when the owner is one with no name to decline (an unseen "Its": "чья-то шляпа") |
+//! | `{4:hero:race}` | the hero's race as `{4:hero}` gives it, but nothing for a human, and a space next to it goes too: "законопослушный археолог", "законопослушный дварфийский археолог" |
 //! | `{hero:gender\|сам\|сама}` | as the hero's gender: masculine, feminine |
 //! | `{1:skip}` | nothing: the Russian says otherwise what argument 1 says (a heading's fixed word, the "weapons" of a menu about the item itself) |
 //!
@@ -52,7 +54,7 @@ pub enum TemplateError {
     Forms(String, &'static str, usize, usize),
     #[error("placeholder {{{0}}}: forms without a selector (gender, num, plural)")]
     FormsWithoutSelector(String),
-    #[error("placeholder {{{0}}}: a selector with a case or `cap`")]
+    #[error("placeholder {{{0}}}: a selector with a case, `cap` or `low`")]
     SelectorWithCase(String),
     #[error("placeholder {{{0}}}: `hero` only selects by gender")]
     Hero(String),
@@ -89,6 +91,8 @@ pub struct Placeholder {
     pub target: Target,
     pub case: Option<Case>,
     pub cap: bool,
+    /// `{1:low}`: its first letter lower-cased.
+    pub low: bool,
     pub select: Option<Select>,
     /// `{2:by1}`: argument 2 as counted by the number argument 1.
     pub count_by: Option<usize>,
@@ -100,6 +104,8 @@ pub struct Placeholder {
     pub own: bool,
     /// `{2:of1}`: argument 2 as argument 1's.
     pub owner: Option<usize>,
+    /// `{4:race}`: the hero's race, unsaid for a human.
+    pub race: bool,
     /// As written, without the braces.
     pub source: String,
 }
@@ -228,11 +234,27 @@ impl RuTemplate {
     /// argument that is missing renders as nothing.
     pub fn render(&self, args: &[Value], hero: Gender) -> String {
         let mut out = String::new();
+        // a race left unsaid takes a space along, the one before it or else
+        // the one after
+        let mut drop_space = false;
         for part in &self.parts {
             match part {
-                Part::Text(t) => out.push_str(t),
+                Part::Text(t) => {
+                    let t = match std::mem::take(&mut drop_space) {
+                        true => t.strip_prefix(' ').unwrap_or(t),
+                        false => t,
+                    };
+                    out.push_str(t);
+                }
                 Part::Place(p) => {
-                    let _ = write!(out, "{}", render_placeholder(p, args, hero));
+                    let form = render_placeholder(p, args, hero);
+                    if p.race && form.is_empty() {
+                        match out.ends_with(' ') {
+                            true => _ = out.pop(),
+                            false => drop_space = true,
+                        }
+                    }
+                    let _ = write!(out, "{form}");
                 }
             }
         }
@@ -310,7 +332,11 @@ fn render_placeholder(p: &Placeholder, args: &[Value], hero: Gender) -> String {
                 Some(owner) => owned(&form, owner, v, case),
                 None => form,
             };
-            if p.cap { capitalize(&form) } else { form }
+            match (p.cap, p.low) {
+                (true, _) => capitalize(&form),
+                (_, true) => uncapitalize(&form),
+                _ => form,
+            }
         }
     }
 }
@@ -340,6 +366,15 @@ pub fn capitalize(s: &str) -> String {
     }
 }
 
+/// The first letter lower-cased.
+fn uncapitalize(s: &str) -> String {
+    let mut cs = s.chars();
+    match cs.next() {
+        Some(c) => c.to_lowercase().chain(cs).collect(),
+        None => String::new(),
+    }
+}
+
 fn placeholder(src: &str) -> Result<Placeholder, TemplateError> {
     let mut forms: Vec<&str> = src.split('|').collect();
     let head = forms.remove(0);
@@ -353,17 +388,21 @@ fn placeholder(src: &str) -> Result<Placeholder, TemplateError> {
     };
     let mut case = None;
     let mut cap = false;
+    let mut low = false;
     let mut selector = None;
     let mut count_by = None;
     let mut skip = false;
     let mut agree = None;
     let mut own = false;
     let mut owner = None;
+    let mut race = false;
     for w in words {
         match w.trim() {
             "cap" => cap = true,
+            "low" => low = true,
             "skip" => skip = true,
             "own" => own = true,
+            "race" => race = true,
             "hero" => agree = Some(Agree::Hero),
             "m" => agree = Some(Agree::Gender(Gender::Masc, Number::Sing)),
             "f" => agree = Some(Agree::Gender(Gender::Fem, Number::Sing)),
@@ -437,17 +476,18 @@ fn placeholder(src: &str) -> Result<Placeholder, TemplateError> {
             ]))
         }
     };
-    let shaped = count_by.is_some() || agree.is_some() || own || owner.is_some();
-    if select.is_some() && (case.is_some() || cap || shaped) {
+    let shaped = count_by.is_some() || agree.is_some() || own || owner.is_some() || race;
+    if select.is_some() && (case.is_some() || cap || low || shaped) {
         return Err(TemplateError::SelectorWithCase(src.into()));
     }
-    if skip && (select.is_some() || case.is_some() || cap || shaped) {
+    if skip && (select.is_some() || case.is_some() || cap || low || shaped) {
         return Err(TemplateError::Skip(src.into()));
     }
     Ok(Placeholder {
         target,
         case,
         cap,
+        low,
         select,
         count_by,
         skip,
@@ -455,6 +495,7 @@ fn placeholder(src: &str) -> Result<Placeholder, TemplateError> {
         own,
         source: src.into(),
         owner,
+        race,
     })
 }
 
@@ -610,6 +651,8 @@ mod tests {
         assert_eq!(render("Вы бьёте {1:acc}.", &[newt()]), "Вы бьёте тритона.");
         assert_eq!(render("Вы бьёте {1:acc}.", &[rat()]), "Вы бьёте крысу.");
         assert_eq!(render("{1:cap} кусает!", &[rat()]), "Крыса кусает!");
+        let title = [Value::Phrase(Box::new(Fixed::new("Мародёр")))];
+        assert_eq!(render("Вы — {1:hero:low}.", &title), "Вы — мародёр.");
         assert_eq!(
             render("С {1:ins}: {{ok}}", &[arrows()]),
             "С 3 стрелами: {ok}"
@@ -666,6 +709,31 @@ mod tests {
         );
         assert_eq!(render("{1:ins} бьют вас.", &axe), "вашим топором бьют вас.");
         assert_eq!(render("{1:own}", &[newt()]), "тритон");
+    }
+
+    #[test]
+    fn a_race_left_unsaid_takes_a_space_along() {
+        let lawful = || Value::Phrase(Box::new(Lawful));
+        let unsaid = || Value::Text(String::new());
+        let t = RuTemplate::parse("Вы — {1:hero} {2:hero:race} {3:hero}.").unwrap();
+        assert_eq!(
+            t.render(&[lawful(), unsaid(), newt()], Gender::Fem),
+            "Вы — законопослушная тритон."
+        );
+        // a race that is said is as {2:hero} says it
+        assert_eq!(
+            t.render(&[lawful(), lawful(), newt()], Gender::Masc),
+            "Вы — законопослушный законопослушный тритон."
+        );
+        // first in the line, the space after it goes
+        assert_eq!(
+            render("{1:hero:race} {2} по имени Hero", &[unsaid(), newt()]),
+            "тритон по имени Hero"
+        );
+        assert!(matches!(
+            RuTemplate::parse("{1:race:gender|а|б|в|г}"),
+            Err(TemplateError::SelectorWithCase(_))
+        ));
     }
 
     #[test]
