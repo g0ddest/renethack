@@ -1,14 +1,17 @@
 //! Play with a gamepad alone, over the map (`pad-play`). The message
 //! history is the top layer: Back opens it, the d-pad scrolls it and the
 //! hero stays put, B closes it (the game's menu stays shut), A too, and
-//! its close names B; F9 and Esc do the same with the keys.
+//! its close names B; F9 and Esc do the same with the keys. The ring
+//! held by LT closes when the window loses the focus, and the next pull
+//! opens it at once.
 
-use godot::global::Key as GKey;
+use godot::global::{JoyAxis, Key as GKey};
 use nh_world::Prompt;
 
-use super::{Step, fail_on_error_screen, start, tap};
+use super::{PadEv, Step, fail_on_error_screen, start, tap};
 use crate::game::RenethackGame;
 use crate::gamepad::{PadButton, PadCtx};
+use crate::ui_events::UiEvent;
 use std::sync::Mutex;
 
 /// The hero's cell before the d-pad pressed under the history.
@@ -32,7 +35,32 @@ fn plain(g: &RenethackGame) -> Result<bool, String> {
 pub(super) fn pad_play() -> Vec<Step> {
     let mut steps = start();
     steps.extend(the_history());
+    steps.extend(the_ring());
     steps
+}
+
+/// The ring held open by LT, the window's focus lost.
+fn the_ring() -> Vec<Step> {
+    let lt = |v: f32| Step::Pad(vec![PadEv::Axis(JoyAxis::TRIGGER_LEFT, v)]);
+    let ring = |g: &RenethackGame| Ok(g.ui.as_ref().ok_or("no UI")?.pad.radial_shown());
+    vec![
+        lt(1.0),
+        Step::Wait("LT: the ring", ring),
+        Step::Call("the window loses the focus", |g| {
+            g.push_ui(UiEvent::FocusLost);
+            Ok(())
+        }),
+        Step::Wait("the ring gone", |g| {
+            Ok(!g.ui.as_ref().ok_or("no UI")?.pad.radial_shown())
+        }),
+        lt(0.0),
+        lt(1.0),
+        Step::Wait("the next pull opens it at once", ring),
+        lt(0.0),
+        Step::Wait("let go in the middle: nothing", |g| {
+            Ok(!g.ui.as_ref().ok_or("no UI")?.pad.radial_shown() && plain(g)?)
+        }),
+    ]
 }
 
 /// The history over the map, with the pad and with the keys.

@@ -786,15 +786,23 @@ impl Pad {
         out
     }
 
-    /// Forget held buttons (the window lost the focus, a dialog changed
-    /// what the sticks do).
-    pub fn release_all(&mut self) {
+    /// Forget held buttons and triggers (the window lost the focus: their
+    /// releases go unseen). The radial up closes with nothing chosen, and
+    /// the next pull of LT opens it again.
+    pub fn release_all(&mut self) -> Vec<PadOut> {
+        let mut out = Vec::new();
+        if self.radial.take().is_some() {
+            out.push(PadOut::RadialClose(None));
+        }
         self.left = Stick::default();
         self.right = Stick::default();
         self.dpad = [false; 4];
         self.lb = false;
         self.rb = false;
-        self.radial = None;
+        self.bumper_used = false;
+        self.lt = false;
+        self.rt = false;
+        out
     }
 }
 
@@ -946,6 +954,29 @@ mod tests {
         assert_eq!(radial_pick(0.0, -1.0), Some(0));
         assert_eq!(radial_pick(-0.8, -0.8), Some(7));
         assert_eq!(radial_pick(0.1, 0.0), None);
+    }
+
+    #[test]
+    fn a_focus_lost_closes_the_radial_and_lets_go_of_the_triggers() {
+        let mut p = Pad::new();
+        let w = PadCtx::World;
+        assert_eq!(
+            p.axis(JoyAxis::TRIGGER_LEFT, 1.0, w, 0.0),
+            vec![PadOut::RadialOpen]
+        );
+        p.axis(JoyAxis::LEFT_X, 1.0, w, 0.1);
+        // the window loses the focus with LT held: closed, nothing run
+        assert_eq!(p.release_all(), vec![PadOut::RadialClose(None)]);
+        assert!(p.release_all().is_empty(), "closed once");
+        // LT's release went unseen: the next pull opens it at once
+        assert_eq!(
+            p.axis(JoyAxis::TRIGGER_LEFT, 1.0, w, 1.0),
+            vec![PadOut::RadialOpen]
+        );
+        assert_eq!(
+            p.axis(JoyAxis::TRIGGER_LEFT, 0.0, w, 1.1),
+            vec![PadOut::RadialClose(None)]
+        );
     }
 
     #[test]

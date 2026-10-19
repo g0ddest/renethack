@@ -4044,7 +4044,9 @@ impl RenethackGame {
             UiEvent::Help(input) => self.ui_mut().help.input(input),
             UiEvent::KeyUp(k) => self.on_key_up(k),
             UiEvent::FocusLost => {
-                self.pad.release_all();
+                // the radial held open by LT closes, nothing chosen
+                let outs = self.pad.release_all();
+                self.pad_out(outs);
                 self.held = None;
                 self.driver.interrupt(Stop::Focus);
             }
