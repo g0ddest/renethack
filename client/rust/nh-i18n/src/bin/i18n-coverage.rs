@@ -454,7 +454,10 @@ impl Report {
 
 /// English function words: left in a Russian text they are a miss whatever
 /// length they have and whoever else wrote them somewhere.
-const ENGLISH: [&str; 3] = ["a", "an", "the"];
+const ENGLISH: [&str; 22] = [
+    "a", "an", "the", "of", "to", "in", "on", "at", "by", "is", "it", "as", "or", "if", "no", "up",
+    "so", "be", "do", "he", "my", "we",
+];
 /// Names that stay in Latin letters on purpose: the soak's hero, what it
 /// calls everything it may name, the game.
 const KEPT: [&str; 3] = ["Hero", "Elbereth", "NetHack"];
@@ -602,6 +605,14 @@ mod tests {
         assert_eq!(
             left("Contents of the sack:", "Содержимое мешка the:"),
             ["the"]
+        );
+        // a short word is English too when it is a function word
+        assert_eq!(
+            left(
+                "You stop eating the newt corpse.",
+                "Вы перестаёте eating to тритон."
+            ),
+            ["eating", "to"]
         );
     }
 

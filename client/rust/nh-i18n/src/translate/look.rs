@@ -353,7 +353,7 @@ fn clauses(tail: &str) -> Vec<&str> {
 /// Is `ru` all Russian? The Latin words it may keep of `english` are
 /// proper names ("shopkeeper Asidonhopo") and what the player typed: a
 /// name after "called" or "named", a text in quotes.
-fn reads(ru: &str, english: &str) -> bool {
+pub(super) fn reads(ru: &str, english: &str) -> bool {
     let typed = typed(english);
     latin_words(ru).all(|w| w.starts_with(|c: char| c.is_ascii_uppercase()) || typed.contains(&w))
 }

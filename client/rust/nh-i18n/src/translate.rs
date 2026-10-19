@@ -453,11 +453,19 @@ impl Translator {
             // no Russian for the template yet: a heading the glossary
             // names ("Armor") still reads as a name, another template
             // may hold it all ("x - 12 gold pieces." is "%c - %s."
-            // more than "%s gold %s.")
-            _ => unmarked
-                .or_else(|| self.whole_name(text))
-                .or_else(|| self.fallback(text, channel, 0))
-                .unwrap_or_else(|| Output::english(text, Status::Untranslated, Some(m.template))),
+            // more than "%s gold %s."); a reading without the mark that
+            // stays English is the last ("You stop eating the newt
+            // corpse." is "You stop %s." more than "%s corpse")
+            _ => {
+                let english = unmarked.take_if(|out| out.status != Status::Translated);
+                unmarked
+                    .or_else(|| self.whole_name(text))
+                    .or_else(|| self.fallback(text, channel, 0))
+                    .or(english)
+                    .unwrap_or_else(|| {
+                        Output::english(text, Status::Untranslated, Some(m.template))
+                    })
+            }
         }
     }
 
@@ -548,7 +556,9 @@ impl Translator {
     /// (paperback)" (known from the start), "* potion of healing (bubbly)"
     /// (discovered), whose look agrees with the name only read with it.
     /// A name in a list keeps its own case ("  Uruk-hai shield" is «щит
-    /// урук-хаев» there).
+    /// урук-хаев» there). A reading that keeps English words is no name:
+    /// "You stop eating the newt corpse." is no "<name> the newt corpse"
+    /// («Труп тритона You stop eating.»).
     fn whole_name(&self, text: &str) -> Option<Output> {
         let rest = text.trim_start();
         let start = match rest.strip_prefix("* ") {
@@ -558,6 +568,9 @@ impl Translator {
         let bare = text[start..].trim_end();
         let p = self.names.parse(NameKind::Any, bare)?;
         let ru = p.form(Case::Nom);
+        if !look::reads(&ru, bare) {
+            return None;
+        }
         let upper = start == 0 && bare.chars().next().is_some_and(char::is_uppercase);
         Some(Output {
             text: format!(

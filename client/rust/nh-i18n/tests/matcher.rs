@@ -1647,6 +1647,26 @@ fn the_review_s_grammar() {
     );
 }
 
+#[test]
+fn a_reading_that_keeps_english_is_no_name() {
+    // the text alone, without P7's arguments: the lexicon read "You stop
+    // eating the newt corpse" as a name («Труп тритона You stop eating.»),
+    // and a reading without the mark that stays English hid "You stop %s."
+    for (en, ru) in [
+        (
+            "You stop eating the newt corpse.",
+            "Вы перестаёте есть труп тритона.",
+        ),
+        (
+            "You stop eating the jackal corpse.",
+            "Вы перестаёте есть труп шакала.",
+        ),
+    ] {
+        let out = translator().message(None, &[], en);
+        assert_eq!((out.text.as_str(), out.status), (ru, Status::Translated));
+    }
+}
+
 /// The built-in catalog and lexicon with these translations only: (the
 /// English format, the rest of its entry).
 fn with(entries: &[(&str, &str)]) -> Translator {
