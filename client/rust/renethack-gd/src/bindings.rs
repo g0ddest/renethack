@@ -62,19 +62,9 @@ const KEYS_FIXED: [Binding; 7] = [
     ),
 ];
 
-/// Classic's count: Alt and the top-row digits (Modern's `n` moves).
-const KEYS_CLASSIC_FIXED: [Binding; 1] = [b(
-    &[
-        Key("Alt"),
-        Plus,
-        Key("2"),
-        Key("Alt"),
-        Plus,
-        Key("0"),
-        Key("s"),
-    ],
-    "controls-count",
-)];
+/// Classic's count: the top-row digits, as in NetHack (Modern's `n`
+/// moves).
+const KEYS_CLASSIC_FIXED: [Binding; 1] = [b(&[Key("2"), Key("0"), Key("s")], "controls-count")];
 
 /// The gamepad's bindings.
 const PAD: [Binding; 15] = [
@@ -183,7 +173,8 @@ mod tests {
             }
         }
         assert!(Shown::Pad.bindings().len() >= 12);
-        // Classic counts with Alt; Modern's n is a command the player moves
+        // Classic counts with the digits; Modern's n is a command the
+        // player moves
         assert!(
             Shown::Keys(KeyProfile::Classic)
                 .bindings()

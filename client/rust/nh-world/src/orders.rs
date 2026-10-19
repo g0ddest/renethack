@@ -400,11 +400,12 @@ impl CountEntry {
         }
     }
 
-    /// A key at a command prompt under `profile`. The top-row digits are
-    /// the action bar, except after Modern's `n`, where they are the
-    /// count (a slot then takes the count by a click, see [`take`]).
-    /// Classic's count is Alt and the top-row digits. The keypad moves in
-    /// both (after `n` its digits are the count, as in tty).
+    /// A key at a command prompt under `profile`. Modern's top-row digits
+    /// are the action bar, except after `n`, where they are the count (a
+    /// slot then takes the count by a click, see [`take`]). Classic's are
+    /// the count, as in NetHack, and its bar is Alt and the digits. The
+    /// keypad moves in both (after `n` its digits are the count, as in
+    /// tty).
     ///
     /// [`take`]: CountEntry::take
     pub fn feed_key(
@@ -419,7 +420,7 @@ impl CountEntry {
             let counting = match profile {
                 KeyProfile::Modern if input.mods.alt => return CommandInput::Ignored,
                 KeyProfile::Modern => self.prefix,
-                KeyProfile::Classic => input.mods.alt,
+                KeyProfile::Classic => !input.mods.alt,
             };
             if !counting {
                 return CommandInput::Bar {
@@ -1765,7 +1766,8 @@ mod tests {
         assert_eq!(c.take(), Some(7));
         assert_eq!(c.shown(), None);
 
-        // Classic: n steps, Alt+digits count, digits are the bar
+        // Classic: n steps, digits count as in NetHack, Alt+digits are
+        // the bar
         let k = KeyProfile::Classic;
         assert_eq!(
             c.feed_key(&plain('n'), k, vi),
@@ -1774,9 +1776,10 @@ mod tests {
                 count: None
             }
         );
-        assert_eq!(c.feed_key(&alt('0'), k, vi), CommandInput::Ignored);
-        assert_eq!(c.feed_key(&alt('2'), k, vi), CommandInput::Typing);
-        assert_eq!(c.feed_key(&alt('0'), k, vi), CommandInput::Typing);
+        assert_eq!(c.feed_key(&plain('0'), k, vi), CommandInput::Ignored);
+        assert_eq!(c.feed_key(&plain('2'), k, vi), CommandInput::Typing);
+        assert_eq!(c.feed_key(&plain('0'), k, vi), CommandInput::Typing);
+        assert_eq!(c.shown().as_deref(), Some("Count: 20"));
         assert_eq!(
             c.feed_key(&plain('s'), k, vi),
             CommandInput::Command {
@@ -1784,9 +1787,16 @@ mod tests {
                 count: Some(20)
             }
         );
-        c.feed_key(&alt('4'), k, vi);
         assert_eq!(
-            c.feed_key(&plain('2'), k, vi),
+            c.feed_key(&alt('3'), k, vi),
+            CommandInput::Bar {
+                slot: 2,
+                count: None
+            }
+        );
+        c.feed_key(&plain('4'), k, vi);
+        assert_eq!(
+            c.feed_key(&alt('2'), k, vi),
             CommandInput::Bar {
                 slot: 1,
                 count: Some(4)
@@ -1801,7 +1811,7 @@ mod tests {
             }
         );
         // Esc forgets a count; Ctrl+digit is nothing
-        c.feed_key(&alt('9'), k, vi);
+        c.feed_key(&plain('9'), k, vi);
         assert_eq!(
             c.feed_key(&KeyInput::plain(Key::Escape), k, vi),
             CommandInput::Typing

@@ -71,9 +71,9 @@ when the character is created and kept with it:
 |---|---|---|
 | NetHack's `number_pad` | on | off |
 | move | arrows, `Home` `PgUp` `End` `PgDn`, keypad; `Shift` — run | `hjklyubn` (and the arrows, keypad); `Shift` — run |
-| a count (`20` searches) | `n20s` | `Alt`+`2` `Alt`+`0` `s` |
+| a count (`20` searches) | `n20s` | `20s`, as in NetHack |
 | `k` `j` `l` `u` | kick, jump, loot, untrap (number_pad letters) | moves |
-| top-row `1`–`0` | the action bar | the action bar |
+| the action bar | top-row `1`–`0` | `Alt`+`1`–`0` |
 
 The client adds:
 
@@ -82,7 +82,7 @@ The client adds:
 | `i` | the inventory panel (the engine's `i` is never needed): a grid in pack order, the paper doll, filters, the detail of an item. Double-click — its first action, right-click — all of them; drag to the doll — wear, wield, put on; off the doll — take off, remove, unwield; onto another item — `#adjust`; out of the panel — drop; onto the bar — bind. Command keys still work while it is open (`w`, then a letter). `Tab` filters, arrows move, `Enter` acts, `Space` the actions, `Esc` closes |
 | a question about an item ("What do you want to wield?") | the panel in selection mode: the suggested items pulse, the others are dimmed but can be chosen; a click or the letter answers, `-` the hands, digits or `Shift`+click a count, `?`/`*` the Suggested/All filter, `Esc` cancels |
 | a menu of your own items (`D`, `A`, identify...) | the panel with check marks: the letter or a click toggles, digits a count, `Enter` confirms |
-| `1`–`9`, `0` | action bar slots: an item with its action, a spell or a command; a new character gets its role's loadout. After a count (`n20`, `Alt`+digits) a slot takes it by a click. Right-click clears a slot (Undo in the notice); an item's slot follows it through new letters and names, and shows it greyed while it is not in the pack. The bar is kept with the character (`<name>.rhui.json` in the game directory) |
+| `1`–`9`, `0` (Classic: `Alt`+`1`–`0`) | action bar slots: an item with its action, a spell or a command; a new character gets its role's loadout. After a count (`n20`, Classic's `20`) a slot takes it by a click. Right-click clears a slot (Undo in the notice); an item's slot follows it through new letters and names, and shows it greyed while it is not in the pack. The bar is kept with the character (`<name>.rhui.json` in the game directory) |
 | holding a direction key (or `s`, `.`) | step (search, wait) again every tick until the key is let go |
 | a count before a command | the engine has both, as NetHack reads them (`n20s` searches 20 turns, `n5,` picks up five of a stack, `n2f` fires two at most), and repeats the command until NetHack itself stops it: an attack, full health, something it tells |
 | left click on the map | walk there by the known map, one step per tick; on an object — pick it up, on stairs — take them, on a closed door — open it, on a monster — attack it; on yourself — the engine's menu of actions here |
@@ -271,7 +271,9 @@ scenario opens the panel, filters it, wields by a drag and by the context
 menu, answers a getobj question in selection mode and drops through the
 panel's `D` menu; `bar` binds the food ration to a slot, follows it through
 `#adjust`, eats it with `2`, and gives the engine 20 searches with `n20s`
-(Modern) and `Alt`+`2` `Alt`+`0` `s` (Classic). The `title` scenario checks the scene
+(Modern) and `20s` (Classic, whose bar is `Alt`+digits); `counts` has a
+samurai pick five of their ya up again with `n5,` and `5,`, the engine
+reading the count. The `title` scenario checks the scene
 behind the title menu: drawn before the start-up veil lifts, the hero in
 their gear, both ends of the camera's sway, put away by a game and laid
 again on the title after it. The `riding` scenario puts a Knight on his

@@ -105,14 +105,18 @@ fn typed(keys: &[KeyInput], profile: KeyProfile, dirchars: &str) -> VecDeque<i32
     for k in keys {
         match count.feed_key(k, profile, dirchars) {
             CommandInput::Typing => {}
-            CommandInput::Command { key, count } => {
-                out.extend(
-                    count
-                        .map(|n| count_keys(n, profile.number_pad()))
-                        .unwrap_or_default(),
-                );
-                out.push_back(key);
-            }
+            CommandInput::Command { key, count: None } => out.push_back(key),
+            CommandInput::Command {
+                key,
+                count: Some(n),
+            } => out.extend(
+                counted(key, n, profile.number_pad(), dirchars)
+                    .into_iter()
+                    .map(|r| match r {
+                        Reply::Key(k) => k,
+                        other => panic!("{k:?}: {other:?}"),
+                    }),
+            ),
             other => panic!("{k:?}: {other:?}"),
         }
     }
@@ -157,15 +161,11 @@ fn modern_counts_after_n() {
 }
 
 #[test]
-fn classic_counts_with_alt_digits() {
-    let alt = |c| KeyInput {
-        mods: Mods {
-            alt: true,
-            ..Mods::default()
-        },
-        ..KeyInput::plain(Key::Char(c))
-    };
-    let keys = [alt('2'), alt('0'), KeyInput::plain(Key::Char('s'))];
+fn classic_counts_with_digits() {
+    let keys: Vec<KeyInput> = "20s"
+        .chars()
+        .map(|c| KeyInput::plain(Key::Char(c)))
+        .collect();
     twenty_searches(KeyProfile::Classic, &keys);
 }
 

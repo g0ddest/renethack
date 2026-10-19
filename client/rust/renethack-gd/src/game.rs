@@ -2964,7 +2964,8 @@ impl RenethackGame {
         let Some(k) = self.player_key(pressed) else {
             return;
         };
-        // the top-row digits are the bar's (Alt+digits Classic's count)
+        // the top-row digits: Modern's bar, Classic's count (its bar is
+        // Alt and the digits)
         let digit = matches!(k.key, Key::Char('0'..='9')) && !k.mods.ctrl;
         let Some(code) = nethack_key(&k, KeyContext::Command, np, &dirs) else {
             return;
@@ -3441,9 +3442,10 @@ impl RenethackGame {
                     .collect(),
             ),
             None => {
-                let map = self.settings.keymaps.get(self.ui_state.profile);
+                let profile = self.ui_state.profile;
+                let map = self.settings.keymaps.get(profile);
                 let keys: Vec<String> = (0..BAR_SLOTS)
-                    .map(|i| crate::rebind::bound_hint(map, crate::action_bar::key_label(i)))
+                    .map(|i| crate::rebind::bound_hint(map, &crate::rebind::slot_hint(profile, i)))
                     .collect();
                 let moved = keys
                     .iter()
@@ -3501,8 +3503,9 @@ impl RenethackGame {
             bar.set_count(i, count.as_deref());
             bar.set_enabled(i, v.state != SlotState::Gone);
             // the keys as the player presses them now
-            let map = self.settings.keymaps.get(self.ui_state.profile);
-            let key = crate::rebind::bound_hint(map, crate::action_bar::key_label(i));
+            let profile = self.ui_state.profile;
+            let map = self.settings.keymaps.get(profile);
+            let key = crate::rebind::bound_hint(map, &crate::rebind::slot_hint(profile, i));
             let what = v
                 .label_key
                 .as_deref()
@@ -4064,7 +4067,8 @@ impl RenethackGame {
 
     /// A slot's key as the player presses it now.
     fn slot_key(&self, slot: usize) -> String {
-        crate::rebind::bound_hint(self.keymap(), crate::action_bar::key_label(slot))
+        let hint = crate::rebind::slot_hint(self.ui_state.profile, slot);
+        crate::rebind::bound_hint(self.keymap(), &hint)
     }
 
     /// The keys the player moved, for the character playing's profile.

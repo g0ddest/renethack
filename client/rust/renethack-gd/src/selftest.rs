@@ -42,6 +42,8 @@ mod codex_tests;
 mod conditions_tests;
 #[path = "selftest_corridors.rs"]
 mod corridors;
+#[path = "selftest_counts.rs"]
+mod counts_tests;
 #[path = "selftest_credits.rs"]
 mod credits_tests;
 #[path = "selftest_crowd.rs"]
@@ -1547,8 +1549,8 @@ fn descend(g: &RenethackGame) -> Result<bool, String> {
     } else if hero == WEST_DOORWAY {
         g.push_ui(key('h'));
     } else if hero.0 == WEST_DOORWAY.0 - 1 {
-        g.push_ui(UiEvent::Key(alt('2')));
-        g.push_ui(UiEvent::Key(alt('0')));
+        g.push_ui(key('2'));
+        g.push_ui(key('0'));
         g.push_ui(key('j'));
     } else {
         let (x, y) = WEST_DOORWAY;
@@ -1654,7 +1656,7 @@ fn orders() -> Vec<Step> {
             g.sent.clear();
             mark(g)
         }),
-        Step::Key(alt('5')),
+        Step::Key(plain_key('5')),
         Step::Wait("the count on the prompt line", |g| {
             let line = g.ui.as_ref().and_then(|ui| ui.hud.prompt_line());
             Ok(line.as_deref() == Some("Count: 5"))
@@ -3000,7 +3002,8 @@ fn searched_by_the_engine(g: &RenethackGame, keys: &str, n: i64) -> Result<bool,
 /// food ration bound to slot 2 by a drag from the panel, `#adjust` gives
 /// it another letter and the slot follows it, `2` eats it (then the slot
 /// shows it gone), `n20s` goes to the engine, which searches 20 turns
-/// (Modern); a Classic character's `Alt+2 Alt+0 s` does too.
+/// (Modern); a Classic character's `20s` does too, as in NetHack, and
+/// `Alt+3` is its bar's slot 3.
 fn bar() -> Vec<Step> {
     use crate::inventory_panel::{InvInput, InvTarget};
     use nh_world::{BarCommand, ItemActionKind, SlotBinding};
@@ -3100,8 +3103,8 @@ fn bar() -> Vec<Step> {
             g.sent.clear();
             mark(g)
         }),
-        Step::Key(alt('2')),
-        Step::Key(alt('0')),
+        key('2'),
+        key('0'),
         Step::Wait("the count on the prompt line", |g| {
             let line = g.ui.as_ref().and_then(|ui| ui.hud.prompt_line());
             Ok(line.as_deref() == Some("Count: 20"))
@@ -3109,6 +3112,17 @@ fn bar() -> Vec<Step> {
         key('s'),
         Step::Wait("twenty searches by the engine", |g| {
             searched_by_the_engine(g, "20s", 20)
+        }),
+        // Classic's bar: Alt and the digit (slot 3, Search)
+        Step::Wait("the player's turn", idle_command),
+        Step::Call("mark", |g| {
+            g.sent.clear();
+            mark(g)
+        }),
+        Step::Key(alt('3')),
+        Step::Wait("one search from the bar", |g| {
+            let turns = g.world.status.number("time").unwrap_or(0) - marked().turn;
+            Ok(idle_command(g)? && turns >= 1 && command_keys(g) == "s")
         }),
     ]);
     steps.extend(quit());
@@ -4994,6 +5008,7 @@ impl SelfTest {
             "profile-files" => settings_tests::profile_files(),
             "gameplay" => gameplay_tests::gameplay(),
             "chords" => chords_tests::chords(),
+            "counts" => counts_tests::counts(),
             "guide" => guide_tests::guide(),
             "credits" => credits_tests::credits(),
             "rebind" => rebind_tests::rebind(),

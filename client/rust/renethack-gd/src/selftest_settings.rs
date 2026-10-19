@@ -520,7 +520,14 @@ pub(super) fn settings() -> Vec<Step> {
             let p = page(g)?;
             let list = p.control_texts();
             let west = KeyInput::plain(Key::Char('h'));
-            let slot = KeyInput::plain(Key::Char('1'));
+            // Classic's bar is Alt and the digits (its digits count)
+            let slot = KeyInput {
+                mods: nh_world::Mods {
+                    alt: true,
+                    ..nh_world::Mods::default()
+                },
+                ..KeyInput::plain(Key::Char('1'))
+            };
             let entry = |k| p.entry_of(k).and_then(|i| list.get(i));
             Ok(p.section() == Section::Controls
                 && p.controls() == Shown::Keys(KeyProfile::Classic)

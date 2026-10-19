@@ -66,6 +66,25 @@ fn alt(c: char) -> KeyInput {
     }
 }
 
+/// The key the game knows bar slot `i` (0-based) by: Modern's top-row
+/// digit, Classic's Alt and the digit (its digits are NetHack's count).
+pub fn slot_command(profile: KeyProfile, i: usize) -> KeyInput {
+    let digit = crate::action_bar::key_label(i)
+        .chars()
+        .next()
+        .unwrap_or('0');
+    match profile {
+        KeyProfile::Modern => ch(digit),
+        KeyProfile::Classic => alt(digit),
+    }
+}
+
+/// A bar slot's key as NetHack's hints write it ("1", Classic's "M-1"),
+/// for [`bound_hint`].
+pub fn slot_hint(profile: KeyProfile, i: usize) -> String {
+    short_name(&slot_command(profile, i))
+}
+
 /// The eight steps' keys, west first, round by north (as the catalog
 /// lists the moves and the engine's dirchars run).
 pub fn steps(profile: KeyProfile) -> [KeyInput; 8] {
@@ -139,11 +158,8 @@ pub fn commands(profile: KeyProfile, catalog: Option<&Catalog>) -> Vec<Command> 
     if profile == KeyProfile::Modern {
         interface.push((ch('n'), tr!("controls-count-prefix")));
     }
-    for (i, digit) in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
-        .into_iter()
-        .enumerate()
-    {
-        interface.push((ch(digit), tr!("controls-slot", n = i + 1)));
+    for i in 0..crate::action_bar::SLOTS {
+        interface.push((slot_command(profile, i), tr!("controls-slot", n = i + 1)));
     }
     out.extend(interface.into_iter().map(|(key, name)| Command {
         key,
@@ -220,7 +236,7 @@ pub fn fixed(profile: KeyProfile, key: KeyInput) -> Option<String> {
                 return Some(tr!("controls-fixed-run"));
             }
             if let Key::Char('0'..='9') = key.key
-                && m.alt
+                && bare
             {
                 return Some(tr!("controls-fixed-count"));
             }
@@ -331,7 +347,11 @@ mod tests {
                 list.iter().filter(|c| c.group == Group::Movement).count(),
                 8
             );
-            for k in [ch('i'), ch('#'), plain(Key::F(5)), ch('1'), ch('0')] {
+            let slots = [slot_command(profile, 0), slot_command(profile, 9)];
+            for k in [ch('i'), ch('#'), plain(Key::F(5))]
+                .into_iter()
+                .chain(slots)
+            {
                 assert!(list.iter().any(|c| c.key == k), "{profile:?} {k:?}");
             }
             for (i, c) in list.iter().enumerate() {
@@ -342,6 +362,13 @@ mod tests {
                 );
             }
         }
+        // the bar: Modern's digits, Classic's Alt and the digits (its
+        // digits count, as in NetHack)
+        assert_eq!(slot_hint(KeyProfile::Modern, 0), "1");
+        assert_eq!(slot_hint(KeyProfile::Classic, 9), "M-0");
+        assert!(fixed(KeyProfile::Classic, ch('2')).is_some());
+        assert!(fixed(KeyProfile::Classic, alt('2')).is_none());
+        assert!(fixed(KeyProfile::Modern, ch('2')).is_none());
         // n counts in Modern; in Classic it is a step
         assert!(
             commands(KeyProfile::Modern, None)
