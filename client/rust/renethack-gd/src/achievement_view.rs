@@ -24,7 +24,9 @@ use godot::prelude::*;
 use nh_world::achievements::{Achievement, Achievements, Store, Unlock};
 
 use crate::achievement_bake::{self, GAME_DIR};
+use crate::gamepad::{PadButton, PadKind};
 use crate::i18n;
+use crate::pad_view;
 use crate::screens::format_time;
 use crate::theme::{self, Face, Frame, place};
 use crate::tr;
@@ -330,12 +332,21 @@ pub struct Page {
     detail_name: Gd<Label>,
     detail_desc: Gd<Label>,
     detail_when: Gd<Label>,
+    /// The gamepad whose buttons the foot shows (None: the keyboard's
+    /// keys).
+    pad: Option<PadKind>,
 }
 
 impl Page {
     /// Every achievement of `all`, earned as `store` has them; the grid's
     /// medallions as large as the screen (`canvas`) allows.
-    pub fn new(all: &Achievements, store: &Store, queue: &UiQueue, canvas: Vector2) -> Page {
+    pub fn new(
+        all: &Achievements,
+        store: &Store,
+        queue: &UiQueue,
+        canvas: Vector2,
+        pad: Option<PadKind>,
+    ) -> Page {
         let entries: Vec<Entry> = all
             .all()
             .iter()
@@ -452,14 +463,27 @@ impl Page {
 
         let mut foot = HBoxContainer::new_alloc();
         foot.add_theme_constant_override("separation", 18);
-        let mut hint = theme::styled_label(
-            &i18n::whole_parts(&tr!("achievements-hint")),
-            Face::Body,
-            16,
-            theme::TEXT_DIM,
-        );
+        let mut hint: Gd<Control> = match pad {
+            Some(kind) => {
+                use PadButton::*;
+                let parts: [(&[PadButton], String); 2] = [
+                    (&[Up, Down, Left, Right], tr!("hint-choose")),
+                    (&[B], tr!("hint-back")),
+                ];
+                pad_view::buttons_row(kind, &parts, 16).upcast()
+            }
+            None => {
+                let mut l = theme::styled_label(
+                    &i18n::whole_parts(&tr!("achievements-hint")),
+                    Face::Body,
+                    16,
+                    theme::TEXT_DIM,
+                );
+                l.set_vertical_alignment(VerticalAlignment::CENTER);
+                l.upcast()
+            }
+        };
         hint.set_h_size_flags(SizeFlags::EXPAND_FILL);
-        hint.set_vertical_alignment(VerticalAlignment::CENTER);
         foot.add_child(&hint);
         foot.add_child(&theme::button(
             &tr!("achievements-back"),
@@ -479,6 +503,7 @@ impl Page {
             detail_name,
             detail_desc,
             detail_when,
+            pad,
         };
         // the first earned one, else the first
         let first = page
@@ -488,6 +513,11 @@ impl Page {
             .unwrap_or(0);
         page.select(first);
         page
+    }
+
+    /// The gamepad whose buttons the foot shows.
+    pub fn pad(&self) -> Option<PadKind> {
+        self.pad
     }
 
     /// What the screens show.

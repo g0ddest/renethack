@@ -6,10 +6,12 @@
 
 use godot::classes::control::MouseFilter;
 use godot::classes::{
-    Button, CanvasLayer, ColorRect, Control, Label, PanelContainer, VBoxContainer,
+    Button, CanvasLayer, ColorRect, Control, HBoxContainer, Label, PanelContainer, VBoxContainer,
 };
 use godot::prelude::*;
 
+use crate::gamepad::{PadButton, PadKind};
+use crate::pad_view;
 use crate::theme::{self, Face, Frame, place};
 use crate::tr;
 use crate::ui_events::{UiEvent, UiQueue};
@@ -53,6 +55,10 @@ pub struct GameMenu {
     buttons: Vec<(GameMenuPick, Gd<Button>)>,
     about: Gd<Label>,
     hint: Gd<Label>,
+    /// The foot: the keyboard's hint, or a gamepad's buttons (`pad`).
+    foot: Gd<VBoxContainer>,
+    pad: Option<PadKind>,
+    pad_row: Option<Gd<HBoxContainer>>,
     focus: usize,
     focus_look: Gd<godot::classes::StyleBoxFlat>,
 }
@@ -92,8 +98,11 @@ impl GameMenu {
         about.set_autowrap_mode(godot::classes::text_server::AutowrapMode::WORD_SMART);
         about.set_custom_minimum_size(Vector2::new(MENU_W, 0.0));
         col.add_child(&about);
+        let mut foot = VBoxContainer::new_alloc();
+        foot.set_mouse_filter(MouseFilter::IGNORE);
         let hint = theme::styled_label("", Face::Body, 14, theme::TEXT_DIM);
-        col.add_child(&hint);
+        foot.add_child(&hint);
+        col.add_child(&foot);
         panel.add_child(&col);
         root.add_child(&panel);
         let focus_look = {
@@ -112,8 +121,38 @@ impl GameMenu {
             buttons,
             about,
             hint,
+            foot,
+            pad: None,
+            pad_row: None,
             focus: 0,
             focus_look,
+        }
+    }
+
+    /// A gamepad gives the input (its buttons under the menu), or the
+    /// keyboard does (its keys).
+    pub fn set_pad(&mut self, pad: Option<PadKind>) {
+        if self.pad != pad {
+            self.pad = pad;
+            self.show_foot();
+        }
+    }
+
+    fn show_foot(&mut self) {
+        if let Some(mut row) = self.pad_row.take() {
+            row.queue_free();
+        }
+        self.hint.set_visible(self.pad.is_none());
+        if let Some(kind) = self.pad {
+            use PadButton::*;
+            let parts: [(&[PadButton], String); 3] = [
+                (&[Up, Down], tr!("hint-choose")),
+                (&[A], tr!("hint-ok")),
+                (&[B], tr!("hint-back")),
+            ];
+            let row = pad_view::buttons_row(kind, &parts, 15);
+            self.foot.add_child(&row);
+            self.pad_row = Some(row);
         }
     }
 
@@ -130,6 +169,8 @@ impl GameMenu {
         self.about.set_text(&tr!("game-menu-give-up-about"));
         self.hint
             .set_text(&crate::i18n::whole_parts(&tr!("game-menu-hint")));
+        // its words in the language now
+        self.show_foot();
         self.focus = 0;
         self.show_focus();
         self.root.set_visible(true);
@@ -171,6 +212,12 @@ impl GameMenu {
                 b.remove_theme_stylebox_override("normal");
             }
         }
+    }
+
+    /// Every word of the menu as shown (self-tests): its foot the
+    /// keyboard's hint, or a gamepad's buttons and theirs.
+    pub fn shown_words(&self) -> Vec<String> {
+        pad_view::shown_words(&self.panel)
     }
 
     /// The entries' words on screen, the one focused (self-tests).

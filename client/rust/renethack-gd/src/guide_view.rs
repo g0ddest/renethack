@@ -16,6 +16,8 @@ use godot::global::MouseButton;
 use godot::prelude::*;
 use nh_world::Guide;
 
+use crate::gamepad::{PadButton, PadKind};
+use crate::pad_view;
 use crate::theme::{self, Face, Frame, place};
 use crate::tr;
 use crate::ui_events::{UiEvent, UiQueue, push};
@@ -34,7 +36,12 @@ pub struct HintCard {
     panel: Gd<PanelContainer>,
     title: Gd<Label>,
     body: Gd<Label>,
+    /// How it goes: the keyboard's, the mouse's and B's words, or with a
+    /// gamepad (`pad`) its button.
     close: Gd<Label>,
+    foot: Gd<HBoxContainer>,
+    pad: Option<PadKind>,
+    pad_row: Option<Gd<HBoxContainer>>,
     /// The card shown, and for how long; going: its fade's start.
     shown: Option<(Guide, f64)>,
     going: Option<f64>,
@@ -64,9 +71,13 @@ impl HintCard {
         body.set_autowrap_mode(AutowrapMode::WORD_SMART);
         body.set_clip_text(true);
         col.add_child(&body);
+        let mut foot = HBoxContainer::new_alloc();
+        foot.set_mouse_filter(MouseFilter::IGNORE);
+        foot.set_alignment(godot::classes::box_container::AlignmentMode::END);
         let mut close = theme::styled_label("", Face::Body, 14, theme::TEXT_DIM);
         close.set_horizontal_alignment(godot::global::HorizontalAlignment::RIGHT);
-        col.add_child(&close);
+        foot.add_child(&close);
+        col.add_child(&foot);
         for l in [&mut title, &mut body, &mut close] {
             l.set_mouse_filter(MouseFilter::IGNORE);
         }
@@ -78,8 +89,35 @@ impl HintCard {
             title,
             body,
             close,
+            foot,
+            pad: None,
+            pad_row: None,
             shown: None,
             going: None,
+        }
+    }
+
+    /// A gamepad gives the input (B puts the card away), or the keyboard
+    /// and the mouse do. The words follow (`rewrite`).
+    pub fn set_pad(&mut self, pad: Option<PadKind>) {
+        if self.pad == pad {
+            return;
+        }
+        self.pad = pad;
+        self.show_foot();
+    }
+
+    fn show_foot(&mut self) {
+        if let Some(mut row) = self.pad_row.take() {
+            row.queue_free();
+        }
+        self.close.set_text(&tr!("guide-card-close"));
+        self.close.set_visible(self.pad.is_none());
+        if let Some(kind) = self.pad {
+            let parts: [(&[PadButton], String); 1] = [(&[PadButton::B], tr!("hint-close"))];
+            let row = pad_view::buttons_row(kind, &parts, 14);
+            self.foot.add_child(&row);
+            self.pad_row = Some(row);
         }
     }
 
@@ -88,7 +126,7 @@ impl HintCard {
     pub fn show(&mut self, card: Guide, title: &str, body: &str, at: Vector2) {
         self.title.set_text(title);
         self.body.set_text(body);
-        self.close.set_text(&tr!("guide-card-close"));
+        self.show_foot();
         // the words' own height: a wrapped label sizes itself late
         let text_w = CARD_W - 36.0;
         fit_lines(&mut self.title, text_w);
@@ -164,6 +202,13 @@ impl HintCard {
         false
     }
 
+    /// The card up now, shown or held back hidden (not one going).
+    pub fn current(&self) -> Option<Guide> {
+        self.shown
+            .filter(|_| self.going.is_none())
+            .map(|(g, _)| g)
+    }
+
     /// No card, not even one going.
     pub fn idle(&self) -> bool {
         self.shown.is_none()
@@ -179,6 +224,12 @@ impl HintCard {
     /// Come in all the way, not yet going (self-tests: a shot of it).
     pub fn in_full(&self) -> bool {
         self.shown().is_some() && self.shown.is_some_and(|(_, t)| t >= CARD_IN)
+    }
+
+    /// Every word on the card as shown (self-tests: no keyboard's words
+    /// while a gamepad plays).
+    pub fn shown_words(&self) -> Vec<String> {
+        pad_view::shown_words(&self.panel)
     }
 
     /// The card's words on screen (self-tests).
@@ -250,7 +301,12 @@ pub struct QuestPage {
     body: Gd<VBoxContainer>,
     back: Gd<Button>,
     next: Gd<Button>,
+    /// The keys: the keyboard's hint, or a gamepad's buttons (`pad`) in
+    /// its place.
     hint: Gd<Label>,
+    foot: Gd<HBoxContainer>,
+    pad: Option<PadKind>,
+    pad_row: Option<Gd<HBoxContainer>>,
     tags: Gd<Control>,
     step: Option<usize>,
     /// The canvas and the named blocks the step was laid out for, and how
@@ -313,6 +369,9 @@ impl QuestPage {
             back,
             next,
             hint,
+            foot,
+            pad: None,
+            pad_row: None,
             tags,
             step: None,
             laid_for: (Vector2::ZERO, Vec::new()),
@@ -323,6 +382,52 @@ impl QuestPage {
 
     pub fn is_open(&self) -> bool {
         self.step.is_some()
+    }
+
+    /// A gamepad gives the input (its buttons in the foot), or the
+    /// keyboard and the mouse do (their hint).
+    pub fn set_pad(&mut self, pad: Option<PadKind>) {
+        if self.pad != pad {
+            self.pad = pad;
+            self.show_foot();
+        }
+    }
+
+    /// The foot's keys for the step shown: A goes on (or plays), ← back,
+    /// B skips.
+    fn show_foot(&mut self) {
+        if let Some(mut row) = self.pad_row.take() {
+            row.queue_free();
+        }
+        self.hint.set_visible(self.pad.is_none());
+        let (Some(kind), Some(i)) = (self.pad, self.step) else {
+            return;
+        };
+        use PadButton::*;
+        let last = i + 1 == QuestStep::ALL.len();
+        let mut parts: Vec<(&[PadButton], String)> = vec![(
+            &[A],
+            if last {
+                tr!("quest-play")
+            } else {
+                tr!("quest-next")
+            },
+        )];
+        if i > 0 {
+            parts.push((&[Left], tr!("quest-back")));
+        }
+        parts.push((&[B], tr!("quest-skip")));
+        let mut row = pad_view::buttons_row(kind, &parts, 15);
+        row.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        self.foot.add_child(&row);
+        self.foot.move_child(&row, 0);
+        self.pad_row = Some(row);
+    }
+
+    /// Every word of the page as shown, its names of the HUD's blocks too
+    /// (self-tests: no keyboard's words while a gamepad plays).
+    pub fn shown_words(&self) -> Vec<String> {
+        pad_view::shown_words(&self.root)
     }
 
     /// The step shown (self-tests).
@@ -339,6 +444,7 @@ impl QuestPage {
     pub fn close(&mut self) {
         self.step = None;
         self.root.set_visible(false);
+        self.show_foot();
     }
 
     /// A step on or back; past the last, closed. True while open.
@@ -384,6 +490,7 @@ impl QuestPage {
         });
         self.hint
             .set_text(&crate::i18n::whole_parts(&tr!("quest-hint")));
+        self.show_foot();
         // the screen's step lets the HUD show through, named
         self.shade.set_color(Color::from_rgba(
             0.0,

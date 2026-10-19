@@ -8,8 +8,8 @@ use godot::classes::control::MouseFilter;
 use godot::classes::control::SizeFlags;
 use godot::classes::texture_rect::{ExpandMode, StretchMode};
 use godot::classes::{
-    CanvasLayer, ColorRect, Control, HBoxContainer, HFlowContainer, Label, PanelContainer,
-    ShaderMaterial, StyleBoxFlat, TextureRect, VBoxContainer,
+    Button, CanvasLayer, ColorRect, Control, HBoxContainer, HFlowContainer, Label,
+    PanelContainer, RichTextLabel, ShaderMaterial, StyleBoxFlat, TextureRect, VBoxContainer,
 };
 use godot::global::{HorizontalAlignment, VerticalAlignment};
 use godot::prelude::*;
@@ -68,6 +68,89 @@ pub fn medallion(kind: PadKind, b: PadButton) -> Gd<PanelContainer> {
     p
 }
 
+/// Buttons and what they do, in a row: the medallions, then the words,
+/// for each (a page's or a panel's own foot).
+pub fn buttons_row(kind: PadKind, parts: &[(&[PadButton], String)], size: i32) -> Gd<HBoxContainer> {
+    let mut row = HBoxContainer::new_alloc();
+    row.set_mouse_filter(MouseFilter::IGNORE);
+    row.add_theme_constant_override("separation", 16);
+    for (buttons, what) in parts {
+        let mut item = HBoxContainer::new_alloc();
+        item.set_mouse_filter(MouseFilter::IGNORE);
+        item.add_theme_constant_override("separation", 4);
+        for &b in *buttons {
+            item.add_child(&medallion(kind, b));
+        }
+        let mut l = theme::styled_label(what, Face::Body, size, theme::TEXT_DIM);
+        l.set_vertical_alignment(VerticalAlignment::CENTER);
+        item.add_child(&l);
+        row.add_child(&item);
+    }
+    row
+}
+
+/// The meta that marks a control as the keyboard's and the mouse's words
+/// (a hint's keys): hidden while a gamepad gives the input.
+const KEY_WORDS: &str = "key_words";
+
+/// Mark `c` as the keyboard's words, shown now as `pad` says.
+pub fn key_words<T: Inherits<Control>>(c: &Gd<T>, pad: bool) {
+    let mut c = c.clone().upcast::<Control>();
+    c.set_meta(KEY_WORDS, &true.to_variant());
+    c.set_visible(!pad);
+}
+
+/// Under `root`, the keyboard's words hidden while a gamepad gives the
+/// input, shown again when it no longer does.
+pub fn show_key_words<T: Inherits<Node>>(root: &Gd<T>, pad: bool) {
+    let root = root.clone().upcast::<Node>();
+    let found = root
+        .find_children_ex("*")
+        .type_("Control")
+        .owned(false)
+        .done();
+    for c in found.iter_shared() {
+        if c.has_meta(KEY_WORDS)
+            && let Ok(mut c) = c.try_cast::<Control>()
+        {
+            c.set_visible(!pad);
+        }
+    }
+}
+
+/// The words shown under `root` (self-tests: no keyboard's words while a
+/// gamepad plays): every visible label's, button's and rich text's.
+pub fn shown_words<T: Inherits<Node>>(root: &Gd<T>) -> Vec<String> {
+    let root = root.clone().upcast::<Node>();
+    let found = root
+        .find_children_ex("*")
+        .type_("Control")
+        .owned(false)
+        .done();
+    let mut out = Vec::new();
+    for c in found.iter_shared() {
+        let Ok(c) = c.try_cast::<Control>() else {
+            continue;
+        };
+        if !c.is_visible_in_tree() {
+            continue;
+        }
+        let text = if let Ok(l) = c.clone().try_cast::<Label>() {
+            l.get_text().to_string()
+        } else if let Ok(b) = c.clone().try_cast::<Button>() {
+            b.get_text().to_string()
+        } else if let Ok(r) = c.clone().try_cast::<RichTextLabel>() {
+            r.get_parsed_text().to_string()
+        } else {
+            continue;
+        };
+        if !text.trim().is_empty() {
+            out.push(text);
+        }
+    }
+    out
+}
+
 /// The buttons that mean something now, and what.
 pub fn hints(ctx: PadCtx) -> Vec<(Vec<PadButton>, &'static str)> {
     use PadButton::*;
@@ -88,6 +171,34 @@ pub fn hints(ctx: PadCtx) -> Vec<(Vec<PadButton>, &'static str)> {
             (vec![Start], "hint-confirm"),
             (vec![B], "hint-cancel"),
             (vec![Lb, Rb], "hint-page"),
+        ],
+        PadCtx::Menu { any: false } => vec![
+            (vec![Up, Down], "hint-choose"),
+            (vec![A], "hint-ok"),
+            (vec![Lb, Rb], "hint-page"),
+            (vec![B], "hint-cancel"),
+        ],
+        PadCtx::Choice => vec![
+            (vec![Left, Right], "hint-choose"),
+            (vec![A], "hint-answer"),
+            (vec![B], "hint-cancel"),
+        ],
+        PadCtx::Message { .. } => vec![(vec![A], "hint-choose"), (vec![B], "hint-cancel")],
+        PadCtx::Read => vec![
+            (vec![Up, Down], "hint-scroll"),
+            (vec![Lb, Rb], "hint-page"),
+            (vec![B], "hint-close"),
+        ],
+        PadCtx::Palette => vec![
+            (vec![Up, Down], "hint-choose"),
+            (vec![A], "hint-run"),
+            (vec![Lb, Rb], "hint-page"),
+            (vec![B], "hint-cancel"),
+        ],
+        PadCtx::Codex => vec![
+            (vec![Up, Down], "hint-scroll"),
+            (vec![Lb, Rb], "hint-section"),
+            (vec![B], "hint-close"),
         ],
         PadCtx::PanelBrowse => vec![
             (vec![A], "hint-use"),
@@ -148,6 +259,8 @@ pub struct PadView {
     /// over the world right of the log (its rect).
     strip_in: Option<(Option<Rect2>, Rect2)>,
     shown: Option<(PadKind, PadCtx)>,
+    /// The controller last shown (the radial names its trigger).
+    kind: PadKind,
     selected: Option<usize>,
 }
 
@@ -239,6 +352,7 @@ impl PadView {
             strip,
             strip_in: None,
             shown: None,
+            kind: PadKind::default(),
             selected: None,
         }
     }
@@ -274,7 +388,8 @@ impl PadView {
         match sel.and_then(|i| RADIAL.get(i)) {
             Some(e) => {
                 self.title.set_text(&i18n::tr(e.label_key()));
-                self.hint.set_text(&tr!("radial-let-go"));
+                let lt = self.kind.label(crate::gamepad::PadButton::Lt);
+                self.hint.set_text(&tr!("radial-let-go", lt = lt));
             }
             None => {
                 self.title.set_text(&tr!("radial-title"));
@@ -302,6 +417,7 @@ impl PadView {
             self.strip.set_visible(false);
             return;
         };
+        self.kind = kind;
         for (buttons, what) in hints(ctx) {
             let mut item = HBoxContainer::new_alloc();
             item.set_mouse_filter(MouseFilter::IGNORE);
@@ -355,6 +471,12 @@ impl PadView {
         }
     }
 
+    /// The controller and the screen the strip shows the buttons of
+    /// (self-tests).
+    pub fn shown(&self) -> Option<(PadKind, PadCtx)> {
+        self.shown
+    }
+
     /// How high the strip is (0: hidden): the room a dialog keeps for it.
     pub fn strip_height(&self) -> f32 {
         if self.strip.is_visible() {
@@ -393,6 +515,12 @@ mod tests {
             PadCtx::Getpos,
             PadCtx::Direction,
             PadCtx::Menu { any: true },
+            PadCtx::Menu { any: false },
+            PadCtx::Choice,
+            PadCtx::Message { letter: 'y' },
+            PadCtx::Read,
+            PadCtx::Palette,
+            PadCtx::Codex,
             PadCtx::PanelBrowse,
             PadCtx::PanelSelect,
             PadCtx::Other,

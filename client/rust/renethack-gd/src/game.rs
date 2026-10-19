@@ -220,25 +220,39 @@ fn legacy_of(prompt: &Prompt) -> Option<Vec<String>> {
     crate::prologue::is_legacy(&texts).then(|| texts.iter().map(|t| t.to_string()).collect())
 }
 
-/// What the prompt line says while `prompt` waits.
-fn prompt_line(prompt: &Prompt) -> Option<String> {
-    match prompt {
-        Prompt::Key => Some(tr!("prompt-press-key")),
-        Prompt::FreeKey { query, .. } => Some(i18n::engine(EngineKind::Prompt, query).into_owned()),
-        Prompt::MapPause => Some(tr!("prompt-more")),
+/// What the prompt line says while `prompt` waits; with a gamepad (`pad`)
+/// its button, not a key.
+fn prompt_line(prompt: &Prompt, pad: Option<PadKind>) -> Option<String> {
+    let a = pad.map(|k| k.label(PadButton::A));
+    match (prompt, a) {
+        (Prompt::Key, None) => Some(tr!("prompt-press-key")),
+        (Prompt::Key, Some(a)) => Some(tr!("prompt-press-key-pad", a = a)),
+        (Prompt::FreeKey { query, .. }, _) => {
+            Some(i18n::engine(EngineKind::Prompt, query).into_owned())
+        }
+        (Prompt::MapPause, None) => Some(tr!("prompt-more")),
+        (Prompt::MapPause, Some(a)) => Some(tr!("prompt-more-pad", a = a)),
         _ => None,
     }
 }
 
 /// What the prompt line says while getpos waits: what for (the engine's
-/// words), and the keys.
-fn getpos_line(world: &World) -> Option<String> {
+/// words), and the keys, or a gamepad's buttons.
+fn getpos_line(world: &World, pad: Option<PadKind>) -> Option<String> {
     world.getpos.then(|| {
         let goal = match world.getpos_goal.as_deref() {
             Some(g) => i18n::engine(EngineKind::Prompt, g).into_owned(),
             None => tr!("prompt-pick-spot"),
         };
-        tr!("prompt-getpos", goal = goal)
+        match pad {
+            Some(k) => tr!(
+                "prompt-getpos-pad",
+                goal = goal,
+                a = k.label(PadButton::A),
+                b = k.label(PadButton::B)
+            ),
+            None => tr!("prompt-getpos", goal = goal),
+        }
     })
 }
 
@@ -250,8 +264,9 @@ fn held_key(k: Key) -> Key {
     }
 }
 
-/// What the HUD says an order does.
-fn order_text(order: &Order) -> String {
+/// What the HUD says an order does, and that a key (or a gamepad's
+/// button) stops it.
+fn order_text(order: &Order, pad: bool) -> String {
     use nh_world::Arrival;
     let what = match order {
         Order::Walk { arrival, .. } => match arrival {
@@ -265,7 +280,11 @@ fn order_text(order: &Order) -> String {
         Order::Hold { .. } => tr!("order-hold"),
         Order::Rest => tr!("order-rest"),
     };
-    tr!("order-line", what = what)
+    if pad {
+        tr!("order-line-pad", what = what)
+    } else {
+        tr!("order-line", what = what)
+    }
 }
 
 /// What the HUD says about why an order ended.
@@ -509,6 +528,9 @@ pub struct RenethackGame {
     /// A gamepad's state, and its world cursor (None: on the hero).
     pub(crate) pad: Pad,
     pub(crate) pad_cursor: Option<(i32, i32)>,
+    /// The gamepad the words naming keys were last made for (None: the
+    /// keyboard's): the prompt line, the guide's card and page.
+    words_pad: Option<PadKind>,
     /// With RENETHACK_FRAME_STATS: what this frame's work spent, by part
     /// (printed when it is long).
     prof: Option<Vec<(&'static str, f64)>>,
@@ -828,6 +850,7 @@ impl INode for RenethackGame {
             held: None,
             chords: nh_world::Chords::new(),
             screen_stick: (0, 0),
+            words_pad: None,
             hint_watch: nh_world::HintWatch::new(),
             hints_waiting: Vec::new(),
             hint_gone_at: None,
@@ -1120,6 +1143,8 @@ impl INode for RenethackGame {
         self.sync_settings_page();
         self.drive_options();
         self.sync_credits_page();
+        self.sync_achievements_page();
+        self.sync_pad_words();
         parts.input = ms(t);
         self.lap("input", t);
         let t = Instant::now();
@@ -2030,9 +2055,10 @@ impl RenethackGame {
             self.typeahead.clear();
         }
         let catalog = self.catalog.clone();
+        let pad = self.pad.active.then_some(self.pad.kind);
         let line = match prompt {
-            Prompt::Command => getpos_line(&self.world),
-            _ => prompt_line(&prompt),
+            Prompt::Command => getpos_line(&self.world, pad),
+            _ => prompt_line(&prompt, pad),
         };
         let inventory_menu = match &prompt {
             Prompt::Menu { how, items, .. } => {
@@ -2070,6 +2096,9 @@ impl RenethackGame {
                 ) {
                     ui.inventory.close();
                 }
+                // built for the input as it is now (a gamepad's focus, its
+                // words)
+                ui.dialogs.set_pad(pad.is_some());
                 ui.dialogs.open(id, &prompt, catalog.as_deref());
             }
         }
@@ -2695,14 +2724,48 @@ impl RenethackGame {
         }
     }
 
-    /// "Your quest"'s words for `step`, the keys as the player presses them.
+    /// "Your quest"'s words for `step`, the keys as the player presses them,
+    /// or while a gamepad plays its buttons.
     pub(crate) fn quest_words(
         &self,
         step: crate::guide_view::QuestStep,
     ) -> crate::guide_view::QuestWords {
+        use crate::guide_view::QuestStep;
+        let mut words = self.quest_words_keys(step);
+        if !self.pad.active {
+            return words;
+        }
+        let pad = self.pad_args();
+        let padded = |key: &str| i18n::tr_with(key, Some(&pad));
+        match step {
+            QuestStep::Screen => {
+                for (block, w) in words.tags.iter_mut() {
+                    if *block == "action bar" {
+                        *w = padded("quest-tour-bar-pad");
+                    }
+                }
+            }
+            QuestStep::Moves => {
+                words.lines = [
+                    "quest-moves-pad-walk",
+                    "quest-moves-pad-fight",
+                    "quest-moves-pad-cursor",
+                    "quest-moves-pad-more",
+                ]
+                .map(padded)
+                .to_vec();
+            }
+            QuestStep::Goal => {}
+        }
+        words
+    }
+
+    /// "Your quest"'s words for `step`, the keys as the player presses them.
+    fn quest_words_keys(&self, step: crate::guide_view::QuestStep) -> crate::guide_view::QuestWords {
         use crate::guide_view::{QuestStep, QuestWords};
         let map = self.keymap();
         let bound = |hint: &str| crate::rebind::bound_hint(map, hint);
+        let pad = self.pad_args();
         match step {
             QuestStep::Goal => QuestWords {
                 title: tr!("guide-quest-title"),
@@ -2730,7 +2793,7 @@ impl RenethackGame {
                     tr!("quest-moves-keys", steps = self.steps_words()),
                     tr!("quest-moves-fight", fight = bound("F")),
                     tr!("quest-moves-click"),
-                    tr!("quest-moves-pad"),
+                    i18n::tr_with("quest-moves-pad", Some(&pad)),
                     tr!(
                         "quest-moves-more",
                         inventory = bound("i"),
@@ -2865,9 +2928,39 @@ impl RenethackGame {
         });
     }
 
+    /// A gamepad's buttons by name, for words that tell them.
+    fn pad_args(&self) -> i18n::FluentArgs<'static> {
+        let kind = self.pad.kind;
+        let mut args = i18n::FluentArgs::new();
+        for (name, b) in [
+            ("a", PadButton::A),
+            ("b", PadButton::B),
+            ("x", PadButton::X),
+            ("y", PadButton::Y),
+            ("lb", PadButton::Lb),
+            ("rb", PadButton::Rb),
+            ("lt", PadButton::Lt),
+            ("rt", PadButton::Rt),
+            ("start", PadButton::Start),
+            ("back", PadButton::Back),
+        ] {
+            args.set(name, i18n::Arg::fluent(kind.label(b).to_string()));
+        }
+        args
+    }
+
     /// The guide's page `g` in the language now: its title, and its words
-    /// with the keys as the player presses them.
+    /// with the keys as the player presses them, or while a gamepad plays
+    /// its buttons (the pages that name keys have words of their own).
     pub(crate) fn guide_words(&self, g: nh_world::Guide) -> (String, String) {
+        let key = g.key();
+        let pad_key = format!("{key}-pad");
+        if self.pad.active && i18n::has(&pad_key) {
+            return (
+                i18n::tr(&format!("{key}-title")),
+                i18n::tr_with(&pad_key, Some(&self.pad_args())),
+            );
+        }
         let map = self.keymap();
         let bound = |hint: &str| crate::rebind::bound_hint(map, hint);
         let kick = match self.ui_state.profile {
@@ -2888,7 +2981,6 @@ impl RenethackGame {
         ] {
             args.set(name, i18n::Arg::fluent(bound(hint)));
         }
-        let key = g.key();
         (
             i18n::tr(&format!("{key}-title")),
             i18n::tr_with(key, Some(&args)),
@@ -3067,13 +3159,16 @@ impl RenethackGame {
         }
         // the codex: its tabs on the bumpers, as the inventory's filters
         if ui.dialogs.layout_name() == Some("codex") {
-            return PadCtx::PanelBrowse;
+            return PadCtx::Codex;
         }
         if ui.dialogs.is_open() {
             return match ui.dialogs.kind_name() {
+                Some("menu") if !ui.dialogs.menu_picks() => PadCtx::Read,
                 Some("menu") => PadCtx::Menu {
                     any: ui.dialogs.menu_any(),
                 },
+                Some("show") => PadCtx::Read,
+                Some("extcmd") => PadCtx::Palette,
                 Some("choice") => PadCtx::Choice,
                 Some("text") => PadCtx::Text,
                 Some("picker") => PadCtx::Picker {
@@ -3419,8 +3514,15 @@ impl RenethackGame {
         ui.dialogs.set_pad(pad.is_some());
         ui.help.set_pad(pad.is_some());
         ui.inventory.set_pad(pad);
-        // the settings and credits pages show their own
-        let page = matches!(ui.screens.current(), Some("settings" | "credits"));
+        ui.game_menu.set_pad(pad);
+        ui.quest.set_pad(pad);
+        ui.hint.set_pad(pad);
+        // the pages, the game's menu and "Your quest" show their own
+        let page = matches!(
+            ui.screens.current(),
+            Some("settings" | "credits" | "achievements")
+        ) || ui.game_menu.is_open()
+            || ui.quest.is_open();
         ui.pad.show_hints(pad.filter(|_| !page).map(|k| (k, ctx)));
         // the hints go into the panel on top: a dialog's, else the
         // inventory's, which keep room for them
@@ -3743,7 +3845,7 @@ impl RenethackGame {
             .filter(|(_, at)| at.elapsed() < STOP_NOTE)
             .map(|(t, _)| t.clone());
         let line = match self.driver.order() {
-            Some(o) => Some(order_text(o)),
+            Some(o) => Some(order_text(o, self.pad.active)),
             None => note,
         };
         let combat = self.driver.mode() == Mode::Combat;
@@ -4294,7 +4396,8 @@ impl RenethackGame {
             None => (Achievements::built_in(), Default::default()),
         };
         let queue = self.queue.clone();
-        let mut page = crate::achievement_view::Page::new(&all, &store, &queue, canvas);
+        let pad = self.pad.active.then_some(self.pad.kind);
+        let mut page = crate::achievement_view::Page::new(&all, &store, &queue, canvas, pad);
         if let Some(i) = selected {
             page.select(i);
         }
@@ -4529,6 +4632,55 @@ impl RenethackGame {
         if page.key(&k) {
             self.close_credits();
         }
+    }
+
+    /// The achievements page's hints follow the input: a gamepad's or the
+    /// keyboard's.
+    fn sync_achievements_page(&mut self) {
+        let Some(page) = self.achievement_page.as_ref() else {
+            return;
+        };
+        let pad = self.pad.active.then_some(self.pad.kind);
+        if page.pad() != pad {
+            let selected = page.selected();
+            let in_game = self
+                .ui
+                .as_ref()
+                .is_some_and(|ui| ui.screens.achievements_in_game());
+            self.build_achievements(in_game, Some(selected));
+        }
+    }
+
+    /// The words that name keys follow the input: a gamepad's buttons
+    /// while it plays, the keys again once the keyboard or the mouse does
+    /// (the prompt line, the guide's card and "Your quest", and the feet
+    /// of the game's menu, the page and the card).
+    fn sync_pad_words(&mut self) {
+        let pad = self.pad.active.then_some(self.pad.kind);
+        if pad == self.words_pad {
+            return;
+        }
+        self.words_pad = pad;
+        let line = self.pending.as_ref().and_then(|(_, p)| match p {
+            Prompt::Command => getpos_line(&self.world, pad),
+            p => prompt_line(p, pad),
+        });
+        let card = self.ui.as_ref().and_then(|ui| ui.hint.current());
+        let words = card.map(|g| self.guide_words(g));
+        let Some(ui) = self.ui.as_mut() else {
+            return;
+        };
+        ui.game_menu.set_pad(pad);
+        ui.quest.set_pad(pad);
+        ui.hint.set_pad(pad);
+        ui.prologue.set_pad(pad);
+        if line.is_some() {
+            ui.hud.set_prompt_line(line.as_deref());
+        }
+        if let Some((title, body)) = words {
+            ui.hint.rewrite(&title, &body);
+        }
+        self.show_quest();
     }
 
     /// The credits page's hints follow the input: a gamepad's or the
@@ -4868,9 +5020,10 @@ impl RenethackGame {
     fn relang(&mut self) {
         self.bar_key = None;
         self.bar_labels = None;
+        let pad = self.pad.active.then_some(self.pad.kind);
         let line = self.pending.as_ref().and_then(|(_, p)| match p {
-            Prompt::Command => getpos_line(&self.world),
-            p => prompt_line(p),
+            Prompt::Command => getpos_line(&self.world, pad),
+            p => prompt_line(p, pad),
         });
         let catalog = self.catalog.clone();
         let Some(ui) = self.ui.as_mut() else {
@@ -5453,9 +5606,10 @@ mod tests {
             goal: (5, 5),
             arrival: nh_world::Arrival::Stairs('>'),
         };
-        assert!(order_text(&walk).starts_with("Going to the stairs down"));
-        assert!(order_text(&Order::Hold { key: 's' }).starts_with("Holding the key"));
-        assert!(order_text(&Order::Rest).contains("any key stops"));
+        assert!(order_text(&walk, false).starts_with("Going to the stairs down"));
+        assert!(order_text(&Order::Hold { key: 's' }, false).starts_with("Holding the key"));
+        assert!(order_text(&Order::Rest, false).contains("any key stops"));
+        assert!(order_text(&Order::Rest, true).contains("any button stops"));
         assert_eq!(held_key(Key::Char('L')), Key::Char('l'));
         assert_eq!(held_key(Key::Left), Key::Left);
         let a = parse_args(&["--tick=20"]);
@@ -5467,13 +5621,20 @@ mod tests {
 
     #[test]
     fn the_prompt_line_says_what_waits() {
-        assert_eq!(prompt_line(&Prompt::Command), None);
-        assert_eq!(prompt_line(&Prompt::Key).as_deref(), Some("Press a key"));
+        assert_eq!(prompt_line(&Prompt::Command, None), None);
+        assert_eq!(prompt_line(&Prompt::Key, None).as_deref(), Some("Press a key"));
         let free = Prompt::FreeKey {
             query: "In what direction?".into(),
             directions: true,
         };
-        assert_eq!(prompt_line(&free).as_deref(), Some("In what direction?"));
-        assert!(prompt_line(&Prompt::MapPause).unwrap().contains("More"));
+        assert_eq!(prompt_line(&free, None).as_deref(), Some("In what direction?"));
+        assert!(prompt_line(&Prompt::MapPause, None).unwrap().contains("More"));
+        // a gamepad's button, never a key
+        let pad = Some(PadKind::PlayStation);
+        assert_eq!(prompt_line(&Prompt::Key, pad).as_deref(), Some("Press ✕"));
+        assert_eq!(
+            prompt_line(&Prompt::MapPause, pad).as_deref(),
+            Some("--More--  (✕)")
+        );
     }
 }

@@ -286,11 +286,18 @@ pub enum PadCtx {
     },
     /// The help: chapters and their text.
     Help,
+    /// Something to read and close: a text window, an RPG panel, a menu
+    /// of no choice.
+    Read,
+    /// The command palette: its list.
+    Palette,
+    /// The codex: its tabs on the bumpers.
+    Codex,
     /// The inventory panel: browse, a question, or a menu of items.
     PanelBrowse,
     PanelSelect,
     PanelMenu,
-    /// Any other dialog (a text window, the palette, --More--).
+    /// Any other dialog (a message, --More--) or page.
     Other,
 }
 
@@ -515,11 +522,13 @@ impl Pad {
                 if self.bumper_used {
                     return out;
                 }
-                // a bumper alone: filters in the inventory, pages in menus
+                // a bumper alone: filters in the inventory (the codex's
+                // tabs), pages in menus
                 match ctx {
                     PadCtx::PanelBrowse
                     | PadCtx::PanelSelect
                     | PadCtx::PanelMenu
+                    | PadCtx::Codex
                     | PadCtx::Picker { .. } => {
                         out.push(PadOut::Key(KeyInput {
                             key: Key::Tab,
@@ -530,7 +539,11 @@ impl Pad {
                             echo: false,
                         }));
                     }
-                    PadCtx::Menu { .. } | PadCtx::Other | PadCtx::Help => {
+                    PadCtx::Menu { .. }
+                    | PadCtx::Other
+                    | PadCtx::Help
+                    | PadCtx::Read
+                    | PadCtx::Palette => {
                         out.push(PadOut::Key(key(if b == Lb {
                             Key::PageUp
                         } else {

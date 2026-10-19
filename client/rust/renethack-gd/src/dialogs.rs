@@ -33,6 +33,7 @@ use crate::i18n::{self, EngineKind, Lang};
 use crate::journal;
 use crate::journal_view::{self, JournalView};
 use crate::layouts::{self, Genocided, GoneRow, KillRow, OverviewRow, Vanquished};
+use crate::pad_view;
 use crate::pickers::{self, Ask, ObjClass, Pick, Wish};
 use crate::sheet;
 use crate::sheet_view::{self, SheetView};
@@ -216,13 +217,19 @@ fn truncate_bytes(s: &str, max: usize) -> String {
 }
 
 /// A Choice button's label: the usual answers spelled out, others as typed.
-fn choice_label(c: char) -> String {
-    match c {
-        'y' => tr!("dlg-yes"),
-        'n' => tr!("dlg-no"),
-        'q' => tr!("dlg-cancel-q"),
-        'a' => tr!("dlg-all-a"),
-        c => c.to_string(),
+/// An answer's button: its word and its key, or with a gamepad its word
+/// alone.
+fn choice_label(c: char, pad: bool) -> String {
+    match (c, pad) {
+        ('y', false) => tr!("dlg-yes"),
+        ('n', false) => tr!("dlg-no"),
+        ('q', false) => tr!("dlg-cancel-q"),
+        ('a', false) => tr!("dlg-all-a"),
+        ('y', true) => tr!("dlg-yes-pad"),
+        ('n', true) => tr!("dlg-no-pad"),
+        ('q', true) => tr!("dlg-cancel-q-pad"),
+        ('a', true) => tr!("dlg-all-a-pad"),
+        (c, _) => c.to_string(),
     }
 }
 
@@ -1455,7 +1462,8 @@ pub struct Dialogs {
     look: Look,
     open: Option<Open>,
     /// A gamepad gave the last input: dialogs open with a focus, a text
-    /// field with the on-screen keyboard.
+    /// field with the on-screen keyboard; the keyboard's words hidden (the
+    /// pad's hints show instead).
     pad: bool,
     /// Dialogs of every kind built behind the title screen one a frame,
     /// and the frames each has been drawn (the warm-up); the next to build.
@@ -1683,11 +1691,14 @@ impl Dialogs {
         out
     }
 
+    /// The keys' hint under a dialog: the keyboard's words, hidden while a
+    /// gamepad gives the input (its own hints show).
     fn hint(&self, col: &mut Gd<VBoxContainer>, text: &str, width: f32) -> Gd<Label> {
         let text = i18n::whole_parts(text);
         let mut hint = theme::styled_label(&text, Face::Body, 15, theme::TEXT_DIM);
         hint.set_autowrap_mode(AutowrapMode::WORD_SMART);
         hint.set_custom_minimum_size(Vector2::new(width, 0.0));
+        pad_view::key_words(&hint, self.pad);
         col.add_child(&hint);
         hint
     }
@@ -3115,6 +3126,7 @@ impl Dialogs {
         hint.set_autowrap_mode(AutowrapMode::WORD_SMART);
         hint.set_h_size_flags(SizeFlags::EXPAND_FILL);
         hint.set_vertical_alignment(VerticalAlignment::CENTER);
+        pad_view::key_words(&hint, self.pad);
         foot.add_child(&hint);
         for b in buttons {
             foot.add_child(b);
@@ -3833,12 +3845,16 @@ impl Dialogs {
                 }
                 let items: Vec<(String, UiEvent)> = visible
                     .iter()
-                    .map(|&c| (choice_label(c), dialog_ui(req, DialogEvent::Choice(c))))
+                    .map(|&c| {
+                        let ev = dialog_ui(req, DialogEvent::Choice(c));
+                        (choice_label(c, self.pad), ev)
+                    })
                     .collect();
                 let buttons = self.buttons(&mut col, &items);
                 let mut hint = tr!("choice-hint");
                 if let Some(d) = *default {
-                    hint = tr!("choice-hint-default", hint = hint, answer = choice_label(d));
+                    let answer = choice_label(d, false);
+                    hint = tr!("choice-hint-default", hint = hint, answer = answer);
                     if let Some(i) = visible.iter().position(|&c| c == d) {
                         let mut b = buttons[i].clone();
                         b.add_theme_stylebox_override("normal", &self.look.default_button);
@@ -4013,6 +4029,8 @@ impl Dialogs {
         let pad_room = add_pad_room(&panel);
         let own = self.opening_own.take();
         let rpg = std::mem::take(&mut self.opening_rpg);
+        // the palette kept from before shows them as the input is now
+        pad_view::show_key_words(&panel, self.pad);
         self.open = Some(Open {
             req,
             prompt: original.clone(),
@@ -4206,9 +4224,23 @@ impl Dialogs {
         }
     }
 
-    /// Whether a gamepad gives the input now.
+    /// Whether a gamepad gives the input now: the open dialog's keyboard
+    /// words hidden or shown again, its answers named without their keys
+    /// or with them.
     pub fn set_pad(&mut self, on: bool) {
+        if self.pad == on {
+            return;
+        }
         self.pad = on;
+        let Some(open) = self.open.as_mut() else {
+            return;
+        };
+        pad_view::show_key_words(&open.panel, on);
+        if let Kind::Choice { buttons, .. } = &mut open.kind {
+            for (c, b) in buttons.iter_mut() {
+                b.set_text(&choice_label(*c, on));
+            }
+        }
     }
 
     /// The hero rendered in their gear, for the character sheet's
@@ -4227,6 +4259,20 @@ impl Dialogs {
         if let Some(v) = self.sheet.as_mut() {
             v.set_rendered(rendered);
         }
+    }
+
+    /// Every word of the open dialog as shown (self-tests: no keyboard's
+    /// words while a gamepad plays).
+    pub fn shown_words(&self) -> Vec<String> {
+        self.open
+            .as_ref()
+            .map(|o| pad_view::shown_words(&o.panel))
+            .unwrap_or_default()
+    }
+
+    /// The open menu picks something (not one only to read).
+    pub fn menu_picks(&self) -> bool {
+        matches!(self.open.as_ref().map(|o| &o.kind), Some(Kind::Menu(v)) if v.state.how != PickHow::None)
     }
 
     /// The open menu picks several entries.
@@ -5357,12 +5403,15 @@ mod tests {
 
     #[test]
     fn choice_labels_spell_out_the_usual_answers() {
-        assert_eq!(choice_label('y'), "Yes (y)");
-        assert_eq!(choice_label('n'), "No (n)");
-        assert_eq!(choice_label('q'), "Cancel (q)");
-        assert_eq!(choice_label('a'), "All (a)");
-        assert_eq!(choice_label('m'), "m");
-        assert_eq!(choice_label('?'), "?");
+        assert_eq!(choice_label('y', false), "Yes (y)");
+        assert_eq!(choice_label('n', false), "No (n)");
+        assert_eq!(choice_label('q', false), "Cancel (q)");
+        assert_eq!(choice_label('a', false), "All (a)");
+        assert_eq!(choice_label('m', false), "m");
+        assert_eq!(choice_label('?', false), "?");
+        // a gamepad has no letters to press
+        assert_eq!(choice_label('y', true), "Yes");
+        assert_eq!(choice_label('n', true), "No");
     }
 
     fn entry(selectable: bool, text: &str, attr: i32) -> MenuEntry {

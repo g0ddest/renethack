@@ -76,6 +76,8 @@ mod journal_tests;
 mod layouts_tests;
 #[path = "selftest_pad_screens.rs"]
 mod pad_screens_tests;
+#[path = "selftest_pad_words.rs"]
+mod pad_words_tests;
 #[path = "selftest_passing.rs"]
 mod passing_tests;
 #[path = "selftest_polyself.rs"]
@@ -5018,6 +5020,7 @@ impl SelfTest {
             "give-up" => give_up_tests::give_up(),
             "hud-tips" => tips_tests::hud_tips(),
             "pad-screens" => pad_screens_tests::pad_screens(),
+            "pad-words" => pad_words_tests::pad_words(),
             "skills" => skills_tests::skills(),
             "journal" => journal_tests::journal(),
             "codex" => codex_tests::codex(),

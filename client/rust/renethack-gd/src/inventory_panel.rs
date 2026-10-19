@@ -1413,6 +1413,7 @@ pub struct InventoryPanel {
     ctx_rows: Gd<VBoxContainer>,
     count_box: Gd<PanelContainer>,
     count_label: Gd<Label>,
+    count_hint: Gd<Label>,
     /// AC, gold and burden, from the HUD's status.
     status: (Option<String>, Option<String>, Option<String>),
     /// A gamepad plays: the focus is always somewhere.
@@ -1712,13 +1713,12 @@ impl InventoryPanel {
         head_right.add_child(&ac_chip);
         let gold_chip = chip("");
         head_right.add_child(&gold_chip);
+        // their keys follow the input (`refresh`)
         let mut confirm = theme::button("", &queue, UiEvent::Inventory(InvInput::Confirm));
-        i18n::text(&confirm, "inv-confirm");
         confirm.add_theme_stylebox_override("normal", &theme::default_button_style());
         confirm.set_visible(false);
         head_right.add_child(&confirm);
         let mut cancel = theme::button("", &queue, UiEvent::Inventory(InvInput::Cancel));
-        i18n::text(&cancel, "inv-cancel");
         cancel.set_visible(false);
         head_right.add_child(&cancel);
         let mut close = theme::button("✕", &queue, UiEvent::Inventory(InvInput::Close));
@@ -2040,7 +2040,6 @@ impl InventoryPanel {
         count_label.set_custom_minimum_size(Vector2::new(300.0, 0.0));
         count_col.add_child(&count_label);
         let mut count_hint = theme::styled_label("", Face::Body, 14, theme::TEXT_DIM);
-        i18n::text(&count_hint, "inv-count-hint");
         count_hint.set_horizontal_alignment(HorizontalAlignment::CENTER);
         count_hint.set_autowrap_mode(AutowrapMode::WORD_SMART);
         count_col.add_child(&count_hint);
@@ -2106,6 +2105,7 @@ impl InventoryPanel {
             ctx_rows,
             count_box,
             count_label,
+            count_hint,
             status: (None, None, None),
             pad: false,
             pad_kind: None,
@@ -3709,6 +3709,16 @@ impl InventoryPanel {
         self.subtitle.set_offset(Side::LEFT, PAD + 4.0 + tw + 24.0);
         self.hint.set_text(&i18n::whole_parts(&hint));
         let menu = matches!(self.mode, Mode::Menu { .. });
+        // the buttons' keys: a gamepad's, or the keyboard's
+        let (confirm, cancel) = match self.pad_kind {
+            Some(kind) => (
+                tr!("inv-confirm-pad", start = kind.label(PadButton::Start)),
+                tr!("inv-cancel-pad", b = kind.label(PadButton::B)),
+            ),
+            None => (tr!("inv-confirm"), tr!("inv-cancel")),
+        };
+        self.confirm.set_text(&confirm);
+        self.cancel.set_text(&cancel);
         self.confirm.set_visible(
             menu && matches!(&self.mode, Mode::Menu { state, .. } if state.how == PickHow::Any),
         );
@@ -3742,6 +3752,14 @@ impl InventoryPanel {
                 let verb = i18n::tr(key);
                 self.count_label
                     .set_text(&tr!("inv-count", verb = verb, value = v, most = max));
+                self.count_hint.set_text(&match self.pad_kind {
+                    Some(kind) => tr!(
+                        "inv-count-hint-pad",
+                        a = kind.label(PadButton::A),
+                        b = kind.label(PadButton::B)
+                    ),
+                    None => tr!("inv-count-hint"),
+                });
                 self.count_box.reset_size();
                 let view = self.root.get_viewport_rect().size;
                 let size = self.count_box.get_combined_minimum_size();

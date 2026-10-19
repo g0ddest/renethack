@@ -17,6 +17,7 @@ use godot::classes::{
 use godot::global::HorizontalAlignment;
 use godot::prelude::*;
 
+use crate::gamepad::{PadButton, PadKind};
 use crate::prologue::{Beat, Run};
 use crate::theme::{self, Face};
 use crate::tr;
@@ -42,7 +43,10 @@ pub struct PrologueView {
     /// The lines laid out now: each label and the range of the text's
     /// characters it holds.
     lines: Vec<(Gd<Label>, usize, usize)>,
+    /// The keys' note: the keyboard's and A's, or a gamepad's alone
+    /// (`pad`).
     hint: Gd<Label>,
+    pad: Option<PadKind>,
     /// The dark right behind the words, and their widest line's width.
     plate: Gd<NinePatchRect>,
     widest: f32,
@@ -100,6 +104,7 @@ impl PrologueView {
             words,
             lines: Vec::new(),
             hint,
+            pad: None,
             plate,
             widest: 0.0,
             laid: None,
@@ -128,8 +133,33 @@ impl PrologueView {
 
     /// The text in the language now (after a switch).
     pub fn relang(&mut self) {
-        self.hint.set_text(&tr!("prologue-hint"));
+        self.show_hint();
         self.laid = None;
+    }
+
+    /// A gamepad gives the input (the note names its buttons), or the
+    /// keyboard does.
+    pub fn set_pad(&mut self, pad: Option<PadKind>) {
+        if self.pad != pad {
+            self.pad = pad;
+            self.show_hint();
+        }
+    }
+
+    fn show_hint(&mut self) {
+        self.hint.set_text(&match self.pad {
+            Some(k) => tr!(
+                "prologue-hint-pad",
+                a = k.label(PadButton::A),
+                b = k.label(PadButton::B)
+            ),
+            None => tr!("prologue-hint"),
+        });
+    }
+
+    /// The keys' note as shown (self-tests).
+    pub fn hint_words(&self) -> String {
+        self.hint.get_text().to_string()
     }
 
     /// Show the run as it is now: its beat's words as far as they have

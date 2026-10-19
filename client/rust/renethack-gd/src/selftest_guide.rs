@@ -509,11 +509,18 @@ pub(super) fn guide() -> Vec<Step> {
         Step::Wait("Your quest to read again", |g| {
             let ui = g.ui.as_ref().ok_or("no UI")?;
             let text = ui.help.shown_text();
+            // moving and fighting for the input the player last used: the
+            // gamepad put the door's card away
+            let moves = if g.pad.active {
+                tr!("quest-moves-pad-walk")
+            } else {
+                tr!("quest-moves-click")
+            };
             Ok([
                 tr!("guide-quest"),
                 tr!("quest-screen-title"),
                 tr!("quest-tour-log"),
-                tr!("quest-moves-click"),
+                moves,
             ]
             .iter()
             .all(|w| text.contains(w.as_str())))
