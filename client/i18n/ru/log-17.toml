@@ -22,11 +22,11 @@ ru = "Вы не можете им пользоваться, пока оно на
 
 [e61bcfa1d5f4]
 en = "Yecch!  Your %s has more gunk on it!"
-ru = "Фу!  На {1:gender|вашем|вашей|вашем|ваших} {1:loc} стало ещё больше липкой гадости!"
+ru = "Фу! На {1:gender|вашем|вашей|вашем|ваших} {1:loc} стало ещё больше липкой гадости!"
 
 [e28921bd7cbe]
 en = "Yecch!  Your %s now has gunk on it!"
-ru = "Фу!  Теперь на {1:gender|вашем|вашей|вашем|ваших} {1:loc} липкая гадость!"
+ru = "Фу! Теперь на {1:gender|вашем|вашей|вашем|ваших} {1:loc} липкая гадость!"
 
 [c0894fcca491]
 en = "You push your blindfold cock-eyed."
@@ -90,39 +90,39 @@ ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} и {2} и так чист
 
 [3160db4aa3da]
 en = "You barely hear a voice say, \"%s, Jim.\""
-ru = "Вы едва слышите чей-то голос: «{1:cap}, Джим.»"
+ru = "Вы едва слышите чей-то голос: «{1:cap}, Джим»."
 
 [b7f1be7a4ca3]
 en = "You barely hear a voice say, \"They're dead, Jim.\""
-ru = "Вы едва слышите чей-то голос: «Они мертвы, Джим.»"
+ru = "Вы едва слышите чей-то голос: «Они мертвы, Джим»."
 
 [de3526b4dd61]
 en = "You barely hear a voice say, \"You're both stoned, Jim.\""
-ru = "Вы едва слышите чей-то голос: «Вы оба окаменели, Джим.»"
+ru = "Вы едва слышите чей-то голос: «Вы оба окаменели, Джим»."
 
 [5fdbcfc15c3f]
 en = "You dream that you hear a voice say, \"%s, Jim.\""
-ru = "Вам снится, что вы слышите чей-то голос: «{1:cap}, Джим.»"
+ru = "Вам снится, что вы слышите чей-то голос: «{1:cap}, Джим»."
 
 [197d0f4fbd8b]
 en = "You dream that you hear a voice say, \"They're dead, Jim.\""
-ru = "Вам снится, что вы слышите чей-то голос: «Они мертвы, Джим.»"
+ru = "Вам снится, что вы слышите чей-то голос: «Они мертвы, Джим»."
 
 [e31678b81f72]
 en = "You dream that you hear a voice say, \"You're both stoned, Jim.\""
-ru = "Вам снится, что вы слышите чей-то голос: «Вы оба окаменели, Джим.»"
+ru = "Вам снится, что вы слышите чей-то голос: «Вы оба окаменели, Джим»."
 
 [d02283ba0b14]
 en = "You hear a voice say, \"%s, Jim.\""
-ru = "Вы слышите чей-то голос: «{1:cap}, Джим.»"
+ru = "Вы слышите чей-то голос: «{1:cap}, Джим»."
 
 [4455766178e2]
 en = "You hear a voice say, \"They're dead, Jim.\""
-ru = "Вы слышите чей-то голос: «Они мертвы, Джим.»"
+ru = "Вы слышите чей-то голос: «Они мертвы, Джим»."
 
 [a63fd95470ee]
 en = "You hear a voice say, \"You're both stoned, Jim.\""
-ru = "Вы слышите чей-то голос: «Вы оба окаменели, Джим.»"
+ru = "Вы слышите чей-то голос: «Вы оба окаменели, Джим»."
 
 [081db4b268ff]
 en = "%s's dead"
@@ -314,27 +314,27 @@ ru = "Невидимый монстр, должно быть, перемести
 
 [9ba399aa97e5]
 en = "You barely hear a hollow sound.  This must be a secret door!"
-ru = "Вы едва слышите гулкий звук.  Должно быть, это потайная дверь!"
+ru = "Вы едва слышите гулкий звук. Должно быть, это потайная дверь!"
 
 [14b72161c6fd]
 en = "You dream that you hear a hollow sound.  This must be a secret door!"
-ru = "Вам снится, что вы слышите гулкий звук.  Должно быть, это потайная дверь!"
+ru = "Вам снится, что вы слышите гулкий звук. Должно быть, это потайная дверь!"
 
 [1a574c70d80c]
 en = "You hear a hollow sound.  This must be a secret door!"
-ru = "Вы слышите гулкий звук.  Должно быть, это потайная дверь!"
+ru = "Вы слышите гулкий звук. Должно быть, это потайная дверь!"
 
 [f4d441545b73]
 en = "You barely hear a hollow sound.  This must be a secret passage!"
-ru = "Вы едва слышите гулкий звук.  Должно быть, это потайной проход!"
+ru = "Вы едва слышите гулкий звук. Должно быть, это потайной проход!"
 
 [71f7366f3b17]
 en = "You dream that you hear a hollow sound.  This must be a secret passage!"
-ru = "Вам снится, что вы слышите гулкий звук.  Должно быть, это потайной проход!"
+ru = "Вам снится, что вы слышите гулкий звук. Должно быть, это потайной проход!"
 
 [728b81a878d2]
 en = "You hear a hollow sound.  This must be a secret passage!"
-ru = "Вы слышите гулкий звук.  Должно быть, это потайной проход!"
+ru = "Вы слышите гулкий звук. Должно быть, это потайной проход!"
 
 [415e6e2ad78c]
 en = "You hear nothing special."
@@ -458,7 +458,7 @@ ru = "Вы не можете взять на поводок ещё одного 
 
 [79ad8eb08673]
 en = "Leash yourself?  Very funny..."
-ru = "Взять на поводок себя?  Очень смешно..."
+ru = "Взять на поводок себя? Очень смешно..."
 
 [e4b3997bd651]
 en = "There is no creature there."
@@ -582,11 +582,11 @@ ru = "Вы на миг цепенеете под собственным взгл
 
 [88be9ad5cce7]
 en = "Yow!  The %s stares back!"
-ru = "Ого!  {1:cap} {1:num|смотрит|смотрят} на вас в ответ!"
+ru = "Ого! {1:cap} {1:num|смотрит|смотрят} на вас в ответ!"
 
 [fa57227ba647]
 en = "Yikes!  You've frozen yourself!"
-ru = "Ой!  Вы сковали {hero:gender|самого|саму} себя!"
+ru = "Ой! Вы сковали {hero:gender|самого|саму} себя!"
 
 [2421f9973082]
 en = "You don't have a reflection."
@@ -594,7 +594,7 @@ ru = "У вас нет отражения."
 
 [3fc6fbc5a736]
 en = "Huh?  That doesn't look like you!"
-ru = "А?  Это на вас не похоже!"
+ru = "А? Это на вас не похоже!"
 
 [1ee5f17da833]
 en = "You look %s."
@@ -794,11 +794,11 @@ ru = "В {2:loc} всего {1} {1:plural|свеча|свечи|свечей}."
 
 [53b1d25a67ba]
 en = "It is lit.  %s shines dimly."
-ru = "Она зажжена.  {1:cap} {1:num|светит|светят} тускло."
+ru = "Она зажжена. {1:cap} {1:num|светит|светят} тускло."
 
 [189dff933c4b]
 en = "They are lit.  %s shines dimly."
-ru = "Они зажжены.  {1:cap} {1:num|светит|светят} тускло."
+ru = "Они зажжены. {1:cap} {1:num|светит|светят} тускло."
 
 [93842815ffa9]
 en = "%s's candles burn brightly!"
@@ -982,11 +982,11 @@ ru = "Вы поджигаете зелье.{1:skip}"
 
 [296f23fc51b3]
 en = "You light %spotion.  It gives off a dim light."
-ru = "Вы поджигаете зелье.  Оно испускает тусклый свет.{1:skip}"
+ru = "Вы поджигаете зелье. Оно испускает тусклый свет.{1:skip}"
 
 [11ab800f654d]
 en = "\"That's in addition to the cost of the potion, of course.\""
-ru = "«Это, разумеется, сверх стоимости самого зелья.»"
+ru = "«Это, разумеется, сверх стоимости самого зелья»."
 
 [87504f0f98a5]
 en = "You aren't able to rub anything without hands."
@@ -1067,7 +1067,7 @@ ru = "{1} не {1:num|умеет|умеют} прыгать на месте."
 
 [543ff3b0f2d6]
 en = "You rip yourself free of the bear trap!  Ouch!"
-ru = "Вы вырываетесь из медвежьего капкана!  Ой!"
+ru = "Вы вырываетесь из медвежьего капкана! Ой!"
 
 [4b5604b96724]
 en = "You leap from the pit!"
@@ -1125,7 +1125,7 @@ ru = "Консервировать {1:acc} без перчаток — роко�
 
 [1fedebbf8c44]
 en = "\"Yes...  But War does not preserve its enemies...\""
-ru = "«Да...  Но Война не консервирует своих врагов...»"
+ru = "«Да... Но Война не консервирует своих врагов...»"
 
 [f7195a113917]
 en = "The corpse evades your grasp."

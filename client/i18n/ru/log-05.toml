@@ -186,7 +186,7 @@ ru = "Волшебные стрелы отскакивают!"
 
 [31f1dd8bf48a]
 en = "Idiot!  You've shot yourself!"
-ru = "{hero:gender|Идиот|Идиотка}!  Вы подстрелили себя!"
+ru = "{hero:gender|Идиот|Идиотка}! Вы подстрелили себя!"
 
 [599ffd1826fa]
 en = "You don't feel sleepy!"

@@ -35,11 +35,11 @@ ru = "Какое улётное ощущение!"
 
 [ea24f8e6e00a]
 en = "Huh, What?  Where am I?"
-ru = "А?  Что?  Где я?"
+ru = "А? Что? Где я?"
 
 [4ba7512cb58b]
 en = "Ulch!  That potion tasted foul!"
-ru = "Тьфу!  Какое мерзкое зелье!"
+ru = "Тьфу! Какое мерзкое зелье!"
 
 [2ee888fc7ecd]
 en = "Your quickness feels very natural."
@@ -115,11 +115,11 @@ ru = "Вам немного лучше."
 
 [5248f035eb7b]
 en = "You dream that you feel cured.  What a relief!"
-ru = "Вам снится, что вы исцелились.  Какое облегчение!"
+ru = "Вам снится, что вы исцелились. Какое облегчение!"
 
 [d297daeb3074]
 en = "You feel cured.  What a relief!"
-ru = "Вы исцелились.  Какое облегчение!"
+ru = "Вы исцелились. Какое облегчение!"
 
 [0987dba0350e]
 en = "%s looks sound and hale again."
@@ -143,7 +143,7 @@ ru = "Пары безвредно проходят мимо вас."
 
 [cf46f4288736]
 en = "Ulch!  That potion smells terrible!"
-ru = "Тьфу!  Это зелье ужасно пахнет!"
+ru = "Тьфу! Это зелье ужасно пахнет!"
 
 [87517788e17d]
 en = "You have a momentary vision."
@@ -203,7 +203,7 @@ ru = "Что-то происходит."
 
 [81624dc6f6c7]
 en = "Far out!  Everything is all cosmic again!"
-ru = "Улёт!  Всё снова космическое!"
+ru = "Улёт! Всё снова космическое!"
 
 [851aec870e19]
 en = "You smell acrid fumes."
@@ -211,7 +211,7 @@ ru = "Вы чувствуете едкий запах."
 
 [f3bb99aef565]
 en = "\"I am in your debt.  I will grant one wish!\""
-ru = "«Я в долгу перед вами.  Я исполню одно ваше желание!»"
+ru = "«Я в долгу перед вами. Я исполню одно ваше желание!»"
 
 [9fc96e6d17c8]
 en = "\"Thank you for freeing me!\""
@@ -231,7 +231,7 @@ ru = "Ваши {1} наливаются новой силой."
 
 [ab6ef56c65da]
 en = "Oh, bummer!  Everything is dark!  Help!"
-ru = "Облом!  Всё темно!  Помогите!"
+ru = "Облом! Всё темно! Помогите!"
 
 [fb7a94d3963a]
 en = "A cloud of darkness falls upon you."
@@ -263,7 +263,7 @@ ru = "А вы знаете, что живёт в этой воде?"
 
 [d513d944edfc]
 en = "Ulch!  This makes you feel mediocre!"
-ru = "Тьфу!  Вы чувствуете себя посредственно!"
+ru = "Тьфу! Вы чувствуете себя посредственно!"
 
 [1d272e5d4a0b]
 en = "You perceive yourself..."
@@ -355,7 +355,7 @@ ru = "Вам одиноко."
 
 [90919eb34435]
 en = "Yecch!  This stuff tastes like poison."
-ru = "Фу!  На вкус как яд."
+ru = "Фу! На вкус как яд."
 
 [c95cfb42e2d8]
 en = "(But in fact it was mildly stale %s.)"
@@ -439,7 +439,7 @@ ru = "Вы чувствуете гибкость!"
 
 [21bb0acd5817]
 en = "Wow!  This makes you feel great!"
-ru = "Ух ты!  Вы чувствуете себя отлично!"
+ru = "Ух ты! Вы чувствуете себя отлично!"
 
 [f83816089afd]
 en = "Your skin itches."
@@ -671,7 +671,7 @@ ru = "Вы чувствуете себя гибче."
 
 [cc976a1a821b]
 en = "BOOM!  They explode!"
-ru = "БАБАХ!  Они взрываются!"
+ru = "БАБАХ! Они взрываются!"
 
 [a7ea0c00300f]
 en = "They explode!"
@@ -919,27 +919,27 @@ ru = "Теперь всё выглядит ТАКИМ скучным."
 
 [14204d1db20d]
 en = "Oh wow!  Everything feels so cosmic!"
-ru = "Ух ты!  Всё на ощупь такое космическое!"
+ru = "Ух ты! Всё на ощупь такое космическое!"
 
 [07351bd2fa70]
 en = "Oh wow!  Everything looks so cosmic!"
-ru = "Ух ты!  Всё выглядит таким космическим!"
+ru = "Ух ты! Всё выглядит таким космическим!"
 
 [ee7503a50d59]
 en = "Far out, man!  You can see right through yourself."
-ru = "Улёт, чувак!  Вы видите себя насквозь."
+ru = "Улёт, чувак! Вы видите себя насквозь."
 
 [b68d32304535]
 en = "Far out, man!  You can't see yourself."
-ru = "Улёт, чувак!  Вы себя не видите."
+ru = "Улёт, чувак! Вы себя не видите."
 
 [4cb41c9bd137]
 en = "Gee!  All of a sudden, you can see right through yourself."
-ru = "Ого!  Внезапно вы видите себя насквозь."
+ru = "Ого! Внезапно вы видите себя насквозь."
 
 [750fa152699e]
 en = "Gee!  All of a sudden, you can't see yourself."
-ru = "Ого!  Внезапно вы перестаёте себя видеть."
+ru = "Ого! Внезапно вы перестаёте себя видеть."
 
 [5e3f3d1099a8]
 en = "As you open the bottle, something emerges."
@@ -959,35 +959,35 @@ ru = "На миг у вас возникает необычное чувство
 
 [c53ee2ce4f58]
 en = "Wow!  This makes you feel better!"
-ru = "Ух ты!  Вам становится лучше!"
+ru = "Ух ты! Вам становится лучше!"
 
 [ccc3e2e7c24c]
 en = "Wow!  This makes you feel good!"
-ru = "Ух ты!  Вам становится хорошо!"
+ru = "Ух ты! Вам становится хорошо!"
 
 [adb491bdfa89]
 en = "Ooph!  This tastes like dandelion wine!"
-ru = "Ух!  На вкус как одуванчиковое вино!"
+ru = "Ух! На вкус как одуванчиковое вино!"
 
 [047281758c6c]
 en = "Ooph!  This tastes like liquid fire!"
-ru = "Ух!  На вкус как жидкий огонь!"
+ru = "Ух! На вкус как жидкий огонь!"
 
 [83809a136e6c]
 en = "Ooph!  This tastes like watered down dandelion wine!"
-ru = "Ух!  На вкус как разбавленное одуванчиковое вино!"
+ru = "Ух! На вкус как разбавленное одуванчиковое вино!"
 
 [3b8f33ded347]
 en = "Ooph!  This tastes like watered down liquid fire!"
-ru = "Ух!  На вкус как разбавленный жидкий огонь!"
+ru = "Ух! На вкус как разбавленный жидкий огонь!"
 
 [a314f25d1cd7]
 en = "Yecch!  This tastes overripe."
-ru = "Фу!  На вкус как перезрелое."
+ru = "Фу! На вкус как перезрелое."
 
 [5a8ae5798f29]
 en = "Yecch!  This tastes rotten."
-ru = "Фу!  На вкус как гнилое."
+ru = "Фу! На вкус как гнилое."
 
 [db4140da9385]
 en = "This tastes like 10%% real %s all-natural beverage."

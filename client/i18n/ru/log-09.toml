@@ -58,11 +58,11 @@ ru = "На миг вы цепенеете."
 
 [3bb5d5a4c882]
 en = "You break %s.  That's bad luck!"
-ru = "Вы разбиваете {1:acc:own}.  Удачи не видать!"
+ru = "Вы разбиваете {1:acc:own}. Удачи не видать!"
 
 [fddeb10b3606]
 en = "You succeed in destroying %s.  Congratulations!"
-ru = "Вам удаётся уничтожить {1:acc:own}.  Поздравляем!"
+ru = "Вам удаётся уничтожить {1:acc:own}. Поздравляем!"
 
 [8d91b279f675]
 en = "You hit %s with %s."
@@ -162,7 +162,7 @@ ru = "Вас обдаёт {1:ins}, но это, похоже, безвредно
 
 [ed8c576a05bd]
 en = "You're covered in %s!  It burns!"
-ru = "Вас обдаёт {1:ins}!  Жжётся!"
+ru = "Вас обдаёт {1:ins}! Жжётся!"
 
 [8497cdaeb498]
 en = "%s is covered in %s, but it seems harmless."
@@ -194,7 +194,7 @@ ru = "На вас это не действует."
 
 [382e586792b1]
 en = "Wait!  There's a hidden monster there!"
-ru = "Стойте!  Там прячется монстр!"
+ru = "Стойте! Там прячется монстр!"
 
 [24ac80c358e7]
 en = "%s blinds you!"
@@ -406,7 +406,7 @@ ru = "{1}, кажется, {1:num|корчит|корчат} гримасу."
 
 [3183d2fa1874]
 en = "%s hits!  (I hope you don't mind.)"
-ru = "{1} {1:num|бьёт|бьют}!  (Надеюсь, вы не против.)"
+ru = "{1} {1:num|бьёт|бьют}! (Надеюсь, вы не против.)"
 
 [6bed809449a3]
 en = "\"Burrrrp!\""
@@ -586,11 +586,11 @@ ru = "{1:gender|Этот|Эта|Это|Эти} {1} — {2}!"
 
 [479f1702ae99]
 en = "Wait!  That %s is really %s!"
-ru = "Стойте!  {1:gender|Этот|Эта|Это|Эти} {1} на самом деле — {2}!"
+ru = "Стойте! {1:gender|Этот|Эта|Это|Эти} {1} на самом деле — {2}!"
 
 [3e41e6bad358]
 en = "Wait!  That's %s!"
-ru = "Стойте!  Это {1}!"
+ru = "Стойте! Это {1}!"
 
 [fbe084b71728]
 en = "Your %s stop tingling."
@@ -674,7 +674,7 @@ ru = "{1} {1:num|посмеивается|посмеиваются}."
 
 [77a4076525ce]
 en = "\"Doc, I can't help you unless you cooperate.\""
-ru = "«Док, я не смогу вам помочь, если вы не пойдёте мне навстречу.»"
+ru = "«Док, я не смогу вам помочь, если вы не пойдёте мне навстречу»."
 
 [aa04feae63e2]
 en = "You touch %s."
@@ -702,19 +702,19 @@ ru = "У {1:gen} оружие разлетается вдребезги от с�
 
 [c05ca407a876]
 en = "Splat!  You hit %s with a petrifying egg!"
-ru = "Шмяк!  Вы попадаете в {1:acc} окаменяющим яйцом!"
+ru = "Шмяк! Вы попадаете в {1:acc} окаменяющим яйцом!"
 
 [992c294b1647]
 en = "Splat!  You hit %s with some petrifying eggs!"
-ru = "Шмяк!  Вы попадаете в {1:acc} окаменяющими яйцами!"
+ru = "Шмяк! Вы попадаете в {1:acc} окаменяющими яйцами!"
 
 [7c7492e2323f]
 en = "Splat!  You hit %s with the %s egg!"
-ru = "Шмяк!  Вы попадаете в {1:acc} яйцом {2:gen}!"
+ru = "Шмяк! Вы попадаете в {1:acc} яйцом {2:gen}!"
 
 [2a1be54da8fc]
 en = "Splat!  You hit %s with the %s eggs!"
-ru = "Шмяк!  Вы попадаете в {1:acc} яйцами {2:gen}!"
+ru = "Шмяк! Вы попадаете в {1:acc} яйцами {2:gen}!"
 
 [ab0aa07332aa]
 en = "You hit %s with %s egg."
@@ -862,35 +862,35 @@ ru = "Вы соскальзываете со скользкого плаща {1:
 
 [2b66480c0ddc]
 en = "You charm %s.  %s gladly hands over her possessions."
-ru = "Вы очаровываете {1:acc}.  {1:gender|Он|Она|Оно|Они}{2:skip} охотно {1:num|отдаёт|отдают} вам всё своё имущество."
+ru = "Вы очаровываете {1:acc}. {1:gender|Он|Она|Оно|Они}{2:skip} охотно {1:num|отдаёт|отдают} вам всё своё имущество."
 
 [8980329a2221]
 en = "You charm %s.  %s gladly hands over his possessions."
-ru = "Вы очаровываете {1:acc}.  {1:gender|Он|Она|Оно|Они}{2:skip} охотно {1:num|отдаёт|отдают} вам всё своё имущество."
+ru = "Вы очаровываете {1:acc}. {1:gender|Он|Она|Оно|Они}{2:skip} охотно {1:num|отдаёт|отдают} вам всё своё имущество."
 
 [44bfbf10f918]
 en = "You charm %s.  %s gladly hands over its possessions."
-ru = "Вы очаровываете {1:acc}.  {1:gender|Он|Она|Оно|Они}{2:skip} охотно {1:num|отдаёт|отдают} вам всё своё имущество."
+ru = "Вы очаровываете {1:acc}. {1:gender|Он|Она|Оно|Они}{2:skip} охотно {1:num|отдаёт|отдают} вам всё своё имущество."
 
 [52f8e94da04e]
 en = "You charm %s.  %s gladly hands over most of her possessions."
-ru = "Вы очаровываете {1:acc}.  {1:gender|Он|Она|Оно|Они}{2:skip} охотно {1:num|отдаёт|отдают} вам почти всё своё имущество."
+ru = "Вы очаровываете {1:acc}. {1:gender|Он|Она|Оно|Они}{2:skip} охотно {1:num|отдаёт|отдают} вам почти всё своё имущество."
 
 [86f471e2fbf8]
 en = "You charm %s.  %s gladly hands over most of his possessions."
-ru = "Вы очаровываете {1:acc}.  {1:gender|Он|Она|Оно|Они}{2:skip} охотно {1:num|отдаёт|отдают} вам почти всё своё имущество."
+ru = "Вы очаровываете {1:acc}. {1:gender|Он|Она|Оно|Они}{2:skip} охотно {1:num|отдаёт|отдают} вам почти всё своё имущество."
 
 [58dedf736303]
 en = "You charm %s.  %s gladly hands over most of its possessions."
-ru = "Вы очаровываете {1:acc}.  {1:gender|Он|Она|Оно|Они}{2:skip} охотно {1:num|отдаёт|отдают} вам почти всё своё имущество."
+ru = "Вы очаровываете {1:acc}. {1:gender|Он|Она|Оно|Они}{2:skip} охотно {1:num|отдаёт|отдают} вам почти всё своё имущество."
 
 [bfe4f1aa211b]
 en = "You charm %s.  %s gladly hands over most of their possessions."
-ru = "Вы очаровываете {1:acc}.  {1:gender|Он|Она|Оно|Они}{2:skip} охотно {1:num|отдаёт|отдают} вам почти всё своё имущество."
+ru = "Вы очаровываете {1:acc}. {1:gender|Он|Она|Оно|Они}{2:skip} охотно {1:num|отдаёт|отдают} вам почти всё своё имущество."
 
 [f31ad76700d7]
 en = "You charm %s.  %s gladly hands over their possessions."
-ru = "Вы очаровываете {1:acc}.  {1:gender|Он|Она|Оно|Они}{2:skip} охотно {1:num|отдаёт|отдают} вам всё своё имущество."
+ru = "Вы очаровываете {1:acc}. {1:gender|Он|Она|Оно|Они}{2:skip} охотно {1:num|отдаёт|отдают} вам всё своё имущество."
 
 [9228eaee614e]
 en = "You seduce %s and he starts to take off her clothes."
@@ -1014,7 +1014,7 @@ ru = "Ваше местоположение вдруг кажется крайн
 
 [c75cf21b3f5f]
 en = "Wait!  There's something hiding under %s!"
-ru = "Стойте!  Под {1:ins} что-то прячется!"
+ru = "Стойте! Под {1:ins} что-то прячется!"
 
 [ee7fca6ae34a]
 en = "%s is blinded."

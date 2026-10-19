@@ -42,7 +42,7 @@ ru = "Вы по спирали взмываете вглубь {1:gen}."
 
 [ad2147f3c629]
 en = "Up, up, and awaaaay!  You're walking on air!"
-ru = "Вверх, вверх и прооочь!  Вы шагаете по воздуху!"
+ru = "Вверх, вверх и прооочь! Вы шагаете по воздуху!"
 
 [2fec60805b86]
 en = "You gain control over your movements."
@@ -114,7 +114,7 @@ ru = "Вы чувствуете себя тяжелее."
 
 [c9ac6161d794]
 en = "Bummer!  You've crashed."
-ru = "Облом!  Вы потерпели крушение."
+ru = "Облом! Вы потерпели крушение."
 
 [49aa8c9e69ba]
 en = "You fall over."
@@ -126,11 +126,11 @@ ru = "Вы плотнее усаживаетесь в седле."
 
 [eb39c8a8556a]
 en = "Bummer!  You've hit the ground."
-ru = "Облом!  Вы грохнулись на землю."
+ru = "Облом! Вы грохнулись на землю."
 
 [52dac5a53405]
 en = "Bummer!  You've splashed down."
-ru = "Облом!  Вы приводнились."
+ru = "Облом! Вы приводнились."
 
 [c0f295a837fe]
 en = "You float gently to the %s."
@@ -566,7 +566,7 @@ ru = "Упс..."
 
 [48851585e28b]
 en = "The web sticks to you.  You're caught too!"
-ru = "Паутина прилипает к вам.  Вы тоже попались!"
+ru = "Паутина прилипает к вам. Вы тоже попались!"
 
 [5b2355d91bab]
 en = "%s remains entangled."

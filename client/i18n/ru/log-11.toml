@@ -86,11 +86,11 @@ ru = "Ваше отравление очень тяжело."
 
 [d4f1b8dfea78]
 en = "You are at Death's door.  %s is inviting you in."
-ru = "Вы на пороге смерти.  Вас приглашают войти.{1:skip}"
+ru = "Вы на пороге смерти. Вас приглашают войти.{1:skip}"
 
 [107e24ecfee9]
 en = "You are at Death's door.  %s are inviting you in."
-ru = "Вы на пороге смерти.  Вас приглашают войти.{1:skip}"
+ru = "Вы на пороге смерти. Вас приглашают войти.{1:skip}"
 
 [aeae8bcc43e9]
 en = "You float slightly lower."
@@ -182,11 +182,11 @@ ru = "Как смеешь ты осквернять мой алтарь!"
 
 [67396858767b]
 en = "So, mortal!  You dare desecrate my altar!"
-ru = "Так, {hero:gender|смертный|смертная}!  Ты смеешь осквернять мой алтарь!"
+ru = "Так, {hero:gender|смертный|смертная}! Ты смеешь осквернять мой алтарь!"
 
 [29df5137c0b9]
 en = "So, mortal!  You dare desecrate my High Temple!"
-ru = "Так, {hero:gender|смертный|смертная}!  Ты смеешь осквернять мой Верховный храм!"
+ru = "Так, {hero:gender|смертный|смертная}! Ты смеешь осквернять мой Верховный храм!"
 
 [f2edced62756]
 en = "a doodad"

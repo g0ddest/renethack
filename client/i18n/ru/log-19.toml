@@ -14,11 +14,11 @@ ru = "Появляются кистоунские копы!"
 
 [43270f77aa9d]
 en = "\"%s!  Don't you leave without paying!\""
-ru = "«{1}!  Не вздумай уйти, не заплатив!»"
+ru = "«{1}! Не вздумай уйти, не заплатив!»"
 
 [1e94413ab62a]
 en = "\"%s!  Please pay before leaving.\""
-ru = "«{1}!  Пожалуйста, заплатите перед уходом.»"
+ru = "«{1}! Пожалуйста, заплатите перед уходом»."
 
 [d8a6b7c7af0c]
 en = "%s makes it clear that you need to pay before leaving!"
@@ -186,7 +186,7 @@ ru = "{1}, похоже, не на шутку {1:num|злится|злятся} 
 
 [242cf83be0c9]
 en = "\"Back again, %s?  I've got my %s on you.\""
-ru = "«Опять ты, {1}?  Я с тебя {2:pl:gen} не спущу.»"
+ru = "«Опять ты, {1}? Я с тебя {2:pl:gen} не спущу»."
 
 [7ed92e362468]
 en = "The atmosphere at %s antique weapons outlet seems unwelcoming."
@@ -354,23 +354,23 @@ ru = "Вы входите в магазин подержанных доспех�
 
 [00a01a26b2fc]
 en = "\"Leave the digging tools outside.\""
-ru = "«Оставь кирки снаружи.»"
+ru = "«Оставь кирки снаружи»."
 
 [e97ebfe9cad0]
 en = "\"Leave the mattock outside.\""
-ru = "«Оставь большую кирку снаружи.»"
+ru = "«Оставь большую кирку снаружи»."
 
 [2fddcbd568a5]
 en = "\"Leave the mattocks outside.\""
-ru = "«Оставь большие кирки снаружи.»"
+ru = "«Оставь большие кирки снаружи»."
 
 [f8521d5994dc]
 en = "\"Leave the pick-axe outside.\""
-ru = "«Оставь кирку снаружи.»"
+ru = "«Оставь кирку снаружи»."
 
 [7ea77d9c4191]
 en = "\"Leave the pick-axes outside.\""
-ru = "«Оставь кирки снаружи.»"
+ru = "«Оставь кирки снаружи»."
 
 [a9c322366fae]
 en = "\"Will you please leave your digging tools outside?\""
@@ -430,7 +430,7 @@ ru = "{1} {1:num|отказывается|отказываются} впуска
 
 [82423399a5c8]
 en = "\"Leave %s outside.\""
-ru = "«Оставь {1:acc:own} снаружи.»"
+ru = "«Оставь {1:acc:own} снаружи»."
 
 [ef516170054c]
 en = "\"Will you please leave %s outside?\""
@@ -446,7 +446,7 @@ ru = "{1} {1:num|отказывается|отказываются} впуска
 
 [55594c55f0bb]
 en = "\"You sneaky %s!  Get out of here with that pick!\""
-ru = "«Ах ты {1:gender|хитрый|хитрая|хитрое|хитрые} {1}!  Убирайся отсюда с этой киркой!»"
+ru = "«Ах ты {1:gender|хитрый|хитрая|хитрое|хитрые} {1}! Убирайся отсюда с этой киркой!»"
 
 [ac0ea177285a]
 en = "%s glares at your pick!"
@@ -882,7 +882,7 @@ ru = "«Спасибо за покупки в антикварной оруже�
 
 [d2d5ab17c4fb]
 en = "\"Thank you for shopping in %s antique weapons outlet.\""
-ru = "«Спасибо за покупки в антикварной оружейной лавке {1:gen}.»"
+ru = "«Спасибо за покупки в антикварной оружейной лавке {1:gen}»."
 
 [46ec9ca51bea]
 en = "\"Thank you for shopping in %s delicatessen!\""
@@ -890,7 +890,7 @@ ru = "«Спасибо за покупки в гастрономе {1:gen}!»"
 
 [0b506f9a1b01]
 en = "\"Thank you for shopping in %s delicatessen.\""
-ru = "«Спасибо за покупки в гастрономе {1:gen}.»"
+ru = "«Спасибо за покупки в гастрономе {1:gen}»."
 
 [c9cbe386b5ef]
 en = "\"Thank you for shopping in %s general store!\""
@@ -898,7 +898,7 @@ ru = "«Спасибо за покупки в универсальном маг�
 
 [77d455d21644]
 en = "\"Thank you for shopping in %s general store.\""
-ru = "«Спасибо за покупки в универсальном магазине {1:gen}.»"
+ru = "«Спасибо за покупки в универсальном магазине {1:gen}»."
 
 [ba803ea1b825]
 en = "\"Thank you for shopping in %s hardware store!\""
@@ -906,7 +906,7 @@ ru = "«Спасибо за покупки в скобяной лавке {1:gen
 
 [8d65bfba6393]
 en = "\"Thank you for shopping in %s hardware store.\""
-ru = "«Спасибо за покупки в скобяной лавке {1:gen}.»"
+ru = "«Спасибо за покупки в скобяной лавке {1:gen}»."
 
 [7a64aec58cb1]
 en = "\"Thank you for shopping in %s health food store!\""
@@ -914,7 +914,7 @@ ru = "«Спасибо за покупки в магазине здоровог�
 
 [8a4510b49309]
 en = "\"Thank you for shopping in %s health food store.\""
-ru = "«Спасибо за покупки в магазине здорового питания {1:gen}.»"
+ru = "«Спасибо за покупки в магазине здорового питания {1:gen}»."
 
 [93850b7c9465]
 en = "\"Thank you for shopping in %s jewelers!\""
@@ -922,7 +922,7 @@ ru = "«Спасибо за покупки в ювелирной лавке {1:g
 
 [f5eb549348d9]
 en = "\"Thank you for shopping in %s jewelers.\""
-ru = "«Спасибо за покупки в ювелирной лавке {1:gen}.»"
+ru = "«Спасибо за покупки в ювелирной лавке {1:gen}»."
 
 [61e1063b8d88]
 en = "\"Thank you for shopping in %s lighting store!\""
@@ -930,7 +930,7 @@ ru = "«Спасибо за покупки в магазине светильн�
 
 [9a902c7c478b]
 en = "\"Thank you for shopping in %s lighting store.\""
-ru = "«Спасибо за покупки в магазине светильников {1:gen}.»"
+ru = "«Спасибо за покупки в магазине светильников {1:gen}»."
 
 [d7e7e78d42b1]
 en = "\"Thank you for shopping in %s liquor emporium!\""
@@ -938,7 +938,7 @@ ru = "«Спасибо за покупки в винной лавке {1:gen}!»
 
 [00166dfea97a]
 en = "\"Thank you for shopping in %s liquor emporium.\""
-ru = "«Спасибо за покупки в винной лавке {1:gen}.»"
+ru = "«Спасибо за покупки в винной лавке {1:gen}»."
 
 [5301287171c4]
 en = "\"Thank you for shopping in %s quality apparel and accessories!\""
@@ -946,7 +946,7 @@ ru = "«Спасибо за покупки в салоне одежды и ак�
 
 [14794db38092]
 en = "\"Thank you for shopping in %s quality apparel and accessories.\""
-ru = "«Спасибо за покупки в салоне одежды и аксессуаров {1:gen}.»"
+ru = "«Спасибо за покупки в салоне одежды и аксессуаров {1:gen}»."
 
 [870595afbf2b]
 en = "\"Thank you for shopping in %s rare books!\""
@@ -954,7 +954,7 @@ ru = "«Спасибо за покупки в лавке редких книг {
 
 [c577c5b51ae0]
 en = "\"Thank you for shopping in %s rare books.\""
-ru = "«Спасибо за покупки в лавке редких книг {1:gen}.»"
+ru = "«Спасибо за покупки в лавке редких книг {1:gen}»."
 
 [af9ecd3c78d7]
 en = "\"Thank you for shopping in %s second-hand bookstore!\""
@@ -962,7 +962,7 @@ ru = "«Спасибо за покупки в букинистической л�
 
 [de3ded7896a8]
 en = "\"Thank you for shopping in %s second-hand bookstore.\""
-ru = "«Спасибо за покупки в букинистической лавке {1:gen}.»"
+ru = "«Спасибо за покупки в букинистической лавке {1:gen}»."
 
 [e3415916885a]
 en = "\"Thank you for shopping in %s used armor dealership!\""
@@ -970,7 +970,7 @@ ru = "«Спасибо за покупки в магазине подержан�
 
 [3c22844788a2]
 en = "\"Thank you for shopping in %s used armor dealership.\""
-ru = "«Спасибо за покупки в магазине подержанных доспехов {1:gen}.»"
+ru = "«Спасибо за покупки в магазине подержанных доспехов {1:gen}»."
 
 [843fe044ebde]
 en = "%s nods appreciatively at you for shopping in her %s!"
@@ -1034,39 +1034,39 @@ ru = "Может, у вас где-то припрятано золото?"
 
 [cb90631d4c47]
 en = "\"You need to remove any unpaid items from that %s and buy them separately.\""
-ru = "«Вам нужно вынуть все неоплаченные предметы из {1:gender|этого|этой|этого|этих} {1:gen} и купить их отдельно.»"
+ru = "«Вам нужно вынуть все неоплаченные предметы из {1:gender|этого|этой|этого|этих} {1:gen} и купить их отдельно»."
 
 [443489176b3a]
 en = "\"Pay for the other %s before buying the one in %s.\""
-ru = "«Заплати за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать {1:sg|тот|ту|то}, что в {2:prep}.»"
+ru = "«Заплати за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать {1:sg|тот|ту|то}, что в {2:prep}»."
 
 [223879d69fd6]
 en = "\"Pay for the other %s before buying the ones in %s.\""
-ru = "«Заплати за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать те, что в {2:prep}.»"
+ru = "«Заплати за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать те, что в {2:prep}»."
 
 [5698531ff154]
 en = "\"Pay for the other %s before buying these.\""
-ru = "«Заплати за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать эти.»"
+ru = "«Заплати за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать эти»."
 
 [fae95cd34733]
 en = "\"Pay for the other %s before buying this one.\""
-ru = "«Заплати за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать {1:sg|этот|эту|это}.»"
+ru = "«Заплати за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать {1:sg|этот|эту|это}»."
 
 [c3b86e94caf7]
 en = "\"Please pay for the other %s before buying the one in %s.\""
-ru = "«Пожалуйста, заплатите за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать {1:sg|тот|ту|то}, что в {2:prep}.»"
+ru = "«Пожалуйста, заплатите за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать {1:sg|тот|ту|то}, что в {2:prep}»."
 
 [8cebe01edc55]
 en = "\"Please pay for the other %s before buying the ones in %s.\""
-ru = "«Пожалуйста, заплатите за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать те, что в {2:prep}.»"
+ru = "«Пожалуйста, заплатите за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать те, что в {2:prep}»."
 
 [d91e68db0cc9]
 en = "\"Please pay for the other %s before buying these.\""
-ru = "«Пожалуйста, заплатите за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать эти.»"
+ru = "«Пожалуйста, заплатите за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать эти»."
 
 [e393d83e2be0]
 en = "\"Please pay for the other %s before buying this one.\""
-ru = "«Пожалуйста, заплатите за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать {1:sg|этот|эту|это}.»"
+ru = "«Пожалуйста, заплатите за {1:gender|другой|другую|другое|другие} {1:acc}, прежде чем покупать {1:sg|этот|эту|это}»."
 
 [a30518aab64e]
 en = "%s angrily motions to your bill for the other %s first."

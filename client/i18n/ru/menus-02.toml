@@ -33,7 +33,7 @@ ru = "расшифровка кодов levl[][].typ в base-36"
 
 [27cc4e1e8b68]
 en = "Key '%s' is currently bound to \"%s\"."
-ru = "Клавиша '{1}' сейчас назначена на \"{2}\"."
+ru = "Клавиша '{1}' сейчас назначена на «{2}»."
 
 [e0ffc7c5b7f8]
 en = "Key '%s' is not bound to anything."
@@ -1941,19 +1941,19 @@ ru = "Выберите навык для улучшения:"
 
 [60d366a454bc]
 en = "Current skills:  (%d slot available)"
-ru = "Текущие навыки:  (свободных слотов: {1})"
+ru = "Текущие навыки: (свободных слотов: {1})"
 
 [85307973e10f]
 en = "Pick a skill to advance:  (%d slot available)"
-ru = "Выберите навык для улучшения:  (свободных слотов: {1})"
+ru = "Выберите навык для улучшения: (свободных слотов: {1})"
 
 [9406bb9acff4]
 en = "Current skills:  (%d slots available)"
-ru = "Текущие навыки:  (свободных слотов: {1})"
+ru = "Текущие навыки: (свободных слотов: {1})"
 
 [ed32870d53cc]
 en = "Pick a skill to advance:  (%d slots available)"
-ru = "Выберите навык для улучшения:  (свободных слотов: {1})"
+ru = "Выберите навык для улучшения: (свободных слотов: {1})"
 
 [996811299eef]
 en = "%c  All classes of objects"
@@ -1965,11 +1965,11 @@ ru = "Примечание: если ничего не выбрано, подр�
 
 [6022376a8483]
 en = "Toggle off 'autopickup' to not pick up anything."
-ru = "Выключите 'autopickup', чтобы ничего не подбирать."
+ru = "Выключите «autopickup», чтобы ничего не подбирать."
 
 [7ce30c746039]
 en = "Toggle on 'autopickup' to automatically pick these things up."
-ru = "Включите 'autopickup', чтобы подбирать эти вещи автоматически."
+ru = "Включите «autopickup», чтобы подбирать эти вещи автоматически."
 
 [1d7e87b0cb3b]
 en = "Autopickup what?"

@@ -3,7 +3,7 @@
 
 [e465dbb131f1]
 en = "Tip: Farlooking or selecting a map location\n\nYou are now in a \"farlook\" mode - the movement keys move the cursor,\nnot your character.  Game time does not advance.  This mode is used\nto look around the map, or to select a location on it.\n\nWhen in this mode, you can press ESC to return to normal game mode,\nand pressing ? will show the key help."
-ru = "Подсказка: осмотр или выбор места на карте\n\nВы в режиме «осмотра»: клавиши движения перемещают курсор,\nа не вашего героя.  Игровое время стоит.  В этом режиме\nможно осмотреться на карте или выбрать на ней место.\n\nВ этом режиме ESC возвращает к обычной игре,\nа ? показывает подсказку по клавишам."
+ru = "Подсказка: осмотр или выбор места на карте\n\nВы в режиме «осмотра»: клавиши движения перемещают курсор,\nа не вашего героя. Игровое время стоит. В этом режиме\nможно осмотреться на карте или выбрать на ней место.\n\nВ этом режиме ESC возвращает к обычной игре,\nа ? показывает подсказку по клавишам."
 
 [8d1dab161231]
 en = "Things that are here:"

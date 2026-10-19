@@ -36,7 +36,7 @@ ru = "Докажи, что достоин, или погибни!"
 
 [9fc9e66b2103]
 en = "Looks like you're getting hungry.  You'll starve to death, unless you eat something."
-ru = "Похоже, вы проголодались.  Если ничего не съесть, вы умрёте от голода."
+ru = "Похоже, вы проголодались. Если ничего не съесть, вы умрёте от голода."
 
 [e06b322c8a85]
 en = "Comestibles are eaten with '%s'"
@@ -204,7 +204,7 @@ ru = "ИДЁТ СТРОИТЕЛЬСТВО"
 
 [454a33484916]
 en = "Can't get through?  You're carrying too much."
-ru = "Не пролезть?  Вы несёте слишком много."
+ru = "Не пролезть? Вы несёте слишком много."
 
 [7a00a5ebff6a]
 en = "Spellcasting"

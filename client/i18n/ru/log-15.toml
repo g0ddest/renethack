@@ -279,11 +279,11 @@ ru = "Вам кажется, что вы здесь уже бывали."
 
 [ef858d5bed55]
 en = "Whoa!  Everything looks different."
-ru = "Ого!  Всё выглядит по-другому."
+ru = "Ого! Всё выглядит по-другому."
 
 [02a77f397b90]
 en = "Whoa!  Everything seems different."
-ru = "Ого!  Всё кажется другим."
+ru = "Ого! Всё кажется другим."
 
 [7f3c63abe8d0]
 en = "You are surrounded by twisty little passages, all alike."
@@ -735,27 +735,27 @@ ru = "Вам удаётся взломать замок."
 
 [e525f0a9f03f]
 en = "You succeed in disarming the trap.  The box is still locked."
-ru = "Вам удаётся обезвредить ловушку.  Ящик по-прежнему заперт."
+ru = "Вам удаётся обезвредить ловушку. Ящик по-прежнему заперт."
 
 [ca7a20a667eb]
 en = "You succeed in disarming the trap.  The box is still unlocked."
-ru = "Вам удаётся обезвредить ловушку.  Ящик по-прежнему не заперт."
+ru = "Вам удаётся обезвредить ловушку. Ящик по-прежнему не заперт."
 
 [0311c2faa2b9]
 en = "You succeed in disarming the trap.  The chest is still locked."
-ru = "Вам удаётся обезвредить ловушку.  Сундук по-прежнему заперт."
+ru = "Вам удаётся обезвредить ловушку. Сундук по-прежнему заперт."
 
 [f456c2a5b392]
 en = "You succeed in disarming the trap.  The chest is still unlocked."
-ru = "Вам удаётся обезвредить ловушку.  Сундук по-прежнему не заперт."
+ru = "Вам удаётся обезвредить ловушку. Сундук по-прежнему не заперт."
 
 [163f56893ec1]
 en = "You succeed in disarming the trap.  The door is still locked."
-ru = "Вам удаётся обезвредить ловушку.  Дверь по-прежнему заперта."
+ru = "Вам удаётся обезвредить ловушку. Дверь по-прежнему заперта."
 
 [f1b4e1c89bdb]
 en = "You succeed in disarming the trap.  The door is still unlocked."
-ru = "Вам удаётся обезвредить ловушку.  Дверь по-прежнему не заперта."
+ru = "Вам удаётся обезвредить ловушку. Дверь по-прежнему не заперта."
 
 [c22d6f3d6805]
 en = "disarming"
@@ -875,11 +875,11 @@ ru = "Облако пыли взвивается и складывается в 
 
 [632880892801]
 en = "\"That's in addition to the cost of %s itself, of course.\""
-ru = "«Это, разумеется, сверх стоимости {1:gender|самого|самой|самого|самих} {1:gen}.»"
+ru = "«Это, разумеется, сверх стоимости {1:gender|самого|самой|самого|самих} {1:gen}»."
 
 [067352473c72]
 en = "\"That's in addition to the cost of %s themselves, of course.\""
-ru = "«Это, разумеется, сверх стоимости {1:gender|самого|самой|самого|самих} {1:gen}.»"
+ru = "«Это, разумеется, сверх стоимости {1:gender|самого|самой|самого|самих} {1:gen}»."
 
 [041c7930663c]
 en = "%s is on fire!"

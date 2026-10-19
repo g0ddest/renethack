@@ -61,7 +61,7 @@ ru = "Вы не видите здесь никаких предметов."
 
 [62ba78627eb0]
 en = "Ouch!  You bump into a door."
-ru = "Ой!  Вы врезаетесь в дверь."
+ru = "Ой! Вы врезаетесь в дверь."
 
 [cf60093a2441]
 en = "You get zapped!"
@@ -77,7 +77,7 @@ ru = "{1} {1:gender|убит|убита|убито|убиты}!"
 
 [7abd00927bfe]
 en = "You stop.  %s is in the way!"
-ru = "Вы останавливаетесь.  {1:cap} {1:num|стоит|стоят} на пути!"
+ru = "Вы останавливаетесь. {1:cap} {1:num|стоит|стоят} на пути!"
 
 [752eb0e1b6b6]
 en = "You cannot escape from %s!"
@@ -129,7 +129,7 @@ ru = "Вы проваливаетесь..."
 
 [a3dfd51209d6]
 en = "Be careful!  New moon tonight."
-ru = "Осторожно!  Сегодня новолуние."
+ru = "Осторожно! Сегодня новолуние."
 
 [2bf24241726b]
 en = "Where do you want to travel to?"
@@ -193,7 +193,7 @@ ru = "Вы снова слышите."
 
 [b26effd89232]
 en = "Ouch!  That hurts!"
-ru = "Ой!  Больно!"
+ru = "Ой! Больно!"
 
 [23efe4dcca92]
 en = "You are bare handed."

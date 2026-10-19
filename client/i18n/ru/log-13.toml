@@ -1056,7 +1056,7 @@ ru = "К счастью, дно у неё всё-таки есть..."
 
 [81f79ed7076c]
 en = "How pitiful.  Isn't that the pits?"
-ru = "Какое падение.  Ну разве это не дно?"
+ru = "Какое падение. Ну разве это не дно?"
 
 [89611aa5505d]
 en = "%s protects you from the sharp iron spikes."
@@ -1238,31 +1238,31 @@ ru = "Вы обнаруживаете под собой взрыватель с�
 
 [df1c86480f71]
 en = "KAABLAMM!!!  The air currents set a land mine off!"
-ru = "БАБАХ!!!  Потоки воздуха приводят мину в действие!"
+ru = "БАБАХ!!! Потоки воздуха приводят мину в действие!"
 
 [df87696e68dc]
 en = "KAABLAMM!!!  The air currents set it off!"
-ru = "БАБАХ!!!  Потоки воздуха приводят взрыватель в действие!"
+ru = "БАБАХ!!! Потоки воздуха приводят взрыватель в действие!"
 
 [a7a0972eae6b]
 en = "KAABLAMM!!!  The air currents set your land mine off!"
-ru = "БАБАХ!!!  Потоки воздуха приводят вашу мину в действие!"
+ru = "БАБАХ!!! Потоки воздуха приводят вашу мину в действие!"
 
 [25b6df78431e]
 en = "KAABLAMM!!!  Your inept attempt sets a land mine off!"
-ru = "БАБАХ!!!  Ваша неумелая попытка приводит мину в действие!"
+ru = "БАБАХ!!! Ваша неумелая попытка приводит мину в действие!"
 
 [2a968f1f6418]
 en = "KAABLAMM!!!  Your inept attempt sets it off!"
-ru = "БАБАХ!!!  Ваша неумелая попытка приводит взрыватель в действие!"
+ru = "БАБАХ!!! Ваша неумелая попытка приводит взрыватель в действие!"
 
 [ad45c4aca6c1]
 en = "KAABLAMM!!!  Your inept attempt sets your land mine off!"
-ru = "БАБАХ!!!  Ваша неумелая попытка приводит в действие вашу же мину!"
+ru = "БАБАХ!!! Ваша неумелая попытка приводит в действие вашу же мину!"
 
 [735e25ad4917]
 en = "KAABLAMM!!!  You triggered your land mine!"
-ru = "БАБАХ!!!  Вы наступили на собственную мину!"
+ru = "БАБАХ!!! Вы наступили на собственную мину!"
 
 [062298bc7b2a]
 en = "A trigger appears in a pile of soil below %s."
@@ -1286,15 +1286,15 @@ ru = "{1} {1:num|наступает|наступают} на вашу мину!"
 
 [ad0be1b95c0d]
 en = "KAABLAMM!!!  %s triggers a land mine!"
-ru = "БАБАХ!!!  {1:cap} {1:num|наступает|наступают} на мину!"
+ru = "БАБАХ!!! {1:cap} {1:num|наступает|наступают} на мину!"
 
 [f3121b14eb38]
 en = "KAABLAMM!!!  %s triggers your land mine!"
-ru = "БАБАХ!!!  {1:cap} {1:num|наступает|наступают} на вашу мину!"
+ru = "БАБАХ!!! {1:cap} {1:num|наступает|наступают} на вашу мину!"
 
 [7a94f2df3f83]
 en = "Kaablamm!  You hear an explosion in the distance!"
-ru = "Бабах!  Вы слышите взрыв вдалеке!"
+ru = "Бабах! Вы слышите взрыв вдалеке!"
 
 [32128a72c71c]
 en = "The explosion awakens you!"
@@ -1406,7 +1406,7 @@ ru = "БАБАХ!!!"
 
 [caddd7d4ae20]
 en = "KAABLAMM!!!  The rolling boulder triggers a land mine."
-ru = "БАБАХ!!!  Катящийся валун приводит мину в действие."
+ru = "БАБАХ!!! Катящийся валун приводит мину в действие."
 
 [954abe7c9077]
 en = "Suddenly the rolling boulder disappears!"

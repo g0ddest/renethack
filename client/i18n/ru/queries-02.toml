@@ -9,7 +9,7 @@ ru = "Продолжить устанавливать {1:acc}?"
 
 [7962ad62486d]
 en = "Bones file already exists.  Replace it?"
-ru = "Файл костей уже есть.  Заменить его?"
+ru = "Файл костей уже есть. Заменить его?"
 
 [1efe3e8717df]
 en = "Command %s requires a parameter:"
@@ -357,7 +357,7 @@ ru = "Попытаться протиснуться вниз?"
 
 [b569a8915411]
 en = "Beware, there will be no return!  Still climb?"
-ru = "Берегитесь, пути назад не будет!  Всё равно подняться?"
+ru = "Берегитесь, пути назад не будет! Всё равно подняться?"
 
 [12d737be80ba]
 en = "What do you want to name this %s?"
@@ -833,11 +833,11 @@ ru = "Пнуть?"
 
 [f277c917d8e3]
 en = "\"That %s looks pretty.  May I have it?\""
-ru = "«{1:gender|Какой красивый|Какая красивая|Какое красивое|Какие красивые} {1}.  Можно мне {1:gender|его|её|его|их} взять?»"
+ru = "«{1:gender|Какой красивый|Какая красивая|Какое красивое|Какие красивые} {1}. Можно мне {1:gender|его|её|его|их} взять?»"
 
 [8e26c6da2d23]
 en = "\"That %s looks pretty.  Would you wear it for me?\""
-ru = "«{1:gender|Какой красивый|Какая красивая|Какое красивое|Какие красивые} {1}.  Наденешь {1:gender|его|её|его|их} для меня?»"
+ru = "«{1:gender|Какой красивый|Какая красивая|Какое красивое|Какие красивые} {1}. Наденешь {1:gender|его|её|его|их} для меня?»"
 
 [057359f6af0f]
 en = "\"Shall I remove your dragon scales, sweetheart?\""
@@ -1085,35 +1085,35 @@ ru = "Какая команда?"
 
 [31e20f838c3d]
 en = "You have trouble lifting %s.  Continue?"
-ru = "Вам трудно поднять {1:acc}.  Продолжить?"
+ru = "Вам трудно поднять {1:acc}. Продолжить?"
 
 [3c76f028f2fb]
 en = "You have a little trouble removing %s.  Continue?"
-ru = "Вам немного трудно вынуть {1:acc}.  Продолжить?"
+ru = "Вам немного трудно вынуть {1:acc}. Продолжить?"
 
 [4df416ffc953]
 en = "You have trouble removing %s.  Continue?"
-ru = "Вам трудно вынуть {1:acc}.  Продолжить?"
+ru = "Вам трудно вынуть {1:acc}. Продолжить?"
 
 [6a7f96dd7c6e]
 en = "You have a little trouble lifting %s.  Continue?"
-ru = "Вам немного трудно поднять {1:acc}.  Продолжить?"
+ru = "Вам немного трудно поднять {1:acc}. Продолжить?"
 
 [6b660a05a41f]
 en = "You have extreme difficulty lifting %s.  Continue?"
-ru = "Вам крайне трудно поднять {1:acc}.  Продолжить?"
+ru = "Вам крайне трудно поднять {1:acc}. Продолжить?"
 
 [a51469ed9c37]
 en = "You have much trouble lifting %s.  Continue?"
-ru = "Вам очень трудно поднять {1:acc}.  Продолжить?"
+ru = "Вам очень трудно поднять {1:acc}. Продолжить?"
 
 [d99bb020c6fd]
 en = "You have extreme difficulty removing %s.  Continue?"
-ru = "Вам крайне трудно вынуть {1:acc}.  Продолжить?"
+ru = "Вам крайне трудно вынуть {1:acc}. Продолжить?"
 
 [fb6e11b8cc5a]
 en = "You have much trouble removing %s.  Continue?"
-ru = "Вам очень трудно вынуть {1:acc}.  Продолжить?"
+ru = "Вам очень трудно вынуть {1:acc}. Продолжить?"
 
 [2c81971328bf]
 en = "What kinds of thing do you want to put in? [%s]"
@@ -1245,7 +1245,7 @@ ru = "Какого монстра создать?"
 
 [00510025ac94]
 en = "Reading mail will violate \"illiterate\" conduct.  Read anyway?"
-ru = "Прочитав письмо, вы провалите испытание неграмотностью.  Всё равно прочитать?"
+ru = "Прочитав письмо, вы провалите испытание неграмотностью. Всё равно прочитать?"
 
 [ad21f92aece3]
 en = "\"Wilt thou settle for a minor consultation?\" (%d zorkmids)"
@@ -1285,19 +1285,19 @@ ru = "Примете ли вы {1} {1:plural|зоркмид|зоркмида|з�
 
 [bd427937268c]
 en = "You did %ld zorkmid worth of damage!  Pay?"
-ru = "Вы нанесли ущерба на {1} {1:plural|зоркмид|зоркмида|зоркмидов}!  Заплатить?"
+ru = "Вы нанесли ущерба на {1} {1:plural|зоркмид|зоркмида|зоркмидов}! Заплатить?"
 
 [e1c44a3aac0f]
 en = "You did %ld zorkmids worth of damage!  Pay?"
-ru = "Вы нанесли ущерба на {1} {1:plural|зоркмид|зоркмида|зоркмидов}!  Заплатить?"
+ru = "Вы нанесли ущерба на {1} {1:plural|зоркмид|зоркмида|зоркмидов}! Заплатить?"
 
 [7b82c1fcf0a9]
 en = "This spellbook is difficult to comprehend.  Continue?"
-ru = "Эта книга заклинаний трудна для понимания.  Продолжить?"
+ru = "Эта книга заклинаний трудна для понимания. Продолжить?"
 
 [cef7a3d48c1f]
 en = "This spellbook is very difficult to comprehend.  Continue?"
-ru = "Эта книга заклинаний очень трудна для понимания.  Продолжить?"
+ru = "Эта книга заклинаний очень трудна для понимания. Продолжить?"
 
 [6ea0ab685f4d]
 en = "Cast which spell? [a-%c *?]"
@@ -1345,7 +1345,7 @@ ru = "На какой уровень вы хотите телепортиров�
 
 [146c0d7a7e64]
 en = "Go to Nowhere.  Are you sure?"
-ru = "Отправиться в Никуда.  Вы уверены?"
+ru = "Отправиться в Никуда. Вы уверены?"
 
 [7cb3aa0366a0]
 en = "Disarm it?"
@@ -1353,7 +1353,7 @@ ru = "Обезвредить?"
 
 [1e136e2398ee]
 en = "There is %s here.  Check it for traps?"
-ru = "Здесь {1:num|лежит|лежат} {1}.  Проверить на ловушки?"
+ru = "Здесь {1:num|лежит|лежат} {1}. Проверить на ловушки?"
 
 [66427e852d3c]
 en = "You are required to supply your name. -"
@@ -1369,7 +1369,7 @@ ru = "Повысить навыки без тренировки?"
 
 [7298751873e7]
 en = "You have %ld %s readied.  Wield one?"
-ru = "У вас в колчане {1} {2:by1}.  Взять {2:sg|один|одну|одно} в руки?"
+ru = "У вас в колчане {1} {2:by1}. Взять {2:sg|один|одну|одно} в руки?"
 
 [b3175842e612]
 en = "Wield all of them instead?"
@@ -1377,23 +1377,23 @@ ru = "Взять в руки их все?"
 
 [13ab2b9f31df]
 en = "You have those readied.  Wield them instead?"
-ru = "Это у вас в колчане.  Взять их в руки?"
+ru = "Это у вас в колчане. Взять их в руки?"
 
 [2cc96915206e]
 en = "You have those readied.  Wield it instead?"
-ru = "Это у вас в колчане.  Взять в руки?"
+ru = "Это у вас в колчане. Взять в руки?"
 
 [3b3f39a317cd]
 en = "You have that readied.  Wield it instead?"
-ru = "Это у вас в колчане.  Взять в руки?"
+ru = "Это у вас в колчане. Взять в руки?"
 
 [757b58383cd8]
 en = "You have that readied.  Wield them instead?"
-ru = "Это у вас в колчане.  Взять их в руки?"
+ru = "Это у вас в колчане. Взять их в руки?"
 
 [bdaa0e3bc86d]
 en = "You are wielding %ld %s.  Ready %ld of them?"
-ru = "У вас в руках {1} {2:by1}.  Положить {3} в колчан?"
+ru = "У вас в руках {1} {2:by1}. Положить {3} в колчан?"
 
 [47f7537fca35]
 en = "Ready all of them instead?"
@@ -1401,55 +1401,55 @@ ru = "Положить в колчан их все?"
 
 [207bcff6d0db]
 en = "You are wielding those.  Ready them instead?"
-ru = "Это у вас в руках.  Положить их в колчан?"
+ru = "Это у вас в руках. Положить их в колчан?"
 
 [609c2ad5e000]
 en = "You are wielding that.  Ready them instead?"
-ru = "Это у вас в руках.  Положить их в колчан?"
+ru = "Это у вас в руках. Положить их в колчан?"
 
 [d0baa58e6095]
 en = "You are wielding that.  Ready it instead?"
-ru = "Это у вас в руках.  Положить в колчан?"
+ru = "Это у вас в руках. Положить в колчан?"
 
 [fa947a780651]
 en = "You are wielding those.  Ready it instead?"
-ru = "Это у вас в руках.  Положить в колчан?"
+ru = "Это у вас в руках. Положить в колчан?"
 
 [2911c3ca7758]
 en = "You are dual wielding %ld %s.  Ready %ld of them?"
-ru = "У вас в обеих руках {1} {2:by1}.  Положить {3} в колчан?"
+ru = "У вас в обеих руках {1} {2:by1}. Положить {3} в колчан?"
 
 [ac1a8bfb42f6]
 en = "Your alternate weapon is %ld %s.  Ready %ld of them?"
-ru = "Ваше запасное оружие — {1} {2:by1}.  Положить {3} в колчан?"
+ru = "Ваше запасное оружие — {1} {2:by1}. Положить {3} в колчан?"
 
 [00b7b4a49291]
 en = "Those are your alternate weapon.  Ready it instead?"
-ru = "Это ваше запасное оружие.  Положить его в колчан?"
+ru = "Это ваше запасное оружие. Положить его в колчан?"
 
 [3231d33bdd06]
 en = "Those are your second weapon.  Ready them instead?"
-ru = "Это ваше второе оружие.  Положить их в колчан?"
+ru = "Это ваше второе оружие. Положить их в колчан?"
 
 [4bc135cff4c6]
 en = "Those are your second weapon.  Ready it instead?"
-ru = "Это ваше второе оружие.  Положить его в колчан?"
+ru = "Это ваше второе оружие. Положить его в колчан?"
 
 [96b4dd01309c]
 en = "That is your second weapon.  Ready it instead?"
-ru = "Это ваше второе оружие.  Положить его в колчан?"
+ru = "Это ваше второе оружие. Положить его в колчан?"
 
 [d6f2ffe85b59]
 en = "That is your second weapon.  Ready them instead?"
-ru = "Это ваше второе оружие.  Положить их в колчан?"
+ru = "Это ваше второе оружие. Положить их в колчан?"
 
 [dd6f3bc9d7e2]
 en = "That is your alternate weapon.  Ready them instead?"
-ru = "Это ваше запасное оружие.  Положить их в колчан?"
+ru = "Это ваше запасное оружие. Положить их в колчан?"
 
 [ffad1fb192ef]
 en = "Those are your alternate weapon.  Ready them instead?"
-ru = "Это ваше запасное оружие.  Положить их в колчан?"
+ru = "Это ваше запасное оружие. Положить их в колчан?"
 
 [50e84be44a54]
 en = "What type of scroll do you want to write?"

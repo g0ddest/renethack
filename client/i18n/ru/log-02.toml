@@ -17,11 +17,11 @@ ru = "Вы не падаете вниз."
 
 [15bf60644f32]
 en = "%s %s, welcome to NetHack!  You are a %s female %s %s."
-ru = "{1}, {2}, добро пожаловать в NetHack!  Вы — {3:f} {4:f:race} {5:f}."
+ru = "{1}, {2}, добро пожаловать в NetHack! Вы — {3:f} {4:f:race} {5:f}."
 
 [062e77ea0344]
 en = "%s %s, welcome to NetHack!  You are a %s male %s %s."
-ru = "{1}, {2}, добро пожаловать в NetHack!  Вы — {3:m} {4:m:race} {5:m}."
+ru = "{1}, {2}, добро пожаловать в NetHack! Вы — {3:m} {4:m:race} {5:m}."
 
 [008b86dc124c]
 en = "%s strikes at your displaced image and misses you!"
@@ -29,7 +29,7 @@ ru = "{1} {1:num|бьёт|бьют} по вашему смещённому об�
 
 [7f437a804495]
 en = "%s %s, welcome to NetHack!  You are a %s %s %s."
-ru = "{1}, {2}, добро пожаловать в NetHack!  Вы — {3:hero} {4:hero:race} {5:hero}."
+ru = "{1}, {2}, добро пожаловать в NetHack! Вы — {3:hero} {4:hero:race} {5:hero}."
 
 [0ffa3ea2c4b2]
 en = "This door is broken."
@@ -101,7 +101,7 @@ ru = "Это насыщает {1:gender|ваш|вашу|ваше|ваши} {1:ac
 
 [dd1a59a2aed9]
 en = "\"%s, %s!  Welcome again to %s used armor dealership!\""
-ru = "«{1}, {2}!  Снова добро пожаловать в магазин подержанных доспехов {3:gen}!»"
+ru = "«{1}, {2}! Снова добро пожаловать в магазин подержанных доспехов {3:gen}!»"
 
 [0ab8fc3c52ea]
 en = "%s thrusts one of her %s."
@@ -210,7 +210,7 @@ ru = "{1} {1:num|касается|касаются} {2:gen}."
 
 [594d58645331]
 en = "\"Be careful, sir, or you might fall through the floor.\""
-ru = "«Осторожнее, сударь, а то провалитесь сквозь пол.»"
+ru = "«Осторожнее, сударь, а то провалитесь сквозь пол»."
 
 [5bd880e49182]
 en = "Something is engraved here on the %s."
@@ -270,7 +270,7 @@ ru = "Вы слышите грохот вдалеке."
 
 [aeef3f9e9ca9]
 en = "\"%s, %s!  Welcome again to %s general store!\""
-ru = "«{1}, {2}!  Снова добро пожаловать в универсальный магазин {3:gen}!»"
+ru = "«{1}, {2}! Снова добро пожаловать в универсальный магазин {3:gen}!»"
 
 [b00f2161ba97]
 en = "%s suddenly appears close by%c"
@@ -282,7 +282,7 @@ ru = "{1} {1:num|хлещет|хлещут} {2:ins}."
 
 [b7b126557010]
 en = "\"%s, %s!  Welcome to %s used armor dealership!\""
-ru = "«{1}, {2}!  Добро пожаловать в магазин подержанных доспехов {3:gen}!»"
+ru = "«{1}, {2}! Добро пожаловать в магазин подержанных доспехов {3:gen}!»"
 
 [c0cf1aed7b51]
 en = "The %s crashes on your %s and breaks into shards."
@@ -322,7 +322,7 @@ ru = "Вы снова в сознании."
 
 [d62b279c747e]
 en = "\"Thou art arrogant, mortal.\""
-ru = "«{hero:gender|Ты высокомерен, смертный|Ты высокомерна, смертная}.»"
+ru = "«{hero:gender|Ты высокомерен, смертный|Ты высокомерна, смертная}»."
 
 [d65e64f17c9b]
 en = "You are hit."
@@ -362,7 +362,7 @@ ru = "У вас не хватает сил сломать {1:acc:own}!"
 
 [0268c566626b]
 en = "\"%s, %s!  Welcome to %s second-hand bookstore!\""
-ru = "«{1}, {2}!  Добро пожаловать в букинистическую лавку {3:gen}!»"
+ru = "«{1}, {2}! Добро пожаловать в букинистическую лавку {3:gen}!»"
 
 [124e17e06f6c]
 en = "You cannot throw something you are wearing."
@@ -530,7 +530,7 @@ ru = "{1} {1:gender|погас|погасла|погасло|погасли}."
 
 [73850eeb8f93]
 en = "Wait!  There's something there you can't see!"
-ru = "Стойте!  Там что-то, чего вы не видите!"
+ru = "Стойте! Там что-то, чего вы не видите!"
 
 [74b2b6cf25df]
 en = "There is nothing else you can remove or unwield."
@@ -606,7 +606,7 @@ ru = "Куда вы хотите прыгнуть?"
 
 [b5e9d4ca458f]
 en = "\"I don't know you.\""
-ru = "«Я вас не знаю.»"
+ru = "«Я вас не знаю»."
 
 [b6b789b014a6]
 en = "You succeed in cutting away some rock."
@@ -639,7 +639,7 @@ ru = "Здесь {1:num|лежит|лежат} {1}, но вы больше ни�
 
 [ca32dd77bc77]
 en = "\"Please follow me.\""
-ru = "«Пожалуйста, следуйте за мной.»"
+ru = "«Пожалуйста, следуйте за мной»."
 
 [ccb0d7ab3964]
 en = "You see %s start to roll."
@@ -711,7 +711,7 @@ ru = "Вы кладёте {1:acc} в {2:acc}."
 
 [6ef059e89609]
 en = "\"%s, %s!  Welcome again to %s delicatessen!\""
-ru = "«{1}, {2}!  Снова добро пожаловать в гастроном {3:gen}!»"
+ru = "«{1}, {2}! Снова добро пожаловать в гастроном {3:gen}!»"
 
 [386d7f68438a]
 en = "You find a hidden passage."
@@ -779,7 +779,7 @@ ru = "{1} не {1:num|годится|годятся} как основное о�
 
 [32f597c61029]
 en = "\"%s, %s!  Welcome again to %s second-hand bookstore!\""
-ru = "«{1}, {2}!  Снова добро пожаловать в букинистическую лавку {3:gen}!»"
+ru = "«{1}, {2}! Снова добро пожаловать в букинистическую лавку {3:gen}!»"
 
 [4292cbc3f475]
 en = "You ring %s."
@@ -795,7 +795,7 @@ ru = "{1:gender|Ваш|Ваша|Ваше|Ваши} {1} {1:gender|доволен|
 
 [562fb965ec48]
 en = "Click!  %s triggers something."
-ru = "Щёлк!  {1:cap} что-то {1:num|задевает|задевают}."
+ru = "Щёлк! {1:cap} что-то {1:num|задевает|задевают}."
 
 [643e3a771753]
 en = "You caitiff!"
@@ -831,7 +831,7 @@ ru = "{1} снова {1:num|бьёт|бьют}!"
 
 [028ed83bebaf]
 en = "\"Please drop that gold and follow me.\""
-ru = "«Пожалуйста, бросьте это золото и следуйте за мной.»"
+ru = "«Пожалуйста, бросьте это золото и следуйте за мной»."
 
 [046508a48517]
 en = "You are still weak."
@@ -855,11 +855,11 @@ ru = "Вы возвращаетесь к еде."
 
 [10843e0b4e1f]
 en = "\"Most likely all your gold was stolen from this vault.\""
-ru = "«Скорее всего, всё ваше золото украдено из этого хранилища.»"
+ru = "«Скорее всего, всё ваше золото украдено из этого хранилища»."
 
 [1658a873ae31]
 en = "\"%s, %s!  Welcome to %s hardware store!\""
-ru = "«{1}, {2}!  Добро пожаловать в скобяную лавку {3:gen}!»"
+ru = "«{1}, {2}! Добро пожаловать в скобяную лавку {3:gen}!»"
 
 [1e7bbdea28b2]
 en = "You feel a little sick!"
@@ -971,7 +971,7 @@ ru = "Тьфу, это мясо испорчено!"
 
 [5ec0ec5ab9e5]
 en = "Click!  %s triggers a rolling boulder trap."
-ru = "Щёлк!  {1:cap} {1:num|приводит|приводят} в действие ловушку с катящимся валуном."
+ru = "Щёлк! {1:cap} {1:num|приводит|приводят} в действие ловушку с катящимся валуном."
 
 [6063bce173a9]
 en = "The spellbook crumbles to dust!"
@@ -999,7 +999,7 @@ ru = "{1} {1:num|указывает|указывают} на вас и {1:num|р
 
 [74e8d72dbd50]
 en = "Wait!  There's %s hiding under %s!"
-ru = "Стойте!  Под {2:ins} прячется {1}!"
+ru = "Стойте! Под {2:ins} прячется {1}!"
 
 [75219b4de1fb]
 en = "%s stole %s."
@@ -1015,7 +1015,7 @@ ru = "{1} {1:num|поглощает|поглощают} {2:acc}."
 
 [80a1795b1eaa]
 en = "KAABLAMM!!!  You triggered a land mine!"
-ru = "БАБАХ!!!  Вы наступили на мину!"
+ru = "БАБАХ!!! Вы наступили на мину!"
 
 [8421608342a1]
 en = "%s tries to wield %s."
@@ -1164,15 +1164,15 @@ ru = "Вы чувствуете себя довольно {hero:gender|уста�
 
 [364099d41355]
 en = "%s %s, welcome to NetHack!  You are a %s %s."
-ru = "{1}, {2}, добро пожаловать в NetHack!  Вы — {3:hero:race} {4:hero}."
+ru = "{1}, {2}, добро пожаловать в NetHack! Вы — {3:hero:race} {4:hero}."
 
 [62602ffb2f1d]
 en = "%s %s, welcome to NetHack!  You are a female %s %s."
-ru = "{1}, {2}, добро пожаловать в NetHack!  Вы — {3:f:race} {4:f}."
+ru = "{1}, {2}, добро пожаловать в NetHack! Вы — {3:f:race} {4:f}."
 
 [eeb0f4c0375f]
 en = "%s %s, welcome to NetHack!  You are a male %s %s."
-ru = "{1}, {2}, добро пожаловать в NetHack!  Вы — {3:m:race} {4:m}."
+ru = "{1}, {2}, добро пожаловать в NetHack! Вы — {3:m:race} {4:m}."
 
 [e96a45c2b554]
 en = "%s %s, the %s %s %s, welcome back to NetHack!"

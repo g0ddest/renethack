@@ -2,7 +2,7 @@
 
 [dcb20e8a3a78]
 en = "Divine knowledge of %s fills your mind!  Spell '%c'."
-ru = "Божественное знание заклинания «{1}» наполняет ваш разум!  Буква заклинания: '{2}'."
+ru = "Божественное знание заклинания «{1}» наполняет ваш разум! Буква заклинания: '{2}'."
 
 [d310af180f9c]
 en = "You dream that you feel the power of %s over %s."
@@ -38,7 +38,7 @@ ru = "Вы слышите божественную музыку..."
 
 [1484904cafd6]
 en = "It sounds like:  \"%s\"."
-ru = "Мелодия звучит так:  «{1}»."
+ru = "Мелодия звучит так: «{1}»."
 
 [8a839e2d1105]
 en = "You are surrounded by %s glow."
@@ -258,7 +258,7 @@ ru = "Вы замечаете у {1:gender|своего|своей|своего|
 
 [f04702bbc46b]
 en = "You see crabgrass at your %s.  A funny thing in a dungeon."
-ru = "Вы видите у {1:gender|своего|своей|своего|своих} {1:gen} пырей.  Забавная находка для подземелья."
+ru = "Вы видите у {1:gender|своего|своей|своего|своих} {1:gen} пырей. Забавная находка для подземелья."
 
 [c63262ca06de]
 en = "Nothing else happens."
@@ -390,7 +390,7 @@ ru = "«Тебе не уйти от моего гнева, {hero:gender|смер
 
 [419ad844536e]
 en = "\"I crown thee...  The Hand of Elbereth!\""
-ru = "«Нарекаю тебя...  Дланью Elbereth!»"
+ru = "«Нарекаю тебя... Дланью Elbereth!»"
 
 [b0014424fa29]
 en = "\"Thou shalt be my Envoy of Balance!\""
@@ -782,15 +782,15 @@ ru = "Вы чувствуете, что {1} {1:gender|обломался|обл�
 
 [1e03690c02d4]
 en = "\"Thou art arrogant, creature.\""
-ru = "«{hero:gender|Ты высокомерен|Ты высокомерна}, создание.»"
+ru = "«{hero:gender|Ты высокомерен|Ты высокомерна}, создание»."
 
 [cd76ddb4e162]
 en = "\"Thou hast strayed from the path, creature.\""
-ru = "«{hero:gender|Ты сбился|Ты сбилась} с пути, создание.»"
+ru = "«{hero:gender|Ты сбился|Ты сбилась} с пути, создание»."
 
 [0442eeaa9410]
 en = "\"Thou hast strayed from the path, mortal.\""
-ru = "«{hero:gender|Ты сбился с пути, смертный|Ты сбилась с пути, смертная}.»"
+ru = "«{hero:gender|Ты сбился с пути, смертный|Ты сбилась с пути, смертная}»."
 
 [b9133fe9d047]
 en = "\"Thou durst call upon me?\""

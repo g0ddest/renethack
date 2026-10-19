@@ -221,7 +221,7 @@ fn what_a_helper_writes() {
     );
     check(
         "\"For you, scum; 133 zorkmids for this lamp.\"",
-        "«Для тебя, негодяй, 133 зоркмида за лампу.»",
+        "«Для тебя, негодяй, 133 зоркмида за лампу».",
     );
 }
 
@@ -1327,7 +1327,11 @@ fn a_heroine_is_spoken_to_as_one() {
             "Ты пьяна или всегда такая неуклюжая?",
             "пьян ",
         ),
-        ("51131edb47e4", "Ты недостойна искать Амулет.", "недостоин "),
+        (
+            "51131edb47e4",
+            "Ты недостойна искать Амулет».",
+            "недостоин ",
+        ),
         ("192077760360", "Ты не думала", "думал "),
         ("211059dc6fed", "Так вы — лучшая ученица", "лучший ученик"),
         ("1e88cfd407a7", "Я проголодалась", "проголодался"),
@@ -1356,15 +1360,15 @@ fn a_human_s_race_goes_unsaid() {
             &[
                 (
                     "Hello Hero, welcome to NetHack!  You are a lawful female human Archeologist.",
-                    "Здравствуйте, Hero, добро пожаловать в NetHack!  Вы — законопослушная женщина-археолог.",
+                    "Здравствуйте, Hero, добро пожаловать в NetHack! Вы — законопослушная женщина-археолог.",
                 ),
                 (
                     "Hello Hero, welcome to NetHack!  You are a chaotic human Valkyrie.",
-                    "Здравствуйте, Hero, добро пожаловать в NetHack!  Вы — хаотичная валькирия.",
+                    "Здравствуйте, Hero, добро пожаловать в NetHack! Вы — хаотичная валькирия.",
                 ),
                 (
                     "Hello Hero, welcome to NetHack!  You are a neutral female dwarven Valkyrie.",
-                    "Здравствуйте, Hero, добро пожаловать в NetHack!  Вы — нейтральная дварфийская валькирия.",
+                    "Здравствуйте, Hero, добро пожаловать в NetHack! Вы — нейтральная дварфийская валькирия.",
                 ),
                 (
                     "Hello Hero, the human Archeologist, welcome back to NetHack!",
@@ -1397,7 +1401,7 @@ fn a_human_s_race_goes_unsaid() {
             &[
                 (
                     "Hello Hero, welcome to NetHack!  You are a lawful male human Archeologist.",
-                    "Здравствуйте, Hero, добро пожаловать в NetHack!  Вы — законопослушный археолог.",
+                    "Здравствуйте, Hero, добро пожаловать в NetHack! Вы — законопослушный археолог.",
                 ),
                 (
                     "Hello Hero, the lawful human Archeologist, welcome back to NetHack!",
@@ -1449,7 +1453,7 @@ fn words_that_meant_something_else() {
     // «с вашей собачкой» where Russian says свой
     check(
         "Crash!  You kick open a secret door!",
-        "Хрясь!  Вы выбиваете",
+        "Хрясь! Вы выбиваете",
     );
     check("You see here a shito.", "танто");
     check("You swap places with your little dog.", "со своей собачкой");

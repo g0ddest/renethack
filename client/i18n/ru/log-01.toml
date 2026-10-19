@@ -5,7 +5,7 @@
 
 [4e9a5544b54b]
 en = "You already found a monster.  Use '%s' prefix to force another search."
-ru = "Вы уже нашли монстра.  Чтобы всё равно искать, используйте префикс '{1}'."
+ru = "Вы уже нашли монстра. Чтобы всё равно искать, используйте префикс '{1}'."
 
 [37b621a30e7f]
 en = "The '%s' prefix should be followed by a movement command."
@@ -161,11 +161,11 @@ ru = "Вы пытаетесь сдвинуть {1:acc}, но тщетно."
 
 [915abbecdacd]
 en = "Are you waiting to get hit?  Use '%s' prefix to force a no-op (to rest)."
-ru = "Ждёте, когда вас ударят?  Чтобы всё равно пропустить ход (отдохнуть), используйте префикс '{1}'."
+ru = "Ждёте, когда вас ударят? Чтобы всё равно пропустить ход (отдохнуть), используйте префикс '{1}'."
 
 [978510d59d1d]
 en = "Delicious!  Must be a Macintosh!"
-ru = "Восхитительно!  Должно быть, «Макинтош»!"
+ru = "Восхитительно! Должно быть, «Макинтош»!"
 
 [a340f48ee756]
 en = "You pull free from %s."
@@ -401,7 +401,7 @@ ru = "Вы начинаете чувствовать слабость."
 
 [51a3917713c8]
 en = "Blecch!  Rotten food!"
-ru = "Фу!  Тухлятина!"
+ru = "Фу! Тухлятина!"
 
 [556f62eba235]
 en = "You don't have anything to rub."
@@ -409,7 +409,7 @@ ru = "Вам нечего потереть."
 
 [57461d3230d8]
 en = "Dumb move!  You strain a muscle."
-ru = "Глупая затея!  Вы растягиваете мышцу."
+ru = "Глупая затея! Вы растягиваете мышцу."
 
 [5bb5470bf8db]
 en = "You feel less confused now."
@@ -498,7 +498,7 @@ ru = "Эти снаряды уже наготове!"
 
 [1037a67d0a3c]
 en = "Click!  You trigger a rolling boulder trap!"
-ru = "Щёлк!  Вы приводите в действие ловушку с катящимся валуном!"
+ru = "Щёлк! Вы приводите в действие ловушку с катящимся валуном!"
 
 [10754d62b25a]
 en = "A shiver runs up and down your %s!"
@@ -510,7 +510,7 @@ ru = "{1} {1:num|засыпает|засыпают}."
 
 [1ac803c405d4]
 en = "\"%s, %s!  Welcome to %s jewelers!\""
-ru = "«{1}, {2}!  Добро пожаловать в ювелирную лавку {3:gen}!»"
+ru = "«{1}, {2}! Добро пожаловать в ювелирную лавку {3:gen}!»"
 
 [1b31a8fea95b]
 en = "%s thrusts one of his %s at %s."
@@ -538,7 +538,7 @@ ru = "Эльфу срочно нужна еда!"
 
 [2e17feaec5ea]
 en = "\"%s, %s!  Welcome to %s general store!\""
-ru = "«{1}, {2}!  Добро пожаловать в универсальный магазин {3:gen}!»"
+ru = "«{1}, {2}! Добро пожаловать в универсальный магазин {3:gen}!»"
 
 [38513a6dbefd]
 en = "Your left %s is empty."
@@ -623,7 +623,7 @@ not_terms = ["tin"]
 
 [836ebbf8ab7e]
 en = "\"%s, %s!  Welcome again to %s jewelers!\""
-ru = "«{1}, {2}!  Снова добро пожаловать в ювелирную лавку {3:gen}!»"
+ru = "«{1}, {2}! Снова добро пожаловать в ювелирную лавку {3:gen}!»"
 
 [847197203499]
 en = "Thump!"
@@ -643,7 +643,7 @@ ru = "{1} {1:num|получает|получают} удар током!"
 
 [8f4c4c093470]
 en = "You stop.  %s doesn't want to swap places."
-ru = "Вы останавливаетесь.  {1:cap} не {1:num|хочет|хотят} меняться местами."
+ru = "Вы останавливаетесь. {1:cap} не {1:num|хочет|хотят} меняться местами."
 
 [90bf72594cd7]
 en = "You no longer have ammunition readied."
@@ -695,7 +695,7 @@ ru = "{1} {1:num|отбрасывает|отбрасывают} {2:acc} мощн
 
 [aed8d85586e2]
 en = "\"%s, %s!  Welcome to %s delicatessen!\""
-ru = "«{1}, {2}!  Добро пожаловать в гастроном {3:gen}!»"
+ru = "«{1}, {2}! Добро пожаловать в гастроном {3:gen}!»"
 
 [afc88279f2f9]
 en = "You can't force anything with that weapon."
@@ -751,7 +751,7 @@ ru = "Волшебные чернила в этой книге заклинан�
 
 [de50d862a58e]
 en = "\"%s, %s!  Welcome to %s health food store!\""
-ru = "«{1}, {2}!  Добро пожаловать в магазин здорового питания {3:gen}!»"
+ru = "«{1}, {2}! Добро пожаловать в магазин здорового питания {3:gen}!»"
 
 [de55948b6c2e]
 en = "You can't force anything with those weapons."
@@ -969,7 +969,7 @@ ru = "{1} с отвращением {1:num|выплёвывает|выплёвы
 
 [c9651452f4ca]
 en = "You can't breathe.  Sorry."
-ru = "Вы не можете выдохнуть.  Увы."
+ru = "Вы не можете выдохнуть. Увы."
 
 [0c65c6fccef3]
 en = "You don't have enough energy to breathe!"
@@ -1818,7 +1818,7 @@ ru = "Книга, похоже, не обращает на вас внимани
 
 [eb91608b05fb]
 en = "The runes appear scrambled.  You can't read them!"
-ru = "Руны перепутаны.  Вы не можете их прочесть!"
+ru = "Руны перепутаны. Вы не можете их прочесть!"
 
 [7351451a2c18]
 en = "A chill runs down your %s."
@@ -1866,7 +1866,7 @@ ru = "Надгробия на кладбище приходят в движен�
 
 [49f11980a71b]
 en = "Oh my!  Your name appears in the book!"
-ru = "Ой-ой!  В книге появляется ваше имя!"
+ru = "Ой-ой! В книге появляется ваше имя!"
 
 [8eee03595762]
 en = "You are too impaired to cast a spell."
@@ -1978,7 +1978,7 @@ ru = "Вы ощущаете на {1:prep} остроконечную шляпу.
 
 [d55c1861a244]
 en = "You're joking!  In this weather?"
-ru = "Вы шутите!  В такую погоду?"
+ru = "Вы шутите! В такую погоду?"
 
 [b153bf8e05ca]
 en = "You had better wait for the sun to come out."

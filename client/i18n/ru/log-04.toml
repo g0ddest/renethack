@@ -206,7 +206,7 @@ ru = "Ваш разум заполняют безумные линии!"
 
 [ebe837294350]
 en = "Wow!  Modern art."
-ru = "Ух ты!  Современное искусство."
+ru = "Ух ты! Современное искусство."
 
 [7055904707e5]
 en = "Your %s spins in bewilderment."
@@ -294,7 +294,7 @@ ru = "Громовой голос разносится по пещерам:"
 
 [85a49270a0ea]
 en = "\"No, mortal!  That will not be done.\""
-ru = "«Нет, {hero:gender|смертный|смертная}!  Этому не бывать.»"
+ru = "«Нет, {hero:gender|смертный|смертная}! Этому не бывать»."
 
 [e7c487903aff]
 en = "Your iron ball gets heavier."
@@ -334,7 +334,7 @@ ru = "На {1:gender|этом|этой|этом|этих} {1:loc} нет эти�
 
 [257b50ba6c49]
 en = "\"Magic Marker(TM) %s Red Ink Marker Pen.  Water Soluble.\""
-ru = "«Волшебный маркер(TM) „{1:cap}“ с красными чернилами.  Водорастворимый.»"
+ru = "«Волшебный маркер(TM) „{1:cap}“ с красными чернилами. Водорастворимый»."
 
 [1babe1ba429d]
 en = "You feel the embossed words:"
@@ -346,7 +346,7 @@ ru = "Вы читаете:"
 
 [f3763213bcca]
 en = "\"1 Zorkmid.  857 GUE.  In Frobs We Trust.\""
-ru = "«1 зоркмид.  857 GUE.  На Фробов уповаем.»"
+ru = "«1 зоркмид. 857 GUE. На Фробов уповаем»."
 
 [d89ed424ac52]
 en = "You feel the engraved signature:"
@@ -358,7 +358,7 @@ ru = "Подписано:"
 
 [c47045e800ce]
 en = "\"Odin.\""
-ru = "«Один.»"
+ru = "«Один»."
 
 [48307d231ab3]
 en = "The candy bar's wrapper is blank."
@@ -750,7 +750,7 @@ ru = "Класс монстров не указан."
 
 [375291fc52fe]
 en = "Type letter (or punctuation) or name used for a class of monsters or 'none'."
-ru = "Введите букву (или знак препинания), название класса монстров или 'none'."
+ru = "Введите букву (или знак препинания), название класса монстров или «none»."
 
 [819ade4fb77c]
 en = "Eliminated %d monster."
@@ -810,7 +810,7 @@ ru = "Вид монстра не указан."
 
 [f0ecac36c3a0]
 en = "Type the name of a type of monster or 'none'."
-ru = "Введите название вида монстров или 'none'."
+ru = "Введите название вида монстров или «none»."
 
 [a104692d0735]
 en = "Such creatures do not exist in this world."
@@ -894,19 +894,19 @@ ru = "На рисунке изображено: {1}."
 
 [17591f4d2287]
 en = "There is writing on the %s.  It reads:  DUNCE."
-ru = "На {1:loc} есть надпись.  Она гласит:  ТУПИЦА."
+ru = "На {1:loc} есть надпись. Она гласит: ТУПИЦА."
 
 [d3eed144d06b]
 en = "There is writing on the %s.  It reads:  WIZZARD."
-ru = "На {1:loc} есть надпись.  Она гласит:  ВАЛШЕБНИК."
+ru = "На {1:loc} есть надпись. Она гласит: ВАЛШЕБНИК."
 
 [8b3d0c92ccfd]
 en = "You feel lettering on the %s.  It reads:  DUNCE."
-ru = "Вы нащупываете на {1:loc} буквы.  Надпись гласит:  ТУПИЦА."
+ru = "Вы нащупываете на {1:loc} буквы. Надпись гласит: ТУПИЦА."
 
 [906c503f39ab]
 en = "You feel lettering on the %s.  It reads:  WIZZARD."
-ru = "Вы нащупываете на {1:loc} буквы.  Надпись гласит:  ВАЛШЕБНИК."
+ru = "Вы нащупываете на {1:loc} буквы. Надпись гласит: ВАЛШЕБНИК."
 
 [9f10e8d878c4]
 en = "\"Ankh-Morpork Merchant's Guild Barter Card\""

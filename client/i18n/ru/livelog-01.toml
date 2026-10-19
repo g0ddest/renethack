@@ -717,11 +717,11 @@ ru = "{hero:gender|получил|получила} {1:acc} от Владычи�
 
 [a959835eb85d]
 en = "was denied %s!  The Lady of the Lake has deemed him unworthy"
-ru = "не получил {1:gen}!  Владычица Озера сочла его недостойным"
+ru = "не получил {1:gen}! Владычица Озера сочла его недостойным"
 
 [5bb73db3693a]
 en = "was denied %s!  The Lady of the Lake has deemed her unworthy"
-ru = "не получила {1:gen}!  Владычица Озера сочла её недостойной"
+ru = "не получила {1:gen}! Владычица Озера сочла её недостойной"
 
 [e74828c27f30]
 en = "found %s"
