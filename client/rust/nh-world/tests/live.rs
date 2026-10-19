@@ -192,6 +192,35 @@ fn a_new_game_has_its_inventory_at_the_first_command() {
     assert!(!pack.twoweap());
 }
 
+/// The options notice tells every option set, as `#saveoptions` writes
+/// them: the player's own are what is left once the client's are out (the
+/// character, the session's, number_pad, the conditions...).
+#[test]
+fn the_options_notice_tells_the_player_s_own_options() {
+    let pg = tempfile::tempdir().unwrap();
+    let mut cfg = config(pg.path());
+    cfg.options
+        .push_str(",fruit:kumquat,hitpointbar,number_pad:1");
+    let mut engine = Engine::spawn(&cfg).unwrap();
+    let script = "key #\next quit\nyn y\nyn n\nyn n\nyn n\nyn n\n";
+    let mut responder = ScriptResponder::new(parse_script(script).unwrap());
+    let t = run_session(&mut engine, &mut responder, &SessionLimits::default()).unwrap();
+    assert!(t.said_bye && t.exit.unwrap().success(), "{:?}", t.errors);
+    let (_, seen, _) = replay(&t.lines);
+    let rc = seen[0]
+        .world
+        .options_rc
+        .clone()
+        .expect("an options notice before the first command");
+    assert!(rc.contains("OPTIONS=fruit:kumquat"), "{rc}");
+    assert!(!rc.starts_with('#'), "no dated header: {rc}");
+    assert_eq!(
+        player_options(&rc),
+        ["fruit:kumquat", "hitpointbar"],
+        "{rc}"
+    );
+}
+
 /// Play by reading engine lines one at a time, answering each prompt with
 /// `decide`; read-only displays are acknowledged. Returns the final world.
 fn play(decide: &mut dyn FnMut(&mut World, &Prompt) -> Reply) -> World {

@@ -22,6 +22,75 @@ const TYPES_LINE: &str = "New pickup_types:";
 const BURDEN_MENU: &str = "Select encumbrance level:";
 const PARANOID_MENU: &str = "Actions requiring extra confirmation:";
 
+/// NetHack options the client sets itself, left out of the player's own
+/// (`player_options`): the character and the session's options, the key
+/// profile's number_pad, the Gameplay section's, and those that change
+/// how the engine's windows, menus, keys and clicks come to the client.
+/// So are the status conditions (`cond_`), getpos's (`getpos`) and
+/// farlook's (`whatis_`).
+const CLIENT_OPTIONS: [&str; 35] = [
+    "name",
+    "role",
+    "race",
+    "gender",
+    "align",
+    "alignment",
+    "playmode",
+    "number_pad",
+    "time",
+    "legacy",
+    "tutorial",
+    "tips",
+    "mail",
+    "showexp",
+    "pushweapon",
+    "autopickup",
+    "pickup_types",
+    "pickup_burden",
+    "autoopen",
+    "autoquiver",
+    "safe_pet",
+    "confirm",
+    "verbose",
+    "paranoid_confirmation",
+    "windowtype",
+    "menustyle",
+    "perm_invent",
+    "perminv_mode",
+    "altmeta",
+    "force_invmenu",
+    "clicklook",
+    "herecmd_menu",
+    "therecmd_menu",
+    "mouse_support",
+    "autodescribe",
+];
+
+/// The player's own NetHack options in an options notice's `rc` (every
+/// option set, as `#saveoptions` writes them): those `O` set, kept for the
+/// next games (`Settings::nethack_options`), not the client's. Only the
+/// `OPTIONS=` lines' options: menu colours and message types stay a
+/// game's.
+pub fn player_options(rc: &str) -> Vec<String> {
+    rc.replace("\\\n", "")
+        .lines()
+        .filter_map(|l| l.trim().strip_prefix("OPTIONS="))
+        .flat_map(|opts| opts.split(','))
+        .map(str::trim)
+        .filter(|o| !o.is_empty() && !o.chars().any(char::is_control))
+        .filter(|o| {
+            let name = o.trim_start_matches('!');
+            let name = name.split(':').next().unwrap_or("").trim();
+            !name.is_empty()
+                && !CLIENT_OPTIONS.contains(&name)
+                && !["cond_", "getpos", "whatis_"]
+                    .iter()
+                    .any(|p| name.starts_with(p))
+        })
+        .map(str::to_string)
+        .collect()
+}
+
 /// The most a pickup lifts without asking (`pickup_burden`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -936,6 +1005,26 @@ mod tests {
     }
 
     #[test]
+    fn the_player_s_own_options_leave_the_client_s_out() {
+        let rc = "OPTIONS=!autopickup\n\
+                  OPTIONS=hitpointbar\n\
+                  OPTIONS=name:Hero\n\
+                  OPTIONS=number_pad:1\n\
+                  OPTIONS=fruit:kumquat\n\
+                  OPTIONS=cond_barehanded,cond_busy,\\\n        cond_trap,!rest_on_space\n\
+                  OPTIONS=playmode:debug\n\
+                  OPTIONS=paranoid_confirmation:pray\n\
+                  OPTIONS=whatis_menu\n\
+                  MENUCOLOR=\"blessed\"=green\n\
+                  BIND=^X:attributes\n";
+        assert_eq!(
+            player_options(rc),
+            ["hitpointbar", "fruit:kumquat", "!rest_on_space"]
+        );
+        assert!(player_options("").is_empty());
+    }
+
+    #[test]
     fn the_notice_tells_the_game_s_values() {
         let n = OptionsNotice {
             autopickup: true,
@@ -950,6 +1039,7 @@ mod tests {
             paranoid_attack: false,
             paranoid_pray: false,
             paranoid_remove: true,
+            rc: String::new(),
         };
         let g = Gameplay::from_notice(&n);
         assert_eq!(

@@ -6,7 +6,9 @@
 //! steps (number_pad's digit would have joined the count). `>` off the
 //! stairs is NetHack's own ("You can't go down here."): no walk, unless
 //! the player's setting asks for one. With the orders' speed at Instant a
-//! click walks three cells at once.
+//! click walks three cells at once. An option the player sets with the
+//! engine's own `O` (hitpointbar) is kept in the profile, without the
+//! client's own, and the next game has it.
 
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
@@ -18,7 +20,7 @@ use super::{Check, Step, command, idle_command, key, letter_of, quit, smoke_choi
 use godot::prelude::godot_print;
 
 use crate::game::RenethackGame;
-use crate::ui_events::{CharacterChoice, UiEvent};
+use crate::ui_events::{CharacterChoice, DialogEvent, UiEvent};
 
 fn samurai(profile: KeyProfile) -> CharacterChoice {
     CharacterChoice {
@@ -288,12 +290,76 @@ fn not_down_here() -> Vec<Step> {
     ]
 }
 
+/// The engine's own options menu (`O`) is the request waiting.
+fn engine_options(p: &Prompt) -> bool {
+    matches!(p, Prompt::Menu { title: Some(t), .. } if t == "Options")
+}
+
+/// hitpointbar's line in the engine's `O` menu waiting shows it on.
+fn hitpointbar_on(g: &RenethackGame) -> Result<bool, String> {
+    let Some((_, Prompt::Menu { items, .. })) = &g.pending else {
+        return Ok(false);
+    };
+    let line = items
+        .iter()
+        .filter_map(|i| i.str.as_deref())
+        .find(|t| t.starts_with("hitpointbar "));
+    Ok(line.is_some_and(|l| l.contains("[X]")))
+}
+
+/// `O`, hitpointbar picked (a pick-one menu: a click answers it), the
+/// menu again with it on, closed; the profile keeps it, not the client's
+/// own options.
+fn hitpointbar_set() -> Vec<Step> {
+    vec![
+        Step::Wait("the player's turn", idle_command),
+        key('O'),
+        Step::Request("the engine's own options", engine_options),
+        Step::Call("hitpointbar picked", |g| {
+            let (id, _) = g.pending.clone().ok_or("no request waits")?;
+            let entries = super::open_menu(g).ok_or("no menu shown")?;
+            let i = entries
+                .iter()
+                .position(|e| e.text.starts_with("hitpointbar "))
+                .ok_or("no hitpointbar in O")?;
+            g.push_ui(UiEvent::Dialog {
+                req: id,
+                ev: DialogEvent::MenuClick(i),
+            });
+            Ok(())
+        }),
+        Step::Wait("the options again, hitpointbar on", hitpointbar_on),
+        Step::Dialog(DialogEvent::MenuCancel),
+        Step::Request("a command again", command),
+        Step::Wait("the profile keeps it, not the client's own", |g| {
+            let own = &g.settings.nethack_options;
+            let client = ["name", "role", "number_pad", "time", "showexp", "cond_"];
+            if own.iter().any(|o| client.iter().any(|c| o.starts_with(c))) {
+                return Err(format!("the profile keeps the client's own: {own:?}"));
+            }
+            Ok(own.iter().any(|o| o == "hitpointbar"))
+        }),
+    ]
+}
+
+/// The next game's `O` shows hitpointbar on.
+fn hitpointbar_kept() -> Vec<Step> {
+    vec![
+        key('O'),
+        Step::Request("the engine's own options", engine_options),
+        Step::Wait("hitpointbar on in the next game", hitpointbar_on),
+        Step::Dialog(DialogEvent::MenuCancel),
+        Step::Request("a command again", command),
+    ]
+}
+
 pub(super) fn counts() -> Vec<Step> {
     let mut steps = start_as(samurai(KeyProfile::Modern));
     steps.extend(pick_five(vec![key('n'), key('5')], |g| keys_were(g, "n5,")));
     steps.extend(three_steps());
     steps.extend(not_down_here());
     steps.extend(instant_walk());
+    steps.extend(hitpointbar_set());
     steps.extend(quit());
     steps.extend([
         Step::Push(UiEvent::BackToTitle),
@@ -304,6 +370,7 @@ pub(super) fn counts() -> Vec<Step> {
         Step::Push(UiEvent::StartCharacter(samurai(KeyProfile::Classic))),
         Step::Request("the first command (Classic)", command),
     ]);
+    steps.extend(hitpointbar_kept());
     steps.extend(pick_five(vec![key('5')], |g| keys_were(g, "5,")));
     steps.extend(quit());
     steps

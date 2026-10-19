@@ -270,6 +270,11 @@ pub struct OptionsNotice {
     pub paranoid_attack: bool,
     pub paranoid_pray: bool,
     pub paranoid_remove: bool,
+    /// Every option set, as NetHack writes them for `#saveoptions` (an rc
+    /// file's lines without its dated header): the player's, from `O`,
+    /// and the client's own.
+    #[serde(default)]
+    pub rc: String,
 }
 
 /// The hero's progress as the game tells it to the player (#chronicle,

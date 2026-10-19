@@ -1192,6 +1192,7 @@ mod tests {
                 prologue: crate::PrologueWhen::EveryGame,
                 order_speed: crate::OrderSpeed::Fast,
                 walk_to_stairs: true,
+                nethack_options: vec!["hitpointbar".into(), "fruit:kumquat".into()],
             },
             volumes: BTreeMap::from([("Music".into(), 40), ("SFX".into(), 100)]),
             guide_seen: [crate::Guide::Quest, crate::Guide::Pet].into(),

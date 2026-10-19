@@ -770,6 +770,7 @@ fn old_profile() -> Profile {
             prologue: nh_world::PrologueWhen::default(),
             order_speed: nh_world::OrderSpeed::Fast,
             walk_to_stairs: true,
+            nethack_options: vec!["hitpointbar".into()],
         },
         volumes: [("Music".to_string(), 40), ("SFX".to_string(), 100)].into(),
         guide_seen: [nh_world::Guide::Quest, nh_world::Guide::Pet].into(),

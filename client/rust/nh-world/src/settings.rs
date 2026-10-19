@@ -2,8 +2,9 @@
 //! profile (`Profile`): how the window covers the screen, how much the 3D
 //! view draws, the interface's scale, the screen's effects, a new
 //! character's keys, the commands' keys moved, the NetHack options a new
-//! game starts with, how fast the client's orders go and whether `<` and
-//! `>` walk to the stairs. Plain data and the rules between its parts (a graphics
+//! game starts with and those the player set with `O`, how fast the
+//! client's orders go and whether `<` and `>` walk to the stairs. Plain
+//! data and the rules between its parts (a graphics
 //! preset and the controls it sets, a step through a setting's values);
 //! the client applies them to Godot and to the engine.
 
@@ -50,6 +51,10 @@ pub struct Settings {
     /// off, they are NetHack's ("You can't go down here.").
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub walk_to_stairs: bool,
+    /// The player's own NetHack options (`player_options`): those `O` set
+    /// in the last game, given to every new game and restore.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub nethack_options: Vec<String>,
 }
 
 /// How fast the client's own orders step: the tick between their actions.

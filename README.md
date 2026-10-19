@@ -187,7 +187,12 @@ autoquiver, safe_pet, confirm, verbose, the confirmations), a new game's
 at the title and the game's over it; then the client's own: how fast its
 orders step (Instant, Fast 150 ms, Normal 300 ms, Slow 500 ms) and whether
 `<` and `>` off the stairs walk to the known stairs (off: NetHack answers
-"You can't go down here."). Controls: the keyboard's commands of either
+"You can't go down here."). The options a player sets with the engine's
+own `O` are kept in the profile as well (`nethack_options`: the host's
+options notice tells every option set, as `#saveoptions` would write it;
+the client's own are left out), and every next game and restore starts
+with them; NetHack's tip windows are off (`!tips`), the guide's cards
+teach. Controls: the keyboard's commands of either
 key profile, each on its key, and the gamepad's buttons in the
 controller's own names (read only: Steam Input remaps a controller).
 

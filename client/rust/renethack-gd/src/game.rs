@@ -2015,6 +2015,11 @@ impl RenethackGame {
                     self.ui_mut().hud.set_mode(mode == Mode::Combat, true);
                 }
                 self.check_hints();
+                // the player's own NetHack options as the game has them
+                // (what `O` set): kept for the next games
+                if let Some(rc) = self.world.options_rc.take() {
+                    self.keep_nethack_options(&rc);
+                }
             } else if self.driver.is_active() {
                 // a question the order did not expect: the player answers
                 self.driver.on_question();
@@ -3699,6 +3704,17 @@ impl RenethackGame {
         self.driver.set_tick_ms(ms);
     }
 
+    /// The player's own NetHack options as a notice tells them, kept in
+    /// the profile for every next game and restore.
+    fn keep_nethack_options(&mut self, rc: &str) {
+        let own = nh_world::player_options(rc);
+        if own != self.settings.nethack_options {
+            let mut s = self.settings.clone();
+            s.nethack_options = own;
+            self.set_settings(s);
+        }
+    }
+
     /// Forget orders, counts and notes (a new game, the end of one).
     fn reset_orders(&mut self) {
         self.driver.reset();
@@ -5113,11 +5129,21 @@ impl RenethackGame {
         let cfg = EngineConfig {
             engine: paths.engine(),
             playground: paths.playground.clone(),
-            // NetHack does not save number_pad: every start passes it
-            options: format!(
-                "{options},{CLIENT_EXTRA_OPTIONS},{}",
-                state.profile.engine_option()
-            ),
+            // NetHack does not save number_pad: every start passes it; the
+            // player's own options (`O`'s, kept) last, where the client's
+            // win over them (the engine reads the list right to left)
+            options: {
+                let own = &self.settings.nethack_options;
+                let own = if own.is_empty() {
+                    String::new()
+                } else {
+                    format!(",{}", own.join(","))
+                };
+                format!(
+                    "{options},{CLIENT_EXTRA_OPTIONS},{}{own}",
+                    state.profile.engine_option()
+                )
+            },
             seed: self
                 .seed
                 .or_else(|| env_number("RENETHACK_SEED"))

@@ -68,13 +68,15 @@ echo "$prog" | grep -q '"gameover":false,"how":null,"turn":1}' || fail "progress
 echo "$prog" | grep -q '"conduct":{"unvegetarian":0,' || fail "progress: no conducts"
 # the options the client's settings show arrive before the first command
 # wait, as the game has them (the client's start options aside, NetHack's
-# own defaults)
+# own defaults), and every option set, as #saveoptions writes them, no
+# dated header (printf: sh's echo would turn the text's \n into lines)
 opts=$(grep '^{"t":"win","fn":"options",' "$out" || true)
-[ "$(echo "$opts" | grep -c .)" = 1 ] || fail "not one options notice"
+[ "$(printf '%s\n' "$opts" | grep -c .)" = 1 ] || fail "not one options notice"
 opts_line=$(grep -n '^{"t":"win","fn":"options",' "$out" | head -1 | cut -d: -f1)
 [ "$opts_line" -lt "$first_req" ] || fail "options come after the first request"
-echo "$opts" | grep -q '"a":{"autopickup":false,"pickup_types":"","pickup_burden":"stressed","autoopen":true,"autoquiver":false,"safe_pet":true,"confirm":true,"verbose":true,"paranoid_quit":false,"paranoid_attack":false,"paranoid_pray":true,"paranoid_remove":false}}$' \
+printf '%s\n' "$opts" | grep -q '"a":{"autopickup":false,"pickup_types":"","pickup_burden":"stressed","autoopen":true,"autoquiver":false,"safe_pet":true,"confirm":true,"verbose":true,"paranoid_quit":false,"paranoid_attack":false,"paranoid_pray":true,"paranoid_remove":false,"rc":"OPTIONS=name:Hero\\n.*"}}$' \
     || fail "options: not the defaults"
+printf '%s\n' "$opts" | grep -q '"rc":"#' && fail "options: the rc text's dated header"
 # messages carry the format vpline() was given and its arguments, for the
 # translator; the hook that reads them only observes: without it the game
 # is the same, line for line

@@ -71,6 +71,9 @@ pub struct World {
     /// The options the settings' Gameplay section shows, as the game has
     /// them (the last options notice).
     pub options: Option<Gameplay>,
+    /// Every option the game has set, as the last options notice wrote
+    /// them (`OptionsNotice::rc`), until the client takes them.
+    pub options_rc: Option<String>,
     /// The spells of helplessness, from the status line.
     helpless: HelplessWatch,
     /// The last progress notice (see `progress`), and how many came.
@@ -126,6 +129,7 @@ impl World {
             level: None,
             hero_trap: None,
             options: None,
+            options_rc: None,
             helpless: HelplessWatch::default(),
             progress: None,
             progress_seq: 0,
@@ -357,7 +361,10 @@ impl World {
             WinCall::Inventory(inv) => self.inventory.replace(inv),
             WinCall::Level(l) => self.level = Some(l.clone()),
             WinCall::Hero(h) => self.hero_trap = h.trap.as_deref().map(TrapKind::of),
-            WinCall::Options(o) => self.options = Some(Gameplay::from_notice(o)),
+            WinCall::Options(o) => {
+                self.options = Some(Gameplay::from_notice(o));
+                self.options_rc = Some(o.rc.clone());
+            }
             WinCall::Progress(p) => {
                 self.progress = Some(p.clone());
                 self.progress_seq += 1;

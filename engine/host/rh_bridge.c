@@ -434,12 +434,35 @@ progress_flush(void)
     rh_proto_send("win", "progress", a);
 }
 
+/* Every option set, as #saveoptions would write them into an rc file
+   (all_options_strbuf()), without its dated header: those the player set
+   with O and those the client set itself.  The client keeps the player's
+   own for the next games.  Observation only. */
+static void
+add_rc(cJSON *a)
+{
+    strbuf_t sbuf;
+    const char *s;
+
+    all_options_strbuf(&sbuf);
+    s = sbuf.str ? sbuf.str : "";
+    /* the header's comment lines: the time it would have been saved */
+    while (*s == '#') {
+        const char *nl = strchr(s, '\n');
+
+        s = nl ? nl + 1 : s + strlen(s);
+    }
+    add_str(a, "rc", s);
+    strbuf_empty(&sbuf);
+}
+
 /* The options the client's settings show (their Gameplay section), as
    the game has them now and as its full options menu words them:
    autopickup, pickup_types (the classes' symbols, "" for all),
    pickup_burden, autoopen, autoquiver, safe_pet, confirm, verbose and four
-   switches of paranoid_confirmation.  The save keeps them, so only the
-   game knows a restored game's.  Observation only: reads of `flags`. */
+   switches of paranoid_confirmation; and every option set (add_rc()).
+   The save keeps them, so only the game knows a restored game's.
+   Observation only: reads of `flags`. */
 static cJSON *
 options_json(void)
 {
@@ -466,6 +489,7 @@ options_json(void)
     add_bool(a, "paranoid_attack", ParanoidHit);
     add_bool(a, "paranoid_pray", ParanoidPray);
     add_bool(a, "paranoid_remove", ParanoidRemove);
+    add_rc(a);
     return a;
 }
 
