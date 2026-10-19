@@ -105,7 +105,8 @@ pub struct PaletteCmd {
     pub desc: String,
     /// Its key as the player presses it now ("" for none).
     pub key: String,
-    /// Other words that find it ("give up" finds #quit), lower case.
+    /// Other words that find it ("give up" finds #quit, "молитва"
+    /// #pray), lower case.
     pub also: Vec<String>,
 }
 
@@ -126,7 +127,7 @@ pub fn palette_cmds(catalog: Option<&Catalog>, keymap: &nh_world::Keymap) -> Vec
         .iter()
         .filter(|e| palette_lists(&e.name))
         .map(|e| {
-            // #quit is giving up: said so, and found by those words too
+            // #quit is giving up: said so
             let quit = e.name == "quit";
             PaletteCmd {
                 name: e.name.clone(),
@@ -137,26 +138,36 @@ pub fn palette_cmds(catalog: Option<&Catalog>, keymap: &nh_world::Keymap) -> Vec
                     i18n::engine(EngineKind::Menu, &e.desc).into_owned()
                 },
                 key: crate::rebind::bound_code(keymap, e.key),
-                also: if quit {
-                    let own = tr!("game-menu-give-up").to_lowercase();
-                    let mut also = vec!["give up".to_string()];
-                    if own != "give up" {
-                        also.push(own);
-                    }
-                    also
-                } else {
-                    Vec::new()
-                },
+                // the names it goes by in the player's language
+                also: tr!("palette-also", cmd = e.name.as_str())
+                    .split(',')
+                    .map(|w| w.trim().to_lowercase())
+                    .filter(|w| !w.is_empty())
+                    .collect(),
             }
         })
         .collect()
 }
 
-/// Commands matching `text`: the exact name first, then prefix matches,
-/// then other substring matches, each shortest first (then by name). An
-/// empty `text` lists everything in catalog order.
+/// Lower case, ё as е: a search's text and what it is compared with.
+fn folded(s: &str) -> String {
+    s.to_lowercase().replace('ё', "е")
+}
+
+/// `s` or one of its words starts with `text`.
+fn word_starts(s: &str, text: &str) -> bool {
+    s.starts_with(text)
+        || s.split(|c: char| !c.is_alphanumeric())
+            .any(|w| w.starts_with(text))
+}
+
+/// Commands matching `text`: the exact name first, then the names it
+/// starts, then a word of the other names (`also`, in the player's
+/// language: "моли" finds #pray) or of the description it starts, then
+/// the names it is inside; each shortest first (then by name). An empty
+/// `text` lists everything in catalog order.
 pub fn palette_filter(cmds: &[PaletteCmd], text: &str) -> Vec<usize> {
-    let text = text.trim().to_lowercase();
+    let text = folded(text.trim());
     if text.is_empty() {
         return (0..cmds.len()).collect();
     }
@@ -164,13 +175,18 @@ pub fn palette_filter(cmds: &[PaletteCmd], text: &str) -> Vec<usize> {
         .iter()
         .enumerate()
         .filter_map(|(i, c)| {
-            let name = c.name.to_lowercase();
+            let name = folded(&c.name);
+            let also: Vec<String> = c.also.iter().map(|a| folded(a)).collect();
             let tier = if name == text {
                 0
             } else if name.starts_with(&text) {
                 1
-            } else if name.contains(&text) || c.also.iter().any(|a| a.contains(&text)) {
+            } else if also.iter().any(|a| word_starts(a, &text))
+                || word_starts(&folded(&c.desc), &text)
+            {
                 2
+            } else if name.contains(&text) || also.iter().any(|a| a.contains(&text)) {
+                3
             } else {
                 return None;
             };
@@ -4497,6 +4513,18 @@ impl Dialogs {
         }
     }
 
+    /// Type `text` into the open palette's field, as a player would.
+    pub fn type_palette(&mut self, text: &str) -> bool {
+        let Some(Kind::ExtCmd { edit, palette, .. }) = self.open.as_mut().map(|o| &mut o.kind)
+        else {
+            return false;
+        };
+        edit.set_text(text);
+        palette.borrow_mut().refilter(text);
+        fill_palette(palette);
+        true
+    }
+
     /// Type `text` into the open picker's search, as a player would.
     pub fn type_pick(&mut self, text: &str) -> bool {
         let Some(Kind::Picker { edit, picker }) = self.open.as_mut().map(|o| &mut o.kind) else {
@@ -5332,6 +5360,29 @@ mod tests {
                 also: Vec::new(),
             })
             .collect()
+    }
+
+    #[test]
+    fn russian_words_and_descriptions_find_commands() {
+        let mut c = cmds(&["pray", "offer", "eat", "genocided"]);
+        c[0].desc = "помолиться богам о помощи".into();
+        c[0].also = vec!["молитва".into(), "молиться".into()];
+        c[1].desc = "принести жертву богам".into();
+        c[1].also = vec!["жертва".into(), "алтарь".into()];
+        c[2].desc = "съесть что-нибудь".into();
+        c[3].desc = "список истреблённых и вымерших монстров".into();
+        // a name in the player's language, a word's start
+        assert_eq!(names(&c, &palette_filter(&c, "моли")), ["pray"]);
+        assert_eq!(names(&c, &palette_filter(&c, "Жертв")), ["offer"]);
+        // the description's words: "богам" is in both, shortest name first
+        assert_eq!(names(&c, &palette_filter(&c, "бог")), ["pray", "offer"]);
+        assert_eq!(names(&c, &palette_filter(&c, "съе")), ["eat"]);
+        // ё typed as е
+        assert_eq!(names(&c, &palette_filter(&c, "истребленн")), ["genocided"]);
+        // a word's middle is no match: "ощи" ends "помощи"
+        assert!(palette_filter(&c, "ощи").is_empty());
+        // the English name still leads
+        assert_eq!(names(&c, &palette_filter(&c, "pr")), ["pray"]);
     }
 
     #[test]

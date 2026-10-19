@@ -7,7 +7,10 @@
 //! a gamepad builds a wish (X blessed, Y +2, RB weapons, ↓, A); a wish
 //! typed in English instead still works, and one typed in English into the
 //! picker goes to the engine as typed; an engraving typed in Cyrillic is
-//! written in Latin letters, "Элберет" as "Elbereth".
+//! written in Latin letters, "Элберет" as "Elbereth". `palette-words`
+//! finds the extended commands by their Russian names and descriptions in
+//! the `#` palette: "моли" lists #pray first and runs it, "жертв" #offer;
+//! the English name still leads ("pra").
 
 use nh_world::{Key, KeyInput, Prompt};
 
@@ -252,6 +255,103 @@ pub(super) fn pickers() -> Vec<Step> {
                 _ => Ok(false),
             }
         }),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
+/// The palette's rows shown first is `name`.
+fn palette_first(g: &RenethackGame, name: &str) -> Result<bool, String> {
+    let ui = g.ui.as_ref().ok_or("no UI")?;
+    let rows = ui.dialogs.palette_rows().ok_or("no palette open")?;
+    match rows.first() {
+        Some((first, _)) if first == name => Ok(true),
+        Some(_) | None if rows.len() > 30 => Ok(false),
+        Some((first, desc)) => Err(format!(
+            "the palette lists #{first} ({desc}) first, not #{name}"
+        )),
+        None => Err(format!("the palette lists nothing for #{name}")),
+    }
+}
+
+fn type_into_palette(g: &mut RenethackGame, text: &str) -> Result<(), String> {
+    let ui = g.ui.as_mut().ok_or("no UI")?;
+    if ui.dialogs.type_palette(text) {
+        Ok(())
+    } else {
+        Err("no palette is open".into())
+    }
+}
+
+/// `#`, then `text` typed: the palette lists `name` first (`shot` taken).
+fn find_in_palette(
+    text: fn(&mut RenethackGame) -> Result<(), String>,
+    first: Check,
+    shot: Option<&'static str>,
+) -> Vec<Step> {
+    let mut steps = vec![
+        Step::Wait("the player's turn", |g| {
+            Ok(matches!(g.pending, Some((_, Prompt::Command))) && !g.world.getpos)
+        }),
+        key('#'),
+        Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
+        Step::Call("the text typed", text),
+        Step::Wait("the command it finds, first", first),
+    ];
+    steps.extend(shot.map(Step::Shot));
+    steps
+}
+
+pub(super) fn palette_words() -> Vec<Step> {
+    let mut steps = vec![Step::Call("in Russian", |g: &mut RenethackGame| {
+        if i18n::lang() == Lang::En {
+            g.push_ui(UiEvent::SetLanguage(Lang::Ru));
+        }
+        Ok(())
+    })];
+    steps.extend(start());
+    steps.push(Step::Wait("the engine's words in Russian", |g| {
+        // its translator loads on a thread
+        let cmds = crate::dialogs::palette_cmds(g.catalog.as_deref(), g.keymap());
+        Ok(cmds
+            .iter()
+            .any(|c| c.desc.chars().any(|c| ('а'..='я').contains(&c))))
+    }));
+    // "моли": #pray's Russian name, its description's verb inside
+    // "помолиться"; Enter runs it
+    steps.extend(find_in_palette(
+        |g| type_into_palette(g, "моли"),
+        |g| palette_first(g, "pray"),
+        Some("palette-words"),
+    ));
+    steps.extend([
+        Step::Dialog(DialogEvent::TextSubmitted("моли".into())),
+        Step::Request(
+            "Are you sure you want to pray?",
+            |p| matches!(p, Prompt::Choice { query, .. } if query.contains("pray")),
+        ),
+        key('n'),
+        Step::Request("a command after not praying", command),
+    ]);
+    // a word of the description: "жертв" is #offer's
+    steps.extend(find_in_palette(
+        |g| type_into_palette(g, "жертв"),
+        |g| palette_first(g, "offer"),
+        None,
+    ));
+    steps.extend([
+        Step::Dialog(DialogEvent::ExtCmd(None)),
+        Step::Request("a command after the palette", command),
+    ]);
+    // the English name still leads
+    steps.extend(find_in_palette(
+        |g| type_into_palette(g, "pra"),
+        |g| palette_first(g, "pray"),
+        None,
+    ));
+    steps.extend([
+        Step::Dialog(DialogEvent::ExtCmd(None)),
+        Step::Request("a command after the palette", command),
     ]);
     steps.extend(quit());
     steps

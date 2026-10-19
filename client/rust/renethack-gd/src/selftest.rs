@@ -5010,6 +5010,7 @@ impl SelfTest {
             "deep" => crowd_tests::deep(),
             "variants" => variants_tests::variants(),
             "pickers" => input_ru::pickers(),
+            "palette-words" => input_ru::palette_words(),
             "help" => help_tests::help(),
             "settings" => settings_tests::settings(),
             "deck" => settings_tests::deck(),

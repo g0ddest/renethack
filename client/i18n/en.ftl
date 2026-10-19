@@ -537,6 +537,13 @@ palette-title = Extended command
 palette-placeholder = type a command
 palette-none = no command matches
 palette-hint = Enter: run the highlighted command · Tab: complete · ↑↓ PgUp PgDn: choose · Esc: cancel
+# the words that find an extended command in the `#` palette beside its
+# name and description, a comma between two, else its name (the
+# commands' names stay English: they are what one types)
+palette-also = { $cmd ->
+        [quit] give up
+       *[other] { $cmd }
+    }
 osk-shift = ⇧ Shift
 osk-layout = АБВ / ABC
 osk-space = Space

@@ -100,7 +100,7 @@ The client adds:
 | mouse over the map | what is there (by appearance only) |
 | mouse wheel, `Ctrl`+`-` / `Ctrl`+`=` | zoom out / in |
 | `F8` or `Ctrl`+`0` | the whole known level; again (or a zoom) — back to the hero |
-| `#` | command palette: type to filter, `Tab` completes, `Up`/`Down` choose |
+| `#` | command palette: type to filter (by a command's name, or in the player's language by its description and its names there: «моли» finds #pray), `Tab` completes, `Up`/`Down` choose |
 | `Alt`+letter | meta commands (`M-p` pray, `M-e` enhance, ...) |
 | `Ctrl`+letter | `^X` attributes, `^T` teleport, `^P` previous messages (opens the full log)... |
 | `F9` | full message log |
