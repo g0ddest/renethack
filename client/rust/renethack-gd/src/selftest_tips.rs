@@ -284,7 +284,11 @@ pub(super) fn hud_tips() -> Vec<Step> {
             let foot: Vec<usize> = (0..blocks.len())
                 .filter(|&i| blocks[i].1.position.y > view.y / 2.0)
                 .collect();
-            let empty = crate::tr!("bar-slot-empty-tip", key = "0");
+            // the last slot's key as the bar names it (Classic's Alt+0)
+            let profile = g.ui_state.profile;
+            let map = g.settings.keymaps.get(profile);
+            let key = crate::rebind::bound_hint(map, &crate::rebind::slot_hint(profile, 9));
+            let empty = crate::tr!("bar-slot-empty-tip", key = key.as_str());
             // the pictures: the bar's first slot (a tip of two lines at the
             // foot), the HP orb (the foot's widest square, on the left)
             let slot = foot.iter().copied().find(|&i| blocks[i].0.contains('\n'));
