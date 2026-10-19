@@ -71,7 +71,7 @@ when the character is created and kept with it:
 |---|---|---|
 | NetHack's `number_pad` | on | off |
 | move | arrows, `Home` `PgUp` `End` `PgDn`, keypad; `Shift` — run | `hjklyubn` (and the arrows, keypad); `Shift` — run |
-| a count (`20` searches) | `n20s` | `20s`, as in NetHack |
+| a count (`20` searches) | `n20s`; `n5` and an arrow: five steps | `20s`, as in NetHack |
 | `k` `j` `l` `u` | kick, jump, loot, untrap (number_pad letters) | moves |
 | the action bar | top-row `1`–`0` | `Alt`+`1`–`0` |
 
@@ -273,7 +273,7 @@ panel's `D` menu; `bar` binds the food ration to a slot, follows it through
 `#adjust`, eats it with `2`, and gives the engine 20 searches with `n20s`
 (Modern) and `20s` (Classic, whose bar is `Alt`+digits); `counts` has a
 samurai pick five of their ya up again with `n5,` and `5,`, the engine
-reading the count. The `title` scenario checks the scene
+reading the count, and take three steps with `n3` and an arrow. The `title` scenario checks the scene
 behind the title menu: drawn before the start-up veil lifts, the hero in
 their gear, both ends of the camera's sway, put away by a game and laid
 again on the title after it. The `riding` scenario puts a Knight on his

@@ -405,7 +405,7 @@ impl CountEntry {
     /// slot then takes the count by a click, see [`take`]). Classic's are
     /// the count, as in NetHack, and its bar is Alt and the digits. The
     /// keypad moves in both (after `n` its digits are the count, as in
-    /// tty).
+    /// tty); an arrow after `n` ends the count and steps.
     ///
     /// [`take`]: CountEntry::take
     pub fn feed_key(
@@ -438,6 +438,25 @@ impl CountEntry {
         let Some(key) = nethack_key(input, KeyContext::Command, number_pad, dirchars) else {
             return CommandInput::Ignored;
         };
+        // number_pad gives an arrow a digit, which the count would take:
+        // after `n` an arrow is the step the count is for
+        let arrow = matches!(
+            input.key,
+            Key::Up
+                | Key::Down
+                | Key::Left
+                | Key::Right
+                | Key::Home
+                | Key::End
+                | Key::PageUp
+                | Key::PageDown
+        );
+        if arrow && number_pad && self.typing() {
+            return CommandInput::Command {
+                key,
+                count: self.take(),
+            };
+        }
         match self.feed(key, number_pad) {
             Counted::Typing => CommandInput::Typing,
             Counted::Command(count) => CommandInput::Command { key, count },
@@ -1758,6 +1777,26 @@ mod tests {
         c.feed_key(&plain('n'), m, pad);
         c.feed_key(&KeyInput::plain(Key::Keypad(3)), m, pad);
         assert_eq!(c.take(), Some(3));
+        // an arrow ends the count and is its step (n5 then 4 would be 54)
+        c.feed_key(&plain('n'), m, pad);
+        c.feed_key(&plain('5'), m, pad);
+        assert_eq!(
+            c.feed_key(&KeyInput::plain(Key::Left), m, pad),
+            CommandInput::Command {
+                key: '4' as i32,
+                count: Some(5)
+            }
+        );
+        c.feed_key(&plain('n'), m, pad);
+        assert_eq!(
+            c.feed_key(&KeyInput::plain(Key::PageDown), m, pad),
+            CommandInput::Command {
+                key: '3' as i32,
+                count: None
+            },
+            "n and an arrow: one step"
+        );
+        assert_eq!(c.shown(), None);
         // Alt+digit is nothing in Modern (a second bar row later)
         assert_eq!(c.feed_key(&alt('2'), m, pad), CommandInput::Ignored);
         // a count, then a click on a slot

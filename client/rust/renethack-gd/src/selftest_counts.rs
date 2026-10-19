@@ -1,11 +1,14 @@
-//! Counts are the engine's (the critics' pass, vet 1 and 10): a count
+//! Counts are the engine's (the critics' pass, vet 1, 7 and 10): a count
 //! and its command go to NetHack as tty types them, and NetHack reads the
 //! count itself. A samurai drops their ya and picks five of the stack up
 //! again: `n5,` with Modern keys, `5,` with Classic ones, whose digits
-//! count as in NetHack.
+//! count as in NetHack. With Modern keys `n3` and an arrow are three
+//! steps (number_pad's digit would have joined the count).
+
+use std::sync::Mutex;
 
 use nh_protocol::Reply;
-use nh_world::{Key, KeyInput, KeyProfile, Prompt};
+use nh_world::{Key, KeyInput, KeyProfile, Passage, Prompt, passage};
 
 use super::{Check, Step, command, idle_command, key, letter_of, quit, smoke_choice, start_as};
 use crate::game::RenethackGame;
@@ -96,9 +99,76 @@ fn keys_were(g: &RenethackGame, want: &str) -> Result<bool, String> {
     }
 }
 
+/// The arrows in dirchars' order (W NW N NE E SE S SW), and their steps.
+const ARROWS: [(Key, (i32, i32)); 8] = [
+    (Key::Left, (-1, 0)),
+    (Key::Home, (-1, -1)),
+    (Key::Up, (0, -1)),
+    (Key::PageUp, (1, -1)),
+    (Key::Right, (1, 0)),
+    (Key::PageDown, (1, 1)),
+    (Key::Down, (0, 1)),
+    (Key::End, (-1, 1)),
+];
+
+/// Where the counted steps should take the hero.
+static STEPS_TO: Mutex<Option<(i32, i32)>> = Mutex::new(None);
+
+/// The arrow toward three cells of open floor in a row, and the third.
+fn open_way(g: &RenethackGame) -> Result<(Key, (i32, i32)), String> {
+    let cat = g.catalog.as_deref().ok_or("no catalog")?;
+    let (x, y) = g.world.hero().ok_or("no hero")?;
+    ARROWS
+        .iter()
+        .find_map(|&(k, (dx, dy))| {
+            let open = (1..=3).all(|i| {
+                g.world
+                    .map
+                    .cell(x + dx * i, y + dy * i)
+                    .is_some_and(|c| c.entity().is_none() && passage(c, cat) == Passage::Open)
+            });
+            open.then_some((k, (x + dx * 3, y + dy * 3)))
+        })
+        .ok_or_else(|| format!("no three open cells in a row from {:?}", (x, y)))
+}
+
+/// `n3` and an arrow: three steps, the step as number_pad's extended
+/// command after the count.
+fn three_steps() -> Vec<Step> {
+    vec![
+        Step::Wait("the player's turn", idle_command),
+        Step::Call("forget what was sent", |g| {
+            g.sent.clear();
+            Ok(())
+        }),
+        key('n'),
+        key('3'),
+        Step::KeyFrom("an arrow toward open floor", |g| {
+            let (k, to) = open_way(g)?;
+            *STEPS_TO.lock().map_err(|e| e.to_string())? = Some(to);
+            Ok(KeyInput::plain(k))
+        }),
+        Step::Wait("three steps by the engine", |g| {
+            let to = *STEPS_TO.lock().map_err(|e| e.to_string())?;
+            Ok(idle_command(g)? && g.world.hero() == to)
+        }),
+        Step::Wait("the count, then the step as #move", |g| {
+            let ext = g.sent.iter().find_map(|(_, r)| match r {
+                Reply::ExtCmd(Some(name)) => Some(name.clone()),
+                _ => None,
+            });
+            match (command_keys(g).as_str(), ext.as_deref()) {
+                ("n3#", Some(m)) if m.starts_with("move") => Ok(true),
+                (keys, ext) => Err(format!("the engine was sent {keys:?}, then {ext:?}")),
+            }
+        }),
+    ]
+}
+
 pub(super) fn counts() -> Vec<Step> {
     let mut steps = start_as(samurai(KeyProfile::Modern));
     steps.extend(pick_five(vec![key('n'), key('5')], |g| keys_were(g, "n5,")));
+    steps.extend(three_steps());
     steps.extend(quit());
     steps.extend([
         Step::Push(UiEvent::BackToTitle),
