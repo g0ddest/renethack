@@ -131,21 +131,22 @@ A direction question takes the stick; a text question opens a keyboard on
 screen (Latin and Cyrillic, Y switches; on a Steam Deck the client also
 asks Steam for its own keyboard).
 
-Time runs like in BG3. While no hostile is in view (**exploring**, the
-badge top right), an order — a click, a held key, `F5`, `<`/`>` —
-is carried out one engine action per tick (300 ms; `tick_ms` in the
-`[renethack]` section of `client/godot/project.godot`, 150–500, or
-`RENETHACK_TICK_MS`). The hover shows the way a click would take. An order
-stops before its next step on anything worth a look: a hostile in view,
-lost HP, hunger, a new condition, a message (not what a pet does), a trap,
-another level, a step that went nowhere, a question from the game, or any
-key, click or panel. With a hostile in view (**combat**, a banner when it
-starts), every action waits for you: a click takes one step (the first
-mark of the way is larger), a held key still repeats. The fight ends after
-three turns without a hostile in view. Without the engine patch that marks
-peaceful monsters, every monster but a pet counts as hostile until the
-game calls it peaceful (`;` on it says so) — shopkeepers, watchmen and
-priests excepted.
+Time runs like in BG3. Out of a fight (**exploring**, the badge top
+right), an order — a click, a held key, `F5`, `<`/`>` — is carried out one
+engine action per tick (300 ms; `tick_ms` in the `[renethack]` section of
+`client/godot/project.godot`, 150–500, or `RENETHACK_TICK_MS`). The hover
+shows the way a click would take. An order stops before its next step on
+anything worth a look: a hostile beside the hero, lost HP, hunger, a new
+condition, a message (not what a pet does), a trap, another level, a step
+that went nowhere, a question from the game, or any key, click or panel.
+A fight is what NetHack's own runs and travel stop for (`lookaround`): a
+hostile the hero sees beside them, or blows given or taken. One farther
+off, a peaceful one (the engine tells each monster's peacefulness, as `;`
+would) or one only sensed (telepathy, detection) stops nothing. In a fight
+(**combat**, a banner when it starts), every action waits for you: a
+click takes one step (the first mark of the way is larger), a held key
+still repeats. The fight ends after three turns with no hostile beside the
+hero and no blow.
 
 ## Settings
 

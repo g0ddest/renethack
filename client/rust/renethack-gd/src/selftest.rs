@@ -1563,9 +1563,9 @@ fn descend(g: &RenethackGame) -> Result<bool, String> {
 /// key steps until let go, `5s` goes to the engine, Esc stops a walk
 /// before its next step, `>` walks to the stairs and goes down; in a
 /// second game (seed 11) a click on a closed door walks up and opens it,
-/// a hostile coming into view stops a walk and starts a fight, and in the
-/// fight a click takes one step. With `--screenshots`: the way previewed
-/// while exploring and in the fight, and the combat banner.
+/// a hostile coming beside the hero stops a walk and starts a fight, and
+/// in the fight a click takes one step. With `--screenshots`: the way
+/// previewed while exploring and in the fight, and the combat banner.
 fn orders() -> Vec<Step> {
     let plain_key = |c| KeyInput::plain(Key::Char(c));
     let mut steps = start();
@@ -2523,8 +2523,9 @@ fn threat_arrow() -> Vec<Step> {
             g.world.map.print(hero.0, hero.1 + 2, &bug, None);
             g.world.view_center = Some(hero);
             g.driver.observe(&g.world, &cat);
-            if g.driver.mode() != nh_world::Mode::Combat {
-                return Err("a grid bug in view is no fight".into());
+            // two off: a threat the arrow points at (no fight of its own)
+            if !nh_world::threats(&g.world, &cat).contains(&(hero.0, hero.1 + 2)) {
+                return Err("a grid bug in view is no threat".into());
             }
             Ok(())
         }),

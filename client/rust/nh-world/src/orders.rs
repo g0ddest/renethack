@@ -1,9 +1,11 @@
 //! Time in the style of BG3 (spec 4): the player gives orders — walk to a
 //! cell, hold a key, rest until healed, go to the stairs — and the client
-//! carries them out one engine action per tick while nothing hostile is in
-//! view; in a fight every action waits for the player. An order stops on
-//! anything that deserves the player's eye, and on any key or click,
-//! before its next step.
+//! carries them out one engine action per tick; in a fight every action
+//! waits for the player. An order stops on anything that deserves the
+//! player's eye, and on any key or click, before its next step. A fight
+//! is NetHack's own idea of a threat to a run or a travel (`lookaround`):
+//! a hostile the hero sees beside them, or blows given or taken. One
+//! farther off, a peaceful one or one only sensed stops nothing.
 //!
 //! Everything here is plain data: the game asks for the next action when a
 //! command prompt waits and the tick has passed, and answers that very
@@ -52,9 +54,10 @@ const ITEMS_HERE: [&str; 4] = [
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
-    /// No hostile in view: orders run on the tick.
+    /// No fight: orders run on the tick.
     Exploration,
-    /// Every action waits for the player.
+    /// A hostile beside the hero, or blows given or taken: every action
+    /// waits for the player.
     Combat,
 }
 
@@ -115,7 +118,7 @@ pub enum Stop {
     Focus,
     /// The engine asks something the order did not expect.
     Question,
-    /// A hostile came into view.
+    /// A hostile came beside the hero.
     Hostile,
     HpLost,
     Hunger,
@@ -154,7 +157,7 @@ impl Stop {
             Stop::Panel => "Stopped: a panel opened".into(),
             Stop::Focus => "Stopped: the window lost focus".into(),
             Stop::Question => "Stopped: a question".into(),
-            Stop::Hostile => "Stopped: a hostile in view".into(),
+            Stop::Hostile => "Stopped: a hostile beside you".into(),
             Stop::HpLost => "Stopped: you are hurt".into(),
             Stop::Hunger => "Stopped: hunger changed".into(),
             Stop::Condition => "Stopped: your condition changed".into(),
@@ -195,9 +198,10 @@ fn names_of(catalog: &Catalog, mon: i32) -> Vec<&str> {
 }
 
 /// Is what this cell at `at` shows something to fight? A monster that is
-/// not the hero, not a pet, not sensed without being seen, not peaceful
-/// (as the engine tells it of each monster, as farlook would); while
-/// hallucinating every monster; a remembered unseen one next to the hero.
+/// not the hero, not a pet, not sensed without being seen (telepathy,
+/// detection: the host's `sensed`, MG_DETECT), not peaceful (as the engine
+/// tells it of each monster, as farlook would); while hallucinating every
+/// monster; a remembered unseen one next to the hero.
 pub fn is_threat(
     cell: &Cell,
     at: (i32, i32),
@@ -209,7 +213,7 @@ pub fn is_threat(
     };
     match g.kind {
         GlyphKind::Mon => {
-            if g.flags & (mg::HERO | mg::DETECT) != 0 {
+            if g.flags & (mg::HERO | mg::DETECT) != 0 || cell.sensed {
                 false
             } else if hallucinating {
                 true
@@ -230,6 +234,16 @@ pub fn hallucinating(world: &World, catalog: &Catalog) -> bool {
         .conditions
         .iter()
         .any(|c| c.name == "Hallu" && world.status.conditions() & c.mask != 0)
+}
+
+/// A threat beside the hero: what stops a run or a travel in NetHack
+/// (`lookaround`), and what makes a fight of it here.
+pub fn engaged(world: &World, catalog: &Catalog) -> bool {
+    world.hero().is_some_and(|h| {
+        threats(world, catalog)
+            .into_iter()
+            .any(|t| chebyshev(h, t) <= 1)
+    })
 }
 
 /// Cells with a threat on them.
@@ -553,7 +567,7 @@ pub struct TickDriver {
     /// Messages already looked at.
     seen_seq: u64,
     last_hp: Option<i64>,
-    /// The turn a threat was last seen (or a blow struck).
+    /// The turn a threat was last beside the hero (or a blow struck).
     last_threat: Option<i64>,
     /// Command prompts observed: the turn when the status has no T:.
     observed: i64,
@@ -824,12 +838,12 @@ impl TickDriver {
         let hp = world.status.number("hp");
         let hurt = matches!((self.last_hp, hp), (Some(a), Some(b)) if b < a);
         self.last_hp = hp;
-        let seen = !threats(world, catalog).is_empty();
-        if seen || hurt || fought {
+        let near = engaged(world, catalog);
+        if near || hurt || fought {
             self.last_threat = Some(turn);
         }
         let was = self.mode;
-        if seen || hurt || fought {
+        if near || hurt || fought {
             self.mode = Mode::Combat;
         } else if self.mode == Mode::Combat
             && self.last_threat.is_none_or(|t| turn - t >= CALM_TURNS)
@@ -1319,7 +1333,7 @@ mod tests {
     fn combat_orders_take_one_action() {
         let (mut w, cat) = world_of(&[
             "|@.......|", //
-            "|.......J|",
+            "|J.......|",
         ]);
         let mut d = TickDriver::new();
         assert_eq!(d.observe(&w, &cat), Some(Mode::Combat));
@@ -1353,27 +1367,39 @@ mod tests {
     }
 
     #[test]
-    fn combat_starts_on_a_hostile_and_ends_after_three_quiet_turns() {
+    fn combat_starts_on_a_hostile_beside_the_hero_and_ends_after_three_quiet_turns() {
         let (mut w, cat) = world_of(&ROOM);
         let mut d = TickDriver::new();
         assert_eq!(d.observe(&w, &cat), None);
         assert_eq!(d.mode(), Mode::Exploration);
-        // a pet is no threat, nor a monster sensed but not seen
+        // a pet is no threat, nor a monster sensed but not seen, even
+        // beside the hero
         draw(&mut w.map, &cat, 0, &["  f"]);
         w.map.print(8, 2, &mon(FOE_MON, mg::DETECT), None);
+        let sensed = crate::Told {
+            sensed: true,
+            ..crate::Told::default()
+        };
+        w.map.print_with(3, 2, &mon(FOE_MON, 0), None, sensed);
         assert_eq!(d.observe(&w, &cat), None);
-        // a jackal
-        draw(&mut w.map, &cat, 2, &["       J"]);
+        assert!(threats(&w, &cat).is_empty());
+        // a jackal far off: a threat, but no fight (NetHack's runs stop
+        // for one beside the hero)
+        draw(&mut w.map, &cat, 2, &["  .    J"]);
         turn(&mut w, 5);
-        assert_eq!(d.observe(&w, &cat), Some(Mode::Combat));
         assert_eq!(threats(&w, &cat), vec![(8, 2)]);
-        // it dies
-        draw(&mut w.map, &cat, 2, &["       ."]);
-        turn(&mut w, 6);
         assert_eq!(d.observe(&w, &cat), None);
+        // it comes beside the hero
+        draw(&mut w.map, &cat, 2, &["  J    ."]);
+        turn(&mut w, 6);
+        assert_eq!(d.observe(&w, &cat), Some(Mode::Combat));
+        // it dies
+        draw(&mut w.map, &cat, 2, &["  ."]);
         turn(&mut w, 7);
-        assert_eq!(d.observe(&w, &cat), None, "two quiet turns");
+        assert_eq!(d.observe(&w, &cat), None);
         turn(&mut w, 8);
+        assert_eq!(d.observe(&w, &cat), None, "two quiet turns");
+        turn(&mut w, 9);
         assert_eq!(d.observe(&w, &cat), Some(Mode::Exploration));
         // a remembered unseen monster: a threat only next to the hero
         draw(&mut w.map, &cat, 0, &["      I"]);
@@ -1425,22 +1451,29 @@ mod tests {
     fn peacefulness_is_each_monster_s_own() {
         let (mut w, cat) = world_of(&ROOM);
         let mut d = TickDriver::new();
-        // two jackals, one told peaceful: only the other is a threat (the
-        // species says nothing)
-        draw(&mut w.map, &cat, 2, &["     J J"]);
-        peaceful(&mut w, (6, 2));
-        assert_eq!(threats(&w, &cat), vec![(8, 2)]);
+        // two jackals beside the hero, one told peaceful: only the other
+        // is a threat (the species says nothing)
+        draw(&mut w.map, &cat, 2, &["  JJ"]);
+        peaceful(&mut w, (3, 2));
+        assert_eq!(threats(&w, &cat), vec![(4, 2)]);
+        assert_eq!(d.observe(&w, &cat), None, "the hostile one is two off");
+        draw(&mut w.map, &cat, 2, &["  J."]);
+        peaceful(&mut w, (3, 2));
+        draw(&mut w.map, &cat, 0, &["   J"]);
+        assert_eq!(threats(&w, &cat), vec![(4, 0)]);
+        assert_eq!(d.observe(&w, &cat), None);
+        draw(&mut w.map, &cat, 0, &["  J."]);
         assert_eq!(d.observe(&w, &cat), Some(Mode::Combat));
         // the hostile one gone, the peaceful one stays: calm after a while
-        draw(&mut w.map, &cat, 2, &["       ."]);
+        draw(&mut w.map, &cat, 0, &["  ."]);
         for t in 2..=4 {
             turn(&mut w, t);
             d.observe(&w, &cat);
         }
         assert_eq!(d.mode(), Mode::Exploration);
         // the peaceful one angered: drawn again, no longer told peaceful
-        draw(&mut w.map, &cat, 2, &["     J"]);
-        assert_eq!(threats(&w, &cat), vec![(6, 2)]);
+        draw(&mut w.map, &cat, 2, &["  J"]);
+        assert_eq!(threats(&w, &cat), vec![(3, 2)]);
         assert_eq!(d.observe(&w, &cat), Some(Mode::Combat));
     }
 
@@ -1448,8 +1481,8 @@ mod tests {
     fn hallucination_makes_every_monster_a_threat() {
         let (mut w, cat) = world_of(&ROOM);
         let mut d = TickDriver::new();
-        draw(&mut w.map, &cat, 2, &["       J"]);
-        peaceful(&mut w, (8, 2));
+        draw(&mut w.map, &cat, 2, &["  J"]);
+        peaceful(&mut w, (3, 2));
         assert_eq!(d.observe(&w, &cat), None);
         let hallu = cat
             .conditions
@@ -1463,7 +1496,7 @@ mod tests {
     }
 
     #[test]
-    fn an_order_stops_on_a_hostile() {
+    fn an_order_stops_on_a_hostile_beside_the_hero_only() {
         let (mut w, cat) = world_of(&ROOM);
         let mut d = TickDriver::new();
         d.observe(&w, &cat);
@@ -1476,8 +1509,20 @@ mod tests {
             &cat,
         )
         .unwrap();
+        // one far off, or one only sensed beside the way: the walk goes on
         step(&mut w, &cat, (2, 1), (3, 1));
         draw(&mut w.map, &cat, 2, &["        J"]);
+        let sensed = crate::Told {
+            sensed: true,
+            ..crate::Told::default()
+        };
+        w.map.print_with(4, 0, &mon(FOE_MON, 0), None, sensed);
+        assert_eq!(d.observe(&w, &cat), None);
+        assert!(d.is_active());
+        assert_eq!(keys(&d.next(&w, &cat).unwrap()), "l");
+        // one beside the hero: a fight, and the walk stops
+        step(&mut w, &cat, (3, 1), (4, 1));
+        draw(&mut w.map, &cat, 2, &["    J    "]);
         assert_eq!(d.observe(&w, &cat), Some(Mode::Combat));
         assert!(!d.is_active());
         assert_eq!(d.next(&w, &cat), None);
