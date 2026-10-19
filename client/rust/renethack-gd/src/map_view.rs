@@ -55,7 +55,7 @@ use crate::meshes::{
     MeshKey, bevel, cuboid, cylinder, dome, facets, plane, prism, rock, sphere, torus,
 };
 use crate::seated::Mount;
-use crate::surface::{Fow, FowCell, Role, Seen, Surfaces, cell_index, sight};
+use crate::surface::{Fow, FowCell, Ground, GroundField, Role, Seen, Surfaces, cell_index, sight};
 use crate::theme::{self, nh_color};
 use crate::vfx::{Blast, Ray, Vfx, VfxKind};
 
@@ -239,6 +239,10 @@ const CORPSE_DARKEN: f32 = 0.45;
 
 const FLOOR_UNSEEN: Color = Color::from_rgb(0.19, 0.19, 0.21);
 const DEEP: Color = Color::from_rgb(0.02, 0.02, 0.03);
+/// Where water and lava lie: just under the floor, so that where their
+/// shore wanders into a cell of ground they lie there too, shallows over
+/// the stone (who swims or wades stands deeper).
+const SURFACE_Y: f32 = -0.015;
 /// Scratches of an engraving on the floor.
 const ENGRAVING: Color = Color::from_rgb(0.05, 0.04, 0.035);
 const HERO_RING: Color = Color::from_rgba(1.0, 0.83, 0.54, 0.2);
@@ -416,8 +420,6 @@ enum Paint {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Liquid {
     Water,
-    /// Foam along water's bank.
-    Foam,
     Lava,
     Haze,
     /// The air bent where something unseen is remembered.
@@ -473,6 +475,8 @@ struct Placed {
 /// How a cell looks; its nodes are touched only when this changes.
 #[derive(Debug, Clone, Default, PartialEq)]
 struct Look {
+    /// The ground the cell is (the ground's shaders blend it).
+    kind: Ground,
     solids: Vec<Solid>,
     letters: Vec<Letter>,
     models: Vec<Placed>,
@@ -819,6 +823,8 @@ struct Around {
     /// Which of them are water or lava, and which a room's floor.
     liquid: [bool; 4],
     floor: [bool; 4],
+    /// The ground of each (`Ground::None`: a wall, the rock, unknown).
+    ground: [Ground; 4],
     /// Open ground north of here (a doorway too), and two cells north (in
     /// front of the cell north of here).
     north_open: bool,
@@ -856,11 +862,13 @@ impl Around {
         let mut sides = [Side::Solid; 4];
         let mut liquid = [false; 4];
         let mut floor = [false; 4];
+        let mut ground = [Ground::None; 4];
         for (i, side) in sides.iter_mut().enumerate() {
             let cell = near.cells[i];
             let t = cell.and_then(|c| cell_terrain(c, catalog));
             liquid[i] = matches!(t, Some(Terrain::Pool | Terrain::Water | Terrain::Lava));
             floor[i] = matches!(t, Some(Terrain::Floor | Terrain::DarkFloor));
+            ground[i] = cell.map_or(Ground::None, |c| cell_ground(c, catalog));
             *side = side_of(cell);
         }
         let open = |cell: Option<&Cell>| is_open(cell, catalog);
@@ -874,6 +882,7 @@ impl Around {
             sides,
             liquid,
             floor,
+            ground,
             north_open: open(n),
             far_open: open(near.far_north),
             aside_open: open(nw) || open(ne),
@@ -937,6 +946,8 @@ fn terrain_look(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, near: &Near, 
     let around = Around::of(near, ctx.catalog);
     let cut = is_open(near.cells[0], ctx.catalog);
     terrain_base(look, t, sym, g, cut, &around, ctx);
+    look.kind = ground_of(t);
+    ground_layers(look, ground_of(t), near, ctx);
     if engraved(sym) {
         // a few lines of runes cut into the floor, dark in their grooves
         let paint = Paint::Flat(ENGRAVING, Finish::Matte);
@@ -975,6 +986,76 @@ fn terrain_look(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, near: &Near, 
         Terrain::Stone | Terrain::Unknown | Terrain::Effect => Seen::Nothing,
         _ => Seen::Other,
     };
+}
+
+/// The ground a terrain is, as the ground's shaders blend it with the
+/// cells beside it: a wall, the rock, stairs or a bridge are none.
+fn ground_of(t: Terrain) -> Ground {
+    match t {
+        Terrain::Pool | Terrain::Water => Ground::Water,
+        Terrain::Lava => Ground::Lava,
+        Terrain::Ice => Ground::Ice,
+        Terrain::Floor
+        | Terrain::DarkFloor
+        | Terrain::Corridor
+        | Terrain::Doorway
+        | Terrain::BrokenDoor
+        | Terrain::OpenDoor
+        | Terrain::Tree
+        | Terrain::Altar
+        | Terrain::Grave
+        | Terrain::Throne
+        | Terrain::Sink
+        | Terrain::Fountain
+        | Terrain::Trap => Ground::Land,
+        _ => Ground::None,
+    }
+}
+
+/// The ground a cell is: its terrain's, or the floor's under whoever
+/// stands where the engine sent no ground (it is drawn as the floor beside
+/// it).
+fn cell_ground(cell: &Cell, catalog: &Catalog) -> Ground {
+    match cell_terrain(cell, catalog) {
+        Some(t) => ground_of(t),
+        None if cell.entity().is_some() => Ground::Land,
+        None => Ground::None,
+    }
+}
+
+/// Where another ground lies beside this cell's own (`own`), its surface
+/// under or over this one's: each shows only where its kind wins over the
+/// cells' beside it (`ground_tex`), so the line between them wanders
+/// through both cells instead of running along their edge. Land is the
+/// branch's floor; water and lava their surfaces just under it (shallows
+/// over the stone, `SURFACE_Y`); ice its sheet.
+fn ground_layers(look: &mut Look, own: Ground, near: &Near, ctx: &Ctx) {
+    if own == Ground::None {
+        return;
+    }
+    let mut near_kinds = [false; 5];
+    for cell in near.cells.iter().flatten() {
+        near_kinds[cell_ground(cell, ctx.catalog) as usize] = true;
+    }
+    for g in [Ground::Land, Ground::Water, Ground::Lava, Ground::Ice] {
+        if g == own || !near_kinds[g as usize] {
+            continue;
+        }
+        let (paint, y) = match g {
+            Ground::Land => match ctx.mat("floor") {
+                Some(m) => (Paint::Pbr(m, SHADE_LIT, Role::Floor), 0.0),
+                None => continue,
+            },
+            Ground::Water => (Paint::Liquid(Liquid::Water), SURFACE_Y),
+            Ground::Lava => (Paint::Liquid(Liquid::Lava), SURFACE_Y),
+            Ground::Ice => match ctx.remap(ctx.art.terrain(Terrain::Ice).material) {
+                Some(m) => (Paint::Pbr(m, SHADE_LIT, Role::Ice), 0.0),
+                None => continue,
+            },
+            Ground::None => continue,
+        };
+        look.ground_tile(plane(1.0, 1.0), paint, at(0.0, y, 0.0));
+    }
 }
 
 /// Something is engraved here (in a room or a corridor).
@@ -1078,7 +1159,8 @@ fn mine_support(look: &mut Look, around: &Around, ctx: &Ctx) {
 }
 
 /// What holds water or lava: a bed of stone `depth` down, and a bank of
-/// stone on each side where the ground is not liquid too.
+/// stone on each side where a wall or the rock stands (where ground lies
+/// the shore wanders over both cells: `ground_layers`).
 fn liquid_bed(look: &mut Look, around: &Around, ctx: &Ctx, depth: f32) {
     let Some(m) = ctx.mat("bedrock") else {
         return;
@@ -1087,7 +1169,7 @@ fn liquid_bed(look: &mut Look, around: &Around, ctx: &Ctx, depth: f32) {
     let stone = Paint::Pbr(m, 45, Role::Prop);
     look.ground_tile(plane(1.0, 1.0), stone, at(0.0, -depth, 0.0));
     for (i, (dx, dz)) in SIDES.iter().enumerate() {
-        if around.liquid[i] {
+        if around.liquid[i] || around.ground[i] != Ground::None {
             continue;
         }
         let (mesh, pos) = if *dx == 0.0 {
@@ -1776,36 +1858,13 @@ fn terrain_base(
             look.ground = 0.12;
         }
         Terrain::Pool | Terrain::Water => {
+            // (who swims or wades stands deeper than its surface)
             let deep = if t == Terrain::Water { 0.1 } else { 0.05 };
             look.ground_tile(
                 plane(1.0, 1.0),
                 Paint::Liquid(Liquid::Water),
-                at(0.0, -deep, 0.0),
+                at(0.0, SURFACE_Y, 0.0),
             );
-            if let Some(s) = look.solids.last_mut() {
-                s.shadow = false;
-            }
-            // foam lapping at every bank, its stone side out
-            for (i, (dx, dz)) in SIDES.iter().enumerate() {
-                if around.liquid[i] {
-                    continue;
-                }
-                let yaw = match (*dx as i32, *dz as i32) {
-                    (0, -1) => 0.0,
-                    (0, _) => 180.0,
-                    (-1, _) => 90.0,
-                    _ => -90.0,
-                };
-                look.turned(
-                    plane(1.0, 0.24),
-                    Paint::Liquid(Liquid::Foam),
-                    at(dx * 0.38, -deep + 0.004, dz * 0.38),
-                    at(0.0, yaw, 0.0),
-                );
-                if let Some(s) = look.solids.last_mut() {
-                    s.shadow = false;
-                }
-            }
             liquid_bed(
                 look,
                 around,
@@ -1815,12 +1874,15 @@ fn terrain_base(
             look.ground = -deep;
             look.sunk = true;
         }
-        Terrain::Ice => look.ground_tile(tile, main(SHADE_LIT), Vector3::ZERO),
+        Terrain::Ice => {
+            let ice = pbr(art.material, SHADE_LIT, Role::Ice, FLOOR_UNSEEN);
+            look.ground_tile(tile, ice, Vector3::ZERO);
+        }
         Terrain::Lava => {
             look.ground_tile(
                 plane(1.0, 1.0),
                 Paint::Liquid(Liquid::Lava),
-                at(0.0, -0.06, 0.0),
+                at(0.0, SURFACE_Y, 0.0),
             );
             liquid_bed(look, around, ctx, 0.12);
             // the air shimmers over it, and it lights its banks: every
@@ -2484,6 +2546,9 @@ fn look_of(cell: &Cell, near: Near, ctx: &Ctx) -> Look {
                 };
                 let open = Near::default();
                 terrain_look(&mut look, terrain_of(sym), sym, g, &open, ctx);
+                // (its shore with the cells beside it as theirs)
+                let kind = look.kind;
+                ground_layers(&mut look, kind, &near, ctx);
             }
             // none known: the branch's floor (a flat grey tile reads as
             // a highlight under whoever stands there)
@@ -2493,6 +2558,8 @@ fn look_of(cell: &Cell, near: Near, ctx: &Ctx) -> Look {
                     None => Paint::Flat(FLOOR_UNSEEN, Finish::Matte),
                 };
                 look.ground_tile(plane(1.0, 1.0), paint, Vector3::ZERO);
+                look.kind = Ground::Land;
+                ground_layers(&mut look, Ground::Land, &near, ctx);
             }
         },
         None => rock_look(&mut look, &near, ctx),
@@ -2826,6 +2893,8 @@ pub struct MapView {
     fow: Fow,
     /// A cell's sight changed, or the hero moved: work the fog out again.
     fow_dirty: bool,
+    /// The ground of every cell, which the ground's shaders blend.
+    ground: GroundField,
     vfx: Vfx,
     /// Low mist over the level.
     mist: Gd<FogVolume>,
@@ -3436,7 +3505,8 @@ impl MapView {
         let hero_pose = hero_pose::HeroPose::new(&mut root);
         let hero_look = hero_look::HeroLook::new();
         let fow = Fow::new();
-        let surfaces = Surfaces::new(&fow, art.manifest());
+        let ground = GroundField::new();
+        let surfaces = Surfaces::new(&fow, &ground, art.manifest());
         let batches = Batches::new(cells_root.clone(), 1 | TERRAIN_LAYER);
         let vfx = Vfx::new(root.clone(), TERRAIN_LAYER);
         let mut view = MapView {
@@ -3503,6 +3573,7 @@ impl MapView {
             surfaces,
             fow,
             fow_dirty: true,
+            ground,
             vfx,
             mist,
             post_mat,
@@ -3666,6 +3737,7 @@ impl MapView {
         if new_level {
             // a new level (or a redraw from scratch) never animates
             self.finish_motions();
+            self.ground.clear();
             self.finish_falls_where(|_| true);
             self.end_drops();
             self.forget_gone();
@@ -3791,6 +3863,7 @@ impl MapView {
         if self.fow.advance(delta as f32) {
             self.surfaces.show_fow(&self.fow);
         }
+        self.surfaces.show_ground(&mut self.ground);
         // the lights of a level still being drawn wait for all of it
         if self.building.is_empty() && std::mem::take(&mut self.lights_dirty) {
             let __t = std::time::Instant::now();
@@ -4965,7 +5038,7 @@ impl MapView {
             return m.clone();
         }
         let path = match l {
-            Liquid::Water | Liquid::Foam => "res://shaders/water.gdshader",
+            Liquid::Water => "res://shaders/water.gdshader",
             Liquid::Lava => "res://shaders/lava.gdshader",
             Liquid::Haze => "res://shaders/heat_haze.gdshader",
             Liquid::Unseen => "res://shaders/unseen.gdshader",
@@ -4976,10 +5049,9 @@ impl MapView {
                 m.set_shader(&shader);
                 m.set_shader_parameter("noise_tex", &self.surfaces.noise().to_variant());
                 m.set_shader_parameter("fow_tex", &self.surfaces.fow_texture().to_variant());
-                if l == Liquid::Foam {
-                    m.set_shader_parameter("bank", &true.to_variant());
-                    // over the water it laps on
-                    m.set_render_priority(1);
+                if matches!(l, Liquid::Water | Liquid::Lava) {
+                    let ground = self.surfaces.ground_texture();
+                    m.set_shader_parameter("ground_tex", &ground.to_variant());
                 }
                 if l == Liquid::Lava {
                     let flow = |map: &str| {
@@ -4999,7 +5071,6 @@ impl MapView {
             Err(_) => {
                 let c = match l {
                     Liquid::Water => Color::from_rgba(0.05, 0.12, 0.15, 0.85),
-                    Liquid::Foam => Color::from_rgba(0.7, 0.75, 0.75, 0.0),
                     Liquid::Lava => Color::from_rgb(1.0, 0.35, 0.05),
                     Liquid::Haze => Color::from_rgba(1.0, 1.0, 1.0, 0.0),
                     Liquid::Unseen => Color::from_rgba(0.7, 0.72, 0.8, 0.3),
@@ -6589,13 +6660,7 @@ impl MapView {
             None => {}
         }
         // the liquids' materials (their shaders and the lava's flow)
-        for l in [
-            Liquid::Water,
-            Liquid::Foam,
-            Liquid::Lava,
-            Liquid::Haze,
-            Liquid::Unseen,
-        ] {
+        for l in [Liquid::Water, Liquid::Lava, Liquid::Haze, Liquid::Unseen] {
             if !self.liquids.contains_key(&l) {
                 self.liquid(l);
                 return true;
@@ -6952,6 +7017,7 @@ impl MapView {
             .cell(x, y)
             .map(|c| look_of(c, Near::of(&world.map, x, y), &ctx))
             .unwrap_or_default();
+        self.ground.set(x, y, look.kind);
         match self.cells.get(&(x, y)) {
             Some(n) if n.look == look => return,
             None if look.is_empty() => return,
@@ -8500,6 +8566,9 @@ mod tests {
                     '7' => "S_trcorn",
                     'L' => "S_blcorn",
                     'J' => "S_brcorn",
+                    '}' => "S_pool",
+                    '~' => "S_ice",
+                    '^' => "S_lava",
                     _ => continue,
                 };
                 let (x, y) = (PICTURE_AT.0 + col as i32, PICTURE_AT.1 + row as i32);
@@ -8586,6 +8655,62 @@ mod tests {
             over: None,
             ..Cell::default()
         }
+    }
+
+    #[test]
+    fn a_shore_lies_over_both_cells_and_banks_stand_only_by_walls() {
+        let f = Fixture::new();
+        let cat = &f.cat;
+        // a pool between a floor and a wall, ice and lava beyond
+        let map = level(cat, &["|..}}.", "|.}}~~", "|.^.~~"]);
+        let at = |c: i32, r: i32| (PICTURE_AT.0 + c, PICTURE_AT.1 + r);
+        let look = |c, r| f.look_in(&map, at(c, r), Branch::Main);
+        let liquid = |l: &Look, liq: Liquid| {
+            l.solids
+                .iter()
+                .filter(|s| s.paint == Paint::Liquid(liq))
+                .map(|s| s.pos.y)
+                .collect::<Vec<_>>()
+        };
+        let floors = |l: &Look| {
+            l.solids
+                .iter()
+                .filter(|s| matches!(s.paint, Paint::Pbr(_, _, Role::Floor)))
+                .count()
+        };
+        let ice = |l: &Look| {
+            l.solids
+                .iter()
+                .any(|s| matches!(s.paint, Paint::Pbr(_, _, Role::Ice)))
+        };
+        // the floor beside the pool has the water under it, as high as the
+        // pool's own; the pool a lip of the floor; each its own kind
+        let floor = look(1, 0);
+        assert_eq!(floor.kind, Ground::Land);
+        assert_eq!(liquid(&floor, Liquid::Water), vec![SURFACE_Y]);
+        let pool = look(3, 0);
+        assert_eq!(pool.kind, Ground::Water);
+        assert_eq!(liquid(&pool, Liquid::Water), vec![SURFACE_Y]);
+        assert!(floors(&pool) >= 1, "no floor lip on the pool");
+        // ice and the pool beside each other; lava and the floor
+        assert!(ice(&look(3, 1)), "no ice under the pool by the ice");
+        assert_eq!(liquid(&look(4, 1), Liquid::Water), vec![SURFACE_Y]);
+        assert_eq!(liquid(&look(1, 2), Liquid::Lava), vec![SURFACE_Y]);
+        assert!(floors(&look(2, 2)) >= 1, "no floor lip on the lava");
+        // far from any other ground, nothing but its own
+        let alone = look(5, 2);
+        assert!(liquid(&alone, Liquid::Water).is_empty() && floors(&alone) == 0);
+        // the pool's banks: none towards the ground west of it (the shore
+        // wanders over both cells), one towards a wall west of another
+        let west_bank = |l: &Look| {
+            l.solids
+                .iter()
+                .filter(|s| matches!(s.paint, Paint::Pbr(_, 45, Role::Prop)))
+                .any(|s| s.pos.y < 0.0 && s.pos.x < -0.4)
+        };
+        assert!(!west_bank(&pool));
+        let by_wall = level(cat, &["|}"]);
+        assert!(west_bank(&f.look_in(&by_wall, at(1, 0), Branch::Main)));
     }
 
     /// The camera's ray, PITCH_DEG down and looking north, meeting the

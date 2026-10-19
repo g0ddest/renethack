@@ -28,7 +28,9 @@ void fragment() {
 	off += (vec2(texture(noise_tex, q).r, texture(noise_tex, q + 0.61).r) - 0.5) * 0.5;
 	// strongest low, fading up and at the sides
 	float fade = (1.0 - UV.y) * UV.y * 4.0 * (1.0 - abs(UV.x - 0.5) * 2.0);
-	vec3 behind = texture(screen_tex, SCREEN_UV + off * strength * fade).rgb;
+	// (the screen itself, never its blurred levels: they bleed what is
+	// bright beside it over what is dark)
+	vec3 behind = textureLod(screen_tex, SCREEN_UV + off * strength * fade, 0.0).rgb;
 	ALBEDO = behind + warmth.rgb * 0.025 * fade;
 	ALPHA = clamp(fade * 2.0, 0.0, 1.0);
 }

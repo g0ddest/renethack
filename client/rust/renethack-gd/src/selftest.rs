@@ -4990,6 +4990,7 @@ impl SelfTest {
             "worn" => worn_looks::worn(),
             "footprints" => sizes::footprints(),
             "branches" => world_looks::branches(),
+            "terrain" => world_looks::terrain(),
             "title" => world_looks::title(),
             "bestiary" => world_looks::bestiary(),
             "corridors" => corridors::corridors(),

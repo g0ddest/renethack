@@ -4,7 +4,11 @@
 //! says what the hero sees now, what they remember and what lies near
 //! anything known. What is seen now is worked out here from the glyphs
 //! alone (the engine sends no vision): a lit floor is in view, a dark one
-//! is remembered, and the rest takes the floor beside it.
+//! is remembered, and the rest takes the floor beside it. And the ground of
+//! every cell (land, water, lava, ice) as a texture too: the ground's
+//! shaders blend each cell's kind into its neighbours' and break the line
+//! where two kinds meet with a noise, so a shore wanders instead of
+//! running along the cells' edges.
 
 use std::collections::HashMap;
 
@@ -41,6 +45,8 @@ pub enum Role {
     Ruin,
     /// The rock the level is cut into: broken up, cut in facets, dithers.
     Rock,
+    /// Ice on the ground: its edge wanders into the ground beside it.
+    Ice,
     /// The ground under the level: rock fading into darkness.
     Void,
 }
@@ -51,6 +57,7 @@ type Key = (usize, u8, Role);
 pub struct Surfaces {
     shader: Option<Gd<Shader>>,
     fow: Gd<ImageTexture>,
+    ground: Gd<ImageTexture>,
     noise: Gd<Texture2D>,
     detail: Option<Gd<Texture2D>>,
     textures: HashMap<String, Option<Gd<Texture2D>>>,
@@ -59,15 +66,18 @@ pub struct Surfaces {
 }
 
 impl Surfaces {
-    pub fn new(fow: &Fow, manifest: &ArtManifest) -> Surfaces {
+    pub fn new(fow: &Fow, ground: &GroundField, manifest: &ArtManifest) -> Surfaces {
         let shader = godot::tools::try_load::<Shader>(SHADER).ok();
         if shader.is_none() {
             godot_warn!("renethack: {SHADER} is missing; the map is drawn with plain materials");
         }
         let fow = ImageTexture::create_from_image(&fow.image).unwrap_or_else(ImageTexture::new_gd);
+        let ground =
+            ImageTexture::create_from_image(&ground.image).unwrap_or_else(ImageTexture::new_gd);
         let mut s = Surfaces {
             shader,
             fow,
+            ground,
             noise: noise_texture(),
             detail: None,
             textures: HashMap::new(),
@@ -117,6 +127,18 @@ impl Surfaces {
     /// The fog of war changed: the shader sees the new texture.
     pub fn show_fow(&mut self, fow: &Fow) {
         self.fow.update(&fow.image);
+    }
+
+    /// The cells' ground, for the ground's shaders of the map's own.
+    pub fn ground_texture(&self) -> Gd<ImageTexture> {
+        self.ground.clone()
+    }
+
+    /// The ground of some cells changed: the shaders see the new texture.
+    pub fn show_ground(&mut self, ground: &mut GroundField) {
+        if ground.write() {
+            self.ground.update(&ground.image);
+        }
     }
 
     /// The material of a manifest material in a role (None without the
@@ -175,13 +197,24 @@ impl Surfaces {
         }
         mat.set_shader_parameter("fow_tex", &self.fow.to_variant());
         mat.set_shader_parameter("noise_tex", &self.noise.to_variant());
+        // the ground's own kind: it shows where its kind wins over its
+        // neighbours'
+        let kind = match role {
+            Role::Floor => Ground::Land,
+            Role::Ice => Ground::Ice,
+            _ => Ground::None,
+        };
+        if kind != Ground::None {
+            mat.set_shader_parameter("ground_tex", &self.ground.to_variant());
+            set(&mut mat, "edge_kind", kind.code());
+        }
         // the rock the level is cut from is rock, never blocks
         if Some(m) == self.top {
             set(&mut mat, "natural", 1.0);
         }
         // whatever stands between the eye and the hero thins out around
         // them; floors and the ground below never do
-        if !matches!(role, Role::Floor | Role::Void) {
+        if !matches!(role, Role::Floor | Role::Void | Role::Ice) {
             set(&mut mat, "occlude", 1.0);
             set(&mut mat, "solid_top", 10.0);
         }
@@ -194,6 +227,10 @@ impl Surfaces {
         mat.set_shader_parameter("lift", &lift.to_variant());
         match role {
             Role::Prop | Role::Trim => set(&mut mat, "glow", 0.02),
+            Role::Ice => {
+                set(&mut mat, "glow", 0.03);
+                set(&mut mat, "specular", 0.7);
+            }
             Role::Ruin => {
                 set(&mut mat, "glow", 0.02);
                 set(&mut mat, "displace", 0.03);
@@ -269,6 +306,102 @@ fn noise_texture() -> Gd<Texture2D> {
     tex.set_normalize(true);
     tex.set_noise(&noise);
     tex.upcast()
+}
+
+/// What a cell's ground is, as the ground's shaders blend it with the
+/// cells beside it: a wall, the rock or the unknown is none of them.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
+pub enum Ground {
+    #[default]
+    None,
+    Land,
+    Water,
+    Lava,
+    Ice,
+}
+
+impl Ground {
+    /// Its number in the shaders (`edge_kind`).
+    pub fn code(self) -> f32 {
+        match self {
+            Ground::None => 0.0,
+            Ground::Land => 1.0,
+            Ground::Water => 2.0,
+            Ground::Lava => 3.0,
+            Ground::Ice => 4.0,
+        }
+    }
+
+    /// Its channel of the texture: water, lava, ice, land.
+    fn channel(self) -> Option<usize> {
+        match self {
+            Ground::None => None,
+            Ground::Water => Some(0),
+            Ground::Lava => Some(1),
+            Ground::Ice => Some(2),
+            Ground::Land => Some(3),
+        }
+    }
+}
+
+/// The ground of every cell of the level, and its texture: a channel per
+/// kind, full where the cell is of it.
+pub struct GroundField {
+    cells: Vec<Ground>,
+    image: Gd<Image>,
+    changed: bool,
+}
+
+impl GroundField {
+    pub fn new() -> GroundField {
+        let image =
+            Image::create_empty(COLNO, ROWNO, false, Format::RGBA8).unwrap_or_else(Image::new_gd);
+        GroundField {
+            cells: vec![Ground::None; (COLNO * ROWNO) as usize],
+            image,
+            changed: true,
+        }
+    }
+
+    pub fn set(&mut self, x: i32, y: i32, ground: Ground) {
+        if let Some(i) = index(x, y)
+            && self.cells[i] != ground
+        {
+            self.cells[i] = ground;
+            self.changed = true;
+        }
+    }
+
+    pub fn clear(&mut self) {
+        if self.cells.iter().any(|g| *g != Ground::None) {
+            self.cells.fill(Ground::None);
+            self.changed = true;
+        }
+    }
+
+    /// The image made again if a cell changed since; true then.
+    fn write(&mut self) -> bool {
+        if !std::mem::take(&mut self.changed) {
+            return false;
+        }
+        let mut bytes = PackedByteArray::new();
+        bytes.resize(self.cells.len() * 4);
+        let out = bytes.as_mut_slice();
+        for (i, g) in self.cells.iter().enumerate() {
+            if let Some(c) = g.channel() {
+                out[i * 4 + c] = 255;
+            }
+        }
+        self.image
+            .set_data(COLNO, ROWNO, false, Format::RGBA8, &bytes);
+        true
+    }
+}
+
+impl Default for GroundField {
+    fn default() -> GroundField {
+        GroundField::new()
+    }
 }
 
 /// What the hero knows of a cell.

@@ -5,6 +5,9 @@
 // fog of war: what the hero sees now in full colour, what they remember
 // darker, cold and grey, what they never saw fading into darkness.
 // Walls and rock between the eye and the hero dither away around them.
+// The ground (a floor, ice) shows only where its kind wins over the
+// cells' beside it (`ground_kind`): a shore wanders, wet, scorched or
+// frosted along it, instead of running along the cells' edges.
 shader_type spatial;
 render_mode diffuse_burley, specular_schlick_ggx, cull_back;
 
@@ -21,6 +24,12 @@ uniform sampler2D fow_tex : filter_linear, repeat_disable;
 // a tiling fractal noise (surface.rs): the fragments read noise from it
 // rather than work it out (a fragment of rock would hash hundreds of times)
 uniform sampler2D noise_tex : filter_linear_mipmap, repeat_enable;
+// per cell of the level, full in the channel of its ground: water, lava,
+// ice, land (surface.rs `GroundField`)
+uniform sampler2D ground_tex : filter_linear, repeat_disable;
+// the ground's own kind (1 land, 4 ice), shown where it wins; 0: whatever
+// lies around it
+uniform float edge_kind = 0.0;
 
 uniform vec4 side_color : source_color = vec4(1.0);
 uniform vec4 top_color : source_color = vec4(1.0);
@@ -143,6 +152,33 @@ float tl2(vec2 p) {
 	return textureLod(noise_tex, p * 0.125, 0.0).r;
 }
 
+// the kinds' strengths at a point of the ground: each cell's own blended
+// into its neighbours' and broken by the noise, so where two kinds meet
+// the line wanders through both cells. A kind with nothing of it near
+// counts for nothing. (The same in every shader of the ground, read at
+// the noise's own level: each decides alike where a shore runs.)
+vec4 ground_field(vec2 p) {
+	return texture(ground_tex, (p + 0.5) / FIELD);
+}
+
+vec4 ground_lead(vec2 p, vec4 f) {
+	vec2 q = p * 1.7;
+	vec4 n = vec4(tl2(q + vec2(3.1, 7.7)), tl2(q + vec2(11.3, 1.9)),
+		tl2(q + vec2(5.9, 13.1)), tl2(q + vec2(17.7, 4.3)));
+	return (f + (n - 0.5) * 0.6) * step(0.004, f);
+}
+
+// the kind that wins: 1 land, 2 water, 3 lava, 4 ice (0: none near)
+float ground_kind(vec4 v) {
+	float k = 0.0;
+	float best = 0.0;
+	if (v.a > best) { best = v.a; k = 1.0; }
+	if (v.r > best) { best = v.r; k = 2.0; }
+	if (v.g > best) { best = v.g; k = 3.0; }
+	if (v.b > best) { best = v.b; k = 4.0; }
+	return k;
+}
+
 vec3 displacement(vec3 w) {
 	vec2 q = w.xz * 1.1 + w.y * vec2(0.37, 0.71);
 	vec3 d = vec3(tl2(q), tl2(q + 17.3), tl2(q.yx + 31.1)) - 0.5;
@@ -245,6 +281,25 @@ float dither(vec2 p, float t) {
 }
 
 void fragment() {
+	// the ground shows where its kind wins; how near it comes to losing
+	// to water, lava or ice beside it (for the shore's own look)
+	float near_water = 0.0;
+	float near_lava = 0.0;
+	float near_ice = 0.0;
+	vec4 field = edge_kind > 0.0 ? ground_field(wpos.xz) : vec4(0.0);
+	// (nothing else near: all its own)
+	float rivals = edge_kind == 4.0 ? max(max(field.r, field.g), field.a) : max(max(field.r, field.g), field.b);
+	if (rivals > 0.0) {
+		vec4 v = ground_lead(wpos.xz, field);
+		float k = ground_kind(v);
+		if (k > 0.0 && k != edge_kind) {
+			discard;
+		}
+		float own = edge_kind == 4.0 ? v.b : v.a;
+		near_water = (1.0 - smoothstep(0.0, 0.28, own - v.r)) * step(0.001, v.r);
+		near_lava = (1.0 - smoothstep(0.0, 0.35, own - v.g)) * step(0.001, v.g);
+		near_ice = edge_kind == 1.0 ? (1.0 - smoothstep(0.0, 0.4, own - v.b)) * step(0.001, v.b) : 0.0;
+	}
 	vec3 n = normalize(wnrm);
 	if (facets > 0.0) {
 		vec3 f = normalize(cross(dFdx(wpos), dFdy(wpos)));
@@ -358,6 +413,21 @@ void fragment() {
 		float w = smoothstep(0.66, 0.74, tn2(wpos.xz * 0.3 + 11.0)) * wet * bw.y;
 		albedo *= mix(1.0, 0.75, w);
 		rough = mix(rough, 0.35, w);
+	}
+	// along a shore: soaked dark and glossy by the water, frosted white by
+	// ice, scorched black by lava (whose own edge glows)
+	if (near_water > 0.0) {
+		albedo *= mix(1.0, 0.5, near_water);
+		rough = mix(rough, 0.18, near_water);
+	}
+	if (near_ice > 0.0) {
+		float luma = dot(albedo, vec3(0.299, 0.587, 0.114));
+		vec3 frost = vec3(0.78, 0.84, 0.9) * mix(0.55, 0.95, tn2(wpos.xz * 3.1));
+		albedo = mix(albedo, frost * max(luma * 2.2, 0.35), near_ice * 0.8);
+		rough = mix(rough, 0.3, near_ice);
+	}
+	if (near_lava > 0.0) {
+		albedo *= mix(1.0, 0.25, near_lava);
 	}
 
 	// remembered: the same stone, grey, cold and dark

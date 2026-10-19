@@ -110,6 +110,136 @@ pub(super) fn branches() -> Vec<Step> {
     steps
 }
 
+/// The engine waits for a command (every question before it answered).
+fn at_command(g: &RenethackGame) -> Result<bool, String> {
+    Ok(matches!(g.pending, Some((_, Prompt::Command))))
+}
+
+/// The level drawn, up out of black and the camera settled on it,
+/// whatever its branch.
+fn drawn_here(g: &RenethackGame) -> Result<bool, String> {
+    let map = map_view(g)?;
+    Ok(map.branch() == g.world.branch()
+        && map.drawn_generation() == Some(g.world.map.generation())
+        && map.is_settled()
+        && camera_settled(g)?)
+}
+
+/// A level teleport by the debug prompt's answer `to` (a depth in the
+/// branch the hero is in), the level mapped and drawn.
+fn teleport_to(to: &'static str) -> Vec<Step> {
+    vec![
+        Step::Key(ctrl_key('v')),
+        Step::Request(
+            "to what level",
+            |p| matches!(p, Prompt::Text { query, .. } if query.contains("level")),
+        ),
+        Step::Dialog(DialogEvent::TextSubmitted(to.into())),
+        Step::AnswerUntil('n', "a command on the new level", at_command),
+        Step::Key(ctrl_key('f')),
+        Step::Request("a command after the map", |p| matches!(p, Prompt::Command)),
+        Step::Wait("the level drawn", drawn_here),
+    ]
+}
+
+/// The terrain's looks where the critics met them, for pictures (not part
+/// of `make test-client`): the shores of Medusa's island, the ice and
+/// lava of the Valkyrie's home, the Castle's moat, Juiblex's swamp, and
+/// the Gnomish Mines' rock above and below Minetown.
+pub(super) fn terrain() -> Vec<Step> {
+    let mut steps = vec![Step::Call(
+        "debug mode for this game",
+        |g: &mut RenethackGame| {
+            g.debug_mode = true;
+            Ok(())
+        },
+    )];
+    steps.extend(start());
+    steps.push(Step::Wait("the first level drawn", |g| {
+        drawn_in(g, Branch::Main)
+    }));
+    steps.push(Step::Shot("terrain-main"));
+    let visits: [(KeyCheck, &'static str); 3] = [
+        (|g| entry_key(g, "medusa"), "terrain-medusa"),
+        (|g| entry_key(g, "castle"), "terrain-castle"),
+        (|g| entry_key(g, "juiblex"), "terrain-juiblex"),
+    ];
+    let visit = |steps: &mut Vec<Step>, pick: KeyCheck, shot: &'static str| {
+        // (a name for the far view too, for the run's length)
+        let far_shot: &'static str = Box::leak(format!("{shot}-far").into_boxed_str());
+        steps.extend([
+            Step::Key(ctrl_key('v')),
+            Step::Request(
+                "to what level",
+                |p| matches!(p, Prompt::Text { query, .. } if query.contains("level")),
+            ),
+            Step::Dialog(DialogEvent::TextSubmitted("?".into())),
+            Step::Request("the levels to teleport to", is_menu),
+            Step::KeyFrom("the level", pick),
+            Step::AnswerUntil('n', "a command on the new level", at_command),
+            // the whole level mapped (the debug mode's map), so its
+            // terrain shows beyond the hero's own light
+            Step::Key(ctrl_key('f')),
+            Step::Request("a command after the map", |p| matches!(p, Prompt::Command)),
+            Step::Wait("the level drawn", drawn_here),
+            Step::Shot(shot),
+            // and the shores further off
+            Step::Call("the camera far off", |g| far(g, 19.0)),
+            Step::Wait("the camera far off", drawn_here),
+            Step::Shot(far_shot),
+            Step::Call("the camera back", |g| far(g, 11.0)),
+            Step::Wait("the camera back", drawn_here),
+        ]);
+    };
+    for (pick, shot) in visits {
+        visit(&mut steps, pick, shot);
+    }
+    visit(&mut steps, |g| entry_key(g, "minetn"), "terrain-minetown");
+    // a filler level of the Mines below Minetown, unlit, and its end
+    steps.extend(teleport_to("9"));
+    steps.push(Step::Shot("terrain-mines-deep"));
+    visit(&mut steps, |g| entry_key(g, "minend"), "terrain-mines-end");
+    // last: the quest's home (the level teleport works no further there),
+    // its greeting read first
+    steps.extend([
+        Step::Key(ctrl_key('v')),
+        Step::Request(
+            "to what level",
+            |p| matches!(p, Prompt::Text { query, .. } if query.contains("level")),
+        ),
+        Step::Dialog(DialogEvent::TextSubmitted("?".into())),
+        Step::Request("the levels to teleport to", is_menu),
+        Step::KeyFrom("the quest's home", |g| entry_key(g, "-strt")),
+        Step::AnswerUntil('n', "a command in the quest's home", at_command),
+        Step::Key(ctrl_key('f')),
+        Step::Request("a command after the map", |p| matches!(p, Prompt::Command)),
+        Step::Wait("the level drawn", drawn_here),
+        Step::Shot("terrain-home"),
+        // and its lava, as far as the map shows it, nearest the hero
+        Step::Call("the view on the lava", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            let (hx, hy) = g.world.map.hero().ok_or("no hero")?;
+            let lava = (0..nh_world::ROWNO)
+                .flat_map(|y| (0..nh_world::COLNO).map(move |x| (x, y)))
+                .filter(|&(x, y)| {
+                    g.world
+                        .map
+                        .cell(x, y)
+                        .and_then(|c| nh_world::cell_terrain(c, &cat))
+                        == Some(nh_world::Terrain::Lava)
+                })
+                .min_by_key(|&(x, y)| (x - hx).pow(2) + (y - hy).pow(2))
+                .ok_or("no lava on the quest's home")?;
+            g.world.view_center = Some(lava);
+            Ok(())
+        }),
+        Step::Wait("the camera on the lava", drawn_here),
+        Step::Shot("terrain-home-lava"),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
 /// What hangs shown on the hero's bone attachment `Gear_<bone>` (the held
 /// models' names).
 fn held_on(g: &RenethackGame, bone: &str) -> Result<Vec<String>, String> {
