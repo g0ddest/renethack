@@ -479,11 +479,11 @@ not_terms = ["tin"]
 
 [ebcee104e56c]
 en = "You don't have anything to tip."
-ru = "Вам нечего опорожнять."
+ru = "Вам нечего вытряхивать."
 
 [f8be20658db8]
 en = "You don't have anything else to tip."
-ru = "Вам больше нечего опорожнять."
+ru = "Вам больше нечего вытряхивать."
 
 [3ca30616be6f]
 en = "You don't have anything to untrap with."

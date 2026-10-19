@@ -932,11 +932,11 @@ ru = " Вы с пустыми руками."
 
 [0fa020f54595]
 en = " You were wielding two weapons at once."
-ru = " Вы сражались двумя оружиями сразу."
+ru = " Вы сражались с двух рук."
 
 [59acb3262a36]
 en = " You are wielding two weapons at once."
-ru = " Вы сражаетесь двумя оружиями сразу."
+ru = " Вы сражаетесь с двух рук."
 
 [098ae9b5584f]
 en = " Your items are protected from cold%s."

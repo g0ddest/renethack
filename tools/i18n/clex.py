@@ -279,8 +279,10 @@ def scan_unit(path, src):
         if t.kind == "ident" and i + 1 < n and toks[i + 1].text == "(":
             close = match_close(toks, i + 1)
             k = close + 1
-            # attribute macros between a definition's ')' and its '{'
-            while k < n and toks[k].kind == "ident" and toks[k].text in ATTRIBUTE_WORDS:
+            # attribute macros between a definition's ')' and its '{', and
+            # the #endif of a header written twice (libnhmain.c's nhmain)
+            while k < n and (toks[k].kind == "pp"
+                             or (toks[k].kind == "ident" and toks[k].text in ATTRIBUTE_WORDS)):
                 k += 1
                 if k < n and toks[k].text == "(":
                     k = match_close(toks, k) + 1

@@ -63,7 +63,7 @@ ru = "{1:m} алтарь"
 
 [ec0133bc082d]
 en = "%s high altar"
-ru = "{1:m} верховный алтарь"
+ru = "{1:m} главный алтарь"
 
 [1d7373bf5e19]
 en = "aligned altar"
@@ -71,7 +71,7 @@ ru = "алтарь неведомого мировоззрения"
 
 [b73316549932]
 en = "aligned high altar"
-ru = "верховный алтарь неведомого мировоззрения"
+ru = "главный алтарь неведомого мировоззрения"
 
 [74844baca69e]
 en = "interior of %s"
@@ -239,7 +239,7 @@ ru = "видение невидимого"
 
 [41eee2cc2a8c]
 en = "infravision"
-ru = "инфравидение"
+ru = "инфразрение"
 
 [dec7356b342f]
 en = "telepathy"
@@ -292,3 +292,30 @@ ru = " на потолке"
 [2a3d6728437a]
 en = " on the %s"
 ru = " на {1:loc}"
+
+# getpos.c auto_describe(): the spot under the cursor, and why it won't do
+# (the description, then its coordinates when getpos_coords asks for them)
+
+[b410a761b8ad]
+en = "%s %s (invalid target)"
+ru = "{1} {2} (недопустимая цель)"
+
+[efe6706ee017]
+en = "%s %s (invalid target) (no travel path)"
+ru = "{1} {2} (недопустимая цель) (путь неизвестен)"
+
+[4a91bddf1eb2]
+en = "%s %s (no travel path)"
+ru = "{1} {2} (путь неизвестен)"
+
+[c4b3a1de1ff9]
+en = "%s%s (invalid target)"
+ru = "{1}{2} (недопустимая цель)"
+
+[9cc5297b60a3]
+en = "%s%s (invalid target) (no travel path)"
+ru = "{1}{2} (недопустимая цель) (путь неизвестен)"
+
+[477f6d361220]
+en = "%s%s (no travel path)"
+ru = "{1}{2} (путь неизвестен)"

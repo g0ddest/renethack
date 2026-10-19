@@ -795,15 +795,15 @@ ru = "[Здоровье {1}, осталось {2}]"
 
 [4bc8618ae595]
 en = "You can't tip a container while carrying so much."
-ru = "С такой ношей вам не опорожнить контейнер."
+ru = "С такой ношей вам не вытряхнуть контейнер."
 
 [ab36dd565a58]
 en = "You can't tip it while carrying so much."
-ru = "С такой ношей вам его не опорожнить."
+ru = "С такой ношей вам его не вытряхнуть."
 
 [b7336aa56753]
 en = "You can't tip one while carrying so much."
-ru = "С такой ношей вам ни один из них не опорожнить."
+ru = "С такой ношей вам ни один из них не вытряхнуть."
 
 [e7611245e056]
 en = "You cannot fight while so heavily loaded."

@@ -713,15 +713,15 @@ ru = "{hero:gender|загадал|загадала} {1:acc}"
 
 [e5cf76442841]
 en = "was given %s by the Lady of the Lake"
-ru = "{hero:gender|получил|получила} {1:acc} от Леди Озера"
+ru = "{hero:gender|получил|получила} {1:acc} от Владычицы Озера"
 
 [a959835eb85d]
 en = "was denied %s!  The Lady of the Lake has deemed him unworthy"
-ru = "не получил {1:gen}!  Леди Озера сочла его недостойным"
+ru = "не получил {1:gen}!  Владычица Озера сочла его недостойным"
 
 [5bb73db3693a]
 en = "was denied %s!  The Lady of the Lake has deemed her unworthy"
-ru = "не получила {1:gen}!  Леди Озера сочла её недостойной"
+ru = "не получила {1:gen}!  Владычица Озера сочла её недостойной"
 
 [e74828c27f30]
 en = "found %s"
@@ -809,11 +809,11 @@ ru = "{hero:gender|стал безверным|стала безверной} б
 
 [3442b2acaccb]
 en = "%s has expelled you from the quest"
-ru = "{1} {1:gender|изгнал|изгнала|изгнало|изгнали} вас из задания"
+ru = "{1} {1:gender|отлучил|отлучила|отлучило|отлучили} вас от Квеста"
 
 [d6e57c9f1418]
 en = "%s has granted access to proceed deeper into the quest"
-ru = "{1} {1:gender|позволил|позволила|позволило|позволили} вам продолжить задание"
+ru = "{1} {1:gender|позволил|позволила|позволило|позволили} вам продолжить Квест"
 
 [078fe4dded39]
 en = "bribed %s with %ld zorkmid for safe passage"

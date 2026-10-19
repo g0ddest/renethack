@@ -35,6 +35,11 @@ class Lexer(unittest.TestCase):
         unit = clex.scan_unit("t.c", "static int t[] = { 1 };\n\nint\nf(int a)\n{\n    return a;\n}\n")
         self.assertEqual([(f.name, f.line) for f in unit.functions], [("f", 4)])
 
+    def test_a_header_written_twice(self):
+        # libnhmain.c: main() for one build, nhmain() for the other
+        unit = clex.scan_unit("t.c", "#ifdef X\nint\nmain(int c)\n#else\nint\nnhmain(int c)\n#endif\n{\n    return c;\n}\n")
+        self.assertEqual([f.name for f in unit.functions], ["nhmain"])
+
 
 class Formats(unittest.TestCase):
     def test_prefixes_and_kinds(self):
@@ -62,6 +67,16 @@ class Formats(unittest.TestCase):
         self.assertIn("%s hits!", e)
         self.assertIn("%s glows bes.", e)
         self.assertEqual(e["%s glow be."].args, [{"object"}])
+
+    def test_a_variable_a_call_may_set(self):
+        # getpos.c auto_describe(): firstmatch is "unknown" until
+        # do_screen_description(…, &firstmatch, …) names the spot
+        e = catalog_of('void f(int x) {\n'
+                       '    const char *first = "unknown";\n'
+                       '    describe(x, &first);\n'
+                       '    pline("%s%s", first, x ? " (no travel path)" : "");\n}\n')
+        self.assertIn("%s (no travel path)", e)
+        self.assertNotIn("unknown (no travel path)", e)
 
     def test_a_member_its_unit_sets(self):
         e = catalog_of('static void verb(struct ctx *de) {\n'

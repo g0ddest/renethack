@@ -128,7 +128,7 @@ ru = "Чтобы положить часть стопки, наберите пе
 
 [23385920128b]
 en = "Throw items with '%s'"
-ru = "Бросайте предметы клавишей '{1}'"
+ru = "Метайте предметы клавишей '{1}'"
 
 [eeaaf052be93]
 en = "Missiles, such as rocks, work better when fired from appropriate launcher"
@@ -180,7 +180,7 @@ ru = "Клавишей '{1}' ешьте съедобное"
 
 [15fcaf6a8b25]
 en = "Use '%s' to use two weapons at once"
-ru = "Клавишей '{1}' сражайтесь двумя оружиями сразу"
+ru = "Клавишей '{1}' сражайтесь с двух рук"
 
 [13735b2a251a]
 en = "Swap weapons quickly with '%s'"

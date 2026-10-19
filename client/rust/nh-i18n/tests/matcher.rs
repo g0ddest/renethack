@@ -212,7 +212,7 @@ fn what_a_helper_writes() {
     );
     check(
         " You are unskilled in dagger.",
-        "Ваш уровень владения кинжалом: неопытный",
+        "Ваш уровень владения кинжалом: без навыка",
     );
     // shk.c: append_honorific() adds to "For you, "
     check(
@@ -1490,6 +1490,103 @@ fn words_that_meant_something_else() {
             "{en}"
         );
     }
+}
+
+#[test]
+fn one_word_for_one_thing() {
+    // ru-editor: the UI and the engine named the same thing differently
+    // (three sets of skill levels, four verbs for casting, обеты beside
+    // испытания, «опорожнить» beside «Вытряхнуть», «бросить» beside «Метнуть»)
+    check(
+        " You are unskilled in dagger.",
+        "Ваш уровень владения кинжалом: без навыка.",
+    );
+    check(
+        "You fail to cast the spell correctly.",
+        "произнести заклинание",
+    );
+    check(
+        "You are too impaired to cast a spell.",
+        "чтобы произносить заклинания",
+    );
+    check(
+        "Do you want to see your conduct?",
+        "Показать ваши испытания?",
+    );
+    check(
+        "Reading mail will violate \"illiterate\" conduct.  Read anyway?",
+        "вы провалите испытание неграмотностью",
+    );
+    check(
+        " You are wielding two weapons at once.",
+        "Вы сражаетесь с двух рук.",
+    );
+    check("What do you want to tip?", "Что вы хотите вытряхнуть?");
+    check("What do you want to throw? [*]", "Что вы хотите метнуть?");
+    check(
+        "\"Then dost thou desire a major one?\" (500 zorkmids)",
+        "большого прорицания",
+    );
+    let t = translator();
+    let out = t.window("force bolt            1   attack         0%      100%");
+    assert!(out.text.contains("атака"), "{}", out.text);
+    let mut t = Translator::built_in().expect("the built-in translator");
+    t.set_hero(Gender::Fem);
+    for (en, ru) in [
+        (
+            "was given Excalibur by the Lady of the Lake",
+            "получила Экскалибур от Владычицы Озера",
+        ),
+        (
+            "\"Wilt thou settle for a minor consultation?\" (50 zorkmids)",
+            "«Согласна ли ты на малое прорицание?» (50 зоркмидов)",
+        ),
+    ] {
+        let out = t.text(en);
+        assert_eq!(
+            (out.text.as_str(), out.status),
+            (ru, Status::Translated),
+            "{en}"
+        );
+    }
+}
+
+#[test]
+fn the_last_english_of_the_first_hour() {
+    // the travel cursor's "(no travel path)": auto_describe's firstmatch
+    // is no "unknown" once a call names the spot
+    let s = |x: &str| Arg::Str(x.to_string());
+    for (args, text, ru) in [
+        (
+            vec![s("corridor"), s(""), s(""), s(""), s(" (no travel path)")],
+            "corridor (no travel path)",
+            "коридор (путь неизвестен)",
+        ),
+        (
+            vec![
+                s("doorway"),
+                s(" "),
+                s("(3s)"),
+                s(" (invalid target)"),
+                s(" (no travel path)"),
+            ],
+            "doorway (3s) (invalid target) (no travel path)",
+            "дверной проём (3s) (недопустимая цель) (путь неизвестен)",
+        ),
+    ] {
+        for out in [
+            translator().message(Some("%s%s%s%s%s"), &args, text),
+            translator().message(None, &[], text),
+        ] {
+            assert_eq!(
+                (out.text.as_str(), out.status),
+                (ru, Status::Translated),
+                "{text}"
+            );
+        }
+    }
+    // libnh's main, read by the extractor now
+    check("Restoring save file...", "Загрузка сохранённой игры...");
 }
 
 /// The built-in catalog and lexicon with these translations only: (the

@@ -1197,3 +1197,45 @@ ru = "{1}, {2}, {3:f:race} {4:f}, с возвращением в NetHack!"
 [a2220107839d]
 en = "%s %s, the male %s %s, welcome back to NetHack!"
 ru = "{1}, {2}, {3:m:race} {4:m}, с возвращением в NetHack!"
+
+# sys/libnh/libnhmain.c: the main the host builds (restoring a game, debug
+# and explore mode refused, the command line)
+
+[cadd8e9e7223]
+en = "Restoring save file..."
+ru = "Загрузка сохранённой игры..."
+
+[3b0243cb5d7d]
+en = "Do you want to keep the save file?"
+ru = "Оставить файл сохранения?"
+
+[dbf513f8c39d]
+en = "Only user %s may access debug (wizard) mode."
+ru = "Режим отладки доступен только пользователю {1}."
+not_terms = ["wizard"]
+
+[08274248d5aa]
+en = "Only users %s may access debug (wizard) mode."
+ru = "Режим отладки доступен только пользователям {1}."
+not_terms = ["wizard"]
+
+[eaf0a10dde02]
+en = "You cannot access debug (wizard) mode."
+ru = "Режим отладки вам недоступен."
+not_terms = ["wizard"]
+
+[e3e82e3cdef1]
+en = "Entering explore/discovery mode instead."
+ru = "Вместо него — режим исследования."
+
+[9491357e57ed]
+en = "You are in non-scoring explore/discovery mode."
+ru = "Вы в режиме исследования, очки не считаются."
+
+[ece730920236]
+en = "Unknown option: %.60s"
+ru = "Неизвестный параметр: {1}"
+
+[6c7f9424d3fd]
+en = "MAXPLAYERS are set in sysconf file.\n"
+ru = "MAXPLAYERS задаётся в файле sysconf.\n"

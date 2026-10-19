@@ -15,7 +15,7 @@ ru = "Что вы хотите прочитать? [*]"
 
 [db716f189453]
 en = "What do you want to throw? [*]"
-ru = "Что вы хотите бросить? [*]"
+ru = "Что вы хотите метнуть? [*]"
 
 [ef7d708f8eb5]
 en = "What do you want to use or apply? [%s or ?*]"
@@ -87,7 +87,7 @@ ru = "Показать обзор подземелья?"
 
 [91aa93cb913c]
 en = "What do you want to throw? [%s or ?*]"
-ru = "Что вы хотите бросить? [{1} или ?*]"
+ru = "Что вы хотите метнуть? [{1} или ?*]"
 
 [f2c7fcf900dc]
 en = "What do you want to fire? [%s or ?*]"
@@ -103,7 +103,7 @@ ru = "Что вы хотите надеть? [{1} или ?*]"
 
 [8b3d36083e2b]
 en = "Do you want to see your conduct?"
-ru = "Показать ваши обеты?"
+ru = "Показать ваши испытания?"
 
 [1884bc7750b2]
 en = "What do you want to dip? [%s or ?*]"
@@ -111,7 +111,7 @@ ru = "Что вы хотите окунуть? [{1} или ?*]"
 
 [67d98943ae6e]
 en = "Do you want to see your conduct and achievements?"
-ru = "Показать ваши обеты и достижения?"
+ru = "Показать ваши испытания и достижения?"
 
 [0d450883412d]
 en = "What do you want to rub on the stone? [*]"

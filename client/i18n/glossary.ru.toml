@@ -2116,10 +2116,10 @@
 "matter spells" = { ru = "заклинания материи", src = "nethack-ru" }
 "bare handed combat" = { ru = "рукопашный бой", src = "chosen", note = "was бой голыми руками" }
 "martial arts" = { ru = "боевые искусства", src = "nethack-ru" }
-"Restricted" = { ru = "Недоступно", src = "chosen" }
-"Unskilled" = { ru = "Новичок", src = "chosen" }
-"Basic" = { ru = "Основы", src = "chosen" }
-"Skilled" = { ru = "Умелец", src = "chosen" }
+"Restricted" = { ru = "Недоступен", src = "chosen", note = "the skill levels as the UI's #enhance names them (ru-editor 2026-10-18); was Недоступно" }
+"Unskilled" = { ru = "Без навыка", src = "chosen", note = "was Новичок (and Неопытный in windows-03)" }
+"Basic" = { ru = "Базовый", src = "chosen", note = "was Основы, a textbook" }
+"Skilled" = { ru = "Опытный", src = "chosen", note = "was Умелец, a handyman" }
 "Expert" = { ru = "Эксперт", src = "chosen" }
 "Master" = { ru = "Мастер", src = "chosen" }
 "Grand Master" = { ru = "Великий мастер", src = "chosen" }
@@ -2170,7 +2170,7 @@
 "attack" = { ru = "атака", src = "chosen", note = "school; healing is the spell's word too" }
 "divination" = { ru = "прорицание", src = "chosen", note = "school" }
 "enchantment" = { ru = "очарование", src = "chosen", note = "school" }
-"clerical" = { ru = "жреческие", src = "chosen", note = "school" }
+"clerical" = { ru = "жречество", src = "chosen", note = "school, as the UI names it; was жреческие" }
 "escape" = { ru = "бегство", src = "chosen", note = "school" }
 "matter" = { ru = "материя", src = "chosen", note = "school" }
 
@@ -2305,6 +2305,7 @@
 "Hand of Elbereth" = { ru = "Длань Elbereth", src = "chosen", note = "team-lead 2026-10-07; Elbereth stays Latin, as it is engraved" }
 "Envoy of Balance" = { ru = "Посланник Равновесия", src = "chosen", note = "team-lead 2026-10-07; a heroine is Посланница Равновесия" }
 "High Temple" = { ru = "Верховный храм", src = "chosen", note = "team-lead 2026-10-07; as Верховный жрец" }
+"Lady of the Lake" = { ru = "Владычица Озера", src = "chosen", note = "Excalibur's giver; one name for her (ru-editor 2026-10-18: the chronicle said Леди Озера)" }
 
 [currency]
 "zorkmid" = { ru = "зоркмид", src = "chosen" }

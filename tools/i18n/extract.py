@@ -13,7 +13,9 @@ Sources (engine/upstream, read only):
   "The "...) folded into the format, as vpline sees it; the Sprintf /
   Snprintf / Strcpy / Strcat calls that build text; menu items, text
   window lines, questions (yn_function, getlin...), getobj verbs,
-  occupations, enlightenment lines, death reasons;
+  occupations, enlightenment lines, death reasons; the same of
+  sys/libnh/libnhmain.c, the main the host builds ("Restoring save
+  file...");
 - dat/: rumors, oracles, epitaphs, engravings, hallucinatory monster
   names, the quest texts of quest.lua (their %p, %r... codes become %s
   placeholders), the level messages and engravings of the other .lua
@@ -792,6 +794,7 @@ class Context:
         self._depths = None
         self._opens = None
         start, end = func.body
+        addressed = set()
         i = start + 1
         while i < end:
             t = toks[i]
@@ -909,7 +912,15 @@ class Context:
                         op = Op(i, append or t.text in APPENDS, args[tidx], args[tidx + 1:],
                                 printf, t.line, t.text)
                         self.ops.setdefault(dest, []).append(op)
+            if (t.text == "&" and toks[i - 1].text in ("(", ",") and toks[i + 1].kind == "ident"
+                    and toks[i + 2].text in (")", ",")):
+                # f(…, &name): the call may set it, so what it was set to
+                # before says nothing (auto_describe's firstmatch is
+                # "unknown" only until do_screen_description names the spot)
+                addressed.add(toks[i + 1].text)
             i += 1
+        for name in addressed:
+            self.assigns.pop(name, None)
 
     def _params(self):
         toks = self.unit.toks
@@ -1748,7 +1759,7 @@ def add_rip(cat, unit):
     """The tombstone's lines (rip_txt), as layout: each line as it is, and
     a line with text centered between its sides as a pattern."""
     for line in unit.arrays.get("rip_txt", []):
-        site = f"src/{unit.path}:0 rip_txt"
+        site = f"{source_path(unit)}:0 rip_txt"
         cat.add(escape(line), "layout", site, [], force=True)
         m = RIP_SIDE.match(line)
         if m:
@@ -1805,7 +1816,7 @@ def add_appended(cat, contexts):
             if t.always:
                 heads = [(f + g, k + h) for f, k in heads for g, h in t.pieces]
         branches = [p for t in tails if not t.always for p in t.pieces]
-        site = f"src/{ctx.unit.path}:{ctx.unit.toks[start].line} {ctx.func.name}"
+        site = f"{source_path(ctx.unit)}:{ctx.unit.toks[start].line} {ctx.func.name}"
         for f, k in heads:
             for g, h in branches or [("", [])]:
                 cat.add(f + g, "sprintf", site, k + h)
@@ -1859,7 +1870,7 @@ def add_seamed(cat, units):
                 if (u.kind == "string" and "\033%s" in u.value and toks[j - 1].text == ","
                         and toks[j - 2].text == args[2][0].text and toks[j - 4].text == "Sprintf"):
                     fmt = escape(args[1][0].value) + "%s" + u.value.replace("\033", " ")
-                    cat.add(fmt, "query", f"src/{unit.path}:{t.line} safe_qbuf {source_text(args[1])}", ["object", "object"])
+                    cat.add(fmt, "query", f"{source_path(unit)}:{t.line} safe_qbuf {source_text(args[1])}", ["object", "object"])
 
 
 EXTCMD_ROW = re.compile(r" %-(\d+)s %4s %s")
@@ -1952,7 +1963,7 @@ def scan_function(cat, ctx):
     if func.name in LAYOUT_FUNCS:
         cat = LayoutCatalog(cat)
     start, end = func.body
-    path = "src/" + unit.path
+    path = source_path(unit)
     i = start
     while i < end:
         t = toks[i]
@@ -2167,6 +2178,16 @@ def struct_initializer(unit, struct):
     return []
 
 
+# what the host builds besides src/: libnh's main (engine/host/rh.mk), which
+# says "Restoring save file..."
+SYS_SOURCES = ["sys/libnh/libnhmain.c"]
+
+
+def source_path(unit):
+    """A unit's file as a site names it: src/ unless it is elsewhere."""
+    return unit.path if "/" in unit.path else f"src/{unit.path}"
+
+
 def extract():
     src_dir = os.path.join(UPSTREAM, "src")
     units = []
@@ -2174,6 +2195,9 @@ def extract():
         if name.endswith(".c"):
             with open(os.path.join(src_dir, name), encoding="latin-1") as f:
                 units.append(clex.scan_unit(name, f.read()))
+    for path in SYS_SOURCES:
+        with open(os.path.join(UPSTREAM, path), encoding="latin-1") as f:
+            units.append(clex.scan_unit(path, f.read()))
     glob = load_globals(units)
     contexts = [Context(glob, unit, func) for unit in units for func in unit.functions]
     for ctx in contexts:

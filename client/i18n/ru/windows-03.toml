@@ -33,7 +33,7 @@ ru = "Вырезать надпись на {1:loc} одним из этих пр
 
 [2cb08984c5be]
 en = "Throw one of these with your wielded %s"
-ru = "Бросить один из них с помощью {1:gen}"
+ru = "Метнуть один из них с помощью {1:gen}"
 
 [2d19691612d4]
 en = "Shoot them"
@@ -73,7 +73,7 @@ ru = "Надеть это кольцо"
 
 [58c4ddc724a7]
 en = "Throw this with your wielded %s"
-ru = "Бросить это с помощью {1:gen}"
+ru = "Метнуть это с помощью {1:gen}"
 
 [5f321e823569]
 en = "[already wearing an amulet]"
@@ -81,7 +81,7 @@ ru = "[амулет уже надет]"
 
 [6023eb24d8fe]
 en = "Throw them (same as 'f')"
-ru = "Бросить их (то же, что 'f')"
+ru = "Метнуть их (то же, что 'f')"
 
 [6e264d7eecab]
 en = "Remove this amulet"
@@ -101,7 +101,7 @@ ru = "Выстрелить этим из {1:gen}"
 
 [9520df9a3421]
 en = "Throw one of these (same as 'f')"
-ru = "Бросить один из них (то же, что 'f')"
+ru = "Метнуть один из них (то же, что 'f')"
 
 [95769fc09d3e]
 en = "Shoot this item"
@@ -113,7 +113,7 @@ ru = "Надеть этот амулет"
 
 [a8747a1a5c8b]
 en = "Throw one of these"
-ru = "Бросить один из них"
+ru = "Метнуть один из них"
 
 [ac11cdd16ab2]
 en = "Shoot this"
@@ -121,7 +121,7 @@ ru = "Выстрелить этим"
 
 [ad4fe74283ae]
 en = "Throw them"
-ru = "Бросить их"
+ru = "Метнуть их"
 
 [b09c6376a473]
 en = "Write on the %s with this item"
@@ -153,11 +153,11 @@ ru = "Выстрелить этим предметом (то же, что 'f')"
 
 [c7748394d54a]
 en = "Throw this item"
-ru = "Бросить этот предмет"
+ru = "Метнуть этот предмет"
 
 [cd9bc473d724]
 en = "Throw this item (same as 'f')"
-ru = "Бросить этот предмет (то же, что 'f')"
+ru = "Метнуть этот предмет (то же, что 'f')"
 
 [d4ecc4171cc2]
 en = "Shoot one of these"
@@ -169,7 +169,7 @@ ru = "Взять этот предмет в {1:acc}"
 
 [daef4b444670]
 en = "Throw this"
-ru = "Бросить это"
+ru = "Метнуть это"
 
 [dbd776fba7f0]
 en = "Wield this item as your weapon"
@@ -217,7 +217,7 @@ ru = "Выключить бой с двух рук"
 
 [feeb5fd13027]
 en = "Put these lenses on"
-ru = "Надеть эти линзы"
+ru = "Надеть эти очки"
 
 [b03d18671aed]
 en = "Reroll this character?"
@@ -462,7 +462,7 @@ ru = "без нагрузки"
 
 [6253e3ffc23d]
 en = "Unskilled"
-ru = "Неопытный"
+ru = "Без навыка"
 
 [aa2c96dacf00]
 en = "Basic"

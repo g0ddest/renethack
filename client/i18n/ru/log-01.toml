@@ -321,7 +321,7 @@ ru = "{1} {1:num|попадает|попадают} в кого-то."
 
 [745d2fda50c2]
 en = "%s aren't able to use two weapons at once."
-ru = "{1} не {1:num|умеет|умеют} сражаться двумя оружиями сразу."
+ru = "{1} не {1:num|умеет|умеют} сражаться с двух рук."
 
 [7486143d6542]
 en = "You finish your prayer."
@@ -1870,7 +1870,7 @@ ru = "Ой-ой!  В книге появляется ваше имя!"
 
 [8eee03595762]
 en = "You are too impaired to cast a spell."
-ru = "Вы слишком ослаблены, чтобы колдовать."
+ru = "Вы слишком ослаблены, чтобы произносить заклинания."
 
 [7e5de5623205]
 en = "You are unable to chant the incantation."
@@ -1878,7 +1878,7 @@ ru = "Вы не в силах произнести заклинание."
 
 [f1a0427f559c]
 en = "Your arms are not free to cast!"
-ru = "Ваши руки заняты, колдовать нельзя!"
+ru = "Ваши руки заняты, заклинание не произнести!"
 
 [3456e6c0b2c7]
 en = "You don't know that spell."
@@ -1938,7 +1938,7 @@ ru = "Вы слишком голодны, чтобы творить это за�
 
 [d113a1200c52]
 en = "You lack the strength to cast spells."
-ru = "У вас не хватает сил колдовать."
+ru = "У вас не хватает сил произносить заклинания."
 
 [c7aaaca3d1ef]
 en = "You feel the amulet draining your energy away."
@@ -1958,7 +1958,7 @@ ru = "У вас не хватает энергии на это заклинан�
 
 [1943a611ba2d]
 en = "You fail to cast the spell correctly."
-ru = "Вам не удаётся правильно сотворить заклинание."
+ru = "Вам не удаётся правильно произнести заклинание."
 
 [717692bb90e0]
 en = "The magical energy is released!"

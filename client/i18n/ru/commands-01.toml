@@ -380,7 +380,7 @@ ru = "меню команд для соседней клетки"
 
 [cb681274ae9d]
 en = "throw something"
-ru = "бросить что-нибудь"
+ru = "метнуть что-нибудь"
 
 [4fa340092e35]
 en = "look at timeout queue and hero's timed intrinsics"
@@ -388,7 +388,7 @@ ru = "посмотреть очередь таймеров и временные
 
 [b0d14f5b6a6b]
 en = "empty a container"
-ru = "опорожнить контейнер"
+ru = "вытряхнуть контейнер"
 
 [fbe38754cc96]
 en = "toggle boolean option"
