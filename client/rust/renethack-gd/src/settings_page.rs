@@ -28,8 +28,8 @@ use godot::global::{HorizontalAlignment, VerticalAlignment};
 use godot::prelude::*;
 use nh_world::{
     Burden, FPS_CAPS, GameOption, Gameplay, Graphics, Key, KeyInput, KeyProfile, Keymap, Level,
-    Msaa, Paranoid, PrologueWhen, Quality, RENDER_SCALES, Settings, Shadows, UI_SCALES, Upscale,
-    WindowMode, key_name, step_through, step_window_size,
+    Msaa, OrderSpeed, Paranoid, PrologueWhen, Quality, RENDER_SCALES, Settings, Shadows, UI_SCALES,
+    Upscale, WindowMode, key_name, step_through, step_window_size,
 };
 
 use crate::audio::Bus;
@@ -115,8 +115,9 @@ impl Section {
     }
 }
 
-/// The Gameplay section's rows (`GameOption::ALL`).
-const GAMEPLAY: [Field; 12] = [
+/// The Gameplay section's rows: the NetHack options (`GameOption::ALL`),
+/// then the client's own.
+const GAMEPLAY: [Field; 14] = [
     Field::Game(GameOption::Autopickup),
     Field::Game(GameOption::PickupTypes),
     Field::Game(GameOption::PickupBurden),
@@ -129,6 +130,8 @@ const GAMEPLAY: [Field; 12] = [
     Field::Game(GameOption::Paranoid(Paranoid::Quit)),
     Field::Game(GameOption::Paranoid(Paranoid::Remove)),
     Field::Game(GameOption::Verbose),
+    Field::OrderSpeed,
+    Field::StairsWalk,
 ];
 
 /// A row's setting.
@@ -162,6 +165,10 @@ pub enum Field {
     Hints,
     /// A NetHack option: a new game's at the title, the game's over it.
     Game(GameOption),
+    /// How fast the client's own orders step (a walk, a held key, F5).
+    OrderSpeed,
+    /// `<` and `>` off the stairs walk to them.
+    StairsWalk,
     /// Which controls the list shows: a key profile's, or the gamepad's.
     Controls,
 }
@@ -206,6 +213,8 @@ impl Field {
                 GameOption::Paranoid(Paranoid::Remove) => tr!("settings-paranoid-remove"),
                 GameOption::Verbose => tr!("settings-verbose"),
             },
+            Field::OrderSpeed => tr!("settings-order-speed"),
+            Field::StairsWalk => tr!("settings-stairs-walk"),
             Field::Controls => tr!("controls-show"),
         }
     }
@@ -280,6 +289,8 @@ impl Field {
                 };
                 format!("{what} {whose}")
             }
+            Field::OrderSpeed => tr!("settings-order-speed-about"),
+            Field::StairsWalk => tr!("settings-stairs-walk-about"),
             Field::Controls => tr!("controls-show-about"),
         }
     }
@@ -453,6 +464,14 @@ pub fn value_text(field: Field, v: &View) -> String {
         // the game has not told them yet
         Field::Game(_) if gameplay(v).is_none() => "…".to_string(),
         Field::Game(o) => gameplay(v).map(|g| game_value(o, g)).unwrap_or_default(),
+        Field::OrderSpeed => match v.settings.order_speed {
+            OrderSpeed::Instant => tr!("settings-order-speed-instant"),
+            OrderSpeed::Fast => tr!("settings-order-speed-fast"),
+            OrderSpeed::Normal => tr!("settings-order-speed-normal"),
+            OrderSpeed::Slow => tr!("settings-order-speed-slow"),
+        },
+        Field::StairsWalk if v.settings.walk_to_stairs => tr!("settings-on"),
+        Field::StairsWalk => tr!("settings-off"),
         // the page's own choice (`SettingsPage::show`)
         Field::Controls => String::new(),
     }
@@ -597,6 +616,12 @@ pub fn step(field: Field, v: &View, dir: i32, wrap: bool) -> Option<Change> {
             let now = gameplay(v)?;
             let next = now.step(o, dir, wrap);
             return (next != *now).then_some(Change::Gameplay(o, next));
+        }
+        Field::OrderSpeed => {
+            s.order_speed = step_through(&OrderSpeed::ALL, s.order_speed, dir, wrap);
+        }
+        Field::StairsWalk => {
+            s.walk_to_stairs = step_through(&[false, true], s.walk_to_stairs, dir, wrap);
         }
         // the page's own (`SettingsPage::controls_step`)
         Field::Controls => return None,
@@ -2121,7 +2146,7 @@ mod tests {
 
     #[test]
     fn a_step_changes_its_row_s_setting() {
-        let v = view();
+        let mut v = view();
         let s = changed(step(Field::WindowMode, &v, 1, false));
         assert_eq!(s.display.mode, Some(WindowMode::Borderless));
         let s = changed(step(Field::FpsCap, &v, 1, false));
@@ -2145,6 +2170,20 @@ mod tests {
             changed(step(Field::Prologue, &v, 1, false)).prologue,
             PrologueWhen::EveryGame
         );
+        // the orders: Normal, a step down to Fast and on to Instant
+        assert_eq!(
+            value_text(Field::OrderSpeed, &v),
+            tr!("settings-order-speed-normal")
+        );
+        let fast = changed(step(Field::OrderSpeed, &v, -1, false));
+        assert_eq!(fast.order_speed, OrderSpeed::Fast);
+        v.settings = fast;
+        let instant = changed(step(Field::OrderSpeed, &v, -1, false));
+        assert_eq!(instant.order_speed, OrderSpeed::Instant);
+        // the stairs: off (NetHack's answer), then on
+        assert_eq!(step(Field::StairsWalk, &v, -1, false), None);
+        assert!(changed(step(Field::StairsWalk, &v, 1, false)).walk_to_stairs);
+        assert!(live(Field::OrderSpeed, &v) && live(Field::StairsWalk, &v));
     }
 
     #[test]
@@ -2269,13 +2308,19 @@ mod tests {
         for (i, f) in all.iter().enumerate() {
             assert!(!all[i + 1..].contains(f), "{f:?} twice");
         }
-        // the Gameplay rows are the options, in their order
+        // the Gameplay rows: the options, in their order, then the
+        // client's own
+        let options: Vec<GameOption> = GAMEPLAY
+            .iter()
+            .filter_map(|f| match f {
+                Field::Game(o) => Some(*o),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(options, GameOption::ALL);
         assert_eq!(
-            GAMEPLAY.map(|f| match f {
-                Field::Game(o) => o,
-                other => panic!("{other:?}"),
-            }),
-            GameOption::ALL
+            GAMEPLAY[GameOption::ALL.len()..],
+            [Field::OrderSpeed, Field::StairsWalk]
         );
     }
 

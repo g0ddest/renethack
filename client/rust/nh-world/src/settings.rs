@@ -2,7 +2,8 @@
 //! profile (`Profile`): how the window covers the screen, how much the 3D
 //! view draws, the interface's scale, the screen's effects, a new
 //! character's keys, the commands' keys moved, the NetHack options a new
-//! game starts with. Plain data and the rules between its parts (a graphics
+//! game starts with, how fast the client's orders go and whether `<` and
+//! `>` walk to the stairs. Plain data and the rules between its parts (a graphics
 //! preset and the controls it sets, a step through a setting's values);
 //! the client applies them to Godot and to the engine.
 
@@ -42,6 +43,49 @@ pub struct Settings {
     /// game.
     #[serde(default, skip_serializing_if = "PrologueWhen::is_default")]
     pub prologue: PrologueWhen,
+    /// How fast the client's own orders step (a walk, a held key, a rest).
+    #[serde(default, skip_serializing_if = "OrderSpeed::is_default")]
+    pub order_speed: OrderSpeed,
+    /// `<` and `>` off the stairs walk to the known stairs and take them;
+    /// off, they are NetHack's ("You can't go down here.").
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub walk_to_stairs: bool,
+}
+
+/// How fast the client's own orders step: the tick between their actions.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum OrderSpeed {
+    /// No wait: the next action as soon as the engine asks for one.
+    Instant,
+    Fast,
+    /// The project's tick (300 ms).
+    #[default]
+    Normal,
+    Slow,
+}
+
+impl OrderSpeed {
+    pub const ALL: [OrderSpeed; 4] = [
+        OrderSpeed::Instant,
+        OrderSpeed::Fast,
+        OrderSpeed::Normal,
+        OrderSpeed::Slow,
+    ];
+
+    pub fn is_default(&self) -> bool {
+        *self == OrderSpeed::default()
+    }
+
+    /// Its tick in milliseconds, `normal` being the project's.
+    pub fn tick_ms(self, normal: u64) -> u64 {
+        match self {
+            OrderSpeed::Instant => 0,
+            OrderSpeed::Fast => 150,
+            OrderSpeed::Normal => normal,
+            OrderSpeed::Slow => 500,
+        }
+    }
 }
 
 /// When the prologue plays before a new game.
@@ -586,9 +630,27 @@ mod tests {
             !plain.contains("graphics")
                 && !plain.contains("ui_scale")
                 && !plain.contains("reduce_effects")
-                && !plain.contains("gameplay"),
+                && !plain.contains("gameplay")
+                && !plain.contains("order_speed")
+                && !plain.contains("walk_to_stairs"),
             "{plain}"
         );
+        let quick = Settings {
+            order_speed: OrderSpeed::Instant,
+            walk_to_stairs: true,
+            ..Settings::default()
+        };
+        let text = serde_json::to_string(&quick).unwrap();
+        assert!(text.contains("\"order_speed\":\"instant\""), "{text}");
+        assert_eq!(serde_json::from_str::<Settings>(&text).unwrap(), quick);
+    }
+
+    #[test]
+    fn order_speeds_are_ticks_normal_the_project_s() {
+        let ticks: Vec<u64> = OrderSpeed::ALL.iter().map(|s| s.tick_ms(300)).collect();
+        assert_eq!(ticks, [0, 150, 300, 500]);
+        assert_eq!(OrderSpeed::Normal.tick_ms(250), 250);
+        assert_eq!(OrderSpeed::default(), OrderSpeed::Normal);
     }
 
     #[test]

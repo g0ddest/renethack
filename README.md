@@ -87,7 +87,7 @@ The client adds:
 | a count before a command | the engine has both, as NetHack reads them (`n20s` searches 20 turns, `n5,` picks up five of a stack, `n2f` fires two at most), and repeats the command until NetHack itself stops it: an attack, full health, something it tells |
 | left click on the map | walk there by the known map, one step per tick; on an object — pick it up, on stairs — take them, on a closed door — open it, on a monster — attack it; on yourself — the engine's menu of actions here |
 | right click on the map | the engine's menu of actions for that cell (open, kick, talk, look at...) |
-| `<` / `>` away from the stairs | walk to the known stairs and take them |
+| `<` / `>` away from the stairs | NetHack's answer ("You can't go down here."); with "< and > walk to the stairs" on (Settings → Gameplay), a walk to the known stairs and up or down them |
 | `F5` | rest (search) until HP and Pw are full |
 | any key, a click, `Esc` | stop the order before its next step |
 | mouse over the map | what is there (by appearance only) |
@@ -133,8 +133,10 @@ asks Steam for its own keyboard).
 
 Time runs like in BG3. Out of a fight (**exploring**, the badge top
 right), an order — a click, a held key, `F5`, `<`/`>` — is carried out one
-engine action per tick (300 ms; `tick_ms` in the `[renethack]` section of
-`client/godot/project.godot`, 150–500, or `RENETHACK_TICK_MS`). The hover
+engine action per tick (Settings → Gameplay → Order speed: Instant, Fast,
+Normal or Slow; Normal is `tick_ms` in the `[renethack]` section of
+`client/godot/project.godot`, 300 ms; `RENETHACK_TICK_MS` overrides them).
+The hover
 shows the way a click would take. An order stops before its next step on
 anything worth a look: a hostile beside the hero, lost HP, hunger, a new
 condition, a message (not what a pet does), a trap, another level, a step
@@ -179,14 +181,20 @@ mouse drags. Interface: the scale (Auto, or 80–140 %;
 starts with, the language, fewer screen effects (no sway of the hero, no
 drift of the camera, no hues of a hallucination; blindness still dims the
 view), and when the prologue plays (before the first game, every new
-game, or never). Controls: the keyboard's commands of either key profile, each on
-its key, and the gamepad's buttons in the controller's own names (read
-only: Steam Input remaps a controller).
+game, or never). Gameplay: the NetHack options a new player trips on
+(autopickup and what it takes, the load lifted without asking, autoopen,
+autoquiver, safe_pet, confirm, verbose, the confirmations), a new game's
+at the title and the game's over it; then the client's own: how fast its
+orders step (Instant, Fast 150 ms, Normal 300 ms, Slow 500 ms) and whether
+`<` and `>` off the stairs walk to the known stairs (off: NetHack answers
+"You can't go down here."). Controls: the keyboard's commands of either
+key profile, each on its key, and the gamepad's buttons in the
+controller's own names (read only: Steam Input remaps a controller).
 
 A keyboard's command takes another key there: Enter or a click on it,
 then the key. A key another command has is offered as a swap (Enter swaps
 the two, Esc keeps them); a key that stays as it is (Esc, the keypad, Shift
-and a step for running, Classic's Alt and digits, NetHack's second keys)
+and a step for running, Classic's digits, NetHack's second keys)
 is refused. Delete puts a command's own key back; a row at the top puts
 every key of the profile back. Each profile's moved keys are kept in the
 profile beside the other settings (`nh-world/src/keymap.rs`). They apply

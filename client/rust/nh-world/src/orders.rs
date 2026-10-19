@@ -594,9 +594,15 @@ impl TickDriver {
         }
     }
 
-    /// The player's setting, 150–500 ms.
+    /// The player's setting, 150–500 ms, or 0: instant, the next action
+    /// as soon as the engine asks for one.
     pub fn set_tick_ms(&mut self, ms: u64) {
-        self.tick = Duration::from_millis(ms.clamp(MIN_TICK_MS, MAX_TICK_MS));
+        let ms = if ms == 0 {
+            0
+        } else {
+            ms.clamp(MIN_TICK_MS, MAX_TICK_MS)
+        };
+        self.tick = Duration::from_millis(ms);
     }
 
     /// Any tick (self-tests run faster than a player may choose).
@@ -1728,6 +1734,9 @@ mod tests {
         assert_eq!(d.tick(), ms(MAX_TICK_MS));
         d.set_tick_ms(250);
         assert_eq!(d.tick(), ms(250));
+        // instant: no wait, not even for the step
+        d.set_tick_ms(0);
+        assert!(d.ready(ms(0), true));
         d.set_test_tick(ms(20));
         assert_eq!(d.tick(), ms(20));
         d.reset();

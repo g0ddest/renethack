@@ -374,6 +374,8 @@ pub struct RenethackGame {
     /// The client's settings, as the profile keeps them (read at start,
     /// changed on the settings page).
     pub(crate) settings: Settings,
+    /// A self-test's tick (`--tick=`, the soak's), over the order speed.
+    test_tick: Option<u64>,
     /// The settings page while it is open.
     pub(crate) settings_page: Option<SettingsPage>,
     /// What the player set over this game, until the game has it.
@@ -796,6 +798,7 @@ impl INode for RenethackGame {
             legacy_hero_of: None,
             achievement_page: None,
             settings: Settings::default(),
+            test_tick: None,
             settings_page: None,
             gameplay_goal: None,
             options_run: None,
@@ -3024,8 +3027,11 @@ impl RenethackGame {
                     }
                     return;
                 }
-                // '<' or '>' away from the stairs: walk there and use them
+                // '<' or '>' away from the stairs: walk there and use them,
+                // if the player asked for it; else NetHack answers ("You
+                // can't go down here.")
                 if let Some(c @ ('<' | '>')) = c
+                    && self.settings.walk_to_stairs
                     && let Some(cat) = self.catalog.clone()
                     && let Some(order) = stairs_order(&self.world, &cat, c)
                     && self.start_order(order)
@@ -3672,10 +3678,12 @@ impl RenethackGame {
         }
     }
 
-    /// The tick: the project setting (150–500 ms), RENETHACK_TICK_MS, or a
-    /// self-test's `--tick=` (any value).
+    /// The tick: a self-test's `--tick=` (any value), RENETHACK_TICK_MS,
+    /// else the player's order speed, Normal being the project setting
+    /// (150–500 ms).
     fn set_tick(&mut self, test: Option<u64>) {
-        if let Some(ms) = test {
+        self.test_tick = test.or(self.test_tick);
+        if let Some(ms) = self.test_tick {
             self.driver.set_test_tick(Duration::from_millis(ms));
             return;
         }
@@ -3685,9 +3693,9 @@ impl RenethackGame {
             .then(|| settings.get_setting(TICK_SETTING).try_to::<i64>().ok())
             .flatten()
             .and_then(|v| u64::try_from(v).ok());
+        let normal = setting.unwrap_or(nh_world::DEFAULT_TICK_MS);
         let ms = env_number::<u64>("RENETHACK_TICK_MS")
-            .or(setting)
-            .unwrap_or(nh_world::DEFAULT_TICK_MS);
+            .unwrap_or_else(|| self.settings.order_speed.tick_ms(normal));
         self.driver.set_tick_ms(ms);
     }
 
@@ -4130,6 +4138,9 @@ impl RenethackGame {
         if s.keymaps != old.keymaps {
             self.bar_key = None;
             self.bar_labels = None;
+        }
+        if s.order_speed != old.order_speed {
+            self.set_tick(None);
         }
         self.update_profile(|p| p.settings = s);
         let view = self.settings_view();

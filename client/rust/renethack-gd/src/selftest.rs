@@ -1692,7 +1692,9 @@ fn orders() -> Vec<Step> {
             Ok(true)
         }),
         // the corridor by counts, then '>' walks to the stairs, goes down
+        // (the player's setting: off, '>' is NetHack's)
         Step::Call("start counting", |g| {
+            g.settings.walk_to_stairs = true;
             mark(g)?;
             let mut m = MARK.lock().map_err(|e| e.to_string())?;
             m.pushed = None;
