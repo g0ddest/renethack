@@ -1364,6 +1364,18 @@ impl INode for RenethackGame {
         if ui.dialogs.is_open() || ui.help.is_open() {
             return;
         }
+        // the message history is over the map: a click beside it puts it
+        // away, and does nothing on the map
+        if ui.hud.full_log_open() {
+            if let Ok(b) = event.try_cast::<InputEventMouseButton>()
+                && b.is_pressed()
+                && b.get_button_index() == MouseButton::LEFT
+            {
+                push(&self.queue, UiEvent::ToggleFullLog);
+                self.handled();
+            }
+            return;
+        }
         // hovering follows the recorded mouse position (update_hover)
         let Ok(b) = event.try_cast::<InputEventMouseButton>() else {
             return;
@@ -2450,6 +2462,22 @@ impl RenethackGame {
             }
             return;
         }
+        // so has the message history over the map: the arrows and the
+        // pages scroll it, its own key, Esc (B) and Enter (A) close it;
+        // no key acts on the map under it
+        if !dialog && self.ui.as_ref().is_some_and(|ui| ui.hud.full_log_open()) {
+            let close = client == Some(UiEvent::ToggleFullLog)
+                || matches!(
+                    k.key,
+                    Key::Escape | Key::Enter | Key::KeypadEnter | Key::Char(' ')
+                );
+            if close && !k.echo {
+                self.on_ui_event(UiEvent::ToggleFullLog);
+            } else {
+                self.ui_mut().hud.full_log_key(k.key);
+            }
+            return;
+        }
         // typed ahead or pushed by a self-test as a plain key
         if let Some(ev) = client {
             self.on_ui_event(ev);
@@ -3208,6 +3236,10 @@ impl RenethackGame {
                 _ => PadCtx::PanelBrowse,
             };
         }
+        // the message history over the map: read it, B closes it
+        if ui.hud.full_log_open() {
+            return PadCtx::Read;
+        }
         match self.pending.as_ref().map(|(_, p)| p) {
             Some(Prompt::Command) if self.world.getpos => PadCtx::Getpos,
             Some(Prompt::Command) | None => PadCtx::World,
@@ -3544,6 +3576,7 @@ impl RenethackGame {
         ui.game_menu.set_pad(pad);
         ui.quest.set_pad(pad);
         ui.hint.set_pad(pad);
+        ui.hud.set_pad(pad);
         // the pages, the game's menu and "Your quest" show their own
         let page = matches!(
             ui.screens.current(),

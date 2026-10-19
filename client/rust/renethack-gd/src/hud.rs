@@ -24,6 +24,7 @@ use nh_protocol::{Catalog, GlyphKind, mg};
 use nh_world::{Key, KeyInput, Message, Mods, Status, World};
 
 use crate::action_bar::{self, ActionBar};
+use crate::gamepad::{PadButton, PadKind};
 use crate::i18n::{self, EngineKind};
 use crate::minimap::{self, Minimap};
 use crate::orb::{self, Orb};
@@ -1158,6 +1159,9 @@ pub struct Hud {
     full_log_panel: Gd<PanelContainer>,
     full_log: Gd<RichTextLabel>,
     full_log_count: Gd<Label>,
+    /// The history's close: its key, or a gamepad's button (`pad`).
+    full_log_close: Gd<Button>,
+    pad: Option<PadKind>,
 
     status_text: String,
     /// (newest message, input seq, full log open, faded lines) last shown.
@@ -1623,13 +1627,13 @@ impl Hud {
         full_log_count.set_h_size_flags(SizeFlags::EXPAND_FILL);
         full_log_count.set_vertical_alignment(VerticalAlignment::CENTER);
         full_head.add_child(&full_log_count);
-        let close = theme::button("", &queue, UiEvent::ToggleFullLog);
+        let full_log_close = theme::button("", &queue, UiEvent::ToggleFullLog);
         keyed.push(Keyed::text(
-            &close,
+            &full_log_close,
             "log-history-close",
             KeyInput::plain(Key::F(9)),
         ));
-        full_head.add_child(&close);
+        full_head.add_child(&full_log_close);
         full_col.add_child(&full_head);
         let mut rule = ColorRect::new_alloc();
         rule.set_color(Color {
@@ -1758,6 +1762,8 @@ impl Hud {
             full_log_panel,
             full_log,
             full_log_count,
+            full_log_close,
+            pad: None,
             status_text: String::new(),
             log_key: None,
             full_log_dirty: true,
@@ -2004,6 +2010,49 @@ impl Hud {
         for k in &mut self.keyed {
             k.write(&keymap);
         }
+        // the history closes with a gamepad's B while one plays
+        if let Some(kind) = self.pad {
+            let b = kind.label(PadButton::B);
+            self.full_log_close
+                .set_text(&tr!("log-history-close", key = b));
+        }
+    }
+
+    /// A gamepad gives the input (the history's close names its button),
+    /// or the keyboard does (its key).
+    pub fn set_pad(&mut self, pad: Option<PadKind>) {
+        if self.pad != pad {
+            self.pad = pad;
+            self.write_keys();
+        }
+    }
+
+    /// A key on the message history: the arrows a line, PgUp PgDn a page,
+    /// Home End its ends. False for any other key.
+    pub fn full_log_key(&mut self, key: Key) -> bool {
+        let Some(mut bar) = self.full_log.get_v_scroll_bar() else {
+            return false;
+        };
+        let line = f64::from(FULL_LOG_LINE);
+        let page = (f64::from(self.full_log.get_size().y) - line).max(line);
+        let at = bar.get_value();
+        let to = match key {
+            Key::Up => at - line,
+            Key::Down => at + line,
+            Key::PageUp => at - page,
+            Key::PageDown => at + page,
+            Key::Home => 0.0,
+            Key::End => bar.get_max(),
+            _ => return false,
+        };
+        bar.set_value(to);
+        true
+    }
+
+    /// The history's words as shown (self-tests): its close names the
+    /// key or the button.
+    pub fn full_log_close_words(&self) -> String {
+        self.full_log_close.get_text().to_string()
     }
 
     pub fn relang(&mut self) {
