@@ -717,10 +717,9 @@ fn keys() -> Vec<Step> {
             let map = &g.ui.as_ref().ok_or("no UI")?.map;
             Ok(!map.in_overview() && map.camera_distance() < 13.0)
         }),
-        // travel's getpos: its goal on the prompt line, not in the log
+        // travel's getpos: its goal on the prompt line, not in the log (no
+        // tip window first: NetHack's tips are off)
         press('_'),
-        Step::Request("the getpos tip", |p| matches!(p, Prompt::Show { .. })),
-        Step::Dialog(DialogEvent::Close),
         Step::Request("where to travel", command),
         Step::Wait("the travel question on the prompt line", |g| {
             let line = g.ui.as_ref().and_then(|ui| ui.hud.prompt_line());
@@ -1214,9 +1213,6 @@ fn tour() -> Vec<Step> {
         // the travel command's getpos cursor a cell east, the mouse
         // hovering south-west of the hero
         key('_'),
-        // the first getpos shows a tip window
-        Step::Request("the getpos tip", |p| matches!(p, Prompt::Show { .. })),
-        Step::Dialog(DialogEvent::Close),
         Step::Request("where to travel", command),
         key('l'),
         Step::Request("the cursor moved", command),

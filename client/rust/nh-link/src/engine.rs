@@ -11,8 +11,9 @@ use serde_json::Value;
 use crate::LinkError;
 
 /// Options every session needs: turn counter for the timeline, no intro
-/// text, no tutorial prompt, no autopickup surprises.
-pub const BASE_OPTIONS: &str = "time,!legacy,!tutorial,!autopickup";
+/// text, no tutorial prompt, no autopickup surprises, no tip windows
+/// (the client's guide has its own cards).
+pub const BASE_OPTIONS: &str = "time,!legacy,!tutorial,!autopickup,!tips";
 
 /// Options the interactive client adds to character/restore options: the
 /// status line carries experience points only with "showexp", and with
@@ -285,7 +286,7 @@ mod tests {
     fn a_plain_name_becomes_the_options_string() {
         assert_eq!(
             options("Hero").unwrap(),
-            "time,!legacy,!tutorial,!autopickup,name:Hero,role:valkyrie,race:human,gender:female,align:neutral"
+            "time,!legacy,!tutorial,!autopickup,!tips,name:Hero,role:valkyrie,race:human,gender:female,align:neutral"
         );
         assert!(options("Сигурд").is_ok());
         assert!(options("Olaf the Bold").is_ok());
@@ -319,7 +320,7 @@ mod tests {
     fn restoring_names_only_the_hero() {
         assert_eq!(
             EngineConfig::restore_options("Olaf_the_Bold").unwrap(),
-            "time,!legacy,!tutorial,!autopickup,name:Olaf_the_Bold"
+            "time,!legacy,!tutorial,!autopickup,!tips,name:Olaf_the_Bold"
         );
         assert!(EngineConfig::restore_options("Hero,playmode:debug").is_err());
     }

@@ -198,9 +198,6 @@ pub(super) fn layouts() -> Vec<Step> {
         key('#'),
         Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
         Step::Dialog(DialogEvent::ExtCmd(Some("wizkill".into()))),
-        // the game's first getpos shows its tip
-        Step::Request("the getpos tip", |p| matches!(p, Prompt::Show { .. })),
-        Step::Dialog(DialogEvent::Close),
         Step::Request("the monster to slay", command),
         key('.'),
         Step::Request("the suicide's question", |p| asking(p, "suicide")),
