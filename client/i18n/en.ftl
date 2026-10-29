@@ -796,6 +796,26 @@ inv-close-tip = Close (Esc or i)
 inv-suggested-tip = Suggested (?)
 inv-search = Search
 inv-pack-order = NetHack's pack order
+inv-view-grid-tip = The pack as a grid of icons (Ctrl+L)
+inv-view-list-tip = The pack as NetHack's list: a line an item, under its class (Ctrl+L)
+inv-list-empty = Nothing here.
+inv-head-weapons = Weapons
+inv-head-armor = Armor
+inv-head-rings = Rings
+inv-head-amulets = Amulets
+inv-head-tools = Tools
+inv-head-comestibles = Comestibles
+inv-head-potions = Potions
+inv-head-scrolls = Scrolls
+inv-head-spellbooks = Spellbooks
+inv-head-wands = Wands
+inv-head-gems = Gems/Stones
+inv-head-boulders = Boulders/Statues
+inv-head-iron-balls = Iron balls
+inv-head-chains = Chains
+inv-head-venoms = Venoms
+inv-head-coins = Coins
+inv-head-other = Other
 inv-detail-empty = Select an item to see what you know of it.
 inv-count-hint = Type the number or use ← →.  Enter: OK · Esc: cancel
 inv-count-hint-pad = ← →: the count · { $a }: OK · { $b }: cancel
@@ -819,7 +839,7 @@ inv-pad-menu = D-pad: the item · { $a }: select · { $start }: confirm · { $fi
 inv-pad-carrying = D-pad: where it goes (a doll socket, another item) · { $y }: put it down · { $b }: put it back
 inv-pad-browse =
     D-pad: the items and the doll · { $a }: the first action · { $x }: every action
-    { $y }: pick up, then { $y } again where it goes (the doll: equip) · { $filter } · { $b }: close
+    { $y }: pick up, then { $y } again where it goes (the doll: equip) · { $filter } · { $view }: grid or list · { $b }: close
 inv-nothing-suggested = Nothing suggested — any item may be chosen. { $hint }
 inv-split-to = Split { $n } off { $from } to which letter?
 inv-adjust-to = Adjust { $from } to which letter?
@@ -1212,6 +1232,7 @@ quit-warning = The hero dies here and the game ends for good: it is not saved an
 palette-give-up = Give up: end this game for good, without saving
 hint-chapter = Chapter
 hint-scroll = Scroll
+hint-view = Grid or list
 
 ## The status: the level, experience and score
 

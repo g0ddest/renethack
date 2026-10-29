@@ -1089,6 +1089,10 @@ impl INode for RenethackGame {
         self.paths = Some(paths.clone());
         let profile = load_profile(&paths.playground);
         self.guide_seen = profile.guide_seen.clone();
+        // the pack as the player last chose to see it
+        if let Some(ui) = self.ui.as_mut() {
+            ui.inventory.set_list(profile.pack_list);
+        }
         // the sound at the volumes the player left it at
         crate::audio::apply_volumes(&profile.volumes);
         // the title scene shows the hero of the last game played
@@ -3533,6 +3537,7 @@ impl RenethackGame {
                     None => self.reply(Reply::Char(letter as i32)),
                 }
             }
+            Intent::View(list) => self.update_profile(|p| p.pack_list = list),
             Intent::Bind { slot, binding } => {
                 self.ui_state.bar.set(slot, Some(binding));
                 self.save_ui_state();

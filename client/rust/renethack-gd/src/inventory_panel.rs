@@ -1,6 +1,8 @@
 //! The inventory panel (ui-design §2, §3): NetHack's pack as a grid of
-//! icons in pack order, a paper doll of what is worn and wielded, filter
-//! tabs, the detail of the selected item, its context menu, drag and drop.
+//! icons in pack order (or, for a veteran, as NetHack's `i` lists it: a
+//! line an item under its class), a paper doll of what is worn and
+//! wielded, filter tabs, the detail of the selected item, its context
+//! menu, drag and drop.
 //!
 //! It has three modes. **Browse** (`i`): clicks, drags and the menu run
 //! macros at the command prompt, and command keys still go to the engine
@@ -26,7 +28,8 @@ use godot::classes::texture_rect::{ExpandMode, StretchMode};
 use godot::classes::{
     Button, Camera3D, CanvasLayer, ColorRect, Control, Environment, GridContainer, HBoxContainer,
     InputEvent, InputEventMouseButton, InputEventMouseMotion, Label, LineEdit, Node3D, OmniLight3D,
-    PanelContainer, StyleBoxFlat, SubViewport, Texture2D, TextureRect, Time, VBoxContainer,
+    PanelContainer, ScrollContainer, StyleBoxFlat, SubViewport, Texture2D, TextureRect, Time,
+    VBoxContainer,
 };
 use godot::global::{HorizontalAlignment, MouseButton, VerticalAlignment};
 use godot::prelude::*;
@@ -35,7 +38,7 @@ use nh_i18n::{Case, Gender, Number};
 use nh_protocol::{InvItem, MenuItem, PickHow, Reply, Slot};
 use nh_world::{
     Buc, GridCell, InvFilter, ItemAction, ItemActionKind, ItemQuestion, Key, KeyInput, Macro,
-    MenuEntry, MenuOutcome, MenuState, Pack, SlotBinding, actions_for, default_action, grid,
+    MenuEntry, MenuOutcome, MenuState, Mods, Pack, SlotBinding, actions_for, default_action, grid,
     parse_item_name, worn_accessory, worn_armor,
 };
 
@@ -119,6 +122,109 @@ pub fn class_name(class: char) -> String {
         _ => tr!("class-item"),
     }
 }
+
+/// A class's heading in the list view, as NetHack's `i` heads it
+/// ("Weapons", "Comestibles").
+pub fn class_heading(class: char) -> String {
+    match class {
+        ')' => tr!("inv-head-weapons"),
+        '[' => tr!("inv-head-armor"),
+        '=' => tr!("inv-head-rings"),
+        '"' => tr!("inv-head-amulets"),
+        '(' => tr!("inv-head-tools"),
+        '%' => tr!("inv-head-comestibles"),
+        '!' => tr!("inv-head-potions"),
+        '?' => tr!("inv-head-scrolls"),
+        '+' => tr!("inv-head-spellbooks"),
+        '/' => tr!("inv-head-wands"),
+        '*' => tr!("inv-head-gems"),
+        '`' => tr!("inv-head-boulders"),
+        '0' => tr!("inv-head-iron-balls"),
+        '_' => tr!("inv-head-chains"),
+        '.' => tr!("inv-head-venoms"),
+        '$' => tr!("inv-head-coins"),
+        _ => tr!("inv-head-other"),
+    }
+}
+
+/// An item's tip in the grid or the list: its name, and what a click
+/// does with it (answers the question, selects it in the menu, runs the
+/// first action).
+fn cell_tip(
+    item: &InvItem,
+    question: Option<&ItemQuestion>,
+    menu: bool,
+    pack: &Pack,
+    keymap: &nh_world::Keymap,
+) -> String {
+    let mut tip = i18n::engine(EngineKind::Name, &item.text).into_owned();
+    if let Some(q) = question {
+        let verb = i18n::engine(EngineKind::Prompt, &q.verb).into_owned();
+        tip.push('\n');
+        tip.push_str(&tr!(
+            "inv-cell-select-tip",
+            letter = item.letter,
+            verb = verb
+        ));
+    } else if menu {
+        tip.push('\n');
+        tip.push_str(&tr!("inv-cell-menu-tip"));
+    } else if let Some(a) = default_action(item, pack) {
+        tip.push('\n');
+        tip.push_str(&tr!(
+            "inv-cell-tip",
+            action = label(a.label_key()),
+            keys = crate::rebind::bound_hint(keymap, a.keys())
+        ));
+    }
+    tip
+}
+
+/// The mark of an entry picked in a menu: its count, else a tick.
+fn picked_mark(count: Option<i64>) -> String {
+    match count {
+        Some(n) => format!("{n}"),
+        None => "✔".to_string(),
+    }
+}
+
+/// A class's heading over its lines in the list.
+fn list_heading(class: char, first: bool) -> Gd<Control> {
+    let mut row = HBoxContainer::new_alloc();
+    row.set_mouse_filter(MouseFilter::IGNORE);
+    row.add_theme_constant_override("separation", 6);
+    if !first {
+        row.set_custom_minimum_size(Vector2::new(0.0, 30.0));
+    }
+    let mut glyph = TextureRect::new_alloc();
+    glyph.set_mouse_filter(MouseFilter::IGNORE);
+    glyph.set_expand_mode(ExpandMode::IGNORE_SIZE);
+    glyph.set_stretch_mode(StretchMode::KEEP_ASPECT_CENTERED);
+    glyph.set_custom_minimum_size(Vector2::new(18.0, 18.0));
+    glyph.set_v_size_flags(SizeFlags::SHRINK_END);
+    glyph.set_texture(&icons::glyph_icon(icons::class_glyph(class)));
+    glyph.set_modulate(theme::GOLD);
+    row.add_child(&glyph);
+    let heading = class_heading(class);
+    let mut l = theme::styled_label(&heading, Face::Caps, 15, theme::GOLD);
+    l.set_v_size_flags(SizeFlags::SHRINK_END);
+    row.add_child(&l);
+    // what the self-tests read
+    row.set_meta("words", &GString::from(heading.as_str()).to_variant());
+    row.upcast()
+}
+
+/// The key that switches the pack between the grid and the list (a
+/// gamepad's Back/View gives it too).
+pub const VIEW_KEY: KeyInput = KeyInput {
+    key: Key::Char('l'),
+    mods: Mods {
+        ctrl: true,
+        shift: false,
+        alt: false,
+    },
+    echo: false,
+};
 
 /// A line of the detail panel and its tone.
 #[derive(Debug, Clone, PartialEq)]
@@ -680,6 +786,8 @@ pub enum InvInput {
     /// A gamepad picks up the focused item, or puts the one it holds down
     /// where the focus is (a drag and drop).
     Carry,
+    /// The pack as a list (true) or as the grid.
+    View(bool),
 }
 
 /// What the game does for the panel.
@@ -694,6 +802,9 @@ pub enum Intent {
     Pick { letter: char, count: Option<u32> },
     /// Put this in an action bar slot.
     Bind { slot: usize, binding: SlotBinding },
+    /// The pack is now shown as a list (true) or as the grid: the
+    /// profile keeps it.
+    View(bool),
 }
 
 /// What a key does while the panel is open.
@@ -784,6 +895,8 @@ struct Mouse {
     /// The panel frame and the grid sockets, the doll sockets on screen.
     frame: Option<Gd<Control>>,
     cell_nodes: Vec<Gd<Control>>,
+    /// The list's rows and the item each shows.
+    list_nodes: Vec<(char, Gd<Control>)>,
     doll_nodes: Vec<(DollSlot, Gd<Control>)>,
     preview: Option<Gd<TextureRect>>,
     preview_tex: Option<Gd<Texture2D>>,
@@ -798,6 +911,11 @@ impl Mouse {
         for (i, n) in self.cell_nodes.iter().enumerate() {
             if n.is_visible_in_tree() && n.get_global_rect().contains_point(pos) {
                 return self.cells.get(i).copied().unwrap_or(InvTarget::Nothing);
+            }
+        }
+        for (letter, n) in &self.list_nodes {
+            if n.is_visible_in_tree() && n.get_global_rect().contains_point(pos) {
+                return InvTarget::Cell(*letter);
             }
         }
         for (slot, n) in &self.doll_nodes {
@@ -851,6 +969,21 @@ struct Looks {
     glow: Gd<StyleBoxFlat>,
     tab: Gd<StyleBoxFlat>,
     tab_on: Gd<StyleBoxFlat>,
+    /// The list's rows: plain, worn or wielded, picked in a menu.
+    row: Gd<StyleBoxFlat>,
+    row_worn: Gd<StyleBoxFlat>,
+    row_picked: Gd<StyleBoxFlat>,
+    row_on: Gd<StyleBoxFlat>,
+}
+
+/// A list row's look: `bg`, a `border` of `width`, room inside.
+fn row_style(bg: Color, border: Color, width: i32) -> Gd<StyleBoxFlat> {
+    let mut sb = flat(bg, border, width, 3);
+    sb.set_content_margin(Side::LEFT, 6.0);
+    sb.set_content_margin(Side::RIGHT, 8.0);
+    sb.set_content_margin(Side::TOP, 3.0);
+    sb.set_content_margin(Side::BOTTOM, 3.0);
+    sb
 }
 
 impl Looks {
@@ -877,6 +1010,14 @@ impl Looks {
             glow,
             tab: flat(Color::from_rgb(0.07, 0.055, 0.04), theme::IRON, 1, 3),
             tab_on: flat(Color::from_rgb(0.14, 0.1, 0.06), theme::GOLD_BRIGHT, 1, 3),
+            row: row_style(
+                Color::from_rgba(0.06, 0.047, 0.036, 0.6),
+                Color::from_rgba(0.0, 0.0, 0.0, 0.0),
+                1,
+            ),
+            row_worn: row_style(Color::from_rgb(0.085, 0.064, 0.04), theme::GOLD_DIM, 1),
+            row_picked: row_style(Color::from_rgb(0.06, 0.07, 0.045), theme::GOOD, 1),
+            row_on: row_style(Color::from_rgb(0.12, 0.09, 0.05), theme::GOLD_BRIGHT, 2),
         }
     }
 }
@@ -1403,6 +1544,17 @@ pub struct InventoryPanel {
     hint: Gd<Label>,
     /// "Your pack": the classes carried and how many, under the grid.
     pack_box: Gd<VBoxContainer>,
+    /// The grid's cells' container, and the list shown instead of it
+    /// (`list`): its rows, and what they were drawn from.
+    grid_box: Gd<GridContainer>,
+    list: bool,
+    list_box: Gd<ScrollContainer>,
+    list_rows: Gd<VBoxContainer>,
+    list_key: Vec<String>,
+    /// The rows' controls by cell index (`cells_shown`), for the focus.
+    list_cells: Vec<Gd<Control>>,
+    /// The switches between the grid and the list.
+    view_buttons: [Gd<Button>; 2],
     pack_key: Vec<(InvFilter, usize)>,
     detail: Gd<VBoxContainer>,
     /// What the detail column shows (the item, and its actions or not):
@@ -1910,12 +2062,44 @@ impl InventoryPanel {
         i18n::text(&order, "inv-pack-order");
         order.set_horizontal_alignment(HorizontalAlignment::RIGHT);
         order.set_vertical_alignment(VerticalAlignment::CENTER);
+        order.set_clip_text(true);
         place(
             &order,
             [0.0, 0.0, 0.0, 0.0],
-            [gx + 260.0, top + 42.0, gx + GRID_COL_W - 20.0, top + 76.0],
+            [gx + 250.0, top + 42.0, gx + GRID_COL_W - 96.0, top + 76.0],
         );
         body.add_child(&order);
+        // the pack as the grid or as the list
+        let mut views = HBoxContainer::new_alloc();
+        views.set_mouse_filter(MouseFilter::IGNORE);
+        views.add_theme_constant_override("separation", 4);
+        place(
+            &views,
+            [0.0, 0.0, 0.0, 0.0],
+            [
+                gx + GRID_COL_W - 88.0,
+                top + 42.0,
+                gx + GRID_COL_W - 20.0,
+                top + 76.0,
+            ],
+        );
+        let mut view_buttons = Vec::new();
+        for (glyph, tip, list) in [
+            (Glyph::Grid, "inv-view-grid-tip", false),
+            (Glyph::List, "inv-view-list-tip", true),
+        ] {
+            let mut b = tab_button(glyph, "", &looks);
+            b.set_custom_minimum_size(Vector2::new(32.0, 32.0));
+            crate::tips::bind(&b, tip);
+            let q = queue.clone();
+            b.signals()
+                .pressed()
+                .connect(move || push(&q, UiEvent::Inventory(InvInput::View(list))));
+            views.add_child(&b);
+            view_buttons.push(b);
+        }
+        body.add_child(&views);
+        let view_buttons: [Gd<Button>; 2] = view_buttons.try_into().expect("two switches");
         let mut grid_box = GridContainer::new_alloc();
         grid_box.set_columns(COLS as i32);
         grid_box.add_theme_constant_override("h_separation", CELL_GAP as i32);
@@ -1949,6 +2133,21 @@ impl InventoryPanel {
             cells.push(s);
         }
         body.add_child(&grid_box);
+        // the list, in the grid's place and down to the column's foot
+        let mut list_box = ScrollContainer::new_alloc();
+        list_box.set_horizontal_scroll_mode(godot::classes::scroll_container::ScrollMode::DISABLED);
+        list_box.set_follow_focus(false);
+        place(
+            &list_box,
+            [0.0, 0.0, 0.0, 0.0],
+            [gx + 4.0, grid_y, gx + GRID_COL_W - 4.0, top + body_h],
+        );
+        let mut list_rows = VBoxContainer::new_alloc();
+        list_rows.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        list_rows.add_theme_constant_override("separation", 2);
+        list_box.add_child(&list_rows);
+        list_box.set_visible(false);
+        body.add_child(&list_box);
         let mut hint = theme::styled_label("", Face::Body, 15, theme::TEXT_DIM);
         hint.set_autowrap_mode(AutowrapMode::WORD_SMART);
         hint.set_horizontal_alignment(HorizontalAlignment::CENTER);
@@ -2097,6 +2296,13 @@ impl InventoryPanel {
             doll_summary,
             hint,
             pack_box,
+            grid_box,
+            list: false,
+            list_box,
+            list_rows,
+            list_key: Vec::new(),
+            list_cells: Vec::new(),
+            view_buttons,
             pack_key: Vec::new(),
             detail,
             detail_key: None,
@@ -2222,6 +2428,50 @@ impl InventoryPanel {
         self.mode != Mode::Closed
     }
 
+    /// The pack shown as a list (the profile's choice, at start).
+    pub fn set_list(&mut self, list: bool) {
+        if self.list != list {
+            self.list = list;
+            self.list_key.clear();
+            self.dirty = true;
+        }
+    }
+
+    /// The pack is shown as a list.
+    pub fn list_view(&self) -> bool {
+        self.list
+    }
+
+    /// The list's lines as shown, in order: a class's heading, or an
+    /// item's letter and words (self-tests).
+    pub fn list_lines(&self) -> Vec<(Option<char>, String)> {
+        let mut out = Vec::new();
+        for row in self.list_rows.get_children().iter_shared() {
+            let Ok(row) = row.try_cast::<Control>() else {
+                continue;
+            };
+            if !row.is_visible() {
+                continue;
+            }
+            let letter = row
+                .get_meta_ex("letter")
+                .default(&Variant::nil())
+                .done()
+                .try_to::<GString>()
+                .ok()
+                .and_then(|s| s.to_string().chars().next());
+            let text = row
+                .get_meta_ex("words")
+                .default(&Variant::nil())
+                .done()
+                .try_to::<GString>()
+                .map(|s| s.to_string())
+                .unwrap_or_default();
+            out.push((letter, text));
+        }
+        out
+    }
+
     /// Words the panel cuts short (self-tests): a label or button out of
     /// the box it sits in (a button, a plate, a socket) or out of the
     /// panel, a wrapped label showing fewer lines than it has. Measured
@@ -2294,6 +2544,16 @@ impl InventoryPanel {
             }
         }
         out
+    }
+
+    /// The pack's view switched: drawn again, the focus kept on its item;
+    /// the profile is told.
+    fn set_view(&mut self, list: bool) -> Option<Intent> {
+        if self.list == list {
+            return None;
+        }
+        self.set_list(list);
+        Some(Intent::View(list))
     }
 
     /// "browse", "select", "menu" (self-tests); None when closed.
@@ -2580,6 +2840,7 @@ impl InventoryPanel {
                 _ => None,
             },
             InvInput::Carry => self.carry(),
+            InvInput::View(list) => self.set_view(list),
             InvInput::Cancel => match &self.mode {
                 Mode::Menu { .. } => Some(Intent::Reply(Reply::Cancel)),
                 Mode::Select { .. } => Some(Intent::Reply(Reply::Char(27))),
@@ -3028,6 +3289,9 @@ impl InventoryPanel {
             self.cycle_filter(if k.mods.shift { -1 } else { 1 });
             return KeyUse::Used;
         }
+        if k.key == VIEW_KEY.key && k.mods.ctrl {
+            return self.set_view(!self.list).map_or(KeyUse::Used, KeyUse::Then);
+        }
         // the doll's sockets (the keyboard or a gamepad): its columns, the
         // weapons row, and back to the grid on the right
         if self.mode == Mode::Browse
@@ -3040,27 +3304,36 @@ impl InventoryPanel {
                     DollStep::Grid(row) => {
                         self.doll_focus = None;
                         let n = self.cells_shown.len();
-                        self.focus = (n > 0).then(|| (row * COLS).min(n - 1));
+                        let at = if self.list { row } else { row * COLS };
+                        self.focus = (n > 0).then(|| at.min(n - 1));
                     }
                     DollStep::Stay => {}
                 }
                 self.select_focus();
                 return KeyUse::Used;
             }
-            let at_left_edge = self.focus.is_none_or(|f| f % COLS == 0);
+            // the list's lines are all at its left edge
+            let at_left_edge = self.list || self.focus.is_none_or(|f| f % COLS == 0);
             if k.key == Key::Left && at_left_edge {
-                let row = self.focus.map_or(0, |f| f / COLS).min(5);
+                let row = match self.list {
+                    true => self.focus.unwrap_or(0),
+                    false => self.focus.map_or(0, |f| f / COLS),
+                }
+                .min(5);
                 self.focus = None;
                 self.doll_focus = Some(6 + row);
                 self.select_focus();
                 return KeyUse::Used;
             }
         }
-        let step = match k.key {
-            Key::Left => Some(-1),
-            Key::Right => Some(1),
-            Key::Up => Some(-(COLS as i32)),
-            Key::Down => Some(COLS as i32),
+        let step = match (k.key, self.list) {
+            (Key::Left | Key::Right, true) => return KeyUse::Used,
+            (Key::Up, true) => Some(-1),
+            (Key::Down, true) => Some(1),
+            (Key::Left, false) => Some(-1),
+            (Key::Right, false) => Some(1),
+            (Key::Up, false) => Some(-(COLS as i32)),
+            (Key::Down, false) => Some(COLS as i32),
             _ => None,
         };
         if let Some(s) = step {
@@ -3637,7 +3910,13 @@ impl InventoryPanel {
                     if self.selected == Some(item.letter) && self.mode == Mode::Browse || focus {
                         style = &self.looks.selected;
                     }
-                    let mut tip = i18n::engine(EngineKind::Name, &item.text).into_owned();
+                    let tip = cell_tip(
+                        item,
+                        question.as_ref(),
+                        menu_letters.is_some(),
+                        &self.pack,
+                        &self.keymap,
+                    );
                     if let Some(q) = &question {
                         let on = q.all || q.suggests(item.letter);
                         sock.rim.set_visible(on && !q.all);
@@ -3645,33 +3924,12 @@ impl InventoryPanel {
                             sock.root
                                 .set_modulate(Color::from_rgba(0.55, 0.52, 0.5, 0.4));
                         }
-                        let verb = i18n::engine(EngineKind::Prompt, &q.verb).into_owned();
-                        tip.push('\n');
-                        tip.push_str(&tr!(
-                            "inv-cell-select-tip",
-                            letter = item.letter,
-                            verb = verb
-                        ));
-                    } else if let Some(m) = &menu_letters {
-                        if let Some((_, true, count)) = m.iter().find(|(l, ..)| *l == item.letter) {
-                            {
-                                style = &self.looks.picked;
-                                sock.check.set_text(&match count {
-                                    Some(n) => format!("{n}"),
-                                    None => "✔".to_string(),
-                                });
-                                sock.check.set_visible(true);
-                            }
-                        }
-                        tip.push('\n');
-                        tip.push_str(&tr!("inv-cell-menu-tip"));
-                    } else if let Some(a) = default_action(item, &self.pack) {
-                        tip.push('\n');
-                        tip.push_str(&tr!(
-                            "inv-cell-tip",
-                            action = label(a.label_key()),
-                            keys = crate::rebind::bound_hint(&self.keymap, a.keys())
-                        ));
+                    } else if let Some(m) = &menu_letters
+                        && let Some((_, true, count)) = m.iter().find(|(l, ..)| *l == item.letter)
+                    {
+                        style = &self.looks.picked;
+                        sock.check.set_text(&picked_mark(*count));
+                        sock.check.set_visible(true);
                     }
                     if let Some(d) = &drag_item
                         && d.letter == item.letter
@@ -3688,6 +3946,45 @@ impl InventoryPanel {
                     crate::tips::set(&sock.root, "");
                 }
             }
+        }
+        // the grid, or the list in its place
+        self.grid_box.set_visible(!self.list);
+        self.hint.set_visible(!self.list);
+        self.list_box.set_visible(self.list);
+        // under the grid, the pack's summary where there is room for it
+        let bottom = self.grid_top + rows as f32 * (CELL + CELL_GAP) - CELL_GAP;
+        let free = self.hint.get_offset(Side::BOTTOM) - (bottom + 80.0);
+        self.pack_box.set_visible(!self.list && free > 120.0);
+        for (i, b) in self.view_buttons.iter_mut().enumerate() {
+            let sb = if (i == 1) == self.list {
+                &self.looks.tab_on
+            } else {
+                &self.looks.tab
+            };
+            set_style(b, "normal", sb);
+            set_style(b, "pressed", sb);
+        }
+        if self.list {
+            // a gamepad's strip of hints sits on the column's foot: the
+            // list ends above it (the strip is the canvas's size, the
+            // panel may be scaled down)
+            let room = if self.pad {
+                (54.0 / self.frame.get_scale().x.max(0.1)).ceil()
+            } else {
+                0.0
+            };
+            self.list_box.set_offset(Side::BOTTOM, HEIGHT - 16.0 - room);
+            self.draw_list(
+                &shown,
+                &class_starts,
+                question.as_ref(),
+                menu_letters.as_deref(),
+                drag_item.as_ref(),
+            );
+        } else {
+            self.list_key.clear();
+            self.list_cells.clear();
+            self.mouse.borrow_mut().list_nodes.clear();
         }
         // the doll
         let doll_focus = self.doll_focus;
@@ -3884,6 +4181,7 @@ impl InventoryPanel {
                 x = b(X),
                 y = b(Y),
                 b = b(B),
+                view = b(Back),
                 filter = filter
             ),
         }
@@ -3945,6 +4243,246 @@ impl InventoryPanel {
             ),
             _ => (tr!("inv-title"), String::new(), tr!("inv-browse-hint")),
         }
+    }
+
+    /// The pack as NetHack's `i` lists it: under each class's heading, a
+    /// line an item (its BUC's stripe, the letter, the icon, the doname in
+    /// the language now), in the grid's order and with its states (the
+    /// focus, worn, picked, not suggested). Drawn again only when what it
+    /// shows changes; the focus kept in view.
+    fn draw_list(
+        &mut self,
+        shown: &[InvTarget],
+        class_starts: &[bool],
+        question: Option<&ItemQuestion>,
+        menu_letters: Option<&[(char, bool, Option<i64>)]>,
+        drag_item: Option<&InvItem>,
+    ) {
+        // what each line shows: its target, words and states
+        let mut key: Vec<String> = Vec::new();
+        for (i, t) in shown.iter().enumerate() {
+            let item = match t {
+                InvTarget::Cell(l) => self.pack.by_letter(*l),
+                _ => None,
+            };
+            let picked = item.and_then(|it| {
+                menu_letters?
+                    .iter()
+                    .find(|(l, on, _)| *l == it.letter && *on)
+                    .map(|(_, _, n)| *n)
+            });
+            let on = self.focus == Some(i)
+                || item.is_some_and(|it| {
+                    self.selected == Some(it.letter) && self.mode == Mode::Browse
+                });
+            key.push(format!(
+                "{t:?}|{}|{}|{on}|{picked:?}|{}|{}",
+                item.map_or("", |it| it.text.as_str()),
+                class_starts.get(i).copied().unwrap_or(false),
+                question.map_or(String::new(), |q| format!("{}{}", q.all, q.verb)),
+                drag_item.is_some_and(|d| item.is_some_and(|it| it.letter == d.letter)),
+            ));
+        }
+        key.push(format!(
+            "{}|{}",
+            i18n::lang().code(),
+            self.keymap_hint_key()
+        ));
+        if key == self.list_key {
+            return;
+        }
+        self.list_key = key;
+        for mut c in self.list_rows.get_children().iter_shared() {
+            self.list_rows.remove_child(&c);
+            c.queue_free();
+        }
+        self.list_cells.clear();
+        self.mouse.borrow_mut().list_nodes.clear();
+        let mut focus_row: Option<Gd<Control>> = None;
+        for (i, t) in shown.iter().enumerate() {
+            let item = match t {
+                InvTarget::Cell(l) => self.pack.by_letter(*l).cloned(),
+                _ => None,
+            };
+            if let Some(it) = &item
+                && class_starts.get(i).copied().unwrap_or(false)
+            {
+                self.list_rows.add_child(&list_heading(it.class, i == 0));
+            }
+            let row = self.list_row(*t, item.as_ref(), i, question, menu_letters, drag_item);
+            if self.focus == Some(i) {
+                focus_row = Some(row.clone().upcast());
+            }
+            self.list_rows.add_child(&row);
+            self.list_cells.push(row.upcast());
+        }
+        if shown.is_empty() {
+            let mut none =
+                theme::styled_label(&tr!("inv-list-empty"), Face::Body, 15, theme::TEXT_DIM);
+            none.set_autowrap_mode(AutowrapMode::WORD_SMART);
+            self.list_rows.add_child(&none);
+        }
+        // the focus in view, once laid out
+        if let Some(row) = focus_row {
+            self.list_box
+                .call_deferred("ensure_control_visible", &[row.to_variant()]);
+        }
+    }
+
+    /// What the tips' keys depend on, for the list's drawn key.
+    fn keymap_hint_key(&self) -> String {
+        format!("{:?}", self.keymap)
+    }
+
+    /// A line of the list: `t` (an item, or the bare hands of a question),
+    /// the `i`-th the grid shows.
+    fn list_row(
+        &self,
+        t: InvTarget,
+        item: Option<&InvItem>,
+        i: usize,
+        question: Option<&ItemQuestion>,
+        menu_letters: Option<&[(char, bool, Option<i64>)]>,
+        drag_item: Option<&InvItem>,
+    ) -> Gd<PanelContainer> {
+        let mut root = PanelContainer::new_alloc();
+        root.set_mouse_filter(MouseFilter::STOP);
+        root.set_custom_minimum_size(Vector2::new(0.0, 34.0));
+        let mut row = HBoxContainer::new_alloc();
+        row.set_mouse_filter(MouseFilter::IGNORE);
+        row.add_theme_constant_override("separation", 8);
+        root.add_child(&row);
+        // the BUC as the grid's stripe says it
+        let mut stripe = ColorRect::new_alloc();
+        stripe.set_mouse_filter(MouseFilter::IGNORE);
+        stripe.set_custom_minimum_size(Vector2::new(3.0, 22.0));
+        stripe.set_v_size_flags(SizeFlags::SHRINK_CENTER);
+        stripe.set_color(match item.and_then(|it| parse_item_name(&it.text).buc) {
+            Some(Buc::Blessed) => BLESSED,
+            Some(Buc::Uncursed) => UNCURSED,
+            Some(Buc::Cursed) => CURSED,
+            None => Color::from_rgba(0.0, 0.0, 0.0, 0.0),
+        });
+        row.add_child(&stripe);
+        let letter = match (t, item) {
+            (_, Some(it)) => it.letter,
+            _ => '-',
+        };
+        // not small caps: `a` and `A` are different items
+        let mut l =
+            theme::styled_label(&letter.to_string(), Face::BodyBold, 16, theme::GOLD_BRIGHT);
+        l.set_custom_minimum_size(Vector2::new(16.0, 0.0));
+        l.set_horizontal_alignment(HorizontalAlignment::CENTER);
+        l.set_vertical_alignment(VerticalAlignment::CENTER);
+        l.set_v_size_flags(SizeFlags::SHRINK_CENTER);
+        i18n::verbatim(&l);
+        row.add_child(&l);
+        let mut icon = TextureRect::new_alloc();
+        icon.set_mouse_filter(MouseFilter::IGNORE);
+        icon.set_expand_mode(ExpandMode::IGNORE_SIZE);
+        icon.set_stretch_mode(StretchMode::KEEP_ASPECT_CENTERED);
+        icon.set_custom_minimum_size(Vector2::new(28.0, 28.0));
+        icon.set_v_size_flags(SizeFlags::SHRINK_CENTER);
+        match item {
+            Some(it) => icon.set_texture(&icons::item_icon(it.tile, it.class)),
+            None => {
+                icon.set_texture(&icons::glyph_icon(Glyph::Hand));
+                icon.set_modulate(theme::GOLD_BRIGHT);
+            }
+        }
+        row.add_child(&icon);
+        let words = match item {
+            Some(it) => i18n::engine(EngineKind::Name, &it.text).into_owned(),
+            None => hands_label(question.map_or("", |q| q.verb.as_str())),
+        };
+        let mut w = theme::styled_label(&words, Face::Body, 16, theme::TEXT);
+        w.set_autowrap_mode(AutowrapMode::WORD_SMART);
+        w.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        w.set_v_size_flags(SizeFlags::SHRINK_CENTER);
+        row.add_child(&w);
+        // the look: the focus, picked in a menu, worn or wielded
+        let picked = item.and_then(|it| {
+            menu_letters?
+                .iter()
+                .find(|(l, on, _)| *l == it.letter && *on)
+                .map(|(_, _, n)| *n)
+        });
+        let on = self.focus == Some(i)
+            || item.is_some_and(|it| self.selected == Some(it.letter) && self.mode == Mode::Browse);
+        let style = if on {
+            &self.looks.row_on
+        } else if picked.is_some() {
+            &self.looks.row_picked
+        } else if item.is_some_and(nh_world::equipped) {
+            &self.looks.row_worn
+        } else {
+            &self.looks.row
+        };
+        root.add_theme_stylebox_override("panel", style);
+        if let Some(n) = picked {
+            let mut check = theme::styled_label(&picked_mark(n), Face::BodyBold, 16, theme::GOOD);
+            check.set_v_size_flags(SizeFlags::SHRINK_CENTER);
+            row.add_child(&check);
+        }
+        // not suggested by the question, or being dragged: dimmed
+        let suggested = match (question, item) {
+            (Some(q), Some(it)) => q.all || q.suggests(it.letter),
+            (Some(q), None) => q.hands,
+            _ => true,
+        };
+        let dragged = drag_item.is_some_and(|d| item.is_some_and(|it| it.letter == d.letter));
+        if !suggested {
+            root.set_modulate(Color::from_rgba(0.55, 0.52, 0.5, 0.45));
+        } else if dragged {
+            root.set_modulate(Color::from_rgba(1.0, 1.0, 1.0, 0.4));
+        }
+        let tip = match item {
+            Some(it) => cell_tip(
+                it,
+                question,
+                menu_letters.is_some(),
+                &self.pack,
+                &self.keymap,
+            ),
+            None => format!(
+                "{}  (-)",
+                hands_label(question.map_or("", |q| q.verb.as_str()))
+            ),
+        };
+        crate::tips::set(&root, &tip);
+        // what the self-tests read
+        root.set_meta(
+            "letter",
+            &GString::from(letter.to_string().as_str()).to_variant(),
+        );
+        root.set_meta("words", &GString::from(words.as_str()).to_variant());
+        // the mouse as on a cell: a click, a double click, a drag
+        wire_socket(&root, Rc::new(move || t), &self.queue, &self.mouse);
+        if let Some(it) = item {
+            self.mouse
+                .borrow_mut()
+                .list_nodes
+                .push((it.letter, root.clone().upcast()));
+        }
+        // a rim under the pointer
+        let mut hover = PanelContainer::new_alloc();
+        hover.set_mouse_filter(MouseFilter::IGNORE);
+        hover.add_theme_stylebox_override("panel", &self.looks.hover);
+        hover.set_visible(false);
+        let mut over = Control::new_alloc();
+        over.set_mouse_filter(MouseFilter::IGNORE);
+        root.add_child(&over);
+        place(&hover, [0.0, 0.0, 1.0, 1.0], [-2.0, -3.0, 2.0, 3.0]);
+        over.add_child(&hover);
+        let mut h = hover.clone();
+        root.signals()
+            .mouse_entered()
+            .connect(move || h.set_visible(true));
+        let mut h = hover;
+        root.signals()
+            .mouse_exited()
+            .connect(move || h.set_visible(false));
+        root
     }
 
     /// "Your pack": a button per class carried (its count), which filters

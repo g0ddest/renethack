@@ -894,6 +894,26 @@ inv-close-tip = Закрыть (Esc или i)
 inv-suggested-tip = Подходящие (?)
 inv-search = Поиск
 inv-pack-order = Порядок вещей, как в NetHack
+inv-view-grid-tip = Вещи сеткой значков (Ctrl+L)
+inv-view-list-tip = Вещи списком, как в NetHack: строка на предмет, по видам (Ctrl+L)
+inv-list-empty = Здесь ничего нет.
+inv-head-weapons = Оружие
+inv-head-armor = Доспехи
+inv-head-rings = Кольца
+inv-head-amulets = Амулеты
+inv-head-tools = Инструменты
+inv-head-comestibles = Еда
+inv-head-potions = Зелья
+inv-head-scrolls = Свитки
+inv-head-spellbooks = Книги заклинаний
+inv-head-wands = Палочки
+inv-head-gems = Самоцветы и камни
+inv-head-boulders = Валуны и статуи
+inv-head-iron-balls = Железные ядра
+inv-head-chains = Цепи
+inv-head-venoms = Яды
+inv-head-coins = Монеты
+inv-head-other = Прочее
 inv-detail-empty = Выберите предмет, чтобы узнать, что вам о нём известно.
 inv-count-hint = Введите число или используйте ← →.  Enter: ОК · Esc: отмена
 inv-count-hint-pad = ← →: количество · { $a }: ОК · { $b }: отмена
@@ -917,7 +937,7 @@ inv-pad-menu = Крестовина: предмет · { $a }: отметить 
 inv-pad-carrying = Крестовина: куда положить (ячейка куклы, другой предмет) · { $y }: положить · { $b }: вернуть на место
 inv-pad-browse =
     Крестовина: предметы и кукла · { $a }: первое действие · { $x }: все действия
-    { $y }: взять, затем снова { $y } там, куда положить (на куклу — надеть) · { $filter } · { $b }: закрыть
+    { $y }: взять, затем снова { $y } там, куда положить (на куклу — надеть) · { $filter } · { $view }: сетка или список · { $b }: закрыть
 inv-nothing-suggested = Подходящих нет — можно выбрать любой предмет. { $hint }
 inv-split-to = Отделить { $n } от { $from } — на какую букву?
 inv-adjust-to = Сменить букву { $from } — на какую?
@@ -1309,6 +1329,7 @@ quit-warning = Герой погибнет здесь, и игра законч�
 palette-give-up = Сдаться: закончить эту игру навсегда, без сохранения
 hint-chapter = Глава
 hint-scroll = Прокрутка
+hint-view = Сетка или список
 
 ## Состояние: уровень подземелья, опыт и очки
 

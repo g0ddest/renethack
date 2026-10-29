@@ -305,6 +305,8 @@ pub enum Glyph {
     Hand,
     /// "All" in the filter tabs: a grid of four.
     Grid,
+    /// The pack as a list: three lines, each with its bullet.
+    List,
     /// "Equipped": a checkmark in a ring.
     Check,
     /// "Suggested": a star.
@@ -364,7 +366,7 @@ impl Glyph {
 }
 
 /// Every glyph (the warm-up paints them all).
-pub const ALL_GLYPHS: [Glyph; 40] = [
+pub const ALL_GLYPHS: [Glyph; 41] = [
     Glyph::Sword,
     Glyph::Cuirass,
     Glyph::Ring,
@@ -394,6 +396,7 @@ pub const ALL_GLYPHS: [Glyph; 40] = [
     Glyph::Quiver,
     Glyph::Hand,
     Glyph::Grid,
+    Glyph::List,
     Glyph::Check,
     Glyph::Star,
     Glyph::Eye,
@@ -1093,6 +1096,14 @@ fn layers(g: Glyph, main: Mat) -> Vec<Layer> {
             layer(|p| rect(p, (0.3, -0.3), (0.22, 0.22), 0.04), GOLD),
             layer(|p| rect(p, (-0.3, 0.3), (0.22, 0.22), 0.04), GOLD),
             layer(|p| rect(p, (0.3, 0.3), (0.22, 0.22), 0.04), GOLD),
+        ],
+        Glyph::List => vec![
+            layer(|p| rect(p, (-0.46, -0.38), (0.09, 0.09), 0.02), GOLD),
+            layer(|p| rect(p, (-0.46, 0.0), (0.09, 0.09), 0.02), GOLD),
+            layer(|p| rect(p, (-0.46, 0.38), (0.09, 0.09), 0.02), GOLD),
+            layer(|p| rect(p, (0.14, -0.38), (0.42, 0.07), 0.03), GOLD),
+            layer(|p| rect(p, (0.14, 0.0), (0.42, 0.07), 0.03), GOLD),
+            layer(|p| rect(p, (0.14, 0.38), (0.42, 0.07), 0.03), GOLD),
         ],
         Glyph::Check => vec![
             layer(|p| ring_sd(p, (0.0, 0.0), 0.6, 0.06), GOLD),

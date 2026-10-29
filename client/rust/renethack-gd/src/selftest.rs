@@ -82,6 +82,8 @@ mod journal_tests;
 mod layouts_tests;
 #[path = "selftest_look.rs"]
 mod look_tests;
+#[path = "selftest_pack_list.rs"]
+mod pack_list_tests;
 #[path = "selftest_pad_panels.rs"]
 mod pad_panels_tests;
 #[path = "selftest_pad_play.rs"]
@@ -5157,6 +5159,7 @@ impl SelfTest {
             "through" => through_tests::through(),
             "passing" => passing_tests::passing(),
             "inventory" => inventory(),
+            "pack-list" => pack_list_tests::pack_list(),
             "map-pause" => map_pause(),
             "pool-sizes" => pool_sizes(),
             "palette" => palette(),

@@ -209,17 +209,20 @@ pub fn hints(ctx: PadCtx) -> Vec<(Vec<PadButton>, &'static str)> {
             (vec![X], "hint-actions"),
             (vec![Y], "hint-carry"),
             (vec![Lb, Rb], "hint-filter"),
+            (vec![Back], "hint-view"),
             (vec![B], "hint-close"),
         ],
         PadCtx::PanelSelect => vec![
             (vec![A], "hint-choose"),
             (vec![Lb, Rb], "hint-filter"),
+            (vec![Back], "hint-view"),
             (vec![B], "hint-cancel"),
         ],
         PadCtx::PanelMenu => vec![
             (vec![A], "hint-toggle"),
             (vec![Start], "hint-confirm"),
             (vec![Lb, Rb], "hint-filter"),
+            (vec![Back], "hint-view"),
             (vec![B], "hint-cancel"),
         ],
         PadCtx::Text => vec![

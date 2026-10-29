@@ -15,7 +15,7 @@
 //! | LT (hold) | the radial menu; a stick picks, letting go runs it | |
 //! | RT | fire | |
 //! | Start | the game's menu (its panels, every command) | confirm |
-//! | Back | the message history | |
+//! | Back | the message history | the inventory: grid or list |
 //! | R3 | the cursor back on the hero | |
 //!
 //! Nothing here touches Godot but the event types: `Pad` is fed buttons,
@@ -586,6 +586,10 @@ impl Pad {
             (Start, PadCtx::Picker { .. }) => PadOut::Pick(PickOp::Manual),
             (Start, PadCtx::PanelMenu | PadCtx::Menu { .. }) => PadOut::Key(key(Key::Enter)),
             (Start, _) => PadOut::Key(key(Key::Enter)),
+            // in the inventory: its pack as the grid or the list
+            (Back, PadCtx::PanelBrowse | PadCtx::PanelSelect | PadCtx::PanelMenu) => {
+                PadOut::Key(crate::inventory_panel::VIEW_KEY)
+            }
             (Back, _) => PadOut::History,
             (R3, _) => PadOut::CursorHome,
             (L3, PadCtx::World) => PadOut::Key(key(Key::F(8))),

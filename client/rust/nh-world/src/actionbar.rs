@@ -614,6 +614,10 @@ pub struct Profile {
     /// had it.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub prologue_seen: bool,
+    /// The inventory shows the pack as a list, a line an item (as
+    /// NetHack's `i`), not as the grid of icons.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub pack_list: bool,
     /// The last prologue's text as the engine wrote it (its English
     /// lines): what the title replays, with `legacy_hero`.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -1197,6 +1201,7 @@ mod tests {
             volumes: BTreeMap::from([("Music".into(), 40), ("SFX".into(), 100)]),
             guide_seen: [crate::Guide::Quest, crate::Guide::Pet].into(),
             prologue_seen: true,
+            pack_list: true,
             legacy: vec!["It is written in the Book of Thoth:".into()],
             legacy_hero: Some(LegacyHero {
                 role: "Wiz".into(),
@@ -1226,6 +1231,7 @@ mod tests {
             "volumes",
             "hints_off",
             "guide_seen",
+            "pack_list",
             "legacy",
             "legacy_hero",
         ] {

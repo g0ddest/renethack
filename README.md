@@ -86,7 +86,7 @@ The client adds:
 
 | Input | Action |
 |---|---|
-| `i` | the inventory panel (the engine's `i` is never needed): a grid in pack order, the paper doll, filters, the detail of an item. Double-click — its first action, right-click — all of them; drag to the doll — wear, wield, put on; off the doll — take off, remove, unwield; onto another item — `#adjust`; out of the panel — drop; onto the bar — bind. Command keys still work while it is open (`w`, then a letter). `Tab` filters, arrows move, `Enter` acts, `Space` the actions, `Esc` closes |
+| `i` | the inventory panel (the engine's `i` is never needed): a grid in pack order, the paper doll, filters, the detail of an item; or, by its switch (`Ctrl+L`, a gamepad's View), the pack as NetHack's `i` lists it, a line an item under its class's heading, which the profile keeps. Double-click — its first action, right-click — all of them; drag to the doll — wear, wield, put on; off the doll — take off, remove, unwield; onto another item — `#adjust`; out of the panel — drop; onto the bar — bind. Command keys still work while it is open (`w`, then a letter). `Tab` filters, arrows move, `Enter` acts, `Space` the actions, `Esc` closes. No weights: NetHack's `i` shows none (only debug mode's `wizweight`) |
 | a question about an item ("What do you want to wield?") | the panel in selection mode: the suggested items pulse, the others are dimmed but can be chosen; a click or the letter answers, `-` the hands, digits or `Shift`+click a count, `?`/`*` the Suggested/All filter, `Esc` cancels |
 | a menu of your own items (`D`, `A`, identify...) | the panel with check marks: the letter or a click toggles, digits a count, `Enter` confirms |
 | `1`–`9`, `0` (Classic: `Alt`+`1`–`0`) | action bar slots: an item with its action, a spell or a command; a new character gets its role's loadout. After a count (`n20`, Classic's `20`) a slot takes it by a click. Right-click clears a slot (Undo in the notice); an item's slot follows it through new letters and names, and shows it greyed while it is not in the pack. The bar is kept with the character (`<name>.rhui.json` in the game directory) |
@@ -133,7 +133,7 @@ over the action bar says what the buttons do on the screen at hand.
 | LT (hold) | the radial menu: the cursor cell's actions (the engine's menu of what can be done there), pick up, fight, kick, rest, pray, travel, save; a stick picks, letting go of LT runs it | |
 | RT | fire | |
 | Start | the game's menu: back to the game, the settings, saving, giving up, and a column of the panels (spells, the character, skills, the overview, the journal, the codex, achievements, help, every command) | confirm (a menu of several, the keyboard) |
-| Back / View | the message history (B closes it) | |
+| Back / View | the message history (B closes it) | the inventory: its pack as the grid or as a list |
 | L3, R3 | the whole level; the cursor back on the hero | |
 
 A direction question takes the stick; a text question opens a keyboard on
