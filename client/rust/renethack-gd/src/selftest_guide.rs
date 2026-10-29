@@ -191,6 +191,7 @@ pub(super) fn guide() -> Vec<Step> {
                 && g.guide_seen.contains(&Guide::Quest)
                 && ui.hint.shown().is_none())
         }),
+        Step::Wait("the welcome agreeing with the hero", super::welcome_agrees),
         Step::Shot("guide-quest-goal"),
         Step::Call("a click on the page's words", |g| {
             let r = g.ui.as_ref().ok_or("no UI")?.quest.rect().ok_or("no page")?;

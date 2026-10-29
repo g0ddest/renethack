@@ -306,6 +306,7 @@ fn smoke() -> Vec<Step> {
         Step::Wait("the level notice: the main dungeon, depth 1", |g| {
             Ok(g.world.branch() == nh_world::Branch::Main && g.world.depth() == Some(1))
         }),
+        Step::Wait("the welcome agreeing with the heroine", welcome_agrees),
         Step::Wait("HP:16(16) and Dlvl:1 on the HUD", |g| {
             let text = g.ui.as_ref().map_or("", |ui| ui.hud.status_text());
             Ok(text.contains("HP:16(16)") && text.contains("Dlvl:1"))
@@ -398,6 +399,34 @@ fn smoke() -> Vec<Step> {
         }),
         Step::Shot("end"),
     ]
+}
+
+/// The log's first line, the welcome ("…You are a neutral human
+/// Valkyrie."), reads as the hero's gender has it: drawn again once the
+/// gender is known, never left as it read before.
+fn welcome_agrees(g: &RenethackGame) -> Result<bool, String> {
+    let ui = g.ui.as_ref().ok_or("no UI")?;
+    if g.hero_female.is_none() {
+        return Ok(false);
+    }
+    let Some(welcome) = g
+        .world
+        .log
+        .iter()
+        .find(|m| !m.from_history && m.text.contains("welcome"))
+    else {
+        return Ok(false);
+    };
+    let want = i18n::engine_message(welcome).into_owned();
+    let shown = ui.hud.log_shown();
+    if shown.contains(&want) {
+        Ok(true)
+    } else {
+        Err(format!(
+            "the log shows {shown:?}, not {want:?} (the hero female: {:?})",
+            g.hero_female
+        ))
+    }
 }
 
 /// A new game as in `smoke`, up to the first command.

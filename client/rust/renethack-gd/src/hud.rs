@@ -2835,6 +2835,11 @@ impl Hud {
     pub fn hero_changed(&mut self) {
         self.show_subtitle();
         self.status_text.clear();
+        // the log's lines read again: one drawn before the gender was
+        // known agrees now
+        self.log_key = None;
+        self.full_log_dirty = true;
+        self.transient_shown = None;
     }
 
     /// How much of the screen's foot the bottom cluster (the orbs, the

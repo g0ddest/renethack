@@ -5566,6 +5566,9 @@ impl RenethackGame {
         if !matches!(self.state, GameState::Playing | GameState::Closing) {
             return;
         }
+        // the hero's gender before the HUD reads a line that agrees with it
+        // (the welcome comes with the hero's first drawing)
+        self.sync_hero_gender();
         // the map draws the prologue's scenes meanwhile, the game behind;
         // its HUD and pack, hidden, keep up with it from the second beat
         // (the game comes up out of the black with them already drawn)
@@ -5665,7 +5668,6 @@ impl RenethackGame {
         let t = Instant::now();
         ui.hud.sync(&mut self.world, catalog.as_deref());
         self.lap("hud", t);
-        self.sync_hero_gender();
         self.sync_last_hero();
         self.sync_legacy_hero();
         let t = Instant::now();
