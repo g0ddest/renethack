@@ -209,6 +209,29 @@ fn card(icon: Option<Glyph>, color: Color) -> Gd<Button> {
     b
 }
 
+/// The first-game mark, a star, and `text` beside it.
+fn starred(text: &str, size: i32, color: Color) -> Gd<HBoxContainer> {
+    let mut row = HBoxContainer::new_alloc();
+    row.add_theme_constant_override("separation", 6);
+    let mut star = TextureRect::new_alloc();
+    star.set_texture(&icons::glyph_icon(Glyph::Star));
+    star.set_expand_mode(godot::classes::texture_rect::ExpandMode::IGNORE_SIZE);
+    star.set_stretch_mode(godot::classes::texture_rect::StretchMode::KEEP_ASPECT_CENTERED);
+    star.set_custom_minimum_size(Vector2::new(18.0, 18.0));
+    star.set_modulate(theme::GOOD);
+    row.add_child(&star);
+    row.add_child(&theme::styled_label(text, Face::BodyBold, size, color));
+    row
+}
+
+/// The keys' choice told in a line: what walks, the rest in its tip.
+fn keys_line(profile: KeyProfile) -> String {
+    match profile {
+        KeyProfile::Modern => tr!("creation-keys-modern-line"),
+        KeyProfile::Classic => tr!("creation-keys-classic-line"),
+    }
+}
+
 fn caption(text: &str) -> Gd<Label> {
     theme::styled_label(text, Face::Caps, 15, theme::TEXT_DIM)
 }
@@ -232,8 +255,9 @@ pub struct Form {
     race: Gd<OptionButton>,
     gender: Gd<OptionButton>,
     align: Gd<OptionButton>,
-    /// Modern (item 0) or Classic keys.
+    /// Modern (item 0) or Classic keys, and what they walk with.
     keys: Gd<OptionButton>,
+    keys_told: Gd<Label>,
     lang: Gd<OptionButton>,
     /// The chosen role's name, its first-game mark and how it plays.
     role_title: Gd<Label>,
@@ -312,6 +336,12 @@ impl Form {
             grid.add_child(c);
         }
         col.add_child(&grid);
+        // what the star on a card says
+        col.add_child(&starred(
+            &tr!("creation-first-game-key"),
+            15,
+            theme::TEXT_DIM,
+        ));
         left.add_child(&col);
 
         // ---- right: the role chosen, the name and the other choices,
@@ -323,21 +353,7 @@ impl Form {
         col.add_theme_constant_override("separation", 10);
         let role_title = theme::styled_label("", Face::Title, 30, theme::ACCENT);
         col.add_child(&role_title);
-        let mut role_mark = HBoxContainer::new_alloc();
-        role_mark.add_theme_constant_override("separation", 6);
-        let mut star = TextureRect::new_alloc();
-        star.set_texture(&icons::glyph_icon(Glyph::Star));
-        star.set_expand_mode(godot::classes::texture_rect::ExpandMode::IGNORE_SIZE);
-        star.set_stretch_mode(godot::classes::texture_rect::StretchMode::KEEP_ASPECT_CENTERED);
-        star.set_custom_minimum_size(Vector2::new(18.0, 18.0));
-        star.set_modulate(theme::GOOD);
-        role_mark.add_child(&star);
-        role_mark.add_child(&theme::styled_label(
-            &tr!("creation-first-game"),
-            Face::BodyBold,
-            16,
-            theme::GOOD,
-        ));
+        let role_mark = starred(&tr!("creation-first-game"), 16, theme::GOOD);
         col.add_child(&role_mark);
         let mut role_line = theme::styled_label("", Face::Body, 17, theme::TEXT);
         role_line.set_autowrap_mode(AutowrapMode::WORD_SMART);
@@ -367,10 +383,17 @@ impl Form {
         let gender = option(&tr!("creation-gender"), &mut choices);
         let align = option(&tr!("creation-alignment"), &mut choices);
         let mut keys = option(&tr!("creation-keys"), &mut choices);
-        keys.add_item(&tr!("creation-keys-modern"));
-        keys.add_item(&tr!("creation-keys-classic"));
+        keys.add_item(&tr!("creation-keys-modern-name"));
+        keys.add_item(&tr!("creation-keys-classic-name"));
         keys.select(i32::from(keys_first == KeyProfile::Classic));
         crate::tips::set(&keys, &tr!("creation-keys-tip"));
+        // under the keys' short name, what they walk with
+        choices.add_child(&Control::new_alloc());
+        let mut keys_told =
+            theme::styled_label(&keys_line(keys_first), Face::Body, 15, theme::TEXT_DIM);
+        keys_told.set_autowrap_mode(AutowrapMode::WORD_SMART);
+        crate::tips::set(&keys_told, &tr!("creation-keys-tip"));
+        choices.add_child(&keys_told);
         choices.add_child(&theme::label(&tr!("creation-language")));
         let mut lang = lang;
         lang.set_h_size_flags(SizeFlags::EXPAND_FILL);
@@ -418,6 +441,7 @@ impl Form {
             gender,
             align,
             keys,
+            keys_told,
             lang,
             role_title,
             role_mark,
@@ -464,6 +488,11 @@ impl Form {
             .signals()
             .pressed()
             .connect(move || f.clone().roll());
+        let f = self.clone();
+        self.keys
+            .signals()
+            .item_selected()
+            .connect(move |_i: i64| f.clone().show_keys());
         let (mut field, q) = (self.name.clone(), self.queue.clone());
         self.name
             .signals()
@@ -609,6 +638,12 @@ impl Form {
             .set_visible(code.is_some_and(|c| FIRST_GAME.contains(&c)));
         self.role_line
             .set_text(&about(code).map(i18n::tr).unwrap_or_default());
+    }
+
+    /// The line under the keys for the ones chosen.
+    fn show_keys(&mut self) {
+        let profile = self.choice().profile;
+        self.keys_told.set_text(&keys_line(profile));
     }
 
     pub fn typed_name(&self) -> String {
@@ -769,6 +804,7 @@ impl Form {
         Form::preset_option(&mut self.align, &choice.align, &aligns);
         self.keys
             .select(i32::from(choice.profile == KeyProfile::Classic));
+        self.show_keys();
         self.show_role();
     }
 
