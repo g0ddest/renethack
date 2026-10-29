@@ -303,6 +303,17 @@ const XRAY_PET: Color = Color::from_rgba(0.37, 0.84, 0.75, 0.6);
 /// depth, metres (a box round the model would take in a spear held up).
 const BODY_HALF_WIDTH: f32 = 0.35;
 const BODY_HALF_DEPTH: f32 = 0.15;
+/// A creature seen through what hides it, and whether it is hostile.
+type Behind = (Gd<Node3D>, bool);
+
+/// How high a huge or gigantic creature takes the pointer on its cell
+/// (its column): the height of the tallest one a cell held before they
+/// overhung theirs, so a grown dragon takes no click nor tip of the cells
+/// behind it.
+const BIG_PICK_TOP: f32 = 1.4;
+/// How see-through a huge or gigantic creature is drawn while it hides
+/// an object or a trap the hero knows of behind it.
+const BIG_FADE: f32 = 0.55;
 /// A creature behind the hero is seen through them when it is no taller
 /// than this share of them (a rat, not a giant whose head shows over
 /// theirs, nor a man).
@@ -639,6 +650,10 @@ impl Look {
         let r = look.art;
         let top = if look.pose == Pose::Corpse {
             pos.y + (r.height * 0.4).min(0.5)
+        } else if r.cap > nh_art::MAX_FOOTPRINT {
+            // a body over its cell picks by its cell, not its height: the
+            // pointer on the cells behind it is not its
+            pos.y + (r.lift + r.height).min(BIG_PICK_TOP)
         } else {
             pos.y + r.lift + r.height
         };
@@ -3019,6 +3034,9 @@ pub struct MapView {
     /// a hostile's and a pet's.
     xray_behind: Vec<(Gd<Node3D>, bool)>,
     xray_creature: Option<(Gd<Material>, Gd<Material>)>,
+    /// The huge and gigantic creatures drawn see-through: each hides an
+    /// object or a trap the hero knows of.
+    big_faded: Vec<Gd<Node3D>>,
     /// Where a rider would stand if the saddle were the ground, facing
     /// their way: what looks at the hero alone (the inventory's doll)
     /// frames them from there as it does on foot.
@@ -3714,6 +3732,7 @@ impl MapView {
             xray_steed: None,
             xray_behind: Vec::new(),
             xray_creature,
+            big_faded: Vec::new(),
             rider_view,
             room_lights: Vec::new(),
             torches: Vec::new(),
@@ -4099,7 +4118,7 @@ impl MapView {
                 self.equip_hero((x, y), world, catalog, delta as f32);
                 self.prof
                     .push(("equip", __t.elapsed().as_secs_f64() * 1000.0));
-                self.show_through((x, y), p);
+                self.show_through((x, y), p, world, catalog);
                 self.light_torches(p);
             }
             None => {
@@ -4917,7 +4936,7 @@ impl MapView {
     /// The hero seen through what hides them from the camera: a wall, a
     /// door or rock between the eye and their chest, or a creature as tall
     /// as a giant standing there (in the cell south of them).
-    fn show_through(&mut self, hero: (i32, i32), at: Vector3) {
+    fn show_through(&mut self, hero: (i32, i32), at: Vector3, world: &World, catalog: &Catalog) {
         let up = self
             .hero_stands()
             .map_or(CHEST, |(_, tall)| (CHEST * tall / HUMAN_TALL).min(CHEST));
@@ -4967,7 +4986,8 @@ impl MapView {
         // back (a foe there had the threat arrow over the hero's own head),
         // nor anything behind a body that overhangs its cell
         let mut behind = self.hidden_behind(hero);
-        for (n, hostile) in self.hidden_by_big() {
+        let (hidden, faded) = self.hidden_by_big(world, catalog);
+        for (n, hostile) in hidden {
             if !behind
                 .iter()
                 .any(|(b, _)| b.instance_id() == n.instance_id())
@@ -4975,6 +4995,7 @@ impl MapView {
                 behind.push((n, hostile));
             }
         }
+        self.fade_big(faded);
         let key = |v: &[(Gd<Node3D>, bool)]| -> Vec<(InstanceId, bool)> {
             v.iter().map(|(n, h)| (n.instance_id(), *h)).collect()
         };
@@ -5073,15 +5094,32 @@ impl MapView {
     /// The creatures on the cells north of a huge or gigantic one (a body
     /// that overhangs its cell) that it hides from the camera, the whole
     /// or a part, and whether each is hostile: smaller than it, not the
-    /// hero (`stands_before` sees them through it).
-    fn hidden_by_big(&self) -> Vec<(Gd<Node3D>, bool)> {
+    /// hero (`stands_before` sees them through it); and the huge ones that
+    /// hide an object or a trap the hero knows of there (drawn
+    /// see-through: a trap is no model of its own to show through).
+    fn hidden_by_big(&self, world: &World, catalog: &Catalog) -> (Vec<Behind>, Vec<Gd<Node3D>>) {
+        // an object or a trap the map shows there
+        let known = |x: i32, y: i32| {
+            world
+                .map
+                .cell(x, y)
+                .and_then(|c| c.glyph.as_ref())
+                .is_some_and(|g| match g.kind {
+                    GlyphKind::Obj | GlyphKind::Body | GlyphKind::Statue => true,
+                    GlyphKind::Cmap => {
+                        cmap_sym(g, catalog).is_some_and(|s| terrain_of(s) == Terrain::Trap)
+                    }
+                    _ => false,
+                })
+        };
+        let mut faded: Vec<Gd<Node3D>> = Vec::new();
         let living = |n: &CellNodes, i: usize| {
             n.look
                 .models
                 .get(i)
                 .is_some_and(|p| matches!(p.look.pose, Pose::Alive | Pose::Ghost))
         };
-        let mut hidden: Vec<(Gd<Node3D>, bool)> = Vec::new();
+        let mut hidden: Vec<Behind> = Vec::new();
         for (&(x, y), n) in &self.cells {
             let Some(i) = n.look.entity.filter(|&i| !n.look.hero && living(n, i)) else {
                 continue;
@@ -5100,6 +5138,19 @@ impl MapView {
                     let Some(o) = self.cells.get(&(x + dx, y + dy)) else {
                         continue;
                     };
+                    // its middle on the ground and its near edge
+                    let (ox, oz) = ((x + dx) as f32, (y + dy) as f32);
+                    let spot = [
+                        Vector3::new(ox, o.look.ground + 0.1, oz),
+                        Vector3::new(ox, o.look.ground + 0.1, oz + 0.4),
+                    ];
+                    let own = n.models[i].node.instance_id();
+                    if known(x + dx, y + dy)
+                        && spot.iter().any(|p| body.intersects_segment(*p, self.eye))
+                        && !faded.iter().any(|f| f.instance_id() == own)
+                    {
+                        faded.push(n.models[i].node.clone());
+                    }
                     let Some(j) = o.look.entity.filter(|&j| !o.look.hero && living(o, j)) else {
                         continue;
                     };
@@ -5125,7 +5176,45 @@ impl MapView {
                 }
             }
         }
-        hidden
+        (hidden, faded)
+    }
+
+    /// The huge creatures in `now` drawn see-through, those no longer
+    /// as they were (a model given back to the pool is never another's
+    /// faded; one that falls meanwhile, its fall fades again).
+    fn fade_big(&mut self, now: Vec<Gd<Node3D>>) {
+        let key =
+            |v: &[Gd<Node3D>]| -> Vec<InstanceId> { v.iter().map(|n| n.instance_id()).collect() };
+        if key(&now) == key(&self.big_faded) {
+            return;
+        }
+        let see = |node: &Gd<Node3D>, k: f32| {
+            for mut g in node
+                .find_children_ex("*")
+                .type_("GeometryInstance3D")
+                .owned(false)
+                .done()
+                .iter_shared()
+                .filter_map(|g| g.try_cast::<GeometryInstance3D>().ok())
+            {
+                g.set_transparency(k);
+            }
+        };
+        for old in std::mem::take(&mut self.big_faded) {
+            let kept = now.iter().any(|n| n.instance_id() == old.instance_id());
+            if !kept && old.is_instance_valid() {
+                see(&old, 0.0);
+            }
+        }
+        for n in now.iter().filter(|n| n.is_instance_valid()) {
+            see(n, BIG_FADE);
+        }
+        self.big_faded = now;
+    }
+
+    /// The huge and gigantic creatures drawn see-through now (self-tests).
+    pub fn big_faded(&self) -> usize {
+        self.big_faded.len()
     }
 
     /// A model on the cells the line from the hero's `chest` to the eye
@@ -5570,6 +5659,8 @@ impl MapView {
     }
 
     pub fn clear(&mut self) {
+        // (no model goes back to the pool see-through)
+        self.fade_big(Vec::new());
         // a game starts: the rehearsal is over, the title scene gone, the
         // gallery's light off, nothing of a prologue's scene left
         self.rehearsal = None;

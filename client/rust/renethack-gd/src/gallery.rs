@@ -363,6 +363,21 @@ pub fn lay_out_one(world: &mut World, cat: &Catalog, name: &str) -> Result<(i32,
     Ok((cx, cy))
 }
 
+/// One gallery entry (an object, a trap...) on the cell `at`, over the
+/// lit floor.
+pub fn put_entry(world: &mut World, cat: &Catalog, at: (i32, i32), e: Entry) -> Result<(), String> {
+    let g = match e {
+        Mon(name, flags) => monster(cat, name, flags, GlyphKind::Mon)?,
+        Body(name) => monster(cat, name, 0, GlyphKind::Body)?,
+        Statue(name) => monster(cat, name, 0, GlyphKind::Statue)?,
+        Obj(class, a) => object(cat, class, a, false)?,
+        Pile(class, a) => object(cat, class, a, true)?,
+        Feature(sym) => cmap(cat, sym)?,
+    };
+    world.map.print(at.0, at.1, &g, Some(&cmap(cat, "S_room")?));
+    Ok(())
+}
+
 /// Map features (`S_throne`...) in a row two cells apart on a small lit
 /// floor, a patch of ice three cells across to the west of them and a pool
 /// to the east, the hero beside them for scale (the `features`

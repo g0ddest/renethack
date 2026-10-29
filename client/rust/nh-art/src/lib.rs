@@ -163,7 +163,7 @@ pub const FOOTPRINT_GIVE: f32 = 0.15;
 /// of a pony), its front kept in its cell (`Resolved::back`): this long
 /// at most, in cells.
 pub const HUGE_FOOTPRINT: f32 = 1.9;
-pub const GIGANTIC_FOOTPRINT: f32 = 2.8;
+pub const GIGANTIC_FOOTPRINT: f32 = 2.2;
 /// How far ahead of its cell's middle a body that overhangs its cell
 /// reaches, metres; the rest of it lies behind (a dragon's snout stays
 /// out of the hero it bites).
