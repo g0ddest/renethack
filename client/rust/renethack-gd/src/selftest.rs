@@ -94,6 +94,8 @@ mod pad_words_tests;
 mod passing_tests;
 #[path = "selftest_polyself.rs"]
 mod polyself_tests;
+#[path = "selftest_portrait.rs"]
+mod portrait_tests;
 #[path = "selftest_prologue.rs"]
 mod prologue_tests;
 #[path = "selftest_prose.rs"]
@@ -5102,6 +5104,7 @@ impl SelfTest {
             "pad-play" => pad_play_tests::pad_play(),
             "pad-screens" => pad_screens_tests::pad_screens(),
             "creation" => creation_tests::creation(),
+            "portrait" => portrait_tests::portrait(),
             "pad-words" => pad_words_tests::pad_words(),
             "skills" => skills_tests::skills(),
             "journal" => journal_tests::journal(),

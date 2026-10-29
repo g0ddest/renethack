@@ -19,12 +19,12 @@
 //! one that summons help bursts where the new ones come.
 //! Nothing waits for it: the next turn plays alongside.
 
-use godot::classes::Skeleton3D;
 use godot::prelude::*;
 use nh_protocol::{Catalog, GlyphKind, mg};
 use nh_world::World;
 
 use super::{MapView, Opening};
+use crate::art::bone_at;
 use crate::vfx::{Ray, VfxKind};
 
 /// The clips monsters do things with (the hero's own, `held.uses`): a
@@ -894,23 +894,6 @@ fn eyes_at(node: &Gd<Node3D>, height: f32) -> Vector3 {
         Some(head) => head + ahead * (height * 0.06),
         None => t.origin + Vector3::new(0.0, height * 0.55, 0.0) + ahead * (height * 0.45),
     }
-}
-
-/// Where a bone of a model's skeleton is now, in the world.
-fn bone_at(node: &Gd<Node3D>, bone: &str) -> Option<Vector3> {
-    if !node.is_instance_valid() || !node.is_inside_tree() {
-        return None;
-    }
-    let sk = node
-        .find_children_ex("*")
-        .type_("Skeleton3D")
-        .owned(false)
-        .done()
-        .iter_shared()
-        .next()
-        .and_then(|n| n.try_cast::<Skeleton3D>().ok())?;
-    let i = sk.find_bone(bone);
-    (i >= 0).then(|| sk.get_global_transform() * sk.get_bone_global_pose(i).origin)
 }
 
 /// The cell of the monster the line names, nearest the hero, among those

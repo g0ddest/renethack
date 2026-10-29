@@ -348,7 +348,7 @@ hang on their coming together: the scene takes a drawing of the map once
 it is whole (the engine ends each with a display of the map window).
 
 A headless run draws nothing, so what upsets Godot's renderer never shows
-in one. `make test-client` therefore ends with two scenarios in a window
+in one. `make test-client` therefore ends with three scenarios in a window
 (they need a display; `xvfb-run make test-client` without one, or
 `make test-client WINDOW_SELFTESTS=` to skip them). In `rim` the hero's rim
 light's layer stays on the hero's own model, and a model in view changes
@@ -357,7 +357,9 @@ inventory's doll shows the hero in its own lights (put out, the doll is
 dim and the hero on the map as lit as before), from the first frame an
 opening draws (the first time in a session, and after the hero walked
 on), and without the tint their model wears on the map while a wall hides
-them. Every run, headless or
+them. In `portrait` the HUD's medallion shows the hero rendered head and
+shoulders (a Wizard, a Samurai, a Valkyrie, and her as a red dragon),
+anew when the look changes and not while it stays. Every run, headless or
 not, passes only with its PASS line, exit status 0 and no error of Godot's
 that says "BUG": a crash on quit, after the PASS line, fails it.
 `make soak SOAK_WINDOW=1` plays the soak in a window, the renderer at work.

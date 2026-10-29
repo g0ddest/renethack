@@ -196,7 +196,7 @@ fn hero_form_name(g: &RenethackGame) -> Option<String> {
 }
 
 /// #polyself into `name`, every question after it answered no.
-fn become_(name: &'static str) -> Vec<Step> {
+pub(super) fn become_(name: &'static str) -> Vec<Step> {
     vec![
         key('#'),
         Step::Request("the command palette", |p| *p == Prompt::ExtCmd),

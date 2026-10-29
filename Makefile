@@ -58,7 +58,7 @@ PSEUDO_SELFTESTS := smoke keys dialogs orders inventory gamepad hud pickers achi
 # shows only when it runs, as a "BUG" error of Godot's or a crash on quit;
 # nor does it render the inventory's doll.
 # Needs a display (without one: xvfb-run, or WINDOW_SELFTESTS= to skip)
-WINDOW_SELFTESTS ?= rim doll
+WINDOW_SELFTESTS ?= rim doll portrait
 # `make deck`: the same screens shot at a real 1280×800, into DECK_DIR
 # (`make deck DECK_ARGS=--lang=ru`: in Russian)
 DECK_SHOTS := smoke tour inventory bar hud dialogs gamepad settings credits

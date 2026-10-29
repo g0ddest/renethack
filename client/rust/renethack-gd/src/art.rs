@@ -2512,6 +2512,23 @@ fn bounds_of(root: &Gd<Node3D>) -> Option<Bounds> {
 
 /// The bounds of the meshes shown under `root`, in its space; None with
 /// no mesh (`posed_points`).
+/// Where a bone of a model's skeleton is now, in the world.
+pub fn bone_at(node: &Gd<Node3D>, bone: &str) -> Option<Vector3> {
+    if !node.is_instance_valid() || !node.is_inside_tree() {
+        return None;
+    }
+    let sk = node
+        .find_children_ex("*")
+        .type_("Skeleton3D")
+        .owned(false)
+        .done()
+        .iter_shared()
+        .next()
+        .and_then(|n| n.try_cast::<Skeleton3D>().ok())?;
+    let i = sk.find_bone(bone);
+    (i >= 0).then(|| sk.get_global_transform() * sk.get_bone_global_pose(i).origin)
+}
+
 pub fn posed_bounds(root: &Gd<Node3D>) -> Option<Aabb> {
     bounds_round(&posed_points(root))
 }

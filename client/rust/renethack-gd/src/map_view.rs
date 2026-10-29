@@ -5715,6 +5715,11 @@ impl MapView {
         &self.hero_fx
     }
 
+    /// The gear the hero's model shows.
+    pub fn hero_gear_shown(&self) -> &nh_art::Gear {
+        self.hero_gear.gear()
+    }
+
     /// The way the hero faces, in degrees (self-tests).
     pub fn hero_yaw(&self) -> f32 {
         self.hero_yaw

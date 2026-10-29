@@ -3711,8 +3711,13 @@ impl RenethackGame {
         // a model still loading has nothing to show, nor to render ahead
         let loading = ui.map.hero_model().is_some_and(|m| m.is_pending());
         let hero = ui.map.hero_view().filter(|_| !loading);
-        ui.inventory.set_hero(hero);
+        ui.inventory.set_hero(hero.clone());
         ui.inventory.set_form(self.world.status.polymorphed());
+        ui.hud.sync_portrait(
+            hero,
+            ui.map.hero_gear_shown(),
+            self.world.status.polymorphed(),
+        );
         ui.inventory.set_dark(ui.map.dark());
         let rects = ui.hud.action_bar().slot_rects();
         ui.inventory.set_bar_rects(rects);

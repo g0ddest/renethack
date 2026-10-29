@@ -1,7 +1,9 @@
 // A round medallion in a bronze ring: the portrait, condition gems, the
 // level plaque's jewel. `inner` is the face's radius as a share of the
 // whole; `face_*` its radial gradient; `rim` tints the ring (gold, amber,
-// red for deadly conditions) and `glow` lights it (pulses).
+// red for deadly conditions) and `glow` lights it (pulses). The HUD's
+// portrait shows a render of the hero in the face (`portrait`, its
+// square to the face's disc), under the face's shading.
 shader_type canvas_item;
 render_mode unshaded;
 
@@ -10,6 +12,8 @@ uniform vec4 face_center : source_color = vec4(0.16, 0.12, 0.09, 1.0);
 uniform vec4 face_edge : source_color = vec4(0.03, 0.025, 0.02, 1.0);
 uniform vec4 rim : source_color = vec4(0.72, 0.55, 0.3, 1.0);
 uniform float glow = 0.0;
+uniform sampler2D portrait : source_color, filter_linear;
+uniform bool has_portrait = false;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
@@ -34,6 +38,10 @@ void fragment() {
 	vec2 q = p / inner;
 	vec3 face = mix(face_center.rgb, face_edge.rgb, smoothstep(0.0, 1.0, length(q - vec2(0.0, -0.25)) * 0.9));
 	face += (hash(floor(UV * 256.0)) - 0.5) * 0.02;
+	if (has_portrait) {
+		vec4 hero = texture(portrait, q * 0.5 + 0.5);
+		face = mix(face, hero.rgb, hero.a);
+	}
 	// inner shadow under the ring
 	face *= mix(0.35, 1.0, smoothstep(0.78, 0.55, length(q)) * 0.6 + 0.4);
 	face *= mix(1.0, 0.4, smoothstep(0.85, 1.0, length(q)));

@@ -51,6 +51,7 @@ mod organic;
 mod pad_view;
 mod paths;
 mod pickers;
+mod portrait;
 mod prologue;
 mod prologue_view;
 mod rebind;

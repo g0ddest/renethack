@@ -28,6 +28,7 @@ use crate::gamepad::{PadButton, PadKind};
 use crate::i18n::{self, EngineKind};
 use crate::minimap::{self, Minimap};
 use crate::orb::{self, Orb};
+use crate::portrait::PortraitView;
 use crate::theme::{self, Face, Frame, bbcode_escape, hex, hex_alpha, place};
 use crate::tr;
 use crate::ui_events::{UiEvent, UiQueue, push};
@@ -1054,6 +1055,12 @@ pub struct Hud {
 
     // portrait block, top left
     portrait_panel: Gd<PanelContainer>,
+    /// The hero rendered into the medallion's face (`portrait`), the
+    /// face's material, whether it shows a render; the role's initial
+    /// until it does.
+    portrait: PortraitView,
+    portrait_face: Option<Gd<ShaderMaterial>>,
+    portrait_on: bool,
     initial: Gd<Label>,
     plaque: Gd<Label>,
     title: Gd<Label>,
@@ -1198,9 +1205,13 @@ impl Hud {
         );
         let mut block = Control::new_alloc();
         block.set_mouse_filter(MouseFilter::IGNORE);
-        let (mut medallion, _) = ring(124.0, 0.9, theme::GOLD);
+        let (mut medallion, portrait_face) = ring(124.0, 0.9, theme::GOLD);
         medallion.set_position(Vector2::new(0.0, 0.0));
         block.add_child(&medallion);
+        let portrait = PortraitView::new(&mut block);
+        if let Some(mut face) = portrait_face.clone() {
+            face.set_shader_parameter("portrait", &portrait.texture().to_variant());
+        }
         let mut initial = theme::styled_label("", Face::TitleBold, 64, theme::GOLD_BRIGHT);
         theme::outline(&initial, 6);
         place(&initial, [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 124.0, 118.0]);
@@ -1704,6 +1715,9 @@ impl Hud {
             keyed,
             keymap: nh_world::Keymap::default(),
             portrait_panel,
+            portrait,
+            portrait_face,
+            portrait_on: false,
             initial,
             plaque,
             title,
@@ -1801,6 +1815,31 @@ impl Hud {
     /// The hero's role (or form) as the map shows it: "Valkyrie".
     pub fn role(&self) -> Option<&str> {
         self.role.as_deref()
+    }
+
+    /// Every frame of a game: the hero's model (None: none to show), the
+    /// gear it shows, whether polymorphed. The portrait renders them when
+    /// that changes, and shows the render in place of the initial.
+    pub fn sync_portrait(&mut self, hero: Option<Gd<Node3D>>, gear: &nh_art::Gear, form: bool) {
+        let on = self.portrait.sync(hero, gear, form, now_secs());
+        if on != self.portrait_on {
+            self.portrait_on = on;
+            if let Some(face) = self.portrait_face.as_mut() {
+                face.set_shader_parameter("has_portrait", &on.to_variant());
+            }
+            self.initial.set_visible(!on);
+        }
+    }
+
+    /// The portrait shows a render of the hero, and how many it has made
+    /// (self-tests).
+    pub fn portrait_shown(&self) -> (bool, u32) {
+        (self.portrait_on, self.portrait.renders())
+    }
+
+    /// The box round what the portrait's render draws (self-tests).
+    pub fn portrait_drawn_box(&self) -> Option<Rect2> {
+        self.portrait.drawn_box()
     }
 
     /// The action bar's slots (their bindings drive it).
@@ -2317,13 +2356,14 @@ impl Hud {
             .align_text
             .as_deref()
             .map(|a| i18n::engine_hero_word(a).into_owned());
-        let parts: Vec<String> = [role, align].into_iter().flatten().collect();
+        let parts: Vec<String> = [role.clone(), align].into_iter().flatten().collect();
         self.subtitle.set_text(&parts.join("  ·  "));
-        let initial = self
-            .role
+        // (until the portrait renders: the role's initial, as the player
+        // reads the role)
+        let initial = role
             .as_deref()
             .and_then(|r| r.chars().next())
-            .map_or(String::new(), |c| c.to_string());
+            .map_or(String::new(), |c| c.to_uppercase().to_string());
         self.initial.set_text(&initial);
     }
 
