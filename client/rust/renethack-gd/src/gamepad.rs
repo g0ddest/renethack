@@ -10,11 +10,11 @@
 //! | B | Esc | back, cancel |
 //! | X | search | the item's actions (inventory) |
 //! | Y | inventory | pick up / put down an item (inventory) |
-//! | LB / RB + A B X Y | action bar slots 1–4 / 5–8 (page 2: 9, 0) | filters, pages |
-//! | LB / RB + d-pad ← → | the bar's other page | |
+//! | LB / RB + A B X Y | action bar slots 1–4 / 5–8 | alone: filters, pages |
+//! | LB + RB + A B | action bar slots 9, 0 | |
 //! | LT (hold) | the radial menu; a stick picks, letting go runs it | |
 //! | RT | fire | |
-//! | Start | the command palette | confirm |
+//! | Start | the game's menu (its panels, every command) | confirm |
 //! | Back | the message history | |
 //! | R3 | the cursor back on the hero | |
 //!

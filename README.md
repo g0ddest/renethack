@@ -115,8 +115,9 @@ Any command's key can be moved in the settings (Controls).
 
 The whole game plays with a controller (Xbox, PlayStation or the Steam
 Deck; the buttons on screen are drawn with that controller's letters or
-shapes). A strip over the action bar says what the buttons do on the
-screen at hand.
+shapes), from the title and the creation form to the end page, where the
+d-pad moves the focus, A takes it, B goes back and Start begins. A strip
+over the action bar says what the buttons do on the screen at hand.
 
 | Input | In the world | In menus, questions and the inventory |
 |---|---|---|
@@ -126,13 +127,13 @@ screen at hand.
 | B | Esc | back, cancel |
 | X | search | the item's actions (inventory) |
 | Y | inventory | pick the item up, then put it down where the focus is (a drag: to the doll, onto another item) |
-| LB + A B X Y | action bar slots 1–4 | the previous filter or page |
-| RB + A B X Y | action bar slots 5–8 | the next filter or page |
-| LB or RB + d-pad ← → | the bar's second page: LB + A, B are slots 9 and 0 | |
+| LB + A B X Y | action bar slots 1–4 | LB alone: the previous filter or page |
+| RB + A B X Y | action bar slots 5–8 | RB alone: the next filter or page |
+| LB + RB + A B | action bar slots 9 and 0 | |
 | LT (hold) | the radial menu: the cursor cell's actions (the engine's menu of what can be done there), pick up, fight, kick, rest, pray, travel, save; a stick picks, letting go of LT runs it | |
 | RT | fire | |
-| Start | the command palette | confirm (a menu of several, the keyboard) |
-| Back / View | the message history | |
+| Start | the game's menu: back to the game, the settings, saving, giving up, and a column of the panels (spells, the character, skills, the overview, the journal, the codex, achievements, help, every command) | confirm (a menu of several, the keyboard) |
+| Back / View | the message history (B closes it) | |
 | L3, R3 | the whole level; the cursor back on the hero | |
 
 A direction question takes the stick; a text question opens a keyboard on
