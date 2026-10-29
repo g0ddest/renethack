@@ -2813,10 +2813,15 @@ impl RenethackGame {
         match step {
             QuestStep::Screen => {
                 for (block, w) in words.tags.iter_mut() {
-                    if *block == "action bar" {
-                        *w = padded("quest-tour-bar-pad");
+                    match *block {
+                        "action bar" => *w = padded("quest-tour-bar-pad"),
+                        "micro-buttons" => *w = padded("quest-tour-buttons-pad"),
+                        _ => {}
                     }
                 }
+                // the whole level by the stick; no mouse to rest
+                words.lines.truncate(2);
+                words.lines.push(padded("quest-screen-overview-pad"));
             }
             QuestStep::Moves => {
                 words.lines = [
@@ -2850,12 +2855,23 @@ impl RenethackGame {
             },
             QuestStep::Screen => QuestWords {
                 title: tr!("quest-screen-title"),
-                lines: vec![tr!("quest-screen")],
+                lines: vec![
+                    tr!("quest-screen"),
+                    tr!(
+                        "quest-screen-combat",
+                        banner = tr!("mode-combat"),
+                        badge = tr!("mode-combat-badge")
+                    ),
+                    tr!("quest-screen-overview", overview = bound("F8")),
+                    tr!("quest-screen-tips"),
+                ],
                 tags: vec![
                     ("portrait", tr!("quest-tour-portrait")),
+                    ("mode badge", tr!("quest-tour-mode")),
                     ("HP orb", tr!("quest-tour-hp")),
                     ("Pw orb", tr!("quest-tour-pw")),
                     ("minimap", tr!("quest-tour-minimap")),
+                    ("micro-buttons", tr!("quest-tour-buttons")),
                     (
                         "action bar",
                         tr!("quest-tour-bar", first = bound("1"), last = bound("0")),
@@ -3019,6 +3035,7 @@ impl RenethackGame {
             ("rt", PadButton::Rt),
             ("start", PadButton::Start),
             ("back", PadButton::Back),
+            ("l3", PadButton::L3),
         ] {
             args.set(name, i18n::Arg::fluent(kind.label(b).to_string()));
         }
@@ -3095,8 +3112,9 @@ impl RenethackGame {
             } else {
                 paragraphs.push(format!("[b]{}[/b]", esc(&words.title)));
             }
-            paragraphs.extend(words.lines.iter().map(|l| esc(l)));
-            // the screen's names, a list
+            let mut lines = words.lines.iter().map(|l| esc(l));
+            paragraphs.extend(lines.next());
+            // the screen's names, a list, after the line that says so
             if !words.tags.is_empty() {
                 let list: Vec<String> = words
                     .tags
@@ -3105,6 +3123,7 @@ impl RenethackGame {
                     .collect();
                 paragraphs.push(list.join("\n"));
             }
+            paragraphs.extend(lines);
         }
         (title, paragraphs)
     }

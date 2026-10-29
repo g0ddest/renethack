@@ -132,6 +132,11 @@ pub(super) fn pad_words() -> Vec<Step> {
             if !bar.contains("LB") {
                 return Err(format!("the bar named {bar:?}"));
             }
+            // the whole level by the stick
+            let l3 = crate::gamepad::PadKind::default().label(PadButton::L3);
+            if !words.iter().any(|w| w.contains(l3)) {
+                return Err(format!("the whole level's button unsaid: {words:?}"));
+            }
             Ok(words.contains(&bar))
         }),
         tap(PadButton::A),

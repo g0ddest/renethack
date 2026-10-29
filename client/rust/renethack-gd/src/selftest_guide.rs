@@ -203,9 +203,28 @@ pub(super) fn guide() -> Vec<Step> {
             }
             let tags = ui.quest.tags();
             let blocks = ui.hud.blocks();
-            for name in ["portrait", "HP orb", "Pw orb", "minimap", "action bar", "log"] {
+            for name in [
+                "portrait",
+                "mode badge",
+                "HP orb",
+                "Pw orb",
+                "minimap",
+                "micro-buttons",
+                "action bar",
+                "log",
+            ] {
                 if !blocks.iter().any(|(b, _)| *b == name) {
                     return Err(format!("no {name} on the HUD"));
+                }
+            }
+            // the fight's banner and badge, the whole level's key as bound,
+            // and the tips the mouse brings
+            let (_, lines) = ui.quest.words();
+            let said = |w: &str| lines.iter().any(|l| l.contains(w));
+            let overview = crate::rebind::bound_hint(g.keymap(), "F8");
+            for w in [tr!("mode-combat-badge"), overview, tr!("quest-screen-tips")] {
+                if !said(&w) {
+                    return Err(format!("the screen's words lack {w:?}: {lines:?}"));
                 }
             }
             // each name clear of every block, at every size and language
@@ -215,7 +234,14 @@ pub(super) fn guide() -> Vec<Step> {
             }
             let canvas = Rect2::new(Vector2::ZERO, g.canvas_size()).grow(1.0);
             super::quest_names_clear(ui, canvas)?;
-            Ok(tags.len() == 6 && tags.iter().any(|(t, _)| *t == tr!("quest-tour-log")))
+            Ok(tags.len() == 8
+                && [
+                    tr!("quest-tour-log"),
+                    tr!("quest-tour-mode"),
+                    tr!("quest-tour-buttons"),
+                ]
+                .iter()
+                .all(|w| tags.iter().any(|(t, _)| t == w)))
         }),
         Step::Call("", |g| {
             let n = g.ui.as_ref().ok_or("no UI")?.quest.layouts();
