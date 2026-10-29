@@ -98,6 +98,9 @@ uniform vec3 lift : source_color = vec3(0.0);
 global uniform vec3 hero_pos;
 global uniform vec3 eye_pos;
 global uniform float branch_cracks;
+// the whole level framed (map_view's overview): what is remembered shows
+// nearly as it is, lit by its own faint light
+global uniform float overview;
 
 const vec2 FIELD = vec2(80.0, 21.0);
 const vec3 MEMORY_TINT = vec3(0.54, 0.59, 0.72);
@@ -483,14 +486,18 @@ void fragment() {
 	// remembered: the same stone, grey, cold and dark
 	float seen = mix(1.0, fow.r, memory);
 	float luma = dot(albedo, vec3(0.299, 0.587, 0.114));
-	vec3 remembered = mix(albedo, luma * MEMORY_TINT, 0.8) * 0.4;
+	vec3 remembered = mix(albedo, luma * MEMORY_TINT, mix(0.8, 0.45, overview))
+		* mix(0.4, 0.75, overview);
 	vec3 color = mix(remembered, albedo, seen);
 	// what is remembered shows by its own faint light: shaded by its
 	// relief, as if from above and to one side, so a remembered wall is
 	// the same stone, not a flat box
 	float relief = 0.45 + 0.8 * clamp(dot(wn, normalize(vec3(-0.35, 0.75, 0.55))), 0.0, 1.0);
 	relief *= mix(1.0, orm.r, 0.7);
-	vec3 emission = color * mix(memory_glow * relief, glow, seen) + lift;
+	vec3 emission = color * mix(memory_glow * relief * (1.0 + overview), glow, seen) + lift;
+	// and what is in view as plain as what is remembered, far from any
+	// torch (the ground under the level stays in its dark)
+	emission += albedo * relief * seen * overview * memory * 0.45;
 	float near = 1.0;
 	if (void_fade > 0.0) {
 		near = mix(1.0, fow.a, void_fade);

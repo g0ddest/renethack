@@ -62,6 +62,11 @@ branch_cracks={
 "type": "float",
 "value": 0.0
 }
+; the whole level framed: what is remembered shows nearly as it is
+overview={
+"type": "float",
+"value": 0.0
+}
 
 [renethack]
 

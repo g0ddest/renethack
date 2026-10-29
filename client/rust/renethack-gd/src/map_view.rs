@@ -96,6 +96,15 @@ const MIN_DISTANCE: f32 = 7.0;
 const MAX_DISTANCE: f32 = 22.0;
 /// The camera's vertical field of view, degrees.
 const FOV_DEG: f32 = 40.0;
+/// The whole level framed (the overview): how far past the frame the dark
+/// closes in, metres more than the hero's view, and how long its air
+/// takes to clear (seconds).
+const OVERVIEW_CLEAR: f32 = 45.0;
+const OVERVIEW_EASE: f32 = 0.35;
+/// The ambient light the overview adds.
+const OVERVIEW_AMBIENT: f32 = 0.3;
+/// The vignette's strength over the map (vignette.gdshader's own).
+const VIGNETTE: f32 = 0.4;
 /// The overview never goes further (a whole 80x21 level fits well within).
 const MAX_OVERVIEW_DISTANCE: f32 = 80.0;
 const FOLLOW_RATE: f32 = 6.0;
@@ -3080,6 +3089,8 @@ pub struct MapView {
     distance: f32,
     /// The whole-level view is on: its distance, refitted as cells appear.
     overview: Option<f32>,
+    /// How far the overview's clear air has come in (0 to 1).
+    overview_k: f32,
     snap: bool,
     /// Seconds since the start (the torch's flicker).
     clock: f64,
@@ -3744,6 +3755,7 @@ impl MapView {
             focus: center,
             distance: DISTANCE,
             overview: None,
+            overview_k: 0.0,
             snap: true,
             clock: 0.0,
             hero_at: None,
@@ -4100,6 +4112,7 @@ impl MapView {
             let t = (FOLLOW_RATE * delta as f32).clamp(0.0, 1.0);
             self.focus = self.focus.lerp(self.target, t);
         }
+        self.ease_overview(delta as f32);
         self.place_camera();
         self.follow_rings();
         self.fade_in(new_level, delta as f32);
@@ -5346,6 +5359,38 @@ impl MapView {
             None => Some(self.distance),
         };
         self.hints_dirty = true;
+    }
+
+    /// The whole level framed, its air clears: the haze, the dark past the
+    /// frame and the vignette go, a little light more falls everywhere,
+    /// and what is remembered shows nearly as it is (map_surface's
+    /// `overview`), over `OVERVIEW_EASE` seconds; back as it was when the
+    /// camera follows the hero again.
+    fn ease_overview(&mut self, delta: f32) {
+        let want = if self.overview.is_some() { 1.0 } else { 0.0 };
+        if self.overview_k == want && want == 0.0 {
+            return;
+        }
+        let step = delta.min(1.0 / 30.0) / OVERVIEW_EASE;
+        self.overview_k = if want > self.overview_k {
+            (self.overview_k + step).min(want)
+        } else {
+            (self.overview_k - step).max(want)
+        };
+        let k = self.overview_k * self.overview_k * (3.0 - 2.0 * self.overview_k);
+        // (a level changing under the overview sets the branch's again)
+        let l = self.branch_look;
+        self.env
+            .set_volumetric_fog_density(l.fog_density * (1.0 - k));
+        if !self.showcase {
+            // a lit hall far from its torches, as plain as the rest
+            let ambient = l.ambient_energy + OVERVIEW_AMBIENT * k;
+            self.env.set_ambient_light_energy(ambient);
+        }
+        if let Some(m) = self.post_mat.as_mut() {
+            m.set_shader_parameter("strength", &(VIGNETTE * (1.0 - k)).to_variant());
+        }
+        RenderingServer::singleton().global_shader_parameter_set("overview", &k.to_variant());
     }
 
     /// The whole-level view is on (self-tests).
@@ -6712,8 +6757,10 @@ impl MapView {
         let pitch = pitch_at(distance);
         // the darkness closes in at the same depth behind what is framed,
         // however far the camera is
-        self.env.set_fog_depth_begin(distance + 3.0);
-        self.env.set_fog_depth_end(distance + 16.0);
+        // (the whole level framed: none)
+        let clear = OVERVIEW_CLEAR * self.overview_k;
+        self.env.set_fog_depth_begin(distance + 3.0 + clear);
+        self.env.set_fog_depth_end(distance + 16.0 + clear);
         let offset = Vector3::new(0.0, pitch.sin(), pitch.cos()) * distance;
         // aim a little south of the hero, so the hero stands above the
         // log; close in, the same offset would push the hero off the top
