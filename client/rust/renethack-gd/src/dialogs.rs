@@ -314,6 +314,13 @@ fn fields(text: &str) -> Vec<String> {
     out
 }
 
+/// `text` ends a sentence (or a colon), maybe in its closing quote:
+/// NetHack puts two spaces after one.
+fn ends_sentence(text: &str) -> bool {
+    text.trim_end_matches(['"', '\'', '»', '”', ')'])
+        .ends_with(['.', '!', '?', ':', '…'])
+}
+
 /// A row's cells as a table has them: parted by a run of three spaces or
 /// more, a tab, or two spaces not after a sentence's end (prose has those).
 fn table_cells(text: &str) -> Vec<String> {
@@ -325,7 +332,7 @@ fn table_cells(text: &str) -> Vec<String> {
             ' ' => spaces += 1,
             '\t' => spaces = 3,
             _ => {
-                let sentence = cur.ends_with(['.', '!', '?', ':']);
+                let sentence = ends_sentence(&cur);
                 if !cur.is_empty() && (spaces >= 3 || (spaces == 2 && !sentence)) {
                     out.push(std::mem::take(&mut cur));
                 } else if spaces > 0 && !cur.is_empty() {
@@ -2592,10 +2599,7 @@ impl Dialogs {
         let lines = &lines[..end];
         // prose (`^X`, the intro, messages) reads in the body face; tables
         // and pictures keep the monospace columns
-        let prose = !lines.iter().any(|l| {
-            let t = l.text.trim();
-            t.contains("  ") || t.contains('|') || t.contains("--") || t.contains('\t')
-        });
+        let prose = is_prose(lines);
         let look = self.look.clone();
         let longest_w = lines
             .iter()
@@ -4139,6 +4143,19 @@ impl Dialogs {
         }
     }
 
+    /// The open text window reads in the body face, as prose (self-tests).
+    pub fn show_prose(&self) -> Option<bool> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::Show { text, layout: None }) => text
+                .scroll
+                .get_children()
+                .iter_shared()
+                .find_map(|c| c.try_cast::<RichTextLabel>().ok())
+                .map(|l| l.has_theme_font_override("normal_font")),
+            _ => None,
+        }
+    }
+
     /// Every label's text in the open dialog, in order (self-tests).
     pub fn panel_texts(&self) -> Vec<String> {
         fn walk(node: &Gd<Node>, out: &mut Vec<String>) {
@@ -5135,6 +5152,37 @@ fn spells_hint(purpose: Purpose, reorder: bool, key: &str) -> String {
     }
 }
 
+/// A text window's lines are prose: none laid out in columns (a run of
+/// spaces inside it that ends no sentence: NetHack's two spaces after one
+/// are none), nor a rule or a bar of a picture.
+fn is_prose(lines: &[TextLine]) -> bool {
+    !lines.iter().any(|l| {
+        let t = l.text.trim();
+        table_cells(t).len() > 1 || t.contains('|') || t.contains("--")
+    })
+}
+
+/// Prose's two spaces after a sentence, one: the body face is no
+/// typewriter.
+fn one_space_after_sentences(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some(i) = rest.find("  ") {
+        let (before, after) = rest.split_at(i);
+        out.push_str(before);
+        let gap = after.len() - after.trim_start_matches(' ').len();
+        let next = &after[gap..];
+        if gap == 2 && ends_sentence(&out) && !next.is_empty() {
+            out.push(' ');
+        } else {
+            out.push_str(&after[..gap]);
+        }
+        rest = next;
+    }
+    out.push_str(rest);
+    out
+}
+
 /// A text window of prose: as `show_text`, and the lines that head a
 /// section ("Background:") in gold.
 fn prose_text(lines: &[TextLine]) -> String {
@@ -5149,7 +5197,11 @@ fn prose_text(lines: &[TextLine]) -> String {
                 let t = bbcode_escape(&l.text);
                 format!("[b][color={}]{t}[/color][/b]", hex(theme::GOLD_BRIGHT))
             } else {
-                show_text(std::slice::from_ref(l))
+                let l = TextLine {
+                    attr: l.attr,
+                    text: one_space_after_sentences(&l.text),
+                };
+                show_text(std::slice::from_ref(&l))
             }
         })
         .collect::<Vec<_>>()
@@ -5520,6 +5572,39 @@ mod tests {
         assert_eq!(mark_text(&e), "✔");
         e.count = Some(12);
         assert_eq!(mark_text(&e), "12");
+    }
+
+    #[test]
+    fn prose_with_two_spaces_after_its_sentences_is_no_table() {
+        let line = |t: &str| TextLine {
+            attr: 0,
+            text: t.into(),
+        };
+        // a quest's words in English and in Russian read alike
+        let english = [
+            line("You receive a faint telepathic message from Norn:"),
+            line("Your help is urgently needed at the Shrine of Destiny!  Look for a"),
+            line("...ad aerarium.\"  The rest is \"Hurry!\"  Go."),
+        ];
+        assert!(is_prose(&english));
+        assert!(is_prose(&[line(
+            "Ты срочно нужна в Святилище Судьбы! Ищи…"
+        )]));
+        // a table, a picture, a gap after no sentence: monospace
+        assert!(!is_prose(&[line(
+            "protection             1   clerical       0%      100%"
+        )]));
+        assert!(!is_prose(&[line(
+            "Status of the hero:  Level 3  HP 12(14)"
+        )]));
+        assert!(!is_prose(&[line("    |....|"), line("    ------")]));
+        assert!(!is_prose(&[line("Strength!   18")]), "three spaces");
+        // shown with one space after each sentence
+        assert_eq!(
+            one_space_after_sentences("needed!  Look for it.\"  Go:  now  here"),
+            "needed! Look for it.\" Go: now  here"
+        );
+        assert_eq!(one_space_after_sentences("End.  "), "End.  ");
     }
 
     #[test]

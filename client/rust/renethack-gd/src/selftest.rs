@@ -94,6 +94,8 @@ mod passing_tests;
 mod polyself_tests;
 #[path = "selftest_prologue.rs"]
 mod prologue_tests;
+#[path = "selftest_prose.rs"]
+mod prose_tests;
 #[path = "selftest_rebind.rs"]
 mod rebind_tests;
 #[path = "selftest_riding.rs"]
@@ -5063,6 +5065,7 @@ impl SelfTest {
             "give-up" => give_up_tests::give_up(),
             "hud-tips" => tips_tests::hud_tips(),
             "look-tip" => look_tests::look_tip(),
+            "quest-words" => prose_tests::quest_words(),
             "pad-panels" => pad_panels_tests::pad_panels(),
             "pad-play" => pad_play_tests::pad_play(),
             "pad-screens" => pad_screens_tests::pad_screens(),
