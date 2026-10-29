@@ -20296,6 +20296,8 @@ Enter value for %s threshold:  [f4b9a4e76e90]
   pl  Введите порог для 3 стрелы:
 Entering explore/discovery mode instead.  [e3e82e3cdef1]
   =   Вместо него — режим исследования.
+Entering the tutorial.  [d1056997b2dc]
+  =   Начинается обучение.
 Eris?  I don't need Eris  [f5ab189080b2]
   =   Эрида? Не нужна мне Эрида
 Et in Arcadia ego  [16b7fc4f390b]
@@ -22846,6 +22848,8 @@ Restoring save file...  [cadd8e9e7223]
   =   Загрузка сохранённой игры...
 Restoring:  [873ad926717a]
   =   Восстановление:
+Resuming regular play.  [f045b51d5967]
+  =   Возвращаемся к обычной игре.
 Ride %s  [87ed071ab015]
   m   Сесть верхом на тритона
   f   Сесть верхом на крысу
@@ -25234,6 +25238,11 @@ The hole fills with %s!  [0c9e50db2097]
   f   Яму заливает крыса!
   n   Яму заливает копьё!
   pl  Яму заливают 3 стрелы!
+The hole in the %s above you closes up.  [7601658edb96]
+  m   Дыра в тритоне над вами затягивается.
+  f   Дыра в крысе над вами затягивается.
+  n   Дыра в копье над вами затягивается.
+  pl  Дыра в 3 стрелах над вами затягивается.
 The hook slices through the %s.  [e8c6290ff100]
   m   Крюк рассекает тритона.
   f   Крюк рассекает крысу.
@@ -32664,6 +32673,8 @@ You feel diffuse.  [e713f0455b0a]
   =   Вы будто расплываетесь в пространстве.
 You feel discharged.  [b20e8cd6ea00]
   =   Вы чувствуете себя разряженной батарейкой.
+You feel dizzier.  [1a2c4a3dad09]
+  =   Голова кружится ещё сильнее.
 You feel drained of energy.  [64beabbccf13]
   =   Вы чувствуете, что из вас вытянули всю энергию.
 You feel embarrassed for a moment.  [92dbb9ec70d3]
@@ -32676,6 +32687,8 @@ You feel even worse.  [e71d6dcf01d8]
   =   Вам ещё хуже.
 You feel exhausted.  [bc9db4631580]
   =   Вы совершенно обессилены.
+You feel extremely out of place.  [bb28c8d07ee4]
+  =   Вам кажется, что вы совсем не на своём месте.
 You feel feverish.  [5bac0e61e72f]
   =   Вас лихорадит.
 You feel foolish!  [d1154276d66e]
@@ -32924,6 +32937,8 @@ You feel sick.  [948b4649ab34]
   =   Вам плохо.
 You feel slightly confused.  [14ed072ee9ce]
   =   У вас слегка путаются мысли.
+You feel slightly dizzy.  [834ae5c6fbef]
+  =   У вас немного кружится голова.
 You feel sluggish.  [d24c176d19d6]
   =   Вы чувствуете вялость.
 You feel smart!  [e01adb65a0cd]
@@ -34751,6 +34766,8 @@ You materialize in the shadows of %s.  Immediately, you notice\nthat something i
   f   Вы возникаете в тени крысы. Сразу же вы замечаете,\nчто что-то не так. Поля вокруг замка вытоптаны и\nиссохли, будто недавно здесь отгремела великая битва.\n\nОсмотревшись, вы видите длинные борозды на стенах крысы.\nВы знаете лишь одно существо, что оставляет такие следы...
   n   Вы возникаете в тени копья. Сразу же вы замечаете,\nчто что-то не так. Поля вокруг замка вытоптаны и\nиссохли, будто недавно здесь отгремела великая битва.\n\nОсмотревшись, вы видите длинные борозды на стенах копья.\nВы знаете лишь одно существо, что оставляет такие следы...
   pl  Вы возникаете в тени 3 стрел. Сразу же вы замечаете,\nчто что-то не так. Поля вокруг замка вытоптаны и\nиссохли, будто недавно здесь отгремела великая битва.\n\nОсмотревшись, вы видите длинные борозды на стенах 3 стрел.\nВы знаете лишь одно существо, что оставляет такие следы...
+You materialize on a different level!  [40aa9b82feeb]
+  =   Вы материализуетесь на другом уровне!
 You may discover a fine spirit inside a potion bottle.  [fc9064e909bd]
   =   В бутылке из-под зелья может оказаться отменный дух.
 You may get rich selling letters, but beware of being blackmailed!  [39607d49c07b]

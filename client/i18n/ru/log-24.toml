@@ -1,0 +1,31 @@
+# R6, log messages batch 24: what a level change says before or after it
+# (schedule_goto's words: a level teleport, a hole, the tutorial, the
+# magic portal's dizziness). Syntax: nh-i18n's template.rs.
+
+[40aa9b82feeb]
+en = "You materialize on a different level!"
+ru = "Вы материализуетесь на другом уровне!"
+
+[bb28c8d07ee4]
+en = "You feel extremely out of place."
+ru = "Вам кажется, что вы совсем не на своём месте."
+
+[7601658edb96]
+en = "The hole in the %s above you closes up."
+ru = "Дыра в {1:loc} над вами затягивается."
+
+[834ae5c6fbef]
+en = "You feel slightly dizzy."
+ru = "У вас немного кружится голова."
+
+[1a2c4a3dad09]
+en = "You feel dizzier."
+ru = "Голова кружится ещё сильнее."
+
+[d1056997b2dc]
+en = "Entering the tutorial."
+ru = "Начинается обучение."
+
+[f045b51d5967]
+en = "Resuming regular play."
+ru = "Возвращаемся к обычной игре."

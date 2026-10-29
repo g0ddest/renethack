@@ -1,4 +1,4 @@
-{"format": 1, "engine": "NetHack-5.0.0_Released", "count": 29589, "entries": [
+{"format": 1, "engine": "NetHack-5.0.0_Released", "count": 29591, "entries": [
 {"id": "a053ba02e4d4", "fmt": "X marks the spot.", "uses": ["engraving"], "sites": ["dat/Arc-loca.lua:90 des.engraving", "dat/Arc-loca.lua:91 des.engraving", "dat/Arc-loca.lua:92 des.engraving", "dat/Arc-loca.lua:93 des.engraving"]},
 {"id": "d5335a1468c3", "fmt": "What a strange feeling!", "uses": ["level"], "sites": ["dat/air.lua:12 des.message"]},
 {"id": "2442f1605479", "fmt": "You notice that there is no gravity here.", "uses": ["level"], "sites": ["dat/air.lua:13 des.message"]},
@@ -2887,7 +2887,9 @@
 {"id": "c715dd85a1e8", "fmt": "RogueEpyx", "uses": ["sprintf"], "sites": ["src/alloc.c:246 dupstr strcpy((char *) alloc(len + 1), string)"]},
 {"id": "251a36b95999", "fmt": "RogueIBM", "uses": ["sprintf"], "sites": ["src/alloc.c:246 dupstr strcpy((char *) alloc(len + 1), string)"]},
 {"id": "1a2c4a3dad09", "fmt": "You feel dizzier.", "uses": ["sprintf"], "sites": ["src/alloc.c:246 dupstr strcpy((char *) alloc(len + 1), string)"]},
+{"id": "bb28c8d07ee4", "fmt": "You feel extremely out of place.", "uses": ["sprintf"], "sites": ["src/alloc.c:246 dupstr strcpy((char *) alloc(len + 1), string)"]},
 {"id": "834ae5c6fbef", "fmt": "You feel slightly dizzy.", "uses": ["sprintf"], "sites": ["src/alloc.c:246 dupstr strcpy((char *) alloc(len + 1), string)"]},
+{"id": "40aa9b82feeb", "fmt": "You materialize on a different level!", "uses": ["sprintf"], "sites": ["src/alloc.c:246 dupstr strcpy((char *) alloc(len + 1), string)"]},
 {"id": "5e3eb367a865", "fmt": "You now prefer mimicking %s again.", "uses": ["sprintf"], "args": ["species|text"], "sites": ["src/alloc.c:246 dupstr strcpy((char *) alloc(len + 1), string)", "src/eat.c:1209 cpostfx Sprintf(buf, Hallucination ? \"You suddenly dread being peeled and mimic %s again!\" : \"You now prefer mimicking %s again.\", an...)"]},
 {"id": "b22cbbd701e0", "fmt": "You suddenly dread being peeled and mimic %s again!", "uses": ["sprintf"], "args": ["species|text"], "sites": ["src/alloc.c:246 dupstr strcpy((char *) alloc(len + 1), string)", "src/eat.c:1209 cpostfx Sprintf(buf, Hallucination ? \"You suddenly dread being peeled and mimic %s again!\" : \"You now prefer mimicking %s again.\", an...)"]},
 {"id": "2a26b0d57d43", "fmt": "[%.*s]", "uses": ["sprintf"], "args": ["text"], "sites": ["src/alloc.c:246 dupstr strcpy((char *) alloc(len + 1), string)", "src/questpgr.c:585 com_pager_core Sprintf(tmpbuf, \"[%.*s]\", BUFSZ - 1 - 2, text)"]},

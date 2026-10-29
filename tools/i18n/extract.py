@@ -236,8 +236,11 @@ COLUMNS_OF_WORDS = {"dospellmenu"}
 # translated lines of uhitm.c)
 THINGS_GO_FIRST = {"erode_obj"}
 # Helpers whose parameter is their caller's own: its literals are those the
-# caller is given (getobj's word, which silly_thing says)
-HANDED_ON = {"silly_thing"}
+# caller is given (getobj's word, which silly_thing says; the words
+# schedule_goto keeps with dupstr for after a level change, "You
+# materialize on a different level!", though another caller hands it a
+# buffer)
+HANDED_ON = {"silly_thing", "dupstr"}
 # Members a text is copied into, by name (most are the player's or a save
 # file's to fill: svp.plname): takeoff.disrobing is "disrobing" or "disarming"
 COPIED_INTO = {"disrobing"}
