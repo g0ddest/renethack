@@ -751,6 +751,7 @@ impl Art {
                 height: 1.0,
                 cap: nh_art::MAX_FOOTPRINT,
                 back: 0.0,
+                overhangs: false,
                 tint: h.tint,
                 skin: h.skin,
                 level: h.level,

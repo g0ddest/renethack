@@ -3,9 +3,11 @@
 //! looks: a jackal two cells north of it, which its body hides from the
 //! camera, is drawn through it in the x-ray as a creature behind the hero
 //! is; the pointer on the jackal, and on the cell beside the dragon under
-//! its wing, picks those cells and not the dragon's; and with an arrow trap and a dagger
-//! beside the jackal, which it hides too, the dragon is drawn
-//! see-through. With `--screenshots`, pictures of both.
+//! its wing, picks those cells and not the dragon's; with nothing known
+//! under it, it is drawn whole, and with a dagger beside it, then an arrow
+//! trap between it and the jackal, under its overhang, it is drawn
+//! see-through, the trap's cell still the pointer's. With
+//! `--screenshots`, pictures of both.
 
 use std::sync::atomic::{AtomicI32, Ordering};
 
@@ -63,21 +65,47 @@ pub(super) fn overhang() -> Vec<Step> {
             Ok(())
         }),
         Step::Shot("overhang"),
-        Step::Call("an arrow trap and a dagger beside the jackal", |g| {
+        Step::Wait("nothing known hidden, the dragon drawn whole", |g| {
+            Ok(map_view(g)?.big_faded() == 0)
+        }),
+        // under its overhang: a dagger in the cell beside it, where its
+        // body lies set back, and an arrow trap between it and the jackal
+        Step::Call("a dagger beside the dragon", |g| {
             let cat = g.catalog.clone().ok_or("no catalog")?;
             let (x, y) = jackal();
-            crate::gallery::put_entry(
-                &mut g.world,
-                &cat,
-                (x - 1, y),
-                Entry::Feature("S_arrow_trap"),
-            )?;
-            crate::gallery::put_entry(&mut g.world, &cat, (x + 1, y), Entry::Obj(")", "dagger"))?;
-            Ok(())
+            let at = (x - 1, y + 2);
+            crate::gallery::put_entry(&mut g.world, &cat, at, Entry::Obj(")", "dagger"))
         }),
-        Step::Wait("the dragon see-through over them", |g| {
+        Step::Wait("the dragon see-through over the dagger", |g| {
             Ok(map_view(g)?.big_faded() == 1)
         }),
+        Step::Call("the dagger gone, an arrow trap behind the dragon", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            let (x, y) = jackal();
+            let floor = Entry::Feature("S_room");
+            crate::gallery::put_entry(&mut g.world, &cat, (x - 1, y + 2), floor)?;
+            let trap = Entry::Feature("S_arrow_trap");
+            crate::gallery::put_entry(&mut g.world, &cat, (x, y + 1), trap)
+        }),
+        Step::Wait("the dragon see-through over the trap", |g| {
+            Ok(map_view(g)?.big_faded() == 1)
+        }),
+        Step::Call(
+            "the trap's cell and the dragon's picked by their ground",
+            |g| {
+                let map = map_view(g)?;
+                let (x, y) = jackal();
+                for cell in [(x, y + 1), (x, y + 2)] {
+                    let at = Vector3::new(cell.0 as f32, 0.05, cell.1 as f32);
+                    let p = map.on_screen(at).ok_or("off the screen")?;
+                    let picked = map.cell_at(p);
+                    if picked != Some(cell) {
+                        return Err(format!("the pointer at {cell:?} picks {picked:?}"));
+                    }
+                }
+                Ok(())
+            },
+        ),
         Step::Shot("overhang-faded"),
     ]);
     steps.extend(quit());

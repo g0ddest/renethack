@@ -2180,6 +2180,7 @@ impl Art {
                 height: 1.0,
                 cap: nh_art::MAX_FOOTPRINT,
                 back: 0.0,
+                overhangs: false,
                 tint: nh_art::Tint::None,
                 skin,
                 level: nh_art::Level::Generic,

@@ -810,6 +810,8 @@ pub struct Resolved {
     /// cell overhangs behind it.
     pub cap: f32,
     pub back: f32,
+    /// It lies over more than its own cell (a grown dragon's wings).
+    pub overhangs: bool,
     pub tint: Tint,
     pub skin: Skin,
     pub level: Level,
@@ -1143,12 +1145,14 @@ impl ArtManifest {
         let scale = target / spec.size;
         // one let overhang its cell: its front in it, the rest behind (a
         // footprint's z is along the way the model faces)
-        let back = match spec.footprint {
-            Some([_, z]) if cap > MAX_FOOTPRINT => {
-                let [_, along] = spec.squash(scale, cap);
-                (z * spec.girth * along * scale / 2.0 - FRONT_REACH).max(0.0)
+        let (back, overhangs) = match spec.footprint {
+            Some([x, z]) if cap > MAX_FOOTPRINT => {
+                let [across, along] = spec.squash(scale, cap);
+                let long = (x * across).max(z * along) * spec.girth * scale;
+                let back = (z * spec.girth * along * scale / 2.0 - FRONT_REACH).max(0.0);
+                (back, long > 1.0)
             }
-            _ => 0.0,
+            _ => (0.0, false),
         };
         Resolved {
             model,
@@ -1158,6 +1162,7 @@ impl ArtManifest {
             height: target,
             cap,
             back,
+            overhangs,
             tint: if spec.tint_strength > 0.0 {
                 Tint::Glyph(spec.tint_strength)
             } else {
@@ -2201,6 +2206,11 @@ mod tests {
             );
         }
         assert_eq!(art.monster(find("mumak"), 0).back, 0.0);
+        // a grown dragon lies over more than its cell; a giant (huge, but
+        // upright) and a mumak (large) keep to theirs
+        assert!(art.monster(find("red dragon"), 0).overhangs);
+        assert!(!art.monster(find("hill giant"), 0).overhangs);
+        assert!(!art.monster(find("mumak"), 0).overhangs);
         // of two long bodies of one model, the one that would have been
         // bigger is still the bigger
         assert!(height("winter wolf") > height("wolf"));

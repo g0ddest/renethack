@@ -311,11 +311,6 @@ const BODY_HALF_DEPTH: f32 = 0.15;
 /// A creature seen through what hides it, and whether it is hostile.
 type Behind = (Gd<Node3D>, bool);
 
-/// How high a huge or gigantic creature takes the pointer on its cell
-/// (its column): the height of the tallest one a cell held before they
-/// overhung theirs, so a grown dragon takes no click nor tip of the cells
-/// behind it.
-const BIG_PICK_TOP: f32 = 1.4;
 /// How see-through a huge or gigantic creature is drawn while it hides
 /// an object or a trap the hero knows of behind it.
 const BIG_FADE: f32 = 0.55;
@@ -655,14 +650,15 @@ impl Look {
         let r = look.art;
         let top = if look.pose == Pose::Corpse {
             pos.y + (r.height * 0.4).min(0.5)
-        } else if r.cap > nh_art::MAX_FOOTPRINT {
-            // a body over its cell picks by its cell, not its height: the
-            // pointer on the cells behind it is not its
-            pos.y + (r.lift + r.height).min(BIG_PICK_TOP)
         } else {
             pos.y + r.lift + r.height
         };
-        self.reach(top);
+        // a body over more than its cell takes the pointer by its cell's
+        // ground, not by its height: the cells behind it and beside it
+        // under its wings keep theirs
+        if !r.overhangs {
+            self.reach(top);
+        }
         self.models.push(Placed { look, pos, yaw });
     }
 }
@@ -2420,6 +2416,7 @@ fn entity_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
                     height: 0.12,
                     cap: nh_art::MAX_FOOTPRINT,
                     back: 0.0,
+                    overhangs: false,
                     tint: Tint::None,
                     skin: nh_art::Skin::Own,
                     level: nh_art::Level::Generic,
@@ -5103,12 +5100,13 @@ impl MapView {
         hidden
     }
 
-    /// The creatures on the cells north of a huge or gigantic one (a body
-    /// that overhangs its cell) that it hides from the camera, the whole
-    /// or a part, and whether each is hostile: smaller than it, not the
-    /// hero (`stands_before` sees them through it); and the huge ones that
-    /// hide an object or a trap the hero knows of there (drawn
-    /// see-through: a trap is no model of its own to show through).
+    /// The creatures on the cells round a huge or gigantic one (a body
+    /// that overhangs its cell: behind it, and beside it under its wings)
+    /// that it hides from the camera, the whole or a part, and whether
+    /// each is hostile: smaller than it, not the hero (`stands_before`
+    /// sees them through it); and the huge ones that hide an object or a
+    /// trap the hero knows of there (drawn see-through: a trap is no model
+    /// of its own to show through).
     fn hidden_by_big(&self, world: &World, catalog: &Catalog) -> (Vec<Behind>, Vec<Gd<Node3D>>) {
         // an object or a trap the map shows there
         let known = |x: i32, y: i32| {
@@ -5145,8 +5143,12 @@ impl MapView {
             else {
                 continue;
             };
-            for dy in -3..=-1 {
+            // the cells behind it, and beside and before it under its wings
+            for dy in -3..=1 {
                 for dx in -2..=2 {
+                    if (dx, dy) == (0, 0) {
+                        continue;
+                    }
                     let Some(o) = self.cells.get(&(x + dx, y + dy)) else {
                         continue;
                     };
