@@ -1,8 +1,9 @@
 //! The title, the creation form and the end with a gamepad alone
 //! (`pad-screens`): the title opens with the focus on a new game; the
 //! d-pad moves it and A takes it (the achievements, then B back); the
-//! form opens on the name, the d-pad goes down to the role and → changes
-//! it, Start begins the game. Given up from the game's menu (B, the d-pad,
+//! form opens on the empty name, → goes to the dice and A rolls a name
+//! that agrees with the gender (chosen with it), the d-pad goes down to
+//! the role and → changes it, Start begins the game. Given up from the game's menu (B, the d-pad,
 //! A, ← to yes, A), its questions let go with B; the end opens on a new
 //! game and B goes back to the title.
 
@@ -20,6 +21,8 @@ use crate::tr;
 
 /// The role the form had before → changed it.
 static ROLE: Mutex<String> = Mutex::new(String::new());
+/// The name the dice rolled.
+static NAME: Mutex<String> = Mutex::new(String::new());
 static FRAME: AtomicI64 = AtomicI64::new(0);
 
 fn frames() -> i64 {
@@ -33,8 +36,12 @@ fn focus_on(g: &RenethackGame, page: &str, words: &str) -> Result<bool, String> 
     Ok(screen(g) == Some(page) && ui.screens.nav_focused().as_deref() == Some(words))
 }
 
+fn choice(g: &RenethackGame) -> Option<crate::ui_events::CharacterChoice> {
+    g.ui.as_ref()?.screens.creation_choice()
+}
+
 fn role(g: &RenethackGame) -> Option<String> {
-    g.ui.as_ref()?.screens.creation_choice().map(|c| c.role)
+    choice(g).map(|c| c.role)
 }
 
 pub(super) fn pad_screens() -> Vec<Step> {
@@ -62,17 +69,38 @@ pub(super) fn pad_screens() -> Vec<Step> {
             focus_on(g, "title", &tr!("title-new-game"))
         }),
         tap(PadButton::A),
-        Step::Wait("the form, on the name", |g| {
-            focus_on(g, "creation", crate::screens::DEFAULT_NAME)
+        Step::Wait("the form, on the empty name", |g| {
+            let empty = choice(g).is_some_and(|c| c.name.is_empty());
+            Ok(empty && focus_on(g, "creation", &tr!("creation-name-placeholder"))?)
+        }),
+        tap(PadButton::Right),
+        Step::Wait("→ the dice", |g| {
+            focus_on(g, "creation", &tr!("creation-name-roll-tip"))
+        }),
+        tap(PadButton::A),
+        Step::Wait("A: a name of the pool, the gender chosen with it", |g| {
+            fail_on_error_screen(g)?;
+            let Some(c) = choice(g).filter(|c| !c.name.is_empty()) else {
+                return Ok(false);
+            };
+            let cat = g.catalog.as_deref().ok_or("no catalog")?;
+            if c.gender == "random" {
+                return Err(format!("the dice left the gender to chance: {c:?}"));
+            }
+            let female = crate::names::is_female(cat, &c.gender);
+            if !crate::names::pool(female).contains(&c.name) {
+                return Err(format!("{:?} is no {} name", c.name, c.gender));
+            }
+            *NAME.lock().map_err(|e| e.to_string())? = c.name;
+            Ok(true)
         }),
         tap(PadButton::Down),
         Step::Wait("down to the role", |g| {
             fail_on_error_screen(g)?;
             let ui = g.ui.as_ref().ok_or("no UI")?;
-            let on_role = ui
-                .screens
-                .nav_focused()
-                .is_some_and(|w| w != crate::screens::DEFAULT_NAME);
+            let words = ui.screens.nav_focused().unwrap_or_default();
+            let on_role =
+                words != tr!("creation-name-roll-tip") && words != tr!("creation-name-placeholder");
             if on_role {
                 *ROLE.lock().map_err(|e| e.to_string())? = role(g).unwrap_or_default();
             }
@@ -86,6 +114,13 @@ pub(super) fn pad_screens() -> Vec<Step> {
         Step::Shot("pad-creation"),
         tap(PadButton::Start),
         Step::Request("Start: the game's first command", |p| *p == Prompt::Command),
+        Step::Call("the hero named by the dice", |g| {
+            let rolled = NAME.lock().map_err(|e| e.to_string())?.clone();
+            match g.name.as_deref() {
+                Some(name) if name == rolled => Ok(()),
+                other => Err(format!("the hero is {other:?}, the dice rolled {rolled:?}")),
+            }
+        }),
         // given up from the game's menu
         tap(PadButton::B),
         Step::Wait("the game's menu", |g| {

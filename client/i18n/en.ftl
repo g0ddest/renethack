@@ -249,6 +249,12 @@ creation-start = Start
 creation-back = Back
 creation-continue-instead = Continue { $name } instead
 creation-name-taken = A saved game has this name: starting would continue it.
+creation-name-placeholder = Type a name, or leave it to the dice
+creation-name-roll-tip = A name by chance, one that suits the hero
+creation-name-bad = A name holds only letters, digits, spaces and ' _ .
+# the dice's names: a heroine's, a hero's (at most 31 bytes each)
+creation-names-female = Astrid, Aveline, Brenna, Celandine, Dagny, Elowen, Gwendolyn, Hilde, Isolde, Jorunn, Kestrel, Liesel, Maren, Morwenna, Nessa, Odile, Rowena, Sigrun, Tamsin, Una, Vivienne, Wren, Ysolde, Ingrid
+creation-names-male = Alaric, Aldric, Bran, Corwin, Duncan, Edric, Fenwick, Gareth, Garrick, Hakon, Ivo, Jasper, Kenrick, Leofric, Merrick, Niall, Osric, Percival, Roderick, Sigurd, Tristan, Ulric, Wystan, Yorick
 
 end-title = The game is over
 end-new-game = New game

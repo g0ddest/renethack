@@ -40,8 +40,9 @@ use crate::icons;
 use crate::input::{client_key, key_input, key_release};
 use crate::inventory_panel::{self, Intent, InvInput, InventoryPanel, KeyUse, WarmStep};
 use crate::map_view::MapView;
+use crate::names;
 use crate::paths::Paths;
-use crate::screens::{DEFAULT_NAME, EndSummary, Screens};
+use crate::screens::{EndSummary, Screens};
 use crate::selftest::SelfTest;
 use crate::settings_page::{self, Change, PageKey, SettingsInput, SettingsPage};
 use crate::tr;
@@ -5191,16 +5192,19 @@ impl RenethackGame {
         self.state = GameState::Creating;
         self.show_game(false);
         let keys = self.settings.keys.unwrap_or_default();
-        self.ui_mut().screens.show_creation(catalog, keys);
+        let pg = self.playground();
+        let taken = Rc::new(move |name: &str| save_exists(&pg, name));
+        self.ui_mut().screens.show_creation(catalog, keys, taken);
     }
 
     fn check_name(&mut self, name: &str) {
         let name = name.trim();
-        let name = if name.is_empty() { DEFAULT_NAME } else { name };
-        let taken = save_exists(&self.playground(), name);
-        let error = EngineConfig::character_options(name, "random", "random", "random", "random")
-            .err()
-            .map(|e| e.to_string());
+        // an empty field: the dice choose a name no saved game has
+        let taken = !name.is_empty() && save_exists(&self.playground(), name);
+        let error = (!name.is_empty())
+            .then(|| EngineConfig::character_options(name, "random", "random", "random", "random"))
+            .and_then(Result::err)
+            .map(|_| tr!("creation-name-bad"));
         let screens = &mut self.ui_mut().screens;
         screens.set_name_taken(taken);
         if !taken {
@@ -5250,6 +5254,15 @@ impl RenethackGame {
             ui.map.warm_up(cat, Some(&choice.role));
         }
         let pg = self.playground();
+        // no name (the form names an empty field itself): the dice's
+        let choice = &match self.catalog.as_deref() {
+            Some(cat) if choice.name.trim().is_empty() => {
+                names::named(cat, choice.clone(), names::roll(), false, |n| {
+                    save_exists(&pg, n)
+                })
+            }
+            _ => choice.clone(),
+        };
         if save_exists(&pg, &choice.name) {
             self.ui_mut().screens.set_name_taken(true);
             return;
@@ -5263,7 +5276,9 @@ impl RenethackGame {
         ) {
             Ok(o) => o,
             Err(e) => {
-                self.ui_mut().screens.set_name_error(Some(&e.to_string()));
+                godot_warn!("renethack: {e}");
+                let error = tr!("creation-name-bad");
+                self.ui_mut().screens.set_name_error(Some(&error));
                 return;
             }
         };
@@ -5298,7 +5313,11 @@ impl RenethackGame {
             self.loadout_for = Some(choice.role.clone());
             self.save_ui_state();
             self.prologue_due = prologue;
-            self.prologue_choice = Some((choice.role.clone(), choice.gender == "female"));
+            let female = self
+                .catalog
+                .as_deref()
+                .is_some_and(|cat| names::is_female(cat, &choice.gender));
+            self.prologue_choice = Some((choice.role.clone(), female));
             self.new_game = true;
         }
     }

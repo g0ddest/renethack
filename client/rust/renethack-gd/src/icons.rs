@@ -343,6 +343,8 @@ pub enum Glyph {
     Drawbridge,
     /// The passtune: two notes beamed together.
     Notes,
+    /// A die showing five: a name by chance.
+    Die,
     Unknown,
 }
 
@@ -355,14 +357,14 @@ impl Glyph {
             Ball, Chain, Drop, Coins, Helmet, Blindfold, Cloak, Shirt, Gloves, Boots, Lamp, Leash,
             Shield, Swap, Quiver, Hand, Grid, Check, Star, Eye, Lens, Moon, Ankh, Heart, Stairs,
             Burst, Flames, Pentagram, Elements, Sunburst, Ascension, Hall, Crown, Ripples,
-            Drawbridge, Notes,
+            Drawbridge, Notes, Die,
         ];
         all.into_iter().find(|g| format!("{g:?}") == name)
     }
 }
 
 /// Every glyph (the warm-up paints them all).
-pub const ALL_GLYPHS: [Glyph; 39] = [
+pub const ALL_GLYPHS: [Glyph; 40] = [
     Glyph::Sword,
     Glyph::Cuirass,
     Glyph::Ring,
@@ -401,6 +403,7 @@ pub const ALL_GLYPHS: [Glyph; 39] = [
     Glyph::Heart,
     Glyph::Stairs,
     Glyph::Burst,
+    Glyph::Die,
     Glyph::Unknown,
 ];
 
@@ -1433,6 +1436,19 @@ fn layers(g: Glyph, main: Mat) -> Vec<Layer> {
                 GOLD,
             ),
         ],
+        Glyph::Die => {
+            let mut die = vec![layer(|p| rect(p, (0.0, 0.0), (0.64, 0.64), 0.2), BONE)];
+            for at in [
+                (-0.32, -0.32),
+                (0.32, -0.32),
+                (0.0, 0.0),
+                (-0.32, 0.32),
+                (0.32, 0.32),
+            ] {
+                die.push(layer(move |p| circle(p, at, 0.09), IRON));
+            }
+            die
+        }
         Glyph::Unknown => vec![layer(|p| circle(p, (0.0, 0.0), 0.5), STONE)],
     }
 }

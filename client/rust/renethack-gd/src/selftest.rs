@@ -44,6 +44,8 @@ mod conditions_tests;
 mod corridors;
 #[path = "selftest_counts.rs"]
 mod counts_tests;
+#[path = "selftest_creation.rs"]
+mod creation_tests;
 #[path = "selftest_credits.rs"]
 mod credits_tests;
 #[path = "selftest_crowd.rs"]
@@ -203,6 +205,9 @@ enum Step {
     /// input buffer: delivered next frame to `input()` and the focused
     /// text field, never from inside the game's own call.
     Press(GKey, char, bool),
+    /// A real key event as `Press`, waiting for no request: the pages
+    /// outside a game (the title, the creation form).
+    PagePress(GKey),
     Shot(&'static str),
     /// A screenshot, taken only when the check holds now (else skipped).
     ShotIf(&'static str, Check),
@@ -5033,6 +5038,7 @@ impl SelfTest {
             "pad-panels" => pad_panels_tests::pad_panels(),
             "pad-play" => pad_play_tests::pad_play(),
             "pad-screens" => pad_screens_tests::pad_screens(),
+            "creation" => creation_tests::creation(),
             "pad-words" => pad_words_tests::pad_words(),
             "skills" => skills_tests::skills(),
             "journal" => journal_tests::journal(),
@@ -5364,6 +5370,11 @@ impl SelfTest {
                     self.next();
                     return;
                 }
+                Step::PagePress(keycode) => {
+                    real_key(*keycode, '\0', false);
+                    self.next();
+                    return;
+                }
                 Step::Shot(name) | Step::ShotIf(name, _) => {
                     if let Step::ShotIf(_, check) = step
                         && self.frames == 0
@@ -5488,6 +5499,7 @@ fn describe(step: &Step) -> String {
         Step::Call(what, _) | Step::Inv(what, _) | Step::PadFrom(what, _) => what.to_string(),
         Step::Pad(evs) => format!("joypad {evs:?}"),
         Step::Press(k, c, _) => format!("a request for key {k:?} {c:?}"),
+        Step::PagePress(k) => format!("key {k:?}"),
         Step::Shot(name) | Step::ShotIf(name, _) => format!("screenshot {name}"),
     }
 }

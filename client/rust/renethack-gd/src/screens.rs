@@ -1,6 +1,7 @@
 //! Full-screen pages outside a game: title, settings, character creation,
 //! the end of a game and errors.
 
+use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -17,7 +18,9 @@ use nh_protocol::Catalog;
 use nh_world::KeyProfile;
 
 use crate::i18n::{self, EngineKind, Lang};
+use crate::icons::{self, Glyph};
 use crate::layouts;
+use crate::names;
 use crate::theme::{self, bbcode_escape, hex};
 use crate::tombstone;
 use crate::tr;
@@ -33,10 +36,10 @@ pub struct EndSummary {
     pub scores: Vec<String>,
 }
 
-/// Name used when the field is left empty (a name the engine keeps: not
-/// translated).
-pub const DEFAULT_NAME: &str = "Adventurer";
 const RANDOM: &str = "random";
+
+/// Whether a saved game has a name (the dice pass over those).
+pub type Taken = Rc<dyn Fn(&str) -> bool>;
 
 /// Races allowed for `role` (None: any role).
 fn races_for(cat: &Catalog, role: Option<i32>) -> Vec<i32> {
@@ -117,7 +120,14 @@ fn capitalize(s: &str) -> String {
 #[derive(Clone)]
 struct Form {
     catalog: Rc<Catalog>,
+    queue: UiQueue,
     name: Gd<LineEdit>,
+    /// Rolls a name (`names`).
+    dice: Gd<Button>,
+    /// The name the dice put in the field, a heroine's or not: while the
+    /// field holds it, it follows the gender chosen.
+    rolled: Rc<RefCell<Option<(String, bool)>>>,
+    taken: Taken,
     role: Gd<OptionButton>,
     race: Gd<OptionButton>,
     gender: Gd<OptionButton>,
@@ -159,12 +169,77 @@ impl Form {
     }
 
     fn typed_name(&self) -> String {
-        let name = self.name.get_text().to_string();
-        let name = name.trim();
-        if name.is_empty() {
-            DEFAULT_NAME.to_string()
-        } else {
-            name.to_string()
+        self.name.get_text().to_string().trim().to_string()
+    }
+
+    /// Whether a heroine's name, when the field holds the dice's.
+    fn rolled_female(&self) -> Option<bool> {
+        let name = self.typed_name();
+        self.rolled
+            .borrow()
+            .as_ref()
+            .filter(|(rolled, _)| *rolled == name)
+            .map(|&(_, female)| female)
+    }
+
+    /// The dice: a name that agrees with the gender chosen, a gender
+    /// left to chance chosen first (and shown).
+    fn roll(&mut self) {
+        let was = self.choice();
+        let rolled = names::named(
+            &self.catalog,
+            was.clone(),
+            names::roll(),
+            true,
+            &*self.taken,
+        );
+        if rolled.gender != was.gender {
+            let genders: Vec<(i32, String, String)> = self
+                .catalog
+                .genders
+                .iter()
+                .map(|g| (g.idx, g.code.clone(), g.adj.clone()))
+                .collect();
+            Form::preset(&mut self.gender, &rolled.gender, &genders);
+        }
+        self.show_rolled(&rolled);
+    }
+
+    /// The dice's name in the field, again if the gender chosen now (or
+    /// the role's and race's) does not agree with it.
+    fn agree(&mut self) {
+        let Some(female) = self.rolled_female() else {
+            return;
+        };
+        let was = self.choice();
+        let now = names::agreed(
+            &self.catalog,
+            was.clone(),
+            female,
+            names::roll(),
+            &*self.taken,
+        );
+        if now.name != was.name {
+            self.show_rolled(&now);
+        }
+    }
+
+    fn show_rolled(&mut self, choice: &CharacterChoice) {
+        let female = names::is_female(&self.catalog, &choice.gender);
+        *self.rolled.borrow_mut() = Some((choice.name.clone(), female));
+        self.name.set_text(&choice.name);
+        self.name
+            .set_caret_column(choice.name.chars().count() as i32);
+        push(&self.queue, UiEvent::NameEdited(choice.name.clone()));
+    }
+
+    /// The choice the game starts with: an empty name rolled, the dice's
+    /// name with the gender it agrees with.
+    fn chosen(&self) -> CharacterChoice {
+        let (cat, choice, roll) = (&self.catalog, self.choice(), names::roll());
+        match self.rolled_female() {
+            Some(female) => names::agreed(cat, choice, female, roll, &*self.taken),
+            None => names::named(cat, choice, roll, false, &*self.taken),
         }
     }
 
@@ -588,10 +663,11 @@ impl Screens {
                 };
                 let choice = form.choice();
                 let typed = form.name.get_text().to_string();
-                self.show_creation(form.catalog.clone(), choice.profile);
+                self.show_creation(form.catalog.clone(), choice.profile, form.taken.clone());
                 self.preset_creation(&choice);
                 if let Some(f) = self.form.as_mut() {
                     f.name.set_text(&typed);
+                    *f.rolled.borrow_mut() = form.rolled.borrow().clone();
                 }
                 // the name's check again (a saved game of that name)
                 push(&self.queue, UiEvent::NameEdited(typed));
@@ -606,8 +682,8 @@ impl Screens {
     }
 
     /// The character creation form; `keys`: the keys it offers first (the
-    /// settings page's for a new character).
-    pub fn show_creation(&mut self, catalog: Rc<Catalog>, keys_first: KeyProfile) {
+    /// settings page's for a new character); `taken`: a saved game's name.
+    pub fn show_creation(&mut self, catalog: Rc<Catalog>, keys_first: KeyProfile, taken: Taken) {
         let mut panel = PanelContainer::new_alloc();
         let mut col = column();
         col.add_child(&title_label(&tr!("creation-title"), 32));
@@ -616,11 +692,32 @@ impl Screens {
         grid.add_theme_constant_override("h_separation", 16);
         grid.add_theme_constant_override("v_separation", 10);
         let mut name = LineEdit::new_alloc();
-        name.set_placeholder(DEFAULT_NAME);
-        // a name: the same in every language (the default one too)
+        name.set_placeholder(&tr!("creation-name-placeholder"));
+        // a name: the same in every language
         i18n::verbatim(&name);
-        name.set_max_length(31);
-        name.set_custom_minimum_size(Vector2::new(360.0, 0.0));
+        name.set_max_length(names::MAX_BYTES as i32);
+        name.set_custom_minimum_size(Vector2::new(316.0, 0.0));
+        name.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        let mut dice = Button::new_alloc();
+        dice.set_focus_mode(FocusMode::NONE);
+        dice.set_button_icon(&icons::glyph_icon(Glyph::Die));
+        dice.set_icon_alignment(HorizontalAlignment::CENTER);
+        dice.add_theme_constant_override("icon_max_width", 24);
+        for (state, color) in [
+            ("icon_normal_color", theme::GOLD),
+            ("icon_focus_color", theme::GOLD),
+            ("icon_hover_color", theme::GOLD_BRIGHT),
+            ("icon_pressed_color", theme::GOLD_BRIGHT),
+            ("icon_hover_pressed_color", theme::GOLD_BRIGHT),
+        ] {
+            dice.add_theme_color_override(state, color);
+        }
+        dice.set_custom_minimum_size(Vector2::new(44.0, 0.0));
+        crate::tips::set(&dice, &tr!("creation-name-roll-tip"));
+        let mut name_row = HBoxContainer::new_alloc();
+        name_row.add_theme_constant_override("separation", 8);
+        name_row.add_child(&name);
+        name_row.add_child(&dice);
         let option = |label: &str, grid: &mut Gd<GridContainer>| {
             grid.add_child(&theme::label(label));
             let mut ob = OptionButton::new_alloc();
@@ -630,7 +727,7 @@ impl Screens {
             ob
         };
         grid.add_child(&theme::label(&tr!("creation-name")));
-        grid.add_child(&name);
+        grid.add_child(&name_row);
         let mut role = option(&tr!("creation-role"), &mut grid);
         let race = option(&tr!("creation-race"), &mut grid);
         let gender = option(&tr!("creation-gender"), &mut grid);
@@ -671,6 +768,7 @@ impl Screens {
         panel.add_child(&col);
         let items: Vec<Gd<Control>> = vec![
             name.clone().upcast(),
+            dice.clone().upcast(),
             role.clone().upcast(),
             race.clone().upcast(),
             gender.clone().upcast(),
@@ -684,7 +782,11 @@ impl Screens {
 
         let mut form = Form {
             catalog,
+            queue: self.queue.clone(),
             name,
+            dice,
+            rolled: Rc::new(RefCell::new(None)),
+            taken,
             role,
             race,
             gender,
@@ -697,34 +799,55 @@ impl Screens {
         form.restrict(true);
         // the closures below touch only the form's own widgets and the queue
         let f = form.clone();
-        form.role
-            .signals()
-            .item_selected()
-            .connect(move |_i: i64| f.clone().restrict(true));
+        form.role.signals().item_selected().connect(move |_i: i64| {
+            let mut f = f.clone();
+            f.restrict(true);
+            f.agree();
+        });
         let f = form.clone();
-        form.race
+        form.race.signals().item_selected().connect(move |_i: i64| {
+            let mut f = f.clone();
+            f.restrict(false);
+            f.agree();
+        });
+        let f = form.clone();
+        form.gender
             .signals()
             .item_selected()
-            .connect(move |_i: i64| f.clone().restrict(false));
-        let q = self.queue.clone();
+            .connect(move |_i: i64| f.clone().agree());
+        let f = form.clone();
+        form.dice
+            .signals()
+            .pressed()
+            .connect(move || f.clone().roll());
+        let (mut field, q) = (form.name.clone(), self.queue.clone());
         form.name
             .signals()
             .text_changed()
-            .connect(move |t: GString| push(&q, UiEvent::NameEdited(t.to_string())));
+            .connect(move |t: GString| {
+                // no more than NetHack keeps (Cyrillic: 15 letters)
+                let text = t.to_string();
+                let kept = names::clip(&text);
+                if kept.len() < text.len() {
+                    field.set_text(kept);
+                    field.set_caret_column(kept.chars().count() as i32);
+                }
+                push(&q, UiEvent::NameEdited(kept.to_string()));
+            });
         let (f, q) = (form.clone(), self.queue.clone());
         form.name
             .signals()
             .text_submitted()
             .connect(move |_t: GString| {
                 if !f.start.is_disabled() {
-                    push(&q, UiEvent::StartCharacter(f.choice()));
+                    push(&q, UiEvent::StartCharacter(f.chosen()));
                 }
             });
         let (f, q) = (form.clone(), self.queue.clone());
         form.start
             .signals()
             .pressed()
-            .connect(move || push(&q, UiEvent::StartCharacter(f.choice())));
+            .connect(move || push(&q, UiEvent::StartCharacter(f.chosen())));
         let (f, q) = (form.clone(), self.queue.clone());
         form.continue_instead
             .signals()
@@ -733,17 +856,19 @@ impl Screens {
         let mut name = form.name.clone();
         self.page("creation", &panel.upcast());
         self.form = Some(form);
+        // a name can be typed at once
         name.call_deferred("grab_focus", &[]);
+        name.call_deferred("edit", &[]);
         // Start begins the game; Esc or B goes back to the title
-        self.set_nav(items, 0, Some(UiEvent::BackToTitle), Some(7));
+        self.set_nav(items, 0, Some(UiEvent::BackToTitle), Some(8));
     }
 
-    /// Fill the form (self-tests).
     /// What the creation form has chosen (self-tests).
     pub fn creation_choice(&self) -> Option<CharacterChoice> {
         self.form.as_ref().map(|f| f.choice())
     }
 
+    /// Fill the form (self-tests).
     pub fn preset_creation(&mut self, choice: &CharacterChoice) {
         let Some(form) = self.form.as_mut() else {
             return;
@@ -1026,7 +1151,10 @@ impl Screens {
                 b.emit_signal("pressed", &[]);
             }
         } else if let Ok(mut field) = c.try_cast::<LineEdit>() {
+            // the keys typed go in at once (a field only focused takes
+            // none until edited)
             field.grab_focus();
+            field.edit();
         }
     }
 
@@ -1062,10 +1190,12 @@ impl Screens {
         })
     }
 
-    /// The words of the control the focus is on (self-tests).
+    /// The words of the control the focus is on, an icon's tip
+    /// (self-tests).
     pub fn nav_focused(&self) -> Option<String> {
         let c = self.nav.items.get(self.nav.at)?.clone();
         Some(match c.clone().try_cast::<Button>() {
+            Ok(b) if b.get_text().is_empty() => crate::tips::tip_of(&c).unwrap_or_default(),
             Ok(b) => b.get_text().to_string(),
             Err(_) => c
                 .try_cast::<LineEdit>()
