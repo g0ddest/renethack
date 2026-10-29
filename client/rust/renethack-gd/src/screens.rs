@@ -1,15 +1,14 @@
 //! Full-screen pages outside a game: title, settings, character creation,
 //! the end of a game and errors.
 
-use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use godot::classes::control::{FocusMode, MouseFilter, SizeFlags};
+use godot::classes::control::{FocusMode, MouseFilter};
 use godot::classes::{
-    Button, CanvasLayer, CenterContainer, ColorRect, Control, Gradient, GradientTexture2D,
-    GridContainer, HBoxContainer, Label, LineEdit, OptionButton, PanelContainer, RichTextLabel,
-    TextureRect, VBoxContainer,
+    BaseButton, Button, CanvasLayer, CenterContainer, ColorRect, Control, Gradient,
+    GradientTexture2D, HBoxContainer, Label, LineEdit, MarginContainer, OptionButton,
+    PanelContainer, RichTextLabel, StyleBox, TextureRect, VBoxContainer,
 };
 use godot::global::HorizontalAlignment;
 use godot::prelude::*;
@@ -17,11 +16,12 @@ use nh_link::SavedGame;
 use nh_protocol::Catalog;
 use nh_world::KeyProfile;
 
+pub use crate::creation::Taken;
+use crate::creation::{self, Form};
 use crate::i18n::{self, EngineKind, Lang};
-use crate::icons::{self, Glyph};
 use crate::layouts;
-use crate::names;
 use crate::theme::{self, bbcode_escape, hex};
+use crate::title_scene::Preview;
 use crate::tombstone;
 use crate::tr;
 use crate::ui_events::{CharacterChoice, UiEvent, UiQueue, push};
@@ -34,247 +34,6 @@ pub struct EndSummary {
     pub text: Vec<String>,
     /// The top ten list.
     pub scores: Vec<String>,
-}
-
-const RANDOM: &str = "random";
-
-/// Whether a saved game has a name (the dice pass over those).
-pub type Taken = Rc<dyn Fn(&str) -> bool>;
-
-/// Races allowed for `role` (None: any role).
-fn races_for(cat: &Catalog, role: Option<i32>) -> Vec<i32> {
-    let mut v: Vec<i32> = cat
-        .roles
-        .iter()
-        .filter(|r| role.is_none_or(|x| r.idx == x))
-        .flat_map(|r| r.combos.iter().map(|c| c.race))
-        .collect();
-    v.sort_unstable();
-    v.dedup();
-    v
-}
-
-/// Genders (`aligns` false) or alignments allowed for role and race.
-fn options_for(cat: &Catalog, role: Option<i32>, race: Option<i32>, aligns: bool) -> Vec<i32> {
-    let mut v: Vec<i32> = cat
-        .roles
-        .iter()
-        .filter(|r| role.is_none_or(|x| r.idx == x))
-        .flat_map(|r| r.combos.iter())
-        .filter(|c| race.is_none_or(|x| c.race == x))
-        .flat_map(|c| {
-            if aligns {
-                c.aligns.clone()
-            } else {
-                c.genders.clone()
-            }
-        })
-        .collect();
-    v.sort_unstable();
-    v.dedup();
-    v
-}
-
-/// Item ids are catalog indices plus one: 0 is "Random" (Godot reads an
-/// id of -1 as "use the item's position").
-const RANDOM_ID: i32 = 0;
-
-/// The catalog index of the selected item; None for "Random".
-fn selected(ob: &Gd<OptionButton>) -> Option<i32> {
-    Some(ob.get_selected_id() - 1).filter(|&idx| idx >= 0)
-}
-
-/// Select catalog index `idx` (None: Random), if offered.
-fn select_index(ob: &mut Gd<OptionButton>, idx: Option<i32>) {
-    let id = idx.map_or(RANDOM_ID, |i| i + 1);
-    let index = ob.get_item_index(id).max(0);
-    ob.select(index);
-}
-
-/// Fill `ob` with Random plus `items` (catalog index, text), keeping the
-/// selection if still offered.
-fn fill_options(ob: &mut Gd<OptionButton>, items: &[(i32, String)]) {
-    let keep = selected(ob);
-    ob.clear();
-    ob.add_item_ex(&tr!("creation-random")).id(RANDOM_ID).done();
-    for (idx, text) in items {
-        ob.add_item_ex(text).id(idx + 1).done();
-    }
-    select_index(ob, keep);
-}
-
-/// A role's, race's, gender's or alignment's name from the catalog, as the
-/// player reads it.
-fn engine_name(english: &str) -> String {
-    capitalize(&i18n::engine(EngineKind::Name, english))
-}
-
-fn capitalize(s: &str) -> String {
-    let mut c = s.chars();
-    c.next()
-        .map(|f| f.to_uppercase().chain(c).collect())
-        .unwrap_or_default()
-}
-
-/// The creation form; closures share it to keep combinations valid.
-#[derive(Clone)]
-struct Form {
-    catalog: Rc<Catalog>,
-    queue: UiQueue,
-    name: Gd<LineEdit>,
-    /// Rolls a name (`names`).
-    dice: Gd<Button>,
-    /// The name the dice put in the field, a heroine's or not: while the
-    /// field holds it, it follows the gender chosen.
-    rolled: Rc<RefCell<Option<(String, bool)>>>,
-    taken: Taken,
-    role: Gd<OptionButton>,
-    race: Gd<OptionButton>,
-    gender: Gd<OptionButton>,
-    align: Gd<OptionButton>,
-    /// Modern (item 0) or Classic keys.
-    keys: Gd<OptionButton>,
-    start: Gd<Button>,
-    continue_instead: Gd<Button>,
-    notice: Gd<Label>,
-}
-
-impl Form {
-    /// Offer only races, genders and alignments valid with what is chosen.
-    fn restrict(&mut self, from_role: bool) {
-        let cat = self.catalog.clone();
-        let role = selected(&self.role);
-        if from_role {
-            let races: Vec<(i32, String)> = races_for(&cat, role)
-                .into_iter()
-                .filter_map(|i| cat.races.get(i as usize).map(|r| (i, engine_name(&r.noun))))
-                .collect();
-            fill_options(&mut self.race, &races);
-        }
-        let race = selected(&self.race);
-        let genders: Vec<(i32, String)> = options_for(&cat, role, race, false)
-            .into_iter()
-            .filter_map(|i| {
-                cat.genders
-                    .get(i as usize)
-                    .map(|g| (i, engine_name(&g.adj)))
-            })
-            .collect();
-        fill_options(&mut self.gender, &genders);
-        let aligns: Vec<(i32, String)> = options_for(&cat, role, race, true)
-            .into_iter()
-            .filter_map(|i| cat.aligns.get(i as usize).map(|a| (i, engine_name(&a.adj))))
-            .collect();
-        fill_options(&mut self.align, &aligns);
-    }
-
-    fn typed_name(&self) -> String {
-        self.name.get_text().to_string().trim().to_string()
-    }
-
-    /// Whether a heroine's name, when the field holds the dice's.
-    fn rolled_female(&self) -> Option<bool> {
-        let name = self.typed_name();
-        self.rolled
-            .borrow()
-            .as_ref()
-            .filter(|(rolled, _)| *rolled == name)
-            .map(|&(_, female)| female)
-    }
-
-    /// The dice: a name that agrees with the gender chosen, a gender
-    /// left to chance chosen first (and shown).
-    fn roll(&mut self) {
-        let was = self.choice();
-        let rolled = names::named(
-            &self.catalog,
-            was.clone(),
-            names::roll(),
-            true,
-            &*self.taken,
-        );
-        if rolled.gender != was.gender {
-            let genders: Vec<(i32, String, String)> = self
-                .catalog
-                .genders
-                .iter()
-                .map(|g| (g.idx, g.code.clone(), g.adj.clone()))
-                .collect();
-            Form::preset(&mut self.gender, &rolled.gender, &genders);
-        }
-        self.show_rolled(&rolled);
-    }
-
-    /// The dice's name in the field, again if the gender chosen now (or
-    /// the role's and race's) does not agree with it.
-    fn agree(&mut self) {
-        let Some(female) = self.rolled_female() else {
-            return;
-        };
-        let was = self.choice();
-        let now = names::agreed(
-            &self.catalog,
-            was.clone(),
-            female,
-            names::roll(),
-            &*self.taken,
-        );
-        if now.name != was.name {
-            self.show_rolled(&now);
-        }
-    }
-
-    fn show_rolled(&mut self, choice: &CharacterChoice) {
-        let female = names::is_female(&self.catalog, &choice.gender);
-        *self.rolled.borrow_mut() = Some((choice.name.clone(), female));
-        self.name.set_text(&choice.name);
-        self.name
-            .set_caret_column(choice.name.chars().count() as i32);
-        push(&self.queue, UiEvent::NameEdited(choice.name.clone()));
-    }
-
-    /// The choice the game starts with: an empty name rolled, the dice's
-    /// name with the gender it agrees with.
-    fn chosen(&self) -> CharacterChoice {
-        let (cat, choice, roll) = (&self.catalog, self.choice(), names::roll());
-        match self.rolled_female() {
-            Some(female) => names::agreed(cat, choice, female, roll, &*self.taken),
-            None => names::named(cat, choice, roll, false, &*self.taken),
-        }
-    }
-
-    fn choice(&self) -> CharacterChoice {
-        let cat = &self.catalog;
-        let code = |ob: &Gd<OptionButton>, codes: &dyn Fn(usize) -> Option<String>| {
-            selected(ob)
-                .and_then(|i| codes(i as usize))
-                .unwrap_or_else(|| RANDOM.to_string())
-        };
-        CharacterChoice {
-            name: self.typed_name(),
-            role: code(&self.role, &|i| cat.roles.get(i).map(|r| r.code.clone())),
-            race: code(&self.race, &|i| cat.races.get(i).map(|r| r.code.clone())),
-            gender: code(&self.gender, &|i| {
-                cat.genders.get(i).map(|g| g.code.clone())
-            }),
-            align: code(&self.align, &|i| cat.aligns.get(i).map(|a| a.code.clone())),
-            profile: if self.keys.get_selected() == 1 {
-                KeyProfile::Classic
-            } else {
-                KeyProfile::Modern
-            },
-        }
-    }
-
-    /// Select the item whose catalog code or name matches `word`.
-    fn preset(ob: &mut Gd<OptionButton>, word: &str, names: &[(i32, String, String)]) {
-        let w = word.to_lowercase();
-        let idx = names
-            .iter()
-            .find(|(_, code, name)| code.to_lowercase() == w || name.to_lowercase() == w)
-            .map(|(idx, _, _)| *idx);
-        select_index(ob, idx);
-    }
 }
 
 pub struct Screens {
@@ -316,13 +75,26 @@ pub enum NavInput {
 }
 
 /// A page's controls in their order, the one the focus is on, what going
-/// back sends, and which control Start takes.
+/// back sends, and which control Start takes; the cards among them laid
+/// out in a grid.
 #[derive(Default)]
 struct Nav {
     items: Vec<Gd<Control>>,
     at: usize,
     back: Option<UiEvent>,
     start: Option<usize>,
+    grid: Option<Grid>,
+}
+
+/// Cards in a grid (the creation form's roles): ↑↓ go a row, ←→ a card
+/// along it, and the card the focus is on is the one chosen; the focus
+/// comes into the grid on the card chosen, and A takes it on past the
+/// grid.
+struct Grid {
+    cards: std::ops::Range<usize>,
+    columns: usize,
+    /// The look of the card the focus is on.
+    focus: Gd<StyleBox>,
 }
 
 /// The game's name on the title: a name, the same in every language.
@@ -333,6 +105,9 @@ const SETTINGS_SHADE: f32 = 0.62;
 
 /// The share of the title's width the menu stands in (on the left).
 const TITLE_MENU_WIDTH: f32 = 0.42;
+
+/// The creation form's panels keep this far from the screen's edges.
+const CREATION_EDGE: i32 = 28;
 
 /// The title's shade over its scene (`across`): the ink of the pages
 /// under the menu on the left, clearing towards the right; else (down)
@@ -697,6 +472,7 @@ impl Screens {
                     f.name.set_text(&typed);
                     *f.rolled.borrow_mut() = form.rolled.borrow().clone();
                 }
+
                 // the name's check again (a saved game of that name)
                 push(&self.queue, UiEvent::NameEdited(typed));
             }
@@ -711,184 +487,53 @@ impl Screens {
 
     /// The character creation form; `keys`: the keys it offers first (the
     /// settings page's for a new character); `taken`: a saved game's name.
+    /// The title scene shows through, its hero the one being made.
     pub fn show_creation(&mut self, catalog: Rc<Catalog>, keys_first: KeyProfile, taken: Taken) {
-        let mut panel = PanelContainer::new_alloc();
-        let mut col = column();
-        col.add_child(&title_label(&tr!("creation-title"), 32));
-        let mut grid = GridContainer::new_alloc();
-        grid.set_columns(2);
-        grid.add_theme_constant_override("h_separation", 16);
-        grid.add_theme_constant_override("v_separation", 10);
-        let mut name = LineEdit::new_alloc();
-        name.set_placeholder(&tr!("creation-name-placeholder"));
-        // a name: the same in every language
-        i18n::verbatim(&name);
-        name.set_max_length(names::MAX_BYTES as i32);
-        name.set_custom_minimum_size(Vector2::new(316.0, 0.0));
-        name.set_h_size_flags(SizeFlags::EXPAND_FILL);
-        let mut dice = Button::new_alloc();
-        dice.set_focus_mode(FocusMode::NONE);
-        dice.set_button_icon(&icons::glyph_icon(Glyph::Die));
-        dice.set_icon_alignment(HorizontalAlignment::CENTER);
-        dice.add_theme_constant_override("icon_max_width", 24);
-        for (state, color) in [
-            ("icon_normal_color", theme::GOLD),
-            ("icon_focus_color", theme::GOLD),
-            ("icon_hover_color", theme::GOLD_BRIGHT),
-            ("icon_pressed_color", theme::GOLD_BRIGHT),
-            ("icon_hover_pressed_color", theme::GOLD_BRIGHT),
-        ] {
-            dice.add_theme_color_override(state, color);
-        }
-        dice.set_custom_minimum_size(Vector2::new(44.0, 0.0));
-        crate::tips::set(&dice, &tr!("creation-name-roll-tip"));
-        let mut name_row = HBoxContainer::new_alloc();
-        name_row.add_theme_constant_override("separation", 8);
-        name_row.add_child(&name);
-        name_row.add_child(&dice);
-        let option = |label: &str, grid: &mut Gd<GridContainer>| {
-            grid.add_child(&theme::label(label));
-            let mut ob = OptionButton::new_alloc();
-            ob.set_focus_mode(FocusMode::NONE);
-            ob.set_h_size_flags(SizeFlags::EXPAND_FILL);
-            grid.add_child(&ob);
-            ob
-        };
-        grid.add_child(&theme::label(&tr!("creation-name")));
-        grid.add_child(&name_row);
-        let mut role = option(&tr!("creation-role"), &mut grid);
-        let race = option(&tr!("creation-race"), &mut grid);
-        let gender = option(&tr!("creation-gender"), &mut grid);
-        let align = option(&tr!("creation-alignment"), &mut grid);
-        let mut keys = option(&tr!("creation-keys"), &mut grid);
-        keys.add_item(&tr!("creation-keys-modern"));
-        keys.add_item(&tr!("creation-keys-classic"));
-        keys.select(i32::from(keys_first == KeyProfile::Classic));
-        crate::tips::set(&keys, &tr!("creation-keys-tip"));
-        grid.add_child(&theme::label(&tr!("creation-language")));
-        let mut lang = language_option(&self.queue);
-        lang.set_h_size_flags(SizeFlags::EXPAND_FILL);
-        grid.add_child(&lang);
-        col.add_child(&grid);
-        let roles: Vec<(i32, String)> = catalog
-            .roles
-            .iter()
-            .map(|r| (r.idx, i18n::engine(EngineKind::Name, &r.name).into_owned()))
-            .collect();
-        fill_options(&mut role, &roles);
-        let mut notice = theme::label("");
-        notice.add_theme_color_override("font_color", theme::WARN);
-        notice.set_autowrap_mode(godot::classes::text_server::AutowrapMode::WORD_SMART);
-        notice.set_custom_minimum_size(Vector2::new(480.0, 0.0));
-        col.add_child(&notice);
-        let mut buttons = row();
-        let mut start = Button::new_alloc();
-        start.set_text(&tr!("creation-start"));
-        start.set_focus_mode(FocusMode::NONE);
-        let mut continue_instead = Button::new_alloc();
-        continue_instead.set_focus_mode(FocusMode::NONE);
-        continue_instead.set_visible(false);
-        buttons.add_child(&start);
-        buttons.add_child(&continue_instead);
         let back = theme::button(&tr!("creation-back"), &self.queue, UiEvent::BackToTitle);
-        buttons.add_child(&back);
-        col.add_child(&buttons);
-        panel.add_child(&col);
-        let items: Vec<Gd<Control>> = vec![
-            name.clone().upcast(),
-            dice.clone().upcast(),
-            role.clone().upcast(),
-            race.clone().upcast(),
-            gender.clone().upcast(),
-            align.clone().upcast(),
-            keys.clone().upcast(),
-            lang.clone().upcast(),
-            start.clone().upcast(),
-            continue_instead.clone().upcast(),
-            back.upcast(),
-        ];
-
-        let mut form = Form {
-            catalog,
-            queue: self.queue.clone(),
-            name,
-            dice,
-            rolled: Rc::new(RefCell::new(None)),
-            taken,
-            role,
-            race,
-            gender,
-            align,
-            keys,
-            start,
-            continue_instead,
-            notice,
-        };
-        form.restrict(true);
-        // the closures below touch only the form's own widgets and the queue
-        let f = form.clone();
-        form.role.signals().item_selected().connect(move |_i: i64| {
-            let mut f = f.clone();
-            f.restrict(true);
-            f.agree();
-        });
-        let f = form.clone();
-        form.race.signals().item_selected().connect(move |_i: i64| {
-            let mut f = f.clone();
-            f.restrict(false);
-            f.agree();
-        });
-        let f = form.clone();
-        form.gender
-            .signals()
-            .item_selected()
-            .connect(move |_i: i64| f.clone().agree());
-        let f = form.clone();
-        form.dice
-            .signals()
-            .pressed()
-            .connect(move || f.clone().roll());
-        let (mut field, q) = (form.name.clone(), self.queue.clone());
-        form.name
-            .signals()
-            .text_changed()
-            .connect(move |t: GString| {
-                // no more than NetHack keeps (Cyrillic: 15 letters)
-                let text = t.to_string();
-                let kept = names::clip(&text);
-                if kept.len() < text.len() {
-                    field.set_text(kept);
-                    field.set_caret_column(kept.chars().count() as i32);
-                }
-                push(&q, UiEvent::NameEdited(kept.to_string()));
-            });
-        let (f, q) = (form.clone(), self.queue.clone());
-        form.name
-            .signals()
-            .text_submitted()
-            .connect(move |_t: GString| {
-                if !f.start.is_disabled() {
-                    push(&q, UiEvent::StartCharacter(f.chosen()));
-                }
-            });
-        let (f, q) = (form.clone(), self.queue.clone());
-        form.start
-            .signals()
-            .pressed()
-            .connect(move || push(&q, UiEvent::StartCharacter(f.chosen())));
-        let (f, q) = (form.clone(), self.queue.clone());
-        form.continue_instead
-            .signals()
-            .pressed()
-            .connect(move || push(&q, UiEvent::ContinueGame(f.typed_name())));
-        let mut name = form.name.clone();
-        self.page("creation", &panel.upcast());
+        let lang = language_option(&self.queue);
+        let form = Form::new(catalog, keys_first, taken, &self.queue, lang, back);
+        let mut page = Control::new_alloc();
+        theme::full_rect_ignore(&page);
+        let mut shade = TextureRect::new_alloc();
+        shade.set_texture(&title_shade(false));
+        shade.set_expand_mode(godot::classes::texture_rect::ExpandMode::IGNORE_SIZE);
+        shade.set_stretch_mode(godot::classes::texture_rect::StretchMode::SCALE);
+        shade.set_mouse_filter(MouseFilter::IGNORE);
+        theme::place(&shade, [0.0, 0.0, 1.0, 1.0], [0.0; 4]);
+        page.add_child(&shade);
+        let mut margins = MarginContainer::new_alloc();
+        margins.set_mouse_filter(MouseFilter::IGNORE);
+        theme::place(&margins, [0.0, 0.0, 1.0, 1.0], [0.0; 4]);
+        for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"] {
+            margins.add_theme_constant_override(side, CREATION_EDGE);
+        }
+        let mut panels = HBoxContainer::new_alloc();
+        panels.set_mouse_filter(MouseFilter::IGNORE);
+        panels.add_theme_constant_override("separation", 0);
+        panels.add_child(&form.left);
+        panels.add_child(&form.room);
+        panels.add_child(&form.right);
+        margins.add_child(&panels);
+        page.add_child(&margins);
+        let (items, cards, start) = form.nav_items();
+        self.hide();
+        self.root.add_child(&page);
+        self.content = Some(page.upcast());
+        self.current = Some("creation");
+        // the page still takes the clicks: none reaches the scene
+        self.bg.set_color(Color::from_rgba(0.0, 0.0, 0.0, 0.0));
+        self.root.set_visible(true);
         self.form = Some(form);
-        // a name can be typed at once
-        name.call_deferred("grab_focus", &[]);
-        name.call_deferred("edit", &[]);
-        // Start begins the game; Esc or B goes back to the title
-        self.set_nav(items, 0, Some(UiEvent::BackToTitle), Some(8));
+        // the focus on the role chosen; Start begins the game, Esc or B
+        // goes back to the title
+        self.set_nav(items, 0, Some(UiEvent::BackToTitle), Some(start));
+        self.nav.grid = Some(Grid {
+            cards,
+            columns: creation::CARD_COLUMNS,
+            focus: creation::card_focus(),
+        });
+        self.nav.at = self.chosen_card().unwrap_or(0);
+        self.show_nav();
     }
 
     /// What the creation form has chosen (self-tests).
@@ -896,68 +541,33 @@ impl Screens {
         self.form.as_ref().map(|f| f.choice())
     }
 
+    /// The hero the creation form is making, as the title scene is to
+    /// show them, where the form leaves room (None: no form).
+    pub fn creation_preview(&self) -> Option<Preview> {
+        let form = self.form.as_ref()?;
+        let width = self.root.get_viewport_rect().size.x.max(1.0);
+        let room = form.room.get_global_rect();
+        Some(form.preview((room.position.x + room.size.x / 2.0) / width))
+    }
+
     /// Fill the form (self-tests).
     pub fn preset_creation(&mut self, choice: &CharacterChoice) {
-        let Some(form) = self.form.as_mut() else {
-            return;
-        };
-        form.name.set_text(&choice.name);
-        let cat = form.catalog.clone();
-        let roles: Vec<(i32, String, String)> = cat
-            .roles
-            .iter()
-            .map(|r| (r.idx, r.code.clone(), r.name.clone()))
-            .collect();
-        Form::preset(&mut form.role, &choice.role, &roles);
-        form.restrict(true);
-        let races: Vec<(i32, String, String)> = cat
-            .races
-            .iter()
-            .map(|r| (r.idx, r.code.clone(), r.noun.clone()))
-            .collect();
-        Form::preset(&mut form.race, &choice.race, &races);
-        form.restrict(false);
-        let genders: Vec<(i32, String, String)> = cat
-            .genders
-            .iter()
-            .map(|g| (g.idx, g.code.clone(), g.adj.clone()))
-            .collect();
-        Form::preset(&mut form.gender, &choice.gender, &genders);
-        let aligns: Vec<(i32, String, String)> = cat
-            .aligns
-            .iter()
-            .map(|a| (a.idx, a.code.clone(), a.adj.clone()))
-            .collect();
-        Form::preset(&mut form.align, &choice.align, &aligns);
-        form.keys
-            .select(i32::from(choice.profile == KeyProfile::Classic));
+        if let Some(form) = self.form.as_mut() {
+            form.preset(choice);
+        }
     }
 
     /// The name would restore a saved game: offer to continue it instead.
     pub fn set_name_taken(&mut self, taken: bool) {
-        let Some(form) = self.form.as_mut() else {
-            return;
-        };
-        let name = form.typed_name();
-        form.start.set_disabled(taken);
-        form.continue_instead.set_visible(taken);
-        form.continue_instead
-            .set_text(&tr!("creation-continue-instead", name = name));
-        form.notice.set_text(&if taken {
-            tr!("creation-name-taken")
-        } else {
-            String::new()
-        });
+        if let Some(form) = self.form.as_mut() {
+            form.set_name_taken(taken);
+        }
     }
 
     /// Why the name cannot be used (None: it can).
     pub fn set_name_error(&mut self, error: Option<&str>) {
-        let Some(form) = self.form.as_mut() else {
-            return;
-        };
-        if let Some(e) = error {
-            form.start.set_disabled(true);
-            form.notice.set_text(e);
+        if let (Some(form), Some(e)) = (self.form.as_mut(), error) {
+            form.set_name_error(e);
         }
     }
 
@@ -1098,21 +708,81 @@ impl Screens {
             at,
             back,
             start,
+            grid: None,
         };
         self.show_nav();
     }
 
-    /// The focus drawn on its control, gold-edged.
+    /// The focus drawn on its control, gold-edged (a card chosen, as the
+    /// one the focus is on always is, in every state).
     fn show_nav(&mut self) {
-        let look = theme::focus_style();
+        let look: Gd<StyleBox> = theme::focus_style().upcast();
         let at = self.nav.at;
+        let grid = self.nav.grid.as_ref();
         for (i, c) in self.nav.items.iter_mut().enumerate() {
-            if i == at {
-                c.add_theme_stylebox_override("normal", &look);
+            let card = grid.filter(|g| g.cards.contains(&i));
+            let states: &[&str] = if card.is_some() {
+                &["normal", "hover", "pressed", "hover_pressed"]
             } else {
-                c.remove_theme_stylebox_override("normal");
+                &["normal"]
+            };
+            for state in states {
+                if i == at {
+                    c.add_theme_stylebox_override(*state, card.map_or(&look, |g| &g.focus));
+                } else {
+                    c.remove_theme_stylebox_override(*state);
+                }
             }
         }
+    }
+
+    /// The card chosen (pressed) in the grid, by its place in the page's
+    /// controls.
+    fn chosen_card(&self) -> Option<usize> {
+        let grid = self.nav.grid.as_ref()?;
+        grid.cards.clone().find(|&i| {
+            self.nav.items[i]
+                .clone()
+                .try_cast::<BaseButton>()
+                .is_ok_and(|b| b.is_pressed())
+        })
+    }
+
+    /// In the grid, the focus `by` cards along (`across`: in its row) or
+    /// `by` rows; out over its top or bottom edge, on to the controls
+    /// before or after it. The card it comes to is chosen.
+    fn grid_step(&mut self, by: i32, across: bool) {
+        let Some(grid) = self.nav.grid.as_ref() else {
+            return;
+        };
+        let (first, len, cols) = (grid.cards.start, grid.cards.len(), grid.columns);
+        let at = self.nav.at - first;
+        let to = if across {
+            let row = at / cols * cols;
+            (at as i32 + by).clamp(row as i32, (row + cols - 1).min(len - 1) as i32)
+        } else {
+            let to = at as i32 + by * cols as i32;
+            if to < 0 {
+                self.nav.at = first;
+                return self.nav_step(-1);
+            }
+            if to >= len as i32 {
+                // the last row may be short: down to its last card first
+                if at / cols < (len - 1) / cols {
+                    (len - 1) as i32
+                } else {
+                    self.nav.at = first + len - 1;
+                    return self.nav_step(1);
+                }
+            } else {
+                to
+            }
+        };
+        self.nav.at = first + to as usize;
+        if let Ok(mut card) = self.nav.items[self.nav.at].clone().try_cast::<Button>() {
+            card.emit_signal("pressed", &[]);
+        }
+        self.show_nav();
     }
 
     /// A key or a gamepad's button on the page; false: not the page's.
@@ -1120,7 +790,24 @@ impl Screens {
         let Some(focused) = self.nav.items.get(self.nav.at).cloned() else {
             return false;
         };
+        let at = self.nav.at;
+        let in_grid = self
+            .nav
+            .grid
+            .as_ref()
+            .is_some_and(|g| g.cards.contains(&at));
         match input {
+            NavInput::Up if in_grid => self.grid_step(-1, false),
+            NavInput::Down if in_grid => self.grid_step(1, false),
+            NavInput::Left if in_grid => self.grid_step(-1, true),
+            NavInput::Right if in_grid => self.grid_step(1, true),
+            // the card chosen: on to what comes after the cards
+            NavInput::Accept if in_grid => {
+                if let Some(g) = self.nav.grid.as_ref() {
+                    self.nav.at = g.cards.end - 1;
+                }
+                self.nav_step(1);
+            }
             NavInput::Up => self.nav_step(-1),
             NavInput::Down => self.nav_step(1),
             NavInput::Left | NavInput::Right => {
@@ -1161,6 +848,14 @@ impl Screens {
         }
         if let Ok(mut field) = self.nav.items[self.nav.at].clone().try_cast::<LineEdit>() {
             field.release_focus();
+        }
+        // into the grid: on the card chosen
+        let cards = self.nav.grid.as_ref().map(|g| g.cards.clone());
+        if let Some(cards) = cards
+            && cards.contains(&(i as usize))
+            && !cards.contains(&self.nav.at)
+        {
+            i = self.chosen_card().unwrap_or(cards.start) as i32;
         }
         self.nav.at = i as usize;
         self.show_nav();

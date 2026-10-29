@@ -1,9 +1,9 @@
 //! The creation form with the keys alone (`creation`): Enter on the title
-//! opens it on the empty name; ↓ goes past the dice to the role, ← twice
-//! (round past Random and the Wizard) picks the Valkyrie; ↑ back to the
-//! name, Enter gives it the keys and Enter again starts the game with the
-//! field still empty: the hero is named from the pool of heroines' names,
-//! in the language of the game.
+//! opens it on the role chosen, Random; ↓ six rows of cards picks the
+//! Valkyrie, whom the title scene shows in her kit; Enter goes on past
+//! the cards to the name, Enter gives it the keys and Enter again starts
+//! the game with the field still empty: the hero is named from the pool
+//! of heroines' names, in the language of the game.
 
 use std::sync::Mutex;
 
@@ -41,27 +41,33 @@ pub(super) fn creation() -> Vec<Step> {
             Ok(screen(g) == Some("title") && loaded && g.warmed_up())
         }),
         press(GKey::ENTER),
-        Step::Wait("Enter: the form, on the empty name", |g| {
-            Ok(on(g, &tr!("creation-name-placeholder"))? && choice(g)?.name.is_empty())
+        Step::Wait("Enter: the form, on Random, the name empty", |g| {
+            Ok(on(g, &tr!("creation-random"))? && choice(g)?.name.is_empty())
         }),
-        press(GKey::DOWN),
-        Step::Wait("↓ the dice", |g| on(g, &tr!("creation-name-roll-tip"))),
-        press(GKey::DOWN),
-        Step::Wait("↓ the role", |g| {
-            fail_on_error_screen(g)?;
-            Ok(screen(g) == Some("creation")
-                && g.ui
-                    .as_ref()
-                    .and_then(|ui| ui.screens.nav_focused())
-                    .is_some_and(|w| w == tr!("creation-random")))
+        Step::Wait("the hooded figure framed in the title's place", |g| {
+            let map = &g.ui.as_ref().ok_or("no UI")?.map;
+            Ok(map.creation_hero().is_some_and(|p| p.veiled()) && map.creation_framed())
         }),
-        press(GKey::LEFT),
-        press(GKey::LEFT),
-        Step::Wait("← ← the Valkyrie", |g| Ok(choice(g)?.role == "Val")),
+        Step::Shot("creation-random"),
+        press(GKey::DOWN),
+        press(GKey::DOWN),
+        press(GKey::DOWN),
+        press(GKey::DOWN),
+        press(GKey::DOWN),
+        press(GKey::DOWN),
+        Step::Wait("↓ six rows: the Valkyrie, shown in her kit", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let shown = ui.map.creation_hero().cloned();
+            let held = ui.map.hero_held_slots();
+            Ok(choice(g)?.role == "Val"
+                && shown
+                    .is_some_and(|p| p.role.as_deref() == Some("Val") && p.female == Some(true))
+                && ui.map.creation_framed()
+                && held.contains(&"hand_r"))
+        }),
         Step::Shot("creation-keys"),
-        press(GKey::UP),
-        press(GKey::UP),
-        Step::Wait("↑ ↑ the name", |g| {
+        press(GKey::ENTER),
+        Step::Wait("Enter: on past the cards, to the name", |g| {
             on(g, &tr!("creation-name-placeholder"))
         }),
         press(GKey::ENTER),

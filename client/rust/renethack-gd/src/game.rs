@@ -1207,6 +1207,7 @@ impl INode for RenethackGame {
             || !matches!(self.title_warm, TitleWarm::Dialogs | TitleWarm::Glyphs)
             || self.state != GameState::Title;
         let t = Instant::now();
+        self.sync_creation_preview();
         if let Some(ui) = self.ui.as_mut() {
             if map_turn && (veiled || !self.warm_heavy) {
                 ui.map.preload_step();
@@ -5226,6 +5227,16 @@ impl RenethackGame {
         let pg = self.playground();
         let taken = Rc::new(move |name: &str| save_exists(&pg, name));
         self.ui_mut().screens.show_creation(catalog, keys, taken);
+    }
+
+    /// The title scene shows the hero the creation form is making, and
+    /// its own again once the form is gone.
+    fn sync_creation_preview(&mut self) {
+        let creating = self.state == GameState::Creating;
+        if let Some(ui) = self.ui.as_mut() {
+            let preview = creating.then(|| ui.screens.creation_preview()).flatten();
+            ui.map.set_creation_hero(preview);
+        }
     }
 
     fn check_name(&mut self, name: &str) {

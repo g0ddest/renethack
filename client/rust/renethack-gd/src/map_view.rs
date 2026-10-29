@@ -164,6 +164,17 @@ const CHARRED: Color = Color::from_rgb(0.035, 0.024, 0.018);
 const MANY_FLAMES_ENERGY: f32 = 0.85;
 /// Where the depth fog begins and is whole on the title (metres).
 const TITLE_FOG: (f32, f32) = (11.5, 14.5);
+/// The creation form's camera: as the title's, closer, lower and swaying
+/// less, aiming this high beside the hero (whose figure is some 1.1 m
+/// tall); the seconds it takes to come from the title's frame.
+const CREATION_DISTANCE: f32 = 3.4;
+const CREATION_PITCH_DEG: f32 = 9.0;
+const CREATION_SWAY_DEG: f32 = 7.0;
+const CREATION_AIM_UP: f32 = 0.66;
+const CREATION_FRAME_SECS: f32 = 0.6;
+/// The figure that stands for a hero whose role or gender is left to
+/// chance (`set_creation_hero`).
+const HOODED_FIGURE: &str = "figure_hooded";
 
 /// Seconds from the start of a strike to the blow landing.
 const CONTACT_SECS: f32 = 0.16;
@@ -3051,6 +3062,11 @@ pub struct MapView {
     titled: bool,
     title_hero: (String, bool),
     title_catalog: Option<Catalog>,
+    /// The hero the creation form is making, shown in the title's place
+    /// (`set_creation_hero`), and how far the camera has gone from the
+    /// title's frame to theirs (0 to 1).
+    creation: Option<crate::title_scene::Preview>,
+    creation_blend: f32,
     /// Whether the start-up veil is down (the game tells; None: never
     /// told, the rehearsal judges by itself).
     veiled: Option<bool>,
@@ -3702,6 +3718,8 @@ impl MapView {
             titled: false,
             title_hero: ("valkyrie".to_string(), true),
             title_catalog: None,
+            creation: None,
+            creation_blend: 0.0,
             veiled: None,
             title_fires: Vec::new(),
             cover: 1.0,
@@ -6201,6 +6219,41 @@ impl MapView {
         (&self.title_hero.0, self.title_hero.1)
     }
 
+    /// The hero the creation form is making, in the title hero's place,
+    /// framed where the form leaves room (None: the form is gone, the
+    /// title's own hero again). Only their cell is drawn again.
+    pub fn set_creation_hero(&mut self, preview: Option<crate::title_scene::Preview>) {
+        if preview == self.creation {
+            return;
+        }
+        let dress = match &preview {
+            Some(p)
+                if self
+                    .creation
+                    .as_ref()
+                    .is_some_and(|c| c.role == p.role && c.female == p.female) =>
+            {
+                None
+            }
+            Some(p) => Some((p.role.clone(), p.female)),
+            None => Some((Some(self.title_hero.0.clone()), Some(self.title_hero.1))),
+        };
+        self.creation = preview;
+        if let (Some((role, female)), Some(t)) = (dress, self.title.as_mut()) {
+            t.dress(role.as_deref(), female);
+        }
+    }
+
+    /// The hero the creation form shows (self-tests).
+    pub fn creation_hero(&self) -> Option<&crate::title_scene::Preview> {
+        self.creation.as_ref()
+    }
+
+    /// The camera frames the creation form's hero (self-tests).
+    pub fn creation_framed(&self) -> bool {
+        self.creation.is_some() && self.creation_blend >= 1.0
+    }
+
     /// Lay the title scene; nothing before the rehearsal is over.
     fn show_title_scene(&mut self) {
         let Some(catalog) = self.title_catalog.clone() else {
@@ -6208,7 +6261,11 @@ impl MapView {
         };
         self.clear();
         let (role, female) = &self.title_hero;
-        self.title = Some(crate::title_scene::TitleScene::new(&catalog, role, *female));
+        let mut title = crate::title_scene::TitleScene::new(&catalog, role, *female);
+        if let Some(p) = &self.creation {
+            title.dress(p.role.as_deref(), p.female);
+        }
+        self.title = Some(title);
         self.titled = true;
         self.light_title_fires();
         // black past the far wall (the branch's darkness is a deep blue)
@@ -6220,6 +6277,13 @@ impl MapView {
     /// A title frame: the camera round the hero, the fires flickering,
     /// the cover lifting.
     fn title_frame_update(&mut self, delta: f64) {
+        let to = if self.creation.is_some() { 1.0 } else { 0.0 };
+        let step = delta.min(1.0 / 30.0) as f32 / CREATION_FRAME_SECS;
+        self.creation_blend = if to > self.creation_blend {
+            (self.creation_blend + step).min(to)
+        } else {
+            (self.creation_blend - step).max(to)
+        };
         if self.titled && !self.shown {
             self.hero_ring.set_visible(false);
             self.place_camera();
@@ -6524,19 +6588,40 @@ impl MapView {
         if self.titled && !self.shown {
             use crate::title_scene::{AIM, DISTANCE, PITCH_DEG, SWAY_DEG, SWAY_SECS};
             let phase = (self.clock as f32 / SWAY_SECS * std::f32::consts::TAU).sin();
-            let yaw = (SWAY_DEG * phase).to_radians();
-            let pitch = PITCH_DEG.to_radians();
-            let aim = Vector3::new(AIM.0, AIM.1, AIM.2);
-            let offset = Vector3::new(
-                yaw.sin() * pitch.cos(),
-                pitch.sin(),
-                yaw.cos() * pitch.cos(),
-            ) * DISTANCE;
+            let orbit = |aim: Vector3, sway: f32, pitch: f32, distance: f32| {
+                let (yaw, pitch) = ((sway * phase).to_radians(), pitch.to_radians());
+                let offset = Vector3::new(
+                    yaw.sin() * pitch.cos(),
+                    pitch.sin(),
+                    yaw.cos() * pitch.cos(),
+                ) * distance;
+                (aim + offset, aim)
+            };
+            let (mut eye, mut aim) = orbit(
+                Vector3::new(AIM.0, AIM.1, AIM.2),
+                SWAY_DEG,
+                PITCH_DEG,
+                DISTANCE,
+            );
+            // the creation form's hero, close, where the form leaves room
+            if self.creation_blend > 0.0 {
+                let at = self.creation.as_ref().map_or(0.5, |p| p.at);
+                let (e, a) = orbit(
+                    self.creation_aim(at),
+                    CREATION_SWAY_DEG,
+                    CREATION_PITCH_DEG,
+                    CREATION_DISTANCE,
+                );
+                let t = self.creation_blend;
+                let t = t * t * (3.0 - 2.0 * t);
+                eye = eye.lerp(e, t);
+                aim = aim.lerp(a, t);
+            }
             // the dark closes in just past the far wall
             self.env.set_fog_depth_begin(TITLE_FOG.0);
             self.env.set_fog_depth_end(TITLE_FOG.1);
-            self.camera.look_at_from_position(aim + offset, aim);
-            self.eye = aim + offset;
+            self.camera.look_at_from_position(eye, aim);
+            self.eye = eye;
             RenderingServer::singleton()
                 .global_shader_parameter_set("eye_pos", &self.eye.to_variant());
             return;
@@ -6556,6 +6641,20 @@ impl MapView {
         self.camera.look_at_from_position(aim + offset, aim);
         self.eye = aim + offset;
         RenderingServer::singleton().global_shader_parameter_set("eye_pos", &self.eye.to_variant());
+    }
+
+    /// Where the creation camera aims: beside the hero, so that they stand
+    /// `at` (a share of the screen's width from its left).
+    fn creation_aim(&self, at: f32) -> Vector3 {
+        use crate::title_scene::HERO;
+        let size = self
+            .root
+            .get_viewport()
+            .map_or(Vector2::new(16.0, 10.0), |v| v.get_visible_rect().size);
+        let aspect = size.x / size.y.max(1.0);
+        let half = (FOV_DEG.to_radians() / 2.0).tan() * aspect * CREATION_DISTANCE;
+        let across = (at.clamp(0.2, 0.8) - 0.5) * 2.0 * half;
+        Vector3::new(HERO.0 as f32 - across, CREATION_AIM_UP, HERO.1 as f32)
     }
 
     /// Rings stay under their creatures as the models walk between cells.
@@ -7046,11 +7145,23 @@ impl MapView {
                 .map(|t| t == nh_world::TrapKind::SpikedPit),
             branch: &self.branch_look,
         };
-        let look = world
+        let mut look = world
             .map
             .cell(x, y)
             .map(|c| look_of(c, Near::of(&world.map, x, y), &ctx))
             .unwrap_or_default();
+        // behind the creation form, a choice left to chance: the hooded
+        // figure stands for the hero
+        if look.hero
+            && self.titled
+            && !self.shown
+            && self.creation.as_ref().is_some_and(|p| p.veiled())
+            && let Some(i) = look.entity
+            && let Some(hooded) = self.art.manifest().model_index(HOODED_FIGURE)
+            && let Some(m) = look.models.get_mut(i)
+        {
+            m.look.art.model = hooded;
+        }
         self.ground.set(x, y, look.kind);
         match self.cells.get(&(x, y)) {
             Some(n) if n.look == look => return,

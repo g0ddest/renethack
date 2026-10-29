@@ -1,9 +1,11 @@
 //! The title, the creation form and the end with a gamepad alone
 //! (`pad-screens`): the title opens with the focus on a new game; the
 //! d-pad moves it and A takes it (the achievements, then B back); the
-//! form opens on the empty name, → goes to the dice and A rolls a name
-//! that agrees with the gender (chosen with it), the d-pad goes down to
-//! the role and → changes it, Start begins the game. Given up from the game's menu (B, the d-pad,
+//! form opens on the role chosen (Random: the hooded figure framed in the
+//! title's place), → picks the next and shows them, A goes on to the
+//! empty name, → to the die, and A rolls a name that agrees with the
+//! gender (chosen with it, the figure unhooded); Start begins the game
+//! under that name. Given up from the game's menu (B, the d-pad,
 //! A, ← to yes, A), its questions let go with B; the end opens on a new
 //! game and B goes back to the title.
 
@@ -69,9 +71,28 @@ pub(super) fn pad_screens() -> Vec<Step> {
             focus_on(g, "title", &tr!("title-new-game"))
         }),
         tap(PadButton::A),
-        Step::Wait("the form, on the empty name", |g| {
-            let empty = choice(g).is_some_and(|c| c.name.is_empty());
-            Ok(empty && focus_on(g, "creation", &tr!("creation-name-placeholder"))?)
+        Step::Wait("the form, on the role chosen (Random), no name", |g| {
+            let empty = choice(g).is_some_and(|c| c.name.is_empty() && c.role == "random");
+            Ok(empty && focus_on(g, "creation", &tr!("creation-random"))?)
+        }),
+        Step::Wait("the hooded figure framed in the title's place", |g| {
+            let map = &g.ui.as_ref().ok_or("no UI")?.map;
+            Ok(map.creation_hero().is_some_and(|p| p.veiled()) && map.creation_framed())
+        }),
+        tap(PadButton::Right),
+        Step::Wait("→ another role, shown", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let role = role(g).unwrap_or_default();
+            let shown = ui.map.creation_hero().and_then(|p| p.role.clone());
+            if role != "random" && shown.as_deref() == Some(role.as_str()) {
+                *ROLE.lock().map_err(|e| e.to_string())? = role;
+                return Ok(true);
+            }
+            Ok(false)
+        }),
+        tap(PadButton::A),
+        Step::Wait("A: on past the cards, to the empty name", |g| {
+            focus_on(g, "creation", &tr!("creation-name-placeholder"))
         }),
         tap(PadButton::Right),
         Step::Wait("→ the dice", |g| {
@@ -91,25 +112,15 @@ pub(super) fn pad_screens() -> Vec<Step> {
             if !crate::names::pool(female).contains(&c.name) {
                 return Err(format!("{:?} is no {} name", c.name, c.gender));
             }
+            if c.role != *ROLE.lock().map_err(|e| e.to_string())? {
+                return Err(format!("the role changed: {c:?}"));
+            }
             *NAME.lock().map_err(|e| e.to_string())? = c.name;
             Ok(true)
         }),
-        tap(PadButton::Down),
-        Step::Wait("down to the role", |g| {
-            fail_on_error_screen(g)?;
-            let ui = g.ui.as_ref().ok_or("no UI")?;
-            let words = ui.screens.nav_focused().unwrap_or_default();
-            let on_role =
-                words != tr!("creation-name-roll-tip") && words != tr!("creation-name-placeholder");
-            if on_role {
-                *ROLE.lock().map_err(|e| e.to_string())? = role(g).unwrap_or_default();
-            }
-            Ok(on_role)
-        }),
-        tap(PadButton::Right),
-        Step::Wait("→ another role", |g| {
-            let was = ROLE.lock().map_err(|e| e.to_string())?.clone();
-            Ok(role(g).is_some_and(|r| r != was))
+        Step::Wait("the hero shown as rolled, unhooded", |g| {
+            let map = &g.ui.as_ref().ok_or("no UI")?.map;
+            Ok(map.creation_hero().is_some_and(|p| !p.veiled()))
         }),
         Step::Shot("pad-creation"),
         tap(PadButton::Start),

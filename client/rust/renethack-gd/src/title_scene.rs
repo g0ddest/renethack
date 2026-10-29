@@ -4,7 +4,8 @@
 //! the hero of the role last played (a Valkyrie the first time) standing
 //! in the kit NetHack starts that role with, in the dust of the main
 //! dungeon. The near side is open to the camera, which sways slowly round
-//! the hero (the map's title camera).
+//! the hero (the map's title camera). Behind the creation form the hero
+//! is the one being made (`dress`).
 
 use nh_protocol::{Catalog, Glyph, GlyphKind, LevelNotice, mg};
 use nh_world::World;
@@ -90,27 +91,50 @@ impl Fire {
     }
 }
 
+/// The hero the creation form is making, as the title scene shows them:
+/// the role (its name or code) and whether a heroine, each None while it
+/// is left to chance; where the form leaves room for them, a share of
+/// the screen's width from its left.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Preview {
+    pub role: Option<String>,
+    pub female: Option<bool>,
+    pub at: f32,
+}
+
+impl Preview {
+    /// Something is left to chance: the hooded figure stands for the hero.
+    pub fn veiled(&self) -> bool {
+        self.role.is_none() || self.female.is_none()
+    }
+}
+
 /// The title's chamber, ready for the map to draw.
 pub struct TitleScene {
     world: World,
     catalog: Catalog,
 }
 
+/// The engine's name of a role ("valkyrie") from its name, code or a
+/// heroine's name for it, in any case.
+fn role_name(catalog: &Catalog, role: &str) -> String {
+    catalog
+        .roles
+        .iter()
+        .find(|r| {
+            r.name.eq_ignore_ascii_case(role)
+                || r.code.eq_ignore_ascii_case(role)
+                || r.name_female
+                    .as_deref()
+                    .is_some_and(|n| n.eq_ignore_ascii_case(role))
+        })
+        .map_or_else(|| role.to_lowercase(), |r| r.name.to_lowercase())
+}
+
 impl TitleScene {
     /// The chamber with a hero of `role` (its name, "valkyrie", or the
     /// catalog's name or code for it), a woman's look when `female`.
     pub fn new(catalog: &Catalog, role: &str, female: bool) -> TitleScene {
-        let role = catalog
-            .roles
-            .iter()
-            .find(|r| {
-                r.name.eq_ignore_ascii_case(role)
-                    || r.code.eq_ignore_ascii_case(role)
-                    || r.name_female
-                        .as_deref()
-                        .is_some_and(|n| n.eq_ignore_ascii_case(role))
-            })
-            .map_or_else(|| role.to_lowercase(), |r| r.name.to_lowercase());
         let mut world = World::new();
         world.set_catalog(catalog);
         world.level = Some(LevelNotice {
@@ -118,18 +142,29 @@ impl TitleScene {
             depth: 1,
             plane: None,
         });
-        lay(&mut world, catalog, &role, female);
-        // the kit NetHack starts the role with (the first of the
-        // Barbarian's two), as the `kits` self-test holds the game to it
-        if let Some(kit) = crate::kits::kits(&role).first() {
-            world
-                .inventory
-                .replace(&crate::kits::inventory(catalog, kit));
-        }
-        TitleScene {
+        lay(&mut world, catalog);
+        let mut scene = TitleScene {
             world,
             catalog: catalog.clone(),
-        }
+        };
+        scene.dress(Some(role), Some(female));
+        scene
+    }
+
+    /// The hero of `role` in the kit NetHack starts it with, a woman's
+    /// look when `female`; a role left to chance (None) carries nothing.
+    /// Either left to chance, the map draws the hooded figure in their
+    /// place (`Preview::veiled`); the glyph stands for the size.
+    pub fn dress(&mut self, role: Option<&str>, female: Option<bool>) {
+        let cat = &self.catalog;
+        let role = role.map(|r| role_name(cat, r));
+        let shown = role.as_deref().unwrap_or("archeologist");
+        put_hero(&mut self.world, cat, shown, female == Some(true));
+        // the kit NetHack starts the role with (the first of the
+        // Barbarian's two), as the `kits` self-test holds the game to it
+        let kit = role.as_deref().and_then(|r| crate::kits::kits(r).first());
+        let pack = kit.map(|k| crate::kits::inventory(cat, k));
+        self.world.inventory.replace(&pack.unwrap_or_default());
     }
 
     /// A scene of another level, drawn as the chamber is (the prologue's).
@@ -146,8 +181,8 @@ impl TitleScene {
     }
 }
 
-/// The chamber's cells, its features, the rubble and the hero.
-fn lay(world: &mut World, cat: &Catalog, role: &str, female: bool) {
+/// The chamber's cells, its features and the rubble.
+fn lay(world: &mut World, cat: &Catalog) {
     let cmap = |sym: &str| -> Option<Glyph> {
         let info = cat.cmap.iter().find(|c| c.sym == sym)?;
         Some(Glyph {
@@ -204,18 +239,28 @@ fn lay(world: &mut World, cat: &Catalog, role: &str, female: bool) {
             }
         }
     }
+}
+
+/// The hero on their cell: of `role` (its name), a woman when `female`.
+fn put_hero(world: &mut World, cat: &Catalog, role: &str, female: bool) {
+    let floor = cat
+        .cmap
+        .iter()
+        .find(|c| c.sym == "S_room")
+        .map(|info| Glyph {
+            cmap: Some(info.idx),
+            color: info.color,
+            ..glyph(GlyphKind::Cmap, info.ch)
+        });
     if let Some(m) = cat.monsters.iter().find(|m| m.name == role_monster(role)) {
         let gender = if female { mg::FEMALE } else { mg::MALE };
-        put_on_floor(
-            HERO.0,
-            HERO.1,
-            Glyph {
-                mon: Some(m.idx),
-                color: m.color,
-                flags: mg::HERO | gender,
-                ..glyph(GlyphKind::Mon, '@' as i32)
-            },
-        );
+        let hero = Glyph {
+            mon: Some(m.idx),
+            color: m.color,
+            flags: mg::HERO | gender,
+            ..glyph(GlyphKind::Mon, '@' as i32)
+        };
+        world.map.print(HERO.0, HERO.1, &hero, floor.as_ref());
     }
 }
 
@@ -259,6 +304,39 @@ mod tests {
             })
             .count();
         assert_eq!(objects, BOULDERS.len() + ROCKS.len());
+    }
+
+    #[test]
+    fn the_hero_is_dressed_as_the_form_chooses() {
+        let cat = catalog();
+        let mut t = TitleScene::new(&cat, "Val", true);
+        let mon = |t: &mut TitleScene| {
+            let (world, cat) = t.parts();
+            let g = world.map.cell(HERO.0, HERO.1)?.glyph.clone()?;
+            let m = cat.monsters.get(g.mon? as usize)?;
+            Some((m.name.clone(), g.flags & mg::FEMALE != 0))
+        };
+        t.dress(Some("Sam"), Some(false));
+        assert_eq!(mon(&mut t), Some(("samurai".to_string(), false)));
+        let wielded = t.parts().0.inventory.wielded().map(|i| i.text.clone());
+        assert_eq!(wielded.as_deref(), Some("a samurai sword"));
+        // a gender left to chance: still the role's kit, on its own cell
+        t.dress(Some("Wizard"), None);
+        assert_eq!(t.parts().0.hero(), Some(HERO));
+        let wielded = t.parts().0.inventory.wielded().map(|i| i.text.clone());
+        assert_eq!(wielded.as_deref(), Some("a staff"));
+        // a role left to chance: nothing carried
+        t.dress(None, Some(true));
+        assert_eq!(t.parts().0.hero(), Some(HERO));
+        assert!(t.parts().0.inventory.wielded().is_none());
+        let veiled = |role: Option<&str>, female| Preview {
+            role: role.map(str::to_string),
+            female,
+            at: 0.5,
+        };
+        assert!(veiled(None, Some(true)).veiled());
+        assert!(veiled(Some("Wiz"), None).veiled());
+        assert!(!veiled(Some("Wiz"), Some(false)).veiled());
     }
 
     #[test]
