@@ -338,13 +338,39 @@ hero_flush(void)
     rh_proto_send("win", "hero", a);
 }
 
+/* The chronicle's major events, as #chronicle lists them once the game is
+   over (show_gamelog's final list, insight.c's LL_majors): wishes,
+   achievements, unique monsters defeated, gifts, a life saved,
+   artifacts, genocides, the game's start and its end.  For the end
+   screen; told only once the game is over, when nothing in it can spoil
+   the game. */
+#define RH_LL_MAJORS (LL_WISH | LL_ACHIEVE | LL_UMONST | LL_DIVINEGIFT \
+                      | LL_LIFESAVE | LL_ARTIFACT | LL_GENOCIDE | LL_DUMP)
+
+static void
+add_chronicle(cJSON *a)
+{
+    struct gamelog_line *ll;
+    cJSON *events = cJSON_AddArrayToObject(a, "chronicle"), *e;
+
+    for (ll = gg.gamelog; ll; ll = ll->next) {
+        if (!(ll->flags & RH_LL_MAJORS))
+            continue;
+        e = cJSON_CreateObject();
+        add_int(e, "turn", ll->turn);
+        add_str(e, "text", ll->text);
+        cJSON_AddItemToArray(events, e);
+    }
+}
+
 /* The hero's progress, for achievements: the play mode, NetHack's own
    achievements in the order attained, the u.uevent milestones, the
    deepest level reached, the conducts, the role-play options and how the
-   game ended.  Only what the game tells the player: #chronicle lists the
-   achievements (but for the two spoilers, held back until the game is
-   over: rh_progress.h), #overview and #conduct the rest.  Observation
-   only: no RNG, no state change, no formatting buffers. */
+   game ended; once it is over, its chronicle and score.  Only what the
+   game tells the player: #chronicle lists the achievements (but for the
+   two spoilers, held back until the game is over: rh_progress.h),
+   #overview and #conduct the rest, the end's summary the score.
+   Observation only: no RNG, no state change, no formatting buffers. */
 static cJSON *
 progress_json(void)
 {
@@ -401,6 +427,12 @@ progress_json(void)
     add_str(a, "how",
             rh_end_how(program_state.gameover, svk.killer.name,
                        u.uevent.ascended, u.uhp > 0 || (Upolyd && u.mh > 0)));
+    if (program_state.gameover) {
+        add_chronicle(a);
+        /* the score the end's summary tells: final once really_done() has
+           added the gold and the depth to it, before its last --More-- */
+        add_int(a, "score", u.urexp);
+    }
     return a;
 }
 

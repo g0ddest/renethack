@@ -256,12 +256,18 @@ fn progress_is_told_when_it_changes_with_the_turn_of_the_change() {
     let script = format!("key s\nkey s\nkey s\nkey s\nkey s\nkey #\next pray\nyn y\n{QUIT}");
     let (_pg, t) = run_script(SEED, NEW_MOON, &script);
     let p = progress(&t);
-    // the start, the prayer, the end: the turns between send nothing
-    assert_eq!(p.len(), 3, "{p:?}");
+    // the start, the prayer, the end: the turns between send nothing;
+    // once over, the end in the chronicle (the end page's) comes after
+    // the end's questions
+    assert_eq!(p.len(), 4, "{p:?}");
     assert_eq!((p[0].turn, p[0].conduct["gnostic"]), (1, 0));
     assert_eq!(p[1].conduct["gnostic"], 1);
     assert!(p[1].turn > 5, "prayed on turn {}", p[1].turn);
     assert!(p[2].gameover && p[2].turn >= p[1].turn);
+    assert!(p[0].chronicle.is_empty() && p[0].score.is_none());
+    let told: Vec<&str> = p[3].chronicle.iter().map(|e| e.text.as_str()).collect();
+    assert_eq!(told.last(), Some(&"quit"), "{told:?}");
+    assert_eq!(p[3].score, Some(0));
 }
 
 #[test]

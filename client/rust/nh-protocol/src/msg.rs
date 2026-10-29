@@ -307,11 +307,27 @@ pub struct ProgressNotice {
     /// Once over: "died", "quit", "escaped", "ascended", "panicked" or
     /// "tricked".
     pub how: Option<String>,
+    /// Once over: the chronicle's major events as #chronicle lists them
+    /// then (wishes, achievements, unique monsters defeated, gifts,
+    /// artifacts, genocides, the start and the end), oldest first.
+    #[serde(default)]
+    pub chronicle: Vec<ChronicleEvent>,
+    /// Once over: the score (`u.urexp`), final from the end's summary on.
+    #[serde(default)]
+    pub score: Option<i64>,
     /// The turn (moves) the notice was sent on. A notice comes only when
     /// the progress changed, so this is when whatever it brings was
     /// earned (0 in recordings made before the notice carried it).
     #[serde(default)]
     pub turn: i64,
+}
+
+/// One of the chronicle's events: the turn it happened on, and the
+/// engine's words for it (livelog_printf's, in English).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+pub struct ChronicleEvent {
+    pub turn: i64,
+    pub text: String,
 }
 
 impl ProgressNotice {
