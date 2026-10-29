@@ -534,12 +534,21 @@ fn marker(s: &EndSummary, scale: f32) -> Gd<Control> {
     let rank = rank_of(s);
     let mut inner = match s.how {
         EndHow::Died | EndHow::Quit => {
-            let stone = s.stone().unwrap_or_else(|| Tombstone {
+            let mut stone = s.stone().unwrap_or_else(|| Tombstone {
                 name: s.name.clone(),
                 gold: s.numbers().gold.unwrap_or(0),
                 death: String::new(),
                 year: s.year,
             });
+            // the stone has room for 16 bytes: a Cyrillic name is cut at 8
+            // letters, the hero's whole name carved instead
+            if stone.name.len() < s.name.len()
+                && s.name
+                    .to_lowercase()
+                    .starts_with(&stone.name.to_lowercase())
+            {
+                stone.name = s.name.clone();
+            }
             // a death's words as the stone has them, else as the
             // chronicle ends (formatkiller's words both); a quit's ours
             let death = match s.how {

@@ -5322,12 +5322,22 @@ impl RenethackGame {
                 _ => r.name.clone(),
             })
             .unwrap_or_default();
-        // the engine's name (debug mode names every hero "wizard")
+        // the engine's name (debug mode names every hero "wizard"), whole:
+        // the stone and the status line cut a long one by its bytes
+        let typed = self.name.clone().unwrap_or_default();
         let name = crate::layouts::tombstone(&text)
             .map(|(t, _)| t.name)
             .or_else(|| told("title").and_then(|t| t.split(" the ").next().map(str::to_string)))
             .or_else(|| self.name.clone())
             .unwrap_or_default();
+        let name = if !name.is_empty()
+            && name.len() < typed.len()
+            && typed.to_lowercase().starts_with(&name.to_lowercase())
+        {
+            typed.clone()
+        } else {
+            name
+        };
         let held: Vec<(nh_world::achievements::Achievement, bool)> = self
             .achievements
             .as_ref()
@@ -5350,7 +5360,9 @@ impl RenethackGame {
             how,
             name,
             female,
-            title: told("title").unwrap_or_default(),
+            title: told("title")
+                .map(|t| crate::hud::whole_name(&t, &typed))
+                .unwrap_or_default(),
             role,
             align: told("align").unwrap_or_default(),
             text,
@@ -5779,6 +5791,7 @@ impl RenethackGame {
                 .map(|(&at, tip)| (tip.text.as_str(), at)),
         );
         let t = Instant::now();
+        ui.hud.set_hero_name(self.name.as_deref());
         ui.hud.sync(&mut self.world, catalog.as_deref());
         self.lap("hud", t);
         self.sync_last_hero();

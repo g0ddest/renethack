@@ -206,6 +206,22 @@ fn place_text(view: &StatusView) -> Option<String> {
     })
 }
 
+/// The status line's title ("Ростисла the Troglodyte") with the hero's
+/// whole name: NetHack cuts "Name the Rank" to 30 bytes, and a Cyrillic
+/// name takes two a letter. A title whose name is not the start of
+/// `name` (debug mode's "wizard") stays as it is.
+pub fn whole_name(title: &str, name: &str) -> String {
+    let title = title.trim_end();
+    let Some((cut, rank)) = title.split_once(" the ") else {
+        return title.to_string();
+    };
+    let lower = |t: &str| t.to_lowercase();
+    if cut.is_empty() || cut.len() >= name.len() || !lower(name).starts_with(&lower(cut)) {
+        return title.to_string();
+    }
+    format!("{} the {rank}", crate::layouts::upstart(name))
+}
+
 /// The status as the portrait's tooltip says it in full: name and title,
 /// alignment; place, gold, armour, level, experience, turn, score; hit
 /// points and power; the attributes; hunger, encumbrance, conditions.
@@ -1187,6 +1203,9 @@ pub struct Hud {
     pad: Option<PadKind>,
 
     status_text: String,
+    /// The hero's name as typed: the status line's title cuts a long one
+    /// (`whole_name`).
+    hero_name: Option<String>,
     /// (newest message, input seq, full log open, faded lines) last shown.
     log_key: Option<(u64, u64, bool, usize)>,
     full_log_dirty: bool,
@@ -1802,6 +1821,7 @@ impl Hud {
             full_log_close,
             pad: None,
             status_text: String::new(),
+            hero_name: None,
             log_key: None,
             full_log_dirty: true,
             full_log_follow: true,
@@ -2150,6 +2170,15 @@ impl Hud {
         self.transient_shown = None;
     }
 
+    /// The hero's name as typed (its title shows it whole).
+    pub fn set_hero_name(&mut self, name: Option<&str>) {
+        if self.hero_name.as_deref() != name {
+            self.hero_name = name.map(str::to_string);
+            // the title again at the next frame
+            self.status_text.clear();
+        }
+    }
+
     /// Called every frame while a game is on screen.
     pub fn sync(&mut self, world: &mut World, catalog: Option<&Catalog>) {
         let now = now_secs();
@@ -2379,7 +2408,10 @@ impl Hud {
 
     fn show_status(&mut self, status: &Status, catalog: Option<&Catalog>, now: f64) {
         let conditions = catalog.map_or_else(Vec::new, |c| status.condition_names(c));
-        let view = StatusView::new(status, &conditions);
+        let mut view = StatusView::new(status, &conditions);
+        if let Some(name) = &self.hero_name {
+            view.title = whole_name(&view.title, name);
+        }
         self.status_text = view.lines().join("\n");
         crate::tips::set(&self.portrait_panel, &status_tip(&view));
         // the rank in the hero's gender (Новобранка, not Новобранец)
@@ -3058,6 +3090,25 @@ impl Hud {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_name_the_title_cut_shows_whole() {
+        // 30 bytes: a Cyrillic name loses its end
+        assert_eq!(
+            whole_name("Ростисла the Troglodyte      ", "Ростислава"),
+            "Ростислава the Troglodyte"
+        );
+        // whole already, or another name (debug mode's), as it is
+        assert_eq!(
+            whole_name("Hero the Stripling", "Hero"),
+            "Hero the Stripling"
+        );
+        assert_eq!(
+            whole_name("Wizard the Evoker", "Добрава"),
+            "Wizard the Evoker"
+        );
+        assert_eq!(whole_name("no rank here", "Hero"), "no rank here");
+    }
     use nh_protocol::StatusUpdate;
     use nh_world::{MessageLog, NO_COLOR};
 
