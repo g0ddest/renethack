@@ -71,6 +71,9 @@ SCENES = {
     # falling through: a trap door (a dwarf's, then the hero's), a pit, a
     # hole, one dug with a wand
     "trapdoor": ("trapdoor", [], 600),
+    # the rooms' dressing by branch: the first rooms, the Big Room,
+    # Medusa, the Castle, the Mines, the Valley, Orcus, the mazes, Vlad's
+    "dressing": ("dressing", [], 900),
     # every creature and thing a batch at a time: with --census, what the
     # game can draw (not a timing)
     "variants": ("variants", [], 1800),
