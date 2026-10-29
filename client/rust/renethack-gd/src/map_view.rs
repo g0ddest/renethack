@@ -49,7 +49,7 @@ use crate::art::{
 };
 use crate::audio::Sound;
 use crate::batch::{Batches, Slot};
-use crate::branch_look::{BranchLook, Prop};
+use crate::branch_look::{BranchLook, Prop, Under};
 use crate::cues::Size;
 use crate::engulf::{Engulfed, Flesh, Inside};
 use crate::hearing;
@@ -449,6 +449,35 @@ const FLAME: Color = Color::from_rgb(1.0, 0.45, 0.12);
 /// from the depths of down stairs.
 const STAIR_UP_LIGHT: Color = Color::from_rgb(1.0, 0.72, 0.46);
 const STAIR_DOWN_LIGHT: Color = Color::from_rgb(0.5, 0.6, 0.9);
+/// The Planes (`Under`): how tall a bubble's skin stands on the Plane of
+/// Water, the puffs a cloud cell of the Plane of Air is, and how far below
+/// the level the sea of clouds lies (metres).
+const MEMBRANE_TALL: f32 = 1.5;
+/// How far a bubble's skin leans in over it (degrees).
+const MEMBRANE_LEAN: f32 = 14.0;
+const CLOUD_PUFFS: u32 = 2;
+/// How far behind whoever stands in a cloud its puffs are drawn (metres).
+const CLOUD_BEHIND: f32 = 0.7;
+const SKY_DROP: f32 = 30.0;
+/// How wide the sea of clouds is (metres): past the overview's frame.
+const SKY_SEA: f32 = 1400.0;
+/// The light from above on the Planes of Air and Water (the moon's, the
+/// level's own elsewhere): its way, colour and energy.
+const SUN: (Vector3, Color, f32) = (
+    Vector3::new(-55.0, 35.0, 0.0),
+    Color::from_rgb(1.0, 0.96, 0.9),
+    0.9,
+);
+const DEEP_LIGHT: (Vector3, Color, f32) = (
+    Vector3::new(-80.0, 10.0, 0.0),
+    Color::from_rgb(0.45, 0.75, 0.9),
+    0.45,
+);
+const MOON: (Vector3, Color, f32) = (
+    Vector3::new(-62.0, 25.0, 0.0),
+    Color::from_rgb(0.55, 0.62, 0.9),
+    0.14,
+);
 /// Depth fog and the background: never pure black.
 const DARKNESS: Color = Color::from_rgb(0.008, 0.009, 0.013);
 
@@ -470,6 +499,28 @@ enum Liquid {
     Haze,
     /// The air bent where something unseen is remembered.
     Unseen,
+    // the Planes' (`Under`):
+    /// An air cell of a bubble in the Plane of Water: its floor.
+    Bubble,
+    /// A soft mass of cloud on a cloud cell.
+    Cloud,
+    /// The deep round a bubble: its water cells and what lies under.
+    Deep,
+    /// The bubble's skin where its air meets the water.
+    Membrane,
+}
+
+impl Liquid {
+    pub const ALL: [Liquid; 8] = [
+        Liquid::Water,
+        Liquid::Lava,
+        Liquid::Haze,
+        Liquid::Unseen,
+        Liquid::Bubble,
+        Liquid::Cloud,
+        Liquid::Deep,
+        Liquid::Membrane,
+    ];
 }
 
 /// A light of a feature on its cell.
@@ -624,6 +675,15 @@ impl Look {
 
     fn turned(&mut self, mesh: MeshKey, paint: Paint, pos: Vector3, rot: Vector3) {
         self.add(mesh, paint, pos, rot);
+    }
+
+    /// A thin see-through sheet (a bubble's skin, a puff of cloud): no
+    /// shadow of its own.
+    fn sheet(&mut self, mesh: MeshKey, paint: Paint, pos: Vector3, rot: Vector3) {
+        self.add(mesh, paint, pos, rot);
+        if let Some(s) = self.solids.last_mut() {
+            s.shadow = false;
+        }
     }
 
     /// Flat ground: no shadow of its own.
@@ -1994,6 +2054,16 @@ fn terrain_base(
             );
             look.ground = 0.12;
         }
+        Terrain::Water if ctx.branch.under == Under::Deep => {
+            // the deep, no bed under it
+            look.ground_tile(
+                plane(1.0, 1.0),
+                Paint::Liquid(Liquid::Deep),
+                at(0.0, SURFACE_Y, 0.0),
+            );
+            look.ground = -0.1;
+            look.sunk = true;
+        }
         Terrain::Pool | Terrain::Water => {
             // (who swims or wades stands deeper than its surface)
             let deep = if t == Terrain::Water { 0.1 } else { 0.05 };
@@ -2071,13 +2141,67 @@ fn terrain_base(
             look.solid(mesh, main(SHADE_LIT), at(0.0, 0.55, 0.0));
             look.ground = 1.1;
         }
-        Terrain::Air => {
-            let air = lighter(nh_color(c), 0.4);
-            look.ground_tile(
-                plane(1.0, 1.0),
-                Paint::Flat(air, Finish::Ghost),
-                Vector3::ZERO,
-            );
+        Terrain::Air => match ctx.branch.under {
+            // nothing: open air over the sea of clouds far below
+            Under::Sky => {}
+            Under::Deep => {
+                look.ground_tile(
+                    plane(1.0, 1.0),
+                    Paint::Liquid(Liquid::Bubble),
+                    Vector3::ZERO,
+                );
+                // its skin on each side that meets the water, leaning in
+                // over the bubble as a sphere's would
+                let half = MEMBRANE_TALL / 2.0;
+                let (lean, inset) = (MEMBRANE_LEAN, half * MEMBRANE_LEAN.to_radians().sin());
+                let sides = [
+                    (at(0.0, half, -0.5 + inset), at(90.0 - lean, 0.0, 0.0)),
+                    (at(0.0, half, 0.5 - inset), at(90.0 + lean, 0.0, 0.0)),
+                    (at(-0.5 + inset, half, 0.0), at(90.0 + lean, 90.0, 0.0)),
+                    (at(0.5 - inset, half, 0.0), at(90.0 - lean, 90.0, 0.0)),
+                ];
+                for ((pos, rot), water) in sides.into_iter().zip(around.liquid) {
+                    if water {
+                        look.sheet(
+                            plane(1.0, MEMBRANE_TALL),
+                            Paint::Liquid(Liquid::Membrane),
+                            pos,
+                            rot,
+                        );
+                    }
+                }
+            }
+            Under::Rock => {
+                let air = lighter(nh_color(c), 0.4);
+                look.ground_tile(
+                    plane(1.0, 1.0),
+                    Paint::Flat(air, Finish::Ghost),
+                    Vector3::ZERO,
+                );
+            }
+        },
+        Terrain::Cloud if ctx.branch.under == Under::Sky => {
+            // soft masses overlapping their neighbours' into a bank, each
+            // cell's own by its noise
+            for k in 0..CLOUD_PUFFS {
+                let salt = 70 + k * 4;
+                // (scattered past the cell's edges: a bank's rim is
+                // ragged, never the cells' straight line)
+                // (low: whoever is beside it stands over the bank, knee
+                // deep, not hidden behind it)
+                let size = 1.2 + ctx.noise(salt) * 1.0;
+                let pos = at(
+                    (ctx.noise(salt + 1) - 0.5) * 0.9,
+                    0.1 + k as f32 * 0.3 + ctx.noise(salt + 2) * 0.2,
+                    (ctx.noise(salt + 3) - 0.5) * 0.9,
+                );
+                look.sheet(
+                    plane(size, size),
+                    Paint::Liquid(Liquid::Cloud),
+                    pos,
+                    Vector3::ZERO,
+                );
+            }
         }
         Terrain::Cloud => {
             let cloud = lighter(nh_color(c), 0.2);
@@ -2627,7 +2751,13 @@ impl<'a> Near<'a> {
     /// The floor most neighbours show (lit, dark or corridor; ties in that
     /// order), as one of their terrain glyphs.
     fn floor(&self, catalog: &Catalog) -> Option<&'a Glyph> {
-        let floors = [Terrain::Floor, Terrain::DarkFloor, Terrain::Corridor];
+        // (the air of the Planes of Air and Water too)
+        let floors = [
+            Terrain::Floor,
+            Terrain::DarkFloor,
+            Terrain::Corridor,
+            Terrain::Air,
+        ];
         let known: Vec<(Terrain, &Glyph)> = self.cells[..4]
             .iter()
             .copied()
@@ -2678,6 +2808,15 @@ fn look_of(cell: &Cell, near: Near, ctx: &Ctx) -> Look {
             if terrain == Terrain::Stone && cell.entity().is_none() {
                 rock_look(&mut look, &near, ctx);
             }
+            // whoever stands in a cloud stands in front of it, never lost
+            // in its puffs (they are drawn behind, not over)
+            if terrain == Terrain::Cloud && cell.entity().is_some() {
+                for s in &mut look.solids {
+                    if s.paint == Paint::Liquid(Liquid::Cloud) {
+                        s.pos.z -= CLOUD_BEHIND;
+                    }
+                }
+            }
         }
         // print_glyph sends an unexplored background under monsters and
         // objects: something stands there, so it is walkable; it looks
@@ -2690,8 +2829,15 @@ fn look_of(cell: &Cell, near: Near, ctx: &Ctx) -> Look {
                     "S_engrcorr" => "S_corr",
                     sym => sym,
                 };
+                // (a bubble's air meets the water beside it all the same)
                 let open = Near::default();
-                terrain_look(&mut look, terrain_of(sym), sym, g, &open, ctx);
+                let terrain = terrain_of(sym);
+                let near_it = if terrain == Terrain::Air {
+                    &near
+                } else {
+                    &open
+                };
+                terrain_look(&mut look, terrain, sym, g, near_it, ctx);
                 // (its shore with the cells beside it as theirs)
                 let kind = look.kind;
                 ground_layers(&mut look, kind, &near, ctx);
@@ -3129,6 +3275,10 @@ pub struct MapView {
     bedrock: Gd<MeshInstance3D>,
     holes: HashSet<(i32, i32)>,
     bedrock_dirty: bool,
+    /// The sea of clouds far below the Plane of Air (made the first time),
+    /// and the light from above (the moon's, the Planes' own sun).
+    sky_sea: Option<Gd<MeshInstance3D>>,
+    moon: Gd<DirectionalLight3D>,
     /// The vignette and grain over the map, under the HUD.
     post: Gd<CanvasLayer>,
     /// The inside of what engulfed the hero, round them.
@@ -3489,9 +3639,9 @@ impl MapView {
         // a faint cold light from above: the shapes of remembered walls
         // stay barely readable outside any light
         let mut moon = DirectionalLight3D::new_alloc();
-        moon.set_rotation_degrees(Vector3::new(-62.0, 25.0, 0.0));
-        moon.set_color(Color::from_rgb(0.55, 0.62, 0.9));
-        moon.set_param(Param::ENERGY, 0.14);
+        moon.set_rotation_degrees(MOON.0);
+        moon.set_color(MOON.1);
+        moon.set_param(Param::ENERGY, MOON.2);
         moon.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
         root.add_child(&moon);
         // and fainter still from the other side: no wall face is flat black
@@ -3804,6 +3954,8 @@ impl MapView {
             bedrock,
             holes: HashSet::new(),
             bedrock_dirty: true,
+            sky_sea: None,
+            moon,
             post,
             engulfed,
             stage: None,
@@ -4412,11 +4564,49 @@ impl MapView {
         env.set_adjustment_color_correction(&grade_curve(g.shadows, g.highlights));
         RenderingServer::singleton()
             .global_shader_parameter_set("branch_cracks", &l.cracks.to_variant());
+        let (way, color, energy) = match l.under {
+            Under::Sky => SUN,
+            Under::Deep => DEEP_LIGHT,
+            Under::Rock => MOON,
+        };
+        self.moon.set_rotation_degrees(way);
+        self.moon.set_color(color);
+        self.moon.set_param(Param::ENERGY, energy);
+        self.show_sky_sea(l.under == Under::Sky);
         self.vfx.set_dust(l.dust, l.embers);
         self.lights_dirty = true;
         self.bedrock_dirty = true;
         // (a prologue's scene keeps its own air)
         self.keep_prologue_air();
+    }
+
+    /// The sea of clouds far below the level (the Plane of Air's), made
+    /// the first time it is shown.
+    fn show_sky_sea(&mut self, on: bool) {
+        if !on {
+            if let Some(sea) = self.sky_sea.as_mut() {
+                sea.set_visible(false);
+            }
+            return;
+        }
+        let sea = self.sky_sea.get_or_insert_with(|| {
+            let mut sea = MeshInstance3D::new_alloc();
+            let mut quad = godot::classes::PlaneMesh::new_gd();
+            quad.set_size(Vector2::new(SKY_SEA, SKY_SEA));
+            sea.set_mesh(&quad);
+            if let Ok(shader) = godot::tools::try_load::<Shader>("res://shaders/sky_sea.gdshader") {
+                let mut m = ShaderMaterial::new_gd();
+                m.set_shader(&shader);
+                sea.set_material_override(&m);
+            }
+            sea.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+            // the middle of the level's field, far below it
+            let mid = Vector3::new(COLNO as f32 / 2.0, -SKY_DROP, ROWNO as f32 / 2.0);
+            sea.set_position(mid);
+            self.root.add_child(&sea);
+            sea
+        });
+        sea.set_visible(true);
     }
 
     /// The branch the level drawn is in (self-tests).
@@ -5384,6 +5574,10 @@ impl MapView {
             Liquid::Lava => "res://shaders/lava.gdshader",
             Liquid::Haze => "res://shaders/heat_haze.gdshader",
             Liquid::Unseen => "res://shaders/unseen.gdshader",
+            Liquid::Bubble => "res://shaders/bubble.gdshader",
+            Liquid::Cloud => "res://shaders/cloud.gdshader",
+            Liquid::Deep => "res://shaders/deep.gdshader",
+            Liquid::Membrane => "res://shaders/membrane.gdshader",
         };
         let mat: Gd<Material> = match godot::tools::try_load::<Shader>(path) {
             Ok(shader) => {
@@ -5394,6 +5588,9 @@ impl MapView {
                 if matches!(l, Liquid::Water | Liquid::Lava) {
                     let ground = self.surfaces.ground_texture();
                     m.set_shader_parameter("ground_tex", &ground.to_variant());
+                }
+                if l == Liquid::Membrane {
+                    m.set_shader_parameter("tall", &MEMBRANE_TALL.to_variant());
                 }
                 if l == Liquid::Lava {
                     let flow = |map: &str| {
@@ -5416,6 +5613,10 @@ impl MapView {
                     Liquid::Lava => Color::from_rgb(1.0, 0.35, 0.05),
                     Liquid::Haze => Color::from_rgba(1.0, 1.0, 1.0, 0.0),
                     Liquid::Unseen => Color::from_rgba(0.7, 0.72, 0.8, 0.3),
+                    Liquid::Bubble => Color::from_rgba(0.4, 0.65, 0.8, 0.35),
+                    Liquid::Cloud => Color::from_rgba(0.9, 0.93, 1.0, 0.7),
+                    Liquid::Deep => Color::from_rgb(0.01, 0.05, 0.1),
+                    Liquid::Membrane => Color::from_rgba(0.7, 0.85, 1.0, 0.25),
                 };
                 self.art.flat(
                     c,
@@ -5470,7 +5671,15 @@ impl MapView {
         if let Some(mesh) = st.commit() {
             self.bedrock.set_mesh(&mesh);
         }
-        // the branch's own rock (Gehennom's dark basalt)
+        // the branch's own rock (Gehennom's dark basalt); on the Planes of
+        // Air and Water none: the sky, the deep
+        self.bedrock
+            .set_visible(self.branch_look.under != Under::Sky);
+        if self.branch_look.under == Under::Deep {
+            let mat = self.material(Paint::Liquid(Liquid::Deep));
+            self.bedrock.set_material_override(&mat);
+            return;
+        }
         let name = self.branch_look.material("bedrock");
         if let Some(m) = self.art.manifest().material(name) {
             let mat = self.material(Paint::Pbr(m, SHADE_BEDROCK, Role::Void));
@@ -7132,7 +7341,7 @@ impl MapView {
             None => {}
         }
         // the liquids' materials (their shaders and the lava's flow)
-        for l in [Liquid::Water, Liquid::Lava, Liquid::Haze, Liquid::Unseen] {
+        for l in Liquid::ALL {
             if !self.liquids.contains_key(&l) {
                 self.liquid(l);
                 return true;
@@ -9083,7 +9292,8 @@ mod tests {
 
     /// A level from its picture: `.` a lit floor, `#` a corridor, `+` a
     /// doorway, `|` and `-` walls, `r 7 L J` their corners, `}` water, `~`
-    /// ice, `^` lava, `>` stairs down, `_` an altar.
+    /// ice, `^` lava, `>` stairs down, `_` an altar; the Planes' `W` deep
+    /// water, `a` air and `c` cloud.
     fn level(cat: &Catalog, rows: &[&str]) -> MapState {
         let mut map = MapState::new();
         for (row, line) in rows.iter().enumerate() {
@@ -9103,6 +9313,9 @@ mod tests {
                     '^' => "S_lava",
                     '>' => "S_dnstair",
                     '_' => "S_altar",
+                    'W' => "S_water",
+                    'a' => "S_air",
+                    'c' => "S_cloud",
                     _ => continue,
                 };
                 let (x, y) = (PICTURE_AT.0 + col as i32, PICTURE_AT.1 + row as i32);
@@ -9500,6 +9713,50 @@ mod tests {
         let pitch = PITCH_DEG.to_radians();
         let back = Vector3::new(0.0, pitch.sin(), pitch.cos());
         (Vector3::new(10.0, 0.0, 9.0) + back * DISTANCE, -back)
+    }
+
+    /// The Planes of Air and Water looked like debug tiles: a grid of
+    /// translucent cubes, flat blue squares. Air there is no floor (open
+    /// over a sea of clouds far below), a cloud soft puffs of its own;
+    /// water is the deep, with no bed under it, and the air of a bubble in
+    /// it is a floor with a skin on each side the water meets.
+    #[test]
+    fn the_planes_of_air_and_water_are_sky_and_deep() {
+        let f = Fixture::new();
+        let liquids = |look: &Look| -> Vec<Liquid> {
+            look.solids
+                .iter()
+                .filter_map(|s| match s.paint {
+                    Paint::Liquid(l) => Some(l),
+                    _ => None,
+                })
+                .collect()
+        };
+        let air = Branch::Planes(nh_world::Plane::Air);
+        let water = Branch::Planes(nh_world::Plane::Water);
+        let sky = level(&f.cat, &["acc", "aaa"]);
+        let at = |col: i32, row: i32| (PICTURE_AT.0 + col, PICTURE_AT.1 + row);
+        assert!(f.look_in(&sky, at(0, 0), air).solids.is_empty());
+        let cloud = f.look_in(&sky, at(1, 0), air);
+        assert_eq!(liquids(&cloud), [Liquid::Cloud; CLOUD_PUFFS as usize]);
+        assert!(
+            cloud.solids.iter().all(|s| !s.shadow),
+            "a cloud throws no shadow"
+        );
+        // the deep round a bubble two cells wide: each air cell's skin on
+        // its three sides that meet the water, none between them
+        let deep = level(&f.cat, &["WWWW", "WaaW", "WWWW"]);
+        let bubble = f.look_in(&deep, at(1, 1), water);
+        let skins = liquids(&bubble)
+            .iter()
+            .filter(|&&l| l == Liquid::Membrane)
+            .count();
+        assert_eq!(liquids(&bubble)[0], Liquid::Bubble);
+        assert_eq!(skins, 3);
+        assert_eq!(liquids(&f.look_in(&deep, at(0, 0), water)), [Liquid::Deep]);
+        // elsewhere the same cells as they were
+        let main = f.look_in(&deep, at(1, 1), Branch::Main);
+        assert!(liquids(&main).is_empty());
     }
 
     #[test]

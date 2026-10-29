@@ -65,6 +65,17 @@ impl Prop {
     }
 }
 
+/// What lies under the level's cells and round them: the rock, an open
+/// drop to a sea of clouds far below (the Plane of Air: its air cells a
+/// faint breeze, its clouds soft masses), or the deep (the Plane of Water:
+/// dark, caustic-lit, the bubble of air a membrane in it).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Under {
+    Rock,
+    Sky,
+    Deep,
+}
+
 /// What a branch dresses its rooms with (map_view's `dressing`): never
 /// anything that could pass for an object, a monster or loot.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -160,6 +171,7 @@ pub struct BranchLook {
     pub grade: Grade,
     /// What its rooms are dressed with.
     pub dress: Dress,
+    pub under: Under,
 }
 
 const NEUTRAL: Grade = Grade {
@@ -210,6 +222,7 @@ const MAIN: BranchLook = BranchLook {
         corners: true,
         formations: false,
     },
+    under: Under::Rock,
 };
 
 /// The look of a branch.
@@ -412,12 +425,16 @@ fn plane_look(plane: Plane) -> BranchLook {
             dress: Dress::NONE,
             ..MAIN
         },
+        // high in an open sky: clear air, the haze thin, a sea of clouds
+        // far below
         Plane::Air => BranchLook {
             ambient: rgb(0.6, 0.72, 0.95),
             ambient_energy: 0.6,
             fog: rgb(0.85, 0.9, 1.0),
-            fog_density: 0.02,
-            darkness: rgb(0.35, 0.45, 0.62),
+            fog_density: 0.006,
+            darkness: rgb(0.55, 0.68, 0.88),
+            dust: 0.0,
+            under: Under::Sky,
             grade: Grade {
                 saturation: 0.85,
                 brightness: 1.1,
@@ -450,12 +467,16 @@ fn plane_look(plane: Plane) -> BranchLook {
             dress: Dress::NONE,
             ..MAIN
         },
+        // a bubble of air drifting in the deep: motes in the water about
+        // it, the dark closing in
         Plane::Water => BranchLook {
             ambient: rgb(0.2, 0.36, 0.6),
             ambient_energy: 0.35,
             fog: rgb(0.3, 0.5, 0.75),
             fog_density: 0.02,
             darkness: rgb(0.01, 0.04, 0.08),
+            dust: 2.0,
+            under: Under::Deep,
             grade: Grade {
                 saturation: 0.9,
                 shadows: rgb(0.9, 1.0, 1.12),
