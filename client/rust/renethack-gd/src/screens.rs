@@ -482,7 +482,8 @@ impl Screens {
     pub fn show_creation(&mut self, catalog: Rc<Catalog>, keys_first: KeyProfile, taken: Taken) {
         let back = theme::button(&tr!("creation-back"), &self.queue, UiEvent::BackToTitle);
         let lang = language_option(&self.queue);
-        let form = Form::new(catalog, keys_first, taken, &self.queue, lang, back);
+        let mut form = Form::new(catalog, keys_first, taken, &self.queue, lang, back);
+        form.set_pad(self.pad.is_some());
         let mut page = Control::new_alloc();
         theme::full_rect_ignore(&page);
         let mut shade = TextureRect::new_alloc();
@@ -525,6 +526,12 @@ impl Screens {
         });
         self.nav.at = self.chosen_card().unwrap_or(0);
         self.show_nav();
+    }
+
+    /// The creation form shows its keys' row (self-tests: not while a
+    /// gamepad plays).
+    pub fn creation_keys_shown(&self) -> Option<bool> {
+        self.form.as_ref().map(|f| f.keys_shown())
     }
 
     /// What the creation form has chosen (self-tests).
@@ -598,6 +605,19 @@ impl Screens {
         self.pad = pad;
         if let Some((_, foot, _)) = self.end_page.as_mut() {
             end_view::show_hints(foot, pad);
+        }
+        if let Some(form) = self.form.as_mut() {
+            form.set_pad(pad.is_some());
+            // the focus off a row that hid
+            let at = self.nav.at;
+            if self
+                .nav
+                .items
+                .get(at)
+                .is_some_and(|c| !c.is_visible_in_tree())
+            {
+                self.nav_step(1);
+            }
         }
     }
 

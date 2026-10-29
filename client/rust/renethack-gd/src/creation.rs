@@ -258,6 +258,9 @@ pub struct Form {
     /// Modern (item 0) or Classic keys, and what they walk with.
     keys: Gd<OptionButton>,
     keys_told: Gd<Label>,
+    /// The keys' row, all of it: hidden while a gamepad plays (keys are
+    /// no pad player's business; the settings keep the choice).
+    keys_row: Vec<Gd<Control>>,
     lang: Gd<OptionButton>,
     /// The chosen role's name, its first-game mark and how it plays.
     role_title: Gd<Label>,
@@ -382,18 +385,33 @@ impl Form {
         let race = option(&tr!("creation-race"), &mut choices);
         let gender = option(&tr!("creation-gender"), &mut choices);
         let align = option(&tr!("creation-alignment"), &mut choices);
-        let mut keys = option(&tr!("creation-keys"), &mut choices);
+        let keys_label = theme::label(&tr!("creation-keys"));
+        choices.add_child(&keys_label);
+        let mut keys = OptionButton::new_alloc();
+        keys.set_focus_mode(FocusMode::NONE);
+        keys.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        keys.set_fit_to_longest_item(false);
+        keys.set_clip_text(true);
+        keys.set_text_overrun_behavior(OverrunBehavior::TRIM_ELLIPSIS);
+        choices.add_child(&keys);
         keys.add_item(&tr!("creation-keys-modern-name"));
         keys.add_item(&tr!("creation-keys-classic-name"));
         keys.select(i32::from(keys_first == KeyProfile::Classic));
         crate::tips::set(&keys, &tr!("creation-keys-tip"));
         // under the keys' short name, what they walk with
-        choices.add_child(&Control::new_alloc());
+        let keys_gap = Control::new_alloc();
+        choices.add_child(&keys_gap);
         let mut keys_told =
             theme::styled_label(&keys_line(keys_first), Face::Body, 15, theme::TEXT_DIM);
         keys_told.set_autowrap_mode(AutowrapMode::WORD_SMART);
         crate::tips::set(&keys_told, &tr!("creation-keys-tip"));
         choices.add_child(&keys_told);
+        let keys_row: Vec<Gd<Control>> = vec![
+            keys_label.upcast(),
+            keys.clone().upcast(),
+            keys_gap,
+            keys_told.clone().upcast(),
+        ];
         choices.add_child(&theme::label(&tr!("creation-language")));
         let mut lang = lang;
         lang.set_h_size_flags(SizeFlags::EXPAND_FILL);
@@ -442,6 +460,7 @@ impl Form {
             align,
             keys,
             keys_told,
+            keys_row,
             lang,
             role_title,
             role_mark,
@@ -638,6 +657,18 @@ impl Form {
             .set_visible(code.is_some_and(|c| FIRST_GAME.contains(&c)));
         self.role_line
             .set_text(&about(code).map(i18n::tr).unwrap_or_default());
+    }
+
+    /// A gamepad plays (`pad`): the keys' row hides; the keys chosen stay.
+    pub fn set_pad(&mut self, pad: bool) {
+        for c in &mut self.keys_row {
+            c.set_visible(!pad);
+        }
+    }
+
+    /// Whether the keys' row shows.
+    pub fn keys_shown(&self) -> bool {
+        self.keys_row.iter().all(|c| c.is_visible())
     }
 
     /// The line under the keys for the ones chosen.

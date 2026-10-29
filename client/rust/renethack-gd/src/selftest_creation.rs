@@ -48,6 +48,13 @@ pub(super) fn creation() -> Vec<Step> {
             let map = &g.ui.as_ref().ok_or("no UI")?.map;
             Ok(map.creation_hero().is_some_and(|p| p.veiled()) && map.creation_framed())
         }),
+        Step::Call("the keys' row with the keys", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            match ui.screens.creation_keys_shown() {
+                Some(true) => Ok(()),
+                other => Err(format!("the keys' row shown: {other:?}")),
+            }
+        }),
         Step::Shot("creation-random"),
         press(GKey::DOWN),
         press(GKey::DOWN),

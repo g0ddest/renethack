@@ -75,6 +75,10 @@ pub(super) fn pad_screens() -> Vec<Step> {
             let empty = choice(g).is_some_and(|c| c.name.is_empty() && c.role == "random");
             Ok(empty && focus_on(g, "creation", &tr!("creation-random"))?)
         }),
+        Step::Wait("no keys' row under a pad", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(ui.screens.creation_keys_shown() == Some(false))
+        }),
         Step::Wait("the hooded figure framed in the title's place", |g| {
             let map = &g.ui.as_ref().ok_or("no UI")?.map;
             Ok(map.creation_hero().is_some_and(|p| p.veiled()) && map.creation_framed())
