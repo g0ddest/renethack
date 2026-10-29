@@ -4407,6 +4407,21 @@ impl Dialogs {
         }
     }
 
+    /// A gamepad has somewhere to be in the open dialog: an answer of a
+    /// question, a menu's row when it picks (self-tests). A dialog with
+    /// nothing to choose (a text to read, a field) needs none.
+    pub fn pad_focused(&self) -> bool {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::Choice { buttons, focus, .. }) => buttons.is_empty() || focus.is_some(),
+            Some(Kind::Menu(view)) => {
+                view.state.how == PickHow::None
+                    || view.state.entries.iter().all(|e| !e.selectable)
+                    || view.cursor.is_some()
+            }
+            _ => true,
+        }
+    }
+
     /// The open menu's keyboard row (an index into `menu_entries`).
     pub fn menu_cursor(&self) -> Option<usize> {
         match self.open.as_ref().map(|o| &o.kind) {

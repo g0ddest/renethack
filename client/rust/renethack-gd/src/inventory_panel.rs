@@ -2428,6 +2428,12 @@ impl InventoryPanel {
         self.mode != Mode::Closed
     }
 
+    /// A gamepad's focus is on a line, a cell or a doll socket (or there
+    /// is nothing to be on) (self-tests).
+    pub fn pad_focused(&self) -> bool {
+        self.focus.is_some() || self.doll_focus.is_some() || self.cells_shown.is_empty()
+    }
+
     /// The pack shown as a list (the profile's choice, at start).
     pub fn set_list(&mut self, list: bool) {
         if self.list != list {

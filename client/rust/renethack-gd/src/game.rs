@@ -2184,8 +2184,9 @@ impl RenethackGame {
         matches!(self.pending, Some((_, Prompt::Command))) && !self.world.getpos
     }
 
-    /// Answer the pending request.
-    fn reply(&mut self, reply: Reply) {
+    /// Answer the pending request (a self-test stages with it what no
+    /// player's input stands for: debug mode's commands).
+    pub(crate) fn reply(&mut self, reply: Reply) {
         let Some((id, prompt)) = self.pending.take() else {
             godot_warn!("renethack: no request waits for {reply:?}");
             return;

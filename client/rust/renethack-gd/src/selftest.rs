@@ -88,6 +88,8 @@ mod look_tests;
 mod overhang_tests;
 #[path = "selftest_pack_list.rs"]
 mod pack_list_tests;
+#[path = "selftest_pad_journey.rs"]
+mod pad_journey_tests;
 #[path = "selftest_pad_panels.rs"]
 mod pad_panels_tests;
 #[path = "selftest_pad_play.rs"]
@@ -227,6 +229,9 @@ enum Step {
     ShotIf(&'static str, Check),
     /// Answer each question with this key (text windows with OK) until the check holds.
     AnswerUntil(char, &'static str, Check),
+    /// With `--screenshots`: the pictures taken so far, in their order, on
+    /// one contact sheet (`<name>.png`, its index `<name>.txt`).
+    Sheet(&'static str),
     /// Random play until the budget is spent; its own watchdog, no step timeout.
     Soak(Box<Soak>),
 }
@@ -240,6 +245,8 @@ pub struct SelfTest {
     /// The request (session serial, id) the last key or dialog event went to.
     last_req: (u64, u64),
     started: bool,
+    /// The pictures saved so far, in order (the contact sheet's).
+    taken: Vec<PathBuf>,
     finished: bool,
 }
 
@@ -5136,6 +5143,7 @@ impl SelfTest {
             "look-tip" => look_tests::look_tip(),
             "quest-words" => prose_tests::quest_words(),
             "pad-panels" => pad_panels_tests::pad_panels(),
+            "pad-journey" => pad_journey_tests::pad_journey(),
             "pad-play" => pad_play_tests::pad_play(),
             "pad-screens" => pad_screens_tests::pad_screens(),
             "creation" => creation_tests::creation(),
@@ -5183,6 +5191,7 @@ impl SelfTest {
             frames: 0,
             last_req: (0, 0),
             started: false,
+            taken: Vec::new(),
             finished: false,
         })
     }
@@ -5518,6 +5527,7 @@ impl SelfTest {
                             return self.fail(game, &why);
                         }
                         godot_print!("selftest: screenshot {}", path.display());
+                        self.taken.push(path);
                         // the picture is taken as the next frame begins: the
                         // steps after it wait for that, or they would change
                         // what it shows
@@ -5525,6 +5535,19 @@ impl SelfTest {
                         return;
                     }
                     self.next();
+                }
+                Step::Sheet(name) => {
+                    if let Some(dir) = self.shots.clone() {
+                        let path = dir.join(format!("{name}.png"));
+                        let taken = self.taken.clone();
+                        // after the last picture is saved, as the next frame
+                        // begins
+                        if let Err(why) = at_next_frame(move || contact_sheet(&taken, &path)) {
+                            return self.fail(game, &why);
+                        }
+                    }
+                    self.next();
+                    return;
                 }
                 Step::AnswerUntil(c, _, check) => {
                     match check(game) {
@@ -5608,6 +5631,7 @@ fn describe(step: &Step) -> String {
         Step::Press(k, c, _) => format!("a request for key {k:?} {c:?}"),
         Step::PagePress(k) => format!("key {k:?}"),
         Step::Shot(name) | Step::ShotIf(name, _) => format!("screenshot {name}"),
+        Step::Sheet(name) => format!("the contact sheet {name}"),
     }
 }
 
@@ -5978,6 +6002,60 @@ fn next_frame_failed(why: String) {
 
 fn next_frame_failure() -> Option<String> {
     NEXT_FRAME_FAILS.lock().ok()?.drain(..).next()
+}
+
+/// The pictures `taken`, each a quarter of its size, three a row in their
+/// order on a dark ground, saved as `path`; their names in order beside
+/// it (`.txt`).
+fn contact_sheet(taken: &[PathBuf], path: &std::path::Path) {
+    use godot::classes::Image;
+    use godot::classes::image::{Format, Interpolation};
+    const COLS: i32 = 3;
+    const GAP: i32 = 8;
+    let mut thumbs = Vec::new();
+    for p in taken {
+        let Some(mut im) = Image::load_from_file(&p.to_string_lossy().to_string()) else {
+            return next_frame_failed(format!("cannot read {}", p.display()));
+        };
+        let size = im.get_size();
+        im.resize_ex(size.x / 2, size.y / 2)
+            .interpolation(Interpolation::LANCZOS)
+            .done();
+        im.convert(Format::RGBA8);
+        thumbs.push(im);
+    }
+    let Some(first) = thumbs.first() else {
+        return;
+    };
+    let cell = first.get_size();
+    let rows = (thumbs.len() as i32 + COLS - 1) / COLS;
+    let w = COLS * cell.x + (COLS + 1) * GAP;
+    let h = rows * cell.y + (rows + 1) * GAP;
+    let Some(mut sheet) = Image::create_empty(w, h, false, Format::RGBA8) else {
+        return next_frame_failed("cannot make the contact sheet".into());
+    };
+    sheet.fill(Color::from_rgb(0.04, 0.035, 0.03));
+    for (i, im) in thumbs.iter().enumerate() {
+        let (c, r) = (i as i32 % COLS, i as i32 / COLS);
+        let at = Vector2i::new(GAP + c * (cell.x + GAP), GAP + r * (cell.y + GAP));
+        let size = im.get_size();
+        sheet.blit_rect(im, Rect2i::new(Vector2i::ZERO, size), at);
+    }
+    if sheet.save_png(&path.to_string_lossy().to_string()) != Error::OK {
+        return next_frame_failed(format!("cannot save {}", path.display()));
+    }
+    let names: Vec<String> = taken
+        .iter()
+        .enumerate()
+        .map(|(i, p)| {
+            let name = p
+                .file_stem()
+                .map_or(String::new(), |s| s.to_string_lossy().into_owned());
+            format!("{:2}. {name}", i + 1)
+        })
+        .collect();
+    let _ = std::fs::write(path.with_extension("txt"), names.join("\n") + "\n");
+    godot_print!("selftest: contact sheet {}", path.display());
 }
 
 /// The frame as Godot draws it, drawn now whatever the window: Forward+

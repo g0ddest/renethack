@@ -26,7 +26,7 @@ fn wizard() -> CharacterChoice {
 }
 
 /// The game's menu up, the focus on `pick`, the whole menu on screen.
-fn menu_on(g: &RenethackGame, pick: GameMenuPick) -> Result<bool, String> {
+pub(super) fn menu_on(g: &RenethackGame, pick: GameMenuPick) -> Result<bool, String> {
     fail_on_error_screen(g)?;
     let ui = g.ui.as_ref().ok_or("no UI")?;
     if !ui.game_menu.is_open() {
@@ -41,7 +41,7 @@ fn menu_on(g: &RenethackGame, pick: GameMenuPick) -> Result<bool, String> {
 }
 
 /// The panel open: a dialog whose words begin with `title`.
-fn panel(g: &RenethackGame, title: &str) -> Result<bool, String> {
+pub(super) fn panel(g: &RenethackGame, title: &str) -> Result<bool, String> {
     fail_on_error_screen(g)?;
     let ui = g.ui.as_ref().ok_or("no UI")?;
     Ok(ui.dialogs.is_open()
@@ -53,7 +53,7 @@ fn panel(g: &RenethackGame, title: &str) -> Result<bool, String> {
 }
 
 /// Back in the game: nothing over it, the command prompt.
-fn back(g: &RenethackGame) -> Result<bool, String> {
+pub(super) fn back(g: &RenethackGame) -> Result<bool, String> {
     fail_on_error_screen(g)?;
     let ui = g.ui.as_ref().ok_or("no UI")?;
     Ok(!ui.game_menu.is_open()
@@ -64,7 +64,7 @@ fn back(g: &RenethackGame) -> Result<bool, String> {
 }
 
 /// Start, →, ↓ `down` times: the focus on `pick`; A takes it.
-fn open(pick: GameMenuPick, down: usize, steps: &mut Vec<Step>) {
+pub(super) fn open(pick: GameMenuPick, down: usize, steps: &mut Vec<Step>) {
     steps.push(tap(PadButton::Start));
     steps.push(Step::Wait("the game's menu", |g| {
         menu_on(g, GameMenuPick::Resume)

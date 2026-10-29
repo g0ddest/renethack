@@ -330,6 +330,16 @@ the frame (taken in the middle of a frame, it showed a panel opened in that
 frame with what it drew the time before, its list not laid out). The
 `first-open` scenario checks the first frame drawn of the inventory panel
 and of the command palette, the first time in a session and again.
+`pad-journey` plays the whole loop with a gamepad alone, as a Steam Deck
+player meets it (made for Russian at 1280×800): the title, creation (a
+role's card, the dice), the prologue, "Your quest" and a card, a few
+steps, the game's menu with every panel, the pack as a list, a fight to
+the death (debug mode's ^G staging two soldier ants), the end page, a new
+game, a save and Continue. At each state the pad's focus is somewhere; at
+each picture no word names a key or a click, no wrapped label is short of
+lines, and in Russian no English is left; seams known in other owners'
+files are told, not failed. With `--screenshots` its pictures end on one
+contact sheet (`journey-sheet.png`, and its index `journey-sheet.txt`).
 Screenshots are 1920×1080 unless `--size=1280x800` (or Godot's own
 `--resolution`) asks for another window; a run fails when the window or a
 screenshot is not the size asked for, and at a set size every screen a
