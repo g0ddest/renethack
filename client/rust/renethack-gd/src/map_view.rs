@@ -44,7 +44,9 @@ use nh_world::{
 };
 
 use crate::animator::{Motion, STEP_SECS, ease, pace, turn, yaw_toward};
-use crate::art::{Art, Finish, Model, ModelLook, Pose, build_flat, no_shadow, set_layer_mask};
+use crate::art::{
+    Art, CREATURE_LAYER, Finish, Model, ModelLook, Pose, build_flat, no_shadow, set_layer_mask,
+};
 use crate::audio::Sound;
 use crate::batch::{Batches, Slot};
 use crate::branch_look::{BranchLook, Prop};
@@ -351,6 +353,14 @@ const HERO_STUDIO: [(Vector3, Color, f32); 5] = [
         1.6,
     ),
 ];
+/// Every creature seen is lit from behind and above, its back and outline
+/// standing out of the floor whatever the light about it (six soldier ants
+/// in a lit room were dark specks on the flagstones): the way the light
+/// shines, and its energy (its colour the hero's rim's; no shine). With
+/// the moon, the back light and the hero's five it is the eighth
+/// directional light, the most Godot draws.
+const CREATURE_LIGHT_WAY: Vector3 = Vector3::new(-55.0, 180.0, 0.0);
+const CREATURE_LIGHT_ENERGY: f32 = 0.6;
 /// Which of `HERO_STUDIO`'s lights reach a ridden steed: the fills (all
 /// of them made its brown coat a pale tan).
 const STEED_STUDIO: [bool; 5] = [false, true, false, true, false];
@@ -2852,6 +2862,9 @@ pub struct MapView {
     /// The hero's key and fills (`HERO_STUDIO`), off while they are
     /// polymorphed.
     hero_studio: Gd<Node3D>,
+    /// The light every creature seen takes (`CREATURE_LIGHT_WAY`), off in
+    /// the gallery (its studio light takes the last of Godot's eight).
+    creature_light: Gd<DirectionalLight3D>,
     /// The hero's model, on the rim light's layer too.
     rim_model: Option<Gd<Node3D>>,
     /// The hero's own model while they ride (their cell shows the steed).
@@ -3246,6 +3259,8 @@ fn set_layers(node: &Gd<Node3D>, mask: u32) {
         .iter_shared()
     {
         if let Ok(mut v) = n.try_cast::<VisualInstance3D>() {
+            // a creature's stays in the creatures' light
+            let mask = mask | v.get_layer_mask() & CREATURE_LAYER;
             set_layer_mask(&mut v, mask);
         }
     }
@@ -3453,6 +3468,17 @@ impl MapView {
             studio_frame.add_child(&light);
         }
         root.add_child(&studio_frame);
+        let mut creature_light = DirectionalLight3D::new_alloc();
+        creature_light.set_rotation_degrees(CREATURE_LIGHT_WAY);
+        creature_light.set_color(RIM_LIGHT);
+        creature_light.set_param(Param::ENERGY, CREATURE_LIGHT_ENERGY);
+        creature_light.set_param(Param::SPECULAR, 0.0);
+        creature_light.set_cull_mask(CREATURE_LAYER);
+        // (as the studio's: off the haze, which the mask does not keep it
+        // out of)
+        creature_light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
+        creature_light.set_shadow(false);
+        root.add_child(&creature_light);
 
         let mut bedrock = MeshInstance3D::new_alloc();
         bedrock.set_cast_shadows_setting(ShadowCastingSetting::OFF);
@@ -3543,6 +3569,7 @@ impl MapView {
             underglow,
             rim,
             hero_studio: studio_frame,
+            creature_light,
             rim_model: None,
             rider: None,
             lit_steed: None,
@@ -5935,6 +5962,7 @@ impl MapView {
         }
         self.showcase = on;
         self.studio.set_visible(on);
+        self.creature_light.set_visible(!on);
         self.env.set_ambient_light_energy(if on {
             GALLERY_AMBIENT
         } else {

@@ -162,6 +162,15 @@ pub const FOOTPRINT_GIVE: f32 = 0.15;
 /// for its height (never narrower than it is wide), then smaller: a
 /// compact elephant as tall as an elephant, not a long one knee-high.
 const FOOTPRINT_SQUASH: f32 = 0.65;
+/// A creature's longest side (its height, or its length where it lies
+/// long) is drawn at least this long, metres: at the game's camera a newt
+/// or a grid bug drawn to scale was a speck of 10 to 20 pixels. The sizes
+/// from `TINIEST` (a garter snake's, a newt's height) up to
+/// `LIFTED_BELOW` are spread over `READABLE` up to it, so the smaller of
+/// two small creatures still looks the smaller.
+pub const READABLE: f32 = 0.45;
+const TINIEST: f32 = 0.18;
+const LIFTED_BELOW: f32 = 0.58;
 
 /// A model: a scene under `client/godot/art` or a procedural body.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -410,6 +419,23 @@ impl ModelSpec {
         let [x, z] = self.footprint?;
         let (long, short) = (x.max(z) * self.girth, x.min(z) * self.girth);
         (long > 0.0).then(|| (long, FOOTPRINT_SQUASH.max(short / long)))
+    }
+
+    /// The height a creature that would stand `height` tall is drawn at to
+    /// read at the game's camera: its own, unless its longest side would
+    /// be shorter than `LIFTED_BELOW`, when the small end of the sizes is
+    /// lifted to start at `READABLE`.
+    pub fn readable(&self, height: f32) -> f32 {
+        let long = self
+            .long_side()
+            .map_or(1.0, |(long, _)| long / self.size)
+            .max(1.0);
+        let side = height * long;
+        if side <= 0.0 || side >= LIFTED_BELOW {
+            return height;
+        }
+        let up = (side - TINIEST).max(0.0) / (LIFTED_BELOW - TINIEST);
+        height * (READABLE + up * (LIFTED_BELOW - READABLE)) / side
     }
 
     /// The height a body that would stand `height` tall is drawn at. Its
@@ -1165,7 +1191,7 @@ impl ArtManifest {
             }
         };
         let height = height * rules.iter().find_map(|r| r.scale).unwrap_or(1.0);
-        let placed = self.placed(model, height, level);
+        let placed = self.placed(model, spec.readable(height), level);
         self.apply(&rules, placed)
     }
 
@@ -2030,6 +2056,41 @@ mod tests {
                 .get("@Shag")
                 .is_some_and(|c| !c.starts_with('='))
         );
+    }
+
+    /// At the game's camera a newt, a grid bug, an ant or a bee drawn to
+    /// scale was a speck of 10 to 20 pixels: every creature's longest
+    /// side is drawn at least `READABLE` long, and the small ones keep
+    /// their order.
+    #[test]
+    fn a_tiny_creature_is_drawn_big_enough_to_read() {
+        let (art, cat) = (manifest(), catalog());
+        let find = |n: &str| cat.monsters.iter().find(|m| m.name == n).unwrap();
+        let longest = |m: &MonsterInfo| {
+            let r = art.monster(m, 0);
+            let spec = art.model_at(r.model).1;
+            let long = spec.footprint.map_or(0.0, |[x, z]| {
+                let [across, along] = spec.squash(r.scale);
+                (x * across).max(z * along) * spec.girth * r.scale
+            });
+            r.height.max(long)
+        };
+        for m in &cat.monsters {
+            let l = longest(m);
+            assert!(l >= READABLE - 1e-3, "{}: {l:.2} m at its longest", m.name);
+        }
+        let side = |n: &str| longest(find(n));
+        // the smaller of two still the smaller, by more than a hair
+        let order = ["garter snake", "giant ant", "newt", "homunculus", "hobbit"];
+        for w in order.windows(2) {
+            assert!(side(w[0]) + 0.02 < side(w[1]), "{} against {}", w[0], w[1]);
+        }
+        assert!(side("killer bee") < side("queen bee"));
+        assert!(side("giant ant") < side("kitten"));
+        // the bigger ones as they were
+        let jackal = art.monster(find("jackal"), 0).height;
+        assert_eq!(jackal, art.monsters.sizes["small"] * 0.85);
+        assert_eq!(art.monster(find("gnome"), 0).height, side("gnome"));
     }
 
     /// A mumak was drawn two cells long and a baluchitherium four: they hid

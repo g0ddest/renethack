@@ -82,6 +82,12 @@ const RIM_ROUGHNESS: f32 = 0.95;
 /// The specular a rimmed material keeps at most: smoother for its rim, it
 /// is not to shine more for it.
 const RIM_SPECULAR: f32 = 0.5;
+/// A living creature's meshes are on this layer too: a light of the map's
+/// for them alone lights every one seen from behind and above, whatever
+/// the light about it (map_view's `CREATURE_LIGHT_WAY`).
+pub const CREATURE_LAYER: u32 = 1 << 6;
+/// The pass round a living creature's outline (`Art::rim`).
+const EDGE_SHADER: &str = "res://shaders/creature_edge.gdshader";
 /// A living creature's contact shadow (`Art::ground`): how dark it is at
 /// its middle, and how much wider and longer than the body's own bounds
 /// on the floor (metres more, and the most it is across).
@@ -332,6 +338,9 @@ pub struct Art {
     /// each was made from, and the ids of those made (they take none more).
     rims: HashMap<i64, Gd<Material>>,
     rimmed: HashSet<i64>,
+    /// The pass that edges them (`EDGE_SHADER`), once loaded (None: not
+    /// yet asked for; Some(None): missing).
+    edge: Option<Option<Gd<Material>>>,
     /// The soft disc a contact shadow is (`ground`).
     contact: Option<Gd<Texture2D>>,
     proc_anims: HashMap<(Proc, Option<String>), Gd<AnimationLibrary>>,
@@ -430,6 +439,7 @@ impl Art {
             derived: HashMap::new(),
             rims: HashMap::new(),
             rimmed: HashSet::new(),
+            edge: None,
             contact: None,
             proc_anims: HashMap::new(),
             proc_clips: None,
@@ -1065,6 +1075,10 @@ impl Art {
     /// (on the map, past this frame's budget, a stand-in for a look never
     /// built before: see `complete`).
     pub fn take(&mut self, look: &ModelLook) -> Model {
+        self.take_as(look, false)
+    }
+
+    fn take_as(&mut self, look: &ModelLook, creature: bool) -> Model {
         let key = PoolKey::of(look);
         self.live += 1;
         if self.taken.insert((key.model, key.skin)) {
@@ -1073,6 +1087,12 @@ impl Art {
         }
         if let Some(mut m) = self.pool.get_mut(&key).and_then(Vec::pop) {
             m.node.set_visible(true);
+            // a creature's model taken for the hero: out of the creatures'
+            // light (theirs is their own)
+            if m.creature && !creature {
+                creature_lit(&m, false);
+            }
+            m.creature = creature;
             self.start(&mut m, look);
             return m;
         }
@@ -1090,7 +1110,7 @@ impl Art {
                 worn: None,
                 extras: Vec::new(),
                 pending: Some(*look),
-                creature: false,
+                creature,
                 seated: None,
                 saddle: None,
             };
@@ -1098,6 +1118,7 @@ impl Art {
         let start = std::time::Instant::now();
         self.built += 1;
         let mut m = self.build(look, key);
+        m.creature = creature;
         self.start(&mut m, look);
         self.warmed.insert(key);
         if let Some(t) = self.spent.as_mut() {
@@ -1403,8 +1424,7 @@ impl Art {
     /// from the lights about it (`rim`) and a soft shadow lies under it
     /// (`ground`), now or once a stand-in is built.
     pub fn take_creature(&mut self, look: &ModelLook) -> Model {
-        let mut m = self.take(look);
-        m.creature = true;
+        let m = self.take_as(look, true);
         self.as_creature(&m, look);
         m
     }
@@ -1416,8 +1436,10 @@ impl Art {
         if RIM > 0.0 {
             self.rim(m);
         }
-        // what is seen through or only sensed throws no shadow
+        // what is seen through or only sensed throws no shadow, nor takes
+        // the light of the creatures seen
         if look.pose != Pose::Ghost {
+            creature_lit(m, true);
             self.ground(m);
         }
     }
@@ -1460,9 +1482,12 @@ impl Art {
 
     /// A creature's materials with a rim: Godot's own, lit by each light
     /// that lights the surface, so its silhouette reads against a floor of
-    /// its own colour (a jackal on brown flagstones) with no outline drawn
-    /// and no pass more. Each material is copied once; a stand-in is rimmed
-    /// once it is built.
+    /// its own colour (a jackal on brown flagstones); and a pass more that
+    /// edges an opaque one in a cold light of its own (`EDGE_SHADER`):
+    /// the lights' rim is a hairline on a smooth body and dim on a dark
+    /// one (a homunculus in a dark corridor, a manes on Gehennom's floor
+    /// were lost). Each material is copied once; a stand-in is rimmed once
+    /// it is built.
     fn rim(&mut self, m: &Model) {
         let Some(inner) = m.inner.as_ref() else {
             return;
@@ -1491,6 +1516,18 @@ impl Art {
         }
     }
 
+    /// The pass a creature's rimmed materials draw its edge in.
+    fn edge_pass(&mut self) -> Option<Gd<Material>> {
+        self.edge
+            .get_or_insert_with(|| {
+                let shader = godot::tools::try_load::<Shader>(EDGE_SHADER).ok()?;
+                let mut m = ShaderMaterial::new_gd();
+                m.set_shader(&shader);
+                Some(m.upcast())
+            })
+            .clone()
+    }
+
     fn rimmed_material(&mut self, src: &Gd<Material>) -> Gd<Material> {
         let key = src.instance_id().to_i64();
         if let Some(m) = self.rims.get(&key) {
@@ -1507,6 +1544,14 @@ impl Art {
                 m.set_roughness(rough);
                 let specular = m.get_specular().min(RIM_SPECULAR);
                 m.set_specular(specular);
+                // (never on a see-through one: the pass knows nothing of
+                // the cut-outs of a card of feathers or hair)
+                if m.get_transparency() == Transparency::DISABLED
+                    && m.get_next_pass().is_none()
+                    && let Some(edge) = self.edge_pass()
+                {
+                    m.set_next_pass(&edge);
+                }
                 m.upcast::<Material>()
             }
             // a shader of its own, or a glow: as it is
@@ -4182,6 +4227,31 @@ fn lit_skin(color: Color, glow: f32) -> Gd<Material> {
 /// Cast shadows off for flat ground geometry (map_view).
 pub fn no_shadow(mi: &mut Gd<MeshInstance3D>) {
     mi.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+}
+
+/// A creature's meshes on `CREATURE_LAYER` (`on`), where the light of the
+/// creatures seen reaches them, or off it.
+fn creature_lit(m: &Model, on: bool) {
+    let Some(inner) = m.inner.as_ref() else {
+        return;
+    };
+    for node in inner
+        .find_children_ex("*")
+        .type_("MeshInstance3D")
+        .owned(false)
+        .done()
+        .iter_shared()
+    {
+        if let Ok(mut v) = node.try_cast::<VisualInstance3D>() {
+            let mask = v.get_layer_mask();
+            let mask = if on {
+                mask | CREATURE_LAYER
+            } else {
+                mask & !CREATURE_LAYER
+            };
+            set_layer_mask(&mut v, mask);
+        }
+    }
 }
 
 /// Put a mesh or a light on these render layers.
