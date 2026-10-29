@@ -1217,6 +1217,8 @@ hint-scroll = Scroll
 
 hud-dlvl = Dlvl { $level }
 hud-tutorial-level = Tutorial { $level }
+# the Quest's levels, as the status line says them
+hud-home-level = Home { $level }
 hud-exp = Exp { $exp }
 hud-score = Score { $score }
 

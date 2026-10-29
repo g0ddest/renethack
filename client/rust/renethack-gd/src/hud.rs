@@ -183,15 +183,25 @@ pub struct Chip {
     pub tone: Tone,
 }
 
-/// Where the hero is, as the player reads it: "Dlvl 1" and "Tutorial 1"
-/// in the interface's words, the engine's names of other places ("Home 2",
-/// "Fort Ludios", "Astral") through its translator.
+/// Where the hero is, as the player reads it: "Dlvl 1", "Tutorial 1",
+/// the Quest's "Home 2" and the Planes in the interface's words (the
+/// overview's), the engine's names of other places ("Fort Ludios")
+/// through its translator.
 fn place_text(view: &StatusView) -> Option<String> {
     let (tag, v) = view.fields.first()?;
-    Some(match tag.as_str() {
-        "$" | "AC" | "XL" | "Exp" | "HD" | "T" | "S" => return None,
-        "Dlvl" => tr!("hud-dlvl", level = v.as_str()),
-        "Tutorial" => tr!("hud-tutorial-level", level = v.as_str()),
+    Some(match (tag.as_str(), v.as_str()) {
+        ("$" | "AC" | "XL" | "Exp" | "HD" | "T" | "S", _) => return None,
+        ("Dlvl", _) => tr!("hud-dlvl", level = v.as_str()),
+        ("Tutorial", _) => tr!("hud-tutorial-level", level = v.as_str()),
+        // describe_level(): the Planes without "Plane of "
+        ("", "Astral Plane") => tr!("overview-astral"),
+        ("", "Earth") => tr!("overview-plane-earth"),
+        ("", "Air") => tr!("overview-plane-air"),
+        ("", "Fire") => tr!("overview-plane-fire"),
+        ("", "Water") => tr!("overview-plane-water"),
+        ("", home) if home.starts_with("Home ") => {
+            tr!("hud-home-level", level = home.trim_start_matches("Home "))
+        }
         _ => i18n::engine(EngineKind::Status, &view.place()?).into_owned(),
     })
 }
@@ -3119,9 +3129,26 @@ mod tests {
         for words in ["Глубина 1", "Золото 0", "Ур 1", "Ход 1", "Сил 16"] {
             assert!(tip.contains(words), "{words:?} not in {tip:?}");
         }
-        // a place with a name of its own: the engine's words
-        let home = StatusView::new(&status(&[("leveldesc", "Home 2")]), &[]);
-        assert_eq!(place_text(&home).as_deref(), Some("Home 2"));
+        // the Quest's levels and the Planes: the overview's words
+        let at = |place: &str| StatusView::new(&status(&[("leveldesc", place)]), &[]);
+        assert_eq!(place_text(&at("Home 2")).as_deref(), Some("Home 2"));
+        assert_eq!(place_text(&at("Earth")).as_deref(), Some("Plane of Earth"));
+        crate::i18n::set_lang(crate::i18n::Lang::Ru);
+        let places: Vec<Option<String>> =
+            ["Home 2", "Earth", "Air", "Fire", "Water", "Astral Plane"]
+                .into_iter()
+                .map(|p| place_text(&at(p)))
+                .collect();
+        crate::i18n::set_lang(crate::i18n::Lang::En);
+        let want = [
+            "Дом 2",
+            "План Земли",
+            "План Воздуха",
+            "План Огня",
+            "План Воды",
+            "Астральный план",
+        ];
+        assert_eq!(places, want.map(|w| Some(w.to_string())));
     }
 
     #[test]

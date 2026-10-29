@@ -1314,6 +1314,8 @@ hint-scroll = Прокрутка
 
 hud-dlvl = Глубина { $level }
 hud-tutorial-level = Обучение { $level }
+# the Quest's levels, as the status line says them
+hud-home-level = Дом { $level }
 hud-exp = Опыт { $exp }
 hud-score = Очки { $score }
 
