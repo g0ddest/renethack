@@ -219,6 +219,24 @@ impl Achievements {
         self.list.iter().find(|a| a.id == id)
     }
 
+    /// What `progress` holds for the hero (of `role`, its file code when
+    /// known), whether the store has it or not, in the definitions'
+    /// order: the game's own achievements (the end screen's). Nothing
+    /// outside a normal game.
+    pub fn held<'a>(
+        &'a self,
+        progress: &ProgressNotice,
+        role: Option<&str>,
+    ) -> Vec<&'a Achievement> {
+        if progress.mode != "normal" {
+            return Vec::new();
+        }
+        self.list
+            .iter()
+            .filter(|a| a.when.holds(progress, role))
+            .collect()
+    }
+
     /// What `progress` earns the hero (of `role`, its file code when
     /// known) that `store` does not hold yet, in the definitions' order:
     /// nothing outside a normal game (explore and debug modes earn
@@ -585,6 +603,24 @@ impl Tracker {
             self.fresh.push(a.id.clone());
         }
         earned
+    }
+
+    /// What the world's last progress notice holds, earned in an earlier
+    /// game or not (`Achievements::held`); a debug game's too while it
+    /// earns as a normal one.
+    pub fn held(&self, world: &World) -> Vec<&Achievement> {
+        let Some(p) = world.progress() else {
+            return Vec::new();
+        };
+        let role = Some(p.role.as_str()).filter(|r| !r.is_empty());
+        if self.debug_earns && p.mode == "debug" {
+            let tested = ProgressNotice {
+                mode: "normal".into(),
+                ..p.clone()
+            };
+            return self.all.held(&tested, role);
+        }
+        self.all.held(p, role)
     }
 
     /// Once a frame: the backend's work.
@@ -1047,6 +1083,23 @@ mod tests {
         t.debug_earns(true);
         assert_eq!(t.update(&w, 1, "Wizard", 2).len(), 1);
         assert_eq!(*mock.unlocked.borrow(), ["ACH_MINES"]);
+    }
+
+    #[test]
+    fn a_game_holds_what_it_earned_and_what_an_earlier_game_did() {
+        let mut t = Tracker::start(Achievements::built_in(), None, Box::new(Local));
+        let w = world_after(&[MINES]);
+        assert_eq!(t.update(&w, 1, "Indy", 1).len(), 1);
+        // the next game enters the Mines too: unlocked before, held again
+        let next = world_after(&[MINES]);
+        assert!(t.update(&next, 2, "Marion", 2).is_empty());
+        let held: Vec<&str> = t.held(&next).iter().map(|a| a.id.as_str()).collect();
+        assert_eq!(held, ["mines"]);
+        // a debug game holds nothing, but while it earns as a normal one
+        let debug = world_after(&[&MINES.replace("\"normal\"", "\"debug\"")]);
+        assert!(t.held(&debug).is_empty());
+        t.debug_earns(true);
+        assert_eq!(t.held(&debug).len(), 1);
     }
 
     #[test]

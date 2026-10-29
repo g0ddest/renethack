@@ -272,8 +272,79 @@ creation-about-val = Выносливость, копьё и щит, скрыт�
 creation-about-wiz = Силовой удар с самого начала, магические предметы и плащ сопротивления магии. Вблизи — уязвимость.
 
 end-title = Игра окончена
+end-title-ascended = Вознесение
+end-title-escaped = Побег из подземелья
 end-new-game = Новая игра
 end-to-title = В меню
+end-quit = Выход
+end-hint = ↑↓ PgUp PgDn: прокрутка · ←→ Tab: выбор · Enter: нажать · Esc: в меню
+end-stone-quit =
+    { $female ->
+        [yes] сдалась
+       *[other] сдался
+    }
+end-ascended =
+    { $female ->
+        [yes] Вознеслась и стала полубогиней
+       *[other] Вознёсся и стал полубогом
+    }
+end-escaped =
+    { $female ->
+        [yes] Выбралась из подземелья живой
+       *[other] Выбрался из подземелья живым
+    }
+end-stat-turns = Ходы
+end-stat-deepest = Глубина
+end-stat-score = Очки
+end-stat-place = Место
+end-stat-gold = Золото
+end-stat-level = Уровень
+end-achievements = Достижения
+end-achievements-none = В этой игре — ни одного.
+end-achievement-new = Новое
+end-conduct = Выдержанные испытания
+end-conduct-none = Ни одного.
+end-conduct-foodless = Без еды
+end-conduct-vegan =
+    { $female ->
+        [yes] Веганка
+       *[other] Веган
+    }
+end-conduct-vegetarian =
+    { $female ->
+        [yes] Вегетарианка
+       *[other] Вегетарианец
+    }
+end-conduct-atheist =
+    { $female ->
+        [yes] Атеистка
+       *[other] Атеист
+    }
+end-conduct-weaponless = Без оружия
+end-conduct-pacifist =
+    { $female ->
+        [yes] Пацифистка
+       *[other] Пацифист
+    }
+end-conduct-illiterate =
+    { $female ->
+        [yes] Неграмотная
+       *[other] Неграмотный
+    }
+end-conduct-polypileless = Без превращения предметов
+end-conduct-polyselfless = Без смены облика
+end-conduct-wishless = Без желаний
+end-conduct-artiwishless = Без артефактов по желанию
+end-conduct-sokoban = Правила Сокобана соблюдены
+end-conduct-petless = Без питомца
+end-chronicle = Хроника
+end-chronicle-none = Событий нет.
+end-topten = Таблица рекордов
+end-topten-none = Рекордов пока нет.
+end-topten-place = №
+end-topten-points = Очки
+end-topten-hero = Герой
+end-topten-hp = ОЗ
 
 error-title = Что-то пошло не так
 error-continue = Продолжить { $name }

@@ -272,8 +272,72 @@ creation-about-val = Hardy and stealthy, with a spear and a shield, and resistan
 creation-about-wiz = Knows force bolt from the start, with magic items and a cloak against magic. Frail up close.
 
 end-title = The game is over
+end-title-ascended = Ascension
+end-title-escaped = Escape from the dungeon
 end-new-game = New game
 end-to-title = Title
+end-quit = Quit
+end-hint = ↑↓ PgUp PgDn: scroll · ←→ Tab: choose · Enter: take · Esc: title
+end-stone-quit =
+    { $female ->
+       *[other] gave up
+    }
+end-ascended =
+    { $female ->
+        [yes] Ascended to demigoddess-hood
+       *[other] Ascended to demigodhood
+    }
+end-escaped =
+    { $female ->
+       *[other] Escaped the dungeon alive
+    }
+end-stat-turns = Turns
+end-stat-deepest = Deepest
+end-stat-score = Score
+end-stat-place = Place
+end-stat-gold = Gold
+end-stat-level = Level
+end-achievements = Achievements
+end-achievements-none = None earned in this game.
+end-achievement-new = New
+end-conduct = Conduct kept
+end-conduct-none = None.
+end-conduct-foodless = Foodless
+end-conduct-vegan =
+    { $female ->
+       *[other] Vegan
+    }
+end-conduct-vegetarian =
+    { $female ->
+       *[other] Vegetarian
+    }
+end-conduct-atheist =
+    { $female ->
+       *[other] Atheist
+    }
+end-conduct-weaponless = Weaponless
+end-conduct-pacifist =
+    { $female ->
+       *[other] Pacifist
+    }
+end-conduct-illiterate =
+    { $female ->
+       *[other] Illiterate
+    }
+end-conduct-polypileless = Never polymorphed an object
+end-conduct-polyselfless = Never changed form
+end-conduct-wishless = Wishless
+end-conduct-artiwishless = No artifact wished for
+end-conduct-sokoban = Sokoban's rules kept
+end-conduct-petless = Petless
+end-chronicle = Chronicle
+end-chronicle-none = No events.
+end-topten = Top ten
+end-topten-none = No scores yet.
+end-topten-place = No.
+end-topten-points = Points
+end-topten-hero = Hero
+end-topten-hp = HP
 
 error-title = Something went wrong
 error-continue = Continue { $name }

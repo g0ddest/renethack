@@ -142,24 +142,23 @@ fn a_scripted_game_builds_the_world() {
     let letters: String = menu.entries.iter().filter_map(|e| e.letter).collect();
     assert_eq!(letters, "abcde");
 
-    // #quit, "n" to every question: the summary window, then the top ten
+    // #quit, "n" to every question: the summary window, passed at once
+    // (the end page shows it), then the top ten
     let prompts: Vec<_> = seen.iter().map(|s| &s.prompt).collect();
     assert!(prompts.contains(&&Prompt::ExtCmd));
-    let summary = seen
-        .iter()
-        .find_map(|s| match &s.prompt {
-            Prompt::Show { lines, .. } => Some(lines),
-            _ => None,
-        })
-        .expect("a summary window");
+    let shown = seen.iter().any(|s| {
+        matches!(&s.prompt, Prompt::Show { lines, .. }
+            if lines.iter().any(|l| l.text.contains("You quit")))
+    });
+    assert!(!shown, "the summary was shown as a window");
     assert!(
-        summary.iter().any(|l| l.text.contains("You quit")),
-        "{summary:?}"
+        end.last_text.iter().any(|l| l.text.contains("You quit")),
+        "{:?}",
+        end.last_text
     );
-    assert!(end.last_text.iter().any(|l| l.text.contains("You quit")));
     assert!(end.windows_exited);
     assert!(
-        end.raw_lines.iter().any(|l| l.contains("Points")),
+        end.raw_lines.iter().any(|l| l.text.contains("Points")),
         "{:?}",
         end.raw_lines
     );

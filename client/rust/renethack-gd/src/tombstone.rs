@@ -25,7 +25,10 @@ const CARVED_LIGHT: Color = Color::from_rgba(0.88, 0.85, 0.78, 0.45);
 /// A name longer than this is cut smaller.
 const LONG_NAME: usize = 10;
 
-pub fn view(t: &Tombstone) -> Gd<Control> {
+/// The stone with `death` carved as how the hero died (the language's
+/// words already: a quit's, which NetHack carves no stone for), and the
+/// hero's `rank` under the name.
+pub fn view_with(t: &Tombstone, death: &str, rank: Option<&str>) -> Gd<Control> {
     let mut root = Control::new_alloc();
     root.set_custom_minimum_size(SIZE);
     root.set_mouse_filter(MouseFilter::IGNORE);
@@ -62,14 +65,17 @@ pub fn view(t: &Tombstone) -> Gd<Control> {
         name_size,
         width,
     ));
+    if let Some(rank) = rank {
+        face.add_child(&carved(rank, Face::Title, 17, width));
+    }
     face.add_child(&carved(
         &tr!("rip-gold", gold = t.gold),
         Face::Body,
         18,
         width,
     ));
-    if !t.death.is_empty() {
-        face.add_child(&carved(&layouts::death(&t.death), Face::Body, 18, width));
+    if !death.is_empty() {
+        face.add_child(&carved(death, Face::Body, 18, width));
     }
     face.add_child(&carved(&t.year.to_string(), Face::Title, 22, width));
     root.add_child(&face);

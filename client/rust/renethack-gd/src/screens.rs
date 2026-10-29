@@ -8,7 +8,7 @@ use godot::classes::control::{FocusMode, MouseFilter};
 use godot::classes::{
     BaseButton, Button, CanvasLayer, CenterContainer, ColorRect, Control, Gradient,
     GradientTexture2D, HBoxContainer, Label, LineEdit, MarginContainer, OptionButton,
-    PanelContainer, RichTextLabel, StyleBox, TextureRect, VBoxContainer,
+    PanelContainer, RichTextLabel, ScrollContainer, StyleBox, TextureRect, VBoxContainer,
 };
 use godot::global::HorizontalAlignment;
 use godot::prelude::*;
@@ -18,23 +18,13 @@ use nh_world::KeyProfile;
 
 pub use crate::creation::Taken;
 use crate::creation::{self, Form};
-use crate::i18n::{self, EngineKind, Lang};
-use crate::layouts;
-use crate::theme::{self, bbcode_escape, hex};
+use crate::end_view::{self, EndSummary};
+use crate::gamepad::PadKind;
+use crate::i18n::{self, Lang};
+use crate::theme;
 use crate::title_scene::Preview;
-use crate::tombstone;
 use crate::tr;
 use crate::ui_events::{CharacterChoice, UiEvent, UiQueue, push};
-
-/// What the end screen shows.
-#[derive(Debug, Clone, Default, PartialEq)]
-pub struct EndSummary {
-    pub last_messages: Vec<String>,
-    /// The summary and tombstone window (empty if the player skipped it).
-    pub text: Vec<String>,
-    /// The top ten list.
-    pub scores: Vec<String>,
-}
 
 pub struct Screens {
     root: Gd<Control>,
@@ -58,6 +48,11 @@ pub struct Screens {
     prologue: bool,
     /// The page's controls the keys and a gamepad move among.
     nav: Nav,
+    /// The end page's body (the keys and the pad scroll it) and its
+    /// hints.
+    end_page: Option<(Gd<ScrollContainer>, Gd<HBoxContainer>, Gd<PanelContainer>)>,
+    /// A gamepad gives the input: the hints are its buttons.
+    pad: Option<PadKind>,
 }
 
 /// What the keys and a gamepad do on the title, the creation form, the
@@ -72,6 +67,13 @@ pub enum NavInput {
     Accept,
     Back,
     Start,
+    /// Tab and Shift+Tab: the focus along (as down and up but on the
+    /// end page, whose arrows scroll).
+    Next,
+    Prev,
+    /// PgUp and PgDn, the bumpers: the end page's body a screen along.
+    PageUp,
+    PageDown,
 }
 
 /// A page's controls in their order, the one the focus is on, what going
@@ -99,6 +101,9 @@ struct Grid {
 
 /// The game's name on the title: a name, the same in every language.
 const GAME_NAME: &str = "renethack";
+
+/// How far an arrow scrolls the end page, in design pixels.
+const END_STEP: f32 = 90.0;
 
 /// How much the settings page's backdrop hides of the scene behind it.
 const SETTINGS_SHADE: f32 = 0.62;
@@ -191,22 +196,6 @@ fn wide(mut b: Gd<Button>) -> Gd<Button> {
     b
 }
 
-/// Lines without blank ones at either end, and at most one blank line
-/// between paragraphs.
-fn paragraphs<'a>(lines: &[&'a str]) -> Vec<&'a str> {
-    let mut out: Vec<&str> = Vec::new();
-    for l in lines {
-        if l.trim().is_empty() && out.last().is_none_or(|p| p.trim().is_empty()) {
-            continue;
-        }
-        out.push(l);
-    }
-    while out.last().is_some_and(|l| l.trim().is_empty()) {
-        out.pop();
-    }
-    out
-}
-
 fn column() -> Gd<VBoxContainer> {
     let mut col = VBoxContainer::new_alloc();
     col.add_theme_constant_override("separation", 12);
@@ -296,6 +285,8 @@ impl Screens {
             credits_in_game: false,
             prologue: false,
             nav: Nav::default(),
+            end_page: None,
+            pad: None,
         }
     }
 
@@ -571,86 +562,95 @@ impl Screens {
         }
     }
 
+    /// The end page: the stone, the story, the records and the buttons;
+    /// the focus on a new game.
     pub fn show_end(&mut self, summary: &EndSummary) {
-        let mut panel = PanelContainer::new_alloc();
-        let mut col = column();
-        col.add_child(&title_label(&tr!("end-title"), 32));
-        // the tombstone is drawn: its lines apart from the window's others
-        let stone = layouts::tombstone(&summary.text);
-        let rest: Vec<&str> = match &stone {
-            Some((_, at)) => summary.text[..at.start]
-                .iter()
-                .chain(&summary.text[at.end..])
-                .map(String::as_str)
-                .collect(),
-            None => summary.text.iter().map(String::as_str).collect(),
-        };
-        let rest = paragraphs(&rest);
-        let mut text = RichTextLabel::new_alloc();
-        text.set_use_bbcode(true);
-        text.set_focus_mode(FocusMode::NONE);
-        let width = if stone.is_some() { 700.0 } else { 980.0 };
-        text.set_custom_minimum_size(Vector2::new(width, 600.0));
-        // the top ten's columns line up in the monospace face
-        text.add_theme_font_override("mono_font", &theme::font(theme::Face::Mono));
-        text.add_theme_font_size_override("mono_font_size", theme::MONO_SIZE - 1);
-        let mut parts: Vec<String> = Vec::new();
-        if !summary.last_messages.is_empty() {
-            let msgs: Vec<String> = summary
-                .last_messages
-                .iter()
-                .map(|m| bbcode_escape(&i18n::engine(EngineKind::Message, m)))
-                .collect();
-            parts.push(format!(
-                "[color={}]{}[/color]",
-                hex(theme::TEXT_DIM),
-                msgs.join("\n")
-            ));
-        }
-        if !rest.is_empty() {
-            let shown = i18n::engine_window(&rest)
-                .unwrap_or_else(|| rest.iter().map(|l| l.to_string()).collect());
-            let lines: Vec<String> = shown.iter().map(|l| bbcode_escape(l)).collect();
-            parts.push(lines.join("\n"));
-        }
-        if !summary.scores.is_empty() {
-            // the list whole: an entry runs over lines mid-sentence
-            let english: Vec<&str> = summary.scores.iter().map(String::as_str).collect();
-            let lines: Vec<String> = i18n::engine_window(&english)
-                .unwrap_or_else(|| summary.scores.clone())
-                .iter()
-                .map(|l| bbcode_escape(l))
-                .collect();
-            parts.push(format!(
-                "[code][color={}]{}[/color][/code]",
-                hex(theme::ACCENT),
-                lines.join("\n")
-            ));
-        }
-        text.set_text(&parts.join("\n\n"));
-        match &stone {
-            Some((t, _)) => {
-                let mut body = HBoxContainer::new_alloc();
-                body.add_theme_constant_override("separation", 28);
-                body.add_child(&tombstone::view(t));
-                body.add_child(&text);
-                col.add_child(&body);
-            }
-            None => col.add_child(&text),
-        }
-        let mut buttons = row();
-        let new_game = theme::button(&tr!("end-new-game"), &self.queue, UiEvent::NewGame);
-        buttons.add_child(&new_game);
-        let to_title = theme::button(&tr!("end-to-title"), &self.queue, UiEvent::BackToTitle);
-        buttons.add_child(&to_title);
-        col.add_child(&buttons);
-        panel.add_child(&col);
+        let page = end_view::build(summary, &self.queue, self.canvas(), self.pad);
         self.end = Some(summary.clone());
         self.form = None;
-        self.page("end", &panel.upcast());
+        self.hide();
+        self.root.add_child(&page.root);
+        self.content = Some(page.root.clone());
+        self.current = Some("end");
+        self.bg.set_color(theme::BG);
+        self.root.set_visible(true);
+        self.end_page = Some((page.scroll, page.foot, page.panel));
         // Start: a new game; Esc or B: the title
-        let items = vec![new_game.upcast(), to_title.upcast()];
-        self.set_nav(items, 0, Some(UiEvent::BackToTitle), Some(0));
+        self.set_nav(page.buttons, 0, Some(UiEvent::BackToTitle), Some(0));
+    }
+
+    /// The canvas the pages are laid out on, in design pixels.
+    fn canvas(&self) -> Vector2 {
+        let s = self.root.get_viewport_rect().size;
+        // a headless run without a size has a 64-pixel window
+        if s.x < 320.0 || s.y < 240.0 {
+            theme::DESIGN
+        } else {
+            s
+        }
+    }
+
+    /// The hints follow the input: a gamepad's buttons, or the keys.
+    pub fn set_pad(&mut self, pad: Option<PadKind>) {
+        if self.pad == pad {
+            return;
+        }
+        self.pad = pad;
+        if let Some((_, foot, _)) = self.end_page.as_mut() {
+            end_view::show_hints(foot, pad);
+        }
+    }
+
+    /// The end page's body `by` pixels down (up when less than 0); a
+    /// screen's worth for `page`.
+    fn scroll_end(&mut self, by: f32, page: bool) {
+        let Some((scroll, _, _)) = self.end_page.as_mut() else {
+            return;
+        };
+        let step = if page {
+            (scroll.get_size().y * 0.8).max(120.0) * by.signum()
+        } else {
+            by
+        };
+        let at = scroll.get_v_scroll() as f32 + step;
+        scroll.set_v_scroll(at.max(0.0).round() as i32);
+    }
+
+    /// The end page's frame and its body's view, and how far the body
+    /// scrolls (self-tests).
+    pub fn end_rects(&self) -> Option<(Rect2, Rect2, i32)> {
+        let (scroll, _, panel) = self
+            .end_page
+            .as_ref()
+            .filter(|_| self.current == Some("end"))?;
+        let range = scroll
+            .get_v_scroll_bar()
+            .map_or(0.0, |b| (b.get_max() - b.get_page()).max(0.0));
+        Some((
+            panel.get_global_rect(),
+            scroll.get_global_rect(),
+            range.round() as i32,
+        ))
+    }
+
+    /// The end page's body scrolled so far (self-tests).
+    pub fn end_scrolled(&self) -> Option<i32> {
+        let (scroll, _, _) = self.end_page.as_ref()?;
+        Some(scroll.get_v_scroll())
+    }
+
+    /// The end page's root (self-tests: its words).
+    pub fn end_root(&self) -> Option<Gd<Control>> {
+        self.content.clone().filter(|_| self.current == Some("end"))
+    }
+
+    /// The end page's scrolled body (self-tests).
+    pub fn end_body(&self) -> Option<Gd<ScrollContainer>> {
+        let (scroll, _, _) = self
+            .end_page
+            .as_ref()
+            .filter(|_| self.current == Some("end"))?;
+        Some(scroll.clone())
     }
 
     /// `can_continue`: the name of a save to offer.
@@ -796,7 +796,21 @@ impl Screens {
             .grid
             .as_ref()
             .is_some_and(|g| g.cards.contains(&at));
+        let end = self.current == Some("end");
+        // Tab is down and up but where the arrows scroll
+        let input = match input {
+            NavInput::Next if !end => NavInput::Down,
+            NavInput::Prev if !end => NavInput::Up,
+            other => other,
+        };
         match input {
+            // the end page's body scrolls; its buttons are in a row
+            NavInput::Up if end => self.scroll_end(-END_STEP, false),
+            NavInput::Down if end => self.scroll_end(END_STEP, false),
+            NavInput::PageUp => self.scroll_end(-1.0, true),
+            NavInput::PageDown => self.scroll_end(1.0, true),
+            NavInput::Prev => self.nav_step(-1),
+            NavInput::Next => self.nav_step(1),
             NavInput::Up if in_grid => self.grid_step(-1, false),
             NavInput::Down if in_grid => self.grid_step(1, false),
             NavInput::Left if in_grid => self.grid_step(-1, true),
@@ -931,6 +945,7 @@ impl Screens {
         if let Some(mut c) = self.content.take() {
             c.queue_free();
         }
+        self.end_page = None;
         self.nav = Nav::default();
         self.current = None;
         self.form = None;

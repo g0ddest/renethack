@@ -617,6 +617,19 @@ lists as rows with each creature's map symbol, the overview as the
 dungeons' levels with their features and where the hero is; the client's
 words come from Fluent, the engine's names through the lexicon. The
 `layouts` scenario plays them in a debug-mode game, to its death.
+The end screen (`end_view.rs`) is a page of its own at every game's end:
+the stone with the hero's name, rank, gold, death and year (a quit's
+carved the same way; an ascension's or an escape's page instead), beside
+NetHack's summary, the turns, deepest level, score, place, gold and
+level, the achievements the game holds (those first earned in it marked)
+and the conduct kept, then the chronicle's major events and the top ten
+as a table, this game's row lit. The engine's end window does not show:
+the page says it all (the host adds the chronicle and the score to its
+last progress notice). The arrows, PgUp and PgDn, the d-pad and the
+bumpers scroll a page longer than the canvas; ← → or Tab choose among a
+new game, the title and quitting. The `end-death`, `end-quit` (with an
+escape after it) and `end-ascend` scenarios stage each ending in debug
+mode or over a top ten of earlier games, and picture them.
 The RPG panels lay out the windows of the commands that spend no turn,
 parsed from their English too. The character sheet (`^X`, or the HUD's
 button; `sheet.rs`, `sheet_view.rs`) shows the hero's portrait (the

@@ -2,6 +2,8 @@ use std::collections::VecDeque;
 
 pub use nh_protocol::FmtArg;
 
+/// ATR_BOLD: the line stands out (the top ten's entries of this game).
+pub const ATR_BOLD: i32 = 1;
 /// ATR_URGENT: the message must not be missed.
 pub const ATR_URGENT: i32 = 16;
 /// ATR_NOHISTORY: a transient message that does not belong in the history.

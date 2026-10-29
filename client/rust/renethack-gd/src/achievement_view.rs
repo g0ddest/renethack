@@ -42,7 +42,7 @@ pub fn clear() {
 }
 
 /// A medallion as the bake drew it, earned or locked.
-fn medallion(id: &str, locked: bool) -> Option<Gd<Texture2D>> {
+pub(crate) fn medallion(id: &str, locked: bool) -> Option<Gd<Texture2D>> {
     let path = format!("{GAME_DIR}/{id}{}.png", if locked { "_locked" } else { "" });
     if let Some(t) = TEXTURES.with(|t| t.borrow().get(&path).cloned()) {
         return Some(t);
@@ -96,7 +96,7 @@ fn question(size: f32) -> Gd<Label> {
 
 /// Its name and description as the player reads them: the catalogs',
 /// else the definition's English.
-fn words(a: &Achievement) -> (String, String) {
+pub(crate) fn words(a: &Achievement) -> (String, String) {
     let pick = |key: &str, english: &str| {
         if i18n::has(key) {
             i18n::tr(key)

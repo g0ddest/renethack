@@ -58,6 +58,8 @@ mod doll_tests;
 mod doorways;
 #[path = "selftest_effects.rs"]
 mod effects;
+#[path = "selftest_end.rs"]
+mod end_tests;
 #[path = "selftest_falls.rs"]
 mod falls_tests;
 #[path = "selftest_first.rs"]
@@ -132,9 +134,9 @@ mod world_looks;
 mod worn_looks;
 
 use crate::dialogs::ROW_H;
+use crate::end_view::EndSummary;
 use crate::game::{Args, GameState, RenethackGame, SELFTEST_SEED, env_number};
 use crate::i18n::{self, Lang};
-use crate::screens::EndSummary;
 use crate::tr;
 use crate::ui_events::{CharacterChoice, DialogEvent, UiEvent};
 
@@ -3904,7 +3906,7 @@ fn tells_death(s: &EndSummary) -> bool {
         s.last_messages
             .iter()
             .chain(&s.text)
-            .chain(&s.scores)
+            .chain(s.printed.iter().map(|(l, _)| l))
             .map(|l| l.to_lowercase())
     };
     let quit = lines().any(|l| l.contains("you quit") || l.contains("escaped"));
@@ -5106,6 +5108,9 @@ impl SelfTest {
             "codex" => codex_tests::codex(),
             "presets" => settings_tests::presets(),
             "layouts" => layouts_tests::layouts(),
+            "end-death" => end_tests::end_death(),
+            "end-quit" => end_tests::end_quit(),
+            "end-ascend" => end_tests::end_ascend(),
             "rim" => rim_tests::rim(),
             "riding" => riding_tests::riding(),
             "audio" => audio_tests::audio(),
@@ -6038,8 +6043,7 @@ mod tests {
     fn soak_tells_a_death_from_a_quit() {
         let summary = |msgs: &[&str]| EndSummary {
             last_messages: msgs.iter().map(|m| m.to_string()).collect(),
-            text: Vec::new(),
-            scores: Vec::new(),
+            ..EndSummary::default()
         };
         assert!(tells_death(&summary(&["You die..."])));
         assert!(tells_death(&summary(&["You drown."])));

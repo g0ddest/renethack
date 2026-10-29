@@ -6,8 +6,8 @@ use nh_protocol::{
 
 use crate::prompt::{choice, free_key};
 use crate::{
-    ATR_NOHISTORY, Gameplay, HelplessSpan, HelplessWatch, MapState, MessageLog, Pack, Prompt,
-    Status, Told, TrapKind, effect_cmaps,
+    ATR_BOLD, ATR_NOHISTORY, Gameplay, HelplessSpan, HelplessWatch, MapState, MessageLog, Pack,
+    Prompt, Status, Told, TrapKind, effect_cmaps,
 };
 
 /// getpos() says this (with `flags.verbose`) right after its goal ("Where
@@ -132,8 +132,9 @@ pub struct World {
     pub dirchars: String,
     /// Latest ATR_NOHISTORY message (autodescribe, "Unknown command").
     pub transient: Option<String>,
-    /// raw_print (the top ten list at the end).
-    pub raw_lines: Vec<String>,
+    /// raw_print (the top ten list at the end), raw_print_bold's lines
+    /// ATR_BOLD (this game's entries).
+    pub raw_lines: Vec<TextLine>,
     /// exit_nhwindows text ("Be seeing you...").
     pub exit_text: Option<String>,
     /// Last text window shown. Cleared when the message window goes (the
@@ -399,7 +400,10 @@ impl World {
                 let turn = if *restoring { None } else { self.turn() };
                 self.log.push(msg.clone(), 0, turn, *restoring);
             }
-            WinCall::RawPrint { text, .. } => self.raw_lines.push(text.clone()),
+            WinCall::RawPrint { text, bold } => self.raw_lines.push(TextLine {
+                attr: if *bold { ATR_BOLD } else { 0 },
+                text: text.clone(),
+            }),
             WinCall::ExitNhwindows { text } => {
                 self.windows_exited = true;
                 self.exit_text = text.clone();
@@ -507,9 +511,18 @@ impl World {
                     if !w.lines.is_empty() {
                         self.last_text = w.lines.clone();
                     }
-                    Prompt::Show {
-                        title: None,
-                        lines: w.lines.clone(),
+                    // the game over, its message window gone: the end
+                    // window (the stone, the summary) is the end page's,
+                    // passed at once
+                    let over = self.message_win.is_none()
+                        && self.progress.as_ref().is_some_and(|p| p.gameover);
+                    if over {
+                        Prompt::AutoAck
+                    } else {
+                        Prompt::Show {
+                            title: None,
+                            lines: w.lines.clone(),
+                        }
                     }
                 }
                 Some(w) if w.kind == WindowKind::Menu => Prompt::Show {
@@ -669,6 +682,21 @@ mod tests {
         assert!(p.achieved(15));
         assert!(p.event("qcalled"));
         assert_eq!(p.deepest, 3);
+        assert!(p.chronicle.is_empty());
+        // once over, the chronicle's major events come with it
+        feed(
+            &mut w,
+            r#"
+            {"t":"win","fn":"progress","a":{"mode":"normal","role":"Val","achieved":[],"events":{},"deepest":2,"conduct":{},"roleplay":{},"gameover":true,"how":"died","chronicle":[{"turn":1,"text":"Hero the Valkyrie entered the dungeon"},{"turn":540,"text":"killed by a jackal, on dungeon level 2"}],"turn":540}}
+            "#,
+        );
+        let p = w.progress().expect("progress");
+        assert_eq!(p.chronicle.len(), 2);
+        assert_eq!(p.chronicle[1].turn, 540);
+        assert_eq!(
+            p.chronicle[1].text,
+            "killed by a jackal, on dungeon level 2"
+        );
     }
 
     #[test]
@@ -746,12 +774,39 @@ mod tests {
             {"t":"win","fn":"destroy_nhwindow","a":{"win":1}}
             {"t":"win","fn":"exit_nhwindows","a":{"str":null}}
             {"t":"win","fn":"raw_print","a":{"str":" No  Points     Name","bold":false}}
+            {"t":"win","fn":"raw_print","a":{"str":"  1          0  Hero-Val","bold":true}}
             "#,
         );
         assert!(w.windows.is_empty());
         assert!(w.windows_exited);
-        assert_eq!(w.raw_lines, vec![" No  Points     Name"]);
+        assert_eq!(
+            texts(&w.raw_lines),
+            vec![" No  Points     Name", "  1          0  Hero-Val"]
+        );
+        // this game's entry stands out
+        let bold: Vec<i32> = w.raw_lines.iter().map(|l| l.attr).collect();
+        assert_eq!(bold, vec![0, ATR_BOLD]);
         assert_eq!(w.last_text.len(), 3);
+    }
+
+    #[test]
+    fn the_end_window_of_a_game_over_passes_at_once() {
+        let mut w = World::new();
+        feed(&mut w, START);
+        let p = feed(
+            &mut w,
+            r#"
+            {"t":"win","fn":"progress","a":{"mode":"normal","role":"Val","achieved":[],"events":{},"deepest":1,"conduct":{},"roleplay":{},"gameover":true,"how":"quit","turn":2}}
+            {"t":"win","fn":"destroy_nhwindow","a":{"win":2}}
+            {"t":"win","fn":"destroy_nhwindow","a":{"win":1}}
+            {"t":"win","fn":"create_nhwindow","a":{"win":1,"type":"text"}}
+            {"t":"win","fn":"putstr","a":{"win":1,"attr":0,"str":"You quit in The Dungeons of Doom on dungeon level 1 with 0 points,"}}
+            {"t":"req","id":11,"fn":"display_nhwindow","a":{"win":1}}
+            "#,
+        );
+        // the end page shows it: no window for it
+        assert_eq!(p, Some(Prompt::AutoAck));
+        assert!(texts(&w.last_text).iter().any(|t| t.contains("You quit")));
     }
 
     #[test]

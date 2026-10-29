@@ -32,6 +32,7 @@ use nh_world::{
 
 use crate::census::Census;
 use crate::dialogs::Dialogs;
+use crate::end_view::{EndHow, EndSummary};
 use crate::frame_log::{self, FrameLog};
 use crate::gamepad::{OskOp, Pad, PadButton, PadCtx, PadKind, PadOut, RADIAL, RadialEntry};
 use crate::hud::Hud;
@@ -42,7 +43,7 @@ use crate::inventory_panel::{self, Intent, InvInput, InventoryPanel, KeyUse, War
 use crate::map_view::MapView;
 use crate::names;
 use crate::paths::Paths;
-use crate::screens::{EndSummary, Screens};
+use crate::screens::Screens;
 use crate::selftest::SelfTest;
 use crate::settings_page::{self, Change, PageKey, SettingsInput, SettingsPage};
 use crate::tr;
@@ -58,6 +59,9 @@ const HINT_GAP: Duration = Duration::from_millis(800);
 const CLOSE_TIMEOUT: Duration = Duration::from_secs(10);
 /// Messages the end screen repeats.
 const END_MESSAGES: usize = 12;
+/// NetHack's achievement for entering Sokoban (ACH_SOKO): its rules are a
+/// conduct from then on.
+const SOKOBAN_ENTERED: i32 = 21;
 /// Project setting with the order tick in milliseconds (150–500).
 const TICK_SETTING: &str = "renethack/tick_ms";
 /// The soak self-test's tick, unless it is given one.
@@ -392,6 +396,9 @@ pub struct RenethackGame {
     pub(crate) achievements: Option<Tracker>,
     /// The achievements page while it is open.
     pub(crate) achievement_page: Option<crate::achievement_view::Page>,
+    /// The achievements first earned in a game: its engine start
+    /// (`session_serial`) and their ids (the end screen marks them).
+    earned_in_game: (u64, Vec<String>),
     /// The client's settings, as the profile keeps them (read at start,
     /// changed on the settings page).
     pub(crate) settings: Settings,
@@ -836,6 +843,7 @@ impl INode for RenethackGame {
             last_hero_of: None,
             legacy_hero_of: None,
             achievement_page: None,
+            earned_in_game: (0, Vec::new()),
             settings: Settings::default(),
             test_tick: None,
             settings_page: None,
@@ -2384,6 +2392,10 @@ impl RenethackGame {
             .map_or(0, |d| d.as_secs() as i64);
         for a in t.update(&self.world, self.session_serial, character, now) {
             godot_print!("renethack: achievement {} ({})", a.name_en, a.steam);
+            if self.earned_in_game.0 != self.session_serial {
+                self.earned_in_game = (self.session_serial, Vec::new());
+            }
+            self.earned_in_game.1.push(a.id);
         }
         if let Some(e) = t.take_trouble() {
             godot_warn!("renethack: achievements: {e}");
@@ -4576,6 +4588,8 @@ impl RenethackGame {
                 Some(PadButton::A) => NavInput::Accept,
                 Some(PadButton::B) => NavInput::Back,
                 Some(PadButton::Start) => NavInput::Start,
+                Some(PadButton::Lb) => NavInput::PageUp,
+                Some(PadButton::Rb) => NavInput::PageDown,
                 _ => return true,
             }
         } else if let Ok(m) = event.clone().try_cast::<InputEventJoypadMotion>() {
@@ -4624,8 +4638,10 @@ impl RenethackGame {
             match key.get_keycode() {
                 GKey::UP => NavInput::Up,
                 GKey::DOWN => NavInput::Down,
-                GKey::TAB if shift => NavInput::Up,
-                GKey::TAB => NavInput::Down,
+                GKey::TAB if shift => NavInput::Prev,
+                GKey::TAB => NavInput::Next,
+                GKey::PAGEUP => NavInput::PageUp,
+                GKey::PAGEDOWN => NavInput::PageDown,
                 // a name being typed keeps the rest
                 _ if typing && key.get_keycode() != GKey::ESCAPE => return false,
                 GKey::LEFT => NavInput::Left,
@@ -4793,6 +4809,7 @@ impl RenethackGame {
             return;
         };
         ui.game_menu.set_pad(pad);
+        ui.screens.set_pad(pad);
         ui.quest.set_pad(pad);
         ui.hint.set_pad(pad);
         ui.prologue.set_pad(pad);
@@ -5255,7 +5272,78 @@ impl RenethackGame {
     }
 
     fn show_end(&mut self) {
-        let summary = EndSummary {
+        // the last notice's achievements counted before the page lists them
+        self.achieve(0.0);
+        let summary = self.end_summary();
+        self.state = GameState::Ended;
+        self.show_game(false);
+        self.ui_mut().screens.show_end(&summary);
+    }
+
+    /// What the end screen tells of the game just over, as the engine
+    /// left it: its last progress notice, status, end window and top ten.
+    fn end_summary(&self) -> EndSummary {
+        let progress = self.world.progress();
+        let text: Vec<String> = self
+            .world
+            .last_text
+            .iter()
+            .map(|l| l.text.clone())
+            .collect();
+        let told = |field: &str| {
+            self.world
+                .status
+                .get(field)
+                .map(|v| v.trim().to_string())
+                .filter(|v| !v.is_empty())
+        };
+        let how = match progress.and_then(|p| p.how.as_deref()) {
+            Some(how) => EndHow::of(Some(how)),
+            // an older host: the summary's words
+            None if text.iter().any(|l| l.contains("You quit")) => EndHow::Quit,
+            None => EndHow::Died,
+        };
+        let female = self.hero_female.unwrap_or(false);
+        let role = progress
+            .zip(self.catalog.as_deref())
+            .and_then(|(p, cat)| cat.roles.iter().find(|r| r.code == p.role))
+            .map(|r| match (&r.name_female, female) {
+                (Some(hers), true) => hers.clone(),
+                _ => r.name.clone(),
+            })
+            .unwrap_or_default();
+        // the engine's name (debug mode names every hero "wizard")
+        let name = crate::layouts::tombstone(&text)
+            .map(|(t, _)| t.name)
+            .or_else(|| told("title").and_then(|t| t.split(" the ").next().map(str::to_string)))
+            .or_else(|| self.name.clone())
+            .unwrap_or_default();
+        let held: Vec<(nh_world::achievements::Achievement, bool)> = self
+            .achievements
+            .as_ref()
+            .map(|t| {
+                let fresh = &self.earned_in_game;
+                t.held(&self.world)
+                    .into_iter()
+                    .map(|a| {
+                        let new = fresh.0 == self.session_serial && fresh.1.contains(&a.id);
+                        (a.clone(), new)
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+        let year = crate::screens::format_time(std::time::SystemTime::now())
+            .get(..4)
+            .and_then(|y| y.parse().ok())
+            .unwrap_or(2026);
+        EndSummary {
+            how,
+            name,
+            female,
+            title: told("title").unwrap_or_default(),
+            role,
+            align: told("align").unwrap_or_default(),
+            text,
             last_messages: {
                 let mut m: Vec<String> = self
                     .world
@@ -5268,17 +5356,32 @@ impl RenethackGame {
                 m.reverse();
                 m
             },
-            text: self
+            printed: self
                 .world
-                .last_text
+                .raw_lines
                 .iter()
-                .map(|l| l.text.clone())
+                .map(|l| (l.text.clone(), l.attr & nh_world::ATR_BOLD != 0))
                 .collect(),
-            scores: self.world.raw_lines.clone(),
-        };
-        self.state = GameState::Ended;
-        self.show_game(false);
-        self.ui_mut().screens.show_end(&summary);
+            turns: progress
+                .map(|p| p.turn)
+                .filter(|t| *t > 0)
+                .or_else(|| self.world.turn()),
+            deepest: progress.map(|p| i64::from(p.deepest)).filter(|d| *d > 0),
+            score: progress.and_then(|p| p.score),
+            gold: self.world.status.number("gold"),
+            level: self.world.status.number("xlevel"),
+            year,
+            conduct: progress.map_or_else(Vec::new, |p| {
+                crate::end_view::conduct_kept(&p.conduct, p.achieved(SOKOBAN_ENTERED))
+            }),
+            chronicle: progress.map_or_else(Vec::new, |p| {
+                p.chronicle
+                    .iter()
+                    .map(|e| (e.turn, e.text.clone()))
+                    .collect()
+            }),
+            achievements: held,
+        }
     }
 
     fn show_failure(&mut self, what: &str, details: &str, can_continue: Option<&str>) {
