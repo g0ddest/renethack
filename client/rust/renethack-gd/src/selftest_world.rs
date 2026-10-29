@@ -142,6 +142,160 @@ fn teleport_to(to: &'static str) -> Vec<Step> {
     ]
 }
 
+/// A level teleport by the debug menu's entry `pick` (a special level),
+/// the level mapped and drawn, a picture of it near and far (`shot`,
+/// `shot`-far).
+fn visit(steps: &mut Vec<Step>, pick: KeyCheck, shot: &'static str) {
+    // (a name for the far view too, for the run's length)
+    let far_shot: &'static str = Box::leak(format!("{shot}-far").into_boxed_str());
+    steps.extend([
+        Step::Key(ctrl_key('v')),
+        Step::Request(
+            "to what level",
+            |p| matches!(p, Prompt::Text { query, .. } if query.contains("level")),
+        ),
+        Step::Dialog(DialogEvent::TextSubmitted("?".into())),
+        Step::Request("the levels to teleport to", is_menu),
+        Step::KeyFrom("the level", pick),
+        Step::AnswerUntil('n', "a command on the new level", at_command),
+        // the whole level mapped (the debug mode's map), so its terrain
+        // shows beyond the hero's own light
+        Step::Key(ctrl_key('f')),
+        Step::Request("a command after the map", |p| matches!(p, Prompt::Command)),
+        Step::Wait("the level drawn", drawn_here),
+        Step::Shot(shot),
+        // and further off
+        Step::Call("the camera far off", |g| far(g, 19.0)),
+        Step::Wait("the camera far off", drawn_here),
+        Step::Shot(far_shot),
+        Step::Call("the camera back", |g| far(g, 11.0)),
+        Step::Wait("the camera back", drawn_here),
+    ]);
+}
+
+/// The view on the cell of terrain `t` nearest the hero, as far as the
+/// map shows it.
+fn view_nearest(g: &mut RenethackGame, t: nh_world::Terrain) -> Result<(), String> {
+    let cat = g.catalog.clone().ok_or("no catalog")?;
+    let (hx, hy) = g.world.map.hero().ok_or("no hero")?;
+    let at = (0..nh_world::ROWNO)
+        .flat_map(|y| (0..nh_world::COLNO).map(move |x| (x, y)))
+        .filter(|&(x, y)| {
+            g.world
+                .map
+                .cell(x, y)
+                .and_then(|c| nh_world::cell_terrain(c, &cat))
+                == Some(t)
+        })
+        .min_by_key(|&(x, y)| (x - hx).pow(2) + (y - hy).pow(2))
+        .ok_or_else(|| format!("no {t:?} on the level"))?;
+    g.world.view_center = Some(at);
+    Ok(())
+}
+
+/// The view close on the north wall of a room nearest the hero: a wall
+/// with walls either side of it and the room's floor south of it; a long
+/// one first (a run of five, the floor south of the middle three), then
+/// a lit one.
+fn view_north_wall(g: &mut RenethackGame) -> Result<(), String> {
+    use nh_world::Terrain;
+    let cat = g.catalog.clone().ok_or("no catalog")?;
+    let (hx, hy) = g.world.map.hero().ok_or("no hero")?;
+    let map = &g.world.map;
+    let t = |x: i32, y: i32| map.cell(x, y).and_then(|c| nh_world::cell_terrain(c, &cat));
+    let floor = |x: i32, y: i32| matches!(t(x, y), Some(Terrain::Floor | Terrain::DarkFloor));
+    let at = (0..nh_world::ROWNO)
+        .flat_map(|y| (0..nh_world::COLNO).map(move |x| (x, y)))
+        .filter(|&(x, y)| {
+            (-1..=1).all(|dx| t(x + dx, y) == Some(Terrain::Wall))
+                && floor(x, y + 1)
+                && !floor(x, y - 1)
+        })
+        .min_by_key(|&(x, y)| {
+            let long = [-2, 2].iter().all(|dx| t(x + dx, y) == Some(Terrain::Wall))
+                && (-1..=1).all(|dx| floor(x + dx, y + 1));
+            let dark = t(x, y + 1) != Some(Terrain::Floor);
+            (!long, dark, (x - hx).pow(2) + (y - hy).pow(2))
+        })
+        .ok_or("no room's north wall on the level")?;
+    g.world.view_center = Some(at);
+    far(g, 7.0)
+}
+
+/// A picture close on the north wall of the room nearest the hero
+/// (`shot`-wall), then the camera back on the hero.
+fn close_on_wall(steps: &mut Vec<Step>, shot: &'static str) {
+    let wall_shot: &'static str = Box::leak(format!("{shot}-wall").into_boxed_str());
+    steps.extend([
+        Step::Call("the view on a room's north wall", view_north_wall),
+        Step::Wait("the camera on the wall", drawn_here),
+        Step::Shot(wall_shot),
+        Step::Call("the camera back on the hero", |g| {
+            g.world.view_center = None;
+            far(g, 11.0)
+        }),
+        Step::Wait("the camera back", drawn_here),
+    ]);
+}
+
+/// A room's dressing where the critics wanted it, for pictures before and
+/// after (not part of `make test-client`): the first rooms and a few
+/// levels down, the Big Room, Medusa's island, the Castle, the Gnomish
+/// Mines' rock, Sokoban (left bare), the Valley, Orcus' town, the mazes
+/// round the Wizard's tower and Vlad's Tower; each with a picture close
+/// on a room's north wall.
+pub(super) fn dressing() -> Vec<Step> {
+    let mut steps = vec![Step::Call(
+        "debug mode for this game",
+        |g: &mut RenethackGame| {
+            g.debug_mode = true;
+            Ok(())
+        },
+    )];
+    steps.extend(start());
+    steps.push(Step::Wait("the first level drawn", |g| {
+        drawn_in(g, Branch::Main)
+    }));
+    steps.push(Step::Shot("dressing-dlvl1"));
+    close_on_wall(&mut steps, "dressing-dlvl1");
+    for (depth, shot) in [
+        ("2", "dressing-dlvl2"),
+        ("3", "dressing-dlvl3"),
+        ("4", "dressing-dlvl4"),
+        ("6", "dressing-dlvl6"),
+    ] {
+        steps.extend(teleport_to(depth));
+        steps.push(Step::Shot(shot));
+        close_on_wall(&mut steps, shot);
+    }
+    let visits: [(KeyCheck, &'static str); 4] = [
+        (|g| entry_key(g, "bigrm"), "dressing-bigroom"),
+        (|g| entry_key(g, "medusa"), "dressing-medusa"),
+        (|g| entry_key(g, "castle"), "dressing-castle"),
+        (|g| entry_key(g, "minetn"), "dressing-minetown"),
+    ];
+    for (pick, shot) in visits {
+        visit(&mut steps, pick, shot);
+        close_on_wall(&mut steps, shot);
+    }
+    steps.extend(teleport_to("9"));
+    steps.push(Step::Shot("dressing-mines-deep"));
+    close_on_wall(&mut steps, "dressing-mines-deep");
+    let visits: [(KeyCheck, &'static str); 5] = [
+        (|g| entry_key(g, "soko"), "dressing-sokoban"),
+        (|g| entry_key(g, "valley"), "dressing-valley"),
+        (|g| entry_key(g, "orcus"), "dressing-orcus"),
+        (|g| entry_key(g, "wizard1"), "dressing-wizard"),
+        (|g| entry_key(g, "tower1"), "dressing-vlad"),
+    ];
+    for (pick, shot) in visits {
+        visit(&mut steps, pick, shot);
+        close_on_wall(&mut steps, shot);
+    }
+    steps.extend(quit());
+    steps
+}
+
 /// The terrain's looks where the critics met them, for pictures (not part
 /// of `make test-client`): the shores of Medusa's island, the ice and
 /// lava of the Valkyrie's home, the Castle's moat, Juiblex's swamp, and
@@ -164,33 +318,6 @@ pub(super) fn terrain() -> Vec<Step> {
         (|g| entry_key(g, "castle"), "terrain-castle"),
         (|g| entry_key(g, "juiblex"), "terrain-juiblex"),
     ];
-    let visit = |steps: &mut Vec<Step>, pick: KeyCheck, shot: &'static str| {
-        // (a name for the far view too, for the run's length)
-        let far_shot: &'static str = Box::leak(format!("{shot}-far").into_boxed_str());
-        steps.extend([
-            Step::Key(ctrl_key('v')),
-            Step::Request(
-                "to what level",
-                |p| matches!(p, Prompt::Text { query, .. } if query.contains("level")),
-            ),
-            Step::Dialog(DialogEvent::TextSubmitted("?".into())),
-            Step::Request("the levels to teleport to", is_menu),
-            Step::KeyFrom("the level", pick),
-            Step::AnswerUntil('n', "a command on the new level", at_command),
-            // the whole level mapped (the debug mode's map), so its
-            // terrain shows beyond the hero's own light
-            Step::Key(ctrl_key('f')),
-            Step::Request("a command after the map", |p| matches!(p, Prompt::Command)),
-            Step::Wait("the level drawn", drawn_here),
-            Step::Shot(shot),
-            // and the shores further off
-            Step::Call("the camera far off", |g| far(g, 19.0)),
-            Step::Wait("the camera far off", drawn_here),
-            Step::Shot(far_shot),
-            Step::Call("the camera back", |g| far(g, 11.0)),
-            Step::Wait("the camera back", drawn_here),
-        ]);
-    };
     for (pick, shot) in visits {
         visit(&mut steps, pick, shot);
     }
@@ -217,21 +344,7 @@ pub(super) fn terrain() -> Vec<Step> {
         Step::Shot("terrain-home"),
         // and its lava, as far as the map shows it, nearest the hero
         Step::Call("the view on the lava", |g| {
-            let cat = g.catalog.clone().ok_or("no catalog")?;
-            let (hx, hy) = g.world.map.hero().ok_or("no hero")?;
-            let lava = (0..nh_world::ROWNO)
-                .flat_map(|y| (0..nh_world::COLNO).map(move |x| (x, y)))
-                .filter(|&(x, y)| {
-                    g.world
-                        .map
-                        .cell(x, y)
-                        .and_then(|c| nh_world::cell_terrain(c, &cat))
-                        == Some(nh_world::Terrain::Lava)
-                })
-                .min_by_key(|&(x, y)| (x - hx).pow(2) + (y - hy).pow(2))
-                .ok_or("no lava on the quest's home")?;
-            g.world.view_center = Some(lava);
-            Ok(())
+            view_nearest(g, nh_world::Terrain::Lava)
         }),
         Step::Wait("the camera on the lava", drawn_here),
         Step::Shot("terrain-home-lava"),

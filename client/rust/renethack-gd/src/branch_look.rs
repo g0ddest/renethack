@@ -65,6 +65,50 @@ impl Prop {
     }
 }
 
+/// What a branch dresses its rooms with (map_view's `dressing`): never
+/// anything that could pass for an object, a monster or loot.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Dress {
+    /// Half-columns built into the faces of a room's north walls.
+    pub pilasters: bool,
+    /// Banners hung above head height (their cloths, manifest materials,
+    /// one chosen by the cell), and whether they hang torn.
+    pub banners: &'static [&'static str],
+    pub torn: bool,
+    /// Iron chains with shackles from a high ring, on side walls.
+    pub chains: bool,
+    /// Shallow empty niches in a north wall's face.
+    pub alcoves: bool,
+    /// Small cobwebs high in a room's far corners.
+    pub cobwebs: bool,
+    /// Moss at the foot of a room's walls, and cracks in its floor from
+    /// them.
+    pub moss: bool,
+    pub cracks: bool,
+    /// Soot on the walls.
+    pub soot: bool,
+    /// Rubble heaped and sunk in a room's corners.
+    pub corners: bool,
+    /// Rock grown into a cave's walls.
+    pub formations: bool,
+}
+
+impl Dress {
+    pub const NONE: Dress = Dress {
+        pilasters: false,
+        banners: &[],
+        torn: false,
+        chains: false,
+        alcoves: false,
+        cobwebs: false,
+        moss: false,
+        cracks: false,
+        soot: false,
+        corners: false,
+        formations: false,
+    };
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct BranchLook {
     /// What stands in a closed door's frame instead of planks.
@@ -73,9 +117,8 @@ pub struct BranchLook {
     pub lanterns: bool,
     /// Candles stand on some walls' tops.
     pub candles: bool,
-    /// Narrow pointed windows in some walls (a tower), and banners.
+    /// Narrow pointed windows in some walls (a tower).
     pub windows: bool,
-    pub banners: bool,
     /// An iron band round the walls beside a room (built places), by
     /// manifest name.
     pub bands: Option<&'static str>,
@@ -115,6 +158,8 @@ pub struct BranchLook {
     /// How thick the dust in the air is (1: the main dungeon's).
     pub dust: f32,
     pub grade: Grade,
+    /// What its rooms are dressed with.
+    pub dress: Dress,
 }
 
 const NEUTRAL: Grade = Grade {
@@ -130,7 +175,6 @@ const MAIN: BranchLook = BranchLook {
     lanterns: false,
     candles: false,
     windows: false,
-    banners: false,
     bands: None,
     embers: false,
     underglow: None,
@@ -152,6 +196,20 @@ const MAIN: BranchLook = BranchLook {
     cracks: 0.0,
     dust: 1.0,
     grade: NEUTRAL,
+    // a crypt, a barracks, a storeroom: worn, and some of it still hung
+    dress: Dress {
+        pilasters: true,
+        banners: &["banner_red", "banner_ochre"],
+        torn: false,
+        chains: true,
+        alcoves: true,
+        cobwebs: true,
+        moss: true,
+        cracks: true,
+        soot: false,
+        corners: true,
+        formations: false,
+    },
 };
 
 /// The look of a branch.
@@ -183,6 +241,10 @@ pub fn look_of(branch: Branch) -> BranchLook {
             haze: 0.3,
             darkness: rgb(0.012, 0.009, 0.007),
             dust: 2.5,
+            dress: Dress {
+                formations: true,
+                ..Dress::NONE
+            },
             grade: Grade {
                 saturation: 0.95,
                 shadows: rgb(1.02, 0.98, 0.94),
@@ -194,6 +256,8 @@ pub fn look_of(branch: Branch) -> BranchLook {
         // built: brick, planks and iron, an even cold light
         Branch::Sokoban => BranchLook {
             remap: &[("masonry", "soko_wall"), ("floor", "planks")],
+            // (every thing on its floor is a thing to reckon with)
+            dress: Dress::NONE,
             rubble: false,
             cap: "iron",
             bands: Some("iron"),
@@ -237,6 +301,15 @@ pub fn look_of(branch: Branch) -> BranchLook {
             embers: true,
             underglow: Some(rgb(1.0, 0.36, 0.12)),
             dust: 1.5,
+            dress: Dress {
+                banners: &["banner_black"],
+                torn: true,
+                chains: true,
+                cracks: true,
+                soot: true,
+                corners: true,
+                ..Dress::NONE
+            },
             grade: Grade {
                 saturation: 1.0,
                 contrast: 1.1,
@@ -250,6 +323,7 @@ pub fn look_of(branch: Branch) -> BranchLook {
         // greener, quieter light
         Branch::Quest => BranchLook {
             remap: &[("masonry", "quest_wall"), ("floor", "quest_floor")],
+            dress: Dress::NONE,
             torch: rgb(1.0, 0.76, 0.5),
             ambient: rgb(0.3, 0.38, 0.36),
             grade: Grade {
@@ -267,6 +341,11 @@ pub fn look_of(branch: Branch) -> BranchLook {
             cap: "gilded",
             door: Some(Prop::CastleDoor),
             lanterns: true,
+            dress: Dress {
+                pilasters: true,
+                banners: &["banner_blue"],
+                ..Dress::NONE
+            },
             torch: rgb(1.0, 0.78, 0.5),
             fill_scale: 2.0,
             grade: Grade {
@@ -284,8 +363,12 @@ pub fn look_of(branch: Branch) -> BranchLook {
             lanterns: true,
             candles: true,
             windows: true,
-            banners: true,
             bands: Some("dark_iron"),
+            dress: Dress {
+                pilasters: true,
+                banners: &["banner_purple"],
+                ..Dress::NONE
+            },
             torch: rgb(0.9, 0.6, 0.5),
             torch_energy: 2.0,
             // a cold night in the tower: blue in the shadows and the haze
@@ -326,6 +409,7 @@ fn plane_look(plane: Plane) -> BranchLook {
                 shadows: rgb(1.04, 0.98, 0.9),
                 ..NEUTRAL
             },
+            dress: Dress::NONE,
             ..MAIN
         },
         Plane::Air => BranchLook {
@@ -341,6 +425,7 @@ fn plane_look(plane: Plane) -> BranchLook {
                 highlights: rgb(1.0, 1.02, 1.06),
                 ..NEUTRAL
             },
+            dress: Dress::NONE,
             ..MAIN
         },
         Plane::Fire => BranchLook {
@@ -362,6 +447,7 @@ fn plane_look(plane: Plane) -> BranchLook {
                 highlights: rgb(1.08, 0.94, 0.82),
                 ..NEUTRAL
             },
+            dress: Dress::NONE,
             ..MAIN
         },
         Plane::Water => BranchLook {
@@ -376,6 +462,7 @@ fn plane_look(plane: Plane) -> BranchLook {
                 highlights: rgb(0.94, 1.02, 1.08),
                 ..NEUTRAL
             },
+            dress: Dress::NONE,
             ..MAIN
         },
         Plane::Astral => BranchLook {
@@ -392,6 +479,7 @@ fn plane_look(plane: Plane) -> BranchLook {
                 highlights: rgb(1.04, 1.02, 0.96),
                 ..NEUTRAL
             },
+            dress: Dress::NONE,
             ..MAIN
         },
     }

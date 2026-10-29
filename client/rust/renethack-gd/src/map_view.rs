@@ -63,6 +63,8 @@ use crate::vfx::{Blast, Ray, Vfx, VfxKind};
 
 #[path = "acts.rs"]
 mod acts;
+#[path = "dressing.rs"]
+mod dressing;
 #[path = "drop.rs"]
 mod drop;
 #[path = "fall.rs"]
@@ -846,6 +848,9 @@ struct Around {
     floor: [bool; 4],
     /// The ground of each (`Ground::None`: a wall, the rock, unknown).
     ground: [Ground; 4],
+    /// A door or a feature (`may_matter`) here or round here, diagonals
+    /// too.
+    matters: bool,
     /// Open ground north of here (a doorway too), and two cells north (in
     /// front of the cell north of here).
     north_open: bool,
@@ -904,6 +909,10 @@ impl Around {
             liquid,
             floor,
             ground,
+            matters: near
+                .cells
+                .iter()
+                .any(|c| c.is_some_and(|c| may_matter(c, catalog))),
             north_open: open(n),
             far_open: open(near.far_north),
             aside_open: open(nw) || open(ne),
@@ -941,6 +950,12 @@ impl Around {
         }
     }
 
+    /// No door nor feature beside it, nor at its corners: a room's
+    /// dressing may be here.
+    fn plain(&self) -> bool {
+        !self.matters
+    }
+
     /// A door's wall runs along x (its passage along z): walls or doors
     /// east or west of it, or open ground north or south.
     fn wall_along_x(&self) -> bool {
@@ -958,6 +973,47 @@ impl Around {
 
 /// The unit vectors towards north, south, west, east (x, z).
 const SIDES: [(f32, f32); 4] = [(0.0, -1.0), (0.0, 1.0), (-1.0, 0.0), (1.0, 0.0)];
+
+/// A terrain that matters in play, which a room's dressing keeps off and
+/// away from: a door or a doorway, stairs, a ladder, an altar, a trap and
+/// the like (not the floor, a wall, the rock, nor water, ice or lava).
+fn matters(t: Terrain) -> bool {
+    !matches!(
+        t,
+        Terrain::Stone
+            | Terrain::Wall
+            | Terrain::Floor
+            | Terrain::DarkFloor
+            | Terrain::Corridor
+            | Terrain::Pool
+            | Terrain::Water
+            | Terrain::Ice
+            | Terrain::Lava
+            | Terrain::LavaWall
+            | Terrain::Air
+            | Terrain::Cloud
+            | Terrain::Effect
+            | Terrain::Unknown
+    )
+}
+
+/// A cell that shows a terrain that `matters`, or may: the hero or a
+/// thing lying on ground never shown bare (the engine tells no stairs nor
+/// altar under them: the stairs the hero came down, an altar under an
+/// offering). Another monster is taken to stand on floor (it moves on).
+fn may_matter(cell: &Cell, catalog: &Catalog) -> bool {
+    match cell_terrain(cell, catalog) {
+        Some(t) => matters(t),
+        None => {
+            let hides = |g: &Glyph| match g.kind {
+                GlyphKind::Mon => g.flags & mg::HERO != 0,
+                GlyphKind::Obj | GlyphKind::Body | GlyphKind::Statue => true,
+                _ => false,
+            };
+            cell.rider.is_some() || cell.glyph.as_ref().is_some_and(hides)
+        }
+    }
+}
 
 /// Floor, walls and features. Sets `ground`. `cut`: open ground lies north
 /// of the cell (the row behind a room's south wall, a doorway above a side
@@ -1144,6 +1200,13 @@ fn rubble(
     look.top = look.top.min(0.2);
 }
 
+/// Timber holds a mine's rock up on this side (`SIDES`) of a wall cell
+/// beside open ground, as the cell has it (the camera does not see a
+/// south wall's face, its north side).
+fn propped(ctx: &Ctx, i: usize) -> bool {
+    ctx.branch.supports && i != 0 && ctx.noise(71 + i as u32) <= 0.28
+}
+
 /// Timber holding up a mine's rock: on some walls beside open ground, two
 /// posts against the face and a beam across, placed by the cell.
 fn mine_support(look: &mut Look, around: &Around, ctx: &Ctx) {
@@ -1152,8 +1215,7 @@ fn mine_support(look: &mut Look, around: &Around, ctx: &Ctx) {
     };
     let wood = Paint::Pbr(wood, 75, Role::Prop);
     for (i, (dx, dz)) in SIDES.iter().enumerate() {
-        // the camera does not see a south wall's face (its north side)
-        if around.sides[i] != Side::Open || i == 0 || ctx.noise(71 + i as u32) > 0.28 {
+        if around.sides[i] != Side::Open || !propped(ctx, i) {
             continue;
         }
         let out = 0.56;
@@ -1384,6 +1446,9 @@ fn terrain_base(
                 if ctx.branch.supports && !low {
                     mine_support(look, around, ctx);
                 }
+                if !low {
+                    dressing::cave(look, around, ctx, h, rock_paint);
+                }
             } else if low {
                 // cut down, it is the stump of a wall: courses of masonry
                 // broken off unevenly, darker than the wall that stands
@@ -1460,11 +1525,10 @@ fn terrain_base(
                 }
             }
             // the face the camera sees: a tower's narrow pointed windows
-            // (the night cold through them) and its banners
+            // (the night cold through them)
             let facing = !low && !pier && !ctx.branch.cave && around.sides[1] == Side::Open;
             let decor = ctx.noise(97);
             let window = facing && ctx.branch.windows && decor < 0.25;
-            let banner = facing && ctx.branch.banners && (0.25..0.6).contains(&decor);
             let face = w / 2.0 + 0.01;
             let decor_from = look.solids.len();
             if window {
@@ -1485,27 +1549,15 @@ fn terrain_base(
                     );
                 }
             }
-            if banner {
-                // a long cloth hung from an iron rod, a gold hem
-                let rod = pbr(ctx.mat("dark_iron"), SHADE_LIT, Role::Trim, DEEP);
-                look.turned(
-                    cylinder(0.015, 0.015, 0.62),
-                    rod,
-                    at(0.0, 1.98, face + 0.05),
-                    at(0.0, 0.0, 90.0),
-                );
-                let cloth = Paint::Flat(Color::from_rgb(0.3, 0.05, 0.08), Finish::Matte);
-                look.solid(cuboid(0.5, 0.92, 0.012), cloth, at(0.0, 1.5, face + 0.04));
-                let gold = pbr(ctx.mat("gold"), SHADE_LIT, Role::Trim, DEEP);
-                look.solid(cuboid(0.5, 0.05, 0.016), gold, at(0.0, 1.06, face + 0.045));
-                look.solid(cuboid(0.04, 0.88, 0.016), gold, at(0.0, 1.5, face + 0.045));
-            }
+            // what the branch dresses its rooms' walls with
+            let dressed =
+                !low && !ctx.branch.cave && dressing::wall(look, around, sym, ctx, top, window);
             // a built place's iron bands round the faces beside a room
             if let (Some(band), false, false) = (ctx.branch.bands, low, ctx.branch.cave) {
                 let iron = pbr(ctx.mat(band), SHADE_LIT, Role::Trim, DEEP);
                 let out = w / 2.0 + 0.02;
                 for (i, (dx, dz)) in SIDES.iter().enumerate() {
-                    if around.sides[i] != Side::Open || (i == 1 && (window || banner)) {
+                    if around.sides[i] != Side::Open || (i == 1 && (window || dressed)) {
                         continue;
                     }
                     let (mesh, pos) = if *dx == 0.0 {
@@ -2605,6 +2657,18 @@ fn look_of(cell: &Cell, near: Near, ctx: &Ctx) -> Look {
         }
         (Some(o), _) => opening::closed_floor(&mut look, o, unseen_floor, ctx),
         (None, _) => {}
+    }
+    // a room's floor dressed where it shows bare: nothing lies on it,
+    // nothing is written on it, nothing opens in it
+    let lies = |g: &Glyph| matches!(g.kind, GlyphKind::Obj | GlyphKind::Body | GlyphKind::Statue);
+    if let Some(t) = &cell.terrain
+        && look.opening.is_none()
+        && !cell.glyph.as_ref().is_some_and(lies)
+    {
+        let sym = cmap_sym(t, catalog).unwrap_or("");
+        if matches!(terrain_of(sym), Terrain::Floor | Terrain::DarkFloor) && !engraved(sym) {
+            dressing::floor(&mut look, &Around::of(&near, catalog), ctx);
+        }
     }
     if let Some(g) = &cell.glyph {
         glyph_look(&mut look, g, ctx);
@@ -4482,10 +4546,13 @@ impl MapView {
             .filter(|a| a.len() >= 4)
             .flat_map(|a| fill_lights(a))
             .collect();
+        let dress = self.branch_look.dress;
         for area in areas.iter().filter(|a| a.len() >= 4) {
-            sconces.extend(torch_walls(area, |x, y| {
-                self.cells.get(&(x, y)).is_some_and(|n| n.look.wall)
-            }));
+            sconces.extend(torch_walls(
+                area,
+                |x, y| self.cells.get(&(x, y)).is_some_and(|n| n.look.wall),
+                |&((x, y), into)| dressing::hangs(x, y, into, &dress),
+            ));
         }
         for (cx, cy, reach, energy) in fills {
             if used == self.room_lights.len() {
@@ -8395,11 +8462,27 @@ impl MapView {
 /// A wall cell a torch hangs on, and the way it faces into its room.
 type TorchWall = ((i32, i32), (i32, i32));
 
+/// A torch hangs on the wall at (x, y) by the torches' pattern (`north`: a
+/// room's north wall, else a side wall): every fifth cell of the north
+/// walls, every fourth of the east and west ones.
+fn torch_pattern(x: i32, y: i32, north: bool) -> bool {
+    if north {
+        (x + 2 * y).rem_euclid(5) == 0
+    } else {
+        (y + 2 * x).rem_euclid(4) == 0
+    }
+}
+
 /// The walls of a lit area a torch hangs on, and the way each faces into
-/// the area: every fifth cell of the north walls and every fourth of the
-/// east and west ones (the camera does not see the south wall's face), at
-/// least one per area.
-fn torch_walls(area: &[(i32, i32)], is_wall: impl Fn(i32, i32) -> bool) -> Vec<TorchWall> {
+/// the area: the torches' pattern on the north, east and west walls (the
+/// camera does not see the south wall's face), at least one per area. One
+/// a room gets off the pattern hangs where the room's dressing leaves the
+/// wall bare (`dressed`: something of it may hang there).
+fn torch_walls(
+    area: &[(i32, i32)],
+    is_wall: impl Fn(i32, i32) -> bool,
+    dressed: impl Fn(&TorchWall) -> bool,
+) -> Vec<TorchWall> {
     let mut walls: Vec<TorchWall> = area
         .iter()
         .flat_map(|&(x, y)| {
@@ -8416,23 +8499,23 @@ fn torch_walls(area: &[(i32, i32)], is_wall: impl Fn(i32, i32) -> bool) -> Vec<T
     let chosen: Vec<_> = walls
         .iter()
         .copied()
-        .filter(|&((x, y), (dx, _))| {
-            if dx == 0 {
-                (x + 2 * y).rem_euclid(5) == 0
-            } else {
-                (y + 2 * x).rem_euclid(4) == 0
-            }
-        })
+        .filter(|&((x, y), (dx, _))| torch_pattern(x, y, dx == 0))
         .collect();
     if !chosen.is_empty() {
         return chosen;
     }
-    // none fell on the pattern: the north wall's middle
+    // none fell on the pattern: the north wall's middle, or the nearest
+    // to it that is bare; else any bare wall
     let north: Vec<_> = walls.iter().filter(|(_, (dx, _))| *dx == 0).collect();
-    north
-        .get(north.len() / 2)
-        .or(walls.first().as_ref())
-        .map(|&&w| vec![w])
+    let mid = north.len() / 2;
+    let bare = (0..north.len())
+        .filter(|&k| !dressed(north[k]))
+        .min_by_key(|&k| k.abs_diff(mid))
+        .map(|k| north[k]);
+    bare.or(walls.iter().find(|w| !dressed(w)))
+        .or(north.get(mid).copied())
+        .or(walls.first())
+        .map(|&w| vec![w])
         .unwrap_or_default()
 }
 
@@ -8696,7 +8779,8 @@ mod tests {
     const PICTURE_AT: (i32, i32) = (10, 5);
 
     /// A level from its picture: `.` a lit floor, `#` a corridor, `+` a
-    /// doorway, `|` and `-` walls, `r 7 L J` their corners.
+    /// doorway, `|` and `-` walls, `r 7 L J` their corners, `}` water, `~`
+    /// ice, `^` lava, `>` stairs down, `_` an altar.
     fn level(cat: &Catalog, rows: &[&str]) -> MapState {
         let mut map = MapState::new();
         for (row, line) in rows.iter().enumerate() {
@@ -8714,6 +8798,8 @@ mod tests {
                     '}' => "S_pool",
                     '~' => "S_ice",
                     '^' => "S_lava",
+                    '>' => "S_dnstair",
+                    '_' => "S_altar",
                     _ => continue,
                 };
                 let (x, y) = (PICTURE_AT.0 + col as i32, PICTURE_AT.1 + row as i32);
@@ -8856,6 +8942,253 @@ mod tests {
         assert!(!west_bank(&pool));
         let by_wall = level(cat, &["|}"]);
         assert!(west_bank(&f.look_in(&by_wall, at(1, 0), Branch::Main)));
+    }
+
+    /// A hall of the main dungeon: a doorway in its north wall, stairs
+    /// by it (a pilaster's cell at their corner), an altar on its floor.
+    const HALL: [&str; 7] = [
+        "r-----------+-----------7",
+        "|..>....................|",
+        "|.......................|",
+        "|................._.....|",
+        "|.......................|",
+        "|.......................|",
+        "L-----------------------J",
+    ];
+
+    /// A cell of a level as the main dungeon has it, and as it would be
+    /// with no dressing.
+    fn dressed_and_bare(f: &Fixture, map: &MapState, at: (i32, i32)) -> (Look, Look) {
+        let bare = BranchLook {
+            dress: crate::branch_look::Dress::NONE,
+            ..crate::branch_look::look_of(Branch::Main)
+        };
+        let ctx = Ctx {
+            branch: &bare,
+            ..f.ctx_at(at.0, at.1, None)
+        };
+        let cell = map.cell(at.0, at.1).cloned().unwrap_or_default();
+        let plain = look_of(&cell, Near::of(map, at.0, at.1), &ctx);
+        (f.look_in(map, at, Branch::Main), plain)
+    }
+
+    /// The corners of the box round a solid as it is turned and placed on
+    /// its cell.
+    fn corners(s: &Solid) -> Vec<Vector3> {
+        let m = crate::meshes::metres;
+        let (half, lift) = match s.mesh {
+            MeshKey::Box(x, y, z) | MeshKey::Prism(x, y, z) | MeshKey::Bevel(x, y, z, _) => {
+                (Vector3::new(m(x), m(y), m(z)) / 2.0, 0.0)
+            }
+            // (standing on its foot)
+            MeshKey::Rock(x, y, z) => (Vector3::new(m(x), m(y), m(z)) / 2.0, m(y) / 2.0),
+            MeshKey::Cylinder(t, b, h) => {
+                let r = m(t.max(b));
+                (Vector3::new(r, m(h) / 2.0, r), 0.0)
+            }
+            MeshKey::Torus(i, o) => (Vector3::new(m(o), m(o - i) / 2.0, m(o)), 0.0),
+            mesh => (Vector3::ONE * mesh.half_height(), 0.0),
+        };
+        // (a ball the same any way it is turned)
+        let round = matches!(s.mesh, MeshKey::Sphere(_) | MeshKey::Facets(..));
+        let t = solid_transform(Vector3::ZERO, s);
+        let t = if round {
+            Transform3D::new(Basis::IDENTITY, s.pos)
+        } else {
+            t
+        };
+        (0..8)
+            .map(|k| {
+                let sign = |bit: i32| if k & bit == 0 { -1.0 } else { 1.0 };
+                let c = Vector3::new(sign(1) * half.x, sign(2) * half.y + lift, sign(4) * half.z);
+                t * c
+            })
+            .collect()
+    }
+
+    /// What a room's dressing adds to a cell of a level.
+    fn dressing_at(f: &Fixture, map: &MapState, at: (i32, i32)) -> Vec<Solid> {
+        let (dressed, bare) = dressed_and_bare(f, map, at);
+        let mut plain = bare.solids;
+        dressed
+            .solids
+            .into_iter()
+            .filter(|s| match plain.iter().position(|p| p == s) {
+                Some(i) => {
+                    plain.remove(i);
+                    false
+                }
+                None => true,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn a_rooms_dressing_keeps_off_doors_and_features() {
+        let f = Fixture::new();
+        let map = level(&f.cat, &HALL);
+        let dressing = |c: i32, r: i32| dressing_at(&f, &map, (PICTURE_AT.0 + c, PICTURE_AT.1 + r));
+        // the doorway, the stairs, the altar, and every cell round them
+        for (c, r) in [(12, 0), (3, 1), (18, 3)] {
+            for (dc, dr) in (-1..=1).flat_map(|dc| (-1..=1).map(move |dr| (dc, dr))) {
+                let (c, r) = (c + dc, r + dr);
+                if r >= 0 {
+                    assert!(dressing(c, r).is_empty(), "dressed at {c},{r}");
+                }
+            }
+        }
+        // elsewhere its north wall is (a pilaster every third cell)
+        assert!((1..24).any(|c| !dressing(c, 0).is_empty()));
+    }
+
+    #[test]
+    fn a_rooms_dressing_keeps_off_what_the_hero_and_a_pile_may_hide() {
+        let f = Fixture::new();
+        let cat = &f.cat;
+        // the hero come down by the north wall (a pilaster's cell at their
+        // corner) and a pile by the west wall, on ground never shown bare:
+        // the engine tells no stairs nor altar under them
+        let mut map = level(
+            cat,
+            &[
+                "r-----------------------7",
+                "|..@....................|",
+                "|.......................|",
+                "|(......................|",
+                "|.......................|",
+                "L-----------------------J",
+            ],
+        );
+        let (hero, pile) = (
+            (PICTURE_AT.0 + 3, PICTURE_AT.1 + 1),
+            (PICTURE_AT.0 + 1, PICTURE_AT.1 + 3),
+        );
+        let valkyrie = monster(cat, "valkyrie", mg::HERO | mg::FEMALE);
+        map.print(hero.0, hero.1, &valkyrie, None);
+        map.print(pile.0, pile.1, &object(cat, "(", "chest"), None);
+        for (x, y) in [hero, pile] {
+            for (dx, dy) in (-1..=1).flat_map(|dx| (-1..=1).map(move |dy| (dx, dy))) {
+                let at = (x + dx, y + dy);
+                assert!(dressing_at(&f, &map, at).is_empty(), "dressed at {at:?}");
+            }
+        }
+        // the hero steps off plain floor: the wall by it is dressed
+        map.print(hero.0, hero.1, &cmap(cat, "S_room"), None);
+        let corner = (PICTURE_AT.0 + 2, PICTURE_AT.1);
+        assert!(!dressing_at(&f, &map, corner).is_empty());
+    }
+
+    #[test]
+    fn a_rooms_dressing_hides_nobody_and_lies_flat_on_its_floor() {
+        let f = Fixture::new();
+        let map = level(&f.cat, &HALL);
+        let silk = f.art.material("cobweb");
+        let (mut webs, mut floor) = (0, 0);
+        for r in 0..7 {
+            for c in 0..25 {
+                let at = (PICTURE_AT.0 + c, PICTURE_AT.1 + r);
+                let (dressed, bare) = dressed_and_bare(&f, &map, at);
+                for s in dressing_at(&f, &map, at) {
+                    let box_ = corners(&s);
+                    let low = box_.iter().map(|p| p.y).fold(f32::MAX, f32::min);
+                    let top = box_.iter().map(|p| p.y).fold(f32::MIN, f32::max);
+                    let out = box_
+                        .iter()
+                        .map(|p| p.x.abs().max(p.z.abs()))
+                        .fold(0.0, f32::max);
+                    if !dressed.masonry {
+                        // on the floor and in its cell: flat in it, a sunk
+                        // stone ankle high at most
+                        floor += 1;
+                        assert!(top <= 0.07, "{c},{r}: {s:?}");
+                        assert!(s.pos.x.abs().max(s.pos.z.abs()) < 0.5, "{c},{r}: {s:?}");
+                        continue;
+                    }
+                    // on a wall: never over its top (it would hide what is
+                    // behind it); what stands up never stands out into the
+                    // room where somebody stands by it (what lies flat on
+                    // the floor hides nobody, and keeps to the wall's foot)
+                    assert!(top <= WALL_HEIGHT + 0.01, "{c},{r}: {s:?}");
+                    if !matches!(s.paint, Paint::Pbr(m, _, _) if Some(m) == silk) {
+                        let reach = if top <= 0.02 {
+                            0.75
+                        } else {
+                            0.5 + BODY_HALF_DEPTH
+                        };
+                        assert!(out <= reach, "{c},{r}: {s:?}");
+                        continue;
+                    }
+                    // a cobweb high in a corner, over anybody's head
+                    webs += 1;
+                    assert!(low >= dressing::WEB_LOW - 0.01, "{c},{r}: {s:?}");
+                    assert!(s.pos.x.abs().min(s.pos.z.abs()) > 0.5, "{c},{r}: {s:?}");
+                }
+                // nothing of it makes a cell taller to the pointer
+                if !dressed.masonry {
+                    assert_eq!(dressed.top, bare.top, "{c},{r}");
+                }
+            }
+        }
+        assert!(webs > 0 && floor > 0, "{webs} {floor}");
+    }
+
+    #[test]
+    fn a_rooms_floor_is_dressed_only_where_it_shows_bare() {
+        let f = Fixture::new();
+        let cat = &f.cat;
+        let mut map = level(cat, &HALL);
+        let inside =
+            (1..6).flat_map(|r| (1..24).map(move |c| (PICTURE_AT.0 + c, PICTURE_AT.1 + r)));
+        let mut dressed = inside.filter(|&at| !dressing_at(&f, &map, at).is_empty());
+        let (x, y) = dressed.next().expect("no floor dressed");
+        // something lying there: nothing of it; somebody standing there:
+        // all of it, as before
+        let before = f.look_in(&map, (x, y), Branch::Main).solids;
+        map.print(x, y, &object(cat, "(", "chest"), Some(&cmap(cat, "S_room")));
+        assert!(dressing_at(&f, &map, (x, y)).is_empty());
+        map.print(x, y, &monster(cat, "jackal", 0), Some(&cmap(cat, "S_room")));
+        let jackal = f.look_in(&map, (x, y), Branch::Main).solids;
+        assert!(before.iter().all(|s| jackal.contains(s)));
+    }
+
+    #[test]
+    fn a_cobweb_never_hangs_by_a_torch() {
+        let dress = crate::branch_look::look_of(Branch::Main).dress;
+        let mut webs = 0;
+        for (x, y) in (0..ROWNO).flat_map(|y| (0..COLNO).map(move |x| (x, y))) {
+            for sx in [1, -1] {
+                if !dressing::webbed(x, y, sx, &dress) {
+                    continue;
+                }
+                webs += 1;
+                // on the faces beside its corner no torch by the pattern,
+                // nor one a room gets off it
+                assert!(!torch_pattern(x + sx, y, true) && !torch_pattern(x, y + 1, false));
+                assert!(dressing::hangs(x + sx, y, (0, 1), &dress));
+                assert!(dressing::hangs(x, y + 1, (sx, 0), &dress));
+            }
+        }
+        assert!(webs > 0);
+    }
+
+    #[test]
+    fn every_branch_dresses_its_rooms_in_materials_of_its_own() {
+        let art = manifest();
+        let branches = [
+            Branch::Main,
+            Branch::Mines,
+            Branch::Sokoban,
+            Branch::Gehennom,
+            Branch::Quest,
+            Branch::Ludios,
+            Branch::Vlad,
+        ];
+        for b in branches {
+            let d = crate::branch_look::look_of(b).dress;
+            for name in d.banners.iter().chain(["moss", "cobweb"].iter()) {
+                assert!(art.material(name).is_some(), "{b:?}: {name}");
+            }
+        }
     }
 
     /// The camera's ray, PITCH_DEG down and looking north, meeting the
@@ -9896,7 +10229,7 @@ mod tests {
         let wall = |x: i32, y: i32| {
             (4..=15).contains(&x) && (3..=7).contains(&y) && !area.contains(&(x, y))
         };
-        let torches = torch_walls(&area, wall);
+        let torches = torch_walls(&area, wall, |_| false);
         assert!(!torches.is_empty());
         for &((x, y), (dx, dz)) in &torches {
             assert!(wall(x, y));
@@ -9913,8 +10246,13 @@ mod tests {
         }
         // a closet with no wall on the pattern still gets one
         let closet = [(6, 5)];
-        let one = torch_walls(&closet, |x, y| (x, y) != (6, 5) && (5..=7).contains(&x));
-        assert_eq!(one.len(), 1);
+        let closet_wall = |x: i32, y: i32| (x, y) != (6, 5) && (5..=7).contains(&x);
+        let one = torch_walls(&closet, closet_wall, |_| false);
+        assert_eq!(one, vec![((6, 4), (0, 1))]);
+        // off the pattern it keeps clear of the room's dressing
+        let dressed = |w: &TorchWall| w.0 == (6, 4);
+        let aside = torch_walls(&closet, closet_wall, dressed);
+        assert_eq!(aside, vec![((5, 5), (1, 0))]);
     }
 
     #[test]

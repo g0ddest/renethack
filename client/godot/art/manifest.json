@@ -69,7 +69,14 @@
   "chain_mail": {"textures": "cc0/ambientcg/Chainmail004/Chainmail004", "uv": true, "uv_scale": 16.0, "metallic": 0.3},
   "plate_mail": {"textures": "cc0/ambientcg/Metal038/Metal038", "uv": true, "uv_scale": 3.0, "metallic": 0.3},
   "glove_leather": {"color": "#ffffff", "roughness": 0.6},
-  "felt": {"color": "#d8d0c4", "roughness": 0.95}
+  "felt": {"color": "#d8d0c4", "roughness": 0.95},
+  "banner_red": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 3.0, "color": "#9c3c34", "roughness": 0.95, "normal_scale": 0.5},
+  "banner_ochre": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 3.0, "color": "#a47c3c", "roughness": 0.95, "normal_scale": 0.5},
+  "banner_black": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 3.0, "color": "#4a2a26", "roughness": 0.9, "normal_scale": 0.5},
+  "banner_blue": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 3.0, "color": "#3c5096", "roughness": 0.95, "normal_scale": 0.5},
+  "banner_purple": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 3.0, "color": "#7a4490", "roughness": 0.95, "normal_scale": 0.5},
+  "moss": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 1.5, "color": "#3c6a2a", "roughness": 0.95},
+  "cobweb": {"color": "#7c7a72", "roughness": 0.9}
  },
  "models": {
   "human_male": {"extra_rigs": ["ual2"], "scene": "cc0/quaternius/outfits/Outfits/Male_Peasant.gltf", "size": 1.6, "rig": "ual", "head": "human_m", "shade": "#a0968c",
