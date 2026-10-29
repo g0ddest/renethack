@@ -1020,7 +1020,7 @@ achievement-sokoban-purist-desc = Claim the Sokoban prize without breaking Sokob
 
 ## The help: NetHack's Guidebook
 
-hud-help-tip = Help: the Guidebook ({ $key })
+hud-help-tip = Help: the guide and the Guidebook ({ $key })
 help-title = Help — { $book }
 help-close-tip = Close (Esc, { $key })
 help-search-placeholder = Search the Guidebook
@@ -1072,7 +1072,11 @@ guide-fountain-pad = Drinking from it (stand on it and press { $a }) or dipping 
 guide-altar-title = An altar
 guide-altar = Drop things on it to see whether they are blessed or cursed.
 help-guide = Guide
-help-guide-about = The guide's pages you have met, to read again. Settings → Interface → Hints turns the guide on or off.
+help-guide-about = This game's own guide: “Your quest” on its screen, moving and fighting, then the cards you have met, to read again (Settings → Interface → Hints turns the cards on or off). NetHack's own Guidebook follows; its chapters marked “terminal” describe the screen of NetHack's terminal version.
+# a mark after the Guidebook's chapters on the screen in the help's list
+help-terminal-tag = · terminal
+# the first words of those chapters; $page: the guide's first page
+help-terminal-note = This chapter describes the screen of NetHack's terminal version: a map drawn in letters, the status lines at the bottom, the messages at the top. This game's screen is another: “{ $page }”, the first page of this help, shows it.
 quest-goal-more = The way is long, and the dungeon is different in every game. These pages show you around; the help's Guide keeps them, and the cards that come up as you play.
 quest-screen-title = Your screen
 quest-screen = Around the dungeon, the game shows you:

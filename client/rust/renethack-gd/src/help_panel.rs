@@ -1,9 +1,12 @@
-//! The in-game help (localization phase R8): NetHack's Guidebook in the
+//! The in-game help (localization phase R8): the game's own guide first
+//! ("Your quest", the cards met), then NetHack's Guidebook in the
 //! player's language, by chapters, with a search. The books are made by
 //! `tools/help/guidebook.py` (`client/help/guidebook.{en,ru}.json`): the
 //! English from NetHack's own Guidebook, the Russian from Vadim
-//! Velikodniy's translation.
+//! Velikodniy's translation. The Guidebook's chapters on the screen are
+//! its terminal version's: marked so.
 
+use godot::builtin::Side;
 use godot::classes::control::{FocusMode, MouseFilter, SizeFlags};
 use godot::classes::text_server::AutowrapMode;
 use godot::classes::{
@@ -29,6 +32,17 @@ const ROWS: usize = 90;
 const MAX_HITS: usize = 60;
 /// Characters of a find's paragraph around the words found.
 const SNIPPET: usize = 90;
+/// The list's words: their size, a row's height and a wrapped line's.
+const ROW_FONT: i32 = 16;
+const ROW_H: f32 = 28.0;
+const ROW_LINE: f32 = 20.0;
+/// A row's text from its left and right edges, and a level's indent.
+const ROW_LEFT: f32 = 8.0;
+const ROW_RIGHT: f32 = 6.0;
+const ROW_INDENT: f32 = 18.0;
+/// The list's width (its column's) less a scroll bar, before it is laid
+/// out.
+const LIST_W: f32 = 348.0;
 
 /// A Guidebook, as `tools/help/guidebook.py` makes it.
 #[derive(Debug, Deserialize)]
@@ -90,6 +104,13 @@ impl Book {
             .unwrap_or(0);
         chapter.paragraphs.insert(at, line);
     }
+}
+
+/// The Guidebook's chapter on the screen and its sections (chapter 3 in
+/// either book): its status lines at the bottom, messages at the top, a
+/// map of letters are NetHack's terminal version's, not this game's.
+pub fn on_terminal_screen(c: &Chapter) -> bool {
+    c.number == "3" || c.number.starts_with("3.")
 }
 
 /// A paragraph's words: its BBCode less the tags.
@@ -212,6 +233,8 @@ pub struct HelpPanel {
     search: Gd<LineEdit>,
     scroll: Gd<ScrollContainer>,
     rows: Vec<(Gd<Button>, Gd<Label>)>,
+    /// The rows of chapters on the terminal's screen (dimmer).
+    terminal_rows: Vec<bool>,
     text: Gd<RichTextLabel>,
     credit: Gd<Label>,
     hint: Gd<Label>,
@@ -296,7 +319,7 @@ impl HelpPanel {
             sb.set_corner_radius_all(3);
             sb.set_content_margin_all(0.0);
             if let Some(b) = border {
-                sb.set_border_width(godot::builtin::Side::LEFT, 3);
+                sb.set_border_width(Side::LEFT, 3);
                 sb.set_border_color(b);
             }
             sb
@@ -313,7 +336,7 @@ impl HelpPanel {
         for i in 0..ROWS {
             let mut b = Button::new_alloc();
             b.set_focus_mode(FocusMode::NONE);
-            b.set_custom_minimum_size(Vector2::new(0.0, 28.0));
+            b.set_custom_minimum_size(Vector2::new(0.0, ROW_H));
             for state in [
                 "normal",
                 "hover",
@@ -324,12 +347,12 @@ impl HelpPanel {
             ] {
                 b.add_theme_stylebox_override(state, &row_normal);
             }
-            let mut l = theme::styled_label("", Face::Body, 16, theme::TEXT);
+            let mut l = theme::styled_label("", Face::Body, ROW_FONT, theme::TEXT);
             // the book's own words, in its own language
             i18n::verbatim(&l);
             l.set_vertical_alignment(VerticalAlignment::CENTER);
             l.set_clip_text(true);
-            place(&l, [0.0, 0.0, 1.0, 1.0], [8.0, 0.0, -6.0, 0.0]);
+            place(&l, [0.0, 0.0, 1.0, 1.0], [ROW_LEFT, 0.0, -ROW_RIGHT, 0.0]);
             b.add_child(&l);
             let q = queue.clone();
             b.signals()
@@ -393,6 +416,7 @@ impl HelpPanel {
             search,
             scroll,
             rows,
+            terminal_rows: vec![false; ROWS],
             text,
             credit,
             hint,
@@ -483,13 +507,23 @@ impl HelpPanel {
     }
 
     /// The book of the language now (kept while it stays), the guide's
-    /// pages first.
+    /// pages first, open on the first ("Your quest"); its chapters on the
+    /// terminal's screen say so first.
     fn load(&mut self) {
         let lang = i18n::lang();
         if self.open.as_ref().is_some_and(|o| o.lang == lang) {
             return;
         }
         let mut book = Book::of(lang);
+        let note = tr!("help-terminal-note", page = tr!("guide-quest-title"));
+        let note = format!(
+            "[i][color={}]{}[/color][/i]",
+            theme::hex(theme::GOLD),
+            theme::bbcode_escape(&note)
+        );
+        for c in book.chapters.iter_mut().filter(|c| on_terminal_screen(c)) {
+            c.paragraphs.insert(0, note.clone());
+        }
         if !self.guide.is_empty() {
             let heading = Chapter {
                 number: String::new(),
@@ -511,7 +545,7 @@ impl HelpPanel {
             .iter()
             .map(|c| c.paragraphs.iter().map(|p| fold(&plain(p))).collect())
             .collect();
-        self.chapter = 0;
+        self.chapter = usize::from(!self.guide.is_empty());
         self.hits = None;
         self.search.set_text("");
         self.heading
@@ -621,16 +655,15 @@ impl HelpPanel {
         let Some(o) = &self.open else {
             return;
         };
-        let items: Vec<(String, f32, bool)> = match &self.hits {
+        let tag = tr!("help-terminal-tag");
+        // each row's words, its indent, lines and whether it is dimmer
+        let items: Vec<(String, f32, Option<f32>, bool)> = match &self.hits {
             Some(hits) => hits
                 .iter()
                 .map(|h| {
                     let c = &o.book.chapters[h.chapter];
-                    (
-                        format!("{} {}\n{}", c.number, c.title, h.snippet),
-                        48.0,
-                        true,
-                    )
+                    let text = format!("{} {}\n{}", c.number, c.title, h.snippet);
+                    (text.trim().to_string(), 0.0, Some(2.0), false)
                 })
                 .collect(),
             None => o
@@ -638,27 +671,54 @@ impl HelpPanel {
                 .chapters
                 .iter()
                 .map(|c| {
-                    let pad = "    ".repeat(usize::from(c.level.saturating_sub(1)));
-                    (format!("{pad}{} {}", c.number, c.title), 28.0, false)
+                    let indent = ROW_INDENT * f32::from(c.level.saturating_sub(1));
+                    let terminal = on_terminal_screen(c);
+                    let mut text = format!("{} {}", c.number, c.title).trim().to_string();
+                    if terminal {
+                        text = format!("{text} {tag}");
+                    }
+                    (text, indent, None, terminal)
                 })
                 .collect(),
         };
+        // a title wider than the list wraps: every row reads whole
+        let width = match self.scroll.get_size().x {
+            w if w > 0.0 => {
+                let bar = self
+                    .scroll
+                    .get_v_scroll_bar()
+                    .map_or(12.0, |b| b.get_combined_minimum_size().x);
+                w - bar
+            }
+            _ => LIST_W,
+        };
+        let font = theme::font(Face::Body);
         let none = self.hits.as_ref().is_some_and(|h| h.is_empty());
         for (i, (b, l)) in self.rows.iter_mut().enumerate() {
+            self.terminal_rows[i] = false;
             match items.get(i) {
-                Some((text, h, wrap)) => {
+                Some((text, indent, lines, terminal)) => {
+                    let room = width - ROW_LEFT - indent - ROW_RIGHT;
+                    let lines = lines.unwrap_or_else(|| {
+                        let w = font.get_string_size_ex(text).font_size(ROW_FONT).done().x;
+                        (w / room.max(1.0)).ceil().max(1.0)
+                    });
                     l.set_text(text);
-                    l.set_autowrap_mode(if *wrap {
+                    l.set_autowrap_mode(if lines > 1.0 {
                         AutowrapMode::WORD_SMART
                     } else {
                         AutowrapMode::OFF
                     });
-                    b.set_custom_minimum_size(Vector2::new(0.0, *h));
+                    l.set_offset(Side::LEFT, ROW_LEFT + indent);
+                    b.set_custom_minimum_size(Vector2::new(0.0, ROW_H + ROW_LINE * (lines - 1.0)));
                     b.set_visible(true);
+                    self.terminal_rows[i] = *terminal;
                 }
                 None if i == 0 && none => {
                     l.set_text(&tr!("help-nothing"));
-                    b.set_custom_minimum_size(Vector2::new(0.0, 28.0));
+                    l.set_autowrap_mode(AutowrapMode::OFF);
+                    l.set_offset(Side::LEFT, ROW_LEFT);
+                    b.set_custom_minimum_size(Vector2::new(0.0, ROW_H));
                     b.set_visible(true);
                 }
                 None => b.set_visible(false),
@@ -687,6 +747,8 @@ impl HelpPanel {
                 "font_color",
                 if i == self.selected {
                     theme::GOLD_BRIGHT
+                } else if self.terminal_rows[i] {
+                    theme::TEXT_DIM
                 } else {
                     theme::TEXT
                 },
@@ -737,6 +799,41 @@ impl HelpPanel {
         let o = self.open.as_ref()?;
         let titles = o.book.chapters.iter().map(|c| c.title.clone()).collect();
         Some((titles, self.chapter, self.hits.as_ref().map(Vec::len)))
+    }
+
+    /// The list's rows shown whose words do not fit them (self-tests).
+    pub fn cut_rows(&self) -> Vec<String> {
+        let font = theme::font(Face::Body);
+        self.rows
+            .iter()
+            .filter(|(b, _)| b.is_visible())
+            .filter(|(_, l)| {
+                let text = l.get_text().to_string();
+                if l.get_autowrap_mode() == AutowrapMode::OFF {
+                    let w = font.get_string_size_ex(&text).font_size(ROW_FONT).done().x;
+                    w > l.get_size().x + 0.5
+                } else {
+                    l.get_line_count() > l.get_visible_line_count()
+                }
+            })
+            .map(|(_, l)| l.get_text().to_string())
+            .collect()
+    }
+
+    /// The list is laid out: its rows as wide as it is (self-tests).
+    pub fn list_laid_out(&self) -> bool {
+        self.rows
+            .first()
+            .is_some_and(|(b, _)| b.is_visible() && b.get_size().x >= LIST_W / 2.0)
+    }
+
+    /// The list's row of each chapter (self-tests).
+    pub fn row_texts(&self) -> Vec<String> {
+        self.rows
+            .iter()
+            .filter(|(b, _)| b.is_visible())
+            .map(|(_, l)| l.get_text().to_string())
+            .collect()
     }
 
     /// The text of the chapter shown (self-tests).
@@ -803,6 +900,27 @@ mod tests {
                 chapter.paragraphs[near].to_lowercase().contains(beside),
                 "{lang:?}: {:?}",
                 chapter.paragraphs[near]
+            );
+        }
+    }
+
+    #[test]
+    fn the_chapters_on_the_terminal_s_screen_are_chapter_3_in_both_books() {
+        for (lang, screen) in [(Lang::En, "screen"), (Lang::Ru, "экран")] {
+            let book = Book::of(lang);
+            let marked: Vec<&Chapter> = book
+                .chapters
+                .iter()
+                .filter(|c| on_terminal_screen(c))
+                .collect();
+            let numbers: Vec<&str> = marked.iter().map(|c| c.number.as_str()).collect();
+            assert_eq!(numbers, ["3", "3.1", "3.2", "3.3"], "{lang:?}");
+            // the chapter on the screen; then its status lines, message
+            // line and map
+            assert!(
+                fold(&marked[0].title).contains(screen),
+                "{lang:?}: {}",
+                marked[0].title
             );
         }
     }

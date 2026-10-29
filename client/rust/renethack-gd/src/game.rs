@@ -3065,6 +3065,20 @@ impl RenethackGame {
 
     /// The guide's page `g` in the help: its title and paragraphs (BBCode);
     /// "Your quest" whole, each of its steps under its title.
+    /// The guide, first in the help's list: "Your quest" always, the cards
+    /// met so far.
+    fn help_guide(&self) -> Vec<(String, Vec<String>)> {
+        std::iter::once(nh_world::Guide::Quest)
+            .chain(
+                self.guide_seen
+                    .iter()
+                    .copied()
+                    .filter(|&g| g != nh_world::Guide::Quest),
+            )
+            .map(|g| self.guide_page(g))
+            .collect()
+    }
+
     fn guide_page(&self, g: nh_world::Guide) -> (String, Vec<String>) {
         use crate::guide_view::QuestStep;
         let esc = crate::theme::bbcode_escape;
@@ -4055,12 +4069,7 @@ impl RenethackGame {
             }
             UiEvent::ToggleHelp if self.state == GameState::Playing => {
                 self.driver.interrupt(Stop::Panel);
-                // the guide's pages met so far, first in its list
-                let pages: Vec<(String, Vec<String>)> = self
-                    .guide_seen
-                    .iter()
-                    .map(|&g| self.guide_page(g))
-                    .collect();
+                let pages = self.help_guide();
                 let help = &mut self.ui_mut().help;
                 if help.is_open() {
                     help.close();
@@ -5119,11 +5128,14 @@ impl RenethackGame {
             p => prompt_line(p, pad),
         });
         let catalog = self.catalog.clone();
+        let guide = self.help_guide();
         let Some(ui) = self.ui.as_mut() else {
             return;
         };
         ui.hud.relang();
         ui.inventory.relang();
+        // the guide's pages in the language too
+        ui.help.set_guide(guide);
         ui.help.relang();
         ui.prologue.relang();
         ui.dialogs.relang(catalog.as_deref());

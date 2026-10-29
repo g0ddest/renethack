@@ -599,12 +599,16 @@ the engine as typed (as a veteran's "blessed fixed +2 speed boots"). An engravin
 an engraving away a byte at a time): Cyrillic is transliterated, and
 "Элберет" is written "Elbereth". The `pickers` scenario plays them in a
 debug-mode game.
-The help (F1, or the `?` among the HUD's buttons) is NetHack's Guidebook
-in the interface's language, by chapters, with a search: the English of
-NetHack's own `doc/Guidebook.mn`, the Russian of Vadim Velikodniy's
-translation (`client/help/CREDITS.md`). `make help` builds both from their
-sources with `tools/help/guidebook.py`; `make help-check` runs its tests
-and fails when a built book is stale. The `help` scenario searches both.
+The help (F1, or the `?` among the HUD's buttons) opens on the game's own
+guide ("Your quest": the screen, moving and fighting; then the hint cards
+met), followed by NetHack's Guidebook in the interface's language, by
+chapters, with a search; the Guidebook's chapters on the screen (3 and its
+sections) describe NetHack's terminal version, and are marked so. The
+English of NetHack's own `doc/Guidebook.mn`, the Russian of Vadim
+Velikodniy's translation (`client/help/CREDITS.md`). `make help` builds
+both from their sources with `tools/help/guidebook.py`; `make help-check`
+runs its tests and fails when a built book is stale. The `help` scenario
+searches both, and checks that every title in the list reads whole.
 The engine's pictures and tables (the tombstone, `#vanquished`,
 `#genocided`, `#overview`), whose lines the catalog knows only as layout,
 are drawn by the client from their English (`layouts.rs`): the tombstone
