@@ -5,7 +5,9 @@
 // of lightning with forks, a spray of droplets, billows of gas, churning
 // rock dust, rings of force. `head` is how far it has run from its start,
 // `fade` takes it away. What glows adds light; what is dark, misty or
-// dusty covers what is behind (premultiplied alpha).
+// dusty covers what is behind (premultiplied alpha). Its ends are rounded
+// off, and where it runs into a wall or a block it fades into it: never
+// cut off square.
 shader_type spatial;
 render_mode unshaded, blend_premul_alpha, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled, skip_vertex_transform;
 
@@ -22,6 +24,7 @@ uniform int style = 0;
 uniform float ray_len = 1.0;
 // each ray its own pattern
 uniform float seed = 0.0;
+uniform sampler2D depth_tex : hint_depth_texture, filter_nearest, repeat_disable;
 
 const int PLAIN = 0;
 const int MISSILE = 1;
@@ -41,6 +44,8 @@ const int GAS = 10;
 const float STRIKES = 14.0;
 const float JAG = 0.22;
 const float SWING = 0.55;
+// how far in front of what is behind it the ray fades out (metres)
+const float SOFT_DEPTH = 0.3;
 
 float hash(vec2 p) {
 	vec3 q = fract(vec3(p.xyx) * 0.1031);
@@ -104,17 +109,27 @@ void vertex() {
 void fragment() {
 	// across the ribbon: -1..1 (side), 0 in the middle to 1 at its edges (x)
 	float side = (UV.x - 0.5) * 2.0;
-	float x = abs(side);
 	// UV.y runs from the end (0) to the start (1); m is metres from the start
 	float from_start = 1.0 - UV.y;
 	float m = from_start * ray_len;
+	// its ends rounded: within half its width of either end it narrows to
+	// a point
+	float cap = max(min(width * 0.5, ray_len * 0.5), 0.01);
+	float near_end = clamp(min(m, ray_len - m) / cap, 0.0, 1.0);
+	side /= max(sqrt(1.0 - (1.0 - near_end) * (1.0 - near_end)), 0.05);
+	float x = abs(side);
 	// a haze, a spray, gas and dust thin out over a longer way
 	bool soft = style == SLEEP || style == SPRAY || style == DUST || style == GAS;
 	float taper = soft ? min(0.3 * ray_len, 0.9) : min(0.04 * ray_len, 0.25);
 	float ends = smoothstep(0.0, taper * (soft ? 0.5 : 1.0), m)
 		* smoothstep(0.0, taper, ray_len - m);
 	float shown = 1.0 - smoothstep(head - 0.03, head, from_start);
-	float a = fade * ends * shown;
+	// fading into what it runs into
+	float depth = texture(depth_tex, SCREEN_UV).r;
+	vec4 scene = INV_PROJECTION_MATRIX * vec4(SCREEN_UV * 2.0 - 1.0, depth, 1.0);
+	float front = clamp((VERTEX.z - scene.z / scene.w) / SOFT_DEPTH, 0.0, 1.0);
+	// and never a straight edge along its sides
+	float a = fade * ends * shown * front * smoothstep(1.0, 0.8, x);
 	float t = TIME + seed * 7.3;
 	// light it adds, and how much it covers what is behind with its own
 	// colour

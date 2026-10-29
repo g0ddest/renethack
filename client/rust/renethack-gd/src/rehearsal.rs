@@ -36,7 +36,7 @@ const STAGES: &[(&str, Branch)] = &[
 /// The effects the first stage fires (`act`), how many a frame go off
 /// under the start-up veil, and the frames a stage is held after them
 /// (the effects that follow others go off then).
-const ACTS: u32 = 24;
+const ACTS: u32 = 27;
 const VEILED_ACTS: u32 = 4;
 const HOLD_TAIL: u32 = 24;
 /// The frames a later stage is held (nothing in it is drawn for the
@@ -498,6 +498,9 @@ impl Rehearsal {
             VfxKind::Sparks,
             VfxKind::Blood(red),
             VfxKind::Shock(red),
+            VfxKind::Aura(Color::from_rgb(0.4, 0.6, 1.0)),
+            VfxKind::Halo,
+            VfxKind::Impact(red),
         ];
         let at = |(x, y): (i32, i32)| Vector3::new(x as f32, 0.6, y as f32);
         let path: Vec<_> = (0..5).map(|i| (HERO.0 - i, HERO.1 - 1)).collect();

@@ -8,7 +8,7 @@ use nh_art::{ArtManifest, Gear};
 use nh_protocol::{Catalog, InvItem, ObjectTile};
 use nh_world::{ItemUse, Pack, UseKind};
 
-use crate::vfx::{Vfx, VfxKind};
+use crate::vfx::{Vfx, VfxKind, beam_color};
 
 /// The hero's gear, as of the last pack it was read from.
 #[derive(Default)]
@@ -49,9 +49,10 @@ impl HeroGear {
 }
 
 /// What using an item shows around the hero (spec §3.9), timed to its
-/// clip: a drink's motes in the potion's colour, runes rising off a page,
-/// a wand's flare and beam, a spell's swirl, the thrown thing flying off,
-/// dust at a kick. Bursts and beams are the map's effects (`Vfx`); the
+/// clip: a drink's motes in the potion's colour and its glow rising round
+/// the body, runes rising off a page and round the reader, a wand's flare
+/// and beam (a flash where it strikes stone), a spell's swirl, the thrown
+/// thing flying off, dust at a kick. Bursts and beams are the map's effects (`Vfx`); the
 /// flight is drawn here. The colour of an effect never tells more than the
 /// appearance (a ruby potion's motes are red; a wand's beam is its wood or
 /// metal's colour, else arcane violet).
@@ -73,7 +74,18 @@ pub enum Fx {
         at: Vector3,
         anchor: Option<Gd<Node3D>>,
     },
-    /// A ray, and the flash where it stops (at the first wall on its way).
+    /// An effect on the hero's body (`Vfx::on_body`): at their feet,
+    /// where `anchor` is when it starts (they may have moved), `tall`
+    /// metres tall.
+    Body {
+        name: &'static str,
+        kind: VfxKind,
+        feet: Vector3,
+        tall: f32,
+        anchor: Option<Gd<Node3D>>,
+    },
+    /// A ray, and the flash where it stops (at the first wall on its way):
+    /// a strike on stone at arm's length is that flash alone.
     Beam {
         kind: VfxKind,
         from: Vector3,
@@ -99,6 +111,16 @@ struct Flight {
     from: Vector3,
     to: Vector3,
 }
+
+/// A beam that strikes stone nearer than this (metres from where it
+/// leaves the hand) is only its flash there.
+const POINT_BLANK: f32 = 1.0;
+/// How far past its way's end a beam looks for what it strikes (metres).
+const STRIKE_PAST: f32 = 0.3;
+/// When a drink's glow rises round the drinker, and a page's runes round
+/// the reader (seconds into the use).
+const DRUNK_AT: f32 = 1.0;
+const READ_AT: f32 = 0.65;
 
 /// Seconds a thrown thing flies per metre, and how high it arcs.
 const FLIGHT_SECS: f32 = 0.07;
@@ -203,6 +225,16 @@ impl HeroFx {
                 }
                 vfx.burst(kind, where_now(anchor.as_ref(), at));
             }
+            Fx::Body {
+                name,
+                kind,
+                feet,
+                tall,
+                anchor,
+            } => {
+                self.started.push(name);
+                vfx.on_body(kind, where_now(anchor.as_ref(), feet), tall);
+            }
             Fx::Beam {
                 kind,
                 from,
@@ -217,10 +249,28 @@ impl HeroFx {
                 if vfx.ray_lately() {
                     return;
                 }
+                // its way (as it was aimed: the hand may have reached past
+                // the end of it at arm's length from a wall) ends at the
+                // last open cell's far edge; what is a little further on
+                // is what it strikes
+                let way = (to - from).normalized();
+                let past = to + way * STRIKE_PAST;
+                let at = vfx.clip(from, past);
+                let struck = at.distance_to(past) > 0.05;
+                let at = if struck { at } else { to };
                 let from = where_now(anchor.as_ref(), from);
+                // stone at arm's length: no room for rings to spread, it
+                // flashes where it strikes
+                if struck && (at - from).dot(way) < POINT_BLANK {
+                    vfx.impact(beam_color(kind), at, at - way);
+                    return;
+                }
                 vfx.beam(kind, from, to);
                 if let Some(kind) = impact {
-                    let at = vfx.clip(from, to);
+                    let kind = match kind {
+                        VfxKind::Zap(c) if struck => VfxKind::Impact(c),
+                        k => k,
+                    };
                     self.after(
                         0.15,
                         Fx::Burst {
@@ -265,6 +315,24 @@ impl HeroFx {
             }
         }
     }
+}
+
+/// The hero's body for an effect on it: where they stand, how tall they
+/// are, and their model's node (followed as they move).
+#[derive(Debug, Clone)]
+pub struct Body {
+    pub feet: Vector3,
+    pub tall: f32,
+    pub node: Option<Gd<Node3D>>,
+}
+
+/// Healing told by a line of the engine's: a potion's, a spell's, a
+/// prayer's.
+pub fn healed(text: &str) -> bool {
+    matches!(
+        text,
+        "You feel better." | "You feel much better." | "You feel completely healed."
+    )
 }
 
 /// Where an anchor is now, else `at`.
@@ -347,12 +415,20 @@ pub fn use_effects(
     hand: Vector3,
     anchor: Option<Gd<Node3D>>,
     ahead: Option<Vector3>,
+    body: Body,
 ) -> Vec<(f32, Fx)> {
     let burst = |name, kind, at: Vector3| Fx::Burst {
         name,
         kind,
         at,
         anchor: anchor.clone(),
+    };
+    let on_body = |name, kind| Fx::Body {
+        name,
+        kind,
+        feet: body.feet,
+        tall: body.tall,
+        anchor: body.node.clone(),
     };
     let beam = |kind, impact| {
         ahead.map(|to| {
@@ -369,9 +445,15 @@ pub fn use_effects(
         })
     };
     match u.kind {
-        UseKind::Quaff => vec![(0.8, burst("quaff", VfxKind::Quaff(color), hand))],
+        UseKind::Quaff => vec![
+            (0.8, burst("quaff", VfxKind::Quaff(color), hand)),
+            (DRUNK_AT, on_body("drunk", VfxKind::Aura(color))),
+        ],
         UseKind::Eat => vec![(0.6, burst("eat", VfxKind::Quaff(color), hand))],
-        UseKind::Read => vec![(0.5, burst("read", VfxKind::Read, hand))],
+        UseKind::Read => vec![
+            (0.5, burst("read", VfxKind::Read, hand)),
+            (READ_AT, on_body("lore", VfxKind::Halo)),
+        ],
         // a wand or a spell whose way the engine draws no ray along
         // (striking, force bolt, the rest that strike what is there) sends
         // rings of force; a ray's own look is the map's (`Fx::Beam`)
@@ -396,5 +478,46 @@ pub fn use_effects(
             },
         )],
         _ => Vec::new(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Drinking and reading show on the body too, after what shows in
+    /// the hand; healing is told by the lines a potion, a spell or a
+    /// prayer gives.
+    #[test]
+    fn a_drink_and_a_page_work_on_the_body() {
+        let body = Body {
+            feet: Vector3::ZERO,
+            tall: 1.8,
+            node: None,
+        };
+        let names = |kind: UseKind| -> Vec<(f32, &'static str)> {
+            let u = ItemUse {
+                kind,
+                letter: Some('a'),
+                tile: None,
+                class: None,
+                dir: None,
+                vertical: None,
+                spot: None,
+                prayer: None,
+                spell: None,
+            };
+            let fx = use_effects(&u, Color::WHITE, Vector3::UP, None, None, body.clone());
+            fx.into_iter()
+                .map(|(t, fx)| match fx {
+                    Fx::Burst { name, .. } | Fx::Body { name, .. } => (t, name),
+                    _ => (t, "other"),
+                })
+                .collect()
+        };
+        assert_eq!(names(UseKind::Quaff), [(0.8, "quaff"), (DRUNK_AT, "drunk")]);
+        assert_eq!(names(UseKind::Read), [(0.5, "read"), (READ_AT, "lore")]);
+        assert!(healed("You feel better.") && healed("You feel completely healed."));
+        assert!(!healed("You feel feverish.") && !healed("You feel much better now."));
     }
 }

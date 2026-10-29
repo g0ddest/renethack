@@ -49,7 +49,15 @@ pub enum VfxKind {
     Poison,
     /// A blast of this colour.
     Explosion(Color),
+    /// Healing: a soft green glow and stars rising round the body healed
+    /// (on the body: `Vfx::on_body`).
     Heal,
+    /// A potion working on its drinker: a glow of its colour rising round
+    /// the body from the feet (on the body).
+    Aura(Color),
+    /// A scroll's words working on its reader: runes rising round the body
+    /// in a warm glow (on the body).
+    Halo,
     Sparkle,
     /// A weapon's blow landing.
     Sparks,
@@ -58,6 +66,9 @@ pub enum VfxKind {
     /// A ring of force spreading where a bolt of force (or magic the
     /// client cannot tell) strikes, of this colour.
     Shock(Color),
+    /// A ray or a bolt striking a wall or rock: a flash, sparks thrown back
+    /// and a burst of light, of this colour.
+    Impact(Color),
 }
 
 /// What a ray is of: NetHack's beam types (`ZT_*`), a wand of digging's
@@ -291,6 +302,15 @@ enum Recipe {
     Blaze,
     /// Embers flung up and drifting.
     Embers,
+    // rising round a body from a ring about it (`Recipe::ring`):
+    /// Soft glow.
+    Aura,
+    /// Wisps of light turning as they rise.
+    Wisps,
+    /// Runes.
+    Halo,
+    /// Stars.
+    Mend,
     // shed along a ray once it has run its length (`Vfx::shed`):
     /// Tongues of flame rising.
     Tongues,
@@ -358,10 +378,25 @@ impl Recipe {
         }
     }
 
+    /// Rising round a body: the ring it comes from, as a share of the
+    /// body's height (`BODY_TALL` at `k` 1): how high its middle is over
+    /// the feet, and how tall the band is.
+    fn ring(self) -> Option<(f32, f32)> {
+        match self {
+            Recipe::Aura => Some((0.05, 0.1)),
+            Recipe::Wisps => Some((0.3, 0.5)),
+            Recipe::Halo => Some((0.35, 0.25)),
+            Recipe::Mend => Some((0.4, 0.6)),
+            _ => None,
+        }
+    }
+
     /// How much of a burst comes at once (Godot's explosiveness): the rest
     /// comes over that share of its life.
     fn explosiveness(self) -> f32 {
-        if matches!(self, Recipe::Motes | Recipe::Runes | Recipe::Cloud) || self.is_trail() {
+        if self.ring().is_some() {
+            0.25
+        } else if matches!(self, Recipe::Motes | Recipe::Runes | Recipe::Cloud) || self.is_trail() {
             0.6
         } else {
             1.0
@@ -596,6 +631,53 @@ impl Recipe {
                 hdr: 3.0,
                 ..base
             },
+            // a body's, seen at the game's distance: the ring's radius
+            Recipe::Aura => Params {
+                amount: 32,
+                life: 1.4,
+                speed: (0.4, 0.95),
+                spread: 8.0,
+                gravity: Vector3::new(0.0, 0.25, 0.0),
+                size: (0.35, 0.6),
+                radius: 0.3,
+                damping: 0.5,
+                hdr: 2.0,
+                ..base
+            },
+            Recipe::Wisps => Params {
+                amount: 12,
+                life: 1.2,
+                speed: (0.5, 1.0),
+                spread: 10.0,
+                size: (0.45, 0.75),
+                radius: 0.25,
+                damping: 0.6,
+                hdr: 2.6,
+                ..base
+            },
+            Recipe::Halo => Params {
+                amount: 22,
+                life: 1.4,
+                speed: (0.3, 0.7),
+                spread: 10.0,
+                gravity: Vector3::new(0.0, 0.1, 0.0),
+                size: (0.25, 0.42),
+                radius: 0.45,
+                damping: 0.5,
+                hdr: 1.9,
+                ..base
+            },
+            Recipe::Mend => Params {
+                amount: 18,
+                life: 1.3,
+                speed: (0.35, 0.8),
+                spread: 12.0,
+                size: (0.22, 0.4),
+                radius: 0.4,
+                damping: 0.5,
+                hdr: 2.8,
+                ..base
+            },
             // shed along a ray: amounts are for a ray of `TRAIL_FULL`
             // metres, a shorter one sheds fewer; a ray shows for a moment,
             // so they come thick while it does
@@ -733,9 +815,15 @@ fn look_of(kind: VfxKind) -> (Recipe, Color, Option<(Color, f32, f32)>) {
         VfxKind::Poison => (Recipe::Cloud, rgb(0.56, 1.0, 0.25), None),
         VfxKind::Explosion(c) => (Recipe::Blast, c, Some((c, 4.0, 0.3))),
         VfxKind::Heal => {
-            let c = rgb(0.6, 1.0, 0.55);
-            (Recipe::Motes, c, Some((c, 0.8, 0.6)))
+            let c = rgb(0.75, 1.0, 0.7);
+            (Recipe::Mend, c, Some((rgb(0.6, 1.0, 0.55), 2.2, 1.1)))
         }
+        VfxKind::Aura(c) => (Recipe::Aura, c, Some((c, 2.0, 1.0))),
+        VfxKind::Halo => {
+            let gold = rgb(1.0, 0.8, 0.42);
+            (Recipe::Halo, gold, Some((gold, 2.4, 0.9)))
+        }
+        VfxKind::Impact(c) => (Recipe::Sparks, c, Some((c, 9.0, 0.35))),
         VfxKind::Sparkle => (Recipe::Glints, rgb(1.0, 0.95, 0.8), None),
         VfxKind::Sparks => {
             let c = rgb(1.0, 0.6, 0.22);
@@ -746,8 +834,18 @@ fn look_of(kind: VfxKind) -> (Recipe, Color, Option<(Color, f32, f32)>) {
     }
 }
 
+/// A colour as bright as its hue goes (its brightest channel full), a
+/// grey one a pale glow.
+fn vivid(c: Color) -> Color {
+    let most = c.r.max(c.g).max(c.b);
+    if most < 0.05 {
+        return Color::from_rgb(0.8, 0.8, 0.85);
+    }
+    Color::from_rgb(c.r / most, c.g / most, c.b / most)
+}
+
 /// The colour of a beam of this kind.
-fn beam_color(kind: VfxKind) -> Color {
+pub fn beam_color(kind: VfxKind) -> Color {
     let rgb = Color::from_rgb;
     match kind {
         VfxKind::Fire => rgb(1.0, 0.48, 0.13),
@@ -758,7 +856,9 @@ fn beam_color(kind: VfxKind) -> Color {
         | VfxKind::Cast(c)
         | VfxKind::Quaff(c)
         | VfxKind::Explosion(c)
-        | VfxKind::Shock(c) => c,
+        | VfxKind::Shock(c)
+        | VfxKind::Aura(c)
+        | VfxKind::Impact(c) => c,
         _ => rgb(0.38, 0.56, 1.0),
     }
 }
@@ -808,6 +908,8 @@ struct Beam {
     whole: bool,
     /// Whether it has shed what its kind sheds along its way.
     shed: bool,
+    /// The solid cells it has struck (`Vfx::cap`).
+    capped: Vec<(i32, i32)>,
 }
 
 impl Beam {
@@ -868,6 +970,17 @@ const LARGE: f32 = 4.0;
 const LARGE_GLOW: f32 = 1.25;
 const LARGE_LIGHT_UP: (f32, f32) = (2.5, 1.5);
 const LARGE_LIGHT: (f32, f32) = (0.6, 0.45);
+/// The height of a body an effect on it (`Vfx::on_body`) is made for,
+/// metres: a taller one's is as many times larger.
+const BODY_TALL: f32 = 1.75;
+/// How far past a ray's end the solid it strikes is looked for (metres):
+/// a piece of a ray runs a little past its cell's edge.
+const CAP_REACH: f32 = 0.3;
+/// A strike's flash, this many times a blow's.
+const IMPACT_FLASH: f32 = 2.2;
+/// A strike's flash this far off the stone it strikes (metres): half of
+/// it was buried in the wall.
+const IMPACT_OFF: f32 = 0.25;
 const BEAM_SECS: f32 = 0.45;
 /// How long a whole ray's head takes to run its length, and a ray shows
 /// at its brightest once it stops growing, before it fades.
@@ -903,6 +1016,9 @@ fn particle_textures() -> HashMap<Recipe, Gd<Texture2D>> {
         (Recipe::Glints, format!("{rpicster}spotlight_5.png")),
         (Recipe::Flare, format!("{rpicster}spotlight_5.png")),
         (Recipe::Runes, format!("{rpicster}spotlight_8.png")),
+        (Recipe::Halo, format!("{kenney}magic_05.png")),
+        (Recipe::Mend, format!("{kenney}star_01.png")),
+        (Recipe::Wisps, format!("{kenney}twirl_02.png")),
         (Recipe::Ring, format!("{kenney}circle_02.png")),
         (Recipe::Rime, format!("{kenney}star_04.png")),
         (Recipe::Twinkles, format!("{kenney}star_01.png")),
@@ -1178,6 +1294,19 @@ fn ramp_of(recipe: Recipe, color: Color) -> Gd<GradientTexture1D> {
                 rgba(0.3, 0.05, 0.0, 0.0),
             ],
         )
+    } else if recipe.ring().is_some() {
+        // round a body: it comes up softly, and fades as it rises
+        let k = p.hdr;
+        let hot = rgba(color.r * k, color.g * k, color.b * k, 1.0);
+        (
+            &[0.0, 0.2, 0.6, 1.0],
+            vec![
+                hot.with_alpha(0.0),
+                hot,
+                rgba(color.r * k * 0.6, color.g * k * 0.6, color.b * k * 0.6, 0.7),
+                color.with_alpha(0.0),
+            ],
+        )
     } else if recipe == Recipe::Grit {
         (&[0.0, 0.85, 1.0], vec![color, color, color.with_alpha(0.0)])
     } else {
@@ -1289,6 +1418,24 @@ impl Vfx {
         self.burst_by(kind, at, None, None, LARGE);
     }
 
+    /// An effect on a body (`Aura`, `Halo`, `Heal`) standing at `feet`,
+    /// `tall` metres tall: it rises round all of it, its light at its
+    /// chest.
+    pub fn on_body(&mut self, kind: VfxKind, feet: Vector3, tall: f32) {
+        let k = (tall / BODY_TALL).clamp(0.5, 2.5);
+        self.burst_by(kind, feet, None, None, k);
+    }
+
+    /// A ray or a bolt of `color` striking something solid at `at`, from
+    /// `from`'s side: its sparks thrown back that way.
+    pub fn impact(&mut self, color: Color, at: Vector3, from: Vector3) {
+        let back = Vector3::new(from.x - at.x, 0.0, from.z - at.z).normalized();
+        let dir = (back + Vector3::UP * 0.5).normalized();
+        // a grey wand's strike still flashes white
+        let at = at + back * IMPACT_OFF;
+        self.burst_dir(VfxKind::Impact(vivid(color)), at, None, Some(dir));
+    }
+
     /// A blow landing at `at`, its sparks thrown out towards `toward` (the
     /// striker's side) after `secs`.
     pub fn hit(&mut self, at: Vector3, toward: Vector3, secs: f32) {
@@ -1318,23 +1465,49 @@ impl Vfx {
     ) {
         let (recipe, color, light) = look_of(kind);
         let color = tint.unwrap_or(color);
-        let large = k > 1.0;
+        // a dark potion's glow still a glow, in its hue
+        let (color, light) = match recipe.ring() {
+            Some(_) => (vivid(color), light.map(|(c, e, s)| (vivid(c), e, s))),
+            None => (color, light),
+        };
+        let large = k >= LARGE;
         let light = light
             .map(|(c, e, s)| (tint.unwrap_or(c), e, s))
             .or_else(|| large.then_some((color, LARGE_LIGHT.0, LARGE_LIGHT.1)));
-        let (glow, (up, longer)) = match large {
+        let (glow, (up_k, longer)) = match large {
             true => (LARGE_GLOW, LARGE_LIGHT_UP),
             false => (1.0, (1.0, 1.0)),
         };
         let bright = Color::from_rgba(color.r * glow, color.g * glow, color.b * glow, color.a);
         self.emit_by(recipe, bright, at, dir, k);
-        if recipe == Recipe::Sparks {
-            self.emit_by(Recipe::Flash, bright, at, None, k);
+        match kind {
+            // a strike on stone: a flash, larger than a blow's, and
+            // flecks of light flung every way
+            VfxKind::Impact(_) => {
+                self.emit_by(Recipe::Flash, bright, at, None, k * IMPACT_FLASH);
+                self.emit_by(Recipe::Flare, bright, at, None, k * IMPACT_FLASH);
+            }
+            _ if recipe == Recipe::Sparks => self.emit_by(Recipe::Flash, bright, at, None, k),
+            // a glow rising with the runes; wisps turning in a drink's
+            // glow, and in a healing's with its stars
+            VfxKind::Halo => self.emit_by(Recipe::Aura, color, at, None, k),
+            VfxKind::Aura(_) => self.emit_by(Recipe::Wisps, bright, at, None, k),
+            VfxKind::Heal => {
+                self.emit_by(Recipe::Aura, color, at, None, k);
+                self.emit_by(Recipe::Wisps, color, at, None, k);
+            }
+            _ => {}
         }
         if let Some((c, energy, secs)) = light {
             let range = 2.5 * k.sqrt();
-            let at = at + Vector3::new(0.0, 0.3, 0.0);
-            self.flash(at, c, energy * up, secs * longer, range);
+            // on a body, at its chest
+            let up = if recipe.ring().is_some() {
+                BODY_TALL * 0.55 * k
+            } else {
+                0.3
+            };
+            let at = at + Vector3::new(0.0, up, 0.0);
+            self.flash(at, c, energy * up_k, secs * longer, range);
         }
         if let VfxKind::Blood(c) = kind {
             // blood darkens as it lies: never the bright red of the glyph
@@ -1581,9 +1754,44 @@ impl Vfx {
                 .flatten()
                 .map(|(from, to)| (i, from, to))
         });
-        match grown {
-            Some((i, from, to)) => self.grow(i, from, to),
-            None => self.place_ray(kind, color, from, to, false),
+        let (i, old) = match grown {
+            Some((i, from, to)) => {
+                let old = (self.beams[i].from, self.beams[i].to);
+                self.grow(i, from, to);
+                (i, Some(old))
+            }
+            None => (self.place_ray(kind, color, from, to, false), None),
+        };
+        self.cap(i, old);
+    }
+
+    /// Where ray `i` has come to (an end new since `old`, or either end of
+    /// a new one) runs into a wall or rock: it strikes there, in a flash
+    /// (once for each solid it meets), not cut off square.
+    fn cap(&mut self, i: usize, old: Option<(Vector3, Vector3)>) {
+        let b = &self.beams[i];
+        let len = b.from.distance_to(b.to);
+        if len < 0.1 {
+            return;
+        }
+        let out = (b.to - b.from) / len;
+        let mut ends = Vec::new();
+        if old.is_none_or(|(_, to)| to != b.to) {
+            ends.push((b.to, out));
+        }
+        if old.is_none_or(|(from, _)| from != b.from) {
+            ends.push((b.from, -out));
+        }
+        let color = b.kind.look().color.unwrap_or(b.color);
+        for (end, out) in ends {
+            let beyond = end + out * CAP_REACH;
+            let cell = (beyond.x.round() as i32, beyond.z.round() as i32);
+            let solid = self.solids.get(&cell).is_some_and(|&top| end.y < top);
+            if !solid || self.beams[i].capped.contains(&cell) {
+                continue;
+            }
+            self.beams[i].capped.push(cell);
+            self.impact(color, end, end - out);
         }
     }
 
@@ -1666,7 +1874,14 @@ impl Vfx {
         to
     }
 
-    fn place_ray(&mut self, kind: Ray, color: Color, from: Vector3, to: Vector3, whole: bool) {
+    fn place_ray(
+        &mut self,
+        kind: Ray,
+        color: Color,
+        from: Vector3,
+        to: Vector3,
+        whole: bool,
+    ) -> usize {
         let i = match self.beams.iter().position(|b| !b.live()) {
             Some(i) => i,
             None => {
@@ -1701,7 +1916,9 @@ impl Vfx {
         b.light.set_visible(look.light != 0.0);
         b.node.set_visible(true);
         b.light.set_position(from);
+        b.capped.clear();
         self.grow(i, from, to);
+        i
     }
 
     /// Ray `i` now runs from `from` to `to`: shown anew (it fades only
@@ -1810,6 +2027,7 @@ impl Vfx {
             color: Color::WHITE,
             whole: false,
             shed: true,
+            capped: Vec::new(),
         }
     }
 
@@ -1868,7 +2086,16 @@ impl Vfx {
         // and as its recipe makes it: a ray's trail (`shed`) or a blast's
         // cell (`emit_in_cell`) left it turned along the ray, emitting from
         // a box, a share of its amount
-        if !recipe.is_trail() {
+        let mut at = at;
+        if let Some((over, band)) = recipe.ring() {
+            // round a body as wide as it is tall, from its feet
+            e.process.set_emission_shape(EmissionShape::RING);
+            e.process.set_emission_ring_axis(Vector3::UP);
+            e.process.set_emission_ring_radius(p.radius * k);
+            e.process.set_emission_ring_inner_radius(p.radius * k * 0.7);
+            e.process.set_emission_ring_height(BODY_TALL * band * k);
+            at.y += BODY_TALL * over * k;
+        } else if !recipe.is_trail() {
             e.process.set_emission_shape(EmissionShape::SPHERE);
         }
         e.process.set_emission_sphere_radius(p.radius * k.sqrt());
@@ -2275,6 +2502,13 @@ fn process_material(recipe: Recipe, p: &Params) -> Gd<ParticleProcessMaterial> {
         m.set_param_min(Parameter::ORBIT_VELOCITY, 0.4);
         m.set_param_max(Parameter::ORBIT_VELOCITY, 0.8);
     }
+    if recipe == Recipe::Wisps {
+        // each turning as it rises, from any start
+        m.set_param_min(Parameter::ANGLE, 0.0);
+        m.set_param_max(Parameter::ANGLE, 360.0);
+        m.set_param_min(Parameter::ANGULAR_VELOCITY, 160.0);
+        m.set_param_max(Parameter::ANGULAR_VELOCITY, 320.0);
+    }
     // a ring spreads from a small one; smoke swells as it drifts
     let grows: Option<(f32, f32)> = match recipe {
         Recipe::Ring => Some((0.12, 1.0)),
@@ -2468,5 +2702,25 @@ mod tests {
         let mut styles: Vec<i32> = Ray::ALL.iter().map(|r| r.style()).collect();
         styles.sort_unstable();
         assert_eq!(styles, (0..11).collect::<Vec<_>>());
+    }
+
+    /// A murky potion's glow on the drinker was a few dim motes: what
+    /// rises round a body is as bright as its hue goes, a grey one white.
+    #[test]
+    fn a_glow_on_the_body_is_bright_in_its_own_hue() {
+        let murky = vivid(Color::from_rgb(0.2, 0.1, 0.05));
+        assert!((murky.r - 1.0).abs() < 1e-5);
+        assert!((murky.g - 0.5).abs() < 1e-5 && (murky.b - 0.25).abs() < 1e-5);
+        let grey = vivid(Color::from_rgb(0.45, 0.45, 0.45));
+        assert!(grey.r == 1.0 && grey.g == 1.0 && grey.b == 1.0);
+        // each body's effect rises round it, with a light at its chest
+        for kind in [VfxKind::Aura(murky), VfxKind::Halo, VfxKind::Heal] {
+            let (recipe, _, light) = look_of(kind);
+            assert!(recipe.ring().is_some(), "{kind:?}");
+            assert!(
+                light.is_some_and(|(_, energy, _)| energy >= 2.0),
+                "{kind:?}"
+            );
+        }
     }
 }

@@ -319,6 +319,12 @@ pub(super) fn item_use() -> Vec<Step> {
         Step::Wait("the hero idle again", |g| {
             Ok(!map_view(g)?.hero_fx().busy())
         }),
+        Step::Call("the drink's glow rose round the body", |g| {
+            let started = map_view(g)?.hero_fx().started().contains(&"drunk");
+            started
+                .then_some(())
+                .ok_or_else(|| "no glow on the body".into())
+        }),
         key('r'),
         Step::Request("what to read", getobj),
         key('i'),
@@ -329,6 +335,12 @@ pub(super) fn item_use() -> Vec<Step> {
         Step::Shot("use-read"),
         Step::Wait("the hero idle again", |g| {
             Ok(!map_view(g)?.hero_fx().busy())
+        }),
+        Step::Call("the page's runes rose round the reader", |g| {
+            let started = map_view(g)?.hero_fx().started().contains(&"lore");
+            started
+                .then_some(())
+                .ok_or_else(|| "no runes round the body".into())
         }),
         key('z'),
         Step::Request("what to zap", getobj),

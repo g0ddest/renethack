@@ -374,6 +374,9 @@ const HERO_STUDIO: [(Vector3, Color, f32); 5] = [
 /// directional light, the most Godot draws.
 const CREATURE_LIGHT_WAY: Vector3 = Vector3::new(-55.0, 180.0, 0.0);
 const CREATURE_LIGHT_ENERGY: f32 = 0.6;
+/// When a healing's glow rises round the hero after the line telling of
+/// it (seconds): after a potion's own glow (`hero::DRUNK_AT`).
+const HEALED_AT: f32 = 1.15;
 /// Which of `HERO_STUDIO`'s lights reach a ridden steed: the fills (all
 /// of them made its brown coat a pale tan).
 const STEED_STUDIO: [bool; 5] = [false, true, false, true, false];
@@ -5522,7 +5525,9 @@ impl MapView {
     /// The hero uses an item (spec decision 8): they turn the way it goes
     /// and play the use's clip with the item in hand; its effects follow.
     pub fn show_use(&mut self, u: &ItemUse, catalog: &Catalog, world: &World) {
-        use crate::hero::{Fx, THROW_AT, in_hand, use_color, use_effects, use_hand, use_name};
+        use crate::hero::{
+            Body, Fx, THROW_AT, in_hand, use_color, use_effects, use_hand, use_name,
+        };
         let Some(at) = self.hero_at else {
             return;
         };
@@ -5583,6 +5588,11 @@ impl MapView {
                 (&mut r.model, height, lift)
             }
             None => (&mut nodes.models[i], placed.look.art.height, 0.0),
+        };
+        let body = Body {
+            feet: pos + Vector3::new(0.0, lift, 0.0),
+            tall: height,
+            node: Some(m.node.clone()),
         };
         let mut clips = self.art.clips(m, false);
         // from the saddle, its own way where it has one (a lance couched)
@@ -5656,7 +5666,7 @@ impl MapView {
             }
         });
         let lets_go = anchor.clone();
-        for (delay, fx) in use_effects(u, color, hand, anchor, ahead) {
+        for (delay, fx) in use_effects(u, color, hand, anchor, ahead, body) {
             self.hero_fx.after(delay, fx);
         }
         if matches!(u.kind, UseKind::Throw | UseKind::Fire) {
@@ -7820,6 +7830,25 @@ impl MapView {
             .any(|g| g.get_layer_mask() & RIM_LAYER != 0)
     }
 
+    /// The hero healed (a potion's, a spell's, a prayer's): a glow and
+    /// stars rising round them, after a drink's own glow.
+    fn show_healed(&mut self) {
+        let Some((feet, tall)) = self.hero_stands() else {
+            return;
+        };
+        let node = self.hero_model().map(|m| m.node.clone());
+        self.hero_fx.after(
+            HEALED_AT,
+            crate::hero::Fx::Body {
+                name: "healed",
+                kind: VfxKind::Heal,
+                feet,
+                tall,
+                anchor: node,
+            },
+        );
+    }
+
     /// Fights the new messages tell of: the attacker turns to its target
     /// and strikes.
     fn watch_fights(&mut self, world: &World, catalog: &Catalog) {
@@ -7854,6 +7883,9 @@ impl MapView {
         for m in world.log.since(seen).filter(|m| !m.from_history) {
             // what a monster does that the hero sees: a spell cast
             self.watch_act(&m.text, world, catalog);
+            if crate::hero::healed(&m.text) {
+                self.show_healed();
+            }
             if let Some(a) = parse_attack(&m.text) {
                 let hit = !m.text.contains(" miss");
                 let cells = locate_attack(&a, &world.map, names);
