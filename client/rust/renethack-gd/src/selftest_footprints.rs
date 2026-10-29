@@ -3,7 +3,9 @@
 //! stands idle. One drawn much longer than a cell stands in its
 //! neighbours' cells, hides the hero it fights and goes through walls; a
 //! model that long says how it lies in the manifest (`footprint`) and the
-//! size resolution fits it (`nh_art::ModelSpec::fitted`).
+//! size resolution fits it (`nh_art::ModelSpec::fitted`). A huge or a
+//! gigantic one may overhang its cell, as far as its size allows
+//! (`nh_art::footprint_cap`): a grown dragon towers over the hero.
 
 use godot::prelude::*;
 
@@ -22,7 +24,15 @@ pub(super) fn footprints() -> Vec<Step> {
             let mut all = ui.map.footprints(&cat);
             let long = |sides: &[f32; 2]| sides[0].max(sides[1]);
             all.sort_by(|a, b| long(&b.2).total_cmp(&long(&a.2)));
-            let most = nh_art::MAX_FOOTPRINT * (1.0 + nh_art::FOOTPRINT_GIVE);
+            let most = |name: &str| {
+                let name = name.trim_end_matches(" (F)");
+                let size = cat
+                    .monsters
+                    .iter()
+                    .find(|m| m.name == name)
+                    .map(|m| m.size.as_str());
+                nh_art::footprint_cap(size.unwrap_or("medium")) * (1.0 + nh_art::FOOTPRINT_GIVE)
+            };
             // the long ones for the log, with their models' sides in the
             // models' own units (what a manifest `footprint` says)
             let mut over = Vec::new();
@@ -38,7 +48,7 @@ pub(super) fn footprints() -> Vec<Step> {
                     sides[1] / scale
                 );
                 godot_print!("selftest: footprints: {line}");
-                if long(sides) > most * SLACK {
+                if long(sides) > most(name) * SLACK {
                     over.push(line);
                 }
             }
@@ -46,7 +56,7 @@ pub(super) fn footprints() -> Vec<Step> {
                 return Ok(());
             }
             Err(format!(
-                "longer than {most:.2} m (say the models' `footprint` in the manifest): {}",
+                "longer than their size allows (say the models' `footprint` in the manifest): {}",
                 over.join("; ")
             ))
         }),

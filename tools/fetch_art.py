@@ -481,13 +481,15 @@ def do_turned(w, item):
                                         item.get("back", "Body"), item.get("stretch")))
 
 
-def do_smoothed(w, item):
+def do_smoothed(put, item):
     """A rigged GLB written before in this run (`from`, under ART) whose
-    low-poly mesh (`mesh`) tools/gltf_smooth.py rounds, `steps` times."""
+    low-poly mesh (`mesh`) tools/gltf_smooth.py rounds, `steps` times (only
+    its parts drawn in `materials`, when given)."""
     import gltf_smooth
     with open(os.path.join(ART, item["from"]), "rb") as f:
         data = f.read()
-    w.put(item["out"], gltf_smooth.smoothed(data, item["mesh"], item.get("steps", 2)))
+    put(item["out"], gltf_smooth.smoothed(data, item["mesh"], item.get("steps", 2),
+                                          item.get("materials")))
 
 
 def do_fonts(op, item):
@@ -546,9 +548,14 @@ def main():
     for item in recipe.get("turned", []):
         print("turned", item["out"], flush=True)
         do_turned(w, item)
+    # (a CC-BY model's, made in Blender below, is rounded after it, and
+    # stays out of the CC0 tree)
+    later = [i for i in recipe.get("smoothed", []) if i["from"].startswith("ccby/")]
     for item in recipe.get("smoothed", []):
+        if item in later:
+            continue
         print("smoothed", item["out"], flush=True)
-        do_smoothed(w, item)
+        do_smoothed(w.put, item)
     for item in recipe.get("blender", []):
         print("blender", item["script"], item["out"], flush=True)
         data = do_blender(op, item, blender, max_size)
@@ -558,6 +565,9 @@ def main():
             print("  no Blender: the committed model is kept", flush=True)
             data = kept[item["out"]]
         real_put(item["out"], data)
+    for item in later:
+        print("smoothed", item["out"], flush=True)
+        do_smoothed(real_put, item)
     for item in recipe.get("fonts", []):
         print("fonts", item["dest"], flush=True)
         do_fonts(op, item)

@@ -1865,15 +1865,28 @@ fn terrain_base(
         }
         Terrain::Throne => {
             floor(look);
+            // a gilded chair of state on a dais of two steps: a tall back
+            // in velvet between posts with gold balls, a crest over it,
+            // arms on turned supports, a cushion (it was a box chair)
             let gold = main(SHADE_LIT);
-            look.solid(bevel(0.62, 0.2, 0.6), trim(SHADE_LIT), at(0.0, 0.1, 0.0));
-            look.solid(bevel(0.6, 0.18, 0.55), gold, at(0.0, 0.29, 0.02));
-            look.solid(bevel(0.6, 0.8, 0.12), gold, at(0.0, 0.78, -0.24));
-            for x in [-0.28, 0.28] {
-                look.solid(bevel(0.07, 0.22, 0.5), gold, at(x, 0.49, 0.0));
+            let step = trim(SHADE_LIT);
+            look.solid(bevel(0.94, 0.08, 0.9), step, at(0.0, 0.04, 0.0));
+            look.solid(bevel(0.76, 0.08, 0.72), step, at(0.0, 0.12, -0.04));
+            look.solid(bevel(0.6, 0.16, 0.5), gold, at(0.0, 0.24, -0.04));
+            let velvet = Paint::Flat(Color::from_rgb(0.36, 0.04, 0.07), Finish::Matte);
+            look.solid(bevel(0.5, 0.07, 0.44), velvet, at(0.0, 0.35, -0.02));
+            for x in [-0.27f32, 0.27] {
+                look.solid(bevel(0.09, 1.08, 0.09), gold, at(x, 0.86, -0.26));
+                look.solid(sphere(0.055), gold, at(x, 1.44, -0.26));
+                // the arm on a turned support, a ball at its end
+                look.solid(bevel(0.08, 0.06, 0.46), gold, at(x * 1.04, 0.56, -0.04));
+                look.solid(cylinder(0.025, 0.035, 0.22), gold, at(x * 1.04, 0.42, 0.14));
+                look.solid(sphere(0.04), gold, at(x * 1.04, 0.6, 0.2));
             }
-            let velvet = Paint::Flat(Color::from_rgb(0.35, 0.04, 0.06), Finish::Matte);
-            look.solid(cuboid(0.48, 0.03, 0.45), velvet, at(0.0, 0.395, 0.04));
+            look.solid(bevel(0.46, 0.84, 0.05), velvet, at(0.0, 0.8, -0.25));
+            look.solid(bevel(0.64, 0.09, 0.12), gold, at(0.0, 1.27, -0.26));
+            look.solid(prism(0.34, 0.2, 0.07), gold, at(0.0, 1.41, -0.26));
+            look.solid(sphere(0.045), gold, at(0.0, 1.53, -0.26));
             look.ground = 0.38;
         }
         Terrain::Fountain => {
@@ -1913,16 +1926,38 @@ fn terrain_base(
         }
         Terrain::Sink => {
             floor(look);
+            // a stone basin on a pedestal, water standing in it, a metal
+            // spout and its taps behind (it was a crate with a hole)
             let stone = main(SHADE_LIT);
-            look.solid(bevel(0.6, 0.4, 0.5), stone, at(0.0, 0.2, 0.0));
+            look.solid(cylinder(0.2, 0.25, 0.08), stone, at(0.0, 0.04, 0.0));
+            look.solid(cylinder(0.11, 0.15, 0.52), stone, at(0.0, 0.34, 0.0));
+            look.solid(cylinder(0.34, 0.18, 0.18), stone, at(0.0, 0.69, 0.0));
+            look.solid(torus(0.3, 0.37), stone, at(0.0, 0.78, 0.0));
+            // dark water over the basin's closed top, under the rim's
+            // crown (the water's own surface is clear: over stone it
+            // showed the stone)
             look.solid(
-                plane(0.44, 0.34),
+                cylinder(0.31, 0.31, 0.01),
                 Paint::Flat(DEEP, Finish::Glossy),
-                at(0.0, 0.405, 0.0),
+                at(0.0, 0.785, 0.0),
+            );
+            look.ground_tile(
+                cylinder(0.31, 0.31, 0.01),
+                Paint::Liquid(Liquid::Water),
+                at(0.0, 0.795, 0.0),
             );
             let metal = pbr(ctx.mat("metal"), SHADE_LIT, Role::Prop, DEEP);
-            look.solid(cylinder(0.02, 0.02, 0.2), metal, at(0.0, 0.5, -0.2));
-            look.ground = 0.4;
+            look.solid(cylinder(0.022, 0.03, 0.26), metal, at(0.0, 0.9, -0.32));
+            look.turned(
+                cylinder(0.018, 0.018, 0.16),
+                metal,
+                at(0.0, 1.02, -0.25),
+                at(90.0, 0.0, 0.0),
+            );
+            for x in [-0.09f32, 0.09] {
+                look.solid(sphere(0.03), metal, at(x, 0.88, -0.32));
+            }
+            look.ground = 0.78;
         }
         Terrain::Grave => {
             look.ground_tile(tile, ground(75), Vector3::ZERO);
@@ -2362,6 +2397,8 @@ fn entity_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
                     lift: 0.0,
                     rot: [0.0; 3],
                     height: 0.12,
+                    cap: nh_art::MAX_FOOTPRINT,
+                    back: 0.0,
                     tint: Tint::None,
                     skin: nh_art::Skin::Own,
                     level: nh_art::Level::Generic,
@@ -4927,8 +4964,17 @@ impl MapView {
             self.xray_steed = steed;
         }
         // and the other way: a rat behind them is not lost behind their
-        // back (a foe there had the threat arrow over the hero's own head)
-        let behind = self.hidden_behind(hero);
+        // back (a foe there had the threat arrow over the hero's own head),
+        // nor anything behind a body that overhangs its cell
+        let mut behind = self.hidden_behind(hero);
+        for (n, hostile) in self.hidden_by_big() {
+            if !behind
+                .iter()
+                .any(|(b, _)| b.instance_id() == n.instance_id())
+            {
+                behind.push((n, hostile));
+            }
+        }
         let key = |v: &[(Gd<Node3D>, bool)]| -> Vec<(InstanceId, bool)> {
             v.iter().map(|(n, h)| (n.instance_id(), *h)).collect()
         };
@@ -5024,6 +5070,64 @@ impl MapView {
         hidden
     }
 
+    /// The creatures on the cells north of a huge or gigantic one (a body
+    /// that overhangs its cell) that it hides from the camera, the whole
+    /// or a part, and whether each is hostile: smaller than it, not the
+    /// hero (`stands_before` sees them through it).
+    fn hidden_by_big(&self) -> Vec<(Gd<Node3D>, bool)> {
+        let living = |n: &CellNodes, i: usize| {
+            n.look
+                .models
+                .get(i)
+                .is_some_and(|p| matches!(p.look.pose, Pose::Alive | Pose::Ghost))
+        };
+        let mut hidden: Vec<(Gd<Node3D>, bool)> = Vec::new();
+        for (&(x, y), n) in &self.cells {
+            let Some(i) = n.look.entity.filter(|&i| !n.look.hero && living(n, i)) else {
+                continue;
+            };
+            let big = n.look.models[i].look.art.cap > nh_art::MAX_FOOTPRINT;
+            let Some(body) = n
+                .models
+                .get(i)
+                .filter(|_| big)
+                .and_then(|m| world_box(&m.node))
+            else {
+                continue;
+            };
+            for dy in -3..=-1 {
+                for dx in -2..=2 {
+                    let Some(o) = self.cells.get(&(x + dx, y + dy)) else {
+                        continue;
+                    };
+                    let Some(j) = o.look.entity.filter(|&j| !o.look.hero && living(o, j)) else {
+                        continue;
+                    };
+                    let Some((m, b)) = o.models.get(j).and_then(|m| Some((m, world_box(&m.node)?)))
+                    else {
+                        continue;
+                    };
+                    if b.size.y >= body.size.y
+                        || hidden
+                            .iter()
+                            .any(|(h, _)| h.instance_id() == m.node.instance_id())
+                    {
+                        continue;
+                    }
+                    let c = b.center();
+                    let near = Vector3::new(c.x, c.y, b.end().z);
+                    if [c, near]
+                        .iter()
+                        .any(|p| body.intersects_segment(*p, self.eye))
+                    {
+                        hidden.push((m.node.clone(), o.look.hostile));
+                    }
+                }
+            }
+        }
+        hidden
+    }
+
     /// A model on the cells the line from the hero's `chest` to the eye
     /// crosses, or beside them (a broad body reaches over), that the line
     /// goes through: what stands on the hero's own cell is not before them.
@@ -5039,7 +5143,8 @@ impl MapView {
                 break;
             }
             let (x, y) = (p.x.round() as i32, p.z.round() as i32);
-            for cell in (-1..=1).map(|dx| (x + dx, y)) {
+            // (a body overhanging its cell reaches over from two away)
+            for cell in (-2..=2).map(|dx| (x + dx, y)) {
                 if cell == own || looked.contains(&cell) {
                     continue;
                 }
@@ -7290,6 +7395,15 @@ impl MapView {
             && let Some(m) = look.models.get_mut(i)
         {
             m.look.art.model = hooded;
+        }
+        // the hero in a form longer than a cell stands on it as it is, not
+        // set back (none bites into them; their step and their ring keep
+        // to the middle)
+        if look.hero
+            && let Some(i) = look.entity
+            && let Some(m) = look.models.get_mut(i)
+        {
+            m.look.art.back = 0.0;
         }
         self.ground.set(x, y, look.kind);
         match self.cells.get(&(x, y)) {

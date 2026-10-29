@@ -158,6 +158,26 @@ pub const MAX_FOOTPRINT: f32 = 1.3;
 /// How much longer than that the biggest may be: the bigger of two long
 /// bodies still looks the bigger.
 pub const FOOTPRINT_GIVE: f32 = 0.15;
+/// A huge or a gigantic creature lies longer than its cell (nothing late
+/// in the game towered over the hero: grown dragons were drawn the size
+/// of a pony), its front kept in its cell (`Resolved::back`): this long
+/// at most, in cells.
+pub const HUGE_FOOTPRINT: f32 = 1.9;
+pub const GIGANTIC_FOOTPRINT: f32 = 2.8;
+/// How far ahead of its cell's middle a body that overhangs its cell
+/// reaches, metres; the rest of it lies behind (a dragon's snout stays
+/// out of the hero it bites).
+pub const FRONT_REACH: f32 = 0.55;
+
+/// How long a creature of `size` (the catalog's "medium", "huge"...) may
+/// lie, in cells.
+pub fn footprint_cap(size: &str) -> f32 {
+    match size {
+        "huge" => HUGE_FOOTPRINT,
+        "gigantic" => GIGANTIC_FOOTPRINT,
+        _ => MAX_FOOTPRINT,
+    }
+}
 /// A body too long for its cell is first drawn up to this much shorter
 /// for its height (never narrower than it is wide), then smaller: a
 /// compact elephant as tall as an elephant, not a long one knee-high.
@@ -439,16 +459,16 @@ impl ModelSpec {
     }
 
     /// The height a body that would stand `height` tall is drawn at. Its
-    /// own, while its long side fits a cell with the squash's help; a
-    /// longer body is drawn smaller, to lie between `MAX_FOOTPRINT` and
-    /// `FOOTPRINT_GIVE` more of it (the more, the bigger it would have
-    /// been).
-    pub fn fitted(&self, height: f32) -> f32 {
+    /// own, while its long side fits `cap` cells (`footprint_cap`) with
+    /// the squash's help; a longer body is drawn smaller, to lie between
+    /// `cap` and `FOOTPRINT_GIVE` more of it (the more, the bigger it would
+    /// have been).
+    pub fn fitted(&self, height: f32, cap: f32) -> f32 {
         let Some((long, least)) = self.long_side() else {
             return height;
         };
         let lies = long * height / self.size;
-        let fits = MAX_FOOTPRINT / least;
+        let fits = cap / least;
         if lies <= fits {
             return height;
         }
@@ -457,13 +477,13 @@ impl ModelSpec {
     }
 
     /// The scales across (x) and along (z) the floor of a body drawn at
-    /// `scale`, for its height: its long side shortened to a cell's, as
+    /// `scale`, for its height: its long side shortened to `cap` cells, as
     /// far as `fitted` counts on.
-    pub fn squash(&self, scale: f32) -> [f32; 2] {
+    pub fn squash(&self, scale: f32, cap: f32) -> [f32; 2] {
         let Some((long, least)) = self.long_side() else {
             return [1.0; 2];
         };
-        let k = (MAX_FOOTPRINT / (long * scale)).clamp(least, 1.0);
+        let k = (cap / (long * scale)).clamp(least, 1.0);
         match self.footprint {
             Some([x, z]) if x > z => [k, 1.0],
             _ => [1.0, k],
@@ -785,6 +805,11 @@ pub struct Resolved {
     pub rot: [f32; 3],
     /// Its size in metres once scaled (height of a creature).
     pub height: f32,
+    /// How long it may lie, in cells (`footprint_cap`), and how far it is
+    /// set back along the way it faces, metres: a body longer than its
+    /// cell overhangs behind it.
+    pub cap: f32,
+    pub back: f32,
     pub tint: Tint,
     pub skin: Skin,
     pub level: Level,
@@ -1111,17 +1136,28 @@ impl ArtManifest {
         out
     }
 
-    fn placed(&self, model: usize, target: f32, level: Level) -> Resolved {
+    fn placed(&self, model: usize, target: f32, level: Level, cap: f32) -> Resolved {
         let spec = &self.models[model].1;
         // a body too long for its cell at that height is drawn smaller
-        let target = spec.fitted(target);
+        let target = spec.fitted(target, cap);
         let scale = target / spec.size;
+        // one let overhang its cell: its front in it, the rest behind (a
+        // footprint's z is along the way the model faces)
+        let back = match spec.footprint {
+            Some([_, z]) if cap > MAX_FOOTPRINT => {
+                let [_, along] = spec.squash(scale, cap);
+                (z * spec.girth * along * scale / 2.0 - FRONT_REACH).max(0.0)
+            }
+            _ => 0.0,
+        };
         Resolved {
             model,
             scale,
             lift: spec.lift * scale,
             rot: spec.rot,
             height: target,
+            cap,
+            back,
             tint: if spec.tint_strength > 0.0 {
                 Tint::Glyph(spec.tint_strength)
             } else {
@@ -1191,7 +1227,8 @@ impl ArtManifest {
             }
         };
         let height = height * rules.iter().find_map(|r| r.scale).unwrap_or(1.0);
-        let placed = self.placed(model, spec.readable(height), level);
+        let cap = footprint_cap(&m.size);
+        let placed = self.placed(model, spec.readable(height), level, cap);
         self.apply(&rules, placed)
     }
 
@@ -1199,9 +1236,11 @@ impl ArtManifest {
     /// monster not known.
     pub fn statue(&self, m: Option<&MonsterInfo>, flags: u32) -> Resolved {
         match m {
+            // (on its plinth's middle)
             Some(m) => Resolved {
                 skin: Skin::Material(self.statue_material),
                 tint: Tint::None,
+                back: 0.0,
                 ..self.monster(m, flags)
             },
             None => {
@@ -1210,6 +1249,7 @@ impl ArtManifest {
                     self.statue_model,
                     spec.target.unwrap_or(1.0),
                     Level::Generic,
+                    MAX_FOOTPRINT,
                 )
             }
         }
@@ -1246,7 +1286,7 @@ impl ArtManifest {
             .or(spec.target)
             .unwrap_or(0.3);
         let size = size * rules.iter().find_map(|r| r.scale).unwrap_or(1.0);
-        let placed = self.placed(model, size, level);
+        let placed = self.placed(model, size, level, MAX_FOOTPRINT);
         self.apply(&rules, placed)
     }
 
@@ -1265,7 +1305,7 @@ impl ArtManifest {
             trim: spec.trim.as_deref().and_then(|m| self.material_index(m)),
             model: model.map(|i| {
                 let size = spec.size.or(self.models[i].1.target).unwrap_or(1.0);
-                self.placed(i, size, level)
+                self.placed(i, size, level, MAX_FOOTPRINT)
             }),
             level,
         }
@@ -2008,7 +2048,8 @@ mod tests {
         assert_eq!(model("Nalzok"), "demon_great");
         assert_eq!(model("Chromatic Dragon"), "dragon_chromatic");
         // the yeti and the sasquatch hulking under a long shag, not the apes'
-        // smooth gorilla; scorpions and centipedes are not an ant and a grub
+        // smooth gorilla (both rounded, not the low-poly boxes they were);
+        // scorpions and centipedes are not an ant and a grub
         let scene = |n: &str| {
             let m = cat.monsters.iter().find(|m| m.name == n).unwrap();
             let spec = art.model_at(art.monster(m, 0).model).1;
@@ -2016,12 +2057,12 @@ mod tests {
         };
         for who in ["yeti", "sasquatch"] {
             assert!(
-                scene(who).ends_with("GorillaShaggy.glb"),
+                scene(who).ends_with("GorillaShaggySmooth.glb"),
                 "{who}: {}",
                 scene(who)
             );
         }
-        assert!(scene("ape").ends_with("Gorilla.glb"));
+        assert!(scene("ape").ends_with("GorillaSmooth.glb"));
         assert!(scene("scorpion").ends_with("Scorpion.glb"));
         assert!(scene("centipede").ends_with("Centipede.glb"));
         // a naga a head on a serpent's body rising from its coil, not a snake
@@ -2070,7 +2111,7 @@ mod tests {
             let r = art.monster(m, 0);
             let spec = art.model_at(r.model).1;
             let long = spec.footprint.map_or(0.0, |[x, z]| {
-                let [across, along] = spec.squash(r.scale);
+                let [across, along] = spec.squash(r.scale, r.cap);
                 (x * across).max(z * along) * spec.girth * r.scale
             });
             r.height.max(long)
@@ -2103,17 +2144,24 @@ mod tests {
         let lies = |r: &Resolved| {
             let spec = art.model_at(r.model).1;
             spec.footprint.map(|[x, z]| {
-                let [across, along] = spec.squash(r.scale);
+                let [across, along] = spec.squash(r.scale, r.cap);
                 (x * across).max(z * along) * spec.girth * r.scale
             })
         };
-        let most = MAX_FOOTPRINT * (1.0 + FOOTPRINT_GIVE) + 1e-3;
+        let most = |cap: f32| cap * (1.0 + FOOTPRINT_GIVE) + 1e-3;
         for m in &cat.monsters {
             for flags in [0, mg::FEMALE] {
-                let l = lies(&art.monster(m, flags));
-                assert!(l.is_none_or(|l| l <= most), "{}: {l:?} m long", m.name);
+                let r = art.monster(m, flags);
+                assert_eq!(r.cap, footprint_cap(&m.size), "{}", m.name);
+                let l = lies(&r);
+                assert!(
+                    l.is_none_or(|l| l <= most(r.cap)),
+                    "{}: {l:?} m long",
+                    m.name
+                );
             }
         }
+        let most = most(MAX_FOOTPRINT);
         let height = |n: &str| art.monster(find(n), 0).height;
         for huge in ["mumak", "mastodon", "titanothere", "baluchitherium"] {
             let l = lies(&art.monster(find(huge), 0)).unwrap();
@@ -2129,6 +2177,30 @@ mod tests {
         let sizes = &art.monsters.sizes;
         assert_eq!(height("horse"), sizes["large"]);
         assert_eq!(height("dog"), art.monster(find("large dog"), 0).height);
+        // a grown dragon towers over the hero (a role's model is 1.1 m),
+        // overhangs its cell and over a baby's, and keeps its front in its
+        // own cell; a large beast keeps to its cell, set back not at all
+        for (grown, baby) in [
+            ("red dragon", "baby red dragon"),
+            ("gold dragon", "baby gold dragon"),
+        ] {
+            let r = art.monster(find(grown), 0);
+            let l = lies(&r).unwrap();
+            assert!(
+                r.height > 2.0 * 1.1 && l > MAX_FOOTPRINT,
+                "{grown}: {:.2} m tall, {l:.2} m",
+                r.height
+            );
+            assert!(r.height > 2.0 * height(baby), "{grown} against {baby}");
+            let spec = art.model_at(r.model).1;
+            let z =
+                spec.footprint.unwrap()[1] * spec.girth * spec.squash(r.scale, r.cap)[1] * r.scale;
+            assert!(
+                r.back > 0.0 && z / 2.0 - r.back <= FRONT_REACH + 1e-3,
+                "{grown}: {r:?}"
+            );
+        }
+        assert_eq!(art.monster(find("mumak"), 0).back, 0.0);
         // of two long bodies of one model, the one that would have been
         // bigger is still the bigger
         assert!(height("winter wolf") > height("wolf"));

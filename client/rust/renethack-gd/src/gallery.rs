@@ -363,6 +363,45 @@ pub fn lay_out_one(world: &mut World, cat: &Catalog, name: &str) -> Result<(i32,
     Ok((cx, cy))
 }
 
+/// Map features (`S_throne`...) in a row two cells apart on a small lit
+/// floor, a patch of ice three cells across to the west of them and a pool
+/// to the east, the hero beside them for scale (the `features`
+/// self-test's close-ups); the view centres on the row.
+pub fn lay_out_features(
+    world: &mut World,
+    cat: &Catalog,
+    syms: &[&str],
+) -> Result<(i32, i32), String> {
+    let map = &mut world.map;
+    map.clear();
+    let floor = cmap(cat, "S_room")?;
+    let ice = cmap(cat, "S_ice")?;
+    let pool = cmap(cat, "S_pool")?;
+    let (cx, cy): (i32, i32) = (40, 10);
+    let left = cx - (syms.len() as i32 - 1);
+    let right = left + 2 * (syms.len() as i32 - 1);
+    for y in cy - 4..=cy + 4 {
+        for x in left - 6..=right + 6 {
+            let patch = |x0: i32| (x - x0).abs() <= 1 && (y - cy).abs() <= 1;
+            let g = if patch(left - 3) {
+                &ice
+            } else if patch(right + 3) {
+                &pool
+            } else {
+                &floor
+            };
+            map.print(x, y, g, None);
+        }
+    }
+    for (i, sym) in syms.iter().enumerate() {
+        map.print(left + 2 * i as i32, cy, &cmap(cat, sym)?, None);
+    }
+    let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    map.print(cx, cy + 2, &hero, Some(&floor));
+    world.view_center = Some((cx, cy));
+    Ok((cx, cy))
+}
+
 /// The monster of `lay_out_one` a cell west of where it stood: it walks
 /// there (a step stopped midway shows its legs under it).
 pub fn step_one(world: &mut World, cat: &Catalog, name: &str) -> Result<(), String> {

@@ -254,7 +254,9 @@
   {"from": "cc0/made/DragonRearing.glb", "mesh": "Dragon", "steps": 2, "out": "made/DragonRearingSmooth.glb",
    "use": "grown dragons: round, not folded into flat facets"},
   {"from": "cc0/made/Jabberwock.glb", "mesh": "Dragon", "steps": 2, "out": "made/JabberwockSmooth.glb",
-   "use": "the jabberwock, round"}
+   "use": "the jabberwock, round"},
+  {"from": "ccby/polypizza/Gorilla.glb", "mesh": "Gorilla", "steps": 2, "out": "ccby/polypizza/GorillaSmooth.glb", "use": "apes, round (CC-BY as the gorilla above: Poly by Google)"},
+  {"from": "ccby/polypizza/GorillaShaggy.glb", "mesh": "GorillaShaggy", "steps": 2, "materials": ["Back", "Fur", "Hide", "Skin"], "out": "ccby/polypizza/GorillaShaggySmooth.glb", "use": "yetis and sasquatches, the body round under the same shag (CC-BY as above)"}
  ],
  "blender_comment": "Models made in Blender by tools/blender/<script>.py: static models rigged with the skeleton and clips of a Quaternius animal (rig_quadruped), centaurs put together from the horse and a base character (centaur), things worn round the neck of each outfit body they are fitted to, a stethoscope (also on the floor) and a tourist's camera on its strap (neck). URLs are downloaded (and locked); other paths are files above. fetch_art.py runs Blender when it finds one ($BLENDER, `blender` on the PATH, /Applications/Blender.app); without it the committed models are kept and only the downloads are checked. CC-BY models go to ccby/, see CREDITS.md.",
  "blender": [

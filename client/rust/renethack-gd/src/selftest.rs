@@ -62,6 +62,8 @@ mod effects;
 mod end_tests;
 #[path = "selftest_falls.rs"]
 mod falls_tests;
+#[path = "selftest_features.rs"]
+mod features_tests;
 #[path = "selftest_first.rs"]
 mod first_tests;
 #[path = "selftest_gameplay.rs"]
@@ -82,6 +84,8 @@ mod journal_tests;
 mod layouts_tests;
 #[path = "selftest_look.rs"]
 mod look_tests;
+#[path = "selftest_overhang.rs"]
+mod overhang_tests;
 #[path = "selftest_pack_list.rs"]
 mod pack_list_tests;
 #[path = "selftest_pad_panels.rs"]
@@ -5136,6 +5140,8 @@ impl SelfTest {
             "pad-screens" => pad_screens_tests::pad_screens(),
             "creation" => creation_tests::creation(),
             "portrait" => portrait_tests::portrait(),
+            "overhang" => overhang_tests::overhang(),
+            "features" => features_tests::features(),
             "pad-words" => pad_words_tests::pad_words(),
             "skills" => skills_tests::skills(),
             "journal" => journal_tests::journal(),

@@ -12,9 +12,10 @@ strongest kept). The normals are then those of the faces round each
 place. The skeleton, the clips and every other mesh are kept byte for
 byte. A body folded into flat facets reads as origami beside the smooth
 ones; Catmull-Clark in Blender rounds it as well, but its glTF round trip
-moved this rig's pose.
+moved this rig's pose. With `materials`, only the parts of the mesh drawn
+in those are rounded (a shaggy ape's body, not its cards of hair).
 
-    python3 tools/gltf_smooth.py in.glb out.glb MESH [steps]
+    python3 tools/gltf_smooth.py in.glb out.glb MESH [steps] [MATERIAL,...]
 """
 import json
 import math
@@ -191,9 +192,15 @@ def compacted(doc, binary):
     return out
 
 
-def smoothed(data, mesh_name, steps=2):
+def smoothed(data, mesh_name, steps=2, materials=None):
     doc, binary = chunks(data)
     mesh = next(m for m in doc["meshes"] if m.get("name") == mesh_name)
+
+    def rounded(prim):
+        if materials is None:
+            return True
+        material = doc["materials"][prim["material"]].get("name") if "material" in prim else None
+        return material in materials
     tail = bytearray()
     base = len(binary)
 
@@ -217,7 +224,7 @@ def smoothed(data, mesh_name, steps=2):
         doc["accessors"].append(acc)
         return len(doc["accessors"]) - 1
 
-    for prim in mesh["primitives"]:
+    for prim in filter(rounded, mesh["primitives"]):
         attrs = {k: read(doc, binary, i) for k, i in prim["attributes"].items()}
         flat = [i[0] for i in read(doc, binary, prim["indices"])]
         tris = [tuple(flat[i:i + 3]) for i in range(0, len(flat) - 2, 3)]
@@ -243,7 +250,8 @@ def smoothed(data, mesh_name, steps=2):
 if __name__ == "__main__":
     src, dst, name = sys.argv[1:4]
     steps = int(sys.argv[4]) if len(sys.argv) > 4 else 2
+    materials = sys.argv[5].split(",") if len(sys.argv) > 5 else None
     with open(src, "rb") as f:
-        out = smoothed(f.read(), name, steps)
+        out = smoothed(f.read(), name, steps, materials)
     with open(dst, "wb") as f:
         f.write(out)

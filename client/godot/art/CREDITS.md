@@ -76,6 +76,7 @@ glint. The scorpion and the centipede are kept as they came, unrigged. The textu
 | `ccby/polypizza/GroundSloth.glb` | Ground sloth (wumpuses) | Poly by Google | https://poly.pizza/m/34WS63awSqJ |
 | `ccby/polypizza/Gorilla.glb` | Gorilla (apes) | Poly by Google | https://poly.pizza/m/bmfQ1j9CeO2 |
 | `ccby/polypizza/GorillaShaggy.glb` | Gorilla, under a long shag, its eyes glinting (yetis, sasquatches) | Poly by Google | https://poly.pizza/m/bmfQ1j9CeO2 |
+| `ccby/polypizza/GorillaSmooth.glb`, `GorillaShaggySmooth.glb` | The two gorillas above rounded, the shag left as it is: each face of the body cut in four twice, the new corners curved out (`tools/gltf_smooth.py`) | Poly by Google | made here from the files above |
 | `ccby/polypizza/Baboon.glb` | Baboon (monkeys) | Poly by Google | https://poly.pizza/m/aeLFKp6X19x |
 | `ccby/polypizza/Bear.glb` | Bear (owlbears) | Poly by Google | https://poly.pizza/m/0PXWfxfb0Hu |
 | `ccby/polypizza/Hyena.glb` | Spotted hyena (leocrottas) | Poly by Google | https://poly.pizza/m/0yU1LU3Nkpu |

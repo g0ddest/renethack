@@ -262,9 +262,14 @@ fn inner_transform(look: &ModelLook, spec: &nh_art::ModelSpec) -> Transform3D {
     }
     let s = r.scale;
     let girth = s * spec.girth;
-    // a body longer than its cell is drawn shorter for its height
-    let [across, along] = spec.squash(s);
-    transform([0.0, lift, 0.0], rot, [girth * across, s, girth * along])
+    // a body longer than its cell is drawn shorter for its height; one let
+    // overhang it, set back from its front (the parent turns it to face)
+    let [across, along] = spec.squash(s, r.cap);
+    transform(
+        [0.0, lift, -r.back],
+        rot,
+        [girth * across, s, girth * along],
+    )
 }
 
 /// The share of its idle a corpse or a statue without a death clip of its
@@ -2173,6 +2178,8 @@ impl Art {
                 lift: 0.0,
                 rot: [0.0; 3],
                 height: 1.0,
+                cap: nh_art::MAX_FOOTPRINT,
+                back: 0.0,
                 tint: nh_art::Tint::None,
                 skin,
                 level: nh_art::Level::Generic,
