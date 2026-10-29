@@ -18,7 +18,9 @@ use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{Mutex, Once};
 use std::time::{Duration, Instant};
 
-use godot::classes::{DisplayServer, Engine, Input, InputEventKey, RenderingServer, SceneTree};
+use godot::classes::{
+    DisplayServer, Engine, Input, InputEventKey, RenderingServer, SceneTree, Time,
+};
 use godot::global::{Error, Key as GKey};
 use godot::prelude::*;
 use nh_protocol::PickHow;
@@ -550,6 +552,32 @@ fn save() -> Vec<Step> {
             fail_on_error_screen(g)?;
             let ui = g.ui.as_ref().ok_or("no UI")?;
             Ok(screen(g) == Some("title") && ui.screens.has_button(&continue_label("Hero")))
+        }),
+        Step::Call("the save's time in the player's time zone", |g| {
+            // Godot's clock of the system, now or a minute ago
+            let time = Time::singleton();
+            let bias = time
+                .get_time_zone_from_system()
+                .get("bias")
+                .map_or(0, |b| b.try_to::<i64>().unwrap_or(0));
+            let now = time.get_unix_time_from_system() as i64 + bias * 60;
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let at = |t: i64| {
+                time.get_datetime_string_from_unix_time_ex(t)
+                    .use_space(true)
+                    .done()
+                    .to_string()
+            };
+            let shown = [now, now - 60].iter().any(|&t| {
+                let minute: String = at(t).chars().take(16).collect();
+                ui.screens
+                    .has_button(&format!("{}{minute}", continue_label("Hero")))
+            });
+            if shown {
+                Ok(())
+            } else {
+                Err(format!("the save's time is not {} (local)", at(now)))
+            }
         }),
         Step::Shot("saved"),
         // the title shows the hero of the game just played, and the

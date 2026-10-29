@@ -445,9 +445,37 @@ fn row() -> Gd<HBoxContainer> {
     row
 }
 
-/// Unix time as "YYYY-MM-DD HH:MM" (UTC).
+/// Unix time as "YYYY-MM-DD HH:MM" in the player's own time zone.
 pub fn format_time(t: SystemTime) -> String {
     let secs = t.duration_since(UNIX_EPOCH).map_or(0, |d| d.as_secs()) as i64;
+    format_civil(secs + local_offset(secs))
+}
+
+/// How far the player's time zone is ahead of UTC at `secs`, in seconds
+/// (its summer time then, if any).
+#[cfg(unix)]
+fn local_offset(secs: i64) -> i64 {
+    let t = secs as libc::time_t;
+    // SAFETY: a zeroed tm is a valid one; localtime_r writes only into it
+    let mut tm: libc::tm = unsafe { std::mem::zeroed() };
+    if unsafe { libc::localtime_r(&t, &mut tm) }.is_null() {
+        return 0;
+    }
+    // a c_long: 32 bits on some systems
+    tm.tm_gmtoff as i64
+}
+
+/// The system's offset from UTC now, as Godot has it.
+#[cfg(not(unix))]
+fn local_offset(_secs: i64) -> i64 {
+    let zone = godot::classes::Time::singleton().get_time_zone_from_system();
+    zone.get("bias")
+        .map_or(0, |b| b.try_to::<i64>().unwrap_or(0))
+        * 60
+}
+
+/// Seconds since the epoch as "YYYY-MM-DD HH:MM" (of UTC).
+fn format_civil(secs: i64) -> String {
     let (days, rem) = (secs.div_euclid(86400), secs.rem_euclid(86400));
     // civil_from_days (H. Hinnant)
     let z = days + 719_468;
@@ -1262,11 +1290,35 @@ mod tests {
     use std::time::Duration;
 
     #[test]
-    fn times_format_as_utc_dates() {
-        let t = UNIX_EPOCH + Duration::from_secs(1_768_694_400);
-        assert_eq!(format_time(t), "2026-01-18 00:00");
-        assert_eq!(format_time(UNIX_EPOCH), "1970-01-01 00:00");
-        let leap = UNIX_EPOCH + Duration::from_secs(951_782_400 + 3_661);
-        assert_eq!(format_time(leap), "2000-02-29 01:01");
+    fn times_format_as_dates() {
+        assert_eq!(format_civil(1_768_694_400), "2026-01-18 00:00");
+        assert_eq!(format_civil(0), "1970-01-01 00:00");
+        assert_eq!(format_civil(951_782_400 + 3_661), "2000-02-29 01:01");
+        assert_eq!(format_civil(-60), "1969-12-31 23:59");
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn times_show_in_the_player_s_time_zone() {
+        let secs = 1_768_694_400;
+        let t = UNIX_EPOCH + Duration::from_secs(secs as u64);
+        let offset = local_offset(secs);
+        assert!(offset.abs() <= 14 * 3600, "{offset}");
+        assert_eq!(format_time(t), format_civil(secs + offset));
+        // libc's own reading of it
+        let mut tm: libc::tm = unsafe { std::mem::zeroed() };
+        let t = secs as libc::time_t;
+        assert!(!unsafe { libc::localtime_r(&t, &mut tm) }.is_null());
+        assert_eq!(
+            format_time(UNIX_EPOCH + Duration::from_secs(secs as u64)),
+            format!(
+                "{:04}-{:02}-{:02} {:02}:{:02}",
+                tm.tm_year + 1900,
+                tm.tm_mon + 1,
+                tm.tm_mday,
+                tm.tm_hour,
+                tm.tm_min
+            )
+        );
     }
 }
