@@ -1,7 +1,7 @@
 //! `;` answers by the cell (`look-tip`): the cursor walked to the pet and
 //! picked with `.`, no help window before it; the engine's answer shows in
 //! a tip over the pet, without the tty's map symbol it starts with, and
-//! stays in the log whole. The next command takes the tip away. A click
+//! stays in the log, without it too. The next command takes the tip away. A click
 //! picks a cell as well (the hero's own): the tip goes over the hero.
 
 use std::sync::Mutex;
@@ -65,6 +65,16 @@ fn tip_over_the_cell(g: &RenethackGame) -> Result<bool, String> {
     let sym = line.text.chars().next().unwrap_or(' ');
     if text.strip_prefix(sym).is_some_and(|t| t.starts_with(' ')) {
         return Err(format!("the tip starts with the map symbol: {text:?}"));
+    }
+    // the log's line says the same, no symbol either
+    let shown = ui.hud.log_shown();
+    let last = shown
+        .lines()
+        .rev()
+        .find(|l| !l.trim().is_empty())
+        .unwrap_or("");
+    if last.trim() != text {
+        return Ok(false);
     }
     let (x, y) = at()?;
     let cell = ui

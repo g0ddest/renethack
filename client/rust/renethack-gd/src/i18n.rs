@@ -469,8 +469,18 @@ pub fn engine_window(lines: &[&str]) -> Option<Vec<String>> {
 }
 
 /// A message of the log as the player reads it (see `engine`): its format
-/// and arguments go to the translator with it.
+/// and arguments go to the translator with it. pager.c's answer about a
+/// map symbol (`;`, `/`) goes without the symbol: this client draws no
+/// letters on its map.
 pub fn engine_message(m: &Message) -> Cow<'_, str> {
+    let read = translated_message(m);
+    if !nh_world::is_look_line(&m.text) {
+        return read;
+    }
+    Cow::Owned(nh_world::look_words(&read).to_string())
+}
+
+fn translated_message(m: &Message) -> Cow<'_, str> {
     let lang = lang();
     match lang {
         Lang::En => return Cow::Borrowed(&m.text),
@@ -876,6 +886,16 @@ mod tests {
         };
         set_engine_text(Some(Box::new(Marks)));
         assert_eq!(engine_message(&m), "You hit the newt.", "English stays");
+        // `;`'s answer without the tty's map symbol, in any language
+        let look = Message {
+            text: "d        a jackal".into(),
+            fmt: None,
+            args: Vec::new(),
+            ..m.clone()
+        };
+        assert_eq!(engine_message(&look), "a jackal");
+        LANG.with(|l| l.set(Lang::Pseudo));
+        assert_eq!(engine_message(&look), "⟪a jackal⟫");
         LANG.with(|l| l.set(Lang::Ru));
         assert_eq!(engine_message(&m), "You hit %s. with 1");
         assert_eq!(engine(EngineKind::Name, "newt"), "<newt>");

@@ -5672,8 +5672,8 @@ impl RenethackGame {
     /// the cell is behind the camera.
     fn look_tip_at(&mut self, camera: Option<&Gd<Camera3D>>) -> Option<Rect2> {
         if let Some(looked) = self.world.looked.take() {
-            // the log's line, as the player reads it there, without the
-            // tty's map symbol
+            // the log's line, as the player reads it there (without the
+            // tty's map symbol)
             self.look_tip = self
                 .world
                 .log
@@ -5682,7 +5682,7 @@ impl RenethackGame {
                 .find(|m| m.seq == looked.seq)
                 .map(|m| LookTip {
                     at: looked.at,
-                    text: nh_world::look_words(&i18n::engine_message(m)).to_string(),
+                    text: i18n::engine_message(m).into_owned(),
                     since: Instant::now(),
                 });
         }
