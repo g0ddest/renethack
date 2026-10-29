@@ -14,7 +14,7 @@
 
 use std::collections::{HashMap, VecDeque};
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU32, Ordering};
 use std::sync::{Mutex, Once};
 use std::time::{Duration, Instant};
 
@@ -2306,6 +2306,32 @@ fn modern_choice() -> CharacterChoice {
     }
 }
 
+/// The frame a check began waiting on.
+static FITS_SINCE: AtomicI64 = AtomicI64::new(-1);
+
+/// The panel's words all fit it, once what changed is laid out (a list
+/// drawn this frame is sorted at its end).
+fn panel_fits(what: &'static str) -> Step {
+    Step::Wait(what, |g| {
+        let now = godot::classes::Engine::singleton().get_process_frames() as i64;
+        let since = FITS_SINCE.load(Ordering::Relaxed);
+        if since < 0 {
+            FITS_SINCE.store(now, Ordering::Relaxed);
+            return Ok(false);
+        }
+        if now - since < 3 {
+            return Ok(false);
+        }
+        FITS_SINCE.store(-1, Ordering::Relaxed);
+        let cut = panel(g)?.cut_words();
+        if cut.is_empty() {
+            Ok(true)
+        } else {
+            Err(format!("cut in the inventory: {}", cut.join("; ")))
+        }
+    })
+}
+
 fn panel(g: &RenethackGame) -> Result<&crate::inventory_panel::InventoryPanel, String> {
     Ok(&g.ui.as_ref().ok_or("no UI")?.inventory)
 }
@@ -2888,6 +2914,9 @@ fn inventory() -> Vec<Step> {
             Ok(panel(g)?.doll_rendered())
         }),
         Step::Shot("inventory-browse"),
+        // measured in the panel's own pixels: a panel scaled down to fit
+        // a large interface scale cuts nothing (its words scale with it)
+        panel_fits("the panel's words fit"),
         inv(InvInput::Filter(InvFilter::Weapons)),
         Step::Wait("only the weapons", |g| {
             let shown = panel(g)?.shown();

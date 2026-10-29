@@ -2222,6 +2222,80 @@ impl InventoryPanel {
         self.mode != Mode::Closed
     }
 
+    /// Words the panel cuts short (self-tests): a label or button out of
+    /// the box it sits in (a button, a plate, a socket) or out of the
+    /// panel, a wrapped label showing fewer lines than it has. Measured
+    /// in the panel's own design pixels, whatever the frame's scale (a
+    /// scaled panel scales its words with it).
+    pub fn cut_words(&self) -> Vec<String> {
+        let mut out = Vec::new();
+        let to_frame = self.frame.get_global_transform().affine_inverse();
+        let rect_of = |c: &Gd<Control>| {
+            to_frame * c.get_global_transform() * Rect2::new(Vector2::ZERO, c.get_size())
+        };
+        let frame = Rect2::new(Vector2::ZERO, Vector2::new(WIDTH, HEIGHT)).grow(1.0);
+        let mut stack: Vec<Gd<Node>> = vec![self.frame.clone().upcast()];
+        while let Some(node) = stack.pop() {
+            let Ok(c) = node.clone().try_cast::<Control>() else {
+                stack.extend(node.get_children().iter_shared());
+                continue;
+            };
+            if !c.is_visible_in_tree() {
+                continue;
+            }
+            stack.extend(node.get_children().iter_shared());
+            let text = if let Ok(l) = c.clone().try_cast::<Label>() {
+                if l.get_autowrap_mode() != AutowrapMode::OFF
+                    && l.get_visible_line_count() < l.get_line_count()
+                {
+                    out.push(format!(
+                        "{:?} shows {} of its {} lines",
+                        l.get_text().to_string(),
+                        l.get_visible_line_count(),
+                        l.get_line_count()
+                    ));
+                }
+                l.get_text().to_string()
+            } else if let Ok(b) = c.clone().try_cast::<Button>() {
+                b.get_text().to_string()
+            } else {
+                continue;
+            };
+            if text.trim().is_empty() {
+                continue;
+            }
+            // the box it is drawn in: the nearest button or panel (none
+            // inside a scroll, which clips by design)
+            let r = rect_of(&c);
+            let mut boxed: Option<Gd<Control>> = None;
+            let mut scrolled = false;
+            let mut up = node.get_parent();
+            while let Some(n) = up {
+                if n.is_class("ScrollContainer") {
+                    scrolled = true;
+                }
+                if boxed.is_none()
+                    && (n.is_class("Button") || n.is_class("PanelContainer"))
+                    && n != self.frame.clone().upcast::<Node>()
+                {
+                    boxed = n.clone().try_cast::<Control>().ok();
+                }
+                up = n.get_parent();
+            }
+            if let Some(b) = boxed {
+                let br = rect_of(&b).grow(1.0);
+                if !br.encloses(r) {
+                    out.push(format!("{text:?} at {r:?} is out of its box at {br:?}"));
+                }
+            }
+            // a scroll's lines leave the panel as they scroll
+            if !scrolled && !frame.encloses(r) {
+                out.push(format!("{text:?} at {r:?} is out of the panel"));
+            }
+        }
+        out
+    }
+
     /// "browse", "select", "menu" (self-tests); None when closed.
     pub fn mode_name(&self) -> Option<&'static str> {
         match self.mode {
