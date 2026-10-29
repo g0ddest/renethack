@@ -72,19 +72,19 @@ ru = "{1} {1:plural|никчёмный кусок|никчёмных куска|
 
 [120cbca851ca]
 en = "and %ld pieces of gold, after %ld move."
-ru = "и {1} {1:plural|золотую монету|золотые монеты|золотых монет} за {2} {2:plural|ход|хода|ходов}."
+ru = "и имея {1} {1:plural|золотую монету|золотые монеты|золотых монет}, за {2} {2:plural|ход|хода|ходов}."
 
 [78e2caae88dc]
 en = "and %ld pieces of gold, after %ld moves."
-ru = "и {1} {1:plural|золотую монету|золотые монеты|золотых монет} за {2} {2:plural|ход|хода|ходов}."
+ru = "и имея {1} {1:plural|золотую монету|золотые монеты|золотых монет}, за {2} {2:plural|ход|хода|ходов}."
 
 [87a96cf598e3]
 en = "and %ld piece of gold, after %ld move."
-ru = "и {1} {1:plural|золотую монету|золотые монеты|золотых монет} за {2} {2:plural|ход|хода|ходов}."
+ru = "и имея {1} {1:plural|золотую монету|золотые монеты|золотых монет}, за {2} {2:plural|ход|хода|ходов}."
 
 [eff7a69629fd]
 en = "and %ld piece of gold, after %ld moves."
-ru = "и {1} {1:plural|золотую монету|золотые монеты|золотых монет} за {2} {2:plural|ход|хода|ходов}."
+ru = "и имея {1} {1:plural|золотую монету|золотые монеты|золотых монет}, за {2} {2:plural|ход|хода|ходов}."
 
 [00964ece2849]
 en = "You were level %d with a maximum of %d hit points when you escaped."
@@ -2844,187 +2844,187 @@ ru = " Вы в воде{1}."
 
 [001f0b237b15]
 en = "You were crushed in The Astral Plane with %ld point,"
-ru = "Вы были раздавлены на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы были раздавлены на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [0041817db941]
 en = "You turned to stone in %s with %ld points,"
-ru = "Вы окаменели в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы окаменели в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [012adbf4e901]
 en = "You escaped in %s with %ld point,"
-ru = "Вы сбежали в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы сбежали в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [017cf2194c73]
 en = "You quit beyond the confines of the dungeon with %ld points,"
-ru = "Вы сдались за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы сдались за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [01ce8e72cd24]
 en = "You dissolved in the lava in The Astral Plane with %ld points,"
-ru = "Вы растворились в лаве на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы растворились в лаве на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [01f67fc18e8f]
 en = "You dissolved in the lava in %s on dungeon level %d with %ld point,"
-ru = "Вы растворились в лаве в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы растворились в лаве в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [06cc1ca0e8ac]
 en = "You were poisoned in %s on dungeon level %d with %ld point,"
-ru = "Вы отравились в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы отравились в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [07135a44a8bd]
 en = "You passed away beyond the confines of the dungeon with %ld point,"
-ru = "Вы скончались за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы скончались за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [075ad418f001]
 en = "You ascended in %s on dungeon level %d with %ld point,"
-ru = "Вы вознеслись в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы вознеслись в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [08a4d353f9f4]
 en = "You were genocided in The Astral Plane with %ld point,"
-ru = "Вы были истреблены на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы были истреблены на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [0c2a88dabf69]
 en = "You quit in %s on dungeon level %d with %ld points,"
-ru = "Вы сдались в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы сдались в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [0c9d8c2fa929]
 en = "You burned in %s with %ld points,"
-ru = "Вы сгорели в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы сгорели в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [0def99958c6d]
 en = "You were tricked beyond the confines of the dungeon with %ld point,"
-ru = "Вы были обмануты за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы были обмануты за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [126407a97c6e]
 en = "You were genocided in %s with %ld points,"
-ru = "Вы были истреблены в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы были истреблены в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [16a291f9d333]
 en = "You turned into slime in %s with %ld points,"
-ru = "Вы превратились в слизь в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы превратились в слизь в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [1995e5b4af82]
 en = "You dissolved in the lava in %s on dungeon level %d with %ld points,"
-ru = "Вы растворились в лаве в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы растворились в лаве в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [1a05d9cf4123]
 en = "You burned beyond the confines of the dungeon with %ld points,"
-ru = "Вы сгорели за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы сгорели за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [1a9f3463fa1a]
 en = "You choked in The Astral Plane with %ld point,"
-ru = "Вы подавились на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы подавились на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [218b11fcc57f]
 en = "You burned in The Astral Plane with %ld point,"
-ru = "Вы сгорели на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы сгорели на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [22ca5df3bdc0]
 en = "You drowned in %s on dungeon level %d with %ld point,"
-ru = "Вы утонули в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы утонули в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [2649212f9198]
 en = "You died beyond the confines of the dungeon with %ld point,"
-ru = "Вы умерли за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы умерли за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [27382a5ecb48]
 en = "You dissolved in the lava beyond the confines of the dungeon with %ld points,"
-ru = "Вы растворились в лаве за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы растворились в лаве за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [2adf848079f6]
 en = "You choked beyond the confines of the dungeon with %ld point,"
-ru = "Вы подавились за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы подавились за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [2ddf264f4367]
 en = "You died in The Astral Plane with %ld point,"
-ru = "Вы умерли на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы умерли на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [313f3f879f6a]
 en = "You turned to stone beyond the confines of the dungeon with %ld points,"
-ru = "Вы окаменели за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы окаменели за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [31a243e89c15]
 en = "You escaped beyond the confines of the dungeon with %ld points,"
-ru = "Вы сбежали за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы сбежали за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [31f82e93ffd5]
 en = "You choked in %s with %ld point,"
-ru = "Вы подавились в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы подавились в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [3927e2bf4bac]
 en = "You ascended in %s with %ld point,"
-ru = "Вы вознеслись в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы вознеслись в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [3bd9e8c33101]
 en = "You turned to stone in %s with %ld point,"
-ru = "Вы окаменели в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы окаменели в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [3c1ef4b1b649]
 en = "You burned in %s on dungeon level %d with %ld points,"
-ru = "Вы сгорели в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы сгорели в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [3d8a6ae5d2af]
 en = "You starved beyond the confines of the dungeon with %ld points,"
-ru = "Вы умерли от голода за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы умерли от голода за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [3e7306515634]
 en = "You starved in %s on dungeon level %d with %ld point,"
-ru = "Вы умерли от голода в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы умерли от голода в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [40afa16a586c]
 en = "You burned in The Astral Plane with %ld points,"
-ru = "Вы сгорели на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы сгорели на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [447e9b2ecb11]
 en = "You turned to stone beyond the confines of the dungeon with %ld point,"
-ru = "Вы окаменели за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы окаменели за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [4c58620fe248]
 en = "You starved in %s with %ld points,"
-ru = "Вы умерли от голода в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы умерли от голода в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [4db4a349d43a]
 en = "You were tricked in The Astral Plane with %ld point,"
-ru = "Вы были обмануты на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы были обмануты на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [4eeb6a19dd2b]
 en = "You were crushed in %s with %ld point,"
-ru = "Вы были раздавлены в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы были раздавлены в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [529c816232da]
 en = "You were genocided in %s with %ld point,"
-ru = "Вы были истреблены в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы были истреблены в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [55d94a4d987a]
 en = "You died in %s with %ld points,"
-ru = "Вы умерли в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы умерли в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [56f0e913df4b]
 en = "You dissolved in the lava in %s with %ld points,"
-ru = "Вы растворились в лаве в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы растворились в лаве в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [58264cbc3235]
 en = "You were crushed in %s with %ld points,"
-ru = "Вы были раздавлены в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы были раздавлены в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [59b954146cc5]
 en = "You ascended beyond the confines of the dungeon with %ld point,"
-ru = "Вы вознеслись за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы вознеслись за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [5b381bea36f4]
 en = "You escaped in %s on dungeon level %d with %ld point,"
-ru = "Вы сбежали в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы сбежали в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [5cc7033a3de9]
 en = "You quit in %s on dungeon level %d with %ld point,"
-ru = "Вы сдались в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы сдались в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [5d058f6dbbbb]
 en = "You were tricked in %s with %ld point,"
-ru = "Вы были обмануты в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы были обмануты в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [62d5d726b452]
 en = "You dissolved in the lava in The Astral Plane with %ld point,"
-ru = "Вы растворились в лаве на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы растворились в лаве на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [650d5bd735a5]
 en = " went to your reward with %ld point,"
@@ -3032,103 +3032,103 @@ ru = " отправились за наградой, набрав {1} {1:plural|
 
 [65ee890aa15d]
 en = "You turned into slime beyond the confines of the dungeon with %ld point,"
-ru = "Вы превратились в слизь за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы превратились в слизь за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [6956dc338210]
 en = "You turned into slime in %s on dungeon level %d with %ld points,"
-ru = "Вы превратились в слизь в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы превратились в слизь в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [6a363413c0c7]
 en = "You dissolved in the lava beyond the confines of the dungeon with %ld point,"
-ru = "Вы растворились в лаве за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы растворились в лаве за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [6c441beab7c7]
 en = "You burned in %s with %ld point,"
-ru = "Вы сгорели в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы сгорели в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [6e44f2dd6e29]
 en = "You dissolved in the lava in %s with %ld point,"
-ru = "Вы растворились в лаве в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы растворились в лаве в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [6e695e02b960]
 en = "You starved in %s with %ld point,"
-ru = "Вы умерли от голода в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы умерли от голода в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [6e7deec3fb04]
 en = "You died in %s with %ld point,"
-ru = "Вы умерли в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы умерли в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [70d7ec238e80]
 en = "You were genocided beyond the confines of the dungeon with %ld point,"
-ru = "Вы были истреблены за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы были истреблены за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [73a51e331e4a]
 en = "You were poisoned in The Astral Plane with %ld points,"
-ru = "Вы отравились на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы отравились на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [73e98045d6d1]
 en = "You starved in The Astral Plane with %ld point,"
-ru = "Вы умерли от голода на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы умерли от голода на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [7972fd9bbeb5]
 en = "You turned to stone in The Astral Plane with %ld point,"
-ru = "Вы окаменели на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы окаменели на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [79dcea7bb25b]
 en = "You were crushed in %s on dungeon level %d with %ld point,"
-ru = "Вы были раздавлены в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы были раздавлены в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [7d3c03f7f497]
 en = "You were genocided in %s on dungeon level %d with %ld point,"
-ru = "Вы были истреблены в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы были истреблены в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [7d6904f08b65]
 en = "You were genocided in The Astral Plane with %ld points,"
-ru = "Вы были истреблены на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы были истреблены на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [7d9d00668b6b]
 en = "You burned in %s on dungeon level %d with %ld point,"
-ru = "Вы сгорели в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы сгорели в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [80fddea37dff]
 en = "You passed away beyond the confines of the dungeon with %ld points,"
-ru = "Вы скончались за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы скончались за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [829475ffdb8d]
 en = "You were tricked in The Astral Plane with %ld points,"
-ru = "Вы были обмануты на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы были обмануты на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [837e5187ed8a]
 en = "You ascended in The Astral Plane with %ld point,"
-ru = "Вы вознеслись на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы вознеслись на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [8600504434d7]
 en = "You panicked beyond the confines of the dungeon with %ld point,"
-ru = "Вы запаниковали за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы запаниковали за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [8964383dce7f]
 en = "You drowned in %s with %ld points,"
-ru = "Вы утонули в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы утонули в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [89702b809bf4]
 en = "You were tricked in %s on dungeon level %d with %ld point,"
-ru = "Вы были обмануты в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы были обмануты в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [8dfc55c5cc31]
 en = "You burned beyond the confines of the dungeon with %ld point,"
-ru = "Вы сгорели за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы сгорели за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [8eb1b55c7efe]
 en = "You ascended in The Astral Plane with %ld points,"
-ru = "Вы вознеслись на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы вознеслись на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [8ece5211dc78]
 en = "You starved beyond the confines of the dungeon with %ld point,"
-ru = "Вы умерли от голода за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы умерли от голода за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [8fe6485f2a18]
 en = "You drowned in %s on dungeon level %d with %ld points,"
-ru = "Вы утонули в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы утонули в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [92077376aa7b]
 en = " went to your reward with %ld points,"
@@ -3136,19 +3136,19 @@ ru = " отправились за наградой, набрав {1} {1:plural|
 
 [96e54f008b46]
 en = "You panicked in %s with %ld point,"
-ru = "Вы запаниковали в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы запаниковали в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [9cc5be9f1b27]
 en = "You panicked in The Astral Plane with %ld points,"
-ru = "Вы запаниковали на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы запаниковали на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [a8a5acb5cf0e]
 en = "You quit in %s with %ld point,"
-ru = "Вы сдались в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы сдались в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [a9b18f36d1db]
 en = "You drowned in The Astral Plane with %ld points,"
-ru = "Вы утонули на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы утонули на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [aa04c08c5aa3]
 en = "You and %s"
@@ -3156,47 +3156,47 @@ ru = "Вы и {1}"
 
 [ac9710a62c6a]
 en = "You died in The Astral Plane with %ld points,"
-ru = "Вы умерли на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы умерли на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [b09aa56abd93]
 en = "You escaped beyond the confines of the dungeon with %ld point,"
-ru = "Вы сбежали за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы сбежали за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [b3a30fa26e75]
 en = "You turned into slime beyond the confines of the dungeon with %ld points,"
-ru = "Вы превратились в слизь за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы превратились в слизь за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [b4f348ffe541]
 en = "You choked in The Astral Plane with %ld points,"
-ru = "Вы подавились на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы подавились на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [b52283ca278a]
 en = "You starved in The Astral Plane with %ld points,"
-ru = "Вы умерли от голода на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы умерли от голода на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [b7cb19952501]
 en = "You were poisoned in The Astral Plane with %ld point,"
-ru = "Вы отравились на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы отравились на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [b85d8b721943]
 en = "You panicked beyond the confines of the dungeon with %ld points,"
-ru = "Вы запаниковали за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы запаниковали за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [b8608ade36ed]
 en = "You drowned beyond the confines of the dungeon with %ld point,"
-ru = "Вы утонули за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы утонули за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [b9748285177b]
 en = "You drowned in The Astral Plane with %ld point,"
-ru = "Вы утонули на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы утонули на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [b9933436abfa]
 en = "You died beyond the confines of the dungeon with %ld points,"
-ru = "Вы умерли за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы умерли за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [ba08972cc0f6]
 en = "You ascended in %s with %ld points,"
-ru = "Вы вознеслись в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы вознеслись в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [bbdcde226ec0]
 en = " escaped from the dungeon with %ld point,"
@@ -3204,131 +3204,131 @@ ru = " сбежали из подземелья, набрав {1} {1:plural|оч
 
 [bca25dfd1c66]
 en = "You died in %s on dungeon level %d with %ld points,"
-ru = "Вы умерли в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы умерли в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [c15cf5032c18]
 en = "You were crushed beyond the confines of the dungeon with %ld point,"
-ru = "Вы были раздавлены за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы были раздавлены за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [c4350b611c10]
 en = "You quit in The Astral Plane with %ld point,"
-ru = "Вы сдались на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы сдались на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [c466fcf47ee5]
 en = "You escaped in The Astral Plane with %ld points,"
-ru = "Вы сбежали на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы сбежали на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [c56430e0f525]
 en = "You starved in %s on dungeon level %d with %ld points,"
-ru = "Вы умерли от голода в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы умерли от голода в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [c970b38376d7]
 en = "You turned into slime in The Astral Plane with %ld point,"
-ru = "Вы превратились в слизь на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы превратились в слизь на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [cace98943884]
 en = "You were poisoned beyond the confines of the dungeon with %ld point,"
-ru = "Вы отравились за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы отравились за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [cdfbef24a42c]
 en = "You panicked in %s on dungeon level %d with %ld points,"
-ru = "Вы запаниковали в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы запаниковали в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [d05dc4627df9]
 en = "You quit in The Astral Plane with %ld points,"
-ru = "Вы сдались на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы сдались на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [d0e719950841]
 en = "You choked beyond the confines of the dungeon with %ld points,"
-ru = "Вы подавились за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы подавились за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [d1799b8a2aeb]
 en = "You choked in %s on dungeon level %d with %ld point,"
-ru = "Вы подавились в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы подавились в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [d2665756e57a]
 en = "You turned into slime in %s on dungeon level %d with %ld point,"
-ru = "Вы превратились в слизь в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы превратились в слизь в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [d3527218399d]
 en = "You choked in %s with %ld points,"
-ru = "Вы подавились в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы подавились в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [d5415cd3d743]
 en = "You were genocided in %s on dungeon level %d with %ld points,"
-ru = "Вы были истреблены в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы были истреблены в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [d5bca2aa695a]
 en = "You turned to stone in %s on dungeon level %d with %ld points,"
-ru = "Вы окаменели в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы окаменели в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [d608032d9714]
 en = "You were crushed in The Astral Plane with %ld points,"
-ru = "Вы были раздавлены на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы были раздавлены на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [d624c4c08ca5]
 en = "You were poisoned in %s on dungeon level %d with %ld points,"
-ru = "Вы отравились в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы отравились в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [d6e36686fc9e]
 en = "You choked in %s on dungeon level %d with %ld points,"
-ru = "Вы подавились в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы подавились в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [d86182aea814]
 en = "You were poisoned in %s with %ld points,"
-ru = "Вы отравились в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы отравились в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [d94293c36934]
 en = "You were poisoned in %s with %ld point,"
-ru = "Вы отравились в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы отравились в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [d9e16a2936bb]
 en = "You were tricked beyond the confines of the dungeon with %ld points,"
-ru = "Вы были обмануты за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы были обмануты за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [dc5640aab7bc]
 en = "You were tricked in %s on dungeon level %d with %ld points,"
-ru = "Вы были обмануты в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы были обмануты в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [dcb5b798fc32]
 en = "You turned to stone in %s on dungeon level %d with %ld point,"
-ru = "Вы окаменели в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы окаменели в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [dcf99e44acd0]
 en = "You turned into slime in %s with %ld point,"
-ru = "Вы превратились в слизь в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы превратились в слизь в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [dd3e082e38f1]
 en = "You drowned beyond the confines of the dungeon with %ld points,"
-ru = "Вы утонули за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы утонули за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [dda453ddaa1a]
 en = "You died in %s on dungeon level %d with %ld point,"
-ru = "Вы умерли в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы умерли в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [deef6d992518]
 en = "You were crushed in %s on dungeon level %d with %ld points,"
-ru = "Вы были раздавлены в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы были раздавлены в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [dfb20ee8370f]
 en = "You were tricked in %s with %ld points,"
-ru = "Вы были обмануты в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы были обмануты в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [e0c5c6dc8865]
 en = "You panicked in %s on dungeon level %d with %ld point,"
-ru = "Вы запаниковали в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы запаниковали в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [e22ba6e11e7b]
 en = "You were crushed beyond the confines of the dungeon with %ld points,"
-ru = "Вы были раздавлены за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы были раздавлены за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [e26eb1a40720]
 en = "You panicked in The Astral Plane with %ld point,"
-ru = "Вы запаниковали на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы запаниковали на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [e36575d990c0]
 en = "You turned into slime in The Astral Plane with %ld points,"
-ru = "Вы превратились в слизь на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы превратились в слизь на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [e57d49c5e54b]
 en = " escaped from the dungeon with %ld points,"
@@ -3336,19 +3336,19 @@ ru = " сбежали из подземелья, набрав {1} {1:plural|оч
 
 [e5a507c577cd]
 en = "You were poisoned beyond the confines of the dungeon with %ld points,"
-ru = "Вы отравились за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы отравились за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [e6b04b3a6482]
 en = "You escaped in %s on dungeon level %d with %ld points,"
-ru = "Вы сбежали в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы сбежали в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [e9582535970b]
 en = "You turned to stone in The Astral Plane with %ld points,"
-ru = "Вы окаменели на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы окаменели на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [eb20f8339c63]
 en = "You were genocided beyond the confines of the dungeon with %ld points,"
-ru = "Вы были истреблены за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы были истреблены за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [f23b599f7c63]
 en = "You and %s and Schroedinger's cat"
@@ -3356,35 +3356,35 @@ ru = "Вы, {1} и кот Шрёдингера"
 
 [f4d327b29946]
 en = "You quit in %s with %ld points,"
-ru = "Вы сдались в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы сдались в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [f4d9b7a06db7]
 en = "You quit beyond the confines of the dungeon with %ld point,"
-ru = "Вы сдались за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы сдались за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [f75774581fff]
 en = "You ascended beyond the confines of the dungeon with %ld points,"
-ru = "Вы вознеслись за пределами подземелья, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы вознеслись за пределами подземелья, набрав {1} {1:plural|очко|очка|очков}"
 
 [f797f12b50c2]
 en = "You panicked in %s with %ld points,"
-ru = "Вы запаниковали в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы запаниковали в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [fc01a2e928f3]
 en = "You escaped in The Astral Plane with %ld point,"
-ru = "Вы сбежали на Астральном плане, набрав {1} {1:plural|очко|очка|очков},"
+ru = "Вы сбежали на Астральном плане, набрав {1} {1:plural|очко|очка|очков}"
 
 [fc27cc6ee4dc]
 en = "You escaped in %s with %ld points,"
-ru = "Вы сбежали в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы сбежали в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [fde9c6c8ab20]
 en = "You ascended in %s on dungeon level %d with %ld points,"
-ru = "Вы вознеслись в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков},"
+ru = "Вы вознеслись в {1:loc} на {2}-м уровне подземелья, набрав {3} {3:plural|очко|очка|очков}"
 
 [ff1a455f673a]
 en = "You drowned in %s with %ld point,"
-ru = "Вы утонули в {1:loc}, набрав {2} {2:plural|очко|очка|очков},"
+ru = "Вы утонули в {1:loc}, набрав {2} {2:plural|очко|очка|очков}"
 
 [40c132f3c15e]
 en = " You are dead%s."
