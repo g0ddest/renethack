@@ -280,6 +280,11 @@ const RING_CIRCLE: f32 = 0.84;
 const FORM_FOOTING: f32 = 0.3;
 const FORM_RING_OUT: f32 = 0.12;
 const FORM_RING_MOST: f32 = 2.2;
+/// How deep the ring reaches, up and down from where the hero stands; on
+/// a cell they stand raised on (the steps of a stair) down to the floor
+/// and as far over, so that it lies on every step under them.
+const RING_DEPTH: f32 = 0.24;
+const RAISED: f32 = 0.15;
 /// The core's cursor (getpos, travel): the theme's gold.
 const CURSOR: Color = Color::from_rgba(1.0, 0.82, 0.42, 0.85);
 /// The way an order would walk: pale gold dots exploring, red in a fight.
@@ -1024,10 +1029,11 @@ fn matters(t: Terrain) -> bool {
     )
 }
 
-/// A cell that shows a terrain that `matters`, or may: the hero or a
-/// thing lying on ground never shown bare (the engine tells no stairs nor
-/// altar under them: the stairs the hero came down, an altar under an
-/// offering). Another monster is taken to stand on floor (it moves on).
+/// A cell that shows a terrain that `matters`, or may: a thing lying on
+/// ground never shown bare (the engine tells no stairs nor altar under it:
+/// an altar under an offering), or the hero on one (what they remember
+/// under them is the thing). Another monster is taken to stand on floor
+/// (it moves on).
 fn may_matter(cell: &Cell, catalog: &Catalog) -> bool {
     match cell_terrain(cell, catalog) {
         Some(t) => matters(t),
@@ -2991,8 +2997,8 @@ pub struct MapView {
     cursor: Gd<Decal>,
     hero_ring: Gd<Decal>,
     /// The model the ring was sized for: a polymorphed hero's (None: the
-    /// hero's own size).
-    ring_sized: Option<Option<InstanceId>>,
+    /// hero's own size), and how high the hero stood.
+    ring_sized: Option<(Option<InstanceId>, f32)>,
     ring_tex: Gd<godot::classes::Texture2D>,
     hero_light: Gd<OmniLight3D>,
     /// The glow from below round the hero where the floors burn.
@@ -4107,7 +4113,7 @@ impl MapView {
                 if self.hero_studio.is_visible() == form {
                     self.hero_studio.set_visible(!form);
                 }
-                self.size_hero_ring(form);
+                self.size_hero_ring(form, ground);
                 // while a level is drawn the hero's cell may still hold the
                 // last level's model; while the engine's drawing is read in
                 // part, the cell the world has them on is not drawn yet
@@ -4909,17 +4915,18 @@ impl MapView {
     }
 
     /// The hero's ring round their form: a polymorphed hero's model is
-    /// measured where it meets the floor, once a model.
-    fn size_hero_ring(&mut self, form: bool) {
+    /// measured where it meets the floor, once a model; as deep as the
+    /// hero stands high (`ground`: `RING_DEPTH`).
+    fn size_hero_ring(&mut self, form: bool, ground: f32) {
         let node = self
             .hero_model()
             .filter(|m| form && self.rider.is_none() && !m.is_pending())
             .map(|m| m.node.clone());
         let id = node.as_ref().map(|n| n.instance_id());
-        if self.ring_sized == Some(id) {
+        if self.ring_sized == Some((id, ground)) {
             return;
         }
-        self.ring_sized = Some(id);
+        self.ring_sized = Some((id, ground));
         let inner = node.and_then(|n| n.get_child(0)?.try_cast::<Node3D>().ok());
         let size = match inner.and_then(|n| Some((crate::art::footing(&n, FORM_FOOTING)?, n))) {
             Some((foot, n)) => {
@@ -4930,7 +4937,12 @@ impl MapView {
             }
             None => HERO_RING_SIZE,
         };
-        self.hero_ring.set_size(Vector3::new(size, 0.24, size));
+        let depth = if ground > RAISED {
+            2.0 * ground + RING_DEPTH
+        } else {
+            RING_DEPTH
+        };
+        self.hero_ring.set_size(Vector3::new(size, depth, size));
     }
 
     /// The hero seen through what hides them from the camera: a wall, a

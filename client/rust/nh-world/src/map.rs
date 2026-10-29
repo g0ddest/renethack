@@ -17,9 +17,11 @@ pub struct Cell {
     /// the last clear), but not one that only passes over it (`over`).
     pub glyph: Option<Glyph>,
     pub bk: Option<Glyph>,
-    /// Last known map feature (a Cmap glyph): `glyph` when Cmap, else `bk` when Cmap;
-    /// kept when both are something else. Effect cmaps (beams, sparkles, S_goodpos)
-    /// never become terrain: they are drawn for a moment over whatever is there.
+    /// Last known map feature (a Cmap glyph): `glyph` when Cmap, else what
+    /// the hero remembers under them (`Told::under`) or `bk` when Cmap; kept
+    /// when all are something else. Effect cmaps (beams, sparkles,
+    /// S_goodpos) never become terrain: they are drawn for a moment over
+    /// whatever is there.
     pub terrain: Option<Glyph>,
     /// What is drawn over the cell for a moment, `glyph` staying what it
     /// shows: a ray, an explosion or a sparkle over anything; over the hero,
@@ -59,6 +61,8 @@ pub struct Told<'a> {
     pub wields: Option<&'a Glyph>,
     /// It is peaceful (as farlook tells it).
     pub peaceful: bool,
+    /// On the hero's own cell: what the hero remembers there.
+    pub under: Option<&'a Glyph>,
 }
 
 impl Told<'_> {
@@ -317,14 +321,17 @@ impl MapState {
             sensed,
             wields,
             peaceful,
+            under,
         } = told;
         let Some(i) = index(x, y) else {
             return;
         };
+        // under the hero, the stairs or the altar they remember there: the
+        // background tells only a floor's kind
         let terrain = if g.kind == GlyphKind::Cmap {
             self.is_terrain(g).then_some(g)
         } else {
-            bk.filter(|b| self.is_terrain(b))
+            under.or(bk).filter(|b| self.is_terrain(b))
         };
         self.touch(i, (x, y));
         self.flying.retain(|&at| at != (x, y));
@@ -532,6 +539,36 @@ pub(crate) mod tests {
         // the dog leaves: the floor is the glyph again, no entity
         map.print(10, 5, &floor(), Some(&unexplored()));
         assert_eq!(map.cell(10, 5).unwrap().entity(), None);
+    }
+
+    #[test]
+    fn the_hero_tells_what_they_remember_under_them() {
+        let mut map = MapState::new();
+        let upstairs = Glyph {
+            cmap: Some(29), // S_upstair
+            ..glyph(GlyphKind::Cmap, '<')
+        };
+        let hero = monster(342, mg::HERO);
+        let under = |g| Told {
+            under: Some(g),
+            ..Told::default()
+        };
+        // come to stairs never seen bare: the background says nothing of
+        // them, the hero's memory does
+        map.print_with(10, 5, &hero, Some(&unexplored()), under(&upstairs));
+        assert_eq!(map.cell(10, 5).unwrap().terrain, Some(upstairs.clone()));
+        // and before a floor's kind
+        let corridor = Glyph {
+            cmap: Some(21), // S_corr
+            ..glyph(GlyphKind::Cmap, '#')
+        };
+        map.print_with(11, 5, &hero, Some(&corridor), under(&upstairs));
+        assert_eq!(map.cell(11, 5).unwrap().terrain, Some(upstairs.clone()));
+        // a thing lying on known floor: what lies under it stays known
+        map.print(12, 5, &floor(), None);
+        let pile = glyph(GlyphKind::Obj, '(');
+        map.print_with(12, 5, &hero, None, under(&pile));
+        assert_eq!(map.cell(12, 5).unwrap().terrain, Some(floor()));
     }
 
     #[test]

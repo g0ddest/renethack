@@ -42,6 +42,12 @@ static unsigned long long told_progress;
 static char told_trap[16];
 /* the hash of the options notice the client last got (0: none) */
 static unsigned long long told_options;
+/* the hero's spot as last drawn and what they remembered there then
+   (under_json(); x < 0: none) */
+static struct {
+    coordxy x, y;
+    int glyph;
+} told_under = { -1, -1, NO_GLYPH };
 /* the message vpline() is about to show, as its format and arguments and
    the text they make: the putstr that shows that text carries them to the
    client's translator.  Any message putstr ends it, so a message that is
@@ -555,6 +561,7 @@ options_flush(void)
 }
 
 static void wielders_flush(void);
+static void under_flush(void);
 
 /* every request of this file goes through here */
 static cJSON *
@@ -566,6 +573,7 @@ request(const char *fn, cJSON *args)
     hero_flush();
     options_flush();
     wielders_flush();
+    under_flush();
     return rh_proto_request(fn, args);
 }
 
@@ -1107,6 +1115,33 @@ peaceful_json(cJSON *a, int x, int y, const glyph_info *ginfo)
         add_bool(a, "peaceful", 1);
 }
 
+/* What the hero remembers of their own spot, which their glyph hides:
+   "under", the remembered glyph there as the map shows it once they step
+   off (the stairs they came down, an altar, a fountain, a trap they know,
+   the top thing lying there).  NetHack maps the hero's spot into memory
+   while they stand on it (newsym(): _map_location(), or feel_location()
+   unseen) but shows the map only the hero, and as the background only a
+   floor's kind, never stairs nor an altar.  Only on the hero's own spot
+   under a monster's glyph (the hero, a steed ridden); whatever the memory
+   holds, hallucinated things too.  Observation only. */
+static void
+under_json(cJSON *a, int x, int y, const glyph_info *ginfo)
+{
+    glyph_info under;
+    int glyph;
+
+    if (!ginfo || !glyph_is_monster(ginfo->glyph) || !isok(x, y)
+        || !u_at(x, y))
+        return;
+    glyph = levl[x][y].glyph;
+    told_under.x = (coordxy) x, told_under.y = (coordxy) y;
+    told_under.glyph = glyph;
+    if (glyph_is_unexplored(glyph))
+        return;
+    map_glyphinfo((coordxy) x, (coordxy) y, glyph, 0, &under);
+    cJSON_AddItemToObject(a, "under", glyph_json(&under));
+}
+
 static void print_glyph_json(int win, int x, int y, const glyph_info *g,
                              const glyph_info *bk);
 
@@ -1153,6 +1188,32 @@ wielders_flush(void)
     rh_held_sweep();
 }
 
+/* Before each request: the hero's own spot drawn again, their glyph the
+   same, when what they remember there changed since it was last told (a
+   fountain or a trap made under them, a thing dropped or picked up):
+   NetHack draws a spot again only when its glyph changes.  Observation
+   only. */
+static void
+under_flush(void)
+{
+    glyph_info shown;
+    int glyph;
+
+    if (!program_state.in_moveloop || rh_proto_is_lost()
+        || suppress_map_output() || WIN_MAP == WIN_ERR
+        || !isok(u.ux, u.uy)) {
+        told_under.x = -1;
+        return;
+    }
+    glyph = glyph_at(u.ux, u.uy);
+    if (!glyph_is_monster(glyph)
+        || (told_under.x == u.ux && told_under.y == u.uy
+            && told_under.glyph == levl[u.ux][u.uy].glyph))
+        return;
+    map_glyphinfo(u.ux, u.uy, glyph, 0, &shown);
+    print_glyph_json(WIN_MAP, u.ux, u.uy, &shown, (glyph_info *) 0);
+}
+
 static void
 print_glyph_json(int win, int x, int y, const glyph_info *g,
                  const glyph_info *bk)
@@ -1168,6 +1229,7 @@ print_glyph_json(int win, int x, int y, const glyph_info *g,
     sensed_json(a, x, y, g);
     wielding_json(a, x, y, g);
     peaceful_json(a, x, y, g);
+    under_json(a, x, y, g);
     rh_proto_send("win", "print_glyph", a);
 }
 

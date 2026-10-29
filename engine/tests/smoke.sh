@@ -103,6 +103,13 @@ if grep -q '"wields":' "$out"; then fail "a weapon told in a paw, or the hero's 
 # farlook tells it: the kitten is tame, not peaceful (a peaceful one, and
 # one angered, are the live tests')
 if grep -q '"peaceful":' "$out"; then fail "a tame kitten told peaceful"; fi
+# what the hero remembers under them: the up stairs they start on, and
+# only ever under the hero's own glyph (an altar or a fountain is the live
+# tests')
+grep -q '"under":{"ch":60,' "$out" || fail "the up stairs under the hero not told"
+if grep '"under":' "$out" | grep -vq '"g":{[^}]*"kind":"mon"}'; then
+    fail "something told under what is not the hero"
+fi
 run_engine knight NETHACKOPTIONS='time,!legacy,!tutorial,!autopickup,name:Hero,role:knight,race:human,gender:male,align:lawful'
 grep -q '^{"t":"win","fn":"print_glyph","a":{.*"g":{[^}]*"kind":"mon"},.*"saddled":true}}$' "$tmp/knight/session.jsonl" \
     || fail "the Knight's pony is not saddled"

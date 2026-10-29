@@ -113,6 +113,12 @@ pub enum WinCall {
         /// hallucinating. The engine draws its cell again when that
         /// changes (one angered), its glyph the same.
         peaceful: bool,
+        /// On the hero's own cell, under their glyph (or a steed's they
+        /// ride): what the hero remembers there, as the map shows it once
+        /// they step off (the stairs they came down, an altar, a known
+        /// trap, the top thing lying there; hallucinated things too).
+        /// Boxed: on one cell only, it would make every call bigger.
+        under: Option<Box<Glyph>>,
     },
     RawPrint {
         text: String,
@@ -611,6 +617,8 @@ struct PrintGlyph {
     wields: Option<Glyph>,
     #[serde(default)]
     peaceful: bool,
+    #[serde(default)]
+    under: Option<Box<Glyph>>,
 }
 #[derive(Deserialize)]
 struct RawPrint {
@@ -747,6 +755,7 @@ fn win_call(name: String, a: Value) -> Result<WinCall, ProtocolError> {
                 sensed: p.sensed,
                 wields: p.wields,
                 peaceful: p.peaceful,
+                under: p.under,
             }
         }
         "raw_print" => {

@@ -367,6 +367,7 @@ impl World {
                 sensed,
                 wields,
                 peaceful,
+                under,
             } => {
                 if Some(*win) == self.map_win {
                     let told = Told {
@@ -375,6 +376,7 @@ impl World {
                         sensed: *sensed,
                         wields: wields.as_ref(),
                         peaceful: *peaceful,
+                        under: under.as_deref(),
                     };
                     self.map.print_with(*x, *y, g, bk.as_ref(), told);
                     self.map_drawn = false;
