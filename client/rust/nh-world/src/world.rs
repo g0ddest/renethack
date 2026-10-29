@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use nh_protocol::{
-    Catalog, LevelNotice, MenuItem, PickHow, ProgressNotice, Request, WinCall, WindowKind,
+    Catalog, LevelNotice, MenuItem, PickHow, ProgressNotice, Reply, Request, WinCall, WindowKind,
 };
 
 use crate::prompt::{choice, free_key};
@@ -15,6 +15,15 @@ use crate::{
 const GETPOS_TIP: &str = "(For instructions type a ";
 /// getpos() repeats its goal so after its first-time tip window.
 const GETPOS_GOAL_AGAIN: &str = "Move cursor to ";
+/// What farlook asks before its getpos (`;`, `/` from the map, again after
+/// each answer): without getpos's tip after it, the goal all the same.
+const LOOK_GOALS: [&str; 2] = [
+    "Pick a monster, object or location.",
+    "Please move the cursor to a monster, object or location.",
+];
+/// What parts the symbol from what it is in pager.c's answer about a
+/// cell: "d        a dog or other canine (tame little dog called Rex)".
+const LOOK_GAP: &str = "        ";
 
 /// Direction keys while the engine has not said otherwise (number_pad off).
 pub const DEFAULT_DIRCHARS: &str = "hykulnjb><";
@@ -48,6 +57,37 @@ impl Window {
             text: i.str.clone().unwrap_or_default(),
         });
         self.lines.iter().cloned().chain(items).collect()
+    }
+}
+
+/// pager.c's answer about a cell the player picked with getpos (`;`, or
+/// `/` on the map): the log's message and the cell.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Looked {
+    /// The message's seq in the log.
+    pub seq: u64,
+    pub at: (i32, i32),
+}
+
+/// `text` is pager.c's answer about a map symbol: the symbol, eight
+/// spaces, what it is.
+pub fn is_look_line(text: &str) -> bool {
+    let mut chars = text.chars();
+    chars.next().is_some_and(|c| c != ' ')
+        && chars
+            .as_str()
+            .strip_prefix(LOOK_GAP)
+            .is_some_and(|rest| rest.starts_with(|c: char| c != ' '))
+}
+
+/// What pager.c's answer says, without the symbol it starts with (a
+/// letter of the tty's map, nothing on this one); other text as it is.
+/// Translated, the line keeps its gap.
+pub fn look_words(text: &str) -> &str {
+    match text.find(LOOK_GAP) {
+        // the symbol, marked in the pseudo-language: "⟪d⟫"
+        Some(i) if text[..i].chars().count() <= 3 => text[i..].trim_start(),
+        _ => text,
     }
 }
 
@@ -104,6 +144,12 @@ pub struct World {
     pub getpos: bool,
     /// What that getpos is for ("Where do you want to travel to?").
     pub getpos_goal: Option<String>,
+    /// The cell the player's last answer to getpos picked: a click's, else
+    /// the cursor's.
+    getpos_pick: Option<(i32, i32)>,
+    /// The engine's answer about the cell the player looked at, until the
+    /// game takes it.
+    pub looked: Option<Looked>,
     /// doprev_message (^P) asked for the message history; the game takes it.
     pub wants_history: bool,
     /// Where the cursor was at the last command prompt: the core puts it on
@@ -148,6 +194,8 @@ impl World {
             windows_exited: false,
             getpos: false,
             getpos_goal: None,
+            getpos_pick: None,
+            looked: None,
             wants_history: false,
             hero_at_command: None,
             input_seq: 0,
@@ -257,6 +305,16 @@ impl World {
                         self.helpless.message(text, turn.unwrap_or(0));
                         self.log
                             .push_format(text.clone(), *attr, turn, fmt.clone(), args.clone());
+                        // getpos picked a cell, and pager.c tells what is there
+                        if self.getpos
+                            && is_look_line(text)
+                            && let Some(at) = self.getpos_pick
+                        {
+                            self.looked = Some(Looked {
+                                seq: self.log.last_seq(),
+                                at,
+                            });
+                        }
                     }
                 }
                 Some(WindowKind::Text | WindowKind::Menu) => {
@@ -382,6 +440,20 @@ impl World {
         match req {
             Request::NhPoskey { getpos } => {
                 self.getpos = *getpos;
+                // farlook's goal, said since the last key: the prompt line
+                // shows it
+                let seq = self.log.last_seq();
+                let goal = self.log.iter().next_back().filter(|m| {
+                    *getpos
+                        && m.seq == seq
+                        && m.seq > self.input_seq
+                        && !m.from_history
+                        && LOOK_GOALS.contains(&m.text.as_str())
+                });
+                if let Some(goal) = goal.map(|m| m.text.clone()) {
+                    self.getpos_goal = Some(goal);
+                    self.log.retract_newest();
+                }
                 if !getpos {
                     self.getpos_goal = None;
                     self.map.settle();
@@ -481,6 +553,19 @@ impl World {
     pub fn note_player_input(&mut self) {
         self.input_seq = self.log.last_seq();
         self.transient = None;
+    }
+
+    /// Called by the game with each answer to a getpos: a click picks its
+    /// cell, a key the cursor's (a key that only moves the cursor is
+    /// followed by another getpos).
+    pub fn note_getpos_answer(&mut self, reply: &Reply) {
+        if !self.getpos {
+            return;
+        }
+        self.getpos_pick = match reply {
+            Reply::Click { x, y, .. } => Some((*x, *y)),
+            _ => self.cursor,
+        };
     }
 
     /// Where the hero is: the cell drawn with MG_HERO (they stay there under
@@ -884,6 +969,89 @@ mod tests {
         let logged: Vec<&str> = w.log.iter().map(|m| m.text.as_str()).collect();
         assert_eq!(logged, ["You see here a dagger."]);
         assert!(w.getpos_line().unwrap().starts_with("Pick a spot."));
+    }
+
+    #[test]
+    fn the_answer_about_a_picked_cell_is_told_with_the_cell() {
+        let mut w = World::new();
+        feed(&mut w, START);
+        let look = |w: &mut World, id: u64| {
+            feed(
+                w,
+                &format!(
+                    r#"
+                    {{"t":"win","fn":"putstr","a":{{"win":1,"attr":0,"str":"Pick a monster, object or location."}}}}
+                    {{"t":"win","fn":"curs","a":{{"win":2,"x":5,"y":4}}}}
+                    {{"t":"req","id":{id},"fn":"nh_poskey","a":{{"getpos":true}}}}
+                    "#
+                ),
+            );
+            assert_eq!(
+                w.getpos_goal.as_deref(),
+                Some("Pick a monster, object or location.")
+            );
+        };
+        let answer = r#"{"t":"win","fn":"putstr","a":{"win":1,"attr":0,"str":":        a newt"}}"#;
+        // `;`, a key moves the cursor, `.` picks: the cursor's cell
+        look(&mut w, 1);
+        w.note_getpos_answer(&Reply::Key('l' as i32));
+        feed(
+            &mut w,
+            r#"
+            {"t":"win","fn":"curs","a":{"win":2,"x":6,"y":4}}
+            {"t":"req","id":2,"fn":"nh_poskey","a":{"getpos":true}}
+            "#,
+        );
+        w.note_getpos_answer(&Reply::Key('.' as i32));
+        feed(&mut w, answer);
+        let looked = w.looked.take().expect("the answer is told");
+        assert_eq!(looked.at, (6, 4));
+        let m = w.log.iter().find(|m| m.seq == looked.seq).unwrap();
+        assert_eq!(look_words(&m.text), "a newt");
+        // a click picks its own cell
+        feed(&mut w, r#"{"t":"req","id":3,"fn":"nh_poskey","a":{}}"#);
+        look(&mut w, 4);
+        w.note_getpos_answer(&Reply::Click {
+            x: 9,
+            y: 2,
+            modifier: 1,
+        });
+        feed(&mut w, answer);
+        assert_eq!(w.looked.take().map(|l| l.at), Some((9, 2)));
+        // the same words with no getpos before them (`/` and a typed
+        // symbol) point at no cell
+        feed(
+            &mut w,
+            r#"
+            {"t":"req","id":5,"fn":"nh_poskey","a":{}}
+            {"t":"win","fn":"putstr","a":{"win":1,"attr":0,"str":":        a dog or other canine"}}
+            "#,
+        );
+        assert_eq!(w.looked, None);
+        // farlook's goal is the prompt line's, not the log's
+        let logged: Vec<&str> = w.log.iter().map(|m| m.text.as_str()).collect();
+        assert_eq!(
+            logged,
+            [
+                ":        a newt",
+                ":        a newt",
+                ":        a dog or other canine"
+            ]
+        );
+    }
+
+    #[test]
+    fn a_look_line_is_a_symbol_and_eight_spaces() {
+        assert!(is_look_line("d        a jackal"));
+        assert!(is_look_line("@        human valkyrie called Hero"));
+        assert!(!is_look_line("You see here a dagger."));
+        assert!(!is_look_line("d         a jackal"), "nine spaces");
+        assert!(!is_look_line("         a jackal"));
+        assert_eq!(look_words("d        a jackal"), "a jackal");
+        assert_eq!(look_words(":        ящерица (тритон)"), "ящерица (тритон)");
+        // the pseudo-language marks the symbol
+        assert_eq!(look_words("⟪d⟫        ⟪a jackal⟫"), "⟪a jackal⟫");
+        assert_eq!(look_words("Hello  there        x"), "Hello  there        x");
     }
 
     #[test]

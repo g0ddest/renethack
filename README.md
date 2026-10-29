@@ -98,6 +98,7 @@ The client adds:
 | `F5` | rest (search) until HP and Pw are full |
 | any key, a click, `Esc` | stop the order before its next step |
 | mouse over the map | what is there (by appearance only) |
+| `;`, then a cell (the cursor and `.`, or a click) | NetHack's answer about it, in a tip over the cell until the next command (and in the log) |
 | mouse wheel, `Ctrl`+`-` / `Ctrl`+`=` | zoom out / in |
 | `F8` or `Ctrl`+`0` | the whole known level; again (or a zoom) — back to the hero |
 | `#` | command palette: type to filter (by a command's name, or in the player's language by its description and its names there: «моли» finds #pray), `Tab` completes, `Up`/`Down` choose |

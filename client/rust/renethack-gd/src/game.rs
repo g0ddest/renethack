@@ -8,8 +8,9 @@ use std::time::{Duration, Instant};
 
 use godot::classes::notify::NodeNotification;
 use godot::classes::{
-    CanvasLayer, INode, Input, InputEvent, InputEventJoypadButton, InputEventJoypadMotion,
-    InputEventKey, InputEventMouseButton, InputEventMouseMotion, Node3D, Os, ProjectSettings, Time,
+    Camera3D, CanvasLayer, INode, Input, InputEvent, InputEventJoypadButton,
+    InputEventJoypadMotion, InputEventKey, InputEventMouseButton, InputEventMouseMotion, Node3D,
+    Os, ProjectSettings, Time,
 };
 use godot::global::{JoyAxis, Key as GKey, MouseButton};
 use godot::prelude::*;
@@ -494,6 +495,8 @@ pub struct RenethackGame {
     pub(crate) hint_only: Option<nh_world::Guide>,
     /// Why the last order stopped, shown until then.
     stop_note: Option<(String, Instant)>,
+    /// The engine's answer about the cell the player looked at.
+    look_tip: Option<LookTip>,
     /// What the way preview was drawn for.
     preview_key: Option<PreviewKey>,
     /// The last actions orders sent (self-tests: when and what), and how
@@ -790,7 +793,20 @@ struct Hover {
     look: Option<Cell>,
     text: Option<String>,
     pos: Vector2,
+    /// The tooltip gives way to the engine's answer about the same cell.
+    quiet: bool,
 }
+
+/// The engine's answer about the cell the player looked at (`;`), shown
+/// over the cell until the player's next answer to the engine, or a while.
+struct LookTip {
+    at: (i32, i32),
+    text: String,
+    since: Instant,
+}
+
+/// How long the answer about a cell stays over it, unanswered.
+const LOOK_TIP_SECS: f64 = 20.0;
 
 #[godot_api]
 impl INode for RenethackGame {
@@ -859,6 +875,7 @@ impl INode for RenethackGame {
             hint_log: Vec::new(),
             hint_only: None,
             stop_note: None,
+            look_tip: None,
             preview_key: None,
             order_log: std::collections::VecDeque::new(),
             order_actions: 0,
@@ -2180,6 +2197,13 @@ impl RenethackGame {
                 }
                 self.sent.push_back((prompt.clone(), reply.clone()));
                 self.uses.on_reply(prompt, &reply, &self.world);
+                if *prompt == Prompt::Command {
+                    self.world.note_getpos_answer(&reply);
+                }
+                // the answer about a cell stays until the player goes on
+                if *prompt != Prompt::AutoAck {
+                    self.look_tip = None;
+                }
                 if matches!(
                     prompt,
                     Prompt::Command | Prompt::Key | Prompt::FreeKey { .. } | Prompt::Choice { .. }
@@ -5562,6 +5586,7 @@ impl RenethackGame {
                 Vector2::new(2.0 * half, feet.y - head.y),
             ))
         });
+        let look = self.look_tip_at(camera.as_ref());
         let Some(ui) = self.ui.as_mut() else {
             return;
         };
@@ -5570,6 +5595,11 @@ impl RenethackGame {
             &heads,
             hero_box,
             Time::singleton().get_ticks_msec() as f64 / 1000.0,
+        );
+        ui.hud.set_look_tip(
+            look.as_ref()
+                .zip(self.look_tip.as_ref())
+                .map(|(&at, tip)| (tip.text.as_str(), at)),
         );
         let t = Instant::now();
         ui.hud.sync(&mut self.world, catalog.as_deref());
@@ -5583,6 +5613,56 @@ impl RenethackGame {
         self.update_hover();
         self.sync_orders();
         self.update_preview();
+    }
+
+    /// The engine's answer about the cell the player looked at, newly told
+    /// or still up, and where on screen the thing on that cell stands
+    /// (feet to head; the floor's middle for an item or the ground). None
+    /// once it timed out, or while a dialog or a panel covers the map or
+    /// the cell is behind the camera.
+    fn look_tip_at(&mut self, camera: Option<&Gd<Camera3D>>) -> Option<Rect2> {
+        if let Some(looked) = self.world.looked.take() {
+            // the log's line, as the player reads it there, without the
+            // tty's map symbol
+            self.look_tip = self
+                .world
+                .log
+                .iter()
+                .rev()
+                .find(|m| m.seq == looked.seq)
+                .map(|m| LookTip {
+                    at: looked.at,
+                    text: nh_world::look_words(&i18n::engine_message(m)).to_string(),
+                    since: Instant::now(),
+                });
+        }
+        if self
+            .look_tip
+            .as_ref()
+            .is_some_and(|t| t.since.elapsed().as_secs_f64() > LOOK_TIP_SECS)
+        {
+            self.look_tip = None;
+        }
+        let (x, y) = self.look_tip.as_ref()?.at;
+        let ui = self.ui.as_ref()?;
+        if self.state != GameState::Playing || ui.dialogs.is_open() || ui.inventory.is_open() {
+            return None;
+        }
+        let cam = camera?;
+        let (feet, tall) = ui
+            .map
+            .entity_stands(x, y)
+            .unwrap_or((Vector3::new(x as f32, 0.0, y as f32), 0.5));
+        if cam.is_position_behind(feet) {
+            return None;
+        }
+        let low = cam.unproject_position(feet);
+        let high = cam.unproject_position(feet + Vector3::new(0.0, tall, 0.0));
+        let half = (cam.unproject_position(feet + Vector3::new(0.4, 0.0, 0.0)).x - low.x).abs();
+        Some(Rect2::new(
+            Vector2::new(low.x - half, high.y),
+            Vector2::new(2.0 * half, (low.y - high.y).max(1.0)),
+        ))
     }
 
     /// Hover marker and tooltip for the cell under the mouse, checked every
@@ -5625,6 +5705,8 @@ impl RenethackGame {
             .filter(|_| self.test_hover.is_none())
             .and_then(|(x, y)| self.world.map.cell(x, y));
         let pos = pos.unwrap_or(Vector2::ZERO);
+        // the engine's answer over the same cell says it better
+        let quiet = cell.is_some() && self.look_tip.as_ref().map(|t| t.at) == cell;
         if look != self.hover.look.as_ref() {
             self.hover.look = look.cloned();
             // the catalog's names, a line each, as the player reads them
@@ -5637,11 +5719,14 @@ impl RenethackGame {
                         .collect::<Vec<_>>()
                         .join("\n")
                 });
-        } else if self.hover.text.is_none() || pos == self.hover.pos {
+        } else if quiet == self.hover.quiet && (self.hover.text.is_none() || pos == self.hover.pos)
+        {
             return;
         }
         self.hover.pos = pos;
-        ui.hud.set_tooltip(self.hover.text.as_deref(), pos);
+        self.hover.quiet = quiet;
+        let text = self.hover.text.as_deref().filter(|_| !quiet);
+        ui.hud.set_tooltip(text, pos);
     }
 
     /// No hover marker and no tooltip, and nothing remembered about them.

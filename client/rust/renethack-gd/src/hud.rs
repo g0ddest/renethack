@@ -1148,6 +1148,12 @@ pub struct Hud {
     tooltip: Gd<Label>,
     tooltip_text: Option<String>,
 
+    /// The engine's answer about the cell the player looked at (`;`),
+    /// over that cell; its words and its plate's size.
+    look_panel: Gd<PanelContainer>,
+    look: Gd<Label>,
+    look_text: Option<(String, Vector2)>,
+
     toast_panel: Gd<PanelContainer>,
     /// The row the toast is centred in: over the cluster, or over the
     /// docked log.
@@ -1682,6 +1688,10 @@ impl Hud {
         let toast_lane = toast_row.clone();
         solid.push(toast_panel.clone().upcast());
 
+        // ---- the answer about a cell looked at, over it ----
+        let (look_panel, look) = crate::tips::view();
+        root.add_child(&look_panel);
+
         // ---- tooltip, follows the mouse; on top of everything ----
         let (tooltip_panel, tooltip) = crate::tips::view();
         root.add_child(&tooltip_panel);
@@ -1753,6 +1763,9 @@ impl Hud {
             tooltip_panel,
             tooltip,
             tooltip_text: None,
+            look_panel,
+            look,
+            look_text: None,
             toast_panel,
             toast_lane,
             toast,
@@ -2690,10 +2703,47 @@ impl Hud {
         }
     }
 
+    /// The engine's answer about the cell the player looked at, `text`, in
+    /// the tips' plate over `at` (what stands on the cell, on screen; under
+    /// it when there is no room above), kept on the screen; None hides it.
+    /// Cheap when nothing changed (called every frame).
+    pub fn set_look_tip(&mut self, tip: Option<(&str, Rect2)>) {
+        let Some((text, at)) = tip.filter(|(t, _)| !t.is_empty()) else {
+            if self.look_text.take().is_some() {
+                self.look_panel.set_visible(false);
+            }
+            return;
+        };
+        let size = match &self.look_text {
+            Some((t, size)) if t == text => *size,
+            _ => {
+                let size = crate::tips::fill(&mut self.look_panel, &mut self.look, text);
+                self.look_text = Some((text.to_string(), size));
+                self.look_panel.set_visible(true);
+                size
+            }
+        };
+        let view = self.root.get_viewport_rect().size;
+        let pos = crate::tips::place_for(size, at, view, false);
+        if self.look_panel.get_position() != pos {
+            self.look_panel.set_position(pos);
+        }
+    }
+
+    /// The answer about a cell on screen: its words and where it is
+    /// (self-tests).
+    pub fn look_tip(&self) -> Option<(String, Rect2)> {
+        self.look_text
+            .as_ref()
+            .filter(|_| self.look_panel.is_visible_in_tree())
+            .map(|(t, _)| (t.clone(), self.look_panel.get_global_rect()))
+    }
+
     pub fn set_visible(&mut self, on: bool) {
         self.root.set_visible(on);
         if !on {
             self.set_tooltip(None, Vector2::ZERO);
+            self.set_look_tip(None);
             self.set_full_log(false);
         }
     }
