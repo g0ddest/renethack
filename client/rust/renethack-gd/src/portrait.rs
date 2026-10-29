@@ -115,10 +115,11 @@ impl PortraitView {
             self.wanted = look;
             self.since = now;
         }
+        // none a moment (a level arriving, a new game): the last render
+        // stays until the next is made
         let Some(hero) = hero else {
-            self.shown = None;
             self.aimed = None;
-            return false;
+            return self.shown.is_some();
         };
         if self.wanted != self.shown {
             // aimed every frame while a render is due: a camera reaches the
