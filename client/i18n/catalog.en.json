@@ -1,4 +1,4 @@
-{"format": 1, "engine": "NetHack-5.0.0_Released", "count": 29585, "entries": [
+{"format": 1, "engine": "NetHack-5.0.0_Released", "count": 29589, "entries": [
 {"id": "a053ba02e4d4", "fmt": "X marks the spot.", "uses": ["engraving"], "sites": ["dat/Arc-loca.lua:90 des.engraving", "dat/Arc-loca.lua:91 des.engraving", "dat/Arc-loca.lua:92 des.engraving", "dat/Arc-loca.lua:93 des.engraving"]},
 {"id": "d5335a1468c3", "fmt": "What a strange feeling!", "uses": ["level"], "sites": ["dat/air.lua:12 des.message"]},
 {"id": "2442f1605479", "fmt": "You notice that there is no gravity here.", "uses": ["level"], "sites": ["dat/air.lua:13 des.message"]},
@@ -9729,6 +9729,10 @@
 {"id": "fe44549c2232", "fmt": " and %s", "uses": ["sprintf"], "args": ["monster"], "sites": ["src/end.c:1456 really_done Sprintf(eos(pbuf), \" and %s\", mon_nam(mtmp))", "src/teleport.c:881 scrolltele Sprintf(eos(whobuf), \" and %s\", mon_nam(u.usteed))", "src/uhitm.c:5365 mhitm_knockback Snprintf(eos(mdefbuf), sizeof mdefbuf - strlen(mdefbuf), \" and %s\", y_monnam(u.usteed))"]},
 {"id": "770a80790e6d", "fmt": " and Schroedinger's cat", "uses": ["sprintf"], "sites": ["src/end.c:1468 really_done Strcat(eos(pbuf), \" and Schroedinger's cat\")"]},
 {"id": "ea1f6447a951", "fmt": "%s with %ld point%s,", "uses": ["sprintf"], "args": ["text", "number", "text"], "expanded": true, "sites": ["src/end.c:1475 really_done Sprintf(eos(pbuf), \"%s with %ld point%s,\", (how == ASCENDED) ? \"went to your reward\" : \"escaped from the dungeon\", u.urexp, p...)"]},
+{"id": "7f376bc94127", "fmt": "You escaped from the dungeon with %ld point,", "uses": ["window"], "args": ["number"], "sites": ["src/end.c:1475 really_done"]},
+{"id": "177bf94cd2ea", "fmt": "You escaped from the dungeon with %ld points,", "uses": ["window"], "args": ["number"], "sites": ["src/end.c:1475 really_done"]},
+{"id": "cec74f810ccf", "fmt": "You went to your reward with %ld point,", "uses": ["window"], "args": ["number"], "sites": ["src/end.c:1475 really_done"]},
+{"id": "a92b8fd86223", "fmt": "You went to your reward with %ld points,", "uses": ["window"], "args": ["number"], "sites": ["src/end.c:1475 really_done"]},
 {"id": "a8fb11549201", "fmt": "escaped from the dungeon with %ld point,", "uses": ["sprintf", "window"], "args": ["number"], "from": ["ea1f6447a951"], "sites": ["src/end.c:1475 really_done", "src/windows.c:1281 dump_forward_putstr putstr(win, attr, str)"]},
 {"id": "f86b21ba623c", "fmt": "escaped from the dungeon with %ld points,", "uses": ["sprintf", "window"], "args": ["number"], "from": ["ea1f6447a951"], "sites": ["src/end.c:1475 really_done", "src/windows.c:1281 dump_forward_putstr putstr(win, attr, str)"]},
 {"id": "a19e385f0624", "fmt": "went to your reward with %ld point,", "uses": ["sprintf", "window"], "args": ["number"], "from": ["ea1f6447a951"], "sites": ["src/end.c:1475 really_done", "src/windows.c:1281 dump_forward_putstr putstr(win, attr, str)"]},

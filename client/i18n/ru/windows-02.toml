@@ -38,6 +38,22 @@ ru = "отправились за наградой, набрав {1} {1:plural|�
 en = "escaped from the dungeon with %ld points,"
 ru = "сбежали из подземелья, набрав {1} {1:plural|очко|очка|очков},"
 
+[cec74f810ccf]
+en = "You went to your reward with %ld point,"
+ru = "Вы отправились за наградой, набрав {1} {1:plural|очко|очка|очков},"
+
+[a92b8fd86223]
+en = "You went to your reward with %ld points,"
+ru = "Вы отправились за наградой, набрав {1} {1:plural|очко|очка|очков},"
+
+[7f376bc94127]
+en = "You escaped from the dungeon with %ld point,"
+ru = "Вы сбежали из подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
+[177bf94cd2ea]
+en = "You escaped from the dungeon with %ld points,"
+ru = "Вы сбежали из подземелья, набрав {1} {1:plural|очко|очка|очков},"
+
 [7c504abdd166]
 en = "%8ld %s (worth %ld zorkmids),"
 ru = "{1} {2:by1} (стоимостью {3} {3:plural|зоркмид|зоркмида|зоркмидов}),"

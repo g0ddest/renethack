@@ -1800,6 +1800,18 @@ def add_killers(cat, contexts):
             cat.add(text[1:], "death", "src/dungeon.c:3711 print_mapseen", kinds)
 
 
+def add_end_summary(cat):
+    """really_done's line for an escape or an ascension without a pet
+    (end.c): "You", a space, then its "%s with %ld point%s," as expanded,
+    on one line: "You went to your reward with 150 points,". With pets,
+    "You and %s" is a line of its own."""
+    for e in list(cat.entries.values()):
+        if (e.fmt.startswith(("went to your reward with ", "escaped from the dungeon with "))
+                and any(s.endswith(" really_done") for s in e.sites)):
+            kinds = ["|".join(sorted(k)) for k in (e.args or [])]
+            cat.add("You " + e.fmt, "window", e.sites[0], kinds)
+
+
 def add_appended(cat, contexts):
     """What a helper of APPENDED_BY appends, as pieces of their own: the
     appends that always run, then one of those in a branch ("esteemed" +
@@ -2213,6 +2225,7 @@ def extract():
     add_poiseff(cat, units)
     add_seamed(cat, units)
     add_killers(cat, contexts)
+    add_end_summary(cat)
     add_appended(cat, contexts)
     for fmt, use, site, kinds in datfiles.extract(UPSTREAM):
         cat.add(fmt, use, site, kinds)
