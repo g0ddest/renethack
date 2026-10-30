@@ -1,7 +1,9 @@
-//! A lair the overview names, on the real engine in debug mode: the hero
-//! teleported to the Valley of the Dead is told only its dungeon and
-//! depth; once the level is mapped and the overview names its temple of
-//! Moloch, the level notice says "valley".
+//! The lair the hero knows their level to be, on the real engine in debug
+//! mode: teleported to the Valley of the Dead, which NetHack names on
+//! arrival ("You arrive at the Valley of the Dead..."), the level notice
+//! says "valley" at once; teleported to Moloch's Sanctum, it says only the
+//! dungeon and depth until the level is mapped and the overview names its
+//! temple, then "sanctum".
 //! Build the engine first with `make -C engine` (or set RENETHACK_ENGINE_DIR).
 
 mod common;
@@ -16,36 +18,43 @@ const LEVEL_TELEPORT: i32 = 22;
 const MAP: i32 = 6;
 
 #[test]
-fn the_overview_names_the_valley_once_it_is_known() {
+fn the_valley_is_known_on_arrival_the_sanctum_once_the_overview_names_it() {
     #[derive(Debug, Clone, Copy, PartialEq)]
     enum Stage {
         Start,
+        Valley,
+        Sanctum,
         Mapped,
-        Overviewed,
     }
     let mut stage = Stage::Start;
-    let mut arrived = None;
+    let mut valley = None;
+    let mut sanctum = None;
     let mut known = None;
     let mut prompts = 0;
     play(SEED, "valkyrie", &mut |w, _, p| {
         prompts += 1;
-        assert!(prompts < 200, "no end at {stage:?}");
+        assert!(prompts < 300, "no end at {stage:?}");
         match p {
-            // the level teleport: its menu of special levels, the Valley
+            // the level teleport: its menu of special levels
             Prompt::Text { query, .. } if query.contains("level") => {
                 return Act::Reply(Reply::Text("?".into()));
             }
             Prompt::Menu {
                 how, title, items, ..
-            } if stage == Stage::Start => {
+            } if matches!(stage, Stage::Start | Stage::Valley) => {
+                let to = if stage == Stage::Start {
+                    "valley"
+                } else {
+                    "sanctum"
+                };
                 let mut m = MenuState::new(*how, title.clone(), items);
-                let valley = m
+                let letter = m
                     .entries
                     .iter()
-                    .find(|e| e.selectable && e.text.contains("valley"))
+                    .find(|e| e.selectable && e.text.contains(to))
                     .and_then(|e| e.letter)
-                    .expect("the Valley in the level teleport's menu");
-                return Act::Reply(match m.key(valley) {
+                    .unwrap_or_else(|| panic!("{to} in the level teleport's menu"));
+                return Act::Reply(match m.key(letter) {
                     MenuOutcome::Done(r) => r,
                     _ => m.confirm(),
                 });
@@ -55,16 +64,24 @@ fn the_overview_names_the_valley_once_it_is_known() {
             Prompt::Command => {}
             other => return Act::Reply(other.escape_reply()),
         }
-        let in_valley = w.depth().is_some_and(|d| d > 20);
+        let depth = w.depth().unwrap_or(0);
         let lair = w.level.as_ref().and_then(|l| l.lair.clone());
         let (next, reply) = match stage {
-            Stage::Start if !in_valley => (Stage::Start, Reply::Key(LEVEL_TELEPORT)),
+            Stage::Start if depth <= 20 => (Stage::Start, Reply::Key(LEVEL_TELEPORT)),
             Stage::Start => {
-                arrived = Some(lair);
-                (Stage::Mapped, Reply::Key(MAP))
+                valley = Some(lair);
+                (Stage::Valley, Reply::Key(LEVEL_TELEPORT))
             }
-            Stage::Mapped => (Stage::Overviewed, Reply::Key('#' as i32)),
-            Stage::Overviewed => {
+            // still in the Valley: the teleport did not happen yet
+            Stage::Valley if valley.is_some() && lair.as_deref() == Some("valley") => {
+                (Stage::Valley, Reply::Key(LEVEL_TELEPORT))
+            }
+            Stage::Valley => {
+                sanctum = Some(lair);
+                (Stage::Sanctum, Reply::Key(MAP))
+            }
+            Stage::Sanctum => (Stage::Mapped, Reply::Key('#' as i32)),
+            Stage::Mapped => {
                 known = Some(lair);
                 return Act::Quit;
             }
@@ -73,13 +90,18 @@ fn the_overview_names_the_valley_once_it_is_known() {
         Act::Reply(reply)
     });
     assert_eq!(
-        arrived,
+        valley,
+        Some(Some("valley".to_string())),
+        "the Valley not told on arrival, which NetHack names"
+    );
+    assert_eq!(
+        sanctum,
         Some(None),
-        "a lair told before the overview names it"
+        "the Sanctum told before the overview names it"
     );
     assert_eq!(
         known,
-        Some(Some("valley".to_string())),
-        "the Valley not told once the overview names it"
+        Some(Some("sanctum".to_string())),
+        "the Sanctum not told once the overview names it"
     );
 }
