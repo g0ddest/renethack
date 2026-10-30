@@ -86,6 +86,8 @@ mod journal_tests;
 mod layouts_tests;
 #[path = "selftest_look.rs"]
 mod look_tests;
+#[path = "selftest_ordinals.rs"]
+mod ordinals_tests;
 #[path = "selftest_overhang.rs"]
 mod overhang_tests;
 #[path = "selftest_pack_list.rs"]
@@ -5177,6 +5179,7 @@ impl SelfTest {
             "creation" => creation_tests::creation(),
             "portrait" => portrait_tests::portrait(),
             "overhang" => overhang_tests::overhang(),
+            "ordinals" => ordinals_tests::ordinals(),
             "features" => features_tests::features(),
             "pad-words" => pad_words_tests::pad_words(),
             "skills" => skills_tests::skills(),

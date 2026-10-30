@@ -131,9 +131,31 @@ impl Default for EngineTranslator {
 /// may stay English: a pet's, an engraving's text).
 fn shown(out: Output) -> Option<String> {
     match out.status {
-        Status::Translated | Status::Partial => Some(out.text),
+        Status::Translated | Status::Partial => Some(glue_ordinals(&out.text)),
         Status::Untranslated | Status::Unknown => None,
     }
+}
+
+/// U+2060 WORD JOINER: no line breaks at it, and it draws nothing (the
+/// fonts have no non-breaking hyphen of their own).
+const JOIN: char = '\u{2060}';
+
+/// A number's ending held to it: "1-й", "3-м", "8-битные" broke as "1-" at
+/// the end of one line and "й уровень" at the start of the next. A word
+/// joiner after each hyphen between a digit and a letter.
+pub fn glue_ordinals(text: &str) -> String {
+    let chars: Vec<char> = text.chars().collect();
+    let mut out = String::with_capacity(text.len() + 6);
+    for (i, &c) in chars.iter().enumerate() {
+        out.push(c);
+        let between = i > 0
+            && chars[i - 1].is_ascii_digit()
+            && chars.get(i + 1).is_some_and(|n| n.is_alphabetic());
+        if c == '-' && between {
+            out.push(JOIN);
+        }
+    }
+    out
 }
 
 fn arg(a: &FmtArg) -> Arg {
@@ -287,6 +309,21 @@ impl EngineText for EngineTranslator {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_number_keeps_its_ending() {
+        let j = JOIN;
+        assert_eq!(
+            glue_ordinals("у вас был 1-й уровень"),
+            format!("у вас был 1-{j}й уровень")
+        );
+        assert_eq!(glue_ordinals("на 3-м уровне"), format!("на 3-{j}м уровне"));
+        assert_eq!(glue_ordinals("12-го"), format!("12-{j}го"));
+        // a dash between words, a minus, a range: as they were
+        for kept in ["кто-то", "AC -1", "1-2", "вход — выход", "-5"] {
+            assert_eq!(glue_ordinals(kept), kept);
+        }
+    }
 
     fn loaded() -> EngineTranslator {
         let t = EngineTranslator::new();
