@@ -108,11 +108,27 @@ pub const WARE_JITTER: f32 = 5.0;
 /// How far from its cell's middle a thing on the floor may reach (the
 /// cell's half is 0.5 m): each square's wares are its own.
 const WARE_HALF: f32 = 0.47;
+/// A thing on the floor is drawn at least this long at its longest
+/// (metres): at the game's camera a ring, a gem or a potion drawn to
+/// scale was a speck of 10 to 25 pixels. The sizes from `WARE_TINIEST` up
+/// to `WARE_LIFTED_BELOW` are spread over `WARE_READABLE` up to it, so the
+/// smaller of two still looks the smaller.
+const WARE_READABLE: f32 = 0.2;
+const WARE_TINIEST: f32 = 0.03;
+const WARE_LIFTED_BELOW: f32 = 0.32;
+/// What lies on the floor glints (`glint.gdshader`) this high over it
+/// (metres), and lights the floor under it a little (`Art::shine`): the
+/// colour and how much wider than the thing that pool is.
+const GLINT_SHADER: &str = "res://shaders/glint.gdshader";
+const GLINT_Y: f32 = 0.16;
+const SHINE: Color = Color::from_rgba(1.0, 0.88, 0.62, 0.55);
+const SHINE_MORE: f32 = 0.35;
 
 /// A thing on the floor's model, scale and turn (the bits of the floats).
 type WareKey = (usize, u32, [u32; 3]);
-/// Bounds on the ground: the lowest corner (x, z) and the highest.
-type Bounds = ([f32; 2], [f32; 2]);
+/// Bounds on the ground: the lowest corner (x, z) and the highest, and
+/// how tall it stands.
+type Bounds = ([f32; 2], [f32; 2], f32);
 
 /// Whether a thing on the floor lies along its cell's diagonal.
 pub fn on_diagonal(r: &Resolved) -> bool {
@@ -120,9 +136,10 @@ pub fn on_diagonal(r: &Resolved) -> bool {
 }
 
 /// How a thing on the floor whose bounds there are `lo`..`hi` (x, z, in
-/// its holder's space) is fitted to its cell: the scale it is drawn at
-/// (never over its own) and the shift that puts its middle on the cell's.
-fn ware_fit(lo: [f32; 2], hi: [f32; 2], diagonal: bool) -> (f32, [f32; 2]) {
+/// its holder's space), `tall` high, is fitted to its cell: the scale it is drawn at
+/// (never over its own, but for a small thing: `WARE_READABLE`) and the
+/// shift that puts its middle on the cell's.
+fn ware_fit(lo: [f32; 2], hi: [f32; 2], tall: f32, diagonal: bool) -> (f32, [f32; 2]) {
     let (w, l) = (hi[0] - lo[0], hi[1] - lo[1]);
     let (a, b) = (w.max(l) / 2.0, w.min(l) / 2.0);
     let reach = if diagonal {
@@ -139,7 +156,17 @@ fn ware_fit(lo: [f32; 2], hi: [f32; 2], diagonal: bool) -> (f32, [f32; 2]) {
         // any way: its long side no longer than the cell
         a
     };
-    let k = (WARE_HALF / reach.max(1e-4)).min(1.0);
+    // never larger than it is, but for a small thing (`WARE_READABLE`): by
+    // its longest side, standing too (a potion is no bigger round than a
+    // ring, but taller)
+    let long = (2.0 * a).max(tall);
+    let lift = if long > 0.0 && long < WARE_LIFTED_BELOW {
+        let up = (long - WARE_TINIEST).max(0.0) / (WARE_LIFTED_BELOW - WARE_TINIEST);
+        (WARE_READABLE + up * (WARE_LIFTED_BELOW - WARE_READABLE)) / long
+    } else {
+        1.0
+    };
+    let k = (WARE_HALF / reach.max(1e-4)).min(lift);
     let mid = [(lo[0] + hi[0]) / 2.0, (lo[1] + hi[1]) / 2.0];
     (k, [-mid[0] * k, -mid[1] * k])
 }
@@ -346,6 +373,8 @@ pub struct Art {
     /// The pass that edges them (`EDGE_SHADER`), once loaded (None: not
     /// yet asked for; Some(None): missing).
     edge: Option<Option<Gd<Material>>>,
+    /// A thing on the floor's glint (`GLINT_SHADER`), the same way.
+    glint: Option<Option<Gd<Material>>>,
     /// The soft disc a contact shadow is (`ground`).
     contact: Option<Gd<Texture2D>>,
     proc_anims: HashMap<(Proc, Option<String>), Gd<AnimationLibrary>>,
@@ -445,6 +474,7 @@ impl Art {
             rims: HashMap::new(),
             rimmed: HashSet::new(),
             edge: None,
+            glint: None,
             contact: None,
             proc_anims: HashMap::new(),
             proc_clips: None,
@@ -1063,10 +1093,10 @@ impl Art {
             .ware_bounds
             .entry(key)
             .or_insert_with(|| bounds_of(&m.node));
-        let Some((lo, hi)) = bounds else {
+        let Some((lo, hi, tall)) = bounds else {
             return;
         };
-        let (k, shift) = ware_fit(lo, hi, on_diagonal(&r));
+        let (k, shift) = ware_fit(lo, hi, tall, on_diagonal(&r));
         let fit = Transform3D::new(
             Basis::from_scale(Vector3::new(k, k, k)),
             Vector3::new(shift[0], 0.0, shift[1]),
@@ -1442,10 +1472,72 @@ impl Art {
             self.rim(m);
         }
         // what is seen through or only sensed throws no shadow, nor takes
-        // the light of the creatures seen
-        if look.pose != Pose::Ghost {
-            creature_lit(m, true);
-            self.ground(m);
+        // the light of the creatures seen; a thing on the floor lights the
+        // floor under it instead, and glints
+        match look.pose {
+            Pose::Ghost => {}
+            Pose::Ware => {
+                creature_lit(m, true);
+                self.shine(m);
+            }
+            _ => {
+                creature_lit(m, true);
+                self.ground(m);
+            }
+        }
+    }
+
+    /// A thing on the floor's own light (B7's creatures had theirs): a soft
+    /// warm pool on the floor under it, a little wider than it, and a glint
+    /// over it now and then (`GLINT_SHADER`). Once per instance: it stays
+    /// with it in the pool.
+    fn shine(&mut self, m: &Model) {
+        let Some(inner) = m.inner.as_ref() else {
+            return;
+        };
+        if m.node.has_node("Shine") {
+            return;
+        }
+        let [w, l] = aabb_reach(&m.node, inner);
+        let mut d = Decal::new_alloc();
+        d.set_name("Shine");
+        d.set_size(Vector3::new(
+            (w + SHINE_MORE).clamp(0.35, 1.0),
+            0.5,
+            (l + SHINE_MORE).clamp(0.35, 1.0),
+        ));
+        let tex = self
+            .contact
+            .get_or_insert_with(crate::vfx::contact_texture)
+            .clone();
+        d.set_texture(godot::classes::decal::DecalTexture::EMISSION, &tex);
+        d.set_emission_energy(0.9);
+        d.set_modulate(SHINE);
+        d.set_cull_mask(CONTACT_LAYERS);
+        d.set_upper_fade(0.3);
+        d.set_lower_fade(0.3);
+        d.set_normal_fade(0.5);
+        d.set_position(Vector3::new(0.0, 0.1, 0.0));
+        m.node.clone().add_child(&d);
+        let glint = self
+            .glint
+            .get_or_insert_with(|| {
+                let shader = godot::tools::try_load::<Shader>(GLINT_SHADER).ok()?;
+                let mut mat = ShaderMaterial::new_gd();
+                mat.set_shader(&shader);
+                Some(mat.upcast())
+            })
+            .clone();
+        if let Some(mat) = glint {
+            let mut quad = godot::classes::QuadMesh::new_gd();
+            quad.set_size(Vector2::new(0.3, 0.3));
+            let mut g = MeshInstance3D::new_alloc();
+            g.set_name("Glint");
+            g.set_mesh(&quad);
+            g.set_material_override(&mat);
+            g.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+            g.set_position(Vector3::new(0.0, GLINT_Y, 0.0));
+            m.node.clone().add_child(&g);
         }
     }
 
@@ -2505,7 +2597,7 @@ fn aabb_reach(holder: &Gd<Node3D>, inner: &Gd<Node3D>) -> [f32; 2] {
 /// `root`, in its space (`bounds_of`).
 fn reach_of(root: &Gd<Node3D>) -> [f32; 2] {
     match bounds_of(root) {
-        Some((lo, hi)) => [hi[0] - lo[0], hi[1] - lo[1]],
+        Some((lo, hi, _)) => [hi[0] - lo[0], hi[1] - lo[1]],
         None => [0.0; 2],
     }
 }
@@ -2515,7 +2607,7 @@ fn reach_of(root: &Gd<Node3D>) -> [f32; 2] {
 fn bounds_of(root: &Gd<Node3D>) -> Option<Bounds> {
     let b = posed_bounds(root)?;
     let end = b.end();
-    Some(([b.position.x, b.position.z], [end.x, end.z]))
+    Some(([b.position.x, b.position.z], [end.x, end.z], b.size.y))
 }
 
 /// The bounds of the meshes shown under `root`, in its space; None with
@@ -4338,7 +4430,7 @@ mod tests {
     /// How far a box with these bounds reaches from its cell's middle,
     /// fitted and turned `yaw` degrees.
     fn reach(lo: [f32; 2], hi: [f32; 2], diagonal: bool, yaw: f32) -> f32 {
-        let (k, shift) = ware_fit(lo, hi, diagonal);
+        let (k, shift) = ware_fit(lo, hi, 0.1, diagonal);
         let (s, c) = yaw.to_radians().sin_cos();
         let mut most: f32 = 0.0;
         for x in [lo[0], hi[0]] {
@@ -4366,17 +4458,38 @@ mod tests {
             let r = reach(lo, hi, true, yaw);
             assert!(r <= WARE_HALF + 1e-4, "{yaw}: {r}");
         }
-        let (k, _) = ware_fit(lo, hi, true);
+        let (k, _) = ware_fit(lo, hi, 0.1, true);
         assert!(k < 0.6 && k > 0.45, "{k}");
         // its middle on the cell's
-        let (k, shift) = ware_fit(lo, hi, true);
+        let (k, shift) = ware_fit(lo, hi, 0.1, true);
         let mid = ((lo[1] + hi[1]) / 2.0) * k + shift[1];
         assert!(mid.abs() < 1e-5);
         // a dagger as it is, whatever way it lies; a long box across a
         // cell drawn as long as the cell holds
-        let (k, _) = ware_fit([-0.03, -0.2], [0.03, 0.2], false);
+        let (k, _) = ware_fit([-0.03, -0.2], [0.03, 0.2], 0.03, false);
         assert_eq!(k, 1.0);
-        let (k, _) = ware_fit([-0.1, -0.6], [0.1, 0.6], false);
+        let (k, _) = ware_fit([-0.1, -0.6], [0.1, 0.6], 0.1, false);
         assert!((k * 1.2 - 2.0 * WARE_HALF).abs() < 1e-4, "{k}");
+    }
+
+    /// A ring, a gem or a potion on the floor drawn to scale was a speck
+    /// at the game's camera: a small thing is drawn at least
+    /// `WARE_READABLE` at its longest, standing too, and the smaller of
+    /// two stays the smaller.
+    #[test]
+    fn a_small_thing_on_the_floor_is_drawn_big_enough_to_read() {
+        let longest = |w: f32, tall: f32| {
+            let (k, _) = ware_fit([-w / 2.0; 2], [w / 2.0; 2], tall, false);
+            k * w.max(tall)
+        };
+        let ring = longest(0.025, 0.006);
+        let gem = longest(0.02, 0.015);
+        let potion = longest(0.06, 0.16);
+        assert!(ring >= WARE_READABLE - 1e-4 && gem >= WARE_READABLE - 1e-4);
+        assert!(gem < ring && ring < potion, "{gem} {ring} {potion}");
+        // a potion stands no taller than a knee
+        assert!(potion < 0.3, "{potion}");
+        // a dagger as it is
+        assert!((longest(0.4, 0.03) - 0.4).abs() < 1e-4);
     }
 }

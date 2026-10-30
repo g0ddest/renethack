@@ -877,6 +877,20 @@ fn tint_color(tint: Tint, glyph_color: i32) -> Color {
     }
 }
 
+/// What undoes a branch's grade on a thing's colours, about: the inverse
+/// of its curve's middle (between its shadows and its highlights), its
+/// strongest channel at 1 (a thing on the floor keeps its own colour).
+fn ungraded(g: &crate::branch_look::Grade) -> Color {
+    let mid = |s: f32, h: f32| 1.0 / ((s + h) / 2.0).max(0.1);
+    let (r, gr, b) = (
+        mid(g.shadows.r, g.highlights.r),
+        mid(g.shadows.g, g.highlights.g),
+        mid(g.shadows.b, g.highlights.b),
+    );
+    let most = r.max(gr).max(b);
+    Color::from_rgb(r / most, gr / most, b / most)
+}
+
 /// What a cell's look depends on besides the cell and its neighbours.
 struct Ctx<'a> {
     catalog: &'a Catalog,
@@ -2573,7 +2587,11 @@ fn entity_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
                 look.model(heap_look, here, yaw + 40.0);
                 pos.y += 0.1;
             }
-            let tint = tint_color(r.tint, g.color);
+            // (in the branch's own colours, not its grade's: Gehennom's red
+            // turned every thing pink)
+            let c = tint_color(r.tint, g.color);
+            let un = ungraded(&ctx.branch.grade);
+            let tint = Color::from_rgba(c.r * un.r, c.g * un.g, c.b * un.b, c.a);
             look.model(
                 ModelLook {
                     art: r,
@@ -8034,9 +8052,10 @@ impl MapView {
                 kept.push(r.model);
                 continue;
             }
-            // a creature on the cell (not the hero: their light rims them)
-            let creature =
-                look.entity == Some(i) && matches!(p.look.pose, Pose::Alive | Pose::Ghost);
+            // a creature on the cell (not the hero: their light rims them),
+            // and the thing on top of what lies there: lit as one
+            let creature = look.entity == Some(i)
+                && matches!(p.look.pose, Pose::Alive | Pose::Ghost | Pose::Ware);
             let mut m = match (before, reuse) {
                 (Some(b), Some(m)) if b.look == p.look => m,
                 (_, other) => {
