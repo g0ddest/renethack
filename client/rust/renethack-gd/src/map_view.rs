@@ -480,9 +480,12 @@ const SHAFT_STRENGTH: f32 = 0.45;
 /// The Planes (`Under`): how tall a bubble's skin stands on the Plane of
 /// Water, the puffs a cloud cell of the Plane of Air is, and how far below
 /// the level the sea of clouds lies (metres).
-const MEMBRANE_TALL: f32 = 1.5;
-/// How far a bubble's skin leans in over it (degrees).
-const MEMBRANE_LEAN: f32 = 14.0;
+const MEMBRANE_TALL: f32 = 0.8;
+/// A bubble's skin, from the floor up: how far each segment of it leans
+/// in over the bubble (degrees) and how long it is (metres), a meniscus
+/// curving in to about `MEMBRANE_TALL` high (a flat leaning wall of glass
+/// made the bubble a square box).
+const MENISCUS: [(f32, f32); 3] = [(12.0, 0.4), (38.0, 0.35), (66.0, 0.32)];
 const CLOUD_PUFFS: u32 = 2;
 /// How far behind whoever stands in a cloud its puffs are drawn (metres).
 const CLOUD_BEHIND: f32 = 0.7;
@@ -2286,27 +2289,32 @@ fn terrain_base(
                     Paint::Liquid(Liquid::Bubble),
                     Vector3::ZERO,
                 );
-                // its skin on each side that meets the water, standing on
-                // the cell's edge and leaning in over the bubble as a
-                // sphere's would, its face outwards (the shader makes the
-                // side facing the eye, in front of the bubble, fainter)
-                let half = MEMBRANE_TALL / 2.0;
-                let edge = 0.5 - half * MEMBRANE_LEAN.to_radians().sin();
-                let tilt = 90.0 - MEMBRANE_LEAN;
+                // its skin on each side that meets the water: a meniscus
+                // rising from the cell's edge and curving in over the
+                // bubble as a sphere's would (`MENISCUS`, segment by
+                // segment), its face outwards (the shader makes the side
+                // facing the eye, in front of the bubble, fainter)
                 let sides = [
-                    (at(0.0, half, -edge), at(tilt, 180.0, 0.0)),
-                    (at(0.0, half, edge), at(tilt, 0.0, 0.0)),
-                    (at(-edge, half, 0.0), at(tilt, 270.0, 0.0)),
-                    (at(edge, half, 0.0), at(tilt, 90.0, 0.0)),
+                    (Vector3::new(0.0, 0.0, -1.0), 180.0),
+                    (Vector3::new(0.0, 0.0, 1.0), 0.0),
+                    (Vector3::new(-1.0, 0.0, 0.0), 270.0),
+                    (Vector3::new(1.0, 0.0, 0.0), 90.0),
                 ];
-                for ((pos, rot), water) in sides.into_iter().zip(around.liquid) {
-                    if water {
+                for ((out, yaw), water) in sides.into_iter().zip(around.liquid) {
+                    if !water {
+                        continue;
+                    }
+                    let mut base = out * 0.5;
+                    for (lean, len) in MENISCUS {
+                        let (s, c) = lean.to_radians().sin_cos();
+                        let way = -out * s + Vector3::UP * c;
                         look.sheet(
-                            plane(1.0, MEMBRANE_TALL),
+                            plane(1.0, len),
                             Paint::Liquid(Liquid::Membrane),
-                            pos,
-                            rot,
+                            base + way * (len / 2.0),
+                            at(90.0 - lean, yaw, 0.0),
                         );
+                        base += way * len;
                     }
                 }
             }
@@ -6032,7 +6040,10 @@ impl MapView {
                 m.set_shader(&shader);
                 m.set_shader_parameter("noise_tex", &self.surfaces.noise().to_variant());
                 m.set_shader_parameter("fow_tex", &self.surfaces.fow_texture().to_variant());
-                if matches!(l, Liquid::Water | Liquid::Lava) {
+                if matches!(
+                    l,
+                    Liquid::Water | Liquid::Lava | Liquid::Bubble | Liquid::Membrane
+                ) {
                     let ground = self.surfaces.ground_texture();
                     m.set_shader_parameter("ground_tex", &ground.to_variant());
                 }
@@ -10341,8 +10352,9 @@ mod tests {
             cloud.solids.iter().all(|s| !s.shadow),
             "a cloud throws no shadow"
         );
-        // the deep round a bubble two cells wide: each air cell's skin on
-        // its three sides that meet the water, none between them
+        // the deep round a bubble two cells wide: each air cell's skin (a
+        // curved meniscus) on its three sides that meet the water, none
+        // between them
         let deep = level(&f.cat, &["WWWW", "WaaW", "WWWW"]);
         let bubble = f.look_in(&deep, at(1, 1), water);
         let skins = liquids(&bubble)
@@ -10350,7 +10362,7 @@ mod tests {
             .filter(|&&l| l == Liquid::Membrane)
             .count();
         assert_eq!(liquids(&bubble)[0], Liquid::Bubble);
-        assert_eq!(skins, 3);
+        assert_eq!(skins, 3 * MENISCUS.len());
         assert_eq!(liquids(&f.look_in(&deep, at(0, 0), water)), [Liquid::Deep]);
         // elsewhere the same cells as they were
         let main = f.look_in(&deep, at(1, 1), Branch::Main);
