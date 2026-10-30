@@ -89,8 +89,23 @@ pub enum Under {
 /// anything that could pass for an object, a monster or loot.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Dress {
-    /// Half-columns built into the faces of a room's north walls.
+    /// Columns engaged in the faces of a room's north walls, their
+    /// capitals gilded or not.
     pub pilasters: bool,
+    pub gilded: bool,
+    /// Blind arches between those columns on a long north wall.
+    pub arcades: bool,
+    /// Thick piers filling a room's far corners.
+    pub piers: bool,
+    /// Shallow buttresses on a room's side walls, and how heavy (chamfered
+    /// blocks rather than dressed stone).
+    pub buttresses: bool,
+    pub heavy: bool,
+    /// Braziers on brackets on side walls: never lights.
+    pub braziers: Brazier,
+    /// A band of another stone inlaid in a bigger room's floor (manifest
+    /// name), a lozenge in the biggest's middle.
+    pub inlay: Option<&'static str>,
     /// Banners hung above head height (their cloths, manifest materials,
     /// one chosen by the cell), and whether they hang torn.
     pub banners: &'static [&'static str],
@@ -116,9 +131,27 @@ pub struct Dress {
     pub formations: bool,
 }
 
+/// What a wall's brazier holds: never a light (a lit-looking brazier in a
+/// room NetHack has dark would lie about its light).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Brazier {
+    None,
+    /// Cold ash.
+    Cold,
+    /// A dull glow of embers, lighting nothing.
+    Ember,
+}
+
 impl Dress {
     pub const NONE: Dress = Dress {
         pilasters: false,
+        gilded: false,
+        arcades: false,
+        piers: false,
+        buttresses: false,
+        heavy: false,
+        braziers: Brazier::None,
+        inlay: None,
         banners: &[],
         torn: false,
         chains: false,
@@ -242,6 +275,13 @@ const MAIN: BranchLook = BranchLook {
     // a crypt, a barracks, a storeroom: worn, and some of it still hung
     dress: Dress {
         pilasters: true,
+        gilded: false,
+        arcades: true,
+        piers: true,
+        buttresses: true,
+        heavy: false,
+        braziers: Brazier::Cold,
+        inlay: Some("marble"),
         banners: &["banner_red", "banner_ochre"],
         torn: false,
         chains: true,
@@ -357,6 +397,12 @@ pub fn look_of(branch: Branch) -> BranchLook {
                 cracks: true,
                 embers: true,
                 corners: true,
+                // heavy and plain, its braziers smouldering (lighting
+                // nothing); no inlay (its floors are its fire's)
+                piers: true,
+                buttresses: true,
+                heavy: true,
+                braziers: Brazier::Ember,
                 ..Dress::NONE
             },
             grade: Grade {
@@ -392,6 +438,10 @@ pub fn look_of(branch: Branch) -> BranchLook {
             lanterns: true,
             dress: Dress {
                 pilasters: true,
+                gilded: true,
+                arcades: true,
+                piers: true,
+                inlay: Some("marble"),
                 banners: &["banner_blue"],
                 ..Dress::NONE
             },
@@ -415,6 +465,9 @@ pub fn look_of(branch: Branch) -> BranchLook {
             bands: Some("dark_iron"),
             dress: Dress {
                 pilasters: true,
+                arcades: true,
+                piers: true,
+                inlay: Some("marble"),
                 banners: &["banner_purple"],
                 ..Dress::NONE
             },

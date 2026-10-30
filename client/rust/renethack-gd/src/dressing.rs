@@ -7,25 +7,43 @@
 //!
 //! On the faces the camera sees, a room's north wall (square on) and its
 //! side walls (aslant): pilasters, banners and alcoves on the north wall,
-//! seams of fire in Gehennom; chains on the side walls; moss at their feet; small
-//! cobwebs high in the far corners, well above anybody's head. On its
-//! bare floor: cracks from the foot of its walls, rubble heaped and sunk
-//! in its corners. In a cave, rock grown into its walls from the floor to
-//! their tops. Each is chosen by its cell on a fixed pattern that keeps
-//! the torches' cells free: a level looks the same every visit and as
-//! more of it comes into view. Each is part of its cell's batched solids,
-//! of a few shared meshes, in the map's own materials (what hangs on a
-//! wall thins out with it round the hero). A child of map_view.
+//! seams of fire in Gehennom; chains on the side walls; moss at their
+//! feet; small cobwebs high in the far corners, well above anybody's head.
+//! On its bare floor: cracks from the foot of its walls, rubble heaped and
+//! sunk in its corners. In a cave, rock grown into its walls from the
+//! floor to their tops. Each is chosen by its cell on a fixed pattern that
+//! keeps the torches' cells free: a level looks the same every visit and
+//! as more of it comes into view.
+//!
+//! Volume goes into the walls, never onto the floor (a player would read
+//! whatever stands on a floor cell as in the way): columns engaged in the
+//! north walls, blind arches between them on a long one, or buttresses
+//! where a branch builds no columns; thick piers in the far corners;
+//! buttresses and high braziers (never alight) on the side walls. Below
+//! head height nothing stands out more than a hand from a wall, above it
+//! an impost or a pier's capital may; what has mass casts a shadow. A
+//! bigger room's floor has a band of another stone inlaid in it, flat
+//! (the level's `plan` lays the arches and the inlays out). Each is part
+//! of its cell's batched solids, of a few shared meshes, in the map's own
+//! materials (what hangs on a wall thins out with it round the hero). A
+//! child of map_view.
 
 use godot::prelude::*;
 use nh_world::Terrain;
+
+use std::collections::HashMap;
 
 use super::{
     Around, CAP_HEIGHT, Ctx, Finish, Look, PLINTH_HEIGHT, Paint, Role, SHADE_LIT, SHADE_RUBBLE,
     SIDES, Side, WALL_HEIGHT, at, bevel, cell_noise, cuboid, cylinder, facets, is_pier, prism,
     rock, torch_pattern, torus,
 };
-use crate::branch_look::Dress;
+use crate::branch_look::{Brazier, Dress};
+
+/// How far below head height what stands out of a wall may reach past its
+/// face, and from what height up it may overhang the room's air further.
+pub(super) const REACH: f32 = 0.13;
+pub(super) const OVERHEAD: f32 = 1.9;
 
 /// What the face of a room's north wall shows.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -37,18 +55,25 @@ enum Piece {
     Alcove,
     /// Seams of the fire under the floors, glowing up from its foot.
     Embers,
+    /// A buttress against it, where the branch builds no columns.
+    Buttress,
 }
 
 /// What the face of a room's north wall at (x, y) shows by the branch's
-/// dressing: a pilaster on every third cell, a banner between them on
-/// some, an alcove or seams of fire on a few; nothing where the torches' pattern
-/// hangs one.
+/// dressing: a column on every third cell (a torch falling there hangs on
+/// it), or where it builds none a buttress on every fourth, a banner
+/// between them on some, an alcove or seams of fire on a few; nothing
+/// else where the torches' pattern hangs one.
 fn north_piece(x: i32, y: i32, dress: &Dress) -> Option<Piece> {
+    // (a torch on a column's cell hangs on the column)
+    if dress.pilasters && x.rem_euclid(3) == 0 {
+        return Some(Piece::Pilaster);
+    }
     if torch_pattern(x, y, true) {
         return None;
     }
-    if dress.pilasters && x.rem_euclid(3) == 0 {
-        return Some(Piece::Pilaster);
+    if dress.buttresses && !dress.pilasters && x.rem_euclid(4) == 1 {
+        return Some(Piece::Buttress);
     }
     let pick = cell_noise(x, y, 131);
     if !dress.banners.is_empty() && pick < 0.3 {
@@ -73,6 +98,7 @@ fn chain_here(x: i32, y: i32, side: usize, dress: &Dress) -> bool {
 /// never where a torch hangs on either face beside it (the flame in it).
 pub(super) fn webbed(x: i32, y: i32, sx: i32, dress: &Dress) -> bool {
     dress.cobwebs
+        && !pier_here(x, y, dress)
         && cell_noise(x, y, 136) < 0.45
         && !torch_pattern(x + sx, y, true)
         && !torch_pattern(x, y + 1, false)
@@ -89,7 +115,11 @@ pub(super) fn hangs(x: i32, y: i32, into: (i32, i32), dress: &Dress) -> bool {
                 || webbed(x + 1, y, -1, dress)
         }
         (dx, _) => {
-            chain_here(x, y, if dx > 0 { 3 } else { 2 }, dress) || webbed(x, y - 1, dx, dress)
+            let side = if dx > 0 { 3 } else { 2 };
+            chain_here(x, y, side, dress)
+                || buttress_here(x, y, side, dress)
+                || brazier_here(x, y, side, dress)
+                || webbed(x, y - 1, dx, dress)
         }
     }
 }
@@ -126,17 +156,48 @@ pub(super) fn wall(
     // (a pier stands a little wider than the walls it joins)
     let face = if pier { 0.55 } else { 0.51 };
     let first = look.solids.len();
-    let piece = north_piece(ctx.x, ctx.y, dress).filter(|_| around.floor[1] && !pier && !taken);
+    let arch = match ctx.volume {
+        Some(Volume::Arch { west }) if around.floor[1] && !pier && !taken => Some(west),
+        _ => None,
+    };
+    let piece = north_piece(ctx.x, ctx.y, dress)
+        .filter(|_| around.floor[1] && !pier && !taken && arch.is_none());
+    // (what has mass casts a shadow: it reads as standing out by it)
+    let mut massive = Vec::new();
+    if let Some(west) = arch {
+        let a = look.solids.len();
+        arch_half(look, ctx, face, west);
+        massive.push(a..look.solids.len());
+    }
     match piece {
-        Some(Piece::Pilaster) => pilaster(look, ctx, top, face),
+        Some(Piece::Pilaster) => {
+            let a = look.solids.len();
+            column(look, ctx, top, face);
+            massive.push(a..look.solids.len());
+        }
+        Some(Piece::Buttress) => {
+            let a = look.solids.len();
+            buttress(look, ctx, top, face, true);
+            massive.push(a..look.solids.len());
+        }
         Some(Piece::Banner) => banner(look, ctx, face),
         Some(Piece::Alcove) => alcove(look, ctx, face),
         Some(Piece::Embers) => embers(look, ctx, face),
         None => {}
     }
     for side in [2, 3] {
-        if around.floor[side] && !pier && chain_here(ctx.x, ctx.y, side, dress) {
-            chain(look, ctx, SIDES[side].0 * face);
+        if !around.floor[side] || pier {
+            continue;
+        }
+        let fx = SIDES[side].0 * face;
+        if chain_here(ctx.x, ctx.y, side, dress) {
+            chain(look, ctx, fx);
+        } else if buttress_here(ctx.x, ctx.y, side, dress) {
+            let a = look.solids.len();
+            buttress(look, ctx, top, fx, false);
+            massive.push(a..look.solids.len());
+        } else if brazier_here(ctx.x, ctx.y, side, dress) {
+            brazier(look, ctx, fx);
         }
     }
     if dress.moss {
@@ -151,38 +212,246 @@ pub(super) fn wall(
         _ => None,
     };
     let standing = !around.aside_open && !around.far_aside_open;
-    if let Some(sx) = room.filter(|&sx| standing && webbed(ctx.x, ctx.y, sx, dress)) {
+    if let Some(sx) = room.filter(|_| standing && pier_here(ctx.x, ctx.y, dress)) {
+        let a = look.solids.len();
+        corner_pier(look, ctx, top, sx as f32);
+        massive.push(a..look.solids.len());
+    } else if let Some(sx) = room.filter(|&sx| standing && webbed(ctx.x, ctx.y, sx, dress)) {
         cobweb(look, ctx, sx as f32);
     }
     for s in &mut look.solids[first..] {
         s.shadow = false;
     }
-    piece.is_some()
+    for r in massive {
+        for s in &mut look.solids[r] {
+            s.shadow = true;
+        }
+    }
+    piece.is_some() || arch.is_some()
 }
 
-/// A half-column built into the face: a base standing out over the
-/// plinth, its shaft, a capital under the wall's cap.
-fn pilaster(look: &mut Look, ctx: &Ctx, top: f32, face: f32) {
+/// Where a room's columns spring their arches from, and how high their
+/// crown rises (`column`, `arch_half`).
+const SPRING: f32 = 1.62;
+const CROWN: f32 = 1.98;
+
+/// A column engaged in the face: a round shaft half sunk in the wall on a
+/// stepped plinth, a capital over it, and above head height an impost
+/// block standing out into the room's air (the arches spring from it).
+/// Gilded capitals in a branch that has them.
+fn column(look: &mut Look, ctx: &Ctx, top: f32, face: f32) {
+    let (Some(stone), Some(dark)) = (masonry(ctx, 108), masonry(ctx, 75)) else {
+        return;
+    };
+    let capital = if ctx.branch.dress.gilded {
+        trim(ctx, "gold", 60).unwrap_or(dark)
+    } else {
+        dark
+    };
+    // the plinth in two steps
+    look.solid(bevel(0.52, 0.16, 2.0 * REACH), dark, at(0.0, 0.08, face));
+    look.solid(bevel(0.44, 0.14, 1.6 * REACH), stone, at(0.0, 0.23, face));
+    // the shaft, sunk a little past half in the wall
+    let shaft = SPRING - 0.3;
+    look.solid(
+        cylinder(0.2, 0.2, shaft),
+        stone,
+        at(0.0, 0.3 + shaft / 2.0, face + REACH - 0.2),
+    );
+    look.solid(
+        bevel(0.48, 0.14, 2.0 * REACH),
+        capital,
+        at(0.0, SPRING + 0.07, face),
+    );
+    // the impost, over anybody's head (none where a torch hangs on the
+    // column: its flame stands there)
+    if !torch_pattern(ctx.x, ctx.y, true) {
+        let impost = (top.min(WALL_HEIGHT) - CAP_HEIGHT - OVERHEAD).max(0.08);
+        look.solid(
+            bevel(0.56, impost, 0.5),
+            dark,
+            at(0.0, OVERHEAD + impost / 2.0, face + 0.1),
+        );
+    }
+}
+
+/// Half of a blind arch between two columns on a long north wall (`west`:
+/// the column it springs from stands west of this cell): the face under
+/// it a recess of the wall's stone in shade (never dark as a way through),
+/// the ring of its voussoirs standing out from the face, its crown at the
+/// edge of the cell it shares with the other half.
+fn arch_half(look: &mut Look, ctx: &Ctx, face: f32, west: bool) {
+    let (Some(stone), Some(dark)) = (masonry(ctx, SHADE_LIT), masonry(ctx, 50)) else {
+        return;
+    };
+    let sx = if west { -1.0 } else { 1.0 };
+    // the arch spans from one column's side to the other's: its middle at
+    // this cell's edge with the other half
+    let mid = -sx * 0.5;
+    let half_span = 1.25;
+    let rise = CROWN - SPRING;
+    // the recess: dark under the arch, up to its springing and in strips
+    // under its curve, each as wide as the curve is at its height
+    look.solid(
+        cuboid(1.0, SPRING - 0.3, 0.01),
+        dark,
+        at(0.0, 0.3 + (SPRING - 0.3) / 2.0, face + 0.004),
+    );
+    for k in 0..4 {
+        let h = rise / 4.0;
+        let y0 = SPRING + h * k as f32;
+        let frac = ((y0 + h / 2.0 - SPRING) / rise).min(0.95);
+        let w = half_span * (1.0 - frac * frac).sqrt();
+        let x0 = mid + sx * w;
+        let (lo, hi) = (x0.min(mid).max(-0.5), x0.max(mid).min(0.5));
+        if hi - lo > 0.02 {
+            look.solid(
+                cuboid(hi - lo, h, 0.01),
+                dark,
+                at((lo + hi) / 2.0, y0 + h / 2.0, face + 0.004),
+            );
+        }
+    }
+    // the voussoirs along the curve, each turned to it
+    for k in 0..5 {
+        let a = std::f32::consts::FRAC_PI_2 * (k as f32 + 0.5) / 5.0;
+        let (x, y) = (mid + sx * half_span * a.cos(), SPRING + rise * a.sin());
+        if x.abs() > 0.5 {
+            continue;
+        }
+        let tilt = (rise * a.cos()).atan2(half_span * a.sin()).to_degrees();
+        look.turned(
+            bevel(0.2, 0.13, 0.12),
+            stone,
+            at(x, y, face + 0.05),
+            at(0.0, 0.0, -sx * tilt),
+        );
+    }
+}
+
+/// A pier the room's corner is built into at a corner cell (`sx`: the
+/// room east of it, or west): a thick chamfered block filling the corner,
+/// a hand into the room each way, its capital, and over anybody's head an
+/// impost reaching further.
+fn corner_pier(look: &mut Look, ctx: &Ctx, top: f32, sx: f32) {
     let (Some(stone), Some(dark)) = (masonry(ctx, SHADE_LIT), masonry(ctx, 80)) else {
         return;
     };
-    let base = 0.3;
-    let capital = top - CAP_HEIGHT - 0.14;
+    // the corner's faces at 0.55 (a pier's), the block a hand past them
+    // and its capital a little more
+    let edge = 0.55 + REACH - 0.02;
+    let size = edge + 0.35;
+    let mid = edge - size / 2.0;
     look.solid(
-        bevel(0.38, base, 0.12),
-        dark,
-        at(0.0, base / 2.0, face + 0.06),
-    );
-    let shaft = capital - base;
-    look.solid(
-        bevel(0.26, shaft, 0.08),
+        bevel(size, SPRING, size),
         stone,
-        at(0.0, base + shaft / 2.0, face + 0.04),
+        at(sx * mid, SPRING / 2.0, mid),
     );
     look.solid(
-        bevel(0.38, 0.14, 0.12),
+        bevel(size + 0.04, 0.12, size + 0.04),
         dark,
-        at(0.0, capital + 0.07, face + 0.06),
+        at(sx * mid, SPRING + 0.06, mid),
+    );
+    let impost = (top.min(WALL_HEIGHT) - CAP_HEIGHT - OVERHEAD).max(0.08);
+    let reach = edge + 0.16;
+    let wide = size + 0.3;
+    let at_mid = reach - wide / 2.0;
+    look.solid(
+        bevel(wide, impost, wide),
+        dark,
+        at(sx * at_mid, OVERHEAD + impost / 2.0, at_mid),
+    );
+}
+
+/// A pier fills a room's corner at a corner cell (by the cell).
+fn pier_here(x: i32, y: i32, dress: &Dress) -> bool {
+    dress.piers && (dress.heavy || cell_noise(x, y, 171) < 0.6)
+}
+
+/// A buttress against the face of the side wall at (x, y) towards `side`:
+/// every fourth cell, never where a torch hangs.
+fn buttress_here(x: i32, y: i32, side: usize, dress: &Dress) -> bool {
+    dress.buttresses && !torch_pattern(x, y, false) && (y + side as i32).rem_euclid(4) == 1
+}
+
+/// A buttress against a wall's face (`face`: how far it stands from the
+/// middle, west or east of it on a side wall, south on a `north` one): a
+/// hand deep up to two thirds of the wall, half as deep above a string
+/// course; of heavy blocks where the branch builds so.
+fn buttress(look: &mut Look, ctx: &Ctx, top: f32, face: f32, north: bool) {
+    let (Some(stone), Some(dark)) = (masonry(ctx, SHADE_LIT), masonry(ctx, 80)) else {
+        return;
+    };
+    let heavy = ctx.branch.dress.heavy;
+    let wide = if heavy { 0.56 } else { 0.42 };
+    // (deep and wide as on a side wall, turned for a north one)
+    let block = |deep: f32, h: f32, wide: f32| {
+        if north {
+            bevel(wide, h, deep)
+        } else {
+            bevel(deep, h, wide)
+        }
+    };
+    let place = |y: f32| {
+        if north {
+            at(0.0, y, face)
+        } else {
+            at(face, y, 0.0)
+        }
+    };
+    let low = (top - CAP_HEIGHT) * 0.66;
+    look.solid(block(2.0 * REACH, low, wide), stone, place(low / 2.0));
+    let high = top - CAP_HEIGHT - low;
+    look.solid(
+        block(REACH, high, wide - 0.08),
+        if heavy { dark } else { stone },
+        place(low + high / 2.0),
+    );
+    look.solid(
+        block(2.0 * REACH + 0.02, 0.06, wide + 0.04),
+        dark,
+        place(low),
+    );
+}
+
+/// A brazier on the side wall at (x, y) towards `side`: a few, never with
+/// a torch, a chain or a buttress.
+fn brazier_here(x: i32, y: i32, side: usize, dress: &Dress) -> bool {
+    dress.braziers != Brazier::None
+        && !torch_pattern(x, y, false)
+        && !chain_here(x, y, side, dress)
+        && !buttress_here(x, y, side, dress)
+        && cell_noise(x, y, 175 + side as u32) < 0.12
+}
+
+/// An iron brazier on a bracket high on a side wall's face (`fx`), over
+/// anybody's head and never alight: cold ash in it, or in a branch over
+/// fire embers glowing dull (they light nothing).
+fn brazier(look: &mut Look, ctx: &Ctx, fx: f32) {
+    let Some(iron) = trim(ctx, ctx.branch.dress.iron, SHADE_LIT) else {
+        return;
+    };
+    let out = fx.signum();
+    let y = OVERHEAD + 0.06;
+    // the bracket, then the bowl a little out from the face
+    look.solid(
+        cuboid(0.18, 0.04, 0.06),
+        iron,
+        at(fx + out * 0.09, y - 0.03, 0.0),
+    );
+    look.solid(
+        cylinder(0.14, 0.08, 0.1),
+        iron,
+        at(fx + out * 0.2, y + 0.05, 0.0),
+    );
+    let fill = match ctx.branch.dress.braziers {
+        Brazier::Ember => Paint::Flat(Color::from_rgb(0.55, 0.14, 0.03), Finish::Ember),
+        _ => Paint::Flat(Color::from_rgb(0.22, 0.21, 0.2), Finish::Matte),
+    };
+    look.solid(
+        cylinder(0.12, 0.12, 0.01),
+        fill,
+        at(fx + out * 0.2, y + 0.1, 0.0),
     );
 }
 
@@ -432,6 +701,7 @@ pub(super) fn floor(look: &mut Look, around: &Around, ctx: &Ctx) {
         return;
     }
     let (first, top) = (look.solids.len(), look.top);
+    inlay(look, ctx);
     if dress.cracks {
         cracks(look, around, ctx);
     }
@@ -563,5 +833,341 @@ pub(super) fn cave(look: &mut Look, around: &Around, ctx: &Ctx, top: f32, rock_p
             (rock(0.4, h, wide), at(dx * 0.5, 0.0, along))
         };
         look.solid(mesh, rock_paint, pos);
+    }
+}
+
+/// What the level's plan (`plan`) gives a cell: half of a blind arch on a
+/// north wall between two columns (`west`: the column it springs from
+/// stands west of it), or lines inlaid in a room's floor (the first `n`,
+/// each from and to in the cell's own metres, x and z, and how wide;
+/// `corner`: a band's corner there, a stone set where its lines meet).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub(super) enum Volume {
+    Arch {
+        west: bool,
+    },
+    Inlay {
+        lines: [[f32; 5]; 4],
+        n: u8,
+        corner: Option<[f32; 2]>,
+    },
+}
+
+/// The least run of north wall over a room's floor that has arches, the
+/// least room (wide, deep) that has a band inlaid, and the least that has
+/// a lozenge in its middle too.
+const ARCADE_LEAST: i32 = 7;
+const BAND_LEAST: (i32, i32) = (5, 4);
+const LOZENGE_LEAST: (i32, i32) = (9, 5);
+/// A band's width, how far inside its cells' outer edges it runs (to its
+/// middle), its fillet's width, and how far inside the band the fillet
+/// runs (middle to middle); a lozenge's width; a band's corner stone.
+const BAND: f32 = 0.14;
+const BAND_IN: f32 = 0.1;
+const FILLET: f32 = 0.04;
+const FILLET_IN: f32 = 0.13;
+const LOZENGE: f32 = 0.1;
+const CORNER: f32 = 0.2;
+
+/// What the plan reads of a cell: its terrain as known; whether something
+/// stands or lies on ground never shown bare (it is inside a room all the
+/// same); whether it matters in play or may (`map_view::may_matter`).
+#[derive(Debug, Clone, Copy, Default)]
+pub(super) struct PlanCell {
+    pub terrain: Option<Terrain>,
+    pub held: bool,
+    pub matters: bool,
+}
+
+/// The level's plan by what each cell is (`cell`) and the branch's dressing:
+/// on a long north wall over a room's floor, a blind arch between two of
+/// its columns (a torch on the wall there hangs in it), whole or none; in
+/// a room of `BAND_LEAST` or more, a band of another stone inlaid round
+/// it a cell in from its walls, a fillet inside the band, and in one of
+/// `LOZENGE_LEAST` or more a lozenge in its middle. Nothing on or round a
+/// door or a feature.
+pub(super) fn plan(
+    cell: impl Fn(i32, i32) -> PlanCell,
+    dress: &Dress,
+) -> HashMap<(i32, i32), Volume> {
+    use nh_world::{COLNO, ROWNO};
+    let mut out = HashMap::new();
+    // (each cell read once: the rooms and the plain round them read most
+    // several times over)
+    let grid: Vec<PlanCell> = (0..ROWNO)
+        .flat_map(|y| (0..COLNO).map(move |x| (x, y)))
+        .map(|(x, y)| cell(x, y))
+        .collect();
+    let cell = |x: i32, y: i32| {
+        let on = (0..COLNO).contains(&x) && (0..ROWNO).contains(&y);
+        if on {
+            grid[(y * COLNO + x) as usize]
+        } else {
+            PlanCell::default()
+        }
+    };
+    let t = |x: i32, y: i32| cell(x, y).terrain;
+    let floor = |x: i32, y: i32| matches!(t(x, y), Some(Terrain::Floor | Terrain::DarkFloor));
+    let plain =
+        |x: i32, y: i32| (-1..=1).all(|dy| (-1..=1).all(|dx| !cell(x + dx, y + dy).matters));
+    if dress.arcades && dress.pilasters {
+        let north = |x: i32, y: i32| t(x, y) == Some(Terrain::Wall) && floor(x, y + 1);
+        for y in 0..ROWNO {
+            let mut x = 0;
+            while x < COLNO {
+                if !north(x, y) {
+                    x += 1;
+                    continue;
+                }
+                let start = x;
+                while x < COLNO && north(x, y) {
+                    x += 1;
+                }
+                if x - start < ARCADE_LEAST {
+                    continue;
+                }
+                for c in (start..x - 3).filter(|c| c.rem_euclid(3) == 0) {
+                    if (c..=c + 3).all(|cx| plain(cx, y)) {
+                        out.insert((c + 1, y), Volume::Arch { west: true });
+                        out.insert((c + 2, y), Volume::Arch { west: false });
+                    }
+                }
+            }
+        }
+    }
+    if dress.inlay.is_some() {
+        let mut lines: HashMap<(i32, i32), Vec<[f32; 5]>> = HashMap::new();
+        let mut corners = HashMap::new();
+        // (a room's rectangle takes in what stands in it: stairs, an
+        // altar, a fountain, a pool)
+        let inside = |x: i32, y: i32| {
+            cell(x, y).held
+                || matches!(
+                    t(x, y),
+                    Some(
+                        Terrain::Floor
+                            | Terrain::DarkFloor
+                            | Terrain::StairsUp
+                            | Terrain::StairsDown
+                            | Terrain::LadderUp
+                            | Terrain::LadderDown
+                            | Terrain::Altar
+                            | Terrain::Grave
+                            | Terrain::Throne
+                            | Terrain::Sink
+                            | Terrain::Fountain
+                            | Terrain::Trap
+                            | Terrain::Tree
+                            | Terrain::Pool
+                            | Terrain::Water
+                            | Terrain::Ice
+                            | Terrain::Lava
+                    )
+                )
+        };
+        for room in rooms(&inside) {
+            let (x0, y0, x1, y1) = room;
+            let (w, h) = (x1 - x0 + 1, y1 - y0 + 1);
+            if w < BAND_LEAST.0 || h < BAND_LEAST.1 {
+                continue;
+            }
+            // the band just inside the cells a cell in from the walls,
+            // along their outer edges, its fillet inside it
+            let edge = 0.5 + BAND_IN;
+            let (bx0, by0, bx1, by1) = (
+                x0 as f32 + edge,
+                y0 as f32 + edge,
+                x1 as f32 - edge,
+                y1 as f32 - edge,
+            );
+            let i = FILLET_IN;
+            let rings = [
+                ((bx0, by0), (bx1, by0), (bx0, by1), (bx1, by1), BAND),
+                (
+                    (bx0 + i, by0 + i),
+                    (bx1 - i, by0 + i),
+                    (bx0 + i, by1 - i),
+                    (bx1 - i, by1 - i),
+                    FILLET,
+                ),
+            ];
+            for (nw, ne, sw, se, wide) in rings {
+                for (a, b) in [(nw, ne), (sw, se), (nw, sw), (ne, se)] {
+                    for x in x0 + 1..x1 {
+                        for y in y0 + 1..y1 {
+                            if let Some(seg) = clip(a, b, x, y) {
+                                let [a0, a1, b0, b1] = seg;
+                                lines
+                                    .entry((x, y))
+                                    .or_default()
+                                    .push([a0, a1, b0, b1, wide]);
+                            }
+                        }
+                    }
+                }
+            }
+            for (cx, cy) in [(bx0, by0), (bx1, by0), (bx0, by1), (bx1, by1)] {
+                let (x, y) = (cx.round() as i32, cy.round() as i32);
+                corners.insert((x, y), [cx - x as f32, cy - y as f32]);
+            }
+            if w < LOZENGE_LEAST.0 || h < LOZENGE_LEAST.1 {
+                continue;
+            }
+            // the lozenge inside the band, its corners a cell in from the
+            // middles of the band's sides
+            let (ix0, iy0, ix1, iy1) = (bx0 + 1.0, by0 + 1.0, bx1 - 1.0, by1 - 1.0);
+            let (cx, cy) = ((ix0 + ix1) / 2.0, (iy0 + iy1) / 2.0);
+            let tips = [(cx, iy0), (ix1, cy), (cx, iy1), (ix0, cy)];
+            for k in 0..4 {
+                let (a, b) = (tips[k], tips[(k + 1) % 4]);
+                for x in x0 + 1..x1 {
+                    for y in y0 + 1..y1 {
+                        if let Some([a0, a1, b0, b1]) = clip(a, b, x, y) {
+                            lines
+                                .entry((x, y))
+                                .or_default()
+                                .push([a0, a1, b0, b1, LOZENGE]);
+                        }
+                    }
+                }
+            }
+        }
+        for ((x, y), segs) in lines {
+            if !floor(x, y) || !plain(x, y) {
+                continue;
+            }
+            let mut arr = [[0.0; 5]; 4];
+            let n = segs.len().min(4);
+            arr[..n].copy_from_slice(&segs[..n]);
+            out.insert(
+                (x, y),
+                Volume::Inlay {
+                    lines: arr,
+                    n: n as u8,
+                    corner: corners.get(&(x, y)).copied(),
+                },
+            );
+        }
+    }
+    out
+}
+
+/// The rooms of the level as their floors show (`floor`: inside a room):
+/// each whole rectangle (x0, y0, x1, y1), a room fully known (a dark one
+/// half seen is not one yet).
+fn rooms(floor: &impl Fn(i32, i32) -> bool) -> Vec<(i32, i32, i32, i32)> {
+    use nh_world::{COLNO, ROWNO};
+    let mut seen = std::collections::HashSet::new();
+    let mut out = Vec::new();
+    for (x, y) in (0..ROWNO).flat_map(|y| (0..COLNO).map(move |x| (x, y))) {
+        if !floor(x, y) || !seen.insert((x, y)) {
+            continue;
+        }
+        let mut area = vec![(x, y)];
+        let mut i = 0;
+        while i < area.len() {
+            let (ax, ay) = area[i];
+            for n in [(ax + 1, ay), (ax - 1, ay), (ax, ay + 1), (ax, ay - 1)] {
+                if floor(n.0, n.1) && seen.insert(n) {
+                    area.push(n);
+                }
+            }
+            i += 1;
+        }
+        let (x0, x1) = (
+            area.iter().map(|a| a.0).min(),
+            area.iter().map(|a| a.0).max(),
+        );
+        let (y0, y1) = (
+            area.iter().map(|a| a.1).min(),
+            area.iter().map(|a| a.1).max(),
+        );
+        if let (Some(x0), Some(x1), Some(y0), Some(y1)) = (x0, x1, y0, y1)
+            && area.len() as i32 == (x1 - x0 + 1) * (y1 - y0 + 1)
+        {
+            out.push((x0, y0, x1, y1));
+        }
+    }
+    out
+}
+
+/// The part of the line from `a` to `b` (level coordinates) inside cell
+/// (x, y), in the cell's own metres; None if it does not cross it.
+fn clip(a: (f32, f32), b: (f32, f32), x: i32, y: i32) -> Option<[f32; 4]> {
+    let (lo_x, hi_x) = (x as f32 - 0.5, x as f32 + 0.5);
+    let (lo_y, hi_y) = (y as f32 - 0.5, y as f32 + 0.5);
+    let (dx, dy) = (b.0 - a.0, b.1 - a.1);
+    let (mut t0, mut t1) = (0.0f32, 1.0f32);
+    for (p, q) in [
+        (-dx, a.0 - lo_x),
+        (dx, hi_x - a.0),
+        (-dy, a.1 - lo_y),
+        (dy, hi_y - a.1),
+    ] {
+        if p == 0.0 {
+            if q < 0.0 {
+                return None;
+            }
+        } else {
+            let r = q / p;
+            if p < 0.0 {
+                t0 = t0.max(r);
+            } else {
+                t1 = t1.min(r);
+            }
+        }
+    }
+    (t1 - t0 > 0.02).then_some([
+        a.0 + dx * t0 - x as f32,
+        a.1 + dy * t0 - y as f32,
+        a.0 + dx * t1 - x as f32,
+        a.1 + dy * t1 - y as f32,
+    ])
+}
+
+/// How light an inlay's stone is: held down, so it reads as another stone
+/// set in the floor and never as a line drawn over it.
+const INLAY_SHADE: u8 = 62;
+
+/// The inlay the plan gives a floor cell: its lines, flat in the floor, a
+/// corner stone where a band's lines meet.
+fn inlay(look: &mut Look, ctx: &Ctx) {
+    let Some(Volume::Inlay { lines, n, corner }) = ctx.volume else {
+        return;
+    };
+    let Some(stone) = ctx
+        .branch
+        .dress
+        .inlay
+        .and_then(|name| trim(ctx, name, INLAY_SHADE))
+    else {
+        return;
+    };
+    for &[x0, z0, x1, z1, wide] in &lines[..n as usize] {
+        let len = (x1 - x0).hypot(z1 - z0);
+        if len < 0.02 {
+            continue;
+        }
+        let yaw = -(z1 - z0).atan2(x1 - x0).to_degrees();
+        // a band or a lozenge laid in stones with joints between, a
+        // fillet in one
+        let stones = if wide > FILLET {
+            (len / 0.5).round().max(1.0)
+        } else {
+            1.0
+        };
+        let (step, joint) = (len / stones, if stones > 1.0 { 0.03 } else { 0.0 });
+        for k in 0..stones as usize {
+            let t = (k as f32 + 0.5) / stones;
+            look.turned(
+                cuboid(step - joint, 0.004, wide),
+                stone,
+                at(x0 + (x1 - x0) * t, 0.003, z0 + (z1 - z0) * t),
+                at(0.0, yaw, 0.0),
+            );
+        }
+    }
+    if let Some([x, z]) = corner {
+        look.solid(cuboid(CORNER, 0.005, CORNER), stone, at(x, 0.0035, z));
     }
 }

@@ -1006,6 +1006,8 @@ struct Ctx<'a> {
     hero_pit: Option<bool>,
     /// How the branch the level is in looks.
     branch: &'a BranchLook,
+    /// What the level's plan gives this cell (`dressing::plan`).
+    volume: Option<dressing::Volume>,
 }
 
 impl Ctx<'_> {
@@ -1210,6 +1212,18 @@ fn matters(t: Terrain) -> bool {
             | Terrain::Effect
             | Terrain::Unknown
     )
+}
+
+/// What the level's plan (`dressing::plan`) reads of the cell at (x, y).
+fn plan_cell(map: &MapState, catalog: &Catalog, x: i32, y: i32) -> dressing::PlanCell {
+    map.cell(x, y).map_or_else(Default::default, |c| {
+        let terrain = cell_terrain(c, catalog);
+        dressing::PlanCell {
+            terrain,
+            held: terrain.is_none() && c.entity().is_some(),
+            matters: may_matter(c, catalog),
+        }
+    })
 }
 
 /// A cell that shows a terrain that `matters`, or may: a thing lying on
@@ -3436,6 +3450,8 @@ pub struct MapView {
     /// one: Minetown's shops and temple), drawn in `built_look`.
     built: HashSet<(i32, i32)>,
     built_look: BranchLook,
+    /// The level's plan: its arches and inlays (`dressing::plan`).
+    volume: HashMap<(i32, i32), dressing::Volume>,
     /// The post layer's material, and how far a new level is still
     /// hidden in black (1 when it is drawn, 0 when it shows).
     post_mat: Option<Gd<ShaderMaterial>>,
@@ -4222,6 +4238,7 @@ impl MapView {
             level_look: crate::branch_look::look_of(Branch::Main),
             swamp: false,
             built: HashSet::new(),
+            volume: HashMap::new(),
             built_look: crate::branch_look::look_of(Branch::Main),
             stats_window: std::env::var_os("RENETHACK_FRAME_STATS").map(|_| FrameStats::default()),
             sightings: std::env::var_os("RENETHACK_DUMP_SIGHTINGS").and_then(|p| {
@@ -4402,6 +4419,7 @@ impl MapView {
             self.vfx.clear();
             self.facing.clear();
             self.refresh_built(world, catalog);
+            self.refresh_volume(world, catalog);
             self.generation = Some(generation);
             world.map.take_dirty();
             // built over the next frames, nearest the hero first (the
@@ -4441,6 +4459,8 @@ impl MapView {
             self.flank_steed(was_at, hero, world);
             // walls found to be built (a door seen in them) drawn again
             dirty.extend(self.refresh_built(world, catalog));
+            // and cells the level's plan gives something else now
+            dirty.extend(self.refresh_volume(world, catalog));
             let near: Vec<_> = dirty
                 .iter()
                 .flat_map(|&(x, y)| {
@@ -5250,6 +5270,28 @@ impl MapView {
         changed
     }
 
+    /// The level's plan of arches and inlays as the map shows it now
+    /// (`dressing::plan`); the cells whose part in it changed.
+    fn refresh_volume(&mut self, world: &World, catalog: &Catalog) -> Vec<(i32, i32)> {
+        let plan = dressing::plan(
+            |x, y| plan_cell(&world.map, catalog, x, y),
+            &self.level_look.dress,
+        );
+        let changed = plan
+            .iter()
+            .filter(|(k, v)| self.volume.get(k) != Some(v))
+            .map(|(&k, _)| k)
+            .chain(
+                self.volume
+                    .keys()
+                    .filter(|k| !plan.contains_key(k))
+                    .copied(),
+            )
+            .collect();
+        self.volume = plan;
+        changed
+    }
+
     /// Lava is a light: one over the middle of each pool of it known, and
     /// over a big one one every `LAVA_SPACING` cells, lighting its walls
     /// and banks; at most `LAVA_LIGHTS`, the pools' middles first.
@@ -5317,8 +5359,10 @@ impl MapView {
                 self.torches.push(torch);
             }
             let (fx, fz) = (dx as f32, dz as f32);
-            // on the wall's face towards the room
-            let face = Vector3::new(x as f32 + fx * 0.5, 0.0, y as f32 + fz * 0.5);
+            // on the wall's face towards the room, or on a column's there
+            let column = dx == 0 && self.branch_look.dress.pilasters && x.rem_euclid(3) == 0;
+            let out = 0.5 + if column { dressing::REACH } else { 0.0 };
+            let face = Vector3::new(x as f32 + fx * out, 0.0, y as f32 + fz * out);
             let t = &mut self.torches[i];
             // a torch lit again elsewhere: the embers it left behind go
             // (they rise in the world, not on the torch)
@@ -7565,6 +7609,7 @@ impl MapView {
                     facing: None,
                     hero_pit: None,
                     branch: &self.branch_look,
+                    volume: None,
                 };
                 let look = look_of(cell, Near::of(map, x, y), &ctx);
                 let models = look.models.iter().map(|p| p.look);
@@ -8135,6 +8180,7 @@ impl MapView {
             facing: None,
             hero_pit: None,
             branch: &self.branch_look,
+            volume: None,
         }
     }
 
@@ -8242,6 +8288,7 @@ impl MapView {
             } else {
                 &self.branch_look
             },
+            volume: self.volume.get(&(x, y)).copied(),
         };
         let mut look = world
             .map
@@ -9820,6 +9867,7 @@ mod tests {
                 facing: None,
                 hero_pit: None,
                 branch: &self.branch,
+                volume: None,
             }
         }
 
@@ -9830,8 +9878,10 @@ mod tests {
         /// The look of a cell of a level (`level`), as a level of `branch`.
         fn look_in(&self, map: &MapState, (x, y): (i32, i32), branch: Branch) -> Look {
             let look = crate::branch_look::look_of(branch);
+            let plan = dressing::plan(|x, y| plan_cell(map, &self.cat, x, y), &look.dress);
             let ctx = Ctx {
                 branch: &look,
+                volume: plan.get(&(x, y)).copied(),
                 ..self.ctx_at(x, y, None)
             };
             let cell = map.cell(x, y).cloned().unwrap_or_default();
@@ -10195,10 +10245,14 @@ mod tests {
                     assert!(top <= WALL_HEIGHT + 0.01, "{c},{r}: {s:?}");
                     seams += usize::from(matches!(s.paint, Paint::Flat(_, Finish::Ember)));
                     if !matches!(s.paint, Paint::Pbr(m, _, _) if Some(m) == silk) {
+                        // a hand past a face (a pier's stands a little out
+                        // of a wall's), over anybody's head further
                         let reach = if top <= 0.02 {
                             0.75
+                        } else if low >= dressing::OVERHEAD - 0.01 {
+                            0.9
                         } else {
-                            0.5 + BODY_HALF_DEPTH
+                            0.55 + dressing::REACH + 0.005
                         };
                         assert!(out <= reach, "{c},{r}: {s:?}");
                         continue;
@@ -10214,11 +10268,18 @@ mod tests {
                 }
             }
         }
-        // the main dungeon's far corners hold cobwebs, Gehennom's walls
-        // seams of its fire
+        // the far corners hold a pier or a cobweb, Gehennom's walls seams
+        // of its fire
         let dress = crate::branch_look::look_of(branch).dress;
+        let corners = [(0, 0), (24, 0)]
+            .iter()
+            .filter(|&&(c, r)| {
+                !dressing_at(&f, &map, branch, (PICTURE_AT.0 + c, PICTURE_AT.1 + r)).is_empty()
+            })
+            .count();
         assert!(floor > 0, "{branch:?}");
-        assert_eq!(webs > 0, dress.cobwebs, "{branch:?}: {webs}");
+        assert!(webs == 0 || dress.cobwebs, "{branch:?}: {webs}");
+        assert_eq!(corners > 0, dress.cobwebs || dress.piers, "{branch:?}");
         assert_eq!(seams > 0, dress.embers, "{branch:?}: {seams}");
     }
 
@@ -10239,6 +10300,58 @@ mod tests {
         map.print(x, y, &monster(cat, "jackal", 0), Some(&cmap(cat, "S_room")));
         let jackal = f.look_in(&map, (x, y), Branch::Main).solids;
         assert!(before.iter().all(|s| jackal.contains(s)));
+    }
+
+    #[test]
+    fn a_rooms_plan_arches_its_long_walls_and_inlays_its_floor() {
+        let f = Fixture::new();
+        let map = level(&f.cat, &HALL);
+        let t = |x: i32, y: i32| map.cell(x, y).and_then(|c| cell_terrain(c, &f.cat));
+        let dress = crate::branch_look::look_of(Branch::Main).dress;
+        let plan = dressing::plan(|x, y| plan_cell(&map, &f.cat, x, y), &dress);
+        let (mut arches, mut lines, mut corners) = (0, 0, 0);
+        for (&(x, y), v) in &plan {
+            // nothing on or round the doorway, the stairs or the altar
+            let near = (-1..=1).any(|dy| (-1..=1).any(|dx| t(x + dx, y + dy).is_some_and(matters)));
+            assert!(!near, "{x},{y}: {v:?}");
+            match *v {
+                // whole arches, on a north wall over the room's floor
+                dressing::Volume::Arch { west } => {
+                    arches += 1;
+                    let other = if west { (x + 1, y) } else { (x - 1, y) };
+                    assert_eq!(
+                        plan.get(&other),
+                        Some(&dressing::Volume::Arch { west: !west }),
+                        "{x},{y}"
+                    );
+                    assert_eq!(t(x, y), Some(Terrain::Wall));
+                    assert_eq!(t(x, y + 1), Some(Terrain::Floor));
+                }
+                // lines in the floor's own cell
+                dressing::Volume::Inlay {
+                    lines: l,
+                    n,
+                    corner,
+                } => {
+                    assert_eq!(t(x, y), Some(Terrain::Floor));
+                    for line in &l[..n as usize] {
+                        assert!(
+                            line[..4].iter().all(|v| v.abs() <= 0.5 + 1e-4),
+                            "{x},{y}: {line:?}"
+                        );
+                    }
+                    lines += n as usize;
+                    corners += usize::from(corner.is_some());
+                }
+            }
+        }
+        assert!(
+            arches >= 2 && lines > 20 && corners > 0,
+            "{arches} {lines} {corners}"
+        );
+        // a branch that dresses none of it
+        let sokoban = crate::branch_look::look_of(Branch::Sokoban).dress;
+        assert!(dressing::plan(|x, y| plan_cell(&map, &f.cat, x, y), &sokoban).is_empty());
     }
 
     #[test]
