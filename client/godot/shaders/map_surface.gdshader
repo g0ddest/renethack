@@ -4,7 +4,9 @@
 // on floors, a fine detail normal, grime at the foot of walls, and the
 // fog of war: what the hero sees now in full colour, what they remember
 // darker, cold and grey, what they never saw fading into darkness.
-// Walls and rock between the eye and the hero dither away around them.
+// Walls and rock between the eye and the hero open round them: a hole in
+// the stone, its rim crumbling in the world's own noise (no screen dither:
+// with no temporal blend it showed as a grid of dots).
 // The ground (a floor, ice) shows only where its kind wins over the
 // cells' beside it (`ground_kind`): a shore wanders, wet, scorched or
 // frosted along it, instead of running along the cells' edges.
@@ -54,7 +56,7 @@ uniform float macro = 1.0;
 uniform float wet = 0.0;
 // darker at the foot of walls (floors)
 uniform float grime = 0.0;
-// dithers away between the eye and the hero, all but its top line
+// opens between the eye and the hero, all but its top line
 uniform float occlude = 0.0;
 uniform float solid_top = 2.0;
 // a broken stump of masonry: pushed by a noise of the world position
@@ -326,13 +328,6 @@ vec3 bent(vec3 tn, vec2 base, float z) {
 	return vec3(tn.xy * normal_strength + base, abs(tn.z) * z);
 }
 
-// interleaved gradient noise: a fine dither with no visible grid, moved
-// a little each frame so it never settles into a pattern
-float dither(vec2 p, float t) {
-	p += vec2(5.588238, 5.588238) * mod(t * 60.0, 64.0);
-	return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715))));
-}
-
 void fragment() {
 	// the ground shows where its kind wins; how near it comes to losing
 	// to water, lava or ice beside it (for the shore's own look)
@@ -362,14 +357,20 @@ void fragment() {
 		vec3 ch = hero_pos - eye_pos;
 		float len2 = max(dot(ch, ch), 1e-4);
 		float t = dot(wpos - eye_pos, ch) / len2;
-		// closer to the eye than the hero, near the line to them
+		// closer to the eye than the hero, near the line to them; never
+		// what stands right over their head (a doorway's lintel, a stair's
+		// arch: it hides nothing of them)
 		float before = 1.0 - 0.6 / sqrt(len2);
-		if (t > 0.0 && t < before) {
+		bool overhead = wpos.y > hero_pos.y + 0.7 && length(wpos.xz - hero_pos.xz) < 0.7;
+		if (t > 0.0 && t < before && !overhead) {
 			float d = length(wpos - (eye_pos + ch * t));
-			// a cone from the eye widening to the hero's own size at the hero
-			float r = 0.25 + 0.5 * t;
-			float cover = mix(0.2, 1.0, smoothstep(r * 0.7, r * 1.3, d));
-			if (dither(FRAGCOORD.xy, TIME) >= cover) {
+			// a cone from the eye widening to the hero's own body at the
+			// hero (a lintel over their head stays): open inside, its rim
+			// broken by the stone's own noise (fixed in the world: it never
+			// crawls nor shows a pixel grid)
+			float r = 0.2 + 0.42 * t;
+			float cover = smoothstep(r * 0.75, r * 1.2, d);
+			if (tn3(wpos * 12.0) * 0.8 + 0.1 >= cover) {
 				discard;
 			}
 		}

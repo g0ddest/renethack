@@ -211,8 +211,9 @@ const WALL_HEIGHT: f32 = 2.1;
 /// A door's leaf; a lintel and the cap close the wall above it.
 const DOOR_HEIGHT: f32 = 1.8;
 const LINTEL: f32 = 0.2;
-/// Walls and doors in front of open ground, seen from the camera's side.
-const CUT_HEIGHT: f32 = 0.35;
+/// Walls and doors in front of open ground, seen from the camera's side:
+/// a kerb (at 0.35 m it read as a dark block the hero stood on).
+const CUT_HEIGHT: f32 = 0.16;
 /// A wall two cells in front of open ground, behind such a stump: broken
 /// off low enough to hide nobody who stands there, however close the
 /// camera (a full wall would stand between the eye and their feet).
@@ -258,8 +259,9 @@ const GALLERY_FILL: f32 = 2.5;
 const SHADE_ROCK: u8 = 120;
 /// Stones at the foot of a wall: of the rock, darker still.
 const SHADE_RUBBLE: u8 = 55;
-/// A wall cut down in front of open ground.
-const SHADE_RUIN: u8 = 65;
+/// A wall cut down in front of open ground: lit nearly as the floor (darker
+/// still, it read as a dark block).
+const SHADE_RUIN: u8 = 85;
 /// A lying corpse is this much darker than the living monster.
 const CORPSE_DARKEN: f32 = 0.45;
 
@@ -1526,6 +1528,8 @@ fn terrain_base(
             let pier = corner && !ctx.branch.cave;
             let (cut, half) = (stand == Stand::Cut, stand == Stand::Half);
             let wall_h = match stand {
+                // (a cave's is the rock's lip)
+                Stand::Cut if ctx.branch.cave => ROCK_CUT,
                 Stand::Cut => CUT_HEIGHT,
                 Stand::Half => HALF_HEIGHT,
                 Stand::Full => WALL_HEIGHT,
