@@ -18,7 +18,7 @@
 //! names and the engine's scroll labels aside). The pictures end on one
 //! contact sheet.
 
-use std::sync::atomic::{AtomicI64, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicI64, AtomicU32, AtomicU64, Ordering};
 
 use godot::classes::text_server::AutowrapMode;
 use godot::classes::{Button, CanvasItem, Control, Engine, Label, RichTextLabel};
@@ -39,6 +39,8 @@ use crate::tr;
 static PRESSED_AT: AtomicI64 = AtomicI64::new(0);
 /// The request (session serial × 1000 + id) the fight last acted on.
 static ACTED_ON: AtomicU64 = AtomicU64::new(0);
+/// The portrait's renders before the restore.
+static RENDERS: AtomicU32 = AtomicU32::new(0);
 
 /// Words only a keyboard or a mouse has: whole words, word stems (the
 /// Russian's cases), and phrases.
@@ -83,10 +85,7 @@ fn names_a_key(text: &str) -> Option<&'static str> {
 /// Seams found in other owners' files, reported to them (2026-10-30):
 /// what a seam's words hold, and whose it is. Told as known, they fail
 /// nothing; a seam not here fails the run.
-const KNOWN: [(&str, &str); 8] = [
-    // creation.rs: the keys row (a keyboard's choice) under a pad
-    ("\"Клавиши\"", "impl-hero, creation.rs"),
-    ("\"Keys\"", "impl-hero, creation.rs"),
+const KNOWN: [(&str, &str); 6] = [
     // the engine's ^X lines without their Russian (the catalog's)
     ("magic-protected", "i18n, the ^X window"),
     ("innately", "i18n, the ^X window"),
@@ -708,15 +707,22 @@ pub(super) fn pad_journey() -> Vec<Step> {
     ]);
     steps.extend(shot("journey-title-continue"));
     steps.extend([
+        Step::Call("the portrait's renders so far", |g| {
+            let n = g.ui.as_ref().map_or(0, |ui| ui.hud.portrait_shown().1);
+            RENDERS.store(n, Ordering::Relaxed);
+            Ok(())
+        }),
         tap(PadButton::A),
         settle("A: the game restored at its command prompt"),
         Step::Wait(
             "its level drawn, the camera on the hero",
             super::camera_settled,
         ),
-        Step::Wait("the hero's whole name, the portrait rendered", |g| {
-            let rendered = g.ui.as_ref().is_some_and(|ui| ui.hud.portrait_shown().0);
-            Ok(whole_name_shown(g)? && rendered)
+        // the portrait renders this hero: a render since the restore, not
+        // the last game's hero kept
+        Step::Wait("the hero's whole name, the portrait of this hero", |g| {
+            let (_, n) = g.ui.as_ref().ok_or("no UI")?.hud.portrait_shown();
+            Ok(whole_name_shown(g)? && n > RENDERS.load(Ordering::Relaxed))
         }),
     ]);
     steps.extend(shot("journey-restored"));
