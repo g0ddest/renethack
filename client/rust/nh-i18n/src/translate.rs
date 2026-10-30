@@ -955,6 +955,11 @@ impl Translator {
         if trimmed.len() == shown.len() {
             return self.bare_text_value(shown, name, depth);
         }
+        // a translated piece with these spaces of its own (^X's " innately",
+        // which the lexicon would keep as an English name)
+        if let Some(p) = self.bare_piece(shown) {
+            return (Value::Phrase(p), true);
+        }
         let start = shown.len() - shown.trim_start().len();
         let (before, after) = (&shown[..start], &shown[start + trimmed.len()..]);
         let read = self.bare_text_value(trimmed, name, depth);

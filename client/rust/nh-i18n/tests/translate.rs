@@ -222,3 +222,20 @@ fn names_alone() {
     // not a name: a text of the catalog
     assert_eq!(t.name("You are already here.").text, "Вы уже здесь.");
 }
+
+#[test]
+fn a_piece_with_spaces_of_its_own() {
+    // ^X's " innately" after an attribute: one word the lexicon would keep
+    // as a name, English
+    let t = Translator::built_in().unwrap();
+    let out = t.window(" You have infravision innately.");
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        (" У вас инфразрение от природы.", Status::Translated)
+    );
+    let out = t.window(" You are magic-protected because of your experience.");
+    assert_eq!(
+        (out.text.as_str(), out.status),
+        (" Вы защищены от магии благодаря опыту.", Status::Translated)
+    );
+}

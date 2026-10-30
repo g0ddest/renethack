@@ -1,0 +1,52 @@
+# R6, log messages batch 25: a creature that appears in sight (makemon's
+# "%s appears next to you." of debug mode's ^G, with '!' in a game) or
+# arrives beside the hero, and a temple's ghost. Syntax: nh-i18n's
+# template.rs.
+
+[d1c98d3c0551]
+en = "%s appears next to you%c"
+ru = "Рядом с вами {1:num|появляется|появляются} {1}{2}"
+
+[a2c1d4cb3cac]
+en = "%s appear next to you%c"
+ru = "Рядом с вами {1:num|появляется|появляются} {1}{2}"
+
+[fce8c06475f3]
+en = "%s suddenly appears next to you%c"
+ru = "Рядом с вами внезапно {1:num|появляется|появляются} {1}{2}"
+
+[1e057acbcf4d]
+en = "%s suddenly appear next to you%c"
+ru = "Рядом с вами внезапно {1:num|появляется|появляются} {1}{2}"
+
+[709a5928e89a]
+en = "%s appears%c"
+ru = "{1:num|Появляется|Появляются} {1}{2}"
+
+[6af23496a44b]
+en = "%s appear%c"
+ru = "{1:num|Появляется|Появляются} {1}{2}"
+
+[38b0a475c409]
+en = "%s suddenly appears%c"
+ru = "Внезапно {1:num|появляется|появляются} {1}{2}"
+
+[e9b1c4b49b62]
+en = "%s suddenly appear%c"
+ru = "Внезапно {1:num|появляется|появляются} {1}{2}"
+
+[3af17b949984]
+en = "%s arrives next to you!"
+ru = "Рядом с вами {1:num|оказывается|оказываются} {1}!"
+
+[1df1b8de3108]
+en = "%s suddenly arrives next to you!"
+ru = "Рядом с вами внезапно {1:num|оказывается|оказываются} {1}!"
+
+[4dcafc527a40]
+en = "A ghost appears next to you%c"
+ru = "Рядом с вами появляется привидение{1}"
+
+[df36182c70bb]
+en = "An enormous ghost appears next to you%c"
+ru = "Рядом с вами появляется огромное привидение{1}"

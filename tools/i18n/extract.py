@@ -1289,13 +1289,22 @@ class Context:
         """Every text of format `fmt` with its arguments: literal arguments
         put in, buffers inlined. Pieces (format, kinds)."""
         convs = conversions(fmt)
+        # texts glued with a bound each ("%.20s%.30s" of "temporarily " and
+        # "acid resistant"): literals the bound does not reach are as they are
+        glued = (convs and not CONV_RE.sub("", fmt)
+                 and all(m.group("conv") == "s" and m.group("width") is None
+                         and (m.group("prec") or "").isdigit() for m in convs))
         choices = []
         ai = 0
         for m in convs:
             ai += (m.group("width") == "*") + (m.group("prec") == "*")
             arg = args[ai] if ai < len(args) else []
             ai += 1
-            choices.append(self.alternatives(m, arg, pos, depth))
+            words = self.values(arg) if glued else None
+            if words and all(len(w) <= int(m.group("prec")) for w in words):
+                choices.append([(escape(w), []) for w in words])
+            else:
+                choices.append(self.alternatives(m, arg, pos, depth))
         # too many combinations: the most varied arguments stay placeholders,
         # and the sentences among their texts pieces of their own
         # (godvoice's "Thou hast angered me.")

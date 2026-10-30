@@ -239,6 +239,17 @@ class Formats(unittest.TestCase):
         self.assertIn("%-20s  %2d   attack       %3d%%", e)
         self.assertNotIn("%-20s  %2d   %-12s %3d%%", [k for k in e if e[k].uses == {"menu"}])
 
+    def test_texts_glued_within_their_bounds(self):
+        e = catalog_of('void f(int t) {\n    char buf[BUFSZ];\n'
+                       '    Sprintf(buf, "%.20s%.30s", t ? "temporarily " : "", "acid resistant");\n'
+                       '    pline("You are %s.", buf);\n'
+                       '    Sprintf(buf, "%.3s %.30s", t ? "temporarily " : "", "acid resistant");\n'
+                       '    pline("You were %s.", buf);\n}\n')
+        self.assertIn("You are temporarily acid resistant.", e)
+        self.assertIn("You are acid resistant.", e)
+        # (text between them: a bound may cut, the conversions stay)
+        self.assertNotIn("You were tem acid resistant.", e)
+
     def test_a_question_around_a_name_in_the_call_that_asks(self):
         e = catalog_of('void f(struct obj *o) {\n    char confirm[QBUFSZ];\n'
                        '    if (ynq(safe_qbuf(confirm, "Really wield ", "?", o, yname, ysimple_name, "that")) == \'y\')\n'

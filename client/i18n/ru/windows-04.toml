@@ -1,0 +1,133 @@
+# ^X: where an attribute comes from (attrib.c from_what(), which debug
+# mode adds after the attribute: "You are magic-protected because of your
+# cloak of magic resistance."), the attributes ^X built in a buffer of its
+# own, and the lines of the game that goes on that only the game's end had.
+# Syntax: nh-i18n's template.rs.
+
+# where it comes from
+
+[5405013ebdf4]
+en = " from birth"
+ru = " от рождения"
+
+[f4b4358d9c42]
+en = " innately"
+ru = " от природы"
+
+[60159ce54a0b]
+en = " intrinsically"
+ru = " благодаря приобретённому свойству"
+
+[96db9681e942]
+en = " because of your experience"
+ru = " благодаря опыту"
+
+[a6951a998fb9]
+en = " due to your lycanthropy"
+ru = " из-за ликантропии"
+
+[39845f980e73]
+en = " from your creature form"
+ru = " в нынешнем облике"
+
+[a7a93714a035]
+en = " because of %s"
+ru = " из-за {1:gen}"
+
+[7fb17029d793]
+en = " because of a potion or spell"
+ru = " из-за зелья или заклинания"
+
+[5a4343cf3df2]
+en = " because of something"
+ru = " из-за чего-то"
+
+[5885f18c660e]
+en = " because of worn equipment"
+ru = " из-за надетого снаряжения"
+
+[a74875b1c4f0]
+en = "due to goop covering your %s"
+ru = " из-за слизи на {1:loc}"
+
+# the resistances a buffer of their own holds
+
+[259d209cb482]
+en = " You are acid resistant%s."
+ru = " Вы невосприимчивы к кислоте{1}."
+
+[bb9596de1612]
+en = " You are temporarily acid resistant%s."
+ru = " Вы временно невосприимчивы к кислоте{1}."
+
+[ef648c4053f0]
+en = " You were acid resistant%s."
+ru = " Вы были невосприимчивы к кислоте{1}."
+
+[428ea4afa703]
+en = " You were temporarily acid resistant%s."
+ru = " Вы были временно невосприимчивы к кислоте{1}."
+
+[61a7a35d892f]
+en = " You are petrification resistant%s."
+ru = " Вы невосприимчивы к окаменению{1}."
+
+[39a445500f66]
+en = " You are temporarily petrification resistant%s."
+ru = " Вы временно невосприимчивы к окаменению{1}."
+
+[d5fd4fc0f5cf]
+en = " You were petrification resistant%s."
+ru = " Вы были невосприимчивы к окаменению{1}."
+
+[42eee98e6d74]
+en = " You were temporarily petrification resistant%s."
+ru = " Вы были временно невосприимчивы к окаменению{1}."
+
+# what only comes with where it comes from
+
+[5f0f247e82c3]
+en = " You can see%s."
+ru = " Вы можете видеть{1}."
+
+[51c75d66fd4a]
+en = " You could see%s."
+ru = " Вы могли видеть{1}."
+
+[623f59a6453f]
+en = " You can't change from your current form%s."
+ru = " Вы не можете сменить нынешний облик{1}."
+
+[d6fcaa382f81]
+en = " You couldn't change from your current form%s."
+ru = " Вы не могли сменить нынешний облик{1}."
+
+# the game going on: debug mode's prayer timeout and bones
+
+[6a104a0e7964]
+en = " You can't safely pray (%d)."
+ru = " Вы не можете безопасно молиться ({1})."
+
+[cb36e0c05269]
+en = " You can't safely pray."
+ru = " Вы не можете безопасно молиться."
+
+[ee8ad8fd6c64]
+en = " You haven't encountered any bones levels."
+ru = " Вы пока не встречали уровней с костями."
+
+[484e33b2447e]
+en = " You have encountered %ld bones level."
+ru = " Вы встретили {1} {1:plural|уровень|уровня|уровней} с костями."
+
+[7ae6386fa7f3]
+en = " You have encountered %ld bones levels."
+ru = " Вы встретили {1} {1:plural|уровень|уровня|уровней} с костями."
+
+[a2a4fd5f113b]
+en = " You have disabled loading and storing of bones levels."
+ru = " Вы отключили загрузку и сохранение уровней с костями."
+
+[2ec02b02bf0a]
+en = " You have disabled loading of bones levels."
+ru = " Вы отключили загрузку уровней с костями."

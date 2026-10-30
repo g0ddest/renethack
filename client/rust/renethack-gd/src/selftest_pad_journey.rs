@@ -82,21 +82,11 @@ fn names_a_key(text: &str) -> Option<&'static str> {
         .copied()
 }
 
-/// Seams found in other owners' files, reported to them (2026-10-30):
-/// what a seam's words hold, and whose it is. Told as known, they fail
-/// nothing; a seam not here fails the run.
-const KNOWN: [(&str, &str); 6] = [
-    // the engine's ^X lines without their Russian (the catalog's)
-    ("magic-protected", "i18n, the ^X window"),
-    ("innately", "i18n, the ^X window"),
-    // debug mode's own ^X lines, which a player's game never shows
-    ("bones levels", "i18n, debug mode's ^X"),
-    ("safely pray", "i18n, debug mode's ^X"),
-    // debug mode's ^G says its monster in English (a '.', not a '!')
-    ("appears next to you.", "i18n, debug mode's ^G"),
-    // #name's description in the palette names #call in English
-    ("то же, что call", "i18n, the palette's descriptions"),
-];
+/// Seams found in other owners' files and reported to them: what a seam's
+/// words hold, and whose it is. Told as known, they fail nothing; a seam
+/// not here fails the run. (None now: the ^X, ^G and palette ones of
+/// 2026-10-30 have their Russian.)
+const KNOWN: [(&str, &str); 0] = [];
 
 fn frames() -> i64 {
     Engine::singleton().get_process_frames() as i64

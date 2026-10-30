@@ -2152,11 +2152,11 @@ ru = " Игра идёт в режиме отладки."
 
 [0be807a53c93]
 en = " You disabled loading of bones levels."
-ru = " Вы отключили загрузку уровней-костей."
+ru = " Вы отключили загрузку уровней с костями."
 
 [fc5981f6c6e8]
 en = " You disabled loading and storing of bones levels."
-ru = " Вы отключили загрузку и сохранение уровней-костей."
+ru = " Вы отключили загрузку и сохранение уровней с костями."
 
 [58eb9b46cd78]
 en = " You encountered %ld bones level."
