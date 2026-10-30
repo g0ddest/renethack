@@ -146,17 +146,18 @@ fn gloves_over(mesh: &Gd<ArrayMesh>, skin: &Gd<Skin>) -> Option<Gd<ArrayMesh>> {
 
 impl Art {
     /// Put on what `gear` wears and take off what it no longer does: the
-    /// armour's material, the gloves (shaded as the outfit is), the thing
-    /// round the neck.
+    /// armour's material (as the manifest's `model` wears it), the gloves
+    /// (shaded as the outfit is), the thing round the neck.
     pub(super) fn wear(
         &mut self,
         on: &mut Dressed,
         skeleton: &Gd<Skeleton3D>,
         gear: &Gear,
-        shade: Color,
+        model: usize,
     ) {
+        let shade = rgb(self.manifest.model_at(model).1.shade_rgb());
         if on.armour != gear.armour {
-            self.plate(on, skeleton, gear.armour);
+            self.plate(on, skeleton, gear.armour, model);
         }
         if on.gloves != gear.gloves {
             self.glove(on, skeleton, gear.gloves, shade);
@@ -177,24 +178,36 @@ impl Art {
     /// The armour's material on the outfit's parts its rule names; the
     /// skin a part shows (a sleeve's hand) stays skin. Metal keeps its own
     /// brightness (the outfit's shade mutes cloth).
-    fn plate(&mut self, on: &mut Dressed, skeleton: &Gd<Skeleton3D>, look: Option<Look>) {
+    fn plate(
+        &mut self,
+        on: &mut Dressed,
+        skeleton: &Gd<Skeleton3D>,
+        look: Option<Look>,
+        model: usize,
+    ) {
         unplate(on);
         on.armour = look;
         let Some(look) = look else {
             return;
         };
         let rule = self.manifest.worn_rules().armour[look.rule].clone();
-        let Some(material) = rule
-            .material
-            .as_deref()
-            .and_then(|m| self.manifest.material_index(m))
-        else {
+        // the model's people may wear it their own way (lacquered)
+        let own = self.manifest.model_at(model).1.armour_for(&rule).cloned();
+        let (name, tint) = match &own {
+            Some(d) => (Some(d.material.as_str()), d.own_tint().unwrap_or(look.tint)),
+            None => (rule.material.as_deref(), look.tint),
+        };
+        let Some(material) = name.and_then(|m| self.manifest.material_index(m)) else {
             return;
         };
-        let material = self.surface(material, 100, false, rgb(look.tint));
+        let material = self.surface(material, 100, false, rgb(tint));
+        let parts = match &own {
+            Some(d) if !d.parts.is_empty() => &d.parts,
+            _ => &rule.parts,
+        };
         for mut mi in meshes(skeleton) {
             let name = mi.get_name().to_string();
-            if !rule.parts.iter().any(|p| name.ends_with(p.as_str())) {
+            if !parts.iter().any(|p| name.ends_with(p.as_str())) {
                 continue;
             }
             let Some(mesh) = mi.get_mesh() else {

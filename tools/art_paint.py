@@ -158,3 +158,124 @@ def lift(coat, light):
     mean = sum(i * n for i, n in enumerate(grey.histogram())) / (grey.width * grey.height)
     power = math.log(light) / math.log(mean / 255)
     return coat.point([round(255 * (v / 255) ** power) for v in range(256)] * 3)
+
+
+def tiled(image, filt):
+    """`filt` applied to `image` as if it went on for ever every way (it
+    tiles): run on nine of it and the middle kept."""
+    w, h = image.size
+    big = Image.new(image.mode, (w * 3, h * 3))
+    for i in range(3):
+        for j in range(3):
+            big.paste(image, (i * w, j * h))
+    return filt(big).crop((w, h, w * 2, h * 2))
+
+
+def normals(height, strength):
+    """A normal map (OpenGL's: green up) from a height map that tiles,
+    steeper as `strength` grows."""
+    scale = max(1, round(8 / strength))
+    # the slope across, and down the image (up is the other way in a
+    # normal map's green)
+    sx = tiled(height, lambda i: i.filter(ImageFilter.Kernel((3, 3), [1, 0, -1, 2, 0, -2, 1, 0, -1], scale, 128)))
+    sy = tiled(height, lambda i: i.filter(ImageFilter.Kernel((3, 3), [-1, -2, -1, 0, 0, 0, 1, 2, 1], scale, 128)))
+    return Image.merge("RGB", [sx, sy, Image.new("L", height.size, 255)])
+
+
+def hollows(height, radius, depth):
+    """Ambient occlusion from a height map: darker where it lies below
+    what is round it within `radius` pixels, by up to `depth` (0..1)."""
+    around = tiled(height, lambda i: i.filter(ImageFilter.GaussianBlur(radius)))
+    below = ImageChops.subtract(around, height)
+    return below.point(lambda v: max(0, round(255 - v * depth * 2)))
+
+
+def at_every_wrap(size, draw):
+    """`draw(dx, dy)` at the image's own place and its eight neighbours',
+    so what crosses an edge comes in at the other."""
+    for dx in (-size, 0, size):
+        for dy in (-size, 0, size):
+            draw(dx, dy)
+
+
+def fur(size=512, seed="fur"):
+    """A pale pelt that takes a tint: locks of hair lying down the image,
+    each a few strands from a dark root to a light tip, the newer over the
+    older; mottled. It tiles. The albedo, normal and ORM maps."""
+    rng = random.Random(seed)
+    height = Image.new("L", (size, size), 30)
+    d = ImageDraw.Draw(height)
+    for _ in range(size * 3):
+        x0, y0 = rng.random() * size, rng.random() * size
+        length = size * rng.uniform(0.06, 0.12)
+        lean, curl = rng.uniform(-0.25, 0.25), rng.uniform(-0.2, 0.2)
+        for _ in range(rng.randint(4, 8)):
+            sx, sy = x0 + rng.uniform(-4, 4), y0 + rng.uniform(-2, 2)
+            pts = [(sx + (lean * t + curl * t * t) * length, sy + t * length)
+                   for t in (i / 6 for i in range(7))]
+            width = rng.choice((1, 1, 2))
+            shade = rng.uniform(0.75, 1.0)
+            for i in range(6):
+                v = round((70 + 170 * (i + 1) / 6) * shade)
+                a, b = pts[i], pts[i + 1]
+                at_every_wrap(size, lambda dx, dy: d.line(
+                    [(a[0] + dx, a[1] + dy), (b[0] + dx, b[1] + dy)], fill=v, width=width))
+    height = height.filter(ImageFilter.GaussianBlur(0.6))
+    mottle = noise(rng, (size, size), 6)
+    light = ImageChops.add(height.point(lambda v: round(v * 0.45)), mottle.point(lambda v: 95 + v * 50 // 255))
+    albedo = Image.merge("RGB", [light, light.point(lambda v: round(v * 0.97)), light.point(lambda v: round(v * 0.92))])
+    ao = hollows(height, 6, 0.8)
+    rough = height.point(lambda v: round(240 - v * 0.25))
+    arm = Image.merge("RGB", [ao, rough, Image.new("L", (size, size), 0)])
+    return {"albedo": albedo, "normal": normals(height, 2.5), "arm": arm}
+
+
+def scales(size=512, rows=8, seed="scales"):
+    """Overlapping scales that take a tint, in rows offset by half a scale,
+    each a rounded shield keeled down its middle, its free edge down the
+    image over the root of the one below; dark in the gaps between. Their
+    middles glossier than their edges (roughness about 0.6 to 0.8). It
+    tiles. The albedo, normal and ORM maps."""
+    rng = random.Random(seed)
+    cols = rows
+    cw, rh = size / cols, size / rows
+    # one scale: a dome shaped like a shield, its keel, and where it is
+    sw, sh = round(cw * 1.16), round(rh * 1.7)
+    dome = Image.new("L", (sw, sh), 0)
+    mask = Image.new("L", (sw, sh), 0)
+    px, pm = dome.load(), mask.load()
+    for y in range(sh):
+        for x in range(sw):
+            u = (x + 0.5) / sw * 2 - 1
+            t = (y + 0.5) / sh
+            # narrower toward its root (the top), round at its free edge
+            half = 0.62 + 0.38 * math.sin(min(1.0, t * 1.25) * math.pi / 2)
+            edge = 1 - (max(0.0, t - 0.55) / 0.45) ** 2
+            if abs(u) > half * math.sqrt(max(0.0, edge)):
+                continue
+            r = abs(u) / max(1e-3, half * math.sqrt(max(1e-3, edge)))
+            rise = 0.35 + 0.65 * t
+            keel = max(0.0, 1 - abs(u) * 6) * 0.25 * t
+            px[x, y] = max(1, round(255 * (rise * (1 - r ** 3) * 0.8 + keel)))
+            pm[x, y] = 255
+    # the lowest row first, each over the one below it, on a taller sheet
+    # (two rows more above and below) so the overlaps run on across the
+    # seam; the rows repeat (an even number of them)
+    pad = 2 * rh
+    jitter = [[rng.uniform(-1, 1) for _ in range(cols)] for _ in range(rows)]
+    tall = Image.new("L", (size, round(size + 2 * pad)), 0)
+    for r in range(rows + 2, -3, -1):
+        for c in range(cols):
+            x = round((c + 0.5 * (r % 2)) * cw - sw / 2 + jitter[r % rows][c])
+            y = round(pad + (r - 0.7) * rh)
+            for dx in (-size, 0, size):
+                tall.paste(dome, (x + dx, y), mask)
+    height = tall.crop((0, round(pad), size, round(pad) + size))
+    height = height.filter(ImageFilter.GaussianBlur(0.8))
+    mottle = noise(rng, (size, size), 5)
+    light = ImageChops.add(height.point(lambda v: round(110 + v * 0.5)), mottle.point(lambda v: v * 30 // 255))
+    albedo = Image.merge("RGB", [light] * 3)
+    ao = hollows(height, 8, 0.9)
+    rough = height.point(lambda v: round(205 - v * 0.2))
+    arm = Image.merge("RGB", [ao, rough, Image.new("L", (size, size), 0)])
+    return {"albedo": albedo, "normal": normals(height, 3.0), "arm": arm}

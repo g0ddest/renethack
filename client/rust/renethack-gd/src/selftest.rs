@@ -82,12 +82,16 @@ mod hero;
 mod input_ru;
 #[path = "selftest_journal.rs"]
 mod journal_tests;
+#[path = "selftest_late.rs"]
+mod late_tests;
 #[path = "selftest_layouts.rs"]
 mod layouts_tests;
 #[path = "selftest_look.rs"]
 mod look_tests;
 #[path = "selftest_ordinals.rs"]
 mod ordinals_tests;
+#[path = "selftest_outfits.rs"]
+mod outfits_tests;
 #[path = "selftest_overhang.rs"]
 mod overhang_tests;
 #[path = "selftest_pack_list.rs"]
@@ -5186,6 +5190,8 @@ impl SelfTest {
             "creation" => creation_tests::creation(),
             "portrait" => portrait_tests::portrait(),
             "overhang" => overhang_tests::overhang(),
+            "outfits" => outfits_tests::outfits(),
+            "late-monsters" => late_tests::late_monsters(),
             "ordinals" => ordinals_tests::ordinals(),
             "travel-words" => travel_words_tests::travel_words(),
             "features" => features_tests::features(),

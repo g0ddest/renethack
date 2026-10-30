@@ -462,6 +462,14 @@ def do_painted(w, item):
         image = art_paint.pale(source(), item["light"])
     elif item["paint"] == "lift":
         image = art_paint.lift(source(), item["light"])
+    elif item["paint"] in ("fur", "scales"):
+        # a material's maps from nothing: `out` and the map's name
+        maps = getattr(art_paint, item["paint"])(item.get("size", 512))
+        for name, image in maps.items():
+            out = io.BytesIO()
+            image.save(out, "JPEG", quality=88, optimize=True)
+            w.put(f"{item['out']}_{name}.jpg", out.getvalue())
+        return
     else:
         raise SystemExit(f"{item['out']}: no paint {item['paint']}")
     out = io.BytesIO()

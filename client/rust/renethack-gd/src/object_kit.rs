@@ -5,6 +5,8 @@
 //! the colour is the look's tint, which the appearance gives.
 
 use super::*;
+use crate::organic::Organic;
+use crate::organic::gear::Part as GearPart;
 
 const ONE: [f32; 3] = [1.0; 3];
 const FLAT: [f32; 3] = [0.0; 3];
@@ -1005,33 +1007,18 @@ impl Kit<'_> {
                     [-10.0, 0.0, 0.0],
                     ONE,
                 );
-                self.part(
-                    root,
-                    cuboid(0.62, 0.06, 0.04),
-                    &dark,
-                    [0.0, 0.3, 0.43],
-                    [-8.0, 0.0, 0.0],
-                    ONE,
-                );
+                if shape != "winged" {
+                    self.part(
+                        root,
+                        cuboid(0.62, 0.06, 0.04),
+                        &dark,
+                        [0.0, 0.3, 0.43],
+                        [-8.0, 0.0, 0.0],
+                        ONE,
+                    );
+                }
                 match shape.as_str() {
-                    "winged" => {
-                        // a Valkyrie's: a fan of white feathers splayed out
-                        // on each side, facing forward (they read as wings
-                        // from the camera)
-                        let wing = self.mat(Color::from_rgb(0.86, 0.84, 0.78), Finish::Matte);
-                        for side in [-1.0f32, 1.0] {
-                            for (i, a) in [(0.0f32, 18.0f32), (1.0, 40.0), (2.0, 62.0)] {
-                                self.part(
-                                    root,
-                                    prism(0.16, 0.55 - i * 0.08, 0.025),
-                                    &wing,
-                                    [side * (0.5 + i * 0.05), 0.42 - i * 0.06, -0.02 - i * 0.03],
-                                    [0.0, 0.0, -side * a],
-                                    ONE,
-                                );
-                            }
-                        }
-                    }
+                    "winged" => self.wings(root),
                     "plumed" => self.plume(root),
                     "crested" => self.part(
                         root,
@@ -1065,6 +1052,55 @@ impl Kit<'_> {
                     _ => {}
                 }
             }
+        }
+    }
+
+    /// A Valkyrie's helmet over the plain one: a gilt brow band riveted
+    /// round it and a ridge from brow to nape, and on each side a wing of
+    /// long white feathers rising up and back from a gilt boss, turned a
+    /// little out so they read from the front and from above.
+    fn wings(&mut self, root: &mut Gd<Node3D>) {
+        let gilt = self.plain("gilded", Color::from_rgb(0.7, 0.55, 0.2));
+        let quill = self.mat(Color::from_rgb(0.9, 0.88, 0.84), Finish::Matte);
+        self.part(
+            root,
+            torus(0.4, 0.47),
+            &gilt,
+            [0.0, 0.14, 0.0],
+            FLAT,
+            [1.0, 1.6, 1.12],
+        );
+        self.part(
+            root,
+            dome(0.4),
+            &gilt,
+            [0.0, 0.1, 0.0],
+            FLAT,
+            [0.1, 1.39, 1.16],
+        );
+        for a in [-60.0f32, -36.0, -12.0, 12.0, 36.0, 60.0] {
+            let (s, c) = a.to_radians().sin_cos();
+            self.part(
+                root,
+                sphere(0.028),
+                &gilt,
+                [s * 0.47, 0.14, c * 0.5],
+                FLAT,
+                ONE,
+            );
+        }
+        let wing = MeshKey::Organic(Organic::Gear(GearPart::Wing));
+        for side in [-1.0f32, 1.0] {
+            let at = [side * 0.41, 0.24, -0.02];
+            self.part(
+                root,
+                wing,
+                &quill,
+                at,
+                [0.0, -side * 28.0, -side * 16.0],
+                ONE,
+            );
+            self.part(root, sphere(0.07), &gilt, at, FLAT, [0.6, 1.0, 1.0]);
         }
     }
 
@@ -1409,6 +1445,47 @@ impl Kit<'_> {
         let dark = self.dark();
         let shape = self.shape.clone().unwrap_or_default();
         match shape.as_str() {
+            "toga" => {
+                // a toga's drape, pinned at the shoulder by a gilt brooch
+                self.part(
+                    root,
+                    MeshKey::Organic(Organic::Gear(GearPart::Toga)),
+                    &skin,
+                    [0.0, 0.0, 0.0],
+                    FLAT,
+                    ONE,
+                );
+                let brooch = self.plain("gilded", Color::from_rgb(0.7, 0.55, 0.2));
+                self.part(
+                    root,
+                    cylinder(0.06, 0.06, 0.025),
+                    &brooch,
+                    [0.25, 0.5, 0.06],
+                    [60.0, 0.0, -30.0],
+                    ONE,
+                );
+            }
+            "pelt" => {
+                // a pelt over the shoulders and down the back, pinned at
+                // the throat by a bronze brooch
+                self.part(
+                    root,
+                    MeshKey::Organic(Organic::Gear(GearPart::Pelt)),
+                    &skin,
+                    [0.0, 0.0, 0.0],
+                    FLAT,
+                    ONE,
+                );
+                let brooch = self.plain("gilded", Color::from_rgb(0.7, 0.55, 0.2));
+                self.part(
+                    root,
+                    cylinder(0.04, 0.04, 0.02),
+                    &brooch,
+                    [0.0, 0.1, 0.27],
+                    [80.0, 0.0, 0.0],
+                    ONE,
+                );
+            }
             "mantle" => {
                 // a short fur mantle on the shoulders: a thick ring of fur
                 // and tufts
@@ -2511,7 +2588,19 @@ impl Kit<'_> {
             _ => 0.34,
         };
         self.rod(root, &wood, 0.0, (-0.5, top), (thick, thick * 0.9));
-        if form != "staff" && form != "lance" {
+        let socketed = matches!(form.as_str(), "spear" | "stout" | "javelin");
+        if socketed {
+            // a leather grip about the middle, an iron shoe at the butt
+            let grip = self.leather();
+            self.rod(root, &grip, 0.0, (-0.17, -0.03), (thick * 1.2, thick * 1.2));
+            self.rod(
+                root,
+                &iron,
+                0.0,
+                (-0.53, -0.49),
+                (thick * 0.4, thick * 1.05),
+            );
+        } else if form != "staff" && form != "lance" {
             self.rod(
                 root,
                 &iron,
@@ -2631,14 +2720,41 @@ impl Kit<'_> {
                 self.point(root, &steel, [0.0, t + 0.05], 0.03, 0.12, 0.0);
             }
             form => {
-                // spears: a leaf point (a stout one broader, a javelin slim)
+                // spears: a leaf on a socket (a stout one broader, a
+                // javelin slim). The socket is a cone of steel over the
+                // shaft's end, bound with thongs and nailed through; the
+                // leaf swells from it and runs out to the point, ridged
                 let (w, len) = match form {
-                    "stout" => (0.07, 0.15),
-                    "javelin" => (0.036, 0.12),
-                    _ => (0.05, 0.14),
+                    "stout" => (0.08, 0.15),
+                    "javelin" => (0.04, 0.12),
+                    _ => (0.064, 0.14),
                 };
-                self.point(root, &steel, [0.0, t + 0.035], w, len, 0.0);
-                self.point(root, &steel, [0.0, t + 0.04], w, 0.035, 180.0);
+                let r = thick;
+                self.rod(root, &steel, 0.0, (t - 0.07, t + 0.02), (r * 1.45, r * 0.9));
+                let thong = self.leather();
+                for z in [t - 0.062, t - 0.05] {
+                    self.part(
+                        root,
+                        torus(r * 1.3, r * 1.8),
+                        &thong,
+                        [0.0, 0.03, z],
+                        [90.0, 0.0, 0.0],
+                        ONE,
+                    );
+                }
+                for x in [-1.0f32, 1.0] {
+                    self.part(
+                        root,
+                        sphere(r * 0.4),
+                        &iron,
+                        [x * r * 1.3, 0.03, t - 0.025],
+                        FLAT,
+                        ONE,
+                    );
+                }
+                let swell = 0.05;
+                self.point(root, &steel, [0.0, t + swell], w, len, 0.0);
+                self.point(root, &steel, [0.0, t + swell + 0.005], w, swell, 180.0);
             }
         }
     }

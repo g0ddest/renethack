@@ -275,6 +275,10 @@ pub struct ModelSpec {
     /// Shade the scene's meshes smooth (a low-poly pack's flat facets).
     #[serde(default)]
     pub smooth: bool,
+    /// A manifest material's relief, gloss and shading over some of the
+    /// scene's surfaces, their dye kept: a dragon's scales on its hide.
+    #[serde(default)]
+    pub coat: Option<Coat>,
     /// Multiplies the meshes whose names end so ("_Arms": "#c89070"):
     /// sleeves the colour of bare skin; "=#rrggbb" dyes them that colour
     /// outright (a white robe: a product only darkens). A key "@Name" takes
@@ -282,6 +286,16 @@ pub struct ModelSpec {
     /// materials (a bull's coat, not its horns and eyes).
     #[serde(default)]
     pub recolor: BTreeMap<String, String>,
+    /// The meshes whose names end so made of a manifest material ("_Body":
+    /// chain mail, "_Arms": leather): an outfit's own mail and leather,
+    /// not a dyed cloth's (worn armour plates over it, as over the cloth).
+    #[serde(default)]
+    pub dress: BTreeMap<String, Dress>,
+    /// How its people wear a body armour, by a word of the armour's rule
+    /// (`exact` or `words`): in a material of their own (a Samurai's
+    /// splint mail lacquered).
+    #[serde(default)]
+    pub armour: BTreeMap<String, Dress>,
     /// Another albedo texture (relative to `client/godot/art`) for the
     /// scene's own materials: a coat left pale to take a tint, linen wound
     /// over a body. Their relief, gloss and glow stay.
@@ -355,8 +369,49 @@ pub struct Seat {
     pub half_width: Option<f32>,
 }
 
+/// The maps of a manifest `material` laid over the surfaces of a scene
+/// whose materials are named in `on` (`ModelSpec::coat`), by their place
+/// in the mesh, `scale` repeats to its unit: the dye stays the surface's,
+/// the relief (normal), gloss (roughness) and shading (its albedo, and
+/// the hollows) come from the maps.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Coat {
+    pub material: String,
+    pub on: Vec<String>,
+    #[serde(default = "one")]
+    pub scale: f32,
+}
+
+/// What an outfit's mesh is made of (`ModelSpec::dress`), or how a
+/// model's people wear an armour (`ModelSpec::armour`): a manifest
+/// material, tinted.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Dress {
+    pub material: String,
+    #[serde(default)]
+    pub tint: Option<String>,
+    /// An armour's: only these of its rule's parts (the rest keep the
+    /// outfit's own look: a Samurai's sleeves under a lacquered cuirass).
+    #[serde(default)]
+    pub parts: Vec<String>,
+}
+
+impl Dress {
+    /// The tint it gives, or none to keep the one worn.
+    pub fn own_tint(&self) -> Option<[f32; 3]> {
+        self.tint.as_deref().and_then(hex)
+    }
+
+    pub fn tint_rgb(&self) -> [f32; 3] {
+        self.tint.as_deref().and_then(hex).unwrap_or([1.0; 3])
+    }
+}
+
 /// A model worn on a bone of a character (a role's hat or cape), hidden
-/// while something is worn in its `slot` ("helmet", "cloak", "shield").
+/// while something is worn in its `slot` ("helmet", "cloak", "shield"),
+/// or shown only while something is worn in `with`.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Extra {
@@ -372,6 +427,11 @@ pub struct Extra {
     pub tint: Option<String>,
     #[serde(default)]
     pub slot: Option<String>,
+    /// Shown only while something is worn in this slot ("body", "cloak"):
+    /// how its people wear it (a Samurai's sode over his cuirass, a
+    /// Valkyrie's cloak worn as a pelt). Never on a monster.
+    #[serde(default)]
+    pub with: Option<String>,
     /// Held in both hands (an extra on `hand_r`: a dwarf leader's
     /// mattock): where the off hand grips it, as `HeldSpec::two`, in the
     /// frame of `pos` and `rot`.
@@ -413,12 +473,22 @@ impl PortraitSpec {
 }
 
 impl ModelSpec {
+    /// Its people's own way with the body armour of `rule`, if they have
+    /// one (`armour`).
+    pub fn armour_for(&self, rule: &WornLook) -> Option<&Dress> {
+        self.armour
+            .iter()
+            .find(|(k, _)| rule.exact.contains(k) || rule.words.contains(k))
+            .map(|(_, d)| d)
+    }
+
     /// Whether the scene's own materials are changed beyond a tint.
     pub fn refinishes(&self) -> bool {
         self.metallic.is_some()
             || self.roughness.is_some()
             || self.rim.is_some()
             || self.glow.is_some()
+            || self.coat.is_some()
     }
 
     pub fn glow_rgb(&self) -> Option<[f32; 3]> {
@@ -1346,7 +1416,10 @@ impl ArtManifest {
             glow: None,
             glow_energy: 0.0,
             smooth: false,
+            coat: None,
             recolor: BTreeMap::new(),
+            dress: BTreeMap::new(),
+            armour: BTreeMap::new(),
             albedo: None,
             extras: Vec::new(),
             neck: Vec::new(),
@@ -1431,6 +1504,82 @@ mod tests {
                 assert!(file.is_file(), "{name}: no {}", file.display());
             }
         }
+    }
+
+    #[test]
+    fn outfits_are_made_of_materials_there_are() {
+        // an outfit's own mail and leather, and a people's own armour
+        let art = manifest();
+        let mut made = 0;
+        for (name, spec) in &art.models {
+            for (part, d) in spec.dress.iter().chain(&spec.armour) {
+                assert!(
+                    art.material_index(&d.material).is_some(),
+                    "{name} {part}: {d:?}"
+                );
+                assert!(
+                    d.tint.is_none() || d.own_tint().is_some(),
+                    "{name} {part}: {d:?}"
+                );
+                made += 1;
+            }
+        }
+        assert!(made > 0);
+    }
+
+    #[test]
+    fn a_hero_shows_armour_only_while_wearing_it() {
+        // a role's own look is clothing: a helmet, a cloak, mail or a
+        // shield is there only with one worn in its slot
+        let art = manifest();
+        for (name, spec) in art.models.iter().filter(|(n, _)| n.starts_with("role_")) {
+            for e in &spec.extras {
+                assert!(
+                    e.slot.is_none(),
+                    "{name} {}: shown till something is worn",
+                    e.model
+                );
+            }
+            for (part, d) in &spec.dress {
+                assert!(
+                    !matches!(d.material.as_str(), "chain_mail" | "plate_mail"),
+                    "{name} {part}: mail unworn"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn a_samurai_lacquers_the_cuirass_of_splint_mail() {
+        let art = manifest();
+        let rules = &art.worn_rules().armour;
+        let rule = |name: &str| {
+            rules
+                .iter()
+                .find(|r| r.exact.iter().any(|e| e == name))
+                .unwrap()
+        };
+        let role = |name: &str| art.model_at(art.model_index(name).unwrap()).1;
+        let own = role("role_samurai_f")
+            .armour_for(rule("splint mail"))
+            .unwrap();
+        assert_eq!(own.material, "lacquer");
+        assert_eq!(own.parts, ["_Body"]);
+        assert!(
+            role("role_samurai_m")
+                .armour_for(rule("splint mail"))
+                .is_some()
+        );
+        assert!(
+            role("role_samurai_f")
+                .armour_for(rule("plate mail"))
+                .is_none()
+        );
+        assert!(
+            role("role_valkyrie_f")
+                .armour_for(rule("splint mail"))
+                .is_none()
+        );
     }
 
     #[test]

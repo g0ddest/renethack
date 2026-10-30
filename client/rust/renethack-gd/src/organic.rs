@@ -20,6 +20,8 @@ use godot::prelude::*;
 
 #[path = "organic_felines.rs"]
 pub mod felines;
+#[path = "organic_gear.rs"]
+pub mod gear;
 #[path = "organic_lurkers.rs"]
 pub mod lurkers;
 #[path = "organic_more.rs"]
@@ -125,6 +127,8 @@ pub enum Organic {
     Sea(sea::Part),
     /// A part of a piercer, a trapper or a lurker above (`lurkers`).
     Lurker(lurkers::Part),
+    /// A piece of a hero's outfit: a helmet's wing, a pelt (`gear`).
+    Gear(gear::Part),
 }
 
 /// Where a cat's legs join its body (out to the side, up, forward): the
@@ -567,6 +571,7 @@ impl Organic {
             Organic::Weather(part) => weather::build(&mut m, part),
             Organic::Sea(part) => sea::build(&mut m, part),
             Organic::Lurker(part) => lurkers::build(&mut m, part),
+            Organic::Gear(part) => gear::build(&mut m, part),
             Organic::SporeThreads => {
                 for k in 0..4 {
                     let a = (k as f32 / 4.0 * 360.0 + 45.0).to_radians();

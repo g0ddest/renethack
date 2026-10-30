@@ -16,7 +16,7 @@ use std::collections::{HashMap, HashSet};
 
 use godot::classes::animation::{LoopMode, TrackType};
 use godot::classes::base_material_3d::{
-    CullMode, Feature, Flags, ShadingMode, TextureParam, Transparency,
+    CullMode, Feature, Flags, ShadingMode, TextureChannel, TextureParam, Transparency,
 };
 use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::{
@@ -199,8 +199,70 @@ impl PoolKey {
     }
 }
 
-/// What a look wears on its bones, by the slot that hides it.
-type Extras = Vec<(Option<String>, Gd<Node3D>)>;
+/// What a look wears on its bones, by the slot that hides or shows it.
+type Extras = Vec<(Slotted, Gd<Node3D>)>;
+
+/// How what is worn in a slot bears on an extra of a look.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Slotted {
+    /// Always there.
+    No,
+    /// Hidden while something is worn there (a role's hat under a helmet).
+    HiddenBy(String),
+    /// There only while something is worn there (a Samurai's sode with his
+    /// armour).
+    ShownWith(String),
+}
+
+impl Slotted {
+    fn of(e: &nh_art::Extra) -> Slotted {
+        match (&e.with, &e.slot) {
+            (Some(w), _) => Slotted::ShownWith(w.clone()),
+            (None, Some(s)) => Slotted::HiddenBy(s.clone()),
+            (None, None) => Slotted::No,
+        }
+    }
+
+    /// Hidden by what is worn round the neck.
+    pub fn neck(&self) -> bool {
+        matches!(self, Slotted::HiddenBy(s) if s == NECK_SLOT)
+    }
+}
+
+/// A coat's maps (`Art::coat`), laid over a surface by its place in the
+/// mesh.
+struct CoatMaps {
+    scale: f32,
+    albedo: Option<Gd<Texture2D>>,
+    normal: Option<Gd<Texture2D>>,
+    orm: Option<Gd<Texture2D>>,
+    normal_scale: f32,
+}
+
+impl CoatMaps {
+    /// Over `m`: its shading under the dye, its relief, its gloss (the
+    /// map's alone) and its hollows.
+    fn lay_on(&self, m: &mut Gd<BaseMaterial3D>) {
+        m.set_flag(Flags::UV1_USE_TRIPLANAR, true);
+        m.set_uv1_scale(Vector3::splat(self.scale));
+        if let Some(a) = &self.albedo {
+            m.set_texture(TextureParam::ALBEDO, a);
+        }
+        if let Some(n) = &self.normal {
+            m.set_feature(Feature::NORMAL_MAPPING, true);
+            m.set_texture(TextureParam::NORMAL, n);
+            m.set_normal_scale(self.normal_scale);
+        }
+        if let Some(orm) = &self.orm {
+            m.set_texture(TextureParam::ROUGHNESS, orm);
+            m.set_roughness_texture_channel(TextureChannel::GREEN);
+            m.set_roughness(1.0);
+            m.set_feature(Feature::AMBIENT_OCCLUSION, true);
+            m.set_texture(TextureParam::AMBIENT_OCCLUSION, orm);
+            m.set_ao_texture_channel(TextureChannel::RED);
+        }
+    }
+}
 
 /// A model instance on the map.
 pub struct Model {
@@ -235,6 +297,14 @@ impl Model {
 
     pub fn player(&self) -> Option<&Gd<AnimationPlayer>> {
         self.player.as_ref().filter(|p| p.is_instance_valid())
+    }
+
+    /// Turned `degrees` further about its up (self-tests: a hero seen
+    /// from behind).
+    pub fn turn(&self, degrees: f32) {
+        if let Some(mut inner) = self.inner.clone() {
+            inner.rotate_y(degrees.to_radians());
+        }
     }
 
     /// Still an empty stand-in for its look.
@@ -1729,7 +1799,7 @@ impl Art {
             let hung = self.own_neck(&skeleton, &spec, look);
             extras.extend(
                 hung.into_iter()
-                    .map(|mi| (Some(NECK_SLOT.to_string()), mi.upcast())),
+                    .map(|mi| (Slotted::HiddenBy(NECK_SLOT.to_string()), mi.upcast())),
             );
         }
         if spec.proc.is_none() {
@@ -1825,11 +1895,21 @@ impl Art {
             .and_then(|h| h.tint.as_deref())
             .and_then(nh_art::hex)
             .map_or(Color::WHITE, rgb);
+        // (mesh name suffix, material, tint): what the outfit is made of
+        let dresses: Vec<(String, usize, Color)> = spec
+            .dress
+            .iter()
+            .filter_map(|(k, d)| {
+                let m = self.manifest.material_index(&d.material)?;
+                Some((k.clone(), m, rgb(d.tint_rgb())))
+            })
+            .collect();
         let plain = tint == Color::WHITE
             && !ghost
             && r.skin == Skin::Own
             && finish.is_none()
-            && recolor.is_empty();
+            && recolor.is_empty()
+            && dresses.is_empty();
         for node in inner
             .find_children_ex("*")
             .type_("MeshInstance3D")
@@ -1862,6 +1942,11 @@ impl Art {
                 None => tint,
             };
             let flat = dye.is_some_and(|d| d.2);
+            // mail, leather, fur: the material itself, not a dyed cloth
+            let made = dresses
+                .iter()
+                .find(|(k, _, _)| !head && !ghost && name.ends_with(k.as_str()))
+                .map(|&(_, m, c)| (m, mul(look.tint, c)));
             let n = mi.get_mesh().map_or(0, |m| m.get_surface_count());
             for i in 0..n {
                 let mat = match r.skin {
@@ -1872,6 +1957,9 @@ impl Art {
                         if is_skin(&src) {
                             let tone = mul(look.tint, skin_tone);
                             return self.derive(&src, tone, ghost, None);
+                        }
+                        if let Some((m, c)) = made {
+                            return self.surface(m, 100, false, c);
                         }
                         // a surface dyed by its material's name ("@Main"):
                         // one mesh of several materials, its coat apart
@@ -2197,10 +2285,13 @@ impl Art {
                 Skin::Material(m) => Some((m, look.tint)),
                 _ => None,
             };
-            if let Some((_, holder)) =
+            if let Some((_, mut holder)) =
                 self.attach_extra(&mut skeleton, e, look.pose == Pose::Ghost, made_of)
             {
-                out.push((e.slot.clone(), holder));
+                let slotted = Slotted::of(e);
+                // nothing is worn until the gear says so
+                holder.set_visible(!matches!(slotted, Slotted::ShownWith(_)));
+                out.push((slotted, holder));
             }
         }
         out
@@ -2354,6 +2445,7 @@ impl Art {
         if let Some(m) = self.derived.get(&key) {
             return m.clone();
         }
+        let coat = finish.and_then(|model| self.coat(model, &src.get_name().to_string()));
         let out = match src.duplicate_resource().try_cast::<BaseMaterial3D>().ok() {
             Some(mut m) => {
                 let mut albedo = mul(m.get_albedo(), tint);
@@ -2390,6 +2482,9 @@ impl Art {
                         }
                     }
                 }
+                if let Some(coat) = &coat {
+                    coat.lay_on(&mut m);
+                }
                 if ghost {
                     albedo.a = 0.4;
                     m.set_transparency(Transparency::ALPHA);
@@ -2401,6 +2496,25 @@ impl Art {
         };
         self.derived.insert(key, out.clone());
         out
+    }
+
+    /// The coat a model lays over its surface of the material `name`
+    /// (`ModelSpec::coat`): the maps of the coat's material, loaded.
+    fn coat(&mut self, model: usize, name: &str) -> Option<CoatMaps> {
+        let coat = self.manifest.model_at(model).1.coat.clone()?;
+        if !coat.on.iter().any(|n| n == name) {
+            return None;
+        }
+        let i = self.manifest.material_index(&coat.material)?;
+        let spec = self.manifest.material_at(i).1.clone();
+        let mut load = |p: Option<String>| p.and_then(|p| self.texture(&p));
+        Some(CoatMaps {
+            scale: coat.scale,
+            albedo: load(spec.albedo_path()),
+            normal: load(spec.normal_path()),
+            orm: load(spec.arm_path()),
+            normal_scale: spec.normal_scale,
+        })
     }
 
     fn proc_library(&mut self, kind: Proc, shape: Option<&str>) -> Option<Gd<AnimationLibrary>> {

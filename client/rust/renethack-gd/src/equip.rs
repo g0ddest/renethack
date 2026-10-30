@@ -21,7 +21,9 @@ use godot::classes::{
 use godot::prelude::*;
 use nh_art::{Gear, HeldArt, LightSpec, PROC_CLIPS, Resolved, Tint};
 
-use super::{Art, Finish, Model, ModelLook, NECK_SLOT, Pose, find, set_layer_mask, transform};
+use super::{
+    Art, Finish, Model, ModelLook, NECK_SLOT, Pose, Slotted, find, set_layer_mask, transform,
+};
 use crate::meshes::sphere;
 use crate::off_hand::{GuardClips, OffHand};
 
@@ -234,7 +236,7 @@ impl Art {
             // the hero's neck shows what they carry, never their look's own
             // (with nothing at all, no gear changes to say so)
             for (slot, node) in &m.extras {
-                if slot.as_deref() == Some(NECK_SLOT) && node.is_instance_valid() {
+                if slot.neck() && node.is_instance_valid() {
                     node.clone().set_visible(false);
                 }
             }
@@ -317,19 +319,24 @@ impl Art {
         }
         self.show_parts(&mut worn, &gear.worn);
         if let Some(skeleton) = worn.skeleton.clone() {
-            let shade = super::rgb(self.manifest.model_at(m.key.model).1.shade_rgb());
-            self.wear(&mut worn.dressed, &skeleton, gear, shade);
+            self.wear(&mut worn.dressed, &skeleton, gear, m.key.model);
         }
         // a role's hat, cape or shield steps aside for what is worn there,
         // and its own thing round the neck for whatever the hero carries
+        // (and what goes with a slot comes with what is worn there)
         for (slot, node) in &m.extras {
-            let Some(slot) = slot else { continue };
-            let covered = (slot == NECK_SLOT && !worn.monster)
-                || gear.worn.contains(&slot.as_str())
-                || (slot == "shield" && gear.arm_l.is_some());
+            let shown = match slot {
+                Slotted::No => continue,
+                Slotted::ShownWith(s) => !worn.monster && gear.worn.contains(&s.as_str()),
+                Slotted::HiddenBy(s) => {
+                    !((s == NECK_SLOT && !worn.monster)
+                        || gear.worn.contains(&s.as_str())
+                        || (s == "shield" && gear.arm_l.is_some()))
+                }
+            };
             let mut node = node.clone();
             if node.is_instance_valid() {
-                node.set_visible(!covered);
+                node.set_visible(shown);
             }
         }
         worn.gear = gear.clone();
@@ -594,10 +601,10 @@ impl Art {
         }
         self.take_off(&mut worn.dressed);
         worn.gear = Gear::default();
-        for (_, node) in &m.extras {
+        for (slot, node) in &m.extras {
             let mut node = node.clone();
             if node.is_instance_valid() {
-                node.set_visible(true);
+                node.set_visible(!matches!(slot, Slotted::ShownWith(_)));
             }
         }
         // a dwarf leader's mattock in both hands again, once no hero is
