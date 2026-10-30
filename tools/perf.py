@@ -77,11 +77,14 @@ SCENES = {
     # Gehennom: the Valley, Juiblex's swamp, Orcus Town, the Wizard's
     # mazes and a level of each fire deeper
     "gehennom": ("gehennom", [], 900),
+    # a creature hidden behind the hero (its x-ray contour): for the
+    # census, not timed
+    "through": ("through", [], 300),
     # every creature and thing a batch at a time: with --census, what the
     # game can draw (not a timing)
     "variants": ("variants", [], 1800),
 }
-DEFAULT_SCENES = [s for s in SCENES if s not in ("smoke", "variants")]
+DEFAULT_SCENES = [s for s in SCENES if s not in ("smoke", "variants", "through")]
 
 
 def say(*a):
