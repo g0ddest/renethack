@@ -538,6 +538,10 @@ const ARROW_OVER: f32 = 8.0;
 /// And its middle this far from a panel of the HUD: half its length and a
 /// little air.
 const ARROW_PAD: f32 = 28.0;
+/// A hostile whose head is this little over the hero's (padded) head is
+/// behind them, a sliver of it showing (pixels): its arrow goes beside
+/// them (`off_hero`).
+const OVER_HEAD: f32 = ARROW_TIP * 1.5;
 
 /// Arrows over the other hostiles at most, and their size against the
 /// nearest's (they say "here too", it says "this one first").
@@ -629,9 +633,11 @@ pub fn off_panels(
 /// The arrow over a hostile's head at `p` off the hero's own body (`hero`,
 /// on screen): a hostile in the cell south of the hero stands before them,
 /// and what is over its head is the hero's waist; a small one north of
-/// them is behind them, its head (`target`) on their body, and the arrow
-/// over it would sit on the hero's own head. The arrow then goes beside
-/// the hero, level with where it was, and points at `target` from there.
+/// them is behind them, its head (`target`) on their body or just over
+/// their head (`OVER_HEAD`: a sliver of it showing), and the arrow over it
+/// would sit on the hero's own head, marking them. The arrow then goes
+/// beside the hero, level with where it was, and points at `target` from
+/// there.
 /// `side` is the side it went to last (true: the right), kept while it
 /// stays beside them, so that it does not jump over as the hostile sways;
 /// None again once it is clear.
@@ -643,9 +649,16 @@ pub fn off_hero(
     hero: Option<Rect2>,
     side: &mut Option<bool>,
 ) -> (Vector2, f32) {
+    let over_head = |r: &Rect2| {
+        let band = Rect2::new(
+            r.position - Vector2::new(0.0, OVER_HEAD),
+            Vector2::new(r.size.x, OVER_HEAD),
+        );
+        band.contains_point(target)
+    };
     let Some(body) = hero
         .map(|r| r.grow(ARROW_PAD))
-        .filter(|r| r.contains_point(p) || r.contains_point(target))
+        .filter(|r| r.contains_point(p) || r.contains_point(target) || over_head(r))
     else {
         *side = None;
         return (p, angle);
@@ -3469,6 +3482,16 @@ mod tests {
             (d.y.atan2(d.x) - a).abs() < 1e-3,
             "it points at the hostile"
         );
+        // one right behind them, a sliver of its head just over theirs:
+        // its arrow over it would mark the hero, so beside them, leaning
+        // to it
+        let (mut side, target) = (None, Vector2::new(962.0, 380.0 - ARROW_PAD - 20.0));
+        let head = Vector2::new(target.x, target.y - 36.0);
+        assert!(!on_hero(head) && !on_hero(target));
+        let (q, a) = off_hero(head, down, target, view, Some(hero), &mut side);
+        assert!(q.x > hero.end().x || q.x < hero.position.x, "{q:?}");
+        let d = target - q;
+        assert!((d.y.atan2(d.x) - a).abs() < 1e-3);
         // a hero not on screen
         let off = off_hero(head, down, target, view, None, &mut side);
         assert_eq!(off, (head, down));
