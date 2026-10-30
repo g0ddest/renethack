@@ -144,6 +144,8 @@ mod through_tests;
 mod tips_tests;
 #[path = "selftest_trapdoor.rs"]
 mod trapdoor_tests;
+#[path = "selftest_travel_words.rs"]
+mod travel_words_tests;
 #[path = "selftest_variants.rs"]
 mod variants_tests;
 #[path = "selftest_world.rs"]
@@ -5180,6 +5182,7 @@ impl SelfTest {
             "portrait" => portrait_tests::portrait(),
             "overhang" => overhang_tests::overhang(),
             "ordinals" => ordinals_tests::ordinals(),
+            "travel-words" => travel_words_tests::travel_words(),
             "features" => features_tests::features(),
             "pad-words" => pad_words_tests::pad_words(),
             "skills" => skills_tests::skills(),

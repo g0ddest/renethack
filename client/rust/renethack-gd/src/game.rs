@@ -250,14 +250,26 @@ fn getpos_line(world: &World, pad: Option<PadKind>) -> Option<String> {
             Some(g) => i18n::engine(EngineKind::Prompt, g).into_owned(),
             None => tr!("prompt-pick-spot"),
         };
+        // this client's words, not the tty's keys: travel goes there,
+        // anything else (a look, a spell's target) picks the cell
+        let travel = world
+            .getpos_goal
+            .as_deref()
+            .is_some_and(|g| g.contains("travel"));
+        let verb = if travel {
+            tr!("prompt-getpos-go")
+        } else {
+            tr!("prompt-getpos-pick")
+        };
         match pad {
             Some(k) => tr!(
                 "prompt-getpos-pad",
                 goal = goal,
+                verb = verb,
                 a = k.label(PadButton::A),
                 b = k.label(PadButton::B)
             ),
-            None => tr!("prompt-getpos", goal = goal),
+            None => tr!("prompt-getpos", goal = goal, verb = verb),
         }
     })
 }
@@ -2666,7 +2678,11 @@ impl RenethackGame {
         };
         let (np, dirs) = (self.world.number_pad, self.world.dirchars.clone());
         let code = |ctx| nethack_key(&k, ctx, np, &dirs);
+        // getpos's cursor: Enter picks the cell, as its line says (NetHack
+        // picks with . , ; : alone)
+        let pick = matches!(k.key, Key::Enter | Key::KeypadEnter) && !k.echo;
         let reply = match prompt {
+            Prompt::Command if self.world.getpos && pick => Some(Reply::Key('.' as i32)),
             Prompt::Command => code(KeyContext::Command).map(Reply::Key),
             Prompt::Key => code(KeyContext::Directions).map(Reply::Key),
             Prompt::FreeKey { directions, .. } => {
