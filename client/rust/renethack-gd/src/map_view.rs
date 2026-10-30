@@ -2160,15 +2160,18 @@ fn terrain_base(
                     Paint::Liquid(Liquid::Bubble),
                     Vector3::ZERO,
                 );
-                // its skin on each side that meets the water, leaning in
-                // over the bubble as a sphere's would
+                // its skin on each side that meets the water, standing on
+                // the cell's edge and leaning in over the bubble as a
+                // sphere's would, its face outwards (the shader makes the
+                // side facing the eye, in front of the bubble, fainter)
                 let half = MEMBRANE_TALL / 2.0;
-                let (lean, inset) = (MEMBRANE_LEAN, half * MEMBRANE_LEAN.to_radians().sin());
+                let edge = 0.5 - half * MEMBRANE_LEAN.to_radians().sin();
+                let tilt = 90.0 - MEMBRANE_LEAN;
                 let sides = [
-                    (at(0.0, half, -0.5 + inset), at(90.0 - lean, 0.0, 0.0)),
-                    (at(0.0, half, 0.5 - inset), at(90.0 + lean, 0.0, 0.0)),
-                    (at(-0.5 + inset, half, 0.0), at(90.0 + lean, 90.0, 0.0)),
-                    (at(0.5 - inset, half, 0.0), at(90.0 - lean, 90.0, 0.0)),
+                    (at(0.0, half, -edge), at(tilt, 180.0, 0.0)),
+                    (at(0.0, half, edge), at(tilt, 0.0, 0.0)),
+                    (at(-edge, half, 0.0), at(tilt, 270.0, 0.0)),
+                    (at(edge, half, 0.0), at(tilt, 90.0, 0.0)),
                 ];
                 for ((pos, rot), water) in sides.into_iter().zip(around.liquid) {
                     if water {
