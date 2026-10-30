@@ -198,8 +198,10 @@ fn a_new_game_has_its_inventory_at_the_first_command() {
 fn the_options_notice_tells_the_player_s_own_options() {
     let pg = tempfile::tempdir().unwrap();
     let mut cfg = config(pg.path());
+    // the interactive client's pushweapon too: none of its own is the
+    // player's (one it set and the notice misses is)
     cfg.options
-        .push_str(",fruit:kumquat,hitpointbar,number_pad:1");
+        .push_str(",fruit:kumquat,hitpointbar,number_pad:1,pushweapon");
     let mut engine = Engine::spawn(&cfg).unwrap();
     let script = "key #\next quit\nyn y\nyn n\nyn n\nyn n\nyn n\n";
     let mut responder = ScriptResponder::new(parse_script(script).unwrap());

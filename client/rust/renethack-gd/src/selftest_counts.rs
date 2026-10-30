@@ -8,7 +8,8 @@
 //! the player's setting asks for one. With the orders' speed at Instant a
 //! click walks three cells at once. An option the player sets with the
 //! engine's own `O` (hitpointbar) is kept in the profile, without the
-//! client's own, and the next game has it.
+//! client's own, and the next game has it; so is one of the client's own
+//! the player turns off (pushweapon), over the client's value.
 
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
@@ -295,59 +296,82 @@ fn engine_options(p: &Prompt) -> bool {
     matches!(p, Prompt::Menu { title: Some(t), .. } if t == "Options")
 }
 
-/// hitpointbar's line in the engine's `O` menu waiting shows it on.
-fn hitpointbar_on(g: &RenethackGame) -> Result<bool, String> {
+/// `name`'s line in the engine's `O` menu waiting: on or off (None: no
+/// such menu waits).
+fn option_on(g: &RenethackGame, name: &str) -> Result<Option<bool>, String> {
     let Some((_, Prompt::Menu { items, .. })) = &g.pending else {
-        return Ok(false);
+        return Ok(None);
     };
     let line = items
         .iter()
         .filter_map(|i| i.str.as_deref())
-        .find(|t| t.starts_with("hitpointbar "));
-    Ok(line.is_some_and(|l| l.contains("[X]")))
+        .find(|t| t.starts_with(&format!("{name} ")))
+        .ok_or_else(|| format!("no {name} in O"))?;
+    Ok(Some(line.contains("[X]")))
 }
 
-/// `O`, hitpointbar picked (a pick-one menu: a click answers it), the
-/// menu again with it on, closed; the profile keeps it, not the client's
-/// own options.
-fn hitpointbar_set() -> Vec<Step> {
+/// `name` picked in the `O` menu waiting (a pick-one menu: a click
+/// answers it, and the menu comes again).
+fn pick_option(g: &mut RenethackGame, name: &str) -> Result<(), String> {
+    let (id, _) = g.pending.clone().ok_or("no request waits")?;
+    let entries = super::open_menu(g).ok_or("no menu shown")?;
+    let i = entries
+        .iter()
+        .position(|e| e.text.starts_with(&format!("{name} ")))
+        .ok_or_else(|| format!("no {name} in O"))?;
+    g.push_ui(UiEvent::Dialog {
+        req: id,
+        ev: DialogEvent::MenuClick(i),
+    });
+    Ok(())
+}
+
+/// `O`: hitpointbar (the player's own) on, pushweapon (the client's own,
+/// on) off; closed. The profile keeps both, and none of the client's own
+/// it left as the client sets them.
+fn options_set() -> Vec<Step> {
     vec![
         Step::Wait("the player's turn", idle_command),
         key('O'),
         Step::Request("the engine's own options", engine_options),
-        Step::Call("hitpointbar picked", |g| {
-            let (id, _) = g.pending.clone().ok_or("no request waits")?;
-            let entries = super::open_menu(g).ok_or("no menu shown")?;
-            let i = entries
-                .iter()
-                .position(|e| e.text.starts_with("hitpointbar "))
-                .ok_or("no hitpointbar in O")?;
-            g.push_ui(UiEvent::Dialog {
-                req: id,
-                ev: DialogEvent::MenuClick(i),
-            });
-            Ok(())
+        Step::Call("hitpointbar picked", |g| pick_option(g, "hitpointbar")),
+        Step::Wait("the options again, hitpointbar on", |g| {
+            Ok(option_on(g, "hitpointbar")? == Some(true))
         }),
-        Step::Wait("the options again, hitpointbar on", hitpointbar_on),
+        Step::Call("pushweapon picked", |g| pick_option(g, "pushweapon")),
+        Step::Wait("the options again, pushweapon off", |g| {
+            Ok(option_on(g, "pushweapon")? == Some(false))
+        }),
         Step::Dialog(DialogEvent::MenuCancel),
         Step::Request("a command again", command),
-        Step::Wait("the profile keeps it, not the client's own", |g| {
+        Step::Wait("the profile keeps them, not the client's own", |g| {
             let own = &g.settings.nethack_options;
-            let client = ["name", "role", "number_pad", "time", "showexp", "cond_"];
+            let client = [
+                "name",
+                "role",
+                "number_pad",
+                "time",
+                "showexp",
+                "cond_",
+                "pushweapon",
+            ];
             if own.iter().any(|o| client.iter().any(|c| o.starts_with(c))) {
                 return Err(format!("the profile keeps the client's own: {own:?}"));
             }
-            Ok(own.iter().any(|o| o == "hitpointbar"))
+            Ok(own.iter().any(|o| o == "hitpointbar") && own.iter().any(|o| o == "!pushweapon"))
         }),
     ]
 }
 
-/// The next game's `O` shows hitpointbar on.
-fn hitpointbar_kept() -> Vec<Step> {
+/// The next game's `O` shows hitpointbar on and pushweapon off.
+fn options_kept() -> Vec<Step> {
     vec![
         key('O'),
         Step::Request("the engine's own options", engine_options),
-        Step::Wait("hitpointbar on in the next game", hitpointbar_on),
+        Step::Wait("hitpointbar on, pushweapon off in the next game", |g| {
+            Ok(option_on(g, "hitpointbar")? == Some(true)
+                && option_on(g, "pushweapon")? == Some(false))
+        }),
         Step::Dialog(DialogEvent::MenuCancel),
         Step::Request("a command again", command),
     ]
@@ -359,7 +383,7 @@ pub(super) fn counts() -> Vec<Step> {
     steps.extend(three_steps());
     steps.extend(not_down_here());
     steps.extend(instant_walk());
-    steps.extend(hitpointbar_set());
+    steps.extend(options_set());
     steps.extend(quit());
     steps.extend([
         Step::Push(UiEvent::BackToTitle),
@@ -370,7 +394,7 @@ pub(super) fn counts() -> Vec<Step> {
         Step::Push(UiEvent::StartCharacter(samurai(KeyProfile::Classic))),
         Step::Request("the first command (Classic)", command),
     ]);
-    steps.extend(hitpointbar_kept());
+    steps.extend(options_kept());
     steps.extend(pick_five(vec![key('5')], |g| keys_were(g, "5,")));
     steps.extend(quit());
     steps

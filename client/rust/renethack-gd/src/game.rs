@@ -5618,19 +5618,21 @@ impl RenethackGame {
             engine: paths.engine(),
             playground: paths.playground.clone(),
             // NetHack does not save number_pad: every start passes it; the
-            // player's own options (`O`'s, kept) last, where the client's
-            // win over them (the engine reads the list right to left)
+            // player's own options (`O`'s, kept) last, and the client's
+            // own the player set otherwise left out (the engine reads the
+            // list right to left: the first of a name wins)
             options: {
                 let own = &self.settings.nethack_options;
-                let own = if own.is_empty() {
-                    String::new()
-                } else {
-                    format!(",{}", own.join(","))
-                };
-                format!(
-                    "{options},{CLIENT_EXTRA_OPTIONS},{}{own}",
+                let client = format!(
+                    "{options},{CLIENT_EXTRA_OPTIONS},{}",
                     state.profile.engine_option()
-                )
+                );
+                let client = nh_world::without_options(&client, own);
+                if own.is_empty() {
+                    client
+                } else {
+                    format!("{client},{}", own.join(","))
+                }
             },
             seed: self
                 .seed

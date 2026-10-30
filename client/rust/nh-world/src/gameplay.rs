@@ -28,7 +28,7 @@ const PARANOID_MENU: &str = "Actions requiring extra confirmation:";
 /// how the engine's windows, menus, keys and clicks come to the client.
 /// So are the status conditions (`cond_`), getpos's (`getpos`) and
 /// farlook's (`whatis_`).
-const CLIENT_OPTIONS: [&str; 36] = [
+const CLIENT_OPTIONS: [&str; 33] = [
     "name",
     "role",
     "race",
@@ -37,14 +37,12 @@ const CLIENT_OPTIONS: [&str; 36] = [
     "alignment",
     "playmode",
     "number_pad",
-    "time",
     "legacy",
     "tutorial",
     "tips",
     "implicit_uncursed",
+    // the host's, always off: no Unix mailbox may summon the mail daemon
     "mail",
-    "showexp",
-    "pushweapon",
     "autopickup",
     "pickup_types",
     "pickup_burden",
@@ -67,12 +65,56 @@ const CLIENT_OPTIONS: [&str; 36] = [
     "autodescribe",
 ];
 
+/// The client's own options a player may turn off with `O`: the client
+/// starts every game with them on (`BASE_OPTIONS`, `CLIENT_EXTRA_OPTIONS`),
+/// NetHack's default is off. A notice lists a boolean only when it is not
+/// its default: one of these missing from it is off, the player's choice.
+pub const SOFT_CLIENT_OPTIONS: [&str; 3] = ["time", "showexp", "pushweapon"];
+
 /// The player's own NetHack options in an options notice's `rc` (every
 /// option set, as `#saveoptions` writes them): those `O` set, kept for the
-/// next games (`Settings::nethack_options`), not the client's. Only the
+/// next games (`Settings::nethack_options`), not the client's; of the
+/// client's soft ones (`SOFT_CLIENT_OPTIONS`) those turned off. Only the
 /// `OPTIONS=` lines' options: menu colours and message types stay a
 /// game's.
 pub fn player_options(rc: &str) -> Vec<String> {
+    let mut own = listed_options(rc);
+    if own.is_empty() && !rc.contains("OPTIONS=") {
+        return own;
+    }
+    let on: Vec<String> = own.clone();
+    own.retain(|o| !SOFT_CLIENT_OPTIONS.contains(&o.as_str()));
+    own.extend(
+        SOFT_CLIENT_OPTIONS
+            .iter()
+            .filter(|n| !on.iter().any(|o| o == *n))
+            .map(|n| format!("!{n}")),
+    );
+    own
+}
+
+/// A NetHack options list (the client's own, comma-separated) without those
+/// the player has a value of their own for (`own`, `player_options`):
+/// the player's value stands, whichever end of NETHACKOPTIONS it is at.
+pub fn without_options(list: &str, own: &[String]) -> String {
+    let name = |o: &str| {
+        o.trim()
+            .trim_start_matches('!')
+            .split(':')
+            .next()
+            .unwrap_or("")
+            .trim()
+            .to_string()
+    };
+    let theirs: Vec<String> = own.iter().map(|o| name(o)).collect();
+    list.split(',')
+        .filter(|o| !theirs.contains(&name(o)))
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
+/// The `OPTIONS=` lines' options of an `rc` but the client's.
+fn listed_options(rc: &str) -> Vec<String> {
     rc.replace("\\\n", "")
         .lines()
         .filter_map(|l| l.trim().strip_prefix("OPTIONS="))
@@ -1008,6 +1050,8 @@ mod tests {
     #[test]
     fn the_player_s_own_options_leave_the_client_s_out() {
         let rc = "OPTIONS=!autopickup\n\
+                  OPTIONS=time\n\
+                  OPTIONS=showexp\n\
                   OPTIONS=hitpointbar\n\
                   OPTIONS=name:Hero\n\
                   OPTIONS=number_pad:1\n\
@@ -1018,11 +1062,29 @@ mod tests {
                   OPTIONS=whatis_menu\n\
                   MENUCOLOR=\"blessed\"=green\n\
                   BIND=^X:attributes\n";
+        // the client's time and showexp on: its own; pushweapon missing:
+        // the player turned it off with `O`
         assert_eq!(
             player_options(rc),
-            ["hitpointbar", "fruit:kumquat", "!rest_on_space"]
+            [
+                "hitpointbar",
+                "fruit:kumquat",
+                "!rest_on_space",
+                "!pushweapon"
+            ]
         );
         assert!(player_options("").is_empty());
+        // the next game: the client's pushweapon left out, the player's
+        // value stands
+        let own = player_options(rc);
+        assert_eq!(
+            without_options("time,!legacy,showexp,pushweapon,cond_trap", &own),
+            "time,!legacy,showexp,cond_trap"
+        );
+        assert_eq!(
+            without_options("hitpointbar,name:Hero", &["!hitpointbar".to_string()]),
+            "name:Hero"
+        );
     }
 
     #[test]
