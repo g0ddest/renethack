@@ -276,7 +276,8 @@ fn order_text(order: &Order, pad: bool) -> String {
     use nh_world::Arrival;
     let what = match order {
         Order::Walk { arrival, .. } => match arrival {
-            Arrival::None => tr!("order-walk"),
+            // to a peaceful one: a walk, no attack
+            Arrival::None | Arrival::Meet => tr!("order-walk"),
             Arrival::PickUp => tr!("order-walk-pick-up"),
             Arrival::Stairs('<') => tr!("order-stairs-up"),
             Arrival::Stairs(_) => tr!("order-stairs-down"),

@@ -73,13 +73,18 @@ pub enum Arrival {
     Open,
     /// `F` and the direction, from a cell next to the monster.
     Attack,
+    /// The direction alone, from a cell next to a peaceful monster: the
+    /// engine does what NetHack does when the hero walks into it (swaps
+    /// places with it, or asks "Really attack?"), never `F`'s blow
+    /// without a question.
+    Meet,
 }
 
 impl Arrival {
     pub fn reach(self) -> Reach {
         match self {
             Arrival::Open => Reach::Orthogonal,
-            Arrival::Attack => Reach::Adjacent,
+            Arrival::Attack | Arrival::Meet => Reach::Adjacent,
             _ => Reach::Onto,
         }
     }
@@ -274,7 +279,8 @@ pub enum ClickPlan {
     Nothing(&'static str),
 }
 
-/// A left click at `at`: a monster — attack it (a pet — walk there); an
+/// A left click at `at`: a monster — attack it (a pet — walk there; a
+/// peaceful one — walk up and into it, as NetHack takes a step); an
 /// object — walk there and pick it up; stairs — walk there and use them; a
 /// closed door — walk up and open it; the hero — the engine's menu;
 /// anything else seen — walk there.
@@ -292,6 +298,7 @@ pub fn click_order(world: &World, catalog: &Catalog, at: (i32, i32)) -> ClickPla
     if let Some(g) = cell.entity() {
         match g.kind {
             GlyphKind::Mon if g.flags & mg::PET != 0 => return walk(Arrival::None),
+            GlyphKind::Mon if cell.peaceful => return walk(Arrival::Meet),
             GlyphKind::Mon | GlyphKind::Invisible => return walk(Arrival::Attack),
             GlyphKind::Obj | GlyphKind::Body if passage(cell, catalog) != Passage::Occupied => {
                 return walk(Arrival::PickUp);
@@ -644,7 +651,7 @@ impl TickDriver {
         let target = match order {
             Order::Walk {
                 goal,
-                arrival: Arrival::Attack,
+                arrival: Arrival::Attack | Arrival::Meet,
             } => world
                 .map
                 .cell(goal.0, goal.1)
@@ -736,7 +743,7 @@ impl TickDriver {
                 let Some(hero) = hero else {
                     return self.end(Stop::Blocked);
                 };
-                let goal = if arrival == Arrival::Attack {
+                let goal = if matches!(arrival, Arrival::Attack | Arrival::Meet) {
                     let found = follow_target(world, goal, active.target.as_ref());
                     if let Some(g) = found {
                         active.order = Order::Walk { goal: g, arrival };
@@ -761,16 +768,19 @@ impl TickDriver {
                             dir.filter(|_| closed)
                                 .map(|d| Action { keys: vec!['o', d] })
                         }
-                        Arrival::Attack => {
-                            let there = world
-                                .map
-                                .cell(goal.0, goal.1)
-                                .and_then(|c| c.entity())
-                                .is_some_and(|g| {
-                                    matches!(g.kind, GlyphKind::Mon | GlyphKind::Invisible)
-                                        && g.flags & mg::HERO == 0
-                                });
-                            dir.filter(|_| there).map(|d| Action { keys: vec!['F', d] })
+                        Arrival::Attack | Arrival::Meet => {
+                            let cell = world.map.cell(goal.0, goal.1);
+                            let there = cell.and_then(|c| c.entity()).is_some_and(|g| {
+                                matches!(g.kind, GlyphKind::Mon | GlyphKind::Invisible)
+                                    && g.flags & mg::HERO == 0
+                            });
+                            // `F` skips the engine's "Really attack?": never
+                            // on a peaceful one (it may have become so)
+                            let peaceful =
+                                arrival == Arrival::Meet || cell.is_some_and(|c| c.peaceful);
+                            dir.filter(|_| there).map(|d| Action {
+                                keys: if peaceful { vec![d] } else { vec!['F', d] },
+                            })
                         }
                     };
                     match action {
@@ -1232,6 +1242,48 @@ mod tests {
     }
 
     #[test]
+    fn a_click_on_a_peaceful_steps_into_it_never_fights_it() {
+        let rows = ["|@.....|"];
+        let (mut w, cat) = world_of(&rows);
+        draw(&mut w.map, &cat, 0, &["   J"]);
+        peaceful(&mut w, (4, 0));
+        // a peaceful watchman: walk up to him and step into him, as
+        // NetHack's move does (it swaps places, or asks "Really attack?")
+        let plan = click_order(&w, &cat, (4, 0));
+        assert_eq!(
+            plan,
+            ClickPlan::Order(Order::Walk {
+                goal: (4, 0),
+                arrival: Arrival::Meet
+            })
+        );
+        let ClickPlan::Order(order) = plan else {
+            unreachable!()
+        };
+        let mut d = TickDriver::new();
+        assert_eq!(keys(&d.start(order, &w, &cat).unwrap()), "l");
+        step(&mut w, &cat, (2, 0), (3, 0));
+        d.observe(&w, &cat);
+        assert_eq!(keys(&d.next(&w, &cat).unwrap()), "l");
+        // a hostile one is fought, with `F`
+        let (mut w, cat) = world_of(&rows);
+        draw(&mut w.map, &cat, 0, &["  J"]);
+        let plan = click_order(&w, &cat, (3, 0));
+        let ClickPlan::Order(order) = plan else {
+            panic!("{plan:?}")
+        };
+        assert_eq!(
+            order,
+            Order::Walk {
+                goal: (3, 0),
+                arrival: Arrival::Attack
+            }
+        );
+        let mut d = TickDriver::new();
+        assert_eq!(keys(&d.start(order, &w, &cat).unwrap()), "Fl");
+    }
+
+    #[test]
     fn an_attack_follows_its_target() {
         let rows = ["|@.....|"];
         let (mut w, cat) = world_of(&rows);
@@ -1256,7 +1308,9 @@ mod tests {
         assert_eq!(keys(&d.next(&w, &cat).unwrap()), "l");
         step(&mut w, &cat, (4, 0), (5, 0));
         d.observe(&w, &cat);
-        assert_eq!(keys(&d.next(&w, &cat).unwrap()), "Fl");
+        // beside it, and it is peaceful: a step into it, not `F`'s blow
+        // without a question
+        assert_eq!(keys(&d.next(&w, &cat).unwrap()), "l");
         assert_eq!(
             d.order(),
             Some(&Order::Walk {

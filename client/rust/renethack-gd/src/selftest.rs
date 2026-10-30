@@ -100,6 +100,8 @@ mod pad_screens_tests;
 mod pad_words_tests;
 #[path = "selftest_passing.rs"]
 mod passing_tests;
+#[path = "selftest_peaceful.rs"]
+mod peaceful_tests;
 #[path = "selftest_polyself.rs"]
 mod polyself_tests;
 #[path = "selftest_portrait.rs"]
@@ -5142,6 +5144,8 @@ impl SelfTest {
             "give-up" => give_up_tests::give_up(),
             "hud-tips" => tips_tests::hud_tips(),
             "look-tip" => look_tests::look_tip(),
+            "peaceful" => peaceful_tests::peaceful(),
+            "peaceful-swap" => peaceful_tests::peaceful_swap(),
             "quest-words" => prose_tests::quest_words(),
             "pad-panels" => pad_panels_tests::pad_panels(),
             "pad-journey" => pad_journey_tests::pad_journey(),
