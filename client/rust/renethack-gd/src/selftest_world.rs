@@ -199,13 +199,22 @@ fn view_nearest(g: &mut RenethackGame, t: nh_world::Terrain) -> Result<(), Strin
 /// a lit one. In a maze (its walls a cell thick) any wall over a floor;
 /// with none, the view stays on the hero.
 fn view_north_wall(g: &mut RenethackGame) -> Result<(), String> {
+    if let Some(at) = north_wall_near_hero(g)? {
+        g.world.view_center = Some(at);
+    }
+    far(g, 7.0)
+}
+
+/// The north wall of a room nearest the hero, as `view_north_wall` takes
+/// it.
+fn north_wall_near_hero(g: &RenethackGame) -> Result<Option<(i32, i32)>, String> {
     use nh_world::Terrain;
     let cat = g.catalog.clone().ok_or("no catalog")?;
     let (hx, hy) = g.world.map.hero().ok_or("no hero")?;
     let map = &g.world.map;
     let t = |x: i32, y: i32| map.cell(x, y).and_then(|c| nh_world::cell_terrain(c, &cat));
     let floor = |x: i32, y: i32| matches!(t(x, y), Some(Terrain::Floor | Terrain::DarkFloor));
-    let at = (0..nh_world::ROWNO)
+    Ok((0..nh_world::ROWNO)
         .flat_map(|y| (0..nh_world::COLNO).map(move |x| (x, y)))
         .filter(|&(x, y)| t(x, y) == Some(Terrain::Wall) && floor(x, y + 1))
         .min_by_key(|&(x, y)| {
@@ -214,11 +223,50 @@ fn view_north_wall(g: &mut RenethackGame) -> Result<(), String> {
                 && (-1..=1).all(|dx| floor(x + dx, y + 1));
             let dark = t(x, y + 1) != Some(Terrain::Floor);
             (!room, !long, dark, (x - hx).pow(2) + (y - hy).pow(2))
-        });
-    if let Some(at) = at {
-        g.world.view_center = Some(at);
-    }
-    far(g, 7.0)
+        }))
+}
+
+/// Where impl-world's luma script measures the next picture, printed as
+/// points on the screen: the hero's feet, the face of the north wall
+/// nearest them turned to the camera (as `north_wall_near_hero`), and a
+/// bare floor nearest the hero.
+fn luma_marks(g: &mut RenethackGame) -> Result<(), String> {
+    use nh_world::Terrain;
+    let cat = g.catalog.clone().ok_or("no catalog")?;
+    let (hx, hy) = g.world.map.hero().ok_or("no hero")?;
+    let wall = north_wall_near_hero(g)?;
+    let map = &g.world.map;
+    // (the nearest: in a maze the floor out of sight is none drawn)
+    let mut near: Vec<(i32, i32)> = (-3..=3)
+        .flat_map(|dy| (-3..=3).map(move |dx| (hx + dx, hy + dy)))
+        .filter(|&at| at != (hx, hy))
+        .collect();
+    near.sort_by_key(|&(x, y)| (x - hx).abs().max((y - hy).abs()));
+    let bare = near.into_iter().find(|&(x, y)| {
+        map.cell(x, y).is_some_and(|c| {
+            c.entity().is_none()
+                && matches!(
+                    nh_world::cell_terrain(c, &cat),
+                    Some(Terrain::Floor | Terrain::DarkFloor)
+                )
+        })
+    });
+    let ui = g.ui.as_ref().ok_or("no UI")?;
+    let mark = |what: &str, at: Option<Vector3>| {
+        if let Some(p) = at.and_then(|at| ui.map.on_screen(at)) {
+            godot_print!("selftest: luma: {what} {:.0} {:.0}", p.x, p.y);
+        }
+    };
+    mark("hero", ui.map.hero_stands().map(|(feet, _)| feet));
+    mark(
+        "wall",
+        wall.map(|(x, y)| Vector3::new(x as f32, 1.0, y as f32 + 0.52)),
+    );
+    mark(
+        "floor",
+        bare.map(|(x, y)| Vector3::new(x as f32, 0.0, y as f32)),
+    );
+    Ok(())
 }
 
 /// A picture close on the north wall of the room nearest the hero
@@ -228,6 +276,7 @@ fn close_on_wall(steps: &mut Vec<Step>, shot: &'static str) {
     steps.extend([
         Step::Call("the view on a room's north wall", view_north_wall),
         Step::Wait("the camera on the wall", drawn_here),
+        Step::Call("where to measure", luma_marks),
         Step::Shot(wall_shot),
         Step::Call("the camera back on the hero", |g| {
             g.world.view_center = None;
@@ -295,12 +344,71 @@ pub(super) fn dressing() -> Vec<Step> {
     steps
 }
 
-/// Gehennom's looks (the critics' art #8), for pictures before and after
-/// (not part of `make test-client`): the Valley as the hero arrives and
-/// once the overview names it (the level mapped, its temple of Moloch
-/// with it), Juiblex's swamp, Orcus' town, the Wizard's mazes and a few
-/// levels deeper (each its own fire), each near, far and close on a
-/// room's north wall.
+/// A level teleport for the pictures of a level's light (`gehennom`): to
+/// the special level the debug menu's entry `pick` names, or without one
+/// to `depth`. A picture as the hero arrives, before the level is mapped
+/// (`shot`-arrival: only what they see of it), then mapped at the game's
+/// camera (`shot`), close on a wall (`shot`-wall) and in the overview
+/// (`shot`-overview).
+fn light_visit(
+    steps: &mut Vec<Step>,
+    pick: Option<KeyCheck>,
+    depth: &'static str,
+    shot: &'static str,
+) {
+    let named =
+        |suffix: &str| -> &'static str { Box::leak(format!("{shot}-{suffix}").into_boxed_str()) };
+    steps.extend([
+        Step::Key(ctrl_key('v')),
+        Step::Request(
+            "to what level",
+            |p| matches!(p, Prompt::Text { query, .. } if query.contains("level")),
+        ),
+        Step::Dialog(DialogEvent::TextSubmitted(
+            if pick.is_some() { "?" } else { depth }.into(),
+        )),
+    ]);
+    if let Some(pick) = pick {
+        steps.extend([
+            Step::Request("the levels to teleport to", is_menu),
+            Step::KeyFrom("the level", pick),
+        ]);
+    }
+    steps.extend([
+        Step::AnswerUntil('n', "a command on the new level", at_command),
+        Step::Wait("the level drawn as the hero arrives", drawn_here),
+        Step::Call("where to measure", luma_marks),
+        Step::Shot(named("arrival")),
+        Step::Key(ctrl_key('f')),
+        Step::Request("a command after the map", |p| matches!(p, Prompt::Command)),
+        Step::Wait("the level drawn", drawn_here),
+        Step::Call("where to measure", luma_marks),
+        Step::Shot(shot),
+    ]);
+    close_on_wall(steps, shot);
+    steps.extend([
+        Step::Call("the overview", |g| {
+            g.ui.as_mut().ok_or("no UI")?.map.toggle_overview();
+            Ok(())
+        }),
+        Step::Wait("the overview framed", |g| Ok(map_view(g)?.overview_shown())),
+        Step::Call("where to measure", luma_marks),
+        Step::Shot(named("overview")),
+        Step::Call("the camera back on the hero", |g| {
+            g.ui.as_mut().ok_or("no UI")?.map.toggle_overview();
+            Ok(())
+        }),
+        Step::Wait("the camera back", drawn_here),
+    ]);
+}
+
+/// Gehennom's looks and light (the critics' art #7 and #8), for pictures
+/// and their luma before and after (not part of `make test-client`): the
+/// Valley, then once the overview names it (its temple of Moloch, the
+/// level mapped), Orcus' town, Baalzebub's lair, Moloch's Sanctum, the
+/// Wizard's tower, Juiblex's swamp and three levels a few deeper (each its
+/// own fire), each as the hero arrives, mapped, close on a wall and in
+/// the overview.
 pub(super) fn gehennom() -> Vec<Step> {
     let mut steps = vec![Step::Call(
         "debug mode for this game",
@@ -313,8 +421,12 @@ pub(super) fn gehennom() -> Vec<Step> {
     steps.push(Step::Wait("the first level drawn", |g| {
         drawn_in(g, Branch::Main)
     }));
-    visit(&mut steps, |g| entry_key(g, "valley"), "gehennom-valley");
-    close_on_wall(&mut steps, "gehennom-valley");
+    light_visit(
+        &mut steps,
+        Some(|g| entry_key(g, "valley")),
+        "",
+        "gehennom-valley",
+    );
     // the overview names its temple, its altar mapped: its own air
     steps.extend([
         Step::Key(KeyInput::plain(nh_world::Key::Char('#'))),
@@ -329,24 +441,23 @@ pub(super) fn gehennom() -> Vec<Step> {
         }),
         Step::Shot("gehennom-valley-known"),
     ]);
-    let lairs: [(KeyCheck, &'static str); 3] = [
-        (|g| entry_key(g, "juiblex"), "gehennom-juiblex"),
+    let lairs: [(KeyCheck, &'static str); 5] = [
         (|g| entry_key(g, "orcus"), "gehennom-orcus"),
+        (|g| entry_key(g, "baalz"), "gehennom-baalz"),
+        (|g| entry_key(g, "sanctum"), "gehennom-sanctum"),
         (|g| entry_key(g, "wizard1"), "gehennom-wizard"),
+        (|g| entry_key(g, "juiblex"), "gehennom-juiblex"),
     ];
     for (pick, shot) in lairs {
-        visit(&mut steps, pick, shot);
-        close_on_wall(&mut steps, shot);
+        light_visit(&mut steps, Some(pick), "", shot);
     }
+    // (each its fire: blood, brimstone, embers)
     for (depth, shot) in [
-        // (each its fire: blood, brimstone, embers)
         ("33", "gehennom-33"),
         ("34", "gehennom-34"),
         ("36", "gehennom-36"),
     ] {
-        steps.extend(teleport_to(depth));
-        steps.push(Step::Shot(shot));
-        close_on_wall(&mut steps, shot);
+        light_visit(&mut steps, None, depth, shot);
     }
     steps.extend(quit());
     steps

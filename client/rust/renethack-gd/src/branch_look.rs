@@ -70,13 +70,16 @@ impl Prop {
 
 /// What lies under the level's cells and round them: the rock, an open
 /// drop to a sea of clouds far below (the Plane of Air: its air cells a
-/// faint breeze, its clouds soft masses), or the deep (the Plane of Water:
-/// dark, caustic-lit, the bubble of air a membrane in it).
+/// faint breeze, its clouds soft masses), the deep (the Plane of Water:
+/// dark, caustic-lit, the bubble of air a membrane in it), or a chasm
+/// smouldering far below (Gehennom: smoke over a red glow, so what is not
+/// known yet is a dark drop, never a black screen, and shows nothing).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Under {
     Rock,
     Sky,
     Deep,
+    Chasm,
 }
 
 /// What a branch dresses its rooms with (map_view's `dressing`): never
@@ -158,6 +161,11 @@ pub struct BranchLook {
     pub cap: &'static str,
     pub torch: Color,
     pub torch_energy: f32,
+    /// How far a torch's light reaches, in metres.
+    pub torch_range: f32,
+    /// How much brighter the hero's own pool of light is than in the main
+    /// dungeon (its floors darker stone, its levels mostly unlit).
+    pub hero_light: f32,
     /// The rooms' faint fill, and how much stronger than the main
     /// dungeon's it is.
     pub fill: Color,
@@ -207,6 +215,8 @@ const MAIN: BranchLook = BranchLook {
     cap: "bedrock",
     torch: Color::from_rgb(1.0, 0.66, 0.38),
     torch_energy: 2.4,
+    torch_range: 5.5,
+    hero_light: 1.0,
     fill: Color::from_rgb(0.86, 0.80, 0.72),
     fill_scale: 1.0,
     ambient: Color::from_rgb(0.28, 0.32, 0.46),
@@ -309,6 +319,10 @@ pub fn look_of(branch: Branch) -> BranchLook {
             remap: FIRES[0].remap,
             torch: rgb(1.0, 0.42, 0.18),
             torch_energy: 2.8,
+            // (further: its walls and floors are dark stone)
+            torch_range: 7.0,
+            hero_light: 2.1,
+            under: Under::Chasm,
             fill: rgb(1.0, 0.45, 0.25),
             fill_scale: 1.5,
             // the dark is dark: red in the haze over the fire, not a red

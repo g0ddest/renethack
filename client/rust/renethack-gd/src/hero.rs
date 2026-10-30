@@ -42,6 +42,11 @@ impl HeroGear {
         std::mem::replace(&mut self.lamp, lit) != lit
     }
 
+    /// A lit lamp in hand.
+    pub fn lamp(&self) -> bool {
+        self.lamp
+    }
+
     /// Read the pack again next time (a new game).
     pub fn reset(&mut self) {
         *self = HeroGear::default();

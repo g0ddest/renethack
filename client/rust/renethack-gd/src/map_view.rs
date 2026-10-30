@@ -475,6 +475,12 @@ const CLOUD_BEHIND: f32 = 0.7;
 const SKY_DROP: f32 = 30.0;
 /// How wide the sea of clouds is (metres): past the overview's frame.
 const SKY_SEA: f32 = 1400.0;
+/// Gehennom's chasm: the glow of its smouldering depths where the ground
+/// under the level lies far from anything known (map_surface.gdshader's
+/// `branch_chasm`; what is not known yet reads 6-12 of 255, never black),
+/// and in alpha how much of its own light that ground shows near what is
+/// known (a maze's remembered floor, which NetHack leaves unmapped).
+const CHASM: Color = Color::from_rgba(0.019, 0.0048, 0.0024, 0.6);
 /// The light from above on the Planes of Air and Water (the moon's, the
 /// level's own elsewhere): its way, colour and energy.
 const SUN: (Vector3, Color, f32) = (
@@ -491,6 +497,34 @@ const MOON: (Vector3, Color, f32) = (
     Vector3::new(-62.0, 25.0, 0.0),
     Color::from_rgb(0.55, 0.62, 0.9),
     0.14,
+);
+/// Over a chasm (Gehennom) the light from above is the fire's, faint and
+/// red, not the moon's.
+const EMBER_LIGHT: (Vector3, Color, f32) = (
+    Vector3::new(-62.0, 25.0, 0.0),
+    Color::from_rgb(1.0, 0.55, 0.36),
+    0.16,
+);
+/// Lava's light (`place_lava_lights`): its colour, energy and reach (3 to
+/// 4 cells), one every so many cells over a big pool, and how many at
+/// most on a level.
+const LAVA_LIGHT: Color = Color::from_rgb(1.0, 0.42, 0.12);
+const LAVA_ENERGY: f32 = 1.5;
+const LAVA_RANGE: f32 = 3.5;
+const LAVA_SPACING: f32 = 3.5;
+const LAVA_LIGHTS: usize = 40;
+/// The faint fill from the other side, so no wall face is flat black: a
+/// cold one from above; over a chasm a warm one, low from the south, as if
+/// from the fire below: the faces turned to the camera read by it.
+const BACK: (Vector3, Color, f32) = (
+    Vector3::new(-40.0, 205.0, 0.0),
+    Color::from_rgb(0.5, 0.56, 0.8),
+    0.07,
+);
+const EMBER_BACK: (Vector3, Color, f32) = (
+    Vector3::new(6.0, 0.0, 0.0),
+    Color::from_rgb(1.0, 0.5, 0.3),
+    0.55,
 );
 /// Depth fog and the background: never pure black.
 const DARKNESS: Color = Color::from_rgb(0.008, 0.009, 0.013);
@@ -2205,7 +2239,7 @@ fn terrain_base(
                     }
                 }
             }
-            Under::Rock => {
+            Under::Rock | Under::Chasm => {
                 let air = lighter(nh_color(c), 0.4);
                 look.ground_tile(
                     plane(1.0, 1.0),
@@ -3230,6 +3264,8 @@ pub struct MapView {
     rider_view: Gd<Node3D>,
     /// Fill lights over the parts of the level in view.
     room_lights: Vec<Gd<OmniLight3D>>,
+    /// Lava's own light, over each pool of it known (`place_lava_lights`).
+    lava_lights: Vec<Gd<OmniLight3D>>,
     torches: Vec<Torch>,
     torch_scene: Option<Gd<PackedScene>>,
     flame_mat: Gd<Material>,
@@ -3323,6 +3359,7 @@ pub struct MapView {
     /// and the light from above (the moon's, the Planes' own sun).
     sky_sea: Option<Gd<MeshInstance3D>>,
     moon: Gd<DirectionalLight3D>,
+    back: Gd<DirectionalLight3D>,
     /// The vignette and grain over the map, under the HUD.
     post: Gd<CanvasLayer>,
     /// The inside of what engulfed the hero, round them.
@@ -3749,9 +3786,9 @@ impl MapView {
         root.add_child(&moon);
         // and fainter still from the other side: no wall face is flat black
         let mut back = DirectionalLight3D::new_alloc();
-        back.set_rotation_degrees(Vector3::new(-40.0, 205.0, 0.0));
-        back.set_color(Color::from_rgb(0.5, 0.56, 0.8));
-        back.set_param(Param::ENERGY, 0.07);
+        back.set_rotation_degrees(BACK.0);
+        back.set_color(BACK.1);
+        back.set_param(Param::ENERGY, BACK.2);
         back.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
         root.add_child(&back);
         // the art gallery's own light (for review, never in a game)
@@ -4008,6 +4045,7 @@ impl MapView {
             big_faded: Vec::new(),
             rider_view,
             room_lights: Vec::new(),
+            lava_lights: Vec::new(),
             torches: Vec::new(),
             torch_scene,
             flame_mat: flame,
@@ -4079,6 +4117,7 @@ impl MapView {
             bedrock_dirty: true,
             sky_sea: None,
             moon,
+            back,
             post,
             engulfed,
             stage: None,
@@ -4717,11 +4756,33 @@ impl MapView {
             Under::Sky => SUN,
             Under::Deep => DEEP_LIGHT,
             Under::Rock => MOON,
+            Under::Chasm => EMBER_LIGHT,
         };
         self.moon.set_rotation_degrees(way);
         self.moon.set_color(color);
         self.moon.set_param(Param::ENERGY, energy);
+        let (way, color, energy) = if l.under == Under::Chasm {
+            EMBER_BACK
+        } else {
+            BACK
+        };
+        self.back.set_rotation_degrees(way);
+        self.back.set_color(color);
+        self.back.set_param(Param::ENERGY, energy);
+        // the hero's own pool, as bright as the branch has it (a lamp in
+        // hand keeps its own)
+        if !self.hero_gear.lamp() {
+            self.hero_light
+                .set_param(Param::ENERGY, HERO_LIGHT_ENERGY * l.hero_light);
+        }
         self.show_sky_sea(l.under == Under::Sky);
+        let chasm = if l.under == Under::Chasm {
+            CHASM
+        } else {
+            Color::from_rgba(0.0, 0.0, 0.0, 0.0)
+        };
+        RenderingServer::singleton()
+            .global_shader_parameter_set("branch_chasm", &chasm.to_variant());
         self.vfx.set_dust(l.dust, l.embers);
         self.lights_dirty = true;
         self.bedrock_dirty = true;
@@ -4995,6 +5056,65 @@ impl MapView {
             l.set_visible(false);
         }
         self.place_torches(&sconces);
+        self.place_lava_lights();
+    }
+
+    /// Lava is a light: one over the middle of each pool of it known, and
+    /// over a big one one every `LAVA_SPACING` cells, lighting its walls
+    /// and banks; at most `LAVA_LIGHTS`, the pools' middles first.
+    fn place_lava_lights(&mut self) {
+        let lava: HashSet<(i32, i32)> = self
+            .cells
+            .iter()
+            .filter(|(_, n)| n.look.kind == Ground::Lava)
+            .map(|(&k, _)| k)
+            .collect();
+        let mut spots: Vec<(usize, (i32, i32))> = Vec::new();
+        for pool in lit_areas(&lava) {
+            let n = pool.len() as f32;
+            let (sx, sy) = pool
+                .iter()
+                .fold((0.0, 0.0), |(a, b), &(x, y)| (a + x as f32, b + y as f32));
+            let mid = (sx / n, sy / n);
+            let mut cells = pool;
+            let off =
+                |&(x, y): &(i32, i32)| (x as f32 - mid.0).powi(2) + (y as f32 - mid.1).powi(2);
+            cells.sort_by(|a, b| off(a).total_cmp(&off(b)));
+            let mut chosen: Vec<(i32, i32)> = Vec::new();
+            for c in cells {
+                let apart = |o: &(i32, i32)| (o.0 - c.0).pow(2) + (o.1 - c.1).pow(2);
+                if chosen
+                    .iter()
+                    .all(|o| apart(o) as f32 >= LAVA_SPACING * LAVA_SPACING)
+                {
+                    chosen.push(c);
+                }
+            }
+            spots.extend(chosen.into_iter().enumerate());
+        }
+        // (each pool's middle before any pool's second light)
+        spots.sort_by_key(|&(rank, _)| rank);
+        spots.truncate(LAVA_LIGHTS);
+        for (i, &(_, (x, y))) in spots.iter().enumerate() {
+            if i == self.lava_lights.len() {
+                let mut l = OmniLight3D::new_alloc();
+                l.set_color(LAVA_LIGHT);
+                l.set_shadow(false);
+                l.set_param(Param::ENERGY, LAVA_ENERGY);
+                l.set_param(Param::RANGE, LAVA_RANGE);
+                l.set_param(Param::ATTENUATION, 1.0);
+                // the haze glows over it a little
+                l.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.6);
+                self.root.add_child(&l);
+                self.lava_lights.push(l);
+            }
+            let l = &mut self.lava_lights[i];
+            l.set_position(Vector3::new(x as f32, 0.6, y as f32));
+            l.set_visible(true);
+        }
+        for l in self.lava_lights.iter_mut().skip(spots.len()) {
+            l.set_visible(false);
+        }
     }
 
     /// Torches on these walls, each facing into its room: (wall cell,
@@ -5038,6 +5158,8 @@ impl MapView {
             t.flame
                 .set_instance_shader_parameter("phase", &(t.phase as f32).to_variant());
             t.light.set_position(t.at);
+            t.light
+                .set_param(Param::RANGE, self.branch_look.torch_range);
             t.light.set_visible(true);
             let lanterns = self.branch_look.lanterns;
             t.fire.set_visible(!lanterns);
@@ -5841,8 +5963,9 @@ impl MapView {
         if let Some(mesh) = st.commit() {
             self.bedrock.set_mesh(&mesh);
         }
-        // the branch's own rock (Gehennom's dark basalt); on the Planes of
-        // Air and Water none: the sky, the deep
+        // the branch's own rock (over Gehennom's chasm too: what is far
+        // from anything known smoulders in it); on the Plane of Air none,
+        // the sky; on the Plane of Water the deep
         self.bedrock
             .set_visible(self.branch_look.under != Under::Sky);
         if self.branch_look.under == Under::Deep {
@@ -5983,6 +6106,11 @@ impl MapView {
     /// The whole-level view is on (self-tests).
     pub fn in_overview(&self) -> bool {
         self.overview.is_some()
+    }
+
+    /// The overview framed, its air eased in all the way (self-tests).
+    pub fn overview_shown(&self) -> bool {
+        self.overview.is_some() && self.overview_k >= 1.0 && self.is_settled()
     }
 
     /// The camera's distance now (self-tests).
@@ -6402,7 +6530,8 @@ impl MapView {
             let (color, energy, range) = if lamp {
                 (LAMP_POOL, LAMP_POOL_ENERGY, LAMP_POOL_RANGE)
             } else {
-                (HERO_LIGHT, HERO_LIGHT_ENERGY, HERO_LIGHT_RANGE)
+                let energy = HERO_LIGHT_ENERGY * self.branch_look.hero_light;
+                (HERO_LIGHT, energy, HERO_LIGHT_RANGE)
             };
             self.hero_light.set_color(color);
             self.hero_light.set_param(Param::ENERGY, energy);
@@ -7913,7 +8042,7 @@ impl MapView {
         }
         let mut nodes = self.cells.remove(&(x, y)).unwrap_or_default();
         let old = std::mem::take(&mut nodes.look);
-        if old.lit != look.lit {
+        if old.lit != look.lit || (old.kind == Ground::Lava) != (look.kind == Ground::Lava) {
             self.lights_dirty = true;
         }
         let origin = Vector3::new(x as f32, 0.0, y as f32);

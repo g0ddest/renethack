@@ -104,6 +104,7 @@ global uniform vec3 hero_pos;
 global uniform vec3 eye_pos;
 global uniform float branch_cracks;
 global uniform vec4 branch_crack_color;
+global uniform vec4 branch_chasm;
 // the whole level framed (map_view's overview): what is remembered shows
 // nearly as it is, lit by its own faint light
 global uniform float overview;
@@ -504,6 +505,9 @@ void fragment() {
 	float luma = dot(albedo, vec3(0.299, 0.587, 0.114));
 	vec3 remembered = mix(albedo, luma * MEMORY_TINT, mix(0.8, 0.45, overview))
 		* mix(0.4, 0.75, overview);
+	// never so dark the darkest stones drop to black (Gehennom's basalt),
+	// the less so in the overview
+	remembered = max(remembered, MEMORY_TINT * mix(0.02, 0.06, overview));
 	vec3 color = mix(remembered, albedo, seen);
 	// what is remembered shows by its own faint light: shaded by its
 	// relief, as if from above and to one side, so a remembered wall is
@@ -519,6 +523,19 @@ void fragment() {
 		near = mix(1.0, fow.a, void_fade);
 		color *= near;
 		emission *= near * near;
+		// over a chasm (Gehennom) what lies far from anything known is
+		// its smouldering depths, never black: smoke drifting over a red
+		// glow, the same everywhere (it shows nothing of the map); near
+		// what is known it is the floor a maze's dark remembers as nothing
+		// (NetHack maps no unlit floor out of sight), shown by its own
+		// faint light as a remembered floor is (alpha: how much)
+		if (branch_chasm.a > 0.0) {
+			emission += albedo * near * branch_chasm.a;
+			float smoke = tn2(wpos.xz * 0.05 + TIME * vec2(0.01, 0.004));
+			float deep = smoothstep(0.35, 0.75, tn2(wpos.xz * 0.11 + 7.0 - TIME * 0.006));
+			emission += branch_chasm.rgb * mix(0.45, 1.0, deep) * mix(0.6, 1.0, smoke)
+				* (1.0 - near);
+		}
 	}
 
 	ALBEDO = color;

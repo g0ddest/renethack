@@ -67,6 +67,13 @@ branch_crack_color={
 "type": "color",
 "value": Color(1, 0.28, 0.05, 1)
 }
+; the smouldering depths the ground under the level shows far from
+; anything known (Gehennom's chasm), and in alpha how much of its own
+; light it shows near what is known (0: no chasm)
+branch_chasm={
+"type": "color",
+"value": Color(0, 0, 0, 0)
+}
 ; the whole level framed: what is remembered shows nearly as it is
 overview={
 "type": "float",
