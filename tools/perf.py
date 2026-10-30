@@ -74,6 +74,9 @@ SCENES = {
     # the rooms' dressing by branch: the first rooms, the Big Room,
     # Medusa, the Castle, the Mines, the Valley, Orcus, the mazes, Vlad's
     "dressing": ("dressing", [], 900),
+    # Gehennom: the Valley, Juiblex's swamp, Orcus Town, the Wizard's
+    # mazes and a level of each fire deeper
+    "gehennom": ("gehennom", [], 900),
     # every creature and thing a batch at a time: with --census, what the
     # game can draw (not a timing)
     "variants": ("variants", [], 1800),
