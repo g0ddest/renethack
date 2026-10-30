@@ -585,6 +585,9 @@ pub struct TickDriver {
     last_threat: Option<i64>,
     /// Command prompts observed: the turn when the status has no T:.
     observed: i64,
+    /// The level the hero was on at the last command prompt: a fight
+    /// stays on the level it was fought on.
+    level: Option<(String, i32, Option<String>)>,
 }
 
 impl Default for TickDriver {
@@ -605,6 +608,7 @@ impl TickDriver {
             last_hp: None,
             last_threat: None,
             observed: 0,
+            level: None,
         }
     }
 
@@ -873,12 +877,26 @@ impl TickDriver {
         let hp = world.status.number("hp");
         let hurt = matches!((self.last_hp, hp), (Some(a), Some(b)) if b < a);
         self.last_hp = hp;
+        let was = self.mode;
+        // another level: the fight stayed on the one left
+        let level = world
+            .level
+            .as_ref()
+            .map(|l| (l.dungeon.clone(), l.depth, l.plane.clone()));
+        if self.level.is_some() && level.is_some() && level != self.level {
+            self.mode = Mode::Exploration;
+            self.last_threat = None;
+        }
+        self.level = level.or(self.level.take());
         let near = engaged(world, catalog);
-        if near || hurt || fought {
+        // HP lost to no hostile in sight (a potion, hunger, a trap) is no
+        // fight: the order stops for it, the mode stays
+        let struck = hurt && !threats(world, catalog).is_empty();
+        let threat = near || fought || struck;
+        if threat {
             self.last_threat = Some(turn);
         }
-        let was = self.mode;
-        if near || hurt || fought {
+        if threat {
             self.mode = Mode::Combat;
         } else if self.mode == Mode::Combat
             && self.last_threat.is_none_or(|t| turn - t >= CALM_TURNS)
@@ -1503,16 +1521,48 @@ mod tests {
     }
 
     #[test]
+    fn a_fight_stays_on_the_level_it_was_fought_on() {
+        let (mut w, cat) = world_of(&ROOM);
+        let level = |depth: i32| nh_protocol::LevelNotice {
+            dungeon: "The Dungeons of Doom".into(),
+            depth,
+            plane: None,
+            lair: None,
+        };
+        w.level = Some(level(3));
+        let mut d = TickDriver::new();
+        d.observe(&w, &cat);
+        say(&mut w, "The jackal bites!");
+        assert_eq!(d.observe(&w, &cat), Some(Mode::Combat));
+        // down the stairs mid-fight: nothing here
+        w.level = Some(level(4));
+        turn(&mut w, 2);
+        assert_eq!(d.observe(&w, &cat), Some(Mode::Exploration));
+        // a hostile beside the hero on arrival: a fight again
+        w.level = Some(level(5));
+        draw(&mut w.map, &cat, 2, &["  J"]);
+        turn(&mut w, 3);
+        assert_eq!(d.observe(&w, &cat), Some(Mode::Combat));
+    }
+
+    #[test]
     fn combat_starts_when_hp_drops_or_the_hero_fights() {
         let (mut w, cat) = world_of(&ROOM);
         let mut d = TickDriver::new();
         d.observe(&w, &cat);
+        // HP lost with no hostile in sight (a bad potion): no fight
+        stat(&mut w, "hp", "14");
+        assert_eq!(d.observe(&w, &cat), None, "hurt with nothing to fight");
+        assert_eq!(d.mode(), Mode::Exploration);
+        // HP lost with a hostile in sight, however far: a fight
+        draw(&mut w.map, &cat, 2, &["       J"]);
         stat(&mut w, "hp", "12");
         assert_eq!(
             d.observe(&w, &cat),
             Some(Mode::Combat),
-            "hurt by something unseen"
+            "hurt with a hostile in sight"
         );
+        draw(&mut w.map, &cat, 2, &["       ."]);
         for t in 2..=4 {
             turn(&mut w, t);
             d.observe(&w, &cat);

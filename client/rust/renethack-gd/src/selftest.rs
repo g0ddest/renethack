@@ -36,6 +36,8 @@ mod achievements;
 mod acts_tests;
 #[path = "selftest_audio.rs"]
 mod audio_tests;
+#[path = "selftest_calm.rs"]
+mod calm_tests;
 #[path = "selftest_chords.rs"]
 mod chords_tests;
 #[path = "selftest_codex.rs"]
@@ -5166,6 +5168,7 @@ impl SelfTest {
             "peaceful" => peaceful_tests::peaceful(),
             "peaceful-swap" => peaceful_tests::peaceful_swap(),
             "rest" => rest_tests::rest(),
+            "calm" => calm_tests::calm(),
             "quest-words" => prose_tests::quest_words(),
             "pad-panels" => pad_panels_tests::pad_panels(),
             "pad-journey" => pad_journey_tests::pad_journey(),
