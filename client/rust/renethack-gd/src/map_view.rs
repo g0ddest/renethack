@@ -307,8 +307,8 @@ const HOSTILE_RING: Color = Color::from_rgba(0.88, 0.29, 0.23, 0.6);
 const HOVER_OUTLINE: Color = Color::from_rgba(0.95, 0.86, 0.62, 0.9);
 /// The hero seen through what hides them.
 const XRAY: Color = Color::from_rgba(0.55, 0.68, 1.0, 0.45);
-/// A creature the hero's body hides, seen through it: a hostile's, a
-/// pet's (fainter: one often follows behind them).
+/// A creature the hero's body hides, its outline seen through it: a
+/// hostile's, a pet's (fainter: one often follows behind them).
 const XRAY_FOE: Color = Color::from_rgba(1.0, 0.3, 0.22, 0.85);
 const XRAY_PET: Color = Color::from_rgba(0.37, 0.84, 0.75, 0.6);
 /// The hero's body for what it hides behind it: half its width and its
@@ -3798,7 +3798,15 @@ impl MapView {
             })
         };
         let xray = xray_of(XRAY);
-        let xray_creature = xray_of(XRAY_FOE).zip(xray_of(XRAY_PET));
+        // a creature behind the hero: its outline only
+        let outlined = |m: Option<Gd<Material>>| {
+            m.inspect(|m| {
+                if let Ok(mut s) = m.clone().try_cast::<ShaderMaterial>() {
+                    s.set_shader_parameter("outline", &true.to_variant());
+                }
+            })
+        };
+        let xray_creature = outlined(xray_of(XRAY_FOE)).zip(outlined(xray_of(XRAY_PET)));
 
         // over the hero's head: short shadows at their feet, not long ones
         // across the floor
