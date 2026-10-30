@@ -4,7 +4,7 @@
 use std::rc::Rc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use godot::classes::control::{FocusMode, MouseFilter};
+use godot::classes::control::{FocusMode, GrowDirection, MouseFilter};
 use godot::classes::{
     BaseButton, Button, CanvasLayer, CenterContainer, ColorRect, Control, Gradient,
     GradientTexture2D, HBoxContainer, Label, LineEdit, MarginContainer, OptionButton,
@@ -18,10 +18,12 @@ use nh_world::KeyProfile;
 
 pub use crate::creation::Taken;
 use crate::creation::{self, Form};
+use crate::dialogs::{Osk, OskKey};
 use crate::end_view::{self, EndSummary};
-use crate::gamepad::PadKind;
+use crate::gamepad::{PadButton, PadKind};
 use crate::i18n::{self, Lang};
-use crate::theme;
+use crate::pad_view;
+use crate::theme::{self, Face};
 use crate::title_scene::Preview;
 use crate::tr;
 use crate::ui_events::{CharacterChoice, UiEvent, UiQueue, push};
@@ -53,6 +55,19 @@ pub struct Screens {
     end_page: Option<(Gd<ScrollContainer>, Gd<HBoxContainer>, Gd<PanelContainer>)>,
     /// A gamepad gives the input: the hints are its buttons.
     pad: Option<PadKind>,
+    /// The creation form's on-screen keyboard, typing the hero's name.
+    name_keys: Option<NameKeys>,
+}
+
+/// The on-screen keyboard over the creation form (A on the name field
+/// while a gamepad plays): the d-pad moves, A types, B erases (and with
+/// nothing left closes), Y switches the letters, Start is done.
+struct NameKeys {
+    panel: Gd<PanelContainer>,
+    osk: Osk,
+    /// The name as typed so far.
+    shown: Gd<Label>,
+    field: Gd<LineEdit>,
 }
 
 /// What the keys and a gamepad do on the title, the creation form, the
@@ -74,6 +89,8 @@ pub enum NavInput {
     /// PgUp and PgDn, the bumpers: the end page's body a screen along.
     PageUp,
     PageDown,
+    /// Y: the on-screen keyboard's other letters (Latin, Cyrillic).
+    Layout,
 }
 
 /// A page's controls in their order, the one the focus is on, what going
@@ -97,6 +114,14 @@ struct Grid {
     columns: usize,
     /// The look of the card the focus is on.
     focus: Gd<StyleBox>,
+}
+
+impl NameKeys {
+    /// The name as typed, a caret after it.
+    fn show_name(&mut self) {
+        let text = self.field.get_text().to_string();
+        self.shown.set_text(&format!("{text}_"));
+    }
 }
 
 /// The game's name on the title: a name, the same in every language.
@@ -287,6 +312,7 @@ impl Screens {
             nav: Nav::default(),
             end_page: None,
             pad: None,
+            name_keys: None,
         }
     }
 
@@ -807,6 +833,10 @@ impl Screens {
 
     /// A key or a gamepad's button on the page; false: not the page's.
     pub fn nav_input(&mut self, input: NavInput) -> bool {
+        if self.name_keys.is_some() {
+            self.name_keys_input(input);
+            return true;
+        }
         let Some(focused) = self.nav.items.get(self.nav.at).cloned() else {
             return false;
         };
@@ -853,13 +883,154 @@ impl Screens {
                 }
             }
             NavInput::Accept => self.nav_take(self.nav.at),
+            // the creation form: back to the cards first (the card and
+            // the name stay), then the title
+            NavInput::Back if self.nav.grid.is_some() && !in_grid => {
+                if let Ok(mut field) = focused.try_cast::<LineEdit>() {
+                    field.release_focus();
+                }
+                let first = self.nav.grid.as_ref().map_or(0, |g| g.cards.start);
+                self.nav.at = self.chosen_card().unwrap_or(first);
+                self.show_nav();
+            }
             NavInput::Back => match self.nav.back.clone() {
                 Some(ev) => push(&self.queue, ev),
                 None => return false,
             },
             NavInput::Start => self.nav_take(self.nav.start.unwrap_or(self.nav.at)),
+            NavInput::Layout => return false,
         }
         true
+    }
+
+    /// The on-screen keyboard over the creation form, for `field` (the
+    /// name): at the bottom, over the room where the hero stands, in the
+    /// interface's letters first.
+    fn open_name_keys(&mut self, field: Gd<LineEdit>) {
+        let Some(mut page) = self.content.clone() else {
+            return;
+        };
+        let mut panel = theme::framed(theme::Frame::Panel);
+        theme::place(&panel, [0.5, 1.0, 0.5, 1.0], [0.0, 0.0, 0.0, -24.0]);
+        panel.set_h_grow_direction(GrowDirection::BOTH);
+        panel.set_v_grow_direction(GrowDirection::BEGIN);
+        let mut col = VBoxContainer::new_alloc();
+        col.add_theme_constant_override("separation", 8);
+        let mut shown = theme::styled_label("", Face::Title, 26, theme::ACCENT);
+        shown.set_horizontal_alignment(HorizontalAlignment::CENTER);
+        // a name: the same in every language
+        i18n::verbatim(&shown);
+        col.add_child(&shown);
+        let q = self.queue.clone();
+        let mut osk = Osk::new(&mut col, move |r, c| push(&q, UiEvent::NameKey(r, c)));
+        if i18n::lang() != Lang::En {
+            osk.switch();
+        }
+        osk.show();
+        // what the pad's buttons do on it
+        use crate::gamepad::PadButton::*;
+        let hints: [(&[PadButton], &str); 5] = [
+            (&[Up, Down, Left, Right], "hint-letter"),
+            (&[A], "hint-type"),
+            (&[B], "hint-erase"),
+            (&[Y], "hint-layout"),
+            (&[Start], "hint-ok"),
+        ];
+        let parts: Vec<(&[PadButton], String)> =
+            hints.iter().map(|(b, key)| (*b, i18n::tr(key))).collect();
+        let mut row = pad_view::buttons_row(self.pad.unwrap_or_default(), &parts, 15);
+        row.set_alignment(godot::classes::box_container::AlignmentMode::CENTER);
+        col.add_child(&row);
+        panel.add_child(&col);
+        page.add_child(&panel);
+        // Steam's own keyboard too, which types into the field, as a text
+        // question asks for it
+        let steam = std::env::var("SteamDeck").is_ok_and(|v| v == "1")
+            || std::env::var("SteamTenfoot").is_ok();
+        if steam {
+            godot::classes::Os::singleton().shell_open("steam://open/keyboard");
+        }
+        let mut keys = NameKeys {
+            panel,
+            osk,
+            shown,
+            field,
+        };
+        keys.show_name();
+        self.name_keys = Some(keys);
+    }
+
+    /// The name's keyboard is up (self-tests).
+    pub fn name_keys_open(&self) -> bool {
+        self.name_keys.is_some()
+    }
+
+    /// The focus is on the creation form's cards (self-tests).
+    pub fn on_cards(&self) -> bool {
+        self.nav
+            .grid
+            .as_ref()
+            .is_some_and(|g| g.cards.contains(&self.nav.at))
+    }
+
+    /// The name's keyboard put away (keys came instead of the pad).
+    pub fn close_name_keys(&mut self) {
+        if self.name_keys.is_none() {
+            return;
+        }
+        if let Some(mut keys) = self.name_keys.take() {
+            keys.panel.queue_free();
+        }
+        self.show_nav();
+    }
+
+    /// A key of the name's keyboard clicked: as if A typed it.
+    pub fn name_key(&mut self, row: usize, col: usize) {
+        if let Some(keys) = self.name_keys.as_mut() {
+            keys.osk.at(row, col);
+            keys.osk.show();
+            self.name_keys_input(NavInput::Accept);
+        }
+    }
+
+    /// The pad (or a key) on the name's keyboard.
+    fn name_keys_input(&mut self, input: NavInput) {
+        let Some(keys) = self.name_keys.as_mut() else {
+            return;
+        };
+        let text = keys.field.get_text().to_string();
+        let mut erased = text.clone();
+        erased.pop();
+        let typed = match input {
+            NavInput::Up => return keys.osk.step(0, -1),
+            NavInput::Down => return keys.osk.step(0, 1),
+            NavInput::Left => return keys.osk.step(-1, 0),
+            NavInput::Right => return keys.osk.step(1, 0),
+            NavInput::Layout => return keys.osk.switch(),
+            NavInput::Start => return self.close_name_keys(),
+            NavInput::Back if text.is_empty() => return self.close_name_keys(),
+            NavInput::Back => erased,
+            NavInput::Accept => match keys.osk.current() {
+                OskKey::Char(c) => format!("{text}{c}"),
+                OskKey::Space => format!("{text} "),
+                OskKey::Back => erased,
+                OskKey::Shift => return keys.osk.shift(),
+                OskKey::Layout => return keys.osk.switch(),
+                OskKey::Ok => return self.close_name_keys(),
+            },
+            _ => return,
+        };
+        // no more than NetHack keeps
+        if typed.len() > crate::names::MAX_BYTES {
+            return;
+        }
+        keys.field.set_text(&typed);
+        keys.field.set_caret_column(typed.chars().count() as i32);
+        // as typing would: the form follows (a rolled name no longer
+        // follows the gender; a saved game's name offers to continue)
+        keys.field
+            .emit_signal("text_changed", &[GString::from(&typed).to_variant()]);
+        keys.show_name();
     }
 
     /// The focus `by` along, round, past what is hidden or disabled; a
@@ -908,6 +1079,11 @@ impl Screens {
                 b.emit_signal("pressed", &[]);
             }
         } else if let Ok(mut field) = c.try_cast::<LineEdit>() {
+            if self.pad.is_some() {
+                // no keys to type with: the keyboard on the screen
+                self.open_name_keys(field);
+                return;
+            }
             // the keys typed go in at once (a field only focused takes
             // none until edited)
             field.grab_focus();
@@ -966,6 +1142,7 @@ impl Screens {
             c.queue_free();
         }
         self.end_page = None;
+        self.name_keys = None;
         self.nav = Nav::default();
         self.current = None;
         self.form = None;

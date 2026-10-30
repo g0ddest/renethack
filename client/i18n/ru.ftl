@@ -727,7 +727,6 @@ palette-also = { $cmd ->
 osk-shift = ⇧ Shift
 osk-layout = АБВ / ABC
 osk-space = Пробел
-osk-hint = Крестовина: клавиша · A: ввод · B: стереть · Y: АБВ/ABC · Start: ОК
 
 ## Действия с предметами, фильтры и команды панели (ключи nh-world)
 
@@ -997,6 +996,7 @@ hint-carry = Взять / положить
 hint-filter = Фильтр
 hint-close = Закрыть
 hint-choose = Выбрать
+hint-letter = Буква
 hint-type = Ввод
 hint-erase = Стереть
 hint-layout = АБВ / ABC

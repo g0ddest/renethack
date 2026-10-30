@@ -9,10 +9,10 @@ use std::time::{Duration, Instant};
 use godot::classes::notify::NodeNotification;
 use godot::classes::{
     Camera3D, CanvasLayer, INode, Input, InputEvent, InputEventJoypadButton,
-    InputEventJoypadMotion, InputEventKey, InputEventMouseButton, InputEventMouseMotion, Node3D,
-    Os, ProjectSettings, Time,
+    InputEventJoypadMotion, InputEventKey, InputEventMouseButton, InputEventMouseMotion, InputMap,
+    Node3D, Os, ProjectSettings, Time,
 };
-use godot::global::{JoyAxis, Key as GKey, MouseButton};
+use godot::global::{JoyAxis, JoyButton, Key as GKey, MouseButton};
 use godot::prelude::*;
 use nh_link::{
     AnswerError, CLIENT_EXTRA_OPTIONS, Ending, EngineConfig, LiveSession, PlaygroundLock,
@@ -939,6 +939,7 @@ impl INode for RenethackGame {
             .collect();
         let args = parse_args(&raw);
         self.base().get_tree().set_auto_accept_quit(false);
+        pad_ui_actions();
         // the interface's language before anything shows words
         i18n::set_lang(startup_lang(&args));
         // the engine's texts in the player's language: nh-i18n's translator
@@ -1442,6 +1443,22 @@ impl INode for RenethackGame {
             // entering is followed by motion, which gives the position
             NodeNotification::WM_MOUSE_EXIT => self.mouse_pos = None,
             _ => {}
+        }
+    }
+}
+
+/// Godot's own lists (an OptionButton's popup, which takes the input
+/// before the game sees it) take a gamepad's A and B as Enter and Esc:
+/// Godot's `ui_accept` and `ui_cancel` have no pad buttons. The game
+/// handles every pad button itself, so nothing else sees them.
+fn pad_ui_actions() {
+    let mut map = InputMap::singleton();
+    for (action, button) in [("ui_accept", JoyButton::A), ("ui_cancel", JoyButton::B)] {
+        let mut ev = InputEventJoypadButton::new_gd();
+        ev.set_device(-1);
+        ev.set_button_index(button);
+        if !map.action_has_event(action, &ev) {
+            map.action_add_event(action, &ev);
         }
     }
 }
@@ -4103,6 +4120,7 @@ impl RenethackGame {
             UiEvent::ContinueGame(name) if idle => self.continue_game(&name),
             UiEvent::StartCharacter(choice) if idle => self.start_new(&choice),
             UiEvent::NameEdited(name) if idle => self.check_name(&name),
+            UiEvent::NameKey(row, col) => self.ui_mut().screens.name_key(row, col),
             UiEvent::BackToTitle if idle && self.playground_lock.is_none() => self.start_up(),
             UiEvent::BackToTitle if idle => self.show_title(None),
             UiEvent::QuitApp if idle => self.finish_close(),
@@ -4602,6 +4620,7 @@ impl RenethackGame {
                 Some(PadButton::Start) => NavInput::Start,
                 Some(PadButton::Lb) => NavInput::PageUp,
                 Some(PadButton::Rb) => NavInput::PageDown,
+                Some(PadButton::Y) => NavInput::Layout,
                 _ => return true,
             }
         } else if let Ok(m) = event.clone().try_cast::<InputEventJoypadMotion>() {
@@ -4646,6 +4665,8 @@ impl RenethackGame {
                 return false;
             }
             self.pad.active = false;
+            // keys instead of the pad: the name's keyboard goes
+            self.ui_mut().screens.close_name_keys();
             let shift = key.is_shift_pressed();
             match key.get_keycode() {
                 GKey::UP => NavInput::Up,

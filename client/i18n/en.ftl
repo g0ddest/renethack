@@ -637,7 +637,6 @@ palette-also = { $cmd ->
 osk-shift = ⇧ Shift
 osk-layout = АБВ / ABC
 osk-space = Space
-osk-hint = D-pad: a key · A: type · B: erase · Y: АБВ/ABC · Start: OK
 
 ## Item actions, filters and bar commands (nh-world's label keys)
 
@@ -900,6 +899,7 @@ hint-carry = Pick up / put down
 hint-filter = Filter
 hint-close = Close
 hint-choose = Choose
+hint-letter = Letter
 hint-type = Type
 hint-erase = Erase
 hint-layout = АБВ / ABC

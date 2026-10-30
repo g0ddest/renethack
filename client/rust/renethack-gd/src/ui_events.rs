@@ -39,6 +39,9 @@ pub enum UiEvent {
     StartCharacter(CharacterChoice),
     /// The name field on the creation screen changed.
     NameEdited(String),
+    /// A key of the creation form's on-screen keyboard (row, column)
+    /// clicked.
+    NameKey(usize, usize),
     BackToTitle,
     QuitApp,
     CloseRequested,

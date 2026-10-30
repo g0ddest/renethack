@@ -2324,8 +2324,11 @@ impl Dialogs {
         // a gamepad types on a keyboard of ours (and asks Steam for its
         // own, which types into the field, where there is one)
         let osk = self.pad.then(|| {
-            let mut osk = Osk::new(&mut col, req, &self.queue);
-            osk.show(&self.look);
+            let q = self.queue.clone();
+            let mut osk = Osk::new(&mut col, move |r, c| {
+                push(&q, dialog_ui(req, DialogEvent::OskKey(r, c)));
+            });
+            osk.show();
             let steam = std::env::var("SteamDeck").is_ok_and(|v| v == "1")
                 || std::env::var("SteamTenfoot").is_ok();
             if steam {
@@ -4362,7 +4365,7 @@ impl Dialogs {
             text.clone()
         };
         match op {
-            OskOp::Move(dx, dy) => osk.step(dx, dy, &self.look),
+            OskOp::Move(dx, dy) => osk.step(dx, dy),
             OskOp::Layout => osk.switch(),
             OskOp::Submit => return Some(Reply::Text(truncate_bytes(&sent, MAX_TEXT_BYTES))),
             OskOp::Back if text.is_empty() => return Some(open.prompt.escape_reply()),
@@ -5237,7 +5240,7 @@ fn show_focus(buttons: &mut [(char, Gd<Button>)], focus: Option<usize>, look: &L
 
 /// A key of the on-screen keyboard.
 #[derive(Debug, Clone, PartialEq)]
-enum OskKey {
+pub(crate) enum OskKey {
     Char(String),
     Space,
     Back,
@@ -5246,22 +5249,34 @@ enum OskKey {
     Ok,
 }
 
+/// The meta that marks the on-screen keyboard's keys (self-tests: their
+/// words name no key to press).
+pub(crate) const OSK: &str = "on_screen_keyboard";
+
 /// The keyboard's rows: digits and letters by layout, then the controls.
 const OSK_LATIN: [&str; 4] = ["1234567890", "qwertyuiop", "asdfghjkl'", "zxcvbnm,.-"];
 const OSK_CYRILLIC: [&str; 4] = ["1234567890", "йцукенгшщзх", "фывапролджэ", "ячсмитьбю.ё"];
 
-/// The on-screen keyboard of a text question, driven by a gamepad (or the
-/// mouse): the d-pad moves, A types, Y switches Latin and Cyrillic.
-struct Osk {
+/// The on-screen keyboard of a text question or the hero's name, driven
+/// by a gamepad (or the mouse): the d-pad moves, A types, Y switches Latin
+/// and Cyrillic. What the buttons do is the owner's to say (the pad's
+/// strip under a question).
+pub(crate) struct Osk {
     rows: Vec<Vec<(OskKey, Gd<Button>)>>,
     row: usize,
     col: usize,
     cyrillic: bool,
     upper: bool,
+    focus: Gd<StyleBoxFlat>,
 }
 
 impl Osk {
-    fn new(col: &mut Gd<VBoxContainer>, req: u64, queue: &UiQueue) -> Osk {
+    /// The keyboard at the end of `col`; a key clicked calls `clicked`
+    /// with its row and column (the owner types it as A would).
+    pub(crate) fn new(
+        col: &mut Gd<VBoxContainer>,
+        clicked: impl Fn(usize, usize) + Clone + 'static,
+    ) -> Osk {
         let mut grid = VBoxContainer::new_alloc();
         grid.add_theme_constant_override("separation", 4);
         let mut rows = Vec::new();
@@ -5291,34 +5306,26 @@ impl Osk {
                 if r == 4 {
                     b.set_text(&text);
                 }
-                // a click types the key as A does (the dialog knows which)
-                let q = queue.clone();
+                // a click types the key as A does (the owner knows which)
+                let clicked = clicked.clone();
                 let (rr, cc) = (r, c);
-                b.signals().pressed().connect(move || {
-                    let ev = DialogEvent::OskKey(rr, cc);
-                    push(&q, UiEvent::Dialog { req, ev });
-                });
+                b.signals().pressed().connect(move || clicked(rr, cc));
                 line.add_child(&b);
                 keys.push((k, b));
             }
             grid.add_child(&line);
             rows.push(keys);
         }
+        // a keyboard's keys by nature (Space, Shift), not a key to press
+        grid.set_meta(OSK, &true.to_variant());
         col.add_child(&grid);
-        let mut hint = theme::styled_label(
-            &i18n::whole_parts(&tr!("osk-hint")),
-            Face::Body,
-            14,
-            theme::TEXT_DIM,
-        );
-        hint.set_horizontal_alignment(HorizontalAlignment::CENTER);
-        col.add_child(&hint);
         let mut osk = Osk {
             rows,
             row: 1,
             col: 0,
             cyrillic: false,
             upper: false,
+            focus: theme::focus_style(),
         };
         osk.relabel();
         osk
@@ -5356,19 +5363,19 @@ impl Osk {
             .max(1)
     }
 
-    fn step(&mut self, dx: i32, dy: i32, look: &Look) {
+    pub(crate) fn step(&mut self, dx: i32, dy: i32) {
         let rows = self.rows.len() as i32;
         self.row = (self.row as i32 + dy).rem_euclid(rows) as usize;
         let w = self.width(self.row) as i32;
         self.col = (self.col as i32 + dx).clamp(0, w - 1) as usize;
-        self.show(look);
+        self.show();
     }
 
-    fn show(&mut self, look: &Look) {
+    pub(crate) fn show(&mut self) {
         for (r, line) in self.rows.iter_mut().enumerate() {
             for (c, (_, b)) in line.iter_mut().enumerate() {
                 if (r, c) == (self.row, self.col) {
-                    b.add_theme_stylebox_override("normal", &look.focus_button);
+                    b.add_theme_stylebox_override("normal", &self.focus);
                 } else {
                     b.remove_theme_stylebox_override("normal");
                 }
@@ -5376,24 +5383,24 @@ impl Osk {
         }
     }
 
-    fn current(&self) -> OskKey {
+    pub(crate) fn current(&self) -> OskKey {
         self.rows[self.row][self.col].0.clone()
     }
 
-    fn at(&mut self, row: usize, col: usize) {
+    pub(crate) fn at(&mut self, row: usize, col: usize) {
         if row < self.rows.len() && col < self.width(row) {
             self.row = row;
             self.col = col;
         }
     }
 
-    fn switch(&mut self) {
+    pub(crate) fn switch(&mut self) {
         self.cyrillic = !self.cyrillic;
         self.relabel();
         self.col = self.col.min(self.width(self.row) - 1);
     }
 
-    fn shift(&mut self) {
+    pub(crate) fn shift(&mut self) {
         self.upper = !self.upper;
         self.relabel();
     }

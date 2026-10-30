@@ -117,6 +117,10 @@ fn on_screen(g: &RenethackGame) -> Vec<(String, bool, String)> {
         {
             continue;
         }
+        // the on-screen keyboard's keys: Space and Shift are its own
+        if node.has_meta(crate::dialogs::OSK) {
+            continue;
+        }
         let verbatim = node.has_meta(i18n::VERBATIM);
         let text = if let Ok(l) = node.clone().try_cast::<Label>() {
             Some(l.get_text().to_string())
@@ -259,6 +263,44 @@ fn focused(g: &RenethackGame) -> Result<(), String> {
         return Err("no focus in the inventory".into());
     }
     Ok(())
+}
+
+/// The gender the creation form has chosen, before a list's pick.
+static GENDER: std::sync::Mutex<String> = std::sync::Mutex::new(String::new());
+
+/// The creation form's name keyboard is up.
+fn name_keys(g: &RenethackGame) -> bool {
+    g.ui.as_ref().is_some_and(|ui| ui.screens.name_keys_open())
+}
+
+/// What the journey types on the name's keyboard, `n` letters: its first
+/// key in the interface's letters (Cyrillic for Russian), then Y's.
+fn typed(n: usize) -> String {
+    let (first, then) = match i18n::lang() {
+        Lang::En => ("q", "й"),
+        _ => ("й", "q"),
+    };
+    [first, then][..n].concat()
+}
+
+/// The creation form's name is `name`.
+fn name_is(g: &RenethackGame, name: &str) -> bool {
+    g.ui.as_ref()
+        .and_then(|ui| ui.screens.creation_choice())
+        .is_some_and(|c| c.name == name)
+}
+
+/// The gender the creation form has chosen.
+fn creation_gender(g: &RenethackGame) -> String {
+    g.ui.as_ref()
+        .and_then(|ui| ui.screens.creation_choice())
+        .map(|c| c.gender)
+        .unwrap_or_default()
+}
+
+/// A list of the page is open.
+fn list_open(g: &RenethackGame) -> bool {
+    g.ui.as_ref().is_some_and(|ui| ui.screens.list_open())
 }
 
 /// On `page`, the focus on the control whose words begin with `words`.
@@ -480,8 +522,43 @@ pub(super) fn pad_journey() -> Vec<Step> {
         Step::Wait("A: past the cards, on the name", |g| {
             focus_on(g, "creation", &tr!("creation-name-placeholder"))
         }),
+        // the name typed on the screen's keyboard: Cyrillic first, Y the
+        // Latin letters, B erases, Start puts it away
+        tap(PadButton::A),
+        Step::Wait("A: the name's keyboard", |g| Ok(name_keys(g))),
+        tap(PadButton::A),
+        Step::Wait("A: a letter typed", |g| Ok(name_is(g, &typed(1)))),
+        tap(PadButton::Y),
+        tap(PadButton::A),
+        Step::Wait("Y, A: a letter of the other layout", |g| {
+            Ok(name_is(g, &typed(2)))
+        }),
+        tap(PadButton::B),
+        Step::Wait("B: erased", |g| Ok(name_is(g, &typed(1)))),
+    ]);
+    steps.extend(shot("journey-name-keys"));
+    steps.extend([
+        tap(PadButton::Start),
+        Step::Wait("Start: the keyboard away, the name kept", |g| {
+            Ok(!name_keys(g) && focus_on(g, "creation", &tr!("creation-name-placeholder"))?)
+        }),
+        // B steps back to the cards, the card and the name kept
+        tap(PadButton::B),
+        Step::Wait("B: back on the cards", |g| {
+            focused(g)?;
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let wizard = ui
+                .screens
+                .creation_choice()
+                .is_some_and(|c| c.role.to_lowercase().starts_with("wiz"));
+            Ok(screen(g) == Some("creation")
+                && ui.screens.on_cards()
+                && wizard
+                && name_is(g, &typed(1)))
+        }),
+        tap(PadButton::A),
         tap(PadButton::Right),
-        Step::Wait("→ the dice", |g| {
+        Step::Wait("A, →: the dice", |g| {
             focus_on(g, "creation", &tr!("creation-name-roll-tip"))
         }),
         tap(PadButton::A),
@@ -490,7 +567,32 @@ pub(super) fn pad_journey() -> Vec<Step> {
             Ok(g.ui
                 .as_ref()
                 .and_then(|ui| ui.screens.creation_choice())
-                .is_some_and(|c| !c.name.is_empty()))
+                .is_some_and(|c| !c.name.is_empty() && c.name != typed(1)))
+        }),
+        // a list opened with A: the d-pad moves in it, A picks, B closes
+        tap(PadButton::Down),
+        tap(PadButton::Down),
+        Step::Call("the gender before", |g| {
+            *GENDER.lock().unwrap() = creation_gender(g);
+            Ok(())
+        }),
+        tap(PadButton::A),
+        Step::Wait("A: the gender's list open", |g| Ok(list_open(g))),
+        tap(PadButton::Down),
+        tap(PadButton::A),
+        Step::Wait("↓, A: another gender, the list closed", |g| {
+            Ok(!list_open(g) && creation_gender(g) != *GENDER.lock().unwrap())
+        }),
+        Step::Call("the gender picked", |g| {
+            *GENDER.lock().unwrap() = creation_gender(g);
+            Ok(())
+        }),
+        tap(PadButton::A),
+        Step::Wait("A: the list open again", |g| Ok(list_open(g))),
+        tap(PadButton::Down),
+        tap(PadButton::B),
+        Step::Wait("B: the list closed, the gender kept", |g| {
+            Ok(!list_open(g) && creation_gender(g) == *GENDER.lock().unwrap())
         }),
     ]);
     steps.extend(shot("journey-creation"));
