@@ -261,6 +261,9 @@ pub struct Form {
     /// The keys' row, all of it: hidden while a gamepad plays (keys are
     /// no pad player's business; the settings keep the choice).
     keys_row: Vec<Gd<Control>>,
+    /// The names were filled in the engine's words (not English waiting
+    /// for them).
+    names_read: bool,
     lang: Gd<OptionButton>,
     /// The chosen role's name, its first-game mark and how it plays.
     role_title: Gd<Label>,
@@ -461,6 +464,7 @@ impl Form {
             keys,
             keys_told,
             keys_row,
+            names_read: i18n::engine_ready(),
             lang,
             role_title,
             role_mark,
@@ -657,6 +661,18 @@ impl Form {
             .set_visible(code.is_some_and(|c| FIRST_GAME.contains(&c)));
         self.role_line
             .set_text(&about(code).map(i18n::tr).unwrap_or_default());
+    }
+
+    /// The engine's words came in after the form was filled (a load on
+    /// a thread: under load, the roles stood in English for seconds): the
+    /// names again, the choices kept.
+    pub fn refresh_names(&mut self) {
+        if self.names_read || !i18n::engine_ready() {
+            return;
+        }
+        self.names_read = true;
+        self.restrict(true);
+        self.show_role();
     }
 
     /// A gamepad plays (`pad`): the keys' row hides; the keys chosen stay.

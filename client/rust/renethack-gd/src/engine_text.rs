@@ -146,6 +146,10 @@ fn arg(a: &FmtArg) -> Arg {
 }
 
 impl EngineText for EngineTranslator {
+    fn ready(&self) -> bool {
+        EngineTranslator::ready(self)
+    }
+
     fn translate(&self, lang: Lang, kind: EngineKind, english: &str) -> Option<String> {
         if lang != Lang::Ru || english.trim().is_empty() {
             return None;

@@ -435,8 +435,10 @@ the settings of what Godot builds pipelines for (the MSAA, ambient
 occlusion or indirect light turned on or off, FSR 2) makes the variants
 again behind a short veil. On a first launch (Godot's shader cache holds
 nothing of this build) the start-up veil waits for the whole warm-up, a
-line and a bar under the ankh saying so; a later launch lifts it at 6 s at
-the latest.
+line and a bar under the ankh saying so; a later launch lifts it once the
+title scene is drawn and the engine's words are in (30 s at the latest),
+and until that scene is drawn the title and the creation form stand on
+the pages' ink, never on the bare 3D view.
 
 ### A first launch
 

@@ -567,6 +567,9 @@ pub struct RenethackGame {
     veil: Option<Gd<godot::classes::ColorRect>>,
     veil_cue: Option<Gd<godot::classes::TextureRect>>,
     veil_lift: Option<Instant>,
+    /// Over the title, whether the scene was drawn (and the engine's words
+    /// in) as the veil began to lift (self-tests: not at its cap).
+    pub(crate) veil_over_scene: Option<bool>,
     /// Godot's shader cache holds nothing of this build (a first launch):
     /// the veil waits for the whole warm-up, its note and bar saying so.
     first_launch: bool,
@@ -627,7 +630,10 @@ enum TitleWarm {
 /// warm, at most these seconds after start; then it fades. A cue pulses
 /// on it after a second.
 const VEIL_FRAMES: u64 = 8;
-const VEIL_CAP_SECS: f64 = 6.0;
+/// A later launch's veil waits for the title scene drawn and the engine's
+/// words in, at most this long (at 6 s the bare menu stood on grey for
+/// 2–9 s more; a Deck is slower than a laptop).
+const VEIL_CAP_SECS: f64 = 30.0;
 const VEIL_FADE: f32 = 0.25;
 const VEIL_CUE_SECS: f64 = 1.0;
 /// Seconds the cue takes to fade out, before the veil lifts.
@@ -916,6 +922,7 @@ impl INode for RenethackGame {
             first_launch: false,
             veil_note: None,
             veil_lift: None,
+            veil_over_scene: None,
             cue_out: None,
             rewarm: None,
             map_warm: false,
@@ -1221,7 +1228,7 @@ impl INode for RenethackGame {
             || !matches!(self.title_warm, TitleWarm::Dialogs | TitleWarm::Glyphs)
             || self.state != GameState::Title;
         let t = Instant::now();
-        self.sync_creation_preview();
+        self.sync_creation_preview(delta);
         if let Some(ui) = self.ui.as_mut() {
             if map_turn && (veiled || !self.warm_heavy) {
                 ui.map.preload_step();
@@ -1716,13 +1723,17 @@ impl RenethackGame {
                 let map = self.ui.as_ref().map(|ui| &ui.map);
                 // a first launch shows the title only once nothing is left
                 // to load or draw for the first time behind it
-                let drawn = if self.first_launch {
-                    map.is_some_and(|m| m.rehearsal_first_draws_done() && m.preloaded())
-                        && self.title_warm == TitleWarm::Done
-                } else {
-                    map.is_some_and(|m| m.rehearsal_first_draws_done())
-                        && matches!(self.title_warm, TitleWarm::Panel | TitleWarm::Done)
-                };
+                // (and the title scene itself drawn, the engine's words in
+                // the player's language: the creation form names its roles)
+                let scene = map.is_some_and(|m| m.title_drawn()) && i18n::engine_ready();
+                let drawn = scene
+                    && if self.first_launch {
+                        map.is_some_and(|m| m.rehearsal_first_draws_done() && m.preloaded())
+                            && self.title_warm == TitleWarm::Done
+                    } else {
+                        map.is_some_and(|m| m.rehearsal_first_draws_done())
+                            && matches!(self.title_warm, TitleWarm::Panel | TitleWarm::Done)
+                    };
                 let progress = map.map_or(0.0, |m| m.warm_progress());
                 if let Some(note) = self.veil_note.as_mut() {
                     note.show(secs, progress);
@@ -1738,6 +1749,9 @@ impl RenethackGame {
                 }
                 if title && drawn && self.first_launch {
                     mark_shader_cache_warm();
+                }
+                if title {
+                    self.veil_over_scene = Some(drawn);
                 }
                 if title && !drawn {
                     godot_warn!(
@@ -5294,12 +5308,15 @@ impl RenethackGame {
     }
 
     /// The title scene shows the hero the creation form is making, and
-    /// its own again once the form is gone.
-    fn sync_creation_preview(&mut self) {
+    /// its own again once the form is gone; the pages over it hide it
+    /// until it is drawn.
+    fn sync_creation_preview(&mut self, delta: f64) {
         let creating = self.state == GameState::Creating;
         if let Some(ui) = self.ui.as_mut() {
             let preview = creating.then(|| ui.screens.creation_preview()).flatten();
             ui.map.set_creation_hero(preview);
+            let drawn = ui.map.title_drawn();
+            ui.screens.sync_scene(drawn, delta);
         }
     }
 

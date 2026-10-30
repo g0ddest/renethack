@@ -7197,6 +7197,21 @@ impl MapView {
                 }
             }
         }
+        // the creation form's hooded figure, built ahead with the roles
+        // (under load the form stood with no hero while it was built)
+        if role.is_none()
+            && let Some(hooded) = self.art.manifest().model_index(HOODED_FIGURE)
+            && let Some(info) = catalog.monsters.iter().find(|m| m.name == "archeologist")
+        {
+            // as the title scene's hero stands for it (`update_cell`)
+            let mut r = self.art.manifest().monster(info, 0);
+            r.model = hooded;
+            looks.push(ModelLook {
+                art: r,
+                tint: lifted(tint_color(r.tint, info.color)),
+                pose: Pose::Alive,
+            });
+        }
         self.art.warm(&looks, role.is_some());
     }
 

@@ -450,6 +450,13 @@ pub(super) fn title() -> Vec<Step> {
         Step::Wait("the title up over its scene", |g| {
             Ok(screen(g) == Some("title") && map_view(g)?.title_drawn())
         }),
+        // and the veil held for it: no bare menu on grey after it lifted
+        Step::Call("the veil lifted over the drawn scene", |g| {
+            match g.veil_over_scene {
+                Some(true) => Ok(()),
+                other => Err(format!("the veil lifted over the scene: {other:?}")),
+            }
+        }),
         Step::Wait("the hero in her gear", |g| {
             let hand = held_on(g, "hand_r")?;
             let arm = held_on(g, "lowerarm_l")?;

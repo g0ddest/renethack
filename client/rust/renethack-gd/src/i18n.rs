@@ -336,6 +336,12 @@ pub enum EngineKind {
 pub trait EngineText {
     fn translate(&self, lang: Lang, kind: EngineKind, english: &str) -> Option<String>;
 
+    /// Loaded: what it does not translate now stays English (one loading
+    /// on a thread returns the English meanwhile).
+    fn ready(&self) -> bool {
+        true
+    }
+
     /// A message of the log with the printf format the engine made it
     /// from and the format's arguments, the surer key of its translation
     /// (None, no arguments: history, or text the host could not pair with
@@ -393,6 +399,12 @@ pub trait EngineText {
 }
 
 /// Plug the engine's translator in (None: the English shows).
+/// The engine's words read in the language now: English needs no
+/// translator, Russian waits for its to load.
+pub fn engine_ready() -> bool {
+    lang() != Lang::Ru || ENGINE.with(|e| e.borrow().as_ref().is_none_or(|t| t.ready()))
+}
+
 pub fn set_engine_text(translator: Option<Box<dyn EngineText>>) {
     ENGINE.with(|e| *e.borrow_mut() = translator);
 }

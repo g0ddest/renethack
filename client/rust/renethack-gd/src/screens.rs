@@ -48,6 +48,9 @@ pub struct Screens {
     credits_in_game: bool,
     /// The title offers the prologue again (the profile keeps one).
     prologue: bool,
+    /// The title scene behind the title's and the creation form's pages
+    /// is drawn (else their backdrop hides the bare 3D view).
+    scene_drawn: bool,
     /// The page's controls the keys and a gamepad move among.
     nav: Nav,
     /// The end page's body (the keys and the pad scroll it) and its
@@ -135,6 +138,10 @@ const SETTINGS_SHADE: f32 = 0.62;
 
 /// The share of the title's width the menu stands in (on the left).
 const TITLE_MENU_WIDTH: f32 = 0.42;
+
+/// Seconds the title's and the creation form's backdrop takes to clear
+/// as the title scene comes up under them.
+const SCENE_CLEAR_SECS: f32 = 0.6;
 
 /// The creation form's panels keep this far from the screen's edges.
 const CREATION_EDGE: i32 = 28;
@@ -309,6 +316,7 @@ impl Screens {
             achievements_in_game: false,
             credits_in_game: false,
             prologue: false,
+            scene_drawn: false,
             nav: Nav::default(),
             end_page: None,
             pad: None,
@@ -352,9 +360,39 @@ impl Screens {
         self.root.add_child(&page);
         self.content = Some(page.upcast());
         self.current = Some("title");
-        // the page still takes the clicks: none reaches the scene
-        self.bg.set_color(Color::from_rgba(0.0, 0.0, 0.0, 0.0));
+        // the page still takes the clicks: none reaches the scene, which
+        // shows through once drawn (`sync_scene`)
+        self.show_scene_backdrop();
         self.root.set_visible(true);
+    }
+
+    /// The backdrop of a page over the title scene: clear once the scene is
+    /// drawn, the pages' ink until then (not the bare 3D view's grey).
+    fn show_scene_backdrop(&mut self) {
+        let a = if self.scene_drawn { 0.0 } else { 1.0 };
+        self.bg.set_color(theme::BG.with_alpha(a));
+    }
+
+    /// Every frame: whether the title scene is drawn (the title's and the
+    /// creation form's backdrop clears as it comes up, `delta` seconds
+    /// on), and the creation form's names in the engine's words once they
+    /// are in.
+    pub fn sync_scene(&mut self, drawn: bool, delta: f64) {
+        self.scene_drawn = drawn;
+        if matches!(self.current, Some("title" | "creation")) {
+            let a = self.bg.get_color().a;
+            let next = if drawn {
+                (a - delta as f32 / SCENE_CLEAR_SECS).max(0.0)
+            } else {
+                1.0
+            };
+            if next != a {
+                self.bg.set_color(theme::BG.with_alpha(next));
+            }
+        }
+        if let Some(form) = self.form.as_mut() {
+            form.refresh_names();
+        }
     }
 
     pub fn show_title(&mut self, saves: &[SavedGame], notice: Option<&str>) {
@@ -538,8 +576,9 @@ impl Screens {
         self.root.add_child(&page);
         self.content = Some(page.upcast());
         self.current = Some("creation");
-        // the page still takes the clicks: none reaches the scene
-        self.bg.set_color(Color::from_rgba(0.0, 0.0, 0.0, 0.0));
+        // the page still takes the clicks: none reaches the scene, which
+        // shows through once drawn (`sync_scene`)
+        self.show_scene_backdrop();
         self.root.set_visible(true);
         self.form = Some(form);
         // the focus on the role chosen; Start begins the game, Esc or B
