@@ -10355,6 +10355,26 @@ mod tests {
     }
 
     #[test]
+    fn a_rooms_floor_is_inlaid_only_once_its_walls_are_seen_all_round() {
+        let f = Fixture::new();
+        let dress = crate::branch_look::look_of(Branch::Main).dress;
+        let inlays = |rows: &[&str]| {
+            let map = level(&f.cat, rows);
+            dressing::plan(|x, y| plan_cell(&map, &f.cat, x, y), &dress)
+                .values()
+                .filter(|v| matches!(v, dressing::Volume::Inlay { .. }))
+                .count()
+        };
+        assert!(inlays(&HALL) > 0);
+        // its south wall not seen yet
+        assert_eq!(inlays(&HALL[..6]), 0);
+        // a dark room seen in part: what is known of its floor is a
+        // rectangle, its east edge no wall
+        let west: Vec<&str> = HALL.iter().map(|row| &row[..15]).collect();
+        assert_eq!(inlays(&west), 0);
+    }
+
+    #[test]
     fn a_cave_s_walls_with_a_door_in_them_are_built() {
         fn terrain<'a>(
             map: &'a MapState,

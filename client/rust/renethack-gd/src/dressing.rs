@@ -885,7 +885,9 @@ pub(super) struct PlanCell {
 /// a room of `BAND_LEAST` or more, a band of another stone inlaid round
 /// it a cell in from its walls, a fillet inside the band, and in one of
 /// `LOZENGE_LEAST` or more a lozenge in its middle. Nothing on or round a
-/// door or a feature.
+/// door or a feature. All of it from what has been seen: a run of wall
+/// as far as it is known, a room once its floor and its walls all round
+/// are (it may grow as more comes into view, never ahead of it).
 pub(super) fn plan(
     cell: impl Fn(i32, i32) -> PlanCell,
     dress: &Dress,
@@ -965,10 +967,27 @@ pub(super) fn plan(
                     )
                 )
         };
+        // (what bounds a room: a dark one's floor seen in part is a
+        // rectangle too, its edge no wall)
+        let bound = |x: i32, y: i32| {
+            matches!(
+                t(x, y),
+                Some(
+                    Terrain::Wall
+                        | Terrain::Doorway
+                        | Terrain::OpenDoor
+                        | Terrain::ClosedDoor
+                        | Terrain::BrokenDoor
+                        | Terrain::IronBars
+                )
+            )
+        };
         for room in rooms(&inside) {
             let (x0, y0, x1, y1) = room;
             let (w, h) = (x1 - x0 + 1, y1 - y0 + 1);
-            if w < BAND_LEAST.0 || h < BAND_LEAST.1 {
+            let walled = (x0 - 1..=x1 + 1).all(|x| bound(x, y0 - 1) && bound(x, y1 + 1))
+                && (y0..=y1).all(|y| bound(x0 - 1, y) && bound(x1 + 1, y));
+            if !walled || w < BAND_LEAST.0 || h < BAND_LEAST.1 {
                 continue;
             }
             // the band just inside the cells a cell in from the walls,
@@ -1053,8 +1072,7 @@ pub(super) fn plan(
 }
 
 /// The rooms of the level as their floors show (`floor`: inside a room):
-/// each whole rectangle (x0, y0, x1, y1), a room fully known (a dark one
-/// half seen is not one yet).
+/// each area of it known that is a whole rectangle (x0, y0, x1, y1).
 fn rooms(floor: &impl Fn(i32, i32) -> bool) -> Vec<(i32, i32, i32, i32)> {
     use nh_world::{COLNO, ROWNO};
     let mut seen = std::collections::HashSet::new();
