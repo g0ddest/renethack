@@ -103,6 +103,10 @@ const FOV_DEG: f32 = 40.0;
 /// takes to clear (seconds).
 const OVERVIEW_CLEAR: f32 = 45.0;
 const OVERVIEW_EASE: f32 = 0.35;
+/// The haze thins as the camera moves out (`air_near`): the eye looks
+/// through as much of it at any distance as at the default one, never
+/// less than this share of it (at 22 m a lit room was a grey veil).
+const AIR_LEAST: f32 = 0.3;
 /// The ambient light the overview adds.
 const OVERVIEW_AMBIENT: f32 = 0.3;
 /// The vignette's strength over the map (vignette.gdshader's own).
@@ -3380,6 +3384,9 @@ pub struct MapView {
     overview: Option<f32>,
     /// How far the overview's clear air has come in (0 to 1).
     overview_k: f32,
+    /// How much of the branch's haze the air holds at the camera's
+    /// distance now (`air_near`), as last set.
+    air_near: f32,
     snap: bool,
     /// Seconds since the start (the torch's flicker).
     clock: f64,
@@ -4129,6 +4136,7 @@ impl MapView {
             distance: DISTANCE,
             overview: None,
             overview_k: 0.0,
+            air_near: 1.0,
             snap: true,
             clock: 0.0,
             hero_at: None,
@@ -4507,6 +4515,11 @@ impl MapView {
             self.focus = self.focus.lerp(self.target, t);
         }
         self.ease_overview(delta as f32);
+        let near = self.air_near();
+        if (near - self.air_near).abs() > 0.01 {
+            self.air_near = near;
+            self.keep_prologue_air();
+        }
         self.place_camera();
         self.follow_rings();
         self.fade_in(new_level, delta as f32);
@@ -6090,8 +6103,8 @@ impl MapView {
         let k = self.overview_k * self.overview_k * (3.0 - 2.0 * self.overview_k);
         // (a level changing under the overview sets the branch's again)
         let l = self.branch_look;
-        self.env
-            .set_volumetric_fog_density(l.fog_density * (1.0 - k));
+        self.air_near = self.air_near();
+        self.keep_prologue_air();
         if !self.showcase {
             // a lit hall far from its torches, as plain as the rest
             let ambient = l.ambient_energy + OVERVIEW_AMBIENT * k;
@@ -6101,6 +6114,15 @@ impl MapView {
             m.set_shader_parameter("strength", &(VIGNETTE * (1.0 - k)).to_variant());
         }
         RenderingServer::singleton().global_shader_parameter_set("overview", &k.to_variant());
+    }
+
+    /// How much of the branch's haze the air holds: as much as the eye
+    /// looks through at the default distance (the more the farther it
+    /// is, `AIR_LEAST` at the least), none in the overview's clear air.
+    fn air_near(&self) -> f32 {
+        let k = self.overview_k * self.overview_k * (3.0 - 2.0 * self.overview_k);
+        let far = (DISTANCE / self.camera_distance().max(1.0)).clamp(AIR_LEAST, 1.0);
+        far * (1.0 - k)
     }
 
     /// The whole-level view is on (self-tests).

@@ -650,8 +650,11 @@ impl MapView {
     pub(super) fn keep_prologue_air(&mut self) {
         let look = self.branch_look;
         let beat = self.stage.as_ref().filter(|_| self.titled).map(|s| s.beat);
+        // (the game's own: thinner the farther the camera, none in the
+        // overview: `air_near`)
+        let near = self.air_near;
         let (density, glow) = match beat {
-            None => (look.fog_density, super::HAZE * look.haze),
+            None => (look.fog_density * near, super::HAZE * look.haze),
             Some(Beat::Hero) => (look.fog_density, 0.0),
             Some(_) => (PROLOGUE_AIR, 0.0),
         };
