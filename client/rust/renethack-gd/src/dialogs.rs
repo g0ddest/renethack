@@ -149,6 +149,16 @@ pub fn palette_cmds(catalog: Option<&Catalog>, keymap: &nh_world::Keymap) -> Vec
         .collect()
 }
 
+/// `s` with its first letter upper-cased (a command's description read
+/// as the palette's row).
+fn capitalized(s: &str) -> String {
+    let mut chars = s.chars();
+    chars
+        .next()
+        .map(|c| c.to_uppercase().chain(chars).collect())
+        .unwrap_or_default()
+}
+
 /// Lower case, ё as е: a search's text and what it is compared with.
 fn folded(s: &str) -> String {
     s.to_lowercase().replace('ё', "е")
@@ -1163,17 +1173,33 @@ struct Palette {
     list: Scroller,
     none: Gd<Label>,
     look: Look,
+    /// A gamepad plays: each row reads as what it does, in the player's
+    /// language, no name to type nor key; the rows in that order.
+    pad: bool,
+    /// The rows drawn as `pad` says (restyled only when it changes).
+    drawn_pad: Option<bool>,
 }
 
 impl Palette {
     fn refilter(&mut self, text: &str) {
         self.shown = palette_filter(&self.cmds, text);
         self.selected = (!text.trim().is_empty() && !self.shown.is_empty()).then_some(0);
+        if self.pad && text.trim().is_empty() {
+            // as the rows read, after one listed first (#pay, owed)
+            let cmds = &self.cmds;
+            let pinned = |i: usize| !(i == 0 && cmds[0].name == "pay");
+            self.shown
+                .sort_by_cached_key(|&i| (pinned(i), folded(&cmds[i].desc)));
+        }
     }
 }
 
 /// Show the palette's rows. The borrow is released before Godot is called.
 fn fill_palette(palette: &Rc<RefCell<Palette>>) {
+    let (pad, restyle) = {
+        let p = palette.borrow();
+        (p.pad, p.drawn_pad != Some(p.pad))
+    };
     let (rows, selected, styled, slots, look, mut none) = {
         let p = palette.borrow();
         let rows: Vec<(String, String, String)> = p
@@ -1200,7 +1226,11 @@ fn fill_palette(palette: &Rc<RefCell<Palette>>) {
         };
         slot.name.set_text(name);
         slot.key.set_text(key);
-        slot.desc.set_text(desc);
+        if pad {
+            slot.desc.set_text(&capitalized(desc));
+        } else {
+            slot.desc.set_text(desc);
+        }
         if (selected == Some(i)) != (styled == Some(i)) {
             look.style_row(&mut slot.button, false, selected == Some(i));
         }
@@ -1208,6 +1238,16 @@ fn fill_palette(palette: &Rc<RefCell<Palette>>) {
     }
     none.set_visible(rows.is_empty());
     let mut p = palette.borrow_mut();
+    if restyle {
+        // under a pad the description is the row: no name, no key
+        for slot in p.slots.iter_mut() {
+            slot.name.set_visible(!pad);
+            slot.key.set_visible(!pad);
+            let color = if pad { theme::TEXT } else { theme::TEXT_DIM };
+            slot.desc.add_theme_color_override("font_color", color);
+        }
+        p.drawn_pad = Some(pad);
+    }
     p.styled = selected;
     match selected {
         Some(i) => p.list.reveal(i as f32 * ROW_H, ROW_H),
@@ -1493,6 +1533,8 @@ pub struct Dialogs {
     /// field with the on-screen keyboard; the keyboard's words hidden (the
     /// pad's hints show instead).
     pad: bool,
+    /// The hero carries goods not paid for: the palette lists #pay first.
+    owes: bool,
     /// Dialogs of every kind built behind the title screen one a frame,
     /// and the frames each has been drawn (the warm-up); the next to build.
     warm: Vec<(Open, u32)>,
@@ -1603,6 +1645,7 @@ impl Dialogs {
             look: Look::new(),
             open: None,
             pad: false,
+            owes: false,
             warm: Vec::new(),
             warm_next: 0,
             warming: false,
@@ -2089,7 +2132,15 @@ impl Dialogs {
         req: u64,
         catalog: Option<&Catalog>,
     ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
-        let cmds = palette_cmds(catalog, &self.keymap);
+        let mut cmds = palette_cmds(catalog, &self.keymap);
+        // goods not paid for: #pay first (a shop card sends a pad player
+        // here to pay)
+        if self.owes
+            && let Some(i) = cmds.iter().position(|c| c.name == "pay")
+        {
+            let pay = cmds.remove(i);
+            cmds.insert(0, pay);
+        }
         // the palette put away serves again only if it reads the same: the
         // engine's translator may have loaded since it was made, or the
         // language be another
@@ -2111,6 +2162,7 @@ impl Dialogs {
             } = pool;
             pooled.set(req);
             edit.set_text("");
+            palette.borrow_mut().pad = self.pad;
             palette.borrow_mut().refilter("");
             fill_palette(&palette);
             // as tall as its rows again: a panel grows to what it holds
@@ -2218,7 +2270,7 @@ impl Dialogs {
         row.add_child(&cancel);
         col.add_child(&row);
         let palette = Rc::new(RefCell::new(Palette {
-            shown: palette_filter(&cmds, ""),
+            shown: Vec::new(),
             cmds,
             selected: None,
             slots,
@@ -2226,7 +2278,10 @@ impl Dialogs {
             list,
             none,
             look,
+            pad: self.pad,
+            drawn_pad: None,
         }));
+        palette.borrow_mut().refilter("");
         fill_palette(&palette);
         // refiltering is local to the palette: it never touches the game
         let p = palette.clone();
@@ -2947,6 +3002,8 @@ impl Dialogs {
             let mut k = theme::styled_label(&key, Face::Caps, 16, theme::TEXT_DIM);
             k.set_vertical_alignment(VerticalAlignment::CENTER);
             i18n::verbatim(&k);
+            // the key is no pad player's: hidden while a gamepad plays
+            pad_view::key_words(&k, self.pad);
             head.add_child(&k);
         }
         let mut button = theme::button("✕", &self.queue, dialog_ui(req, close));
@@ -4298,6 +4355,16 @@ impl Dialogs {
                 b.set_text(&choice_label(*c, on));
             }
         }
+        if let Kind::ExtCmd { edit, palette, .. } = &open.kind {
+            palette.borrow_mut().pad = on;
+            palette.borrow_mut().refilter(&edit.get_text().to_string());
+            fill_palette(palette);
+        }
+    }
+
+    /// The hero carries goods not paid for (the palette lists #pay first).
+    pub fn set_owes(&mut self, owes: bool) {
+        self.owes = owes;
     }
 
     /// The hero rendered in their gear, for the character sheet's

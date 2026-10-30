@@ -335,6 +335,9 @@ pub enum PadOut {
     KeyUp(KeyInput),
     /// A left click on the world cursor's cell.
     Activate,
+    /// A search: pressed on purpose, so beside a hostile too (`m s`, where
+    /// a plain `s` asks for the 'm' prefix, which a pad has no key for).
+    Search,
     /// Move the world cursor a cell.
     Cursor(i32, i32),
     /// The world cursor back on the hero.
@@ -572,7 +575,7 @@ impl Pad {
             (A, _) => PadOut::Key(key(Key::Enter)),
             (B, PadCtx::Text) => PadOut::Osk(OskOp::Back),
             (B, _) => PadOut::Key(key(Key::Escape)),
-            (X, PadCtx::World) => PadOut::Key(ch('s')),
+            (X, PadCtx::World) => PadOut::Search,
             (X, PadCtx::PanelBrowse) => PadOut::Key(ch(' ')),
             (X, PadCtx::Picker { wish: true }) => PadOut::Pick(PickOp::Buc),
             (X, _) => return out,
@@ -906,10 +909,7 @@ mod tests {
         // alone, the face buttons are A, B, X, Y
         p.button(PadButton::Rb, false, w, 0.6);
         p.button(PadButton::Lb, false, w, 0.6);
-        assert_eq!(
-            p.button(PadButton::X, true, w, 0.7),
-            vec![PadOut::Key(ch('s'))]
-        );
+        assert_eq!(p.button(PadButton::X, true, w, 0.7), vec![PadOut::Search]);
         assert_eq!(
             p.button(PadButton::Y, true, w, 0.7),
             vec![PadOut::Key(ch('i'))]

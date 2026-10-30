@@ -3403,6 +3403,7 @@ impl RenethackGame {
                     }
                     self.pad_cursor = None;
                 }
+                PadOut::Search => self.use_slot(SlotUse::Macro(nh_world::Macro::search())),
                 PadOut::Cursor(dx, dy) => {
                     if let Some((x, y)) = self.pad_cell() {
                         let (nx, ny) = (x + dx, y + dy);
@@ -3696,6 +3697,8 @@ impl RenethackGame {
         // a gamepad: its hints, the bar's chords, dialogs with a focus
         let pad = self.pad.active.then_some(self.pad.kind);
         ui.dialogs.set_pad(pad.is_some());
+        let owes = (self.world.inventory.items().iter()).any(|i| i.text.contains("(unpaid"));
+        ui.dialogs.set_owes(owes);
         ui.help.set_pad(pad.is_some());
         ui.inventory.set_pad(pad);
         ui.game_menu.set_pad(pad);

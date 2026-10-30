@@ -321,6 +321,9 @@ pub struct QuestPage {
     panel: Gd<PanelContainer>,
     title: Gd<Label>,
     body: Gd<VBoxContainer>,
+    /// Skip, Back and Next for the mouse: a gamepad's buttons say them
+    /// instead.
+    skip: Gd<Button>,
     back: Gd<Button>,
     next: Gd<Button>,
     /// The keys: the keyboard's hint, or a gamepad's buttons (`pad`) in
@@ -388,6 +391,7 @@ impl QuestPage {
             panel,
             title,
             body,
+            skip,
             back,
             next,
             hint,
@@ -421,7 +425,12 @@ impl QuestPage {
         if let Some(mut row) = self.pad_row.take() {
             row.queue_free();
         }
-        self.hint.set_visible(self.pad.is_none());
+        let mouse = self.pad.is_none();
+        self.hint.set_visible(mouse);
+        self.skip.set_visible(mouse);
+        self.next.set_visible(mouse);
+        self.back
+            .set_visible(mouse && self.step.is_some_and(|i| i > 0));
         let (Some(kind), Some(i)) = (self.pad, self.step) else {
             return;
         };
@@ -504,7 +513,6 @@ impl QuestPage {
             self.body.add_child(&l);
             fit_lines(&mut l, QUEST_W);
         }
-        self.back.set_visible(i > 0);
         self.next.set_text(&if last {
             tr!("quest-play")
         } else {

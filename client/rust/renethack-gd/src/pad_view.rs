@@ -104,6 +104,12 @@ pub fn key_words<T: Inherits<Control>>(c: &Gd<T>, pad: bool) {
     c.set_visible(!pad);
 }
 
+/// Is `node` marked as the keyboard's words (self-tests: none shows while
+/// a gamepad plays)?
+pub fn is_key_words(node: &Gd<Node>) -> bool {
+    node.has_meta(KEY_WORDS)
+}
+
 /// Under `root`, the keyboard's words hidden while a gamepad gives the
 /// input, shown again when it no longer does.
 pub fn show_key_words<T: Inherits<Node>>(root: &Gd<T>, pad: bool) {
@@ -163,7 +169,8 @@ pub fn hints(ctx: PadCtx) -> Vec<(Vec<PadButton>, &'static str)> {
             (vec![A], "hint-act"),
             (vec![X], "hint-search"),
             (vec![Y], "hint-inventory"),
-            (vec![Lt], "hint-actions"),
+            // the radial: no twin of A's "Act"
+            (vec![Lt], "hint-wheel"),
             (vec![Rt], "hint-fire"),
             (vec![Lb, Rb], "hint-bar"),
             (vec![Start], "hint-menu"),

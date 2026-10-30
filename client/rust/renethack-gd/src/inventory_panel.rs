@@ -46,6 +46,7 @@ use crate::gamepad::{PadButton, PadKind};
 use crate::i18n::{self, EngineKind, Lang};
 use crate::icons::{self, Glyph};
 use crate::map_view::DOLL_LAYER;
+use crate::pad_view;
 use crate::theme::{self, Face, Frame, place};
 use crate::tr;
 use crate::ui_events::{UiEvent, UiQueue, push};
@@ -3194,6 +3195,8 @@ impl InventoryPanel {
         keys.set_horizontal_alignment(HorizontalAlignment::RIGHT);
         keys.set_vertical_alignment(VerticalAlignment::CENTER);
         place(&keys, [0.0, 0.0, 1.0, 1.0], [0.0, 0.0, -10.0, 0.0]);
+        // the key is no pad player's: hidden while a gamepad plays
+        pad_view::key_words(&keys, self.pad);
         b.add_child(&keys);
         let q = self.queue.clone();
         let kind = a.kind;
@@ -3518,6 +3521,8 @@ impl InventoryPanel {
             self.pad_kind = kind;
             self.pad = kind.is_some();
             self.dirty = true;
+            // (an item's menu open now is not drawn again)
+            pad_view::show_key_words(&self.root, self.pad);
         }
     }
 

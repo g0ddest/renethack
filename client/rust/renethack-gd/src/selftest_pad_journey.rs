@@ -41,6 +41,9 @@ static PRESSED_AT: AtomicI64 = AtomicI64::new(0);
 static ACTED_ON: AtomicU64 = AtomicU64::new(0);
 /// The portrait's renders before the restore.
 static RENDERS: AtomicU32 = AtomicU32::new(0);
+/// The turn and the log before a search beside a foe.
+static TURN: AtomicI64 = AtomicI64::new(0);
+static LOG_SEQ: AtomicU64 = AtomicU64::new(0);
 
 /// Words only a keyboard or a mouse has: whole words, word stems (the
 /// Russian's cases), and phrases.
@@ -64,12 +67,41 @@ const KEY_WORDS: [&str; 15] = [
 const KEY_STEMS: [&str; 5] = ["щелч", "щёлк", "Щелч", "клавиш", "Клавиш"];
 const KEY_PHRASES: [&str; 3] = ["any key", "(y)", "(n)"];
 
+/// A label that is a key alone, as a keyboard's hint prints it: a control
+/// key ("^X"), a meta key ("M-a"), an extended command ("#twoweapon"). A
+/// letter alone is a menu's or the pack's letter as often as a key: a key
+/// hint marked as the keyboard's (`pad_view::key_words`) is caught by its
+/// mark.
+fn is_a_key(text: &str) -> bool {
+    let t = text.trim();
+    let mut chars = t.chars();
+    let one = |c: Option<char>| c.is_some_and(|c| c.is_ascii_graphic());
+    match (chars.next(), t.chars().count()) {
+        (Some('^'), 2) => one(chars.next()),
+        (Some('M'), 3) => chars.next() == Some('-') && one(chars.next()),
+        (Some('#'), n) if n > 2 => chars.all(|c| c.is_ascii_lowercase()),
+        _ => false,
+    }
+}
+
 /// The key or click `text` names, if any ("Escape spells" names none).
 fn names_a_key(text: &str) -> Option<&'static str> {
-    let words: Vec<&str> = text
+    let mut words: Vec<&str> = text
         .split(|c: char| !c.is_alphanumeric())
         .filter(|w| !w.is_empty())
         .collect();
+    // a sentence's first word, a verb ("Enter explore mode"), is no key;
+    // a key's name is followed by what it does ("Esc: cancel")
+    let verb = words.first().is_some_and(|w| {
+        let rest = text
+            .trim_start()
+            .strip_prefix(w)
+            .and_then(|r| r.strip_prefix(' '));
+        rest.is_some_and(|r| r.starts_with(char::is_lowercase))
+    });
+    if verb {
+        words.remove(0);
+    }
     KEY_WORDS
         .iter()
         .find(|k| words.contains(*k))
@@ -104,8 +136,9 @@ fn press_every(b: PadButton, every: i64) {
 
 /// The words on screen: each visible label's, button's and rich text's,
 /// with whether its widget is the same in every language (a name, a
-/// language, a controller's button).
-fn on_screen(g: &RenethackGame) -> Vec<(String, bool, String)> {
+/// language, a controller's button) and whether it is marked as the
+/// keyboard's words.
+fn on_screen(g: &RenethackGame) -> Vec<(String, bool, bool, String)> {
     let mut out = Vec::new();
     let mut stack: Vec<Gd<Node>> = vec![g.to_gd().upcast()];
     while let Some(node) = stack.pop() {
@@ -122,6 +155,7 @@ fn on_screen(g: &RenethackGame) -> Vec<(String, bool, String)> {
             continue;
         }
         let verbatim = node.has_meta(i18n::VERBATIM);
+        let keys = crate::pad_view::is_key_words(&node);
         let text = if let Ok(l) = node.clone().try_cast::<Label>() {
             Some(l.get_text().to_string())
         } else if let Ok(b) = node.clone().try_cast::<Button>() {
@@ -132,7 +166,7 @@ fn on_screen(g: &RenethackGame) -> Vec<(String, bool, String)> {
             None
         };
         if let Some(t) = text.filter(|t| !t.trim().is_empty()) {
-            out.push((t, verbatim, node.get_path().to_string()));
+            out.push((t, verbatim, keys, node.get_path().to_string()));
         }
         stack.extend(node.get_children().iter_shared());
     }
@@ -144,9 +178,11 @@ fn on_screen(g: &RenethackGame) -> Vec<(String, bool, String)> {
 fn seams(g: &mut RenethackGame) -> Result<(), String> {
     let words = on_screen(g);
     let mut found = Vec::new();
-    for (t, _, path) in &words {
+    for (t, _, keys, path) in &words {
         if let Some(k) = names_a_key(t) {
             found.push(format!("{k:?} with a gamepad in {path}: {t:?}"));
+        } else if *keys || is_a_key(t) {
+            found.push(format!("a key with a gamepad in {path}: {t:?}"));
         }
     }
     // a wrapped label that shows fewer lines than it has
@@ -190,7 +226,7 @@ fn seams(g: &mut RenethackGame) -> Result<(), String> {
         // a line at a time: the log's English line named, not its first
         let texts: Vec<String> = words
             .iter()
-            .filter(|(_, verbatim, _)| !verbatim)
+            .filter(|(_, verbatim, ..)| !verbatim)
             .flat_map(|(t, ..)| t.lines().map(str::to_string).collect::<Vec<_>>())
             .collect();
         // NetHack's scroll labels are Latin capitals in every language
@@ -226,9 +262,21 @@ fn seams(g: &mut RenethackGame) -> Result<(), String> {
     Err(found.join("; "))
 }
 
-/// A picture, and the screen's seams checked once it is drawn.
-fn shot(name: &'static str) -> [Step; 2] {
-    [Step::Shot(name), Step::Call("the screen's seams", seams)]
+/// A picture, and the screen's seams checked once it is drawn; a few
+/// frames first, with pictures or without (a run at no set size takes
+/// none, and its next press would come in the frame the screen opened).
+fn shot(name: &'static str) -> [Step; 4] {
+    [
+        Step::Call("", |_| {
+            PRESSED_AT.store(frames(), Ordering::Relaxed);
+            Ok(())
+        }),
+        Step::Wait("drawn", |_| {
+            Ok(frames() - PRESSED_AT.load(Ordering::Relaxed) > 3)
+        }),
+        Step::Shot(name),
+        Step::Call("the screen's seams", seams),
+    ]
 }
 
 /// The screen's seams, once what just opened is laid out (a few frames).
@@ -714,6 +762,8 @@ pub(super) fn pad_journey() -> Vec<Step> {
         match pick {
             GameMenuPick::Character => steps.extend(shot("journey-character")),
             GameMenuPick::Journal => steps.extend(shot("journey-journal")),
+            // what each command does, in the player's words, no key
+            GameMenuPick::Commands => steps.extend(shot("journey-palette")),
             _ => steps.extend(settled_seams()),
         }
         steps.push(tap(PadButton::B));
@@ -735,12 +785,47 @@ pub(super) fn pad_journey() -> Vec<Step> {
         tap(PadButton::Down),
     ]);
     steps.extend(shot("journey-pack-list"));
-    steps.extend([tap(PadButton::B), settle("B: the inventory closed")]);
+    // an item's actions: what each does, no key beside it
+    steps.extend([
+        tap(PadButton::X),
+        Step::Wait("X: the item's actions", |g| {
+            focused(g)?;
+            Ok(g.ui
+                .as_ref()
+                .ok_or("no UI")?
+                .inventory
+                .context_rows()
+                .is_some())
+        }),
+    ]);
+    steps.extend(shot("journey-item-actions"));
+    steps.extend([
+        tap(PadButton::B),
+        tap(PadButton::B),
+        settle("B, B: the inventory closed"),
+    ]);
     // a fight: two soldier ants staged beside the hero, met with the stick
     stage_monster(&mut steps);
     stage_monster(&mut steps);
     steps.push(Step::Wait("a foe beside the hero", |g| fight_on(g, true)));
     steps.extend(shot("journey-fight"));
+    // X beside a foe searches all the same (the pad has no 'm' prefix)
+    steps.extend([
+        Step::Call("the turn before a search", |g| {
+            TURN.store(g.world.turn().unwrap_or(0), Ordering::Relaxed);
+            LOG_SEQ.store(g.world.log.last_seq(), Ordering::Relaxed);
+            Ok(())
+        }),
+        tap(PadButton::X),
+        Step::Wait("X: a search beside a foe", |g| {
+            let seq = LOG_SEQ.load(Ordering::Relaxed);
+            if let Some(m) = (g.world.log.since(seq)).find(|m| m.text.contains("prefix to force")) {
+                return Err(format!("the search refused: {:?}", m.text));
+            }
+            let turn = g.world.turn().unwrap_or(0);
+            Ok(screen(g) == Some("end") || turn > TURN.load(Ordering::Relaxed))
+        }),
+    ]);
     steps.push(Step::Wait(
         "the fight to the death, the end's questions let go",
         |g| fight_on(g, false),

@@ -299,6 +299,13 @@ impl Macro {
         Macro::new(steps)
     }
 
+    /// `s` after the `m` prefix: a search beside a hostile too, where 5.0
+    /// asks for the prefix instead of searching ("Are you waiting to get
+    /// hit?"); anywhere else it searches as `s` does.
+    pub fn search() -> Macro {
+        Macro::new(vec![Step::Key('m' as i32), Step::Key('s' as i32)])
+    }
+
     /// An extended command by name (`#pray`): `#`, then the name.
     pub fn ext(name: &'static str) -> Macro {
         Macro::new(vec![Step::Key('#' as i32), Step::Ext(name)])
