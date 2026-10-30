@@ -32,6 +32,13 @@ pub const MAX_TICK_MS: u64 = 500;
 pub const CALM_TURNS: i64 = 3;
 /// Searches a rest takes at most.
 const REST_LIMIT: u32 = 1000;
+/// The searches of a rest's one action: the engine runs them as `20s`
+/// (none worth watching a turn at a time), and stops them itself on a
+/// blow or when HP or Pw comes full.
+const REST_COUNT: u32 = 20;
+/// What the engine says when it ends a count at full HP or Pw: a rest
+/// goes on while the other is not full.
+const REST_FULL: [&str; 2] = ["You are in full health.", "You feel full of energy."];
 /// The highest count a prefix takes (NetHack's LARGEST_INT).
 const MAX_COUNT: u32 = 32767;
 
@@ -729,6 +736,7 @@ impl TickDriver {
     /// The next action of the order, at a command prompt once `ready`; None
     /// when it has ended (`take_stop` says why).
     pub fn next(&mut self, world: &World, catalog: &Catalog) -> Option<Action> {
+        let fight = self.mode == Mode::Combat;
         let active = self.active.as_mut()?;
         if active.finishing {
             return self.end(Stop::Arrived);
@@ -810,10 +818,21 @@ impl TickDriver {
                 if full("hp", "hpmax") && full("energy", "energymax") {
                     return self.end(Stop::Healed);
                 }
-                if active.actions >= REST_LIMIT {
+                if active.actions >= REST_LIMIT / REST_COUNT {
                     return self.end(Stop::Done);
                 }
-                (Action::key('s'), None, false)
+                // in a fight, a turn at a time: every action waits
+                let count = if fight {
+                    Vec::new()
+                } else {
+                    crate::count_keys(REST_COUNT, world.number_pad)
+                };
+                let keys = count
+                    .into_iter()
+                    .filter_map(|k| u8::try_from(k).ok().map(char::from))
+                    .chain(['s'])
+                    .collect();
+                (Action { keys }, None, false)
             }
         };
         active.actions += 1;
@@ -911,9 +930,11 @@ impl TickDriver {
             }
             _ => false,
         };
+        let rest = matches!(active.order, Order::Rest);
         for n in news.iter().filter(|n| n.seq > before.seq) {
             let items = ITEMS_HERE.iter().any(|h| n.text.starts_with(h));
-            if n.urgent || !(n.harmless || (items && at_goal)) {
+            let full = rest && REST_FULL.contains(&n.text.as_str());
+            if n.urgent || !(n.harmless || (items && at_goal) || full) {
                 return Some(Stop::Message(n.text.clone()));
             }
         }
@@ -1358,10 +1379,23 @@ mod tests {
         stat(&mut w, "energy", "2");
         let mut d = TickDriver::new();
         d.observe(&w, &cat);
-        assert_eq!(keys(&d.start(Order::Rest, &w, &cat).unwrap()), "s");
+        // twenty searches at a time, the engine's own count
+        assert_eq!(keys(&d.start(Order::Rest, &w, &cat).unwrap()), "20s");
         stat(&mut w, "hp", "16");
+        // the engine ends the count at full HP: Pw is not full yet
+        say(&mut w, "You are in full health.");
         d.observe(&w, &cat);
-        assert_eq!(keys(&d.next(&w, &cat).unwrap()), "s", "Pw is not full yet");
+        assert_eq!(
+            keys(&d.next(&w, &cat).unwrap()),
+            "20s",
+            "Pw is not full yet"
+        );
+        // with number_pad, the count's prefix
+        w.number_pad = true;
+        stat(&mut w, "energy", "3");
+        d.observe(&w, &cat);
+        assert_eq!(keys(&d.next(&w, &cat).unwrap()), "n20s");
+        w.number_pad = false;
         stat(&mut w, "energy", "5");
         d.observe(&w, &cat);
         assert_eq!(d.next(&w, &cat), None);
@@ -1413,10 +1447,10 @@ mod tests {
         d.observe(&w, &cat);
         assert_eq!(d.next(&w, &cat), None);
         assert_eq!(d.take_stop(), Some(Stop::OneAction));
-        // a rest: one search
+        // a rest: one search, no count
         stat(&mut w, "hp", "10");
         d.observe(&w, &cat);
-        d.start(Order::Rest, &w, &cat).unwrap();
+        assert_eq!(keys(&d.start(Order::Rest, &w, &cat).unwrap()), "s");
         d.observe(&w, &cat);
         assert_eq!(d.next(&w, &cat), None);
         assert_eq!(d.take_stop(), Some(Stop::OneAction));

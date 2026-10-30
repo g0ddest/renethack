@@ -112,6 +112,8 @@ mod prologue_tests;
 mod prose_tests;
 #[path = "selftest_rebind.rs"]
 mod rebind_tests;
+#[path = "selftest_rest.rs"]
+mod rest_tests;
 #[path = "selftest_riding.rs"]
 mod riding_tests;
 #[path = "selftest_rim.rs"]
@@ -5163,6 +5165,7 @@ impl SelfTest {
             "look-tip" => look_tests::look_tip(),
             "peaceful" => peaceful_tests::peaceful(),
             "peaceful-swap" => peaceful_tests::peaceful_swap(),
+            "rest" => rest_tests::rest(),
             "quest-words" => prose_tests::quest_words(),
             "pad-panels" => pad_panels_tests::pad_panels(),
             "pad-journey" => pad_journey_tests::pad_journey(),
