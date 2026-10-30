@@ -326,6 +326,23 @@ fn smoke() -> Vec<Step> {
             Ok(g.world.branch() == nh_world::Branch::Main && g.world.depth() == Some(1))
         }),
         Step::Wait("the welcome agreeing with the heroine", welcome_agrees),
+        Step::Wait("the starting pack's curse status known, every item", |g| {
+            // !implicit_uncursed: "an uncursed +1 spear", not "a +1 spear"
+            let items = g.world.inventory.items();
+            if items.is_empty() {
+                return Ok(false);
+            }
+            let unknown: Vec<&str> = items
+                .iter()
+                .filter(|i| nh_world::parse_item_name(&i.text).buc.is_none())
+                .map(|i| i.text.as_str())
+                .collect();
+            if unknown.is_empty() {
+                Ok(true)
+            } else {
+                Err(format!("no curse status in {unknown:?}"))
+            }
+        }),
         Step::Wait("HP:16(16) and Dlvl:1 on the HUD", |g| {
             let text = g.ui.as_ref().map_or("", |ui| ui.hud.status_text());
             Ok(text.contains("HP:16(16)") && text.contains("Dlvl:1"))

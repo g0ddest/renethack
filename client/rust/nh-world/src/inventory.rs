@@ -224,6 +224,12 @@ pub fn parse_item_name(text: &str) -> ItemName {
     }
     let name = words.collect::<Vec<_>>().join(" ");
     let stem = if plural { singular(&name) } else { name };
+    // water says its curse status in its name: never "blessed holy water"
+    let buc = buc.or(match stem.as_str() {
+        "potion of holy water" => Some(Buc::Blessed),
+        "potion of unholy water" => Some(Buc::Cursed),
+        _ => None,
+    });
     ItemName {
         count,
         buc,
@@ -429,6 +435,15 @@ mod tests {
 
     #[test]
     fn names_tell_count_curse_status_enchantment_and_charges() {
+        // holy and unholy water: the curse status is in the name
+        let n = parse_item_name("4 potions of holy water");
+        assert_eq!((n.count, n.buc), (Some(4), Some(Buc::Blessed)));
+        assert_eq!(n.stem, "potion of holy water");
+        assert_eq!(
+            parse_item_name("a potion of unholy water").buc,
+            Some(Buc::Cursed)
+        );
+        assert_eq!(parse_item_name("a potion of water").buc, None);
         let n = parse_item_name("a blessed +3 small shield (being worn)");
         assert_eq!(n.count, Some(1));
         assert_eq!(n.buc, Some(Buc::Blessed));

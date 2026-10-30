@@ -28,7 +28,7 @@ const PARANOID_MENU: &str = "Actions requiring extra confirmation:";
 /// how the engine's windows, menus, keys and clicks come to the client.
 /// So are the status conditions (`cond_`), getpos's (`getpos`) and
 /// farlook's (`whatis_`).
-const CLIENT_OPTIONS: [&str; 35] = [
+const CLIENT_OPTIONS: [&str; 36] = [
     "name",
     "role",
     "race",
@@ -41,6 +41,7 @@ const CLIENT_OPTIONS: [&str; 35] = [
     "legacy",
     "tutorial",
     "tips",
+    "implicit_uncursed",
     "mail",
     "showexp",
     "pushweapon",

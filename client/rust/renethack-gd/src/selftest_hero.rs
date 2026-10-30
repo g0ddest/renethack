@@ -1875,6 +1875,25 @@ pub(super) fn roles() -> Vec<Step> {
                 Ok(())
             }),
         ]);
+        if role == "priest" {
+            // a priest sees every item's curse status, and the names say
+            // it (!implicit_uncursed): "an uncursed robe", not "a robe"
+            steps.push(Step::Wait(
+                "the priest's pack, its curse status said",
+                |g| {
+                    let items = g.world.inventory.items();
+                    let unsaid: Vec<&str> = items
+                        .iter()
+                        .filter(|i| nh_world::parse_item_name(&i.text).buc.is_none())
+                        .map(|i| i.text.as_str())
+                        .collect();
+                    if !unsaid.is_empty() {
+                        return Err(format!("no curse status in {unsaid:?}"));
+                    }
+                    Ok(!items.is_empty())
+                },
+            ));
+        }
         steps.extend(quit());
     }
     steps.push(Step::Call("every role its own model", |_| {
