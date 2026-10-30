@@ -5137,6 +5137,7 @@ impl SelfTest {
             "dressing" => world_looks::dressing(),
             "gehennom" => world_looks::gehennom(),
             "mines" => world_looks::mines(),
+            "lava" => world_looks::lava(),
             "title" => world_looks::title(),
             "bestiary" => world_looks::bestiary(),
             "corridors" => corridors::corridors(),

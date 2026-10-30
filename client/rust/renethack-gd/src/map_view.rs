@@ -4921,6 +4921,13 @@ impl MapView {
         self.back.set_rotation_degrees(way);
         self.back.set_color(color);
         self.back.set_param(Param::ENERGY, energy);
+        // the creatures' own light: a rim, or the branch's key
+        let (way, color, energy) =
+            l.creature_key
+                .unwrap_or((CREATURE_LIGHT_WAY, RIM_LIGHT, CREATURE_LIGHT_ENERGY));
+        self.creature_light.set_rotation_degrees(way);
+        self.creature_light.set_color(color);
+        self.creature_light.set_param(Param::ENERGY, energy);
         // the hero's own pool, as bright as the branch has it (a lamp in
         // hand keeps its own)
         if !self.hero_gear.lamp() {

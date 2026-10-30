@@ -30,6 +30,18 @@ float tl2(vec2 p) {
 	return textureLod(noise_tex, p * 0.125, 0.0).r;
 }
 
+// the cells' ground about a point, blurred over a cell and a half: a
+// shore cuts the cells' corners, never steps along their edges (the same
+// in every shader of the ground)
+vec4 ground_blur(vec2 p) {
+	vec2 uv = (p + 0.5) / FIELD;
+	vec2 d = vec2(0.6) / FIELD;
+	return (texture(ground_tex, uv) * 2.0
+		+ texture(ground_tex, uv + d) + texture(ground_tex, uv - d)
+		+ texture(ground_tex, uv + vec2(d.x, -d.y))
+		+ texture(ground_tex, uv + vec2(-d.x, d.y))) / 6.0;
+}
+
 // the kinds' strengths at a point of the ground (as map_surface.gdshader
 // works them out, alike to the bit: where its kind wins, the lava shows)
 vec4 ground_lead(vec2 p, vec4 f) {
@@ -63,7 +75,7 @@ void fragment() {
 	float t = TIME;
 	// it shows where lava wins over the ground beside it; how little it
 	// leads there, its shore
-	vec4 field = texture(ground_tex, (wpos.xz + 0.5) / FIELD);
+	vec4 field = ground_blur(wpos.xz);
 	float shore = 0.0;
 	if (max(max(field.r, field.b), field.a) > 0.0) {
 		vec4 v = ground_lead(wpos.xz, field);

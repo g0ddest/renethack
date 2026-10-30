@@ -349,12 +349,14 @@ pub(super) fn dressing() -> Vec<Step> {
 /// to `depth`. A picture as the hero arrives, before the level is mapped
 /// (`shot`-arrival: only what they see of it), then mapped at the game's
 /// camera (`shot`), close on a wall (`shot`-wall) and in the overview
-/// (`shot`-overview).
+/// (`shot`-overview). With `wish`, the Amulet's wish on arriving in the
+/// endgame is wished away ("nothing").
 fn light_visit(
     steps: &mut Vec<Step>,
     pick: Option<KeyCheck>,
     depth: &'static str,
     shot: &'static str,
+    wish: bool,
 ) {
     let named =
         |suffix: &str| -> &'static str { Box::leak(format!("{shot}-{suffix}").into_boxed_str()) };
@@ -372,6 +374,15 @@ fn light_visit(
         steps.extend([
             Step::Request("the levels to teleport to", is_menu),
             Step::KeyFrom("the level", pick),
+        ]);
+    }
+    if wish {
+        steps.extend([
+            Step::AnswerUntil('n', "the Amulet's wish", |g| {
+                Ok(matches!(&g.pending,
+                    Some((_, Prompt::Text { query, .. })) if query.contains("wish")))
+            }),
+            Step::Dialog(DialogEvent::TextSubmitted("nothing".into())),
         ]);
     }
     steps.extend([
@@ -402,6 +413,47 @@ fn light_visit(
     ]);
 }
 
+/// Lava's shores and the Plane of Fire (the critics' second pass, #9), for
+/// pictures before and after (not part of `make test-client`): Orcus'
+/// town and the Wizard's tower (their lava), and the Plane of Fire, each
+/// as the hero arrives, mapped, close on a wall and in the overview.
+pub(super) fn lava() -> Vec<Step> {
+    let mut steps = vec![Step::Call(
+        "debug mode for this game",
+        |g: &mut RenethackGame| {
+            g.debug_mode = true;
+            Ok(())
+        },
+    )];
+    steps.extend(start());
+    steps.push(Step::Wait("the first level drawn", |g| {
+        drawn_in(g, Branch::Main)
+    }));
+    light_visit(
+        &mut steps,
+        Some(|g| entry_key(g, "orcus")),
+        "",
+        "lava-orcus",
+        false,
+    );
+    light_visit(
+        &mut steps,
+        Some(|g| entry_key(g, "wizard1")),
+        "",
+        "lava-wizard",
+        false,
+    );
+    light_visit(
+        &mut steps,
+        Some(|g| entry_key(g, "fire")),
+        "",
+        "lava-fire",
+        true,
+    );
+    steps.extend(quit());
+    steps
+}
+
 /// The Gnomish Mines' rock and Minetown's buildings (the critics' second
 /// pass, #5), for pictures before and after (not part of `make
 /// test-client`): Minetown, a level below it and Mines' End, each as the
@@ -423,13 +475,15 @@ pub(super) fn mines() -> Vec<Step> {
         Some(|g| entry_key(g, "minetn")),
         "",
         "mines-minetown",
+        false,
     );
-    light_visit(&mut steps, None, "9", "mines-9");
+    light_visit(&mut steps, None, "9", "mines-9", false);
     light_visit(
         &mut steps,
         Some(|g| entry_key(g, "minend")),
         "",
         "mines-end",
+        false,
     );
     steps.extend(quit());
     steps
@@ -459,6 +513,7 @@ pub(super) fn gehennom() -> Vec<Step> {
         Some(|g| entry_key(g, "valley")),
         "",
         "gehennom-valley",
+        false,
     );
     // the overview names its temple, its altar mapped: its own air
     steps.extend([
@@ -482,7 +537,7 @@ pub(super) fn gehennom() -> Vec<Step> {
         (|g| entry_key(g, "juiblex"), "gehennom-juiblex"),
     ];
     for (pick, shot) in lairs {
-        light_visit(&mut steps, Some(pick), "", shot);
+        light_visit(&mut steps, Some(pick), "", shot, false);
     }
     // (each its fire: blood, brimstone, embers)
     for (depth, shot) in [
@@ -490,7 +545,7 @@ pub(super) fn gehennom() -> Vec<Step> {
         ("34", "gehennom-34"),
         ("36", "gehennom-36"),
     ] {
-        light_visit(&mut steps, None, depth, shot);
+        light_visit(&mut steps, None, depth, shot, false);
     }
     steps.extend(quit());
     steps

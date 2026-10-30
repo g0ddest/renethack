@@ -179,8 +179,20 @@ float tl2(vec2 p) {
 // the line wanders through both cells. A kind with nothing of it near
 // counts for nothing. (The same in every shader of the ground, read at
 // the noise's own level: each decides alike where a shore runs.)
+// the cells' ground about a point, blurred over a cell and a half: a
+// shore cuts the cells' corners, never steps along their edges (the same
+// in every shader of the ground)
+vec4 ground_blur(vec2 p) {
+	vec2 uv = (p + 0.5) / FIELD;
+	vec2 d = vec2(0.6) / FIELD;
+	return (texture(ground_tex, uv) * 2.0
+		+ texture(ground_tex, uv + d) + texture(ground_tex, uv - d)
+		+ texture(ground_tex, uv + vec2(d.x, -d.y))
+		+ texture(ground_tex, uv + vec2(-d.x, d.y))) / 6.0;
+}
+
 vec4 ground_field(vec2 p) {
-	return texture(ground_tex, (p + 0.5) / FIELD);
+	return ground_blur(p);
 }
 
 vec4 ground_lead(vec2 p, vec4 f) {

@@ -169,6 +169,11 @@ pub struct BranchLook {
     /// How much brighter the hero's own pool of light is than in the main
     /// dungeon (its floors darker stone, its levels mostly unlit).
     pub hero_light: f32,
+    /// The light creatures alone take (map_view's creature light): None,
+    /// a cold rim from behind; or its way, colour and energy (the Plane of
+    /// Fire's neutral key from the front, so the fire's air does not turn
+    /// them all orange).
+    pub creature_key: Option<(Vector3, Color, f32)>,
     /// The rooms' faint fill, and how much stronger than the main
     /// dungeon's it is.
     pub fill: Color,
@@ -220,6 +225,7 @@ const MAIN: BranchLook = BranchLook {
     torch_energy: 2.4,
     torch_range: 5.5,
     hero_light: 1.0,
+    creature_key: None,
     fill: Color::from_rgb(0.86, 0.80, 0.72),
     fill_scale: 1.0,
     ambient: Color::from_rgb(0.28, 0.32, 0.46),
@@ -484,14 +490,18 @@ fn plane_look(plane: Plane) -> BranchLook {
             ambient: rgb(0.7, 0.25, 0.1),
             ambient_energy: 0.3,
             fog: rgb(1.0, 0.45, 0.2),
-            fog_density: 0.012,
+            // (thinner: thick, it flooded the frame orange)
+            fog_density: 0.006,
+            creature_key: Some((Vector3::new(-40.0, 15.0, 0.0), rgb(1.0, 0.97, 0.92), 1.8)),
             darkness: rgb(0.08, 0.015, 0.005),
             cracks: 1.4,
             embers: true,
+            // (near neutral: the air and the light carry the fire's colour,
+            // warmed again by the grade everything turned orange)
             grade: Grade {
-                contrast: 1.12,
-                shadows: rgb(1.1, 0.92, 0.86),
-                highlights: rgb(1.08, 0.94, 0.82),
+                contrast: 1.1,
+                shadows: rgb(1.03, 0.98, 0.96),
+                highlights: rgb(1.02, 0.99, 0.96),
                 ..NEUTRAL
             },
             dress: Dress::NONE,
