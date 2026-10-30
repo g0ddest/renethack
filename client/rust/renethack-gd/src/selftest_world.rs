@@ -196,7 +196,8 @@ fn view_nearest(g: &mut RenethackGame, t: nh_world::Terrain) -> Result<(), Strin
 /// The view close on the north wall of a room nearest the hero: a wall
 /// with walls either side of it and the room's floor south of it; a long
 /// one first (a run of five, the floor south of the middle three), then
-/// a lit one.
+/// a lit one. In a maze (its walls a cell thick) any wall over a floor;
+/// with none, the view stays on the hero.
 fn view_north_wall(g: &mut RenethackGame) -> Result<(), String> {
     use nh_world::Terrain;
     let cat = g.catalog.clone().ok_or("no catalog")?;
@@ -206,19 +207,17 @@ fn view_north_wall(g: &mut RenethackGame) -> Result<(), String> {
     let floor = |x: i32, y: i32| matches!(t(x, y), Some(Terrain::Floor | Terrain::DarkFloor));
     let at = (0..nh_world::ROWNO)
         .flat_map(|y| (0..nh_world::COLNO).map(move |x| (x, y)))
-        .filter(|&(x, y)| {
-            (-1..=1).all(|dx| t(x + dx, y) == Some(Terrain::Wall))
-                && floor(x, y + 1)
-                && !floor(x, y - 1)
-        })
+        .filter(|&(x, y)| t(x, y) == Some(Terrain::Wall) && floor(x, y + 1))
         .min_by_key(|&(x, y)| {
+            let room = (-1..=1).all(|dx| t(x + dx, y) == Some(Terrain::Wall)) && !floor(x, y - 1);
             let long = [-2, 2].iter().all(|dx| t(x + dx, y) == Some(Terrain::Wall))
                 && (-1..=1).all(|dx| floor(x + dx, y + 1));
             let dark = t(x, y + 1) != Some(Terrain::Floor);
-            (!long, dark, (x - hx).pow(2) + (y - hy).pow(2))
-        })
-        .ok_or("no room's north wall on the level")?;
-    g.world.view_center = Some(at);
+            (!room, !long, dark, (x - hx).pow(2) + (y - hy).pow(2))
+        });
+    if let Some(at) = at {
+        g.world.view_center = Some(at);
+    }
     far(g, 7.0)
 }
 
@@ -290,6 +289,63 @@ pub(super) fn dressing() -> Vec<Step> {
     ];
     for (pick, shot) in visits {
         visit(&mut steps, pick, shot);
+        close_on_wall(&mut steps, shot);
+    }
+    steps.extend(quit());
+    steps
+}
+
+/// Gehennom's looks (the critics' art #8), for pictures before and after
+/// (not part of `make test-client`): the Valley as the hero arrives and
+/// once the overview names it (the level mapped, its temple of Moloch
+/// with it), Juiblex's swamp, Orcus' town, the Wizard's mazes and a few
+/// levels deeper (each its own fire), each near, far and close on a
+/// room's north wall.
+pub(super) fn gehennom() -> Vec<Step> {
+    let mut steps = vec![Step::Call(
+        "debug mode for this game",
+        |g: &mut RenethackGame| {
+            g.debug_mode = true;
+            Ok(())
+        },
+    )];
+    steps.extend(start());
+    steps.push(Step::Wait("the first level drawn", |g| {
+        drawn_in(g, Branch::Main)
+    }));
+    visit(&mut steps, |g| entry_key(g, "valley"), "gehennom-valley");
+    close_on_wall(&mut steps, "gehennom-valley");
+    // the overview names its temple, its altar mapped: its own air
+    steps.extend([
+        Step::Key(KeyInput::plain(nh_world::Key::Char('#'))),
+        Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
+        Step::Dialog(DialogEvent::ExtCmd(Some("overview".into()))),
+        Step::AnswerUntil('n', "a command after the overview", at_command),
+        Step::Wait("the level drawn after the overview", drawn_here),
+        Step::Call("what the Valley is told", |g| {
+            let lair = g.world.level.as_ref().and_then(|l| l.lair.clone());
+            godot_print!("selftest: gehennom: the Valley told as {lair:?}");
+            Ok(())
+        }),
+        Step::Shot("gehennom-valley-known"),
+    ]);
+    let lairs: [(KeyCheck, &'static str); 3] = [
+        (|g| entry_key(g, "juiblex"), "gehennom-juiblex"),
+        (|g| entry_key(g, "orcus"), "gehennom-orcus"),
+        (|g| entry_key(g, "wizard1"), "gehennom-wizard"),
+    ];
+    for (pick, shot) in lairs {
+        visit(&mut steps, pick, shot);
+        close_on_wall(&mut steps, shot);
+    }
+    for (depth, shot) in [
+        // (each its fire: blood, brimstone, embers)
+        ("33", "gehennom-33"),
+        ("34", "gehennom-34"),
+        ("36", "gehennom-36"),
+    ] {
+        steps.extend(teleport_to(depth));
+        steps.push(Step::Shot(shot));
         close_on_wall(&mut steps, shot);
     }
     steps.extend(quit());

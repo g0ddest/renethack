@@ -101,6 +101,7 @@ uniform vec3 lift : source_color = vec3(0.0);
 global uniform vec3 hero_pos;
 global uniform vec3 eye_pos;
 global uniform float branch_cracks;
+global uniform vec4 branch_crack_color;
 // the whole level framed (map_view's overview): what is remembered shows
 // nearly as it is, lit by its own faint light
 global uniform float overview;
@@ -467,8 +468,14 @@ void fragment() {
 		crack *= smoothstep(0.44, 0.6, tn2(wpos.xz * 0.09 + 21.0));
 		crack *= 1.0 - smoothstep(0.3, 0.6, texture(stand_tex, cell / FIELD).r);
 		float pulse = 0.75 + 0.25 * sin(TIME * 1.3 + tn2(wpos.xz * 0.2) * 9.0);
-		lava = vec3(1.0, 0.28, 0.05) * crack * pulse * branch_cracks * 0.65;
+		lava = branch_crack_color.rgb * crack * pulse * branch_cracks * 0.65;
 		albedo *= 1.0 - crack * 0.8;
+		// and a faint glow at the walls' very feet, a thin line (never a
+		// band a player might take for lava's edge): the mazes read by it
+		if (grime > 0.0) {
+			float foot = smoothstep(0.3, 0.55, texture(fow_tex, cell / FIELD).b);
+			lava += branch_crack_color.rgb * foot * pulse * branch_cracks * 0.04;
+		}
 	}
 	if (wet > 0.0) {
 		float w = smoothstep(0.66, 0.74, tn2(wpos.xz * 0.3 + 11.0)) * wet * bw.y;

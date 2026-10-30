@@ -57,10 +57,15 @@ eye_pos={
 "type": "vec3",
 "value": Vector3(0, 0, 0)
 }
-; how much the floors of the branch crack and glow from below (Gehennom)
+; how much the floors of the branch crack and glow from below (Gehennom),
+; and in what colour (the level's fire)
 branch_cracks={
 "type": "float",
 "value": 0.0
+}
+branch_crack_color={
+"type": "color",
+"value": Color(1, 0.28, 0.05, 1)
 }
 ; the whole level framed: what is remembered shows nearly as it is
 overview={

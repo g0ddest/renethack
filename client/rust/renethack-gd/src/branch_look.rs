@@ -2,9 +2,12 @@
 //! materials of its walls, floors and rock, whether its walls are masonry
 //! or the rock itself, its props, its light and its grade. Keyed by the
 //! branch alone (and in the endgame by the plane), never by a special
-//! level's name.
+//! level's name: Gehennom's levels vary by a hash of the dungeon and the
+//! depth, a lair looks its own once the overview names it, and a level
+//! turns to a swamp once the hero has seen its water.
 
 use godot::prelude::*;
+use nh_protocol::LevelNotice;
 use nh_world::{Branch, Plane};
 
 /// The colour grade of a branch: the environment's adjustments and a
@@ -168,8 +171,11 @@ pub struct BranchLook {
     pub haze: f32,
     /// The darkness at the frame's depth.
     pub darkness: Color,
-    /// Floors crack and glow from below (lava under them).
+    /// Floors crack and glow from below (lava under them), in this colour.
     pub cracks: f32,
+    pub crack_color: Color,
+    /// Water the hero has seen on a level makes it a swamp (`swamp`).
+    pub swamps: bool,
     /// How thick the dust in the air is (1: the main dungeon's).
     pub dust: f32,
     pub grade: Grade,
@@ -210,6 +216,8 @@ const MAIN: BranchLook = BranchLook {
     haze: 1.0,
     darkness: Color::from_rgb(0.008, 0.009, 0.013),
     cracks: 0.0,
+    crack_color: FIRE,
+    swamps: false,
     dust: 1.0,
     grade: NEUTRAL,
     // a crypt, a barracks, a storeroom: worn, and some of it still hung
@@ -295,14 +303,10 @@ pub fn look_of(branch: Branch) -> BranchLook {
             ..MAIN
         },
         // basalt over fire: floors cracked and glowing, red light, a
-        // red grade
+        // red grade; walls of a paler, warmer stone than the floors
+        // (black on black, its mazes did not read)
         Branch::Gehennom => BranchLook {
-            remap: &[
-                ("masonry", "basalt"),
-                ("bedrock", "basalt_rock"),
-                ("floor", "basalt_floor"),
-                ("dirt", "ash"),
-            ],
+            remap: FIRES[0].remap,
             torch: rgb(1.0, 0.42, 0.18),
             torch_energy: 2.8,
             fill: rgb(1.0, 0.45, 0.25),
@@ -316,6 +320,7 @@ pub fn look_of(branch: Branch) -> BranchLook {
             fog_density: 0.004,
             darkness: rgb(0.011, 0.007, 0.006),
             cracks: 1.0,
+            swamps: true,
             embers: true,
             underglow: Some(rgb(1.0, 0.36, 0.12)),
             dust: 1.5,
@@ -514,7 +519,165 @@ fn plane_look(plane: Plane) -> BranchLook {
     }
 }
 
+/// The fire under Gehennom's floors, by default.
+const FIRE: Color = Color::from_rgb(1.0, 0.28, 0.05);
+
+/// One of the fires Gehennom's levels burn with (`look_of_level`): what
+/// shows through the floors' cracks, the haze over it, and the stone.
+struct Fire {
+    crack: Color,
+    fog: Color,
+    fog_density: f32,
+    remap: &'static [(&'static str, &'static str)],
+}
+
+const FIRES: [Fire; 3] = [
+    // embers through black basalt
+    Fire {
+        crack: FIRE,
+        fog: Color::from_rgb(0.62, 0.4, 0.32),
+        fog_density: 0.004,
+        remap: &[
+            ("masonry", "ash_wall"),
+            ("bedrock", "basalt_rock"),
+            ("floor", "basalt_floor"),
+            ("dirt", "ash"),
+        ],
+    },
+    // blood-red under glassy obsidian, a darker haze
+    Fire {
+        crack: Color::from_rgb(0.95, 0.1, 0.05),
+        fog: Color::from_rgb(0.5, 0.22, 0.2),
+        fog_density: 0.005,
+        remap: &[
+            ("masonry", "ash_wall"),
+            ("bedrock", "basalt_rock"),
+            ("floor", "obsidian_floor"),
+            ("dirt", "ash"),
+        ],
+    },
+    // brimstone yellow through grey ash, a smoky haze
+    Fire {
+        crack: Color::from_rgb(1.0, 0.68, 0.16),
+        fog: Color::from_rgb(0.58, 0.52, 0.42),
+        fog_density: 0.006,
+        remap: &[
+            ("masonry", "ash_wall"),
+            ("bedrock", "basalt_rock"),
+            ("floor", "ash"),
+            ("dirt", "ash"),
+        ],
+    },
+];
+
+/// Which of `FIRES` a level burns with: a hash of its dungeon's name and
+/// its depth, all the hero knows of where they are (never which level it
+/// is): the same every visit.
+fn fire_of(dungeon: &str, depth: i32) -> usize {
+    let mut h: u32 = 0x811c_9dc5;
+    for b in dungeon.bytes().chain(depth.to_le_bytes()) {
+        h = (h ^ u32::from(b)).wrapping_mul(0x0100_0193);
+    }
+    (h % FIRES.len() as u32) as usize
+}
+
+/// The look of the level the notice tells of: its branch's, a Gehennom
+/// level's in its own fire (`fire_of`), a lair's once the overview names
+/// it ("valley", "sanctum"). A lair changes only the light and the air:
+/// the level's cells stay as they are drawn.
+pub fn look_of_level(branch: Branch, level: Option<&LevelNotice>) -> BranchLook {
+    let look = look_of(branch);
+    let Some(level) = level.filter(|_| branch == Branch::Gehennom) else {
+        return look;
+    };
+    let fire = &FIRES[fire_of(&level.dungeon, level.depth)];
+    let look = BranchLook {
+        crack_color: fire.crack,
+        fog: fire.fog,
+        fog_density: fire.fog_density,
+        remap: fire.remap,
+        ..look
+    };
+    let rgb = Color::from_rgb;
+    match level.lair.as_deref() {
+        // the Valley of the Dead: a graveyard's grey mist over a fire
+        // banked low
+        Some("valley") => BranchLook {
+            fog: rgb(0.44, 0.46, 0.42),
+            fog_density: 0.008,
+            haze: 1.3,
+            cracks: 0.5,
+            ambient: rgb(0.32, 0.34, 0.36),
+            grade: Grade {
+                saturation: 0.85,
+                shadows: rgb(0.97, 1.0, 1.04),
+                highlights: rgb(1.02, 1.0, 0.98),
+                ..look.grade
+            },
+            ..look
+        },
+        // Moloch's Sanctum: a crimson haze, its fire high
+        Some("sanctum") => BranchLook {
+            fog: rgb(0.5, 0.16, 0.26),
+            fog_density: 0.006,
+            cracks: 1.2,
+            crack_color: rgb(1.0, 0.12, 0.18),
+            grade: Grade {
+                saturation: 1.1,
+                ..look.grade
+            },
+            ..look
+        },
+        _ => look,
+    }
+}
+
+/// The look a level takes once the hero has seen a swamp on it (Juiblex's,
+/// `swamps`): a murky green haze, no fire showing through the floors, no
+/// embers in the air nor glow from below. The light and the air alone:
+/// the cells stay as they are drawn.
+pub fn swamp(look: BranchLook) -> BranchLook {
+    let rgb = Color::from_rgb;
+    BranchLook {
+        fog: rgb(0.36, 0.42, 0.3),
+        fog_density: 0.009,
+        haze: 1.2,
+        cracks: 0.0,
+        embers: false,
+        underglow: None,
+        dust: 1.0,
+        ambient: rgb(0.3, 0.36, 0.28),
+        grade: Grade {
+            saturation: 0.85,
+            shadows: rgb(0.96, 1.02, 0.96),
+            highlights: rgb(1.0, 1.02, 0.96),
+            ..look.grade
+        },
+        ..look
+    }
+}
+
 impl BranchLook {
+    /// What of the look the level's cells are drawn by: two looks the
+    /// same in this draw the same cells (only the light and the air
+    /// differ).
+    pub fn cells(&self) -> impl PartialEq + use<> {
+        (
+            self.remap,
+            self.cave,
+            self.dress,
+            self.under,
+            self.rubble,
+            self.cap,
+            self.supports,
+            self.candles,
+            self.windows,
+            self.door,
+            self.bands,
+            self.lanterns,
+        )
+    }
+
     /// The manifest material a name stands for in this branch.
     pub fn material<'a>(&self, name: &'a str) -> &'a str {
         self.remap
@@ -554,6 +717,51 @@ mod tests {
         assert_eq!(look_of(Branch::Mines).material("masonry"), "cave");
         assert!(look_of(Branch::Gehennom).cracks > 0.0);
         assert_eq!(look_of(Branch::Gehennom).material("floor"), "basalt_floor");
+        assert_eq!(look_of(Branch::Gehennom).material("masonry"), "ash_wall");
         assert!(look_of(Branch::Sokoban).fill_scale > main.fill_scale);
+    }
+
+    fn notice(dungeon: &str, depth: i32, lair: Option<&str>) -> LevelNotice {
+        LevelNotice {
+            dungeon: dungeon.into(),
+            depth,
+            plane: None,
+            lair: lair.map(Into::into),
+        }
+    }
+
+    #[test]
+    fn gehennoms_levels_burn_each_its_own_fire_by_the_level() {
+        let g = Branch::Gehennom;
+        let at = |depth| look_of_level(g, Some(&notice("Gehennom", depth, None)));
+        // the same every visit, and the fires all met over the branch
+        for depth in 26..50 {
+            assert_eq!(at(depth), at(depth));
+        }
+        let fires: std::collections::HashSet<usize> =
+            (26..50).map(|d| fire_of("Gehennom", d)).collect();
+        assert_eq!(fires.len(), FIRES.len());
+        // every one draws the walls paler than the floors, and only
+        // Gehennom varies so
+        for d in 26..50 {
+            assert_eq!(at(d).material("masonry"), "ash_wall");
+        }
+        let main = notice("The Dungeons of Doom", 5, None);
+        assert_eq!(look_of_level(Branch::Main, Some(&main)), MAIN);
+    }
+
+    #[test]
+    fn a_lair_and_a_swamp_change_the_air_not_the_cells() {
+        let g = Branch::Gehennom;
+        let plain = look_of_level(g, Some(&notice("Gehennom", 27, None)));
+        for lair in ["valley", "sanctum"] {
+            let l = look_of_level(g, Some(&notice("Gehennom", 27, Some(lair))));
+            assert_ne!(l, plain, "{lair}");
+            assert!(l.cells() == plain.cells(), "{lair}");
+        }
+        let s = swamp(plain);
+        assert!(s.cells() == plain.cells());
+        assert!(s.cracks == 0.0 && !s.embers && s.underglow.is_none());
+        assert!(plain.swamps && !look_of(Branch::Main).swamps);
     }
 }

@@ -473,6 +473,7 @@ impl Rehearsal {
             dungeon: STAGES[stage].0.to_string(),
             depth: 1,
             plane: None,
+            lair: None,
         });
         debug_assert_eq!(self.world.branch(), STAGES[stage].1);
     }
@@ -858,6 +859,7 @@ mod tests {
                 dungeon: dungeon.to_string(),
                 depth: 1,
                 plane: None,
+                lair: None,
             };
             assert_eq!(Branch::of(&notice), *branch);
         }

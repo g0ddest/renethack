@@ -421,6 +421,11 @@ impl GroundField {
         }
     }
 
+    /// How many cells are of `ground`.
+    pub fn count(&self, ground: Ground) -> usize {
+        self.cells.iter().filter(|&&g| g == ground).count()
+    }
+
     pub fn clear(&mut self) {
         if self.cells.iter().any(|g| *g != Ground::None) {
             self.cells.fill(Ground::None);

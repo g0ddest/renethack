@@ -141,6 +141,7 @@ impl TitleScene {
             dungeon: "The Dungeons of Doom".to_string(),
             depth: 1,
             plane: None,
+            lair: None,
         });
         lay(&mut world, catalog);
         let mut scene = TitleScene {

@@ -34,8 +34,10 @@ static boolean inventory_dirty;
 /* program_state.in_moveloop as of the last request: a rise means a new or
    restored game, whose inventory the client has not seen */
 static boolean seen_moveloop;
-/* the level the client was last told the hero is on (dnum < 0: none) */
+/* the level the client was last told the hero is on (dnum < 0: none), and
+   the lair it was told the level is ("": none) */
 static d_level told_level = { -1, -1 };
+static const char *told_lair = "";
 /* the hash of the progress notice the client last got (0: none) */
 static unsigned long long told_progress;
 /* the trap the client was last told the hero is caught in ("": none) */
@@ -257,23 +259,49 @@ inventory_flush(void)
     rh_proto_send("win", "inventory", inventory_json());
 }
 
+/* The lair the overview names the hero's level once the hero knows it:
+   "valley" or "sanctum" (#overview's temple of Moloch, its flags set when
+   the hero enters the temple, or by the overview once its altar is
+   mapped), else "".  The flags as they stand, never worked out anew.
+   Observation only. */
+static const char *
+level_lair(void)
+{
+    mapseen *mptr;
+
+    for (mptr = svm.mapseenchn; mptr; mptr = mptr->next)
+        if (on_level(&mptr->lev, &u.uz))
+            break;
+    if (!mptr)
+        return "";
+    return mptr->flags.valley ? "valley" : mptr->flags.msanctum ? "sanctum"
+                                                               : "";
+}
+
 /* Before the engine waits for input: the hero arrived on another level
-   (or a game began or was restored).  Only the branch and the depth, which
-   the hero always knows (the overview names the branch on arrival); never
-   a special level's name, which would tell more than the map shows. */
+   (or a game began or was restored), or the overview has come to name
+   it.  Only the branch and the depth, which the hero always knows (the
+   overview names the branch on arrival), and a lair once the overview
+   names it (level_lair()); never a special level's name, which would
+   tell more than the map shows. */
 static void
 level_flush(void)
 {
+    const char *lair;
     cJSON *a;
 
     if (!program_state.in_moveloop) {
         told_level.dnum = -1;
+        told_lair = "";
         return;
     }
+    lair = level_lair();
     if (rh_proto_is_lost() || suppress_map_output()
-        || (told_level.dnum == u.uz.dnum && told_level.dlevel == u.uz.dlevel))
+        || (told_level.dnum == u.uz.dnum && told_level.dlevel == u.uz.dlevel
+            && !strcmp(told_lair, lair)))
         return;
     told_level = u.uz;
+    told_lair = lair;
     a = args_new();
     add_str(a, "dungeon", svd.dungeons[u.uz.dnum].dname);
     add_int(a, "depth", depth(&u.uz));
@@ -284,6 +312,8 @@ level_flush(void)
                             : Is_firelevel(&u.uz) ? "fire"
                             : Is_waterlevel(&u.uz) ? "water"
                             : "astral");
+    if (*lair)
+        add_str(a, "lair", lair);
     rh_proto_send("win", "level", a);
 }
 

@@ -21,6 +21,8 @@
   "basalt_floor": {"textures": "cc0/polyhaven/textures/volcanic_rock_tiles/volcanic_rock_tiles", "uv_scale": 0.5, "color": "#5a4440"},
   "ash": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 0.5, "color": "#3e3532"},
   "basalt_rock": {"textures": "cc0/ambientcg/Rock058/Rock058", "uv_scale": 0.4, "color": "#3a2c2a"},
+  "ash_wall": {"textures": "cc0/polyhaven/textures/rock_wall_08/rock_wall_08", "uv_scale": 0.4, "color": "#8c7668"},
+  "obsidian_floor": {"textures": "cc0/polyhaven/textures/volcanic_rock_tiles/volcanic_rock_tiles", "uv_scale": 0.5, "color": "#3c2e2e", "roughness": 0.45},
   "quest_wall": {"textures": "cc0/polyhaven/textures/stone_wall_04/stone_wall_04", "uv_scale": 0.4, "color": "#7f8a7a"},
   "quest_floor": {"textures": "cc0/polyhaven/textures/stone_tiles_02/stone_tiles_02", "uv_scale": 0.5, "color": "#8a9286"},
   "ludios_wall": {"textures": "cc0/polyhaven/textures/stone_wall_04/stone_wall_04", "uv_scale": 0.4, "color": "#c0b5a2"},

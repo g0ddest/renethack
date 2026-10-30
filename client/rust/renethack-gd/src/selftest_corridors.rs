@@ -57,6 +57,7 @@ fn lay_out(g: &mut RenethackGame) -> Result<(), String> {
             dungeon: dungeon.to_string(),
             depth: 3,
             plane: None,
+            lair: None,
         });
     }
     let ui = g.ui.as_mut().ok_or("no UI")?;

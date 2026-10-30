@@ -229,6 +229,10 @@ pub struct LevelNotice {
     /// In the endgame: "earth", "air", "fire", "water" or "astral".
     #[serde(default)]
     pub plane: Option<String>,
+    /// A lair the overview names once the hero knows it: "valley" (the
+    /// Valley of the Dead), "sanctum" (Moloch's Sanctum).
+    #[serde(default)]
+    pub lair: Option<String>,
 }
 
 /// One argument of a message's format, as the host read it.

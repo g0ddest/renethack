@@ -5106,6 +5106,7 @@ impl SelfTest {
             "branches" => world_looks::branches(),
             "terrain" => world_looks::terrain(),
             "dressing" => world_looks::dressing(),
+            "gehennom" => world_looks::gehennom(),
             "title" => world_looks::title(),
             "bestiary" => world_looks::bestiary(),
             "corridors" => corridors::corridors(),

@@ -282,6 +282,9 @@ const RING_CIRCLE: f32 = 0.84;
 const FORM_FOOTING: f32 = 0.3;
 const FORM_RING_OUT: f32 = 0.12;
 const FORM_RING_MOST: f32 = 2.2;
+/// Cells of water seen on a level of a branch that turns to a swamp
+/// (Gehennom: Juiblex's) that make it one; a moat round a tower is fewer.
+const SWAMP_WATER: usize = 40;
 /// How deep the ring reaches, up and down from where the hero stands; on
 /// a cell they stand raised on (the steps of a stair) down to the floor
 /// and as far over, so that it lies on every step under them.
@@ -3237,6 +3240,10 @@ pub struct MapView {
     /// The branch the level drawn is in, and how it looks.
     branch: Branch,
     branch_look: BranchLook,
+    /// The look of the level drawn (`look_of_level`), and whether the
+    /// hero has seen it to be a swamp (`branch_look` is then its swamp's).
+    level_look: BranchLook,
+    swamp: bool,
     /// The post layer's material, and how far a new level is still
     /// hidden in black (1 when it is drawn, 0 when it shows).
     post_mat: Option<Gd<ShaderMaterial>>,
@@ -3998,6 +4005,8 @@ impl MapView {
             prof: Vec::new(),
             branch: Branch::Main,
             branch_look: crate::branch_look::look_of(Branch::Main),
+            level_look: crate::branch_look::look_of(Branch::Main),
+            swamp: false,
             stats_window: std::env::var_os("RENETHACK_FRAME_STATS").map(|_| FrameStats::default()),
             sightings: std::env::var_os("RENETHACK_DUMP_SIGHTINGS").and_then(|p| {
                 std::fs::OpenOptions::new()
@@ -4135,11 +4144,19 @@ impl MapView {
             self.fow_dirty = true;
         }
         let was_at = std::mem::replace(&mut self.hero_at, hero);
-        // another branch: its own look, and every cell drawn again in it
+        // another branch, or a level drawn otherwise: its own look, and
+        // every cell drawn again in it; a lair the overview names now, its
+        // own light and air
         let branch = world.branch();
-        if branch != self.branch {
+        let look = crate::branch_look::look_of_level(branch, world.level.as_ref());
+        if branch != self.branch || look.cells() != self.level_look.cells() {
+            self.level_look = look;
+            self.swamp = false;
             self.set_branch(branch);
             self.generation = None;
+        } else if look != self.level_look {
+            self.level_look = look;
+            self.set_branch(branch);
         }
         let generation = world.map.generation();
         let new_level = self.generation != Some(generation);
@@ -4156,6 +4173,10 @@ impl MapView {
             self.finish_motions();
             self.ground.clear();
             self.standing.clear();
+            // a swamp seen was that level's
+            if std::mem::take(&mut self.swamp) {
+                self.set_branch(self.branch);
+            }
             self.finish_falls_where(|_| true);
             self.end_drops();
             self.forget_gone();
@@ -4283,6 +4304,13 @@ impl MapView {
         }
         self.surfaces.show_ground(&mut self.ground);
         self.surfaces.show_standing(&mut self.standing);
+        // water enough seen on a level of a branch that turns to a swamp:
+        // a swamp, its light and air, for the rest of the visit
+        if self.level_look.swamps && !self.swamp && self.ground.count(Ground::Water) >= SWAMP_WATER
+        {
+            self.swamp = true;
+            self.set_branch(self.branch);
+        }
         // the lights of a level still being drawn wait for all of it
         if self.building.is_empty() && std::mem::take(&mut self.lights_dirty) {
             let __t = std::time::Instant::now();
@@ -4614,11 +4642,15 @@ impl MapView {
         )
     }
 
-    /// Light, haze and grade the branch's way (the level's cells are drawn
-    /// again by the caller).
+    /// Light, haze and grade the level's way (`level_look`, or its swamp's;
+    /// the level's cells are drawn again by the caller when they differ).
     fn set_branch(&mut self, branch: Branch) {
         self.branch = branch;
-        let l = crate::branch_look::look_of(branch);
+        let l = if self.swamp {
+            crate::branch_look::swamp(self.level_look)
+        } else {
+            self.level_look
+        };
         self.branch_look = l;
         let env = &mut self.env;
         env.set_bg_color(l.darkness);
@@ -4640,8 +4672,9 @@ impl MapView {
         env.set_adjustment_contrast(g.contrast);
         env.set_adjustment_brightness(g.brightness);
         env.set_adjustment_color_correction(&grade_curve(g.shadows, g.highlights));
-        RenderingServer::singleton()
-            .global_shader_parameter_set("branch_cracks", &l.cracks.to_variant());
+        let mut rs = RenderingServer::singleton();
+        rs.global_shader_parameter_set("branch_cracks", &l.cracks.to_variant());
+        rs.global_shader_parameter_set("branch_crack_color", &l.crack_color.to_variant());
         let (way, color, energy) = match l.under {
             Under::Sky => SUN,
             Under::Deep => DEEP_LIGHT,

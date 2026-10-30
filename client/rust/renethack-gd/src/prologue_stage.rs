@@ -800,6 +800,7 @@ fn level(beat: Beat, hero: &PrologueHero, cat: &Catalog) -> World {
         dungeon: dungeon.to_string(),
         depth: 1,
         plane: None,
+        lair: None,
     });
     let altar = altar_color(hero.align);
     let (mx, my) = MID;
