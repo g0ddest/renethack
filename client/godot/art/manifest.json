@@ -72,7 +72,7 @@
   "felt": {"color": "#d8d0c4", "roughness": 0.95},
   "banner_red": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 3.0, "color": "#9c3c34", "roughness": 0.95, "normal_scale": 0.5},
   "banner_ochre": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 3.0, "color": "#a47c3c", "roughness": 0.95, "normal_scale": 0.5},
-  "banner_black": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 3.0, "color": "#4a2a26", "roughness": 0.9, "normal_scale": 0.5},
+  "banner_crimson": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 3.0, "color": "#a0302a", "roughness": 0.9, "normal_scale": 0.5},
   "banner_blue": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 3.0, "color": "#3c5096", "roughness": 0.95, "normal_scale": 0.5},
   "banner_purple": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 3.0, "color": "#7a4490", "roughness": 0.95, "normal_scale": 0.5},
   "moss": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 1.5, "color": "#3c6a2a", "roughness": 0.95},

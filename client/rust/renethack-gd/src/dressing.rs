@@ -7,7 +7,7 @@
 //!
 //! On the faces the camera sees, a room's north wall (square on) and its
 //! side walls (aslant): pilasters, banners and alcoves on the north wall,
-//! soot in Gehennom; chains on the side walls; moss at their feet; small
+//! seams of fire in Gehennom; chains on the side walls; moss at their feet; small
 //! cobwebs high in the far corners, well above anybody's head. On its
 //! bare floor: cracks from the foot of its walls, rubble heaped and sunk
 //! in its corners. In a cave, rock grown into its walls from the floor to
@@ -21,9 +21,9 @@ use godot::prelude::*;
 use nh_world::Terrain;
 
 use super::{
-    Around, CAP_HEIGHT, Ctx, Look, PLINTH_HEIGHT, Paint, Role, SHADE_LIT, SHADE_RUBBLE, SIDES,
-    Side, WALL_HEIGHT, at, bevel, cell_noise, cuboid, cylinder, facets, is_pier, prism, rock,
-    torch_pattern, torus,
+    Around, CAP_HEIGHT, Ctx, Finish, Look, PLINTH_HEIGHT, Paint, Role, SHADE_LIT, SHADE_RUBBLE,
+    SIDES, Side, WALL_HEIGHT, at, bevel, cell_noise, cuboid, cylinder, facets, is_pier, prism,
+    rock, torch_pattern, torus,
 };
 use crate::branch_look::Dress;
 
@@ -35,13 +35,13 @@ enum Piece {
     Banner,
     /// A shallow empty niche.
     Alcove,
-    /// Soot up it from fires long out.
-    Soot,
+    /// Seams of the fire under the floors, glowing up from its foot.
+    Embers,
 }
 
 /// What the face of a room's north wall at (x, y) shows by the branch's
 /// dressing: a pilaster on every third cell, a banner between them on
-/// some, an alcove or soot on a few; nothing where the torches' pattern
+/// some, an alcove or seams of fire on a few; nothing where the torches' pattern
 /// hangs one.
 fn north_piece(x: i32, y: i32, dress: &Dress) -> Option<Piece> {
     if torch_pattern(x, y, true) {
@@ -55,8 +55,8 @@ fn north_piece(x: i32, y: i32, dress: &Dress) -> Option<Piece> {
         Some(Piece::Banner)
     } else if dress.alcoves && pick > 0.94 {
         Some(Piece::Alcove)
-    } else if dress.soot && pick < 0.65 {
-        Some(Piece::Soot)
+    } else if dress.embers && pick < 0.65 {
+        Some(Piece::Embers)
     } else {
         None
     }
@@ -131,7 +131,7 @@ pub(super) fn wall(
         Some(Piece::Pilaster) => pilaster(look, ctx, top, face),
         Some(Piece::Banner) => banner(look, ctx, face),
         Some(Piece::Alcove) => alcove(look, ctx, face),
-        Some(Piece::Soot) => soot(look, ctx, face),
+        Some(Piece::Embers) => embers(look, ctx, face),
         None => {}
     }
     for side in [2, 3] {
@@ -193,10 +193,8 @@ fn banner(look: &mut Look, ctx: &Ctx, face: f32) {
     let dress = &ctx.branch.dress;
     let n = dress.banners.len();
     let name = dress.banners[(ctx.noise(132) * n as f32) as usize % n];
-    let (Some(cloth), Some(iron)) = (
-        trim(ctx, name, SHADE_LIT),
-        trim(ctx, "dark_iron", SHADE_LIT),
-    ) else {
+    let (Some(cloth), Some(iron)) = (trim(ctx, name, SHADE_LIT), trim(ctx, dress.iron, SHADE_LIT))
+    else {
         return;
     };
     look.turned(
@@ -256,23 +254,34 @@ fn alcove(look: &mut Look, ctx: &Ctx, face: f32) {
     }
 }
 
-/// Soot up the face from a fire long out: two dark tongues, one over the
-/// other, rising from the wall's foot.
-fn soot(look: &mut Look, ctx: &Ctx, face: f32) {
-    let Some(soot) = trim(ctx, "bedrock", 12) else {
-        return;
-    };
+/// Seams of the fire under the floors in the face, glowing up from the
+/// plinth (soot would not show on Gehennom's black stone): two, each
+/// wandering up half a metre or so, thin and flat in the stone.
+fn embers(look: &mut Look, ctx: &Ctx, face: f32) {
+    let glow = Paint::Flat(Color::from_rgb(0.75, 0.2, 0.04), Finish::Ember);
     for k in 0..2u32 {
-        // (two sizes of each: shared meshes)
-        let pick = |salt: u32| usize::from(ctx.noise(salt) < 0.5);
-        let w = [[0.62, 0.5], [0.4, 0.3]][k as usize][pick(140 + k)];
-        let h = [[1.4, 1.1], [0.9, 0.7]][k as usize][pick(142 + k)];
-        let x = (ctx.noise(144 + k) - 0.5) * 0.3;
-        look.solid(
-            prism(w, h, 0.01),
-            soot,
-            at(x, 0.2 + h / 2.0, face + 0.006 + 0.004 * k as f32),
-        );
+        let salt = 300 + k * 40;
+        let mut p = Vector2::new((ctx.noise(salt) - 0.5) * 0.7, PLINTH_HEIGHT);
+        let mut lean = (ctx.noise(salt + 1) - 0.5) * 0.6;
+        let steps = 3 + (ctx.noise(salt + 2) * 3.0) as u32;
+        for i in 0..steps {
+            let n = |j: u32| ctx.noise(salt + 3 + i * 2 + j);
+            lean = (lean + (n(0) - 0.5) * 0.8).clamp(-0.7, 0.7);
+            // (two lengths: shared meshes)
+            let len = [0.1, 0.15][usize::from(n(1) < 0.5)];
+            let to = p + Vector2::new(lean.sin(), lean.cos()) * len;
+            if to.x.abs() > 0.45 {
+                break;
+            }
+            let mid = (p + to) / 2.0;
+            look.turned(
+                cuboid(0.02, len, 0.01),
+                glow,
+                at(mid.x, mid.y, face + 0.006),
+                at(0.0, 0.0, -lean.to_degrees()),
+            );
+            p = to;
+        }
     }
 }
 
@@ -280,7 +289,7 @@ fn soot(look: &mut Look, ctx: &Ctx, face: f32) {
 /// the middle), hung from a ring set flat in the stone, a shackle at its
 /// end, its links turned each across the last.
 fn chain(look: &mut Look, ctx: &Ctx, fx: f32) {
-    let Some(iron) = trim(ctx, "dark_iron", SHADE_LIT) else {
+    let Some(iron) = trim(ctx, ctx.branch.dress.iron, SHADE_LIT) else {
         return;
     };
     let out = fx.signum();

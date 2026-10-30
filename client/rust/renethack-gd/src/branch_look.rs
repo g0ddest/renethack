@@ -86,8 +86,10 @@ pub struct Dress {
     /// one chosen by the cell), and whether they hang torn.
     pub banners: &'static [&'static str],
     pub torn: bool,
-    /// Iron chains with shackles from a high ring, on side walls.
+    /// Iron chains with shackles from a high ring, on side walls, and the
+    /// iron of them and of the banners' rods (manifest name).
     pub chains: bool,
+    pub iron: &'static str,
     /// Shallow empty niches in a north wall's face.
     pub alcoves: bool,
     /// Small cobwebs high in a room's far corners.
@@ -96,8 +98,9 @@ pub struct Dress {
     /// them.
     pub moss: bool,
     pub cracks: bool,
-    /// Soot on the walls.
-    pub soot: bool,
+    /// Seams of the fire under the floors glowing low in the walls (soot
+    /// would not show on black stone).
+    pub embers: bool,
     /// Rubble heaped and sunk in a room's corners.
     pub corners: bool,
     /// Rock grown into a cave's walls.
@@ -110,11 +113,12 @@ impl Dress {
         banners: &[],
         torn: false,
         chains: false,
+        iron: "dark_iron",
         alcoves: false,
         cobwebs: false,
         moss: false,
         cracks: false,
-        soot: false,
+        embers: false,
         corners: false,
         formations: false,
     };
@@ -214,11 +218,12 @@ const MAIN: BranchLook = BranchLook {
         banners: &["banner_red", "banner_ochre"],
         torn: false,
         chains: true,
+        iron: "dark_iron",
         alcoves: true,
         cobwebs: true,
         moss: true,
         cracks: true,
-        soot: false,
+        embers: false,
         corners: true,
         formations: false,
     },
@@ -315,11 +320,14 @@ pub fn look_of(branch: Branch) -> BranchLook {
             underglow: Some(rgb(1.0, 0.36, 0.12)),
             dust: 1.5,
             dress: Dress {
-                banners: &["banner_black"],
+                // in colours and iron the fire lights: black on its black
+                // stone showed nothing
+                banners: &["banner_crimson"],
                 torn: true,
                 chains: true,
+                iron: "iron",
                 cracks: true,
-                soot: true,
+                embers: true,
                 corners: true,
                 ..Dress::NONE
             },

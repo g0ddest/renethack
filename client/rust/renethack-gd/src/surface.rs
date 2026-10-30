@@ -8,7 +8,8 @@
 //! every cell (land, water, lava, ice) as a texture too: the ground's
 //! shaders blend each cell's kind into its neighbours' and break the line
 //! where two kinds meet with a noise, so a shore wanders instead of
-//! running along the cells' edges.
+//! running along the cells' edges. And where something stands or lies (a
+//! creature, a thing): the fire's cracks keep clear of it.
 
 use std::collections::HashMap;
 
@@ -61,6 +62,7 @@ pub struct Surfaces {
     shader: Option<Gd<Shader>>,
     fow: Gd<ImageTexture>,
     ground: Gd<ImageTexture>,
+    standing: Gd<ImageTexture>,
     noise: Gd<Texture2D>,
     detail: Option<Gd<Texture2D>>,
     textures: HashMap<String, Option<Gd<Texture2D>>>,
@@ -69,7 +71,12 @@ pub struct Surfaces {
 }
 
 impl Surfaces {
-    pub fn new(fow: &Fow, ground: &GroundField, manifest: &ArtManifest) -> Surfaces {
+    pub fn new(
+        fow: &Fow,
+        ground: &GroundField,
+        standing: &StandField,
+        manifest: &ArtManifest,
+    ) -> Surfaces {
         let shader = godot::tools::try_load::<Shader>(SHADER).ok();
         if shader.is_none() {
             godot_warn!("renethack: {SHADER} is missing; the map is drawn with plain materials");
@@ -77,10 +84,13 @@ impl Surfaces {
         let fow = ImageTexture::create_from_image(&fow.image).unwrap_or_else(ImageTexture::new_gd);
         let ground =
             ImageTexture::create_from_image(&ground.image).unwrap_or_else(ImageTexture::new_gd);
+        let standing =
+            ImageTexture::create_from_image(&standing.image).unwrap_or_else(ImageTexture::new_gd);
         let mut s = Surfaces {
             shader,
             fow,
             ground,
+            standing,
             noise: noise_texture(),
             detail: None,
             textures: HashMap::new(),
@@ -141,6 +151,13 @@ impl Surfaces {
     pub fn show_ground(&mut self, ground: &mut GroundField) {
         if ground.write() {
             self.ground.update(&ground.image);
+        }
+    }
+
+    /// What stands or lies on some cells changed: the shaders see it.
+    pub fn show_standing(&mut self, standing: &mut StandField) {
+        if standing.write() {
+            self.standing.update(&standing.image);
         }
     }
 
@@ -216,6 +233,11 @@ impl Surfaces {
         // (a cave's rock rounds off by the open ground it reads there)
         if kind != Ground::None || role == Role::Cave {
             mat.set_shader_parameter("ground_tex", &self.ground.to_variant());
+        }
+        // (the fire's cracks, in floors and the ground below, keep clear
+        // of what stands on them)
+        if matches!(role, Role::Floor | Role::Void) {
+            mat.set_shader_parameter("stand_tex", &self.standing.to_variant());
         }
         // the rock the level is cut from is rock, never blocks
         if Some(m) == self.top {
@@ -303,9 +325,10 @@ impl Surfaces {
                 set(&mut mat, "glow", 0.02);
                 set(&mut mat, "macro", 1.4);
                 // rock in any branch (the main dungeon's is the manifest's
-                // own bedrock), cracked where the branch's floors are
+                // own bedrock), cracked faintly where the branch's floors
+                // are: the fire shows through the floors
                 set(&mut mat, "natural", 1.0);
-                set(&mut mat, "fissures", 0.6);
+                set(&mut mat, "fissures", 0.25);
             }
         }
         let mat = mat.upcast::<Material>();
@@ -427,6 +450,62 @@ impl GroundField {
 impl Default for GroundField {
     fn default() -> GroundField {
         GroundField::new()
+    }
+}
+
+/// Where something stands or lies, per cell of the level (a creature, the
+/// hero, a thing, a body): the shaders read it as a texture (R full).
+pub struct StandField {
+    cells: Vec<bool>,
+    image: Gd<Image>,
+    changed: bool,
+}
+
+impl StandField {
+    pub fn new() -> StandField {
+        let image =
+            Image::create_empty(COLNO, ROWNO, false, Format::R8).unwrap_or_else(Image::new_gd);
+        StandField {
+            cells: vec![false; (COLNO * ROWNO) as usize],
+            image,
+            changed: true,
+        }
+    }
+
+    pub fn set(&mut self, x: i32, y: i32, on: bool) {
+        if let Some(i) = index(x, y)
+            && self.cells[i] != on
+        {
+            self.cells[i] = on;
+            self.changed = true;
+        }
+    }
+
+    pub fn clear(&mut self) {
+        if self.cells.contains(&true) {
+            self.cells.fill(false);
+            self.changed = true;
+        }
+    }
+
+    /// The image made again if a cell changed since; true then.
+    fn write(&mut self) -> bool {
+        if !std::mem::take(&mut self.changed) {
+            return false;
+        }
+        let mut bytes = PackedByteArray::new();
+        bytes.resize(self.cells.len());
+        for (out, &on) in bytes.as_mut_slice().iter_mut().zip(&self.cells) {
+            *out = if on { 255 } else { 0 };
+        }
+        self.image.set_data(COLNO, ROWNO, false, Format::R8, &bytes);
+        true
+    }
+}
+
+impl Default for StandField {
+    fn default() -> StandField {
+        StandField::new()
     }
 }
 

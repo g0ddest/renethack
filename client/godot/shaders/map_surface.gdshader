@@ -27,6 +27,9 @@ uniform sampler2D noise_tex : filter_linear_mipmap, repeat_enable;
 // per cell of the level, full in the channel of its ground: water, lava,
 // ice, land (surface.rs `GroundField`)
 uniform sampler2D ground_tex : filter_linear, repeat_disable;
+// per cell of the level, full where something stands or lies (a creature,
+// a thing): the fire's cracks keep clear of it (surface.rs `StandField`)
+uniform sampler2D stand_tex : filter_linear, repeat_disable;
 // the ground's own kind (1 land, 4 ice), shown where it wins; 0: whatever
 // lies around it
 uniform float edge_kind = 0.0;
@@ -455,11 +458,16 @@ void fragment() {
 	}
 	vec3 lava = vec3(0.0);
 	if ((grime > 0.0 || fissures > 0.0) && branch_cracks > 0.0) {
-		// fire under the floor shows through its cracks
+		// fire under the floor shows through its cracks: thin, in patches
+		// with whole stretches of stone unbroken between them, and never
+		// under nor right round whatever stands or lies on a cell (a
+		// creature on the fire was lost in it)
 		float c = tn2(wpos.xz * 0.6 + 3.7);
-		float crack = smoothstep(0.487, 0.5, c) - smoothstep(0.5, 0.513, c);
+		float crack = smoothstep(0.4925, 0.5, c) - smoothstep(0.5, 0.5075, c);
+		crack *= smoothstep(0.44, 0.6, tn2(wpos.xz * 0.09 + 21.0));
+		crack *= 1.0 - smoothstep(0.3, 0.6, texture(stand_tex, cell / FIELD).r);
 		float pulse = 0.75 + 0.25 * sin(TIME * 1.3 + tn2(wpos.xz * 0.2) * 9.0);
-		lava = vec3(1.0, 0.28, 0.05) * crack * pulse * branch_cracks * 1.2;
+		lava = vec3(1.0, 0.28, 0.05) * crack * pulse * branch_cracks * 0.65;
 		albedo *= 1.0 - crack * 0.8;
 	}
 	if (wet > 0.0) {

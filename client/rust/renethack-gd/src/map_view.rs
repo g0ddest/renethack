@@ -57,7 +57,9 @@ use crate::meshes::{
     MeshKey, bevel, cuboid, cylinder, dome, facets, plane, prism, rock, sphere, torus,
 };
 use crate::seated::Mount;
-use crate::surface::{Fow, FowCell, Ground, GroundField, Role, Seen, Surfaces, cell_index, sight};
+use crate::surface::{
+    Fow, FowCell, Ground, GroundField, Role, Seen, StandField, Surfaces, cell_index, sight,
+};
 use crate::theme::{self, nh_color};
 use crate::vfx::{Blast, Ray, Vfx, VfxKind};
 
@@ -3205,6 +3207,8 @@ pub struct MapView {
     fow_dirty: bool,
     /// The ground of every cell, which the ground's shaders blend.
     ground: GroundField,
+    /// Where something stands or lies (the fire's cracks keep clear).
+    standing: StandField,
     vfx: Vfx,
     /// Low mist over the level.
     mist: Gd<FogVolume>,
@@ -3840,7 +3844,8 @@ impl MapView {
         let hero_look = hero_look::HeroLook::new();
         let fow = Fow::new();
         let ground = GroundField::new();
-        let surfaces = Surfaces::new(&fow, &ground, art.manifest());
+        let standing = StandField::new();
+        let surfaces = Surfaces::new(&fow, &ground, &standing, art.manifest());
         let batches = Batches::new(cells_root.clone(), 1 | TERRAIN_LAYER);
         let vfx = Vfx::new(root.clone(), TERRAIN_LAYER);
         let mut view = MapView {
@@ -3910,6 +3915,7 @@ impl MapView {
             fow,
             fow_dirty: true,
             ground,
+            standing,
             vfx,
             mist,
             post_mat,
@@ -4079,6 +4085,7 @@ impl MapView {
             // a new level (or a redraw from scratch) never animates
             self.finish_motions();
             self.ground.clear();
+            self.standing.clear();
             self.finish_falls_where(|_| true);
             self.end_drops();
             self.forget_gone();
@@ -4205,6 +4212,7 @@ impl MapView {
             self.surfaces.show_fow(&self.fow);
         }
         self.surfaces.show_ground(&mut self.ground);
+        self.surfaces.show_standing(&mut self.standing);
         // the lights of a level still being drawn wait for all of it
         if self.building.is_empty() && std::mem::take(&mut self.lights_dirty) {
             let __t = std::time::Instant::now();
@@ -7720,6 +7728,7 @@ impl MapView {
             m.look.art.back = 0.0;
         }
         self.ground.set(x, y, look.kind);
+        self.standing.set(x, y, look.entity.is_some());
         match self.cells.get(&(x, y)) {
             Some(n) if n.look == look => return,
             None if look.is_empty() => return,
@@ -9472,12 +9481,17 @@ mod tests {
         "L-----------------------J",
     ];
 
-    /// A cell of a level as the main dungeon has it, and as it would be
-    /// with no dressing.
-    fn dressed_and_bare(f: &Fixture, map: &MapState, at: (i32, i32)) -> (Look, Look) {
+    /// A cell of a level as `branch` has it, and as it would be with no
+    /// dressing.
+    fn dressed_and_bare(
+        f: &Fixture,
+        map: &MapState,
+        branch: Branch,
+        at: (i32, i32),
+    ) -> (Look, Look) {
         let bare = BranchLook {
             dress: crate::branch_look::Dress::NONE,
-            ..crate::branch_look::look_of(Branch::Main)
+            ..crate::branch_look::look_of(branch)
         };
         let ctx = Ctx {
             branch: &bare,
@@ -9485,7 +9499,7 @@ mod tests {
         };
         let cell = map.cell(at.0, at.1).cloned().unwrap_or_default();
         let plain = look_of(&cell, Near::of(map, at.0, at.1), &ctx);
-        (f.look_in(map, at, Branch::Main), plain)
+        (f.look_in(map, at, branch), plain)
     }
 
     /// The corners of the box round a solid as it is turned and placed on
@@ -9523,8 +9537,8 @@ mod tests {
     }
 
     /// What a room's dressing adds to a cell of a level.
-    fn dressing_at(f: &Fixture, map: &MapState, at: (i32, i32)) -> Vec<Solid> {
-        let (dressed, bare) = dressed_and_bare(f, map, at);
+    fn dressing_at(f: &Fixture, map: &MapState, branch: Branch, at: (i32, i32)) -> Vec<Solid> {
+        let (dressed, bare) = dressed_and_bare(f, map, branch, at);
         let mut plain = bare.solids;
         dressed
             .solids
@@ -9543,7 +9557,9 @@ mod tests {
     fn a_rooms_dressing_keeps_off_doors_and_features() {
         let f = Fixture::new();
         let map = level(&f.cat, &HALL);
-        let dressing = |c: i32, r: i32| dressing_at(&f, &map, (PICTURE_AT.0 + c, PICTURE_AT.1 + r));
+        let dressing = |c: i32, r: i32| {
+            dressing_at(&f, &map, Branch::Main, (PICTURE_AT.0 + c, PICTURE_AT.1 + r))
+        };
         // the doorway, the stairs, the altar, and every cell round them
         for (c, r) in [(12, 0), (3, 1), (18, 3)] {
             for (dc, dr) in (-1..=1).flat_map(|dc| (-1..=1).map(move |dr| (dc, dr))) {
@@ -9585,26 +9601,35 @@ mod tests {
         for (x, y) in [hero, pile] {
             for (dx, dy) in (-1..=1).flat_map(|dx| (-1..=1).map(move |dy| (dx, dy))) {
                 let at = (x + dx, y + dy);
-                assert!(dressing_at(&f, &map, at).is_empty(), "dressed at {at:?}");
+                assert!(
+                    dressing_at(&f, &map, Branch::Main, at).is_empty(),
+                    "dressed at {at:?}"
+                );
             }
         }
         // the hero steps off plain floor: the wall by it is dressed
         map.print(hero.0, hero.1, &cmap(cat, "S_room"), None);
         let corner = (PICTURE_AT.0 + 2, PICTURE_AT.1);
-        assert!(!dressing_at(&f, &map, corner).is_empty());
+        assert!(!dressing_at(&f, &map, Branch::Main, corner).is_empty());
     }
 
     #[test]
     fn a_rooms_dressing_hides_nobody_and_lies_flat_on_its_floor() {
+        for branch in [Branch::Main, Branch::Gehennom] {
+            a_rooms_dressing_hides_nobody_in(branch);
+        }
+    }
+
+    fn a_rooms_dressing_hides_nobody_in(branch: Branch) {
         let f = Fixture::new();
         let map = level(&f.cat, &HALL);
         let silk = f.art.material("cobweb");
-        let (mut webs, mut floor) = (0, 0);
+        let (mut webs, mut floor, mut seams) = (0, 0, 0);
         for r in 0..7 {
             for c in 0..25 {
                 let at = (PICTURE_AT.0 + c, PICTURE_AT.1 + r);
-                let (dressed, bare) = dressed_and_bare(&f, &map, at);
-                for s in dressing_at(&f, &map, at) {
+                let (dressed, bare) = dressed_and_bare(&f, &map, branch, at);
+                for s in dressing_at(&f, &map, branch, at) {
                     let box_ = corners(&s);
                     let low = box_.iter().map(|p| p.y).fold(f32::MAX, f32::min);
                     let top = box_.iter().map(|p| p.y).fold(f32::MIN, f32::max);
@@ -9625,6 +9650,7 @@ mod tests {
                     // room where somebody stands by it (what lies flat on
                     // the floor hides nobody, and keeps to the wall's foot)
                     assert!(top <= WALL_HEIGHT + 0.01, "{c},{r}: {s:?}");
+                    seams += usize::from(matches!(s.paint, Paint::Flat(_, Finish::Ember)));
                     if !matches!(s.paint, Paint::Pbr(m, _, _) if Some(m) == silk) {
                         let reach = if top <= 0.02 {
                             0.75
@@ -9645,7 +9671,12 @@ mod tests {
                 }
             }
         }
-        assert!(webs > 0 && floor > 0, "{webs} {floor}");
+        // the main dungeon's far corners hold cobwebs, Gehennom's walls
+        // seams of its fire
+        let dress = crate::branch_look::look_of(branch).dress;
+        assert!(floor > 0, "{branch:?}");
+        assert_eq!(webs > 0, dress.cobwebs, "{branch:?}: {webs}");
+        assert_eq!(seams > 0, dress.embers, "{branch:?}: {seams}");
     }
 
     #[test]
@@ -9655,13 +9686,13 @@ mod tests {
         let mut map = level(cat, &HALL);
         let inside =
             (1..6).flat_map(|r| (1..24).map(move |c| (PICTURE_AT.0 + c, PICTURE_AT.1 + r)));
-        let mut dressed = inside.filter(|&at| !dressing_at(&f, &map, at).is_empty());
+        let mut dressed = inside.filter(|&at| !dressing_at(&f, &map, Branch::Main, at).is_empty());
         let (x, y) = dressed.next().expect("no floor dressed");
         // something lying there: nothing of it; somebody standing there:
         // all of it, as before
         let before = f.look_in(&map, (x, y), Branch::Main).solids;
         map.print(x, y, &object(cat, "(", "chest"), Some(&cmap(cat, "S_room")));
-        assert!(dressing_at(&f, &map, (x, y)).is_empty());
+        assert!(dressing_at(&f, &map, Branch::Main, (x, y)).is_empty());
         map.print(x, y, &monster(cat, "jackal", 0), Some(&cmap(cat, "S_room")));
         let jackal = f.look_in(&map, (x, y), Branch::Main).solids;
         assert!(before.iter().all(|s| jackal.contains(s)));
@@ -9701,7 +9732,7 @@ mod tests {
         ];
         for b in branches {
             let d = crate::branch_look::look_of(b).dress;
-            for name in d.banners.iter().chain(["moss", "cobweb"].iter()) {
+            for name in d.banners.iter().chain(["moss", "cobweb", d.iron].iter()) {
                 assert!(art.material(name).is_some(), "{b:?}: {name}");
             }
         }
