@@ -54,3 +54,13 @@ ru = "Рядом с вами появляется огромное привид�
 [13919afcdd01]
 en = "Unknown command '%s'."
 ru = "Неизвестная команда '{1}'."
+
+# a blade engraving dulls (engrave.c)
+
+[9f71c24dd2e9]
+en = "One of %s gets dull."
+ru = "{1:sg|Один|Одна|Одно} из {1:gen} затупляется."
+
+[17ca25416ff2]
+en = "%s gets dull."
+ru = "{1} {1:num|затупляется|затупляются}."

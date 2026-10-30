@@ -108,6 +108,10 @@ pub struct EndSummary {
     pub chronicle: Vec<(i64, String)>,
     /// The achievements this game holds; true: first earned in it.
     pub achievements: Vec<(Achievement, bool)>,
+    /// The roles by their codes, as the top ten names its heroes
+    /// ("Hero-Sam-Hum-Mal-Law"): the role, and the role of a heroine if
+    /// it has its own.
+    pub roles: Vec<(String, String, Option<String>)>,
 }
 
 /// The numbers the page shows.
@@ -801,7 +805,8 @@ fn fact(name: &str, value: &str) -> Gd<PanelContainer> {
     // a number reads the same in every language
     i18n::verbatim(&v);
     col.add_child(&v);
-    let mut n = theme::styled_label(name, Face::Caps, 13, theme::TEXT_DIM);
+    // 12 px at the Steam Deck's own scale (120 %)
+    let mut n = theme::styled_label(name, Face::Caps, 15, theme::TEXT_DIM);
     n.set_horizontal_alignment(HorizontalAlignment::CENTER);
     col.add_child(&n);
     plate.add_child(&col);
@@ -930,6 +935,7 @@ fn topten(s: &EndSummary) -> Gd<Control> {
             .split_whitespace()
             .collect::<Vec<_>>()
             .join(" ");
+        let said = readable_hero(&said, &s.roles);
         let mut words = cell(&said, face, color, false);
         words.set_autowrap_mode(AutowrapMode::WORD_SMART);
         words.set_h_size_flags(SizeFlags::EXPAND_FILL);
@@ -939,6 +945,34 @@ fn topten(s: &EndSummary) -> Gd<Control> {
         grid.add_child(&hp);
     }
     grid.upcast()
+}
+
+/// An entry's hero as a player reads it: "Hero-Sam-Hum-Mal-Law died…" (the
+/// name, then the codes of the role, race, gender and alignment) is
+/// "Hero (самурай) died…", the role in the hero's gender and the language
+/// now. Words that hold no such hero stay as they are.
+fn readable_hero(said: &str, roles: &[(String, String, Option<String>)]) -> String {
+    let (head, rest) = said.split_once(' ').unwrap_or((said, ""));
+    let parts: Vec<&str> = head.split('-').collect();
+    let n = parts.len();
+    let code = |p: &str| p.len() == 3 && p.starts_with(|c: char| c.is_ascii_uppercase());
+    if n < 5 || !parts[n - 4..].iter().all(|p| code(p)) {
+        return said.to_string();
+    }
+    let Some((_, his, hers)) = roles.iter().find(|(c, ..)| c == parts[n - 4]) else {
+        return said.to_string();
+    };
+    let english = hers
+        .as_ref()
+        .filter(|_| parts[n - 2] == "Fem")
+        .unwrap_or(his);
+    let role = i18n::engine(EngineKind::Name, english).to_lowercase();
+    let name = parts[..n - 4].join("-");
+    if rest.is_empty() {
+        format!("{name} ({role})")
+    } else {
+        format!("{name} ({role}) {rest}")
+    }
 }
 
 /// An entry's words in the language now. The engine's translator reads an
@@ -1009,6 +1043,30 @@ mod tests {
 
     fn more(words: &str) -> String {
         format!("{:15} {words}", "")
+    }
+
+    #[test]
+    fn a_top_ten_hero_reads_as_a_name_and_a_role() {
+        let roles = vec![
+            ("Sam".to_string(), "Samurai".to_string(), None),
+            (
+                "Pri".to_string(),
+                "Priest".to_string(),
+                Some("Priestess".to_string()),
+            ),
+        ];
+        assert_eq!(
+            readable_hero("Hero-Sam-Hum-Mal-Law quit in the Dungeons.", &roles),
+            "Hero (samurai) quit in the Dungeons."
+        );
+        assert_eq!(
+            readable_hero("Ann-Pri-Elf-Fem-Cha", &roles),
+            "Ann (priestess)"
+        );
+        // no hero's codes: as it was
+        for words in ["killed by a jackal", "Hero-Xyz-Hum-Mal-Law died", "a-b"] {
+            assert_eq!(readable_hero(words, &roles), words);
+        }
     }
 
     #[test]

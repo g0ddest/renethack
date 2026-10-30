@@ -1981,7 +1981,8 @@ impl InventoryPanel {
         for (i, slot) in DollSlot::HANDS.iter().enumerate() {
             let x = row_x + i as f32 * (CELL + 24.0);
             add_slot(*slot, x, row_y, &mut doll);
-            let mut cap = theme::styled_label("", Face::Caps, 13, theme::TEXT_DIM);
+            // 12 px at the Steam Deck's own scale (120 %)
+            let mut cap = theme::styled_label("", Face::Caps, 15, theme::TEXT_DIM);
             i18n::text(&cap, slot.caption());
             cap.set_horizontal_alignment(HorizontalAlignment::CENTER);
             place(

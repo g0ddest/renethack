@@ -4449,7 +4449,14 @@ impl RenethackGame {
         if s.display != old.display
             && let Some(mut window) = self.base().get_tree().get_root()
         {
-            crate::video::apply_display(&mut window, &s.display, true);
+            // after this call: a new size or mode notifies this node at
+            // once, and it is bound here
+            let display = s.display;
+            Callable::from_fn("apply the display", move |_| {
+                crate::video::apply_display(&mut window, &display, true);
+                Variant::nil()
+            })
+            .call_deferred(&[]);
         }
         if self.graphics() != drawn {
             let rewarm = pipeline_settings(&self.graphics()) != pipeline_settings(&drawn);
@@ -4461,7 +4468,13 @@ impl RenethackGame {
         if s.ui_scale != old.ui_scale
             && let Some(window) = self.base().get_tree().get_root()
         {
-            crate::theme::apply_scaling(window, s.ui_scale);
+            // after this call too: the window's new scale notifies it
+            let scale = s.ui_scale;
+            Callable::from_fn("apply the scale", move |_| {
+                crate::theme::apply_scaling(window.clone(), scale);
+                Variant::nil()
+            })
+            .call_deferred(&[]);
         }
         // the slots' keys and tips drawn again
         if s.keymaps != old.keymaps {
@@ -5429,7 +5442,15 @@ impl RenethackGame {
             .get(..4)
             .and_then(|y| y.parse().ok())
             .unwrap_or(2026);
+        let roles = (self.catalog.as_deref())
+            .map(|c| {
+                (c.roles.iter())
+                    .map(|r| (r.code.clone(), r.name.clone(), r.name_female.clone()))
+                    .collect()
+            })
+            .unwrap_or_default();
         EndSummary {
+            roles,
             how,
             name,
             female,

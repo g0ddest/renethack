@@ -1350,7 +1350,10 @@ rip-rest-in-peace =
     ПОКОЙСЯ
     С
     МИРОМ
-rip-gold = { $gold } Au
+rip-gold = { $gold } { $gold ->
+        [one] золотой
+       *[other] золотых
+    }
 vanquished-title = Побеждённые существа
 vanquished-rider = Всадник
 vanquished-total =

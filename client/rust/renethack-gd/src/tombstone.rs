@@ -68,14 +68,15 @@ pub fn view_with(t: &Tombstone, death: &str, rank: Option<&str>) -> Gd<Control> 
     if let Some(rank) = rank {
         face.add_child(&carved(rank, Face::Title, 17, width));
     }
+    // the stone's one face, as its words are cut
     face.add_child(&carved(
         &tr!("rip-gold", gold = t.gold),
-        Face::Body,
-        18,
+        Face::Title,
+        19,
         width,
     ));
     if !death.is_empty() {
-        face.add_child(&carved(death, Face::Body, 18, width));
+        face.add_child(&carved(death, Face::Title, 19, width));
     }
     face.add_child(&carved(&t.year.to_string(), Face::Title, 22, width));
     root.add_child(&face);

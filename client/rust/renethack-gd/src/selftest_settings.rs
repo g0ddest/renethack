@@ -17,7 +17,7 @@
 //! page opens as the HUD's gear opens it, and Esc goes back to the game.
 //! Every screen fits the canvas, every value its place.
 
-use std::sync::atomic::{AtomicU8, Ordering};
+use std::sync::atomic::{AtomicU8, AtomicU64, Ordering};
 
 use godot::classes::display_server::VSyncMode;
 use godot::classes::viewport::{Msaa as ViewportMsaa, Scaling3DMode};
@@ -102,6 +102,14 @@ pub(super) fn pad_tap(b: PadButton) -> Step {
 }
 
 /// The window's size now.
+/// The window's size before the page stepped it (width << 32 | height).
+static WINDOW_BEFORE: AtomicU64 = AtomicU64::new(0);
+
+fn window_before() -> (u32, u32) {
+    let v = WINDOW_BEFORE.load(Ordering::Relaxed);
+    ((v >> 32) as u32, v as u32)
+}
+
 fn window(g: &RenethackGame) -> (u32, u32) {
     let s = g
         .base()
@@ -275,6 +283,32 @@ pub(super) fn settings() -> Vec<Step> {
                 && kept == Some(smaller)
                 && shown(g, Field::WindowSize)?
                     == tr!("settings-size", width = smaller.0, height = smaller.1))
+        }),
+        // in a window: the size stepped from the page and set back, no
+        // panic (a resize notifies the game node, which the page's step
+        // has bound)
+        Step::Call("in a window: ↑ to the size, ← a smaller window", |g| {
+            if !headless() {
+                let (w, h) = window(g);
+                WINDOW_BEFORE.store((u64::from(w) << 32) | u64::from(h), Ordering::Relaxed);
+                tap_key(GKey::UP);
+                tap_key(GKey::LEFT);
+            }
+            Ok(())
+        }),
+        Step::Wait("in a window: a smaller window", |g| {
+            Ok(headless() || window(g) != window_before())
+        }),
+        Step::Call("in a window: the size before, set again", |g| {
+            if !headless() {
+                let mut s = g.settings.clone();
+                s.display.size = Some(window_before());
+                g.set_settings(s);
+            }
+            Ok(())
+        }),
+        Step::Wait("in a window: the window as before", |g| {
+            Ok(headless() || window(g) == window_before())
         }),
         Step::Call("↑ to the mode, → the full screen", |_| {
             if headless() {

@@ -24,7 +24,10 @@ pub const GAP: f32 = 8.0;
 /// The bar's width: ten slots and nine gaps.
 pub const WIDTH: f32 = SLOTS as f32 * SLOT + (SLOTS - 1) as f32 * GAP;
 /// A chord's pill under a slot's icon: its height.
-const CHORD_H: f32 = 18.0;
+const CHORD_H: f32 = 20.0;
+/// The chord's words: 12 px at the Steam Deck's own scale (120 %), 10 at
+/// 100 % (Valve's floor is 9, its advice 12).
+const CHORD_SIZE: i32 = 15;
 
 /// The key of slot `i` (0-based): "1".."9", then "0".
 pub fn key_label(i: usize) -> &'static str {
@@ -310,7 +313,7 @@ impl ActionBar {
                     // small capitals' do not
                     s.key
                         .add_theme_font_override("font", &theme::font(Face::BodyBold));
-                    s.key.add_theme_font_size_override("font_size", 13);
+                    s.key.add_theme_font_size_override("font_size", CHORD_SIZE);
                     s.key.add_theme_stylebox_override("normal", &pill);
                     s.key.add_theme_constant_override("outline_size", 0);
                     s.key.set_horizontal_alignment(HorizontalAlignment::CENTER);
