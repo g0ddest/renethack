@@ -451,6 +451,13 @@ const FLAME: Color = Color::from_rgb(1.0, 0.45, 0.12);
 /// from the depths of down stairs.
 const STAIR_UP_LIGHT: Color = Color::from_rgb(1.0, 0.72, 0.46);
 const STAIR_DOWN_LIGHT: Color = Color::from_rgb(0.5, 0.6, 0.9);
+/// A mark's sheet (`marker`): how far under the cell's plane it lies
+/// (metres), and how much more opaque than the decal it is.
+const MARK_UNDER: f32 = 0.03;
+const MARK_SHEET_ALPHA: f32 = 3.0;
+/// How low the deep lies, its water cells and the ground round the level
+/// (metres): under the marks' sheets.
+const DEEP_BEDROCK: f32 = -0.3;
 /// The Planes (`Under`): how tall a bubble's skin stands on the Plane of
 /// Water, the puffs a cloud cell of the Plane of Air is, and how far below
 /// the level the sea of clouds lies (metres).
@@ -2057,11 +2064,12 @@ fn terrain_base(
             look.ground = 0.12;
         }
         Terrain::Water if ctx.branch.under == Under::Deep => {
-            // the deep, no bed under it
+            // the deep, no bed under it, as low as the ground round the
+            // level (a ring's sheet over a swimmer shows over it)
             look.ground_tile(
                 plane(1.0, 1.0),
                 Paint::Liquid(Liquid::Deep),
-                at(0.0, SURFACE_Y, 0.0),
+                at(0.0, DEEP_BEDROCK, 0.0),
             );
             look.ground = -0.1;
             look.sunk = true;
@@ -3413,8 +3421,67 @@ fn marker(root: &mut Gd<Node3D>, texture: &Gd<godot::classes::Texture2D>, size: 
     // on the ground only: never up the side of a wall or a step
     d.set_normal_fade(0.6);
     d.set_visible(false);
+    // and the same mark on a sheet a little under the cell's plane, for
+    // where there is no ground to land on (the Planes of Air and Water, a
+    // bubble's see-through floor): a floor hides it
+    let mut sheet = MeshInstance3D::new_alloc();
+    sheet.set_name("Sheet");
+    let mut quad = godot::classes::PlaneMesh::new_gd();
+    quad.set_size(Vector2::new(1.0, 1.0));
+    sheet.set_mesh(&quad);
+    let mut m = StandardMaterial3D::new_gd();
+    m.set_shading_mode(ShadingMode::UNSHADED);
+    m.set_transparency(godot::classes::base_material_3d::Transparency::ALPHA);
+    m.set_texture(
+        godot::classes::base_material_3d::TextureParam::ALBEDO,
+        texture,
+    );
+    sheet.set_material_override(&m);
+    sheet.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+    sheet.set_position(Vector3::new(0.0, -MARK_UNDER, 0.0));
+    sheet.set_scale(Vector3::new(size, 1.0, size));
+    d.add_child(&sheet);
     root.add_child(&d);
     d
+}
+
+/// A mark's sheet (`marker`) and its material.
+fn mark_sheet(d: &Gd<Decal>) -> Option<(Gd<MeshInstance3D>, Gd<StandardMaterial3D>)> {
+    let sheet = d
+        .get_node_or_null("Sheet")?
+        .try_cast::<MeshInstance3D>()
+        .ok()?;
+    let m = sheet
+        .get_material_override()?
+        .try_cast::<StandardMaterial3D>()
+        .ok()?;
+    Some((sheet, m))
+}
+
+/// A mark's colour, on the ground and on its sheet (more opaque there:
+/// the ground's own light shows through the decal).
+fn mark_color(d: &mut Gd<Decal>, c: Color) {
+    d.set_modulate(c);
+    if let Some((_, mut m)) = mark_sheet(d) {
+        m.set_albedo(c.with_alpha((c.a * MARK_SHEET_ALPHA).min(1.0)));
+    }
+}
+
+/// A mark's size, on the ground and on its sheet.
+fn mark_size(d: &mut Gd<Decal>, size: Vector3) {
+    d.set_size(size);
+    if let Some((mut sheet, _)) = mark_sheet(d) {
+        sheet.set_scale(Vector3::new(size.x, 1.0, size.z));
+    }
+}
+
+/// A mark's picture, on the ground and on its sheet.
+fn mark_texture(d: &mut Gd<Decal>, tex: &Gd<godot::classes::Texture2D>) {
+    d.set_texture(godot::classes::decal::DecalTexture::ALBEDO, tex);
+    d.set_texture(godot::classes::decal::DecalTexture::EMISSION, tex);
+    if let Some((_, mut m)) = mark_sheet(d) {
+        m.set_texture(godot::classes::base_material_3d::TextureParam::ALBEDO, tex);
+    }
 }
 
 /// A low mist lying over the whole level, thin, in slow drifting patches.
@@ -3678,9 +3745,9 @@ impl MapView {
 
         let ring_tex = crate::vfx::ring_texture();
         let mut hover = marker(&mut root, &crate::vfx::frame_texture(), 1.0);
-        hover.set_modulate(Color::from_rgba(1.0, 0.88, 0.62, 0.2));
+        mark_color(&mut hover, Color::from_rgba(1.0, 0.88, 0.62, 0.2));
         let mut cursor = marker(&mut root, &crate::vfx::frame_texture(), 1.05);
-        cursor.set_modulate(CURSOR);
+        mark_color(&mut cursor, CURSOR);
 
         // the node the doll aims at, and the child it takes the way the
         // body faces from (as from a model's own node)
@@ -3689,9 +3756,9 @@ impl MapView {
         rider_view.add_child(&Node3D::new_alloc());
         root.add_child(&rider_view);
         let mut hero_ring = marker(&mut root, &ring_tex, HERO_RING_SIZE);
-        hero_ring.set_modulate(HERO_RING);
+        mark_color(&mut hero_ring, HERO_RING);
         let mut hostile_ring = marker(&mut root, &ring_tex, 1.05);
-        hostile_ring.set_modulate(HOSTILE_RING);
+        mark_color(&mut hostile_ring, HOSTILE_RING);
         let outline = |color: Color| -> Gd<Material> {
             match godot::tools::try_load::<Shader>("res://shaders/outline.gdshader") {
                 Ok(shader) => {
@@ -5137,7 +5204,7 @@ impl MapView {
         } else {
             RING_DEPTH
         };
-        self.hero_ring.set_size(Vector3::new(size, depth, size));
+        mark_size(&mut self.hero_ring, Vector3::new(size, depth, size));
     }
 
     /// The hero seen through what hides them from the camera: a wall, a
@@ -5642,11 +5709,32 @@ impl MapView {
 
     /// The dark rock under the level, with holes for what lies below the
     /// ground (stairs down, water, lava).
+    /// How high the bedrock lies: the deep lower (a mark's sheet under a
+    /// bubble's floor shows over it).
+    fn bedrock_y(&self) -> f32 {
+        if self.branch_look.under == Under::Deep {
+            DEEP_BEDROCK
+        } else {
+            -0.02
+        }
+    }
+
+    /// The hero's ring is drawn where no ground takes it (the Planes of
+    /// Air and Water): shown, on its sheet, with nothing of the level's
+    /// own under the cell over the sheet (self-tests).
+    pub fn hero_ring_drawn(&self) -> bool {
+        let Some((sheet, _)) = mark_sheet(&self.hero_ring) else {
+            return false;
+        };
+        let clear = !self.bedrock.is_visible() || sheet.get_global_position().y > self.bedrock_y();
+        self.hero_ring.is_visible() && sheet.is_visible_in_tree() && clear
+    }
+
     fn lay_bedrock(&mut self) {
         let mut st = SurfaceTool::new_gd();
         st.begin(PrimitiveType::TRIANGLES);
         st.set_normal(Vector3::UP);
-        let y = -0.02;
+        let y = self.bedrock_y();
         let mut quad = |x0: f32, z0: f32, x1: f32, z1: f32| {
             for (x, z) in [(x0, z0), (x1, z0), (x1, z1), (x0, z0), (x1, z1), (x0, z1)] {
                 st.add_vertex(Vector3::new(x, y, z));
@@ -7241,12 +7329,12 @@ impl MapView {
         }
         match (look.ring, nodes.ring.as_mut()) {
             (Some(c), Some(d)) => {
-                d.set_modulate(c);
+                mark_color(d, c);
                 d.set_position(origin + at(0.0, look.ground, 0.0));
             }
             (Some(c), None) => {
                 let mut d = marker(&mut self.root, &self.ring_tex, 0.95);
-                d.set_modulate(c);
+                mark_color(&mut d, c);
                 d.set_position(origin + at(0.0, look.ground, 0.0));
                 d.set_visible(true);
                 nodes.ring = Some(d);
@@ -8903,10 +8991,9 @@ impl MapView {
                 (&self.soft_tex, 0.26, dot)
             };
             let d = &mut self.path_marks[i];
-            d.set_texture(godot::classes::decal::DecalTexture::ALBEDO, tex);
-            d.set_texture(godot::classes::decal::DecalTexture::EMISSION, tex);
-            d.set_size(Vector3::new(size, 0.24, size));
-            d.set_modulate(color.with_alpha(0.75));
+            mark_texture(d, tex);
+            mark_size(d, Vector3::new(size, 0.24, size));
+            mark_color(d, color.with_alpha(0.75));
             d.set_position(Vector3::new(x as f32, ground, y as f32));
             d.set_visible(true);
         }

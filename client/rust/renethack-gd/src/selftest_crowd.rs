@@ -278,6 +278,12 @@ pub(super) fn deep() -> Vec<Step> {
                 Ok(drawn == Some(g.world.map.generation()) && camera_settled(g)?)
             }),
         ]);
+        // with no ground under them the hero's ring still marks them
+        if matches!(name, "air:" | "water:") {
+            steps.push(Step::Wait("the hero's ring on no ground", |g| {
+                Ok(map_view(g)?.hero_ring_drawn())
+            }));
+        }
         for what in creatures.iter() {
             steps.extend(genesis(what));
         }
