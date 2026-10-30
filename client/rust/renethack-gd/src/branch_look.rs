@@ -80,6 +80,9 @@ pub enum Under {
     Sky,
     Deep,
     Chasm,
+    /// The heavens round the Astral Plane: night, nebulae and stars far
+    /// below, its floor slabs of marble floating over them.
+    Stars,
 }
 
 /// What a branch dresses its rooms with (map_view's `dressing`): never
@@ -513,14 +516,19 @@ fn plane_look(plane: Plane) -> BranchLook {
             dress: Dress::NONE,
             ..MAIN
         },
+        // the last level of a winning game: temples of marble capped in
+        // gold, floating among the stars
         Plane::Astral => BranchLook {
-            remap: &[("masonry", "ludios_wall"), ("floor", "astral_floor")],
+            remap: &[("masonry", "marble"), ("floor", "astral_floor")],
             cap: "gilded",
             ambient: rgb(0.6, 0.58, 0.72),
             ambient_energy: 0.3,
             fill_scale: 2.0,
-            fog: rgb(0.9, 0.86, 1.0),
-            fog_density: 0.008,
+            fog: rgb(0.7, 0.66, 0.9),
+            fog_density: 0.003,
+            darkness: rgb(0.012, 0.01, 0.035),
+            dust: 0.0,
+            under: Under::Stars,
             grade: Grade {
                 saturation: 0.85,
                 brightness: 1.05,

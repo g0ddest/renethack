@@ -110,7 +110,7 @@ pub(super) fn crowd() -> Vec<Step> {
 /// The levels `deep` visits (the debug level teleport's names) and the
 /// creatures made at each (`^G`'s names: a class's letter makes one of the
 /// class at random).
-const DEEP: [(&str, &[&str]); 11] = [
+const DEEP: [(&str, &[&str]); 12] = [
     (
         "medusa",
         &[
@@ -201,6 +201,8 @@ const DEEP: [(&str, &[&str]); 11] = [
     // deep and a bubble's skin
     ("air:", &["2 peaceful E", "2 peaceful v"]),
     ("water:", &["2 peaceful ;", "1 peaceful E"]),
+    // the Astral Plane: the stars, its slabs and its altars' light
+    ("astral:", &["2 peaceful A", "1 peaceful @"]),
 ];
 
 /// Turns the hero waits on each deep level.

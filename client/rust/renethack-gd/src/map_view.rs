@@ -147,6 +147,7 @@ fn lamp_offset(kind: Lamp) -> Vector3 {
         Lamp::Up => at(0.0, 1.5, -0.3),
         Lamp::Lava => at(0.0, 0.4, 0.0),
         Lamp::Down => at(0.0, -0.05, 0.3),
+        Lamp::Holy => at(0.0, 2.4, 0.0),
     }
 }
 
@@ -467,6 +468,15 @@ const MARK_SHEET_ALPHA: f32 = 3.0;
 /// How low the deep lies, its water cells and the ground round the level
 /// (metres): under the marks' sheets.
 const DEEP_BEDROCK: f32 = -0.3;
+/// How thick an Astral Plane's floor slab is (metres).
+const ASTRAL_SLAB: f32 = 0.35;
+/// The light over an altar of the Astral Plane, falling on it from its
+/// god (`Lamp::Holy`): colour, energy and reach.
+const HOLY: (Color, f32, f32) = (Color::from_rgb(1.0, 0.88, 0.62), 3.2, 4.5);
+/// Its shaft of light: how tall (it fades out in its lower half) and how
+/// strong.
+const SHAFT_TALL: f32 = 7.0;
+const SHAFT_STRENGTH: f32 = 0.45;
 /// The Planes (`Under`): how tall a bubble's skin stands on the Plane of
 /// Water, the puffs a cloud cell of the Plane of Air is, and how far below
 /// the level the sea of clouds lies (metres).
@@ -496,6 +506,12 @@ const DEEP_LIGHT: (Vector3, Color, f32) = (
     Vector3::new(-80.0, 10.0, 0.0),
     Color::from_rgb(0.45, 0.75, 0.9),
     0.45,
+);
+/// Among the stars (the Astral Plane): a cold clear light from above.
+const STAR_LIGHT: (Vector3, Color, f32) = (
+    Vector3::new(-60.0, 20.0, 0.0),
+    Color::from_rgb(0.78, 0.76, 1.0),
+    0.55,
 );
 const MOON: (Vector3, Color, f32) = (
     Vector3::new(-62.0, 25.0, 0.0),
@@ -623,6 +639,9 @@ enum Lamp {
     Down,
     /// The red glow of lava.
     Lava,
+    /// An Astral Plane's altar lit from above by its god, a shaft of light
+    /// in a thin mist.
+    Holy,
 }
 
 /// One mesh of a cell, relative to the cell's centre on the ground.
@@ -1771,7 +1790,11 @@ fn terrain_base(
         Terrain::Floor | Terrain::DarkFloor => {
             look.ground_tile(tile, ground(lit_shade), Vector3::ZERO);
             look.lit = t == Terrain::Floor;
-            rubble(look, around, bedrock, ctx, Side::Wall, 0.3);
+            if ctx.branch.under == Under::Stars {
+                astral_floor(look, around, ctx);
+            } else {
+                rubble(look, around, bedrock, ctx, Side::Wall, 0.3);
+            }
         }
         Terrain::Corridor => {
             let lit = sym == "S_litcorr";
@@ -2038,6 +2061,10 @@ fn terrain_base(
                 yaw: 0.0,
                 scale: Vector3::new(1.0, 1.0, 1.0),
             });
+            // among the stars, lit from above by its god
+            if ctx.branch.under == Under::Stars {
+                look.lamp = Some(Lamp::Holy);
+            }
             let flame = Paint::Flat(Color::from_rgb(1.0, 0.7, 0.35), Finish::Glow);
             for x in [-0.112f32, 0.0, 0.112] {
                 look.solid(sphere(0.012), flame, at(x, 0.6 + 0.41, -0.22));
@@ -2250,8 +2277,9 @@ fn terrain_base(
             look.ground = 1.1;
         }
         Terrain::Air => match ctx.branch.under {
-            // nothing: open air over the sea of clouds far below
-            Under::Sky => {}
+            // nothing: open air over the sea of clouds (or the stars) far
+            // below
+            Under::Sky | Under::Stars => {}
             Under::Deep => {
                 look.ground_tile(
                     plane(1.0, 1.0),
@@ -2291,7 +2319,7 @@ fn terrain_base(
                 );
             }
         },
-        Terrain::Cloud if ctx.branch.under == Under::Sky => {
+        Terrain::Cloud if matches!(ctx.branch.under, Under::Sky | Under::Stars) => {
             // soft masses overlapping their neighbours' into a bank, each
             // cell's own by its noise
             for k in 0..CLOUD_PUFFS {
@@ -2329,6 +2357,56 @@ fn terrain_base(
             // its letter names it under the pointer and in the overview
             label(look, 0.45);
         }
+    }
+}
+
+/// A floor of the Astral Plane: a slab of marble floating over the stars,
+/// its sides where nothing is beside it (the edge of what is known, or of
+/// the plane) a gilded lip, and gold inlaid between its slabs of two by
+/// two cells.
+fn astral_floor(look: &mut Look, around: &Around, ctx: &Ctx) {
+    let gold = ctx.mat("gilded").map_or(
+        Paint::Flat(Color::from_rgb(0.8, 0.62, 0.3), Finish::Glossy),
+        |m| Paint::Pbr(m, SHADE_LIT, Role::Trim),
+    );
+    if let Some(m) = ctx.mat("floor") {
+        let side = Paint::Pbr(m, 70, Role::Prop);
+        look.solid(
+            cuboid(1.0, ASTRAL_SLAB, 1.0),
+            side,
+            at(0.0, -ASTRAL_SLAB / 2.0 - 0.005, 0.0),
+        );
+        if let Some(s) = look.solids.last_mut() {
+            s.shadow = false;
+        }
+    }
+    // north, south, west, east
+    let edges = [
+        (at(0.0, 0.0, -0.5), true),
+        (at(0.0, 0.0, 0.5), true),
+        (at(-0.5, 0.0, 0.0), false),
+        (at(0.5, 0.0, 0.0), false),
+    ];
+    for ((pos, along_x), side) in edges.into_iter().zip(around.sides) {
+        if side != Side::Solid {
+            continue;
+        }
+        let lip = if along_x {
+            cuboid(1.04, 0.05, 0.06)
+        } else {
+            cuboid(0.06, 0.05, 1.04)
+        };
+        look.solid(lip, gold, pos + at(0.0, -0.01, 0.0));
+    }
+    // the inlay: on the west and north edges of every other cell
+    let inlay = |look: &mut Look, mesh, pos| {
+        look.ground_tile(mesh, gold, pos);
+    };
+    if ctx.x.rem_euclid(2) == 0 && around.sides[2] == Side::Open {
+        inlay(look, plane(0.035, 1.0), at(-0.5, 0.003, 0.0));
+    }
+    if ctx.y.rem_euclid(2) == 0 && around.sides[0] == Side::Open {
+        inlay(look, plane(1.0, 0.035), at(0.0, 0.003, -0.5));
     }
 }
 
@@ -3075,7 +3153,8 @@ fn blast_flash(look: &mut Look, kind: Blast, heart: bool, g: &Glyph) {
 struct CellLamp {
     kind: Lamp,
     light: Gd<OmniLight3D>,
-    mist: Option<Gd<FogVolume>>,
+    /// A stair's mist, an altar's shaft of light.
+    mist: Option<Gd<Node3D>>,
 }
 
 #[derive(Default)]
@@ -3405,6 +3484,7 @@ pub struct MapView {
     /// The sea of clouds far below the Plane of Air (made the first time),
     /// and the light from above (the moon's, the Planes' own sun).
     sky_sea: Option<Gd<MeshInstance3D>>,
+    sea_mats: Vec<(&'static str, Gd<Material>)>,
     moon: Gd<DirectionalLight3D>,
     back: Gd<DirectionalLight3D>,
     /// The vignette and grain over the map, under the HUD.
@@ -4168,6 +4248,7 @@ impl MapView {
             holes: HashSet::new(),
             bedrock_dirty: true,
             sky_sea: None,
+            sea_mats: Vec::new(),
             moon,
             back,
             post,
@@ -4819,6 +4900,7 @@ impl MapView {
             Under::Deep => DEEP_LIGHT,
             Under::Rock => MOON,
             Under::Chasm => EMBER_LIGHT,
+            Under::Stars => STAR_LIGHT,
         };
         self.moon.set_rotation_degrees(way);
         self.moon.set_color(color);
@@ -4837,7 +4919,11 @@ impl MapView {
             self.hero_light
                 .set_param(Param::ENERGY, HERO_LIGHT_ENERGY * l.hero_light);
         }
-        self.show_sky_sea(l.under == Under::Sky);
+        self.show_sky_sea(match l.under {
+            Under::Sky => Some("res://shaders/sky_sea.gdshader"),
+            Under::Stars => Some("res://shaders/stars.gdshader"),
+            _ => None,
+        });
         let chasm = if l.under == Under::Chasm {
             CHASM
         } else {
@@ -4852,25 +4938,31 @@ impl MapView {
         self.keep_prologue_air();
     }
 
-    /// The sea of clouds far below the level (the Plane of Air's), made
-    /// the first time it is shown.
-    fn show_sky_sea(&mut self, on: bool) {
-        if !on {
+    /// What lies far below the level, in `shader`: the Plane of Air's sea
+    /// of clouds, the Astral Plane's stars (None: nothing). Made the first
+    /// time it is shown, its material for each shader once.
+    fn show_sky_sea(&mut self, shader: Option<&'static str>) {
+        let Some(path) = shader else {
             if let Some(sea) = self.sky_sea.as_mut() {
                 sea.set_visible(false);
             }
             return;
-        }
+        };
+        let mat = match self.sea_mats.iter().find(|(p, _)| *p == path) {
+            Some((_, m)) => Some(m.clone()),
+            None => godot::tools::try_load::<Shader>(path).ok().map(|shader| {
+                let mut m = ShaderMaterial::new_gd();
+                m.set_shader(&shader);
+                let m = m.upcast::<Material>();
+                self.sea_mats.push((path, m.clone()));
+                m
+            }),
+        };
         let sea = self.sky_sea.get_or_insert_with(|| {
             let mut sea = MeshInstance3D::new_alloc();
             let mut quad = godot::classes::PlaneMesh::new_gd();
             quad.set_size(Vector2::new(SKY_SEA, SKY_SEA));
             sea.set_mesh(&quad);
-            if let Ok(shader) = godot::tools::try_load::<Shader>("res://shaders/sky_sea.gdshader") {
-                let mut m = ShaderMaterial::new_gd();
-                m.set_shader(&shader);
-                sea.set_material_override(&m);
-            }
             sea.set_cast_shadows_setting(ShadowCastingSetting::OFF);
             // the middle of the level's field, far below it
             let mid = Vector3::new(COLNO as f32 / 2.0, -SKY_DROP, ROWNO as f32 / 2.0);
@@ -4878,6 +4970,9 @@ impl MapView {
             self.root.add_child(&sea);
             sea
         });
+        if let Some(m) = mat {
+            sea.set_material_override(&m);
+        }
         sea.set_visible(true);
     }
 
@@ -6048,7 +6143,7 @@ impl MapView {
         // from anything known smoulders in it); on the Plane of Air none,
         // the sky; on the Plane of Water the deep
         self.bedrock
-            .set_visible(self.branch_look.under != Under::Sky);
+            .set_visible(!matches!(self.branch_look.under, Under::Sky | Under::Stars));
         if self.branch_look.under == Under::Deep {
             let mat = self.material(Paint::Liquid(Liquid::Deep));
             self.bedrock.set_material_override(&mat);
@@ -7935,7 +8030,12 @@ impl MapView {
             l.light.set_position(pos);
             l.light.set_visible(true);
             if let Some(m) = l.mist.as_mut() {
-                m.set_position(origin + at(0.0, -0.3, 0.0));
+                let y = if kind == Lamp::Holy {
+                    SHAFT_TALL / 2.0
+                } else {
+                    -0.3
+                };
+                m.set_position(origin + at(0.0, y, 0.0));
                 m.set_visible(true);
             }
             nodes.lamp = Some(l);
@@ -7958,6 +8058,30 @@ impl MapView {
                 light.set_param(Param::RANGE, 3.6);
                 light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 2.0);
             }
+            Lamp::Holy => {
+                light.set_color(HOLY.0);
+                light.set_param(Param::ENERGY, HOLY.1);
+                light.set_param(Param::RANGE, HOLY.2);
+                light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 2.5);
+                // a shaft of light falling on it, soft at its sides and
+                // fading upwards (the prayer's own, shaders/holy_light)
+                if let Ok(shader) =
+                    godot::tools::try_load::<Shader>("res://shaders/holy_light.gdshader")
+                {
+                    let mut mat = ShaderMaterial::new_gd();
+                    mat.set_shader(&shader);
+                    mat.set_shader_parameter("color", &HOLY.0.to_variant());
+                    mat.set_shader_parameter("height", &SHAFT_TALL.to_variant());
+                    mat.set_shader_parameter("strength", &SHAFT_STRENGTH.to_variant());
+                    let mut shaft = MeshInstance3D::new_alloc();
+                    shaft.set_mesh(&self.art.mesh(cylinder(0.55, 0.55, SHAFT_TALL)));
+                    shaft.set_material_override(&mat);
+                    shaft.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+                    shaft.set_position(origin + at(0.0, SHAFT_TALL / 2.0, 0.0));
+                    self.root.add_child(&shaft);
+                    mist = Some(shaft.upcast());
+                }
+            }
             Lamp::Down => {
                 light.set_color(STAIR_DOWN_LIGHT);
                 // above the far steps, so their treads catch it
@@ -7973,7 +8097,7 @@ impl MapView {
                 fog.set_position(origin + at(0.0, -0.3, 0.0));
                 fog.set_material(&mat);
                 self.root.add_child(&fog);
-                mist = Some(fog);
+                mist = Some(fog.upcast());
             }
         }
         self.root.add_child(&light);
@@ -10231,6 +10355,35 @@ mod tests {
         // elsewhere the same cells as they were
         let main = f.look_in(&deep, at(1, 1), Branch::Main);
         assert!(liquids(&main).is_empty());
+    }
+
+    /// The Astral Plane was a beige square in grey nothing: its floor is
+    /// slabs of marble floating over the stars, a gilded lip where
+    /// nothing is beside them, and its altars are lit from above.
+    #[test]
+    fn the_astral_plane_floats_among_the_stars() {
+        let f = Fixture::new();
+        let astral = Branch::Planes(nh_world::Plane::Astral);
+        let map = level(&f.cat, &["...", "._.", "..."]);
+        let at = |col: i32, row: i32| (PICTURE_AT.0 + col, PICTURE_AT.1 + row);
+        let corner = f.look_in(&map, at(0, 0), astral);
+        // the slab under it, and a lip on its north and west sides
+        let lips = corner
+            .solids
+            .iter()
+            .filter(|s| s.pos.y < 0.0 && s.pos.y > -0.1)
+            .count();
+        assert!(corner.solids.iter().any(|s| s.pos.y < -0.1), "no slab");
+        assert_eq!(lips, 2, "{:?}", corner.solids);
+        let middle = f.look_in(&map, at(1, 0), astral);
+        let lips = middle
+            .solids
+            .iter()
+            .filter(|s| s.pos.y < 0.0 && s.pos.y > -0.1)
+            .count();
+        assert_eq!(lips, 1);
+        assert_eq!(f.look_in(&map, at(1, 1), astral).lamp, Some(Lamp::Holy));
+        assert_eq!(f.look_in(&map, at(1, 1), Branch::Main).lamp, None);
     }
 
     #[test]
