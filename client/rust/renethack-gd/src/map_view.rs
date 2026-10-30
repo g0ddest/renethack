@@ -3816,15 +3816,23 @@ impl MapView {
             })
         };
         let xray = xray_of(XRAY);
-        // a creature behind the hero: its outline only
-        let outlined = |m: Option<Gd<Material>>| {
-            m.inspect(|m| {
-                if let Ok(mut s) = m.clone().try_cast::<ShaderMaterial>() {
-                    s.set_shader_parameter("outline", &true.to_variant());
-                }
-            })
+        // a creature behind the hero: its contour only, one line round it
+        // (its mask marks where it is hidden, its grown shell draws
+        // outside that)
+        let mask = godot::tools::try_load::<Shader>("res://shaders/xray_mask.gdshader").ok();
+        let contour = godot::tools::try_load::<Shader>("res://shaders/xray_contour.gdshader").ok();
+        let contour_of = |color: Color| {
+            let (mask, contour) = (mask.as_ref()?, contour.as_ref()?);
+            let mut line = ShaderMaterial::new_gd();
+            line.set_shader(contour);
+            line.set_shader_parameter("color", &color.to_variant());
+            line.set_render_priority(1);
+            let mut m = ShaderMaterial::new_gd();
+            m.set_shader(mask);
+            m.set_next_pass(&line);
+            Some(m.upcast::<Material>())
         };
-        let xray_creature = outlined(xray_of(XRAY_FOE)).zip(outlined(xray_of(XRAY_PET)));
+        let xray_creature = contour_of(XRAY_FOE).zip(contour_of(XRAY_PET));
 
         // over the hero's head: short shadows at their feet, not long ones
         // across the floor
