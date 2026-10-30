@@ -402,6 +402,39 @@ fn light_visit(
     ]);
 }
 
+/// The Gnomish Mines' rock and Minetown's buildings (the critics' second
+/// pass, #5), for pictures before and after (not part of `make
+/// test-client`): Minetown, a level below it and Mines' End, each as the
+/// hero arrives, mapped, close on a wall and in the overview.
+pub(super) fn mines() -> Vec<Step> {
+    let mut steps = vec![Step::Call(
+        "debug mode for this game",
+        |g: &mut RenethackGame| {
+            g.debug_mode = true;
+            Ok(())
+        },
+    )];
+    steps.extend(start());
+    steps.push(Step::Wait("the first level drawn", |g| {
+        drawn_in(g, Branch::Main)
+    }));
+    light_visit(
+        &mut steps,
+        Some(|g| entry_key(g, "minetn")),
+        "",
+        "mines-minetown",
+    );
+    light_visit(&mut steps, None, "9", "mines-9");
+    light_visit(
+        &mut steps,
+        Some(|g| entry_key(g, "minend")),
+        "",
+        "mines-end",
+    );
+    steps.extend(quit());
+    steps
+}
+
 /// Gehennom's looks and light (the critics' art #7 and #8), for pictures
 /// and their luma before and after (not part of `make test-client`): the
 /// Valley, then once the overview names it (its temple of Moloch, the

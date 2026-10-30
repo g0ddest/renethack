@@ -29,8 +29,9 @@ uniform sampler2D noise_tex : filter_linear_mipmap, repeat_enable;
 // per cell of the level, full in the channel of its ground: water, lava,
 // ice, land (surface.rs `GroundField`)
 uniform sampler2D ground_tex : filter_linear, repeat_disable;
-// per cell of the level, full where something stands or lies (a creature,
-// a thing): the fire's cracks keep clear of it (surface.rs `StandField`)
+// per cell of the level: R full where something stands or lies (a
+// creature, a thing: the fire's cracks keep clear of it), G where nothing
+// is drawn at all (a floor frays towards it) (surface.rs `StandField`)
 uniform sampler2D stand_tex : filter_linear, repeat_disable;
 // the ground's own kind (1 land, 4 ice), shown where it wins; 0: whatever
 // lies around it
@@ -82,6 +83,9 @@ uniform float ledge_shade = 1.0;
 // and this much of its relief to the noise's own
 uniform float natural = 0.0;
 uniform float natural_relief = 1.0;
+// natural rock split by crevices (a cave's: dark seams wandering over its
+// lumps, a fine grit in its relief, so it never reads as crumpled sheets)
+uniform float crevices = 0.0;
 // a faint cold light along the edges the camera sees grazing (rock)
 uniform float rim = 0.0;
 // the same on the tops only (a wall's rock top)
@@ -349,6 +353,15 @@ void fragment() {
 		near_lava = (1.0 - smoothstep(0.0, 0.35, own - v.g)) * step(0.001, v.g);
 		near_ice = edge_kind == 1.0 ? (1.0 - smoothstep(0.0, 0.4, own - v.b)) * step(0.001, v.b) : 0.0;
 	}
+	// a floor's edge where nothing is drawn beside it (the dark past what
+	// is seen, a floor NetHack leaves unmapped out of sight): frayed by the
+	// noise as a shore is, never a square step
+	if (edge_kind == 1.0) {
+		float empty = texture(stand_tex, (wpos.xz + 0.5) / FIELD).g;
+		if (empty > 0.001 && empty + (tl2(wpos.xz * 1.7 + vec2(23.1, 9.4)) - 0.5) * 0.6 > 0.5) {
+			discard;
+		}
+	}
 	vec3 n = normalize(wnrm);
 	if (facets > 0.0) {
 		vec3 f = normalize(cross(dFdx(wpos), dFdy(wpos)));
@@ -428,6 +441,14 @@ void fragment() {
 		// (fainter on rock's lit faces: dark veins there are marble's; on
 		// a cave's lumps all but none)
 		rock *= 1.0 - (boulder > 0.0 ? 0.1 : chunks > 0.0 ? 0.3 : 0.45) * crack;
+		float seam = 0.0;
+		if (crevices > 0.0) {
+			float cv = tn3(wpos * 1.6 + 7.3);
+			seam = smoothstep(0.47, 0.5, cv) - smoothstep(0.5, 0.53, cv);
+			// deep in some stretches, closed in others
+			seam *= smoothstep(0.35, 0.6, tn3(wpos * 0.7 + 1.9)) * crevices;
+			rock *= 1.0 - 0.75 * seam;
+		}
 		albedo = mix(albedo, rock, nat);
 		// its relief from the noise's slope, not from the mesh's grid
 		const float STEP = 0.04;
@@ -436,9 +457,19 @@ void fragment() {
 		vec3 grad = vec3(tn3(q + vec3(STEP, 0, 0)), tn3(q + vec3(0, STEP, 0)), tn3(q + vec3(0, 0, STEP))) - h0;
 		grad /= STEP;
 		vec3 bump = normalize(n - (grad - dot(grad, n) * n) * 0.16);
+		if (crevices > 0.0) {
+			// a fine grit over the lumps
+			vec3 q2 = wpos * 11.0;
+			float g0 = tn3(q2);
+			vec3 g2 = (vec3(tn3(q2 + vec3(STEP, 0, 0)), tn3(q2 + vec3(0, STEP, 0)),
+				tn3(q2 + vec3(0, 0, STEP))) - g0) / STEP;
+			bump = normalize(bump - (g2 - dot(g2, n) * n) * 0.035 * crevices);
+		}
 		wn = normalize(mix(wn, bump, nat * natural_relief));
 		// nor the texture's cavities and gloss: the noise's own
 		orm = mix(orm, vec3(mix(0.55, 1.0, smoothstep(0.25, 0.6, h0)), mix(0.55, 0.9, grain), 0.0), nat * natural_relief);
+		// the crevices in their own shadow
+		orm.r *= 1.0 - 0.6 * seam * nat;
 	}
 	albedo *= mix(1.0, mix(ledge_shade, top_shade, smoothstep(0.5, 1.2, wpos.y)), up);
 	// natural rock's hollows lie in their own shadow

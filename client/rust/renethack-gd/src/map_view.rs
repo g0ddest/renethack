@@ -509,6 +509,45 @@ const EMBER_LIGHT: (Vector3, Color, f32) = (
     Color::from_rgb(1.0, 0.55, 0.36),
     0.16,
 );
+/// The walls and doors a door is set in or joined to through walls, of
+/// the level `t` tells the terrain of (`MapView::refresh_built`); a run of
+/// them more than `most` long is the cave's own, a building against it.
+fn built_walls(t: impl Fn(i32, i32) -> Option<Terrain>, most: usize) -> HashSet<(i32, i32)> {
+    let door = |t: Option<Terrain>| {
+        matches!(
+            t,
+            Some(Terrain::ClosedDoor | Terrain::OpenDoor | Terrain::Doorway | Terrain::BrokenDoor)
+        )
+    };
+    let mut built = HashSet::new();
+    let mut seen = HashSet::new();
+    for (x, y) in (0..ROWNO).flat_map(|y| (0..COLNO).map(move |x| (x, y))) {
+        if !door(t(x, y)) || seen.contains(&(x, y)) {
+            continue;
+        }
+        let mut run = vec![(x, y)];
+        seen.insert((x, y));
+        let mut i = 0;
+        while i < run.len() && run.len() <= most {
+            let (cx, cy) = run[i];
+            for n in [(cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)] {
+                let tn = t(n.0, n.1);
+                if (tn == Some(Terrain::Wall) || door(tn)) && seen.insert(n) {
+                    run.push(n);
+                }
+            }
+            i += 1;
+        }
+        if run.len() <= most {
+            built.extend(run);
+        }
+    }
+    built
+}
+
+/// The most walls and doors joined up that are still a building in a cave
+/// branch (Minetown's temple is the biggest); more are the cave's own.
+const BUILT_MOST: usize = 90;
 /// Lava's light (`place_lava_lights`): its colour, energy and reach (3 to
 /// 4 cells), one every so many cells over a big pool, and how many at
 /// most on a level.
@@ -3306,6 +3345,10 @@ pub struct MapView {
     /// hero has seen it to be a swamp (`branch_look` is then its swamp's).
     level_look: BranchLook,
     swamp: bool,
+    /// In a cave branch, the walls built (a door set in them or joined to
+    /// one: Minetown's shops and temple), drawn in `built_look`.
+    built: HashSet<(i32, i32)>,
+    built_look: BranchLook,
     /// The post layer's material, and how far a new level is still
     /// hidden in black (1 when it is drawn, 0 when it shows).
     post_mat: Option<Gd<ShaderMaterial>>,
@@ -4090,6 +4133,8 @@ impl MapView {
             branch_look: crate::branch_look::look_of(Branch::Main),
             level_look: crate::branch_look::look_of(Branch::Main),
             swamp: false,
+            built: HashSet::new(),
+            built_look: crate::branch_look::look_of(Branch::Main),
             stats_window: std::env::var_os("RENETHACK_FRAME_STATS").map(|_| FrameStats::default()),
             sightings: std::env::var_os("RENETHACK_DUMP_SIGHTINGS").and_then(|p| {
                 std::fs::OpenOptions::new()
@@ -4267,6 +4312,7 @@ impl MapView {
             self.forget_gone();
             self.vfx.clear();
             self.facing.clear();
+            self.refresh_built(world, catalog);
             self.generation = Some(generation);
             world.map.take_dirty();
             // built over the next frames, nearest the hero first (the
@@ -4304,6 +4350,8 @@ impl MapView {
             self.hear_steps(&moves, world, catalog);
             self.carry_rider(was_at, world);
             self.flank_steed(was_at, hero, world);
+            // walls found to be built (a door seen in them) drawn again
+            dirty.extend(self.refresh_built(world, catalog));
             let near: Vec<_> = dirty
                 .iter()
                 .flat_map(|&(x, y)| {
@@ -4742,6 +4790,7 @@ impl MapView {
             self.level_look
         };
         self.branch_look = l;
+        self.built_look = crate::branch_look::built(l);
         let env = &mut self.env;
         env.set_bg_color(l.darkness);
         env.set_fog_light_color(l.darkness);
@@ -5070,6 +5119,25 @@ impl MapView {
         }
         self.place_torches(&sconces);
         self.place_lava_lights();
+    }
+
+    /// In a cave branch, the walls built: those a door is set in or joined
+    /// to one through walls (Minetown's shops and temple; the caves' own
+    /// walls have no doors). A run of walls that joins up with more than
+    /// `BUILT_MOST` is the cave's (a building against the rock). The walls
+    /// whose look that changed.
+    fn refresh_built(&mut self, world: &World, catalog: &Catalog) -> Vec<(i32, i32)> {
+        let built = if self.level_look.cave {
+            built_walls(
+                |x, y| world.map.cell(x, y).and_then(|c| cell_terrain(c, catalog)),
+                BUILT_MOST,
+            )
+        } else {
+            HashSet::new()
+        };
+        let changed = built.symmetric_difference(&self.built).copied().collect();
+        self.built = built;
+        changed
     }
 
     /// Lava is a light: one over the middle of each pool of it known, and
@@ -8027,7 +8095,11 @@ impl MapView {
                 .hero_trap
                 .filter(|t| t.is_pit())
                 .map(|t| t == nh_world::TrapKind::SpikedPit),
-            branch: &self.branch_look,
+            branch: if self.built.contains(&(x, y)) {
+                &self.built_look
+            } else {
+                &self.branch_look
+            },
         };
         let mut look = world
             .map
@@ -8056,7 +8128,8 @@ impl MapView {
             m.look.art.back = 0.0;
         }
         self.ground.set(x, y, look.kind);
-        self.standing.set(x, y, look.entity.is_some());
+        self.standing
+            .set(x, y, look.entity.is_some(), look.is_empty());
         match self.cells.get(&(x, y)) {
             Some(n) if n.look == look => return,
             None if look.is_empty() => return,
@@ -10024,6 +10097,48 @@ mod tests {
         map.print(x, y, &monster(cat, "jackal", 0), Some(&cmap(cat, "S_room")));
         let jackal = f.look_in(&map, (x, y), Branch::Main).solids;
         assert!(before.iter().all(|s| jackal.contains(s)));
+    }
+
+    #[test]
+    fn a_cave_s_walls_with_a_door_in_them_are_built() {
+        fn terrain<'a>(
+            map: &'a MapState,
+            cat: &'a Catalog,
+        ) -> impl Fn(i32, i32) -> Option<Terrain> + 'a {
+            move |x, y| map.cell(x, y).and_then(|c| cell_terrain(c, cat))
+        }
+        let f = Fixture::new();
+        let t = |map| terrain(map, &f.cat);
+        let at = |c: i32, r: i32| (PICTURE_AT.0 + c, PICTURE_AT.1 + r);
+        // a shop with its door in a cave of no doors: its walls only
+        let town = level(
+            &f.cat,
+            &[
+                "r-----------------------7",
+                "|.......................|",
+                "|..r--+--7..............|",
+                "|..|.....|..............|",
+                "|..L-----J..............|",
+                "|.......................|",
+                "L-----------------------J",
+            ],
+        );
+        let built = built_walls(t(&town), BUILT_MOST);
+        assert_eq!(built.len(), 16, "{built:?}");
+        assert!(built.contains(&at(5, 2)) && built.contains(&at(3, 4)));
+        assert!(!built.contains(&at(0, 0)) && !built.contains(&at(12, 6)));
+        // one built against the cave's own walls: joined up with them, more
+        // than a building's, the cave's
+        let against = level(
+            &f.cat,
+            &[
+                "r-----+--7--------------7",
+                "|........|..............|",
+                "|........|..............|",
+                "L--------J--------------J",
+            ],
+        );
+        assert!(built_walls(t(&against), 30).is_empty());
     }
 
     #[test]

@@ -308,6 +308,7 @@ impl Surfaces {
                 set(&mut mat, "round_off", 0.4);
                 set(&mut mat, "natural", 0.6);
                 set(&mut mat, "natural_relief", 0.35);
+                set(&mut mat, "crevices", 1.0);
                 set(&mut mat, "natural_top", 1.0);
                 set(&mut mat, "top_shade", 0.28);
                 set(&mut mat, "ledge_shade", 0.68);
@@ -458,10 +459,13 @@ impl Default for GroundField {
     }
 }
 
-/// Where something stands or lies, per cell of the level (a creature, the
-/// hero, a thing, a body): the shaders read it as a texture (R full).
+/// Per cell of the level, where something stands or lies (a creature, the
+/// hero, a thing, a body: R full) and where nothing is drawn at all (the
+/// unknown, a floor NetHack leaves unmapped out of sight: G full): the
+/// shaders read it as a texture.
 pub struct StandField {
     cells: Vec<bool>,
+    empty: Vec<bool>,
     image: Gd<Image>,
     changed: bool,
 }
@@ -469,26 +473,29 @@ pub struct StandField {
 impl StandField {
     pub fn new() -> StandField {
         let image =
-            Image::create_empty(COLNO, ROWNO, false, Format::R8).unwrap_or_else(Image::new_gd);
+            Image::create_empty(COLNO, ROWNO, false, Format::RG8).unwrap_or_else(Image::new_gd);
         StandField {
             cells: vec![false; (COLNO * ROWNO) as usize],
+            empty: vec![true; (COLNO * ROWNO) as usize],
             image,
             changed: true,
         }
     }
 
-    pub fn set(&mut self, x: i32, y: i32, on: bool) {
+    pub fn set(&mut self, x: i32, y: i32, on: bool, empty: bool) {
         if let Some(i) = index(x, y)
-            && self.cells[i] != on
+            && (self.cells[i] != on || self.empty[i] != empty)
         {
             self.cells[i] = on;
+            self.empty[i] = empty;
             self.changed = true;
         }
     }
 
     pub fn clear(&mut self) {
-        if self.cells.contains(&true) {
+        if self.cells.contains(&true) || self.empty.contains(&false) {
             self.cells.fill(false);
+            self.empty.fill(true);
             self.changed = true;
         }
     }
@@ -499,11 +506,14 @@ impl StandField {
             return false;
         }
         let mut bytes = PackedByteArray::new();
-        bytes.resize(self.cells.len());
-        for (out, &on) in bytes.as_mut_slice().iter_mut().zip(&self.cells) {
-            *out = if on { 255 } else { 0 };
+        bytes.resize(self.cells.len() * 2);
+        let out = bytes.as_mut_slice();
+        for (i, (&on, &empty)) in self.cells.iter().zip(&self.empty).enumerate() {
+            out[i * 2] = if on { 255 } else { 0 };
+            out[i * 2 + 1] = if empty { 255 } else { 0 };
         }
-        self.image.set_data(COLNO, ROWNO, false, Format::R8, &bytes);
+        self.image
+            .set_data(COLNO, ROWNO, false, Format::RG8, &bytes);
         true
     }
 }

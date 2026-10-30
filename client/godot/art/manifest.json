@@ -11,7 +11,7 @@
   "masonry": {"textures": "cc0/polyhaven/textures/stone_wall_04/stone_wall_04", "uv_scale": 0.4, "color": "#8a8580"},
   "bedrock": {"textures": "cc0/ambientcg/Rock058/Rock058", "uv_scale": 0.4, "color": "#34312f"},
   "rock": {"textures": "cc0/polyhaven/textures/rock_wall_08/rock_wall_08", "uv_scale": 0.5},
-  "cave": {"textures": "cc0/ambientcg/Rock035/Rock035", "uv_scale": 0.35, "color": "#a08a70"},
+  "cave": {"textures": "cc0/ambientcg/Rock035/Rock035", "uv_scale": 0.35, "color": "#86735e"},
   "cave_rock": {"textures": "cc0/ambientcg/Rock035/Rock035", "uv_scale": 0.4, "color": "#4a3e34"},
   "earth": {"textures": "cc0/polyhaven/textures/dirt_floor/dirt_floor", "uv_scale": 0.45, "color": "#7a6450"},
   "dressed": {"textures": "cc0/polyhaven/textures/castle_wall_varriation/castle_wall_varriation", "uv_scale": 0.45, "color": "#9a9a9e"},

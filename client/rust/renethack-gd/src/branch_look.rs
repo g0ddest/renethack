@@ -646,6 +646,25 @@ pub fn look_of_level(branch: Branch, level: Option<&LevelNotice>) -> BranchLook 
     }
 }
 
+/// The look of a wall a cave branch has built (Minetown's shops and
+/// temple: the walls a door is set in, map_view's `built`): brick under a
+/// timber cap, never the rock's lumps.
+pub fn built(look: BranchLook) -> BranchLook {
+    BranchLook {
+        cave: false,
+        supports: false,
+        remap: &[
+            ("masonry", "brick"),
+            ("bedrock", "cave_rock"),
+            ("floor", "earth"),
+            ("dirt", "earth"),
+        ],
+        cap: "wood",
+        dress: Dress::NONE,
+        ..look
+    }
+}
+
 /// The look a level takes once the hero has seen a swamp on it (Juiblex's,
 /// `swamps`): a murky green haze, no fire showing through the floors, no
 /// embers in the air nor glow from below. The light and the air alone:
