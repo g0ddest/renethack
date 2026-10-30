@@ -2604,9 +2604,15 @@ impl RenethackGame {
         let Some((_, prompt)) = &self.pending else {
             return;
         };
-        // Esc (a gamepad's B) puts the guide's card away first
+        // Esc (a gamepad's B) puts the guide's card away first, and so do
+        // Space and Enter: the prologue and "Your quest" taught "any key:
+        // next", and the engine took them for commands it does not know
         if command
-            && k.key == Key::Escape
+            && matches!(
+                k.key,
+                Key::Escape | Key::Enter | Key::KeypadEnter | Key::Char(' ')
+            )
+            && k.mods == nh_world::Mods::default()
             && !k.echo
             && self.count.shown().is_none()
             && self.ui.as_ref().is_some_and(|ui| ui.hint.shown().is_some())
@@ -3369,6 +3375,13 @@ impl RenethackGame {
             match o {
                 PadOut::Key(k) => self.push_ui(UiEvent::GameKey(k)),
                 PadOut::KeyUp(k) => self.push_ui(UiEvent::KeyUp(k)),
+                // A puts the guide's card away first, as B does
+                PadOut::Activate
+                    if self.at_command()
+                        && self.ui.as_ref().is_some_and(|ui| ui.hint.shown().is_some()) =>
+                {
+                    self.ui_mut().hint.dismiss();
+                }
                 PadOut::Activate => {
                     if let Some((x, y)) = self.pad_cell() {
                         self.push_ui(UiEvent::MapClick { x, y, button: 1 });

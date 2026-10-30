@@ -1,8 +1,9 @@
 //! The first-steps guide's hint cards: `guide` plays a debug game with the
 //! guide on, staging each card's occasion in turn (the others passed by,
 //! `RenethackGame::hint_only`). The pet's card comes at the start, under
-//! the portrait block, clear of the HUD and the hero; Esc, a click and the
-//! gamepad's B put a card away. The level mapped (^F) shows stairs down and
+//! the portrait block, clear of the HUD and the hero; Space, Enter, Esc, a
+//! click and the gamepad's A and B put a card away (Space and Enter never
+//! reach the engine as a command it does not know). The level mapped (^F) shows stairs down and
 //! a door; a monster made (^G) a creature; a dagger dropped and looked at
 //! an item here; a wished scroll an unknown item; a potion of gain level a
 //! new level; a fountain, a trap and an altar drawn beside the hero (the
@@ -163,7 +164,26 @@ fn esc() -> Step {
 
 /// Wait for the card staged, then Esc.
 fn shown_then_esc(what: &'static str) -> [Step; 3] {
-    [Step::Wait(what, card), esc(), Step::Wait("put away", gone)]
+    shown_then(what, esc())
+}
+
+/// Wait for the card staged, then `put` puts it away.
+fn shown_then(what: &'static str, put: Step) -> [Step; 3] {
+    [Step::Wait(what, card), put, Step::Wait("put away", gone)]
+}
+
+/// No line of the engine's "Unknown command" in the log: the key that
+/// put a card away never reached it.
+fn no_unknown_command(g: &RenethackGame) -> Result<bool, String> {
+    let unknown = g
+        .world
+        .log
+        .iter()
+        .any(|m| m.text.starts_with("Unknown command"));
+    match unknown {
+        true => Err("the key went to the engine: Unknown command".into()),
+        false => Ok(true),
+    }
 }
 
 pub(super) fn guide() -> Vec<Step> {
@@ -300,8 +320,11 @@ pub(super) fn guide() -> Vec<Step> {
             Ok(g.ui.as_ref().ok_or("no UI")?.hint.in_full())
         }),
         Step::Shot("guide-pet"),
-        esc(),
-        Step::Wait("put away with Esc", gone),
+        // Space, as "Your quest" taught: the card goes, the engine never
+        // hears of it
+        Step::Key(KeyInput::plain(Key::Char(' '))),
+        Step::Wait("put away with Space", gone),
+        Step::Wait("no unknown command", no_unknown_command),
         // the level mapped: stairs down (put away with a click), a door
         // (with the gamepad's B)
         stage!(Guide::StairsDown),
@@ -333,7 +356,11 @@ pub(super) fn guide() -> Vec<Step> {
         Step::Dialog(DialogEvent::TextSubmitted("newt".into())),
         Step::Request("a command after the monster", command),
     ]);
-    steps.extend(shown_then_esc("the creature's card"));
+    steps.extend(shown_then(
+        "the creature's card",
+        Step::Key(KeyInput::plain(Key::Enter)),
+    ));
+    steps.push(Step::Wait("no unknown command", no_unknown_command));
     // a dagger dropped and looked at
     steps.extend([
         stage!(Guide::ItemHere),
@@ -352,7 +379,13 @@ pub(super) fn guide() -> Vec<Step> {
     // a scroll whose kind the hero does not know
     steps.push(stage!(Guide::Unidentified));
     steps.extend(wish("uncursed scroll"));
-    steps.extend(shown_then_esc("the unknown thing's card"));
+    steps.extend(shown_then(
+        "the unknown thing's card",
+        Step::Pad(vec![
+            PadEv::Button(PadButton::A, true),
+            PadEv::Button(PadButton::A, false),
+        ]),
+    ));
     // a new level
     steps.push(stage!(Guide::LevelUp));
     steps.extend(wish("uncursed potion of gain level"));

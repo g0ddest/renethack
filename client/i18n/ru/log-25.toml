@@ -50,3 +50,7 @@ ru = "Рядом с вами появляется привидение{1}"
 [df36182c70bb]
 en = "An enormous ghost appears next to you%c"
 ru = "Рядом с вами появляется огромное привидение{1}"
+
+[13919afcdd01]
+en = "Unknown command '%s'."
+ru = "Неизвестная команда '{1}'."

@@ -2,8 +2,8 @@
 //! game (the goal, the screen, moving and fighting), and a hint card beside
 //! the HUD, under the portrait block and clear of the map's middle where
 //! the hero stands, the first time its occasion comes
-//! (`nh_world::HintWatch`). Esc, B or a click puts a card away, or a while
-//! unread. Something over the map (a question, a dialog, a panel, a page)
+//! (`nh_world::HintWatch`). Space, Enter, Esc, A, B or a click puts a card
+//! away, or a while unread. Something over the map (a question, a dialog, a panel, a page)
 //! holds it back: hidden, its time stopped.
 
 use godot::classes::control::{MouseFilter, SizeFlags};
@@ -114,7 +114,8 @@ impl HintCard {
         self.close.set_text(&tr!("guide-card-close"));
         self.close.set_visible(self.pad.is_none());
         if let Some(kind) = self.pad {
-            let parts: [(&[PadButton], String); 1] = [(&[PadButton::B], tr!("hint-close"))];
+            let parts: [(&[PadButton], String); 1] =
+                [(&[PadButton::A, PadButton::B], tr!("hint-close"))];
             let row = pad_view::buttons_row(kind, &parts, 14);
             self.foot.add_child(&row);
             self.pad_row = Some(row);
