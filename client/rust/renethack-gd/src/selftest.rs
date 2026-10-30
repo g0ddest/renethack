@@ -146,6 +146,8 @@ mod tips_tests;
 mod trapdoor_tests;
 #[path = "selftest_travel_words.rs"]
 mod travel_words_tests;
+#[path = "selftest_valley.rs"]
+mod valley_tests;
 #[path = "selftest_variants.rs"]
 mod variants_tests;
 #[path = "selftest_world.rs"]
@@ -5173,6 +5175,7 @@ impl SelfTest {
             "peaceful-swap" => peaceful_tests::peaceful_swap(),
             "rest" => rest_tests::rest(),
             "calm" => calm_tests::calm(),
+            "valley" => valley_tests::valley(),
             "quest-words" => prose_tests::quest_words(),
             "pad-panels" => pad_panels_tests::pad_panels(),
             "pad-journey" => pad_journey_tests::pad_journey(),

@@ -259,16 +259,22 @@ inventory_flush(void)
     rh_proto_send("win", "inventory", inventory_json());
 }
 
-/* The lair the overview names the hero's level once the hero knows it:
-   "valley" or "sanctum" (#overview's temple of Moloch, its flags set when
-   the hero enters the temple, or by the overview once its altar is
-   mapped), else "".  The flags as they stand, never worked out anew.
-   Observation only. */
+/* The lair the hero knows their level to be: "valley" from the arrival
+   there, which NetHack's own words name; "sanctum" once the overview
+   names it (#overview's temple of Moloch, its flag set when the hero
+   enters the temple, or by the overview once its altar is mapped); else
+   "".  The flags as they stand, never worked out anew.  Observation
+   only. */
 static const char *
 level_lair(void)
 {
     mapseen *mptr;
 
+    /* the Valley: NetHack names it as the hero arrives from outside
+       Gehennom ("You arrive at the Valley of the Dead..."), and every way
+       in from inside Gehennom passed through it first */
+    if (Is_valley(&u.uz))
+        return "valley";
     for (mptr = svm.mapseenchn; mptr; mptr = mptr->next)
         if (on_level(&mptr->lev, &u.uz))
             break;
@@ -281,8 +287,8 @@ level_lair(void)
 /* Before the engine waits for input: the hero arrived on another level
    (or a game began or was restored), or the overview has come to name
    it.  Only the branch and the depth, which the hero always knows (the
-   overview names the branch on arrival), and a lair once the overview
-   names it (level_lair()); never a special level's name, which would
+   overview names the branch on arrival), and a lair once the hero knows
+   it (level_lair()); never another special level's name, which would
    tell more than the map shows. */
 static void
 level_flush(void)
