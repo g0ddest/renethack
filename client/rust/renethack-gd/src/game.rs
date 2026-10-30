@@ -3018,7 +3018,8 @@ impl RenethackGame {
             self.hints_waiting.clear();
             return;
         }
-        if ui.hint.tick(dt, !clear) {
+        let next = !self.hints_waiting.is_empty();
+        if ui.hint.tick(dt, !clear, self.world.turn(), next) {
             self.hint_gone_at = Some(Instant::now());
         }
         let rested = self.hint_gone_at.is_none_or(|t| t.elapsed() >= HINT_GAP);

@@ -3,7 +3,8 @@
 //! the HUD, under the portrait block and clear of the map's middle where
 //! the hero stands, the first time its occasion comes
 //! (`nh_world::HintWatch`). Space, Enter, Esc, A, B or a click puts a card
-//! away, or a while unread. Something over the map (a question, a dialog, a panel, a page)
+//! away; it goes by itself after some turns, a while unread, or for the
+//! next card. Something over the map (a question, a dialog, a panel, a page)
 //! holds it back: hidden, its time stopped.
 
 use godot::classes::control::{MouseFilter, SizeFlags};
@@ -30,6 +31,11 @@ const BODY_SIZE: i32 = 17;
 const CARD_IN: f64 = 0.25;
 const CARD_HOLD: f64 = 45.0;
 const CARD_OUT: f64 = 0.3;
+/// A card goes after this many game turns up (a quick player's 45
+/// seconds are hundreds of turns: "Your pet" stayed from T76 to T431),
+/// and makes way for the next one waiting after this many seconds shown.
+pub const CARD_TURNS: i64 = 20;
+const CARD_WAITED: f64 = 8.0;
 
 /// The card and the one it shows.
 pub struct HintCard {
@@ -45,6 +51,8 @@ pub struct HintCard {
     /// The card shown, and for how long; going: its fade's start.
     shown: Option<(Guide, f64)>,
     going: Option<f64>,
+    /// The game's turn when the card came (None: not known yet).
+    since_turn: Option<i64>,
 }
 
 impl HintCard {
@@ -94,6 +102,7 @@ impl HintCard {
             pad_row: None,
             shown: None,
             going: None,
+            since_turn: None,
         }
     }
 
@@ -142,6 +151,7 @@ impl HintCard {
             .set_modulate(Color::from_rgba(1.0, 1.0, 1.0, 0.0));
         self.shown = Some((card, 0.0));
         self.going = None;
+        self.since_turn = None;
     }
 
     /// The words again (in another language).
@@ -171,8 +181,11 @@ impl HintCard {
     }
 
     /// The time passes (`dt` seconds); `blocked`: something is over the
-    /// map, the card waits hidden. True once it has gone.
-    pub fn tick(&mut self, dt: f64, blocked: bool) -> bool {
+    /// map, the card waits hidden; `turn`: the game's turn now; `next`:
+    /// another card waits. A card goes at its hold's end, after
+    /// `CARD_TURNS` turns, or for the next one once read a while. True
+    /// once it has gone.
+    pub fn tick(&mut self, dt: f64, blocked: bool, turn: Option<i64>, next: bool) -> bool {
         let Some((_, t)) = self.shown.as_mut() else {
             return false;
         };
@@ -182,7 +195,17 @@ impl HintCard {
         }
         *t += dt;
         let t = *t;
-        if self.going.is_none() && t >= CARD_IN + CARD_HOLD {
+        if self.since_turn.is_none() {
+            self.since_turn = turn;
+        }
+        let turns = turn
+            .zip(self.since_turn)
+            .map_or(0, |(now, from)| now - from);
+        if self.going.is_none()
+            && (t >= CARD_IN + CARD_HOLD
+                || turns >= CARD_TURNS
+                || (next && t >= CARD_IN + CARD_WAITED))
+        {
             self.going = Some(t);
         }
         let alpha = match self.going {

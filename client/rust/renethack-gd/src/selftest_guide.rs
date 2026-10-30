@@ -3,7 +3,8 @@
 //! `RenethackGame::hint_only`). The pet's card comes at the start, under
 //! the portrait block, clear of the HUD and the hero; Space, Enter, Esc, a
 //! click and the gamepad's A and B put a card away (Space and Enter never
-//! reach the engine as a command it does not know). The level mapped (^F) shows stairs down and
+//! reach the engine as a command it does not know), and a card left alone
+//! goes by itself some turns later. The level mapped (^F) shows stairs down and
 //! a door; a monster made (^G) a creature; a dagger dropped and looked at
 //! an item here; a wished scroll an unknown item; a potion of gain level a
 //! new level; a fountain, a trap and an altar drawn beside the hero (the
@@ -419,7 +420,26 @@ pub(super) fn guide() -> Vec<Step> {
             Ok(())
         }),
     ]);
-    steps.extend(shown_then_esc("the trap's card"));
+    // left alone, it goes by itself some turns later
+    steps.extend([
+        Step::Wait("the trap's card", card),
+        Step::Wait("the card come in", |g| {
+            Ok(g.ui.as_ref().ok_or("no UI")?.hint.in_full())
+        }),
+        Step::Call("the turns pass", |g| {
+            let now = g.world.turn().ok_or("no turn")?;
+            let later = now + crate::guide_view::CARD_TURNS;
+            set_status(g, "time", &later.to_string(), None);
+            mark_frame(g)
+        }),
+        Step::Wait("gone by itself, turns later (not at its hold's end)", |g| {
+            let frame = Engine::singleton().get_process_frames() as i64;
+            if frame > FRAME.load(Ordering::Relaxed) + 120 {
+                return Err("the card stayed after its turns".into());
+            }
+            gone(g)
+        }),
+    ]);
     // a shopkeeper's welcome
     steps.extend([
         stage!(Guide::Shop),
