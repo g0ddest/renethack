@@ -1,6 +1,7 @@
 //! `portrait`: the HUD's medallion shows the hero rendered, head and
 //! shoulders, in place of the role's initial: a Wizard, a Samurai and a
-//! Valkyrie, each a game of their own. It renders when the look changes
+//! Valkyrie, each a game of their own (none showing the last game's
+//! face before their own is rendered). It renders when the look changes
 //! and not every frame: once for a hero, not again while they only stand
 //! there, again when the Valkyrie swaps the spear for the dagger, and
 //! again when she polymorphs (#polyself, a debug-mode game) into a red
@@ -129,6 +130,14 @@ fn not_again() -> Vec<Step> {
 fn game(choice: CharacterChoice, shot: &'static str) -> Vec<Step> {
     let mut steps = start_as(choice);
     steps.extend([
+        // the last game's hero is not this one's face
+        Step::Call("no other game's face", |g| {
+            let (on, renders) = shown(g)?;
+            if on && renders <= RENDERS.load(Ordering::Relaxed) {
+                return Err("the portrait shows the last game's hero".into());
+            }
+            Ok(())
+        }),
         Step::Wait("the hero on the map", |g| Ok(g.world.map.hero().is_some())),
         rendered_anew(false),
         Step::Shot(shot),

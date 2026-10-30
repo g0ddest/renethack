@@ -115,8 +115,8 @@ impl PortraitView {
             self.wanted = look;
             self.since = now;
         }
-        // none a moment (a level arriving, a new game): the last render
-        // stays until the next is made
+        // none a moment (a level arriving): the last render stays until
+        // the next is made (a new game forgets it: `forget`)
         let Some(hero) = hero else {
             self.aimed = None;
             return self.shown.is_some();
@@ -134,6 +134,13 @@ impl PortraitView {
             }
         }
         self.shown.is_some()
+    }
+
+    /// A new game: the last hero's render is no longer theirs.
+    pub fn forget(&mut self) {
+        self.shown = None;
+        self.wanted = None;
+        self.aimed = None;
     }
 
     fn render(&mut self) {

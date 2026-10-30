@@ -3043,6 +3043,14 @@ impl Hud {
         self.title.set_text("");
         self.subtitle.set_text("");
         self.initial.set_text("");
+        // another game's hero is not this one's: the initial until their
+        // own render
+        self.portrait.forget();
+        self.portrait_on = false;
+        if let Some(face) = self.portrait_face.as_mut() {
+            face.set_shader_parameter("has_portrait", &false.to_variant());
+        }
+        self.initial.set_visible(true);
         self.plaque.set_text("");
         self.role = None;
         self.align_text = None;
