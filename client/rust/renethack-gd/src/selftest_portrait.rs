@@ -16,7 +16,7 @@ use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 
 use godot::classes::{DisplayServer, Engine};
 use godot::obj::Singleton;
-use nh_world::KeyProfile;
+use nh_world::{Key, KeyInput, KeyProfile, Prompt};
 
 use super::{Step, command, key, quit, start_as};
 use crate::game::RenethackGame;
@@ -166,7 +166,11 @@ pub(super) fn portrait() -> Vec<Step> {
         Step::Push(UiEvent::BackToTitle),
     ]);
     steps.extend(game(
-        hero("valkyrie", "female", "neutral"),
+        // debug mode's name, which its save takes
+        CharacterChoice {
+            name: "wizard".into(),
+            ..hero("valkyrie", "female", "neutral")
+        },
         "portrait-valkyrie",
     ));
     steps.extend([
@@ -174,6 +178,61 @@ pub(super) fn portrait() -> Vec<Step> {
         Step::Request("a command, the dagger in hand", command),
         rendered_anew(false),
         Step::Shot("portrait-valkyrie-dagger"),
+    ]);
+    // invisible: the map draws no hero, the portrait keeps its last render
+    steps.extend(super::audio_tests::wish("uncursed ring of invisibility"));
+    steps.extend([
+        key('P'),
+        Step::Request("what to put on", |p| !matches!(p, Prompt::Command)),
+        Step::KeyFrom("the ring", |g| {
+            (g.world.inventory.items().iter())
+                // (not known by its name yet: "an opal ring")
+                .find(|i| i.class == '=')
+                .map(|i| KeyInput::plain(Key::Char(i.letter)))
+                .ok_or_else(|| "no ring".to_string())
+        }),
+        Step::AnswerUntil('r', "a command, the ring on", |g| {
+            Ok(matches!(g.pending, Some((_, Prompt::Command))))
+        }),
+        Step::Call("", |_| {
+            FRAME.store(frames(), Ordering::Relaxed);
+            Ok(())
+        }),
+        Step::Wait("invisible: the map draws no hero", |g| {
+            Ok(g.ui.as_ref().ok_or("no UI")?.map.hero_view().is_none())
+        }),
+        Step::Wait("invisible: still the hero's portrait", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            if !ui.hud.portrait_shown().0 {
+                return Err("the portrait lost the hero's render while invisible".into());
+            }
+            Ok(frames() > FRAME.load(Ordering::Relaxed) + STILL_FRAMES)
+        }),
+        Step::Shot("portrait-invisible"),
+        // saved and restored invisible: the picture kept with the save
+        key('S'),
+        Step::Request(
+            "Really save?",
+            |p| matches!(p, Prompt::Choice { query, .. } if query.contains("save")),
+        ),
+        key('y'),
+        Step::AnswerUntil(' ', "the title after the save", |g| {
+            super::fail_on_error_screen(g)?;
+            Ok(super::screen(g) == Some("title"))
+        }),
+        Step::Push(UiEvent::ContinueGame("wizard".into())),
+        // (debug mode asks whether to keep the save file)
+        Step::AnswerUntil('n', "a command in the restored game", |g| {
+            Ok(matches!(g.pending, Some((_, Prompt::Command))))
+        }),
+        Step::Wait("restored invisible: the hero's saved picture", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            if DisplayServer::singleton().get_name() == "headless" {
+                return Ok(true);
+            }
+            Ok(ui.map.hero_view().is_none() && ui.hud.portrait_shown().0)
+        }),
+        Step::Shot("portrait-restored-invisible"),
     ]);
     steps.extend(super::polyself_tests::become_("red dragon"));
     steps.extend([

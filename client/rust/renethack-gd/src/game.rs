@@ -1473,6 +1473,11 @@ impl INode for RenethackGame {
     }
 }
 
+/// Where a saved game keeps its hero's last portrait, beside its UI state.
+fn saved_portrait_path(playground: &std::path::Path, name: &str) -> std::path::PathBuf {
+    nh_link::ui_state_path(playground, name).with_extension("png")
+}
+
 /// Godot's own lists (an OptionButton's popup, which takes the input
 /// before the game sees it) take a gamepad's A and B as Enter and Esc:
 /// Godot's `ui_accept` and `ui_cancel` have no pad buttons. The game
@@ -2413,6 +2418,13 @@ impl RenethackGame {
             }
             self.show_failure(&text, details.trim(), save.as_deref());
         } else if let Some(n) = saved(&name) {
+            // the hero's last picture kept with the save: a restored hero
+            // not drawn (invisible) has no other
+            let image = self.ui.as_ref().and_then(|ui| ui.hud.portrait_image());
+            if let Some(image) = image {
+                let path = saved_portrait_path(&pg, &n);
+                let _ = image.save_png(path.to_string_lossy().as_ref());
+            }
             self.show_title(Some(tr!("title-game-saved", name = n)));
         } else if ending.said_bye && ending.code == Some(0) {
             // the character is gone with its save: its bar too
@@ -2420,6 +2432,9 @@ impl RenethackGame {
                 && let Err(e) = remove_ui_state(&pg, n)
             {
                 godot_warn!("renethack: cannot remove the UI state: {e}");
+            }
+            if let Some(n) = &name {
+                let _ = std::fs::remove_file(saved_portrait_path(&pg, n));
             }
             self.show_end();
         } else {
@@ -5751,6 +5766,11 @@ impl RenethackGame {
         let Some(paths) = self.paths.clone() else {
             return false;
         };
+        // a restore: the hero's picture as it was saved
+        let saved_portrait = save_exists(&paths.playground, name)
+            .then(|| saved_portrait_path(&paths.playground, name))
+            .and_then(|p| godot::classes::Image::load_from_file(p.to_string_lossy().as_ref()))
+            .and_then(|i| godot::classes::ImageTexture::create_from_image(&i));
         let test = self.selftest.is_some();
         let cfg = EngineConfig {
             engine: paths.engine(),
@@ -5806,6 +5826,9 @@ impl RenethackGame {
                 ui.screens.hide();
                 ui.map.clear();
                 ui.hud.reset();
+                if let Some(picture) = saved_portrait {
+                    ui.hud.show_saved_portrait(picture.upcast());
+                }
                 self.show_game(true);
                 self.ui_state = state;
                 // the order speed of these keys, unless the player chose one

@@ -1125,6 +1125,10 @@ pub struct Hud {
     portrait: PortraitView,
     portrait_face: Option<Gd<ShaderMaterial>>,
     portrait_on: bool,
+    /// A restored game's hero as the last render left them when it was
+    /// saved, shown until this session renders them (an invisible hero
+    /// is not drawn to render): the renders made when it came.
+    saved_portrait: Option<u32>,
     initial: Gd<Label>,
     plaque: Gd<Label>,
     title: Gd<Label>,
@@ -1785,6 +1789,7 @@ impl Hud {
             portrait,
             portrait_face,
             portrait_on: false,
+            saved_portrait: None,
             initial,
             plaque,
             title,
@@ -1889,7 +1894,18 @@ impl Hud {
     /// gear it shows, whether polymorphed. The portrait renders them when
     /// that changes, and shows the render in place of the initial.
     pub fn sync_portrait(&mut self, hero: Option<Gd<Node3D>>, gear: &nh_art::Gear, form: bool) {
-        let on = self.portrait.sync(hero, gear, form, now_secs());
+        let mut on = self.portrait.sync(hero, gear, form, now_secs());
+        // the saved picture until a render of this session replaces it
+        if let Some(renders) = self.saved_portrait {
+            if self.portrait.renders() > renders {
+                self.saved_portrait = None;
+                if let Some(face) = self.portrait_face.as_mut() {
+                    face.set_shader_parameter("portrait", &self.portrait.texture().to_variant());
+                }
+            } else {
+                on = true;
+            }
+        }
         if on != self.portrait_on {
             self.portrait_on = on;
             if let Some(face) = self.portrait_face.as_mut() {
@@ -1897,6 +1913,26 @@ impl Hud {
             }
             self.initial.set_visible(!on);
         }
+    }
+
+    /// The portrait's last render of this session, to keep with a save.
+    pub fn portrait_image(&self) -> Option<Gd<godot::classes::Image>> {
+        if !self.portrait_on || self.saved_portrait.is_some() {
+            return None;
+        }
+        self.portrait.texture().get_image()
+    }
+
+    /// A restored game's hero as it was saved, until this session renders
+    /// them.
+    pub fn show_saved_portrait(&mut self, picture: Gd<godot::classes::Texture2D>) {
+        if let Some(face) = self.portrait_face.as_mut() {
+            face.set_shader_parameter("portrait", &picture.to_variant());
+            face.set_shader_parameter("has_portrait", &true.to_variant());
+        }
+        self.saved_portrait = Some(self.portrait.renders());
+        self.portrait_on = true;
+        self.initial.set_visible(false);
     }
 
     /// The portrait shows a render of the hero, and how many it has made
@@ -3098,8 +3134,10 @@ impl Hud {
         // own render
         self.portrait.forget();
         self.portrait_on = false;
+        self.saved_portrait = None;
         if let Some(face) = self.portrait_face.as_mut() {
             face.set_shader_parameter("has_portrait", &false.to_variant());
+            face.set_shader_parameter("portrait", &self.portrait.texture().to_variant());
         }
         self.initial.set_visible(true);
         self.plaque.set_text("");
