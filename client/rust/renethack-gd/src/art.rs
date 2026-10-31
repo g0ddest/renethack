@@ -134,6 +134,8 @@ const GLINT_SHADER: &str = "res://shaders/glint.gdshader";
 const GLINT_Y: f32 = 0.16;
 const SHINE: Color = Color::from_rgba(1.0, 0.88, 0.62, 0.55);
 const SHINE_MORE: f32 = 0.35;
+/// How bright a small thing's pool is (the decal's emission energy).
+const SHINE_ENERGY: f32 = 0.9;
 /// A heavy thing's pool, this share of a small thing's (`Sheen::Faint`).
 const SHINE_FAINT: f32 = 0.35;
 
@@ -1633,11 +1635,13 @@ impl Art {
             .get_or_insert_with(crate::vfx::contact_texture)
             .clone();
         d.set_texture(godot::classes::decal::DecalTexture::EMISSION, &tex);
-        d.set_emission_energy(0.9);
-        d.set_modulate(match sheen {
-            Sheen::Faint => SHINE.with_alpha(SHINE.a * SHINE_FAINT),
-            _ => SHINE,
+        // (a decal's alpha dims its albedo only, never its emission: a
+        // faint pool is a weaker light)
+        d.set_emission_energy(match sheen {
+            Sheen::Faint => SHINE_ENERGY * SHINE_FAINT,
+            _ => SHINE_ENERGY,
         });
+        d.set_modulate(SHINE);
         d.set_cull_mask(CONTACT_LAYERS);
         d.set_upper_fade(0.3);
         d.set_lower_fade(0.3);
