@@ -80,6 +80,8 @@ mod helm_hair_tests;
 mod help_tests;
 #[path = "selftest_hero.rs"]
 mod hero;
+#[path = "selftest_hud_buttons.rs"]
+mod hud_buttons_tests;
 #[path = "selftest_input.rs"]
 mod input_ru;
 #[path = "selftest_journal.rs"]
@@ -5220,6 +5222,7 @@ impl SelfTest {
             "spells-one" => spells_tests::spells_one(),
             "give-up" => give_up_tests::give_up(),
             "hud-tips" => tips_tests::hud_tips(),
+            "hud-buttons" => hud_buttons_tests::hud_buttons(),
             "look-tip" => look_tests::look_tip(),
             "peaceful" => peaceful_tests::peaceful(),
             "peaceful-swap" => peaceful_tests::peaceful_swap(),

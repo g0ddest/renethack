@@ -357,7 +357,10 @@ pub(super) fn hud_tips() -> Vec<Step> {
         Step::Wait("the inventory closed", |g| {
             Ok(g.ui.as_ref().is_some_and(|ui| !ui.inventory.is_open()))
         }),
-        // the help's
+        // the HUD laid out again without it (the micro-buttons back beside
+        // the docked log), then the help's
+        Step::Call("", mark),
+        Step::Wait("laid out", settled),
         Step::Call("the tips before the help", before_panel),
         Step::Push(crate::ui_events::UiEvent::ToggleHelp),
         Step::Wait("the help", |g| {

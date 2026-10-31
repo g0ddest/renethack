@@ -14,9 +14,9 @@ use godot::classes::box_container::AlignmentMode;
 use godot::classes::control::{FocusMode, GrowDirection, MouseFilter, SizeFlags};
 use godot::classes::text_server::{AutowrapMode, OverrunBehavior};
 use godot::classes::{
-    Button, CanvasLayer, ColorRect, Control, HBoxContainer, HFlowContainer, InputEvent,
-    InputEventMouseButton, Label, PanelContainer, Polygon2D, RichTextLabel, ShaderMaterial,
-    StyleBoxFlat, Time, VBoxContainer,
+    BoxContainer, Button, CanvasLayer, ColorRect, Control, GridContainer, HBoxContainer,
+    HFlowContainer, InputEvent, InputEventMouseButton, Label, PanelContainer, Polygon2D,
+    RichTextLabel, ShaderMaterial, StyleBoxFlat, Time, VBoxContainer,
 };
 use godot::global::{HorizontalAlignment, MouseButton, VerticalAlignment};
 use godot::prelude::*;
@@ -47,11 +47,25 @@ const LOG_H: f32 = 260.0;
 /// left end, clear of the gamepad's hints on the right; this many lines.
 const LOG_COMPACT_W: f32 = 436.0;
 const LOG_COMPACT_LINES: f32 = 4.0;
-/// The micro-buttons over the bar's right end: how many, how wide, the gap
-/// (the docked log keeps clear of them).
+/// The micro-buttons over the bar's right end: how many, a button's side
+/// (its hit target) in the canvas, in a row of eight or in two rows of
+/// four beside the docked log of the compact layout, and the gap
+/// (`hud-buttons` measures them).
 const MICRO_BUTTONS: usize = 8;
-const MICRO_W: f32 = 32.0;
+const MICRO_W: f32 = 48.0;
 const MICRO_GAP: i32 = 4;
+/// The least hit target in the window's pixels at any UI scale: 32, and on
+/// a handheld's screen (a Steam Deck's 1280×800, or less) a fingertip's 44
+/// (Valve gives no figure; 44×44 is what guides to the Deck ask).
+pub(crate) const MICRO_LEAST: f32 = 32.0;
+pub(crate) const MICRO_TOUCH: f32 = 44.0;
+/// The docked log keeps this far left of the micro-buttons beside it, and
+/// the pad's medallion this far from them.
+const MICRO_LOG_GAP: f32 = 12.0;
+const MICRO_PAD_GAP: i32 = 8;
+/// The micro-buttons' plate inside the hit target, and their glyph.
+const MICRO_PLATE: f32 = 0.78;
+const MICRO_GLYPH: f32 = 0.5;
 /// The log's text: Alegreya Sans 16 and 2 px between lines.
 const LOG_FONT: i32 = 16;
 const LOG_LINE_GAP: i32 = 2;
@@ -1015,18 +1029,20 @@ fn ctrl(c: char) -> KeyInput {
     }
 }
 
-/// An icon-only button (36×28) with a tooltip naming it and its key.
-/// A small round button with its glyph; `bind`: its tip kept in the
-/// language (a tip that names a key is the HUD's to write: `Keyed`).
+/// An icon-only button, `w` × `h`, with a tooltip naming it and its key;
+/// `bind`: its tip kept in the language (a tip that names a key is the
+/// HUD's to write: `Keyed`).
 fn micro_button(
     glyph: i32,
     tip: &'static str,
     queue: &UiQueue,
     ev: UiEvent,
     bind: bool,
+    w: f32,
+    h: f32,
 ) -> Gd<Button> {
     let mut b = theme::button("", queue, ev);
-    b.set_custom_minimum_size(Vector2::new(MICRO_W, 28.0));
+    b.set_custom_minimum_size(Vector2::new(w, h));
     if bind {
         crate::tips::bind(&b, tip);
     }
@@ -1039,11 +1055,107 @@ fn micro_button(
             b.add_theme_stylebox_override(state, &sb);
         }
     }
-    let mut g = icon(glyph, 20.0, theme::GOLD);
-    place(&g, [0.5, 0.5, 0.5, 0.5], [-10.0, -10.0, 10.0, 10.0]);
+    let side = w.min(h) * 0.7;
+    let mut g = icon(glyph, side, theme::GOLD);
+    place(
+        &g,
+        [0.5, 0.5, 0.5, 0.5],
+        [-side / 2.0, -side / 2.0, side / 2.0, side / 2.0],
+    );
     g.set_v_size_flags(SizeFlags::FILL);
     b.add_child(&g);
     b
+}
+
+/// A micro-button's look: a round plate inside its hit target, as the
+/// orbs' rims are drawn, lit when the mouse is on it.
+fn micro_plate(side: f32, hover: bool) -> Gd<StyleBoxFlat> {
+    let mut sb = StyleBoxFlat::new_gd();
+    sb.set_bg_color(Color::from_rgba(
+        0.06,
+        0.05,
+        0.04,
+        if hover { 0.95 } else { 0.82 },
+    ));
+    sb.set_border_width_all(if hover { 2 } else { 1 });
+    sb.set_border_color(if hover { theme::GOLD } else { theme::GOLD_DIM });
+    sb.set_corner_radius_all((side / 2.0).round() as i32);
+    sb.set_corner_detail(12);
+    // the plate inside the target: the target is the larger
+    let inset = side * (1.0 - MICRO_PLATE) / 2.0;
+    for s in [Side::LEFT, Side::TOP, Side::RIGHT, Side::BOTTOM] {
+        sb.set_expand_margin(s, -inset);
+        sb.set_content_margin(s, 0.0);
+    }
+    sb
+}
+
+/// The micro-buttons at `side`: their target, their plate, their glyph.
+fn size_micro(b: &mut Gd<Button>, side: f32) {
+    b.set_custom_minimum_size(Vector2::new(side, side));
+    b.set_size(Vector2::new(side, side));
+    let (off, on) = (micro_plate(side, false), micro_plate(side, true));
+    for (state, sb) in [
+        ("normal", &off),
+        ("disabled", &off),
+        ("focus", &off),
+        ("hover", &on),
+        ("pressed", &on),
+        ("hover_pressed", &on),
+    ] {
+        b.add_theme_stylebox_override(state, sb);
+    }
+    let g = side * MICRO_GLYPH;
+    if let Some(mut glyph) = b.get_child(0).and_then(|c| c.try_cast::<Control>().ok()) {
+        glyph.set_custom_minimum_size(Vector2::new(g, g));
+        place(
+            &glyph,
+            [0.5, 0.5, 0.5, 0.5],
+            [-g / 2.0, -g / 2.0, g / 2.0, g / 2.0],
+        );
+    }
+}
+
+/// How wide the micro-buttons' row may be in the canvas: the bar's width,
+/// or in two rows what the docked log leaves of it.
+fn micro_room(two: bool) -> f32 {
+    if two {
+        BAR_W - LOG_COMPACT_W - MICRO_LOG_GAP
+    } else {
+        BAR_W
+    }
+}
+
+/// A micro-button's side in the canvas, in two rows or one: never a hit
+/// target under the least for the window (`window`, its size in its
+/// pixels, `k` of them to the canvas's one), nor wider than its row's room.
+fn micro_side(two: bool, k: f32, window: Vector2) -> f32 {
+    let handheld = window.x <= 1280.5 && window.y <= 800.5;
+    let least = if handheld { MICRO_TOUCH } else { MICRO_LEAST };
+    let n = if two {
+        MICRO_BUTTONS / 2
+    } else {
+        MICRO_BUTTONS
+    } as f32;
+    let most = (micro_room(two) - (n - 1.0) * MICRO_GAP as f32) / n;
+    MICRO_W.max((least / k).ceil()).min(most.floor())
+}
+
+/// The micro-buttons' grid at `side`: its columns, its width, its height.
+fn micro_grid(two: bool, side: f32) -> (usize, f32, f32) {
+    let columns = if two {
+        MICRO_BUTTONS / 2
+    } else {
+        MICRO_BUTTONS
+    };
+    let n = columns as f32;
+    let rows = MICRO_BUTTONS.div_ceil(columns) as f32;
+    let gap = MICRO_GAP as f32;
+    (
+        columns,
+        n * side + (n - 1.0) * gap,
+        rows * side + (rows - 1.0) * gap,
+    )
 }
 
 /// How wide a banner at the top centre may be on a canvas `width` wide:
@@ -1155,6 +1267,16 @@ pub struct Hud {
     /// The orbs, the XP bar, the micro-buttons and the bar, by name
     /// (self-tests: what must fit).
     cluster_parts: Vec<(&'static str, Gd<Control>)>,
+    /// The micro-buttons' row (the pad's medallion, the grid of them),
+    /// its bottom in the cluster, and the buttons.
+    micro: Gd<BoxContainer>,
+    micro_pad: Gd<HBoxContainer>,
+    micro_grid: Gd<GridContainer>,
+    micro_bottom: f32,
+    micro_btns: Vec<Gd<Button>>,
+    /// How they are laid out: in two rows (beside the docked log), their
+    /// side, the pad's medallion over them (no room beside them).
+    micro_laid: Option<(bool, f32, bool)>,
 
     // the log, bottom left (docked over the cluster when compact)
     log_panel: Gd<PanelContainer>,
@@ -1202,6 +1324,8 @@ pub struct Hud {
     panel_open: bool,
     /// And it asks the engine's question itself (the banner steps back).
     panel_asks: bool,
+    /// An RPG panel is open (the docked log steps back under it).
+    rpg_open: bool,
     minimap: Minimap,
     minimap_caption: Gd<Label>,
     mode_panel: Gd<PanelContainer>,
@@ -1253,8 +1377,9 @@ pub struct Hud {
     full_log_dirty: bool,
     /// The full log jumps to the newest message on its next rebuild.
     full_log_follow: bool,
-    /// The canvas size the layout was made for.
-    laid_out: Option<Vector2>,
+    /// The canvas size the layout was made for, and the window's pixels
+    /// to the canvas's one.
+    laid_out: Option<(Vector2, f32)>,
 }
 
 impl Hud {
@@ -1436,14 +1561,28 @@ impl Hud {
         cluster_parts.push(("XP bar", xp_frame.clone().upcast()));
         solid.push(xp_frame.clone().upcast());
 
-        let mut micro = hbox(MICRO_GAP);
+        // the micro-buttons, their row's right end at the bar's: laid out
+        // by `layout` (a row, or two beside the docked log); under a pad
+        // the Menu button's medallion beside them says where they are
+        // (a box either way: the medallion beside them, or over them)
+        let mut micro = BoxContainer::new_alloc();
+        micro.set_mouse_filter(MouseFilter::IGNORE);
+        micro.add_theme_constant_override("separation", MICRO_PAD_GAP);
         micro.set_alignment(AlignmentMode::END);
-        let micro_y = xp_y - 6.0 - 28.0;
-        place(
-            &micro,
-            [0.0, 0.0, 0.0, 0.0],
-            [bar_x, micro_y, bar_x + BAR_W, micro_y + 28.0],
-        );
+        let mut micro_pad = hbox(0);
+        micro_pad.set_h_size_flags(SizeFlags::SHRINK_BEGIN);
+        micro_pad.set_v_size_flags(SizeFlags::SHRINK_CENTER);
+        micro_pad.set_visible(false);
+        micro.add_child(&micro_pad);
+        let mut micro_grid = GridContainer::new_alloc();
+        micro_grid.set_columns(MICRO_BUTTONS as i32);
+        micro_grid.add_theme_constant_override("h_separation", MICRO_GAP);
+        micro_grid.add_theme_constant_override("v_separation", MICRO_GAP);
+        micro_grid.set_h_size_flags(SizeFlags::SHRINK_END);
+        micro_grid.set_v_size_flags(SizeFlags::SHRINK_END);
+        micro.add_child(&micro_grid);
+        let micro_bottom = xp_y - 6.0;
+        let mut micro_btns: Vec<Gd<Button>> = Vec::new();
         let plain = |c| key_event(KeyInput::plain(Key::Char(c)));
         let f = |n| KeyInput::plain(Key::F(n));
         // the buttons' tips name their keys, as the player moved them
@@ -1473,11 +1612,13 @@ impl Hud {
             (7, "hud-settings-tip", UiEvent::OpenSettings, None),
         ];
         for (glyph, tip, ev, key) in buttons {
-            let b = micro_button(glyph, tip, &queue, ev, key.is_none());
+            let mut b = micro_button(glyph, tip, &queue, ev, key.is_none(), MICRO_W, MICRO_W);
+            size_micro(&mut b, MICRO_W);
             if let Some(key) = key {
                 keyed.push(Keyed::tip(&b, tip, key));
             }
-            micro.add_child(&b);
+            micro_grid.add_child(&b);
+            micro_btns.push(b.clone());
             solid.push(b.upcast());
         }
         cluster.add_child(&micro);
@@ -1512,7 +1653,15 @@ impl Hud {
         log_title.set_h_size_flags(SizeFlags::EXPAND_FILL);
         log_title.set_vertical_alignment(VerticalAlignment::CENTER);
         log_head.add_child(&log_title);
-        let history = micro_button(4, "hud-history-tip", &queue, UiEvent::ToggleFullLog, false);
+        let history = micro_button(
+            4,
+            "hud-history-tip",
+            &queue,
+            UiEvent::ToggleFullLog,
+            false,
+            32.0,
+            28.0,
+        );
         keyed.push(Keyed::tip(
             &history,
             "hud-history-tip",
@@ -1814,6 +1963,12 @@ impl Hud {
             log,
             log_head,
             cluster_parts,
+            micro,
+            micro_pad,
+            micro_grid,
+            micro_bottom,
+            micro_btns,
+            micro_laid: None,
             log_compact: None,
             log_width: 0.0,
             arrivals: VecDeque::new(),
@@ -1832,6 +1987,7 @@ impl Hud {
             minimap_panel: minimap_frame,
             minimap_well,
             panel_open: false,
+            rpg_open: false,
             panel_asks: false,
             minimap,
             minimap_caption,
@@ -2199,6 +2355,18 @@ impl Hud {
         if self.pad != pad {
             self.pad = pad;
             self.write_keys();
+            // the micro-buttons are the mouse's: a pad finds their panels
+            // in the Menu button's menu, its medallion beside them says
+            for mut c in self.micro_pad.get_children().iter_shared() {
+                self.micro_pad.remove_child(&c);
+                c.queue_free();
+            }
+            if let Some(kind) = pad {
+                self.micro_pad
+                    .add_child(&crate::pad_view::medallion(kind, PadButton::Start));
+            }
+            self.micro_pad.set_visible(pad.is_some());
+            self.lay_micro();
         }
     }
 
@@ -2356,17 +2524,65 @@ impl Hud {
         }
     }
 
-    /// Place the blocks that depend on the canvas size (the compact
-    /// layout, the prompt banner's width).
-    fn layout(&mut self) {
-        let size = self.root.get_viewport_rect().size;
-        if self.laid_out == Some(size) {
+    /// The micro-buttons laid out: a row of eight over the bar's right
+    /// end, or two rows of four beside the log docked there (the compact
+    /// layout, the log shown), their bottom on the XP bar's top; each as
+    /// large as `micro_side` makes it for the window's pixels now. Under a
+    /// pad the Menu button's medallion goes left of them, or over their
+    /// left end when the docked log leaves no room beside them.
+    fn lay_micro(&mut self) {
+        let compact = self.log_compact == Some(true);
+        let two = compact && !self.log_away();
+        let k = self.window_scale();
+        let window = self.root.get_viewport_rect().size * k;
+        let side = micro_side(two, k, window);
+        let (columns, row, h) = micro_grid(two, side);
+        let medal = self.micro_pad.get_combined_minimum_size();
+        let above =
+            self.micro_pad.is_visible() && row + MICRO_PAD_GAP as f32 + medal.x > micro_room(two);
+        if self.micro_laid == Some((two, side, above)) {
             return;
         }
-        self.laid_out = Some(size);
+        self.micro_laid = Some((two, side, above));
+        for b in self.micro_btns.iter_mut() {
+            size_micro(b, side);
+        }
+        self.micro_grid.set_columns(columns as i32);
+        self.micro.set_vertical(above);
+        let right = (CLUSTER_W + BAR_W) / 2.0;
+        let (left, top) = if above {
+            (right - row, h + MICRO_PAD_GAP as f32 + medal.y)
+        } else {
+            (right - BAR_W, h)
+        };
+        place(
+            &self.micro,
+            [0.0, 0.0, 0.0, 0.0],
+            [left, self.micro_bottom - top, right, self.micro_bottom],
+        );
+    }
+
+    /// The window's pixels to the canvas's one (the stretch, the UI scale).
+    fn window_scale(&self) -> f32 {
+        (self.root.get_viewport())
+            .map_or(1.0, |v| v.get_screen_transform().a.x)
+            .max(0.01)
+    }
+
+    /// Place the blocks that depend on the canvas size (the compact
+    /// layout, the prompt banner's width) and on the window's pixels (the
+    /// micro-buttons' side).
+    fn layout(&mut self) {
+        let size = self.root.get_viewport_rect().size;
+        let k = self.window_scale();
+        if self.laid_out == Some((size, k)) {
+            return;
+        }
+        self.laid_out = Some((size, k));
         let compact = compact(size.x);
         if self.log_compact != Some(compact) {
             self.log_compact = Some(compact);
+            self.step_back();
             if compact {
                 // docked on the XP bar, from the bar's left end, as high
                 // as its lines and the frame
@@ -2424,6 +2640,7 @@ impl Hud {
             });
             self.log_key = None;
         }
+        self.lay_micro();
         let max = banner_room(size.x);
         self.prompt.set_custom_minimum_size(Vector2::new(0.0, 24.0));
         self.prompt_row.set_meta("max_width", &max.to_variant());
@@ -2976,7 +3193,8 @@ impl Hud {
                 .filter(|k| k.is_visible())
                 .map(|k| k.get_global_rect())
                 .collect();
-            match (c.is_class("HBoxContainer"), kids.split_first()) {
+            let row = c.is_class("BoxContainer") && !c.is_class("VBoxContainer");
+            match (row, kids.split_first()) {
                 (true, Some((first, rest))) => rest.iter().fold(*first, |a, b| a.merge(*b)),
                 _ => c.get_global_rect(),
             }
@@ -3013,20 +3231,74 @@ impl Hud {
 
     /// How much of the screen's foot the bottom cluster (the orbs, the
     /// bar) takes, from its highest part down: the RPG panels keep above
-    /// it, as they stay in sight under a panel.
+    /// it, as they stay in sight under a panel. The micro-buttons count in
+    /// the one row they take under a panel.
     pub fn cluster_room(&self) -> f32 {
         let view = self.root.get_viewport_rect();
         let top = self
             .cluster_parts
             .iter()
             .filter(|(_, c)| c.is_visible_in_tree())
-            .map(|(_, c)| c.get_global_rect().position.y)
+            .map(|(name, c)| match *name {
+                "micro-buttons" => c.get_global_rect().end().y - self.micro_laid_side(),
+                _ => c.get_global_rect().position.y,
+            })
             .fold(f32::INFINITY, f32::min);
         if top.is_finite() {
             (view.position.y + view.size.y - top).max(0.0)
         } else {
             0.0
         }
+    }
+
+    /// The micro-buttons on screen: each one's rect (its hit target) and
+    /// its tip as it reads now (self-tests).
+    pub fn micro_buttons(&self) -> Vec<(Rect2, String)> {
+        let Some((_, row)) = self
+            .cluster_parts
+            .iter()
+            .find(|(n, _)| *n == "micro-buttons")
+        else {
+            return Vec::new();
+        };
+        row.find_children_ex("*")
+            .type_("Button")
+            .owned(false)
+            .done()
+            .iter_shared()
+            .filter_map(|n| n.try_cast::<Control>().ok())
+            .filter(|c| c.is_visible_in_tree())
+            .map(|c| {
+                (
+                    c.get_global_rect(),
+                    crate::tips::tip_of(&c).unwrap_or_default(),
+                )
+            })
+            .collect()
+    }
+
+    /// Where the micro-buttons are, their rows whole and the pad's
+    /// medallion with them (the pad's strip keeps over them); None while
+    /// they are not on screen.
+    pub fn micro_rect(&self) -> Option<Rect2> {
+        let shown = self.micro.is_visible_in_tree() && self.micro.get_modulate().a > 0.0;
+        let grid = self.micro_grid.get_global_rect();
+        shown.then(|| match self.micro_pad.is_visible() {
+            true => grid.merge(self.micro_pad.get_global_rect()),
+            false => grid,
+        })
+    }
+
+    /// The pad's medallion by the micro-buttons, while it shows
+    /// (self-tests: it keeps off the other blocks).
+    pub fn micro_pad_rect(&self) -> Option<Rect2> {
+        let shown = self.micro_pad.is_visible_in_tree() && self.micro_pad.get_child_count() > 0;
+        shown.then(|| self.micro_pad.get_global_rect())
+    }
+
+    /// The micro-buttons' side as laid out now, in the canvas.
+    fn micro_laid_side(&self) -> f32 {
+        self.micro_laid.map_or(MICRO_W, |(_, side, _)| side)
     }
 
     /// The cluster's parts on screen (self-tests: an RPG panel keeps off
@@ -3080,24 +3352,52 @@ impl Hud {
         }
     }
 
+    /// An RPG panel (the sheet, the spells…) opens or closes: it reaches
+    /// down to the cluster, over the log docked there.
+    pub fn set_rpg_open(&mut self, on: bool) {
+        if self.rpg_open != on {
+            self.rpg_open = on;
+            self.step_back();
+        }
+    }
+
+    /// The log is put away: under a modal panel or the history, or, docked
+    /// over the bar, under an RPG panel.
+    fn log_away(&self) -> bool {
+        self.panel_open
+            || self.full_log_panel.is_visible()
+            || (self.rpg_open && self.log_compact == Some(true))
+    }
+
     /// Under a modal panel the portrait, the minimap, the mode badge, the
     /// order line and the log fade out (the orbs and the bar stay).
     fn step_back(&mut self) {
         let away = self.panel_open || self.full_log_panel.is_visible();
-        let m = Color::from_rgba(1.0, 1.0, 1.0, if away { 0.0 } else { 1.0 });
-        let filter = if away {
-            MouseFilter::IGNORE
-        } else {
-            MouseFilter::STOP
+        let shown = |away| Color::from_rgba(1.0, 1.0, 1.0, if away { 0.0 } else { 1.0 });
+        let filter = |away| {
+            if away {
+                MouseFilter::IGNORE
+            } else {
+                MouseFilter::STOP
+            }
         };
+        let m = shown(away);
         for mut c in [
             self.portrait_panel.clone().upcast::<Control>(),
             self.minimap_panel.clone().upcast(),
-            self.log_panel.clone().upcast(),
         ] {
             c.set_modulate(m);
-            c.set_mouse_filter(filter);
+            c.set_mouse_filter(filter(away));
         }
+        // the log docked over the bar goes under an RPG panel too, and the
+        // micro-buttons beside it take one row, under where it was: its
+        // lines let the mouse through to them
+        let log_away = self.log_away();
+        self.log_panel.set_modulate(shown(log_away));
+        self.log_panel.set_mouse_filter(filter(log_away));
+        self.log.set_mouse_filter(filter(log_away));
+        self.transient_panel.set_modulate(shown(log_away));
+        self.lay_micro();
         // the question is in the panel's header: the banner would only
         // peek out behind its top edge on a short screen
         let asked = self.panel_open && self.panel_asks;
@@ -3110,7 +3410,6 @@ impl Hud {
         for mut c in [
             self.mode_panel.clone().upcast::<Control>(),
             self.order_label.clone().upcast(),
-            self.transient_panel.clone().upcast(),
             self.threat.clone().upcast(),
             self.threat_count.clone().upcast(),
         ]
@@ -3596,10 +3895,33 @@ mod tests {
         assert_eq!(left, -CLUSTER_W / 2.0 + orb::SIZE + 4.0);
         // the micro-buttons' bottom, 6 above the XP bar
         assert_eq!(bottom, -CLUSTER_BOTTOM - BAR_H - 6.0 - 22.0 - 6.0);
-        // clear of the micro-buttons at the bar's right end
-        let n = MICRO_BUTTONS as f32;
-        let micro_left = left + BAR_W - (n * MICRO_W + (n - 1.0) * MICRO_GAP as f32);
-        assert!(left + LOG_COMPACT_W + 12.0 <= micro_left);
+        // clear of the micro-buttons at the bar's right end: two rows of
+        // four there, as wide as a tiny window's pixels make them
+        let side = micro_side(true, 0.1, Vector2::new(400.0, 300.0));
+        let (_, row, _) = micro_grid(true, side);
+        assert!(left + LOG_COMPACT_W + MICRO_LOG_GAP <= left + BAR_W - row);
+    }
+
+    #[test]
+    fn micro_buttons_are_a_mouse_s_or_a_finger_s_size() {
+        // 1920×1080 at 80–140 %, a Deck's 1280×800 at 100–140 %
+        for (window, least, scales) in [
+            (Vector2::new(1920.0, 1080.0), MICRO_LEAST, 80..=140),
+            (Vector2::new(1280.0, 800.0), MICRO_TOUCH, 100..=140),
+        ] {
+            for p in scales.step_by(10) {
+                let s = p as f32 / 100.0;
+                // the canvas is 1920 wide at 100 % (a Deck's 1920×1200)
+                let k = window.x / 1920.0 * s;
+                let compact = compact(window.x / k);
+                for two in [compact, false] {
+                    let side = micro_side(two, k, window);
+                    assert!(side * k >= least - 0.01, "{window:?} {p}%: {}", side * k);
+                    let (_, row, _) = micro_grid(two, side);
+                    assert!(row <= micro_room(two), "{window:?} {p}%: {row}");
+                }
+            }
+        }
     }
 
     #[test]

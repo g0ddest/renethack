@@ -270,8 +270,9 @@ pub struct PadView {
     hint: Gd<Label>,
     strip: Gd<HFlowContainer>,
     /// Where the strip is docked: the panel it sits in the bottom of, or
-    /// over the world right of the log (its rect).
-    strip_in: Option<(Option<Rect2>, Rect2)>,
+    /// over the world right of the log (its rect) and over the HUD's
+    /// micro-buttons (theirs).
+    strip_in: Option<(Option<Rect2>, Rect2, Option<Rect2>)>,
     shown: Option<(PadKind, PadCtx)>,
     /// The controller last shown (the radial names its trigger).
     kind: PadKind,
@@ -462,12 +463,13 @@ impl PadView {
 
     /// The strip goes in the bottom right of a panel open on screen (the
     /// inventory), inside its frame, rather than across its edge; None:
-    /// back over the world, above the Pw orb, right of the log (`log`).
-    pub fn dock_hints(&mut self, panel: Option<Rect2>, log: Rect2) {
-        if self.strip_in == Some((panel, log)) {
+    /// back over the world, above the Pw orb, right of the log (`log`) and
+    /// over the HUD's micro-buttons (`over`).
+    pub fn dock_hints(&mut self, panel: Option<Rect2>, log: Rect2, over: Option<Rect2>) {
+        if self.strip_in == Some((panel, log, over)) {
             return;
         }
-        self.strip_in = Some((panel, log));
+        self.strip_in = Some((panel, log, over));
         match panel {
             Some(r) => {
                 let (end, bottom) = (r.end().x - 28.0, r.end().y - 18.0);
@@ -477,11 +479,17 @@ impl PadView {
                     [r.position.x + 28.0, bottom - 32.0, end, bottom],
                 );
             }
-            None => place(
-                &self.strip,
-                [0.0, 1.0, 1.0, 1.0],
-                [log.end().x.max(0.0) + 24.0, -232.0, -24.0, -200.0],
-            ),
+            None => {
+                // over the HUD's micro-buttons where they rise that high
+                // (two rows beside the docked log)
+                let view = self.strip.get_viewport_rect().size.y;
+                let bottom = over.map_or(-200.0, |r| (r.position.y - view - 8.0).min(-200.0));
+                place(
+                    &self.strip,
+                    [0.0, 1.0, 1.0, 1.0],
+                    [log.end().x.max(0.0) + 24.0, bottom - 32.0, -24.0, bottom],
+                );
+            }
         }
     }
 
@@ -515,7 +523,7 @@ impl PadView {
             .filter(|k| k.is_visible())
             .map(|k| k.get_global_rect())
             .reduce(|a, b| a.merge(b))?;
-        Some((rect, self.strip_in.and_then(|(panel, _)| panel)))
+        Some((rect, self.strip_in.and_then(|(panel, ..)| panel)))
     }
 }
 

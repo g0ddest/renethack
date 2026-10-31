@@ -1310,11 +1310,11 @@ impl INode for RenethackGame {
         self.achieve(delta);
         self.tick_hints(delta);
         self.tick_quest();
-        // a block's tip, the mouse resting on it (the title's, the game's)
-        let hovered = self
-            .base()
-            .get_viewport()
-            .and_then(|v| v.gui_get_hovered_control());
+        // a block's tip, the mouse resting on it (the title's, the game's);
+        // none while a pad plays, the mouse only left there
+        let hovered = (self.base().get_viewport())
+            .and_then(|v| v.gui_get_hovered_control())
+            .filter(|_| !self.pad.active);
         if let Some(ui) = self.ui.as_mut() {
             ui.tips.tick(hovered, now_secs());
         }
@@ -3926,6 +3926,7 @@ impl RenethackGame {
         ui.inventory.set_keymap(map);
         ui.help.set_keymap(map);
         // the RPG panels keep above the HUD's orbs and bar
+        ui.hud.set_rpg_open(ui.dialogs.rpg_open());
         let room = ui.hud.cluster_room();
         ui.dialogs.set_bottom_room(room);
         // the journal's messages: the log's, beside #chronicle's events
@@ -3957,7 +3958,8 @@ impl RenethackGame {
             .frame_rect()
             .or_else(|| ui.dialogs.panel_rect())
             .or_else(|| ui.inventory.frame_rect());
-        ui.pad.dock_hints(panel, ui.hud.log_rect());
+        ui.pad
+            .dock_hints(panel, ui.hud.log_rect(), ui.hud.micro_rect());
         let room = if pad.is_some() {
             ui.pad.strip_height() + 6.0
         } else {
