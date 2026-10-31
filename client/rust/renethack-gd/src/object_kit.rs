@@ -2539,6 +2539,26 @@ impl Kit<'_> {
         );
     }
 
+    /// A rod as `rod` lays one, for one too thin for the meshes' centimetre
+    /// (a spear's socket and grip): a rod a unit across, drawn that thin.
+    fn fine_rod(
+        &mut self,
+        root: &mut Gd<Node3D>,
+        mat: &Gd<Material>,
+        z: (f32, f32),
+        r: (f32, f32),
+    ) {
+        let big = r.0.max(r.1).max(1e-4);
+        self.part(
+            root,
+            cylinder(r.1 / big, r.0 / big, (z.1 - z.0).abs()),
+            mat,
+            [0.0, 0.03, (z.0 + z.1) / 2.0],
+            [90.0, 0.0, 0.0],
+            [big, 1.0, big],
+        );
+    }
+
     /// A curved blade: short plates along an arc of radius `r` about
     /// (x, z), from angle `a0` to `a1` (degrees; 0 is +z, 90 is +x).
     #[allow(clippy::too_many_arguments)]
@@ -2592,14 +2612,8 @@ impl Kit<'_> {
         if socketed {
             // a leather grip about the middle, an iron shoe at the butt
             let grip = self.leather();
-            self.rod(root, &grip, 0.0, (-0.17, -0.03), (thick * 1.2, thick * 1.2));
-            self.rod(
-                root,
-                &iron,
-                0.0,
-                (-0.53, -0.49),
-                (thick * 0.4, thick * 1.05),
-            );
+            self.fine_rod(root, &grip, (-0.17, -0.03), (thick * 1.2, thick * 1.2));
+            self.fine_rod(root, &iron, (-0.53, -0.49), (thick * 0.4, thick * 1.05));
         } else if form != "staff" && form != "lance" {
             self.rod(
                 root,
@@ -2729,27 +2743,29 @@ impl Kit<'_> {
                     "javelin" => (0.04, 0.12),
                     _ => (0.064, 0.14),
                 };
+                // (all of it finer than the meshes' centimetre: drawn a
+                // unit across, and shrunk to the shaft's measure)
                 let r = thick;
-                self.rod(root, &steel, 0.0, (t - 0.07, t + 0.02), (r * 1.45, r * 0.9));
+                self.fine_rod(root, &steel, (t - 0.07, t + 0.02), (r * 1.45, r * 0.9));
                 let thong = self.leather();
                 for z in [t - 0.062, t - 0.05] {
                     self.part(
                         root,
-                        torus(r * 1.3, r * 1.8),
+                        torus(1.25, 1.65),
                         &thong,
                         [0.0, 0.03, z],
                         [90.0, 0.0, 0.0],
-                        ONE,
+                        [r; 3],
                     );
                 }
                 for x in [-1.0f32, 1.0] {
                     self.part(
                         root,
-                        sphere(r * 0.4),
+                        sphere(0.4),
                         &iron,
                         [x * r * 1.3, 0.03, t - 0.025],
                         FLAT,
-                        ONE,
+                        [r; 3],
                     );
                 }
                 let swell = 0.05;

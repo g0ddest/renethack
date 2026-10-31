@@ -2759,8 +2759,10 @@ pub fn footing(root: &Gd<Node3D>, share: f32) -> Option<Aabb> {
 }
 
 fn bounds_round(points: &[Vector3]) -> Option<Aabb> {
-    let (&first, rest) = points.split_first()?;
-    let (lo, hi) = rest.iter().fold((first, first), |(lo, hi), &p| {
+    // (a mesh too small to build has bounds of NaN: they are no bounds)
+    let mut points = points.iter().copied().filter(|p| p.is_finite());
+    let first = points.next()?;
+    let (lo, hi) = points.fold((first, first), |(lo, hi), p| {
         (lo.coord_min(p), hi.coord_max(p))
     });
     Some(Aabb::new(lo, hi - lo))
