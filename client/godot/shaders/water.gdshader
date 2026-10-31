@@ -42,16 +42,42 @@ float tl2(vec2 p) {
 	return textureLod(noise_tex, p * 0.125, 0.0).r;
 }
 
-// the cells' ground about a point, blurred over a cell and a half: a
-// shore cuts the cells' corners, never steps along their edges (the same
-// in every shader of the ground)
+// the cells' ground about a point: bilinear between the cells' middles,
+// smoothed over two cells and a half where two kinds each hold a share of
+// the ground about (a big field's shore runs smooth past its steps, and
+// wanders over a couple of metres), and
+// every cell's own kind holding its middle (a lone cell, a stream a cell
+// wide keeps its place). The same in every shader of the ground, so each
+// decides alike where a shore runs.
 vec4 ground_blur(vec2 p) {
 	vec2 uv = (p + 0.5) / FIELD;
-	vec2 d = vec2(0.6) / FIELD;
-	return (texture(ground_tex, uv) * 2.0
+	vec4 near = texture(ground_tex, uv);
+	vec2 d = vec2(1.0) / FIELD;
+	vec4 wide = (near * 4.0
+		+ (texture(ground_tex, uv + vec2(d.x, 0.0)) + texture(ground_tex, uv - vec2(d.x, 0.0))
+		+ texture(ground_tex, uv + vec2(0.0, d.y)) + texture(ground_tex, uv - vec2(0.0, d.y))) * 2.0
 		+ texture(ground_tex, uv + d) + texture(ground_tex, uv - d)
 		+ texture(ground_tex, uv + vec2(d.x, -d.y))
-		+ texture(ground_tex, uv + vec2(-d.x, d.y))) / 6.0;
+		+ texture(ground_tex, uv + vec2(-d.x, d.y))) / 16.0;
+	// how much of the ground about the second kind holds: a shore of a
+	// big field where it is a fair share
+	float hi = max(wide.r, wide.g);
+	float lo = min(wide.r, wide.g);
+	float hi2 = max(wide.b, wide.a);
+	float lo2 = min(wide.b, wide.a);
+	float second = max(min(hi, hi2), max(lo, lo2));
+	float big = smoothstep(0.2, 0.35, second);
+	vec4 f = mix(near, wide, big);
+	// and there wandering on a larger scale too, a long shore never
+	// straight along the cells
+	vec2 q = p * 0.42;
+	vec4 slow = vec4(tl2(q + vec2(7.3, 2.9)), tl2(q + vec2(1.7, 15.1)),
+		tl2(q + vec2(13.9, 8.3)), tl2(q + vec2(4.1, 11.7)));
+	f += (slow - 0.5) * 0.3 * big * step(0.004, wide);
+	vec2 middle = floor(p + 0.5);
+	ivec2 at = clamp(ivec2(middle), ivec2(0), ivec2(FIELD) - 1);
+	float core = 1.0 - smoothstep(0.15, 0.45, length(p - middle));
+	return f + texelFetch(ground_tex, at, 0) * core * 0.35;
 }
 
 // the kinds' strengths at a point of the ground (as map_surface.gdshader
