@@ -4925,6 +4925,7 @@ impl MapView {
         };
         self.branch_look = l;
         self.built_look = crate::branch_look::built(l);
+        self.still_water();
         let env = &mut self.env;
         env.set_bg_color(l.darkness);
         env.set_fog_light_color(l.darkness);
@@ -6099,6 +6100,24 @@ impl MapView {
         }
     }
 
+    /// How much foam laps at the water's shores: none on a swamp (white,
+    /// it ringed each of its still pools); the sea's and a moat's keep it.
+    fn foam_amount(&self) -> f32 {
+        if self.swamp { 0.0 } else { 1.0 }
+    }
+
+    /// The water's foam as the level is now (a swamp seen, or not).
+    fn still_water(&mut self) {
+        let foam = self.foam_amount();
+        if let Some(mut m) = self
+            .liquids
+            .get(&Liquid::Water)
+            .and_then(|m| m.clone().try_cast::<ShaderMaterial>().ok())
+        {
+            m.set_shader_parameter("foam_amount", &foam.to_variant());
+        }
+    }
+
     /// The material of water, lava or the air over lava (made once).
     fn liquid(&mut self, l: Liquid) -> Gd<Material> {
         if let Some(m) = self.liquids.get(&l) {
@@ -6129,6 +6148,9 @@ impl MapView {
                 }
                 if l == Liquid::Membrane {
                     m.set_shader_parameter("tall", &MEMBRANE_TALL.to_variant());
+                }
+                if l == Liquid::Water {
+                    m.set_shader_parameter("foam_amount", &self.foam_amount().to_variant());
                 }
                 if l == Liquid::Lava {
                     let flow = |map: &str| {

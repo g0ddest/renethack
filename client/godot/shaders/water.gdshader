@@ -10,6 +10,8 @@ render_mode blend_mix, depth_draw_always, cull_back, diffuse_burley, specular_sc
 uniform vec4 shallow : source_color = vec4(0.1, 0.22, 0.24, 1.0);
 uniform vec4 deep : source_color = vec4(0.015, 0.05, 0.075, 1.0);
 uniform vec4 foam_color : source_color = vec4(0.62, 0.68, 0.68, 1.0);
+// how much foam laps at its shores: none on a swamp's still water
+uniform float foam_amount = 1.0;
 // the dark over the water, seen in it at a glance
 uniform vec4 sheen : source_color = vec4(0.16, 0.2, 0.26, 1.0);
 // metres of water over which it turns from shallow to deep
@@ -78,19 +80,6 @@ vec4 ground_blur(vec2 p) {
 	ivec2 at = clamp(ivec2(middle), ivec2(0), ivec2(FIELD) - 1);
 	float core = 1.0 - smoothstep(0.15, 0.45, length(p - middle));
 	return f + texelFetch(ground_tex, at, 0) * core * 0.35;
-}
-
-// how much of the ground about a point, two cells and more round it, is
-// water: a sea's or a lake's shore, not a puddle's
-float water_about(vec2 p) {
-	vec2 uv = (p + 0.5) / FIELD;
-	vec2 d = vec2(1.5) / FIELD;
-	return (texture(ground_tex, uv).r
-		+ texture(ground_tex, uv + vec2(d.x, 0.0)).r + texture(ground_tex, uv - vec2(d.x, 0.0)).r
-		+ texture(ground_tex, uv + vec2(0.0, d.y)).r + texture(ground_tex, uv - vec2(0.0, d.y)).r
-		+ texture(ground_tex, uv + d).r + texture(ground_tex, uv - d).r
-		+ texture(ground_tex, uv + vec2(d.x, -d.y)).r
-		+ texture(ground_tex, uv + vec2(-d.x, d.y)).r) / 9.0;
 }
 
 // the kinds' strengths at a point of the ground (as map_surface.gdshader
@@ -170,13 +159,13 @@ void fragment() {
 	EMISSION = sheen.rgb * (fresnel * 3.0 + 0.08 + streak * 0.4) * mix(0.3, 1.0, seen)
 		+ own * overview * OVERVIEW_GLOW;
 
-	// foam lapping at the shore of a sea, a lake: a band at its very
-	// edge, its reach breathing, broken up by the noise; none round a
-	// puddle or a swamp's pools, still water (white, it ringed each one)
+	// foam lapping at the shore: a band at its very edge, its reach
+	// breathing, broken up by the noise; none on a swamp (`foam_amount`:
+	// white, it ringed each of its pools)
 	float lap = 0.5 + 0.5 * sin(t * 1.3 + wpos.x * 1.9 + wpos.z * 1.4);
 	float band = smoothstep(mix(0.45, 0.8, lap), 0.97, shore);
 	float breakup = smoothstep(0.3, 0.62, n2(wpos.xz * 2.4 + vec2(t * 0.06, -t * 0.04)) + 0.35 * shore);
-	float foam = band * breakup * smoothstep(0.4, 0.65, water_about(wpos.xz));
+	float foam = band * breakup * foam_amount;
 	vec3 froth = mix(luma * vec3(0.54, 0.59, 0.72) * 0.4, foam_color.rgb, seen);
 	col = mix(col, froth, foam * 0.85);
 
