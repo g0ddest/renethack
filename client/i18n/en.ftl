@@ -378,6 +378,7 @@ order-line-pad = { $what }  -  any button stops
 stop-arrived = Arrived
 stop-done = Done
 stop-healed = Rested: HP and Pw are full
+rest-foe = No rest with a foe in sight
 stop-one-action = One action in a fight
 stop-released = Released
 stop-stopped = Stopped

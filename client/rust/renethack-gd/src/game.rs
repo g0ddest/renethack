@@ -4072,8 +4072,22 @@ impl RenethackGame {
     /// Rest until HP and Pw are full (F5), at a command prompt.
     fn rest(&mut self) {
         self.driver.interrupt(Stop::Key);
-        if matches!(self.pending, Some((_, Prompt::Command))) && !self.world.getpos {
-            self.start_order(Order::Rest);
+        if !matches!(self.pending, Some((_, Prompt::Command))) || self.world.getpos {
+            return;
+        }
+        // no rest with a foe in sight: said in the client's words, not
+        // NetHack's refusal of a counted search beside a monster
+        let foe = self
+            .catalog
+            .as_deref()
+            .is_some_and(|cat| !nh_world::threats(&self.world, cat).is_empty());
+        if foe {
+            self.stop_note = Some((tr!("rest-foe"), Instant::now()));
+            return;
+        }
+        // full already: said so, though nothing was done
+        if !self.start_order(Order::Rest) && self.last_stop == Some(Stop::Healed) {
+            self.stop_note = Some((stop_text(&Stop::Healed), Instant::now()));
         }
     }
 

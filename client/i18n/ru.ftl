@@ -385,6 +385,7 @@ order-line-pad = { $what }  —  любая кнопка остановит
 stop-arrived = На месте
 stop-done = Готово
 stop-healed = Отдых окончен: здоровье и энергия полны
+rest-foe = Отдыхать нельзя: враг на виду
 stop-one-action = В бою — одно действие за раз
 stop-released = Клавиша отпущена
 stop-stopped = Остановлено
