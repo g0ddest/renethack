@@ -362,6 +362,18 @@ pub(super) fn guide() -> Vec<Step> {
         Step::Key(KeyInput::plain(Key::Enter)),
     ));
     steps.push(Step::Wait("no unknown command", no_unknown_command));
+    // Space with no card up: nothing, not an unknown command
+    steps.extend([
+        Step::Wait("no card up", |g| {
+            Ok(g.ui.as_ref().is_some_and(|ui| ui.hint.shown().is_none()))
+        }),
+        Step::Key(KeyInput::plain(Key::Char(' '))),
+        Step::Key(KeyInput::plain(Key::Char(' '))),
+        Step::Wait(
+            "Space with no card: still no unknown command",
+            no_unknown_command,
+        ),
+    ]);
     // a dagger dropped and looked at
     steps.extend([
         stage!(Guide::ItemHere),

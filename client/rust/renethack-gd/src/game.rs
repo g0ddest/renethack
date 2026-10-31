@@ -234,11 +234,28 @@ fn prompt_line(prompt: &Prompt, pad: Option<PadKind>) -> Option<String> {
         (Prompt::Key, None) => Some(tr!("prompt-press-key")),
         (Prompt::Key, Some(a)) => Some(tr!("prompt-press-key-pad", a = a)),
         (Prompt::FreeKey { query, .. }, _) => {
-            Some(i18n::engine(EngineKind::Prompt, query).into_owned())
+            let said = i18n::engine(EngineKind::Prompt, query).into_owned();
+            // its keys in a bracket ("[hyuln>]") are no pad player's, nor
+            // words in another language
+            Some(if pad.is_some() || i18n::lang() != Lang::En {
+                without_keys(&said).to_string()
+            } else {
+                said
+            })
         }
         (Prompt::MapPause, None) => Some(tr!("prompt-more")),
         (Prompt::MapPause, Some(a)) => Some(tr!("prompt-more-pad", a = a)),
         _ => None,
+    }
+}
+
+/// A question without the keys NetHack lists at its end ("In what
+/// direction do you want to dig? [hyuln>]"): a bracket of keys, no word.
+fn without_keys(text: &str) -> &str {
+    let t = text.trim_end();
+    match t.strip_suffix(']').and_then(|r| r.rsplit_once(" [")) {
+        Some((head, keys)) if !keys.is_empty() && !keys.contains(' ') && keys.is_ascii() => head,
+        _ => text,
     }
 }
 
@@ -2729,6 +2746,25 @@ impl RenethackGame {
             && self.ui.as_ref().is_some_and(|ui| ui.hint.shown().is_some())
         {
             self.ui_mut().hint.dismiss();
+            return;
+        }
+        // Space with no card to put away: nothing (the engine would answer
+        // "Unknown command ' '"), unless the player's rest_on_space or a
+        // key they moved makes it a command
+        if command
+            && k.key == Key::Char(' ')
+            && k.mods == nh_world::Mods::default()
+            && self.count.shown().is_none()
+            && !self
+                .settings
+                .nethack_options
+                .iter()
+                .any(|o| o == "rest_on_space")
+            && self
+                .keymap()
+                .translate(k)
+                .is_none_or(|t| t.key == Key::Char(' '))
+        {
             return;
         }
         // Esc (B) at the command prompt, nothing else up: the game's menu
@@ -6181,6 +6217,17 @@ mod tests {
         assert_eq!(parse_args::<&str>(&[]), Args::default());
         let a = parse_args(&["--selftest=soak", "--soak=300", "--seed=7"]);
         assert_eq!((a.soak, a.seed), (Some(300), Some(7)));
+    }
+
+    #[test]
+    fn a_question_without_its_keys() {
+        assert_eq!(
+            without_keys("В каком направлении копать? [hyuln>]"),
+            "В каком направлении копать?"
+        );
+        assert_eq!(without_keys("In what direction?"), "In what direction?");
+        // a bracket of words is no keys
+        assert_eq!(without_keys("Name it [the kitten]"), "Name it [the kitten]");
     }
 
     #[test]
