@@ -467,7 +467,7 @@ def do_painted(w, item):
         image = art_paint.pale(source(), item["light"])
     elif item["paint"] == "lift":
         image = art_paint.lift(source(), item["light"])
-    elif item["paint"] in ("fur", "scales", "weave"):
+    elif item["paint"] in ("fur", "scales", "weave", "floral"):
         # a material's maps from nothing: `out` and the map's name
         maps = getattr(art_paint, item["paint"])(item.get("size", 512))
         for name, image in maps.items():

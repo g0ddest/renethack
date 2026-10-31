@@ -1471,6 +1471,28 @@ impl Kit<'_> {
                     ONE,
                 );
             }
+            "tabard" => {
+                // a knight's tabard, a gilt cross on its chest
+                self.part(
+                    root,
+                    MeshKey::Organic(Organic::Gear(GearPart::Tabard)),
+                    &skin,
+                    [0.0, 0.0, 0.0],
+                    FLAT,
+                    ONE,
+                );
+                let gilt = self.plain("gilded", Color::from_rgb(0.7, 0.55, 0.2));
+                for (size, at) in [([0.07, 0.5, 0.02], -0.38f32), ([0.36, 0.07, 0.02], -0.3)] {
+                    self.part(
+                        root,
+                        cuboid(size[0], size[1], size[2]),
+                        &gilt,
+                        [0.0, at, 0.43],
+                        FLAT,
+                        ONE,
+                    );
+                }
+            }
             "drape_cape" | "drape_cloak" => {
                 // a cape or a cloak worn, pinned at the throat by a brooch
                 let part = if shape == "drape_cape" {

@@ -29,6 +29,10 @@ pub enum Part {
     Cape,
     /// A cloak as the cape, to the calves, flared clear of the legs.
     Cloak,
+    /// A knight's tabard over his mail, worn round the neck (the origin):
+    /// a panel down the chest and one down the back to the hips, joined
+    /// over the shoulders.
+    Tabard,
 }
 
 const UP: Vector3 = Vector3::UP;
@@ -55,6 +59,7 @@ pub(super) fn build(m: &mut Merge, part: Part) {
         Part::Kasaya => toga(m, &KASAYA),
         Part::Cape => cloth(m, &CAPE),
         Part::Cloak => cloth(m, &CLOAK),
+        Part::Tabard => tabard(m),
     }
 }
 
@@ -405,6 +410,51 @@ fn toga(m: &mut Merge, w: &Wrap) {
     };
     for face in [1.0f32, -1.0] {
         sheet(m, 12, 8, &end, face);
+    }
+}
+
+/// How far a tabard reaches: half its width, its top and its hem below
+/// the neck.
+const TABARD_HALF: f32 = 0.31;
+const TABARD_TOP: f32 = -0.04;
+const TABARD_HEM: f32 = -1.25;
+
+/// A tabard's panel (`front` 1, the back -1): `s` from the shoulders (0)
+/// to the hem (1), `t` across; over the chest's swell, then hanging
+/// straight, its folds deepening down it.
+fn panel(front: f32, s: f32, t: f32) -> Vector3 {
+    let x = (t * 2.0 - 1.0) * TABARD_HALF;
+    let y = TABARD_TOP + (TABARD_HEM - TABARD_TOP) * s;
+    // clear of the chest (a woman's too) and of the belt's buckle
+    let (base, swell) = if front > 0.0 {
+        (0.24, 0.18)
+    } else {
+        (0.2, 0.08)
+    };
+    let off = base + swell * smoothstep(0.0, 0.2, s) + 0.06 * (s - 0.5).max(0.0);
+    let fold = 0.012 * s * (t * PI * 5.0).sin();
+    v(x, y, front * (off - 0.3 * x * x + fold))
+}
+
+fn tabard(m: &mut Merge) {
+    for front in [1.0f32, -1.0] {
+        for face in [1.0f32, -1.0] {
+            sheet(m, 12, 10, &|s, t| panel(front, s, t), face);
+        }
+    }
+    // over each shoulder by the neck, from the front panel's top to the
+    // back's
+    for side in [-1.0f32, 1.0] {
+        let strap = |s: f32, t: f32| {
+            let x = side * (0.13 + 0.17 * t);
+            let a = (s - 0.5) * PI;
+            let (z0, z1) = (panel(1.0, 0.0, 0.5).z, panel(-1.0, 0.0, 0.5).z);
+            let z = (z0 + z1) / 2.0 - (z0 - z1) / 2.0 * a.sin();
+            v(x, TABARD_TOP + 0.2 * a.cos(), z + 0.3 * x * x * a.sin())
+        };
+        for face in [1.0f32, -1.0] {
+            sheet(m, 8, 3, &strap, face);
+        }
     }
 }
 

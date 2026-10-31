@@ -314,3 +314,51 @@ def weave(size=512, threads=32, seed="weave"):
     rough = height.point(lambda v: round(235 - v * 0.08))
     arm = Image.merge("RGB", [ao, rough, Image.new("L", (size, size), 0)])
     return {"albedo": albedo, "normal": normals(height, 2.0), "arm": arm}
+
+
+def floral(size=512, seed="floral"):
+    """A Hawaiian shirt's print, in its own colours (tint it white): big
+    hibiscus flowers, five round petals round a dark heart, and pointed
+    leaves, scattered over a warm red; the cotton a little rough. It tiles.
+    The albedo, normal and ORM maps."""
+    rng = random.Random(seed)
+    albedo = Image.new("RGB", (size, size), (196, 58, 34))
+    d = ImageDraw.Draw(albedo)
+    def leaf(x, y, r, a):
+        pts = []
+        for k in range(12):
+            t = k / 11
+            w = math.sin(math.pi * t) * r * 0.35
+            for side in (1, -1) if k in (0, 11) else (1,):
+                pass
+            pts.append((t, w))
+        outline = [(x + math.cos(a) * (t * r) - math.sin(a) * w, y + math.sin(a) * (t * r) + math.cos(a) * w)
+                   for t, w in pts]
+        outline += [(x + math.cos(a) * (t * r) + math.sin(a) * w, y + math.sin(a) * (t * r) - math.cos(a) * w)
+                    for t, w in reversed(pts)]
+        at_every_wrap(size, lambda dx, dy: d.polygon([(px + dx, py + dy) for px, py in outline],
+                                                     fill=(46, 112, 52)))
+    def flower(x, y, r, colour):
+        a0 = rng.uniform(0, math.tau)
+        for k in range(5):
+            a = a0 + k * math.tau / 5
+            cx, cy = x + math.cos(a) * r * 0.55, y + math.sin(a) * r * 0.55
+            at_every_wrap(size, lambda dx, dy: d.ellipse(
+                [cx - r * 0.5 + dx, cy - r * 0.5 + dy, cx + r * 0.5 + dx, cy + r * 0.5 + dy], fill=colour))
+        at_every_wrap(size, lambda dx, dy: d.ellipse(
+            [x - r * 0.18 + dx, y - r * 0.18 + dy, x + r * 0.18 + dx, y + r * 0.18 + dy], fill=(120, 20, 30)))
+    spots = []
+    for _ in range(20):
+        x, y = rng.random() * size, rng.random() * size
+        spots.append((x, y))
+        for _ in range(3):
+            leaf(x, y, size * rng.uniform(0.09, 0.14), rng.uniform(0, math.tau))
+    for x, y in spots:
+        flower(x, y, size * rng.uniform(0.05, 0.08),
+               rng.choice([(246, 236, 210), (250, 206, 70), (244, 150, 170)]))
+    grain = noise(rng, (size, size), 64).point(lambda v: 118 + v * 20 // 255)
+    height = grain.filter(ImageFilter.GaussianBlur(0.5))
+    ao = Image.new("L", (size, size), 255)
+    rough = Image.new("L", (size, size), 222)
+    arm = Image.merge("RGB", [ao, rough, Image.new("L", (size, size), 0)])
+    return {"albedo": albedo, "normal": normals(height, 1.0), "arm": arm}
