@@ -115,6 +115,8 @@ global uniform float overview;
 
 const vec2 FIELD = vec2(80.0, 21.0);
 const vec3 MEMORY_TINT = vec3(0.54, 0.59, 0.72);
+// how far toward it what is remembered turns in the overview
+const float OVERVIEW_TINT = 0.15;
 
 varying vec3 wpos;
 varying vec3 wnrm;
@@ -543,14 +545,21 @@ void fragment() {
 		albedo *= mix(1.0, 0.25, near_lava);
 	}
 
-	// remembered: the same stone, grey, cold and dark
+	// remembered: the same stone, grey, cold and dark; in the overview
+	// nearly as it is, its own hue kept (cold over it all, every level
+	// read as one grey clay)
 	float seen = mix(1.0, fow.r, memory);
 	float luma = dot(albedo, vec3(0.299, 0.587, 0.114));
-	vec3 remembered = mix(albedo, luma * MEMORY_TINT, mix(0.8, 0.45, overview))
+	vec3 remembered = mix(albedo, luma * MEMORY_TINT, mix(0.8, OVERVIEW_TINT, overview))
 		* mix(0.4, 0.75, overview);
 	// never so dark the darkest stones drop to black (Gehennom's basalt),
-	// the less so in the overview
-	remembered = max(remembered, MEMORY_TINT * mix(0.02, 0.06, overview));
+	// the less so in the overview: lifted in value, its hue kept; there
+	// rock stays in its dark (lifted, the rock between corridors read as
+	// floor)
+	bool rock = chunks > 0.0 || boulder > 0.0;
+	float least = mix(0.012, rock ? 0.0 : 0.035, overview);
+	float rl = dot(remembered, vec3(0.299, 0.587, 0.114));
+	remembered *= clamp(least / max(rl, 1e-4), 1.0, 12.0);
 	vec3 color = mix(remembered, albedo, seen);
 	// what is remembered shows by its own faint light: shaded by its
 	// relief, as if from above and to one side, so a remembered wall is

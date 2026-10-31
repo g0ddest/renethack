@@ -433,6 +433,38 @@ fn light_visit(
     ]);
 }
 
+/// The overview where the critics' third pass found it grey (new 2), for
+/// pictures before and after (not part of `make test-client`): a plain
+/// level, the Oracle, Medusa's sea, the Castle's moat, and in Gehennom the
+/// Valley and a maze, each as the hero arrives, mapped, close on a wall
+/// and in the overview.
+pub(super) fn overview() -> Vec<Step> {
+    let mut steps = vec![Step::Call(
+        "debug mode for this game",
+        |g: &mut RenethackGame| {
+            g.debug_mode = true;
+            Ok(())
+        },
+    )];
+    steps.extend(start());
+    steps.push(Step::Wait("the first level drawn", |g| {
+        drawn_in(g, Branch::Main)
+    }));
+    light_visit(&mut steps, None, "3", "overview-dlvl3", false);
+    let visits: [(KeyCheck, &'static str); 4] = [
+        (|g| entry_key(g, "oracle"), "overview-oracle"),
+        (|g| entry_key(g, "medusa"), "overview-medusa"),
+        (|g| entry_key(g, "castle"), "overview-castle"),
+        (|g| entry_key(g, "valley"), "overview-valley"),
+    ];
+    for (pick, shot) in visits {
+        light_visit(&mut steps, Some(pick), "", shot, false);
+    }
+    light_visit(&mut steps, None, "34", "overview-34", false);
+    steps.extend(quit());
+    steps
+}
+
 /// Lava's shores and the Plane of Fire (the critics' second pass, #9), for
 /// pictures before and after (not part of `make test-client`): Orcus'
 /// town and the Wizard's tower (their lava), and the Plane of Fire, each

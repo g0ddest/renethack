@@ -20,8 +20,12 @@ uniform sampler2D noise_tex : filter_linear_mipmap, repeat_enable;
 uniform sampler2D ground_tex : filter_linear, repeat_disable;
 uniform sampler2D depth_tex : hint_depth_texture, filter_linear_mipmap;
 uniform sampler2D fow_tex : filter_linear, repeat_disable;
+// the whole level framed (map_view's overview, as map_surface.gdshader)
+global uniform float overview;
 
 const vec2 FIELD = vec2(80.0, 21.0);
+// what the overview shows water by, as the stone shows by its own light
+const float OVERVIEW_GLOW = 1.2;
 
 varying vec3 wpos;
 
@@ -111,16 +115,21 @@ void fragment() {
 	vec3 col = mix(shallow.rgb, deep.rgb, depth_t);
 	// light caught in the crests
 	col *= mix(0.85, 1.2, smoothstep(0.9, 1.4, h));
-	// remembered: grey and dark as the stone around it
+	// remembered: grey and dark as the stone around it; in the overview
+	// nearly as it is, in its own colour, by its own faint light (black,
+	// a moat or a sea read as a hole)
 	float luma = dot(col, vec3(0.299, 0.587, 0.114));
-	col = mix(mix(col, luma * vec3(0.54, 0.59, 0.72), 0.8) * 0.4, col, seen);
+	vec3 own = col;
+	col = mix(mix(col, luma * vec3(0.54, 0.59, 0.72), mix(0.8, 0.15, overview))
+		* mix(0.4, 0.75, overview), col, seen);
 
 	// the dark above it, mirrored more the flatter it is seen
 	float facing = clamp(dot(n, VIEW), 0.0, 1.0);
 	float fresnel = 0.04 + 0.96 * pow(1.0 - facing, 5.0);
 	// and broken up by the ripples into bands of sheen
 	float streak = smoothstep(0.5, 0.75, n2(wpos.xz * 0.8 + wn.xz * 3.0 + t * 0.01));
-	EMISSION = sheen.rgb * (fresnel * 3.0 + 0.08 + streak * 0.4) * mix(0.3, 1.0, seen);
+	EMISSION = sheen.rgb * (fresnel * 3.0 + 0.08 + streak * 0.4) * mix(0.3, 1.0, seen)
+		+ own * overview * OVERVIEW_GLOW;
 
 	// foam lapping at the shore: a band at its very edge, its reach
 	// breathing, broken up by the noise
