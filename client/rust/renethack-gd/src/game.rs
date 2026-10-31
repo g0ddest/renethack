@@ -592,6 +592,9 @@ pub struct RenethackGame {
     warm_heavy: bool,
     /// Frames waited for the rehearsal's hero to show on the doll.
     title_frames: u32,
+    /// The player's last input (the creation form left alone, the map
+    /// loads ahead with more of each frame).
+    input_at: Instant,
     /// Frames processed, and whether none is drawn (headless): frames are
     /// counted by those processed then.
     frames: u64,
@@ -682,6 +685,16 @@ const CUE_OUT: f32 = 0.2;
 /// On a first launch the veil waits for the warm-up to end, at most this
 /// long (should a load never finish, the title still comes).
 const FIRST_LAUNCH_CAP_SECS: f64 = 120.0;
+
+/// A later launch's loading ahead: under the veil, once the title's
+/// scene is drawn, as much as a frame may take (a model's mesh read back
+/// from the graphics card waits for its frame, some 15 ms: the next ones
+/// in the same frame do not); while the title or the creation form is
+/// looked at, a little, and the game's once the form is left alone this
+/// long.
+const VEILED_PRELOAD: Duration = Duration::from_millis(50);
+const TITLE_PRELOAD: Duration = Duration::from_millis(3);
+const CREATION_IDLE: Duration = Duration::from_secs(3);
 
 /// A file in Godot's shader cache saying a warm-up of this build has run
 /// to its end: the shaders and the variants' pipelines the start compiles
@@ -958,6 +971,7 @@ impl INode for RenethackGame {
             warm_did: "-",
             warm_heavy: false,
             title_frames: 0,
+            input_at: Instant::now(),
             frames: 0,
             requests: 0,
             map_ms: 0.0,
@@ -1277,7 +1291,9 @@ impl INode for RenethackGame {
             || self.state != GameState::Title;
         let t = Instant::now();
         self.sync_creation_preview(delta);
+        let budget = self.preload_budget();
         if let Some(ui) = self.ui.as_mut() {
+            ui.map.set_preload_budget(budget);
             if map_turn && (veiled || !self.warm_heavy) {
                 ui.map.preload_step();
             } else {
@@ -1348,6 +1364,7 @@ impl INode for RenethackGame {
     /// the position over the HUD panels too, which `unhandled_input` never
     /// sees.
     fn input(&mut self, event: Gd<InputEvent>) {
+        self.input_at = Instant::now();
         self.hear_click(&event);
         let event = match event.try_cast::<InputEventMouseMotion>() {
             Ok(motion) => {
@@ -1745,12 +1762,15 @@ impl RenethackGame {
             return;
         }
         // the map's rehearsal from the first frames on, under the veil:
-        // its first draws are made there, unseen
+        // its first draws are made there, unseen (on a later launch
+        // Godot's cache has made them: no rehearsal, the title at once)
         if !self.map_warm
             && shown >= 1
             && let Some(cat) = catalog.as_deref()
         {
             self.map_warm = true;
+            ui.map
+                .set_quick_start(!self.first_launch && self.census.is_none());
             ui.map.warm_up(cat, None);
             self.warm_did = "map warm-up";
         }
@@ -1794,6 +1814,27 @@ impl RenethackGame {
             TitleWarm::Done => {
                 ui.dialogs.warm_tick();
             }
+        }
+    }
+
+    /// A frame's time for the map's loading ahead. On a later launch,
+    /// under the veil the game's until the title's own scene is drawn,
+    /// then much; over the title and the creation form a little, so that
+    /// the camera's sway stays smooth; the game's once a game is under way
+    /// or the form has been left alone a while.
+    fn preload_budget(&self) -> Duration {
+        let Some(map) = self.ui.as_ref().map(|ui| &ui.map) else {
+            return crate::art::PRELOAD_BUDGET;
+        };
+        if !map.quick_start() {
+            return crate::art::PRELOAD_BUDGET;
+        }
+        match self.state {
+            _ if self.veil_state() == 2 && !map.title_drawn() => crate::art::PRELOAD_BUDGET,
+            _ if self.veil_state() == 2 => VEILED_PRELOAD,
+            GameState::Title => TITLE_PRELOAD,
+            GameState::Creating if self.input_at.elapsed() < CREATION_IDLE => TITLE_PRELOAD,
+            _ => crate::art::PRELOAD_BUDGET,
         }
     }
 
@@ -1855,6 +1896,10 @@ impl RenethackGame {
                         "the title's panel warm",
                         matches!(self.title_warm, TitleWarm::Panel | TitleWarm::Done),
                     ),
+                    (
+                        "the pipeline variants made",
+                        map.is_some_and(|m| m.warm_parts().1 && m.variants_made().0 > 0),
+                    ),
                 ];
                 for (i, (what, done)) in waits.iter().enumerate() {
                     if *done && self.veil_waits_done & (1 << i) == 0 {
@@ -1867,8 +1912,13 @@ impl RenethackGame {
                         map.is_some_and(|m| m.rehearsal_first_draws_done() && m.preloaded())
                             && self.title_warm == TitleWarm::Done
                     } else {
-                        map.is_some_and(|m| m.rehearsal_first_draws_done())
-                            && matches!(self.title_warm, TitleWarm::Panel | TitleWarm::Done)
+                        // a later launch rehearses nothing (Godot's cache
+                        // has the pipelines): the title's scene, the
+                        // variants and the art, whose meshes read back
+                        // from the graphics card cost a long frame each
+                        map.is_some_and(|m| {
+                            m.rehearsal_first_draws_done() && (!m.quick_start() || m.warm_parts().0)
+                        }) && matches!(self.title_warm, TitleWarm::Panel | TitleWarm::Done)
                     };
                 let progress = map.map_or(0.0, |m| m.warm_progress());
                 if let Some(note) = self.veil_note.as_mut() {

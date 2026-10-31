@@ -415,8 +415,9 @@ fn stats() -> bool {
     *ON.get_or_init(|| std::env::var_os("RENETHACK_FRAME_STATS").is_some())
 }
 
-/// Time per frame the preloading may take.
-const PRELOAD_BUDGET: std::time::Duration = std::time::Duration::from_millis(6);
+/// Time per frame the preloading may take; while the title shows over
+/// it, less (`set_preload_budget`): its frames stay smooth.
+pub const PRELOAD_BUDGET: std::time::Duration = std::time::Duration::from_millis(6);
 /// Files the loader's threads read at once, at most: half of Godot's
 /// worker pool (a thread a processor), the rest waiting their turn. The
 /// pool also compiles the shaders the main thread asks for, the main
@@ -432,6 +433,9 @@ pub(crate) fn loads_at_once() -> usize {
         (usize::try_from(processors).unwrap_or(2) / 2).max(1)
     })
 }
+
+/// Items ahead in the queue whose files are asked for while it waits.
+const PRELOAD_AHEAD: usize = 24;
 
 /// Animations stripped of their root motion in one step.
 const STRIP_STEP: usize = 4;
@@ -493,14 +497,20 @@ pub struct Art {
     preload: Vec<Preload>,
     /// The most items the queue has held (its progress, `preload_progress`).
     preload_most: usize,
-    /// The files the preloading needs were asked of the loader's threads.
+    /// The files the preloading needs were asked of the loader's threads;
+    /// and how many items ahead their files are asked for as the queue
+    /// waits (`set_files_ahead`).
     requested: bool,
+    files_ahead: usize,
     /// Files being read on worker threads (`res://` paths), and the ones
     /// read, held so that a load of them is the cached resource.
     loading: Vec<String>,
     /// Files others read on the loader's threads now (the rehearsal's):
     /// they count against `loads_at_once` too.
     others_loading: usize,
+    /// This frame's time for the loading ahead (`PRELOAD_BUDGET` but
+    /// while the title shows).
+    preload_budget: std::time::Duration,
     loaded: HashMap<String, Gd<godot::classes::Resource>>,
     /// A library being stripped of its root motion over several steps:
     /// its name, the source, what is stripped so far, the next animation.
@@ -577,8 +587,10 @@ impl Art {
             preload: Vec::new(),
             preload_most: 0,
             requested: false,
+            files_ahead: 0,
             loading: Vec::new(),
             others_loading: 0,
+            preload_budget: PRELOAD_BUDGET,
             loaded: HashMap::new(),
             stripping: None,
             warmed: HashSet::new(),
@@ -719,10 +731,25 @@ impl Art {
             }
         }
         self.collect_loads();
+        // the loader's threads kept busy with the next items' files (else
+        // the queue waits on each item's in turn)
+        let ahead: Vec<String> = self
+            .preload
+            .iter()
+            .rev()
+            .take(self.files_ahead)
+            .flat_map(|p| self.files_of(p))
+            .collect();
+        for f in ahead {
+            if self.loading.len() + self.others_loading >= loads_at_once() {
+                break;
+            }
+            self.request(f);
+        }
         // a step is not begun that would end past the budget at the pace
         // of the last one
         let mut last = std::time::Duration::ZERO;
-        while start.elapsed() + last < PRELOAD_BUDGET {
+        while start.elapsed() + last < self.preload_budget {
             let Some(next) = self.preload.last().cloned() else {
                 self.loaded.clear();
                 return false;
@@ -854,6 +881,18 @@ impl Art {
     /// Files the loading ahead has the loader's threads reading now.
     pub fn loads_in_flight(&self) -> usize {
         self.loading.len()
+    }
+
+    /// Whether the files of the items ahead are asked for as the queue
+    /// waits: on a later launch, Godot's shaders cached, its worker pool
+    /// is the files' (on a first launch it compiles them).
+    pub fn set_files_ahead(&mut self, ahead: bool) {
+        self.files_ahead = if ahead { PRELOAD_AHEAD } else { 0 };
+    }
+
+    /// The time a frame's loading ahead may take.
+    pub fn set_preload_budget(&mut self, budget: std::time::Duration) {
+        self.preload_budget = budget;
     }
 
     /// Files others have the loader's threads reading now (the

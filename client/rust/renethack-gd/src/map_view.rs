@@ -3495,6 +3495,12 @@ pub struct MapView {
     /// compiled ahead), until it is over; and whether the map is shown.
     rehearsal: Option<crate::rehearsal::Rehearsal>,
     rehearsed: bool,
+    /// A later launch: Godot's shader cache holds the pipelines, so no
+    /// level is rehearsed. The title is laid at once; the rehearsal's
+    /// models load with the art, its files in `unplayed` (kept for the
+    /// levels that draw them).
+    quick: bool,
+    unplayed: Option<crate::rehearsal::Rehearsal>,
     /// One of each pipeline variant a game draws, made by the rehearsal;
     /// their materials kept for the session.
     variants: crate::variants::Variants,
@@ -4279,6 +4285,8 @@ impl MapView {
             rehearsal: None,
             variants: Default::default(),
             rehearsed: false,
+            quick: false,
+            unplayed: None,
             shadow_made: false,
             build_budget: BUILD_BUDGET,
             showing: 0,
@@ -6486,7 +6494,11 @@ impl MapView {
         // those of the variants still to make are made in the game's first
         // frames (`tick`), then let go: a game started before the rehearsal
         // was over (the veil lifts at its cap) meets them made
-        self.variants.release_canvas();
+        // (a later launch lays its title under the veil, the variants'
+        // canvas items still to make)
+        if !self.quick || !self.veiled.unwrap_or(true) {
+            self.variants.release_canvas();
+        }
         if self.variants.done() {
             self.variants.release();
         }
@@ -7180,8 +7192,9 @@ impl MapView {
             self.show_parts();
         }
         // the loader's threads shared with the rehearsal's own files
-        let others = self.rehearsal.as_ref().map_or(0, |r| r.loading());
-        self.art.set_others_loading(others);
+        let others = self.rehearsal.as_ref().or(self.unplayed.as_ref());
+        self.art
+            .set_others_loading(others.map_or(0, |r| r.loading()));
         let mut more = self.art.preload_step();
         let art = now.elapsed();
         if !more
@@ -7195,7 +7208,15 @@ impl MapView {
                 self.art.counts().1
             );
         }
-        if self.rehearsal.is_some() {
+        // the art's own files first (a later launch's veil waits for them)
+        if let Some(r) = self.unplayed.as_mut().filter(|_| !more) {
+            r.fetch(crate::art::loads_at_once());
+        }
+        if self.quick && !self.veiled.unwrap_or(true) {
+            // the veil is up over a later launch's title
+            self.variants.release_canvas();
+        }
+        if self.rehearsal.is_some() || (self.quick && !self.variants.done()) {
             if !self.variants.done() {
                 self.make_variants();
             }
@@ -7572,6 +7593,10 @@ impl MapView {
     /// How far the warm-up behind the start-up veil has come, 0 to 1: the
     /// art loaded ahead, the variants made, the rehearsal's stages.
     pub fn warm_progress(&self) -> f32 {
+        if self.quick {
+            // a later launch's veil waits for these (and the title)
+            return (self.art.preload_progress() + self.variants.progress()) / 2.0;
+        }
         let rehearsal = match &self.rehearsal {
             Some(r) => r.progress(),
             None if self.rehearsed => 1.0,
@@ -7592,7 +7617,27 @@ impl MapView {
 
     /// Nothing is left to load ahead (self-tests start a game then).
     pub fn preloaded(&self) -> bool {
-        self.rehearsed && self.art.preloaded() && self.rehearsal.is_none()
+        self.rehearsed
+            && self.art.preloaded()
+            && self.rehearsal.is_none()
+            && self.unplayed.as_ref().is_none_or(|r| r.fetched())
+    }
+
+    /// A later launch's warm-up (`warm_up`): no rehearsal, the title at
+    /// once; set before it starts.
+    pub fn set_quick_start(&mut self, quick: bool) {
+        self.quick = quick;
+        self.art.set_files_ahead(quick);
+    }
+
+    pub fn quick_start(&self) -> bool {
+        self.quick
+    }
+
+    /// The time a frame's loading ahead may take (the game's but on a
+    /// later launch's title, `game.rs` `preload_budget`).
+    pub fn set_preload_budget(&mut self, budget: std::time::Duration) {
+        self.art.set_preload_budget(budget);
     }
 
     /// Build ahead the models a game shows first: the role's hero (first
@@ -7607,7 +7652,12 @@ impl MapView {
                 );
             }
             let fetch = self.prefetch_paths();
-            self.rehearsal = Some(crate::rehearsal::Rehearsal::new(catalog, fetch));
+            let rehearsal = crate::rehearsal::Rehearsal::new(catalog, fetch);
+            if self.quick {
+                self.unplayed = Some(rehearsal);
+            } else {
+                self.rehearsal = Some(rehearsal);
+            }
             self.variants.start(&mut self.root, true);
             // the title scene after it is laid from the same catalog
             self.title_catalog = Some(catalog.clone());
@@ -7623,7 +7673,7 @@ impl MapView {
         };
         // the rehearsal's monsters and objects are built ahead with the
         // art (a model built as a level is drawn costs a long frame)
-        let mut looks = match &self.rehearsal {
+        let mut looks = match self.rehearsal.as_ref().or(self.unplayed.as_ref()) {
             Some(r) => self.models_of(r.map(), catalog),
             None => Vec::new(),
         };

@@ -277,6 +277,11 @@ impl Rehearsal {
         self.fetching.is_empty() && self.queued.is_empty()
     }
 
+    /// Everything it draws is loaded (`fetch`).
+    pub fn fetched(&self) -> bool {
+        self.fetching.is_empty() && self.queued.is_empty()
+    }
+
     /// How far it has come, 0 to 1: its stages, and the stage's phase.
     pub fn progress(&self) -> f32 {
         let phase = match self.phase {
