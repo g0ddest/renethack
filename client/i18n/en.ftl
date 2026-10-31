@@ -5,6 +5,7 @@
 ## The title, settings, character creation, the end of a game, errors
 
 veil-first-launch = Preparing the game for its first launch…
+veil-loading = Loading the game…
 title-subtitle = NetHack 5.0
 title-new-game = New game
 title-continue = Continue: { $name } ({ $time })

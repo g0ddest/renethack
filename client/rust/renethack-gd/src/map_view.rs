@@ -7540,6 +7540,16 @@ impl MapView {
         (self.art.preload_progress() + self.variants.progress() + rehearsal) / 3.0
     }
 
+    /// What is left of the warm-up, each part: the art's files and models
+    /// loaded ahead, the pipeline variants made, the rehearsal over.
+    pub fn warm_parts(&self) -> (bool, bool, bool) {
+        (
+            self.art.preloaded(),
+            self.variants.done(),
+            self.rehearsed && self.rehearsal.is_none(),
+        )
+    }
+
     /// Nothing is left to load ahead (self-tests start a game then).
     pub fn preloaded(&self) -> bool {
         self.rehearsed && self.art.preloaded() && self.rehearsal.is_none()

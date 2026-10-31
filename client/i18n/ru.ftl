@@ -5,6 +5,7 @@
 ## Заставка, настройки, создание персонажа, конец игры, ошибки
 
 veil-first-launch = Подготовка к первому запуску…
+veil-loading = Загрузка игры…
 title-subtitle = NetHack 5.0
 title-new-game = Новая игра
 title-continue = Продолжить: { $name } ({ $time })

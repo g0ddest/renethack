@@ -603,6 +603,8 @@ pub struct RenethackGame {
     /// Over the title, whether the scene was drawn (and the engine's words
     /// in) as the veil began to lift (self-tests: not at its cap).
     pub(crate) veil_over_scene: Option<bool>,
+    /// What the start-up veil waited for that has come (logged once each).
+    veil_waits_done: u8,
     /// Godot's shader cache holds nothing of this build (a first launch):
     /// the veil waits for the whole warm-up, its note and bar saying so.
     first_launch: bool,
@@ -728,17 +730,20 @@ struct VeilNote {
 const NOTE_BAR: (f32, f32) = (240.0, 3.0);
 
 impl VeilNote {
-    fn new(veil: &mut Gd<godot::classes::ColorRect>) -> VeilNote {
+    /// `first`: a first launch, whose shaders Godot compiles behind it
+    /// (said so); else the game loading.
+    fn new(veil: &mut Gd<godot::classes::ColorRect>, first: bool) -> VeilNote {
         use godot::classes::{ColorRect, Control, control::MouseFilter};
         let mut note = Control::new_alloc();
         note.set_mouse_filter(MouseFilter::IGNORE);
         crate::theme::place(&note, [0.5, 0.5, 0.5, 0.5], [-200.0, 52.0, 200.0, 100.0]);
-        let mut line = crate::theme::styled_label(
-            &crate::tr!("veil-first-launch"),
-            crate::theme::Face::Body,
-            18,
-            crate::theme::GOLD,
-        );
+        let words = if first {
+            crate::tr!("veil-first-launch")
+        } else {
+            crate::tr!("veil-loading")
+        };
+        let mut line =
+            crate::theme::styled_label(&words, crate::theme::Face::Body, 18, crate::theme::GOLD);
         line.set_horizontal_alignment(godot::global::HorizontalAlignment::CENTER);
         crate::theme::place(&line, [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 28.0]);
         note.add_child(&line);
@@ -958,6 +963,7 @@ impl INode for RenethackGame {
             veil_note: None,
             veil_lift: None,
             veil_over_scene: None,
+            veil_waits_done: 0,
             cue_out: None,
             rewarm: None,
             map_warm: false,
@@ -1055,11 +1061,12 @@ impl INode for RenethackGame {
         cue.set_self_modulate(crate::theme::GOLD);
         veil.add_child(&cue);
         self.headless = godot::classes::DisplayServer::singleton().get_name() == "headless";
-        // a first launch: Godot compiles the shaders behind the veil for
-        // a while, and a line and a bar under the ankh say so
+        // a line and a bar under the ankh say what goes on behind the
+        // veil: on a first launch Godot compiles the shaders for a while,
+        // on every other the game loads (a mute ankh looks hung)
         self.first_launch = !self.headless && !shader_cache_warm();
-        if self.first_launch {
-            self.veil_note = Some(VeilNote::new(&mut veil));
+        if !self.headless {
+            self.veil_note = Some(VeilNote::new(&mut veil, self.first_launch));
         }
         veil_layer.add_child(&veil);
         self.base_mut().add_child(&veil_layer);
@@ -1822,6 +1829,34 @@ impl RenethackGame {
                 // (and the title scene itself drawn, the engine's words in
                 // the player's language: the creation form names its roles)
                 let scene = map.is_some_and(|m| m.title_drawn()) && i18n::engine_ready();
+                // what the veil waits for, each said once as it comes
+                let waits = [
+                    (
+                        "the title scene drawn",
+                        map.is_some_and(|m| m.title_drawn()),
+                    ),
+                    ("the engine's words loaded", i18n::engine_ready()),
+                    (
+                        "the rehearsal's first draws done",
+                        map.is_some_and(|m| m.rehearsal_first_draws_done()),
+                    ),
+                    ("the art preloaded", map.is_some_and(|m| m.preloaded())),
+                    (
+                        "the art's files and models loaded",
+                        map.is_some_and(|m| m.warm_parts().0),
+                    ),
+                    ("the rehearsal over", map.is_some_and(|m| m.warm_parts().2)),
+                    (
+                        "the title's panel warm",
+                        matches!(self.title_warm, TitleWarm::Panel | TitleWarm::Done),
+                    ),
+                ];
+                for (i, (what, done)) in waits.iter().enumerate() {
+                    if *done && self.veil_waits_done & (1 << i) == 0 {
+                        self.veil_waits_done |= 1 << i;
+                        godot_print!("renethack: veil: {what} at {secs:.1} s");
+                    }
+                }
                 let drawn = scene
                     && if self.first_launch {
                         map.is_some_and(|m| m.rehearsal_first_draws_done() && m.preloaded())
