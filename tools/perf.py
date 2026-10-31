@@ -80,11 +80,16 @@ SCENES = {
     # a creature hidden behind the hero (its x-ray contour): for the
     # census, not timed
     "through": ("through", [], 300),
+    # the heroes dressed in their kits, and the late monsters (the
+    # dragons, the titan): for the census, not timed
+    "outfits": ("outfits", [], 600),
+    "late-monsters": ("late-monsters", [], 600),
     # every creature and thing a batch at a time: with --census, what the
     # game can draw (not a timing)
     "variants": ("variants", [], 1800),
 }
-DEFAULT_SCENES = [s for s in SCENES if s not in ("smoke", "variants", "through")]
+CENSUS_ONLY = ("through", "outfits", "late-monsters")
+DEFAULT_SCENES = [s for s in SCENES if s not in ("smoke", "variants", *CENSUS_ONLY)]
 
 
 def say(*a):
