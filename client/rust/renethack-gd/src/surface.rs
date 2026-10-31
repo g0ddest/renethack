@@ -265,6 +265,11 @@ impl Surfaces {
             Role::Ruin => {
                 set(&mut mat, "glow", 0.02);
                 set(&mut mat, "displace", 0.03);
+                // its broken top in the dark a wall's cap is, and matt: lit
+                // as the floor, a run of stumps read as a raised path
+                set(&mut mat, "ledge_shade", 0.35);
+                set(&mut mat, "top_shade", 0.35);
+                set(&mut mat, "specular", 0.15);
             }
             Role::Floor => {
                 set(&mut mat, "grime", 1.0);

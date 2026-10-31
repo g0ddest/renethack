@@ -410,6 +410,8 @@ void fragment() {
 		vec3 f = normalize(cross(dFdx(wpos), dFdy(wpos)));
 		n = dot(f, CAMERA_POSITION_WORLD - wpos) < 0.0 ? -f : f;
 	}
+	// how near the see-through's rim this stone is (0 far, 1 at its edge)
+	float rim_near = 0.0;
 	if (occlude > 0.0 && wpos.y < solid_top) {
 		vec3 ch = hero_pos - eye_pos;
 		float len2 = max(dot(ch, ch), 1e-4);
@@ -418,18 +420,26 @@ void fragment() {
 		// what stands right over their head (a doorway's lintel, a stair's
 		// arch: it hides nothing of them)
 		float before = 1.0 - 0.6 / sqrt(len2);
-		bool overhead = wpos.y > hero_pos.y + 0.7 && length(wpos.xz - hero_pos.xz) < 0.7;
-		if (t > 0.0 && t < before && !overhead) {
+		float aside = length(wpos.xz - hero_pos.xz);
+		bool overhead = wpos.y > hero_pos.y + 0.7 && aside < 0.7;
+		if (t > 0.0 && t < before) {
 			float d = length(wpos - (eye_pos + ch * t));
 			// a cone from the eye widening to the hero's own body at the
 			// hero (a lintel over their head stays): open inside, its rim
-			// broken by the stone's own noise (fixed in the world: it never
-			// crawls nor shows a pixel grid)
+			// wandering gently in the stone's own noise (fixed in the world:
+			// it never crawls nor shows a pixel grid), the stone darkening
+			// towards it, never a torn pixel edge
 			float r = 0.2 + 0.42 * t;
-			float cover = smoothstep(r * 0.75, r * 1.2, d);
-			if (tn3(wpos * 12.0) * 0.8 + 0.1 >= cover) {
+			float wander = (tn3(wpos * 3.0) - 0.5) * 0.3;
+			if (!overhead && smoothstep(r * 0.75, r * 1.2, d) + wander < 0.4) {
 				discard;
 			}
+			// (and fading out where the hole ends: before the hero, and
+			// round what stays over their head)
+			float lintel = (1.0 - smoothstep(0.55, 0.85, aside))
+				* smoothstep(0.6, 0.8, wpos.y - hero_pos.y);
+			rim_near = (1.0 - smoothstep(0.4, 1.0, smoothstep(r * 0.75, r * 1.5, d) + wander))
+				* smoothstep(0.0, 0.3, (before - t) * sqrt(len2)) * (1.0 - lintel);
 		}
 	}
 	vec3 bw = pow(abs(n), vec3(4.0));
@@ -637,10 +647,13 @@ void fragment() {
 		}
 	}
 
+	// the stone dark towards the see-through's rim
+	color *= 1.0 - 0.6 * rim_near;
+	emission *= 1.0 - 0.6 * rim_near;
 	ALBEDO = color;
 	ROUGHNESS = rough;
 	// rock's tops and ledges mirror nothing at all
-	SPECULAR = chunks > 0.0 ? specular * (1.0 - up) : specular;
+	SPECULAR = (chunks > 0.0 ? specular * (1.0 - up) : specular) * (1.0 - rim_near);
 	METALLIC = metallic * orm.b;
 	AO = orm.r;
 	AO_LIGHT_AFFECT = 0.3;
