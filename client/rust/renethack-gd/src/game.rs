@@ -235,17 +235,22 @@ fn prompt_line(prompt: &Prompt, pad: Option<PadKind>) -> Option<String> {
         (Prompt::Key, Some(a)) => Some(tr!("prompt-press-key-pad", a = a)),
         (Prompt::FreeKey { query, .. }, _) => {
             let said = i18n::engine(EngineKind::Prompt, query).into_owned();
-            // its keys in a bracket ("[hyuln>]") are no pad player's, nor
-            // words in another language
-            Some(if pad.is_some() || i18n::lang() != Lang::En {
-                without_keys(&said).to_string()
-            } else {
-                said
-            })
+            Some(question_shown(&said, pad.is_some()))
         }
         (Prompt::MapPause, None) => Some(tr!("prompt-more")),
         (Prompt::MapPause, Some(a)) => Some(tr!("prompt-more-pad", a = a)),
         _ => None,
+    }
+}
+
+/// A question as the prompt line shows it: its keys in a bracket
+/// ("[hyuln>]") are no pad player's; a keys player reads them in any
+/// language (`>`: down is a way to dig).
+fn question_shown(said: &str, pad: bool) -> String {
+    if pad {
+        without_keys(said).to_string()
+    } else {
+        said.to_string()
     }
 }
 
@@ -6263,6 +6268,10 @@ mod tests {
         assert_eq!(without_keys("In what direction?"), "In what direction?");
         // a bracket of words is no keys
         assert_eq!(without_keys("Name it [the kitten]"), "Name it [the kitten]");
+        // a keys player keeps them, in any language; a pad player does not
+        let dig = "В каком направлении копать? [hyuln>]";
+        assert_eq!(question_shown(dig, false), dig);
+        assert_eq!(question_shown(dig, true), "В каком направлении копать?");
     }
 
     #[test]
